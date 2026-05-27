@@ -9,7 +9,7 @@ module Master
   # No LLM call, no token cost. Applied before LLM sweep on every scan cycle.
   # Each transform is idempotent — safe to apply repeatedly.
   class AstFixer
-    FROZEN_HEADER  = "# frozen_string_literal: true\n"
+    FROZEN_HEADER = "# frozen_string_literal: true\n"
     BARE_RESCUE_RE = /^(\s*)rescue(\s*\n|\s*=>)/.freeze
 
     Result = Struct.new(:path, :changed, :transforms, keyword_init: true)
@@ -21,8 +21,8 @@ module Master
     end
 
     def initialize(path, source)
-      @path       = path
-      @source     = source
+      @path = path
+      @source = source
       @transforms = []
     end
 

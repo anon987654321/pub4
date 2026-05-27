@@ -14,12 +14,12 @@ module Master
 
         def initialize(agent: nil)
           super()
-          @agent       = agent
-          @id          = "semantic"
+          @agent = agent
+          @id = "semantic"
           @description = "LLM-based rule review (violations + opportunities)"
-          @severity    = :warning
-          @rules      = load_semantic_rules
-          @rule_tags  = @rules.keys.map(&:to_sym)
+          @severity = :warning
+          @rules = load_semantic_rules
+          @rule_tags = @rules.keys.map(&:to_sym)
         end
 
         def self.auto_build? = false

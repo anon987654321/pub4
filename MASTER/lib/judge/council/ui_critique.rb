@@ -5,7 +5,7 @@ module Master
   module Council
     class UiCritique
       COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
-      WEB_ROOT     = File.join(Master::ROOT, "web").freeze
+      WEB_ROOT = File.join(Master::ROOT, "web").freeze
       MAX_FILE_BYTES = 32_768
 
       UI_PANEL = %w[
@@ -16,12 +16,12 @@ module Master
 
       def initialize(agent:, event_bus: nil)
         @agent = agent
-        @bus   = event_bus
+        @bus = event_bus
       end
 
       def run
-        preset  = load_preset
-        panel   = build_panel(preset)
+        preset = load_preset
+        panel = build_panel(preset)
         payload = build_payload(preset)
         @bus&.publish(:ui_critique_start, files: payload[:files], personas: panel.map(&:name))
 
@@ -49,7 +49,7 @@ module Master
       end
 
       def build_panel(preset)
-        all  = Personas.load
+        all = Personas.load
         names = Array(preset["panel"]).map(&:downcase)
         return all if names.empty?
 

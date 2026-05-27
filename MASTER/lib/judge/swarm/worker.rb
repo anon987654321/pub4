@@ -8,7 +8,7 @@ module Master
     # Base worker — receives only the context slice it needs (need-to-know).
     class Worker
       PREFERRED_MODEL = nil
-      FALLBACK_MODEL  = nil
+      FALLBACK_MODEL = nil
 
       UNCERTAINTY_PHRASES = %w[unclear uncertain not\ sure cannot\ determine
                                 i\ don't\ know limited\ information probably].freeze
@@ -16,12 +16,12 @@ module Master
       attr_reader :role, :result, :confidence
 
       def initialize(agent:, event_bus: nil)
-        @agent      = agent
-        @bus        = event_bus
-        class_name  = self.class.name
+        @agent = agent
+        @bus = event_bus
+        class_name = self.class.name
         class_parts = class_name.split("::")
-        @role       = class_parts.last.downcase
-        @result     = nil
+        @role = class_parts.last.downcase
+        @result = nil
         @confidence = 1.0
       end
 
@@ -51,7 +51,7 @@ module Master
 
       def ask_with_fallback(prompt)
         preferred = self.class::PREFERRED_MODEL
-        fallback  = self.class::FALLBACK_MODEL
+        fallback = self.class::FALLBACK_MODEL
         @agent.ask_once(prompt, model: preferred, system: worker_system_prompt)
       rescue StandardError => e
         raise unless fallback

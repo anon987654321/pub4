@@ -7,19 +7,19 @@ module Master
 
     class Rule
       EXT_LANG = {
-        ".rb" => "ruby",        ".rake" => "ruby",   ".gemspec" => "ruby",
-        ".erb" => "html",        ".html" => "html",   ".htm" => "html",
-        ".css" => "css",         ".scss" => "scss",   ".sass" => "scss",
-        ".js" => "javascript",  ".ts" => "javascript",
-        ".jsx" => "javascript",  ".tsx" => "javascript",
-        ".zsh" => "zsh",         ".sh" => "zsh",    ".bash" => "zsh",
-        ".yml" => "yaml",        ".yaml" => "yaml",
-        ".md" => "markdown",    ".json" => "json",
+        ".rb" => "ruby", ".rake" => "ruby", ".gemspec" => "ruby",
+        ".erb" => "html", ".html" => "html", ".htm" => "html",
+        ".css" => "css", ".scss" => "scss", ".sass" => "scss",
+        ".js" => "javascript", ".ts" => "javascript",
+        ".jsx" => "javascript", ".tsx" => "javascript",
+        ".zsh" => "zsh", ".sh" => "zsh", ".bash" => "zsh",
+        ".yml" => "yaml", ".yaml" => "yaml",
+        ".md" => "markdown", ".json" => "json",
       }.freeze
 
       attr_reader :id, :description, :severity, :rule_tags, :auto_fix
 
-      @registry       = []
+      @registry = []
       @registry_mutex = Mutex.new
 
       def self.inherited(subclass)
@@ -35,11 +35,11 @@ module Master
       def self.auto_build? = true
 
       def initialize
-        @id         = self.class.name&.split("::")&.last&.downcase || "unknown"
+        @id = self.class.name&.split("::")&.last&.downcase || "unknown"
         @description = ""
-        @severity    = :warning
-        @rule_tags  = []
-        @auto_fix    = true
+        @severity = :warning
+        @rule_tags = []
+        @auto_fix = true
       end
 
       def check(code, path:)

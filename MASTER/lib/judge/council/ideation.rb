@@ -50,7 +50,7 @@ module Master
       end
 
       def brainstorm(prompt, prior, constraints)
-        context           = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
+        context = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
         constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
         system_msg = "Generate 3-5 novel, bold ideas. One idea per bullet (- prefix)."
         raw = @agent.ask_once(<<~PROMPT, system: system_msg)
@@ -65,9 +65,9 @@ module Master
       end
 
       def critique(ideas)
-        list       = ideas.map { |idea| "- #{idea}" }.join("\n")
+        list = ideas.map { |idea| "- #{idea}" }.join("\n")
         system_msg = "Critique these ideas. Identify weaknesses, blind spots, risks. Be direct."
-        raw        = @agent.ask_once(<<~PROMPT, system: system_msg)
+        raw = @agent.ask_once(<<~PROMPT, system: system_msg)
           #{list}
         PROMPT
         raw_text = raw.to_s
@@ -78,8 +78,8 @@ module Master
 
       def synthesize(prompt:, ideas:, critiques:, constraints:)
         constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
-        list              = ideas.map { |idea| "- #{idea}" }.join("\n")
-        crits      = critiques.join("\n\n")
+        list = ideas.map { |idea| "- #{idea}" }.join("\n")
+        crits = critiques.join("\n\n")
         system_msg = "Synthesize the best elements into a concrete, practical recommendation. " \
                      "Preserve innovation. Address valid critiques."
         raw = @agent.ask_once(<<~PROMPT, system: system_msg)

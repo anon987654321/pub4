@@ -10,23 +10,23 @@ module Master
       # Also detects orphan keys — top-level YAML keys with zero references in lib/.
       # Only meaningful when scanning lib/ with root: access.
       class InterconnectRule < Rule
-        LOAD_CALL   = /load_yaml(?:_data)?\s*\(\s*["']([^"']+\.yml)["']/.freeze
-        DIG_CALL    = /\.dig\(\s*((?:["'][^"']+["']\s*,?\s*)+)\)/.freeze
-        FETCH_CALL  = /\.fetch\(\s*["']([^"']+)["']/.freeze
+        LOAD_CALL = /load_yaml(?:_data)?\s*\(\s*["']([^"']+\.yml)["']/.freeze
+        DIG_CALL = /\.dig\(\s*((?:["'][^"']+["']\s*,?\s*)+)\)/.freeze
+        FETCH_CALL = /\.fetch\(\s*["']([^"']+)["']/.freeze
         BRACKET_KEY = /\[["']([^"']+)["']\]/.freeze
 
         def self.auto_build? = false
 
         def initialize(root:)
           super()
-          @id          = "interconnect"
+          @id = "interconnect"
           @description = "Phantom YAML key reads and orphan data keys"
-          @severity    = :warning
-          @auto_fix    = false
-          @rule_tags  = %i[ONE_SOURCE]
-          @root        = root
-          @data_dir    = File.join(root, "data")
-          @lib_source  = load_lib_source(root)
+          @severity = :warning
+          @auto_fix = false
+          @rule_tags = %i[ONE_SOURCE]
+          @root = root
+          @data_dir = File.join(root, "data")
+          @lib_source = load_lib_source(root)
         end
 
         def check(code, path:)
@@ -96,7 +96,7 @@ module Master
 
         def extract_dig_paths(code)
           code.scan(DIG_CALL).filter_map do |match|
-            raw  = match.first.to_s
+            raw = match.first.to_s
             keys = raw.scan(/["']([^"']+)["']/).flatten
             keys.size >= 1 ? keys : nil
           end

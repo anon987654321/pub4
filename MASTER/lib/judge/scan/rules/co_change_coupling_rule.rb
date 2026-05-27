@@ -11,19 +11,19 @@ module Master
       # threshold and that live in different top-level module paths — likely DECOUPLE
       # candidates the lexical rules can't see.
       class CoChangeCouplingRule < Rule
-        COMMITS_WINDOW    = 500
-        WEIGHT_THRESHOLD  = 5
+        COMMITS_WINDOW = 500
+        WEIGHT_THRESHOLD = 5
         # Skip mega-commits — they pollute the graph.
         MAX_FILES_IN_COMMIT = 12
 
         def initialize
           super
-          @id          = "co_change_coupling"
+          @id = "co_change_coupling"
           @description = "Files co-change with N+ peers across module boundaries — hidden coupling"
-          @severity    = :info
-          @rule_tags  = %i[DECOUPLE ONE_JOB]
+          @severity = :info
+          @rule_tags = %i[DECOUPLE ONE_JOB]
           @graph_mutex = Mutex.new
-          @graph       = nil
+          @graph = nil
         end
 
         def check(_code, path:)

@@ -63,16 +63,16 @@ module Master
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     description: "empty rescue swallows errors silently" do |src, path:|
     src.each_line.with_index(1).filter_map { |line, n|
-      bare_rescue   = line.match?(/^\s*rescue\s*$/)
-      naked_class   = line.match?(/^\s*rescue\s+\S+\s*$/) && !line.match?(/=>/)
+      bare_rescue = line.match?(/^\s*rescue\s*$/)
+      naked_class = line.match?(/^\s*rescue\s+\S+\s*$/) && !line.match?(/=>/)
       finding(line: n, message: "empty rescue — use Ground::Swallow.log or re-raise") if bare_rescue || naked_class
     }
   end
 
   # Regexes hoisted out of the per-call hot path (HOIST).
   RESCUE_DISCARD = /\A(nil|false|0|\[\]|\{\}|next|return|return\s+(nil|false|0|\[\]|\{\})|raise)?\z/
-  RESCUE_SINK    = /\b(raise\b|Swallow\.log|\.publish\b|\bwarn\b|\blog\b|Diag\b|Result\.err)/
-  RESCUE_HEAD    = /^(\s*)rescue\b([^;#]*?)(?:=>\s*(\w+))?\s*(?:;\s*(.*))?$/
+  RESCUE_SINK = /\b(raise\b|Swallow\.log|\.publish\b|\bwarn\b|\blog\b|Diag\b|Result\.err)/
+  RESCUE_HEAD = /^(\s*)rescue\b([^;#]*?)(?:=>\s*(\w+))?\s*(?:;\s*(.*))?$/
 
   # 1-based line numbers of rescues whose handler discards the error.
   def self.silent_rescue_lines(src, blanket_only:)
@@ -170,7 +170,7 @@ module Master
     severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[ruby],
     description: "bare Time.now/Date.today bypasses Rails Time.zone" do |src, path:|
     next [] unless path.match?(%r{/app/|/spec/|/test/})
-    findings  = scan_lines(src, /(?<![A-Za-z_.])Time\.now\b/,
+    findings = scan_lines(src, /(?<![A-Za-z_.])Time\.now\b/,
                            message: "Time.now ignores Time.zone — use Time.current")
     findings += scan_lines(src, /(?<![A-Za-z_.])Date\.today\b/,
                            message: "Date.today ignores Time.zone — use Date.current")

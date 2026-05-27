@@ -10,19 +10,19 @@ module Master
 
         def initialize(root:)
           super()
-          @id          = "rule_coverage"
+          @id = "rule_coverage"
           @description = "Rule subclass has no corresponding test file"
-          @severity    = :warning
-          @auto_fix    = false
-          @rule_tags  = %i[TEST_COVERAGE]
-          @root        = root
-          @test_dir    = File.join(root, "test")
+          @severity = :warning
+          @auto_fix = false
+          @rule_tags = %i[TEST_COVERAGE]
+          @root = root
+          @test_dir = File.join(root, "test")
         end
 
         def check(code, path:)
           return [] unless path.include?("/judge/scan/rules/") && path.end_with?("_rule.rb")
 
-          base      = File.basename(path, ".rb")
+          base = File.basename(path, ".rb")
           test_glob = File.join(@test_dir, "**", "#{base}_test.rb")
           return [] if Dir.glob(test_glob).any?
 

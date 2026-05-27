@@ -12,12 +12,12 @@ module Master
   module RuleDSL
     def self.rule(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil, &block)
       raise ArgumentError, "block required" unless block
-      dsl_id   = id.to_s.downcase
+      dsl_id = id.to_s.downcase
       dsl_desc = description || dsl_id.tr("_", " ")
       dsl_tags = Array(tags)
       Class.new(Rule) do
-        @dsl_block   = block
-        @dsl_langs   = applies_to
+        @dsl_block = block
+        @dsl_langs = applies_to
         @dsl_autofix = autofix
         class << self; attr_reader :dsl_block, :dsl_langs, :dsl_autofix; end
         define_method(:initialize) do

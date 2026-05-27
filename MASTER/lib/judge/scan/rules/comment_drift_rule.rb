@@ -11,15 +11,15 @@ module Master
       class CommentDriftRule < Rule
         MAX_PAIRS_PER_FILE = 8
         # Lines of method body sent to LLM for drift comparison.
-        BODY_SNIPPET       = 20
+        BODY_SNIPPET = 20
 
         def initialize(agent: nil)
           super()
-          @agent       = agent
-          @id          = "comment_drift"
+          @agent = agent
+          @id = "comment_drift"
           @description = "Comment claim doesn't match method body — comment is lying"
-          @severity    = :warning
-          @rule_tags  = %i[SELF_EXPLAINING EXPLICIT]
+          @severity = :warning
+          @rule_tags = %i[SELF_EXPLAINING EXPLICIT]
         end
 
         def self.auto_build? = false

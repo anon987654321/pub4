@@ -22,22 +22,22 @@ module Master
       ROOT_DATA_PATH = File.join(File.expand_path("../../..", __dir__), "data", "council.yml").freeze
 
       DEFAULTS = [
-        Persona.new(name: "Architect",  role: "System design",    bias: "Structure",
+        Persona.new(name: "Architect", role: "System design", bias: "Structure",
                     prompt: "Review for architectural soundness, coupling, and interface design.",
                     **PERSONA_DEFAULTS),
-        Persona.new(name: "Skeptic",    role: "Devil's advocate", bias: "Caution",
+        Persona.new(name: "Skeptic", role: "Devil's advocate", bias: "Caution",
                     prompt: "Find what could go wrong. Challenge every assumption.",
                     **PERSONA_DEFAULTS),
-        Persona.new(name: "Pragmatist", role: "Implementation",   bias: "Shipping",
+        Persona.new(name: "Pragmatist", role: "Implementation", bias: "Shipping",
                     prompt: "Is this shippable? Flag over-engineering.",
                     **PERSONA_DEFAULTS),
-        Persona.new(name: "Security",   role: "Security review",  bias: "Safety",
+        Persona.new(name: "Security", role: "Security review", bias: "Safety",
                     prompt: "Find injection vectors, auth bypasses, path traversals. Prefix VETO: if must not ship.",
                     **PERSONA_DEFAULTS.merge(veto_role: true)),
-        Persona.new(name: "User",       role: "UX advocate",      bias: "Usability",
+        Persona.new(name: "User", role: "UX advocate", bias: "Usability",
                     prompt: "Does this serve the user? Are error messages actionable?",
                     **PERSONA_DEFAULTS),
-        Persona.new(name: "Mentor",     role: "Code review",      bias: "Clarity",
+        Persona.new(name: "Mentor", role: "Code review", bias: "Clarity",
                     prompt: "Is this code readable? Do names reveal intent?",
                     **PERSONA_DEFAULTS)
       ].freeze
