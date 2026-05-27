@@ -9,8 +9,8 @@ module Master
     # in-process Master::Ground::Memory store so semantic recall sees it now.
     # Types: user, feedback, project, reference, general.
     class MemoryRecord
-      TIER        = :open
-      NAME        = "memory_record".freeze
+      TIER = :open
+      NAME = "memory_record".freeze
       DESCRIPTION = "Write a durable markdown memory record. " \
                     "Use for user facts, feedback, project context, or external references.".freeze
 

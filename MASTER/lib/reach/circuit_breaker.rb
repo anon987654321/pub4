@@ -8,9 +8,9 @@ module Master
     include MonitorMixin
 
     FAILURE_THRESHOLD = 8
-    COOLDOWN_S        = 30
-    RATE_WINDOW_S     = 60
-    RATE_MAX          = 60
+    COOLDOWN_S = 30
+    RATE_WINDOW_S = 60
+    RATE_MAX = 60
 
     class CircuitError < StandardError
       attr_reader :category
@@ -19,15 +19,15 @@ module Master
 
     def initialize(budget_max:, req_max:, event_bus: nil, rate_window_s: RATE_WINDOW_S, rate_max: nil)
       super()
-      @budget_max    = budget_max
-      @bus           = event_bus
-      @failures      = 0
-      @opened_at     = nil
-      @state         = :closed
+      @budget_max = budget_max
+      @bus = event_bus
+      @failures = 0
+      @opened_at = nil
+      @state = :closed
       @session_total = 0.0
-      @req_times     = []
-      @rate_window   = rate_window_s
-      @rate_max      = normalize_rate_max(rate_max || req_max)
+      @req_times = []
+      @rate_window = rate_window_s
+      @rate_max = normalize_rate_max(rate_max || req_max)
     end
 
     def check_rate!
@@ -114,7 +114,7 @@ module Master
       synchronize do
         @failures += 1
         return unless @failures >= FAILURE_THRESHOLD
-        @state     = :open
+        @state = :open
         @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @bus&.publish("circuit:open", failures: @failures)
       end

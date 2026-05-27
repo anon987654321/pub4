@@ -14,9 +14,9 @@ module Master
         DEFAULT_LIMIT = 2000
 
         description "Read a file with line numbers. Path is relative to project root."
-        param :path,   desc: "File path relative to project root", required: true
+        param :path, desc: "File path relative to project root", required: true
         param :offset, desc: "First line to read (0-indexed)", type: "integer", required: false
-        param :limit,  desc: "Maximum number of lines to return", type: "integer", required: false
+        param :limit, desc: "Maximum number of lines to return", type: "integer", required: false
 
         def initialize(tool) = @tool = tool
 
@@ -28,7 +28,7 @@ module Master
 
       class WriteFile < RubyLLM::Tool
         description "Write content to a file, creating it if needed. Snapshots for undo."
-        param :path,    desc: "File path relative to project root", required: true
+        param :path, desc: "File path relative to project root", required: true
         param :content, desc: "Full content to write", required: true
 
         def initialize(tool) = @tool = tool
@@ -41,9 +41,9 @@ module Master
 
       class StrReplace < RubyLLM::Tool
         description "Replace an exact unique string in a file with new content."
-        param :path,        desc: "File path relative to project root", required: true
-        param :old_string,  desc: "Exact string to find (must be unique in file)", required: true
-        param :new_string,  desc: "Replacement string", required: true
+        param :path, desc: "File path relative to project root", required: true
+        param :old_string, desc: "Exact string to find (must be unique in file)", required: true
+        param :new_string, desc: "Replacement string", required: true
 
         def initialize(tool) = @tool = tool
 
@@ -55,7 +55,7 @@ module Master
 
       class ListDir < RubyLLM::Tool
         description "List directory contents as a tree. Path is relative to project root."
-        param :path,  desc: "Directory path (default: project root)", required: false
+        param :path, desc: "Directory path (default: project root)", required: false
         param :depth, desc: "Tree depth (1-5)", type: "integer", required: false
 
         def initialize(tool) = @tool = tool
@@ -69,7 +69,7 @@ module Master
       class SearchFiles < RubyLLM::Tool
         description "Search files in the project for a regex pattern. Returns matching lines with context."
         param :pattern, desc: "Ruby regex pattern to search for", required: true
-        param :path,    desc: "Directory to search in (default: project root)", required: false
+        param :path, desc: "Directory to search in (default: project root)", required: false
         param :context, desc: "Lines of context to show around each match", type: "integer", required: false
 
         def initialize(tool) = @tool = tool
@@ -108,7 +108,7 @@ module Master
 
       class AskLlm < RubyLLM::Tool
         description "Ask a sub-question to a fresh LLM context. Useful for isolated reasoning."
-        param :prompt,  desc: "The question or prompt to ask", required: true
+        param :prompt, desc: "The question or prompt to ask", required: true
         param :context, desc: "Optional background context", required: false
 
         def initialize(tool) = @tool = tool
@@ -122,8 +122,8 @@ module Master
       class GitContext < RubyLLM::Tool
         description "Query git log, blame, diff, status, or show for the project."
         param :operation, desc: "One of: log, blame, diff, status, show", required: true
-        param :path,      desc: "File path (required for blame; optional for log/diff/show)", required: false
-        param :limit,     desc: "Max commits for log", type: "integer", required: false
+        param :path, desc: "File path (required for blame; optional for log/diff/show)", required: false
+        param :limit, desc: "Max commits for log", type: "integer", required: false
 
         def initialize(tool) = @tool = tool
 
@@ -136,12 +136,12 @@ module Master
       class AstEdit < RubyLLM::Tool
         description "AST-aware Ruby code editing: find, rename, or insert methods safely."
         param :operation, desc: "One of: find_method, rename_method, add_after, method_lines", required: true
-        param :path,      desc: "File path relative to project root", required: true
-        param :name,      desc: "Method name (for find_method, method_lines)", required: false
-        param :from,      desc: "Original method name (for rename_method)", required: false
-        param :to,        desc: "New method name (for rename_method)", required: false
-        param :after,     desc: "Insert after this method name (for add_after)", required: false
-        param :code,      desc: "Ruby code to insert (for add_after)", required: false
+        param :path, desc: "File path relative to project root", required: true
+        param :name, desc: "Method name (for find_method, method_lines)", required: false
+        param :from, desc: "Original method name (for rename_method)", required: false
+        param :to, desc: "New method name (for rename_method)", required: false
+        param :after, desc: "Insert after this method name (for add_after)", required: false
+        param :code, desc: "Ruby code to insert (for add_after)", required: false
 
         def initialize(tool) = @tool = tool
 
@@ -169,11 +169,10 @@ module Master
 
       class FeedbackRecord < RubyLLM::Tool
         description "Record RSI feedback: tool_success, tool_failure, user_correction, provider_error, user_feedback."
-        param :event_type, desc: "One of: tool_success tool_failure user_correction provider_error user_feedback",
-required: true
-        param :dimension,  desc: "Tool name, provider name, or pattern label", required: true
-        param :value,      desc: "Numeric value (1.0=success 0.0=failure or duration)", type: "number", required: false
-        param :metadata,   desc: "Additional context string", required: false
+        param :event_type, desc: "One of: tool_success tool_failure user_correction provider_error user_feedback", required: true
+        param :dimension, desc: "Tool name, provider name, or pattern label", required: true
+        param :value, desc: "Numeric value (1.0=success 0.0=failure or duration)", type: "number", required: false
+        param :metadata, desc: "Additional context string", required: false
 
         def initialize(tool) = @tool = tool
 
@@ -185,10 +184,10 @@ required: true
 
       class MemoryRecord < RubyLLM::Tool
         description "Write a durable markdown memory record (user facts, feedback, project context, or external references)."
-        param :key,         desc: "Snake-case identifier, e.g. user_role or feedback_no_python", required: true
+        param :key, desc: "Snake-case identifier, e.g. user_role or feedback_no_python", required: true
         param :description, desc: "One-line hook surfaced in the memory index", required: true
-        param :body,        desc: "Full memory body (markdown)", required: true
-        param :type,        desc: "One of: user, feedback, project, reference, general", required: false
+        param :body, desc: "Full memory body (markdown)", required: true
+        param :type, desc: "One of: user, feedback, project, reference, general", required: false
 
         def initialize(tool) = @tool = tool
 
@@ -202,9 +201,9 @@ required: true
         description "Apply cinematic post-processing (film stocks, presets, recipes) to images " \
           "via ruby-vips. Writes processed copies next to originals."
         param :target_dir, desc: "Directory containing source images (relative to project root)", required: true
-        param :preset,     desc: "One of: portrait, landscape, street, blockbuster", required: false
+        param :preset, desc: "One of: portrait, landscape, street, blockbuster", required: false
         param :variations, desc: "1-5 output variations per file", type: "integer", required: false
-        param :recipe,     desc: "JSON recipe filename (overrides preset)", required: false
+        param :recipe, desc: "JSON recipe filename (overrides preset)", required: false
 
         def initialize(tool) = @tool = tool
 
@@ -219,8 +218,8 @@ required: true
         description "Discover, search, and run Replicate.com models. Actions: sync, search, stats. " \
           "Requires REPLICATE_API_TOKEN for sync."
         param :action, desc: "One of: sync, search, stats", required: true
-        param :query,  desc: "Search query (required for action=search)", required: false
-        param :limit,  desc: "Sync limit (1-1000, default 100)", type: "integer", required: false
+        param :query, desc: "Search query (required for action=search)", required: false
+        param :limit, desc: "Sync limit (1-1000, default 100)", type: "integer", required: false
 
         def initialize(tool) = @tool = tool
 

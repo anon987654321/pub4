@@ -11,12 +11,12 @@ module Master
     Worker = Struct.new(:type, :thread, :started_at, :tag, keyword_init: true)
 
     def initialize(governor:, event_bus: nil, taxonomy_path: File.join(Master::ROOT, "data", "agent_taxonomy.yml"))
-      @governor   = governor
-      @bus        = event_bus
-      @taxonomy   = Master.load_yaml(taxonomy_path) || {}
-      @max        = @taxonomy.dig("spawn_policy", "max_concurrent_children") || MAX_CONCURRENT
-      @workers    = []
-      @mutex      = Mutex.new
+      @governor = governor
+      @bus = event_bus
+      @taxonomy = Master.load_yaml(taxonomy_path) || {}
+      @max = @taxonomy.dig("spawn_policy", "max_concurrent_children") || MAX_CONCURRENT
+      @workers = []
+      @mutex = Mutex.new
     end
 
     def spawn(type:, tag: nil, &block)

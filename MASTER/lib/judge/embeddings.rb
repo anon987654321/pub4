@@ -10,8 +10,8 @@ module Master
     module_function
 
     DEFAULT_MODEL = "nomic-embed-text"
-    HTTP_TIMEOUT  = 5
-    MIN_SIM       = 0.30
+    HTTP_TIMEOUT = 5
+    MIN_SIM = 0.30
 
     @ollama_alive = nil
 
@@ -36,7 +36,8 @@ module Master
       http.read_timeout = HTTP_TIMEOUT
       res = http.get(uri.request_uri)
       @ollama_alive = res.is_a?(Net::HTTPSuccess)
-    rescue StandardError
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "Embeddings.ollama_alive?")
       @ollama_alive = false
     end
 
@@ -63,7 +64,12 @@ module Master
       req.body = JSON.generate(model: ENV.fetch("EMBEDDINGS_MODEL", DEFAULT_MODEL), prompt: text)
       res = http.request(req)
       return unless res.is_a?(Net::HTTPSuccess)
-      parsed = JSON.parse(res.body) rescue nil
+      parsed = begin
+        JSON.parse(res.body)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Embeddings.ollama_embed")
+        nil
+      end
       vec = parsed&.fetch("embedding", nil)
       vec.is_a?(Array) ? vec : nil
     end

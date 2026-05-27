@@ -12,10 +12,10 @@ module Master
     #   2. Interactive detection: block commands that need a TTY
     #   3. Recent failure window: warn after 3 failures in last 5 commands
     class Shell
-      TIER        = :dangerous
-      NAME        = "zsh".freeze
+      TIER = :dangerous
+      NAME = "zsh".freeze
       DESCRIPTION = "Execute a zsh command in the project root.".freeze
-      TIMEOUT     = 30
+      TIMEOUT = 30
       FAILURE_WINDOW = 5
       FAILURE_WARN_AT = 3
 
@@ -46,7 +46,7 @@ module Master
       def call(command:)
         return Result.err("blocked command: #{command}", category: :validation) if blocked?(command)
         return Result.err("interactive command blocked — no TTY available: #{command}",
-category: :validation) if interactive?(command)
+                          category: :validation) if interactive?(command)
 
         warn_if_failing_often
 

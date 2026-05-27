@@ -6,15 +6,15 @@ require "json"
 module Master
   module Reach
     class WebSearch
-      TIER               = :guarded
-      MAX_QUERY_CHARS    = 300
+      TIER = :guarded
+      MAX_QUERY_CHARS = 300
       MAX_SEARCH_RESULTS = 5
-      HTTP_OK            = "200".freeze
+      HTTP_OK = "200".freeze
 
-      NAME        = "web_search".freeze
+      NAME = "web_search".freeze
       DESCRIPTION = "Search DuckDuckGo instant answers API.".freeze
-      ENDPOINT    = "https://api.duckduckgo.com/".freeze
-      TIMEOUT     = 10
+      ENDPOINT = "https://api.duckduckgo.com/".freeze
+      TIMEOUT = 10
 
       def initialize(governor:, event_bus: nil)
         @governor = governor

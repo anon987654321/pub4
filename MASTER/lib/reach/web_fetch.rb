@@ -12,15 +12,15 @@ module Master
     #   codepen.io/<u>/pen/<slug>   → triple-fetch .html + .css + .js
     # Pairs with web_search for two-step research. Governor-permitted.
     class WebFetch
-      TIER         = :guarded
-      NAME         = "web_fetch".freeze
-      DESCRIPTION  = "Fetch a URL → plain text. Rewrites github/gist/arxiv/codepen URLs.".freeze
-      TIMEOUT      = 15
-      MAX_BYTES    = 16_000
-      HTTP_OK      = "200".freeze
-      TAG_RE       = /<[^>]+>/.freeze
-      WS_RE        = /[ \t]+/.freeze
-      BLANK_RE     = /\n{3,}/.freeze
+      TIER = :guarded
+      NAME = "web_fetch".freeze
+      DESCRIPTION = "Fetch a URL → plain text. Rewrites github/gist/arxiv/codepen URLs.".freeze
+      TIMEOUT = 15
+      MAX_BYTES = 16_000
+      HTTP_OK = "200".freeze
+      TAG_RE = /<[^>]+>/.freeze
+      WS_RE = /[ \t]+/.freeze
+      BLANK_RE = /\n{3,}/.freeze
 
       REWRITES = [
         [%r{\Ahttps://github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.+)\z},
