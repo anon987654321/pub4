@@ -270,23 +270,11 @@ module Master
           return Master::Result.err(quorum_msg, category: :timeout)
         end
 
-        vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
-        unless vetoes.empty?
-          veto = vetoes.first
-          @bus&.publish(:council_veto, veto)
-          return Master::Result.err("council: veto from #{veto[:persona]}\n#{veto[:feedback]}", category: :validation)
-        end
+        veto_result = enforce_veto(feedback)
+        return veto_result if veto_result
 
-        synthesis = @judge_enabled ? judge(feedback, code, context) : nil
-        if synthesis
-          @bus&.publish(:council_synthesis, synthesis: synthesis)
-          feedback << { persona: "Judge", role: "Synthesis", veto_role: false,
-                        axiom: nil, feedback: synthesis }
-        end
-
-        scores = feedback.filter_map { |f| f[:confidence] }
-        council_confidence = scores.empty? ? 0.5 : scores.sum / scores.size
-        @bus&.publish(:council_confidence, score: council_confidence.round(3), members: feedback.size)
+        append_judge_synthesis(feedback, code, context)
+        publish_confidence(feedback)
         Master::Result.ok(feedback)
       rescue StandardError => e
         Master::Result.err("council: #{e.message}", category: :unknown)
@@ -330,6 +318,31 @@ module Master
           acc << entry if entry
         end
         acc
+      end
+
+      # Returns a Result::Err if any veto-eligible persona issued a VETO, else nil.
+      def enforce_veto(feedback)
+        vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
+        return nil if vetoes.empty?
+        veto = vetoes.first
+        @bus&.publish(:council_veto, veto)
+        Master::Result.err("council: veto from #{veto[:persona]}\n#{veto[:feedback]}", category: :validation)
+      end
+
+      # Append judge synthesis entry to feedback when judge is enabled.
+      def append_judge_synthesis(feedback, code, context)
+        synthesis = @judge_enabled ? judge(feedback, code, context) : nil
+        return unless synthesis
+        @bus&.publish(:council_synthesis, synthesis: synthesis)
+        feedback << { persona: "Judge", role: "Synthesis", veto_role: false,
+                      axiom: nil, feedback: synthesis }
+      end
+
+      # Compute mean confidence and publish the council_confidence event.
+      def publish_confidence(feedback)
+        scores = feedback.filter_map { |f| f[:confidence] }
+        council_confidence = scores.empty? ? 0.5 : scores.sum / scores.size
+        @bus&.publish(:council_confidence, score: council_confidence.round(3), members: feedback.size)
       end
 
       def circuit_open?
