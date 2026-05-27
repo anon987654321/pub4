@@ -7,9 +7,9 @@ module Master
     class Review
       def initialize(council:, scanner:, config:, root: nil, event_bus: nil, **_)
         @council = council
-        @lint    = Lint.new(scanner:, config:, root:, event_bus:)
-        @prune   = Prune.new
-        @bus     = event_bus
+        @lint = Lint.new(scanner:, config:, root:, event_bus:)
+        @prune = Prune.new
+        @bus = event_bus
       end
 
       def call(ctx)

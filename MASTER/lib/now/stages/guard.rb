@@ -7,7 +7,7 @@ module Master
     # Skips scan when message is absent (command-only paths set no :message).
     class Guard
       def initialize(governor:, injection_guard:)
-        @governor        = governor
+        @governor = governor
         @injection_guard = injection_guard
       end
 

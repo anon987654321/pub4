@@ -5,18 +5,18 @@ module Master
   module Stages
     # Deliberate — enumerate N approaches before acting; prevents first-solution fixation.
     class Deliberate
-      MIN_OPTIONS   = 4
-      CODING_TYPES  = %i[coding refactor architecture infrastructure].freeze
+      MIN_OPTIONS = 4
+      CODING_TYPES = %i[coding refactor architecture infrastructure].freeze
 
       def initialize(agent:, config:)
-        @agent  = agent
+        @agent = agent
         @config = config
       end
 
       def call(ctx)
         return Result.ok(ctx) unless applicable?(ctx)
 
-        msg    = ctx[:message].to_s
+        msg = ctx[:message].to_s
         Result.ok(ctx.merge(message: wrap(msg)))
       end
 
