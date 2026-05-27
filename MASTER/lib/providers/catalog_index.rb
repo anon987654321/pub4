@@ -38,7 +38,9 @@ module Providers
     def refresh(source_name, token: nil, url: nil)
       source = SOURCES.fetch(source_name)
       source_url = url || source.fetch(:url)
-      raise "missing URL for #{source_name}; set REPLICATE_MODELS_INDEX_URL or pass --url" if source_url.nil? || source_url.empty?
+      if source_url.nil? || source_url.empty?
+        raise "missing URL for #{source_name}; set REPLICATE_MODELS_INDEX_URL or pass --url"
+      end
 
       payload = fetch_json(source_url, token: token)
       upsert_snapshot(source_name, source.fetch(:kind), source_url, payload)
@@ -67,7 +69,11 @@ module Providers
         clauses << "(id LIKE ? OR name LIKE ? OR description LIKE ? OR tags LIKE ?)"
         4.times { params << "%#{query}%" }
       end
-      sql = "SELECT source, id, name, description, context_length, input_modalities, output_modalities, price_prompt, price_completion, tags, updated_at FROM provider_models"
+      sql = <<~SQL.chomp
+        SELECT source, id, name, description, context_length, input_modalities,
+               output_modalities, price_prompt, price_completion, tags, updated_at
+        FROM provider_models
+      SQL
       sql += " WHERE #{clauses.join(" AND ")}" unless clauses.empty?
       sql += " ORDER BY source, id LIMIT ?"
       params << limit
@@ -119,26 +125,39 @@ module Providers
       request["Authorization"] = "Bearer #{token}" if token && !token.empty?
       request["Accept"] = "application/json"
       request["User-Agent"] = "MASTER provider catalog index"
-      response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") { |http| http.request(request) }
+      response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+        http.request(request)
+      end
       raise "#{url} returned #{response.code}: #{response.body[0, 200]}" unless response.is_a?(Net::HTTPSuccess)
       JSON.parse(response.body)
     end
 
     def upsert_snapshot(source, kind, url, payload)
-      db.execute(
-        "INSERT INTO provider_snapshots(source, kind, url, fetched_at, raw_json) VALUES(?, ?, ?, ?, ?) ON CONFLICT(source) DO UPDATE SET kind=excluded.kind, url=excluded.url, fetched_at=excluded.fetched_at, raw_json=excluded.raw_json",
-        [source, kind, url, Time.now.utc.iso8601, JSON.generate(payload)]
-      )
+      db.execute(<<~SQL, [source, kind, url, Time.now.utc.iso8601, JSON.generate(payload)])
+        INSERT INTO provider_snapshots(source, kind, url, fetched_at, raw_json)
+        VALUES(?, ?, ?, ?, ?)
+        ON CONFLICT(source) DO UPDATE SET
+          kind=excluded.kind, url=excluded.url,
+          fetched_at=excluded.fetched_at, raw_json=excluded.raw_json
+      SQL
     end
 
     def replace_models(source, rows)
       db.transaction do
         db.execute("DELETE FROM provider_models WHERE source = ?", [source])
         rows.each do |row|
-          db.execute(
-            "INSERT INTO provider_models(source, id, name, description, context_length, input_modalities, output_modalities, price_prompt, price_completion, tags, raw_json, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [source, row.fetch(:id), row[:name], row[:description], row[:context_length], row[:input_modalities], row[:output_modalities], row[:price_prompt], row[:price_completion], row[:tags], JSON.generate(row[:raw]), Time.now.utc.iso8601]
-          )
+          db.execute(<<~SQL, [
+            INSERT INTO provider_models(
+              source, id, name, description, context_length,
+              input_modalities, output_modalities,
+              price_prompt, price_completion, tags, raw_json, updated_at
+            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          SQL
+            source, row.fetch(:id), row[:name], row[:description],
+            row[:context_length], row[:input_modalities], row[:output_modalities],
+            row[:price_prompt], row[:price_completion], row[:tags],
+            JSON.generate(row[:raw]), Time.now.utc.iso8601
+          ])
         end
       end
     end

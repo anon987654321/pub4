@@ -18,23 +18,23 @@ module Master
     }.freeze
 
     PRINCIPLES = [
-      [:dry, :three_duplications, :abstract, :high],
-      [:kiss, :complexity_over_10, :simplify, :high],
-      [:yagni, :unused, :remove, :medium],
-      [:solid, :coupling_over_5, :decouple, :critical],
-      [:composition, :deep_inheritance, :compose, :medium],
-      [:evidence, :assumption, :validate, :critical],
-      [:reversible, :irreversible, :add_rollback, :critical],
-      [:explicit, :implicit, :make_explicit, :high],
-      [:orthogonal, :coupled, :split, :high],
-      [:minimalism, :bloat, :subtract, :medium],
-      [:clarity, :synonym, :unify, :medium],
-      [:flatten, :wrapper, :flatten, :high],
-      [:pola, :surprise, :make_predictable, :high],
-      [:unix, :multi_responsibility, :one_thing, :high],
-      [:anti_divitis, :div_soup, :semantic_html, :medium],
-      [:anti_sectionitis, :scattered_sections, :consolidate, :high],
-      [:geometric, :visual_confusion, :simplify_geometry, :medium]
+      %i[dry three_duplications abstract high],
+      %i[kiss complexity_over_10 simplify high],
+      %i[yagni unused remove medium],
+      %i[solid coupling_over_5 decouple critical],
+      %i[composition deep_inheritance compose medium],
+      %i[evidence assumption validate critical],
+      %i[reversible irreversible add_rollback critical],
+      %i[explicit implicit make_explicit high],
+      %i[orthogonal coupled split high],
+      %i[minimalism bloat subtract medium],
+      %i[clarity synonym unify medium],
+      %i[flatten wrapper flatten high],
+      %i[pola surprise make_predictable high],
+      %i[unix multi_responsibility one_thing high],
+      %i[anti_divitis div_soup semantic_html medium],
+      %i[anti_sectionitis scattered_sections consolidate high],
+      %i[geometric visual_confusion simplify_geometry medium]
     ].freeze
 
     PHASES = [

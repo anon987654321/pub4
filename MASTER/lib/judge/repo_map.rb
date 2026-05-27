@@ -13,21 +13,21 @@ module Master
   #   prompt_context << map.render(focus: [current_file])
   class RepoMap
     DEFAULT_TOKEN_BUDGET = 4096
-    CHARS_PER_TOKEN      = 4
-    DAMPING              = 0.85
-    ITERATIONS           = 30
-    MAX_DEFS_PER_FILE    = 20
+    CHARS_PER_TOKEN = 4
+    DAMPING = 0.85
+    ITERATIONS = 30
+    MAX_DEFS_PER_FILE = 20
 
     def initialize(code_index:, root:, token_budget: DEFAULT_TOKEN_BUDGET)
-      @index  = code_index
-      @root   = File.expand_path(root)
+      @index = code_index
+      @root = File.expand_path(root)
       @budget = token_budget
     end
 
     def render(focus: [])
       @index.wait_for_build unless @index.ready?
-      g       = build_graph
-      ranks   = pagerank(g, normalize(focus))
+      g = build_graph
+      ranks = pagerank(g, normalize(focus))
       ordered = ranks.sort_by { |_, r| -r }.map(&:first)
       pack(ordered)
     end
@@ -41,7 +41,7 @@ module Master
     def build_graph
       symbols = @index.symbols
       owners = symbols.each_value.to_h { |s| [s.fqn, s.file] }
-      edges  = Hash.new { |h, k| h[k] = Set.new }
+      edges = Hash.new { |h, k| h[k] = Set.new }
       @index.references.each do |ref|
         target = owners[ref.to_fqn]
         edges[ref.from_file] << target if target && target != ref.from_file
@@ -64,7 +64,7 @@ module Master
 
     def step(g:, nodes:, rank:, focus:)
       tele = teleport(nodes, focus)
-      out  = nodes.to_h { |n| [n, tele[n]] }
+      out = nodes.to_h { |n| [n, tele[n]] }
       nodes.each do |from|
         successors = g[from]
         next if successors.empty?
@@ -86,7 +86,7 @@ module Master
 
     def pack(ordered)
       sections = ["# Repo map", ""]
-      tokens   = estimate(sections.join("\n"))
+      tokens = estimate(sections.join("\n"))
       ordered.each do |path|
         block = format_file(path)
         next if block.empty?
@@ -101,7 +101,7 @@ module Master
     def format_file(path)
       symbols = @index.symbols_in(path)
       return [] if symbols.empty?
-      rel  = path.sub("#{@root}/", "")
+      rel = path.sub("#{@root}/", "")
       defs = symbols.first(MAX_DEFS_PER_FILE).map { |s| "  #{s.type}: #{s.fqn} (line #{s.line})" }
       ["## #{rel}", *defs, ""]
     end

@@ -139,13 +139,13 @@ module Master
 
     def dead_file_candidates(records)
       records = records.compact
-      corpus  = records.map { |record| [record[:path], record[:tokens].join(" ")] }.to_h
+      corpus = records.map { |record| [record[:path], record[:tokens].join(" ")] }.to_h
       records.filter_map { |r| dead_candidate(r, corpus) }.first(MAX_DEAD_CANDIDATES)
     end
 
     def dead_candidate(record, corpus)
       return nil if protected_path?(record[:path])
-      stem    = File.basename(record[:basename], record[:ext]).downcase
+      stem = File.basename(record[:basename], record[:ext]).downcase
       inbound = corpus.count { |path, text| path != record[:path] && text.include?(stem) }
       record[:inbound_refs] = inbound
       return nil unless inbound.zero?

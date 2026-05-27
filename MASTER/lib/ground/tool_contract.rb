@@ -9,15 +9,19 @@ module Master
   # retry policy, timeout, and side-effect classification. The validator
   # enforces these at the call site before any tool runs.
   module ToolContract
+    # name: Symbol tool id; inputs: { key => :required | :optional }
+    # output_shape: expected output keys (or :any); permission: :read | :write | :exec | :network
+    # timeout_s: hard timeout (Integer); side_effects: :filesystem | :network | :git | :process | :none
+    # category: :reach | :judge | :trace | :ground
     Contract = Data.define(
-      :name,          # Symbol — tool identifier
-      :inputs,        # Hash { key => :required | :optional }
-      :output_shape,  # Array of expected output keys (or :any)
-      :permission,    # :read | :write | :exec | :network
-      :timeout_s,     # Integer — hard timeout
-      :max_retries,   # Integer
-      :side_effects,  # Array of Symbols — :filesystem | :network | :git | :process | :none
-      :category       # :reach | :judge | :trace | :ground
+      :name,
+      :inputs,
+      :output_shape,
+      :permission,
+      :timeout_s,
+      :max_retries,
+      :side_effects,
+      :category
     )
 
     REGISTRY = {
@@ -38,17 +42,17 @@ module Master
       ),
       shell_exec: Contract.new(
         name: :shell_exec, inputs: { command: :required, cwd: :optional },
-        output_shape: [:stdout, :stderr, :exit_code], permission: :exec, timeout_s: 60,
-        max_retries: 0, side_effects: [:process, :filesystem], category: :reach
+        output_shape: %i[stdout stderr exit_code], permission: :exec, timeout_s: 60,
+        max_retries: 0, side_effects: %i[process filesystem], category: :reach
       ),
       git_op: Contract.new(
         name: :git_op, inputs: { op: :required, args: :optional },
         output_shape: [:output], permission: :exec, timeout_s: 30, max_retries: 1,
-        side_effects: [:git, :filesystem], category: :reach
+        side_effects: %i[git filesystem], category: :reach
       ),
       llm_call: Contract.new(
         name: :llm_call, inputs: { prompt: :required, model: :optional, system: :optional },
-        output_shape: [:text, :tokens], permission: :network, timeout_s: 120, max_retries: 2,
+        output_shape: %i[text tokens], permission: :network, timeout_s: 120, max_retries: 2,
         side_effects: [:network], category: :ground
       ),
       scan: Contract.new(
@@ -58,13 +62,13 @@ module Master
       ),
       postpro: Contract.new(
         name: :postpro, inputs: { args: :optional },
-        output_shape: [:stdout, :stderr, :exit_code], permission: :exec, timeout_s: 600,
-        max_retries: 0, side_effects: [:process, :filesystem], category: :reach
+        output_shape: %i[stdout stderr exit_code], permission: :exec, timeout_s: 600,
+        max_retries: 0, side_effects: %i[process filesystem], category: :reach
       ),
       repligen: Contract.new(
         name: :repligen, inputs: { args: :optional },
-        output_shape: [:stdout, :stderr, :exit_code], permission: :network, timeout_s: 900,
-        max_retries: 0, side_effects: [:network, :process, :filesystem], category: :reach
+        output_shape: %i[stdout stderr exit_code], permission: :network, timeout_s: 900,
+        max_retries: 0, side_effects: %i[network process filesystem], category: :reach
       )
     }.freeze
 

@@ -24,12 +24,12 @@ module Master
     ].freeze
 
     def initialize(pipeline: nil, event_bus: nil, container: {})
-      @pipeline  = pipeline
-      @bus       = event_bus
+      @pipeline = pipeline
+      @bus = event_bus
       @container = container
-      @orders    = load_orders
-      @mutex     = Mutex.new
-      @running   = Set.new
+      @orders = load_orders
+      @mutex = Mutex.new
+      @running = Set.new
       subscribe_events!
     end
 
@@ -112,10 +112,10 @@ module Master
     end
 
     def format_order(o)
-      st   = state_of(o)
+      st = state_of(o)
       flag = o["enabled"] ? "on" : "off"
       last = o["last_run_at"].to_i > 0 ? Time.at(o["last_run_at"].to_i).strftime("%Y-%m-%d") : "never"
-      err  = o["last_error"] ? "  !! #{o["last_error"][0, 60]}" : ""
+      err = o["last_error"] ? "  !! #{o["last_error"][0, 60]}" : ""
       "#{o['name']} [#{flag}|#{st}] - #{o['description']} (last: #{last})#{err}"
     end
 

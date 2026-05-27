@@ -36,14 +36,14 @@ module Master
         freeze
       end
 
-      def ok?              = true
-      def err?             = false
-      def value!           = @value
-      def unwrap           = @value
-      def value_or(_)      = @value
+      def ok? = true
+      def err? = false
+      def value! = @value
+      def unwrap = @value
+      def value_or(_) = @value
 
-      def map(&blk)        = Result.ok(blk.call(@value))
-      def flat_map(&blk)   = blk.call(@value)
+      def map(&blk) = Result.ok(blk.call(@value))
+      def flat_map(&blk) = blk.call(@value)
 
       def and_then(label = nil, &blk)
         result = blk.call(@value)
@@ -53,8 +53,8 @@ module Master
       end
 
       def deconstruct_keys(_keys) = { value: @value }
-      def to_s                    = @value.to_s
-      def inspect                 = "Ok(#{@value.inspect})"
+      def to_s = @value.to_s
+      def inspect = "Ok(#{@value.inspect})"
     end
 
     class Err < Result
@@ -67,27 +67,27 @@ module Master
         raise ArgumentError, "message cannot be nil" if message.nil?
         raise ArgumentError, "category must be a symbol" unless category.is_a?(Symbol)
 
-        @message  = message
+        @message = message
         @category = category
         freeze
       end
 
-      def ok?                   = false
-      def err?                  = true
-      def value!                = raise(Master::UnwrapError, "Err#value! called: #{@message}")
-      def unwrap                = value!
-      def value_or(default)     = default
+      def ok? = false
+      def err? = true
+      def value! = raise(Master::UnwrapError, "Err#value! called: #{@message}")
+      def unwrap = value!
+      def value_or(default) = default
 
-      def map(&)                = self
-      def flat_map(&)           = self
-      def and_then(*)           = self
+      def map(&) = self
+      def flat_map(&) = self
+      def and_then(*) = self
 
-      def retriable?            = RETRIABLE.include?(@category)
-      def permanent?            = PERMANENT.include?(@category)
+      def retriable? = RETRIABLE.include?(@category)
+      def permanent? = PERMANENT.include?(@category)
 
       def deconstruct_keys(_keys) = { message: @message, category: @category }
-      def to_s                    = @message
-      def inspect                 = "Err(#{@category}: #{@message})"
+      def to_s = @message
+      def inspect = "Err(#{@category}: #{@message})"
     end
   end
 end
