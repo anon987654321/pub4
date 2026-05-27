@@ -35,13 +35,13 @@ module Master
         paths.each do |path|
           next if skip_file?(path)
           lines = File.readlines(path, encoding: "UTF-8", invalid: :replace)
-          lines.each_with_index do |line, idx|
+          lines.each_with_index do |line, line_index|
             next unless line.match?(re)
-            start = [idx - 2, 0].max
-            finish = [idx + 2, lines.size - 1].min
-            ctx = lines[start..finish].map.with_index(start + 1) { |l, n| "#{n}: #{l}" }.join
+            start = [line_index - 2, 0].max
+            finish = [line_index + 2, lines.size - 1].min
+            context_snippet = lines[start..finish].map.with_index(start + 1) { |l, n| "#{n}: #{l}" }.join
             rel = path.delete_prefix(@knowledge_root + "/")
-            results << "### #{rel}:#{idx + 1}\n#{ctx}"
+            results << "### #{rel}:#{line_index + 1}\n#{context_snippet}"
             break if results.size >= MAX_RESULTS
           end
           break if results.size >= MAX_RESULTS

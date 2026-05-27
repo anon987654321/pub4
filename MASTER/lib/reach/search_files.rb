@@ -34,13 +34,13 @@ module Master
           next if binary_file?(path)
 
           lines = File.readlines(path)
-          lines.each_with_index do |line, idx|
+          lines.each_with_index do |line, line_index|
             next unless line.match?(re)
-            start  = [idx - context_lines, 0].max
-            finish = [idx + context_lines, lines.size - 1].min
-            ctx    = lines[start..finish].each_with_index.map { |l, i| "#{start + i + 1}:#{l}" }.join
+            start  = [line_index - context_lines, 0].max
+            finish = [line_index + context_lines, lines.size - 1].min
+            context_snippet = lines[start..finish].each_with_index.map { |l, i| "#{start + i + 1}:#{l}" }.join
             rel    = path.delete_prefix(@root + "/")
-            results << "#{rel}:#{idx + 1}\n#{ctx}"
+            results << "#{rel}:#{line_index + 1}\n#{context_snippet}"
             if results.size >= MAX_RESULTS
               out = Result.ok(results.join("\n---\n") + "\n[...truncated]")
               @cache[key] = out

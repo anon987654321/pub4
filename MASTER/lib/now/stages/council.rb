@@ -57,11 +57,11 @@ module Master
 
       def load_patterns
         data = Master.load_yaml(Master::COUNCIL_PATH)
-        (data["auto_trigger_patterns"] || []).filter_map do |str|
-          Regexp.new(str, Regexp::IGNORECASE)
+        (data["auto_trigger_patterns"] || []).filter_map do |pattern_source|
+          Regexp.new(pattern_source, Regexp::IGNORECASE)
         rescue RegexpError => e
           # Operator-authored config — a bad pattern must not vanish silently.
-          warn("council: dropped invalid auto_trigger_pattern #{str.inspect}: #{e.message}")
+          warn("council: dropped invalid auto_trigger_pattern #{pattern_source.inspect}: #{e.message}")
           nil
         end
       end
@@ -72,8 +72,8 @@ module Master
       end
 
       def dangerous_request?(ctx)
-        msg = ctx[:message].to_s.gsub(/[[:cntrl:]]/, "")
-        !msg.empty? && @dangerous_patterns.any? { |p| msg.match?(p) }
+        message_text = ctx[:message].to_s.gsub(/[[:cntrl:]]/, "")
+        !message_text.empty? && @dangerous_patterns.any? { |p| message_text.match?(p) }
       end
 
       def dangerous_tool?(ctx)  = ctx[:last_tool_tier] == :dangerous
