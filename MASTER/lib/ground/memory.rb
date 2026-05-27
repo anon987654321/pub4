@@ -181,25 +181,27 @@ module Master
         persist
       end
 
-      if agent
-        active_text = @mutex.synchronize do
-          @store
-            .reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
-            .map { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
-            .join("\n")
-        end
-        unless active_text.strip.empty?
-          summary = agent.ask_once("Summarize in 2 concise sentences, preserving all key facts:\n#{active_text}")
-          remember("_consolidated_summary", summary.strip)
-        end
-      end
-
+      summarize_active_entries(agent) if agent
       "dreaming: #{entries.size} entries checked, #{archived} archived"
     rescue StandardError => e
       "consolidation error: #{e.message}"
     end
 
     private
+
+    # Ask the agent to produce a two-sentence summary of current active entries,
+    # then store it as the consolidated summary key.
+    def summarize_active_entries(agent)
+      active_text = @mutex.synchronize do
+        @store
+          .reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
+          .map { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
+          .join("\n")
+      end
+      return if active_text.strip.empty?
+      summary = agent.ask_once("Summarize in 2 concise sentences, preserving all key facts:\n#{active_text}")
+      remember("_consolidated_summary", summary.strip)
+    end
 
     # Imports markdown memory files from data/claude/ on first boot.
     def import_external!
