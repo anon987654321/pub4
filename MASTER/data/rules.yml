@@ -1815,6 +1815,74 @@ rules:
       detect_semantic: "Is this file close to instantiating a known pattern from {Strategy, Decorator, Pipeline, Visitor, Builder, Observer, Command, State, Adapter, NullObject}? Only flag when extraction would genuinely reduce complexity — never propose a pattern that adds ceremony for its own sake. Format: PATTERN:LINE:short reason."
       fix: "Extract toward the named pattern only if the resulting code is simpler than the current shape; otherwise leave it."
 
+    - id: NULL_BLINDNESS
+      name: "NULL comparisons must use IS NULL, not = NULL"
+      tier: safety
+      severity: error
+      autofix: false
+      detect_lexical: "= NULL|!= NULL|== nil.*column|column.*== nil"
+      fix: "Use IS NULL / IS NOT NULL in SQL; .nil? in Ruby."
+
+    - id: SECRET_PROXIMITY
+      name: "Hardcoded secrets must move to environment variables"
+      tier: security
+      severity: error
+      autofix: false
+      detect_lexical: "(password|secret|token|api_key|private_key)\\s*=\\s*['\"][^'\"]{8,}"
+      fix: "Move secret to environment variable or secrets manager."
+
+    - id: MAGIC_COLOR
+      name: "Color values must reference design tokens, not raw hex/rgb"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_lexical: "#[0-9a-fA-F]{3,6}\\b|rgb\\(|rgba\\(|hsl\\("
+      fix: "Reference a CSS custom property or design token."
+      languages: [css, scss, html, javascript]
+
+    - id: UNBOUNDED_RETRY
+      name: "Retry loops must have a max_attempts cap and backoff"
+      tier: reliability
+      severity: error
+      autofix: false
+      detect_lexical: "\\bretry\\b|while\\s+true"
+      fix: "Add max_attempts cap and exponential backoff."
+
+    - id: NO_VAR
+      name: "var is function-scoped and hoisted — use const or let"
+      tier: safety
+      severity: error
+      autofix: true
+      detect_lexical: "\\bvar\\s+\\w"
+      fix: "Use const (default) or let (when reassigned)."
+      languages: [javascript]
+
+    - id: JS_MODULE_SIZE
+      name: "JS files over 300 lines — split at module boundaries"
+      tier: clean_code
+      severity: warning
+      autofix: false
+      detect_structural: file_silhouette
+      fix: "Extract cohesive modules; keep each file under 300 lines."
+      languages: [javascript]
+
+    - id: META_CHARSET
+      name: "HTML must declare charset early in <head>"
+      tier: correctness
+      severity: error
+      autofix: true
+      detect_lexical: "\\A(?!.*<meta\\s+charset=)"
+      fix: "Add <meta charset=UTF-8> as first element in <head>."
+      languages: [html]
+
+    - id: NO_COLUMN_ALIGN
+      name: "One space before operators — no column padding"
+      tier: density
+      severity: info
+      autofix: true
+      detect_lexical: "\\S {2,}(?:=>|[^=!<>]=[^=>]|:\\s)"
+      fix: "Remove padding; one space before operators. Column alignment decays and hides diffs."
+
 # Falsifiable identity — what MASTER explicitly does NOT aim for, and the
 # failure modes that mean the system has lost its way.
 # Source: master2 v4 MANIFEST reunification.
