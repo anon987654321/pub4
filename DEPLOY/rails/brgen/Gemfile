@@ -1,7 +1,7 @@
 source "https://rubygems.org"
-ruby "~> 3.3"
+ruby "~> 3.4"
 
-gem "rails", "~> 8.0"
+gem "rails", "~> 8.1"
 gem "sqlite3", "~> 2.1"
 gem "falcon"
 gem "async"
@@ -16,6 +16,13 @@ gem "importmap-rails"
 gem "solid_queue"
 gem "solid_cache"
 gem "solid_cable"
+
+# StimulusReflex stack
+gem "stimulus_reflex"
+gem "cable_ready"
+gem "kredis"
+gem "optimism"
+gem "futurism"
 
 # Authentication
 gem "bcrypt", "~> 3.1"

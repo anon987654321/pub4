@@ -1,9 +1,15 @@
-<%= form_with url: votes_path(votable_type: votable.class.name, votable_id: votable.id), method: :post do |f| %>
-  <%= f.hidden_field :value, value: 1 %>
-  <%= f.button "▲", type: :submit %>
-<% end %>
-<span><%= votable.score %></span>
-<%= form_with url: votes_path(votable_type: votable.class.name, votable_id: votable.id), method: :post do |f| %>
-  <%= f.hidden_field :value, value: -1 %>
-  <%= f.button "▼", type: :submit %>
-<% end %>
+<div id="vote-<%= votable.class.name.downcase %>-<%= votable.id %>" class="vote-widget">
+  <button type="button"
+          data-reflex="click->Vote#cast"
+          data-votable-type="<%= votable.class.name %>"
+          data-votable-id="<%= votable.id %>"
+          data-value="1"
+          aria-label="Upvote">▲</button>
+  <span aria-label="Score"><%= votable.score %></span>
+  <button type="button"
+          data-reflex="click->Vote#cast"
+          data-votable-type="<%= votable.class.name %>"
+          data-votable-id="<%= votable.id %>"
+          data-value="-1"
+          aria-label="Downvote">▼</button>
+</div>

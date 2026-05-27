@@ -3,21 +3,21 @@
     <div>
       <h2 id="splash-title">Brgen</h2>
       <p class="tagline">City-native social. Post, vote, discover local communities across Europe and beyond.</p>
-      <div class="chips">
-        <span class="chip"><%= link_to "sign in", new_session_path, style: "color:inherit" %></span>
+      <nav class="chips" aria-label="Quick links">
+        <span class="chip"><%= link_to "sign in", new_session_path %></span>
         <span class="chip">markedsplass</span>
         <span class="chip">tv</span>
         <span class="chip">dating</span>
         <span class="chip">playlist</span>
         <span class="chip">takeaway</span>
-      </div>
-      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, style: "color:inherit" %> to post</p>
+      </nav>
+      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path %> to post</p>
     </div>
   <% end %>
 <% end %>
 
 <% content_for :widgets do %>
-  <div class="sidebar-card">
+  <aside class="sidebar-card">
     <h3>Communities</h3>
     <ul>
       <% @communities.each do |c| %>
@@ -25,22 +25,22 @@
       <% end %>
     </ul>
     <% if authenticated? %>
-      <div style="margin-top:12px"><%= link_to "+ New community", new_community_path, class: "btn btn-ghost btn-sm" %></div>
+      <p><%= link_to "+ New community", new_community_path, class: "btn btn-ghost btn-sm" %></p>
     <% end %>
-  </div>
+  </aside>
 <% end %>
 
-<div class="sort-tabs">
-  <span class="sort-tab active">Hot</span>
+<nav class="sort-tabs" aria-label="Sort posts">
+  <span class="sort-tab active" aria-current="page">Hot</span>
   <%= link_to "Latest", posts_path(sort: "fresh"), class: "sort-tab" %>
-</div>
+</nav>
 
 <% if @posts.any? %>
   <% @posts.each do |post| %>
     <%= render "posts/post", post: post %>
   <% end %>
 <% else %>
-  <div class="empty">
+  <section class="empty">
     <p>No posts yet. <%= authenticated? ? link_to("Create one", new_post_path) : link_to("Sign in to post", new_session_path) %>.</p>
-  </div>
+  </section>
 <% end %>

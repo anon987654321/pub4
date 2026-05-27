@@ -27,3 +27,8 @@ pin "@rails/request.js", to: "@rails--request.js.js" # @0.0.13
 pin "sortablejs" # @1.15.7
 pin "lightgallery", to: "lightgallery.js" # @2.9.0
 pin "@stimulus-components/lightbox", to: "@stimulus-components--lightbox.js"
+pin "@stimulus-components/password-visibility" # @1.1.2
+pin "@stimulus-components/rails-nested-form" # @3.0.0
+pin "@stimulus-components/carousel" # @2.1.0
+pin "stimulus_reflex" # @3.5
+pin "cable_ready" # @5.0

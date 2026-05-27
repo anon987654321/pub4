@@ -2,16 +2,18 @@
 <article>
   <% if authenticated? %>
     <%= button_to "▲", post_vote_path(post), params: { vote: { value: 1 } },
+          aria: { label: "Upvote" },
           class: ("active-up" if post.upvoted_by?(Current.user)) %>
   <% else %>
-    <span>▲</span>
+    <span aria-hidden="true">▲</span>
   <% end %>
-  <span data-controller="animated-number"><%= post.score %></span>
+  <span data-controller="animated-number" aria-label="Score"><%= post.score %></span>
   <% if authenticated? %>
     <%= button_to "▼", post_vote_path(post), params: { vote: { value: -1 } },
+          aria: { label: "Downvote" },
           class: ("active-down" if post.downvoted_by?(Current.user)) %>
   <% else %>
-    <span>▼</span>
+    <span aria-hidden="true">▼</span>
   <% end %>
 
   <header>
@@ -26,12 +28,12 @@
 
   <h2><%= link_to post.title, post %></h2>
   <% if post.image.attached? %>
-    <%= link_to post do %><%= image_tag post.image, class: "post-image" %><% end %>
+    <%= link_to post do %><%= image_tag post.image, alt: post.title, loading: "lazy", class: "post-image" %><% end %>
   <% end %>
 
   <footer>
     <%= link_to "#{post.comment_count} comments", post_path(post) %>
-    <%= button_to "share", "#", data: { controller: "clipboard", clipboard_source_value: post_url(post), action: "click->clipboard#copy" } %>
+    <button type="button" data-controller="clipboard" data-clipboard-source-value="<%= post_url(post) %>" data-action="click->clipboard#copy">share</button>
     <% if authenticated? && post.user == Current.user %>
       <%= link_to "edit", edit_post_path(post) %>
       <%= button_to "delete", post, method: :delete, data: { turbo_confirm: "Delete this post?" } %>
