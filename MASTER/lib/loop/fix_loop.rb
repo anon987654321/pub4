@@ -72,17 +72,7 @@ module Master
         end
         consecutive_clean = 0
 
-        snap = violation_snapshot(violations)
-        if seen_snapshots.include?(snap)
-          @bus&.publish("fix_loop:oscillation", pass:, violations: violations.size)
-          break
-        end
-        seen_snapshots << snap
-
-        history << violations.size
-        window = plateau_window
-        if history.size >= window && history.last(window).uniq.size == 1
-          @bus&.publish("fix_loop:plateau", pass:, violations: violations.size)
+        if stagnant?(history, seen_snapshots, violations, pass)
           break
         end
 
@@ -157,27 +147,7 @@ module Master
       end
       rb.each do |path|
         next unless File.exist?(path)
-        src = File.read(path, encoding: "UTF-8")
-
-        ast_result = Judge::Scan::AstFixer.fix(path, src)
-        if ast_result&.changed
-          fixed += ast_result.transforms.size
-          @bus&.publish("fix_loop:ast_fixed", file: path.delete_prefix("#{@root}/"), transforms: ast_result.transforms)
-          src = File.read(path, encoding: "UTF-8")
-        end
-
-        type_errors = Ground::TypeChecker.check(path, src)
-        type_errors.each do |te|
-          @bus&.publish("fix_loop:type_error", file: path.delete_prefix("#{@root}/"),
-                        rule: te.rule, message: te.message)
-        end
-
-        dl = Judge::Scan::DatalogEngine.from_ruby(path, src)
-        dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[1]} — use rescue StandardError" }
-        dl.evaluate.each do |finding|
-          @bus&.publish("fix_loop:datalog_finding", file: path.delete_prefix("#{@root}/"),
-                        rule: finding.rule_id, message: finding.message)
-        end
+        fixed += analyze_ruby_file(path)
       rescue StandardError => e
         @bus&.publish("fix_loop:fast_error", file: path, error: e.message)
       end
@@ -206,6 +176,32 @@ module Master
         fixed += result[:fixed]
         @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
       end
+      fixed
+    end
+
+    # AST-fix, type-check, and datalog-evaluate one Ruby file. Returns fix count.
+    def analyze_ruby_file(path)
+      src = File.read(path, encoding: "UTF-8")
+      fixed = 0
+      rel = path.delete_prefix("#{@root}/")
+
+      ast_result = Judge::Scan::AstFixer.fix(path, src)
+      if ast_result&.changed
+        fixed += ast_result.transforms.size
+        @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: ast_result.transforms)
+        src = File.read(path, encoding: "UTF-8")
+      end
+
+      Ground::TypeChecker.check(path, src).each do |te|
+        @bus&.publish("fix_loop:type_error", file: rel, rule: te.rule, message: te.message)
+      end
+
+      dl = Judge::Scan::DatalogEngine.from_ruby(path, src)
+      dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[1]} — use rescue StandardError" }
+      dl.evaluate.each do |finding|
+        @bus&.publish("fix_loop:datalog_finding", file: rel, rule: finding.rule_id, message: finding.message)
+      end
+
       fixed
     end
 
@@ -363,6 +359,23 @@ module Master
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
       {}
+    end
+
+    # Returns true and publishes an event when oscillation or plateau is detected.
+    def stagnant?(history, seen_snapshots, violations, pass)
+      snap = violation_snapshot(violations)
+      if seen_snapshots.include?(snap)
+        @bus&.publish("fix_loop:oscillation", pass:, violations: violations.size)
+        return true
+      end
+      seen_snapshots << snap
+      history << violations.size
+      window = plateau_window
+      if history.size >= window && history.last(window).uniq.size == 1
+        @bus&.publish("fix_loop:plateau", pass:, violations: violations.size)
+        return true
+      end
+      false
     end
 
     def violation_snapshot(violations)
