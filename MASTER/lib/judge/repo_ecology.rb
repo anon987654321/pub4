@@ -2,6 +2,7 @@
 
 require "digest"
 require "find"
+require "open3"
 require "set"
 
 module Master
@@ -19,12 +20,40 @@ module Master
     MAX_CLUSTERS = 20
     CO_CHANGE_COMMITS = 200
     MAX_CO_CHANGE_PAIRS = 20
+    CO_CHANGE_MIN_COUNT = 2
+    COMMIT_SEPARATOR = "===commit===".freeze
 
     def initialize(root:, event_bus: nil, ignore_dirs: DEFAULT_IGNORE_DIRS, code_index: nil)
       @root = File.expand_path(root)
       @bus = event_bus
       @ignore_dirs = ignore_dirs.to_set
       @code_index = code_index
+      @co_change_graph = nil
+      @graph_mutex = Mutex.new
+    end
+
+    # Returns a file => Set<file> adjacency graph built from git co-change history.
+    # Edges exist between files that changed together >= CO_CHANGE_MIN_COUNT times.
+    # Memoized; call reindex(path) or reset_graph to invalidate.
+    def co_change_graph
+      @graph_mutex.synchronize { @co_change_graph ||= build_co_change_graph }
+    end
+
+    # Re-parse a single file's symbols in the code_index and invalidate the graph.
+    def reindex(path)
+      @code_index&.reindex(path)
+      @graph_mutex.synchronize { @co_change_graph = nil }
+    end
+
+    # Returns a snapshot summary hash for the dmesg boot line.
+    def snapshot
+      graph = co_change_graph
+      symbol_count = @code_index ? (@code_index.size rescue 0) : 0
+      file_count = graph.size
+      edge_count = graph.values.sum(&:size) / 2
+      hotspots = graph.max_by(5) { |_, peers| peers.size }
+                      .map { |file, peers| { file:, coupled_to: peers.size } }
+      { symbols: symbol_count, files: file_count, edges: edge_count, hotspots: }
     end
 
     def scan(path: nil)
@@ -201,21 +230,42 @@ module Master
     end
 
     def co_change_pairs
-      raw = IO.popen(["git", "-C", @root, "log", "--name-only",
-                      "--pretty=format:COMMIT", "-#{CO_CHANGE_COMMITS}"],
-                     err: File::NULL) { |io| io.read }
       pair_counts = Hash.new(0)
-      raw.split("COMMIT").each do |block|
-        files = block.lines.map(&:strip).reject(&:empty?).uniq
-        files.combination(2) { |a, b| pair_counts[[a, b].sort] += 1 }
+      co_change_graph.each do |file_a, peers|
+        peers.each do |file_b, count|
+          key = [file_a, file_b].sort
+          pair_counts[key] = count if file_a < file_b
+        end
       end
-      pair_counts.select { |_, count| count >= 2 }
-                 .sort_by { |_, count| -count }
+      pair_counts.sort_by { |_, count| -count }
                  .first(MAX_CO_CHANGE_PAIRS)
                  .map { |(a, b), count| { a:, b:, count: } }
     rescue StandardError => e
       @bus&.publish("repo_ecology:co_change_error", error: e.message)
       []
+    end
+
+    def build_co_change_graph
+      out, status = Open3.capture2e("git", "-C", @root, "log", "--name-only",
+                                    "--pretty=format:#{COMMIT_SEPARATOR}",
+                                    "-#{CO_CHANGE_COMMITS}")
+      return {} unless status.success?
+      pair_counts = Hash.new(0)
+      out.split(COMMIT_SEPARATOR).each do |chunk|
+        files = chunk.lines.map(&:strip).reject(&:empty?).uniq
+        next if files.size < 2
+        files.combination(2) { |a, b| pair_counts[[a, b].sort] += 1 }
+      end
+      graph = Hash.new { |h, k| h[k] = {} }
+      pair_counts.each do |(a, b), count|
+        next if count < CO_CHANGE_MIN_COUNT
+        graph[a][b] = count
+        graph[b][a] = count
+      end
+      graph.transform_values(&:freeze).freeze
+    rescue StandardError => e
+      @bus&.publish("repo_ecology:co_change_error", error: e.message)
+      {}
     end
 
     def extension_mix(records)

@@ -78,9 +78,10 @@ module Master
       renderer = Voice::Renderer.new(config:)
       code_index = Judge::CodeIndex.new(root:, event_bus: bus)
       code_index.build_async
+      ecology = Judge::RepoEcology.new(root:, event_bus: bus, code_index:)
       bus.subscribe("tool:after") do |ev|
         next unless ev[:path] && MUTATING_TOOLS.include?(ev[:tool].to_s)
-        code_index.reindex(ev[:path])
+        ecology.reindex(ev[:path])
       end
       diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging])
       pressure = PressureEngine.new(event_bus: bus)
@@ -92,7 +93,7 @@ module Master
         Ground::Swallow.log(e, context: "builder.pressure_engine", event_bus: bus)
       end
 
-      { config:, boot_config:, renderer:, code_index:, diag:, pressure: }
+      { config:, boot_config:, renderer:, code_index:, ecology:, diag:, pressure: }
         .merge(trace).merge(loop_c).merge(reach).merge(ground)
     end
 
@@ -152,7 +153,8 @@ module Master
       ctx.check_and_compact!
       agent.wire_context_window(ctx)
       agent.wire_constitution(Ground::Constitution.new)
-      scanner = build_scanner(root:, agent:, bus:)
+      ecology = infra[:ecology]
+      scanner = build_scanner(root:, agent:, bus:, ecology:)
       swarm = Judge::Swarm::Coordinator.new(agent:, event_bus: bus)
       personas = Judge::Council::Personas.load(File.join(Master::ROOT, "data", "council.yml"))
       axioms = Ground::Rules.new(root:)
@@ -160,19 +162,19 @@ module Master
       ideation = Judge::Council::Ideation.new(agent:, event_bus: bus)
       council_stage = Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus)
       guard = Judge::Security::InjectionGuard.new
-      ecology = Judge::RepoEcology.new(root:, event_bus: bus, code_index: infra[:code_index])
       autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms:)
         .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
       autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
       { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard: }.merge(autonomous)
     end
 
-    def build_scanner(root:, agent: nil, bus: nil)
+    def build_scanner(root:, agent: nil, bus: nil, ecology: nil)
       Judge::Scan::RuleDSL
       wf = Master.load_yaml(File.join(root, "data", "workflow.yml")) rescue {}
       sleep_s = wf.dig("autoloop", "scan_file_sleep_s").to_f
       scanner = Judge::Scan::Scanner.new(event_bus: bus, file_sleep_s: sleep_s)
       Judge::Scan::Rule.registry.select(&:auto_build?).each { |k| scanner.add_rule(k.new) }
+      scanner.add_rule(Judge::Scan::Rules::CoChangeCouplingRule.new(root:, ecology:))
       scanner.add_rule(Judge::Scan::Rules::RuleCoverageRule.new(root:))
       scanner.add_rule(Judge::Scan::Rules::RubocopRule.new(root:))
       scanner.add_rule(Judge::Scan::Rules::ReekRule.new(root:))

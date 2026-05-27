@@ -1,29 +1,26 @@
 # frozen_string_literal: true
 
-require "open3"
-
 module Master
   module Judge
   module Scan
     module Rules
       # Files that change together in many commits are coupled regardless of imports.
-      # Mines the last N commits, builds adjacency, flags pairs whose weight exceeds
-      # threshold and that live in different top-level module paths — likely DECOUPLE
-      # candidates the lexical rules can't see.
+      # Reads the co-change graph from RepoEcology (built once at boot) instead of
+      # mining git per-scan. Flags cross-module pairs — likely DECOUPLE candidates
+      # the lexical rules can't see.
       class CoChangeCouplingRule < Rule
-        COMMITS_WINDOW = 500
         WEIGHT_THRESHOLD = 5
-        # Skip mega-commits — they pollute the graph.
-        MAX_FILES_IN_COMMIT = 12
 
-        def initialize
-          super
+        def self.auto_build? = false
+
+        def initialize(root: nil, ecology: nil)
+          super()
           @id = "co_change_coupling"
           @description = "Files co-change with N+ peers across module boundaries — hidden coupling"
           @severity = :info
           @rule_tags = %i[DECOUPLE ONE_JOB]
-          @graph_mutex = Mutex.new
-          @graph = nil
+          @root = root ? File.expand_path(root) : File.expand_path(File.join(Master::ROOT, ".."))
+          @ecology = ecology
         end
 
         def check(_code, path:)
@@ -31,11 +28,11 @@ module Master
           rel = relativize(path)
           return [] unless rel
           peers = neighbors(rel).reject { |peer, _| same_module?(rel, peer) }
-                                .select { |_, w| w >= WEIGHT_THRESHOLD }
-                                .sort_by { |_, w| -w }
+                                .select { |_, weight| weight >= WEIGHT_THRESHOLD }
+                                .sort_by { |_, weight| -weight }
                                 .first(3)
           return [] if peers.empty?
-          coupling_message = "co-changes with " + peers.map { |p, w| "#{p} (#{w}x)" }.join(", ")
+          coupling_message = "co-changes with " + peers.map { |peer, weight| "#{peer} (#{weight}x)" }.join(", ")
           [finding(line: 1, message: coupling_message)]
         end
 
@@ -46,36 +43,12 @@ module Master
         end
 
         def graph
-          @graph_mutex.synchronize { @graph ||= build_graph }
-        end
-
-        COMMIT_SEPARATOR = "===commit===".freeze
-
-        def build_graph
-          out, _, status = Open3.capture3("git", "-C", repo_root,
-                                          "log", "--name-only",
-                                          "--pretty=format:#{COMMIT_SEPARATOR}",
-                                          "-n", COMMITS_WINDOW.to_s, "--", "*.rb")
-          return {} unless status.success?
-          adjacency = Hash.new { |h, k| h[k] = Hash.new(0) }
-          out.split(COMMIT_SEPARATOR).each do |chunk|
-            files = chunk.lines.map(&:strip).reject(&:empty?).select { |f| f.end_with?(".rb") }
-            next if files.size < 2 || files.size > MAX_FILES_IN_COMMIT
-            files.combination(2) do |a, b|
-              adjacency[a][b] += 1
-              adjacency[b][a] += 1
-            end
-          end
-          adjacency
-        end
-
-        def repo_root
-          @repo_root ||= File.expand_path(File.join(Master::ROOT, ".."))
+          @ecology ? @ecology.co_change_graph : {}
         end
 
         def relativize(path)
           full = File.expand_path(path)
-          prefix = repo_root + "/"
+          prefix = @root + "/"
           full.start_with?(prefix) ? full.delete_prefix(prefix) : nil
         end
 

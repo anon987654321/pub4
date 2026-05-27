@@ -172,6 +172,14 @@ module Master
       end
     end
 
+    # Returns [file, line] for the first symbol matching name, or nil.
+    def lookup(name)
+      with_built_index do
+        hit = find_locked(name).first
+        hit ? [relativize(hit.file), hit.line] : nil
+      end
+    end
+
     private
 
     def with_built_index(&blk)
