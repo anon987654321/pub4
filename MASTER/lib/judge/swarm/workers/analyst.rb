@@ -7,7 +7,7 @@ module Master
       # Reads code, produces structured analysis. Knows nothing about other workers.
       class Analyst < Worker
         PREFERRED_MODEL = "google/gemini-2.0-flash-lite:free".freeze
-        FALLBACK_MODEL  = "openrouter/auto".freeze
+        FALLBACK_MODEL = "openrouter/auto".freeze
         private
 
         def role_description

@@ -10,20 +10,20 @@ module Master
   # Rejects malformed or no-op patches; never applies blindly.
   class PatchApplier
     # Files smaller than this are cheaper to rewrite in full — skip diff mode.
-    DIFF_THRESHOLD = 8_192  # bytes
+    DIFF_THRESHOLD = 8_192
 
     Success = Struct.new(:source, keyword_init: true)
     Failure = Struct.new(:reason, keyword_init: true)
 
     def self.apply(original, diff_text)
-      return Failure.new(reason: "empty diff")   if diff_text.strip.empty?
-      return Failure.new(reason: "not a diff")   unless diff_text.include?("@@")
+      return Failure.new(reason: "empty diff") if diff_text.strip.empty?
+      return Failure.new(reason: "not a diff") unless diff_text.include?("@@")
       new(original, diff_text).apply
     end
 
     def initialize(original, diff_text)
       @original = original
-      @diff     = diff_text
+      @diff = diff_text
     end
 
     def apply

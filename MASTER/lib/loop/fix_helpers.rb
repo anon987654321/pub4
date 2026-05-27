@@ -12,7 +12,7 @@ module Master
     def extract_code(text, ext = nil)
       return nil if text.nil? || text.strip.empty? || text.strip == "UNCHANGED"
       return nil if text.match?(/\b(?:error|exception|rate.?limit|i cannot|as an ai)\b/i)
-      lang     = ext ? (Master::Judge::Scan::Rule::EXT_LANG.fetch(ext.downcase, "text") rescue "text") : "text"
+      lang = ext ? (Master::Judge::Scan::Rule::EXT_LANG.fetch(ext.downcase, "text") rescue "text") : "text"
       langs_re = Regexp.union(lang, "text", "")
       return m[1].strip if (m = text.match(/```(?:#{langs_re})?\n(.*?)```/m))
       return text.strip if ext == ".rb" && text.match?(/frozen_string_literal|module |class /)
