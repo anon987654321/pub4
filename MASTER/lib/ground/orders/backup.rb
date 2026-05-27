@@ -9,7 +9,7 @@ module Master
   class Backup < Base
     REMOTE_HOST = "s4vm23@wingman1.openbsd.amsterdam"
     REMOTE_PATH = "backup"
-    SSH_OPTS    = %w[-o BatchMode=yes -o ConnectTimeout=10].freeze
+    SSH_OPTS = %w[-o BatchMode=yes -o ConnectTimeout=10].freeze
 
     def call
       src = File.expand_path("../../..", root)  # ~/pub4 from MASTER root

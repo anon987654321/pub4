@@ -30,7 +30,9 @@ module Master
     def command_decision(mode, command)
       case MODE_RULES.fetch(normalize(mode)).fetch(:commands)
       when :read_only
-        SandboxPolicy.decide(command).allow? && command.to_s.match?(/\A(?:git\s+(status|diff|log|show)|ls|find|grep|rg)\b/) ? :allow : :deny
+        safe = SandboxPolicy.decide(command).allow?
+        read_only = command.to_s.match?(/\A(?:git\s+(status|diff|log|show)|ls|find|grep|rg)\b/)
+        safe && read_only ? :allow : :deny
       when :confirm_risky
         decision = SandboxPolicy.decide(command)
         decision.allow? ? :allow : (decision.deny? ? :deny : :ask)

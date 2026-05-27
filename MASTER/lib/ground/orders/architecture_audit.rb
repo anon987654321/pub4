@@ -11,7 +11,7 @@ module Master
 
       def call
         data_dir = File.join(root, "data")
-        bloated  = bloated_files(data_dir)
+        bloated = bloated_files(data_dir)
         overlaps = overlapping_keys(data_dir)
         bus&.publish("architecture_audit:bloated", files: bloated)
         bus&.publish("architecture_audit:overlap", pairs: overlaps)
@@ -31,7 +31,7 @@ module Master
 
       def overlapping_keys(dir)
         files = Dir.glob(File.join(dir, "*.yml"))
-        keys  = files.each_with_object({}) do |f, h|
+        keys = files.each_with_object({}) do |f, h|
           data = Master.load_yaml(f) rescue nil
           h[File.basename(f)] = data.is_a?(Hash) ? data.keys : []
         end

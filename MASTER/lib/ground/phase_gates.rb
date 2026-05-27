@@ -20,15 +20,15 @@ module Master
     }.freeze
 
     def initialize(root:, event_bus: nil)
-      @root  = root
-      @bus   = event_bus
+      @root = root
+      @bus = event_bus
       @state = load_state
     end
 
     def current = @state["phase"] || "idle"
 
     def advance!(to: nil)
-      prev   = current
+      prev = current
       target = to&.to_s || next_phase
       return Master::Result.err("unknown phase: #{target}") unless PHASES.include?(target)
       return Master::Result.err("already at final phase: #{prev}") if prev == "idle" && target == "idle"
@@ -62,7 +62,7 @@ module Master
 
     def status
       unmet = unmet_gates(current)
-      met   = (@state["met_gates"] || []) & (GATES[current] || [])
+      met = (@state["met_gates"] || []) & (GATES[current] || [])
       "phase=#{current} met=#{met.join(",")} unmet=#{unmet.join(",")}"
     end
 
@@ -83,7 +83,8 @@ module Master
       return { "phase" => "idle", "met_gates" => [] } unless File.exist?(path)
       data = Master.load_yaml(path)
       data.is_a?(Hash) ? data : { "phase" => "idle", "met_gates" => [] }
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "phase_gates.load_state")
       { "phase" => "idle", "met_gates" => [] }
     end
 

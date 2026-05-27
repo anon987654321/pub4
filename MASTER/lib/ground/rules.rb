@@ -7,16 +7,16 @@ module Master
     RULES_SUBDIR = "rules"
 
     def initialize(root: nil)
-      @root          = root || Master::ROOT
-      @data_dir      = File.join(@root, "data")
-      @rules_path    = File.join(@data_dir, "rules.yml")
-      @soul_path     = File.join(@data_dir, "soul.yml")
+      @root = root || Master::ROOT
+      @data_dir = File.join(@root, "data")
+      @rules_path = File.join(@data_dir, "rules.yml")
+      @soul_path = File.join(@data_dir, "soul.yml")
       @workflow_path = File.join(@data_dir, "workflow.yml")
-      @data          = load_yaml(@rules_path) || {}
+      @data = load_yaml(@rules_path) || {}
       @data["rules"] = load_split_rules
-      @soul_data     = load_yaml(@soul_path)     || {}
-      @workflow      = load_yaml(@workflow_path) || {}
-      @cache         = {}
+      @soul_data = load_yaml(@soul_path) || {}
+      @workflow = load_yaml(@workflow_path) || {}
+      @cache = {}
     end
 
     # mtime-aware cache. Reloads automatically when data/<name>.yml changes on disk.
@@ -75,26 +75,26 @@ module Master
       "## Rules (top #{items.size})\n#{top}"
     end
 
-    def voice    = @voice    ||= (@data["voice"] || {}).freeze
-    def strunk   = @strunk   ||= (voice["strunk"] || {}).freeze
+    def voice = @voice ||= (@data["voice"] || {}).freeze
+    def strunk = @strunk ||= (voice["strunk"] || {}).freeze
     def preserve = @preserve ||= (voice["preserve"] || {}).freeze
 
     def constitution
       @constitution ||= begin
         absolute = @soul_data["absolute"] || {}
         {
-          "golden_rule" => absolute["golden_rule"]      || @data["golden_rule"],
+          "golden_rule" => absolute["golden_rule"] || @data["golden_rule"],
           "protection" => absolute["protection_tiers"] || @data["protection"],
           "banned_output" => voice["banned_output"],
-          "anti_simulation" => absolute["anti_simulation"]  || voice["anti_simulation"],
+          "anti_simulation" => absolute["anti_simulation"] || voice["anti_simulation"],
           "communication_style" => voice["style"]
         }.freeze
       end
     end
 
-    def code_rules      = @code_rules      ||= (@soul_data.dig("absolute", "code_rules") || {}).freeze
-    def thresholds       = @thresholds       ||= (@data["thresholds"] || {}).freeze
-    def scan_depths      = @scan_depths      ||= (@data["scan_depths"] || {}).freeze
+    def code_rules = @code_rules ||= (@soul_data.dig("absolute", "code_rules") || {}).freeze
+    def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
+    def scan_depths = @scan_depths ||= (@data["scan_depths"] || {}).freeze
     def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
     def workflow_rule(key) = @workflow.dig(key.to_s) || {}
 
@@ -104,8 +104,8 @@ module Master
     end
 
     def valid_id?(id) = all_ids.include?(id.to_s)
-    def all_ids       = @all_ids ||= all_rules.map { |r| r["id"] }.compact.to_set.freeze
-    def empty?        = @data.empty?
+    def all_ids = @all_ids ||= all_rules.map { |r| r["id"] }.compact.to_set.freeze
+    def empty? = @data.empty?
 
     private
 
