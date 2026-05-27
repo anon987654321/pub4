@@ -8,27 +8,27 @@ module Master
   module Voice
   # Manages SOUL.md identity document; Evolution Protocol: propose→test→approve→tag.
   class Soul
-    SOUL_PATH     = File.join(Master::ROOT, "SOUL.md").freeze
+    SOUL_PATH = File.join(Master::ROOT, "SOUL.md").freeze
     PROPOSAL_PATH = File.join(Master::ROOT, ".master", "soul_proposal.md").freeze
 
     # Drift boundaries — changes to ABSOLUTE sections are blocked without override.
-    ABSOLUTE_PATTERNS  = [/anti-simulation rule/i, /golden rule/i, /preserve.*then.*improve/i].freeze
+    ABSOLUTE_PATTERNS = [/anti-simulation rule/i, /golden rule/i, /preserve.*then.*improve/i].freeze
     PROTECTED_PATTERNS = [/voice character/i, /terse.*direct.*dark/i].freeze
 
     def initialize(root: Master::ROOT, agent: nil)
-      @root  = root
+      @root = root
       @agent = agent
-      @soul  = load_soul
+      @soul = load_soul
     end
 
     # Wire the agent after construction (avoids circular dependency in build).
     def wire_agent(agent) = @agent = agent
 
     def summary
-      version    = extract_version
-      persona    = extract_field("Persona")
-      voice_raw  = extract_field("Voice").to_s
-      voice      = voice_raw.lines.first.to_s.strip[0, 120]
+      version = extract_version
+      persona = extract_field("Persona")
+      voice_raw = extract_field("Voice").to_s
+      voice = voice_raw.lines.first.to_s.strip[0, 120]
       "SOUL.md v#{version} | persona: #{persona}\n#{voice}"
     end
 
@@ -41,7 +41,7 @@ module Master
       return "no agent available for drafting" unless agent
 
       current = @soul
-      prompt  = <<~PROMPT
+      prompt = <<~PROMPT
         You are editing SOUL.md — a constitutional identity document for an AI coding agent.
         Current document:
         #{current}
@@ -53,7 +53,7 @@ module Master
         Output the full updated SOUL.md. No preamble.
       PROMPT
 
-      draft      = agent.ask_once(prompt)
+      draft = agent.ask_once(prompt)
       draft_text = draft.to_s.strip
       return "draft failed" if draft_text.empty?
 
@@ -101,8 +101,8 @@ module Master
       # Inject new version into proposal
       updated = proposal.sub(/Version: [\d.]+/, "Version: #{new_version}")
       # Update changelog entry
-      date    = Time.now.strftime("%Y-%m-%d")
-      entry   = "| #{new_version} | #{date} | Evolution Protocol change | Approved via `soul approve` |\n"
+      date = Time.now.strftime("%Y-%m-%d")
+      entry = "| #{new_version} | #{date} | Evolution Protocol change | Approved via `soul approve` |\n"
       updated = updated.sub(/\| 1\.0\.0 \|/, entry + "| 1.0.0 |")
 
       tmp_w = "#{SOUL_PATH}.tmp.#{Process.pid}"
@@ -142,7 +142,7 @@ module Master
     end
 
     def system_prompt
-      voice  = @soul[/## Voice\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
+      voice = @soul[/## Voice\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
       values = @soul[/## Values\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
       "#{voice}\n\n#{values}"
     end
@@ -150,7 +150,7 @@ module Master
     def propose_from_violations(rule_id, sample_violations, agent: @agent)
       return "no agent available" unless agent
 
-      examples  = sample_violations.first(3).map { |v| "  L#{v[:line]}: #{v[:message]}" }.join("\n")
+      examples = sample_violations.first(3).map { |v| "  L#{v[:line]}: #{v[:message]}" }.join("\n")
       rationale = "Recurring scan rule '#{rule_id}' flagged #{sample_violations.size} " \
                   "violations across multiple files and cycles:\n#{examples}\n" \
                   "Propose whether the codebase axioms or soul principles should acknowledge this pattern " \
@@ -162,7 +162,7 @@ module Master
 
     def load_soul
       File.exist?(SOUL_PATH) ? File.read(SOUL_PATH, encoding: "UTF-8") : ""
-    rescue StandardError => _e
+    rescue StandardError
       ""
     end
 
@@ -184,7 +184,7 @@ module Master
     end
 
     def measure_drift(old_doc, new_doc)
-      absolute_changed  = ABSOLUTE_PATTERNS.select  { |p| old_doc.match?(p) && !new_doc.match?(p) }.map(&:source)
+      absolute_changed = ABSOLUTE_PATTERNS.select { |p| old_doc.match?(p) && !new_doc.match?(p) }.map(&:source)
       protected_changed = PROTECTED_PATTERNS.select { |p| old_doc.match?(p) && !new_doc.match?(p) }.map(&:source)
       { absolute_changed:, protected_changed: }
     end

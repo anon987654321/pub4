@@ -20,9 +20,9 @@ module Master
 
       def rule_coverage
         tags = load_rule_tags
-        src  = Dir.glob(File.join(@root, "lib/**/*.rb"))
-                  .map { |f| File.read(f, encoding: "UTF-8") rescue "" }
-                  .join("\n")
+        src = Dir.glob(File.join(@root, "lib/**/*.rb"))
+                 .map { |f| File.read(f, encoding: "UTF-8") rescue "" }
+                 .join("\n")
         tags.each_with_object({}) { |ax, h| h[ax] = src.scan(/\b#{Regexp.escape(ax)}\b/).size }
       end
 
@@ -33,7 +33,7 @@ module Master
         data = Master.load_yaml(rules_path)
         tags = (data["rules"] || {}).keys
         tags.empty? ? AXIOM_FALLBACK : tags
-      rescue StandardError => _e
+      rescue StandardError
         AXIOM_FALLBACK
       end
     end
