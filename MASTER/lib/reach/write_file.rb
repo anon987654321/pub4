@@ -6,8 +6,8 @@ module Master
   module Reach
     class WriteFile
       include Base
-      TIER        = :guarded
-      NAME        = "write_file".freeze
+      TIER = :guarded
+      NAME = "write_file".freeze
       DESCRIPTION = "Atomically write content to a file, with undo snapshot.".freeze
 
       def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil)

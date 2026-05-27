@@ -48,10 +48,10 @@ module Master
 
       def collapse_line(line)
         leading = line[/\A[ \t]*/]
-        rest    = line[leading.length..] || ""
-        out     = +""
-        i       = 0
-        in_str  = nil
+        rest = line[leading.length..] || ""
+        out = +""
+        i = 0
+        in_str = nil
         while i < rest.length
           c = rest[i]
           if in_str

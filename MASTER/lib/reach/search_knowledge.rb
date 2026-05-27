@@ -4,8 +4,8 @@ module Master
   module Reach
     # Search the local knowledge base: cloned docs, man pages, system prompts, gem READMEs.
     class SearchKnowledge
-      TIER        = :safe
-      NAME        = "search_knowledge".freeze
+      TIER = :safe
+      NAME = "search_knowledge".freeze
       DESCRIPTION = "Search local knowledge base (ruby_llm docs, OpenBSD man pages, system prompts, gem docs). " \
                     "Use for: how does X work in ruby_llm? what does man pf.conf say? example system prompts?".freeze
       MAX_RESULTS = 30
@@ -29,7 +29,7 @@ module Master
           re = Regexp.new(Regexp.escape(query), Regexp::IGNORECASE)
         end
 
-        paths   = Dir.glob(File.join(search_dir, "**", "*")).select { |p| File.file?(p) && text_file?(p) }
+        paths = Dir.glob(File.join(search_dir, "**", "*")).select { |p| File.file?(p) && text_file?(p) }
         results = []
 
         paths.each do |path|
@@ -37,10 +37,10 @@ module Master
           lines = File.readlines(path, encoding: "UTF-8", invalid: :replace)
           lines.each_with_index do |line, idx|
             next unless line.match?(re)
-            start  = [idx - 2, 0].max
+            start = [idx - 2, 0].max
             finish = [idx + 2, lines.size - 1].min
-            ctx    = lines[start..finish].map.with_index(start + 1) { |l, n| "#{n}: #{l}" }.join
-            rel    = path.delete_prefix(@knowledge_root + "/")
+            ctx = lines[start..finish].map.with_index(start + 1) { |l, n| "#{n}: #{l}" }.join
+            rel = path.delete_prefix(@knowledge_root + "/")
             results << "### #{rel}:#{idx + 1}\n#{ctx}"
             break if results.size >= MAX_RESULTS
           end
@@ -60,7 +60,7 @@ module Master
       def available_topics
         return [] unless Dir.exist?(@knowledge_root)
         Dir.entries(@knowledge_root).select { |e|
- File.directory?(File.join(@knowledge_root, e)) && !e.start_with?(".") }
+          File.directory?(File.join(@knowledge_root, e)) && !e.start_with?(".") }
       end
 
       private
