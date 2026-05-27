@@ -61,3 +61,10 @@ end
 gem "pagy"
 gem "prism", "1.9.0"
 gem "falcon"
+
+# StimulusReflex stack
+gem "stimulus_reflex"
+gem "cable_ready"
+gem "kredis"
+gem "optimism"
+gem "futurism"
