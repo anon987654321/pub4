@@ -315,7 +315,9 @@ bootstrap_rails_app() {
   [[ -f $app_dir/db/seeds.rb ]] && \
     su -l "$app" -c "cd $app_dir && RAILS_ENV=production bin/rails db:seed" || :
 
-  secret=$(su -l "$app" -c "cd $app_dir && RAILS_ENV=production bundle exec rails secret 2>/dev/null" | tail -1)
+  typeset -a _secret_lines
+  _secret_lines=("${(@f)$(su -l "$app" -c "cd $app_dir && RAILS_ENV=production bundle exec rails secret 2>/dev/null")}")
+  secret=${_secret_lines[-1]}
   [[ ${#secret} -ge 64 ]] || { log ERROR "$app: secret capture failed (got ${#secret} chars)"; return 1 }
   install_template etc/rc.d/rails-app.tmpl /etc/rc.d/$app
   chmod 755 /etc/rc.d/$app
@@ -476,7 +478,9 @@ stage_2() {
   bundle config set --local path vendor/bundle
   bundle install --quiet
   typeset master_secret
-  master_secret=$(RAILS_ENV=production bundle exec rails secret 2>/dev/null | tail -1)
+  typeset -a _master_secret_lines
+  _master_secret_lines=("${(@f)$(RAILS_ENV=production bundle exec rails secret 2>/dev/null)}")
+  master_secret=${_master_secret_lines[-1]}
   [[ ${#master_secret} -ge 64 ]] || { log ERROR "master: secret capture failed (got ${#master_secret} chars)"; exit 1 }
   install_template etc/rc.d/master.tmpl /etc/rc.d/master
   chmod 555 /etc/rc.d/master
