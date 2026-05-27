@@ -473,10 +473,10 @@ module Master
     end
 
     def format_error_message(err)
-      msg = err.message.to_s
-      return msg if msg.bytesize <= 200
+      error_text = err.message.to_s
+      return error_text if error_text.bytesize <= 200
 
-      msg[0, 197] + "…"
+      error_text[0, 197] + "…"
     end
 
     def display_ok(ok, _accumulated, streamed)

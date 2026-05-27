@@ -13,16 +13,16 @@ module Master
       def call(ctx)
         Master::Now::PipelineContext.validate!(ctx)
         raw = ctx[:user_message]
-        msg = raw.to_s.strip
-        return Result.err("intake: empty message", category: :validation) if msg.empty?
+        message_text = raw.to_s.strip
+        return Result.err("intake: empty message", category: :validation) if message_text.empty?
 
-        if (m = msg.match(COMMAND_RE))
+        if (m = message_text.match(COMMAND_RE))
           command = m[1].downcase
           args    = m[2].strip
           args = nil if args.empty?
           Result.ok(ctx.merge(intent: :command, command: command, args: args))
         else
-          Result.ok(ctx.merge(intent: :llm, message: msg))
+          Result.ok(ctx.merge(intent: :llm, message: message_text))
         end
       end
     end

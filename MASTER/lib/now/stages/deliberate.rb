@@ -16,8 +16,8 @@ module Master
       def call(ctx)
         return Result.ok(ctx) unless applicable?(ctx)
 
-        msg = ctx[:message].to_s
-        Result.ok(ctx.merge(message: wrap(msg)))
+        message_text = ctx[:message].to_s
+        Result.ok(ctx.merge(message: wrap(message_text)))
       end
 
       private

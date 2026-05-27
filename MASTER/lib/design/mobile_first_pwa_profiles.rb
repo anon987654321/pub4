@@ -125,8 +125,8 @@ module Master
           source.scan(rule.pattern) do |m|
             value = rule.extract&.call(m)
             next if value && value >= rule.threshold
-            msg = value ? format(rule.message, value) : rule.message
-            findings << { id: rule.id, file:, message: msg, severity: rule.severity }
+            finding_message = value ? format(rule.message, value) : rule.message
+            findings << { id: rule.id, file:, message: finding_message, severity: rule.severity }
           end
         end
 

@@ -35,8 +35,8 @@ module Master
                                 .sort_by { |_, w| -w }
                                 .first(3)
           return [] if peers.empty?
-          msg = "co-changes with " + peers.map { |p, w| "#{p} (#{w}x)" }.join(", ")
-          [finding(line: 1, message: msg)]
+          coupling_message = "co-changes with " + peers.map { |p, w| "#{p} (#{w}x)" }.join(", ")
+          [finding(line: 1, message: coupling_message)]
         end
 
         private
