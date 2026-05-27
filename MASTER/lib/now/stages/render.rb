@@ -10,7 +10,7 @@ module Master
       end
 
       def call(ctx)
-        output = ctx[:output]
+        output = ctx.output
         rendered = case output
                    when Result::Ok  then @renderer.render(output.value!, mode: :plain)
                    when Result::Err then @renderer.render(output.message, mode: :error)

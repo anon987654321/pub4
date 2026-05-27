@@ -24,7 +24,9 @@ module Master
       wf_id   = "pipeline-#{Process.pid}-#{Time.now.to_i}"
       timings = {}
       @orchestrator&.execute(intent_type: :llm_call, workflow_id: wf_id, payload: { stage: "start" }) { nil }
-      final = @stages.reduce(initial) do |result, stage|
+      # Wrap plain Hash into typed PipelineContext at the pipeline boundary.
+      wrapped = initial.map { |h| PipelineContext.wrap(h) }
+      final = @stages.reduce(wrapped) do |result, stage|
         result.and_then(stage_label(stage)) { |ctx| run_stage(stage, ctx, timings) }
       end
       @orchestrator&.checkpoint(workflow_id: wf_id, label: final.ok? ? "ok" : "err")
@@ -93,7 +95,7 @@ module Master
       end
 
       def call(ctx)
-        return @stage.call(ctx) unless ctx[:pressure]
+        return @stage.call(ctx) unless ctx.pressure
         label = pressure_label
         @bus&.publish("pipeline:skipped", stage: label, reason: "pressure")
         $stdout.puts "pipeline: skipped #{label} (pressure)"

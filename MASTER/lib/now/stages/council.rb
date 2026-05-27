@@ -26,13 +26,13 @@ module Master
         return Result.ok(ctx) unless should_run?(ctx)
 
         payload = extract_payload(ctx)
-        result  = @deliberation.review(payload, context: ctx[:message])
+        result  = @deliberation.review(payload, context: ctx.message)
         return result if result.err?
 
         feedback = result.value!
-        log_praise(ctx[:message], feedback) if praise?(feedback)
+        log_praise(ctx.message, feedback) if praise?(feedback)
         if reject?(feedback)
-          @bus&.publish("council:veto", message: ctx[:message].to_s[0, 120])
+          @bus&.publish("council:veto", message: ctx.message.to_s[0, 120])
           return Result.err("council vetoed: #{feedback.to_s[0, 240]}", category: :policy)
         end
 
@@ -67,26 +67,26 @@ module Master
       end
 
       def should_run?(ctx)
-        return false if ctx[:intent] == :command
+        return false if ctx.intent == :command
         @enabled || dangerous_request?(ctx) || dangerous_tool?(ctx) || multi_file_diff?(ctx)
       end
 
       def dangerous_request?(ctx)
-        message_text = ctx[:message].to_s.gsub(/[[:cntrl:]]/, "")
+        message_text = ctx.message.to_s.gsub(/[[:cntrl:]]/, "")
         !message_text.empty? && @dangerous_patterns.any? { |p| message_text.match?(p) }
       end
 
-      def dangerous_tool?(ctx)  = ctx[:last_tool_tier] == :dangerous
+      def dangerous_tool?(ctx)  = ctx.last_tool_tier == :dangerous
       def multi_file_diff?(ctx) = extract_payload(ctx).scan(/^(?:---|\+\+\+)\s+[ab]\/(.+)$/).uniq.size >= 2
 
       def extract_payload(ctx)
-        out = ctx[:output]
+        out = ctx.output
         case out
         when Result::Ok  then out.value!.to_s
         when Result::Err then ""
         else
           text = out.to_s
-          text.empty? ? ctx[:message].to_s : text
+          text.empty? ? ctx.message.to_s : text
         end
       end
 

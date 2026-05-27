@@ -12,7 +12,7 @@ module Master
 
       def call(ctx)
         Master::Now::PipelineContext.validate!(ctx)
-        raw = ctx[:user_message]
+        raw = ctx.user_message
         message_text = raw.to_s.strip
         return Result.err("intake: empty message", category: :validation) if message_text.empty?
 

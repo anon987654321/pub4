@@ -6,7 +6,7 @@ module Master
     # Execute — call the handler resolved by Route and store its output.
     class Execute
       def call(ctx)
-        handler = ctx[:handler]
+        handler = ctx.handler
         return Result.err("execute: no handler", category: :validation) unless handler
 
         raw = handler.call(ctx)

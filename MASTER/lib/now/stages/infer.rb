@@ -35,9 +35,9 @@ module Master
       end
 
       def call(ctx)
-        return Result.ok(ctx) unless ctx[:intent] == :llm
+        return Result.ok(ctx) unless ctx.intent == :llm
 
-        msg = ctx[:message].to_s.strip
+        msg = ctx.message.to_s.strip
         @patterns.each do |cmd, entry|
           entry[:regexes].each do |pattern|
             next unless (m = msg.match(pattern))
@@ -47,7 +47,7 @@ module Master
         end
 
         pressure = msg.match?(PRESSURE_PATTERN)
-        Result.ok(ctx.merge(task_type: infer_task_type(msg), pressure: pressure || ctx[:pressure]))
+        Result.ok(ctx.merge(task_type: infer_task_type(msg), pressure: pressure || ctx.pressure))
       end
 
       private

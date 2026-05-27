@@ -2,33 +2,26 @@
 
 module Master
   module Now
-  # Canonical key inventory and type contracts for the pipeline Hash.
-  module PipelineContext
-    INTAKE_REQUIRED = %i[user_message].freeze
+  # Typed pipeline context — enforces required keys, validates types, provides accessors.
+  # Immutable update via #merge (returns new instance). Hash-compatible via [] and #to_h.
+  class PipelineContext
+    # Keys every stage may read or write. Unknown keys raise on construction.
+    KNOWN_KEYS = %i[
+      user_message on_chunk
+      intent command args message original_message
+      task_type pressure
+      handler model last_tool_tier
+      output tool_calls written_files source
+      council_feedback
+      lint_report lint_error
+      review_error
+      pre_enhanced
+      rendered voice
+      channel metadata turn_id
+      _timings _parallel_errors _parallel_timeout _stage_error
+    ].freeze
 
-    STAGE_KEYS = {
-      intake: %i[intent command args message],
-      infer: %i[task_type pressure original_message],
-      route: %i[handler model last_tool_tier],
-      execute: %i[output tool_calls written_files source],
-      council: %i[council_feedback],
-      lint: %i[lint_report lint_error],
-      review: %i[review_error],
-      enhance: %i[pre_enhanced],
-      render: %i[rendered voice],
-      memory: []
-    }.freeze
-
-    ALL_KEYS = (INTAKE_REQUIRED + STAGE_KEYS.values.flatten).uniq.freeze
-
-    STAGE_PREREQUISITES = {
-      infer: %i[user_message],
-      route: %i[user_message],
-      execute: %i[user_message handler],
-      council: %i[output],
-      lint: %i[output],
-      render: %i[output]
-    }.freeze
+    REQUIRED = %i[user_message].freeze
 
     KEY_TYPES = {
       user_message: [String],
@@ -40,33 +33,87 @@ module Master
       voice: [String, NilClass]
     }.freeze
 
-    module_function
+    # Stage prerequisite contracts — checked before each stage runs.
+    STAGE_PREREQUISITES = {
+      infer: %i[user_message],
+      route: %i[user_message],
+      execute: %i[user_message handler],
+      council: %i[output],
+      lint: %i[output],
+      render: %i[output]
+    }.freeze
 
-    def validate!(ctx)
-      missing = INTAKE_REQUIRED.reject { |k| ctx.key?(k) }
-      return if missing.empty?
-      raise ArgumentError, "PipelineContext missing required keys: #{missing.join(', ')}"
+    def self.build(user_message:, **opts)
+      new({ user_message:, on_chunk: opts[:on_chunk] }.merge(opts))
     end
 
-    # Raises if prerequisites are absent or present values violate declared types.
-    def assert_stage!(ctx, stage)
+    def initialize(hash)
+      unknown = hash.keys - KNOWN_KEYS
+      raise KeyError, "PipelineContext: unknown keys #{unknown.inspect}" unless unknown.empty?
+      @data = hash.freeze
+    end
+
+    # Read by symbol or string key — Hash-compatible subscript.
+    def [](key)
+      @data[key.to_sym]
+    end
+
+    # Struct-style accessors for all known keys.
+    KNOWN_KEYS.each do |key|
+      define_method(key) { @data[key] }
+    end
+
+    def key?(key) = @data.key?(key.to_sym)
+    def to_h = @data.dup
+    def freeze = self # already immutable
+
+    # Immutable update — returns a new PipelineContext merging overrides.
+    def merge(overrides = {})
+      PipelineContext.new(@data.merge(symbolize(overrides)))
+    end
+
+    def ==(other)
+      other.is_a?(PipelineContext) && @data == other.to_h
+    end
+
+    def inspect = "#<PipelineContext #{@data.inspect}>"
+
+    # Validation helpers — called by pipeline and stages.
+    def self.validate!(ctx)
+      hash = ctx.is_a?(PipelineContext) ? ctx.to_h : ctx
+      missing = REQUIRED.reject { |k| hash.key?(k) }
+      raise ArgumentError, "PipelineContext missing required keys: #{missing.join(', ')}" unless missing.empty?
+    end
+
+    def self.assert_stage!(ctx, stage)
+      hash = ctx.is_a?(PipelineContext) ? ctx.to_h : ctx
       prereqs = STAGE_PREREQUISITES.fetch(stage, [])
-      missing = prereqs.reject { |k| ctx.key?(k) }
+      missing = prereqs.reject { |k| hash.key?(k) }
       raise ArgumentError, "#{stage} stage missing prerequisites: #{missing.join(', ')}" unless missing.empty?
       KEY_TYPES.each do |key, allowed|
-        next unless ctx.key?(key)
-        value = ctx[key]
+        next unless hash.key?(key)
+        value = hash[key]
         next if allowed.any? { |t| value.is_a?(t) }
         raise TypeError, "ctx[#{key.inspect}] expected #{allowed.map(&:name).join('|')}, got #{value.class}"
       end
     end
 
-    def fetch!(ctx, key)
-      ctx.fetch(key) { raise KeyError, "PipelineContext: missing key #{key.inspect}" }
+    def self.fetch!(ctx, key)
+      value = ctx[key]
+      raise KeyError, "PipelineContext: missing key #{key.inspect}" unless ctx.key?(key)
+      value
     end
 
-    def build(user_message:, **opts)
-      { user_message:, on_chunk: opts[:on_chunk] }.merge(opts)
+    # Wrap a plain Hash into a PipelineContext. Skips wrapping if already typed.
+    def self.wrap(hash)
+      return hash if hash.is_a?(PipelineContext)
+      new(hash)
+    end
+
+    private
+
+    def symbolize(hash)
+      hash.transform_keys(&:to_sym)
     end
   end
   end

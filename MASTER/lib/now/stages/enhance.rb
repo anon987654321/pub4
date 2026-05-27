@@ -52,10 +52,10 @@ module Master
 
       # Pipeline stage — skip if web already confirmed an enhanced version.
       def call(ctx)
-        return Result.ok(ctx) if ctx[:pre_enhanced]
-        return Result.ok(ctx) unless ctx[:intent] == :llm
+        return Result.ok(ctx) if ctx.pre_enhanced
+        return Result.ok(ctx) unless ctx.intent == :llm
 
-        msg    = ctx[:message].to_s.strip
+        msg    = ctx.message.to_s.strip
         result = call_raw(msg)
         return Result.ok(ctx) unless result[:changed]
 

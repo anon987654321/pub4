@@ -17,7 +17,7 @@ module Master
       def call(ctx)
         findings = []
 
-        paths = Array(ctx[:written_files]).filter_map { |p| File.exist?(p) ? p : nil }
+        paths = Array(ctx.written_files).filter_map { |p| File.exist?(p) ? p : nil }
         paths.each do |scan_path|
           if File.directory?(scan_path)
             dir_map = Result.wrap(@scanner.scan_dir(scan_path, depth: :deep)).value_or({})
@@ -27,7 +27,7 @@ module Master
           end
         end
 
-        output = ctx[:output].to_s
+        output = ctx.output.to_s
         output.scan(FENCE_RE).each do |match|
           code = match[0]
           next if code.nil? || code.strip.empty?

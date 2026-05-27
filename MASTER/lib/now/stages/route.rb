@@ -16,22 +16,22 @@ module Master
       def add_command(name, handler) = @commands[name.to_s] = handler
 
       def call(ctx)
-        case ctx[:intent]
+        case ctx.intent
         when :command then route_command(ctx)
         when :llm then Result.ok(ctx.merge(handler: @agent))
-        else Result.err("route: unknown intent #{ctx[:intent].inspect}", category: :validation)
+        else Result.err("route: unknown intent #{ctx.intent.inspect}", category: :validation)
         end
       end
 
       private
 
       def route_command(ctx)
-        return Result.err("bye", category: :shutdown) if EXIT_ALIASES.include?(ctx[:command])
+        return Result.err("bye", category: :shutdown) if EXIT_ALIASES.include?(ctx.command)
 
-        cmd = @commands[ctx[:command]]
+        cmd = @commands[ctx.command]
         unless cmd
-          suggestion = closest_command(ctx[:command])
-          error_message = "unknown command: /#{ctx[:command]}"
+          suggestion = closest_command(ctx.command)
+          error_message = "unknown command: /#{ctx.command}"
           error_message += " -- did you mean /#{suggestion}?" if suggestion
           return Result.err(error_message, category: :validation)
         end

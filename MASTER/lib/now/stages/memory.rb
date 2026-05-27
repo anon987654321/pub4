@@ -19,9 +19,9 @@ module Master
 
       def call(ctx)
         return Result.ok(ctx) unless @memory
-        text = ctx[:user_message].to_s
+        text = ctx.user_message.to_s
         remember_user_text(text) unless text.empty?
-        record_episode(ctx, text) if ctx[:voice] && !text.empty?
+        record_episode(ctx, text) if ctx.voice && !text.empty?
         Result.ok(ctx)
       rescue StandardError => e
         @bus&.publish("memory:error", message: e.message)
@@ -31,7 +31,7 @@ module Master
       private
 
       def record_episode(ctx, user_text)
-        reply  = ctx[:rendered].to_s
+        reply  = ctx.rendered.to_s
         digest = "user: #{user_text[0, EPISODE_CHARS]} | reply: #{reply[0, EPISODE_CHARS]}"
         @memory.remember("episode_#{Time.now.to_i}", digest, type: "general")
       end

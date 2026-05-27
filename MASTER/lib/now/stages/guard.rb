@@ -12,7 +12,7 @@ module Master
       end
 
       def call(ctx)
-        message_text = ctx[:message].to_s
+        message_text = ctx.message.to_s
         return Result.ok(ctx) if message_text.empty?
 
         scan = @injection_guard.scan(message_text)
