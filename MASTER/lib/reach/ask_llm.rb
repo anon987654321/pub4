@@ -4,16 +4,16 @@ module Master
   module Reach
     # AskLlm — delegate sub-questions to the LLM agent mid-pipeline.
     class AskLlm
-      TIER        = :guarded
-      NAME        = "ask_llm".freeze
+      TIER = :guarded
+      NAME = "ask_llm".freeze
       DESCRIPTION = "Ask the LLM a sub-question and return the answer as a string.".freeze
 
       def initialize(agent:, governor:, circuit_breaker:, cache:, event_bus: nil)
-        @agent          = agent
-        @governor       = governor
+        @agent = agent
+        @governor = governor
         @circuit_breaker = circuit_breaker
-        @cache          = cache
-        @bus            = event_bus
+        @cache = cache
+        @bus = event_bus
       end
 
       def call(prompt:, context: nil)

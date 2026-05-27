@@ -33,7 +33,12 @@ module Master
           next unless SAFE_EXTENSIONS.include?(File.extname(path))
           rel = path.delete_prefix("#{@root}/")
           next if PathGuard::SACRED_PATHS.any? { |s| rel == s || rel.start_with?(s) }
-          content = begin; File.read(path, encoding: "UTF-8"); rescue StandardError; next; end
+          content = begin
+            File.read(path, encoding: "UTF-8")
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "batch_replace.read", event_bus: @bus, path: path)
+            next
+          end
           next unless content.include?(old_str)
           write_atomic(path, content.gsub(old_str, new_str))
           changed += 1

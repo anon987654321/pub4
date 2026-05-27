@@ -3,9 +3,9 @@
 module Master
   module Reach
     class GitContext
-      TIER            = :safe
-      NAME            = "git_context".freeze
-      DESCRIPTION     = "Query git log, blame, diff, and status for the project.".freeze
+      TIER = :safe
+      NAME = "git_context".freeze
+      DESCRIPTION = "Query git log, blame, diff, and status for the project.".freeze
       MAX_OUTPUT_CHARS = 4000
 
       def initialize(root:, event_bus: nil)
