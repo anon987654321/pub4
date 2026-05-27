@@ -1,3 +1,8 @@
 import { application } from "./application"
-// controllers are auto-imported via eagerLoadControllersFrom in application.js
-// or listed here explicitly:
+import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
+import StimulusReflex from "stimulus_reflex"
+import ApplicationController from "controllers/application_controller"
+
+eagerLoadControllersFrom("controllers", application)
+
+StimulusReflex.initialize(application, { applicationController: ApplicationController, isolate: true })
