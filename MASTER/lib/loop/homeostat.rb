@@ -24,6 +24,12 @@ module Master
       idle_tick: {}
     }.freeze
 
+    # Thresholds for health predicates — cognitive error pressure + exhaustion signal.
+    HEALTH_THRESHOLDS = {
+      degraded: { error_rate: 0.25, fatigue: 0.6, energy: 0.35 },
+      critical: { error_rate: 0.50, fatigue: 0.8, energy: 0.20 }
+    }.freeze
+
     def state = @mutex.synchronize { @state.dup }
 
     def initialize(event_bus: nil)
@@ -31,6 +37,7 @@ module Master
       @mutex = Mutex.new
       @state = DRIVES.transform_values { |spec| spec[:setpoint] }
       @started_at = Time.now
+      @prev_health = :healthy
     end
 
     def observe(event, **_kwargs)
@@ -41,7 +48,32 @@ module Master
         @state.dup
       end
       @bus&.publish("homeostat:observe", event: event, state: snap)
+      publish_health_transition(snap)
       snap
+    end
+
+    # Cognitive health predicates — derived from error pressure, fatigue, and energy.
+    def healthy? = !degraded? && !critical?
+
+    def critical?
+      t = HEALTH_THRESHOLDS[:critical]
+      @state[:error_rate] >= t[:error_rate] ||
+        @state[:fatigue] >= t[:fatigue] ||
+        @state[:energy] <= t[:energy]
+    end
+
+    def degraded?
+      return false if critical?
+      t = HEALTH_THRESHOLDS[:degraded]
+      @state[:error_rate] >= t[:error_rate] ||
+        @state[:fatigue] >= t[:fatigue] ||
+        @state[:energy] <= t[:energy]
+    end
+
+    def health_status
+      return :critical if critical?
+      return :degraded if degraded?
+      :healthy
     end
 
     def model_tier_bias
@@ -67,14 +99,22 @@ module Master
 
     def summary
       pairs = @state.map { |k, v| "#{k}=#{format("%.2f", v)}" }.join(" ")
-      "homeostat: #{pairs} | mood=#{mood} phase=#{circadian_phase}"
+      "homeostat: #{pairs} | mood=#{mood} phase=#{circadian_phase} health=#{health_status}"
     end
 
     def to_h
-      { state: @state.dup, mood: mood, phase: circadian_phase, tier: model_tier_bias }
+      { state: @state.dup, mood: mood, phase: circadian_phase,
+        tier: model_tier_bias, health: health_status }
     end
 
     private
+
+    def publish_health_transition(snap)
+      current = health_status
+      return if current == @prev_health
+      @bus&.publish("system:health", status: current, previous: @prev_health, state: snap)
+      @prev_health = current
+    end
 
     def decay_drift!
       DRIVES.each do |drive, spec|
