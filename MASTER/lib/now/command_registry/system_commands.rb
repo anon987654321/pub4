@@ -57,21 +57,21 @@ module Master
       cfg   = (Master.load_yaml(File.join(root, "data", "rules.yml")) || {}).dig("paths", "tree") || {}
       depth = arg.to_i.positive? ? arg.to_i : (cfg["max_depth"] || 2)
       cap   = cfg["max_lines"] || 200
-      buf   = []
+      tree_lines = []
       walker = lambda do |dir, level|
-        return if level > depth || buf.size >= cap
+        return if level > depth || tree_lines.size >= cap
         Dir.children(dir).sort.each do |name|
-          break if buf.size >= cap
+          break if tree_lines.size >= cap
           next if name.start_with?(".") || SKIP_SEGS.include?(name)
           path = File.join(dir, name)
-          buf << "#{"  " * (level - 1)}#{name}#{File.directory?(path) ? "/" : ""}"
+          tree_lines << "#{"  " * (level - 1)}#{name}#{File.directory?(path) ? "/" : ""}"
           walker.call(path, level + 1) if File.directory?(path)
         end
       rescue Errno::EACCES, Errno::ENOENT
         nil
       end
       walker.call(root, 1)
-      buf.join("\n")
+      tree_lines.join("\n")
     end
 
     def dispatch_diff(root, arg)
@@ -85,9 +85,9 @@ module Master
       diff, = Open3.capture2e("git", "-C", root, "diff", "--stat") if diff.strip.empty?
       return "nothing to commit" if diff.strip.empty?
       prompt = "Write a concise git commit message (1 line, imperative mood) for:\n#{diff}"
-      msg    = agent.ask_once(prompt).to_s.strip.lines.first.to_s.strip
+      commit_message = agent.ask_once(prompt).to_s.strip.lines.first.to_s.strip
       Open3.capture2e("git", "-C", root, "add", "-u")
-      out, = Open3.capture2e("git", "-C", root, "commit", "-m", msg)
+      out, = Open3.capture2e("git", "-C", root, "commit", "-m", commit_message)
       out.strip
     end
 

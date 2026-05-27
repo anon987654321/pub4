@@ -77,12 +77,12 @@ module Master
   # 1-based line numbers of rescues whose handler discards the error.
   def self.silent_rescue_lines(src, blanket_only:)
     lines = src.lines
-    lines.each_with_index.filter_map do |line, idx|
+    lines.each_with_index.filter_map do |line, line_index|
       m = RESCUE_HEAD.match(line)
       next unless m && rescue_in_scope?(m[2].to_s.strip, blanket_only)
-      body = rescue_body(lines, idx, m[4].to_s.strip)
+      body = rescue_body(lines, line_index, m[4].to_s.strip)
       next unless rescue_silent?(body, m[3])
-      [idx + 1, m[3], m[2].to_s.strip]
+      [line_index + 1, m[3], m[2].to_s.strip]
     end
   end
 
@@ -94,10 +94,10 @@ module Master
   end
 
   # Handler body — the inline `; expr` form, or lines down to the matching end.
-  def self.rescue_body(lines, idx, inline)
+  def self.rescue_body(lines, line_index, inline)
     return [inline] unless inline.empty?
     collected = []
-    ((idx + 1)...lines.size).each do |j|
+    ((line_index + 1)...lines.size).each do |j|
       stripped = lines[j].strip
       break if stripped.match?(/\A(end|else|ensure|rescue)\b/)
       collected << stripped unless stripped.empty? || stripped.start_with?("#")

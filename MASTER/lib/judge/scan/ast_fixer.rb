@@ -64,9 +64,9 @@ module Master
 
       lines = src.lines
       bare_lines.each do |lineno|
-        idx = lineno - 1
-        next unless idx < lines.size
-        lines[idx] = lines[idx].sub(/\brescue\b(?!\s+\w)/, "rescue StandardError")
+        line_index = lineno - 1
+        next unless line_index < lines.size
+        lines[line_index] = lines[line_index].sub(/\brescue\b(?!\s+\w)/, "rescue StandardError")
       end
       @transforms << :bare_rescue
       lines.join
@@ -100,11 +100,11 @@ module Master
     end
 
     def write_back(content)
-      tmp = "#{@path}.ast_fix.#{Process.pid}.tmp"
-      File.write(tmp, content, encoding: "UTF-8")
-      File.rename(tmp, @path)
+      temporary_path = "#{@path}.ast_fix.#{Process.pid}.tmp"
+      File.write(temporary_path, content, encoding: "UTF-8")
+      File.rename(temporary_path, @path)
     rescue StandardError => e
-      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      File.delete(temporary_path) if defined?(temporary_path) && File.exist?(temporary_path) rescue nil
       raise e
     end
   end

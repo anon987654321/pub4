@@ -83,8 +83,8 @@ module Master
           response.lines.filter_map do |line|
             match = line.strip.match(/\A(\d+):(.+)\z/)
             next unless match
-            idx = match[1].to_i
-            pair = pairs[idx]
+            pair_index = match[1].to_i
+            pair = pairs[pair_index]
             next unless pair
             finding(line: pair[:line], message: "comment drift — #{match[2].strip}")
           end
