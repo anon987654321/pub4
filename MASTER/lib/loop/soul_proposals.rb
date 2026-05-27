@@ -9,7 +9,7 @@ module Master
       PROPOSALS_PATH = "runtime/soul_proposals.md"
 
       def initialize(event_bus:, root: Master::ROOT)
-        @bus  = event_bus
+        @bus = event_bus
         @root = root
       end
 
@@ -22,7 +22,7 @@ module Master
 
       def record(payload)
         rule_id = payload[:rule] || payload["rule"]
-        sample  = Array(payload[:sample] || payload["sample"])
+        sample = Array(payload[:sample] || payload["sample"])
         return unless rule_id
 
         append(format_proposal(rule_id, sample))

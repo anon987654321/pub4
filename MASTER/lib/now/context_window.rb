@@ -10,7 +10,7 @@ module Master
 
     def initialize(session:, agent: nil, model_context: 200_000)
       @session = session
-      @agent   = agent
+      @agent = agent
       @model_context = model_context
     end
 

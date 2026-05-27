@@ -10,9 +10,9 @@ module Master
 
     def initialize(data_dir:, event_bus:, interval: DEFAULT_INTERVAL)
       @data_dir = data_dir
-      @bus      = event_bus
+      @bus = event_bus
       @interval = interval
-      @mtimes   = {}
+      @mtimes = {}
       snapshot
     end
 

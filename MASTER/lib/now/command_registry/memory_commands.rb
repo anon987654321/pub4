@@ -13,11 +13,11 @@ module Master
           if arg == "consolidate"
             memory.respond_to?(:consolidate!) ? memory.consolidate!(agent:) : "dreaming not available"
           else
-            entries  = memory.all
+            entries = memory.all
             archived = entries.count { |k, _| k.to_s.start_with?("archive/") }
-            active   = entries.count { |k, _| !k.to_s.start_with?("archive/") }
-            summary  = memory.recall("_consolidated_summary")
-            lines    = ["active: #{active} memories, archived: #{archived}"]
+            active = entries.count { |k, _| !k.to_s.start_with?("archive/") }
+            summary = memory.recall("_consolidated_summary")
+            lines = ["active: #{active} memories, archived: #{archived}"]
             lines << "last consolidation: #{summary}" if summary
             lines.join("\n")
           end
@@ -27,7 +27,7 @@ module Master
 
     def dispatch_memory(memory, arg)
       case arg
-      when /\Aforget (.+)/  then memory.forget($1.strip); "forgot: #{$1.strip}"
+      when /\Aforget (.+)/ then memory.forget($1.strip); "forgot: #{$1.strip}"
       when /\Aremember (.+)/
         body, type = parse_remember($1)
         key, value = body.split("=", 2).map(&:strip)
@@ -38,7 +38,7 @@ module Master
           "usage: /memory remember [type=user|feedback|project|reference] key=value"
         end
       when /\Asearch (.+)/ then memory_search(memory, $1.strip)
-      when /\Atype (\S+)/  then list_by_type(memory, $1.strip)
+      when /\Atype (\S+)/ then list_by_type(memory, $1.strip)
       when "types"
         counts = memory.type_counts.map { |t, n| "#{t}: #{n}" }.join("\n")
         counts.empty? ? "(no memories)" : counts
