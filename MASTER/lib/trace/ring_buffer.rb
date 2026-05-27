@@ -9,9 +9,9 @@ module Master
     def initialize(capacity)
       super()
       @capacity = capacity
-      @buffer      = Array.new(capacity)
-      @start    = 0
-      @size     = 0
+      @buffer = Array.new(capacity)
+      @start = 0
+      @size = 0
     end
 
     def push(item)
@@ -35,10 +35,10 @@ module Master
       synchronize { @size.times { |i| yield @buffer[(@start + i) % @capacity] } }
     end
 
-    def to_a    = synchronize { @size.times.map { |i| @buffer[(@start + i) % @capacity] } }
-    def size    = @size
-    def full?   = @size == @capacity
-    def empty?  = @size.zero?
+    def to_a = synchronize { @size.times.map { |i| @buffer[(@start + i) % @capacity] } }
+    def size = @size
+    def full? = @size == @capacity
+    def empty? = @size.zero?
 
     def clear
       synchronize { @start = @size = 0 }

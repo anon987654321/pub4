@@ -7,14 +7,14 @@ module Master
     class EventBus
       include MonitorMixin
 
-      BOOT_TIME         = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
+      BOOT_TIME = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
       PATTERN_CACHE_MAX = 512
 
       def initialize(event_log: nil)
         super()
-        @subscribers   = Hash.new { |h, k| h[k] = [] }
+        @subscribers = Hash.new { |h, k| h[k] = [] }
         @pattern_cache = {}
-        @event_log     = event_log || Master::Trace::EventLog.new
+        @event_log = event_log || Master::Trace::EventLog.new
       end
 
       def subscribe(pattern, &handler)
@@ -23,7 +23,7 @@ module Master
       end
 
       def publish(event, payload = {})
-        ts       = elapsed_ms
+        ts = elapsed_ms
         enriched = payload.merge(event:, ts:)
         handlers = synchronize { matching_handlers(event) }
 

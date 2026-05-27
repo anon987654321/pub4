@@ -9,20 +9,20 @@ module Master
   #   working (in-session ring buffer), episodic (NDJSON per session), semantic (SQLite).
   # Run after session save to keep memory lean.
   class MemoryTierCompactor
-    EPISODIC_DIR  = File.join(Master::ROOT, ".master", "episodic").freeze
-    MAX_WORKING   = 40   # messages kept in ring buffer
-    MAX_EPISODIC  = 200  # lines per session episodic file
-    MAX_SEMANTIC  = 5000 # rows kept in semantic SQLite table
+    EPISODIC_DIR = File.join(Master::ROOT, ".master", "episodic").freeze
+    MAX_WORKING = 40 # messages kept in ring buffer
+    MAX_EPISODIC = 200 # lines per session episodic file
+    MAX_SEMANTIC = 5000 # rows kept in semantic SQLite table
 
     def initialize(session:, sqlite_memory: nil, event_bus: nil)
-      @session  = session
-      @db       = sqlite_memory
-      @bus      = event_bus
+      @session = session
+      @db = sqlite_memory
+      @bus = event_bus
     end
 
     def compact!
       results = {}
-      results[:working]  = compact_working
+      results[:working] = compact_working
       results[:episodic] = compact_episodic
       results[:semantic] = compact_semantic
       @bus&.publish("memory:compacted", **results)
@@ -58,7 +58,8 @@ module Master
     def compact_semantic
       return 0 unless @db
       @db.compact!(keep_last: MAX_SEMANTIC)
-    rescue StandardError
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "MemoryTierCompactor.compact_semantic")
       0
     end
   end

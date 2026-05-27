@@ -7,12 +7,12 @@ module Master
   module Trace
   # Append-only tool invocation log; subscribes to tool:before on EventBus.
   class AuditLog
-    LOG_PATH  = ".master/audit.ndjson".freeze
-    MAX_VAL   = 120
+    LOG_PATH = ".master/audit.ndjson".freeze
+    MAX_VAL = 120
     MAX_BYTES = 5 * 1024 * 1024
 
     def initialize(root:, event_bus:)
-      @path  = File.join(root, LOG_PATH)
+      @path = File.join(root, LOG_PATH)
       @mutex = Mutex.new
       FileUtils.mkdir_p(File.dirname(@path))
       event_bus.subscribe("tool:before") { |event_data| append(event_data) }

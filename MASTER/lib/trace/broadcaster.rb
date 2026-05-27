@@ -5,9 +5,9 @@ module Master
     # Optional Rails/Action Cable bridge. Degrades to no-op when Action Cable is absent.
     class Broadcaster
       class << self
-        def broadcast_event(event)    = broadcast("master:events",  type: "event",   data: event)
+        def broadcast_event(event) = broadcast("master:events", type: "event", data: event)
         def broadcast_council(summary) = broadcast("master:council", type: "council", data: summary)
-        def broadcast_status(status)  = broadcast("master:status",  type: "status",  data: status)
+        def broadcast_status(status) = broadcast("master:status", type: "status", data: status)
 
         private
 

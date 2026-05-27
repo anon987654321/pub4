@@ -9,9 +9,9 @@ module Master
 
     def initialize(homeostat:, breaker:, logging:, scan_registry: Master::Judge::Scan::Rule)
       @homeostat = homeostat
-      @breaker   = breaker
-      @logging   = logging
-      @registry  = scan_registry
+      @breaker = breaker
+      @logging = logging
+      @registry = scan_registry
     end
 
     def render(section = nil)
@@ -32,7 +32,7 @@ module Master
     def section_breaker
       return ["breaker: -- (no breaker)"] unless @breaker
       total = format("%.4f", @breaker.session_total)
-      open  = @breaker.open_models
+      open = @breaker.open_models
       ["breaker: session=$#{total} open=(#{open.empty? ? "" : open.join(",")})"]
     end
 

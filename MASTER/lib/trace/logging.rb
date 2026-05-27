@@ -7,8 +7,8 @@ module Master
     attr_reader :buffer
 
     def initialize(ring_buffer:, event_bus:)
-      @buffer      = ring_buffer
-      @bus         = event_bus
+      @buffer = ring_buffer
+      @bus = event_bus
       wire_events
     end
 
@@ -24,10 +24,10 @@ module Master
 
     def format_entry(payload)
       event = payload[:event].to_s
-      rest  = payload.except(:event, :ts)
+      rest = payload.except(:event, :ts)
       component, action = event.split(":", 2)
-      action  ||= "ready"
-      details   = rest.map { |k, v| "#{k}=#{v}" }.join(" ")
+      action ||= "ready"
+      details = rest.map { |k, v| "#{k}=#{v}" }.join(" ")
       details.empty? ? "#{component}: #{action}" : "#{component}: #{action} #{details}"
     end
   end
