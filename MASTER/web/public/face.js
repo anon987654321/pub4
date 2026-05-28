@@ -53,10 +53,13 @@ document.addEventListener('visibilitychange', updateRuntimeProfile, { passive: t
 
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, powerPreference: 'low-power' });
+  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false });
   renderer.setClearColor(0x000000, 1);
 } catch (_) {}
-if (!renderer) { primer.textContent = 'webgl unavailable'; }
+if (!renderer) {
+  Object.assign(primer.style, { color: '#fff', font: '12px monospace', display: 'flex', alignItems: 'center', justifyContent: 'center' });
+  primer.textContent = 'webgl unavailable';
+}
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
 camera.position.set(0, 0, 4.6);
