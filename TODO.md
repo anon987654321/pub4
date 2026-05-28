@@ -18,7 +18,7 @@ Full codebase review found these gaps. Each item is self-contained — pick any 
 
 - **Cherry-pick vps/refactor/seven-modules** (9 commits onto main). Script at `~/pub4/tmp/cherry_seven_modules.rb`. Skip `f282ee20` and `b96d7f21` (doc-sync whose super_loop refs conflict with fix_loop rename already on main). Remaining 9 contain: SILENT_RESCUE rule, Swallow.log routing, ground enhancements, CANON.md, Opus 4.7 patches. Run `ruby34 ~/pub4/tmp/cherry_seven_modules.rb` on the VPS (not Termux — disk full locally).
 - **Merge cleanup-attempt-backup** — 2 commits not yet on main: `8a584e9` (drop 20 stale snapshot dumps) and `0a4434c` (drop stubs, relocate analysis dump). Low risk; review diff then `git merge cleanup-attempt-backup`.
-- **Delete abandoned worktree branches** — `worktree-agent-a42b7088`, `worktree-agent-a90dcdbf`, `worktree-agent-ad3dd101` are stale agent runs. Run `git branch -d worktree-agent-{a42b7088,a90dcdbf,ad3dd101}` locally.
+- ~~**Delete abandoned worktree branches**~~ — done 2026-05-28.
 
 ### Memory subsystem (currently structural stub)
 
