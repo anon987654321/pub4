@@ -35,16 +35,21 @@ module Master
           task: ctx.respond_to?(:task_type) ? ctx.task_type&.to_sym : nil,
           risk:
         )
+
+        @bus&.publish("council:start", personas: persona_names, risk: risk, message_preview: ctx.message.to_s[0, 80])
+
         result = @deliberation.review(payload, context: ctx.message, personas: persona_names)
         return result if result.err?
 
         feedback = result.value!
         log_praise(ctx.message, feedback) if praise?(feedback)
+
         if reject?(feedback)
-          @bus&.publish("council:veto", message: ctx.message.to_s[0, 120])
+          @bus&.publish("council:veto", personas: persona_names, risk: risk, message: ctx.message.to_s[0, 120])
           return Result.err("council vetoed: #{feedback.to_s[0, 240]}", category: :policy)
         end
 
+        @bus&.publish("council:pass", personas: persona_names, risk: risk)
         Result.ok(ctx.merge(council_feedback: feedback))
       end
 

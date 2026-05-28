@@ -119,6 +119,9 @@ module Master
     def run_stage(stage, ctx, timings)
       label = stage_label(stage)
       Master::Now::PipelineContext.assert_stage!(ctx, label.downcase.to_sym)
+
+      @bus&.publish("pipeline:stage_start", stage: label, pressure: !!ctx.pressure)
+
       t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       stage_result = stage.call(ctx)
       ms    = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SECOND).round
@@ -126,7 +129,7 @@ module Master
       return stage_result if stage_result.err?
 
       @last_timings = timings.dup
-      @bus&.publish("pipeline:stage", stage: label, ms:) if @trace
+      @bus&.publish("pipeline:stage_complete", stage: label, ms:, success: true)
       stage_result.map { |c| c.merge(_timings: timings.dup) }
     end
 
