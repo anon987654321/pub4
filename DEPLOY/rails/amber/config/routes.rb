@@ -16,7 +16,7 @@ Rails.application.routes.draw do
 
   resources :outfits do
     collection { get :dressing_room }
-    member { post :like }
+    member { post :like; patch :reorder }
   end
 
   resources :planned_outfits, only: %i[index create destroy]

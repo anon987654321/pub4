@@ -2,7 +2,7 @@
 
 class OutfitsController < ApplicationController
   before_action :require_authentication
-  before_action :set_outfit, only: %i[show edit update destroy like]
+  before_action :set_outfit, only: %i[show edit update destroy like reorder]
   before_action :authorize!, only: %i[edit update destroy]
 
   def index
@@ -44,6 +44,14 @@ class OutfitsController < ApplicationController
   def like
     @outfit.like!
     redirect_to @outfit
+  end
+
+  def reorder
+    positions = params.require(:positions)
+    positions.each_with_index do |item_id, index|
+      @outfit.outfit_items.where(item_id:).update_all(position: index)
+    end
+    head :ok
   end
 
   private
