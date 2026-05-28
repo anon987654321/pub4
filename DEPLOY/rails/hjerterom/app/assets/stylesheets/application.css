@@ -1,17 +1,33 @@
+:root {
+  --primary: #e11d48;
+  --primary-dark: #9f1239;
+  --text: #111827;
+  --text-dim: #64748b;
+  --panel: rgba(255, 255, 255, 0.9);
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; }
+body { color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8fafc; }
+main { min-height: 100vh; }
+
 nav {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 100;
   display: flex;
   align-items: center;
+  gap: 1rem;
   padding: .5rem 1rem;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.92);
   border-bottom: 1px solid #e2e8f0;
+  backdrop-filter: blur(18px);
   transform: translateY(-100%);
   transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-nav.nav-visible { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+nav.nav-visible, nav:focus-within, nav:hover { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+nav a { color: var(--text); font-weight: 700; text-decoration: none; }
 
 nav .brand {
   display: block;
@@ -22,12 +38,201 @@ nav .brand {
 
 nav .brand svg { width: 100%; height: 100%; }
 
+.map-home {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(244, 63, 94, 0.34), transparent 26rem),
+    radial-gradient(circle at 78% 18%, rgba(14, 165, 233, 0.22), transparent 24rem),
+    linear-gradient(135deg, #172554 0%, #0f172a 50%, #020617 100%);
+}
+
+.map-home__canvas {
+  position: absolute;
+  inset: 0;
+  min-height: 100vh;
+}
+
+.map-home__canvas::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(2, 6, 23, .68), rgba(2, 6, 23, .18) 46%, rgba(2, 6, 23, .44));
+  z-index: 1;
+}
+
+.map-home__panel, .map-home__sheet {
+  position: relative;
+  z-index: 2;
+  width: min(27rem, calc(100vw - 2rem));
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  background: var(--panel);
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .24);
+  backdrop-filter: blur(20px);
+}
+
+.map-home__panel {
+  top: clamp(5rem, 12vh, 8rem);
+  left: clamp(1rem, 4vw, 4rem);
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border-radius: 2rem;
+}
+
+.map-home__panel h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  line-height: .9;
+  letter-spacing: -.07em;
+}
+
+.eyebrow {
+  margin: 0 0 .75rem;
+  color: var(--primary);
+  font-size: .8rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.lead { color: #334155; font-size: 1.08rem; line-height: 1.5; }
+.map-home__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+.map-home__crisis { display: grid; gap: .35rem; margin-top: 1.4rem; color: #7f1d1d; font-size: .9rem; }
+
+.map-home__sheet {
+  position: absolute;
+  right: clamp(1rem, 3vw, 3rem);
+  bottom: clamp(1rem, 3vw, 3rem);
+  max-height: min(42vh, 24rem);
+  overflow: auto;
+  padding: 1rem;
+  border-radius: 1.5rem;
+}
+
+.map-home__sheet h2 { margin: 0 0 .75rem; }
+.map-home__sheet article { padding: .8rem 0; border-top: 1px solid rgba(148, 163, 184, .35); }
+.map-home__sheet a { color: var(--primary-dark); font-weight: 900; text-decoration: none; }
+.map-home__sheet p { margin: .2rem 0 0; color: var(--text-dim); }
+
+.map-home__fallback {
+  display: grid;
+  place-items: center;
+  padding: 8rem 1rem 3rem;
+}
+
+.map-home__fallback-list {
+  position: absolute;
+  right: clamp(1rem, 3vw, 3rem);
+  top: clamp(5rem, 12vh, 8rem);
+  z-index: 2;
+  display: grid;
+  gap: .75rem;
+  width: min(22rem, calc(100vw - 2rem));
+}
+
+.map-home__pin-card {
+  display: grid;
+  gap: .2rem;
+  padding: .9rem 1rem;
+  border-radius: 1rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 16px 50px rgba(15, 23, 42, .2);
+  text-decoration: none;
+}
+
+.map-home__pin-card span { color: var(--primary); font-size: .75rem; font-weight: 900; text-transform: uppercase; }
+.map-home__pin-card small { color: var(--text-dim); }
+
+.hjerterom-heart-logo {
+  position: relative;
+  z-index: 1;
+  width: 12rem;
+  height: 12rem;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 28px 55px rgba(225, 29, 72, .34));
+}
+
+.hjerterom-heart-logo__heart,
+.hjerterom-heart-marker__heart {
+  display: block;
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, #fb7185, #e11d48 62%, #9f1239);
+  transform: rotate(-45deg);
+  border-radius: .45rem;
+  animation: hjerterom-heartbeat 1.7s ease-in-out infinite;
+}
+
+.hjerterom-heart-logo__heart { width: 7rem; height: 7rem; border-radius: 1.1rem; }
+.hjerterom-heart-logo__heart::before,
+.hjerterom-heart-logo__heart::after,
+.hjerterom-heart-marker__heart::before,
+.hjerterom-heart-marker__heart::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: inherit;
+}
+
+.hjerterom-heart-logo__heart::before,
+.hjerterom-heart-marker__heart::before { top: -50%; left: 0; }
+.hjerterom-heart-logo__heart::after,
+.hjerterom-heart-marker__heart::after { top: 0; left: 50%; }
+
+.hjerterom-heart-logo__pulse,
+.hjerterom-heart-marker__pulse {
+  position: absolute;
+  inset: 18%;
+  border-radius: 999px;
+  border: 2px solid rgba(251, 113, 133, .58);
+  animation: hjerterom-pulse 1.7s ease-out infinite;
+}
+
+.hjerterom-heart-marker {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.8rem;
+  height: 3.8rem;
+  transform: translateY(-.35rem);
+}
+
+.hjerterom-heart-marker__heart {
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: .28rem;
+}
+
+.hjerterom-heart-marker--resource .hjerterom-heart-marker__heart { background: linear-gradient(135deg, #38bdf8, #2563eb 62%, #1e3a8a); }
+.mapboxgl-popup-content { border-radius: 1rem; padding: .9rem 1rem; box-shadow: 0 18px 60px rgba(15, 23, 42, .26); }
+.map-popup { display: grid; gap: .25rem; min-width: 12rem; }
+.map-popup p { margin: 0; color: var(--text-dim); }
+.map-popup a { color: var(--primary); font-weight: 900; text-decoration: none; }
+
+@keyframes hjerterom-heartbeat {
+  0%, 100% { transform: rotate(-45deg) scale(1); }
+  14% { transform: rotate(-45deg) scale(1.16); }
+  28% { transform: rotate(-45deg) scale(.96); }
+  42% { transform: rotate(-45deg) scale(1.08); }
+}
+
+@keyframes hjerterom-pulse {
+  0% { opacity: .75; transform: scale(.72); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+
 .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
 .meta { display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1rem; margin: 1rem 0; }
 .meta dt { font-weight: 600; }
-.btn { display: inline-block; padding: .5rem 1.25rem; border-radius: 8px; border: none; cursor: pointer; font-size: .9rem; font-weight: 600; text-decoration: none; }
-.btn-primary { background: var(--primary); color: #fff; }
+.btn { display: inline-block; padding: .65rem 1.25rem; border-radius: 999px; border: none; cursor: pointer; font-size: .9rem; font-weight: 800; text-decoration: none; }
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 10px 28px rgba(225, 29, 72, .28); }
 .btn-danger { background: #dc3545; color: #fff; }
+.btn-ghost { color: var(--primary-dark); background: rgba(255, 255, 255, .72); border: 1px solid rgba(225, 29, 72, .18); }
 .dim { color: var(--text-dim); font-size: .85rem; }
 .form { max-width: 560px; }
 .form .field { display: flex; flex-direction: column; gap: .25rem; margin-bottom: .75rem; }
@@ -35,3 +240,10 @@ nav .brand svg { width: 100%; height: 100%; }
 .form input, .form select, .form textarea { border: 1px solid #cbd5e0; border-radius: 6px; padding: .45rem .6rem; font: inherit; }
 .form .actions { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; }
 h1, h2 { margin-bottom: .5rem; }
+
+@media (max-width: 800px) {
+  .map-home__panel { top: 4.25rem; left: 1rem; right: 1rem; width: auto; }
+  .map-home__sheet { left: 1rem; right: 1rem; bottom: 1rem; width: auto; max-height: 28vh; }
+  .map-home__canvas::after { background: linear-gradient(180deg, rgba(2, 6, 23, .7), rgba(2, 6, 23, .12) 55%, rgba(2, 6, 23, .64)); }
+  .map-home__fallback-list { display: none; }
+}
