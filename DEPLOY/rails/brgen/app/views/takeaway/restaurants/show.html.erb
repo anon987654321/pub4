@@ -3,7 +3,7 @@
 <div class="page-header">
   <h1><%= @restaurant.name %></h1>
   <nav>
-    <% if authenticated? && Current.user == @restaurant.user %>
+    <% if authenticated? && @restaurant.owner?(Current.user) %>
       <%= link_to "Edit", edit_takeaway_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
     <% elsif authenticated? %>
       <%= button_to "Save", takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn btn-primary btn-sm" %>
@@ -17,10 +17,10 @@
   <p class="dim">Min order: <%= @restaurant.min_order_display %> · Delivery: <%= @restaurant.delivery_fee_display %></p>
 </article>
 
-<% if authenticated? && Current.user == @restaurant.user %>
-  <div style="padding:16px;border-bottom:1px solid var(--border)">
-    <p style="font-size:20px;font-weight:800;margin-bottom:12px">Add menu item</p>
-    <div class="form-wrap" style="padding:0">
+<% if authenticated? && @restaurant.owner?(Current.user) %>
+  <section>
+    <h2>Add menu item</h2>
+    <div class="form-wrap">
       <%= form_with scope: :takeaway_menu_item, url: takeaway_restaurant_menu_items_path(@restaurant) do |f| %>
         <div class="field"><%= f.text_field :name, placeholder: "Name", required: true %></div>
         <div class="field"><%= f.number_field :price_cents, placeholder: "Price (øre)", required: true %></div>
@@ -28,27 +28,27 @@
         <div class="field"><%= f.submit "Add", class: "btn btn-primary btn-sm" %></div>
       <% end %>
     </div>
-  </div>
+  </section>
 <% end %>
 
-<div style="padding:16px;border-bottom:1px solid var(--border)">
-  <p style="font-size:20px;font-weight:800;margin-bottom:12px">Menu</p>
+<section>
+  <h2>Menu</h2>
   <% if authenticated? %>
     <%= form_with scope: :takeaway_order, url: takeaway_restaurant_orders_path(@restaurant) do |f| %>
       <% @menu_items.each do |item| %>
-        <article style="display:flex;align-items:center;justify-content:space-between">
+        <article class="menu-row">
           <div>
             <strong><%= item.name %></strong> · <%= item.price_display %>
             <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
           </div>
-          <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, style: "width:60px", aria: { label: "Quantity for #{item.name}" } %>
+          <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: "Quantity for #{item.name}" } %>
         </article>
       <% end %>
-      <div class="field" style="margin-top:12px"><%= f.text_field :delivery_address, placeholder: "Delivery address", required: true %></div>
+      <div class="field"><%= f.text_field :delivery_address, placeholder: "Delivery address", required: true %></div>
       <div class="field"><%= f.text_area :special_instructions, placeholder: "Special instructions (optional)" %></div>
       <div class="field"><%= f.submit "Place order", class: "btn btn-primary" %></div>
     <% end %>
   <% else %>
     <p><%= link_to "Sign in to order", new_session_path %></p>
   <% end %>
-</div>
+</section>

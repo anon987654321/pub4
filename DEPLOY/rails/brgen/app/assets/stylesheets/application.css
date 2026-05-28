@@ -904,3 +904,5 @@ article mark { background: rgba(244, 33, 46, .15); color: #f87171; padding: 1px 
 .affiliate-merchant { font-size: .75rem; }
 
 .item-subtotal { float: inline-end; }
+.menu-row { display: flex; align-items: center; justify-content: space-between; }
+.qty-field { width: 60px; }
