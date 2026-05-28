@@ -60,6 +60,5 @@ group :development do
 end
 gem "pagy", "~> 9.3"
 gem "ruby-openai"
-gem "dartsass-rails"
 gem "falcon"
 
