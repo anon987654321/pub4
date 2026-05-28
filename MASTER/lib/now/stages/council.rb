@@ -13,10 +13,11 @@ module Master
       EXEMPLAR_MSG_CHARS = 120
       EXEMPLAR_FEEDBACK_CHARS = 240
 
-      def initialize(deliberation:, config: nil, enabled: false, event_bus: nil)
+      def initialize(deliberation:, config: nil, enabled: false, event_bus: nil, graph: nil)
         @deliberation = deliberation
         @config = config
         @bus = event_bus
+        @graph = graph
         @enabled = @config&.[]("council") == true || enabled
         @dangerous_patterns = load_patterns
         @exemplar_mutex = Mutex.new
@@ -26,7 +27,7 @@ module Master
         return Result.ok(ctx) unless should_run?(ctx)
 
         payload = extract_payload(ctx)
-        risk = Master::Now::Routing::RiskClassifier.call(
+        risk = Master::Now::Routing::RiskClassifier.new(graph: @graph).call(
           intent: ctx.respond_to?(:task_type) ? ctx.task_type&.to_sym : nil,
           touches: Array(ctx.respond_to?(:touches) ? ctx.touches : [])
         )

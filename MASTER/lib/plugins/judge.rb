@@ -47,7 +47,8 @@ module Master
       axioms                = Master::Ground::Rules.new(root:)
       deliberation          = Master::Judge::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
       ideation              = Master::Judge::Council::Ideation.new(agent:, event_bus: bus)
-      council_stage         = Master::Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus)
+      graph                 = Master::Ground::EvidenceGraph.new(Master::Ground::ClusterRegistry.new)
+      council_stage         = Master::Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus, graph:)
       guard                 = Master::Judge::Security::InjectionGuard.new
       autonomous = Plugins::Loop.boot_autonomous(root:, infra:, agent:, scanner:, soul: soul_doc)
                                .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
