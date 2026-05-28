@@ -8,7 +8,12 @@
 <% end %>
 
 <section class="map-home" data-mapbox-token="<%= @mapbox_token %>" data-map-points="<%= json_escape(@map_points.to_json) %>">
+  <template id="hjerterom-logo-template"><%= render "shared/logo" %></template>
   <div id="hjerterom-map" class="map-home__canvas" aria-label="Kart over Hjerterom Åsane"></div>
+
+  <%= link_to root_path, class: "map-home__logo", aria: { label: "Hjerterom home" } do %>
+    <%= render "shared/logo" %>
+  <% end %>
 
   <div class="map-home__panel">
     <p class="eyebrow">Hjerterom Åsane</p>
