@@ -1,0 +1,24 @@
+<% content_for :title, "Donations" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Hjerterom intake</p>
+    <h1>Donations</h1>
+  </div>
+  <%= link_to "New donation", new_donation_path, class: "btn btn-primary" %>
+</div>
+
+<% if @donations.any? %>
+  <%= turbo_stream_from "hjerterom:donations" %>
+  <div id="donations">
+    <% @donations.each do |donation| %>
+      <article id="<%= dom_id(donation) %>">
+        <h2><%= link_to donation.source_name, donation %></h2>
+        <p class="dim"><%= donation.status.humanize %><% if donation.pickup_window.present? %> · <%= donation.pickup_window %><% end %></p>
+        <% if donation.notes.present? %><p><%= donation.notes %></p><% end %>
+      </article>
+    <% end %>
+  </div>
+<% else %>
+  <div class="empty"><p>No donations yet.</p></div>
+<% end %>
