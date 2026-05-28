@@ -529,7 +529,7 @@ function startEverything() {
   if (actx && actx.state === 'suspended') actx.resume();
   let li = 0;
   const postEl = Object.assign(document.createElement('pre'), {
-    style: 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:8px "Silkscreen",monospace;color:#fff;text-align:left;white-space:pre;pointer-events:none;z-index:10'
+    style: 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:12px "Roboto Mono",monospace;color:#fff;text-align:left;white-space:pre;pointer-events:none;z-index:10'
   });
   primer.appendChild(postEl);
   const tick = () => {

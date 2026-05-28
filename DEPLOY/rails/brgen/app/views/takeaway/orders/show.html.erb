@@ -26,7 +26,7 @@
   <% @order.order_items.includes(:menu_item).each do |order_item| %>
     <article>
       <strong><%= order_item.menu_item.name %></strong> × <%= order_item.quantity %>
-      <span class="dim" style="float:right"><%= order_item.subtotal_display %></span>
+      <span class="dim item-subtotal"><%= order_item.subtotal_display %></span>
     </article>
   <% end %>
 </section>
