@@ -3,8 +3,11 @@
 module Master
   module Now
   module Routing
-    # Maps (intent, context) to a risk tier that governs model selection and
+    # Maps (intent, touches) to a risk tier governing model selection and
     # council requirements. Tiers: :low < :medium < :high < :critical.
+    # Accepts an optional graph: (Master::Ground::EvidenceGraph) to elevate
+    # tier based on cluster blast radius — files referenced by many clusters
+    # carry higher blast radius and warrant stricter review.
     class RiskClassifier
       TIERS = %i[low medium high critical].freeze
 
@@ -25,14 +28,21 @@ module Master
         /\btest\/\b|\bspec\/\b/i => :low
       }.freeze
 
-      def self.call(intent: nil, touches: [])
-        new.call(intent:, touches:)
+      # Files referenced by this many clusters get tier elevation.
+      BLAST_THRESHOLDS = [[5, :high], [3, :medium]].freeze
+
+      def self.call(intent: nil, touches: [], graph: nil)
+        new(graph:).call(intent:, touches:)
+      end
+
+      def initialize(graph: nil)
+        @graph = graph
       end
 
       def call(intent: nil, touches: [])
-        path_tier = path_tier_for(Array(touches))
-        intent_tier = intent_tier_for(intent)
-        [path_tier, intent_tier].compact.max_by { |t| TIERS.index(t) } || :medium
+        paths = Array(touches)
+        tiers = [path_tier_for(paths), blast_tier_for(paths), intent_tier_for(intent)]
+        tiers.compact.max_by { |t| TIERS.index(t) } || :medium
       end
 
       private
@@ -47,11 +57,19 @@ module Master
       def path_tier_for(paths)
         return nil if paths.empty?
         paths.filter_map do |path|
-          PATH_OVERRIDES.each do |re, tier|
-            return tier if re.match?(path.to_s)
-          end
+          PATH_OVERRIDES.each { |re, tier| return tier if re.match?(path.to_s) }
           nil
         end.max_by { |t| TIERS.index(t) }
+      end
+
+      def blast_tier_for(paths)
+        return nil if @graph.nil? || paths.empty?
+        paths.filter_map do |path|
+          count = @graph.clusters_for_file(path.to_s).size
+          BLAST_THRESHOLDS.find { |threshold, _| count >= threshold }&.last
+        end.max_by { |t| TIERS.index(t) }
+      rescue StandardError
+        nil
       end
     end
   end
