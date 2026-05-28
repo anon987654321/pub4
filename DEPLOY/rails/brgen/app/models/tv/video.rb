@@ -5,6 +5,7 @@ class Tv::Video < ApplicationRecord
   belongs_to :user
   has_many :view_events,   class_name: "Tv::ViewEvent", foreign_key: :tv_video_id, dependent: :destroy
   has_many :video_notes,   class_name: "Tv::VideoNote", foreign_key: :video_id, dependent: :destroy
+  has_many :comments,      class_name: "Tv::Comment", dependent: :destroy
   has_one_attached :video_file
   has_one_attached :thumbnail
 
