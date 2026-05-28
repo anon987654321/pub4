@@ -19,6 +19,13 @@ Rails.application.routes.draw do
     resources :comments, only: %i[create destroy]
   end
 
+  resources :donations
+  resources :boxes
+  resources :volunteers do
+    resources :shifts, only: %i[create]
+  end
+  resources :shifts, only: %i[index update]
+
   resources :users, only: %i[show]
 
   get 'manifest' => 'rails/pwa#manifest', as: :pwa_manifest
