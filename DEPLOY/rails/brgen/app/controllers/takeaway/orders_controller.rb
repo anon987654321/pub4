@@ -8,7 +8,7 @@ class Takeaway::OrdersController < Takeaway::BaseController
   end
 
   def show
-    @order = Current.user.takeaway_orders.find(params[:id])
+    @order = Current.user.takeaway_orders.includes(:restaurant, order_items: :menu_item).find(params[:id])
   end
 
   def new
@@ -34,8 +34,8 @@ class Takeaway::OrdersController < Takeaway::BaseController
   end
 
   def update
-    @order = Takeaway::Order.find(params[:id])
-    @order.advance_status! if @order.restaurant.user == Current.user
+    @order = Takeaway::Order.includes(:restaurant).find(params[:id])
+    @order.advance_status! if @order.restaurant.owner?(Current.user)
     redirect_to takeaway_order_path(@order)
   end
 
