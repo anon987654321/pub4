@@ -10,11 +10,17 @@ class HomeController < ApplicationController
     @food_listings = FoodListing.available.order(created_at: :desc).limit(20)
     @posts         = Post.recent.includes(:user, :category).limit(5)
     @resources     = Resource.verified.limit(20)
-    @mapbox_token  = ENV["MAPBOX_PUBLIC_TOKEN"].presence || Rails.application.credentials.dig(:mapbox, :public_token)
+    @mapbox_token  = mapbox_token
     @map_points    = map_points
   end
 
   private
+
+  def mapbox_token
+    ENV["MAPBOX_API_KEY"].presence ||
+      ENV["MAPBOX_PUBLIC_TOKEN"].presence ||
+      Rails.application.credentials.dig(:mapbox, :public_token)
+  end
 
   def map_points
     food_points + resource_points
