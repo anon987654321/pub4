@@ -57,7 +57,7 @@
       "inset:0",
       "width:100vw",
       "height:100vh",
-      "z-index:-1",
+      "z-index:1",
       "pointer-events:none",
       "mix-blend-mode:screen"
     ].join(";");
