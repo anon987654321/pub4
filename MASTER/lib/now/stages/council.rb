@@ -26,7 +26,15 @@ module Master
         return Result.ok(ctx) unless should_run?(ctx)
 
         payload = extract_payload(ctx)
-        result  = @deliberation.review(payload, context: ctx.message)
+        risk = Master::Now::Routing::RiskClassifier.call(
+          intent: ctx.respond_to?(:task_type) ? ctx.task_type&.to_sym : nil,
+          touches: Array(ctx.respond_to?(:touches) ? ctx.touches : [])
+        )
+        persona_names = Master::Judge::Council::Selector.for(
+          task: ctx.respond_to?(:task_type) ? ctx.task_type&.to_sym : nil,
+          risk:
+        )
+        result = @deliberation.review(payload, context: ctx.message, personas: persona_names)
         return result if result.err?
 
         feedback = result.value!

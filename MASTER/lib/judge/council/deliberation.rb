@@ -259,10 +259,12 @@ module Master
         Master::Result.ok(Array(history.last))
       end
 
-      def review(code, context: nil)
-        return Master::Result.err("council: no personas configured", category: :validation) if @personas.empty?
+      def review(code, context: nil, personas: nil)
+        active = personas ? @personas.select { |p| personas.include?(p.name) } : @personas
+        active = @personas if active.empty?
+        return Master::Result.err("council: no personas configured", category: :validation) if active.empty?
 
-        feedback = @mode == :sequential ? collect_sequential(code, context) : collect_parallel(code, context)
+        feedback = @mode == :sequential ? collect_sequential(code, context, active) : collect_parallel(code, context, active)
         effective_quorum = [MIN_QUORUM, @personas.size].min
         if feedback.size < effective_quorum
           @bus&.publish(:council_timeout, completed: feedback.size, total: @personas.size)
@@ -283,14 +285,14 @@ module Master
       private
 
       # Parallel fan-out — all personas in flight at once, bounded by MAX_CONCURRENT.
-      def collect_parallel(code, context)
+      def collect_parallel(code, context, personas = @personas)
         return [] if circuit_open?
         slots = Mutex.new
         available = MAX_CONCURRENT
         ready = ConditionVariable.new
 
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
-        threads = @personas.map do |persona|
+        threads = personas.map do |persona|
           Thread.new do
             slots.synchronize { ready.wait(slots) until available > 0; available -= 1 }
             begin
@@ -307,10 +309,10 @@ module Master
       # Slower than parallel but lets personas react to each other rather than
       # all speaking in isolation. Use when reactions and rebuttals matter more
       # than independent reads.
-      def collect_sequential(code, context)
+      def collect_sequential(code, context, personas = @personas)
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
         acc = []
-        @personas.each do |persona|
+        personas.each do |persona|
           break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
           break if circuit_open?
           turn_ctx = acc.empty? ? context : "#{context}\n\nprior turns:\n#{format_prior_turns(acc)}"
