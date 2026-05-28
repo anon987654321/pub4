@@ -1,0 +1,11 @@
+<% content_for :title, "New donation" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Donation intake</p>
+    <h1>New donation</h1>
+  </div>
+  <%= link_to "All donations", donations_path, class: "btn btn-ghost" %>
+</div>
+
+<%= render "form", donation: @donation %>
