@@ -1,12 +1,20 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
 
 class RuntimeHardeningTest < Minitest::Test
+  FakeConfig = Struct.new(:model) do
+    def [](key)
+      key.to_s == "model" ? model : nil
+    end
+  end
+
   def test_execute_propagates_handler_error
     stage = Master::Now::Stages::Execute.new
     err = Master::Result.err("boom", category: :provider_error)
-    result = stage.call(handler: ->(_ctx) { err })
+    ctx = Master::Now::PipelineContext.build(user_message: "test", handler: ->(_ctx) { err })
+    result = stage.call(ctx)
 
     assert_instance_of Master::Result::Err, result
     assert_equal :provider_error, result.category
@@ -44,6 +52,37 @@ class RuntimeHardeningTest < Minitest::Test
       assert_instance_of Master::Result::Err, second
       assert_equal :provider_error, second.category
       assert_equal "upstream", second.message
+    end
+  end
+
+  def test_model_router_uses_provider_health_to_avoid_unhealthy_primary
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "models.yml"), <<~YAML)
+        routing:
+          enabled: true
+        weights:
+          quality: 1.0
+          speed: 1.0
+          cost: 1.0
+        routes:
+          exploration: cheap
+          fallback_default: cheap
+        models:
+          cheap:
+            - id: flaky-free
+              score: { quality: 1.0, speed: 1.0, cost: 1.0 }
+            - id: steady-free
+              score: { quality: 0.8, speed: 1.0, cost: 1.0 }
+      YAML
+      health = Master::Now::Routing::ProviderHealth.new(path: File.join(dir, "provider_health.ndjson"))
+      4.times { health.record(model: "flaky-free", status: :provider_error) }
+
+      router = Master::Now::Routing::ModelRouter.new(
+        config: FakeConfig.new("fallback-model"), root: dir, provider_health: health
+      )
+
+      assert_equal "steady-free", router.preferred(task_type: :exploration)
     end
   end
 end

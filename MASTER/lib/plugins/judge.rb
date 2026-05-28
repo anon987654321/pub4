@@ -24,7 +24,9 @@ module Master
       deps         = Master::Judge::Agent::Dependencies.from_kwargs(
         config: infra[:config], session: infra[:session], tools:,
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus,
-        model_router: Master::Now::Routing::ModelRouter.new(config: infra[:config]),
+        model_router: Master::Now::Routing::ModelRouter.new(
+          config: infra[:config], provider_health: infra[:provider_health]
+        ),
         reasoning_modes: Master::Judge::Modes.new,
         memory: infra[:memory], personality: infra[:personality],
         code_index: infra[:code_index], homeostat: infra[:homeostat]

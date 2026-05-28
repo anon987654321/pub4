@@ -38,8 +38,11 @@ module Master
       )
       cache = Master::Reach::SemanticCache.new(root:, ttl: config["cache_ttl"], event_bus: bus)
       mcp   = Master::Reach::McpCoordinator.new(root:, event_bus: bus)
+      provider_health = Master::Now::Routing::ProviderHealth.new(
+        path: File.join(root, "runtime", "telemetry", "provider_health.ndjson")
+      )
       mcp.connect_all
-      { breaker:, cache:, mcp: }
+      { breaker:, cache:, mcp:, provider_health: }
     end
 
     def self.build_tools(root:, infra:)

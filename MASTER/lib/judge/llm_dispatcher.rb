@@ -13,6 +13,7 @@ module Master
       CACHE_WRITE_RATIO = 1.25
       CACHE_WINDOW = 4
       REACT_MAX_STEPS = 8
+      MS_PER_SECOND = 1000
       CLAUDE_RE = /\Aclaude-|anthropic\/claude/i.freeze
       NEMOTRON3_RE = /nemotron-3/i.freeze
       LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
@@ -60,14 +61,19 @@ module Master
 
       def send_with_cache(selected_model, messages, system: nil, stream: false, &blk)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model)
-        breaker_for(selected_model).call(estimate_cost(messages.last[:content])) {
-          @cache.fetch(cache_key, selected_model) {
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
+          @cache.fetch(cache_key, selected_model) do
             send_llm_request(selected_model, messages, system:, stream:, &blk)
-          }
-        }
+          end
+        end
+        record_provider_result(selected_model, result, started)
+        result
       rescue Reach::CircuitBreaker::CircuitError => err
+        record_provider_outcome(selected_model, err.category, latency_ms: elapsed_ms(started), error: err.message)
         Result.err(redact_secrets(err.message), category: err.category)
       rescue StandardError => err
+        record_provider_outcome(selected_model, :llm_call_failure, latency_ms: elapsed_ms(started), error: err.message)
         return Result.err(Master.no_api_key_message, category: :no_api_key) if missing_key_error?(err)
         Result.err(redact_secrets(err.message.to_s), category: :llm_call_failure)
       end
@@ -275,6 +281,37 @@ module Master
 
       def estimate_cost(prompt)
         Master::Trace::Session.estimate_tokens(prompt) * COST_PER_TOKEN
+      end
+
+      def elapsed_ms(started)
+        ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * MS_PER_SECOND).round
+      end
+
+      def record_provider_result(model, result, started)
+        latency_ms = elapsed_ms(started)
+        if Result.wrap(result).ok?
+          record_provider_outcome(model, :success, latency_ms:)
+        else
+          record_provider_outcome(model, failure_status(result), latency_ms:,
+                                  error: result.respond_to?(:message) ? result.message : result.to_s)
+        end
+      end
+
+      def failure_status(result)
+        cat = result.respond_to?(:category) ? result.category : :provider_error
+        case cat
+        when :rate_limit then :rate_limit
+        when :timeout then :timeout
+        when :budget then :quota_exceeded
+        when :provider_error then :provider_error
+        else :failure
+        end
+      end
+
+      def record_provider_outcome(model, status, latency_ms: nil, error: nil)
+        @model_router&.record_provider_outcome(model:, status:, latency_ms:, error:)
+      rescue StandardError => e
+        @bus&.publish("provider_health:record_error", model:, error: e.message)
       end
 
       def llm_tools(selected_model)

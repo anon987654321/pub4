@@ -15,9 +15,10 @@ module Master
       ESCALATION_CHAIN = %w[cheap default strong].freeze
       DEFAULT_THRESHOLD = 0.3
 
-      def initialize(config:, root: Master::ROOT)
+      def initialize(config:, root: Master::ROOT, provider_health: nil)
         @config = config
         @root = root
+        @provider_health = provider_health
         @rules = load_rules
       end
 
@@ -28,7 +29,8 @@ module Master
         candidates = @rules.dig("models", tier).to_a
         return @config.model if candidates.empty?
 
-        best = candidates.max_by { |m| weighted_score(m["score"] || {}) }
+        best = healthy(candidates).max_by { |m| effective_score(m) }
+        best ||= candidates.max_by { |m| effective_score(m) }
         best["id"] || @config.model
       end
 
@@ -37,7 +39,8 @@ module Master
 
         pref = preferred(task_type:)
         all = @rules.fetch("models", {}).values.flat_map { |tier| tier.filter_map { |m| m["id"] } }
-        ([pref] + all + continuity_models + [@config.model]).uniq
+        chain = ([pref] + all + continuity_models + [@config.model]).uniq
+        @provider_health ? @provider_health.rank(chain) : chain
       end
 
       def continuity_models
@@ -63,7 +66,7 @@ module Master
         candidates = @rules.dig("models", tier).to_a
         return preferred(task_type:) if candidates.empty?
 
-        candidates.max_by { |m| weighted_score(m["score"] || {}) }&.dig("id") || preferred(task_type:)
+        healthy(candidates).max_by { |m| effective_score(m) }&.dig("id") || preferred(task_type:)
       end
 
       def escalate_if_low_confidence(response, current_model:, task_type: :exploration)
@@ -82,10 +85,10 @@ module Master
         min_quality = constraint.fetch("min_quality", 0.0).to_f
         preferred_tier = constraint.fetch("preferred_tier", "strong")
         candidates = @rules.dig("models", preferred_tier).to_a
-        qualified = candidates.select { |m| m.dig("score", "quality").to_f >= min_quality }
+        qualified = healthy(candidates).select { |m| m.dig("score", "quality").to_f >= min_quality }
         return preferred if qualified.empty?
 
-        qualified.max_by { |m| weighted_score(m["score"] || {}) }&.dig("id") || preferred
+        qualified.max_by { |m| effective_score(m) }&.dig("id") || preferred
       end
 
       def tier_for_model(model_id)
@@ -129,6 +132,12 @@ module Master
         }.sort_by { |x| -x[:total] }
       end
 
+      def record_provider_outcome(model:, status:, latency_ms: nil, error: nil)
+        @provider_health&.record(model:, status:, latency_ms:, error:)
+      rescue StandardError
+        nil
+      end
+
       INTENT_PATTERNS = {
         code_generation: /\b(implement|build|add|create|write|make|generate|scaffold|port|wire)\b/i,
         refactoring: /\b(refactor|rename|clean ?up|simplify|extract|inline|dedup|consolidate|tidy)\b/i,
@@ -160,7 +169,27 @@ module Master
         @rules.dig("routing", "enabled") != false
       end
 
-      def weighted_score(score)
+def healthy(models)
+  models.reject { |m| unhealthy?(m["id"]) }
+end
+
+def effective_score(model)
+  weighted_score(model["score"] || {}) * health_score(model["id"])
+end
+
+def health_score(model_id)
+  @provider_health ? @provider_health.score(model_id) : 1.0
+rescue StandardError
+  1.0
+end
+
+def unhealthy?(model_id)
+  @provider_health&.unhealthy?(model_id)
+rescue StandardError
+  false
+end
+
+def weighted_score(score)
         weights = @rules.fetch("weights", {})
         qw = [weights.fetch("quality", 1.0).to_f, 0.01].max
         sw = [weights.fetch("speed", 1.0).to_f, 0.01].max
