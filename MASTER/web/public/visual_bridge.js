@@ -39,6 +39,8 @@
 
     return mapped;
   }
+  // Note: EVENT_MAP is duplicated from data/topologies.yml event_classifier.
+  // Prefer window.MASTERTopology.classifyEvent when available (see topology_registry).
 
   function emitVisual(name, detail = {}) {
     state.lastEventAt = performance.now();

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../now/stages/trivial"
+
 module Master
   module Plugins
   module Now

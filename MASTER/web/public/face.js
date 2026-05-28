@@ -69,10 +69,29 @@ function resize() {
   if (!renderer) return;
   W = window.innerWidth; H = window.innerHeight;
   DPR = Math.min(window.devicePixelRatio || 1, State.coarsePointer ? 1.25 : 2);
-  renderer.setPixelRatio(DPR);
-  renderer.setSize(W, H, false);
-  camera.aspect = W / H;
+
+  // Low internal render resolution + CSS upscale (topologies.yml + visual_clusters spec).
+  // The Three canvas will render at modest internal size; browser + pixelated CSS does the integer scale.
+  const limits = window.MASTER_VISUAL_LIMITS || {};
+  const isReduced = State.reducedMotion || (limits.reducedMotionParticles && limits.reducedMotionParticles < 100);
+  let internalW = W;
+  let internalH = H;
+  if (isReduced) {
+    internalW = Math.min(640, Math.floor(W * 0.6));
+    internalH = Math.min(360, Math.floor(H * 0.6));
+  } else if (W * H > 1200000) {
+    internalW = Math.floor(W * 0.75);
+    internalH = Math.floor(H * 0.75);
+  }
+
+  renderer.setPixelRatio(1); // we control internal size manually
+  renderer.setSize(internalW, internalH, false);
+  camera.aspect = internalW / internalH;
   camera.updateProjectionMatrix();
+
+  // Ensure the canvas element itself is styled for crisp upscale (already in CSS)
+  const cv = renderer.domElement;
+  if (cv) cv.style.imageRendering = "pixelated";
 }
 window.addEventListener('resize', resize, { passive: true });
 
@@ -157,6 +176,23 @@ for (let i = 0; i < VERT_COUNT; i++) {
   }
 }
 
+// Semantic driver pools per data/topologies.yml face cell_rules + data/ops/visual.yml limits.
+// Respect MASTER_VISUAL_LIMITS and reducedMotion for battery/coarse profiles.
+let mouthPool = null;
+let eyePool = null;
+if (window.ParticleKernel) {
+  const K = window.ParticleKernel;
+  const limits = window.MASTER_VISUAL_LIMITS || { maxParticles: 200, reducedMotionParticles: 64 };
+  const isReduced = State?.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cap = isReduced ? limits.reducedMotionParticles : Math.min(48, limits.maxParticles);
+  const mouthCount = Math.max(4, Math.floor(cap * 0.25));
+  const eyeCount = Math.max(3, Math.floor(cap * 0.15));
+  mouthPool = K.createPool(mouthCount);
+  eyePool = K.createPool(eyeCount);
+  for (let i = 0; i < Math.floor(mouthCount * 0.6); i++) K.spawn(mouthPool, 0, 0, { kind: 2, zone: 1, confidence: 0.85, arousal: 0.1, attention: 0.6, decay: 0.12 });
+  for (let i = 0; i < Math.floor(eyeCount * 0.6); i++) K.spawn(eyePool, 0, 0, { kind: 1, zone: 0, confidence: 0.9, arousal: 0.2, attention: 0.7, decay: 0.03 });
+}
+
 function makeSprite() {
   const c = document.createElement('canvas');
   c.width = c.height = 64;
@@ -239,17 +275,41 @@ function frame(t) {
   const visOpen = (State.viseme === 'A' || State.viseme === 'O' || State.viseme === 'U') ? 1.0
                 : (State.viseme === 'I' || State.viseme === 'E') ? 0.45
                 : (State.viseme === 'M') ? 0.05 : 0.0;
+
+  // Kernel cells now drive expression (data/topologies.yml face.cell_rules + visual_clusters migration).
+  // mouthPool: kind=speech (fast decay); eyePool: kind=focus (slow decay). Values feed displacement.
+  let mouthDrive = visAmp;
+  let eyeJitter = 0.02;
+  if (mouthPool) {
+    window.ParticleKernel.step(mouthPool, 0.016);
+    let sum = 0, n = 0;
+    for (let i = 0; i < mouthPool.count; i++) {
+      if (mouthPool.alive[i]) { sum += mouthPool.cells[i * window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.arousal]; n++; }
+    }
+    if (n > 0) mouthDrive = Math.max(visAmp, sum / n);
+    window.ParticleKernel.compact(mouthPool);
+  }
+  if (eyePool) {
+    window.ParticleKernel.step(eyePool, 0.016);
+    let sum = 0, n = 0;
+    for (let i = 0; i < eyePool.count; i++) {
+      if (eyePool.alive[i]) { sum += eyePool.cells[i * window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.attention]; n++; }
+    }
+    if (n > 0) eyeJitter = 0.01 + (sum / n) * 0.04;
+    window.ParticleKernel.compact(eyePool);
+  }
+
   for (let i = 0; i < VERT_COUNT; i++) {
     const i3 = i * 3;
     let hx = vertHome[i3], hy = vertHome[i3+1], hz = vertHome[i3+2];
     if (mouthMask[i]) {
-      const open = visOpen * visAmp;
+      const open = visOpen * mouthDrive;
       hy -= open * 0.05;
       hz += open * 0.04;
     }
-    if (eyeMask[i] && !State.reducedMotion && Math.random() < 0.02) {
-      vertVel[i3]   += (Math.random() - 0.5) * 0.004;
-      vertVel[i3+1] += (Math.random() - 0.5) * 0.004;
+    if (eyeMask[i] && !State.reducedMotion && Math.random() < eyeJitter) {
+      vertVel[i3]   += (Math.random() - 0.5) * (eyeJitter * 0.2);
+      vertVel[i3+1] += (Math.random() - 0.5) * (eyeJitter * 0.2);
     }
     const sx = vertVel[i3]   = vertVel[i3]   * 0.9 + (hx - vPos[i3])   * 0.18;
     const sy = vertVel[i3+1] = vertVel[i3+1] * 0.9 + (hy - vPos[i3+1]) * 0.18;
@@ -368,11 +428,20 @@ function ttsTick() {
     const c = (text.charAt(ev.charIndex || 0) || '').toLowerCase();
     State.viseme = VOWEL_VISEME[c] || (('mbpfwv'.indexOf(c) >= 0) ? 'M' : 'E');
     State.visemeAmp = 1.0;
+    // Push speech energy into the kernel cells (topologies.yml mouth: kind speech).
+    if (mouthPool) {
+      for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+        const base = i * window.ParticleKernel.FIELDS_PER_CELL;
+        mouthPool.cells[base + window.ParticleKernel.FIELD.arousal] = 1.0;
+        mouthPool.cells[base + window.ParticleKernel.FIELD.pressure] = 0.8;
+      }
+    }
   };
   u.onend = () => {
     tts.playing = false; tts.current = null;
     State.viseme = 'neutral'; State.visemeAmp = 0;
     if (State.mode === 'speaking') State.mode = 'idle';
+    // Let kernel cells decay naturally (fast decay on mouth pool).
     ttsTick();
   };
   u.onerror = u.onend;
@@ -382,6 +451,8 @@ function ttsSkip() {
   try { speechSynthesis.cancel(); } catch (_) {}
   tts.queue.length = 0; tts.playing = false; tts.current = null;
   State.viseme = 'neutral'; State.visemeAmp = 0;
+  // Reset driver cells on skip (preserves fast-decay intent from topologies.yml).
+  if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) mouthPool.cells[i * window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.arousal] = 0.05;
 }
 function ttsToggleMute() {
   tts.muted = !tts.muted;
@@ -573,6 +644,24 @@ document.addEventListener('keydown', (e) => {
 });
 
 window.sendMessage = sendMessage;
+
+// Semantic reaction (item from topologies.yml emotional_mapping + visual_clusters).
+// High entropy or veto/pressure events from the bridge visibly stress the kernel face cells
+// (mouth pressure up, eye confidence down) — new observable "tension" on the constitutional face.
+window.addEventListener('master:visual', (ev) => {
+  const d = ev.detail || {};
+  if (!mouthPool || !eyePool) return;
+  if ((d.entropy || 0) > 0.6 || d.mode === 'veto' || /veto|error|failure|pressure/.test(d.name || '')) {
+    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * window.ParticleKernel.FIELDS_PER_CELL;
+      mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] || 0) + 0.6);
+    }
+    for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
+      const b = i * window.ParticleKernel.FIELDS_PER_CELL;
+      eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] || 0.9) - 0.3);
+    }
+  }
+});
 
 resize();
 if (renderer) requestAnimationFrame(frame);

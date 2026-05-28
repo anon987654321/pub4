@@ -1,5 +1,7 @@
 // Pixel Field topology registry. Names every renderable topology and the
-// canonical event bus. Source of truth: data/topologies.yml.
+// canonical event bus. Source of truth: data/topologies.yml (SINGULARITY).
+// EVENT_CLASSIFIER and TOPOLOGIES below are currently duplicated from the yml.
+// Temporary until a loader or generator is added in a later sweep.
 // Renderers ask the registry which topology owns an event; visual_bridge.js
 // reflects topology changes to document.dataset.masterTopology.
 
