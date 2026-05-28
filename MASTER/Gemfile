@@ -21,8 +21,6 @@ gem "pastel", "~> 0.8"
 gem "rouge", "~> 4.4"
 gem "diffy", "~> 3.4"
 gem "zeitwerk", "~> 2.7"
-gem "sinatra", "~> 4.0"
-gem "sinatra-contrib", "~> 4.0"
 gem "rb-edge-tts", git: "https://github.com/ZPVIP/rb-edge-tts"
 
 group :test do
