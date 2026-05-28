@@ -1,9 +1,9 @@
 <article>
   <%= link_to tv_video_path(tv_video) do %>
     <% if tv_video.thumbnail.attached? %>
-      <%= image_tag tv_video.thumbnail %>
+      <%= image_tag tv_video.thumbnail, alt: tv_video.title, loading: "lazy" %>
     <% else %>
-      <span><%= tv_video.title[0] %></span>
+      <span aria-hidden="true"><%= tv_video.title[0] %></span>
     <% end %>
     <p><strong><%= tv_video.title %></strong></p>
     <small><%= tv_video.channel.name %> · <%= tv_video.views_count %> views · <%= tv_video.duration_formatted %></small>

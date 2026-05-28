@@ -41,7 +41,7 @@
 <section>
   <h2>Trending</h2>
   <%= render @trending %>
-  <%= @pagy_trending.series_nav if @pagy_trending&.pages.to_i > 1 %>
+  <%= pagy_nav(@pagy_trending) if @pagy_trending&.pages.to_i > 1 %>
 </section>
 
 <section>
