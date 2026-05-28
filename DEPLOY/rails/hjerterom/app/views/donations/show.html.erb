@@ -1,0 +1,19 @@
+<% content_for :title, @donation.source_name %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Donation</p>
+    <h1><%= @donation.source_name %></h1>
+  </div>
+  <%= link_to "All donations", donations_path, class: "btn btn-ghost" %>
+</div>
+
+<article id="<%= dom_id(@donation) %>">
+  <p class="dim">Status: <%= @donation.status.humanize %></p>
+  <p><strong>Pickup:</strong> <%= @donation.pickup_window.presence || "Not set" %></p>
+  <% if @donation.notes.present? %>
+    <p><%= @donation.notes %></p>
+  <% end %>
+</article>
+
+<%= render "form", donation: @donation %>
