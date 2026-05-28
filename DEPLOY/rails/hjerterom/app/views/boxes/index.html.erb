@@ -1,0 +1,24 @@
+<% content_for :title, "Boxes" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Weekly support boxes</p>
+    <h1>Boxes</h1>
+  </div>
+  <%= link_to "New box", new_box_path, class: "btn btn-primary" %>
+</div>
+
+<% if @boxes.any? %>
+  <%= turbo_stream_from "hjerterom:boxes" %>
+  <div id="boxes">
+    <% @boxes.each do |box| %>
+      <article id="<%= dom_id(box) %>">
+        <h2><%= link_to box.week_start, box %></h2>
+        <p class="dim"><%= box.status.humanize %></p>
+        <% if box.notes.present? %><p><%= box.notes %></p><% end %>
+      </article>
+    <% end %>
+  </div>
+<% else %>
+  <div class="empty"><p>No boxes planned.</p></div>
+<% end %>
