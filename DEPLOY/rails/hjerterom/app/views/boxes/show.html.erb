@@ -1,0 +1,17 @@
+<% content_for :title, "Box #{@box.week_start}" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Support box</p>
+    <h1>Box <%= @box.week_start %></h1>
+  </div>
+  <%= link_to "All boxes", boxes_path, class: "btn btn-ghost" %>
+</div>
+
+<article id="<%= dom_id(@box) %>">
+  <p class="dim">Status: <%= @box.status.humanize %></p>
+  <% if @box.beneficiary_id.present? %><p><strong>Beneficiary:</strong> #<%= @box.beneficiary_id %></p><% end %>
+  <% if @box.notes.present? %><p><%= @box.notes %></p><% end %>
+</article>
+
+<%= render "form", box: @box %>
