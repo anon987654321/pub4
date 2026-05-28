@@ -17,13 +17,6 @@ gem "solid_queue"
 gem "solid_cache"
 gem "solid_cable"
 
-# StimulusReflex stack
-gem "stimulus_reflex"
-gem "cable_ready"
-gem "kredis"
-gem "optimism"
-gem "futurism"
-
 # Authentication
 gem "bcrypt", "~> 3.1"
 

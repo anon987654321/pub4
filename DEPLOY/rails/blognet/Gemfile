@@ -62,9 +62,3 @@ gem "pagy"
 gem "friendly_id"
 gem "falcon"
 
-# StimulusReflex stack
-gem "stimulus_reflex"
-gem "cable_ready"
-gem "kredis"
-gem "optimism"
-gem "futurism"
