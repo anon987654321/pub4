@@ -22,6 +22,16 @@ Bundler.require(*Rails.groups)
 
 require_relative "../app/middleware/auth_tier"
 
+class ServiceWorkerNoCache
+  def initialize(app) = @app = app
+
+  def call(env)
+    status, headers, body = @app.call(env)
+    headers["Cache-Control"] = "no-cache, no-store, must-revalidate" if env["PATH_INFO"] == "/sw.js"
+    [status, headers, body]
+  end
+end
+
 module Web
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
@@ -42,6 +52,8 @@ module Web
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    config.middleware.insert_before ActionDispatch::Static, ServiceWorkerNoCache
 
     config.middleware.use(
       AuthTier,
