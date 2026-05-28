@@ -2,9 +2,8 @@
 # frozen_string_literal: true
 
 # Postpro.rb - Professional Cinematic Post-Processing
-# Version: 19.0.0 - Full Analog + Print/Defect physics (paper texture, dodgeburn artifacts,
-#   fixing bath fog, reticulation, expired film fog+clump, gate weave, lens ghosting,
-#   ortho film response, tilt-shift focus fall-off; 7 new presets)
+# Version: 20.0.0 - Photo quality research: adaptive contrast, filmic shoulder/toe,
+#   clarity (local contrast), edge-aware NR, selective sharpening; quality_uplift preset
 
 require "logger"
 require "json"
@@ -435,6 +434,9 @@ PRESETS = {
 
   haunted: { fx: %w[optical_blur expired_film reticulation fixing_bath_fog lens_ghosting gate_weave grain],
              stock: :kodachrome, temp: 4600, intensity: 0.90, age: 0.80 },
+
+  quality_uplift: { fx: %w[adaptive_contrast film_shoulder clarity edge_aware_nr selective_sharpen film_curve grain],
+                    stock: :kodak_portra, temp: 5600, intensity: 0.75 },
 }.freeze
 
 def halation_tint_for(stock)
@@ -1468,6 +1470,72 @@ rescue StandardError => e
   $logger.error "tilt_shift: #{e.message}"; image
 end
 
+# Adaptive contrast: histogram normalization blended at partial opacity.
+# Strongest single predictor of perceived photo quality in NIMA/AVA research.
+def adaptive_contrast(image, intensity = 0.70)
+  normalized = image.hist_norm
+  safe_cast(image * (1.0 - intensity * 0.55) + normalized * (intensity * 0.55))
+rescue StandardError => e
+  $logger.error "adaptive_contrast: #{e.message}"; image
+end
+
+# Filmic shoulder + toe: raised shadow floor + soft highlight rolloff.
+# Models the analog curve endpoints without stock-specific emulsion data.
+def film_shoulder(image, intensity = 0.75)
+  toe = intensity * 0.04 * 255.0
+  lifted = image.linear([1.0 - intensity * 0.04], [toe])
+  rolled = highlight_roll(lifted, (220 - (intensity * 20).to_i), intensity * 0.50)
+  safe_cast(rolled)
+rescue StandardError => e
+  $logger.error "film_shoulder: #{e.message}"; image
+end
+
+# Clarity: medium-radius unsharp on Lab L channel only — local contrast "3D pop"
+# without hue shift or color fringing.
+def clarity(image, radius = 15, intensity = 0.65)
+  lab = image.colourspace("lab")
+  l = lab.extract_band(0)
+  a_ch = lab.extract_band(1)
+  b_ch = lab.extract_band(2)
+  detail = l - l.gaussblur(radius)
+  l_new = l + detail.linear([intensity * 0.40], [0.0])
+  safe_cast(Vips::Image.bandjoin([l_new, a_ch, b_ch]).colourspace("srgb"))
+rescue StandardError => e
+  $logger.error "clarity: #{e.message}"; image
+end
+
+# Edge-aware noise reduction: smooth flat areas, preserve edges.
+# Approximated as luminance-masked Gaussian — clean base before film grain is added.
+def edge_aware_nr(image, strength = 0.60)
+  blurred = image.gaussblur(1.5 + strength * 2.0)
+  quick = image.gaussblur(1.5)
+  edge_diff = (image - quick) + (quick - image)
+  edge_luma = edge_diff.extract_band(0) * 0.299 +
+              edge_diff.extract_band(1) * 0.587 +
+              edge_diff.extract_band(2) * 0.114
+  mask = (edge_luma > (12.0 * (1.0 - strength * 0.5))).ifthenelse(1, 0)
+  mask3 = mask.bandjoin([mask, mask])
+  safe_cast(image * mask3 + blurred * mask3.linear([-1.0], [1.0]))
+rescue StandardError => e
+  $logger.error "edge_aware_nr: #{e.message}"; image
+end
+
+# Selective sharpening: high-pass at σ=1.2, applied only at high-edge regions.
+# Lifts perceived acuity at detail without amplifying noise in smooth areas.
+def selective_sharpen(image, intensity = 0.70)
+  blurred = image.gaussblur(1.2)
+  detail = image - blurred
+  edge_diff = detail + (blurred - image)
+  edge_luma = edge_diff.extract_band(0) * 0.299 +
+              edge_diff.extract_band(1) * 0.587 +
+              edge_diff.extract_band(2) * 0.114
+  mask = (edge_luma > 8).ifthenelse(1, 0)
+  mask3 = mask.bandjoin([mask, mask])
+  safe_cast(image + detail * mask3 * (intensity * 0.55))
+rescue StandardError => e
+  $logger.error "selective_sharpen: #{e.message}"; image
+end
+
 def teal_orange(image, intensity = 1.0)
   protected = skin_protect(image, 0.8)
   r, g, b = protected.bandsplit
@@ -1650,6 +1718,11 @@ def preset(image, name)
              when "lens_ghosting"       then lens_ghosting(result, p[:intensity] * 0.35)
              when "ortho_film"          then ortho_film(result, p[:intensity] * 0.80)
              when "tilt_shift"          then tilt_shift(result, p[:intensity] * 0.70)
+             when "adaptive_contrast"   then adaptive_contrast(result, p[:intensity] * 0.70)
+             when "film_shoulder"       then film_shoulder(result, p[:intensity] * 0.75)
+             when "clarity"             then clarity(result, 15, p[:intensity] * 0.65)
+             when "edge_aware_nr"       then edge_aware_nr(result, p[:intensity] * 0.55)
+             when "selective_sharpen"   then selective_sharpen(result, p[:intensity] * 0.65)
              else result
              end
     result = result.copy_memory
@@ -1765,6 +1838,7 @@ RECIPE_ALLOWED = %w[
   film_curl_vignette selenium_tone dye_fade darkroom_print film_base_density
   paper_texture dodgeburn_artifacts fixing_bath_fog reticulation expired_film
   gate_weave lens_ghosting ortho_film tilt_shift
+  adaptive_contrast film_shoulder clarity edge_aware_nr selective_sharpen
 ].freeze
 
 def recipe(image, recipe_data)
@@ -2048,7 +2122,7 @@ def run_random
   uplift_presets = %i[portrait cinematic magic_hour blockbuster golden_age reversal
                       warmth noir masterpiece anamorphic aged_kodachrome analog_scan
                       cinema_scan nitrate fiber_print expired reticulated ortho
-                      tilt_shift_look haunted]
+                      tilt_shift_look haunted quality_uplift]
 
   files.each_with_index do |file, index|
     $cli_logger.info "#{index + 1}/#{files.count}: #{File.basename(file)}"
