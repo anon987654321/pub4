@@ -24,8 +24,10 @@ class Takeaway::OrdersController < Takeaway::BaseController
       next unless item
       @order.order_items.build(menu_item: item, quantity: qty.to_i, unit_price_cents: item.price_cents)
     end
-    if @order.save
-      @order.calculate_totals!
+    saved = ActiveRecord::Base.transaction do
+      @order.save ? @order.calculate_totals! && true : false
+    end
+    if saved
       redirect_to takeaway_order_path(@order), notice: "Order placed"
     else
       @menu_items = @restaurant.menu_items.available

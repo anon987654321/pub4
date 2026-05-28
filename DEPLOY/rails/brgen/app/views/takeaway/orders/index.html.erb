@@ -5,7 +5,7 @@
 <% @orders.each do |o| %>
   <article>
     <h2><%= link_to o.restaurant.name, takeaway_order_path(o) %></h2>
-    <p class="dim"><%= o.status %> · <%= o.total_display %> · <time><%= o.created_at.strftime("%d %b %Y") %></time></p>
+    <p class="dim"><%= o.status.humanize %> · <%= o.total_display %> · <time><%= o.created_at.strftime("%d %b %Y") %></time></p>
   </article>
 <% end %>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
