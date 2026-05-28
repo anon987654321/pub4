@@ -51,14 +51,19 @@ matchMedia('(pointer: coarse)').addEventListener('change', event => {
 });
 document.addEventListener('visibilitychange', updateRuntimeProfile, { passive: true });
 
-const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: true, powerPreference: 'low-power' });
-renderer.setClearColor(0x000000, 1);
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, powerPreference: 'low-power' });
+  renderer.setClearColor(0x000000, 1);
+} catch (_) {}
+if (!renderer) { primer.textContent = 'webgl unavailable'; }
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
 camera.position.set(0, 0, 4.6);
 
 let W = 0, H = 0, DPR = 1;
 function resize() {
+  if (!renderer) return;
   W = window.innerWidth; H = window.innerHeight;
   DPR = Math.min(window.devicePixelRatio || 1, State.coarsePointer ? 1.25 : 2);
   renderer.setPixelRatio(DPR);
@@ -196,7 +201,7 @@ head3.add(vertPoints);
 head3.add(edgePoints);
 
 function frame(t) {
-  if (State.hidden) {
+  if (!renderer || State.hidden) {
     lastT = t;
     requestAnimationFrame(frame);
     return;
@@ -567,4 +572,4 @@ document.addEventListener('keydown', (e) => {
 window.sendMessage = sendMessage;
 
 resize();
-requestAnimationFrame(frame);
+if (renderer) requestAnimationFrame(frame);
