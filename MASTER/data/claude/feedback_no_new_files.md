@@ -2,9 +2,9 @@
 name: no new files without approval
 description: Never create new files — always edit originals in place
 type: feedback
-originSessionId: 84fcf91d-46ea-43a5-8efa-3d33b065e6a5
+status: consolidated
+canonical: data/principles/feedback_no_new_files.md
 ---
-Always edit the original file directly. Never create intermediate files (local staging files, _fixed.rb copies, tmp patches) without explicit approval.
+**Consolidated.** This content is now maintained as single source in `data/principles/feedback_no_new_files.md`.
 
-**Why:** User explicitly said "write changes back into original files don't create new files ever without approval."
-**How to apply:** Use Edit tool on the actual file path, or write patch Ruby to /tmp on the VPS and run it in-place — but never create a local copy. The /tmp/patch.rb VPS pattern from CLAUDE.md is fine since it's a transient runner, not a persisted file.
+See the principles/ version for the current authoritative text. This file is kept only for historical session traceability.

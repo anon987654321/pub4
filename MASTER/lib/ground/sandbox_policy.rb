@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
+require_relative "policy"
+
 module Master
   module Ground
   module SandboxPolicy
+    include Policy
     DENY_PATTERNS = [
       /\brm\s+-rf\s+(?:\/|~|\$HOME)\b/,
       /\bsudo\b/,
@@ -60,8 +63,7 @@ module Master
     end
 
     def brief
-      "Sandbox policy: deny destructive/system commands, " \
-        "ask for pushes/deploy/db/reset, allow read-only git and test/lint commands."
+      Policy.brief("deny destructive/system commands, ask for pushes/deploy/db/reset, allow read-only git and test/lint")
     end
   end
   end
