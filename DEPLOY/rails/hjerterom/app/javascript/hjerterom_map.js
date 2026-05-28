@@ -15,15 +15,24 @@ function parsePoints(raw) {
   }
 }
 
+function logoClone(className) {
+  const template = document.getElementById("hjerterom-logo-template");
+  const wrap = document.createElement("span");
+  wrap.className = className;
+
+  if (!template) return wrap;
+
+  const logo = template.content.firstElementChild?.cloneNode(true);
+  if (logo) wrap.appendChild(logo);
+  return wrap;
+}
+
 function heartMarker(point) {
   const wrap = document.createElement("a");
   wrap.href = point.url || "#";
   wrap.className = `hjerterom-heart-marker hjerterom-heart-marker--${point.type || "resource"}`;
   wrap.setAttribute("aria-label", point.title || "Hjerterom punkt");
-  wrap.innerHTML = `
-    <span class="hjerterom-heart-marker__pulse"></span>
-    <span class="hjerterom-heart-marker__heart" aria-hidden="true"></span>
-  `;
+  wrap.appendChild(logoClone("hjerterom-heart-marker__logo"));
   return wrap;
 }
 
@@ -43,9 +52,7 @@ function fallbackMap(root, points) {
   canvas.innerHTML = "";
   canvas.classList.add("map-home__fallback");
 
-  const logo = document.createElement("div");
-  logo.className = "hjerterom-heart-logo";
-  logo.innerHTML = '<span class="hjerterom-heart-logo__pulse"></span><span class="hjerterom-heart-logo__heart"></span>';
+  const logo = logoClone("hjerterom-heart-logo");
 
   const list = document.createElement("div");
   list.className = "map-home__fallback-list";
