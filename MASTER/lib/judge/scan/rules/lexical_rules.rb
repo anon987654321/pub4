@@ -184,6 +184,50 @@ module Master
     description: "ASCII divider decorations" do |src, path:|
     scan_lines(src, /(?:^|\s)(?:={3,}|-{3,})(?:\s|$)/, message: "remove ASCII divider decorations")
   end
+
+  # Veto: UNFINISHED — block merge on incomplete placeholders (ROBUSTNESS).
+  RuleDSL.rule :UNFINISHED,
+    severity: :error, tags: %i[ROBUSTNESS COMPLETENESS],
+    description: "unfinished placeholder blocks merge" do |src, path:|
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    src.each_line.with_index(1).filter_map do |line, n|
+      stripped = line.strip
+      next if stripped.start_with?("#")
+      next unless stripped.match?(/\.\.\.|pending\b/) || stripped.match?(/\bTODO\b|\bFIXME\b/)
+      finding(line: n, message: "unfinished code — complete or track in issue before merging")
+    end
+  end
+
+  # Veto: UNSAFE_CALLS — flag shell interpolation as command injection risk (ROBUSTNESS).
+  RuleDSL.rule :UNSAFE_CALLS,
+    severity: :error, tags: %i[SECURITY ROBUSTNESS],
+    description: "shell interpolation in system/exec/Open3 is a command injection vector" do |src, path:|
+    src.each_line.with_index(1).filter_map do |line, n|
+      stripped = line.strip
+      next if stripped.start_with?("#")
+      next unless stripped.match?(/\bsystem\s*\(.*#\{/) ||
+                  stripped.match?(/\bexec\s*\(.*#\{/) ||
+                  stripped.match?(/%x\{.*#\{/) ||
+                  stripped.match?(/Open3\.capture[23]\s*\([^)]*#\{/)
+      finding(line: n, message: "shell interpolation — use arg-array form to prevent injection")
+    end
+  end
+
+  # Veto: RACE_CONDITIONS — bare check-then-set without synchronize (ROBUSTNESS).
+  RuleDSL.rule :RACE_CONDITIONS,
+    severity: :error, tags: %i[ROBUSTNESS CONCURRENCY],
+    description: "check-then-set without synchronize is a TOCTOU race" do |src, path:|
+    next [] unless path.to_s.end_with?(".rb")
+    lines = src.lines
+    lines.each_with_index.filter_map do |line, i|
+      next unless line.match?(/\bif\b.*\b(nil\?|empty\?|zero\?|blank\?)\b/) ||
+                  line.match?(/\bif\b.*==\s*nil\b/)
+      setter = lines[i + 1..]&.first(3)&.any? { |l| l.match?(/^\s+@\w+\s*=/) }
+      next unless setter
+      no_sync = !lines[0..i].last(10).any? { |l| l.match?(/synchronize|Mutex\.new|Monitor/) }
+      finding(line: i + 1, message: "check-then-set without synchronize — wrap in synchronize { }") if no_sync
+    end
+  end
   end
   end
   end

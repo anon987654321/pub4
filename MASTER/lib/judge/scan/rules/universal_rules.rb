@@ -171,6 +171,32 @@ module Master
     end
   end
 
+  # Bias: SIMULATION — future tense in output implies intent without evidence.
+  RuleDSL.rule :SIMULATION,
+    severity: :warning, tags: %i[ANTI_SIMULATION DENSITY],
+    description: "future tense implies without evidence — use indicative past" do |src, path:|
+    next [] unless path.to_s.end_with?(".rb", ".md", ".txt", ".erb")
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    src.each_line.with_index(1).filter_map do |line, n|
+      next if line.strip.start_with?("#")
+      next unless line.match?(/\b(will\s+\w+|would\s+\w+|let('s|\s+us)\s+\w+|I\s+will\s+|we\s+will\s+)/i)
+      finding(line: n, message: "simulation language — rewrite in indicative past or present tense")
+    end
+  end
+
+  # Bias: COMPLETION_THEATER — ellipsis/etc as placeholder outputs.
+  RuleDSL.rule :COMPLETION_THEATER,
+    severity: :error, tags: %i[ROBUSTNESS COMPLETENESS],
+    description: "ellipsis or etcetera as placeholder violates completeness" do |src, path:|
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    src.each_line.with_index(1).filter_map do |line, n|
+      stripped = line.strip
+      next if stripped.start_with?("#")
+      next unless stripped.match?(/\.\.\.\s*$/) || stripped.match?(/\betc\.?\b|\betcetera\b/i)
+      finding(line: n, message: "completion theater — implement or delete, never placeholder")
+    end
+  end
+
   RuleDSL.rule :SQL_INJECTION,
     severity: :error, tags: %i[SECURITY],
     description: "parameterize all SQL — never interpolate user input" do |src, path:|
