@@ -15,6 +15,10 @@ class Takeaway::Restaurant < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :popular, -> { order(rating: :desc) }
 
+  def owner?(account)
+    user_id == account&.id
+  end
+
   def delivery_fee_display
     format("%.2f NOK", delivery_fee_cents.to_i / CENTS_PER_KRONE)
   end
