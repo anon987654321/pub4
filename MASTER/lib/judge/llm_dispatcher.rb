@@ -100,7 +100,11 @@ module Master
 
       private
 
-      def system_prompt = @system_prompt_proc.call
+      def system_prompt
+        result = @system_prompt_proc.call
+        return result unless result.is_a?(Hash)
+        [result[:static], result[:dynamic]].compact.join("\n\n").then { |s| s.empty? ? nil : s }
+      end
 
       def send_llm_request(selected_model, messages, system: nil, stream: false, &blk)
         sys = system || system_prompt
@@ -265,11 +269,18 @@ module Master
       end
 
       def build_final_system(selected_model, sys)
-        base = nemotron_system_prompt(selected_model, sys)
-        return base unless base.is_a?(String) && claude_model?(selected_model)
-        RubyLLM::Content::Raw.new([
-          { type: "text", text: base, cache_control: { type: "ephemeral" } }
-        ])
+        return sys unless claude_model?(selected_model)
+        raw = @system_prompt_proc.call
+        if raw.is_a?(Hash) && raw[:static]
+          static_text = nemotron_system_prompt(selected_model, raw[:static])
+          blocks = [{ type: "text", text: static_text, cache_control: { type: "ephemeral" } }]
+          blocks << { type: "text", text: raw[:dynamic] } if raw[:dynamic]
+          RubyLLM::Content::Raw.new(blocks)
+        else
+          base = nemotron_system_prompt(selected_model, sys)
+          return base unless base.is_a?(String)
+          RubyLLM::Content::Raw.new([{ type: "text", text: base, cache_control: { type: "ephemeral" } }])
+        end
       end
 
       def cache_key_for(message, context, model = nil)

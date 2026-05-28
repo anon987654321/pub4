@@ -32,7 +32,7 @@ module Master
       @memory, @personality, @code_index = deps.memory, deps.personality, deps.code_index
       @context_window, @homeostat        = deps.context_window, deps.homeostat
       @constitution                      = nil
-      @dispatcher                        = Master::Judge::LLMDispatcher.new(deps:, system_prompt: -> { system_prompt })
+      @dispatcher                        = Master::Judge::LLMDispatcher.new(deps:, system_prompt: -> { { static: static_prompt, dynamic: dynamic_prompt } })
     end
 
     def wire_constitution(constitution) = @constitution = constitution
@@ -150,15 +150,23 @@ module Master
       @reasoning_modes.wrap(message, mode:)
     end
 
-    def system_prompt
+    def static_prompt
       parts = []
-      parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic
       parts << @constitution.system_prompt if @constitution && !@constitution.empty?
       parts << @personality.system_prompt if @personality
+      parts.compact.join("\n\n").then { |s| s.empty? ? nil : s }
+    end
+
+    def dynamic_prompt
+      parts = []
+      parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic
       parts << @code_index.summary if @code_index&.built?
       parts << @memory.context_summary if @memory&.context_summary
-      parts.compact!
-      parts.empty? ? nil : parts.join("\n\n")
+      parts.compact.join("\n\n").then { |s| s.empty? ? nil : s }
+    end
+
+    def system_prompt
+      [static_prompt, dynamic_prompt].compact.join("\n\n").then { |s| s.empty? ? nil : s }
     end
 
     def conversation_context(max_messages: DEFAULT_MESSAGE_WINDOW_SIZE)
