@@ -1,0 +1,24 @@
+<% content_for :title, @volunteer.name %>
+<article>
+  <h1><%= @volunteer.name %></h1>
+  <dl>
+    <% if @volunteer.email.present? %><dt>Email</dt><dd><%= mail_to @volunteer.email %></dd><% end %>
+    <% if @volunteer.phone.present? %><dt>Phone</dt><dd><%= @volunteer.phone %></dd><% end %>
+    <% if @volunteer.notes.present? %><dt>Notes</dt><dd><%= @volunteer.notes %></dd><% end %>
+  </dl>
+  <section>
+    <h2>Upcoming shifts</h2>
+    <% if @shifts.any? %>
+      <ul>
+        <% @shifts.each do |shift| %>
+          <li><%= shift.kind.humanize %> — <%= shift.starts_at.strftime("%b %-d, %H:%M") %>–<%= shift.ends_at.strftime("%H:%M") %> (<%= shift.state.humanize %>)</li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>No upcoming shifts.</p>
+    <% end %>
+    <% if authenticated? %>
+      <%= render "shifts/form", volunteer: @volunteer, shift: Shift.new %>
+    <% end %>
+  </section>
+</article>

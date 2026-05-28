@@ -1,0 +1,14 @@
+<%= form_with model: volunteer do |f| %>
+  <% if volunteer.errors.any? %>
+    <ul>
+      <% volunteer.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+    </ul>
+  <% end %>
+  <p><%= f.label :name %><%= f.text_field :name %></p>
+  <p><%= f.label :email %><%= f.email_field :email %></p>
+  <p><%= f.label :phone %><%= f.telephone_field :phone %></p>
+  <p><%= f.label :notes %><%= f.text_area :notes, rows: 3 %></p>
+  <p><%= f.submit %></p>
+<% end %>

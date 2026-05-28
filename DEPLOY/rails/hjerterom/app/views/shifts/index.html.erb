@@ -1,0 +1,16 @@
+<% content_for :title, "Shifts" %>
+<h1>Shifts</h1>
+<% if @shifts.any? %>
+  <ul>
+    <% @shifts.each do |shift| %>
+      <li>
+        <strong><%= shift.kind.humanize %></strong>
+        — <%= shift.starts_at.strftime("%b %-d, %H:%M") %>–<%= shift.ends_at.strftime("%H:%M") %>
+        (<%= shift.state.humanize %>)
+        <% if shift.volunteer %> · <%= link_to shift.volunteer.name, shift.volunteer %><% end %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No upcoming shifts.</p>
+<% end %>

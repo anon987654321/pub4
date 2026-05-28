@@ -1,0 +1,14 @@
+<% content_for :title, "Volunteers" %>
+<h1>Volunteers</h1>
+<% if @volunteers.any? %>
+  <ul>
+    <% @volunteers.each do |volunteer| %>
+      <li><%= link_to volunteer.name, volunteer %><% if volunteer.email.present? %> — <%= mail_to volunteer.email %><% end %></li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No active volunteers yet.</p>
+<% end %>
+<% if authenticated? %>
+  <%= link_to "Register as volunteer", new_volunteer_path %>
+<% end %>
