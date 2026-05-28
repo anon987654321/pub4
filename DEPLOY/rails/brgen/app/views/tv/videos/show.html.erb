@@ -52,5 +52,23 @@
 
 <section>
   <h2>Discussion</h2>
-  <p class="dim">Comments are being prepared for this channel. Share the video or subscribe meanwhile.</p>
+  <% if @video.comments.any? %>
+    <% @video.comments.order(created_at: :asc).each do |comment| %>
+      <article>
+        <p class="dim"><%= comment.user.email_address %></p>
+        <p><%= comment.body %></p>
+      </article>
+    <% end %>
+  <% else %>
+    <p class="dim">No comments yet.</p>
+  <% end %>
+  <% if authenticated? %>
+    <%= form_with url: tv_video_comments_path(@video) do |f| %>
+      <div class="field">
+        <%= f.label :body, "Add a comment" %>
+        <%= f.text_area :body, rows: 3, placeholder: "Write something…" %>
+      </div>
+      <%= f.submit "Post comment", class: "btn btn-primary btn-sm" %>
+    <% end %>
+  <% end %>
 </section>

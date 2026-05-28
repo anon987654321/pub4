@@ -57,6 +57,7 @@ Rails.application.routes.draw do
       end
       resources :videos, only: %i[show destroy] do
         resources :video_notes, only: :create
+        resources :comments, only: :create
       end
       resources :live_streams, only: %i[index show update destroy] do
         resources :stream_chats, only: :create
