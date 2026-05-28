@@ -1,42 +1,45 @@
-<% content_for :title, "Hjerterom" %>
-<% if @crisis_lines.any? %>
-  <aside>
-    <strong>Crisis support:</strong>
-    <% @crisis_lines.each do |c| %>
-      <%= c.title %> <strong><%= c.phone %></strong><%= " · " unless c == @crisis_lines.last %>
-    <% end %>
-  </aside>
+<% content_for :title, "Hjerterom kart" %>
+<% content_for :description, "Fullskjerm kart over mat, ressurser og hjelp i Åsane." %>
+<% if @mapbox_token.present? %>
+  <% content_for :head do %>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.js"></script>
+  <% end %>
 <% end %>
 
-<section>
-  <h2>Food available</h2>
-  <% @food_listings.each do |listing| %>
-    <article>
-      <%= link_to listing.title, food_listing_path(listing) %>
-      <p><%= listing.city %> · available until <%= listing.available_until&.strftime("%b %-d") %></p>
-    </article>
-  <% end %>
-  <%= link_to "All food listings →", food_listings_path %>
-</section>
+<section class="map-home" data-mapbox-token="<%= @mapbox_token %>" data-map-points="<%= json_escape(@map_points.to_json) %>">
+  <div id="hjerterom-map" class="map-home__canvas" aria-label="Kart over Hjerterom Åsane"></div>
 
-<section>
-  <h2>Community</h2>
-  <% @posts.each do |post| %>
-    <article>
-      <%= link_to post.title, community_show_path(post) %>
-    </article>
-  <% end %>
-  <%= link_to "All posts →", community_path %>
-  <% if authenticated? %><%= link_to "New post", new_community_post_path %><% end %>
-</section>
+  <div class="map-home__panel">
+    <p class="eyebrow">Hjerterom Åsane</p>
+    <h1>Finn mat, hjelp og fellesskap rundt deg.</h1>
+    <p class="lead">Et levende kart for overskuddsmat, trygge ressurser og lokale møtepunkt.</p>
 
-<section>
-  <h2>Resources</h2>
-  <% @resources.each do |resource| %>
-    <article>
-      <%= link_to resource.title, resource_path(resource) %>
-      <p><%= resource.resource_type %><%= " · #{resource.city}" if resource.city.present? %></p>
-    </article>
-  <% end %>
-  <%= link_to "All resources →", resources_path %>
+    <div class="map-home__actions">
+      <%= link_to "Legg ut mat", new_food_listing_path, class: "btn btn-primary" %>
+      <%= link_to "Se ressurser", resources_path, class: "btn btn-ghost" %>
+    </div>
+
+    <% if @crisis_lines.any? %>
+      <aside class="map-home__crisis">
+        <strong>Akutt støtte</strong>
+        <% @crisis_lines.each do |c| %>
+          <span><%= c.title %> <b><%= c.phone %></b></span>
+        <% end %>
+      </aside>
+    <% end %>
+  </div>
+
+  <div class="map-home__sheet">
+    <h2>Tilgjengelig nå</h2>
+    <% @food_listings.first(5).each do |listing| %>
+      <article>
+        <%= link_to listing.title, food_listing_path(listing) %>
+        <p><%= listing.city.presence || "Åsane" %> · til <%= listing.available_until&.strftime("%b %-d") || "snart" %></p>
+      </article>
+    <% end %>
+    <% if @food_listings.empty? %>
+      <p class="dim">Ingen aktive matannonser akkurat nå.</p>
+    <% end %>
+  </div>
 </section>
