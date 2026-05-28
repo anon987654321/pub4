@@ -1,4 +1,3 @@
-"use strict";
 import * as THREE from '/three.module.js';
 
 const cv = document.getElementById('face');
@@ -6,6 +5,10 @@ const primer = document.getElementById('primer');
 const zshBar = document.getElementById('zsh');
 const zshIn  = document.getElementById('zin');
 const rootBody = document.body;
+
+const CAMERA_DISTANCE = 4.6;
+const VERTEX_POINT_SIZE = 0.055;
+const EDGE_POINT_SIZE = 0.025;
 
 const TINT = {
   idle:    new THREE.Color(0.62, 0.86, 1.00),
@@ -55,7 +58,7 @@ const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: 
 renderer.setClearColor(0x000000, 1);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-camera.position.set(0, 0, 4.6);
+camera.position.set(0, 0, CAMERA_DISTANCE);
 
 let W = 0, H = 0, DPR = 1;
 function resize() {
@@ -168,17 +171,16 @@ const sprite = makeSprite();
 const vertGeom = new THREE.BufferGeometry();
 vertGeom.setAttribute('position', new THREE.BufferAttribute(vertPositions, 3));
 const vertMat = new THREE.PointsMaterial({
-  size: 0.055, map: sprite, transparent: true, depthWrite: false,
+  size: VERTEX_POINT_SIZE, map: sprite, transparent: true, depthWrite: false,
   blending: THREE.AdditiveBlending, sizeAttenuation: true,
   color: TINT.idle.clone()
 });
 const vertPoints = new THREE.Points(vertGeom, vertMat);
-scene.add(vertPoints);
 
 const edgeGeom = new THREE.BufferGeometry();
 edgeGeom.setAttribute('position', new THREE.BufferAttribute(edgePositions, 3));
 const edgeMat = new THREE.PointsMaterial({
-  size: 0.025, map: sprite, transparent: true, depthWrite: false,
+  size: EDGE_POINT_SIZE, map: sprite, transparent: true, depthWrite: false,
   blending: THREE.AdditiveBlending, sizeAttenuation: true,
   color: TINT.idle.clone(), opacity: 0.55
 });
@@ -202,7 +204,7 @@ function frame(t) {
     return;
   }
 
-  const dt = Math.min(State.coarsePointer ? 66 : 50, t - lastT); lastT = t;
+  lastT = t;
   const sec = t * 0.001;
 
   colorCurrent.lerp(colorTarget, State.reducedMotion ? 0.12 : 0.04);
