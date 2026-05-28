@@ -32,9 +32,9 @@
     <p style="font-size:20px;font-weight:800;margin-bottom:12px">Add a track</p>
     <div class="form-wrap" style="padding:0">
       <%= form_with url: playlist_playlist_tracks_path(@playlist) do |f| %>
-        <div class="field"><input placeholder="Title" name="playlist_track[title]"></div>
-        <div class="field"><input placeholder="Artist" name="playlist_track[artist]"></div>
-        <div class="field"><input placeholder="URL (optional)" name="playlist_track[source_url]"></div>
+        <div class="field"><%= f.text_field :title, placeholder: "Title" %></div>
+        <div class="field"><%= f.text_field :artist, placeholder: "Artist" %></div>
+        <div class="field"><%= f.url_field :source_url, placeholder: "URL (optional)" %></div>
         <div class="field"><%= f.submit "Add", class: "btn btn-primary btn-sm" %></div>
       <% end %>
     </div>

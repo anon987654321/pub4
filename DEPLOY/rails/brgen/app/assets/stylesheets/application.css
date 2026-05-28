@@ -902,3 +902,5 @@ article mark { background: rgba(244, 33, 46, .15); color: #f87171; padding: 1px 
   margin-bottom: 2px;
 }
 .affiliate-merchant { font-size: .75rem; }
+
+.item-subtotal { float: inline-end; }

@@ -30,7 +30,7 @@
       <div class="preset-strip">
         <% %w[none portrait landscape street blockbuster].each do |preset| %>
           <label class="preset-opt">
-            <input type="radio" name="post[preset]" value="<%= preset %>" <%= "checked" if preset == "none" %>>
+            <%= f.radio_button :preset, preset %>
             <span><%= preset.capitalize %></span>
           </label>
         <% end %>

@@ -28,7 +28,7 @@
       <div class="preset-strip">
         <% %w[none portrait landscape street blockbuster].each do |p| %>
           <label class="preset-opt">
-            <input type="radio" name="marketplace_listing[preset]" value="<%= p %>" <%= "checked" if p == "none" %>>
+            <%= f.radio_button :preset, p %>
             <span><%= p.capitalize %></span>
           </label>
         <% end %>
