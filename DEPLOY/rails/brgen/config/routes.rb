@@ -10,7 +10,11 @@ Rails.application.routes.draw do
   resource  :session
   resources :passwords, param: :token
   resources :activity_events, only: :index
-  resources :notifications, only: %i[index update]
+  resources :notifications, only: %i[index update] do
+    collection { patch :read_all }
+  end
+  resources :reactions, only: :create
+  resources :reports, only: :create
 
   resources :communities do
     resources :posts, shallow: true do

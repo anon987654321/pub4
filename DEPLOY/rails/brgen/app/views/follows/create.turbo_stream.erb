@@ -1,0 +1,3 @@
+<%= turbo_stream.replace "follow_#{@user.id}" do %>
+  <%= render "shared/follow_button", user: @user, active: @active %>
+<% end %>

@@ -1,0 +1,5 @@
+<%= turbo_stream.update "notifications" do %>
+  <% @notifications.each do |n| %>
+    <%= render n %>
+  <% end %>
+<% end %>

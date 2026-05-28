@@ -23,4 +23,20 @@ class Notification < ApplicationRecord
   def mark_as_read!
     update!(read_at: Time.current)
   end
+
+  def title
+    actor_name = actor&.display_name || "Someone"
+    case kind
+    when "follow" then "#{actor_name} followed you"
+    when "like", "reaction" then "#{actor_name} reacted to your post"
+    when "mention" then "#{actor_name} mentioned you"
+    when "reply" then "#{actor_name} replied to your comment"
+    when "message" then "New message from #{actor_name}"
+    else "New notification"
+    end
+  end
+
+  def body
+    notifiable.try(:content).presence || notifiable.try(:body).presence || ""
+  end
 end

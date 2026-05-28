@@ -16,7 +16,10 @@ class Port < ApplicationRecord
 
   scope :recent_updates, -> { joins(:port_updates).order("port_updates.committed_at DESC").distinct }
   scope :by_category,    ->(cat) { where(category: cat) }
-  scope :search,         ->(q) { where("name LIKE ? OR comment LIKE ?", "%#{q}%", "%#{q}%") }
+  scope :search, ->(q) {
+    ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM ports_fts WHERE ports_fts MATCH ?", q]))
+    ids.any? ? where(id: ids) : none
+  }
 
   def watched_by?(user)
     watches.exists?(user: user)
