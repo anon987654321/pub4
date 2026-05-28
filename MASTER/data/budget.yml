@@ -2,7 +2,9 @@
 # Source: master2 reunification.
 
 budget:
-  limit:    10.0
+  limit: 10.0
+  warn_at: 0.50
+  max_per_file: 1.0
   currency: USD
   thresholds:
     strong: 5.0

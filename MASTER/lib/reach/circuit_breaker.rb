@@ -17,9 +17,11 @@ module Master
       def initialize(msg, category) = (super(msg); @category = category)
     end
 
-    def initialize(budget_max:, req_max:, event_bus: nil, rate_window_s: RATE_WINDOW_S, rate_max: nil)
+    def initialize(budget_max:, req_max:, event_bus: nil, rate_window_s: RATE_WINDOW_S, rate_max: nil, warn_at: nil, max_per_file: nil)
       super()
       @budget_max = budget_max
+      @warn_at = warn_at
+      @max_per_file = max_per_file
       @bus = event_bus
       @failures = 0
       @opened_at = nil
@@ -76,12 +78,16 @@ module Master
     end
 
     def check_budget(estimate)
-      # Only check budget if it's a positive value.
       return unless @budget_max.positive?
       synchronize do
-        over_budget = @session_total + estimate > @budget_max
-        raise CircuitError.new("budget: $#{(@session_total + estimate).round(4)} exceeds $#{@budget_max}",
-                               :budget) if over_budget
+        projected = @session_total + estimate
+        if @max_per_file && estimate > @max_per_file
+          raise CircuitError.new("budget: single call $#{estimate.round(4)} exceeds max_per_file $#{@max_per_file}", :budget)
+        end
+        if @warn_at && projected >= @warn_at && @session_total < @warn_at
+          @bus&.publish("budget:warn", projected:, warn_at: @warn_at)
+        end
+        raise CircuitError.new("budget: $#{projected.round(4)} exceeds $#{@budget_max}", :budget) if projected > @budget_max
       end
     end
 

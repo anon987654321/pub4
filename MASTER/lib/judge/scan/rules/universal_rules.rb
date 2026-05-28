@@ -171,6 +171,17 @@ module Master
     end
   end
 
+  RuleDSL.rule :SQL_INJECTION,
+    severity: :error, tags: %i[SECURITY],
+    description: "parameterize all SQL — never interpolate user input" do |src, path:|
+    src.each_line.with_index(1).filter_map do |line, n|
+      stripped = line.strip
+      next if stripped.start_with?("#")
+      next unless stripped.match?(/\.execute\s*\(|\.query\s*\(.*#\{/)
+      finding(line: n, message: "SQL injection risk — use parameterized queries or ActiveRecord helpers")
+    end
+  end
+
   # Detects 2+ spaces before hash rocket, assignment, or inline comment to
   # catch column-alignment padding. Skips heredocs, string content, and
   # lines that are themselves just operators.

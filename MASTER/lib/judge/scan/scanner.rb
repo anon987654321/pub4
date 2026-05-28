@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "etc"
 require "open3"
 require "prism"
@@ -25,6 +26,7 @@ module Master
         return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
 
         code = File.read(path, encoding: "UTF-8")
+        @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
         ast = parse_ruby(code, path)
         rule_set = rules || active_rules(depth)
         findings = rule_set.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }

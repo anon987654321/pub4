@@ -19,7 +19,7 @@ module Master
     DEPS_PATH = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
     PRIORS_PATH = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
 
-    def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil)
+    def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil, incremental: false)
       @rules = rules
       @axioms = axioms
       @agent = agent
@@ -28,6 +28,7 @@ module Master
       @bus = bus
       @git = git || Reach::GitOperations.new(root)
       @learnings = learnings
+      @incremental = incremental
       @violation_counts = Hash.new(0)
       @rule_recurrence = Hash.new(0)
       @preamble = build_preamble
@@ -43,8 +44,8 @@ module Master
 
     # Three guards prevent wedging when the LLM provider degrades:
     # wall-clock budget, per-pass deadline, circuit-open early-exit.
-    def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS)
-      files = collect_files(target)
+    def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS, incremental: @incremental)
+      files = incremental ? collect_changed_files(target) : collect_files(target)
       history = []
       seen_snapshots = Set.new
       consecutive_clean = 0
@@ -122,7 +123,7 @@ module Master
 
     def background_alive? = @bg_thread&.alive? || false
 
-    # Scan only — no commit, no mutation. Returns what would change.
+    # Scan only — no commit, no mutation. Always full scan regardless of incremental flag.
     def preview(target = @root)
       files = collect_files(target)
       violations = scan_violations(files)
@@ -319,6 +320,25 @@ module Master
     def collect_files(target)
       Dir.glob(File.join(target, "**", "*"))
          .select { |f| File.file?(f) }
+         .reject { |f| SKIP_DIRS.any? { |d| f.include?(d) } }
+         .sort
+    end
+
+    def collect_changed_files(target)
+      changed = changed_since_last_commit(target)
+      return collect_files(target) if changed.empty?
+      changed
+    rescue StandardError => e
+      @bus&.publish("fix_loop:incremental_fallback", error: e.message)
+      collect_files(target)
+    end
+
+    def changed_since_last_commit(target)
+      out, _, status = Open3.capture3("git", "-C", @root, "diff", "--name-only", "HEAD")
+      return [] unless status.success?
+      out.lines.map(&:strip).reject(&:empty?)
+         .map { |rel| File.join(@root, rel) }
+         .select { |f| File.exist?(f) && f.start_with?(target) }
          .reject { |f| SKIP_DIRS.any? { |d| f.include?(d) } }
          .sort
     end
