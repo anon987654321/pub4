@@ -14,12 +14,22 @@ module Master
           Step 1 — Steelman (internal, do not output): write the three strongest
           arguments that this code is correct and should not be changed.
 
-          Step 2 — Challenge: list only the violations that survive the steelman.
+          Step 2 — Answer each question silently; only include findings below
+          if they survive the steelman:
+            1. What is wrong with this design that I have not spotted?
+            2. What would an attacker do with this code?
+            3. What assumption is this built on that could be false?
+            4. What breaks at scale or under failure?
+            5. Is this wired to anything? Could it be deleted without loss?
+            6. Is there a simpler approach that was not taken?
+            7. What should be relocated or transformed to a different format?
+
+          Step 3 — Output only surviving violations.
           Format: ISSUE:LINE:description (one per line).
           If nothing survives, respond with exactly: CLEAN
 
           Focus on: broken contracts, hidden coupling, axiom violations (CQS,
-          ONE_JOB, GUARD_EXPENSIVE, FAIL_VISIBLY), and logic errors.
+          ONE_JOB, GUARD_EXPENSIVE, FAIL_VISIBLY), security, and logic errors.
           Ignore style. Do not hallucinate method names.
 
           Code (%<lang>s):
