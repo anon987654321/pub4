@@ -17,9 +17,7 @@ class HomeController < ApplicationController
   private
 
   def mapbox_token
-    ENV["MAPBOX_API_KEY"].presence ||
-      ENV["MAPBOX_PUBLIC_TOKEN"].presence ||
-      Rails.application.credentials.dig(:mapbox, :public_token)
+    ENV["MAPBOX_API_KEY"].presence
   end
 
   def map_points

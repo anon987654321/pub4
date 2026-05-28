@@ -63,6 +63,24 @@ nav .brand svg { width: 100%; height: 100%; }
   z-index: 1;
 }
 
+.map-home__logo {
+  position: absolute;
+  top: clamp(.75rem, 2vw, 1.5rem);
+  left: clamp(.75rem, 2vw, 1.5rem);
+  z-index: 4;
+  display: block;
+  width: clamp(6rem, 12vw, 9rem);
+  line-height: 0;
+  filter: drop-shadow(0 18px 42px rgba(15, 23, 42, .34));
+}
+
+.map-home__logo svg,
+.hjerterom-heart-marker__logo svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .map-home__panel, .map-home__sheet {
   position: relative;
   z-index: 2;
@@ -200,6 +218,12 @@ nav .brand svg { width: 100%; height: 100%; }
   width: 3.8rem;
   height: 3.8rem;
   transform: translateY(-.35rem);
+}
+
+.hjerterom-heart-marker__logo {
+  display: block;
+  width: 3.8rem;
+  line-height: 0;
 }
 
 .hjerterom-heart-marker__heart {
