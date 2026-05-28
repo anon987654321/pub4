@@ -3,7 +3,7 @@
 
 validate_ip() {
   typeset ip=$1
-  [[ $ip =~ ^([0-9]{1,3}.){3}[0-9]{1,3}$ ]] || return 1
+  [[ $ip =~ '^([0-9]{1,3}\.){3}[0-9]{1,3}$' ]] || return 1
   typeset -a octets; octets=(${(s:.:)ip})
   for octet in $octets; do (( octet > 255 )) && return 1; done
   return 0
