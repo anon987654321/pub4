@@ -1,0 +1,27 @@
+<%= form_with model: donation do |form| %>
+  <% if donation.errors.any? %>
+    <div class="error"><%= donation.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :source_name %>
+    <%= form.text_field :source_name, required: true %>
+  </div>
+
+  <div class="field">
+    <%= form.label :pickup_window %>
+    <%= form.text_field :pickup_window %>
+  </div>
+
+  <div class="field">
+    <%= form.label :status %>
+    <%= form.select :status, Donation.statuses.keys.map { |status| [status.humanize, status] } %>
+  </div>
+
+  <div class="field">
+    <%= form.label :notes %>
+    <%= form.text_area :notes, rows: 4 %>
+  </div>
+
+  <%= form.submit class: "btn btn-primary" %>
+<% end %>
