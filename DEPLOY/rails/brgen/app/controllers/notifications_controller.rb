@@ -5,6 +5,7 @@ class NotificationsController < ApplicationController
 
   def index
     @notifications = Current.user.notifications.recent.limit(100)
+    @unread_count = Current.user.notifications.unread.count
   end
 
   def update
