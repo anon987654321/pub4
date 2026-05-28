@@ -5,6 +5,8 @@
   <nav>
     <% if authenticated? && @restaurant.owner?(Current.user) %>
       <%= link_to "Edit", edit_takeaway_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
+    <% elsif authenticated? && @favorited %>
+      <%= button_to "Unsave", takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm" %>
     <% elsif authenticated? %>
       <%= button_to "Save", takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn btn-primary btn-sm" %>
     <% end %>
@@ -14,7 +16,7 @@
 <article>
   <p><%= @restaurant.description %></p>
   <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city %></p>
-  <p class="dim">Min order: <%= @restaurant.min_order_display %> · Delivery: <%= @restaurant.delivery_fee_display %></p>
+  <p class="dim">Min order: <%= @restaurant.min_order_display %> · Delivery: <%= @restaurant.delivery_fee_display %> · <%= pluralize(@restaurant.favorites.size, "save") %></p>
 </article>
 
 <% if authenticated? && @restaurant.owner?(Current.user) %>
@@ -33,7 +35,9 @@
 
 <section>
   <h2>Menu</h2>
-  <% if authenticated? %>
+  <% if @menu_items.empty? %>
+    <p class="dim">No items available yet.</p>
+  <% elsif authenticated? %>
     <%= form_with scope: :takeaway_order, url: takeaway_restaurant_orders_path(@restaurant) do |f| %>
       <% @menu_items.each do |item| %>
         <article class="menu-row">
@@ -44,8 +48,14 @@
           <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: "Quantity for #{item.name}" } %>
         </article>
       <% end %>
-      <div class="field"><%= f.text_field :delivery_address, placeholder: "Delivery address", required: true %></div>
-      <div class="field"><%= f.text_area :special_instructions, placeholder: "Special instructions (optional)" %></div>
+      <div class="field">
+        <%= f.label :delivery_address, "Delivery address" %>
+        <%= f.text_field :delivery_address, required: true %>
+      </div>
+      <div class="field">
+        <%= f.label :special_instructions, "Special instructions (optional)" %>
+        <%= f.text_area :special_instructions %>
+      </div>
       <div class="field"><%= f.submit "Place order", class: "btn btn-primary" %></div>
     <% end %>
   <% else %>

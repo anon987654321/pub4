@@ -4,6 +4,7 @@ class Takeaway::Restaurant < ApplicationRecord
   belongs_to :user
   has_many :menu_items, class_name: "Takeaway::MenuItem", dependent: :destroy
   has_many :orders, class_name: "Takeaway::Order", dependent: :destroy
+  has_many :favorites, class_name: "Takeaway::FavoriteRestaurant", dependent: :destroy
 
   CUISINE_TYPES = %w[Norwegian Italian Chinese Japanese Indian Thai Mexican Pizza Burger Kebab Sushi Vegetarian Vegan].freeze
   CENTS_PER_KRONE = 100.0
