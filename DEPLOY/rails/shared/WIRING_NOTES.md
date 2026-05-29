@@ -101,6 +101,8 @@ Inspiration from current best practice (Hotwire + StimulusReflex production apps
 
 Implementation rule: New features in any app must add an Activity emission + a Turbo Stream consumer before building custom real-time UI.
 
+**Practical starter**: Use `Shared::EventEmitter.call("Vertical::ActionHappened", actor_id: ..., vertical: "marketplace", ...)` (see `shared/app/services/shared/event_emitter.rb`). This feeds both the unified graph and Hotwire broadcasts.
+
 ## Photo / Multimodal Upload Inheritance
 
 Photo creation (upload + processing) is intentionally allowed for unauthenticated visitors on the public surface (`https://ai.brgen.no` without token). This enables multimodal chat experiences for everyone while keeping deeper agent filesystem tools (`ReadFile`, `WriteFile`, `ListDir`, arbitrary `Shell`, etc.) restricted to token-authenticated users.
