@@ -101,6 +101,15 @@ All apps should include (see existing patterns in `brgen/app/.github/workflows/c
 
 See `test_check_ports.sh` and individual app test/deploy/ folders for smoke examples. Add a `ci.yml` to any app missing one using the brgen/amber pattern as baseline. This supports MASTER `/scan` and council reviews.
 
+## Secrets & Environment Management (OpenBSD-friendly)
+
+- Store secrets in `/etc/rails/<app>.env` (or `/etc/<app>.env`) on the target server.
+- Source them in the rc.d service or falcon/puma command line (never commit to git).
+- Use `SECRET_KEY_BASE` and app-specific keys (e.g. `OPENAI_API_KEY`, `VIPPS_*`).
+- The thin deploy scripts should not embed secrets; they only set up the service to read the external env file.
+- For local dev, use `config/credentials.yml.enc` or `.env` in the tracked tree (gitignored).
+- Consistent pattern across brgen, amber, bsdports, etc. reduces operational surprises. See individual `*.sh` and the rc.d templates in `DEPLOY/openbsd/` for current examples.
+
 ## Directory map
 
 ```text
