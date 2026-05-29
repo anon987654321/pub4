@@ -7,4 +7,4 @@ python-dotenv>=1.0.0
 # Firecrawl MCP agent dependencies
 # Note: The main Firecrawl MCP server runs via npx (Node.js)
 # These are additional Python packages that may be useful
-firecrawl-py>=1.0.0 
+firecrawl-py>=1.0.0

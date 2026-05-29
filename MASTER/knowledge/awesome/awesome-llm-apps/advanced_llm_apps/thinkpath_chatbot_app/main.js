@@ -20,7 +20,7 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
-  
+
   // Open DevTools in development
   if (process.env.NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools();
@@ -58,7 +58,7 @@ ipcMain.handle('send-to-llm', async (event, message) => {
       prompt: message,
       stream: false
     });
-    
+
     return {
       success: true,
       response: response.data.response
@@ -87,7 +87,7 @@ Generate 4 NEW thinking approaches that logically continue from where we left of
 4. Alternative directions to explore
 
 For each path, provide:
-1. A clear approach name (2-4 words) 
+1. A clear approach name (2-4 words)
 2. Exactly 3 specific thinking steps for that approach
 3. Make steps actionable and build on current progress
 
@@ -108,7 +108,7 @@ Focus on continuation and progression rather than starting over.`;
       prompt: prompt,
       stream: false
     });
-    
+
     // Try to parse JSON from response
     let parsedPaths;
     try {
@@ -122,7 +122,7 @@ Focus on continuation and progression rather than starting over.`;
       // Fallback: generate contextual paths
       parsedPaths = generateContinuationPaths(lastPathName, lastStepsExecuted);
     }
-    
+
     return {
       success: true,
       paths: parsedPaths.paths || []
@@ -185,7 +185,7 @@ Make the paths genuinely different approaches, not just variations. Think like a
       prompt: prompt,
       stream: false
     });
-    
+
     // Try to parse JSON from response
     let parsedPaths;
     try {
@@ -200,7 +200,7 @@ Make the paths genuinely different approaches, not just variations. Think like a
       // Fallback: generate default paths
       parsedPaths = generateFallbackPaths(query);
     }
-    
+
     return {
       success: true,
       paths: parsedPaths.paths || []
@@ -218,11 +218,11 @@ Make the paths genuinely different approaches, not just variations. Think like a
 ipcMain.handle('execute-thinking-path', async (event, { query, pathName, steps, executeUpToStep }) => {
   try {
     let prompt = `Original question: "${query}"\n\nI'm following the "${pathName}" approach. I will execute these steps and structure my response to show my thinking process:\n\n`;
-    
+
     for (let i = 0; i < executeUpToStep; i++) {
       prompt += `Step ${i + 1}: ${steps[i]}\n`;
     }
-    
+
     prompt += `\nIMPORTANT: You must think through and execute ONLY the ${executeUpToStep} step${executeUpToStep > 1 ? 's' : ''} listed above. Do NOT go beyond these steps or provide a complete solution.
 
 Structure your response exactly like this format:
@@ -248,7 +248,7 @@ REMEMBER: Only execute the steps you're asked to. Don't provide a complete answe
       prompt: prompt,
       stream: false
     });
-    
+
     return {
       success: true,
       response: response.data.response,
@@ -266,7 +266,7 @@ REMEMBER: Only execute the steps you're asked to. Don't provide a complete answe
 function generateFallbackPaths(query) {
   const isCodeRelated = query.toLowerCase().includes('code') || query.toLowerCase().includes('program') || query.toLowerCase().includes('function');
   const isAnalysisRelated = query.toLowerCase().includes('analyz') || query.toLowerCase().includes('data') || query.toLowerCase().includes('research');
-  
+
   if (isCodeRelated) {
     return {
       paths: [

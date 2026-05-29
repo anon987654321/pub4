@@ -1,4 +1,4 @@
-streamlit 
+streamlit
 agno>=2.2.10
-google-search-results  
+google-search-results
 lxml_html_clean

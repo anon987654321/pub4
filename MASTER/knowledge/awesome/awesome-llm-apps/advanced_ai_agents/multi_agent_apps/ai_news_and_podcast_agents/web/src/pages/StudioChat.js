@@ -147,7 +147,6 @@ const PodcastSession = () => {
             throw new Error('Session validation failed');
          }
 
-
          if (historyData.data.browser_recording_path) {
             setWebSearchRecording(historyData.data.browser_recording_path);
          }
@@ -409,7 +408,6 @@ const PodcastSession = () => {
                   updateSessionState(statusResponse.data.session_state);
                }
 
-               
             }
             // If it's still processing but there's a status update
             else if (

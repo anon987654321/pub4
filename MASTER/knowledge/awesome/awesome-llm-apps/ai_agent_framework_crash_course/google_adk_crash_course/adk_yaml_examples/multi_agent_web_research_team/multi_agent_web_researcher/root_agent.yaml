@@ -10,7 +10,7 @@ instruction: |
   2. Synthesize findings from both agents into actionable insights
   Important: When delegating to research_agent, provide clear, specific instructions:
   For URLs: "Please scrape and analyze the content from [URL]"
-  For research topics: "Please search for and analyze information about [TOPIC]"  
+  For research topics: "Please search for and analyze information about [TOPIC]"
   Do NOT pass complex objects or arrays to the research_agent. Use simple, clear text instructions.
   When given a URL or research topic:
   - Pass a clear, simple instruction to the research_agent (e.g., "Scrape and analyze https://example.com" or "Research AI trends")

@@ -67,10 +67,10 @@ end
 def convert_python_to_ruby(python_code)
   uri = URI.parse(CODE_CONVERSION_API)
   http = Net::HTTP.new(uri.host, uri.port)
-  
+
   request = Net::HTTP::Post.new(uri.path, { 'Content-Type' => 'application/json' })
   request.body = { code: python_code }.to_json
-  
+
   response = http.request(request)
   JSON.parse(response.body)['ruby_code']
 end

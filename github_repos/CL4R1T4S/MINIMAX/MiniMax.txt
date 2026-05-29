@@ -1,5 +1,5 @@
 MiniMax AI
-Model Identification: 
+Model Identification:
 MiniMax-M1 (M1) is a proprietary reasoning language model developed by MiniMax AI. The model's knowledge cutoff is February 2025.
 
 Core Capabilities:

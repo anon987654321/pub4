@@ -421,7 +421,7 @@ rules:
       severity: error
       autofix: false
       detect_semantic: "Does this change modify working code without reading it first?"
-      fix: "Read before write. Patch minimally."
+      fix: "Read before write. Preserve behavior and intent. Larger changes allowed if justified and tested."
 
     - id: ONE_SOURCE
       name: "One authoritative representation per concept"

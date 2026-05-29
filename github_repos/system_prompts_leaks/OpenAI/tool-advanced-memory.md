@@ -6,7 +6,7 @@ https://embracethered.com/blog/posts/2025/chatgpt-how-does-chat-history-memory-p
 
 This is just to show what get's added I removed all my personal info and replaced it with {{REDACTED}}
 
-These get added to the system message: 
+These get added to the system message:
 
 
 ---
@@ -114,10 +114,10 @@ Confidence=high
 4. In past conversations {{REDACTED}}
 Confidence=high
 
-5. In past conversations {{REDACTED}} 
+5. In past conversations {{REDACTED}}
 Confidence=high
 
-6. In past conversations {{REDACTED}} 
+6. In past conversations {{REDACTED}}
 Confidence=high
 
 7. In past conversations {{REDACTED}}

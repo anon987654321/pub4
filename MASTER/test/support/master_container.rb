@@ -23,7 +23,7 @@ module Master
             code_rules:
               FAIL_VISIBLY: never rescue Exception silently.
               SIMPLEST_WORKS: refuse god classes.
-              PRESERVE_FIRST: never rewrite from scratch.
+              PRESERVE_FIRST: read first. preserve behavior. larger changes allowed if safe.
               BE_CONCISE: minimal response.
           negotiable:
             style: openbsd_dmesg

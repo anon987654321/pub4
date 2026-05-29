@@ -20,7 +20,7 @@
   <link rel="stylesheet" type="text/css" href="stylesheets/highlight.css" data-turbo-track="reload" />
 
   <link rel="icon" href="images/favicon.ico" sizes="any" />
-  
+
   <link rel="apple-touch-icon" href="images/icon.png" />
 
   <script src="javascripts/@hotwired--turbo.js" data-turbo-track="reload"></script>
@@ -328,7 +328,7 @@ The guides for earlier releases:
   <main id="container">
     <div class="wrapper">
       <div id="mainCol">
-        
+
 
 
   <h2>Start Here</h2>
