@@ -1,0 +1,37 @@
+/* Ultra-minimal shared UI for all apps — synced from MASTER web */
+body.zen-minimal .top-nav,
+body.zen-minimal .sidebar,
+body.zen-minimal .primary-actions:not(.always) {
+  opacity: 0.06;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+body.zen-minimal .top-right-logo {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  z-index: 60;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  opacity: 0.55;
+}
+
+body.zen-minimal .revealed,
+body.zen-minimal [data-minimal-reveal].revealed {
+  opacity: 0.96;
+  pointer-events: auto;
+}
+
+/* Mobile sensor affordances */
+@media (pointer: coarse) {
+  body.zen-minimal {
+    --accent: #8fe3bd;
+  }
+  .deal-card, .post-card {
+    transition: transform 0.2s ease;
+  }
+  .deal-card:active {
+    transform: scale(0.985);
+  }
+}

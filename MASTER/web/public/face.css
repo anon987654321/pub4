@@ -102,10 +102,39 @@ canvas {
   z-index: 11;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s steps(4, end);
+  transition: opacity 0.2s steps(4, end), transform 0.2s ease;
+  transform: translateY(30%);
 }
 
-#zsh.live { opacity: 1; pointer-events: auto; }
+/* ULTRAMINIMAL MODE — only the living face + tiny top-right presence visible.
+   Nav, input, chrome revealed only on gesture (swipe bottom, right edge, long-press face for Osman voice).
+   Mobile-first, sensor-driven, cinematic. */
+body.zen #zsh,
+body.zen .face-plate,
+body.zen #chat-log {
+  opacity: 0.08;
+}
+
+body.zen #zsh.revealed {
+  opacity: 0.96;
+  pointer-events: auto;
+  transform: none;
+}
+
+/* Tiny top-right logo only in zen mode (the face itself is the main UI) */
+body.zen .top-right-logo {
+  position: fixed;
+  top: 12px;
+  right: 14px;
+  z-index: 50;
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.6;
+  pointer-events: none;
+  user-select: none;
+}
+
+#zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 #zsh .pp { color: var(--face-fg); font-weight: 700; }
 #zsh .sep, #zsh .sep2 { color: var(--face-muted); }
 #zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
