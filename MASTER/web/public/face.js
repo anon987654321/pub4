@@ -404,7 +404,13 @@ function beep(freq, dur) {
   o.start(); o.stop(actx.currentTime + dur);
 }
 
-const tts = { queue: [], muted: false, playing: false, voice: null, current: null };
+// Primary voice is the server-rendered Osman neural model (soul.yml voice:
+// ms-MY-OsmanNeural, GET /chat/tts). Browser speechSynthesis is the fallback
+// only — server.unavailable flips once on 403/501/503 so we stop retrying.
+const VISEME_STEP_MS = 90;
+const LOCAL_RATE = 0.95;
+const LOCAL_PITCH = 0.92;
+const tts = { queue: [], muted: false, playing: false, voice: null, current: null, audio: null, visemeTimer: null, serverUnavailable: false };
 
 function pickVoice() {
   const list = speechSynthesis.getVoices();
@@ -420,49 +426,119 @@ if ('speechSynthesis' in window) {
 }
 
 const VOWEL_VISEME = { a:'A', e:'E', i:'I', o:'O', u:'U' };
+
+// Drive the mouth particle pool to an open/closed pose (topologies.yml mouth: kind speech).
+function driveMouth(open) {
+  if (!mouthPool) return;
+  const K = window.ParticleKernel;
+  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+    const base = i * K.FIELDS_PER_CELL;
+    mouthPool.cells[base + K.FIELD.arousal] = open ? 1.0 : 0.25;
+    mouthPool.cells[base + K.FIELD.pressure] = open ? 0.8 : 0.2;
+    mouthPool.cells[base + K.FIELD.valence] = 0.6;
+  }
+}
+
+function setViseme(ch) {
+  const c = (ch || '').toLowerCase();
+  State.viseme = VOWEL_VISEME[c] || (('mbpfwv'.indexOf(c) >= 0) ? 'M' : 'E');
+  State.visemeAmp = 1.0;
+  driveMouth(true);
+}
+
+function clearViseme() {
+  State.viseme = 'neutral';
+  State.visemeAmp = 0;
+}
+
 function enqueueSpeech(text) {
-  if (tts.muted || !('speechSynthesis' in window)) return;
+  if (tts.muted) return;
   const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`~]/g, '').trim();
   if (!clean) return;
   tts.queue.push(clean);
   ttsTick();
 }
+
 function ttsTick() {
   if (tts.muted || tts.playing) return;
   const text = tts.queue.shift();
   if (!text) return;
+  tts.playing = true;
+  State.mode = 'speaking';
+  if (tts.serverUnavailable) { speakLocal(text); return; }
+  speakServer(text);
+}
+
+// Osman neural voice from the server, lip-synced to the actual audio duration.
+function speakServer(text) {
+  const url = `/chat/tts?voice=osman&text=${encodeURIComponent(text)}`;
+  fetch(url)
+    .then(r => {
+      if (!r.ok) {
+        if (r.status === 403 || r.status === 501 || r.status === 503) tts.serverUnavailable = true;
+        throw new Error(`tts ${r.status}`);
+      }
+      return r.blob();
+    })
+    .then(blob => {
+      const src = URL.createObjectURL(blob);
+      const audio = new Audio(src);
+      tts.audio = audio;
+      audio.onplay = () => startVisemeAnim(text);
+      audio.onended = audio.onerror = () => {
+        stopVisemeAnim();
+        URL.revokeObjectURL(src);
+        tts.audio = null;
+        tts.playing = false;
+        if (State.mode === 'speaking') State.mode = 'idle';
+        clearViseme();
+        ttsTick();
+      };
+      return audio.play();
+    })
+    .catch(() => { tts.audio = null; speakLocal(text); });
+}
+
+// Sample the cleaned text across the audio length so the mouth moves with real prosody.
+function startVisemeAnim(text) {
+  stopVisemeAnim();
+  let i = 0;
+  tts.visemeTimer = setInterval(() => {
+    const audio = tts.audio;
+    if (!audio || !audio.duration || !isFinite(audio.duration)) { setViseme(text.charAt(i)); i = (i + 3) % text.length; return; }
+    const idx = Math.min(text.length - 1, Math.floor((audio.currentTime / audio.duration) * text.length));
+    setViseme(text.charAt(idx));
+  }, VISEME_STEP_MS);
+}
+
+function stopVisemeAnim() {
+  if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; }
+}
+
+// Browser speechSynthesis fallback (generic OS voice, word-boundary visemes).
+function speakLocal(text) {
+  if (!('speechSynthesis' in window)) { tts.playing = false; if (State.mode === 'speaking') State.mode = 'idle'; ttsTick(); return; }
   const u = new SpeechSynthesisUtterance(text);
   if (tts.voice) u.voice = tts.voice;
-  u.rate = 0.95; u.pitch = 0.92;
-  tts.playing = true; tts.current = u; State.mode = 'speaking';
-  u.onboundary = (ev) => {
-    const c = (text.charAt(ev.charIndex || 0) || '').toLowerCase();
-    State.viseme = VOWEL_VISEME[c] || (('mbpfwv'.indexOf(c) >= 0) ? 'M' : 'E');
-    State.visemeAmp = 1.0;
-    // Push speech energy into the kernel cells (topologies.yml mouth: kind speech).
-    if (mouthPool) {
-      for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-        const base = i * window.ParticleKernel.FIELDS_PER_CELL;
-        mouthPool.cells[base + window.ParticleKernel.FIELD.arousal] = 1.0;
-        mouthPool.cells[base + window.ParticleKernel.FIELD.pressure] = 0.8;
-        mouthPool.cells[base + window.ParticleKernel.FIELD.valence] = 0.6;
-      }
-    }
-  };
+  u.rate = LOCAL_RATE; u.pitch = LOCAL_PITCH;
+  tts.current = u;
+  u.onboundary = (ev) => setViseme(text.charAt(ev.charIndex || 0));
   u.onend = () => {
     tts.playing = false; tts.current = null;
-    State.viseme = 'neutral'; State.visemeAmp = 0;
+    clearViseme();
     if (State.mode === 'speaking') State.mode = 'idle';
-    // Let kernel cells decay naturally (fast decay on mouth pool).
     ttsTick();
   };
   u.onerror = u.onend;
   try { speechSynthesis.speak(u); } catch (_) { tts.playing = false; }
 }
+
 function ttsSkip() {
   try { speechSynthesis.cancel(); } catch (_) {}
+  if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
+  stopVisemeAnim();
   tts.queue.length = 0; tts.playing = false; tts.current = null;
-  State.viseme = 'neutral'; State.visemeAmp = 0;
+  clearViseme();
   // Reset driver cells on skip (preserves fast-decay intent from topologies.yml).
   if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) mouthPool.cells[i * window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.arousal] = 0.05;
 }

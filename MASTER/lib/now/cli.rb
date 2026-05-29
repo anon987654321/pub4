@@ -23,8 +23,8 @@ module Master
       critical: "!!"
     }.freeze
     SLASH_COMMANDS = %w[
-      /run /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
-      /ui-critique /sound-critique /rebuild /context /checkpoint /verify
+      /help /exit /quit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
+      /ui-critique /sound-critique /rebuild /context /checkpoint /verify /rails-pwa-audit /rails-pwa-fix /swallow-report
     ].freeze
 
     attr_reader :container
@@ -207,6 +207,7 @@ module Master
       return accept_top_suggestion if stripped.empty?
       NL_DISPATCH.each { |pat, meth| return send(meth) if stripped.match?(pat) }
       case stripped
+      when "/help", "/?" then run_help
       when "/exit", "/quit" then exit_cli
       when "/undo" then run_undo
       when "/redo" then run_redo
@@ -230,8 +231,18 @@ module Master
       when "/rails-pwa-fix" then run_rails_pwa_fix
       when "/swallow-report" then run_swallow_report
       when "<<" then run_input(read_multiline)
-      else run_input(line)
+      else stripped.start_with?("/") ? unknown_command(stripped) : run_input(line)
       end
+    end
+
+    def run_help
+      puts @renderer.render("commands: #{SLASH_COMMANDS.join(" ")}", mode: :dim)
+      puts @renderer.render("<< for multiline. anything else is a prompt.", mode: :dim)
+    end
+
+    def unknown_command(stripped)
+      name = stripped.split(/\s/).first
+      puts @renderer.render("unknown command: #{name}. /help for commands.", mode: :dim)
     end
 
     def run_sound_critique

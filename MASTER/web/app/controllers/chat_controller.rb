@@ -91,7 +91,8 @@ class ChatController < ApplicationController
       container[:bus]&.publish("tts:anticipate", style: style.to_s, expression: anticipate)
     end
 
-    bytes = Master::Voice::Speech.synthesize_bytes(text, voice: voice_key)
+    synth_style = Master::Voice::Speech::STYLES.key?(style) ? style : :auto
+    bytes = Master::Voice::Speech.synthesize_bytes(text, voice: voice_key, style: synth_style)
     return head(:service_unavailable) if bytes.nil? || bytes.empty?
 
     send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
