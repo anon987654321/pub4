@@ -110,6 +110,10 @@ See `test_check_ports.sh` and individual app test/deploy/ folders for smoke exam
 - For local dev, use `config/credentials.yml.enc` or `.env` in the tracked tree (gitignored).
 - Consistent pattern across brgen, amber, bsdports, etc. reduces operational surprises. See individual `*.sh` and the rc.d templates in `DEPLOY/openbsd/` for current examples.
 
+## Gem & Dependency Alignment
+
+All apps should target a consistent baseline (Rails 8, Solid Queue/Cache, Active Storage, importmap + Hotwire). Use `SHARED_BUNDLE_CACHE` in deploy scripts where possible. Pin major gems in individual Gemfiles but align on the family-wide set from `brgen` as the reference. Run `bundle update` coordinated across apps when upgrading shared dependencies. This reduces divergence and eases MASTER scans for security/compatibility.
+
 ## Directory map
 
 ```text
