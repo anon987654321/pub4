@@ -1,3 +1,0 @@
-streamlit
-"routellm[serve,eval]"
-routellm

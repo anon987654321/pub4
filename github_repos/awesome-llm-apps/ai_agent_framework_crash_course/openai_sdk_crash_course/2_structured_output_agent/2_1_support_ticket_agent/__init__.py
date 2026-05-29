@@ -1,1 +1,0 @@
-# Support Ticket Agent Package
