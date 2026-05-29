@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# nsd-resign — re-sign all NSD zones whose RRSIG validity drops below RESIGN_DAYS.
+# Runs as root (called from /etc/daily.local). Requires ldns-signzone.
+#
+# Usage: nsd-resign [--force]
+#   --force  re-sign every zone unconditionally
+
+require "date"
+require "open3"
+
+ZONES_DIR = "/var/nsd/zones/master"
+RESIGN_DAYS = 14
+VALIDITY_DAYS = 30
+FORCE = ARGV.include?("--force")
+
+def log(msg) = $stdout.puts("nsd-resign: #{msg}")
+
+def expiry_date(signed_zone)
+  File.read(signed_zone).scan(/RRSIG\s+\S+\s+\d+\s+\d+\s+\d+\s+(\d{14})/).flatten.map { |s|
+    Date.strptime(s, "%Y%m%d%H%M%S")
+  }.min
+rescue
+  nil
+end
+
+def keys_for(zone)
+  Dir[File.join(ZONES_DIR, "K#{zone}.+*.key")].map { |k|
+    k.sub(/\.key$/, "")
+  }
+end
+
+def sign(zone, zone_file, keys, expiry)
+  exp = expiry.strftime("%Y%m%d000000")
+  out, err, st = Open3.capture3(
+    "ldns-signzone", "-e", exp, zone_file, *keys,
+    chdir: ZONES_DIR
+  )
+  unless st.success?
+    log "FAIL #{zone}: #{err.strip}"
+    return false
+  end
+  log "signed #{zone} → expires #{expiry}"
+  true
+end
+
+changed = []
+
+Dir[File.join(ZONES_DIR, "*.zone")].sort.each do |zone_file|
+  zone = File.basename(zone_file, ".zone")
+  signed = "#{zone_file}.signed"
+  keys = keys_for(zone)
+  next if keys.empty?
+
+  needs_sign = FORCE
+  unless needs_sign
+    exp = expiry_date(signed) if File.exist?(signed)
+    needs_sign = exp.nil? || (exp - Date.today) < RESIGN_DAYS
+    next unless needs_sign
+    log "#{zone} expires #{exp || "unknown"} — resigning"
+  end
+
+  next unless sign(zone, zone_file, keys, Date.today + VALIDITY_DAYS)
+
+  changed << zone
+end
+
+if changed.any?
+  changed.each { |z| system("nsd-control", "reload", z) }
+  system("nsd-control", "notify")
+  log "reloaded #{changed.size} zone(s): #{changed.join(", ")}"
+else
+  log "all zones valid — nothing to do"
+end
