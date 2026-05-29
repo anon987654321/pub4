@@ -21,10 +21,14 @@ log "${APP_NAME} — deploying tracked tree → ${APP_DIR}"
 id "$APP_NAME" >/dev/null 2>&1 || doas useradd -m -L daemon -s /bin/ksh "$APP_NAME"
 doas mkdir -p "$APP_DIR"
 
-doas cp -R "${SRC_DIR}/." "${APP_DIR}/"
+# Parametric shared grammar layer first (provides base classes, concerns, bins, assets, config)
 doas cp -R "${SCRIPT_DIR:h}/shared/bin/." "${APP_DIR}/bin/" 2>/dev/null || true
 doas cp -R "${SCRIPT_DIR:h}/shared/public/." "${APP_DIR}/public/" 2>/dev/null || true
 doas cp -R "${SCRIPT_DIR:h}/shared/config/." "${APP_DIR}/config/" 2>/dev/null || true
+doas cp -R "${SCRIPT_DIR:h}/shared/app/." "${APP_DIR}/app/" 2>/dev/null || true
+
+# Per-app tracked tree last (specialized instances + custom overrides win)
+doas cp -R "${SRC_DIR}/." "${APP_DIR}/"
 doas chown -R "${APP_NAME}:${APP_NAME}" "$APP_DIR"
 
 cd "$APP_DIR"
