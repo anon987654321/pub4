@@ -1,4 +1,6 @@
 #!/usr/bin/env zsh
+set -euo pipefail
+
 # Pure zsh script to fix hardcoded passwords in ALL installer scripts
 
 # NO bash, sed, awk, perl, python - pure zsh only

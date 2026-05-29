@@ -33,7 +33,7 @@
 <%# Lightbox gallery %>
 <div data-controller="lightbox">
   <% Array(local_assigns[:images]).each do |image| %>
-    <a href="<%= image %>"><img src="<%= image %>" alt=""></a>
+    <a href="<%= image %>"><img src="<%= image %>" alt="<%= image.respond_to?(:filename) ? image.filename.base : "Gallery image" %>"></a>
   <% end %>
 </div>
 

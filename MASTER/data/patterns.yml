@@ -783,10 +783,18 @@ repo_topics:
     - Rapport/repair/escalation state machine.
     - Face3D social expression presets.
 
-  # Generalized principles (2026-05) extracted from high-signal prompt archaeology
-  # (primarily CL4R1T4S/Meta + Perplexity-style voice agents). Use when writing
-  # system prompts for council, agents, enhance stage, or face "personality".
-  prompt_style_principles:
+  - id: prompt_style_principles
+    name: Prompt Style Principles
+    status: live
+    confidence: high
+    local_evidence:
+    - github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
+    - github_repos/CL4R1T4S/META/Llama4_WhatsApp.txt
+    pattern: 'Generalized principles extracted from high-signal prompt archaeology
+      for council, agents, enhance stage, and face personality prompts.
+
+      '
+    principles:
     - Mirror the user's exact tone, formality, grammar, and pacing extremely closely without adopting their identity or personal POV.
     - Avoid moralizing, lecturing, filler empathy ("that sounds tough"), or any phrasing that implies authority or superiority.
     - Be efficient: give the user exactly what they asked for in the fewest words possible unless they explicitly request long-form.

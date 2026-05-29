@@ -1,3 +1,8 @@
+# Quarantined sample: non-executable reference only.
+# Original path: DEPLOY/sh/tools/pouncekeys/pklog.sh
+# Reason: keylogger installer content; kept only for audit/provenance.
+# Do not run, source, deploy, or rename into an executable extension.
+
 #!/bin/bash
 
 #!/data/data/com.termux/files/usr/bin/zsh
@@ -176,4 +181,3 @@ echo "Troubleshooting:"
 echo "- No logs? Verify SMTP settings and accessibility."
 echo "- Uninstall: adb uninstall $PACKAGE_NAME"
 echo "Log file: $LOG_FILE"
-

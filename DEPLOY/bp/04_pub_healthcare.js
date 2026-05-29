@@ -9,17 +9,7 @@
         type: 'bar',
         data: {
 
-          labels: ['Prescription
-
-Received', 'AI Recipe
-
-Optimization', 'Synthesis
-
-Execution', 'Quality
-
-Control', 'Packaging
-
-& Dispensing'],
+          labels: ['Prescription\n\nReceived', 'AI Recipe\n\nOptimization', 'Synthesis\n\nExecution', 'Quality\n\nControl', 'Packaging\n\n& Dispensing'],
 
           datasets: [{
 
@@ -86,31 +76,7 @@ Control', 'Packaging
         type: 'line',
         data: {
 
-          labels: ['Q1
-
-Year 1', 'Q2
-
-Year 1', 'Q3
-
-Year 1', 'Q4
-
-Year 1', 'Q1
-
-Year 2', 'Q2
-
-Year 2', 'Q3
-
-Year 2', 'Q4
-
-Year 2', 'Q1
-
-Year 3', 'Q2
-
-Year 3', 'Q3
-
-Year 3', 'Q4
-
-Year 3'],
+          labels: ['Q1\n\nYear 1', 'Q2\n\nYear 1', 'Q3\n\nYear 1', 'Q4\n\nYear 1', 'Q1\n\nYear 2', 'Q2\n\nYear 2', 'Q3\n\nYear 2', 'Q4\n\nYear 2', 'Q1\n\nYear 3', 'Q2\n\nYear 3', 'Q3\n\nYear 3', 'Q4\n\nYear 3'],
 
           datasets: [{
 
@@ -181,15 +147,7 @@ Year 3'],
         type: 'line',
         data: {
 
-          labels: ['Year 1
-
-Pilot', 'Year 2
-
-Scale', 'Year 3
-
-Optimize', 'Year 4
-
-Mature'],
+          labels: ['Year 1\n\nPilot', 'Year 2\n\nScale', 'Year 3\n\nOptimize', 'Year 4\n\nMature'],
 
           datasets: [{
 
@@ -260,11 +218,7 @@ Mature'],
         type: 'bar',
         data: {
 
-          labels: ['Nordland', 'Troms', 'Finnmark', 'Møre og
-
-Romsdal', 'Sogn og
-
-Fjordane', 'Oppland', 'Hedmark'],
+          labels: ['Nordland', 'Troms', 'Finnmark', 'Møre og\n\nRomsdal', 'Sogn og\n\nFjordane', 'Oppland', 'Hedmark'],
 
           datasets: [{
 

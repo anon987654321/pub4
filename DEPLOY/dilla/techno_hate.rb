@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 # frozen_string_literal: true
+# frozen_string_literal: true
 #
 # Hate techno — hard, dark, distorted. 142 BPM × 8 bars.
 # 4-on-the-floor saturated kick, acid-bass C-minor progression (i-iv-v),

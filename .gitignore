@@ -37,6 +37,7 @@ memory/*.jsonl
 .env
 .env.local
 !.env.example
+**/config/master.key
 
 # Coverage reports
 coverage/

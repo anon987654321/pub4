@@ -203,7 +203,8 @@ module Master
     src.each_line.with_index(1).filter_map do |line, n|
       stripped = line.strip
       next if stripped.start_with?("#")
-      next unless stripped.match?(/\.execute\s*\(|\.query\s*\(.*#\{/)
+      next unless stripped.match?(/\.(?:execute|query)\s*\(.*#\{/) ||
+                  stripped.match?(/\.(?:execute|query)\s*\(\s*["'][^"']*\+\s*/)
       finding(line: n, message: "SQL injection risk — use parameterized queries or ActiveRecord helpers")
     end
   end

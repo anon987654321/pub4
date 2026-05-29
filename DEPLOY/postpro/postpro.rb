@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Postpro.rb - Professional Cinematic Post-Processing
 # Version: 20.0.0 - Photo quality research: adaptive contrast, filmic shoulder/toe,

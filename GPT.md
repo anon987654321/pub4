@@ -1,6 +1,6 @@
-# CLAUDE.md
+# GPT.md
 
-Bootstrap instructions for Claude-family agents working in this repository.
+Bootstrap instructions for GPT-family agents working in this repository.
 
 Start with `MASTER/QUICKSTART.md`. It is the designed entry point for all LLM agents and gives the practical workflow before the deeper constitution files.
 
@@ -11,19 +11,16 @@ Use these files as authority when precision matters:
 - `MASTER/data/ruby_style.yml`
 - `MASTER/data/workflow.yml`
 - `MASTER/data/standing_orders.yml`
-- `MASTER/data/patterns.yml`
-- `MASTER/data/openbsd.yml`
 - `AGENTS.md`
+- `CLAUDE.md`
 
 Do not duplicate rules here. If this file conflicts with `MASTER/data/*`, `MASTER/data/*` wins.
 
-Claude-specific notes:
+GPT/Codex-specific notes:
 
-- Launch with the operator-approved full-tool mode when available.
 - Read affected files before editing.
 - Keep patches scoped and reversible.
 - Prefer local checks with concrete output over claims.
-- For VPS work, use one deliberate SSH/tmux operation and avoid rapid reconnect loops.
-- After `MASTER/web/` changes on the VPS, restart the `master` service.
 - Treat deploy, auth, secrets, shell scripts, and public Rails surfaces as high-risk.
+- For frontend files, verify syntax and basic structure before changing style.
 - Publish through a branch and draft PR unless the operator explicitly asks for direct main work.

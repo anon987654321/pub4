@@ -184,10 +184,17 @@ module Master
   end
 
   def self.load_rules(root: ROOT)
-    base = load_yaml(data_path("rules.yml"))
-    rules_dir = data_path("rules")
-    merged = Dir.glob(File.join(rules_dir, "*.yml")).sort.each_with_object({}) do |f, h|
-      (load_yaml(f) || {}).each { |scope, list| (h[scope] ||= []).concat(Array(list)) }
+    data_dir = root == ROOT ? DATA : File.join(root, "data")
+    base = load_yaml(File.join(data_dir, "rules.yml"))
+    rules_dir = File.join(data_dir, "rules")
+    shards = Dir.glob(File.join(rules_dir, "*.yml")).sort
+    return base if shards.empty?
+
+    merged = Marshal.load(Marshal.dump(base.fetch("rules", {})))
+    shards.each do |file|
+      (load_yaml(file) || {}).each do |scope, list|
+        (merged[scope] ||= []).concat(Array(list))
+      end
     end
     base.merge("rules" => merged)
   end

@@ -8,6 +8,7 @@ module Master
   RuleDSL.rule :HTML_LANG,
     severity: :error, tags: %i[ACCESSIBILITY], applies_to: %i[html],
     description: "lang attribute on <html>" do |src, path:|
+    next [] unless src.match?(/<html\b/i)
     scan_lines(src, /<html(?!\s+[^>]*lang=)/, message: "<html> missing lang= attribute")
   end
 
@@ -92,6 +93,7 @@ module Master
     severity: :error, tags: %i[CORRECTNESS], applies_to: %i[html],
     description: "HTML must declare charset early in <head>" do |src, path:|
     next [] unless path.to_s.match?(/\.(html|erb|haml|slim)\z/)
+    next [] unless src.match?(/<head\b/i) || src.match?(/<html\b/i)
     next [] if src.match?(/<meta\s+charset=/i)
     [finding(line: 1, message: "missing <meta charset=UTF-8> — declare encoding as first element in <head>")]
   end
