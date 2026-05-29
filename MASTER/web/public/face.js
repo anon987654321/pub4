@@ -275,20 +275,7 @@ TINT.idle.copy(dayNightTint());
 colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
 setInterval(() => { if (!State.mood || State.mood === 'idle') { TINT.idle.copy(dayNightTint()); fadeColorTo(TINT.idle); } }, 60000);
 
-// Bloom overlay: copy main canvas at 30% res, CSS blur + screen blend
 let bloomCtx = null, bloomCv = null;
-if (renderer && !State.reducedMotion) {
-  try {
-    bloomCv = document.createElement('canvas');
-    Object.assign(bloomCv.style, {
-      position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
-      pointerEvents: 'none', mixBlendMode: 'screen',
-      opacity: '0.42', filter: 'blur(11px)', zIndex: '1'
-    });
-    cv.insertAdjacentElement('afterend', bloomCv);
-    bloomCtx = bloomCv.getContext('2d');
-  } catch (_) { bloomCtx = null; }
-}
 
 // Dolly zoom (Hitchcock) — zoom in while dollying back, reversed smoothly
 function dollyZoom(intensity) {
@@ -638,13 +625,6 @@ function frame(t) {
   }
 
   renderer.render(scene, camera);
-
-  if (bloomCtx && bloomCv) {
-    const bw = Math.floor(W * 0.28), bh = Math.floor(H * 0.28);
-    if (bloomCv.width !== bw || bloomCv.height !== bh) { bloomCv.width = bw; bloomCv.height = bh; }
-    bloomCtx.clearRect(0, 0, bw, bh);
-    bloomCtx.drawImage(cv, 0, 0, bw, bh);
-  }
 
   requestAnimationFrame(frame);
 }
