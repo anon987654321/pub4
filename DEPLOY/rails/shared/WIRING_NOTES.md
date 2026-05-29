@@ -82,3 +82,7 @@ This ensures a single coherent "watch from afar" aesthetic across Brgen, Amber, 
 ## Stimulus Components Baseline
 
 `shared/frontend/stimulus_components.js` + Brgen's controller set (clipboard, lightbox, media_picker, geolocation, notification, timeago, typing, etc.) is the shared component library. New apps and verticals should start from these rather than duplicating. See `shared/STIMULUS_COMPONENTS_BASELINE.md` (and Brgen's `app/javascript/controllers/`).
+
+## LLM / AI Readiness
+
+apps.yml is the canonical structured surface for MASTER scans (`/scan`, `/sweep`, council). Future LLM features (recommendations, ranking, moderation assistance, content generation) should be added as new rows there first, then wired via small shared concerns or services. Brgen's "ai" vertical is the primary experimentation surface. All apps should emit consistent activity events so AI ranking can work across the unified graph (see brgen_CORE.md).
