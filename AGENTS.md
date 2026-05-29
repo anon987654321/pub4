@@ -2,7 +2,7 @@
 
 Bootstrap for autonomous coding agents (Claude Code, Cursor, Aider, Codex, Continue).
 
-**Primary entry point:** Read `MASTER/QUICKSTART.md` first. It provides a practical mental model and LLM ergonomics guidance without forcing you to swallow the entire constitution upfront.
+**Primary entry point:** Read `MASTER/QUICKSTART.md` first. It provides a practical mental model and LLM ergonomics guidance (see `data/workflow.yml` → `llm_ergonomics` for constitutional details) without forcing you to swallow the entire constitution upfront.
 
 Only after you have a working model should you dive into the deep sources:
 - `MASTER/data/soul.yml`
