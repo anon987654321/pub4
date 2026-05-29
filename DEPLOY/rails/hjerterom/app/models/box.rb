@@ -11,5 +11,6 @@ class Box < ApplicationRecord
   scope :current, -> { where(week_start: Date.current.beginning_of_week) }
   scope :open, -> { where(status: %i[planning packing ready]) }
 
+  after_create_commit { broadcast_append_later_to "hjerterom:boxes" }
   after_update_commit { broadcast_replace_later_to "hjerterom:boxes" }
 end

@@ -3,49 +3,50 @@
   <head>
     <meta charset="utf-8">
     <title><%= content_for(:title) || "MASTER" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="MASTER">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="master-tier" content="<%= request.env['master.tier'] || 'visitor' %>">
     <meta name="theme-color" content="#000000">
+    <meta name="master-runtime" content="face">
+    <meta name="master-visual-profile" content="auto">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icon.png">
-
-    <%= stylesheet_link_tag :app %>
-    <%= javascript_include_tag :app, defer: true %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preload" href="/face.css" as="style">
+    <link rel="modulepreload" href="/three.module.js">
+    <link rel="modulepreload" href="/face.js">
+    <link rel="stylesheet" href="/face.css">
+    <link rel="stylesheet" href="/photo_upload.css">
   </head>
-
-  <body
-    data-master-tier="<%= request.env['master.tier'] || 'visitor' %>"
-    data-master-state="idle"
-    data-runtime-profile="calm"
-    data-runtime-visible="true"
-    data-visual-runtime="rails">
-    <canvas id="mask" aria-hidden="true"></canvas>
-    <section class="face-plate" aria-hidden="true">
-      <div class="face-core">
-        <span class="face-eye face-eye-left"></span>
-        <span class="face-eye face-eye-right"></span>
-        <span class="face-mouth"></span>
-      </div>
-    </section>
-    <main id="app-shell">
+  <body class="zen" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
+    <div class="top-right-logo" aria-hidden="true">MASTER</div>
+    <canvas id="cognition-ecology" aria-hidden="true"></canvas>
+    <canvas id="face" aria-hidden="true"></canvas>
+    <div id="primer" role="button" tabindex="0" aria-label="Start MASTER"></div>
+    <main id="chat-shell" aria-label="MASTER chat">
+      <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
+    </main>
+    <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
+      <button id="photo-button" type="button" aria-label="Attach photo">+</button>
+      <input id="photo" type="file" accept="image/*" capture="environment" hidden>
+      <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
+      <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message">
+    </form>
+    <main id="app-shell" aria-label="MASTER content">
       <%= yield %>
     </main>
-    <nav aria-label="Primary"><a href="/">chat</a></nav>
-    <section class="runtime-console" aria-label="MASTER prompt">
-      <textarea id="input" rows="1" placeholder="type here..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
-      <div id="status" aria-live="polite" data-runtime-status="idle">ready</div>
-    </section>
-    <script src="/face_state.js" defer></script>
-    <script src="/visual_governor.js" defer></script>
     <script src="/topology_registry.js" defer></script>
     <script src="/particle_kernel.js" defer></script>
-    <script type="module" src="/mask.js" defer></script>
+    <script type="module" src="/face.js"></script>
+    <script src="/visual_bridge.js" defer></script>
+    <script src="/cognition_ecology.js" defer></script>
+    <script src="/codebase.js" defer></script>
+    <script src="/chat.js" defer></script>
   </body>
 </html>

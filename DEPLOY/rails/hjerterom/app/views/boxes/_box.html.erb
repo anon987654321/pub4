@@ -1,0 +1,10 @@
+<article id="<%= dom_id(box) %>">
+  <h2><%= link_to box.week_start, box %></h2>
+  <p class="dim">Status: <%= box.status.humanize %></p>
+  <% if box.beneficiary_id.present? %>
+    <p><strong>Beneficiary:</strong> #<%= box.beneficiary_id %></p>
+  <% end %>
+  <% if box.notes.present? %>
+    <p><%= box.notes %></p>
+  <% end %>
+</article>

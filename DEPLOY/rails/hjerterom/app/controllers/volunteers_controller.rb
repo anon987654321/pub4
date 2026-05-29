@@ -19,7 +19,10 @@ class VolunteersController < ApplicationController
   def create
     @volunteer = Volunteer.new(volunteer_params)
     if @volunteer.save
-      redirect_to @volunteer
+      respond_to do |format|
+        format.html { redirect_to @volunteer }
+        format.turbo_stream
+      end
     else
       render :new, status: :unprocessable_entity
     end

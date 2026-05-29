@@ -455,6 +455,7 @@ function enqueueSpeech(text) {
   if (tts.muted) return;
   const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`~]/g, '').trim();
   if (!clean) return;
+  tts.lastText = clean;
   tts.queue.push(clean);
   ttsTick();
 }
@@ -596,7 +597,10 @@ async function sendMessage(text) {
   evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
     if (raw === '[DONE]') {
-      if (pending.trim()) enqueueSpeech(pending.trim());
+      if (pending.trim()) {
+        tts.lastText = pending.trim();
+        enqueueSpeech(pending.trim());
+      }
       pending = '';
       State.mode = 'idle';
       if (navigator.vibrate) navigator.vibrate([60]);
@@ -734,6 +738,21 @@ document.addEventListener('keydown', (e) => {
 });
 
 window.sendMessage = sendMessage;
+window.MASTERVoice = {
+  enqueue: enqueueSpeech,
+  skip: ttsSkip,
+  toggleMute: ttsToggleMute,
+  speak: speakLocal,
+  get muted() { return tts.muted; },
+  get playing() { return tts.playing; },
+  get voice() { return tts.voice; },
+  setLastText(text) { tts.lastText = String(text || ""); },
+  get lastText() { return tts.lastText || ""; }
+};
+window._chatSpeakLast = () => {
+  const text = tts.lastText || "";
+  if (text) enqueueSpeech(text);
+};
 
 // Semantic reaction — now primarily driven by server Expression payloads
 // (from lib/voice/expression.rb) with lightweight event-specific overrides.

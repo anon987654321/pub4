@@ -129,10 +129,14 @@ async function sendMessageWithPhoto(text) {
   if (photoInput) photoInput.value = '';
   setPhotoState('idle', '+');
 
+  let assistantBuffer = '';
   _evtSrc = new EventSource(`/chat/message?${params.toString()}`);
   _evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
     if (raw === '[DONE]') {
+      const voice = window.MASTERVoice;
+      if (voice?.setLastText) voice.setLastText(assistantBuffer);
+      if (voice?.enqueue) voice.enqueue(assistantBuffer);
       try { _evtSrc.close(); } catch (_) {}
       window._chatOnDone?.();
       return;
@@ -142,6 +146,8 @@ async function sendMessageWithPhoto(text) {
       window._chatOnError?.();
       return;
     }
+    const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+    assistantBuffer += chunk;
     window._chatOnChunk?.(raw);
   };
   _evtSrc.addEventListener('dmesg', (ev) => {

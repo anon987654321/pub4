@@ -68,8 +68,6 @@ class ChatController < ApplicationController
   end
 
   def tts
-    return head(:forbidden) if visitor?
-
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 

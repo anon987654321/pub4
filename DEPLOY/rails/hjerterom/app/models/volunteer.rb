@@ -7,4 +7,6 @@ class Volunteer < ApplicationRecord
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
 
   scope :available, -> { where(active: true) }
+
+  after_create_commit { broadcast_append_later_to "hjerterom:volunteers" }
 end

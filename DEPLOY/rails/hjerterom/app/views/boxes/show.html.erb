@@ -8,10 +8,6 @@
   <%= link_to "All boxes", boxes_path, class: "btn btn-ghost" %>
 </div>
 
-<article id="<%= dom_id(@box) %>">
-  <p class="dim">Status: <%= @box.status.humanize %></p>
-  <% if @box.beneficiary_id.present? %><p><strong>Beneficiary:</strong> #<%= @box.beneficiary_id %></p><% end %>
-  <% if @box.notes.present? %><p><%= @box.notes %></p><% end %>
-</article>
+<%= render @box %>
 
 <%= render "form", box: @box %>

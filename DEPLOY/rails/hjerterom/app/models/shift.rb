@@ -12,6 +12,9 @@ class Shift < ApplicationRecord
 
   scope :future, -> { where("starts_at >= ?", Time.current).order(:starts_at) }
 
+  after_create_commit { broadcast_append_later_to "hjerterom:shifts" }
+  after_update_commit { broadcast_replace_later_to "hjerterom:shifts" }
+
   private
 
   def valid_time_range

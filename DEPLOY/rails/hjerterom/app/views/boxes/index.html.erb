@@ -11,13 +11,7 @@
 <% if @boxes.any? %>
   <%= turbo_stream_from "hjerterom:boxes" %>
   <div id="boxes">
-    <% @boxes.each do |box| %>
-      <article id="<%= dom_id(box) %>">
-        <h2><%= link_to box.week_start, box %></h2>
-        <p class="dim"><%= box.status.humanize %></p>
-        <% if box.notes.present? %><p><%= box.notes %></p><% end %>
-      </article>
-    <% end %>
+    <%= render @boxes %>
   </div>
 <% else %>
   <div class="empty"><p>No boxes planned.</p></div>

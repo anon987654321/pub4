@@ -1,10 +1,9 @@
 <% content_for :title, "Volunteers" %>
 <h1>Volunteers</h1>
 <% if @volunteers.any? %>
-  <ul>
-    <% @volunteers.each do |volunteer| %>
-      <li><%= link_to volunteer.name, volunteer %><% if volunteer.email.present? %> — <%= mail_to volunteer.email %><% end %></li>
-    <% end %>
+  <%= turbo_stream_from "hjerterom:volunteers" %>
+  <ul id="volunteers">
+    <%= render @volunteers %>
   </ul>
 <% else %>
   <p>No active volunteers yet.</p>

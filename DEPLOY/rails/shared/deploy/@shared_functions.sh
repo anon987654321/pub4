@@ -148,8 +148,10 @@ db_migrate() {
 
 configure_production() {
   local cfg=config/environments/production.rb
-  grep -q 'force_ssl' "$cfg" || print '  config.force_ssl = true' >> "$cfg"
-  grep -q 'solid_cache' "$cfg" || print '  config.cache_store = :solid_cache_store' >> "$cfg"
+  local text
+  text=$(<"$cfg")
+  [[ $text == *"assume_ssl"* ]] || print '  config.assume_ssl = true' >> "$cfg"
+  [[ $text == *"solid_cache"* ]] || print '  config.cache_store = :solid_cache_store' >> "$cfg"
   log_ok "Production config updated"
 }
 
@@ -157,4 +159,3 @@ install_security_tools() {
   add_gem_group "development,test" brakeman rubocop-rails-omakase
   log_ok "Security tools added"
 }
-
