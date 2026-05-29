@@ -154,6 +154,7 @@
       else if (/memory|retriev|context/.test(name) && agent.name === "memory") agent.charge = 1;
       else if (/tool|scan|sweep|audit/.test(name) && agent.name === "coder") agent.charge = 0.95;
       else if (/error|rollback|escalat/.test(name) && agent.name === "judge") agent.charge = 1;
+      else if (/council:deliberation|reversibility:low/.test(name)) agent.charge = Math.min(1, agent.charge + 0.25);
       else agent.charge = Math.max(agent.charge, 0.55);
     }
     // Mirror charges into the kernel cells (ecology habitats port).

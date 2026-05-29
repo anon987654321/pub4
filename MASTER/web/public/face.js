@@ -682,6 +682,7 @@ window.addEventListener('master:visual', (ev) => {
       const b = i*window.ParticleKernel.FIELDS_PER_CELL;
       mouthPool.cells[b+window.ParticleKernel.FIELD.arousal] = hi?1.0: lo?0.3:0.7;
       mouthPool.cells[b+window.ParticleKernel.FIELD.pressure] = hi?0.85: lo?0.25:0.6;
+      if (hi) State.breath = Math.min(1.6, (State.breath||1.0) + 0.25);
       // Use richer payload (rate/pitch from server) for prosody-driven modulation
       const rate = parseFloat(d.rate || (d.raw && d.raw.rate)) || 0;
       const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
