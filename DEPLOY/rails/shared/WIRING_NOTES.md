@@ -120,6 +120,8 @@ Photo creation (upload + processing) is intentionally allowed for unauthenticate
 
 See `chat_controller.rb` (photo + uploaded_image_payload) and recent security carve-outs for the exact boundaries.
 
+**Standardization tip**: When adding photo support to a new app, mount the upload route and ensure `ActiveStorage` + post-processing is wired (use Brgen as reference). Keep the visitor-allowed carve-out for public multimodal chat.
+
 ## OpenBSD Provisioning & Service Wiring (reference patterns)
 rc.d services (falcon/puma per-app on distinct ports), relayd tables/healthchecks, and per-vertical feature scripts (auth, voting, styles, social, models) provide a repeatable template. All family apps should converge on the same rc.d + relayd + Solid stack baseline for doas rcctl consistency. Shared functions for gem groups, db setup, and layout/CSS baselines reduce drift across brgen, amber, blognet, hjerterom.
 
