@@ -1,5 +1,5 @@
 "use strict";
-import * as THREE from '/three.module.js?v=4';
+import * as THREE from '/three.module.js?v=5';
 
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
@@ -8,18 +8,18 @@ const zshIn  = document.getElementById('zin');
 const rootBody = document.body;
 
 const TINT = {
-  idle:    new THREE.Color(0.62, 0.86, 1.00),
-  claude:  new THREE.Color(0.86, 0.74, 0.96),
-  deepseek:new THREE.Color(0.42, 0.78, 1.00),
-  gemini:  new THREE.Color(0.50, 0.92, 0.74),
-  gpt:     new THREE.Color(0.92, 0.86, 0.46),
-  tense:   new THREE.Color(1.00, 0.50, 0.40),
-  curious: new THREE.Color(0.50, 0.82, 0.96),
-  focused: new THREE.Color(0.36, 0.66, 0.92),
-  weary:   new THREE.Color(0.62, 0.62, 0.72),
-  pass:    new THREE.Color(0.50, 0.92, 0.62),
-  veto:    new THREE.Color(0.96, 0.32, 0.28),
-  unclear: new THREE.Color(0.84, 0.78, 0.40)
+  idle:    new THREE.Color(1.00, 1.00, 1.00),
+  claude:  new THREE.Color(0.90, 0.82, 1.00),
+  deepseek:new THREE.Color(0.76, 0.90, 1.00),
+  gemini:  new THREE.Color(0.78, 1.00, 0.88),
+  gpt:     new THREE.Color(1.00, 0.94, 0.72),
+  tense:   new THREE.Color(1.00, 0.68, 0.60),
+  curious: new THREE.Color(0.78, 0.94, 1.00),
+  focused: new THREE.Color(0.70, 0.84, 1.00),
+  weary:   new THREE.Color(0.82, 0.82, 0.88),
+  pass:    new THREE.Color(0.78, 1.00, 0.84),
+  veto:    new THREE.Color(1.00, 0.56, 0.52),
+  unclear: new THREE.Color(0.96, 0.90, 0.66)
 };
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
@@ -163,6 +163,8 @@ const VERT_COUNT = vertPositions.length / 3;
 
 const vertHome = vertPositions.slice();
 const vertVel  = new Float32Array(VERT_COUNT * 3);
+const CURSOR_R = 0.40; // repulsion radius in head-local units
+const CURSOR_F = 0.016; // repulsion force per frame
 
 const mouthMask = new Uint8Array(VERT_COUNT);
 const eyeMask   = new Uint8Array(VERT_COUNT);
@@ -249,6 +251,15 @@ function frame(t) {
   const dt = Math.min(State.coarsePointer ? 66 : 50, t - lastT); lastT = t;
   const sec = t * 0.001;
 
+  if (tts.analyser && tts.analyserBuf) {
+    tts.analyser.getByteTimeDomainData(tts.analyserBuf);
+    let rmsSum = 0;
+    const bufLen = tts.analyserBuf.length;
+    for (let bi = 0; bi < bufLen; bi++) { const s = (tts.analyserBuf[bi] - 128) / 128; rmsSum += s * s; }
+    const rms = Math.sqrt(rmsSum / bufLen);
+    if (rms > 0.01) State.pulse = Math.min(0.9, State.pulse + rms * 1.5);
+  }
+
   const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
   colorCurrent.lerp(colorTarget, lerpSpeed);
   vertMat.color.copy(colorCurrent);
@@ -313,6 +324,16 @@ function frame(t) {
     if (eyeMask[i] && !State.reducedMotion && Math.random() < eyeJitter) {
       vertVel[i3]   += (Math.random() - 0.5) * (eyeJitter * 0.2);
       vertVel[i3+1] += (Math.random() - 0.5) * (eyeJitter * 0.2);
+    }
+    if (!State.reducedMotion) {
+      const cdx = vPos[i3] - State.mouseX * 1.5, cdy = vPos[i3+1] + State.mouseY * 1.5;
+      const cd2 = cdx * cdx + cdy * cdy;
+      if (cd2 < CURSOR_R * CURSOR_R && cd2 > 0.0001) {
+        const cd = Math.sqrt(cd2);
+        const cf = CURSOR_F * (1 - cd / CURSOR_R);
+        vertVel[i3]   += (cdx / cd) * cf;
+        vertVel[i3+1] += (cdy / cd) * cf;
+      }
     }
     const sx = vertVel[i3]   = vertVel[i3]   * 0.9 + (hx - vPos[i3])   * 0.18;
     const sy = vertVel[i3+1] = vertVel[i3+1] * 0.9 + (hy - vPos[i3+1]) * 0.18;
@@ -410,7 +431,7 @@ function beep(freq, dur) {
 const VISEME_STEP_MS = 90;
 const LOCAL_RATE = 0.95;
 const LOCAL_PITCH = 0.92;
-const tts = { queue: [], muted: false, playing: false, voice: null, current: null, audio: null, visemeTimer: null, serverUnavailable: false };
+const tts = { queue: [], muted: false, playing: false, voice: null, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null };
 
 function pickVoice() {
   const list = speechSynthesis.getVoices();
@@ -485,9 +506,22 @@ function speakServer(text) {
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
       tts.audio = audio;
+      if (actx && actx.state !== 'closed') {
+        try {
+          const msrc = actx.createMediaElementSource(audio);
+          const analyser = actx.createAnalyser();
+          analyser.fftSize = 256;
+          msrc.connect(analyser);
+          analyser.connect(actx.destination);
+          tts.analyser = analyser;
+          tts.analyserBuf = new Uint8Array(analyser.fftSize);
+        } catch (_) {}
+      }
       audio.onplay = () => startVisemeAnim(text);
       audio.onended = audio.onerror = () => {
         stopVisemeAnim();
+        tts.analyser = null;
+        tts.analyserBuf = null;
         URL.revokeObjectURL(src);
         tts.audio = null;
         tts.playing = false;
