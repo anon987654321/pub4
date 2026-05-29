@@ -1,7 +1,9 @@
 // MASTER visual governor: state-aware animation pressure control before mask.js loads.
+// Limits sourced from data/ops/visual.yml (SINGULARITY / ONE_SOURCE). Do not duplicate.
 (() => {
-  const maxFps = 18;
-  const maxParticles = 96;
+  const maxFps = 24;
+  const maxParticles = 200;
+  const reducedMotionParticles = 64;
   const minFrameMs = 1000 / maxFps;
   const nativeRaf = window.requestAnimationFrame.bind(window);
   const nativePush = Array.prototype.push;
@@ -30,6 +32,7 @@
   window.MASTER_VISUAL_LIMITS = Object.freeze({
     maxFps,
     maxParticles,
+    reducedMotionParticles,
     pauseWhenHidden: true,
     freezeOnFail: true
   });

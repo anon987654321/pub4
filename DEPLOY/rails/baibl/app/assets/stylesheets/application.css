@@ -1,3 +1,4 @@
+/* Target: Brgen application.css :root tokens + X.com/MASTER NNG system for family consistency */
 .book-nav { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: 1.5rem; }
 .book-nav a { padding: .25rem .5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; font-size: .8rem; color: var(--primary); }
 .book-nav a:hover { background: var(--primary); color: var(--bg); text-decoration: none; }

@@ -1,4 +1,8 @@
 /*
+ * Visual inheritance target: Brgen base (brgen/app/assets/stylesheets/application.css)
+ * X.com 3-col + MASTER dark cinema palette + NNG tokens.
+ * Align future styles to Brgen :root variables for family-wide consistency.
+ *
  * This is a manifest file that'll be compiled into application.css.
  *
  * With Propshaft, assets are served efficiently without preprocessing steps. You can still include

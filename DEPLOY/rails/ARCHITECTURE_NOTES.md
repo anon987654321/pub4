@@ -45,6 +45,8 @@ Marketplace should use Solidus Starter Frontend as its baseline and then adapt t
 
 ## Shared frontend direction
 
+Brgen's `application.css` (X.com 3-col + MASTER cinema palette + NNG tokens) is the visual base. All apps should inherit its `:root` variables and align components to it over time. See `shared/WIRING_NOTES.md` → "Visual System & Component Inheritance".
+
 Use Stimulus Components where possible.
 
 Use stimulus-lightbox backed by lightGallery.js for gallery needs.

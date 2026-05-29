@@ -20,6 +20,7 @@ module Master
         system_commands(ai[:agent], infra[:diag], root),
         "help" => ->(_ctx) {
           [
+            "unified: /run <natural language task>   # recommended for most work (intent inferred)",
             "scan:    /scan /fix [loop|preview|stop] /why /axioms /topic /propose-tree /ecology",
             "review:  /critique /review",
             "health:  /status /resync [--dry-run] /tail [N] [pattern]",

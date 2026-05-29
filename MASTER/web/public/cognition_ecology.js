@@ -30,6 +30,24 @@
     { name: "safety", angle: 5.4, radius: 0.44, charge: 0.65, hue: "245,220,160" }
   ];
 
+  // Start of ecology habitats port to ParticleKernel (visual_clusters.yml + topologies.yml).
+  // The 7 agent spirits are now backed by semantic cells (kind based on role).
+  let agentsPool = null;
+  if (window.ParticleKernel) {
+    const K = window.ParticleKernel;
+    agentsPool = K.createPool(agents.length);
+    agents.forEach((a, idx) => {
+      K.spawn(agentsPool, 0, 0, {
+        kind: idx + 10, // distinct per agent role
+        zone: 2,
+        confidence: a.charge,
+        arousal: a.charge * 0.8,
+        attention: 0.7,
+        decay: 0.02
+      });
+    });
+  }
+
   const memories = [];
   const trails = [];
   const weather = [];
@@ -47,11 +65,31 @@
     return node;
   }
 
+  let internalW = 480, internalH = 270;
+
   function resize() {
     state.width = innerWidth;
     state.height = innerHeight;
-    canvas.width = Math.floor(state.width * state.dpr);
-    canvas.height = Math.floor(state.height * state.dpr);
+
+    // Low internal resolution + integer upscale per data/topologies.yml + visual_clusters.yml.
+    const limits = window.MASTER_VISUAL_LIMITS || {};
+    const isReduced = reducedMotion || (limits.reducedMotionParticles && limits.reducedMotionParticles < 100);
+    let res = { w: 480, h: 270 };
+    if (isReduced || (state.width * state.height) < 400000) res = { w: 320, h: 180 };
+
+    internalW = res.w;
+    internalH = res.h;
+
+    if (window.ParticleKernel) {
+      window.ParticleKernel.fitInternalResolution(canvas, res);
+      window.ParticleKernel.configureContext(ctx);
+    } else {
+      canvas.width = res.w;
+      canvas.height = res.h;
+      canvas.style.imageRendering = "pixelated";
+      ctx.imageSmoothingEnabled = false;
+    }
+
     canvas.style.cssText = [
       "position:fixed",
       "inset:0",
@@ -59,9 +97,10 @@
       "height:100vh",
       "z-index:1",
       "pointer-events:none",
-      "mix-blend-mode:screen"
+      "mix-blend-mode:screen",
+      "image-rendering:pixelated"
     ].join(";");
-    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
 
   function clamp(value, min, max) {
@@ -69,7 +108,7 @@
   }
 
   function center() {
-    return [state.width * 0.5, state.height * 0.48];
+    return [internalW * 0.5, internalH * 0.48];
   }
 
   function rand(min, max) {
@@ -116,6 +155,14 @@
       else if (/tool|scan|sweep|audit/.test(name) && agent.name === "coder") agent.charge = 0.95;
       else if (/error|rollback|escalat/.test(name) && agent.name === "judge") agent.charge = 1;
       else agent.charge = Math.max(agent.charge, 0.55);
+    }
+    // Mirror charges into the kernel cells (ecology habitats port).
+    if (agentsPool) {
+      for (let i = 0; i < agentsPool.count; i++) if (agentsPool.alive[i]) {
+        const b = i * window.ParticleKernel.FIELDS_PER_CELL;
+        const a = agents[i];
+        if (a) agentsPool.cells[b + window.ParticleKernel.FIELD.arousal] = a.charge;
+      }
     }
   }
 
@@ -219,8 +266,8 @@
     const [cx, cy] = center();
     const rows = reducedMotion ? 7 : 13;
     const cols = reducedMotion ? 12 : 24;
-    const spanX = state.width * 0.86;
-    const spanY = state.height * 0.56;
+    const spanX = internalW * 0.86;
+    const spanY = internalH * 0.56;
     const t = state.terrainPhase;
     const calm = state.confidence;
     const alphaBase = 0.018 + state.activity * 0.032;
@@ -234,13 +281,14 @@
         const x = cx - spanX * 0.5 + u * spanX;
         const h = terrainHeight(x, y, t);
         const perspective = 0.55 + v * 0.45;
-        const px = x + Math.sin(t + v * 6) * 10 * state.entropy;
+        const jagged = 10 + state.entropy * 12;
+        const px = x + Math.sin(t + v * 6) * jagged;
         const py = y + h * 34 * perspective + Math.cos(t * 1.7 + u * 4) * 5 * (1 - calm);
         if (c === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
       const color = state.weather === "storm" || state.weather === "serpent" ? "235,80,45" : "120,220,185";
-      ctx.strokeStyle = `rgba(${color},${alphaBase * (0.55 + v)})`;
+      ctx.strokeStyle = `rgba(${color},${alphaBase * (0.55 + v) * (0.7 + state.confidence * 0.4)})`;
       ctx.lineWidth = 0.75 + state.entropy * 1.2;
       ctx.stroke();
     }
@@ -281,25 +329,32 @@
 
   function drawAgentSpirits(dt) {
     const [cx, cy] = center();
-    const base = Math.min(state.width, state.height);
-    for (const agent of agents) {
-      agent.angle += dt * (0.00008 + agent.charge * 0.00022) * (reducedMotion ? 0.25 : 1);
+    const base = Math.min(internalW, internalH);
+    for (let idx = 0; idx < agents.length; idx++) {
+      const agent = agents[idx];
+      // Read charge from kernel cell when available (ecology port).
+      let kCharge = agent.charge;
+      if (agentsPool && agentsPool.alive[idx]) {
+        const b = idx * window.ParticleKernel.FIELDS_PER_CELL;
+        kCharge = agentsPool.cells[b + window.ParticleKernel.FIELD.arousal] || agent.charge;
+      }
+      agent.angle += dt * (0.00008 + kCharge * 0.00022) * (reducedMotion ? 0.25 : 1);
       agent.charge += (0.42 - agent.charge) * 0.006;
-      const radius = base * agent.radius * (0.74 + state.activity * 0.18);
+      const radius = base * agent.radius * (0.74 + state.activity * 0.18 - (state.confidence - 0.5) * 0.08);
       const wobble = Math.sin(state.time * 0.0012 + agent.angle * 3) * base * 0.015;
       const x = cx + Math.cos(agent.angle) * (radius + wobble);
       const y = cy + Math.sin(agent.angle * 0.91) * radius * 0.62;
-      const glow = 0.12 + agent.charge * 0.42;
+      const glow = 0.12 + kCharge * 0.42;
 
       ctx.beginPath();
       ctx.fillStyle = `rgba(${agent.hue},${glow})`;
-      ctx.arc(x, y, 3 + agent.charge * 6, 0, Math.PI * 2);
+      ctx.arc(x, y, 3 + kCharge * 6, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(${agent.hue},${0.06 + agent.charge * 0.12})`;
+      ctx.strokeStyle = `rgba(${agent.hue},${0.06 + kCharge * 0.12})`;
       ctx.lineWidth = 1;
-      ctx.arc(x, y, 12 + agent.charge * 16, 0, Math.PI * 2);
+      ctx.arc(x, y, 12 + kCharge * 16, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
@@ -345,7 +400,7 @@
         const dx = other.x - memory.x;
         const dy = other.y - memory.y;
         const d2 = dx * dx + dy * dy;
-        const max = Math.min(state.width, state.height) * 0.22;
+        const max = Math.min(internalW, internalH) * 0.22;
         if (d2 < max * max) {
           ctx.beginPath();
           ctx.strokeStyle = `rgba(120,220,185,${0.035 * memory.life})`;
@@ -399,7 +454,28 @@
   }
 
   window.addEventListener("resize", resize, { passive: true });
-  window.addEventListener("master:visual", (event) => ingestVisual(event.detail || {}));
+
+  // Hardened registration: defensive, prefers MASTERTopology classify when present (single source).
+  // Addresses prior fragile listener behavior for master:visual events from visual_bridge.
+  function onMasterVisual(event) {
+    try {
+      const detail = event?.detail || {};
+      const classified = (window.MASTERTopology && typeof window.MASTERTopology.classifyEvent === "function")
+        ? window.MASTERTopology.classifyEvent(detail.name || "event", detail)
+        : {};
+      ingestVisual({ ...classified, ...detail });
+    } catch (_) {
+      ingestVisual(event?.detail || {});
+    }
+  }
+  window.addEventListener("master:visual", onMasterVisual);
+
+  // Also expose direct callable for bridge/registry (idempotent path).
+  window.addEventListener("master:visual", (event) => {
+    if (window.MASTEREcology && typeof window.MASTEREcology.event === "function") {
+      // no-op here; the MASTEREcology.event already routes to ingest
+    }
+  });
 
   window.MASTEREcology = {
     state,

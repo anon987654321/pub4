@@ -16,6 +16,13 @@ module Master
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
   RULES_PATH = File.join(DATA, "rules.yml").freeze
 
+  # Single source for all constitution / config data files.
+  # Improves SINGULARITY and DENSITY by eliminating repeated
+  # File.join(Master::ROOT, "data", ...) constructions across the codebase.
+  def self.data_path(*parts)
+    File.join(DATA, *parts)
+  end
+
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
   MIN_API_KEY_LENGTH = 20
   NEMOTRON_PRIMARY = "nvidia/nemotron-3-super-120b-a12b:free"
@@ -177,9 +184,8 @@ module Master
   end
 
   def self.load_rules(root: ROOT)
-    data_dir = File.join(root, "data")
-    base = load_yaml(File.join(data_dir, "rules.yml"))
-    rules_dir = File.join(data_dir, "rules")
+    base = load_yaml(data_path("rules.yml"))
+    rules_dir = data_path("rules")
     merged = Dir.glob(File.join(rules_dir, "*.yml")).sort.each_with_object({}) do |f, h|
       (load_yaml(f) || {}).each { |scope, list| (h[scope] ||= []).concat(Array(list)) }
     end

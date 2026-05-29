@@ -48,6 +48,7 @@ class EventsController < ApplicationController
       if received.empty?
         if Time.now >= next_keepalive
           response.stream.write(": keepalive\n\n")  # SSE comment, prevents proxy timeout
+          response.stream.write("event: link\ndata: {\"state\":\"quiet\"}\n\n") rescue nil
           next_keepalive = Time.now + KEEPALIVE_EVERY_S
         end
         sleep POLL_INTERVAL_S

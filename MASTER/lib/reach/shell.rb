@@ -21,9 +21,9 @@ module Master
 
       BLOCKLIST   = Judge::Security::Permissions::BLOCKLIST
       ZSH_BANNED  = begin
-        merged = Master.load_yaml(File.join(Master::ROOT, "data", "patterns.yml"))
+        merged = Master.load_yaml(Master.data_path("patterns.yml"))
         zsh_data = (merged && merged["zsh"]) ||
-                    Master.load_yaml(File.join(Master::ROOT, "data", "zsh_patterns.yml"))
+                    Master.load_yaml(Master.data_path("zsh_patterns.yml"))
         Array(zsh_data["banned_commands"]).freeze
       rescue StandardError => _e
         %w[sed awk grep find head tail wc cut tr bash sudo perl python].freeze

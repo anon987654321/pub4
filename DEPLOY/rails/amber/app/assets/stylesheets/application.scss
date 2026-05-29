@@ -1,4 +1,8 @@
-// ==================== VARIABLES ====================
+// Visual inheritance: Align to Brgen base (see DEPLOY/rails/brgen/app/assets/stylesheets/application.css)
+// Preferred: import Brgen :root tokens + X.com 3-col + MASTER cinema palette over time.
+// Current Amber styles are product-specific; long-term goal is shared visual system.
+
+ // ==================== VARIABLES ====================
 :root {
   // Colors
   --color-black: #000;

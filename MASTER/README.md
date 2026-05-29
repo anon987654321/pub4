@@ -1,10 +1,10 @@
-# MASTER 2.0.1
+# MASTER
 
-Constitutional AI runtime for any text artifact — code, prose, design, structure. Ruby. OpenBSD. Self-hosting.
+Constitutional AI runtime for any text artifact — code, prose, design, structure. Ruby. OpenBSD-first. Self-hosting.
 
 Models propose. The constitution validates. Convergence loops digest violations. Memory learns what fixes stick. Pressure fields track epistemic health. Providers compete by capability, cost, and evidence.
 
-2.0.1 adds a standalone Converge kernel: topologically ordered rules, oscillation tracking, append-only SQLite runtime ledger, event streaming, personas, and a particle face dashboard.
+The visual face (web UI particle system) is a live mirror of internal state (council, pipeline stages, pressure, topology). See `data/topologies.yml`, `data/visual_clusters.yml`, and `web/public/particle_kernel.js`.
 
 ## Quickstart
 

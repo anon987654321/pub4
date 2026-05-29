@@ -140,6 +140,22 @@ module Master
           allowed.include?(r.class.name&.split("::")&.last) || allowed.include?(r.id)
         }
       end
+
+      # Pure Ruby reader for data/rules.yml prediction_engine (TODO.md:88).
+      # Gates autofix below per-rule confidence threshold.
+      def prediction_thresholds
+        @prediction_thresholds ||= (Master.load_yaml(Master::RULES_PATH)["prediction_engine"] || {})
+      rescue
+        {}
+      end
+
+      def should_autofix?(rule_id, observed_conf)
+        t = prediction_thresholds[rule_id.to_s] || prediction_thresholds[rule_id]
+        return true unless t && t["confidence"]
+        observed_conf.to_f >= t["confidence"].to_f
+      end
+
+      # HALLUCINATION rule stub (TODO constitutional gap): lexical/semantic detector for claim_without_reading etc. Deferred to full council wiring.
     end
   end
   end

@@ -364,7 +364,8 @@ module Master
         body = f[:feedback].to_s.strip.lines.first(3).map(&:chomp).join(" ")
         out << "  #{axiom}#{f[:persona]} (#{f[:role]}): #{body}"
       end
-      bus&.publish("tribunal:rendered", jurors: jurors.size, vetoes: vetoes.size, judge: !judge.nil?)
+      conf = (jurors.filter_map { |j| j[:confidence] || 0.5 }.sum / [jurors.size, 1].max).round(2) rescue 0.5
+      bus&.publish("tribunal:rendered", jurors: jurors.size, vetoes: vetoes.size, judge: !judge.nil?, confidence: conf)
       out.join("\n")
     end
 

@@ -2,11 +2,12 @@
 name: Importance-ordered file layout
 description: Every file's lines flow by importance — newspaper inverted pyramid. Most important content at top.
 type: feedback
-originSessionId: 038b16d9-fc5e-4144-9a47-5bd746b2d3ac
+status: consolidated
+canonical: data/principles/feedback_importance_order.md
 ---
-Every file I touch gets reordered so the most important content sits at the top. Newspaper-style inverted pyramid.
+**Consolidated.** This content is now maintained as single source in `data/principles/feedback_importance_order.md`.
 
-**Why:** A reader who stops halfway must still have the gist. The user explicitly asked for this on 2026-05-07 ("every file must have all its lines rearranged to flow by importance so most important stuff comes top"). Encoded into `MASTER/data/ruby_style.yml` (`line_order:` section) and `MASTER/data/sweep_prompts.yml` (`IMPORTANCE_ORDER` structural technique) so MASTER's auto-sweep propagates the rule.
+See the principles/ version for the current authoritative text. This file is kept only for historical session traceability.
 
 **How to apply:**
 - Order: requires → module/class declaration + headline doc → public API (ordered by importance/call-frequency) → primary algorithm → private helpers (in dependency order) → constants/tables → edge-case handlers/rescues.

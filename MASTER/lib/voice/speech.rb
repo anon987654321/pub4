@@ -30,7 +30,17 @@ module Master
       brief: { rate: "+8%", pitch: "+0Hz" },
       warn: { rate: "-4%", pitch: "-20Hz" },
       fail: { rate: "-8%", pitch: "-40Hz" },
-      question: { rate: "+0%", pitch: "+15Hz" }
+      question: { rate: "+0%", pitch: "+15Hz" },
+
+      # Creative vocal effects for Osman (and other voices)
+      dramatic:     { rate: "-15%", pitch: "-60Hz" },   # lower, slower, intense
+      intimate:     { rate: "-5%",  pitch: "-25Hz" },   # close, warm
+      intense:      { rate: "+5%",  pitch: "+20Hz" },   # urgent, raised
+      ethereal:     { rate: "-20%", pitch: "+40Hz" },   # high, slow, airy
+      robotic:      { rate: "+10%", pitch: "-80Hz" },   # flat, mechanical
+      whispered:    { rate: "-25%", pitch: "-10Hz" },   # very soft, breathy feel via extreme rate
+      storyteller:  { rate: "-8%",  pitch: "-15Hz" },   # narrative, measured
+      energetic:    { rate: "+15%", pitch: "+30Hz" }    # lively, higher
     }.freeze
 
     DEFAULT_VOICE = :ryan

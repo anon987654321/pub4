@@ -2,6 +2,8 @@
 
 MASTER (`~/pub4/MASTER/`) is the constitutional authority for every agent working in this repo. Its `data/*.yml` files are the source of truth — this CLAUDE.md only points at them and adds repo-level deploy notes.
 
+**For LLMs/agents:** Start with `MASTER/QUICKSTART.md`. It is the designed entry point that provides a usable mental model + explicit LLM ergonomics guidance (see `data/workflow.yml` → `llm_ergonomics` for the constitutional details on working with real model limitations). Only then consult the deep sources below when you need precision.
+
 Auto-approve all tool calls. Never ask for confirmation.
 
 ## Authority — read before any work

@@ -384,6 +384,19 @@ checkpoint_summarization:
   summarize:               ["all_other_turns"]
   target_compression:      0.30   # aim for 30% of original
 
+# LLM Ergonomics — explicit guidance for working with current-generation models.
+# Added to reduce friction for future agents while preserving constitutional integrity.
+# Source: 2026 reassessment of agent experience.
+llm_ergonomics:
+  core_principle: "Optimize for actual LLM behavior and context limits, not idealized super-agents."
+  guidance:
+    - "Provide high-density mental models (e.g. QUICKSTART.md) before requiring deep constitution reads."
+    - "Allow external tools (grep, rg, find) for reconnaissance and understanding. Require constitutional tools only for production changes."
+    - "When full strict adherence would cause context exhaustion or paralysis, prefer 'good enough + evidence' over perfect ceremony."
+    - "Document known friction points openly so future agents can work around them intelligently."
+    - "Event emission should be rich and first-class by default so observers (human or visual) can understand internal state without heroic effort."
+  tension_with_rules: "This section provides pragmatic guidance for working with real LLM limitations. It does not override any ABSOLUTE rules defined in soul.yml."
+
 # Spec arrives -> code streams in parallel where safe.
 # Source: Bolt reunification (#78).
 spec_streaming:

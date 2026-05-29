@@ -23,6 +23,8 @@ Audio-reactive 3D warp tunnel. Three.js for scene + particle rings; p5.js audio 
 
 Self-hosting AI agent that replaces Claude Code CLI on the VPS.
 
+**For LLMs and autonomous agents:** Start here → `MASTER/QUICKSTART.md`
+
 ```zsh
 cd MASTER && bundle exec ruby bin/cli
 ```

@@ -39,6 +39,11 @@
 
     return mapped;
   }
+  // Note: EVENT_MAP local is transitional dupe of data/topologies.yml + registry.
+  // handleRuntimeEvent (live SSE path to watched face/ecology) now prefers registry
+  // classifyEvent for ONE_SOURCE alignment (canonical ecology/face/codebase names + values).
+  // This reduces signal fragmentation so particle reactions (kernel arousal/pressure,
+  // tints, terrain, agents) are more coherent and calm to watch from afar.
 
   function emitVisual(name, detail = {}) {
     state.lastEventAt = performance.now();
@@ -96,7 +101,9 @@
 
   function handleRuntimeEvent(event) {
     const type = event?.type || event?.event || event?.data?.event || "runtime:event";
-    const mapped = classify(type, event);
+    const mapped = (window.MASTERTopology && typeof window.MASTERTopology.classifyEvent === "function")
+      ? window.MASTERTopology.classifyEvent(type, event)
+      : classify(type, event);
     mapped.raw = event;
     emitVisual(type, mapped);
     // Architecture #15: forward codebase topology to particle system.

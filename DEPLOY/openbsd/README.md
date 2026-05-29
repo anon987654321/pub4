@@ -40,6 +40,12 @@ doas zsh openbsd.sh --resume
 - loads final PF rules
 - verifies service health
 
+### Dev terminal environment (for operator `dev` user)
+
+- terminal packages: zsh fish neovim tmux fontconfig fzf ripgrep fd
+- enriched /home/dev/.zshrc (Starship if present, nvim editor, quality aliases, brgen helper)
+- enables the rich local dev experience (Nerd Fonts, modern prompt, Neovim) on the VPS itself for tmux sessions and non-CLI work
+
 ## Boundary rules
 
 - Public ingress should be limited to SSH, SMTP, HTTP, and HTTPS.

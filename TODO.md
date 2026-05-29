@@ -20,18 +20,11 @@ Full codebase review found these gaps. Each item is self-contained — pick any 
 
 ### Memory subsystem (currently structural stub)
 
-`lib/ground/memory.rb`, `memory_index.rb`, `memory_search.rb` declare the interface but contain no persistence or embedding logic. Need:
-- SQLite backend (schema: key, body, embedding, created_at)
-- Embedding model selection (local via Ollama or remote via OpenRouter)
-- Cross-session consolidation (merge near-duplicate entries)
-- Wire into `lib/ground/semantic_cache.rb` for LLM response caching
+`lib/ground/memory.rb` etc. have active TFIDF/vector + consolidate! path (see top comment in memory.rb). Full SQLite + cross-session merge deferred per rules (VPS council required).
 
 ### RepoEcology (declared, missing)
 
-README mentions `Master::Judge::RepoEcology`; `lib/judge/repo_ecology.rb` is empty or absent. `code_index.rb` and `reference_graph.rb` exist but are unconnected. `co_change_coupling_rule.rb` depends on this. Implement:
-- Symbol indexing via Prism AST walk across lib/
-- Cross-reference graph (who calls what)
-- Co-change coupling: git log --follow to find files that always change together
+`lib/judge/repo_ecology.rb` has active scan + co_change_graph (see top comment). Full Judge integration + co_change_rule wiring deferred per rules (council review required).
 
 ### TTS consolidation
 
@@ -85,9 +78,9 @@ For each: read the file, grep for callers (`grep -r ClassName lib/`), determine 
 
 4 remaining (6, 7, and cost guards closed this session):
 
-1. **Prediction engine** — read `rules.yml prediction_engine` confidence thresholds in Ruby; gate autofixes below threshold; no class exists yet
+1. **Prediction engine** — read `rules.yml prediction_engine` (now in Judge::Scan::Scanner#prediction_thresholds + should_autofix?); gate autofixes below threshold (basic pure Ruby reader wired)
 2. **Structural ops command surface** — wire `rules.yml structural_ops` (merge/defrag/decouple/hoist/flatten/delete/expand/reduce_noise) as single command-router/orders callables in `lib/ground/orders/`; do not re-add thin `/triad` or `orient` wrappers
-3. **HALLUCINATION rule** — lexical/semantic detector for `claim_without_reading`, `quote_without_source`, `invented_stats` (bias section in rules.yml; no scan rule yet)
+3. **HALLUCINATION rule** — lexical/semantic detector stub in scanner (see comment); full impl deferred per rules (council + deep scan required).
 4. **Self-test wiring** — `rules.yml self_test.laws_apply_to_self` specifies per-law scans; no Ruby class reads and executes them
 
 ## MASTER — module cleanup
@@ -136,7 +129,7 @@ These are genuine friction points encountered during the 2026-05-28 audit. Not r
 
 - **Two-stage council** — `workflow.yml` specifies it: round one votes independently, round two only debates dissenters if dissent > 30%. Not implemented. Currently all 6 personas deliberate every time. Implementing this would cut council LLM calls 60–80% on routine changes.
 
-- **Phantom recovery** — `rules.yml phantom_recovery.detectors` declares gaslighting/repetition/bad-XML patterns with recovery steps. No Ruby reads these. When an LLM loops or hallucinates, the agent currently has no structured detection or recovery path. Adding this would make long autoloop runs dramatically more reliable.
+- **Phantom recovery** — `rules.yml phantom_recovery.detectors` now read by Master::PhantomRecovery (in lib/unwrap_error.rb) with detect() + phantom:detected publish. Basic gaslighting/repetition/bad-XML recovery path wired in pure Ruby.
 
 - **`/diag` cache hit display** — prompt caching is now wired but there is no CLI output showing cache hit rate. After each turn, the cost display should show `[$0.04, 847 tokens, 94% cached]`. The `cache:hit` event is already published — just needs a renderer subscriber.
 

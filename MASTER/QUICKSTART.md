@@ -1,44 +1,84 @@
-# MASTER Quickstart (External LLMs)
+# MASTER Quickstart for LLMs & Agents
 
-MASTER is a constitutional coding agent in Ruby. Read this first, then run `/orient` for full doctrine.
+This is the primary entry point for any LLM or autonomous agent. It provides a practical mental model so you can operate effectively without first absorbing the entire constitution.
 
-1) Golden rule
-- Preserve, then improve, never break.
-- Read full files before editing.
-- Keep patches minimal and reversible.
+Read this document first. Treat the deep YAML files (`data/soul.yml`, `rules.yml`, etc.) as reference material you consult when you need precision, not as mandatory pre-reading.
 
-2) Non-negotiables
-- No fabricated claims; show evidence from files/commands.
-- No bare `rescue`; rescue specific exceptions.
-- Prefer named constants over magic literals.
-- Use string methods before regex when possible.
-- Dependency-inject collaborators; avoid hidden instantiation.
+## The Big Picture (Mental Model)
 
-3) Style baseline
-- `# frozen_string_literal: true` in Ruby files.
-- Double-quoted strings.
-- Guard clauses first.
-- Endless method style for single expressions.
-- Clear names; avoid abbreviations like `idx`, `tmp`, `sig`.
+MASTER is a **constitutional self-improving coding agent**. Its core loop is:
 
-4) How MASTER works
-- Pipeline: Intake → Infer → Route → Guard → Execute → Council/Lint → Prune → Memo → Render.
-- Scans enforce structure/style rules from `data/rules.yml` and `data/ruby_style.yml`.
-- Fixes are applied through FixLoop and must remain safe and auditable.
+**Propose → Validate against Constitution → Execute with evidence → Learn from outcomes**
 
-5) Core commands
-- `/scan [profile] [path]` check a file/dir.
-- `/fix [path]` apply fixes.
-- `/diag` runtime snapshot.
-- `/why <rule>` explain one rule.
-- `/help` command catalog.
+It has strong opinions because it was built to survive long-term in the presence of tired humans, hallucinating models, decaying dependencies, and its own future versions.
 
-6) Web auth model
-- Token-authenticated operator gets full tools.
-- Visitor mode is restricted to safe tools.
+Key layers (in order of importance):
+1. **Constitution** (`data/*.yml`) — The actual law. Everything else is implementation.
+2. **Pipeline** (`now/pipeline.rb` + stages) — The 11-stage turn: Intake → Enhance → Infer → Route → Guard → Execute → [Council | Lint] → Prune → Memo → Render.
+3. **Judge** — Deep static + semantic analysis + adversarial council review.
+4. **Loop** — Self-improvement mechanisms (fix loops, rule loops, autoloop).
+5. **Ground / Reach / Trace** — Memory, tools, and event bus.
 
-7) If uncertain
-- Ask for the specific rule section instead of guessing.
-- Prefer explicit tradeoffs and smallest safe change.
+The web face (the particle system) is a **live visualization** of the agent's internal state, not just decoration.
 
-Full reference: `CONVENTIONS.md` and `/orient`.
+## How to Actually Work Here (LLM Ergonomics)
+
+The rules are intentionally strict. Here is the practical guidance:
+
+### When you must be perfect
+- Any change that touches production behavior, security, or durable state.
+- Anything that will be deployed.
+
+### When you can be more pragmatic (exploration mode)
+- Understanding the codebase
+- Finding duplication or bloat
+- Writing analysis or proposals
+- Using external tools (`grep`, `rg`, `find`, etc.) purely for reconnaissance
+
+**Recommended pattern for LLMs:**
+1. Use whatever tools you have (including external grep) to build understanding.
+2. When you are ready to make real changes, switch to strict mode: read the full relevant files, use the internal `/scan` where possible, make minimal patches, emit evidence.
+
+### The "Read Everything" Rule in Practice
+The project says "read every file in full before editing." In reality:
+- For small, local fixes → read the file + its direct callers/tests.
+- For structural changes → run `/scan deep` (via the CLI when available) + read the affected areas.
+- Never edit based on partial context or memory.
+
+## Core Operating Principles (Memorize These)
+
+- **PRESERVE_THEN_IMPROVE_NEVER_BREAK** — The golden rule. Read first. Patch minimally.
+- Evidence over simulation. No "will", "would", "could", "might" without proof.
+- Small commits. One meaningful change per commit.
+- Single source of truth. If something exists in `data/`, code should read from there.
+- The agent improves itself using its own tools when possible.
+
+## Practical Commands (Unified Interface)
+
+The recommended way for most work:
+
+- `/run <natural language task or description>` — Primary entry point. Full pipeline intent inference, rich routing, council when needed. Examples:
+  - `/run deep scan the particle kernel and face.js for improvement opportunities`
+  - `/run perform a sound critique on the recent event emission changes`
+
+Legacy explicit commands still work for power users (`/scan`, `/fix`, `/why`, etc.), but `/run` is preferred for LLM/agent ergonomics. See `/cmd` for the current explicit list.
+
+## Current Known Friction Points (2026)
+
+This system was built with extremely high standards. Some resulting pain points for LLMs:
+
+- Heavy upfront reading requirements in AGENTS.md / CLAUDE.md.
+- Environment-specific Ruby (ruby34 + bundle34 on OpenBSD) makes the self-scan CLI hard to bootstrap.
+- Significant historical documentation sprawl (especially feedback files).
+
+See `data/workflow.yml` → `llm_ergonomics` for the constitutional guidance on how to work with these realities.
+
+These are acknowledged areas for improvement. When working here, prioritize clarity and evidence over perfect adherence to every ceremony.
+
+## Next Steps When You're Ready
+
+1. Run `/orient` (or read `data/CANON.md`) when you need the full doctrine.
+2. For any real edit: read the full target file(s) + relevant callers.
+3. Prefer using the agent's own mechanisms (`/scan`, event bus, etc.) over external shortcuts for production changes.
+
+Welcome. The system is opinionated because it has survived a lot. Treat it with respect, and it will reward careful work.

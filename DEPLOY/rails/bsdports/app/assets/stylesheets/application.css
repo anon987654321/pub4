@@ -1,3 +1,4 @@
+/* Visual target: inherit from Brgen base (application.css :root + X.com/MASTER tokens) over time */
 :root {
   --white: #ffffff;
   --black: #000000;

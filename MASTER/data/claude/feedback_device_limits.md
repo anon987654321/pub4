@@ -2,9 +2,12 @@
 name: No heavy work on device
 description: Termux/Android — defer CPU/IO-heavy tasks to VPS, keep device work minimal
 type: feedback
-originSessionId: 84fcf91d-46ea-43a5-8efa-3d33b065e6a5
+status: consolidated
+canonical: data/principles/feedback_device_limits.md
 ---
-Prefer the VPS (dev@46.23.89.226) for all work. This device (Termux/Android) is a last resort.
+**Consolidated.** This content is now maintained as single source in `data/principles/feedback_device_limits.md`.
+
+See the principles/ version for the current authoritative text. This file is kept only for historical session traceability.
 
 **Why:** User said "prefer using the VPS" and "avoid doing heavy stuff on this device."
 

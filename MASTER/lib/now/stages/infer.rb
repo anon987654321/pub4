@@ -28,7 +28,7 @@ module Master
         qa: /\?(?:\s*$|\s+[A-Z])/m,
       }.freeze
 
-      PATTERNS_PATH = File.join(Master::ROOT, "data", "patterns.yml").freeze
+      PATTERNS_PATH = Master.data_path("patterns.yml").freeze
 
       def initialize
         @patterns = load_patterns

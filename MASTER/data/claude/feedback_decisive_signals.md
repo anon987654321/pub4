@@ -2,12 +2,12 @@
 name: Decisive short directives = full authorization
 description: Short lowercase replies ("ship all", "kill X keep Y", "yes", "i think X") are binding — execute pass-by-pass without re-confirming.
 type: feedback
-originSessionId: b02ce9b9-a7c7-4c65-b8d0-3b8469dc2028
+status: consolidated
+canonical: data/principles/feedback_decisive_signals.md
 ---
-Short, lowercase, often typo-laden user directives are decisive — full authorization to execute without re-asking. Recognized signals:
+**Consolidated.** This content is now maintained as single source in `data/principles/feedback_decisive_signals.md`.
 
-- "ship all" / "yes" / "do it" → full proposed backlog approved
-- "kill X, keep Y" → binary fork decided
+See the principles/ version for the current authoritative text. This file is kept only for historical session traceability.
 - "i think X" → user has settled on X, proceed
 - "propose N X" → wants a numbered, categorized list with one-liner per item, grouped by surface (type, color, motion, etc.); user then picks a slice or says "ship all"
 

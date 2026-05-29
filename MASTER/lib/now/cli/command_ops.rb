@@ -67,8 +67,9 @@ module Master
     end
 
     def run_cmd
+      puts @renderer.render("unified: /run <task description>   (recommended primary interface for most work)", mode: :dim)
       puts @renderer.render("explicit: #{SLASH_COMMANDS.join("  ")}", mode: :dim)
-      puts @renderer.render("or describe what you want — intent is inferred", mode: :dim)
+      puts @renderer.render("or just describe what you want — full pipeline intent inference", mode: :dim)
     end
 
     def toggle_dmesg

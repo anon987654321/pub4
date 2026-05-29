@@ -29,6 +29,8 @@ const state = {
   frame: 0
 };
 
+let internalW = 480, internalH = 270;
+
 const ctx = canvas.getContext("2d", { alpha: true });
 const particles = [];
 const topologies = new Map();
@@ -37,8 +39,23 @@ const PARTICLE_COUNT = prefersReducedMotion ? 520 : 2200;
 function resize() {
   state.width = window.innerWidth;
   state.height = window.innerHeight;
-  canvas.width = Math.floor(state.width * state.dpr);
-  canvas.height = Math.floor(state.height * state.dpr);
+
+  // Low internal resolution + integer upscale (data/topologies.yml resolutions + kernel spec).
+  const limits = window.MASTER_VISUAL_LIMITS || {};
+  const isReduced = prefersReducedMotion || (limits.reducedMotionParticles && limits.reducedMotionParticles < 100);
+  let res = { w: 480, h: 270 };
+  if (isReduced) res = { w: 320, h: 180 };
+
+  if (window.ParticleKernel) {
+    window.ParticleKernel.fitInternalResolution(canvas, res);
+    window.ParticleKernel.configureContext(ctx);
+  } else {
+    canvas.width = res.w;
+    canvas.height = res.h;
+    canvas.style.imageRendering = "pixelated";
+    ctx.imageSmoothingEnabled = false;
+  }
+
   canvas.style.cssText = [
     "position:fixed",
     "inset:0",
@@ -46,9 +63,10 @@ function resize() {
     "height:100vh",
     "z-index:-1",
     "pointer-events:none",
-    "background:radial-gradient(circle at 50% 40%, #17110d 0%, #080605 55%, #020202 100%)"
+    "background:radial-gradient(circle at 50% 40%, #17110d 0%, #080605 55%, #020202 100%)",
+    "image-rendering:pixelated"
   ].join(";");
-  ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
 function rand(min, max) {
@@ -324,7 +342,7 @@ function smoothstep(x) {
 }
 
 function project(p) {
-  const scaleBase = Math.min(state.width, state.height) * 0.43;
+  const scaleBase = Math.min(internalW, internalH) * 0.43;
   const angle = state.rotation;
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
@@ -332,8 +350,8 @@ function project(p) {
   const z = p.x * sin + p.z * cos;
   const depth = 1.9 / (1.9 + z);
   return {
-    x: state.width * 0.5 + x * scaleBase * depth,
-    y: state.height * 0.47 + p.y * scaleBase * depth,
+    x: internalW * 0.5 + x * scaleBase * depth,
+    y: internalH * 0.47 + p.y * scaleBase * depth,
     depth
   };
 }
