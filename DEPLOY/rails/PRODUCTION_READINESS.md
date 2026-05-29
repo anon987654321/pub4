@@ -2,10 +2,17 @@
 
 Status as of this audit: not fully production-ready until the checks below pass on the OpenBSD target.
 
+Run the static gate before every deploy:
+
+```sh
+DEPLOY/rails/check_production_gate.rb
+```
+
 ## Shared blockers
 
-- Rotate Rails credentials for `brgen`, `amber`, and `bsdports`; `config/master.key` was previously tracked and must be treated as exposed.
-- Run each app under Ruby 3.4 with its locked bundle installed.
+- Rotate Rails credentials for every app that previously had a tracked `config/master.key`: `brgen`, `amber`, `bsdports`, `baibl`, `blognet`, and `hjerterom`.
+- Run each app under Ruby 3.4 with its locked bundle installed; every Gemfile now declares `ruby "~> 3.4"`.
+- TLS terminates at OpenBSD `relayd`. Rails production configs should keep `config.assume_ssl = true` and leave `config.force_ssl` disabled.
 - Run `bin/rails db:prepare`, `bin/rails test`, `bin/brakeman`, and `bin/bundler-audit` per app.
 - Deploy to the OpenBSD target and verify `/up`, TLS, host authorization, logs, database writes, background jobs, and service restart.
 
@@ -26,7 +33,7 @@ Not production-ready yet.
 
 Fixed in this pass:
 
-- Production SSL, host authorization, and mailer host now target `amber.brgen.no`.
+- Production proxy SSL trust, host authorization, and mailer host now target `amber.brgen.no`.
 
 Remaining checks:
 
@@ -40,7 +47,7 @@ Not production-ready yet.
 
 Fixed in this pass:
 
-- Production SSL, host authorization, mailer host, Solid Cache, and Solid Queue are configured for `bsdports.org`.
+- Production proxy SSL trust, host authorization, mailer host, Solid Cache, and Solid Queue are configured for `bsdports.org`.
 
 Remaining checks:
 
