@@ -107,7 +107,11 @@ Inspiration from current best practice (Hotwire + StimulusReflex production apps
 
 Implementation rule: New features in any app must add an Activity emission + a Turbo Stream consumer before building custom real-time UI.
 
-**Practical starter**: Use `Shared::EventEmitter.call("Vertical::ActionHappened", actor_id: ..., vertical: "marketplace", ...)` (see `shared/app/services/shared/event_emitter.rb`). This feeds both the unified graph and Hotwire broadcasts.
+**Practical starter**: 
+- From services: `Shared::EventEmitter.call("Vertical::ActionHappened", actor_id: ..., vertical: "marketplace", ...)`
+- From controllers: `include Shared::StructuredEvents` then `emit_event("Vertical::ActionHappened", ...)`
+
+See `shared/app/services/shared/event_emitter.rb` and `shared/app/controllers/concerns/shared/structured_events.rb`. This feeds the unified graph + Hotwire.
 
 ## Photo / Multimodal Upload Inheritance
 
