@@ -15,7 +15,7 @@ module Master
         data = Master.load_yaml(Master::RULES_PATH)
         (data.dig("phantom_recovery", "detectors") || {}).transform_values { |v| v.is_a?(String) ? Regexp.new(v, Regexp::IGNORECASE) : v }
       end
-    rescue
+    rescue StandardError
       {}
     end
 

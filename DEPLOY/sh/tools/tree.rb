@@ -67,7 +67,7 @@ class ProjectTree
         begin
           lines = File.readlines(f).size
           lines <= 30
-        rescue
+        rescue StandardError
           false
         end
       end
@@ -100,7 +100,7 @@ class ProjectTree
         if lines <= 30
           tiny_files << [file.sub(lib_root + "/", ""), lines]
         end
-      rescue
+      rescue StandardError
       end
     end
 
@@ -146,7 +146,7 @@ class ProjectTree
       data = YAML.safe_load_file(rules_path, permitted_classes: [Symbol], aliases: true) || {}
       from_yml = data.dig("paths", "skip_dirs") || []
       (from_yml + DEFAULT_SKIP).map(&:to_s).uniq
-    rescue
+    rescue StandardError
       DEFAULT_SKIP
     end
   end
@@ -161,7 +161,7 @@ class ProjectTree
 
     entries = begin
       Dir.entries(dir).sort
-    rescue
+    rescue StandardError
       return
     end
 
