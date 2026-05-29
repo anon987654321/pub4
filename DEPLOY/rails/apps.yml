@@ -45,6 +45,7 @@ apps:
         - { name: moderation tools,                                        status: missing }
         - { name: media pipeline (Active Storage variants),                status: missing }
         - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see WIRING_NOTES.md" }
+        - { name: unified Activity graph emission,                         status: port, notes: "core to recommendations & discovery across verticals; see brgen_CORE.md + WIRING_NOTES.md" }
         - { name: AI feed ranking,                                         status: planned }
         - { name: creator monetization,                                    status: planned }
         - { name: maps surface,                                            status: planned }

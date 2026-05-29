@@ -1,5 +1,7 @@
 # Shared Rails wiring notes
 
+**Current model (as of 2026):** Each product maintains its own `app/` tree. `shared/` is copied in via small install scripts during setup/bootstrap. The long-term goal remains turning this into a proper engine or gem, but the immediate priority is consistency across the family via documentation + conventions.
+
 This file describes how each app should connect the shared layer until `DEPLOY/rails/shared` is packaged as a real Rails engine or gem.
 
 ## Copy shared files
