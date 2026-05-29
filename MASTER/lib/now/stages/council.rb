@@ -37,6 +37,7 @@ module Master
         )
 
         @bus&.publish("council:start", personas: persona_names, risk: risk, message_preview: ctx.message.to_s[0, 80])
+        @bus&.publish("council:deliberation", personas: persona_names, payload_size: payload.length)
 
         result = @deliberation.review(payload, context: ctx.message, personas: persona_names)
         return result if result.err?
