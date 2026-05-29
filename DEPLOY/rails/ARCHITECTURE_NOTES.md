@@ -80,6 +80,10 @@ Required live-search surfaces:
 - Hjerterom content/resources
 - Amber baseline examples
 
+## Legacy scripts note
+
+The `@*.sh` feature modules at the root of `DEPLOY/rails/` are reference patterns from earlier work (see `github_repos/rails-style-guide/`). The active model uses tracked app trees + thin deploy scripts. See `README.md` → "Legacy feature scripts" for details.
+
 ## Completion checklist
 
 - Brgen folder mirrors Rails structure.

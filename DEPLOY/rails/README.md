@@ -42,6 +42,17 @@ Each app deploy script should:
 - Every app must have a `/up` health endpoint.
 - Every app must have an rc.d restart smoke check.
 
+## Legacy feature scripts (@*.sh)
+
+The many `@*.sh` files in this directory (and subdirs) are extracted patterns from earlier generator work (see also `github_repos/rails-style-guide/`). They are **not** the current production contract.
+
+Current model (per ARCHITECTURE_NOTES.md):
+- Prefer tracked, hand-maintained `app/` trees inside each product folder.
+- Deploy scripts are thin (copy tree → bundle → migrate → rc.d + relayd).
+- Heavy one-shot generators are legacy.
+
+These scripts remain useful as reference for common patterns (auth, social, frontend, Solid stack, etc.) when bootstrapping a new vertical or recovering an old one. Do not run them blindly against production trees.
+
 ## Backup-era lineage
 
 `pub/__OLD_BACKUPS/MEGA_ALL_APPS.md` describes the original app family:
