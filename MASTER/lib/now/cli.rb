@@ -23,7 +23,7 @@ module Master
       critical: "!!"
     }.freeze
     SLASH_COMMANDS = %w[
-      /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
+      /run /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
       /ui-critique /sound-critique /rebuild /context /checkpoint /verify
     ].freeze
 

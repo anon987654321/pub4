@@ -60,6 +60,12 @@ module Master
         message_text = raw.to_s.strip
         return Result.err("intake: empty message", category: :validation) if message_text.empty?
 
+        # Unified /run entry point for natural language tasks (better LLM ergonomics)
+        if message_text.start_with?("/run ")
+          desc = message_text[5..].strip
+          return Result.ok(ctx.merge(intent: :llm, message: desc, explicit_run: true))
+        end
+
         if (m = message_text.match(COMMAND_RE))
           command = m[1].downcase
           args    = m[2].strip

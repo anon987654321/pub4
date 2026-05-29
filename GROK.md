@@ -19,6 +19,9 @@ Grok is well-suited for this environment because of strong tool use, planning, a
 - For exploration and reconnaissance, I may use my full available tools while still routing production changes through the project's required mechanisms (full file reads, internal scans where possible, minimal patches).
 - When the full MASTER CLI is available on the VPS, prefer routing deep analysis through `/scan deep`, `/sweep`, etc., so the agent improves itself.
 
+**Primary recommended interface (unified ergonomics):**
+Use `/run <natural language task description>` inside the CLI. This is the new single preferred entry point for most work — it goes through full intelligent pipeline routing (including enhance, council when appropriate).
+
 **Recommended interaction pattern:**
 1. Point me at the specific goal + relevant files (or let me discover via full reads).
 2. I will read affected files in full before proposing changes.

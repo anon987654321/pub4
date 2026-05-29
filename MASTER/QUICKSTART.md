@@ -53,13 +53,15 @@ The project says "read every file in full before editing." In reality:
 - Single source of truth. If something exists in `data/`, code should read from there.
 - The agent improves itself using its own tools when possible.
 
-## Practical Commands
+## Practical Commands (Unified Interface)
 
-When the full environment is available:
-- `/scan deep <path>` — Deep analysis (preferred over external grep for real work)
-- `/fix <path>` — Apply fixes
-- `/sweep` — Run convergence/fix loops
-- `/help` — Full command list
+The recommended way for most work:
+
+- `/run <natural language task or description>` — Primary entry point. Full pipeline intent inference, rich routing, council when needed. Examples:
+  - `/run deep scan the particle kernel and face.js for improvement opportunities`
+  - `/run perform a sound critique on the recent event emission changes`
+
+Legacy explicit commands still work for power users (`/scan`, `/fix`, `/why`, etc.), but `/run` is preferred for LLM/agent ergonomics. See `/cmd` for the current explicit list.
 
 ## Current Known Friction Points (2026)
 
