@@ -249,7 +249,8 @@ function frame(t) {
   const dt = Math.min(State.coarsePointer ? 66 : 50, t - lastT); lastT = t;
   const sec = t * 0.001;
 
-  colorCurrent.lerp(colorTarget, State.reducedMotion ? 0.12 : 0.04);
+  const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
+  colorCurrent.lerp(colorTarget, lerpSpeed);
   vertMat.color.copy(colorCurrent);
   edgeMat.color.copy(colorCurrent).multiplyScalar(0.78);
 
@@ -258,7 +259,7 @@ function frame(t) {
   head3.rotation.y += (yaw   - head3.rotation.y) * 0.06;
   head3.rotation.x += (pitch - head3.rotation.x) * 0.06;
 
-  const breath = State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * 0.012 + State.pulse * 0.08;
+  const breath = State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005) + State.pulse * 0.08;
   head3.scale.setScalar(breath);
   State.pulse *= 0.92;
 
@@ -296,6 +297,8 @@ function frame(t) {
       if (eyePool.alive[i]) { sum += eyePool.cells[i * window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.attention]; n++; }
     }
     if (n > 0) eyeJitter = 0.01 + (sum / n) * 0.04;
+    if (State.confidence > 0.85) eyeJitter *= 0.92;
+    eyeJitter += (State.entropy || 0) * 0.03;
     window.ParticleKernel.compact(eyePool);
   }
 
@@ -434,6 +437,7 @@ function ttsTick() {
         const base = i * window.ParticleKernel.FIELDS_PER_CELL;
         mouthPool.cells[base + window.ParticleKernel.FIELD.arousal] = 1.0;
         mouthPool.cells[base + window.ParticleKernel.FIELD.pressure] = 0.8;
+        mouthPool.cells[base + window.ParticleKernel.FIELD.valence] = 0.6;
       }
     }
   };
@@ -552,6 +556,8 @@ async function sendMessage(text) {
     const v = (ev.data || '').trim();
     if (TINT[v]) fadeColorTo(TINT[v]);
     State.pulse = 0.6;
+    State.jitter = (State.confidence < 0.45 ? 0.75 : 0.15);
+    if (State.confidence > 0.75) State.pulse = 0.9;
     if (v === 'pass') beep(880, 0.06);
     if (v === 'veto') { beep(220, 0.10); State.shake = 0.6; }
   });
@@ -650,6 +656,7 @@ window.sendMessage = sendMessage;
 // (mouth pressure up, eye confidence down) — new observable "tension" on the constitutional face.
 window.addEventListener('master:visual', (ev) => {
   const d = ev.detail || {};
+  State.entropy = d.entropy ?? State.entropy ?? 0.2;
   if (!mouthPool || !eyePool) return;
   if ((d.entropy || 0) > 0.6 || d.mode === 'veto' || /veto|error|failure|pressure/.test(d.name || '')) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {

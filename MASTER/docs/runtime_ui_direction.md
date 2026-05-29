@@ -225,15 +225,11 @@ Implementation order suggestion: group by file (bridge + face first for signal +
 **Batch 3 (micro-slice 10, face personality):**
 - face.js: eyeJitter now increases with entropy (nervous/tense eyes on high-entropy moments) while still damped by confidence — nice "alive" personality signal for the watched face.
 
-**Batch 4 (micro-slices 11-16, Ruby runtime events):**
-- lib/now/stages/council.rb: richer "council:deliberation" payload (personas_count, risk, pressure) from existing ctx (idea 64 council spirits + NNG control/observability).
-- web/app/controllers/chat_controller.rb: "user:interrupt" on every new_turn (idea 42 escape/ttsSkip + NNG 3/5 recovery).
-- web/app/controllers/chat_controller.rb + speech STYLES: "tts:style:active" published for creative Osman presets (dramatic/ethereal/etc.) when server TTS endpoint hit with style (idea 62 breath warp + 8 presets).
-- lib/now/command_registry/work_commands.rb: "tribunal:rendered" (verdict) now carries numeric confidence from feedback (ideas 47 low-conf jitter, 70 high-conf done brighter, 17 error flash + NNG recovery).
-- web/app/controllers/chat_controller.rb: "input:long" for >180 char inputs (ideas 8/9 density + paste signals + 48 predictive /run).
-- web/app/controllers/events_controller.rb: "link:quiet" on SSE keepalive after silence (ideas 35/50/167 network stall + NNG recovery; single dmesg + face breath slow).
+**Batch 4 (micro-slices 11-16, Ruby runtime events + face reaction):**
+- ... (Ruby signals for council:deliberation, user:interrupt, tts:style:active, tribunal:rendered+confidence, input:long, link:quiet — ideas 64/42/62/47/70/17/8/9/48/35/50/167 + NNG control/recovery)
+- face.js verdict handler: numeric confidence now drives jitter (nervous on low) + pulse brightness (brighter done on high) — visible personality on the constitutional face (47/70/17).
 
-**Remaining backlog** in todo (ms17+). All changes 1-line additive PRESERVE_FIRST after full re-reads. Face + ecology field now noticeably more reactive and beautiful. Continuing systematic micro-slices.
+**Remaining backlog** in todo (ms17+). All changes 1-line additive PRESERVE_FIRST after full re-reads. Face now visibly reacts to verdict confidence with alive tension/brightness. Continuing systematic micro-slices.
 
 Run `/sweep` or equivalent after full set for style.
 
