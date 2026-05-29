@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
 # Repligen - Replicate.com AI Generation CLI
 # Version: 5.0.0 - Consolidated (zero sprawl per master.json)
 #

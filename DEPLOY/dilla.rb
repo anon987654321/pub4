@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
 # Dilla - J Dilla Music Generation & Playback
 # Version: 5.0.0 - Consolidated per master.json (zero sprawl)
 #

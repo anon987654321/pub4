@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
 
 # Postpro.rb - Professional Cinematic Post-Processing
 # Version: 20.0.0 - Photo quality research: adaptive contrast, filmic shoulder/toe,
@@ -27,7 +26,7 @@ module PostproBootstrap
   def self.ensure_gems
     vips_available = ensure_vips
     tty_available = ensure_tty_prompt
-    
+
     dmesg "vipsgem=#{vips_available} tty=#{tty_available}"
     { vips: vips_available, tty: tty_available }
   end
@@ -75,7 +74,7 @@ module PostproBootstrap
 
   def self.probe_and_install_libvips
     dmesg "probing libvips installation..."
-    
+
     if system("pkg-config", "--exists", "vips", out: File::NULL, err: File::NULL)
       dmesg "OK libvips already installed"
       return true
@@ -133,7 +132,7 @@ module PostproBootstrap
 
   def self.load_camera_profiles(profiles_path)
     profiles = {}
-    
+
     unless Dir.exist?(profiles_path)
       dmesg "WARN camera profiles directory not found: #{profiles_path}"
       return profiles
@@ -158,7 +157,7 @@ module PostproBootstrap
 
   def self.load_master_config
     return {} unless File.exist?("master.json")
-    
+
     begin
       master = JSON.parse(File.read("master.json").gsub(/^.*\/\/.*$/, ""))
       config = master.dig("config", "multimedia", "postpro") || {}
@@ -173,7 +172,7 @@ module PostproBootstrap
   def self.run
     startup_banner
     gems = ensure_gems
-    
+
     unless gems[:vips]
       dmesg "FATAL libvips unavailable; macOS: brew install vips; Ubuntu: apt install libvips-dev; OpenBSD: doas pkg_add vips"
       exit 1
@@ -182,7 +181,7 @@ module PostproBootstrap
     profiles_path = "multimedia/camera_profiles"
     camera_profiles = load_camera_profiles(profiles_path)
     config = load_master_config
-    
+
     {
       gems: gems,
       camera_profiles: camera_profiles,
@@ -535,23 +534,23 @@ end
 
 def get_camera_profile(image)
   return nil if CAMERA_PROFILES.empty?
-  
+
   begin
     make = image.get("exif-ifd0-Make")&.strip&.downcase
     model = image.get("exif-ifd0-Model")&.strip&.downcase
-    
+
     return nil unless make && model
-    
+
     # Try exact model match first
     CAMERA_PROFILES.each do |brand, profiles|
       return profiles[model] if profiles[model]
     end
-    
+
     # Try brand match
     CAMERA_PROFILES.each do |brand, profiles|
       return profiles.values.first if make.include?(brand) || brand.include?(make)
     end
-    
+
     nil
   rescue StandardError => e
     $logger.debug "EXIF read failed: #{e.message}"
@@ -561,18 +560,18 @@ end
 
 def apply_camera_profile(image, profile)
   return image unless profile && profile["color_matrix"]
-  
+
   begin
     matrix = profile["color_matrix"]
     return image unless matrix.length == 9
-    
+
     # Apply 3x3 color matrix
     result = image.recomb([
       [matrix[0], matrix[1], matrix[2]],
       [matrix[3], matrix[4], matrix[5]],
       [matrix[6], matrix[7], matrix[8]]
     ])
-    
+
     # Apply optional adjustments
     if profile["saturation"]
       hsv = result.colourspace("hsv")
@@ -580,16 +579,16 @@ def apply_camera_profile(image, profile)
       s = s.linear([profile["saturation"]], [0])
       result = Vips::Image.bandjoin([h, s, v]).colourspace("srgb")
     end
-    
+
     if profile["vibrance"]
       # Simple vibrance simulation
       result = result.linear([1.0 + profile["vibrance"] * 0.1], [0])
     end
-    
+
     if profile["base_tint"]
       result = base_tint(result, profile["base_tint"], 0.1)
     end
-    
+
     safe_cast(result)
   rescue StandardError => e
     $logger.error "Camera profile failed: #{e.message}"
@@ -738,11 +737,11 @@ end
 def skin_protect(image, intensity = 1.0)
   hsv = image.colourspace('hsv')
   h, s, v = hsv.bandsplit
-  
+
   hue_mask = (h > 25.5) & (h < 63.75)
   sat_mask = (s > 51) & (s < 153)
   skin_mask = hue_mask & sat_mask
-  
+
   protection = skin_mask.cast('float') / 255.0 * (1.0 - intensity * 0.7)
   protection_rgb = protection.bandjoin([protection, protection])
   inv_protection = protection_rgb.linear(-1, 1)
@@ -780,14 +779,14 @@ end
 
 def color_separate(image, intensity = 0.6)
   r, g, b = image.bandsplit
-  
+
   r_diff = r - (g * 0.08 * intensity) - (b * 0.05 * intensity)
   g_diff = g - (r * 0.06 * intensity) - (b * 0.10 * intensity)
   b_diff = b - (r * 0.04 * intensity) - (g * 0.07 * intensity)
   r_clean = (r_diff > 0).ifthenelse(r_diff, 0)
   g_clean = (g_diff > 0).ifthenelse(g_diff, 0)
   b_clean = (b_diff > 0).ifthenelse(b_diff, 0)
-  
+
   separated = Vips::Image.bandjoin([r_clean, g_clean, b_clean])
   safe_cast(image * (1 - intensity) + separated * intensity)
 end
@@ -840,7 +839,7 @@ def base_tint(image, color = [252, 248, 240], intensity = 0.08)
   overlay = Vips::Image.black(image.width, image.height, bands: 3) + color
   overlay_norm = overlay.cast('float') / 255.0
   image_norm = image.cast('float') / 255.0
-  
+
   inv_image   = image_norm.linear(-1, 1)
   inv_overlay = overlay_norm.linear(-1, 1)
   multiply    = image_norm * overlay_norm * 2
@@ -1540,11 +1539,11 @@ end
 def teal_orange(image, intensity = 1.0)
   protected = skin_protect(image, 0.8)
   r, g, b = protected.bandsplit
-  
+
   r_enhanced = r.linear([1 + 0.25 * intensity], [8 * intensity])
   g_balanced = g.linear([1 - 0.08 * intensity], [0])
   b_enhanced = b.linear([1 + 0.35 * intensity], [0])
-  
+
   safe_cast(Vips::Image.bandjoin([r_enhanced, g_balanced, b_enhanced]))
 end
 
@@ -1907,12 +1906,12 @@ end
 # Repligen Integration
 def check_repligen
   return unless REPLIGEN_PRESENT
-  
+
   $cli_logger.info 'Repligen detected! Auto-processing generated images...'
-  
+
   recent_files = Dir.glob('*_generated_*.{jpg,jpeg,png,webp}')
                     .select { |f| File.mtime(f) > (Time.now - 300) }
-  
+
   if recent_files.any?
     $cli_logger.info "Found #{recent_files.count} recent Repligen outputs"
     preset_name = PROMPT ? PROMPT.select("Choose preset for Repligen outputs:", PRESETS.keys) : (CONFIG["default_preset"] || "portrait")
@@ -1927,7 +1926,7 @@ end
 def process_file(file, variations, preset_name = nil, recipe_data = nil, random_effects = nil, mode = "professional")
   image = load_image(file)
   return 0 unless image
-  
+
   # Apply camera profile first if enabled
   if CONFIG["apply_camera_profile_first"]
     profile = get_camera_profile(image)
@@ -1936,7 +1935,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       PostproBootstrap.dmesg "camera_profile src=#{File.basename(file)}"
     end
   end
-  
+
   processed_count = 0
   variations.times do |i|
     begin
@@ -1949,7 +1948,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
                    else
                      next
                    end
-      
+
       next unless processed
 
       processed = grain(processed, 400, :kodak_portra, 0.35)
@@ -1957,7 +1956,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       timestamp = Time.now.strftime("%Y%m%d%H%M%S")
       suffix = preset_name || "processed"
       output = file.sub(File.extname(file), "_#{suffix}_v#{i + 1}_#{timestamp}#{File.extname(file)}")
-      
+
       quality = CONFIG["jpeg_quality"] || 95
       if ARGV.include?("--tiff16") || output.end_with?(".tif", ".tiff")
         processed.cast("ushort").write_to_file(output.sub(/\.(jpg|jpeg|png)$/i, ".tif"))
@@ -1966,41 +1965,41 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       end
       PostproBootstrap.dmesg "write out=#{File.basename(output)} q=#{quality}"
       processed_count += 1
-      
+
     rescue StandardError => e
       $logger.error "Variation #{i + 1} failed: #{e.message}"
     end
   end
-  
+
   processed_count
 end
 
 # Main Workflow
 def get_input
   $cli_logger.info "postpro.rb v18.0.0 full-analog#{REPLIGEN_PRESENT ? " repligen=active" : ""}"
-  
+
   check_repligen if REPLIGEN_PRESENT
-  
+
   if PROMPT
     workflow = PROMPT.select("Choose workflow:", [
       "Masterpiece Presets (Recommended)",
-      "Random Effects (Experimental)", 
+      "Random Effects (Experimental)",
       "Custom JSON Recipe"
     ])
-    
+
     patterns = PROMPT.ask("File patterns:", default: "**/*.{jpg,jpeg,png,webp}").strip.split(",").map(&:strip)
     variations = PROMPT.ask("Variations per image:", convert: :int, default: CONFIG["variations"] || 2) { |q| q.in("1-5") }
-    
+
     case workflow
     when "Masterpiece Presets (Recommended)"
       preset_name = PROMPT.select("Choose preset:", PRESETS.keys)
       [patterns, variations, { type: :preset, preset: preset_name }]
-      
+
     when "Random Effects (Experimental)"
       mode = PROMPT.select("Mode:", ["Professional", "Experimental"])
       fx_count = PROMPT.ask("Effects per variation:", convert: :int, default: 4) { |q| q.in("2-8") }
       [patterns, variations, { type: :random, mode: mode.downcase, fx: fx_count }]
-      
+
     when "Custom JSON Recipe"
       file = PROMPT.ask("Recipe file path:").strip
       recipe_data = File.exist?(file) ? JSON.parse(File.read(file)) : {}
@@ -2020,7 +2019,7 @@ def auto_mode
   patterns = ["**/*.{jpg,jpeg,png,webp}"]
   variations = CONFIG["variations"] || 2
   preset_name = CONFIG["default_preset"] || "portrait"
-  
+
   [patterns, variations, { type: :preset, preset: preset_name }]
 end
 
@@ -2204,28 +2203,28 @@ def auto_launch
   else
     input = get_input
   end
-  
+
   return unless input
-  
+
   patterns, variations, config = input
-  
+
   files = patterns.flat_map { |pattern| Dir.glob(pattern) }
                   .reject { |f| File.basename(f).match?(/processed|masterpiece/) }
-  
+
   if files.empty?
     $cli_logger.error "No files matched patterns!"
     return
   end
-  
+
   $cli_logger.info "Processing #{files.count} files..."
   total_processed = 0
   total_variations = 0
   start_time = Time.now
-  
+
   files.each_with_index do |file, i|
     begin
       $cli_logger.info "#{i + 1}/#{files.count}: #{File.basename(file)}"
-      
+
       count = case config[:type]
               when :preset
                 process_file(file, variations, config[:preset])
@@ -2239,20 +2238,20 @@ def auto_launch
               else
                 0
               end
-      
+
       total_processed += 1 if count > 0
       total_variations += count
       GC.start if (i % 10).zero?
-      
+
     rescue StandardError => e
       $logger.error "Failed #{file}: #{e.message}"
       $cli_logger.error "Error: #{File.basename(file)}"
     end
   end
-  
+
   duration = (Time.now - start_time).round(2)
   $cli_logger.info "Complete! #{total_processed} files → #{total_variations} masterpieces (#{duration}s)"
-  
+
   if REPLIGEN_PRESENT && total_variations > 0
     $cli_logger.info "Tip: Run 'ruby repligen.rb' to generate more content!"
   end

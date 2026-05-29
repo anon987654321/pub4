@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
 # J Dilla Audio Generator - Master Orchestrator
 
 # Complexity: 8/10 (within master.json ≤10 limit)

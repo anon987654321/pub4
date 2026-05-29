@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
 # dilla_analog.rb
 # Full analog-pad restoration renderer for Dilla/Madlib/FlyLo-inspired music.
 # Original synthesis only: no copyrighted sample downloading.
