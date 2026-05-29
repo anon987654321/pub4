@@ -15,36 +15,41 @@ export function initMinimalUI() {
   });
 
   // Unified swipe gestures (right edge for nav, left for hide, down for content action/Osman read)
+  // Supports touch + desktop mouse drag simulation for creative cross-device
   let lastTouch = { x: 0, y: 0, time: 0 };
-  document.addEventListener('touchstart', e => {
-    lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() };
-    if (innerWidth - lastTouch.x < 48) body.dataset.rightEdge = '1';
-  }, { passive: true });
-
-  document.addEventListener('touchend', e => {
-    const endX = e.changedTouches[0].clientX;
-    const endY = e.changedTouches[0].clientY;
-    const dx = endX - lastTouch.x;
-    const dy = endY - lastTouch.y;
+  const startGesture = (x, y) => {
+    lastTouch = { x, y, time: Date.now() };
+    if (innerWidth - x < 48) body.dataset.rightEdge = '1';
+  };
+  const endGesture = (x, y) => {
+    const dx = x - lastTouch.x;
+    const dy = y - lastTouch.y;
     const dt = Date.now() - lastTouch.time;
     delete body.dataset.rightEdge;
 
     if (dx > 60 && dt < 400 && lastTouch.x > innerWidth - 80) {
-      // Right edge swipe right -> reveal sidebar/nav
       const sidebar = document.querySelector('.sidebar, nav, .app-shell > aside');
       if (sidebar) sidebar.classList.add('revealed');
     } else if (dx < -100) {
-      // Left swipe -> hide
       document.querySelectorAll('.revealed, .sidebar.revealed').forEach(el => el.classList.remove('revealed'));
     } else if (dy > 80 && Math.abs(dx) < 50) {
-      // Down swipe on content -> creative action: trigger Osman to "read" or refresh
       const main = document.querySelector('main, .app-shell');
       if (main) main.style.opacity = '0.7';
       setTimeout(() => { if (main) main.style.opacity = ''; }, 300);
       if (window.MASTERMinimalUI?.triggerOsman) window.MASTERMinimalUI.triggerOsman('current content');
       else if (window.startOsmanVoice) window.startOsmanVoice();
     }
-  }, { passive: true });
+  };
+
+  // Touch
+  document.addEventListener('touchstart', e => startGesture(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  document.addEventListener('touchend', e => endGesture(e.changedTouches[0].clientX, e.changedTouches[0].clientY), { passive: true });
+
+  // Desktop mouse drag sim (for testing/dev creative use)
+  let mouseDown = false;
+  document.addEventListener('mousedown', e => { mouseDown = true; startGesture(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', e => { if (mouseDown) { mouseDown = false; endGesture(e.clientX, e.clientY); } });
+  document.addEventListener('mouseleave', () => { mouseDown = false; });
 
   // Advanced cam tracking + sensors (innovative mobile-first, synced with MASTER face)
   async function startCamFace() {
