@@ -15,27 +15,26 @@ export function initMinimalUI() {
   });
 
   // Right edge swipe for nav (e.g. reveal sidebar in brgen-style apps)
-  let swipeStartX = 0;
+  let lastTouchX = 0;
   document.addEventListener('touchstart', e => {
-    swipeStartX = e.touches[0].clientX;
-    if (innerWidth - swipeStartX < 48) body.dataset.rightEdge = '1';
+    lastTouchX = e.touches[0].clientX;
+    if (innerWidth - lastTouchX < 48) body.dataset.rightEdge = '1';
   }, { passive: true });
+
   document.addEventListener('touchend', e => {
-    const delta = e.changedTouches[0].clientX - swipeStartX;
+    const endX = e.changedTouches[0].clientX;
+    const delta = endX - lastTouchX;
     delete body.dataset.rightEdge;
+
     if (delta > 60) {
       // Swipe right from edge -> reveal sidebar/nav
       const sidebar = document.querySelector('.sidebar, nav, .app-shell > aside');
       if (sidebar) sidebar.classList.add('revealed');
-    }
-  }, { passive: true });
-
-  // Swipe left anywhere to hide revealed elements (minimal reset)
-  document.addEventListener('touchend', e => {
-    if (e.changedTouches[0].clientX - swipeStartX < -100) {
+    } else if (delta < -100) {
+      // Swipe left anywhere -> hide revealed elements (minimal reset)
       document.querySelectorAll('.revealed, .sidebar.revealed').forEach(el => el.classList.remove('revealed'));
     }
-  });
+  }, { passive: true });
 
   // Advanced cam tracking + sensors (innovative mobile-first, synced with MASTER face)
   async function startCamFace() {
@@ -61,11 +60,19 @@ export function initMinimalUI() {
         if (count > 20) {
           const nx = (sumX / count / c.width - 0.5) * 2;
           const ny = (sumY / count / c.height - 0.5) * 1.5;
-          // Subtle UI reaction (e.g. shift subtle elements)
+          // Innovative cam "face tracking": central brightness as proxy for user face position
+          // Drives CSS vars for parallax, and syncs to MASTER particle face for "eye contact"
           document.documentElement.style.setProperty('--cam-tilt-x', nx.toFixed(2));
           document.documentElement.style.setProperty('--cam-tilt-y', ny.toFixed(2));
-          // If MASTER face present, influence it
-          if (window.State) { window.State.mouseX = nx * 0.8; window.State.mouseY = ny * 0.6; }
+          if (window.State) {
+            window.State.mouseX = nx * 0.8;
+            window.State.mouseY = ny * 0.6;
+            // Creative: slight arousal on face when user "looks" at it
+            if (Math.abs(nx) < 0.3 && Math.abs(ny) < 0.3) window.State.pulse = Math.max(window.State.pulse || 0, 0.4);
+          }
+          // Optional: tilt main content subtly for "presence" feel
+          const main = document.querySelector('main, .app-shell');
+          if (main) main.style.transform = `translate(${nx * -2}px, ${ny * -1}px)`;
         }
       }, 140);
     } catch (_) {}
@@ -130,15 +137,17 @@ export function initMinimalUI() {
       if (transcript.includes('osman') || transcript.includes('voice')) {
         const command = transcript.replace(/osman|voice|hey|ok/gi, '').trim();
         if (command) {
-          // Trigger Osman via global hook or fetch to /tts if in MASTER context
+          // Trigger Osman via global hook or fetch to /tts (MASTER backend or shared)
           if (window.MASTERMinimalUI?.triggerOsman) {
             window.MASTERMinimalUI.triggerOsman(command);
           } else if (window.speakWithOsman) {
             window.speakWithOsman(command);
           } else {
-            // Fallback browser speech + visual cue
-            const utter = new SpeechSynthesisUtterance(command);
+            // Fallback: browser speech (or could fetch /tts with Osman style if endpoint exists)
+            const utter = new SpeechSynthesisUtterance(`Osman says: ${command}`);
             speechSynthesis.speak(utter);
+            // Visual cue in face if present
+            if (window.State) window.State.pulse = 0.8;
           }
         }
       }
@@ -150,3 +159,18 @@ export function initMinimalUI() {
 }
 
 export default { initMinimalUI };
+
+// Auto-initialize on module load for <script type="module" src> includes in all apps
+// (brgen uses manual import in some cases for flexibility)
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  const autoInit = () => {
+    if (typeof initMinimalUI === 'function') {
+      initMinimalUI();
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoInit, { once: true });
+  } else {
+    autoInit();
+  }
+}

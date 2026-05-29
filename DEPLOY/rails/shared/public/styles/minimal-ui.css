@@ -55,6 +55,13 @@ body.zen-minimal .top-right-logo {
 
 body.zen-minimal .sidebar.revealed {
   transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* General ultra-minimal reveal support for nav/content on swipe */
+body.zen-minimal .sidebar {
+  transition: transform 0.3s ease, opacity 0.2s ease;
 }
 
 /* Subtle face/cam reaction on canvas or hero elements */
@@ -66,4 +73,10 @@ body.zen-minimal .hero {
     calc(var(--cam-tilt-x) * -3px),
     calc(var(--cam-tilt-y) * -2px)
   );
+}
+
+/* Cam tracking affects main content for innovative "presence" (mobile-first) */
+body.zen-minimal main,
+body.zen-minimal .app-shell {
+  transition: transform 0.1s ease-out;
 }
