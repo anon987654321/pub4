@@ -1,5 +1,5 @@
 "use strict";
-import * as THREE from '/three.module.js?v=6';
+import * as THREE from '/three.module.js?v=7';
 
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
@@ -325,7 +325,7 @@ function frame(t) {
       vertVel[i3]   += (Math.random() - 0.5) * (eyeJitter * 0.2);
       vertVel[i3+1] += (Math.random() - 0.5) * (eyeJitter * 0.2);
     }
-    if (!State.reducedMotion) {
+    if (!State.reducedMotion && cursorActive) {
       const cdx = vPos[i3] - State.mouseX * 1.5, cdy = vPos[i3+1] + State.mouseY * 1.5;
       const cd2 = cdx * cdx + cdy * cdy;
       if (cd2 < CURSOR_R * CURSOR_R && cd2 > 0.0001) {
@@ -353,10 +353,16 @@ function frame(t) {
 }
 
 let pressTimer = null, pressStart = 0;
-cv.addEventListener('pointermove', (e) => {
+let cursorActive = false;
+function updateCursor(e) {
   State.mouseX = (e.clientX / innerWidth  - 0.5) * 1.6;
   State.mouseY = (e.clientY / innerHeight - 0.5) * 0.9;
-}, { passive: true });
+  cursorActive = true;
+}
+document.addEventListener('pointermove', updateCursor, { passive: true });
+document.addEventListener('pointerdown', updateCursor, { passive: true });
+document.addEventListener('pointerup',     () => { if (State.coarsePointer) cursorActive = false; }, { passive: true });
+document.addEventListener('pointercancel', () => { if (State.coarsePointer) cursorActive = false; }, { passive: true });
 
 cv.addEventListener('pointerdown', () => {
   pressStart = performance.now();
