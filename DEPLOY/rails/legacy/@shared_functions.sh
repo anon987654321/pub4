@@ -1,8 +1,4 @@
 #!/usr/bin/env zsh
-# @core.sh — sourced via @shared_functions.sh
-set -euo pipefail
-
-#!/usr/bin/env zsh
 # @shared_functions.sh — shared helpers for DEPLOY/rails/* scripts
 # Source this file; do not execute directly.
 # Requires: zsh, ruby34, bundle, rails, doas

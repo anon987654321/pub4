@@ -22,7 +22,7 @@ Rails 8 · SQLite · Falcon · Hotwire · OpenBSD
 - **Shared patterns**: Use shared social concerns (Reactable, Followable, Notification) and EventEmitter where relevant.
 - Deploy follows the thin tracked-tree model.
 
-See `DEPLOY/rails/ARCHITECTURE_NOTES.md`, `WIRING_NOTES.md`, and `LEGACY_FEATURE_SCRIPTS.md`.
+See `DEPLOY/rails/ARCHITECTURE_NOTES.md` and `WIRING_NOTES.md`.
 
 ## Deploy
 

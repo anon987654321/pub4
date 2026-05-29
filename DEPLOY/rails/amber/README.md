@@ -30,7 +30,7 @@ doas zsh DEPLOY/rails/amber/amber.sh
 - **Shared concerns**: Reactable, Followable, LiveSearchable, etc. available via `shared/`.
 - **Deploy**: Uses thin script + tracked tree model (prefers this over heavy @*.sh generators).
 
-See `DEPLOY/rails/ARCHITECTURE_NOTES.md`, `WIRING_NOTES.md`, and `LEGACY_FEATURE_SCRIPTS.md` for family-wide guidance.
+See `DEPLOY/rails/ARCHITECTURE_NOTES.md` and `WIRING_NOTES.md` for family-wide guidance.
 
 ## Roadmap
 
