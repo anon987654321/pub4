@@ -25,10 +25,19 @@
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <link rel="stylesheet" href="/lightgallery.css">
   <meta name="lg-license" content="<%= ENV.fetch("LIGHTGALLERY_LICENSE", "0000-0000-000-0000") %>">
+  <link rel="stylesheet" href="/styles/minimal-ui.css">
   <%= yield :json_ld %>
   <%= javascript_importmap_tags %>
+  <script type="module">
+    import { initMinimalUI } from '/minimal-gesture.js';
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initMinimalUI);
+    } else {
+      initMinimalUI();
+    }
+  </script>
 </head>
-<body>
+<body class="zen-minimal">
   <canvas id="tunnel-canvas" data-turbo-permanent aria-hidden="true"></canvas>
 
   <div id="nearby-alerts" class="nearby-alerts" data-turbo-permanent aria-live="polite"></div>

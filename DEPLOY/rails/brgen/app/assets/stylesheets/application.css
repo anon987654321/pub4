@@ -468,6 +468,26 @@ input[type=text], input[type=email], input[type=password], textarea, select {
   transition: border-color var(--transition-fast);
 }
 
+/* ULTRAMINIMAL ZEN for all apps (synced from MASTER web)
+   Only top-right logo. Swipe/gesture to reveal nav/content.
+   Sensors, cam tracking, Osman voice as core interaction. */
+body.zen-minimal .sidebar,
+body.zen-minimal #cityCarousel,
+body.zen-minimal .tab-bar {
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+body.zen-minimal .brand {
+  position: fixed !important;
+  top: 10px !important;
+  right: 12px !important;
+  z-index: 999 !important;
+  opacity: 0.65;
+}
+
+body.zen-minimal .brand svg { width: 28px; height: 28px; }
+
 input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
