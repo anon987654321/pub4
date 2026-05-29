@@ -446,7 +446,7 @@ configure_relayd() {
     BACKEND_PORT[$app]=${APP_PORTS[$app]:-0}
   done
   DOMAIN_BACKEND[ai.brgen.no]=master
-  BACKEND_PORT[master]=53187
+  BACKEND_PORT[master]=${BACKEND_PORT[master]:-53187}
   for entry in $ALL_DOMAINS; do
     dom=${entry%%:*}
     [[ -n ${DOMAIN_BACKEND[$dom]:-} ]] && continue

@@ -76,6 +76,12 @@ module Master
       fallback
     end
 
+    # register_for: creative vs factual bias from prompt_style_principles + voice leaks.
+    # Longer/emotional text → creative (dramatic/ethereal/storyteller etc); facts/tools stay crisp.
+    def register_for(text)
+      t = text.to_s; (t.split.size > 35 || t.match?(/\b(grand|beautiful|story|deep|feel|world)\b/i)) ? :creative : :factual
+    end
+
     def clean_text(text)
       text.to_s
           .gsub(/```.*?```/m, " code omitted. ")
@@ -113,6 +119,7 @@ module Master
       return unless available?
 
       style = infer_style(text_str, fallback: default_style) if style == :auto
+      if register_for(text_str) == :creative && %i[neutral normal clear].include?(style) then style = %i[storyteller ethereal dramatic][text_str.hash % 3] end
       style = default_style unless STYLES.key?(style)
       voice = default_voice unless VOICES.key?(voice)
 

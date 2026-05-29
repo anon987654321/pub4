@@ -376,6 +376,14 @@ if (window.DeviceMotionEvent) {
     lastAccel = [a.x, a.y, a.z];
     const now = performance.now();
     if (m > 24 && now - lastShake > 800) { lastShake = now; ttsSkip(); State.shake = 1.2; }
+    // Harden mobile sensor integration: subtle kernel pressure/jitter from device motion (for "shaky hand" expressiveness)
+    if (mouthPool && m > 8) {
+      for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) {
+        const b = i*window.ParticleKernel.FIELDS_PER_CELL;
+        mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + window.ParticleKernel.FIELD.pressure]||0) + m*0.01);
+        if (m > 18) { mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + window.ParticleKernel.FIELD.arousal]||0) + 0.08); mouthPool.cells[b + window.ParticleKernel.FIELD.valence] = Math.max(-1, (mouthPool.cells[b + window.ParticleKernel.FIELD.valence]||0) - 0.04); }
+      }
+    }
   }, { passive: true });
 }
 
@@ -674,8 +682,11 @@ window.addEventListener('master:visual', (ev) => {
       const b = i*window.ParticleKernel.FIELDS_PER_CELL;
       mouthPool.cells[b+window.ParticleKernel.FIELD.arousal] = hi?1.0: lo?0.3:0.7;
       mouthPool.cells[b+window.ParticleKernel.FIELD.pressure] = hi?0.85: lo?0.25:0.6;
-      // Use richer payload (rate/pitch from server style config) for finer prosody-driven motion
-      if (d.raw && d.raw.rate) mouthPool.cells[b+window.ParticleKernel.FIELD.velocity] = (parseFloat(d.raw.rate) || 0) * 0.01;
+      // Use richer payload (rate/pitch from server) for prosody-driven modulation
+      const rate = parseFloat(d.rate || (d.raw && d.raw.rate)) || 0;
+      const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
+      mouthPool.cells[b+window.ParticleKernel.FIELD.velocity] = rate * 0.008;
+      if (Math.abs(pitch) > 20) eyePool && eyePool.alive && (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = 0.6);
     }
   }
   if (/council:deliberation|council:start/i.test(d.name || '')) {

@@ -31,13 +31,14 @@ module Master
           intent: ctx.respond_to?(:task_type) ? ctx.task_type&.to_sym : nil,
           touches: Array(ctx.respond_to?(:touches) ? ctx.touches : [])
         )
+        reversibility = (risk == :critical || risk == :high) ? :low : :high
         persona_names = Master::Judge::Council::Selector.for(
           task: ctx.respond_to?(:task_type) ? ctx.task_type&.to_sym : nil,
           risk:
         )
 
-        @bus&.publish("council:start", personas: persona_names, risk: risk, message_preview: ctx.message.to_s[0, 80])
-        @bus&.publish("council:deliberation", personas: persona_names, payload_size: payload.length, personas_count: persona_names.size, risk: risk, pressure: !!ctx.pressure)
+        @bus&.publish("council:start", personas: persona_names, risk: risk, reversibility: reversibility, message_preview: ctx.message.to_s[0, 80])
+        @bus&.publish("council:deliberation", personas: persona_names, payload_size: payload.length, personas_count: persona_names.size, risk: risk, reversibility: reversibility, pressure: !!ctx.pressure)
 
         result = @deliberation.review(payload, context: ctx.message, personas: persona_names)
         return result if result.err?
