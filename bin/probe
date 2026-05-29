@@ -7,6 +7,7 @@ require "yaml"
 ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
+QUARANTINE_ROOT = File.join(ROOT, "DEPLOY", "quarantine", "virus_museum")
 
 Check = Struct.new(:name, :ok, :detail, keyword_init: true)
 
@@ -51,10 +52,44 @@ def no_tracked_master_keys_check
   )
 end
 
+def git_lines(*args)
+  out, err, status = Open3.capture3("git", "-C", ROOT, *args)
+  [out.lines.map(&:chomp).reject(&:empty?), err, status]
+end
+
+def quarantine_checks
+  paths, err, status = git_lines("ls-files", "DEPLOY/quarantine/virus_museum")
+  mode_lines, mode_err, mode_status = git_lines("ls-files", "-s", "DEPLOY/quarantine/virus_museum")
+  executable = mode_lines.filter_map do |line|
+    mode, _type, _sha, _stage, path = line.split(/\s+/, 5)
+    path unless mode == "100644"
+  end
+  bad_extensions = paths.reject { |path| path.end_with?(".txt") || path.end_with?("/README.md") }
+
+  [
+    Check.new(
+      name: "quarantine README exists",
+      ok: File.file?(File.join(QUARANTINE_ROOT, "README.md")),
+      detail: File.join(QUARANTINE_ROOT, "README.md")
+    ),
+    Check.new(
+      name: "quarantine samples are text-only",
+      ok: status.success? && bad_extensions.empty?,
+      detail: (bad_extensions + [err]).join("\n").strip
+    ),
+    Check.new(
+      name: "quarantine samples are non-executable",
+      ok: mode_status.success? && executable.empty?,
+      detail: (executable + [mode_err]).join("\n").strip
+    )
+  ]
+end
+
 def repo_checks
   [
     run_check("Rails production gate", File.join(RAILS_ROOT, "check_production_gate.rb")),
     no_tracked_master_keys_check,
+    *quarantine_checks,
     run_check("git diff whitespace check", "git", "-C", ROOT, "diff", "--check")
   ]
 end
