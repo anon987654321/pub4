@@ -61,7 +61,7 @@ document.addEventListener('visibilitychange', updateRuntimeProfile, { passive: t
 
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
+  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false });
   renderer.setClearColor(0x000000, 1);
 } catch (_) {}
 if (!renderer) {
