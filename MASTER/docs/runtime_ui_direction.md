@@ -228,9 +228,10 @@ Implementation order suggestion: group by file (bridge + face first for signal +
 **Batch 4 (micro-slices 11-16, Ruby runtime events + face reaction):**
 - ... (Ruby signals for council:deliberation, user:interrupt, tts:style:active, tribunal:rendered+confidence, input:long, link:quiet — ideas 64/42/62/47/70/17/8/9/48/35/50/167 + NNG control/recovery)
 - face.js verdict handler: numeric confidence now drives jitter + brightness.
-- face.js: council:deliberation/start now visibly raises mouth pressure + lowers eye confidence (idea 64 spirits + NNG observability during thinking).
+- face.js: council:deliberation/start now visibly raises mouth pressure + lowers eye confidence (idea 64).
+- face.js: input:long/cmd:long now drives jitter + mouth pressure (ideas 8/9/48 density/predictive).
 
-**Remaining backlog** in todo (ms17+). All changes 1-line additive PRESERVE_FIRST after full re-reads. Face now visibly reacts to verdict confidence and council deliberation. Continuing systematic micro-slices.
+**Remaining backlog** in todo (ms17+). All changes 1-line additive PRESERVE_FIRST after full re-reads. Face now visibly reacts to verdict confidence, council deliberation, and long inputs. Continuing systematic micro-slices.
 
 Run `/sweep` or equivalent after full set for style.
 

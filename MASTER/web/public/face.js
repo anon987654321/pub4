@@ -680,6 +680,10 @@ window.addEventListener('master:visual', (ev) => {
     if (mouthPool) for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0)+0.5);
     if (eyePool) for (let i=0; i<eyePool.count; i++) if (eyePool.alive[i]) eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9)-0.25);
   }
+  if (/input:long|cmd:long/i.test(d.name || '')) {
+    State.jitter = Math.max(State.jitter || 0.2, 0.55);
+    if (mouthPool) for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0)+0.4);
+  }
 });
 
 resize();
