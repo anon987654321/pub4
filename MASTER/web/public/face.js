@@ -61,7 +61,7 @@ document.addEventListener('visibilitychange', updateRuntimeProfile, { passive: t
 
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false });
+  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
   renderer.setClearColor(0x000000, 1);
 } catch (_) {}
 if (!renderer) {
@@ -243,20 +243,27 @@ const sprite = makeSprite();
 
 const vertGeom = new THREE.BufferGeometry();
 vertGeom.setAttribute('position', new THREE.BufferAttribute(vertPositions, 3));
+const vertColors = new Float32Array(VERT_COUNT * 3).fill(1);
+const vertColorAttr = new THREE.BufferAttribute(vertColors, 3);
+vertGeom.setAttribute('color', vertColorAttr);
 const vertMat = new THREE.PointsMaterial({
   size: 0.055, map: sprite, transparent: true, depthWrite: false,
   blending: THREE.AdditiveBlending, sizeAttenuation: true,
-  color: TINT.idle.clone()
+  vertexColors: true
 });
 const vertPoints = new THREE.Points(vertGeom, vertMat);
 scene.add(vertPoints);
 
+const EDGE_COUNT = edgePositions.length / 3;
 const edgeGeom = new THREE.BufferGeometry();
 edgeGeom.setAttribute('position', new THREE.BufferAttribute(edgePositions, 3));
+const edgeColors = new Float32Array(EDGE_COUNT * 3).fill(1);
+const edgeColorAttr = new THREE.BufferAttribute(edgeColors, 3);
+edgeGeom.setAttribute('color', edgeColorAttr);
 const edgeMat = new THREE.PointsMaterial({
   size: 0.025, map: sprite, transparent: true, depthWrite: false,
   blending: THREE.AdditiveBlending, sizeAttenuation: true,
-  color: TINT.idle.clone(), opacity: 0.55
+  vertexColors: true, opacity: 0.55
 });
 const edgePoints = new THREE.Points(edgeGeom, edgeMat);
 scene.add(edgePoints);
@@ -267,6 +274,72 @@ function fadeColorTo(c) { colorTarget.copy(c); }
 TINT.idle.copy(dayNightTint());
 colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
 setInterval(() => { if (!State.mood || State.mood === 'idle') { TINT.idle.copy(dayNightTint()); fadeColorTo(TINT.idle); } }, 60000);
+
+// Bloom overlay: copy main canvas at 30% res, CSS blur + screen blend
+let bloomCtx = null, bloomCv = null;
+if (renderer && !State.reducedMotion) {
+  try {
+    bloomCv = document.createElement('canvas');
+    Object.assign(bloomCv.style, {
+      position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+      pointerEvents: 'none', mixBlendMode: 'screen',
+      opacity: '0.42', filter: 'blur(11px)', zIndex: '1'
+    });
+    cv.insertAdjacentElement('afterend', bloomCv);
+    bloomCtx = bloomCv.getContext('2d');
+  } catch (_) { bloomCtx = null; }
+}
+
+// Dolly zoom (Hitchcock) — zoom in while dollying back, reversed smoothly
+function dollyZoom(intensity) {
+  const startFOV = camera.fov, startZ = camera.position.z;
+  const targetFOV = Math.max(20, startFOV - intensity * 10);
+  const targetZ   = startZ + intensity * 0.55;
+  const t0 = performance.now();
+  function forward(now) {
+    const p = Math.min(1, (now - t0) / 1200);
+    const e = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
+    camera.fov = startFOV + (targetFOV - startFOV) * e;
+    camera.position.z = startZ + (targetZ - startZ) * e;
+    camera.updateProjectionMatrix();
+    if (p < 1) { requestAnimationFrame(forward); return; }
+    const t1 = performance.now();
+    function back(now2) {
+      const p2 = Math.min(1, (now2 - t1) / 2000);
+      camera.fov = targetFOV + (38 - targetFOV) * p2;
+      camera.position.z = targetZ + (4.6 - targetZ) * p2;
+      camera.updateProjectionMatrix();
+      if (p2 < 1) requestAnimationFrame(back);
+    }
+    requestAnimationFrame(back);
+  }
+  requestAnimationFrame(forward);
+}
+
+// Photo depth map: project vertex XY to image UV, use luminance as Z offset
+function applyPhotoDepthMap(file) {
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    const g = c.getContext('2d');
+    g.drawImage(img, 0, 0, 64, 64);
+    const id = g.getImageData(0, 0, 64, 64);
+    URL.revokeObjectURL(url);
+    for (let i = 0; i < VERT_COUNT; i++) {
+      const i3 = i * 3;
+      const u = Math.max(0, Math.min(63, Math.floor((vertHome[i3]   + 1.1) / 2.2 * 63)));
+      const v = Math.max(0, Math.min(63, Math.floor((1.0 - (vertHome[i3+1] + 1.0) / 2.4) * 63)));
+      const px = (v * 64 + u) * 4;
+      const lum = (id.data[px] + id.data[px+1] + id.data[px+2]) / (3 * 255);
+      vertHome[i3+2] += (lum - 0.45) * 0.55;
+    }
+  };
+  img.src = url;
+}
+const _photoEl = document.getElementById('photo');
+if (_photoEl) _photoEl.addEventListener('change', () => { if (_photoEl.files[0]) applyPhotoDepthMap(_photoEl.files[0]); });
 
 // Waveform ghost ring
 const WAVEFORM_N = 72;
@@ -354,8 +427,8 @@ function frame(t) {
 
   const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
   colorCurrent.lerp(colorTarget, lerpSpeed);
-  vertMat.color.copy(colorCurrent);
-  edgeMat.color.copy(colorCurrent).multiplyScalar(0.78);
+  vertMat.color.setRGB(1, 1, 1);
+  edgeMat.color.setRGB(1, 1, 1);
 
   if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
     saccadeX = (Math.random() - 0.5) * 0.28;
@@ -478,6 +551,27 @@ function frame(t) {
   State.visemeAmp *= 0.85;
   vertGeom.attributes.position.needsUpdate = true;
 
+  // Per-vertex z-depth coloring (rack focus: near=bright, far=dim)
+  for (let i = 0; i < VERT_COUNT; i++) {
+    const z = vPos[i*3+2];
+    const depth = Math.max(0, Math.min(1, (z + 0.8) / 1.8));
+    const br = 0.25 + depth * 0.75;
+    vertColors[i*3]   = colorCurrent.r * br;
+    vertColors[i*3+1] = colorCurrent.g * br;
+    vertColors[i*3+2] = colorCurrent.b * br;
+  }
+  vertColorAttr.needsUpdate = true;
+  const ePos = edgeGeom.attributes.position.array;
+  for (let i = 0; i < EDGE_COUNT; i++) {
+    const z = ePos[i*3+2];
+    const depth = Math.max(0, Math.min(1, (z + 0.8) / 1.8));
+    const br = 0.12 + depth * 0.45;
+    edgeColors[i*3]   = colorCurrent.r * br;
+    edgeColors[i*3+1] = colorCurrent.g * br;
+    edgeColors[i*3+2] = colorCurrent.b * br;
+  }
+  edgeColorAttr.needsUpdate = true;
+
   // Confidence → particle sharpness; whisper dims, shout brightens
   const voiceRMS = State.voiceRMS || 0;
   const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
@@ -544,6 +638,14 @@ function frame(t) {
   }
 
   renderer.render(scene, camera);
+
+  if (bloomCtx && bloomCv) {
+    const bw = Math.floor(W * 0.28), bh = Math.floor(H * 0.28);
+    if (bloomCv.width !== bw || bloomCv.height !== bh) { bloomCv.width = bw; bloomCv.height = bh; }
+    bloomCtx.clearRect(0, 0, bw, bh);
+    bloomCtx.drawImage(cv, 0, 0, bw, bh);
+  }
+
   requestAnimationFrame(frame);
 }
 
@@ -908,7 +1010,7 @@ async function sendMessage(text) {
       for (let i = 0; i < VERT_COUNT; i++) { vertVel[i*3] *= 0.1; vertVel[i*3+1] *= 0.1; vertVel[i*3+2] *= 0.1; }
     }
     if (v === 'veto') {
-      beep(220, 0.10); State.shake = 0.6;
+      beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
       // Shatter on veto
       const vp = vertGeom.attributes.position.array;
       for (let i = 0; i < VERT_COUNT; i++) {
