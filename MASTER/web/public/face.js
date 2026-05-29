@@ -833,8 +833,13 @@ if (renderer) requestAnimationFrame(frame);
           }
         }
         if (n > 40) {
-          State.mouseX = ((sx / n) / c.width - 0.5) * 2.1;
-          State.mouseY = ((sy / n) / c.height - 0.5) * 1.3;
+          const nx = (sx / n / c.width - 0.5) * 2.1;
+          const ny = (sy / n / c.height - 0.5) * 1.3;
+          // Fleshed out cam "face tracking" (brightness center as user face proxy, synced from shared minimal-gesture)
+          // Drives particle "eye contact" + creative pulse when user faces the UI
+          State.mouseX = nx;
+          State.mouseY = ny;
+          if (Math.abs(nx) < 0.3 && Math.abs(ny) < 0.3) State.pulse = Math.max(State.pulse || 0, 0.5);
         }
       }, 160);
     } catch (_) {}
