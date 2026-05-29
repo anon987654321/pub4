@@ -115,6 +115,8 @@ ABSOLUTE aborts the pipeline. PROTECTED emits a warning and continues. NEGOTIABL
 
 VPS: `dev@brgen.no` · OpenBSD 7.8 · passwordless `doas`. SSH credentials live in the operator's environment, never in versioned docs. Non-interactive SSH must not source `.zshrc` — load env only: `eval "$(grep '^export' ~/.zshrc)"`.
 
+Local dev terminal (operator side): Zsh + Starship + Neovim + Nerd Fonts + `brgen` alias (one-command persistent tmux session: `ssh -t dev@brgen.no tmux new -A -s main`). The rich local stack and the `brgen` helper live in the operator's shell config; they are not yet surfaced by the CLI. DEPLOY/openbsd/ only provisions the web service (rc.d + env).
+
 Edit VPS files by direct edit + `scp` — write the new file content locally, scp it up. Reserve `~/pub4/tmp/patch.rb` for genuinely script-shaped edits where a patch script is the right tool. Never use `ruby -i` with heredoc — empties the file on script error.
 
 After every scp under `MASTER/web/`, immediately `doas rcctl restart master` so Falcon picks up the change. Falcon does not hot-reload in production; without the restart the deployed app keeps serving the prior bytecode.

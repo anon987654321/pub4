@@ -281,13 +281,14 @@
         const x = cx - spanX * 0.5 + u * spanX;
         const h = terrainHeight(x, y, t);
         const perspective = 0.55 + v * 0.45;
-        const px = x + Math.sin(t + v * 6) * 10 * state.entropy;
+        const jagged = 10 + state.entropy * 12;
+        const px = x + Math.sin(t + v * 6) * jagged;
         const py = y + h * 34 * perspective + Math.cos(t * 1.7 + u * 4) * 5 * (1 - calm);
         if (c === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
       const color = state.weather === "storm" || state.weather === "serpent" ? "235,80,45" : "120,220,185";
-      ctx.strokeStyle = `rgba(${color},${alphaBase * (0.55 + v)})`;
+      ctx.strokeStyle = `rgba(${color},${alphaBase * (0.55 + v) * (0.7 + state.confidence * 0.4)})`;
       ctx.lineWidth = 0.75 + state.entropy * 1.2;
       ctx.stroke();
     }
@@ -339,7 +340,7 @@
       }
       agent.angle += dt * (0.00008 + kCharge * 0.00022) * (reducedMotion ? 0.25 : 1);
       agent.charge += (0.42 - agent.charge) * 0.006;
-      const radius = base * agent.radius * (0.74 + state.activity * 0.18);
+      const radius = base * agent.radius * (0.74 + state.activity * 0.18 - (state.confidence - 0.5) * 0.08);
       const wobble = Math.sin(state.time * 0.0012 + agent.angle * 3) * base * 0.015;
       const x = cx + Math.cos(agent.angle) * (radius + wobble);
       const y = cy + Math.sin(agent.angle * 0.91) * radius * 0.62;

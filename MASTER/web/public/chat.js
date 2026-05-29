@@ -63,17 +63,19 @@ window._chatOnChunk = (raw) => {
   _streamEl.textContent += raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
   log.scrollTop = log.scrollHeight;
 };
-window._chatOnDone  = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => c.remove()); };
+window._chatOnDone  = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => { c.style.transition = 'opacity 0.25s steps(4,end)'; c.style.opacity = '0'; setTimeout(() => c.remove(), 280); }); };
 window._chatOnError = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => c.remove()); };
 
 window._chatOnDmesg = (line) => {
   if (!line) return;
   const d = document.createElement('div');
   d.className = 'dmesg-line';
+  d.style.opacity = '0.25';
   d.textContent = line;
   const asst = log.querySelector('.message.assistant:last-of-type');
   asst ? log.insertBefore(d, asst) : log.appendChild(d);
   log.scrollTop = log.scrollHeight;
+  requestAnimationFrame(() => { d.style.transition = 'opacity 0.18s steps(3,end)'; d.style.opacity = '1'; });
   setTimeout(() => { d.classList.add('dmesg-fade'); setTimeout(() => d.remove(), 800); }, 7000);
 };
 

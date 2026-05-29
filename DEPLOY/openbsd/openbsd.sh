@@ -11,7 +11,7 @@ zmodload zsh/datetime
 typeset -a TMPFILES
 SCRIPT_DIR=${0:a:h}
 
-# Inlined from _lib.sh (rm _lib.sh goal): logging, backup, template install, sync helpers (pure Zsh)
+# Helpers inlined ( _lib.sh removed for ONE_SOURCE/singularity). Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs (now ships .zshrc to /home/dev too).
 log() {
   typeset level=$1; shift
   print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] [$level] $*" | tee -a /var/log/openbsd_setup.log >&2

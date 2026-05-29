@@ -6,6 +6,7 @@ require "fileutils"
 module Master
   module Ground
   # Memory — persistent cross-session store with TF-IDF semantic search.
+  # Full SQLite backend + embedding merge deferred (per TODO + rules: VPS council required).
   class Memory
     module Search
       def semantic_recall(query, top_n: 3)

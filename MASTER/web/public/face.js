@@ -668,6 +668,14 @@ window.addEventListener('master:visual', (ev) => {
       eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] || 0.9) - 0.3);
     }
   }
+  if (/tts:style|style:active/i.test(d.name || '')) {
+    const s = d.name || ''; const hi = /dramatic|intense|energetic|storyteller/i.test(s); const lo = /whisper|ethereal|robotic|intimate/i.test(s);
+    if (mouthPool) for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i*window.ParticleKernel.FIELDS_PER_CELL;
+      mouthPool.cells[b+window.ParticleKernel.FIELD.arousal] = hi?1.0: lo?0.3:0.7;
+      mouthPool.cells[b+window.ParticleKernel.FIELD.pressure] = hi?0.85: lo?0.25:0.6;
+    }
+  }
 });
 
 resize();

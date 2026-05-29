@@ -8,35 +8,40 @@ set -eu
 # Works in both zsh and plain sh/linux environments.
 #
 # Usage:
-#   ./tree.sh [--max-depth=3] [--summary]
+#   ./tree.sh [--max-depth=4] [--summary]
+#   ./tree.sh /some/other/root --max-depth=3
 #
 # Created on demand per explicit user request for overview before
 # implementing major architectural simplifications.
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-TOOLS_DIR="$SCRIPT_DIR/tools"
-RUBY_TREE="$TOOLS_DIR/tree.rb"
+RUBY_TREE="$SCRIPT_DIR/tools/tree.rb"
 
-ROOT="${1:-/root/pub4}"
+ROOT="/root/pub4"
+
+# If the first argument looks like a directory (or .), treat it as root
+if [ $# -gt 0 ]; then
+  case "$1" in
+    --*|-*) ;;
+    *)
+      if [ -d "$1" ] 2>/dev/null || [ "$1" = "." ]; then
+        ROOT="$1"
+        shift
+      fi
+      ;;
+  esac
+fi
 
 if [ ! -f "$RUBY_TREE" ]; then
   echo "tree.rb not found at $RUBY_TREE" >&2
   exit 1
 fi
 
-# Prefer project ruby34 if present, else system ruby
 if command -v ruby34 >/dev/null 2>&1; then
   RUBY=ruby34
-elif command -v ruby >/dev/null 2>&1; then
-  RUBY=ruby
 else
-  echo "No ruby interpreter found" >&2
-  exit 1
-fi
-
-# Shift only if first arg was the root we consumed
-if [ "$ROOT" != "/root/pub4" ] || [ "${2:-}" != "" ]; then
-  shift || true
+  RUBY=ruby
 fi
 
 exec "$RUBY" "$RUBY_TREE" "$ROOT" "$@"
+

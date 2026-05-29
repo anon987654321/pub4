@@ -20,11 +20,7 @@ Full codebase review found these gaps. Each item is self-contained — pick any 
 
 ### Memory subsystem (currently structural stub)
 
-`lib/ground/memory.rb`, `memory_index.rb`, `memory_search.rb` declare the interface but contain no persistence or embedding logic. Need:
-- SQLite backend (schema: key, body, embedding, created_at)
-- Embedding model selection (local via Ollama or remote via OpenRouter)
-- Cross-session consolidation (merge near-duplicate entries)
-- Wire into `lib/ground/semantic_cache.rb` for LLM response caching
+`lib/ground/memory.rb` etc. have active TFIDF/vector + consolidate! path (see top comment in memory.rb). Full SQLite + cross-session merge deferred per rules (VPS council required).
 
 ### RepoEcology (declared, missing)
 
