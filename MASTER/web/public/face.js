@@ -847,4 +847,21 @@ if (renderer) requestAnimationFrame(frame);
     revealConsole: () => { const z = document.getElementById('zsh'); if (z) z.classList.add('revealed'); },
     triggerOsman: (text) => { if (window.sendMessage) window.sendMessage(`/voice ${text || 'last'} osman`); }
   };
+
+  // Web Speech "Osman" voice commands (synced with shared minimal-gesture for all apps)
+  if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SpeechRec();
+    rec.continuous = false;
+    rec.lang = 'en-US';
+    rec.onresult = (ev) => {
+      const t = ev.results[0][0].transcript.toLowerCase();
+      if (t.includes('osman')) {
+        const cmd = t.replace(/osman|hey|ok/gi,'').trim();
+        if (cmd && window.sendMessage) window.sendMessage(`/voice ${cmd} osman`);
+      }
+    };
+    document.addEventListener('keydown', e => { if (e.key === '?' ) { e.preventDefault(); rec.start(); } });
+    window.startOsmanVoice = () => rec.start();
+  }
 })();
