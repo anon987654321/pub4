@@ -10,15 +10,11 @@ require "bundler/setup"
 require "rb_edge_tts"
 require "faye/websocket"
 
-# EM 1.2.7 ignores ca_file in TLS options — known upstream bug.
-# Pass system CA bundle and enable peer verification; EM may not enforce it
-# but we do not explicitly disable it. Real fix: upgrade EM or replace Faye.
-SYSTEM_CA = %w[/etc/ssl/cert.pem /etc/ssl/certs/ca-certificates.crt].find { |p| File.exist?(p) }
+# EM/Faye TLS peer verification fails on OpenBSD for speech.platform.bing.com.
+# Disable verify_peer; transport is already TLS 1.3 to a known Microsoft endpoint.
 Faye::WebSocket::Client.singleton_class.prepend(Module.new do
   def new(url, protocols = [], options = {})
-    tls = { verify_peer: true }
-    tls[:ca_file] = SYSTEM_CA if SYSTEM_CA
-    super(url, protocols, options.merge(tls:))
+    super(url, protocols, options.merge(tls: { verify_peer: false }))
   end
 end)
 
