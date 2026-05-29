@@ -124,6 +124,16 @@ The city family should converge on a shared locale approach:
 
 See `amber/config/locales/` and `brgen/config/locales/` as current examples. This is early-stage — coordinate before heavy investment.
 
+## Performance & Caching Baseline (starter)
+
+Target consistent use of the Solid stack (Solid Cache + Solid Queue) across apps.
+- Use `config/cache.yml` and `config/queue.yml` from the reference apps.
+- Prefer low-level caching for expensive queries and fragment caching in views.
+- Monitor with the existing pressure/observability in MASTER.
+- N+1 prevention and query analysis should be part of the review checklist when adding features.
+
+See `amber/config/` and `brgen/config/` for current setups. Align before scaling individual verticals.
+
 ## Directory map
 
 ```text
