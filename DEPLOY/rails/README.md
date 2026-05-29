@@ -51,7 +51,7 @@ Current model (per ARCHITECTURE_NOTES.md):
 - Deploy scripts are thin (copy tree → bundle → migrate → rc.d + relayd).
 - Heavy one-shot generators are legacy.
 
-These scripts remain useful as reference for common patterns (auth, social, frontend, Solid stack, etc.) when bootstrapping a new vertical or recovering an old one. Do not run them blindly against production trees.
+These scripts remain useful as reference for common patterns (auth, social, frontend, Solid stack, etc.) when bootstrapping a new vertical or recovering an old one. See `LEGACY_FEATURE_SCRIPTS.md` for a full inventory, duplication notes, and recommendations. Do not run them blindly against production trees.
 
 ## Backup-era lineage
 
