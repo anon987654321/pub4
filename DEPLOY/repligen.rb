@@ -51,9 +51,7 @@ CHAIN_TEMPLATES = {
 def ensure_gems
   require "sqlite3"
 rescue LoadError
-  puts "[repligen] installing sqlite3..."
-  system("gem install sqlite3 --no-document")
-  require "sqlite3"
+  abort "[repligen] missing sqlite3 gem. Install dependencies outside repligen before running."
 end
 
 # ============================================================================

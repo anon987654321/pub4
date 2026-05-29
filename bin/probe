@@ -8,6 +8,7 @@ ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 QUARANTINE_ROOT = File.join(ROOT, "DEPLOY", "quarantine", "virus_museum")
+DILLA_ROOT = File.join(ROOT, "DEPLOY", "dilla")
 
 Check = Struct.new(:name, :ok, :detail, keyword_init: true)
 
@@ -94,6 +95,38 @@ def repo_checks
   ]
 end
 
+def ruby_syntax_checks(title, paths)
+  [
+    Check.new(name: "#{title} files exist", ok: paths.all? { |path| File.file?(path) }, detail: paths.reject { |path| File.file?(path) }.join("\n")),
+    *paths.select { |path| File.file?(path) }.map { |path| run_check("#{path.delete_prefix(ROOT + "/")} Ruby syntax", "ruby", "-c", path) }
+  ]
+end
+
+def dilla_checks
+  ruby_files = Dir.glob(File.join(DILLA_ROOT, "*.rb")).sort
+  inline_installers = ruby_files.select { |path| File.read(path).include?("bundler/inline") }
+  [
+    Check.new(name: "Dilla README exists", ok: File.file?(File.join(DILLA_ROOT, "README.md")), detail: File.join(DILLA_ROOT, "README.md")),
+    Check.new(name: "Dilla has no bundler/inline auto-installers", ok: inline_installers.empty?, detail: inline_installers.join("\n")),
+    *ruby_files.map { |path| run_check("#{path.delete_prefix(ROOT + "/")} Ruby syntax", "ruby", "-c", path) }
+  ]
+end
+
+def lab_checks
+  postpro = %w[postpro.rb DEPLOY/postpro/postpro.rb MASTER/tools/postpro.rb].map { |path| File.join(ROOT, path) }
+  repligen = %w[DEPLOY/repligen.rb MASTER/tools/repligen.rb].map { |path| File.join(ROOT, path) }
+  face_tts = %w[MASTER/bin/tts-worker MASTER/lib/voice/speech.rb MASTER/lib/rails/face3d_runtime_policy.rb].map { |path| File.join(ROOT, path) }
+  repligen_auto_installers = repligen.select { |path| File.file?(path) && File.read(path).match?(/gem install/) }
+  face_sources = Dir.glob(File.join(ROOT, "MASTER/web/public/face*.js")).sort
+  [
+    *ruby_syntax_checks("postpro", postpro),
+    *ruby_syntax_checks("repligen", repligen),
+    Check.new(name: "repligen has no runtime gem install", ok: repligen_auto_installers.empty?, detail: repligen_auto_installers.join("\n")),
+    *ruby_syntax_checks("face/TTS", face_tts),
+    Check.new(name: "face runtime JavaScript exists", ok: face_sources.any?, detail: face_sources.join("\n"))
+  ]
+end
+
 def openbsd_checks
   unless command_available?("rcctl")
     return [
@@ -129,14 +162,20 @@ ok = case mode
        print_checks("rails", rails_app_checks)
      when "openbsd"
        print_checks("openbsd", openbsd_checks)
+     when "dilla"
+       print_checks("dilla", dilla_checks)
+     when "lab"
+       print_checks("lab", lab_checks)
      when "all"
        [
          print_checks("repo", repo_checks),
          print_checks("rails", rails_app_checks),
+         print_checks("dilla", dilla_checks),
+         print_checks("lab", lab_checks),
          print_checks("openbsd", openbsd_checks)
        ].all?
      else
-       warn "usage: bin/probe [all|repo|rails|openbsd]"
+       warn "usage: bin/probe [all|repo|rails|dilla|lab|openbsd]"
        false
      end
 
