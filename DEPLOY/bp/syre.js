@@ -1,5 +1,5 @@
 // Initialize Swiper Carousel
-        var swiper = new Swiper('.swiper', {
+        const swiper = new Swiper('.swiper', {
             pagination: {
                 el: '.swiper-pagination',
                 clickable: true,
@@ -44,8 +44,7 @@
                 label: {
                     show: true,
                     position: 'inside',
-                    formatter: '{b}
-{c} par',
+                    formatter: '{b}\n{c} par',
 
                     fontSize: 14
                 },
@@ -174,24 +173,7 @@
             xAxis: {
                 type: 'category',
                 splitLine: { show: false },
-                data: ['Startkapital
-(Total)', 'Innovasjon
-
-Norge', 'Private
-
-Investors', 'SPEIS
-
-Samfinansiering', 'SkatteFUNN', 'FoU
-
-(35%)', 'Produksjon
-
-(30%)', 'Marketing
-
-(20%)', 'Social Impact
-
-(10%)', 'Drift
-
-(5%)', 'Restkapital'],
+                data: ['Startkapital\n(Total)', 'Innovasjon\n\nNorge', 'Private\n\nInvestors', 'SPEIS\n\nSamfinansiering', 'SkatteFUNN', 'FoU\n\n(35%)', 'Produksjon\n\n(30%)', 'Marketing\n\n(20%)', 'Social Impact\n\n(10%)', 'Drift\n\n(5%)', 'Restkapital'],
 
                 axisLabel: {
                     interval: 0,
@@ -262,67 +244,4 @@ Samfinansiering', 'SkatteFUNN', 'FoU
         });
         // Keep existing Chart.js chart for Financial Projections (compatibility)
         const financeCtx = document.getElementById('financeChart').getContext('2d');
-        // Note: Chart.js is still needed for this one legacy chart, but we're transitioning to ECharts
-        // For full ECharts migration, this would be replaced too, but keeping minimal change approach
-
-// Financial Projections Chart (Chart.js - keeping for backward compatibility)
-        const financeChart = new Chart(financeCtx, {
-            type: 'bar',
-            data: {
-                labels: ['År 1', 'År 2', 'År 3'],
-                datasets: [
-                    {
-                        label: 'Omsetning (MNOK)',
-                        data: [5, 12, 25],
-                        backgroundColor: '#8a2be2',
-                    },
-                    {
-                        label: 'Netto Resultat (MNOK)',
-                        data: [-1, 2, 6],
-                        backgroundColor: '#333333',
-                    },
-                    {
-                        label: 'Donerte sko (antall)',
-                        data: [2500, 6000, 12500],
-                        backgroundColor: '#ff007f',
-                        yAxisID: 'y1'
-                    }
-                ]
-            },
-            options: {
-                scales: {
-                    y: { beginAtZero: true },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        grid: { drawOnChartArea: false }
-                    }
-                },
-                plugins: {
-                    title: { display: true, text: 'Økonomiske Prognoser og Samfunnsimpakt' },
-                    legend: { position: 'bottom' }
-                }
-            }
-        });
-        // Growth Trends Line Chart (Chart.js)
-        const growthCtx = document.getElementById('growthChart').getContext('2d');
-        const growthChart = new Chart(growthCtx, {
-            type: 'line',
-            data: {
-                labels: ['2022', '2023', '2024', '2025'],
-                datasets: [{
-                    label: 'Årlig Vekst (%)',
-                    data: [5, 8, 10, 12],
-                    backgroundColor: 'rgba(138, 43, 226, 0.2)',
-                    borderColor: '#8a2be2',
-                    fill: true,
-                }]
-            },
-            options: {
-                plugins: {
-                    title: { display: true, text: 'Forventet Markedsvekst' }
-                },
-                scales: { y: { beginAtZero: true } }
-            }
-        });
+        // Note: Chart.js is still needed for this one legacy chart, but we're transitioning to ECharts\n        // For full ECharts migration, this would be replaced too, but keeping minimal change approach\n\n// Financial Projections Chart (Chart.js - keeping for backward compatibility)\n        const financeChart = new Chart(financeCtx, {\n            type: 'bar',\n            data: {\n                labels: ['År 1', 'År 2', 'År 3'],\n                datasets: [\n                    {\n                        label: 'Omsetning (MNOK)',\n                        data: [5, 12, 25],\n                        backgroundColor: '#8a2be2',\n                    },\n                    {\n                        label: 'Netto Resultat (MNOK)',\n                        data: [-1, 2, 6],\n                        backgroundColor: '#333333',\n                    },\n                    {\n                        label: 'Donerte sko (antall)',\n                        data: [2500, 6000, 12500],\n                        backgroundColor: '#ff007f',\n                        yAxisID: 'y1'\n                    }\n                ]\n            },\n            options: {\n                scales: {\n                    y: { beginAtZero: true },\n                    y1: {\n                        type: 'linear',\n                        display: true,\n                        position: 'right',\n                        grid: { drawOnChartArea: false }\n                    }\n                },\n                plugins: {\n                    title: { display: true, text: 'Økonomiske Prognoser og Samfunnsimpakt' },\n                    legend: { position: 'bottom' }\n                }\n            }\n        });\n        // Growth Trends Line Chart (Chart.js)\n        const growthCtx = document.getElementById('growthChart').getContext('2d');\n        const growthChart = new Chart(growthCtx, {\n            type: 'line',\n            data: {\n                labels: ['2022', '2023', '2024', '2025'],\n                datasets: [{\n                    label: 'Årlig Vekst (%)',\n                    data: [5, 8, 10, 12],\n                    backgroundColor: 'rgba(138, 43, 226, 0.2)',\n                    borderColor: '#8a2be2',\n                    fill: true,\n                }]\n            },\n            options: {\n                plugins: {\n                    title: { display: true, text: 'Forventet Markedsvekst' }\n                },\n                scales: { y: { beginAtZero: true } }\n            }\n        });\n

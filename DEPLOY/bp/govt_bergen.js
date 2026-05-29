@@ -1,5 +1,5 @@
-var ctx = document.getElementById('marketChart').getContext('2d');
-                var marketChart = new Chart(ctx, {
+const ctx = document.getElementById('marketChart').getContext('2d');
+                const marketChart = new Chart(ctx, {
                     type: 'bar',
 
                     data: {

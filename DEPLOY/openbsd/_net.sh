@@ -1,4 +1,6 @@
 #!/usr/bin/env zsh
+set -euo pipefail
+
 # DNS, NSD, DNSSEC, and cert utilities.
 
 validate_ip() {

@@ -75,6 +75,7 @@ apps:
         - { name: premium memberships / boost purchases,                    status: planned }
       subapp_marketplace:
         notes: Old impl used Solidus — pub4 needs native Rails 8 models instead
+        items:
         - { name: Marketplace::Product (name, description, price, image),   status: port }
         - { name: Marketplace::Category,                                    status: port }
         - { name: Marketplace::Review,                                      status: port }
@@ -210,6 +211,7 @@ apps:
         - { name: ad-supported + sponsored posts,                          status: planned }
       foodielicious:
         notes: Food vertical, public brand foodielicio.us
+        items:
         - { name: Recipe model (structured schema.org),                    status: missing }
         - { name: Ingredient model + metadata,                             status: missing }
         - { name: step-by-step cooking view,                               status: missing }

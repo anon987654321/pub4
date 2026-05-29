@@ -57,9 +57,9 @@
     <% if @comments.any? %>
       <% @comments.each do |comment| %>
         <%= render "comments/comment", comment: comment %>
-      <% else %>
-        <li>No comments yet. Be first.</li>
       <% end %>
+    <% else %>
+      <li>No comments yet. Be first.</li>
     <% end %>
   </ul>
 </section>

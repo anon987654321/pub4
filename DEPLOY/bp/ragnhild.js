@@ -18,8 +18,7 @@
           left: '10%',
 
           width: '80%',
-          label: { formatter: '{b}
-{c} MNOK' },
+          label: { formatter: '{b}\n{c} MNOK' },
 
           labelLine: { show: false },
           itemStyle: { borderColor: '#fff', borderWidth: 2 },

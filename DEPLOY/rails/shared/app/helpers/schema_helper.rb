@@ -65,7 +65,7 @@ module SchemaHelper
       "datePublished" => post.created_at&.iso8601,
       "dateModified" => post.updated_at&.iso8601,
       "description" => post.try(:body)&.truncate(200),
-      "url" => url_for(post) rescue nil
+      "url" => schema_url_for(post)
     }.compact
   end
 
@@ -74,7 +74,7 @@ module SchemaHelper
       "@context" => "https://schema.org",
       "@type" => "Person",
       "name" => user.try(:name) || user.try(:username) || "User",
-      "url" => url_for(user) rescue nil,
+      "url" => schema_url_for(user),
       "image" => user.try(:avatar_url)
     }.compact
   end
@@ -86,7 +86,7 @@ module SchemaHelper
       "name" => place.try(:name) || place.try(:title),
       "address" => place.try(:address),
       "geo" => geo_snippet(place),
-      "url" => url_for(place) rescue nil
+      "url" => schema_url_for(place)
     }.compact
   end
 
@@ -98,7 +98,7 @@ module SchemaHelper
       "@type" => "Product",
       "name" => listing.try(:title),
       "description" => listing.try(:description)&.truncate(300),
-      "url" => url_for(listing) rescue nil,
+      "url" => schema_url_for(listing),
       "sku" => listing.try(:id)&.to_s,
       "brand" => { "@type" => "Brand", "name" => listing.try(:user)&.name || "Local Seller" },
       "offers" => {
@@ -106,13 +106,12 @@ module SchemaHelper
         "price" => price,
         "priceCurrency" => listing.try(:currency) || "NOK",
         "availability" => listing.sold? ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-        "url" => url_for(listing) rescue nil
+        "url" => schema_url_for(listing)
       }.compact
     }
 
-    # Add first photo as image if available
     if listing.respond_to?(:photos) && listing.photos.attached?
-      data["image"] = listing.photos.first.url rescue nil
+      data["image"] = schema_photo_url_for(listing.photos.first)
     end
 
     data.compact
@@ -125,7 +124,7 @@ module SchemaHelper
       "name" => video.try(:title),
       "description" => video.try(:description)&.truncate(200),
       "uploadDate" => video.created_at&.iso8601,
-      "url" => url_for(video) rescue nil
+      "url" => schema_url_for(video)
     }.compact
   end
 
@@ -143,7 +142,7 @@ module SchemaHelper
       "@context" => "https://schema.org",
       "@type" => "Thing",
       "name" => resource.try(:title) || resource.try(:name) || resource.to_s,
-      "url" => url_for(resource) rescue nil
+      "url" => schema_url_for(resource)
     }.compact
   end
 
@@ -175,10 +174,22 @@ module SchemaHelper
           "item" => {
             "@type" => "Product",
             "name" => item.try(:title) || item.try(:name),
-            "url" => url_for(item) rescue nil
+            "url" => schema_url_for(item)
           }
         }
       end
     }.compact
+  end
+
+  def schema_url_for(resource)
+    url_for(resource)
+  rescue StandardError
+    nil
+  end
+
+  def schema_photo_url_for(photo)
+    photo.url
+  rescue StandardError
+    nil
   end
 end
