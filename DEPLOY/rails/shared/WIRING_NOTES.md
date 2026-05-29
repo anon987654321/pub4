@@ -113,6 +113,35 @@ Implementation rule: New features in any app must add an Activity emission + a T
 
 See `shared/app/services/shared/event_emitter.rb` and `shared/app/controllers/concerns/shared/structured_events.rb`. This feeds the unified graph + Hotwire.
 
+## Shared Concerns & Mixins
+
+The `shared/app/models/concerns/shared/` and `shared/app/controllers/concerns/shared/` provide reusable behavior:
+
+- **Reactable** (models): `include Shared::Reactable` → adds `reactions`, `reacted_by?`, `reaction_count`.
+- **Followable** (models): `include Shared::Followable` → adds `follows_received`, `followed_by?`, `followers_count`.
+- **LiveSearchable** (controllers): `include Shared::LiveSearchable` → provides `live_search_query`, `live_search_scope`, `render_live_search` for Turbo Streams.
+- **ActorIdentity**, **MediaGuard**, **StructuredEvents**: Supporting mixins for current user, upload guards, and event emission.
+
+**Usage pattern** (in your app models/controllers):
+
+```ruby
+class Post < ApplicationRecord
+  include Shared::Reactable
+  include Shared::Followable   # if posts can be followed
+end
+
+class PostsController < ApplicationController
+  include Shared::LiveSearchable
+
+  def index
+    @posts = live_search_scope(Post.all, columns: %w[title content])
+    render_live_search(collection: @posts, partial: "posts/post")
+  end
+end
+```
+
+See the files in `shared/app/{models,controllers}/concerns/shared/` for full implementations and `shared/WIRING_NOTES.md` for family-wide guidance. Wire these early when adding social or search features.
+
 ## Photo / Multimodal Upload Inheritance
 
 Photo creation (upload + processing) is intentionally allowed for unauthenticated visitors on the public surface (`https://ai.brgen.no` without token). This enables multimodal chat experiences for everyone while keeping deeper agent filesystem tools (`ReadFile`, `WriteFile`, `ListDir`, arbitrary `Shell`, etc.) restricted to token-authenticated users.
