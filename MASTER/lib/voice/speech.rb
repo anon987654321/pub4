@@ -43,7 +43,14 @@ module Master
       energetic:    { rate: "+15%", pitch: "+30Hz" }    # lively, higher
     }.freeze
 
-    DEFAULT_VOICE = :ryan
+    # Osman character tuning (user request):
+    # - Slightly darker (lower) pitch for warmth and gravity
+    # - Slightly slower pacing for more deliberate, musical delivery
+    # - The combination + neural model gives more harmonious, human-like intonation
+    OSMAN_RATE_OFFSET  = "-7%"
+    OSMAN_PITCH_OFFSET = "-22Hz"
+
+    DEFAULT_VOICE = :osman
     DEFAULT_STYLE = :clear
     MAX_CHARS = 900
     CHUNK_CHARS = 220
@@ -65,6 +72,26 @@ module Master
         return STYLES.key?(style) ? style : DEFAULT_STYLE
       end
     end
+
+    # Returns the final rate/pitch for a given voice + style.
+    # Applies Osman character tuning when appropriate (darker, slower, more musical).
+    def style_config_for(voice, style)
+      base = STYLES.fetch(style.to_sym, STYLES[default_style]).dup
+      if voice.to_sym == :osman
+        base[:rate]  = apply_osman_offset(base[:rate],  OSMAN_RATE_OFFSET)
+        base[:pitch] = apply_osman_offset(base[:pitch], OSMAN_PITCH_OFFSET)
+      end
+      base
+    end
+
+    def apply_osman_offset(current, offset)
+      c_val = current.to_s[/[+-]?\d+/].to_i
+      o_val = offset.to_s[/[+-]?\d+/].to_i
+      unit  = current.to_s[/[A-Za-z%]+/] || offset.to_s[/[A-Za-z%]+/]
+      sign  = (c_val + o_val) >= 0 ? "+" : ""
+      "#{sign}#{c_val + o_val}#{unit}"
+    end
+
 
     def infer_style(text, fallback: default_style)
       t = text.to_s.strip
@@ -124,8 +151,11 @@ module Master
       style = default_style unless STYLES.key?(style)
       voice = default_voice unless VOICES.key?(voice)
 
+      # Use the resolved config (applies Osman character when needed)
+      style_config = style_config_for(voice, style)
+
       if EDGE_TTS
-        path = synthesize_edge(text_str, voice: voice, style: style)
+        path = synthesize_edge(text_str, voice: voice, style_config: style_config)
         return path if path
       end
 
@@ -149,10 +179,9 @@ module Master
       File.extname(path.to_s).downcase == ".wav" ? "audio/wav" : "audio/mpeg"
     end
 
-    def synthesize_edge(text, voice:, style:)
+    def synthesize_edge(text, voice:, style_config:)
       audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
       voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
-      style_config = STYLES.fetch(style.to_sym, STYLES[default_style])
 
       _out, _err, status = Open3.capture3(
         WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,

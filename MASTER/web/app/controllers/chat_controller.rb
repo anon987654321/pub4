@@ -78,7 +78,9 @@ class ChatController < ApplicationController
 
     style = params[:style].to_s.strip.to_sym
     if Master::Voice::Speech::STYLES.key?(style) && ![:neutral, :normal].include?(style)
-      cfg = Master::Voice::Speech::STYLES[style]
+      voice_key = params[:voice].to_s.strip.to_sym
+      voice_key = Master::Voice::Speech::DEFAULT_VOICE unless Master::Voice::Speech::VOICES.key?(voice_key)
+      cfg = Master::Voice::Speech.style_config_for(voice_key, style)
       expr = Master::Voice::Expression.for_tts_style(style)
       container[:bus]&.publish("tts:style:active", style: style.to_s, rate: cfg[:rate], pitch: cfg[:pitch], expression: expr)
 
