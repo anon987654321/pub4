@@ -1,5 +1,5 @@
 "use strict";
-import * as THREE from '/three.module.js?v=5';
+import * as THREE from '/three.module.js?v=6';
 
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
@@ -164,7 +164,7 @@ const VERT_COUNT = vertPositions.length / 3;
 const vertHome = vertPositions.slice();
 const vertVel  = new Float32Array(VERT_COUNT * 3);
 const CURSOR_R = 0.40; // repulsion radius in head-local units
-const CURSOR_F = 0.016; // repulsion force per frame
+const CURSOR_F = 0.035; // repulsion force per frame
 
 const mouthMask = new Uint8Array(VERT_COUNT);
 const eyeMask   = new Uint8Array(VERT_COUNT);
