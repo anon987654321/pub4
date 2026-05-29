@@ -69,6 +69,8 @@ This system was built with extremely high standards. Some resulting pain points 
 - Environment-specific Ruby (ruby34 + bundle34 on OpenBSD) makes the self-scan CLI hard to bootstrap.
 - Significant historical documentation sprawl (especially feedback files).
 
+See `data/workflow.yml` → `llm_ergonomics` for the constitutional guidance on how to work with these realities.
+
 These are acknowledged areas for improvement. When working here, prioritize clarity and evidence over perfect adherence to every ceremony.
 
 ## Next Steps When You're Ready
