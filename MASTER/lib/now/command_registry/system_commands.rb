@@ -105,7 +105,7 @@ module Master
       list.lines.each do |line|
         id = line.split.first
         next unless line.include?("snapshot")
-        Open3.capture2e("gh", "gist", "delete", id) if id
+        Open3.capture2e("gh", "gist", "delete", "--yes", id) if id
       end
     rescue StandardError
       nil
