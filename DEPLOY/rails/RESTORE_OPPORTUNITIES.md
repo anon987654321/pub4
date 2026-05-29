@@ -2,6 +2,8 @@
 
 This note maps useful logic from the old `pub` Rails shell generators into the current `pub4/DEPLOY/rails` deployment layout.
 
+**Note (2026-05):** The old top-level `rails/` directory (source of the paths below) has been removed repo-wide as stale/dupe (ONE_SOURCE cleanup). All active code lives in DEPLOY/rails/.
+
 ## Source material inspected
 
 Old repo paths:

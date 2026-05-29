@@ -674,6 +674,8 @@ window.addEventListener('master:visual', (ev) => {
       const b = i*window.ParticleKernel.FIELDS_PER_CELL;
       mouthPool.cells[b+window.ParticleKernel.FIELD.arousal] = hi?1.0: lo?0.3:0.7;
       mouthPool.cells[b+window.ParticleKernel.FIELD.pressure] = hi?0.85: lo?0.25:0.6;
+      // Use richer payload (rate/pitch from server style config) for finer prosody-driven motion
+      if (d.raw && d.raw.rate) mouthPool.cells[b+window.ParticleKernel.FIELD.velocity] = (parseFloat(d.raw.rate) || 0) * 0.01;
     }
   }
   if (/council:deliberation|council:start/i.test(d.name || '')) {

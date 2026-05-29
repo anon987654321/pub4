@@ -233,5 +233,62 @@ Implementation order suggestion: group by file (bridge + face first for signal +
 
 **Remaining backlog** in todo (ms17+). All changes 1-line additive PRESERVE_FIRST after full re-reads. Face now visibly reacts to verdict confidence, council deliberation, and long inputs. Continuing systematic micro-slices.
 
-Run `/sweep` or equivalent after full set for style.
+## Proposed Improvements: Web UI + Face + TTS + Interconnectedness (2026+)
+
+These build on the completed batches and the current architecture (Ruby events → visual_bridge → master:visual + specific listeners → ParticleKernel fields + visemes + CSS). Focus is on deeper coupling so the face "feels" the full system state and TTS creative choices in a coherent, watchable way.
+
+### Face / Particle System (parametric expressiveness)
+1. Map server "entropy" + "pressure" more broadly to additional kernel fields (velocity damping, zone jitter, attention decay rate) for richer idle "personality".
+2. Add subtle global "breathing" offset to all pools driven by overall system confidence (slow inhale/exhale visible even when zoomed out).
+3. Eye pool: pupil size + saccade frequency modulated by "focus" (low during council deliberation, high during precise user input).
+4. Terrain / background elements react to vertical (marketplace = more angular, dating = softer curves, tv = scanlines).
+5. Age field decay rate changes with "mood arc" (recent high-entropy events make cells "tire" faster).
+6. Additive glow / rim lighting on high-arousal cells during energetic TTS styles.
+7. Bayer dither + low internal res upscaling for consistent "pixel art instrument" aesthetic at all zoom levels.
+8. Mouse tilt interaction strength scales with current system "openness" (low during error states).
+9. Cluster "personalities": groups of cells that stay coherent longer when the same vertical has been dominant recently.
+10. Slow "memory trails" — faint ghost particles that linger and slowly decay, showing emotional history.
+
+### TTS + Voice Creative Effects (Osman + styles)
+11. Server-driven viseme stream (from edge-tts phonemes or timing) instead of client Web Speech approximation for accurate mouth sync on all styles.
+12. Prosody → kernel: rate affects global time scale of all lerps; pitch affects vertical bias in eye/mouth pools.
+13. Style chaining / layering (e.g. "whispered + ethereal" produces very low pressure + high valence + airy terrain).
+14. Pre-speech "inhale" anticipation: brief arousal spike + eye widening 150-300ms before audio starts (makes the face feel alive and anticipatory).
+15. Post-speech decay tuned per style (dramatic lingers with high pressure; whispered drops fast to calm).
+16. TTS "effort" signal (long text or complex style) increases overall particle density temporarily.
+17. Voice-specific idle signatures (Osman has slightly lower base arousal than Ryan when idle).
+18. Real-time ducking: when user starts speaking (STT), TTS-driven mouth energy gracefully hands off to listening state.
+19. Creative effect "bleed": intense style leaves a temporary "ringing" high-frequency jitter on eye pool for 4-8 seconds after.
+20. Style preview on face: hovering or selecting a style in UI temporarily modulates the idle face so you can "see" what dramatic vs whispered will look like.
+
+### Web UI / Controls & Feedback
+21. Prominent TTS style picker (or quick chips) that sends the style to /chat/tts and also triggers a live face preview reaction.
+22. Current mode / style indicator that is visually tied to the face (subtle color or topology shift on the canvas).
+23. "Emotional history" mini timeline or sparkline in the UI driven by recent master:visual events.
+24. Direct manipulation: dragging on the face sends a "user:expression" event that can influence the next LLM response or council.
+25. Voice activity visualization that is unified with the particle system (user mic input creates temporary "listening" terrain ripples).
+26. Better error / phantom recovery visuals that feel like part of the instrument (not popups).
+27. Keyboard shortcuts that have corresponding visible face "acknowledgment" micro-animations.
+28. Mobile: pressure-sensitive long-press that changes face "tension" in real time before sending.
+29. Theme / palette switcher that also remaps the particle color/tonal system (CINEMA_PALETTE variants).
+
+### Deep Interconnectedness & Feedback Loops (the core request)
+30. Bidirectional context: average face state (mean arousal, dominant valence, recent entropy) is sent back with the next message as lightweight "felt sense" for the LLM/council.
+31. Multi-signal superposition: when council deliberation + TTS dramatic + high entropy overlap, the kernel produces interesting "polyphonic" states instead of last-wins.
+32. Vertical "timbre": each subapp (marketplace, dating, tv...) has a subtle persistent bias on kernel parameters so the face develops a "voice" for that vertical over a session.
+33. Graph state reflection: high co-change or dense local activity in the unified event stream makes the overall particle field more "connected" (more cross-pool influence).
+34. Confidence from multiple sources (verdict, retrieval, council) is fused into a single "certainty" signal that smoothly controls eye stability and terrain crispness.
+35. TTS style chosen by the system (not just user) creates a visible "the AI decided to speak dramatically" moment.
+36. Phantom / self-correction events create a brief "flinch" or self-soothing motion on the face before the text appears.
+37. Long-running council or heavy tool use creates a visible "thinking breath" cycle on the face that users can watch.
+38. User interrupt (escape / ttsSkip) creates an immediate "reset" ripple across all pools + quick return to attentive idle.
+39. Memory of emotional arc: the face slowly drifts toward a "baseline personality" based on the last 5-10 minutes of interaction signals.
+40. Cross-app resonance: activity in one vertical (e.g. new marketplace offer) can cause a small "echo" modulation on the face even if the user is looking at TV.
+
+### Beauty from Afar, NNG, Performance, Mobile
+41-50. (Slow breathing that looks good when the tab is in the background; stronger respect for reduced-motion; better mobile touch targets tied to face affordances; fixed-timestep + Bayer improvements for consistent pixel look; data-driven "mood" that persists across reloads via small local storage; etc.)
+
+These are all designed as 1-4 line additive changes on existing paths (kernel field modulation, richer event payloads, small listeners, CSS tokens, one extra publish in the controller or pipeline). They dramatically increase the felt interconnectedness so the face stops being "just a pretty animation" and becomes a living instrument that reflects the entire MASTER runtime and the user's emotional journey through the city platform.
+
+Run `/sweep` after implementing batches. Continuing micro-slices.
 

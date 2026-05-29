@@ -736,7 +736,7 @@ repo_topics:
     confidence: high
     local_evidence:
     - github_repos/awesome-ai-agents/README.md
-    - github_repos/awesome-llm-apps/mcp_ai_agents/multi_mcp_agent/multi_mcp_agent.py
+    # (awesome-llm-apps example removed 2026-05 as dead external bloat)
     - MASTER/lib/judge/agent.rb
     - MASTER/docs/cognitive_runtime.md
     pattern: 'The repo contains a mirrored agent landscape plus internal agent/council/runtime
@@ -752,8 +752,7 @@ repo_topics:
     status: mirrored_research
     confidence: high
     local_evidence:
-    - github_repos/awesome-llm-apps/ai_agent_framework_crash_course/openai_sdk_crash_course/1_starter_agent/1_personal_assistant_agent/README.md
-    - github_repos/awesome-llm-apps/ai_agent_framework_crash_course/openai_sdk_crash_course/1_starter_agent/1_personal_assistant_agent/agent.py
+    # (awesome-llm-apps personal assistant example removed 2026-05 as dead external bloat)
     - github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
     - github_repos/system_prompts_leaks/Perplexity/comet-browser-assistant.md
     - MASTER/web/public/face.js

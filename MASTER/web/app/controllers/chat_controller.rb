@@ -78,7 +78,8 @@ class ChatController < ApplicationController
 
     style = params[:style].to_s.strip.to_sym
     if Master::Voice::Speech::STYLES.key?(style) && ![:neutral, :normal].include?(style)
-      container[:bus]&.publish("tts:style:active", style: style.to_s)
+      cfg = Master::Voice::Speech::STYLES[style]
+      container[:bus]&.publish("tts:style:active", style: style.to_s, rate: cfg[:rate], pitch: cfg[:pitch])
     end
 
     bytes = Master::Voice::Speech.synthesize_bytes(text, voice: voice_key)

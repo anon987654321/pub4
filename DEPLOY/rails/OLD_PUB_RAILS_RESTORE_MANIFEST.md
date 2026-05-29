@@ -1,7 +1,7 @@
 # Old `pub/rails` restore manifest
 
 Source repo: `anon987654321/pub`
-Source tree: `rails/`
+Source tree: `rails/`  (REMOVED 2026-05 as ONE_SOURCE cleanup — all active code lives in DEPLOY/rails/)
 Target repo: `anon987654321/pub4`
 Target tree: `DEPLOY/rails/`
 
