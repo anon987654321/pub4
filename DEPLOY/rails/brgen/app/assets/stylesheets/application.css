@@ -225,9 +225,8 @@ main {
 .feed-header {
   position: sticky;
   top: 0;
-  height: 53px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   padding: 0 16px;
   background: rgba(0, 0, 0, .85);
   backdrop-filter: blur(12px);
@@ -235,10 +234,10 @@ main {
   z-index: 10;
 }
 
-.feed-header h1 { font-size: 20px; font-weight: 800; }
+.feed-header h1 { font-size: 20px; font-weight: 800; padding: 12px 0 4px; }
 
 /* ── For you / Latest tabs ── */
-.feed-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.feed-tabs { display: flex; }
 
 .feed-tab {
   flex: 1;
@@ -284,7 +283,8 @@ main {
 
 .compose-prompt:hover { color: var(--text); text-decoration: none; }
 
-.compose-footer { display: flex; justify-content: flex-end; }
+.compose-footer { display: flex; align-items: center; justify-content: space-between; }
+.compose-actions { display: flex; gap: 12px; color: var(--accent); font-size: 18px; }
 
 /* ── Right widgets column ── */
 .widgets {
@@ -549,8 +549,18 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 section h2 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); margin-bottom: var(--sp); font-family: ui-monospace, monospace; }
 
 /* ── Article cards ── */
-article { padding: 16px; border-bottom: 1px solid var(--border); transition: background var(--transition-fast); }
+article { padding: 16px; border-bottom: 1px solid var(--border); transition: background var(--transition-fast); display: flex; gap: 12px; }
 article:hover { background: rgba(255, 255, 255, .03); }
+.x-avatar { width: 48px; height: 48px; border-radius: 9999px; background: var(--surface2); flex-shrink: 0; }
+.x-content { flex: 1; min-width: 0; }
+.x-header { display: flex; gap: 4px; font-size: 15px; color: var(--text-dim); margin-bottom: 2px; }
+.x-name { color: var(--text); font-weight: 700; }
+.x-handle, .x-time { color: var(--text-dim); }
+.x-text { font-size: 15px; line-height: 1.5; margin: 0 0 8px; color: var(--text); }
+.x-actions { display: flex; align-items: center; justify-content: space-between; gap: 4px; color: var(--text-dim); font-size: 13px; margin-top: 8px; }
+.x-act { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: 9999px; transition: color var(--transition-fast), background var(--transition-fast); }
+.x-act:hover { color: var(--accent); background: rgba(29, 155, 240, .1); }
+.x-count { font-size: 12px; }
 article h2 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
 article p { color: var(--text-dim); font-size: .9375rem; }
 article mark { background: rgba(244, 33, 46, .15); color: #f87171; padding: 1px 4px; font: 11px/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; border-radius: 4px; }
