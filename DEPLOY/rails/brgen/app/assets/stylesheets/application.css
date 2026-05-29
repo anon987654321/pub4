@@ -549,7 +549,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 section h2 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); margin-bottom: var(--sp); font-family: ui-monospace, monospace; }
 
 /* ── Article cards ── */
-article { padding: 16px; border-bottom: 1px solid var(--border); transition: background var(--transition-fast); display: flex; gap: 12px; }
+article { padding: 20px 16px; border-bottom: 1px solid var(--border); transition: background var(--transition-fast); display: flex; gap: 12px; }
 article:hover { background: rgba(255, 255, 255, .03); }
 .x-avatar { width: 48px; height: 48px; border-radius: 9999px; background: var(--surface2); flex-shrink: 0; }
 .x-content { flex: 1; min-width: 0; }
