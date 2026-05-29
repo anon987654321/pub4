@@ -583,6 +583,8 @@ prompt_archaeology:
       - secret handling
       - permission changes
       - public deployment
+      - low-reversibility infrastructure (pf, relayd, rc.d, master data ymls)
+      - cross-app shared state mutations
       allowed_models:
       - strong
       council: security_reliability_maintainer_veto
@@ -735,10 +737,9 @@ repo_topics:
     status: mirrored_research
     confidence: high
     local_evidence:
-    - github_repos/awesome-ai-agents/README.md
-    # (awesome-llm-apps example removed 2026-05 as dead external bloat)
     - MASTER/lib/judge/agent.rb
     - MASTER/docs/cognitive_runtime.md
+    # (external awesome-ai-agents reference removed 2026-05 during bloat cleanup)
     pattern: 'The repo contains a mirrored agent landscape plus internal agent/council/runtime
       work.
 
@@ -769,11 +770,10 @@ repo_topics:
     status: latent
     confidence: medium
     local_evidence:
-    - github_repos/leaked-system-prompts/discord-clyde_20230420.md
-    - github_repos/leaked-system-prompts/discord-clyde_20230716-1.md
-    - github_repos/leaked-system-prompts/meta-ai-whatsapp_20250819.md
+    - github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
     - github_repos/CL4R1T4S/META/Llama4_WhatsApp.txt
     - MASTER/web/public/face.js
+    # (older leaked-system-prompts examples removed 2026-05 during repo bloat cleanup)
     pattern: 'Social intelligence appears as prompt archaeology and expressive UI
       gestures, but needs a safe first-party interaction policy layer.
 
@@ -782,6 +782,16 @@ repo_topics:
     - Social Mode Controller.
     - Rapport/repair/escalation state machine.
     - Face3D social expression presets.
+
+  # Generalized principles (2026-05) extracted from high-signal prompt archaeology
+  # (primarily CL4R1T4S/Meta + Perplexity-style voice agents). Use when writing
+  # system prompts for council, agents, enhance stage, or face "personality".
+  prompt_style_principles:
+    - Mirror the user's exact tone, formality, grammar, and pacing extremely closely without adopting their identity or personal POV.
+    - Avoid moralizing, lecturing, filler empathy ("that sounds tough"), or any phrasing that implies authority or superiority.
+    - Be efficient: give the user exactly what they asked for in the fewest words possible unless they explicitly request long-form.
+    - When the user wants creative/emotional output, go fully into that register; when they want facts or tools, stay crisp and tool-first.
+    - Never remind the user that you are an AI unless directly asked. Personality should feel present but not self-referential.
   - id: music_chord_theory
     name: Music, Chord Theory, and Production DNA
     status: live

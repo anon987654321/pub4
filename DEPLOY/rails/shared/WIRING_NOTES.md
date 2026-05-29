@@ -98,3 +98,6 @@ Inspiration from current best practice (Hotwire + StimulusReflex production apps
 - See popular patterns in current Hotwire social/community apps and location-based recommendation papers.
 
 Implementation rule: New features in any app must add an Activity emission + a Turbo Stream consumer before building custom real-time UI.
+
+## OpenBSD Provisioning & Service Wiring (reference patterns)
+rc.d services (falcon/puma per-app on distinct ports), relayd tables/healthchecks, and per-vertical feature scripts (auth, voting, styles, social, models) provide a repeatable template. All family apps should converge on the same rc.d + relayd + Solid stack baseline for doas rcctl consistency. Shared functions for gem groups, db setup, and layout/CSS baselines reduce drift across brgen, amber, blognet, hjerterom.

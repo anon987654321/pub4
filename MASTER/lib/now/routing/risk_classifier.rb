@@ -22,6 +22,8 @@ module Master
         /\bauth\b|\bsession\b|\bcredential\b|\bpassword\b|\btoken\b/i => :high,
         /\bsecret\b|\bapi[_\-]?key\b|\bprivate[_\-]?key\b/i => :critical,
         /\bpf\.conf\b|\bdoas\.conf\b|\bsshd\b|\bsmtpd\b/i => :critical,
+        /\brelayd\.conf\b|\brc\.d\/|\/etc\/rc\.d\b/i => :critical,
+        /\bdata\/(rules|soul|patterns|topologies)\.yml\b/i => :critical,
         /\bbin\/cli\b|\blib\/ground\/axioms\b|\bdata\/standing_orders\b/i => :critical,
         /\blib\/loop\b|\blib\/judge\/security\b/i => :high,
         /\bapp\/controllers\b|\bapp\/models\b/i => :medium,
