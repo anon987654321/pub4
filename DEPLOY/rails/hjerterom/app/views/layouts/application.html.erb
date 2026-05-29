@@ -22,11 +22,13 @@
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  <link rel="stylesheet" href="/styles/minimal-ui.css">
   <%= yield :json_ld %>
   <%= javascript_importmap_tags %>
   <%= yield :head if content_for?(:head) %>
+  <script type="module" src="/minimal-gesture.js"></script>
 </head>
-<body>
+<body class="zen-minimal">
 <nav>
   <%= link_to "Hjerterom", root_path, class: "brand" %>
   <%= link_to "Mat",        food_listings_path %>
