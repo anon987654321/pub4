@@ -6,7 +6,6 @@ sacred_terms:
   - soul        # data/soul.yml + SOUL.md — constitutional schema
   - tribunal    # user's word for /review; code says "council"
   - council     # canonical code path for tribunal
-  - triad       # /triad = scan + fix + tribunal; 3-pass quality gate
   - fix         # /fix, FixLoop
   - scan        # /scan, Scanner
   - sweep       # legacy alias for fix; do not rename

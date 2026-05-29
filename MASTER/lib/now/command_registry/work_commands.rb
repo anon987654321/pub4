@@ -27,7 +27,6 @@ module Master
       {
         "scan" => cmd(:dispatch_scan, scanner, root),
         "fix" => ->(ctx) { dispatch_fix(fix_loop, root, arg_for(ctx)) },
-        "triad" => ->(ctx) { dispatch_triad(scanner:, fix_loop:, deliberation:, root:, bus:, arg: arg_for(ctx)) },
         "status" => ->(_c) { dispatch_status(root:, fix_loop:, bus:) },
         "resync" => ->(c) { dispatch_resync(root:, fix_loop:, arg: arg_for(c)) },
         "tail" => ->(c) { dispatch_tail(root:, arg: arg_for(c)) },
@@ -292,39 +291,6 @@ module Master
       [data["principle_groups"] || {}, data["scan_profiles"] || {}]
     rescue StandardError
       [{}, {}]
-    end
-
-    # /triad [path] — scan → fix → tribunal: the full 3-pass quality gate.
-    def dispatch_triad(scanner:, fix_loop:, deliberation:, root:, bus:, arg:)
-      target = expand_or_root(arg, root)
-      out = []
-
-      bus&.publish("triad:start", target: target)
-
-      # Step 1: scan
-      pairs = collect_scan_pairs(scanner:, root:, arg: arg, depth: :deep)
-      scan_out = pairs.is_a?(String) ? pairs : format_scan_results(pairs, nil, nil)
-      out << "scan:\n#{scan_out}"
-      bus&.publish("triad:scan_done", violations: scan_out.lines.last.to_s.strip)
-
-      # Step 2: fix (one convergence pass)
-      if fix_loop
-        fix_result = fix_loop.run(target)
-        fix_out = fix_result.ok? ? fix_result.value! : "fix: #{fix_result.message}"
-        out << "\nfix:\n#{fix_out}"
-        bus&.publish("triad:fix_done")
-      else
-        out << "\nfix: not configured"
-      end
-
-      # Step 3: tribunal deliberation
-      tribunal_out = run_tribunal(deliberation:, artifact: snapshot_artifact(target), target: target, bus: bus)
-      out << "\ntribunal:\n#{tribunal_out}"
-      bus&.publish("triad:done", target: target)
-
-      out.join
-    rescue StandardError => e
-      "triad: #{e.message}"
     end
 
     def dispatch_review(council_stage:, deliberation:, root:, bus:, arg:)
