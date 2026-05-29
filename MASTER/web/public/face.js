@@ -1,5 +1,5 @@
 "use strict";
-import * as THREE from '/three.module.js?v=3';
+import * as THREE from '/three.module.js?v=4';
 
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
@@ -714,12 +714,15 @@ function startEverything() {
   };
   setTimeout(tick, 80);
 }
-primer.addEventListener('pointerdown', startEverything, { once: true });
+let primerFired = false;
+function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
+primer.addEventListener('pointerdown', firePrimer);
+primer.addEventListener('click', firePrimer);
 primer.addEventListener('keydown', event => {
   if (event.key !== 'Enter' && event.key !== ' ') return;
   event.preventDefault();
-  startEverything();
-}, { once: true });
+  firePrimer();
+});
 
 zshBar.addEventListener('submit', (e) => {
   e.preventDefault();
