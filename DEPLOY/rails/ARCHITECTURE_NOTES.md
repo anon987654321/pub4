@@ -23,6 +23,12 @@ Each production app folder should mirror Rails structure:
 
 Deploy wrappers should only sync, configure, migrate, seed, install service files, and wire relayd.
 
+**Relayd pattern recommendation** (see `DEPLOY/openbsd/` for current templates):
+- One table per app: `table <amber> { 127.0.0.1 }`
+- SNI-based routing on :443 with `tls keypair` per domain.
+- Health checks: `check http "/" code 200`
+- Central `relayd.conf` managed from `DEPLOY/openbsd/etc/relayd.conf` or equivalent. Avoid per-app duplication.
+
 ## Core rule
 
 A product folder is a Rails application folder first and a deployment folder second.
