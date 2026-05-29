@@ -92,47 +92,20 @@ module Master
     end
 
     def dispatch_snapshot(root)
-      [
-        publish_snapshot(root, "MASTER"),
-        publish_snapshot(File.expand_path("../DEPLOY", root), "DEPLOY")
-      ].join("\n")
-    end
-
-    def publish_snapshot(target, label)
-      return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
-      skip      = ->(rel) { rel.split("/").any? { |s| SKIP_SEGS.include?(s) } }
-      text_file = ->(f) { TEXT_EXTS.include?(File.extname(f).downcase) || TEXT_NAMES.include?(File.basename(f)) }
-      all   = Dir.glob(File.join(target, "**", "*"))
-                 .reject { |f| File.basename(f).start_with?(".") }
-                 .reject { |f| skip.(f.delete_prefix("#{target}/")) }.sort
-      dirs  = all.select { |f| File.directory?(f) }
-      files = all.select { |f| File.file?(f) && text_file.(f) && File.size(f) < Master::CTX_WINDOW_SIZE }
-      stamp = Time.now.utc.iso8601
-      md    = ["# #{label} Snapshot — #{stamp}", "", "## Tree", "```"]
-      entries = (dirs.map { |d| [d, :dir] } + files.map { |f| [f, :file] })
-                  .sort_by { |p, _| p.split("/") }
-                  .map { |p, k| "#{"  " * p.delete_prefix("#{target}/").count("/")}#{File.basename(p)}#{k == :dir ? "/" : ""}" }
-      md.concat(entries) << "```" << ""
-      n_lines = 0
-      files.each do |f|
-        rel  = f.delete_prefix("#{target}/")
-        lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
-        body = File.read(f, encoding: "UTF-8", invalid: :replace).lines
-        n_lines += body.size
-        md << "## `#{rel}`" << "```#{lang}"
-        md.concat(body.map(&:rstrip))
-        md << "```" << ""
-      rescue StandardError => e
-        md << "## `#{rel}`" << "[skipped: #{e.message}]" << ""
-      end
-      md << "files: #{files.size} / lines: #{n_lines}"
+      deploy_root = File.expand_path("../DEPLOY", root)
+      master_src  = File.join(root, "README.md")
+      deploy_src  = File.join(deploy_root, "README.md")
+      return "snapshot: MASTER/README.md missing" unless File.exist?(master_src)
+      return "snapshot: DEPLOY/README.md missing" unless File.exist?(deploy_src)
       day = Time.now.strftime("%Y-%m-%d")
-      out, status = Open3.capture2e("gh", "gist", "create", "-",
-        "--public", "--desc", "#{label} #{day}",
-        "--filename", "snapshot_latest.md",
-        stdin_data: md.join("\n"))
-      status.success? ? "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{out.strip}" :
-                        "snapshot:#{label.downcase}: gist publish failed: #{out.strip}"
+      args = [
+        "gh", "gist", "create",
+        master_src, "--filename", "MASTER.md",
+        deploy_src, "--filename", "DEPLOY.md",
+        "--public", "--desc", "MASTER snapshot #{day}"
+      ]
+      out, status = Open3.capture2e(*args)
+      status.success? ? "snapshot: → #{out.strip}" : "snapshot: gist failed: #{out.strip}"
     end
   end
   end
