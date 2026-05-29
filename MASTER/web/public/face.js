@@ -659,50 +659,96 @@ document.addEventListener('keydown', (e) => {
 
 window.sendMessage = sendMessage;
 
-// Semantic reaction (item from topologies.yml emotional_mapping + visual_clusters).
-// High entropy or veto/pressure events from the bridge visibly stress the kernel face cells
-// (mouth pressure up, eye confidence down) — new observable "tension" on the constitutional face.
+// Semantic reaction — now primarily driven by server Expression payloads
+// (from lib/voice/expression.rb) with lightweight event-specific overrides.
+// This structure makes the remaining 50+ ideas from runtime_ui_direction.md
+// (pre-speech anticipation, style bleed, mood arc, vertical timbre, etc.)
+// implementable with small deltas on the Ruby side instead of JS sprawl.
 window.addEventListener('master:visual', (ev) => {
   const d = ev.detail || {};
   State.entropy = d.entropy ?? State.entropy ?? 0.2;
   if (!mouthPool || !eyePool) return;
+
+  const ex = d.expression || {};
+
+  // High-tension / veto / high-entropy baseline (still useful fallback)
   if ((d.entropy || 0) > 0.6 || d.mode === 'veto' || /veto|error|failure|pressure/.test(d.name || '')) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] || 0) + 0.6);
+      mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] || 0) + (ex.mouth_pressure || 0.6));
     }
     for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
       const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] || 0.9) - 0.3);
+      eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] || 0.9) - (ex.eye_confidence_drop || 0.3));
     }
   }
+
+  // TTS creative style reactions — prefer server Expression data
   if (/tts:style|style:active/i.test(d.name || '')) {
-    const ex = d.expression || {};
-    const s = d.name || ''; const hi = /dramatic|intense|energetic|storyteller/i.test(s); const lo = /whisper|ethereal|robotic|intimate/i.test(s);
-    if (mouthPool) for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i*window.ParticleKernel.FIELDS_PER_CELL;
-      mouthPool.cells[b+window.ParticleKernel.FIELD.arousal] = ex.arousal ?? (hi?1.0: lo?0.3:0.7);
-      mouthPool.cells[b+window.ParticleKernel.FIELD.pressure] = ex.pressure ?? (hi?0.85: lo?0.25:0.6);
-      if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath||1.0) + (ex.breath_boost || 0.25));
-      // Use richer payload (rate/pitch from server) for prosody-driven modulation
+    const s = d.name || '';
+    const hi = /dramatic|intense|energetic|storyteller/i.test(s);
+    const lo = /whisper|ethereal|robotic|intimate/i.test(s);
+
+    if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * window.ParticleKernel.FIELDS_PER_CELL;
+      mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
+      mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] = ex.pressure ?? (hi ? 0.85 : lo ? 0.25 : 0.6);
+      if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
+
+      // Prosody from server rate/pitch
       const rate = parseFloat(d.rate || (d.raw && d.raw.rate)) || 0;
       const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
-      mouthPool.cells[b+window.ParticleKernel.FIELD.velocity] = rate * 0.008;
-      if (Math.abs(pitch) > 20) eyePool && eyePool.alive && (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = 0.6);
+      mouthPool.cells[b + window.ParticleKernel.FIELD.velocity] = rate * 0.008;
+
+      // Creative style "bleed" into eyes (pending idea from runtime_ui_direction)
+      if (hi && Math.abs(pitch) > 15) {
+        eyePool && eyePool.alive && (eyePool.cells[b + window.ParticleKernel.FIELD.attention] = Math.min(1.0, (eyePool.cells[b + window.ParticleKernel.FIELD.attention] || 0.6) + 0.18));
+      }
+      if (Math.abs(pitch) > 20) eyePool && eyePool.alive && (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = 0.6);
     }
+
+    // Post-style creative bleed decay (small persistent effect on eyes after dramatic styles)
+    if (hi) State.creativeBleed = (State.creativeBleed || 0) + 0.9;
   }
+
+  // Council + reversibility — now richer via Expression
   if (/council:deliberation|council:start/i.test(d.name || '')) {
-    const ex = d.expression || {};
     const pBoost = ex.mouth_pressure || 0.5;
     const cDrop  = ex.eye_confidence_drop || 0.25;
-    if (mouthPool) for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0)+pBoost);
-    if (eyePool) for (let i=0; i<eyePool.count; i++) if (eyePool.alive[i]) eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9)-cDrop);
+    if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i])
+      mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0) + pBoost);
+    if (eyePool) for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i])
+      eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9) - cDrop);
   }
+
+  // Long input density signal
   if (/input:long|cmd:long/i.test(d.name || '')) {
     State.jitter = Math.max(State.jitter || 0.2, 0.55);
-    if (mouthPool) for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0)+0.4);
+    const density = ex.pressure || 0.4;
+    if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i])
+      mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0) + density);
+  }
+
+  // Apply any broad expression fields that weren't caught above (future-proof for more ideas)
+  if (ex && (ex.arousal != null || ex.valence != null || ex.attention != null)) {
+    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * window.ParticleKernel.FIELDS_PER_CELL;
+      if (ex.arousal != null) mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = ex.arousal;
+      if (ex.valence != null) mouthPool.cells[b + window.ParticleKernel.FIELD.valence] = ex.valence;
+    }
   }
 });
+
+// Creative style bleed decay over time (small persistent "ringing" after dramatic TTS)
+setInterval(() => {
+  if (State.creativeBleed > 0.01 && eyePool) {
+    for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
+      const b = i * window.ParticleKernel.FIELDS_PER_CELL;
+      eyePool.cells[b + window.ParticleKernel.FIELD.attention] = Math.max(0.3, (eyePool.cells[b + window.ParticleKernel.FIELD.attention] || 0.6) - 0.06);
+    }
+    State.creativeBleed *= 0.82;
+  }
+}, 420);
 
 resize();
 if (renderer) requestAnimationFrame(frame);
