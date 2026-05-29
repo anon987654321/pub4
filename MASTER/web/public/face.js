@@ -1,5 +1,5 @@
 "use strict";
-import * as THREE from '/three.module.js?v=9';
+import * as THREE from '/three.module.js?v=10';
 
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
@@ -171,6 +171,16 @@ const VERT_COUNT = vertPositions.length / 3;
 
 const vertHome = vertPositions.slice();
 const vertVel  = new Float32Array(VERT_COUNT * 3);
+// Session-unique face: tiny golden-ratio perturbation seeds a distinct face each load
+const SESSION_SEED = Math.random() * Math.PI * 2;
+for (let i = 0; i < VERT_COUNT; i++) {
+  const theta = SESSION_SEED + i * 2.3999632; // golden angle
+  const r = 0.014 * Math.sin(theta * 2.71);
+  vertHome[i*3]   += r * Math.cos(theta);
+  vertHome[i*3+1] += r * Math.sin(theta) * 0.65;
+  vertPositions[i*3]   = vertHome[i*3];
+  vertPositions[i*3+1] = vertHome[i*3+1];
+}
 const CURSOR_R = 0.40; // repulsion radius in head-local units
 const CURSOR_F = 0.035; // repulsion force per frame
 
@@ -258,6 +268,44 @@ TINT.idle.copy(dayNightTint());
 colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
 setInterval(() => { if (!State.mood || State.mood === 'idle') { TINT.idle.copy(dayNightTint()); fadeColorTo(TINT.idle); } }, 60000);
 
+// Waveform ghost ring
+const WAVEFORM_N = 72;
+const waveformPos = new Float32Array(WAVEFORM_N * 3);
+const waveformGeom = new THREE.BufferGeometry();
+waveformGeom.setAttribute('position', new THREE.BufferAttribute(waveformPos, 3));
+const waveformMat = new THREE.PointsMaterial({
+  size: 0.018, map: sprite, transparent: true, depthWrite: false,
+  blending: THREE.AdditiveBlending, sizeAttenuation: true,
+  color: new THREE.Color(0.6, 0.85, 1.0), opacity: 0
+});
+scene.add(new THREE.Points(waveformGeom, waveformMat));
+
+// Crowd orbit (thinking satellites)
+const CROWD_N = 28;
+const crowdPos = new Float32Array(CROWD_N * 3);
+const crowdAngles = Float32Array.from({ length: CROWD_N }, (_, i) => (i / CROWD_N) * Math.PI * 2);
+const crowdRadii  = Float32Array.from({ length: CROWD_N }, () => 1.45 + Math.random() * 0.45);
+const crowdGeom = new THREE.BufferGeometry();
+crowdGeom.setAttribute('position', new THREE.BufferAttribute(crowdPos, 3));
+const crowdMat = new THREE.PointsMaterial({
+  size: 0.016, map: sprite, transparent: true, depthWrite: false,
+  blending: THREE.AdditiveBlending, sizeAttenuation: true,
+  color: new THREE.Color(0.75, 0.88, 1.0), opacity: 0
+});
+scene.add(new THREE.Points(crowdGeom, crowdMat));
+
+// Lens flare (one-shot drift across view)
+const lensFlarePos = new Float32Array(3);
+const lensFlareGeom = new THREE.BufferGeometry();
+lensFlareGeom.setAttribute('position', new THREE.BufferAttribute(lensFlarePos, 3));
+const lensFlareMat = new THREE.PointsMaterial({
+  size: 0.18, map: sprite, transparent: true, depthWrite: false,
+  blending: THREE.AdditiveBlending, sizeAttenuation: true,
+  color: new THREE.Color(1.0, 0.97, 0.88), opacity: 0
+});
+scene.add(new THREE.Points(lensFlareGeom, lensFlareMat));
+let lensFlareT = null, lensFlareStart = performance.now() + Math.random() * 20000 + 12000;
+
 let lastT = performance.now();
 let nextBlink    = performance.now() + 3000 + Math.random() * 3000;
 let saccadeX     = 0, nextSaccade = performance.now() + Math.random() * 6000 + 3000;
@@ -286,6 +334,7 @@ function frame(t) {
     for (let bi = 0; bi < bufLen; bi++) { const s = (tts.analyserBuf[bi] - 128) / 128; rmsSum += s * s; }
     const rms = Math.sqrt(rmsSum / bufLen);
     if (rms > 0.01) State.pulse = Math.min(0.9, State.pulse + rms * 1.5);
+    State.voiceRMS = rms;
     if (tts.analyserFreqBuf) {
       tts.analyser.getByteFrequencyData(tts.analyserFreqBuf);
       let bass = 0, mids = 0, highs = 0;
@@ -297,8 +346,9 @@ function frame(t) {
       State.audioHighs = highs / (48  * 255);
     }
   } else {
-    State.audioBass = (State.audioBass || 0) * 0.88;
-    State.audioMids = (State.audioMids || 0) * 0.88;
+    State.voiceRMS   = (State.voiceRMS   || 0) * 0.9;
+    State.audioBass  = (State.audioBass  || 0) * 0.88;
+    State.audioMids  = (State.audioMids  || 0) * 0.88;
     State.audioHighs = (State.audioHighs || 0) * 0.88;
   }
 
@@ -324,12 +374,14 @@ function frame(t) {
   head3.scale.setScalar(breath);
   State.pulse *= 0.92;
 
+  State.lean = (State.lean || 0) * 0.97;
   if (State.shake > 0.01 && !State.reducedMotion) {
     head3.position.x = (Math.random() - 0.5) * State.shake * 0.18;
     head3.position.y = (Math.random() - 0.5) * State.shake * 0.18;
+    head3.position.z = State.lean;
     State.shake *= 0.86;
   } else {
-    head3.position.set(0, 0, 0);
+    head3.position.set(0, 0, State.lean);
   }
 
   if (!State.reducedMotion && t > nextBlink) {
@@ -426,9 +478,12 @@ function frame(t) {
   State.visemeAmp *= 0.85;
   vertGeom.attributes.position.needsUpdate = true;
 
-  // Confidence → particle sharpness (crisp at 1.0, soft at 0.0)
-  vertMat.size = 0.055 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12);
-  edgeMat.size = 0.025 * (0.55 + State.confidence * 0.45);
+  // Confidence → particle sharpness; whisper dims, shout brightens
+  const voiceRMS = State.voiceRMS || 0;
+  const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
+  const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
+  vertMat.size = 0.055 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
+  edgeMat.size = 0.025 * (0.55 + State.confidence * 0.45) * whisperScale;
   edgeMat.opacity = 0.55 * (0.6 + State.confidence * 0.4) * (0.93 + Math.random() * 0.07);
 
   // Idle dissolve + grain
@@ -442,6 +497,51 @@ function frame(t) {
     vertVel[ri+2] += (Math.random() - 0.5) * 0.028;
   }
   State.flash *= 0.9;
+
+  // Waveform ghost ring
+  if (tts.analyserBuf && tts.analyser && !State.reducedMotion) {
+    waveformMat.opacity = Math.min(0.38, waveformMat.opacity + 0.015);
+    for (let i = 0; i < WAVEFORM_N; i++) {
+      const angle = (i / WAVEFORM_N) * Math.PI * 2;
+      const bi = Math.floor(i / WAVEFORM_N * tts.analyserBuf.length);
+      const sample = (tts.analyserBuf[bi] - 128) / 128;
+      const r = 1.38 + sample * 0.28;
+      waveformPos[i*3]   = Math.cos(angle) * r;
+      waveformPos[i*3+1] = Math.sin(angle) * r * 0.78 - 0.08;
+      waveformPos[i*3+2] = 0.45 + sample * 0.12;
+    }
+    waveformGeom.attributes.position.needsUpdate = true;
+  } else {
+    waveformMat.opacity = Math.max(0, waveformMat.opacity - 0.012);
+  }
+
+  // Crowd orbit during thinking
+  const thinkingOn = State.mode === 'thinking' && !State.reducedMotion;
+  crowdMat.opacity = Math.max(0, Math.min(0.32, crowdMat.opacity + (thinkingOn ? 0.007 : -0.007)));
+  if (crowdMat.opacity > 0.005) {
+    for (let i = 0; i < CROWD_N; i++) {
+      crowdAngles[i] += 0.007 + i * 0.0004;
+      const r = crowdRadii[i];
+      crowdPos[i*3]   = Math.cos(crowdAngles[i]) * r;
+      crowdPos[i*3+1] = Math.sin(crowdAngles[i]) * r * 0.38 - 0.15;
+      crowdPos[i*3+2] = Math.sin(crowdAngles[i] * 0.63) * 0.28;
+    }
+    crowdGeom.attributes.position.needsUpdate = true;
+  }
+
+  // Lens flare one-shot
+  if (lensFlareStart && t > lensFlareStart) {
+    lensFlareT = t; lensFlareStart = null;
+    lensFlarePos[1] = (Math.random() - 0.5) * 1.0;
+    lensFlarePos[2] = 0.6;
+  }
+  if (lensFlareT !== null) {
+    const lp = (t - lensFlareT) / 2800;
+    lensFlarePos[0] = -2.4 + lp * 4.8;
+    lensFlareMat.opacity = lp < 0.5 ? lp * 0.55 : (1 - lp) * 0.55;
+    lensFlareGeom.attributes.position.needsUpdate = true;
+    if (lp >= 1) { lensFlareMat.opacity = 0; lensFlareT = null; }
+  }
 
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
@@ -736,6 +836,7 @@ async function sendMessage(text) {
   } catch (_) {}
 
   State.mode = 'thinking'; State.pulse = 0.4;
+  if (input.length > 180) State.lean = 0.14;
   const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|0`);
   const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}`;
   evtSrc = new EventSource(url);
