@@ -1,0 +1,22 @@
+<% content_for :title, "Delivery drivers" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Takeaway operations</p>
+    <h1>Delivery drivers</h1>
+  </div>
+</div>
+
+<% if @delivery_drivers.any? %>
+  <% @delivery_drivers.each do |driver| %>
+    <article>
+      <h2><%= link_to driver.user.display_name.presence || driver.user.email_address.split("@").first, takeaway_delivery_driver_path(driver) %></h2>
+      <p class="dim"><%= driver.vehicle_type.presence&.humanize || "Vehicle not set" %> · <%= driver.available? ? "Available" : "Unavailable" %></p>
+      <% if driver.location? %>
+        <p><%= driver.current_lat %>, <%= driver.current_lng %></p>
+      <% end %>
+    </article>
+  <% end %>
+<% else %>
+  <div class="empty"><p>No available drivers.</p></div>
+<% end %>

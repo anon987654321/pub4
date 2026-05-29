@@ -1,0 +1,55 @@
+<% content_for :title, @set.name %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Playlist set</p>
+    <h1><%= @set.name %></h1>
+  </div>
+  <% if authenticated? && Current.user == @set.user %>
+    <div style="display:flex;gap:8px">
+      <%= link_to "Edit", edit_playlist_set_path(@set), class: "btn btn-ghost btn-sm" %>
+      <%= button_to "Delete", playlist_set_path(@set), method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger btn-sm" %>
+    </div>
+  <% end %>
+</div>
+
+<article>
+  <% if @set.description.present? %>
+    <p><%= @set.description %></p>
+  <% end %>
+  <p class="dim"><%= @set.privacy.presence&.humanize || "Public" %> · <%= @tracks.count %> tracks · <%= @set.formatted_duration %></p>
+  <% if @set.collaborative? %>
+    <p class="dim">Collaborative</p>
+  <% end %>
+</article>
+
+<% if @set_tracks.any? %>
+  <% @set_tracks.each do |set_track| %>
+    <article style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <strong><%= set_track.track.title %></strong>
+        <% if set_track.track.artist.present? %> — <%= set_track.track.artist %><% end %>
+        <span class="dim"> · <%= set_track.track.duration_formatted %></span>
+      </div>
+      <% if authenticated? && (Current.user == set_track.user || Current.user == @set.user) %>
+        <%= button_to "Remove", playlist_set_track_path(@set, set_track), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% end %>
+    </article>
+  <% end %>
+<% else %>
+  <div class="empty"><p>No tracks in this set yet.</p></div>
+<% end %>
+
+<% if authenticated? %>
+  <div style="padding:16px;border-bottom:1px solid var(--border)">
+    <p style="font-size:20px;font-weight:800;margin-bottom:12px">Add a track</p>
+    <div class="form-wrap" style="padding:0">
+      <%= form_with url: playlist_set_tracks_path(@set), scope: :playlist_track do |form| %>
+        <div class="field"><%= form.text_field :title, placeholder: "Title", required: true %></div>
+        <div class="field"><%= form.text_field :artist, placeholder: "Artist" %></div>
+        <div class="field"><%= form.url_field :source_url, placeholder: "URL (optional)" %></div>
+        <div class="field"><%= form.submit "Add", class: "btn btn-primary btn-sm" %></div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

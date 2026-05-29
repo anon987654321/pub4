@@ -1,0 +1,23 @@
+<% content_for :title, "Sets" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Local audio collections</p>
+    <h1>Sets</h1>
+  </div>
+  <%= link_to "New set", new_playlist_set_path, class: "btn btn-primary btn-sm" if authenticated? %>
+</div>
+
+<% if @sets.any? %>
+  <% @sets.each do |set| %>
+    <article>
+      <h2><%= link_to set.name, playlist_set_path(set) %></h2>
+      <p class="dim"><%= set.privacy.presence&.humanize || "Public" %> · <%= set.tracks.count %> tracks · <%= set.formatted_duration %></p>
+      <% if set.description.present? %>
+        <p><%= set.description %></p>
+      <% end %>
+    </article>
+  <% end %>
+<% else %>
+  <div class="empty"><p>No sets yet.</p></div>
+<% end %>

@@ -1,0 +1,11 @@
+<% content_for :title, "Edit #{@set.name}" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Playlist set</p>
+    <h1>Edit set</h1>
+  </div>
+  <%= link_to "Back to set", playlist_set_path(@set), class: "btn btn-ghost btn-sm" %>
+</div>
+
+<%= render "form", set: @set %>

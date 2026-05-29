@@ -1,0 +1,27 @@
+<%= form_with model: [:playlist, @set] do |form| %>
+  <% if @set.errors.any? %>
+    <div class="error"><%= @set.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :name %>
+    <%= form.text_field :name, required: true %>
+  </div>
+
+  <div class="field">
+    <%= form.label :description %>
+    <%= form.text_area :description, rows: 4 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :privacy %>
+    <%= form.select :privacy, Playlist::Set::PRIVACY_LEVELS.map { |level| [level.humanize, level] } %>
+  </div>
+
+  <div class="field">
+    <%= form.label :collaborative %>
+    <%= form.check_box :collaborative %>
+  </div>
+
+  <%= form.submit class: "btn btn-primary btn-sm" %>
+<% end %>

@@ -1,0 +1,33 @@
+<% content_for :title, "Delivery driver" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Takeaway operations</p>
+    <h1><%= @delivery_driver.user.display_name.presence || @delivery_driver.user.email_address.split("@").first %></h1>
+  </div>
+  <%= link_to "All drivers", takeaway_delivery_drivers_path, class: "btn btn-ghost btn-sm" %>
+</div>
+
+<article>
+  <p class="dim"><%= @delivery_driver.vehicle_type.presence&.humanize || "Vehicle not set" %> · <%= @delivery_driver.available? ? "Available" : "Unavailable" %></p>
+  <% if @delivery_driver.location? %>
+    <p><%= @delivery_driver.current_lat %>, <%= @delivery_driver.current_lng %></p>
+  <% end %>
+</article>
+
+<% if authenticated? && Current.user == @delivery_driver.user %>
+  <%= form_with model: @delivery_driver, url: takeaway_delivery_driver_path(@delivery_driver), scope: :delivery_driver, method: :patch do |form| %>
+    <div class="field">
+      <%= form.label :vehicle_type %>
+      <%= form.select :vehicle_type, Takeaway::DeliveryDriver::VEHICLE_TYPES.map { |type| [type.humanize, type] }, include_blank: true %>
+    </div>
+    <div class="field">
+      <%= form.label :available %>
+      <%= form.check_box :available %>
+    </div>
+    <div class="field"><%= form.text_field :license_number, placeholder: "License number" %></div>
+    <div class="field"><%= form.text_field :current_lat, placeholder: "Latitude" %></div>
+    <div class="field"><%= form.text_field :current_lng, placeholder: "Longitude" %></div>
+    <%= form.submit "Update", class: "btn btn-primary btn-sm" %>
+  <% end %>
+<% end %>
