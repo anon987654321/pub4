@@ -10,11 +10,19 @@ class Marketplace::ListingsController < Marketplace::BaseController
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
     @pagy, @listings = pagy(scope.recent)
     @categories = Marketplace::Category.roots.includes(:children)
+
+    # Schema.org ItemList for the marketplace listings page
+    if @listings.any?
+      content_for :json_ld, item_list_schema(@listings, title: "Markedsplass")
+    end
   end
 
   def show
     @listing.increment!(:views_count)
     @order = Marketplace::Order.new if authenticated?
+
+    # Schema.org Product markup for SEO (uses shared SchemaHelper)
+    content_for :json_ld, json_ld_for(@listing, type: :product)
   end
 
   def new

@@ -1,0 +1,16 @@
+<div class="deal-card" data-product-id="<%= listing.id %>">
+  <a href="<%= marketplace_listing_path(listing) %>" class="deal-card-img">
+    <% if listing.photos.attached? %>
+      <%= image_tag listing.photos.first, alt: listing.title %>
+    <% else %>
+      <span><%= listing.title.first %></span>
+    <% end %>
+  </a>
+  <div class="deal-card-body">
+    <p class="deal-card-title"><%= listing.title %></p>
+    <p class="deal-meta"><%= listing.location %> · <%= listing.condition %></p>
+    <p class="deal-meta"><%= listing.category&.name %> · <%= pluralize(listing.views_count.to_i, "view") %></p>
+    <p class="deal-price"><%= listing.price_display %></p>
+  </div>
+  <%= link_to "View deal", marketplace_listing_path(listing), class: "deal-cta" %>
+</div>

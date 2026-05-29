@@ -91,18 +91,31 @@ module SchemaHelper
   end
 
   def product_schema(listing)
-    {
+    price = listing.try(:price_cents).to_i / 100.0 if listing.try(:price_cents).to_i > 0
+
+    data = {
       "@context" => "https://schema.org",
       "@type" => "Product",
       "name" => listing.try(:title),
-      "description" => listing.try(:description)&.truncate(200),
+      "description" => listing.try(:description)&.truncate(300),
       "url" => url_for(listing) rescue nil,
+      "sku" => listing.try(:id)&.to_s,
+      "brand" => { "@type" => "Brand", "name" => listing.try(:user)&.name || "Local Seller" },
       "offers" => {
         "@type" => "Offer",
-        "price" => listing.try(:price),
-        "priceCurrency" => "NOK" # or from Current.currency
+        "price" => price,
+        "priceCurrency" => listing.try(:currency) || "NOK",
+        "availability" => listing.sold? ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+        "url" => url_for(listing) rescue nil
       }.compact
-    }.compact
+    }
+
+    # Add first photo as image if available
+    if listing.respond_to?(:photos) && listing.photos.attached?
+      data["image"] = listing.photos.first.url rescue nil
+    end
+
+    data.compact
   end
 
   def video_schema(video)
@@ -146,5 +159,26 @@ module SchemaHelper
       "latitude" => place.latitude,
       "longitude" => place.longitude
     }
+  end
+
+  # Simple ItemList for category / search result pages (good for marketplace, blognet, etc.)
+  def item_list_schema(items, title: nil)
+    {
+      "@context" => "https://schema.org",
+      "@type" => "ItemList",
+      "name" => title,
+      "numberOfItems" => items.size,
+      "itemListElement" => items.map.with_index(1) do |item, index|
+        {
+          "@type" => "ListItem",
+          "position" => index,
+          "item" => {
+            "@type" => "Product",
+            "name" => item.try(:title) || item.try(:name),
+            "url" => url_for(item) rescue nil
+          }
+        }
+      end
+    }.compact
   end
 end
