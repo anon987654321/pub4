@@ -99,5 +99,16 @@ Inspiration from current best practice (Hotwire + StimulusReflex production apps
 
 Implementation rule: New features in any app must add an Activity emission + a Turbo Stream consumer before building custom real-time UI.
 
+## Photo / Multimodal Upload Inheritance
+
+Photo creation (upload + processing) is intentionally allowed for unauthenticated visitors on the public surface (`https://ai.brgen.no` without token). This enables multimodal chat experiences for everyone while keeping deeper agent filesystem tools (`ReadFile`, `WriteFile`, `ListDir`, arbitrary `Shell`, etc.) restricted to token-authenticated users.
+
+- The `/photo` endpoint and `image_token` resolution in chat are open to visitors.
+- Uploaded images are stored in a scoped tmp directory per app and referenced via short-lived image tokens.
+- When wiring a new app (amber, hjerterom, etc.), mount the photo upload route and ensure the `ActiveStorage` + postpro pipeline is present if you want vision features.
+- Agent-side tools that touch the real filesystem remain gated by the tool registry (`data/tools.yml` + `LLMDispatcher` visitor filtering). Never grant `Reach::ReadFile` / `WriteFile` etc. to visitors.
+
+See `chat_controller.rb` (photo + uploaded_image_payload) and recent security carve-outs for the exact boundaries.
+
 ## OpenBSD Provisioning & Service Wiring (reference patterns)
 rc.d services (falcon/puma per-app on distinct ports), relayd tables/healthchecks, and per-vertical feature scripts (auth, voting, styles, social, models) provide a repeatable template. All family apps should converge on the same rc.d + relayd + Solid stack baseline for doas rcctl consistency. Shared functions for gem groups, db setup, and layout/CSS baselines reduce drift across brgen, amber, blognet, hjerterom.

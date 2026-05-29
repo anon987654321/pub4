@@ -47,6 +47,8 @@ Marketplace should use Solidus Starter Frontend as its baseline and then adapt t
 
 Brgen's `application.css` (X.com 3-col + MASTER cinema palette + NNG tokens) is the visual base. All apps should inherit its `:root` variables and align components to it over time. See `shared/WIRING_NOTES.md` → "Visual System & Component Inheritance".
 
+Photo/multimodal upload is deliberately open to visitors on the public surface (see `shared/WIRING_NOTES.md` → "Photo / Multimodal Upload Inheritance"). This is a conscious KISS carve-out: anyone can attach images to chat, while the agent’s deeper filesystem tools stay locked behind the auth token.
+
 Use Stimulus Components where possible.
 
 Use stimulus-lightbox backed by lightGallery.js for gallery needs.
