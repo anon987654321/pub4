@@ -6,9 +6,9 @@
 </div>
 
 <% if @profile.photos.attached? %>
-  <div style="display:flex;gap:8px;padding:16px;border-bottom:1px solid var(--border)">
+  <div style="display:flex;gap:8px;padding:16px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
     <% @profile.photos.each do |photo| %>
-      <%= image_tag photo, style: "width:80px;height:80px;object-fit:cover;border-radius:8px" %>
+      <%= image_tag photo, style: "width:96px;height:96px;object-fit:cover;border-radius:6px" %>
     <% end %>
   </div>
 <% end %>
@@ -16,9 +16,33 @@
 <article>
   <p><span class="dim">Bio</span><br><%= @profile.bio.presence || "—" %></p>
 </article>
+
 <article>
-  <p><span class="dim">Age</span> · <%= @profile.age || "—" %> &nbsp; <span class="dim">Gender</span> · <%= @profile.gender || "—" %> &nbsp; <span class="dim">Looking for</span> · <%= @profile.looking_for || "—" %></p>
+  <p>
+    <span class="dim">Age</span> · <%= @profile.age || "—" %>
+    &nbsp;
+    <span class="dim">Gender</span> · <%= @profile.gender || "—" %>
+    &nbsp;
+    <span class="dim">Looking for</span> · <%= @profile.looking_for || "—" %>
+  </p>
 </article>
+
 <article>
-  <p><span class="dim">Location</span> · <%= @profile.location.presence || "—" %> &nbsp; <span class="dim">Visibility</span> · <%= @profile.visible? ? "visible" : "hidden" %></p>
+  <p>
+    <span class="dim">Location</span> · <%= @profile.location.presence || "—" %>
+    &nbsp;
+    <span class="dim">Visibility</span> ·
+    <% if @profile.visible? %>
+      <span style="color:var(--green,#4caf50)">visible</span>
+    <% else %>
+      <span style="color:var(--muted,#888)">hidden</span>
+    <% end %>
+  </p>
+</article>
+
+<article>
+  <p class="dim" style="font-size:13px">
+    Your profile is <%= @profile.visible? ? "visible to others in your city" : "hidden — no one can see it" %>.
+    <%= link_to(@profile.visible? ? "Hide profile" : "Show profile", edit_dating_profile_path, style: "color:inherit;text-decoration:underline") %>.
+  </p>
 </article>

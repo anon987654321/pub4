@@ -1,0 +1,59 @@
+<% content_for :title, "Map" %>
+<% content_for :head do %>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<% end %>
+
+<div id="map" style="position:fixed;inset:0;z-index:0"></div>
+
+<div style="position:fixed;top:16px;left:16px;z-index:10;display:flex;flex-direction:column;gap:8px;max-width:280px">
+  <div style="display:flex;gap:8px">
+    <input id="map-search" type="search" placeholder="Search places…"
+      style="flex:1;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:inherit;font-size:14px">
+  </div>
+  <div id="place-popup" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:14px"></div>
+</div>
+
+<script>
+  mapboxgl.accessToken = "<%= @mapbox_token %>";
+  const map = new mapboxgl.Map({
+    container: "map",
+    style: "mapbox://styles/mapbox/dark-v11",
+    center: [5.33, 60.39],
+    zoom: 12
+  });
+  map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+  map.addControl(new mapboxgl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true }), "bottom-right");
+
+  const places = <%= raw @places_json %>;
+  const popup = document.getElementById("place-popup");
+  const markers = [];
+
+  function renderMarkers(list) {
+    markers.forEach(m => m.remove());
+    markers.length = 0;
+    list.forEach(p => {
+      if (!p.lat || !p.lng) return;
+      const el = document.createElement("div");
+      el.style.cssText = "width:10px;height:10px;border-radius:50%;background:var(--accent,#fff);border:2px solid #000;cursor:pointer";
+      const m = new mapboxgl.Marker(el).setLngLat([p.lng, p.lat]).addTo(map);
+      el.addEventListener("click", () => {
+        popup.style.display = "block";
+        popup.innerHTML = `<strong>${p.name}</strong><br><span style="opacity:.6">${p.kind}${p.neighborhood ? " · " + p.neighborhood : ""}</span>`;
+        map.flyTo({ center: [p.lng, p.lat], zoom: 15 });
+      });
+      markers.push(m);
+    });
+  }
+
+  map.on("load", () => renderMarkers(places));
+
+  document.getElementById("map-search").addEventListener("input", e => {
+    const q = e.target.value.toLowerCase();
+    renderMarkers(q ? places.filter(p => p.name.toLowerCase().includes(q) || (p.kind || "").toLowerCase().includes(q)) : places);
+  });
+
+  document.addEventListener("click", e => {
+    if (!popup.contains(e.target) && e.target.id !== "map-search") popup.style.display = "none";
+  });
+</script>

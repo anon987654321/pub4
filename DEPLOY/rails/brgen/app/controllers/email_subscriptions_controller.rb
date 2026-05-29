@@ -6,8 +6,10 @@ class EmailSubscriptionsController < ApplicationController
   def create
     sub = EmailSubscription.find_or_initialize_by(email: params[:email_subscription][:email])
     if sub.new_record?
-      sub.city   = params[:email_subscription][:city].presence
-      sub.locale = I18n.locale.to_s
+      sub.city                = params[:email_subscription][:city].presence
+      sub.locale              = I18n.locale.to_s
+      sub.agreed_to_marketing = params[:email_subscription][:agreed_to_marketing] == "1"
+      sub.interests           = params[:email_subscription][:interests].presence
       if sub.save
         EmailSubscriptionMailer.confirm(sub).deliver_later
         redirect_back fallback_location: root_path, notice: "Check your inbox to confirm."

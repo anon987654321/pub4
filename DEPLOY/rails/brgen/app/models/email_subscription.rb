@@ -7,6 +7,7 @@ class EmailSubscription < ApplicationRecord
     format: { with: URI::MailTo::EMAIL_REGEXP }
 
   scope :confirmed, -> { where(confirmed: true) }
+  scope :marketing_opted_in, -> { confirmed.where(agreed_to_marketing: true) }
 
   def confirm!
     update!(confirmed: true, confirmed_at: Time.current)

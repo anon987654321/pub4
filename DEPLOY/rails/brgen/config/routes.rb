@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   PLAYLIST_SUBDOMAINS    = %w[playlist].freeze
   TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
   MARKETPLACE_SUBDOMAINS = %w[markedsplass markadur marknadsplats marktplaats marktplatz marche mercato mercado markkinapaikka marketplace].freeze
+  MAPS_SUBDOMAINS        = %w[maps].freeze
 
   resource  :session
   resources :passwords, param: :token
@@ -121,6 +122,13 @@ Rails.application.routes.draw do
       resource :cart, only: :show, controller: "carts"
       resources :categories, only: :show, param: :id
       resources :saved_searches, only: %i[index create destroy]
+    end
+  end
+
+  constraints(subdomain: MAPS_SUBDOMAINS) do
+    scope module: "maps", as: "maps" do
+      root "home#index", as: :maps_root
+      resources :places, only: %i[index show]
     end
   end
 
