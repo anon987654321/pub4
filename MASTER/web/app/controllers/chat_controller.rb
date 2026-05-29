@@ -76,6 +76,11 @@ class ChatController < ApplicationController
     voice_key = params[:voice].to_s.strip.to_sym
     voice_key = Master::Voice::Speech::DEFAULT_VOICE unless Master::Voice::Speech::VOICES.key?(voice_key)
 
+    style = params[:style].to_s.strip.to_sym
+    if Master::Voice::Speech::STYLES.key?(style) && ![:neutral, :normal].include?(style)
+      container[:bus]&.publish("tts:style:active", style: style.to_s)
+    end
+
     bytes = Master::Voice::Speech.synthesize_bytes(text, voice: voice_key)
     return head(:service_unavailable) if bytes.nil? || bytes.empty?
 
@@ -139,6 +144,9 @@ class ChatController < ApplicationController
     input = params[:message].to_s.strip
     return head(:bad_request) if input.empty?
     return head(:forbidden) if visitor? && input.start_with?("/")
+
+    container[:bus].publish("user:interrupt", reason: "new_turn", source: "chat")
+    container[:bus]&.publish("input:long", length: input.length) if input.length > 180
 
     response.headers["Content-Type"]      = "text/event-stream"
     response.headers["Cache-Control"]     = "no-cache"

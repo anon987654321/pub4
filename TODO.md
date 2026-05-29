@@ -85,7 +85,7 @@ For each: read the file, grep for callers (`grep -r ClassName lib/`), determine 
 
 4 remaining (6, 7, and cost guards closed this session):
 
-1. **Prediction engine** — read `rules.yml prediction_engine` confidence thresholds in Ruby; gate autofixes below threshold; no class exists yet
+1. **Prediction engine** — read `rules.yml prediction_engine` (now in Judge::Scan::Scanner#prediction_thresholds + should_autofix?); gate autofixes below threshold (basic pure Ruby reader wired)
 2. **Structural ops command surface** — wire `rules.yml structural_ops` (merge/defrag/decouple/hoist/flatten/delete/expand/reduce_noise) as single command-router/orders callables in `lib/ground/orders/`; do not re-add thin `/triad` or `orient` wrappers
 3. **HALLUCINATION rule** — lexical/semantic detector for `claim_without_reading`, `quote_without_source`, `invented_stats` (bias section in rules.yml; no scan rule yet)
 4. **Self-test wiring** — `rules.yml self_test.laws_apply_to_self` specifies per-law scans; no Ruby class reads and executes them
@@ -136,7 +136,7 @@ These are genuine friction points encountered during the 2026-05-28 audit. Not r
 
 - **Two-stage council** — `workflow.yml` specifies it: round one votes independently, round two only debates dissenters if dissent > 30%. Not implemented. Currently all 6 personas deliberate every time. Implementing this would cut council LLM calls 60–80% on routine changes.
 
-- **Phantom recovery** — `rules.yml phantom_recovery.detectors` declares gaslighting/repetition/bad-XML patterns with recovery steps. No Ruby reads these. When an LLM loops or hallucinates, the agent currently has no structured detection or recovery path. Adding this would make long autoloop runs dramatically more reliable.
+- **Phantom recovery** — `rules.yml phantom_recovery.detectors` now read by Master::PhantomRecovery (in lib/unwrap_error.rb) with detect() + phantom:detected publish. Basic gaslighting/repetition/bad-XML recovery path wired in pure Ruby.
 
 - **`/diag` cache hit display** — prompt caching is now wired but there is no CLI output showing cache hit rate. After each turn, the cost display should show `[$0.04, 847 tokens, 94% cached]`. The `cache:hit` event is already published — just needs a renderer subscriber.
 

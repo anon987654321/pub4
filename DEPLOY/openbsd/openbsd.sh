@@ -108,7 +108,7 @@ stage_1() {
   typeset -a _df_var; _df_var=("${(@f)$(df -k /var)}"); typeset _var_avail=${${(z)_df_var[2]}[4]}
   (( _var_avail < 512000 )) && { log ERROR "Insufficient disk space on /var"; exit 1 }
 
-  pkg_add -U ldns-utils ruby%3.4 zap 2>/tmp/pkg_add.log \
+  pkg_add -U ldns-utils ruby%3.4 zap zsh fish neovim tmux fontconfig fzf ripgrep fd 2>/tmp/pkg_add.log \
     || { log ERROR "pkg_add failed. See /tmp/pkg_add.log"; exit 1 }
 
   [[ -f /etc/rc.conf.local && $(<"/etc/rc.conf.local") == *"pf=NO"* ]] && log WARN "pf disabled in rc.conf.local"
@@ -422,6 +422,13 @@ configure_dev_ssh() {
     chown dev:dev "$cfg"
     chmod 600 "$cfg"
     log INFO "dev ssh: github.com block installed"
+  fi
+
+  # Ensure the operator dev account uses the modern Zsh environment
+  # (packages for zsh + starship + neovim etc. are installed in Stage 1).
+  typeset dev_shell=${${(s/:/)$(getent passwd dev)}[-1]}
+  if [[ $dev_shell != */zsh ]]; then
+    chsh -s /usr/local/bin/zsh dev 2>/dev/null || log WARN "chsh dev to zsh failed (may need manual)"
   fi
 }
 
