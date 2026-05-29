@@ -24,9 +24,11 @@ end
 failures = []
 warnings = []
 apps = YAML.safe_load_file(APPS_YML).fetch("apps")
+env_sample = File.join(RAILS_ROOT, "env.sample")
 
 tracked_master_keys = git_ls_files("DEPLOY/rails/*/config/master.key")
 fail!(failures, "tracked Rails master keys: #{tracked_master_keys.join(', ')}") if tracked_master_keys.any?
+fail!(failures, "missing shared DEPLOY/rails/env.sample") unless File.file?(env_sample)
 
 apps.each do |name, metadata|
   app_dir = File.join(RAILS_ROOT, name)
@@ -34,6 +36,7 @@ apps.each do |name, metadata|
 
   production = File.join(app_dir, "config", "environments", "production.rb")
   gemfile = File.join(app_dir, "Gemfile")
+  ci_bin = File.join(app_dir, "bin", "ci")
   deploy_script = File.join(ROOT, metadata.fetch("deploy_script"))
   domain = metadata.fetch("domain")
   app_failures = []
@@ -59,6 +62,17 @@ apps.each do |name, metadata|
     fail!(app_failures, "Gemfile must target Rails 8.1") unless gemfile_text.match?(/^gem "rails", "~> 8\.1/)
   else
     fail!(app_failures, "missing Gemfile")
+  end
+
+  if File.file?(ci_bin)
+    ci_text = File.read(ci_bin)
+    fail!(app_failures, "bin/ci must be executable") unless File.executable?(ci_bin)
+    fail!(app_failures, "bin/ci must run RuboCop") unless ci_text.include?("rubocop")
+    fail!(app_failures, "bin/ci must run bundler-audit") unless ci_text.include?("bundler-audit")
+    fail!(app_failures, "bin/ci must run Brakeman") unless ci_text.include?("brakeman")
+    fail!(app_failures, "bin/ci must run Rails tests") unless ci_text.include?("rails") && ci_text.include?("test")
+  else
+    fail!(app_failures, "missing bin/ci")
   end
 
   if File.file?(deploy_script)

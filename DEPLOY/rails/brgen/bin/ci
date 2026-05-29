@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+APP_ROOT = File.expand_path("..", __dir__)
+
+def run!(label, *cmd)
+  puts "\n== #{label} =="
+  system(*cmd, chdir: APP_ROOT, exception: true)
+end
+
+run!("Style: Ruby", "bundle", "exec", "rubocop")
+run!("Security: Gem audit", "bundle", "exec", "bundler-audit", "check", "--update")
+run!("Security: Brakeman", "bundle", "exec", "brakeman", "--ensure-latest", "--quiet", "--no-pager", "--exit-on-warn", "--exit-on-error")
+run!("Tests: Rails", "bundle", "exec", "rails", "test")

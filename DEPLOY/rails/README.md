@@ -98,6 +98,7 @@ All apps should include (see existing patterns in `brgen/app/.github/workflows/c
 - Lint: RuboCop (with cache)
 - Basic test run (if tests exist)
 - Deploy script smoke (e.g. syntax check on the `*.sh`)
+- Each app tree should expose a `bin/ci` entrypoint that runs RuboCop, Brakeman, bundler-audit, and Minitest from the app root.
 
 See `test_check_ports.sh` and individual app test/deploy/ folders for smoke examples. Add a `ci.yml` to any app missing one using the brgen/amber pattern as baseline. This supports MASTER `/scan` and council reviews.
 
@@ -109,6 +110,7 @@ See `test_check_ports.sh` and individual app test/deploy/ folders for smoke exam
 - The thin deploy scripts should not embed secrets; they only set up the service to read the external env file.
 - For local dev, use `config/credentials.yml.enc` or `.env` in the tracked tree (gitignored).
 - Consistent pattern across brgen, amber, bsdports, etc. reduces operational surprises. See individual `*.sh` and the rc.d templates in `DEPLOY/openbsd/` for current examples.
+- `DEPLOY/rails/env.sample` inventories the shared keys plus app-specific ones so operators can trim a deploy env file without hunting through code.
 
 ## Gem & Dependency Alignment
 
