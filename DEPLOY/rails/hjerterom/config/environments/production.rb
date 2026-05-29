@@ -60,7 +60,7 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "hjerterom.no", protocol: "https" }
+  config.action_mailer.default_url_options = { host: "hjerterom.brgen.no", protocol: "https" }
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
   # config.action_mailer.smtp_settings = {
@@ -81,6 +81,6 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  config.hosts = ["hjerterom.no", "www.hjerterom.no"]
+  config.hosts = ["hjerterom.brgen.no", "hjerterom.no", "www.hjerterom.no"]
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end
