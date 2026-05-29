@@ -25,6 +25,14 @@ alias gc='git commit'
 alias gp='git push'
 alias brgen='tmux-ssh dev@brgen.no'  # if remote helper needed inside VPS
 
+# tmux-ssh: persistent named tmux over ssh (synced from live dev stack for consistency)
+tmux-ssh() {
+  typeset host=$1
+  typeset session=${2:-main}
+  [[ -z $host ]] && { print "Usage: tmux-ssh user@host [session]"; return 1 }
+  ssh -t "$host" "tmux new -A -s $session"
+}
+
 # Non-interactive shells (SSH `cmd`, scp): env only, no auto-launch.
 [[ -o interactive && -t 0 && -t 1 ]] || return
 
