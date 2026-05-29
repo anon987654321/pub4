@@ -1,6 +1,6 @@
 # MASTER Quickstart for LLMs & Agents
 
-This is the primary entry point for any LLM or autonomous agent working in this repository. It gives you a working mental model so you can be productive without immediately drowning in the full constitution.
+This is the primary entry point for any LLM or autonomous agent. It provides a practical mental model so you can operate effectively without first absorbing the entire constitution.
 
 Read this document first. Treat the deep YAML files (`data/soul.yml`, `rules.yml`, etc.) as reference material you consult when you need precision, not as mandatory pre-reading.
 

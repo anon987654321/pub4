@@ -1,6 +1,6 @@
 # pub4 — GROK.md
 
-Tailored bootstrap for Grok (xAI) and similar agents working in this repository.
+Bootstrap instructions specific to Grok (xAI) when working in this repository.
 
 **Primary entry point for all agents:** Read `MASTER/QUICKSTART.md` first. It provides the practical mental model and explicit LLM ergonomics guidance (including the new `llm_ergonomics` section in `data/workflow.yml`).
 
@@ -16,7 +16,7 @@ Grok is well-suited for this environment because of strong tool use, planning, a
 
 - Use me for high-level planning, architectural reasoning, and generating compliant patches.
 - I can perform full-file reads, structured searches (via the available grep tool), and precise edits.
-- For exploration and reconnaissance, I can use external-style analysis via my native tools while still respecting the spirit of the banned-command rules during production changes.
+- For exploration and reconnaissance, I may use my full available tools while still routing production changes through the project's required mechanisms (full file reads, internal scans where possible, minimal patches).
 - When the full MASTER CLI is available on the VPS, prefer routing deep analysis through `/scan deep`, `/sweep`, etc., so the agent improves itself.
 
 **Recommended interaction pattern:**
@@ -50,6 +50,6 @@ Everything must ultimately serve the constitutional goals in `data/soul.yml` and
 - Rich observability (events, the particle face)
 - Making the system more pleasant and effective for future agents (including future Groks)
 
-This GROK.md exists to reduce friction for me and future xAI agents, exactly in the spirit of the LLM ergonomics improvements.
+This GROK.md exists to reduce friction for Grok and future xAI agents, in line with the `llm_ergonomics` guidance added to `data/workflow.yml`.
 
-Welcome. Let's do precise, evidence-based, high-signal work together.
+Work here with precision, evidence, and strict adherence to the constitution.

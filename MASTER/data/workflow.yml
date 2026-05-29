@@ -395,7 +395,7 @@ llm_ergonomics:
     - "When full strict adherence would cause context exhaustion or paralysis, prefer 'good enough + evidence' over perfect ceremony."
     - "Document known friction points openly so future agents can work around them intelligently."
     - "Event emission should be rich and first-class by default so observers (human or visual) can understand internal state without heroic effort."
-  tension_with_rules: "This section deliberately relaxes some purity for usability. It does not override ABSOLUTE rules in soul.yml."
+  tension_with_rules: "This section provides pragmatic guidance for working with real LLM limitations. It does not override any ABSOLUTE rules defined in soul.yml."
 
 # Spec arrives -> code streams in parallel where safe.
 # Source: Bolt reunification (#78).
