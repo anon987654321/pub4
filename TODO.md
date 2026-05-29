@@ -1,10 +1,10 @@
 # TODO
 
-The active backlog has been merged into `HANDOFF.md`.
+This file is a pointer only.
 
-Use `HANDOFF.md` as the source of truth for:
+The active backlog lives in `HANDOFF.md` and should be treated as the single source of truth for:
 
-- current unpushed production-gate work
+- current checkpoint state
 - sequential next waves
 - MASTER architecture and constitutional gaps
 - DEPLOY/Rails/OpenBSD production backlog

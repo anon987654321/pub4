@@ -25,6 +25,15 @@ Do not overclaim production readiness. `brgen` is closest. `amber`, `bsdports`, 
 
 ## Already Landed
 
+Latest checkpoint was merged and pushed to `main`:
+
+- Commit `0346ea68` fixed the MASTER web UI/voice path and landed the hjerterom deploy views.
+- `MASTER/web/app/views/layouts/application.html.erb` now uses the particle/chat runtime surface.
+- `MASTER/web/public/chat.js` now hands completed assistant text to the shared Osman voice queue.
+- `MASTER/web/public/face.js` now exposes the shared voice hook and `_chatSpeakLast`.
+- `MASTER/web/app/controllers/chat_controller.rb#tts` now serves Osman TTS to the public chat surface.
+- `DEPLOY/rails/hjerterom` gained the missing box/volunteer/shift partials and turbo-stream views.
+
 Earlier checkpoint was merged and pushed to `main`:
 
 - Added `GPT.md`.
@@ -54,31 +63,11 @@ Previous validation:
 
 ## Current Unpushed Work
 
-At the time this handoff was written, the working tree includes the next production-gate wave:
-
-- Removed tracked `config/master.key` from `baibl`, `blognet`, and `hjerterom`.
-- Added `DEPLOY/rails/check_production_gate.rb`.
-- Updated all six Rails app Gemfiles to declare `ruby "~> 3.4"`.
-- Updated `baibl`, `blognet`, and `hjerterom` production configs:
-  - `config.assume_ssl = true`.
-  - `config.force_ssl` remains disabled because `relayd` owns TLS.
-  - Solid Cache and Solid Queue enabled where missing.
-  - Production mailer hosts set from `DEPLOY/rails/apps.yml`.
-  - Production host allowlists and `/up` host authorization exceptions added.
-- Corrected `brgen` mailer host to `brgen.no`.
-- Corrected all Rails production configs so `force_ssl` is commented out with an explicit relayd note.
-- Updated `DEPLOY/rails/PRODUCTION_READINESS.md` to document the gate and relayd policy.
-
-Current gate result:
-
-```sh
-DEPLOY/rails/check_production_gate.rb
-# Production gate passed for 6 Rails apps.
-```
+None at the moment. The latest production-gate and MASTER/UI checkpoint has already been pushed, so the next operator should start from the backlog below and the most recent commit above.
 
 ## Finish This Checkpoint First
 
-Run:
+If you need a verification pass, run:
 
 ```sh
 DEPLOY/rails/check_production_gate.rb
@@ -87,11 +76,7 @@ ruby -c DEPLOY/rails/check_production_gate.rb
 git diff --check
 ```
 
-Then commit and push to `main`. Suggested commit message:
-
-```text
-Add Rails production gate
-```
+Then commit and push to `main` if you make further changes.
 
 ## Next Waves
 
