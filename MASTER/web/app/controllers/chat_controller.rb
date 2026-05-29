@@ -111,8 +111,6 @@ class ChatController < ApplicationController
   end
 
   def photo
-    return render(json: { error: "filesystem access disabled for visitors (no valid token)" }, status: :forbidden) if visitor?
-
     upload = params[:photo]
     return render(json: { error: "missing photo" }, status: :bad_request) unless upload.respond_to?(:read)
 
@@ -212,7 +210,6 @@ class ChatController < ApplicationController
       if (img = params[:image]).present?
         ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
       elsif (token = params[:image_token]).present?
-        return head(:forbidden) if visitor?
         payload = uploaded_image_payload(token)
         ctx[:image] = payload if payload
       end
@@ -323,7 +320,6 @@ class ChatController < ApplicationController
   end
 
   def uploaded_image_payload(token)
-    return nil if visitor?
     return nil unless token.to_s.match?(/\A[0-9a-f]{24}\z/)
 
     meta_path = PHOTO_UPLOAD_DIR.join("#{token}.json")
