@@ -81,6 +81,12 @@ class ChatController < ApplicationController
       cfg = Master::Voice::Speech::STYLES[style]
       expr = Master::Voice::Expression.for_tts_style(style)
       container[:bus]&.publish("tts:style:active", style: style.to_s, rate: cfg[:rate], pitch: cfg[:pitch], expression: expr)
+
+      # Pre-speech anticipation (pending idea): brief arousal + eye widening signal before audio starts
+      anticipate = expr.dup
+      anticipate[:arousal] = (anticipate[:arousal] || 0.7) + 0.25
+      anticipate[:attention] = (anticipate[:attention] || 0.6) + 0.3
+      container[:bus]&.publish("tts:anticipate", style: style.to_s, expression: anticipate)
     end
 
     bytes = Master::Voice::Speech.synthesize_bytes(text, voice: voice_key)

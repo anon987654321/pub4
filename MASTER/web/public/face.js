@@ -750,5 +750,20 @@ setInterval(() => {
   }
 }, 420);
 
+// Pre-speech anticipation (idea from runtime_ui_direction): eyes widen + arousal spike just before voice starts
+window.addEventListener('tts:anticipate', (ev) => {
+  const ex = (ev.detail && ev.detail.expression) || {};
+  if (!mouthPool || !eyePool) return;
+  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+    const b = i * window.ParticleKernel.FIELDS_PER_CELL;
+    mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = Math.min(1.0, (mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] || 0.6) + (ex.arousal || 0.25));
+  }
+  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
+    const b = i * window.ParticleKernel.FIELDS_PER_CELL;
+    eyePool.cells[b + window.ParticleKernel.FIELD.attention] = Math.min(1.0, (eyePool.cells[b + window.ParticleKernel.FIELD.attention] || 0.6) + (ex.attention || 0.3));
+  }
+  State.pulse = Math.max(State.pulse || 0, 0.35);
+});
+
 resize();
 if (renderer) requestAnimationFrame(frame);
