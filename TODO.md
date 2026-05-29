@@ -80,7 +80,7 @@ For each: read the file, grep for callers (`grep -r ClassName lib/`), determine 
 
 1. **Prediction engine** — read `rules.yml prediction_engine` (now in Judge::Scan::Scanner#prediction_thresholds + should_autofix?); gate autofixes below threshold (basic pure Ruby reader wired)
 2. **Structural ops command surface** — wire `rules.yml structural_ops` (merge/defrag/decouple/hoist/flatten/delete/expand/reduce_noise) as single command-router/orders callables in `lib/ground/orders/`; do not re-add thin `/triad` or `orient` wrappers
-3. **HALLUCINATION rule** — lexical/semantic detector for `claim_without_reading`, `quote_without_source`, `invented_stats` (bias section in rules.yml; no scan rule yet)
+3. **HALLUCINATION rule** — lexical/semantic detector stub in scanner (see comment); full impl deferred per rules (council + deep scan required).
 4. **Self-test wiring** — `rules.yml self_test.laws_apply_to_self` specifies per-law scans; no Ruby class reads and executes them
 
 ## MASTER — module cleanup

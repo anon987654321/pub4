@@ -154,6 +154,8 @@ module Master
         return true unless t && t["confidence"]
         observed_conf.to_f >= t["confidence"].to_f
       end
+
+      # HALLUCINATION rule stub (TODO constitutional gap): lexical/semantic detector for claim_without_reading etc. Deferred to full council wiring.
     end
   end
   end
