@@ -64,3 +64,17 @@ This keeps polymorphic user-facing action targets tamper-resistant.
 - Add app-local authorization before review updates.
 - Add tests for every mounted route.
 - Replace copy/install with a Rails engine once app structure stabilizes.
+
+## Visual System & Component Inheritance (Brgen as Base)
+
+Brgen's `app/assets/stylesheets/application.css` is the canonical visual source of truth for the entire city app family:
+- X.com 3-column layout (275px sidebar / 600px feed / 350px widgets)
+- Dark cinema palette (--bg #000, --surface2 #16181c, --accent #1d9bf0, etc.)
+- NNG-compliant spacing, typography, and interaction tokens
+
+All other apps should:
+1. Import or copy the `:root` custom properties from Brgen.
+2. Gradually align their components (cards, nav, forms, modals) to Brgen patterns.
+3. Prefer components from `shared/frontend/` + Brgen's Stimulus controllers where possible.
+
+This ensures a single coherent "watch from afar" aesthetic across Brgen, Amber, Blognet, etc. while allowing product-specific branding on top.
