@@ -24,11 +24,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles/minimal-ui.css">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= yield :json_ld %>
   <%= javascript_importmap_tags %>
-  <script type="module" src="/minimal-gesture.js"></script>
+  <%= render "shared/minimal_ui" %>
 </head>
 <body class="zen-minimal">
 <nav>
