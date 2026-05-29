@@ -36,6 +36,7 @@ Use `/run <natural language task description>` inside the CLI. This is the new s
 - For self-improvement of MASTER itself, I can help draft richer event emissions, better documentation, or ergonomics enhancements that align with the constitution.
 
 **Voice / TTS**: The agent uses ms-MY-OsmanNeural (Osman) by default (per `data/soul.yml`). Creative vocal styles are available via the STYLES in `lib/voice/speech.rb` (dramatic, intimate, intense, ethereal, robotic, storyteller, energetic, etc.). These combine rate + pitch for expressive delivery on top of the base Osman voice. Post-processing via /postpro or dilla tools can add further layers if needed.
+Auto register bias (creative vs factual) now drives style selection for grand/emotional text; council events carry reversibility for downstream face/kernel reaction.
 
 ## Environment & Remote Work
 
