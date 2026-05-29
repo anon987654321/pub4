@@ -90,6 +90,17 @@ For every app:
 - [ ] background jobs are observable
 - [ ] service restart is verified after deploy
 
+## Recommended CI & Smoke Standardization
+
+All apps should include (see existing patterns in `brgen/app/.github/workflows/ci.yml`, `amber/app/.github`, etc.):
+
+- Security scans: `brakeman`, `bundler-audit`, `importmap audit`
+- Lint: RuboCop (with cache)
+- Basic test run (if tests exist)
+- Deploy script smoke (e.g. syntax check on the `*.sh`)
+
+See `test_check_ports.sh` and individual app test/deploy/ folders for smoke examples. Add a `ci.yml` to any app missing one using the brgen/amber pattern as baseline. This supports MASTER `/scan` and council reviews.
+
 ## Directory map
 
 ```text
