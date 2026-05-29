@@ -114,6 +114,16 @@ See `test_check_ports.sh` and individual app test/deploy/ folders for smoke exam
 
 All apps should target a consistent baseline (Rails 8, Solid Queue/Cache, Active Storage, importmap + Hotwire). Use `SHARED_BUNDLE_CACHE` in deploy scripts where possible. Pin major gems in individual Gemfiles but align on the family-wide set from `brgen` as the reference. Run `bundle update` coordinated across apps when upgrading shared dependencies. This reduces divergence and eases MASTER scans for security/compatibility.
 
+## Internationalization & Locale Strategy (starter)
+
+The city family should converge on a shared locale approach:
+- Use Rails i18n with `config/locales/` in each app + shared fallbacks where possible.
+- Brgen as the reference for city-specific terms (Norwegian + English).
+- Centralize common strings (errors, navigation, moderation) in `shared/` once the pattern stabilizes.
+- Support locale via subdomain or param consistently across verticals.
+
+See `amber/config/locales/` and `brgen/config/locales/` as current examples. This is early-stage — coordinate before heavy investment.
+
 ## Directory map
 
 ```text
