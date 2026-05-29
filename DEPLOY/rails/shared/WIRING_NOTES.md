@@ -81,6 +81,12 @@ All other apps should:
 
 This ensures a single coherent "watch from afar" aesthetic across Brgen, Amber, Blognet, etc. while allowing product-specific branding on top.
 
+**Quick rollout checklist for new apps**:
+1. Copy `:root` custom properties from Brgen's `application.css`.
+2. Import `shared/frontend/stimulus_components.js` baseline.
+3. Align major components (cards, nav, forms) to Brgen tokens.
+4. Test reduced-motion + coarse pointer profiles.
+
 ## Stimulus Components Baseline
 
 `shared/frontend/stimulus_components.js` + Brgen's controller set (clipboard, lightbox, media_picker, geolocation, notification, timeago, typing, etc.) is the shared component library. New apps and verticals should start from these rather than duplicating. See `shared/STIMULUS_COMPONENTS_BASELINE.md` (and Brgen's `app/javascript/controllers/`).
