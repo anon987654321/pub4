@@ -231,7 +231,7 @@ Implementation order suggestion: group by file (bridge + face first for signal +
 - face.js: council:deliberation/start now visibly raises mouth pressure + lowers eye confidence (idea 64).
 - face.js: input:long/cmd:long now drives jitter + mouth pressure (ideas 8/9/48 density/predictive).
 
-**Batch 5+ (ongoing auto-waves)**: council reversibility now emitted on bus + charges ecology spirits (idea 64 + action-care from prompt archaeology); Ruby speech register_for + creative bias now drives Osman styles and face breath boost (TTS 11-20 interconnectedness); mobile devicemotion feeds arousal/valence; pure-Zsh relayd hardening. Continuing micro-slices until per-area plateau (most high-leverage 1-4 line deltas from the 80 + later lists now wired or naturally covered by existing kernel/event paths).
+**Batch 5+ (ongoing auto-waves)**: council reversibility now emitted on bus + charges ecology spirits (idea 64 + action-care from prompt archaeology); Ruby speech register_for + creative bias now drives Osman styles and face breath boost (TTS 11-20 interconnectedness); mobile devicemotion feeds arousal/valence; pure-Zsh relayd hardening. New lib/voice/expression.rb created as single source for all runtime→TTS+face+ecology mappings (enables clean implementation of the remaining 60+ interconnectedness ideas without sprawl). Continuing micro-slices until per-area plateau.
 
 ## Proposed Improvements: Web UI + Face + TTS + Interconnectedness (2026+)
 

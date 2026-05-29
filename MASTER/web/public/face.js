@@ -677,12 +677,13 @@ window.addEventListener('master:visual', (ev) => {
     }
   }
   if (/tts:style|style:active/i.test(d.name || '')) {
+    const ex = d.expression || {};
     const s = d.name || ''; const hi = /dramatic|intense|energetic|storyteller/i.test(s); const lo = /whisper|ethereal|robotic|intimate/i.test(s);
     if (mouthPool) for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i*window.ParticleKernel.FIELDS_PER_CELL;
-      mouthPool.cells[b+window.ParticleKernel.FIELD.arousal] = hi?1.0: lo?0.3:0.7;
-      mouthPool.cells[b+window.ParticleKernel.FIELD.pressure] = hi?0.85: lo?0.25:0.6;
-      if (hi) State.breath = Math.min(1.6, (State.breath||1.0) + 0.25);
+      mouthPool.cells[b+window.ParticleKernel.FIELD.arousal] = ex.arousal ?? (hi?1.0: lo?0.3:0.7);
+      mouthPool.cells[b+window.ParticleKernel.FIELD.pressure] = ex.pressure ?? (hi?0.85: lo?0.25:0.6);
+      if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath||1.0) + (ex.breath_boost || 0.25));
       // Use richer payload (rate/pitch from server) for prosody-driven modulation
       const rate = parseFloat(d.rate || (d.raw && d.raw.rate)) || 0;
       const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
@@ -691,8 +692,11 @@ window.addEventListener('master:visual', (ev) => {
     }
   }
   if (/council:deliberation|council:start/i.test(d.name || '')) {
-    if (mouthPool) for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0)+0.5);
-    if (eyePool) for (let i=0; i<eyePool.count; i++) if (eyePool.alive[i]) eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9)-0.25);
+    const ex = d.expression || {};
+    const pBoost = ex.mouth_pressure || 0.5;
+    const cDrop  = ex.eye_confidence_drop || 0.25;
+    if (mouthPool) for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0)+pBoost);
+    if (eyePool) for (let i=0; i<eyePool.count; i++) if (eyePool.alive[i]) eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9)-cDrop);
   }
   if (/input:long|cmd:long/i.test(d.name || '')) {
     State.jitter = Math.max(State.jitter || 0.2, 0.55);
