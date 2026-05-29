@@ -9,6 +9,7 @@ module Master
   module Judge
   # RepoEcology converts repo-gardening principles into executable analysis.
   # It never deletes or rewrites; it emits evidence for later governed changes.
+  # Full integration into Judge + co_change_rule wiring deferred (per TODO; requires council review).
   class RepoEcology
     DEFAULT_IGNORE_DIRS = %w[
       .git .master node_modules vendor tmp log coverage storage .bundle dist build

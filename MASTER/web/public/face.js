@@ -676,6 +676,10 @@ window.addEventListener('master:visual', (ev) => {
       mouthPool.cells[b+window.ParticleKernel.FIELD.pressure] = hi?0.85: lo?0.25:0.6;
     }
   }
+  if (/council:deliberation|council:start/i.test(d.name || '')) {
+    if (mouthPool) for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0)+0.5);
+    if (eyePool) for (let i=0; i<eyePool.count; i++) if (eyePool.alive[i]) eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9)-0.25);
+  }
 });
 
 resize();

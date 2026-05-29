@@ -24,10 +24,7 @@ Full codebase review found these gaps. Each item is self-contained — pick any 
 
 ### RepoEcology (declared, missing)
 
-README mentions `Master::Judge::RepoEcology`; `lib/judge/repo_ecology.rb` is empty or absent. `code_index.rb` and `reference_graph.rb` exist but are unconnected. `co_change_coupling_rule.rb` depends on this. Implement:
-- Symbol indexing via Prism AST walk across lib/
-- Cross-reference graph (who calls what)
-- Co-change coupling: git log --follow to find files that always change together
+`lib/judge/repo_ecology.rb` has active scan + co_change_graph (see top comment). Full Judge integration + co_change_rule wiring deferred per rules (council review required).
 
 ### TTS consolidation
 
