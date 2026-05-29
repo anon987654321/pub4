@@ -2,11 +2,12 @@
 name: Bare HTML/CSS targeting — no divitis, no utility classes
 description: Always use bare element selectors (nav a, main, h1) not BEM classes or utility class strings on elements
 type: feedback
-originSessionId: ab7bf92a-5fdc-43bb-998c-dc1d5598f33d
+status: consolidated
+canonical: data/principles/feedback_html_css_style.md
 ---
-Use bare element and structural selectors throughout. Never add class attributes to elements that can be targeted by tag or relationship.
+**Consolidated.** This content is now maintained as single source in `data/principles/feedback_html_css_style.md`.
 
-**Why:** User explicitly stated "always bare targeting for clean HTML/CSS" and "no divitis." Confirmed with rejection of `.nav__link`, `.nav__brand`, `.nav__links` pattern.
+See the principles/ version for the current authoritative text. This file is kept only for historical session traceability.
 
 **How to apply:**
 - `nav a` not `a.nav__link`

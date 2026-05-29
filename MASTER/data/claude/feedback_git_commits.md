@@ -2,9 +2,9 @@
 name: frequent git commits
 description: Make git commits frequently after meaningful changes
 type: feedback
-originSessionId: 84fcf91d-46ea-43a5-8efa-3d33b065e6a5
+status: consolidated
+canonical: data/principles/feedback_git_commits.md
 ---
-Commit after every meaningful change — don't batch. After fixing a bug, restoring a file, or completing a refactor, commit immediately.
+**Consolidated.** This content is now maintained as single source in `data/principles/feedback_git_commits.md`.
 
-**Why:** User explicitly requested frequent commits.
-**How to apply:** After any file write or fix on the VPS, run `git add <file> && git commit -m "..."` before moving on.
+See the principles/ version for the current authoritative text. This file is kept only for historical session traceability.
