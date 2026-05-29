@@ -114,3 +114,5 @@ See `chat_controller.rb` (photo + uploaded_image_payload) and recent security ca
 
 ## OpenBSD Provisioning & Service Wiring (reference patterns)
 rc.d services (falcon/puma per-app on distinct ports), relayd tables/healthchecks, and per-vertical feature scripts (auth, voting, styles, social, models) provide a repeatable template. All family apps should converge on the same rc.d + relayd + Solid stack baseline for doas rcctl consistency. Shared functions for gem groups, db setup, and layout/CSS baselines reduce drift across brgen, amber, blognet, hjerterom.
+
+**Pure Zsh preference**: New provisioning logic should favor zsh parameter expansion and builtins over external tools (grep, sed, awk, etc.) where practical, per the broader pub4 conventions. See current thin deploy scripts (e.g. `brgen/brgen.sh`) as the model rather than the heavier legacy @*.sh helpers.
