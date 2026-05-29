@@ -21,6 +21,7 @@
   <nav>
     <%= link_to "Sell", new_marketplace_listing_path, class: "btn btn-sm" if authenticated? %>
     <%= link_to "Saved searches", marketplace_saved_searches_path, class: "btn btn-ghost btn-sm" if authenticated? %>
+    <%= link_to "Cart", marketplace_cart_path, class: "btn btn-ghost btn-sm" if authenticated? %>
   </nav>
 </div>
 

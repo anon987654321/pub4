@@ -30,7 +30,13 @@
           data-share-url-value="<%= request.original_url %>"
           data-action="click->share#share">Share</button>
   <% if !@listing.sold? && authenticated? && Current.user != @listing.user %>
-    <a href="#make-offer" class="deal-cta" style="display:inline-block;margin:16px 0 0;padding:12px 32px;font-size:1rem">Make offer</a>
+    <div style="margin: 16px 0; display: flex; gap: 12px; align-items: center;">
+      <%= button_to "Add to cart", marketplace_listing_orders_path(@listing),
+            params: { quantity: 1 },
+            class: "btn btn-primary" %>
+
+      <a href="#make-offer" class="btn btn-ghost">Make custom offer</a>
+    </div>
   <% end %>
 </article>
 

@@ -1,0 +1,36 @@
+<% content_for :title, "Your Cart" %>
+
+<div class="page-header">
+  <h1>Your Cart</h1>
+  <p class="dim"><%= pluralize(@cart_items.size, "item") %></p>
+</div>
+
+<% if @cart_items.any? %>
+  <div class="cart-items">
+    <% @cart_items.each do |item| %>
+      <div class="cart-item">
+        <div>
+          <strong><%= link_to item.listing.title, marketplace_listing_path(item.listing) %></strong>
+          <div class="dim"><%= item.listing.price_display %> × <%= item.quantity || 1 %></div>
+        </div>
+        <div style="text-align: right;">
+          <strong><%= item.total_display %></strong>
+          <div>
+            <%= button_to "Remove", marketplace_listing_order_path(item.listing, item),
+                  method: :patch, params: { decline: true }, class: "btn btn-ghost btn-sm" %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="cart-summary" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+    <p><strong>Total: <%= @cart_total / 100.0 %> NOK</strong></p>
+    <p class="dim">This will send offers to the sellers. They can accept or decline individually.</p>
+
+    <%= button_to "Send all offers", "#", class: "btn btn-primary", disabled: true %>
+    <p class="hint" style="margin-top: 8px;">(One-click checkout coming soon)</p>
+  </div>
+<% else %>
+  <p>Your cart is empty. <%= link_to "Browse the marketplace", marketplace_root_path %>.</p>
+<% end %>

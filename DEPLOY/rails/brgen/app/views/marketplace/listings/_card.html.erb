@@ -12,5 +12,13 @@
     <p class="deal-meta"><%= listing.category&.name %> · <%= pluralize(listing.views_count.to_i, "view") %></p>
     <p class="deal-price"><%= listing.price_display %></p>
   </div>
-  <%= link_to "View deal", marketplace_listing_path(listing), class: "deal-cta" %>
+
+  <div class="deal-card-actions">
+    <%= link_to "View deal", marketplace_listing_path(listing), class: "deal-cta" %>
+    <% if authenticated? %>
+      <%= button_to "Add to cart", marketplace_listing_orders_path(listing),
+            params: { quantity: 1 },
+            class: "btn btn-sm btn-ghost" %>
+    <% end %>
+  </div>
 </div>

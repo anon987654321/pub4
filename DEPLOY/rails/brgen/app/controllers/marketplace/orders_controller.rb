@@ -4,9 +4,14 @@ class Marketplace::OrdersController < Marketplace::BaseController
   before_action :set_listing
 
   def create
-    @order = @listing.orders.build(buyer: Current.user,
-                                   message: params.dig(:marketplace_order, :message),
-                                   price_cents: @listing.price_cents)
+    quantity = params[:quantity].to_i.positive? ? params[:quantity].to_i : 1
+
+    @order = @listing.orders.build(
+      buyer: Current.user,
+      message: params.dig(:marketplace_order, :message),
+      price_cents: @listing.price_cents,
+      quantity: quantity
+    )
     if @order.save
       notify_seller!
       record_offer_activity!
