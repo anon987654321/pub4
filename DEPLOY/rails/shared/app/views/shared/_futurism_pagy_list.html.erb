@@ -1,0 +1,28 @@
+<%# 
+  Futurism + Pagy infinite scroll partial (per ruby_style.yml mandated pattern).
+  Julian Rubisch / stimulusreflex/futurism style.
+
+  Usage in a list view:
+    <%= render "shared/futurism_pagy_list", 
+               collection: @posts, 
+               partial: "posts/post", 
+               pagy: @pagy %>
+
+  Requires: gem "futurism" + the futurism Stimulus controller registered.
+%>
+
+<% if collection.present? %>
+  <div data-controller="infinite-scroll" class="infinite-scroll-container">
+    <% collection.each do |item| %>
+      <%= futurize partial: partial, locals: { item => item } do %>
+        <div class="loading-placeholder" style="height: 120px; background: #111; border-radius: 8px; margin-bottom: 12px;"></div>
+      <% end %>
+    <% end %>
+
+    <% if pagy && pagy.next %>
+      <div data-infinite-scroll-target="sentinel"
+           data-next-page="<%= pagy.next %>"
+           style="height: 1px;"></div>
+    <% end %>
+  </div>
+<% end %>

@@ -42,5 +42,10 @@ application.register("speech-recognition", SpeechRecognition)
 application.register("textarea-autogrow", TextareaAutogrow)
 application.register("timeago", Timeago)
 
+// Futurism (julianrubisch / stimulusreflex/futurism) for Pagy infinite scroll
+// per ruby_style.yml stimulus_reflex_stack. Installed via gem "futurism";
+// it registers its own "futurism" controller + <futurism-element>.
+// See shared/app/views/shared/_futurism_pagy_list.html.erb for the Pagy + Futurism pattern.
+
 window.Stimulus = application
 export { application }

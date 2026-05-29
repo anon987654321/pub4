@@ -30,6 +30,10 @@ gem "geocoder"
 gem "webpush"
 gem "ruby-vips"
 
+# Real-time + LLM + structured data (per ruby_style.yml stimulus_reflex_stack + SEO requirements)
+gem "futurism"
+gem "ruby_llm"
+
 # Discovery — vision-LLM scrapers (lib/tasks/{reddit,amazon}.rake)
 gem "ferrum"
 
