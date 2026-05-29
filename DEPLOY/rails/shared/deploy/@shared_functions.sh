@@ -159,3 +159,56 @@ install_security_tools() {
   add_gem_group "development,test" brakeman rubocop-rails-omakase
   log_ok "Security tools added"
 }
+
+# random_port — picks a random unused TCP port in 10000–62000.
+# Usage: port=$(random_port)
+random_port() {
+  local port
+  while true; do
+    port=$(( RANDOM % 52000 + 10000 ))
+    # Confirm nothing is bound to the port
+    if ! nc -z 127.0.0.1 "$port" 2>/dev/null; then
+      print "$port"
+      return 0
+    fi
+  done
+}
+
+# install_rcd APP_NAME APP_DIR PORT SERVICE_NAME
+# Installs or updates the rc.d service file for a Rails app on OpenBSD.
+install_rcd() {
+  local app_name=$1 app_dir=$2 port=$3 svc=${4:-$1}
+  local rcd_src="$(dirname "$0")/../../openbsd/etc/rc.d/${svc}"
+  local rcd_dst="/etc/rc.d/${svc}"
+  if [[ ! -f $rcd_src ]]; then
+    log_warn "rc.d template not found: $rcd_src — skipping install_rcd"
+    return 0
+  fi
+  ${_PRIV} install -o root -g wheel -m 0555 "$rcd_src" "$rcd_dst"
+  ${_PRIV} rcctl enable "$svc"
+  log_ok "rc.d ${svc} installed and enabled"
+}
+
+# relayd_add_relay DOMAIN PORT
+# Idempotently adds a table + host-routing entry to /etc/relayd.conf for a new app.
+# Run doas rcctl restart relayd after all relay additions are done.
+relayd_add_relay() {
+  local domain=$1 port=$2
+  local app=${domain%%.*}
+  local conf=/etc/relayd.conf
+  # Add table if missing
+  if ! grep -q "table <${app}>" "$conf" 2>/dev/null; then
+    ${_PRIV} sed -i "1a table <${app}> { 127.0.0.1 }" "$conf"
+    log_ok "relayd: added table <${app}>"
+  fi
+  # Add forward rule if missing
+  if ! grep -q "forward to <${app}>" "$conf" 2>/dev/null; then
+    ${_PRIV} sed -i "/match request header.*forward to <master>/a\\  match request header \"Host\" value \"${domain}\" forward to <${app}>" "$conf"
+    log_ok "relayd: added Host routing for ${domain}"
+  fi
+  # Add forward target if missing
+  if ! grep -q "forward to <${app}> port" "$conf" 2>/dev/null; then
+    ${_PRIV} sed -i "/forward to <master> port/a\\  forward to <${app}> port ${port} check http \"/up\" code 200" "$conf"
+    log_ok "relayd: added forward to <${app}> port ${port}"
+  fi
+}

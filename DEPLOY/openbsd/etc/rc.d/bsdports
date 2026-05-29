@@ -1,8 +1,10 @@
 #!/bin/ksh
+[ -f /etc/rails/bsdports.env ] && . /etc/rails/bsdports.env
 daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE= HOME=/home/bsdports falcon serve --bind http://127.0.0.1:47312"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE:-} HOME=/home/bsdports falcon serve --bind http://127.0.0.1:47312"
 daemon_user="bsdports"
 daemon_execdir="/home/bsdports/app"
+daemon_logger="daemon.notice"
 daemon_timeout="60"
 . /etc/rc.d/rc.subr
 pexp="ruby.*47312"
