@@ -80,7 +80,10 @@
   <div class="empty"><p>No listings match this search. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
 <% end %>
 
-<%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>
+<%= render "shared/futurism_pagy_list",
+           records: @listings,
+           partial: "marketplace/listings/listing",
+           pagy: @pagy %>
 
 <% content_for :widgets do %>
   <%= render "shared/affiliate_deals", category: params[:category_id] %>

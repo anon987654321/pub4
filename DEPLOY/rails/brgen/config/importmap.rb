@@ -32,3 +32,4 @@ pin "@stimulus-components/rails-nested-form" # @3.0.0
 pin "@stimulus-components/carousel" # @2.1.0
 pin "stimulus_reflex" # @3.5
 pin "cable_ready" # @5.0
+pin "@stimulus_reflex/futurism" # Futurism for Pagy infinite scroll (ruby_style.yml)
