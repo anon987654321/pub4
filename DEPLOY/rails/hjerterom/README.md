@@ -14,6 +14,16 @@ Runs local resource redistribution like a food bank, not a social network. Recei
 
 Rails 8 · SQLite · Falcon · Hotwire · OpenBSD
 
+## Current Integration Status (2026)
+
+- **Visual system**: Target Brgen cinema palette + NNG tokens (see family `WIRING_NOTES.md`).
+- **Activity Graph**: Should emit donation, distribution, and volunteer events to the shared graph.
+- **Photo / Multimodal**: Can leverage public photo upload for donation photos.
+- **Shared patterns**: Use shared social concerns (Reactable, Followable, Notification) and EventEmitter where relevant.
+- Deploy follows the thin tracked-tree model.
+
+See `DEPLOY/rails/ARCHITECTURE_NOTES.md`, `WIRING_NOTES.md`, and `LEGACY_FEATURE_SCRIPTS.md`.
+
 ## Deploy
 
 ```zsh
