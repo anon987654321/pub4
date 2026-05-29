@@ -14,11 +14,28 @@ export function initMinimalUI() {
     }
   });
 
-  // Right edge swipe for nav
+  // Right edge swipe for nav (e.g. reveal sidebar in brgen-style apps)
+  let swipeStartX = 0;
   document.addEventListener('touchstart', e => {
-    if (innerWidth - e.touches[0].clientX < 48) body.dataset.rightEdge = '1';
+    swipeStartX = e.touches[0].clientX;
+    if (innerWidth - swipeStartX < 48) body.dataset.rightEdge = '1';
   }, { passive: true });
-  document.addEventListener('touchend', () => delete body.dataset.rightEdge);
+  document.addEventListener('touchend', e => {
+    const delta = e.changedTouches[0].clientX - swipeStartX;
+    delete body.dataset.rightEdge;
+    if (delta > 60) {
+      // Swipe right from edge -> reveal sidebar/nav
+      const sidebar = document.querySelector('.sidebar, nav, .app-shell > aside');
+      if (sidebar) sidebar.classList.add('revealed');
+    }
+  }, { passive: true });
+
+  // Swipe left anywhere to hide revealed elements (minimal reset)
+  document.addEventListener('touchend', e => {
+    if (e.changedTouches[0].clientX - swipeStartX < -100) {
+      document.querySelectorAll('.revealed, .sidebar.revealed').forEach(el => el.classList.remove('revealed'));
+    }
+  });
 
   // Advanced cam tracking + sensors (innovative mobile-first, synced with MASTER face)
   async function startCamFace() {
@@ -92,6 +109,44 @@ export function initMinimalUI() {
       lastTap = now;
     }
   });
+
+  // Voice commands: "Osman, [command]" using Web Speech API (triggers Osman TTS backend if available)
+  if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SpeechRec();
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.lang = 'en-US';
+
+    document.addEventListener('keydown', e => {
+      if (e.key === '/' && document.activeElement.tagName === 'BODY') {
+        e.preventDefault();
+        try { rec.start(); } catch (_) {}
+      }
+    });
+
+    rec.onresult = (event) => {
+      const transcript = event.results[0][0].transcript.toLowerCase();
+      if (transcript.includes('osman') || transcript.includes('voice')) {
+        const command = transcript.replace(/osman|voice|hey|ok/gi, '').trim();
+        if (command) {
+          // Trigger Osman via global hook or fetch to /tts if in MASTER context
+          if (window.MASTERMinimalUI?.triggerOsman) {
+            window.MASTERMinimalUI.triggerOsman(command);
+          } else if (window.speakWithOsman) {
+            window.speakWithOsman(command);
+          } else {
+            // Fallback browser speech + visual cue
+            const utter = new SpeechSynthesisUtterance(command);
+            speechSynthesis.speak(utter);
+          }
+        }
+      }
+    };
+
+    // Expose to start voice mode
+    window.startOsmanVoice = () => rec.start();
+  }
 }
 
 export default { initMinimalUI };

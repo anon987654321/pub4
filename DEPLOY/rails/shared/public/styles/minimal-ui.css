@@ -35,3 +35,35 @@ body.zen-minimal [data-minimal-reveal].revealed {
     transform: scale(0.985);
   }
 }
+
+/* Sensor + Cam creative effects (tilt, cam tracking) */
+body.zen-minimal {
+  --sensor-tilt-x: 0;
+  --sensor-tilt-y: 0;
+  --cam-tilt-x: 0;
+  --cam-tilt-y: 0;
+}
+
+body.zen-minimal .brand,
+body.zen-minimal .top-right-logo {
+  transform: translate(
+    calc(var(--sensor-tilt-x) * 4px + var(--cam-tilt-x) * 6px),
+    calc(var(--sensor-tilt-y) * 3px + var(--cam-tilt-y) * 4px)
+  );
+  transition: transform 0.1s linear;
+}
+
+body.zen-minimal .sidebar.revealed {
+  transform: translateX(0);
+}
+
+/* Subtle face/cam reaction on canvas or hero elements */
+body.zen-minimal canvas,
+body.zen-minimal .face-core,
+body.zen-minimal .hero {
+  filter: contrast(1.02) saturate(1.05);
+  transform: translate(
+    calc(var(--cam-tilt-x) * -3px),
+    calc(var(--cam-tilt-y) * -2px)
+  );
+}
