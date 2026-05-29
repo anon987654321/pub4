@@ -34,6 +34,8 @@ Important actions emit an activity event with actor, locality, visibility, moder
 
 Common events: ListingCreated, MarketplaceOfferSent, OrderPlaced, TakeawayOrderUpdated, PlaylistShared, VideoPublished, CommentCreated, ReactionAdded, and MessageSent.
 
+Modern implementation (2025-2026 Hotwire + graph patterns): Use Turbo Streams + Action Cable (or StimulusReflex) to surface the unified graph as live local activity. Power recommendations and discovery from the single event stream rather than per-vertical logic. See shared/WIRING_NOTES.md for family-wide guidance.
+
 ## Feed
 
 The feed is a view over the activity graph. It ranks posts, comments, listings, playlists, videos, restaurant activity, local events, and recommendations by locality, freshness, moderation state, social relevance, recommendation weight, and vertical filters.

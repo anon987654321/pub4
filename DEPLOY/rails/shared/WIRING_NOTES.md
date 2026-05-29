@@ -86,3 +86,15 @@ This ensures a single coherent "watch from afar" aesthetic across Brgen, Amber, 
 ## LLM / AI Readiness
 
 apps.yml is the canonical structured surface for MASTER scans (`/scan`, `/sweep`, council). Future LLM features (recommendations, ranking, moderation assistance, content generation) should be added as new rows there first, then wired via small shared concerns or services. Brgen's "ai" vertical is the primary experimentation surface. All apps should emit consistent activity events so AI ranking can work across the unified graph (see brgen_CORE.md).
+
+## Unified Activity Graph + Modern Hotwire Reactivity (2025-2026 Patterns)
+
+Brgen (and by extension the whole family) should treat every vertical action as an event in one city activity graph (actor, vertical, event_type, locality, target, visibility, timestamp, metadata). This single source powers feeds, discovery, notifications, moderation, and recommendations.
+
+Inspiration from current best practice (Hotwire + StimulusReflex production apps + LBSN/graph recsys research):
+- Use Turbo Streams + Action Cable (or StimulusReflex/CableReady) for live "something just happened near you" updates across marketplace, dating, tv, playlist, takeaway, etc.
+- All subapps must emit to the shared Activity stream instead of building private feeds.
+- Graph-powered recs (collab filtering + location + social signals) become possible once the unified event stream exists.
+- See popular patterns in current Hotwire social/community apps and location-based recommendation papers.
+
+Implementation rule: New features in any app must add an Activity emission + a Turbo Stream consumer before building custom real-time UI.
