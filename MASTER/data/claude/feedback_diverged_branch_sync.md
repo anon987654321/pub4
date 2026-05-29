@@ -2,12 +2,12 @@
 name: Diverged branch sync via cherry-pick onto remote
 description: When local and remote main have diverged with overlap, cherry-pick the targeted commits onto remote tip rather than rebase mixed history or force-push
 type: feedback
-originSessionId: b02ce9b9-a7c7-4c65-b8d0-3b8469dc2028
+status: consolidated
+canonical: data/principles/feedback_diverged_branch_sync.md
 ---
-When `git push` is rejected because remote has new commits and local also has commits the remote doesn't, prefer this flow:
-1. `git tag backup-pre-sync-YYYY-MM-DD` on local main
-2. `git reset --hard origin/main` (backup tag preserves the prior tip)
-3. Cherry-pick only the commits we actually want to ship (e.g. session's lofi passes), not the mixed pile of older local-only commits that may already exist upstream in equivalent form
+**Consolidated.** This content is now maintained as single source in `data/principles/feedback_diverged_branch_sync.md`.
+
+See the principles/ version for the current authoritative text. This file is kept only for historical session traceability.
 4. Resolve conflicts case by case
 5. Push
 
