@@ -88,7 +88,7 @@ Required live-search surfaces:
 
 ## Legacy scripts note
 
-The `@*.sh` feature modules at the root of `DEPLOY/rails/` are reference patterns from earlier work (see `github_repos/rails-style-guide/`). The active model uses tracked app trees + thin deploy scripts. See `README.md` → "Legacy feature scripts" and the dedicated `LEGACY_FEATURE_SCRIPTS.md` for inventory + recommendations.
+The `@*.sh` feature modules (now under `legacy/`) are reference patterns from earlier work (see `github_repos/rails-style-guide/`). The active model uses tracked app trees + thin deploy scripts. See `README.md` → "Legacy feature scripts" and the dedicated `LEGACY_FEATURE_SCRIPTS.md` for inventory + recommendations.
 
 ## Completion checklist
 

@@ -1,6 +1,6 @@
 # Legacy Feature Scripts (@*.sh)
 
-These files are extracted patterns from earlier generator work (see also `github_repos/rails-style-guide/`).
+These files (now located in `legacy/`) are extracted patterns from earlier generator work (see also `github_repos/rails-style-guide/`).
 
 **Current status (2026):** They are **reference material only**. The active production model uses tracked Rails app trees + thin, app-specific deploy scripts (see `README.md` and `ARCHITECTURE_NOTES.md`).
 
@@ -9,7 +9,7 @@ Do not run these blindly against existing production trees.
 ## Inventory & Duplication Notes
 
 ### Core / Shared Helpers
-- `@core.sh`, `@shared_functions.sh` (and copies inside some scripts): Logging, `need_cmd`, `already_done`, `create_rails_app`, gem helpers, Solid stack, auth, rc.d, relayd helpers.
+- `legacy/@core.sh`, `legacy/@shared_functions.sh` (and copies inside some scripts): Logging, `need_cmd`, `already_done`, `create_rails_app`, gem helpers, Solid stack, auth, rc.d, relayd helpers.
   - High duplication of the same helper functions across files.
   - Recommendation: Keep as historical reference. Current thin deploy scripts (e.g. `brgen/brgen.sh`) implement only what they need directly.
 
@@ -46,6 +46,6 @@ Do not run these blindly against existing production trees.
 - `README.md` → "Legacy feature scripts"
 - `ARCHITECTURE_NOTES.md`
 - `shared/WIRING_NOTES.md`
-- Individual app deploy scripts (e.g. `brgen/brgen.sh`)
+- Individual app deploy scripts now source from `legacy/` (e.g. `brgen/brgen.sh`)
 
 Last reviewed: 2026 during DEPLOY/rails convergence waves.
