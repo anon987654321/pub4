@@ -1,5 +1,5 @@
 "use strict";
-import * as THREE from '/three.module.js?v=8';
+import * as THREE from '/three.module.js?v=9';
 
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
@@ -21,6 +21,14 @@ const TINT = {
   veto:    new THREE.Color(1.00, 0.56, 0.52),
   unclear: new THREE.Color(0.96, 0.90, 0.66)
 };
+
+function dayNightTint() {
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  if (h >= 5  && h < 7)  return new THREE.Color(1.00, 0.92, 0.78); // dawn — warm gold
+  if (h >= 7  && h < 18) return new THREE.Color(1.00, 1.00, 1.00); // day — white
+  if (h >= 18 && h < 21) return new THREE.Color(1.00, 0.88, 0.65); // dusk — amber
+  return new THREE.Color(0.82, 0.88, 1.00);                         // night — cool blue-white
+}
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
 
@@ -246,8 +254,16 @@ scene.add(edgePoints);
 const colorCurrent = TINT.idle.clone();
 const colorTarget  = TINT.idle.clone();
 function fadeColorTo(c) { colorTarget.copy(c); }
+TINT.idle.copy(dayNightTint());
+colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
+setInterval(() => { if (!State.mood || State.mood === 'idle') { TINT.idle.copy(dayNightTint()); fadeColorTo(TINT.idle); } }, 60000);
 
 let lastT = performance.now();
+let nextBlink    = performance.now() + 3000 + Math.random() * 3000;
+let saccadeX     = 0, nextSaccade = performance.now() + Math.random() * 6000 + 3000;
+let windPhase    = 0;
+let nextMicro    = performance.now() + Math.random() * 20000 + 15000;
+let nodImpulse   = 0;
 const head3 = new THREE.Object3D();
 scene.add(head3);
 head3.add(vertPoints);
@@ -270,6 +286,20 @@ function frame(t) {
     for (let bi = 0; bi < bufLen; bi++) { const s = (tts.analyserBuf[bi] - 128) / 128; rmsSum += s * s; }
     const rms = Math.sqrt(rmsSum / bufLen);
     if (rms > 0.01) State.pulse = Math.min(0.9, State.pulse + rms * 1.5);
+    if (tts.analyserFreqBuf) {
+      tts.analyser.getByteFrequencyData(tts.analyserFreqBuf);
+      let bass = 0, mids = 0, highs = 0;
+      for (let bi = 0; bi < 8; bi++) bass += tts.analyserFreqBuf[bi];
+      for (let bi = 8; bi < 32; bi++) mids += tts.analyserFreqBuf[bi];
+      for (let bi = 32; bi < 80 && bi < tts.analyserFreqBuf.length; bi++) highs += tts.analyserFreqBuf[bi];
+      State.audioBass  = bass  / (8   * 255);
+      State.audioMids  = mids  / (24  * 255);
+      State.audioHighs = highs / (48  * 255);
+    }
+  } else {
+    State.audioBass = (State.audioBass || 0) * 0.88;
+    State.audioMids = (State.audioMids || 0) * 0.88;
+    State.audioHighs = (State.audioHighs || 0) * 0.88;
   }
 
   const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
@@ -277,12 +307,20 @@ function frame(t) {
   vertMat.color.copy(colorCurrent);
   edgeMat.color.copy(colorCurrent).multiplyScalar(0.78);
 
-  const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05;
+  if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
+    saccadeX = (Math.random() - 0.5) * 0.28;
+    nextSaccade = t + Math.random() * 6000 + 3000;
+  }
+  saccadeX *= 0.93;
+  const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX;
   const pitch = State.mouseY * 0.4 + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
   head3.rotation.y += (yaw   - head3.rotation.y) * 0.06;
   head3.rotation.x += (pitch - head3.rotation.x) * 0.06;
+  nodImpulse *= 0.87;
+  head3.rotation.x += nodImpulse;
 
-  const breath = State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005) + State.pulse * 0.08;
+  const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
+  const breath = silenceScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005) + State.pulse * 0.08);
   head3.scale.setScalar(breath);
   State.pulse *= 0.92;
 
@@ -293,6 +331,16 @@ function frame(t) {
   } else {
     head3.position.set(0, 0, 0);
   }
+
+  if (!State.reducedMotion && t > nextBlink) {
+    for (let i = 0; i < VERT_COUNT; i++) if (eyeMask[i]) vertVel[i*3+1] -= 0.10;
+    nextBlink = t + Math.random() * 4000 + 3000;
+  }
+  if (!State.reducedMotion && State.mode === 'speaking' && t > nextMicro) {
+    for (let i = 0; i < VERT_COUNT; i++) if (vertHome[i*3+1] > 0.55) vertVel[i*3+1] += 0.048;
+    nextMicro = t + Math.random() * 20000 + 15000;
+  }
+  windPhase += dt * 0.00008;
 
   const vPos = vertGeom.attributes.position.array;
   const visAmp = State.visemeAmp;
@@ -347,6 +395,27 @@ function frame(t) {
         vertVel[i3+1] += (cdy / cd) * cf;
       }
     }
+    if (!State.reducedMotion) {
+      // Gaze gravity: particles drift slightly toward where face looks
+      const gx = State.mouseX * 1.5, gy = -State.mouseY * 1.5;
+      const gdx = gx - vPos[i3], gdy = gy - vPos[i3+1];
+      const gd2 = gdx*gdx + gdy*gdy;
+      if (gd2 > 0.04 && gd2 < 4.0) { const gf = 0.000025 / gd2; vertVel[i3] += gdx * gf; vertVel[i3+1] += gdy * gf; }
+      // Wind: slow sinusoidal lateral drift
+      vertVel[i3] += Math.sin(windPhase + hx * 2.1) * 0.00013;
+      // Thinking: slow CCW orbit around y-axis
+      if (State.mode === 'thinking') {
+        vertVel[i3]   -= vPos[i3+2] * 0.0009;
+        vertVel[i3+2] += vPos[i3]   * 0.0009;
+      }
+      // Audio frequency zones: bass=jaw, mids=cheeks, highs=crown
+      if (mouthMask[i] && (State.audioBass || 0) > 0.04)
+        vertVel[i3+1] -= State.audioBass * 0.028;
+      if (!mouthMask[i] && !eyeMask[i] && Math.abs(hx) > 0.35 && Math.abs(hy) < 0.38 && (State.audioMids || 0) > 0.04)
+        vertVel[i3] += (hx > 0 ? 1 : -1) * State.audioMids * 0.020;
+      if (hy > 0.52 && (State.audioHighs || 0) > 0.04)
+        vertVel[i3+1] += State.audioHighs * 0.024;
+    }
     const sx = vertVel[i3]   = vertVel[i3]   * 0.9 + (hx - vPos[i3])   * 0.18;
     const sy = vertVel[i3+1] = vertVel[i3+1] * 0.9 + (hy - vPos[i3+1]) * 0.18;
     const sz = vertVel[i3+2] = vertVel[i3+2] * 0.9 + (hz - vPos[i3+2]) * 0.18;
@@ -357,7 +426,21 @@ function frame(t) {
   State.visemeAmp *= 0.85;
   vertGeom.attributes.position.needsUpdate = true;
 
-  vertMat.opacity = 1 - State.flash * 0.4;
+  // Confidence → particle sharpness (crisp at 1.0, soft at 0.0)
+  vertMat.size = 0.055 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12);
+  edgeMat.size = 0.025 * (0.55 + State.confidence * 0.45);
+  edgeMat.opacity = 0.55 * (0.6 + State.confidence * 0.4) * (0.93 + Math.random() * 0.07);
+
+  // Idle dissolve + grain
+  const idleS = (t - State.lastTouch) / 1000;
+  const dissolveT = idleS > 90 ? Math.min(1, (idleS - 90) / 90) : 0;
+  vertMat.opacity = Math.max(0, (1 - State.flash * 0.4 - dissolveT * 0.55)) * (0.93 + Math.random() * 0.07);
+  if (dissolveT > 0.25 && !State.reducedMotion && Math.random() < 0.009) {
+    const ri = Math.floor(Math.random() * VERT_COUNT) * 3;
+    vertVel[ri]   += (Math.random() - 0.5) * 0.055;
+    vertVel[ri+1] += (Math.random() - 0.5) * 0.055;
+    vertVel[ri+2] += (Math.random() - 0.5) * 0.028;
+  }
   State.flash *= 0.9;
 
   renderer.render(scene, camera);
@@ -414,7 +497,15 @@ if (window.DeviceMotionEvent) {
     const m = Math.hypot(dx, dy, dz);
     lastAccel = [a.x, a.y, a.z];
     const now = performance.now();
-    if (m > 24 && now - lastShake > 800) { lastShake = now; ttsSkip(); State.shake = 1.2; }
+    if (m > 24 && now - lastShake > 800) {
+      lastShake = now; ttsSkip(); State.shake = 1.2;
+      // Clap/shake scatter
+      for (let i = 0; i < VERT_COUNT; i++) {
+        vertVel[i*3]   += (Math.random() - 0.5) * 0.08;
+        vertVel[i*3+1] += (Math.random() - 0.5) * 0.08;
+        vertVel[i*3+2] += (Math.random() - 0.5) * 0.04;
+      }
+    }
     // Harden mobile sensor integration: subtle kernel pressure/jitter from device motion (for "shaky hand" expressiveness)
     if (mouthPool && m > 8) {
       for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) {
@@ -449,7 +540,7 @@ function beep(freq, dur) {
 const VISEME_STEP_MS = 90;
 const LOCAL_RATE = 0.95;
 const LOCAL_PITCH = 0.92;
-const tts = { queue: [], muted: false, playing: false, voice: null, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null };
+const tts = { queue: [], muted: false, playing: false, voice: null, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
 
 function pickVoice() {
   const list = speechSynthesis.getVoices();
@@ -496,6 +587,7 @@ function enqueueSpeech(text) {
   if (!clean) return;
   tts.lastText = clean;
   tts.queue.push(clean);
+  nodImpulse += 0.022; // brief forward nod on each sentence
   ttsTick();
 }
 
@@ -533,6 +625,7 @@ function speakServer(text) {
           analyser.connect(actx.destination);
           tts.analyser = analyser;
           tts.analyserBuf = new Uint8Array(analyser.fftSize);
+          tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
         } catch (_) {}
       }
       audio.onplay = () => startVisemeAnim(text);
@@ -540,6 +633,7 @@ function speakServer(text) {
         stopVisemeAnim();
         tts.analyser = null;
         tts.analyserBuf = null;
+        tts.analyserFreqBuf = null;
         URL.revokeObjectURL(src);
         tts.audio = null;
         tts.playing = false;
@@ -664,6 +758,15 @@ async function sendMessage(text) {
       window._chatOnChunk?.('\n' + raw + '\n');
       State.mode = 'error'; State.flash = 1; State.shake = 0.8;
       fadeColorTo(TINT.veto);
+      const vp = vertGeom.attributes.position.array;
+      for (let i = 0; i < VERT_COUNT; i++) {
+        const i3 = i * 3;
+        const dx = vp[i3], dy = vp[i3+1];
+        const d = Math.hypot(dx, dy) || 1;
+        vertVel[i3]   = (dx/d) * (0.07 + Math.random() * 0.11);
+        vertVel[i3+1] = (dy/d) * (0.07 + Math.random() * 0.11);
+        vertVel[i3+2] = (Math.random() - 0.5) * 0.09;
+      }
       window._chatOnError?.();
       return;
     }
@@ -698,8 +801,22 @@ async function sendMessage(text) {
     State.pulse = 0.6;
     State.jitter = (State.confidence < 0.45 ? 0.75 : 0.15);
     if (State.confidence > 0.75) State.pulse = 0.9;
-    if (v === 'pass') beep(880, 0.06);
-    if (v === 'veto') { beep(220, 0.10); State.shake = 0.6; }
+    if (v === 'pass') {
+      beep(880, 0.06);
+      // Consensus snap: all particles rush home simultaneously
+      for (let i = 0; i < VERT_COUNT; i++) { vertVel[i*3] *= 0.1; vertVel[i*3+1] *= 0.1; vertVel[i*3+2] *= 0.1; }
+    }
+    if (v === 'veto') {
+      beep(220, 0.10); State.shake = 0.6;
+      // Shatter on veto
+      const vp = vertGeom.attributes.position.array;
+      for (let i = 0; i < VERT_COUNT; i++) {
+        const i3 = i*3, dx = vp[i3], dy = vp[i3+1], d = Math.hypot(dx, dy) || 1;
+        vertVel[i3]   = (dx/d) * (0.05 + Math.random() * 0.09);
+        vertVel[i3+1] = (dy/d) * (0.05 + Math.random() * 0.09);
+        vertVel[i3+2] = (Math.random() - 0.5) * 0.07;
+      }
+    }
   });
   evtSrc.addEventListener('council:speech', (ev) => {
     try {
@@ -757,12 +874,13 @@ function playDuo(lines, onDone) {
           analyser.connect(actx.destination);
           tts.analyser = analyser;
           tts.analyserBuf = new Uint8Array(analyser.fftSize);
+          tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
         } catch (_) {}
       }
       startVisemeAnim(text);
       audio.onended = audio.onerror = () => {
         stopVisemeAnim();
-        tts.analyser = null; tts.analyserBuf = null;
+        tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
         URL.revokeObjectURL(src);
         clearViseme();
         playDuo(rest, onDone);
