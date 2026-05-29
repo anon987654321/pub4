@@ -6,6 +6,9 @@
 #   missing no implementation found anywhere
 #   planned roadmap only, no code
 #
+# Cross-cutting dimensions tracked below:
+#   visual_inheritance, activity_graph, multimodal_photo, openbsd_readiness, llm_scan_ready
+#
 # Run `/scan deep DEPLOY/rails/<app>/app` through MASTER to verify `done` claims.
 # Sources: pub4 orbs/ extracted models, patch_tv_models.sh, brgen_seeds.rb,
 #          anon987654321/pub repo READMEs, brgen_app/ models,
