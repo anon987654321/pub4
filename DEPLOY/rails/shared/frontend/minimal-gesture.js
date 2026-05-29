@@ -14,25 +14,35 @@ export function initMinimalUI() {
     }
   });
 
-  // Right edge swipe for nav (e.g. reveal sidebar in brgen-style apps)
-  let lastTouchX = 0;
+  // Unified swipe gestures (right edge for nav, left for hide, down for content action/Osman read)
+  let lastTouch = { x: 0, y: 0, time: 0 };
   document.addEventListener('touchstart', e => {
-    lastTouchX = e.touches[0].clientX;
-    if (innerWidth - lastTouchX < 48) body.dataset.rightEdge = '1';
+    lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() };
+    if (innerWidth - lastTouch.x < 48) body.dataset.rightEdge = '1';
   }, { passive: true });
 
   document.addEventListener('touchend', e => {
     const endX = e.changedTouches[0].clientX;
-    const delta = endX - lastTouchX;
+    const endY = e.changedTouches[0].clientY;
+    const dx = endX - lastTouch.x;
+    const dy = endY - lastTouch.y;
+    const dt = Date.now() - lastTouch.time;
     delete body.dataset.rightEdge;
 
-    if (delta > 60) {
-      // Swipe right from edge -> reveal sidebar/nav
+    if (dx > 60 && dt < 400 && lastTouch.x > innerWidth - 80) {
+      // Right edge swipe right -> reveal sidebar/nav
       const sidebar = document.querySelector('.sidebar, nav, .app-shell > aside');
       if (sidebar) sidebar.classList.add('revealed');
-    } else if (delta < -100) {
-      // Swipe left anywhere -> hide revealed elements (minimal reset)
+    } else if (dx < -100) {
+      // Left swipe -> hide
       document.querySelectorAll('.revealed, .sidebar.revealed').forEach(el => el.classList.remove('revealed'));
+    } else if (dy > 80 && Math.abs(dx) < 50) {
+      // Down swipe on content -> creative action: trigger Osman to "read" or refresh
+      const main = document.querySelector('main, .app-shell');
+      if (main) main.style.opacity = '0.7';
+      setTimeout(() => { if (main) main.style.opacity = ''; }, 300);
+      if (window.MASTERMinimalUI?.triggerOsman) window.MASTERMinimalUI.triggerOsman('current content');
+      else if (window.startOsmanVoice) window.startOsmanVoice();
     }
   }, { passive: true });
 

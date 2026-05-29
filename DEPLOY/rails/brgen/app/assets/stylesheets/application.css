@@ -510,6 +510,18 @@ body.zen-minimal .tab-bar:not(.revealed) {
   pointer-events: none;
 }
 
+/* Ultra-minimal: dim main content/feed until gesture (nav/content on swipe) */
+body.zen-minimal .layout > main,
+body.zen-minimal .deal-grid,
+body.zen-minimal .post-card {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+body.zen-minimal .sidebar.revealed ~ .layout > main,
+body.zen-minimal .revealed ~ .layout > main {
+  opacity: 1;
+}
+
 input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 

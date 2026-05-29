@@ -78,5 +78,11 @@ body.zen-minimal .hero {
 /* Cam tracking affects main content for innovative "presence" (mobile-first) */
 body.zen-minimal main,
 body.zen-minimal .app-shell {
-  transition: transform 0.1s ease-out;
+  transition: transform 0.1s ease-out, opacity 0.3s ease;
+  opacity: 0.75;
+}
+
+body.zen-minimal .revealed ~ main,
+body.zen-minimal .sidebar.revealed ~ main {
+  opacity: 1;
 }
