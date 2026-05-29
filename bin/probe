@@ -1,0 +1,108 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+require "yaml"
+
+ROOT = File.expand_path("..", __dir__)
+RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
+APPS_YML = File.join(RAILS_ROOT, "apps.yml")
+
+Check = Struct.new(:name, :ok, :detail, keyword_init: true)
+
+def run_check(name, *cmd, chdir: ROOT)
+  out, err, status = Open3.capture3(*cmd, chdir: chdir)
+  Check.new(name: name, ok: status.success?, detail: [out, err].join.strip)
+rescue Errno::ENOENT
+  Check.new(name: name, ok: false, detail: "command not found: #{cmd.first}")
+end
+
+def command_available?(name)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
+    File.executable?(File.join(dir, name))
+  end
+end
+
+def print_checks(title, checks)
+  puts title
+  checks.each do |check|
+    mark = check.ok ? "ok" : "fail"
+    puts "  #{mark} #{check.name}"
+    next if check.ok || check.detail.empty?
+
+    check.detail.lines.first(6).each { |line| puts "    #{line.chomp}" }
+  end
+  checks.all?(&:ok)
+end
+
+def apps
+  @apps ||= YAML.safe_load_file(APPS_YML).fetch("apps")
+end
+
+def no_tracked_master_keys_check
+  out, err, status = Open3.capture3(
+    "git", "-C", ROOT, "ls-files", "DEPLOY/rails/*/config/master.key"
+  )
+  detail = [out, err].join.strip
+  Check.new(
+    name: "no tracked Rails config/master.key files",
+    ok: status.success? && detail.empty?,
+    detail: detail
+  )
+end
+
+def repo_checks
+  [
+    run_check("Rails production gate", File.join(RAILS_ROOT, "check_production_gate.rb")),
+    no_tracked_master_keys_check,
+    run_check("git diff whitespace check", "git", "-C", ROOT, "diff", "--check")
+  ]
+end
+
+def openbsd_checks
+  unless command_available?("rcctl")
+    return [
+      Check.new(
+        name: "rcctl service state",
+        ok: true,
+        detail: "skipped: rcctl is not available on this host"
+      )
+    ]
+  end
+
+  services = (%w[master relayd nsd httpd] + apps.keys).uniq
+  services.map { |service| run_check("rcctl check #{service}", "rcctl", "check", service) }
+end
+
+def rails_app_checks
+  apps.keys.flat_map do |name|
+    ci = File.join(RAILS_ROOT, name, "bin", "ci")
+    [
+      Check.new(name: "#{name} bin/ci exists", ok: File.file?(ci), detail: ci),
+      Check.new(name: "#{name} bin/ci executable", ok: File.executable?(ci), detail: ci),
+      run_check("#{name} bin/ci Ruby syntax", "ruby", "-c", ci)
+    ]
+  end
+end
+
+mode = ARGV.first || "all"
+
+ok = case mode
+     when "repo"
+       print_checks("repo", repo_checks)
+     when "rails"
+       print_checks("rails", rails_app_checks)
+     when "openbsd"
+       print_checks("openbsd", openbsd_checks)
+     when "all"
+       [
+         print_checks("repo", repo_checks),
+         print_checks("rails", rails_app_checks),
+         print_checks("openbsd", openbsd_checks)
+       ].all?
+     else
+       warn "usage: bin/probe [all|repo|rails|openbsd]"
+       false
+     end
+
+exit(ok ? 0 : 1)

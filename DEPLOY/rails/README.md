@@ -102,6 +102,8 @@ All apps should include (see existing patterns in `brgen/app/.github/workflows/c
 
 See `test_check_ports.sh` and individual app test/deploy/ folders for smoke examples. Add a `ci.yml` to any app missing one using the brgen/amber pattern as baseline. This supports MASTER `/scan` and council reviews.
 
+Repository-level checks should go through `bin/probe`. Use `bin/probe repo` for static production gates, `bin/probe rails` for per-app CI wrapper checks, and `bin/probe openbsd` on the target host for `rcctl` service state.
+
 ## Secrets & Environment Management (OpenBSD-friendly)
 
 - Store secrets in `/etc/rails/<app>.env` (or `/etc/<app>.env`) on the target server.
