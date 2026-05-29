@@ -1,1 +1,0 @@
-# Static voice agent example

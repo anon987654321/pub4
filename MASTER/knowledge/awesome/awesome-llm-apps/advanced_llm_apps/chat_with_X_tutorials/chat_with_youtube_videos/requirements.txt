@@ -1,3 +1,0 @@
-streamlit
-embedchain[youtube]
-youtube-transcript-api==0.6.3
