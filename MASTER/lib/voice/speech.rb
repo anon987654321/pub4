@@ -16,9 +16,15 @@ module Master
     VOICES = {
       osman: "ms-MY-OsmanNeural",
       yasmin: "ms-MY-YasminNeural",
+      pernille: "nb-NO-PernilleNeural",
       ryan: "en-GB-RyanNeural",
       finn: "nb-NO-FinnNeural",
-      steffan: "en-US-SteffanNeural"
+      steffan: "en-US-SteffanNeural",
+      andrew: "en-US-AndrewNeural",
+      guy: "en-US-GuyNeural",
+      william: "en-AU-WilliamNeural",
+      christopher: "en-US-ChristopherNeural",
+      eric: "en-US-EricNeural"
     }.freeze
 
     STYLES = {

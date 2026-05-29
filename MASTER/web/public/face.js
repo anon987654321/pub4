@@ -1,5 +1,5 @@
 "use strict";
-import * as THREE from '/three.module.js?v=7';
+import * as THREE from '/three.module.js?v=8';
 
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
@@ -165,6 +165,18 @@ const vertHome = vertPositions.slice();
 const vertVel  = new Float32Array(VERT_COUNT * 3);
 const CURSOR_R = 0.40; // repulsion radius in head-local units
 const CURSOR_F = 0.035; // repulsion force per frame
+
+const COUNCIL_VOICE = {
+  Architect: 'ryan', Skeptic: 'steffan', Pragmatist: 'finn',
+  Security: 'osman', User: 'pernille', Mentor: 'yasmin'
+};
+
+const BOOT_DUO = [
+  ['osman',    'Good morning.'],
+  ['pernille', 'Hei, og velkommen.'],
+  ['osman',    'Constitutional AI — live and ready.'],
+  ['pernille', 'Spør oss hva som helst.']
+];
 
 const mouthMask = new Uint8Array(VERT_COUNT);
 const eyeMask   = new Uint8Array(VERT_COUNT);
@@ -689,6 +701,12 @@ async function sendMessage(text) {
     if (v === 'pass') beep(880, 0.06);
     if (v === 'veto') { beep(220, 0.10); State.shake = 0.6; }
   });
+  evtSrc.addEventListener('council:speech', (ev) => {
+    try {
+      const { voice, text } = JSON.parse(ev.data || '{}');
+      if (voice && text && !tts.playing) playDuo([[voice, text]]);
+    } catch (_) {}
+  });
   evtSrc.addEventListener('confidence', (ev) => {
     const c = parseFloat(ev.data); if (isNaN(c)) return;
     State.confidence = c;
@@ -721,6 +739,39 @@ async function acquireWakeLock() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
 }
 
+function playDuo(lines, onDone) {
+  if (!lines.length) { onDone?.(); return; }
+  const [voice, text] = lines[0];
+  const rest = lines.slice(1);
+  fetch(`/chat/tts?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(text)}`)
+    .then(r => r.ok ? r.blob() : Promise.reject())
+    .then(blob => {
+      const src = URL.createObjectURL(blob);
+      const audio = new Audio(src);
+      if (actx && actx.state !== 'closed') {
+        try {
+          const msrc = actx.createMediaElementSource(audio);
+          const analyser = actx.createAnalyser();
+          analyser.fftSize = 256;
+          msrc.connect(analyser);
+          analyser.connect(actx.destination);
+          tts.analyser = analyser;
+          tts.analyserBuf = new Uint8Array(analyser.fftSize);
+        } catch (_) {}
+      }
+      startVisemeAnim(text);
+      audio.onended = audio.onerror = () => {
+        stopVisemeAnim();
+        tts.analyser = null; tts.analyserBuf = null;
+        URL.revokeObjectURL(src);
+        clearViseme();
+        playDuo(rest, onDone);
+      };
+      audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone); });
+    })
+    .catch(() => playDuo(rest, onDone));
+}
+
 const POST_LINES = [
   'MASTER (CONSTITUTIONAL)',
   'soul: ok',
@@ -730,6 +781,15 @@ const POST_LINES = [
   'ready'
 ];
 function startEverything() {
+  // Scatter particles to flat 2D — spring in frame() coalesces them into 3D face shape
+  for (let i = 0; i < VERT_COUNT; i++) {
+    vertPositions[i*3]   = (Math.random() - 0.5) * 3.5;
+    vertPositions[i*3+1] = (Math.random() - 0.5) * 3.5;
+    vertPositions[i*3+2] = 0;
+    vertVel[i*3] = vertVel[i*3+1] = vertVel[i*3+2] = 0;
+  }
+  vertGeom.attributes.position.needsUpdate = true;
+
   initAudio();
   if (actx && actx.state === 'suspended') actx.resume();
   let li = 0;
@@ -748,7 +808,7 @@ function startEverything() {
       setTimeout(() => primer.remove(), 1000);
       zshBar.classList.add('live');
       requestMotionPermission(); acquireWakeLock();
-      setTimeout(() => enqueueSpeech('ready'), 200);
+      setTimeout(() => playDuo(BOOT_DUO), 200);
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
   };

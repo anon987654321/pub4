@@ -11,6 +11,15 @@ class ChatController < ApplicationController
   # CSRF guarded by SameSite=Strict session cookie set in AuthTier.
   skip_before_action :verify_authenticity_token, only: :command
 
+  COUNCIL_PERSONA_VOICE = {
+    "Architect" => :ryan,
+    "Skeptic" => :steffan,
+    "Pragmatist" => :finn,
+    "Security" => :osman,
+    "User" => :pernille,
+    "Mentor" => :yasmin
+  }.freeze
+
   PHOTO_UPLOAD_DIR = Rails.root.join("tmp", "chat_uploads")
   PHOTO_MAX_BYTES = Integer(ENV.fetch("MASTER_PHOTO_MAX_BYTES", 12 * 1024 * 1024))
   PHOTO_MIME_EXT = {
@@ -191,6 +200,15 @@ class ChatController < ApplicationController
       enhance_sub   = container[:bus].subscribe("enhance:rewrite") do |ev|
         sse.write("event: enhance\ndata: #{ev[:enhanced].to_s.gsub("\n", "\\n").to_json}\n\n") rescue nil
       end
+      council_sub = container[:bus].subscribe(:council_feedback) do |ev|
+        persona = ev[:persona].to_s
+        voice = COUNCIL_PERSONA_VOICE[persona] || Master::Voice::Speech::DEFAULT_VOICE
+        raw = ev[:feedback].to_s.strip
+        sentence = raw.split(/(?<=[.!?])\s+/).first(2).join(" ").strip[0, 200]
+        next if sentence.empty?
+        payload = { voice: voice.to_s, text: sentence, persona: persona }.to_json
+        sse.write("event: council:speech\ndata: #{payload}\n\n") rescue nil
+      end
       # Publish incoming canvas state into bus so prompt-builder can include it.
       if (st = params[:state]).present?
         mood, mode, idle_s, palette = st.to_s.split("|")
@@ -272,6 +290,7 @@ class ChatController < ApplicationController
         verdict_sub.call if defined?(verdict_sub) && verdict_sub
         escalate_sub.call if defined?(escalate_sub) && escalate_sub
         enhance_sub.call  if defined?(enhance_sub)  && enhance_sub
+        council_sub.call  if defined?(council_sub)  && council_sub
         dmesg_sub.call    if defined?(dmesg_sub)    && dmesg_sub
       rescue StandardError => _e
         nil

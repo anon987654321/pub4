@@ -71,3 +71,10 @@ medic:
   tts_pitch: "-40Hz"
   style: slow
   description: "Medical research. PubMed. Not medical advice."
+
+anchor:
+  voice: nb-NO-PernilleNeural
+  tts_rate: "-8%"
+  tts_pitch: "+8Hz"
+  style: clear
+  description: "Norwegian. Clear. Curious. Warm editorial voice."
