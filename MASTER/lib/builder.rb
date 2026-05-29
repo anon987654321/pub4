@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require_relative "now/stages/trivial"
 
 module Master
   module Builder

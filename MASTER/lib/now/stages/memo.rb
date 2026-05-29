@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
-# Deprecated: moved to trivial.rb for reduced stage file count (KISS/DENSITY).
-require_relative "trivial"
-# Memo alias lives in trivial.rb
+module Master
+  module Now
+  module Stages
+    # Compatibility name. Use Memory for new code.
+    Memo = Memory
+  end
+  end
+end

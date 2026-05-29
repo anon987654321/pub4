@@ -1,7 +1,25 @@
 # frozen_string_literal: true
 
-# NOTE: Render implementation lives in trivial.rb (historical consolidation for file count).
-# The filename "trivial.rb" is recognized as poor naming and should be revisited
-# in a future disciplined refactor (full scan + council recommended).
-require_relative "trivial"
-# Render is now defined in trivial.rb
+module Master
+  module Now
+  module Stages
+    # Render — format the final output for display.
+    class Render
+      def initialize(renderer:)
+        @renderer = renderer
+      end
+
+      def call(ctx)
+        output = ctx.output
+        rendered = case output
+                   when Result::Ok  then @renderer.render(output.value!, mode: :plain)
+                   when Result::Err then @renderer.render(output.message, mode: :error)
+                   else                  @renderer.render(output.to_s, mode: :plain)
+                   end
+
+        Result.ok(ctx.merge(rendered:))
+      end
+    end
+  end
+  end
+end
