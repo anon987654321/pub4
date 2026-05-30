@@ -129,18 +129,19 @@ function buildHeadGeometry() {
 
 const head = buildHeadGeometry();
 
-// Area-weighted surface sampler — returns home, scatter, seed arrays
+// Area-weighted surface sampler — handles indexed and non-indexed geometries
 function sampleMeshSurface(geom, N) {
   const pos = geom.attributes.position;
   const idx = geom.index;
-  const triCount = idx.count / 3;
+  const triCount = idx ? idx.count / 3 : pos.count / 3;
   const areas = new Float32Array(triCount);
   let totalArea = 0;
   const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
+  function vi(t, k) { return idx ? idx.getX(t*3+k) : t*3+k; }
   for (let t = 0; t < triCount; t++) {
-    va.fromBufferAttribute(pos, idx.getX(t*3));
-    vb.fromBufferAttribute(pos, idx.getX(t*3+1));
-    vc.fromBufferAttribute(pos, idx.getX(t*3+2));
+    va.fromBufferAttribute(pos, vi(t,0));
+    vb.fromBufferAttribute(pos, vi(t,1));
+    vc.fromBufferAttribute(pos, vi(t,2));
     const area = vb.clone().sub(va).cross(vc.clone().sub(va)).length() * 0.5;
     areas[t] = area; totalArea += area;
   }
@@ -155,7 +156,7 @@ function sampleMeshSurface(geom, N) {
     const r = Math.random();
     let lo = 0, hi = triCount - 1;
     while (lo < hi) { const mid = (lo+hi)>>1; if (cdf[mid] < r) lo = mid+1; else hi = mid; }
-    const a = idx.getX(lo*3), b = idx.getX(lo*3+1), c = idx.getX(lo*3+2);
+    const a = vi(lo,0), b = vi(lo,1), c = vi(lo,2);
     let r1 = Math.random(), r2 = Math.random();
     if (r1 + r2 > 1) { r1 = 1-r1; r2 = 1-r2; }
     const r3 = 1-r1-r2;

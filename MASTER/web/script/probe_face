@@ -1,0 +1,139 @@
+#!/usr/bin/env ruby
+require "ferrum"
+
+URL = ARGV[0] || "http://localhost:53187/"
+WAIT = 8
+
+puts "probe: #{URL}"
+
+browser = Ferrum::Browser.new(
+  headless: true,
+  browser_path: "/usr/local/bin/chrome",
+  browser_options: {
+    "no-sandbox" => nil,
+    "disable-gpu" => nil,
+    "disable-dev-shm-usage" => nil,
+    "ignore-certificate-errors" => nil
+  },
+  timeout: 30
+)
+
+console_msgs = []
+browser.on(:console) { |msg| console_msgs << "[#{msg.type}] #{msg.args.map(&:value).join(' ')}" rescue nil }
+
+network_errors = []
+browser.network.intercept
+browser.on(:request) { |req| req.continue }
+browser.on(:response) do |res|
+  s = res.status.to_i
+  network_errors << "#{s} #{res.url.split('?').first.split('/').last}" if s >= 400
+end
+
+begin
+  browser.evaluate_on_new_document(<<~JS)
+    window._errs = [];
+    window._clog = [];
+    window.onerror = function(msg, src, line) {
+      window._errs.push(msg + ' @ ' + (src||'').split('/').pop() + ':' + line);
+    };
+    window.addEventListener('unhandledrejection', function(e) {
+      window._errs.push('UNHANDLED: ' + String(e.reason));
+    });
+    // Watch for script elements being added so we can attach error listeners early
+    new MutationObserver(function(mutations) {
+      mutations.forEach(function(m) {
+        m.addedNodes.forEach(function(n) {
+          if (n.nodeType === 1 && n.tagName === 'SCRIPT' && n.type === 'module') {
+            n.addEventListener('error', function() {
+              window._clog.push('SCRIPT_ERROR: ' + n.src);
+            });
+          }
+        });
+      });
+    }).observe(document.documentElement || document, {childList: true, subtree: true});
+    (function() {
+      var orig = console.log.bind(console);
+      console.log = function() {
+        var args = Array.prototype.slice.call(arguments);
+        window._clog.push(args.map(String).join(' '));
+        orig.apply(console, arguments);
+      };
+      ['error','warn'].forEach(function(level) {
+        var orig2 = console[level].bind(console);
+        console[level] = function() {
+          var args = Array.prototype.slice.call(arguments);
+          window._clog.push(level.toUpperCase() + ': ' + args.map(String).join(' '));
+          orig2.apply(console, arguments);
+        };
+      });
+    })();
+  JS
+
+  browser.go_to URL
+  puts "loaded, waiting #{WAIT}s..."
+  sleep WAIT
+
+  puts "\n=== JS errors ==="
+  errs = browser.evaluate("window._errs || []") rescue []
+  puts errs.empty? ? "(none)" : errs.join("\n")
+
+  puts "\n=== network errors ==="
+  puts network_errors.empty? ? "(none)" : network_errors.join("\n")
+
+  puts "\n=== chat.js overlay ==="
+  dbg = browser.evaluate("(document.getElementById('_dbg') || {}).textContent || '(no overlay)'")
+  puts dbg
+
+  puts "\n=== page scripts loaded ==="
+  scripts = browser.evaluate("Array.from(document.querySelectorAll('script[src]')).map(s => s.src + ' ' + (s.getAttribute('data-loaded') || ''))")
+  puts scripts.inspect
+
+  puts "\n=== CSP header ==="
+  # Re-fetch headers via CDP
+  csp = browser.evaluate(<<~JS)
+    (function() {
+      var metas = document.querySelectorAll('meta[http-equiv]');
+      for (var m of metas) { if (m.httpEquiv.toLowerCase() === 'content-security-policy') return m.content; }
+      return '(not in meta — set via response header)';
+    })()
+  JS
+  puts csp
+
+  puts "\n=== test dynamic import of three.module.js ==="
+  browser.evaluate(<<~JS)
+    import('/three.module.js?v=11')
+      .then(function(m) { window._clog.push('THREE_OK keys=' + Object.keys(m).length); })
+      .catch(function(e) { window._clog.push('THREE_FAIL: ' + String(e)); });
+  JS
+  sleep 4
+
+  puts "\n=== primer state ==="
+  puts browser.evaluate("document.getElementById('primer') ? 'exists' : 'gone'")
+
+  puts "\n=== console log ==="
+  clog = browser.evaluate("window._clog || []") rescue []
+  puts clog.empty? ? "(none)" : clog.join("\n")
+
+  puts "\n=== element at tap point ==="
+  el = browser.evaluate("(function(){ var e = document.elementFromPoint(300,500); return e ? e.tagName+'#'+e.id+'.'+e.className : 'none'; })()")
+  puts el
+
+  puts "\n=== simulate tap ==="
+  browser.mouse.click(x: 300, y: 500)
+  sleep 3
+
+  puts "window._primerFired: " + (browser.evaluate("String(window._primerFired)") rescue "?")
+  puts "overlay after tap: " + (browser.evaluate("(document.getElementById('_dbg') || {}).textContent || '(no overlay)'") rescue "(evaluate failed)")
+  puts "primer after tap: " + (browser.evaluate("document.getElementById('primer') ? 'exists' : 'gone'") rescue "?")
+  puts "zsh.live: " + (browser.evaluate("document.getElementById('zsh').classList.contains('live').toString()") rescue "?")
+
+  puts "\n=== console log after tap ==="
+  clog2 = browser.evaluate("window._clog || []") rescue []
+  puts clog2.empty? ? "(none)" : clog2.join("\n")
+
+rescue => e
+  puts "probe error: #{e.class}: #{e.message}"
+  puts e.backtrace.first(3).join("\n")
+ensure
+  browser.quit
+end
