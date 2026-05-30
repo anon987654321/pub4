@@ -1,5 +1,5 @@
 "use strict";
-import * as THREE from '/three.module.js?v=12';
+import * as THREE from '/three.module.js?v=13';
 
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
@@ -178,6 +178,7 @@ const FACE_N = State.coarsePointer ? 8000 : 20000;
 const { home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleMeshSurface(head, FACE_N);
 
 const VERT_SHADER = `
+precision highp float;
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
 vec4 permute4(vec4 x){return mod289v4(((x*34.)+1.)*x);}
@@ -235,11 +236,12 @@ void main(){
   gl_PointSize=uSize*(300./-mv.z);
   gl_Position=projectionMatrix*mv;
   float depth=clamp((p.z+0.8)/1.8,0.,1.);
-  vAlpha=mix(0.06,0.3+depth*0.7,m);
+  vAlpha=mix(0.22,0.3+depth*0.7,m);
   vColor=uColor*(0.3+depth*0.7);
 }`;
 
 const FRAG_SHADER = `
+precision highp float;
 varying float vAlpha;
 varying vec3 vColor;
 void main(){
