@@ -129,60 +129,147 @@ function buildHeadGeometry() {
 
 const head = buildHeadGeometry();
 
-function uniqueVertexPositions(geom) {
-  const pos = geom.attributes.position;
-  const seen = new Map();
-  const out = [];
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-    const key = (x.toFixed(4) + ',' + y.toFixed(4) + ',' + z.toFixed(4));
-    if (seen.has(key)) continue;
-    seen.set(key, true);
-    out.push(x, y, z);
-  }
-  return new Float32Array(out);
-}
-
-function edgeMidpointPositions(geom) {
+// Area-weighted surface sampler — returns home, scatter, seed arrays
+function sampleMeshSurface(geom, N) {
   const pos = geom.attributes.position;
   const idx = geom.index;
-  const out = [];
-  const seen = new Set();
-  function add(a, b) {
-    const lo = Math.min(a, b), hi = Math.max(a, b);
-    const key = lo + ':' + hi;
-    if (seen.has(key)) return;
-    seen.add(key);
-    const mx = (pos.getX(lo) + pos.getX(hi)) * 0.5;
-    const my = (pos.getY(lo) + pos.getY(hi)) * 0.5;
-    const mz = (pos.getZ(lo) + pos.getZ(hi)) * 0.5;
-    out.push(mx, my, mz);
+  const triCount = idx.count / 3;
+  const areas = new Float32Array(triCount);
+  let totalArea = 0;
+  const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
+  for (let t = 0; t < triCount; t++) {
+    va.fromBufferAttribute(pos, idx.getX(t*3));
+    vb.fromBufferAttribute(pos, idx.getX(t*3+1));
+    vc.fromBufferAttribute(pos, idx.getX(t*3+2));
+    const area = vb.clone().sub(va).cross(vc.clone().sub(va)).length() * 0.5;
+    areas[t] = area; totalArea += area;
   }
-  for (let i = 0; i < idx.count; i += 3) {
-    const a = idx.getX(i), b = idx.getX(i + 1), c = idx.getX(i + 2);
-    add(a, b); add(b, c); add(c, a);
+  const cdf = new Float32Array(triCount);
+  let cum = 0;
+  for (let t = 0; t < triCount; t++) { cum += areas[t] / totalArea; cdf[t] = cum; }
+
+  const home = new Float32Array(N * 3);
+  const scatter = new Float32Array(N * 3);
+  const seeds = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const r = Math.random();
+    let lo = 0, hi = triCount - 1;
+    while (lo < hi) { const mid = (lo+hi)>>1; if (cdf[mid] < r) lo = mid+1; else hi = mid; }
+    const a = idx.getX(lo*3), b = idx.getX(lo*3+1), c = idx.getX(lo*3+2);
+    let r1 = Math.random(), r2 = Math.random();
+    if (r1 + r2 > 1) { r1 = 1-r1; r2 = 1-r2; }
+    const r3 = 1-r1-r2;
+    home[i*3]   = pos.getX(a)*r3 + pos.getX(b)*r1 + pos.getX(c)*r2;
+    home[i*3+1] = pos.getY(a)*r3 + pos.getY(b)*r1 + pos.getY(c)*r2;
+    home[i*3+2] = pos.getZ(a)*r3 + pos.getZ(b)*r1 + pos.getZ(c)*r2;
+    const phi = Math.acos(2*Math.random()-1);
+    const theta = Math.random() * Math.PI * 2;
+    const rad = 2.0 + Math.random() * 1.0;
+    scatter[i*3]   = rad * Math.sin(phi) * Math.cos(theta);
+    scatter[i*3+1] = rad * Math.sin(phi) * Math.sin(theta);
+    scatter[i*3+2] = rad * Math.cos(phi);
+    seeds[i] = Math.random() * 6.28318;
   }
-  return new Float32Array(out);
+  return { home, scatter, seeds };
 }
 
-const vertPositions = uniqueVertexPositions(head);
-const edgePositions = edgeMidpointPositions(head);
-const VERT_COUNT = vertPositions.length / 3;
+const FACE_N = State.coarsePointer ? 8000 : 20000;
+const { home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleMeshSurface(head, FACE_N);
 
-const vertHome = vertPositions.slice();
-const vertVel  = new Float32Array(VERT_COUNT * 3);
-// Session-unique face: tiny golden-ratio perturbation seeds a distinct face each load
-const SESSION_SEED = Math.random() * Math.PI * 2;
-for (let i = 0; i < VERT_COUNT; i++) {
-  const theta = SESSION_SEED + i * 2.3999632; // golden angle
-  const r = 0.014 * Math.sin(theta * 2.71);
-  vertHome[i*3]   += r * Math.cos(theta);
-  vertHome[i*3+1] += r * Math.sin(theta) * 0.65;
-  vertPositions[i*3]   = vertHome[i*3];
-  vertPositions[i*3+1] = vertHome[i*3+1];
+const VERT_SHADER = `
+vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
+vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
+vec4 permute4(vec4 x){return mod289v4(((x*34.)+1.)*x);}
+vec4 taylorInvSqrt4(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+float snoise(vec3 v){
+  const vec2 C=vec2(1./6.,1./3.);const vec4 D=vec4(0.,.5,1.,2.);
+  vec3 i=floor(v+dot(v,C.yyy));vec3 x0=v-i+dot(i,C.xxx);
+  vec3 g=step(x0.yzx,x0.xyz);vec3 l=1.-g;
+  vec3 i1=min(g.xyz,l.zxy);vec3 i2=max(g.xyz,l.zxy);
+  vec3 x1=x0-i1+C.xxx;vec3 x2=x0-i2+C.yyy;vec3 x3=x0-D.yyy;
+  i=mod289v3(i);
+  vec4 p=permute4(permute4(permute4(i.z+vec4(0.,i1.z,i2.z,1.))+i.y+vec4(0.,i1.y,i2.y,1.))+i.x+vec4(0.,i1.x,i2.x,1.));
+  float n_=.142857142857;vec3 ns=n_*D.wyz-D.xzx;
+  vec4 j=p-49.*floor(p*ns.z*ns.z);
+  vec4 x_=floor(j*ns.z);vec4 y_=floor(j-7.*x_);
+  vec4 x=x_*ns.x+ns.yyyy;vec4 y=y_*ns.x+ns.yyyy;vec4 h=1.-abs(x)-abs(y);
+  vec4 b0=vec4(x.xy,y.xy);vec4 b1=vec4(x.zw,y.zw);
+  vec4 s0=floor(b0)*2.+1.;vec4 s1=floor(b1)*2.+1.;vec4 sh=-step(h,vec4(0.));
+  vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+  vec3 p0=vec3(a0.xy,h.x);vec3 p1=vec3(a0.zw,h.y);vec3 p2=vec3(a1.xy,h.z);vec3 p3=vec3(a1.zw,h.w);
+  vec4 norm=taylorInvSqrt4(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+  p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+  vec4 m=max(.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.);m=m*m;
+  return 42.*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
 }
-const CURSOR_R = 0.40; // repulsion radius in head-local units
-const CURSOR_F = 0.035; // repulsion force per frame
+vec3 curlNoise(vec3 p){
+  const float e=.07;
+  float n1,n2,n3,n4;
+  n1=snoise(p+vec3(0,e,0));n2=snoise(p-vec3(0,e,0));
+  n3=snoise(p+vec3(0,0,e));n4=snoise(p-vec3(0,0,e));
+  float cx=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
+  vec3 q=p+vec3(31.416);
+  n1=snoise(q+vec3(0,0,e));n2=snoise(q-vec3(0,0,e));
+  n3=snoise(q+vec3(e,0,0));n4=snoise(q-vec3(e,0,0));
+  float cy=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
+  vec3 r=p+vec3(17.);
+  n1=snoise(r+vec3(e,0,0));n2=snoise(r-vec3(e,0,0));
+  n3=snoise(r+vec3(0,e,0));n4=snoise(r-vec3(0,e,0));
+  float cz=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
+  return vec3(cx,cy,cz);
+}
+uniform float uMorph;
+uniform float uTime;
+uniform float uSize;
+uniform vec3 uColor;
+attribute vec3 scatter;
+attribute float seed;
+varying float vAlpha;
+varying vec3 vColor;
+void main(){
+  float m=smoothstep(0.,1.,uMorph);
+  vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*0.85;
+  vec3 p=mix(scatter,position,m)+noise;
+  vec4 mv=modelViewMatrix*vec4(p,1.);
+  gl_PointSize=uSize*(300./-mv.z);
+  gl_Position=projectionMatrix*mv;
+  float depth=clamp((p.z+0.8)/1.8,0.,1.);
+  vAlpha=mix(0.06,0.3+depth*0.7,m);
+  vColor=uColor*(0.3+depth*0.7);
+}`;
+
+const FRAG_SHADER = `
+varying float vAlpha;
+varying vec3 vColor;
+void main(){
+  float d=length(gl_PointCoord-0.5);
+  if(d>0.5)discard;
+  float soft=1.-d*2.;
+  gl_FragColor=vec4(vColor,soft*soft*vAlpha);
+}`;
+
+const faceGeom = new THREE.BufferGeometry();
+faceGeom.setAttribute('position', new THREE.BufferAttribute(faceHome, 3));
+faceGeom.setAttribute('scatter',  new THREE.BufferAttribute(faceScatter, 3));
+faceGeom.setAttribute('seed',     new THREE.BufferAttribute(faceSeeds, 1));
+
+const faceMat = new THREE.ShaderMaterial({
+  vertexShader: VERT_SHADER,
+  fragmentShader: FRAG_SHADER,
+  uniforms: {
+    uMorph: { value: 0.0 },
+    uTime:  { value: 0.0 },
+    uSize:  { value: 0.08 },
+    uColor: { value: new THREE.Color(1, 1, 1) }
+  },
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending
+});
+const facePoints = new THREE.Points(faceGeom, faceMat);
+
+let morphCurrent = 0.0, morphTarget = 0.0;
+let mouthPool = null, eyePool = null;
 
 const COUNCIL_VOICE = {
   Architect: 'ryan', Skeptic: 'steffan', Pragmatist: 'finn',
@@ -196,77 +283,6 @@ const BOOT_DUO = [
   ['pernille', 'Spør oss hva som helst.']
 ];
 
-const mouthMask = new Uint8Array(VERT_COUNT);
-const eyeMask   = new Uint8Array(VERT_COUNT);
-for (let i = 0; i < VERT_COUNT; i++) {
-  const x = vertHome[i*3], y = vertHome[i*3+1], z = vertHome[i*3+2];
-  const md = Math.hypot(x, (y + 0.38) * 1.4, (z - 0.84) * 1.4);
-  if (md < 0.30 && z > 0.5) mouthMask[i] = 1;
-  for (const sx of [-1, 1]) {
-    const dx = x - 0.32 * sx, dy = y - 0.22, dz = z - 0.78;
-    if (dx*dx + dy*dy + dz*dz < 0.06) eyeMask[i] = 1;
-  }
-}
-
-// Semantic driver pools per data/topologies.yml face cell_rules + data/ops/visual.yml limits.
-// Respect MASTER_VISUAL_LIMITS and reducedMotion for battery/coarse profiles.
-let mouthPool = null;
-let eyePool = null;
-if (window.ParticleKernel) {
-  const K = window.ParticleKernel;
-  const limits = window.MASTER_VISUAL_LIMITS || { maxParticles: 200, reducedMotionParticles: 64 };
-  const isReduced = State?.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const cap = isReduced ? limits.reducedMotionParticles : Math.min(48, limits.maxParticles);
-  const mouthCount = Math.max(4, Math.floor(cap * 0.25));
-  const eyeCount = Math.max(3, Math.floor(cap * 0.15));
-  mouthPool = K.createPool(mouthCount);
-  eyePool = K.createPool(eyeCount);
-  for (let i = 0; i < Math.floor(mouthCount * 0.6); i++) K.spawn(mouthPool, 0, 0, { kind: 2, zone: 1, confidence: 0.85, arousal: 0.1, attention: 0.6, decay: 0.12 });
-  for (let i = 0; i < Math.floor(eyeCount * 0.6); i++) K.spawn(eyePool, 0, 0, { kind: 1, zone: 0, confidence: 0.9, arousal: 0.2, attention: 0.7, decay: 0.03 });
-}
-
-function makeSprite() {
-  const c = document.createElement('canvas');
-  c.width = c.height = 64;
-  const g = c.getContext('2d');
-  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-  grad.addColorStop(0.0, 'rgba(255,255,255,1)');
-  grad.addColorStop(0.4, 'rgba(255,255,255,0.6)');
-  grad.addColorStop(1.0, 'rgba(255,255,255,0)');
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 64, 64);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-const sprite = makeSprite();
-
-const vertGeom = new THREE.BufferGeometry();
-vertGeom.setAttribute('position', new THREE.BufferAttribute(vertPositions, 3));
-const vertColors = new Float32Array(VERT_COUNT * 3).fill(1);
-const vertColorAttr = new THREE.BufferAttribute(vertColors, 3);
-vertGeom.setAttribute('color', vertColorAttr);
-const vertMat = new THREE.PointsMaterial({
-  size: 0.055, map: sprite, transparent: true, depthWrite: false,
-  blending: THREE.AdditiveBlending, sizeAttenuation: true,
-  vertexColors: true
-});
-const vertPoints = new THREE.Points(vertGeom, vertMat);
-scene.add(vertPoints);
-
-const EDGE_COUNT = edgePositions.length / 3;
-const edgeGeom = new THREE.BufferGeometry();
-edgeGeom.setAttribute('position', new THREE.BufferAttribute(edgePositions, 3));
-const edgeColors = new Float32Array(EDGE_COUNT * 3).fill(1);
-const edgeColorAttr = new THREE.BufferAttribute(edgeColors, 3);
-edgeGeom.setAttribute('color', edgeColorAttr);
-const edgeMat = new THREE.PointsMaterial({
-  size: 0.025, map: sprite, transparent: true, depthWrite: false,
-  blending: THREE.AdditiveBlending, sizeAttenuation: true,
-  vertexColors: true, opacity: 0.55
-});
-const edgePoints = new THREE.Points(edgeGeom, edgeMat);
-scene.add(edgePoints);
 
 const colorCurrent = TINT.idle.clone();
 const colorTarget  = TINT.idle.clone();
@@ -303,42 +319,18 @@ function dollyZoom(intensity) {
   requestAnimationFrame(forward);
 }
 
-// Photo depth map: project vertex XY to image UV, use luminance as Z offset
-function applyPhotoDepthMap(file) {
-  const img = new Image();
-  const url = URL.createObjectURL(file);
-  img.onload = () => {
-    const c = document.createElement('canvas');
-    c.width = 64; c.height = 64;
-    const g = c.getContext('2d');
-    g.drawImage(img, 0, 0, 64, 64);
-    const id = g.getImageData(0, 0, 64, 64);
-    URL.revokeObjectURL(url);
-    for (let i = 0; i < VERT_COUNT; i++) {
-      const i3 = i * 3;
-      const u = Math.max(0, Math.min(63, Math.floor((vertHome[i3]   + 1.1) / 2.2 * 63)));
-      const v = Math.max(0, Math.min(63, Math.floor((1.0 - (vertHome[i3+1] + 1.0) / 2.4) * 63)));
-      const px = (v * 64 + u) * 4;
-      const lum = (id.data[px] + id.data[px+1] + id.data[px+2]) / (3 * 255);
-      vertHome[i3+2] += (lum - 0.45) * 0.55;
-    }
-  };
-  img.src = url;
-}
 const _photoEl = document.getElementById('photo');
-if (_photoEl) _photoEl.addEventListener('change', () => { if (_photoEl.files[0]) applyPhotoDepthMap(_photoEl.files[0]); });
+if (_photoEl) _photoEl.addEventListener('change', () => {
+  if (_photoEl.files[0]) { morphCurrent = 0; morphTarget = 1.0; }
+});
 
 
 let lastT = performance.now();
-let nextBlink    = performance.now() + 3000 + Math.random() * 3000;
-let saccadeX     = 0, nextSaccade = performance.now() + Math.random() * 6000 + 3000;
-let windPhase    = 0;
-let nextMicro    = performance.now() + Math.random() * 20000 + 15000;
-let nodImpulse   = 0;
+let saccadeX = 0, nextSaccade = performance.now() + Math.random() * 6000 + 3000;
+let nodImpulse = 0;
 const head3 = new THREE.Object3D();
 scene.add(head3);
-head3.add(vertPoints);
-head3.add(edgePoints);
+head3.add(facePoints);
 
 function frame(t) {
   if (!renderer || State.hidden) {
@@ -377,8 +369,6 @@ function frame(t) {
 
   const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
   colorCurrent.lerp(colorTarget, lerpSpeed);
-  vertMat.color.setRGB(1, 1, 1);
-  edgeMat.color.setRGB(1, 1, 1);
 
   if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
     saccadeX = (Math.random() - 0.5) * 0.28;
@@ -407,139 +397,19 @@ function frame(t) {
     head3.position.set(0, 0, State.lean);
   }
 
-  if (!State.reducedMotion && t > nextBlink) {
-    for (let i = 0; i < VERT_COUNT; i++) if (eyeMask[i]) vertVel[i*3+1] -= 0.10;
-    nextBlink = t + Math.random() * 4000 + 3000;
-  }
-  if (!State.reducedMotion && State.mode === 'speaking' && t > nextMicro) {
-    for (let i = 0; i < VERT_COUNT; i++) if (vertHome[i*3+1] > 0.55) vertVel[i*3+1] += 0.048;
-    nextMicro = t + Math.random() * 20000 + 15000;
-  }
-  windPhase += dt * 0.00008;
+  // GPU morph: settle on load, dissolve on long idle
+  const idleS = (t - State.lastTouch) / 1000;
+  morphTarget = idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : 1.0;
+  morphCurrent += (morphTarget - morphCurrent) * 0.012;
+  faceMat.uniforms.uMorph.value = morphCurrent;
+  faceMat.uniforms.uTime.value = t * 0.001;
+  faceMat.uniforms.uColor.value.copy(colorCurrent);
 
-  const vPos = vertGeom.attributes.position.array;
-  const visAmp = State.visemeAmp;
-  const visOpen = (State.viseme === 'A' || State.viseme === 'O' || State.viseme === 'U') ? 1.0
-                : (State.viseme === 'I' || State.viseme === 'E') ? 0.45
-                : (State.viseme === 'M') ? 0.05 : 0.0;
-
-  // Kernel cells now drive expression (data/topologies.yml face.cell_rules + visual_clusters migration).
-  // mouthPool: kind=speech (fast decay); eyePool: kind=focus (slow decay). Values feed displacement.
-  let mouthDrive = visAmp;
-  let eyeJitter = 0.02;
-  if (mouthPool) {
-    window.ParticleKernel.step(mouthPool, 0.016);
-    let sum = 0, n = 0;
-    for (let i = 0; i < mouthPool.count; i++) {
-      if (mouthPool.alive[i]) { sum += mouthPool.cells[i * window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.arousal]; n++; }
-    }
-    if (n > 0) mouthDrive = Math.max(visAmp, sum / n);
-    window.ParticleKernel.compact(mouthPool);
-  }
-  if (eyePool) {
-    window.ParticleKernel.step(eyePool, 0.016);
-    let sum = 0, n = 0;
-    for (let i = 0; i < eyePool.count; i++) {
-      if (eyePool.alive[i]) { sum += eyePool.cells[i * window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.attention]; n++; }
-    }
-    if (n > 0) eyeJitter = 0.01 + (sum / n) * 0.04;
-    if (State.confidence > 0.85) eyeJitter *= 0.92;
-    eyeJitter += (State.entropy || 0) * 0.03;
-    window.ParticleKernel.compact(eyePool);
-  }
-
-  for (let i = 0; i < VERT_COUNT; i++) {
-    const i3 = i * 3;
-    let hx = vertHome[i3], hy = vertHome[i3+1], hz = vertHome[i3+2];
-    if (mouthMask[i]) {
-      const open = visOpen * mouthDrive;
-      hy -= open * 0.05;
-      hz += open * 0.04;
-    }
-    if (eyeMask[i] && !State.reducedMotion && Math.random() < eyeJitter) {
-      vertVel[i3]   += (Math.random() - 0.5) * (eyeJitter * 0.2);
-      vertVel[i3+1] += (Math.random() - 0.5) * (eyeJitter * 0.2);
-    }
-    if (!State.reducedMotion && cursorActive) {
-      const cdx = vPos[i3] - State.mouseX * 1.5, cdy = vPos[i3+1] + State.mouseY * 1.5;
-      const cd2 = cdx * cdx + cdy * cdy;
-      if (cd2 < CURSOR_R * CURSOR_R && cd2 > 0.0001) {
-        const cd = Math.sqrt(cd2);
-        const cf = CURSOR_F * (1 - cd / CURSOR_R);
-        vertVel[i3]   += (cdx / cd) * cf;
-        vertVel[i3+1] += (cdy / cd) * cf;
-      }
-    }
-    if (!State.reducedMotion) {
-      // Gaze gravity: particles drift slightly toward where face looks
-      const gx = State.mouseX * 1.5, gy = -State.mouseY * 1.5;
-      const gdx = gx - vPos[i3], gdy = gy - vPos[i3+1];
-      const gd2 = gdx*gdx + gdy*gdy;
-      if (gd2 > 0.04 && gd2 < 4.0) { const gf = 0.000025 / gd2; vertVel[i3] += gdx * gf; vertVel[i3+1] += gdy * gf; }
-      // Wind: slow sinusoidal lateral drift
-      vertVel[i3] += Math.sin(windPhase + hx * 2.1) * 0.00013;
-      // Thinking: slow CCW orbit around y-axis
-      if (State.mode === 'thinking') {
-        vertVel[i3]   -= vPos[i3+2] * 0.0009;
-        vertVel[i3+2] += vPos[i3]   * 0.0009;
-      }
-      // Audio frequency zones: bass=jaw, mids=cheeks, highs=crown
-      if (mouthMask[i] && (State.audioBass || 0) > 0.04)
-        vertVel[i3+1] -= State.audioBass * 0.028;
-      if (!mouthMask[i] && !eyeMask[i] && Math.abs(hx) > 0.35 && Math.abs(hy) < 0.38 && (State.audioMids || 0) > 0.04)
-        vertVel[i3] += (hx > 0 ? 1 : -1) * State.audioMids * 0.020;
-      if (hy > 0.52 && (State.audioHighs || 0) > 0.04)
-        vertVel[i3+1] += State.audioHighs * 0.024;
-    }
-    const sx = vertVel[i3]   = vertVel[i3]   * 0.9 + (hx - vPos[i3])   * 0.18;
-    const sy = vertVel[i3+1] = vertVel[i3+1] * 0.9 + (hy - vPos[i3+1]) * 0.18;
-    const sz = vertVel[i3+2] = vertVel[i3+2] * 0.9 + (hz - vPos[i3+2]) * 0.18;
-    vPos[i3]   += sx * 0.5;
-    vPos[i3+1] += sy * 0.5;
-    vPos[i3+2] += sz * 0.5;
-  }
-  State.visemeAmp *= 0.85;
-  vertGeom.attributes.position.needsUpdate = true;
-
-  // Per-vertex z-depth coloring (rack focus: near=bright, far=dim)
-  for (let i = 0; i < VERT_COUNT; i++) {
-    const z = vPos[i*3+2];
-    const depth = Math.max(0, Math.min(1, (z + 0.8) / 1.8));
-    const br = 0.25 + depth * 0.75;
-    vertColors[i*3]   = colorCurrent.r * br;
-    vertColors[i*3+1] = colorCurrent.g * br;
-    vertColors[i*3+2] = colorCurrent.b * br;
-  }
-  vertColorAttr.needsUpdate = true;
-  const ePos = edgeGeom.attributes.position.array;
-  for (let i = 0; i < EDGE_COUNT; i++) {
-    const z = ePos[i*3+2];
-    const depth = Math.max(0, Math.min(1, (z + 0.8) / 1.8));
-    const br = 0.12 + depth * 0.45;
-    edgeColors[i*3]   = colorCurrent.r * br;
-    edgeColors[i*3+1] = colorCurrent.g * br;
-    edgeColors[i*3+2] = colorCurrent.b * br;
-  }
-  edgeColorAttr.needsUpdate = true;
-
-  // Confidence → particle sharpness; whisper dims, shout brightens
   const voiceRMS = State.voiceRMS || 0;
   const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
   const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
-  vertMat.size = 0.055 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
-  edgeMat.size = 0.025 * (0.55 + State.confidence * 0.45) * whisperScale;
-  edgeMat.opacity = 0.55 * (0.6 + State.confidence * 0.4) * (0.93 + Math.random() * 0.07);
+  faceMat.uniforms.uSize.value = 0.08 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
 
-  // Idle dissolve + grain
-  const idleS = (t - State.lastTouch) / 1000;
-  const dissolveT = idleS > 90 ? Math.min(1, (idleS - 90) / 90) : 0;
-  vertMat.opacity = Math.max(0, (1 - State.flash * 0.4 - dissolveT * 0.55)) * (0.93 + Math.random() * 0.07);
-  if (dissolveT > 0.25 && !State.reducedMotion && Math.random() < 0.009) {
-    const ri = Math.floor(Math.random() * VERT_COUNT) * 3;
-    vertVel[ri]   += (Math.random() - 0.5) * 0.055;
-    vertVel[ri+1] += (Math.random() - 0.5) * 0.055;
-    vertVel[ri+2] += (Math.random() - 0.5) * 0.028;
-  }
   State.flash *= 0.9;
 
   renderer.render(scene, camera);
@@ -599,20 +469,7 @@ if (window.DeviceMotionEvent) {
     const now = performance.now();
     if (m > 24 && now - lastShake > 800) {
       lastShake = now; ttsSkip(); State.shake = 1.2;
-      // Clap/shake scatter
-      for (let i = 0; i < VERT_COUNT; i++) {
-        vertVel[i*3]   += (Math.random() - 0.5) * 0.08;
-        vertVel[i*3+1] += (Math.random() - 0.5) * 0.08;
-        vertVel[i*3+2] += (Math.random() - 0.5) * 0.04;
-      }
-    }
-    // Harden mobile sensor integration: subtle kernel pressure/jitter from device motion (for "shaky hand" expressiveness)
-    if (mouthPool && m > 8) {
-      for (let i=0; i<mouthPool.count; i++) if (mouthPool.alive[i]) {
-        const b = i*window.ParticleKernel.FIELDS_PER_CELL;
-        mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + window.ParticleKernel.FIELD.pressure]||0) + m*0.01);
-        if (m > 18) { mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + window.ParticleKernel.FIELD.arousal]||0) + 0.08); mouthPool.cells[b + window.ParticleKernel.FIELD.valence] = Math.max(-1, (mouthPool.cells[b + window.ParticleKernel.FIELD.valence]||0) - 0.04); }
-      }
+      morphCurrent = Math.max(0, morphCurrent - 0.6); morphTarget = 1.0;
     }
   }, { passive: true });
 }
@@ -657,23 +514,10 @@ if ('speechSynthesis' in window) {
 
 const VOWEL_VISEME = { a:'A', e:'E', i:'I', o:'O', u:'U' };
 
-// Drive the mouth particle pool to an open/closed pose (topologies.yml mouth: kind speech).
-function driveMouth(open) {
-  if (!mouthPool) return;
-  const K = window.ParticleKernel;
-  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-    const base = i * K.FIELDS_PER_CELL;
-    mouthPool.cells[base + K.FIELD.arousal] = open ? 1.0 : 0.25;
-    mouthPool.cells[base + K.FIELD.pressure] = open ? 0.8 : 0.2;
-    mouthPool.cells[base + K.FIELD.valence] = 0.6;
-  }
-}
-
 function setViseme(ch) {
   const c = (ch || '').toLowerCase();
   State.viseme = VOWEL_VISEME[c] || (('mbpfwv'.indexOf(c) >= 0) ? 'M' : 'E');
   State.visemeAmp = 1.0;
-  driveMouth(true);
 }
 
 function clearViseme() {
@@ -786,8 +630,6 @@ function ttsSkip() {
   stopVisemeAnim();
   tts.queue.length = 0; tts.playing = false; tts.current = null;
   clearViseme();
-  // Reset driver cells on skip (preserves fast-decay intent from topologies.yml).
-  if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) mouthPool.cells[i * window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.arousal] = 0.05;
 }
 function ttsToggleMute() {
   tts.muted = !tts.muted;
@@ -859,15 +701,7 @@ async function sendMessage(text) {
       window._chatOnChunk?.('\n' + raw + '\n');
       State.mode = 'error'; State.flash = 1; State.shake = 0.8;
       fadeColorTo(TINT.veto);
-      const vp = vertGeom.attributes.position.array;
-      for (let i = 0; i < VERT_COUNT; i++) {
-        const i3 = i * 3;
-        const dx = vp[i3], dy = vp[i3+1];
-        const d = Math.hypot(dx, dy) || 1;
-        vertVel[i3]   = (dx/d) * (0.07 + Math.random() * 0.11);
-        vertVel[i3+1] = (dy/d) * (0.07 + Math.random() * 0.11);
-        vertVel[i3+2] = (Math.random() - 0.5) * 0.09;
-      }
+      morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
       window._chatOnError?.();
       return;
     }
@@ -904,19 +738,11 @@ async function sendMessage(text) {
     if (State.confidence > 0.75) State.pulse = 0.9;
     if (v === 'pass') {
       beep(880, 0.06);
-      // Consensus snap: all particles rush home simultaneously
-      for (let i = 0; i < VERT_COUNT; i++) { vertVel[i*3] *= 0.1; vertVel[i*3+1] *= 0.1; vertVel[i*3+2] *= 0.1; }
+      morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
     }
     if (v === 'veto') {
       beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
-      // Shatter on veto
-      const vp = vertGeom.attributes.position.array;
-      for (let i = 0; i < VERT_COUNT; i++) {
-        const i3 = i*3, dx = vp[i3], dy = vp[i3+1], d = Math.hypot(dx, dy) || 1;
-        vertVel[i3]   = (dx/d) * (0.05 + Math.random() * 0.09);
-        vertVel[i3+1] = (dy/d) * (0.05 + Math.random() * 0.09);
-        vertVel[i3+2] = (Math.random() - 0.5) * 0.07;
-      }
+      morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
     }
   });
   evtSrc.addEventListener('council:speech', (ev) => {
@@ -1000,15 +826,7 @@ const POST_LINES = [
   'ready'
 ];
 function startEverything() {
-  // Scatter particles to flat 2D — spring in frame() coalesces them into 3D face shape
-  for (let i = 0; i < VERT_COUNT; i++) {
-    vertPositions[i*3]   = (Math.random() - 0.5) * 3.5;
-    vertPositions[i*3+1] = (Math.random() - 0.5) * 3.5;
-    vertPositions[i*3+2] = 0;
-    vertVel[i*3] = vertVel[i*3+1] = vertVel[i*3+2] = 0;
-  }
-  vertGeom.attributes.position.needsUpdate = true;
-
+  morphCurrent = 0.0; morphTarget = 1.0;
   initAudio();
   if (actx && actx.state === 'suspended') actx.resume();
   let li = 0;
