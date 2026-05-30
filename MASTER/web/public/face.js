@@ -1,5 +1,5 @@
 "use strict";
-import * as THREE from '/three.module.js?v=11';
+import * as THREE from '/three.module.js?v=12';
 
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
