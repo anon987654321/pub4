@@ -400,7 +400,7 @@ function frame(t) {
   // GPU morph: hold scatter until primer fires, then settle; dissolve on long idle
   const idleS = (t - State.lastTouch) / 1000;
   morphTarget = !primerFired ? 0.0 : (idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : 1.0);
-  morphCurrent += (morphTarget - morphCurrent) * 0.012;
+  morphCurrent += (morphTarget - morphCurrent) * 0.04;
   faceMat.uniforms.uMorph.value = morphCurrent;
   faceMat.uniforms.uTime.value = t * 0.001;
   faceMat.uniforms.uColor.value.copy(colorCurrent);
@@ -854,6 +854,7 @@ function startEverything() {
 let primerFired = false;
 function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
 primer.addEventListener('pointerdown', firePrimer);
+primer.addEventListener('touchstart', firePrimer, { passive: true });
 primer.addEventListener('click', firePrimer);
 primer.addEventListener('keydown', event => {
   if (event.key !== 'Enter' && event.key !== ' ') return;
