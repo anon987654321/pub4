@@ -397,9 +397,9 @@ function frame(t) {
     head3.position.set(0, 0, State.lean);
   }
 
-  // GPU morph: settle on load, dissolve on long idle
+  // GPU morph: hold scatter until primer fires, then settle; dissolve on long idle
   const idleS = (t - State.lastTouch) / 1000;
-  morphTarget = idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : 1.0;
+  morphTarget = !primerFired ? 0.0 : (idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : 1.0);
   morphCurrent += (morphTarget - morphCurrent) * 0.012;
   faceMat.uniforms.uMorph.value = morphCurrent;
   faceMat.uniforms.uTime.value = t * 0.001;
