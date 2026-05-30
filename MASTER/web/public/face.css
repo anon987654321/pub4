@@ -46,6 +46,9 @@ canvas {
   justify-content: center;
   z-index: 9;
   cursor: pointer;
+  background: rgba(0,0,0,0.001);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 #primer:focus-visible { outline: 1px solid var(--face-fg); outline-offset: -8px; }
