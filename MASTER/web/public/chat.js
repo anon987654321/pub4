@@ -1,5 +1,20 @@
 "use strict";
 
+// Diagnostic overlay — reports JS errors on-screen so we can debug without devtools
+(function() {
+  const overlay = document.createElement('div');
+  overlay.id = '_dbg';
+  overlay.style.cssText = 'position:fixed;bottom:48px;left:0;right:0;z-index:999;font:10px monospace;color:#0f0;padding:4px 8px;pointer-events:none;word-break:break-all;white-space:pre-wrap';
+  document.body.appendChild(overlay);
+  function dbg(msg) { overlay.textContent = (overlay.textContent + '\n' + msg).slice(-400); }
+  dbg('chat.js ok');
+  window.addEventListener('error', function(e) { dbg('ERR: ' + e.message + ' ' + e.filename?.split('/').pop() + ':' + e.lineno); });
+  window.addEventListener('unhandledrejection', function(e) { dbg('REJ: ' + String(e.reason)); });
+  document.addEventListener('touchstart', function() { dbg('touch ok'); }, { once: true, passive: true });
+  document.addEventListener('pointerdown', function() { dbg('ptr ok'); }, { once: true });
+  window._dbg = dbg;
+})();
+
 const log   = document.getElementById('chat-log');
 const zsh   = document.getElementById('zsh');
 const input = document.getElementById('zin');
