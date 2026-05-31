@@ -1235,3 +1235,278 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] AA808 Kernel#pp for debugging instead of puts: MASTER's development output should use pp not puts for structured data — enables cleaner inspection without custom serializers
 - [ ] AA809 Frozen string literal by default everywhere: currently some files lack the magic comment — enforce globally; Erubi demonstrates this at scale
 - [ ] AA810 Proc#curry for partial application: ModelRouter's scoring functions take 3 args — curry enables `score_for_tier.(tier)` partial application; cleaner than closures with captured state
+
+## AB — Logic Inconsistencies, Ambiguity, Overlapping Rules (item 14)
+
+### AB1: Scan Rule Conflicts and Overlaps
+
+- [ ] AB101 TRAILING_WHITESPACE (lexical rule) overlaps with C02 AstFixer strip_trailing_whitespace — two systems fix the same thing; deduplicate to AstFixer only, remove lexical rule
+- [ ] AB102 CONSECUTIVE_BLANK_LINES (lexical rule) overlaps with C01 AstFixer collapse_blank_lines — same dedup; AstFixer is deterministic and runs first; lexical rule becomes unreachable
+- [ ] AB103 FROZEN_LITERAL (lexical rule) overlaps with C00 AstFixer add_frozen_header — rule fires on a file that AstFixer will immediately fix; report only if autofix is disabled
+- [ ] AB104 STRICT_MODE_ZSH (lexical, applies_to zsh) and C04 AstFixer add_strict_mode both target the same pattern — coordinate so rule fires only if autofix explicitly turned off
+- [ ] AB105 SMALL_FILES (SmallFilesRule B01, limit 300) and JS_MODULE_SIZE (js_rules, limit 300) are the same rule duplicated for different language labels — unify under one rule with medium-specific message
+- [ ] AB106 SECRET_PROXIMITY and FORBIDDEN_PATTERNS both detect hardcoded credentials — SECRET_PROXIMITY uses proximity context; FORBIDDEN_PATTERNS uses exact pattern; define which is authoritative or merge
+- [ ] AB107 UNBOUNDED_RETRY and RACE_CONDITIONS both inspect multi-line context around a keyword — create shared scan_context_lines helper to avoid inconsistent window sizes (12 vs 10)
+- [ ] AB108 NO_MAGIC_NUMBERS fires on integer literals inside constant definitions (FOO = 300) — should exempt right-hand side of SCREAMING_SNAKE assignments; currently false-positives own constants
+- [ ] AB109 GUARD_CLAUSE and NESTING_DEPTH both fire on deeply nested if/else — GUARD_CLAUSE fires at def level, NESTING_DEPTH at >4 levels; they can both fire on same method; suppress one
+- [ ] AB110 KEYWORD_ARGS fires on `def foo(a, b, c)` but not on `def foo(a, b, c = nil)` — the presence of a default makes it a keyword-style arg; rule inconsistently exempts defaults
+- [ ] AB111 DEAD_CODE fires on line after `return` but not after `raise` at end of a rescue block — raise in rescue is a valid terminal; align the pattern
+- [ ] AB112 TRAILING_COMMAS fires on multi-line arrays but not on multi-line method argument lists — extend or document the deliberate exclusion
+- [ ] AB113 NULL_BLINDNESS fires on `== nil` but AstFixer normalise_null_comparison targets SQL `= NULL` — scopes don't overlap but names imply they do; rename AstFixer transform to SQL_NULL_COMPARISON
+
+### AB2: Severity Inconsistencies
+
+- [ ] AB201 FORBIDDEN_PATTERNS is :error but RACE_CONDITIONS is also :error — yet RACE_CONDITIONS has a much higher false-positive rate (check-then-set without synchronize fires on valid patterns) — downgrade to :warning or add suppressibility
+- [ ] AB202 SECRET_PROXIMITY is :error but KEYWORD_ARGS is :error — keyword args are stylistic, not security — KEYWORD_ARGS should be :warning
+- [ ] AB203 SMALL_FILES and SmallFilesRule both have :warning severity — consistent, but files >500 lines should escalate to :error; add tiered severity
+- [ ] AB204 DATA_CLASS fires as :info but should be :warning — a data-only class with no behavior is a design smell, not a style preference
+- [ ] AB205 CQS (B04) fires as :warning but Clean Code treats CQS violation as high severity — align with source material or document why downgraded
+- [ ] AB206 FileLayoutRule (B05) fires as :info — frozen_string_literal missing is already :warning in FROZEN_LITERAL; two rules for the same finding create duplicate findings at different severities
+
+### AB3: Vague or Ambiguous Rule Descriptions
+
+- [ ] AB301 FULL_BY_DEFAULT: description "use full/deep by default" — ambiguous whether it flags the param name or the default value; clarify: "flag any method/flag parameter named shallow|standard|lite|basic|quick"
+- [ ] AB302 GUARD_CLAUSE: message says "extract to guard clause" but the detection regex matches `def … if … else` — it fires on correct guard clauses too if they're nested; refine regex
+- [ ] AB303 SPECULATIVE_GENERALITY_LEXICAL: fires on `# TODO: future` — legitimate TODOs with dates should be exempt; add "# TODO(2026-06-01):" exclusion
+- [ ] AB304 COMMENTS_AS_DEODORANT fires on "This method returns…" — should exempt method documentation at class/module boundary (first comment after a class/module declaration)
+- [ ] AB305 USE_THEN: description says "use .then over temp variable chains" — detection pattern requires temp var used immediately on next line; chains split by blank lines are missed; clarify scope
+- [ ] AB306 EXPLICIT rule (B06): "detect implicit requires, implicit return types, magic coupling" — three completely different concerns bundled; split into ExplicitRequiresRule, MethodMissingRule, AutoloadRule
+- [ ] AB307 CyclomaticComplexityRule description says "max 10" but soul.yml SIMPLEST_WORKS says "max 20 lines" for methods — two different metrics (CC vs length) used interchangeably in violation messages; distinguish them explicitly
+
+### AB4: Pipeline Logic Inconsistencies
+
+- [ ] AB401 AstFixer runs before scan but AstFixer's normalise_null_comparison skips /judge/scan/ files — scanner files can contain SQL patterns but are exempt; undocumented exclusion; add comment explaining why
+- [ ] AB402 FixLoop has two strategies (llm_pass, fast_pass) but the strategy selection logic is in scanner.rb, not FixLoop — SRP violation in the scanner itself; move strategy selection to FixLoop
+- [ ] AB403 DetectionPipeline has a cyclomatic_complexity method that's being superseded by CyclomaticComplexityRule (B08) — old CC logic still runs in parallel; will produce duplicate findings until removed
+- [ ] AB404 SemanticRule batches all detect_semantic rules into one LLM call but structural rules run individually — inconsistent batching strategy; either batch structural too or explain why not
+- [ ] AB405 /review and /critique both invoke deliberation logic — /critique is subset of /review; the distinction is invisible to users; merge or rename clearly
+- [ ] AB406 /fix and /scan --fix are both valid entry points for the same fix pipeline — duplicate invocation paths with potentially different defaults; canonicalize one
+- [ ] AB407 Loop::Heartbeat and Loop::Homeostat both manage background scheduling — Heartbeat runs periodic scans, Homeostat manages drive states — their interaction (who yields to whom) is undocumented
+- [ ] AB408 Propose module and SoulProposals both emit proposals — different triggers, different output paths — user sees proposals from both without clear distinction; unify under one Proposal.emit interface
+
+### AB5: Data Inconsistencies
+
+- [ ] AB501 rules.yml has 173 rules but Rule.registry at runtime has fewer — rules declared in YAML but not implemented in Ruby are silently absent; add boot assertion counting both and failing on mismatch
+- [ ] AB502 soul.yml negotiable.default_model and data/models.yml default_tier use different model ID formats — soul.yml uses shorthand ("claude-opus-4-7"), models.yml uses full API path; normalize to one canonical format
+- [ ] AB503 data/standing_orders.yml and data/workflow.yml both define execution limits — max_iterations appears in both with potentially different values; single source of truth required
+- [ ] AB504 ruby_style.yml defines max_method_lines: 10 but SmallFunctionsRule uses MAX: 20 — two different "max" values for the same concept; align or document the distinction (ideal vs hard limit)
+- [ ] AB505 data/patterns.yml and data/rules.yml both contain regex patterns for the same smells — DRY violation in the data layer; rules.yml patterns should be the single source
+- [ ] AB506 data/council.yml defines reviewer personas but judge/council/ Ruby files redefine them inline — YAML persona config not loaded by council code; dead data
+- [ ] AB507 data/axioms.jsonl and lib/ground/axioms/ both contain axiom definitions — JSONL format and Ruby module format for the same information; one must be authoritative
+
+### AB6: CLI Inconsistencies
+
+- [ ] AB601 /run is documented as "recommended for most work" in help output but /scan, /fix, /review are still listed as primary commands — creates ambiguity about which to use
+- [ ] AB602 /topic accepts an argument but /model, /persona, /mode also accept arguments — inconsistent help text format: some show [arg], some show <arg>, some show nothing
+- [ ] AB603 /checkpoint creates a snapshot but /snapshot also exists — two commands with same semantic intent; merge to /checkpoint, remove /snapshot alias
+- [ ] AB604 /resync --dry-run flag documented but not all commands support --dry-run consistently — flag handling is command-specific not framework-level; should be universal
+- [ ] AB605 /dmesg shows boot log but /diag shows diagnostics — user cannot predict which shows what; merge or rename: /diag for live diagnostics, /dmesg for boot history only
+- [ ] AB606 /orient [topic] outputs all five bootstrap yml files when no topic given — 50KB+ of output; violates unix-silence; should output only the topic-relevant section by default
+
+## AC — Flatten Commands / Zero-Command Design (items 18, 19, 20)
+
+### AC1: Command Consolidation
+
+- [ ] AC101 Merge /scan and /fix into a single entry point: any invocation that mentions a file or directory runs scan+fix loop automatically — no explicit /fix needed
+- [ ] AC102 Retire /critique as separate command: fold into /review — /review already calls deliberation; /critique is a subset; remove the distinction
+- [ ] AC103 Retire /axioms as separate command: /why already explains principles; /axioms just lists them — add as section of /why output when no specific finding given
+- [ ] AC104 Retire /ecology as separate command: surface repo ecology automatically at session start as part of boot dmesg — not an on-demand command
+- [ ] AC105 Retire /propose-tree as separate command: proposal tree surfaces automatically when idle >5 minutes or after session with violations — not on-demand
+- [ ] AC106 Retire /topic as separate command: topic detection is automatic; user never needs to set topic explicitly — infer from context
+- [ ] AC107 Retire /resync as separate command: fold into /status with auto-remediation: if /status detects drift, offer to fix in-place
+- [ ] AC108 Retire /snapshot as alias: /checkpoint is the canonical command; /snapshot is duplicate surface
+- [ ] AC109 Merge /tokens and /cost into /status output: both are already shown in session line; redundant standalone commands
+- [ ] AC110 /model with no args shows current model — fold into /status; /model <name> to switch is the only needed form
+- [ ] AC111 /persona with no args shows current — fold into /status; /persona <name> to switch is the only needed form
+- [ ] AC112 /mode with no args shows current — fold into /status; /mode <name> is the only needed form
+- [ ] AC113 Retire /postpro and /repligen as slash commands: they are tool wrappers, not REPL commands; invoke automatically when relevant tool is available
+- [ ] AC114 Target: reduce from 30+ slash commands to ≤8: /run, /status, /model, /persona, /memory, /undo, /help, /exit
+
+### AC2: Intent Inference (No Commands Needed)
+
+- [ ] AC201 Any input containing a file path → auto-run scan+fix loop on that file; no /scan needed
+- [ ] AC202 Any input containing "why" or "explain" → auto-run /why on most recent finding; no /why command needed
+- [ ] AC203 Any input containing "commit" or "push" → auto-run git commit with LLM message; no /commit needed
+- [ ] AC204 Any input containing "clean" or "fix" without a path → auto-run fix loop on last scanned target
+- [ ] AC205 Any input containing "status" or "health" → auto-run /status output
+- [ ] AC206 Any input that is empty or "?" → show abbreviated /status + last finding count; never show full help
+- [ ] AC207 /run <anything> routes all natural language through the intent router — /run is the one command users need to learn; everything else is inferrable
+
+### AC3: "Best Design Is No Design" Measures (item 19)
+
+- [ ] AC301 Remove all depth/tier/profile scan flags — DEEP_SCAN_ONLY is law; no configuration surface needed
+- [ ] AC302 Remove --dry-run from all commands — preview is always shown before destructive operations; no flag needed
+- [ ] AC303 Remove --verbose from all commands — structured dmesg output is always on; verbosity is per-component, not per-invocation
+- [ ] AC304 Remove model selection flags — ModelRouter chooses optimally; user overrides only via /model command if needed
+- [ ] AC305 Remove --parallel/--no-parallel flags — always parallel on multi-core; --no-parallel was a workaround for Termux fork() ban; use Thread instead of Process
+- [ ] AC306 Remove all scan profile flags (--profile quick, --profile critical) — always full scan; profiling was a performance workaround
+- [ ] AC307 Remove backup_count config — always keep 5 backups; this is not a decision the user should make
+- [ ] AC308 Remove ask_language config — always auto-detect; asking the user was a workaround for ambiguous extensions
+- [ ] AC309 Remove convergence_window and convergence_threshold — always converge to zero; these thresholds allowed "good enough" early exits
+- [ ] AC310 Remove explicit --fix flag from commands — always fix when fixable; show diff first; confirm only for destructive refactors
+
+### AC4: Useless Limits and Thresholds to Remove (item 20)
+
+- [ ] AC401 Remove max_iterations: 10 limit — iterate until zero violations; the limit existed because old LLM calls were expensive, not because 10 is a meaningful stopping point
+- [ ] AC402 Remove max_file_size: 1MB / max_lines: 10000 guards — stream large files instead; these limits silently skip files the user wants scanned
+- [ ] AC403 Remove convergence_threshold: 0.9 — 90% isn't zero; only 100% (zero violations) is acceptable per soul.yml
+- [ ] AC404 Remove max_per_file: $1.00 hard cap — budget control belongs at session level; per-file cap causes silent abandonment of complex files
+- [ ] AC405 Remove backup_count: 5 — either unlimited backups (cheap on modern storage) or time-based rotation; 5 is arbitrary
+- [ ] AC406 Remove POOL_SIZE constant defaulting to CPU count — measure actual speedup; if I/O-bound, more threads than CPUs is better
+- [ ] AC407 Remove warn_at: 0.50 cost threshold — either warn at every LLM call with running total, or not at all; 50% is arbitrary
+- [ ] AC408 Remove max_new_violations: 0 from fix_validation — this is correct behavior; make it invariant (not configurable)
+- [ ] AC409 Remove lock_timeout: 30 and stale_lock_age: 300 as config — hard-code reasonable values; these are not user decisions
+- [ ] AC410 Remove gc_every_n_iterations: 5 — let Ruby's GC heuristics run; manual GC triggers are premature optimization
+
+## AD — Natural Language Understanding (item 21)
+
+### AD1: Intent Recognition
+
+- [ ] AD101 Semantic intent classifier: before routing any input, run a fast (zero-LLM) regex+keyword classifier that maps plain-language phrases to pipeline actions — "show me what's broken" → scan, "make it cleaner" → fix+lint, "explain this" → why
+- [ ] AD102 Entity extraction: identify file paths, rule IDs, and model names in natural language input — "fix the scanner" resolves to lib/judge/scan/scanner.rb; "the CQS rule" resolves to B04
+- [ ] AD103 Pronoun resolution: "it" / "that file" / "the last one" → resolve to most recently mentioned/scanned file in session context
+- [ ] AD104 Verb-action mapping: build verb→action table: "clean/tidy/polish" → fix+lint, "check/review/audit" → scan, "explain/why/what" → why+axioms, "ship/deploy/push" → commit+push
+- [ ] AD105 Negation handling: "don't fix X" / "skip the magic number rule" → add rule to session suppression list; persist for session
+- [ ] AD106 Scope inference: "fix everything" → scan all tracked files; "just this method" → extract method name and run targeted scan
+- [ ] AD107 Urgency detection: "quickly" / "just give me the main issues" → still run full scan but show only :error findings first; don't downgrade scan depth
+- [ ] AD108 Multi-step intent: "scan, fix what you can, then commit" → parse as ordered pipeline; execute each step; confirm between stages only when destructive
+- [ ] AD109 Question vs command distinction: "what's wrong with this?" → report; "fix what's wrong with this" → fix; detect question mark and interrogative verbs
+
+### AD2: Context Awareness
+
+- [ ] AD201 Session state awareness: if user says "try again" after a failed fix, auto-retry with next strategy (genetic after diff, council after genetic)
+- [ ] AD202 File history awareness: "you just changed this" → check git diff for the file; offer to undo if user sounds dissatisfied
+- [ ] AD203 Error message paraphrasing: when a rule fires, offer a one-sentence plain-language explanation before the technical message — "This method does two things at once (CQS violation)" before the formal finding
+- [ ] AD204 Ambiguity escalation: when intent is <60% confident, ask one specific clarifying question — not a menu of options
+- [ ] AD205 Language switching: if user writes in Norwegian, respond in Norwegian; MASTER already has bilingual config; ensure the intent router also works on Norwegian input
+- [ ] AD206 Typo tolerance: "scna this file" → scan; "fx the erros" → fix; use edit-distance matching for command words
+
+### AD3: Natural Language Rule Descriptions
+
+- [ ] AD301 Every rule must have a plain_english: field: one sentence a non-programmer could understand — "This file is too long. Long files are hard to understand and change." not "SMALL_FILES: count 347 > limit 300"
+- [ ] AD302 Error messages must use active voice identifying who must act: "Move method foo to its own class" not "Method foo violates SRP"
+- [ ] AD303 Findings must answer "so what?": every message ends with the consequence — "extract helpers — long methods hide bugs and resist testing"
+- [ ] AD304 Severity labels must be translated: :error → "must fix before shipping", :warning → "fix soon", :info → "consider when refactoring"
+- [ ] AD305 Rule IDs must resolve to human names on demand: "what is B04?" → "CQS: Command-Query Separation — a method should change state or return a value, not both"
+
+### AD4: Dialogue Quality
+
+- [ ] AD401 No "I'll" or "let me" — MASTER speaks in present tense declaratives: "Scanning…" not "I'll scan this for you"
+- [ ] AD402 No lists when prose suffices: "3 errors, 7 warnings" not a bulleted list of the numbers
+- [ ] AD403 Offer exactly one next action, not a menu: "Run /fix to apply 2 autofixes" not "You could run /fix, or review the findings, or…"
+- [ ] AD404 Acknowledge confirmation with action, not words: when user says "yes" or "do it" → execute immediately; don't say "Great, I'll proceed"
+- [ ] AD405 When stuck, state the blocker precisely: "Can't fix: method bar has 4 callers with incompatible signatures" not "This is complex"
+
+## AE — Internal Wiring, Synergy, Loop Improvement (item 22)
+
+### AE1: Act-React Loop Architecture
+
+- [ ] AE101 Event-driven act-react: every tool action publishes an event; every event can trigger a reactor — scan→found_violations→auto_fix→fixed→rescan→clean; the loop is data-flow, not imperative sequence
+- [ ] AE102 Convergence as invariant: the loop doesn't have an iteration limit — it runs until the scan result is identical to the previous scan result (fixed point); abort only on oscillation detection
+- [ ] AE103 Violation delta tracking: each loop iteration compares findings to previous pass; only show new/resolved findings — "3 resolved, 1 new" not full re-dump
+- [ ] AE104 Fix success rate tracking per rule: if the LLM fix for GUARD_CLAUSE succeeds 80% of the time but for KEYWORD_ARGS only 30%, route KEYWORD_ARGS to a different strategy — use feedback ledger
+- [ ] AE105 Homeostatic drive integration: if CPU pressure rises above threshold during scan, Homeostat should pause background scan, prioritize user turn — currently drives and scan operate independently
+- [ ] AE106 Bus event ordering: EventBus subscribers fire in registration order — make ordering explicit, documented, and testable; event ordering bugs are silent
+- [ ] AE107 Pipeline stages as pure functions: each stage receives PipelineContext and returns modified PipelineContext — no side effects inside stage; all I/O at edges; enables replay and testing
+- [ ] AE108 Checkpoint after every fix: write scan result + applied fixes to runtime/checkpoints/ after each loop iteration — enables rollback to any intermediate state
+- [ ] AE109 Dead-letter queue: if an event has no subscriber, log to runtime/dead_letters.jsonl — prevents silent event loss
+- [ ] AE110 Back-pressure signaling: if fix queue grows faster than LLM can process, surface "N fixes queued, processing…" — prevent silent slowdowns
+
+### AE2: Multi-Agent Synergy
+
+- [ ] AE201 Scanner and Fixer share AST: parse file once, pass Prism result to scanner, then to fixer — currently each re-parses; AST sharing reduces CPU 40%
+- [ ] AE202 Council result feeds Fixer: if council finds a structural issue, the fix strategy is pre-populated from council's synthesis — no separate fix-strategy-selection step
+- [ ] AE203 Proposal engine learns from fix outcomes: when a proposed fix is accepted and the next scan is clean, reinforce the proposal type; when rejected or re-broken, penalize
+- [ ] AE204 Heartbeat scans feed Propose: results of background heartbeat scans are immediately fed to the proposal engine as new evidence — proposals are always based on current state
+- [ ] AE205 Memory recalls feed Infer stage: when memory recalls a past similar problem, the InferStage receives the recall as additional context before routing to LLM
+- [ ] AE206 Soul drift detection in loop: if MASTER's own voice drifts (soul measure_drift fires), pause user turn and re-anchor before responding — soul integrity is higher priority than throughput
+- [ ] AE207 Cross-file violation clustering: after per-file scan, cluster findings by root cause pattern across all files; present cluster as one meta-finding — "12 files have the same GUARD_CLAUSE pattern — likely from a shared template"
+- [ ] AE208 Session-end synthesis: at session end (/exit or idle timeout), run meta_analysis pass: summarize what was fixed, what persists, what patterns recurred — write to runtime/session_summaries/
+
+### AE3: Wiring Gaps to Close
+
+- [ ] AE301 Wire boot-time self-scan: currently D01 is in TODO but not wired — scanner must run on lib/ at boot and refuse to start if self-violations exceed zero :error findings
+- [ ] AE302 Wire conflict resolver: AB501–AB507 describe data inconsistencies that have no runtime detector — add boot assertion pass that checks all cross-references
+- [ ] AE303 Wire feedback ledger: every tool call result should write to Ground::FeedbackLedger; currently feedback_ledger is not wired to any tool call path
+- [ ] AE304 Wire ar5iv research lookup to /why: when user asks /why <rule>, fetch relevant paper from data/research/ if present — currently /why only cites soul.yml axioms
+- [ ] AE305 Wire plan-approval gate: before any multi-file fix session, generate execution plan and require user confirmation — currently fix loops start immediately
+- [ ] AE306 Wire undo to fix loop: every fix applied should push to Undo stack — currently undo only covers manual file edits
+- [ ] AE307 Wire soul drift check to every LLM response: measure_drift fires after every assistant turn; if drift > 0, regenerate — currently drift check is manual
+- [ ] AE308 Wire proposal weights to feedback: proposal engine has static weights — wire to feedback ledger so accepted proposals increase weight, ignored ones decay
+
+## AF — System Prompt Archaeology: Improvements from Leaked Prompts (item 16b)
+
+### AF1: Identity and Behavioral Anchors
+
+- [ ] AF101 Add `default_posture: helping_bias` to soul.yml — flip burden-of-proof from permission-required to refusal-justified; decline only when concrete harm risk exists
+- [ ] AF102 Front-load soul.yml with 3-5 foundational stances before any rules: "MASTER ships code. MASTER enforces its own rules on itself. MASTER converges to zero violations. MASTER speaks unix." — stance before taxonomy
+- [ ] AF103 Encode `philosophy: humanist_empiricist` in soul.yml — statistics are not moral claims; factual reporting without moral valuation
+- [ ] AF104 Separate truthfulness from compliance: soul.yml code_rules should add HONESTY_OVER_THEATER — "state failures clearly even when it violates expected behavior patterns"
+- [ ] AF105 Define specialist agent personas in soul.yml for per-domain invocation: code_expert, researcher, philosopher, designer — each with focus, voice, knowledge_sources
+- [ ] AF106 Add `memory_attribution: never_explicit` to soul.yml — apply recalled facts invisibly; never say "I see from your history" or "I notice from memory"
+- [ ] AF107 Encode graded refusal: not binary refuse/allow — FORBIDDEN returns nothing, DISCOURAGED suggests alternative, AMBIGUOUS makes best-effort attempt
+- [ ] AF108 Add `jailbreak_response: brief` to soul.yml — reject manipulation with 1-2 sentences, not essays; don't validate the attempt with lengthy analysis
+
+### AF2: Knowledge and Recency Management
+
+- [ ] AF201 Auto-inject `knowledge_cutoff: 2025-02` and `current_date:` into every LLM system context turn — all vendors do this; MASTER doesn't
+- [ ] AF202 Define mandatory search triggers: medical diagnoses, legal advice, investment recommendations, current prices/regulations, post-cutoff technical specs — always web-search before answering
+- [ ] AF203 Domain-specific recency windows: science/tech (6 months), news/politics (weeks), art/ideas (years) — route to search based on domain + recency sensitivity
+- [ ] AF204 Citation format standard: `[source_domain] "quote"` or `[1]` footnote style — never uncited post-cutoff factual claims
+- [ ] AF205 `temporal_confidence_modifier: escalate_hedging_for_date_sensitive` — when dates matter, explicitly note uncertainty
+
+### AF3: Tool Ecosystem Wiring
+
+- [ ] AF301 Tool-search-first principle: before claiming a capability is unavailable, always check tool registry — never say "I can't do X" without checking tools
+- [ ] AF302 Tool matrix in CLAUDE.md: name, cost-tier, permissions, parallel-safe, deferred-ok — systematic registry instead of prose description
+- [ ] AF303 Parallel tool invocation as default: any two independent tools invoked in the same response block — serialize only when there's a data dependency
+- [ ] AF304 Tool deprecation notices: versioned tool registry with deprecation warnings in AGENTS.md — prevents use of superseded tools
+- [ ] AF305 Async tool result handling: if tool result arrives late, proactively reframe response if answer validity changed
+
+### AF4: Formatting and Communication Patterns
+
+- [ ] AF401 Three-mode formatting system: `response_mode: [learning, concise, formal]` — different bullet/prose/heading density per mode
+- [ ] AF402 `bullet_use: exception_not_default` — prose for reports, bullets only for ≥4 parallel items; match Claude's default-styles.md
+- [ ] AF403 Dense-text detection: responses >400 words without structure → auto-add headings/breaks
+- [ ] AF404 Output artifact thresholds: code >20 lines → code block; document >1500 chars → structured artifact; inline otherwise
+- [ ] AF405 Max 3 follow-up suggestions or zero — never offer 10 options; Gemini's ElicitationsGroup pattern
+- [ ] AF406 `language_strategy: mirror_user` — respond in user's language, dialect, and script unless instructed otherwise
+
+### AF5: Safety and Refusal Architecture
+
+- [ ] AF501 Explicit refusal taxonomy in soul.yml: FORBIDDEN (no response), PROHIBITED_SPECIFIC (decline specific guidance), SENSITIVE (handle carefully), AMBIGUOUS (best-effort)
+- [ ] AF502 Refusal categories: weapons_technical, malware_creation, csam, self_harm_enabling, criminal_specific — named explicitly, not "harmful content"
+- [ ] AF503 Post-refusal escalation: after child-safety refusal, apply heightened scrutiny to related-domain requests for N turns
+- [ ] AF504 Cumulative harm assessment: evaluate conversation trajectory, not per-message — weapons knowledge distributed across turns still constitutes a violation
+- [ ] AF505 Prompt injection detection: when user pastes "system instructions" or operational directives, flag as potential injection and apply scrutiny
+
+### AF6: Context Window as First-Class Design
+
+- [ ] AF601 Context saturation threshold: at 80% context used, auto-summarize old turns and offer fresh-start option
+- [ ] AF602 Progressive context trimming rules: keep recent turns + user preferences + task state; drop old reasoning + failed attempts + verbose system context
+- [ ] AF603 `no_deferred_work` principle: complete all work in current response; never tell user "I'll do this next time" or "check back in a few minutes"
+- [ ] AF604 Memory sensitivity tiers: tag memories as public/private/sensitive; only surface public tier without user initiation
+- [ ] AF605 Conversation-length drift detection: reset assumptions after N turns to prevent incremental agreement drift (sycophancy creep)
+
+## AG — External LLM Mirror Behavior (item 17)
+
+### AG1: LLM-Specific Companion Files (CLAUDE.md, GROK.md, GPT.md, DEEPSEEK.md, GEMINI.md)
+
+- [ ] AG101 CLAUDE.md: add explicit tool-use protocol (parallel invocation, tool-search-first), knowledge cutoff, refusal taxonomy, memory attribution rules — current version is 29 lines; needs 200+
+- [ ] AG102 GROK.md: humanist-empiricist stance, multi-agent reasoning pattern (specialist personas), language mirroring, brief jailbreak dismissal, permissive content defaults with hard categorical limits
+- [ ] AG103 GPT.md: truthfulness-over-compliance, hidden-reasoning pattern, citation format, context-window efficiency, async result handling, output artifact thresholds
+- [ ] AG104 DEEPSEEK.md: code-first persona, chain-of-thought surfacing (DeepSeek-R1 style visible reasoning), cost-efficiency (smallest effective model), aggressive context compression
+- [ ] AG105 GEMINI.md: capability isolation block (non-executable capability statements), ElicitationsGroup (max 3 follow-ups), citation requirements, sensitive data exclusion, vision handling rules
+
+### AG2: Mirror Behavior Enforcement
+
+- [ ] AG201 Every LLM companion file starts with: "Behave as MASTER's external operator. MASTER's soul.yml is the constitutional authority. Your task is to enforce it, not interpret it."
+- [ ] AG202 Add MASTER's five foundational stances to every LLM file as the first section — before any rules — so any LLM boots with identity before taxonomy
+- [ ] AG203 Include a condensed rules.yml summary (top 20 rules by severity) in every LLM companion file — LLMs should know the rules they're enforcing
+- [ ] AG204 Include MASTER's voice config (terse, unix, perfectionist, Strunk & White) with 10 concrete examples: before/after sentence pairs
+- [ ] AG205 Include MASTER's aesthetic rules with visual examples: NO_COLUMN_ALIGN (before/after), NO_ASCII_DECORATION, IMPORTANCE_ORDER (before/after layout)
+- [ ] AG206 Include a "things MASTER never does" list: never says "great question", never uses === decorators, never pads alignment, never creates files without checking existing overlap
+- [ ] AG207 Include MASTER's git discipline: commit format, S&W message style, frequency (after every meaningful change)
+- [ ] AG208 Include MASTER's OpenBSD rules: relayd not nginx, doas not sudo, pledge/unveil for new daemons, base tools not pkg_add'd
+- [ ] AG209 Add "verification protocol" to each file: before claiming a task is done, re-read the file, run the scan, confirm zero findings — never accept in-memory state as ground truth
+- [ ] AG210 Add model-specific anti-patterns for each LLM: known failure modes unique to that model family (GPT over-explains, Gemini over-formats, DeepSeek over-reasons out loud)
