@@ -35,6 +35,9 @@ module Master
           out = strip_trailing_whitespace(out)
           out = freeze_mutable_constants(out)  if ruby?
           out = add_strict_mode(out)           if shell?
+          out = add_html_lang(out)             if html?
+          out = add_meta_charset(out)          if html?
+          out = add_lazy_loading(out)          if html?
           changed = out != @source
           Result.new(path: @path, changed: changed, transforms: @transforms)
             .tap { write_back(out) if changed }
@@ -141,9 +144,34 @@ module Master
           lines.join
         end
 
+      # C05 — add lang="en" to <html> tags missing the lang attribute.
+        def add_html_lang(src)
+          return src if src.match?(/<html\b[^>]*\blang=/)
+          out = src.sub(/<html\b(?=[^>]*>)/) { |m| m.rstrip + ' lang="en"' }
+          @transforms << :html_lang if out != src
+          out
+        end
+
+      # C06 — add loading="lazy" to <img> tags missing a loading attribute.
+        def add_lazy_loading(src)
+          out = src.gsub(/<img\b(?=[^>]*>)(?![^>]*\bloading=)/) { |m| m.rstrip + ' loading="lazy"' }
+          @transforms << :lazy_images if out != src
+          out
+        end
+
+      # C07 — ensure <meta charset="UTF-8"> is first element inside <head>.
+        def add_meta_charset(src)
+          return src if src.match?(/<meta\s[^>]*charset=/i)
+          out = src.sub(/<head\b[^>]*>/, "\\0\n<meta charset=\"UTF-8\">")
+          @transforms << :meta_charset if out != src
+          out
+        end
+
         def ruby? = File.extname(@path).downcase == ".rb"
 
         def shell? = %w[.zsh .sh .bash].include?(File.extname(@path).downcase)
+
+        def html? = %w[.html .erb .html.erb].any? { |ext| @path.to_s.downcase.end_with?(ext) }
 
         def sql_in_ruby?
           ruby? || %w[.sql .erb].include?(File.extname(@path).downcase)

@@ -51,9 +51,9 @@ Rules marked `autofix: true` whose transform isn't in lib/judge/scan/ast_fixer.r
 - [x] C02 Strip trailing whitespace from every line (TRAILING_WHITESPACE)
 - [x] C03 Append .freeze to mutable constants: `FOO = [` → `FOO = [].freeze` (IMMUTABLE)
 - [x] C04 Add `set -euo pipefail` after shebang in .zsh/.sh scripts (STRICT_MODE_ZSH)
-- [ ] C05 Add `lang="en"` to `<html>` tags missing it (HTML_LANG)
-- [ ] C06 Add `loading="lazy"` to `<img>` tags missing loading= (LAZY_IMAGES)
-- [ ] C07 Add `<meta charset=UTF-8>` as first element in `<head>` (META_CHARSET)
+- [x] C05 Add `lang="en"` to `<html>` tags missing it (HTML_LANG)
+- [x] C06 Add `loading="lazy"` to `<img>` tags missing loading= (LAZY_IMAGES)
+- [x] C07 Add `<meta charset=UTF-8>` as first element in `<head>` (META_CHARSET)
 - [ ] C08 Replace `var ` with `const ` in JS (NO_VAR) — only when variable not reassigned
 - [ ] C09 Convert `for (const x in arr)` to `for (const x of arr)` (FOR_OF)
 - [ ] C10 Convert `"a" + b + "c"` to `` `a${b}c` `` template literals (TEMPLATE_LITERALS)
@@ -774,3 +774,180 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] T1003 Architect-then-edit flow: for files >200 lines, send to strong model for architecture plan, then send plan to fast model for implementation
 - [ ] T1004 Edit format negotiation: try preferred edit format, fall back to whole-file if LLM produces malformed diff
 - [ ] T1005 In-chat file references: @file.rb in REPL automatically includes file content in next LLM call — fast targeted context injection
+
+## U — Preventing Shallow Skimming: Deep Semantic Comprehension (item 8)
+
+### U1: LLM Prompt Architecture to Force Depth
+
+- [ ] U101 Before any scan/fix LLM call, inject "chain-of-thought depth contract": "Before answering, enumerate all structural properties of this code: module hierarchy, data flow, side effects, implicit invariants, edge cases for nil/empty/max/unicode input. Only then proceed."
+- [ ] U102 Add "anti-skim system message" to soul.yml identity section: "Never skim. Every code artifact has a semantic iceberg — surface syntax is 10%, behavior is 90%. Excavate to bedrock before proposing changes."
+- [ ] U103 For every file read during scan, require MASTER to emit a 3-line "semantic summary" before findings: what it does, what it assumes, what could break — stored in scan context, not output
+- [ ] U104 Implement "second-pass obligation": after initial scan findings, always re-read the same file with findings in context and ask "what did I miss that a senior engineer would catch?"
+- [ ] U105 Require explicit enumeration of cross-file dependencies before any multi-file fix: "List all other files that import, call, or are called by this file" — prevents fixes that break callers
+- [ ] U106 Add "assumption audit" step: before each LLM fix call, list all assumptions the proposed fix makes (input types, object states, concurrency) and validate each assumption against the codebase
+- [ ] U107 Require "edge case checklist" for every proposed change: nil input, empty collection, max value, concurrent access, network failure, file permission failure — LLM must address each or explain why N/A
+- [ ] U108 "Inversion test" prompt: after proposing a fix, ask "if this fix is wrong, what would break, where, and when?" — forces adversarial self-review before applying
+- [ ] U109 "Diff impact analysis" before applying: enumerate every caller of a changed method/class and verify the signature change is backward-compatible
+- [ ] U110 Require LLM to state the design pattern being used (or violated) before proposing a structural fix — prevents pattern-blind refactoring
+
+### U2: Research Integration (ar5iv.org + GitHub)
+
+- [ ] U201 Before implementing any new detection rule, fetch ar5iv.org search results for the smell name (e.g., "cyclomatic complexity Ruby" → ar5iv) — cite the academic basis in the rule's description
+- [ ] U202 For each rules.yml principle (SOLID, POLA, YAGNI, etc.), fetch the canonical academic paper from ar5iv.org and store abstract in data/research/<principle>.md — ground rules in theory
+- [ ] U203 GitHub corpus validation: before adding a new rule, search GitHub for 10 real violations of that pattern in popular Ruby repos (rails/rails, Shopify/*, fastlane/fastlane) — confirm the smell is real and frequent
+- [ ] U204 Implement /research <rule_id> command: fetches top 3 ar5iv papers + top 5 GitHub examples for the rule — shows evidence base before user acts on a finding
+- [ ] U205 Add "literature review" field to each rule in rules.yml: {paper: "ar5iv URL", github_example: "URL"} — makes every rule traceable to evidence
+- [ ] U206 Periodic corpus scan: weekly job fetches trending Ruby repos from GitHub API, runs MASTER scan on top 20, updates rule frequency statistics in data/rule_stats.yml
+- [ ] U207 Rule effectiveness tracking: for each finding, track whether the user accepted/rejected the fix — rules with >80% rejection rate get flagged for review in data/rule_stats.yml
+- [ ] U208 False positive audit: when a user overrides a finding, log the override with file+line+rule+reason in runtime/overrides.jsonl — accumulate to discover systematic false positives
+- [ ] U209 "Related work" prompt: before proposing a novel abstraction, check if aider/rubocop/reek/flog already has a rule for it — avoid reinventing; link to existing tool if better
+- [ ] U210 ar5iv weekly digest: fetch 10 recent papers tagged "code quality" or "static analysis" and distill key findings into a weekly entry in data/research/weekly_digest.md
+
+### U3: Depth Enforcement in MASTER's Own Processing
+
+- [ ] U301 Implement "read before fix" hard gate: MASTER cannot propose a fix for file X unless it has read file X in the current session — prevents hallucinated context
+- [ ] U302 "Semantic fingerprint" per file: hash of {line_count, class_count, method_count, def_names[], constant_names[]} — if fingerprint changes between read and fix, re-read before applying
+- [ ] U303 Multi-pass scan mandate: every file goes through at minimum lexical → structural → semantic passes before findings are finalized — no early exit on first pass
+- [ ] U304 "Dependency graph" before bulk fix: build module→module dependency graph for the target directory; fix in topological order, leaves first
+- [ ] U305 Cross-file DRY pass: after per-file scan, run a mandatory cross-file pass looking for duplicate patterns across the whole scan batch — cannot be skipped
+- [ ] U306 "Confidence score" on each finding: 0.0–1.0 based on regex certainty vs AST certainty vs LLM inference; only surface findings above 0.7 confidence by default
+- [ ] U307 Finding deduplication: before reporting, cluster findings by root cause — if 8 files have the same smell from a shared ancestor, report the ancestor once, not 8 times
+- [ ] U308 "Impact radius" annotation on every finding: {files_affected: N, callers: M, severity_multiplier: S} — high-impact findings shown first regardless of per-file severity
+- [ ] U309 Require method-level test coverage check before marking any rule violation as fixed: if the fixed method has no test, flag as "fix unverified — add test"
+- [ ] U310 "Ghost smell" detection: pattern that appears correct but conceals a deeper problem (e.g., guard clause that hides a missing abstraction) — requires semantic LLM analysis, not just lexical
+
+### U4: Cognitive Load / Anti-Skim UI Patterns
+
+- [ ] U401 Show scan progress as "files understood / files skimmed" not just "files scanned" — forces acknowledgement of depth
+- [ ] U402 "Deep mode" flag: /scan --deep forces all three passes + cross-file analysis + ar5iv lookup for each finding — explicit commitment to thoroughness
+- [ ] U403 After each LLM response, display: "Depth: {lexical|structural|semantic|cross-file} | Evidence: {regex|AST|LLM|research}" — makes reasoning basis visible
+- [ ] U404 "Confidence histogram" in scan summary: show distribution of finding confidence scores — reveals whether the scan was shallow or deep
+- [ ] U405 "Unknown-unknowns prompt": at end of each session, ask LLM "What questions about this codebase should I have asked but didn't?" — surfaces blind spots
+- [ ] U406 "Red team" mode: after proposing a fix set, spawn a second LLM call with "You are a senior engineer reviewing this diff for mistakes. Find every problem." before presenting to user
+- [ ] U407 Require findings to have "why this matters" annotation beyond the rule message — e.g., "CQS violation here makes this method untestable because…"
+- [ ] U408 Show "smell genealogy" for each finding: which principle → which rule → which pattern → which line — full traceability from axiom to code
+- [ ] U409 "Attention heatmap": track which lines of each file received the most LLM attention tokens — reveal coverage gaps
+- [ ] U410 Block "batch-and-forget" pattern: if MASTER proposes >10 fixes without asking user to verify one, pause and require acknowledgment before continuing
+
+### U5: MASTER Self-Compliance (Applies to MASTER's Own Code)
+
+- [ ] U501 MASTER must run its own deep scan on itself before each release — zero findings required to push
+- [ ] U502 Every new rule must have a test in spec/judge/scan/ that catches at least one known real violation and passes on at least one clean counterexample
+- [ ] U503 MASTER's own LLM prompt templates must pass NO_MAGIC_NUMBERS, NO_COLUMN_ALIGN, COMMENTS_AS_DEODORANT — prompts are code
+- [ ] U504 Every ar5iv research reference must be verified (live URL, correct abstract) before being added to data/research/ — no hallucinated citations
+- [ ] U505 MASTER's proposal engine must score its own proposals by evidence strength: regex-only proposals labeled "low confidence", AST+research-backed labeled "high confidence"
+
+## V — Rename Opportunities: Files, Directories, Classes, Methods, Variables (item 9)
+
+### V1: File and Directory Renames
+
+- [ ] V101 `/lib/ground/swallow.rb` → `/lib/ground/tolerated_error_logger.rb` — "Swallow" is cryptic idiom
+- [ ] V102 `/lib/judge/scan/detection_pipeline.rb` → `/lib/judge/scan/finding_detector.rb` — "DetectionPipeline" is generic
+- [ ] V103 `/lib/converge/engine.rb` → `/lib/converge/convergence_executor.rb` — "Engine" is too broad
+- [ ] V104 `/lib/ground/brain_overlay.rb` → `/lib/ground/system_prompt_builder.rb` — reveals true purpose
+- [ ] V105 `/lib/reach/base.rb` → `/lib/reach/tool_write_base.rb` — "Base" says nothing
+- [ ] V106 `/lib/builder.rb` → `/lib/app_container_builder.rb` — clarify what it builds
+- [ ] V107 `/lib/judge/scan/rules/` → `/lib/judge/scan/violation_rules/` — disambiguate from convergence rules
+- [ ] V108 `/lib/ground/axioms/` → `/lib/ground/constitutional_axioms/` — clarify scope
+- [ ] V109 `/lib/judge/council/` → `/lib/judge/consensus_council/` — reveal the consensus mechanism
+- [ ] V110 `/lib/now/stages/` → `/lib/now/pipeline_stages/` — clarify they're pipeline stages
+- [ ] V111 `/lib/now/routing/` → `/lib/now/llm_routing/` — clarify it routes LLM calls
+- [ ] V112 `/lib/ground/orders/` → `/lib/ground/standing_order_handlers/` — type specificity
+- [ ] V113 `/lib/memory.rb` → `/lib/session_memory_manager.rb` — too generic
+- [ ] V114 `/lib/learnings.rb` → `/lib/learning_ledger.rb` — specific to ledger pattern
+- [ ] V115 `/lib/orient.rb` → `/lib/startup_orientation.rb` — "orient" is cryptic
+- [ ] V116 `/lib/pressure_engine.rb` → `/lib/request_pressure_monitor.rb` — what pressure?
+- [ ] V117 `/lib/plugin.rb` → `/lib/plugin_base.rb` — clarify it's an abstract base
+
+### V2: Class and Module Renames
+
+- [ ] V201 `Converge::Rule` → `Converge::ConfigurableRule` — disambiguate from `Judge::Scan::Rule`
+- [ ] V202 `Converge::Engine` → `Converge::ConvergenceExecutor` — "Engine" is overloaded
+- [ ] V203 `Judge::Scan::Rule` → `Judge::Scan::ViolationDetectionRule` — reveals intent
+- [ ] V204 `Judge::Scan::Scanner` → `Judge::Scan::RuleBasedScanner` — clarify mechanism
+- [ ] V205 `Ground::Policy` → `Ground::PolicyHelper` — it's a helper module, not a policy definition
+- [ ] V206 `Ground::Swallow` → `Ground::ToleratedErrorLogger` — idiomatic but opaque
+- [ ] V207 `Loop::Homeostat` → `Loop::HomeostasisDrive` — what does Homeostat do?
+- [ ] V208 `Ground::BrainOverlay` → `Ground::SystemPromptAssembler` — "Brain" is metaphor, not mechanism
+- [ ] V209 `Voice::Soul` → `Voice::IdentityDocumentManager` — manages SOUL.md, not a soul
+- [ ] V210 `Judge::Swarm::Coordinator` → `Judge::Swarm::ConsensusVotingCoordinator` — reveals voting
+- [ ] V211 `Reach::CircuitBreaker` → `Reach::ProviderCircuitBreaker` — clarify it's for LLM providers
+- [ ] V212 `Now::Routing::ModelRouter` → `Now::Routing::LLMModelRouter` — clarify domain
+- [ ] V213 `Judge::LLMDispatcher` → `Judge::LLMRequestDispatcher` — "Dispatcher" alone is vague
+- [ ] V214 `Ground::Memory` → `Ground::PersistentMemoryStore` — clarify persistence backend
+- [ ] V215 `Loop::Governor` → `Loop::ToolApprovalGovernor` — reveals what it governs
+- [ ] V216 `Ground::StandingOrders` → `Ground::RecurringTaskOrchestrator` — military jargon → plain
+- [ ] V217 `Judge::RepoEcology` → `Judge::RepositoryHealthAnalyzer` — "Ecology" is metaphorical
+- [ ] V218 `Ground::KnowledgeStore` → `Ground::FixQualityRepository` — clarify content
+- [ ] V219 `Voice::Personality` → `Voice::BehavioralPersona` — not just personality data
+- [ ] V220 `Now::Pipeline` → `Now::RequestProcessingPipeline` — "Pipeline" is overused across codebase
+
+### V3: Stage-Specific Class Renames
+
+- [ ] V301 `Now::Stages::Council` → `Now::Stages::CodeReviewCouncil` — clarify context
+- [ ] V302 `Now::Stages::Deliberate` → `Now::Stages::DecisionDeliberation` — more semantic
+- [ ] V303 `Now::Stages::Guard` → `Now::Stages::InjectionGuard` — what does it guard against?
+- [ ] V304 `Now::Stages::Intake` → `Now::Stages::RequestIntake` — clarify input domain
+- [ ] V305 `Now::Stages::Lint` → `Now::Stages::CodeLinting` — verb-driven
+- [ ] V306 `Now::Stages::Memo` → `Now::Stages::MemoizationStage` — clarify purpose
+- [ ] V307 `Now::Stages::Memory` → `Now::Stages::MemoryInjection` — what does it do to memory?
+- [ ] V308 `Now::Stages::Prune` → `Now::Stages::ContextPruning` — specific domain
+- [ ] V309 `Now::Stages::Render` → `Now::Stages::ResponseRendering` — more semantic
+- [ ] V310 `Now::Stages::Review` → `Now::Stages::QualityReview` — which review?
+- [ ] V311 `Now::Stages::Route` → `Now::Stages::RequestRouting` — verb domain
+- [ ] V312 `Now::Stages::Enhance` → `Now::Stages::MessageEnhancement` — specific
+- [ ] V313 `Now::Stages::Infer` → `Now::Stages::IntentInference` — specific
+- [ ] V314 `Now::Stages::Execute` → `Now::Stages::ToolExecution` — specific
+
+### V4: Method Renames
+
+- [ ] V401 `Judge::Scan::Scanner#parallel_each` → `#execute_in_parallel` — "each" implies enumeration not execution
+- [ ] V402 `Judge::Scan::Scanner#parse_ruby` → `#parse_ruby_into_ast` — clarify return type
+- [ ] V403 `Ground::Memory#semantic_recall` → `#retrieve_similar_memories` — "recall" is vague
+- [ ] V404 `Ground::Memory#vector_recall` → `#retrieve_by_embedding_similarity` — explains mechanism
+- [ ] V405 `Ground::Memory#tfidf_recall` → `#retrieve_by_term_frequency` — clarifies TF-IDF
+- [ ] V406 `Ground::Memory#by_type` → `#retrieve_entries_by_type` — verb-driven
+- [ ] V407 `Ground::Memory#auto_save` → `#auto_remember_from_text` — "save" is too generic
+- [ ] V408 `Judge::Agent#ask` → `#ask_agent` — disambiguates from `ask_once`
+- [ ] V409 `Judge::Agent#with_task_type` → `#set_task_type_context` — clarify temporary context setting
+- [ ] V410 `Voice::Soul#measure_drift` → `#detect_restricted_section_changes` — clarify what "drift" is
+- [ ] V411 `Reach::Base#safely` → `#execute_with_error_capture` — "safely" is too vague
+- [ ] V412 `Ground::StandingOrders#event_match?` → `#order_matches_event?` — subject first
+- [ ] V413 `Judge::Scan::DetectionPipeline#guess_medium` → `#infer_file_language` — "guess" implies uncertainty; "medium" is not the domain term
+- [ ] V414 `Judge::RepoEcology#dead_file_candidates` → `#identify_unused_files` — verb-driven
+- [ ] V415 `Judge::RepoEcology#similar_clusters` → `#identify_duplicate_file_clusters` — more explicit
+- [ ] V416 `Trace::Metrics#check_threshold` → `#check_and_warn_if_threshold_exceeded` — complete intent
+- [ ] V417 `Loop::Homeostat#publish_health_transition` → `#broadcast_health_status_change` — "transition" is vague
+- [ ] V418 `Now::Routing::ModelRouter#effective_score` → `#compute_weighted_model_score` — clarify computation
+- [ ] V419 `Reach::Base#commit_write` → `#write_file_atomically_with_undo` — reveals atomicity + rollback
+- [ ] V420 `Judge::Council::Ideation` → `Judge::Council::IdeationPhase` — clarify lifecycle position
+
+### V5: Constant Renames
+
+- [ ] V501 `Judge::Scan::Scanner::POOL_SIZE` → `PARALLEL_WORKER_COUNT` — "pool" is implementation detail
+- [ ] V502 `Judge::Scan::Scanner::SCAN_GLOB` → `SCANNABLE_FILE_GLOB_PATTERN` — unexpanded abbreviation
+- [ ] V503 `Loop::Homeostat::DRIVES` → `HOMEOSTATIC_DRIVES` — add class context to standalone constant
+- [ ] V504 `Ground::Evidence::THRESHOLDS` → `EVIDENCE_POLICY_THRESHOLDS` — add domain context
+- [ ] V505 `Now::Routing::ModelRouter::ESCALATION_CHAIN` → `MODEL_TIER_ESCALATION_CHAIN` — clarify domain
+- [ ] V506 `Voice::Soul::ABSOLUTE_PATTERNS` → `PROTECTED_IDENTITY_SECTION_PATTERNS` — "absolute" is vague
+- [ ] V507 `Trace::Session::TOKENS_PER_CHAR` → `TOKEN_ESTIMATE_CHARS_PER_TOKEN` — clarify estimation direction
+- [ ] V508 `Judge::Swarm::Coordinator::WORKER_TIMEOUT` → `WORKER_EXECUTION_TIMEOUT_SECONDS` — add units
+- [ ] V509 `Ground::StandingOrders::ERROR_TRUNCATE` → `ERROR_MESSAGE_MAX_LENGTH` — clarify it's a length cap
+
+### V6: Instance Variable / Parameter Renames
+
+- [ ] V601 `@bus` in Scanner/Loop → `@event_bus` — expand abbreviation
+- [ ] V602 `@deps` in Judge::Agent → `@dependencies` — expand abbreviation
+- [ ] V603 `@workers` in Swarm → `@specialist_workers` — clarify role
+- [ ] V604 `@store` in Ground::Memory → `@semantic_memory_entries` — descriptive
+- [ ] V605 `@state` in CircuitBreaker → `@circuit_state` — remove ambiguity
+- [ ] V606 `@model_router` → `@llm_model_router` — clarify domain
+- [ ] V607 `@stages` in Pipeline → `@request_stages` — clarify content type
+- [ ] V608 Local `pkt` → `violation_packet` in FixPipeline#run — expand abbreviation
+- [ ] V609 Local `cfg` → `adapter_config` in DetectionPipeline — expand abbreviation
+- [ ] V610 Local `ms` → `elapsed_milliseconds` in Pipeline#run_stage — full word + units
+- [ ] V611 Local `vec` → `query_embedding` in Memory#context_summary — semantic name
+- [ ] V612 Local `rate_err` → `rate_limit_error` in Agent#chat — expand abbreviation
+- [ ] V613 `scan_depth:` parameter → `#scan` parameter `analysis_depth:` — clarify it's analysis depth, not file depth
+- [ ] V614 `finding` parameter `fix:` → `suggested_fix:` — clarify it's a suggestion not a command
+- [ ] V615 `timeout:` in fan_out → `worker_timeout_seconds:` — add type+units
