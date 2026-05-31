@@ -12,7 +12,7 @@ module Master
       module RuleDSL
         def self.rule(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil, &block)
           raise ArgumentError, "block required" unless block
-          dsl_id = id.to_s.downcase
+          dsl_id = id.to_s.upcase
           dsl_desc = description || dsl_id.tr("_", " ")
           dsl_tags = Array(tags)
           Class.new(Rule) do
@@ -42,3 +42,4 @@ require_relative "rules/ruby_rules"
 require_relative "rules/web_rules"
 require_relative "rules/js_rules"
 require_relative "rules/universal_rules"
+require_relative "rules/structural_rules"

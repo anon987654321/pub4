@@ -69,6 +69,24 @@ module Master
           [finding(line: 1, message: "JS file #{line_count} lines — split at 300; extract cohesive modules")]
         end
 
+      # A02 MAGIC_COLOR — raw color values must reference design tokens (MAGIC_COLOR).
+        RuleDSL.rule :MAGIC_COLOR,
+          severity: :warning, tags: %i[DESIGN], applies_to: %i[css scss javascript html],
+          description: "color values must reference design tokens, not raw hex/rgb" do |src, path:|
+          next [] if path.to_s.match?(%r{/spec/|/test/})
+          findings = scan_lines(src, /#[0-9a-fA-F]{3,6}\b/, message: "raw hex color — use CSS custom property or design token")
+          findings += scan_lines(src, /\brgba?\s*\(/, message: "raw rgb() color — use CSS custom property or design token")
+          findings += scan_lines(src, /\bhsla?\s*\(/, message: "raw hsl() color — use CSS custom property or design token")
+          findings
+        end
+
+      # A11 OPTIONAL_CHAINING_JS — && guard chains in JavaScript (OPTIONAL_CHAINING).
+        RuleDSL.rule :OPTIONAL_CHAINING_JS,
+          severity: :warning, tags: %i[READABILITY], applies_to: %i[javascript],
+          description: "use ?. over && chains" do |src, path:|
+          scan_lines(src, /(\w+)\s*&&\s*\1\.\w+/, message: "nil-guard chain — use optional chaining (?.) instead")
+        end
+
       end
     end
   end

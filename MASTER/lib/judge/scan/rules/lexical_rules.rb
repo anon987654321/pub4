@@ -213,6 +213,157 @@ module Master
           end
         end
 
+      # A01 SECRET_PROXIMITY — hardcoded credentials (SECRET_PROXIMITY).
+        RuleDSL.rule :SECRET_PROXIMITY,
+          severity: :error, tags: %i[SECURITY],
+          description: "hardcoded secret must move to environment variable" do |src, path:|
+          next [] if path.to_s.match?(%r{/spec/|/test/|\.sample\z|\.example\z})
+          scan_lines(src, /(?:password|secret|token|api_key|private_key)\s*=\s*['"][^'"]{8,}['"]/i,
+            message: "hardcoded credential — move to ENV or secrets manager")
+        end
+
+      # A03 UNBOUNDED_RETRY — retry/while true without cap (UNBOUNDED_RETRY).
+        RuleDSL.rule :UNBOUNDED_RETRY,
+          severity: :error, tags: %i[ROBUSTNESS],
+          description: "retry loop missing max_attempts cap and backoff" do |src, path:|
+          src.each_line.with_index(1).filter_map do |line, n|
+            next if line.strip.start_with?("#")
+            next unless line.match?(/\bretry\b/) || line.match?(/while\s+true\b/)
+            context = src.lines[[n - 6, 0].max, 12].join
+            next if context.match?(/max_attempts|max_retries|attempts\s*<|retries\s*<|backoff/)
+            finding(line: n, message: "unbounded retry — add max_attempts cap and exponential backoff")
+          end
+        end
+
+      # A04 KEYWORD_ARGS — 3+ positional args in Ruby def (KEYWORD_ARGS).
+        RuleDSL.rule :KEYWORD_ARGS,
+          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
+          description: "keyword arguments for 3+ parameters" do |src, path:|
+          src.each_line.with_index(1).filter_map do |line, n|
+            next unless line.match?(/def \w+\(/)
+            args_str = line[/\(([^)]*)\)/, 1].to_s
+            next if args_str.empty?
+            positional = args_str.split(",").map(&:strip).reject { |a| a.include?(":") || a.start_with?("*", "&") }
+            finding(line: n, message: "#{positional.size} positional args — use keyword args for clarity") if positional.size >= 3
+          end
+        end
+
+      # A05 GUARD_CLAUSE — nested if-else in method body (GUARD_CLAUSE).
+        RuleDSL.rule :GUARD_CLAUSE,
+          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
+          description: "favor guard clauses over nested conditionals" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          in_def = false
+          first_if = nil
+          findings = []
+          src.each_line.with_index(1) do |line, n|
+            stripped = line.strip
+            in_def = true if stripped.match?(/\Adef \w+/)
+            first_if = n if in_def && first_if.nil? && stripped.match?(/\Aif /)
+            if in_def && first_if && stripped == "else"
+              findings << finding(line: first_if, message: "if-else at method top — flatten to guard clause: return unless ...")
+              first_if = nil
+            end
+            if stripped == "end" && in_def
+              in_def = false
+              first_if = nil
+            end
+          end
+          findings
+        end
+
+      # A07 RESCUE_ON_DEF — begin/rescue inside def (RESCUE_ON_DEF).
+        RuleDSL.rule :RESCUE_ON_DEF,
+          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
+          description: "move begin/rescue to def line" do |src, path:|
+          lines = src.lines
+          lines.each_with_index.filter_map do |line, i|
+            next unless line.strip.match?(/\Adef \w+/)
+            next_non_blank = lines[i + 1..].find { |l| !l.strip.empty? }&.strip
+            finding(line: i + 1, message: "def followed by begin — put rescue directly on def block") if next_non_blank == "begin"
+          end
+        end
+
+      # A08 DEAD_CODE — statement after return/raise/exit/throw (DEAD_CODE).
+        RuleDSL.rule :DEAD_CODE,
+          severity: :warning, tags: %i[CLEAN_CODE],
+          description: "unreachable code after return/raise/exit/throw" do |src, path:|
+          lines = src.lines
+          findings = []
+          lines.each_with_index do |line, i|
+            stripped = line.strip
+            next unless stripped.match?(/\A(return|raise|exit|throw)\b/)
+            lookahead = lines[i + 1]&.strip
+            next if lookahead.nil? || lookahead.empty? || lookahead.start_with?("#", "end", "else", "elsif", "rescue", "ensure")
+            findings << finding(line: i + 2, message: "unreachable code after #{stripped.split.first} — remove")
+          end
+          findings
+        end
+
+      # A09 TRAILING_COMMAS — multi-line collection missing trailing comma (TRAILING_COMMAS).
+        RuleDSL.rule :TRAILING_COMMAS,
+          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
+          description: "trailing commas in multi-line collections" do |src, path:|
+          lines = src.lines
+          findings = []
+          lines.each_with_index do |line, i|
+            stripped = line.strip
+            next unless stripped.match?(/[\]\)}\}]\s*$/) && i > 0
+            prev = lines[i - 1]&.strip
+            next unless prev && !prev.empty? && !prev.end_with?(",", "(", "[", "{")
+            next if prev.start_with?("#")
+            next unless lines[0..i].any? { |l| l.include?("\n") } rescue false
+            next unless src.lines[[i - 5, 0].max..i].any? { |l| l.match?(/,\s*$/) }
+            findings << finding(line: i, message: "last element missing trailing comma — add comma for clean diffs")
+          end
+          findings
+        end
+
+      # A10 FULL_BY_DEFAULT — fake quality-tier parameters (FULL_BY_DEFAULT).
+        RuleDSL.rule :FULL_BY_DEFAULT,
+          severity: :warning, tags: %i[SMALL_PARTS],
+          description: "fake-choice tiers — defaults must be maximal correctness" do |src, path:|
+          next [] if path.to_s.include?("rules.yml") || path.to_s.include?("/spec/") || path.to_s.include?("/test/")
+          scan_lines(src, /\b(shallow|standard|quick|lite|basic|light)\b.*\b(deep|full|advanced|complete|thorough)\b/i,
+            message: "shallow/full tier pair — drop degraded tier or rename to surface real cost (lexical|structural|semantic)")
+        end
+
+      # A13 STRICT_MODE_ZSH — zsh scripts missing set -euo pipefail (STRICT_MODE_ZSH).
+        RuleDSL.rule :STRICT_MODE_ZSH,
+          severity: :error, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
+          description: "set -euo pipefail at script top" do |src, path:|
+          next [] unless src.start_with?("#!/") || src.start_with?("# !")
+          next [] if src.include?("set -euo pipefail") || src.include?("set -e")
+          [finding(line: 1, message: "zsh script missing set -euo pipefail after shebang")]
+        end
+
+      # A14 NO_MAGIC_NUMBERS — unexplained numeric literals (NO_MAGIC).
+        RuleDSL.rule :NO_MAGIC_NUMBERS,
+          severity: :warning, tags: %i[READABILITY],
+          description: "no unexplained constants or flags" do |src, path:|
+          next [] if path.to_s.match?(%r{/spec/|/test/|/rules/|\.yml\z|\.yaml\z|\.json\z})
+          src.each_line.with_index(1).filter_map do |line, n|
+            stripped = line.strip
+            next if stripped.start_with?("#")
+            next if stripped.match?(/\A\s*(POOL_SIZE|MAX_|MIN_|DEFAULT_|\w+_LIMIT|\w+_THRESHOLD|\w+_TTL|\w+_DAYS|\w+_S\b)/)
+            next unless stripped.match?(/(?<![.\d])\b(?:[2-9]\d{1,}|\d{3,})\b(?!\.\d)(?![\w.])/)
+            finding(line: n, message: "magic number — extract to named constant")
+          end
+        end
+
+      # A16 FORBIDDEN_PATTERNS — anti_patterns.forbidden from rules.yml.
+        RuleDSL.rule :FORBIDDEN_PATTERNS,
+          severity: :error, tags: %i[SECURITY ROBUSTNESS],
+          description: "forbidden pattern from rules.yml anti_patterns" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/") || path.to_s.include?("rules.yml")
+          findings = []
+          findings.concat(scan_lines(src, /\beval\(.*\$\{|\beval\(.*user/i, message: "eval with user input — arbitrary code execution"))
+          findings.concat(scan_lines(src, /\brm\s+-rf\s+\/(?!\w)/, message: "rm -rf / — data loss"))
+          findings.concat(scan_lines(src, /Marshal\.load\b/, message: "Marshal.load — deserialization RCE vector"))
+          findings.concat(scan_lines(src, /\bopen\(.*#\{/, message: "open() with interpolation — shell injection via Kernel#open"))
+          findings
+        end
+
       # Veto: RACE_CONDITIONS — bare check-then-set without synchronize (ROBUSTNESS).
         RuleDSL.rule :RACE_CONDITIONS,
           severity: :error, tags: %i[ROBUSTNESS CONCURRENCY],

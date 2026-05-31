@@ -28,9 +28,13 @@ module Master
 
         def apply
           out = @source
-          out = add_frozen_header(out)       if ruby?
-          out = fix_bare_rescue(out)         if ruby?
+          out = add_frozen_header(out)         if ruby?
+          out = fix_bare_rescue(out)           if ruby?
           out = normalise_null_comparison(out) if sql_in_ruby?
+          out = collapse_blank_lines(out)
+          out = strip_trailing_whitespace(out)
+          out = freeze_mutable_constants(out)  if ruby?
+          out = add_strict_mode(out)           if shell?
           changed = out != @source
           Result.new(path: @path, changed: changed, transforms: @transforms)
             .tap { write_back(out) if changed }
@@ -93,7 +97,53 @@ module Master
           lines
         end
 
+      # C01 — collapse 3+ consecutive blank lines to 2 (SQUINT_TEST).
+        def collapse_blank_lines(src)
+          out = src.gsub(/(\n\n)\n+/, "\\1")
+          @transforms << :collapse_blank_lines if out != src
+          out
+        end
+
+      # C02 — strip trailing whitespace from every line (TRAILING_WHITESPACE).
+        def strip_trailing_whitespace(src)
+          out = src.gsub(/[ \t]+(?=\n|\z)/, "")
+          @transforms << :trailing_whitespace if out != src
+          out
+        end
+
+      # C03 — append .freeze to mutable top-level constants (IMMUTABLE).
+        MUTABLE_CONST_RE = /^(\s*[A-Z][A-Z_]*\s*=\s*[\[{])(.*)(?<!\.freeze)\s*$/.freeze
+
+        def freeze_mutable_constants(src)
+          lines = src.lines
+          changed = false
+          out = lines.map do |line|
+            next line unless line.match?(MUTABLE_CONST_RE)
+            next line if line.match?(/\.freeze\s*$/)
+            next line if line.strip.end_with?(",", "(", "\\")
+            changed = true
+            line.chomp.rstrip + ".freeze\n"
+          end.join
+          @transforms << :freeze_constants if changed
+          out
+        end
+
+      # C04 — add set -euo pipefail after shebang in shell scripts (STRICT_MODE_ZSH).
+        STRICT_MODE = "set -euo pipefail\n"
+
+        def add_strict_mode(src)
+          return src if src.include?(STRICT_MODE) || src.include?("set -e")
+          lines = src.lines
+          shebang_idx = lines.index { |l| l.start_with?("#!") }
+          return src unless shebang_idx
+          lines.insert(shebang_idx + 1, STRICT_MODE)
+          @transforms << :strict_mode
+          lines.join
+        end
+
         def ruby? = File.extname(@path).downcase == ".rb"
+
+        def shell? = %w[.zsh .sh .bash].include?(File.extname(@path).downcase)
 
         def sql_in_ruby?
           ruby? || %w[.sql .erb].include?(File.extname(@path).downcase)
