@@ -1653,3 +1653,196 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] AK403 Hallucination detection: fact-check all generated code claims by running the code; flag unverifiable assertions
 - [ ] AK404 Reward model integration: train a small reward model on {fix, scan_result_after} pairs to predict fix quality without running the scan
 - [ ] AK405 RLHF from user feedback: every user accept/reject of a finding updates a lightweight preference model; proposals adapt
+
+## AL — OpenClaw Personal Assistant Patterns (item 24, expanded)
+
+### AL1: Memory Architecture
+
+- [ ] AL101 Three-tier memory: hotcache (last 20 turns in RAM), semantic store (embeddings, SQLite FTS5), cold archive (compressed episodic summaries on disk) — mirrors OpenClaw's brain-file-per-turn approach
+- [ ] AL102 FTS5 full-text search over memory: `fts5(content, tags, session_id)` virtual table; sub-millisecond keyword retrieval across all past sessions
+- [ ] AL103 Embedding-based semantic retrieval: store 768-dim embeddings (nomic-embed or Gemini embed) per memory chunk; cosine similarity retrieval at query time
+- [ ] AL104 Hybrid RRF retrieval: Reciprocal Rank Fusion over keyword + semantic + recency scores — no single ranking signal dominates
+- [ ] AL105 Memory confidence scores: each memory has {created_at, last_accessed, reinforcement_count, decay_factor} — retrieved weight = confidence × recency
+- [ ] AL106 Memory mutation log: every write to semantic store appended to append-only WAL; replay-able audit trail; never destructive update
+- [ ] AL107 Summarization-before-storage: raw turn → LLM summary (key facts, decisions, follow-ups) → store summary + embedding, not raw text
+- [ ] AL108 User-controlled forgetting: /forget <query> — fuzzy-match memories and soft-delete (mark inactive); hard delete only with explicit --confirm
+- [ ] AL109 Cross-session continuity: at session start, retrieve top-10 most relevant past memories and inject as compressed context prefix
+- [ ] AL110 Memory namespace isolation: separate memory spaces per domain (code, financial, health, personal) — cross-domain retrieval requires explicit --cross-domain flag
+
+### AL2: Personality and Constitutional Identity
+
+- [ ] AL201 Five-stance injection: first system message block always contains the five foundational stances verbatim — model receives them before any task
+- [ ] AL202 Soul drift detection: after every LLM response, check for presence of banned phrases (sycophantic openers, decorative separators) — auto-strip, log violation count
+- [ ] AL203 Persona warmth spectrum: soul.yml defines warmth level (0=cold/diagnostic, 5=warm/supportive) — voice renderer adjusts hedging and acknowledgment per domain
+- [ ] AL204 Role switching without personality loss: when entering therapy mode or finance mode, inject domain-specific prompt extension while preserving soul.yml absolute rules
+- [ ] AL205 Anti-simulation anchor: soul.yml anti_simulation block sent in every system prompt — prevents model from roleplaying as "a different AI" or ignoring rules
+- [ ] AL206 Constitutional critique loop: after any response touching SENSITIVE categories, run a second LLM pass that checks response against soul.yml absolute rules
+- [ ] AL207 Jailbreak pattern classifier: maintain list of known jailbreak templates; fuzzy-match incoming messages; respond with 1-2 sentence dismissal, log attempt
+- [ ] AL208 Response density normalization: track response length distribution per user; if current response >2σ above mean, flag for compression before send
+- [ ] AL209 Voice consistency across models: all model responses pass through Voice::Renderer which enforces terse/unix/S&W style — model-agnostic voice guarantee
+- [ ] AL210 Commitment to user across models: user profile (preferences, history, style) persists in memory regardless of which underlying model handles the turn
+
+### AL3: Financial Intelligence
+
+- [ ] AL301 Transaction import pipeline: CSV/OFX/PDF → parser → normalizer → LLM categorizer → SQLite ledger; one command per file type
+- [ ] AL302 Merchant normalization: raw payee strings ("REMA 1000*OSLO") → canonical merchant name via lookup table + LLM fallback
+- [ ] AL303 Recurring expense detection: group transactions by merchant + amount ± 10%; flag if interval ≈ 30/7/365 days; estimate annual cost
+- [ ] AL304 Budget vs actuals report: /budget report — compare monthly spend per category against user-defined limits; surface overage with % delta
+- [ ] AL305 Savings trajectory: given current balance, monthly surplus, and savings goal, compute months-to-goal with confidence interval
+- [ ] AL306 Tax flag detection: Norwegian tax rules: fradrag (mortgagerenter, fagforeningskontingent, reisefradrag) — flag qualifying transactions for å-meldingen review
+- [ ] AL307 Anomalous spend alert: if single transaction >3σ above merchant's historical average, surface at next session with "unusual charge" tag
+- [ ] AL308 Net worth dashboard: /net-worth — aggregate assets (bank, investments, crypto, property estimate) minus liabilities; time-series chart in terminal
+- [ ] AL309 Exchange rate injection: fetch live NOK/EUR/USD/BTC from free API (fx.fixer.io free tier) at session start; auto-convert amounts in user messages
+- [ ] AL310 Invoice calendar sync: parsed invoices (amount, due date, IBAN) → generate iCal event file; user imports to calendar app
+
+### AL4: Research and Knowledge Work
+
+- [ ] AL401 Arxiv/ar5iv search: /research <query> — call arxiv.org API; return 5 most cited + 5 most recent papers; structured {title, abstract_summary, methodology, key_finding}
+- [ ] AL402 Citation graph traversal: given a paper, fetch its references and citations via Semantic Scholar API; identify foundational papers and recent extensions
+- [ ] AL403 Paper contradiction scanner: given 2+ papers on same topic, diff their findings; surface conflicts with explicit quote comparison
+- [ ] AL404 Research gap identification: after literature synthesis, prompt LLM to identify unexplored questions → ranked by novelty and feasibility
+- [ ] AL405 Knowledge base update: when user confirms a research finding as important, store in semantic memory with domain tag for future retrieval
+- [ ] AL406 Code-from-paper implementation: given paper URL, extract algorithm section → generate Ruby/pseudocode implementation skeleton with TODOs for paper-specific parameters
+- [ ] AL407 Hypothesis tracking: /hypothesis <claim> — store with {evidence_for: [], evidence_against: [], status: :open/:supported/:refuted}; update as evidence arrives
+- [ ] AL408 Reading list management: /queue <URL> — add to reading list with priority; /next — surface next unread item with estimated reading time
+- [ ] AL409 Meeting prep: given calendar event title, auto-research all mentioned entities/topics; produce briefing doc with key facts and open questions
+- [ ] AL410 Source credibility scoring: for any factual claim, surface source type (peer-reviewed, preprint, blog, social) and citation count as credibility signal
+
+### AL5: Safety and Crisis Protocols
+
+- [ ] AL501 Crisis keyword detection: maintain regex list of high-risk phrases; if matched, immediate response: crisis resources + warm acknowledgment + do not continue task
+- [ ] AL502 Mandatory crisis resources: Norway: Kirkens SOS 22 40 00 40, Mental Helse 116 123, Legevakt 116 117, Police 112; always current, never outdated
+- [ ] AL503 Tone de-escalation: detect escalating emotional distress across consecutive turns; shift to slower, more validating response style; reduce task orientation
+- [ ] AL504 Privacy-by-default: health, financial, relationship data stored in encrypted namespace; never included in LLM context without explicit /unlock
+- [ ] AL505 Data retention policy: all stored data has default TTL (financial: 7 years, mood: 2 years, session transcripts: 90 days) — auto-expire with notification
+- [ ] AL506 Consent checkpoint: before storing new sensitive category (health, financial, relationship), surface category name and ask once for consent; never re-ask
+- [ ] AL507 Minimal data principle: only store what is needed for the specific feature; no speculative pre-collection; delete what is no longer needed
+
+### AL6: Free and Cheap LLM Exploitation
+
+- [ ] AL601 Groq integration: llama3-8b-8192 at ~500 tokens/sec free tier — use for fast lexical scan, regex detection, syntax check passes
+- [ ] AL602 Gemini Flash integration: gemini-1.5-flash free tier (15 RPM, 1M context) — use for long-file analysis where context window > OpenRouter models
+- [ ] AL603 Together AI: Llama3 70B at $0.0009/1K tokens — use as mid-tier between Groq (fast/small) and claude-opus (slow/expensive)
+- [ ] AL604 Ollama local: llama3.2, codellama:13b, mistral:7b — zero cost, offline, <200ms for small prompts; use for private data that shouldn't leave device
+- [ ] AL605 OpenRouter free suffix: models ending in `:free` on OpenRouter — auto-discover at session start, add to routing table with quality tier `low`
+- [ ] AL606 Model routing table: {model_id, cost_per_1k_in, cost_per_1k_out, context_window, quality_tier, latency_p50, free_quota} — dynamic routing based on task × budget
+- [ ] AL607 Quality-tiered routing: lexical/syntax → groq; structural/semantic → together; architecture/council → claude-opus; always route to cheapest that meets quality bar
+- [ ] AL608 Prompt minimization: strip comments, blank lines, and non-relevant context before sending to any model — every token saved × every call = real money
+- [ ] AL609 Diff-only sends: for fix verification, send only the changed lines + 5-line context rather than the full file — reduces tokens 10-50x for large files
+- [ ] AL610 Batch rule checks: send 10-20 rule checks in a single LLM prompt rather than 10-20 sequential calls — amortizes model loading overhead
+
+### AL7: Proactive Assistant Behaviors
+
+- [ ] AL701 Ambient monitoring: background daemon checks for {new commits, calendar events, approaching deadlines, anomalous transactions} at configurable intervals
+- [ ] AL702 Daily briefing: at first session of day, produce {weather, calendar, unread priority items, approaching deadlines, yesterday's unresolved findings} in <20 lines
+- [ ] AL703 Proactive debt surfacing: when user mentions a file or module, auto-check if it has open TODO items or findings; surface without being asked
+- [ ] AL704 Follow-up scheduling: when a fix is applied, schedule a /health check on the same file 48h later to verify the fix held under real usage
+- [ ] AL705 Context-aware suggestions: after completing a task, identify the single most impactful next logical step and offer it (not a menu — one suggestion)
+- [ ] AL706 Deadline proximity alerts: 72h before any tracked deadline, surface reminder with estimated completion time for pending work
+- [ ] AL707 Session summary: at session end (user says bye/exit/done), output {tasks completed, findings fixed, decisions made, open items} in 5-10 lines
+
+## AM — Bleeding-Edge Research Integration (item 27, expanded)
+
+### AM1: Constitutional and Alignment Research
+
+- [ ] AM101 Constitutional AI self-critique (Anthropic 2022+): after generating response, run second LLM pass with soul.yml principles as critique criteria; revise on violation — implement as `Ground::ConstitutionalCritic`
+- [ ] AM102 RLHF from implicit signals: track which findings user accepts/rejects/ignores; train lightweight reward model (logistic regression over finding features) — no explicit rating needed
+- [ ] AM103 Debate-based alignment (Irving 2018, updated 2024): for ambiguous rule decisions, run two-agent debate where agents argue for/against the finding; human-in-loop judges; outcome updates rule weight
+- [ ] AM104 Process reward models (Lightman et al. 2023): reward correct reasoning steps, not just final answer — apply to AstFixer: reward intermediate transformation correctness
+- [ ] AM105 Scalable oversight via weak supervision: use cheaper model to generate candidate critiques of expensive model's fixes; expensive model selects best critique — reduces oracle calls
+- [ ] AM106 Value learning from demonstrations: record expert sessions (user correcting MASTER) as demonstration trajectories; extract implicit preferences via IRL
+- [ ] AM107 Constitutional prefix caching: stable soul.yml absolute section sent as Anthropic prompt cache prefix — 93% token cost reduction on system prompt; implement with `cache_control: {type: "ephemeral"}`
+
+### AM2: Agent Architecture Research
+
+- [ ] AM201 ReAct (Yao et al. 2022): every tool invocation preceded by explicit `Thought: <reasoning>` written to trace log — not LLM chain-of-thought, but recorded rationale for each action
+- [ ] AM202 Reflexion (Shinn et al. 2023): after failed fix, generate verbal self-critique ("I tried X but it failed because Y") and inject as context for next attempt — implement in `Loop::Reflexion`
+- [ ] AM203 Tree of Thought (Yao et al. 2023): for architectural decisions, generate 3 distinct solution branches; score each with `Judge::Council`; backtrack from dead ends — O(depth × branching_factor) LLM calls
+- [ ] AM204 Graph of Thought (Besta et al. 2023): for multi-file dependency problems, build explicit dependency graph before reasoning; enables non-linear thought aggregation across nodes
+- [ ] AM205 LLM-MCTS (Zhao et al. 2024): Monte Carlo Tree Search over fix candidates; rollout = run scan after fix; reward = reduction in finding count; select fix with highest expected reward
+- [ ] AM206 Skeleton-of-Thought (Ning et al. 2023): for long doc generation, produce skeleton first, then fill sections in parallel LLM calls — latency reduction proportional to parallelism
+- [ ] AM207 Self-discover (Wang et al. 2024): before executing a complex task, compose a reasoning structure from primitive modules (search, verify, critique); improves zero-shot task performance
+- [ ] AM208 AgentBench evaluation: benchmark MASTER against AgentBench tasks (OS, DB, web) to identify capability gaps vs. SOTA agents — not just code; broader agentic reasoning
+
+### AM3: Memory Systems Research
+
+- [ ] AM301 MemGPT (Packer et al. 2023): OS-inspired virtual context management — main context (limited) + external storage; agent decides what to page in/out via function calls; implement as `Reach::MemoryPager`
+- [ ] AM302 LongMem (Wang et al. 2023): decoupled memory encoder; encode past sessions offline; retrieve compressed representations at inference — reduces memory retrieval to embedding lookup
+- [ ] AM303 ReMem (Xu et al. 2023): retrieve-and-rerank memory with interleaved generation; memory retrieval happens mid-generation, not just at start — enables dynamic context injection
+- [ ] AM304 RAPTOR (Sarthi et al. 2024): recursive abstractive processing — embed individual chunks, cluster, summarize clusters, embed summaries; enables multi-granularity retrieval
+- [ ] AM305 Cognitive architecture (SOAR/ACT-R inspired): separate declarative (facts), procedural (rules), episodic (events) memory stores with distinct retrieval mechanisms — maps to MASTER's ground/loop/trace modules
+- [ ] AM306 Streaming memory updates: as session progresses, incrementally update semantic store rather than batch-writing at session end — enables crash recovery and real-time retrieval
+
+### AM4: Multi-Agent Systems
+
+- [ ] AM401 AutoGen patterns (Wu et al. 2023): structured multi-agent conversations where agents have roles (planner, executor, critic); apply to MASTER's council — not free-form but role-constrained dialogue
+- [ ] AM402 MetaGPT (Hong et al. 2023): SOPs (standard operating procedures) for agent coordination — each agent follows a structured workflow with defined inputs/outputs; reduces hallucination in multi-step tasks
+- [ ] AM403 CAMEL cooperative agents: role-playing agent pairs (architect + implementer); architect generates high-level plan, implementer executes; critic validates — cleaner separation than current council
+- [ ] AM404 Swarm intelligence: leaderless multi-agent systems where agents vote on best fix; majority vote reduces individual LLM error rate; implement as `Judge::Swarm` with quorum threshold
+- [ ] AM405 Agent communication protocol: define structured message format for inter-agent communication (JSON with {from, to, intent, payload, trace_id}) — enables debugging multi-agent interactions
+- [ ] AM406 Hierarchical agent decomposition: complex tasks decomposed into subtasks by orchestrator; subtask agents operate independently; results merged by orchestrator — reduces context load per agent
+
+### AM5: Tool Use and Function Calling
+
+- [ ] AM501 Toolformer approach (Schick et al. 2023): train model to self-insert API calls in-context by showing cost-benefit — adapt to MASTER: annotate which tool calls proved useful; reinforce those patterns
+- [ ] AM502 HuggingGPT (Shen et al. 2023): use LLM as controller to select specialist models for subtasks; MASTER equivalent: route to specialized models per rule type (code model for Ruby, security model for FORBIDDEN_PATTERNS)
+- [ ] AM503 AnyTool (Du et al. 2024): hierarchical API retrieval for large tool spaces; first retrieve relevant tool category, then specific tool — scales to 100+ tools without overwhelming context
+- [ ] AM504 Tool documentation compression: store tool descriptions as embeddings; retrieve top-K relevant tools per task rather than sending full tool list — reduces prompt size 50-80% for large tool sets
+- [ ] AM505 Tool result caching: cache deterministic tool results (file reads, static analysis) with TTL; avoid re-running expensive tools on unchanged inputs
+
+### AM6: Context Window and Long-Context Research
+
+- [ ] AM601 LLMLingua (Jiang et al. 2023): token-level prompt compression via perplexity scoring; compress long context to 25% length with <5% quality loss — apply before any call with >4K token prompt
+- [ ] AM602 Selective context (Li et al. 2023): identify and remove semantically redundant sentences from context; simpler than LLMLingua, no fine-tuning required
+- [ ] AM603 LONGLLMLINGUA (Jiang et al. 2024): question-aware compression — compress context conditioned on the query; retains query-relevant tokens preferentially
+- [ ] AM604 Chunk-and-summarize: for files >2K lines, chunk at function/class boundaries, summarize each chunk, send summaries + relevant chunk — stays within any context limit
+- [ ] AM605 Sliding window attention (Beltagy et al. 2020 → Mistral 2023): local attention window + sparse global attention; enables infinite-length processing at linear cost — relevant for streaming file processing
+- [ ] AM606 Position interpolation: extend model's effective context via RoPE interpolation — use models that support extended context (Claude 200K, Gemini 1M) for whole-repo analysis
+
+### AM7: Self-Improvement Research
+
+- [ ] AM701 Self-play (Silver et al. 2017 → LLM adaptation): MASTER generates adversarial test cases for its own rules; tries to find inputs that produce false negatives — self-generated red-teaming
+- [ ] AM702 Self-instruct (Wang et al. 2022): MASTER generates new rule proposals from seed rules; filters via quality criteria; adds approved rules to rules.yml — autonomous rule expansion
+- [ ] AM703 Recursive self-improvement safety: any self-modification (new rules, changed thresholds) runs through `Judge::Council` before commit; never self-modify without deliberation
+- [ ] AM704 Capability elicitation: periodically run MASTER on a fixed benchmark suite; track pass rate over time; capability regressions trigger investigation before the next release
+- [ ] AM705 Knowledge distillation: expensive council deliberation results cached as fine-tuning examples; distill into a smaller, faster model for common cases — reduces latency and cost
+
+### AM8: Efficiency and Inference Research
+
+- [ ] AM801 Speculative decoding (Leviathan et al. 2022): draft model (llama3-8b) proposes K tokens; target model (claude) verifies in single forward pass; 2-3x throughput with identical quality
+- [ ] AM802 Medusa (Cai et al. 2024): multiple parallel decoding heads predict N future tokens simultaneously; no draft model needed; 2-3x speedup — applicable at model server level
+- [ ] AM803 Prompt quantization awareness: prefer models with int4/int8 quantization where quality loss is acceptable (lexical rules); reserve FP16 for semantic/council passes
+- [ ] AM804 Continuous batching (Orca, Yu et al. 2022): process multiple requests in same forward pass without waiting for slowest; critical for parallel rule scan workers
+- [ ] AM805 Prefix sharing (RadixAttention, Zheng et al. 2023): share KV cache for common prefixes across requests — system prompt cached once, amortized across all requests in session
+
+### AM9: Neurosymbolic and Hybrid AI
+
+- [ ] AM901 Neuro-symbolic integration: rules.yml rules as symbolic constraints; LLM provides neural completion within constraint boundaries — deterministic correctness + neural flexibility
+- [ ] AM902 Constraint propagation: for fix generation, encode post-conditions as constraints (e.g., frozen_string_literal must be present); propagate constraints to ensure generated fix satisfies them
+- [ ] AM903 Logic programming integration: embed Prolog or miniKanren for rule deduction — applicable to dependency analysis and rule conflict detection
+- [ ] AM904 Abstract interpretation: analyze Ruby code for invariants (type bounds, null safety, range constraints) without execution — enables static proofs of fix correctness
+- [ ] AM905 Formal verification integration: for critical rules (security-related), generate TLA+ or Alloy specifications; verify absence of counterexamples before marking rule as passing
+
+### AM10: RAG and Retrieval Advances
+
+- [ ] AM1001 HyDE (Gao et al. 2022): Hypothetical Document Embeddings — generate hypothetical answer, embed it, retrieve documents similar to hypothetical answer rather than query — improves recall for ambiguous queries
+- [ ] AM1002 ColBERT v2 (Santhanam et al. 2021): late-interaction retrieval model — token-level similarity across query and document; better than bi-encoder for code retrieval
+- [ ] AM1003 FLARE (Jiang et al. 2023): active retrieval during generation — model detects when it's uncertain and triggers retrieval mid-generation; prevents hallucination on code facts
+- [ ] AM1004 GraphRAG (Edge et al. 2024): build knowledge graph over codebase; retrieve subgraphs rather than chunks — enables structural reasoning about code relationships
+- [ ] AM1005 Adaptive RAG: dynamically choose retrieval strategy (no retrieval / single-step / multi-step) based on query complexity; avoids retrieval overhead for simple queries
+
+### AM11: Code Generation Research
+
+- [ ] AM1101 AlphaCode 2 patterns: competitive programming approach applied to fix generation — generate diverse fix candidates (100-1000), filter by test execution, cluster by behavior, present representative fixes
+- [ ] AM1102 Repo-level context (RepoFormer, 2024): encode full repository structure as context; enables cross-file fix generation that respects project-wide invariants
+- [ ] AM1103 Test-driven fix generation: for each proposed fix, generate unit test that verifies the fix; only accept fixes that pass generated tests — self-validating
+- [ ] AM1104 Execution-guided synthesis: run proposed fix and observe runtime behavior; use observation to refine fix in tight feedback loop — requires sandboxed Ruby execution environment
+- [ ] AM1105 Diff representation learning: fine-tune embedding model on (original, diff, result) triples; enables semantic similarity over code changes, not just code text
+
+### AM12: Adversarial Robustness
+
+- [ ] AM1201 Smooth-LLM (Robey et al. 2023): randomize input perturbations and aggregate outputs — smoothing defense against adversarial prompts; apply to incoming user messages before processing
+- [ ] AM1202 Self-reminder (Xie et al. 2023): append reminders of system instructions at both beginning and end of every prompt — simple but effective jailbreak resistance
+- [ ] AM1203 Paraphrase augmentation: for ambiguous requests, generate 3 paraphrases and check consistency of responses — inconsistency signals adversarial or ambiguous input
+- [ ] AM1204 Perplexity filtering: compute perplexity of input under language model; anomalously high perplexity signals adversarial injection — flag for elevated scrutiny
+- [ ] AM1205 Prompt injection detection: classify each tool result for prompt injection attempts (instructions embedded in retrieved content) before executing any implied commands
