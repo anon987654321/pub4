@@ -214,7 +214,7 @@ module Master
         chat_session.with_tools(*available_tools) unless available_tools.empty?
 
         reply = if stream && blk
-          chat_session.ask(messages.last[:content]) { |chunk| blk.call(chunk.content.to_s) if chunk.content }
+                  chat_session.ask(messages.last[:content]) { |chunk| blk.call(chunk.content.to_s) if chunk.content }
         else
           chat_session.ask(messages.last[:content])
         end

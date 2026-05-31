@@ -2,21 +2,21 @@
 
 module Master
   module Ground
-  module Orders
-    # Standing-order callables. Subclass and implement `call`. Returning a
-    # Master::Result::Ok marks the order done; Result::Err marks it errored.
-    class Base
-      def initialize(container:)
-        @container = container
-      end
+    module Orders
+      # Standing-order callables. Subclass and implement `call`. Returning a
+      # Master::Result::Ok marks the order done; Result::Err marks it errored.
+      class Base
+        def initialize(container:)
+          @container = container
+        end
 
-      def bus = @container[:bus]
-      def root = @container[:root]
+        def bus = @container[:bus]
+        def root = @container[:root]
 
-      def call
-        raise NotImplementedError, "#{self.class}#call not implemented"
+        def call
+          raise NotImplementedError, "#{self.class}#call not implemented"
+        end
       end
     end
-  end
   end
 end

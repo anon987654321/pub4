@@ -2,76 +2,76 @@
 
 module Master
   module Ground
-  class BrainOverlay
-    CORE_FILES = %w[
-      standing_orders.rb
-      workflow_policy.rb
-      evidence_base.rb
-      tool_protocol.rb
-      subagent_policy.rb
-    ].freeze
+    class BrainOverlay
+      CORE_FILES = %w[
+        standing_orders.rb
+        workflow_policy.rb
+        evidence_base.rb
+        tool_protocol.rb
+        subagent_policy.rb
+      ].freeze
 
-    CONTEXTUAL_FILES = %w[
-      policy_classifier.rb
-      patch_verifier.rb
-      done_checker.rb
-      memory_search.rb
-      context_compactor.rb
-    ].freeze
+      CONTEXTUAL_FILES = %w[
+        policy_classifier.rb
+        patch_verifier.rb
+        done_checker.rb
+        memory_search.rb
+        context_compactor.rb
+      ].freeze
 
-    DEFAULT_MARKDOWN_DIRS = [
-      File.join(Master::ROOT, "data", "claude"),
-      File.join(Master::ROOT, ".master", "memory")
-    ].freeze
+      DEFAULT_MARKDOWN_DIRS = [
+        File.join(Master::ROOT, "data", "claude"),
+        File.join(Master::ROOT, ".master", "memory")
+      ].freeze
 
-    attr_reader :root
+      attr_reader :root
 
-    def initialize(root: Master::ROOT, markdown_dirs: DEFAULT_MARKDOWN_DIRS)
-      @root = root
-      @markdown_dirs = markdown_dirs
-    end
+      def initialize(root: Master::ROOT, markdown_dirs: DEFAULT_MARKDOWN_DIRS)
+        @root = root
+        @markdown_dirs = markdown_dirs
+      end
 
-    def core_brief
-      lines = ["Brain overlay: Ruby policy is authoritative; markdown is legacy/contextual."]
-      lines << Master::Ground::ToolProtocol.brief if defined?(Master::Ground::ToolProtocol)
-      lines << Master::Ground::EvidenceBase.brief if defined?(Master::Ground::EvidenceBase)
-      lines << Master::Ground::WorkflowPolicy.brief if defined?(Master::Ground::WorkflowPolicy)
-      lines.compact.join("\n\n")
-    end
+      def core_brief
+        lines = ["Brain overlay: Ruby policy is authoritative; markdown is legacy/contextual."]
+        lines << Master::Ground::ToolProtocol.brief if defined?(Master::Ground::ToolProtocol)
+        lines << Master::Ground::EvidenceBase.brief if defined?(Master::Ground::EvidenceBase)
+        lines << Master::Ground::WorkflowPolicy.brief if defined?(Master::Ground::WorkflowPolicy)
+        lines.compact.join("\n\n")
+      end
 
-    def contextual_index
-      markdown_files.map do |path|
-        rel = relative(path)
-        title = File.basename(path)
-        "#{rel} — #{title}"
+      def contextual_index
+        markdown_files.map do |path|
+          rel = relative(path)
+          title = File.basename(path)
+          "#{rel} — #{title}"
+        end
+      end
+
+      def load_context(name_or_pattern)
+        pattern = name_or_pattern.to_s
+        match = markdown_files.find { |path|
+          relative(path).include?(pattern) || File.basename(path).include?(pattern)
+        }
+        return nil unless match
+
+        File.read(match, encoding: "utf-8")
+      end
+
+      def reloadable?
+        true
+      end
+
+      private
+
+      def markdown_files
+        @markdown_dirs
+          .flat_map { |dir| Dir.glob(File.join(dir, "**", "*.md")) }
+          .select { |path| File.file?(path) }
+      end
+
+      def relative(path)
+        path.sub(%r{\A#{Regexp.escape(@root)}/?}, "")
       end
     end
-
-    def load_context(name_or_pattern)
-      pattern = name_or_pattern.to_s
-      match = markdown_files.find { |path|
-        relative(path).include?(pattern) || File.basename(path).include?(pattern)
-      }
-      return nil unless match
-
-      File.read(match, encoding: "utf-8")
-    end
-
-    def reloadable?
-      true
-    end
-
-    private
-
-    def markdown_files
-      @markdown_dirs
-        .flat_map { |dir| Dir.glob(File.join(dir, "**", "*.md")) }
-        .select { |path| File.file?(path) }
-    end
-
-    def relative(path)
-      path.sub(%r{\A#{Regexp.escape(@root)}/?}, "")
-    end
-  end
   end
 end

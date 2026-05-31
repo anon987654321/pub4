@@ -5,50 +5,50 @@ require "json"
 
 module Master
   module Ground
-  module Persistence
-    # SQLite-backed findings store. Replaces .master/findings.jsonl when present;
-    # otherwise no-op so existing JSONL flow continues unaltered. Exposes time-series
-    # queries the JSONL stream cannot answer (rule frequency over time, by directory).
-    class SqliteFindings
-      include SqliteStore
-      DEFAULT_PATH = ".master/findings.sqlite3"
+    module Persistence
+      # SQLite-backed findings store. Replaces .master/findings.jsonl when present;
+      # otherwise no-op so existing JSONL flow continues unaltered. Exposes time-series
+      # queries the JSONL stream cannot answer (rule frequency over time, by directory).
+      class SqliteFindings
+        include SqliteStore
+        DEFAULT_PATH = ".master/findings.sqlite3"
 
-      def initialize(root:)
-        @db = open_sqlite(root, DEFAULT_PATH)
-        ensure_schema
-      end
+        def initialize(root:)
+          @db = open_sqlite(root, DEFAULT_PATH)
+          ensure_schema
+        end
 
-      def record(rule:, message:, line:, severity:, path:, tags: [])
-        @db.execute(<<~SQL, [Time.now.to_i, rule.to_s, message.to_s, line.to_i, severity.to_s, path.to_s, tags.to_json])
+        def record(rule:, message:, line:, severity:, path:, tags: [])
+          @db.execute(<<~SQL, [Time.now.to_i, rule.to_s, message.to_s, line.to_i, severity.to_s, path.to_s, tags.to_json])
           INSERT INTO findings (ts, rule, message, line, severity, path, tags) VALUES (?, ?, ?, ?, ?, ?, ?)
         SQL
-      end
+        end
 
-      def top_rules(since_days: 30, limit: 10)
-        cutoff = Time.now.to_i - since_days * 86_400
-        @db.execute(<<~SQL, [cutoff, limit])
+        def top_rules(since_days: 30, limit: 10)
+          cutoff = Time.now.to_i - since_days * 86_400
+          @db.execute(<<~SQL, [cutoff, limit])
           SELECT rule, COUNT(*) AS n FROM findings WHERE ts >= ?
           GROUP BY rule ORDER BY n DESC LIMIT ?
         SQL
-      end
+        end
 
-      def by_directory(since_days: 30)
-        cutoff = Time.now.to_i - since_days * 86_400
-        @db.execute(<<~SQL, [cutoff])
+        def by_directory(since_days: 30)
+          cutoff = Time.now.to_i - since_days * 86_400
+          @db.execute(<<~SQL, [cutoff])
           SELECT substr(path, 1, instr(path || '/', '/lib/') + 4) AS dir,
                  COUNT(*) AS n FROM findings WHERE ts >= ?
           GROUP BY dir ORDER BY n DESC
         SQL
-      end
+        end
 
-      def close
-        @db&.close
-      end
+        def close
+          @db&.close
+        end
 
-      private
+        private
 
-      def ensure_schema
-        @db.execute_batch(<<~SQL)
+        def ensure_schema
+          @db.execute_batch(<<~SQL)
           CREATE TABLE IF NOT EXISTS findings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ts INTEGER NOT NULL,
@@ -63,8 +63,8 @@ module Master
           CREATE INDEX IF NOT EXISTS idx_findings_rule ON findings(rule);
           CREATE INDEX IF NOT EXISTS idx_findings_path ON findings(path);
         SQL
+        end
       end
     end
-  end
   end
 end

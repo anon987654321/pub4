@@ -201,7 +201,7 @@ module Master
 
       # MASTER_WATCH=1 enables reactive file-watching (requires rb-kqueue or rb-inotify).
       watch_loop = if ENV["MASTER_WATCH"] == "1"
-        wl = Loop::WatchLoop.new(rules:, agent:, scanner:, root:, bus:, learnings:)
+                     wl = Loop::WatchLoop.new(rules:, agent:, scanner:, root:, bus:, learnings:)
         Thread.new { wl.run }.tap { |t| t.abort_on_exception = false }
         wl
       end

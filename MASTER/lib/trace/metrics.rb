@@ -4,123 +4,123 @@ require "json"
 
 module Master
   module Trace
-  class Metrics
-    SLOW_REQUEST_MS = 5000
-    METRICS_PREFIX = "metrics0".freeze
-    DIFF_SIZE_LIMIT_DEFAULT = 200
-    MAX_DIFF_SIZE_LIMIT = DIFF_SIZE_LIMIT_DEFAULT.freeze
-    MAX_DIFF_SIZE_LINES = MAX_DIFF_SIZE_LIMIT.freeze
-    ROLLBACK_RATE_THRESHOLD = 0.15
-    DECISION_LATENCY_MS_THRESHOLD = 5000
-    MAX_SAMPLE_SIZE = 500
+    class Metrics
+      SLOW_REQUEST_MS = 5000
+      METRICS_PREFIX = "metrics0".freeze
+      DIFF_SIZE_LIMIT_DEFAULT = 200
+      MAX_DIFF_SIZE_LIMIT = DIFF_SIZE_LIMIT_DEFAULT.freeze
+      MAX_DIFF_SIZE_LINES = MAX_DIFF_SIZE_LIMIT.freeze
+      ROLLBACK_RATE_THRESHOLD = 0.15
+      DECISION_LATENCY_MS_THRESHOLD = 5000
+      MAX_SAMPLE_SIZE = 500
 
-    def initialize(root:, event_bus: nil)
-      @path = File.join(root, ".master", "metrics.jsonl")
-      @bus = event_bus
-      @mutex = Mutex.new
-      @writes = 0
-      @undos = 0
-      @latencies = []
-      @diff_sizes = []
-      @model_stats = Hash.new { |h, k| h[k] = { calls: 0, failures: 0, escalations: 0 } }
-      subscribe_to_bus(event_bus) if event_bus
-    end
-
-    def record_latency(ms)
-      avg = @mutex.synchronize do
-        @latencies << ms
-        @latencies.shift if @latencies.size > MAX_SAMPLE_SIZE
-        average(@latencies)
+      def initialize(root:, event_bus: nil)
+        @path = File.join(root, ".master", "metrics.jsonl")
+        @bus = event_bus
+        @mutex = Mutex.new
+        @writes = 0
+        @undos = 0
+        @latencies = []
+        @diff_sizes = []
+        @model_stats = Hash.new { |h, k| h[k] = { calls: 0, failures: 0, escalations: 0 } }
+        subscribe_to_bus(event_bus) if event_bus
       end
-      check_threshold(:decision_latency_ms, avg)
-      append(decision_latency_ms: ms)
-    end
 
-    def record_diff(lines)
-      avg = @mutex.synchronize do
-        @diff_sizes << lines
-        @diff_sizes.shift if @diff_sizes.size > MAX_SAMPLE_SIZE
-        @writes += 1
-        average(@diff_sizes)
-      end
-      check_threshold(:diff_size_lines, avg)
-      append(diff_size_lines: lines)
-    end
-
-    def record_undo
-      rate = @mutex.synchronize { @undos += 1; @writes > 0 ? @undos.to_f / @writes : 0.0 }
-      check_threshold(:rollback_rate, rate)
-      append(rollback_rate: rate.round(3))
-    end
-
-    def record_llm_response(model:, success:, tokens_approx: 0, escalated: false)
-      @mutex.synchronize do
-        stats = @model_stats[model.to_s]
-        stats[:calls] += 1
-        stats[:failures] += 1 unless success
-        stats[:escalations] += 1 if escalated
-      end
-      append(llm_response: { model: model.to_s, success:, tokens_approx:, escalated: })
-    end
-
-    def summary
-      {
-        avg_latency_ms: average(@latencies).round,
-        avg_diff_lines: average(@diff_sizes).round,
-        rollback_rate: (@writes > 0 ? @undos.to_f / @writes : 0.0).round(3),
-        writes: @writes,
-        undos: @undos
-      }
-    end
-
-    def model_quality
-      @model_stats.transform_values do |s|
-        fail_rate = s[:calls] > 0 ? (s[:failures].to_f / s[:calls]).round(3) : 0.0
-        s.merge(fail_rate:)
-      end.sort_by { |_, v| -v[:fail_rate] }.to_h
-    end
-
-    private
-
-    def subscribe_to_bus(bus)
-      bus.subscribe("llm:response") do |ev|
-        record_llm_response(
-          model: ev[:model].to_s,
-          success: ev[:success] != false,
-          tokens_approx: ev[:tokens_approx].to_i,
-          escalated: ev[:escalated] == true
-        )
-      rescue StandardError => e
-        @bus&.publish("metrics:record_error", error: e.message)
-      end
-    end
-
-    def check_threshold(metric, value)
-      threshold =
-        case metric
-        when :decision_latency_ms then DECISION_LATENCY_MS_THRESHOLD
-        when :diff_size_lines then MAX_DIFF_SIZE_LINES
-        when :rollback_rate then ROLLBACK_RATE_THRESHOLD
-        else return
+      def record_latency(ms)
+        avg = @mutex.synchronize do
+          @latencies << ms
+          @latencies.shift if @latencies.size > MAX_SAMPLE_SIZE
+          average(@latencies)
         end
-      return unless value > threshold
-      @bus&.publish("metrics:threshold_exceeded", metric:, value:)
-      warn "#{METRICS_PREFIX}: #{metric} #{value} exceeds #{threshold}"
-    end
-
-    def average(arr)
-      return 0.0 if arr.empty?
-      arr.sum.to_f / arr.size
-    end
-
-    def append(entry)
-      entry[:ts] = Time.now.to_i
-      Master::Trace::Telemetry.span("metrics.append", keys: entry.keys.join(",")) do
-        File.open(@path, "a") { |f| f.puts(JSON.generate(entry)) }
+        check_threshold(:decision_latency_ms, avg)
+        append(decision_latency_ms: ms)
       end
-    rescue StandardError => e
-      @bus&.publish("metrics:append_error", error: e.message)
+
+      def record_diff(lines)
+        avg = @mutex.synchronize do
+          @diff_sizes << lines
+          @diff_sizes.shift if @diff_sizes.size > MAX_SAMPLE_SIZE
+          @writes += 1
+          average(@diff_sizes)
+        end
+        check_threshold(:diff_size_lines, avg)
+        append(diff_size_lines: lines)
+      end
+
+      def record_undo
+        rate = @mutex.synchronize { @undos += 1; @writes > 0 ? @undos.to_f / @writes : 0.0 }
+        check_threshold(:rollback_rate, rate)
+        append(rollback_rate: rate.round(3))
+      end
+
+      def record_llm_response(model:, success:, tokens_approx: 0, escalated: false)
+        @mutex.synchronize do
+          stats = @model_stats[model.to_s]
+          stats[:calls] += 1
+          stats[:failures] += 1 unless success
+          stats[:escalations] += 1 if escalated
+        end
+        append(llm_response: { model: model.to_s, success:, tokens_approx:, escalated: })
+      end
+
+      def summary
+        {
+          avg_latency_ms: average(@latencies).round,
+          avg_diff_lines: average(@diff_sizes).round,
+          rollback_rate: (@writes > 0 ? @undos.to_f / @writes : 0.0).round(3),
+          writes: @writes,
+          undos: @undos
+        }
+      end
+
+      def model_quality
+        @model_stats.transform_values do |s|
+          fail_rate = s[:calls] > 0 ? (s[:failures].to_f / s[:calls]).round(3) : 0.0
+          s.merge(fail_rate:)
+        end.sort_by { |_, v| -v[:fail_rate] }.to_h
+      end
+
+      private
+
+      def subscribe_to_bus(bus)
+        bus.subscribe("llm:response") do |ev|
+          record_llm_response(
+            model: ev[:model].to_s,
+            success: ev[:success] != false,
+            tokens_approx: ev[:tokens_approx].to_i,
+            escalated: ev[:escalated] == true
+          )
+        rescue StandardError => e
+          @bus&.publish("metrics:record_error", error: e.message)
+        end
+      end
+
+      def check_threshold(metric, value)
+        threshold =
+          case metric
+          when :decision_latency_ms then DECISION_LATENCY_MS_THRESHOLD
+          when :diff_size_lines then MAX_DIFF_SIZE_LINES
+          when :rollback_rate then ROLLBACK_RATE_THRESHOLD
+          else return
+          end
+        return unless value > threshold
+        @bus&.publish("metrics:threshold_exceeded", metric:, value:)
+        warn "#{METRICS_PREFIX}: #{metric} #{value} exceeds #{threshold}"
+      end
+
+      def average(arr)
+        return 0.0 if arr.empty?
+        arr.sum.to_f / arr.size
+      end
+
+      def append(entry)
+        entry[:ts] = Time.now.to_i
+        Master::Trace::Telemetry.span("metrics.append", keys: entry.keys.join(",")) do
+          File.open(@path, "a") { |f| f.puts(JSON.generate(entry)) }
+        end
+      rescue StandardError => e
+        @bus&.publish("metrics:append_error", error: e.message)
+      end
     end
-  end
   end
 end
