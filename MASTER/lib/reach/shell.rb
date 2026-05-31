@@ -55,7 +55,7 @@ module Master
 
         @bus&.publish("tool:before", tool: NAME, command:)
 
-        banned = ZSH_BANNED.select { |b| command.match?(/\b#{b}\b/) }
+        banned = ZSH_BANNED.select { |b| command.match?(/\b#{Regexp.escape(b)}\b/) }
         @bus&.publish("zsh:banned_tool_warning", tools: banned, command:) if banned.any?
 
         zdotdir = File.writable?("/tmp") ? "/tmp" : Dir.home

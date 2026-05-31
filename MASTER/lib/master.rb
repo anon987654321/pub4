@@ -86,8 +86,6 @@ module Master
   loader.ignore(File.join(__dir__, "converge.rb"))
   loader.ignore(File.join(__dir__, "converge"))
   loader.ignore(File.join(__dir__, "master_paths.rb"))
-  loader.ignore(File.join(__dir__, "council/member.rb"))
-  loader.ignore(File.join(__dir__, "council/runner.rb"))
   loader.ignore(File.join(__dir__, "harness/registry.rb"))
   loader.ignore(File.join(__dir__, "history/fossils.rb"))
   loader.ignore(File.join(__dir__, "providers/catalog_index.rb"))
@@ -163,7 +161,7 @@ module Master
   def self.load_yaml(path, symbolize_names: false, default: {})
     YAML.safe_load_file(path, aliases: true, symbolize_names: symbolize_names)
   rescue Psych::Exception, Errno::ENOENT, Errno::EACCES => e
-    warn("load_yaml: " + e.message)
+    warn("load_yaml: #{e.message}")
     default
   end
 
@@ -222,7 +220,6 @@ module Master
     install_process_guards!
     Trace::Telemetry.bootstrap!(root: root)
     container = Builder.build(root:)
-    install_process_guards!
     validate_data!(root: root, bus: container[:bus])
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
