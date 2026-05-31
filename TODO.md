@@ -2494,3 +2494,372 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] AP1505 No layout thrash: read all DOM geometry before writing; never alternate `element.getBoundingClientRect()` with `element.style.height = ...` in loops; batch reads then batch writes
 - [ ] AP1506 Bundle size audit: importmap manifest shows exact version + size of each dependency; total JS on first load ≤ 150KB gzipped; audit quarterly; remove unused imports
 - [ ] AP1507 CSS size audit: application.css ≤ 30KB gzipped per app; if larger, split into critical (inlined) and deferred (linked); PurgeCSS pass to remove unused selectors in production
+
+## AQ — Rails 8+ PWA Deep-Dive (AN continuation)
+
+### AQ1: Action Cable and Real-Time Architecture
+
+- [ ] AQ101 Channel per vertical in brgen: separate ActionCable channels — `FeedChannel`, `DatingChannel`, `MarketplaceChannel`, `TVChannel`, `PlaylistChannel`; subscribe only to active vertical's channel; reduce unnecessary broadcasts
+- [ ] AQ102 Presence tracking: `ConnectionsChannel` broadcasts online user IDs to subscribers; `before_subscribe { track_presence }`, `after_unsubscribe { remove_presence }`; stored in Solid Cache with 30s TTL
+- [ ] AQ103 Typing indicators: `TypingChannel` with `transmit(typing: true)` on keydown debounce; `typing: false` on blur or 2s idle; broadcast to conversation partner only
+- [ ] AQ104 Read receipts: `MessagesChannel#mark_read` Nothing Morph reflex; updates `read_at` timestamp; CableReady `set_attribute` on sender's message to show double-tick
+- [ ] AQ105 Live notification count: `NotificationsChannel` broadcasts `{count: unread_count}` on every new notification; client updates badge via `cable_ready.set_attribute(selector: "[data-badge]", name: "data-count", value: count)`
+- [ ] AQ106 Throttle broadcasts: wrap `ActionCable.server.broadcast` in `Rails.cache.fetch("broadcast:#{key}", expires_in: 1.second) { broadcast! }`; prevent storm from rapid successive writes
+- [ ] AQ107 ActionCable identity: `identified_by :current_user`; reject anonymous WebSocket connections to all channels except public TV channel; never trust client-sent user IDs
+- [ ] AQ108 Connection health ping: `ActionCable.server.config.ping_interval = 15`; client auto-reconnects on dropped connection; display "Reconnecting…" indicator via Stimulus
+
+### AQ2: Active Storage Deep-Dive
+
+- [ ] AQ201 Direct upload to disk: configure `config/storage.yml` with `service: Disk` for development, `service: Mirror` (local + S3) for production; Active Storage handles upload → storage → retrieval
+- [ ] AQ202 Image variants pipeline: `variant :thumb, resize_to_fill: [80, 80]; variant :card, resize_to_fill: [400, 300]; variant :full, resize_to_limit: [1200, nil]` — define on model, never in view
+- [ ] AQ203 WebP conversion: `variant :webp, convert: :webp, quality: 85` for all image attachments; serve WebP with JPEG fallback via `<picture>` tag helper
+- [ ] AQ204 Blurhash on upload: after Active Storage attachment completes, enqueue `GenerateBlurhashJob` which reads image bytes, computes blurhash, stores in `attachments.metadata` JSON column
+- [ ] AQ205 Content-type validation: `validates :photo, content_type: ["image/jpg", "image/jpeg", "image/png", "image/webp", "image/heic"]` — explicit allowlist; reject all other types server-side
+- [ ] AQ206 File size validation: `validates :photo, size: { less_than: 10.megabytes, message: "must be less than 10MB" }` — hard limit server-side regardless of client-side check
+- [ ] AQ207 Mirror service for CDN: configure `Mirror` storage service that writes to both local disk and Cloudflare R2; read from CDN for public content; local disk as fallback origin
+- [ ] AQ208 Expiring URLs: `rails_blob_path(@post.image, expires_in: 1.hour)` for sensitive content (dating photos, private marketplace items); public content uses permanent URLs
+- [ ] AQ209 Preview generation: `has_one_attached :document; has_many_attached :images` — for PDFs, use `preview` to generate first-page thumbnail; show in card without PDF download
+- [ ] AQ210 Concurrent upload: `data-controller="direct-upload"` Stimulus controller tracking multiple concurrent `DirectUpload` instances; progress bar per file; total progress aggregated
+
+### AQ3: Hotwire Native (Mobile App Bridge)
+
+- [ ] AQ301 Turbo Native setup: add `turbo-ios` gem + `turbo_ios` Stimulus bridge; wrap existing web views in native iOS app shell; reuse all Rails views without duplication
+- [ ] AQ302 Bridge components: `data-controller="bridge--menu"` triggers native iOS action sheet; `data-controller="bridge--form"` triggers native keyboard handling; define in `app/javascript/controllers/bridge/`
+- [ ] AQ303 Native navigation: `Turbo.visit(url, {action: "advance"})` = push; `{action: "replace"}` = replace; `{action: "restore"}` = pop; map to UINavigationController operations
+- [ ] AQ304 Path configuration: `path_configuration.json` routes which URLs use native views vs web views; dating swipe = native, post compose = web, settings = web
+- [ ] AQ305 Native bottom tabs: define in path config; each tab maps to a `TabBar` item with icon + label; tab state persists across navigations; badge count from CableReady
+- [ ] AQ306 Native share sheet: `BridgeComponent` intercepts `share` button taps; calls `window.nativeShare({url:, title:})` → native iOS Share sheet with all apps; no PWA Web Share API needed
+- [ ] AQ307 Native image picker: `data-controller="bridge--photo-picker"` invokes native camera/gallery picker; returns base64 → direct upload starts immediately; better than `<input type="file">`
+- [ ] AQ308 Push via APNs: `webpush` gem handles both Web Push (VAPID) and bridges to APNs for Turbo Native iOS; single notification sending path regardless of client platform
+
+### AQ4: Search Architecture
+
+- [ ] AQ401 SQLite FTS5 setup: in each app's migration, `execute "CREATE VIRTUAL TABLE posts_fts USING fts5(title, body, content='posts', content_rowid='id', tokenize='porter unicode61')"` — porter stemming for English; unicode61 for Norwegian
+- [ ] AQ402 FTS5 triggers: `CREATE TRIGGER posts_ai AFTER INSERT ON posts BEGIN INSERT INTO posts_fts(rowid, title, body) VALUES (new.id, new.title, new.body); END` — keep FTS index in sync automatically
+- [ ] AQ403 FTS5 search query: `Post.where("posts_fts MATCH ?", query.gsub(/[^a-zA-Z0-9æøåÆØÅ ]/, "") + "*").joins("JOIN posts_fts ON posts_fts.rowid = posts.id").order("rank")`
+- [ ] AQ404 Highlight snippets: `SELECT snippet(posts_fts, 0, '<mark>', '</mark>', '...', 10) as title_snippet FROM posts_fts WHERE posts_fts MATCH ?` — FTS5 native snippet function; highlights matched terms in results
+- [ ] AQ405 Faceted search Rails: `scope :by_category, ->(cat) { where(category: cat) }` + `scope :by_date_range, ->(from, to) { where(created_at: from..to) }` — composable scopes chain cleanly
+- [ ] AQ406 Typeahead endpoint: `GET /search/suggestions?q=` returns JSON array of {label, url} pairs; cached 60s per query; no authentication required for suggestions
+- [ ] AQ407 Search history: store last 20 unique queries per user in `search_histories` table; surface as chips below empty search input; delete on click + X button per chip
+- [ ] AQ408 Zero results handling: when search returns 0 results, surface 3 alternative suggestions via LLM (`"Did you mean: ..."`); log zero-result query for content gap analysis
+- [ ] AQ409 Norwegian search: FTS5 tokenize with `unicode61` handles Norwegian characters (æ ø å) correctly; add synonym table mapping Norwegian → Bokmål variants
+- [ ] AQ410 Semantic search fallback: if FTS5 returns <3 results, fall back to embedding search — `SELECT id, 1 - (embedding <=> ?) AS score FROM posts ORDER BY score DESC LIMIT 10` (requires sqlite-vec extension)
+
+### AQ5: Background Jobs Architecture
+
+- [ ] AQ501 Job naming convention: all job classes end in `Job`; named as `Verb + Noun + Job` — `SendWelcomeEmailJob`, `GenerateOutfitJob`, `IndexSearchJob`; never `ProcessJob` or `HandleJob`
+- [ ] AQ502 Job idempotency: every job must be safe to run twice; check pre-conditions before executing: `return if @post.already_indexed?`; use database unique constraints as guards
+- [ ] AQ503 Job payload minimization: pass only IDs to jobs, never full objects: `AnalyzeItemJob.perform_later(item.id)` not `AnalyzeItemJob.perform_later(item)`; objects serialize + deserialize; IDs don't
+- [ ] AQ504 Dead letter alerting: `config/recurring.yml` defines nightly job that queries `solid_queue_failed_executions` and emails admin if count > 0; never silently drop failed jobs
+- [ ] AQ505 Job observability: `around_perform { Rails.logger.tagged("job:#{self.class.name}") { yield } }` — every job logs with class name tag; greppable in production logs
+- [ ] AQ506 AI job rate limiting: `limits_concurrency on: :model_name, to: 2` on all LLM-calling jobs — max 2 concurrent LLM calls per job type; prevent API rate limit errors
+- [ ] AQ507 Webhook delivery: `DeliverWebhookJob` with exponential backoff — retry delays: 5s, 30s, 5m, 30m, 2h; after 5 failures, deactivate endpoint and email user
+- [ ] AQ508 Scheduled cleanup: `PurgeExpiredDataJob` in `recurring.yml` — runs nightly; purges soft-deleted records older than 30 days, expired sessions, stale cache, unconfirmed users >7 days
+- [ ] AQ509 Email delivery job: `ActionMailer::MailDeliveryJob` routes through `critical` queue; never delay email delivery to `default` or `bulk` queues; users expect email immediately
+
+### AQ6: Multi-Tenancy Patterns (brgen)
+
+- [ ] AQ601 acts_as_tenant configuration: `ActsAsTenant.configure { |config| config.require_tenant = true }` — raises if tenant not set; prevents accidental cross-tenant data access
+- [ ] AQ602 City as tenant: `City` model as tenant; every request sets `ActsAsTenant.current_tenant = City.find_by(subdomain: request.subdomain)`; all models scoped automatically
+- [ ] AQ603 Tenant-agnostic admin: `/admin` routes bypass tenant scoping via `ActsAsTenant.without_tenant { ... }` — admin can see all cities' data
+- [ ] AQ604 Cross-city content: some content is global (platform policies, help docs); use `city_id: nil` + scope override: `unscoped.where(global: true)`
+- [ ] AQ605 Tenant switching: users can follow communities in other cities; display cross-city content in "Explore" tab without changing tenant; query with explicit `city_id:` condition
+- [ ] AQ606 Per-city config: `cities` table has `{config: jsonb}` with per-city feature flags — dating enabled, marketplace enabled, TV enabled; read via `Current.city.config["dating_enabled"]`
+
+### AQ7: Email and Notifications
+
+- [ ] AQ701 Action Mailer preview: `/rails/mailers` in development shows every email template rendered; define `WelcomeMailerPreview`, `MatchMailerPreview`, `OrderMailerPreview` etc.
+- [ ] AQ702 Email layout: single `mailer_layout.html.erb` with inline CSS (email clients don't support linked CSS); max-width 600px; single column; dark mode via `@media (prefers-color-scheme: dark)` in `<style>`
+- [ ] AQ703 Text version: every HTML email has a matching `.text.erb` template; Action Mailer sends multipart by default when both exist; plain text for clients that can't render HTML
+- [ ] AQ704 Unsubscribe header: `headers["List-Unsubscribe"] = "<mailto:unsubscribe@brgen.no?subject=unsubscribe>, <https://brgen.no/unsubscribe/#{token}>"` — one-click unsubscribe per RFC 8058
+- [ ] AQ705 Email preference center: `/account/notifications` shows matrix of event types × delivery channels (email/push/in-app); stored in `notification_preferences` JSONB column
+- [ ] AQ706 Digest emails: `DigestEmailJob` aggregates last 24h of unread notifications into single email; send only if user has >3 unread and hasn't visited in 24h; opt-out option
+- [ ] AQ707 Transactional vs marketing: use separate `from:` addresses — `no-reply@brgen.no` for transactional (match notifications, order updates), `hello@brgen.no` for marketing (digest, recommendations)
+- [ ] AQ708 Email open tracking: `<img src="/track/email/#{token}" width="1" height="1">` pixel; on request, mark email as opened, log timestamp; use for engagement analytics, not manipulation
+- [ ] AQ709 Bounce handling: webhook from mail provider on hard bounce → deactivate email address, flag user account, prompt to update email on next login
+- [ ] AQ710 Web push payload: `webpush` gem payload: `{title:, body:, icon:, badge:, url:, tag:}` — `tag:` groups notifications (replaces old with same tag); badge is monochrome icon for notification tray
+
+### AQ8: API Design for PWA Offline Sync
+
+- [ ] AQ801 JSON:API responses: standardized `{data: {id:, type:, attributes:, relationships:}, links:, meta:}` format for all API endpoints; use `jsonapi-serializer` gem
+- [ ] AQ802 Etag-based sync: `If-None-Match` header on GET /api/posts — return 304 if unchanged; client uses cached response; reduces bandwidth for reconnected offline PWAs
+- [ ] AQ803 Delta sync: `GET /api/posts?since=<timestamp>` returns only records modified after timestamp; client merges delta into IndexedDB; full sync only on fresh install
+- [ ] AQ804 Conflict resolution: `updated_at` optimistic locking — server rejects writes where client's `updated_at` doesn't match server's; client receives 409 + server version; user resolves
+- [ ] AQ805 Offline write queue: client queues mutations in IndexedDB when offline; on reconnect, `background-sync` fires queued POST/PATCH requests; server processes idempotently
+- [ ] AQ806 Pagination cursor: `GET /api/posts?cursor=<opaque_token>&limit=20` — cursor-based pagination stable under inserts; avoid offset pagination (items shift as new content is added)
+- [ ] AQ807 Partial response fields: `GET /api/posts?fields[posts]=title,author,created_at` — client requests only needed fields; reduces payload for list views vs detail views
+- [ ] AQ808 Compression: `Accept-Encoding: br, gzip` in all API requests; server returns brotli-compressed JSON; 70-80% size reduction on typical JSON responses
+- [ ] AQ809 Webhook events: for partner integrations (hjerterom→food bank APIs), emit `POST` webhooks on key events; `HmacSHA256` signature header for verification; `WebhookDeliveryJob` handles retries
+
+### AQ9: Accessibility and Internationalisation
+
+- [ ] AQ901 ARIA live regions: `<div aria-live="polite" aria-atomic="true">` containing notification area; screen readers announce new Turbo Stream updates without user navigating there
+- [ ] AQ902 Role feed: `<main role="feed" aria-label="Innlegg">` on timeline; `article` elements with `aria-posinset` and `aria-setsize` for screen reader position announcement
+- [ ] AQ903 Focus management after Turbo navigation: `document.addEventListener("turbo:load", () => document.querySelector("h1")?.focus())` — move focus to page heading after navigation; disorienting otherwise
+- [ ] AQ904 Keyboard navigation for swipe cards: dating swipe cards respond to `ArrowRight` (like), `ArrowLeft` (pass), `ArrowUp` (superlike), `Escape` (close profile); announced via `aria-label` updates
+- [ ] AQ905 i18n pluralization: `t("post.count", count: n)` uses `config/locales/nb.yml` with `one:` and `other:` keys; Norwegian irregular plurals handled via explicit keys
+- [ ] AQ906 Norwegian address format: `SteetName Number, Postal City`; `PostalCode` is 4 digits; `hjerterom` and `brgen` delivery addresses validate against this format
+- [ ] AQ907 Norwegian phone number: `+47 XXX XX XXX` format validation; `validates :phone, format: { with: /\A(\+47)?[0-9]{8}\z/ }` after stripping spaces
+- [ ] AQ908 Date localization: `I18n.l(date, format: :long)` → "31. mai 2026" in nb; "May 31, 2026" in en; never hardcode date format strings in views
+- [ ] AQ909 Currency localization: hjerterom donation values displayed in NOK; amber wardrobe costs in NOK; blognet subscription prices in NOK with ISO code fallback for non-NO users
+- [ ] AQ910 Locale switching: `?locale=en` URL param overrides default; stored in session; `ApplicationController#set_locale` reads `params[:locale] || session[:locale] || I18n.default_locale`
+
+### AQ10: Security Hardening
+
+- [ ] AQ1001 Content Security Policy: `config.content_security_policy` in `config/initializers/content_security_policy.rb` — `default_src :none; script_src :self; style_src :self; img_src :self :data: blob:; connect_src :self wss:; font_src :self; frame_ancestors :none`
+- [ ] AQ1002 CSP nonce for inline scripts: `content_security_policy_nonce` helper; `script_tag nonce: true` on any inline scripts; Turbo and Stimulus use `nonce` attribute automatically in Rails 8
+- [ ] AQ1003 CSRF protection: `config.action_controller.forgery_protection_origin_check = true`; verify `Origin` header on all non-GET requests; token embedded in Turbo meta tag
+- [ ] AQ1004 Secure headers gem: `SecureHeaders.configure` — `X-Frame-Options: DENY`, `X-XSS-Protection: 0` (deprecated but belt-and-suspenders), `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=()`
+- [ ] AQ1005 SQL injection prevention: never string-interpolate into `where()` clauses; always `where("column = ?", value)` or hash syntax `where(column: value)`; Brakeman catches violations in CI
+- [ ] AQ1006 Parameter pollution: `params.expect()` (Rails 8) or `params.require().permit()` — never pass `params` directly to model; Pundit policy checks authorization before record mutation
+- [ ] AQ1007 File upload security: validate content-type via `Marcel` gem (reads magic bytes, not MIME header); reject files where declared type ≠ magic byte type; store outside web root
+- [ ] AQ1008 Rate limiting auth endpoints: `Rack::Attack` middleware; limit `/session` to 5 POST/minute per IP; limit `/password_reset` to 3/hour per IP; return 429 with `Retry-After` header
+- [ ] AQ1009 Audit log: `AuditLog` model with `{user_id, action, resource_type, resource_id, ip, user_agent, created_at}`; log all create/update/destroy via `after_action` callback in ApplicationController
+- [ ] AQ1010 Secret rotation: `rails credentials:edit` per environment; rotate `SECRET_KEY_BASE` quarterly; rotation invalidates all sessions (acceptable security tradeoff); announce rotation 24h in advance
+
+### AQ11: Analytics Without Third Parties
+
+- [ ] AQ1101 Self-hosted analytics: `PageView` model with `{path, referrer, user_agent, country, device_type, session_id, created_at}`; log via `after_action` in ApplicationController; exclude bot user agents
+- [ ] AQ1102 Unique visitor counting: HyperLogLog estimate via `HLL` SQLite extension; exact count prohibitively expensive; 2% error acceptable for analytics
+- [ ] AQ1103 Event tracking: `AnalyticsEvent` model with `{event_name, properties: jsonb, user_id, session_id, created_at}`; log via `track("post.created", {category_id: @post.category_id})`
+- [ ] AQ1104 Funnel analysis: define conversion funnels in code — dating signup → profile complete → first swipe → first match; query event sequences; surface drop-off in admin dashboard
+- [ ] AQ1105 Retention cohorts: weekly cohort analysis query — `SELECT week(created_at) as cohort, week(last_seen_at) - week(created_at) as retention_week, count(*) FROM users GROUP BY 1, 2`
+- [ ] AQ1106 Revenue tracking: `RevenueEvent` model; log subscription starts, upgrades, downgrades, churns; MRR computed as `sum(amount) WHERE billing_cycle = 'monthly'`; no Stripe dashboard dependency
+- [ ] AQ1107 Admin analytics dashboard: `/admin/analytics` — 30-day chart (pure SVG, no chart.js) of DAU/WAU/MAU, new users, revenue, top content; server-rendered for maximum speed
+- [ ] AQ1108 Privacy-first: no cross-site tracking; no cookies beyond session; no fingerprinting; all analytics aggregated before display; GDPR-compliant by architecture not policy
+
+### AQ12: Rails Generators and Conventions
+
+- [ ] AQ1201 Custom generators: `rails generate brgen:vertical DatingProfile` creates model + migration + controller + views + routes + Stimulus controller in one command; enforce app-specific conventions
+- [ ] AQ1202 Concern templates: `rails generate concern Votable` generates boilerplate Votable concern with `included do ... end` block; attach to model in one line
+- [ ] AQ1203 Service objects: `app/services/` directory; `rails generate service OutfitGenerator` creates `OutfitGeneratorService` with `call` method; SRP — one service, one responsibility
+- [ ] AQ1204 Query objects: `app/queries/` directory; `FeedQuery.new(user: current_user, page: params[:page]).call` — extract complex AR queries from controllers and models; testable in isolation
+- [ ] AQ1205 View components: `rails generate view_component PostCard` creates `PostCardComponent` + template; replaces partials for complex, reusable UI; testable without full controller stack
+- [ ] AQ1206 Decorator pattern: `app/decorators/PostDecorator` wraps model with view-specific methods; `@post.formatted_created_at`, `@post.truncated_body` live here; never in model or view
+- [ ] AQ1207 Form objects: `app/forms/RegistrationForm` validates multi-step form data before model creation; no model validation pollution for wizard flows
+- [ ] AQ1208 Policy objects (Pundit): `app/policies/PostPolicy` with `create?`, `update?`, `destroy?`, `index?` per role; `policy_scope(Post)` returns scoped relation; 100% of authorization lives here
+
+### AQ13: Deployment and DevOps
+
+- [ ] AQ1301 Kamal 2 deploy: `config/deploy.yml` with `service`, `image`, `servers`, `env`, `volumes`, `proxy`; `kamal setup` once; `kamal deploy` on every release; `kamal rollback` on failed deploy
+- [ ] AQ1302 Health check endpoint: `GET /up` returns 200 if app, DB, and cache are reachable; 503 otherwise; Kamal and relayd use this for liveness; implement with `ActiveRecord::Base.connection.execute("SELECT 1")`
+- [ ] AQ1303 Zero-downtime deploy: Kamal blue-green with `proxy.buffering.enabled: true`; new container starts, health check passes, traffic switches, old container stops; no dropped requests
+- [ ] AQ1304 Database migrations safety: `rake db:migrate:status` in deploy pipeline; alert on pending migrations older than 24h; never deploy with destructive migration without maintenance window
+- [ ] AQ1305 Secrets via Kamal: `kamal secrets push` uploads encrypted secrets to server; never store secrets in `.env` committed to git; `config/deploy.yml` references `KAMAL_REGISTRIES_PASSWORD` etc.
+- [ ] AQ1306 Log aggregation: all apps log to stdout in production; `dmesg`-format one-liners; Kamal captures to `docker logs`; `logrotate` on VPS; no external log service needed
+- [ ] AQ1307 Backup strategy: SQLite database backed up via `litestream` replication to S3-compatible (Cloudflare R2 free tier); continuous replication; point-in-time restore to any second
+- [ ] AQ1308 Staging environment: mirror of production config; deploys to staging on every merge to `main`; production deploys require explicit `kamal deploy --destination production`
+
+
+## AR — CSS Implementation Specifics (AO continuation)
+
+### AR1: CSS Architecture and File Structure
+
+- [ ] AR101 CSS layer order: `@layer reset, tokens, base, layout, components, utilities, overrides` — explicit cascade layer declaration; later layers win; utilities always trump components; overrides for third-party
+- [ ] AR102 CSS reset: modern reset — `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }; img, video { display: block; max-width: 100% }; input, button, textarea, select { font: inherit }` — minimal, predictable base
+- [ ] AR103 Logical properties throughout: `margin-inline-start` not `margin-left`; `padding-block-end` not `padding-bottom`; `inset-inline-end` not `right`; prepares for RTL support without CSS rewrite
+- [ ] AR104 Custom property scope: global tokens on `:root`; component tokens on component root selector `[data-component="card"] { --card-padding: var(--space-4) }`; never leak component variables to global scope
+- [ ] AR105 No `!important` policy: forbidden except in utility classes (intentionally highest specificity) and `prefers-reduced-motion` overrides; if `!important` is needed elsewhere, specificity architecture is wrong
+- [ ] AR106 Selector specificity budget: maximum two-class selector depth `.card .card-title`; never three `.nav .menu .item`; ID selectors forbidden in component CSS; only on single layout anchors
+- [ ] AR107 CSS file per component: one file per component (post-card.css, nav.css, btn.css); imported via `@import` in application.css; each file ≤150 lines before splitting
+- [ ] AR108 Design token file: `tokens.css` imported first; defines all `--` custom properties; this file is the contract between design and engineering; never modify without design review
+- [ ] AR109 Component isolation: every component CSS block opens with the component's root class; all descendant selectors scoped within; `postCard { &-title { } &-meta { } }` using CSS nesting
+- [ ] AR110 Utility classes: generate spacing utilities `mt-1` through `mt-16`, `px-1` through `px-16` from token scale; typography utilities `text-sm`, `text-base`, `text-lg`; color utilities `text-primary`, `bg-surface`
+
+### AR2: Grid and Layout Implementation
+
+- [ ] AR201 App shell layout: `display: grid; grid-template-areas: "sidebar main aside"; grid-template-columns: var(--sidebar-width, 240px) 1fr var(--aside-width, 320px); min-height: 100dvh` — named areas for clarity
+- [ ] AR202 Mobile layout: `@media (max-width: 768px) { grid-template-areas: "main"; grid-template-columns: 1fr; }` sidebar and aside hidden; main fills viewport
+- [ ] AR203 Content column constraint: `max-width: var(--content-max-width, 680px); margin-inline: auto; padding-inline: var(--content-padding, clamp(16px, 5vw, 48px))` — fluid padding that collapses gracefully
+- [ ] AR204 Card grid: `display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width, 280px), 1fr)); gap: var(--grid-gap, 24px)` — no media queries; cards reflow automatically
+- [ ] AR205 Sticky sidebar: `position: sticky; top: var(--header-height, 56px); height: calc(100dvh - var(--header-height, 56px)); overflow-y: auto; overscroll-behavior: contain` — sidebar scrolls independently
+- [ ] AR206 Split view: `display: grid; grid-template-columns: 1fr 1fr; height: 100dvh; overflow: hidden` — each side `overflow-y: auto`; for baibl parallel translations, amber outfit vs wardrobe
+- [ ] AR207 Masonry layout: CSS `columns: 2; column-gap: var(--space-4); column-fill: balance` + `break-inside: avoid` on cards; falls back to single column on narrow viewport; amber moodboard, medium-style feeds
+- [ ] AR208 Magazine layout: `grid-template-areas` named grid; hero article spans full width (`grid-column: 1 / -1`); secondary articles in 3-column row below; tertiary in 4-column row; New Yorker pattern
+- [ ] AR209 Full-bleed within constraint: `.full-bleed { width: 100vw; margin-inline: calc(50% - 50vw) }` — makes element break out of content column without absolute positioning; for hero images in articles
+- [ ] AR210 Subgrid: `display: subgrid; grid-row: span 4` — card children participate in parent grid; card titles align across all cards in a row without fixed heights; bleeding-edge but widely supported 2025+
+
+### AR3: Typography Implementation Details
+
+- [ ] AR301 Variable font loading: `@font-face { font-family: "Inter"; src: url("inter-variable.woff2") format("woff2-variations"); font-weight: 100 900; font-display: swap; font-style: normal }`
+- [ ] AR302 Font size fluid scale: `--text-xs: clamp(11px, 1.5vw, 13px); --text-sm: clamp(13px, 1.8vw, 15px); --text-base: clamp(15px, 2.2vw, 17px); --text-lg: clamp(17px, 2.5vw, 20px); --text-xl: clamp(20px, 3vw, 24px); --text-2xl: clamp(24px, 4vw, 32px); --text-3xl: clamp(32px, 5vw, 48px)`
+- [ ] AR303 Prose styles: `.prose { font-size: var(--text-lg); line-height: 1.6; max-width: 68ch } .prose h2 { font-size: var(--text-2xl); margin-block: 1.5em 0.5em } .prose p { margin-bottom: 1.25em } .prose ul, ol { padding-inline-start: 1.5em; margin-bottom: 1.25em }` — single class for all longform content
+- [ ] AR304 Code blocks: `.code { font-family: var(--font-mono); font-size: 0.875em; background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-1) var(--space-2); white-space: pre-wrap; overflow-x: auto; tab-size: 2 }`
+- [ ] AR305 Blockquote: `blockquote { border-inline-start: 3px solid var(--color-midtone); padding-inline-start: var(--space-4); margin-block: var(--space-6); font-style: italic; color: var(--text-secondary) }` — left border treatment from Medium
+- [ ] AR306 Footnotes: `.footnote-ref { font-size: 0.75em; vertical-align: super; line-height: 0; color: var(--color-midtone) }` — superscript numbers that scroll to footnote section; :target pseudo highlights referenced footnote
+- [ ] AR307 Drop cap: `.prose > p:first-of-type::first-letter { font-size: 3.5em; float: left; line-height: 0.8; margin-inline-end: 0.1em; margin-block-end: -0.1em; font-weight: 700; color: var(--color-shadow) }` — Medium-style; blognet articles only
+- [ ] AR308 Reading width enforcement: `@container (min-width: 900px) { .prose { max-width: 68ch } }` — container queries ensure reading width constraint applies to the content box, not the viewport
+- [ ] AR309 Orphan/widow prevention: `p { text-wrap: balance }` on headings and short paragraphs; `orphans: 2; widows: 2` on long paragraphs in print styles; CSS Text Level 4
+- [ ] AR310 Text selection style: `::selection { background: var(--color-midtone-200); color: var(--color-shadow) }` — branded selection color matching app midtone; subtle, not jarring
+
+### AR4: Color Implementation Patterns
+
+- [ ] AR401 Dark mode via data attribute: `[data-theme="dark"] { --color-background: ...; --color-text: ... }` — all dark mode overrides in one block; trivial to add new dark theme
+- [ ] AR402 System preference + manual: `:root { color-scheme: light dark }` + `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { ... } }` — system preference wins unless user explicitly chose light
+- [ ] AR403 Transparent color: `--color-overlay: rgb(0 0 0 / 0.5)` using space-separated RGB — modern syntax; `/ alpha` notation; more readable than `rgba(0, 0, 0, 0.5)`
+- [ ] AR404 Color-mix for tints: `color-mix(in srgb, var(--color-midtone) 20%, white)` — derive tints without pre-computing; dynamic; changes when midtone changes; use for hover backgrounds
+- [ ] AR405 High contrast mode: `@media (prefers-contrast: high) { :root { --color-border: var(--color-shadow); --text-secondary: var(--text-primary) } }` — automatically adapt for users needing higher contrast
+- [ ] AR406 Forced colors mode: `@media (forced-colors: active) { .btn { border: 2px solid ButtonText } }` — Windows High Contrast mode; maintain usability without custom colors
+- [ ] AR407 P3 color gamut: `@media (color-gamut: p3) { :root { --color-midtone: color(display-p3 0.1 0.45 0.9) } }` — wider gamut on supported displays; falls back to sRGB; more vibrant accent colors
+- [ ] AR408 Semantic color naming: never `--red`, `--green`, `--blue`; always `--color-danger`, `--color-success`, `--color-info`; semantic meaning survives dark mode and rebrand
+- [ ] AR409 Gradient tokens: `--gradient-hero: linear-gradient(135deg, var(--color-shadow) 0%, var(--color-midtone) 100%)`; `--gradient-card-scrim: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)` — reusable gradient definitions
+- [ ] AR410 Border color opacity: `border-color: rgb(from var(--color-shadow) r g b / 0.15)` — relative color syntax; border is shadow-hued but translucent; updates automatically when shadow color changes
+
+### AR5: Animation Implementation
+
+- [ ] AR501 Keyframe library: define all app keyframes in `animations.css` — `@keyframes fadeIn`, `slideInUp`, `slideInRight`, `scaleIn`, `shimmer`, `heartbeat`, `spin`, `bounce`; import once; reference everywhere
+- [ ] AR502 Animation utility classes: `.animate-fade-in { animation: fadeIn var(--duration-standard) var(--ease-decelerate) both }` etc. — apply to elements; `animation-fill-mode: both` handles pre/post states
+- [ ] AR503 Animation delay utilities: `[style="--delay: 1"] { animation-delay: calc(1 * 40ms) }` — arbitrary delay via inline style custom property; enables staggered lists from HTML without JS
+- [ ] AR504 View transitions API: `document.startViewTransition(() => updateDOM())` — browser-native cross-document animations; Rails 8 Turbo 8 has native support; `::view-transition-old(root)` and `::view-transition-new(root)` for custom cross-fade
+- [ ] AR505 CSS scroll timeline: `@scroll-timeline reading-progress { source: selector(#article); start: 0%; end: 100% }; .progress-bar { animation: progress-grow auto linear; animation-timeline: reading-progress }` — reading progress bar without JS
+- [ ] AR506 Container query animations: `@container (min-width: 600px) { .card { animation: expandLayout var(--duration-standard) var(--ease-standard) } }` — animate layout changes driven by container width not viewport
+- [ ] AR507 CSS paint worklet: `CSS.paintWorklet.addModule("hatch-fill.js")` for custom painted backgrounds (amber item cards could have subtle fabric texture via CSS Houdini paint worklet)
+- [ ] AR508 will-change budgeting: `will-change: transform` only on elements actively animating; remove after animation ends via JS; never apply globally; GPU layers are expensive
+- [ ] AR509 transform-origin for card animations: `transform-origin: center bottom` for dating swipe cards (rotate around bottom center, like holding a card); `transform-origin: center` for likes/hearts
+- [ ] AR510 Motion path: `offset-path: path("M0,0 C50,-50 100,50 150,0")` for particle effects (confetti on match in dating); CSS Motion Path instead of canvas; hardware accelerated
+
+### AR6: Component CSS Patterns
+
+- [ ] AR601 BEM-lite naming: `.card`, `.card__title`, `.card__meta`, `.card--featured`; block, element (double underscore), modifier (double dash); max depth 2 elements; never `.card__header__title`
+- [ ] AR602 Data attribute styling: `[data-state="active"]`, `[data-variant="danger"]`, `[data-size="sm"]` — Stimulus-friendly; HTML attributes as API; CSS selects on state without class toggling
+- [ ] AR603 :has() for parent selection: `.card:has(img) { grid-template-rows: auto 1fr }` — add image grid row only when image is present; eliminates JS-based conditional class toggling
+- [ ] AR604 :is() specificity flattening: `:is(h1, h2, h3, h4) { ... }` — specificity of highest-specificity argument in list; use for typography resets across heading levels
+- [ ] AR605 :where() for zero-specificity: `:where(.prose) h2 { ... }` — zero specificity; easily overridden by any consumer; good for base component styles that should be customizable
+- [ ] AR606 Aspect ratio boxes: `.embed-container { aspect-ratio: 16/9; position: relative; overflow: hidden } .embed-container > * { position: absolute; inset: 0; width: 100%; height: 100% }` — replaces padding-top hack
+- [ ] AR607 Fluid images: `img { max-width: 100%; height: auto; display: block }` as reset; `object-fit: cover` on sized containers; never explicit width/height except on avatar circles
+- [ ] AR608 Sticky table headers: `thead th { position: sticky; top: 0; background: var(--color-background); z-index: var(--z-raised) }` — data tables in admin views and bsdports comparison
+- [ ] AR609 Overflow menu: horizontal nav with `::-webkit-scrollbar { display: none }` + `scrollbar-width: none` — invisible scrollbar but still scrollable; tags row in brgen feed header
+- [ ] AR610 Clamp lines: `.truncate-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }` utility; `.truncate-3` with 3; apply to card titles and excerpts
+
+### AR7: Form Styling Implementation
+
+- [ ] AR701 Input group: `.input-group { position: relative } .input-group__icon { position: absolute; inset-inline-start: var(--space-3); top: 50%; transform: translateY(-50%); color: var(--text-tertiary) } .input-group__input { padding-inline-start: calc(var(--space-3) * 2 + 20px) }` — icon inside input, never outside
+- [ ] AR702 Floating label: `input:not(:placeholder-shown) + label, input:focus + label { transform: translateY(-1.5em) scale(0.85); color: var(--color-midtone) }` — label floats above on fill; zero JS; CSS-only
+- [ ] AR703 Toggle/switch: `input[type="checkbox"].toggle { width: 44px; height: 26px; appearance: none; background: var(--color-border); border-radius: 9999px; transition: background var(--duration-fast) } input[type="checkbox"].toggle:checked { background: var(--color-midtone) }` — pill toggle without JS
+- [ ] AR704 Radio card: `input[type="radio"]:checked + label { border-color: var(--color-midtone); background: var(--color-midtone-50) }` — visually selectable card options for dating preferences, amber style profiles
+- [ ] AR705 File drop zone: `.dropzone { border: 2px dashed var(--color-border); border-radius: var(--radius-lg); padding: var(--space-8); text-align: center; transition: all var(--duration-fast) } .dropzone.drag-over { border-color: var(--color-midtone); background: var(--color-midtone-50) }` — `drag-over` class toggled by Stimulus
+- [ ] AR706 Progress indicator: `progress { appearance: none; width: 100%; height: 4px; border-radius: 9999px; background: var(--color-border) } progress::-webkit-progress-bar { background: var(--color-border) } progress::-webkit-progress-value { background: var(--color-midtone); border-radius: 9999px }` — cross-browser styled progress
+- [ ] AR707 Star rating: `input[type="radio"].star:checked ~ .star, input[type="radio"].star:checked { color: var(--color-accent) }` — reverse-DOM star trick; CSS-only; accessible with labels
+- [ ] AR708 Inline errors: `.field-error { font-size: var(--text-sm); color: var(--color-danger); margin-block-start: var(--space-1); display: flex; align-items: center; gap: var(--space-1) }` + error icon SVG via CSS `::before`
+- [ ] AR709 Form section divider: `fieldset { border: none; padding: 0; margin: 0 } legend { font-size: var(--text-sm); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-bottom: var(--space-4) }` — semantic fieldset, styled legend
+
+### AR8: Responsive Patterns
+
+- [ ] AR801 Mobile-first breakpoint system: `--bp-sm: 480px; --bp-md: 768px; --bp-lg: 1024px; --bp-xl: 1280px; --bp-2xl: 1536px`; always `@media (min-width: ...)` not `max-width` — mobile base, enhance up
+- [ ] AR802 Container queries for components: `@container (min-width: 400px) { .card { flex-direction: row } }` — card layout responds to its container width, not viewport; cards reflow correctly in sidebar and main
+- [ ] AR803 Container type declaration: `.card-grid { container-type: inline-size; container-name: grid }` — enables `@container grid (min-width: ...)` rules on descendants
+- [ ] AR804 Responsive navigation strategy: hamburger menu at mobile only — avoid hamburger on tablet+; use horizontal scrollable nav or visible condensed nav instead of hiding behind burger
+- [ ] AR805 Fluid spacing: `padding: clamp(16px, 4vw, 48px)` on major sections — no discrete breakpoints; spacing scales continuously; feels naturally proportioned at any width
+- [ ] AR806 Image srcset: `<%= image_tag @post.image, srcset: { small_url => "400w", medium_url => "800w", large_url => "1200w" }, sizes: "(max-width: 768px) 100vw, 800px" %>` — Rails helper for responsive images
+- [ ] AR807 Print styles: `@media print { .sidebar, .nav, .btn { display: none } .prose { max-width: 100%; font-size: 12pt } a[href]::after { content: " (" attr(href) ")" } }` — articles printable; blognet, baibl
+- [ ] AR808 `dvh` for full-screen: `height: 100dvh` instead of `100vh`; dynamic viewport height excludes mobile browser chrome; no content hidden under address bar or bottom toolbar
+- [ ] AR809 `svh` for stable fullscreen: `height: 100svh` for elements that should not resize when mobile browser chrome shows/hides; modals and overlays use `svh`
+- [ ] AR810 Intrinsic sizing: `width: fit-content` on badge/chip elements; `width: min-content` on narrow column headers; `width: max-content` on tooltip text — never hardcode widths on text containers
+
+### AR9: Performance-Oriented CSS
+
+- [ ] AR901 Contain property: `contain: content` on feed items — isolates paint, layout, style; browser skips these items when unrelated DOM changes; critical for long feeds
+- [ ] AR902 content-visibility: `content-visibility: auto; contain-intrinsic-size: 0 200px` on off-screen cards — browser skips rendering; 50px scroll = 10× rendering performance improvement on long lists
+- [ ] AR903 will-change restriction: applied only within `@keyframes` animation or Stimulus controller's `connect()`, removed in `disconnect()`; browser allocates GPU memory only while needed
+- [ ] AR904 Layer promotion: `transform: translateZ(0)` on the scrolling feed container — promotes to compositor layer; scroll handled by GPU not CPU; eliminates scroll jank on low-end devices
+- [ ] AR905 Font-display: `font-display: optional` for decorative fonts (brand font in headers); `font-display: swap` for body text; never `font-display: block` which causes invisible text
+- [ ] AR906 Critical CSS extraction: above-the-fold CSS (header, hero, first fold of feed) inlined in `<style>` tag via build step; deferred stylesheet covers below-fold; eliminates render-blocking CSS
+- [ ] AR907 CSS-only dark mode switch: `<input type="checkbox" id="dark-toggle"> <label for="dark-toggle">` + `#dark-toggle:checked ~ * { --color-background: ... }` — no JavaScript needed for theme toggle; preference stored in localStorage by tiny JS snippet only for persistence
+- [ ] AR908 Unused CSS removal: PurgeCSS configured in propshaft build; scans ERB + JS + Ruby for class names; removes unreferenced CSS rules; 60-80% reduction in production CSS bundle size
+- [ ] AR909 CSS property inheritance: use `inherit` keyword for text colors in child elements rather than repeating values; `color: inherit` on `a` tags inside components prevents browser default blue override
+- [ ] AR910 Reduce paint: `background-color` changes are cheaper than `box-shadow` changes; `opacity` and `transform` don't trigger repaint; prefer these for hover states over color-change animations
+
+
+## AS — Design System Rollout and Implementation (AP continuation)
+
+### AS1: Implementation Sequencing
+
+- [ ] AS101 Phase 0 — token extraction: extract every hardcoded color, size, and spacing value from all 6 apps' CSS into `tokens.css`; replace with `var(--token-name)`; no visual change; 1-2 days
+- [ ] AS102 Phase 1 — reset + base: implement CSS reset + base typography in shared `base.css`; apply to all apps; fix any regressions; no new features; 1 day
+- [ ] AS103 Phase 2 — layout: implement app-shell grid, content column constraint, card grid in each app; replace float-based or fixed-px layouts; 2-3 days per app
+- [ ] AS104 Phase 3 — navigation: implement new nav (desktop sidebar, mobile bottom nav, breadcrumbs) per app spec; test keyboard navigation and screen reader; 1-2 days per app
+- [ ] AS105 Phase 4 — components: implement card, button, form, modal, toast, badge, avatar components per app; replace inline styles with component classes; 3-5 days per app
+- [ ] AS106 Phase 5 — typography: apply per-app font stack, fluid type scale, prose styles; verify reading comfort at 375px, 768px, 1280px viewports; 1-2 days per app
+- [ ] AS107 Phase 6 — color system: apply cinema palettes per app; dark mode implementation; verify contrast ratios; 1-2 days per app
+- [ ] AS108 Phase 7 — motion: add easing vocabulary, animation keyframes, transition tokens to all interactive elements; verify reduced-motion; 1 day per app
+- [ ] AS109 Phase 8 — performance: CSS bundle audit, content-visibility, critical CSS extraction, PurgeCSS; Lighthouse audit target ≥95; 1-2 days per app
+- [ ] AS110 Phase 9 — accessibility: axe-core CI, ARIA roles, focus management, contrast audit; zero critical violations; 1-2 days per app
+
+### AS2: brgen — Specific Implementation Steps
+
+- [ ] AS201 brgen tokens.css: define `--brgen-midtone: #2563eb; --brgen-shadow: #0a0e1a; --brgen-highlight: #dbeafe; --brgen-accent: #f59e0b; --brgen-danger: #dc2626; --brgen-success: #059669`
+- [ ] AS202 brgen app shell: CSS Grid `"sidebar main"` on desktop; `"main"` on mobile; sidebar `width: 240px` collapses to bottom nav on mobile via `@media (max-width: 768px)`
+- [ ] AS203 brgen feed card: `.post-card { display: flex; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border); transition: background var(--duration-fast) } .post-card:hover { background: var(--color-surface) }` — X-inspired density
+- [ ] AS204 brgen vote component: `.vote { display: flex; gap: var(--space-2); align-items: center } .vote__btn { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); color: var(--text-secondary); border: none; background: none; cursor: pointer; transition: all var(--duration-fast) var(--ease-spring) } .vote__btn:hover { background: var(--color-midtone-100); color: var(--color-midtone) } .vote__btn[data-voted="true"] { color: var(--color-midtone); font-weight: 600 }`
+- [ ] AS205 brgen subdomain theming: `[data-vertical="dating"] { --color-midtone: #ec4899 } [data-vertical="marketplace"] { --color-midtone: #f59e0b } [data-vertical="tv"] { --color-midtone: #7c3aed } [data-vertical="playlist"] { --color-midtone: #10b981 } [data-vertical="takeaway"] { --color-midtone: #ef4444 } [data-vertical="maps"] { --color-midtone: #06b6d4 }` — set `data-vertical` on `<body>` in layout
+- [ ] AS206 brgen dating swipe stack: `.swipe-stack { position: relative; width: 320px; height: 480px; margin: auto } .swipe-card { position: absolute; inset: 0; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-lg); transition: transform var(--duration-standard) var(--ease-spring) } .swipe-card:nth-child(2) { transform: scale(0.94) translateY(12px) } .swipe-card:nth-child(3) { transform: scale(0.88) translateY(24px) }`
+- [ ] AS207 brgen bottom nav: `.bottom-nav { position: fixed; bottom: 0; inset-inline: 0; height: 54px; padding-bottom: env(safe-area-inset-bottom); display: flex; background: var(--color-background); border-top: 1px solid var(--color-border); z-index: var(--z-sticky) } .bottom-nav__item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--text-secondary); font-size: var(--text-xs); transition: color var(--duration-fast) } .bottom-nav__item[aria-current] { color: var(--color-midtone) }`
+- [ ] AS208 brgen notification badge: `.badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding-inline: 4px; background: var(--color-danger); color: white; border-radius: 9999px; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; border: 2px solid var(--color-background) }` — red dot with count over icon
+- [ ] AS209 brgen marketplace grid: `display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1px; background: var(--color-border)` — gap creates border effect between tiles; tiles have `background: var(--color-background)` — Instagram grid pattern
+- [ ] AS210 brgen TV player: `video { width: 100%; aspect-ratio: 16/9; background: #000; display: block } .player-wrapper { background: #000; position: relative } .player-controls { position: absolute; bottom: 0; inset-inline: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: var(--space-4); opacity: 0; transition: opacity var(--duration-fast) } .player-wrapper:hover .player-controls, .player-wrapper:focus-within .player-controls { opacity: 1 }`
+
+### AS3: amber — Specific Implementation Steps
+
+- [ ] AS301 amber tokens.css: `--amber-shadow: #1c1917; --amber-midtone: #d4a843; --amber-highlight: #fef3c7; --amber-accent: #6366f1; --amber-warm-50: #fffbeb; --amber-warm-100: #fef3c7`
+- [ ] AS302 amber item card: `aspect-ratio: 3/4; border-radius: var(--radius-md); overflow: hidden; position: relative; background: var(--color-surface)` — portrait orientation; `img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--duration-standard) var(--ease-decelerate) }` — zoom on hover
+- [ ] AS303 amber color swatch strip: `.color-swatches { display: flex; gap: 4px; padding: var(--space-2) } .swatch { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0 }` — dominant color dots from blurhash palette
+- [ ] AS304 amber CPW badge: `.cpw-badge { position: absolute; bottom: var(--space-2); right: var(--space-2); background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); color: white; font-size: 11px; border-radius: var(--radius-sm); padding: 2px 6px }` — cost-per-wear overlay
+- [ ] AS305 amber wardrobe grid: `masonry columns: 2` on mobile, `3` on tablet, `4` on desktop; gap `var(--space-2)`; each item `break-inside: avoid; margin-bottom: var(--space-2)` — Pinterest-style varying heights
+- [ ] AS306 amber outfit canvas: `display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: var(--space-2); width: 360px; height: 360px` — 3×3 grid for outfit items; top row = outerwear, middle = tops, bottom = bottoms+shoes
+- [ ] AS307 amber sustainability score: `.sustain-score { display: flex; align-items: center; gap: var(--space-2) } .sustain-meter { height: 6px; border-radius: 3px; background: var(--color-border); flex: 1 } .sustain-meter__fill { height: 100%; border-radius: 3px; background: linear-gradient(to right, var(--color-danger), var(--color-success)); width: calc(var(--score) * 1%) }` — CSS custom property drives meter width
+- [ ] AS308 amber AI suggestion card: `border: 1px solid var(--amber-midtone); background: linear-gradient(135deg, var(--amber-warm-50), white); border-radius: var(--radius-lg); padding: var(--space-4)` — warm gold-tinted background for AI suggestions; visually distinct from regular cards
+
+### AS4: blognet — Specific Implementation Steps
+
+- [ ] AS401 blognet article layout: `.article { max-width: 740px; margin-inline: auto; padding: var(--space-8) var(--space-4) } .article-hero { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: var(--radius-md); margin-bottom: var(--space-6) }` — Medium article pattern
+- [ ] AS402 blognet reading progress: `.progress-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--color-border); z-index: var(--z-sticky) } .progress-bar__fill { height: 100%; background: var(--color-midtone); width: 0; transition: width 0.1s linear }` — driven by Stimulus scroll controller
+- [ ] AS403 blognet drop cap: `.article > .prose > p:first-of-type::first-letter { font-size: 4.5em; float: left; line-height: 0.75; margin-inline-end: 0.08em; font-weight: 700; color: var(--color-shadow) }` — activated only on articles flagged `featured: true`
+- [ ] AS404 blognet pullquote: `.pullquote { text-align: center; font-size: var(--text-xl); font-style: italic; line-height: 1.4; margin-block: var(--space-8); padding-block: var(--space-4); border-block: 1px solid var(--color-border); max-width: 600px; margin-inline: auto; color: var(--color-shadow) }` — editorial statement
+- [ ] AS405 blognet paywall scrim: `.paywall-scrim { position: relative } .paywall-scrim::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 200px; background: linear-gradient(to bottom, transparent, var(--color-background)) }` — fade content to CTA
+- [ ] AS406 blognet section label: `.section-label { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-danger) }` — red department header; New Yorker pattern applied to blognet vertical labels
+
+### AS5: baibl — Specific Implementation Steps
+
+- [ ] AS501 baibl verse container: `.verse { display: grid; grid-template-columns: 2.5rem 1fr; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); transition: background var(--duration-fast) } .verse:hover { background: var(--color-surface) } .verse:target { background: var(--amber-warm-50); border-inline-start: 3px solid var(--color-midtone) }`
+- [ ] AS502 baibl verse number: `.verse-num { font-variant-numeric: tabular-nums; font-size: var(--text-sm); font-weight: 600; color: var(--color-midtone); line-height: 1.7; text-align: end }` — right-aligned verse number in grid column
+- [ ] AS503 baibl parallel view: `display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); overflow: hidden` — two translations side by side; each `overflow-y: auto; height: calc(100dvh - var(--header-height))`; scroll sync via Stimulus
+- [ ] AS504 baibl annotation: `.annotation { border-inline-start: 3px solid var(--color-accent); padding-inline-start: var(--space-2); font-size: var(--text-sm); color: var(--text-secondary); margin-block-start: var(--space-1) }` — appears below annotated verse; toggleable via Stimulus
+
+### AS6: bsdports — Specific Implementation Steps
+
+- [ ] AS601 bsdports port card: `.port-card { display: grid; grid-template-rows: auto 1fr auto; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md) } .port-name { font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 600; color: var(--color-midtone) }` — monospace names, minimal card
+- [ ] AS602 bsdports security badge: `.security-badge { background: var(--color-danger); color: white; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: var(--radius-sm) }` — red security advisory indicator; `display: none` when no advisory
+- [ ] AS603 bsdports dependency graph: SVG-based; nodes as `<circle>` with port name `<text>`; edges as `<line>`; D3 force layout via Stimulus controller; port card color = version freshness (green=recent, yellow=aging, red=outdated)
+- [ ] AS604 bsdports search result: `.search-result { padding: var(--space-3); border-bottom: 1px solid var(--color-border) } .search-result mark { background: var(--color-midtone-200); border-radius: 2px; padding: 0 2px }` — FTS5 snippet with highlight marks styled
+
+### AS7: hjerterom — Specific Implementation Steps
+
+- [ ] AS701 hjerterom category icons: 128px SVG illustrations per category (food bag, clothing, toy, book); `--hjerterom-green: #10b981`; icons in app green on white background; warm, inviting
+- [ ] AS702 hjerterom donation card: `.donation-card { border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-sm) } .donation-card__header { background: var(--color-midtone); padding: var(--space-4); display: flex; align-items: center; gap: var(--space-3) }` — header in app green with white icon and title
+- [ ] AS703 hjerterom expiry urgency: `.expiry-soon { color: var(--color-warning) }; .expiry-critical { color: var(--color-danger); animation: pulse 1.5s ease-in-out infinite }` — animated urgency for food about to expire; non-judgmental urgency
+- [ ] AS704 hjerterom impact numbers: `.impact-stat { text-align: center } .impact-stat__value { font-size: var(--text-3xl); font-weight: 800; color: var(--color-midtone); font-variant-numeric: tabular-nums } .impact-stat__label { font-size: var(--text-sm); color: var(--text-secondary) }` — animated number component
+
+### AS8: Cross-App Pattern Library
+
+- [ ] AS801 Shared partials: `app/views/shared/_card.html.erb`, `_btn.html.erb`, `_avatar.html.erb`, `_badge.html.erb`, `_toast.html.erb` — common patterns across all 6 apps; DRY via shared partials not gem
+- [ ] AS802 Button variants: `.btn` base + `.btn--primary` (filled midtone), `.btn--secondary` (border), `.btn--ghost` (transparent), `.btn--danger` (filled danger), `.btn--sm` / `.btn--lg` size modifiers; all have focus, hover, active, disabled states
+- [ ] AS803 Avatar with fallback: `<% if user.avatar.attached? %> <%= image_tag(user.avatar.variant(:thumb)) %> <% else %> <span class="avatar-initials"><%= user.initials %></span> <% end %>` — never broken image; initials in brand midtone
+- [ ] AS804 Empty state: `.empty-state { text-align: center; padding: var(--space-12) var(--space-4) } .empty-state__icon { width: 64px; height: 64px; margin-inline: auto; margin-bottom: var(--space-4); opacity: 0.4 } .empty-state__title { font-size: var(--text-lg); font-weight: 600; color: var(--text-primary) } .empty-state__body { font-size: var(--text-base); color: var(--text-secondary); max-width: 40ch; margin-inline: auto }`
+- [ ] AS805 Loading skeleton: `.skeleton { background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-border) 50%, var(--color-surface) 75%); background-size: 200%%; animation: shimmer 1.4s ease-in-out infinite; border-radius: var(--radius-sm) }` — apply to any placeholder element
+- [ ] AS806 Toast component: `.toast { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--color-shadow); color: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 360px; pointer-events: all; animation: slideInRight var(--duration-standard) var(--ease-decelerate) } .toast--success { border-inline-start: 3px solid var(--color-success) } .toast--error { border-inline-start: 3px solid var(--color-danger) }`
+- [ ] AS807 Modal/dialog: `.dialog { border: none; border-radius: var(--radius-xl); padding: 0; max-width: min(560px, 90vw); max-height: 90dvh; overflow: auto; box-shadow: var(--shadow-lg) } .dialog::backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px) }` — native `<dialog>` styled; backdrop via pseudo-element
+- [ ] AS808 Tooltip: `.tooltip-wrapper { position: relative } .tooltip { position: absolute; bottom: calc(100% + var(--space-2)); left: 50%; transform: translateX(-50%); background: var(--color-shadow); color: white; font-size: var(--text-xs); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity var(--duration-fast) } .tooltip-wrapper:hover .tooltip { opacity: 1 }`
+
+### AS9: Design QA Checklist
+
+- [ ] AS901 Visual regression testing: Capybara + Cuprite screenshots; compare against baseline; fail CI on pixel diff >1%; implement for all major views in all 6 apps
+- [ ] AS902 Cross-browser testing: Chrome, Firefox, Safari (webkit), Edge; verify CSS features (subgrid, container queries, :has()) in all; polyfill only where usage warrants
+- [ ] AS903 Device testing: 375px (iPhone SE), 428px (iPhone 14 Pro Max), 768px (iPad), 1280px (laptop), 1920px (desktop); each app must be fully functional at all widths
+- [ ] AS904 Dark mode visual audit: every component in light and dark mode; screenshot both; verify no invisible text, broken icons, or washed-out colors in either mode
+- [ ] AS905 Animation audit: play each animation at 0.25× speed; verify enter/exit states, timing, easing feel; reject over-animated elements; check reduced-motion disable
+- [ ] AS906 Typography audit: print each view as PDF; verify line lengths, heading hierarchy, hyphenation; good typography survives print
+- [ ] AS907 Color contrast audit: run Polypane accessibility panel or axe on every view; zero AA failures; document AAA failures with rationale for each
+- [ ] AS908 Touch audit: use touch emulation in Chrome DevTools; verify all touch targets ≥44px; no hover-only affordances; swipe gestures work smoothly
+- [ ] AS909 Keyboard navigation audit: tab through every view; verify logical focus order; all interactive elements reachable; no focus traps outside modals; all actions keyboard-operable
+- [ ] AS910 Performance audit: Lighthouse on every app's most-visited route in incognito; ≥95 all categories; document and fix any failures before marking design phase complete
+
