@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require "zeitwerk"
 require "yaml"
 
@@ -188,7 +189,7 @@ module Master
     shards = Dir.glob(File.join(rules_dir, "*.yml")).sort
     return base if shards.empty?
 
-    merged = Marshal.load(Marshal.dump(base.fetch("rules", {})))
+    merged = JSON.parse(JSON.generate(base.fetch("rules", {})))
     shards.each do |file|
       (load_yaml(file) || {}).each do |scope, list|
         (merged[scope] ||= []).concat(Array(list))

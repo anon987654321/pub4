@@ -36,22 +36,23 @@ module Master
         end
 
         def scan(content)
-          hits = @patterns[:prompt_injection].select { |p| content.match?(p) }
-          hits << @patterns[:shell_injection] if content.match?(@patterns[:shell_injection])
+          total = @patterns[:prompt_injection].count { |p| content.match?(p) }
+          total += 1 if content.match?(@patterns[:shell_injection])
 
-          if hits.empty?
+          if total.zero?
             return Result.ok(:clean) if @mode == :permissive
             return Result.ok(:clean) if content.match?(ALLOWLIST_TOKEN)
             return Result.err("default_deny: no allowlist token; rejecting unmatched input", category: :validation)
           end
-          Result.err("injection detected: #{hits.size} pattern(s) matched", category: :validation)
+          Result.err("injection detected: #{total} pattern(s) matched", category: :validation)
         end
 
         def safe?(text) = scan(text.to_s).ok?
 
         def clean!(content)
-          cleaned = @patterns[:prompt_injection].reduce(content) { |c, p| c.gsub(p, "[REDACTED]") }
-          Result.ok(cleaned)
+          prompt_cleaned = @patterns[:prompt_injection].reduce(content) { |c, p| c.gsub(p, "[REDACTED]") }
+          shell_cleaned = prompt_cleaned.gsub(@patterns[:shell_injection], "[REDACTED]")
+          Result.ok(shell_cleaned)
         end
 
         private

@@ -50,9 +50,9 @@ module Converge
 
       @rules.each do |rule|
         @db.transaction do
-          before = Marshal.dump(serializable_context)
+          before = JSON.generate(serializable_context)
           apply_rule(rule)
-          after = Marshal.dump(serializable_context)
+          after = JSON.generate(serializable_context)
           next if after == before
 
           log_state_delta(rule.id, after)
@@ -93,7 +93,7 @@ module Converge
     end
 
     def track_state_hashes(rule_id)
-      current_hash = Digest::SHA256.hexdigest(Marshal.dump(serializable_context))
+      current_hash = Digest::SHA256.hexdigest(JSON.generate(serializable_context))
       signature = "#{rule_id}:#{current_hash}"
 
       if @context[:tracking_hashes].include?(signature)
