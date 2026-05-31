@@ -2863,3 +2863,260 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] AS909 Keyboard navigation audit: tab through every view; verify logical focus order; all interactive elements reachable; no focus traps outside modals; all actions keyboard-operable
 - [ ] AS910 Performance audit: Lighthouse on every app's most-visited route in incognito; ≥95 all categories; document and fix any failures before marking design phase complete
 
+
+## AT — Active Record Schema and Data Model Patterns
+
+### AT1: brgen Schema Refinements
+
+- [ ] AT101 posts table indexes: `add_index :posts, [:community_id, :created_at]`; `add_index :posts, [:user_id, :created_at]`; `add_index :posts, :trending_score`; `add_index :posts, [:pinned, :created_at]` — composite indexes match actual query patterns
+- [ ] AT102 posts full-text: `add_column :posts, :search_vector, :virtual, as: "title || ' ' || coalesce(body, '')", stored: true` + FTS5 virtual table over search_vector — avoids double-storing text
+- [ ] AT103 votes denormalization: `add_column :posts, :vote_score, :integer, default: 0, null: false` + `add_column :posts, :comment_count, :integer, default: 0, null: false` — counter caches; avoid COUNT(*) on every render
+- [ ] AT104 follows graph: `follows(follower_id, followee_id, followee_type, created_at)` — polymorphic; `add_index :follows, [:follower_id, :followee_type, :followee_id], unique: true` prevents duplicate follows
+- [ ] AT105 dating profiles: `profiles(user_id, bio, birth_date, gender, seeking, city_id, lat, lng, last_active_at, photos_count, verified_at)` — `lat/lng` for distance queries; `last_active_at` for "active recently" filter; `verified_at` for photo verification
+- [ ] AT106 dating likes: `likes(liker_id, liked_id, kind: {like/superlike/pass}, created_at)` — `add_index :likes, [:liker_id, :liked_id], unique: true`; match detection: `SELECT * FROM likes WHERE liker_id = B AND liked_id = A AND kind != 'pass'`
+- [ ] AT107 matches: `matches(user_a_id, user_b_id, matched_at, conversation_id)` — always `user_a_id < user_b_id` to avoid duplicates; `add_index :matches, [:user_a_id, :user_b_id], unique: true`
+- [ ] AT108 marketplace listings: `listings(user_id, category_id, title, description, price_ore, currency, condition, status, lat, lng, city_id, views_count, expires_at)` — price in øre (integer); never float for money; `expires_at` for auto-archival
+- [ ] AT109 conversations + messages: `conversations(id, type: {direct/match/listing}, status)` + `conversation_participants(conversation_id, user_id, last_read_at)` + `messages(conversation_id, sender_id, body, kind: {text/image/offer}, read_at)` — last_read_at per participant for unread count
+- [ ] AT110 notifications: `notifications(user_id, type, actor_id, notifiable_type, notifiable_id, read_at, created_at)` — polymorphic notifiable; `add_index :notifications, [:user_id, :read_at, :created_at]` for unread feed
+- [ ] AT111 communities: `communities(id, city_id, name, slug, description, rules, privacy: {public/restricted/private}, member_count, post_count, created_by_id)` — `slug` unique per city; `add_index :communities, [:city_id, :slug], unique: true`
+- [ ] AT112 tags: `tags(name, slug, taggings_count)` + `taggings(tag_id, taggable_type, taggable_id)` — shared tag table; `add_index :taggings, [:taggable_type, :taggable_id]`; `add_index :tags, :slug, unique: true`
+
+### AT2: amber Schema Refinements
+
+- [ ] AT201 items: `items(user_id, name, brand, category, color_primary, color_hex, material, size, condition, purchase_price_ore, purchased_at, source: {bought/gifted/thrifted}, season_mask: integer, wear_count, last_worn_at, blurhash, active)` — `season_mask` bitmask: spring=1, summer=2, autumn=4, winter=8; `active` false = stored away
+- [ ] AT202 outfits: `outfits(user_id, name, occasion, weather_min, weather_max, rating, worn_count, last_worn_at, notes)` + `outfit_items(outfit_id, item_id, position, layer: integer)` — position for display order; layer for layering (base/mid/outer)
+- [ ] AT203 style_profile: `style_profiles(user_id, aesthetic_tags: jsonb, color_palette: jsonb, size_map: jsonb, body_notes: text, updated_at)` — jsonb for flexible schema evolution; `aesthetic_tags` = ["minimalist", "streetwear"]
+- [ ] AT204 item embeddings: `item_embeddings(item_id, model_version, embedding: blob, created_at)` — raw 768-dim float32 vector stored as blob; queried via sqlite-vec extension; versioned by model_version for re-embedding on model upgrade
+- [ ] AT205 declutter_sessions: `declutter_sessions(user_id, started_at, completed_at, items_kept, items_donated, items_sold, challenge_type)` — track declutter campaign progress; items_donated + items_sold for sustainability impact report
+- [ ] AT206 wear_logs: `wear_logs(item_id, user_id, worn_on, outfit_id, weather, occasion, notes)` — per-item wear history; `add_index :wear_logs, [:item_id, :worn_on]`; CPW = purchase_price / wear_logs.count
+
+### AT3: blognet Schema Refinements
+
+- [ ] AT301 posts: `posts(blog_id, author_id, title, slug, subtitle, body_html, body_text, status: {draft/review/scheduled/published/archived}, published_at, scheduled_for, word_count, reading_time_seconds, paywalled, featured_image_key, seo_title, seo_description, canonical_url)` — `slug` unique per blog; body_text for FTS5; reading_time_seconds computed on save
+- [ ] AT302 blogs: `blogs(user_id, name, slug, description, about_html, plan: {free/pro/business}, subscriber_count, monthly_revenue_ore, custom_domain, verified_at, suspended_at)` — `slug` globally unique; plan determines paywall and newsletter features
+- [ ] AT303 subscriptions: `subscriptions(subscriber_id, blog_id, plan: {free/paid}, status: {active/cancelled/past_due}, stripe_subscription_id, current_period_end, created_at)` — `add_index :subscriptions, [:subscriber_id, :blog_id], unique: true`
+- [ ] AT304 newsletter_sends: `newsletter_sends(post_id, blog_id, started_at, completed_at, recipient_count, open_count, click_count, bounce_count)` — analytics per send; not per recipient (privacy); aggregated only
+- [ ] AT305 reading_history: `reading_history(user_id, post_id, started_at, completed_at, progress_pct, device_type)` — completed_at null = in progress; progress_pct for scroll depth; `add_index :reading_history, [:user_id, :post_id], unique: true`
+
+### AT4: Shared Model Patterns
+
+- [ ] AT401 Soft delete: `add_column :table, :deleted_at, :datetime` + `default_scope { where(deleted_at: nil) }` + `def soft_delete; update(deleted_at: Time.current); end` — never hard delete user-generated content immediately; 30-day grace period
+- [ ] AT402 Optimistic locking: `add_column :table, :lock_version, :integer, default: 0, null: false` — Rails uses `lock_version` automatically; raises `StaleObjectError` on concurrent update; handle in controller
+- [ ] AT403 Audit columns: every table has `created_at: datetime, updated_at: datetime, created_by_id: integer, updated_by_id: integer` — updated_by_id via `Current.user.id` in `before_save` callback; never null on non-system records
+- [ ] AT404 UUID primary keys: `create_table :external_events, id: :uuid, default: "gen_random_uuid()"` — for any externally-referenced resource; prevents enumeration; standard primary key stays integer for internal tables
+- [ ] AT405 JSONB columns for flexibility: `add_column :users, :preferences, :json, default: {}` — store user settings (notification_types, feed_density, theme) without schema migrations for each new preference
+- [ ] AT406 Generated columns: `add_column :posts, :body_length, :integer, as: "length(body)", stored: true` — database computes and indexes derived values; zero application code needed; always consistent
+- [ ] AT407 CHECK constraints: `add_check_constraint :listings, "price_ore > 0", name: "price_positive"` + `add_check_constraint :likes, "liker_id != liked_id", name: "no_self_like"` — database enforces invariants regardless of application code path
+- [ ] AT408 Foreign key constraints: every `_id` column has `add_foreign_key :table, :referenced_table` — prevents orphan records; SQLite supports FK with `foreign_keys: ON` pragma (set in database.yml)
+- [ ] AT409 Partial indexes: `add_index :posts, :created_at, where: "status = 'published'"` — index only rows matching predicate; 10× smaller index on posts table with many drafts; matches queries exactly
+- [ ] AT410 Covering indexes: `add_index :notifications, [:user_id, :read_at, :created_at]` — includes all columns needed for `SELECT COUNT(*) WHERE user_id = ? AND read_at IS NULL`; zero table access needed
+
+## AU — LLM and AI Integration Patterns
+
+### AU1: ruby_llm Configuration
+
+- [ ] AU101 Model registry: define per-feature model assignments in `config/ai.yml` — `outfit_generation: claude-3-5-haiku, semantic_search: text-embedding-3-small, council: claude-opus-4, fast_fix: deepseek-r1:free`; change model without code deploy
+- [ ] AU102 ruby_llm initializer: `RubyLLM.configure { |c| c.openai_api_key = Rails.application.credentials.openai_key; c.anthropic_api_key = Rails.application.credentials.anthropic_key }` in `config/initializers/ruby_llm.rb`
+- [ ] AU103 Streaming responses: `RubyLLM.chat.ask(prompt) { |chunk| ActionCable.server.broadcast("user_#{user_id}", {chunk: chunk.content}) }` — stream LLM response directly to browser via CableReady; eliminates polling
+- [ ] AU104 Tool use: define tools as Ruby methods with `tool :search_wardrobe, description: "search user's wardrobe items", parameters: {query: {type: :string}}` — LLM calls tools autonomously; amber outfit generation uses wardrobe search tool
+- [ ] AU105 Conversation history: maintain `messages` array per session in Solid Cache; `cache.fetch("ai_conv_#{session_id}") { [] }` then push user + assistant messages; pass full history to each LLM call
+- [ ] AU106 System prompt caching: long system prompts (rules, wardrobe context) sent as Anthropic cache_control prefix; `cache_control: {type: "ephemeral"}` on first message; 93% cost reduction on repeated calls
+- [ ] AU107 Error handling: rescue `RubyLLM::RateLimitError` with exponential backoff; rescue `RubyLLM::ContextWindowError` by truncating oldest messages; rescue `RubyLLM::APIError` by routing to fallback model
+- [ ] AU108 Token budget per request: `max_tokens: 512` for fast responses (outfit tags, port descriptions); `max_tokens: 2048` for detailed generation (outfit explanation, research summaries); never unlimited
+- [ ] AU109 Cost tracking: `AICall.create(model:, input_tokens:, output_tokens:, cost_ore:, feature:, user_id:, duration_ms:)` after every LLM call; daily cost report in admin dashboard; per-user budget enforcement
+
+### AU2: Embedding and Semantic Search
+
+- [ ] AU201 Embedding generation job: `GenerateEmbeddingJob.perform_later(record_type, record_id)` — called in `after_commit :generate_embedding, on: [:create, :update]` on embeddable models; never synchronous
+- [ ] AU202 sqlite-vec setup: `db.execute "SELECT load_extension('vec0')"` in `config/database.rb` initializer; enables `CREATE VIRTUAL TABLE embeddings USING vec0(embedding float[768])`; cosine similarity search via `vec_distance_cosine`
+- [ ] AU203 Embedding model selection: `text-embedding-3-small` (1536 dims, cheap) for semantic search; `text-embedding-3-large` (3072 dims, expensive) for similarity-sensitive features (amber visual similarity); configurable per feature
+- [ ] AU204 Batch embedding: collect up to 100 records without embeddings; send in single API call (`input: [text1, text2, ...]`); cost scales linearly but API call overhead is flat; 10× more efficient than one-by-one
+- [ ] AU205 Embedding versioning: `embedding_model_version` column on embedding tables; when model changes, queue `ReembedAllJob` which processes in batches; serve old embeddings until re-embed completes
+- [ ] AU206 Hybrid search implementation: `query_embedding = embed(query)` then `SELECT id, (bm25_score * 0.4 + cosine_similarity * 0.6) AS hybrid_score FROM posts JOIN posts_fts ... ORDER BY hybrid_score DESC LIMIT 20` — RRF blend of keyword + semantic
+- [ ] AU207 Embedding cache: cache embeddings for queries (not documents) in Solid Cache with 1h TTL; repeated queries (common search terms) skip embedding API call; `Rails.cache.fetch("embed:#{Digest::SHA1.hexdigest(query)}") { embed(query) }`
+
+### AU3: Per-App AI Features
+
+- [ ] AU301 brgen: AI post tagging — on post create, `TagPostJob` sends title+body to LLM with system prompt "return 3-5 relevant tags as JSON array"; LLM returns `["oslo", "boligmarked", "leie"]`; auto-attach tags
+- [ ] AU302 brgen: AI content moderation — `ModerateContentJob` checks post against NSFW/spam/hate classifiers; returns `{score: 0.1, categories: []}` as JSON; auto-hide if score > 0.8
+- [ ] AU303 brgen: Personalized feed ranking — user's engagement history → LLM-generated interest vector → dot-product with post embedding → ranked feed; computed nightly per user; stored in `user_interests` JSON
+- [ ] AU304 amber: Item analysis — on photo upload, send image to Claude claude-haiku-4-5 vision: "analyze this clothing item. Return JSON: {category, brand_guess, colors, material_guess, occasion_tags, season_tags}"; pre-fill item form
+- [ ] AU305 amber: Outfit generation — `POST /ai/outfit` with `{occasion, weather, mood}` → LLM receives wardrobe item summaries + constraints → returns 3 outfit combinations as arrays of item IDs → rendered immediately
+- [ ] AU306 amber: Style profile analysis — monthly LLM analysis of wear patterns: "based on these wear logs, describe this user's style in 3 sentences and suggest 3 wardrobe improvements"; stored in `style_profiles.ai_analysis`
+- [ ] AU307 bsdports: Port description enhancement — LLM rewrites terse port descriptions in plain language; original stored; LLM version shown by default with "Show original" toggle; re-generated quarterly
+- [ ] AU308 baibl: Theological Q&A — user asks question; LLM searches relevant verses via embedding similarity; synthesizes answer citing specific passages; includes disclaimer; saves as Q&A in knowledge base
+- [ ] AU309 blognet: Article improvement suggestions — after draft saved, `AnalyseDraftJob` sends first 500 words to LLM: "identify 3 specific improvements: clarity, structure, opening hook"; surfaces as sidebar suggestions
+- [ ] AU310 hjerterom: Donation impact narrative — weekly LLM generation of impact story from aggregated stats: "This week, 47 families received food, including 3 with celiac disease. Maria donated 12kg of pasta..."; displayed on public impact page
+
+### AU4: Prompt Engineering Patterns
+
+- [ ] AU401 System prompt structure: `[Identity] [Task] [Constraints] [Output format] [Examples]` — always in this order; identity anchors behavior; constraints prevent drift; output format eliminates parsing
+- [ ] AU402 JSON output enforcement: always request JSON with explicit schema: "Respond with valid JSON matching this schema: {\"tags\": [\"string\"], \"confidence\": number}" — never free-form text that needs parsing
+- [ ] AU403 Few-shot examples: include 2-3 examples in system prompt for consistent output style; amber item analysis includes example input photo description and expected JSON response
+- [ ] AU404 Chain-of-thought for complex tasks: "Think step by step. First identify..., then consider..., finally produce..." — improves accuracy on multi-factor decisions (outfit compatibility, theological synthesis)
+- [ ] AU405 Temperature calibration: `temperature: 0.0` for deterministic classification (moderation, tagging); `temperature: 0.7` for creative generation (outfit suggestions, narrative); `temperature: 1.0` for brainstorming; never set-and-forget
+- [ ] AU406 Prompt versioning: every prompt string stored as constant in `app/prompts/` directory; version-tagged: `OUTFIT_PROMPT_V3 = "..."` — enables A/B testing and rollback; never inline prompts in job code
+- [ ] AU407 Context window management: truncate conversation history to last N messages that fit in 75% of context window; reserve 25% for response; compute token counts via `RubyLLM::Tokenizer.count`
+- [ ] AU408 Sensitive data scrubbing: before sending any user data to external LLM API, scrub PII — replace email addresses with `[email]`, phone numbers with `[phone]`, account numbers with `[account]`; log scrubbing actions
+- [ ] AU409 Output validation: every LLM JSON response parsed through strict schema validator (Dry::Schema or similar); rejected responses logged + retried once with correction instruction in context
+- [ ] AU410 Fallback responses: if LLM fails (all retries exhausted), surface graceful fallback — outfit suggestion = "Try combining your most-worn top with your newest bottom"; never blank response
+
+## AV — OpenBSD/relayd Deployment Specifics
+
+### AV1: relayd Configuration Per App
+
+- [ ] AV101 Per-app table: each Rails app gets its own `table <appname> { <server_ip>:<port> }` block in `/etc/relayd.conf`; brgen on 3000, amber on 3001, bsdports on 3002, baibl on 3003, blognet on 3004, hjerterom on 3005
+- [ ] AV102 relayd relay per app: `relay <appname>_relay { listen on $ext_addr port 443 tls; table <appname>; forward to <appname> port <port> }` — TLS termination at relayd; backend HTTP only; no TLS cert management per app
+- [ ] AV103 Path-based routing: single relayd listener routes to different apps by path prefix: `match request path "/amber/*" forward to amber`; eliminates separate subdomains per app where not needed; share TLS cert
+- [ ] AV104 Subdomain routing: brgen dating/marketplace/tv on dedicated subdomains: `match request header "Host" value "dating.brgen.no" forward to brgen` — relayd inspects Host header; no nginx needed
+- [ ] AV105 WebSocket relay: `relay websocket { listen on $ext_addr port 443 tls; table cable; protocol websocket; forward to cable port 28080 }` — ActionCable on separate port; relayd proxies WebSocket upgrade
+- [ ] AV106 HTTP to HTTPS redirect: `relay redirect { listen on $ext_addr port 80; match request path "/.well-known/acme-challenge/*" forward to acme; match all redirect to https://... code 301 }` — ACME first, redirect everything else
+- [ ] AV107 Header injection: `match response set header "Strict-Transport-Security" value "max-age=31536000; includeSubDomains; preload"` + `"X-Content-Type-Options" value "nosniff"` + `"X-Frame-Options" value "DENY"` in relayd relay block
+- [ ] AV108 Rate limiting via pf: `table <bruteforce> persist`; `block quick from <bruteforce>`; `pass in proto tcp to port 443 keep state (max-src-conn-rate 100/10)` — 100 connections per 10 seconds per IP; reloaded via `pfctl -f /etc/pf.conf`
+- [ ] AV109 Health check: relayd marks backend unhealthy if `/up` returns non-200 three times in 5s; removes from table; traffic routes to remaining healthy instances; email alert via `pflog` + cron
+- [ ] AV110 Connection buffering: `protocol web { tcp { nodelay } }` — TCP_NODELAY for low-latency WebSocket; `timeout connect 5` — fail fast on unresponsive backend; `timeout read 30` — allow slow streaming responses
+
+### AV2: OpenBSD Service Management
+
+- [ ] AV201 rc.d scripts: each app has `/etc/rc.d/<appname>` script implementing `start`, `stop`, `check`, `restart`; uses `daemon` function from `/etc/rc.d/rc.subr`; PID file in `/var/run/<appname>.pid`
+- [ ] AV202 Service user: each app runs as dedicated `_<appname>` user; `useradd -s /sbin/nologin -d /var/www/<appname> _brgen`; Falcon process starts as this user; never run as root or www
+- [ ] AV203 Pledge + unveil: Falcon daemon pledges `"stdio rpath wpath cpath inet unix proc exec"`; unveils only app directory, `/tmp`, and database path; `Pledge.pledge` + `Unveil.unveil` called in `config/initializers/pledge.rb`
+- [ ] AV204 Log rotation: `/etc/newsyslog.conf` entry per app: `"/var/log/<appname>.log" _<appname>:_<appname> 640 7 * $W0D0 Z /var/run/<appname>.pid 30"` — weekly rotation, 7 kept, gzipped, SIGUSR1 to reopen
+- [ ] AV205 rcctl enable: `rcctl enable <appname>` in deploy script; `rcctl start <appname>` on first deploy; `rcctl restart <appname>` on subsequent deploys; never kill -9 the Falcon process
+- [ ] AV206 Environment file: each app reads `/etc/rc.d/<appname>.conf` for `DATABASE_URL`, `RAILS_MASTER_KEY`, `OPENROUTER_API_KEY`; file owned root:_appname, mode 0640; sourced by rc.d script via `. /etc/rc.d/<appname>.conf`
+- [ ] AV207 Shared credentials: RAILS_MASTER_KEY stored in `/etc/master.keys/<appname>` with mode 0400 owned by `_<appname>`; referenced by rc.d script; not in environment on disk in plaintext
+- [ ] AV208 Soft memory limits: `login.conf` entry for `_<appname>` class sets `memorylocked-cur=512M` and `openfiles-cur=1024`; prevents one app from consuming all VPS memory
+
+### AV3: Database and Storage on VPS
+
+- [ ] AV301 SQLite WAL configuration: `PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA cache_size=-64000` — set via `config/initializers/sqlite_config.rb` on connect
+- [ ] AV302 Litestream config: `/etc/litestream.yml` — `dbs: - path: /var/db/<appname>/production.sqlite3; replicas: - url: s3://bucket/<appname>/db`; systemd-style service via `rcctl enable litestream`
+- [ ] AV303 Backup verification: weekly cron job downloads latest Litestream replica and runs `PRAGMA integrity_check` against it; alerts if check fails; never discover backup corruption during a crisis
+- [ ] AV304 Active Storage on VPS: `config/storage.yml` with `local: {root: /var/www/<appname>/storage}` for production; symlink `public/storage → /var/www/<appname>/storage`; directory owned by `_<appname>`
+- [ ] AV305 Active Storage S3 mirror: production config uses `mirror` service type — writes to both local disk and R2; local disk survives VPS; R2 survives disk failure; read from local (fast), fallback to R2
+- [ ] AV306 Disk space monitoring: cron checks `df -h /var/www`; alerts at 80% full; auto-purge Active Storage variants older than 30 days (regenerated on demand) if >90% full; never silently fail uploads
+
+### AV4: TLS and Certificates
+
+- [ ] AV401 acme-client for all domains: `acme-client.conf` entry per domain and subdomain; `acme-client -v <domain>` in weekly cron; httpd serves ACME challenges; relayd reloads after cert renewal
+- [ ] AV402 Wildcard cert: `*.brgen.no` wildcard cert via DNS-01 ACME challenge (requires DNS API access); covers all brgen subdomains without per-subdomain cert management
+- [ ] AV403 OCSP stapling: `tls { keypair <domain>; ocsp /etc/ssl/<domain>.ocsp }` in relayd config; `ocspcheck -vNo /etc/ssl/<domain>.ocsp /etc/ssl/<domain>.fullchain.pem` in daily cron; serves OCSP staple with TLS handshake
+- [ ] AV404 TLS session resumption: relayd maintains TLS session cache; subsequent connections from same client resume without full handshake; 50ms saved per mobile reconnect
+- [ ] AV405 Certificate transparency monitoring: weekly check against crt.sh API for unexpected certs issued for our domains; alert if unauthorized cert found; mitigates MITM via rogue CA
+
+## AW — Monetisation Patterns
+
+### AW1: Stripe Integration
+
+- [ ] AW101 Stripe gem: `bundle add stripe`; `Stripe.api_key = Rails.application.credentials.stripe_secret_key`; `Stripe.api_version = "2024-06-20"` — pin API version; never use unpinned
+- [ ] AW102 Webhook endpoint: `POST /stripe/webhooks` verified via `Stripe::Webhook.construct_event(payload, sig_header, secret)` — never process Stripe events without signature verification; `protect_from_forgery except: :webhook`
+- [ ] AW103 Subscription model: `Subscription(user_id, blog_id, stripe_subscription_id, stripe_customer_id, plan, status, current_period_end, cancel_at_period_end)` — mirror Stripe state locally; source of truth is Stripe webhook, not client POST
+- [ ] AW104 Checkout Session: `Stripe::Checkout::Session.create(mode: "subscription", line_items: [...], success_url:, cancel_url:, customer_email:)` — redirect user to Stripe-hosted checkout; no card data touches our servers
+- [ ] AW105 Customer Portal: `Stripe::BillingPortal::Session.create(customer: stripe_customer_id, return_url:)` — let users manage subscription (cancel, upgrade, update card) via Stripe portal; zero custom subscription management UI needed
+- [ ] AW106 Webhook events handled: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed`, `customer.subscription.trial_will_end` — each updates local `subscriptions` table
+- [ ] AW107 Idempotency: `Stripe::PaymentIntent.create(idempotency_key: "pi_user_#{user_id}_plan_#{plan}_#{Time.current.to_date}")` — duplicate webhook events or retries don't double-charge
+- [ ] AW108 Norwegian VAT: Stripe Tax handles Norwegian MVA (25%) automatically when `automatic_tax: {enabled: true}` and customer address collected at checkout; no manual VAT calculation
+- [ ] AW109 Revenue recognition: `RevenueEvent` table mirrors Stripe invoice data; MRR = sum of active subscription amounts; churn = subscriptions cancelled in period; computed in admin analytics
+
+### AW2: Vipps and Norwegian Payment Methods
+
+- [ ] AW201 Vipps ePayment: integrate Vipps ePayment API for Norwegian mobile-first payments; `POST /ecomm/v2/payments` with phone number; user approves in Vipps app; webhook confirms payment
+- [ ] AW202 Vipps recurring: Vipps Recurring API for Norwegian subscription billing; alternative to Stripe for users preferring Vipps; same webhook-driven subscription state machine
+- [ ] AW203 BankID verification: for marketplace seller verification and dating profile verification, integrate BankID Connect OIDC flow; verify Norwegian identity without storing personal data
+- [ ] AW204 Payment method preference: user sets default payment method (Stripe card / Vipps) in account settings; checkout respects preference; both paths update same `subscriptions` table
+- [ ] AW205 Marketplace escrow: for high-value listings, hold payment in Stripe Connect escrow; release to seller after buyer confirms receipt; 48h auto-release if no dispute
+
+### AW3: Free Tier and Paywall Logic
+
+- [ ] AW301 brgen freemium: all social features free; dating = 5 likes/day free, unlimited with subscription; marketplace = 3 active listings free, unlimited with subscription; TV = free streams, HD with subscription
+- [ ] AW302 blognet metered paywall: 5 free articles per subscriber per month; on 6th article, show subscribe CTA with article blurred below fold; meter tracked in `reading_history` table per month
+- [ ] AW303 amber freemium: 30 item wardrobe free; unlimited with subscription; AI outfit generation = 5/month free, unlimited with subscription
+- [ ] AW304 Paywall CTA design: subscriber-wall interstitial uses blur + gradient treatment (AP405); CTA copy: "Støtt [publication]. Les ubegrenset fra [price]/mnd." — benefit-first, price second
+- [ ] AW305 Trial period: 14-day free trial on all paid plans; `trial_end` set in Stripe Checkout; no credit card required for trial on blognet; card required for brgen dating (prevent abuse)
+- [ ] AW306 Grandfathering: early subscribers locked at founding price; `founding_member: true` flag on subscription; never retroactively raise price on grandfathered users; honor indefinitely
+- [ ] AW307 Tip jar: one-time payment without subscription; `Stripe::PaymentIntent.create(amount:, currency: "nok", metadata: {type: "tip", recipient_id:})`; creator receives 90% after Stripe fees
+
+## AX — SEO, Structured Data, and Discoverability
+
+### AX1: Meta Tags
+
+- [ ] AX101 Rails meta_tags gem: `bundle add meta-tags`; `set_meta_tags title:, description:, og: {title:, description:, image:, type: "article"}, twitter: {card: "summary_large_image"}` in every show action
+- [ ] AX102 Dynamic OG images: generate OG image per post via `Vips::Image` — post title over background with branding; serve as Active Storage attachment; cache 24h; `og:image` points to static file not dynamic route
+- [ ] AX103 Canonical URLs: `set_meta_tags canonical: post_url(@post)` on all content pages; prevents duplicate content penalty from `?page=`, `?sort=`, and other query params
+- [ ] AX104 Title formula: `[Post Title] — [Publication Name] — [App Name]`; max 60 characters; truncate post title if needed; consistent across all apps
+- [ ] AX105 Description formula: first 150 characters of body_text (plain text, no HTML); fallback to subtitle; never repeat title in description
+- [ ] AX106 hreflang: `<link rel="alternate" hreflang="nb" href="...">` + `<link rel="alternate" hreflang="en" href="...">` on pages with both language versions; signals to Google which version to show per region
+- [ ] AX107 Robots.txt: allow all crawlers on public content; disallow `/admin`, `/api`, `/account`, `/dating` (private); disallow search result pages (`?q=`); auto-generated from Rails route constraints
+
+### AX2: Structured Data
+
+- [ ] AX201 Article JSON-LD: `<script type="application/ld+json">{"@type":"Article","headline":,"datePublished":,"author":{"@type":"Person","name":},"publisher":{"@type":"Organization","name":,"logo":}}</script>` — blognet and brgen posts
+- [ ] AX202 Recipe JSON-LD: `{"@type":"Recipe","name":,"recipeIngredient":[],"recipeInstructions":[],"cookTime":"PT30M","totalTime":"PT45M","nutrition":{}}` — blognet Foodielicious recipes; enables Google Recipe rich results
+- [ ] AX203 Product JSON-LD: `{"@type":"Product","name":,"offers":{"@type":"Offer","price":,"priceCurrency":"NOK","availability":"InStock"},"condition":}` — brgen marketplace listings; enables Google Shopping appearance
+- [ ] AX204 Event JSON-LD: `{"@type":"Event","name":,"startDate":,"location":{"@type":"Place","name":,"address":}}` — brgen city events; enables Google Events appearance
+- [ ] AX205 FAQPage JSON-LD: `{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":,"acceptedAnswer":{"@type":"Answer","text":}}]}` — bsdports port FAQ, baibl theological Q&A
+- [ ] AX206 BreadcrumbList: `{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home"},{"@type":"ListItem","position":2,"name":"Category"}]}` — all nested pages; enables breadcrumb in search results
+- [ ] AX207 SoftwareApplication JSON-LD: `{"@type":"SoftwareApplication","name":"brgen","applicationCategory":"SocialNetworkingApplication","operatingSystem":"Any","offers":{}}` — for PWA apps in app store search
+
+### AX3: Sitemaps and Feeds
+
+- [ ] AX301 Dynamic sitemap: `sitemap_generator` gem; generates XML sitemap per app; posts/listings/profiles with `changefreq` and `priority` per content type; pings Google/Bing on generation
+- [ ] AX302 Sitemap index: root `/sitemap.xml` indexes per-section sitemaps (`/sitemap-posts.xml`, `/sitemap-marketplace.xml`); each sitemap max 50,000 URLs; avoids Google indexation lag
+- [ ] AX303 Atom feed: `GET /feed.atom` returns Atom 1.0 feed of latest posts; `format.atom { render layout: false }` in PostsController; `link_to_atom_feed` in head layout; enables RSS readers
+- [ ] AX304 JSON feed: `GET /feed.json` returns JSON Feed 1.1 spec; easier to parse than Atom for apps; includes `author`, `content_html`, `image`, `tags`; blognet only
+- [ ] AX305 Podcast RSS: blognet audio posts expose podcast-compatible RSS feed with `<enclosure>` tags; iTunes Podcast categories and `itunes:*` namespace tags; submittable to Apple Podcasts / Spotify
+
+## AY — Moderation and Trust and Safety
+
+### AY1: Content Moderation
+
+- [ ] AY101 Moderation queue: `reports(reporter_id, reportable_type, reportable_id, category: {spam/hate/illegal/nsfw/other}, details, status: {pending/reviewed/actioned/dismissed}, reviewed_by_id, reviewed_at)` — every report flows through this table
+- [ ] AY102 Auto-hide threshold: if a post receives ≥5 spam reports from ≥5 distinct users within 1 hour, auto-hide pending human review; `ModerateContentJob` sends notification to moderation queue
+- [ ] AY103 AI pre-moderation: every new post and listing passes through `ClassifyContentJob`; if `nsfw_score > 0.7` or `spam_score > 0.8`, auto-flag for review; human moderator reviews; AI never auto-removes
+- [ ] AY104 Hash-matching: `PhotoDNAJob` computes perceptual hash of all uploaded images; matches against known CSAM hash database (provided by IWF); instant removal + law enforcement report on match
+- [ ] AY105 Moderator dashboard: `/admin/moderation` — queue of pending reports sorted by severity × report count; one-click actions: remove, warn, shadowban, permaban; bulk actions for obvious spam
+- [ ] AY106 Appeal process: users can appeal moderation decisions via `/account/appeals`; appeals reviewed by second moderator; accepted appeals restore content and add credit to reporter's abuse score
+- [ ] AY107 Shadowban: `users.shadowbanned_at` timestamp; shadowbanned user's content visible only to themselves; responses from others never delivered; no notification to shadowbanned user; expires after 7 days or manual review
+- [ ] AY108 Rate limits for new users: accounts <24h old limited to 3 posts/day, 20 comments/day, 5 dating likes/day; reduces throwaway account spam; limits lifted automatically after 24h + email verification
+
+### AY2: Trust Signals
+
+- [ ] AY201 Email verification: required for posting, dating, marketplace; `verification_token` sent on registration; `verified_at` set on click; unverified accounts can browse but not create
+- [ ] AY202 Phone verification: optional for brgen; required for marketplace sellers (fraud prevention); Twilio Verify API; `phone_verified_at` column; phone not stored, only verification status
+- [ ] AY203 Profile completeness score: 0-100 score based on (avatar: 20pts, bio: 20pts, city: 10pts, verified email: 25pts, verified phone: 25pts); displayed to user; gates some features on score threshold
+- [ ] AY204 Seller reputation: marketplace sellers accumulate rating from buyers (1-5 stars + review); `average_rating`, `review_count` on User; displayed on listings; below 3.0 = restricted listing ability
+- [ ] AY205 Trust badge: `trusted_seller` flag awarded after 10+ completed sales, 4.5+ rating, no unresolved disputes; displayed on listings as visual trust signal
+- [ ] AY206 Reporter reputation: track each user's report accuracy (reports upheld vs dismissed); low-accuracy reporters' reports weighted lower; prevents coordinated brigading
+
+## AZ — Advanced PWA and Mobile Patterns
+
+### AZ1: Advanced PWA Features
+
+- [ ] AZ101 Web app manifest categories: `"categories": ["social", "news", "lifestyle"]` in manifest.json — surfaces app in correct category in browser app stores and OS-level app suggestions
+- [ ] AZ102 Related applications: `"related_applications": [{"platform": "webapp"}]` + `"prefer_related_applications": false` — ensures browser offers web app install, not defers to App Store
+- [ ] AZ103 Launch handler: `"launch_handler": {"client_mode": "navigate-existing"}` — if app already open, reuse existing window and navigate; prevents duplicate PWA windows
+- [ ] AZ104 Window controls overlay: `"display_override": ["window-controls-overlay"]` — app content extends into title bar area; add `env(titlebar-area-x/y/width/height)` CSS to position content correctly; desktop PWA feels native
+- [ ] AZ105 Declarative link capturing: `"handle_links": "preferred-in-app"` — external links in app open within PWA window rather than system browser; keeps user in app context
+- [ ] AZ106 App edge side panel: `"edge_side_panel": {"preferred_width": 400}` — Edge browser shows app as side panel at 400px width; relevant for bsdports and baibl as reference panels
+- [ ] AZ107 Tabbed app mode: `"display_override": ["tabbed"]` — multiple PWA windows as browser-style tabs within single app frame; relevant for brgen multi-city browsing
+- [ ] AZ108 Local font access: `window.queryLocalFonts()` — access user's installed fonts; amber style editor could use user's local fonts for outfit notes; GDPR note: user must grant permission
+- [ ] AZ109 Barcode detection API: `new BarcodeDetector({formats: ["ean_13", "qr_code"]}).detect(imageData)` — amber item add: scan barcode to auto-fill brand/product from Open Food Facts / Open Beauty Facts APIs
+- [ ] AZ110 Shape detection: `new FaceDetector().detect(imageBitmap)` — amber profile photo crop to face bounding box; QR code scanner for hjerterom volunteer check-in
+- [ ] AZ111 Web NFC: `new NDEFReader().scan()` — hjerterom donation items tagged with NFC; volunteer taps phone to item, app auto-fills item details; no camera needed
+- [ ] AZ112 Web Serial: `navigator.serial.requestPort()` — bsdports: read from attached hardware (thermal label printer for donations in hjerterom, barcode scanner)
+- [ ] AZ113 Persistent storage: `navigator.storage.persist()` — prevent browser from evicting PWA cache; critical for baibl offline (entire Bible) and bsdports offline port list
+- [ ] AZ114 Storage quota: `navigator.storage.estimate()` — check available quota before caching large offline datasets; show user warning if <50MB available; suggest clearing browser cache
+
+### AZ2: Offline-First Patterns
+
+- [ ] AZ201 Cache-first for shell: `["/", "/offline", "/manifest.webmanifest", "application.js", "application.css"]` in service worker install event precache; app shell always available offline
+- [ ] AZ202 Network-first for API: fetch from network; on failure, serve from Cache API if available; update cache on success; `{ cacheName: "api-v1", networkTimeoutSeconds: 3 }`
+- [ ] AZ203 Stale-while-revalidate for feeds: serve from cache immediately; fetch fresh in background; update cache; next visit gets fresh content; perfect for news feeds
+- [ ] AZ204 IndexedDB schema: `db.createObjectStore("posts", {keyPath: "id"})`; `db.createObjectStore("drafts", {keyPath: "localId", autoIncrement: true})`; `db.createObjectStore("sync_queue", {keyPath: "id", autoIncrement: true})` — structured offline storage
+- [ ] AZ205 Offline indicator: Stimulus controller listens to `window` `online`/`offline` events; shows banner "Du er offline — viser lagret innhold" when offline; hides when reconnected; never disruptive
+- [ ] AZ206 Draft sync: pending drafts saved to IndexedDB; on `background-sync` event, POST each draft to server; mark as synced; show confirmation toast; drafts survive browser close
+- [ ] AZ207 Conflict detection: offline edit + server edit = conflict; on sync, if `server_updated_at > offline_started_at`, show diff to user with merge options; never silently overwrite
+- [ ] AZ208 Offline search: FTS5 index exported as JSON at login; stored in IndexedDB; offline search runs against local index; indicates "offline results" to user; re-sync on reconnect
+- [ ] AZ209 Prefetch critical data: on login, fetch + cache user's feed (first 50 items), unread notifications, active conversations, current wardrobe (amber) — all available immediately offline
+- [ ] AZ210 Service worker update flow: `self.addEventListener("activate", e => e.waitUntil(clients.claim()))` — new service worker takes control immediately; `postMessage({type: "RELOAD_SUGGESTED"})` to active tabs; shows "New version available — reload?" banner
+
