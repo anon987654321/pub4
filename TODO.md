@@ -1846,3 +1846,651 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] AM1203 Paraphrase augmentation: for ambiguous requests, generate 3 paraphrases and check consistency of responses — inconsistency signals adversarial or ambiguous input
 - [ ] AM1204 Perplexity filtering: compute perplexity of input under language model; anomalously high perplexity signals adversarial injection — flag for elevated scrutiny
 - [ ] AM1205 Prompt injection detection: classify each tool result for prompt injection attempts (instructions embedded in retrieved content) before executing any implied commands
+
+## AN — Rails 8+ PWA App Ideation and Refinement
+
+### AN1: PWA Foundation (all apps)
+
+- [ ] AN101 Manifest completeness: add `display_override: ["window-controls-overlay", "standalone"]`, `edge_side_panel: {preferred_width: 400}`, `launch_handler: {client_mode: "navigate-new"}` to all manifest.json.erb
+- [ ] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
+- [ ] AN103 Workbox integration: replace hand-rolled service worker with Workbox 7 strategies — CacheFirst for fonts/images, NetworkFirst for HTML, StaleWhileRevalidate for JS/CSS
+- [ ] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
+- [ ] AN105 Periodic background sync: register `periodicsync` for daily briefing fetch, feed pre-warm, and badge count updates
+- [ ] AN106 Push notification VAPID: generate VAPID keys once per app; store in credentials; wire webpush gem (already in brgen) to all apps; display OS-native notifications
+- [ ] AN107 Notification badge API: use `navigator.setAppBadge(count)` for unread message count; update via CableReady broadcast on new message
+- [ ] AN108 Install prompt interception: capture `beforeinstallprompt`; show custom in-app install banner after 3rd visit; store dismissal in localStorage
+- [ ] AN109 Offline fallback page: dedicated offline.html with last-cached data summary; store last 20 feed items in IndexedDB for offline reading
+- [ ] AN110 IndexedDB local store: use idb-keyval (importmap) for offline drafts, optimistic UI state, pending sync queue
+- [ ] AN111 App shortcuts: manifest `shortcuts` array — brgen: new post, new listing, dating swipe; amber: add item, create outfit; bsdports: search; blognet: new post
+- [ ] AN112 Share target: manifest `share_target` so native Share sheet can send URLs/text/files directly into each app (brgen post composer, amber item photo, blognet draft)
+- [ ] AN113 File handler: manifest `file_handlers` — amber handles image/* (add to wardrobe), blognet handles text/markdown (import as draft)
+- [ ] AN114 Protocol handler: manifest `protocol_handlers` — `web+brgen://post/123` opens post in standalone PWA
+- [ ] AN115 Fullscreen mode toggle: add `display: fullscreen` option for TV vertical in brgen; video player expands to true fullscreen without browser chrome
+- [ ] AN116 Screen wake lock: acquire wake lock during video playback (brgen TV), recipe view (blognet), and navigation (hjerterom map mode)
+- [ ] AN117 Orientation lock: lock to portrait for dating swipe cards; landscape for TV player; use `screen.orientation.lock()`
+- [ ] AN118 Viewport meta hardening: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` on all layouts; use `env(safe-area-inset-*)` for notch-aware padding
+- [ ] AN119 Theme color per app: manifest `theme_color` and `background_color` unique per app brand; inject dynamic theme-color meta tag for dark mode switching
+- [ ] AN120 Standalone mode detection: `window.matchMedia('(display-mode: standalone)')` — show different UI (no back button, bottom nav instead of burger menu) in PWA mode
+
+### AN2: Rails 8 Authentication and Authorization
+
+- [ ] AN201 Rails 8 auth scaffold: run `rails generate authentication` — generates User, Session, Password models with bcrypt; replace any custom auth in all 6 apps with scaffold baseline
+- [ ] AN202 Session fixation protection: `config.action_dispatch.session_fixation: :delete` in all apps; rotate session ID on login
+- [ ] AN203 Passwordless magic link: add `rails generate authentication --passwordless` for baibl and blognet where frictionless onboarding matters more than security
+- [ ] AN204 OAuth via OmniAuth: add google_oauth2 + github strategies to brgen and blognet; store in `authentications` polymorphic table (Rails 8 scaffold supports this)
+- [ ] AN205 Rate limiting on auth: use `Rails.cache` with Solid Cache to track failed login attempts per IP; lock after 10 failures for 15 minutes
+- [ ] AN206 Remember me: `signed_in_as` persistent cookie (30 days) using encrypted cookie with `cookies.signed`; invalidate on password change
+- [ ] AN207 Two-factor TOTP: add `rotp` gem; generate QR code with `rqrcode`; require 2FA for marketplace sellers and dating profile activation
+- [ ] AN208 Pundit authorization: add `pundit` gem to all apps; generate policy per model; `policy_scope` in every index action; `authorize` in every show/create/update/destroy
+- [ ] AN209 Current attributes: `Current.user` via `ActiveSupport::CurrentAttributes` in all apps; thread-safe request context for audit logging and scoping
+- [ ] AN210 Device fingerprinting: log `user_agent`, `accept_language`, `timezone` at login; surface new device alerts via notification/email
+- [ ] AN211 Suspicious login detection: if login from new country (IP geolocation via free ipapi.co), send email alert; do not block but log for review
+- [ ] AN212 Account deletion: GDPR-compliant `/account/delete` — soft delete with 30-day grace period, hard delete via Solid Queue job, export-before-delete CSV
+
+### AN3: Solid Stack Optimization
+
+- [ ] AN301 Solid Queue job classes: define one ActiveJob subclass per async operation per app; never use `perform_later` with anonymous blocks
+- [ ] AN302 Queue priority tiers: configure 3 queues — `critical` (notifications, auth emails), `default` (AI calls, search index), `bulk` (export, batch email, analytics aggregation)
+- [ ] AN303 Solid Queue recurring jobs: define in `config/recurring.yml` — daily digest email, weekly stats, nightly search index rebuild, monthly analytics rollup
+- [ ] AN304 Solid Queue concurrency controls: per-job `limits_concurrency` to prevent duplicate AI calls (especially amber outfit generation); use `key:` as user + job type
+- [ ] AN305 Solid Cache TTLs: define explicit TTLs per cache key type — feed fragments: 5m, user profiles: 1h, search results: 15m, static pages: 24h; never use default
+- [ ] AN306 Solid Cache size limits: set `max_size: 512.megabytes` per app; monitor `ActiveSupport::Cache::Store.stats` and alert when >80% full
+- [ ] AN307 Solid Cable connection tracking: use `ActionCable.server.connections` to monitor active WebSocket connections; alert when >1000 concurrent (memory pressure)
+- [ ] AN308 Solid Queue dashboard: mount `SolidQueue::Engine` at `/admin/jobs` behind authentication; track job latency, failure rate, queue depth
+- [ ] AN309 Job retries: configure `retry_on` with exponential backoff for all external API jobs (LLM calls, push notifications, email delivery); max 3 retries
+- [ ] AN310 Dead letter queue: failed jobs after max retries land in `solid_queue_failed_executions`; daily digest of failures emailed to admin
+
+### AN4: Turbo and Hotwire Patterns
+
+- [ ] AN401 Turbo Frames for every list: wrap every index action response in `<turbo-frame id="posts">` with `src=` for lazy loading; eliminates full-page reloads for tab switching
+- [ ] AN402 Turbo Stream broadcasts: `broadcast_append_to`, `broadcast_replace_to`, `broadcast_remove_to` on Post, Comment, Listing, Match models; real-time feed updates without JS
+- [ ] AN403 Turbo Stream forms: `<form data-turbo="true">` on all forms; success responses return `turbo_stream.replace` or `turbo_stream.append`; errors return `turbo_stream.replace` with form+errors
+- [ ] AN404 Turbo permanent: `data-turbo-permanent` on sidebar, navigation, and media player elements — persist across Turbo Drive navigations
+- [ ] AN405 Turbo prefetch: `data-turbo-prefetch="false"` on logout/delete links; `rel="prefetch"` on next-page pagination links
+- [ ] AN406 Turbo morphing: Rails 8.1 `turbo_refreshes_with :morph` in ApplicationController — smooth page refresh without layout flash; use `:scroll: :preserve` to maintain position
+- [ ] AN407 Turbo progress bar: customize `Turbo.config.drive.progressBarDelay = 100` and override `--turbo-progress-bar-color` CSS var per app brand color
+- [ ] AN408 Turbo native bridge: add `turbo-ios` / `turbo-android` bridge adapter; define `BridgeComponent` Stimulus controllers for native sheet presentation and native share
+- [ ] AN409 Optimistic UI: for vote/like/follow actions, immediately update DOM via Stimulus before server confirms; revert on error via `turbo_stream.replace`
+- [ ] AN410 Page-specific Turbo caching: `<meta name="turbo-cache-control" content="no-cache">` on auth pages, checkout, and any page with CSRF-sensitive forms
+- [ ] AN411 Turbo form submission validation: use `requestsubmit()` with custom validators before Turbo form submission; show inline errors without page reload
+- [ ] AN412 Nested frame navigation: dating swipe cards as nested frames — swiping loads next card via `<turbo-frame src="/dating/next">` without outer layout reload
+- [ ] AN413 Turbo streams over SSE: for low-traffic apps (bsdports, baibl), use Turbo Streams over SSE (`/updates` endpoint) rather than full WebSocket — less server resource
+
+### AN5: Stimulus Controller Patterns
+
+- [ ] AN501 Infinite scroll: Stimulus controller with IntersectionObserver watching sentinel element; fires Turbo Frame `src` update on intersection; replace Pagy with `pagy_countless`
+- [ ] AN502 Pull-to-refresh: Stimulus controller detecting touch `overscroll` event; trigger `Turbo.visit(location, {action: "replace"})` on pull ≥60px; show spinner during load
+- [ ] AN503 Swipe gesture: HammerJS-free swipe via `touchstart`/`touchend` delta; for dating card stack, marketplace image carousel, and playlist track swipe-to-queue
+- [ ] AN504 Bottom sheet: Stimulus controller for mobile bottom sheet with `transform: translateY` + `transition: cubic-bezier(0.32, 0.72, 0, 1)` snap points at 0%, 50%, 100%
+- [ ] AN505 Toast notifications: Stimulus controller triggered by `data-controller="toast"` with `data-toast-message-value`; auto-dismiss after 4s with slide-out animation
+- [ ] AN506 Image lazy load: `data-controller="lazy-image"` using IntersectionObserver; swap `data-src` to `src` on intersection; show blur-hash placeholder until loaded
+- [ ] AN507 Blur hash: generate blurhash on server (blurhash gem) for every uploaded image; store as column; client decodes to canvas placeholder in 50ms
+- [ ] AN508 Character counter: `data-controller="char-counter"` with `data-char-counter-max-value`; show remaining count; color warning at 80%, danger at 95%
+- [ ] AN509 Auto-growing textarea: `data-controller="autogrow"` with `input` event handler resizing via `scrollHeight`; for post composer and comment box
+- [ ] AN510 Clipboard copy: `data-controller="clipboard"` with `navigator.clipboard.writeText()`; animate success state; fallback to `execCommand` on older Safari
+- [ ] AN511 Keyboard shortcut: `data-controller="hotkey"` mapping `j`/`k` for feed navigation, `n` for new post, `?` for help overlay — vim-style navigation
+- [ ] AN512 Form auto-save: `data-controller="autosave"` debouncing `input` events; PATCH to `/drafts/:id` every 5s; show "saved" indicator; restore on page reload from IndexedDB
+- [ ] AN513 Dialog: native `<dialog>` element managed by Stimulus controller; `showModal()` / `close()`; trap focus; close on backdrop click; ARIA roles
+- [ ] AN514 Dropdown: Stimulus controller using `data-action="click@window->dropdown#closeAll"` pattern for click-outside dismiss; accessible with `aria-expanded`
+- [ ] AN515 Toggle: `data-controller="toggle" data-toggle-class="hidden"` — simplest possible show/hide; replaces 80% of custom JS in views
+- [ ] AN516 Reveal: `data-controller="reveal"` with intersection observer — fade in elements as they scroll into view; `animation: fadeInUp 0.4s ease both`
+- [ ] AN517 Tabs: `data-controller="tabs"` with `aria-selected` and `role="tabpanel"`; deep-linkable via URL hash; keyboard arrow navigation
+- [ ] AN518 Sortable: `data-controller="sortable"` wrapping SortableJS; for outfit item reordering, playlist track ordering; saves order via PATCH on dragend
+- [ ] AN519 Flatpickr: `data-controller="datepicker"` wrapping flatpickr; for takeaway delivery scheduling, event creation, financial date ranges
+- [ ] AN520 Maplibre: `data-controller="map"` wrapping MapLibre GL JS with OpenFreeMap tiles (zero cost); for brgen maps vertical, hjerterom pickup locations, takeaway delivery zones
+
+### AN6: brgen — Hyperlocal City Network
+
+- [ ] AN601 City onboarding: `/onboard` flow — pick city, pick interests (categories), pick verticals (dating/marketplace/tv/etc.); redirect to personalized feed
+- [ ] AN602 Subdomain feed merging: unified `/` feed that merges posts from all verticals user follows; scored by recency × engagement × personal affinity
+- [ ] AN603 Community creation flow: step-by-step `<turbo-frame>`-based wizard — name, description, rules, category, privacy; preview before publish
+- [ ] AN604 Post composer rich text: ActionText-based composer with slash-commands (`/image`, `/link`, `/poll`, `/code`); markdown shortcut support (`**bold**`, `#heading`)
+- [ ] AN605 Poll creation: embedded in post composer; up to 6 options; real-time vote count via Turbo Stream; auto-close at set time via Solid Queue job
+- [ ] AN606 Link preview: on URL paste in composer, fetch OpenGraph metadata via background job; render preview card with image, title, description; user can dismiss
+- [ ] AN607 Trending algorithm: score = (votes + comments × 2 + shares × 3) / (hours_since_post + 2)^1.8 — HN-style gravity; computed by Solid Queue job every 15m, stored in `trending_score` column
+- [ ] AN608 Dating — swipe interface: card stack via CSS `transform: rotate()` + `translate()`; swipe right = like (sends Like record + checks for Match), swipe left = pass; keyboard ←/→ support
+- [ ] AN609 Dating — match notification: on Match creation, broadcast CableReady notification to both users; show animated match overlay ("It's a match!"); create Conversation
+- [ ] AN610 Dating — compatibility scoring: LLM-computed affinity score from profile interests, location, activity patterns; surfaced as percentage on match screen
+- [ ] AN611 Marketplace — listing creation wizard: multi-step form (category → photos → details → price → location → review); save progress as draft between steps
+- [ ] AN612 Marketplace — image upload: Active Storage direct upload to S3-compatible (or local disk on VPS); generate multiple variants (thumb 80px, card 400px, full 1200px) via ImageProcessing::Vips
+- [ ] AN613 Marketplace — saved search alerts: user saves a search query; Solid Queue job runs it nightly; Turbo Stream notification if new results
+- [ ] AN614 Marketplace — price negotiation: seller enables "offers accepted"; buyer submits offer; counter-offer flow via Conversation; accepted offer locks listing
+- [ ] AN615 Marketplace — deal proximity: geolocation-based "deals near you" using Haversine distance SQL; rank by distance × discount_percent
+- [ ] AN616 TV — live stream: HLS stream via relayd proxy; `<video>` with hls.js fallback; live viewer count via CableReady broadcast every 30s
+- [ ] AN617 TV — DVR: record live streams to Active Storage; generate thumbnail via FFMPEG at server side; VOD playback with seek
+- [ ] AN618 TV — channel guide: 7-day EPG grid (horizontal time × vertical channels); rendered as CSS Grid; current show highlighted; click to set reminder
+- [ ] AN619 Playlist — music discovery: seed tracks from user listening history → LLM suggests 10 similar artists → link to YouTube/Spotify API for preview
+- [ ] AN620 Playlist — collaborative: invite friends to co-edit a playlist; real-time track additions via Turbo Stream; conflict resolution (last write wins with notification)
+- [ ] AN621 Takeaway — restaurant onboarding: restaurant owner registers, uploads menu (CSV import or manual), sets delivery zones (polygon on map), sets hours
+- [ ] AN622 Takeaway — real-time order tracking: driver location broadcast via CableReady every 30s; customer sees live map pin update; ETA countdown
+- [ ] AN623 Takeaway — menu search: full-text search across all restaurant menus in city; rank by distance + rating; filter by dietary tags (vegan, halal, gluten-free)
+- [ ] AN624 Maps — business discovery: render businesses as clustered pins on MapLibre; click cluster to zoom; click pin for inline info card without page navigation
+- [ ] AN625 Maps — user check-in: tap "I'm here" at any venue; creates check-in record; friends who follow you see update in activity feed
+- [ ] AN626 Notification center: unified `/notifications` Turbo Frame; grouped by type (mentions, matches, order updates, likes); mark-all-read via one PATCH request
+- [ ] AN627 Activity feed: `/activity` shows everything following users did recently; paginated with Pagy; Turbo Stream new activity at top on broadcast
+- [ ] AN628 Hashtag discovery: `/tags/:name` Turbo-framed feed of all posts with tag; trending tags sidebar; auto-link `#word` in post body via ActionText extension
+- [ ] AN629 Mention system: auto-link `@username` in post body; create Notification on mention; user preferences for mention notification type (push/email/none)
+- [ ] AN630 Report/moderation: report any post/listing/profile with category (spam/hate/illegal); Solid Queue job notifies moderators; moderator dashboard at `/admin/reports`
+
+### AN7: amber — Wardrobe Intelligence
+
+- [ ] AN701 Item add flow: tap "+" → camera or gallery → image uploaded → AI analyzes (color, category, brand, material, season) → pre-fills form → user confirms
+- [ ] AN702 Outfit generation: POST `/ai/outfit` with occasion, weather, color mood → LLM returns 3 outfit combinations from wardrobe items → rendered as item grid with "Wear today" CTA
+- [ ] AN703 Visual similarity search: embed item photo via vision model → find top-5 similar items in wardrobe by cosine similarity → "You might also wear" recommendations
+- [ ] AN704 Color palette extraction: extract dominant 5 colors from item photo via ColorThief.js; store as JSON; palette-based outfit matching ("complementary palette today")
+- [ ] AN705 Capsule wardrobe: AI analyzes full wardrobe → identifies 30 versatile pieces that cover 90% of occasions → "Your capsule" view with gap analysis
+- [ ] AN706 Cost-per-wear: track each wear via `/outfits/:id/wear` action; compute item CPW = purchase_price / wear_count; surface in item detail; motivates wearing neglected items
+- [ ] AN707 Declutter challenge: 30-day challenge — each day surface 1 item worn <3 times; user swipes keep/donate/sell; generates donation packing list or Marketplace listing
+- [ ] AN708 Season rotation: "store away" action moves off-season items to archived state; "bring back" reverses; filter current wardrobe by active season automatically
+- [ ] AN709 Wishlist → wardrobe: add wishlist items; when user buys (marks as purchased), moves to wardrobe; tracks budget vs actual spend
+- [ ] AN710 Creator profile: style influencer sub-profile with public feed, follow count, average engagement, sponsored tag disclosure; monetization via tip jar
+- [ ] AN711 Outfit calendar: `FullCalendar`-lite via Stimulus controller; drag outfit onto date; "I wore this" calendar view; export as iCal
+- [ ] AN712 Moodboard: Pinterest-style freeform canvas; drag items and inspiration images; save as outfit inspo; shareable URL
+- [ ] AN713 Sustainability score: rate items by material (organic cotton = 10, polyester = 3, leather = 5), brand ethics (B-Corp = +3), secondhand (+5); aggregate wardrobe sustainability score
+- [ ] AN714 Brand spending analysis: aggregate purchase prices by brand; pie chart via pure SVG (no chart.js); "You've spent 12,400 NOK on Acne Studios"
+- [ ] AN715 Style evolution timeline: monthly snapshot of wardrobe composition (by color, category, brand); horizontal scrollable timeline showing style drift over years
+
+### AN8: bsdports — OpenBSD Package Intelligence
+
+- [ ] AN801 Full-text semantic search: `MATCH` query on SQLite FTS5 virtual table over `port_name`, `description`, `maintainer`; rank by `bm25()` function
+- [ ] AN802 Dependency graph visualization: D3 force graph via Stimulus controller; nodes = ports, edges = dependencies; click node to navigate; zoom/pan
+- [ ] AN803 Security advisory feed: scrape OpenBSD errata page via Nokogiri job; parse CVE references; link to affected ports; Turbo Stream live feed
+- [ ] AN804 Port comparison: select 2-3 ports → side-by-side spec table (size, deps, maintainer, last update, security status); `/compare?ports[]=vim&ports[]=neovim`
+- [ ] AN805 Maintainer profiles: `/maintainers/:email` — all ports by maintainer, response time stats, open security advisories; link to ports@ mailing list thread
+- [ ] AN806 Version history: track port version changes over time; diff between versions; "what changed in nginx 1.26→1.27" via LLM-summarized diff
+- [ ] AN807 Infrastructure recommendation: given a list of software needs ("web server, database, mail"), recommend optimal OpenBSD port combination with rationale
+- [ ] AN808 AI port explainer: "explain what this port does in plain language" via ruby_llm; cached per port; regenerate button if user thinks it's wrong
+- [ ] AN809 User collections: save ports to named collections ("my server stack", "dev tools"); shareable link; import/export as JSON
+- [ ] AN810 Port radar: user watches ports; Solid Queue daily job checks for version bump or security advisory; push notification on change
+
+### AN9: baibl — Scripture and Theology Platform
+
+- [ ] AN901 Book/chapter/verse navigation: `/books/:book/chapters/:chapter/verses/:verse` — deep-linkable; keyboard J/K navigation between verses; Turbo Drive transitions
+- [ ] AN902 Parallel translations: split-pane view of same passage in multiple translations (KJV, NIV, Norwegian Bibelen); CSS Grid 2-column; swipe to cycle on mobile
+- [ ] AN903 Semantic search: "find all verses about forgiveness" → embedding search over verse corpus; return ranked list with context
+- [ ] AN904 Annotation layers: user creates private/public annotations on any verse; visible as margin notes; toggle annotation layers by author/group
+- [ ] AN905 Cross-reference graph: interactive graph of verse cross-references; navigate the network; identify conceptual clusters
+- [ ] AN906 Doctrine mapping: tag verses with theological doctrines (soteriology, eschatology, etc.); browse doctrine → verses; AI identifies under-represented doctrines
+- [ ] AN907 Study plan: user creates reading plan (Genesis to Revelation in 365 days); daily check-off via Turbo Stream; streak tracking; email reminder
+- [ ] AN908 Community discussion: threaded comments per verse; moderated by community; upvoting; expert answers pinned
+- [ ] AN909 AI theological assistant: ask theological questions; AI cites specific verses; sourced reasoning; explicitly non-authoritative disclaimer
+- [ ] AN910 Historical context: per passage, surface historical background (author, date, audience, literary genre) via structured data; link to academic sources
+
+### AN10: blognet — Semantic Publishing Network
+
+- [ ] AN1001 Longform editor: ActionText-based rich editor with full-width image embeds, pullquotes, drop caps, code blocks with syntax highlight, footnotes
+- [ ] AN1002 Reading time estimate: compute from word count (200 WPM); display prominently; update live in composer as user types
+- [ ] AN1003 Draft → published workflow: posts have states (draft/review/scheduled/published/archived); transitions via state machine; scheduled publish via Solid Queue
+- [ ] AN1004 Editorial calendar: `/editorial/calendar` — month view of scheduled posts per blog/author; drag-and-drop reschedule
+- [ ] AN1005 SEO metadata: per-post OpenGraph, Twitter Card, canonical URL, structured data (Article schema JSON-LD); editable in sidebar without touching HTML
+- [ ] AN1006 Newsletter integration: on publish, send post as email newsletter to subscribers via Action Mailer + Solid Queue; unsubscribe link in footer
+- [ ] AN1007 Subscriber management: `/subscribers` — list, import CSV, export, segment by tag, view open rates (pixel tracking), unsubscribe management
+- [ ] AN1008 Paywall: posts can be `free`, `metered` (3/month free), or `subscriber_only`; Stripe Checkout integration; webhook updates `subscriptions` table
+- [ ] AN1009 Recipe vertical (Foodielicious): structured Recipe model with ingredients (quantity/unit/name), steps, nutrition facts, cook/prep time; recipe schema JSON-LD for SEO
+- [ ] AN1010 Knowledge graph: tag posts with concepts (entities, topics, people, places); build concept → post index; `/concepts/:name` discovery page
+- [ ] AN1011 Related posts: embedding-based "more like this" — encode post title+summary at publish time; find top-5 cosine-similar posts; render in sidebar
+- [ ] AN1012 Reading progress: `IntersectionObserver` on last paragraph; when passed, mark as read and update progress bar in `/reading-list`
+- [ ] AN1013 Highlight and quote: select text → popover appears with "Quote" and "Highlight" options; highlights stored as user annotations; quotes create shareable image
+- [ ] AN1014 Author analytics: `/author/analytics` — views, reads-to-completion, subscriber growth, top posts by engagement; all from SQLite, no external analytics
+- [ ] AN1015 Collaborative editing: two authors co-edit via Turbo Stream paragraph locks — editing a paragraph locks it to others; releases after 30s inactivity
+
+### AN11: hjerterom — Food and Resource Rescue
+
+- [ ] AN1101 Donation flow: donor selects category (food/clothing/toys/books), takes photo, describes condition, sets pickup window; creates Donation record
+- [ ] AN1102 Inventory management: staff receives donations, weighs/counts, assigns location in storage grid; tracks by category, expiry (food), and condition
+- [ ] AN1103 Beneficiary matching: when beneficiary requests (food bag, clothing), system matches available inventory to profile (family size, dietary restrictions, clothing sizes)
+- [ ] AN1104 Volunteer scheduling: `/shifts` — staff posts open shifts; volunteers claim shifts; reminder notification 24h before; clock in/out via QR code
+- [ ] AN1105 Expiry alerting: Solid Queue job runs nightly; flags food items expiring within 48h; prioritizes for same-day distribution; alerts on-duty staff via push
+- [ ] AN1106 Impact dashboard: public-facing `/impact` — total meals provided, CO2 saved (vs landfill), families served, volunteer hours; animated counters; shareable
+- [ ] AN1107 Partner network: link to partner organizations (food banks, shelters); route excess inventory to partners via partner API or email; track transfers
+- [ ] AN1108 Donation receipt: email receipt with item list and estimated value for tax deduction purposes (Norwegian fradrag)
+- [ ] AN1109 Route optimization: for multi-stop food delivery, compute optimal route via OSRM API (open source); display on MapLibre; turn-by-turn instructions
+
+### AN12: Cross-App Performance
+
+- [ ] AN1201 YJIT enabled: `config.yjit = true` in production.rb for all apps; verify with `RubyVM::YJIT.enabled?`; expect 15-20% throughput improvement
+- [ ] AN1202 Eager loading: `config.eager_load = true` in production; verify no autoload violations; reduces per-request load time
+- [ ] AN1203 Database connection pool: set `pool:` in database.yml to match Falcon worker count; avoid connection timeout under load
+- [ ] AN1204 N+1 elimination: run `bullet` gem in development; eliminate every N+1 with `includes`/`preload`/`eager_load`; zero tolerance policy
+- [ ] AN1205 Counter caches: add `counter_cache: true` for comment_count, vote_count, follower_count, listing_count on all association-heavy models
+- [ ] AN1206 Database indexes: verify indexes on every `foreign_key`, every `WHERE` column, every `ORDER BY` column; run `lol_dba` gem to surface missing indexes
+- [ ] AN1207 Fragment caching: `cache [@post, current_user]` for post cards; key includes user to handle voted/unvoted state; Russian doll for comment trees
+- [ ] AN1208 HTTP caching: `stale?` / `fresh_when` in show actions with `etag:` and `last_modified:`; static content pages (bsdports port list) get 10m max-age
+- [ ] AN1209 Asset compression: propshaft production fingerprinting + gzip/brotli compression via relayd; verify `Content-Encoding: br` in response headers
+- [ ] AN1210 Image optimization: ImageProcessing::Vips for all Active Storage variants; convert to WebP; serve via `<picture>` with JPEG fallback; lazy load all
+- [ ] AN1211 Font subsetting: subset system UI fonts; if custom font used, subset to Latin + Latin-Extended only; serve as woff2; `font-display: swap`
+- [ ] AN1212 Critical CSS inlining: extract above-the-fold CSS per layout; inline in `<style>`; defer full stylesheet load; eliminates render-blocking CSS
+- [ ] AN1213 Prefetch on hover: `data-turbo-prefetch` triggers on mouseenter (200ms threshold); reduces perceived navigation time to near-zero
+- [ ] AN1214 SQLite WAL mode: `PRAGMA journal_mode=WAL` on all databases; allows concurrent reads + one writer; essential for Falcon multi-fiber concurrency
+- [ ] AN1215 SQLite STRICT tables: `CREATE TABLE ... STRICT` for all new tables; eliminates type coercion bugs; requires schema.rb with explicit column types
+- [ ] AN1216 SQLite FTS5: add FTS5 virtual tables for full-text search in all apps; avoid external search service dependency; `content=` option for storage efficiency
+
+### AN13: Cross-App Search
+
+- [ ] AN1301 Global search: `/search?q=` across all models in app; ranked by type priority and recency; Turbo Frame instant results as user types (debounced 200ms)
+- [ ] AN1302 Search-as-you-type: Stimulus controller debouncing input events; updates Turbo Frame `src` with query param; show skeleton loaders during fetch
+- [ ] AN1303 Faceted filtering: sidebar checkboxes for category/type/date/price; each change appends param and refreshes Turbo Frame; shareable filtered URL
+- [ ] AN1304 Search analytics: log every query + result count + clicked result; identify zero-result queries; use to improve content and synonyms
+- [ ] AN1305 Typo tolerance: SQLite FTS5 with `porter` tokenizer handles stemming; add synonym expansion table for common query→terms mappings
+- [ ] AN1306 Recent searches: store last 10 searches in localStorage; show as quick-select chips below search input before typing
+
+### AN14: Cross-App Internationalization
+
+- [ ] AN1401 Norwegian Bokmål default: `config.i18n.default_locale = :nb`; all user-facing strings in `config/locales/nb.yml`; English fallback in `en.yml`
+- [ ] AN1402 Time zone: `config.time_zone = "Europe/Oslo"`; display relative times via `timeago` Stimulus controller; absolute on hover tooltip
+- [ ] AN1403 Currency formatting: NOK as default; `number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")` helper
+- [ ] AN1404 RTL readiness: CSS `[dir="rtl"]` overrides for any future Arabic/Hebrew locale; logical properties (`margin-inline-start`) instead of `margin-left` throughout
+- [ ] AN1405 Date format: Norwegian `dd.mm.yyyy` format in all date displays; ISO 8601 in API responses
+
+### AN15: Cross-App Testing
+
+- [ ] AN1501 System tests with Capybara + Cuprite: full browser tests for critical flows (auth, post create, checkout, swipe match) using Ferrum/Chrome headless
+- [ ] AN1502 Model unit tests: Minitest for every model method, validation, scope, callback; 100% coverage on business logic
+- [ ] AN1503 Controller tests: request specs for every action; assert response status, redirect, flash; verify authorization (Pundit) for all roles
+- [ ] AN1504 Job tests: test every ActiveJob subclass in isolation; stub external APIs; verify retry behavior; assert correct queue
+- [ ] AN1505 Accessibility audit: `axe-core` integration in system tests; zero critical violations policy; run on every layout
+- [ ] AN1506 Performance regression: `rack-mini-profiler` in staging; alert if any action exceeds 200ms p95; database query count alert if >10 per request
+- [ ] AN1507 Security scan: `brakeman` in CI; zero warnings policy; `bundler-audit` for known CVEs in gems; run on every push
+
+
+### AN16: StimulusReflex Patterns (from docs research)
+
+- [ ] AN1601 Install StimulusReflex in all apps: `bundle add stimulus_reflex` + `rails stimulus_reflex:install`; configure ActionCable + CableReady; verify with `rails test:system`
+- [ ] AN1602 Page morph reflex: use `morph :page` as default strategy; re-runs controller action and re-renders full page; ~50ms; suitable for state changes that affect many DOM regions
+- [ ] AN1603 Selector morph: `morph "#post-123", render(partial: "post", locals: {post: @post})` — partial DOM update without controller action; ~15ms; primary pattern for feed item updates
+- [ ] AN1604 Nothing morph: `morph :nothing` — 6ms RPC; triggers background jobs, sends analytics, fires notifications without any DOM change; use for vote counting, read tracking
+- [ ] AN1605 Declarative reflex bindings: `data-reflex="click->Post#vote"` — zero JS; use on vote buttons, follow buttons, reaction buttons across all apps
+- [ ] AN1606 Form auto-save: `data-reflex="change->Draft#save" data-reflex-serialize-form="true"` on each draft textarea; auto-saves to DB on every keystroke (debounced server-side)
+- [ ] AN1607 data-reflex-permanent: protect active inputs (`<input data-reflex-permanent>`) from being overwritten during page morphs; essential for dating swipe cards and post composer
+- [ ] AN1608 before_reflex auth: `before_reflex { halt_and_render_nothing! unless current_user }` — centralize authorization in reflex callbacks; never expose reflex actions without auth check
+- [ ] AN1609 around_reflex transaction: `around_reflex { ActiveRecord::Base.transaction { yield } }` — wrap mutation reflexes in transactions; auto-rollback on error
+- [ ] AN1610 reflexHalted handler: client-side `reflexHalted()` callback shows toast notification when server halts reflex; user gets feedback even when action is refused
+- [ ] AN1611 Optimistic UI with beforeReflex: `beforeReflex() { this.element.classList.add("voted") }` then revert in `reflexError()`; vote buttons feel instant
+- [ ] AN1612 CableReady after job: `after_perform { cable_ready["user_#{user.id}"].replace(selector: "#job-status", html: render_status).broadcast }` — job completion updates without polling
+- [ ] AN1613 Infinite scroll via append: `cable_ready.append(selector: "#feed", html: render_partial)` from Solid Queue job; no client JS beyond IntersectionObserver
+- [ ] AN1614 Real-time presence: on connect/disconnect, `cable_ready.inner_html(selector: "#online-count", html: count.to_s).broadcast_to(room)` — live viewer count for TV/livestream
+- [ ] AN1615 dispatch_event to Stimulus: `cable_ready.dispatch_event(selector: "#swipe-stack", type: "new-card-available").broadcast` — server pushes event, Stimulus controller loads next card
+- [ ] AN1616 scroll_into_view: `cable_ready.scroll_into_view(selector: "#new-message-#{id}", behavior: "smooth")` — auto-scroll to new chat message after CableReady append
+- [ ] AN1617 stimulus-sortable for outfit/playlist ordering: `data-controller="stimulus-sortable"` + `data-sortable-url-value="/outfits/:id/reorder"` — drag to reorder, PATCH persists order
+- [ ] AN1618 stimulus-tabs with deep linking: `data-controller="stimulus-tabs"` with URL hash sync; dating profile tabs (Photos/About/Interests) are bookmarkable and shareable
+- [ ] AN1619 stimulus-scroll-progress: `data-controller="stimulus-scroll-progress"` on article layout; shows reading progress bar at top; baibl verse reader, blognet articles
+- [ ] AN1620 stimulus-content-loader for lazy sections: `data-controller="stimulus-content-loader" data-stimulus-content-loader-url-value="/section"` — load expensive sections after initial paint
+- [ ] AN1621 stimulus-places-autocomplete for location: `data-controller="stimulus-places-autocomplete"` on takeaway delivery address, hjerterom pickup address, marketplace location
+- [ ] AN1622 stimulus-animated-number for counters: `data-controller="stimulus-animated-number"` on vote counts, follower counts, impact stats; numbers count up on first view
+- [ ] AN1623 stimulus-timeago on all timestamps: replace all `time_ago_in_words` Ruby calls with `data-controller="stimulus-timeago"`; client-side live updating, no server round-trip
+- [ ] AN1624 stimulus-rails-nested-form: `data-controller="stimulus-rails-nested-form"` for marketplace variant creation, recipe ingredient lists, portfolio item addition; add/remove dynamically
+- [ ] AN1625 stimulus-character-counter on all textareas: `data-controller="stimulus-character-counter" data-stimulus-character-counter-max-value="280"` — visible limit indicator
+
+### AN17: Rails 8 API Patterns Applied
+
+- [ ] AN1701 params.expect() strict validation: replace all `params.require(:x).permit(...)` with `params.expect(x: [:field1, :field2])` — raises on unexpected arrays, safer against mass assignment
+- [ ] AN1702 Turbo morph refresh: `turbo_refreshes_with :morph, scroll: :preserve` in ApplicationController — smooth page refresh preserving scroll position; eliminates layout flash on feed reload
+- [ ] AN1703 Active Record strict_loading: `config.active_record.strict_loading_by_default = true` in development — raises on every N+1 before it reaches production
+- [ ] AN1704 find_each for bulk operations: replace `.all.each` with `.find_each(batch_size: 500)` in all admin/reporting jobs — prevents memory exhaustion on large datasets
+- [ ] AN1705 pluck over map: replace `Model.all.map(&:column)` with `Model.pluck(:column)` — 10x faster, bypasses model instantiation
+- [ ] AN1706 pick for single value: replace `Model.where(x: y).limit(1).pluck(:z).first` with `Model.where(x: y).pick(:z)` — cleaner, same performance
+- [ ] AN1707 where.missing for orphan detection: `Comment.where.missing(:post)` — find orphaned records for cleanup jobs; replaces LEFT JOIN + IS NULL pattern
+- [ ] AN1708 counter_cache with touch: `belongs_to :post, counter_cache: true, touch: true` — free comment_count on posts, free cache invalidation; zero SQL overhead in views
+- [ ] AN1709 Solid Queue recurring.yml: define `config/recurring.yml` with daily digest, weekly stats, nightly full-text index rebuild, monthly analytics rollup for all apps
+- [ ] AN1710 limits_concurrency in jobs: `limits_concurrency on: -> { "llm-#{arguments.first}" }` — prevent parallel LLM calls for same user; one LLM request per user at a time
+- [ ] AN1711 http_cache_forever for manifests: `http_cache_forever(public: false)` on PWA manifest and service-worker.js — immutable caching with etag fallback
+- [ ] AN1712 Thruster asset caching: Thruster (default Rails 8 proxy) handles gzip/brotli automatically; verify `Content-Encoding: br` on all JS/CSS assets; zero config needed
+- [ ] AN1713 fresh_when with ETag on show actions: `fresh_when(@post, etag: @post, last_modified: @post.updated_at, public: false)` — 304 responses for unchanged posts; no DB hit after first load
+- [ ] AN1714 format.md responses: `respond_to { |format| format.json { render json: @post } }` — add JSON responses to all show actions for PWA offline/share features
+- [ ] AN1715 config.relative_url_root for subapps: if mounting multiple apps under one domain via relayd, set `config.relative_url_root = "/app_name"` to fix all asset path generation
+
+## AO — CSS and Visual Language Reference (x.com, Medium, Substack, New Yorker)
+
+### AO1: Typography — X.com (Chirp system)
+
+- [ ] AO101 Chirp fallback stack: `font-family: "Chirp", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif` — condensed grotesque; high x-height; use for all UI text in brgen (social app)
+- [ ] AO102 X body font size: 15px base with 1.3125rem on desktop (21px); mobile stays at 15px — study the density vs comfort balance
+- [ ] AO103 X tweet font-size: 17px / 1.4 line-height for tweet body text on desktop; 15px on mobile — matches reading distance ergonomics
+- [ ] AO104 X name typography: `font-weight: 700` for display name; `font-weight: 400` for @handle in muted color — weight contrast as hierarchy without size change
+- [ ] AO105 X metadata typography: timestamp, engagement counts at 13px / `color: rgb(113,118,123)` — tertiary information visually recedes without disappearing
+- [ ] AO106 X letter-spacing: near-zero; `letter-spacing: -0.01em` on bold display names only — grotesque type doesn't need tracking adjustment
+- [ ] AO107 X heading hierarchy: no traditional h1-h4; hierarchy entirely via `font-weight` (700/400) and color (primary/muted); tabs and section titles at 15px bold
+- [ ] AO108 X link style: `color: rgb(29,155,240)` (Twitter blue legacy) or `color: rgb(15,20,25)` with underline on hover; no underline at rest; learn the minimum affordance
+- [ ] AO109 X emoji rendering: `font-family: "Twemoji Mozilla", ...` for cross-platform emoji consistency; relevant for brgen's reaction system
+- [ ] AO110 X code/handle display: `font-family: monospace` only inside code blocks; @handles remain in Chirp stack — avoid mixing font families for inline @mentions
+
+### AO2: Typography — Medium
+
+- [ ] AO201 Medium article body: `font-family: source-serif-4, Georgia, Cambria, "Times New Roman", serif` at 21px / 1.58 line-height — the gold standard for longform comfort
+- [ ] AO202 Medium heading: `font-family: medium-content-title-font, Georgia, Cambria, "Times New Roman", serif` at 42px bold on desktop; 32px mobile; dramatic scale contrast
+- [ ] AO203 Medium subheading: `font-size: 26px / font-weight: 600 / line-height: 1.4` — clear but subordinate to h1; uses same serif stack
+- [ ] AO204 Medium dropcap: first character of article body enlarged to 3 lines height; `float: left; font-size: 5em; line-height: 0.68; margin-right: 0.1em` — implement in blognet article view
+- [ ] AO205 Medium body paragraph spacing: `margin-bottom: 2em` between paragraphs — generous vertical rhythm; each paragraph breathes
+- [ ] AO206 Medium caption: `font-size: 13px / color: rgba(41,41,41,0.6) / font-style: italic` — image captions visually subordinate; implement for Active Storage attachment captions
+- [ ] AO207 Medium tag label: `font-size: 13px / font-weight: 500 / letter-spacing: 0.02em / text-transform: uppercase` — category pills with uppercase tracking
+- [ ] AO208 Medium reading time: `font-size: 14px / color: rgba(117,117,117,1)` next to author name; computed server-side, displayed as "7 min read"
+- [ ] AO209 Medium blockquote: `border-left: 3px solid #000; padding-left: 23px; font-style: italic; font-size: 22px` — strong typographic statement, implement in ActionText
+- [ ] AO210 Medium pullquote: large centered quote at `font-size: 28px / line-height: 1.4 / text-align: center / max-width: 600px / margin: 2em auto` — highlight key insight
+
+### AO3: Typography — Substack
+
+- [ ] AO301 Substack default body: `font-family: Georgia, serif` at 18px / 1.6 line-height — comfortable reading, not as refined as Medium's source-serif-4 but warmer
+- [ ] AO302 Substack headline: `font-family: "GT Sectra", Georgia, serif` — slab-serif display; dramatic at 36px bold; heavy stroke contrast
+- [ ] AO303 Substack sans-serif variant: `font-family: "Söhne", Helvetica, Arial, sans-serif` — alt style for more modern newsletters; implement as font option in blognet
+- [ ] AO304 Substack letter preview typography: email preview text at 15px / lighter weight / muted color — distinguish from full article in feed
+- [ ] AO305 Substack podcast metadata: episode number, duration, published date in monospace or tabular-nums — align numbers in episode lists
+- [ ] AO306 Substack paywall callout: bold sans-serif at 18px, centered, with short line max-width — strong CTA contrast against serif body
+- [ ] AO307 Substack comment reply indent: left-border + `margin-left: 2em` for nested replies; no more than 3 nesting levels before collapsing
+- [ ] AO308 Substack note (short post): 16px / sans-serif / looser line-height (1.7) — differentiated from full post; implement as `format: :note` variant in brgen/blognet
+
+### AO4: Typography — The New Yorker
+
+- [ ] AO401 New Yorker Irvin masthead: `font-family: "NYIrvin", Georgia, serif` — proprietary Art Deco display; heavy, condensed, decorative; only for hero/masthead; implement via web font or approximate with Playfair Display
+- [ ] AO402 New Yorker body: `font-family: "Neutraface Slab", Georgia, serif` at 19px / 1.6 line-height — slab serif with humanist qualities; readable at length
+- [ ] AO403 New Yorker caption: `font-family: "Neutraface 2 Text", sans-serif` at 12px / 1.5 — caps-heavy sans-serif caption; strong contrast against slab body
+- [ ] AO404 New Yorker byline: `font-family: caps-variant sans / font-size: 11px / letter-spacing: 0.1em / text-transform: uppercase` — authoritative small caps treatment
+- [ ] AO405 New Yorker department header: `font-size: 11px / letter-spacing: 0.15em / text-transform: uppercase / color: #d40000` — section label in red; the only color accent in the design
+- [ ] AO406 New Yorker pull quote: centered, larger, italic, generous margins — classic magazine pull quote; `font-size: 24px / font-style: italic / text-align: center / margin: 3em auto / max-width: 480px`
+- [ ] AO407 New Yorker cartoon caption: `font-family: monospace / font-size: 14px / text-align: center / padding-top: 8px` — captions beneath cartoons in consistent style
+- [ ] AO408 New Yorker deck (subheadline): `font-size: 16px / font-style: italic / color: #333 / margin-top: -0.5em` — sits between headline and body; introduces the piece
+
+### AO5: Color Systems
+
+- [ ] AO501 X light mode palette: `--background: #ffffff; --surface: #f7f9f9; --text-primary: #0f1419; --text-secondary: #536471; --text-tertiary: #657786; --accent: #1d9bf0; --border: #eff3f4; --danger: #f4212e; --success: #00ba7c`
+- [ ] AO502 X dark mode palette: `--background: #000000; --surface: #16181c; --surface-raised: #1d2028; --text-primary: #e7e9ea; --text-secondary: #71767b; --accent: #1d9bf0; --border: #2f3336`
+- [ ] AO503 X dim mode (intermediate dark): `--background: #15202b; --surface: #1e2732; --text-primary: #f7f9f9; --text-secondary: #8b98a5; --border: #38444d` — three distinct themes, not just light/dark toggle
+- [ ] AO504 Medium light palette: `--background: #fff; --text-primary: #292929; --text-secondary: rgba(41,41,41,0.6); --border: rgba(41,41,41,0.15); --accent: #1a8917; --link: #1a8917; --surface: #fafafa`
+- [ ] AO505 Medium member badge: `--accent-premium: #FFC017` (amber) for Member-exclusive content lock; subtle premium indicator
+- [ ] AO506 Substack base palette: `--background: #ffffff; --text: #222222; --text-secondary: #6b6b6b; --border: #dde0e4; --accent: #ff6719; --link: #ff6719; --surface: #f5f5f5` — warm orange accent throughout
+- [ ] AO507 Substack premium: `--accent-pro: #5b21b6` (purple) for paid subscriber features — Substack adopts purple = paid tier
+- [ ] AO508 New Yorker palette: `--background: #ffffff; --text: #000000; --text-secondary: #333333; --accent: #d40000; --border: #cccccc; --surface: #f5f5f5` — minimalist four-color system; red is the only chromatic note
+- [ ] AO509 Four-site contrast ratios: all four sites achieve AA minimum (4.5:1) on body text; X dark mode achieves AAA (7:1) — never drop below 4.5:1 in any app
+- [ ] AO510 Semantic color variables: define `--color-danger`, `--color-warning`, `--color-success`, `--color-info` per app; never hardcode hex in component CSS; all change via single variable update
+
+### AO6: Spacing Systems
+
+- [ ] AO601 X spacing scale: 4px base unit; multiples: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64px — 8px system with 4px half-step for tight mobile touch targets
+- [ ] AO602 X tweet card padding: `padding: 12px 16px` on mobile; `padding: 12px 16px` on desktop — consistent horizontal gutters; never 0 padding on any card
+- [ ] AO603 X avatar sizes: 40px (thread), 48px (tweet), 56px (profile card), 66px (profile header); always circular; 2px white border in dark contexts
+- [ ] AO604 Medium spacing scale: 16px base unit; multiples: 16, 24, 32, 40, 56, 80px — generous rhythm; article content uses 80px top/bottom padding
+- [ ] AO605 Medium article max-width: `max-width: 740px` for article body; `max-width: 1192px` for feed; `margin: 0 auto` centers both; 56px side padding on desktop collapses to 16px mobile
+- [ ] AO606 Medium card spacing: `gap: 24px` between cards in feed; `padding: 24px 0` per card; separator via border-bottom not gap — consistent separation
+- [ ] AO607 Substack spacing scale: 16px base; key values: `padding: 24px 16px` on mobile article; `padding: 40px 24px` desktop sidebar; `gap: 24px` between feed items
+- [ ] AO608 Substack avatar: 88×88px profile; 40×40px in feed; always circular with `border-radius: 50%`; subtle border `1px solid var(--border)`
+- [ ] AO609 New Yorker spacing: 24px base unit; very generous — article padding `64px 48px`; between sections `48px`; whitespace as editorial statement not waste
+- [ ] AO610 New Yorker article width: `max-width: 680px` for article body; 80px side margins on desktop — narrower than Medium but taller line-height compensates
+- [ ] AO611 Touch target sizing: minimum 44×44px on all interactive elements per WCAG 2.5.5; X/Medium/Substack all meet this; apply via `min-height: 44px; min-width: 44px` on all buttons and links
+- [ ] AO612 Mobile bottom nav heights: X bottom nav is 54px tall; Medium uses 56px; add bottom padding equal to nav height to main content to avoid overlap
+
+### AO7: Layout Patterns
+
+- [ ] AO701 X sidebar layout: fixed-width left sidebar (256px) + fluid feed column (600px) + optional right sidebar (350px); collapses to single column on mobile; CSS Grid: `grid-template-columns: 256px minmax(0,1fr) 350px`
+- [ ] AO702 X feed column cap: feed max-width 600px, centered; desktop whitespace intentional — narrow column forces eye focus; prevents line lengths over 70 characters
+- [ ] AO703 X sticky sidebar nav: `position: sticky; top: 0; height: 100vh; overflow-y: auto` — sidebar scrolls independently; feed scrolls separately; implement with CSS Grid
+- [ ] AO704 Medium two-column article layout: reading column left; author card + related posts right; `grid-template-columns: 1fr 340px; gap: 80px` on desktop; single column mobile
+- [ ] AO705 Medium hero image: full-width image above article (`width: 100%; max-height: 500px; object-fit: cover`) with credit caption overlay at bottom-right in small italic
+- [ ] AO706 Medium masonry feed: `columns: 2; column-gap: 32px` for curated feed on homepage; `break-inside: avoid` per card; CSS Masonry (or JS fallback)
+- [ ] AO707 Substack home layouts: list view (`flex-direction: column`), grid view (`grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))`), magazine view (featured post full-width + grid below)
+- [ ] AO708 Substack email-friendly layout: max-width 600px for all email-rendered content; single column; inline styles for email client compatibility
+- [ ] AO709 New Yorker featured article: large image (100vw) + title overlay at bottom with white text on dark scrim; `position: absolute; bottom: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7))`
+- [ ] AO710 New Yorker section grid: `grid-template-columns: repeat(4, 1fr); gap: 24px` for article listing; collapses to 2-col at 768px, 1-col at 480px
+- [ ] AO711 New Yorker sticky header: full-width header shrinks on scroll — `transition: height 0.3s`; large on load (80px), compact (48px) after 100px scroll; content reflows via CSS variable
+- [ ] AO712 Horizontal scroll for tags: `overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none` — tag chips scroll horizontally on mobile without layout break
+
+### AO8: Component Patterns
+
+- [ ] AO801 X tweet card: flexbox row; 40px avatar left; right column (name row + body + engagement row); `border-bottom: 1px solid var(--border)` as separator; `padding: 12px 16px`
+- [ ] AO802 X engagement row: reply, repost, like, bookmark, share icons; `justify-content: space-between` with `max-width: 400px`; icon + count in muted color; count hides on mobile
+- [ ] AO803 X like button animation: heart icon scales to 1.2 on click then settles at 1; fill color transitions from `transparent` to `#f91880` with `transition: all 0.15s`; bubble particle burst via keyframe
+- [ ] AO804 X thread connector: vertical line between tweets in thread; `border-left: 2px solid var(--border)` from avatar bottom to next avatar; margin aligns with avatar center
+- [ ] AO805 Medium post card: thumbnail image (16:9, 100% width); title (bold serif 22px); subtitle (muted 15px); author avatar (20px) + name + date + read-time in one metadata row
+- [ ] AO806 Medium member-only card: subtle gradient overlay bottom of card with "Member-only story" badge; gold accent color; CTA to upgrade inline
+- [ ] AO807 Medium clap button: animated hand icon with particle burst on click; count increments optimistically; can clap up to 50 times; number cycles with each clap
+- [ ] AO808 Medium follow button: `border: 1px solid #1a8917; color: #1a8917; background: transparent` at rest; fills green on hover; transitions with `0.2s ease`; transforms to "Following" after click
+- [ ] AO809 Substack subscribe button: prominent CTA button; `background: var(--accent); color: white; border: none; border-radius: 9999px; padding: 12px 24px; font-weight: 600` — pill shape, strong contrast
+- [ ] AO810 Substack post card: newsletter title (small caps above); post title (bold serif 24px); excerpt (muted 16px 2-line clamp); footer with publish date + like count + comment count
+- [ ] AO811 Substack like animation: heart fills with bounce; `animation: heartbeat 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)` — springy overshoot feel
+- [ ] AO812 New Yorker article card: text-dominant; small image (square, left-aligned) + text block right in horizontal card; or image-top vertical card; minimal metadata
+- [ ] AO813 New Yorker nav: horizontal list of sections in 12px uppercase; no dropdown; sticky; `letter-spacing: 0.08em`; active section underline; hover underline transition
+- [ ] AO814 Avatar with online indicator: `position: relative` avatar container; `::after` pseudo-element as 10px green circle `position: absolute; bottom: 2px; right: 2px; border: 2px solid white`
+
+### AO9: Interaction and Motion Patterns
+
+- [ ] AO901 X hover state: `background: rgba(15,20,25,0.05)` on card hover (light); `rgba(247,249,249,0.05)` (dark); barely-there hover keeps focus on content not chrome
+- [ ] AO902 X like transition: `transition: color 0.1s ease, transform 0.1s ease`; `transform: scale(1.2)` on active; quick, responsive — 100ms not 300ms
+- [ ] AO903 X scroll behavior: `scroll-behavior: smooth` on anchor links; feed scrolls independently of sidebar; restore scroll position on back navigation (Turbo Drive handles this)
+- [ ] AO904 Medium article fade-in: `animation: fadeIn 0.5s ease-out` on article body; gives impression of content loading gracefully even if it was instant
+- [ ] AO905 Medium image hover zoom: `img { transition: transform 0.3s ease; } card:hover img { transform: scale(1.02) }` — subtle content preview signal
+- [ ] AO906 Medium progress bar: thin `4px` line at top of viewport tracking reading progress; `background: var(--accent); width: 0; transition: width 0.1s linear` via JS scroll listener
+- [ ] AO907 Substack subscribe form animation: email input expands from `width: 200px` to `width: 320px` on focus; submit button slides in from right; `transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)`
+- [ ] AO908 Substack link hover: underline draw animation; `background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px` → `background-size: 100% 1px` on hover; `transition: background-size 0.2s`
+- [ ] AO909 New Yorker header shrink: on scroll past 100px, header height animates from 80px to 48px; nav font-size 11px throughout; logo scales proportionally via `transform: scale(0.8)`
+- [ ] AO910 New Yorker article image reveal: images fade in as they scroll into view via IntersectionObserver; `opacity: 0 → 1; transform: translateY(8px) → translateY(0)` over `0.6s ease-out`
+- [ ] AO911 Focus visible styles: all four sites use `outline: 2px solid var(--accent)` on keyboard focus (`:focus-visible`); never remove focus outlines; customize but always present
+- [ ] AO912 Skeleton loaders: X uses grey pulsing rectangles matching tweet card shape; Medium uses lighter rectangles for card placeholders; implement via `background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200%%; animation: shimmer 1.5s infinite`
+
+### AO10: Mobile-First Patterns
+
+- [ ] AO1001 X mobile bottom nav: 5 icons (Home, Search, Spaces, Notifications, Messages); fixed bottom; `height: 54px; border-top: 1px solid var(--border); background: var(--background); padding-bottom: env(safe-area-inset-bottom)`
+- [ ] AO1002 X mobile compose FAB: floating `+` button; `position: fixed; bottom: 70px; right: 16px; width: 54px; height: 54px; border-radius: 50%; background: var(--accent)` — always accessible compose
+- [ ] AO1003 X mobile swipe navigation: swipe right from left edge = open sidebar drawer; `transform: translateX(-100%)` drawer; `transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)`
+- [ ] AO1004 Medium mobile header: collapses to logo + hamburger menu; `transition: transform 0.3s` hide on scroll down, show on scroll up — smart header saves vertical space
+- [ ] AO1005 Medium mobile article: `padding: 0 20px; font-size: 18px; line-height: 1.6` — same font size as desktop, narrower container; comfortable on 375px viewport
+- [ ] AO1006 Substack mobile nav: horizontal scrollable tab row; `overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch` — each section tab 64px minimum touch target
+- [ ] AO1007 New Yorker mobile adaptation: single column at 480px; hero image goes full-width; section labels become dropdown; large touch targets on nav items
+- [ ] AO1008 Mobile image optimization: `<picture>` element with WebP source + JPEG fallback; `sizes="(max-width: 768px) 100vw, 600px"` srcset; `loading="lazy"` on all below-fold images
+- [ ] AO1009 Mobile font scaling: `font-size: clamp(15px, 4vw, 19px)` for body text — scales smoothly between viewport sizes without media query breakpoints
+- [ ] AO1010 Mobile tap states: `-webkit-tap-highlight-color: transparent` globally; custom `:active` state with `background: rgba(0,0,0,0.05)` instead of browser default blue tap flash
+
+### AO11: Card and Feed Components
+
+- [ ] AO1101 Card shadow system: X uses no shadows; Medium uses `box-shadow: 0 2px 8px rgba(0,0,0,0.06)` on hover only; Substack uses subtle border; New Yorker uses no shadow — minimal depth language
+- [ ] AO1102 Card border radius: X cards no border-radius (edge-to-edge on mobile); Medium 4px; Substack 8px; New Yorker 0 — the sharper the corner, the more authoritative/editorial
+- [ ] AO1103 Image aspect ratio: X timeline images: 16:9 or 4:3 cropped; Medium hero: 1.6:1; Substack: any (full bleed); New Yorker: 3:4 portrait or 16:9 landscape — enforce via `aspect-ratio` CSS property
+- [ ] AO1104 Two-line title clamp: `display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden` — standard in all four sites for feed card titles
+- [ ] AO1105 Three-line body clamp: `display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden` — excerpt in cards; 3 lines sufficient for scent
+- [ ] AO1106 Author row: avatar (circular, 20-32px) + `display: flex; align-items: center; gap: 8px` + name + metadata — standard horizontal author attribution across all sites
+- [ ] AO1107 Horizontal tag chips: `display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none` — tags scroll horizontally on card; max 3 visible before scroll
+- [ ] AO1108 Engagement metrics row: icon + number pairs; `color: var(--text-secondary)`; hover to `var(--accent)`; `font-size: 13px; gap: 4px` between icon and number; `gap: 16px` between pairs
+
+### AO12: Dark Mode Patterns
+
+- [ ] AO1201 CSS variable dark mode: all colors as CSS variables; `@media (prefers-color-scheme: dark)` overrides on `:root`; one source of truth; no JS needed for system preference
+- [ ] AO1202 Manual dark mode toggle: class-based `[data-theme="dark"]` on `<html>`; overrides `prefers-color-scheme`; persist preference in localStorage; sync across tabs via StorageEvent
+- [ ] AO1203 X true black dark: `--background: #000000` not `#1a1a1a` in dark mode — OLED screen battery optimization; pixels off = no power drain; user preference for OLED-black
+- [ ] AO1204 Transparent images in dark: images with transparent backgrounds (icons, logos) need `filter: invert(1) hue-rotate(180deg)` or separate dark-mode source; plan at design time
+- [ ] AO1205 Dark mode shadow adjustment: light-mode shadows use opacity-black; dark-mode shadows use opacity-white or glow; `box-shadow: 0 2px 8px rgba(255,255,255,0.08)` in dark
+- [ ] AO1206 Color-scheme meta: `<meta name="color-scheme" content="light dark">` tells browser to render scrollbars, inputs, and other native UI in appropriate mode; add to all layouts
+
+
+## AP — Fine-Tuning into Unique Superior Designs (MASTER rules.yml + aesthetic principles)
+
+### AP1: MASTER Aesthetic Rules Applied to CSS
+
+- [ ] AP101 NO_ASCII_DECORATION in CSS comments: purge all `/* ====== */` and `/* ------ */` dividers from CSS/SCSS files; content separates content — blank line suffices
+- [ ] AP102 NO_COLUMN_ALIGN in CSS declarations: one space after property colon, ragged values — never pad `background:    white` to align with `color:         black`
+- [ ] AP103 NO_CONSECUTIVE_BLANK_LINES in stylesheets: maximum one blank line between rule blocks; two blank lines between major sections (layout, components, utilities)
+- [ ] AP104 IMPORTANCE_ORDER in CSS architecture: layout rules first (grid, flexbox, positioning), typography next, colors/backgrounds, spacing, interactivity (hover/focus), animations last
+- [ ] AP105 STRUNK_ACTIVE in CSS naming: class names use concrete nouns and verbs — `.post-card` not `.post-display-wrapper`; `.btn-vote` not `.interactive-voting-element`
+- [ ] AP106 FLAT_UI enforcement: zero `box-shadow` on flat surfaces; depth only when elements physically overlap (dropdown menus over content, modals over page); no fake elevation on cards
+- [ ] AP107 CINEMA_PALETTE enforcement: never raw primaries (`#ff0000`, `#0000ff`, `#00ff00`) in any app; all accent colors via shadow/midtone/highlight triplets; specify all three variants per hue
+- [ ] AP108 SIMPLEST_WORKS for CSS: if `margin-top: 1em` achieves the spacing, don't add a wrapper div with `padding-top: 1em` on the inner and `margin-bottom: -1em` on the outer; minimal CSS wins
+- [ ] AP109 Single source of truth for design tokens: all colors, sizes, spacing as CSS custom properties on `:root`; no hex codes in component CSS — only `var(--color-accent)`, never `#1a8917`
+- [ ] AP110 Property order discipline: within every CSS rule: `display/position` first, then `dimensions`, then `spacing`, then `typography`, then `colors`, then `transitions` — consistent ordering enables scanning
+
+### AP2: Color System — Cinema Palette Per App
+
+- [ ] AP201 brgen palette (social city): shadow `#0a0e1a` (deep navy-black), midtone `#2563eb` (electric blue), highlight `#93c5fd` (sky); complementary warm accent `#f59e0b` (amber) for CTAs; inspired by city-at-night
+- [ ] AP202 amber palette (wardrobe): shadow `#1c1917` (warm almost-black), midtone `#d4a843` (warm gold), highlight `#fef3c7` (cream); complementary cool `#6366f1` (indigo) for AI/tech features; fashion editorial warmth
+- [ ] AP203 bsdports palette (technical): shadow `#0d1117` (GitHub dark), midtone `#58a6ff` (code blue), highlight `#e6edf3` (light grey); monochrome red `#ff4444` for security advisories; developer tool aesthetic
+- [ ] AP204 baibl palette (scripture): shadow `#1a1209` (parchment dark), midtone `#92400e` (sepia brown), highlight `#fef9ef` (cream vellum); complementary `#065f46` (deep green) for wisdom/life references; ancient manuscript
+- [ ] AP205 blognet palette (publishing): shadow `#111827` (editorial dark), midtone `#374151` (ink grey), highlight `#f9fafb` (paper white); accent `#dc2626` (editorial red) for section labels; broadsheet newspaper
+- [ ] AP206 hjerterom palette (community warmth): shadow `#1f2937` (gentle dark), midtone `#10b981` (warm green for life/giving), highlight `#ecfdf5` (mint cream); accent `#f97316` (harvest orange) for urgency/expiry alerts
+- [ ] AP207 Per-app CSS variable declarations: each app's `application.css` opens with `:root { --color-shadow: ...; --color-midtone: ...; --color-highlight: ...; --color-accent: ...; --color-danger: #dc2626; --color-warning: #d97706; --color-success: #059669; }`
+- [ ] AP208 Tint scale generation: from midtone, derive 5 tints (10/20/30/40/50% white blend) and 5 shades (10/20/30/40/50% black blend) — 11-step scale per hue; name as `--color-midtone-{100..900}`
+- [ ] AP209 Color usage rules: shadow = backgrounds and large surfaces only; midtone = interactive elements, icons, links; highlight = text on dark surfaces, inverted UI; accent = maximum 10% of any view's color budget
+- [ ] AP210 Dark mode palette inversion strategy: in dark mode, shadow becomes background (inverted use — now the surface), highlight becomes text; midtone accent remains; never auto-invert all colors, invert semantically
+
+### AP3: Typography System — Per-App Voice
+
+- [ ] AP301 brgen type: `font-family: "Inter", system-ui, sans-serif` at 15px/1.4 — dense, efficient, social; same x-height as Chirp without licensing; pairs with bold 700 for names
+- [ ] AP302 amber type: `font-family: "DM Sans", system-ui, sans-serif` at 16px/1.5 — rounded humanist; fashion-editorial softness; pairs with `font-weight: 300` for style notes
+- [ ] AP303 bsdports type: `font-family: "JetBrains Mono", "Fira Code", monospace` for code/port names; `"Inter"` for prose descriptions; terminal-native aesthetic
+- [ ] AP304 baibl type: `font-family: "Crimson Pro", Georgia, serif` at 19px/1.7 — classic humanist serif; optimized for extended reading; pairs with small-caps for verse references
+- [ ] AP305 blognet type: `font-family: "Source Serif 4", Georgia, serif` at 20px/1.65 for articles; `"Source Sans 3"` for UI chrome — the Medium model done right; warmly editorial
+- [ ] AP306 hjerterom type: `font-family: "Nunito", system-ui, sans-serif` at 16px/1.6 — friendly, rounded, approachable; community-oriented warmth; accessible to non-technical users
+- [ ] AP307 Type scale: all apps use a 4-level modular scale — body, small (0.875em), large (1.125em), heading-sm (1.25em), heading-md (1.5em), heading-lg (2em), display (3em); never arbitrary font sizes
+- [ ] AP308 Variable fonts: load Inter, DM Sans, Source Serif 4 as variable fonts (one file, all weights/widths); `font-variation-settings` for precise weight control; `wght` axis only; no optical size axis needed
+- [ ] AP309 Font loading strategy: `<link rel="preload" as="font" crossorigin>` for the single woff2 variable font file; `font-display: swap`; no FOIT; accept FOUT as tradeoff for performance
+- [ ] AP310 System font fallback hierarchy: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif` as second fallback after custom font — covers all major OS in order
+- [ ] AP311 Minimum font size: 13px absolute minimum for any text in any app; 14px for secondary; 15px for primary body; 16px mobile body (prevents iOS zoom on input focus)
+- [ ] AP312 Line length control: `max-width: 68ch` on all prose containers (article body, post body, comment text) — 60-70 characters per line is optimal for reading; implement via `ch` unit not px
+- [ ] AP313 Heading rhythm: `margin-top: 1.5em; margin-bottom: 0.5em` on all headings — space above heading signals new section; space below attaches heading to its content
+- [ ] AP314 Paragraph spacing: `margin-bottom: 1.25em` between paragraphs; no `margin-top` on first paragraph after heading — heading's bottom margin provides the gap
+- [ ] AP315 Responsive typography: `font-size: clamp(15px, 2.5vw, 20px)` for body; scales continuously without breakpoints; `clamp(28px, 5vw, 48px)` for display headings
+
+### AP4: Void and Whitespace — Architectural Science
+
+- [ ] AP401 Content-to-chrome ratio: in any view, content (text, images) must occupy ≥60% of pixels; navigation, sidebars, headers ≤40% — if chrome exceeds 40%, ruthlessly cut
+- [ ] AP402 Margin-not-padding for section separation: use `margin` between sections (collapsible); `padding` inside sections (for click area and readability); never double-space with both
+- [ ] AP403 Void budget per view: assign explicit whitespace budget — mobile views: 16px horizontal gutters, 24px between sections; desktop: 24px horizontal gutters, 48px between sections; no exceptions
+- [ ] AP404 No decorative dividers: `<hr>`, horizontal rules, `border-bottom` as section dividers — never; sufficient margin between sections communicates separation; if separation isn't clear, the sections may not belong together
+- [ ] AP405 Eliminate dead zones: any area of the UI with >200px of empty space that isn't intentional void is a layout bug — fix with better content flow, not filler elements or background patterns
+- [ ] AP406 Negative space as signal: whitespace around an element signals its importance; the call-to-action button gets more surrounding void than body text; implement via asymmetric margin budgets
+- [ ] AP407 Grid gap over margin: prefer `gap` in CSS Grid/Flex over individual margins; `gap: 24px` on grid container is cleaner than `margin-bottom: 24px` on each child; easier to maintain
+- [ ] AP408 No full-width backgrounds on text sections: text reads better on white/near-white regardless of section background; if background color is needed for section identity, use subtle (5-10% lightness delta from base)
+- [ ] AP409 Screen real estate audit: run a quarterly review of every layout; ask "what element is competing with the primary content?"; remove or subordinate any element that loses this evaluation
+- [ ] AP410 Breathing room on headlines: headline `padding-top` equals approximately 1.5× body line-height; gives the title visual weight without needing a heavier font
+
+### AP5: Motion and Animation System
+
+- [ ] AP501 Easing vocabulary: define only 4 named curves: `--ease-standard: cubic-bezier(0.4, 0, 0.2, 1)` (enter+exit), `--ease-decelerate: cubic-bezier(0, 0, 0.2, 1)` (elements entering), `--ease-accelerate: cubic-bezier(0.4, 0, 1, 1)` (elements leaving), `--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1)` (playful micro-interactions)
+- [ ] AP502 Duration vocabulary: `--duration-instant: 80ms` (state toggles), `--duration-fast: 150ms` (hover effects), `--duration-standard: 250ms` (page transitions, dropdowns), `--duration-slow: 400ms` (hero animations); never arbitrary values
+- [ ] AP503 Reduced motion: `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }` — global; all animations must respect this
+- [ ] AP504 Enter animation pattern: elements entering the viewport should `opacity: 0 → 1` + `transform: translateY(8px) → translateY(0)` over `--duration-standard` with `--ease-decelerate`; subtle, not dramatic
+- [ ] AP505 Exit animation pattern: elements leaving `opacity: 1 → 0` + `transform: scale(0.97)` over `--duration-fast` with `--ease-accelerate`; faster than enter — exits feel snappier
+- [ ] AP506 No loops at rest: never animate elements that are sitting idle; pulse/spin only on explicitly loading states; continuous animation is cognitive noise
+- [ ] AP507 Physics-based spring for interactive elements: vote button, like button, follow button use `--ease-spring` with `--duration-fast`; overshoot communicates responsiveness
+- [ ] AP508 Card hover lift: `transform: translateY(-2px)` + `box-shadow: 0 4px 16px rgba(0,0,0,0.1)` on card hover; 2px maximum — any more is theatrical; `transition: var(--duration-fast) var(--ease-standard)`
+- [ ] AP509 Skeleton loader shimmer: `@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }` with 1.4s linear infinite; direction = reading direction
+- [ ] AP510 Page transition: Turbo Drive handles navigation; add `@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }` on `body.turbo-loading` → remove on `turbo:load`; sub-200ms fade
+- [ ] AP511 Stagger for lists: when a list loads, stagger children's enter animations by 40ms per item; `animation-delay: calc(var(--index) * 40ms)`; maximum 5 items staggered then simultaneous
+- [ ] AP512 Match media for animation performance: check `window.matchMedia('(prefers-reduced-motion: no-preference)')` before registering scroll-based animations; degrade gracefully
+
+### AP6: Component Design — Per-App Unique Identity
+
+- [ ] AP601 brgen post card: dark edge-to-edge card on mobile; no border-radius; `border-bottom: 1px solid var(--color-border)`; avatar 40px circular; vote count left, timestamp right; inspired by X but with electric blue accents
+- [ ] AP602 brgen vote button: pill-shaped, not icon-only; `▲ 42` format; upvoted state fills with `--color-midtone`; downvoted fills with `--color-danger`; springy scale on click
+- [ ] AP603 brgen dating swipe card: `border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.2)` — only context where elevation is appropriate (card physically above surface in affordance); photo full-bleed, info overlay at bottom
+- [ ] AP604 brgen marketplace listing: image 1:1 aspect-ratio; price prominent `font-size: 1.25em; font-weight: 700; color: var(--color-accent)`; seller name small; condition badge top-left `border-radius: 4px; padding: 2px 6px`
+- [ ] AP605 amber item card: portrait 3:4 image; color swatch dots below (5 dominant colors); category tag top-left; CPW badge bottom-right `font-size: 12px; background: rgba(0,0,0,0.6); color: white; border-radius: 4px; padding: 2px 6px`
+- [ ] AP606 amber outfit builder: grid of item thumbnails; drag-to-reorder; selected items get `outline: 2px solid var(--color-accent)`; outfit name editable inline via `contenteditable`
+- [ ] AP607 bsdports port card: monospace port name `font-size: 0.9em; font-family: monospace`; one-line description; metadata row (version, size, maintainer) in muted 12px; security badge red if advisory exists
+- [ ] AP608 baibl verse display: verse reference in small-caps `font-variant: small-caps; font-size: 0.8em; color: var(--color-midtone)` above the verse; verse body at reading size; annotation count as subtle superscript
+- [ ] AP609 blognet article card: full-width hero image 16:9; author byline with avatar; reading time; title at 24px serif bold; 3-line excerpt; tags in lowercase pill chips; no border, generous margin
+- [ ] AP610 hjerterom donation card: large icon (128px) for category (food/clothing/toy); expiry date prominent if food; distance badge top-right; "Claim" button fills card bottom; warm green CTA
+
+### AP7: Navigation Design
+
+- [ ] AP701 brgen desktop sidebar: fixed-width 240px; icon + label navigation links; active state = filled icon + bold label + `background: var(--color-midtone-100)` bar; new post FAB at bottom
+- [ ] AP702 brgen mobile bottom nav: 5 items max; icon only on mobile; active = filled icon + `color: var(--color-midtone)`; `border-top: 1px solid var(--color-border)`; safe-area padding
+- [ ] AP703 amber top nav: minimal — logo left, search icon + profile avatar right; no hamburger menu; categories as horizontal scrollable chips below nav; fashion-minimalist approach
+- [ ] AP704 bsdports nav: top horizontal nav; logo + "OpenBSD Ports" wordmark left; `Search` field center; `Sign in` + `Contribute` right; no mobile hamburger — responsive via breakpoint
+- [ ] AP705 baibl nav: book/chapter/verse breadcrumb always visible; Bible navigator slide-in from left; `position: fixed; left: 0; top: 0; height: 100vh; width: 280px; transform: translateX(-100%)` → open state
+- [ ] AP706 blognet nav: editorial top bar — publication name left (masthead typography); `Subscribe` pill CTA right; section navigation below in smaller caps; New Yorker pattern
+- [ ] AP707 hjerterom nav: large friendly logo; "Donate", "Request", "Volunteer", "About" as equal-weight top nav items; warm green active state; simple, non-intimidating for non-technical users
+- [ ] AP708 Breadcrumb pattern: `<nav aria-label="Breadcrumb"><ol>` with `aria-current="page"` on last item; `>` separator via CSS `::before` on `li + li`; never JS-generated, always server-rendered
+- [ ] AP709 Skip navigation: `<a href="#main" class="skip-nav">Skip to main content</a>` as first element in `<body>`; `position: absolute; transform: translateY(-100%)` at rest; `translateY(0)` on `:focus` — keyboard accessibility
+- [ ] AP710 Active link state: use Rails `current_page?` helper to add `aria-current="page"` and a CSS class; `font-weight: 600; color: var(--color-midtone)` for active; `color: var(--text-secondary)` for inactive
+
+### AP8: Form Design
+
+- [ ] AP801 Input field baseline: `border: 1px solid var(--color-border); border-radius: 6px; padding: 10px 14px; font-size: 1rem; width: 100%; background: var(--color-surface)` — consistent across all apps
+- [ ] AP802 Focus state: `outline: none; border-color: var(--color-midtone); box-shadow: 0 0 0 3px var(--color-midtone-200)` — ring-style focus, not outline; visible and branded
+- [ ] AP803 Error state: `border-color: var(--color-danger); box-shadow: 0 0 0 3px rgba(220,38,38,0.15)` + error message below in `--color-danger` 13px; icon optional (!)
+- [ ] AP804 Disabled state: `opacity: 0.5; cursor: not-allowed` — never remove from DOM, always disable in-place; assistive technology needs to encounter it
+- [ ] AP805 Label positioning: label always above input; `display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text-primary)` — never placeholder-as-label
+- [ ] AP806 Placeholder style: `color: var(--text-tertiary); opacity: 1` — browser default opacity varies; set explicitly; placeholder is a hint not a label; never required information
+- [ ] AP807 Submit button: full-width on mobile; auto-width on desktop; `background: var(--color-midtone); color: var(--color-highlight); border: none; border-radius: 6px; padding: 12px 24px; font-weight: 600` — unambiguous primary action
+- [ ] AP808 Inline validation: validate on `blur` not `input` — don't punish before user finishes typing; show success check on valid field; show error on invalid field after touch
+- [ ] AP809 File upload: custom styled `<label>` over hidden `<input type="file">`; drag-and-drop zone with `dragover` → `border-color: var(--color-midtone); background: var(--color-midtone-50)` feedback
+- [ ] AP810 Select element: custom-styled via `appearance: none` + background SVG chevron; `background-image: url("data:image/svg+xml,...")` — native functionality, custom appearance
+
+### AP9: Accessibility as Design Constraint
+
+- [ ] AP901 Color contrast policy: 4.5:1 minimum for body text (AA); 7:1 for small text <18px (AAA target); 3:1 for large text ≥24px bold (AA); test with `axe` in CI
+- [ ] AP902 Focus visible always: `:focus-visible` ring on every interactive element; `outline: 2px solid var(--color-midtone); outline-offset: 2px` — never `outline: none` without replacement
+- [ ] AP903 ARIA roles: semantic HTML first (`<button>` not `<div onclick>`); add ARIA only when semantics don't exist (`role="feed"` for timeline, `aria-live="polite"` for notifications)
+- [ ] AP904 Image alt text: every `<img>` has `alt`; decorative images use `alt=""` (empty, not missing); Active Storage variants auto-generate alt from filename — override with meaningful text in `image_tag`
+- [ ] AP905 Motion-sensitive design: every animation has a `prefers-reduced-motion` fallback; test by enabling "reduce motion" in OS accessibility settings
+- [ ] AP906 Touch target padding: minimum 44×44px tap target even if visual element is smaller; achieve via `padding` or pseudo-element extension; critical for icon-only buttons
+- [ ] AP907 Landmark regions: every page has exactly one `<main>`, one `<header>`, appropriate `<nav>`, `<aside>`, `<footer>`; assistive technology uses these for navigation
+- [ ] AP908 Heading hierarchy: never skip heading levels (`h1 → h3` without `h2`); document outline must be logical; `h1` = page title, appears once; `h2` = major sections
+- [ ] AP909 Form autocomplete: `autocomplete="email"` on email fields, `autocomplete="current-password"` on password fields, `autocomplete="given-name"` on name fields — browser autofill, password manager compatibility
+- [ ] AP910 Language declaration: `<html lang="nb">` (Norwegian Bokmål) on all pages; `lang` attribute on any inline text in other language — screen readers use this for pronunciation
+
+### AP10: Design Token System Implementation
+
+- [ ] AP1001 Token hierarchy: Global tokens (raw values: `--blue-500: #3b82f6`) → Semantic tokens (meaning: `--color-link: var(--blue-500)`) → Component tokens (scope: `--button-bg: var(--color-link)`) — three layers, never skip
+- [ ] AP1002 Spacing tokens: `--space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px; --space-16: 64px` — match Tailwind scale for cross-reference
+- [ ] AP1003 Border radius tokens: `--radius-sm: 4px; --radius-md: 6px; --radius-lg: 10px; --radius-xl: 16px; --radius-full: 9999px` — never arbitrary values; assign per component in component CSS
+- [ ] AP1004 Shadow tokens: in dark mode apps only: `--shadow-sm: 0 1px 3px rgba(0,0,0,0.12); --shadow-md: 0 4px 12px rgba(0,0,0,0.15); --shadow-lg: 0 8px 32px rgba(0,0,0,0.2)` — used only for overlapping elements
+- [ ] AP1005 Z-index tokens: `--z-base: 0; --z-raised: 10; --z-dropdown: 100; --z-sticky: 200; --z-overlay: 300; --z-modal: 400; --z-toast: 500` — never arbitrary z-index values; prevents stacking context chaos
+- [ ] AP1006 Transition tokens: `--transition-fast: var(--duration-fast) var(--ease-standard); --transition-standard: var(--duration-standard) var(--ease-standard)` — compose from duration + easing tokens; use in `transition:` shorthand
+- [ ] AP1007 Token documentation: `tokens.css` file per app listing every token with comment — the ground truth for design-to-dev handoff; design system without docs is a rumor
+- [ ] AP1008 Token inheritance between apps: shared base tokens in a `_shared_tokens.css` partial; app-specific overrides in `application.css`; never copy-paste tokens between apps — import shared
+
+### AP11: brgen-Specific Design Refinement
+
+- [ ] AP1101 Feed density toggle: compact (X-style, 80px cards), comfortable (default, 120px), spacious (Medium-style, 200px); user preference saved to `current_user.feed_density`; CSS class on `<body>`
+- [ ] AP1102 Subdomain theming: each vertical (dating/marketplace/tv/playlist/takeaway/maps) overrides `--color-midtone` via `<body data-vertical="dating">` CSS selector; dating = `#ec4899`, marketplace = `#f59e0b`, tv = `#7c3aed`
+- [ ] AP1103 City header: large city name header above feed with ambient weather color temperature — warm sunset hue on clear evenings, cool grey on rainy days; live weather API injection
+- [ ] AP1104 Night mode auto: detect `prefers-color-scheme: dark` AND time (22:00-07:00 local) → auto-enable dim mode; respect user's manual override
+- [ ] AP1105 Conversation thread indentation: reply indentation via `padding-left: calc(40px + var(--space-3))` — avatar width + gap; thread connector line via `::before` pseudo on li
+- [ ] AP1106 Dating card stack visual: 3 cards visible; card behind at `transform: scale(0.94) translateY(8px)`; card behind that at `scale(0.88) translateY(16px)`; parallax depth illusion with pure CSS
+- [ ] AP1107 Map overlay design: map takes full viewport; POI pins use app accent color; info card slides up from bottom on pin click; `border-radius: 16px 16px 0 0; background: var(--color-background)`
+- [ ] AP1108 Marketplace grid: 2-column on mobile, 3 on tablet, 4 on desktop; `grid-template-columns: repeat(auto-fill, minmax(180px, 1fr))`; cards edge-to-edge with 1px gap between
+- [ ] AP1109 TV livestream viewer: dark background always (`--background: #000`); player full-width; chat side panel slides in from right; chat message bubbles `border-radius: 16px; max-width: 240px`
+- [ ] AP1110 Playlist now-playing: persistent bottom player bar; `position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: var(--color-surface); border-top: 1px solid var(--color-border); backdrop-filter: blur(12px)`
+
+### AP12: Cross-App Typography Refinement
+
+- [ ] AP1201 Optical size correction: at display sizes (>40px), reduce font-weight by one step — 700 at body size becomes 600 at display to prevent heaviness; variable font `font-weight` axis enables this precisely
+- [ ] AP1202 Hyphenation: `hyphens: auto; overflow-wrap: break-word` on all prose containers (baibl, blognet, hjerterom descriptions) — prevents long Norwegian compound words from breaking layout
+- [ ] AP1203 Tabular numbers: `font-variant-numeric: tabular-nums` on all price displays, counts, statistics — numbers don't shift width as they change, preventing layout jump
+- [ ] AP1204 Ordinal formatting: `font-variant-numeric: ordinal` for Norwegian dates (1ste, 2nde); `font-variant-numeric: slashed-zero` in bsdports code contexts — prevent `0` / `O` confusion
+- [ ] AP1205 Ligatures: `font-variant-ligatures: common-ligatures` on long-form text (blognet, baibl) — `fi`, `fl`, `ffi` ligatures improve paragraph texture; disable in UI chrome
+- [ ] AP1206 Small caps for labels: `font-variant-caps: all-small-caps; letter-spacing: 0.06em` for section labels, category tags, status indicators — authoritative yet compact; implement in blognet and baibl
+- [ ] AP1207 Prose first-line indent alternative: `text-indent: 1.5em` on paragraphs after first (`.prose p + p { text-indent: 1.5em; margin-top: 0 }`) as alternative to paragraph spacing — denser, more typographically classical
+- [ ] AP1208 Quote mark styling: `open-quote: "«"; close-quote: "»"` for Norwegian text; `open-quote: "\u201C"; close-quote: "\u201D"` for English; CSS `content: open-quote` on `blockquote::before`
+- [ ] AP1209 Underline refinement: `text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--color-midtone-400)` — thin, offset underline; not browser default thick underline
+- [ ] AP1210 Gradient text for headings: app-specific gradient on hero headings — brgen: `background: linear-gradient(135deg, var(--color-midtone), var(--color-highlight)); -webkit-background-clip: text; -webkit-text-fill-color: transparent` — sparingly, only hero contexts
+
+### AP13: Mobile-Specific Refinements
+
+- [ ] AP1301 iOS safe area: `padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom))` on bottom nav; `padding-top: env(safe-area-inset-top)` on top header — notch and home indicator clearance
+- [ ] AP1302 Overscroll behavior: `overscroll-behavior-y: contain` on scrollable panels (chat, feed columns) — prevents pull-to-refresh on Android from triggering during scrollable area interaction
+- [ ] AP1303 Tap highlight removal: `-webkit-tap-highlight-color: rgba(0,0,0,0)` globally; custom active states communicate tap instead; eliminates browser blue flash
+- [ ] AP1304 Input zoom prevention: all input `font-size` ≥ 16px on mobile; iOS zooms viewport if `font-size < 16px` on focused input; verify in device emulation
+- [ ] AP1305 Smooth scrolling: `scroll-behavior: smooth` on `html` element; override with `scroll-behavior: auto` inside `@media (prefers-reduced-motion: reduce)` — never apply universally without reduced-motion safeguard
+- [ ] AP1306 Momentum scrolling: `-webkit-overflow-scrolling: touch` on all `overflow-y: auto` containers; ensures iOS native momentum scroll behavior in web contexts
+- [ ] AP1307 Pinch-zoom: never `user-scalable=no` in viewport meta — mandatory for accessibility; design layouts that scale gracefully with pinch-zoom
+- [ ] AP1308 Portrait keyboard: when keyboard appears on mobile, `100dvh` accounts for the keyboard; use `dvh` (dynamic viewport height) units instead of `vh` for full-screen mobile layouts
+- [ ] AP1309 Bottom navigation thumb zone: all critical actions within 70px of bottom edge on mobile — thumb reaches there without repositioning grip; place primary CTA in this zone
+- [ ] AP1310 Passive scroll listeners: `addEventListener("scroll", handler, { passive: true })` on all scroll listeners — prevents jank by telling browser handler won't call `preventDefault()`
+
+### AP14: Icon and Image Design
+
+- [ ] AP1401 Icon system: Heroicons (MIT) via importmap for all apps; `<svg class="icon icon-sm">` at 16px, `icon-md` at 20px, `icon-lg` at 24px; never icon fonts
+- [ ] AP1402 Icon stroke weight: 1.5px stroke on all icons for normal contexts; 2px for emphasis; never 1px (too thin on low-DPI) or 2.5px+ (too heavy in body text)
+- [ ] AP1403 Icon meaning consistency: same action = same icon across all apps; "like" = heart; "share" = box-with-arrow; "comment" = speech bubble; "delete" = trash — never deviate per-app
+- [ ] AP1404 Image border radius: 4px on rectangular images in cards; 50% on avatars; 0 on full-bleed hero images; `--radius-md` token ensures consistency
+- [ ] AP1405 Aspect ratio enforcement: `aspect-ratio: 16/9` on all media images; `aspect-ratio: 1` on avatars; `aspect-ratio: 3/4` on amber item photos — never let images reflow on load
+- [ ] AP1406 Image placeholder color: dominant color placeholder from blur hash before image loads; amber = warm gold placeholder; brgen = cool blue-grey; not generic grey
+- [ ] AP1407 Retina images: all Active Storage variants generate 2× size; served via `srcset="image.webp 1x, image@2x.webp 2x"` — sharp on retina without serving to non-retina
+- [ ] AP1408 SVG illustrations: each app has 3-5 SVG illustrations for empty states, error pages, onboarding; match app color palette; consistent stroke weight with icon system; never stock illustrations
+
+### AP15: Performance as Design Quality
+
+- [ ] AP1501 Lighthouse 95+ target: every app scores ≥95 Performance, ≥95 Accessibility, ≥95 Best Practices, ≥95 SEO in Lighthouse audit; these are design quality metrics not just dev metrics
+- [ ] AP1502 CLS ≤ 0.1: Cumulative Layout Shift; every image has `width` + `height` attributes; fonts use `font-display: swap`; ads/embeds have reserved space; skeleton loaders match content dimensions
+- [ ] AP1503 LCP ≤ 2.5s: Largest Contentful Paint; hero image is `loading="eager"` + `fetchpriority="high"`; preloaded in `<head>`; served as WebP; never LCP element inside lazy-loaded frame
+- [ ] AP1504 INP ≤ 200ms: Interaction to Next Paint; Stimulus handlers do zero synchronous DOM measurement; debounce search inputs; split long tasks with `setTimeout(fn, 0)` or `queueMicrotask`
+- [ ] AP1505 No layout thrash: read all DOM geometry before writing; never alternate `element.getBoundingClientRect()` with `element.style.height = ...` in loops; batch reads then batch writes
+- [ ] AP1506 Bundle size audit: importmap manifest shows exact version + size of each dependency; total JS on first load ≤ 150KB gzipped; audit quarterly; remove unused imports
+- [ ] AP1507 CSS size audit: application.css ≤ 30KB gzipped per app; if larger, split into critical (inlined) and deferred (linked); PurgeCSS pass to remove unused selectors in production
