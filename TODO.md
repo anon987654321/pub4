@@ -1510,3 +1510,71 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] AG208 Include MASTER's OpenBSD rules: relayd not nginx, doas not sudo, pledge/unveil for new daemons, base tools not pkg_add'd
 - [ ] AG209 Add "verification protocol" to each file: before claiming a task is done, re-read the file, run the scan, confirm zero findings — never accept in-memory state as ground truth
 - [ ] AG210 Add model-specific anti-patterns for each LLM: known failure modes unique to that model family (GPT over-explains, Gemini over-formats, DeepSeek over-reasons out loud)
+
+## AH — MASTER Self-Improvement Proposals Meta-List (item 23)
+
+### AH1: Scan Engine Self-Improvement
+
+- [ ] AH101 Adaptive rule weights: after N sessions, rules with >80% false-positive rate auto-downgrade severity; rules never triggered in 100 scans get flagged for removal
+- [ ] AH102 Rule effectiveness dashboard: runtime/rule_stats.yml tracks {rule_id, fires, accepted, rejected, false_positive_rate} — visible via /status
+- [ ] AH103 Auto-generate rule from pattern: if the same manual fix is applied 3+ times across sessions, MASTER proposes a new RuleDSL block for that pattern
+- [ ] AH104 Threshold calibration: SmallFunctionsRule MAX=20, CyclomaticComplexityRule MAX=10 — calibrate against Ruby stdlib and Rails source to find the natural distribution cutoff
+- [ ] AH105 Rule conflict auto-detection: at boot, scan rule pairs for overlapping patterns; flag conflicts in boot dmesg
+- [ ] AH106 Finding deduplication learning: if two rules consistently fire on the same line, learn to suppress the lower-severity one automatically
+- [ ] AH107 Fix success prediction: before attempting LLM fix, predict success probability from historical {rule_id, file_type, complexity} → success rate; skip unpromising fixes
+
+### AH2: LLM Interaction Self-Improvement
+
+- [ ] AH201 Prompt A/B testing: maintain two prompt variants per rule; track which produces cleaner fixes; converge to winner after 20 samples
+- [ ] AH202 Council persona calibration: track which council persona (Explorer/Maintainer/Adversary) catches the most missed violations; weight votes accordingly
+- [ ] AH203 Temperature tuning: track fix quality vs temperature per rule type; converge to optimal temperature per rule category
+- [ ] AH204 Context window optimization: track which context inclusions (full file vs snippet vs diff) produce best fix quality; adapt per rule type
+- [ ] AH205 Model tier calibration: track cost vs fix quality per model tier per rule type; route to cheapest tier that achieves target quality
+
+### AH3: Memory and Knowledge Self-Improvement
+
+- [ ] AH301 Session learning extraction: end-of-session meta-analysis identifies new patterns → proposes new rules → queues for human approval
+- [ ] AH302 Corpus self-scan: weekly, MASTER scans top-20 trending Ruby repos; updates rule frequency stats; surfaces rules that never fire in the wild
+- [ ] AH303 Knowledge graph expansion: when a new rule is added, MASTER searches ar5iv for academic grounding; stores citation in data/research/<rule_id>.md
+- [ ] AH304 Contradiction detection: when a new rule would conflict with an existing one, surface the conflict before registering
+- [ ] AH305 Dead knowledge pruning: data/*.yml entries unreferenced by any Ruby code for 30+ days get flagged for removal
+
+### AH4: Infrastructure Self-Improvement
+
+- [ ] AH401 Self-benchmark: weekly timing run on standard fixture files; alert if scan latency regresses >20%
+- [ ] AH402 Memory leak detection: track Ruby object count across 100 scan iterations; alert if trending upward
+- [ ] AH403 Bundle drift detection: weekly check that Gemfile.lock matches Gemfile; alert on drift before it becomes a boot failure
+- [ ] AH404 Config drift detection: compare soul.yml hash weekly; alert if negotiable section changed without version bump
+- [ ] AH405 Dead code detection: MASTER scans its own lib/ for methods never called across any code path; proposes removal
+
+## AI — Provider Resilience and Free LLM Exploitation (items 24, 25)
+
+### AI1: Free and Cheap Provider Integration
+
+- [ ] AI101 Tier-0 providers (free/cheap): add to models.yml — Groq (llama-3.1-70b free tier), Google Gemini Flash (free tier), Together AI (free models), Fireworks AI, Cerebras (llama-3.1-70b free)
+- [ ] AI102 Task routing by cost: lexical scan regex checks → Tier-0 (free); structural analysis → Tier-1 (cheap); council deliberation → Tier-2 (capable); architecture decisions → Tier-3 (strong)
+- [ ] AI103 Free-tier budget management: track daily usage per free-tier provider; rotate when limits approach; never hard-fail on budget exhaustion
+- [ ] AI104 Ollama integration: local model fallback via Ollama API (llama3, codellama, mistral) — zero cost, offline capable, latency acceptable for non-critical passes
+- [ ] AI105 OpenRouter free models: `openrouter.ai/api/v1` lists free-tier models with `:free` suffix — add dynamic discovery of free models at session start
+- [ ] AI106 Prompt caching across providers: where API supports it (Anthropic, OpenAI), use prefix caching to halve token cost on repeated system prompts
+- [ ] AI107 Speculative execution: send same prompt to fast/cheap model and strong model simultaneously; use cheap result if it meets quality threshold, cancel strong model call
+
+### AI2: Provider Resilience
+
+- [ ] AI201 Circuit breaker per provider: if provider returns 3 consecutive errors, open circuit for 5 minutes; route to next provider in chain
+- [ ] AI202 Latency-aware routing: track p95 latency per provider; deprioritize slow providers during interactive sessions
+- [ ] AI203 Provider health dashboard: /providers command shows {name, status, latency_p95, cost_per_1k, daily_budget_remaining} for all configured providers
+- [ ] AI204 Graceful degradation: if all LLM providers fail, fall back to deterministic AstFixer-only mode; surface "LLM unavailable — applying deterministic fixes only"
+- [ ] AI205 Budget waterfall: primary budget (OpenRouter) → secondary (free tiers) → tertiary (Ollama local) — transparent cost minimization
+- [ ] AI206 Provider API key rotation: support multiple keys per provider; rotate on rate limit; track per-key usage
+
+### AI3: Model-Agnostic Identity (item 26)
+
+- [ ] AI301 Constitutional anchoring: first message to any model includes the five foundational stances verbatim — MASTER's identity is injected before any task
+- [ ] AI302 Soul.yml as system prompt prefix: the stable soul.yml absolute section sent as cached system prompt prefix to every model — MASTER is MASTER regardless of underlying LLM
+- [ ] AI303 Response quality gate: every LLM response passes through Ground::SoulDriftDetector before display — if response violates ABSOLUTE rules, regenerate with higher temperature
+- [ ] AI304 Voice normalization: all LLM responses filtered through Voice::Renderer which enforces terse/unix/Strunk output regardless of model verbosity
+- [ ] AI305 Anti-sycophancy filter: strip phrases from any model response: "Great question", "Certainly!", "Of course", "I'd be happy to" — post-process regardless of model
+- [ ] AI306 Format normalization: enforce dmesg log format, no column alignment, no decorative separators on all generated text — model-agnostic
+- [ ] AI307 Persona consistency: soul.yml persona (ronin/malay/Osman) applies to TTS voice selection regardless of which model generated the text
+- [ ] AI308 Git message normalization: all git commit messages generated by any model pass through S&W normalization before commit — imperative, ≤72 chars, no period
