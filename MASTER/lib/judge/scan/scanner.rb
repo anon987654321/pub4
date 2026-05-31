@@ -141,7 +141,7 @@ module Master
           }
         end
 
-        # Pure Ruby reader for data/rules.yml prediction_engine (TODO.md:88).
+        # Pure Ruby reader for data/rules.yml prediction_engine.
         # Gates autofix below per-rule confidence threshold.
         def prediction_thresholds
           @prediction_thresholds ||= (Master.load_yaml(Master::RULES_PATH)["prediction_engine"] || {})
@@ -155,7 +155,7 @@ module Master
           observed_conf.to_f >= t["confidence"].to_f
         end
 
-        # HALLUCINATION rule stub (TODO constitutional gap): lexical/semantic detector for claim_without_reading etc. Deferred to full council wiring.
+        # HALLUCINATION rule: lexical/semantic detector for claim_without_reading; deferred pending council wiring.
       end
     end
   end
