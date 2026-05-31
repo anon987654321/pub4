@@ -364,6 +364,52 @@ module Master
           findings
         end
 
+      # A06 USE_THEN — sequential temp-var chains that could be .then/.yield_self.
+        RuleDSL.rule :USE_THEN,
+          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
+          description: "use .then over temp variable chains" do |src, path:|
+          lines = src.lines
+          lines.each_with_index.filter_map do |line, i|
+            next unless line.match?(/^\s+(\w+)\s*=\s*\w+[\.\(]/)
+            next_line = lines[i + 1]
+            var = line.match(/^\s+(\w+)\s*=/)[1] rescue next
+            next unless next_line&.match?(/\b#{Regexp.escape(var)}\b/) && next_line.match?(/\w+\(#{Regexp.escape(var)}\)/)
+            finding(line: i + 1, message: "temp var #{var} used immediately — consider .then { |#{var}| … }")
+          end
+        end
+
+      # A12 NULL_BLINDNESS — `= NULL` / `== nil` comparisons in SQL-like contexts.
+        RuleDSL.rule :NULL_BLINDNESS,
+          severity: :warning, tags: %i[CORRECTNESS], applies_to: %i[ruby sql erb],
+          description: "use IS NULL not = NULL in SQL; use .nil? not == nil in Ruby" do |src, path:|
+          findings = scan_lines(src, /(?<![<>!])=\s*NULL\b/i, message: "= NULL — use IS NULL in SQL")
+          findings += scan_lines(src, /==\s*nil\b/, message: "== nil — use .nil? in Ruby") if path.to_s.end_with?(".rb", ".rake")
+          findings
+        end
+
+      # A15 NO_COLUMN_ALIGN — multiple spaces before => / = / : to align columns.
+        RuleDSL.rule :NO_COLUMN_ALIGN,
+          severity: :info, tags: %i[STYLE],
+          description: "no column alignment — one space, ragged beats symmetric" do |src, path:|
+          scan_lines(src, /\S {2,}(?:=>|[^=!<>]=(?!=)|:\s)/, message: "column-aligned padding — use single space before => / = / :")
+        end
+
+      # A17 SPECULATIVE_GENERALITY_LEXICAL — future/hypothetical TODO comments.
+        RuleDSL.rule :SPECULATIVE_GENERALITY_LEXICAL,
+          severity: :info, tags: %i[YAGNI],
+          description: "no speculative future-proofing comments" do |src, path:|
+          scan_lines(src, /#.*\b(TODO.*future|for later|hypothetical|someday|when we need|might need|could use)\b/i,
+            message: "speculative comment — delete or schedule; YAGNI")
+        end
+
+      # A18 COMMENTS_AS_DEODORANT — comments that describe what the code does.
+        RuleDSL.rule :COMMENTS_AS_DEODORANT,
+          severity: :info, tags: %i[CLEAN_CODE],
+          description: "no redundant what-comments; code speaks for itself" do |src, path:|
+          scan_lines(src, /#\s*(?:This (?:method|class|function|module)|The (?:method|class) \w+ (?:does|returns|handles|is responsible))/i,
+            message: "comment explains what code does — rename or delete; code should be self-explanatory")
+        end
+
       # Veto: RACE_CONDITIONS — bare check-then-set without synchronize (ROBUSTNESS).
         RuleDSL.rule :RACE_CONDITIONS,
           severity: :error, tags: %i[ROBUSTNESS CONCURRENCY],

@@ -186,6 +186,222 @@ module Master
           end
         end
 
+      # B04 CQS — method that both mutates state and returns a meaningful value.
+        class CqsRule < Rule
+          def initialize
+            super()
+            @id = "CQS"
+            @description = "command-query separation — mutate OR return, not both"
+            @severity = :warning
+            @rule_tags = %i[CQS CLEAN_CODE]
+            @auto_fix = false
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
+          rescue StandardError
+            []
+          end
+
+          def check_ast(ast, _code, path:)
+            return [] unless ast
+            findings = []
+            visit(ast) do |node|
+              next unless node.is_a?(Prism::DefNode)
+              body = node.body
+              next unless body
+              mutates = body_contains?(body, Prism::InstanceVariableWriteNode, Prism::InstanceVariableOperatorWriteNode)
+              returns_value = body_has_explicit_return?(body)
+              if mutates && returns_value
+                findings << finding(line: node.location.start_line,
+                  message: "method #{node.name} mutates state and returns a value — split into command and query")
+              end
+            end
+            findings
+          end
+
+          private
+
+          def visit(node, &block)
+            return unless node.respond_to?(:child_nodes)
+            block.call(node)
+            node.child_nodes.compact.each { |c| visit(c, &block) }
+          end
+
+          def body_contains?(node, *types)
+            return false unless node.respond_to?(:child_nodes)
+            types.any? { |t| node.is_a?(t) } ||
+              node.child_nodes.compact.any? { |c| body_contains?(c, *types) }
+          end
+
+          def body_has_explicit_return?(node)
+            return false unless node.respond_to?(:child_nodes)
+            return true if node.is_a?(Prism::ReturnNode) && node.arguments&.arguments&.any?
+            node.child_nodes.compact.any? { |c| body_has_explicit_return?(c) }
+          end
+        end
+
+      # B05 FILE_LAYOUT — Ruby file order: frozen → require → module → class → public → private.
+        class FileLayoutRule < Rule
+          def initialize
+            super()
+            @id = "FILE_LAYOUT"
+            @description = "frozen header → requires → module/class → public → private"
+            @severity = :info
+            @rule_tags = %i[PROXIMITY CONVENTION]
+            @auto_fix = false
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
+            findings = []
+            lines = code.lines
+            first_non_comment = lines.find_index { |l| !l.match?(/^\s*#|^\s*$/) }
+            return [] unless first_non_comment
+            unless lines.first&.include?("frozen_string_literal")
+              findings << finding(line: 1, message: "missing # frozen_string_literal: true as first line")
+            end
+            private_idx = lines.find_index { |l| l.match?(/^\s+private\s*$|^\s+private\b/) }
+            if private_idx
+              public_def_after_private = lines[private_idx..].each_with_index.find do |l, i|
+                l.match?(/^\s+def (?!self\.)/) && !l.match?(/^\s+def (?:initialize|to_s|inspect)\b/)
+              end
+              if public_def_after_private
+                idx = private_idx + public_def_after_private[1] + 1
+                findings << finding(line: idx, message: "public method def after private marker — move above private")
+              end
+            end
+            findings
+          end
+        end
+
+      # B06 EXPLICIT — implicit requires, magic coupling, method_missing without respond_to_missing?.
+        class ExplicitRule < Rule
+          def initialize
+            super()
+            @id = "EXPLICIT"
+            @description = "no implicit requires or magic coupling"
+            @severity = :warning
+            @rule_tags = %i[EXPLICIT CONVENTION]
+            @auto_fix = false
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
+            findings = []
+            findings.concat(scan_lines(code, /\bmethod_missing\b/, message: "method_missing without respond_to_missing? — add respond_to_missing?")) \
+              if code.include?("method_missing") && !code.include?("respond_to_missing?")
+            findings.concat(scan_lines(code, /\bconst_missing\b/, message: "const_missing — prefer explicit require"))
+            findings.concat(scan_lines(code, /\bautoload\b/, message: "autoload — prefer explicit require_relative"))
+            findings
+          end
+
+          private
+
+          def scan_lines(src, pattern, message:)
+            src.lines.each_with_index.filter_map do |line, i|
+              finding(line: i + 1, message: message) if line.match?(pattern)
+            end
+          end
+        end
+
+      # B08 CYCLOMATIC_COMPLEXITY — methods with cyclomatic complexity > 10.
+        class CyclomaticComplexityRule < Rule
+          MAX_CC = 10
+          CC_NODES = [
+            Prism::IfNode, Prism::UnlessNode, Prism::WhileNode, Prism::UntilNode,
+            Prism::ForNode, Prism::CaseWhenNode, Prism::RescueNode, Prism::AndNode,
+            Prism::OrNode,
+          ].freeze
+
+          def initialize
+            super()
+            @id = "CYCLOMATIC_COMPLEXITY"
+            @description = "cyclomatic complexity under 10 per method"
+            @severity = :warning
+            @rule_tags = %i[LINEARITY SMALL_PARTS]
+            @auto_fix = false
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
+          rescue StandardError
+            []
+          end
+
+          def check_ast(ast, _code, path:)
+            return [] unless ast
+            findings = []
+            visit(ast) do |node|
+              next unless node.is_a?(Prism::DefNode)
+              cc = 1 + count_cc_nodes(node)
+              next if cc <= MAX_CC
+              findings << finding(line: node.location.start_line,
+                message: "method #{node.name} has cyclomatic complexity #{cc} (max #{MAX_CC}) — extract branches")
+            end
+            findings
+          end
+
+          private
+
+          def visit(node, &block)
+            return unless node.respond_to?(:child_nodes)
+            block.call(node)
+            node.child_nodes.compact.each { |c| visit(c, &block) }
+          end
+
+          def count_cc_nodes(node)
+            return 0 unless node.respond_to?(:child_nodes)
+            own = CC_NODES.include?(node.class) ? 1 : 0
+            own + node.child_nodes.compact.sum { |c| count_cc_nodes(c) }
+          end
+        end
+
+      # B10 DATA_CLASS — class with only attr_accessor and no real methods.
+        class DataClassRule < Rule
+          def initialize
+            super()
+            @id = "DATA_CLASS"
+            @description = "data class with no behavior — use Struct or Data"
+            @severity = :info
+            @rule_tags = %i[SRP SOLID]
+            @auto_fix = false
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
+          rescue StandardError
+            []
+          end
+
+          def check_ast(ast, _code, path:)
+            return [] unless ast
+            findings = []
+            visit(ast) do |node|
+              next unless node.is_a?(Prism::ClassNode)
+              next unless node.body
+              children = node.body.child_nodes.compact
+              accessor_calls = children.count { |n| n.is_a?(Prism::CallNode) && %w[attr_accessor attr_reader attr_writer].include?(n.name.to_s) }
+              real_defs = children.count { |n| n.is_a?(Prism::DefNode) && !%w[initialize to_s inspect].include?(n.name.to_s) }
+              next unless accessor_calls >= 2 && real_defs == 0
+              findings << finding(line: node.location.start_line,
+                message: "#{node.constant_path.slice} has #{accessor_calls} accessors and no behavior — use Struct or Data.define")
+            end
+            findings
+          end
+
+          private
+
+          def visit(node, &block)
+            return unless node.respond_to?(:child_nodes)
+            block.call(node)
+            node.child_nodes.compact.each { |c| visit(c, &block) }
+          end
+        end
+
       end
     end
   end

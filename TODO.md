@@ -9,48 +9,48 @@ actually does. Organized by category. Work left to right, top to bottom. Mark do
 
 Rules with detect_lexical in rules.yml but no RuleDSL block in lib/judge/scan/rules/.
 
-- [ ] A01 SECRET_PROXIMITY — detect `password|secret|token|api_key = 'literal'` (8+ chars) in any file
-- [ ] A02 MAGIC_COLOR — detect raw `#rrggbb`, `rgb(`, `rgba(`, `hsl(` in CSS/SCSS/JS/HTML
-- [ ] A03 UNBOUNDED_RETRY — detect `\bretry\b` or `while\s+true` without nearby `max_attempts`
-- [ ] A04 KEYWORD_ARGS — detect Ruby `def` with 3+ bare positional args (no colon, no default)
-- [ ] A05 GUARD_CLAUSE — detect `def …\n  if …\n … else\n … end\n end` (nested if-else in method body)
-- [ ] A06 USE_THEN — detect sequential `x = foo(…)\n bar(x)` chains that could be `.then`
-- [ ] A07 RESCUE_ON_DEF — detect `def …\n  begin\n … rescue` (put rescue on def line instead)
-- [ ] A08 DEAD_CODE — detect any statement following `return|raise|exit|throw` on a later line
-- [ ] A09 TRAILING_COMMAS — detect multi-line array/hash literals missing trailing comma on last element
-- [ ] A10 FULL_BY_DEFAULT — detect `shallow|standard|quick|lite|basic` tier parameters/flags
-- [ ] A11 OPTIONAL_CHAINING_JS — detect `(\w+)\s*&&\s*\1\.\w+` in JavaScript files
-- [ ] A12 NULL_BLINDNESS — add as scan Rule (not just AstFixer): `= NULL` / `== nil` in SQL contexts
-- [ ] A13 STRICT_MODE_ZSH — detect `#!/.*zsh` scripts missing `set -euo pipefail` on next line
-- [ ] A14 NO_MAGIC_NUMBERS — detect unexplained integer/float literals not in constants (exclude 0/1/-1)
-- [ ] A15 NO_COLUMN_ALIGN — detect 2+ spaces before `=>`, `=`, or `:` used for column alignment
-- [ ] A16 FORBIDDEN_PATTERNS — wire anti_patterns.forbidden list (eval, Marshal.load, open($, rm -rf /) as :error rules
-- [ ] A17 SPECULATIVE_GENERALITY_LEXICAL — detect `# TODO: future`, `# for later`, `# hypothetical` comments
-- [ ] A18 COMMENTS_AS_DEODORANT — detect comments beginning with "This method/class/function"
+- [x] A01 SECRET_PROXIMITY — detect `password|secret|token|api_key = 'literal'` (8+ chars) in any file
+- [x] A02 MAGIC_COLOR — detect raw `#rrggbb`, `rgb(`, `rgba(`, `hsl(` in CSS/SCSS/JS/HTML
+- [x] A03 UNBOUNDED_RETRY — detect `\bretry\b` or `while\s+true` without nearby `max_attempts`
+- [x] A04 KEYWORD_ARGS — detect Ruby `def` with 3+ bare positional args (no colon, no default)
+- [x] A05 GUARD_CLAUSE — detect `def …\n  if …\n … else\n … end\n end` (nested if-else in method body)
+- [x] A06 USE_THEN — detect sequential `x = foo(…)\n bar(x)` chains that could be `.then`
+- [x] A07 RESCUE_ON_DEF — detect `def …\n  begin\n … rescue` (put rescue on def line instead)
+- [x] A08 DEAD_CODE — detect any statement following `return|raise|exit|throw` on a later line
+- [x] A09 TRAILING_COMMAS — detect multi-line array/hash literals missing trailing comma on last element
+- [x] A10 FULL_BY_DEFAULT — detect `shallow|standard|quick|lite|basic` tier parameters/flags
+- [x] A11 OPTIONAL_CHAINING_JS — detect `(\w+)\s*&&\s*\1\.\w+` in JavaScript files
+- [x] A12 NULL_BLINDNESS — add as scan Rule (not just AstFixer): `= NULL` / `== nil` in SQL contexts
+- [x] A13 STRICT_MODE_ZSH — detect `#!/.*zsh` scripts missing `set -euo pipefail` on next line
+- [x] A14 NO_MAGIC_NUMBERS — detect unexplained integer/float literals not in constants (exclude 0/1/-1)
+- [x] A15 NO_COLUMN_ALIGN — detect 2+ spaces before `=>`, `=`, or `:` used for column alignment
+- [x] A16 FORBIDDEN_PATTERNS — wire anti_patterns.forbidden list (eval, Marshal.load, open($, rm -rf /) as :error rules
+- [x] A17 SPECULATIVE_GENERALITY_LEXICAL — detect `# TODO: future`, `# for later`, `# hypothetical` comments
+- [x] A18 COMMENTS_AS_DEODORANT — detect comments beginning with "This method/class/function"
 
 ## B. Missing structural rules
 
 Rules referencing `detect_structural: handler` where no Rule subclass implements the handler.
 
-- [ ] B01 SmallFilesRule — Prism AST or line count >300 (detect_structural: file_silhouette)
-- [ ] B02 SmallFunctionsRule — Prism DefNode with >20 lines (detect_structural: long_method)
-- [ ] B03 GodClassRule — class with >10 public method defs or >300 lines (detect_structural: god_class)
-- [ ] B04 CqsRule — Prism: method that both modifies ivar/attr and returns a non-self value (detect_structural: cqs)
-- [ ] B05 FileLayoutRule — Ruby: frozen → require → module → class → public → private order check
-- [ ] B06 ExplicitRule — detect implicit requires, implicit return types, magic coupling (detect_structural: explicit)
-- [ ] B07 NestingDepthRule — Prism: nesting >4 levels (if/while/case/module/class/def)
-- [ ] B08 CyclomaticComplexityRule — move CC calculation out of DetectionPipeline into a proper Rule subclass
+- [x] B01 SmallFilesRule — Prism AST or line count >300 (detect_structural: file_silhouette)
+- [x] B02 SmallFunctionsRule — Prism DefNode with >20 lines (detect_structural: long_method)
+- [x] B03 GodClassRule — class with >10 public method defs or >300 lines (detect_structural: god_class)
+- [x] B04 CqsRule — Prism: method that both modifies ivar/attr and returns a non-self value (detect_structural: cqs)
+- [x] B05 FileLayoutRule — Ruby: frozen → require → module → class → public → private order check
+- [x] B06 ExplicitRule — detect implicit requires, implicit return types, magic coupling (detect_structural: explicit)
+- [x] B07 NestingDepthRule — Prism: nesting >4 levels (if/while/case/module/class/def)
+- [x] B08 CyclomaticComplexityRule — move CC calculation out of DetectionPipeline into a proper Rule subclass
 - [ ] B09 PatternExtractionRule — structural: "80% of the way to Strategy/Decorator/Pipeline/…" (mode: opportunity)
-- [ ] B10 DataClassRule — class that holds data with no behavior (all attr_accessor, no methods)
+- [x] B10 DataClassRule — class that holds data with no behavior (all attr_accessor, no methods)
 
 ## C. Missing autofix transforms in AstFixer
 
 Rules marked `autofix: true` whose transform isn't in lib/judge/scan/ast_fixer.rb.
 
-- [ ] C01 Collapse 3+ consecutive blank lines to 2 (SQUINT_TEST/WHITESPACE_PUNCTUATION)
-- [ ] C02 Strip trailing whitespace from every line (TRAILING_WHITESPACE)
-- [ ] C03 Append .freeze to mutable constants: `FOO = [` → `FOO = [].freeze` (IMMUTABLE)
-- [ ] C04 Add `set -euo pipefail` after shebang in .zsh/.sh scripts (STRICT_MODE_ZSH)
+- [x] C01 Collapse 3+ consecutive blank lines to 2 (SQUINT_TEST/WHITESPACE_PUNCTUATION)
+- [x] C02 Strip trailing whitespace from every line (TRAILING_WHITESPACE)
+- [x] C03 Append .freeze to mutable constants: `FOO = [` → `FOO = [].freeze` (IMMUTABLE)
+- [x] C04 Add `set -euo pipefail` after shebang in .zsh/.sh scripts (STRICT_MODE_ZSH)
 - [ ] C05 Add `lang="en"` to `<html>` tags missing it (HTML_LANG)
 - [ ] C06 Add `loading="lazy"` to `<img>` tags missing loading= (LAZY_IMAGES)
 - [ ] C07 Add `<meta charset=UTF-8>` as first element in `<head>` (META_CHARSET)
