@@ -28,15 +28,9 @@ module Master
           "dd if=",
           "> /dev/",
           "chmod 777",
-          "chmod -R 777",
+          "chmod -r 777",
           "curl | sh",
-          "curl|sh",
           "wget | sh",
-          "wget|sh",
-          "| bash",
-          "|bash",
-          "| zsh",
-          "|zsh",
           "chown root",
           "passwd root",
           "visudo"
@@ -46,8 +40,11 @@ module Master
           TOOL_TIERS[tool_name.to_s] || :guarded
         end
 
+        PIPE_TO_SHELL_RE = /\|\s*(?:ba|z)?sh\b/i.freeze
+
         def self.blocked?(command)
-          BLOCKLIST.any? { |b| command.downcase.include?(b.downcase) }
+          normalized = command.gsub(/[[:space:]]+/, " ").strip.downcase
+          BLOCKLIST.any? { |b| normalized.include?(b) } || command.match?(PIPE_TO_SHELL_RE)
         end
       end
     end
