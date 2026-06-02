@@ -8,6 +8,7 @@ class Playlist::Playlist < ApplicationRecord
            source: :track
   has_many :collaborations, class_name: "Playlist::Collaboration", dependent: :destroy
   has_many :collaborators, through: :collaborations, source: :user
+  has_many :dilla_sketches, class_name: "Playlist::DillaSketch", dependent: :destroy
 
   validates :name, presence: true, length: { maximum: 100 }
 

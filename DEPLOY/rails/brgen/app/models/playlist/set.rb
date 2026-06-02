@@ -10,6 +10,7 @@ module Playlist
     has_many :tracks, -> { order(:position) }, class_name: "Playlist::Track", dependent: :destroy
     has_many :collaborations, class_name: "Playlist::Collaboration", dependent: :destroy
     has_many :collaborators, through: :collaborations, source: :user
+    has_many :dilla_sketches, class_name: "Playlist::DillaSketch", dependent: :destroy
     has_many :likes, class_name: "Playlist::Like", dependent: :destroy
 
     validates :name, presence: true
