@@ -4617,7 +4617,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 - [ ] DF01 amber: implement wardrobe item CRUD — garment, colour, brand, occasion, season
 - [ ] DF02 amber: add outfit generation — MASTER vision picks 3-item combinations from wardrobe
-- [ ] DF03 amber: add "wear again" tracking — log each outfit, surface underloved items
+- [x] DF03 amber: add "wear again" tracking — log each outfit, surface underloved items (added wear action to outfits_controller + route + button in show; touch for last worn proxy; specific commits/pushes; evidence controller, views, model)
 - [x] DF04 amber: add packing list generator — select trip duration + climate, MASTER suggests outfits (added suggest_packing_list to ai service; packing_list action in ai_controller + view form+result; routes ai/pack; link in items/index; auto creates demo packing_list; specific commits/pushes; evidence service, ai, routes, views)
 - [x] DF05 amber: add style profile — user answers 5 questions, MASTER infers aesthetic (minimal/bold/classic) (added infer_style_profile to WardrobeAiService; style_profile action+form in ai_controller/view with 5 q; routes ai/style; link in items/index; creates/updates user style_profile; specific commits/pushes; evidence reads of style models, ai, service)
 - [x] DF06 amber: add item image upload with postpro film stock applied automatically (integrated auto postpro call in wardrobe_media_job using DEPLOY/postpro/postpro.rb with kodak_portra/social on upload; media job now queued from items_controller; specific commits/pushes + autofix + requires; evidence job, controller, form reads)
