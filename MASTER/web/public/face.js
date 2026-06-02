@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=32') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=33') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -918,9 +918,10 @@ async function loadTTSBlob(text, voice) {
   return blob;
 }
 
-function connectTTSAudio(audio, boostValue = 1.35) {
+async function connectTTSAudio(audio, boostValue = 1.35) {
   if (!actx || actx.state === 'closed') return;
-  if (actx.state === 'suspended') actx.resume();
+  if (actx.state === 'suspended') await actx.resume().catch(() => {});
+  if (actx.state !== 'running') return;
   const msrc = actx.createMediaElementSource(audio);
   const boost = actx.createGain();
   const compressor = actx.createDynamicsCompressor();
@@ -1037,7 +1038,7 @@ function ttsTick() {
       const audio = new Audio(src);
       audio.playbackRate = getTtsRate();
       tts.audio = audio;
-      try { connectTTSAudio(audio); } catch (_) {}
+      try { await connectTTSAudio(audio); } catch (_) {}
       audio.onplay = () => {
         setTTSLoading(false); startVisemeAnim(text);
         if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
@@ -1274,7 +1275,7 @@ function playDuo(lines, onDone) {
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
       audio.playbackRate = getTtsRate();
-      try { connectTTSAudio(audio, 1.15); } catch (_) {}
+      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
       startVisemeAnim(text);
       audio.onended = audio.onerror = () => {
         stopVisemeAnim();
