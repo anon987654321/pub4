@@ -148,17 +148,8 @@ function resize() {
 
   // Low internal render resolution + CSS upscale (topologies.yml + visual_clusters spec).
   // The Three canvas will render at modest internal size; browser + pixelated CSS does the integer scale.
-  const limits = window.MASTER_VISUAL_LIMITS || {};
-  const isReduced = State.reducedMotion || (limits.reducedMotionParticles && limits.reducedMotionParticles < 100);
-  let internalW = W;
-  let internalH = H;
-  if (isReduced) {
-    internalW = Math.min(640, Math.floor(W * 0.6));
-    internalH = Math.min(360, Math.floor(H * 0.6));
-  } else if (W * H > 1200000) {
-    internalW = Math.floor(W * 0.75);
-    internalH = Math.floor(H * 0.75);
-  }
+  const internalW = W;
+  const internalH = H;
 
   renderer.setPixelRatio(1); // we control internal size manually
   renderer.setSize(internalW, internalH, false);
