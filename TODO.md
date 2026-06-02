@@ -88,14 +88,14 @@ Every section of rules.yml that isn't implemented in Ruby.
 - [x] E05 failure_taxonomy: RuleLoop transient retry (already TRANSIENT_RE) — add permanent/ambiguous branches with fail_fast and human_intervention
 - [x] E06 principle_priorities tier1: halt pipeline on PRESERVE_FIRST/DECOUPLE/DEGRADE_GRACEFULLY violation
 - [x] E07 principle_priorities tier2: route DRY/KISS/SRP violations to RuleLoop automatically
-- [ ] E08 veto_patterns section: wire as :error severity rules that block the pipeline
-- [ ] E09 anti_patterns.forbidden: each pattern becomes a SecretProximity/ForbiddenPattern lexical rule
+- [x] E08 veto_patterns section: wire as :error severity rules that block the pipeline
+- [x] E09 anti_patterns.forbidden: each pattern becomes a SecretProximity/ForbiddenPattern lexical rule
 - [x] E10 schema_metadata fields (reversibility, blast_radius): expose on Finding objects
-- [ ] E11 phantom_recovery: implement gaslighting_preamble detector in Judge::Agent — discard and retry if match
-- [ ] E12 phantom_recovery: text_repetition_loop detector — if same 60-char span ≥3 times, escalate model
+- [x] E11 phantom_recovery: implement gaslighting_preamble detector in Judge::Agent — discard and retry if match
+- [x] E12 phantom_recovery: text_repetition_loop detector — if same 60-char span ≥3 times, escalate model
 - [ ] E13 preserve_user_intent: Pipeline check that refactors don't change public method signatures
-- [ ] E14 library_verify: pre_flight checks (Gemfile.lock has gem, path exists, binary in PATH) before shelling out
-- [ ] E15 SINGULARITY self-check: boot assertion that all rule IDs in rules.yml are unique
+- [x] E14 library_verify: pre_flight checks (Gemfile.lock has gem, path exists, binary in PATH) before shelling out
+- [x] E15 SINGULARITY self-check: boot assertion that all rule IDs in rules.yml are unique
 
 ## F. Architecture violations in MASTER's own code
 
@@ -4224,4 +4224,4 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] CB07 brgen: add AI thread summaries on long comment threads (via MASTER streaming)
 - [ ] CB08 brgen dating: add bydel (neighbourhood) matching (hyperlocal beyond city)
 - [ ] CB09 brgen playlist: add collaborative playlists and listening parties
-- [ ] CB10 brgen takeaway: show reviews from neighbours only (hyperlocal trust over anonymous crowd)
+- [x] CB10 brgen takeaway: show reviews from neighbours only (hyperlocal trust over anonymous crowd) — implemented via Takeaway::Review + snapshot loc + haversine <=4km filter in RestaurantsController#load_neighbour_reviews + reviews form on restaurant show (eligible after delivered order). See migration 20260602123000, model, reviews_controller, edits to order/restaurant/ctrl/routes/view. Pre/post scans + diffs in session.
