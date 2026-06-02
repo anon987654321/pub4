@@ -81,8 +81,8 @@ rules.yml success_criteria: "system_applies_to_itself_without_exception"
 
 Every section of rules.yml that isn't implemented in Ruby.
 
-- [ ] E01 Finding#rule_id: findings should carry the exact rules.yml ID string (e.g. "SECRET_PROXIMITY"), not Ruby class name
-- [ ] E02 SemanticRule findings: include the specific rules.yml ID that triggered, not "semantic"
+- [x] E01 Finding#rule_id: findings should carry the exact rules.yml ID string (e.g. "SECRET_PROXIMITY"), not Ruby class name
+- [x] E02 SemanticRule findings: include the specific rules.yml ID that triggered, not "semantic"
 - [ ] E03 Prediction engine: RuleLoop#should_autofix? already exists in scanner.rb — wire it into RuleLoop before applying any fix
 - [ ] E04 evidence_scoring: Pipeline should accumulate scan_clean (25 pts) and require ≥80 to ship
 - [ ] E05 failure_taxonomy: RuleLoop transient retry (already TRANSIENT_RE) — add permanent/ambiguous branches with fail_fast and human_intervention
@@ -90,7 +90,7 @@ Every section of rules.yml that isn't implemented in Ruby.
 - [ ] E07 principle_priorities tier2: route DRY/KISS/SRP violations to RuleLoop automatically
 - [ ] E08 veto_patterns section: wire as :error severity rules that block the pipeline
 - [ ] E09 anti_patterns.forbidden: each pattern becomes a SecretProximity/ForbiddenPattern lexical rule
-- [ ] E10 schema_metadata fields (reversibility, blast_radius): expose on Finding objects
+- [x] E10 schema_metadata fields (reversibility, blast_radius): expose on Finding objects
 - [ ] E11 phantom_recovery: implement gaslighting_preamble detector in Judge::Agent — discard and retry if match
 - [ ] E12 phantom_recovery: text_repetition_loop detector — if same 60-char span ≥3 times, escalate model
 - [ ] E13 preserve_user_intent: Pipeline check that refactors don't change public method signatures

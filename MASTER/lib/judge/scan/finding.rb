@@ -3,9 +3,9 @@
 module Master
   module Judge
     module Scan
-      Finding = Data.define(:rule, :message, :line, :severity, :fix, :tags) do
-        def self.build(rule:, message:, line:, severity: :warning, fix: nil, tags: [])
-          new(rule:, message:, line:, severity:, fix:, tags:)
+      Finding = Data.define(:rule, :rule_id, :message, :line, :severity, :fix, :tags, :reversibility, :blast_radius) do
+        def self.build(rule:, message:, line:, severity: :warning, fix: nil, tags: [], reversibility: nil, blast_radius: nil)
+          new(rule:, rule_id: rule.to_s, message:, line:, severity:, fix:, tags:, reversibility:, blast_radius:)
         end
 
         def [](key)
@@ -13,7 +13,7 @@ module Master
         end
 
         def to_h
-          { rule:, message:, line:, severity:, fix:, tags: }
+          { rule:, rule_id:, message:, line:, severity:, fix:, tags:, reversibility:, blast_radius: }
         end
 
         def merge(extras) = to_h.merge(extras)

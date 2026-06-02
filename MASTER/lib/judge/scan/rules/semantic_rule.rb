@@ -50,11 +50,13 @@ module Master
               .select { |r| r["detect_semantic"] }
               .reject { |r| r["severity"] == "info" && r["mode"] != "opportunity" && r["tier"] != "kernel" }
               .each_with_object({}) do |r, h|
-                h[r["id"]] = {
-                  prompt: r["detect_semantic"],
-                  severity: (r["severity"] || "warning").to_sym,
-                  mode: (r["mode"] || "violation").to_sym
-                }
+	                h[r["id"]] = {
+	                  prompt: r["detect_semantic"],
+	                  severity: (r["severity"] || "warning").to_sym,
+	                  mode: (r["mode"] || "violation").to_sym,
+	                  reversibility: r["reversibility"],
+	                  blast_radius: r["blast_radius"]
+	                }
               end
           end
 
@@ -102,12 +104,14 @@ module Master
 
               axiom = @rules[match[1]]
               Finding.build(
-                rule: match[1].downcase,
+	                rule: match[1],
                 message: match[3].strip,
                 line: match[2].to_i,
                 severity: axiom[:severity],
                 fix: nil,
-                tags: [match[1].to_sym, axiom[:mode]]
+	                tags: [match[1].to_sym, axiom[:mode]],
+	                reversibility: axiom[:reversibility],
+	                blast_radius: axiom[:blast_radius]
               )
             end
           end
