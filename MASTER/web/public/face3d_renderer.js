@@ -151,7 +151,8 @@ class Face3DCanvasRenderer {
 
         const out = idx * 4;
         if (on) {
-          // All white only for pixellish 8-bit video game retro look (dither provides shading).
+          // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
+          // Shading via Atkinson or Bayer dither only; no zone tints or color.
           data[out] = 255;
           data[out + 1] = 255;
           data[out + 2] = 255;

@@ -11,7 +11,7 @@ const VERTEX_POINT_SIZE = 0.055;
 const EDGE_POINT_SIZE = 0.025;
 
 const TINT = {
-  // All white only for pixellish 8-bit video game retro look.
+  // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
   idle:    new THREE.Color(1, 1, 1),
   claude:  new THREE.Color(1, 1, 1),
   deepseek:new THREE.Color(1, 1, 1),

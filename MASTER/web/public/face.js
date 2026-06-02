@@ -26,7 +26,8 @@ const zshIn  = document.getElementById('zin');
 const rootBody = document.body;
 
 const TINT = {
-  // All white only for consistent pixellish 8-bit game look. Subtle mood via size/alpha/pulse in shader instead of hue.
+  // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
+  // Shading and expression via Atkinson/Bayer dither patterns, alpha, size, depth, and pulse (no hue tints).
   idle:    new Color(1.00, 1.00, 1.00),
   claude:  new Color(1.00, 1.00, 1.00),
   deepseek:new Color(1.00, 1.00, 1.00),
@@ -42,7 +43,7 @@ const TINT = {
 };
 
 function dayNightTint() {
-  // All white only — time of day no longer shifts hue for pure 8-bit pixel aesthetic.
+  // Pure white — time of day no longer affects hue (shading is dither-only in the 8-bit CRT phosphor style).
   return new Color(1.00, 1.00, 1.00);
 }
 

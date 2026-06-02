@@ -404,7 +404,8 @@ function updateParticle(p, dt) {
 }
 
 function particleColor(p, alpha) {
-  // All white only — pixellish 8-bit video game retro aesthetic (dither/alpha + size for volume).
+  // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
+  // Volume and expression emerge from dither patterns, alpha, size, and depth (no per-group hues).
   return `rgba(255,255,255,${alpha})`;
 }
 

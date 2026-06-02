@@ -4,7 +4,7 @@ This document describes the incremental path from the current retro canvas face 
 
 ## Goals
 
-- Keep the existing retro Atkinson/Bayer/ZX/phosphor look.
+- Keep (and refine) the existing retro Atkinson/Bayer/ZX/phosphor look as pure white dithered pixels — 8-bit monochrome CRT / terminal aesthetic.
 - Move face geometry into normalized 3D coordinates.
 - Move expression logic into blendshape state.
 - Keep particles semantically assigned to anatomical zones.
@@ -183,7 +183,7 @@ The renderer consumes the engine snapshot:
 }
 ```
 
-It accumulates particles into a low-resolution float buffer, applies phosphor decay, runs Atkinson or Bayer dithering, tints pixels by semantic zone, and blits the result to the face canvas.
+It accumulates particles into a low-resolution float buffer, applies phosphor decay, runs Atkinson or Bayer dithering to produce pure white pixels, and blits the result to the face canvas (8-bit monochrome CRT / terminal aesthetic with dither for shading).
 
 ### Quality controller
 
