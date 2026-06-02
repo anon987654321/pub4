@@ -11,6 +11,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
 
   def show
     @tracks = @playlist.playlist_tracks.includes(:track)
+    @dilla_sketches = @playlist.dilla_sketches.recent.includes(:user)
   end
 
   def new

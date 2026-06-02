@@ -86,10 +86,12 @@ Rails.application.routes.draw do
       resources :playlists do
         resources :tracks, only: %i[create destroy]
         resources :collaborations, only: %i[create destroy]
+        resources :dilla_sketches, only: %i[create update destroy]
       end
       resources :sets do
         resources :tracks, only: %i[create destroy]
         resources :collaborations, only: %i[create destroy]
+        resources :dilla_sketches, only: %i[create update destroy]
         resource :like, only: %i[create destroy]
       end
       resources :listens, only: :create

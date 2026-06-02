@@ -11,6 +11,7 @@ module Playlist
 
     def show
       @tracks = @set.tracks
+      @dilla_sketches = @set.dilla_sketches.recent.includes(:user)
     end
 
     def new
