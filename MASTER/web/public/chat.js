@@ -130,14 +130,16 @@ async function sendMessageWithPhoto(text) {
   if (photoInput) photoInput.value = '';
   setPhotoState('idle', '+');
 
-  let assistantBuffer = '';
+  const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
+  let assistantBuffer = '', ttsBuffer = '';
   _evtSrc = new EventSource(`/chat/message?${params.toString()}`);
   _evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
     if (raw === '[DONE]') {
       const voice = window.MASTERVoice;
       if (voice?.setLastText) voice.setLastText(assistantBuffer);
-      if (voice?.enqueue) voice.enqueue(assistantBuffer);
+      if (voice?.enqueue && ttsBuffer.trim()) voice.enqueue(ttsBuffer.trim());
+      ttsBuffer = '';
       try { _evtSrc.close(); } catch (_) {}
       window._chatOnDone?.();
       return;
@@ -149,7 +151,15 @@ async function sendMessageWithPhoto(text) {
     }
     const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
     assistantBuffer += chunk;
+    ttsBuffer += chunk;
     window._chatOnChunk?.(raw);
+    let m;
+    while ((m = ttsBuffer.match(SENT_BREAK))) {
+      const cut = m.index + m[0].length;
+      const sent = ttsBuffer.slice(0, cut).trim();
+      ttsBuffer = ttsBuffer.slice(cut);
+      if (sent) window.MASTERVoice?.enqueue?.(sent);
+    }
   };
   _evtSrc.addEventListener('dmesg', (ev) => {
     try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
