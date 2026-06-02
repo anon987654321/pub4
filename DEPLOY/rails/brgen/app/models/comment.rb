@@ -24,4 +24,16 @@ class Comment < ApplicationRecord
 
   def root?  = parent_id.nil?
   def depth  = parent ? parent.depth + 1 : 0
+
+  LONG_THREAD_THRESHOLD = 20
+
+  def long_thread?
+    root_replies = replies.count
+    total = root_replies + replies.sum { |r| r.replies.count }
+    total > LONG_THREAD_THRESHOLD
+  end
+
+  def has_thread_summary?
+    thread_summary.present? && summary_updated_at.present?
+  end
 end
