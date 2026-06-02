@@ -2,8 +2,8 @@
 
 class OutfitsController < ApplicationController
   before_action :require_authentication
-  before_action :set_outfit, only: %i[show edit update destroy like reorder share]
-  before_action :authorize!, only: %i[edit update destroy share]
+  before_action :set_outfit, only: %i[show edit update destroy like reorder share wear]
+  before_action :authorize!, only: %i[edit update destroy share wear]
 
   def index
     @pagy, @outfits = pagy(Current.user.outfits.order(created_at: :desc))
@@ -54,6 +54,11 @@ class OutfitsController < ApplicationController
     else
       redirect_to @outfit, alert: "Could not share: #{post.errors.full_messages.to_sentence}"
     end
+  end
+
+  def wear
+    @outfit.touch
+    redirect_to @outfit, notice: "Marked as worn again!"
   end
 
   def reorder

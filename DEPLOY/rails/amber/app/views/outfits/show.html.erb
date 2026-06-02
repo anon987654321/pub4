@@ -33,6 +33,7 @@
 <nav>
   <%= button_to "Like (#{@outfit.likes_count.to_i})", like_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= button_to "Share to brgen", share_outfit_path(@outfit), method: :post, class: "btn" %>
+  <%= button_to "Wear again", wear_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= link_to "Edit", edit_outfit_path(@outfit), class: "btn" %>
   <%= link_to "All outfits", outfits_path, class: "btn" %>
   <%= button_to "Delete", @outfit, method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger" %>
