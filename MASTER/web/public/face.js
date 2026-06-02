@@ -190,73 +190,48 @@ function sampleFlatPositions(flatPos, N) {
   return { home, scatter, seeds };
 }
 
-function buildHeadGeometry() {
-  const base = new THREE.IcosahedronGeometry(1.0, 4);
-  const pos = base.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-    y *= 1.22;
-    z *= 0.92;
-    const jaw = Math.max(0, -y - 0.2);
-    x *= 1 - jaw * 0.45;
-    for (const sx of [-1, 1]) {
-      const dx = x - 0.32 * sx, dy = y - 0.22, dz = z - 0.78;
-      const d2 = dx*dx + dy*dy + dz*dz;
-      if (d2 < 0.10) z -= (0.10 - d2) * 1.4;
-    }
-    const nd2 = x*x + (y + 0.02)*(y + 0.02);
-    if (nd2 < 0.06 && z > 0.6) z += (0.06 - nd2) * 1.6;
-    const md = Math.hypot(x, (y + 0.38) * 1.4, (z - 0.84) * 1.4);
-    if (md < 0.22 && z > 0.5) z -= (0.22 - md) * 0.8;
-    if (y > 0.85) y += (y - 0.85) * 0.4;
-    pos.setXYZ(i, x, y, z);
-  }
-  return base;
+// Load mask image into a 256×256 OffscreenCanvas
+async function loadMaskCanvas(url, size = 256) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+  const cv = new OffscreenCanvas(size, size);
+  cv.getContext('2d').drawImage(img, 0, 0, size, size);
+  return cv;
 }
 
-const head = (_hasWebGL && THREE) ? buildHeadGeometry() : null;
-
-// Area-weighted surface sampler — THREE geometry, indexed or not
-function sampleMeshSurface(geom, N) {
-  const pos = geom.attributes.position;
-  const idx = geom.index;
-  const triCount = idx ? idx.count / 3 : pos.count / 3;
-  const areas = new Float32Array(triCount);
-  let totalArea = 0;
-  const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
-  function vi(t, k) { return idx ? idx.getX(t*3+k) : t*3+k; }
-  for (let t = 0; t < triCount; t++) {
-    va.fromBufferAttribute(pos, vi(t,0));
-    vb.fromBufferAttribute(pos, vi(t,1));
-    vc.fromBufferAttribute(pos, vi(t,2));
-    const area = vb.clone().sub(va).cross(vc.clone().sub(va)).length() * 0.5;
-    areas[t] = area; totalArea += area;
+// Sample N particle home positions from image luminance as depth map.
+// Bright pixels = forward (high Z), dark = recessed, near-white bg excluded.
+function sampleImageDepth(canvas, N) {
+  const W = canvas.width, H = canvas.height;
+  const { data } = canvas.getContext('2d').getImageData(0, 0, W, H);
+  const weights = new Float32Array(W * H);
+  let total = 0;
+  for (let i = 0; i < W * H; i++) {
+    const r = data[i*4], g = data[i*4+1], b = data[i*4+2];
+    const bg = r > 228 && g > 228 && b > 228;
+    weights[i] = bg ? 0 : Math.max(0.04, (r*0.299 + g*0.587 + b*0.114) / 255);
+    total += weights[i];
   }
-  const cdf = new Float32Array(triCount);
+  const cdf = new Float32Array(W * H);
   let cum = 0;
-  for (let t = 0; t < triCount; t++) { cum += areas[t] / totalArea; cdf[t] = cum; }
-
-  const home = new Float32Array(N * 3);
-  const scatter = new Float32Array(N * 3);
-  const seeds = new Float32Array(N);
+  for (let i = 0; i < W * H; i++) { cum += weights[i] / total; cdf[i] = cum; }
+  const home = new Float32Array(N * 3), scatter = new Float32Array(N * 3), seeds = new Float32Array(N);
   for (let i = 0; i < N; i++) {
     const r = Math.random();
-    let lo = 0, hi = triCount - 1;
+    let lo = 0, hi = W * H - 1;
     while (lo < hi) { const mid = (lo+hi)>>1; if (cdf[mid] < r) lo = mid+1; else hi = mid; }
-    const a = vi(lo,0), b = vi(lo,1), c = vi(lo,2);
-    let r1 = Math.random(), r2 = Math.random();
-    if (r1 + r2 > 1) { r1 = 1-r1; r2 = 1-r2; }
-    const r3 = 1-r1-r2;
-    home[i*3]   = pos.getX(a)*r3 + pos.getX(b)*r1 + pos.getX(c)*r2;
-    home[i*3+1] = pos.getY(a)*r3 + pos.getY(b)*r1 + pos.getY(c)*r2;
-    home[i*3+2] = pos.getZ(a)*r3 + pos.getZ(b)*r1 + pos.getZ(c)*r2;
-    const phi = Math.acos(2*Math.random()-1);
-    const theta = Math.random() * Math.PI * 2;
-    const rad = 2.0 + Math.random() * 1.0;
-    scatter[i*3]   = rad * Math.sin(phi) * Math.cos(theta);
-    scatter[i*3+1] = rad * Math.sin(phi) * Math.sin(theta);
-    scatter[i*3+2] = rad * Math.cos(phi);
-    seeds[i] = Math.random() * 6.28318;
+    const px = (lo % W) + Math.random() - 0.5;
+    const py = Math.floor(lo / W) + Math.random() - 0.5;
+    const lum = (data[lo*4]*0.299 + data[lo*4+1]*0.587 + data[lo*4+2]*0.114) / 255;
+    home[i*3]   = (px / W - 0.5) * 2.0;
+    home[i*3+1] = -(py / H - 0.5) * 2.6;
+    home[i*3+2] = lum * 0.9 - 0.1;
+    const phi = Math.acos(2*Math.random()-1), theta = Math.random()*Math.PI*2, rad = 2+Math.random();
+    scatter[i*3]   = rad*Math.sin(phi)*Math.cos(theta);
+    scatter[i*3+1] = rad*Math.sin(phi)*Math.sin(theta);
+    scatter[i*3+2] = rad*Math.cos(phi);
+    seeds[i] = Math.random()*6.28318;
   }
   return { home, scatter, seeds };
 }
@@ -264,8 +239,14 @@ function sampleMeshSurface(geom, N) {
 const FACE_N = State.coarsePointer ? 8000 : 20000;
 const FACE_N_2D = 600;
 let faceHome, faceScatter, faceSeeds;
-if (_hasWebGL && head) {
-  ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleMeshSurface(head, FACE_N));
+if (_hasWebGL && THREE) {
+  try {
+    const maskCanvas = await loadMaskCanvas('/face_mask.jpg?v=1');
+    ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleImageDepth(maskCanvas, FACE_N));
+  } catch (_) {
+    const flatPos = buildHeadPositions2D();
+    ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleFlatPositions(flatPos, FACE_N_2D));
+  }
 } else {
   const flatPos = buildHeadPositions2D();
   ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleFlatPositions(flatPos, FACE_N_2D));
