@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require "ruby_llm"
+require "open3"
+require "rbconfig"
+require "shellwords"
 
 module Master
   module Reach
@@ -199,9 +202,10 @@ module Master
 
       class Postpro < RubyLLM::Tool
         description "Apply cinematic post-processing (film stocks, presets, recipes) to images " \
-          "via ruby-vips. Writes processed copies next to originals."
+          "via ruby-vips for genuinely good photography look. Use AFTER /repligen generate (flux etc) " \
+          "or on uploaded refs. Stocks emulate kodak_portra, vision3 etc + grain/clarity."
         param :target_dir, desc: "Directory containing source images (relative to project root)", required: true
-        param :preset, desc: "One of: portrait, landscape, street, blockbuster", required: false
+        param :preset, desc: "One of: portrait, landscape, street, blockbuster, quality_uplift", required: false
         param :variations, desc: "1-5 output variations per file", type: "integer", required: false
         param :recipe, desc: "JSON recipe filename (overrides preset)", required: false
 
@@ -215,15 +219,26 @@ module Master
       end
 
       class Repligen < RubyLLM::Tool
-        description "Discover, search, and run Replicate.com models. Actions: sync, search, stats. " \
-          "Requires REPLICATE_API_TOKEN for sync."
-        param :action, desc: "One of: sync, search, stats", required: true
-        param :query, desc: "Search query (required for action=search)", required: false
-        param :limit, desc: "Sync limit (1-1000, default 100)", type: "integer", required: false
+        description "Discover, search, stats, and generate images via Replicate (Flux etc for photography). " \
+          "Actions: sync, search, stats, generate. For generate pass query as 'model_id the prompt'. " \
+          "Pair results with postpro tool (film stocks like kodak_portra) for genuinely cinematic photography. " \
+          "Requires REPLICATE_API_TOKEN for generate/sync."
+        param :action, desc: "One of: sync, search, stats, generate", required: true
+        param :query, desc: "For search: query; for generate: 'owner/model prompt text here'", required: false
+        param :limit, desc: "Sync limit", type: "integer", required: false
 
         def initialize(tool) = @tool = tool
 
         def execute(action:, query: nil, limit: nil)
+          if action.to_s == "generate" && query.to_s.include?(" ")
+            # Forward to script for non-interactive generate (supports flux etc + download to output/)
+            master_root = File.expand_path("..", __dir__)
+            repo_root = File.expand_path("..", master_root)
+            script = File.join(repo_root, "DEPLOY", "repligen.rb")
+            argv = ["generate"] + Shellwords.split(query.to_s)
+            out, st = Open3.capture2e(RbConfig.ruby, script, *argv, chdir: repo_root)
+            return st.success? ? out.strip : "repligen generate error: #{out.strip}"
+          end
           result = @tool.call(action: action.to_s, query: query&.to_s, limit: limit&.to_i)
           result.ok? ? result.value! : "Error: #{result.message}"
         end

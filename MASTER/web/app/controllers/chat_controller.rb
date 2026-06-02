@@ -344,14 +344,15 @@ class ChatController < ApplicationController
     return nil unless File.file?(meta_path)
 
     meta = JSON.parse(File.read(meta_path))
-    path = meta["path"].to_s
-    return nil unless path.start_with?(PHOTO_UPLOAD_DIR.to_s)
-    return nil unless File.file?(path)
+    disk_path = meta["path"].to_s
+    return nil unless disk_path.start_with?(PHOTO_UPLOAD_DIR.to_s)
+    return nil unless File.file?(disk_path)
 
     {
-      data: Base64.strict_encode64(File.binread(path)),
+      data: Base64.strict_encode64(File.binread(disk_path)),
       mime: meta["mime"].to_s.empty? ? "image/jpeg" : meta["mime"].to_s,
-      name: meta["name"].to_s.empty? ? File.basename(path) : meta["name"].to_s
+      name: meta["name"].to_s.empty? ? File.basename(disk_path) : meta["name"].to_s,
+      path: disk_path  # prefer for RubyLLM::Attachment (loads from disk, vision models)
     }
   rescue StandardError => e
     Rails.logger.warn("uploaded_image_payload failed: #{e.class}: #{e.message}")

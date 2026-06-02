@@ -4,6 +4,8 @@ require "ruby_llm"
 require "digest"
 require "json"
 require "open3"
+require "tempfile"
+require "base64"
 
 module Master
   module Judge
@@ -59,12 +61,12 @@ module Master
         @tool_registry = load_tool_registry
       end
 
-      def send_with_cache(selected_model, messages, system: nil, stream: false, &blk)
+      def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, &blk)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
           @cache.fetch(cache_key, selected_model) do
-            send_llm_request(selected_model, messages, system:, stream:, &blk)
+            send_llm_request(selected_model, messages, system:, stream:, image: image, &blk)
           end
         end
         record_provider_result(selected_model, result, started)
@@ -106,14 +108,14 @@ module Master
         [result[:static], result[:dynamic]].compact.join("\n\n").then { |s| s.empty? ? nil : s }
       end
 
-      def send_llm_request(selected_model, messages, system: nil, stream: false, &blk)
+      def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, &blk)
         sys = system || system_prompt
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:)     if web_chat_model?(selected_model)
         if !tool_capable?(selected_model) && @tools.any?
-          return react_tool_loop(selected_model, messages, sys:, stream:, &blk)
+          return react_tool_loop(selected_model, messages, sys:, stream:, image: image, &blk)
         end
-        send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
+        send_ruby_llm(selected_model, messages, sys:, stream:, image: image, &blk)
       end
 
       def send_claude_cli(model_alias, messages, sys:)
@@ -135,13 +137,14 @@ module Master
       # ReactToolLoop — emulates function calling for models that lack native tool support.
       # Injects a text-format tool schema into the system prompt; parses <tool_call> XML
       # from responses; executes tools directly; loops until no calls remain.
-      def react_tool_loop(selected_model, messages, sys:, stream:, &blk)
+      def react_tool_loop(selected_model, messages, sys:, stream:, image: nil, &blk)
         react_sys = build_react_system(sys)
         history   = messages.dup
         last      = nil
 
         REACT_MAX_STEPS.times do |step|
-          result = send_ruby_llm(selected_model, history, sys: react_sys, stream: step.zero? ? stream : false, &(step.zero? ? blk : nil))
+          img = (step.zero? ? image : nil)
+          result = send_ruby_llm(selected_model, history, sys: react_sys, stream: step.zero? ? stream : false, image: img, &(step.zero? ? blk : nil))
           return result if result.err?
 
           text  = result.to_s
@@ -204,22 +207,59 @@ module Master
         context.empty? ? prompt : "#{context}\n\nuser: #{prompt}"
       end
 
-      def send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
+      def send_ruby_llm(selected_model, messages, sys:, stream:, image: nil, &blk)
         chat_session = RubyLLM.chat(model: selected_model)
         final_sys = build_final_system(selected_model, sys)
         chat_session.with_instructions(final_sys) if final_sys
-        messages.each { |message_entry| chat_session.add_message(role: message_entry[:role].to_s, content: message_entry[:content].to_s) }
+
+        # Add prior context as plain text (vision is typically only for the current user turn)
+        messages[0...-1].each do |message_entry|
+          chat_session.add_message(role: message_entry[:role].to_s, content: message_entry[:content].to_s)
+        end
+
+        last_entry = messages.last || {}
+        last_text = last_entry[:content].to_s
 
         available_tools = llm_tools(selected_model)
         chat_session.with_tools(*available_tools) unless available_tools.empty?
 
-        reply = if stream && blk
-                  chat_session.ask(messages.last[:content]) { |chunk| blk.call(chunk.content.to_s) if chunk.content }
+        tmp = nil # for vision temp file cleanup
+        if image && ( (image[:path].to_s.present? && File.file?(image[:path])) || image[:data].present? )
+          # Wire free vision models (gemini-2.0-flash-exp:free etc via openrouter) for ref photos in photography gen flows.
+          # Chat photo uploads are already postpro'd. Use disk path when available (from token meta); else write temp for Attachment.
+          # RubyLLM Content+Attachment -> provider media formatting (data/base64 or file) for multimodal.
+          attachment = nil
+          if image[:path].to_s.present? && File.file?(image[:path])
+            attachment = RubyLLM::Attachment.new(image[:path], filename: (image[:name].to_s.presence || File.basename(image[:path])))
+          else
+            ext = (image[:mime].to_s =~ /png/i ? ".png" : (image[:mime].to_s =~ /webp/i ? ".webp" : ".jpg"))
+            tmp = Tempfile.new(["master_vision", ext])
+            tmp.binmode
+            tmp.write(Base64.strict_decode64(image[:data]))
+            tmp.rewind
+            tmp.close
+            attachment = RubyLLM::Attachment.new(tmp.path, filename: (image[:name].to_s.presence || "photo#{ext}"))
+          end
+          content = RubyLLM::Content.new(text: last_text, attachments: [attachment])
+          ask_arg = content
         else
-          chat_session.ask(messages.last[:content])
+          ask_arg = last_text
+        end
+
+        reply = if stream && blk
+                  chat_session.ask(ask_arg) { |chunk| blk.call(chunk.content.to_s) if chunk.content }
+        else
+          chat_session.ask(ask_arg)
         end
         record_usage(reply, selected_model)
-        Result.ok(extract_response(reply, selected_model))
+        res = Result.ok(extract_response(reply, selected_model))
+        begin
+          tmp&.close if tmp && !tmp.closed?
+          tmp&.unlink if tmp && File.exist?(tmp.path)
+        rescue StandardError
+          # best effort cleanup of vision temp
+        end
+        res
       end
 
       def record_usage(reply, model)

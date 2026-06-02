@@ -521,6 +521,19 @@ if __FILE__ == $PROGRAM_NAME
     db = Database.new
     show_stats(db)
 
+  when "generate"
+    ensure_gems
+    token = Config.load
+    api = API.new(token)
+    model_id = ARGV[1]
+    prompt = (ARGV[2..] || []).join(" ")
+    if model_id && !prompt.empty?
+      generate_with_lora(api, model_id, prompt)
+    else
+      puts "Usage: ruby repligen.rb generate <owner/model> <prompt text>"
+      puts "Example: ruby repligen.rb generate black-forest-labs/flux-1.1-pro 'cinematic portrait, natural light, kodak portra'"
+    end
+
   when "--help", "-h"
     puts <<~HELP
       Repligen - Replicate.com AI Generation CLI
@@ -530,12 +543,15 @@ if __FILE__ == $PROGRAM_NAME
         ruby repligen.rb sync 100     # Sync 100 models
         ruby repligen.rb search upscale
         ruby repligen.rb stats
+        ruby repligen.rb generate black-forest-labs/flux-1.1-pro "pro photo prompt here"
 
       Features:
         - Model discovery & database
+        - Direct generation (t2i via Replicate Flux/SD etc.)
         - LoRA generation
         - Chain workflows (masterpiece/quick)
         - Cost tracking
+        - Pair with /postpro for filmic photography polish (grain, kodak stocks, cinematic)
     HELP
 
   else
