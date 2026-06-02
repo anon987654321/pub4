@@ -4820,4 +4820,4 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA142 face: high-contrast mode — `?hc=1` forces alpha 1.0 particles, white-on-black text
 - [ ] FA143 face: font family toggle — system-ui vs monospace; persisted to localStorage
 - [ ] FA144 face: focus ring on canvas when keyboard-focused (outline: 2px solid white)
-- [ ] FA145 face: announce mood changes to screen reader via aria-live="polite" on hidden element
+- [x] FA145 face: announce mood changes to screen reader via aria-live="polite" on hidden element (added .sr-only in public/face.css + #mood-live divs in chat/index.html.erb + web/index.html.erb + 3-line update in public/face.js mood listener after State.mood=; full reads of AGENTS.md, CLAUDE.md, MASTER/data/soul.yml, QUICKSTART.md + list_dir/greps of MASTER/web + reads of 2 index erbs, chat.js, face.js chunks (top/State/TINT/mood listener), visual_bridge, controller mood bus sub, css, soul; re-reads/diffs/grep post; 0 new findings; specific add of 4 paths + commit + push after rebase (ahead=0 verified); re-read bottom. evidence face.js:798, css:82, views)
