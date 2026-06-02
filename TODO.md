@@ -4632,7 +4632,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] DG02 bsdports: add `sqlite-vec` semantic search (port description embeddings)
 - [ ] DG03 bsdports: add dependency graph visualisation (D3.js or plain SVG)
 - [ ] DG04 bsdports: add version diff — compare current port with previous version (unified diff)
-- [ ] DG05 bsdports: add "installed" indicator — query local `pkg_info` output if available
+- [x] DG05 bsdports: add "installed" indicator — query local `pkg_info` output if available (added @pkg_info = capture pkg_info -q in show; display in dl "Local install"; specific commit/push)
 - [x] DG06 bsdports: add MASTER port review — scan `Makefile` and patches for quality issues (added review action in ports_controller (demo findings from metadata + comment on real MASTER scanner); post button in show view; route; specific commit after rebase)
 - [x] DG07 bsdports: add category browse — all categories with port count (enhanced categories/index.html.erb to show (N ports) using pre-included; mirrors maintainer pattern; specific commit/push after rebase)
 - [x] DG08 bsdports: add maintainer page — all ports by a given maintainer with contact link (added create_maintainers mig + add_maintainer_to_ports mig; wired belongs_to + scope in Port model; new MaintainersController (index/show, unauth, pagy); routes + nav link; views/maintainers/index (list with count/label) + show (header + email mailto + ports ul); linked from ports/show; specific commits/pushes + autofix; migs 20260603*; evidence via reads/greps)
