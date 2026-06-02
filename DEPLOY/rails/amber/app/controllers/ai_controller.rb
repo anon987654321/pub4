@@ -27,6 +27,32 @@ class AiController < ApplicationController
     @suggestions = WardrobeAiService.new(Current.user).suggest_outfits(
       occasion: params[:occasion], season: params[:season]
     )
+    # PH03: auto /photograph the combo (styled) using MASTER photograph command, attach postpro'd image to Outfit
+    # reuse DF02 suggest, DF06 postpro pattern (direct script), DF10 outfit create+items
+    master_root = Rails.root.join("..", "..", "MASTER").to_s
+    @suggestions.each do |s|
+      next unless s.is_a?(Hash)
+      combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
+      begin
+        out = `cd #{master_root} && bundle exec ruby bin/cli "photograph #{combo.gsub('"', '\"')}" 2>&1`
+        if out =~ /postpro.*(output\/[^\s]+_postpro)/
+          pdir = File.join(master_root, $1)
+          imgf = Dir.glob(File.join(pdir, "*.{jpg,jpeg,png}")).first
+          if imgf && File.exist?(imgf)
+            outfit = Current.user.outfits.create!(name: s["name"], description: s["description"].to_s)
+            Array(s["items"]).each do |tit|
+              key = tit.to_s.split("(").first.strip.downcase
+              it = Current.user.items.where("lower(title) LIKE ?", "%#{key}%").first || Current.user.items.joy.active_wardrobe.first
+              outfit.outfit_items.create!(item: it) if it
+            end
+            outfit.image.attach(io: File.open(imgf), filename: "visual.jpg")
+            s["outfit_id"] = outfit.id
+          end
+        end
+      rescue StandardError => e
+        Rails.logger.warn("PH03 photograph for suggestion failed: #{e.message}")
+      end
+    end
   end
 
   def declutter_guide

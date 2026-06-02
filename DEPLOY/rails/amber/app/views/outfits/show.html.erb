@@ -20,6 +20,12 @@
   <p class="dim">Add a description to capture why this outfit works.</p>
 <% end %>
 
+<% if @outfit.image.attached? %>
+  <div class="outfit-visual">
+    <%= image_tag @outfit.image, style: "max-width: 400px; height: auto;" %>
+  </div>
+<% end %>
+
 <section>
   <h2>Items</h2>
   <div class="item-grid"><%= render @outfit.items %></div>

@@ -1,4 +1,9 @@
 <article class="item-card" id="<%= dom_id(outfit) %>">
+  <% if outfit.image.attached? %>
+    <%= link_to outfit, class: "item-title" do %>
+      <%= image_tag outfit.image.variant(resize_to_limit: [200, 200]), style: "max-width:100%; height:auto;" %>
+    <% end %>
+  <% end %>
   <%= link_to outfit.name, outfit, class: "item-title" %>
   <span class="dim"><%= outfit.context_label.presence || "No context yet" %></span>
   <span class="dim"><%= outfit.items.count %> items · <%= outfit.likes_count.to_i %> likes</span>
