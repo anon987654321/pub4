@@ -183,7 +183,7 @@ function sampleFlatPositions(flatPos, N) {
     home[i*3]   = flatPos[b]*r3 + flatPos[b+3]*r1 + flatPos[b+6]*r2;
     home[i*3+1] = flatPos[b+1]*r3 + flatPos[b+4]*r1 + flatPos[b+7]*r2;
     home[i*3+2] = flatPos[b+2]*r3 + flatPos[b+5]*r1 + flatPos[b+8]*r2;
-    const phi = Math.acos(2*Math.random()-1), theta = Math.random()*Math.PI*2, rad = 0.8+Math.random()*0.4;
+    const phi = Math.acos(2*Math.random()-1), theta = Math.random()*Math.PI*2, rad = 0.3+Math.random()*0.2;
     scatter[i*3]=rad*Math.sin(phi)*Math.cos(theta); scatter[i*3+1]=rad*Math.sin(phi)*Math.sin(theta); scatter[i*3+2]=rad*Math.cos(phi);
     seeds[i] = Math.random()*6.28318;
   }
@@ -227,7 +227,7 @@ function sampleImageDepth(canvas, N) {
     home[i*3]   = (px / W - 0.5) * 2.0;
     home[i*3+1] = -(py / H - 0.5) * 2.6;
     home[i*3+2] = lum * 0.9 - 0.1;
-    const phi = Math.acos(2*Math.random()-1), theta = Math.random()*Math.PI*2, rad = 0.8+Math.random()*0.4;
+    const phi = Math.acos(2*Math.random()-1), theta = Math.random()*Math.PI*2, rad = 0.3+Math.random()*0.2;
     scatter[i*3]   = rad*Math.sin(phi)*Math.cos(theta);
     scatter[i*3+1] = rad*Math.sin(phi)*Math.sin(theta);
     scatter[i*3+2] = rad*Math.cos(phi);
