@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=37') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=38') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -191,9 +191,9 @@ function generateFaceDepthMap(size) {
   let g;
   // Base face — narrow oval, portrait proportions
   g = ctx.createRadialGradient(cx, cy - H*0.04, 0, cx, cy, W * 0.36);
-  g.addColorStop(0,    'rgba(210,210,210,1)');
-  g.addColorStop(0.42, 'rgba(168,168,168,1)');
-  g.addColorStop(0.78, 'rgba(62, 62, 62, 1)');
+  g.addColorStop(0,    'rgba(222,222,222,1)');
+  g.addColorStop(0.38, 'rgba(175,175,175,1)');
+  g.addColorStop(0.72, 'rgba(68, 68, 68, 1)');
   g.addColorStop(1,    'rgba(0,  0,  0,  1)');
   ctx.fillStyle = g;
   ctx.beginPath();
@@ -221,36 +221,48 @@ function generateFaceDepthMap(size) {
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Brow ridges — raised shelf above eyes
-  for (const ex of [-0.125, 0.125]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.165, 0, cx + ex*W, cy - H*0.165, W*0.09);
-    g.addColorStop(0,    'rgba(200,200,200,0.66)');
-    g.addColorStop(0.55, 'rgba(135,135,135,0.30)');
+  for (const ex of [-0.112, 0.112]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.162, 0, cx + ex*W, cy - H*0.162, W*0.092);
+    g.addColorStop(0,    'rgba(205,205,205,0.70)');
+    g.addColorStop(0.50, 'rgba(140,140,140,0.32)');
     g.addColorStop(1,    'rgba(0,  0,  0,  0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Eye sockets — deep recesses
-  for (const ex of [-0.125, 0.125]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.085, 0, cx + ex*W, cy - H*0.085, W*0.095);
-    g.addColorStop(0,    'rgba(0,0,0,0.96)');
-    g.addColorStop(0.48, 'rgba(0,0,0,0.72)');
-    g.addColorStop(0.82, 'rgba(0,0,0,0.26)');
+  // Eye sockets — deep recesses, horizontally elongated
+  for (const ex of [-0.112, 0.112]) {
+    ctx.save();
+    ctx.translate(cx + ex*W, cy - H*0.082);
+    ctx.scale(1.45, 1.0);
+    g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.088);
+    g.addColorStop(0,    'rgba(0,0,0,0.98)');
+    g.addColorStop(0.45, 'rgba(0,0,0,0.75)');
+    g.addColorStop(0.80, 'rgba(0,0,0,0.28)');
     g.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, W*0.088, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
   }
-  // Nose bridge — vertical ridge from brow to tip
-  g = ctx.createLinearGradient(cx - W*0.020, 0, cx + W*0.020, 0);
+  // Nose bridge — from just below brows to tip, not invading eye area
+  g = ctx.createLinearGradient(cx - W*0.018, 0, cx + W*0.018, 0);
   g.addColorStop(0,   'rgba(0,0,0,0)');
-  g.addColorStop(0.5, 'rgba(205,205,205,0.64)');
+  g.addColorStop(0.5, 'rgba(210,210,210,0.68)');
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g;
-  ctx.fillRect(cx - W*0.020, cy - H*0.16, W*0.040, H*0.26);
+  ctx.fillRect(cx - W*0.018, cy - H*0.04, W*0.036, H*0.14);
   // Nose tip — brightest point
-  g = ctx.createRadialGradient(cx, cy + H*0.102, 0, cx, cy + H*0.082, W*0.082);
-  g.addColorStop(0,    'rgba(255,255,255,0.98)');
-  g.addColorStop(0.32, 'rgba(230,230,230,0.82)');
-  g.addColorStop(0.68, 'rgba(158,158,158,0.42)');
+  g = ctx.createRadialGradient(cx, cy + H*0.098, 0, cx, cy + H*0.098, W*0.076);
+  g.addColorStop(0,    'rgba(255,255,255,1.00)');
+  g.addColorStop(0.28, 'rgba(235,235,235,0.85)');
+  g.addColorStop(0.62, 'rgba(162,162,162,0.44)');
   g.addColorStop(1,    'rgba(0,  0,  0,  0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Nose ala — slight shadow at wings
+  for (const ex of [-0.065, 0.065]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.112, 0, cx + ex*W, cy + H*0.112, W*0.032);
+    g.addColorStop(0,   'rgba(0,0,0,0.38)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
   // Cheekbones — lateral projection at mid-face
   for (const ex of [-0.215, 0.215]) {
     g = ctx.createRadialGradient(cx + ex*W, cy + H*0.032, 0, cx + ex*W, cy + H*0.032, W*0.115);
@@ -298,10 +310,10 @@ function sampleDepthMap(canvas, N) {
     if (Math.random() > lum * 0.96 + 0.04) continue;
     const nx = ((x / size) * 2 - 1) * 0.62;
     const ny = -(((y / size) * 2 - 1)) * 0.62;
-    const nz = lum * 0.70 - 0.04;
-    home[count*3]   = nx + (Math.random()-0.5)*0.008;
-    home[count*3+1] = ny + (Math.random()-0.5)*0.008;
-    home[count*3+2] = nz + (Math.random()-0.5)*0.015;
+    const nz = lum * 0.78;
+    home[count*3]   = nx + (Math.random()-0.5)*0.006;
+    home[count*3+1] = ny + (Math.random()-0.5)*0.006;
+    home[count*3+2] = nz + (Math.random()-0.5)*0.010;
     scatter[count*3]   = nx + (Math.random()-0.5)*0.28;
     scatter[count*3+1] = ny + (Math.random()-0.5)*0.28;
     scatter[count*3+2] = (Math.random()-0.5)*0.20;
@@ -393,12 +405,12 @@ void main(){
   float radial=length(p.xy);
   p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*m;
   vec4 mv=modelViewMatrix*vec4(p,1.);
-  float depth=clamp((p.z+0.8)/1.8,0.,1.);
-  gl_PointSize=clamp(uSize*(240./-mv.z)*(0.72+depth*0.42),1.0,3.0);
+  float depth=clamp(p.z/0.82,0.,1.);
+  gl_PointSize=clamp(uSize*(240./-mv.z)*(0.52+depth*0.96),1.0,4.0);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
-  vAlpha=hc>0.5?1.0:mix(0.28,0.40+depth*0.60,m);
-  float shade=mix(0.18,1.0,depth);
+  vAlpha=hc>0.5?1.0:mix(0.22,0.32+depth*0.68,m);
+  float shade=mix(0.14,1.0,depth);
   vColor=(hc>0.5?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.5?1.0:1.0);
   vec3 viewDir=normalize(-mv.xyz);
   vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
