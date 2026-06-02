@@ -92,6 +92,34 @@ class TestRuleLoopPolicy < Minitest::Test
     end
   end
 
+  def test_preamble_loads_soul_once_across_rule_loops
+    original = Master.method(:load_yaml)
+    count = 0
+    Master::Loop::RuleLoop.clear_preamble_cache!
+    Master.define_singleton_method(:load_yaml) do |path, symbolize_names: false, default: {}|
+      if path.end_with?("soul.yml")
+        count += 1
+        { "absolute" => { "golden_rule" => "CACHE_ME" } }
+      else
+        original.call(path, symbolize_names:, default:)
+      end
+    end
+
+    Dir.mktmpdir do |root|
+      first = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: Agent.new)
+      second = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: Agent.new)
+
+      assert_includes first.__send__(:preamble), "CACHE_ME"
+      assert_includes second.__send__(:preamble), "CACHE_ME"
+      assert_equal 1, count
+    end
+  ensure
+    Master.define_singleton_method(:load_yaml) do |path, symbolize_names: false, default: {}|
+      original.call(path, symbolize_names:, default:)
+    end
+    Master::Loop::RuleLoop.clear_preamble_cache!
+  end
+
   private
 
   def build_loop(root:, bus:, scanner:, agent:)
