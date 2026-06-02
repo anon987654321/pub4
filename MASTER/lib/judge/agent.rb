@@ -77,6 +77,7 @@ module Master
       rescue Reach::CircuitBreaker::CircuitError => err
         Result.err(err.message, category: err.category)
       end
+      private :prepare_chat_turn, :check_rate_limit
 
       def ask(prompt, context: nil, operation: nil, image: nil)
         messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]

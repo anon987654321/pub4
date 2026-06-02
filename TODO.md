@@ -113,7 +113,7 @@ MASTER must pass its own rules. Violations found by reading lib/.
 - [x] F10 rule_loop.rb#preamble: reads soul.yml on every call — memoize (pure function same input = same output)
 - [x] F11 pipeline.rb ParallelGroup#merge_results: uses filter_map + reduce on results — simplify (KISS)
 - [x] F12 repo_ecology.rb: co_change_graph built twice (once in snapshot, once in scan) — always use memoized accessor
-- [ ] F13 judge/agent.rb: verify method count ≤10 public methods (NO_GOD_CLASS threshold)
+- [x] F13 judge/agent.rb: verify method count ≤10 public methods (NO_GOD_CLASS threshold)
 - [ ] F14 now/context_window.rb: verify no god class
 - [ ] F15 loop/rule_loop.rb: CANDIDATE_COUNT=3 magic number — name as semantic constant with comment (NO_MAGIC)
 - [ ] F16 ground/memory.rb: MAX_INJECT_TOKENS = 2000 used as token limit — verify against actual model context size

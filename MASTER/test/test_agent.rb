@@ -69,4 +69,8 @@ class TestAgent < Minitest::Test
     t.join
     assert_nil other_thread_saw, "flag must not leak across threads"
   end
+
+  def test_public_method_count_stays_below_god_class_threshold
+    assert_operator Master::Judge::Agent.public_instance_methods(false).size, :<=, 10
+  end
 end
