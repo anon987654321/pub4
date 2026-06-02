@@ -474,6 +474,7 @@ module Master
           end
         end
 
+        StructuralRules = Module.new
       end
     end
   end
