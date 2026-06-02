@@ -119,6 +119,7 @@ module Master
       private
 
       DEPLOY_RE = /\b(deploy|ship|shipping|release|publish)\b/i
+      TIER1_CRITICAL_RULE_IDS = %w[PRESERVE_FIRST DECOUPLE DEGRADE_GRACEFULLY].freeze
 
       def deploy_gate(ctx)
         return Result.ok(ctx) unless deploy_intent?(ctx)
@@ -130,6 +131,13 @@ module Master
         summary = result.value!
         score = evidence_score(summary, ctx)
         @bus&.publish("pipeline:evidence_score", score:, threshold: evidence_threshold, violations: summary.violation_count)
+
+        tier1_violations = tier1_critical_violations(summary)
+        unless tier1_violations.empty?
+          @bus&.publish("pipeline:blocked", gate: "tier1_critical", violations: tier1_violations.size, score:)
+          return Result.err("deploy blocked: tier1 critical violation(s): #{tier1_violations.uniq.join(", ")}",
+                            category: :policy)
+        end
 
         if summary.violation_count.positive?
           @bus&.publish("pipeline:blocked", gate: "self_scan", violations: summary.violation_count, score:)
@@ -144,6 +152,16 @@ module Master
 
       def deploy_intent?(ctx)
         [ctx[:user_message], ctx[:message], ctx[:command], ctx[:task_type]].compact.any? { |value| value.to_s.match?(DEPLOY_RE) }
+      end
+
+      def tier1_critical_violations(summary)
+        summary.pairs.flat_map do |(_path, result)|
+          next [] unless result.ok?
+          result.value!.filter_map do |finding|
+            rule_id = finding.respond_to?(:rule_id) ? finding.rule_id : finding[:rule_id] || finding[:rule]
+            rule_id.to_s if TIER1_CRITICAL_RULE_IDS.include?(rule_id.to_s)
+          end
+        end
       end
 
       def evidence_score(summary, ctx)

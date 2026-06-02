@@ -19,6 +19,7 @@ module Master
       SKIP_DIRS = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
       DEPS_PATH = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
       PRIORS_PATH = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
+      TIER2_QUALITY_RULE_IDS = %w[DRY KISS SRP].freeze
 
       def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil, incremental: false)
         @rules = rules
@@ -205,6 +206,7 @@ module Master
           rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root,
                             bus: @bus, learnings: @learnings)
           rl.injected_preamble = @preamble
+          @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if tier2_quality_rule?(rule.id)
           result = rl.run_once(files)
           @violation_counts[rule.id] += result[:fixed]
           fixed += result[:fixed]
@@ -302,9 +304,14 @@ module Master
           adjusted = ext_wts.sum { |ext, w| base_prior * (modifiers[ext] || 1.0) * w }
           density = @violation_counts[r.id].to_f + adjusted
           quality = @learnings&.fix_quality(rule: r.id) || 0.5
-          [-density, -quality]
+          tier2_priority = tier2_quality_rule?(r.id) ? 1 : 0
+          [-tier2_priority, -density, -quality]
         end
         topo_sort(rules, deps)
+      end
+
+      def tier2_quality_rule?(rule_id)
+        TIER2_QUALITY_RULE_IDS.include?(rule_id.to_s)
       end
 
       # Emit module-grouped topology for particle visualisation — architecture #15.

@@ -93,6 +93,22 @@ class TestPipeline < Minitest::Test
     end
   end
 
+  def test_deploy_gate_blocks_tier1_critical_principles_first
+    Dir.mktmpdir do |dir|
+      write_rules(dir)
+      bus = FakeBus.new
+      scanner = FakeScanner.new([{ rule: "PRESERVE_FIRST", rule_id: "PRESERVE_FIRST", line: 1, message: "breaks behavior" }])
+      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
+
+      result = pipe.call(Master::Result.ok(user_message: "deploy now"))
+
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_match(/tier1 critical/, result.message)
+      assert_equal "tier1_critical", bus.events.find { |event, _| event == "pipeline:blocked" }.last[:gate]
+    end
+  end
+
   def test_deploy_gate_blocks_when_evidence_score_is_too_low
     Dir.mktmpdir do |dir|
       write_rules(dir)

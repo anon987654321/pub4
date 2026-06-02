@@ -86,8 +86,8 @@ Every section of rules.yml that isn't implemented in Ruby.
 - [x] E03 Prediction engine: RuleLoop#should_autofix? already exists in scanner.rb — wire it into RuleLoop before applying any fix
 - [x] E04 evidence_scoring: Pipeline should accumulate scan_clean (25 pts) and require ≥80 to ship
 - [x] E05 failure_taxonomy: RuleLoop transient retry (already TRANSIENT_RE) — add permanent/ambiguous branches with fail_fast and human_intervention
-- [ ] E06 principle_priorities tier1: halt pipeline on PRESERVE_FIRST/DECOUPLE/DEGRADE_GRACEFULLY violation
-- [ ] E07 principle_priorities tier2: route DRY/KISS/SRP violations to RuleLoop automatically
+- [x] E06 principle_priorities tier1: halt pipeline on PRESERVE_FIRST/DECOUPLE/DEGRADE_GRACEFULLY violation
+- [x] E07 principle_priorities tier2: route DRY/KISS/SRP violations to RuleLoop automatically
 - [ ] E08 veto_patterns section: wire as :error severity rules that block the pipeline
 - [ ] E09 anti_patterns.forbidden: each pattern becomes a SecretProximity/ForbiddenPattern lexical rule
 - [x] E10 schema_metadata fields (reversibility, blast_radius): expose on Finding objects
