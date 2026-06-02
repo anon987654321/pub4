@@ -78,6 +78,19 @@ canvas {
   white-space: nowrap;
 }
 
+/* SR-only for a11y live announcements (mood changes etc) — screen readers only, no visual */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Primer overlay — Radio Bergen dialog style */
 #primer {
   position: fixed;

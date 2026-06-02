@@ -756,6 +756,8 @@ async function sendMessage(text) {
     if (!m) return;
     State.mood = m;
     if (TINT[m]) fadeColorTo(TINT[m]);
+    const live = document.getElementById('mood-live');
+    if (live) live.textContent = 'mood: ' + m;
   });
   evtSrc.addEventListener('model', (ev) => {
     const m = (ev.data || '').trim();
