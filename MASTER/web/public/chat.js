@@ -77,7 +77,7 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
 
 window._chatOnChunk = (raw) => {
   if (!_streamEl) return;
-  const text = _streamEl.textContent + raw.replace(/\n/g, '\n').replace(/\\/g, '\');
+  const text = _streamEl.textContent + raw.replace(/\n/g, '\n').replace(/\\\\/g, '\\');
   if (text.includes('```')) {
     _streamEl.innerHTML = text.replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
   } else {

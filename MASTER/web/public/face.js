@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=34') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=35') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -200,17 +200,18 @@ rootBody.dataset.highContrast = State.highContrast ? '1' : '';
 const STAR_FRAMES = ['|', '/', '-', '\\'];
 let _starTimer = null;
 let _starIdx = 0;
+const spinBtn = document.getElementById('spin-btn');
 function startStar() {
   if (_starTimer) return;
   _starIdx = 0;
   _starTimer = setInterval(() => {
     _starIdx = (_starIdx + 1) % STAR_FRAMES.length;
-    if (uiStatus) uiStatus.textContent = STAR_FRAMES[_starIdx];
+    if (spinBtn) spinBtn.textContent = STAR_FRAMES[_starIdx];
   }, 120);
 }
 function stopStar() {
   if (_starTimer) { clearInterval(_starTimer); _starTimer = null; }
-  if (uiStatus) uiStatus.textContent = '';
+  if (spinBtn) spinBtn.textContent = '';
 }
 
 let _stateMode = 'idle';
@@ -867,7 +868,6 @@ let ttsDBPromise = null;
 function setTTSLoading(loading) {
   tts.loading = !!loading;
   rootBody.dataset.ttsLoading = tts.loading ? 'true' : 'false';
-  if (uiStatus && State.mode === 'thinking') startStar();
 }
 
 function announceTTS(text) {
@@ -1409,7 +1409,7 @@ if (chatLog) {
 const _origHaptic = enqueueSpeech;
 window.MASTERVoice && (window.MASTERVoice._hapticPatch = true);
 
-document.getElementById('cancel-btn')?.addEventListener('click', () => cancelStream());
+spinBtn?.addEventListener('click', () => cancelStream());
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); cancelStream(); }
