@@ -44,7 +44,7 @@ module Master
       end
 
       def dispatch_self(scanner:, root:, bus:)
-        result = Master::Judge::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(stream: true)
+        result = Master::Judge::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(stream: true, autofix: true)
         return result.message unless result.ok?
 
         result.value!.line

@@ -8,15 +8,17 @@ class TestSelfScan < Minitest::Test
   class FakeScanner
     attr_reader :rules
 
-    def initialize(findings)
+    def initialize(findings, rules: [])
       @findings = findings
-      @rules = [Object.new, Object.new]
+      @rules = rules.empty? ? [Object.new, Object.new] : rules
     end
 
     def scan_dir(path, depth:, stream: false)
       Master::Result.ok([[File.join(path, "example.rb"), Master::Result.ok(@findings)]])
     end
   end
+
+  FakeRule = Struct.new(:id, :auto_fix)
 
   class FakeBus
     attr_reader :events
@@ -54,6 +56,23 @@ class TestSelfScan < Minitest::Test
     assert result.ok?
     assert_equal "judge: lib/ 2 rules, 0 violations", result.value!.line
     refute_includes bus.events.map(&:first), "self_violation"
+  end
+
+  def test_autofix_applies_ast_fixer_to_autofixable_findings
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "lib"))
+      path = File.join(root, "lib", "example.rb")
+      File.write(path, "class Example\nend\n")
+      scanner = FakeScanner.new([finding("FROZEN_LITERAL")], rules: [FakeRule.new("FROZEN_LITERAL", true)])
+      bus = FakeBus.new
+
+      result = Master::Judge::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(autofix: true)
+
+      assert result.ok?
+      assert_includes File.read(path), "# frozen_string_literal: true"
+      assert_equal "lib/example.rb", result.value!.autofixes.first[:path]
+      assert_includes bus.events.map(&:first), "self_autofix:applied"
+    end
   end
 
   private

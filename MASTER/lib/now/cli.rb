@@ -374,7 +374,7 @@ module Master
       end
 
       def boot_scan
-        result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call
+        result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call(autofix: true)
         return unless result.is_a?(Master::Result) && result.ok?
 
         prev = @prev_violations
@@ -389,7 +389,7 @@ module Master
       end
 
       def run_self_scan
-        result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call(stream: true)
+        result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call(stream: true, autofix: true)
         line = result.ok? ? result.value!.line : result.message
         puts @renderer.render(line, mode: result.ok? ? :dim : :warning)
       end
