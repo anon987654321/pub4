@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=31') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=32') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -290,7 +290,8 @@ function generateFaceDepthMap(size) {
   return cv;
 }
 
-// Direct luminance sampling — brighter pixels get more particles, luminance = Z depth
+// Direct luminance sampling — pixel brightness = Z depth, no edge detection
+// Scale 0.62: maps depth-map coords to same world-space size as original face
 function sampleDepthMap(canvas, N) {
   const size = canvas.width;
   const ctx = canvas.getContext('2d');
@@ -306,21 +307,21 @@ function sampleDepthMap(canvas, N) {
     const lum = px[(y * size + x) * 4] / 255;
     if (lum < 0.05) continue;
     if (Math.random() > lum * 0.96 + 0.04) continue;
-    const nx = (x / size) * 2 - 1;
-    const ny = -((y / size) * 2 - 1);
-    const nz = lum * 0.72 - 0.04;
-    home[count*3]   = nx + (Math.random()-0.5)*0.010;
-    home[count*3+1] = ny + (Math.random()-0.5)*0.010;
-    home[count*3+2] = nz + (Math.random()-0.5)*0.018;
-    scatter[count*3]   = nx + (Math.random()-0.5)*0.32;
-    scatter[count*3+1] = ny + (Math.random()-0.5)*0.32;
-    scatter[count*3+2] = (Math.random()-0.5)*0.22;
+    const nx = ((x / size) * 2 - 1) * 0.62;
+    const ny = -(((y / size) * 2 - 1)) * 0.62;
+    const nz = lum * 0.70 - 0.04;
+    home[count*3]   = nx + (Math.random()-0.5)*0.008;
+    home[count*3+1] = ny + (Math.random()-0.5)*0.008;
+    home[count*3+2] = nz + (Math.random()-0.5)*0.015;
+    scatter[count*3]   = nx + (Math.random()-0.5)*0.28;
+    scatter[count*3+1] = ny + (Math.random()-0.5)*0.28;
+    scatter[count*3+2] = (Math.random()-0.5)*0.20;
     seeds[count] = Math.random() * 6.28318;
     count++;
   }
   while (count < N) {
-    home[count*3] = (Math.random()-0.5)*0.6;
-    home[count*3+1] = (Math.random()-0.5)*0.6;
+    home[count*3] = (Math.random()-0.5)*0.5;
+    home[count*3+1] = (Math.random()-0.5)*0.5;
     home[count*3+2] = 0.2;
     scatter[count*3] = home[count*3]; scatter[count*3+1] = home[count*3+1]; scatter[count*3+2] = 0;
     seeds[count] = Math.random() * 6.28318;
@@ -407,7 +408,7 @@ void main(){
   gl_PointSize=uSize*(300./-mv.z);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
-  vAlpha=hc>0.5?1.0:mix(0.22,0.3+depth*0.7,m);
+  vAlpha=hc>0.5?1.0:mix(0.30,0.35+depth*0.65,m);
   vColor=(hc>0.5?vec3(1.0,1.0,1.0):uColor)*(hc>0.5?1.0:(0.3+depth*0.7));
   vec3 viewDir=normalize(-mv.xyz);
   vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
@@ -439,7 +440,7 @@ if (_hasWebGL && THREE) {
   faceMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
-      uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.025},
+      uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.033},
       uColor:{value:new Color(1,1,1)}, uHc:{value:0},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
       uBass:{value:0}, uShake:{value:0},
@@ -659,7 +660,7 @@ function frame(t) {
     const voiceRMS = State.voiceRMS || 0;
     const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
-    faceMat.uniforms.uSize.value = 0.025 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
+    faceMat.uniforms.uSize.value = 0.033 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
     faceMat.uniforms.uHc.value = State.highContrast ? 1.0 : 0.0;
     const curlTarget = State.mode === 'thinking' ? 1.0 : 0.0;
     faceMat.uniforms.uCurl.value += (curlTarget - faceMat.uniforms.uCurl.value) * 0.025;
