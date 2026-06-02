@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=36') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=37') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -32,36 +32,7 @@ const FACE_GLOW_SCALE = 1.18;
 const FONT_KEY = 'master:font';
 (function initFont() {
   const root = rootBody || document.documentElement;
-  const saved = localStorage.getItem(FONT_KEY);
-  if (saved === 'mono') root.classList.add('font-mono');
-  let t = document.getElementById('font-toggle');
-  if (!t) {
-    t = document.createElement('span');
-    t.id = 'font-toggle';
-    t.className = 'font-toggle';
-    t.role = 'button';
-    t.tabIndex = 0;
-    t.setAttribute('aria-label', 'Toggle font');
-    t.textContent = 'sys';
-    document.body.appendChild(t);
-  }
-  const update = () => {
-    const m = root.classList.contains('font-mono');
-    t.textContent = m ? 'mono' : 'sys';
-  };
-  update();
-  const doToggle = () => {
-    const m = root.classList.toggle('font-mono');
-    localStorage.setItem(FONT_KEY, m ? 'mono' : 'system');
-    update();
-  };
-  t.addEventListener('click', doToggle);
-  t.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      doToggle();
-    }
-  });
+  if (localStorage.getItem(FONT_KEY) === 'mono') root.classList.add('font-mono');
 })();
 
 const RATE_KEY = 'master:tts-rate';
@@ -77,88 +48,7 @@ function setTtsRate(r) {
   const el = document.getElementById('tts-rate');
   if (el) el.textContent = rate.toFixed(2) + 'x';
 }
-(function initTtsRate() {
-  let r = document.getElementById('tts-rate');
-  if (!r) {
-    r = document.createElement('span');
-    r.id = 'tts-rate';
-    r.className = 'tts-rate';
-    r.role = 'button';
-    r.tabIndex = 0;
-    r.setAttribute('aria-label', 'TTS playback speed');
-    document.body.appendChild(r);
-  }
-  const update = () => { r.textContent = getTtsRate().toFixed(2) + 'x'; };
-  update();
-  const doCycle = () => {
-    const cur = getTtsRate();
-    const idx = RATES.indexOf(cur);
-    const next = RATES[(idx + 1) % RATES.length];
-    setTtsRate(next);
-  };
-  r.addEventListener('click', doCycle);
-  r.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      doCycle();
-    }
-  });
-})();
 
-(function initTranscriptBtn() {
-  function getTranscript() {
-    const lines = [];
-    const logEl = document.getElementById('chat-log');
-    if (!logEl) return '';
-    logEl.querySelectorAll('.message, .dmesg-line').forEach(el => {
-      if (el.classList.contains('dmesg-line')) {
-        lines.push(el.textContent.trim());
-      } else {
-        const p = el.querySelector('.msg-prompt')?.textContent.trim() || '';
-        let body = '';
-        const b = el.querySelector('.msg-body');
-        if (b) {
-          body = b.textContent.trim();
-        } else {
-          body = el.textContent.trim().replace(p, '').trim();
-        }
-        lines.push(p + (p ? ' ' : '') + body);
-      }
-    });
-    return lines.join('\n\n');
-  }
-  let b = document.getElementById('transcript-btn');
-  if (!b) {
-    b = document.createElement('span');
-    b.id = 'transcript-btn';
-    b.className = 'transcript-btn';
-    b.role = 'button';
-    b.tabIndex = 0;
-    b.setAttribute('aria-label', 'Download transcript as Markdown');
-    b.textContent = 'log';
-    document.body.appendChild(b);
-  }
-  const download = (e) => {
-    const text = getTranscript();
-    if (!text) return;
-    const isMd = !(e && e.shiftKey);
-    const blob = new Blob([text], { type: isMd ? 'text/markdown' : 'text/plain' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = isMd ? 'master-transcript.md' : 'master-transcript.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
-  };
-  b.addEventListener('click', download);
-  b.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      download();
-    }
-  });
-})();
 
 const TINT = {
   // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
@@ -1456,6 +1346,7 @@ document.addEventListener('keydown', (e) => {
 window.sendMessage = sendMessage;
 window.MASTERVoice = {
   enqueue: enqueueSpeech,
+  initAudio,
   skip: ttsSkip,
   toggleMute: ttsToggleMute,
   speak: (t) => enqueueSpeech(t),

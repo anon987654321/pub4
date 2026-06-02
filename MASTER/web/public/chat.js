@@ -213,5 +213,6 @@ zsh?.addEventListener('submit', (event) => {
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
+  window.MASTERVoice?.initAudio?.();
   sendMessage(text);
 }, true);
