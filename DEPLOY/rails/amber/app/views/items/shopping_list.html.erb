@@ -1,0 +1,34 @@
+<% content_for :title, "Shopping list" %>
+
+<h1>Shopping list — gaps to fill</h1>
+
+<% if @gaps.any? %>
+  <ul>
+    <% @gaps.each do |gap| %>
+      <li>
+        <strong><%= gap[:category] || gap[:name] %></strong>
+        <p><%= gap[:reason] %></p>
+        <% if gap[:missing] %><span class="tag">missing <%= gap[:missing] %></span><% end %>
+        <% if gap[:owned] %><span class="tag">owned <%= gap[:owned] %> / <%= gap[:target] %></span><% end %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No gaps detected. Your wardrobe looks complete for essentials!</p>
+<% end %>
+
+<h2>MASTER purchase recommendations</h2>
+<% if @recommendations.any? %>
+  <ul>
+    <% @recommendations.each do |rec| %>
+      <li>
+        <%= rec.reason %>
+        <span class="tag">score <%= rec.score %></span>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No recommendations yet. Run the gap analysis or add more items.</p>
+<% end %>
+
+<%= link_to "Back to wardrobe", items_path, class: "btn" %>
