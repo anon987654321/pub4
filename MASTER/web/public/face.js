@@ -208,9 +208,11 @@ function sampleImageDepth(canvas, N) {
   const weights = new Float32Array(W * H);
   let total = 0;
   for (let i = 0; i < W * H; i++) {
+    const nx = (i % W) / W - 0.5, ny = Math.floor(i / W) / H - 0.5;
+    const inEllipse = (nx*nx)/(0.38*0.38) + (ny*ny)/(0.46*0.46) < 1;
     const r = data[i*4], g = data[i*4+1], b = data[i*4+2];
-    const bg = r > 228 && g > 228 && b > 228;
-    weights[i] = bg ? 0 : 1.0;
+    const bg = r > 210 && g > 200 && b > 190;
+    weights[i] = (inEllipse && !bg) ? 1.0 : 0;
     total += weights[i];
   }
   const cdf = new Float32Array(W * H);
@@ -829,6 +831,7 @@ function playDuo(lines, onDone) {
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
       if (actx && actx.state !== 'closed') {
+        if (actx.state === 'suspended') actx.resume();
         try {
           const msrc = actx.createMediaElementSource(audio);
           const analyser = actx.createAnalyser();
@@ -867,7 +870,7 @@ function startEverything() {
   if (actx && actx.state === 'suspended') actx.resume();
   let li = 0;
   const postEl = Object.assign(document.createElement('pre'), {
-    style: 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:12px "Roboto Mono",monospace;color:#fff;text-align:left;white-space:pre;pointer-events:none;z-index:10'
+    style: 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:12px ui-monospace,monospace;color:#dcdcdc;text-align:left;white-space:pre;pointer-events:none;z-index:10'
   });
   primer.appendChild(postEl);
   const tick = () => {
