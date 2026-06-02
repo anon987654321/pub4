@@ -10,8 +10,9 @@ Rails.application.routes.draw do
 
   resources :ports, only: %i[index show] do
     member do
-      post   :watch
+      post :watch
       delete :unwatch
+      post :crossref_cves
     end
     resources :comments, only: %i[create destroy]
   end
