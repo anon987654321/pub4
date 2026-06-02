@@ -31,8 +31,12 @@
     <ul>
       <% @updates.each do |update| %>
         <li>
-          <small><%= update.old_version %> → <%= update.new_version %></small>
-          <small><%= update.commit_message %></small>
+          <pre><code>--- a/<%= @port.pkgpath %>
++++ b/<%= @port.pkgpath %>
+@@ -1 +1 @@
+-<%= update.old_version %>
++<%= update.new_version %>
+<%= update.commit_message %></code></pre>
           <small><%= update.committed_at&.strftime("%Y-%m-%d") %></small>
         </li>
       <% end %>
