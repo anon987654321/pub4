@@ -93,13 +93,17 @@ const State = {
   viseme: 'neutral', visemeAmp: 0,
   flash: 0, shake: 0, pulse: 0, sttActive: false,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
-  coarsePointer: matchMedia('(pointer: coarse)').matches
+  coarsePointer: matchMedia('(pointer: coarse)').matches,
+  highContrast: new URLSearchParams(window.location.search).get('hc') === '1'
 };
+
+rootBody.dataset.highContrast = State.highContrast ? '1' : '';
 
 function updateRuntimeProfile() {
   State.hidden = document.hidden;
   rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
   rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'full';
+  rootBody.dataset.highContrast = State.highContrast ? '1' : '';
 }
 
 updateRuntimeProfile();
@@ -399,6 +403,7 @@ uniform float uMorph;
 uniform float uTime;
 uniform float uSize;
 uniform vec3 uColor;
+uniform float uHc;
 attribute vec3 scatter;
 attribute float seed;
 varying float vAlpha;
@@ -411,8 +416,9 @@ void main(){
   gl_PointSize=uSize*(300./-mv.z);
   gl_Position=projectionMatrix*mv;
   float depth=clamp((p.z+0.8)/1.8,0.,1.);
-  vAlpha=mix(0.22,0.3+depth*0.7,m);
-  vColor=uColor*(0.3+depth*0.7);
+  float hc = uHc;
+  vAlpha = hc > 0.5 ? 1.0 : mix(0.22,0.3+depth*0.7,m);
+  vColor = (hc > 0.5 ? vec3(1.0,1.0,1.0) : uColor) * (hc > 0.5 ? 1.0 : (0.3+depth*0.7));
 }`;
 
 const FRAG_SHADER = `
@@ -433,7 +439,10 @@ if (_hasWebGL && THREE) {
   faceGeom.setAttribute('seed',     new THREE.BufferAttribute(faceSeeds, 1));
   faceMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
-    uniforms: { uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.08}, uColor:{value:new Color(1,1,1)} },
+    uniforms: {
+      uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.08},
+      uColor:{value:new Color(1,1,1)}, uHc:{value:0}
+    },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
   facePoints = new THREE.Points(faceGeom, faceMat);
@@ -586,6 +595,8 @@ function frame(t) {
     const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
     faceMat.uniforms.uSize.value = 0.08 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
+    if (!faceMat.uniforms.uHc) faceMat.uniforms.uHc = {value: 0};
+    faceMat.uniforms.uHc.value = State.highContrast ? 1.0 : 0.0;
   }
 
   State.flash *= 0.9;
@@ -1274,7 +1285,7 @@ if (renderer) {
 
       ctx2.fillStyle = '#000';
       ctx2.fillRect(0, 0, cw2, ch2);
-      ctx2.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx2.fillStyle = State.highContrast ? '#fff' : 'rgba(255,255,255,0.7)';
 
       const noiseAmp = m > 0.98 ? 0 : (1 - m) * 0.28;
       for (let i = 0; i < N2; i++) {

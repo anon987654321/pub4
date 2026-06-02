@@ -36,6 +36,15 @@ body.font-mono {
   font-family: ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
 }
 
+body[data-high-contrast="1"] {
+  --face-fg: #fff;
+  --face-muted: #fff;
+  --face-dim: #fff;
+  --face-soft: #fff;
+}
+body[data-high-contrast="1"] .msg-body { color: #fff; }
+body[data-high-contrast="1"] .enhance-text { color: #fff; }
+
 body[data-runtime-visible="false"] canvas { filter: brightness(0.45) contrast(0.85); }
 body[data-runtime-profile="battery"] canvas { filter: grayscale(0.25) brightness(0.72); }
 body[data-runtime-profile="full"] canvas { filter: none; }

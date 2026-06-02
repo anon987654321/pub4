@@ -424,7 +424,8 @@ function draw(now) {
   semanticPulse();
   ctx.clearRect(0, 0, state.width, state.height);
   ctx.globalCompositeOperation = "source-over";
-  ctx.fillStyle = "rgba(3,2,2,0.24)";
+  const highC = document.body && document.body.dataset.highContrast === '1';
+  ctx.fillStyle = highC ? '#000' : "rgba(3,2,2,0.24)";
   ctx.fillRect(0, 0, state.width, state.height);
   ctx.globalCompositeOperation = "lighter";
 
@@ -433,7 +434,8 @@ function draw(now) {
   for (const p of particles) {
     updateParticle(p, dt);
     const screen = project(p);
-    const alpha = Math.max(0.08, Math.min(0.76, 0.22 + screen.depth * 0.22 + p.heat * 0.16));
+    const alpha = highC ? 1.0 :
+      Math.max(0.08, Math.min(0.76, 0.22 + screen.depth * 0.22 + p.heat * 0.16));
     const radius = p.size * screen.depth * (0.85 + state.breathing * 0.4);
     ctx.beginPath();
     ctx.fillStyle = particleColor(p, alpha);
