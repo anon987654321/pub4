@@ -102,6 +102,7 @@ Rails.application.routes.draw do
         resource :favorite_restaurant, only: %i[create destroy]
         resources :menu_items, only: %i[create destroy]
         resources :orders, only: %i[new create]
+        resources :reviews, only: %i[create]
       end
       resources :delivery_drivers, only: %i[index show update]
       resources :orders, only: %i[index show update]

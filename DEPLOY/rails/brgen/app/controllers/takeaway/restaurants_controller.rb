@@ -14,6 +14,8 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   def show
     @menu_items = @restaurant.menu_items.available
     @favorited = authenticated? && Current.user.takeaway_favorite_restaurants.exists?(restaurant: @restaurant)
+    @reviews = load_neighbour_reviews
+    @can_review = can_leave_review?
   end
 
   def new
@@ -41,9 +43,36 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   end
 
   private
-  def set_restaurant    = (@restaurant = Takeaway::Restaurant.find(params[:id]))
+
+  def set_restaurant = (@restaurant = Takeaway::Restaurant.find(params[:id]))
+
   def restaurant_params = params.require(:takeaway_restaurant).permit(
-    :name, :description, :address, :city, :phone, :cuisine_type,
-    :delivery_fee_cents, :min_order_cents, :active
+    :name,
+    :description,
+    :address,
+    :city,
+    :phone,
+    :cuisine_type,
+    :delivery_fee_cents,
+    :min_order_cents,
+    :active,
   )
+
+  def load_neighbour_reviews
+    base = @restaurant.reviews.includes(:user).order(created_at: :desc).limit(12)
+    return base unless authenticated? && Current.user&.latitude
+
+    my_lat = Current.user.latitude.to_f
+    my_lng = Current.user.longitude.to_f
+    base.select do |r|
+      rlat = r.reviewer_lat || r.user&.latitude
+      rlng = r.reviewer_lng || r.user&.longitude
+      next false unless rlat && rlng
+      User.haversine(my_lat, my_lng, rlat.to_f, rlng.to_f) <= 4.0
+    end
+  end
+
+  def can_leave_review?
+    authenticated? && Current.user.takeaway_orders.where(restaurant: @restaurant, status: "delivered").exists?
+  end
 end
