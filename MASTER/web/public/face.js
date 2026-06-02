@@ -26,6 +26,8 @@ const zshIn  = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
+const FACE_PIXEL_SIZE = 0.024;
+const FACE_GLOW_SCALE = 1.18;
 
 const FONT_KEY = 'master:font';
 (function initFont() {
@@ -460,7 +462,7 @@ void main(){
   p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*m;
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp((p.z+0.8)/1.8,0.,1.);
-  gl_PointSize=uSize*(300./-mv.z);
+  gl_PointSize=clamp(uSize*(240./-mv.z)*(0.72+depth*0.42),1.0,3.0);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
   vAlpha=hc>0.5?1.0:mix(0.30,0.35+depth*0.65,m);
@@ -495,7 +497,7 @@ if (_hasWebGL && THREE) {
   faceMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
-      uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.033},
+      uMorph:{value:0}, uTime:{value:0}, uSize:{value:FACE_PIXEL_SIZE},
       uColor:{value:new Color(1,1,1)}, uHc:{value:0},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
       uBass:{value:0}, uShake:{value:0},
@@ -588,7 +590,7 @@ if (_hasWebGL && THREE && scene && facePoints) {
   const glowMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
-      uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.18},
+      uMorph:{value:0}, uTime:{value:0}, uSize:{value:FACE_PIXEL_SIZE * FACE_GLOW_SCALE},
       uColor:{value:new Color(1,1,1)}, uHc:{value:0},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
       uBass:{value:0}, uShake:{value:0},
@@ -715,7 +717,7 @@ function frame(t) {
     const voiceRMS = State.voiceRMS || 0;
     const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
-    faceMat.uniforms.uSize.value = 0.033 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
+    faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
     faceMat.uniforms.uHc.value = State.highContrast ? 1.0 : 0.0;
     const curlTarget = State.mode === 'thinking' ? 1.0 : 0.0;
     faceMat.uniforms.uCurl.value += (curlTarget - faceMat.uniforms.uCurl.value) * 0.025;
@@ -735,8 +737,8 @@ function frame(t) {
         uMouse: faceMat.uniforms.uMouse, uBass: faceMat.uniforms.uBass,
         uShake: faceMat.uniforms.uShake, uPulseRing: faceMat.uniforms.uPulseRing
       });
-      gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * 2.1;
-          }
+      gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
+    }
   }
 
   State.flash *= 0.9;

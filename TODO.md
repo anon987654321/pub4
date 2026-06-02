@@ -4660,7 +4660,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 - [ ] FA01 face: Bayer 4×4 dither matrix on particle alpha — CRT scanline texture without hue
 - [ ] FA02 face: Atkinson dither pass on depth map at load time — sharper mask silhouette edges
-- [ ] FA03 face: per-particle size modulated by depth (z) — foreground dots bigger, background smaller
+- [x] FA03 face: per-particle size modulated by depth (z) — foreground dots bigger, background smaller
 - [ ] FA04 face: particle size pulse on TTS phoneme — viseme amplitude drives point size uniform
 - [ ] FA05 face: mouth region particles open/close on vowel visemes (A/E/I/O/U mapped from TTS chunk boundaries)
 - [ ] FA06 face: eye-region particles dim and close on long silence (blink simulation)

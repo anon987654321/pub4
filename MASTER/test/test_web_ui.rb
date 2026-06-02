@@ -148,6 +148,15 @@ class TestWebUI < Minitest::Test
     assert_includes face_js, "connectTTSAudio(audio"
   end
 
+  def test_face_particles_are_crisp_depth_sized_pixels
+    face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
+
+    assert_includes face_js, "const FACE_PIXEL_SIZE = 0.024"
+    assert_includes face_js, "const FACE_GLOW_SCALE = 1.18"
+    assert_includes face_js, "gl_PointSize=clamp"
+    assert_includes face_js, "0.72+depth*0.42"
+  end
+
   # SwarmCoordinator
   def test_swarm_coordinator_worker_roles
     # Just check the list is non-empty without booting real agents
