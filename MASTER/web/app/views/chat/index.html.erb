@@ -42,6 +42,14 @@
     <div id="zsh-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
     <button id="cancel-btn" type="button" aria-label="Cancel">×</button>
   </form>
+  <script>
+    (function(){
+      var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false;
+      function go(){if(fired)return;fired=true;window._primerFired=true;p.style.transition='opacity 160ms ease';p.style.opacity='0';setTimeout(function(){if(p&&p.parentNode)p.parentNode.removeChild(p);},220);if(z)z.classList.add('live');}
+      if(p){p.addEventListener('pointerdown',go);p.addEventListener('touchstart',go,{passive:true});p.addEventListener('click',go);}
+      setTimeout(function(){if(!fired)go();},1200);
+    })();
+  </script>
   <script type="module" src="/face.js?v=24"></script>
   <script src="/chat.js?v=24" defer></script>
 </body>

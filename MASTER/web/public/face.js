@@ -8,13 +8,6 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-;(function(){
-  var p=document.getElementById("primer"),z=document.getElementById("zsh"),fired=false;
-  function go(){if(fired)return;fired=true;p.style.transition="opacity 160ms ease";p.style.opacity="0";setTimeout(function(){if(p)p.remove();},220);if(z)z.classList.add("live");}
-  if(p){p.addEventListener("pointerdown",go);p.addEventListener("touchstart",go,{passive:true});p.addEventListener("click",go);}
-  setTimeout(function(){if(!fired)go();},1200);
-})();
-
 const THREE = _hasWebGL ? await import('/three.module.js?v=24') : null;
 
 // Minimal Color stub for no-WebGL path
