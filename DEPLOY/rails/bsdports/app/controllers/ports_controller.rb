@@ -9,8 +9,17 @@ class PortsController < ApplicationController
     scope = scope.search(params[:q]) if params[:q].present?
     scope = scope.by_category(params[:category_id]) if params[:category_id].present?
     scope = scope.order(params[:sort] == "updated" ? "last_updated DESC" : :name)
-    @pagy, @ports = pagy(scope)
-    @categories = Category.order(:name)
+
+    respond_to do |format|
+      format.html do
+        @pagy, @ports = pagy(scope)
+        @categories = Category.order(:name)
+      end
+      format.rss do
+        @ports = scope.where("last_updated >= ?", 7.days.ago).order(last_updated: :desc).limit(100)
+        render layout: false
+      end
+    end
   end
 
   def show
