@@ -83,9 +83,9 @@ Every section of rules.yml that isn't implemented in Ruby.
 
 - [x] E01 Finding#rule_id: findings should carry the exact rules.yml ID string (e.g. "SECRET_PROXIMITY"), not Ruby class name
 - [x] E02 SemanticRule findings: include the specific rules.yml ID that triggered, not "semantic"
-- [ ] E03 Prediction engine: RuleLoop#should_autofix? already exists in scanner.rb — wire it into RuleLoop before applying any fix
+- [x] E03 Prediction engine: RuleLoop#should_autofix? already exists in scanner.rb — wire it into RuleLoop before applying any fix
 - [ ] E04 evidence_scoring: Pipeline should accumulate scan_clean (25 pts) and require ≥80 to ship
-- [ ] E05 failure_taxonomy: RuleLoop transient retry (already TRANSIENT_RE) — add permanent/ambiguous branches with fail_fast and human_intervention
+- [x] E05 failure_taxonomy: RuleLoop transient retry (already TRANSIENT_RE) — add permanent/ambiguous branches with fail_fast and human_intervention
 - [ ] E06 principle_priorities tier1: halt pipeline on PRESERVE_FIRST/DECOUPLE/DEGRADE_GRACEFULLY violation
 - [ ] E07 principle_priorities tier2: route DRY/KISS/SRP violations to RuleLoop automatically
 - [ ] E08 veto_patterns section: wire as :error severity rules that block the pipeline

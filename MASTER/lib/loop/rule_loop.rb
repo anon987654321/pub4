@@ -71,6 +71,7 @@ module Master
       def fix_batch(violations)
         fixed = 0
         violations.uniq { |v| v[:file] }.each do |v|
+          next unless autofix_allowed?(v)
           new_src = v[:severity].to_sym == :error ? council_fix(v) : request_fix(v)
           apply(v[:file], new_src) && (fixed += 1) if new_src
         end
@@ -109,8 +110,8 @@ module Master
           code = extract_code(response, File.extname(path).downcase)
           return code if code && code.strip != src.strip
         rescue StandardError => e
-          next if Master::Loop::Constants::TRANSIENT_RE.match?(e.message.to_s)
-          @bus&.publish("rule_loop:council_error", rule: @rule.id, file: path, error: e.message[0, 120])
+          action = handle_fix_exception(e, violation, event: "rule_loop:council_error")
+          next if action == :retry
           return nil
         end
         nil
@@ -134,8 +135,8 @@ module Master
           result = PatchApplier.apply(src, response)
           return result.source if result.is_a?(PatchApplier::Success)
         rescue StandardError => e
-          next if Master::Loop::Constants::TRANSIENT_RE.match?(e.message.to_s)
-          @bus&.publish("rule_loop:fix_error", rule: @rule.id, file: path, error: e.message[0, 120])
+          action = handle_fix_exception(e, violation, event: "rule_loop:fix_error")
+          next if action == :retry
           return nil
         end
         nil
@@ -150,11 +151,11 @@ module Master
           code = extract_code(@agent.ask(prompt).to_s, ext)
           code if code && code.strip != src.strip
         rescue StandardError => e
-          next if Master::Loop::Constants::TRANSIENT_RE.match?(e.message.to_s)
-          @bus&.publish("rule_loop:fix_error", rule: @rule.id, file: path, error: e.message[0, 120])
-          nil
+          action = handle_fix_exception(e, violation, event: "rule_loop:fix_error")
+          next if action == :retry
+          break nil
         end
-        best_candidate(candidates, path)
+        best_candidate(candidates || [], path)
       end
 
       def best_candidate(candidates, path)
@@ -185,6 +186,29 @@ module Master
       rescue StandardError => e
         @bus&.publish("rule_loop:write_error", rule: @rule.id, file: path, error: e.message)
         false
+      end
+
+      def autofix_allowed?(violation)
+        return true unless @scanner.respond_to?(:should_autofix?, true)
+
+        confidence = violation[:confidence] || violation["confidence"] || 1.0
+        allowed = @scanner.__send__(:should_autofix?, violation[:rule], confidence)
+        @bus&.publish("rule_loop:autofix_skipped", rule: violation[:rule], confidence:) unless allowed
+        allowed
+      end
+
+      def handle_fix_exception(error, violation, event:)
+        message = error.message.to_s
+        if Master::Loop::Constants::TRANSIENT_RE.match?(message)
+          return :retry
+        elsif Master::Loop::Constants::PERMANENT_RE.match?(message)
+          @bus&.publish("rule_loop:fail_fast", rule: violation[:rule], file: violation[:file], error: message[0, 120])
+        elsif Master::Loop::Constants::AMBIGUOUS_RE.match?(message)
+          @bus&.publish("rule_loop:human_intervention", rule: violation[:rule], file: violation[:file], error: message[0, 120])
+        else
+          @bus&.publish(event, rule: violation[:rule], file: violation[:file], error: message[0, 120])
+        end
+        :stop
       end
 
       def build_prompt(violation, src, path)
