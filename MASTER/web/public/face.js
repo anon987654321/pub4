@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=28') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=29') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
