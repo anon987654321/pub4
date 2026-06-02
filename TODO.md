@@ -4622,7 +4622,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] DF05 amber: add style profile — user answers 5 questions, MASTER infers aesthetic (minimal/bold/classic)
 - [ ] DF06 amber: add item image upload with postpro film stock applied automatically
 - [ ] DF07 amber: add shopping list — items MASTER suggests to fill gaps in wardrobe
-- [ ] DF08 amber: add seasonal archive — move out-of-season items to archive, resurface in 6 months
+- [x] DF08 amber: add seasonal archive — move out-of-season items to archive, resurface in 6 months (added current_season, archive_out_of_season!, resurface_seasonal! to Item; seasonal_archived scope; LIFECYCLE_STATES include; archive_seasonal/resurface actions+routes in items_controller; buttons in items/index; model+controller fixes; specific commits/pushes; evidence reads)
 - [x] DF09 amber: add colour palette extraction from uploaded image (ruby-vips dominant colour) (added ruby-vips gem; Item#extract_dominant_color! using vips resize+getpoint for hex dominant/avg; called from wardrobe_media_job and queued on item create/update photo attach; color set on item; specific commits/pushes + autofix + gem; evidence reads of item, job, controller, form, ai etc)
 - [x] DF10 amber: add outfit share to brgen (one-click post with outfit image and items listed) (added :share to outfits routes member; share action in outfits_controller auto-builds Post body with name+items list + outfit_id; 'Share to brgen' button in show nav; redirects to created post; specific commits/pushes + autofix on controller; evidence full reads of outfit model/controller/views/routes/posts before/after; preserves existing like/edit etc)
 
