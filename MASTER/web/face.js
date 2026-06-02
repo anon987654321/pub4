@@ -11,18 +11,19 @@ const VERTEX_POINT_SIZE = 0.055;
 const EDGE_POINT_SIZE = 0.025;
 
 const TINT = {
-  idle:    new THREE.Color(0.62, 0.86, 1.00),
-  claude:  new THREE.Color(0.86, 0.74, 0.96),
-  deepseek:new THREE.Color(0.42, 0.78, 1.00),
-  gemini:  new THREE.Color(0.50, 0.92, 0.74),
-  gpt:     new THREE.Color(0.92, 0.86, 0.46),
-  tense:   new THREE.Color(1.00, 0.50, 0.40),
-  curious: new THREE.Color(0.50, 0.82, 0.96),
-  focused: new THREE.Color(0.36, 0.66, 0.92),
-  weary:   new THREE.Color(0.62, 0.62, 0.72),
-  pass:    new THREE.Color(0.50, 0.92, 0.62),
-  veto:    new THREE.Color(0.96, 0.32, 0.28),
-  unclear: new THREE.Color(0.84, 0.78, 0.40)
+  // All white only for pixellish 8-bit video game retro look.
+  idle:    new THREE.Color(1, 1, 1),
+  claude:  new THREE.Color(1, 1, 1),
+  deepseek:new THREE.Color(1, 1, 1),
+  gemini:  new THREE.Color(1, 1, 1),
+  gpt:     new THREE.Color(1, 1, 1),
+  tense:   new THREE.Color(1, 1, 1),
+  curious: new THREE.Color(1, 1, 1),
+  focused: new THREE.Color(1, 1, 1),
+  weary:   new THREE.Color(1, 1, 1),
+  pass:    new THREE.Color(1, 1, 1),
+  veto:    new THREE.Color(1, 1, 1),
+  unclear: new THREE.Color(1, 1, 1)
 };
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
