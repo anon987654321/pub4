@@ -4021,3 +4021,207 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] BP38 Build clear operational trace records across all validation routine steps.
 - [ ] BP39 Enforce clean diagnostic engine detachment actions on system terminations.
 - [ ] BP40 Streamline telemetry setup scripts using standard host environment configurations.
+
+## BQ: Cross-App Infrastructure & Deployment (DEPLOY snapshot)
+
+- [ ] BQ01 rails/check_production_gate.rb: add check that each app's Gemfile.lock is present and matches Gemfile (no drift)
+- [ ] BQ02 rails/check_production_gate.rb: verify `config.host_authorization` excludes `/up` for all apps
+- [ ] BQ03 All apps: ensure `config.active_storage.service = :local` is used in production; S3/mirror only via explicit override
+- [ ] BQ04 All apps: add `config.assume_ssl = true` — verify no `config.force_ssl = true` anywhere
+- [ ] BQ05 All apps: verify `config.consider_all_requests_local = false` in production
+- [ ] BQ06 All apps: add `config.logger = ActiveSupport::TaggedLogging.logger($stdout)` for JSON-friendly logging
+- [ ] BQ07 All apps: add `config.active_record.query_log_tags_enabled = true` to trace N+1 in production logs
+- [ ] BQ08 All apps: add `config.action_dispatch.show_exceptions = :none` (exceptions → 500) — document if overridden
+- [ ] BQ09 brgen: ensure `Tv::Channel`, `Tv::Video`, `Tv::Broadcast` models are fully migrated and have Active Storage attachments
+- [ ] BQ10 bsdports: verify `PortsImportJob` can run without OOM on OpenBSD (use `find_each` + streaming)
+- [ ] BQ11 bsdports: add `SecurityAdvisory` model and a job that scrapes OpenBSD errata
+- [ ] BQ12 baibl: add `ReadingPlan` & `ReadingPlanDay` — models exist in migration but not in current app tree
+- [ ] BQ13 hjerterom: add `Box` → `Beneficiary` foreign key constraint (migration exists but might be missing in schema.rb)
+- [ ] BQ14 hjerterom: add `Donor` model (table already created in migration) and wire to `Donation`
+- [ ] BQ15 All apps: verify every `db/migrate/` file is idempotent (no `remove_column` without `if_exists`)
+- [ ] BQ16 All apps: add `database.yml` connection pool (`pool:`) equal to Falcon/Puma worker count
+- [ ] BQ17 All apps: set `timeout` in `database.yml` to 5000 — ensure it is not overridden per environment
+- [ ] BQ18 DEPLOY/openbsd/openbsd.sh: add `rcctl enable` and `rcctl start` for `litestream` (backup service)
+- [ ] BQ19 DEPLOY/openbsd/openbsd.sh: add cron job for `cert-renewal.sh` to run weekly — verify on VPS
+- [ ] BQ20 DEPLOY/openbsd/openbsd.sh: after Stage 2, run `verify_deploy_identity.rb` and fail if any error
+- [ ] BQ21 All apps: add `GET /up` endpoint that returns 200 only if DB, cache, and queue are reachable
+- [ ] BQ22 All apps: add `GET /health` returning JSON with component statuses for load balancer
+- [ ] BQ23 All apps: set `config.active_job.queue_adapter = :solid_queue` in production.rb — verify no Redis dependency
+- [ ] BQ24 All apps: add `config/recurring.yml` with `clear_solid_queue_finished_jobs` (copy to apps that are missing it)
+- [ ] BQ25 brgen: add `config.after_initialize` to load `sqlite-vec` extension if present (needed for distance queries)
+
+## BR: Rails 8+ Hotwire & StimulusReflex Refinements
+
+- [ ] BR01 All apps: replace `form_with model:` with `form_with model:, data: { turbo: false }` where uploads are involved (DirectUpload uses its own JS)
+- [ ] BR02 All apps: add `<meta name="turbo-cache-control" content="no-cache">` to all pages with forms or CSRF tokens
+- [ ] BR03 brgen dating: implement `data-reflex="click->Dating#swipe"` on card stack (replaces plain JS swipe)
+- [ ] BR04 brgen TV: use `cable_ready.dispatch_event` to trigger live viewer count update every 10s
+- [ ] BR05 amber outfit builder: add `data-reflex="change->Outfit#reorder"` on sortable list (PATCH /outfits/:id/reorder)
+- [ ] BR06 amber item upload: add `data-controller="direct-upload"` for background image processing
+- [ ] BR07 blognet article editor: add `data-reflex="blur->Article#auto_save"` on ActionText editor
+- [ ] BR08 bsdports search: add `data-reflex="input->Search#live"` for live search with debounce
+- [ ] BR09 baibl verse navigation: add `data-reflex="keydown.arrowDown->Verse#next"` for keyboard bible reading
+- [ ] BR10 hjerterom donation form: add `data-reflex="change->Donation#calculate_impact"` for real-time impact estimate
+- [ ] BR11 All apps: add `data-reflex-permanent` to all `<input>` elements inside modal dialogs (prevents Turbo morph reset)
+- [ ] BR12 All apps: add `around_reflex { ActiveRecord::Base.transaction { yield } }` to all mutation reflexes
+- [ ] BR13 All apps: add `before_reflex { halt_and_render_nothing! unless current_user }` on authenticated reflexes
+- [ ] BR14 All apps: add `reflexError()` toast handler in Stimulus controllers
+- [ ] BR15 All apps: replace `cable_ready.broadcast` with `cable_ready.broadcast_to` (scoped to model) for cache invalidation
+- [ ] BR16 All apps: add `config.action_cable.url = "wss://#{host}/cable"` in production
+- [ ] BR17 All apps: add `config.action_cable.allowed_request_origins` based on domain list — prevent cross-origin WebSocket
+- [ ] BR18 All apps: add `config.cache_store = :solid_cache_store` in production — verify Solid Cache tables exist
+- [ ] BR19 brgen: add `StreamChatChannel` for live TV chat (currently using `Tv::StreamChat` but no ActionCable channel)
+- [ ] BR20 brgen: add `DatingChannel` for real-time match notification (currently only email/push)
+- [ ] BR21 All apps: add `config.eager_load = true` in production — currently `false` in some copied configs
+- [ ] BR22 All apps: add `config.assume_ssl = true` and remove any `force_ssl` — enforce in CI
+
+## BS: Missing Live Search (LIVE_SEARCH_STANDARD.md)
+
+- [ ] BS01 brgen marketplace listings: replace `LIKE` with FTS5, add Turbo Frame live update
+- [ ] BS02 brgen playlist sets and tracks: add FTS5 search with faceted filters (genre, artist)
+- [ ] BS03 brgen TV videos and channels: add full-text search over title + description
+- [ ] BS04 brgen takeaway restaurants: replace `LIKE` with FTS5 + distance ranking
+- [ ] BS05 brgen maps places: add search-as-you-type via Stimulus debounce
+- [ ] BS06 brgen global search: single endpoint returning union of all vertical results
+- [ ] BS07 amber wardrobe: add FTS5 fallback for AI search (low-cost offline mode)
+- [ ] BS08 amber outfits: add search by name, occasion, season, item names
+- [ ] BS09 blognet posts: add FTS5 over title + body, replace `LIKE`
+- [ ] BS10 blognet tags: add tag search page with autocomplete
+- [ ] BS11 hjerterom resources: add FTS5 over title, description, resource_type
+- [ ] BS12 hjerterom food listings: add geo-aware FTS5 search (distance + keyword)
+- [ ] BS13 All apps: add search analytics logging (query, result_count, latency_ms)
+- [ ] BS14 All apps: implement zero-result suggestions via LLM (fallback to related terms)
+
+## BT: Missing Stimulus Components (shared baseline)
+
+- [ ] BT01 brgen: add `content-loader` for infinite scroll on feed
+- [ ] BT02 brgen: add `read-more` for long post bodies
+- [ ] BT03 brgen: add `popover` for user profile cards
+- [ ] BT04 brgen: add `dialog` for confirmation modals (replaces `confirm()`)
+- [ ] BT05 brgen: add `checkbox-select-all` for moderation panel
+- [ ] BT06 brgen dating: add `hotkey` (←/→ for swipe, j/k for feed navigation)
+- [ ] BT07 brgen: add `speech-recognition` for voice commands
+- [ ] BT08 amber: add `sortable` for outfit builder (controller exists, not wired)
+- [ ] BT09 amber: add `dialog` for item quick view modal
+- [ ] BT10 blognet: add `scroll-progress` for article reading position
+- [ ] BT11 blognet: add `read-more` for long article excerpts in feed
+- [ ] BT12 hjerterom: add `map` component for driver location (delivery zones)
+- [ ] BT13 hjerterom: add `toast` for donation confirmation and expiry alerts
+- [ ] BT14 All apps: ensure all Stimulus controllers are registered in `controllers/index.js`
+
+## BU: Missing Production Readiness (PRODUCTION_READINESS.md)
+
+- [ ] BU01 All apps: rotate `config/master.key` and credentials (no committed master keys)
+- [ ] BU02 All apps: add CI workflow with Brakeman, bundler-audit, RuboCop
+- [ ] BU03 All apps: add `bin/ci` script (already in some — copy to all)
+- [ ] BU04 All apps: configure `config.hosts` explicitly for all domains (including wildcard subdomains)
+- [ ] BU05 All apps: add `config.action_mailer.smtp_settings` (currently missing in production.rb)
+- [ ] BU06 All apps: ensure `GET /up` checks Solid Queue and Solid Cache connectivity
+- [ ] BU07 All apps: set `config.active_job.queue_adapter = :solid_queue` (some still missing)
+- [ ] BU08 brgen: add `config.hosts` to include all city subdomains (currently only `*.brgen.no`)
+- [ ] BU09 amber: add `config.hosts` for `www.amber.brgen.no`
+- [ ] BU10 bsdports: add `config/recurring.yml` for daily ports import and advisory refresh
+- [ ] BU11 baibl: replace `cable.yml` redis adapter with `solid_cable` (Redis not on VPS)
+- [ ] BU12 baibl: add `config/recurring.yml` for reading plan notifications
+- [ ] BU13 blognet: add `config/recurring.yml` for newsletter sends and subscriber sync
+- [ ] BU14 hjerterom: add Geocoder configuration for address parsing
+- [ ] BU15 hjerterom: implement `SolidQueue` recurring job for expiry alerting (expiry within 48h)
+
+## BV: Missing Critical Models & Features (apps.yml)
+
+- [ ] BV01 brgen marketplace: buyer-seller chat integration (reuse Conversation model)
+- [ ] BV02 brgen playlist: add `sets` views (index, show, new, edit)
+- [ ] BV03 brgen tv: add live stream chat moderation dashboard
+- [ ] BV04 brgen dating: add event calendar integration and event-based matching
+- [ ] BV05 brgen: add city switcher UI (override subdomain detection)
+- [ ] BV06 brgen: implement AI feed ranking
+- [ ] BV07 amber: implement garment segmentation / background removal (jobs are placeholders)
+- [ ] BV08 amber: wire outfit generation by weather/season/event to dressing room UI
+- [ ] BV09 amber: add style evolution timeline view
+- [ ] BV10 amber: add underused item surfacing with proactive notifications
+- [ ] BV11 amber: implement wardrobe analytics dashboard
+- [ ] BV12 bsdports: implement `PortsImportJob` (real FTP import, not placeholder)
+- [ ] BV13 bsdports: implement `SecurityAdvisory` scraper for OpenBSD errata
+- [ ] BV14 bsdports: populate `Maintainer` model from ports tree
+- [ ] BV15 bsdports: add dependency tree visualization (D3 force graph)
+- [ ] BV16 bsdports: add port radar (watch + notify) background job
+- [ ] BV17 baibl: add annotation UI (create, display, list annotations)
+- [ ] BV18 baibl: add cross-reference interactive graph
+- [ ] BV19 baibl: add reading plan UI and daily generation job
+- [ ] BV20 baibl: fully wire word study popover (routes, controller, stimulus)
+- [ ] BV21 baibl: implement AI theological assistant
+- [ ] BV22 blognet: add Recipe model + ingredients + schema.org markup
+- [ ] BV23 blognet: implement paywall (metered free articles, Stripe Checkout)
+- [ ] BV24 blognet: add newsletter integration (email on publish, unsubscribe)
+- [ ] BV25 blognet: add author analytics dashboard
+- [ ] BV26 hjerterom: implement beneficiary matching algorithm (inventory to profile)
+- [ ] BV27 hjerterom: add public impact dashboard (`/impact`)
+- [ ] BV28 hjerterom: add Partner model and transfer tracking
+- [ ] BV29 hjerterom: integrate OSRM for route optimisation
+
+## BW: Missing OpenBSD Deployment Hardening
+
+- [ ] BW01 All apps: add `newsyslog.conf` entry for log rotation (weekly, compress, signal)
+- [ ] BW02 All apps: ensure `rcctl enable` and `rcctl start` are idempotent in deploy scripts
+- [ ] BW03 All apps: add `check_ports.sh` to CI to prevent port collisions
+- [ ] BW04 All apps: add `verify_deploy_identity.rb` to deploy pipeline
+- [ ] BW05 DEPLOY/openbsd: install and configure Litestream for all SQLite databases
+- [ ] BW06 DEPLOY/openbsd: add cron job for `backup_priv.sh` (daily)
+- [ ] BW07 DEPLOY/openbsd: ensure `relayd.conf` health checks exist for every app (`check http "/up" code 200`)
+- [ ] BW08 DEPLOY/openbsd: configure `doas` for postpro and repligen commands
+- [ ] BW09 DEPLOY/openbsd: set `PermitRootLogin no`, `PasswordAuthentication no`, `MaxAuthTries 3` in `sshd_config`
+
+## BX: Missing Frontend Baseline (shared/WIRING_NOTES.md)
+
+- [ ] BX01 All apps: copy `shared/frontend/stimulus_components.js` baseline and register all controllers
+- [ ] BX02 All apps: import and use `minimal-gesture.js` for swipe/tilt navigation
+- [ ] BX03 All apps: add `<meta name="color-scheme" content="light dark">` to all layouts
+- [ ] BX04 All apps: ensure all `<html>` tags have `lang` attribute (Norwegian/English)
+- [ ] BX05 All apps: replace `<a>` with `<button>` where actions have no navigation
+- [ ] BX06 All apps: add `loading="lazy"` to all below-fold images
+- [ ] BX07 All apps: extract all inline CSS/JS to external files
+
+## BY: Missing Rails 8 API Patterns
+
+- [ ] BY01 All apps: replace `params.require(:x).permit(...)` with `params.expect(...)` (Rails 8 strict)
+- [ ] BY02 All apps: add `turbo_refreshes_with :morph` in ApplicationController
+- [ ] BY03 All apps: set `config.active_record.strict_loading_by_default = true` in development
+- [ ] BY04 All apps: replace `.all.each` with `.find_each(batch_size:)` in admin jobs
+- [ ] BY05 All apps: add missing `counter_cache` declarations (posts.comments_count, etc.)
+- [ ] BY06 All apps: add `http_cache_forever` for service worker and manifest
+- [ ] BY07 All apps: add `fresh_when` with ETag to all `show` actions
+- [ ] BY08 All apps: add JSON responses to all `show` actions (for PWA offline)
+
+## BZ: Missing Token Efficiency & Cost Control
+
+- [ ] BZ01 MASTER: implement Anthropic `cache_control` for system prompt (93% cost reduction — $0.73→$0.07/turn)
+- [ ] BZ02 MASTER: compress rule descriptions sent to LLM (ID + one sentence only)
+- [ ] BZ03 MASTER: deduplicate file content across loop iterations (send SHA placeholder if unchanged)
+- [ ] BZ04 MASTER: skip semantic pass if zero lexical+structural findings
+- [ ] BZ05 MASTER: implement incremental scan (file mtime tracking, skip unchanged files)
+- [ ] BZ06 All apps: add LLM token cost tracking and session budget enforcement
+
+## CA: Missing Self-Scan & Self-Adherence (MASTER's own rules)
+
+- [ ] CA01 MASTER: boot-time self-scan of `lib/` with all rules (block startup on violations)
+- [ ] CA02 MASTER: add `/self` command to scan MASTER itself on demand
+- [ ] CA03 MASTER: add `rules.yml` SINGULARITY check (no duplicate rule IDs) on boot
+- [ ] CA04 MASTER: wire `evidence_scoring` gate — require ≥80 points to deploy
+- [ ] CA05 MASTER: add `phantom_recovery` detector for LLM hallucinations (gaslighting preamble, repetition)
+- [ ] CA06 MASTER: implement `voice/soul_drift_detector` to enforce banned phrases removal
+- [ ] CA07 MASTER: add `--dry-run` flag to scan/fix commands
+- [ ] CA08 MASTER: persist LLM response cache to disk (`.master/llm_cache.yml`)
+- [ ] CA09 MASTER: implement `max_iterations` cap in convergence loop (UNBOUNDED_RETRY guard)
+
+## CB: Missing Competitive Differentiators (brgen vs X/Facebook)
+
+- [ ] CB01 brgen: implement true city isolation at SQL layer — visible in UI (city name in nav, city-scoped URLs)
+- [ ] CB02 brgen: ship OLED-native `#000` landing page with gesture-hidden navigation (BA1, BA2)
+- [ ] CB03 brgen: implement Tiptap longform composer with slash commands (BA6)
+- [ ] CB04 brgen: add anonymous post gate (2 posts before signup) with MASTER moderation (BA7)
+- [ ] CB05 brgen: make near-me feed the default (geolocation-weighted chronological)
+- [ ] CB06 brgen: pin community guidelines as first post in each city feed
+- [ ] CB07 brgen: add AI thread summaries on long comment threads (via MASTER streaming)
+- [ ] CB08 brgen dating: add bydel (neighbourhood) matching (hyperlocal beyond city)
+- [ ] CB09 brgen playlist: add collaborative playlists and listening parties
+- [ ] CB10 brgen takeaway: show reviews from neighbours only (hyperlocal trust over anonymous crowd)
