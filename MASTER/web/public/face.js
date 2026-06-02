@@ -210,7 +210,7 @@ function sampleImageDepth(canvas, N) {
   for (let i = 0; i < W * H; i++) {
     const r = data[i*4], g = data[i*4+1], b = data[i*4+2];
     const bg = r > 228 && g > 228 && b > 228;
-    weights[i] = bg ? 0 : Math.max(0.04, (r*0.299 + g*0.587 + b*0.114) / 255);
+    weights[i] = bg ? 0 : 1.0;
     total += weights[i];
   }
   const cdf = new Float32Array(W * H);
