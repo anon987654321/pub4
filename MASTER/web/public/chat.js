@@ -15,6 +15,9 @@ window._chatCancel = () => {
 function appendMsg(role, text = '') {
   const d = document.createElement('div');
   d.className = 'message ' + role;
+  d.tabIndex = 0;
+  d.setAttribute('role', 'article');
+  d.setAttribute('aria-label', role + ' message');
   const now = new Date();
   d.dataset.ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   if (role === 'assistant') {
@@ -38,6 +41,12 @@ function appendMsg(role, text = '') {
   }
   log.appendChild(d);
   log.scrollTop = log.scrollHeight;
+  d.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      openActionMenu(d);
+    }
+  });
 }
 
 window._chatOnUser  = (text) => { appendMsg('user', text); appendMsg('assistant'); };
@@ -78,6 +87,48 @@ window._chatOnChunk = (raw) => {
 };
 window._chatOnDone  = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => { c.style.transition = 'opacity 0.25s steps(4,end)'; c.style.opacity = '0'; setTimeout(() => c.remove(), 280); }); };
 window._chatOnError = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => c.remove()); };
+
+function getMsgText(msgEl) {
+  const p = msgEl.querySelector('.msg-prompt')?.textContent || '';
+  const b = msgEl.querySelector('.msg-body') || msgEl;
+  return (p + ' ' + (b.textContent || '')).trim();
+}
+
+function openActionMenu(msgEl) {
+  document.querySelectorAll('.action-menu').forEach(m => m.remove());
+  const menu = document.createElement('div');
+  menu.className = 'action-menu';
+  const txt = getMsgText(msgEl);
+  menu.innerHTML = '<button data-act="copy">Copy</button><button data-act="quote">Quote</button><button data-act="close">Close</button>';
+  const rect = msgEl.getBoundingClientRect();
+  menu.style.left = (rect.left + window.scrollX + 8) + 'px';
+  menu.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+  document.body.appendChild(menu);
+  const onAct = (ev) => {
+    const act = ev.target.dataset.act;
+    if (act === 'copy') {
+      navigator.clipboard?.writeText(txt).catch(() => {});
+      menu.remove();
+    } else if (act === 'quote') {
+      if (input) { input.value = '> ' + txt + '\n'; input.focus(); }
+      menu.remove();
+    } else if (act === 'close') {
+      menu.remove();
+    }
+  };
+  menu.addEventListener('click', onAct);
+  const close = (e) => {
+    if (!menu.contains(e.target) || (e.key && e.key === 'Escape')) {
+      menu.remove();
+      document.removeEventListener('click', close, true);
+      document.removeEventListener('keydown', close);
+    }
+  };
+  setTimeout(() => {
+    document.addEventListener('click', close, true);
+    document.addEventListener('keydown', close);
+  }, 0);
+}
 
 window._chatOnDmesg = (line) => {
   if (!line) return;
