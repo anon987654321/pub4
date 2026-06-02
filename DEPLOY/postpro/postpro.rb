@@ -371,10 +371,10 @@ PRESETS = {
   cinematic: { fx: %w[optical_blur spectral_temp tonemap film_curve orange_mask halation shadow_lift print_film grain],
                stock: :kodak_vision3_500t, temp: 4500, intensity: 0.90, print_stock: :kodak_2383 },
 
-  blockbuster: { fx: %w[optical_blur tonemap bleach_bypass film_curve orange_mask teal_orange halation grain],
-                 stock: :kodak_vision3, temp: 4800, intensity: 0.90 },
+  blockbuster: { fx: %w[optical_blur tonemap bleach_bypass film_curve orange_mask teal_orange halation print_film grain],
+                 stock: :kodak_vision3, temp: 4800, intensity: 0.90, print_stock: :kodak_2383 },
 
-  golden_age: { fx: %w[optical_blur film_curve technicolor warmth dir_coupler bloom_pro grain],
+  golden_age: { fx: %w[optical_blur film_curve orange_mask technicolor warmth dir_coupler bloom_pro grain],
                 stock: :kodak_vision3_50d, temp: 5200, intensity: 0.85, lens: "cooke" },
 
   bleached: { fx: %w[optical_blur tonemap bleach_bypass film_curve split_grade highlight_roll grain],
@@ -388,17 +388,17 @@ PRESETS = {
                  stock: :cinestill_800t, temp: 3000, intensity: 0.90,
                  stops: 1.0, exposure_secs: 45.0 },
 
-  tungsten: { fx: %w[optical_blur spectral_temp film_curve halation push_pull shadow_lift grain],
+  tungsten: { fx: %w[optical_blur spectral_temp film_curve orange_mask halation push_pull shadow_lift grain],
               stock: :kodak_vision3_500t, temp: 3200, intensity: 0.90,
               stops: 0.3, exposure_secs: 8.0 },
 
-  street: { fx: %w[optical_blur tonemap bleach_bypass film_curve shadow_lift micro_contrast grain],
+  street: { fx: %w[optical_blur tonemap bleach_bypass film_curve adjacency_effects shadow_lift micro_contrast grain],
             stock: :tri_x, temp: 5600, intensity: 0.90, stops: 1.0 },
 
   war_doc: { fx: %w[optical_blur tonemap push_pull film_curve bleach_bypass green_push grain],
              stock: :tri_x, temp: 5600, intensity: 0.90, stops: 2.0 },
 
-  silver_gelatin: { fx: %w[optical_blur film_curve push_pull shadow_lift highlight_roll grain],
+  silver_gelatin: { fx: %w[optical_blur film_curve push_pull adjacency_effects shadow_lift highlight_roll grain],
                     stock: :tri_x, temp: 5600, intensity: 0.85, stops: 0.5 },
 
   lith: { fx: %w[optical_blur film_curve push_pull lith_print split_toning grain],
