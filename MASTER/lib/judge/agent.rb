@@ -37,7 +37,7 @@ module Master
 
       def wire_constitution(constitution) = @constitution = constitution
 
-      def chat(message, stream: true, escalation_depth: 0, &blk)
+      def chat(message, image: nil, stream: true, escalation_depth: 0, &blk)
         prepare_chat_turn(message)
         candidate_models = routed_models(message)
         selected_model = candidate_models.first
@@ -50,7 +50,7 @@ module Master
         rate_err = check_rate_limit(selected_model)
         return rate_err if rate_err
 
-        response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
+        response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image: image, &blk)
         if response.is_a?(Master::Result::Err)
           @deps.homeostat&.observe(:llm_failure)
           return response
@@ -78,17 +78,17 @@ module Master
         Result.err(err.message, category: err.category)
       end
 
-      def ask(prompt, context: nil, operation: nil)
+      def ask(prompt, context: nil, operation: nil, image: nil)
         messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
         selected_model = operation ? model_for(operation:) : routed_models.first
-        result = @dispatcher.send_with_cache(selected_model, messages, stream: false)
+        result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image: image)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
 
-      def ask_once(prompt, system: nil, model: nil)
+      def ask_once(prompt, system: nil, model: nil, image: nil)
         messages = [{ role: "user", content: prompt.to_s }]
-        result   = @dispatcher.send_with_cache(model || self.model, messages, system:, stream: false)
+        result   = @dispatcher.send_with_cache(model || self.model, messages, system:, stream: false, image: image)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
@@ -96,8 +96,13 @@ module Master
       def call(ctx)
         on_chunk = ctx[:on_chunk]
         task_type = ctx[:task_type]&.to_s
+        image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
         with_task_type(task_type) do
-          on_chunk ? chat(ctx[:message].to_s, stream: true, &on_chunk) : chat(ctx[:message].to_s)
+          if on_chunk
+            chat(ctx[:message].to_s, image: image, stream: true, &on_chunk)
+          else
+            chat(ctx[:message].to_s, image: image)
+          end
         end
       end
 
@@ -175,7 +180,7 @@ module Master
         messages.last(max_messages + 1)[0...-1] || []
       end
 
-      def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
+      def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image: nil, &blk)
         stage_warnings = []
         fallback_modes = mode_chain_for(candidate_models)
         last_response = nil
@@ -187,7 +192,7 @@ module Master
           response = @dispatcher.send_with_cache(
             selected_model,
             context + [{ role: "user", content: wrapped }],
-            stream:, &blk
+            stream:, image: image, &blk
           )
           if response.is_a?(Master::Result::Ok)
             publish_llm_success(selected_model, response)
