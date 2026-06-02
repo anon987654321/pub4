@@ -56,7 +56,7 @@ module Master
       OSMAN_RATE_OFFSET  = "-7%"
       OSMAN_PITCH_OFFSET = "-22Hz"
 
-      DEFAULT_VOICE = :ryan
+      DEFAULT_VOICE = :christopher
       DEFAULT_STYLE = :clear
       MAX_CHARS = 900
       CHUNK_CHARS = 220
