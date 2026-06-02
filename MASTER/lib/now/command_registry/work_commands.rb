@@ -238,9 +238,14 @@ module Master
       end
 
       def ungraphed_rules(root)
-        registered = Master::Judge::Scan::Rule.registry.map { |k| k.new.id.upcase }.uniq
+        rule_classes = Master::Judge::Scan::Rule.registry
+        registered = rule_classes.map do |rule_class|
+          rule = rule_class.new
+          rule.id.upcase
+        end.uniq
         graph = (Master.load_yaml(File.join(root, "data", "rule_deps.yml")) || {})["deps"] || {}
-        graphed = (graph.keys + graph.values.flat_map { |v| Array(v["after"]) }).map(&:to_s).uniq
+        graph_after_rules = graph.values.flat_map { |v| Array(v["after"]) }
+        graphed = (graph.keys + graph_after_rules).map(&:to_s).uniq
         (registered - graphed).sort
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "command_registry.ungraphed_rules")

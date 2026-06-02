@@ -300,7 +300,8 @@ module Master
           private
 
           def scan_lines(src, pattern, message:)
-            src.lines.each_with_index.filter_map do |line, i|
+            indexed_lines = src.lines.each_with_index
+            indexed_lines.filter_map do |line, i|
               finding(line: i + 1, message: message) if line.match?(pattern)
             end
           end

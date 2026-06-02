@@ -73,7 +73,8 @@ module Master
       end
 
       def scan_all_deploy
-        self.class.deploy_apps.map do |name|
+        apps = self.class.deploy_apps
+        apps.map do |name|
           scan(File.join(DEPLOY_RAILS, name))
         rescue StandardError => e
           { app: name, error: e.message }

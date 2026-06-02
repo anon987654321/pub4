@@ -122,7 +122,7 @@ MASTER must pass its own rules. Violations found by reading lib/.
 - [x] F19 All lib/**/*.rb: verify zero `open(.*#{` shell-through-open (anti_patterns.forbidden)
 - [x] F20 All lib/**/*.rb: verify zero `system(.*#{` command injection patterns (UNSAFE_CALLS)
 - [x] F21 All lib/**/*.rb: check for mutable constants missing .freeze (IMMUTABLE)
-- [ ] F22 All lib/**/*.rb: check for long chains a.b.c.d.e not covered by existing rule exclusions (LAW_OF_DEMETER)
+- [x] F22 All lib/**/*.rb: check for long chains a.b.c.d.e not covered by existing rule exclusions (LAW_OF_DEMETER)
 - [ ] F23 All lib/**/*.rb: check for 3+ positional args needing keyword conversion (FEW_ARGUMENTS)
 - [x] F24 loop/fix_helpers.rb: read and verify SRP — only fix-related helpers, no scanning logic
 - [x] F25 judge/scan/rule_dsl.rb: verify auto_build? pattern documented (SELF_EXPLAINING)
