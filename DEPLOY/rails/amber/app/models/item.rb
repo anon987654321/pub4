@@ -34,16 +34,18 @@ class Item < ApplicationRecord
   scope :active_wardrobe, -> { where.not(lifecycle_state: %w[released donated sold recycled]) }
   scope :declutter_box, -> { where(lifecycle_state: "declutter_box") }
   scope :sentimental, -> { where(lifecycle_state: "sentimental_archive") }
+  scope :seasonal_archived, -> { where(lifecycle_state: "seasonal_archive") }
 
   CATEGORIES   = %w[Tops Bottoms Dresses Shoes Accessories Outerwear].freeze
   SEASONS      = %w[Spring Summer Autumn Winter All-Season].freeze
   MOOD_EFFECTS = %w[energising calming confident playful neutral].freeze
   LIFE_PHASES  = %w[current past-self aspirational].freeze
   OCCASIONS    = %w[work casual formal gym date travel].freeze
-  LIFECYCLE_STATES = %w[active repair clean_needed tailor declutter_box sentimental_archive resale donate sold donated recycled released].freeze
+  LIFECYCLE_STATES = %w[active repair clean_needed tailor declutter_box sentimental_archive seasonal_archive resale donate sold donated recycled released].freeze
 
   def cost_per_wear
     return nil unless price.present? && times_worn.to_i > 0
+  end
 
   def value_label
     cost_per_wear ? "#{cost_per_wear} per wear" : "not worn yet"
@@ -90,8 +92,30 @@ class Item < ApplicationRecord
   def released? = %w[released donated sold recycled].include?(lifecycle_state)
   def sentimental? = lifecycle_state == "sentimental_archive"
 
+  def current_season
+    m = Time.current.month
+    case m
+    when 3..5 then "Spring"
+    when 6..8 then "Summer"
+    when 9..11 then "Autumn"
+    else "Winter"
+    end
+  end
+
+  def archive_out_of_season!
+    return unless season.present? && season != "All-Season" && season != current_season
+    update!(lifecycle_state: "seasonal_archive")
+  end
+
+  def resurface_seasonal!
+    if lifecycle_state == "seasonal_archive" && (season == current_season || season == "All-Season")
+      update!(lifecycle_state: "active")
+    end
+  end
+
   def extract_dominant_color!
     return unless photos.attached?
+    photo = photos.first
     tempfile = nil
     begin
       require "vips"
