@@ -4653,3 +4653,171 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] PH10 docs: document photography flow in MASTER/QUICKSTART.md, CLAUDE.md (amber section), amber/README.md, DEPLOY/repligen/README with examples of free vision ref + generate + postpro
 - [ ] PH11 MASTER: unify vision clients — make amber WardrobeAiService (DF02 direct openai/gemini) use ruby_llm + provider_registry for free tier consistency
 - [ ] PH12 MASTER: vision+postpro for other visuals (bsdports port hero images, blognet post previews, etc) using same pipeline
+
+## FA: Face UI & TTS — Snappy, Fun, Educational
+
+### FA-A: Particle visuals
+
+- [ ] FA01 face: Bayer 4×4 dither matrix on particle alpha — CRT scanline texture without hue
+- [ ] FA02 face: Atkinson dither pass on depth map at load time — sharper mask silhouette edges
+- [ ] FA03 face: per-particle size modulated by depth (z) — foreground dots bigger, background smaller
+- [ ] FA04 face: particle size pulse on TTS phoneme — viseme amplitude drives point size uniform
+- [ ] FA05 face: mouth region particles open/close on vowel visemes (A/E/I/O/U mapped from TTS chunk boundaries)
+- [ ] FA06 face: eye-region particles dim and close on long silence (blink simulation)
+- [ ] FA07 face: saccade micro-jitter on eye cluster — random 2-4px offset every 200-800ms, not full saccade
+- [ ] FA08 face: confidence field visualised — low confidence = particles drift outward by 0.05 units
+- [ ] FA09 face: council deliberation = each council voice gets a distinct radial sector that lights up in sequence
+- [ ] FA10 face: pressure wave ripple on message send — outward ring distortion from face center, 400ms decay
+- [ ] FA11 face: breathing idle animation — slow uniform scale 0.98-1.02 on sin(time*0.4), 2.5s cycle
+- [ ] FA12 face: "thinking" state = particles slowly spiral inward (curl noise bias toward center)
+- [ ] FA13 face: "listening" state (STT active) = particles at ear region pulse outward in beat
+- [ ] FA14 face: depth-map refresh on mask image swap — allow /mask <url> command to hot-swap face image
+- [ ] FA15 face: add second mask layer (overlay) — subtle texture from a different image blended at 0.3 alpha
+- [ ] FA16 face: shadow particles — 10% of particles offset +0.05 XY, 0.08 alpha — cheap subsurface depth
+- [ ] FA17 face: forehead region glow on high-confidence answer — luminance +0.15 for 600ms
+- [ ] FA18 face: rain mode — particles fall slowly downward on weary/fail mood, gravity = +0.002/frame
+- [ ] FA19 face: veto mood = face fractures — particles scatter to 8 radial shards then reassemble
+- [ ] FA20 face: pass mood = particles bloom outward then snap back with spring overshoot
+- [ ] FA21 face: idle color temperature drift — particle alpha slow sine 0.18-0.26 over 8s (phosphor warmup sim)
+- [ ] FA22 face: reduce particle count smoothly on tab hidden, restore on focus (requestAnimationFrame pause)
+- [ ] FA23 face: gyroscope tilt on mobile — deviceorientation → tiltX/Y parallax on face position
+- [ ] FA24 face: pinch-to-zoom on mobile — scale face geometry via touch events
+- [ ] FA25 face: cursor proximity field — particles near cursor repel 0.02 units (cursor as local gravity invert)
+- [ ] FA26 face: double-tap resets face to center with spring animation
+- [ ] FA27 face: long-press on face triggers random mood demo sequence
+- [ ] FA28 face: particle trail on morph transition — ghost positions fade out over 8 frames
+- [ ] FA29 face: "surprised" mood = face particles jump +0.3 Y then fall back with gravity
+- [ ] FA30 face: ambient occlusion fake — particles at mask dark-pixel regions get alpha 0.12, bright get 0.35
+- [ ] FA31 face: add WebWorker for depth-map sampling so main thread never blocks on large images
+- [ ] FA32 face: store sampled positions in IndexedDB keyed by image URL — skip resample on reload
+- [ ] FA33 face: particle LOD — coarsePointer already halves count; also reduce on battery saver API signal
+- [ ] FA34 face: chromatic aberration on flash state — R channel offset +1px, B offset -1px for 200ms
+- [ ] FA35 face: scanline overlay CSS on canvas — `repeating-linear-gradient` at 2px pitch, 4% opacity
+- [ ] FA36 face: after long idle (>60s) particles slowly dissolve (alpha → 0 over 4s), reform on interaction
+
+### FA-B: TTS voice & audio
+
+- [ ] FA37 tts: phoneme → viseme map for edge-tts chunks — parse SSML boundary events from WebSocket stream
+- [ ] FA38 tts: word-boundary events from edge-tts → highlight spoken word in chat bubble in real time
+- [ ] FA39 tts: speed slider in UI — maps to `rate` offset ±20% passed to speech.rb via query param
+- [ ] FA40 tts: pitch slider in UI — maps to `pitch` offset ±20Hz passed to speech.rb
+- [ ] FA41 tts: voice picker in UI — dropdown of 13 voices with preview button (2-word sample phrase)
+- [ ] FA42 tts: voice preview plays 3-word clip without sending to chat history
+- [ ] FA43 tts: auto-pause TTS when user scrolls (intent = reading, not listening)
+- [ ] FA44 tts: resume TTS from last word boundary on un-pause (track char offset in streamed chunks)
+- [ ] FA45 tts: per-speaker voice in council mode — each council member uses their mapped voice (already in code, surface in UI)
+- [ ] FA46 tts: emotional prosody — stress key words via SSML `<emphasis>` tags injected by expression.rb
+- [ ] FA47 tts: SSML `<break time="400ms"/>` after code blocks and lists — natural reading pace
+- [ ] FA48 tts: strip markdown before TTS — `**bold**`, `` `code` ``, `#` headers → plain text, not read aloud as punctuation
+- [ ] FA49 tts: skip TTS for messages >800 chars by default, show "read aloud" button instead
+- [ ] FA50 tts: "chapter" mode — long answers chunked into named sections, each gets a play button
+- [ ] FA51 tts: ambient background tone during thinking — 40Hz binaural low hum at 3% volume (WebAudio oscillator)
+- [ ] FA52 tts: subtle audio confirmation click on message send — 8-bit tick sample, <10ms
+- [ ] FA53 tts: audio ducking — background ambient tone ducks to 20% when TTS starts
+- [ ] FA54 tts: TTS cache — store audio blob in IndexedDB keyed by text hash, skip re-request on repeat
+- [ ] FA55 tts: streaming audio — pipe edge-tts WebSocket chunks directly to MediaSource instead of waiting for full MP3
+- [ ] FA56 tts: Whisper STT fallback — if browser SpeechRecognition unavailable, POST audio blob to /chat/stt (whisper.cpp on VPS)
+- [ ] FA57 tts: "repeat that" voice command — re-play last TTS buffer without new LLM call
+- [ ] FA58 tts: spoken timestamp — prepend "As of [date]" to answers about time-sensitive topics
+- [ ] FA59 tts: multi-language auto-detect — if input is Norwegian, switch to Pernille/Finn voice pair
+- [ ] FA60 tts: adjustable chunk size — default 220 chars; short-answer mode 80 chars for snappier start
+- [ ] FA61 tts: silence detection in STT — auto-submit after 1.2s silence (configurable threshold)
+- [ ] FA62 tts: push-to-talk mode — hold spacebar = record, release = submit (no silence detection needed)
+- [ ] FA63 tts: audio waveform visualiser alongside face — small bar chart from AnalyserNode FFT data
+- [ ] FA64 tts: voiced error messages — 503/timeout gets a short spoken apology, not just text
+- [ ] FA65 tts: "thinking aloud" — stream internal pipeline stage name as whispered aside during long waits
+
+### FA-C: Interaction & gamification
+
+- [ ] FA66 face: keyboard shortcut `T` = toggle TTS on/off without opening nav
+- [ ] FA67 face: keyboard shortcut `M` = toggle mic on/off
+- [ ] FA68 face: keyboard shortcut `Escape` = skip current TTS chunk
+- [ ] FA69 face: swipe up on face canvas = open composer (mirror swipe-down nav reveal)
+- [ ] FA70 face: swipe left/right on face = cycle through recent answers
+- [ ] FA71 face: drag face to corner — pin it small while reading long output (PiP mode)
+- [ ] FA72 face: "applause" Easter egg — type "wow" and particles burst confetti pattern for 1s
+- [ ] FA73 face: "sleep" command — face dims to 5% alpha, TTS mutes, wakes on any input
+- [ ] FA74 face: share face state as URL param — mood/model/voice encoded, shareable link
+- [ ] FA75 face: copy-to-clipboard button appears on hover over any assistant message
+- [ ] FA76 face: reaction emojis on message — tap to send 👍/🔁/🗑 to rate/retry/delete answer
+- [ ] FA77 face: "explain simpler" tap on any response — re-asks with Flesch–Kincaid grade 6 constraint
+- [ ] FA78 face: "go deeper" tap — re-asks with expanded detail and cites sources
+- [ ] FA79 face: streamed response has a pause/resume button mid-stream
+- [ ] FA80 face: typing indicator animation while streaming — 3 particle dots pulse in sequence
+- [ ] FA81 face: message timestamps shown on hover
+- [ ] FA82 face: session word count shown in corner — "1.2k words today"
+- [ ] FA83 face: "focus mode" — hide all UI except face and input, full-screen canvas
+- [ ] FA84 face: dark/light toggle persisted to localStorage (currently always black void)
+- [ ] FA85 face: font size control via pinch or slider — rem scale 0.85–1.4
+- [ ] FA86 face: haptic feedback on mobile send — navigator.vibrate(30) on submit
+- [ ] FA87 face: confetti on first correct answer in quiz mode (see FA-D)
+- [ ] FA88 face: session timer shown optionally — "12m 34s" elapsed since first message
+
+### FA-D: Educational & quiz modes
+
+- [ ] FA89 face: `/quiz <topic>` command — generates 5 MCQ questions, scores answers, reads results aloud
+- [ ] FA90 face: `/explain <term>` — concise definition + analogy + example, TTS reads it
+- [ ] FA91 face: `/flashcard` mode — face shows term particle-splash, reads definition, waits for recall
+- [ ] FA92 face: spaced repetition store — flashcard scores saved to SQLite, resurface weak cards
+- [ ] FA93 face: `/timeline <event>` — generates chronological bullet list, each bullet TTS'd in sequence
+- [ ] FA94 face: `/debate <topic>` — council voices each argue a position, switchable per speaker
+- [ ] FA95 face: `/analogy <concept>` — explains technical concept via familiar domain (cooking, sport, etc)
+- [ ] FA96 face: progress bar on long quiz sessions — "question 3 of 5" with particle fill animation
+- [ ] FA97 face: wrong answer = particles shake (FA-shake mood); correct = bloom (FA-pass mood)
+- [ ] FA98 face: `/summarise` — condenses last N messages into bullet points, read aloud
+- [ ] FA99 face: `/etymology <word>` — word origin + language tree, particles morph to text momentarily
+- [ ] FA100 face: `/compare <A> vs <B>` — side-by-side table, TTS reads each column alternating voices
+- [ ] FA101 face: math mode — detect LaTeX `$...$` in response, render via KaTeX, TTS reads equation aloud in natural language
+- [ ] FA102 face: code explainer mode — inline comment TTS reads each line of a code block slowly
+- [ ] FA103 face: `/vocabulary` session — picks 3 rare words from session context, defines them with example sentences
+- [ ] FA104 face: reading level indicator on response — Flesch grade shown, click to simplify/expand
+- [ ] FA105 face: `/translate <lang>` — re-renders last answer in target language, voice auto-switches to matching locale voice
+- [ ] FA106 face: citation mode — answers include inline source tags [1][2], expandable footnote list
+- [ ] FA107 face: knowledge graph export — `/graph` command exports session concepts as DOT/JSON
+- [ ] FA108 face: `/story <prompt>` — narrative mode, TTS reads chapters sequentially with mood shifts per scene
+
+### FA-E: Personality & expression
+
+- [ ] FA109 face: soul drift visible — soul.yml drift score shown as particle density variation
+- [ ] FA110 face: mood history sparkline — tiny bar chart of last 20 mood states in corner
+- [ ] FA111 face: "curious" mood particle behaviour — particles lean toward the user's cursor
+- [ ] FA112 face: "weary" mood — particles sag downward 0.04 units, slower curl noise
+- [ ] FA113 face: model identity badge — tiny text "claude" / "deepseek" / "gpt" near face, fades after 3s
+- [ ] FA114 face: voice character blurb on voice change — one spoken line in new voice: "I'm Christopher. Let's work."
+- [ ] FA115 face: council vote tally displayed — pass/veto counts appear as brief text overlay
+- [ ] FA116 face: constitution violation flash — red particle flash (uFlash) already wired, expose via ABSOLUTE guard event
+- [ ] FA117 face: pipeline stage indicator — tiny label "routing…" "scanning…" fades in/out per stage
+- [ ] FA118 face: model switch animation — brief dissolve/reform of face in new tint (currently all white; future per-model tint opt-in)
+- [ ] FA119 face: "I don't know" response = particles form question-mark shape momentarily
+- [ ] FA120 face: laughter detection — if response contains "(ha" or emoji, particles do a quick jitter burst
+- [ ] FA121 face: multi-turn memory indicator — small counter "remembers N things from today" on hover
+- [ ] FA122 face: `/whoami` — face reads aloud its own soul.yml persona summary
+- [ ] FA123 face: seasonal particle tints — opt-in; Halloween = amber, Midsummer = gold, Winter = ice-blue
+- [ ] FA124 face: reaction to long silence (>90s) — face dims, TTS whispers "still here"
+
+### FA-F: Performance & reliability
+
+- [ ] FA125 face: WebWorker offload for curl-noise vertex computation — JS main thread freed for UI
+- [ ] FA126 face: OffscreenCanvas rendering — move Three.js render to worker, postMessage bitmap to main
+- [ ] FA127 face: adaptive particle count — drop to 8k if frame time >25ms for two consecutive frames
+- [ ] FA128 face: preload face_mask.jpg via `<link rel="preload">` in HTML head — zero parse delay
+- [ ] FA129 face: service worker cache face.js + three.module.js + face_mask.jpg — offline shell
+- [ ] FA130 face: progressive enhancement — 2D canvas fallback already exists; add SVG fallback for no-canvas
+- [ ] FA131 tts: exponential backoff on TTS 503 — retry up to 3× before showing silent fallback text
+- [ ] FA132 tts: connection health ping /up every 60s; show reconnect banner if down, auto-retry
+- [ ] FA133 face: error boundary — uncaught JS exception shows degraded text UI, never blank screen
+- [ ] FA134 face: memory leak guard — dispose Three.js geometries/materials on face swap or page hide
+- [ ] FA135 face: FPS counter toggle (debug overlay) — `?fps=1` query param shows live frame rate
+
+### FA-G: Accessibility
+
+- [ ] FA136 face: `prefers-reduced-motion` already detected; also honour `prefers-contrast: more` → boost alpha to 0.9
+- [ ] FA137 face: ARIA live region for streamed text — screen readers announce new tokens
+- [ ] FA138 face: keyboard-only navigation — Tab cycles through messages, Enter opens action menu
+- [ ] FA139 face: transcript download button — export full session as plain text or Markdown
+- [ ] FA140 face: TTS speed memory — remember last-used rate in localStorage, restore on next session
+- [ ] FA141 face: closed-caption strip — TTS word-boundary events drive a live subtitle bar under face
+- [ ] FA142 face: high-contrast mode — `?hc=1` forces alpha 1.0 particles, white-on-black text
+- [ ] FA143 face: font family toggle — system-ui vs monospace; persisted to localStorage
+- [ ] FA144 face: focus ring on canvas when keyboard-focused (outline: 2px solid white)
+- [ ] FA145 face: announce mood changes to screen reader via aria-live="polite" on hidden element
