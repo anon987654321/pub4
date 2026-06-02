@@ -1276,25 +1276,33 @@ if (renderer) {
     const root = rootBody || document.documentElement;
     const saved = localStorage.getItem(FONT_KEY);
     if (saved === 'mono') root.classList.add('font-mono');
-    const t = document.getElementById('font-toggle');
-    if (t) {
-      const update = () => {
-        const m = root.classList.contains('font-mono');
-        t.textContent = m ? 'mono' : 'sys';
-      };
-      update();
-      const doToggle = () => {
-        const m = root.classList.toggle('font-mono');
-        localStorage.setItem(FONT_KEY, m ? 'mono' : 'system');
-        update();
-      };
-      t.addEventListener('click', doToggle);
-      t.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          doToggle();
-        }
-      });
+    let t = document.getElementById('font-toggle');
+    if (!t) {
+      t = document.createElement('span');
+      t.id = 'font-toggle';
+      t.className = 'font-toggle';
+      t.role = 'button';
+      t.tabIndex = 0;
+      t.setAttribute('aria-label', 'Toggle font');
+      t.textContent = 'sys';
+      document.body.appendChild(t);
     }
+    const update = () => {
+      const m = root.classList.contains('font-mono');
+      t.textContent = m ? 'mono' : 'sys';
+    };
+    update();
+    const doToggle = () => {
+      const m = root.classList.toggle('font-mono');
+      localStorage.setItem(FONT_KEY, m ? 'mono' : 'system');
+      update();
+    };
+    t.addEventListener('click', doToggle);
+    t.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        doToggle();
+      }
+    });
   })();
 })();
