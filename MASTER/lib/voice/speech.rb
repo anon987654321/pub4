@@ -17,6 +17,8 @@ module Master
         osman: "ms-MY-OsmanNeural",
         yasmin: "ms-MY-YasminNeural",
         pernille: "nb-NO-PernilleNeural",
+        jenny: "en-US-JennyNeural",
+        aria: "en-US-AriaNeural",
         ryan: "en-GB-RyanNeural",
         finn: "nb-NO-FinnNeural",
         steffan: "en-US-SteffanNeural",
