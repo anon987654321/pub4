@@ -34,6 +34,9 @@ Rails.application.routes.draw do
   resources :comments do
     resource :vote, only: [:create], controller: "votes"
     resources :comments, only: [:create], as: :replies
+    member do
+      post :generate_summary
+    end
   end
 
   resources :users, only: [:show] do

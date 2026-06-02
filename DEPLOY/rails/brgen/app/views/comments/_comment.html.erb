@@ -14,6 +14,14 @@
   </header>
   <p><%= comment.content %></p>
 
+  <% if comment.long_thread? %>
+    <% if comment.has_thread_summary? %>
+      <p class="thread-summary"><strong>MASTER sammendrag:</strong> <%= comment.thread_summary %></p>
+    <% elsif authenticated? %>
+      <%= button_to "Vis AI sammendrag (via MASTER)", generate_summary_comment_path(comment), method: :post, class: "btn btn-ghost btn-sm", data: { turbo: true } %>
+    <% end %>
+  <% end %>
+
   <% if authenticated? %>
     <section id="reply-<%= comment.id %>" hidden>
       <%= form_with url: post_comments_path(comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable), data: { turbo: true } do |f| %>

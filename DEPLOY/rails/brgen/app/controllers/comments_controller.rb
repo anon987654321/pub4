@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CommentsController < ApplicationController
-  before_action :require_real_user, only: [:destroy]
+  before_action :require_real_user, only: [:destroy, :generate_summary]
   before_action :set_commentable
 
   def create
@@ -28,6 +28,16 @@ class CommentsController < ApplicationController
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.remove(dom_id(@comment)) }
       format.html         { redirect_back fallback_location: root_path }
+    end
+  end
+
+  def generate_summary
+    @comment = Comment.find(params[:id])
+    return unless @comment.long_thread?
+    ThreadSummarizer.call(@comment)
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.replace(dom_id(@comment), partial: "comments/comment", locals: { comment: @comment }) }
+      format.html { redirect_back fallback_location: root_path }
     end
   end
 
