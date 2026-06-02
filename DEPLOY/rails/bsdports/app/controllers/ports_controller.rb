@@ -29,6 +29,7 @@ class PortsController < ApplicationController
     @comments = @port.comments.roots.includes(:user, replies: :user)
     @comment = Comment.new
     @advisories = @port.security_advisories.recent
+    @maintainer = @port.maintainer.present? ? Maintainer.find_by(name: @port.maintainer) : nil
   end
 
   def watch

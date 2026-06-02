@@ -1,0 +1,11 @@
+<% content_for :title, "Maintainers" %>
+<h1>Maintainers</h1>
+<ul id="maintainers">
+  <% @maintainers.each do |m| %>
+    <li>
+      <%= link_to m.name, maintainer_path(m) %>
+      <small><%= m.label %></small>
+      <small>(<%= m.ports.size %> ports)</small>
+    </li>
+  <% end %>
+</ul>
