@@ -117,7 +117,7 @@ MASTER must pass its own rules. Violations found by reading lib/.
 - [x] F14 now/context_window.rb: verify no god class
 - [x] F15 loop/rule_loop.rb: CANDIDATE_COUNT=3 magic number — name as semantic constant with comment (NO_MAGIC)
 - [x] F16 ground/memory.rb: MAX_INJECT_TOKENS = 2000 used as token limit — verify against actual model context size
-- [ ] F17 reach/llm.rb: verify no hardcoded API keys (SECRET_PROXIMITY)
+- [x] F17 reach/llm.rb: verify no hardcoded API keys (SECRET_PROXIMITY)
 - [ ] F18 All lib/**/*.rb: verify zero Marshal.load (anti_patterns.forbidden)
 - [ ] F19 All lib/**/*.rb: verify zero `open(.*#{` shell-through-open (anti_patterns.forbidden)
 - [ ] F20 All lib/**/*.rb: verify zero `system(.*#{` command injection patterns (UNSAFE_CALLS)
