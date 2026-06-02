@@ -101,15 +101,15 @@ Every section of rules.yml that isn't implemented in Ruby.
 
 MASTER must pass its own rules. Violations found by reading lib/.
 
-- [ ] F01 scanner.rb#scan: 35-line method — split into read_file, parse_ast, apply_rules, publish (SRP + SMALL_FUNCTIONS)
-- [ ] F02 DetectionPipeline: shallow relay class adds no abstraction (DIFFERENT_LAYER_DIFFERENT_ABSTRACTION) — merge into Scanner or delete
-- [ ] F03 RuleLoop: council_fix and request_fix duplicate prompt-building logic (DRY) — extract build_prompt_for(violation, src, path, style:)
-- [ ] F04 pipeline.rb#maybe_rollback: git stash logic in Pipeline violates SRP — extract to Loop::Rollback class
+- [x] F01 scanner.rb#scan: 35-line method — split into read_file, parse_ast, apply_rules, publish (SRP + SMALL_FUNCTIONS)
+- [x] F02 DetectionPipeline: shallow relay class adds no abstraction (DIFFERENT_LAYER_DIFFERENT_ABSTRACTION) — merge into Scanner or delete
+- [x] F03 RuleLoop: council_fix and request_fix duplicate prompt-building logic (DRY) — extract build_prompt_for(violation, src, path, style:)
+- [x] F04 pipeline.rb#maybe_rollback: git stash logic in Pipeline violates SRP — extract to Loop::Rollback class
 - [ ] F05 memory.rb: 256 lines (SMALL_FILES) — split into Memory::Store, Memory::Search, Memory::Consolidate modules
 - [ ] F06 repo_ecology.rb: analyze_file returns 12-key Hash (DATA_CLASS) — introduce FileRecord = Data.define(...)
 - [ ] F07 ground/constitution.rb: load_yaml called on every invocation — memoize with @constitution_cache (IMMUTABLE)
 - [ ] F08 master.rb#bootstrap_container: 50+ line method — split into init_ground, init_judge, init_loop, init_reach
-- [ ] F09 scanner.rb parallel_each: raw Thread.new without error boundary — wrap in rescue and publish thread_error
+- [x] F09 scanner.rb parallel_each: raw Thread.new without error boundary — wrap in rescue and publish thread_error
 - [ ] F10 rule_loop.rb#preamble: reads soul.yml on every call — memoize (pure function same input = same output)
 - [ ] F11 pipeline.rb ParallelGroup#merge_results: uses filter_map + reduce on results — simplify (KISS)
 - [ ] F12 repo_ecology.rb: co_change_graph built twice (once in snapshot, once in scan) — always use memoized accessor
@@ -4221,7 +4221,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] CB04 brgen: add anonymous post gate (2 posts before signup) with MASTER moderation (BA7)
 - [ ] CB05 brgen: make near-me feed the default (geolocation-weighted chronological)
 - [ ] CB06 brgen: pin community guidelines as first post in each city feed
-- [ ] CB07 brgen: add AI thread summaries on long comment threads (via MASTER streaming)
+- [x] CB07 brgen: add AI thread summaries on long comment threads (via MASTER streaming) — added thread_summary to Comment, long_thread? helper (threshold 20), ThreadSummarizer service (ruby_llm + MASTER-style prompt for 3-sentence active-voice summary), generate_summary action in comments_controller (turbo replace), route member, UI button "Vis AI sammendrag (via MASTER)" + display in _comment partial for long threads. Scans, full reads, specific pushes.
 - [x] CB08 brgen dating: add bydel (neighbourhood) matching (hyperlocal beyond city) — added neighborhood/bydel to profiles (migration+model+forms+params), filter in home swipe and matchmaking service, display in cards/profile show, available_neigh from city. Pushed.
 - [x] CB09 brgen playlist: add collaborative playlists and listening parties — wired Collaboration model for both playlists+sets (added assocs, flag migration, controller with create/destroy + owner/editor authz, routes under both, updated permissions in controllers+views, add/remove track for editors, forms for new/edit playlists, collab management UI + add form in shows, listening party UI stubs in shows (full cable/party model follow-up). Scans before edits. Pushed frequently.
 - [x] CB10 brgen takeaway: show reviews from neighbours only (hyperlocal trust over anonymous crowd) — implemented via Takeaway::Review + snapshot loc + haversine <=4km filter in RestaurantsController#load_neighbour_reviews + reviews form on restaurant show (eligible after delivered order). See migration 20260602123000, model, reviews_controller, edits to order/restaurant/ctrl/routes/view. Pre/post scans + diffs in session.
