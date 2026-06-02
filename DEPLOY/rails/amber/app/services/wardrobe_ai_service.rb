@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "zlib"
+require "base64"
 
 class WardrobeAiService
   OPENROUTER_BASE = "https://openrouter.ai/api/v1"
@@ -31,15 +32,23 @@ class WardrobeAiService
   end
 
   def suggest_outfits(occasion: nil, season: nil)
-    items_summary = @user.items.joy.limit(20).map { |i| "#{i.title} (#{i.category}, #{i.color})" }.join(", ")
+    items = @user.items.joy.active_wardrobe.limit(20).to_a
+    items_summary = items.map { |i| "#{i.title} (#{i.category}, #{i.color})" }.join(", ")
     prompt = <<~PROMPT
-      Suggest 3 outfit combinations from these wardrobe items.
+      You are a fashion stylist with vision. Suggest 3 outfit combinations (3 items each) from the wardrobe.
+      Use both the text metadata and the attached photos to judge fit, colour harmony, style, and occasion.
       #{occasion ? "Occasion: #{occasion}" : ""}
       #{season ? "Season: #{season}" : ""}
       Items: #{items_summary}
-      Reply with JSON: {"outfits": [{"name": "outfit name", "items": ["item1", ...], "description": "why it works"}]}
+      Reply ONLY with JSON: {"outfits": [{"name": "outfit name", "items": ["item title 1", "item title 2", "item title 3"], "description": "why it works"}]}
     PROMPT
-    chat(prompt)["outfits"] || []
+    vision_items = items.select { |i| i.photos.attached? }.first(5)
+    if vision_items.any? && @client
+      images = vision_items.map { |i| image_data_url(i.photos.first) }.compact
+      chat_with_vision(prompt, images)["outfits"] || []
+    else
+      chat(prompt)["outfits"] || []
+    end
   end
 
   def declutter_candidates
@@ -126,8 +135,8 @@ class WardrobeAiService
       parameters: {
         model: MODEL,
         messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" }
-      }
+        response_format: { type: "json_object" },
+      },
     )
     content = response.dig("choices", 0, "message", "content")
     return fallback_response(prompt) if content.blank?
@@ -170,5 +179,37 @@ class WardrobeAiService
       User wardrobe: #{ @user.items.limit(10).map { |i| "#{i.title} (#{i.category}, #{i.color}, #{i.season})" }.join("; ") }
     PROMPT
     chat(prompt)
+  end
+
+  def image_data_url(photo)
+    return nil unless photo
+    data = photo.download
+    "data:#{photo.content_type.presence || 'image/jpeg'};base64,#{Base64.strict_encode64(data)}"
+  end
+
+  def chat_with_vision(prompt, image_data_urls)
+    return fallback_response(prompt) unless @client && image_data_urls.any?
+
+    content = [{ type: "text", text: prompt }]
+    image_data_urls.each do |url|
+      content << { type: "image_url", image_url: { url: url } }
+    end
+
+    response = @client.chat(
+      parameters: {
+        model: MODEL,
+        messages: [{ role: "user", content: content }],
+      },
+    )
+    content = response.dig("choices", 0, "message", "content")
+    return fallback_response(prompt) if content.blank?
+
+    JSON.parse(content)
+  rescue JSON::ParserError => e
+    Rails.logger.warn("WardrobeAI vision invalid JSON: #{e.message}")
+    fallback_response(prompt)
+  rescue StandardError => e
+    Rails.logger.error("WardrobeAI vision error: #{e.class}: #{e.message}")
+    fallback_response(prompt)
   end
 end
