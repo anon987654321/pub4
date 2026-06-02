@@ -64,6 +64,7 @@ module Master
         base = path ? File.expand_path(path, @root) : @root
         files = collect_files(base)
         records = files.map { |file| analyze_file(file) }
+        graph = co_change_graph
         scanned_utc = Time.now.utc
         report = {
           root: @root,
@@ -76,7 +77,7 @@ module Master
           sprawl: sprawl(records),
           large_files: large_files(records),
           extension_mix: extension_mix(records),
-          co_change_pairs: co_change_pairs
+          co_change_pairs: co_change_pairs(graph)
         }
         @bus&.publish("repo_ecology:scan", files: records.size, score: report[:score])
         report
@@ -232,9 +233,9 @@ module Master
                .first(25)
       end
 
-      def co_change_pairs
+      def co_change_pairs(graph = co_change_graph)
         pair_counts = Hash.new(0)
-        co_change_graph.each do |file_a, peers|
+        graph.each do |file_a, peers|
           peers.each do |file_b, count|
             key = [file_a, file_b].sort
             pair_counts[key] = count if file_a < file_b
