@@ -311,7 +311,7 @@ module Master
           MAX_CC = 10
           CC_NODES = [
             Prism::IfNode, Prism::UnlessNode, Prism::WhileNode, Prism::UntilNode,
-            Prism::ForNode, Prism::CaseWhenNode, Prism::RescueNode, Prism::AndNode,
+            Prism::ForNode, Prism::WhenNode, Prism::RescueNode, Prism::AndNode,
             Prism::OrNode,
           ].freeze
 
@@ -356,6 +356,78 @@ module Master
             return 0 unless node.respond_to?(:child_nodes)
             own = CC_NODES.include?(node.class) ? 1 : 0
             own + node.child_nodes.compact.sum { |c| count_cc_nodes(c) }
+          end
+        end
+
+      # B09 PATTERN_EXTRACTION — code close to a named design pattern.
+        class PatternExtractionRule < Rule
+          BRANCH_THRESHOLD = 3
+          PIPELINE_STEP_THRESHOLD = 4
+
+          def initialize
+            super()
+            @id = "PATTERN_EXTRACTION"
+            @description = "file is close to a named design pattern"
+            @severity = :info
+            @rule_tags = %i[DESIGN OPPORTUNITY]
+            @auto_fix = false
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
+          rescue StandardError
+            []
+          end
+
+          def check_ast(ast, code, path:)
+            return [] unless ast
+            findings = []
+            lines = code.lines
+            visit(ast) do |node|
+              next unless node.is_a?(Prism::DefNode)
+              method_lines = lines[(node.location.start_line - 1)...node.location.end_line].join
+              branch_count = branch_dispatch_count(method_lines)
+              if branch_count >= BRANCH_THRESHOLD
+                findings << finding(
+                  line: node.location.start_line,
+                  message: "Strategy opportunity in #{node.name}: #{branch_count} dispatch branches — extract named handlers"
+                )
+              elsif pipeline_step_count(method_lines) >= PIPELINE_STEP_THRESHOLD
+                findings << finding(
+                  line: node.location.start_line,
+                  message: "Pipeline opportunity in #{node.name}: sequential transformations can be named stages"
+                )
+              end
+            end
+            findings
+          end
+
+          private
+
+          def visit(node, &block)
+            return unless node.respond_to?(:child_nodes)
+            block.call(node)
+            node.child_nodes.compact.each { |c| visit(c, &block) }
+          end
+
+          def branch_dispatch_count(src)
+            src.lines.count { |line| line.match?(/^\s*(when|elsif)\b/) }
+          end
+
+          def pipeline_step_count(src)
+            assignments = src.lines.filter_map do |line|
+              match = line.match(/^\s*([a-z_]\w*)\s*=\s*(.+)$/)
+              [match[1], match[2]] if match
+            end
+            return 0 if assignments.size < PIPELINE_STEP_THRESHOLD
+            assignments.each_cons(PIPELINE_STEP_THRESHOLD).find { |group| chained_assignments?(group) }&.size.to_i
+          end
+
+          def chained_assignments?(group)
+            names = group.map(&:first)
+            return false unless names.uniq.size == names.size
+            group.each_cons(2).all? { |left, right| right.last.match?(/\b#{Regexp.escape(left.first)}\b/) }
           end
         end
 

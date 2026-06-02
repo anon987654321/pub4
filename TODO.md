@@ -40,7 +40,7 @@ Rules referencing `detect_structural: handler` where no Rule subclass implements
 - [x] B06 ExplicitRule — detect implicit requires, implicit return types, magic coupling (detect_structural: explicit)
 - [x] B07 NestingDepthRule — Prism: nesting >4 levels (if/while/case/module/class/def)
 - [x] B08 CyclomaticComplexityRule — move CC calculation out of DetectionPipeline into a proper Rule subclass
-- [ ] B09 PatternExtractionRule — structural: "80% of the way to Strategy/Decorator/Pipeline/…" (mode: opportunity)
+- [x] B09 PatternExtractionRule — structural: "80% of the way to Strategy/Decorator/Pipeline/…" (mode: opportunity)
 - [x] B10 DataClassRule — class that holds data with no behavior (all attr_accessor, no methods)
 
 ## C. Missing autofix transforms in AstFixer
@@ -54,13 +54,13 @@ Rules marked `autofix: true` whose transform isn't in lib/judge/scan/ast_fixer.r
 - [x] C05 Add `lang="en"` to `<html>` tags missing it (HTML_LANG)
 - [x] C06 Add `loading="lazy"` to `<img>` tags missing loading= (LAZY_IMAGES)
 - [x] C07 Add `<meta charset=UTF-8>` as first element in `<head>` (META_CHARSET)
-- [ ] C08 Replace `var ` with `const ` in JS (NO_VAR) — only when variable not reassigned
-- [ ] C09 Convert `for (const x in arr)` to `for (const x of arr)` (FOR_OF)
-- [ ] C10 Convert `"a" + b + "c"` to `` `a${b}c` `` template literals (TEMPLATE_LITERALS)
-- [ ] C11 Convert `a && a.b` to `a?.b` in JavaScript (OPTIONAL_CHAINING)
-- [ ] C12 Remove statement after `return`/`raise` on immediately following line (DEAD_CODE)
-- [ ] C13 Add trailing comma to last element of multi-line array/hash (TRAILING_COMMAS)
-- [ ] C14 Convert `margin-left:` / `margin-right:` to logical properties (LOGICAL_PROPERTIES)
+- [x] C08 Replace `var ` with `const ` in JS (NO_VAR) — only when variable not reassigned
+- [x] C09 Convert `for (const x in arr)` to `for (const x of arr)` (FOR_OF)
+- [x] C10 Convert `"a" + b + "c"` to `` `a${b}c` `` template literals (TEMPLATE_LITERALS)
+- [x] C11 Convert `a && a.b` to `a?.b` in JavaScript (OPTIONAL_CHAINING)
+- [x] C12 Remove statement after `return`/`raise` on immediately following line (DEAD_CODE)
+- [x] C13 Add trailing comma to last element of multi-line array/hash (TRAILING_COMMAS)
+- [x] C14 Convert `margin-left:` / `margin-right:` to logical properties (LOGICAL_PROPERTIES)
 
 ## D. Self-scan infrastructure
 
