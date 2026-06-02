@@ -3,6 +3,7 @@
 require "digest"
 require "open3"
 require "set"
+require "time"
 
 module Master
   module Loop
@@ -31,6 +32,8 @@ module Master
         @incremental = incremental
         @violation_counts = Hash.new(0)
         @rule_recurrence = Hash.new(0)
+        @halted = false
+        @halt_reason = nil
         @preamble = build_preamble
       end
 
@@ -45,6 +48,8 @@ module Master
       # Three guards prevent wedging when the LLM provider degrades:
       # wall-clock budget, per-pass deadline, circuit-open early-exit.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS, incremental: @incremental)
+        return halted_result if halted?
+
         files = incremental ? collect_changed_files(target) : collect_files(target)
         history = []
         seen_snapshots = Set.new
@@ -97,7 +102,9 @@ module Master
       def run_forever(target = @root)
         sleep STARTUP_DELAY
         loop do
+          break if halted?
           run(target)
+          break if halted?
           @bus&.publish("fix_loop:idle", sleep: IDLE_SLEEP)
           sleep IDLE_SLEEP
         end
@@ -107,6 +114,8 @@ module Master
 
       def start_background!(target = @root)
         return Result.err("fix_loop already running") if @bg_thread&.alive?
+        @halted = false
+        @halt_reason = nil
         @bg_thread = Thread.new { run_forever(target) }
         @bg_thread.abort_on_exception = false
         @bus&.publish("fix_loop:background_start", target:)
@@ -123,6 +132,17 @@ module Master
 
       def background_alive? = @bg_thread&.alive? || false
 
+      def halt!(reason: "self_violation")
+        @halted = true
+        @halt_reason = reason
+        @bg_thread&.kill if @bg_thread&.alive?
+        @bg_thread = nil
+        @bus&.publish("fix_loop:halt", reason:)
+        Result.ok("fix_loop halted: #{reason}")
+      end
+
+      def halted? = @halted
+
       # Scan only — no commit, no mutation. Always full scan regardless of incremental flag.
       def preview(target = @root)
         files = collect_files(target)
@@ -137,6 +157,10 @@ module Master
       end
 
       private
+
+      def halted_result
+        Result.err("fix_loop halted: #{@halt_reason || "self_violation"}", category: :policy)
+      end
 
       # Tier 1: rubocop -A + AstFixer + TypeChecker + DatalogEngine. No LLM.
       def fast_pass(files)

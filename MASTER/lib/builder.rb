@@ -196,7 +196,7 @@ module Master
       # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
       fix_loop = Loop::FixLoop.new(rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:)
       if ENV["MASTER_AUTOFIX"] == "1"
-        Thread.new { fix_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
+        fix_loop.start_background!(root)
       end
 
       # MASTER_WATCH=1 enables reactive file-watching (requires rb-kqueue or rb-inotify).
@@ -221,6 +221,7 @@ module Master
         Thread.new { watcher.run_forever }.tap { |t| t.abort_on_exception = false }
       end
       bus.subscribe("system:crit") { Thread.new { fix_loop.stop_background! if fix_loop.background_alive? } }
+      bus.subscribe("self_violation") { |payload| fix_loop.halt!(reason: "self_violation #{payload[:violations]} violations") }
 
       { standing:, fix_loop:, watch_loop:, heartbeat:, triggers:, propose_tree:, watcher: }
     end

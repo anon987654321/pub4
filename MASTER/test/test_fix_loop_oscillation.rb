@@ -93,4 +93,17 @@ class TestFixLoopOscillation < Minitest::Test
     osc = @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
     assert_equal 1, osc.size
   end
+
+  def test_halt_blocks_fix_loop_run
+    loop = build_loop([])
+
+    halt = loop.halt!(reason: "self_violation 2 violations")
+    result = loop.run(@root)
+
+    assert halt.ok?
+    assert result.err?
+    assert_equal :policy, result.category
+    assert_match(/self_violation 2 violations/, result.message)
+    assert @bus.events.any? { |event| event[:event] == "fix_loop:halt" }
+  end
 end
