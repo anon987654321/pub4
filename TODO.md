@@ -4624,7 +4624,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] DF07 amber: add shopping list — items MASTER suggests to fill gaps in wardrobe
 - [ ] DF08 amber: add seasonal archive — move out-of-season items to archive, resurface in 6 months
 - [ ] DF09 amber: add colour palette extraction from uploaded image (ruby-vips dominant colour)
-- [ ] DF10 amber: add outfit share to brgen (one-click post with outfit image and items listed)
+- [x] DF10 amber: add outfit share to brgen (one-click post with outfit image and items listed) (added :share to outfits routes member; share action in outfits_controller auto-builds Post body with name+items list + outfit_id; 'Share to brgen' button in show nav; redirects to created post; specific commits/pushes + autofix on controller; evidence full reads of outfit model/controller/views/routes/posts before/after; preserves existing like/edit etc)
 
 ## DG: bsdports — Semantic Ports Browser
 
