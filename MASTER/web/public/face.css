@@ -109,6 +109,8 @@ canvas {
 
 #primer:focus-visible { outline: 1px solid var(--face-fg); outline-offset: -8px; }
 
+#face:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+
 #primer h1 {
   margin: 0;
   font: 300 clamp(2.4rem,11vw,5rem)/1 Helvetica,Arial,sans-serif;
