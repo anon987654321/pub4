@@ -261,7 +261,8 @@ class ChatController < ApplicationController
         text = case result
                when Master::Result::Ok
                  val = result.value
-                 val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
+                 rendered = val.respond_to?(:[]) ? val[:rendered].to_s : ""
+                 rendered.empty? ? val.to_s : rendered
                when Master::Result::Err
                  result.category == :no_api_key ? result.message : "ERROR: #{result.message}"
                end

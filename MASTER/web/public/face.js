@@ -803,86 +803,6 @@ function beep(freq, dur) {
   o.start(); o.stop(actx.currentTime + dur);
 }
 
-// J Dilla ambient pads — Web Audio PolySynth, no Tone.js dependency.
-// Chord voicings ported from dilla_pads.html. Starts muted, fades in after boot.
-const DILLA_PROGS = {
-  fm_drift:  [['F3','Ab3','C4','Eb4','G4'],['Db3','F3','Ab3','C4','Eb4'],['C3','Eb3','G3','Bb3','D4'],['Eb3','G3','Bb3','D4','F4']],
-  ab_modal:  [['Ab3','C4','Eb4','G4','Bb4'],['G3','Bb3','D4','F4','A4'],['D3','F3','A3','C4','E4'],['A2','C3','E3','G3','B3']],
-  altered:   [['C3','Db3','G3','Bb3','Eb4'],['B2','D3','F3','A3','C4'],['E3','G3','Bb3','D4','F4'],['Bb2','Db3','F3','Ab3','C4']],
-  deep_void: [['A2','C3','E3','G3','B3'],['Gb2','Bb2','Db3','F3','Ab3'],['Bb2','Db3','F3','Ab3','C4'],['C3','Eb3','G3','Bb3','D4']]
-};
-const DILLA_LIST = [
-  { n: 'fm_drift',  t: 58, l: 3 },
-  { n: 'ab_modal',  t: 64, l: 3 },
-  { n: 'altered',   t: 60, l: 2 },
-  { n: 'deep_void', t: 56, l: 3 }
-];
-function noteToHz(n) {
-  const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  const flats = { Db:'C#', Eb:'D#', Fb:'E', Gb:'F#', Ab:'G#', Bb:'A#', Cb:'B' };
-  const m = n.match(/^([A-G][b#]?)(\d)$/);
-  if (!m) return 220;
-  const name = flats[m[1]] || m[1], oct = parseInt(m[2]), semi = names.indexOf(name);
-  if (semi < 0) return 220;
-  return 440 * Math.pow(2, (oct * 12 + semi - 57) / 12);
-}
-const dilla = { idx: 0, beat: 0, timer: null, gain: null, rev: null };
-function dillaPlayChord(notes, beatLen) {
-  if (!actx || !dilla.gain) return;
-  const now = actx.currentTime;
-  const att = 2.4, rel = beatLen * 0.9;
-  notes.forEach(n => {
-    const hz = noteToHz(n);
-    const o1 = actx.createOscillator(), o2 = actx.createOscillator();
-    const g = actx.createGain();
-    o1.type = 'triangle'; o1.frequency.value = hz;
-    o2.type = 'sine';     o2.frequency.value = hz * 1.5;
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(0.022, now + att);
-    g.gain.setValueAtTime(0.022, now + beatLen - 0.1);
-    g.gain.linearRampToValueAtTime(0, now + beatLen + rel);
-    o1.connect(g); o2.connect(g); g.connect(dilla.rev || dilla.gain);
-    o1.start(now); o2.start(now);
-    o1.stop(now + beatLen + rel + 0.1);
-    o2.stop(now + beatLen + rel + 0.1);
-  });
-}
-function dillaAdvance() {
-  if (!actx) return;
-  const item = DILLA_LIST[dilla.idx % DILLA_LIST.length];
-  const prog = DILLA_PROGS[item.n];
-  const beatLen = 60 / item.t * 4;
-  dillaPlayChord(prog[dilla.beat % prog.length], beatLen);
-  dilla.beat++;
-  if (dilla.beat >= prog.length * item.l) { dilla.beat = 0; dilla.idx++; }
-  dilla.timer = setTimeout(dillaAdvance, beatLen * 1000);
-}
-function dillaStart() {
-  if (dilla.gain || !actx) return;
-  dilla.gain = actx.createGain();
-  dilla.gain.gain.value = 0;
-  try {
-    const conv = actx.createConvolver();
-    const len = actx.sampleRate * 2, buf = actx.createBuffer(2, len, actx.sampleRate);
-    for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2); }
-    conv.buffer = buf; conv.normalize = true;
-    const wet = actx.createGain(); wet.gain.value = 0.18;
-    dilla.gain.connect(conv); conv.connect(wet); wet.connect(actx.destination);
-    dilla.rev = dilla.gain;
-  } catch (_) {}
-  // Waveshaper for tape warmth — soft clip odd harmonics
-  const shaper = actx.createWaveShaper();
-  const curve = new Float32Array(256);
-  for (let i = 0; i < 256; i++) { const x = (i * 2) / 256 - 1; curve[i] = (Math.PI + 320) * x / (Math.PI + 320 * Math.abs(x)); }
-  shaper.curve = curve; shaper.oversample = '4x';
-  dilla.gain.connect(shaper); shaper.connect(actx.destination);
-
-  dilla.gain.gain.linearRampToValueAtTime(0.006, actx.currentTime + 4);
-  dillaAdvance();
-}
-function dillaStop() {
-  clearTimeout(dilla.timer);
-  if (dilla.gain) { dilla.gain.gain.linearRampToValueAtTime(0, actx.currentTime + 1.5); }
 }
 
 const VISEME_STEP_MS = 90;
@@ -1250,7 +1170,6 @@ function startEverything() {
   requestMotionPermission(); acquireWakeLock();
   setTimeout(() => { morphTarget = 1.0; }, 600);
   setTimeout(() => playDuo(BOOT_DUO), 120);
-  setTimeout(() => dillaStart(), 1800);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 let primerFired = false;
