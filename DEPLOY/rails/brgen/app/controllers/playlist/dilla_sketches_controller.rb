@@ -7,7 +7,7 @@ class Playlist::DillaSketchesController < Playlist::BaseController
   def create
     sketch = @parent.dilla_sketches.build(dilla_sketch_params.merge(user: Current.user))
     if sketch.save
-      redirect_to(parent_path, notice: "Dilla sketch saved to collab")
+      redirect_to(parent_path, notice: t("dilla.sketch_saved", default: "Dilla sketch saved to collab"))
     else
       redirect_to(parent_path, alert: sketch.errors.full_messages.to_sentence)
     end
@@ -16,7 +16,7 @@ class Playlist::DillaSketchesController < Playlist::BaseController
   def update
     sketch = @parent.dilla_sketches.find(params[:id])
     if sketch.update(dilla_sketch_params)
-      redirect_to(parent_path, notice: "Sketch updated")
+      redirect_to(parent_path, notice: t("dilla.sketch_updated", default: "Sketch updated"))
     else
       redirect_to(parent_path, alert: sketch.errors.full_messages.to_sentence)
     end
@@ -25,7 +25,7 @@ class Playlist::DillaSketchesController < Playlist::BaseController
   def destroy
     sketch = @parent.dilla_sketches.find(params[:id])
     sketch.destroy
-    redirect_to(parent_path, notice: "Sketch removed")
+    redirect_to(parent_path, notice: t("dilla.sketch_removed", default: "Sketch removed"))
   end
 
   private
@@ -34,12 +34,14 @@ class Playlist::DillaSketchesController < Playlist::BaseController
     if params[:playlist_id]
       @parent = Playlist::Playlist.find(params[:playlist_id])
       @playlist = @parent
-    elsif params[:set_id]
+      return
+    end
+    if params[:set_id]
       @parent = Playlist::Set.find(params[:set_id])
       @set = @parent
-    else
-      redirect_to(playlist_playlists_path)
+      return
     end
+    redirect_to(playlist_playlists_path)
   end
 
   def parent_path
@@ -56,7 +58,7 @@ class Playlist::DillaSketchesController < Playlist::BaseController
       if p[:state].is_a?(String) && p[:state].present?
         begin
           p[:state] = JSON.parse(p[:state])
-        rescue
+        rescue JSON::ParserError
           p[:state] = {}
         end
       end
@@ -64,9 +66,14 @@ class Playlist::DillaSketchesController < Playlist::BaseController
   end
 
   def authorize_editor
-    return if Current.user == @parent.user
-    collab = @parent.collaborations.find_by(user: Current.user)
-    return if collab && %w[owner editor].include?(collab.role)
-    redirect_to(parent_path, alert: "Not allowed to edit dilla sketches in this collab")
+    u = Current.user
+    owner = (u == @parent.user)
+    editor = false
+    if (collab = @parent.collaborations.find_by(user: u))
+      editor = %w[owner editor].include?(collab.role)
+    end
+    unless owner || editor
+      redirect_to(parent_path, alert: t("dilla.not_allowed", default: "Not allowed to edit dilla sketches in this collab"))
+    end
   end
 end
