@@ -103,6 +103,61 @@ function setTtsRate(r) {
   });
 })();
 
+(function initTranscriptBtn() {
+  function getTranscript() {
+    const lines = [];
+    const logEl = document.getElementById('chat-log');
+    if (!logEl) return '';
+    logEl.querySelectorAll('.message, .dmesg-line').forEach(el => {
+      if (el.classList.contains('dmesg-line')) {
+        lines.push(el.textContent.trim());
+      } else {
+        const p = el.querySelector('.msg-prompt')?.textContent.trim() || '';
+        let body = '';
+        const b = el.querySelector('.msg-body');
+        if (b) {
+          body = b.textContent.trim();
+        } else {
+          body = el.textContent.trim().replace(p, '').trim();
+        }
+        lines.push(p + (p ? ' ' : '') + body);
+      }
+    });
+    return lines.join('\n\n');
+  }
+  let b = document.getElementById('transcript-btn');
+  if (!b) {
+    b = document.createElement('span');
+    b.id = 'transcript-btn';
+    b.className = 'transcript-btn';
+    b.role = 'button';
+    b.tabIndex = 0;
+    b.setAttribute('aria-label', 'Download transcript as Markdown');
+    b.textContent = 'log';
+    document.body.appendChild(b);
+  }
+  const download = (e) => {
+    const text = getTranscript();
+    if (!text) return;
+    const isMd = !(e && e.shiftKey);
+    const blob = new Blob([text], { type: isMd ? 'text/markdown' : 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = isMd ? 'master-transcript.md' : 'master-transcript.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  };
+  b.addEventListener('click', download);
+  b.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      download();
+    }
+  });
+})();
+
 const TINT = {
   // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
   // Shading and expression via Atkinson/Bayer dither patterns, alpha, size, depth, and pulse (no hue tints).
