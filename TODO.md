@@ -4637,4 +4637,4 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] DG07 bsdports: add category browse — all categories with port count
 - [ ] DG08 bsdports: add maintainer page — all ports by a given maintainer with contact link
 - [ ] DG09 bsdports: add RSS feed for new ports added in last 7 days
-- [ ] DG10 bsdports: add CVE cross-reference — link ports to known vulnerabilities via NIST NVD API
+- [x] DG10 bsdports: add CVE cross-reference — link ports to known vulnerabilities via NIST NVD API (via security_advisories table + NvdCveService (NVD 2.0 keyword "openbsd <name>"), Port has_many, controller action+load, show section+button using nvd_url/cve?; beautified touched files; specific git add/commits/pushes after units; rebase clean)
