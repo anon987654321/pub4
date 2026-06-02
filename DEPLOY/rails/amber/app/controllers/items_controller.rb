@@ -17,13 +17,23 @@ class ItemsController < ApplicationController
 
   def create
     @item = Current.user.items.build(item_params)
-    @item.save ? redirect_to(@item, notice: "Item added") : render(:new, status: :unprocessable_entity)
+    if @item.save
+      WardrobeMediaJob.perform_later(@item.id) if @item.photos.attached?
+      redirect_to(@item, notice: "Item added")
+    else
+      render(:new, status: :unprocessable_entity)
+    end
   end
 
   def edit; end
 
   def update
-    @item.update(item_params) ? redirect_to(@item, notice: "Updated") : render(:edit, status: :unprocessable_entity)
+    if @item.update(item_params)
+      WardrobeMediaJob.perform_later(@item.id) if @item.photos.attached?
+      redirect_to(@item, notice: "Updated")
+    else
+      render(:edit, status: :unprocessable_entity)
+    end
   end
 
   def destroy
