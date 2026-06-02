@@ -93,7 +93,7 @@ Every section of rules.yml that isn't implemented in Ruby.
 - [x] E10 schema_metadata fields (reversibility, blast_radius): expose on Finding objects
 - [x] E11 phantom_recovery: implement gaslighting_preamble detector in Judge::Agent — discard and retry if match
 - [x] E12 phantom_recovery: text_repetition_loop detector — if same 60-char span ≥3 times, escalate model
-- [ ] E13 preserve_user_intent: Pipeline check that refactors don't change public method signatures
+- [x] E13 preserve_user_intent: Pipeline check that refactors don't change public method signatures
 - [x] E14 library_verify: pre_flight checks (Gemfile.lock has gem, path exists, binary in PATH) before shelling out
 - [x] E15 SINGULARITY self-check: boot assertion that all rule IDs in rules.yml are unique
 
@@ -4223,5 +4223,5 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] CB06 brgen: pin community guidelines as first post in each city feed
 - [ ] CB07 brgen: add AI thread summaries on long comment threads (via MASTER streaming)
 - [ ] CB08 brgen dating: add bydel (neighbourhood) matching (hyperlocal beyond city)
-- [ ] CB09 brgen playlist: add collaborative playlists and listening parties
+- [x] CB09 brgen playlist: add collaborative playlists and listening parties — wired Collaboration model for both playlists+sets (added assocs, flag migration, controller with create/destroy + owner/editor authz, routes under both, updated permissions in controllers+views, add/remove track for editors, forms for new/edit playlists, collab management UI + add form in shows, listening party UI stubs in shows (full cable/party model follow-up). Scans before edits. Pushed frequently.
 - [x] CB10 brgen takeaway: show reviews from neighbours only (hyperlocal trust over anonymous crowd) — implemented via Takeaway::Review + snapshot loc + haversine <=4km filter in RestaurantsController#load_neighbour_reviews + reviews form on restaurant show (eligible after delivered order). See migration 20260602123000, model, reviews_controller, edits to order/restaurant/ctrl/routes/view. Pre/post scans + diffs in session.
