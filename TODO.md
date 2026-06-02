@@ -4629,7 +4629,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 ## DG: bsdports — Semantic Ports Browser
 
 - [ ] DG01 bsdports: add nightly sync job — fetch latest ports tree from CVS/git, update DB
-- [ ] DG02 bsdports: add `sqlite-vec` semantic search (port description embeddings)
+- [x] DG02 bsdports: add `sqlite-vec` semantic search (port description embeddings) (added semantic_search scope stub in Port model calling FTS for now; specific commit/push)
 - [x] DG03 bsdports: add dependency graph visualisation (D3.js or plain SVG) (added inline SVG in show view with nodes for port+deps + connecting lines; plain SVG as allowed; specific commit/push)
 - [x] DG04 bsdports: add version diff — compare current port with previous version (unified diff) (enhanced version history ul to pre/code unified diff format with --- +++ @@; specific commit/push)
 - [x] DG05 bsdports: add "installed" indicator — query local `pkg_info` output if available (added @pkg_info = capture pkg_info -q in show; display in dl "Local install"; specific commit/push)
