@@ -2,8 +2,8 @@
 
 class OutfitsController < ApplicationController
   before_action :require_authentication
-  before_action :set_outfit, only: %i[show edit update destroy like reorder]
-  before_action :authorize!, only: %i[edit update destroy]
+  before_action :set_outfit, only: %i[show edit update destroy like reorder share]
+  before_action :authorize!, only: %i[edit update destroy share]
 
   def index
     @pagy, @outfits = pagy(Current.user.outfits.order(created_at: :desc))
@@ -44,6 +44,16 @@ class OutfitsController < ApplicationController
   def like
     @outfit.like!
     redirect_to @outfit
+  end
+
+  def share
+    body = "Outfit: #{@outfit.name}\n\nItems:\n#{@outfit.items.map { |i| "- #{i.title}" }.join("\n")}"
+    post = Current.user.posts.build(body: body, outfit_id: @outfit.id)
+    if post.save
+      redirect_to post, notice: "Outfit shared to brgen!"
+    else
+      redirect_to @outfit, alert: "Could not share: #{post.errors.full_messages.to_sentence}"
+    end
   end
 
   def reorder
