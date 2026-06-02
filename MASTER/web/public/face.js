@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=23') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=24') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -250,40 +250,82 @@ function sampleFlatPositions(flatPos, N) {
 function proceduralFaceTargets() {
   const out = [];
   const push = (x, y, z) => out.push([x, y, z]);
-  for (let i = 0; i < 900; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const r = Math.sqrt(Math.random());
-    const yUnit = Math.sin(a);
-    const taper = 0.48 - Math.max(0, -yUnit) * 0.08 + Math.max(0, yUnit) * 0.10;
-    const x = Math.cos(a) * r * taper;
-    const y = Math.sin(a) * r * 0.78 + 0.02;
-    if (y < -0.62 && Math.abs(x) > 0.28) continue;
-    push(x, y, 0.12 + Math.cos(r * Math.PI) * 0.16);
+  // Face contour — oval tapering to chin
+  for (let i = 0; i < 360; i++) {
+    const a = (i / 359) * Math.PI * 2;
+    const chinT = Math.max(0, -Math.sin(a));
+    const rx = 0.40 - chinT * 0.06;
+    push(Math.cos(a) * rx + (Math.random()-0.5)*0.008,
+         Math.sin(a) * 0.58 - 0.04 + (Math.random()-0.5)*0.008,
+         0.02 - Math.abs(Math.cos(a)) * 0.08);
   }
-  for (let i = 0; i < 260; i++) {
-    const t = i / 259;
-    const y = -0.46 + t * 0.92;
-    const flare = Math.sin(t * Math.PI);
-    push((Math.random() - 0.5) * 0.025 * (1 + flare), y, 0.42 + flare * 0.22);
-  }
-  for (const side of [-1, 1]) {
-    for (let i = 0; i < 220; i++) {
-      const a = Math.random() * Math.PI * 2;
-      push(side * (0.18 + Math.cos(a) * 0.13), -0.18 + Math.sin(a) * 0.055, 0.48);
-    }
+  // Eyes
+  for (const [ex, ey] of [[-0.175, 0.09], [0.175, 0.09]]) {
     for (let i = 0; i < 180; i++) {
-      const t = i / 179;
-      push(side * (0.10 + t * 0.30), -0.38 + t * 0.54, 0.30 + Math.sin(t * Math.PI * 2.4) * 0.05);
+      const a = (i / 179) * Math.PI * 2;
+      push(ex + Math.cos(a)*0.072 + (Math.random()-0.5)*0.006,
+           ey + Math.sin(a)*0.044 + (Math.random()-0.5)*0.006, 0.28);
+    }
+    for (let i = 0; i < 80; i++) {
+      const r = Math.sqrt(Math.random()) * 0.04, a = Math.random() * Math.PI * 2;
+      push(ex + Math.cos(a)*r, ey + Math.sin(a)*r*0.7, 0.18);
+    }
+    for (let i = 0; i < 100; i++) {
+      const t = i / 99, a = Math.PI * (0.05 + t * 0.90);
+      push(ex + Math.cos(a)*0.088, ey + 0.012 + Math.sin(a)*0.028, 0.24);
+    }
+    for (let i = 0; i < 80; i++) {
+      const t = i / 79, a = Math.PI * (0.08 + t * 0.84);
+      push(ex + Math.cos(a)*0.082, ey - Math.sin(a)*0.022, 0.24);
+    }
+    for (let i = 0; i < 140; i++) {
+      const t = i / 139;
+      const bx = ex + (t - 0.5) * 0.21;
+      const arch = Math.sin(t * Math.PI) * 0.018 + (ex < 0 ? (t-0.5)*0.012 : -(t-0.5)*0.012);
+      push(bx + (Math.random()-0.5)*0.008, ey + 0.082 + arch + (Math.random()-0.5)*0.006, 0.20);
     }
   }
-  for (let i = 0; i < 220; i++) {
-    const t = i / 219;
-    const a = Math.PI * (0.18 + t * 0.64);
-    push(Math.cos(a) * 0.25, 0.38 + Math.sin(a) * 0.07, 0.42);
+  // Nose bridge
+  for (let i = 0; i < 120; i++) {
+    const t = i / 119;
+    push((Math.random()-0.5)*0.028, 0.04 - t*0.22, 0.30 + t*0.15);
+  }
+  // Nose tip
+  for (let i = 0; i < 140; i++) {
+    const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random())*0.058;
+    push(Math.cos(a)*r, -0.195 + Math.sin(a)*r*0.65, 0.46 + (Math.random()-0.5)*0.02);
+  }
+  // Nostrils
+  for (const sx of [-1, 1]) {
+    for (let i = 0; i < 80; i++) {
+      const a = Math.random() * Math.PI * 2;
+      push(sx*(0.058 + Math.cos(a)*0.032), -0.21 + Math.sin(a)*0.020, 0.38 + Math.random()*0.02);
+    }
+  }
+  // Upper lip — Cupid bow
+  for (let i = 0; i < 200; i++) {
+    const t = i / 199, a = Math.PI * (0.04 + t * 0.92);
+    const bow = Math.sin(t * Math.PI * 2) * 0.014;
+    push(Math.cos(a)*0.130, -0.30 + 0.018 + Math.sin(a)*0.026 + bow, 0.30 + (Math.random()-0.5)*0.02);
+  }
+  // Lower lip
+  for (let i = 0; i < 200; i++) {
+    const t = i / 199, a = Math.PI * (0.04 + t * 0.92);
+    push(Math.cos(a)*0.130, -0.30 - Math.sin(a)*0.040, 0.32 + (Math.random()-0.5)*0.02);
+  }
+  // Cheeks
+  for (const sx of [-1, 1]) {
+    for (let i = 0; i < 160; i++) {
+      push(sx*(0.22 + Math.random()*0.12), -0.04 + (Math.random()-0.5)*0.20, 0.10 + Math.random()*0.06);
+    }
+  }
+  // Chin
+  for (let i = 0; i < 120; i++) {
+    const a = Math.PI * (1.08 + (i/119)*0.84);
+    push(Math.cos(a)*0.22, -0.45 + Math.sin(a)*0.06, 0.08 + Math.random()*0.04);
   }
   return out;
 }
-
 function sampleProceduralFace(N) {
   const targets = proceduralFaceTargets();
   const home = new Float32Array(N * 3), scatter = new Float32Array(N * 3), seeds = new Float32Array(N);
@@ -306,15 +348,34 @@ async function loadMaskCanvas(url, size = 256) {
   img.crossOrigin = 'anonymous';
   await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
   const cv = new OffscreenCanvas(size, size);
-  cv.getContext('2d').drawImage(img, 0, 0, size, size);
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, size, size);
+  const scale = Math.min(size / img.width, size / img.height);
+  const dw = img.width * scale, dh = img.height * scale;
+  ctx.drawImage(img, (size - dw) / 2, (size - dh) / 2, dw, dh);
   return cv;
 }
 
-// Sample N particle home positions from image luminance as depth map.
-// Bright pixels = forward (high Z), dark = recessed, near-white bg excluded.
+// Sobel edge-weighted sampling: particles concentrate on facial features.
 function sampleImageDepth(canvas, N) {
   const W = canvas.width, H = canvas.height;
-  const { data } = canvas.getContext('2d').getImageData(0, 0, W, H);
+  const { data } = canvas.getContext("2d").getImageData(0, 0, W, H);
+  const lum = new Float32Array(W * H);
+  for (let i = 0; i < W * H; i++) {
+    lum[i] = (data[i*4]*0.299 + data[i*4+1]*0.587 + data[i*4+2]*0.114) / 255;
+  }
+  const grad = new Float32Array(W * H);
+  for (let y = 1; y < H - 1; y++) {
+    for (let x = 1; x < W - 1; x++) {
+      const idx = y * W + x;
+      const gx = -lum[(y-1)*W+(x-1)] - 2*lum[y*W+(x-1)] - lum[(y+1)*W+(x-1)]
+                 +lum[(y-1)*W+(x+1)] + 2*lum[y*W+(x+1)] + lum[(y+1)*W+(x+1)];
+      const gy = -lum[(y-1)*W+(x-1)] - 2*lum[(y-1)*W+x] - lum[(y-1)*W+(x+1)]
+                 +lum[(y+1)*W+(x-1)] + 2*lum[(y+1)*W+x] + lum[(y+1)*W+(x+1)];
+      grad[idx] = Math.sqrt(gx*gx + gy*gy);
+    }
+  }
   const weights = new Float32Array(W * H);
   let total = 0;
   for (let i = 0; i < W * H; i++) {
@@ -322,9 +383,8 @@ function sampleImageDepth(canvas, N) {
     const inEllipse = (nx*nx)/(0.44*0.44) + (ny*ny)/(0.48*0.48) < 1;
     const r = data[i*4], g = data[i*4+1], b = data[i*4+2];
     const bg = r > 210 && g > 200 && b > 190;
-    const eyeL = ((nx+0.18)*(nx+0.18))/(0.09*0.09) + ((ny-0.14)*(ny-0.14))/(0.07*0.07) < 1;
-    const eyeR = ((nx-0.18)*(nx-0.18))/(0.09*0.09) + ((ny-0.14)*(ny-0.14))/(0.07*0.07) < 1;
-    weights[i] = (inEllipse && !bg) ? ((eyeL || eyeR) ? 2.2 : 1.0) : 0;
+    if (!inEllipse || bg) { weights[i] = 0; continue; }
+    weights[i] = 0.25 + grad[i] * 5.0;
     total += weights[i];
   }
   const cdf = new Float32Array(W * H);
@@ -332,19 +392,19 @@ function sampleImageDepth(canvas, N) {
   for (let i = 0; i < W * H; i++) { cum += weights[i] / total; cdf[i] = cum; }
   const home = new Float32Array(N * 3), scatter = new Float32Array(N * 3), seeds = new Float32Array(N);
   for (let i = 0; i < N; i++) {
-    const r = Math.random();
+    const rnd = Math.random();
     let lo = 0, hi = W * H - 1;
-    while (lo < hi) { const mid = (lo+hi)>>1; if (cdf[mid] < r) lo = mid+1; else hi = mid; }
+    while (lo < hi) { const mid = (lo+hi)>>1; if (cdf[mid] < rnd) lo = mid+1; else hi = mid; }
     const px = (lo % W) + Math.random() - 0.5;
     const py = Math.floor(lo / W) + Math.random() - 0.5;
-    const lum = (data[lo*4]*0.299 + data[lo*4+1]*0.587 + data[lo*4+2]*0.114) / 255;
+    const l = lum[lo];
     home[i*3]   = (px / W - 0.5) * 1.18;
     home[i*3+1] = -(py / H - 0.5) * 1.55;
-    home[i*3+2] = lum * 0.9 - 0.1;
+    home[i*3+2] = l * 0.9 - 0.1;
     scatter[i*3]   = home[i*3] + (Math.random() - 0.5) * 0.16;
     scatter[i*3+1] = home[i*3+1] + (Math.random() - 0.5) * 0.16;
     scatter[i*3+2] = home[i*3+2] + (Math.random() - 0.5) * 0.10;
-    seeds[i] = Math.random()*6.28318;
+    seeds[i] = Math.random() * 6.28318;
   }
   return { home, scatter, seeds };
 }
