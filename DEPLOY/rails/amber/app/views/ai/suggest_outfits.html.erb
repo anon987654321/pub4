@@ -1,10 +1,32 @@
-<% content_for :title, "Outfit suggestions" %>
-<h1>Outfit suggestions</h1>
-<% @suggestions.each_with_index do |s, i| %>
-  <article class="ai-card">
-    <h2><%= s["name"] || "Option #{i + 1}" %></h2>
-    <p class="dim"><%= s["items"]&.join(", ") %></p>
-    <p><%= s["description"] %></p>
-  </article>
+<% content_for :title, t("amber.outfits.suggest_title", default: "Outfit suggestions (MASTER vision)") %>
+<h1><%= t("amber.outfits.suggest_title", default: "Outfit suggestions (MASTER vision)") %></h1>
+<p class="dim"><%= t("amber.outfits.vision_hint", default: "MASTER vision analyses your item photos + metadata to pick 3-item combinations.") %></p>
+
+<%= form_with url: ai_suggest_outfits_path, method: :get, class: "form" do |f| %>
+  <div class="field">
+    <label><%= t("amber.outfits.occasion", default: "Occasion") %></label>
+    <%= f.text_field :occasion, value: params[:occasion], placeholder: t("amber.outfits.occasion_ph", default: "e.g. date, work, travel") %>
+  </div>
+  <div class="field">
+    <label><%= t("amber.outfits.season", default: "Season") %></label>
+    <%= f.select :season, Item::SEASONS, { selected: params[:season] }, { include_blank: t("amber.outfits.any", default: "Any") } %>
+  </div>
+  <div class="actions">
+    <%= f.submit t("amber.outfits.generate_vision", default: "Generate with MASTER vision"), class: "btn btn--primary" %>
+    <%= button_to t("amber.outfits.save_first", default: "Generate & save first as outfit"), ai_generate_outfit_path, method: :post, params: { occasion: params[:occasion], season: params[:season] }, class: "btn", form_class: "inline" %>
+  </div>
 <% end %>
-<p><%= link_to "Back to wardrobe", items_path %></p>
+
+<% if @suggestions.present? %>
+  <% @suggestions.each_with_index do |s, i| %>
+    <article class="ai-card">
+      <h2><%= s["name"] || t("amber.outfits.option", default: "Option") + " #{i + 1}" %></h2>
+      <p class="dim"><%= Array(s["items"]).join(", ") %></p>
+      <p><%= s["description"] %></p>
+    </article>
+  <% end %>
+<% else %>
+  <p class="dim"><%= t("amber.outfits.empty_hint", default: "Submit the form to see vision-suggested outfits from your wardrobe photos.") %></p>
+<% end %>
+
+<p><%= link_to t("amber.outfits.back_wardrobe", default: "Back to wardrobe"), items_path %></p>
