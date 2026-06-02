@@ -15,7 +15,7 @@ module Master
           mode_commands(infra[:config]),
           memory_commands(infra[:memory], ai[:agent]),
           work_commands(ai:, root:, infra:),
-          tool_commands(root),
+          tool_commands(root, ai),
           control_commands(ai[:standing], ai[:soul]),
           system_commands(ai[:agent], infra[:diag], root),
           "help" => ->(_ctx) {
@@ -27,7 +27,7 @@ module Master
               "session: /save /clear /history /tokens /cost /undo /redo /checkpoint /dmesg /exit",
               "model:   /model /mode /persona /task",
               "memory:  /memory /dreams",
-              "tools:   /postpro [args] /repligen [args]",
+              "tools:   /postpro [args] /repligen [args] /photograph <prompt>",
               "system:  /orient [topic] /tree /diff /commit /snapshot /diag /reload /help"
             ].join("\n")
           }
