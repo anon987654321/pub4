@@ -1257,4 +1257,29 @@ if (renderer) {
     document.addEventListener('keydown', e => { if (e.key === '?' ) { e.preventDefault(); rec.start(); } });
     window.startOsmanVoice = () => rec.start();
   }
+
+  // font family toggle (FA143) — system-ui vs monospace, persisted to localStorage
+  const FONT_KEY = 'master:font';
+  (function initFont() {
+    const root = rootBody || document.documentElement;
+    const saved = localStorage.getItem(FONT_KEY);
+    if (saved === 'mono') root.classList.add('font-mono');
+    const t = document.getElementById('font-toggle');
+    if (t) {
+      const update = () => {
+        const m = root.classList.contains('font-mono');
+        t.textContent = m ? 'mono' : 'sys';
+      };
+      update();
+      const doToggle = () => {
+        const m = root.classList.toggle('font-mono');
+        localStorage.setItem(FONT_KEY, m ? 'mono' : 'system');
+        update();
+      };
+      t.addEventListener('click', doToggle);
+      t.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doToggle(); }
+      });
+    }
+  })();
 })();
