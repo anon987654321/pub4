@@ -137,7 +137,7 @@ rules.yml voice section must govern MASTER's own outputs.
 - [x] G04 Strunk endings: strip "as a result.", "for this reason.", "thus." from MASTER output
 - [x] G05 Banned output: enforce no headlines/bullet_lists_without_content/filler_phrases in voice/personality.rb
 - [ ] G06 Inverted pyramid: MASTER's scan reports lead with outcome, then evidence, then detail
-- [ ] G07 Boot message: verify 5-line dmesg style; never collapse to 1 line, never expand beyond 5
+- [x] G07 Boot message: verify 5-line dmesg style; never collapse to 1 line, never expand beyond 5
 - [ ] G08 Silence on success: verify routine completions emit one line max
 - [ ] G09 Diagnostic output: multi-line structured output is intentional — verify personality.rb preserve: section enforced
 - [ ] G10 require_evidence: modification claims must show diff, completion claims must show command output
