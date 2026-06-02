@@ -236,7 +236,7 @@ function sampleImageDepth(canvas, N) {
   return { home, scatter, seeds };
 }
 
-const FACE_N = State.coarsePointer ? 8000 : 20000;
+const FACE_N = State.coarsePointer ? 15000 : 40000;
 const FACE_N_2D = 600;
 let faceHome, faceScatter, faceSeeds;
 if (_hasWebGL && THREE) {
