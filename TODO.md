@@ -157,9 +157,9 @@ RuleCoverageRule: every Rule subclass needs a test file.
 - [x] H09 Test for KEYWORD_ARGS rule (A04)
 - [x] H10 Test for DEAD_CODE rule (A08)
 - [x] H11 Test for TRAILING_COMMAS rule (A09)
-- [ ] H12 Test for AstFixer: collapse blank lines transform (C01)
-- [ ] H13 Test for AstFixer: trailing whitespace strip (C02)
-- [ ] H14 Test for AstFixer: .freeze append on mutable constant (C03)
+- [x] H12 Test for AstFixer: collapse blank lines transform (C01)
+- [x] H13 Test for AstFixer: trailing whitespace strip (C02)
+- [x] H14 Test for AstFixer: .freeze append on mutable constant (C03)
 - [ ] H15 Self-scan test: MASTER scans its own lib/, expects zero violations
 - [ ] H16 Idempotency test: scan + fix + scan produces same result as scan + fix + fix + scan
 - [x] H17 Test for evidence_scoring gate (scan_clean:25 weight, pass_threshold: 80)

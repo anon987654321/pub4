@@ -48,6 +48,28 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:transforms], :dead_code
   end
 
+  def test_collapse_blank_lines_transform
+    result = fix("blank.rb", "def call\n\n\n  :ok\nend\n")
+
+    refute_includes result[:content], "\n\n\n"
+    assert_includes result[:transforms], :collapse_blank_lines
+  end
+
+  def test_trailing_whitespace_strip_transform
+    result = fix("space.rb", "def call  \n  :ok\t\nend\n")
+
+    refute_includes result[:content], "  \n"
+    refute_includes result[:content], "\t\n"
+    assert_includes result[:transforms], :trailing_whitespace
+  end
+
+  def test_freeze_mutable_constant_transform
+    result = fix("const.rb", "ITEMS = [\"one\", \"two\"]\n")
+
+    assert_includes result[:content], "ITEMS = [\"one\", \"two\"].freeze"
+    assert_includes result[:transforms], :freeze_constants
+  end
+
   def test_logical_properties
     result = fix("styles.css", <<~CSS)
       .panel {
