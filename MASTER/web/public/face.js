@@ -747,6 +747,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
 }
 function startSTT() {
   if (!recognition || State.sttActive) return;
+  if (tts.playing) ttsSkip();
   try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
 }
 function stopSTT() {
