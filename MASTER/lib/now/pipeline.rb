@@ -83,8 +83,15 @@ module Master
         end
 
         def merge_results(ctx, results)
-          merged = results.filter_map { |r| r.value! if r.ok? }.reduce(ctx, &:merge)
-          errors = results.filter_map { |r| r.message if r.err? }
+          merged = ctx
+          errors = []
+          results.each do |result|
+            if result.ok?
+              merged = merged.merge(result.value!)
+            else
+              errors << result.message
+            end
+          end
           errors.empty? ? merged : merged.merge(_parallel_errors: errors)
         end
       end

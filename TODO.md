@@ -111,7 +111,7 @@ MASTER must pass its own rules. Violations found by reading lib/.
 - [x] F08 master.rb#bootstrap_container: 50+ line method — split into init_ground, init_judge, init_loop, init_reach
 - [x] F09 scanner.rb parallel_each: raw Thread.new without error boundary — wrap in rescue and publish thread_error
 - [x] F10 rule_loop.rb#preamble: reads soul.yml on every call — memoize (pure function same input = same output)
-- [ ] F11 pipeline.rb ParallelGroup#merge_results: uses filter_map + reduce on results — simplify (KISS)
+- [x] F11 pipeline.rb ParallelGroup#merge_results: uses filter_map + reduce on results — simplify (KISS)
 - [ ] F12 repo_ecology.rb: co_change_graph built twice (once in snapshot, once in scan) — always use memoized accessor
 - [ ] F13 judge/agent.rb: verify method count ≤10 public methods (NO_GOD_CLASS threshold)
 - [ ] F14 now/context_window.rb: verify no god class

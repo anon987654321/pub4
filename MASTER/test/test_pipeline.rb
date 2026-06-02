@@ -19,6 +19,15 @@ class TestPipeline < Minitest::Test
     def call(_ctx) = raise "stage exploded"
   end
 
+  class AddStage
+    def initialize(key, value)
+      @key = key
+      @value = value
+    end
+
+    def call(ctx) = Master::Result.ok(ctx.merge(@key => @value))
+  end
+
   FakeRule = Struct.new(:id, :auto_fix)
 
   class FakeScanner
@@ -149,6 +158,17 @@ class TestPipeline < Minitest::Test
       assert result.ok?
       assert_equal "ok", result.value![:output]
     end
+  end
+
+  def test_parallel_group_merges_successes_and_errors_in_one_pass
+    group = Master::Now::Pipeline::ParallelGroup.new(AddStage.new(:a, 1), ErrStage.new)
+
+    result = group.call({ base: true })
+
+    assert result.ok?
+    assert_equal true, result.value![:base]
+    assert_equal 1, result.value![:a]
+    assert_equal ["boom"], result.value![:_parallel_errors]
   end
 
   private
