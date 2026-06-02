@@ -23,6 +23,39 @@ class TestPrune < Minitest::Test
     assert_equal "Ruby is great.", r.value![:output]
   end
 
+  def test_strips_strunk_preambles
+    ["In summary,", "Consequently,", "Therefore,"].each do |prefix|
+      r = call("#{prefix} ship the patch.")
+      assert_equal "ship the patch.", r.value![:output]
+    end
+  end
+
+  def test_strips_strunk_hedges
+    {
+      "I believe this works." => "this works.",
+      "This seems correct." => "This correct.",
+      "This appears stable." => "This stable."
+    }.each do |input, expected|
+      assert_equal expected, call(input).value![:output]
+    end
+  end
+
+  def test_strips_strunk_endings
+    ["as a result.", "for this reason.", "thus."].each do |ending|
+      r = call("Ship the patch #{ending}")
+      assert_equal "Ship the patch", r.value![:output]
+    end
+  end
+
+  def test_personality_prompt_enforces_banned_output
+    prompt = Master::Voice::Personality.new.system_prompt
+
+    assert_includes prompt, "output_never:"
+    assert_includes prompt, "bullet_lists_without_content"
+    assert_includes prompt, "filler_phrases"
+    assert_includes prompt, "No markdown headers"
+  end
+
   def test_skips_code_blocks
     code = "```ruby\njust use this\n```"
     r = call(code)

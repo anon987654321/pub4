@@ -132,10 +132,10 @@ MASTER must pass its own rules. Violations found by reading lib/.
 rules.yml voice section must govern MASTER's own outputs.
 
 - [ ] G01 Anti-simulation: add forbidden word filter (will, would, could, might) to prompts MASTER sends to LLM
-- [ ] G02 Strunk preambles: strip "In summary,", "Consequently,", "Therefore," from MASTER's own output generation
-- [ ] G03 Strunk hedges: strip "I think that", "I believe", "seems", "appears" from MASTER output
-- [ ] G04 Strunk endings: strip "as a result.", "for this reason.", "thus." from MASTER output
-- [ ] G05 Banned output: enforce no headlines/bullet_lists_without_content/filler_phrases in voice/personality.rb
+- [x] G02 Strunk preambles: strip "In summary,", "Consequently,", "Therefore," from MASTER's own output generation
+- [x] G03 Strunk hedges: strip "I think that", "I believe", "seems", "appears" from MASTER output
+- [x] G04 Strunk endings: strip "as a result.", "for this reason.", "thus." from MASTER output
+- [x] G05 Banned output: enforce no headlines/bullet_lists_without_content/filler_phrases in voice/personality.rb
 - [ ] G06 Inverted pyramid: MASTER's scan reports lead with outcome, then evidence, then detail
 - [ ] G07 Boot message: verify 5-line dmesg style; never collapse to 1 line, never expand beyond 5
 - [ ] G08 Silence on success: verify routine completions emit one line max

@@ -21,7 +21,7 @@ module Master
         )[!.,]*\s*/ix
 
         def call(ctx)
-          raw = ctx.output
+          raw = ctx.respond_to?(:output) ? ctx.output : ctx[:output]
           output = if raw.is_a?(Master::Result) && raw.ok?
                      raw.value!.to_s
                    elsif raw.is_a?(String)
