@@ -638,9 +638,9 @@ function ttsTick() {
   speakServer(text);
 }
 
-// Osman neural voice from the server, lip-synced to the actual audio duration.
+// Server neural TTS, lip-synced to the actual audio duration.
 function speakServer(text) {
-  const url = `/chat/tts?voice=osman&text=${encodeURIComponent(text)}`;
+  const url = `/chat/tts?text=${encodeURIComponent(text)}`;
   fetch(url)
     .then(r => {
       if (!r.ok) {
@@ -654,6 +654,7 @@ function speakServer(text) {
       const audio = new Audio(src);
       tts.audio = audio;
       if (actx && actx.state !== 'closed') {
+        if (actx.state === 'suspended') actx.resume();
         try {
           const msrc = actx.createMediaElementSource(audio);
           const analyser = actx.createAnalyser();
