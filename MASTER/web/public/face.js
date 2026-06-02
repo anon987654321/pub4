@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=33') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=34') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -197,7 +197,22 @@ const State = {
 
 rootBody.dataset.highContrast = State.highContrast ? '1' : '';
 
-// Sync State.mode to body[data-mode] and #zsh-status for CSS-driven status visibility.
+const STAR_FRAMES = ['|', '/', '-', '\\'];
+let _starTimer = null;
+let _starIdx = 0;
+function startStar() {
+  if (_starTimer) return;
+  _starIdx = 0;
+  _starTimer = setInterval(() => {
+    _starIdx = (_starIdx + 1) % STAR_FRAMES.length;
+    if (uiStatus) uiStatus.textContent = STAR_FRAMES[_starIdx];
+  }, 120);
+}
+function stopStar() {
+  if (_starTimer) { clearInterval(_starTimer); _starTimer = null; }
+  if (uiStatus) uiStatus.textContent = '';
+}
+
 let _stateMode = 'idle';
 Object.defineProperty(State, 'mode', {
   get() { return _stateMode; },
@@ -205,7 +220,8 @@ Object.defineProperty(State, 'mode', {
     _stateMode = v;
     rootBody.dataset.mode = v;
     const s = document.getElementById('zsh-status');
-    if (s) s.textContent = (v === 'idle' || v === 'error' || v === 'listening') ? '' : v;
+    if (s) s.textContent = '';
+    if (v === 'thinking') startStar(); else stopStar();
   },
   configurable: true
 });
@@ -387,7 +403,7 @@ function sampleDepthMap(canvas, N) {
   return { home, scatter, seeds };
 }
 
-const FACE_N = State.coarsePointer ? 10000 : 28000;
+const FACE_N = State.coarsePointer ? 6000 : 16000;
 const FACE_N_2D = 600;
 let faceHome, faceScatter, faceSeeds;
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleDepthMap(generateFaceDepthMap(256), FACE_N));
@@ -465,8 +481,9 @@ void main(){
   gl_PointSize=clamp(uSize*(240./-mv.z)*(0.72+depth*0.42),1.0,3.0);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
-  vAlpha=hc>0.5?1.0:mix(0.30,0.35+depth*0.65,m);
-  vColor=(hc>0.5?vec3(1.0,1.0,1.0):uColor)*(hc>0.5?1.0:(0.3+depth*0.7));
+  vAlpha=hc>0.5?1.0:mix(0.28,0.40+depth*0.60,m);
+  float shade=mix(0.18,1.0,depth);
+  vColor=(hc>0.5?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.5?1.0:1.0);
   vec3 viewDir=normalize(-mv.xyz);
   vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
   vec3 vn=normalize(mat3(modelViewMatrix)*flatNorm);
@@ -806,18 +823,18 @@ if (window.DeviceMotionEvent) {
 }
 
 let actx = null;
-let _actxKeepAlive = null;
 function initAudio() {
   if (actx) return;
   try {
     actx = new (window.AudioContext || window.webkitAudioContext)();
-    _actxKeepAlive = setInterval(() => {
-      if (!actx || actx.state === 'closed') { clearInterval(_actxKeepAlive); return; }
-      if (actx.state === 'suspended') actx.resume().catch(() => {});
-      const buf = actx.createBuffer(1, 1, actx.sampleRate);
-      const s = actx.createBufferSource();
-      s.buffer = buf; s.connect(actx.destination); s.start();
-    }, 15000);
+    // Permanent silent oscillator keeps actx in 'running' state — prevents iOS auto-suspend
+    const silentGain = actx.createGain();
+    silentGain.gain.value = 0;
+    const silentOsc = actx.createOscillator();
+    silentOsc.frequency.value = 0;
+    silentOsc.connect(silentGain);
+    silentGain.connect(actx.destination);
+    silentOsc.start();
   } catch (_) {}
 }
 function beep(freq, dur) {
@@ -850,7 +867,7 @@ let ttsDBPromise = null;
 function setTTSLoading(loading) {
   tts.loading = !!loading;
   rootBody.dataset.ttsLoading = tts.loading ? 'true' : 'false';
-  if (uiStatus && State.mode !== 'speaking') uiStatus.textContent = tts.loading ? 'tts' : 'idle';
+  if (uiStatus && State.mode === 'thinking') startStar();
 }
 
 function announceTTS(text) {
