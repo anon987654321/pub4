@@ -75,6 +75,28 @@ class TestSelfScan < Minitest::Test
     end
   end
 
+  def test_self_scan_counts_data_yml_singularity_findings
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "data"))
+      FileUtils.mkdir_p(File.join(root, "lib"))
+      File.write(File.join(root, "data", "rules.yml"), <<~YAML)
+        self_test:
+          laws_apply_to_self:
+            SINGULARITY: "rules.yml entries unique by id"
+        rules:
+          - id: DUPLICATE_RULE
+          - id: DUPLICATE_RULE
+      YAML
+      scanner = FakeScanner.new([])
+
+      result = Master::Judge::Scan::SelfScan.new(scanner:, root:).call
+
+      assert result.ok?
+      assert_equal 1, result.value!.violation_count
+      assert_match(/1 violations/, result.value!.line)
+    end
+  end
+
   private
 
   def finding(rule)

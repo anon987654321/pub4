@@ -66,10 +66,16 @@ module Master
         end
 
         def duplicate_rule_id_findings
-          ids = rule_ids(Master.load_yaml(File.join(@root, "data", "rules.yml")))
-          ids.group_by(&:itself).filter_map do |id, values|
-            finding(path: File.join(@root, "data", "rules.yml"), line: 1, message: "duplicate rule id #{id}") if values.size > 1
+          yaml_paths.flat_map do |path|
+            ids = rule_ids(Master.load_yaml(path))
+            ids.group_by(&:itself).filter_map do |id, values|
+              finding(path:, line: 1, message: "duplicate rule id #{id}") if values.size > 1
+            end
           end
+        end
+
+        def yaml_paths
+          Dir.glob(File.join(@root, "data", "*.yml")).sort
         end
 
         def rule_ids(value, ids = [])

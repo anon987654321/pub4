@@ -35,11 +35,17 @@ class TestSelfTest < Minitest::Test
   def test_duplicate_rule_ids_are_reported_under_singularity
     Dir.mktmpdir do |root|
       write_fixture_tree(root)
+      File.write(File.join(root, "data", "patterns.yml"), <<~YAML)
+        patterns:
+          - id: DUPLICATE_PATTERN
+          - id: DUPLICATE_PATTERN
+      YAML
 
       result = Master::Judge::Scan::SelfTest.new(root:).call
       singularity = result.value!.checks.find { |check| check.law == "SINGULARITY" }
 
       assert singularity.findings.any? { |finding| finding[:message].include?("duplicate rule id DUPLICATE_RULE") }
+      assert singularity.findings.any? { |finding| finding[:message].include?("duplicate rule id DUPLICATE_PATTERN") }
     end
   end
 

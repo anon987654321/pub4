@@ -24,6 +24,7 @@ module Master
           pairs = @targets.flat_map { |target| scan_target(target, stream:) }
           autofixes = autofix ? apply_autofixes(pairs) : []
           pairs = @targets.flat_map { |target| scan_target(target, stream:) } if autofixes.any?
+          pairs.concat(singularity_pairs)
           summary = Summary.new(
             pairs:,
             rule_count: rule_count,
@@ -44,6 +45,22 @@ module Master
           path = File.join(@root, target)
           result = @scanner.scan_dir(path, depth: :deep, stream:)
           Result.wrap(result).ok? ? result.value! : []
+        end
+
+        def singularity_pairs
+          return [] unless File.exist?(File.join(@root, "data", "rules.yml"))
+
+          result = SelfTest.new(root: @root, event_bus: @bus).call
+          return [] unless result.ok?
+
+          check = result.value!.checks.find { |item| item.law == "SINGULARITY" }
+          return [] unless check && check.findings.any?
+
+          findings = check.findings.map do |finding|
+            Finding.build(rule: "SINGULARITY", message: finding[:message], line: finding[:line],
+              severity: :error, tags: %i[SINGULARITY])
+          end
+          [[File.join(@root, "data"), Result.ok(findings)]]
         end
 
         def rule_count
