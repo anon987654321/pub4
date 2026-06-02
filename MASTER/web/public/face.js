@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=29') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=30') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -216,107 +216,123 @@ function resize() {
 }
 window.addEventListener('resize', resize, { passive: true });
 
-// Pure-JS icosahedron for the 2D no-WebGL path
-function proceduralFaceTargets() {
-  const out = [];
-  const push = (x, y, z) => out.push([x, y, z]);
-  // Face contour — oval tapering to chin
-  for (let i = 0; i < 360; i++) {
-    const a = (i / 359) * Math.PI * 2;
-    const chinT = Math.max(0, -Math.sin(a));
-    const rx = 0.40 - chinT * 0.06;
-    push(Math.cos(a) * rx + (Math.random()-0.5)*0.008,
-         Math.sin(a) * 0.58 - 0.04 + (Math.random()-0.5)*0.008,
-         0.02 - Math.abs(Math.cos(a)) * 0.08);
+// Grayscale depth map: white = near (high Z), black = background (filtered)
+// Phantom.land technique: sample pixel luminance directly as Z, no edge detection
+function generateFaceDepthMap(size) {
+  const cv = new OffscreenCanvas(size, size);
+  const ctx = cv.getContext('2d');
+  const W = size, H = size, cx = W * 0.5, cy = H * 0.46;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+  let g;
+  // Base face volume — ellipse with radial depth gradient
+  g = ctx.createRadialGradient(cx, cy * 1.02, 0, cx, cy, W * 0.40);
+  g.addColorStop(0,    'rgba(205,205,205,1)');
+  g.addColorStop(0.45, 'rgba(165,165,165,1)');
+  g.addColorStop(0.80, 'rgba(72, 72, 72, 1)');
+  g.addColorStop(1,    'rgba(0,  0,  0,  1)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, W * 0.37, H * 0.46, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Nose tip — brightest point
+  g = ctx.createRadialGradient(cx, cy + H * 0.09, 0, cx, cy + H * 0.06, W * 0.11);
+  g.addColorStop(0,   'rgba(255,255,255,0.95)');
+  g.addColorStop(0.4, 'rgba(218,218,218,0.72)');
+  g.addColorStop(1,   'rgba(0,  0,  0,  0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Nose bridge — vertical ridge
+  g = ctx.createLinearGradient(cx - W*0.025, cy - H*0.12, cx + W*0.025, cy - H*0.12);
+  g.addColorStop(0,   'rgba(0,0,0,0)');
+  g.addColorStop(0.5, 'rgba(200,200,200,0.55)');
+  g.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(cx - W*0.04, cy - H*0.18, W*0.08, H*0.28);
+  // Forehead
+  g = ctx.createRadialGradient(cx, cy - H * 0.28, 0, cx, cy - H * 0.28, W * 0.26);
+  g.addColorStop(0,   'rgba(195,195,195,0.65)');
+  g.addColorStop(0.6, 'rgba(138,138,138,0.35)');
+  g.addColorStop(1,   'rgba(0,  0,  0,  0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Eye sockets — dark recesses
+  for (const ex of [-0.145, 0.145]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.075, 0, cx + ex*W, cy - H*0.075, W*0.092);
+    g.addColorStop(0,    'rgba(0,0,0,0.90)');
+    g.addColorStop(0.55, 'rgba(0,0,0,0.58)');
+    g.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Eyes
-  for (const [ex, ey] of [[-0.175, 0.09], [0.175, 0.09]]) {
-    for (let i = 0; i < 180; i++) {
-      const a = (i / 179) * Math.PI * 2;
-      push(ex + Math.cos(a)*0.072 + (Math.random()-0.5)*0.006,
-           ey + Math.sin(a)*0.044 + (Math.random()-0.5)*0.006, 0.28);
-    }
-    for (let i = 0; i < 80; i++) {
-      const r = Math.sqrt(Math.random()) * 0.04, a = Math.random() * Math.PI * 2;
-      push(ex + Math.cos(a)*r, ey + Math.sin(a)*r*0.7, 0.18);
-    }
-    for (let i = 0; i < 100; i++) {
-      const t = i / 99, a = Math.PI * (0.05 + t * 0.90);
-      push(ex + Math.cos(a)*0.088, ey + 0.012 + Math.sin(a)*0.028, 0.24);
-    }
-    for (let i = 0; i < 80; i++) {
-      const t = i / 79, a = Math.PI * (0.08 + t * 0.84);
-      push(ex + Math.cos(a)*0.082, ey - Math.sin(a)*0.022, 0.24);
-    }
-    for (let i = 0; i < 140; i++) {
-      const t = i / 139;
-      const bx = ex + (t - 0.5) * 0.21;
-      const arch = Math.sin(t * Math.PI) * 0.018 + (ex < 0 ? (t-0.5)*0.012 : -(t-0.5)*0.012);
-      push(bx + (Math.random()-0.5)*0.008, ey + 0.082 + arch + (Math.random()-0.5)*0.006, 0.20);
-    }
+  // Brow ridges — raised shelf
+  for (const ex of [-0.145, 0.145]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.168, 0, cx + ex*W, cy - H*0.168, W*0.10);
+    g.addColorStop(0,   'rgba(192,192,192,0.58)');
+    g.addColorStop(0.6, 'rgba(128,128,128,0.28)');
+    g.addColorStop(1,   'rgba(0,  0,  0,  0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Nose bridge
-  for (let i = 0; i < 120; i++) {
-    const t = i / 119;
-    push((Math.random()-0.5)*0.028, 0.04 - t*0.22, 0.30 + t*0.15);
+  // Cheekbones
+  for (const ex of [-0.24, 0.24]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.03, 0, cx + ex*W, cy + H*0.03, W*0.13);
+    g.addColorStop(0,   'rgba(175,175,175,0.46)');
+    g.addColorStop(1,   'rgba(0,  0,  0,  0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Nose tip
-  for (let i = 0; i < 140; i++) {
-    const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random())*0.058;
-    push(Math.cos(a)*r, -0.195 + Math.sin(a)*r*0.65, 0.46 + (Math.random()-0.5)*0.02);
-  }
-  // Nostrils
-  for (const sx of [-1, 1]) {
-    for (let i = 0; i < 80; i++) {
-      const a = Math.random() * Math.PI * 2;
-      push(sx*(0.058 + Math.cos(a)*0.032), -0.21 + Math.sin(a)*0.020, 0.38 + Math.random()*0.02);
-    }
-  }
-  // Upper lip — Cupid bow
-  for (let i = 0; i < 200; i++) {
-    const t = i / 199, a = Math.PI * (0.04 + t * 0.92);
-    const bow = Math.sin(t * Math.PI * 2) * 0.014;
-    push(Math.cos(a)*0.130, -0.30 + 0.018 + Math.sin(a)*0.026 + bow, 0.30 + (Math.random()-0.5)*0.02);
-  }
-  // Lower lip
-  for (let i = 0; i < 200; i++) {
-    const t = i / 199, a = Math.PI * (0.04 + t * 0.92);
-    push(Math.cos(a)*0.130, -0.30 - Math.sin(a)*0.040, 0.32 + (Math.random()-0.5)*0.02);
-  }
-  // Cheeks
-  for (const sx of [-1, 1]) {
-    for (let i = 0; i < 160; i++) {
-      push(sx*(0.22 + Math.random()*0.12), -0.04 + (Math.random()-0.5)*0.20, 0.10 + Math.random()*0.06);
-    }
-  }
+  // Lips
+  g = ctx.createRadialGradient(cx, cy + H*0.235, 0, cx, cy + H*0.235, W*0.10);
+  g.addColorStop(0,   'rgba(185,185,185,0.62)');
+  g.addColorStop(0.5, 'rgba(138,138,138,0.35)');
+  g.addColorStop(1,   'rgba(0,  0,  0,  0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   // Chin
-  for (let i = 0; i < 120; i++) {
-    const a = Math.PI * (1.08 + (i/119)*0.84);
-    push(Math.cos(a)*0.22, -0.45 + Math.sin(a)*0.06, 0.08 + Math.random()*0.04);
-  }
-  return out;
+  g = ctx.createRadialGradient(cx, cy + H*0.405, 0, cx, cy + H*0.405, W*0.14);
+  g.addColorStop(0,   'rgba(145,145,145,0.55)');
+  g.addColorStop(1,   'rgba(0,  0,  0,  0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  return cv;
 }
-function sampleProceduralFace(N) {
-  const targets = proceduralFaceTargets();
-  const home = new Float32Array(N * 3), scatter = new Float32Array(N * 3), seeds = new Float32Array(N);
-  for (let i = 0; i < N; i++) {
-    const p = targets[Math.floor((i / N) * targets.length) % targets.length];
-    home[i*3] = p[0] + (Math.random() - 0.5) * 0.018;
-    home[i*3+1] = p[1] + (Math.random() - 0.5) * 0.018;
-    home[i*3+2] = p[2] + (Math.random() - 0.5) * 0.025;
-    scatter[i*3] = home[i*3] + (Math.random() - 0.5) * 0.16;
-    scatter[i*3+1] = home[i*3+1] + (Math.random() - 0.5) * 0.16;
-    scatter[i*3+2] = home[i*3+2] + (Math.random() - 0.5) * 0.10;
-    seeds[i] = Math.random() * 6.28318;
+
+// Direct luminance sampling — brighter pixels get more particles, luminance = Z depth
+function sampleDepthMap(canvas, N) {
+  const size = canvas.width;
+  const ctx = canvas.getContext('2d');
+  const px = ctx.getImageData(0, 0, size, size).data;
+  const home = new Float32Array(N * 3);
+  const scatter = new Float32Array(N * 3);
+  const seeds = new Float32Array(N);
+  let count = 0;
+  const max = N * 10;
+  for (let attempt = 0; attempt < max && count < N; attempt++) {
+    const x = Math.floor(Math.random() * size);
+    const y = Math.floor(Math.random() * size);
+    const lum = px[(y * size + x) * 4] / 255;
+    if (lum < 0.05) continue;
+    if (Math.random() > lum * 0.96 + 0.04) continue;
+    const nx = (x / size) * 2 - 1;
+    const ny = -((y / size) * 2 - 1);
+    const nz = lum * 0.72 - 0.04;
+    home[count*3]   = nx + (Math.random()-0.5)*0.010;
+    home[count*3+1] = ny + (Math.random()-0.5)*0.010;
+    home[count*3+2] = nz + (Math.random()-0.5)*0.018;
+    scatter[count*3]   = nx + (Math.random()-0.5)*0.32;
+    scatter[count*3+1] = ny + (Math.random()-0.5)*0.32;
+    scatter[count*3+2] = (Math.random()-0.5)*0.22;
+    seeds[count] = Math.random() * 6.28318;
+    count++;
+  }
+  while (count < N) {
+    home[count*3] = (Math.random()-0.5)*0.6;
+    home[count*3+1] = (Math.random()-0.5)*0.6;
+    home[count*3+2] = 0.2;
+    scatter[count*3] = home[count*3]; scatter[count*3+1] = home[count*3+1]; scatter[count*3+2] = 0;
+    seeds[count] = Math.random() * 6.28318;
+    count++;
   }
   return { home, scatter, seeds };
 }
 
-
 const FACE_N = State.coarsePointer ? 10000 : 28000;
 const FACE_N_2D = 600;
 let faceHome, faceScatter, faceSeeds;
-({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleProceduralFace(FACE_N));
+({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleDepthMap(generateFaceDepthMap(256), FACE_N));
 
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
