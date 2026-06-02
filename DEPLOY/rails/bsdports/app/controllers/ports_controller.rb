@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class PortsController < ApplicationController
-  allow_unauthenticated_access only: %i[index show crossref_cves]
-  before_action :set_port, only: %i[show watch unwatch crossref_cves]
+  allow_unauthenticated_access only: %i[index show crossref_cves review]
+  before_action :set_port, only: %i[show watch unwatch crossref_cves review]
 
   def index
     scope = Port.includes(:category)
@@ -53,6 +53,16 @@ class PortsController < ApplicationController
   def crossref_cves
     NvdCveService.crossref(@port)
     redirect_to @port, notice: "CVE cross-reference complete."
+  end
+
+  def review
+    # MASTER port review: scans Makefile/patches for quality (demo using metadata;
+    # real impl would load from ports tree import + Master::Judge::Scan::Scanner)
+    issues = []
+    issues << "missing HOMEPAGE" if @port.homepage.blank?
+    issues << "weak COMMENT" if @port.comment.to_s.length < 20
+    notice = issues.any? ? "MASTER review: #{issues.join(', ')}" : "MASTER review: clean (no issues found in demo scan)"
+    redirect_to @port, notice: notice
   end
 
   private

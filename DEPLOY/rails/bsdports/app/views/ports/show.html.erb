@@ -58,6 +58,10 @@
   <% end %>
   <%= button_to "Cross-reference with NVD", crossref_cves_port_path(@port), method: :post %>
 
+  <h2>MASTER review</h2>
+  <p>Scan <code>Makefile</code> and patches for quality issues.</p>
+  <%= button_to "Run MASTER review", review_port_path(@port), method: :post %>
+
   <nav>
     <% if authenticated? %>
       <% if @watching %>

@@ -14,6 +14,7 @@ Rails.application.routes.draw do
       post :watch
       delete :unwatch
       post :crossref_cves
+      post :review
     end
     resources :comments, only: %i[create destroy]
   end
