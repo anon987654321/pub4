@@ -863,7 +863,6 @@ function beep(freq, dur) {
   o.start(); o.stop(actx.currentTime + dur);
 }
 
-}
 
 const VISEME_STEP_MS = 90;
 const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
