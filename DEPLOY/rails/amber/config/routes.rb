@@ -59,6 +59,7 @@ Rails.application.routes.draw do
     get  "occasions",         to: "ai#occasion_map",    as: :ai_occasions
     get  "style",             to: "ai#style_profile",   as: :ai_style_profile
     post "style",             to: "ai#style_profile"
+    get  "pack",              to: "ai#packing_list",    as: :ai_packing_list
   end
 
   root "home#index"

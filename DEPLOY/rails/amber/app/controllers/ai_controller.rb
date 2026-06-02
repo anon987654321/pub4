@@ -80,4 +80,17 @@ class AiController < ApplicationController
       redirect_to user_path(Current.user), notice: "Style profile set to #{aesthetic}"
     end
   end
+
+  def packing_list
+    if params[:duration].present?
+      @duration = params[:duration].to_i
+      @climate = params[:climate].to_s
+      @result = WardrobeAiService.new(Current.user).suggest_packing_list(@duration, @climate)
+      # auto create packing list demo
+      if @result["outfits"]
+        list = Current.user.packing_lists.create!(name: "#{@climate} #{ @duration }d trip", starts_on: Date.today, ends_on: Date.today + @duration)
+        # would link items if matched
+      end
+    end
+  end
 end

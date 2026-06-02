@@ -162,4 +162,13 @@ class WardrobeAiService
     PROMPT
     chat(prompt)
   end
+
+  def suggest_packing_list(duration, climate)
+    prompt = <<~PROMPT
+      Suggest 5-8 outfits from the user's wardrobe for a #{duration}-day trip in #{climate} climate.
+      Return JSON: {"outfits": [{"name": "outfit name", "items": ["item title 1", "item title 2"]}, ...], "tips": "brief packing tip"}
+      User wardrobe: #{ @user.items.limit(10).map { |i| "#{i.title} (#{i.category}, #{i.color}, #{i.season})" }.join("; ") }
+    PROMPT
+    chat(prompt)
+  end
 end
