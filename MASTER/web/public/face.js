@@ -1290,7 +1290,10 @@ if (renderer) {
       };
       t.addEventListener('click', doToggle);
       t.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doToggle(); }
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          doToggle();
+        }
       });
     }
   })();
