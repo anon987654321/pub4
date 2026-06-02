@@ -8,10 +8,12 @@ Authority order: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > this file.
 
 ```
 pub4/
-  MASTER/          Constitutional AI agent (~6K LOC Ruby) — the primary product
-  DEPLOY/openbsd/  Two-stage OpenBSD deploy script (openbsd.sh)
-  DEPLOY/rails/    Rails 8 sub-apps: brgen, amber, baibl, bsdports, blognet, hjerterom
-  TODO.md          Living backlog — 2300+ items across 53 sections (A–BA)
+  MASTER/           Constitutional AI agent — the primary product
+  DEPLOY/openbsd/   Two-stage OpenBSD deploy script (openbsd.sh)
+  DEPLOY/rails/     Rails 8 sub-apps: brgen, amber, baibl, bsdports, blognet, hjerterom, marketplace
+  DEPLOY/repligen.rb  Replicate.com AI image generation CLI (544 LOC)
+  DEPLOY/postpro/   Cinematic post-processing via ruby-vips (film stocks, grain, LUTs)
+  TODO.md           Living backlog — 3550+ lines, 57 sections (A–BE)
 ```
 
 ## MASTER — commands
@@ -33,7 +35,7 @@ bundle exec ruby -Ilib -Itest test/path/to/test_file.rb
 # After any MASTER/web/ edit: doas rcctl restart master
 ```
 
-Safe mode is the default (background loops, autofix, and watcher disabled). To enable active loops: `MASTER_UNSAFE_PROCESS_DEFAULTS=1`.
+Safe mode is the default (background loops, autofix, watcher disabled). Enable active loops: `MASTER_UNSAFE_PROCESS_DEFAULTS=1`.
 
 ## MASTER — architecture
 
@@ -45,27 +47,51 @@ Seven modules under `lib/`:
 |--------|----------------|
 | `now/` | Pipeline, CLI, command registry, 11 stage files, routing |
 | `judge/` | Scanner, AST fixer (Prism), council, swarm, security, embeddings |
-| `loop/` | Fix loop, rule loop, watch loop, 15 convergence architectures |
-| `ground/` | Constitution, rules, memory, config, tool contracts, provider registry |
-| `reach/` | All tool implementations: file I/O, git, shell, LLM, web, search |
-| `voice/` | Personality, renderer, TTS (Edge TTS), soul drift, expression |
+| `loop/` | Fix loop, rule loop, watch loop, convergence architectures |
+| `ground/` | Constitution, rules, memory, config, tool contracts, provider registry, axioms |
+| `reach/` | All tool implementations: file I/O, git, shell, LLM, web, search, semantic cache |
+| `voice/` | Personality, renderer, TTS (Edge TTS), soul drift, expression, Dilla audio |
 | `trace/` | Event bus, telemetry, audit log, session, undo, why-explainer |
 
-**Rule system:** Rules are defined via `RuleDSL.rule :RULE_ID, severity:, tags:, applies_to: do |src, path:| ... end` in `lib/judge/scan/rules/`. They auto-register in `Rule.registry`. Structural rules subclass `Rule` directly and use Prism AST traversal. `AstFixer` in `lib/judge/scan/ast_fixer.rb` applies deterministic autofixes before LLM sweep.
+**Rule system:** Rules defined via `RuleDSL.rule :RULE_ID, severity:, tags:, applies_to: do |src, path:| ... end` in `lib/judge/scan/rules/`. Auto-register in `Rule.registry`. `AstFixer` in `lib/judge/scan/ast_fixer.rb` applies deterministic autofixes before LLM sweep.
 
-**Constitution:** `data/soul.yml` is the machine-enforced law. `ABSOLUTE` sections abort the pipeline on violation. `PROTECTED` emit warnings. `data/rules.yml` holds 173 scan rules with thresholds, severities, and autofix metadata. Single source of truth — code reads from there, never hardcodes thresholds.
+**Constitution:** `data/soul.yml` is machine-enforced law. `ABSOLUTE` sections abort the pipeline on violation. `PROTECTED` emit warnings. `data/rules.yml` holds 173 scan rules with thresholds, severities, autofix metadata — single source of truth, never hardcode thresholds.
 
-**Provider routing:** `ground/provider_registry.rb` selects models by capability tier and budget. API keys read from `/etc/master.env` on OpenBSD, environment otherwise. Supported providers: OpenRouter (primary), Anthropic, OpenAI, Gemini, Mistral, DeepSeek.
+**Provider routing:** `ground/provider_registry.rb` selects models by capability tier and budget. API keys read from `/etc/master.env` on OpenBSD, environment otherwise. Supported: OpenRouter (primary), Anthropic, OpenAI, Gemini, Mistral, DeepSeek.
 
-**Web face:** Falcon (async Ruby server) serves `MASTER/web/`. The particle system in `web/public/face.js` / `particle_kernel.js` is a live visualization of internal state (council deliberation, pipeline stage, pressure field). Restart required after any `web/` change — no hot-reload.
+**Web face:** Falcon serves `MASTER/web/`. Particle system in `web/public/face.js` / `particle_kernel.js` visualises internal state (council deliberation, pipeline stage, pressure field). Restart required after any `web/` change — no hot-reload.
+
+**Tools:** `MASTER/tools/repligen.rb` and `MASTER/tools/postpro.rb` are thin shims that exec into `DEPLOY/repligen.rb` and `DEPLOY/postpro/postpro.rb`. Heavy logic lives in DEPLOY; MASTER owns the stable entrypoint and tool contracts.
 
 ## MASTER — key conventions
 
 `# frozen_string_literal: true` on every `.rb`. Double-quoted strings. No bare `rescue` — always `rescue StandardError => e` or a specific class. No god classes (>300 lines / >10 public methods). No abbreviated identifiers (`configuration` not `cfg`). Guard clauses before main logic. CQS — queries return, commands mutate, never both. Endless methods for single expressions: `def foo = expr`.
 
-File/method size: files warn at 200 lines, hard limit 300. Methods ideal at 10 lines, warn at 7. Max 3 positional params; use keyword args beyond that. Max 2 nesting levels inside a method.
+File/method size: files warn at 200 lines, hard limit 300. Methods warn at 7 lines, ideal 10. Max 3 positional params; keyword args beyond that. Max 2 nesting levels inside a method.
 
-Comments explain WHY only, one line max. Never explain what the code does — identifiers do that. No YARD blocks. No section separator comments.
+Comments explain WHY only, one line max. No YARD blocks. No section separator comments.
+
+## repligen.rb — usage
+
+```zsh
+cd pub4
+ruby DEPLOY/repligen.rb                   # interactive menu
+ruby DEPLOY/repligen.rb sync 100          # sync 100 models from Replicate
+ruby DEPLOY/repligen.rb search upscale    # search model DB
+ruby DEPLOY/repligen.rb stats             # usage summary
+```
+
+Config token: `REPLICATE_API_TOKEN` env or `~/.config/repligen/config.json`. DB at `~/.local/share/repligen/repligen.db` (SQLite). Chain templates `masterpiece` and `quick` defined in `CHAIN_TEMPLATES`. Model types auto-classified via regex patterns in `MODEL_TYPES`.
+
+## postpro.rb — usage
+
+```zsh
+ruby DEPLOY/postpro/postpro.rb input.jpg --stock kodak_portra --preset social
+ruby DEPLOY/postpro/postpro.rb batch *.jpg --preset social --out processed/
+ruby DEPLOY/postpro/postpro.rb watch ~/Downloads/ --preset social
+```
+
+Requires `ruby-vips` gem and `libvips` system library (`doas pkg_add vips` on OpenBSD). Film stocks defined in `STOCKS` constant: `kodak_portra`, `kodak_vision3`, `fujichrome_velvia`, others. Each stock defines grain sigma, 3×3 colour matrix, and per-channel H-D curves (Dmin/Dmax/pivot/gamma). Camera profiles loaded from `multimedia/camera_profiles/*.json`.
 
 ## Rails apps — commands
 
@@ -79,26 +105,27 @@ rails server  # or: bundle exec falcon serve
 # Tests
 bundle exec rails test
 bundle exec rails test test/models/post_test.rb
-
-# Single system test
 bundle exec rails test:system TEST=test/system/posts_test.rb
 ```
 
-All six apps share the same stack: Rails 8.1, SQLite3 (WAL mode), Falcon, Hotwire (Turbo + Stimulus), Importmap, Solid Queue/Cache/Cable, bcrypt auth, Propshaft.
+All apps share: Rails 8.1, SQLite3 (WAL mode), Falcon, Hotwire (Turbo + Stimulus), Importmap, Solid Queue/Cache/Cable, bcrypt auth, Propshaft.
 
 ## Rails apps — architecture
 
-**brgen** (`DEPLOY/rails/brgen/`) is the flagship — a hyperlocal social network competing with X and Facebook. Subdomain routing constrains each vertical: `tv.`, `dating.`, `playlist.`, `takeaway.`, `markedsplass.`, `maps.`. `acts_as_tenant` scopes all queries to city. Each city domain (brgen.no, losangeles.citynet.no, etc.) is fully isolated — no cross-city data leakage possible at the SQL layer.
+**brgen** (`DEPLOY/rails/brgen/`) is the flagship — hyperlocal social network competing with X and Facebook. Subdomain routing per vertical: `tv.`, `dating.`, `playlist.`, `takeaway.`, `markedsplass.`, `maps.`. `acts_as_tenant` scopes all queries to city. Cities: `brgen.no` flagship; others follow `<city>.citynet.no` — wildcard DNS, single wildcard TLS cert, per-city SQLite database at `db/cities/<slug>.sqlite3`.
 
-brgen landing page vision: black `#000` background, "brgen" in bold Helvetica top-left, hidden swipe-down/tilt/scroll nav revealing "Regular | AI | Marketplace..." with right-edge fade-out and horizontal scroll to "Dating | Playlist | Chat | Takeaway | TV | Maps". Post composer uses Tiptap.js (headless ProseMirror). Anonymous posting allowed up to 2 posts per browser fingerprint before signup required; MASTER + Groq moderates anonymous content.
+brgen landing: `#000` OLED-black background, "brgen" in bold Helvetica top-left, hidden nav revealed by swipe-down/tilt/scroll (spring physics: `cubic-bezier(0.32,0.72,0,1)`), horizontal scroll nav "Regular | AI | Marketplace..." with right-edge `mask-image` fade-out. Post composer is Tiptap.js (headless ProseMirror). Anonymous posting: 2 posts per SHA-256 browser fingerprint before signup; MASTER + Groq llama3-8b moderates sync (2s timeout, optimistic approve on timeout). Feed is chronological + distance-weighted — no engagement-bait algorithm.
 
-**amber** — wardrobe intelligence with AI outfit generation via ruby_llm vision.  
-**bsdports** — OpenBSD ports semantic search with FTS5 + sqlite-vec embeddings.  
-**baibl** — scripture platform with parallel translations and annotation layers.  
-**blognet** — semantic publishing with Tiptap editor, newsletter, and paywall.  
+**amber** — wardrobe intelligence with AI outfit generation via ruby_llm vision.
+**bsdports** — OpenBSD ports semantic search with FTS5 + sqlite-vec embeddings.
+**baibl** — scripture platform with parallel translations and annotation layers.
+**blognet** — semantic publishing with Tiptap editor, newsletter, and paywall.
 **hjerterom** — food and resource rescue network for community redistribution.
+**marketplace** — local classifieds (Finn.no-style) within brgen's city tenant system.
 
-**Shared patterns:** All apps use `Current.user` via `ActiveSupport::CurrentAttributes`. Counter caches on all high-traffic associations. FTS5 virtual tables for full-text search. Active Storage with WebP variants and blurhash placeholders. Turbo Streams over ActionCable for real-time updates. Stimulus controllers for all interactive behaviour — no inline JS.
+**Shared patterns:** `Current.user` via `ActiveSupport::CurrentAttributes`. Counter caches on all high-traffic associations. FTS5 virtual tables for full-text search. Active Storage with WebP variants and blurhash placeholders. Turbo Streams over ActionCable for real-time updates. Stimulus controllers for all interactive behaviour — no inline JS. Money in øre (integer), never floats.
+
+**PostproJob:** `app/jobs/postpro_job.rb` in brgen auto-processes uploads; city selects film stock (`brgen.no → kodak_portra`, `losangeles → kodak_vision3`, `amsterdam → fujichrome_velvia`).
 
 ## VPS and deployment
 
