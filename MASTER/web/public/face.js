@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=30') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=31') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -404,8 +404,7 @@ void main(){
   p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*m;
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp((p.z+0.8)/1.8,0.,1.);
-  float sizeJitter=0.80+0.38*fract(sin(seed*17.3)*43758.5);
-  gl_PointSize=uSize*(300./-mv.z)*(0.68+depth*0.32)*sizeJitter;
+  gl_PointSize=uSize*(300./-mv.z);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
   vAlpha=hc>0.5?1.0:mix(0.22,0.3+depth*0.7,m);
@@ -425,16 +424,10 @@ varying float vDepth;
 uniform float uShake;
 uniform float uPulseRing;
 void main(){
-  vec2 uv=gl_PointCoord-0.5;
-  float d=length(uv);
-  if(d>0.5)discard;
-  float soft=smoothstep(0.5,0.18,d);
-  float ring=smoothstep(0.04,0.0,abs(d-0.40))*uPulseRing*0.5;
-  vec3 col=vColor+vFresnel*vColor*0.55;
+  vec3 col=vColor+vFresnel*vColor*0.42;
   col.r=min(1.0,col.r+uShake*0.18);
   col.b=max(0.0,col.b-uShake*0.12);
-  float alpha=soft*vAlpha+ring;
-  gl_FragColor=vec4(col,alpha);
+  gl_FragColor=vec4(col,vAlpha);
 }`;
 
 let faceGeom, faceMat, facePoints;
@@ -446,7 +439,7 @@ if (_hasWebGL && THREE) {
   faceMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
-      uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.08},
+      uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.025},
       uColor:{value:new Color(1,1,1)}, uHc:{value:0},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
       uBass:{value:0}, uShake:{value:0},
@@ -666,7 +659,7 @@ function frame(t) {
     const voiceRMS = State.voiceRMS || 0;
     const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
-    faceMat.uniforms.uSize.value = 0.08 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
+    faceMat.uniforms.uSize.value = 0.025 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
     faceMat.uniforms.uHc.value = State.highContrast ? 1.0 : 0.0;
     const curlTarget = State.mode === 'thinking' ? 1.0 : 0.0;
     faceMat.uniforms.uCurl.value += (curlTarget - faceMat.uniforms.uCurl.value) * 0.025;
@@ -909,24 +902,6 @@ function ttsTick() {
       const audio = new Audio(src);
       audio.playbackRate = getTtsRate();
       tts.audio = audio;
-      if (actx && actx.state !== 'closed') {
-        if (actx.state === 'suspended') await actx.resume().catch(() => {});
-        if (actx.state === 'running') {
-          try {
-            const msrc = actx.createMediaElementSource(audio);
-            const boost = actx.createGain();
-            boost.gain.value = 1.8;
-            const analyser = actx.createAnalyser();
-            analyser.fftSize = 256;
-            msrc.connect(boost);
-            boost.connect(analyser);
-            analyser.connect(actx.destination);
-            tts.analyser = analyser;
-            tts.analyserBuf = new Uint8Array(analyser.fftSize);
-            tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
-          } catch (_) {}
-        }
-      }
       audio.onplay = () => {
         setTTSLoading(false); startVisemeAnim(text);
         if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
@@ -936,7 +911,6 @@ function ttsTick() {
         setTTSLoading(false);
         stopVisemeAnim();
         rootBody.dataset.ttsWave = '';
-        tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
         URL.revokeObjectURL(src);
         tts.audio = null; tts.playing = false;
         if (State.mode === 'speaking') State.mode = 'idle';
