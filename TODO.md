@@ -115,7 +115,7 @@ MASTER must pass its own rules. Violations found by reading lib/.
 - [x] F12 repo_ecology.rb: co_change_graph built twice (once in snapshot, once in scan) — always use memoized accessor
 - [x] F13 judge/agent.rb: verify method count ≤10 public methods (NO_GOD_CLASS threshold)
 - [x] F14 now/context_window.rb: verify no god class
-- [ ] F15 loop/rule_loop.rb: CANDIDATE_COUNT=3 magic number — name as semantic constant with comment (NO_MAGIC)
+- [x] F15 loop/rule_loop.rb: CANDIDATE_COUNT=3 magic number — name as semantic constant with comment (NO_MAGIC)
 - [ ] F16 ground/memory.rb: MAX_INJECT_TOKENS = 2000 used as token limit — verify against actual model context size
 - [ ] F17 reach/llm.rb: verify no hardcoded API keys (SECRET_PROXIMITY)
 - [ ] F18 All lib/**/*.rb: verify zero Marshal.load (anti_patterns.forbidden)

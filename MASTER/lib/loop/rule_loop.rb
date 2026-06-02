@@ -18,7 +18,8 @@ module Master
     class RuleLoop
       RATE_LIMIT_SLEEP = 10
       MAX_FIX_RETRIES = 2
-      CANDIDATE_COUNT = 3
+      # Genetic autofix explores three variants before rescanning and choosing the lowest-violation candidate.
+      GENETIC_AUTOFIX_CANDIDATES = 3
 
       SEVERITY_RANK = Master::SEVERITY_RANK
       MIN_SEVERITY = SEVERITY_RANK[:warning]
@@ -152,11 +153,11 @@ module Master
         nil
       end
 
-      # Architecture #9: generate CANDIDATE_COUNT fixes, rescan each, apply lowest-violation winner.
+      # Architecture #9: generate candidates, rescan each, apply lowest-violation winner.
       def genetic_fix(violation, src, path)
         ext    = File.extname(path).downcase
         prompt = build_prompt_for(violation, src, path)
-        candidates = CANDIDATE_COUNT.times.filter_map do |attempt|
+        candidates = GENETIC_AUTOFIX_CANDIDATES.times.filter_map do |attempt|
           sleep RATE_LIMIT_SLEEP if attempt.positive?
           code = extract_code(@agent.ask(prompt).to_s, ext)
           code if code && code.strip != src.strip
