@@ -44,7 +44,6 @@ class Item < ApplicationRecord
 
   def cost_per_wear
     return nil unless price.present? && times_worn.to_i > 0
-    (price / times_worn).round(2)
   end
 
   def value_label
@@ -94,7 +93,6 @@ class Item < ApplicationRecord
 
   def extract_dominant_color!
     return unless photos.attached?
-    photo = photos.first
     tempfile = nil
     begin
       require "vips"
@@ -111,7 +109,7 @@ class Item < ApplicationRecord
       b = px[2].to_i.clamp(0, 255)
       hex = "#%02x%02x%02x" % [r, g, b]
       update!(color: hex)
-    rescue => e
+    rescue StandardError => e
       Rails.logger.warn("vips dominant color extract failed for item #{id}: #{e.message}")
     ensure
       tempfile&.close!

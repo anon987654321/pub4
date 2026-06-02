@@ -3,9 +3,9 @@
 class WardrobeMediaJob < ApplicationJob
   queue_as :media
 
-  VARIANTS = {
+  VARIANTS = {.freeze
     thumb: { resize_to_limit: [240, 240] },
-    card: { resize_to_limit: [720, 960] }
+    card: { resize_to_limit: [720, 960] },
   }.freeze
 
   def perform(item_id)
