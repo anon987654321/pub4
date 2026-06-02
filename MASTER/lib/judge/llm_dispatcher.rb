@@ -41,7 +41,9 @@ module Master
         Reach::AstEdit => Reach::LLM::AstEdit,
         Reach::SearchKnowledge => Reach::LLM::SearchKnowledge,
         Reach::FeedbackRecord => Reach::LLM::FeedbackRecord,
-        Reach::MemoryRecord => Reach::LLM::MemoryRecord
+        Reach::MemoryRecord => Reach::LLM::MemoryRecord,
+        Reach::Repligen => Reach::LLM::Repligen,
+        Reach::Postpro => Reach::LLM::Postpro
       }.freeze
 
       def self.build_tool_capable_re

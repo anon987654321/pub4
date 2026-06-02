@@ -28,3 +28,5 @@
 - { name: Clean,          tier: dangerous, visitor: false, default: true,  description: Remove tmp/build artifacts }
 - { name: FeedbackRecord, tier: safe,      visitor: false, default: true,  description: Record operator feedback into corrections.yml }
 - { name: MemoryRecord,   tier: safe,      visitor: false, default: true,  description: Write a durable markdown memory record to data/claude/ }
+- { name: Repligen,       tier: dangerous, visitor: false, default: true,  description: Replicate image gen (Flux etc), actions: generate/sync/search/stats }
+- { name: Postpro,        tier: dangerous, visitor: false, default: true,  description: Cinematic film post-processing on images (kodak etc) }
