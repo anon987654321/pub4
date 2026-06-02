@@ -1,4 +1,4 @@
-$ORIGIN bsdports.org.
+$ORIGIN bsdports.net.
 $TTL 24h
 
 @ 1h IN SOA ns.bsdports.net. admin.bsdports.net. (
@@ -12,8 +12,11 @@ $TTL 24h
 @ IN NS ns.bsdports.net.
 @ IN NS ns.hyp.net.
 
+ns IN A 209.250.248.67
+ns.hyp.net IN A 194.63.248.53
+
 www IN CNAME @
 
 @ IN A 209.250.248.67
 
-bsdports.org. 3m IN CAA 0 issue "letsencrypt.org"
+bsdports.net. 3m IN CAA 0 issue "letsencrypt.org"
