@@ -221,7 +221,7 @@ class ChatController < ApplicationController
         sse.write("data: #{encoded}\n\n")
       }
 
-      ctx = { user_message: input, on_chunk: on_chunk, visitor: visitor }
+      ctx = { user_message: input, on_chunk: on_chunk }
       ctx[:pre_enhanced] = true if params[:pre_enhanced].present?
       ctx[:voice] = true if params[:voice].present?
       if (img = params[:image]).present?

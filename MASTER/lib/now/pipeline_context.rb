@@ -17,6 +17,7 @@ module Master
         review_error
         pre_enhanced
         rendered voice
+        image
         channel metadata turn_id
         _timings _parallel_errors _parallel_timeout _stage_error
       ].freeze
