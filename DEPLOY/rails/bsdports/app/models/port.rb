@@ -23,6 +23,7 @@ class Port < ApplicationRecord
     ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM ports_fts WHERE ports_fts MATCH ?", q]))
     ids.any? ? where(id: ids) : none
   }
+  scope :semantic_search, ->(q) { search(q) } # stub for sqlite-vec embeddings on description (DG02)
 
   def watched_by?(user)
     watches.exists?(user: user)
