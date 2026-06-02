@@ -66,6 +66,13 @@ class ItemsController < ApplicationController
     redirect_to items_path, notice: "Seasonal items resurfaced if in season"
   end
 
+  def shopping_list
+    service = WardrobeGapService.new(Current.user)
+    service.create_recommendations!
+    @gaps = service.gaps
+    @recommendations = Current.user.recommendations.where(kind: "purchase_gap").recent
+  end
+
   private
 
   def set_item = @item = Item.find(params[:id])

@@ -15,6 +15,7 @@ Rails.application.routes.draw do
     collection do
       post :archive_seasonal
       post :resurface_seasonal
+      get :shopping_list
     end
   end
 
