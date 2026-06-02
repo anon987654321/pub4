@@ -512,7 +512,6 @@ varying vec3 vColor;
 varying float vFresnel;
 varying float vDepth;
 uniform float uShake;
-uniform float uScanAmt;
 uniform float uPulseRing;
 void main(){
   vec2 uv=gl_PointCoord-0.5;
@@ -523,8 +522,7 @@ void main(){
   vec3 col=vColor+vFresnel*vColor*0.55;
   col.r=min(1.0,col.r+uShake*0.18);
   col.b=max(0.0,col.b-uShake*0.12);
-  float scanLine=1.0-uScanAmt*(0.5+0.5*sin(gl_FragCoord.y*3.14159*0.5));
-  float alpha=(soft*vAlpha+ring)*scanLine;
+  float alpha=soft*vAlpha+ring;
   gl_FragColor=vec4(col,alpha);
 }`;
 
@@ -540,7 +538,7 @@ if (_hasWebGL && THREE) {
       uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.08},
       uColor:{value:new Color(1,1,1)}, uHc:{value:0},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
-      uBass:{value:0}, uShake:{value:0}, uScanAmt:{value:0.028},
+      uBass:{value:0}, uShake:{value:0},
       uPulseRing:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
@@ -633,7 +631,7 @@ if (_hasWebGL && THREE && scene && facePoints) {
       uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.18},
       uColor:{value:new Color(1,1,1)}, uHc:{value:0},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
-      uBass:{value:0}, uShake:{value:0}, uScanAmt:{value:0},
+      uBass:{value:0}, uShake:{value:0},
       uPulseRing:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
@@ -778,8 +776,7 @@ function frame(t) {
         uShake: faceMat.uniforms.uShake, uPulseRing: faceMat.uniforms.uPulseRing
       });
       gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * 2.1;
-      gm.uniforms.uScanAmt = { value: 0 };
-    }
+          }
   }
 
   State.flash *= 0.9;
