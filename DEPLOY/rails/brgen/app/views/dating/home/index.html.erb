@@ -41,6 +41,7 @@
         <div>
           <h2><%= profile.user.email_address.split("@").first %><% if profile.age %>, <%= profile.age %><% end %></h2>
           <% if profile.location.present? %><p class="dim"><%= profile.location %></p><% end %>
+          <% if profile.neighborhood&.name.present? %><p class="dim"><%= profile.neighborhood.name %></p><% end %>
         </div>
         <span class="chip"><%= profile.visible? ? "visible" : "paused" %></span>
       </div>

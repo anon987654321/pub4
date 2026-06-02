@@ -30,6 +30,7 @@
 <article>
   <p>
     <span class="dim">Location</span> · <%= @profile.location.presence || "—" %>
+    <% if @profile.neighborhood&.name.present? %> · <span class="dim">Bydel</span> · <%= @profile.neighborhood.name %><% end %>
     &nbsp;
     <span class="dim">Visibility</span> ·
     <% if @profile.visible? %>

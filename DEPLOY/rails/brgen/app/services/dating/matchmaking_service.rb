@@ -50,10 +50,11 @@ module Dating
       excluded_ids += Dating::Like.where(liker: user).pluck(:likee_id)
       excluded_ids += Dating::Dislike.where(disliker: user).pluck(:dislikee_id)
 
-      Dating::Profile.visible
-        .where.not(user_id: excluded_ids)
-        .nearby(profile.latitude, profile.longitude, radius_km)
-        .limit(20)
+      scope = Dating::Profile.visible.where.not(user_id: excluded_ids)
+      if profile.neighborhood
+        scope = scope.in_neighborhood(profile.neighborhood)
+      end
+      scope.nearby(profile.latitude, profile.longitude, radius_km).limit(20)
     end
   end
 end
