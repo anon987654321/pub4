@@ -2,6 +2,7 @@
 
 class Dating::Profile < ApplicationRecord
   belongs_to :user
+  belongs_to :neighborhood, optional: true
   has_many_attached :photos
 
   GENDERS     = %w[man woman nonbinary other].freeze
@@ -16,6 +17,7 @@ class Dating::Profile < ApplicationRecord
   scope :nearby, ->(lat, lng, km = 50) {
     where("ABS(latitude - ?) < ? AND ABS(longitude - ?) < ?", lat, km / 111.0, lng, km / 111.0)
   }
+  scope :in_neighborhood, ->(neigh) { neigh ? where(neighborhood_id: neigh.id) : all }
 
   def liked_by?(user)    = Dating::Like.exists?(liker: user, likee: self.user)
   def disliked_by?(user) = Dating::Dislike.exists?(disliker: user, dislikee: self.user)
