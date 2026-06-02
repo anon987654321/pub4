@@ -2,6 +2,7 @@
 
 class Port < ApplicationRecord
   belongs_to :category
+  belongs_to :maintainer, optional: true
   has_many :dependencies, dependent: :destroy
   has_many :depends_on, through: :dependencies, source: :depends_on
   has_many :dependents, class_name: "Dependency", foreign_key: :depends_on_id
@@ -17,9 +18,10 @@ class Port < ApplicationRecord
 
   scope :recent_updates, -> { joins(:port_updates).order("port_updates.committed_at DESC").distinct }
   scope :by_category, ->(cat) { where(category: cat) }
+  scope :by_maintainer, ->(maintainer) { where(maintainer_id: maintainer.id) }
   scope :search, ->(q) {
     ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM ports_fts WHERE ports_fts MATCH ?", q]))
-    ids.any? ? where(id: ids) : none,
+    ids.any? ? where(id: ids) : none
   }
 
   def watched_by?(user)
