@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=15') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=18') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -736,8 +736,14 @@ function dillaStart() {
     dilla.gain.connect(conv); conv.connect(wet); wet.connect(actx.destination);
     dilla.rev = dilla.gain;
   } catch (_) {}
-  dilla.gain.connect(actx.destination);
-  dilla.gain.gain.linearRampToValueAtTime(0.22, actx.currentTime + 4);
+  // Waveshaper for tape warmth — soft clip odd harmonics
+  const shaper = actx.createWaveShaper();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) { const x = (i * 2) / 256 - 1; curve[i] = (Math.PI + 320) * x / (Math.PI + 320 * Math.abs(x)); }
+  shaper.curve = curve; shaper.oversample = '4x';
+  dilla.gain.connect(shaper); shaper.connect(actx.destination);
+
+  dilla.gain.gain.linearRampToValueAtTime(0.10, actx.currentTime + 4);
   dillaAdvance();
 }
 function dillaStop() {
