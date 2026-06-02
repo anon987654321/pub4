@@ -290,8 +290,8 @@ Violations and opportunities found by reading the actual source. Each item is a 
 ### O5. Rails doctrine
 
 - [ ] O501 chat_controller.rb#tts: no before_action authentication — raw bytes served without web token check
-- [ ] O502 /chat/tts endpoint: no rate limiting (RATE_LIMITING_MISSING) — same endpoint synthesizes unlimited audio
-- [ ] O503 /chat/tts: no ETag or Cache-Control header — same voice+text re-synthesized on every request
+- [x] O502 /chat/tts endpoint: no rate limiting (RATE_LIMITING_MISSING) — same endpoint synthesizes unlimited audio
+- [x] O503 /chat/tts: no ETag or Cache-Control header — same voice+text re-synthesized on every request
 - [ ] O504 chat_controller.rb: uses Rails.logger; other controllers use event bus — pick one per layer
 - [ ] O505 chat_controller.rb#message: no strong_params — params used directly without explicit permit
 - [ ] O506 No ApplicationController before_action enforcing web_token on all sensitive actions
@@ -469,8 +469,8 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 
 ### Q5. Web UI — TTS / Osman / Pernille
 
-- [ ] Q501 /chat/tts endpoint has no rate limiting — add Rack::Attack throttle: 30 req/min per IP
-- [ ] Q502 /chat/tts returns no ETag/Cache-Control — add ETag based on SHA256(voice+text), Cache-Control: max-age=3600
+- [x] Q501 /chat/tts endpoint has no rate limiting — add Rack::Attack throttle: 30 req/min per IP
+- [x] Q502 /chat/tts returns no ETag/Cache-Control — add ETag based on SHA256(voice+text), Cache-Control: max-age=3600
 - [ ] Q503 No client-side TTS cache — store synthesized blobs in IndexedDB keyed by SHA256(voice+text)
 - [ ] Q504 TTS bytes fetched per-sentence causing latency gap — prefetch next sentence while current plays
 - [ ] Q505 tts:anticipate event published from Rails but face.js has no SSE listener — wire anticipate to expression pre-load

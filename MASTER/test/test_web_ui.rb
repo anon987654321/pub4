@@ -95,6 +95,23 @@ class TestWebUI < Minitest::Test
     assert_equal "FAKE-MP3-BYTES", bytes
   end
 
+  def test_tts_endpoint_has_rate_limit_before_action
+    app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
+
+    assert_includes app_controller, "TTS_RATE_LIMIT  = 30"
+    assert_includes app_controller, "before_action :enforce_tts_rate_limit, only: [:tts]"
+    assert_includes app_controller, "Retry-After"
+  end
+
+  def test_tts_endpoint_sets_cache_headers_and_supports_conditional_get
+    chat_controller = File.read(File.expand_path("../web/app/controllers/chat_controller.rb", __dir__))
+
+    assert_includes chat_controller, "Digest::SHA256.hexdigest"
+    assert_includes chat_controller, 'response.headers["ETag"] = etag'
+    assert_includes chat_controller, 'response.headers["Cache-Control"] = "public, max-age=3600"'
+    assert_includes chat_controller, "head(:not_modified)"
+  end
+
   # SwarmCoordinator
   def test_swarm_coordinator_worker_roles
     # Just check the list is non-empty without booting real agents

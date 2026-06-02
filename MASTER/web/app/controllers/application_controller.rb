@@ -9,8 +9,11 @@ class ApplicationController < ActionController::Base
   VISITOR_ALLOWED_TOOLS = %w[AskLlm WebSearch].freeze
   CHAT_RATE_LIMIT = 30  # requests per 60s per IP
   CHAT_WINDOW_S   = 60
+  TTS_RATE_LIMIT  = 30
+  TTS_WINDOW_S    = 60
 
   before_action :enforce_chat_rate_limit, only: [:message]
+  before_action :enforce_tts_rate_limit, only: [:tts]
 
   private
 
@@ -30,14 +33,21 @@ class ApplicationController < ActionController::Base
   end
 
   def enforce_chat_rate_limit
-    ip  = request.remote_ip.to_s
-    key = "master:rl:#{ip}"
+    enforce_rate_limit!("master:rl:chat:#{request.remote_ip}", limit: CHAT_RATE_LIMIT, window: CHAT_WINDOW_S)
+  end
+
+  def enforce_tts_rate_limit
+    enforce_rate_limit!("master:rl:tts:#{request.remote_ip}", limit: TTS_RATE_LIMIT, window: TTS_WINDOW_S)
+  end
+
+  def enforce_rate_limit!(key, limit:, window:)
     cache = Rails.cache
     count = cache.read(key).to_i
-    if count >= CHAT_RATE_LIMIT
-      render json: { error: "rate limit exceeded — retry after #{CHAT_WINDOW_S}s" }, status: :too_many_requests
+    if count >= limit
+      response.headers["Retry-After"] = window.to_s
+      render json: { error: "rate limit exceeded - retry after #{window}s" }, status: :too_many_requests
     else
-      cache.write(key, count + 1, expires_in: CHAT_WINDOW_S)
+      cache.write(key, count + 1, expires_in: window)
     end
   end
 

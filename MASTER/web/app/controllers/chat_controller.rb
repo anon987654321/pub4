@@ -100,7 +100,14 @@ class ChatController < ApplicationController
     end
 
     synth_style = Master::Voice::Speech::STYLES.key?(style) ? style : :auto
-    cache_key = Digest::SHA256.hexdigest("#{voice_key}|#{synth_style}|#{text}")[0, 32]
+    tts_fingerprint = Digest::SHA256.hexdigest("#{voice_key}|#{synth_style}|#{text}")
+    etag = %("#{tts_fingerprint}")
+    response.headers["X-TTS-Voice"] = voice_key.to_s
+    response.headers["ETag"] = etag
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return head(:not_modified) if request.headers["If-None-Match"].to_s.split(",").map(&:strip).include?(etag)
+
+    cache_key = tts_fingerprint[0, 32]
     cache_dir = Rails.root.join("tmp", "tts_cache")
     cache_path = cache_dir.join("#{cache_key}.mp3")
 
@@ -116,7 +123,6 @@ class ChatController < ApplicationController
     end
     return head(:service_unavailable) if bytes.nil? || bytes.empty?
 
-    response.headers["X-TTS-Voice"] = voice_key.to_s
     send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
   rescue StandardError => e
     Rails.logger.warn("tts failed: #{e.class}: #{e.message}")
