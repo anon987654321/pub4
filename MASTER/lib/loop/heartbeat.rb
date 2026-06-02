@@ -124,11 +124,11 @@ module Master
       def run_self_test
         return "no scanner" unless @scanner
 
-        result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call
+        result = Master::Judge::Scan::SelfTest.new(root: @root, event_bus: @bus).call
         return "scan failed" unless Result.wrap(result).ok?
 
         summary = result.value!
-        @bus&.publish("heartbeat:self_test", violations: summary.violation_count)
+        @bus&.publish("heartbeat:self_test", violations: summary.violation_count, checks: summary.to_h)
         summary.line
       end
 
