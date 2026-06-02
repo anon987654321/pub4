@@ -4,6 +4,7 @@ require "digest"
 require "find"
 require "open3"
 require "set"
+require "time"
 
 module Master
   module Judge
@@ -23,6 +24,8 @@ module Master
       MAX_CO_CHANGE_PAIRS = 20
       CO_CHANGE_MIN_COUNT = 2
       COMMIT_SEPARATOR = "===commit===".freeze
+      FileRecord = Data.define(:path, :full_path, :basename, :dirname, :ext, :bytes, :lines,
+                               :symbol_count, :tokens, :digest, :signature, :inbound_refs)
 
       def initialize(root:, event_bus: nil, ignore_dirs: DEFAULT_IGNORE_DIRS, code_index: nil)
         @root = File.expand_path(root)
@@ -130,7 +133,7 @@ module Master
         content = File.read(file, encoding: "UTF-8", invalid: :replace, undef: :replace)
         tokens = content.downcase.scan(/[a-z][a-z0-9_]{2,}/)
         symbol_count = @code_index ? (@code_index.symbols_in(rel).size rescue 0) : 0
-        {
+        FileRecord.new(
           path: rel,
           full_path: file,
           basename: File.basename(file),
@@ -143,7 +146,7 @@ module Master
           digest: Digest::SHA256.hexdigest(content),
           signature: signature(tokens, rel),
           inbound_refs: 0
-        }
+        )
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "repo_ecology.analyze_file", event_bus: @bus, path: file)
         nil
@@ -169,18 +172,17 @@ module Master
 
       def dead_file_candidates(records)
         records = records.compact
-        corpus = records.map { |record| [record[:path], record[:tokens].join(" ")] }.to_h
+        corpus = records.map { |record| [record.path, record.tokens.join(" ")] }.to_h
         records.filter_map { |r| dead_candidate(r, corpus) }.first(MAX_DEAD_CANDIDATES)
       end
 
       def dead_candidate(record, corpus)
-        return nil if protected_path?(record[:path])
-        stem = File.basename(record[:basename], record[:ext]).downcase
-        inbound = corpus.count { |path, text| path != record[:path] && text.include?(stem) }
-        record[:inbound_refs] = inbound
+        return nil if protected_path?(record.path)
+        stem = File.basename(record.basename, record.ext).downcase
+        inbound = corpus.count { |path, text| path != record.path && text.include?(stem) }
         return nil unless inbound.zero?
-        return nil if record[:lines] < 3
-        { path: record[:path], reason: "no stem references found", lines: record[:lines] }
+        return nil if record.lines < 3
+        { path: record.path, reason: "no stem references found", lines: record.lines }
       end
 
       def protected_path?(path)
@@ -189,19 +191,19 @@ module Master
       end
 
       def duplicate_basenames(records)
-        records.compact.group_by { |record| record[:basename] }
+        records.compact.group_by(&:basename)
                .filter_map do |basename, group|
           next if group.size < DUPLICATE_BASENAME_LIMIT
-          { basename:, count: group.size, paths: group.map { |record| record[:path] }.sort }
+          { basename:, count: group.size, paths: group.map(&:path).sort }
         end.sort_by { |item| [-item[:count], item[:basename]] }
       end
 
       def similar_clusters(records)
-        records.compact.group_by { |record| record[:signature] }
+        records.compact.group_by(&:signature)
                .filter_map do |sig, group|
           next if sig.empty? || group.size < 2
-          next if group.map { |record| record[:digest] }.uniq.size == group.size && group.size < 3
-          { signature: sig, count: group.size, paths: group.map { |record| record[:path] }.sort }
+          next if group.map(&:digest).uniq.size == group.size && group.size < 3
+          { signature: sig, count: group.size, paths: group.map(&:path).sort }
         end.sort_by { |item| [-item[:count], item[:signature]] }.first(MAX_CLUSTERS)
       end
 
@@ -213,7 +215,7 @@ module Master
       end
 
       def sprawl(records)
-        dirs = records.compact.map { |record| record[:dirname] }
+        dirs = records.compact.map(&:dirname)
         depths = dirs.map { |dir| dir == "." ? 0 : dir.split(File::SEPARATOR).size }
         counts = dirs.tally
         {
@@ -224,8 +226,8 @@ module Master
       end
 
       def large_files(records)
-        records.compact.select { |record| record[:lines] >= LARGE_FILE_LINES }
-               .map { |record| { path: record[:path], lines: record[:lines], symbol_count: record[:symbol_count] } }
+        records.compact.select { |record| record.lines >= LARGE_FILE_LINES }
+               .map { |record| { path: record.path, lines: record.lines, symbol_count: record.symbol_count } }
                .sort_by { |item| -item[:lines] }
                .first(25)
       end
@@ -270,7 +272,7 @@ module Master
       end
 
       def extension_mix(records)
-        records.compact.map { |record| record[:ext].empty? ? "[none]" : record[:ext] }
+        records.compact.map { |record| record.ext.empty? ? "[none]" : record.ext }
                .tally.sort_by { |ext, count| [-count, ext] }.to_h
       end
 
