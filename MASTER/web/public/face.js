@@ -183,9 +183,63 @@ function sampleFlatPositions(flatPos, N) {
     home[i*3]   = flatPos[b]*r3 + flatPos[b+3]*r1 + flatPos[b+6]*r2;
     home[i*3+1] = flatPos[b+1]*r3 + flatPos[b+4]*r1 + flatPos[b+7]*r2;
     home[i*3+2] = flatPos[b+2]*r3 + flatPos[b+5]*r1 + flatPos[b+8]*r2;
-    const phi = Math.acos(2*Math.random()-1), theta = Math.random()*Math.PI*2, rad = 0.3+Math.random()*0.2;
-    scatter[i*3]=rad*Math.sin(phi)*Math.cos(theta); scatter[i*3+1]=rad*Math.sin(phi)*Math.sin(theta); scatter[i*3+2]=rad*Math.cos(phi);
+    scatter[i*3]=home[i*3]+(Math.random()-0.5)*0.18;
+    scatter[i*3+1]=home[i*3+1]+(Math.random()-0.5)*0.18;
+    scatter[i*3+2]=home[i*3+2]+(Math.random()-0.5)*0.14;
     seeds[i] = Math.random()*6.28318;
+  }
+  return { home, scatter, seeds };
+}
+
+function proceduralFaceTargets() {
+  const out = [];
+  const push = (x, y, z) => out.push([x, y, z]);
+  for (let i = 0; i < 900; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = Math.sqrt(Math.random());
+    const yUnit = Math.sin(a);
+    const taper = 0.48 - Math.max(0, -yUnit) * 0.08 + Math.max(0, yUnit) * 0.10;
+    const x = Math.cos(a) * r * taper;
+    const y = Math.sin(a) * r * 0.78 + 0.02;
+    if (y < -0.62 && Math.abs(x) > 0.28) continue;
+    push(x, y, 0.12 + Math.cos(r * Math.PI) * 0.16);
+  }
+  for (let i = 0; i < 260; i++) {
+    const t = i / 259;
+    const y = -0.46 + t * 0.92;
+    const flare = Math.sin(t * Math.PI);
+    push((Math.random() - 0.5) * 0.025 * (1 + flare), y, 0.42 + flare * 0.22);
+  }
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 220; i++) {
+      const a = Math.random() * Math.PI * 2;
+      push(side * (0.18 + Math.cos(a) * 0.13), -0.18 + Math.sin(a) * 0.055, 0.48);
+    }
+    for (let i = 0; i < 180; i++) {
+      const t = i / 179;
+      push(side * (0.10 + t * 0.30), -0.38 + t * 0.54, 0.30 + Math.sin(t * Math.PI * 2.4) * 0.05);
+    }
+  }
+  for (let i = 0; i < 220; i++) {
+    const t = i / 219;
+    const a = Math.PI * (0.18 + t * 0.64);
+    push(Math.cos(a) * 0.25, 0.38 + Math.sin(a) * 0.07, 0.42);
+  }
+  return out;
+}
+
+function sampleProceduralFace(N) {
+  const targets = proceduralFaceTargets();
+  const home = new Float32Array(N * 3), scatter = new Float32Array(N * 3), seeds = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const p = targets[Math.floor((i / N) * targets.length) % targets.length];
+    home[i*3] = p[0] + (Math.random() - 0.5) * 0.018;
+    home[i*3+1] = p[1] + (Math.random() - 0.5) * 0.018;
+    home[i*3+2] = p[2] + (Math.random() - 0.5) * 0.025;
+    scatter[i*3] = home[i*3] + (Math.random() - 0.5) * 0.16;
+    scatter[i*3+1] = home[i*3+1] + (Math.random() - 0.5) * 0.16;
+    scatter[i*3+2] = home[i*3+2] + (Math.random() - 0.5) * 0.10;
+    seeds[i] = Math.random() * 6.28318;
   }
   return { home, scatter, seeds };
 }
@@ -226,13 +280,12 @@ function sampleImageDepth(canvas, N) {
     const px = (lo % W) + Math.random() - 0.5;
     const py = Math.floor(lo / W) + Math.random() - 0.5;
     const lum = (data[lo*4]*0.299 + data[lo*4+1]*0.587 + data[lo*4+2]*0.114) / 255;
-    home[i*3]   = (px / W - 0.5) * 2.0;
-    home[i*3+1] = -(py / H - 0.5) * 2.6;
+    home[i*3]   = (px / W - 0.5) * 1.18;
+    home[i*3+1] = -(py / H - 0.5) * 1.55;
     home[i*3+2] = lum * 0.9 - 0.1;
-    const phi = Math.acos(2*Math.random()-1), theta = Math.random()*Math.PI*2, rad = 0.3+Math.random()*0.2;
-    scatter[i*3]   = rad*Math.sin(phi)*Math.cos(theta);
-    scatter[i*3+1] = rad*Math.sin(phi)*Math.sin(theta);
-    scatter[i*3+2] = rad*Math.cos(phi);
+    scatter[i*3]   = home[i*3] + (Math.random() - 0.5) * 0.16;
+    scatter[i*3+1] = home[i*3+1] + (Math.random() - 0.5) * 0.16;
+    scatter[i*3+2] = home[i*3+2] + (Math.random() - 0.5) * 0.10;
     seeds[i] = Math.random()*6.28318;
   }
   return { home, scatter, seeds };
@@ -246,12 +299,10 @@ if (_hasWebGL && THREE) {
     const maskCanvas = await loadMaskCanvas('/face_mask.jpg?v=1');
     ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleImageDepth(maskCanvas, FACE_N));
   } catch (_) {
-    const flatPos = buildHeadPositions2D();
-    ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleFlatPositions(flatPos, FACE_N_2D));
+    ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleProceduralFace(FACE_N));
   }
 } else {
-  const flatPos = buildHeadPositions2D();
-  ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleFlatPositions(flatPos, FACE_N_2D));
+  ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleProceduralFace(FACE_N_2D));
 }
 
 const VERT_SHADER = `
@@ -306,7 +357,7 @@ varying float vAlpha;
 varying vec3 vColor;
 void main(){
   float m=smoothstep(0.,1.,uMorph);
-  vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*0.85;
+  vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*0.18;
   vec3 p=mix(scatter,position,m)+noise;
   vec4 mv=modelViewMatrix*vec4(p,1.);
   gl_PointSize=uSize*(300./-mv.z);
@@ -340,7 +391,7 @@ if (_hasWebGL && THREE) {
   facePoints = new THREE.Points(faceGeom, faceMat);
 }
 
-let morphCurrent = 0.0, morphTarget = 0.0;
+let morphCurrent = 0.88, morphTarget = 0.88;
 let mouthPool = null, eyePool = null;
 
 const COUNCIL_VOICE = {
@@ -474,7 +525,7 @@ function frame(t) {
 
   if (faceMat) {
     const idleS = (t - State.lastTouch) / 1000;
-    morphTarget = !primerFired ? 0.0 : (idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : 1.0);
+    morphTarget = !primerFired ? 0.88 : (idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : 1.0);
     morphCurrent += (morphTarget - morphCurrent) * 0.04;
     faceMat.uniforms.uMorph.value = morphCurrent;
     faceMat.uniforms.uTime.value = t * 0.001;
@@ -857,7 +908,7 @@ function playDuo(lines, onDone) {
 }
 
 function startEverything() {
-  morphCurrent = 0.0; morphTarget = 1.0;
+  morphCurrent = 0.88; morphTarget = 1.0;
   initAudio();
   if (actx && actx.state === 'suspended') actx.resume();
   beep(880, 0.06);
