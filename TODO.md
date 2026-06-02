@@ -3120,3 +3120,173 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] AZ209 Prefetch critical data: on login, fetch + cache user's feed (first 50 items), unread notifications, active conversations, current wardrobe (amber) — all available immediately offline
 - [ ] AZ210 Service worker update flow: `self.addEventListener("activate", e => e.waitUntil(clients.claim()))` — new service worker takes control immediately; `postMessage({type: "RELOAD_SUGGESTED"})` to active tabs; shows "New version available — reload?" banner
 
+
+## BA — brgen.no Landing Page and Next-Generation UX Vision
+
+### BA1: Landing Page — Black Void Foundation
+
+- [ ] BA101 Root layout: `<body data-controller="landing">` with `background: #000; min-height: 100dvh; overflow: hidden` — true black OLED-native; no grey, no off-black; `#000000` exactly
+- [ ] BA102 Wordmark: `<h1 class="wordmark">brgen</h1>` positioned `top: clamp(20px, 4vw, 32px); left: clamp(20px, 4vw, 32px)` — `font-family: "Helvetica Neue", "Inter", Helvetica, Arial, sans-serif; font-weight: 700; font-size: clamp(18px, 3vw, 24px); color: #fff; letter-spacing: -0.03em; line-height: 1`; load Inter variable font as drop-in Helvetica substitute under all OSes
+- [ ] BA103 Wordmark click: tapping wordmark on mobile scrolls to top + resets nav to hidden state; on desktop links to `/`; never navigates away when already on root
+- [ ] BA104 Full-bleed void: `position: fixed; inset: 0; background: #000` on `:root` — even momentum scroll overshoot is black; no white flash from browser chrome; `color-scheme: dark` on `<html>` so browser renders scrollbars dark
+- [ ] BA105 No decorative elements: zero gradients, zero textures, zero illustrations on landing; the void IS the design; content (wordmark + arrow + nav) floats in it
+- [ ] BA106 Font loading: preload Inter variable woff2 in `<head>`; `font-display: block` for wordmark only (short block period acceptable; wordmark must not FOUT); `font-display: swap` for all other text
+- [ ] BA107 Meta theme-color: `<meta name="theme-color" content="#000000">` — browser chrome matches landing; seamless PWA install experience
+- [ ] BA108 Favicon: wordmark "b" in white on black, 32×32 SVG; `<link rel="icon" href="/b.svg" type="image/svg+xml">` — scalable, no PNG needed; matches brand
+
+### BA2: Hidden Navigation — Gesture Discovery
+
+- [ ] BA201 Arrow indicator: `<div data-landing-target="arrow" class="nav-arrow">` positioned `top: clamp(20px, 4vw, 32px); right: clamp(20px, 4vw, 32px); width: 28px; height: 28px; color: rgba(255,255,255,0.5)` — SVG chevron-down icon; deliberately dim (50% opacity) — discoverable not screaming
+- [ ] BA202 Arrow animation: `@keyframes float-down { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(6px) } }; animation: float-down 2s ease-in-out infinite` — gentle bobbing; `animation-play-state: paused` once nav revealed; never loops after discovery
+- [ ] BA203 Arrow pulse: after 3s idle on landing, arrow opacity increases from 0.5 → 0.9 with `transition: opacity 1s` — draws attention without immediately revealing the gesture; resets if user interacts
+- [ ] BA204 Nav panel: `<nav data-landing-target="nav" class="slide-nav">` with `position: fixed; inset-inline: 0; top: 0; background: #000; transform: translateY(-100%); transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1); z-index: var(--z-overlay); padding: clamp(60px, 10vw, 80px) clamp(20px, 5vw, 48px) clamp(32px, 6vw, 48px)` — slides from top; covers full viewport; `cubic-bezier(0.32, 0.72, 0, 1)` = iOS sheet spring
+- [ ] BA205 Nav reveal triggers (Stimulus): `data-action="touchstart->landing#trackTouch touchmove->landing#swipeDetect deviceorientation->landing#tiltDetect"` — three parallel triggers; any one reveals nav
+- [ ] BA206 Swipe-down gesture: `touchstart` records `startY`; on `touchmove` if `currentY - startY > 60` and `deltaX < 30` (not a horizontal swipe) → `this.showNav()`; threshold 60px prevents accidental trigger
+- [ ] BA207 Tilt gesture: `deviceorientation` event; if `beta > 25` (device tilted forward >25°) and user has been on page >2s → `this.showNav()`; requires `DeviceOrientationEvent.requestPermission()` on iOS 13+; request on first tap
+- [ ] BA208 Scroll gesture: `wheel` event deltaY > 80 → `this.showNav()`; desktop users discover via scroll; mobile gets swipe; same result either way
+- [ ] BA209 Keyboard: `ArrowDown` or `Space` → `this.showNav()`; `Escape` → `this.hideNav()`; fully keyboard navigable; accessibility requirement
+- [ ] BA210 Nav dismiss: tap outside nav (on the underlying page content scrim), press `Escape`, or swipe-up while nav open → `this.hideNav()` with reversed spring; `transform: translateY(-100%)` returns nav to hidden
+- [ ] BA211 Scrim: when nav open, `<div class="nav-scrim" data-action="click->landing#hideNav">` at `position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: calc(var(--z-overlay) - 1); backdrop-filter: blur(2px)` — tap scrim = dismiss; blur creates depth separation
+- [ ] BA212 First-visit persistence: `localStorage.setItem("nav-discovered", "1")` once user opens nav; on subsequent visits, show arrow at 20% opacity (subtler) rather than animated — user already knows the gesture
+- [ ] BA213 ARIA: `<nav aria-label="Vertikaler" aria-hidden="true" data-landing-target="nav">` at rest; `aria-hidden="false"` when open; focus trapped inside when open via `focus-trap-js` or manual `tabindex` management
+
+### BA3: Navigation Content — Horizontal Scroll Reveal
+
+- [ ] BA301 Nav headline: `<p class="nav-items">` containing all vertical names in one line: `Regular&thinsp;|&thinsp;AI&thinsp;|&thinsp;Marketplace&thinsp;|&thinsp;Dating&thinsp;|&thinsp;Playlist&thinsp;|&thinsp;Chat&thinsp;|&thinsp;Takeaway&thinsp;|&thinsp;TV&thinsp;|&thinsp;Maps` — `font-family: "Helvetica Neue", "Inter", Helvetica, Arial, sans-serif; font-weight: 400; font-size: clamp(28px, 6vw, 56px); color: #fff; white-space: nowrap; line-height: 1.15; letter-spacing: -0.02em`
+- [ ] BA302 Fade-out mask: `.nav-items-wrapper { overflow: hidden; -webkit-mask-image: linear-gradient(to right, black 60%, transparent 90%); mask-image: linear-gradient(to right, black 60%, transparent 90%) }` — text fades to transparent at right edge; signals more content via horizontal scroll
+- [ ] BA303 Horizontal scroll: `overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch` on `.nav-items-wrapper`; each vertical name is `scroll-snap-align: start`; swipe left reveals hidden items
+- [ ] BA304 Swipe-left affordance: after 1.5s with nav open, if user hasn't scrolled, animate wrapper to `scrollLeft = 120px` then back over 0.8s — peek animation reveals "Dating | Playlist..." before snapping back; gesture education without text instruction
+- [ ] BA305 Separator styling: `&thinsp;|&thinsp;` using thin spaces + pipe; `color: rgba(255,255,255,0.3)` on pipe via CSS `::after` pseudo — pipes are visual rhythm, not interactive; items themselves are the links
+- [ ] BA306 Item links: each vertical name is `<a href="/vertical" data-turbo-action="replace">` — Turbo Drive navigation; active vertical gets `font-weight: 700` not a color change (black bg, color meaningless at this size)
+- [ ] BA307 Responsive breakpoints: at `>1100px`, all 9 verticals visible without scroll (font-size reduces to fit); at `<768px`, show 3 before fade; at `<480px`, show 2 before fade — always implies more via mask
+- [ ] BA308 Vertical-specific sub-label: below the horizontal nav, smaller text `font-size: clamp(12px, 2vw, 15px); color: rgba(255,255,255,0.45)` shows city: "Bergen, Norge" — subtle geographic anchor; not a heading, an orientation cue
+- [ ] BA309 Auth links: bottom of nav panel, `Logg inn  ·  Registrer deg` in `font-size: 14px; color: rgba(255,255,255,0.5)` — tertiary; present but not dominant; anonymous posting means signup is optional initially
+- [ ] BA310 Nav transition stagger: nav items fade in with stagger after panel arrives — `animation: fadeIn 0.3s ease both; animation-delay: calc(var(--i) * 60ms)` where `--i` = 0,1,2... on each `<a>`; panel arrives first, content populates
+
+### BA4: City Isolation Architecture
+
+- [ ] BA401 Subdomain-to-city mapping: `cities` table with `{id, name, slug, subdomain, lat, lng, timezone, locale, active}`; `brgen.no` → Bergen; `losangeles.citynet.no` → Los Angeles; `amsterdam.citynet.no` → Amsterdam; all served by same Rails app
+- [ ] BA402 City detection middleware: `CityDetectionMiddleware` reads `request.subdomain`; looks up `City.find_by(subdomain: subdomain)`; sets `ActsAsTenant.current_tenant`; 404s on unknown subdomain; no cross-city leakage possible at the SQL layer
+- [ ] BA403 City wall: `default_scope { where(city_id: ActsAsTenant.current_tenant.id) }` on Post, Comment, Vote, User, Community, Listing, Profile — every query is city-scoped; impossible to accidentally query across cities
+- [ ] BA404 Inter-city isolation test: CI test verifies that `Post.create(city_id: city_a.id)` is NOT findable when tenant = city_b; hard assertion; any regression fails CI immediately
+- [ ] BA405 City launch checklist: new city requires: subdomain DNS + TLS cert (wildcard covers *.citynet.no), City record in DB, seed content batch, relayd relay rule, rcctl enable for city process (or shared process with tenant routing)
+- [ ] BA406 City-specific domain aliases: brgen.no maps to Bergen; each top-level city brand domain resolves to its city; `citynet.no` subdomains as fallback for unlaunched cities during beta
+- [ ] BA407 City admin: `/admin/cities` — per-city moderation dashboard; no global admin view that mixes city content; moderators are city-specific too
+- [ ] BA408 City analytics isolation: `PageView`, `AnalyticsEvent` tables include `city_id`; analytics reports never aggregate across cities; each city's data is its own business unit
+
+### BA5: Content Seeding Strategy
+
+- [ ] BA501 Seed persona pool: generate 40-80 believable Bergen user personas via LLM — names, ages, neighbourhoods (Sandviken, Nordnes, Møhlenpris, Nygård, Fantoft), interests, writing styles; store as `seed_users.json`; never reuse across cities
+- [ ] BA502 Reddit r/bergen mining: use `repligen.rb` to fetch top 200 r/bergen posts; filter for authentic Bergen content (mentions Bryggen, Fløyen, Vidden, Torgallmenningen, USF, Hulen); S&W-paraphrase via MASTER; translate to Norwegian Bokmål
+- [ ] BA503 Content categories to seed: local nightlife recommendations (Terminus, Garage, Rick's), Fløyen hiking conditions, Bergen weather complaints (rain culture), BIFF film festival, Bergenfest, local restaurant openings, university life (UiB/HVL), Brann football, local politics/traffic, dialect jokes
+- [ ] BA504 Post variety: seed posts across types — text only (40%), text + photo (35%), link share (15%), poll (5%), media (5%); distribution mirrors typical social platform organic content mix
+- [ ] BA505 Photo generation: `repligen.rb` generates authentic-looking Bergen photos — Bryggen wharf, Fløyen view, rainy streets, cafe interiors, concert crowds; `postpro.rb` applies film grain, color grade, slight vignette to remove AI-generation artifacts; stored as Active Storage attachments
+- [ ] BA506 LightGallery.js integration: `importmap pin lightgallery` + `importmap pin lightgallery/plugins/thumbnail`; Stimulus controller `data-controller="lightbox"` initialises `lightGallery(this.element, {plugins: [lgThumbnail], speed: 300, download: false})`; wraps `<figure>` elements in post body
+- [ ] BA507 Engagement seeding: for each seeded post, generate 3-40 likes and 0-12 comments from pool of seed users; timestamps spread across past 2-8 weeks; vote scores use HN-style decay formula so older posts naturally have lower visibility; feels organic
+- [ ] BA508 Comment authenticity: seed comments are short, conversational, Bergen-dialect-aware; mix of supportive, mildly sceptical, humorous; avoid unanimously positive threads (looks fake); one mild disagreement per 5 threads
+- [ ] BA509 Seed script: `db/seeds/bergen.rb` — idempotent; skips if `Post.count > 100`; runs via `rails db:seed`; separate `db/seeds/personas.rb` for user personas; committed to repo but not run in CI
+- [ ] BA510 Seed refresh: quarterly `SeedRefreshJob` adds 20-30 new posts to each city to maintain the impression of activity during slow growth phase; ceases when organic MAU > 500
+
+### BA6: Post Composer — Expanding Input
+
+- [ ] BA601 Composer container: `<div data-controller="composer" class="composer">` with `background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: var(--space-3) var(--space-4)` — barely-there surface on black bg; ghost card aesthetic
+- [ ] BA602 Placeholder trigger: `<div data-composer-target="trigger" class="composer-trigger" data-action="click->composer#expand">Hva gjør du i dag?</div>` — `font-size: 16px; color: rgba(255,255,255,0.35); cursor: text` — dim, inviting, Norwegian
+- [ ] BA603 Expand animation: on click/tap, trigger fades out; Tiptap editor slides in from below; media toolbar fades in at bottom; `max-height: 0 → 480px; opacity: 0 → 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)`
+- [ ] BA604 Tiptap integration: `importmap pin @tiptap/core @tiptap/starter-kit @tiptap/extension-placeholder @tiptap/extension-character-count` — headless ProseMirror wrapper; no default styling; we supply all CSS
+- [ ] BA605 Tiptap Stimulus controller: `data-controller="tiptap"` initialises `new Editor({element: this.editorTarget, extensions: [StarterKit, Placeholder.configure({placeholder: "Del noe..."}), CharacterCount.configure({limit: 10000})]})` in `connect()`; destroys in `disconnect()`
+- [ ] BA606 Tiptap toolbar (bubble menu): appears on text selection — bold, italic, link, `H2`, blockquote, code; `BubbleMenu` extension positions toolbar above selection; `background: #1a1a1a; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 4px` — Medium-style
+- [ ] BA607 Tiptap slash commands: type `/` → dropdown of insert commands: `/image` (upload), `/code` (code block), `/quote` (blockquote), `/poll` (poll), `/link` (embed link with preview); custom `Extension` that listens for `/` + word
+- [ ] BA608 Tiptap styling: `.ProseMirror { color: #fff; font-size: 17px; line-height: 1.6; min-height: 80px; max-height: 360px; overflow-y: auto; outline: none } .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: rgba(255,255,255,0.3); pointer-events: none; float: left; height: 0 }`
+- [ ] BA609 Media toolbar: fixed bottom of composer; `display: flex; gap: var(--space-4); align-items: center; padding-top: var(--space-3); border-top: 1px solid rgba(255,255,255,0.08)` — icons at 22px: microphone, camera, photo upload, location pin, post-type selector
+- [ ] BA610 Microphone: `data-action="click->composer#toggleRecord"` — Web Audio API MediaRecorder; records voice note as MP3 via `lamejs` or WebM; Active Storage direct upload; voice note player rendered inline in post
+- [ ] BA611 Camera: `data-action="click->composer#openCamera"` — `<input type="file" accept="image/*,video/*" capture="environment">` on mobile triggers native camera; on desktop opens file picker; multiple files allowed
+- [ ] BA612 Photo upload: drag-and-drop onto composer area or file picker; multiple images accepted; thumbnail strip appears below editor in order; reorderable via drag (stimulus-sortable); remove via ×; direct upload progress bars
+- [ ] BA613 Location: `data-action="click->composer#pickLocation"` — `navigator.geolocation.getCurrentPosition()` → reverse geocode via Nominatim API → display "Bryggen, Bergen"; user can override with text search; stored as lat/lng on post
+- [ ] BA614 Post type selector: `<select data-composer-target="postType">` styled as pill — `Regular | Annonse | Utgivelse` (Regular / Classified ad / Media release); changes composer validation and downstream routing (Annonse goes to Marketplace feed; Utgivelse to Music/Media section)
+- [ ] BA615 Character count: `<span data-composer-target="charCount">` in bottom-right of composer; shows remaining characters (10000 - current); turns amber at 500 remaining, red at 100; Tiptap CharacterCount extension provides count
+- [ ] BA616 Submit button: `<button data-action="click->composer#submit" class="btn-post">Post</button>` — appears only when editor has content; `background: #fff; color: #000; border: none; border-radius: 9999px; padding: 8px 20px; font-weight: 600; font-size: 14px` — white pill on black; maximum contrast CTA
+
+### BA7: Anonymous Posting
+
+- [ ] BA701 Fingerprint: on composer expand, compute browser fingerprint — `navigator.userAgent + screen.width + screen.height + navigator.language + Intl.DateTimeFormat().resolvedOptions().timeZone` → SHA-256 via Web Crypto API → first 16 hex chars as `anon_id`
+- [ ] BA702 Anonymous post limit: `AnonPost.where(fingerprint: anon_id).where("created_at > ?", 7.days.ago).count` — if ≥ 2, reject with prompt: "Du har nådd grensen for anonyme innlegg. Opprett en konto for å fortsette." (You've reached the anonymous post limit. Create an account to continue.)
+- [ ] BA703 Anon post display: anonymous posts show `<span class="anon-badge">Anonym</span>` instead of username; avatar = grey silhouette; no profile link; posted as `user_id: nil, anon_fingerprint: "abc123..."` — fingerprint stored (for moderation) but never displayed
+- [ ] BA704 Anon post MASTER moderation: before saving anonymous post, send to MASTER scan: post body through toxicity + spam + misinformation checks via free LLM (Groq llama3-8b); if flagged, reject with explanation; if clean, save; no LLM call for authenticated posts (reputation substitutes)
+- [ ] BA705 Anon-to-auth upgrade: if anon user subsequently registers, option to claim their anonymous posts: "Dit anonyme innlegg 'X' — vil du knytte det til kontoen din?"; `AnonPost.where(fingerprint: anon_id).update(user_id: new_user.id, anon_fingerprint: nil)`
+- [ ] BA706 Anon rate limiting: Rack::Attack rule — max 2 POST to `/posts` per 10 minutes per IP when `user_id: nil`; harder limit than the 7-day soft limit; prevents scripted spam despite fingerprint bypass
+- [ ] BA707 Anon post expiry: anonymous posts auto-delete after 30 days unless claimed by a registered user; `PurgeAnonPostsJob` in `recurring.yml`; notified of impending deletion if browser revisits (localStorage `anon_post_ids` array)
+
+### BA8: Feed Design — X and Facebook Synthesis
+
+- [ ] BA801 Feed container: `<div role="feed" aria-label="Innlegg fra Bergen" data-controller="feed">` with `max-width: 680px; margin-inline: auto; padding-block: var(--space-4)` — constrained width on dark background; breathing room
+- [ ] BA802 Post card: `<article class="post-card" data-controller="post">` — `background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: var(--space-4); margin-bottom: var(--space-3); transition: border-color var(--duration-fast)` — ghost card on black; hover: border-color to `rgba(255,255,255,0.18)`
+- [ ] BA803 Post header: `display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3)` — avatar (36px circle) + name column (bold 15px white + muted 13px timestamp) + three-dot menu top-right
+- [ ] BA804 Anon post avatar: SVG grey circle with person silhouette; `width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1)` — visually distinct from user avatars; no colour
+- [ ] BA805 Post body: `font-size: 16px; line-height: 1.55; color: rgba(255,255,255,0.95); margin-bottom: var(--space-3)` — near-white, not pure white; slightly warm at 95% — less harsh than `#fff` on `#000`
+- [ ] BA806 Rich text in feed: ActionText-rendered HTML stripped to safe subset; code blocks with syntax highlight (highlight.js via importmap); links open in new tab with `rel="noopener noreferrer"`; images inside post body use LightGallery.js
+- [ ] BA807 Photo grid: 1 photo = full-width 16:9; 2 photos = 50/50 split; 3 photos = 1 large left + 2 stacked right; 4 photos = 2×2 grid; 5+ photos = 2×2 + "+N more" overlay on 5th; all via CSS Grid; LightGallery opens on click
+- [ ] BA808 Action bar: `display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid rgba(255,255,255,0.06)` — 6 icon-buttons; `color: rgba(255,255,255,0.45); font-size: 13px; gap: 4px per icon+count pair`
+- [ ] BA809 Action icons: heart (like), star (save), share-box (share), code-brackets (embed), chat-bubble (reply), flag (report) — Heroicons outline at 18px; hover → `rgba(255,255,255,0.9)` + icon-specific colour (heart→pink, star→amber); spring scale `1.15` on click
+- [ ] BA810 Like animation: click heart → `animation: heartbeat 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)` → fill colour `#f43f5e`; count increments via Turbo Stream broadcast (not optimistic — real count); unlike reverses
+- [ ] BA811 Share menu: click share → native `navigator.share({title:, url:})` on mobile; on desktop → popover with: Copy link, Share to (opens in new tab for X/Facebook), Embed code snippet; `data-controller="share-menu"`
+- [ ] BA812 Embed code: clicking embed copies `<blockquote class="brgen-post" data-post-id="..."><a href="...">…</a></blockquote><script src="https://brgen.no/embed.js"></script>` to clipboard; oembed endpoint at `/oembed?url=`
+- [ ] BA813 Reply inline: reply button expands a sub-composer inline below the post (not a page navigation); same Tiptap composer, smaller; anonymous option if not logged in; submit via `POST /posts/:id/comments`; new comment appended via Turbo Stream
+- [ ] BA814 Report: `data-action="click->post#report"` → bottom sheet (mobile) or popover (desktop) with categories: Spam, Hatefullt innhold, Feil informasjon, Upassende, Annet; submits `POST /reports`; confirmation: "Innmeldt. Vi ser på det."
+
+### BA9: Feed Algorithm and Ranking
+
+- [ ] BA901 Ranked feed: primary feed mixes Trending + Following + Nearby content: `trending_weight: 0.4, following_weight: 0.4, nearby_weight: 0.2`; weights configurable per user in preferences
+- [ ] BA902 Trending score: `score = (likes + comments * 2 + shares * 3) / ((hours_since_post + 2) ** 1.8)` — HN gravity formula; recomputed by `ScorePostsJob` every 10 minutes; stored in `posts.trending_score` for fast sort
+- [ ] BA903 Cold start for new users: before any follows, show city-wide trending feed; after first follow, blend in followed-user content; after 5 follows, reduce trending weight by 10% per additional follow
+- [ ] BA904 Chronological option: `?sort=new` URL param serves pure reverse-chronological feed; no algorithm; user preference toggled via Stimulus; stored in `current_user.feed_sort` preference
+- [ ] BA905 Infinite scroll: IntersectionObserver on sentinel div at bottom of feed; on intersection, Turbo Frame `src` updated with next page cursor; new posts appended via `turbo_stream.append`; scroll position preserved
+- [ ] BA906 New posts indicator: when CableReady broadcasts new post to `FeedChannel`, show "3 nye innlegg" pill at top of feed (like X's "N new tweets"); click → scroll to top + refresh; never auto-inject into feed (disrupts reading)
+- [ ] BA907 Content diversity: prevent same user's posts appearing more than 3 times consecutively in feed; shuffle logic in `FeedQuery#call` — `ORDER BY trending_score DESC, user_id` + Ruby dedup pass
+- [ ] BA908 Vertical filtering: top of feed — horizontal scrollable chip row: All | Regular | AI | Marketplace | Dating | Playlist | TV; active chip filters feed; `?vertical=marketplace` param; Turbo Frame refreshes feed on chip click
+
+### BA10: Tiptap Rich Text Editor — Extended Features
+
+- [ ] BA1001 Image resize in editor: Tiptap `ImageResize` extension from `@tiptap/extension-image` — drag handles on selected image to resize; stores `width` attribute on `<img>`; ActionText renders with stored dimensions
+- [ ] BA1002 Link unfurl: on URL paste into editor, `POST /link_previews?url=` fetches OG metadata; renders link card below URL text: title, description, thumbnail, domain; user can dismiss card; stored as `<a data-type="link-preview" ...>` node
+- [ ] BA1003 @mention: Tiptap `Mention` extension; `@` trigger → dropdown of users matching typed name; inserts `<span data-type="mention" data-id="user_id">@name</span>`; creates Notification on post save
+- [ ] BA1004 #hashtag: Tiptap `Hashtag` extension (custom); `#` trigger auto-links hashtags; `<a href="/tags/name" data-type="hashtag">#name</a>`; creates/increments Tag record on post save
+- [ ] BA1005 Poll node: `/poll` slash command inserts poll node; renders as `<div data-type="poll">` with editable option fields; on post save, creates `Poll` + `PollOption` records; readers vote via Turbo Stream
+- [ ] BA1006 Code block with language: Tiptap `CodeBlockLowlight` extension with `lowlight` for syntax highlighting; language selector dropdown on focus; renders `<pre><code class="language-ruby">` in post body
+- [ ] BA1007 Collaborative cursor (future): Tiptap Y.js provider for real-time collaborative editing; multiple users editing same post draft; coloured cursors per user; websocket via ActionCable — deferred, not for v1
+- [ ] BA1008 Tiptap → ActionText: on form submit, serialize Tiptap JSON to HTML via `editor.getHTML()`; write to hidden `<input name="post[body]">` which ActionText reads; ActionText sanitizes on server before storage
+- [ ] BA1009 Markdown paste: Tiptap detects pasted Markdown; converts to rich nodes via `@tiptap/extension-paste-handler`; `# Heading` → H2 node; `**bold**` → bold mark; `- item` → list item; invisible to user
+
+### BA11: Anonymous Content Moderation via MASTER
+
+- [ ] BA1101 Moderation prompt: `ANON_MOD_PROMPT = "You are a content moderator for a Norwegian hyperlocal social network. Assess this post for: spam, hate speech, misinformation, illegal content. The platform values authentic local discussion. Return JSON: {approved: bool, confidence: 0.0-1.0, category: null|'spam'|'hate'|'misinfo'|'illegal', reason: string}"`
+- [ ] BA1102 Model selection: Groq llama3-8b for moderation (500 tok/s, free tier, Norwegian-aware); fallback to Gemini Flash free tier if Groq rate-limited; never send to paid model for moderation — must be near-zero cost
+- [ ] BA1103 Moderation pipeline: `AnonModerationJob` — synchronous for anonymous posts (user waits max 2s); if LLM response takes >2s, approve optimistically + queue async re-check; reject immediately if sync check returns `approved: false`
+- [ ] BA1104 Approved → save: `{approved: true}` → post saved; Turbo Stream appends to feed; user sees post appear; no indication that moderation occurred
+- [ ] BA1105 Rejected → feedback: `{approved: false}` → Turbo Stream returns error in composer: "Innlegget ble ikke godkjent: [reason]"; composer stays open with content intact; user can edit and resubmit
+- [ ] BA1106 Edge case — uncertain: `{confidence: < 0.7}` → approve + flag for human review in moderation queue; low-confidence cases reviewed by human within 24h; auto-remove if human rejects
+- [ ] BA1107 Language detection: moderation prompt prepended with detected language (`franc` Ruby gem detects; Norwegian Bokmål/Nynorsk/English all accepted; reject posts in no recognisable language >10 words)
+- [ ] BA1108 Moderation log: `AnonModerationLog(anon_fingerprint, post_body_hash, model, result, confidence, duration_ms, created_at)` — audit trail; `post_body_hash` not body (privacy); used to tune thresholds
+
+### BA12: Visual Design — Dark Social Aesthetic
+
+- [ ] BA1201 Colour system: `--bg: #000; --surface: rgba(255,255,255,0.03); --surface-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18); --text-primary: rgba(255,255,255,0.95); --text-secondary: rgba(255,255,255,0.55); --text-tertiary: rgba(255,255,255,0.35); --accent: #2563eb; --accent-hover: #3b82f6; --danger: #f43f5e; --success: #10b981; --warning: #f59e0b`
+- [ ] BA1202 Depth via opacity: no box-shadows on dark; depth via background opacity layers — surface (3%), hover (6%), selected (9%), active (12%); additive layering reads as elevation without fake shadows
+- [ ] BA1203 Accent colour: `#2563eb` (electric blue) is the only chromatic colour in base state; used for: links, active states, CTA button hover, @mention text, hashtag text; everywhere else is opacity-white
+- [ ] BA1204 Vertical accent colours: apply only within vertical-specific views, not on landing or feed; `[data-vertical="dating"] --accent: #f43f5e; [data-vertical="marketplace"] --accent: #f59e0b` — vertical identity within brand system
+- [ ] BA1205 Typography on black: `color: rgba(255,255,255,0.95)` for body (not pure white — optical softness); `0.55` for secondary; `0.35` for tertiary; never `rgba(255,255,255,1)` in body text — harsh against pure black
+- [ ] BA1206 Icon weight on dark: 1.5px stroke icons (Heroicons default) appear thinner on dark backgrounds than light; compensate with `stroke-width: 2` on all icons in dark contexts; heavier stroke reads correctly
+- [ ] BA1207 Image treatment: all images `filter: brightness(0.92) contrast(1.04)` — very subtle; tones down over-bright photos that clash with dark UI; nearly imperceptible but makes the interface cohesive
+- [ ] BA1208 Focus rings on dark: `outline: 2px solid rgba(255,255,255,0.8); outline-offset: 3px` — white rings on black background; high contrast; visible to all users including low-vision
+- [ ] BA1209 Selection on dark: `::selection { background: rgba(37,99,235,0.4); color: rgba(255,255,255,0.95) }` — blue-tinted selection matching accent; legible
+- [ ] BA1210 Scrollbar styling: `scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent` — thin, barely-there scrollbar; consistent with dark void aesthetic
+
+### BA13: Performance — Dark Mode and Black Backgrounds
+
+- [ ] BA1301 OLED optimisation: true `#000` background means OLED pixels are fully off; reduces power consumption 20-40% on OLED phones; entire brgen dark aesthetic is also a battery feature
+- [ ] BA1302 No white flash: `<meta name="color-scheme" content="dark">` + CSS `color-scheme: dark` prevents white flash during page load, navigation, and form focus; critical for immersion
+- [ ] BA1303 Image lazy load with black placeholder: `<img loading="lazy" style="background: #111">` — dark placeholder visible before image loads; never white flash under image
+- [ ] BA1304 Reduced paint on dark: dark backgrounds require fewer repaints than light — browser composites dark surfaces more efficiently; black eliminates subpixel rendering complexity
+- [ ] BA1305 Minimal bundle on landing: landing page CSS is `landing.css` (separate from `application.css`); only loads tokens + reset + landing component CSS; target <8KB gzipped; fastest possible FCP on first visit
+- [ ] BA1306 No render-blocking on landing: zero `<script>` tags in `<head>` on landing layout; all JS `defer`; Stimulus connects after HTML painted; landing is usable before JS loads (wordmark + arrow visible immediately)
+- [ ] BA1307 Skeleton on feed: black skeleton cards `background: rgba(255,255,255,0.06); animation: shimmer-dark 1.4s ease-in-out infinite` with `@keyframes shimmer-dark { 0%, 100% { opacity: 0.5 } 50% { opacity: 1 } }` — dark-appropriate shimmer; not the light-mode grey shimmer
+
