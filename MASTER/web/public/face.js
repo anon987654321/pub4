@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=24') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=28') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -314,6 +314,7 @@ function sampleProceduralFace(N) {
 
 
 const FACE_N = State.coarsePointer ? 10000 : 28000;
+const FACE_N_2D = 600;
 let faceHome, faceScatter, faceSeeds;
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleProceduralFace(FACE_N));
 
