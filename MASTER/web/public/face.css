@@ -270,6 +270,24 @@ body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 #zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
 #zsh input::placeholder { color: rgba(220,220,220,.25); }
 
+/* Closed-caption strip (FA141) — driven by TTS word-boundary proxy under face */
+#tts-live {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--face-bar-height) + var(--safe-bottom) + 22px);
+  z-index: 12;
+  background: rgba(0,0,0,0.65);
+  color: #ddd;
+  font: 10px/1.25 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
+  padding: 1px 6px;
+  text-align: center;
+  white-space: pre-wrap;
+  pointer-events: none;
+  max-height: 2.5em;
+  overflow: hidden;
+}
+
 :focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {

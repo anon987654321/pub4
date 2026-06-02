@@ -839,6 +839,7 @@ function ttsTick() {
         tts.audio = null; tts.playing = false;
         if (State.mode === 'speaking') State.mode = 'idle';
         clearViseme();
+        if (ttsLive) ttsLive.textContent = '';
         ttsTick();
       };
       return audio.play();
@@ -849,12 +850,25 @@ function ttsTick() {
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
 function startVisemeAnim(text) {
   stopVisemeAnim();
+  const words = text.split(/\s+/);
+  let lastWordIdx = -1;
   let i = 0;
   tts.visemeTimer = setInterval(() => {
     const audio = tts.audio;
     if (!audio || !audio.duration || !isFinite(audio.duration)) { setViseme(text.charAt(i)); i = (i + 3) % text.length; return; }
     const idx = Math.min(text.length - 1, Math.floor((audio.currentTime / audio.duration) * text.length));
     setViseme(text.charAt(idx));
+    // drive closed-caption strip (FA141) on word-boundary proxy
+    if (ttsLive) {
+      const denom = Math.max(1, text.length);
+      const wIdx = Math.min(words.length - 1, Math.floor((idx / denom) * words.length));
+      if (wIdx !== lastWordIdx) {
+        lastWordIdx = wIdx;
+        const from = Math.max(0, wIdx - 2);
+        const to = Math.min(words.length, wIdx + 3);
+        ttsLive.textContent = words.slice(from, to).join(' ');
+      }
+    }
   }, VISEME_STEP_MS);
 }
 
@@ -869,6 +883,7 @@ function ttsSkip() {
   stopVisemeAnim();
   tts.queue.length = 0; tts.prefetch.clear(); tts.playing = false; tts.current = null;
   clearViseme();
+  if (ttsLive) ttsLive.textContent = '';
 }
 function ttsToggleMute() {
   tts.muted = !tts.muted;
