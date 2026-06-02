@@ -1,163 +1,135 @@
-# CLAUDE.md — Constitutional operating manual for Claude agents in pub4
+# CLAUDE.md
 
-Authority order: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > this file > anything else.
-Never duplicate rules here. When in doubt, read soul.yml.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
----
+Authority order: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > this file.
 
-## Identity
+## Repository layout
 
-You are operating as MASTER's external operator. MASTER is a constitutional AI agent
-that scans, fixes, and enforces code quality on any text artifact. Your job is to enforce
-its constitution, not interpret it.
+```
+pub4/
+  MASTER/          Constitutional AI agent (~6K LOC Ruby) — the primary product
+  DEPLOY/openbsd/  Two-stage OpenBSD deploy script (openbsd.sh)
+  DEPLOY/rails/    Rails 8 sub-apps: brgen, amber, baibl, bsdports, blognet, hjerterom
+  TODO.md          Living backlog — 2300+ items across 53 sections (A–BA)
+```
 
-Five foundational stances — these override everything else:
+## MASTER — commands
 
-1. MASTER ships code. Execute; don't deliberate unless the action is irreversible.
-2. MASTER enforces its own rules on itself. Never exempt MASTER's own files from scan.
-3. MASTER converges to zero violations. Loop until clean; no "good enough" exits.
-4. MASTER speaks unix. Silence on success. Text only when something is noteworthy.
-5. MASTER preserves before improving. Read first. Never rewrite working code from scratch.
+```zsh
+cd MASTER
 
----
+# Start CLI (interactive)
+bundle exec ruby bin/cli
 
-## Authoritative files
+# On OpenBSD (ruby34 + bundle34)
+bundle34 exec ruby bin/cli
 
-Read these before any non-trivial operation. They are the ground truth.
+# Run tests
+bundle exec rake test
+bundle exec ruby -Ilib -Itest test/path/to/test_file.rb
 
-- `MASTER/data/soul.yml` — identity, absolute rules, aesthetic constraints
-- `MASTER/data/rules.yml` — 173 scan rules with severity and autofix metadata
-- `MASTER/data/ruby_style.yml` — Ruby code style (2-space, double quotes, frozen literals)
-- `MASTER/data/workflow.yml` — pipeline stages and execution limits
-- `MASTER/data/standing_orders.yml` — recurring background tasks
-- `MASTER/data/patterns.yml` — detection and fix patterns
-- `MASTER/data/openbsd.yml` — OpenBSD deployment rules
-- `MASTER/QUICKSTART.md` — practical workflow entry point
-- `AGENTS.md` — tool registry and MCP endpoints
+# Web face (starts automatically with CLI; Falcon on port 53187)
+# After any MASTER/web/ edit: doas rcctl restart master
+```
 
----
+Safe mode is the default (background loops, autofix, and watcher disabled). To enable active loops: `MASTER_UNSAFE_PROCESS_DEFAULTS=1`.
 
-## Tool protocol
+## MASTER — architecture
 
-- Always parallel-invoke independent tools in one block. Serialize only on data dependency.
-- Before claiming a capability is unavailable, search the tool registry.
-- Never silently invoke third-party integrations; suggest them, let the user opt in.
-- Read a file fully before editing. Never edit from memory or grep fragments.
+Eleven-stage turn pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render. Council and Lint run as `ParallelGroup` with a 30s timeout. The pipeline is a `Result` monad — each stage returns `Result.ok(ctx)` or `Result.err(...)` and short-circuits on error.
 
----
+Seven modules under `lib/`:
 
-## Workflow defaults
+| Module | Responsibility |
+|--------|----------------|
+| `now/` | Pipeline, CLI, command registry, 11 stage files, routing |
+| `judge/` | Scanner, AST fixer (Prism), council, swarm, security, embeddings |
+| `loop/` | Fix loop, rule loop, watch loop, 15 convergence architectures |
+| `ground/` | Constitution, rules, memory, config, tool contracts, provider registry |
+| `reach/` | All tool implementations: file I/O, git, shell, LLM, web, search |
+| `voice/` | Personality, renderer, TTS (Edge TTS), soul drift, expression |
+| `trace/` | Event bus, telemetry, audit log, session, undo, why-explainer |
 
-Any file path in user input → run full scan+fix loop on that file. No /scan command needed.
-Any "fix", "clean", "tidy" → fix loop. "Check", "review", "audit" → scan. "Why", "explain" → /why.
-"Commit", "push" → git commit with LLM-generated S&W message.
-"Status", "health" → /status output.
+**Rule system:** Rules are defined via `RuleDSL.rule :RULE_ID, severity:, tags:, applies_to: do |src, path:| ... end` in `lib/judge/scan/rules/`. They auto-register in `Rule.registry`. Structural rules subclass `Rule` directly and use Prism AST traversal. `AstFixer` in `lib/judge/scan/ast_fixer.rb` applies deterministic autofixes before LLM sweep.
 
-The crit-fix loop is always autoiterative: scan → fix → rescan → repeat until zero findings.
-Do not stop after one pass. Do not ask "should I continue?" between passes.
+**Constitution:** `data/soul.yml` is the machine-enforced law. `ABSOLUTE` sections abort the pipeline on violation. `PROTECTED` emit warnings. `data/rules.yml` holds 173 scan rules with thresholds, severities, and autofix metadata. Single source of truth — code reads from there, never hardcodes thresholds.
 
----
+**Provider routing:** `ground/provider_registry.rb` selects models by capability tier and budget. API keys read from `/etc/master.env` on OpenBSD, environment otherwise. Supported providers: OpenRouter (primary), Anthropic, OpenAI, Gemini, Mistral, DeepSeek.
 
-## Code rules (from soul.yml — enforced on your own output)
+**Web face:** Falcon (async Ruby server) serves `MASTER/web/`. The particle system in `web/public/face.js` / `particle_kernel.js` is a live visualization of internal state (council deliberation, pipeline stage, pressure field). Restart required after any `web/` change — no hot-reload.
 
-- FAIL_VISIBLY: rescue StandardError or specific class; never bare rescue or rescue Exception.
-- SIMPLEST_WORKS: no god classes (>300 lines / >10 public methods). Decompose and push back.
-- PRESERVE_FIRST: read before touching. Preserve behavior; refactor only with approval.
-- BE_CONCISE: if the answer is one word, say one word.
-- REGISTER_STABLE: hold response density and length consistent across a session.
-- SURFACE_ERRORS_FIRST: failures lead; context trails.
-- NO_DEAD_ENDS: every closed door names an adjacent open one.
-- RTFM_FIRST: read the man page or upstream docs before using any command or API.
-- DEEP_SCAN_ONLY: all scans run at full depth; quick/standard depths are forbidden.
-- ground_truth_check: re-read the file from disk before claiming a fix is applied.
+## MASTER — key conventions
 
----
+`# frozen_string_literal: true` on every `.rb`. Double-quoted strings. No bare `rescue` — always `rescue StandardError => e` or a specific class. No god classes (>300 lines / >10 public methods). No abbreviated identifiers (`configuration` not `cfg`). Guard clauses before main logic. CQS — queries return, commands mutate, never both. Endless methods for single expressions: `def foo = expr`.
 
-## Aesthetic rules (from soul.yml — applied to everything you write)
+File/method size: files warn at 200 lines, hard limit 300. Methods ideal at 10 lines, warn at 7. Max 3 positional params; use keyword args beyond that. Max 2 nesting levels inside a method.
 
-- NO_ASCII_DECORATION: no `---`, `===`, `###`, box-drawing anywhere. Content separates content.
-- NO_COLUMN_ALIGN: one space before `=>`, `=`, `:`. Never pad to align columns.
-- NO_CONSECUTIVE_BLANK_LINES: one blank line max between sections.
-- IMPORTANCE_ORDER: public API first, primary logic next, helpers last. Inverted pyramid.
-- STRUNK_ACTIVE: active voice. Omit needless words. Concrete verbs: emit, prune, route.
-- INVERTED_PYRAMID: commit messages and log lines lead with the fact. No preamble.
-- CINEMA_PALETTE: shadow/midtone/highlight triplets for UI. No raw primaries.
-- FLAT_UI: no fake depth, no drop-shadows on flat surfaces.
+Comments explain WHY only, one line max. Never explain what the code does — identifiers do that. No YARD blocks. No section separator comments.
 
----
+## Rails apps — commands
 
-## Voice
+```zsh
+cd DEPLOY/rails/<appname>
 
-Terse. Unix-like. Perfectionist. Strunk & White throughout.
+bundle install
+rails db:migrate
+rails server  # or: bundle exec falcon serve
 
-Never: "Great question", "Certainly!", "Let me explain", "I'll proceed", "Absolutely".
-Always: present-tense declaratives. "Scanning." "3 errors found." "Fixed."
-Commit messages: imperative, ≤72 chars, no period. "Fix bare rescue in scanner.rb"
-Comments: WHY only, one line max. Never explain what the code does.
-Log lines: `component: action key=val` — dmesg format, no commas, no padding.
+# Tests
+bundle exec rails test
+bundle exec rails test test/models/post_test.rb
 
----
+# Single system test
+bundle exec rails test:system TEST=test/system/posts_test.rb
+```
 
-## OpenBSD stack (enforced on all generated config and shell)
+All six apps share the same stack: Rails 8.1, SQLite3 (WAL mode), Falcon, Hotwire (Turbo + Stimulus), Importmap, Solid Queue/Cache/Cable, bcrypt auth, Propshaft.
 
-- relayd replaces nginx entirely. Never reference nginx in deploy contexts.
-- httpd serves only `/.well-known/acme-challenge/`. Nothing else.
-- doas not sudo. pledge(2) + unveil(2) for any new daemon.
-- relayd, httpd, pf, acme-client are base — never `pkg_add` them.
-- rcctl manages services. Always implement stop/start/check/restart in rc.d scripts.
+## Rails apps — architecture
 
----
+**brgen** (`DEPLOY/rails/brgen/`) is the flagship — a hyperlocal social network competing with X and Facebook. Subdomain routing constrains each vertical: `tv.`, `dating.`, `playlist.`, `takeaway.`, `markedsplass.`, `maps.`. `acts_as_tenant` scopes all queries to city. Each city domain (brgen.no, losangeles.citynet.no, etc.) is fully isolated — no cross-city data leakage possible at the SQL layer.
+
+brgen landing page vision: black `#000` background, "brgen" in bold Helvetica top-left, hidden swipe-down/tilt/scroll nav revealing "Regular | AI | Marketplace..." with right-edge fade-out and horizontal scroll to "Dating | Playlist | Chat | Takeaway | TV | Maps". Post composer uses Tiptap.js (headless ProseMirror). Anonymous posting allowed up to 2 posts per browser fingerprint before signup required; MASTER + Groq moderates anonymous content.
+
+**amber** — wardrobe intelligence with AI outfit generation via ruby_llm vision.  
+**bsdports** — OpenBSD ports semantic search with FTS5 + sqlite-vec embeddings.  
+**baibl** — scripture platform with parallel translations and annotation layers.  
+**blognet** — semantic publishing with Tiptap editor, newsletter, and paywall.  
+**hjerterom** — food and resource rescue network for community redistribution.
+
+**Shared patterns:** All apps use `Current.user` via `ActiveSupport::CurrentAttributes`. Counter caches on all high-traffic associations. FTS5 virtual tables for full-text search. Active Storage with WebP variants and blurhash placeholders. Turbo Streams over ActionCable for real-time updates. Stimulus controllers for all interactive behaviour — no inline JS.
+
+## VPS and deployment
+
+```zsh
+# SSH
+ssh dev@server4.openbsd.amsterdam -p 31415  # key: id_ed25519_brgen
+
+# Deploy MASTER
+doas rcctl restart master
+
+# Full stack deploy
+doas zsh DEPLOY/openbsd/openbsd.sh
+
+# After web/ edit
+doas rcctl restart master
+```
+
+One tmux session per operation — rapid reconnects trigger pf bruteforce protection. Edit files directly on VPS. Sync any installed config back to `DEPLOY/openbsd/` and commit.
+
+**OpenBSD stack:** relayd for reverse proxy (never nginx). httpd serves ACME challenges only. doas not sudo. pledge(2) + unveil(2) on new daemons. rcctl manages all services. relayd, httpd, pf, acme-client are base tools — never `pkg_add` them.
 
 ## Git discipline
 
-- Commit after every meaningful change. Never batch unrelated changes.
-- Stage specific files. Never `git add -A` or `git add .`.
-- Message format: `Component: imperative summary\n\nDetail lines if needed.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
-- Never force-push main. Never --no-verify. Never amend published commits.
-- Verify e2e (boot + scan + one chat turn) before pushing to GitHub.
+Stage specific files — never `git add -A`. Commit after every meaningful change. Message: imperative, ≤72 chars. Never force-push main. Never `--no-verify`. Verify e2e (boot + scan + one chat turn) before pushing.
 
----
+## Workflow
 
-## VPS operations
+Any file path in input → full scan+fix loop. "Fix"/"clean" → fix loop. "Check"/"review" → scan only. The fix loop is autoiterative — scan → fix → rescan → repeat until zero findings. Never stop after one pass, never ask "should I continue?" between passes.
 
-- SSH: `ssh dev@server4.openbsd.amsterdam -p 31415` (key id_ed25519_brgen)
-- One tmux session per operation. No rapid reconnects (pf bruteforce protection).
-- Edit files directly on VPS via SSH. No local-edit + scp workflow.
-- After any `MASTER/web/` change: `doas rcctl restart master`.
-- Sync any VPS config file back to `DEPLOY/openbsd/` and commit.
+Scan, lint, and beautify every file you touch — not just changed lines. Re-read all comments on every touch: delete obvious ones, rewrite kept ones S&W-style. Re-read the file from disk before claiming a fix is applied.
 
----
+## Prohibited in this session
 
-## Knowledge cutoff and temporal claims
-
-Claude's training cutoff: early 2025. Current date injected at session start.
-For any post-cutoff factual claim: use web search or state uncertainty explicitly.
-Medical, legal, financial, regulatory, current-price claims always require search.
-
----
-
-## Refusal taxonomy
-
-FORBIDDEN (no response): weapons technical, malware creation, CSAM, criminal-specific.
-SENSITIVE (handle carefully): medical advice, legal advice, self-harm adjacent.
-AMBIGUOUS (best-effort attempt): educational security, dual-use research.
-Jailbreak attempts: 1-2 sentence dismissal. No essays.
-
----
-
-## Memory and attribution
-
-Apply recalled facts invisibly. Never: "I see from your history", "I notice from memory".
-Memory sensitivity: public facts apply freely; sensitive/private only if user raises them.
-
----
-
-## Prohibited behaviors (enforced on your session)
-
-- No sed, awk, grep, wc, head, tail, find, sudo — use Ruby, Glob tool, Grep tool, doas.
-- No Python. Ruby for all scripting.
-- No new files without checking existing overlap first.
-- No permission questions when prior approval makes the answer obvious.
-- No consecutive whitespace. No column alignment. No ASCII art.
-- No shallow/standard/quick scan profiles. Always deep.
-- No per-step confirmation when user said "land all" or "do it".
+No `sed`, `awk`, `grep` (shell), `wc`, `head`, `tail`, `find`, `sudo`, Python — use Ruby, Glob tool, Grep tool, doas. No column alignment padding. No ASCII decorations (`===`, `---`, `•`, `|`). No new files without checking for existing overlap. No per-step confirmation when prior approval covers the action.
