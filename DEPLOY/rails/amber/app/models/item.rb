@@ -93,6 +93,7 @@ class Item < ApplicationRecord
 
   def extract_dominant_color!
     return unless photos.attached?
+    photo = photos.first
     tempfile = nil
     begin
       require "vips"
