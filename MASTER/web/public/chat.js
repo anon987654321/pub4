@@ -1,15 +1,11 @@
 "use strict";
 
-
 const log   = document.getElementById('chat-log');
 const zsh   = document.getElementById('zsh');
 const input = document.getElementById('zin');
-const photoButton = document.getElementById('photo-button');
-const photoInput  = document.getElementById('photo');
 
 let _streamEl = null;
 let _evtSrc = null;
-let _pendingPhoto = null;
 
 window._chatCancel = () => {
   if (_evtSrc) { try { _evtSrc.close(); } catch (_) {} _evtSrc = null; }
@@ -46,7 +42,6 @@ function appendMsg(role, text = '') {
 
 window._chatOnUser  = (text) => { appendMsg('user', text); appendMsg('assistant'); };
 
-// Enhance confirm: show dim enhanced text + [y/n], resolve with chosen message.
 window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
   const note = document.createElement('div');
   note.className = 'enhance-confirm';
@@ -70,6 +65,7 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
 
   document.addEventListener('keydown', onKey);
 });
+
 window._chatOnChunk = (raw) => {
   if (!_streamEl) return;
   const text = _streamEl.textContent + raw.replace(/\n/g, '\n').replace(/\\/g, '\');
@@ -100,27 +96,6 @@ function csrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.content || '';
 }
 
-function setPhotoState(state, text) {
-  if (!photoButton) return;
-  photoButton.dataset.state = state;
-  photoButton.textContent = text;
-}
-
-async function uploadPhoto(file) {
-  const form = new FormData();
-  form.append('photo', file);
-  setPhotoState('busy', '…');
-  const response = await fetch('/chat/photo', {
-    method: 'POST',
-    headers: { 'X-CSRF-Token': csrfToken() },
-    credentials: 'same-origin',
-    body: form
-  });
-  if (!response.ok) throw new Error(`photo upload failed: ${response.status}`);
-  _pendingPhoto = await response.json();
-  setPhotoState(_pendingPhoto.processed ? 'ready' : 'raw', '1');
-}
-
 async function enhanceMessage(text) {
   try {
     const r = await fetch(`/chat/enhance?message=${encodeURIComponent(text)}`);
@@ -133,18 +108,13 @@ async function enhanceMessage(text) {
   return { text, preEnhanced: false };
 }
 
-async function sendMessageWithPhoto(text) {
+async function sendMessage(text) {
   if (_evtSrc) { try { _evtSrc.close(); } catch (_) {} }
   window._chatOnUser?.(text);
 
   const enhanced = await enhanceMessage(text);
   const params = new URLSearchParams({ message: enhanced.text, state: 'idle|thinking|0|0' });
   if (enhanced.preEnhanced) params.set('pre_enhanced', '1');
-  if (_pendingPhoto?.token) params.set('image_token', _pendingPhoto.token);
-
-  _pendingPhoto = null;
-  if (photoInput) photoInput.value = '';
-  setPhotoState('idle', '+');
 
   const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
   let assistantBuffer = '', ttsBuffer = '';
@@ -186,27 +156,11 @@ async function sendMessageWithPhoto(text) {
   };
 }
 
-photoButton?.addEventListener('click', () => photoInput?.click());
-photoInput?.addEventListener('change', async () => {
-  const file = photoInput.files && photoInput.files[0];
-  if (!file) return;
-  try {
-    await uploadPhoto(file);
-  } catch (err) {
-    setPhotoState('idle', '+');
-    appendMsg('assistant', `photo upload failed: ${err.message}`);
-    window._chatOnDone?.();
-  }
-});
-
 zsh?.addEventListener('submit', (event) => {
   event.preventDefault();
   event.stopImmediatePropagation();
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
-  sendMessageWithPhoto(text);
+  sendMessage(text);
 }, true);
-
-
-setPhotoState('idle', '+');

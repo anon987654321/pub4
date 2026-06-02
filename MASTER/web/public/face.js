@@ -877,7 +877,7 @@ function ttsTick() {
   tts.prefetch.delete(text);
   if (tts.queue[0]) fetchTTS(tts.queue[0]);
   pending
-    .then(blob => {
+    .then(async blob => {
       if (token !== tts.cancelToken) return null;
       if (!blob) throw new Error('empty');
       const src = URL.createObjectURL(blob);
@@ -885,7 +885,7 @@ function ttsTick() {
       audio.playbackRate = getTtsRate();
       tts.audio = audio;
       if (actx && actx.state !== 'closed') {
-        if (actx.state === 'suspended') actx.resume();
+        if (actx.state === 'suspended') await actx.resume();
         try {
           const msrc = actx.createMediaElementSource(audio);
           const boost = actx.createGain();
@@ -1135,12 +1135,12 @@ function playDuo(lines, onDone) {
   const [voice, text] = lines[0];
   const rest = lines.slice(1);
   loadTTSBlob(text, voice)
-    .then(blob => {
+    .then(async blob => {
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
       audio.playbackRate = getTtsRate();
       if (actx && actx.state !== 'closed') {
-        if (actx.state === 'suspended') actx.resume();
+        if (actx.state === 'suspended') await actx.resume();
         try {
           const msrc = actx.createMediaElementSource(audio);
           const analyser = actx.createAnalyser();
