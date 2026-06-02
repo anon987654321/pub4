@@ -57,6 +57,8 @@ Rails.application.routes.draw do
     get  "search",            to: "ai#search",          as: :ai_search
     get  "moodboard",         to: "ai#mood_board",      as: :ai_mood_board
     get  "occasions",         to: "ai#occasion_map",    as: :ai_occasions
+    get  "style",             to: "ai#style_profile",   as: :ai_style_profile
+    post "style",             to: "ai#style_profile"
   end
 
   root "home#index"

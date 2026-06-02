@@ -1,0 +1,30 @@
+<% content_for :title, "Style profile" %>
+
+<h1>Style profile — 5 questions</h1>
+<p class="dim">MASTER will infer your aesthetic: minimal, bold or classic.</p>
+
+<%= form_with url: ai_style_profile_path, method: :post, class: "form" do |f| %>
+  <div class="field">
+    <label>1. Body type</label>
+    <%= f.select :answers, { "Body type" => ["slim", "athletic", "curvy", "plus"] }, {}, { name: "answers[body_type]" } %>
+  </div>
+  <div class="field">
+    <label>2. Lines vs patterns</label>
+    <%= f.select :answers, { "Preference" => ["minimal clean lines", "bold patterns and colors"] }, {}, { name: "answers[lines]" } %>
+  </div>
+  <div class="field">
+    <label>3. Timeless or trendy</label>
+    <%= f.select :answers, { "Style" => ["classic timeless pieces", "trendy current styles"] }, {}, { name: "answers[timeless]" } %>
+  </div>
+  <div class="field">
+    <label>4. Colors</label>
+    <%= f.select :answers, { "Palette" => ["neutrals and basics", "vibrant pops of color"] }, {}, { name: "answers[colors]" } %>
+  </div>
+  <div class="field">
+    <label>5. Fit</label>
+    <%= f.select :answers, { "Fit" => ["tailored structured fits", "loose comfortable layers"] }, {}, { name: "answers[fit]" } %>
+  </div>
+  <div class="actions"><%= f.submit "Infer with MASTER", class: "btn btn--primary" %></div>
+<% end %>
+
+<%= link_to "Back to AI tools", ai_suggest_outfits_path %>

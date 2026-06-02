@@ -69,4 +69,15 @@ class AiController < ApplicationController
       h[occ] = Current.user.items.by_occasion(occ).to_a
     end
   end
+
+  def style_profile
+    if request.post? || params[:answers].present?
+      answers = params[:answers] || {}
+      result = WardrobeAiService.new(Current.user).infer_style_profile(answers)
+      profile = Current.user.style_profile || Current.user.build_style_profile
+      aesthetic = result["aesthetic"].presence || "minimal"
+      profile.update!(style_preferences: aesthetic, body_type: answers[:body_type])
+      redirect_to user_path(Current.user), notice: "Style profile set to #{aesthetic}"
+    end
+  end
 end

@@ -152,4 +152,14 @@ class WardrobeAiService
       {}
     end
   end
+
+  def infer_style_profile(answers)
+    prompt = <<~PROMPT
+      User answered these 5 style profile questions. Infer primary aesthetic as one of: minimal, bold, classic.
+      Return JSON only: {"aesthetic": "minimal|bold|classic", "reason": "short", "suggestions": ["item type 1", "item type 2"]}
+      Answers: #{answers.inspect}
+      Current wardrobe sample: #{ @user.items.limit(3).map { |i| "#{i.title} (#{i.category}, #{i.color})" }.join("; ") }
+    PROMPT
+    chat(prompt)
+  end
 end
