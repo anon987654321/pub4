@@ -25,6 +25,41 @@ const zshBar = document.getElementById('zsh');
 const zshIn  = document.getElementById('zin');
 const rootBody = document.body;
 
+const FONT_KEY = 'master:font';
+(function initFont() {
+  const root = rootBody || document.documentElement;
+  const saved = localStorage.getItem(FONT_KEY);
+  if (saved === 'mono') root.classList.add('font-mono');
+  let t = document.getElementById('font-toggle');
+  if (!t) {
+    t = document.createElement('span');
+    t.id = 'font-toggle';
+    t.className = 'font-toggle';
+    t.role = 'button';
+    t.tabIndex = 0;
+    t.setAttribute('aria-label', 'Toggle font');
+    t.textContent = 'sys';
+    document.body.appendChild(t);
+  }
+  const update = () => {
+    const m = root.classList.contains('font-mono');
+    t.textContent = m ? 'mono' : 'sys';
+  };
+  update();
+  const doToggle = () => {
+    const m = root.classList.toggle('font-mono');
+    localStorage.setItem(FONT_KEY, m ? 'mono' : 'system');
+    update();
+  };
+  t.addEventListener('click', doToggle);
+  t.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      doToggle();
+    }
+  });
+})();
+
 const TINT = {
   // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
   // Shading and expression via Atkinson/Bayer dither patterns, alpha, size, depth, and pulse (no hue tints).
@@ -1269,40 +1304,4 @@ if (renderer) {
     });
     window.startOsmanVoice = () => rec.start();
   }
-
-  // font family toggle (FA143) — system-ui vs monospace, persisted to localStorage
-  const FONT_KEY = 'master:font';
-  (function initFont() {
-    const root = rootBody || document.documentElement;
-    const saved = localStorage.getItem(FONT_KEY);
-    if (saved === 'mono') root.classList.add('font-mono');
-    let t = document.getElementById('font-toggle');
-    if (!t) {
-      t = document.createElement('span');
-      t.id = 'font-toggle';
-      t.className = 'font-toggle';
-      t.role = 'button';
-      t.tabIndex = 0;
-      t.setAttribute('aria-label', 'Toggle font');
-      t.textContent = 'sys';
-      document.body.appendChild(t);
-    }
-    const update = () => {
-      const m = root.classList.contains('font-mono');
-      t.textContent = m ? 'mono' : 'sys';
-    };
-    update();
-    const doToggle = () => {
-      const m = root.classList.toggle('font-mono');
-      localStorage.setItem(FONT_KEY, m ? 'mono' : 'system');
-      update();
-    };
-    t.addEventListener('click', doToggle);
-    t.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        doToggle();
-      }
-    });
-  })();
 })();
