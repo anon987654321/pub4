@@ -21,7 +21,7 @@ class Port < ApplicationRecord
   scope :by_maintainer, ->(maintainer) { where(maintainer_id: maintainer.id) }
   scope :search, ->(q) {
     ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM ports_fts WHERE ports_fts MATCH ?", q]))
-    ids.any? ? where(id: ids) : none
+    ids.any? ? where(id: ids) : none,
   }
 
   def watched_by?(user)
