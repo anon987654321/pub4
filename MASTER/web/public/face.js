@@ -738,10 +738,18 @@ if (window.DeviceMotionEvent) {
 }
 
 let actx = null;
+let _actxKeepAlive = null;
 function initAudio() {
   if (actx) return;
   try {
     actx = new (window.AudioContext || window.webkitAudioContext)();
+    _actxKeepAlive = setInterval(() => {
+      if (!actx || actx.state === 'closed') { clearInterval(_actxKeepAlive); return; }
+      if (actx.state === 'suspended') actx.resume().catch(() => {});
+      const buf = actx.createBuffer(1, 1, actx.sampleRate);
+      const s = actx.createBufferSource();
+      s.buffer = buf; s.connect(actx.destination); s.start();
+    }, 15000);
   } catch (_) {}
 }
 function beep(freq, dur) {
@@ -885,20 +893,22 @@ function ttsTick() {
       audio.playbackRate = getTtsRate();
       tts.audio = audio;
       if (actx && actx.state !== 'closed') {
-        if (actx.state === 'suspended') await actx.resume();
-        try {
-          const msrc = actx.createMediaElementSource(audio);
-          const boost = actx.createGain();
-          boost.gain.value = 1.8;
-          const analyser = actx.createAnalyser();
-          analyser.fftSize = 256;
-          msrc.connect(boost);
-          boost.connect(analyser);
-          analyser.connect(actx.destination);
-          tts.analyser = analyser;
-          tts.analyserBuf = new Uint8Array(analyser.fftSize);
-          tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
-        } catch (_) {}
+        if (actx.state === 'suspended') await actx.resume().catch(() => {});
+        if (actx.state === 'running') {
+          try {
+            const msrc = actx.createMediaElementSource(audio);
+            const boost = actx.createGain();
+            boost.gain.value = 1.8;
+            const analyser = actx.createAnalyser();
+            analyser.fftSize = 256;
+            msrc.connect(boost);
+            boost.connect(analyser);
+            analyser.connect(actx.destination);
+            tts.analyser = analyser;
+            tts.analyserBuf = new Uint8Array(analyser.fftSize);
+            tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
+          } catch (_) {}
+        }
       }
       audio.onplay = () => {
         setTTSLoading(false); startVisemeAnim(text);
@@ -1140,17 +1150,19 @@ function playDuo(lines, onDone) {
       const audio = new Audio(src);
       audio.playbackRate = getTtsRate();
       if (actx && actx.state !== 'closed') {
-        if (actx.state === 'suspended') await actx.resume();
-        try {
-          const msrc = actx.createMediaElementSource(audio);
-          const analyser = actx.createAnalyser();
-          analyser.fftSize = 256;
-          msrc.connect(analyser);
-          analyser.connect(actx.destination);
-          tts.analyser = analyser;
-          tts.analyserBuf = new Uint8Array(analyser.fftSize);
-          tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
-        } catch (_) {}
+        if (actx.state === 'suspended') await actx.resume().catch(() => {});
+        if (actx.state === 'running') {
+          try {
+            const msrc = actx.createMediaElementSource(audio);
+            const analyser = actx.createAnalyser();
+            analyser.fftSize = 256;
+            msrc.connect(analyser);
+            analyser.connect(actx.destination);
+            tts.analyser = analyser;
+            tts.analyserBuf = new Uint8Array(analyser.fftSize);
+            tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
+          } catch (_) {}
+        }
       }
       startVisemeAnim(text);
       audio.onended = audio.onerror = () => {
