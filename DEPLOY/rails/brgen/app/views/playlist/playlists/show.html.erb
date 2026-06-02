@@ -2,7 +2,7 @@
 
 <div class="page-header">
   <h1><%= @playlist.name %></h1>
-  <% if authenticated? && Current.user == @playlist.user %>
+  <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
     <div style="display:flex;gap:8px">
       <%= link_to "Edit", edit_playlist_playlist_path(@playlist), class: "btn btn-ghost btn-sm" %>
       <%= button_to "Delete", playlist_playlist_path(@playlist), method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger btn-sm" %>
@@ -13,7 +13,38 @@
 <article>
   <p><%= @playlist.description %></p>
   <p class="dim"><%= @playlist.tracks_count %> tracks · <%= @playlist.plays_count %> plays</p>
+  <% if @playlist.collaborative? || @playlist.collaborations.any? %>
+    <p class="dim">Collaborative</p>
+  <% end %>
 </article>
+
+<% if authenticated? %>
+<section>
+  <h2>Collaborators</h2>
+  <% if @playlist.collaborations.any? %>
+    <% @playlist.collaborations.includes(:user).each do |c| %>
+      <span class="dim"><%= c.user&.username || c.user&.email %> (<%= c.role %>)</span>
+      <% if Current.user == @playlist.user || c.user == Current.user %>
+        <%= button_to "Remove", playlist_playlist_collaboration_path(@playlist, c), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% end %>
+    <% end %>
+  <% else %>
+    <p class="dim">No collaborators yet.</p>
+  <% end %>
+
+  <% if Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor]) %>
+    <div class="form-wrap">
+      <%= form_with url: playlist_playlist_collaborations_path(@playlist), method: :post do |f| %>
+        <div class="field" style="display:flex;gap:8px">
+          <%= f.text_field :username, placeholder: "username", style: "flex:1" %>
+          <%= f.select :role, %w[editor viewer] %>
+          <%= f.submit "Add collaborator", class: "btn btn-primary btn-sm" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section>
+<% end %>
 
 <% @tracks.each do |pt| %>
   <article style="display:flex;align-items:center;justify-content:space-between">
@@ -21,13 +52,13 @@
       <strong><%= pt.track.title %></strong> — <%= pt.track.artist %>
       <span class="dim"> · <%= pt.track.duration_formatted %></span>
     </div>
-    <% if authenticated? && (Current.user == pt.user || Current.user == @playlist.user) %>
+    <% if authenticated? && (Current.user == pt.user || Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
       <%= button_to "Remove", playlist_playlist_track_path(@playlist, pt), method: :delete, class: "btn btn-ghost btn-sm" %>
     <% end %>
   </article>
 <% end %>
 
-<% if authenticated? %>
+<% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
   <div style="padding:16px;border-bottom:1px solid var(--border)">
     <p style="font-size:20px;font-weight:800;margin-bottom:12px">Add a track</p>
     <div class="form-wrap" style="padding:0">
@@ -39,4 +70,13 @@
       <% end %>
     </div>
   </div>
+<% end %>
+
+<% if authenticated? %>
+<section>
+  <h2>Listening party</h2>
+  <p class="dim">Start or join a real-time synced listening session with embedded player and chat.</p>
+  <%= button_to "Start party", "#", class: "btn btn-primary btn-sm", disabled: true %>
+  <span class="dim"> (full cable sync + party model TODO in follow-up)</span>
+</section>
 <% end %>

@@ -8,6 +8,7 @@
     <div class="field"><%= f.label :name %><%= f.text_field :name %></div>
     <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
     <div class="field field--check"><%= f.check_box :public_access %><%= f.label :public_access, "Public" %></div>
+    <div class="field field--check"><%= f.check_box :collaborative %><%= f.label :collaborative, "Collaborative" %></div>
     <div class="field"><%= f.submit "Save", class: "btn btn-primary" %></div>
   <% end %>
 </div>
