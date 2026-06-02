@@ -4,9 +4,43 @@ require "ruby_llm"
 require "open3"
 require "rbconfig"
 require "shellwords"
+require_relative "../result"
 
 module Master
   module Reach
+    # Base Reach tools for Repligen and Postpro.
+    # Delegate to the script dispatch (same as /commands) so LLM can call natively
+    # without /command or Shell. Return Master::Result for LLM wrapper compatibility.
+    class Repligen
+      def initialize(root:, governor: nil, event_bus: nil)
+        @root = root
+      end
+
+      def call(args: nil)
+        script = File.join(@root, "tools", "repligen.rb")
+        argv = args ? Shellwords.split(args.to_s) : []
+        out, status = Open3.capture2e(RbConfig.ruby, script, *argv, chdir: File.expand_path("..", @root))
+        status.success? ? Master::Result.ok(out.strip) : Master::Result.err(out.strip)
+      rescue StandardError => e
+        Master::Result.err("repligen: #{e.message}")
+      end
+    end
+
+    class Postpro
+      def initialize(root:, governor: nil, event_bus: nil)
+        @root = root
+      end
+
+      def call(args: nil)
+        script = File.join(@root, "tools", "postpro.rb")
+        argv = args ? Shellwords.split(args.to_s) : []
+        out, status = Open3.capture2e(RbConfig.ruby, script, *argv, chdir: File.expand_path("..", @root))
+        status.success? ? Master::Result.ok(out.strip) : Master::Result.err(out.strip)
+      rescue StandardError => e
+        Master::Result.err("postpro: #{e.message}")
+      end
+    end
+
     # LLM-callable wrappers around the existing Master tool instances.
     # Each class holds a reference to the underlying tool via initialize,
     # so governor, undo, and event_bus plumbing is preserved.
