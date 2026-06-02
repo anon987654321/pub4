@@ -4636,5 +4636,5 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] DG06 bsdports: add MASTER port review — scan `Makefile` and patches for quality issues
 - [ ] DG07 bsdports: add category browse — all categories with port count
 - [ ] DG08 bsdports: add maintainer page — all ports by a given maintainer with contact link
-- [ ] DG09 bsdports: add RSS feed for new ports added in last 7 days
+- [x] DG09 bsdports: add RSS feed for new ports added in last 7 days (implemented in ports#index with respond_to .rss filtering last_updated >= 7.days.ago + limit(100); added index.rss.builder (RSS 2.0 with items, pubDate, cdata desc, category); RSS link added to index.html.erb; autofix applied to bsdports; specific commits/pushes (e.g. 107a9baa); evidence in controller, views, prior bsdports work)
 - [x] DG10 bsdports: add CVE cross-reference — link ports to known vulnerabilities via NIST NVD API (via security_advisories table + NvdCveService (NVD 2.0 keyword "openbsd <name>"), Port has_many, controller action+load, show section+button using nvd_url/cve?; beautified touched files; specific git add/commits/pushes after units; rebase clean)
