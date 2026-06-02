@@ -2,11 +2,11 @@ zone:
   name: "$domain"
   zonefile: "$domain.zone.signed"
 
-  provide-xfr: 194.63.248.53 NOKEY
+  provide-xfr: $HYP_IP NOKEY
   provide-xfr: 151.249.124.1 NOKEY
   provide-xfr: 192.174.68.10 NOKEY
   provide-xfr: 151.249.126.3 NOKEY
-  notify: 194.63.248.53 NOKEY
+  notify: $HYP_IP NOKEY
   notify: 151.249.124.1 NOKEY
   notify: 192.174.68.10 NOKEY
   notify: 151.249.126.3 NOKEY
