@@ -22,17 +22,6 @@ const DEFAULT_PALETTE = Object.freeze({
   accent: '170,210,255'
 });
 
-const ZONE_TINT = Object.freeze({
-  outlineL: [255, 255, 255], outlineR: [255, 255, 255],
-  eyeL: [210, 230, 255], eyeR: [210, 230, 255],
-  pupilL: [255, 255, 255], pupilR: [255, 255, 255],
-  browL: [210, 255, 210], browR: [210, 255, 210],
-  noseRidge: [230, 230, 230], noseFlare: [230, 230, 230],
-  mouth: [255, 160, 160], chin: [240, 240, 180],
-  crown: [180, 255, 255], cheekL: [255, 190, 210], cheekR: [255, 190, 210],
-  sideL: [230, 180, 255], sideR: [230, 180, 255]
-});
-
 class Face3DCanvasRenderer {
   constructor(canvas, { scale = 0.82, lowRes = true } = {}) {
     this.canvas = canvas;
@@ -162,12 +151,10 @@ class Face3DCanvasRenderer {
 
         const out = idx * 4;
         if (on) {
-          const zoneName = ZONE_NAMES[zbuf[idx]];
-          const tint = ZONE_TINT[zoneName] || highlight;
-          const mix = state.neonBleed ? clamp(state.neonBleed) : 0;
-          data[out] = lerp(tint[0], accent[0], mix) | 0;
-          data[out + 1] = lerp(tint[1], accent[1], mix) | 0;
-          data[out + 2] = lerp(tint[2], accent[2], mix) | 0;
+          // All white only for pixellish 8-bit video game retro look (dither provides shading).
+          data[out] = 255;
+          data[out + 1] = 255;
+          data[out + 2] = 255;
           data[out + 3] = 255;
         } else {
           data[out] = 0;

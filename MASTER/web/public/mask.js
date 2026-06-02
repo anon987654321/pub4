@@ -404,20 +404,8 @@ function updateParticle(p, dt) {
 }
 
 function particleColor(p, alpha) {
-  switch (p.group) {
-    case "eye": return `rgba(245,220,160,${alpha})`;
-    case "ridge": return `rgba(205,62,37,${alpha})`;
-    case "halo": return `rgba(235,190,95,${alpha * 0.72})`;
-    case "carving": return `rgba(180,80,45,${alpha})`;
-    case "mouth": return `rgba(225,210,175,${alpha})`;
-    case "sphere": return `rgba(120,190,230,${alpha * 0.9})`;
-    case "ring": return `rgba(185,130,245,${alpha * 0.88})`;
-    case "serpent": return `rgba(205,62,37,${alpha})`;
-    case "neural": return `rgba(126,230,190,${alpha * 0.9})`;
-    case "hub": return `rgba(245,220,160,${alpha})`;
-    case "glyph": return `rgba(235,190,95,${alpha})`;
-    default: return `rgba(210,145,78,${alpha})`;
-  }
+  // All white only — pixellish 8-bit video game retro aesthetic (dither/alpha + size for volume).
+  return `rgba(255,255,255,${alpha})`;
 }
 
 function draw(now) {

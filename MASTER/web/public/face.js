@@ -26,26 +26,24 @@ const zshIn  = document.getElementById('zin');
 const rootBody = document.body;
 
 const TINT = {
+  // All white only for consistent pixellish 8-bit game look. Subtle mood via size/alpha/pulse in shader instead of hue.
   idle:    new Color(1.00, 1.00, 1.00),
-  claude:  new Color(0.90, 0.82, 1.00),
-  deepseek:new Color(0.76, 0.90, 1.00),
-  gemini:  new Color(0.78, 1.00, 0.88),
-  gpt:     new Color(1.00, 0.94, 0.72),
-  tense:   new Color(1.00, 0.68, 0.60),
-  curious: new Color(0.78, 0.94, 1.00),
-  focused: new Color(0.70, 0.84, 1.00),
-  weary:   new Color(0.82, 0.82, 0.88),
-  pass:    new Color(0.78, 1.00, 0.84),
-  veto:    new Color(1.00, 0.56, 0.52),
-  unclear: new Color(0.96, 0.90, 0.66)
+  claude:  new Color(1.00, 1.00, 1.00),
+  deepseek:new Color(1.00, 1.00, 1.00),
+  gemini:  new Color(1.00, 1.00, 1.00),
+  gpt:     new Color(1.00, 1.00, 1.00),
+  tense:   new Color(1.00, 1.00, 1.00),
+  curious: new Color(1.00, 1.00, 1.00),
+  focused: new Color(1.00, 1.00, 1.00),
+  weary:   new Color(1.00, 1.00, 1.00),
+  pass:    new Color(1.00, 1.00, 1.00),
+  veto:    new Color(1.00, 1.00, 1.00),
+  unclear: new Color(1.00, 1.00, 1.00)
 };
 
 function dayNightTint() {
-  const h = new Date().getHours() + new Date().getMinutes() / 60;
-  if (h >= 5  && h < 7)  return new Color(1.00, 0.92, 0.78); // dawn — warm gold
-  if (h >= 7  && h < 18) return new Color(1.00, 1.00, 1.00); // day — white
-  if (h >= 18 && h < 21) return new Color(1.00, 0.88, 0.65); // dusk — amber
-  return new Color(0.82, 0.88, 1.00);                         // night — cool blue-white
+  // All white only — time of day no longer shifts hue for pure 8-bit pixel aesthetic.
+  return new Color(1.00, 1.00, 1.00);
 }
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
