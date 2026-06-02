@@ -4225,3 +4225,416 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [x] CB08 brgen dating: add bydel (neighbourhood) matching (hyperlocal beyond city) — added neighborhood/bydel to profiles (migration+model+forms+params), filter in home swipe and matchmaking service, display in cards/profile show, available_neigh from city. Pushed.
 - [x] CB09 brgen playlist: add collaborative playlists and listening parties — wired Collaboration model for both playlists+sets (added assocs, flag migration, controller with create/destroy + owner/editor authz, routes under both, updated permissions in controllers+views, add/remove track for editors, forms for new/edit playlists, collab management UI + add form in shows, listening party UI stubs in shows (full cable/party model follow-up). Scans before edits. Pushed frequently.
 - [x] CB10 brgen takeaway: show reviews from neighbours only (hyperlocal trust over anonymous crowd) — implemented via Takeaway::Review + snapshot loc + haversine <=4km filter in RestaurantsController#load_neighbour_reviews + reviews form on restaurant show (eligible after delivered order). See migration 20260602123000, model, reviews_controller, edits to order/restaurant/ctrl/routes/view. Pre/post scans + diffs in session.
+
+## CC: VPS Operations & Server Hygiene
+
+- [ ] CC01 VM: run `doas sysupgrade` to upgrade from OpenBSD 7.8 → 7.9; verify services after reboot
+- [ ] CC02 VM: run `doas syspatch` post-upgrade; then `pkg_add -u` and `sysmerge -d`
+- [ ] CC03 VM: set `PasswordAuthentication no` and `MaxAuthTries 3` in sshd_config; `rcctl restart sshd`
+- [ ] CC04 VM: add cron job to detect and kill orphaned chrome/chromium processes (daily `pkill -9 chrome`)
+- [ ] CC05 VM: add swap monitoring to `daily.local` — alert if swap >50% used
+- [ ] CC06 VM: add memory monitoring — alert if free physical RAM <100MB
+- [ ] CC07 VM: configure `doas rcctl restart master` as a scheduled recovery if MASTER crashes (watchdog)
+- [ ] CC08 VM: set up `pf` bruteforce table flush cron (`pfctl -t bruteforce -T expire 86400` weekly)
+- [ ] CC09 VM: verify PTR / rDNS for 46.23.89.226 resolves to brgen.no
+- [ ] CC10 VM: add Litestream replication for all SQLite databases to backup target
+- [ ] CC11 VM: configure `relayd.conf` health check for MASTER — `check http "/up" code 200`
+- [ ] CC12 VM: add `relayd.conf` health checks for all Rails app backends (brgen, amber, bsdports, etc.)
+- [ ] CC13 VM: verify NSD is serving authoritative DNS for brgen.no; add monitoring check
+- [ ] CC14 DEPLOY: add `openbsd.sh` idempotency check — re-running must not destroy existing data
+- [ ] CC15 DEPLOY: write `health_check.rb` Ruby script — verifies all services, pf rules, certs, DNS in one pass
+
+## CD: MASTER Memory & Persistence
+
+- [ ] CD01 MASTER: implement disk-backed LLM response cache (`.master/llm_cache.yml`) with TTL
+- [ ] CD02 MASTER: add session replay — `bin/cli --replay <session_id>` re-runs a past turn
+- [ ] CD03 MASTER: persist `_timings` per stage to SQLite for latency analysis across sessions
+- [ ] CD04 MASTER: add memory compaction — summarise entries older than 30 days into digest
+- [ ] CD05 MASTER: implement `ground/memory.rb` CRUD with FTS5 search (sqlite-vec for semantic)
+- [ ] CD06 MASTER: add `reach/semantic_cache.rb` vector similarity gate before LLM call
+- [ ] CD07 MASTER: scope memory by project (`Fiber[:master_project]`) — isolate across repos
+- [ ] CD08 MASTER: expose `/memory` web endpoint (list, search, delete entries via HTMX)
+- [ ] CD09 MASTER: add memory export to markdown (`/memory export`) for human review
+- [ ] CD10 MASTER: implement `why` explainer — trace which memory entry influenced a decision
+
+## CE: MASTER Tooling & Integrations
+
+- [ ] CE01 MASTER: add `reach/github.rb` tool — PR review, issue triage, status check via `gh` CLI
+- [ ] CE02 MASTER: add `reach/domains.rb` tool — domeneshop API for DNS record management
+- [ ] CE03 MASTER: add `reach/replicate.rb` tool — thin wrapper to exec `DEPLOY/repligen.rb` with args
+- [ ] CE04 MASTER: add `reach/postpro.rb` tool — thin wrapper to exec `DEPLOY/postpro/postpro.rb`
+- [ ] CE05 MASTER: add `reach/vps.rb` tool — SSH command runner against brgen.no with output capture
+- [ ] CE06 MASTER: add `reach/nsd.rb` tool — query NSD zone file, validate records, reload zone
+- [ ] CE07 MASTER: add `reach/relayd.rb` tool — parse `relayd.conf`, check health endpoints, reload
+- [ ] CE08 MASTER: add `/deploy` command — runs `openbsd.sh` on VPS and streams output
+- [ ] CE09 MASTER: add `/syspatch` command — checks current OpenBSD version and available patches
+- [ ] CE10 MASTER: wire `reach/web.rb` browser tool to Ferrum (headless Chrome) with pkill guard on exit
+
+## CF: brgen PWA & Mobile
+
+- [ ] CF01 brgen: add `manifest.webmanifest` with OLED splash, icons, `display: standalone`
+- [ ] CF02 brgen: add service worker with offline fallback page (cache landing + latest feed page)
+- [ ] CF03 brgen: implement install prompt (`beforeinstallprompt`) shown after 3 visits
+- [ ] CF04 brgen: add push notification subscription via Web Push API (for nearby post alerts)
+- [ ] CF05 brgen: implement `navigator.share` for native share on mobile
+- [ ] CF06 brgen: add `vibrate()` haptic feedback on like/match actions
+- [ ] CF07 brgen: ensure all touch targets are ≥44×44px (WCAG 2.5.8)
+- [ ] CF08 brgen: add pull-to-refresh gesture on feed (touch event + Turbo stream reload)
+- [ ] CF09 brgen: add bottom navigation bar on mobile (Home / Nearby / Compose / Profile)
+- [ ] CF10 brgen: test PWA install flow end-to-end on Android Chrome and iOS Safari
+
+## CG: Authentication & Access Security
+
+- [ ] CG01 All apps: implement rate limiting on login (5 attempts per 10 min per IP via `Rack::Attack`)
+- [ ] CG02 All apps: add TOTP two-factor authentication option (via `rotp` gem)
+- [ ] CG03 All apps: enforce `Secure; HttpOnly; SameSite=Lax` on all session cookies
+- [ ] CG04 All apps: add `Content-Security-Policy` header (nonce-based; no `unsafe-inline`)
+- [ ] CG05 All apps: add `Permissions-Policy` header (deny camera, mic except where needed)
+- [ ] CG06 brgen: hash browser fingerprint server-side before storing anonymous post gate count
+- [ ] CG07 MASTER: add API token auth to web UI (`/token` query param or `Authorization: Bearer`)
+- [ ] CG08 MASTER: add `pledge(2)` and `unveil(2)` to MASTER rc.d script on OpenBSD
+- [ ] CG09 VM: flush bruteforce pf table on demand: `doas pfctl -t bruteforce -T flush`
+- [ ] CG10 VM: add fail2ban-style log monitoring for relayd access.log → feed `<bruteforce>` table
+
+## CH: Monitoring & Alerting
+
+- [ ] CH01 MASTER: add `/health` endpoint returning JSON — uptime, memory, last turn latency, queue depth
+- [ ] CH02 All apps: add `/up` endpoint returning `200 OK` (for relayd health checks)
+- [ ] CH03 MASTER: add Prometheus-compatible `/metrics` endpoint (request count, error rate, p99 latency)
+- [ ] CH04 VM: set up `monit` or equivalent to restart crashed services automatically
+- [ ] CH05 VM: email alert when any `rcctl check <service>` returns failed (daily.local hook)
+- [ ] CH06 brgen: add Sentry-compatible error reporting (via `sentry-ruby` gem, DSN in master.env)
+- [ ] CH07 MASTER: add `/trace` command to dump last N pipeline stage timings to CLI
+- [ ] CH08 MASTER: emit structured JSON logs per turn (stage, duration, model, tokens, cost)
+- [ ] CH09 VM: set up logrotate for MASTER, relayd, and Rails app logs
+- [ ] CH10 VM: add uptime monitoring via external ping (UptimeRobot or similar) for ai.brgen.no
+
+## CI: Testing Strategy
+
+- [ ] CI01 MASTER: add integration test that boots full pipeline and runs one real turn (no mocks)
+- [ ] CI02 MASTER: add `test/fixtures/` with canonical good/bad Ruby, JS, CSS, YAML samples
+- [ ] CI03 MASTER: add regression test per scan rule — one file that triggers, one that doesn't
+- [ ] CI04 MASTER: test that chrome/Chromium processes are cleaned up after `reach/web.rb` tool use
+- [ ] CI05 All apps: add `test/system/` Capybara tests with `pkill -9 chrome` cleanup in `teardown`
+- [ ] CI06 All apps: add `test/performance/` benchmarks — feed load, search, post create under 50ms
+- [ ] CI07 brgen: add anonymous post gate test — 3rd post must redirect to signup
+- [ ] CI08 brgen: add city isolation test — data from city A must not appear in city B queries
+- [ ] CI09 MASTER: run full test suite on VPS before each `git push` (pre-push hook)
+- [ ] CI10 MASTER: add `test/council/` with deliberation fixtures — check council output for known inputs
+
+## CJ: Documentation & API
+
+- [ ] CJ01 MASTER: add `docs/api.md` — all `/commands`, request/response shapes, auth
+- [ ] CJ02 MASTER: add `docs/pipeline.md` — stage diagram with inputs/outputs per stage
+- [ ] CJ03 MASTER: add `docs/rules.md` — auto-generated from `rules.yml` (ID, severity, example)
+- [ ] CJ04 MASTER: add `docs/voice.md` — soul drift, register detection, TTS voices, style mapping
+- [ ] CJ05 All apps: add OpenAPI spec for JSON endpoints (via `rswag` or handwritten YAML)
+- [ ] CJ06 DEPLOY: document `openbsd.sh` sections inline — each phase gets a one-line comment block
+- [ ] CJ07 DEPLOY: add `DEPLOY/openbsd/README.md` — step-by-step provisioning narrative
+- [ ] CJ08 brgen: add `ARCHITECTURE.md` — subdomain routing, tenant isolation, feed algorithm
+- [ ] CJ09 MASTER: expose `GET /rules` endpoint — returns rules.yml as JSON for external tooling
+- [ ] CJ10 MASTER: auto-generate CHANGELOG.md entry on each `/release` command
+
+## CK: Performance & Caching
+
+- [ ] CK01 brgen: add `counter_cache` for all high-frequency counts (likes, comments, followers)
+- [ ] CK02 brgen: add Redis-backed fragment caching for feed cards (city-scoped, 30s TTL)
+- [ ] CK03 brgen: enable SQLite WAL mode and `PRAGMA journal_size_limit` on all databases
+- [ ] CK04 brgen: add `eager_load` for all N+1 queries in feed, profile, and thread views
+- [ ] CK05 All apps: add `rack-mini-profiler` in development to catch N+1 before merge
+- [ ] CK06 MASTER: add request coalescing — deduplicate identical in-flight LLM calls
+- [ ] CK07 MASTER: add parallel tool execution for independent `reach/` calls (Ractor or Thread pool)
+- [ ] CK08 brgen: serve images via Active Storage + CDN with `Cache-Control: public, max-age=31536000`
+- [ ] CK09 brgen: add `Vary: Accept-Encoding` and Brotli compression to relayd config
+- [ ] CK10 MASTER: profile and cap max memory per turn — terminate if ruby process exceeds 256MB RSS
+
+## CL: Database Schema & Migrations
+
+- [ ] CL01 brgen: add `posts.blurhash` column — compute on upload, serve as placeholder before image loads
+- [ ] CL02 brgen: add `users.last_seen_at` — used for online indicator and inactivity cleanup
+- [ ] CL03 brgen: add `posts.moderation_status` enum (pending/approved/rejected/escalated)
+- [ ] CL04 brgen: add `cities.active` boolean — disable cities without content rather than deleting
+- [ ] CL05 brgen dating: add `profiles.verified_at` — photo verification timestamp (MASTER vision check)
+- [ ] CL06 brgen takeaway: add `orders.status` state machine (cart/placed/confirmed/ready/delivered/cancelled)
+- [ ] CL07 brgen tv: add `channels.subscriber_count` counter cache (updated via Turbo Stream)
+- [ ] CL08 All apps: add `created_at` index on all primary tables (feed ordering hits this constantly)
+- [ ] CL09 All apps: add `updated_at` index on all tables used in admin "recently changed" views
+- [ ] CL10 MASTER: migrate `trace/` audit log from flat file to SQLite with FTS5 on message content
+
+## CM: Background Jobs & Queues
+
+- [ ] CM01 brgen: add `ModerationJob` — async MASTER call for every new post; update `moderation_status`
+- [ ] CM02 brgen: add `PostproJob` — process all uploaded images through postpro.rb film stock pipeline
+- [ ] CM03 brgen: add `FeedRefreshJob` — precompute near-me feed for each city on 60s interval
+- [ ] CM04 brgen dating: add `MatchSuggestJob` — nightly batch to rank potential matches per user
+- [ ] CM05 brgen: add `BlurhashJob` — compute blurhash for all existing images without one (backfill)
+- [ ] CM06 brgen: add `CleanupJob` — purge soft-deleted records older than 90 days
+- [ ] CM07 All apps: configure Solid Queue with `max_threads: 2` per app (memory budget on 1GB VM)
+- [ ] CM08 All apps: add `SolidQueue::Job.failed` monitoring — alert on job failure rate >5%
+- [ ] CM09 MASTER: add async council deliberation job — non-blocking for long files
+- [ ] CM10 MASTER: add `ScheduledScanJob` — nightly full scan of all tracked repos, report to audit log
+
+## CN: Email & Notifications
+
+- [ ] CN01 All apps: configure smtpd relay in `smtpd.conf` for transactional email (signup, reset, alert)
+- [ ] CN02 brgen: add welcome email on signup (city + nearest posts preview)
+- [ ] CN03 brgen: add digest email — weekly summary of nearby posts for inactive users
+- [ ] CN04 brgen dating: add match notification email (with unsubscribe link)
+- [ ] CN05 brgen: add push notification for new reply to own post (Web Push, subscription stored in DB)
+- [ ] CN06 MASTER: add email notification when council deliberation flags ABSOLUTE violation
+- [ ] CN07 All apps: add ActionMailer previews for all mail templates (`/rails/mailers`)
+- [ ] CN08 All apps: use inlined CSS for all emails (via `premailer-rails` gem)
+- [ ] CN09 VM: verify smtpd is running and can relay through external SMTP (check `smtpd.conf` relay)
+- [ ] CN10 brgen: add unsubscribe token in all emails (`unsubscribe_token` column on users)
+
+## CO: Internationalisation & Localisation
+
+- [ ] CO01 All apps: add `config/locales/nb.yml` (Norwegian Bokmål) — all UI strings
+- [ ] CO02 All apps: add `config/locales/en.yml` — English fallback
+- [ ] CO03 brgen: detect browser `Accept-Language` and set locale on session
+- [ ] CO04 brgen: add `posts.language` column — auto-detect with `cld3` or equivalent
+- [ ] CO05 brgen: translate AI-generated content warnings to Norwegian
+- [ ] CO06 baibl: add Hebrew, Greek, Arabic locale support for scripture text direction
+- [ ] CO07 All apps: use `number_to_currency` with locale — Norwegian `kr` format
+- [ ] CO08 All apps: use `l(date)` for all rendered dates — Norwegian format by default
+- [ ] CO09 brgen: add city-specific locale (Bergen dialect flavour for Bokmål copy)
+- [ ] CO10 MASTER: detect Norwegian input and respond in Norwegian (language pass-through in pipeline)
+
+## CP: Content Moderation Pipeline
+
+- [ ] CP01 brgen: MASTER moderates every post on create (2s timeout, optimistic approve on timeout)
+- [ ] CP02 brgen: add Groq llama3-8b fallback if MASTER times out (faster, lower cost)
+- [ ] CP03 brgen: add moderation appeal flow — flagged user can request human review
+- [ ] CP04 brgen: add `shadow_ban` flag on users — posts visible to self only, not feed
+- [ ] CP05 brgen: log all moderation decisions with reason to audit table (GDPR-compliant retention)
+- [ ] CP06 brgen: add image moderation via MASTER vision — NSFW detection on upload
+- [ ] CP07 brgen: add keyword blocklist per city (local slurs, spam patterns) in `cities.blocklist`
+- [ ] CP08 MASTER: add `MODERATION_BIAS` soul principle — err toward inclusion, flag not delete
+- [ ] CP09 MASTER: add moderation audit export (`/mod export --city bergen --since 30d`)
+- [ ] CP10 brgen: add community reporting — 3 reports trigger human review queue
+
+## CQ: Analytics & Insights
+
+- [ ] CQ01 brgen: add privacy-preserving analytics (no third-party JS; server-side log aggregation)
+- [ ] CQ02 brgen: track post impressions, click-throughs, and engagement rate per city
+- [ ] CQ03 brgen: add `cities.stats` — daily active users, posts per day, top hashtags
+- [ ] CQ04 brgen: add admin dashboard — city health overview, moderation queue, job failures
+- [ ] CQ05 MASTER: track command usage frequency — which `/commands` are used most
+- [ ] CQ06 MASTER: track rule violation frequency per project — surface top offenders in `/report`
+- [ ] CQ07 All apps: add A/B test framework (server-side variant assignment, logged to analytics DB)
+- [ ] CQ08 brgen: add funnel tracking — anonymous → registered → first post → 7-day return
+- [ ] CQ09 brgen: export city analytics as CSV for operator review (`/admin/analytics.csv`)
+- [ ] CQ10 MASTER: add cost-per-turn tracking — cumulative session cost visible in CLI prompt
+
+## CR: Search & Discovery
+
+- [ ] CR01 brgen: add FTS5 full-text search across posts, users, hashtags (SQLite native)
+- [ ] CR02 brgen: add `sqlite-vec` vector search for semantic post similarity
+- [ ] CR03 bsdports: add semantic search with `sqlite-vec` embeddings (port name + description)
+- [ ] CR04 baibl: add cross-translation verse search (FTS5 across all language columns)
+- [ ] CR05 brgen: add hashtag autocomplete in Tiptap composer (Stimulus + Turbo Stream)
+- [ ] CR06 brgen: add user mention autocomplete (`@username`) in Tiptap
+- [ ] CR07 brgen: add trending hashtags per city (top 10 by post count in last 24h)
+- [ ] CR08 brgen: add "nearby posts" map view (Leaflet.js, city-scoped, no cross-city leakage)
+- [ ] CR09 MASTER: add `/search` command — semantic search across memory, audit log, and rules
+- [ ] CR10 All apps: add `robots.txt` and `sitemap.xml` (city-scoped, updated nightly)
+
+## CS: Asset Pipeline & Frontend Build
+
+- [ ] CS01 All apps: switch from Importmap to ESBuild for apps using Stimulus components (faster dev)
+- [ ] CS02 brgen: add `face.js` + `particle_kernel.js` as Propshaft assets — no bundling required
+- [ ] CS03 brgen: add CSS custom properties for all design tokens (color, spacing, type scale)
+- [ ] CS04 brgen: add `@font-face` for Helvetica Neue fallback stack (system-ui → Arial → sans-serif)
+- [ ] CS05 All apps: add `<link rel="preload">` for above-fold fonts and hero images
+- [ ] CS06 All apps: audit Lighthouse score — target 95+ performance, 100 accessibility
+- [ ] CS07 brgen: add critical CSS inlining for landing page (< 14KB inline, rest deferred)
+- [ ] CS08 All apps: remove unused CSS with PurgeCSS pass in production build
+- [ ] CS09 brgen: convert all PNG icons to SVG sprites (single HTTP request)
+- [ ] CS10 MASTER: add `web/public/` cache busting — fingerprint static assets via Propshaft digest
+
+## CT: Repligen — Model Quality & Intelligence
+
+- [ ] CT01 repligen: add model benchmarking mode — run same prompt across 3 models, compare output quality
+- [ ] CT02 repligen: add `quality_score` column to SQLite DB — auto-populated after each generation
+- [ ] CT03 repligen: add cost-per-quality metric — quality_score / cost; surface in `stats` command
+- [ ] CT04 repligen: add model blacklist (models that consistently fail or return blank images)
+- [ ] CT05 repligen: add NSFW gate — detect NSFW output and retry with safer model automatically
+- [ ] CT06 repligen: add LoRA weight caching — avoid re-uploading same weights across runs
+- [ ] CT07 repligen: add prompt enhancement mode — MASTER rewrites bare prompts before sending to Replicate
+- [ ] CT08 repligen: add `--style` flag — map style names to CHAIN_TEMPLATE overrides (cinematic, minimal, etc.)
+- [ ] CT09 repligen: add progress bar during generation (Replicate polling → tty-progress)
+- [ ] CT10 repligen: add `--out` directory flag — save generated images to named output directory
+
+## CU: Postpro — Film Stock Expansion & Pipeline
+
+- [ ] CU01 postpro: add Kodak Ektachrome film stock (vivid blues and reds, high contrast)
+- [ ] CU02 postpro: add Ilford HP5 Plus (black and white, classic grain structure)
+- [ ] CU03 postpro: add Agfa Vista 400 (warm shadows, muted midtones, low contrast)
+- [ ] CU04 postpro: add `--lut` flag — apply 3D LUT from `.cube` file (DaVinci Resolve compatible)
+- [ ] CU05 postpro: add `--vignette` flag — radial darkening with configurable strength and radius
+- [ ] CU06 postpro: add `--lens-flare` flag — synthetic anamorphic streak (horizontal, configurable intensity)
+- [ ] CU07 postpro: add portrait mode — auto-detect face regions, apply shallow depth-of-field blur
+- [ ] CU08 postpro: add `--before-after` output — side-by-side comparison image at original resolution
+- [ ] CU09 postpro: add batch progress reporting — percentage complete and ETA for large directories
+- [ ] CU10 postpro: add EXIF preservation — copy all EXIF tags from source to output via `exiftool`
+- [ ] CU11 postpro: add WebP output option (`--format webp`) for web delivery
+- [ ] CU12 postpro: add AVIF output option (`--format avif`) via libvips native support
+- [ ] CU13 postpro: add `--quality` flag — control output JPEG quality (default 92)
+- [ ] CU14 postpro: add brgen integration test — verify PostproJob applies correct stock per city
+- [ ] CU15 postpro: add camera profile auto-detection from EXIF `Make` + `Model` fields
+
+## CV: MASTER Council & Deliberation
+
+- [ ] CV01 MASTER: fix council — current `/triad` 3rd step is a toggle, not actual deliberation
+- [ ] CV02 MASTER: add `council/swarm.rb` — parallel specialist agents (style/security/perf/soul)
+- [ ] CV03 MASTER: add `council/dissent.rb` — adversarial agent that argues opposite position
+- [ ] CV04 MASTER: add council vote aggregation — majority wins, tie goes to soul.yml principle
+- [ ] CV05 MASTER: add council confidence score — returned with output, visible in web UI
+- [ ] CV06 MASTER: add council timeout handling — partial results from timed-out agents dropped cleanly
+- [ ] CV07 MASTER: add council transcript to audit log — every agent vote recorded verbatim
+- [ ] CV08 MASTER: add `--council` flag to CLI scan — run deliberation even on small files
+- [ ] CV09 MASTER: add council feedback loop — rejected suggestions fed back to propose alternative
+- [ ] CV10 MASTER: expose council transcript in web UI accordion (collapsed by default)
+
+## CW: MASTER CLI & UX Polish
+
+- [ ] CW01 MASTER: add `bin/cli --version` — print git SHA + build date
+- [ ] CW02 MASTER: add `bin/cli --config` — show effective config (env vars, overrides, model)
+- [ ] CW03 MASTER: add `tty-prompt` multi-select for batch scan target selection
+- [ ] CW04 MASTER: add spinner (tty-spinner) during LLM calls — shows stage name
+- [ ] CW05 MASTER: add char-stream output for LLM responses (stream tokens as they arrive)
+- [ ] CW06 MASTER: add `/history` command — last 20 turns with timestamps, input preview
+- [ ] CW07 MASTER: add `/undo` command — revert last file change from audit log
+- [ ] CW08 MASTER: add `/cost` command — cumulative token cost for current session
+- [ ] CW09 MASTER: add zsh completion script for all `/commands` (tab-complete command names + flags)
+- [ ] CW10 MASTER: add `--quiet` flag — suppress all output except final result and errors
+
+## CX: MASTER Web UI Polish
+
+- [ ] CX01 MASTER web: add dark/light mode toggle (CSS custom properties, no JS needed)
+- [ ] CX02 MASTER web: add connection status indicator in nav (WebSocket open/closed/reconnecting)
+- [ ] CX03 MASTER web: add pipeline stage progress bar — visualise which stage is running
+- [ ] CX04 MASTER web: add collapsible turn history sidebar (last 20 turns, click to expand)
+- [ ] CX05 MASTER web: add `/token` param validation — redirect to error page on invalid token
+- [ ] CX06 MASTER web: add keyboard shortcut `Cmd+Enter` to submit, `Esc` to cancel streaming
+- [ ] CX07 MASTER web: add copy-to-clipboard button on all code blocks in output
+- [ ] CX08 MASTER web: add mobile-responsive layout (max-width: 768px breakpoint)
+- [ ] CX09 MASTER web: add particle system pause on tab hidden (`visibilitychange` event)
+- [ ] CX10 MASTER web: add face.js expression sync to pipeline stage (different face for each stage)
+
+## CY: OpenBSD Network & Security Hardening
+
+- [ ] CY01 VM: add IPv6 pass rules to `pf.conf` for HTTPS and SSH (currently only IPv4)
+- [ ] CY02 VM: add `synproxy` to SSH rule (consistent with HTTPS rule — SYN flood mitigation)
+- [ ] CY03 VM: add `max-src-conn 50` to HTTP rule (currently only rate, no absolute limit)
+- [ ] CY04 VM: add `block return` for RFC1918 addresses on egress (prevent SSRF to internal ranges)
+- [ ] CY05 VM: add `set optimization aggressive` to `pf.conf` (faster state expiry under load)
+- [ ] CY06 VM: configure `login.conf` to cap memory per user (`memoryuse-cur=512M`)
+- [ ] CY07 VM: add `kern.maxfiles` and `kern.maxproc` tuning in `sysctl.conf`
+- [ ] CY08 VM: verify TLS cert auto-renewal via `acme-client` cron — check `daily.local`
+- [ ] CY09 VM: add `rcctl ls` audit to `daily.local` — flag any unexpected enabled services
+- [ ] CY10 VM: add outbound connection allow-list in `pf.conf` — block unexpected egress (except API endpoints)
+
+## CZ: Dilla Audio Engine & Generative Music
+
+- [ ] CZ01 MASTER voice/dilla: implement beat sequencer — 16-step grid, tempo-locked to session mood
+- [ ] CZ02 MASTER voice/dilla: add swing quantisation parameter (0–100% Dilla-style laid-back feel)
+- [ ] CZ03 MASTER voice/dilla: generate ambient drone layer tied to pipeline pressure (`pressure: true`)
+- [ ] CZ04 MASTER voice/dilla: add chord progression generator — soul/jazz voicings (ii-V-I, tritone subs)
+- [ ] CZ05 MASTER voice/dilla: add `--groove` flag to CLI — plays background beat during long scans
+- [ ] CZ06 MASTER voice/dilla: export generated beat as `.wav` with loop metadata (ACID-compatible)
+- [ ] CZ07 MASTER voice/dilla: add velocity humanisation — random ±10% per hit, gaussian distribution
+- [ ] CZ08 MASTER voice/dilla: add polyrhythm mode — 3-against-4 or 5-against-4 patterns
+- [ ] CZ09 brgen playlist: use Dilla engine for AI-generated intro music on playlist pages
+- [ ] CZ10 MASTER voice: crossfade TTS response audio with Dilla ambient (ducking on speech start)
+
+## DA: brgen Dating — Hyperlocal Matching
+
+- [ ] DA01 dating: add neighbourhood (bydel) field to profiles — matching within 2km radius
+- [ ] DA02 dating: add `last_active_at` recency filter — exclude profiles inactive >30 days
+- [ ] DA03 dating: add photo verification via MASTER vision — badge on verified profiles
+- [ ] DA04 dating: implement swipe gesture with spring physics (`cubic-bezier(0.32,0.72,0,1)`)
+- [ ] DA05 dating: add mutual interest detection — if both swipe right within 24h, trigger match alert
+- [ ] DA06 dating: add ice-breaker prompt on match — MASTER generates opening line based on shared interests
+- [ ] DA07 dating: add profile completeness score — incomplete profiles deprioritised in feed
+- [ ] DA08 dating: add block + report flow with audit trail (moderator reviews flagged profiles)
+- [ ] DA09 dating: add "seen by" indicator — show when profile was last viewed (opt-in)
+- [ ] DA10 dating: city isolation enforced — no cross-city matches without explicit opt-in
+
+## DB: brgen TV — Streaming & Discovery
+
+- [ ] DB01 tv: add HLS stream ingestion — accept RTMP from OBS, segment and serve via httpd
+- [ ] DB02 tv: add live viewer count — Turbo Stream broadcast every 5s from Solid Cable
+- [ ] DB03 tv: add stream DVR — buffer last 30 minutes, allow rewind via `<video>` seekable range
+- [ ] DB04 tv: add channel subscription — follow channels, get notification on stream start
+- [ ] DB05 tv: add stream title and category — searchable via FTS5
+- [ ] DB06 tv: add chat overlay on live stream — real-time messages via Turbo Streams
+- [ ] DB07 tv: add clip creation — select 30s segment from VOD, save as shareable clip
+- [ ] DB08 tv: add channel page — archive of past streams, subscriber count, about section
+- [ ] DB09 tv: add city-scoped trending — top-watched streams in the last 6 hours per city
+- [ ] DB10 tv: add embed code for streams (`<iframe>`) with CORS allow-list
+
+## DC: brgen Marketplace — Commerce & Trust
+
+- [ ] DC01 marketplace: implement listing creation — title, description, price (øre), images, city
+- [ ] DC02 marketplace: add category taxonomy (electronics, clothing, furniture, vehicles, services)
+- [ ] DC03 marketplace: add price negotiation — buyer sends offer, seller accepts/counters/declines
+- [ ] DC04 marketplace: add seller rating system — 1-5 stars after completed transaction
+- [ ] DC05 marketplace: add "reserved" status — seller can mark listing while in negotiation
+- [ ] DC06 marketplace: add saved search alerts — email when new listing matches saved filter
+- [ ] DC07 marketplace: add MASTER listing quality check — flag vague descriptions or missing images
+- [ ] DC08 marketplace: add distance filter — listings within X km of city centre
+- [ ] DC09 marketplace: city isolation enforced — listings not visible across city boundaries
+- [ ] DC10 marketplace: add report listing flow (scam/prohibited/incorrect category)
+
+## DD: blognet — Publishing & Monetisation
+
+- [ ] DD01 blognet: add Tiptap editor with full formatting (headings, lists, images, code blocks)
+- [ ] DD02 blognet: add newsletter subscription — signup form, double opt-in, unsubscribe token
+- [ ] DD03 blognet: add paywall — first 3 paragraphs free, rest requires subscription
+- [ ] DD04 blognet: add Stripe integration for subscription payments (recurring monthly)
+- [ ] DD05 blognet: add RSS feed per blog (valid RSS 2.0, updated on publish)
+- [ ] DD06 blognet: add SEO meta — og:title, og:description, og:image auto-generated per post
+- [ ] DD07 blognet: add reading time estimate (`ceil(word_count / 200)` minutes)
+- [ ] DD08 blognet: add MASTER post quality scan on publish — grammar, structure, readability
+- [ ] DD09 blognet: add `canonical` URL for posts — prevent duplicate content on import
+- [ ] DD10 blognet: add multi-author support — invite co-authors by email
+
+## DE: hjerterom — Resource Rescue Network
+
+- [ ] DE01 hjerterom: implement resource listing — food surplus, clothing, furniture with expiry date
+- [ ] DE02 hjerterom: add real-time availability — Turbo Stream update when item is claimed
+- [ ] DE03 hjerterom: add organisation profiles — NGOs, food banks, community fridges
+- [ ] DE04 hjerterom: add distance-weighted discovery — nearest resources first
+- [ ] DE05 hjerterom: add expiry alerts — notify givers 2h before food items expire (push + email)
+- [ ] DE06 hjerterom: add collection confirmation — both parties confirm handoff, closes listing
+- [ ] DE07 hjerterom: add impact stats — kg of food rescued, CO₂ saved, items rehomed
+- [ ] DE08 hjerterom: add MASTER content moderation — ensure listings are genuine and non-commercial
+- [ ] DE09 hjerterom: add city isolation (same pattern as brgen — `acts_as_tenant`)
+- [ ] DE10 hjerterom: add volunteer shift scheduling for food bank pickup coordination
+
+## DF: amber — Wardrobe Intelligence
+
+- [ ] DF01 amber: implement wardrobe item CRUD — garment, colour, brand, occasion, season
+- [ ] DF02 amber: add outfit generation — MASTER vision picks 3-item combinations from wardrobe
+- [ ] DF03 amber: add "wear again" tracking — log each outfit, surface underloved items
+- [ ] DF04 amber: add packing list generator — select trip duration + climate, MASTER suggests outfits
+- [ ] DF05 amber: add style profile — user answers 5 questions, MASTER infers aesthetic (minimal/bold/classic)
+- [ ] DF06 amber: add item image upload with postpro film stock applied automatically
+- [ ] DF07 amber: add shopping list — items MASTER suggests to fill gaps in wardrobe
+- [ ] DF08 amber: add seasonal archive — move out-of-season items to archive, resurface in 6 months
+- [ ] DF09 amber: add colour palette extraction from uploaded image (ruby-vips dominant colour)
+- [ ] DF10 amber: add outfit share to brgen (one-click post with outfit image and items listed)
+
+## DG: bsdports — Semantic Ports Browser
+
+- [ ] DG01 bsdports: add nightly sync job — fetch latest ports tree from CVS/git, update DB
+- [ ] DG02 bsdports: add `sqlite-vec` semantic search (port description embeddings)
+- [ ] DG03 bsdports: add dependency graph visualisation (D3.js or plain SVG)
+- [ ] DG04 bsdports: add version diff — compare current port with previous version (unified diff)
+- [ ] DG05 bsdports: add "installed" indicator — query local `pkg_info` output if available
+- [ ] DG06 bsdports: add MASTER port review — scan `Makefile` and patches for quality issues
+- [ ] DG07 bsdports: add category browse — all categories with port count
+- [ ] DG08 bsdports: add maintainer page — all ports by a given maintainer with contact link
+- [ ] DG09 bsdports: add RSS feed for new ports added in last 7 days
+- [ ] DG10 bsdports: add CVE cross-reference — link ports to known vulnerabilities via NIST NVD API
