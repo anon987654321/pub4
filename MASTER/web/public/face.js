@@ -719,8 +719,8 @@ function dillaPlayChord(notes, beatLen) {
     o1.type = 'triangle'; o1.frequency.value = hz;
     o2.type = 'sine';     o2.frequency.value = hz * 1.5;
     g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(0.04, now + att);
-    g.gain.setValueAtTime(0.04, now + beatLen - 0.1);
+    g.gain.linearRampToValueAtTime(0.022, now + att);
+    g.gain.setValueAtTime(0.022, now + beatLen - 0.1);
     g.gain.linearRampToValueAtTime(0, now + beatLen + rel);
     o1.connect(g); o2.connect(g); g.connect(dilla.rev || dilla.gain);
     o1.start(now); o2.start(now);
@@ -758,7 +758,7 @@ function dillaStart() {
   shaper.curve = curve; shaper.oversample = '4x';
   dilla.gain.connect(shaper); shaper.connect(actx.destination);
 
-  dilla.gain.gain.linearRampToValueAtTime(0.012, actx.currentTime + 4);
+  dilla.gain.gain.linearRampToValueAtTime(0.006, actx.currentTime + 4);
   dillaAdvance();
 }
 function dillaStop() {
