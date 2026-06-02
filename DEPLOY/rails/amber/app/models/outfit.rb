@@ -4,6 +4,7 @@ class Outfit < ApplicationRecord
   belongs_to :user
   has_many :outfit_items, dependent: :destroy
   has_many :items, through: :outfit_items
+  has_one_attached :image
 
   validates :name, presence: true
 
