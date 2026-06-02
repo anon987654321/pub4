@@ -298,7 +298,7 @@ function sampleImageDepth(canvas, N) {
   let total = 0;
   for (let i = 0; i < W * H; i++) {
     const nx = (i % W) / W - 0.5, ny = Math.floor(i / W) / H - 0.5;
-    const inEllipse = (nx*nx)/(0.38*0.38) + (ny*ny)/(0.46*0.46) < 1;
+    const inEllipse = (nx*nx)/(0.44*0.44) + (ny*ny)/(0.48*0.48) < 1;
     const r = data[i*4], g = data[i*4+1], b = data[i*4+2];
     const bg = r > 210 && g > 200 && b > 190;
     weights[i] = (inEllipse && !bg) ? 1.0 : 0;
@@ -651,6 +651,80 @@ function beep(freq, dur) {
   o.start(); o.stop(actx.currentTime + dur);
 }
 
+// J Dilla ambient pads — Web Audio PolySynth, no Tone.js dependency.
+// Chord voicings ported from dilla_pads.html. Starts muted, fades in after boot.
+const DILLA_PROGS = {
+  time_donut: [['Db2','Ab3','C4','Eb4','F4'],['C2','Bb3','Eb4','G4','D5'],['F2','Eb3','Ab3','C4','G4'],['Bb1','Ab3','Db4','F4','C5']],
+  players:    [['Eb3','Gb3','Bb3','Db4'],['Ab3','B3','Eb4','Gb4'],['F3','Ab3','C4','Eb4'],['Bb3','Db4','F4','Ab4']],
+  fall:       [['Bb3','Db4','F4'],['Ab3','C4','Eb4'],['F3','Ab3','C4','Eb4'],['F3','Ab3','C4']],
+  ela:        [['D3','F3','A3','C4','E4'],['E3','G3','B3','D4'],['C#3','E3','G#3','B3']],
+  hold:       [['C3','E3','G3'],['Db3','F3','Ab3'],['G3','B3','D4'],['F3','A3','C4'],['Bb3','D4','F4']]
+};
+const DILLA_LIST = [
+  { n: 'time_donut', t: 72, l: 4 }, { n: 'players', t: 94, l: 3 },
+  { n: 'fall', t: 92, l: 3 },       { n: 'ela', t: 92, l: 2 },
+  { n: 'hold', t: 97, l: 2 }
+];
+function noteToHz(n) {
+  const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const m = n.match(/^([A-G]#?)(\d)$/);
+  if (!m) return 220;
+  const oct = parseInt(m[2]), semi = names.indexOf(m[1]);
+  return 440 * Math.pow(2, (oct * 12 + semi - 57) / 12);
+}
+const dilla = { idx: 0, beat: 0, timer: null, gain: null, rev: null };
+function dillaPlayChord(notes, beatLen) {
+  if (!actx || !dilla.gain) return;
+  const now = actx.currentTime;
+  const att = 1.4, rel = beatLen * 0.9;
+  notes.forEach(n => {
+    const hz = noteToHz(n);
+    const o1 = actx.createOscillator(), o2 = actx.createOscillator();
+    const g = actx.createGain();
+    o1.type = 'triangle'; o1.frequency.value = hz;
+    o2.type = 'sine';     o2.frequency.value = hz * 1.5;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.06, now + att);
+    g.gain.setValueAtTime(0.06, now + beatLen - 0.1);
+    g.gain.linearRampToValueAtTime(0, now + beatLen + rel);
+    o1.connect(g); o2.connect(g); g.connect(dilla.rev || dilla.gain);
+    o1.start(now); o2.start(now);
+    o1.stop(now + beatLen + rel + 0.1);
+    o2.stop(now + beatLen + rel + 0.1);
+  });
+}
+function dillaAdvance() {
+  if (!actx) return;
+  const item = DILLA_LIST[dilla.idx % DILLA_LIST.length];
+  const prog = DILLA_PROGS[item.n];
+  const beatLen = 60 / item.t * 4;
+  dillaPlayChord(prog[dilla.beat % prog.length], beatLen);
+  dilla.beat++;
+  if (dilla.beat >= prog.length * item.l) { dilla.beat = 0; dilla.idx++; }
+  dilla.timer = setTimeout(dillaAdvance, beatLen * 1000);
+}
+function dillaStart() {
+  if (dilla.gain || !actx) return;
+  dilla.gain = actx.createGain();
+  dilla.gain.gain.value = 0;
+  try {
+    const conv = actx.createConvolver();
+    const len = actx.sampleRate * 2, buf = actx.createBuffer(2, len, actx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2); }
+    conv.buffer = buf; conv.normalize = true;
+    const wet = actx.createGain(); wet.gain.value = 0.18;
+    dilla.gain.connect(conv); conv.connect(wet); wet.connect(actx.destination);
+    dilla.rev = dilla.gain;
+  } catch (_) {}
+  dilla.gain.connect(actx.destination);
+  dilla.gain.gain.linearRampToValueAtTime(0.22, actx.currentTime + 4);
+  dillaAdvance();
+}
+function dillaStop() {
+  clearTimeout(dilla.timer);
+  if (dilla.gain) { dilla.gain.gain.linearRampToValueAtTime(0, actx.currentTime + 1.5); }
+}
+
 const VISEME_STEP_MS = 90;
 const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
 
@@ -952,6 +1026,7 @@ function startEverything() {
   zshBar.classList.add('live');
   requestMotionPermission(); acquireWakeLock();
   setTimeout(() => playDuo(BOOT_DUO), 120);
+  setTimeout(() => dillaStart(), 1800);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 let primerFired = false;

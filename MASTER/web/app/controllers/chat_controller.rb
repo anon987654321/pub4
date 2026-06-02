@@ -116,6 +116,7 @@ class ChatController < ApplicationController
     end
     return head(:service_unavailable) if bytes.nil? || bytes.empty?
 
+    response.headers["X-TTS-Voice"] = voice_key.to_s
     send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
   rescue StandardError => e
     Rails.logger.warn("tts failed: #{e.class}: #{e.message}")
