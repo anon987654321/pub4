@@ -13,4 +13,12 @@ class SecurityAdvisory < ApplicationRecord
 
   after_create_commit { broadcast_prepend_later_to "bsdports:security_advisories" }
   after_update_commit { broadcast_replace_later_to "bsdports:security_advisories" }
+
+  def nvd_url
+    source_url.presence || (identifier.present? ? "https://nvd.nist.gov/vuln/detail/#{identifier}" : nil)
+  end
+
+  def cve?
+    identifier.to_s.start_with?("CVE-")
+  end
 end
