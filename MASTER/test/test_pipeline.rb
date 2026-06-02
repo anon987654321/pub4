@@ -7,7 +7,7 @@ class TestPipeline < Minitest::Test
   include Master
 
   class OkStage
-    def call(ctx) = Master::Result.ok(ctx.merge(stamped: true))
+    def call(ctx) = Master::Result.ok(ctx.merge(output: "ok"))
   end
 
   class ErrStage
@@ -19,23 +19,50 @@ class TestPipeline < Minitest::Test
     def call(_ctx) = raise "stage exploded"
   end
 
+  FakeRule = Struct.new(:id, :auto_fix)
+
+  class FakeScanner
+    attr_reader :rules
+
+    def initialize(findings)
+      @findings = findings
+      @rules = [FakeRule.new("SELF_RULE", false)]
+    end
+
+    def scan_dir(path, depth:, stream: false)
+      Master::Result.ok([[File.join(path, "example.rb"), Master::Result.ok(@findings)]])
+    end
+  end
+
+  class FakeBus
+    attr_reader :events
+
+    def initialize
+      @events = []
+    end
+
+    def publish(event, payload = {})
+      @events << [event, payload]
+    end
+  end
+
   def test_happy_path_passes_context_through
     pipe = Master::Now::Pipeline.new([OkStage.new, OkStage.new])
-    result = pipe.call(Master::Result.ok(input: "hi"))
+    result = pipe.call(Master::Result.ok(user_message: "hi"))
     assert result.ok?
-    assert result.value![:stamped]
+    assert_equal "ok", result.value![:output]
   end
 
   def test_first_error_short_circuits
     pipe = Master::Now::Pipeline.new([OkStage.new, ErrStage.new, OkStage.new])
-    result = pipe.call(Master::Result.ok({}))
+    result = pipe.call(Master::Result.ok(user_message: "hi"))
     refute result.ok?
     assert_equal "boom", result.message
   end
 
   def test_raise_in_stage_becomes_err
     pipe = Master::Now::Pipeline.new([OkStage.new, RaiseStage.new])
-    result = pipe.call(Master::Result.ok({}))
+    result = pipe.call(Master::Result.ok(user_message: "hi"))
     refute result.ok?
     assert_match(/exploded/, result.message)
   end
@@ -44,9 +71,36 @@ class TestPipeline < Minitest::Test
     # In /tmp (no .git), rollback is a no-op — must not crash.
     Dir.mktmpdir do |dir|
       pipe = Master::Now::Pipeline.new([ErrStage.new(:validation)], root: dir)
-      result = pipe.call(Master::Result.ok({}))
+      result = pipe.call(Master::Result.ok(user_message: "hi"))
       refute result.ok?
       # No exception raised = success for this test.
+    end
+  end
+
+  def test_deploy_gate_blocks_when_self_scan_has_violations
+    Dir.mktmpdir do |dir|
+      bus = FakeBus.new
+      scanner = FakeScanner.new([{ rule: "SELF_RULE", line: 1, message: "violation" }])
+      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
+
+      result = pipe.call(Master::Result.ok(user_message: "deploy now"))
+
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_match(/deploy blocked/, result.message)
+      assert_includes bus.events.map(&:first), "pipeline:blocked"
+    end
+  end
+
+  def test_deploy_gate_skips_non_deploy_messages
+    Dir.mktmpdir do |dir|
+      scanner = FakeScanner.new([{ rule: "SELF_RULE", line: 1, message: "violation" }])
+      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:)
+
+      result = pipe.call(Master::Result.ok(user_message: "scan the project"))
+
+      assert result.ok?
+      assert_equal "ok", result.value![:output]
     end
   end
 end

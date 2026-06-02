@@ -263,7 +263,7 @@ module Master
         Now::Stages::Memory.new(memory: infra[:memory], event_bus: bus),
         Now::Stages::Render.new(renderer: infra[:renderer])
       ]
-      pipeline = Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
+      pipeline = Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:, scanner: ai[:scanner])
       ai[:standing].wire_pipeline(pipeline)
       gateway = Reach::Gateway.new(pipeline:, session: infra[:session], event_bus: bus)
       commands["gateway"] = ->(_ctx) { gateway.channels }

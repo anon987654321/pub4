@@ -11,13 +11,14 @@ module Master
 
       attr_reader :last_timings
 
-      def initialize(stages, bus: nil, trace: false, root: nil, event_bus: nil, orchestrator: nil)
+      def initialize(stages, bus: nil, trace: false, root: nil, event_bus: nil, orchestrator: nil, scanner: nil)
         @stages       = stages
         @last_timings = {}
         @bus          = bus || event_bus
         @trace        = trace
         @root         = root
         @orchestrator = orchestrator
+        @scanner      = scanner
       end
 
       def call(initial)
@@ -26,7 +27,8 @@ module Master
         @orchestrator&.execute(intent_type: :llm_call, workflow_id: wf_id, payload: { stage: "start" }) { nil }
         # Wrap plain Hash into typed PipelineContext at the pipeline boundary.
         wrapped = initial.map { |h| PipelineContext.wrap(h) }
-        final = @stages.reduce(wrapped) do |result, stage|
+        gated = wrapped.and_then("deploy_gate") { |ctx| deploy_gate(ctx) }
+        final = @stages.reduce(gated) do |result, stage|
           result.and_then(stage_label(stage)) { |ctx| run_stage(stage, ctx, timings) }
         end
         @orchestrator&.checkpoint(workflow_id: wf_id, label: final.ok? ? "ok" : "err")
@@ -115,6 +117,26 @@ module Master
       end
 
       private
+
+      DEPLOY_RE = /\b(deploy|ship|shipping|release|publish)\b/i
+
+      def deploy_gate(ctx)
+        return Result.ok(ctx) unless deploy_intent?(ctx)
+        return Result.ok(ctx) unless @scanner && @root
+
+        result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call(autofix: true)
+        return Result.err(result.message, category: :infrastructure) unless result.ok?
+
+        summary = result.value!
+        return Result.ok(ctx) if summary.violation_count.zero?
+
+        @bus&.publish("pipeline:blocked", gate: "self_scan", violations: summary.violation_count)
+        Result.err("deploy blocked: self-scan has #{summary.violation_count} violation(s)", category: :policy)
+      end
+
+      def deploy_intent?(ctx)
+        [ctx[:user_message], ctx[:message], ctx[:command], ctx[:task_type]].compact.any? { |value| value.to_s.match?(DEPLOY_RE) }
+      end
 
       def run_stage(stage, ctx, timings)
         label = stage_label(stage)
