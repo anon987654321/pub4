@@ -358,6 +358,25 @@ async function loadMaskCanvas(url, size = 256) {
 }
 
 // Sobel edge-weighted sampling: particles concentrate on facial features.
+function proceduralFaceDepth(nx, ny) {
+  const r2 = (nx*nx)/(0.38*0.38) + (ny*ny)/(0.46*0.46);
+  const base = Math.max(0, 1 - r2) * 0.45;
+  const nd2 = nx*nx*18 + Math.pow(ny - 0.08, 2)*10;
+  const nose = Math.exp(-nd2*5) * 0.42;
+  const edL = Math.pow(nx+0.15,2)*14 + Math.pow(ny+0.04,2)*18;
+  const edR = Math.pow(nx-0.15,2)*14 + Math.pow(ny+0.04,2)*18;
+  const eyes = (Math.exp(-edL*2.2) + Math.exp(-edR*2.2)) * 0.16;
+  const bwL = Math.pow(nx+0.15,2)*14 + Math.pow(ny+0.14,2)*26;
+  const bwR = Math.pow(nx-0.15,2)*14 + Math.pow(ny+0.14,2)*26;
+  const brows = (Math.exp(-bwL*2.2) + Math.exp(-bwR*2.2)) * 0.07;
+  const ld = nx*nx*10 + Math.pow(ny-0.23,2)*22;
+  const lips = Math.exp(-ld*2.5) * 0.08;
+  const ckL = Math.pow(nx+0.25,2)*8 + Math.pow(ny-0.04,2)*14;
+  const ckR = Math.pow(nx-0.25,2)*8 + Math.pow(ny-0.04,2)*14;
+  const cheeks = (Math.exp(-ckL*2) + Math.exp(-ckR*2)) * 0.05;
+  return base + nose - eyes + brows + lips + cheeks - 0.1;
+}
+
 function sampleImageDepth(canvas, N) {
   const W = canvas.width, H = canvas.height;
   const { data } = canvas.getContext("2d").getImageData(0, 0, W, H);
@@ -400,7 +419,7 @@ function sampleImageDepth(canvas, N) {
     const l = lum[lo];
     home[i*3]   = (px / W - 0.5) * 1.18;
     home[i*3+1] = -(py / H - 0.5) * 1.55;
-    home[i*3+2] = l * 0.9 - 0.1;
+    home[i*3+2] = proceduralFaceDepth(px / W - 0.5, py / H - 0.5);
     scatter[i*3]   = home[i*3] + (Math.random() - 0.5) * 0.16;
     scatter[i*3+1] = home[i*3+1] + (Math.random() - 0.5) * 0.16;
     scatter[i*3+2] = home[i*3+2] + (Math.random() - 0.5) * 0.10;
