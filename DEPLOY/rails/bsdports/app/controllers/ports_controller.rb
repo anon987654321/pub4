@@ -30,6 +30,10 @@ class PortsController < ApplicationController
     @comment = Comment.new
     @advisories = @port.security_advisories.recent
     @maintainer = @port.maintainer.present? ? Maintainer.find_by(name: @port.maintainer) : nil
+    @pkg_info = begin
+      out, = Open3.capture2e("pkg_info", "-q", @port.name) rescue ["(pkg_info not available in this env)"]
+      out.strip
+    end
   end
 
   def watch

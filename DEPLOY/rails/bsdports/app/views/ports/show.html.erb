@@ -8,6 +8,7 @@
   <p><%= @port.description %></p>
   <dl>
     <dt>Maintainer</dt><dd><% if @maintainer %><%= link_to @port.maintainer, maintainer_path(@maintainer) %><% else %><%= @port.maintainer %><% end %></dd>
+    <dt>Local install</dt><dd><%= @pkg_info.present? ? "installed (#{@pkg_info})" : "not installed" %></dd>
     <dt>Pkgpath</dt><dd><code><%= @port.pkgpath %></code></dd>
     <% if @port.homepage.present? %><dt>Homepage</dt><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
     <dt>Updated</dt><dd><%= @port.last_updated&.strftime("%Y-%m-%d") %></dd>
