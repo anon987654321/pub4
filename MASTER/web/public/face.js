@@ -834,6 +834,15 @@ const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, load
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'ryan';
+const TTS_FALLBACK_VOICE_HINTS = {
+  osman: ['osman', 'malay', 'malaysia', 'ms-my', 'ryan', 'en-gb'],
+  yasmin: ['yasmin', 'malay', 'malaysia', 'ms-my', 'jenny', 'en-us'],
+  pernille: ['pernille', 'norwegian', 'norsk', 'nb-no'],
+  finn: ['finn', 'norwegian', 'norsk', 'nb-no'],
+  ryan: ['ryan', 'daniel', 'uk english', 'en-gb'],
+  steffan: ['steffan', 'guy', 'andrew', 'en-us'],
+  default: ['ryan', 'daniel', 'uk english', 'en-gb', 'en-us']
+};
 let ttsDBPromise = null;
 
 function setTTSLoading(loading) {
@@ -907,6 +916,74 @@ async function loadTTSBlob(text, voice) {
   return blob;
 }
 
+function connectTTSAudio(audio, boostValue = 1.35) {
+  if (!actx || actx.state === 'closed') return;
+  if (actx.state === 'suspended') actx.resume();
+  const msrc = actx.createMediaElementSource(audio);
+  const boost = actx.createGain();
+  const compressor = actx.createDynamicsCompressor();
+  const analyser = actx.createAnalyser();
+  boost.gain.value = boostValue;
+  compressor.threshold.value = -24;
+  compressor.knee.value = 24;
+  compressor.ratio.value = 8;
+  compressor.attack.value = 0.003;
+  compressor.release.value = 0.25;
+  analyser.fftSize = 256;
+  msrc.connect(boost);
+  boost.connect(compressor);
+  compressor.connect(analyser);
+  analyser.connect(actx.destination);
+  tts.analyser = analyser;
+  tts.analyserBuf = new Uint8Array(analyser.fftSize);
+  tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
+}
+
+function pickBrowserVoice(voiceKey) {
+  const synth = window.speechSynthesis;
+  if (!synth || typeof synth.getVoices !== 'function') return null;
+  const voices = synth.getVoices();
+  if (!voices.length) return null;
+  const hints = TTS_FALLBACK_VOICE_HINTS[voiceKey] || TTS_FALLBACK_VOICE_HINTS.default;
+  return voices.find(v => hints.some(h => `${v.name} ${v.lang}`.toLowerCase().includes(h))) ||
+    voices.find(v => /^en-GB/i.test(v.lang)) ||
+    voices.find(v => /^en/i.test(v.lang)) ||
+    voices[0];
+}
+
+function speakWithBrowserTTS(text, voiceKey = TTS_DEFAULT_VOICE) {
+  if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return Promise.reject(new Error('no browser tts'));
+  return new Promise((resolve, reject) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = pickBrowserVoice(voiceKey);
+    utterance.rate = voiceKey === 'osman' ? 0.9 : 0.96;
+    utterance.pitch = voiceKey === 'osman' ? 0.82 : 1.0;
+    utterance.onstart = () => {
+      setTTSLoading(false);
+      State.mode = 'speaking';
+      rootBody.dataset.ttsWave = 'true';
+      startVisemeAnim(text);
+    };
+    utterance.onend = () => resolve();
+    utterance.onerror = () => reject(new Error('browser tts failed'));
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  });
+}
+
+function finishTTSPlayback(src, continueQueue = true) {
+  setTTSLoading(false);
+  stopVisemeAnim();
+  rootBody.dataset.ttsWave = '';
+  tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
+  if (src) URL.revokeObjectURL(src);
+  tts.audio = null; tts.playing = false;
+  if (State.mode === 'speaking') State.mode = 'idle';
+  clearViseme();
+  if (ttsLive) ttsLive.textContent = '';
+  if (continueQueue) ttsTick();
+}
+
 const VOWEL_VISEME = { a:'A', e:'E', i:'I', o:'O', u:'U' };
 
 function setViseme(ch) {
@@ -958,29 +1035,27 @@ function ttsTick() {
       const audio = new Audio(src);
       audio.playbackRate = getTtsRate();
       tts.audio = audio;
+      try { connectTTSAudio(audio); } catch (_) {}
       audio.onplay = () => {
         setTTSLoading(false); startVisemeAnim(text);
         if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
         rootBody.dataset.ttsWave = 'true';
       };
       audio.onended = audio.onerror = () => {
-        setTTSLoading(false);
-        stopVisemeAnim();
-        rootBody.dataset.ttsWave = '';
-        URL.revokeObjectURL(src);
-        tts.audio = null; tts.playing = false;
-        if (State.mode === 'speaking') State.mode = 'idle';
-        clearViseme();
-        if (ttsLive) ttsLive.textContent = '';
-        ttsTick();
+        finishTTSPlayback(src);
       };
       return audio.play();
     })
     .catch(() => {
-      tts.audio = null; tts.playing = false; setTTSLoading(false);
-      const s = document.getElementById('zsh-status');
-      if (s) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
-      if (token === tts.cancelToken) ttsTick();
+      if (token !== tts.cancelToken) return;
+      speakWithBrowserTTS(text)
+        .then(() => { if (token === tts.cancelToken) finishTTSPlayback(); })
+        .catch(() => {
+          tts.audio = null; tts.playing = false; setTTSLoading(false);
+          const s = document.getElementById('zsh-status');
+          if (s) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
+          if (token === tts.cancelToken) ttsTick();
+        });
     });
 }
 
@@ -1017,6 +1092,7 @@ function ttsSkip() {
   tts.cancelToken++;
   setTTSLoading(false);
   if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
   stopVisemeAnim();
   tts.queue.length = 0; tts.prefetch.clear(); tts.playing = false; tts.current = null;
   clearViseme();
@@ -1196,21 +1272,7 @@ function playDuo(lines, onDone) {
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
       audio.playbackRate = getTtsRate();
-      if (actx && actx.state !== 'closed') {
-        if (actx.state === 'suspended') await actx.resume().catch(() => {});
-        if (actx.state === 'running') {
-          try {
-            const msrc = actx.createMediaElementSource(audio);
-            const analyser = actx.createAnalyser();
-            analyser.fftSize = 256;
-            msrc.connect(analyser);
-            analyser.connect(actx.destination);
-            tts.analyser = analyser;
-            tts.analyserBuf = new Uint8Array(analyser.fftSize);
-            tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
-          } catch (_) {}
-        }
-      }
+      try { connectTTSAudio(audio, 1.15); } catch (_) {}
       startVisemeAnim(text);
       audio.onended = audio.onerror = () => {
         stopVisemeAnim();
@@ -1221,7 +1283,11 @@ function playDuo(lines, onDone) {
       };
       audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone); });
     })
-    .catch(() => playDuo(rest, onDone));
+    .catch(() => {
+      speakWithBrowserTTS(text, voice)
+        .then(() => { finishTTSPlayback(null, false); playDuo(rest, onDone); })
+        .catch(() => playDuo(rest, onDone));
+    });
 }
 
 let visualEventSource = null;

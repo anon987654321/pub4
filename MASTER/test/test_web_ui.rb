@@ -130,6 +130,24 @@ class TestWebUI < Minitest::Test
     assert_includes face_js, "new CustomEvent('master:visual'"
   end
 
+  def test_face_tts_browser_fallback_maps_voice_names
+    face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
+
+    assert_includes face_js, "TTS_FALLBACK_VOICE_HINTS"
+    assert_includes face_js, "pickBrowserVoice(voiceKey)"
+    assert_includes face_js, "new SpeechSynthesisUtterance(text)"
+    assert_includes face_js, "utterance.voice = pickBrowserVoice(voiceKey)"
+  end
+
+  def test_face_tts_audio_graph_uses_compressor_before_analyser
+    face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
+
+    assert_includes face_js, "createDynamicsCompressor()"
+    assert_includes face_js, "boost.connect(compressor)"
+    assert_includes face_js, "compressor.connect(analyser)"
+    assert_includes face_js, "connectTTSAudio(audio"
+  end
+
   # SwarmCoordinator
   def test_swarm_coordinator_worker_roles
     # Just check the list is non-empty without booting real agents

@@ -475,8 +475,8 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 - [x] Q504 TTS bytes fetched per-sentence causing latency gap — prefetch next sentence while current plays
 - [x] Q505 tts:anticipate event published from Rails but face.js has no SSE listener — wire anticipate to expression pre-load
 - [x] Q506 tts:style:active event published but expression not applied until audio starts — apply expression on anticipate
-- [ ] Q507 Browser speechSynthesis fallback uses default voice — map fallback to closest available voice name
-- [ ] Q508 No audio normalization: whisper and shout differ by 30dB — add gainNode with compressor before analyser
+- [x] Q507 Browser speechSynthesis fallback uses default voice — map fallback to closest available voice name
+- [x] Q508 No audio normalization: whisper and shout differ by 30dB — add gainNode with compressor before analyser
 - [x] Q509 ttsSkip() on pointer down — if user taps during loading, skip fires before audio starts — add guard for loading state
 - [ ] Q510 No offline mode — when synthesis API down, fallback to cached audio or browser TTS silently
 
