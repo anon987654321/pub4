@@ -6,6 +6,7 @@ require "json"
 require "open3"
 require "tempfile"
 require "base64"
+require "securerandom"
 
 module Master
   module Judge
@@ -64,6 +65,12 @@ module Master
       end
 
       def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, &blk)
+        if image.present?
+          # auto bias to vision free models (e.g. gemini-2.0-flash-exp:free) when image in ctx
+          unless selected_model.to_s =~ /gemini|vision|claude-3|gpt-4o/
+            selected_model = "google/gemini-2.0-flash-exp:free"
+          end
+        end
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
@@ -225,43 +232,45 @@ module Master
         available_tools = llm_tools(selected_model)
         chat_session.with_tools(*available_tools) unless available_tools.empty?
 
-        tmp = nil # for vision temp file cleanup
+        ask_arg = last_text
+        temp_file = nil
         if image && ( (image[:path].to_s.present? && File.file?(image[:path])) || image[:data].present? )
-          # Wire free vision models (gemini-2.0-flash-exp:free etc via openrouter) for ref photos in photography gen flows.
-          # Chat photo uploads are already postpro'd. Use disk path when available (from token meta); else write temp for Attachment.
-          # RubyLLM Content+Attachment -> provider media formatting (data/base64 or file) for multimodal.
-          attachment = nil
+          # Prefer disk :path from chat token meta (postpro'd uploads). Robust Tempfile fallback for direct data.
+          # Always ensure cleanup with ensure. Unique temp name.
           if image[:path].to_s.present? && File.file?(image[:path])
             attachment = RubyLLM::Attachment.new(image[:path], filename: (image[:name].to_s.presence || File.basename(image[:path])))
           else
             ext = (image[:mime].to_s =~ /png/i ? ".png" : (image[:mime].to_s =~ /webp/i ? ".webp" : ".jpg"))
-            tmp = Tempfile.new(["master_vision", ext])
-            tmp.binmode
-            tmp.write(Base64.strict_decode64(image[:data]))
-            tmp.rewind
-            tmp.close
-            attachment = RubyLLM::Attachment.new(tmp.path, filename: (image[:name].to_s.presence || "photo#{ext}"))
+            temp_file = Tempfile.new(["master_vision_#{SecureRandom.hex(4)}", ext])
+            temp_file.binmode
+            temp_file.write(Base64.strict_decode64(image[:data]))
+            temp_file.rewind
+            temp_file.close
+            attachment = RubyLLM::Attachment.new(temp_file.path, filename: (image[:name].to_s.presence || "photo#{ext}"))
           end
           content = RubyLLM::Content.new(text: last_text, attachments: [attachment])
           ask_arg = content
-        else
-          ask_arg = last_text
         end
 
-        reply = if stream && blk
-                  chat_session.ask(ask_arg) { |chunk| blk.call(chunk.content.to_s) if chunk.content }
-        else
-          chat_session.ask(ask_arg)
-        end
-        record_usage(reply, selected_model)
-        res = Result.ok(extract_response(reply, selected_model))
         begin
-          tmp&.close if tmp && !tmp.closed?
-          tmp&.unlink if tmp && File.exist?(tmp.path)
-        rescue StandardError
-          # best effort cleanup of vision temp
+          reply = if stream && blk
+                    chat_session.ask(ask_arg) { |chunk| blk.call(chunk.content.to_s) if chunk.content }
+          else
+            chat_session.ask(ask_arg)
+          end
+          record_usage(reply, selected_model)
+          res = Result.ok(extract_response(reply, selected_model))
+          res
+        ensure
+          if temp_file
+            begin
+              temp_file.close unless temp_file.closed?
+              temp_file.unlink if File.exist?(temp_file.path)
+            rescue StandardError
+              # best effort cleanup of vision temp
+            end
+          end
         end
-        res
       end
 
       def record_usage(reply, model)
