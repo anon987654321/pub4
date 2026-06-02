@@ -119,13 +119,13 @@ MASTER must pass its own rules. Violations found by reading lib/.
 - [x] F16 ground/memory.rb: MAX_INJECT_TOKENS = 2000 used as token limit — verify against actual model context size
 - [x] F17 reach/llm.rb: verify no hardcoded API keys (SECRET_PROXIMITY)
 - [x] F18 All lib/**/*.rb: verify zero Marshal.load (anti_patterns.forbidden)
-- [ ] F19 All lib/**/*.rb: verify zero `open(.*#{` shell-through-open (anti_patterns.forbidden)
-- [ ] F20 All lib/**/*.rb: verify zero `system(.*#{` command injection patterns (UNSAFE_CALLS)
+- [x] F19 All lib/**/*.rb: verify zero `open(.*#{` shell-through-open (anti_patterns.forbidden)
+- [x] F20 All lib/**/*.rb: verify zero `system(.*#{` command injection patterns (UNSAFE_CALLS)
 - [ ] F21 All lib/**/*.rb: check for mutable constants missing .freeze (IMMUTABLE)
 - [ ] F22 All lib/**/*.rb: check for long chains a.b.c.d.e not covered by existing rule exclusions (LAW_OF_DEMETER)
 - [ ] F23 All lib/**/*.rb: check for 3+ positional args needing keyword conversion (FEW_ARGUMENTS)
-- [ ] F24 loop/fix_helpers.rb: read and verify SRP — only fix-related helpers, no scanning logic
-- [ ] F25 judge/scan/rule_dsl.rb: verify auto_build? pattern documented (SELF_EXPLAINING)
+- [x] F24 loop/fix_helpers.rb: read and verify SRP — only fix-related helpers, no scanning logic
+- [x] F25 judge/scan/rule_dsl.rb: verify auto_build? pattern documented (SELF_EXPLAINING)
 
 ## G. Voice and personality alignment
 

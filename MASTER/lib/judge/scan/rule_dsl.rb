@@ -5,6 +5,8 @@ module Master
     module Scan
     # Inline Ruby rule definition — JE-style alternative to rules.yml entries.
     # Defined rules auto-register via Rule.inherited; no YAML required.
+    # Rule subclasses inherit Rule.auto_build? == true; specialized rules that
+    # need constructor arguments override self.auto_build? = false explicitly.
     #
     #   RuleDSL.rule :NO_PUTS, severity: :warning, applies_to: %i[ruby] do |src, path:|
     #     scan_lines(src, /\bputs\b/, message: "puts in production code")
