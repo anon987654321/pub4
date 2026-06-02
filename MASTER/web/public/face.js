@@ -343,14 +343,13 @@ let mouthPool = null, eyePool = null;
 
 const COUNCIL_VOICE = {
   Architect: 'ryan', Skeptic: 'steffan', Pragmatist: 'finn',
-  Security: 'osman', User: 'pernille', Mentor: 'yasmin'
+  Security: 'osman', User: 'ryan', Mentor: 'yasmin'
 };
 
 const BOOT_DUO = [
-  ['osman',    'Good morning.'],
-  ['pernille', 'Hei, og velkommen.'],
-  ['osman',    'Constitutional AI — live and ready.'],
-  ['pernille', 'Spør oss hva som helst.']
+  ['osman', 'Good morning.'],
+  ['ryan',  'Constitutional AI — live and ready.'],
+  ['osman', 'Ask us anything.']
 ];
 
 
@@ -571,7 +570,7 @@ function beep(freq, dur) {
 const VISEME_STEP_MS = 90;
 const LOCAL_RATE = 0.95;
 const LOCAL_PITCH = 0.92;
-const tts = { queue: [], muted: false, playing: false, voice: null, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
+const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, voice: null, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
 
 function pickVoice() {
   const list = speechSynthesis.getVoices();
@@ -599,13 +598,22 @@ function clearViseme() {
   State.visemeAmp = 0;
 }
 
+function fetchTTS(text) {
+  if (tts.serverUnavailable || tts.prefetch.has(text)) return;
+  const p = fetch(`/chat/tts?text=${encodeURIComponent(text)}`)
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
+    .catch(() => null);
+  tts.prefetch.set(text, p);
+}
+
 function enqueueSpeech(text) {
   if (tts.muted) return;
   const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`~]/g, '').trim();
   if (!clean) return;
   tts.lastText = clean;
   tts.queue.push(clean);
-  nodImpulse += 0.022; // brief forward nod on each sentence
+  nodImpulse += 0.022;
+  if (tts.playing && !tts.serverUnavailable) fetchTTS(clean);
   ttsTick();
 }
 
@@ -616,21 +624,13 @@ function ttsTick() {
   tts.playing = true;
   State.mode = 'speaking';
   if (tts.serverUnavailable) { speakLocal(text); return; }
-  speakServer(text);
-}
-
-// Server neural TTS, lip-synced to the actual audio duration.
-function speakServer(text) {
-  const url = `/chat/tts?text=${encodeURIComponent(text)}`;
-  fetch(url)
-    .then(r => {
-      if (!r.ok) {
-        if (r.status === 403 || r.status === 501 || r.status === 503) tts.serverUnavailable = true;
-        throw new Error(`tts ${r.status}`);
-      }
-      return r.blob();
-    })
+  const pending = tts.prefetch.get(text) || fetch(`/chat/tts?text=${encodeURIComponent(text)}`).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); });
+  tts.prefetch.delete(text);
+  // Start prefetching next in queue immediately
+  if (tts.queue[0]) fetchTTS(tts.queue[0]);
+  pending
     .then(blob => {
+      if (!blob) throw new Error('empty');
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
       tts.audio = audio;
@@ -650,19 +650,16 @@ function speakServer(text) {
       audio.onplay = () => startVisemeAnim(text);
       audio.onended = audio.onerror = () => {
         stopVisemeAnim();
-        tts.analyser = null;
-        tts.analyserBuf = null;
-        tts.analyserFreqBuf = null;
+        tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
         URL.revokeObjectURL(src);
-        tts.audio = null;
-        tts.playing = false;
+        tts.audio = null; tts.playing = false;
         if (State.mode === 'speaking') State.mode = 'idle';
         clearViseme();
         ttsTick();
       };
       return audio.play();
     })
-    .catch(() => { tts.audio = null; speakLocal(text); });
+    .catch(() => { tts.audio = null; tts.playing = false; speakLocal(text); });
 }
 
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
@@ -703,7 +700,7 @@ function ttsSkip() {
   try { speechSynthesis.cancel(); } catch (_) {}
   if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
   stopVisemeAnim();
-  tts.queue.length = 0; tts.playing = false; tts.current = null;
+  tts.queue.length = 0; tts.prefetch.clear(); tts.playing = false; tts.current = null;
   clearViseme();
 }
 function ttsToggleMute() {

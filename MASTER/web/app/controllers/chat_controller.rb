@@ -16,7 +16,7 @@ class ChatController < ApplicationController
     "Skeptic" => :steffan,
     "Pragmatist" => :finn,
     "Security" => :osman,
-    "User" => :pernille,
+    "User" => :ryan,
     "Mentor" => :yasmin
   }.freeze
 
