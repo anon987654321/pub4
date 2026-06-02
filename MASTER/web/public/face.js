@@ -1,5 +1,23 @@
 "use strict";
-import * as THREE from '/three.module.js?v=13';
+
+// Check WebGL before paying THREE's 1.3MB parse cost
+const _wglCv = document.createElement('canvas');
+const _hasWebGL = !!(_wglCv.getContext('webgl2') || _wglCv.getContext('webgl') || _wglCv.getContext('experimental-webgl'));
+
+const _dbgEl = document.getElementById('_dbg');
+if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
+
+// Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
+const THREE = _hasWebGL ? await import('/three.module.js?v=15') : null;
+
+// Minimal Color stub for no-WebGL path
+class _Color {
+  constructor(r=0,g=0,b=0){this.r=r;this.g=g;this.b=b;}
+  clone(){return new _Color(this.r,this.g,this.b);}
+  copy(c){this.r=c.r;this.g=c.g;this.b=c.b;return this;}
+  lerp(c,t){this.r+=(c.r-this.r)*t;this.g+=(c.g-this.g)*t;this.b+=(c.b-this.b)*t;return this;}
+}
+const Color = _hasWebGL ? THREE.Color : _Color;
 
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
@@ -8,26 +26,26 @@ const zshIn  = document.getElementById('zin');
 const rootBody = document.body;
 
 const TINT = {
-  idle:    new THREE.Color(1.00, 1.00, 1.00),
-  claude:  new THREE.Color(0.90, 0.82, 1.00),
-  deepseek:new THREE.Color(0.76, 0.90, 1.00),
-  gemini:  new THREE.Color(0.78, 1.00, 0.88),
-  gpt:     new THREE.Color(1.00, 0.94, 0.72),
-  tense:   new THREE.Color(1.00, 0.68, 0.60),
-  curious: new THREE.Color(0.78, 0.94, 1.00),
-  focused: new THREE.Color(0.70, 0.84, 1.00),
-  weary:   new THREE.Color(0.82, 0.82, 0.88),
-  pass:    new THREE.Color(0.78, 1.00, 0.84),
-  veto:    new THREE.Color(1.00, 0.56, 0.52),
-  unclear: new THREE.Color(0.96, 0.90, 0.66)
+  idle:    new Color(1.00, 1.00, 1.00),
+  claude:  new Color(0.90, 0.82, 1.00),
+  deepseek:new Color(0.76, 0.90, 1.00),
+  gemini:  new Color(0.78, 1.00, 0.88),
+  gpt:     new Color(1.00, 0.94, 0.72),
+  tense:   new Color(1.00, 0.68, 0.60),
+  curious: new Color(0.78, 0.94, 1.00),
+  focused: new Color(0.70, 0.84, 1.00),
+  weary:   new Color(0.82, 0.82, 0.88),
+  pass:    new Color(0.78, 1.00, 0.84),
+  veto:    new Color(1.00, 0.56, 0.52),
+  unclear: new Color(0.96, 0.90, 0.66)
 };
 
 function dayNightTint() {
   const h = new Date().getHours() + new Date().getMinutes() / 60;
-  if (h >= 5  && h < 7)  return new THREE.Color(1.00, 0.92, 0.78); // dawn — warm gold
-  if (h >= 7  && h < 18) return new THREE.Color(1.00, 1.00, 1.00); // day — white
-  if (h >= 18 && h < 21) return new THREE.Color(1.00, 0.88, 0.65); // dusk — amber
-  return new THREE.Color(0.82, 0.88, 1.00);                         // night — cool blue-white
+  if (h >= 5  && h < 7)  return new Color(1.00, 0.92, 0.78); // dawn — warm gold
+  if (h >= 7  && h < 18) return new Color(1.00, 1.00, 1.00); // day — white
+  if (h >= 18 && h < 21) return new Color(1.00, 0.88, 0.65); // dusk — amber
+  return new Color(0.82, 0.88, 1.00);                         // night — cool blue-white
 }
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
@@ -59,18 +77,17 @@ matchMedia('(pointer: coarse)').addEventListener('change', event => {
 });
 document.addEventListener('visibilitychange', updateRuntimeProfile, { passive: true });
 
-let renderer;
-try {
-  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false });
-  renderer.setClearColor(0x000000, 1);
-} catch (_) {}
-if (!renderer) {
-  Object.assign(primer.style, { color: '#fff', font: '12px monospace', display: 'flex', alignItems: 'center', justifyContent: 'center' });
-  primer.textContent = 'webgl unavailable';
+let renderer, scene, camera;
+if (_hasWebGL && THREE) {
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false });
+    renderer.setClearColor(0x000000, 1);
+  } catch (_) {}
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+  camera.position.set(0, 0, 4.6);
 }
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-camera.position.set(0, 0, 4.6);
+if (_dbgEl) _dbgEl.textContent = renderer ? 'webgl ok' : (_hasWebGL ? 'webgl FAIL' : '2d mode');
 
 let W = 0, H = 0, DPR = 1;
 function resize() {
@@ -103,6 +120,77 @@ function resize() {
 }
 window.addEventListener('resize', resize, { passive: true });
 
+// Pure-JS icosahedron for the 2D no-WebGL path
+function buildHeadPositions2D() {
+  const t = (1 + Math.sqrt(5)) / 2;
+  const raw = [[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],[0,-1,-t],[0,1,-t],[t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]];
+  const verts = raw.map(v => { const l = Math.hypot(v[0],v[1],v[2]); return [v[0]/l,v[1]/l,v[2]/l]; });
+  const faces = [[0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],[1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],[3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],[4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]];
+  const cache = {};
+  function mid(a, b) {
+    const k = Math.min(a,b)+','+Math.max(a,b);
+    if (cache[k] !== undefined) return cache[k];
+    const v = [(verts[a][0]+verts[b][0])/2,(verts[a][1]+verts[b][1])/2,(verts[a][2]+verts[b][2])/2];
+    const l = Math.hypot(v[0],v[1],v[2]);
+    verts.push([v[0]/l,v[1]/l,v[2]/l]);
+    return (cache[k] = verts.length - 1);
+  }
+  let cur = faces;
+  for (let d = 0; d < 3; d++) {
+    const next = [];
+    for (const [a,b,c] of cur) { const ab=mid(a,b),bc=mid(b,c),ca=mid(c,a); next.push([a,ab,ca],[b,bc,ab],[c,ca,bc],[ab,bc,ca]); }
+    cur = next;
+  }
+  // Flatten + apply face deformation
+  const pos = [];
+  for (const [a,b,c] of cur) for (const vi of [a,b,c]) {
+    let [x,y,z] = verts[vi];
+    y *= 1.22; z *= 0.92;
+    const jaw = Math.max(0, -y - 0.2); x *= 1 - jaw * 0.45;
+    for (const sx of [-1,1]) { const dx=x-0.32*sx,dy=y-0.22,dz=z-0.78,d2=dx*dx+dy*dy+dz*dz; if(d2<0.10) z-=(0.10-d2)*1.4; }
+    const nd2=x*x+(y+0.02)*(y+0.02); if(nd2<0.06&&z>0.6) z+=(0.06-nd2)*1.6;
+    const md=Math.hypot(x,(y+0.38)*1.4,(z-0.84)*1.4); if(md<0.22&&z>0.5) z-=(0.22-md)*0.8;
+    if(y>0.85) y+=(y-0.85)*0.4;
+    pos.push(x,y,z);
+  }
+  return new Float32Array(pos);
+}
+
+// Sample surface points from a flat Float32Array of triangle positions (non-indexed)
+function sampleFlatPositions(flatPos, N) {
+  const triCount = flatPos.length / 9;
+  const areas = new Float32Array(triCount);
+  let totalArea = 0;
+  for (let t = 0; t < triCount; t++) {
+    const b = t * 9;
+    const ax=flatPos[b],ay=flatPos[b+1],az=flatPos[b+2];
+    const bx=flatPos[b+3]-ax,by=flatPos[b+4]-ay,bz=flatPos[b+5]-az;
+    const cx2=flatPos[b+6]-ax,cy2=flatPos[b+7]-ay,cz2=flatPos[b+8]-az;
+    const area = 0.5*Math.hypot(by*cz2-bz*cy2, bz*cx2-bx*cz2, bx*cy2-by*cx2);
+    areas[t] = area; totalArea += area;
+  }
+  const cdf = new Float32Array(triCount);
+  let cum = 0;
+  for (let t = 0; t < triCount; t++) { cum += areas[t]/totalArea; cdf[t] = cum; }
+  const home = new Float32Array(N*3), scatter = new Float32Array(N*3), seeds = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const r = Math.random();
+    let lo = 0, hi = triCount - 1;
+    while (lo < hi) { const m2 = (lo+hi)>>1; if (cdf[m2] < r) lo = m2+1; else hi = m2; }
+    const b = lo * 9;
+    let r1 = Math.random(), r2 = Math.random();
+    if (r1+r2 > 1) { r1=1-r1; r2=1-r2; }
+    const r3 = 1-r1-r2;
+    home[i*3]   = flatPos[b]*r3 + flatPos[b+3]*r1 + flatPos[b+6]*r2;
+    home[i*3+1] = flatPos[b+1]*r3 + flatPos[b+4]*r1 + flatPos[b+7]*r2;
+    home[i*3+2] = flatPos[b+2]*r3 + flatPos[b+5]*r1 + flatPos[b+8]*r2;
+    const phi = Math.acos(2*Math.random()-1), theta = Math.random()*Math.PI*2, rad = 2+Math.random();
+    scatter[i*3]=rad*Math.sin(phi)*Math.cos(theta); scatter[i*3+1]=rad*Math.sin(phi)*Math.sin(theta); scatter[i*3+2]=rad*Math.cos(phi);
+    seeds[i] = Math.random()*6.28318;
+  }
+  return { home, scatter, seeds };
+}
+
 function buildHeadGeometry() {
   const base = new THREE.IcosahedronGeometry(1.0, 4);
   const pos = base.attributes.position;
@@ -127,9 +215,9 @@ function buildHeadGeometry() {
   return base;
 }
 
-const head = buildHeadGeometry();
+const head = (_hasWebGL && THREE) ? buildHeadGeometry() : null;
 
-// Area-weighted surface sampler — handles indexed and non-indexed geometries
+// Area-weighted surface sampler — THREE geometry, indexed or not
 function sampleMeshSurface(geom, N) {
   const pos = geom.attributes.position;
   const idx = geom.index;
@@ -175,10 +263,16 @@ function sampleMeshSurface(geom, N) {
 }
 
 const FACE_N = State.coarsePointer ? 8000 : 20000;
-const { home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleMeshSurface(head, FACE_N);
+const FACE_N_2D = 600;
+let faceHome, faceScatter, faceSeeds;
+if (_hasWebGL && head) {
+  ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleMeshSurface(head, FACE_N));
+} else {
+  const flatPos = buildHeadPositions2D();
+  ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleFlatPositions(flatPos, FACE_N_2D));
+}
 
 const VERT_SHADER = `
-precision highp float;
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
 vec4 permute4(vec4 x){return mod289v4(((x*34.)+1.)*x);}
@@ -241,7 +335,6 @@ void main(){
 }`;
 
 const FRAG_SHADER = `
-precision highp float;
 varying float vAlpha;
 varying vec3 vColor;
 void main(){
@@ -251,25 +344,19 @@ void main(){
   gl_FragColor=vec4(vColor,soft*soft*vAlpha);
 }`;
 
-const faceGeom = new THREE.BufferGeometry();
-faceGeom.setAttribute('position', new THREE.BufferAttribute(faceHome, 3));
-faceGeom.setAttribute('scatter',  new THREE.BufferAttribute(faceScatter, 3));
-faceGeom.setAttribute('seed',     new THREE.BufferAttribute(faceSeeds, 1));
-
-const faceMat = new THREE.ShaderMaterial({
-  vertexShader: VERT_SHADER,
-  fragmentShader: FRAG_SHADER,
-  uniforms: {
-    uMorph: { value: 0.0 },
-    uTime:  { value: 0.0 },
-    uSize:  { value: 0.08 },
-    uColor: { value: new THREE.Color(1, 1, 1) }
-  },
-  transparent: true,
-  depthWrite: false,
-  blending: THREE.AdditiveBlending
-});
-const facePoints = new THREE.Points(faceGeom, faceMat);
+let faceGeom, faceMat, facePoints;
+if (_hasWebGL && THREE) {
+  faceGeom = new THREE.BufferGeometry();
+  faceGeom.setAttribute('position', new THREE.BufferAttribute(faceHome, 3));
+  faceGeom.setAttribute('scatter',  new THREE.BufferAttribute(faceScatter, 3));
+  faceGeom.setAttribute('seed',     new THREE.BufferAttribute(faceSeeds, 1));
+  faceMat = new THREE.ShaderMaterial({
+    vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
+    uniforms: { uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.08}, uColor:{value:new Color(1,1,1)} },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+  });
+  facePoints = new THREE.Points(faceGeom, faceMat);
+}
 
 let morphCurrent = 0.0, morphTarget = 0.0;
 let mouthPool = null, eyePool = null;
@@ -296,8 +383,8 @@ setInterval(() => { if (!State.mood || State.mood === 'idle') { TINT.idle.copy(d
 
 let bloomCtx = null, bloomCv = null;
 
-// Dolly zoom (Hitchcock) — zoom in while dollying back, reversed smoothly
 function dollyZoom(intensity) {
+  if (!camera) return;
   const startFOV = camera.fov, startZ = camera.position.z;
   const targetFOV = Math.max(20, startFOV - intensity * 10);
   const targetZ   = startZ + intensity * 0.55;
@@ -331,11 +418,16 @@ if (_photoEl) _photoEl.addEventListener('change', () => {
 let lastT = performance.now();
 let saccadeX = 0, nextSaccade = performance.now() + Math.random() * 6000 + 3000;
 let nodImpulse = 0;
-const head3 = new THREE.Object3D();
-scene.add(head3);
-head3.add(facePoints);
+let head3;
+if (_hasWebGL && THREE && scene && facePoints) {
+  head3 = new THREE.Object3D();
+  scene.add(head3);
+  head3.add(facePoints);
+}
 
+let _dbgFrames = 0;
 function frame(t) {
+  _dbgFrames++;
   if (!renderer || State.hidden) {
     lastT = t;
     requestAnimationFrame(frame);
@@ -373,48 +465,47 @@ function frame(t) {
   const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
   colorCurrent.lerp(colorTarget, lerpSpeed);
 
-  if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
-    saccadeX = (Math.random() - 0.5) * 0.28;
-    nextSaccade = t + Math.random() * 6000 + 3000;
+  if (head3) {
+    if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
+      saccadeX = (Math.random() - 0.5) * 0.28;
+      nextSaccade = t + Math.random() * 6000 + 3000;
+    }
+    saccadeX *= 0.93;
+    const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX;
+    const pitch = State.mouseY * 0.4 + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
+    head3.rotation.y += (yaw   - head3.rotation.y) * 0.06;
+    head3.rotation.x += (pitch - head3.rotation.x) * 0.06;
+    nodImpulse *= 0.87;
+    head3.rotation.x += nodImpulse;
+    const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
+    const breath = silenceScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005) + State.pulse * 0.08);
+    head3.scale.setScalar(breath);
+    State.lean = (State.lean || 0) * 0.97;
+    if (State.shake > 0.01 && !State.reducedMotion) {
+      head3.position.x = (Math.random() - 0.5) * State.shake * 0.18;
+      head3.position.y = (Math.random() - 0.5) * State.shake * 0.18;
+      head3.position.z = State.lean;
+      State.shake *= 0.86;
+    } else {
+      head3.position.set(0, 0, State.lean);
+    }
   }
-  saccadeX *= 0.93;
-  const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX;
-  const pitch = State.mouseY * 0.4 + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
-  head3.rotation.y += (yaw   - head3.rotation.y) * 0.06;
-  head3.rotation.x += (pitch - head3.rotation.x) * 0.06;
-  nodImpulse *= 0.87;
-  head3.rotation.x += nodImpulse;
-
-  const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
-  const breath = silenceScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005) + State.pulse * 0.08);
-  head3.scale.setScalar(breath);
   State.pulse *= 0.92;
 
-  State.lean = (State.lean || 0) * 0.97;
-  if (State.shake > 0.01 && !State.reducedMotion) {
-    head3.position.x = (Math.random() - 0.5) * State.shake * 0.18;
-    head3.position.y = (Math.random() - 0.5) * State.shake * 0.18;
-    head3.position.z = State.lean;
-    State.shake *= 0.86;
-  } else {
-    head3.position.set(0, 0, State.lean);
+  if (faceMat) {
+    const idleS = (t - State.lastTouch) / 1000;
+    morphTarget = !primerFired ? 0.0 : (idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : 1.0);
+    morphCurrent += (morphTarget - morphCurrent) * 0.04;
+    faceMat.uniforms.uMorph.value = morphCurrent;
+    faceMat.uniforms.uTime.value = t * 0.001;
+    faceMat.uniforms.uColor.value.copy(colorCurrent);
+    const voiceRMS = State.voiceRMS || 0;
+    const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
+    const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
+    faceMat.uniforms.uSize.value = 0.08 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
   }
 
-  // GPU morph: hold scatter until primer fires, then settle; dissolve on long idle
-  const idleS = (t - State.lastTouch) / 1000;
-  morphTarget = !primerFired ? 0.0 : (idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : 1.0);
-  morphCurrent += (morphTarget - morphCurrent) * 0.04;
-  faceMat.uniforms.uMorph.value = morphCurrent;
-  faceMat.uniforms.uTime.value = t * 0.001;
-  faceMat.uniforms.uColor.value.copy(colorCurrent);
-
-  const voiceRMS = State.voiceRMS || 0;
-  const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
-  const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
-  faceMat.uniforms.uSize.value = 0.08 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
-
   State.flash *= 0.9;
-
   renderer.render(scene, camera);
 
   requestAnimationFrame(frame);
@@ -1005,7 +1096,91 @@ window.addEventListener('tts:anticipate', (ev) => {
 });
 
 resize();
-if (renderer) requestAnimationFrame(frame);
+
+if (renderer) {
+  if (_dbgEl) {
+    const _dbgTimer = setInterval(() => {
+      if (!_dbgEl.isConnected) { clearInterval(_dbgTimer); return; }
+      _dbgEl.textContent = `webgl ok · f:${_dbgFrames} m:${morphCurrent.toFixed(2)}`;
+    }, 500);
+    setTimeout(() => { clearInterval(_dbgTimer); _dbgEl.remove(); }, 30000);
+  }
+  requestAnimationFrame(frame);
+} else {
+  // 2D canvas fallback — fresh canvas so cv's WebGL attempt doesn't block us
+  (function start2D() {
+    const cv2 = document.createElement('canvas');
+    Object.assign(cv2.style, { position:'fixed', inset:'0', width:'100vw', height:'100dvh', display:'block', zIndex:'0' });
+    document.body.insertBefore(cv2, cv);
+    cv.style.display = 'none';
+
+    const ctx2 = cv2.getContext('2d');
+    if (!ctx2) { console.error('2d ctx failed'); return; }
+
+    const N2 = FACE_N_2D;
+    const pts = new Float32Array(N2 * 7);
+    for (let i = 0; i < N2; i++) {
+      pts[i*7]   = faceHome[i*3];   pts[i*7+1] = faceHome[i*3+1];   pts[i*7+2] = faceHome[i*3+2];
+      pts[i*7+3] = faceScatter[i*3]; pts[i*7+4] = faceScatter[i*3+1]; pts[i*7+5] = faceScatter[i*3+2];
+      pts[i*7+6] = faceSeeds[i];
+    }
+
+    let cw2 = 0, ch2 = 0;
+    function resize2() {
+      cw2 = window.innerWidth; ch2 = window.innerHeight;
+      cv2.width = cw2; cv2.height = ch2;
+    }
+    resize2();
+    window.addEventListener('resize', resize2, { passive: true });
+
+    // Auto-fire primer after 1s if user hasn't tapped — gets chat bar up immediately
+    setTimeout(() => { if (!primerFired) firePrimer(); }, 1000);
+
+    let lastT2 = 0;
+    function frame2(t) {
+      if (t - lastT2 < 33) { requestAnimationFrame(frame2); return; }
+      lastT2 = t;
+      const sec = t * 0.001;
+      const mTgt = primerFired ? 1.0 : 0.0;
+      morphCurrent += (mTgt - morphCurrent) * 0.06;
+      const m = morphCurrent;
+
+      const cosY = Math.cos(State.mouseX * 0.7 + Math.sin(sec * 0.2) * 0.05);
+      const sinY = Math.sin(State.mouseX * 0.7 + Math.sin(sec * 0.2) * 0.05);
+      const cosX = Math.cos(State.mouseY * 0.4 + Math.sin(sec * 0.27) * 0.03);
+      const sinX = Math.sin(State.mouseY * 0.4 + Math.sin(sec * 0.27) * 0.03);
+      const f2 = Math.min(cw2, ch2) * 0.5 / Math.tan(38 * Math.PI / 360);
+      const camZ = 4.6;
+
+      ctx2.fillStyle = '#000';
+      ctx2.fillRect(0, 0, cw2, ch2);
+      ctx2.fillStyle = 'rgba(255,255,255,0.7)';
+
+      const noiseAmp = m > 0.98 ? 0 : (1 - m) * 0.28;
+      for (let i = 0; i < N2; i++) {
+        const b = i * 7;
+        const noise = noiseAmp > 0 ? noiseAmp * Math.sin(sec * 0.4 + pts[b+6]) : 0;
+        const wx = pts[b+3] + (pts[b]   - pts[b+3]) * m + noise;
+        const wy = pts[b+4] + (pts[b+1] - pts[b+4]) * m + noise * 0.5;
+        const wz = pts[b+5] + (pts[b+2] - pts[b+5]) * m;
+        const rx  = wx * cosY + wz * sinY;
+        const rz0 = -wx * sinY + wz * cosY;
+        const ry  = wy * cosX - rz0 * sinX;
+        const rz  = wy * sinX + rz0 * cosX;
+        const dz  = camZ - rz;
+        if (dz <= 0.1) continue;
+        const px = rx / dz * f2 + cw2 * 0.5;
+        const py = -ry / dz * f2 + ch2 * 0.5;
+        const sz = Math.max(2, 2.4 * f2 / (dz * 80));
+        ctx2.fillRect(px - sz * 0.5, py - sz * 0.5, sz, sz);
+      }
+
+      _dbgFrames++;
+      requestAnimationFrame(frame2);
+    }
+    requestAnimationFrame(frame2);
+  })();
+}
 
 // === ULTRAMINIMAL UI + GESTURES + CAM TRACKING + OSMAN VOICE (MASTER web + all apps sync) ===
 // Philosophy: Almost nothing visible. Only the living face + tiny top-right logo.

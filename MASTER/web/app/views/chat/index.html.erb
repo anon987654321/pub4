@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="preload" href="/face.css" as="style">
-  <link rel="modulepreload" href="/three.module.js?v=13">
-  <link rel="modulepreload" href="/face.js?v=13">
+  <link rel="modulepreload" href="/three.module.js?v=15">
+  <link rel="modulepreload" href="/face.js?v=15">
   <link rel="stylesheet" href="/face.css">
   <link rel="stylesheet" href="/photo_upload.css">
 </head>
@@ -35,7 +35,14 @@
     <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
     <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message">
   </form>
-  <script type="module" src="/face.js?v=13"></script>
-  <script src="/chat.js?v=13" defer></script>
+  <script>
+    var _d=document.createElement('div');
+    _d.id='_dbg';
+    _d.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font:18px monospace;color:#ff0;background:#000;padding:14px 20px;border:2px solid #ff0;z-index:9999;pointer-events:none;text-align:center';
+    _d.textContent='html ok';
+    document.body.appendChild(_d);
+  </script>
+  <script type="module" src="/face.js?v=15"></script>
+  <script src="/chat.js?v=15" defer></script>
 </body>
 </html>

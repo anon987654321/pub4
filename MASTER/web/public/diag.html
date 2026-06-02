@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{background:#000;color:#ff0;font:14px monospace;padding:16px;word-break:break-all}</style>
+</head><body>
+<pre id="out">running...</pre>
+<canvas id="cv" width="200" height="200" style="display:block;margin-top:16px;border:1px solid #ff0"></canvas>
+<script>
+var out = document.getElementById('out');
+var lines = [];
+function log(s){ lines.push(s); out.textContent = lines.join('\n'); }
+
+log('ua: ' + navigator.userAgent);
+log('screen: ' + screen.width + 'x' + screen.height + ' dpr:' + devicePixelRatio);
+
+var cv = document.getElementById('cv');
+var gl = cv.getContext('webgl2') || cv.getContext('webgl') || cv.getContext('experimental-webgl');
+if (!gl) {
+  log('webgl: NONE');
+} else {
+  log('webgl: ' + (cv.getContext('webgl2') ? 'webgl2' : 'webgl1'));
+  log('renderer: ' + (gl.getParameter(gl.RENDERER)||'?'));
+  log('vendor: ' + (gl.getParameter(gl.VENDOR)||'?'));
+  var hs = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
+  log('frag highp: ' + (hs && hs.precision > 0 ? 'YES (prec='+hs.precision+')' : 'NO'));
+  var ms = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.MEDIUM_FLOAT);
+  log('frag mediump: ' + (ms && ms.precision > 0 ? 'YES (prec='+ms.precision+')' : 'NO'));
+
+  // Draw a green triangle to confirm actual rendering
+  var vs = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(vs, 'attribute vec2 p;void main(){gl_Position=vec4(p,0,1);}');
+  gl.compileShader(vs);
+  var fs = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(fs, 'precision mediump float;void main(){gl_FragColor=vec4(0,1,0,1);}');
+  gl.compileShader(fs);
+  var prog = gl.createProgram();
+  gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    log('shader: FAIL ' + gl.getProgramInfoLog(prog));
+  } else {
+    gl.useProgram(prog);
+    var buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0,0.8, -0.8,-0.8, 0.8,-0.8]), gl.STATIC_DRAW);
+    var loc = gl.getAttribLocation(prog, 'p');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    log('triangle: drawn (see canvas below)');
+  }
+}
+
+log('modules: ' + (typeof Symbol !== "undefined" && typeof Promise !== "undefined" ? 'likely ok' : 'NO'));
+</script>
+</body></html>

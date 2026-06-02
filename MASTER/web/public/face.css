@@ -138,7 +138,7 @@ body.zen .top-right-logo {
   user-select: none;
 }
 
-#zsh.live { opacity: 1; pointer-events: auto; transform: none; }
+body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 #zsh .pp { color: var(--face-fg); font-weight: 700; }
 #zsh .sep, #zsh .sep2 { color: var(--face-muted); }
 #zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
