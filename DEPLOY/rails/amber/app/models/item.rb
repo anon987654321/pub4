@@ -44,7 +44,6 @@ class Item < ApplicationRecord
 
   def cost_per_wear
     return nil unless price.present? && times_worn.to_i > 0
-  end
 
   def value_label
     cost_per_wear ? "#{cost_per_wear} per wear" : "not worn yet"
@@ -93,7 +92,6 @@ class Item < ApplicationRecord
 
   def extract_dominant_color!
     return unless photos.attached?
-    photo = photos.first
     tempfile = nil
     begin
       require "vips"
