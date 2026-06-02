@@ -112,6 +112,24 @@ class TestWebUI < Minitest::Test
     assert_includes chat_controller, "head(:not_modified)"
   end
 
+  def test_face_tts_uses_indexeddb_blob_cache
+    face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
+
+    assert_includes face_js, "indexedDB.open(TTS_DB_NAME"
+    assert_includes face_js, "crypto.subtle.digest('SHA-256'"
+    assert_includes face_js, "readCachedTTS(key)"
+    assert_includes face_js, "writeCachedTTS(key, blob)"
+  end
+
+  def test_face_tts_bridges_global_style_events
+    face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
+
+    assert_includes face_js, "new EventSource('/events/stream')"
+    assert_includes face_js, "type === 'tts:anticipate'"
+    assert_includes face_js, "type === 'tts:style:active'"
+    assert_includes face_js, "new CustomEvent('master:visual'"
+  end
+
   # SwarmCoordinator
   def test_swarm_coordinator_worker_roles
     # Just check the list is non-empty without booting real agents

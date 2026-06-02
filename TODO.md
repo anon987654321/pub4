@@ -471,10 +471,10 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 
 - [x] Q501 /chat/tts endpoint has no rate limiting — add Rack::Attack throttle: 30 req/min per IP
 - [x] Q502 /chat/tts returns no ETag/Cache-Control — add ETag based on SHA256(voice+text), Cache-Control: max-age=3600
-- [ ] Q503 No client-side TTS cache — store synthesized blobs in IndexedDB keyed by SHA256(voice+text)
-- [ ] Q504 TTS bytes fetched per-sentence causing latency gap — prefetch next sentence while current plays
-- [ ] Q505 tts:anticipate event published from Rails but face.js has no SSE listener — wire anticipate to expression pre-load
-- [ ] Q506 tts:style:active event published but expression not applied until audio starts — apply expression on anticipate
+- [x] Q503 No client-side TTS cache — store synthesized blobs in IndexedDB keyed by SHA256(voice+text)
+- [x] Q504 TTS bytes fetched per-sentence causing latency gap — prefetch next sentence while current plays
+- [x] Q505 tts:anticipate event published from Rails but face.js has no SSE listener — wire anticipate to expression pre-load
+- [x] Q506 tts:style:active event published but expression not applied until audio starts — apply expression on anticipate
 - [ ] Q507 Browser speechSynthesis fallback uses default voice — map fallback to closest available voice name
 - [ ] Q508 No audio normalization: whisper and shout differ by 30dB — add gainNode with compressor before analyser
 - [x] Q509 ttsSkip() on pointer down — if user taps during loading, skip fires before audio starts — add guard for loading state
@@ -4714,7 +4714,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA51 tts: ambient background tone during thinking — 40Hz binaural low hum at 3% volume (WebAudio oscillator)
 - [ ] FA52 tts: subtle audio confirmation click on message send — 8-bit tick sample, <10ms
 - [ ] FA53 tts: audio ducking — background ambient tone ducks to 20% when TTS starts
-- [ ] FA54 tts: TTS cache — store audio blob in IndexedDB keyed by text hash, skip re-request on repeat
+- [x] FA54 tts: TTS cache — store audio blob in IndexedDB keyed by text hash, skip re-request on repeat
 - [ ] FA55 tts: streaming audio — pipe edge-tts WebSocket chunks directly to MediaSource instead of waiting for full MP3
 - [ ] FA56 tts: Whisper STT fallback — if browser SpeechRecognition unavailable, POST audio blob to /chat/stt (whisper.cpp on VPS)
 - [ ] FA57 tts: "repeat that" voice command — re-play last TTS buffer without new LLM call

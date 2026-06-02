@@ -863,6 +863,10 @@ function beep(freq, dur) {
 
 const VISEME_STEP_MS = 90;
 const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
+const TTS_DB_NAME = 'master-tts-v1';
+const TTS_STORE = 'blobs';
+const TTS_DEFAULT_VOICE = 'ryan';
+let ttsDBPromise = null;
 
 function setTTSLoading(loading) {
   tts.loading = !!loading;
@@ -873,6 +877,66 @@ function setTTSLoading(loading) {
 function announceTTS(text) {
   if (!ttsLive) return;
   ttsLive.textContent = text.toString().slice(0, 500);
+}
+
+function ttsURL(text, voice) {
+  const qs = new URLSearchParams({ text });
+  if (voice) qs.set('voice', voice);
+  return `/chat/tts?${qs.toString()}`;
+}
+
+async function ttsCacheKey(text, voice) {
+  if (!window.crypto || !crypto.subtle || !window.TextEncoder) return null;
+  const material = `${voice || TTS_DEFAULT_VOICE}|auto|${text}`;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(material));
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function openTTSDB() {
+  if (!window.indexedDB) return Promise.resolve(null);
+  if (ttsDBPromise) return ttsDBPromise;
+  ttsDBPromise = new Promise((resolve) => {
+    const req = indexedDB.open(TTS_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(TTS_STORE)) db.createObjectStore(TTS_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+    req.onblocked = () => resolve(null);
+  });
+  return ttsDBPromise;
+}
+
+async function readCachedTTS(key) {
+  const db = await openTTSDB();
+  if (!db || !key) return null;
+  return new Promise((resolve) => {
+    const tx = db.transaction(TTS_STORE, 'readonly');
+    const req = tx.objectStore(TTS_STORE).get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+async function writeCachedTTS(key, blob) {
+  const db = await openTTSDB();
+  if (!db || !key || !blob) return;
+  try {
+    const tx = db.transaction(TTS_STORE, 'readwrite');
+    tx.objectStore(TTS_STORE).put(blob, key);
+  } catch (_) {}
+}
+
+async function loadTTSBlob(text, voice) {
+  const key = await ttsCacheKey(text, voice).catch(() => null);
+  const cached = key ? await readCachedTTS(key) : null;
+  if (cached) return cached;
+  const res = await fetch(ttsURL(text, voice));
+  if (!res.ok) throw new Error(res.status);
+  const blob = await res.blob();
+  writeCachedTTS(key, blob);
+  return blob;
 }
 
 const VOWEL_VISEME = { a:'A', e:'E', i:'I', o:'O', u:'U' };
@@ -890,9 +954,7 @@ function clearViseme() {
 
 function fetchTTS(text) {
   if (tts.serverUnavailable || tts.prefetch.has(text)) return;
-  const p = fetch(`/chat/tts?text=${encodeURIComponent(text)}`)
-    .then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
-    .catch(() => null);
+  const p = loadTTSBlob(text).catch(() => null);
   tts.prefetch.set(text, p);
 }
 
@@ -917,7 +979,7 @@ function ttsTick() {
   setTTSLoading(true);
   State.mode = 'speaking';
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
-  const pending = tts.prefetch.get(text) || fetch(`/chat/tts?text=${encodeURIComponent(text)}`).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); });
+  const pending = tts.prefetch.get(text) || loadTTSBlob(text);
   tts.prefetch.delete(text);
   if (tts.queue[0]) fetchTTS(tts.queue[0]);
   pending
@@ -1177,8 +1239,7 @@ function playDuo(lines, onDone) {
   if (!lines.length) { onDone?.(); return; }
   const [voice, text] = lines[0];
   const rest = lines.slice(1);
-  fetch(`/chat/tts?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(text)}`)
-    .then(r => r.ok ? r.blob() : Promise.reject())
+  loadTTSBlob(text, voice)
     .then(blob => {
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
@@ -1208,9 +1269,38 @@ function playDuo(lines, onDone) {
     .catch(() => playDuo(rest, onDone));
 }
 
+let visualEventSource = null;
+function handleGlobalBusEvent(payload) {
+  const data = payload && (payload.data || payload);
+  const type = payload && (payload.type || (data && (data.event || data.name)));
+  if (!type) return;
+  if (type === 'tts:anticipate') {
+    window.dispatchEvent(new CustomEvent('tts:anticipate', { detail: data }));
+  }
+  if (type === 'tts:style:active') {
+    window.dispatchEvent(new CustomEvent('master:visual', { detail: { ...data, name: type, raw: data } }));
+  }
+}
+
+function bindGlobalEventStream() {
+  if (!window.EventSource || visualEventSource) return;
+  try {
+    visualEventSource = new EventSource('/events/stream');
+    visualEventSource.onmessage = (ev) => {
+      try { handleGlobalBusEvent(JSON.parse(ev.data || '{}')); } catch (_) {}
+    };
+    visualEventSource.onerror = () => {
+      if (visualEventSource && visualEventSource.readyState === EventSource.CLOSED) visualEventSource = null;
+    };
+  } catch (_) {
+    visualEventSource = null;
+  }
+}
+
 function startEverything() {
   morphCurrent = 0.72; morphTarget = 1.08;
   initAudio();
+  bindGlobalEventStream();
   if (actx && actx.state === 'suspended') actx.resume();
   beep(880, 0.06);
   primer.style.transition = 'opacity 160ms ease, transform 160ms ease';
