@@ -70,6 +70,33 @@ class TestDeletedFilesAbsent < Minitest::Test
   end
 end
 
+class TestRulesYamlRegistry < Minitest::Test
+  REQUIRED_RULE_FIELDS = %w[id name tier severity autofix].freeze
+
+  def test_rules_yml_has_no_duplicate_rule_ids
+    ids = rules.map { |rule| rule["id"] }.compact
+    duplicates = ids.tally.select { |_, count| count > 1 }.keys
+
+    assert duplicates.empty?, "rules.yml has duplicate rule ids: #{duplicates.join(', ')}"
+  end
+
+  def test_rules_yml_entries_have_required_fields
+    missing = rules.filter_map do |rule|
+      absent = REQUIRED_RULE_FIELDS.reject { |field| rule.key?(field) }
+      "#{rule['id'] || '<missing id>'}: #{absent.join(', ')}" if absent.any?
+    end
+
+    assert missing.empty?, "rules.yml entries missing required fields: #{missing.join('; ')}"
+  end
+
+  private
+
+  def rules
+    data = YAML.load_file(File.join(DATA, "rules.yml"), aliases: true)
+    data.fetch("rules").values.flat_map { |entries| Array(entries) }
+  end
+end
+
 class TestClusterConsistency < Minitest::Test
   CLUSTER_FILES = %w[visual_clusters.yml mobile_web_opportunities.yml].freeze
 
