@@ -24,15 +24,13 @@ module Master
         end
 
         def scan(path, depth: :deep, rules: nil)
-          raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)" if FORBIDDEN_DEPTHS.include?(depth)
-          return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
+          validate_depth!(depth)
+          code = read_file(path)
+          return code if code.err?
 
-          code = File.read(path, encoding: "UTF-8")
-          @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
-          ast = parse_ruby(code, path)
-          rule_set = rules || active_rules(depth)
-          findings = rule_set.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
-          @bus&.publish("scan:complete", path:, depth:, count: findings.size)
+          ast = parse_ruby(code.value!, path)
+          findings = apply_rules(code.value!, ast, path, rules || active_rules(depth))
+          publish_scan_result(path, depth, findings)
           Result.ok(findings)
         rescue StandardError => e
           @bus&.publish("scan:error", path:, error: e.message)
@@ -40,25 +38,21 @@ module Master
         end
 
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
-          raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)" if FORBIDDEN_DEPTHS.include?(depth)
+          validate_depth!(depth)
           paths   = Dir.glob(File.join(dir, glob)).sort
-          results = Array.new(paths.size)
-          parallel_each(paths) { |path, idx| results[idx] = scan_one(dir:, path:, depth:, stream:) }
-          Result.ok(results)
+          Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
         rescue StandardError => e
           Result.err("scan_dir: #{e.message}", category: :infrastructure)
         end
 
         def scan_since(ref = "HEAD~1", dir: ".", depth: :deep, stream: false)
-          raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)" if FORBIDDEN_DEPTHS.include?(depth)
+          validate_depth!(depth)
           out, _, status = Open3.capture3("git", "-C", dir, "diff", "--name-only", "#{ref}...HEAD")
           return Result.err("git diff failed", category: :validation) unless status.success?
           paths = out.lines.map(&:strip).reject(&:empty?)
                     .map { |rel| File.join(dir, rel) }
                     .select { |p| File.exist?(p) && File.extname(p).match?(/\.(rb|erb|yml|js|css|sh|zsh)\z/) }
-          results = Array.new(paths.size)
-          parallel_each(paths) { |path, idx| results[idx] = scan_one(dir:, path:, depth:, stream:) }
-          Result.ok(results)
+          Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
         rescue StandardError => e
           Result.err("scan_since: #{e.message}", category: :infrastructure)
         end
@@ -75,6 +69,20 @@ module Master
 
         private
 
+        def validate_depth!(depth)
+          return unless FORBIDDEN_DEPTHS.include?(depth)
+
+          raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)"
+        end
+
+        def read_file(path)
+          return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
+
+          code = File.read(path, encoding: "UTF-8")
+          @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
+          Result.ok(code)
+        end
+
         def parse_ruby(code, path)
           return unless RUBY_EXT.include?(File.extname(path))
           result = Prism.parse(code)
@@ -82,6 +90,10 @@ module Master
         rescue StandardError => e
           @bus&.publish("scan:parse_error", path:, error: e.message)
           nil
+        end
+
+        def apply_rules(code, ast, path, rule_set)
+          rule_set.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
         end
 
         def run_rule(rule:, code:, ast:, path:)
@@ -92,28 +104,37 @@ module Master
           end
         end
 
-        def parallel_each(items)
+        def publish_scan_result(path, depth, findings)
+          @bus&.publish("scan:complete", path:, depth:, count: findings.size)
+        end
+
+        def parallel_map(items)
           cursor  = Mutex.new
           index   = 0
+          results = Array.new(items.size)
           threads = Array.new(POOL_SIZE) do
-            Thread.new do
+            Thread.new(results) do |thread_results|
               loop do
                 i = cursor.synchronize { (index += 1) - 1 }
                 break if i >= items.size
-                yield items[i], i
+                thread_results[i] = yield(items[i], i)
+              rescue StandardError => e
+                @bus&.publish("scanner:thread_error", path: items[i], index: i, error: e.message)
+                thread_results[i] = [items[i], Result.err(e.message, category: :infrastructure)]
               end
             end
           end
           threads.each(&:join)
+          results
         end
 
-        def scan_one(dir:, path:, depth:, stream:)
+        def scan_one(dir:, path:, depth:, stream:, index: nil)
           sleep @file_sleep_s if @file_sleep_s > 0
           file_result = scan(path, depth:)
           stream_progress(dir, path, file_result) if stream
           [path, file_result]
         rescue StandardError => e
-          @bus&.publish("scanner:thread_error", path:, error: e.message)
+          @bus&.publish("scanner:thread_error", path:, index:, error: e.message)
           [path, Result.err(e.message, category: :infrastructure)]
         end
 

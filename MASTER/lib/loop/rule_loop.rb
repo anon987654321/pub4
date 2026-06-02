@@ -83,26 +83,7 @@ module Master
         path = violation[:file]
         return unless File.exist?(path)
         src    = File.read(path, encoding: "UTF-8")
-        prompt = <<~PROMPT
-        #{preamble}
-
-        File: #{File.basename(path)}
-        Rule violated (severity: ERROR): #{violation[:rule]}
-        Line #{violation[:line]}: #{violation[:message]}
-        #{violation[:fix].to_s.empty? ? "" : "Suggested fix: #{violation[:fix]}"}
-
-        Three reviewers assess before any fix is applied:
-        As Skeptic: Is this a real violation or a false positive? What is the blast radius?
-        As Security: Does this create an attack surface? What must the fix preserve?
-        As Maintainer: What is the minimum change that eliminates the violation without drift?
-
-        Produce the corrected file only if all three agree the fix is safe.
-        If any reviewer would block, return exactly: UNCHANGED
-
-        ```
-        #{src}
-        ```
-      PROMPT
+        prompt = build_prompt_for(violation, src, path, style: :council)
         MAX_FIX_RETRIES.times do |attempt|
           sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
           response = @agent.ask(prompt).to_s
@@ -127,7 +108,7 @@ module Master
 
       # Architecture #5: unified diff patch — safe on large files.
       def diff_fix(violation, src, path)
-        prompt = build_diff_prompt(violation, src, path)
+        prompt = build_prompt_for(violation, src, path, style: :diff)
         MAX_FIX_RETRIES.times do |attempt|
           sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
           response = @agent.ask(prompt).to_s
@@ -145,7 +126,7 @@ module Master
       # Architecture #9: generate CANDIDATE_COUNT fixes, rescan each, apply lowest-violation winner.
       def genetic_fix(violation, src, path)
         ext    = File.extname(path).downcase
-        prompt = build_prompt(violation, src, path)
+        prompt = build_prompt_for(violation, src, path)
         candidates = CANDIDATE_COUNT.times.filter_map do |attempt|
           sleep RATE_LIMIT_SLEEP if attempt.positive?
           code = extract_code(@agent.ask(prompt).to_s, ext)
@@ -211,18 +192,20 @@ module Master
         :stop
       end
 
-      def build_prompt(violation, src, path)
+      def build_prompt_for(violation, src, path, style: :file)
         lang     = Master::Judge::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
         fix_hint = violation[:fix].to_s.strip
+        fix_line = fix_hint.empty? ? "" : "How to fix: #{fix_hint}"
+        action = prompt_action(style)
         <<~PROMPT
         #{preamble}
 
         File: #{File.basename(path)} (#{lang})
         Rule violated: #{violation[:rule]}
         Line #{violation[:line]}: #{violation[:message]}
-        #{fix_hint.empty? ? "" : "How to fix: #{fix_hint}"}
+        #{fix_line}
 
-        Return ONLY the corrected file. If unsafe to autofix, return exactly: UNCHANGED
+        #{action}
 
         ```#{lang}
         #{src}
@@ -230,24 +213,23 @@ module Master
       PROMPT
       end
 
-      def build_diff_prompt(violation, src, path)
-        lang     = Master::Judge::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
-        fix_hint = violation[:fix].to_s.strip
-        <<~PROMPT
-        #{preamble}
+      def prompt_action(style)
+        case style
+        when :council
+          <<~TEXT.chomp
+          Three reviewers assess before any fix is applied:
+          As Skeptic: Is this a real violation or a false positive? What is the blast radius?
+          As Security: Does this create an attack surface? What must the fix preserve?
+          As Maintainer: What is the minimum change that eliminates the violation without drift?
 
-        File: #{File.basename(path)} (#{lang})
-        Rule violated: #{violation[:rule]}
-        Line #{violation[:line]}: #{violation[:message]}
-        #{fix_hint.empty? ? "" : "How to fix: #{fix_hint}"}
-
-        Return a unified diff patch only (like `diff -u`). Fix only the violation.
-        If unsafe to autofix, return exactly: UNCHANGED
-
-        ```#{lang}
-        #{src}
-        ```
-      PROMPT
+          Produce the corrected file only if all three agree the fix is safe.
+          If any reviewer would block, return exactly: UNCHANGED
+          TEXT
+        when :diff
+          "Return a unified diff patch only (like `diff -u`). Fix only the violation.\nIf unsafe to autofix, return exactly: UNCHANGED"
+        else
+          "Return ONLY the corrected file. If unsafe to autofix, return exactly: UNCHANGED"
+        end
       end
 
       def preamble

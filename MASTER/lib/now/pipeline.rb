@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../loop/rollback"
 
 module Master
   module Now
     class Pipeline
-      ROLLBACK_CATEGORIES = %i[validation axiom_violation unknown provider_error llm_call_failure].freeze
       MS_PER_SECOND = 1000
-      ROLLBACK_MSG_TRUNCATE = 120
 
       attr_reader :last_timings
 
@@ -19,6 +17,7 @@ module Master
         @root         = root
         @orchestrator = orchestrator
         @scanner      = scanner
+        @rollback     = root ? Master::Loop::Rollback.new(root:, bus: @bus) : nil
       end
 
       def call(initial)
@@ -207,28 +206,7 @@ module Master
       end
 
       def maybe_rollback(result)
-        return unless rollback_eligible?(result)
-
-        category = result.category
-        tag = "master:rollback:#{category}:#{Process.pid}"
-        @bus&.publish("pipeline:rollback", category:, message: result.message[0, ROLLBACK_MSG_TRUNCATE], tag:)
-        Open3.capture2e("git", "-C", @root, "stash", "push", "-u", "-m", tag)
-        Open3.capture2e("git", "-C", @root, "reset", "--hard", "HEAD")
-      end
-
-      def rollback_eligible?(result)
-        return false unless result.is_a?(Master::Result::Err)
-        return false unless ROLLBACK_CATEGORIES.include?(result.category)
-        @root && git_workspace? && dirty?
-      end
-
-      def git_workspace?
-        @root && Dir.exist?(File.join(@root, ".git"))
-      end
-
-      def dirty?
-        out, _, st = Open3.capture3("git", "-C", @root, "status", "--porcelain")
-        st.success? && !out.strip.empty?
+        @rollback&.call(result)
       end
 
       def stage_label(stage)
