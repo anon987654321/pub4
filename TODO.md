@@ -3290,3 +3290,261 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] BA1306 No render-blocking on landing: zero `<script>` tags in `<head>` on landing layout; all JS `defer`; Stimulus connects after HTML painted; landing is usable before JS loads (wordmark + arrow visible immediately)
 - [ ] BA1307 Skeleton on feed: black skeleton cards `background: rgba(255,255,255,0.06); animation: shimmer-dark 1.4s ease-in-out infinite` with `@keyframes shimmer-dark { 0%, 100% { opacity: 0.5 } 50% { opacity: 1 } }` — dark-appropriate shimmer; not the light-mode grey shimmer
 
+
+## BB: brgen Vertical Deep-Dives
+
+### BB1: Dating — Swipe UX and Match Flow
+
+- [ ] BB101 Dating card deck: `app/views/dating/profiles/_card.html.erb` renders a stack of 3 cards; only top card is interactive; CSS `position: absolute; top: 0; left: 0; width: 100%; transition: transform 0.3s cubic-bezier(0.32,0.72,0,1)` — deck illusion via `translateY(4px) scale(0.97)` on second card, `translateY(8px) scale(0.94)` on third
+- [ ] BB102 Swipe gesture: Stimulus `swipe-controller.js` — `pointerdown` captures start X; `pointermove` applies `translateX(delta) rotate(delta/20deg)` live; `pointerup` with |delta|>80px commits like/pass; with |delta|<80px springs back via CSS transition
+- [ ] BB103 Like/pass decision: `POST /dating/likes` with `{target_id:, direction: "like"|"pass"}`; `DatingLike` model with dedup via `UNIQUE(liker_id, liked_id)`; mutual like → create `DatingMatch`; Turbo Stream triggers match modal
+- [ ] BB104 Match modal: full-screen overlay on mutual match; both user avatars animate toward center (CSS `keyframes slide-in-left/right`); "Det er en match!" headline; two CTAs — "Send melding" (opens chat) and "Fortsett å sveipe" (dismisses); modal auto-dismisses after 6s if untouched
+- [ ] BB105 Distance filter: `acts_as_tenant` scopes to city, but within-city distance uses `ST_Distance` on PostGIS-style lat/lon stored as REAL columns; slider 1–50km; `WHERE distance(lat, lon, :my_lat, :my_lon) <= :km` via SQLite custom function registered at boot
+- [ ] BB106 Age filter: two-thumb range slider (Stimulus `range-slider-controller.js`); `min_age` + `max_age` params; birthday stored, age derived via `(julianday('now') - julianday(birthday)) / 365.25`; CHECK constraint: age >= 18
+- [ ] BB107 Profile photos: up to 6 photos per dating profile; Active Storage `has_many_attached :photos`; drag-to-reorder via Stimulus `sortable-controller.js` (stimulus-components); primary photo is first in array; card shows photo at `object-fit: cover; aspect-ratio: 3/4`
+- [ ] BB108 Icebreaker prompts: 3 prompt slots per dating profile (like Hinge); `PromptResponse(dating_profile_id, prompt_id, body:text)`; prompts table seeded with 40 Norwegian-language prompts; rendered on card below photos with Q+A layout
+- [ ] BB109 Daily like limit: free users 20 likes/day; premium unlimited; `DailyLikeCounter` via Redis counter with midnight TTL; `RateLimitedError` renders Turbo Stream "Oppgradér til Premium for ubegrenset sveip" banner
+- [ ] BB110 Premium blur: non-matched profiles who liked you appear blurred in "Liker deg" grid; `filter: blur(12px)` + overlay CTA; unblur requires premium; `<img>` src still loads (intentional — blur is CSS, not hidden; faster feel)
+- [ ] BB111 Compatibility score: on match, compute score from shared tags + interests + distance + age gap; `CompatibilityScore#call(profile_a, profile_b)` returns 0–100; shown on match modal and in conversation header
+- [ ] BB112 Conversation starter AI: on match, MASTER generates 3 opening lines based on both profiles (icebreaker prompts + shared interests); shown as tap-to-send suggestions in new conversation; `POST /dating/matches/:id/suggestions` → streaming Turbo Stream
+- [ ] BB113 Video intro (future): dating profile may attach a 15s selfie video; Active Storage video variant transcoded to 720p H.264 via Active Storage ffmpeg processor; plays muted on card hover/tap; deferred to v2 — storage cost
+- [ ] BB114 Safety report flow: every profile has "Rapporter" link; `DatingReport(reporter_id, reported_id, category, body)`; categories: fake profil, upassende bilder, trakassering; auto-hides reported profile from reporter; MASTER scans report body; 3 reports in 24h → auto-suspend
+- [ ] BB115 Profile completeness nudge: `ProfileCompletenessScore#call(profile)` — 0-100; shown in profile edit as progress bar; items: photo (30), bio (20), 3 prompts (30), interests (20); incomplete profiles surface lower in deck sort
+
+### BB2: TV — Livestream Player and Schedule
+
+- [ ] BB201 TV player layout: full-bleed `<video>` tag; `object-fit: contain` on landscape, `cover` on portrait/mobile; custom controls overlay (no browser chrome); dark overlay `rgba(0,0,0,0.6)` on pause, transparent on play
+- [ ] BB202 HLS streaming: `hls.js` loaded via importmap; `Hls.isSupported()` → hls.js; else `video.src = m3u8` (Safari native HLS); `HLS_URL` per channel from Rails config; streams from Cloudflare Stream or self-hosted nginx-rtmp (future)
+- [ ] BB203 Channel rail: horizontal scroll rail below player; channel thumbnails 120×68px `aspect-ratio: 16/9`; active channel has 2px `outline: 2px solid #2563eb`; keyboard left/right arrows cycle channels; Stimulus `channel-rail-controller.js`
+- [ ] BB204 EPG (electronic programme guide): `Programme(channel_id, title, starts_at, ends_at, description, category)`; current programme shown in player overlay bottom-left; next programme shown as "Neste:" badge; EPG fetched from XMLTV feed importer (`EpgImportJob` runs hourly)
+- [ ] BB205 Chat alongside stream: `TvChatChannel` ActionCable; right panel chat (desktop) / bottom sheet (mobile); messages scroll up; max 200 messages in DOM (older removed); rate limit 1 msg/5s per user; MASTER moderates chat in background
+- [ ] BB206 Clip creation: "Klipp ut" button captures last 30s of HLS buffer; `MediaRecorder` API records from `<video>` element; client-side WebM blob; `POST /tv/clips` uploads blob + title + timestamp; clip stored via Active Storage; shared as post to brgen feed
+- [ ] BB207 Reaction bar: floating emoji row (❤️🔥😂👏🤔) below player; tap → emoji flies up in CSS animation (`@keyframes fly-up { to { transform: translateY(-80px); opacity: 0 } }`); `POST /tv/reactions` broadcasts count via CableReady; reaction counters update live
+- [ ] BB208 Offline notice: service worker caches EPG and last-known channel metadata; if stream fails, show "Sender ikke akkurat nå — neste sending: [time]"; EPG fallback from cache; no blank screen
+- [ ] BB209 Chromecast sender: `window.chrome.cast` available on Chrome; Cast button in player controls; streams HLS URL to Chromecast receiver; session management via Cast SDK; deferred to v2 (requires GCP Cast SDK key)
+- [ ] BB210 Thumbnail scrubbing: VTT sprite sheet generated on ingest for pre-recorded content; on seekbar hover, thumbnail preview matches hovered time position; `<canvas>` draws sprite crop at pointer position
+
+### BB3: Playlist — Social Music Features
+
+- [ ] BB301 Playlist model: `Playlist(user_id, title, description, cover_image, visibility: public|followers|private, play_count, like_count)`; `PlaylistTrack(playlist_id, track_id, position, added_by_id)` — tracks are ordered by `position` integer
+- [ ] BB302 Track model: `Track(title, artist, album, duration_seconds, isrc, spotify_uri, youtube_id, soundcloud_id, audio_url)`; ISRCs deduplicate across sources; `audio_url` is a self-hosted preview URL (30s MP3) from whatever source resolves first
+- [ ] BB303 Audio player: sticky bottom bar (desktop) / fullscreen player (mobile); Stimulus `player-controller.js` manages `<audio>` element; play/pause, seek, volume, skip; next track on `ended` event; queue is playlist tracks starting at selected index
+- [ ] BB304 Waveform visualisation: `Web Audio API` — `AudioContext.createAnalyser()` feeds canvas waveform draw loop; `requestAnimationFrame` updates 60fps; `canvas` overlays progress bar; on pause, last frame frozen; `OffscreenCanvas` in worker so main thread unblocked
+- [ ] BB305 Spotify import: `POST /playlists/import` accepts Spotify playlist URL; server fetches via Spotify Web API (OAuth2 token stored in session); maps Spotify tracks to `Track` records by ISRC; creates `Playlist` + `PlaylistTrack` records; reports import summary
+- [ ] BB306 Collaborative playlist: `Playlist#collaborators` — `has_many :playlist_collaborators`; collaborators can add/reorder/remove tracks; `PlaylistActivityChannel` broadcasts changes; all collaborators see live reorder; host can remove collaborator
+- [ ] BB307 Radio mode: "Radio basert på" — seeds from last 5 tracks; calls MASTER tool `music_recommend` which queries Last.fm similar tracks API; fills queue with 20 tracks; refreshes 5 tracks before queue exhausts; infinite radio feel
+- [ ] BB308 Social graph for playlists: playlist can be posted to brgen feed as a post type; renders embedded playlist card (cover + first 3 tracks + play button); play button opens full player without leaving feed; like/comment/share same as any post
+- [ ] BB309 Listening party: room-based synchronized playback; `ListeningParty(playlist_id, host_id, started_at, current_track_position)`; all party members sync to host's track position via ActionCable heartbeat every 2s; max 50 members per party
+- [ ] BB310 Lyrics display: `GET /tracks/:id/lyrics` fetches from Musixmatch API (free tier); stores in `track.lyrics_cache` JSON column with timed lines `[{time: 12.4, line: "..."}]`; Stimulus `lyrics-controller.js` highlights current line based on `<audio>.currentTime`
+
+### BB4: Takeaway — Order Flow
+
+- [ ] BB401 Restaurant model: `Restaurant(name, slug, city_id, cuisine_tags, min_order_nok, delivery_fee_nok, avg_delivery_min, open_now, latitude, longitude, rating_avg, rating_count)`; `acts_as_tenant` scopes to city
+- [ ] BB402 Menu model: `MenuCategory(restaurant_id, name, position)`; `MenuItem(category_id, name, description, price_ore, image, allergens_json, vegan, gluten_free, available)`; prices in øre (integer) — never floats for money
+- [ ] BB403 Cart via session: cart stored in encrypted Rails session (Solid Cache backed); `cart = {restaurant_id:, items: [{item_id:, quantity:, notes:}]}`; cross-restaurant add → prompt "Start ny ordre?" modal; cart clears on order placed
+- [ ] BB404 Order model: `Order(user_id, restaurant_id, status, subtotal_ore, delivery_fee_ore, tip_ore, total_ore, delivery_address_json, special_instructions, estimated_delivery_at)`; status enum: pending → confirmed → preparing → out_for_delivery → delivered | cancelled
+- [ ] BB405 Real-time order tracking: `OrderTrackingChannel` — restaurant broadcasts status changes; customer sees step indicators (Stimulus `order-status-controller.js`); estimated time countdown live; push notification on `out_for_delivery`
+- [ ] BB406 Stripe Checkout for takeaway: `OrdersController#create` builds Stripe Checkout session with line items from cart; success URL → `OrdersController#confirm`; webhook `checkout.session.completed` → `OrderConfirmJob` (creates Order, notifies restaurant)
+- [ ] BB407 Restaurant admin panel: `/restaurant_admin` namespace; orders queue sorted by `created_at`; per-order: confirm (sets `confirmed`), set ready time, mark `out_for_delivery`; Turbo Streams push new orders to queue without refresh; audio ping via `<audio src="/ping.mp3" data-order-target="ping">`
+- [ ] BB408 Delivery driver (future): `Driver` model; `OrderAssignment`; driver app (PWA) with geolocation tracking; customer sees driver on map; `DriverLocationChannel` broadcasts GPS every 5s; deferred — requires driver recruitment
+- [ ] BB409 Review after delivery: 24h after `delivered`, push notification / email: "Hvordan var maten?"; `OrderReview(order_id, rating 1-5, body)`; rating aggregated to `restaurant.rating_avg` via counter cache; review visible on restaurant page
+- [ ] BB410 Norwegian VAT: all prices include MVA (25% food); `price_ore` is VAT-inclusive; order receipt shows `subtotal_ex_vat`, `vat_amount`, `total_inc_vat`; Stripe invoice line items include `tax_rates` with NO 25% rate
+
+### BB5: Chat — Real-time Messaging
+
+- [ ] BB501 Conversation model: `Conversation(participant_ids_json, last_message_at, unread_counts_json)`; NOT using polymorphic — flat table; `ConversationParticipant(conversation_id, user_id, last_read_at)` for read receipts
+- [ ] BB502 Message model: `Message(conversation_id, sender_id, body, kind: text|image|file|reaction, parent_id, delivered_at, read_at, edited_at, deleted_at)`; soft delete — `deleted_at` set, body replaced with "Slettet melding"; parent_id for thread replies
+- [ ] BB503 Real-time delivery: `MessagesChannel` subscribed per-conversation; `Message.after_create_commit` broadcasts CableReady `append` to conversation stream; recipient's unread badge increments via separate `NotificationsChannel` broadcast
+- [ ] BB504 Message input: Stimulus `chat-input-controller.js`; `textarea` auto-grows (rows 1→6 max); `Enter` sends, `Shift+Enter` newline; `POST /conversations/:id/messages` Turbo Stream appends optimistically before server confirm; rollback on error
+- [ ] BB505 Read receipts: `MessagesChannel` receives `read` event when recipient scrolls message into viewport (`IntersectionObserver`); `PATCH /messages/:id/read` sets `read_at`; sender sees double-tick → blue-tick CSS class swap
+- [ ] BB506 Typing indicator: `channel.perform "typing"` on keypress (debounced 500ms); server broadcasts `typing_start` to other participants; Stimulus shows "skriver..." ephemeral indicator; auto-clears after 3s without new event
+- [ ] BB507 Image in chat: paste or attach photo; client `FileReader` previews immediately; `POST /conversations/:id/messages` with `kind: image` + blob upload; Active Storage stores; rendered as `<img loading="lazy">` in chat bubble; click → lightbox
+- [ ] BB508 Reaction to message: long-press / right-click message → emoji picker (`emoji-mart` lite); `POST /messages/:id/reactions`; CableReady `update` refreshes reaction row under message; same emoji from same user = toggle off
+- [ ] BB509 Message search: `FTS5` virtual table `messages_fts` mirrors `messages.body`; `GET /conversations/:id/search?q=` returns matching messages with highlighted snippets; results scroll conversation to matched message on click
+- [ ] BB510 Encryption (future): Signal Protocol via `libsodium` Ruby FFI; client generates key pair on first load; public key stored on server; messages encrypted client-side before POST; server stores ciphertext only; zero-knowledge; deferred to v2
+
+## BC: City Expansion Playbook
+
+### BC1: Domain and DNS Setup per City
+
+- [ ] BC101 Domain convention: flagship `brgen.no`; other cities follow `<cityname>.citynet.no` pattern; `losangeles.citynet.no`, `amsterdam.citynet.no`, `london.citynet.no`; register `citynet.no` as the parent domain at Domeneshop; wildcard DNS `*.citynet.no → server IP`
+- [ ] BC102 TLS wildcard cert: `acme-client` with Domeneshop DNS-01 challenge (API-based); single `*.citynet.no` cert covers all city subdomains without per-city cert renewal; stored at `/etc/ssl/citynet.no.crt` + `/etc/ssl/private/citynet.no.key`
+- [ ] BC103 relayd per-city routing: `relayd.conf` relays block matches `*.citynet.no` → brgen app (port 3000); host header preserved; `acts_as_tenant` reads `request.subdomain` to set tenant; add new city = add DNS record only, no relayd change
+- [ ] BC104 City model: `City(name, slug, country_code, latitude, longitude, timezone, locale, currency, launch_date, seed_status)`; slug = subdomain; `acts_as_tenant` keys on `city.id`; city record created before launch; seed_status: unseeded → seeded → live
+- [ ] BC105 City admin: `/admin/cities` CRUD; only `role: superadmin` accesses; per-city settings: `open_registration bool`, `moderation_level enum`, `featured_verticals json`; city toggle for verticals (Bergen has all 6, smaller cities may launch with just Regular + Chat)
+
+### BC2: Seed Content per City
+
+- [ ] BC201 Seed job: `CitySeedJob(city_id)` — creates 20 seed users, 100 posts across 5 content categories, 5 community guidelines posts pinned at top, 3 local business listings; runs once at `seed_status: unseeded → seeded`
+- [ ] BC202 Bergen seed: content sourced from r/bergen scrape (PRAW via Ruby subprocess); top 50 posts of all time; re-posted under anonymous seed accounts; Norwegian language filter (franc gem); PII stripped via MASTER scan; MASTER moderation gate before insert
+- [ ] BC203 Los Angeles seed: LA subreddits (r/LosAngeles, r/AskLosAngeles, r/LAlist); English-language posts; locale set to `en-US`; currency `USD`; Takeaway vertical maps to US food delivery market data (Yelp API free tier for restaurant seed)
+- [ ] BC204 Amsterdam seed: r/Amsterdam + r/thenetherlands; Dutch + English accepted; locale `nl-NL` with English fallback; `EUR` currency; cycling-related content heavily weighted (city identity); integration with Amsterdam OpenData API for POI seed
+- [ ] BC205 AI-assisted seed: for cities without strong Reddit presence, `CityContentJob` prompts MASTER with city facts (population, notable landmarks, industries) → generates 50 authentic-sounding local posts in city's language; marked `ai_generated: true` in metadata but not shown to users
+
+### BC3: RC.D and Infrastructure per City
+
+- [ ] BC301 Single brgen process: all cities run in one Rails process; `acts_as_tenant` tenant-switches per request; no per-city processes needed; horizontal scale = add more Puma/Falcon workers, not more processes
+- [ ] BC302 SQLite per city: each city has its own SQLite database file `db/cities/<slug>.sqlite3`; WAL mode; Litestream replicates each to R2 with `db_path: "db/cities/*.sqlite3"` glob; isolated — city A query never touches city B
+- [ ] BC303 Active Storage per city: `config.active_storage.service` set to `:local` with per-city subdirectory `storage/cities/<slug>/`; city switch middleware sets `ActiveStorage::Current.url_options` host; no cross-city attachment links possible
+- [ ] BC304 Launch checklist: DNS A record, TLS cert covers wildcard, City record created, seed job run, rc.d relayd config verified, smoke test `curl -I https://losangeles.citynet.no` → 200, announce in r/cityname post linking to new site
+- [ ] BC305 City metrics dashboard: `/admin/cities/:slug/metrics` — DAU, posts/day, messages/day, new signups/day, moderation actions/day; Solid Queue job counts; served from read replica if available; renders via Turbo Frame refresh every 60s
+
+## BD: repligen.rb + postpro.rb — Improvements and Integration
+
+### BD1: repligen.rb — Core Architecture
+
+- [ ] BD101 Move to MASTER/lib/reach/: repligen logic belongs in `reach/` alongside other external tool implementations; `DEPLOY/repligen.rb` becomes a thin CLI shim that `require`s `lib/reach/repligen/`; eliminates the MASTER-tool indirection
+- [ ] BD102 Result monad return: all generation methods return `Result.ok(output_path)` or `Result.err(message)` — aligns with pipeline monad; callers stop rescuing raw exceptions; consistent error surface across MASTER
+- [ ] BD103 Structured config via YAML: replace `CONFIG_PATH` JSON with `~/.config/repligen/config.yml`; supports multiple API profiles (dev token, prod token, team token); `Config#profile(name)` returns token; ENV overrides any profile
+- [ ] BD104 Database migrations: introduce `db/migrate/` pattern for repligen SQLite schema; `SchemaVersion` table tracks applied migrations; eliminates `CREATE TABLE IF NOT EXISTS` fragility; new columns added cleanly
+- [ ] BD105 Model cache TTL: models synced from Replicate expire after 24h (`synced_at` column); `Database#stale_models` returns models needing refresh; auto-refresh on next search if stale; eliminates showing removed/deprecated models
+- [ ] BD106 Async prediction polling: replace busy-wait polling loop with exponential backoff — 1s, 2s, 4s, 8s, 16s, max 30s; total timeout configurable; `PollTimeoutError` raised with prediction URL so user can check manually
+- [ ] BD107 Prediction persistence: store every prediction in `predictions` table `(id, model_id, input_json, output_json, status, cost_usd, duration_ms, created_at)`; enables cost tracking, retry failed predictions, audit trail
+- [ ] BD108 Cancel prediction: `DELETE /predictions/:id` via Replicate API; hooked to `Interrupt` signal (`trap("INT") { cancel_prediction(id); exit }`) — user Ctrl-C does not abandon a running $0.10+ prediction
+- [ ] BD109 Webhook mode: `repligen webhook start` launches a minimal Falcon HTTP server on port 54321; registers webhook URL with Replicate prediction; receives completion callback instead of polling; 5× faster for slow models (video, 3D)
+- [ ] BD110 Concurrent chain execution: chain steps that have no dependencies (e.g., 3 parallel style-transfer variants) run in `Ractor` workers; result array merged in order; total chain time = slowest parallel branch, not sum of all
+
+### BD2: repligen.rb — Model Discovery and Routing
+
+- [ ] BD201 Semantic model search: embed model descriptions via `sqlite-vec` (768-dim); `repligen search "cinematic film grain portrait"` returns top-5 by cosine similarity + keyword fallback; better discovery than pattern-match `MODEL_TYPES`
+- [ ] BD202 Cost-aware routing: `ModelRouter#select(type:, budget_usd:)` returns cheapest model of type that fits budget; `--budget 0.02` flag limits per-generation cost; safety net against accidental $5 video generation
+- [ ] BD203 Model benchmarks table: `benchmarks(model_id, quality_score, speed_score, cost_per_run, tested_at)` — populated by running a standard test prompt through each model and having MASTER score output 1-10; `repligen bench` command triggers benchmark sweep
+- [ ] BD204 Favourite models: `user_favourites(model_id, alias, default_params_json)`; `repligen fav add black-forest-labs/flux-schnell --alias flux`; `repligen gen flux "prompt"` expands alias and merges default params; `.repligen_aliases` file in home dir
+- [ ] BD205 Model changelog tracking: `model_versions(model_id, version, published_at, notes)` — repligen polls Replicate model API for version changes; notifies user when a favourite model updates; prevents silent quality regressions
+- [ ] BD206 Usage analytics: `repligen stats --this-month` reports: total runs, total cost, cost by model, cost by chain type, average generation time, success rate; exported as JSON or pretty table; aids budget planning
+- [ ] BD207 Model comparison: `repligen compare flux-schnell flux-dev "a red fox in snow"` — runs same prompt on both models; places outputs side-by-side in terminal (sixel/iTerm2 inline image) or opens in Preview; diff-friendly for quality evaluation
+- [ ] BD208 LoRA discovery: separate `loras` table for fine-tuned models; `repligen lora search "anime portrait"` queries Replicate LoRA collection; `repligen lora attach <base_model> <lora>` creates LoRA-applied prediction config; stored as chain template
+- [ ] BD209 Model health check: `repligen health` pings Replicate API, checks each saved model is still live (`status != "retired"`); reports retired models so user can replace them in chain templates; runs as part of weekly cron
+- [ ] BD210 Provider abstraction: `ModelProvider` base class with `ReplicateProvider`, `HuggingFaceProvider` (future), `FALProvider` (future) subclasses; same `generate(prompt:, params:)` interface; routing selects provider by model prefix; no lock-in to Replicate
+
+### BD3: repligen.rb — Chain Templates and Workflows
+
+- [ ] BD301 YAML chain definitions: move `CHAIN_TEMPLATES` from hardcoded Ruby hash to `~/.config/repligen/chains/` YAML files; `repligen chain list`, `chain run`, `chain edit`; user-editable without touching source
+- [ ] BD302 Chain dry-run: `repligen chain run masterpiece --dry-run "a foggy Oslo street"` prints planned steps with estimated cost and time without executing; confirms budget before committing to a $2 chain
+- [ ] BD303 Chain branching: chain step can specify `branches: 3` — runs 3 parallel variants; user picks best at end; selection stored as `selected_variant` in prediction record; winner fed to next step; creative exploration workflow
+- [ ] BD304 Chain checkpointing: each completed chain step saves output path to `chain_runs` table; `repligen chain resume <run_id>` restarts from last completed step; surviving a Ctrl-C mid-chain, network drop, or crash
+- [ ] BD305 Named output directories: `repligen gen flux "prompt" --out ~/Pictures/brgen-seed/` writes output to named path instead of default `~/.local/share/repligen/outputs/`; easier integration with postpro.rb and brgen seed pipeline
+- [ ] BD306 Batch prompts from file: `repligen batch flux prompts.txt --out ~/out/` reads one prompt per line; generates all; outputs named `001.png`, `002.png`...; progress bar via `tty-progressbar`; rate-limited to 10 concurrent
+- [ ] BD307 Prompt templates: `~/.config/repligen/prompts/portrait.txt` with `{subject}` placeholder; `repligen gen --template portrait subject="a Norwegian fisherman"` expands template; reusable prompt engineering
+- [ ] BD308 Style injection: `--style cinematic` appends style suffix from `~/.config/repligen/styles.yml` (`cinematic: ", shot on ARRI Alexa, anamorphic, 2.39:1, Kodak Vision3 500T colour grade"`); consistent aesthetic across batch
+- [ ] BD309 Negative prompt management: `~/.config/repligen/negatives.yml` stores named negative prompt sets; `--neg portrait` appends `ugly, deformed, extra limbs, watermark...`; avoids retyping long negatives; applied per model type
+- [ ] BD310 Seed pinning: `--seed 42` pins Replicate prediction seed for reproducibility; stored in prediction record; `repligen vary <prediction_id>` regenerates with same seed ±10 — explores prompt neighbourhood deterministically
+
+### BD4: repligen.rb + brgen Integration
+
+- [ ] BD401 Seed pipeline rake task: `rake brgen:seed:photos[city_slug,count]` calls repligen to generate `count` photos for city; uses city-specific prompt styles (`Bergen: "Norwegian fjord town, overcast Nordic light"`); outputs to `tmp/seed_photos/<city>/`
+- [ ] BD402 Avatar generation: `repligen gen flux "professional headshot, neutral background, Norwegian person, {gender}, age {age}"` seeded per user archetype; generated avatars assigned to seed users; avoids real-person photos in seed data
+- [ ] BD403 Listing photo generation: for seed marketplace listings, `repligen chain masterpiece "product: {title}, clean white background, e-commerce photography"` generates listing photos; metadata written to `listing.photos` via Active Storage import
+- [ ] BD404 postpro pipeline integration: repligen output directory watched by postpro; `postpro watch ~/repligen-outputs/ --stock kodak_portra --preset social` auto-processes new images; `postpro_job.rb` triggers on new Active Storage attachments
+- [ ] BD405 MASTER tool contract: `reach/repligen_tool.rb` wraps repligen CLI as MASTER tool; accepts `{prompt:, chain: "masterpiece"|"quick", style:, budget_usd:}`; returns `{output_path:, cost_usd:, duration_ms:}`; MASTER can autonomously generate images when asked
+- [ ] BD406 Cost guard in MASTER: MASTER tool contract enforces `budget_usd <= 0.50` per single generation call; above that requires `MASTER_UNSAFE_PROCESS_DEFAULTS=1`; prevents runaway generation costs in autonomous loops
+- [ ] BD407 Regeneration on low quality: MASTER scores repligen output via vision API (1-10); score < 6 → auto-regenerate with modified prompt (adjective swap, style tweak); max 3 retries; gives up with original if all retries fail
+- [ ] BD408 Output tagging: every repligen output tagged with SQLite metadata `(path, prompt, model, style, city, purpose: seed|avatar|listing|test, quality_score, created_at)`; queryable for audit and regeneration targeting
+- [ ] BD409 Preview in MASTER CLI: on image generation, MASTER CLI outputs sixel inline image if `$TERM` supports it (`xterm-kitty`, `iTerm2`); else outputs file path and opens with `xdg-open`/`open`; `preview_image` helper in `voice/renderer.rb`
+- [ ] BD410 brgen post from generation: `repligen post --city bergen "prompt"` → generates image → postpro → creates brgen post via API with generated image attached; full seed automation in one command
+
+### BD5: postpro.rb — Architecture Improvements
+
+- [ ] BD501 Move to MASTER/lib/reach/postpro/: same rationale as repligen; `reach/postpro/` module with `processor.rb`, `stocks.rb`, `presets.rb`, `pipeline.rb`; DEPLOY shim for standalone CLI use
+- [ ] BD502 Split STOCKS constant: `STOCKS` is a large constant inline in the file; extract to `data/film_stocks.yml`; `Stocks.load` reads YAML; allows user-defined custom stocks without editing source code
+- [ ] BD503 Pipeline class: `PostproPipeline.new(image_path, stock:, preset:)` with `#call` returning `Result.ok(output_path)`; replaces imperative script with composable pipeline; each step is a named method with single responsibility
+- [ ] BD504 Preset system: `data/presets.yml` — `social: {stock: kodak_portra, grain: 0.6, vignette: 0.3, lut: warm}`, `editorial: {stock: kodak_vision3, grain: 0.4, lut: cool}`, `raw_scan: {stock: fujichrome_velvia, grain: 0.8, halation: true}`; `postpro --preset social input.jpg`
+- [ ] BD505 Batch processing with progress: `postpro batch *.jpg --preset social --out processed/`; `tty-progressbar` shows per-file progress; parallel via `Parallel.map(..., in_threads: 4)` (parallel gem); thread-safe via per-thread Vips context
+- [ ] BD506 Watch mode: `postpro watch ~/Downloads/ --preset social` uses `Listen` gem to detect new `.jpg/.png/.webp` files; auto-processes on write; outputs to `~/Downloads/processed/`; useful for photographer tethered-capture workflows
+- [ ] BD507 Vips memory tuning: `Vips.cache_max_mem = 512 * 1024 * 1024` (512MB); `Vips.cache_max = 0` (disable op cache for batch, keeps memory predictable); explicit `image.destroy` after each file in batch; prevents OOM on large batches
+- [ ] BD508 OpenBSD compatibility: `pkg_add vips` installs libvips 8.15 on OpenBSD; `PostproBootstrap#probe_and_install_libvips` already has OpenBSD branch but uses `sudo` — replace with `doas`; test on server4
+- [ ] BD509 EXIF preservation: `image.set_type(Vips::BLOB, "exif-data", original_exif)` copies EXIF from original to output; prevents stripping GPS, camera model, and copyright tags; `--strip-exif` flag for privacy-conscious mode
+- [ ] BD510 Format routing: input `.jpg` → output `.jpg`; input `.png` → output `.png`; `.heic` → `.jpg` (HEIC decoded via vips-heif); `--format webp` override for web output; quality configurable per format (`--quality 88`)
+
+### BD6: postpro.rb — Film Stock and LUT Enhancements
+
+- [ ] BD601 Add Fujifilm Superia 400: `superia_400: { grain: 22, matrix: [...], hd: {...} }` — Fuji green bias in midtones, cooler shadows than Portra; common consumer film aesthetic; used for hjerterom app (community warmth with a Fuji twist)
+- [ ] BD602 Add Ilford HP5: monochrome stock; disable colour matrix; grain `sigma: 28`; `hd` curves push contrast: `Dmin 0.08, Dmax 0.88, gamma 1.3`; `convert_to_greyscale` step before curve application; baibl app (scripture) uses HP5 for archival aesthetic
+- [ ] BD603 Add Polaroid 600: strong vignette hardwired; colour bleed simulation via box-blur ×3 on chroma channel before matrix; `matrix: [1.06, -0.04, -0.02, ...]` warm shift; border rendering (white rectangle via `Vips::Image.black(w+80, h+100)` composite)
+- [ ] BD604 Add Agfa Vista 200: vivid saturation, slight magenta push in shadows; `hd.r: [0.04, 0.96, 0.18, 1.15]`; higher gamma than Portra; used for amber app (fashion photography — punchy colours)
+- [ ] BD605 Halation simulation: light bleed from bright areas into shadows in film; implement as: `highlights = image.more_than(220)` → Gaussian blur radius 12 → tint `rgba(255, 120, 80, 0.25)` → `screen` blend onto original; toggle via `halation: true` in stock definition
+- [ ] BD606 Cross-process emulation: `--xpro` flag; applies slide film curve to negative stock or vice versa; signature: boosted saturation, shifted colours (skin tones go orange-green), crushed blacks; one-click cross-processing aesthetic
+- [ ] BD607 Faded vintage: `--faded` flag; raises blacks by 15 (lifts shadows), reduces contrast by 10%, adds slight warm yellow to shadows (`shadow_tint: [255, 245, 220, 0.08]`); Instagram-era aesthetic on demand
+- [ ] BD608 LUT support: `--lut path/to/identity.cube` loads 3D LUT (32×32×32 or 64×64×64); applies via trilinear interpolation in pure Ruby (Vips does not natively load `.cube`); `lut_to_vips_lut` converter; standard DaVinci/Resolve LUTs work
+- [ ] BD609 Split toning: `--shadow-tint "#1a3a5c" --highlight-tint "#f5e6c8"` — shadows tinted blue-navy, highlights tinted warm parchment; implemented as `luminosity_mask` blend; cinema split-toning in one flag pair
+- [ ] BD610 Per-channel curve editor: `postpro curve input.jpg` opens ASCII curve editor (tty-prompt matrix); user adjusts R/G/B S-curve control points interactively; saves named curve preset to `~/.config/postpro/curves/`; applies to batch
+
+### BD7: postpro.rb — Processing Pipeline Steps
+
+- [ ] BD701 Adaptive contrast (CLAHE): tile-based local contrast enhancement before global curve; `tile_size: 64`, `clip_limit: 2.0`; implemented via `Vips::Image#spcor` + local statistics; recovers flat-lit repligen outputs; `clarity: 0.4` controls blend weight
+- [ ] BD702 Selective sharpening: sharpen only mid-frequency detail (not grain); implement as `unsharp_mask(sigma: 1.5, amount: 0.6) - unsharp_mask(sigma: 0.5, amount: 0.6)` to avoid sharpening noise; applied before grain addition
+- [ ] BD703 Skin tone protection: detect skin pixels via `Cr ∈ [133,173] && Cb ∈ [77,127]` in YCbCr space; mask skin region; reduce saturation boost and grain weight in skin mask by 40%; prevents Portra grain making portraits look gritty
+- [ ] BD704 Sky detection and enhancement: `sky_mask = image.band(1).more_than(image.band(2))` (blue channel dominates) + luminance filter; within sky mask: slight gradient from warmer horizon to cooler zenith; enhances landscape shots from repligen
+- [ ] BD705 Highlight recovery: if repligen output has clipped highlights (>253 in any channel), apply `highlight_rolloff` — Filmic-style shoulder: `f(x) = x / (1 + x * k)` with `k = 0.5`; recovers blown whites into near-white without harsh clipping
+- [ ] BD706 Shadow lift: adjustable `--shadow-lift 0.04` lifts black point; removes crushed blacks in contrasty repligen outputs; combined with highlight recovery gives natural DR even on poorly exposed AI images
+- [ ] BD707 Chromatic aberration: `--ca` flag; lateral CA simulation — red channel shifted `+0.3px` right, blue `-0.3px` left via `affine`; subtle optical character; stronger on edges (distance from centre weighted); off by default
+- [ ] BD708 Lens vignette: `VignettePipeline` generates smooth radial mask `1 - (r/R)^2.5 * strength`; multiplied onto image; `--vignette 0.35` is default for all stocks; shape option `--vignette-shape oval|circular`
+- [ ] BD709 Dust and scratch: `--dust` overlays semi-transparent scratch texture (pre-computed PNG at 2048×2048 in `data/textures/dust.png`); random offset and rotation per image; adds physicality to AI-generated images
+- [ ] BD710 Output metadata: writes `postpro_manifest.json` alongside output: `{input:, output:, stock:, preset:, steps_applied:[], processing_time_ms:, vips_version:, postpro_version:}`; enables reproducibility and audit
+
+### BD8: postpro.rb — Quality and Benchmarking
+
+- [ ] BD801 BRISQUE score: `brisque` pure-Ruby implementation (no OpenCV); no-reference perceptual quality score 0-100 (lower = better); auto-reject outputs scoring >45 (visibly degraded); report score in manifest
+- [ ] BD802 SSIM comparison: when `--compare original.jpg processed.jpg` flag used, compute SSIM (structural similarity) to verify processing preserves content; useful for regression testing stock parameter changes
+- [ ] BD803 A/B preview: `postpro preview input.jpg --stock portra --stock velvia` renders split-screen comparison via Vips `join`; outputs `comparison.jpg` or sixel if terminal supports; quick stock selection without processing full batch
+- [ ] BD804 Regression test suite: `postpro test` runs all stocks against 5 reference images (portrait, landscape, product, street, night); compares outputs against golden files (perceptual hash threshold <8); fails CI if stock behaviour changed unintentionally
+- [ ] BD805 Performance profiling: `--profile` flag wraps each pipeline step in `Process.clock_gettime` measurement; reports per-step time in manifest; identifies bottlenecks (grain simulation is typically 60% of runtime)
+- [ ] BD806 Grain optimisation: grain currently generated fresh per image; cache grain texture for same `(width, height, sigma, seed)` tuple in `~/.cache/postpro/grain/`; 3× faster batch processing when same grain params reused across images
+- [ ] BD807 GPU acceleration via Vips: `Vips::Operation.block_untrusted` ensures safe operations only; `Vips.get("vips-concurrency") = 4` aligns with Falcon worker count; `--gpu` flag enables Vips CUDA path if libvips compiled with CUDA (not OpenBSD)
+- [ ] BD808 Memory-mapped input: for images >50MP, `Vips::Image.new_from_file(path, access: :sequential)` streams pixels instead of loading fully; prevents 2GB+ RAM spikes on large repligen outputs (SDXL at 2048×2048 = 12MB but upscaled 4× = 192MB)
+- [ ] BD809 Error recovery: if Vips crashes mid-pipeline (SIGABRT on corrupt JPEG), `postpro batch` catches via subprocess isolation; marks file as `failed` in manifest; continues with remaining files; failed files reported in summary
+- [ ] BD810 Automated quality uplift preset: `--preset quality_uplift` — applies in order: adaptive contrast (CLAHE 0.3), selective sharpen (0.5), highlight recovery (0.5), shadow lift (0.03), Portra light grain (sigma 10), vignette (0.2), BRISQUE check; designed specifically for improving mediocre AI outputs to gallery quality
+
+### BD9: postpro.rb + brgen Active Storage Integration
+
+- [ ] BD901 PostproJob: `PostproJob(attachment_id, preset:)` — Solid Queue job; downloads attachment blob; runs postpro pipeline; re-uploads processed version as new variant; marks original attachment `postprocessed_at: Time.now`
+- [ ] BD902 Auto-trigger on upload: `Photo.after_create_commit { PostproJob.perform_later(id, preset: "social") }` — every brgen photo upload gets cinematic treatment automatically; users never need to invoke postpro manually
+- [ ] BD903 Preset selection by context: `dating` profile photos → `preset: portrait` (skin protection, soft grain); `marketplace` listing photos → `preset: product` (clarity, white lift, sharpness); `feed` photos → `preset: social`; preset resolved by controller context
+- [ ] BD904 Variant caching: processed variant stored as separate Active Storage blob; original preserved; `image_tag photo.processed_variant` served from Cloudflare cache; re-process only on stock/preset change via `postprocessed_preset` column
+- [ ] BD905 Progress feedback: Stimulus `upload-controller.js` shows upload progress → "bearbeides..." spinner while `PostproJob` runs → Turbo Stream swaps preview when done; user sees live transition from raw to processed
+- [ ] BD906 Before/after toggle: on photo detail view, "Se original" button toggles between processed and raw via Turbo Frame; satisfies curiosity; never shown in feed (processed always preferred)
+- [ ] BD907 Stock selection per city: `City.film_stock` column; Bergen → `:kodak_portra`; LA → `:kodak_vision3`; Amsterdam → `:fujichrome_velvia`; postpro uses city's stock for all uploads from that city; city identity in every photo
+- [ ] BD908 Moderation-safe processing: postpro does NOT alter image content (no removal of objects, no face editing); purely colour/grain; safe from "altered evidence" concerns if photos used in reports; documented in privacy policy
+- [ ] BD909 Thumbnail postpro: Active Storage `variant` chain: `resize_to_limit [800, 800]` → `convert "webp"` → `quality 85`; postpro applied to full-res only, not thumbnails (expensive); thumbnails cropped from postpro output, not from original
+- [ ] BD910 Repligen→postpro→brgen pipeline: `SeedGenerationJob` orchestrates: (1) repligen generates `n` images per city; (2) postpro applies city stock preset; (3) Active Storage import attaches to seed posts; (4) posts published to city feed; fully automated city seeding
+
+## BE: Competitive Differentiation — brgen vs X and Facebook
+
+### BE1: What X and Facebook Cannot Do
+
+- [ ] BE101 True city isolation: X and Facebook are global graphs — no architectural guarantee that LA content won't surface in Bergen; brgen enforces isolation at SQL layer via `acts_as_tenant`; a Bergen user literally cannot see LA data, by construction
+- [ ] BE102 OLED-native design: X.com dark mode uses `#15202b` (dark blue-grey); Facebook dark uses `#18191a` (off-black); brgen uses `#000000` — actual OLED black, 100% pixel-off; 20-40% battery saving on AMOLED phones — a measurable, marketable difference
+- [ ] BE103 Constitutional AI moderation: X relies on Community Notes (crowd-sourced, slow, gameable); Facebook on Oversight Board (political, opaque); MASTER enforces a machine-readable soul.yml with ABSOLUTE/PROTECTED tiers — moderation logic is auditable open-source code, not policy documents
+- [ ] BE104 Anonymous-first: X requires phone number for new accounts; Facebook requires real name + identity verification pushes; brgen allows 2 posts anonymously before signup — lower barrier than any mainstream alternative
+- [ ] BE105 Hyperlocal verticals in one app: X tried Spaces, Shops, Jobs — all bolted-on, poorly integrated; Facebook has Marketplace, Groups, Dating — separate products with different UX languages; brgen's verticals share one design system, one feed, one account — coherent by architecture
+- [ ] BE106 Gesture-hidden navigation: X and Facebook have persistent bottom nav bars consuming 56px; brgen landing has no persistent nav — appears only on intentional gesture; the entire screen is content; especially powerful on small phones
+- [ ] BE107 No algorithmic engagement traps: brgen feed is chronological + distance-weighted — what's near + recent; X's algorithm optimises for engagement (outrage); Facebook EdgeRank optimises for ad revenue; brgen's ranking function is open-source and documented
+- [ ] BE108 City-native content: a Bergen-born social network understands Bergen humour, local politics, dialect; X's globalisation erases local context; brgen seed content, moderation prompts, and UI copy are city-specific — not translated English
+- [ ] BE109 No surveillance advertising: brgen monetises via Vipps/Stripe subscription (Premium) and local business promoted posts; no ad auction, no tracking pixels, no retargeting; GDPR-native because there's nothing to comply about — no ad data collected
+- [ ] BE110 Open stack: Rails + SQLite + OpenBSD — entirely auditable; X is closed-source; Facebook is closed-source; brgen's entire stack can be self-hosted by a city council wanting their own instance; cities can fork and run
+
+### BE2: Specific UX Innovations to Develop
+
+- [ ] BE201 Spring-physics reveal: swipe-down (or scroll or tilt) reveals nav with `cubic-bezier(0.32, 0.72, 0, 1)` spring; feels physical, not linear; X and Facebook use `ease-in-out` transitions — mechanical by comparison; brgen's gesture should feel like lifting a veil
+- [ ] BE202 Right-edge fade nav: the horizontal nav rail fades to nothing at right edge via `mask-image: linear-gradient(to right, black 70%, transparent 100%)`; implies more content beyond; X's nav is hard-edged horizontal scroll — brgen's implies depth
+- [ ] BE203 Tiptap longform + feed coexistence: X is limited to 280 chars (paid 25K); Facebook composer is basic WYSIWYG; brgen has Tiptap — full rich text, embeds, polls, code blocks — in the same feed as short posts; one composer for all formats
+- [ ] BE204 Near-me default: brgen's default feed is "within 5km of you" not "what's trending globally"; no setting required; geo-permission triggers default near-me; this is the inverse of X/Facebook's global-first default
+- [ ] BE205 Community guidelines as pinned posts: first posts in a new city feed are the community guidelines, formatted as regular posts (not terms-of-service PDF); users can like/discuss the rules; guidelines are living documents that the community shapes
+- [ ] BE206 Soft anonymity with trust levels: anonymous users can see all public content but can only post 2 times; verified users (phone) have green tick; premium users have blue; trust level shown as subtle icon, not aggressive badge; trust earns permissions, not status
+- [ ] BE207 AI summaries of hot threads: on threads with >20 replies, "Vis sammendrag" button → MASTER summarises thread in 3 sentences via streaming Turbo Stream; X has Grok summaries (US only, paid); Facebook has no equivalent; brgen's is free and local-language-aware
+- [ ] BE208 Dating that knows your neighbourhood: brgen Dating profiles include "bydel" (neighbourhood); matches default to same bydel or adjacent; you might walk past your match at Narvesen — that hyperlocality is unachievable on Tinder (global) or Facebook Dating (city-level only)
+- [ ] BE209 Playlist as social object: sharing a Spotify playlist on X posts a link; on Facebook it's a preview card; on brgen, a playlist is a first-class post type with embedded player, collaborative editing, and listening-party room — fundamentally richer
+- [ ] BE210 Takeaway with community reviews: Takeaway.com and Foodora show aggregate star ratings; brgen's Takeaway shows reviews from people in your bydel — neighbours you might know; hyperlocal trust signal stronger than anonymous crowd reviews
+
+### BE3: Features to Build First (Competitive Priority)
+
+- [ ] BE301 P1 — City isolation proof: implement and prominently document the per-city SQLite architecture; publish the open-source isolation guarantee; this is the foundational differentiator all others depend on
+- [ ] BE302 P1 — OLED landing page: ship the `#000` landing with spring-physics nav before any other feature; first impression sets the contrast with X/Facebook immediately; 1 developer × 2 days
+- [ ] BE303 P1 — Tiptap composer: longform native in a social network is the anti-X move; ship the composer with image attach and @mention as the first interaction users have with posting; defines the product as substantive over reactive
+- [ ] BE304 P2 — Anonymous post gate: 2-post limit with MASTER moderation gate; enables cold-start user acquisition (no signup friction) while maintaining quality; X and Facebook both require account first
+- [ ] BE305 P2 — Bergen seed content: 100 authentic Bergen posts make the city feel alive at launch; nothing kills a new social network faster than an empty feed; seed before any public announcement
+- [ ] BE306 P2 — Near-me feed: the geo-default feed is the killer feature for daily engagement; schedule and bus routes, local events, neighbourhood news — content X and Facebook algorithmically suppress as "low engagement"
+- [ ] BE307 P3 — Dating vertical: hyperlocal dating is defensible (Tinder can't do bydel-level isolation); ship after core feed is established; requires enough DAU in a city to have viable match pools (target: 500+ registered users per city before soft-launching Dating)
+- [ ] BE308 P3 — AI thread summaries: ship after MASTER prompt caching is implemented (AM107 prerequisite); then cost is $0.07/turn not $0.73; streaming summary in thread is delightful and unprecedented in any local social network
+- [ ] BE309 P4 — Listening parties: ship when Playlist has >1K DAU; social features require density; premature if playlist itself is underused
+- [ ] BE310 P4 — Takeaway full ordering: requires restaurant partner acquisition; ship as soon as 3 Bergen restaurants agree to pilot; Vipps integration unlocks Norwegian market; Stripe for international cities
