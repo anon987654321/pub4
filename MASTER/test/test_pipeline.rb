@@ -79,6 +79,7 @@ class TestPipeline < Minitest::Test
 
   def test_deploy_gate_blocks_when_self_scan_has_violations
     Dir.mktmpdir do |dir|
+      write_rules(dir)
       bus = FakeBus.new
       scanner = FakeScanner.new([{ rule: "SELF_RULE", line: 1, message: "violation" }])
       pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
@@ -92,6 +93,36 @@ class TestPipeline < Minitest::Test
     end
   end
 
+  def test_deploy_gate_blocks_when_evidence_score_is_too_low
+    Dir.mktmpdir do |dir|
+      write_rules(dir)
+      scanner = FakeScanner.new([])
+      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:)
+
+      result = pipe.call(Master::Result.ok(user_message: "deploy now"))
+
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_match(/evidence score 25 below 80/, result.message)
+    end
+  end
+
+  def test_deploy_gate_passes_with_enough_evidence
+    Dir.mktmpdir do |dir|
+      write_rules(dir)
+      scanner = FakeScanner.new([])
+      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:)
+
+      result = pipe.call(Master::Result.ok(
+        user_message: "deploy now",
+        metadata: { evidence: { test_pass: true, code_review: true } }
+      ))
+
+      assert result.ok?
+      assert_equal "ok", result.value![:output]
+    end
+  end
+
   def test_deploy_gate_skips_non_deploy_messages
     Dir.mktmpdir do |dir|
       scanner = FakeScanner.new([{ rule: "SELF_RULE", line: 1, message: "violation" }])
@@ -102,5 +133,19 @@ class TestPipeline < Minitest::Test
       assert result.ok?
       assert_equal "ok", result.value![:output]
     end
+  end
+
+  private
+
+  def write_rules(root)
+    FileUtils.mkdir_p(File.join(root, "data"))
+    File.write(File.join(root, "data", "rules.yml"), <<~YAML)
+      evidence_scoring:
+        weights:
+          test_pass: 35
+          scan_clean: 25
+          code_review: 20
+        pass_threshold: 80
+    YAML
   end
 end

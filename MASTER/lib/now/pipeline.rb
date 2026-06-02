@@ -128,14 +128,47 @@ module Master
         return Result.err(result.message, category: :infrastructure) unless result.ok?
 
         summary = result.value!
-        return Result.ok(ctx) if summary.violation_count.zero?
+        score = evidence_score(summary, ctx)
+        @bus&.publish("pipeline:evidence_score", score:, threshold: evidence_threshold, violations: summary.violation_count)
 
-        @bus&.publish("pipeline:blocked", gate: "self_scan", violations: summary.violation_count)
-        Result.err("deploy blocked: self-scan has #{summary.violation_count} violation(s)", category: :policy)
+        if summary.violation_count.positive?
+          @bus&.publish("pipeline:blocked", gate: "self_scan", violations: summary.violation_count, score:)
+          return Result.err("deploy blocked: self-scan has #{summary.violation_count} violation(s)", category: :policy)
+        end
+
+        return Result.ok(ctx) if score >= evidence_threshold
+
+        @bus&.publish("pipeline:blocked", gate: "evidence_score", violations: 0, score:)
+        Result.err("deploy blocked: evidence score #{score} below #{evidence_threshold}", category: :policy)
       end
 
       def deploy_intent?(ctx)
         [ctx[:user_message], ctx[:message], ctx[:command], ctx[:task_type]].compact.any? { |value| value.to_s.match?(DEPLOY_RE) }
+      end
+
+      def evidence_score(summary, ctx)
+        weights = evidence_weights
+        evidence = ctx[:metadata].is_a?(Hash) ? (ctx[:metadata][:evidence] || ctx[:metadata]["evidence"] || {}) : {}
+        score = summary.violation_count.zero? ? weights.fetch("scan_clean", 0).to_i : 0
+        evidence.each do |key, value|
+          score += weights.fetch(key.to_s, 0).to_i if value
+        end
+        score
+      end
+
+      def evidence_weights
+        evidence_config.fetch("weights", {})
+      end
+
+      def evidence_threshold
+        evidence_config.fetch("pass_threshold", 80).to_i
+      end
+
+      def evidence_config
+        @evidence_config ||= Master.load_yaml(File.join(@root || Master::ROOT, "data", "rules.yml"))
+                                   .fetch("evidence_scoring", {})
+      rescue StandardError
+        {}
       end
 
       def run_stage(stage, ctx, timings)

@@ -84,7 +84,7 @@ Every section of rules.yml that isn't implemented in Ruby.
 - [x] E01 Finding#rule_id: findings should carry the exact rules.yml ID string (e.g. "SECRET_PROXIMITY"), not Ruby class name
 - [x] E02 SemanticRule findings: include the specific rules.yml ID that triggered, not "semantic"
 - [x] E03 Prediction engine: RuleLoop#should_autofix? already exists in scanner.rb — wire it into RuleLoop before applying any fix
-- [ ] E04 evidence_scoring: Pipeline should accumulate scan_clean (25 pts) and require ≥80 to ship
+- [x] E04 evidence_scoring: Pipeline should accumulate scan_clean (25 pts) and require ≥80 to ship
 - [x] E05 failure_taxonomy: RuleLoop transient retry (already TRANSIENT_RE) — add permanent/ambiguous branches with fail_fast and human_intervention
 - [ ] E06 principle_priorities tier1: halt pipeline on PRESERVE_FIRST/DECOUPLE/DEGRADE_GRACEFULLY violation
 - [ ] E07 principle_priorities tier2: route DRY/KISS/SRP violations to RuleLoop automatically
@@ -162,7 +162,7 @@ RuleCoverageRule: every Rule subclass needs a test file.
 - [ ] H14 Test for AstFixer: .freeze append on mutable constant (C03)
 - [ ] H15 Self-scan test: MASTER scans its own lib/, expects zero violations
 - [ ] H16 Idempotency test: scan + fix + scan produces same result as scan + fix + fix + scan
-- [ ] H17 Test for evidence_scoring gate (scan_clean:25 weight, pass_threshold: 80)
+- [x] H17 Test for evidence_scoring gate (scan_clean:25 weight, pass_threshold: 80)
 - [ ] H18 Test for failure_taxonomy: transient errors retry ≤3, permanent errors fail immediately
 - [ ] H19 Test for SINGULARITY: rules.yml has no duplicate IDs
 - [ ] H20 Test for phantom_recovery: gaslighting preamble discards response and retries
@@ -181,7 +181,7 @@ RuleCoverageRule: every Rule subclass needs a test file.
 ## J. Pipeline and convergence integrity
 
 - [ ] J01 FixLoop: add cycle detector — if same violation appears N≥3 times across passes, stop and escalate
-- [ ] J02 Pipeline: wire evidence_scoring — scan_clean(25) + test_pass(35) ≥80 gates the :deploy stage
+- [x] J02 Pipeline: wire evidence_scoring — scan_clean(25) + test_pass(35) ≥80 gates the :deploy stage
 - [ ] J03 Pipeline: tier1_critical rules → halt with rollback on violation, not just :err status
 - [ ] J04 RuleLoop: genetic_fix must reject candidates that increase violation count vs original (not just differ)
 - [ ] J05 Loop::Governor: verify pressure detection accounts for OpenBSD vmm memory (no swap, 1GB RAM)
@@ -403,7 +403,7 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 - [ ] P701 rule_deps.yml exists but fix_loop ordered_rules doesn't use it — sort rules by topological order of dep graph
 - [ ] P702 AstFixer runs before rubocop in fast_pass — but rubocop may undo some AstFixer changes — run AstFixer after rubocop
 - [ ] P703 SemanticRule runs on every file even when lexical rules already caught the violation — skip semantic if file has unresolved lexical errors first
-- [ ] P704 Evidence scoring (scan_clean: 25 pts, pass_threshold: 80) from rules.yml — wire into Pipeline as a gate before :deploy stage
+- [x] P704 Evidence scoring (scan_clean: 25 pts, pass_threshold: 80) from rules.yml — wire into Pipeline as a gate before :deploy stage
 - [ ] P705 tier1_critical rules (PRESERVE_FIRST, DECOUPLE, etc.) should halt pipeline, not just emit :err — wire principle_priorities tier1 to Pipeline halt
 
 ---
@@ -4206,7 +4206,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] CA01 MASTER: boot-time self-scan of `lib/` with all rules (block startup on violations)
 - [ ] CA02 MASTER: add `/self` command to scan MASTER itself on demand
 - [ ] CA03 MASTER: add `rules.yml` SINGULARITY check (no duplicate rule IDs) on boot
-- [ ] CA04 MASTER: wire `evidence_scoring` gate — require ≥80 points to deploy
+- [x] CA04 MASTER: wire `evidence_scoring` gate — require ≥80 points to deploy
 - [ ] CA05 MASTER: add `phantom_recovery` detector for LLM hallucinations (gaslighting preamble, repetition)
 - [ ] CA06 MASTER: implement `voice/soul_drift_detector` to enforce banned phrases removal
 - [ ] CA07 MASTER: add `--dry-run` flag to scan/fix commands
