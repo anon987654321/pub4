@@ -359,7 +359,7 @@ module Master
           findings = []
           findings.concat(scan_lines(src, /\beval\(.*\$\{|\beval\(.*user/i, message: "eval with user input — arbitrary code execution"))
           findings.concat(scan_lines(src, /\brm\s+-rf\s+\/(?!\w)/, message: "rm -rf / — data loss"))
-          findings.concat(scan_lines(src, /Marshal\.load\b/, message: "Marshal.load — deserialization RCE vector"))
+          findings.concat(scan_lines(src, /Marshal[.]load\b/, message: "Marshal load — deserialization RCE vector"))
           findings.concat(scan_lines(src, /\bopen\(.*#\{/, message: "open() with interpolation — shell injection via Kernel#open"))
           findings
         end
