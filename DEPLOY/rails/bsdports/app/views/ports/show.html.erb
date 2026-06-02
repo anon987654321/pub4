@@ -38,6 +38,26 @@
     </ul>
   <% end %>
 
+  <h2>CVEs / Security advisories</h2>
+  <% if @advisories&.any? %>
+    <ul>
+      <% @advisories.each do |adv| %>
+        <li>
+          <% if adv.nvd_url %>
+            <%= link_to adv.identifier, adv.nvd_url, target: "_blank" %>
+          <% else %>
+            <%= adv.identifier %>
+          <% end %>
+          <small><%= adv.severity %></small>
+          <small><%= adv.published_at&.strftime("%Y-%m-%d") %></small>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>No CVEs cross-referenced yet.</p>
+  <% end %>
+  <%= button_to "Cross-reference with NVD", crossref_cves_port_path(@port), method: :post %>
+
   <nav>
     <% if authenticated? %>
       <% if @watching %>
