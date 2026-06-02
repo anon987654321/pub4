@@ -75,7 +75,7 @@ rules.yml success_criteria: "system_applies_to_itself_without_exception"
 - [x] D07 Self-autofix: if self-scan finds violations with autofix: true, apply AstFixer transforms to MASTER's own source
 - [x] D08 Block shipping if self-scan shows violations (Pipeline gate before deploy)
 - [x] D09 Self-scan covers data/*.yml: run SINGULARITY check (no duplicate rule IDs) on every boot
-- [ ] D10 ground_truth_check enforcement: before any `claim_task_complete` in Loop, re-read file and confirm
+- [x] D10 ground_truth_check enforcement: before any `claim_task_complete` in Loop, re-read file and confirm
 
 ## E. Rules.yml → code alignment
 

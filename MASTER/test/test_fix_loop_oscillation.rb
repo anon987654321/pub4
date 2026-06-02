@@ -83,6 +83,9 @@ class TestFixLoopOscillation < Minitest::Test
     assert result.ok?
     osc = @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
     assert_empty osc
+    events = @bus.events.map { |event| event[:event] }
+    assert_includes events, "fix_loop:ground_truth_ok"
+    assert events.index("fix_loop:ground_truth_ok") < events.index("fix_loop:clean")
   end
 
   def test_oscillation_fires_once_not_every_pass

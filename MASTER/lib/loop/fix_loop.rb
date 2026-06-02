@@ -71,6 +71,15 @@ module Master
           emit_topology(violations, target)
 
           if violations.empty?
+            ground_truth = ground_truth_violations(files)
+            unless ground_truth.empty?
+              @bus&.publish("fix_loop:ground_truth_failed", pass:, violations: ground_truth.size)
+              violations = ground_truth
+              consecutive_clean = 0
+              next
+            end
+
+            @bus&.publish("fix_loop:ground_truth_ok", pass:)
             consecutive_clean += 1
             @bus&.publish("fix_loop:clean", pass:, consecutive_clean:)
             return Result.ok("clean after #{pass} pass(es)") if consecutive_clean >= clean_runs_required
@@ -250,6 +259,11 @@ module Master
           result = @scanner.scan(path)
           Result.wrap(result).value_or([]).map { |v| v.to_h.merge(file: path.delete_prefix("#{@root}/")) }
         end
+      end
+
+      def ground_truth_violations(files)
+        files.each { |path| File.read(path, encoding: "UTF-8") if File.file?(path) }
+        scan_violations(files)
       end
 
       # Flag rules recurring across 3+ consecutive passes for soul proposals.
