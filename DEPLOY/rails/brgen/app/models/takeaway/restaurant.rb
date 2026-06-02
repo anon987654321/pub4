@@ -5,6 +5,7 @@ class Takeaway::Restaurant < ApplicationRecord
   has_many :menu_items, class_name: "Takeaway::MenuItem", dependent: :destroy
   has_many :orders, class_name: "Takeaway::Order", dependent: :destroy
   has_many :favorites, class_name: "Takeaway::FavoriteRestaurant", dependent: :destroy
+  has_many :reviews, class_name: "Takeaway::Review", dependent: :destroy
 
   CUISINE_TYPES = %w[Norwegian Italian Chinese Japanese Indian Thai Mexican Pizza Burger Kebab Sushi Vegetarian Vegan].freeze
   CENTS_PER_KRONE = 100.0
@@ -29,7 +30,7 @@ class Takeaway::Restaurant < ApplicationRecord
   end
 
   def update_rating!
-    avg = orders.joins(:reviews).average("takeaway_reviews.rating") rescue nil
+    avg = reviews.average(:rating)
     update_columns(rating: avg&.round(1) || 0)
   end
 end

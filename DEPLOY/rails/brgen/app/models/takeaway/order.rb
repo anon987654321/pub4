@@ -4,6 +4,7 @@ class Takeaway::Order < ApplicationRecord
   belongs_to :user
   belongs_to :restaurant, class_name: "Takeaway::Restaurant"
   has_many :order_items, class_name: "Takeaway::OrderItem", dependent: :destroy
+  has_many :reviews, class_name: "Takeaway::Review", dependent: :destroy
 
   STATUSES = %w[pending confirmed preparing out_for_delivery delivered cancelled].freeze
   TERMINAL_STATUSES = %w[delivered cancelled].freeze
