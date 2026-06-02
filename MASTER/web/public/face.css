@@ -270,7 +270,7 @@ body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 #zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
 #zsh input::placeholder { color: rgba(220,220,220,.25); }
 
-/* Closed-caption strip (FA141) — driven by TTS word-boundary proxy under face */
+/* Closed-caption strip (FA141) */
 #tts-live {
   position: fixed;
   left: 0;
@@ -287,6 +287,38 @@ body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
   max-height: 2.5em;
   overflow: hidden;
 }
+
+/* Inline status text — shows thinking/speaking inside the prompt bar */
+#zsh-status {
+  font: 9px/1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  color: var(--face-muted);
+  opacity: 0;
+  transition: opacity .2s;
+  white-space: nowrap;
+  pointer-events: none;
+  margin-left: 4px;
+}
+body[data-mode="thinking"] #zsh-status { opacity: .7; }
+body[data-mode="speaking"] #zsh-status { opacity: 1; }
+body[data-tts-error="true"] #zsh-status { opacity: 1; color: #c44; }
+
+/* Cancel button — appears during thinking/speaking */
+#cancel-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--face-muted);
+  font: 14px/1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+  opacity: .45;
+  transition: opacity .1s;
+}
+#cancel-btn:hover { opacity: 1; color: var(--face-fg); }
+body[data-mode="thinking"] #cancel-btn,
+body[data-mode="speaking"] #cancel-btn { display: block; }
 
 :focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
 

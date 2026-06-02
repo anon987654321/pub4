@@ -11,6 +11,11 @@ let _streamEl = null;
 let _evtSrc = null;
 let _pendingPhoto = null;
 
+window._chatCancel = () => {
+  if (_evtSrc) { try { _evtSrc.close(); } catch (_) {} _evtSrc = null; }
+  window._chatOnError?.();
+};
+
 function appendMsg(role, text = '') {
   const d = document.createElement('div');
   d.className = 'message ' + role;

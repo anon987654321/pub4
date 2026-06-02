@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=18') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=22') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -98,6 +98,19 @@ const State = {
 };
 
 rootBody.dataset.highContrast = State.highContrast ? '1' : '';
+
+// Sync State.mode to body[data-mode] and #zsh-status for CSS-driven status visibility.
+let _stateMode = 'idle';
+Object.defineProperty(State, 'mode', {
+  get() { return _stateMode; },
+  set(v) {
+    _stateMode = v;
+    rootBody.dataset.mode = v;
+    const s = document.getElementById('zsh-status');
+    if (s) s.textContent = (v === 'idle' || v === 'error' || v === 'listening') ? '' : v;
+  },
+  configurable: true
+});
 
 function updateRuntimeProfile() {
   State.hidden = document.hidden;
@@ -418,8 +431,8 @@ varying vec3 vColor;
 void main(){
   float d=length(gl_PointCoord-0.5);
   if(d>0.5)discard;
-  float soft=1.-d*2.;
-  gl_FragColor=vec4(vColor,soft*soft*vAlpha);
+  float soft=smoothstep(0.5,0.18,d);
+  gl_FragColor=vec4(vColor,soft*vAlpha);
 }`;
 
 let faceGeom, faceMat, facePoints;
@@ -674,29 +687,31 @@ function beep(freq, dur) {
 // J Dilla ambient pads — Web Audio PolySynth, no Tone.js dependency.
 // Chord voicings ported from dilla_pads.html. Starts muted, fades in after boot.
 const DILLA_PROGS = {
-  time_donut: [['Db2','Ab3','C4','Eb4','F4'],['C2','Bb3','Eb4','G4','D5'],['F2','Eb3','Ab3','C4','G4'],['Bb1','Ab3','Db4','F4','C5']],
-  players:    [['Eb3','Gb3','Bb3','Db4'],['Ab3','B3','Eb4','Gb4'],['F3','Ab3','C4','Eb4'],['Bb3','Db4','F4','Ab4']],
-  fall:       [['Bb3','Db4','F4'],['Ab3','C4','Eb4'],['F3','Ab3','C4','Eb4'],['F3','Ab3','C4']],
-  ela:        [['D3','F3','A3','C4','E4'],['E3','G3','B3','D4'],['C#3','E3','G#3','B3']],
-  hold:       [['C3','E3','G3'],['Db3','F3','Ab3'],['G3','B3','D4'],['F3','A3','C4'],['Bb3','D4','F4']]
+  fm_drift:  [['F3','Ab3','C4','Eb4','G4'],['Db3','F3','Ab3','C4','Eb4'],['C3','Eb3','G3','Bb3','D4'],['Eb3','G3','Bb3','D4','F4']],
+  ab_modal:  [['Ab3','C4','Eb4','G4','Bb4'],['G3','Bb3','D4','F4','A4'],['D3','F3','A3','C4','E4'],['A2','C3','E3','G3','B3']],
+  altered:   [['C3','Db3','G3','Bb3','Eb4'],['B2','D3','F3','A3','C4'],['E3','G3','Bb3','D4','F4'],['Bb2','Db3','F3','Ab3','C4']],
+  deep_void: [['A2','C3','E3','G3','B3'],['Gb2','Bb2','Db3','F3','Ab3'],['Bb2','Db3','F3','Ab3','C4'],['C3','Eb3','G3','Bb3','D4']]
 };
 const DILLA_LIST = [
-  { n: 'time_donut', t: 72, l: 4 }, { n: 'players', t: 94, l: 3 },
-  { n: 'fall', t: 92, l: 3 },       { n: 'ela', t: 92, l: 2 },
-  { n: 'hold', t: 97, l: 2 }
+  { n: 'fm_drift',  t: 58, l: 3 },
+  { n: 'ab_modal',  t: 64, l: 3 },
+  { n: 'altered',   t: 60, l: 2 },
+  { n: 'deep_void', t: 56, l: 3 }
 ];
 function noteToHz(n) {
   const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  const m = n.match(/^([A-G]#?)(\d)$/);
+  const flats = { Db:'C#', Eb:'D#', Fb:'E', Gb:'F#', Ab:'G#', Bb:'A#', Cb:'B' };
+  const m = n.match(/^([A-G][b#]?)(\d)$/);
   if (!m) return 220;
-  const oct = parseInt(m[2]), semi = names.indexOf(m[1]);
+  const name = flats[m[1]] || m[1], oct = parseInt(m[2]), semi = names.indexOf(name);
+  if (semi < 0) return 220;
   return 440 * Math.pow(2, (oct * 12 + semi - 57) / 12);
 }
 const dilla = { idx: 0, beat: 0, timer: null, gain: null, rev: null };
 function dillaPlayChord(notes, beatLen) {
   if (!actx || !dilla.gain) return;
   const now = actx.currentTime;
-  const att = 1.4, rel = beatLen * 0.9;
+  const att = 2.4, rel = beatLen * 0.9;
   notes.forEach(n => {
     const hz = noteToHz(n);
     const o1 = actx.createOscillator(), o2 = actx.createOscillator();
@@ -704,8 +719,8 @@ function dillaPlayChord(notes, beatLen) {
     o1.type = 'triangle'; o1.frequency.value = hz;
     o2.type = 'sine';     o2.frequency.value = hz * 1.5;
     g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(0.06, now + att);
-    g.gain.setValueAtTime(0.06, now + beatLen - 0.1);
+    g.gain.linearRampToValueAtTime(0.04, now + att);
+    g.gain.setValueAtTime(0.04, now + beatLen - 0.1);
     g.gain.linearRampToValueAtTime(0, now + beatLen + rel);
     o1.connect(g); o2.connect(g); g.connect(dilla.rev || dilla.gain);
     o1.start(now); o2.start(now);
@@ -743,7 +758,7 @@ function dillaStart() {
   shaper.curve = curve; shaper.oversample = '4x';
   dilla.gain.connect(shaper); shaper.connect(actx.destination);
 
-  dilla.gain.gain.linearRampToValueAtTime(0.04, actx.currentTime + 4);
+  dilla.gain.gain.linearRampToValueAtTime(0.012, actx.currentTime + 4);
   dillaAdvance();
 }
 function dillaStop() {
@@ -821,9 +836,12 @@ function ttsTick() {
         if (actx.state === 'suspended') actx.resume();
         try {
           const msrc = actx.createMediaElementSource(audio);
+          const boost = actx.createGain();
+          boost.gain.value = 1.8;
           const analyser = actx.createAnalyser();
           analyser.fftSize = 256;
-          msrc.connect(analyser);
+          msrc.connect(boost);
+          boost.connect(analyser);
           analyser.connect(actx.destination);
           tts.analyser = analyser;
           tts.analyserBuf = new Uint8Array(analyser.fftSize);
@@ -844,7 +862,12 @@ function ttsTick() {
       };
       return audio.play();
     })
-    .catch(() => { tts.audio = null; tts.playing = false; setTTSLoading(false); if (token === tts.cancelToken) ttsTick(); });
+    .catch(() => {
+      tts.audio = null; tts.playing = false; setTTSLoading(false);
+      const s = document.getElementById('zsh-status');
+      if (s) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
+      if (token === tts.cancelToken) ttsTick();
+    });
 }
 
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
@@ -889,6 +912,14 @@ function ttsToggleMute() {
   tts.muted = !tts.muted;
   if (tts.muted) ttsSkip();
   beep(tts.muted ? 220 : 880, 0.05);
+}
+
+function cancelStream() {
+  if (evtSrc) { try { evtSrc.close(); } catch (_) {} evtSrc = null; }
+  window._chatCancel?.();
+  ttsSkip();
+  State.mode = 'idle';
+  State.flash = 0.2;
 }
 
 let recognition = null;
@@ -1110,8 +1141,10 @@ zshBar.addEventListener('submit', (e) => {
 });
 zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
 
+document.getElementById('cancel-btn')?.addEventListener('click', () => cancelStream());
+
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') ttsSkip();
+  if (e.key === 'Escape') { e.preventDefault(); cancelStream(); }
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }
 });
 
