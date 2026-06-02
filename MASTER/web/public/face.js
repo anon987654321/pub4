@@ -563,26 +563,8 @@ function beep(freq, dur) {
   o.start(); o.stop(actx.currentTime + dur);
 }
 
-// Primary voice is the server-rendered Osman neural model (soul.yml voice:
-// ms-MY-OsmanNeural, GET /chat/tts). Browser speechSynthesis is the fallback
-// only — server.unavailable flips once on 403/501/503 so we stop retrying.
 const VISEME_STEP_MS = 90;
-const LOCAL_RATE = 0.95;
-const LOCAL_PITCH = 0.92;
-const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, voice: null, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
-
-function pickVoice() {
-  const list = speechSynthesis.getVoices();
-  if (!list.length) return;
-  tts.voice = list.find(v => /ms[-_]MY/i.test(v.lang))
-           || list.find(v => /en[-_](GB|US)/i.test(v.lang) && /male|osman|daniel|alex/i.test(v.name))
-           || list.find(v => /en[-_]/i.test(v.lang))
-           || list[0];
-}
-if ('speechSynthesis' in window) {
-  pickVoice();
-  speechSynthesis.onvoiceschanged = pickVoice;
-}
+const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
 
 const VOWEL_VISEME = { a:'A', e:'E', i:'I', o:'O', u:'U' };
 
@@ -622,10 +604,9 @@ function ttsTick() {
   if (!text) return;
   tts.playing = true;
   State.mode = 'speaking';
-  if (tts.serverUnavailable) { speakLocal(text); return; }
+  if (tts.serverUnavailable) { tts.playing = false; ttsTick(); return; }
   const pending = tts.prefetch.get(text) || fetch(`/chat/tts?text=${encodeURIComponent(text)}`).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); });
   tts.prefetch.delete(text);
-  // Start prefetching next in queue immediately
   if (tts.queue[0]) fetchTTS(tts.queue[0]);
   pending
     .then(blob => {
@@ -658,7 +639,7 @@ function ttsTick() {
       };
       return audio.play();
     })
-    .catch(() => { tts.audio = null; tts.playing = false; speakLocal(text); });
+    .catch(() => { tts.audio = null; tts.playing = false; ttsTick(); });
 }
 
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
@@ -677,26 +658,7 @@ function stopVisemeAnim() {
   if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; }
 }
 
-// Browser speechSynthesis fallback (generic OS voice, word-boundary visemes).
-function speakLocal(text) {
-  if (!('speechSynthesis' in window)) { tts.playing = false; if (State.mode === 'speaking') State.mode = 'idle'; ttsTick(); return; }
-  const u = new SpeechSynthesisUtterance(text);
-  if (tts.voice) u.voice = tts.voice;
-  u.rate = LOCAL_RATE; u.pitch = LOCAL_PITCH;
-  tts.current = u;
-  u.onboundary = (ev) => setViseme(text.charAt(ev.charIndex || 0));
-  u.onend = () => {
-    tts.playing = false; tts.current = null;
-    clearViseme();
-    if (State.mode === 'speaking') State.mode = 'idle';
-    ttsTick();
-  };
-  u.onerror = u.onend;
-  try { speechSynthesis.speak(u); } catch (_) { tts.playing = false; }
-}
-
 function ttsSkip() {
-  try { speechSynthesis.cancel(); } catch (_) {}
   if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
   stopVisemeAnim();
   tts.queue.length = 0; tts.prefetch.clear(); tts.playing = false; tts.current = null;
@@ -955,7 +917,7 @@ window.MASTERVoice = {
   enqueue: enqueueSpeech,
   skip: ttsSkip,
   toggleMute: ttsToggleMute,
-  speak: speakLocal,
+  speak: (t) => enqueueSpeech(t),
   get muted() { return tts.muted; },
   get playing() { return tts.playing; },
   get voice() { return tts.voice; },
