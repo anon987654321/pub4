@@ -14,6 +14,8 @@ module Master
         RUBY_EXT = %w[.rb .rake .gemspec].freeze
         FORBIDDEN_DEPTHS = %i[quick standard shallow].freeze
 
+        attr_reader :rules
+
         def initialize(rules: nil, event_bus: nil, file_sleep_s: 0)
           @rules = Array(rules)
           @bus = event_bus

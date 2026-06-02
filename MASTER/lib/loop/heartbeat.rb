@@ -124,13 +124,12 @@ module Master
       def run_self_test
         return "no scanner" unless @scanner
 
-        target = File.join(@root, "lib")
-        result = @scanner.scan_dir(target, depth: :deep)
+        result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call
         return "scan failed" unless Result.wrap(result).ok?
 
-        count = result.value!.sum { |_, fr| Result.wrap(fr).value_or([]).size }
-        @bus&.publish("heartbeat:self_test", violations: count)
-        "self-test: #{count} violations"
+        summary = result.value!
+        @bus&.publish("heartbeat:self_test", violations: summary.violation_count)
+        summary.line
       end
 
       def prune_undo_journal

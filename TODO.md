@@ -66,9 +66,9 @@ Rules marked `autofix: true` whose transform isn't in lib/judge/scan/ast_fixer.r
 
 rules.yml success_criteria: "system_applies_to_itself_without_exception"
 
-- [ ] D01 Boot-time self-scan: on `master start`, scan lib/ with all registered rules; publish self_violation on any finding
-- [ ] D02 Boot dmesg line: emit `judge: lib/ N rules, M violations` in 5-line boot banner
-- [ ] D03 /self command: scan MASTER's lib/ on demand, print dmesg-style report to stdout
+- [x] D01 Boot-time self-scan: on `master start`, scan lib/ with all registered rules; publish self_violation on any finding
+- [x] D02 Boot dmesg line: emit `judge: lib/ N rules, M violations` in 5-line boot banner
+- [x] D03 /self command: scan MASTER's lib/ on demand, print dmesg-style report to stdout
 - [ ] D04 self_test section wiring: ROBUSTNESS (bare rescue check), SINGULARITY (duplicate rule IDs), LINEARITY (nesting depth), PROXIMITY (test files co-located), ABSTRACTION (no god class), DENSITY (no long method)
 - [ ] D05 Self-violation event: `self_violation` event on bus stops the loop until fixed
 - [ ] D06 Periodic self-scan via Loop::Heartbeat: schedule lib/ rescan every 60 minutes

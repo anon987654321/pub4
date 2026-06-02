@@ -24,7 +24,7 @@ module Master
       }.freeze
       SLASH_COMMANDS = %w[
         /help /exit /quit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
-        /ui-critique /sound-critique /rebuild /context /checkpoint /verify /rails-pwa-audit /rails-pwa-fix /swallow-report
+        /self /ui-critique /sound-critique /rebuild /context /checkpoint /verify /rails-pwa-audit /rails-pwa-fix /swallow-report
       ].freeze
 
       attr_reader :container
@@ -222,6 +222,7 @@ module Master
         when "/propose" then run_propose
         when "/principles" then run_principles
         when "/restart" then run_restart
+        when "/self" then run_self_scan
         when "/ui-critique" then run_ui_critique
         when "/sound-critique" then run_sound_critique
         when "/rebuild" then run_rebuild
@@ -373,23 +374,24 @@ module Master
       end
 
       def boot_scan
-        lib_dir = File.join(@root, "lib")
-        changed = changed_lib_files(lib_dir)
-        result = changed.any? ? scan_files(changed) : @scanner.scan_dir(lib_dir, depth: :deep)
+        result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call
         return unless result.is_a?(Master::Result) && result.ok?
 
         prev = @prev_violations
-        @violations = count_violations(result.value!)
+        summary = result.value!
+        @violations = summary.violation_count
         @prev_violations = @violations
-        return if @violations.zero? && prev.zero?
-
-        delta = @violations - prev
-        arrow = delta.zero? ? "·" : (delta.positive? ? "↑" : "↓")
         puts
-        puts @renderer.render("boot scan: #{prev} #{arrow} #{@violations} violation(s)", mode: :dim)
+        puts @renderer.render(summary.line, mode: :dim)
         puts
       rescue StandardError => e
         @bus&.publish("cli:warn", error: e.message)
+      end
+
+      def run_self_scan
+        result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call(stream: true)
+        line = result.ok? ? result.value!.line : result.message
+        puts @renderer.render(line, mode: result.ok? ? :dim : :warning)
       end
 
       def changed_lib_files(lib_dir)

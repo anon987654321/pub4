@@ -26,6 +26,7 @@ module Master
         metrics = infra[:metrics]
         {
           "scan" => cmd(:dispatch_scan, scanner, root),
+          "self" => ->(_ctx) { dispatch_self(scanner:, root:, bus:) },
           "fix" => ->(ctx) { dispatch_fix(fix_loop, root, arg_for(ctx)) },
           "status" => ->(_c) { dispatch_status(root:, fix_loop:, bus:) },
           "resync" => ->(c) { dispatch_resync(root:, fix_loop:, arg: arg_for(c)) },
@@ -40,6 +41,13 @@ module Master
           "propose-tree" => ->(_ctx) { propose_tree&.call || "propose-tree: not wired" },
           "ecology" => ->(ctx) { dispatch_ecology(ecology, arg_for(ctx)) }
         }
+      end
+
+      def dispatch_self(scanner:, root:, bus:)
+        result = Master::Judge::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(stream: true)
+        return result.message unless result.ok?
+
+        result.value!.line
       end
 
       # /status — one-frame health panel. Replaces seven probing tool calls.
