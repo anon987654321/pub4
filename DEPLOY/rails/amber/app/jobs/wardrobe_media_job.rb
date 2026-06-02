@@ -6,7 +6,7 @@ require "rbconfig"
 class WardrobeMediaJob < ApplicationJob
   queue_as :media
 
-  VARIANTS = {
+  VARIANTS = {.freeze
     thumb: { resize_to_limit: [240, 240] },
     card: { resize_to_limit: [720, 960] },
   }.freeze
@@ -38,7 +38,7 @@ class WardrobeMediaJob < ApplicationJob
           tmp_in.close!
           tmp_out.close!
         end
-      rescue => e
+      rescue StandardError => e
         Rails.logger.warn("auto postpro failed for item #{item.id}: #{e.message}")
       end
     end
