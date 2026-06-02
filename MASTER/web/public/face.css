@@ -52,6 +52,41 @@ canvas {
   transition: filter var(--transition-fast) ease;
 }
 
+body.face-loading::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(220,220,220,.18), transparent 22%),
+    repeating-linear-gradient(0deg, rgba(220,220,220,.06) 0 1px, transparent 1px 4px),
+    #000;
+  opacity: .72;
+  animation: faceBootPulse 900ms steps(6,end) infinite;
+}
+
+body.face-ready::before {
+  opacity: 0;
+  animation: none;
+  transition: opacity var(--transition-normal) ease;
+}
+
+body[data-tts-loading="true"] .ui-status {
+  opacity: .9;
+  animation: ttsPulse 620ms steps(4,end) infinite;
+}
+
+@keyframes faceBootPulse {
+  0%, 100% { opacity: .42; }
+  50% { opacity: .78; }
+}
+
+@keyframes ttsPulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
 /* Top-left logo — Radio Bergen style */
 .top-left-logo {
   position: fixed;
@@ -229,7 +264,16 @@ body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 :focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms; animation-iteration-count: 1; scroll-behavior: auto; transition-duration: .01ms; }
+  *, *::before, *::after {
+    animation: none;
+    scroll-behavior: auto;
+    transition: none;
+  }
+
+  body.face-loading::before {
+    background: #000;
+    opacity: .35;
+  }
 }
 
 @media (min-width: 48rem) {

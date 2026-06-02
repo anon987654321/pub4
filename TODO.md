@@ -453,19 +453,19 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 ### Q4. Web UI — face.js (particle 3D face)
 
 - [ ] Q401 face.js is 1,286 lines — split into face/particles.js, face/audio.js, face/expressions.js, face/tts.js, face/main.js
-- [ ] Q402 No requestAnimationFrame pause on document.hidden — wastes CPU/battery on background tabs; add visibilitychange listener
-- [ ] Q403 Audio analyser samples every frame regardless of playback state — skip analysis when !tts.playing
+- [x] Q402 No requestAnimationFrame pause on document.hidden — wastes CPU/battery on background tabs; add visibilitychange listener
+- [x] Q403 Audio analyser samples every frame regardless of playback state — skip analysis when !tts.playing
 - [ ] Q404 analyserBuf allocated once but analyserFreqBuf re-checked — unify allocation in initAudio()
 - [ ] Q405 Canvas not responsive to container resize — add ResizeObserver to reset canvas dimensions
-- [ ] Q406 No loading state: blank canvas while face.js initializes — add CSS skeleton or fade-in on first frame
+- [x] Q406 No loading state: blank canvas while face.js initializes — add CSS skeleton or fade-in on first frame
 - [ ] Q407 Particle count hardcoded — scale N_PARTICLES based on device pixel ratio and screen area
 - [ ] Q408 THREE.js conditionally imported but never used — remove dead import or commit to 3D
-- [ ] Q409 prefers-reduced-motion: JS checks matchMedia but CSS message animations don't check it — add @media (prefers-reduced-motion: reduce) to face.css
+- [x] Q409 prefers-reduced-motion: JS checks matchMedia but CSS message animations don't check it — add @media (prefers-reduced-motion: reduce) to face.css
 - [ ] Q410 Face expression transitions are hard cuts — add linear interpolation (lerp) between expression parameters
 - [ ] Q411 Boot greeting Osman → Pernille plays serially with no overlap — cross-fade or chain via onended
 - [ ] Q412 Speaker identity not visually distinct in particle color/motion between Osman and Pernille — wire persona color palette
-- [ ] Q413 No visual "fetching TTS" indicator between sentence end and audio start — add a brief pulse animation
-- [ ] Q414 Canvas aria-hidden=true but no aria-live region announces TTS text to screen readers
+- [x] Q413 No visual "fetching TTS" indicator between sentence end and audio start — add a brief pulse animation
+- [x] Q414 Canvas aria-hidden=true but no aria-live region announces TTS text to screen readers
 
 ### Q5. Web UI — TTS / Osman / Pernille
 
@@ -477,7 +477,7 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 - [ ] Q506 tts:style:active event published but expression not applied until audio starts — apply expression on anticipate
 - [ ] Q507 Browser speechSynthesis fallback uses default voice — map fallback to closest available voice name
 - [ ] Q508 No audio normalization: whisper and shout differ by 30dB — add gainNode with compressor before analyser
-- [ ] Q509 ttsSkip() on pointer down — if user taps during loading, skip fires before audio starts — add guard for loading state
+- [x] Q509 ttsSkip() on pointer down — if user taps during loading, skip fires before audio starts — add guard for loading state
 - [ ] Q510 No offline mode — when synthesis API down, fallback to cached audio or browser TTS silently
 
 ---

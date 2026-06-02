@@ -23,6 +23,8 @@ const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
 const zshBar = document.getElementById('zsh');
 const zshIn  = document.getElementById('zin');
+const ttsLive = document.getElementById('tts-live');
+const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
 
 const FONT_KEY = 'master:font';
@@ -109,7 +111,18 @@ matchMedia('(pointer: coarse)').addEventListener('change', event => {
   State.coarsePointer = event.matches;
   updateRuntimeProfile();
 });
-document.addEventListener('visibilitychange', updateRuntimeProfile, { passive: true });
+document.addEventListener('visibilitychange', () => {
+  updateRuntimeProfile();
+  if (!document.hidden && renderer) requestAnimationFrame(frame);
+}, { passive: true });
+
+let faceReadyMarked = false;
+function markFaceReady() {
+  if (faceReadyMarked) return;
+  faceReadyMarked = true;
+  rootBody.classList.add('face-ready');
+  rootBody.classList.remove('face-loading');
+}
 
 let renderer, scene, camera;
 if (_hasWebGL && THREE) {
@@ -494,16 +507,20 @@ if (_hasWebGL && THREE && scene && facePoints) {
 let _dbgFrames = 0;
 function frame(t) {
   _dbgFrames++;
-  if (!renderer || State.hidden) {
+  if (!renderer) {
     lastT = t;
     requestAnimationFrame(frame);
+    return;
+  }
+  if (State.hidden) {
+    lastT = t;
     return;
   }
 
   const dt = Math.min(State.coarsePointer ? 66 : 50, t - lastT); lastT = t;
   const sec = t * 0.001;
 
-  if (tts.analyser && tts.analyserBuf) {
+  if (tts.playing && tts.analyser && tts.analyserBuf) {
     tts.analyser.getByteTimeDomainData(tts.analyserBuf);
     let rmsSum = 0;
     const bufLen = tts.analyserBuf.length;
@@ -573,6 +590,7 @@ function frame(t) {
 
   State.flash *= 0.9;
   renderer.render(scene, camera);
+  markFaceReady();
 
   requestAnimationFrame(frame);
 }
@@ -726,7 +744,18 @@ function dillaStop() {
 }
 
 const VISEME_STEP_MS = 90;
-const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
+const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
+
+function setTTSLoading(loading) {
+  tts.loading = !!loading;
+  rootBody.dataset.ttsLoading = tts.loading ? 'true' : 'false';
+  if (uiStatus && State.mode !== 'speaking') uiStatus.textContent = tts.loading ? 'tts' : 'idle';
+}
+
+function announceTTS(text) {
+  if (!ttsLive) return;
+  ttsLive.textContent = text.toString().slice(0, 500);
+}
 
 const VOWEL_VISEME = { a:'A', e:'E', i:'I', o:'O', u:'U' };
 
@@ -753,6 +782,7 @@ function enqueueSpeech(text) {
   if (tts.muted) return;
   const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`~]/g, '').trim();
   if (!clean) return;
+  announceTTS(clean);
   tts.lastText = clean;
   tts.queue.push(clean);
   nodImpulse += 0.022;
@@ -765,13 +795,16 @@ function ttsTick() {
   const text = tts.queue.shift();
   if (!text) return;
   tts.playing = true;
+  const token = ++tts.cancelToken;
+  setTTSLoading(true);
   State.mode = 'speaking';
-  if (tts.serverUnavailable) { tts.playing = false; ttsTick(); return; }
+  if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
   const pending = tts.prefetch.get(text) || fetch(`/chat/tts?text=${encodeURIComponent(text)}`).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); });
   tts.prefetch.delete(text);
   if (tts.queue[0]) fetchTTS(tts.queue[0]);
   pending
     .then(blob => {
+      if (token !== tts.cancelToken) return null;
       if (!blob) throw new Error('empty');
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
@@ -789,8 +822,9 @@ function ttsTick() {
           tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
         } catch (_) {}
       }
-      audio.onplay = () => startVisemeAnim(text);
+      audio.onplay = () => { setTTSLoading(false); startVisemeAnim(text); };
       audio.onended = audio.onerror = () => {
+        setTTSLoading(false);
         stopVisemeAnim();
         tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
         URL.revokeObjectURL(src);
@@ -801,7 +835,7 @@ function ttsTick() {
       };
       return audio.play();
     })
-    .catch(() => { tts.audio = null; tts.playing = false; ttsTick(); });
+    .catch(() => { tts.audio = null; tts.playing = false; setTTSLoading(false); if (token === tts.cancelToken) ttsTick(); });
 }
 
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
@@ -821,6 +855,8 @@ function stopVisemeAnim() {
 }
 
 function ttsSkip() {
+  tts.cancelToken++;
+  setTTSLoading(false);
   if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
   stopVisemeAnim();
   tts.queue.length = 0; tts.prefetch.clear(); tts.playing = false; tts.current = null;
@@ -1260,6 +1296,7 @@ if (renderer) {
       }
 
       _dbgFrames++;
+      markFaceReady();
       requestAnimationFrame(frame2);
     }
     requestAnimationFrame(frame2);

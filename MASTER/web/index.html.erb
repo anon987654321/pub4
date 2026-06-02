@@ -22,9 +22,10 @@
   <link rel="stylesheet" href="/face.css">
   <link rel="stylesheet" href="/photo_upload.css">
 </head>
-<body data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
+<body class="face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
   <canvas id="face" tabindex="0" aria-hidden="true"></canvas>
+  <div id="tts-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
   <div id="primer" role="button" tabindex="0" aria-label="Start MASTER"></div>
   <main id="chat-shell" aria-label="MASTER chat">
     <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
