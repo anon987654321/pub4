@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=22') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=23') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -322,7 +322,9 @@ function sampleImageDepth(canvas, N) {
     const inEllipse = (nx*nx)/(0.44*0.44) + (ny*ny)/(0.48*0.48) < 1;
     const r = data[i*4], g = data[i*4+1], b = data[i*4+2];
     const bg = r > 210 && g > 200 && b > 190;
-    weights[i] = (inEllipse && !bg) ? 1.0 : 0;
+    const eyeL = ((nx+0.18)*(nx+0.18))/(0.09*0.09) + ((ny-0.14)*(ny-0.14))/(0.07*0.07) < 1;
+    const eyeR = ((nx-0.18)*(nx-0.18))/(0.09*0.09) + ((ny-0.14)*(ny-0.14))/(0.07*0.07) < 1;
+    weights[i] = (inEllipse && !bg) ? ((eyeL || eyeR) ? 2.2 : 1.0) : 0;
     total += weights[i];
   }
   const cdf = new Float32Array(W * H);
@@ -408,31 +410,62 @@ uniform float uTime;
 uniform float uSize;
 uniform vec3 uColor;
 uniform float uHc;
+uniform float uCurl;
+uniform float uJaw;
+uniform vec2 uMouse;
+uniform float uBass;
 attribute vec3 scatter;
 attribute float seed;
 varying float vAlpha;
 varying vec3 vColor;
+varying float vFresnel;
+varying float vDepth;
 void main(){
   float m=smoothstep(0.,1.,uMorph);
-  vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*0.18;
-  vec3 p=mix(scatter,position,m)+noise;
+  float curlAmp=0.18+uCurl*0.30;
+  vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*curlAmp;
+  float jawRgn=smoothstep(0.0,0.15,-position.y-0.12)*smoothstep(0.0,0.14,0.28-abs(position.x));
+  vec3 p=mix(scatter,position,m)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
+  vec2 diff2d=p.xy-uMouse;
+  float dist2d=length(diff2d);
+  if(dist2d<0.20&&dist2d>0.001)p.xy+=normalize(diff2d)*(0.20-dist2d)*0.32;
+  float radial=length(p.xy);
+  p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*m;
   vec4 mv=modelViewMatrix*vec4(p,1.);
-  gl_PointSize=uSize*(300./-mv.z);
-  gl_Position=projectionMatrix*mv;
   float depth=clamp((p.z+0.8)/1.8,0.,1.);
-  float hc = uHc;
-  vAlpha = hc > 0.5 ? 1.0 : mix(0.22,0.3+depth*0.7,m);
-  vColor = (hc > 0.5 ? vec3(1.0,1.0,1.0) : uColor) * (hc > 0.5 ? 1.0 : (0.3+depth*0.7));
+  float sizeJitter=0.80+0.38*fract(sin(seed*17.3)*43758.5);
+  gl_PointSize=uSize*(300./-mv.z)*(0.68+depth*0.32)*sizeJitter;
+  gl_Position=projectionMatrix*mv;
+  float hc=uHc;
+  vAlpha=hc>0.5?1.0:mix(0.22,0.3+depth*0.7,m);
+  vColor=(hc>0.5?vec3(1.0,1.0,1.0):uColor)*(hc>0.5?1.0:(0.3+depth*0.7));
+  vec3 viewDir=normalize(-mv.xyz);
+  vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
+  vec3 vn=normalize(mat3(modelViewMatrix)*flatNorm);
+  vFresnel=pow(1.0-abs(dot(viewDir,vn)),2.8);
+  vDepth=depth;
 }`;
 
 const FRAG_SHADER = `
 varying float vAlpha;
 varying vec3 vColor;
+varying float vFresnel;
+varying float vDepth;
+uniform float uShake;
+uniform float uScanAmt;
+uniform float uPulseRing;
 void main(){
-  float d=length(gl_PointCoord-0.5);
+  vec2 uv=gl_PointCoord-0.5;
+  float d=length(uv);
   if(d>0.5)discard;
   float soft=smoothstep(0.5,0.18,d);
-  gl_FragColor=vec4(vColor,soft*vAlpha);
+  float ring=smoothstep(0.04,0.0,abs(d-0.40))*uPulseRing*0.5;
+  vec3 col=vColor+vFresnel*vColor*0.55;
+  col.r=min(1.0,col.r+uShake*0.18);
+  col.b=max(0.0,col.b-uShake*0.12);
+  float scanLine=1.0-uScanAmt*(0.5+0.5*sin(gl_FragCoord.y*3.14159*0.5));
+  float alpha=(soft*vAlpha+ring)*scanLine;
+  gl_FragColor=vec4(col,alpha);
 }`;
 
 let faceGeom, faceMat, facePoints;
@@ -445,7 +478,10 @@ if (_hasWebGL && THREE) {
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
       uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.08},
-      uColor:{value:new Color(1,1,1)}, uHc:{value:0}
+      uColor:{value:new Color(1,1,1)}, uHc:{value:0},
+      uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
+      uBass:{value:0}, uShake:{value:0}, uScanAmt:{value:0.028},
+      uPulseRing:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -509,12 +545,42 @@ if (_photoEl) _photoEl.addEventListener('change', () => {
 
 let lastT = performance.now();
 let saccadeX = 0, nextSaccade = performance.now() + Math.random() * 6000 + 3000;
+let nextBlink = performance.now() + Math.random() * 5000 + 3000;
+function doBlink() {
+  if (!faceMat) return;
+  const orig = faceMat.uniforms.uSize.value;
+  let phase = 0;
+  const blinkTimer = setInterval(() => {
+    phase += 0.18;
+    if (phase < 1) {
+      faceMat.uniforms.uSize.value = orig * (1 - 0.55 * Math.sin(phase * Math.PI));
+    } else {
+      faceMat.uniforms.uSize.value = orig;
+      clearInterval(blinkTimer);
+    }
+  }, 14);
+}
 let nodImpulse = 0;
+let glowPoints;
 let head3;
 if (_hasWebGL && THREE && scene && facePoints) {
   head3 = new THREE.Object3D();
   scene.add(head3);
   head3.add(facePoints);
+  const glowMat = new THREE.ShaderMaterial({
+    vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
+    uniforms: {
+      uMorph:{value:0}, uTime:{value:0}, uSize:{value:0.18},
+      uColor:{value:new Color(1,1,1)}, uHc:{value:0},
+      uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
+      uBass:{value:0}, uShake:{value:0}, uScanAmt:{value:0},
+      uPulseRing:{value:0}
+    },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+  });
+  glowPoints = new THREE.Points(faceGeom, glowMat);
+  glowPoints.renderOrder = -1;
+  head3.add(glowPoints);
 }
 
 let _dbgFrames = 0;
@@ -560,15 +626,43 @@ function frame(t) {
 
   const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
   colorCurrent.lerp(colorTarget, lerpSpeed);
+  if ((_dbgFrames & 7) === 0) {
+    const r = (colorCurrent.r * 255)|0, g = (colorCurrent.g * 255)|0, b = (colorCurrent.b * 255)|0;
+    const cr = (255-r)|0, cg = (255-g)|0, cb = (255-b)|0;
+    rootBody.style.setProperty('--mood-r', r);
+    rootBody.style.setProperty('--mood-g', g);
+    rootBody.style.setProperty('--mood-b', b);
+    rootBody.style.setProperty('--mood-accent', `rgb(${r},${g},${b})`);
+    rootBody.style.setProperty('--mood-complement', `rgb(${cr},${cg},${cb})`);
+    rootBody.style.setProperty('--mood-shadow', `rgba(${r},${g},${b},0.12)`);
+    rootBody.style.setProperty('--mood-mid', `rgba(${r},${g},${b},0.45)`);
+    rootBody.style.setProperty('--mood-hi', `rgba(${r},${g},${b},0.88)`);
+    const moodSat = State.mood === 'weary' ? 0.15 : (State.mood === 'tense' ? 1.0 : 0.7);
+    rootBody.style.setProperty('--mood-sat', moodSat.toFixed(2));
+    if (State.mode === 'error' && !rootBody.dataset.moodCold) {
+      rootBody.dataset.moodCold = '1';
+      TINT.idle.set(0.35, 0.55, 0.9);
+      fadeColorTo(TINT.idle);
+      setTimeout(() => { delete rootBody.dataset.moodCold; TINT.idle.set(1,1,1); fadeColorTo(TINT.idle); }, 1800);
+    }
+  }
 
   if (head3) {
     if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
       saccadeX = (Math.random() - 0.5) * 0.28;
       nextSaccade = t + Math.random() * 6000 + 3000;
     }
+    if (!State.reducedMotion && t > nextBlink) {
+      doBlink();
+      nextBlink = t + Math.random() * 5000 + 2500;
+    }
     saccadeX *= 0.93;
     const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX;
     const pitch = State.mouseY * 0.4 + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
+    if (camera) {
+      camera.position.x += (Math.sin(sec * 0.11) * 0.018 - camera.position.x) * 0.004;
+      camera.position.y += (Math.cos(sec * 0.09) * 0.012 - camera.position.y) * 0.004;
+    }
     head3.rotation.y += (yaw   - head3.rotation.y) * 0.06;
     head3.rotation.x += (pitch - head3.rotation.x) * 0.06;
     nodImpulse *= 0.87;
@@ -590,8 +684,13 @@ function frame(t) {
 
   if (faceMat) {
     const idleS = (t - State.lastTouch) / 1000;
-    morphTarget = !primerFired ? 0.88 : (idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : 1.0);
-    morphCurrent += (morphTarget - morphCurrent) * 0.04;
+    const confTight = 0.78 + State.confidence * 0.22;
+    morphTarget = !primerFired ? 0.88 : (idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : confTight);
+    const springK = 0.038, springDamp = 0.72;
+    if (!faceMat._morphVel) faceMat._morphVel = 0;
+    faceMat._morphVel += (morphTarget - morphCurrent) * springK;
+    faceMat._morphVel *= springDamp;
+    morphCurrent += faceMat._morphVel;
     faceMat.uniforms.uMorph.value = morphCurrent;
     faceMat.uniforms.uTime.value = t * 0.001;
     faceMat.uniforms.uColor.value.copy(colorCurrent);
@@ -599,8 +698,28 @@ function frame(t) {
     const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
     faceMat.uniforms.uSize.value = 0.08 * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
-    if (!faceMat.uniforms.uHc) faceMat.uniforms.uHc = {value: 0};
     faceMat.uniforms.uHc.value = State.highContrast ? 1.0 : 0.0;
+    const curlTarget = State.mode === 'thinking' ? 1.0 : 0.0;
+    faceMat.uniforms.uCurl.value += (curlTarget - faceMat.uniforms.uCurl.value) * 0.025;
+    faceMat.uniforms.uJaw.value = voiceRMS * 2.5;
+    faceMat.uniforms.uMouse.value = { x: State.mouseX * 1.4, y: -State.mouseY * 1.2 };
+    faceMat.uniforms.uBass.value = (State.audioBass || 0) * 0.9 + faceMat.uniforms.uBass.value * 0.1;
+    const shakeTarget = State.shake || 0;
+    faceMat.uniforms.uShake.value += (shakeTarget - faceMat.uniforms.uShake.value) * 0.18;
+    const pulseRingTarget = State.pulse > 0.55 ? (State.pulse - 0.55) * 2.2 : 0;
+    faceMat.uniforms.uPulseRing.value += (pulseRingTarget - faceMat.uniforms.uPulseRing.value) * 0.12;
+    if (glowPoints) {
+      const gm = glowPoints.material;
+      Object.assign(gm.uniforms, {
+        uMorph: faceMat.uniforms.uMorph, uTime: faceMat.uniforms.uTime,
+        uColor: faceMat.uniforms.uColor, uHc: faceMat.uniforms.uHc,
+        uCurl: faceMat.uniforms.uCurl, uJaw: faceMat.uniforms.uJaw,
+        uMouse: faceMat.uniforms.uMouse, uBass: faceMat.uniforms.uBass,
+        uShake: faceMat.uniforms.uShake, uPulseRing: faceMat.uniforms.uPulseRing
+      });
+      gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * 2.1;
+      gm.uniforms.uScanAmt = { value: 0 };
+    }
   }
 
   State.flash *= 0.9;
@@ -848,10 +967,15 @@ function ttsTick() {
           tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
         } catch (_) {}
       }
-      audio.onplay = () => { setTTSLoading(false); startVisemeAnim(text); };
+      audio.onplay = () => {
+        setTTSLoading(false); startVisemeAnim(text);
+        if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
+        rootBody.dataset.ttsWave = 'true';
+      };
       audio.onended = audio.onerror = () => {
         setTTSLoading(false);
         stopVisemeAnim();
+        rootBody.dataset.ttsWave = '';
         tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
         URL.revokeObjectURL(src);
         tts.audio = null; tts.playing = false;
@@ -1035,8 +1159,10 @@ async function sendMessage(text) {
   });
   evtSrc.addEventListener('council:speech', (ev) => {
     try {
-      const { voice, text } = JSON.parse(ev.data || '{}');
+      const { voice, text, persona } = JSON.parse(ev.data || '{}');
+      if (persona) rootBody.dataset.councilPersona = persona;
       if (voice && text && !tts.playing) playDuo([[voice, text]]);
+      setTimeout(() => { if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona; }, 8000);
     } catch (_) {}
   });
   evtSrc.addEventListener('confidence', (ev) => {
@@ -1107,14 +1233,22 @@ function playDuo(lines, onDone) {
 }
 
 function startEverything() {
-  morphCurrent = 0.88; morphTarget = 1.0;
+  morphCurrent = 0.72; morphTarget = 1.08;
   initAudio();
   if (actx && actx.state === 'suspended') actx.resume();
   beep(880, 0.06);
-  primer.classList.add('gone');
-  setTimeout(() => primer.remove(), 400);
+  primer.style.transition = 'opacity 160ms ease, transform 160ms ease';
+  primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)';
+  setTimeout(() => primer.remove(), 200);
   zshBar.classList.add('live');
+  const logo = document.querySelector('.top-left-logo');
+  if (logo) {
+    logo.style.transition = 'none';
+    logo.style.transform = 'translateX(3px)';
+    setTimeout(() => { logo.style.transition = 'transform 80ms ease'; logo.style.transform = ''; }, 80);
+  }
   requestMotionPermission(); acquireWakeLock();
+  setTimeout(() => { morphTarget = 1.0; }, 600);
   setTimeout(() => playDuo(BOOT_DUO), 120);
   setTimeout(() => dillaStart(), 1800);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
@@ -1140,6 +1274,34 @@ zshBar.addEventListener('submit', (e) => {
   sendMessage(v);
 });
 zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
+
+const PLACEHOLDERS = ['ask anything', 'what do you think?', 'challenge me', 'show your work', 'explain simply'];
+let _phIdx = 0;
+setInterval(() => {
+  if (document.activeElement === zshIn || zshIn.value) return;
+  _phIdx = (_phIdx + 1) % PLACEHOLDERS.length;
+  zshIn.placeholder = PLACEHOLDERS[_phIdx];
+}, 8000);
+
+const _charCount = document.getElementById('char-count');
+zshIn.addEventListener('input', () => {
+  const len = zshIn.value.length;
+  if (_charCount) { _charCount.textContent = len > 120 ? len : ''; _charCount.style.opacity = len > 120 ? '0.5' : '0'; }
+});
+
+let _swipeStartX = 0, _swipeStartY = 0;
+const chatLog = document.getElementById('chat-log');
+if (chatLog) {
+  chatLog.addEventListener('touchstart', e => { _swipeStartX = e.touches[0].clientX; _swipeStartY = e.touches[0].clientY; }, { passive: true });
+  chatLog.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - _swipeStartX;
+    const dy = Math.abs(e.changedTouches[0].clientY - _swipeStartY);
+    if (dx > 72 && dy < 40) cancelStream();
+  }, { passive: true });
+}
+
+const _origHaptic = enqueueSpeech;
+window.MASTERVoice && (window.MASTERVoice._hapticPatch = true);
 
 document.getElementById('cancel-btn')?.addEventListener('click', () => cancelStream());
 

@@ -19,6 +19,12 @@ window._chatCancel = () => {
 function appendMsg(role, text = '') {
   const d = document.createElement('div');
   d.className = 'message ' + role;
+  const now = new Date();
+  d.dataset.ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  if (role === 'assistant') {
+    const conf = parseFloat(document.body.dataset.confidence || '1');
+    d.style.setProperty('--conf-alpha', (0.08 + conf * 0.3).toFixed(2));
+  }
   const prompt = document.createElement('span');
   prompt.className = 'msg-prompt';
   prompt.textContent = role === 'user' ? 'you$ ' : 'master$ ';
@@ -66,7 +72,12 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
 });
 window._chatOnChunk = (raw) => {
   if (!_streamEl) return;
-  _streamEl.textContent += raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+  const text = _streamEl.textContent + raw.replace(/\n/g, '\n').replace(/\\/g, '\');
+  if (text.includes('```')) {
+    _streamEl.innerHTML = text.replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
+  } else {
+    _streamEl.textContent = text;
+  }
   log.scrollTop = log.scrollHeight;
 };
 window._chatOnDone  = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => { c.style.transition = 'opacity 0.25s steps(4,end)'; c.style.opacity = '0'; setTimeout(() => c.remove(), 280); }); };
