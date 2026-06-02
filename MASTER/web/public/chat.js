@@ -208,10 +208,5 @@ zsh?.addEventListener('submit', (event) => {
   sendMessageWithPhoto(text);
 }, true);
 
-(function applyTier() {
-  const tier = document.querySelector('meta[name=master-tier]')?.content || 'visitor';
-  const pp = document.querySelector('#zsh .pp');
-  if (pp) pp.textContent = tier === 'authenticated' ? 'dev' : 'visitor';
-})();
 
 setPhotoState('idle', '+');

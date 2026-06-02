@@ -61,25 +61,7 @@ canvas {
   transition: filter var(--transition-fast) ease;
 }
 
-body.face-loading::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 45%, rgba(220,220,220,.18), transparent 22%),
-    repeating-linear-gradient(0deg, rgba(220,220,220,.06) 0 1px, transparent 1px 4px),
-    #000;
-  opacity: .72;
-  animation: faceBootPulse 900ms steps(6,end) infinite;
-}
-
-body.face-ready::before {
-  opacity: 0;
-  animation: none;
-  transition: opacity var(--transition-normal) ease;
-}
+body.face-loading::before, body.face-ready::before { display: none; }
 
 body[data-tts-loading="true"] .ui-status {
   opacity: .9;
@@ -265,7 +247,7 @@ body.zen #chat-log { opacity: .08; }
 body.zen #zsh.revealed { opacity: .96; pointer-events: auto; transform: none; }
 
 body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
-#zsh .pp { color: var(--face-fg); font-weight: 700; }
+#zsh .pp { color: #c44; font-weight: 700; }
 #zsh .sep, #zsh .sep2 { color: var(--face-muted); }
 #zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
 #zsh input::placeholder { color: rgba(220,220,220,.25); }
@@ -329,10 +311,6 @@ body[data-mode="speaking"] #cancel-btn { display: block; }
     transition: none;
   }
 
-  body.face-loading::before {
-    background: #000;
-    opacity: .35;
-  }
 }
 
 @media (min-width: 48rem) {
@@ -403,9 +381,7 @@ body:not(.face-ready) #zsh { opacity:.3; pointer-events:none; }
 /* #55 Primer .gone fade */
 #primer.gone { opacity:0; transform:scale(0.93); pointer-events:none; transition:opacity 160ms ease,transform 160ms ease; }
 
-/* #56 Boot scanline wipe */
-body.face-loading::before { clip-path:inset(0 0 0 0); }
-body.face-ready::before { clip-path:inset(100% 0 0 0); transition:clip-path var(--transition-normal) ease, opacity var(--transition-normal) ease; }
+
 
 /* #57 Cancel button uses mood color */
 #cancel-btn { color:var(--mood-accent,var(--face-muted)); }
