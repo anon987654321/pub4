@@ -14,5 +14,6 @@ class WardrobeMediaJob < ApplicationJob
       Shared::MediaProcessingJob.perform_later("Item", item.id, "photos", variants: VARIANTS)
     end
     Shared::EventEmitter.call("amber.photo.queued", item_id: item.id) if defined?(Shared::EventEmitter)
+    item.extract_dominant_color! if item.photos.attached?
   end
 end

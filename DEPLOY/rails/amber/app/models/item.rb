@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tempfile"
+
 class Item < ApplicationRecord
   belongs_to :user
   has_one :garment_embedding, dependent: :destroy
@@ -89,4 +91,30 @@ class Item < ApplicationRecord
   def in_declutter_box? = lifecycle_state == "declutter_box"
   def released? = %w[released donated sold recycled].include?(lifecycle_state)
   def sentimental? = lifecycle_state == "sentimental_archive"
+
+  def extract_dominant_color!
+    return unless photos.attached?
+    photo = photos.first
+    tempfile = nil
+    begin
+      require "vips"
+      tempfile = Tempfile.new(["item", File.extname(photo.filename.to_s.presence || ".jpg")])
+      tempfile.binmode
+      tempfile.write(photo.download)
+      tempfile.rewind
+      image = Vips::Image.new_from_file(tempfile.path)
+      # resize to 1px for approx dominant/average color
+      thumb = image.resize(1.0 / [image.width, image.height].max.to_f)
+      px = thumb.getpoint(0, 0)
+      r = px[0].to_i.clamp(0, 255)
+      g = px[1].to_i.clamp(0, 255)
+      b = px[2].to_i.clamp(0, 255)
+      hex = "#%02x%02x%02x" % [r, g, b]
+      update!(color: hex)
+    rescue => e
+      Rails.logger.warn("vips dominant color extract failed for item #{id}: #{e.message}")
+    ensure
+      tempfile&.close!
+    end
+  end
 end
