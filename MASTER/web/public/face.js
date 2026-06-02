@@ -743,7 +743,7 @@ function dillaStart() {
   shaper.curve = curve; shaper.oversample = '4x';
   dilla.gain.connect(shaper); shaper.connect(actx.destination);
 
-  dilla.gain.gain.linearRampToValueAtTime(0.10, actx.currentTime + 4);
+  dilla.gain.gain.linearRampToValueAtTime(0.04, actx.currentTime + 4);
   dillaAdvance();
 }
 function dillaStop() {
