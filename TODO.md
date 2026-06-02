@@ -4631,7 +4631,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] DG01 bsdports: add nightly sync job — fetch latest ports tree from CVS/git, update DB
 - [ ] DG02 bsdports: add `sqlite-vec` semantic search (port description embeddings)
 - [ ] DG03 bsdports: add dependency graph visualisation (D3.js or plain SVG)
-- [ ] DG04 bsdports: add version diff — compare current port with previous version (unified diff)
+- [x] DG04 bsdports: add version diff — compare current port with previous version (unified diff) (enhanced version history ul to pre/code unified diff format with --- +++ @@; specific commit/push)
 - [x] DG05 bsdports: add "installed" indicator — query local `pkg_info` output if available (added @pkg_info = capture pkg_info -q in show; display in dl "Local install"; specific commit/push)
 - [x] DG06 bsdports: add MASTER port review — scan `Makefile` and patches for quality issues (added review action in ports_controller (demo findings from metadata + comment on real MASTER scanner); post button in show view; route; specific commit after rebase)
 - [x] DG07 bsdports: add category browse — all categories with port count (enhanced categories/index.html.erb to show (N ports) using pre-included; mirrors maintainer pattern; specific commit/push after rebase)
