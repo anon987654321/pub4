@@ -137,6 +137,22 @@ body[data-tts-loading="true"] .ui-status {
 }
 .font-toggle:hover, .font-toggle:focus { opacity: 1; }
 
+/* TTS rate control (FA140) — cycles 0.75x-2.0x, persists to localStorage, applies to audio */
+.tts-rate {
+  position: fixed;
+  left: calc(10px + var(--safe-left) + 58px);
+  bottom: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
+  z-index: var(--z-ui);
+  font: 9px/1.1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
+  color: var(--face-fg);
+  opacity: .5;
+  pointer-events: auto;
+  user-select: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tts-rate:hover, .tts-rate:focus { opacity: 1; }
+
 /* Primer overlay — Radio Bergen dialog style */
 #primer {
   position: fixed;

@@ -62,6 +62,47 @@ const FONT_KEY = 'master:font';
   });
 })();
 
+const RATE_KEY = 'master:tts-rate';
+const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
+function getTtsRate() {
+  const v = parseFloat(localStorage.getItem(RATE_KEY));
+  return RATES.indexOf(v) >= 0 ? v : 1.0;
+}
+function setTtsRate(r) {
+  const rate = RATES.indexOf(r) >= 0 ? r : 1.0;
+  localStorage.setItem(RATE_KEY, rate);
+  if (tts && tts.audio) tts.audio.playbackRate = rate;
+  const el = document.getElementById('tts-rate');
+  if (el) el.textContent = rate.toFixed(2) + 'x';
+}
+(function initTtsRate() {
+  let r = document.getElementById('tts-rate');
+  if (!r) {
+    r = document.createElement('span');
+    r.id = 'tts-rate';
+    r.className = 'tts-rate';
+    r.role = 'button';
+    r.tabIndex = 0;
+    r.setAttribute('aria-label', 'TTS playback speed');
+    document.body.appendChild(r);
+  }
+  const update = () => { r.textContent = getTtsRate().toFixed(2) + 'x'; };
+  update();
+  const doCycle = () => {
+    const cur = getTtsRate();
+    const idx = RATES.indexOf(cur);
+    const next = RATES[(idx + 1) % RATES.length];
+    setTtsRate(next);
+  };
+  r.addEventListener('click', doCycle);
+  r.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      doCycle();
+    }
+  });
+})();
+
 const TINT = {
   // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
   // Shading and expression via Atkinson/Bayer dither patterns, alpha, size, depth, and pulse (no hue tints).
@@ -1032,6 +1073,7 @@ function ttsTick() {
       if (!blob) throw new Error('empty');
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
+      audio.playbackRate = getTtsRate();
       tts.audio = audio;
       if (actx && actx.state !== 'closed') {
         if (actx.state === 'suspended') actx.resume();
@@ -1287,6 +1329,7 @@ function playDuo(lines, onDone) {
     .then(blob => {
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
+      audio.playbackRate = getTtsRate();
       if (actx && actx.state !== 'closed') {
         if (actx.state === 'suspended') actx.resume();
         try {
@@ -1417,6 +1460,18 @@ document.getElementById('cancel-btn')?.addEventListener('click', () => cancelStr
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); cancelStream(); }
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }
+  if (e.ctrlKey && (e.key === '[' || e.key === ',')) {
+    e.preventDefault();
+    const cur = getTtsRate();
+    const i = RATES.indexOf(cur);
+    setTtsRate(RATES[(i - 1 + RATES.length) % RATES.length]);
+  }
+  if (e.ctrlKey && (e.key === ']' || e.key === '.')) {
+    e.preventDefault();
+    const cur = getTtsRate();
+    const i = RATES.indexOf(cur);
+    setTtsRate(RATES[(i + 1) % RATES.length]);
+  }
 });
 
 window.sendMessage = sendMessage;
@@ -1429,7 +1484,9 @@ window.MASTERVoice = {
   get playing() { return tts.playing; },
   get voice() { return tts.voice; },
   setLastText(text) { tts.lastText = String(text || ""); },
-  get lastText() { return tts.lastText || ""; }
+  get lastText() { return tts.lastText || ""; },
+  get ttsRate() { return getTtsRate(); },
+  setTtsRate,
 };
 window._chatSpeakLast = () => {
   const text = tts.lastText || "";
