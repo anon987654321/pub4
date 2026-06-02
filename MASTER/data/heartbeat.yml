@@ -12,8 +12,9 @@
 
 - name: self_test
   action: self_test
-  enabled: false
-  description: Covered by auto_default standing order.
+  interval_seconds: 3600
+  enabled: true
+  description: Periodic MASTER self-scan.
 
 - name: prune_undo
   action: prune_undo

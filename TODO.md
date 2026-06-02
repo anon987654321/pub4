@@ -71,7 +71,7 @@ rules.yml success_criteria: "system_applies_to_itself_without_exception"
 - [x] D03 /self command: scan MASTER's lib/ on demand, print dmesg-style report to stdout
 - [x] D04 self_test section wiring: ROBUSTNESS (bare rescue check), SINGULARITY (duplicate rule IDs), LINEARITY (nesting depth), PROXIMITY (test files co-located), ABSTRACTION (no god class), DENSITY (no long method)
 - [x] D05 Self-violation event: `self_violation` event on bus stops the loop until fixed
-- [ ] D06 Periodic self-scan via Loop::Heartbeat: schedule lib/ rescan every 60 minutes
+- [x] D06 Periodic self-scan via Loop::Heartbeat: schedule lib/ rescan every 60 minutes
 - [ ] D07 Self-autofix: if self-scan finds violations with autofix: true, apply AstFixer transforms to MASTER's own source
 - [ ] D08 Block shipping if self-scan shows violations (Pipeline gate before deploy)
 - [ ] D09 Self-scan covers data/*.yml: run SINGULARITY check (no duplicate rule IDs) on every boot

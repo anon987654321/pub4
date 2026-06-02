@@ -13,7 +13,6 @@ module Master
 
       RESULT_TRUNCATE = 200
       SECONDS_PER_HOUR = 3600
-      SECONDS_PER_2HOURS = 7200
 
       JOB_HANDLERS = {
         "prune_memory" => :prune_memory,
@@ -165,7 +164,7 @@ module Master
       def default_jobs
         [
           { "name" => "prune_memory", "action" => "prune_memory", "interval_seconds" => SECONDS_PER_HOUR },
-          { "name" => "self_test", "action" => "self_test", "interval_seconds" => SECONDS_PER_2HOURS },
+          { "name" => "self_test", "action" => "self_test", "interval_seconds" => SECONDS_PER_HOUR },
           { "name" => "prune_undo", "action" => "prune_undo", "interval_seconds" => 86_400 },
           { "name" => "snapshot", "action" => "snapshot", "interval_seconds" => 14_400 }
         ]
