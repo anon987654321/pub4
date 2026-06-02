@@ -95,4 +95,8 @@ class TestMemory < Minitest::Test
     assert_equal "v1", flat["k1"]
     assert_equal "v2", flat["k2"]
   end
+
+  def test_context_injection_budget_is_bounded_by_model_context
+    assert_operator Master::Ground::Memory::MAX_INJECT_TOKENS, :<=, Master::CTX_WINDOW_SIZE / 100
+  end
 end
