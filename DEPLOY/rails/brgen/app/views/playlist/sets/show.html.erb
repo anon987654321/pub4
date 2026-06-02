@@ -51,6 +51,40 @@
 </section>
 <% end %>
 
+<% if authenticated? %>
+<section>
+  <h2>Dilla sketches / beats</h2>
+  <p class="dim">Collaborative beat patterns (pat/seq/aud/mix state). Edit in the dilla lab, paste JSON here to persist for the group.</p>
+  <% if @dilla_sketches.any? %>
+    <% @dilla_sketches.each do |sk| %>
+      <div>
+        <strong><%= sk.name %></strong> by <%= sk.user&.display_name || "anon" %>
+        <% if sk.lab_url.present? %>
+          <a href="<%= sk.lab_url %>" target="_blank" class="btn btn-ghost btn-sm">open in lab</a>
+        <% end %>
+        <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
+          <%= button_to "Remove", playlist_set_dilla_sketch_path(@set, sk), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <% end %>
+      </div>
+      <% if sk.notes.present? %><p class="dim"><%= sk.notes %></p><% end %>
+    <% end %>
+  <% else %>
+    <p class="dim">No sketches yet. Create one by pasting state from dilla.html lab.</p>
+  <% end %>
+
+  <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
+    <div class="form-wrap">
+      <%= form_with url: playlist_set_dilla_sketches_path(@set), scope: :playlist_dilla_sketch do |f| %>
+        <div class="field"><%= f.text_field :name, placeholder: "Beat name (e.g. dusty flip)", required: true %></div>
+        <div class="field"><%= f.text_area :state, placeholder: 'Paste JSON state from lab (e.g. {"pat_":{...},"aud_":{...},"mix_":{...}} or full from clipboard)', rows: 3 %></div>
+        <div class="field"><%= f.text_area :notes, placeholder: "notes / instructions (optional)", rows: 2 %></div>
+        <div class="field"><%= f.submit "Save sketch for collab", class: "btn btn-primary btn-sm" %></div>
+      <% end %>
+    </div>
+  <% end %>
+</section>
+<% end %>
+
 <% if @set_tracks.any? %>
   <% @set_tracks.each do |set_track| %>
     <article style="display:flex;align-items:center;justify-content:space-between">
