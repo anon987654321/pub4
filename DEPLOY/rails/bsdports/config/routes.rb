@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   root "ports#index"
 
   resources :categories, only: %i[index show]
+  resources :maintainers, only: %i[index show]
 
   resources :ports, only: %i[index show] do
     member do
