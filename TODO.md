@@ -4638,3 +4638,18 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [x] DG08 bsdports: add maintainer page — all ports by a given maintainer with contact link (added create_maintainers mig + add_maintainer_to_ports mig; wired belongs_to + scope in Port model; new MaintainersController (index/show, unauth, pagy); routes + nav link; views/maintainers/index (list with count/label) + show (header + email mailto + ports ul); linked from ports/show; specific commits/pushes + autofix; migs 20260603*; evidence via reads/greps)
 - [x] DG09 bsdports: add RSS feed for new ports added in last 7 days (implemented in ports#index with respond_to .rss filtering last_updated >= 7.days.ago + limit(100); added index.rss.builder (RSS 2.0 with items, pubDate, cdata desc, category); RSS link added to index.html.erb; autofix applied to bsdports; specific commits/pushes (e.g. 107a9baa); evidence in controller, views, prior bsdports work)
 - [x] DG10 bsdports: add CVE cross-reference — link ports to known vulnerabilities via NIST NVD API (via security_advisories table + NvdCveService (NVD 2.0 keyword "openbsd <name>"), Port has_many, controller action+load, show section+button using nvd_url/cve?; beautified touched files; specific git add/commits/pushes after units; rebase clean)
+
+## PH: MASTER Photography, Vision & Film Emulation
+
+- [ ] PH01 MASTER: add `/photograph <prompt>` (and LLM tool) — auto uses free vision model (gemini-2.0-flash-exp:free etc) for attached ref analysis, refines prompt, repligen generate (flux photoreal), auto postpro (kodak_portra/portrait + variations)
+- [ ] PH02 MASTER: register Repligen + Postpro as native LLM tools (add to LLM_TOOL_MAP + create Reach wrappers delegating to dispatch_master_tool for autonomous calls without /command or Shell)
+- [ ] PH03 amber: extend DF02 vision outfit gen to produce visuals — after text suggest, auto /photograph the combo (styled), attach postpro'd image to Outfit, render in ai/suggest_outfits + outfits/show (reuse DF06 postpro)
+- [ ] PH04 MASTER: harden vision attachments in llm_dispatcher (prefer disk :path from chat token meta, robust Tempfile fallback for direct data, ensure in ask/ask_once/react, auto bias to vision free models when image in ctx)
+- [ ] PH05 chat/web: add "generate photography" action from photo upload + composer (stock/preset picker tied to postpro), passes image_token + prompt through photograph flow, streams postpro result
+- [ ] PH06 MASTER: add vision photo critique (free gemini) — post-gen or upload, "critique photorealism/film look" returns score + refined prompt or postpro recipe for re-run
+- [ ] PH07 repligen: expand CLI `generate` (recently added) with --postpro <preset> --stock <name> chain, --model, json output for tokens/paths usable by chat/amber
+- [ ] PH08 amber/brgen: apply city/app film stock defaults to generated photos (brgen.no=kodak_portra like PostproJob in DF06, amber other)
+- [ ] PH09 MASTER: surface stocks/presets in web UI (chat settings or bus to face), allow re-apply postpro on generated image results
+- [ ] PH10 docs: document photography flow in MASTER/QUICKSTART.md, CLAUDE.md (amber section), amber/README.md, DEPLOY/repligen/README with examples of free vision ref + generate + postpro
+- [ ] PH11 MASTER: unify vision clients — make amber WardrobeAiService (DF02 direct openai/gemini) use ruby_llm + provider_registry for free tier consistency
+- [ ] PH12 MASTER: vision+postpro for other visuals (bsdports port hero images, blognet post previews, etc) using same pipeline
