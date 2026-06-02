@@ -55,7 +55,7 @@ canvas {
   left: calc(10px + var(--safe-left));
   z-index: var(--z-ui);
   font: 700 clamp(14px,3.5vw,22px)/1 Helvetica,sans-serif;
-  letter-spacing: .02em;
+  letter-spacing: -.04em;
   color: var(--face-fg);
   opacity: .6;
   pointer-events: none;
@@ -97,46 +97,14 @@ canvas {
 #primer:focus-visible { outline: 1px solid var(--face-fg); outline-offset: -8px; }
 
 #primer h1 {
-  margin: 0 0 8px;
-  font: 300 clamp(2.2rem,10vw,4.5rem)/1 Helvetica,sans-serif;
-  letter-spacing: -.01em;
+  margin: 0;
+  font: 300 clamp(2.4rem,11vw,5rem)/1 Helvetica,Arial,sans-serif;
+  letter-spacing: -.02em;
   color: var(--face-fg);
   transition: transform var(--transition-fast) ease;
 }
 
-#primer:active h1 { transform: scale(1.04); }
-
-#primer .tagline {
-  color: #778;
-  font-size: clamp(.8rem,2.5vw,.95rem);
-  margin: 0 0 1.8rem;
-  max-width: 30em;
-  line-height: 1.5;
-}
-
-#primer .chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .4rem;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-
-#primer .chip {
-  padding: .25rem .7rem;
-  border: 1px solid #2a3a3a;
-  font: 9px/1.4 ui-monospace,monospace;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #556;
-  pointer-events: none;
-}
-
-#primer .hint {
-  color: #3a4a4a;
-  font-size: .7rem;
-  letter-spacing: .04em;
-}
+#primer:active h1 { transform: scale(1.03); }
 
 #primer.gone { opacity: 0; pointer-events: none; }
 

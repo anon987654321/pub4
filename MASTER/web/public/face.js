@@ -347,9 +347,8 @@ const COUNCIL_VOICE = {
 };
 
 const BOOT_DUO = [
-  ['osman', 'Good morning.'],
-  ['ryan',  'Constitutional AI — live and ready.'],
-  ['osman', 'Ask us anything.']
+  ['ryan', 'Welcome. I am Maestro.'],
+  ['ryan', 'Ask me anything.']
 ];
 
 
