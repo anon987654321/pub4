@@ -3,6 +3,7 @@
 module Playlist
   class SetsController < ApplicationController
     before_action :set_set, only: %i[show edit update destroy]
+    before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
     def index
       @sets = Playlist::Set.publicly_listed.limit(100)
@@ -51,6 +52,14 @@ module Playlist
 
     def set_params
       params.require(:set).permit(:name, :description, :privacy, :collaborative)
+    end
+
+    def authorize_owner_or_editor
+      user = Current.user || (respond_to?(:current_user) ? current_user : nil)
+      return if user == @set.user
+      collab = @set.collaborations.find_by(user: user)
+      return if collab && %w[owner editor].include?(collab.role)
+      redirect_to(playlist_set_path(@set), alert: "Not allowed")
     end
   end
 end

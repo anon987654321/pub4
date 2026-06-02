@@ -85,6 +85,7 @@ Rails.application.routes.draw do
       root "playlists#index", as: :playlist_root
       resources :playlists do
         resources :tracks, only: %i[create destroy]
+        resources :collaborations, only: %i[create destroy]
       end
       resources :sets do
         resources :tracks, only: %i[create destroy]
