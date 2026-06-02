@@ -1200,7 +1200,9 @@ if (renderer) {
   // Camera face tracking → particle face "makes eye contact"
   async function enableCamTracking() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 240, height: 180 } });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: 240, height: 180 }
+      });
       const v = document.createElement('video');
       v.srcObject = stream; v.play();
       const c = document.createElement('canvas');
@@ -1223,11 +1225,14 @@ if (renderer) {
         if (n > 40) {
           const nx = (sx / n / c.width - 0.5) * 2.1;
           const ny = (sy / n / c.height - 0.5) * 1.3;
-          // Fleshed out cam "face tracking" (brightness center as user face proxy, synced from shared minimal-gesture)
+          // Fleshed out cam "face tracking" (brightness center as user face proxy,
+          // synced from shared minimal-gesture)
           // Drives particle "eye contact" + creative pulse when user faces the UI
           State.mouseX = nx;
           State.mouseY = ny;
-          if (Math.abs(nx) < 0.3 && Math.abs(ny) < 0.3) State.pulse = Math.max(State.pulse || 0, 0.5);
+          if (Math.abs(nx) < 0.3 && Math.abs(ny) < 0.3) {
+            State.pulse = Math.max(State.pulse || 0, 0.5);
+          }
         }
       }, 160);
     } catch (_) {}
@@ -1237,8 +1242,13 @@ if (renderer) {
   // Global hook so Rails apps can call the same minimal + Osman experience
   window.MASTERMinimalUI = {
     enableCam: enableCamTracking,
-    revealConsole: () => { const z = document.getElementById('zsh'); if (z) z.classList.add('revealed'); },
-    triggerOsman: (text) => { if (window.sendMessage) window.sendMessage(`/voice ${text || 'last'} osman`); }
+    revealConsole: () => {
+      const z = document.getElementById('zsh');
+      if (z) z.classList.add('revealed');
+    },
+    triggerOsman: (text) => {
+      if (window.sendMessage) window.sendMessage(`/voice ${text || 'last'} osman`);
+    }
   };
 
   // Web Speech "Osman" voice commands (synced with shared minimal-gesture for all apps)
@@ -1254,7 +1264,9 @@ if (renderer) {
         if (cmd && window.sendMessage) window.sendMessage(`/voice ${cmd} osman`);
       }
     };
-    document.addEventListener('keydown', e => { if (e.key === '?' ) { e.preventDefault(); rec.start(); } });
+    document.addEventListener('keydown', e => {
+      if (e.key === '?') { e.preventDefault(); rec.start(); }
+    });
     window.startOsmanVoice = () => rec.start();
   }
 
