@@ -56,6 +56,16 @@ class ItemsController < ApplicationController
     redirect_to @item, notice: "Worn today — +1"
   end
 
+  def archive_seasonal
+    Current.user.items.active_wardrobe.find_each(&:archive_out_of_season!)
+    redirect_to items_path, notice: "Out-of-season items moved to archive"
+  end
+
+  def resurface_seasonal
+    Current.user.items.seasonal_archived.find_each(&:resurface_seasonal!)
+    redirect_to items_path, notice: "Seasonal items resurfaced if in season"
+  end
+
   private
 
   def set_item = @item = Item.find(params[:id])

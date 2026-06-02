@@ -12,6 +12,10 @@ Rails.application.routes.draw do
       post :declutter
       post :wear
     end
+    collection do
+      post :archive_seasonal
+      post :resurface_seasonal
+    end
   end
 
   resources :outfits do
