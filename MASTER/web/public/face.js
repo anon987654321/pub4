@@ -358,23 +358,52 @@ async function loadMaskCanvas(url, size = 256) {
 }
 
 // Sobel edge-weighted sampling: particles concentrate on facial features.
-function proceduralFaceDepth(nx, ny) {
-  const r2 = (nx*nx)/(0.38*0.38) + (ny*ny)/(0.46*0.46);
-  const base = Math.max(0, 1 - r2) * 0.45;
-  const nd2 = nx*nx*18 + Math.pow(ny - 0.08, 2)*10;
-  const nose = Math.exp(-nd2*5) * 0.42;
-  const edL = Math.pow(nx+0.15,2)*14 + Math.pow(ny+0.04,2)*18;
-  const edR = Math.pow(nx-0.15,2)*14 + Math.pow(ny+0.04,2)*18;
-  const eyes = (Math.exp(-edL*2.2) + Math.exp(-edR*2.2)) * 0.16;
-  const bwL = Math.pow(nx+0.15,2)*14 + Math.pow(ny+0.14,2)*26;
-  const bwR = Math.pow(nx-0.15,2)*14 + Math.pow(ny+0.14,2)*26;
-  const brows = (Math.exp(-bwL*2.2) + Math.exp(-bwR*2.2)) * 0.07;
-  const ld = nx*nx*10 + Math.pow(ny-0.23,2)*22;
-  const lips = Math.exp(-ld*2.5) * 0.08;
-  const ckL = Math.pow(nx+0.25,2)*8 + Math.pow(ny-0.04,2)*14;
-  const ckR = Math.pow(nx-0.25,2)*8 + Math.pow(ny-0.04,2)*14;
-  const cheeks = (Math.exp(-ckL*2) + Math.exp(-ckR*2)) * 0.05;
-  return base + nose - eyes + brows + lips + cheeks - 0.1;
+function generateSyntheticFaceCanvas(size) {
+  const cv = new OffscreenCanvas(size, size);
+  const ctx = cv.getContext('2d');
+  const W = size, H = size, cx = W * 0.5, cy = H * 0.47;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  let g;
+  // Face oval
+  g = ctx.createRadialGradient(cx, cy, 0, cx, cy, W * 0.42);
+  g.addColorStop(0, 'rgb(168,168,168)'); g.addColorStop(0.75, 'rgb(140,140,140)'); g.addColorStop(1, 'rgb(0,0,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, cy, W*0.37, H*0.46, 0, 0, Math.PI*2); ctx.fill();
+  // Nose tip
+  g = ctx.createRadialGradient(cx, cy+H*0.10, 0, cx, cy+H*0.10, W*0.09);
+  g.addColorStop(0, 'rgb(245,245,245)'); g.addColorStop(0.5, 'rgb(200,200,200)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Nose bridge
+  g = ctx.createLinearGradient(cx-W*0.03, cy-H*0.08, cx+W*0.03, cy-H*0.08);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.5, 'rgba(185,185,185,0.6)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(cx-W*0.035, cy-H*0.16, W*0.07, H*0.26);
+  // Eye sockets
+  [-0.14, 0.14].forEach(ex => {
+    g = ctx.createRadialGradient(cx+ex*W, cy-H*0.06, 0, cx+ex*W, cy-H*0.06, W*0.085);
+    g.addColorStop(0, 'rgb(12,12,12)'); g.addColorStop(0.55, 'rgb(30,30,30)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(65,65,65,0.7)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx+ex*W, cy-H*0.06, W*0.048, 0, Math.PI*2); ctx.stroke();
+  });
+  // Brow ridges
+  [-0.14, 0.14].forEach(ex => {
+    g = ctx.createRadialGradient(cx+ex*W, cy-H*0.155, 0, cx+ex*W, cy-H*0.155, W*0.095);
+    g.addColorStop(0, 'rgba(158,158,158,0.85)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  });
+  // Lips
+  g = ctx.createRadialGradient(cx, cy+H*0.245, 0, cx, cy+H*0.245, W*0.115);
+  g.addColorStop(0, 'rgba(158,158,158,0.88)'); g.addColorStop(0.55, 'rgba(120,120,120,0.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(18,18,18,0.65)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(cx-W*0.065, cy+H*0.235);
+  ctx.bezierCurveTo(cx-W*0.035, cy+H*0.240, cx+W*0.035, cy+H*0.240, cx+W*0.065, cy+H*0.235); ctx.stroke();
+  // Cheekbones
+  [-0.25, 0.25].forEach(ex => {
+    g = ctx.createRadialGradient(cx+ex*W, cy+H*0.025, 0, cx+ex*W, cy+H*0.025, W*0.11);
+    g.addColorStop(0, 'rgba(148,148,148,0.38)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  });
+  return cv;
 }
 
 function sampleImageDepth(canvas, N) {
@@ -402,7 +431,7 @@ function sampleImageDepth(canvas, N) {
     const inEllipse = (nx*nx)/(0.44*0.44) + (ny*ny)/(0.48*0.48) < 1;
     const r = data[i*4], g = data[i*4+1], b = data[i*4+2];
     const bg = r > 210 && g > 200 && b > 190;
-    if (!inEllipse || bg) { weights[i] = 0; continue; }
+    if (!inEllipse || bg || lum[i] < 0.04) { weights[i] = 0; continue; }
     weights[i] = 0.25 + grad[i] * 5.0;
     total += weights[i];
   }
@@ -419,7 +448,7 @@ function sampleImageDepth(canvas, N) {
     const l = lum[lo];
     home[i*3]   = (px / W - 0.5) * 1.18;
     home[i*3+1] = -(py / H - 0.5) * 1.55;
-    home[i*3+2] = proceduralFaceDepth(px / W - 0.5, py / H - 0.5);
+    home[i*3+2] = l * 0.92 - 0.08;
     scatter[i*3]   = home[i*3] + (Math.random() - 0.5) * 0.16;
     scatter[i*3+1] = home[i*3+1] + (Math.random() - 0.5) * 0.16;
     scatter[i*3+2] = home[i*3+2] + (Math.random() - 0.5) * 0.10;
@@ -432,12 +461,8 @@ const FACE_N = State.coarsePointer ? 10000 : 28000;
 const FACE_N_2D = 600;
 let faceHome, faceScatter, faceSeeds;
 if (_hasWebGL && THREE) {
-  try {
-    const maskCanvas = await loadMaskCanvas('/face_mask.jpg?v=1');
-    ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleImageDepth(maskCanvas, FACE_N));
-  } catch (_) {
-    ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleProceduralFace(FACE_N));
-  }
+  const maskCanvas = generateSyntheticFaceCanvas(256);
+  ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleImageDepth(maskCanvas, FACE_N));
 } else {
   ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleProceduralFace(FACE_N_2D));
 }
