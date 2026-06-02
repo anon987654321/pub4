@@ -14,5 +14,4 @@ class PortsImportJob < ApplicationJob
   rescue StandardError => e
     Shared::EventEmitter.call("bsdports.import.failed", source:, error: e.message) if defined?(Shared::EventEmitter)
     raise
-  end
 end

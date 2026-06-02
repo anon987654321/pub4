@@ -9,7 +9,7 @@
   --grey: #999999;
   --dark-grey: #666666;
   --warning-red: #b04243;
-  --radius: 4px;
+  --radius: 4px;,
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,8 +21,8 @@
     --extra-light-grey: #666666;
     --light-grey: #999999;
     --grey: #ababab;
-    --dark-grey: #f0f0f0;
-  }
+    --dark-grey: #f0f0f0;,
+  },
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -34,7 +34,7 @@ html, body {
   color: var(--black);
   background-color: var(--white);
   display: flex;
-  flex-direction: column;
+  flex-direction: column;,
 }
 
 a { color: var(--light-blue); text-decoration: underline; }
@@ -51,12 +51,12 @@ nav {
   background: var(--white);
   border-bottom: 1px solid var(--extra-light-grey);
   transform: translateY(-100%);
-  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);,
 }
 nav.nav-visible { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
 nav a { color: var(--dark-grey); font-size: .85rem; text-decoration: none; }
 nav a:hover { color: var(--black); }
-nav .brand { font-weight: 700; margin-right: auto; color: var(--black); text-decoration: none; }
+nav .brand { font-weight: 700; margin-inline-end: auto; color: var(--black); text-decoration: none; }
 
 main {
   flex: 1;
@@ -64,7 +64,7 @@ main {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 2rem 1rem;,
 }
 
 .logo {
@@ -75,7 +75,7 @@ main {
   height: 44px;
   background-image: url("bsdports_182x44.svg");
   background-repeat: no-repeat;
-  background-size: contain;
+  background-size: contain;,
 }
 
 header {
@@ -92,14 +92,14 @@ header {
 
     p {
       padding: 0 3px 8px;
-      margin-right: 28px;
+      margin-inline-end: 28px;
 
       &.active {
         color: var(--black);
-        border-bottom: 1px solid var(--black);
-      }
-    }
-  }
+        border-bottom: 1px solid var(--black);,
+      },
+    },
+  },
 }
 
 #search {
@@ -124,8 +124,8 @@ header {
     font-size: 16px;
     color: var(--black);
 
-    &::placeholder { color: var(--dark-grey); }
-  }
+    &::placeholder { color: var(--dark-grey); },
+  },
 }
 
 .browse-link { margin: 44px 0 12px; font-size: 13px; }
@@ -152,9 +152,9 @@ footer {
   display: flex;
   justify-content: center;
   align-items: stretch;
-  padding-bottom: 72px;
+  padding-bottom: 72px;,
 }
 
 @media (max-width: 480px) {
-  footer { transform: scale(0.8); }
+  footer { transform: scale(0.8); },
 }

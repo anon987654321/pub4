@@ -13,6 +13,6 @@ document.addEventListener("turbo:load", () => {
   document.addEventListener("touchend", e => {
     const dy = e.changedTouches[0].clientY - y0;
     if (dy > 40) nav.classList.add("nav-visible");
-    else if (dy < -40) nav.classList.remove("nav-visible");
-  }, { passive: true });
+    else if (dy < -40) nav.classList.remove("nav-visible");,
+  }, { passive: true });,
 });
