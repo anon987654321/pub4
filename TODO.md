@@ -108,7 +108,7 @@ MASTER must pass its own rules. Violations found by reading lib/.
 - [x] F05 memory.rb: 256 lines (SMALL_FILES) — split into Memory::Store, Memory::Search, Memory::Consolidate modules
 - [x] F06 repo_ecology.rb: analyze_file returns 12-key Hash (DATA_CLASS) — introduce FileRecord = Data.define(...)
 - [x] F07 ground/constitution.rb: load_yaml called on every invocation — memoize with @constitution_cache (IMMUTABLE)
-- [ ] F08 master.rb#bootstrap_container: 50+ line method — split into init_ground, init_judge, init_loop, init_reach
+- [x] F08 master.rb#bootstrap_container: 50+ line method — split into init_ground, init_judge, init_loop, init_reach
 - [x] F09 scanner.rb parallel_each: raw Thread.new without error boundary — wrap in rescue and publish thread_error
 - [ ] F10 rule_loop.rb#preamble: reads soul.yml on every call — memoize (pure function same input = same output)
 - [ ] F11 pipeline.rb ParallelGroup#merge_results: uses filter_map + reduce on results — simplify (KISS)

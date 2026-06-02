@@ -218,12 +218,28 @@ module Master
   end
 
   def self.bootstrap_container(root: Dir.pwd)
+    init_ground(root:)
+    container = init_judge(root:)
+    init_loop(root:, container:)
+    init_reach(container:)
+  end
+
+  def self.init_ground(root:)
     install_process_guards!
     Trace::Telemetry.bootstrap!(root: root)
-    container = Builder.build(root:)
+  end
+
+  def self.init_judge(root:)
+    Builder.build(root:)
+  end
+
+  def self.init_loop(root:, container:)
     validate_data!(root: root, bus: container[:bus])
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
+  end
+
+  def self.init_reach(container:)
     start_constitution_drift(container)
     container
   end
