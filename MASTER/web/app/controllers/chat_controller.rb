@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "base64"
+require "digest"
 require "fileutils"
 require "json"
 require "open3"
@@ -99,7 +100,20 @@ class ChatController < ApplicationController
     end
 
     synth_style = Master::Voice::Speech::STYLES.key?(style) ? style : :auto
-    bytes = Master::Voice::Speech.synthesize_bytes(text, voice: voice_key, style: synth_style)
+    cache_key = Digest::SHA256.hexdigest("#{voice_key}|#{synth_style}|#{text}")[0, 32]
+    cache_dir = Rails.root.join("tmp", "tts_cache")
+    cache_path = cache_dir.join("#{cache_key}.mp3")
+
+    bytes = if File.file?(cache_path)
+      File.binread(cache_path)
+    else
+      b = Master::Voice::Speech.synthesize_bytes(text, voice: voice_key, style: synth_style)
+      if b && !b.empty?
+        FileUtils.mkdir_p(cache_dir)
+        File.binwrite(cache_path, b)
+      end
+      b
+    end
     return head(:service_unavailable) if bytes.nil? || bytes.empty?
 
     send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"

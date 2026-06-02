@@ -856,39 +856,17 @@ function playDuo(lines, onDone) {
     .catch(() => playDuo(rest, onDone));
 }
 
-const POST_LINES = [
-  'MASTER (CONSTITUTIONAL)',
-  'soul: ok',
-  'constitution: ok',
-  'pipeline: ok',
-  'council: ok',
-  'ready'
-];
 function startEverything() {
   morphCurrent = 0.0; morphTarget = 1.0;
   initAudio();
   if (actx && actx.state === 'suspended') actx.resume();
-  let li = 0;
-  const postEl = Object.assign(document.createElement('pre'), {
-    style: 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:12px ui-monospace,monospace;color:#dcdcdc;text-align:left;white-space:pre;pointer-events:none;z-index:10'
-  });
-  primer.appendChild(postEl);
-  const tick = () => {
-    if (li < POST_LINES.length) {
-      postEl.textContent += POST_LINES[li] + '\n';
-      beep(li === POST_LINES.length - 1 ? 880 : 440 + li * 12, 0.04);
-      li++;
-      setTimeout(tick, li < POST_LINES.length ? 160 : 320);
-    } else {
-      primer.classList.add('gone');
-      setTimeout(() => primer.remove(), 1000);
-      zshBar.classList.add('live');
-      requestMotionPermission(); acquireWakeLock();
-      setTimeout(() => playDuo(BOOT_DUO), 200);
-      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
-  };
-  setTimeout(tick, 80);
+  beep(880, 0.06);
+  primer.classList.add('gone');
+  setTimeout(() => primer.remove(), 400);
+  zshBar.classList.add('live');
+  requestMotionPermission(); acquireWakeLock();
+  setTimeout(() => playDuo(BOOT_DUO), 120);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 let primerFired = false;
 function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
