@@ -277,6 +277,56 @@ GRAIN_CHAN_SCALE = {
   kodachrome: [1.00, 0.92, 0.82],
 }.freeze
 
+# Per-channel spatial frequency ratios for grain — red layer (σ×1.00) is coarsest,
+# blue (σ×0.72) finest, matching measured dye-cloud PSF widths per layer depth.
+GRAIN_CHANNEL_SPATIAL = [1.00, 0.85, 0.72].freeze
+
+# Lognormal grain amplitude distribution. Silver halide crystals cluster in groups;
+# the cluster field drives amplitude modulation on top of the base Perlin layer.
+GRAIN_LOGNORM_SIGMA = 0.55
+GRAIN_LOGNORM_MEAN = Math.exp(GRAIN_LOGNORM_SIGMA**2 / 2.0)
+
+# Print film stocks: H&D per channel, warmth triplet, grain amplitude.
+# Applied as a final projection stage emulating contact or optical printing.
+PRINT_STOCKS = {
+  kodak_2383: {
+    hd: { r: [0.03, 0.98, 0.18, 1.38], g: [0.02, 0.97, 0.18, 1.34], b: [0.04, 0.96, 0.18, 1.28] },
+    grain: 3, warmth: 0.055, cool_shadow: 0.042
+  },
+  kodak_2302: {
+    hd: { r: [0.05, 0.95, 0.18, 1.50], g: [0.05, 0.95, 0.18, 1.50], b: [0.05, 0.95, 0.18, 1.50] },
+    grain: 5
+  },
+}.freeze
+
+# Per-stock reciprocity failure color shifts. Blue layer lags most under long
+# exposures; green-magenta crossover happens first. Offsets in scRGB units per
+# decade of EV (ev = log2(secs) / 10).
+RECIPROCITY_SHIFT = {
+  cinestill_800t: { r: 0.02, g: -0.04, b: 0.14 },
+  kodak_vision3_500t: { r: 0.01, g: -0.03, b: 0.11 },
+  kodak_vision3: { r: 0.01, g: -0.03, b: 0.10 },
+  tri_x: { r: 0.02, g: -0.05, b: 0.16 },
+  kodak_portra: { r: 0.01, g: -0.02, b: 0.09 },
+}.freeze
+
+# Per-stock push response ratios. Blue dye layer develops faster under push;
+# green is the reference (1.00). Ratios are per-stop multipliers relative to
+# the nominal exposure-doubling factor.
+PUSH_RESPONSE = {
+  kodak_vision3_500t: { g: 1.00, b: 0.92 },
+  kodak_vision3: { g: 1.00, b: 0.93 },
+  cinestill_800t: { g: 0.97, b: 0.89 },
+  kodak_portra: { g: 1.00, b: 0.94 },
+  tri_x: { g: 1.00, b: 0.97 },
+  fuji_velvia: { g: 1.00, b: 0.88 },
+  ektachrome_100: { g: 0.99, b: 0.91 },
+  kodachrome: { g: 0.98, b: 0.90 },
+}.freeze
+
+# Stocks with integral colored couplers (C-41 process) — get orange mask treatment.
+C41_STOCKS = %i[kodak_portra kodak_vision3 kodak_vision3_50d kodak_vision3_500t cinestill_800t].freeze
+
 # Per-stock film base density tints. Each emulsion has a characteristic base fog
 # color: C-41 negatives are orange-masked; reversal stocks are nearly neutral;
 # B&W silver prints are pure white. Applied at low opacity over the whole frame
@@ -297,10 +347,10 @@ FILM_BASE = {
 # → chemistry → optical_effect → print → grain. One contrast mode and one
 # color temperature approach per preset — no stacking.
 PRESETS = {
-  portrait: { fx: %w[optical_blur film_curve dir_coupler skin_protect shadow_lift highlight_roll grain],
+  portrait: { fx: %w[optical_blur film_curve dir_coupler orange_mask skin_protect shadow_lift highlight_roll grain],
               stock: :kodak_portra, temp: 5200, intensity: 0.85 },
 
-  indie: { fx: %w[optical_blur film_curve shadow_lift split_toning chromatic_aberration grain],
+  indie: { fx: %w[optical_blur film_curve orange_mask shadow_lift split_toning chromatic_aberration grain],
            stock: :kodak_portra, temp: 5400, intensity: 0.85, lens: "helios" },
 
   polaroid: { fx: %w[optical_blur film_curve faded_print warmth bloom_pro shadow_lift grain],
@@ -318,10 +368,10 @@ PRESETS = {
   process_e6: { fx: %w[optical_blur push_pull film_curve color_separate halation highlight_roll grain],
                 stock: :ektachrome_100, temp: 5600, intensity: 0.90, stops: 2.0 },
 
-  cinematic: { fx: %w[optical_blur spectral_temp tonemap film_curve halation shadow_lift grain],
-               stock: :kodak_vision3_500t, temp: 4500, intensity: 0.90 },
+  cinematic: { fx: %w[optical_blur spectral_temp tonemap film_curve orange_mask halation shadow_lift print_film grain],
+               stock: :kodak_vision3_500t, temp: 4500, intensity: 0.90, print_stock: :kodak_2383 },
 
-  blockbuster: { fx: %w[optical_blur tonemap bleach_bypass film_curve teal_orange halation grain],
+  blockbuster: { fx: %w[optical_blur tonemap bleach_bypass film_curve orange_mask teal_orange halation grain],
                  stock: :kodak_vision3, temp: 4800, intensity: 0.90 },
 
   golden_age: { fx: %w[optical_blur film_curve technicolor warmth dir_coupler bloom_pro grain],
@@ -330,11 +380,11 @@ PRESETS = {
   bleached: { fx: %w[optical_blur tonemap bleach_bypass film_curve split_grade highlight_roll grain],
               stock: :kodak_vision3, temp: 4800, intensity: 0.90 },
 
-  neon_night: { fx: %w[optical_blur push_pull reciprocity_failure film_curve halation bloom_pro grain],
+  neon_night: { fx: %w[optical_blur push_pull reciprocity_failure film_curve orange_mask halation bloom_pro grain],
                 stock: :cinestill_800t, temp: 3200, intensity: 0.90,
                 stops: 0.5, exposure_secs: 30.0 },
 
-  tokyo_night: { fx: %w[optical_blur push_pull reciprocity_failure film_curve halation teal_orange grain],
+  tokyo_night: { fx: %w[optical_blur push_pull reciprocity_failure film_curve orange_mask halation teal_orange grain],
                  stock: :cinestill_800t, temp: 3000, intensity: 0.90,
                  stops: 1.0, exposure_secs: 45.0 },
 
@@ -408,8 +458,8 @@ PRESETS = {
   wide_angle: { fx: %w[optical_blur lens_distortion spectral_temp film_curve halation grain],
                 stock: :fuji_velvia, temp: 5800, intensity: 0.90, k1: -0.14 },
 
-  cinema_scan: { fx: %w[optical_blur longitudinal_ca tonemap film_curve halation bokeh_rendering grain],
-                 stock: :kodak_vision3, temp: 4600, intensity: 0.90 },
+  cinema_scan: { fx: %w[optical_blur longitudinal_ca tonemap film_curve orange_mask halation bokeh_rendering print_film grain],
+                 stock: :kodak_vision3, temp: 4600, intensity: 0.90, print_stock: :kodak_2383 },
 
   diffraction: { fx: %w[optical_blur diffraction_blur film_curve micro_contrast grain],
                  stock: :fuji_velvia, temp: 5600, intensity: 0.85, f_number: 22.0 },
@@ -816,7 +866,16 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   # Shadow-biased envelope: luma^0.8 shifts peak toward shadows vs symmetric 4L(1-L)
   envelope = (luma.linear([1], [0]).pow(0.80) * luma.linear([-1], [1])).linear([4], [0])
 
-  bands = scales.map do |chan_scale|
+  # Lognormal cluster field: silver halide crystals cluster in groups whose
+  # amplitude follows a lognormal distribution. exp(gaussian_noise) produces
+  # the characteristic long-tail clumping seen in real emulsion grain scans.
+  cluster_sigma = [GRAIN_CELL_BASE * 2.5, 1.0].max
+  cluster_field = Vips::Image.gaussnoise(image.width, image.height, sigma: GRAIN_LOGNORM_SIGMA, mean: 0.0)
+                             .gaussblur(cluster_sigma).exp
+                             .linear([1.0 / GRAIN_LOGNORM_MEAN], [0])
+
+  bands = scales.each_with_index.map do |chan_scale, ci|
+    sp = [GRAIN_CELL_BASE * GRAIN_CHANNEL_SPATIAL[ci] * 0.7, 0.3].max
     sublayers.map do |sl|
       cell      = [GRAIN_CELL_BASE * (2.0**sl[:sensitivity_shift]) * sl[:grain_scale], 1.5].max.round
       amplitude = base_amplitude * chan_scale * sl[:grain_scale] * sl[:weight]
@@ -825,7 +884,8 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
       raw       = (perlin * 0.70 + fractal * 0.30)
       # Anisotropy: slight horizontal elongation along film-transport axis
       aniso     = raw.conv(GRAIN_ANISO_KERNEL, precision: :float)
-      (raw * 0.55 + aniso * 0.45).linear([amplitude], [0.0])
+      clustered = (raw * 0.55 + aniso * 0.45) * cluster_field
+      clustered.gaussblur(sp).linear([amplitude], [0.0])
     end.reduce(:+)
   end
 
@@ -902,10 +962,12 @@ rescue StandardError => e
   image
 end
 
-# OLPF (optical low-pass filter) simulation — gentle pre-blur that removes
-# aliasing-scale detail before the film grain is laid down.
+# OLPF (optical low-pass filter) simulation. Two-gaussian PSF: sharp core (84%)
+# + wide skirt (16%) matches the Lorentzian wings measured on real lens MTFs.
 def optical_blur(image, sigma = 0.6)
-  safe_cast(image.gaussblur([sigma, 0.3].max))
+  core = image.gaussblur([sigma * 0.6, 0.3].max)
+  skirt = image.gaussblur([sigma * 2.8, 0.5].max)
+  safe_cast(core.cast("float") * 0.84 + skirt.cast("float") * 0.16)
 rescue StandardError => e
   $logger.error "optical_blur: #{e.message}"; image
 end
@@ -926,13 +988,18 @@ rescue StandardError => e
   $logger.error "emulsion_defocus: #{e.message}"; image
 end
 
-# Lateral chromatic aberration: R/B fringe separation at sensor edges.
+# Lateral + longitudinal chromatic aberration. Lateral: R/B registration shift
+# at sensor edges. Longitudinal: wavelength-dependent focus depth — blue blurs
+# before the focal plane, red sharpest (as in `longitudinal_ca`).
 def chromatic_aberration(image, strength = 0.5)
   shift = [(strength * 3.0).round, 1].max
   r, g, b = image.bandsplit
   r2 = r.embed(shift, 0, image.width, image.height)
   b2 = b.embed(-shift, 0, image.width, image.height)
-  safe_cast(Vips::Image.bandjoin([r2, g, b2]))
+  long_sigma = [strength * 0.9, 0.3].max
+  r3 = r2.gaussblur([long_sigma * 0.35, 0.3].max)
+  b3 = b2.gaussblur([long_sigma, 0.3].max)
+  safe_cast(Vips::Image.bandjoin([r3, g, b3]))
 rescue StandardError => e
   $logger.error "chromatic_aberration: #{e.message}"; image
 end
@@ -959,30 +1026,39 @@ rescue StandardError => e
   $logger.error "dir_coupler: #{e.message}"; image
 end
 
-# Bleach bypass: skip bleach step, retain silver alongside dye. Result is
-# high contrast, desaturated, with lifted shadow detail. Screen-blend of a
-# B&W layer over the colour image.
+# Bleach bypass: skip bleach step, retain silver alongside dye. Screen-blend of
+# a B&W layer over the colour image. Shadow neutral lift models the base silver
+# density — retained metallic silver adds a grey floor to the darkest zones.
 def bleach_bypass(image, intensity = 0.5)
   img_f  = image.cast("float") / 255.0
   gray_f = image.colourspace("grey16").colourspace("srgb").cast("float") / 255.0
   screen = (img_f.linear(-1, 1) * gray_f.linear(-1, 1)).linear(-1, 1)
-  result = img_f * (1.0 - intensity) + screen * intensity
+  shadow_base = gray_f.linear(-1, 1) ** 2.0 * intensity * 0.18
+  base_rgb = shadow_base.bandjoin([shadow_base, shadow_base])
+  result = img_f * (1.0 - intensity) + screen * intensity + base_rgb * intensity
   safe_cast(clamp01(result) * 255.0)
 rescue StandardError => e
   $logger.error "bleach_bypass: #{e.message}"; image
 end
 
-# Push/pull processing: change development time equivalent. Positive stops
-# push (more exposure time → lifted blacks, boosted grain), negative pull
-# (reduced development → compressed shadows, softer contrast).
-def push_pull(image, stops = 1.0)
-  linear  = image.colourspace("scrgb")
-  exposed = clamp01(linear * (2.0**stops))
+# Push/pull processing. Per-stock per-channel response: blue dye layer develops
+# faster under push (reaches Dmax sooner), so PUSH_RESPONSE attenuates it to
+# match measured sensitometry curves for each stock.
+def push_pull(image, stops = 1.0, stock = :kodak_portra)
+  resp   = PUSH_RESPONSE[stock] || { g: 1.00, b: 0.94 }
+  linear = image.colourspace("scrgb")
+  factor = 2.0**stops
+  r, g, b = linear.bandsplit
+  adj = Vips::Image.bandjoin([
+    clamp01(r * factor),
+    clamp01(g * factor * resp[:g]),
+    clamp01(b * factor * resp[:b])
+  ])
   if stops > 0
-    shadow_add = exposed.linear(-1, 1) ** 2.0 * (stops * 0.04)
-    exposed    = clamp01(exposed + shadow_add)
+    shadow_add = adj.linear(-1, 1) ** 2.0 * (stops * 0.04)
+    adj = clamp01(adj + shadow_add)
   end
-  safe_cast(exposed.colourspace("srgb"))
+  safe_cast(adj.colourspace("srgb"))
 rescue StandardError => e
   $logger.error "push_pull: #{e.message}"; image
 end
@@ -1031,17 +1107,19 @@ rescue StandardError => e
 end
 
 # Reciprocity failure: long exposures exhibit non-linear response — blue
-# channel lags most (needs correction exposure), shadows over-develop slightly.
-def reciprocity_failure(image, exposure_seconds = 10.0)
-  ev = Math.log2([exposure_seconds, 1.0].max) / 10.0
+# channel lags most. Per-stock shifts from RECIPROCITY_SHIFT calibrate the
+# green-magenta crossover and blue lag to measured sensitometry data.
+def reciprocity_failure(image, exposure_seconds = 10.0, stock = :cinestill_800t)
+  ev   = Math.log2([exposure_seconds, 1.0].max) / 10.0
+  cs   = RECIPROCITY_SHIFT[stock] || RECIPROCITY_SHIFT[:cinestill_800t]
   linear = image.colourspace("scrgb")
   r, g, b = linear.bandsplit
   luma    = r * 0.2126 + g * 0.7152 + b * 0.0722
   dark_w  = luma.linear(-1, 1)
   result  = Vips::Image.bandjoin([
-    r + dark_w * ev * 0.03,
-    g + dark_w * ev * 0.02,
-    b + (ev * 0.15) + dark_w * ev * 0.05
+    r + dark_w * ev * 0.03 + (ev * cs[:r]),
+    g + dark_w * ev * 0.02 + (ev * cs[:g]),
+    b + (ev * 0.15) + dark_w * ev * 0.05 + (ev * cs[:b])
   ])
   safe_cast(clamp01(result).colourspace("srgb"))
 rescue StandardError => e
@@ -1132,13 +1210,24 @@ rescue StandardError => e
   $logger.error "kodachrome_sim: #{e.message}"; image
 end
 
-# Aged photographic print: contrast compression, warm yellow-brown lift, soft blur.
+# Aged photographic print with differential dye fading. Cyan is least stable —
+# absorbs visible light, degrades fastest → warm shift. Yellow moderate.
+# Magenta most stable. Contrast compression + shadow floor models paper base fog.
 def faded_print(image, age = 0.5)
   img_f = image.cast("float") / 255.0
-  comp  = img_f * (1.0 - age * 0.35) + (age * 0.12)
-  shift = comp.linear([1.0, 1.0, 1.0], [age * 0.10, age * 0.06, -(age * 0.12)])
-  out   = safe_cast(clamp01(shift) * 255.0)
-  age > 0.3 ? safe_cast(out.gaussblur(age * 1.2)) : out
+  r, g, b = img_f.bandsplit
+  cyan_fade   = age * 0.65
+  yellow_fade = age * 0.28
+  r_faded = clamp01(r + cyan_fade * 0.22 + age * 0.06)
+  g_faded = clamp01(g + age * 0.04)
+  b_faded = clamp01(b * (1.0 - yellow_fade * 0.20) + yellow_fade * 0.05)
+  comp = 1.0 - age * 0.28
+  r_out = r_faded * comp + age * 0.07
+  g_out = g_faded * comp + age * 0.045
+  b_out = b_faded * comp + age * 0.02
+  result = Vips::Image.bandjoin([r_out, g_out, b_out])
+  result = result.gaussblur(age * 0.9) if age > 0.3
+  safe_cast(clamp01(result) * 255.0)
 rescue StandardError => e
   $logger.error "faded_print: #{e.message}"; image
 end
@@ -1358,6 +1447,62 @@ def film_base_density(image, stock = :kodak_portra, opacity = 0.06)
   dual_base_density(image, tint, opacity)
 rescue StandardError => e
   $logger.error "film_base_density: #{e.message}"; image
+end
+
+# C-41 integral orange mask. Colored couplers in the negative create a
+# characteristic orange base density that raises shadows toward orange-amber.
+# Reversal and B&W stocks have no mask — only applied to C41_STOCKS.
+def orange_mask(image, stock = :kodak_portra, intensity = 1.0)
+  return image unless C41_STOCKS.include?(stock)
+  mask = case stock
+         when :cinestill_800t, :kodak_vision3_500t then 0.09
+         when :kodak_vision3, :kodak_vision3_50d   then 0.08
+         else 0.07
+         end * intensity
+  img_f    = image.cast("float") / 255.0
+  shadow_w = image.colourspace("b-w").cast("float") / 255.0
+  shadow_w = shadow_w.linear(-1, 1)
+  r, g, b  = img_f.bandsplit
+  result   = Vips::Image.bandjoin([
+    clamp01(r + shadow_w * mask * 0.55),
+    clamp01(g + shadow_w * mask * 0.18),
+    clamp01(b - shadow_w * mask * 0.35)
+  ])
+  safe_cast(result * 255.0)
+rescue StandardError => e
+  $logger.error "orange_mask: #{e.message}"; image
+end
+
+# Print film projection. Applies a print stock's H&D curve, warmth, cool-shadow
+# grading, and fine grain as a final projection stage — analogous to printing
+# from a negative onto Kodak 2383 (or 2302 for B&W).
+def print_film(image, stock = :kodak_2383, intensity = 0.70)
+  pdata = PRINT_STOCKS[stock]
+  return image unless pdata
+  hd = pdata[:hd]
+  bands = %i[r g b].map { |c| Vips::Image.new_from_array([HD.channel_curve(hd[c])]) }
+  lut = Vips::Image.bandjoin(bands).cast("uchar")
+  developed = image.maplut(lut)
+  img_f = developed.cast("float") / 255.0
+  luma  = developed.colourspace("b-w").cast("float") / 255.0
+  if pdata[:warmth]
+    hi_mask = luma ** 2.8
+    sh_mask = luma.linear(-1, 1) ** 2.8
+    r, g, b = img_f.bandsplit
+    img_f = Vips::Image.bandjoin([
+      clamp01(r + hi_mask * pdata[:warmth] * 0.8),
+      clamp01(g + hi_mask * pdata[:warmth] * 0.15),
+      clamp01(b - hi_mask * pdata[:warmth] * 0.35 + sh_mask * (pdata[:cool_shadow] || 0))
+    ])
+  end
+  if pdata[:grain].to_i > 0
+    amp   = pdata[:grain] * 0.25 / 255.0
+    noise = Vips::Image.gaussnoise(image.width, image.height, sigma: pdata[:grain].to_f * 0.3, mean: 0.0)
+    img_f = clamp01(img_f + rgb_bands(noise).cast("float") * amp)
+  end
+  safe_cast(image * (1.0 - intensity) + safe_cast(img_f * 255.0) * intensity)
+rescue StandardError => e
+  $logger.error "print_film: #{e.message}"; image
 end
 
 def paper_texture(image, intensity = 0.35)
@@ -1667,9 +1812,11 @@ def preset(image, name)
              when "spectral_temp"       then spectral_temp(result, source_kelvin: 6504, target_kelvin: p[:temp], intensity: p[:intensity] * 0.50)
              when "color_temp"          then color_temp(result, p[:temp], p[:intensity] * 0.50)
              when "dir_coupler"         then dir_coupler(result, p[:intensity] * 0.12)
-             when "push_pull"           then push_pull(result, p.fetch(:stops, 1.0))
+             when "push_pull"           then push_pull(result, p.fetch(:stops, 1.0), p[:stock])
              when "bleach_bypass"       then bleach_bypass(result, p[:intensity] * 0.40)
-             when "reciprocity_failure" then reciprocity_failure(result, p.fetch(:exposure_secs, 10.0))
+             when "reciprocity_failure" then reciprocity_failure(result, p.fetch(:exposure_secs, 10.0), p[:stock])
+             when "orange_mask"         then orange_mask(result, p[:stock], p[:intensity] * 0.90)
+             when "print_film"          then print_film(result, p.fetch(:print_stock, :kodak_2383), p[:intensity] * 0.70)
              when "split_grade"         then split_grade(result, intensity: p[:intensity] * 0.25)
              when "split_toning"        then split_toning(result)
              when "skin_protect"        then skin_protect(result, p[:intensity])
