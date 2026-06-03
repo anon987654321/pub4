@@ -1215,14 +1215,6 @@ if ('getBattery' in navigator) {
   }).catch(() => {});
 }
 
-// FA43 scroll pauses TTS
-let scrollResumeTimer = null;
-window.addEventListener('scroll', () => {
-  if (!tts.playing || !tts.audio) return;
-  tts.audio.pause();
-  if (scrollResumeTimer) clearTimeout(scrollResumeTimer);
-  scrollResumeTimer = setTimeout(() => { if (tts.audio && !tts.audio.ended) tts.audio.play().catch(() => {}); scrollResumeTimer = null; }, 800);
-}, { passive: true });
 
 let actx = null;
 let ambientHumGain = null;
