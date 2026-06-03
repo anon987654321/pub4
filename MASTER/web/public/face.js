@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=43') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=44') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -560,6 +560,9 @@ uniform float uEarPulse;
 uniform float uRipple;
 uniform float uVowel;
 uniform float uSurpriseY;
+uniform float uFracture;
+uniform float uBloom;
+uniform float uIdleDrift;
 attribute vec3 scatter;
 attribute float seed;
 attribute float curvature;
@@ -599,6 +602,14 @@ void main(){
   p.y -= uVowel * jawRgnV * 0.025;
   // FA29 surprised Y impulse
   p.y += uSurpriseY * smoothstep(0.0, 0.6, 0.5 + position.y * 0.8) * 0.12;
+  // FA19 veto fracture — scatter to 8 radial shards by position angle
+  if(uFracture > 0.0) {
+    float ang = atan(position.y, position.x);
+    float shardAng = floor(ang * 4.0 / 3.14159 + 0.5) * 3.14159 / 4.0;
+    p.xy += vec2(cos(shardAng), sin(shardAng)) * uFracture * (0.22 + seed * 0.32);
+  }
+  // FA20 pass bloom — brief outward radial spring then snap back
+  if(uBloom > 0.0) p.xy += normalize(p.xy + vec2(0.001)) * uBloom * 0.30 * (1.0 - radial * 0.6);
   // FA09 council sector — radial sector glow by zone during deliberation (carried via uBeat spike)
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
@@ -612,7 +623,7 @@ void main(){
   else if(zone<0.5) zoneAudio=uBass*0.08;
   else if(zone<0.7) zoneAudio=uHighs*0.14;
   else zoneAudio=uMids*0.10;
-  vAlpha=hc>0.0?hc:mix(0.28,0.48+depth*0.52,m)+zoneAudio;
+  vAlpha=hc>0.0?hc:mix(0.28+uIdleDrift*0.08,0.48+depth*0.52,m)+zoneAudio;
   float shade=mix(0.14,1.0,depth);
   vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.0?1.0:1.0);
   vec3 viewDir=normalize(-mv.xyz);
@@ -661,7 +672,8 @@ if (_hasWebGL && THREE) {
       uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
       uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
       uRain:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
-      uVowel:{value:0}, uSurpriseY:{value:0}
+      uVowel:{value:0}, uSurpriseY:{value:0},
+      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -786,7 +798,8 @@ if (_hasWebGL && THREE && scene && facePoints) {
       uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
       uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
       uRain:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
-      uVowel:{value:0}, uSurpriseY:{value:0}
+      uVowel:{value:0}, uSurpriseY:{value:0},
+      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -912,7 +925,7 @@ function frame(t) {
   if (faceMat) {
     const idleS = (t - State.lastTouch) / 1000;
     const confTight = 0.78 + State.confidence * 0.22;
-    morphTarget = !primerFired ? 0.88 : (idleS > 90 ? Math.max(0, 1 - (idleS - 90) / 60) : confTight);
+    morphTarget = !primerFired ? 0.88 : (idleS > 60 ? Math.max(0, 1 - (idleS - 60) / 30) : confTight);
     const springK = 0.038, springDamp = 0.72;
     if (!faceMat._morphVel) faceMat._morphVel = 0;
     faceMat._morphVel += (morphTarget - morphCurrent) * springK;
@@ -968,6 +981,13 @@ function frame(t) {
     faceMat.uniforms.uVowel.value += (vowelAmp - faceMat.uniforms.uVowel.value) * 0.15;
     State.surpriseY = (State.surpriseY || 0) * 0.88;
     faceMat.uniforms.uSurpriseY.value = State.surpriseY;
+    State.fracture = (State.fracture || 0) * 0.91;
+    faceMat.uniforms.uFracture.value = State.fracture;
+    State.bloom = (State.bloom || 0) * 0.88;
+    faceMat.uniforms.uBloom.value = State.bloom;
+    const idleS2 = (t - State.lastTouch) / 1000;
+    State.idleAlphaDrift = Math.sin(t * 0.000785) * 0.5 + 0.5;
+    faceMat.uniforms.uIdleDrift.value = State.idleAlphaDrift;
     if (glowPoints) {
       const gm = glowPoints.material;
       Object.assign(gm.uniforms, {
@@ -981,7 +1001,9 @@ function frame(t) {
         uTremor: faceMat.uniforms.uTremor, uTilt: faceMat.uniforms.uTilt,
         uRain: faceMat.uniforms.uRain, uEarPulse: faceMat.uniforms.uEarPulse,
         uRipple: faceMat.uniforms.uRipple, uVowel: faceMat.uniforms.uVowel,
-        uSurpriseY: faceMat.uniforms.uSurpriseY
+        uSurpriseY: faceMat.uniforms.uSurpriseY,
+        uFracture: faceMat.uniforms.uFracture, uBloom: faceMat.uniforms.uBloom,
+        uIdleDrift: faceMat.uniforms.uIdleDrift
       });
       gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
     }
@@ -1070,6 +1092,83 @@ if (window.DeviceMotionEvent) {
     }
   }, { passive: true });
 }
+
+// FA24 pinch-to-zoom
+let pinchDist0 = null;
+cv.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    pinchDist0 = Math.hypot(dx, dy);
+  }
+}, { passive: true });
+cv.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 2 && pinchDist0) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const d = Math.hypot(dx, dy);
+    State.pinchScale = Math.max(0.5, Math.min(2.0, State.pinchScale * (d / pinchDist0)));
+    pinchDist0 = d;
+    if (head) head.scale.setScalar(State.pinchScale);
+  }
+}, { passive: true });
+cv.addEventListener('touchend', () => { pinchDist0 = null; }, { passive: true });
+
+// FA26 double-tap reset
+let lastTapT = 0;
+cv.addEventListener('pointerup', () => {
+  const now = performance.now();
+  if (now - lastTapT < 320) {
+    State.pinchScale = 1.0;
+    State.tiltX = 0; State.tiltY = 0;
+    State.parX = 0; State.parY = 0;
+    if (head) { head.scale.setScalar(1.0); head.position.set(0, 0, 0); }
+    State.bloom = 0.4;
+  }
+  lastTapT = now;
+}, { passive: true });
+
+// FA27 long-press mood demo (1400ms, distinct from 420ms STT trigger)
+let demoTimer = null;
+cv.addEventListener('pointerdown', () => {
+  demoTimer = setTimeout(() => {
+    const seq = ['curious', 'tense', 'weary', 'pass', 'veto', 'idle'];
+    let i = 0;
+    const step = () => {
+      if (i >= seq.length) return;
+      const m = seq[i++];
+      State.mood = m;
+      if (TINT[m]) fadeColorTo(TINT[m]);
+      if (m === 'curious') State.surpriseY = 0.8;
+      if (m === 'pass') State.bloom = 1.0;
+      if (m === 'veto') State.fracture = 1.0;
+      if (m === 'weary') State.rain = 1.0;
+      setTimeout(step, 1100);
+    };
+    step();
+  }, 1400);
+});
+cv.addEventListener('pointerup', () => { if (demoTimer) { clearTimeout(demoTimer); demoTimer = null; } }, { passive: true });
+cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoTimer); demoTimer = null; } }, { passive: true });
+
+// FA33 battery saver LOD
+if ('getBattery' in navigator) {
+  navigator.getBattery().then(b => {
+    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.018; else FACE_PIXEL_SIZE = 0.024; };
+    check();
+    b.addEventListener('levelchange', check);
+    b.addEventListener('chargingchange', check);
+  }).catch(() => {});
+}
+
+// FA43 scroll pauses TTS
+let scrollResumeTimer = null;
+window.addEventListener('scroll', () => {
+  if (!tts.playing || !tts.audio) return;
+  tts.audio.pause();
+  if (scrollResumeTimer) clearTimeout(scrollResumeTimer);
+  scrollResumeTimer = setTimeout(() => { if (tts.audio && !tts.audio.ended) tts.audio.play().catch(() => {}); scrollResumeTimer = null; }, 800);
+}, { passive: true });
 
 let actx = null;
 function initAudio() {
@@ -1509,10 +1608,12 @@ async function sendMessage(text) {
     if (v === 'pass') {
       beep(880, 0.06);
       morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
+      State.bloom = 1.0;
     }
     if (v === 'veto') {
       beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
+      State.fracture = 1.0;
     }
   });
   evtSrc.addEventListener('council:speech', (ev) => {
