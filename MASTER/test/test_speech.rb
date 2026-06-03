@@ -90,12 +90,14 @@ class TestSpeech < Minitest::Test
   def test_synthesize_edge_warns_and_cleans_up_failed_worker_output
     status = Struct.new(:success?).new(false)
     _out, err = capture_io do
-      ::Open3.stub(:capture3, ["", "worker failed", status]) do
-        assert_nil Master::Voice::Speech.synthesize_edge(
-          "hello",
-          voice: :ryan,
-          style_config: { rate: "+0%", pitch: "+0Hz" }
-        )
+      Master::Voice::Speech.stub(:synthesize_edge_socket, nil) do
+        ::Open3.stub(:capture3, ["", "worker failed", status]) do
+          assert_nil Master::Voice::Speech.synthesize_edge(
+            "hello",
+            voice: :ryan,
+            style_config: { rate: "+0%", pitch: "+0Hz" }
+          )
+        end
       end
     end
 
