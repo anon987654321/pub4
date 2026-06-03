@@ -2,17 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title><%= content_for(:title) || "MASTER" %></title>
+    <title><%= content_for(:title) || "mæstro" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="MASTER">
+    <meta name="application-name" content="mæstro">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#030303">
     <meta name="master-runtime" content="face">
     <meta name="master-visual-profile" content="auto">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icon.png">
     <link rel="preload" href="/face.css" as="style">
@@ -22,7 +25,7 @@
     <link rel="stylesheet" href="/photo_upload.css">
   </head>
   <body class="zen" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
-    <div class="top-left-logo" aria-hidden="true">maestro</div>
+    <div class="top-left-logo" aria-hidden="true">mæstro</div>
     <canvas id="cognition-ecology" aria-hidden="true"></canvas>
     <canvas id="face" tabindex="0" aria-hidden="true"></canvas>
     <div id="primer" role="dialog" aria-modal="true" aria-labelledby="primer-title" tabindex="0">
@@ -35,7 +38,6 @@
           <span class="chip">mic voice</span>
           <span class="chip">swipe up input</span>
         </div>
-        <p class="hint">tap anywhere to start</p>
       </div>
     </div>
     <main id="chat-shell" aria-label="MASTER chat">

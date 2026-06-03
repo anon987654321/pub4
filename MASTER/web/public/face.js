@@ -2115,6 +2115,13 @@ function startEverything() {
     logo.style.transform = 'translateX(3px)';
     setTimeout(() => { logo.style.transition = 'transform 80ms ease'; logo.style.transform = ''; }, 80);
   }
+  let _logoDimTimer = null;
+  function _schedLogoDim() {
+    clearTimeout(_logoDimTimer);
+    _logoDimTimer = setTimeout(() => { if (logo) logo.classList.add('dim'); }, 4000);
+  }
+  _schedLogoDim();
+  document.addEventListener('pointerdown', () => { if (logo) logo.classList.remove('dim'); _schedLogoDim(); }, { passive: true });
   requestMotionPermission(); acquireWakeLock();
   setTimeout(() => { morphTarget = 1.0; }, 600);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});

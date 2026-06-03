@@ -2627,3 +2627,38 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA173 face: WebGL instanced mesh — replace Points+LineSegments with InstancedMesh for nodes; 2× draw-call reduction; same visual, lower GPU overhead
 - [ ] FA174 face: GLSL snoise → hash23 replacement — hash-based noise cheaper on mobile GPU; swap for devices with frame time >20ms
 - [ ] FA175 face: edge length normalization — compute median hex edge length at sample time; normalize all edge positions to unit grid; prevents depth-map scale artifacts
+
+## BF Design backlog — from 100-item proposal
+
+- BF01 Logo entry: 300ms opacity delay of 800ms after primer dismiss (CSS animation-delay on .top-left-logo)
+- BF02 Particles briefly form wordmark on first load (shader morph target)
+- BF03 Photo button: replace + with minimal SVG arc icon
+- BF04 Long responses: auto-collapse at 6 lines with expand gesture
+- BF05 Username: replace visitor with browser fingerprint initial (a@master etc)
+- BF06 Scroll indicator: thin 1px right-edge line fading as user scrolls to bottom
+- BF07 Radio track: slide in from left on track change (translateX -8px → 0)
+- BF08 Radio track: drop first name for well-known artists (Dilla not J Dilla)
+- BF09 Radio track: BPM shown as tiny grey number after title
+- BF10 Radio track: brief label flash before next track name appears
+- BF11 Particle idle size: reduce 8% (uParticleSize or equivalent)
+- BF12 Particle color temperature: warm +10K on idle, cooler on error
+- BF13 Particle breathing rate: 3.2s period (currently ~2.4s)
+- BF14 Iris particles: brighter, tighter cluster
+- BF15 Lip region: 12% higher particle density
+- BF16 Particle alpha floor: 0.08 minimum — face always present
+- BF17 TTS: particles near mouth pulse at speech amplitude
+- BF18 Council mode: particles dissolve to looser cloud
+- BF19 Error state: red channel +0.3 on particles (warm blush)
+- BF20 Interaction ripple: outward burst from touch point, return 400ms
+- BF21 Message stagger: 40ms delay between consecutive messages
+- BF22 Status bar text changes: 150ms crossfade (requires clone trick)
+- BF23 Audio duck: transition cubic-bezier(0.4,0,0.2,1) 350ms musical
+- BF24 Color temperature dawn→dusk: 8s linear filter drift
+- BF25 Haptic: vibrate([20,40,20]) on TTS start
+- BF26 og:image: particle face card, no text
+- BF27 Favicon: single white dot on #030303 background
+- BF28 404 page: particle face system, "lost" in primer h1
+- BF29 Push notification body: MASTER voice style — just the first sentence
+- BF30 City onboarding: first response acknowledges city from subdomain
+- BF31 Session token: 4-char poetic word (moss/iron/dusk) not hex
+- BF32 Sound logo: 400ms beep shaped as minor third (A4+E5)
