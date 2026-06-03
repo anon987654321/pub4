@@ -8,13 +8,13 @@ daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_logger="daemon.notice"
 daemon_timeout="90"
 . /etc/rc.d/rc.subr
-pexp="ruby34.*falcon.*${PORT}"
+pexp="ruby34.*${PORT}"
 rc_bg=YES
 rc_reload=NO
 
 rc_pre() {
-	# Kill orphans from previous failed starts before launching.
 	pkill -f "falcon.*${PORT}" 2>/dev/null
+	pkill -f "ruby34.*${PORT}" 2>/dev/null
 	pkill -f "pub4/MASTER/web" 2>/dev/null
 	sleep 1
 }

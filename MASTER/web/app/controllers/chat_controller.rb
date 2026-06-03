@@ -238,9 +238,10 @@ class ChatController < ApplicationController
       end
 
       on_chunk = ->(token) {
+        t = token.to_s
+        return if t.empty?
         streamed = true
-        encoded = token.to_s.gsub("\\", "\\\\").gsub("\n", "\\n")
-        sse.write("data: #{encoded}\n\n")
+        sse.write("data: #{t.gsub("\\", "\\\\").gsub("\n", "\\n")}\n\n")
       }
 
       ctx = { user_message: input, on_chunk: on_chunk }
