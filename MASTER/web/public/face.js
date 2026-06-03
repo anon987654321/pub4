@@ -1053,7 +1053,7 @@ function frame(t) {
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
     morphGhost += (morphCurrent - morphGhost) * 0.035;
     faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524;
-    faceMat.uniforms.uExposure.value = window.matchMedia( + mq + ).matches ? 0.6 : 1.0;
+    faceMat.uniforms.uExposure.value = window.matchMedia('(prefers-color-scheme: light)').matches ? 0.6 : 1.0;
     if (!State._lastBeat || t - State._lastBeat > (3000 + Math.random() * 2000)) { State._lastBeat = t; State._heartbeat = 1.0; }
     State._heartbeat = (State._heartbeat || 0) * 0.94;
     faceMat.uniforms.uHeartbeat.value = State._heartbeat || 0;
@@ -2086,10 +2086,10 @@ function startEverything() {
 }
 let primerFired = false;
 function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
-primer.addEventListener('pointerdown', firePrimer);
-primer.addEventListener('touchstart', firePrimer, { passive: true });
-primer.addEventListener('click', firePrimer);
-primer.addEventListener('keydown', event => {
+primer?.addEventListener('pointerdown', firePrimer);
+primer?.addEventListener('touchstart', firePrimer, { passive: true });
+primer?.addEventListener('click', firePrimer);
+primer?.addEventListener('keydown', event => {
   if (event.key !== 'Enter' && event.key !== ' ') return;
   event.preventDefault();
   firePrimer();
