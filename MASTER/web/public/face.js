@@ -1656,7 +1656,7 @@ function speakWithBrowserTTS(text, voiceKey = TTS_DEFAULT_VOICE) {
       rootBody.dataset.ttsWave = 'true';
       startVisemeAnim(text);
     };
-    const safety = setTimeout(() => resolve(), (text.length / 8 + 10) * 1000);
+    const safety = setTimeout(() => resolve(), Math.min(12000, (text.length / 12 + 4) * 1000));
     utterance.onend = () => { clearTimeout(safety); resolve(); };
     utterance.onerror = () => { clearTimeout(safety); reject(new Error('browser tts failed')); };
     window.speechSynthesis.cancel();
@@ -1740,10 +1740,11 @@ function ttsTick() {
     const src = URL.createObjectURL(blob);
     const audio = new Audio(src);
     const baseRate = getTtsRate() * 0.97;
-    // Measure duration for beat quantization
+    // Measure duration for beat quantization — 1.5s timeout guards against silent hang
     const dur = await new Promise(resolve => {
-      audio.onloadedmetadata = () => resolve(audio.duration);
-      audio.onerror = () => resolve(null);
+      const t = setTimeout(() => resolve(null), 1500);
+      audio.onloadedmetadata = () => { clearTimeout(t); resolve(audio.duration); };
+      audio.onerror = () => { clearTimeout(t); resolve(null); };
       audio.load();
     });
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
@@ -2114,7 +2115,6 @@ function startEverything() {
   }
   requestMotionPermission(); acquireWakeLock();
   setTimeout(() => { morphTarget = 1.0; }, 600);
-  setTimeout(bootGreet, 120);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 let primerFired = false;
