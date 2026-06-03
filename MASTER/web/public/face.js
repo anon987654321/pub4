@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=47') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=48') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -74,6 +74,11 @@ function dayNightTint() {
 }
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
+const TTS_CHUNK_MAX = 220;
+function detectLang(text) {
+  if (/[æøåÆØÅ]/.test(text) || /\b(og|er|det|ikke|jeg|du|vi|at|til|på|som|av|for|med|han|hun|de)\b/i.test(text)) return 'nb';
+  return 'en';
+}
 
 const State = {
   mode: 'idle', mood: 'idle', model: '', modelName: '',
@@ -1438,7 +1443,8 @@ function ttsTick() {
   setTTSLoading(true);
   State.mode = 'speaking'; setAmbientHum(false);
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
-  const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text);
+  const voice = tts.lang === 'nb' ? (Math.random() < 0.5 ? 'pernille' : 'finn') : undefined;
+  const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice);
   tts.prefetch.delete(text);
   if (tts.queue[0]) fetchTTS(tts.queue[0]);
 
@@ -1590,16 +1596,17 @@ async function sendMessage(text) {
     }
   } catch (_) {}
 
+  tts.lang = detectLang(text);
   State.mode = 'thinking'; State.pulse = 0.4; setAmbientHum(true);
   if (input.length > 180) State.lean = 0.14;
   const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|0`);
   const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}`;
   evtSrc = new EventSource(url);
-  let pending = '';
+  let pending = '', totalTTSChars = 0, ttsSuppressed = false;
   evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
     if (raw === '[DONE]') {
-      if (pending.trim()) {
+      if (pending.trim() && !ttsSuppressed) {
         tts.lastText = pending.trim();
         enqueueSpeech(pending.trim());
       }
@@ -1623,11 +1630,18 @@ async function sendMessage(text) {
     pending += chunk;
     State.pulse = Math.min(0.6, State.pulse + 0.05);
     let m;
-    while ((m = pending.match(SENT_BREAK))) {
-      const cut = m.index + m[0].length;
+    while ((m = pending.match(SENT_BREAK)) || (pending.length > TTS_CHUNK_MAX && (m = pending.match(/\s+/)))) {
+      const cut = m ? m.index + m[0].length : TTS_CHUNK_MAX;
       const sent = pending.slice(0, cut).trim();
       pending = pending.slice(cut);
-      if (sent) enqueueSpeech(sent);
+      if (!sent) continue;
+      totalTTSChars += sent.length;
+      if (!ttsSuppressed && totalTTSChars > 800) {
+        ttsSuppressed = true;
+        window._chatOnReadAloud?.(sent);
+      } else if (!ttsSuppressed) {
+        enqueueSpeech(sent);
+      }
     }
   };
   evtSrc.addEventListener('mood', (ev) => {
