@@ -58,10 +58,14 @@ model_defs:
     id: anthropic/claude-sonnet-4-6
     <<: *model_defaults
     score: { quality: 0.95, speed: 0.75, cost: 0.60 }
+  gemini_flash_openrouter: &gemini_flash_openrouter
+    id: google/gemini-2.5-flash
+    <<: *model_defaults
+    score: { quality: 0.90, speed: 0.95, cost: 0.92 }
   nemotron_super: &nemotron_super
     id: nvidia/nemotron-3-super-120b-a12b:free
     <<: *model_defaults
-    score: { quality: 0.90, speed: 0.88, cost: 1.0 }
+    score: { quality: 0.90, speed: 0.05, cost: 1.0 }
   qwen_coder: &qwen_coder
     id: qwen/qwen3-coder:free
     <<: *model_defaults
@@ -165,7 +169,8 @@ ollama_phi: &ollama_phi
 
 models:
   default:
-    - *nemotron_super
+    - *gemini_flash_openrouter
+    - *gemini_2_flash_exp_free
     - *gpt_oss_120b
     - *qwen3_next
     - *llama_70b
@@ -180,7 +185,8 @@ models:
     - *gemini_flash
     - *command_r_plus
   cheap:
-    - *nemotron_super
+    - *gemini_flash_openrouter
+    - *gemini_2_flash_exp_free
     - *gemini_flash
     - *mistral_small
     - *llama_70b
