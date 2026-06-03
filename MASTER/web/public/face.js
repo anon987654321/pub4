@@ -2068,10 +2068,7 @@ function startEverything() {
   setTimeout(() => radio.start(), 800);
   bindGlobalEventStream();
   if (actx && actx.state === 'suspended') actx.resume();
-  beep(880, 0.06);
-  primer.style.transition = 'opacity 160ms ease, transform 160ms ease';
-  primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)';
-  setTimeout(() => primer.remove(), 200);
+  if (primer) { primer.style.transition = 'opacity 160ms ease, transform 160ms ease'; primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)'; setTimeout(() => primer?.remove(), 200); }
   zshBar.classList.add('live');
   const logo = document.querySelector('.top-left-logo');
   if (logo) {
