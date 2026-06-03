@@ -101,7 +101,7 @@ begin
 
   puts "\n=== test dynamic import of three.module.js ==="
   browser.evaluate(<<~JS)
-    import('/three.module.js?v=11')
+    import('/three.module.js?v=51')
       .then(function(m) { window._clog.push('THREE_OK keys=' + Object.keys(m).length); })
       .catch(function(e) { window._clog.push('THREE_FAIL: ' + String(e)); });
   JS
