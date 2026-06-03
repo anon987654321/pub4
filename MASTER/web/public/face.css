@@ -134,6 +134,26 @@ body[data-mode="listening"] #mic-dot {
   white-space: nowrap;
 }
 
+/* Radio track display — bottom-left, above prompt bar */
+#radio-track {
+  position: fixed;
+  left: calc(12px + var(--safe-left));
+  bottom: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
+  z-index: var(--z-ui);
+  font: 9px/1.1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
+  letter-spacing: .18em;
+  color: var(--face-fg);
+  opacity: .42;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  max-width: min(60vw, 380px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 400ms ease;
+}
+#radio-track:empty { opacity: 0; }
+
 /* SR-only for a11y live announcements (mood changes etc) — screen readers only, no visual */
 .sr-only {
   position: absolute;

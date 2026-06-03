@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=51') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=52') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -885,10 +885,21 @@ function frame(t) {
     if (curBass - faceMat._prevBass > 0.15) State.audioBeat = 1.0;
     faceMat._prevBass = curBass * 0.7 + faceMat._prevBass * 0.3;
   } else {
-    State.voiceRMS   = (State.voiceRMS   || 0) * 0.9;
-    State.audioBass  = (State.audioBass  || 0) * 0.88;
-    State.audioMids  = (State.audioMids  || 0) * 0.88;
-    State.audioHighs = (State.audioHighs || 0) * 0.88;
+    State.voiceRMS = (State.voiceRMS || 0) * 0.9;
+    const rd = radio?.started ? radio.data() : null;
+    if (rd) {
+      State.audioBass  = rd.bass;
+      State.audioMids  = rd.mid;
+      State.audioHighs = rd.high;
+      State.audioBeat  = 0;
+      if (!faceMat?._prevBass) { if (faceMat) faceMat._prevBass = 0; }
+      if (faceMat && rd.bass - faceMat._prevBass > 0.12) State.audioBeat = 1.0;
+      if (faceMat) faceMat._prevBass = rd.bass * 0.7 + (faceMat._prevBass || 0) * 0.3;
+    } else {
+      State.audioBass  = (State.audioBass  || 0) * 0.88;
+      State.audioMids  = (State.audioMids  || 0) * 0.88;
+      State.audioHighs = (State.audioHighs || 0) * 0.88;
+    }
   }
 
   const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
@@ -1246,6 +1257,241 @@ function setAmbientHum(active) {
   const target = active ? 0.03 : 0;
   ambientHumGain.gain.setTargetAtTime(target, actx.currentTime, 0.5);
 }
+const RADIO_TRACKS = [
+  {artist:"J Dilla",title:"Microphone Master",id:"9EGHwkDix78"},
+  {artist:"J Dilla",title:"In Space",id:"vO2nWXCVt6o"},
+  {artist:"J Dilla",title:"Timeless",id:"dbbfo9_7D8g"},
+  {artist:"AFTA-1",title:"Due Time",id:"WC09qDzU9y4"},
+  {artist:"Flying Lotus",title:"Massage Situation",id:"6oUx6wGCekM"},
+  {artist:"Madlib",title:"Eye",id:"ScVz2mntmCE"},
+  {artist:"Slum Village",title:"Players",id:"KsULjOCYdnY"},
+  {artist:"Jay Electronica",title:"Exhibit A",id:"H3UIHZshNQ0"},
+  {artist:"Slum Village",title:"La La (Instrumental)",id:"EYJxxHQ7sX0"},
+  {artist:"Slum Village",title:"Get It Together",id:"t6T-Q6HMbEo"},
+  {artist:"Slum Village",title:"Fantastic",id:"a3ISYWWYgz8"},
+  {artist:"Flying Lotus",title:"me Yesterday//Corded",id:"8DgAhgmpXNA"},
+  {artist:"Flying Lotus",title:"Camel",id:"fU9YRGLPDQ8"},
+  {artist:"Flying Lotus",title:"Golden Diva",id:"iu4FVvR2QQs"},
+  {artist:"Slum Village",title:"Worlds Full of Sadness",id:"MU3nfxsz2XA"},
+  {artist:"A. Mochi & Takaaki Itoh",title:"Sarria's Mind",id:"gFKArkiz8vU"},
+  {artist:"Samiyam",title:"Rounded",id:"oeaY2h_cKsg"},
+  {artist:"Chase Swayze",title:"Traffic",id:"bH-30pDoQdo"},
+  {artist:"Chase Swayze",title:"Underrated",id:"1jjFk2Vp5ok"},
+  {artist:"Flying Lotus",title:"BTS Radio 2006",id:"6nWdggkulHk",start:1364},
+  {artist:"kemt",title:"close to you",id:"8SQZtBRdSbE"},
+  {artist:"J Dilla",title:"Motor City 17",id:"OSg9Fwd8QSs"},
+  {artist:"AKMD",title:"Stailings",src:"/.mp3/akmd-stailings.mp3"},
+  {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:"/.mp3/akmd_mike_t-alt_kan_skje.mp3"},
+  {artist:"AKMD, Mike T & Jan Hakim",title:"Diverse",src:"/.mp3/akmd_mike_t_jan_hakim-diverse.mp3"},
+  {artist:"Angelo Reira & Johann",title:"Sandviken Hotell B",src:"/.mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3"},
+  {artist:"Chase Swayze",title:"Traffic",src:"/.mp3/chase_swayze-traffic.mp3"},
+  {artist:"Haisam & Johann",title:"PB1",src:"/.mp3/haisam_and_johann-pb1.mp3"},
+  {artist:"Jan Hakim & Johann",title:"Stailings A",src:"/.mp3/jan_hakim_and_johann-stailings_a.mp3"},
+  {artist:"Mike T Jr",title:"Rauingar",src:"/.mp3/mike_t_jr-rauingar.mp3"},
+  {artist:"Zaiton",title:"Zaiton",src:"/.mp3/zaiton.mp3"}
+];
+const RADIO_FADE_MS = 3500;
+
+class RadioEngine {
+  constructor(tracks) {
+    this.tracks = tracks.slice().sort(() => Math.random() - 0.5);
+    this.idx = 0; this.started = false; this.muted = false;
+    this.activeKey = 'a'; this.inactiveKey = 'b';
+    this.mp3 = { a: new Audio(), b: new Audio() };
+    this.mp3.a.crossOrigin = 'anonymous'; this.mp3.b.crossOrigin = 'anonymous';
+    this.mp3.a.preload = 'metadata'; this.mp3.b.preload = 'metadata';
+    this.mp3.a.volume = 0; this.mp3.b.volume = 0;
+    this.yt = { a: null, b: null }; this.ytReady = false; this._ytCount = 0;
+    this._fadeIv = null; this._preTimer = null; this._watchTimer = null;
+    this.analyser = null; this.freqBuf = null; this.compressor = null;
+    this.musicGain = null; this._beatEnv = 0; this._beatPhase = 0;
+  }
+  initNodes() {
+    if (!actx || this.analyser) return;
+    try {
+      this.compressor = actx.createDynamicsCompressor();
+      this.compressor.threshold.setValueAtTime(-24, actx.currentTime);
+      this.compressor.knee.setValueAtTime(30, actx.currentTime);
+      this.compressor.ratio.setValueAtTime(12, actx.currentTime);
+      this.compressor.attack.setValueAtTime(0.003, actx.currentTime);
+      this.compressor.release.setValueAtTime(0.25, actx.currentTime);
+      this.musicGain = actx.createGain();
+      this.musicGain.gain.value = 1;
+      this.analyser = actx.createAnalyser();
+      this.analyser.fftSize = 256;
+      this.freqBuf = new Uint8Array(this.analyser.frequencyBinCount);
+      this.analyser.connect(this.compressor);
+      this.compressor.connect(this.musicGain);
+      this.musicGain.connect(actx.destination);
+    } catch (_) {}
+  }
+  initYT() {
+    try {
+      const opts = k => ({
+        width:'1', height:'1',
+        playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},
+        events:{
+          onReady:() => { this._ytCount++; if (this._ytCount >= 2) this.ytReady = true; try { this.yt[k].setVolume(0); this.yt[k].mute(); } catch(_){} },
+          onStateChange: e => this._onYTState(k, e),
+          onError: () => { clearTimeout(this._watchTimer); this.next({fast:true}); }
+        }
+      });
+      this.yt.a = new YT.Player('yt-player-a', opts('a'));
+      this.yt.b = new YT.Player('yt-player-b', opts('b'));
+    } catch (_) {}
+  }
+  _onYTState(k, e) {
+    const S = YT.PlayerState;
+    if (e.data === S.ENDED && k === this.activeKey) { this.next({fast:true}); return; }
+    if (e.data === S.PLAYING) {
+      clearTimeout(this._watchTimer);
+      try {
+        const p = this.yt[k];
+        const sched = () => {
+          const d = p.getDuration ? p.getDuration() || 0 : 0;
+          if (d > 0) { clearTimeout(this._preTimer); this._preTimer = setTimeout(() => this.next({}), Math.max(RADIO_FADE_MS + 1000, d * 1000 - RADIO_FADE_MS - 500)); }
+        };
+        sched(); setTimeout(sched, 500);
+      } catch (_) {}
+    }
+  }
+  start() {
+    this.started = true; this.initNodes();
+    if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+    this._load(this.activeKey, this.tracks[this.idx], true);
+    this._updateTrackDisplay();
+  }
+  _load(k, t, fadeIn) {
+    if (t.src) this._loadMP3(k, t, fadeIn);
+    else this._loadYT(k, t, fadeIn);
+  }
+  _loadMP3(k, t, fadeIn) {
+    const p = this.mp3[k];
+    p.src = t.src; p.load();
+    p.onended = () => { if (k === this.activeKey) this.next({fast:true}); };
+    p.onerror = () => { if (k === this.activeKey) this.next({fast:true}); };
+    p.onloadedmetadata = () => {
+      const d = p.duration;
+      if (d > 0) { clearTimeout(this._preTimer); this._preTimer = setTimeout(() => this.next({}), Math.max(RADIO_FADE_MS + 1000, d * 1000 - RADIO_FADE_MS - 500)); }
+    };
+    try {
+      if (!p._node && this.analyser) { p._node = actx.createMediaElementSource(p); p._node.connect(this.analyser); }
+    } catch (_) {}
+    p.play().catch(() => { if (k === this.activeKey) setTimeout(() => this.next({fast:true}), 1000); });
+    if (p._fadeIv) { clearInterval(p._fadeIv); p._fadeIv = null; }
+    if (fadeIn) { let v = 0; p._fadeIv = setInterval(() => { v += 0.033; p.volume = Math.min(1, v); if (v >= 1) { clearInterval(p._fadeIv); p._fadeIv = null; } }, 50); }
+    else { p.volume = 1; }
+  }
+  _loadYT(k, t, fadeIn) {
+    if (!t.id) return;
+    clearTimeout(this._watchTimer);
+    if (this.ytReady && this.yt[k] && this.yt[k].loadVideoById) {
+      try {
+        this.yt[k].loadVideoById({ videoId: t.id, startSeconds: t.start || 0, suggestedQuality: 'tiny' });
+        this.yt[k].unMute();
+        if (fadeIn) this._fadeYT(k, RADIO_FADE_MS); else this.yt[k].setVolume(100);
+        this._watchTimer = setTimeout(() => { try { if ((this.yt[k].getCurrentTime?.() || 0) < 0.1) this.next({fast:true}); } catch (_) { this.next({fast:true}); } }, 4000);
+      } catch (_) {}
+    } else {
+      const f = document.getElementById('yt-fallback-' + k);
+      if (!f) return;
+      f.src = `https://www.youtube.com/embed/${t.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&mute=0&enablejsapi=1${t.start ? `&start=${t.start}` : ''}`;
+      f.onload = () => {
+        _ytPost(f, 'playVideo');
+        _ytPost(f, 'unMute');
+        if (fadeIn) { _ytPost(f, 'setVolume', [0]); this._fadeYT(k, RADIO_FADE_MS); } else { _ytPost(f, 'setVolume', [100]); }
+      };
+      this._watchTimer = setTimeout(() => this.next({fast:true}), 5000);
+    }
+  }
+  _fadeYT(k, ms) {
+    if (!this.ytReady) return;
+    const steps = 30, dt = ms / steps; let i = 0;
+    const iv = setInterval(() => {
+      i++; const vol = Math.round(100 * i / steps);
+      try { this.yt[k] ? this.yt[k].setVolume(vol) : _ytPost(document.getElementById('yt-fallback-' + k), 'setVolume', [vol]); } catch (_) {}
+      if (i >= steps) clearInterval(iv);
+    }, dt);
+  }
+  next({ fast = false } = {}) {
+    clearInterval(this._fadeIv); clearTimeout(this._preTimer);
+    const ni = (this.idx + 1) % this.tracks.length;
+    const cur = this.tracks[this.idx], next = this.tracks[ni];
+    const f = this.activeKey, o = this.inactiveKey;
+    if (cur.src) { try { this.mp3[f].pause(); this.mp3[f].volume = 0; } catch (_) {} }
+    if (cur.id && this.ytReady) { try { this.yt[f]?.stopVideo(); } catch (_) {} }
+    const ms = fast ? 1200 : RADIO_FADE_MS;
+    if (next.src) {
+      this._loadMP3(o, next, false);
+      setTimeout(() => { this._xfadeMP3(f, o, ms); this.idx = ni; this._updateTrackDisplay(); }, fast ? 200 : 500);
+    } else {
+      this._loadYT(o, next, false);
+      setTimeout(() => { if (this.ytReady) this._fadeYT(o, ms); this.idx = ni; this._updateTrackDisplay(); }, fast ? 200 : 500);
+      this.activeKey = o; this.inactiveKey = f;
+    }
+  }
+  prev() {
+    const pi = (this.idx - 1 + this.tracks.length) % this.tracks.length;
+    this.idx = pi; this._updateTrackDisplay();
+    this._load(this.activeKey, this.tracks[pi], true);
+  }
+  _xfadeMP3(from, to, ms) {
+    const steps = 30, dt = ms / steps; let i = 0;
+    clearInterval(this._fadeIv);
+    this._fadeIv = setInterval(() => {
+      i++; const r = i / steps;
+      try { this.mp3[from].volume = Math.max(0, 1 - r); } catch (_) {}
+      try { this.mp3[to].volume = Math.min(1, r); } catch (_) {}
+      if (i >= steps) { clearInterval(this._fadeIv); this.activeKey = to; this.inactiveKey = from; }
+    }, dt);
+  }
+  toggleMute() {
+    this.muted = !this.muted;
+    const t = this.tracks[this.idx];
+    if (t.src) { try { this.mp3[this.activeKey].muted = this.muted; } catch (_) {} }
+    else if (this.ytReady) { try { this.muted ? this.yt[this.activeKey].mute() : this.yt[this.activeKey].unMute(); } catch (_) {} }
+    this._updateTrackDisplay();
+  }
+  duck(level) {
+    if (!this.musicGain || !actx) return;
+    this.musicGain.gain.setTargetAtTime(level, actx.currentTime, 0.4);
+  }
+  data() {
+    if (this.analyser && this.freqBuf) {
+      try {
+        this.analyser.getByteFrequencyData(this.freqBuf);
+        const n = this.freqBuf.length, n2 = n * 0.2 | 0, n6 = n * 0.6 | 0;
+        let bass = 0, mid = 0, high = 0;
+        for (let i = 0; i < n2; i++) bass += this.freqBuf[i];
+        for (let i = n2; i < n6; i++) mid += this.freqBuf[i];
+        for (let i = n6; i < n; i++) high += this.freqBuf[i];
+        return { bass: bass / (n2 * 255), mid: mid / ((n6 - n2) * 255), high: high / ((n - n6) * 255) };
+      } catch (_) {}
+    }
+    return null;
+  }
+  _updateTrackDisplay() {
+    const el = document.getElementById('radio-track');
+    if (!el) return;
+    const t = this.tracks[this.idx];
+    el.textContent = (this.muted ? '♪ ' : '') + (t.artist ? `${t.artist} — ` : '') + t.title;
+  }
+}
+
+function _ytPost(iframe, func, args = []) {
+  try { iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), 'https://www.youtube.com'); } catch (_) {}
+}
+
+let radio = null;
+function loadRadioYTAPI() {
+  if (document.getElementById('yt-api-script')) return;
+  const s = document.createElement('script');
+  s.id = 'yt-api-script';
+  s.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(s);
+  window.onYouTubeIframeAPIReady = () => radio?.initYT?.();
+}
+
 function beep(freq, dur) {
   if (!actx) return;
   const o = actx.createOscillator(), g = actx.createGain();
@@ -1417,7 +1663,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
   if (src) URL.revokeObjectURL(src);
   tts.audio = null; tts.playing = false;
-  if (State.mode === 'speaking') { State.mode = 'idle'; setAmbientHum(false); }
+  if (State.mode === 'speaking') { State.mode = 'idle'; setAmbientHum(false); radio?.duck(1.0); }
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
   if (continueQueue) ttsTick();
@@ -1471,7 +1717,7 @@ function ttsTick() {
   tts.playing = true;
   const token = ++tts.cancelToken;
   setTTSLoading(true);
-  State.mode = 'speaking'; setAmbientHum(false);
+  State.mode = 'speaking'; setAmbientHum(false); radio?.duck(0.18);
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
   const voice = tts.lang === 'nb' ? (Math.random() < 0.5 ? 'pernille' : 'finn') : undefined;
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice);
@@ -1613,6 +1859,9 @@ async function sendMessage(text) {
   if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
     if (tts.lastText) { tts.queue = [tts.lastText]; ttsTick(); } return;
   }
+  if (/^\/radio\s+next$/i.test(trimmed)) { radio?.next({fast:true}); return; }
+  if (/^\/radio\s+prev$/i.test(trimmed)) { radio?.prev(); return; }
+  if (/^\/radio\s+mute$/i.test(trimmed)) { radio?.toggleMute(); return; }
   const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
   if (maskMatch) { swapMask(maskMatch[1]); return; }
   const rateMatch = trimmed.match(/^\/rate\s+([\d.]+)$/i);
@@ -1816,6 +2065,9 @@ function bindGlobalEventStream() {
 function startEverything() {
   morphCurrent = 0.72; morphTarget = 1.08;
   initAudio();
+  radio = new RadioEngine(RADIO_TRACKS);
+  loadRadioYTAPI();
+  setTimeout(() => radio.start(), 800);
   bindGlobalEventStream();
   if (actx && actx.state === 'suspended') actx.resume();
   beep(880, 0.06);
@@ -1902,6 +2154,9 @@ document.addEventListener('keyup', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); cancelStream(); }
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }
+  if (e.ctrlKey && e.key === 'ArrowRight') { e.preventDefault(); radio?.next({fast:true}); }
+  if (e.ctrlKey && e.key === 'ArrowLeft')  { e.preventDefault(); radio?.prev(); }
+  if (e.ctrlKey && e.shiftKey && e.key === 'M') { e.preventDefault(); radio?.toggleMute(); }
   if (e.ctrlKey && (e.key === '[' || e.key === ',')) {
     e.preventDefault();
     const cur = getTtsRate();
@@ -1917,6 +2172,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 window.sendMessage = sendMessage;
+window.MASTERRadio = { next: () => radio?.next({fast:true}), prev: () => radio?.prev(), mute: () => radio?.toggleMute(), get track() { return radio?.tracks[radio?.idx]; } };
 window.MASTERVoice = {
   enqueue: enqueueSpeech,
   initAudio,
