@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=53') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=54') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -1296,15 +1296,12 @@ class RadioEngine {
   constructor(tracks) {
     this.tracks = tracks.slice().sort(() => Math.random() - 0.5);
     this.idx = 0; this.started = false; this.muted = false;
-    this.activeKey = 'a'; this.inactiveKey = 'b';
-    this.mp3 = { a: new Audio(), b: new Audio() };
-    this.mp3.a.crossOrigin = 'anonymous'; this.mp3.b.crossOrigin = 'anonymous';
-    this.mp3.a.preload = 'metadata'; this.mp3.b.preload = 'metadata';
-    this.mp3.a.volume = 0; this.mp3.b.volume = 0;
-    this.yt = { a: null, b: null }; this.ytReady = false; this._ytCount = 0;
-    this._fadeIv = null; this._preTimer = null; this._watchTimer = null;
+    this.mp3 = new Audio();
+    this.mp3.crossOrigin = 'anonymous'; this.mp3.preload = 'metadata'; this.mp3.volume = 0;
+    this.yt = null; this.ytReady = false;
+    this._watchTimer = null; this._nextTimer = null;
     this.analyser = null; this.freqBuf = null; this.compressor = null;
-    this.musicGain = null; this._beatEnv = 0; this._beatPhase = 0;
+    this.musicGain = null; this._beatEnv = 0;
   }
   initNodes() {
     if (!actx || this.analyser) return;
@@ -1316,7 +1313,7 @@ class RadioEngine {
       this.compressor.attack.setValueAtTime(0.003, actx.currentTime);
       this.compressor.release.setValueAtTime(0.25, actx.currentTime);
       this.musicGain = actx.createGain();
-      this.musicGain.gain.value = 1;
+      this.musicGain.gain.value = 0.35;
       this.analyser = actx.createAnalyser();
       this.analyser.fftSize = 256;
       this.freqBuf = new Uint8Array(this.analyser.frequencyBinCount);
@@ -1327,29 +1324,26 @@ class RadioEngine {
   }
   initYT() {
     try {
-      const opts = k => ({
-        width:'1', height:'1',
-        playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},
-        events:{
-          onReady:() => { this._ytCount++; if (this._ytCount >= 2) this.ytReady = true; try { this.yt[k].setVolume(0); this.yt[k].mute(); } catch(_){} },
-          onStateChange: e => this._onYTState(k, e),
-          onError: () => { clearTimeout(this._watchTimer); this.next({fast:true}); }
+      this.yt = new YT.Player('yt-player-a', {
+        width: '1', height: '1',
+        playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, rel: 0, playsinline: 1 },
+        events: {
+          onReady: () => { this.ytReady = true; try { this.yt.setVolume(0); this.yt.mute(); } catch(_) {} },
+          onStateChange: e => this._onYTState(e),
+          onError: () => { clearTimeout(this._watchTimer); this.next(); }
         }
       });
-      this.yt.a = new YT.Player('yt-player-a', opts('a'));
-      this.yt.b = new YT.Player('yt-player-b', opts('b'));
     } catch (_) {}
   }
-  _onYTState(k, e) {
+  _onYTState(e) {
     const S = YT.PlayerState;
-    if (e.data === S.ENDED && k === this.activeKey) { this.next({fast:true}); return; }
+    if (e.data === S.ENDED) { this.next(); return; }
     if (e.data === S.PLAYING) {
       clearTimeout(this._watchTimer);
       try {
-        const p = this.yt[k];
         const sched = () => {
-          const d = p.getDuration ? p.getDuration() || 0 : 0;
-          if (d > 0) { clearTimeout(this._preTimer); this._preTimer = setTimeout(() => this.next({}), Math.max(RADIO_FADE_MS + 1000, d * 1000 - RADIO_FADE_MS - 500)); }
+          const d = this.yt.getDuration?.() || 0;
+          if (d > 0) { clearTimeout(this._nextTimer); this._nextTimer = setTimeout(() => this.next(), Math.max(2000, d * 1000 - 3000)); }
         };
         sched(); setTimeout(sched, 500);
       } catch (_) {}
@@ -1358,100 +1352,93 @@ class RadioEngine {
   start() {
     this.started = true; this.initNodes();
     if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
-    this._load(this.activeKey, this.tracks[this.idx], true);
+    this._play(this.tracks[this.idx], true);
     this._updateTrackDisplay();
   }
-  _load(k, t, fadeIn) {
-    if (t.src) this._loadMP3(k, t, fadeIn);
-    else this._loadYT(k, t, fadeIn);
+  _play(t, fadeIn) {
+    if (t.src) this._playMP3(t, fadeIn);
+    else this._playYT(t, fadeIn);
   }
-  _loadMP3(k, t, fadeIn) {
-    const p = this.mp3[k];
-    p.src = t.src; p.load();
-    p.onended = () => { if (k === this.activeKey) this.next({fast:true}); };
-    p.onerror = () => { if (k === this.activeKey) this.next({fast:true}); };
-    p.onloadedmetadata = () => {
-      const d = p.duration;
-      if (d > 0) { clearTimeout(this._preTimer); this._preTimer = setTimeout(() => this.next({}), Math.max(RADIO_FADE_MS + 1000, d * 1000 - RADIO_FADE_MS - 500)); }
+  _stopCurrent() {
+    const t = this.tracks[this.idx];
+    if (t.src) { try { this.mp3.pause(); this.mp3.volume = 0; } catch(_) {} }
+    else if (this.ytReady && this.yt) { try { this.yt.stopVideo(); } catch(_) {} }
+    else { const f = document.getElementById('yt-fallback-a'); if (f) f.src = 'about:blank'; }
+  }
+  _playMP3(t, fadeIn) {
+    this.mp3.src = t.src; this.mp3.load();
+    this.mp3.onended = () => this.next();
+    this.mp3.onerror = () => setTimeout(() => this.next(), 1000);
+    this.mp3.onloadedmetadata = () => {
+      const d = this.mp3.duration;
+      if (d > 0) { clearTimeout(this._nextTimer); this._nextTimer = setTimeout(() => this.next(), Math.max(2000, d * 1000 - 3000)); }
     };
     try {
-      if (!p._node && this.analyser) { p._node = actx.createMediaElementSource(p); p._node.connect(this.analyser); }
+      if (!this.mp3._node && this.analyser) { this.mp3._node = actx.createMediaElementSource(this.mp3); this.mp3._node.connect(this.analyser); }
     } catch (_) {}
-    p.play().catch(() => { if (k === this.activeKey) setTimeout(() => this.next({fast:true}), 1000); });
-    if (p._fadeIv) { clearInterval(p._fadeIv); p._fadeIv = null; }
-    if (fadeIn) { let v = 0; p._fadeIv = setInterval(() => { v += 0.033; p.volume = Math.min(1, v); if (v >= 1) { clearInterval(p._fadeIv); p._fadeIv = null; } }, 50); }
-    else { p.volume = 1; }
+    this.mp3.play().catch(() => setTimeout(() => this.next(), 1000));
+    if (fadeIn) {
+      this.mp3.volume = 0;
+      let v = 0;
+      const iv = setInterval(() => { v += 0.033; this.mp3.volume = Math.min(1, v); if (v >= 1) clearInterval(iv); }, 50);
+    } else { this.mp3.volume = 1; }
   }
-  _loadYT(k, t, fadeIn) {
+  _playYT(t, fadeIn) {
     if (!t.id) return;
     clearTimeout(this._watchTimer);
-    if (this.ytReady && this.yt[k] && this.yt[k].loadVideoById) {
+    if (this.ytReady && this.yt?.loadVideoById) {
       try {
-        this.yt[k].loadVideoById({ videoId: t.id, startSeconds: t.start || 0, suggestedQuality: 'tiny' });
-        this.yt[k].unMute();
-        if (fadeIn) this._fadeYT(k, RADIO_FADE_MS); else this.yt[k].setVolume(100);
-        this._watchTimer = setTimeout(() => { try { if ((this.yt[k].getCurrentTime?.() || 0) < 0.1) this.next({fast:true}); } catch (_) { this.next({fast:true}); } }, 4000);
+        this.yt.loadVideoById({ videoId: t.id, startSeconds: t.start || 0, suggestedQuality: 'tiny' });
+        this.yt.unMute();
+        this.yt.setVolume(fadeIn ? 0 : 35);
+        if (fadeIn) this._fadeYTIn();
+        this._watchTimer = setTimeout(() => { try { if ((this.yt.getCurrentTime?.() || 0) < 0.1) this.next(); } catch(_) { this.next(); } }, 4000);
       } catch (_) {}
     } else {
-      const f = document.getElementById('yt-fallback-' + k);
+      const f = document.getElementById('yt-fallback-a');
       if (!f) return;
       f.src = `https://www.youtube.com/embed/${t.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&mute=1&enablejsapi=1${t.start ? `&start=${t.start}` : ''}`;
-      f.onload = () => {
-        setTimeout(() => { _ytPost(f, 'unMute'); _ytPost(f, 'setVolume', [100]); }, 2000);
-      };
-      this._watchTimer = setTimeout(() => this.next({fast:true}), 5000);
+      f.onload = () => { setTimeout(() => { _ytPost(f, 'unMute'); _ytPost(f, 'setVolume', [35]); }, 2000); };
+      this._watchTimer = setTimeout(() => this.next(), 5000);
     }
   }
-  _fadeYT(k, ms) {
-    const steps = 30, dt = ms / steps; let i = 0;
+  _fadeYTIn() {
+    const steps = 30, dt = RADIO_FADE_MS / steps; let i = 0;
     const iv = setInterval(() => {
-      i++; const vol = Math.round(100 * i / steps);
-      try { this.yt[k] ? this.yt[k].setVolume(vol) : _ytPost(document.getElementById('yt-fallback-' + k), 'setVolume', [vol]); } catch (_) {}
+      i++; const vol = Math.round(35 * i / steps);
+      try { this.ytReady && this.yt ? this.yt.setVolume(vol) : _ytPost(document.getElementById('yt-fallback-a'), 'setVolume', [vol]); } catch(_) {}
       if (i >= steps) clearInterval(iv);
     }, dt);
   }
-  next({ fast = false } = {}) {
-    clearInterval(this._fadeIv); clearTimeout(this._preTimer);
-    const ni = (this.idx + 1) % this.tracks.length;
-    const cur = this.tracks[this.idx], next = this.tracks[ni];
-    const f = this.activeKey, o = this.inactiveKey;
-    if (cur.src) { try { this.mp3[f].pause(); this.mp3[f].volume = 0; } catch (_) {} }
-    if (cur.id && this.ytReady) { try { this.yt[f]?.stopVideo(); } catch (_) {} }
-    const ms = fast ? 1200 : RADIO_FADE_MS;
-    if (next.src) {
-      this._loadMP3(o, next, false);
-      setTimeout(() => { this._xfadeMP3(f, o, ms); this.idx = ni; this._updateTrackDisplay(); }, fast ? 200 : 500);
-    } else {
-      this._loadYT(o, next, false);
-      setTimeout(() => { if (this.ytReady) this._fadeYT(o, ms); this.idx = ni; this._updateTrackDisplay(); }, fast ? 200 : 500);
-      this.activeKey = o; this.inactiveKey = f;
-    }
+  next() {
+    clearTimeout(this._nextTimer); clearTimeout(this._watchTimer);
+    this._stopCurrent();
+    this.idx = (this.idx + 1) % this.tracks.length;
+    this._updateTrackDisplay();
+    setTimeout(() => this._play(this.tracks[this.idx], true), 400);
   }
   prev() {
-    const pi = (this.idx - 1 + this.tracks.length) % this.tracks.length;
-    this.idx = pi; this._updateTrackDisplay();
-    this._load(this.activeKey, this.tracks[pi], true);
-  }
-  _xfadeMP3(from, to, ms) {
-    const steps = 30, dt = ms / steps; let i = 0;
-    clearInterval(this._fadeIv);
-    this._fadeIv = setInterval(() => {
-      i++; const r = i / steps;
-      try { this.mp3[from].volume = Math.max(0, 1 - r); } catch (_) {}
-      try { this.mp3[to].volume = Math.min(1, r); } catch (_) {}
-      if (i >= steps) { clearInterval(this._fadeIv); this.activeKey = to; this.inactiveKey = from; }
-    }, dt);
+    clearTimeout(this._nextTimer); clearTimeout(this._watchTimer);
+    this._stopCurrent();
+    this.idx = (this.idx - 1 + this.tracks.length) % this.tracks.length;
+    this._updateTrackDisplay();
+    setTimeout(() => this._play(this.tracks[this.idx], true), 400);
   }
   toggleMute() {
     this.muted = !this.muted;
     const t = this.tracks[this.idx];
-    if (t.src) { try { this.mp3[this.activeKey].muted = this.muted; } catch (_) {} }
-    else if (this.ytReady) { try { this.muted ? this.yt[this.activeKey].mute() : this.yt[this.activeKey].unMute(); } catch (_) {} }
+    if (t.src) { try { this.mp3.muted = this.muted; } catch(_) {} }
+    else if (this.ytReady && this.yt) { try { this.muted ? this.yt.mute() : this.yt.unMute(); } catch(_) {} }
     this._updateTrackDisplay();
   }
   duck(level) {
-    if (!this.musicGain || !actx) return;
-    this.musicGain.gain.setTargetAtTime(level, actx.currentTime, 0.4);
+    if (this.musicGain && actx) this.musicGain.gain.setTargetAtTime(level * 0.35, actx.currentTime, 0.4);
+    const ytVol = Math.round(level * 35);
+    const t = this.tracks[this.idx];
+    if (t && !t.src) {
+      if (this.ytReady && this.yt) { try { this.yt.setVolume(ytVol); } catch(_) {} }
+      else { const f = document.getElementById('yt-fallback-a'); if (f) _ytPost(f, 'setVolume', [ytVol]); }
+    }
   }
   data() {
     if (this.analyser && this.freqBuf) {
@@ -1463,7 +1450,7 @@ class RadioEngine {
         for (let i = n2; i < n6; i++) mid += this.freqBuf[i];
         for (let i = n6; i < n; i++) high += this.freqBuf[i];
         return { bass: bass / (n2 * 255), mid: mid / ((n6 - n2) * 255), high: high / ((n - n6) * 255) };
-      } catch (_) {}
+      } catch(_) {}
     }
     return null;
   }
@@ -1968,7 +1955,7 @@ async function sendMessage(text) {
     try {
       const { voice, text, persona } = JSON.parse(ev.data || '{}');
       if (persona) rootBody.dataset.councilPersona = persona;
-      if (voice && text && !tts.playing) playDuo([[voice, text]]);
+      if (voice && text && !tts.playing) playDuo([[guardVoice(voice), text]]);
       setTimeout(() => { if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona; }, 8000);
     } catch (_) {}
   });
@@ -2004,9 +1991,15 @@ async function acquireWakeLock() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
 }
 
+function guardVoice(v) {
+  if ((v === "pernille" || v === "finn") && tts.lang !== "nb") return undefined;
+  if (v === "osman" && tts.lang !== "ms") return undefined;
+  return v;
+}
+
 function playDuo(lines, onDone) {
   if (!lines.length) { onDone?.(); return; }
-  const [voice, text] = lines[0];
+  const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw);
   const rest = lines.slice(1);
   loadTTSBlob(text, voice)
     .then(async blob => {
