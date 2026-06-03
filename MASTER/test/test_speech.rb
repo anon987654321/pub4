@@ -7,6 +7,20 @@ class TestSpeech < Minitest::Test
     assert_includes [true, false], Master::Voice::Speech.available?
   end
 
+  def test_available_uses_real_backend_guards
+    Master::Voice::Speech.stub(:edge_tts_available?, false) do
+      Master::Voice::Speech.stub(:espeak_path, nil) do
+        refute Master::Voice::Speech.available?
+      end
+    end
+  end
+
+  def test_edge_tts_unavailable_without_worker
+    Master::Voice::Speech.stub(:worker_executable?, false) do
+      refute Master::Voice::Speech.edge_tts_available?
+    end
+  end
+
   def test_voices_constants_present
     assert Master::Voice::Speech::VOICES.key?(:osman)
     assert Master::Voice::Speech::VOICES.key?(:ryan)
@@ -59,6 +73,33 @@ class TestSpeech < Minitest::Test
       assert_equal "fake-mp3-data", bytes
       refute File.exist?(fake_path), "temp file should be deleted"
     end
+  end
+
+  def test_synthesize_falls_back_to_espeak_when_edge_returns_nil
+    Master::Voice::Speech.stub(:edge_tts_available?, true) do
+      Master::Voice::Speech.stub(:synthesize_edge, nil) do
+        Master::Voice::Speech.stub(:espeak_path, "/usr/local/bin/espeak") do
+          Master::Voice::Speech.stub(:synthesize_espeak, "/tmp/fallback.wav") do
+            assert_equal "/tmp/fallback.wav", Master::Voice::Speech.synthesize("hello")
+          end
+        end
+      end
+    end
+  end
+
+  def test_synthesize_edge_warns_and_cleans_up_failed_worker_output
+    status = Struct.new(:success?).new(false)
+    _out, err = capture_io do
+      ::Open3.stub(:capture3, ["", "worker failed", status]) do
+        assert_nil Master::Voice::Speech.synthesize_edge(
+          "hello",
+          voice: :ryan,
+          style_config: { rate: "+0%", pitch: "+0Hz" }
+        )
+      end
+    end
+
+    assert_includes err, "tts: edge worker failed: worker failed"
   end
 
   def test_unknown_voice_falls_back_to_default
