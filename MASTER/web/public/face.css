@@ -92,7 +92,7 @@ body[data-tts-loading="true"] .ui-status {
   font: 700 clamp(15px,3.8vw,24px)/1 Helvetica,sans-serif;
   letter-spacing: -.02em;
   color: #eee;
-  opacity: .72;
+  opacity: 1;
   pointer-events: none;
   user-select: none;
 }
