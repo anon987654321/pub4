@@ -736,7 +736,15 @@ async function bootGreet() {
     src.onmessage = ev => {
       const raw = ev.data || '';
       if (raw === '[DONE]') { if (pending.trim()) enqueueSpeech(pending.trim()); try { src.close(); } catch (_) {} return; }
-      if (!raw.startsWith('ERROR:')) pending += raw;
+if (raw.startsWith('ERROR:')) return;
+pending += raw;
+let m;
+while ((m = pending.match(SENT_BREAK))) {
+  const cut = m.index + m[0].length;
+  const sent = pending.slice(0, cut).trim();
+  pending = pending.slice(cut);
+  if (sent) enqueueSpeech(sent);
+}
     };
     src.onerror = () => { try { src.close(); } catch (_) {} };
   } catch (_) {}
@@ -1517,7 +1525,7 @@ const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, load
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'ryan';
-const TTS_EDGE_GRACE_MS = 1200;   // browser TTS fires if Edge TTS not ready within this window
+const TTS_EDGE_GRACE_MS = 4500;   // Edge worker cold-starts ~2-3s on OpenBSD; give it room to win
 const TTS_FETCH_TIMEOUT_MS = 9000; // abort Edge TTS HTTP fetch after this many ms
 const TTS_FALLBACK_VOICE_HINTS = {
   osman: ['osman', 'malay', 'malaysia', 'ms-my', 'ryan', 'en-gb'],
@@ -1977,14 +1985,9 @@ async function sendMessage(text) {
       pending = pending.slice(cut);
       if (!sent) continue;
       totalTTSChars += sent.length;
-      if (!ttsSuppressed && totalTTSChars > 800) {
-        ttsSuppressed = true;
-        window._chatOnReadAloud?.(sent);
-      } else if (!ttsSuppressed) {
-        const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
-        ttsFirst = false;
-        enqueueSpeech(prefix + sent);
-      }
+      const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
+      ttsFirst = false;
+      enqueueSpeech(prefix + sent);
     }
   };
   evtSrc.addEventListener('mood', (ev) => {
