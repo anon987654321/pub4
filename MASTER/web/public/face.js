@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=44') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=45') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -563,6 +563,7 @@ uniform float uSurpriseY;
 uniform float uFracture;
 uniform float uBloom;
 uniform float uIdleDrift;
+uniform float uEyeClose;
 attribute vec3 scatter;
 attribute float seed;
 attribute float curvature;
@@ -623,7 +624,9 @@ void main(){
   else if(zone<0.5) zoneAudio=uBass*0.08;
   else if(zone<0.7) zoneAudio=uHighs*0.14;
   else zoneAudio=uMids*0.10;
-  vAlpha=hc>0.0?hc:mix(0.28+uIdleDrift*0.08,0.48+depth*0.52,m)+zoneAudio;
+  float eyeRgn = smoothstep(0.30,0.50,zone) * (1.0 - smoothstep(0.50,0.65,zone));
+  float eyeDim = 1.0 - uEyeClose * eyeRgn * 0.82;
+  vAlpha=(hc>0.0?hc:mix(0.28+uIdleDrift*0.08,0.48+depth*0.52,m)+zoneAudio)*eyeDim;
   float shade=mix(0.14,1.0,depth);
   vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.0?1.0:1.0);
   vec3 viewDir=normalize(-mv.xyz);
@@ -673,7 +676,7 @@ if (_hasWebGL && THREE) {
       uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
       uRain:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
-      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}
+      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -705,7 +708,7 @@ if (_hasWebGL && THREE) {
   }
 }
 
-let morphCurrent = 0.0, morphTarget = 0.88;
+let morphCurrent = 0.0, morphTarget = 0.88, morphGhost = 0.0;
 let mouthPool = null, eyePool = null;
 
 const COUNCIL_VOICE = {
@@ -762,6 +765,7 @@ if (_photoEl) _photoEl.addEventListener('change', () => {
 
 let lastT = performance.now();
 let saccadeX = 0, nextSaccade = performance.now() + Math.random() * 6000 + 3000;
+let microJitter = 0, nextMicroJitter = performance.now() + Math.random() * 600 + 200;
 let nextBlink = performance.now() + Math.random() * 5000 + 3000;
 function doBlink() {
   if (!faceMat) return;
@@ -799,7 +803,7 @@ if (_hasWebGL && THREE && scene && facePoints) {
       uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
       uRain:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
-      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}
+      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -884,12 +888,17 @@ function frame(t) {
       saccadeX = (Math.random() - 0.5) * 0.28;
       nextSaccade = t + Math.random() * 6000 + 3000;
     }
+    if (!State.reducedMotion && t > nextMicroJitter) {
+      microJitter = (Math.random() - 0.5) * 0.045;
+      nextMicroJitter = t + Math.random() * 600 + 200;
+    }
     if (!State.reducedMotion && t > nextBlink) {
       doBlink();
       nextBlink = t + Math.random() * 5000 + 2500;
     }
     saccadeX *= 0.93;
-    const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX;
+    microJitter *= 0.78;
+    const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX + microJitter;
     const pitch = State.mouseY * 0.4 + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
     if (camera) {
       const pInput = State.coarsePointer
@@ -988,10 +997,15 @@ function frame(t) {
     const idleS2 = (t - State.lastTouch) / 1000;
     State.idleAlphaDrift = Math.sin(t * 0.000785) * 0.5 + 0.5;
     faceMat.uniforms.uIdleDrift.value = State.idleAlphaDrift;
+    const idleS3 = (t - State.lastTouch) / 1000;
+    const eyeCloseTarget = (idleS3 > 18 && !tts.playing && State.mode === 'idle') ? Math.min(1, (idleS3 - 18) / 12) : 0;
+    faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
+    morphGhost += (morphCurrent - morphGhost) * 0.035;
     if (glowPoints) {
       const gm = glowPoints.material;
+      gm.uniforms.uMorph.value = morphGhost;
       Object.assign(gm.uniforms, {
-        uMorph: faceMat.uniforms.uMorph, uTime: faceMat.uniforms.uTime,
+        uTime: faceMat.uniforms.uTime,
         uColor: faceMat.uniforms.uColor, uHc: faceMat.uniforms.uHc,
         uCurl: faceMat.uniforms.uCurl, uJaw: faceMat.uniforms.uJaw,
         uMouse: faceMat.uniforms.uMouse, uBass: faceMat.uniforms.uBass,
@@ -1003,7 +1017,7 @@ function frame(t) {
         uRipple: faceMat.uniforms.uRipple, uVowel: faceMat.uniforms.uVowel,
         uSurpriseY: faceMat.uniforms.uSurpriseY,
         uFracture: faceMat.uniforms.uFracture, uBloom: faceMat.uniforms.uBloom,
-        uIdleDrift: faceMat.uniforms.uIdleDrift
+        uIdleDrift: faceMat.uniforms.uIdleDrift, uEyeClose: faceMat.uniforms.uEyeClose
       });
       gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
     }
