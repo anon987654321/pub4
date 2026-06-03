@@ -1482,23 +1482,7 @@ class RadioEngine {
     }
     return null;
   }
-  _updateTrackDisplay() {
-    const el = document.getElementById('radio-track');
-    if (!el) return;
-    const t = this.tracks[this.idx];
-    if (!t) { el.textContent = ''; return; }
-    const SHORT = { 'J Dilla': 'Dilla' };
-    const artist = SHORT[t.artist] || t.artist;
-    el.style.transition = 'none';
-    el.style.opacity = '0';
-    el.style.transform = 'translateX(-8px)';
-    el.textContent = `${artist} — ${t.title} · ${t.bpm}`;
-    requestAnimationFrame(() => {
-      el.style.transition = 'opacity 400ms var(--ease-out), transform 220ms var(--ease-out)';
-      el.style.opacity = '0.42';
-      el.style.transform = 'translateX(0)';
-    });
-  }
+  _updateTrackDisplay() {}
 }
 
 function _ytPost(iframe, func, args = []) {

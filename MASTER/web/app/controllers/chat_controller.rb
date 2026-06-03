@@ -451,6 +451,7 @@ end
            when "pressure:updated"  then return nil  # too noisy — skip
            when /\Apipeline:/       then return nil  # internal, skip
            when /\Acanvas_/         then return nil
+           when /\Acache:/          then return nil  # cache:hit/miss noise
            else
              rest&.tr("_", " ") || sub
            end

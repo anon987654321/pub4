@@ -92,7 +92,7 @@ body[data-tts-loading="true"] .ui-status {
   top: calc(14px + var(--safe-top));
   left: calc(14px + var(--safe-left));
   z-index: var(--z-ui);
-  font: 300 clamp(15px,3.8vw,24px)/1 "Inter",Helvetica,sans-serif;
+  font: 700 clamp(15px,3.8vw,24px)/1 "Inter",Helvetica,sans-serif;
   letter-spacing: -.03em;
   color: #fff;
   opacity: 1;
@@ -141,27 +141,6 @@ body[data-mode="listening"] #mic-dot {
   user-select: none;
   white-space: nowrap;
 }
-
-/* Radio track display — bottom-left, above prompt bar */
-#radio-track {
-  position: fixed;
-  left: calc(12px + var(--safe-left));
-  bottom: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
-  z-index: var(--z-ui);
-  font: 9px/1.1 "JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
-  letter-spacing: .14em;
-  color: rgba(230,220,200,.42);
-  opacity: .42;
-  pointer-events: none;
-  user-select: none;
-  white-space: nowrap;
-  max-width: min(60vw, 380px);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: opacity 400ms var(--ease-out), transform 220ms var(--ease-out);
-}
-#radio-track:empty { opacity: 0; }
-body[data-tts-wave="true"] #radio-track { opacity: .18; }
 
 /* SR-only for a11y live announcements (mood changes etc) — screen readers only, no visual */
 .sr-only {
