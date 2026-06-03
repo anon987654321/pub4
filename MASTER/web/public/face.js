@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=40') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=41') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -204,7 +204,7 @@ window.addEventListener('resize', resize, { passive: true });
 function generateFaceDepthMap(size) {
   const cv = new OffscreenCanvas(size, size);
   const ctx = cv.getContext('2d');
-  const W = size, H = size, cx = W * 0.5, cy = H * 0.48;
+  const W = size, H = size, cx = W * 0.493, cy = H * 0.44;
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
   let g;
@@ -216,11 +216,11 @@ function generateFaceDepthMap(size) {
   g.addColorStop(1,    'rgba(0,  0,  0,  1)');
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.ellipse(cx, cy, W * 0.28, H * 0.46, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy, W * 0.26, H * 0.46, 0, 0, Math.PI * 2);
   ctx.fill();
-  // Jaw taper — darken lower corners to carve oval into pointed chin
+  // Jaw taper — sharper chin
   for (const ex of [-0.265, 0.265]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.28, 0, cx + ex*W, cy + H*0.28, W*0.18);
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.32, 0, cx + ex*W, cy + H*0.32, W*0.14);
     g.addColorStop(0,    'rgba(0,0,0,0.94)');
     g.addColorStop(0.55, 'rgba(0,0,0,0.58)');
     g.addColorStop(1,    'rgba(0,0,0,0)');
@@ -239,6 +239,14 @@ function generateFaceDepthMap(size) {
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
+  // Supraorbital ridge — dark band above each brow
+  for (const ex of [-0.112, 0.112]) {
+    g = ctx.createLinearGradient(cx + ex*W - W*0.09, cy - H*0.195, cx + ex*W + W*0.09, cy - H*0.177);
+    g.addColorStop(0,   'rgba(0,0,0,0)');
+    g.addColorStop(0.5, 'rgba(0,0,0,0.28)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.09, cy - H*0.205, W*0.18, H*0.018);
+  }
   // Brow ridges — raised shelf above eyes
   for (const ex of [-0.112, 0.112]) {
     g = ctx.createRadialGradient(cx + ex*W, cy - H*0.162, 0, cx + ex*W, cy - H*0.162, W*0.092);
@@ -247,18 +255,20 @@ function generateFaceDepthMap(size) {
     g.addColorStop(1,    'rgba(0,  0,  0,  0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Glabella — inter-brow depression at top of nose bridge
-  g = ctx.createRadialGradient(cx, cy - H*0.155, 0, cx, cy - H*0.155, W*0.030);
-  g.addColorStop(0,   'rgba(0,0,0,0.48)');
+  // Glabella — deeper inter-brow depression
+  g = ctx.createRadialGradient(cx, cy - H*0.155, 0, cx, cy - H*0.155, W*0.026);
+  g.addColorStop(0,   'rgba(0,0,0,0.58)');
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // Eye sockets — deep recesses, horizontally elongated
-  for (const ex of [-0.112, 0.112]) {
+  // Eye sockets — left slightly deeper (dominant left eye)
+  const eyeAlphas = [0.995, 0.980];
+  for (let ei = 0; ei < 2; ei++) {
+    const ex = ei === 0 ? -0.112 : 0.112;
     ctx.save();
     ctx.translate(cx + ex*W, cy - H*0.082);
     ctx.scale(1.45, 1.0);
     g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.088);
-    g.addColorStop(0,    'rgba(0,0,0,0.98)');
+    g.addColorStop(0,    `rgba(0,0,0,${eyeAlphas[ei]})`);
     g.addColorStop(0.45, 'rgba(0,0,0,0.75)');
     g.addColorStop(0.80, 'rgba(0,0,0,0.28)');
     g.addColorStop(1,    'rgba(0,0,0,0)');
@@ -288,16 +298,16 @@ function generateFaceDepthMap(size) {
   g.addColorStop(0.62, 'rgba(162,162,162,0.44)');
   g.addColorStop(1,    'rgba(0,  0,  0,  0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // Nose ala — slight shadow at wings
+  // Nose ala — more pronounced wings
   for (const ex of [-0.065, 0.065]) {
     g = ctx.createRadialGradient(cx + ex*W, cy + H*0.112, 0, cx + ex*W, cy + H*0.112, W*0.032);
-    g.addColorStop(0,   'rgba(0,0,0,0.38)');
+    g.addColorStop(0,   'rgba(0,0,0,0.52)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Cheekbones — lateral projection at mid-face
+  // Cheekbones — tighter, higher placement
   for (const ex of [-0.215, 0.215]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.032, 0, cx + ex*W, cy + H*0.032, W*0.115);
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.015, 0, cx + ex*W, cy + H*0.015, W*0.10);
     g.addColorStop(0,   'rgba(182,182,182,0.52)');
     g.addColorStop(0.65,'rgba(95, 95, 95, 0.18)');
     g.addColorStop(1,   'rgba(0,  0,  0,  0)');
@@ -316,6 +326,17 @@ function generateFaceDepthMap(size) {
   g.addColorStop(0,   'rgba(0,0,0,0.42)');
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Upper lip — protrudes more forward
+  ctx.save();
+  ctx.translate(cx, cy + H*0.210);
+  ctx.scale(2.0, 1.0);
+  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.052);
+  g.addColorStop(0,    'rgba(215,215,215,0.82)');
+  g.addColorStop(0.38, 'rgba(170,170,170,0.48)');
+  g.addColorStop(1,    'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0, 0, W*0.052, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
   // Lips — horizontally elongated protrusion
   ctx.save();
   ctx.translate(cx, cy + H*0.222);
@@ -336,12 +357,30 @@ function generateFaceDepthMap(size) {
   g.addColorStop(1,    'rgba(0,0,0,0)');
   ctx.fillStyle = g;
   ctx.fillRect(cx - W*0.068, cy + H*0.218, W*0.136, H*0.007);
+  // Labiomental crease — chin-lip junction shadow
+  g = ctx.createRadialGradient(cx, cy + H*0.265, 0, cx, cy + H*0.265, W*0.028);
+  g.addColorStop(0,   'rgba(0,0,0,0.44)');
+  g.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   // Chin — tapered point
   g = ctx.createRadialGradient(cx, cy + H*0.365, 0, cx, cy + H*0.365, W*0.095);
   g.addColorStop(0,   'rgba(160,160,160,0.68)');
   g.addColorStop(0.58,'rgba(88, 88, 88, 0.28)');
   g.addColorStop(1,   'rgba(0,  0,  0,  0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Ear outlines — faint lateral indicators
+  for (const ex of [-0.38, 0.38]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.02, 0, cx + ex*W, cy + H*0.02, W*0.055);
+    g.addColorStop(0,   'rgba(90,90,90,0.12)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  // Neck column — vertical rect fading to transparent
+  const neckGrad = ctx.createLinearGradient(0, cy + H*0.48, 0, H);
+  neckGrad.addColorStop(0,   'rgba(60,60,60,0.35)');
+  neckGrad.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = neckGrad;
+  ctx.fillRect(cx - W*0.04, cy + H*0.48, W*0.08, H - (cy + H*0.48));
   return cv;
 }
 
@@ -386,20 +425,74 @@ function sampleDepthMapGrid(canvas, cols, rows) {
   }
 
   const home = new Float32Array(positions);
+  const n = (home.length / 3) | 0;
+
+  // Per-vertex neighbor Z accumulator for curvature
+  const neighborZSum = new Float32Array(n);
+  const neighborCount = new Int32Array(n);
+  const edgeLengthArr = new Float32Array(edgeIdx.length / 2);
+  const edgeDepthDiffArr = new Float32Array(edgeIdx.length / 2);
+
+  for (let ei = 0; ei < edgeIdx.length; ei += 2) {
+    const a = edgeIdx[ei], b = edgeIdx[ei + 1];
+    const ai = a * 3, bi = b * 3;
+    const dx = home[ai] - home[bi], dy = home[ai+1] - home[bi+1], dz = home[ai+2] - home[bi+2];
+    const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    const dd = Math.abs(home[ai+2] - home[bi+2]);
+    edgeLengthArr[ei >> 1] = len;
+    edgeDepthDiffArr[ei >> 1] = dd;
+    neighborZSum[a] += home[bi+2]; neighborCount[a]++;
+    neighborZSum[b] += home[ai+2]; neighborCount[b]++;
+  }
+
+  const curvature = new Float32Array(n);
+  const boundary = new Float32Array(n);
+  let maxCurv = 0;
+  for (let i = 0; i < n; i++) {
+    const nc = neighborCount[i];
+    if (nc > 0) {
+      const avgNZ = neighborZSum[i] / nc;
+      curvature[i] = Math.abs(home[i*3+2] - avgNZ);
+    }
+    if (curvature[i] > maxCurv) maxCurv = curvature[i];
+    boundary[i] = nc < 4 ? 1.0 : 0.0;
+  }
+  if (maxCurv > 0) { for (let i = 0; i < n; i++) curvature[i] /= maxCurv; }
+
+  const zone = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const nx = home[i*3], ny = home[i*3+1];
+    const anx = Math.abs(nx);
+    if (ny < -0.15) zone[i] = 0.0;
+    else if (anx > 0.12 && ny >= -0.15 && ny <= 0.08) zone[i] = 0.2;
+    else if (anx < 0.06 && ny >= -0.02 && ny <= 0.14) zone[i] = 0.4;
+    else if (anx >= 0.06 && anx <= 0.18 && ny >= 0.03 && ny <= 0.14) zone[i] = 0.6;
+    else if (ny > 0.14) zone[i] = 0.8;
+    else zone[i] = 0.5;
+  }
+
   const edgePosData = new Float32Array(edgeIdx.length * 3);
+  const edgeAlpha = new Float32Array(edgeIdx.length / 2);
   for (let i = 0; i < edgeIdx.length; i++) {
     const vi = edgeIdx[i] * 3;
     edgePosData[i * 3] = home[vi]; edgePosData[i * 3 + 1] = home[vi + 1]; edgePosData[i * 3 + 2] = home[vi + 2];
   }
+  for (let ei = 0; ei < edgeIdx.length / 2; ei++) {
+    const len = edgeLengthArr[ei], dd = edgeDepthDiffArr[ei];
+    const la = Math.max(0.2, Math.min(1.0, 1.0 - len * 2.5));
+    const da = Math.max(0.3, Math.min(1.0, 1.0 - dd * 4.0));
+    edgeAlpha[ei] = la * da;
+  }
 
-  return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), edgePosData };
+  return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), edgePosData, curvature, boundary, zone, edgeAlpha };
 }
 
 const FACE_GRID_COLS = State.coarsePointer ? 32 : 52;
 const FACE_GRID_ROWS = State.coarsePointer ? 40 : 66;
 const FACE_N_2D = 200;
-let faceHome, faceScatter, faceSeeds, faceEdgePosData;
-({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData } =
+let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBoundary, faceZone, faceEdgeAlpha;
+({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
+   curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
   sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));
 const FACE_N = (faceHome.length / 3) | 0;
 
@@ -454,8 +547,17 @@ uniform float uCurl;
 uniform float uJaw;
 uniform vec2 uMouse;
 uniform float uBass;
+uniform float uMids;
+uniform float uHighs;
+uniform float uBeat;
+uniform float uConfidence;
+uniform float uTremor;
+uniform float uTilt;
 attribute vec3 scatter;
 attribute float seed;
+attribute float curvature;
+attribute float boundary;
+attribute float zone;
 varying float vAlpha;
 varying vec3 vColor;
 varying float vFresnel;
@@ -466,6 +568,8 @@ void main(){
   vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*curlAmp;
   float jawRgn=smoothstep(0.0,0.15,-position.y-0.12)*smoothstep(0.0,0.14,0.28-abs(position.x));
   vec3 p=mix(scatter,position,m)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
+  float tremorf=snoise(position*18.0+uTime*3.2+seed)*uTremor*0.003;
+  p+=vec3(tremorf,tremorf*0.7,0.0);
   vec2 diff2d=p.xy-uMouse;
   float dist2d=length(diff2d);
   if(dist2d<0.20&&dist2d>0.001)p.xy+=normalize(diff2d)*(0.20-dist2d)*0.32;
@@ -473,16 +577,23 @@ void main(){
   p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*m;
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
-  gl_PointSize=clamp(uSize*(240./-mv.z)*(0.70+depth*1.10),1.5,6.0);
+  float sizeBoost=0.70+curvature*0.55+depth*1.10+boundary*0.35;
+  gl_PointSize=clamp(uSize*(240./-mv.z)*sizeBoost,1.5,7.0);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
-  vAlpha=hc>0.0?hc:mix(0.28,0.48+depth*0.52,m);
+  float zoneAudio=0.0;
+  if(zone<0.1) zoneAudio=uBass*0.18;
+  else if(zone<0.3) zoneAudio=uMids*0.12;
+  else if(zone<0.5) zoneAudio=uBass*0.08;
+  else if(zone<0.7) zoneAudio=uHighs*0.14;
+  else zoneAudio=uMids*0.10;
+  vAlpha=hc>0.0?hc:mix(0.28,0.48+depth*0.52,m)+zoneAudio;
   float shade=mix(0.14,1.0,depth);
   vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.0?1.0:1.0);
   vec3 viewDir=normalize(-mv.xyz);
   vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
   vec3 vn=normalize(mat3(modelViewMatrix)*flatNorm);
-  vFresnel=pow(1.0-abs(dot(viewDir,vn)),2.8);
+  vFresnel=pow(1.0-abs(dot(viewDir,vn)),1.8);
   vDepth=depth;
 }`;
 
@@ -494,19 +605,26 @@ varying float vDepth;
 uniform float uShake;
 uniform float uPulseRing;
 void main(){
-  vec3 col = vColor + vFresnel * vColor * 0.42;
-  // Shake modulates brightness only (pure white phosphor, no hue tints).
-  float w = 1.0 + uShake * 0.12;
-  col = clamp(col * w, 0.0, 1.0);
-  gl_FragColor = vec4(col, vAlpha);
+  float dist=length(gl_PointCoord-0.5)*2.0;
+  float disc=1.0-smoothstep(0.55,1.0,dist);
+  float ring=smoothstep(0.62,0.72,dist)*(1.0-smoothstep(0.72,0.82,dist))*0.45;
+  float alpha=(disc+ring)*vAlpha;
+  vec3 col=vColor+vFresnel*vColor*0.42;
+  float w=1.0+uShake*0.12;
+  col=clamp(col*w,0.0,1.0);
+  gl_FragColor=vec4(col,alpha);
 }`;
 
 let faceGeom, faceMat, facePoints, faceEdgeGeom, faceEdgeMat, faceEdgeLines;
+let faceEdgeLinesStrong, faceEdgeLinesWeak;
 if (_hasWebGL && THREE) {
   faceGeom = new THREE.BufferGeometry();
   faceGeom.setAttribute('position', new THREE.BufferAttribute(faceHome, 3));
   faceGeom.setAttribute('scatter',  new THREE.BufferAttribute(faceScatter, 3));
   faceGeom.setAttribute('seed',     new THREE.BufferAttribute(faceSeeds, 1));
+  faceGeom.setAttribute('curvature', new THREE.BufferAttribute(faceCurvature, 1));
+  faceGeom.setAttribute('boundary',  new THREE.BufferAttribute(faceBoundary, 1));
+  faceGeom.setAttribute('zone',      new THREE.BufferAttribute(faceZone, 1));
   faceMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
@@ -514,25 +632,41 @@ if (_hasWebGL && THREE) {
       uColor:{value:new Color(1,1,1)},
       uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
-      uBass:{value:0}, uShake:{value:0},
-      uPulseRing:{value:0}
+      uBass:{value:0}, uShake:{value:0}, uPulseRing:{value:0},
+      uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
+      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
   facePoints = new THREE.Points(faceGeom, faceMat);
 
-  if (faceEdgePosData && faceEdgePosData.length > 0) {
-    faceEdgeGeom = new THREE.BufferGeometry();
-    faceEdgeGeom.setAttribute('position', new THREE.BufferAttribute(faceEdgePosData, 3));
-    faceEdgeMat = new THREE.LineBasicMaterial({
-      color: 0xffffff, opacity: 0.0, transparent: true,
-      blending: THREE.AdditiveBlending, depthWrite: false
-    });
-    faceEdgeLines = new THREE.LineSegments(faceEdgeGeom, faceEdgeMat);
+  if (faceEdgePosData && faceEdgePosData.length > 0 && faceEdgeAlpha) {
+    const edgeCount = faceEdgeAlpha.length;
+    const strongIdxArr = [], weakIdxArr = [];
+    for (let ei = 0; ei < edgeCount; ei++) {
+      if (faceEdgeAlpha[ei] > 0.65) { strongIdxArr.push(ei*2, ei*2+1); }
+      else { weakIdxArr.push(ei*2, ei*2+1); }
+    }
+    function buildEdgeLines(idxArr, opacity) {
+      if (!idxArr.length) return null;
+      const posArr = new Float32Array(idxArr.length * 3);
+      for (let i = 0; i < idxArr.length; i++) {
+        const vi = idxArr[i] * 3;
+        posArr[i*3] = faceEdgePosData[vi]; posArr[i*3+1] = faceEdgePosData[vi+1]; posArr[i*3+2] = faceEdgePosData[vi+2];
+      }
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+      const mat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+      return new THREE.LineSegments(geom, mat);
+    }
+    faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.0);
+    faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.0);
+    // Legacy single-line ref kept null — two-tier replaces it
+    faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;
   }
 }
 
-let morphCurrent = 0.88, morphTarget = 0.88;
+let morphCurrent = 0.0, morphTarget = 0.88;
 let mouthPool = null, eyePool = null;
 
 const COUNCIL_VOICE = {
@@ -609,8 +743,10 @@ let glowPoints;
 let head3;
 if (_hasWebGL && THREE && scene && facePoints) {
   head3 = new THREE.Object3D();
+  head3.rotation.z = -0.021;
   scene.add(head3);
-  if (faceEdgeLines) { faceEdgeLines.renderOrder = -2; head3.add(faceEdgeLines); }
+  if (faceEdgeLinesStrong) { faceEdgeLinesStrong.renderOrder = -2; head3.add(faceEdgeLinesStrong); }
+  if (faceEdgeLinesWeak)   { faceEdgeLinesWeak.renderOrder = -2;   head3.add(faceEdgeLinesWeak); }
   head3.add(facePoints);
   const glowMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
@@ -619,8 +755,9 @@ if (_hasWebGL && THREE && scene && facePoints) {
       uColor:{value:new Color(1,1,1)},
       uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
-      uBass:{value:0}, uShake:{value:0},
-      uPulseRing:{value:0}
+      uBass:{value:0}, uShake:{value:0}, uPulseRing:{value:0},
+      uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
+      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -663,6 +800,11 @@ function frame(t) {
       State.audioMids  = mids  / (24  * 255);
       State.audioHighs = highs / (48  * 255);
     }
+    State.audioBeat = 0;
+    const curBass = State.audioBass || 0;
+    if (!faceMat._prevBass) faceMat._prevBass = 0;
+    if (curBass - faceMat._prevBass > 0.15) State.audioBeat = 1.0;
+    faceMat._prevBass = curBass * 0.7 + faceMat._prevBass * 0.3;
   } else {
     State.voiceRMS   = (State.voiceRMS   || 0) * 0.9;
     State.audioBass  = (State.audioBass  || 0) * 0.88;
@@ -708,13 +850,16 @@ function frame(t) {
     const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX;
     const pitch = State.mouseY * 0.4 + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
     if (camera) {
-      camera.position.x += (Math.sin(sec * 0.11) * 0.018 - camera.position.x) * 0.004;
-      camera.position.y += (Math.cos(sec * 0.09) * 0.012 - camera.position.y) * 0.004;
+      const camOffX = 0.015, camOffY = 0.008;
+      camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.004;
+      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.004;
     }
     head3.rotation.y += (yaw   - head3.rotation.y) * 0.06;
     head3.rotation.x += (pitch - head3.rotation.x) * 0.06;
     nodImpulse *= 0.87;
     head3.rotation.x += nodImpulse;
+    const microOrbit = Math.sin(sec * 0.157) * 0.014;
+    head3.rotation.z = -0.021 + microOrbit * 0.3;
     const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
     const breath = silenceScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005) + State.pulse * 0.08);
     head3.scale.setScalar(breath);
@@ -753,14 +898,27 @@ function frame(t) {
     faceMat.uniforms.uJaw.value = voiceRMS * 2.5;
     faceMat.uniforms.uMouse.value = { x: State.mouseX * 1.4, y: -State.mouseY * 1.2 };
     faceMat.uniforms.uBass.value = (State.audioBass || 0) * 0.9 + faceMat.uniforms.uBass.value * 0.1;
+    faceMat.uniforms.uMids.value = (State.audioMids || 0);
+    faceMat.uniforms.uHighs.value = (State.audioHighs || 0);
+    const beatTarget = State.audioBeat || 0;
+    faceMat.uniforms.uBeat.value += (beatTarget - faceMat.uniforms.uBeat.value) * 0.35;
+    faceMat.uniforms.uBeat.value *= 0.82;
+    faceMat.uniforms.uConfidence.value = State.confidence || 1.0;
+    const tremorTarget = 0.25 + faceMat.uniforms.uCurl.value * 0.75;
+    faceMat.uniforms.uTremor.value += (tremorTarget - faceMat.uniforms.uTremor.value) * 0.03;
     const shakeTarget = State.shake || 0;
     faceMat.uniforms.uShake.value += (shakeTarget - faceMat.uniforms.uShake.value) * 0.18;
     const pulseRingTarget = State.pulse > 0.55 ? (State.pulse - 0.55) * 2.2 : 0;
     faceMat.uniforms.uPulseRing.value += (pulseRingTarget - faceMat.uniforms.uPulseRing.value) * 0.12;
-    if (faceEdgeMat) {
-      const edgeTarget = morphCurrent * (0.06 + (State.audioBass || 0) * 0.04);
-      faceEdgeMat.opacity += (edgeTarget - faceEdgeMat.opacity) * 0.05;
-      faceEdgeMat.needsUpdate = true;
+    if (faceEdgeLinesStrong && faceEdgeLinesStrong.material) {
+      const strongTarget = morphCurrent * (0.10 + (State.audioBass || 0) * 0.06);
+      faceEdgeLinesStrong.material.opacity += (strongTarget - faceEdgeLinesStrong.material.opacity) * 0.05;
+      faceEdgeLinesStrong.material.needsUpdate = true;
+    }
+    if (faceEdgeLinesWeak && faceEdgeLinesWeak.material) {
+      const weakTarget = morphCurrent * 0.035;
+      faceEdgeLinesWeak.material.opacity += (weakTarget - faceEdgeLinesWeak.material.opacity) * 0.04;
+      faceEdgeLinesWeak.material.needsUpdate = true;
     }
     if (glowPoints) {
       const gm = glowPoints.material;
@@ -769,7 +927,10 @@ function frame(t) {
         uColor: faceMat.uniforms.uColor, uHc: faceMat.uniforms.uHc,
         uCurl: faceMat.uniforms.uCurl, uJaw: faceMat.uniforms.uJaw,
         uMouse: faceMat.uniforms.uMouse, uBass: faceMat.uniforms.uBass,
-        uShake: faceMat.uniforms.uShake, uPulseRing: faceMat.uniforms.uPulseRing
+        uShake: faceMat.uniforms.uShake, uPulseRing: faceMat.uniforms.uPulseRing,
+        uMids: faceMat.uniforms.uMids, uHighs: faceMat.uniforms.uHighs,
+        uBeat: faceMat.uniforms.uBeat, uConfidence: faceMat.uniforms.uConfidence,
+        uTremor: faceMat.uniforms.uTremor, uTilt: faceMat.uniforms.uTilt
       });
       gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
     }
