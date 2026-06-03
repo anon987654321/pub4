@@ -84,6 +84,7 @@ module Master
         banned = (constitution["banned_output"] || [])
         no_open = (strunk["preambles"] || []).first(4)
         no_end = (strunk["endings"] || []).first(3)
+        anti_sim = @rules.data(:soul).dig("voice", "anti_simulation", "forbidden") || []
         sections["master_constitution_absolute"] = [
           "<master_constitution tier=\"absolute\">",
           "golden_rule: #{constitution["golden_rule"]}",
@@ -91,8 +92,9 @@ module Master
           "opener_never: #{no_open.join(" / ")}",
           "closer_never: #{no_end.join(" / ")}",
           "evidence_only: show diff or file content; never assert; active voice",
+          anti_sim.any? ? "anti_simulation: never use #{anti_sim.join(", ")} — state facts and evidence only" : nil,
           "</master_constitution>"
-        ].join("\n")
+        ].compact.join("\n")
         kernel = @rules.kernel
         if kernel.any?
           sections["master_constitution_kernel"] = "<master_constitution tier=\"kernel\">\n" \

@@ -293,6 +293,7 @@ module Master
                 (cache_write * COST_PER_TOKEN * CACHE_WRITE_RATIO) +
                 (output * COST_PER_TOKEN)).round(6)
         @session.record_cost(cost, model:, tokens:)
+        @bus&.publish("llm:cost", model:, cost:, tokens:, cached:, cache_write:)
         @bus&.publish("cache:hit", model:, cached:, cache_write:) if cached.positive? || cache_write.positive?
       rescue StandardError => e
         @bus&.publish("cost:record_error", error: e.message)
