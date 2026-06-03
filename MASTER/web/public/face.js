@@ -713,8 +713,8 @@ if (_hasWebGL && THREE) {
       const mat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
       return new THREE.LineSegments(geom, mat);
     }
-    faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.0);
-    faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.0);
+    faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.10);
+    faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.04);
     // Legacy single-line ref kept null — two-tier replaces it
     faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;
   }
@@ -728,19 +728,6 @@ const COUNCIL_VOICE = {
   Security: 'osman', User: 'ryan', Mentor: 'yasmin'
 };
 
-async function bootGreet() {
-  const prompt = "Greet the user. You are MASTER. Warm, direct, two or three short sentences. Mention you remember users across sessions and they can shape you into whatever they need.";
-  try {
-    const src = new EventSource(`/chat/message?${new URLSearchParams({ text: prompt })}`);
-    let pending = '';
-    src.onmessage = ev => {
-      const raw = ev.data || '';
-      if (raw === '[DONE]') { if (pending.trim()) enqueueSpeech(pending.trim()); try { src.close(); } catch (_) {} return; }
-      if (!raw.startsWith('ERROR:')) pending += raw;
-    };
-    src.onerror = () => { try { src.close(); } catch (_) {} };
-  } catch (_) {}
-}
 
 
 const colorCurrent = TINT.idle.clone();
@@ -807,7 +794,6 @@ let glowPoints;
 let head;
 if (_hasWebGL && THREE && scene && facePoints) {
   head = new THREE.Object3D();
-  head.rotation.z = -0.021;
   scene.add(head);
   head.add(facePoints);
 // Architectural guides — cross-hair + golden-ratio reference lines.
@@ -818,6 +804,11 @@ if (_hasWebGL && THREE && scene && facePoints) {
     // cross-hair: vertical x=0, horizontal y=0
     0, -half, gridZ,  0,  half, gridZ,
     -half, 0, gridZ,  half, 0, gridZ,
+    // rule-of-thirds tick marks on cross-hair
+    -0.012, half/3, gridZ,  0.012, half/3, gridZ,
+    -0.012, -half/3, gridZ,  0.012, -half/3, gridZ,
+    half/3, -0.012, gridZ,  half/3, 0.012, gridZ,
+    -half/3, -0.012, gridZ,  -half/3, 0.012, gridZ,
     // golden-ratio horizontals at y = ±phi * half
     -half,  phi * half, gridZ,  half,  phi * half, gridZ,
     -half, -phi * half, gridZ,  half, -phi * half, gridZ,
@@ -1319,7 +1310,7 @@ const RADIO_FADE_MS = 3500;
 
 class RadioEngine {
   constructor(tracks) {
-    const rest = tracks.slice(1).sort(() => Math.random() - 0.5); this.tracks = [tracks[0], ...rest];
+    this.tracks = tracks.slice().sort(() => Math.random() - 0.5);
     this.idx = 0; this.started = false; this.muted = false;
     this.mp3 = new Audio();
     this.mp3.crossOrigin = 'anonymous'; this.mp3.preload = 'metadata'; this.mp3.volume = 0;
@@ -1833,13 +1824,10 @@ function ttsTick() {
       });
   }
 
-  // Grace period: if Edge TTS not ready within TTS_EDGE_GRACE_MS, fall back to browser TTS immediately.
-  // Edge TTS result is still cached on arrival so the next identical phrase plays instantly.
-  const graceFallback = setTimeout(playBrowser, TTS_EDGE_GRACE_MS);
-
+  // Edge TTS only - no browser voice fallback. First call cold-starts ~6-8s; honour that.
   edgeBlob
-    .then(blob => { clearTimeout(graceFallback); if (!blob) throw new Error('empty'); playEdge(blob); })
-    .catch(() => { clearTimeout(graceFallback); playBrowser(); });
+    .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
+    .catch(() => { tts.playing = false; setTTSLoading(false); if (token === tts.cancelToken) ttsTick(); });
 }
 
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
