@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=46') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=47') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -1185,11 +1185,11 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 let actx = null;
+let ambientHumGain = null;
 function initAudio() {
   if (actx) return;
   try {
     actx = new (window.AudioContext || window.webkitAudioContext)();
-    // Permanent silent oscillator keeps actx in 'running' state — prevents iOS auto-suspend
     const silentGain = actx.createGain();
     silentGain.gain.value = 0;
     const silentOsc = actx.createOscillator();
@@ -1197,7 +1197,20 @@ function initAudio() {
     silentOsc.connect(silentGain);
     silentGain.connect(actx.destination);
     silentOsc.start();
+    // FA51 ambient thinking hum — 40Hz sine at 3% volume, ducked during TTS
+    ambientHumGain = actx.createGain();
+    ambientHumGain.gain.value = 0;
+    const humOsc = actx.createOscillator();
+    humOsc.type = 'sine'; humOsc.frequency.value = 40;
+    humOsc.connect(ambientHumGain);
+    ambientHumGain.connect(actx.destination);
+    humOsc.start();
   } catch (_) {}
+}
+function setAmbientHum(active) {
+  if (!ambientHumGain || !actx) return;
+  const target = active ? 0.03 : 0;
+  ambientHumGain.gain.setTargetAtTime(target, actx.currentTime, 0.5);
 }
 function beep(freq, dur) {
   if (!actx) return;
@@ -1369,7 +1382,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
   if (src) URL.revokeObjectURL(src);
   tts.audio = null; tts.playing = false;
-  if (State.mode === 'speaking') State.mode = 'idle';
+  if (State.mode === 'speaking') { State.mode = 'idle'; setAmbientHum(false); }
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
   if (continueQueue) ttsTick();
@@ -1423,7 +1436,7 @@ function ttsTick() {
   tts.playing = true;
   const token = ++tts.cancelToken;
   setTTSLoading(true);
-  State.mode = 'speaking';
+  State.mode = 'speaking'; setAmbientHum(false);
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text);
   tts.prefetch.delete(text);
@@ -1560,6 +1573,9 @@ function stopSTT() {
 
 let evtSrc = null;
 async function sendMessage(text) {
+  if (/^(repeat that|say that again|repeat|again)\.?$/i.test(text.trim())) {
+    if (tts.lastText) { tts.queue = [tts.lastText]; ttsTick(); } return;
+  }
   if (evtSrc) { try { evtSrc.close(); } catch (_) {} }
   ttsSkip();
 
@@ -1574,7 +1590,7 @@ async function sendMessage(text) {
     }
   } catch (_) {}
 
-  State.mode = 'thinking'; State.pulse = 0.4;
+  State.mode = 'thinking'; State.pulse = 0.4; setAmbientHum(true);
   if (input.length > 180) State.lean = 0.14;
   const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|0`);
   const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}`;
