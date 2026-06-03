@@ -1581,25 +1581,47 @@ async function loadTTSBlob(text, voice) {
   }
 }
 
+function buildRoomIR(ctx) {
+  const sr = ctx.sampleRate, len = Math.floor(sr * 0.28);
+  const ir = ctx.createBuffer(2, len, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = ir.getChannelData(ch);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4.2);
+  }
+  return ir;
+}
+
 async function connectTTSAudio(audio, boostValue = 1.35) {
   if (!actx || actx.state === 'closed') return;
   if (actx.state === 'suspended') await actx.resume().catch(() => {});
   if (actx.state !== 'running') return;
+  audio.playbackRate = (audio.playbackRate || 1) * 0.97;
   const msrc = actx.createMediaElementSource(audio);
   const boost = actx.createGain();
+  const warmth = actx.createBiquadFilter();
+  const smooth = actx.createBiquadFilter();
+  const presence = actx.createBiquadFilter();
   const compressor = actx.createDynamicsCompressor();
+  const convolver = actx.createConvolver();
+  const dryGain = actx.createGain();
+  const wetGain = actx.createGain();
+  const masterGain = actx.createGain();
   const analyser = actx.createAnalyser();
   boost.gain.value = boostValue;
-  compressor.threshold.value = -24;
-  compressor.knee.value = 24;
-  compressor.ratio.value = 8;
-  compressor.attack.value = 0.003;
-  compressor.release.value = 0.25;
+  warmth.type = 'lowshelf'; warmth.frequency.value = 220; warmth.gain.value = 3.5;
+  smooth.type = 'highshelf'; smooth.frequency.value = 8500; smooth.gain.value = -3;
+  presence.type = 'peaking'; presence.frequency.value = 3200; presence.Q.value = 1.2; presence.gain.value = -1.8;
+  compressor.threshold.value = -22; compressor.knee.value = 22; compressor.ratio.value = 7;
+  compressor.attack.value = 0.004; compressor.release.value = 0.22;
+  convolver.buffer = buildRoomIR(actx);
+  dryGain.gain.value = 0.78; wetGain.gain.value = 0.22; masterGain.gain.value = 1.0;
   analyser.fftSize = 256;
   msrc.connect(boost);
-  boost.connect(compressor);
-  compressor.connect(analyser);
-  analyser.connect(actx.destination);
+  boost.connect(warmth); warmth.connect(smooth); smooth.connect(presence);
+  presence.connect(dryGain); presence.connect(convolver);
+  convolver.connect(wetGain);
+  dryGain.connect(masterGain); wetGain.connect(masterGain);
+  masterGain.connect(compressor); compressor.connect(analyser); analyser.connect(actx.destination);
   tts.analyser = analyser;
   tts.analyserBuf = new Uint8Array(analyser.fftSize);
   tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
