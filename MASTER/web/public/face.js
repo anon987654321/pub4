@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=39') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=40') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -26,7 +26,7 @@ const zshIn  = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
-const FACE_PIXEL_SIZE = 0.024;
+const FACE_PIXEL_SIZE = 0.030;
 const FACE_GLOW_SCALE = 1.18;
 
 const FONT_KEY = 'master:font';
@@ -326,50 +326,63 @@ function generateFaceDepthMap(size) {
   return cv;
 }
 
-// Direct luminance sampling — pixel brightness = Z depth, no edge detection
-// Scale 0.62: maps depth-map coords to same world-space size as original face
-function sampleDepthMap(canvas, N) {
+// Hex-grid topology: particles sit at lattice vertices projected onto face surface.
+// Edge list connects adjacent occupied cells — the wire mesh substrate.
+function sampleDepthMapGrid(canvas, cols, rows) {
   const size = canvas.width;
   const ctx = canvas.getContext('2d');
   const px = ctx.getImageData(0, 0, size, size).data;
-  const home = new Float32Array(N * 3);
-  const scatter = new Float32Array(N * 3);
-  const seeds = new Float32Array(N);
-  let count = 0;
-  const max = N * 14;
-  for (let attempt = 0; attempt < max && count < N; attempt++) {
-    const x = Math.floor(Math.random() * size);
-    const y = Math.floor(Math.random() * size);
-    const lum = px[(y * size + x) * 4] / 255;
-    if (lum < 0.05) continue;
-    if (Math.random() > lum * 0.96 + 0.04) continue;
-    const nx = ((x / size) * 2 - 1) * 0.62;
-    const ny = -(((y / size) * 2 - 1)) * 0.62;
-    const nz = lum * 0.78;
-    home[count*3]   = nx + (Math.random()-0.5)*0.006;
-    home[count*3+1] = ny + (Math.random()-0.5)*0.006;
-    home[count*3+2] = nz + (Math.random()-0.5)*0.010;
-    scatter[count*3]   = nx + (Math.random()-0.5)*0.28;
-    scatter[count*3+1] = ny + (Math.random()-0.5)*0.28;
-    scatter[count*3+2] = (Math.random()-0.5)*0.20;
-    seeds[count] = Math.random() * 6.28318;
-    count++;
+  const positions = [], scatters = [], seeds = [], edgeIdx = [];
+  const cell = new Int32Array(rows * cols).fill(-1);
+
+  for (let row = 0; row < rows; row++) {
+    const hexShift = (row & 1) ? 0.5 : 0.0;
+    for (let col = 0; col < cols; col++) {
+      const u = (col + hexShift + 0.5) / cols;
+      const v = (row + 0.5) / rows;
+      const sx = Math.min(size - 1, (u * size) | 0);
+      const sy = Math.min(size - 1, (v * size) | 0);
+      const lum = px[(sy * size + sx) * 4] / 255;
+      if (lum < 0.08) continue;
+      const idx = (positions.length / 3) | 0;
+      cell[row * cols + col] = idx;
+      const nx = (u * 2 - 1) * 0.62;
+      const ny = -((v * 2 - 1)) * 0.62;
+      const nz = lum * 0.78;
+      positions.push(nx, ny, nz);
+      scatters.push(nx + (Math.random()-0.5)*0.32, ny + (Math.random()-0.5)*0.32, (Math.random()-0.5)*0.18);
+      seeds.push(Math.random() * 6.28318);
+    }
   }
-  while (count < N) {
-    home[count*3] = (Math.random()-0.5)*0.5;
-    home[count*3+1] = (Math.random()-0.5)*0.5;
-    home[count*3+2] = 0.2;
-    scatter[count*3] = home[count*3]; scatter[count*3+1] = home[count*3+1]; scatter[count*3+2] = 0;
-    seeds[count] = Math.random() * 6.28318;
-    count++;
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const a = cell[row * cols + col]; if (a < 0) continue;
+      if (col + 1 < cols)       { const b = cell[row * cols + col + 1];              if (b >= 0) { edgeIdx.push(a, b); } }
+      if (row + 1 < rows)       { const b = cell[(row + 1) * cols + col];            if (b >= 0) { edgeIdx.push(a, b); } }
+      const dc = (row & 1) ? -1 : 1;
+      const nc = col + dc;
+      if (row + 1 < rows && nc >= 0 && nc < cols) { const b = cell[(row + 1) * cols + nc]; if (b >= 0) { edgeIdx.push(a, b); } }
+    }
   }
-  return { home, scatter, seeds };
+
+  const home = new Float32Array(positions);
+  const edgePosData = new Float32Array(edgeIdx.length * 3);
+  for (let i = 0; i < edgeIdx.length; i++) {
+    const vi = edgeIdx[i] * 3;
+    edgePosData[i * 3] = home[vi]; edgePosData[i * 3 + 1] = home[vi + 1]; edgePosData[i * 3 + 2] = home[vi + 2];
+  }
+
+  return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), edgePosData };
 }
 
-const FACE_N = State.coarsePointer ? 6000 : 18000;
-const FACE_N_2D = 600;
-let faceHome, faceScatter, faceSeeds;
-({ home: faceHome, scatter: faceScatter, seeds: faceSeeds } = sampleDepthMap(generateFaceDepthMap(512), FACE_N));
+const FACE_GRID_COLS = State.coarsePointer ? 32 : 52;
+const FACE_GRID_ROWS = State.coarsePointer ? 40 : 66;
+const FACE_N_2D = 200;
+let faceHome, faceScatter, faceSeeds, faceEdgePosData;
+({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData } =
+  sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));
+const FACE_N = (faceHome.length / 3) | 0;
 
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
@@ -430,7 +443,7 @@ varying float vFresnel;
 varying float vDepth;
 void main(){
   float m=smoothstep(0.,1.,uMorph);
-  float curlAmp=0.18+uCurl*0.30;
+  float curlAmp=0.06+uCurl*0.28;
   vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*curlAmp;
   float jawRgn=smoothstep(0.0,0.15,-position.y-0.12)*smoothstep(0.0,0.14,0.28-abs(position.x));
   vec3 p=mix(scatter,position,m)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
@@ -441,10 +454,10 @@ void main(){
   p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*m;
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
-  gl_PointSize=clamp(uSize*(240./-mv.z)*(0.52+depth*0.96),1.0,4.0);
+  gl_PointSize=clamp(uSize*(240./-mv.z)*(0.70+depth*1.10),1.5,6.0);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
-  vAlpha=hc>0.5?1.0:mix(0.22,0.32+depth*0.68,m);
+  vAlpha=hc>0.5?1.0:mix(0.28,0.48+depth*0.52,m);
   float shade=mix(0.14,1.0,depth);
   vColor=(hc>0.5?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.5?1.0:1.0);
   vec3 viewDir=normalize(-mv.xyz);
@@ -470,7 +483,7 @@ void main(){
   gl_FragColor=vec4(col,vAlpha*disc);
 }`;
 
-let faceGeom, faceMat, facePoints;
+let faceGeom, faceMat, facePoints, faceEdgeGeom, faceEdgeMat, faceEdgeLines;
 if (_hasWebGL && THREE) {
   faceGeom = new THREE.BufferGeometry();
   faceGeom.setAttribute('position', new THREE.BufferAttribute(faceHome, 3));
@@ -488,6 +501,16 @@ if (_hasWebGL && THREE) {
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
   facePoints = new THREE.Points(faceGeom, faceMat);
+
+  if (faceEdgePosData && faceEdgePosData.length > 0) {
+    faceEdgeGeom = new THREE.BufferGeometry();
+    faceEdgeGeom.setAttribute('position', new THREE.BufferAttribute(faceEdgePosData, 3));
+    faceEdgeMat = new THREE.LineBasicMaterial({
+      color: 0xffffff, opacity: 0.0, transparent: true,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    faceEdgeLines = new THREE.LineSegments(faceEdgeGeom, faceEdgeMat);
+  }
 }
 
 let morphCurrent = 0.88, morphTarget = 0.88;
@@ -568,6 +591,7 @@ let head3;
 if (_hasWebGL && THREE && scene && facePoints) {
   head3 = new THREE.Object3D();
   scene.add(head3);
+  if (faceEdgeLines) { faceEdgeLines.renderOrder = -2; head3.add(faceEdgeLines); }
   head3.add(facePoints);
   const glowMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
@@ -710,6 +734,11 @@ function frame(t) {
     faceMat.uniforms.uShake.value += (shakeTarget - faceMat.uniforms.uShake.value) * 0.18;
     const pulseRingTarget = State.pulse > 0.55 ? (State.pulse - 0.55) * 2.2 : 0;
     faceMat.uniforms.uPulseRing.value += (pulseRingTarget - faceMat.uniforms.uPulseRing.value) * 0.12;
+    if (faceEdgeMat) {
+      const edgeTarget = morphCurrent * (0.06 + (State.audioBass || 0) * 0.04);
+      faceEdgeMat.opacity += (edgeTarget - faceEdgeMat.opacity) * 0.05;
+      faceEdgeMat.needsUpdate = true;
+    }
     if (glowPoints) {
       const gm = glowPoints.material;
       Object.assign(gm.uniforms, {
@@ -818,6 +847,8 @@ const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, load
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'ryan';
+const TTS_EDGE_GRACE_MS = 1200;   // browser TTS fires if Edge TTS not ready within this window
+const TTS_FETCH_TIMEOUT_MS = 9000; // abort Edge TTS HTTP fetch after this many ms
 const TTS_FALLBACK_VOICE_HINTS = {
   osman: ['osman', 'malay', 'malaysia', 'ms-my', 'ryan', 'en-gb'],
   yasmin: ['yasmin', 'malay', 'malaysia', 'ms-my', 'jenny', 'en-us'],
@@ -892,11 +923,19 @@ async function loadTTSBlob(text, voice) {
   const key = await ttsCacheKey(text, voice).catch(() => null);
   const cached = key ? await readCachedTTS(key) : null;
   if (cached) return cached;
-  const res = await fetch(ttsURL(text, voice));
-  if (!res.ok) throw new Error(res.status);
-  const blob = await res.blob();
-  writeCachedTTS(key, blob);
-  return blob;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TTS_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(ttsURL(text, voice), { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(res.status);
+    const blob = await res.blob();
+    writeCachedTTS(key, blob);
+    return blob;
+  } catch (e) {
+    clearTimeout(timer);
+    throw e;
+  }
 }
 
 async function connectTTSAudio(audio, boostValue = 1.35) {
@@ -1008,39 +1047,52 @@ function ttsTick() {
   setTTSLoading(true);
   State.mode = 'speaking';
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
-  const pending = tts.prefetch.get(text) || loadTTSBlob(text);
+  const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text);
   tts.prefetch.delete(text);
   if (tts.queue[0]) fetchTTS(tts.queue[0]);
-  pending
-    .then(async blob => {
-      if (token !== tts.cancelToken) return null;
-      if (!blob) throw new Error('empty');
-      const src = URL.createObjectURL(blob);
-      const audio = new Audio(src);
-      audio.playbackRate = getTtsRate();
-      tts.audio = audio;
-      try { await connectTTSAudio(audio); } catch (_) {}
-      audio.onplay = () => {
-        setTTSLoading(false); startVisemeAnim(text);
-        if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
-        rootBody.dataset.ttsWave = 'true';
-      };
-      audio.onended = audio.onerror = () => {
-        finishTTSPlayback(src);
-      };
-      return audio.play();
-    })
-    .catch(() => {
-      if (token !== tts.cancelToken) return;
-      speakWithBrowserTTS(text)
-        .then(() => { if (token === tts.cancelToken) finishTTSPlayback(); })
-        .catch(() => {
-          tts.audio = null; tts.playing = false; setTTSLoading(false);
-          const s = document.getElementById('zsh-status');
-          if (s) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
-          if (token === tts.cancelToken) ttsTick();
-        });
-    });
+
+  let settled = false;
+
+  function playEdge(blob) {
+    if (settled || token !== tts.cancelToken) return;
+    settled = true;
+    const src = URL.createObjectURL(blob);
+    const audio = new Audio(src);
+    audio.playbackRate = getTtsRate();
+    tts.audio = audio;
+    connectTTSAudio(audio).catch(() => {});
+    audio.onplay = () => {
+      setTTSLoading(false); startVisemeAnim(text);
+      if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
+      rootBody.dataset.ttsWave = 'true';
+    };
+    audio.onended = audio.onerror = () => finishTTSPlayback(src);
+    audio.play().catch(() => finishTTSPlayback(src));
+  }
+
+  function playBrowser() {
+    if (settled || token !== tts.cancelToken) return;
+    settled = true;
+    setTTSLoading(false);
+    startVisemeAnim(text);
+    rootBody.dataset.ttsWave = 'true';
+    speakWithBrowserTTS(text)
+      .then(() => { if (token === tts.cancelToken) finishTTSPlayback(null); })
+      .catch(() => {
+        tts.audio = null; tts.playing = false; setTTSLoading(false);
+        const s = document.getElementById('zsh-status');
+        if (s) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
+        if (token === tts.cancelToken) ttsTick();
+      });
+  }
+
+  // Grace period: if Edge TTS not ready within TTS_EDGE_GRACE_MS, fall back to browser TTS immediately.
+  // Edge TTS result is still cached on arrival so the next identical phrase plays instantly.
+  const graceFallback = setTimeout(playBrowser, TTS_EDGE_GRACE_MS);
+
+  edgeBlob
+    .then(blob => { clearTimeout(graceFallback); if (!blob) throw new Error('empty'); playEdge(blob); })
+    .catch(() => { clearTimeout(graceFallback); playBrowser(); });
 }
 
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.

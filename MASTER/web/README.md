@@ -12,6 +12,18 @@ Rails 8 + Falcon server. Internal port 53187; relayd proxies to https://ai.brgen
 | `GET /chat/dmesg` | Event log |
 | `GET /events/stream` | SSE event stream |
 
+## Face — Wireframe Mesh
+
+`public/face.js` renders a 3D face as a sparse polygon mesh — vertices and edges, not a particle cloud.
+
+Topology: hex-grid projected onto the face depth map (~1400 nodes desktop, ~480 mobile). Only cells where luminance > 0.08 become vertices; the rest is void. Hex adjacency produces three edge types per cell (right, below, diagonal), yielding the triangulated wireframe.
+
+Rendering: `THREE.Points` for vertex nodes, `THREE.LineSegments` for mesh edges at 6% opacity — the substrate. Vertex nodes are larger and brighter (depth-shaded). Together they read as a Blender/Lightwave wireframe with biological character: the face topology is legible as geometry, not fog.
+
+Motion: curl noise drives vertex drift at low amplitude (0.06 base) — languid, hyphal. During thinking mode the amplitude rises to 0.34 (`uCurl` → 1.0), vertices swarm. During speech, jaw vertices drop and bass pulses the radial wave. Edge opacity scales with bass for a brief mesh-glow on consonants.
+
+Depth map (`generateFaceDepthMap`): OffscreenCanvas grayscale encoding — luminance = Z. Features: forehead plane, brow ridges, glabella depression, elongated eye sockets, corneal speculars, nose bridge/tip, cheekbones, nasolabial folds, elongated lips, philtrum, chin taper.
+
 ## Pixel Field
 
 Semantic bitmap renderer. Cells carry kind, zone, confidence, pressure, valence, arousal, attention, age — not decorative particles.
