@@ -69,7 +69,7 @@ module Master
         if !image.nil? && image != ""
           # auto bias to vision free models (e.g. gemini-2.0-flash-exp:free) when image in ctx
           unless selected_model.to_s =~ /gemini|vision|claude-3|gpt-4o/
-            selected_model = "google/gemini-2.0-flash-exp:free"
+            selected_model = "z-ai/glm-4.5-air:free"
           end
         end
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model)
@@ -305,12 +305,12 @@ module Master
 
       def extract_response(reply, selected_model)
         return reply.to_s unless reply.respond_to?(:content)
-        if NEMOTRON3_RE.match?(selected_model) && reply.respond_to?(:reasoning_content)
-          thinking = reply.reasoning_content.to_s.strip
-          content  = reply.content.to_s
-          return thinking.empty? ? content : "#{content}\n\n<think>\n#{thinking}\n</think>"
+        content  = reply.content.to_s
+        thinking = reply.respond_to?(:thinking) ? reply.thinking&.text.to_s.strip : ""
+        if NEMOTRON3_RE.match?(selected_model) && !thinking.empty?
+          return content.empty? ? thinking : "#{content}\n\n<think>\n#{thinking}\n</think>"
         end
-        reply.content.to_s
+        content.empty? && !thinking.empty? ? thinking : content
       end
 
       def nemotron_system_prompt(selected_model, base = nil)

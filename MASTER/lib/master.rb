@@ -26,7 +26,7 @@ module Master
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
   MIN_API_KEY_LENGTH = 20
-  OPENROUTER_DEFAULT = "google/gemini-2.0-flash-exp:free"
+  OPENROUTER_DEFAULT = "z-ai/glm-4.5-air:free"
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   CTX_WINDOW_SIZE = 200_000
   VIOLATION_TRUNCATE = 90

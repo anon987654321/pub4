@@ -107,7 +107,7 @@ model_defs:
     <<: *model_defaults
     score: { quality: 0.82, speed: 0.78, cost: 0.92 }
   gemini_2_flash_exp_free: &gemini_2_flash_exp_free
-    id: google/gemini-2.0-flash-exp:free
+    id: z-ai/glm-4.5-air:free
     <<: *model_defaults
     score: { quality: 0.85, speed: 0.92, cost: 1.0 }
   gemini_flash_lite: &gemini_flash_lite
@@ -277,7 +277,7 @@ continuity:
 
 openrouter:
   free_latest:
-    - google/gemini-2.0-flash-exp:free
+    - z-ai/glm-4.5-air:free
     - nvidia/nemotron-3-super-120b-a12b:free
     - openai/gpt-oss-120b:free
     - qwen/qwen3-next-80b-a3b-instruct:free
