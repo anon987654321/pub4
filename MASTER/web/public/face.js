@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=41') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=42') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -80,6 +80,7 @@ const State = {
   mode: 'idle', mood: 'idle', model: '', modelName: '',
   lastTouch: performance.now(), confidence: 1.0,
   tiltX: 0, tiltY: 0, mouseX: 0, mouseY: 0,
+  parX: 0, parY: 0,
   viseme: 'neutral', visemeAmp: 0,
   flash: 0, shake: 0, pulse: 0, sttActive: false,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -740,14 +741,14 @@ function doBlink() {
 }
 let nodImpulse = 0;
 let glowPoints;
-let head3;
+let head;
 if (_hasWebGL && THREE && scene && facePoints) {
-  head3 = new THREE.Object3D();
-  head3.rotation.z = -0.021;
-  scene.add(head3);
-  if (faceEdgeLinesStrong) { faceEdgeLinesStrong.renderOrder = -2; head3.add(faceEdgeLinesStrong); }
-  if (faceEdgeLinesWeak)   { faceEdgeLinesWeak.renderOrder = -2;   head3.add(faceEdgeLinesWeak); }
-  head3.add(facePoints);
+  head = new THREE.Object3D();
+  head.rotation.z = -0.021;
+  scene.add(head);
+  if (faceEdgeLinesStrong) { faceEdgeLinesStrong.renderOrder = -2; head.add(faceEdgeLinesStrong); }
+  if (faceEdgeLinesWeak)   { faceEdgeLinesWeak.renderOrder = -2;   head.add(faceEdgeLinesWeak); }
+  head.add(facePoints);
   const glowMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
@@ -763,7 +764,7 @@ if (_hasWebGL && THREE && scene && facePoints) {
   });
   glowPoints = new THREE.Points(faceGeom, glowMat);
   glowPoints.renderOrder = -1;
-  head3.add(glowPoints);
+  head.add(glowPoints);
 }
 
 let _dbgFrames = 0;
@@ -837,7 +838,7 @@ function frame(t) {
     }
   }
 
-  if (head3) {
+  if (head) {
     if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
       saccadeX = (Math.random() - 0.5) * 0.28;
       nextSaccade = t + Math.random() * 6000 + 3000;
@@ -850,27 +851,32 @@ function frame(t) {
     const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX;
     const pitch = State.mouseY * 0.4 + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
     if (camera) {
-      const camOffX = 0.015, camOffY = 0.008;
-      camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.004;
-      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.004;
+      const pInput = State.coarsePointer
+        ? { x: State.tiltX, y: -State.tiltY }
+        : { x: State.mouseX, y: -State.mouseY };
+      State.parX += (pInput.x * 0.055 - State.parX) * 0.04;
+      State.parY += (pInput.y * 0.032 - State.parY) * 0.04;
+      const camOffX = 0.015 + State.parX, camOffY = 0.008 + State.parY;
+      camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.04;
+      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.04;
     }
-    head3.rotation.y += (yaw   - head3.rotation.y) * 0.06;
-    head3.rotation.x += (pitch - head3.rotation.x) * 0.06;
+    head.rotation.y += (yaw   - head.rotation.y) * 0.06;
+    head.rotation.x += (pitch - head.rotation.x) * 0.06;
     nodImpulse *= 0.87;
-    head3.rotation.x += nodImpulse;
+    head.rotation.x += nodImpulse;
     const microOrbit = Math.sin(sec * 0.157) * 0.014;
-    head3.rotation.z = -0.021 + microOrbit * 0.3;
+    head.rotation.z = -0.021 + microOrbit * 0.3;
     const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
     const breath = silenceScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005) + State.pulse * 0.08);
-    head3.scale.setScalar(breath);
+    head.scale.setScalar(breath);
     State.lean = (State.lean || 0) * 0.97;
     if (State.shake > 0.01 && !State.reducedMotion) {
-      head3.position.x = (Math.random() - 0.5) * State.shake * 0.18;
-      head3.position.y = (Math.random() - 0.5) * State.shake * 0.18;
-      head3.position.z = State.lean;
+      head.position.x = (Math.random() - 0.5) * State.shake * 0.18;
+      head.position.y = (Math.random() - 0.5) * State.shake * 0.18;
+      head.position.z = State.lean;
       State.shake *= 0.86;
     } else {
-      head3.position.set(0, 0, State.lean);
+      head.position.set(0, 0, State.lean);
     }
   }
   State.pulse *= 0.92;
@@ -945,15 +951,35 @@ function frame(t) {
 
 let pressTimer = null, pressStart = 0;
 let cursorActive = false;
+let dragOrigin = null;
 function updateCursor(e) {
   State.mouseX = (e.clientX / innerWidth  - 0.5) * 1.6;
   State.mouseY = (e.clientY / innerHeight - 0.5) * 0.9;
   cursorActive = true;
 }
-document.addEventListener('pointermove', updateCursor, { passive: true });
-document.addEventListener('pointerdown', updateCursor, { passive: true });
-document.addEventListener('pointerup',     () => { if (State.coarsePointer) cursorActive = false; }, { passive: true });
-document.addEventListener('pointercancel', () => { if (State.coarsePointer) cursorActive = false; }, { passive: true });
+function onPointerMove(e) {
+  if (State.coarsePointer && dragOrigin) {
+    const dx = (e.clientX - dragOrigin.x) / innerWidth;
+    const dy = (e.clientY - dragOrigin.y) / innerHeight;
+    State.tiltX = Math.max(-1, Math.min(1, dx * 2.8));
+    State.tiltY = Math.max(-1, Math.min(1, dy * 2.0));
+  } else {
+    updateCursor(e);
+  }
+}
+document.addEventListener('pointermove', onPointerMove, { passive: true });
+document.addEventListener('pointerdown', e => {
+  dragOrigin = { x: e.clientX, y: e.clientY };
+  updateCursor(e);
+}, { passive: true });
+document.addEventListener('pointerup', () => {
+  dragOrigin = null;
+  if (State.coarsePointer) cursorActive = false;
+}, { passive: true });
+document.addEventListener('pointercancel', () => {
+  dragOrigin = null;
+  if (State.coarsePointer) cursorActive = false;
+}, { passive: true });
 
 cv.addEventListener('pointerdown', () => {
   pressStart = performance.now();
