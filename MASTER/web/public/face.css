@@ -91,8 +91,8 @@ body[data-tts-loading="true"] .ui-status {
   z-index: var(--z-ui);
   font: 700 clamp(15px,3.8vw,24px)/1 Helvetica,sans-serif;
   letter-spacing: -.02em;
-  color: var(--face-fg);
-  opacity: .6;
+  color: #eee;
+  opacity: .72;
   pointer-events: none;
   user-select: none;
 }

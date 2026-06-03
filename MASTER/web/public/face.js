@@ -215,18 +215,18 @@ function generateFaceDepthMap(size) {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
   let g;
-  // Base face — narrow oval, portrait proportions
-  g = ctx.createRadialGradient(cx, cy - H*0.04, 0, cx, cy, W * 0.36);
+  // Base face — wider heart-shaped oval
+  g = ctx.createRadialGradient(cx, cy - H*0.04, 0, cx, cy, W * 0.38);
   g.addColorStop(0,    'rgba(222,222,222,1)');
   g.addColorStop(0.38, 'rgba(175,175,175,1)');
   g.addColorStop(0.72, 'rgba(68, 68, 68, 1)');
   g.addColorStop(1,    'rgba(0,  0,  0,  1)');
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.ellipse(cx, cy, W * 0.26, H * 0.46, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy, W * 0.285, H * 0.44, 0, 0, Math.PI * 2);
   ctx.fill();
-  // Jaw taper — sharper chin
-  for (const ex of [-0.265, 0.265]) {
+  // Jaw taper — softer jaw
+  for (const ex of [-0.245, 0.245]) {
     g = ctx.createRadialGradient(cx + ex*W, cy + H*0.32, 0, cx + ex*W, cy + H*0.32, W*0.14);
     g.addColorStop(0,    'rgba(0,0,0,0.94)');
     g.addColorStop(0.55, 'rgba(0,0,0,0.58)');
@@ -267,13 +267,13 @@ function generateFaceDepthMap(size) {
   g.addColorStop(0,   'rgba(0,0,0,0.58)');
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // Eye sockets — left slightly deeper (dominant left eye)
+  // Eye sockets — wide-set, almond-shaped, heavy-lidded
   const eyeAlphas = [0.995, 0.980];
   for (let ei = 0; ei < 2; ei++) {
-    const ex = ei === 0 ? -0.112 : 0.112;
+    const ex = ei === 0 ? -0.122 : 0.122;
     ctx.save();
-    ctx.translate(cx + ex*W, cy - H*0.082);
-    ctx.scale(1.45, 1.0);
+    ctx.translate(cx + ex*W, cy - H*0.085);
+    ctx.scale(1.58, 1.0);
     g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.088);
     g.addColorStop(0,    `rgba(0,0,0,${eyeAlphas[ei]})`);
     g.addColorStop(0.45, 'rgba(0,0,0,0.75)');
@@ -284,8 +284,8 @@ function generateFaceDepthMap(size) {
     ctx.restore();
   }
   // Corneal specular — tiny highlight in each eye socket (top-left quadrant)
-  for (const ex of [-0.112, 0.112]) {
-    g = ctx.createRadialGradient(cx + ex*W + W*0.013, cy - H*0.098, 0, cx + ex*W + W*0.013, cy - H*0.098, W*0.020);
+  for (const ex of [-0.122, 0.122]) {
+    g = ctx.createRadialGradient(cx + ex*W + W*0.013, cy - H*0.100, 0, cx + ex*W + W*0.013, cy - H*0.100, W*0.020);
     g.addColorStop(0,   'rgba(210,210,210,0.52)');
     g.addColorStop(0.5, 'rgba(155,155,155,0.18)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
@@ -298,8 +298,8 @@ function generateFaceDepthMap(size) {
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g;
   ctx.fillRect(cx - W*0.018, cy - H*0.04, W*0.036, H*0.14);
-  // Nose tip — brightest point
-  g = ctx.createRadialGradient(cx, cy + H*0.098, 0, cx, cy + H*0.098, W*0.076);
+  // Nose tip — slightly upturned, rounded
+  g = ctx.createRadialGradient(cx, cy + H*0.090, 0, cx, cy + H*0.090, W*0.082);
   g.addColorStop(0,    'rgba(255,255,255,1.00)');
   g.addColorStop(0.28, 'rgba(235,235,235,0.85)');
   g.addColorStop(0.62, 'rgba(162,162,162,0.44)');
@@ -312,11 +312,11 @@ function generateFaceDepthMap(size) {
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Cheekbones — tighter, higher placement
-  for (const ex of [-0.215, 0.215]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.015, 0, cx + ex*W, cy + H*0.015, W*0.10);
-    g.addColorStop(0,   'rgba(182,182,182,0.52)');
-    g.addColorStop(0.65,'rgba(95, 95, 95, 0.18)');
+  // Cheekbones — wide, high, prominent
+  for (const ex of [-0.205, 0.205]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.005, 0, cx + ex*W, cy + H*0.005, W*0.118);
+    g.addColorStop(0,   'rgba(195,195,195,0.62)');
+    g.addColorStop(0.60,'rgba(105,105,105, 0.22)');
     g.addColorStop(1,   'rgba(0,  0,  0,  0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
@@ -333,37 +333,37 @@ function generateFaceDepthMap(size) {
   g.addColorStop(0,   'rgba(0,0,0,0.42)');
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // Upper lip — protrudes more forward
+  // Upper lip — full, wide, prominent Cupid's bow
   ctx.save();
   ctx.translate(cx, cy + H*0.210);
-  ctx.scale(2.0, 1.0);
-  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.052);
-  g.addColorStop(0,    'rgba(215,215,215,0.82)');
-  g.addColorStop(0.38, 'rgba(170,170,170,0.48)');
+  ctx.scale(2.5, 1.0);
+  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.064);
+  g.addColorStop(0,    'rgba(222,222,222,0.88)');
+  g.addColorStop(0.38, 'rgba(175,175,175,0.52)');
   g.addColorStop(1,    'rgba(0,0,0,0)');
   ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(0, 0, W*0.052, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, W*0.064, 0, Math.PI*2); ctx.fill();
   ctx.restore();
-  // Lips — horizontally elongated protrusion
+  // Lower lip — fuller, more voluminous
   ctx.save();
-  ctx.translate(cx, cy + H*0.222);
-  ctx.scale(2.1, 1.0);
-  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.058);
-  g.addColorStop(0,    'rgba(195,195,195,0.72)');
-  g.addColorStop(0.38, 'rgba(155,155,155,0.42)');
+  ctx.translate(cx, cy + H*0.226);
+  ctx.scale(2.6, 1.0);
+  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.074);
+  g.addColorStop(0,    'rgba(210,210,210,0.80)');
+  g.addColorStop(0.38, 'rgba(165,165,165,0.48)');
   g.addColorStop(1,    'rgba(0,0,0,0)');
   ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(0, 0, W*0.058, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, W*0.074, 0, Math.PI*2); ctx.fill();
   ctx.restore();
-  // Lip gap — thin dark line between upper and lower lip
-  g = ctx.createLinearGradient(cx - W*0.068, 0, cx + W*0.068, 0);
+  // Lip gap — wider mouth
+  g = ctx.createLinearGradient(cx - W*0.085, 0, cx + W*0.085, 0);
   g.addColorStop(0,    'rgba(0,0,0,0)');
-  g.addColorStop(0.12, 'rgba(0,0,0,0.40)');
-  g.addColorStop(0.5,  'rgba(0,0,0,0.48)');
-  g.addColorStop(0.88, 'rgba(0,0,0,0.40)');
+  g.addColorStop(0.10, 'rgba(0,0,0,0.42)');
+  g.addColorStop(0.5,  'rgba(0,0,0,0.52)');
+  g.addColorStop(0.90, 'rgba(0,0,0,0.42)');
   g.addColorStop(1,    'rgba(0,0,0,0)');
   ctx.fillStyle = g;
-  ctx.fillRect(cx - W*0.068, cy + H*0.218, W*0.136, H*0.007);
+  ctx.fillRect(cx - W*0.085, cy + H*0.220, W*0.170, H*0.008);
   // Labiomental crease — chin-lip junction shadow
   g = ctx.createRadialGradient(cx, cy + H*0.265, 0, cx, cy + H*0.265, W*0.028);
   g.addColorStop(0,   'rgba(0,0,0,0.44)');
@@ -808,8 +808,6 @@ if (_hasWebGL && THREE && scene && facePoints) {
   head = new THREE.Object3D();
   head.rotation.z = -0.021;
   scene.add(head);
-  if (faceEdgeLinesStrong) { faceEdgeLinesStrong.renderOrder = -2; head.add(faceEdgeLinesStrong); }
-  if (faceEdgeLinesWeak)   { faceEdgeLinesWeak.renderOrder = -2;   head.add(faceEdgeLinesWeak); }
   head.add(facePoints);
   const glowMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
@@ -1026,16 +1024,6 @@ function frame(t) {
     faceMat.uniforms.uShake.value += (shakeTarget - faceMat.uniforms.uShake.value) * 0.18;
     const pulseRingTarget = State.pulse > 0.55 ? (State.pulse - 0.55) * 2.2 : 0;
     faceMat.uniforms.uPulseRing.value += (pulseRingTarget - faceMat.uniforms.uPulseRing.value) * 0.12;
-    if (faceEdgeLinesStrong && faceEdgeLinesStrong.material) {
-      const strongTarget = morphCurrent * (0.10 + (State.audioBass || 0) * 0.06);
-      faceEdgeLinesStrong.material.opacity += (strongTarget - faceEdgeLinesStrong.material.opacity) * 0.05;
-      faceEdgeLinesStrong.material.needsUpdate = true;
-    }
-    if (faceEdgeLinesWeak && faceEdgeLinesWeak.material) {
-      const weakTarget = morphCurrent * 0.035;
-      faceEdgeLinesWeak.material.opacity += (weakTarget - faceEdgeLinesWeak.material.opacity) * 0.04;
-      faceEdgeLinesWeak.material.needsUpdate = true;
-    }
     const rainTarget = State.mood === 'weary' ? 1.0 : 0.0;
     faceMat.uniforms.uRain.value += (rainTarget - faceMat.uniforms.uRain.value) * 0.02;
     faceMat.uniforms.uEarPulse.value += ((State.sttActive ? 1.0 : 0.0) - faceMat.uniforms.uEarPulse.value) * 0.08;
@@ -1333,7 +1321,7 @@ class RadioEngine {
       this.compressor.attack.setValueAtTime(0.003, actx.currentTime);
       this.compressor.release.setValueAtTime(0.25, actx.currentTime);
       this.musicGain = actx.createGain();
-      this.musicGain.gain.value = 0.35;
+      this.musicGain.gain.value = 0.18;
       this.analyser = actx.createAnalyser();
       this.analyser.fftSize = 256;
       this.freqBuf = new Uint8Array(this.analyser.frequencyBinCount);
@@ -1452,7 +1440,7 @@ class RadioEngine {
     this._updateTrackDisplay();
   }
   duck(level) {
-    if (this.musicGain && actx) this.musicGain.gain.setTargetAtTime(level * 0.35, actx.currentTime, 0.4);
+    if (this.musicGain && actx) this.musicGain.gain.setTargetAtTime(level * 0.18, actx.currentTime, 0.4);
     const ytVol = Math.round(level * 35);
     const t = this.tracks[this.idx];
     if (t && !t.src) {
