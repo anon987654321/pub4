@@ -262,7 +262,7 @@ zsh:
   ssh_reading:
     rule: cat path — read the whole file once, never stitch output with grep/head/tail
     rationale: Partial reads yield partial (wrong) changes. Same rule as workflow
-      READ_FULL_FILES.
+      and rules.yml PRESERVE_FIRST.
 infer:
   commands:
     sweep:

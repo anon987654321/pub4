@@ -163,18 +163,18 @@ RuleCoverageRule: every Rule subclass needs a test file.
 - [ ] H15 Self-scan test: MASTER scans its own lib/, expects zero violations
 - [ ] H16 Idempotency test: scan + fix + scan produces same result as scan + fix + fix + scan
 - [x] H17 Test for evidence_scoring gate (scan_clean:25 weight, pass_threshold: 80)
-- [ ] H18 Test for failure_taxonomy: transient errors retry ≤3, permanent errors fail immediately
+- [x] H18 Test for failure_taxonomy: transient errors retry ≤3, permanent errors fail immediately
 - [x] H19 Test for SINGULARITY: rules.yml has no duplicate IDs
-- [ ] H20 Test for phantom_recovery: gaslighting preamble discards response and retries
+- [x] H20 Test for phantom_recovery: gaslighting preamble discards response and retries
 
 ## I. Data quality and config
 
 - [x] I01 rules.yml SINGULARITY boot assertion: verify all 173 IDs unique on load (no duplicates)
 - [x] I02 rules.yml schema validator: every rule has required fields (id, name, tier, severity, autofix)
 - [ ] I03 rules.yml: fix any NO_COLUMN_ALIGN violations (multi-space alignment in YAML values)
-- [ ] I04 data/soul.yml ↔ rules.yml cross-reference: ensure golden_rule in soul.yml matches rules.yml kernel tier
-- [ ] I05 data/patterns.yml: audit for rules referenced here that are not in rules.yml
-- [ ] I06 data/standing_orders.yml: verify voice directives match rules.yml voice section
+- [x] I04 data/soul.yml ↔ rules.yml cross-reference: ensure golden_rule in soul.yml matches rules.yml kernel tier
+- [x] I05 data/patterns.yml: audit for rules referenced here that are not in rules.yml
+- [x] I06 data/standing_orders.yml: verify voice directives match rules.yml voice section
 - [ ] I07 MASTER/Gemfile: add `reek` if not present (ReekRule depends on it)
 - [ ] I08 MASTER/Gemfile: verify `prism` version matches rules.yml language support claims
 

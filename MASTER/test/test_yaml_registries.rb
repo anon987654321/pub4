@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "yaml"
 require "set"
+require "unwrap_error"
 
 DATA = File.expand_path("../data", __dir__)
 
@@ -89,11 +90,97 @@ class TestRulesYamlRegistry < Minitest::Test
     assert missing.empty?, "rules.yml entries missing required fields: #{missing.join('; ')}"
   end
 
+  def test_failure_taxonomy_retry_contract
+    taxonomy = data.fetch("failure_taxonomy")
+
+    assert_operator taxonomy.dig("transient", "max_retries"), :<=, 3
+    assert_equal "exponential_backoff", taxonomy.dig("transient", "strategy")
+    assert_equal 0, taxonomy.dig("permanent", "max_retries")
+    assert_equal "fail_fast", taxonomy.dig("permanent", "strategy")
+  end
+
+  def test_phantom_recovery_contract
+    recovery = data.fetch("phantom_recovery")
+
+    assert_match %r{\A/\^}, recovery.dig("detectors", "gaslighting_preamble")
+    assert recovery.fetch("recovery").any? { |step| step.include?("discard last response") }
+    assert recovery.fetch("recovery").any? { |step| step.include?("publish phantom:detected") }
+  end
+
+  def test_soul_golden_rule_maps_to_kernel_preserve_rule
+    soul = YAML.load_file(File.join(DATA, "soul.yml"), aliases: true)
+    preserve_rule = rules.find { |rule| rule["id"] == "PRESERVE_FIRST" }
+
+    assert_equal "PRESERVE_THEN_IMPROVE_NEVER_BREAK", soul.dig("absolute", "golden_rule")
+    assert_equal "kernel", preserve_rule.fetch("tier")
+    assert_match(/Preserve behavior and intent/, preserve_rule.fetch("fix"))
+    assert_match(/never rewrite working code/i, soul.dig("absolute", "code_rules", "PRESERVE_FIRST"))
+  end
+
+  def test_patterns_do_not_reference_unknown_rules_yml_ids
+    rule_ids = rules.map { |rule| rule.fetch("id") }.to_set
+    referenced = rule_reference_values(patterns).flat_map { |value| value.scan(/\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b/) }.uniq
+    unknown = referenced.reject { |id| rule_ids.include?(id) }
+
+    assert unknown.empty?, "patterns.yml references unknown rules.yml ids: #{unknown.join(', ')}"
+  end
+
+  def test_standing_order_voice_directives_match_rules_voice_strunk
+    strunk = data.dig("voice", "strunk")
+    orders = YAML.load_file(File.join(DATA, "standing_orders.yml"), aliases: true)
+    autocommit = orders.find { |order| order["name"] == "autocommit_post_chat" }
+
+    assert_includes strunk.fetch("apply_to"), "prose"
+    assert_match(/Strunk-style/, autocommit.fetch("description"))
+    assert_includes strunk.fetch("hedges"), "will"
+  end
+
   private
 
   def rules
-    data = YAML.load_file(File.join(DATA, "rules.yml"), aliases: true)
     data.fetch("rules").values.flat_map { |entries| Array(entries) }
+  end
+
+  def data
+    @data ||= YAML.load_file(File.join(DATA, "rules.yml"), aliases: true)
+  end
+
+  def patterns
+    @patterns ||= YAML.load_file(File.join(DATA, "patterns.yml"), aliases: true)
+  end
+
+  def rule_reference_values(object)
+    case object
+    when Hash
+      object.flat_map do |key, value|
+        key.to_s == "rule" || key.to_s == "rules" ? Array(value).map(&:to_s) : rule_reference_values(value)
+      end
+    when Array
+      object.flat_map { |value| rule_reference_values(value) }
+    else
+      []
+    end
+  end
+end
+
+class TestPhantomRecoveryRuntime < Minitest::Test
+  EventBus = Struct.new(:events) do
+    def publish(name, payload)
+      events << [name, payload]
+    end
+  end
+
+  def setup
+    Master::PhantomRecovery.remove_instance_variable(:@detectors) if Master::PhantomRecovery.instance_variable_defined?(:@detectors)
+  end
+
+  def test_gaslighting_preamble_discards_response_and_publishes_event
+    bus = EventBus.new([])
+    result = Master::PhantomRecovery.detect("Sure, I can handle that.", bus: bus)
+
+    assert_includes result.fetch(:patterns), "gaslighting_preamble"
+    assert result.fetch(:recovery).any? { |step| step.include?("discard last response") }
+    assert_equal "phantom:detected", bus.events.fetch(0).fetch(0)
   end
 end
 
