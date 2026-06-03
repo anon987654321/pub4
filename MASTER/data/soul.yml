@@ -67,7 +67,7 @@ absolute:
 
 negotiable:
   style: sentence_case
-  default_model: claude-opus-4-7
+  default_model: google/gemini-2.5-flash
   tts_voice: ms-MY-OsmanNeural
   language_detection: true
 

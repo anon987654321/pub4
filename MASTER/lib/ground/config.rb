@@ -11,7 +11,7 @@ module Master
       DEFAULT_WEB_PORT = 53_187
 
       DEFAULTS = {
-        "model" => "claude-opus-4-7",
+        "model" => "google/gemini-2.5-flash",
         "web_host" => "127.0.0.1",
         "web_public_url" => "https://ai.brgen.no",
         "web_port" => DEFAULT_WEB_PORT,
