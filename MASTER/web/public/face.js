@@ -1531,16 +1531,7 @@ const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, load
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'ryan';
-const TTS_EDGE_GRACE_MS = 9000;   // Edge TTS cold-starts ~6-8s on OpenBSD; give worker time to win
 const TTS_FETCH_TIMEOUT_MS = 9000; // abort Edge TTS HTTP fetch after this many ms
-const TTS_FALLBACK_VOICE_HINTS = {
-  osman: ['osman', 'malay', 'malaysia', 'ms-my', 'ryan', 'en-gb'],
-  yasmin: ['yasmin', 'malay', 'malaysia', 'ms-my', 'jenny', 'en-us'],
-  finn: ['finn', 'norwegian', 'norsk', 'nb-no'],
-  ryan: ['ryan', 'daniel', 'uk english', 'en-gb'],
-  steffan: ['steffan', 'guy', 'andrew', 'en-us'],
-  default: ['ryan', 'daniel', 'uk english', 'en-gb', 'en-us']
-};
 let ttsDBPromise = null;
 
 function setTTSLoading(loading) {
@@ -1667,39 +1658,6 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
 }
 
-function pickBrowserVoice(voiceKey) {
-  const synth = window.speechSynthesis;
-  if (!synth || typeof synth.getVoices !== 'function') return null;
-  const voices = synth.getVoices();
-  if (!voices.length) return null;
-  const hints = TTS_FALLBACK_VOICE_HINTS[voiceKey] || TTS_FALLBACK_VOICE_HINTS.default;
-  return voices.find(v => hints.some(h => `${v.name} ${v.lang}`.toLowerCase().includes(h))) ||
-    voices.find(v => /^en-GB/i.test(v.lang)) ||
-    voices.find(v => /^en/i.test(v.lang)) ||
-    voices[0];
-}
-
-function speakWithBrowserTTS(text, voiceKey = TTS_DEFAULT_VOICE) {
-  if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return Promise.reject(new Error('no browser tts'));
-  return new Promise((resolve, reject) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = pickBrowserVoice(voiceKey);
-    utterance.rate = voiceKey === 'osman' ? 0.9 : 0.96;
-    utterance.pitch = voiceKey === 'osman' ? 0.82 : 1.0;
-    utterance.onstart = () => {
-      setTTSLoading(false);
-      State.mode = 'speaking';
-      rootBody.dataset.ttsWave = 'true';
-      startVisemeAnim(text);
-    };
-    const safety = setTimeout(() => resolve(), Math.min(12000, (text.length / 12 + 4) * 1000));
-    utterance.onend = () => { clearTimeout(safety); resolve(); };
-    utterance.onerror = () => { clearTimeout(safety); reject(new Error('browser tts failed')); };
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  });
-}
-
 function finishTTSPlayback(src, continueQueue = true) {
   setTTSLoading(false);
   stopVisemeAnim();
@@ -1808,26 +1766,14 @@ function ttsTick() {
     audio.play().catch(() => finishTTSPlayback(src));
   }
 
-  function playBrowser() {
-    if (settled || token !== tts.cancelToken) return;
-    settled = true;
-    setTTSLoading(false);
-    startVisemeAnim(text);
-    rootBody.dataset.ttsWave = 'true';
-    speakWithBrowserTTS(text)
-      .then(() => { if (token === tts.cancelToken) finishTTSPlayback(null); })
-      .catch(() => {
-        tts.audio = null; tts.playing = false; setTTSLoading(false);
-        const s = document.getElementById('zsh-status');
-        if (s) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
-        if (token === tts.cancelToken) ttsTick();
-      });
-  }
-
-  // Edge TTS only - no browser voice fallback. First call cold-starts ~6-8s; honour that.
   edgeBlob
     .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
-    .catch(() => { tts.playing = false; setTTSLoading(false); if (token === tts.cancelToken) ttsTick(); });
+    .catch(() => {
+      tts.audio = null; tts.playing = false; setTTSLoading(false);
+      const s = document.getElementById('zsh-status');
+      if (s) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
+      if (token === tts.cancelToken) ttsTick();
+    });
 }
 
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
@@ -1863,7 +1809,6 @@ function ttsSkip() {
   tts.cancelToken++;
   setTTSLoading(false);
   if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
-  if (window.speechSynthesis) window.speechSynthesis.cancel();
   stopVisemeAnim();
   tts.queue.length = 0; tts.prefetch.clear(); tts.playing = false; tts.current = null;
   clearViseme();
@@ -2092,11 +2037,7 @@ function playDuo(lines, onDone) {
       };
       audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone); });
     })
-    .catch(() => {
-      speakWithBrowserTTS(text, TTS_DEFAULT_VOICE)
-        .then(() => { finishTTSPlayback(null, false); playDuo(rest, onDone); })
-        .catch(() => playDuo(rest, onDone));
-    });
+    .catch(() => playDuo(rest, onDone));
 }
 
 let visualEventSource = null;
@@ -2380,7 +2321,6 @@ if (renderer) {
     setTimeout(() => { clearInterval(_dbgTimer); _dbgEl.remove(); }, 30000);
   }
   requestAnimationFrame(frame);
-  setTimeout(() => { if (!primerFired) firePrimer(); }, 800);
   if (window._primerFired && !primerFired) { primerFired = true; startEverything(); }
 } else {
   // 2D canvas fallback — fresh canvas so cv's WebGL attempt doesn't block us
