@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=55') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=56') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -1454,12 +1454,7 @@ class RadioEngine {
     }
     return null;
   }
-  _updateTrackDisplay() {
-    const el = document.getElementById('radio-track');
-    if (!el) return;
-    const t = this.tracks[this.idx];
-    el.textContent = (this.muted ? '♪ ' : '') + (t.artist ? `${t.artist} — ` : '') + t.title;
-  }
+  _updateTrackDisplay() {}
 }
 
 function _ytPost(iframe, func, args = []) {
