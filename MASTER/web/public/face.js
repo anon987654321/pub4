@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=58') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=59') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -1315,7 +1315,7 @@ class RadioEngine {
     this.mp3 = new Audio();
     this.mp3.crossOrigin = 'anonymous'; this.mp3.preload = 'metadata'; this.mp3.volume = 0;
     this.yt = null; this.ytReady = false;
-    this._watchTimer = null; this._nextTimer = null;
+    this._watchTimer = null; this._nextTimer = null; this._playTimer = null; this._playToken = 0;
     this.analyser = null; this.freqBuf = null; this.compressor = null;
     this.musicGain = null; this._beatEnv = 0; this._startMs = 0;
   }
@@ -1384,9 +1384,10 @@ class RadioEngine {
     else this._playYT(t, fadeIn);
   }
   _stopCurrent() {
-    const t = this.tracks[this.idx];
-    if (t.src) { try { this.mp3.pause(); this.mp3.volume = 0; } catch(_) {} }
-    else { if (this.ytReady && this.yt) { try { this.yt.stopVideo(); } catch(_) {} } const fb = document.getElementById('yt-fallback-a'); if (fb) fb.src = 'about:blank'; }
+    try { this.mp3.pause(); this.mp3.volume = 0; this.mp3.removeAttribute('src'); this.mp3.load(); } catch(_) {}
+    if (this.ytReady && this.yt) { try { this.yt.stopVideo(); } catch(_) {} }
+    const fb = document.getElementById('yt-fallback-a');
+    if (fb && fb.src !== 'about:blank') fb.src = 'about:blank';
   }
   _playMP3(t, fadeIn) {
     this.mp3.src = t.src; this.mp3.load();
@@ -1433,19 +1434,27 @@ class RadioEngine {
       if (i >= steps) clearInterval(iv);
     }, dt);
   }
+  _schedulePlay() {
+    const token = ++this._playToken;
+    clearTimeout(this._playTimer);
+    this._playTimer = setTimeout(() => {
+      if (token !== this._playToken) return;
+      this._play(this.tracks[this.idx], true);
+    }, 400);
+  }
   next() {
     clearTimeout(this._nextTimer); clearTimeout(this._watchTimer);
     this._stopCurrent();
     this.idx = (this.idx + 1) % this.tracks.length;
     this._updateTrackDisplay();
-    setTimeout(() => this._play(this.tracks[this.idx], true), 400);
+    this._schedulePlay();
   }
   prev() {
     clearTimeout(this._nextTimer); clearTimeout(this._watchTimer);
     this._stopCurrent();
     this.idx = (this.idx - 1 + this.tracks.length) % this.tracks.length;
     this._updateTrackDisplay();
-    setTimeout(() => this._play(this.tracks[this.idx], true), 400);
+    this._schedulePlay();
   }
   toggleMute() {
     this.muted = !this.muted;
@@ -1738,6 +1747,7 @@ function ttsTick() {
       audio.playbackRate = baseRate;
     }
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
+    if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (_) {} }
     tts.audio = audio;
     setTTSLoading(false);
     connectTTSAudio(audio).catch(() => {});
@@ -2002,13 +2012,13 @@ function guardVoice(v) {
 }
 
 function playDuo(lines, onDone) {
-  if (!lines.length) { tts.playing = false; tts.audio = null; onDone?.(); ttsTick(); return; }
-  tts.playing = true;
+  if (!lines.length) { onDone?.(); return; }
   const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw);
   const rest = lines.slice(1);
   loadTTSBlob(text, voice)
     .then(async blob => {
       const src = URL.createObjectURL(blob);
+      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
       const audio = new Audio(src);
       tts.audio = audio;
       audio.playbackRate = getTtsRate();
