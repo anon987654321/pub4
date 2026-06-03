@@ -76,7 +76,7 @@ function dayNightTint() {
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
 const TTS_CHUNK_MAX = 220;
 function detectLang(text) {
-  if (/[æøåÆØÅ]/.test(text) || /\b(og|er|det|ikke|jeg|du|vi|at|til|på|som|av|for|med|han|hun|de)\b/i.test(text)) return 'nb';
+  if (/[æøåÆØÅ]/.test(text) || /\b(ikke|jeg|deg|seg|eller|dette|disse|skal|dette|vil|kan)\b/i.test(text)) return 'nb';
   return 'en';
 }
 
@@ -2018,7 +2018,7 @@ function playDuo(lines, onDone) {
       audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone); });
     })
     .catch(() => {
-      speakWithBrowserTTS(text, voice)
+      speakWithBrowserTTS(text, TTS_DEFAULT_VOICE)
         .then(() => { finishTTSPlayback(null, false); playDuo(rest, onDone); })
         .catch(() => playDuo(rest, onDone));
     });

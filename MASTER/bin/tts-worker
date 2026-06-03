@@ -6,6 +6,7 @@
 #
 # Usage: tts-worker VOICE RATE PITCH OUT_PATH < text
 
+ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
 require "bundler/setup"
 require "rb_edge_tts"
 require "faye/websocket"
