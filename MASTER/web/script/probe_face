@@ -11,7 +11,9 @@ browser = Ferrum::Browser.new(
   browser_path: "/usr/local/bin/chrome",
   browser_options: {
     "no-sandbox" => nil,
-    "disable-gpu" => nil,
+    "enable-webgl" => nil,
+    "use-gl" => "swiftshader",
+    "enable-unsafe-swiftshader" => nil,
     "disable-dev-shm-usage" => nil,
     "ignore-certificate-errors" => nil
   },

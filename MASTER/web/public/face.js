@@ -2336,6 +2336,7 @@ if (renderer) {
 
     // Auto-fire primer after 1s if user hasn't tapped — gets chat bar up immediately
     setTimeout(() => { if (!primerFired) firePrimer(); }, 1000);
+    if (window._primerFired && !primerFired) { primerFired = true; startEverything(); }
 
     let lastT2 = 0;
     function frame2(t) {
