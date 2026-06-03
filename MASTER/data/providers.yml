@@ -17,7 +17,7 @@ gemini:
 openrouter:
   env: [OPENROUTER_API_KEY]
   strengths: [cheap, routing, free_tier]
-  default_model: openrouter/auto
+  default_model: google/gemini-2.5-flash
 
 deepseek:
   env: [DEEPSEEK_API_KEY]
