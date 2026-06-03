@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=48') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=49') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -1846,6 +1846,17 @@ const _origHaptic = enqueueSpeech;
 window.MASTERVoice && (window.MASTERVoice._hapticPatch = true);
 
 spinBtn?.addEventListener('click', () => cancelStream());
+
+// FA62 push-to-talk: hold space = record, release = submit (unless input focused)
+let pttActive = false;
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ' && !e.repeat && document.activeElement !== zshIn && primerFired) {
+    e.preventDefault(); pttActive = true; startSTT();
+  }
+});
+document.addEventListener('keyup', (e) => {
+  if (e.key === ' ' && pttActive) { pttActive = false; stopSTT(); }
+});
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); cancelStream(); }

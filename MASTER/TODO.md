@@ -2435,38 +2435,38 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA02 face: Atkinson dither pass on depth map at load time — sharper mask silhouette edges
 - [x] FA03 face: per-particle size modulated by depth (z) — foreground dots bigger, background smaller
 - [ ] FA04 face: particle size pulse on TTS phoneme — viseme amplitude drives point size uniform
-- [ ] FA05 face: mouth region particles open/close on vowel visemes (A/E/I/O/U mapped from TTS chunk boundaries)
-- [ ] FA06 face: eye-region particles dim and close on long silence (blink simulation)
-- [ ] FA07 face: saccade micro-jitter on eye cluster — random 2-4px offset every 200-800ms, not full saccade
-- [ ] FA08 face: confidence field visualised — low confidence = particles drift outward by 0.05 units
+- [x] FA05 face: mouth region particles open/close on vowel visemes (A/E/I/O/U mapped from TTS chunk boundaries)
+- [x] FA06 face: eye-region particles dim and close on long silence (blink simulation)
+- [x] FA07 face: saccade micro-jitter on eye cluster — random 2-4px offset every 200-800ms, not full saccade
+- [x] FA08 face: confidence field visualised — low confidence = particles drift outward by 0.05 units
 - [ ] FA09 face: council deliberation = each council voice gets a distinct radial sector that lights up in sequence
-- [ ] FA10 face: pressure wave ripple on message send — outward ring distortion from face center, 400ms decay
-- [ ] FA11 face: breathing idle animation — slow uniform scale 0.98-1.02 on sin(time*0.4), 2.5s cycle
-- [ ] FA12 face: "thinking" state = particles slowly spiral inward (curl noise bias toward center)
-- [ ] FA13 face: "listening" state (STT active) = particles at ear region pulse outward in beat
+- [x] FA10 face: pressure wave ripple on message send — outward ring distortion from face center, 400ms decay
+- [x] FA11 face: breathing idle animation — slow uniform scale 0.98-1.02 on sin(time*0.4), 2.5s cycle
+- [x] FA12 face: "thinking" state = particles slowly spiral inward (curl noise bias toward center)
+- [x] FA13 face: "listening" state (STT active) = particles at ear region pulse outward in beat
 - [ ] FA14 face: depth-map refresh on mask image swap — allow /mask <url> command to hot-swap face image
 - [ ] FA15 face: add second mask layer (overlay) — subtle texture from a different image blended at 0.3 alpha
 - [ ] FA16 face: shadow particles — 10% of particles offset +0.05 XY, 0.08 alpha — cheap subsurface depth
 - [ ] FA17 face: forehead region glow on high-confidence answer — luminance +0.15 for 600ms
-- [ ] FA18 face: rain mode — particles fall slowly downward on weary/fail mood, gravity = +0.002/frame
-- [ ] FA19 face: veto mood = face fractures — particles scatter to 8 radial shards then reassemble
-- [ ] FA20 face: pass mood = particles bloom outward then snap back with spring overshoot
-- [ ] FA21 face: idle color temperature drift — particle alpha slow sine 0.18-0.26 over 8s (phosphor warmup sim)
-- [ ] FA22 face: reduce particle count smoothly on tab hidden, restore on focus (requestAnimationFrame pause)
-- [ ] FA23 face: gyroscope tilt on mobile — deviceorientation → tiltX/Y parallax on face position
-- [ ] FA24 face: pinch-to-zoom on mobile — scale face geometry via touch events
-- [ ] FA25 face: cursor proximity field — particles near cursor repel 0.02 units (cursor as local gravity invert)
-- [ ] FA26 face: double-tap resets face to center with spring animation
-- [ ] FA27 face: long-press on face triggers random mood demo sequence
-- [ ] FA28 face: particle trail on morph transition — ghost positions fade out over 8 frames
-- [ ] FA29 face: "surprised" mood = face particles jump +0.3 Y then fall back with gravity
+- [x] FA18 face: rain mode — particles fall slowly downward on weary/fail mood, gravity = +0.002/frame
+- [x] FA19 face: veto mood = face fractures — particles scatter to 8 radial shards then reassemble
+- [x] FA20 face: pass mood = particles bloom outward then snap back with spring overshoot
+- [x] FA21 face: idle color temperature drift — particle alpha slow sine 0.18-0.26 over 8s (phosphor warmup sim)
+- [x] FA22 face: reduce particle count smoothly on tab hidden, restore on focus (requestAnimationFrame pause)
+- [x] FA23 face: gyroscope tilt on mobile — deviceorientation → tiltX/Y parallax on face position
+- [x] FA24 face: pinch-to-zoom on mobile — scale face geometry via touch events
+- [x] FA25 face: cursor proximity field — particles near cursor repel 0.02 units (cursor as local gravity invert)
+- [x] FA26 face: double-tap resets face to center with spring animation
+- [x] FA27 face: long-press on face triggers random mood demo sequence
+- [x] FA28 face: particle trail on morph transition — ghost positions fade out over 8 frames
+- [x] FA29 face: "surprised" mood = face particles jump +0.3 Y then fall back with gravity
 - [ ] FA30 face: ambient occlusion fake — particles at mask dark-pixel regions get alpha 0.12, bright get 0.35
 - [ ] FA31 face: add WebWorker for depth-map sampling so main thread never blocks on large images
 - [ ] FA32 face: store sampled positions in IndexedDB keyed by image URL — skip resample on reload
-- [ ] FA33 face: particle LOD — coarsePointer already halves count; also reduce on battery saver API signal
+- [x] FA33 face: particle LOD — coarsePointer already halves count; also reduce on battery saver API signal
 - [ ] FA34 face: chromatic aberration on flash state — R channel offset +1px, B offset -1px for 200ms
 - [ ] FA35 face: scanline overlay CSS on canvas — `repeating-linear-gradient` at 2px pitch, 4% opacity
-- [ ] FA36 face: after long idle (>60s) particles slowly dissolve (alpha → 0 over 4s), reform on interaction
+- [x] FA36 face: after long idle (>60s) particles slowly dissolve (alpha → 0 over 4s), reform on interaction
 
 ### FA-B: TTS voice & audio
 
@@ -2476,26 +2476,26 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA40 tts: pitch slider in UI — maps to `pitch` offset ±20Hz passed to speech.rb
 - [ ] FA41 tts: voice picker in UI — dropdown of 13 voices with preview button (2-word sample phrase)
 - [ ] FA42 tts: voice preview plays 3-word clip without sending to chat history
-- [ ] FA43 tts: auto-pause TTS when user scrolls (intent = reading, not listening)
+- [x] FA43 tts: auto-pause TTS when user scrolls (intent = reading, not listening)
 - [ ] FA44 tts: resume TTS from last word boundary on un-pause (track char offset in streamed chunks)
 - [ ] FA45 tts: per-speaker voice in council mode — each council member uses their mapped voice (already in code, surface in UI)
 - [ ] FA46 tts: emotional prosody — stress key words via SSML `<emphasis>` tags injected by expression.rb
 - [ ] FA47 tts: SSML `<break time="400ms"/>` after code blocks and lists — natural reading pace
-- [ ] FA48 tts: strip markdown before TTS — `**bold**`, `` `code` ``, `#` headers → plain text, not read aloud as punctuation
-- [ ] FA49 tts: skip TTS for messages >800 chars by default, show "read aloud" button instead
+- [x] FA48 tts: strip markdown before TTS — `**bold**`, `` `code` ``, `#` headers → plain text, not read aloud as punctuation
+- [x] FA49 tts: skip TTS for messages >800 chars by default, show "read aloud" button instead
 - [ ] FA50 tts: "chapter" mode — long answers chunked into named sections, each gets a play button
-- [ ] FA51 tts: ambient background tone during thinking — 40Hz binaural low hum at 3% volume (WebAudio oscillator)
-- [ ] FA52 tts: subtle audio confirmation click on message send — 8-bit tick sample, <10ms
-- [ ] FA53 tts: audio ducking — background ambient tone ducks to 20% when TTS starts
+- [x] FA51 tts: ambient background tone during thinking — 40Hz binaural low hum at 3% volume (WebAudio oscillator)
+- [x] FA52 tts: subtle audio confirmation click on message send — 8-bit tick sample, <10ms
+- [x] FA53 tts: audio ducking — background ambient tone ducks to 20% when TTS starts
 - [x] FA54 tts: TTS cache — store audio blob in IndexedDB keyed by text hash, skip re-request on repeat
 - [ ] FA55 tts: streaming audio — pipe edge-tts WebSocket chunks directly to MediaSource instead of waiting for full MP3
 - [ ] FA56 tts: Whisper STT fallback — if browser SpeechRecognition unavailable, POST audio blob to /chat/stt (whisper.cpp on VPS)
-- [ ] FA57 tts: "repeat that" voice command — re-play last TTS buffer without new LLM call
+- [x] FA57 tts: "repeat that" voice command — re-play last TTS buffer without new LLM call
 - [ ] FA58 tts: spoken timestamp — prepend "As of [date]" to answers about time-sensitive topics
-- [ ] FA59 tts: multi-language auto-detect — if input is Norwegian, switch to Pernille/Finn voice pair
-- [ ] FA60 tts: adjustable chunk size — default 220 chars; short-answer mode 80 chars for snappier start
-- [ ] FA61 tts: silence detection in STT — auto-submit after 1.2s silence (configurable threshold)
-- [ ] FA62 tts: push-to-talk mode — hold spacebar = record, release = submit (no silence detection needed)
+- [x] FA59 tts: multi-language auto-detect — if input is Norwegian, switch to Pernille/Finn voice pair
+- [x] FA60 tts: adjustable chunk size — default 220 chars; short-answer mode 80 chars for snappier start
+- [x] FA61 tts: silence detection in STT — auto-submit after 1.2s silence (configurable threshold)
+- [x] FA62 tts: push-to-talk mode — hold spacebar = record, release = submit (no silence detection needed)
 - [ ] FA63 tts: audio waveform visualiser alongside face — small bar chart from AnalyserNode FFT data
 - [ ] FA64 tts: voiced error messages — 503/timeout gets a short spoken apology, not just text
 - [ ] FA65 tts: "thinking aloud" — stream internal pipeline stage name as whispered aside during long waits
