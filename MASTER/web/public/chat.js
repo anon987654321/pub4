@@ -32,6 +32,8 @@ function appendMsg(role, text = '') {
   d.tabIndex = 0;
   d.setAttribute('role', 'article');
   d.setAttribute('aria-label', role + ' message');
+  const idx = log.children.length;
+  if (idx > 0) d.style.animationDelay = Math.min(idx, 3) * 40 + 'ms';
   const now = new Date();
   d.dataset.ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   if (role === 'assistant') {
@@ -49,14 +51,14 @@ function appendMsg(role, text = '') {
     body.className = 'msg-body';
     const cur = document.createElement('span');
     cur.className = 'cursor';
-    const copyBtn = document.createElement(button);
-    copyBtn.className = msg-copy;
-    copyBtn.title = Copy;
-    copyBtn.setAttribute(aria-label, Copy response);
-    copyBtn.addEventListener(click, () => {
-      navigator.clipboard?.writeText(body.textContent || ).then(() => {
-        copyBtn.textContent = u2713;
-        setTimeout(() => { copyBtn.textContent = ; }, 1200);
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'msg-copy';
+    copyBtn.title = 'Copy';
+    copyBtn.setAttribute('aria-label', 'Copy response');
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard?.writeText(body.textContent || '').then(() => {
+        copyBtn.textContent = '\u2713';
+        setTimeout(() => { copyBtn.textContent = ''; }, 1200);
       });
     });
     d.appendChild(body);

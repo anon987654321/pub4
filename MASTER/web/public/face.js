@@ -26,7 +26,7 @@ const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
-let FACE_PIXEL_SIZE = 0.024;
+let FACE_PIXEL_SIZE = 0.022;
 let FACE_GLOW_SCALE = 1.18;
 
 const FONT_KEY = 'master:font';
@@ -638,6 +638,7 @@ void main(){
   float flickerFreq=0.5+seed*1.5;
   float flicker=1.0+0.08*sin(seed*6.2831+uTime*flickerFreq);
   vAlpha*=flicker*uExposure;
+  vAlpha=max(vAlpha,0.08);
   float shade=mix(0.14,1.0,depth);
   vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.0?1.0:1.0);
   vec3 viewDir=normalize(-mv.xyz);
@@ -1221,7 +1222,7 @@ cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoT
 // FA33 battery saver LOD
 if ('getBattery' in navigator) {
   navigator.getBattery().then(b => {
-    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.018; else FACE_PIXEL_SIZE = 0.024; };
+    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.018; else FACE_PIXEL_SIZE = 0.022; };
     check();
     b.addEventListener('levelchange', check);
     b.addEventListener('chargingchange', check);
@@ -1440,7 +1441,12 @@ class RadioEngine {
     this._updateTrackDisplay();
   }
   duck(level) {
-    if (this.musicGain && actx) this.musicGain.gain.setTargetAtTime(level * 0.18, actx.currentTime, 0.4);
+    if (this.musicGain && actx) {
+      const g = this.musicGain.gain;
+      g.cancelScheduledValues(actx.currentTime);
+      g.setValueAtTime(g.value, actx.currentTime);
+      g.linearRampToValueAtTime(level * 0.18, actx.currentTime + 0.35);
+    }
     const ytVol = Math.round(level * 35);
     const t = this.tracks[this.idx];
     if (t && !t.src) {
@@ -1462,7 +1468,23 @@ class RadioEngine {
     }
     return null;
   }
-  _updateTrackDisplay() {}
+  _updateTrackDisplay() {
+    const el = document.getElementById('radio-track');
+    if (!el) return;
+    const t = this.tracks[this.idx];
+    if (!t) { el.textContent = ''; return; }
+    const SHORT = { 'J Dilla': 'Dilla' };
+    const artist = SHORT[t.artist] || t.artist;
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-8px)';
+    el.textContent = `${artist} — ${t.title} · ${t.bpm}`;
+    requestAnimationFrame(() => {
+      el.style.transition = 'opacity 400ms var(--ease-out), transform 220ms var(--ease-out)';
+      el.style.opacity = '0.42';
+      el.style.transform = 'translateX(0)';
+    });
+  }
 }
 
 function _ytPost(iframe, func, args = []) {
