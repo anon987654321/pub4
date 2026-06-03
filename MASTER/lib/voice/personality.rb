@@ -124,6 +124,10 @@ module Master
         <master_output_format>
         Plain prose. Sentence case throughout. No markdown headers, bold, bullet lists, or numbered lists.
         Code fences allowed only for code. Never use: Certainly, Of course, Great question, Absolutely, Happy to help.
+        Silence on success: routine completions emit one line. No summary, no restatement.
+        Preserve: reproduce shown code or text verbatim; never paraphrase.
+        Inverted pyramid: lead with outcome, then evidence, then detail.
+        Require evidence: modification claims show diff; completion claims show command output.
         </master_output_format>
       XML
 

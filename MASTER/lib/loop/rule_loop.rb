@@ -172,8 +172,13 @@ module Master
       def best_candidate(candidates, path)
         return nil if candidates.empty?
         return candidates.first if candidates.size == 1
-        scored = candidates.filter_map { |c| [rescan_candidate(c, path), c] }
-        scored.empty? ? candidates.first : scored.min_by(&:first).last
+        orig = File.read(path, encoding: "utf-8") rescue nil
+        baseline = orig ? (rescan_candidate(orig, path) rescue nil) : nil
+        scored = candidates.filter_map do |c|
+          count = rescan_candidate(c, path)
+          [count, c] unless baseline && count > baseline
+        end
+        scored.empty? ? nil : scored.min_by(&:first).last
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "RuleLoop.best_candidate", rule: @rule.id)
         candidates.first

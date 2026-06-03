@@ -364,7 +364,7 @@ module Master
           findings
         end
 
-      # A06 USE_THEN — sequential temp-var chains that could be .then/.yield_self.
+      # A06 USE_THEN: sequential temp-var chains; refactor to .then/.yield_self.
         RuleDSL.rule :USE_THEN,
           severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
           description: "use .then over temp variable chains" do |src, path:|
@@ -394,7 +394,7 @@ module Master
           scan_lines(src, /\S {2,}(?:=>|[^=!<>]=(?!=)|:\s)/, message: "column-aligned padding — use single space before => / = / :")
         end
 
-      # A17 SPECULATIVE_GENERALITY_LEXICAL — future/hypothetical TODO comments.
+      # A17 SPECULATIVE_GENERALITY_LEXICAL: catches future/hypothetical TODO comments.
         RuleDSL.rule :SPECULATIVE_GENERALITY_LEXICAL,
           severity: :info, tags: %i[YAGNI],
           description: "no speculative future-proofing comments" do |src, path:|

@@ -1,13 +1,15 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  --c-text: var(--c-text);
+  --c-accent: var(--c-accent);
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --face-bg: #000;
-  --face-fg: #dcdcdc;
+  --face-fg: var(--c-text);
   --face-muted: rgba(220,220,220,0.35);
   --face-dim: rgba(220,220,220,0.18);
   --face-soft: rgba(220,220,220,0.08);
@@ -301,7 +303,7 @@ body.zen #zsh.revealed { opacity: .96; pointer-events: auto; transform: none; }
 
 body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 #zsh .pp { color: #c44; font-weight: 700; }
-#zsh .sep, #zsh .sep2 { color: var(--face-muted); }
+#zsh .sep, #zsh .sep2 { color: var(--face-muted); margin-right: 0.4ch; }
 #zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
 #zsh input::placeholder { color: rgba(220,220,220,.25); }
 
@@ -386,7 +388,7 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 .msg-body pre { display:block; padding:8px 10px; margin:4px 0; white-space:pre-wrap; }
 
 /* #38 dmesg accent */
-.dmesg-line { color:#6a9fff !important; }
+.dmesg-line { color:var(--c-accent); }
 
 /* #39 Message timestamp on hover */
 .message[data-ts]::after { content:attr(data-ts); font-size:9px; color:var(--face-muted); opacity:0; transition:opacity .15s; margin-left:8px; display:inline-block; vertical-align:middle; }
