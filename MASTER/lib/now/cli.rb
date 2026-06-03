@@ -499,8 +499,8 @@ module Master
         else
           print "\r\e[K" if $stdout.isatty
           value = ok.value
-          rendered = value.is_a?(Hash) ? value[:rendered] : nil
-          text = rendered || value.to_s
+          rendered = value.respond_to?(:[]) ? value[:rendered] : nil
+          text = rendered || (value.respond_to?(:[]) ? value[:output].to_s : value.to_s)
           puts @renderer.speaker_tag
           puts text
           puts

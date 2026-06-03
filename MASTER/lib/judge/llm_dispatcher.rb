@@ -65,14 +65,14 @@ module Master
       end
 
       def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, &blk)
-        if image.present?
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        if !image.nil? && image != ""
           # auto bias to vision free models (e.g. gemini-2.0-flash-exp:free) when image in ctx
           unless selected_model.to_s =~ /gemini|vision|claude-3|gpt-4o/
             selected_model = "google/gemini-2.0-flash-exp:free"
           end
         end
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model)
-        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
           @cache.fetch(cache_key, selected_model) do
             send_llm_request(selected_model, messages, system:, stream:, image: image, &blk)
@@ -234,11 +234,11 @@ module Master
 
         ask_arg = last_text
         temp_file = nil
-        if image && ( (image[:path].to_s.present? && File.file?(image[:path])) || image[:data].present? )
+        if image && ( (!image[:path].to_s.empty? && File.file?(image[:path])) || !image[:data].to_s.empty? )
           # Prefer disk :path from chat token meta (postpro'd uploads). Robust Tempfile fallback for direct data.
           # Always ensure cleanup with ensure. Unique temp name.
-          if image[:path].to_s.present? && File.file?(image[:path])
-            attachment = RubyLLM::Attachment.new(image[:path], filename: (image[:name].to_s.presence || File.basename(image[:path])))
+          if !image[:path].to_s.empty? && File.file?(image[:path])
+            attachment = RubyLLM::Attachment.new(image[:path], filename: (image[:name].to_s.empty? ? File.basename(image[:path]) : image[:name].to_s))
           else
             ext = (image[:mime].to_s =~ /png/i ? ".png" : (image[:mime].to_s =~ /webp/i ? ".webp" : ".jpg"))
             temp_file = Tempfile.new(["master_vision_#{SecureRandom.hex(4)}", ext])
@@ -347,6 +347,7 @@ module Master
       end
 
       def elapsed_ms(started)
+        return 0 unless started
         ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * MS_PER_SECOND).round
       end
 
