@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=54') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=55') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -722,8 +722,8 @@ const COUNCIL_VOICE = {
 };
 
 const BOOT_DUO = [
-  ['ryan', 'Welcome. I am Maestro.'],
-  ['ryan', 'Ask me anything.']
+  ['ryan', 'MASTER. Constitutional AI for code, prose, design, and any text artifact.'],
+  ['ryan', 'Send me code to review, a document to improve, or anything you want fixed.']
 ];
 
 
@@ -1294,7 +1294,7 @@ const RADIO_FADE_MS = 3500;
 
 class RadioEngine {
   constructor(tracks) {
-    this.tracks = tracks.slice().sort(() => Math.random() - 0.5);
+    const rest = tracks.slice(1).sort(() => Math.random() - 0.5); this.tracks = [tracks[0], ...rest];
     this.idx = 0; this.started = false; this.muted = false;
     this.mp3 = new Audio();
     this.mp3.crossOrigin = 'anonymous'; this.mp3.preload = 'metadata'; this.mp3.volume = 0;
