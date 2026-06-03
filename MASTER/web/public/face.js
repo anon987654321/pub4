@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=52') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=53') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -1395,17 +1395,14 @@ class RadioEngine {
     } else {
       const f = document.getElementById('yt-fallback-' + k);
       if (!f) return;
-      f.src = `https://www.youtube.com/embed/${t.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&mute=0&enablejsapi=1${t.start ? `&start=${t.start}` : ''}`;
+      f.src = `https://www.youtube.com/embed/${t.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&mute=1&enablejsapi=1${t.start ? `&start=${t.start}` : ''}`;
       f.onload = () => {
-        _ytPost(f, 'playVideo');
-        _ytPost(f, 'unMute');
-        if (fadeIn) { _ytPost(f, 'setVolume', [0]); this._fadeYT(k, RADIO_FADE_MS); } else { _ytPost(f, 'setVolume', [100]); }
+        setTimeout(() => { _ytPost(f, 'unMute'); _ytPost(f, 'setVolume', [100]); }, 2000);
       };
       this._watchTimer = setTimeout(() => this.next({fast:true}), 5000);
     }
   }
   _fadeYT(k, ms) {
-    if (!this.ytReady) return;
     const steps = 30, dt = ms / steps; let i = 0;
     const iv = setInterval(() => {
       i++; const vol = Math.round(100 * i / steps);
