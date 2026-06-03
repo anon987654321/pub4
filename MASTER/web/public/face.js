@@ -2307,6 +2307,8 @@ if (renderer) {
     setTimeout(() => { clearInterval(_dbgTimer); _dbgEl.remove(); }, 30000);
   }
   requestAnimationFrame(frame);
+  setTimeout(() => { if (!primerFired) firePrimer(); }, 800);
+  if (window._primerFired && !primerFired) { primerFired = true; startEverything(); }
 } else {
   // 2D canvas fallback — fresh canvas so cv's WebGL attempt doesn't block us
   (function start2D() {
