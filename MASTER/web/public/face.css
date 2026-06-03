@@ -1,8 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --c-text: var(--c-text);
-  --c-accent: var(--c-accent);
+  --c-text: #dcdcdc;
+  --c-accent: #6a9fff;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
