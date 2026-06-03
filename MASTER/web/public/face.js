@@ -8,7 +8,6 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-<<<<<<< HEAD
 const THREE = _hasWebGL ? await import('/three.module.js?v=40') : null;
 
 // Minimal Color stub for no-WebGL path
@@ -27,13 +26,8 @@ const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
-<<<<<<< HEAD
-const FACE_PIXEL_SIZE = 0.030;
-const FACE_GLOW_SCALE = 1.18;
-=======
 let FACE_PIXEL_SIZE = 0.024;
 let FACE_GLOW_SCALE = 1.18;
->>>>>>> f68a47e7 (refine face: pure white no-tint shake/err/2d; add css particle vars; dealign TINT; v sync; 2d alpha)
 
 const FONT_KEY = 'master:font';
 (function initFont() {
@@ -495,20 +489,11 @@ varying float vDepth;
 uniform float uShake;
 uniform float uPulseRing;
 void main(){
-<<<<<<< HEAD
-  float dist=length(gl_PointCoord-0.5)*2.0;
-  float disc=1.0-smoothstep(0.55,1.0,dist);
-  vec3 col=vColor+vFresnel*vColor*0.38;
-  col.r=min(1.0,col.r+uShake*0.18);
-  col.b=max(0.0,col.b-uShake*0.12);
-  gl_FragColor=vec4(col,vAlpha*disc);
-=======
   vec3 col = vColor + vFresnel * vColor * 0.42;
   // Shake modulates brightness only (pure white phosphor, no hue tints).
   float w = 1.0 + uShake * 0.12;
   col = clamp(col * w, 0.0, 1.0);
   gl_FragColor = vec4(col, vAlpha);
->>>>>>> f68a47e7 (refine face: pure white no-tint shake/err/2d; add css particle vars; dealign TINT; v sync; 2d alpha)
 }`;
 
 let faceGeom, faceMat, facePoints, faceEdgeGeom, faceEdgeMat, faceEdgeLines;
