@@ -2,7 +2,7 @@
 PORT=53187
 [ -r /etc/master.env ] && . /etc/master.env
 daemon="/usr/local/bin/bundle34"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY OPENROUTER_API_KEY=$OPENROUTER_API_KEY REPLICATE_API_KEY=$REPLICATE_API_KEY WEAVIATE_API_KEY=$WEAVIATE_API_KEY GEMINI_API_KEY=$GEMINI_API_KEY falcon serve --bind http://127.0.0.1:${PORT}"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY OPENROUTER_API_KEY=$OPENROUTER_API_KEY REPLICATE_API_KEY=$REPLICATE_API_KEY WEAVIATE_API_KEY=$WEAVIATE_API_KEY GEMINI_API_KEY=$GEMINI_API_KEY falcon serve --threaded --bind http://127.0.0.1:${PORT}"
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_logger="daemon.notice"
