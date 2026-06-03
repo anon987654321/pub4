@@ -103,6 +103,24 @@ class TestWebUI < Minitest::Test
     assert_includes app_controller, "Retry-After"
   end
 
+  def test_sensitive_web_actions_require_authentication
+    app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
+
+    assert_includes app_controller, "AUTHENTICATED_ACTIONS = %i["
+    assert_includes app_controller, "command dmesg enhance history live metrics photo post_event state stream tts"
+    assert_includes app_controller, "before_action :require_authenticated!, only: AUTHENTICATED_ACTIONS"
+    assert_includes app_controller, 'render json: { error: "authentication required" }, status: :forbidden if visitor?'
+  end
+
+  def test_authenticated_web_actions_are_rate_limited
+    app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
+
+    assert_includes app_controller, "WEB_READ_RATE_LIMIT  = 120"
+    assert_includes app_controller, "WEB_WRITE_RATE_LIMIT = 60"
+    assert_includes app_controller, "before_action :enforce_web_read_rate_limit, only: %i[dmesg history live metrics]"
+    assert_includes app_controller, "before_action :enforce_web_write_rate_limit, only: %i[command enhance photo post_event state]"
+  end
+
   def test_tts_endpoint_sets_cache_headers_and_supports_conditional_get
     chat_controller = File.read(File.expand_path("../web/app/controllers/chat_controller.rb", __dir__))
 
@@ -151,10 +169,10 @@ class TestWebUI < Minitest::Test
   def test_face_particles_are_crisp_depth_sized_pixels
     face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
 
-    assert_includes face_js, "const FACE_PIXEL_SIZE = 0.024"
-    assert_includes face_js, "const FACE_GLOW_SCALE = 1.18"
+    assert_includes face_js, "let FACE_PIXEL_SIZE = 0.024"
+    assert_includes face_js, "let FACE_GLOW_SCALE = 1.18"
     assert_includes face_js, "gl_PointSize=clamp"
-    assert_includes face_js, "0.72+depth*0.42"
+    assert_includes face_js, "0.70+depth*1.10"
   end
 
   # SwarmCoordinator

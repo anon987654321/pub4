@@ -84,7 +84,7 @@ module Master
         banned = (constitution["banned_output"] || [])
         no_open = (strunk["preambles"] || []).first(4)
         no_end = (strunk["endings"] || []).first(3)
-        anti_sim = @rules.data(:soul).dig("voice", "anti_simulation", "forbidden") || []
+        anti_sim = @rules.data(:soul).dig("absolute", "anti_simulation", "forbidden") || []
         sections["master_constitution_absolute"] = [
           "<master_constitution tier=\"absolute\">",
           "golden_rule: #{constitution["golden_rule"]}",

@@ -7,13 +7,23 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   VISITOR_ALLOWED_TOOLS = %w[AskLlm WebSearch].freeze
+  AUTHENTICATED_ACTIONS = %i[
+    command dmesg enhance history live metrics photo post_event state stream tts
+  ].freeze
   CHAT_RATE_LIMIT = 30  # requests per 60s per IP
   CHAT_WINDOW_S   = 60
   TTS_RATE_LIMIT  = 30
   TTS_WINDOW_S    = 60
+  WEB_READ_RATE_LIMIT  = 120
+  WEB_READ_WINDOW_S    = 60
+  WEB_WRITE_RATE_LIMIT = 60
+  WEB_WRITE_WINDOW_S   = 60
 
+  before_action :require_authenticated!, only: AUTHENTICATED_ACTIONS
   before_action :enforce_chat_rate_limit, only: [:message]
   before_action :enforce_tts_rate_limit, only: [:tts]
+  before_action :enforce_web_read_rate_limit, only: %i[dmesg history live metrics]
+  before_action :enforce_web_write_rate_limit, only: %i[command enhance photo post_event state]
 
   private
 
@@ -24,6 +34,10 @@ class ApplicationController < ActionController::Base
 
   def visitor_tool_permitted?(tool_name)
     VISITOR_ALLOWED_TOOLS.include?(tool_name.to_s)
+  end
+
+  def require_authenticated!
+    render json: { error: "authentication required" }, status: :forbidden if visitor?
   end
 
   def enforce_visitor_tool!(tool_name)
@@ -38,6 +52,14 @@ class ApplicationController < ActionController::Base
 
   def enforce_tts_rate_limit
     enforce_rate_limit!("master:rl:tts:#{request.remote_ip}", limit: TTS_RATE_LIMIT, window: TTS_WINDOW_S)
+  end
+
+  def enforce_web_read_rate_limit
+    enforce_rate_limit!("master:rl:web:read:#{request.remote_ip}", limit: WEB_READ_RATE_LIMIT, window: WEB_READ_WINDOW_S)
+  end
+
+  def enforce_web_write_rate_limit
+    enforce_rate_limit!("master:rl:web:write:#{request.remote_ip}", limit: WEB_WRITE_RATE_LIMIT, window: WEB_WRITE_WINDOW_S)
   end
 
   def enforce_rate_limit!(key, limit:, window:)
