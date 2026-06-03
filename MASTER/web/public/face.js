@@ -796,34 +796,6 @@ if (_hasWebGL && THREE && scene && facePoints) {
   head = new THREE.Object3D();
   scene.add(head);
   head.add(facePoints);
-// Architectural guides — cross-hair + golden-ratio reference lines.
-// Faint white phosphor; reads as drafting paper, not decoration.
-{
-  const half = 0.62, phi = 0.618, gridZ = -0.02;
-  const pts = [
-    // cross-hair: vertical x=0, horizontal y=0
-    0, -half, gridZ,  0,  half, gridZ,
-    -half, 0, gridZ,  half, 0, gridZ,
-    // rule-of-thirds tick marks on cross-hair
-    -0.012, half/3, gridZ,  0.012, half/3, gridZ,
-    -0.012, -half/3, gridZ,  0.012, -half/3, gridZ,
-    half/3, -0.012, gridZ,  half/3, 0.012, gridZ,
-    -half/3, -0.012, gridZ,  -half/3, 0.012, gridZ,
-    // golden-ratio horizontals at y = ±phi * half
-    -half,  phi * half, gridZ,  half,  phi * half, gridZ,
-    -half, -phi * half, gridZ,  half, -phi * half, gridZ,
-    // golden-ratio verticals at x = ±phi * half
-     phi * half, -half, gridZ,   phi * half,  half, gridZ,
-    -phi * half, -half, gridZ,  -phi * half,  half, gridZ,
-  ];
-  const geom = new THREE.BufferGeometry();
-  geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pts), 3));
-  const mat = new THREE.LineBasicMaterial({
-    color: 0xffffff, opacity: 0.06, transparent: true,
-    blending: THREE.AdditiveBlending, depthWrite: false
-  });
-  head.add(new THREE.LineSegments(geom, mat));
-}
   const glowMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
