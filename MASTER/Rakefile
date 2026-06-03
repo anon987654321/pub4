@@ -15,12 +15,13 @@ task :constitution do
   require "master"
 
   root    = __dir__
-  scanner = Master::Scan::Scanner.new
-  Master::Scan::Rule.registry.select(&:auto_build?).each { |klass| scanner.add_rule(klass.new) }
-  scanner.add_rule(Master::Scan::Rules::RuleCoverageRule.new(root:))
-  scanner.add_rule(Master::Scan::Rules::RubocopRule.new(root:))
-  scanner.add_rule(Master::Scan::Rules::ReekRule.new(root:))
-  scanner.add_rule(Master::Scan::Rules::InterconnectRule.new(root:))
+  ns = Master::Judge::Scan
+  scanner = ns::Scanner.new
+  ns::Rule.registry.select(&:auto_build?).each { |klass| scanner.add_rule(klass.new) }
+  scanner.add_rule(ns::Rules::RuleCoverageRule.new(root:))
+  scanner.add_rule(ns::Rules::RubocopRule.new(root:))
+  scanner.add_rule(ns::Rules::ReekRule.new(root:))
+  scanner.add_rule(ns::Rules::InterconnectRule.new(root:))
 
   result = scanner.scan_dir(File.join(root, "lib"), depth: :deep, stream: false)
   abort "constitution: scan failed: #{result.message}" unless result.respond_to?(:ok?) && result.ok?
