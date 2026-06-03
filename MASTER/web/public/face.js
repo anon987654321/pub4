@@ -84,10 +84,11 @@ const State = {
   flash: 0, shake: 0, pulse: 0, sttActive: false,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches,
-  highContrast: new URLSearchParams(window.location.search).get('hc') === '1'
+  highContrast: new URLSearchParams(window.location.search).get('hc') === '1',
+  contrastMore: matchMedia("(prefers-contrast: more)").matches
 };
 
-rootBody.dataset.highContrast = State.highContrast ? '1' : '';
+rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
 
 // Read particle sizing from CSS vars (web-ui-improvements.md:97) for theming/CRT profiles.
 // Fallbacks preserve current 8-bit phosphor look.
@@ -135,7 +136,7 @@ function updateRuntimeProfile() {
   State.hidden = document.hidden;
   rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
   rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'full';
-  rootBody.dataset.highContrast = State.highContrast ? '1' : '';
+  rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
 }
 
 updateRuntimeProfile();
@@ -145,6 +146,10 @@ matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event 
 });
 matchMedia('(pointer: coarse)').addEventListener('change', event => {
   State.coarsePointer = event.matches;
+  updateRuntimeProfile();
+});
+matchMedia("(prefers-contrast: more)").addEventListener('change', event => {
+  State.contrastMore = event.matches;
   updateRuntimeProfile();
 });
 document.addEventListener('visibilitychange', () => {
@@ -471,9 +476,9 @@ void main(){
   gl_PointSize=clamp(uSize*(240./-mv.z)*(0.70+depth*1.10),1.5,6.0);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
-  vAlpha=hc>0.5?1.0:mix(0.28,0.48+depth*0.52,m);
+  vAlpha=hc>0.0?hc:mix(0.28,0.48+depth*0.52,m);
   float shade=mix(0.14,1.0,depth);
-  vColor=(hc>0.5?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.5?1.0:1.0);
+  vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.0?1.0:1.0);
   vec3 viewDir=normalize(-mv.xyz);
   vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
   vec3 vn=normalize(mat3(modelViewMatrix)*flatNorm);
@@ -506,7 +511,8 @@ if (_hasWebGL && THREE) {
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
       uMorph:{value:0}, uTime:{value:0}, uSize:{value:FACE_PIXEL_SIZE},
-      uColor:{value:new Color(1,1,1)}, uHc:{value:0},
+      uColor:{value:new Color(1,1,1)},
+      uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
       uBass:{value:0}, uShake:{value:0},
       uPulseRing:{value:0}
@@ -610,7 +616,8 @@ if (_hasWebGL && THREE && scene && facePoints) {
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
       uMorph:{value:0}, uTime:{value:0}, uSize:{value:FACE_PIXEL_SIZE * FACE_GLOW_SCALE},
-      uColor:{value:new Color(1,1,1)}, uHc:{value:0},
+      uColor:{value:new Color(1,1,1)},
+      uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
       uBass:{value:0}, uShake:{value:0},
       uPulseRing:{value:0}
@@ -739,7 +746,8 @@ function frame(t) {
     const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
     faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
-    faceMat.uniforms.uHc.value = State.highContrast ? 1.0 : 0.0;
+    const hcVal = State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0);
+    faceMat.uniforms.uHc.value = hcVal;
     const curlTarget = State.mode === 'thinking' ? 1.0 : 0.0;
     faceMat.uniforms.uCurl.value += (curlTarget - faceMat.uniforms.uCurl.value) * 0.025;
     faceMat.uniforms.uJaw.value = voiceRMS * 2.5;
@@ -1646,7 +1654,7 @@ if (renderer) {
       ctx2.fillRect(0, 0, cw2, ch2);
       // Always pure white pixels for 2D fallback (matches 3D + raster); alpha for non-hc.
       ctx2.fillStyle = '#fff';
-      ctx2.globalAlpha = State.highContrast ? 1.0 : 0.72;
+      ctx2.globalAlpha = State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.72);
 
       const noiseAmp = m > 0.98 ? 0 : (1 - m) * 0.28;
       for (let i = 0; i < N2; i++) {
