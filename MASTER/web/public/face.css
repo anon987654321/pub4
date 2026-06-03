@@ -240,7 +240,7 @@ body[data-mode="listening"] #mic-dot {
 }
 
 #chat-log:not(:empty) { pointer-events: auto; }
-.message { margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; }
+.message { position:relative; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; }
 .message:focus-visible { outline: 1px solid var(--face-fg); outline-offset: 1px; }
 .msg-prompt { font-weight: 700; margin-right: 0.35em; }
 .message.user .msg-prompt { color: var(--face-fg); }
@@ -488,3 +488,8 @@ body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; transition:letter
 /* #29 Mood saturation filter on canvas */
 body[data-runtime-profile="full"] canvas { filter:saturate(var(--mood-sat, 0.7)) brightness(1); }
 body[data-tts-loading="true"] canvas { filter:saturate(var(--mood-sat, 0.7)) brightness(1.04); }
+
+/* FA75 copy button */
+.message.assistant .msg-copy { position:absolute; top:4px; right:6px; background:none; border:none; color:var(--face-dim); cursor:pointer; font:9px ui-monospace,monospace; opacity:0; transition:opacity .15s; padding:2px 4px; }
+.message.assistant:hover .msg-copy { opacity:1; }
+.message.assistant .msg-copy:hover { color:var(--c-text); }

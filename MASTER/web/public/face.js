@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=56') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=57') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -1841,6 +1841,8 @@ async function sendMessage(text) {
   if (/^\/radio\s+next$/i.test(trimmed)) { radio?.next({fast:true}); return; }
   if (/^\/radio\s+prev$/i.test(trimmed)) { radio?.prev(); return; }
   if (/^\/radio\s+mute$/i.test(trimmed)) { radio?.toggleMute(); return; }
+  if (/^\/sleep$/i.test(trimmed)) { State.sleeping = true; faceMat.uniforms.uIdleDrift.value = 0.02; return; }
+  if (/^\/wake$/i.test(trimmed)) { State.sleeping = false; return; }
   const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
   if (maskMatch) { swapMask(maskMatch[1]); return; }
   const rateMatch = trimmed.match(/^\/rate\s+([\d.]+)$/i);
@@ -2091,6 +2093,7 @@ zshBar.addEventListener('submit', (e) => {
   State.pulse = 0.4;
   State.ripplePhase = 0;
   beep(1320, 0.018);
+  navigator.vibrate?.(30);
   sendMessage(v);
 });
 zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
@@ -2137,8 +2140,10 @@ document.addEventListener('keyup', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { e.preventDefault(); cancelStream(); }
+  if (e.key === 'Escape') { e.preventDefault(); cancelStream(); ttsSkip(); }
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }
+  if (e.key === t && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); ttsToggleMute(); }
+  if (e.key === m && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); startSTTOnce?.(); }
   if (e.ctrlKey && e.key === 'ArrowRight') { e.preventDefault(); radio?.next({fast:true}); }
   if (e.ctrlKey && e.key === 'ArrowLeft')  { e.preventDefault(); radio?.prev(); }
   if (e.ctrlKey && e.shiftKey && e.key === 'M') { e.preventDefault(); radio?.toggleMute(); }

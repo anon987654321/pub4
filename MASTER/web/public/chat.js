@@ -49,8 +49,19 @@ function appendMsg(role, text = '') {
     body.className = 'msg-body';
     const cur = document.createElement('span');
     cur.className = 'cursor';
+    const copyBtn = document.createElement(button);
+    copyBtn.className = msg-copy;
+    copyBtn.title = Copy;
+    copyBtn.setAttribute(aria-label, Copy response);
+    copyBtn.addEventListener(click, () => {
+      navigator.clipboard?.writeText(body.textContent || ).then(() => {
+        copyBtn.textContent = u2713;
+        setTimeout(() => { copyBtn.textContent = ; }, 1200);
+      });
+    });
     d.appendChild(body);
     d.appendChild(cur);
+    d.appendChild(copyBtn);
     _streamEl = body;
   }
   log.appendChild(d);
