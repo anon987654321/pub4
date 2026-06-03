@@ -8,6 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
+<<<<<<< HEAD
 const THREE = _hasWebGL ? await import('/three.module.js?v=40') : null;
 
 // Minimal Color stub for no-WebGL path
@@ -22,12 +23,17 @@ const Color = _hasWebGL ? THREE.Color : _Color;
 const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
 const zshBar = document.getElementById('zsh');
-const zshIn  = document.getElementById('zin');
+const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
+<<<<<<< HEAD
 const FACE_PIXEL_SIZE = 0.030;
 const FACE_GLOW_SCALE = 1.18;
+=======
+let FACE_PIXEL_SIZE = 0.024;
+let FACE_GLOW_SCALE = 1.18;
+>>>>>>> f68a47e7 (refine face: pure white no-tint shake/err/2d; add css particle vars; dealign TINT; v sync; 2d alpha)
 
 const FONT_KEY = 'master:font';
 (function initFont() {
@@ -52,23 +58,25 @@ function setTtsRate(r) {
 
 const TINT = {
   // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
-  // Shading and expression via Atkinson/Bayer dither patterns, alpha, size, depth, and pulse (no hue tints).
-  idle:    new Color(1.00, 1.00, 1.00),
-  claude:  new Color(1.00, 1.00, 1.00),
-  deepseek:new Color(1.00, 1.00, 1.00),
-  gemini:  new Color(1.00, 1.00, 1.00),
-  gpt:     new Color(1.00, 1.00, 1.00),
-  tense:   new Color(1.00, 1.00, 1.00),
+  // Shading and expression via Atkinson/Bayer dither patterns,
+  // alpha, size, depth, and pulse (no hue tints).
+  idle: new Color(1.00, 1.00, 1.00),
+  claude: new Color(1.00, 1.00, 1.00),
+  deepseek: new Color(1.00, 1.00, 1.00),
+  gemini: new Color(1.00, 1.00, 1.00),
+  gpt: new Color(1.00, 1.00, 1.00),
+  tense: new Color(1.00, 1.00, 1.00),
   curious: new Color(1.00, 1.00, 1.00),
   focused: new Color(1.00, 1.00, 1.00),
-  weary:   new Color(1.00, 1.00, 1.00),
-  pass:    new Color(1.00, 1.00, 1.00),
-  veto:    new Color(1.00, 1.00, 1.00),
+  weary: new Color(1.00, 1.00, 1.00),
+  pass: new Color(1.00, 1.00, 1.00),
+  veto: new Color(1.00, 1.00, 1.00),
   unclear: new Color(1.00, 1.00, 1.00)
 };
 
 function dayNightTint() {
-  // Pure white — time of day no longer affects hue (shading is dither-only in the 8-bit CRT phosphor style).
+  // Pure white — time of day no longer affects hue.
+  // Shading is dither-only in the 8-bit CRT phosphor style.
   return new Color(1.00, 1.00, 1.00);
 }
 
@@ -86,6 +94,18 @@ const State = {
 };
 
 rootBody.dataset.highContrast = State.highContrast ? '1' : '';
+
+// Read particle sizing from CSS vars (web-ui-improvements.md:97) for theming/CRT profiles.
+// Fallbacks preserve current 8-bit phosphor look.
+(function applyFaceCssVars() {
+  try {
+    const cs = getComputedStyle(rootBody);
+    const ps = parseFloat(cs.getPropertyValue('--face-particle-size'));
+    if (ps > 0.001) FACE_PIXEL_SIZE = ps;
+    const gs = parseFloat(cs.getPropertyValue('--face-glow-scale'));
+    if (gs > 0.5) FACE_GLOW_SCALE = gs;
+  } catch (_) {}
+})();
 
 const STAR_FRAMES = ['|', '/', '-', '\\'];
 let _starTimer = null;
@@ -475,12 +495,20 @@ varying float vDepth;
 uniform float uShake;
 uniform float uPulseRing;
 void main(){
+<<<<<<< HEAD
   float dist=length(gl_PointCoord-0.5)*2.0;
   float disc=1.0-smoothstep(0.55,1.0,dist);
   vec3 col=vColor+vFresnel*vColor*0.38;
   col.r=min(1.0,col.r+uShake*0.18);
   col.b=max(0.0,col.b-uShake*0.12);
   gl_FragColor=vec4(col,vAlpha*disc);
+=======
+  vec3 col = vColor + vFresnel * vColor * 0.42;
+  // Shake modulates brightness only (pure white phosphor, no hue tints).
+  float w = 1.0 + uShake * 0.12;
+  col = clamp(col * w, 0.0, 1.0);
+  gl_FragColor = vec4(col, vAlpha);
+>>>>>>> f68a47e7 (refine face: pure white no-tint shake/err/2d; add css particle vars; dealign TINT; v sync; 2d alpha)
 }`;
 
 let faceGeom, faceMat, facePoints, faceEdgeGeom, faceEdgeMat, faceEdgeLines;
@@ -667,9 +695,11 @@ function frame(t) {
     rootBody.style.setProperty('--mood-sat', moodSat.toFixed(2));
     if (State.mode === 'error' && !rootBody.dataset.moodCold) {
       rootBody.dataset.moodCold = '1';
-      TINT.idle.set(0.35, 0.55, 0.9);
-      fadeColorTo(TINT.idle);
-      setTimeout(() => { delete rootBody.dataset.moodCold; TINT.idle.set(1,1,1); fadeColorTo(TINT.idle); }, 1800);
+      // White-only error indication: shake + pulse (no hue per pure phosphor).
+      State.shake = 1.5;
+      State.pulse = 0.9;
+      State.flash = 1.0;
+      setTimeout(() => { delete rootBody.dataset.moodCold; }, 1800);
     }
   }
 
@@ -1629,7 +1659,9 @@ if (renderer) {
 
       ctx2.fillStyle = '#000';
       ctx2.fillRect(0, 0, cw2, ch2);
-      ctx2.fillStyle = State.highContrast ? '#fff' : 'rgba(255,255,255,0.7)';
+      // Always pure white pixels for 2D fallback (matches 3D + raster); alpha for non-hc.
+      ctx2.fillStyle = '#fff';
+      ctx2.globalAlpha = State.highContrast ? 1.0 : 0.72;
 
       const noiseAmp = m > 0.98 ? 0 : (1 - m) * 0.28;
       for (let i = 0; i < N2; i++) {
@@ -1649,6 +1681,7 @@ if (renderer) {
         const sz = Math.max(2, 2.4 * f2 / (dz * 80));
         ctx2.fillRect(px - sz * 0.5, py - sz * 0.5, sz, sz);
       }
+      ctx2.globalAlpha = 1.0;
 
       _dbgFrames++;
       markFaceReady();
