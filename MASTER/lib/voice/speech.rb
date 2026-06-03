@@ -5,6 +5,7 @@ require "fileutils"
 require "open3"
 require "socket"
 require "json"
+require "timeout"
 
 module Master
   module Voice
@@ -12,7 +13,9 @@ module Master
       WORKER = File.expand_path("../../bin/tts-worker", __dir__)
       EDGE_TTS = File.executable?(WORKER)
       TTS_SOCKET = File.expand_path("../../.master/tts.sock", __dir__)
-      ESPEAK = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
+      ESPEAK_PATHS = %w[/usr/bin/espeak /usr/local/bin/espeak].freeze
+      ESPEAK = ESPEAK_PATHS.find { |p| File.executable?(p) }
+      WORKER_TIMEOUT = 20
 
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
 
@@ -69,7 +72,32 @@ module Master
       module_function
 
       def available?
-        EDGE_TTS || !ESPEAK.nil?
+        edge_tts_available? || !espeak_path.nil?
+      end
+
+      def edge_tts_available?
+        worker_executable? && eventmachine_ssl_available?
+      end
+
+      def worker_executable?
+        File.executable?(WORKER)
+      end
+
+      def espeak_path
+        ESPEAK_PATHS.find { |p| File.executable?(p) }
+      end
+
+      def eventmachine_ssl_available?
+        require "eventmachine"
+        return true unless EventMachine.respond_to?(:ssl?)
+
+        EventMachine.ssl?
+      rescue LoadError => e
+        warn_tts("edge unavailable: eventmachine cannot be loaded (#{e.message})")
+        false
+      rescue StandardError => e
+        warn_tts("edge availability probe failed: #{e.class}: #{e.message}")
+        false
       end
 
       def default_voice
@@ -165,12 +193,12 @@ module Master
         # Use the resolved config (applies Osman character when needed)
         style_config = style_config_for(voice, style)
 
-        if EDGE_TTS
+        if edge_tts_available?
           path = synthesize_edge(text_str, voice: voice, style_config: style_config)
           return path if path
         end
 
-        synthesize_espeak(text_str) if ESPEAK
+        synthesize_espeak(text_str) if espeak_path
       end
 
       def synthesize_audio(text, **opts)
@@ -197,13 +225,28 @@ module Master
         sock_path = synthesize_edge_socket(text, voice_name, style_config, audio_path)
         return sock_path if sock_path
 
-        _out, _err, status = Open3.capture3(
-          WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
-          stdin_data: text.to_s
-        )
-        return unless status.success?
+        timeout = worker_timeout
+        _out, err, status = Timeout.timeout(timeout) do
+          Open3.capture3(
+            WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
+            stdin_data: text.to_s
+          )
+        end
+        unless status.success?
+          warn_tts("edge worker failed: #{err.to_s.strip}") unless err.to_s.strip.empty?
+          return cleanup_failed_audio(audio_path)
+        end
 
-        (File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
+        return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
+
+        warn_tts("edge worker produced empty audio")
+        cleanup_failed_audio(audio_path)
+      rescue Timeout::Error
+        warn_tts("edge worker timed out after #{worker_timeout}s")
+        cleanup_failed_audio(audio_path)
+      rescue StandardError => e
+        warn_tts("edge worker error: #{e.class}: #{e.message}")
+        cleanup_failed_audio(audio_path)
       end
 
       def synthesize_edge_socket(text, voice_name, style_config, audio_path)
@@ -215,23 +258,53 @@ module Master
           pitch: style_config[:pitch],
           text: text.to_s
         )
-        UNIXSocket.open(TTS_SOCKET) do |s|
-          s.write("#{req}\n")
-          File.open(audio_path, "wb") { |f| IO.copy_stream(s, f) }
+        Timeout.timeout(worker_timeout) do
+          UNIXSocket.open(TTS_SOCKET) do |s|
+            s.write("#{req}\n")
+            File.open(audio_path, "wb") { |f| IO.copy_stream(s, f) }
+          end
         end
-        (File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
-      rescue StandardError
-        nil
+        return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
+
+        warn_tts("edge socket produced empty audio")
+        cleanup_failed_audio(audio_path)
+      rescue Timeout::Error
+        warn_tts("edge socket timed out after #{worker_timeout}s")
+        cleanup_failed_audio(audio_path)
+      rescue StandardError => e
+        warn_tts("edge socket failed: #{e.class}: #{e.message}")
+        cleanup_failed_audio(audio_path)
       end
 
       def synthesize_espeak(text)
         audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.wav"
         ok = system(
-          ESPEAK, "-s", "162", "-p", "42", "-a", "125",
+          espeak_path, "-s", "162", "-p", "42", "-a", "125",
           "-w", audio_path, text.to_s,
           out: File::NULL, err: File::NULL
         )
-        (ok && File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
+        return audio_path if ok && File.exist?(audio_path) && File.size(audio_path) > 0
+
+        warn_tts("espeak failed or produced empty audio")
+        cleanup_failed_audio(audio_path)
+      rescue StandardError => e
+        warn_tts("espeak error: #{e.class}: #{e.message}")
+        cleanup_failed_audio(audio_path)
+      end
+
+      def cleanup_failed_audio(path)
+        File.unlink(path) rescue nil if path
+        nil
+      end
+
+      def worker_timeout
+        Integer(ENV.fetch("MASTER_TTS_TIMEOUT", WORKER_TIMEOUT.to_s))
+      rescue ArgumentError
+        WORKER_TIMEOUT
+      end
+
+      def warn_tts(message)
+        Kernel.warn("tts: #{message}")
       end
     end
   end

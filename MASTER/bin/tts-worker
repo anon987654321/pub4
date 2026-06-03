@@ -12,6 +12,7 @@
 
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
 require "bundler/setup"
+require "eventmachine"
 require "rb_edge_tts"
 require "faye/websocket"
 require "json"
@@ -31,7 +32,15 @@ def synth(voice, rate, pitch, text, out_path)
   File.exist?(out_path) && File.size(out_path) > 0
 end
 
+def require_eventmachine_ssl!
+  return unless EventMachine.respond_to?(:ssl?) && !EventMachine.ssl?
+
+  warn "tts-worker: EventMachine SSL support unavailable; reinstall eventmachine with OpenSSL support or install espeak"
+  exit 69
+end
+
 if ARGV[0] == "--daemon"
+  require_eventmachine_ssl!
   sock_path = ARGV[1] or abort "tts-worker --daemon: missing SOCKET_PATH"
   FileUtils.mkdir_p(File.dirname(sock_path))
   File.unlink(sock_path) rescue nil
@@ -77,6 +86,7 @@ if text.to_s.strip.empty?
   warn "tts-worker: empty stdin"
   exit 65
 end
+require_eventmachine_ssl!
 
 begin
   ok = synth(voice, rate, pitch, text, out_path)
