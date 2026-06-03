@@ -55,6 +55,21 @@ class RuntimeHardeningTest < Minitest::Test
     end
   end
 
+
+  def test_semantic_cache_persists_llm_manifest_for_restart
+    Dir.mktmpdir do |dir|
+      cache = Master::Reach::SemanticCache.new(root: dir)
+      first = cache.fetch("prompt", "model") { Master::Result.ok("cached") }
+      FileUtils.rm_rf(File.join(dir, ".master", "cache"))
+      restarted = Master::Reach::SemanticCache.new(root: dir)
+      second = restarted.fetch("prompt", "model") { Master::Result.ok("miss") }
+
+      assert_equal "cached", first.value!
+      assert_equal "cached", second.value!
+      assert File.file?(File.join(dir, ".master", "llm_cache.yml"))
+    end
+  end
+
   def test_model_router_uses_provider_health_to_avoid_unhealthy_primary
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))

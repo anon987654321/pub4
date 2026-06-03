@@ -128,7 +128,16 @@ module Master
 
         summary = result.value!
         @bus&.publish("heartbeat:self_test", violations: summary.violation_count, checks: summary.to_h)
+        publish_scan_status(summary.violation_count)
         summary.line
+      end
+
+      def publish_scan_status(violation_count)
+        if violation_count.to_i.zero?
+          @bus&.publish("heartbeat:scan_clean", violations: 0)
+        else
+          @bus&.publish("heartbeat:violations", violations: violation_count.to_i)
+        end
       end
 
       def prune_undo_journal

@@ -2,6 +2,34 @@
 # frozen_string_literal: true
 
 root = File.expand_path("../..", __dir__)
+
+def fail!(failures, message)
+  failures << message
+end
+
+def require_file!(failures, path, message)
+  fail!(failures, message) unless File.file?(path)
+end
+
+def require_text!(failures, path, pattern, message)
+  return fail!(failures, "missing #{path}") unless File.file?(path)
+
+  text = File.read(path)
+  fail!(failures, message) unless pattern.match?(text)
+end
+
+def verify_openbsd_alignment(root)
+  failures = []
+  openbsd = File.join(root, "DEPLOY", "openbsd")
+  require_file!(failures, File.join(openbsd, "etc", "rc.d", "master"), "M01: missing rc.d/master payload")
+  require_file!(failures, File.join(openbsd, "etc", "master.env.sample"), "M02: missing master.env.sample")
+  require_text!(failures, File.join(openbsd, "etc", "rc.conf.local"), /pkg_scripts=.*\bmaster\b/, "M03: rc.conf.local must enable master")
+  require_text!(failures, File.join(openbsd, "backup_priv.sh"), /\bopenrsync\b/, "M05: backup_priv.sh must use openrsync")
+  require_text!(failures, File.join(openbsd, "backup_priv.sh"), /\bwingman1\.openbsd\.amsterdam\b/, "M05: backup target must be OpenBSD Amsterdam wingman1")
+  require_text!(failures, File.join(root, "MASTER", "data", "openbsd.yml"), /privilege:\s*doas|restart:\s*"doas rcctl restart master"/, "M04: openbsd.yml must encode doas privilege for managed service actions")
+  failures
+end
+
 commands = [
   ["ruby", File.join(root, "DEPLOY", "verify_deploy_identity.rb")]
 ]
@@ -9,6 +37,13 @@ commands = [
 commands.each do |command|
   puts "+ #{command.join(' ')}"
   system(*command) or exit($?.exitstatus || 1)
+end
+
+failures = verify_openbsd_alignment(root)
+if failures.any?
+  warn "DEPLOY verification failures:"
+  failures.each { |failure| warn "  - #{failure}" }
+  exit 1
 end
 
 puts "DEPLOY verification passed"

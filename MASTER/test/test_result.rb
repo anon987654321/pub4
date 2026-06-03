@@ -35,3 +35,14 @@ class TestResult < Minitest::Test
     assert_equal 10, r.value!
   end
 end
+
+class TestResultContext < Minitest::Test
+  def test_err_always_carries_evidence_context
+    result = Master::Result.err("boom", category: :validation)
+
+    assert_kind_of Hash, result.context
+    assert result.context[:file].end_with?("test_result.rb")
+    assert_equal "test_err_always_carries_evidence_context", result.context[:method]
+    assert_equal "boom", result.context[:attempted]
+  end
+end

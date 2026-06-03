@@ -27,14 +27,17 @@ module Converge
     def run(initial_context = {})
       @context.merge!(initial_context)
       cycles = 0
+      capped = false
 
       loop do
         changed = apply_rules_once
         cycles += 1
         @context[:execution_depth] = cycles
-        break unless changed && cycles < MAX_CYCLES
+        capped = changed && cycles >= max_iterations
+        break unless changed && cycles < max_iterations
       end
 
+      emit_iteration_cap(cycles) if capped
       @event_stream.emit(:convergence_complete, cycles: cycles)
       @context
     end
@@ -44,6 +47,15 @@ module Converge
     end
 
     private
+
+    def max_iterations
+      configured = @context[:max_iterations] || @context["max_iterations"]
+      configured.to_i.positive? ? configured.to_i : MAX_CYCLES
+    end
+
+    def emit_iteration_cap(cycles)
+      @event_stream.emit(:"convergence:max_iterations", cycles: cycles, max_iterations: max_iterations)
+    end
 
     def apply_rules_once
       changed = false

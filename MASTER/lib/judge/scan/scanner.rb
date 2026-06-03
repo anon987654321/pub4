@@ -23,6 +23,8 @@ module Master
           @file_sleep_s = file_sleep_s.to_f
         end
 
+        # Preconditions: +path+ must exist and +depth+ must be :deep.
+        # Shallow scan names are rejected by DEEP_SCAN_ONLY before any file I/O.
         def scan(path, depth: :deep, rules: nil)
           validate_depth!(depth)
           code = read_file(path)
@@ -47,11 +49,10 @@ module Master
 
         def scan_since(ref = "HEAD~1", dir: ".", depth: :deep, stream: false)
           validate_depth!(depth)
-          out, _, status = Open3.capture3("git", "-C", dir, "diff", "--name-only", "#{ref}...HEAD")
+          repo = git_root(dir)
+          out, _, status = Open3.capture3("git", "-C", repo, "diff", "--name-only", "#{ref}...HEAD")
           return Result.err("git diff failed", category: :validation) unless status.success?
-          paths = out.lines.map(&:strip).reject(&:empty?)
-                    .map { |rel| File.join(dir, rel) }
-                    .select { |p| File.exist?(p) && File.extname(p).match?(/\.(rb|erb|yml|js|css|sh|zsh)\z/) }
+          paths = changed_scan_paths(out.lines.map(&:strip), repo:, dir:)
           Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
         rescue StandardError => e
           Result.err("scan_since: #{e.message}", category: :infrastructure)
@@ -141,10 +142,32 @@ module Master
         def stream_progress(dir, path, file_result)
           return unless file_result.ok?
           count = file_result.value!.size
-          return unless count.positive?
           rel = path.sub(dir, "").delete_prefix("/")
           $stdout.puts "scan: #{rel} #{count} violation(s)"
           $stdout.flush
+        end
+
+        def git_root(dir)
+          out, status = Open3.capture2("git", "-C", dir, "rev-parse", "--show-toplevel")
+          status.success? ? out.strip : dir
+        end
+
+        def changed_scan_paths(rel_paths, repo:, dir:)
+          wanted = rel_paths.select { |rel| in_scan_scope?(rel, repo:, dir:) }
+          wanted.map { |rel| File.join(repo, rel) }
+                .select { |path| scan_file?(path) }
+                .uniq
+                .sort
+        end
+
+        def in_scan_scope?(rel, repo:, dir:)
+          target = File.expand_path(dir, repo)
+          absolute = File.expand_path(File.join(repo, rel))
+          absolute.start_with?(target) || rel.start_with?("MASTER/lib/")
+        end
+
+        def scan_file?(path)
+          File.exist?(path) && File.extname(path).match?(/\.(rb|erb|yml|js|css|sh|zsh)\z/)
         end
 
         def depth_rules

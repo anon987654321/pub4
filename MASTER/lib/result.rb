@@ -23,10 +23,29 @@ module Master
 
     def self.err(msg, category: :unknown, context: nil)
       raise ArgumentError, "unknown category: #{category}" unless category == :unknown || CATEGORIES.key?(category)
-      Err.new(msg, category, context)
+      Err.new(msg, category, normalize_context(msg, context))
     end
 
     def self.wrap(val) = val.is_a?(Result) ? val : Ok.new(val)
+
+    def self.normalize_context(msg, context)
+      base = caller_context(msg)
+      return base unless context
+      return base.merge(context) if context.is_a?(Hash)
+
+      base.merge(detail: context.to_s)
+    end
+    private_class_method :normalize_context
+
+    def self.caller_context(msg)
+      loc = caller_locations(3, 1).first
+      {
+        file: loc&.path,
+        method: loc&.base_label,
+        attempted: msg.to_s
+      }
+    end
+    private_class_method :caller_context
 
     class Ok < Result
       attr_reader :value
