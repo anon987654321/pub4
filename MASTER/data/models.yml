@@ -61,7 +61,7 @@ model_defs:
   gemini_flash_openrouter: &gemini_flash_openrouter
     id: google/gemini-2.5-flash
     <<: *model_defaults
-    score: { quality: 0.90, speed: 0.95, cost: 0.92 }
+    score: { quality: 0.90, speed: 0.60, cost: 0.92 }
   nemotron_super: &nemotron_super
     id: nvidia/nemotron-3-super-120b-a12b:free
     <<: *model_defaults
@@ -169,8 +169,8 @@ ollama_phi: &ollama_phi
 
 models:
   default:
-    - *gemini_flash_openrouter
     - *gemini_2_flash_exp_free
+    - *gemini_flash_openrouter
     - *gpt_oss_120b
     - *qwen3_next
     - *llama_70b
@@ -185,8 +185,8 @@ models:
     - *gemini_flash
     - *command_r_plus
   cheap:
-    - *gemini_flash_openrouter
     - *gemini_2_flash_exp_free
+    - *gemini_flash_openrouter
     - *gemini_flash
     - *mistral_small
     - *llama_70b
@@ -277,7 +277,7 @@ continuity:
 
 openrouter:
   free_latest:
-    - google/gemini-2.5-flash
+    - google/gemini-2.0-flash-exp:free
     - nvidia/nemotron-3-super-120b-a12b:free
     - openai/gpt-oss-120b:free
     - qwen/qwen3-next-80b-a3b-instruct:free
