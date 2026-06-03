@@ -1274,9 +1274,7 @@ const RADIO_TRACKS = [
   {artist:"J Dilla",title:"Timeless",id:"dbbfo9_7D8g"},
   {artist:"AFTA-1",title:"Due Time",id:"WC09qDzU9y4"},
   {artist:"Flying Lotus",title:"Massage Situation",id:"6oUx6wGCekM"},
-  {artist:"Madlib",title:"Eye",id:"ScVz2mntmCE"},
   {artist:"Slum Village",title:"Players",id:"KsULjOCYdnY"},
-  {artist:"Jay Electronica",title:"Exhibit A",id:"H3UIHZshNQ0"},
   {artist:"Slum Village",title:"La La (Instrumental)",id:"EYJxxHQ7sX0"},
   {artist:"Slum Village",title:"Get It Together",id:"t6T-Q6HMbEo"},
   {artist:"Slum Village",title:"Fantastic",id:"a3ISYWWYgz8"},
@@ -1284,12 +1282,8 @@ const RADIO_TRACKS = [
   {artist:"Flying Lotus",title:"Camel",id:"fU9YRGLPDQ8"},
   {artist:"Flying Lotus",title:"Golden Diva",id:"iu4FVvR2QQs"},
   {artist:"Slum Village",title:"Worlds Full of Sadness",id:"MU3nfxsz2XA"},
-  {artist:"A. Mochi & Takaaki Itoh",title:"Sarria's Mind",id:"gFKArkiz8vU"},
   {artist:"Samiyam",title:"Rounded",id:"oeaY2h_cKsg"},
-  {artist:"Chase Swayze",title:"Traffic",id:"bH-30pDoQdo"},
-  {artist:"Chase Swayze",title:"Underrated",id:"1jjFk2Vp5ok"},
   {artist:"Flying Lotus",title:"BTS Radio 2006",id:"6nWdggkulHk",start:1364},
-  {artist:"kemt",title:"close to you",id:"8SQZtBRdSbE"},
   {artist:"J Dilla",title:"Motor City 17",id:"OSg9Fwd8QSs"},
   {artist:"AKMD",title:"Stailings",src:"/.mp3/akmd-stailings.mp3"},
   {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:"/.mp3/akmd_mike_t-alt_kan_skje.mp3"},
@@ -1298,8 +1292,7 @@ const RADIO_TRACKS = [
   {artist:"Chase Swayze",title:"Traffic",src:"/.mp3/chase_swayze-traffic.mp3"},
   {artist:"Haisam & Johann",title:"PB1",src:"/.mp3/haisam_and_johann-pb1.mp3"},
   {artist:"Jan Hakim & Johann",title:"Stailings A",src:"/.mp3/jan_hakim_and_johann-stailings_a.mp3"},
-  {artist:"Mike T Jr",title:"Rauingar",src:"/.mp3/mike_t_jr-rauingar.mp3"},
-  {artist:"Zaiton",title:"Zaiton",src:"/.mp3/zaiton.mp3"}
+  {artist:"Mike T Jr",title:"Rauingar",src:"/.mp3/mike_t_jr-rauingar.mp3"}
 ];
 const RADIO_FADE_MS = 3500;
 
@@ -1339,7 +1332,7 @@ class RadioEngine {
         width: '1', height: '1',
         playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, rel: 0, playsinline: 1 },
         events: {
-          onReady: () => { this.ytReady = true; try { this.yt.setVolume(0); this.yt.mute(); } catch(_) {} },
+          onReady: () => { this.ytReady = true; const fb = document.getElementById('yt-fallback-a'); if (fb) fb.src = 'about:blank'; try { this.yt.setVolume(0); this.yt.mute(); } catch(_) {} },
           onStateChange: e => this._onYTState(e),
           onError: () => { clearTimeout(this._watchTimer); this.next(); }
         }
@@ -1373,8 +1366,7 @@ class RadioEngine {
   _stopCurrent() {
     const t = this.tracks[this.idx];
     if (t.src) { try { this.mp3.pause(); this.mp3.volume = 0; } catch(_) {} }
-    else if (this.ytReady && this.yt) { try { this.yt.stopVideo(); } catch(_) {} }
-    else { const f = document.getElementById('yt-fallback-a'); if (f) f.src = 'about:blank'; }
+    else { if (this.ytReady && this.yt) { try { this.yt.stopVideo(); } catch(_) {} } const fb = document.getElementById('yt-fallback-a'); if (fb) fb.src = 'about:blank'; }
   }
   _playMP3(t, fadeIn) {
     this.mp3.src = t.src; this.mp3.load();
@@ -1503,7 +1495,6 @@ const TTS_FETCH_TIMEOUT_MS = 9000; // abort Edge TTS HTTP fetch after this many 
 const TTS_FALLBACK_VOICE_HINTS = {
   osman: ['osman', 'malay', 'malaysia', 'ms-my', 'ryan', 'en-gb'],
   yasmin: ['yasmin', 'malay', 'malaysia', 'ms-my', 'jenny', 'en-us'],
-  pernille: ['pernille', 'norwegian', 'norsk', 'nb-no'],
   finn: ['finn', 'norwegian', 'norsk', 'nb-no'],
   ryan: ['ryan', 'daniel', 'uk english', 'en-gb'],
   steffan: ['steffan', 'guy', 'andrew', 'en-us'],
@@ -1639,8 +1630,9 @@ function speakWithBrowserTTS(text, voiceKey = TTS_DEFAULT_VOICE) {
       rootBody.dataset.ttsWave = 'true';
       startVisemeAnim(text);
     };
-    utterance.onend = () => resolve();
-    utterance.onerror = () => reject(new Error('browser tts failed'));
+    const safety = setTimeout(() => resolve(), (text.length / 8 + 10) * 1000);
+    utterance.onend = () => { clearTimeout(safety); resolve(); };
+    utterance.onerror = () => { clearTimeout(safety); reject(new Error('browser tts failed')); };
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   });
@@ -1709,7 +1701,7 @@ function ttsTick() {
   setTTSLoading(true);
   State.mode = 'speaking'; setAmbientHum(false); radio?.duck(0.18);
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
-  const voice = tts.lang === 'nb' ? (Math.random() < 0.5 ? 'pernille' : 'finn') : undefined;
+  const voice = tts.lang === 'nb' ? 'finn' : undefined;
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice);
   tts.prefetch.delete(text);
   if (tts.queue[0]) fetchTTS(tts.queue[0]);
@@ -2336,8 +2328,6 @@ if (renderer) {
     resize2();
     window.addEventListener('resize', resize2, { passive: true });
 
-    // Auto-fire primer after 1s if user hasn't tapped — gets chat bar up immediately
-    setTimeout(() => { if (!primerFired) firePrimer(); }, 1000);
     if (window._primerFired && !primerFired) { primerFired = true; startEverything(); }
 
     let lastT2 = 0;
