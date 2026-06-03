@@ -85,11 +85,14 @@ module Master
         { state: "?", detail: "rcctl err: #{e.class}: #{e.message[0, 60]}" }
       end
 
+      def bundle_ok?(dir)
+        out, = Open3.capture2e("bundle34", "check", chdir: dir)
+        out.include?("dependencies are satisfied")
+      end
+
       def bundle_status(repo)
-        mas, = Open3.capture2e("bundle34", "check", chdir: File.join(repo, "MASTER"))
-        web, = Open3.capture2e("bundle34", "check", chdir: File.join(repo, "MASTER/web"))
-        mas_ok = mas.include?("dependencies are satisfied")
-        web_ok = web.include?("dependencies are satisfied")
+        mas_ok = bundle_ok?(File.join(repo, "MASTER"))
+        web_ok = bundle_ok?(File.join(repo, "MASTER/web"))
         mas_ok && web_ok ? "ok (MASTER+web satisfied)" : "drift — run bundle install"
       rescue StandardError => e
         "unknown (#{e.class})"

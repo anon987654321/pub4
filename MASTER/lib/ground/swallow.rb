@@ -28,5 +28,12 @@ module Master
         nil
       end
     end
+
+      def safe_call(context:, event_bus: nil, **meta)
+        yield
+      rescue StandardError => e
+        log(e, context: context, event_bus: event_bus, **meta)
+        nil
+      end
   end
 end
