@@ -26,7 +26,7 @@ module Master
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
   MIN_API_KEY_LENGTH = 20
-  NEMOTRON_PRIMARY = "nvidia/nemotron-3-super-120b-a12b:free"
+  OPENROUTER_DEFAULT = "google/gemini-2.5-flash"
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   CTX_WINDOW_SIZE = 200_000
   VIOLATION_TRUNCATE = 90
@@ -139,13 +139,13 @@ module Master
   end
 
   def self.default_model
-    return NEMOTRON_PRIMARY if api_key_present?("OPENROUTER_API_KEY")
+    return OPENROUTER_DEFAULT if api_key_present?("OPENROUTER_API_KEY")
     return "claude-opus-4-7" if api_key_present?("ANTHROPIC_API_KEY")
     return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
     return "gpt-4o" if api_key_present?("OPENAI_API_KEY")
     return "gemini-2.5-flash" if api_key_present?("GEMINI_API_KEY")
     return "mistral-large-latest" if api_key_present?("MISTRAL_API_KEY")
-    NEMOTRON_PRIMARY
+    OPENROUTER_DEFAULT
   end
 
   def self.any_api_key_present?
@@ -153,8 +153,7 @@ module Master
   end
 
   def self.no_api_key_message
-    "I'm not wired to any LLM yet. The primary model is nemotron via OpenRouter " \
-    "(free). Set OPENROUTER_API_KEY in /etc/rc.d/master daemon_flags and restart " \
+    "I'm not wired to any LLM yet. Set OPENROUTER_API_KEY in /etc/master.env and restart " \
     "with `doas rcctl restart master`. Other accepted keys: ANTHROPIC_API_KEY, " \
     "DEEPSEEK_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, MISTRAL_API_KEY."
   end

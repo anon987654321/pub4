@@ -94,7 +94,7 @@ body[data-tts-loading="true"] .ui-status {
   z-index: var(--z-ui);
   font: 300 clamp(15px,3.8vw,24px)/1 "Inter",Helvetica,sans-serif;
   letter-spacing: -.03em;
-  color: #f5f0e8;
+  color: #fff;
   opacity: 1;
   pointer-events: none;
   user-select: none;
