@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=50') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=51') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -817,6 +817,34 @@ if (_hasWebGL && THREE && scene && facePoints) {
   head.add(glowPoints);
 }
 
+async function swapMask(imageUrl) {
+  if (!_hasWebGL || !THREE || !facePoints) return;
+  try {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imageUrl; });
+    const tmp = document.createElement('canvas');
+    tmp.width = tmp.height = 512;
+    tmp.getContext('2d').drawImage(img, 0, 0, 512, 512);
+    const nd = sampleDepthMapGrid(tmp, FACE_GRID_COLS, FACE_GRID_ROWS);
+    const ng = new THREE.BufferGeometry();
+    ng.setAttribute('position',  new THREE.BufferAttribute(nd.home, 3));
+    ng.setAttribute('scatter',   new THREE.BufferAttribute(nd.scatter, 3));
+    ng.setAttribute('seed',      new THREE.BufferAttribute(nd.seeds, 1));
+    ng.setAttribute('curvature', new THREE.BufferAttribute(nd.curvature, 1));
+    ng.setAttribute('boundary',  new THREE.BufferAttribute(nd.boundary, 1));
+    ng.setAttribute('zone',      new THREE.BufferAttribute(nd.zone, 1));
+    facePoints.geometry.dispose();
+    facePoints.geometry = ng;
+    if (glowPoints) { glowPoints.geometry.dispose(); glowPoints.geometry = ng; }
+    morphCurrent = 0; morphTarget = 1.0;
+    State.flash = 0.5; State.pulse = 0.8;
+    if (uiStatus) uiStatus.textContent = 'mask loaded';
+  } catch (_) {
+    if (uiStatus) uiStatus.textContent = 'mask load failed';
+  }
+}
+
 let _dbgFrames = 0;
 function frame(t) {
   _dbgFrames++;
@@ -1585,6 +1613,8 @@ async function sendMessage(text) {
   if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
     if (tts.lastText) { tts.queue = [tts.lastText]; ttsTick(); } return;
   }
+  const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
+  if (maskMatch) { swapMask(maskMatch[1]); return; }
   const rateMatch = trimmed.match(/^\/rate\s+([\d.]+)$/i);
   if (rateMatch) { setTtsRate(parseFloat(rateMatch[1])); return; }
   const pitchMatch = trimmed.match(/^\/pitch\s+([+-]?[\d.]+)$/i);
@@ -1604,12 +1634,14 @@ async function sendMessage(text) {
   } catch (_) {}
 
   tts.lang = detectLang(text);
+  const isTimeSensitive = /\b(today|now|current|latest|recent|this (week|month|year)|right now|at the moment|as of)\b/i.test(text);
+  tts.prependTimestamp = isTimeSensitive;
   State.mode = 'thinking'; State.pulse = 0.4; setAmbientHum(true);
   if (input.length > 180) State.lean = 0.14;
   const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|0`);
   const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}`;
   evtSrc = new EventSource(url);
-  let pending = '', totalTTSChars = 0, ttsSuppressed = false;
+  let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
   evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
     if (raw === '[DONE]') {
@@ -1647,7 +1679,9 @@ async function sendMessage(text) {
         ttsSuppressed = true;
         window._chatOnReadAloud?.(sent);
       } else if (!ttsSuppressed) {
-        enqueueSpeech(sent);
+        const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
+        ttsFirst = false;
+        enqueueSpeech(prefix + sent);
       }
     }
   };

@@ -2444,7 +2444,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [x] FA11 face: breathing idle animation — slow uniform scale 0.98-1.02 on sin(time*0.4), 2.5s cycle
 - [x] FA12 face: "thinking" state = particles slowly spiral inward (curl noise bias toward center)
 - [x] FA13 face: "listening" state (STT active) = particles at ear region pulse outward in beat
-- [ ] FA14 face: depth-map refresh on mask image swap — allow /mask <url> command to hot-swap face image
+- [x] FA14 face: depth-map refresh on mask image swap — allow /mask <url> command to hot-swap face image
 - [ ] FA15 face: add second mask layer (overlay) — subtle texture from a different image blended at 0.3 alpha
 - [ ] FA16 face: shadow particles — 10% of particles offset +0.05 XY, 0.08 alpha — cheap subsurface depth
 - [ ] FA17 face: forehead region glow on high-confidence answer — luminance +0.15 for 600ms
@@ -2491,7 +2491,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA55 tts: streaming audio — pipe edge-tts WebSocket chunks directly to MediaSource instead of waiting for full MP3
 - [ ] FA56 tts: Whisper STT fallback — if browser SpeechRecognition unavailable, POST audio blob to /chat/stt (whisper.cpp on VPS)
 - [x] FA57 tts: "repeat that" voice command — re-play last TTS buffer without new LLM call
-- [ ] FA58 tts: spoken timestamp — prepend "As of [date]" to answers about time-sensitive topics
+- [x] FA58 tts: spoken timestamp — prepend "As of [date]" to answers about time-sensitive topics
 - [x] FA59 tts: multi-language auto-detect — if input is Norwegian, switch to Pernille/Finn voice pair
 - [x] FA60 tts: adjustable chunk size — default 220 chars; short-answer mode 80 chars for snappier start
 - [x] FA61 tts: silence detection in STT — auto-submit after 1.2s silence (configurable threshold)
