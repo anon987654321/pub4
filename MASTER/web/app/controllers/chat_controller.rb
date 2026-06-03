@@ -210,11 +210,11 @@ class ChatController < ApplicationController
       mood_sub      = container[:bus].subscribe("agent:mood")        { |ev| sse.write("event: mood\ndata: #{ev[:mood] || ev[:value]}\n\n") rescue nil }
       model_sub     = container[:bus].subscribe("llm:request")       { |ev| sse.write("event: model\ndata: #{ev[:model]}\n\n") rescue nil }
       # dmesg stream — all bus activity as OpenBSD dmesg(8)-style dim lines.
-      dmesg_sub = container[:bus].subscribe("*") do |ev|
+      dmesg_sub = container[:bus].subscribe("**") do |ev|
         line = dmesg_format(ev[:event].to_s, ev)
         sse.write("event: dmesg\ndata: #{line.to_json}\n\n") rescue nil
       end
-      thought_sub = container[:bus].subscribe("*") do |ev|
+      thought_sub = container[:bus].subscribe("**") do |ev|
         line = thought_format(ev[:event].to_s, ev)
         sse.write("event: thought\ndata: #{line.to_json}\n\n") rescue nil if line
       end
