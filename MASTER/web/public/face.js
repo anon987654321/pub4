@@ -886,20 +886,9 @@ function frame(t) {
     faceMat._prevBass = curBass * 0.7 + faceMat._prevBass * 0.3;
   } else {
     State.voiceRMS = (State.voiceRMS || 0) * 0.9;
-    const rd = radio?.started ? radio.data() : null;
-    if (rd) {
-      State.audioBass  = rd.bass;
-      State.audioMids  = rd.mid;
-      State.audioHighs = rd.high;
-      State.audioBeat  = 0;
-      if (!faceMat?._prevBass) { if (faceMat) faceMat._prevBass = 0; }
-      if (faceMat && rd.bass - faceMat._prevBass > 0.12) State.audioBeat = 1.0;
-      if (faceMat) faceMat._prevBass = rd.bass * 0.7 + (faceMat._prevBass || 0) * 0.3;
-    } else {
-      State.audioBass  = (State.audioBass  || 0) * 0.88;
-      State.audioMids  = (State.audioMids  || 0) * 0.88;
-      State.audioHighs = (State.audioHighs || 0) * 0.88;
-    }
+    State.audioBass  = (State.audioBass  || 0) * 0.88;
+    State.audioMids  = (State.audioMids  || 0) * 0.88;
+    State.audioHighs = (State.audioHighs || 0) * 0.88;
   }
 
   const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
@@ -1244,233 +1233,6 @@ function setAmbientHum(active) {
   const target = active ? 0.03 : 0;
   ambientHumGain.gain.setTargetAtTime(target, actx.currentTime, 0.5);
 }
-const RADIO_TRACKS = [
-  {artist:"J Dilla",title:"Microphone Master",id:"9EGHwkDix78",bpm:87},
-  {artist:"J Dilla",title:"In Space",id:"vO2nWXCVt6o",bpm:73},
-  {artist:"J Dilla",title:"Timeless",id:"dbbfo9_7D8g",bpm:75},
-  {artist:"AFTA-1",title:"Due Time",id:"WC09qDzU9y4",bpm:90},
-  {artist:"Flying Lotus",title:"Massage Situation",id:"6oUx6wGCekM",bpm:76},
-  {artist:"Slum Village",title:"Players",id:"KsULjOCYdnY",bpm:88},
-  {artist:"Slum Village",title:"La La (Instrumental)",id:"EYJxxHQ7sX0",bpm:83},
-  {artist:"Slum Village",title:"Get It Together",id:"t6T-Q6HMbEo",bpm:90},
-  {artist:"Slum Village",title:"Fantastic",id:"a3ISYWWYgz8",bpm:88},
-  {artist:"Flying Lotus",title:"me Yesterday//Corded",id:"8DgAhgmpXNA",bpm:82},
-  {artist:"Flying Lotus",title:"Camel",id:"fU9YRGLPDQ8",bpm:85},
-  {artist:"Flying Lotus",title:"Golden Diva",id:"iu4FVvR2QQs",bpm:88},
-  {artist:"Slum Village",title:"Worlds Full of Sadness",id:"MU3nfxsz2XA",bpm:72},
-  {artist:"Samiyam",title:"Rounded",id:"oeaY2h_cKsg",bpm:85},
-  {artist:"Flying Lotus",title:"BTS Radio 2006",id:"6nWdggkulHk",start:1364,bpm:100},
-  {artist:"J Dilla",title:"Motor City 17",id:"OSg9Fwd8QSs",bpm:86},
-  {artist:"AKMD",title:"Stailings",src:"/.mp3/akmd-stailings.mp3",bpm:84},
-  {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:"/.mp3/akmd_mike_t-alt_kan_skje.mp3",bpm:86},
-  {artist:"AKMD, Mike T & Jan Hakim",title:"Diverse",src:"/.mp3/akmd_mike_t_jan_hakim-diverse.mp3",bpm:88},
-  {artist:"Angelo Reira & Johann",title:"Sandviken Hotell B",src:"/.mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3",bpm:82},
-  {artist:"Chase Swayze",title:"Traffic",src:"/.mp3/chase_swayze-traffic.mp3",bpm:85},
-  {artist:"Haisam & Johann",title:"PB1",src:"/.mp3/haisam_and_johann-pb1.mp3",bpm:88},
-  {artist:"Jan Hakim & Johann",title:"Stailings A",src:"/.mp3/jan_hakim_and_johann-stailings_a.mp3",bpm:84},
-  {artist:"Mike T Jr",title:"Rauingar",src:"/.mp3/mike_t_jr-rauingar.mp3",bpm:86}
-];
-const RADIO_FADE_MS = 3500;
-
-class RadioEngine {
-  constructor(tracks) {
-    this.tracks = tracks.slice().sort(() => Math.random() - 0.5);
-    this.idx = 0; this.started = false; this.muted = false;
-    this.mp3 = new Audio();
-    this.mp3.crossOrigin = 'anonymous'; this.mp3.preload = 'metadata'; this.mp3.volume = 0;
-    this.yt = null; this.ytReady = false;
-    this._watchTimer = null; this._nextTimer = null; this._playTimer = null; this._playToken = 0;
-    this.analyser = null; this.freqBuf = null; this.compressor = null;
-    this.musicGain = null; this._beatEnv = 0; this._startMs = 0;
-  }
-  getBPM() { return this.tracks[this.idx]?.bpm || 86; }
-  getSecToNextBeat(beats = 2) {
-    if (!this._startMs) return 0;
-    const unit = beats * 60 / this.getBPM();
-    const phase = ((Date.now() - this._startMs) / 1000) % unit;
-    return phase < 0.04 ? 0 : unit - phase;
-  }
-  initNodes() {
-    if (!actx || this.analyser) return;
-    try {
-      this.compressor = actx.createDynamicsCompressor();
-      this.compressor.threshold.setValueAtTime(-24, actx.currentTime);
-      this.compressor.knee.setValueAtTime(30, actx.currentTime);
-      this.compressor.ratio.setValueAtTime(12, actx.currentTime);
-      this.compressor.attack.setValueAtTime(0.003, actx.currentTime);
-      this.compressor.release.setValueAtTime(0.25, actx.currentTime);
-      this.musicGain = actx.createGain();
-      this.musicGain.gain.value = 0.18;
-      this.analyser = actx.createAnalyser();
-      this.analyser.fftSize = 256;
-      this.freqBuf = new Uint8Array(this.analyser.frequencyBinCount);
-      this.analyser.connect(this.compressor);
-      this.compressor.connect(this.musicGain);
-      this.musicGain.connect(actx.destination);
-    } catch (_) {}
-  }
-  initYT() {
-    try {
-      this.yt = new YT.Player('yt-player-a', {
-        width: '1', height: '1',
-        playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, rel: 0, playsinline: 1 },
-        events: {
-          onReady: () => { this.ytReady = true; const fb = document.getElementById('yt-fallback-a'); if (fb) fb.src = 'about:blank'; try { this.yt.setVolume(0); this.yt.mute(); } catch(_) {} },
-          onStateChange: e => this._onYTState(e),
-          onError: () => { clearTimeout(this._watchTimer); this.next(); }
-        }
-      });
-    } catch (_) {}
-  }
-  _onYTState(e) {
-    const S = YT.PlayerState;
-    if (e.data === S.ENDED) { this.next(); return; }
-    if (e.data === S.PLAYING) {
-      clearTimeout(this._watchTimer);
-      try {
-        const sched = () => {
-          const d = this.yt.getDuration?.() || 0;
-          if (d > 0) { clearTimeout(this._nextTimer); this._nextTimer = setTimeout(() => this.next(), Math.max(2000, d * 1000 - 3000)); }
-        };
-        sched(); setTimeout(sched, 500);
-      } catch (_) {}
-    }
-  }
-  start() {
-    this.started = true; this.initNodes();
-    if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
-    this._play(this.tracks[this.idx], true);
-    this._updateTrackDisplay();
-  }
-  _play(t, fadeIn) {
-    this._startMs = Date.now();
-    if (t.src) this._playMP3(t, fadeIn);
-    else this._playYT(t, fadeIn);
-  }
-  _stopCurrent() {
-    try { this.mp3.pause(); this.mp3.volume = 0; this.mp3.removeAttribute('src'); this.mp3.load(); } catch(_) {}
-    if (this.ytReady && this.yt) { try { this.yt.stopVideo(); } catch(_) {} }
-    const fb = document.getElementById('yt-fallback-a');
-    if (fb && fb.src !== 'about:blank') fb.src = 'about:blank';
-  }
-  _playMP3(t, fadeIn) {
-    this.mp3.src = t.src; this.mp3.load();
-    this.mp3.onended = () => this.next();
-    this.mp3.onerror = () => setTimeout(() => this.next(), 1000);
-    this.mp3.onloadedmetadata = () => {
-      const d = this.mp3.duration;
-      if (d > 0) { clearTimeout(this._nextTimer); this._nextTimer = setTimeout(() => this.next(), Math.max(2000, d * 1000 - 3000)); }
-    };
-    try {
-      if (!this.mp3._node && this.analyser) { this.mp3._node = actx.createMediaElementSource(this.mp3); this.mp3._node.connect(this.analyser); }
-    } catch (_) {}
-    this.mp3.play().catch(() => setTimeout(() => this.next(), 1000));
-    if (fadeIn) {
-      this.mp3.volume = 0;
-      let v = 0;
-      const iv = setInterval(() => { v += 0.033; this.mp3.volume = Math.min(1, v); if (v >= 1) clearInterval(iv); }, 50);
-    } else { this.mp3.volume = 1; }
-  }
-  _playYT(t, fadeIn) {
-    if (!t.id) return;
-    clearTimeout(this._watchTimer);
-    if (this.ytReady && this.yt?.loadVideoById) {
-      try {
-        this.yt.loadVideoById({ videoId: t.id, startSeconds: t.start || 0, suggestedQuality: 'tiny' });
-        this.yt.unMute();
-        this.yt.setVolume(fadeIn ? 0 : 35);
-        if (fadeIn) this._fadeYTIn();
-        this._watchTimer = setTimeout(() => { try { if ((this.yt.getCurrentTime?.() || 0) < 0.1) this.next(); } catch(_) { this.next(); } }, 4000);
-      } catch (_) {}
-    } else {
-      const f = document.getElementById('yt-fallback-a');
-      if (!f) return;
-      f.src = `https://www.youtube.com/embed/${t.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&mute=1&enablejsapi=1${t.start ? `&start=${t.start}` : ''}`;
-      f.onload = () => { setTimeout(() => { _ytPost(f, 'unMute'); _ytPost(f, 'setVolume', [35]); }, 2000); };
-      this._watchTimer = setTimeout(() => this.next(), 5000);
-    }
-  }
-  _fadeYTIn() {
-    const steps = 30, dt = RADIO_FADE_MS / steps; let i = 0;
-    const iv = setInterval(() => {
-      i++; const vol = Math.round(35 * i / steps);
-      try { this.ytReady && this.yt ? this.yt.setVolume(vol) : _ytPost(document.getElementById('yt-fallback-a'), 'setVolume', [vol]); } catch(_) {}
-      if (i >= steps) clearInterval(iv);
-    }, dt);
-  }
-  _schedulePlay() {
-    const token = ++this._playToken;
-    clearTimeout(this._playTimer);
-    this._playTimer = setTimeout(() => {
-      if (token !== this._playToken) return;
-      this._play(this.tracks[this.idx], true);
-    }, 400);
-  }
-  next() {
-    clearTimeout(this._nextTimer); clearTimeout(this._watchTimer);
-    this._stopCurrent();
-    this.idx = (this.idx + 1) % this.tracks.length;
-    this._updateTrackDisplay();
-    this._schedulePlay();
-  }
-  prev() {
-    clearTimeout(this._nextTimer); clearTimeout(this._watchTimer);
-    this._stopCurrent();
-    this.idx = (this.idx - 1 + this.tracks.length) % this.tracks.length;
-    this._updateTrackDisplay();
-    this._schedulePlay();
-  }
-  toggleMute() {
-    this.muted = !this.muted;
-    const t = this.tracks[this.idx];
-    if (t.src) { try { this.mp3.muted = this.muted; } catch(_) {} }
-    else if (this.ytReady && this.yt) { try { this.muted ? this.yt.mute() : this.yt.unMute(); } catch(_) {} }
-    this._updateTrackDisplay();
-  }
-  duck(level) {
-    if (this.musicGain && actx) {
-      const g = this.musicGain.gain;
-      g.cancelScheduledValues(actx.currentTime);
-      g.setValueAtTime(g.value, actx.currentTime);
-      g.linearRampToValueAtTime(level * 0.18, actx.currentTime + 0.35);
-    }
-    const ytVol = Math.round(level * 35);
-    const t = this.tracks[this.idx];
-    if (t && !t.src) {
-      if (this.ytReady && this.yt) { try { this.yt.setVolume(ytVol); } catch(_) {} }
-      else { const f = document.getElementById('yt-fallback-a'); if (f) _ytPost(f, 'setVolume', [ytVol]); }
-    }
-  }
-  data() {
-    if (this.analyser && this.freqBuf) {
-      try {
-        this.analyser.getByteFrequencyData(this.freqBuf);
-        const n = this.freqBuf.length, n2 = n * 0.2 | 0, n6 = n * 0.6 | 0;
-        let bass = 0, mid = 0, high = 0;
-        for (let i = 0; i < n2; i++) bass += this.freqBuf[i];
-        for (let i = n2; i < n6; i++) mid += this.freqBuf[i];
-        for (let i = n6; i < n; i++) high += this.freqBuf[i];
-        return { bass: bass / (n2 * 255), mid: mid / ((n6 - n2) * 255), high: high / ((n - n6) * 255) };
-      } catch(_) {}
-    }
-    return null;
-  }
-  _updateTrackDisplay() {}
-}
-
-function _ytPost(iframe, func, args = []) {
-  try { iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), 'https://www.youtube.com'); } catch (_) {}
-}
-
-let radio = null;
-function loadRadioYTAPI() {
-  if (document.getElementById('yt-api-script')) return;
-  const s = document.createElement('script');
-  s.id = 'yt-api-script';
-  s.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(s);
-  window.onYouTubeIframeAPIReady = () => radio?.initYT?.();
-}
 
 function beep(freq, dur) {
   if (!actx) return;
@@ -1623,7 +1385,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   if (src) URL.revokeObjectURL(src);
   tts.audio = null; tts.playing = false;
   if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
-  if (State.mode === 'speaking') { State.mode = 'idle'; setAmbientHum(false); radio?.duck(1.0); }
+  if (State.mode === 'speaking') { State.mode = 'idle'; setAmbientHum(false); }
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
   if (continueQueue) ttsTick();
@@ -1680,7 +1442,7 @@ function ttsTick() {
   if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
   if (tts.watchdog) clearTimeout(tts.watchdog);
   tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: force-clearing stuck playback'); finishTTSPlayback(null, true); } }, 45000);
-  State.mode = 'speaking'; setAmbientHum(false); radio?.duck(0.06);
+  State.mode = 'speaking'; setAmbientHum(false);
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
   const voice = tts.lang === 'nb' ? 'finn' : undefined;
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice);
@@ -1703,17 +1465,7 @@ function ttsTick() {
       audio.load();
     });
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
-    if (dur && radio?.started && radio._startMs) {
-      const unit = 2 * 60 / radio.getBPM(); // 2-beat unit in seconds
-      const n = Math.max(1, Math.round(dur / unit));
-      const beatRate = Math.max(0.78, Math.min(1.28, dur / (n * unit)));
-      audio.playbackRate = baseRate * beatRate;
-      // beat-wait disabled until TTS confirmed stable
-      // const waitMs = Math.min(radio.getSecToNextBeat(2) * 1000, unit * 900);
-      // if (waitMs > 40) await new Promise(r => setTimeout(r, waitMs));
-    } else {
-      audio.playbackRate = baseRate;
-    }
+    audio.playbackRate = baseRate;
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
     if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (_) {} }
     tts.audio = audio;
@@ -1829,9 +1581,6 @@ async function sendMessage(text) {
   if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
     if (tts.lastText) { tts.queue = [tts.lastText]; ttsTick(); } return;
   }
-  if (/^\/radio\s+next$/i.test(trimmed)) { radio?.next({fast:true}); return; }
-  if (/^\/radio\s+prev$/i.test(trimmed)) { radio?.prev(); return; }
-  if (/^\/radio\s+mute$/i.test(trimmed)) { radio?.toggleMute(); return; }
   if (/^\/sleep$/i.test(trimmed)) { State.sleeping = true; faceMat.uniforms.uIdleDrift.value = 0.02; return; }
   if (/^\/wake$/i.test(trimmed)) { State.sleeping = false; return; }
   const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
@@ -2036,9 +1785,6 @@ function bindGlobalEventStream() {
 function startEverything() {
   morphCurrent = 0.72; morphTarget = 1.08;
   initAudio();
-  radio = new RadioEngine(RADIO_TRACKS);
-  loadRadioYTAPI();
-  setTimeout(() => radio.start(), 800);
   bindGlobalEventStream();
   if (actx && actx.state === 'suspended') actx.resume();
   if (primer) { primer.style.transition = 'opacity 160ms ease, transform 160ms ease'; primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)'; setTimeout(() => primer?.remove(), 200); }
@@ -2131,9 +1877,6 @@ document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }
   if (e.key === t && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); ttsToggleMute(); }
   if (e.key === m && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); startSTTOnce?.(); }
-  if (e.ctrlKey && e.key === 'ArrowRight') { e.preventDefault(); radio?.next({fast:true}); }
-  if (e.ctrlKey && e.key === 'ArrowLeft')  { e.preventDefault(); radio?.prev(); }
-  if (e.ctrlKey && e.shiftKey && e.key === 'M') { e.preventDefault(); radio?.toggleMute(); }
   if (e.ctrlKey && (e.key === '[' || e.key === ',')) {
     e.preventDefault();
     const cur = getTtsRate();
@@ -2149,7 +1892,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 window.sendMessage = sendMessage;
-window.MASTERRadio = { next: () => radio?.next({fast:true}), prev: () => radio?.prev(), mute: () => radio?.toggleMute(), get track() { return radio?.tracks[radio?.idx]; } };
 window.MASTERVoice = {
   enqueue: enqueueSpeech,
   initAudio,
