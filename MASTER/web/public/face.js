@@ -1753,16 +1753,18 @@ function ttsTick() {
       const n = Math.max(1, Math.round(dur / unit));
       const beatRate = Math.max(0.78, Math.min(1.28, dur / (n * unit)));
       audio.playbackRate = baseRate * beatRate;
-      const waitMs = Math.min(radio.getSecToNextBeat(2) * 1000, unit * 900);
-      if (waitMs > 40) await new Promise(r => setTimeout(r, waitMs));
+      // beat-wait disabled until TTS confirmed stable
+      // const waitMs = Math.min(radio.getSecToNextBeat(2) * 1000, unit * 900);
+      // if (waitMs > 40) await new Promise(r => setTimeout(r, waitMs));
     } else {
       audio.playbackRate = baseRate;
     }
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
     tts.audio = audio;
+    setTTSLoading(false);
     connectTTSAudio(audio).catch(() => {});
     audio.onplay = () => {
-      setTTSLoading(false); startVisemeAnim(text);
+      startVisemeAnim(text);
       if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
       rootBody.dataset.ttsWave = 'true';
     };
