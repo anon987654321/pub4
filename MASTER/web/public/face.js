@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=38') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=39') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -228,6 +228,11 @@ function generateFaceDepthMap(size) {
     g.addColorStop(1,    'rgba(0,  0,  0,  0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
+  // Glabella — inter-brow depression at top of nose bridge
+  g = ctx.createRadialGradient(cx, cy - H*0.155, 0, cx, cy - H*0.155, W*0.030);
+  g.addColorStop(0,   'rgba(0,0,0,0.48)');
+  g.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   // Eye sockets — deep recesses, horizontally elongated
   for (const ex of [-0.112, 0.112]) {
     ctx.save();
@@ -241,6 +246,14 @@ function generateFaceDepthMap(size) {
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(0, 0, W*0.088, 0, Math.PI*2); ctx.fill();
     ctx.restore();
+  }
+  // Corneal specular — tiny highlight in each eye socket (top-left quadrant)
+  for (const ex of [-0.112, 0.112]) {
+    g = ctx.createRadialGradient(cx + ex*W + W*0.013, cy - H*0.098, 0, cx + ex*W + W*0.013, cy - H*0.098, W*0.020);
+    g.addColorStop(0,   'rgba(210,210,210,0.52)');
+    g.addColorStop(0.5, 'rgba(155,155,155,0.18)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Nose bridge — from just below brows to tip, not invading eye area
   g = ctx.createLinearGradient(cx - W*0.018, 0, cx + W*0.018, 0);
@@ -271,17 +284,39 @@ function generateFaceDepthMap(size) {
     g.addColorStop(1,   'rgba(0,  0,  0,  0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
+  // Nasolabial folds — shadows from nose wings toward mouth corners
+  for (const ex of [-0.082, 0.082]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.155, 0, cx + ex*W, cy + H*0.155, W*0.055);
+    g.addColorStop(0,   'rgba(0,0,0,0.38)');
+    g.addColorStop(0.6, 'rgba(0,0,0,0.14)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
   // Philtrum — vertical groove above lips
   g = ctx.createRadialGradient(cx, cy + H*0.168, 0, cx, cy + H*0.168, W*0.026);
   g.addColorStop(0,   'rgba(0,0,0,0.42)');
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // Lips — slight protrusion
-  g = ctx.createRadialGradient(cx, cy + H*0.218, 0, cx, cy + H*0.218, W*0.085);
-  g.addColorStop(0,    'rgba(192,192,192,0.70)');
-  g.addColorStop(0.42, 'rgba(148,148,148,0.38)');
-  g.addColorStop(1,    'rgba(0,  0,  0,  0)');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Lips — horizontally elongated protrusion
+  ctx.save();
+  ctx.translate(cx, cy + H*0.222);
+  ctx.scale(2.1, 1.0);
+  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.058);
+  g.addColorStop(0,    'rgba(195,195,195,0.72)');
+  g.addColorStop(0.38, 'rgba(155,155,155,0.42)');
+  g.addColorStop(1,    'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0, 0, W*0.058, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+  // Lip gap — thin dark line between upper and lower lip
+  g = ctx.createLinearGradient(cx - W*0.068, 0, cx + W*0.068, 0);
+  g.addColorStop(0,    'rgba(0,0,0,0)');
+  g.addColorStop(0.12, 'rgba(0,0,0,0.40)');
+  g.addColorStop(0.5,  'rgba(0,0,0,0.48)');
+  g.addColorStop(0.88, 'rgba(0,0,0,0.40)');
+  g.addColorStop(1,    'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(cx - W*0.068, cy + H*0.218, W*0.136, H*0.007);
   // Chin — tapered point
   g = ctx.createRadialGradient(cx, cy + H*0.365, 0, cx, cy + H*0.365, W*0.095);
   g.addColorStop(0,   'rgba(160,160,160,0.68)');
@@ -427,10 +462,12 @@ varying float vDepth;
 uniform float uShake;
 uniform float uPulseRing;
 void main(){
-  vec3 col=vColor+vFresnel*vColor*0.42;
+  float dist=length(gl_PointCoord-0.5)*2.0;
+  float disc=1.0-smoothstep(0.55,1.0,dist);
+  vec3 col=vColor+vFresnel*vColor*0.38;
   col.r=min(1.0,col.r+uShake*0.18);
   col.b=max(0.0,col.b-uShake*0.12);
-  gl_FragColor=vec4(col,vAlpha);
+  gl_FragColor=vec4(col,vAlpha*disc);
 }`;
 
 let faceGeom, faceMat, facePoints;
