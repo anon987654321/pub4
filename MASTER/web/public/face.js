@@ -1540,7 +1540,7 @@ const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, load
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'ryan';
-const TTS_EDGE_GRACE_MS = 1200;   // browser TTS fires if Edge TTS not ready within this window
+const TTS_EDGE_GRACE_MS = 9000;   // Edge TTS cold-starts ~6-8s on OpenBSD; give worker time to win
 const TTS_FETCH_TIMEOUT_MS = 9000; // abort Edge TTS HTTP fetch after this many ms
 const TTS_FALLBACK_VOICE_HINTS = {
   osman: ['osman', 'malay', 'malaysia', 'ms-my', 'ryan', 'en-gb'],
@@ -2000,14 +2000,9 @@ async function sendMessage(text) {
       pending = pending.slice(cut);
       if (!sent) continue;
       totalTTSChars += sent.length;
-      if (!ttsSuppressed && totalTTSChars > 800) {
-        ttsSuppressed = true;
-        window._chatOnReadAloud?.(sent);
-      } else if (!ttsSuppressed) {
-        const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
-        ttsFirst = false;
-        enqueueSpeech(prefix + sent);
-      }
+      const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
+      ttsFirst = false;
+      enqueueSpeech(prefix + sent);
     }
   };
   evtSrc.addEventListener('mood', (ev) => {
