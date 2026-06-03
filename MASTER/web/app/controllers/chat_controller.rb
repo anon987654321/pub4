@@ -214,6 +214,10 @@ class ChatController < ApplicationController
         line = dmesg_format(ev[:event].to_s, ev)
         sse.write("event: dmesg\ndata: #{line.to_json}\n\n") rescue nil
       end
+      thought_sub = container[:bus].subscribe("*") do |ev|
+        line = thought_format(ev[:event].to_s, ev)
+        sse.write("event: thought\ndata: #{line.to_json}\n\n") rescue nil if line
+      end
       verdict_sub   = container[:bus].subscribe("tribunal:rendered") do |ev|
         v = ev[:vetoes].to_i.positive? ? "veto" : (ev[:judge] ? "pass" : "unclear")
         sse.write("event: verdict\ndata: #{v}\n\n") rescue nil
@@ -316,6 +320,7 @@ class ChatController < ApplicationController
         enhance_sub.call  if defined?(enhance_sub)  && enhance_sub
         council_sub.call  if defined?(council_sub)  && council_sub
         dmesg_sub.call    if defined?(dmesg_sub)    && dmesg_sub
+        thought_sub.call  if defined?(thought_sub)  && thought_sub
       rescue StandardError => _e
         nil
       end
@@ -389,6 +394,31 @@ class ChatController < ApplicationController
 
   # Format any bus event as an OpenBSD dmesg(8)-style line.
   # Pattern: <subsystem><unit> at <bus>: <description>
+def thought_format(event, payload)
+  case event
+  when "enhance:rewrite"
+    "refining your prompt for clarity"
+  when "llm:request"
+    model = payload[:model].to_s.split("/").last
+    model.empty? ? "thinking" : "thinking with #{model}"
+  when "llm:escalation"
+    "escalating to a deeper model (depth #{payload[:depth]})"
+  when "tool:before"
+    tool = payload[:tool].to_s.split("::").last.to_s.downcase
+    path = payload[:path].to_s
+    path.empty? ? "using #{tool}" : "using #{tool} on #{File.basename(path)}"
+  when "council_feedback", :council_feedback
+    persona = payload[:persona].to_s
+    persona.empty? ? "council deliberating" : "#{persona} weighs in"
+  when "tribunal:rendered"
+    v = payload[:vetoes].to_i.positive? ? "vetoed" : "approved"
+    "tribunal #{v}"
+  when "pipeline:stage"
+    stage = payload[:stage].to_s
+    %w[enhance infer route guard execute council deliberate prune memo render].include?(stage) ? "entering #{stage}" : nil
+  end
+end
+
   def dmesg_format(event, payload)
     sub, rest = event.split(":", 2)
     desc = case event

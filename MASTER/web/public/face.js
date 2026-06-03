@@ -415,7 +415,7 @@ function sampleDepthMapGrid(canvas, cols, rows) {
       const ny = -((v * 2 - 1)) * 0.62;
       const nz = lum * 0.78;
       positions.push(nx, ny, nz);
-      scatters.push(nx + (Math.random()-0.5)*0.32, ny + (Math.random()-0.5)*0.32, (Math.random()-0.5)*0.18);
+      scatters.push(nx, ny, 0);
       seeds.push(Math.random() * 6.28318);
     }
   }
@@ -583,7 +583,7 @@ varying float vFresnel;
 varying float vDepth;
 void main(){
   float m=smoothstep(0.,1.,uMorph);
-  float curlAmp=0.06+uCurl*0.28;
+  float curlAmp=uCurl*0.28;
   vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*curlAmp;
   float jawRgn=smoothstep(0.0,0.15,-position.y-0.12)*smoothstep(0.0,0.14,0.28-abs(position.x));
   vec3 p=mix(scatter,position,m)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
@@ -736,15 +736,7 @@ async function bootGreet() {
     src.onmessage = ev => {
       const raw = ev.data || '';
       if (raw === '[DONE]') { if (pending.trim()) enqueueSpeech(pending.trim()); try { src.close(); } catch (_) {} return; }
-if (raw.startsWith('ERROR:')) return;
-pending += raw;
-let m;
-while ((m = pending.match(SENT_BREAK))) {
-  const cut = m.index + m[0].length;
-  const sent = pending.slice(0, cut).trim();
-  pending = pending.slice(cut);
-  if (sent) enqueueSpeech(sent);
-}
+      if (!raw.startsWith('ERROR:')) pending += raw;
     };
     src.onerror = () => { try { src.close(); } catch (_) {} };
   } catch (_) {}
@@ -818,6 +810,29 @@ if (_hasWebGL && THREE && scene && facePoints) {
   head.rotation.z = -0.021;
   scene.add(head);
   head.add(facePoints);
+// Architectural guides — cross-hair + golden-ratio reference lines.
+// Faint white phosphor; reads as drafting paper, not decoration.
+{
+  const half = 0.62, phi = 0.618, gridZ = -0.02;
+  const pts = [
+    // cross-hair: vertical x=0, horizontal y=0
+    0, -half, gridZ,  0,  half, gridZ,
+    -half, 0, gridZ,  half, 0, gridZ,
+    // golden-ratio horizontals at y = ±phi * half
+    -half,  phi * half, gridZ,  half,  phi * half, gridZ,
+    -half, -phi * half, gridZ,  half, -phi * half, gridZ,
+    // golden-ratio verticals at x = ±phi * half
+     phi * half, -half, gridZ,   phi * half,  half, gridZ,
+    -phi * half, -half, gridZ,  -phi * half,  half, gridZ,
+  ];
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pts), 3));
+  const mat = new THREE.LineBasicMaterial({
+    color: 0xffffff, opacity: 0.06, transparent: true,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  head.add(new THREE.LineSegments(geom, mat));
+}
   const glowMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
@@ -1027,7 +1042,7 @@ function frame(t) {
     faceMat.uniforms.uBeat.value += (beatTarget - faceMat.uniforms.uBeat.value) * 0.35;
     faceMat.uniforms.uBeat.value *= 0.82;
     faceMat.uniforms.uConfidence.value = State.confidence || 1.0;
-    const tremorTarget = 0.25 + faceMat.uniforms.uCurl.value * 0.75;
+    const tremorTarget = faceMat.uniforms.uCurl.value * 0.75;
     faceMat.uniforms.uTremor.value += (tremorTarget - faceMat.uniforms.uTremor.value) * 0.03;
     const shakeTarget = State.shake || 0;
     faceMat.uniforms.uShake.value += (shakeTarget - faceMat.uniforms.uShake.value) * 0.18;
@@ -1525,7 +1540,7 @@ const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, load
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'ryan';
-const TTS_EDGE_GRACE_MS = 4500;   // Edge worker cold-starts ~2-3s on OpenBSD; give it room to win
+const TTS_EDGE_GRACE_MS = 1200;   // browser TTS fires if Edge TTS not ready within this window
 const TTS_FETCH_TIMEOUT_MS = 9000; // abort Edge TTS HTTP fetch after this many ms
 const TTS_FALLBACK_VOICE_HINTS = {
   osman: ['osman', 'malay', 'malaysia', 'ms-my', 'ryan', 'en-gb'],
@@ -1985,9 +2000,14 @@ async function sendMessage(text) {
       pending = pending.slice(cut);
       if (!sent) continue;
       totalTTSChars += sent.length;
-      const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
-      ttsFirst = false;
-      enqueueSpeech(prefix + sent);
+      if (!ttsSuppressed && totalTTSChars > 800) {
+        ttsSuppressed = true;
+        window._chatOnReadAloud?.(sent);
+      } else if (!ttsSuppressed) {
+        const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
+        ttsFirst = false;
+        enqueueSpeech(prefix + sent);
+      }
     }
   };
   evtSrc.addEventListener('mood', (ev) => {

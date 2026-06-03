@@ -172,6 +172,23 @@ function openActionMenu(msgEl) {
   }, 0);
 }
 
+window._chatOnThought = (line) => {
+  if (!line) return;
+  const asst = log.querySelector('.message.assistant:last-of-type');
+  if (!asst) return;
+  let block = asst.querySelector('.thought-trace');
+  if (!block) {
+    block = document.createElement('div');
+    block.className = 'thought-trace';
+    asst.insertBefore(block, asst.firstChild);
+  }
+  const d = document.createElement('div');
+  d.className = 'thought-line';
+  d.textContent = line;
+  block.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+};
+
 window._chatOnDmesg = (line) => {
   if (!line) return;
   const d = document.createElement('div');
@@ -242,6 +259,9 @@ async function sendMessage(text) {
   };
   _evtSrc.addEventListener('dmesg', (ev) => {
     try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  _evtSrc.addEventListener('thought', (ev) => {
+    try { window._chatOnThought?.(JSON.parse(ev.data)); } catch (_) {}
   });
   _evtSrc.onerror = () => {
     try { _evtSrc.close(); } catch (_) {}
