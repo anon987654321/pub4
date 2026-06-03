@@ -12,7 +12,7 @@ class TestReachLlmSecrets < Minitest::Test
   /x
 
   def test_reach_llm_has_no_hardcoded_api_keys
-    source = File.read(File.join(Master::ROOT, "lib", "reach", "llm.rb"))
+    source = File.read(File.join(Master::ROOT, "lib", "reach", "llm.rb"), encoding: "UTF-8")
 
     refute_match HARDCODED_SECRET_RE, source
   end

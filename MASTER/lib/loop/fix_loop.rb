@@ -298,15 +298,15 @@ module Master
         deps = load_deps
         priors = load_priors
         ext_wts = extension_weights(@root)
-        rules = @rules.sort_by do |r|
+        rules = @rules.each_with_index.sort_by do |r, i|
           base_prior = priors.dig(r.id, "prior_p").to_f
           modifiers = priors.dig(r.id, "language_modifiers") || {}
           adjusted = ext_wts.sum { |ext, w| base_prior * (modifiers[ext] || 1.0) * w }
           density = @violation_counts[r.id].to_f + adjusted
           quality = @learnings&.fix_quality(rule: r.id) || 0.5
           tier2_priority = tier2_quality_rule?(r.id) ? 1 : 0
-          [-tier2_priority, -density, -quality]
-        end
+          [-tier2_priority, -density, -quality, i]
+        end.map(&:first)
         topo_sort(rules, deps)
       end
 

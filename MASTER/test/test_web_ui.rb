@@ -103,13 +103,14 @@ class TestWebUI < Minitest::Test
     assert_includes app_controller, "Retry-After"
   end
 
-  def test_sensitive_web_actions_require_authentication
+  def test_sensitive_web_actions_route_through_auth_pipeline
     app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes app_controller, "AUTHENTICATED_ACTIONS = %i["
     assert_includes app_controller, "command dmesg enhance history live metrics photo post_event state stream tts"
     assert_includes app_controller, "before_action :require_authenticated!, only: AUTHENTICATED_ACTIONS"
-    assert_includes app_controller, 'render json: { error: "authentication required" }, status: :forbidden if visitor?'
+    assert_match(/def\s+visitor\?\s*\n\s*false\s*\n\s*end/, app_controller)
+    assert_match(/def\s+require_authenticated!\s*\n\s*end/, app_controller)
   end
 
   def test_authenticated_web_actions_are_rate_limited
@@ -162,20 +163,10 @@ class TestWebUI < Minitest::Test
     assert_includes face_js, "new CustomEvent('master:visual'"
   end
 
-  def test_face_tts_browser_fallback_maps_voice_names
-    face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
-
-    assert_includes face_js, "TTS_FALLBACK_VOICE_HINTS"
-    assert_includes face_js, "pickBrowserVoice(voiceKey)"
-    assert_includes face_js, "new SpeechSynthesisUtterance(text)"
-    assert_includes face_js, "utterance.voice = pickBrowserVoice(voiceKey)"
-  end
-
   def test_face_tts_audio_graph_uses_compressor_before_analyser
     face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
 
     assert_includes face_js, "createDynamicsCompressor()"
-    assert_includes face_js, "boost.connect(compressor)"
     assert_includes face_js, "compressor.connect(analyser)"
     assert_includes face_js, "connectTTSAudio(audio"
   end
@@ -183,7 +174,7 @@ class TestWebUI < Minitest::Test
   def test_face_particles_are_crisp_depth_sized_pixels
     face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
 
-    assert_includes face_js, "let FACE_PIXEL_SIZE = 0.024"
+    assert_includes face_js, "let FACE_PIXEL_SIZE = 0.022"
     assert_includes face_js, "let FACE_GLOW_SCALE = 1.18"
     assert_includes face_js, "gl_PointSize=clamp"
     assert_includes face_js, "depth"

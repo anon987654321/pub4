@@ -11,8 +11,8 @@ Master::Judge::Scan::RuleDSL # trigger autoload → rule files registered
 class TestSilentRescueRule < Minitest::Test
   def setup
     reg     = Master::Judge::Scan::Rule.registry
-    @silent = reg.find { |k| k.new.id == "silent_rescue" }&.new
-    @narrow = reg.find { |k| k.new.id == "narrow_silent_rescue" }&.new
+    @silent = reg.find { |k| k.new.id == "SILENT_RESCUE" }&.new
+    @narrow = reg.find { |k| k.new.id == "NARROW_SILENT_RESCUE" }&.new
     refute_nil @silent, "SILENT_RESCUE must be registered"
     refute_nil @narrow, "NARROW_SILENT_RESCUE must be registered"
   end

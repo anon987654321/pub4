@@ -6,9 +6,13 @@ module Master
   module Judge
     module Swarm
       class Coordinator
-        SwarmResult = Struct.new(:verdict, :confidence, :reasoning, :artifacts, keyword_init: true) do
-          def ok?      = !%i[error insufficient_quorum].include?(verdict)
+        SwarmResult = Struct.new(:verdict, :confidence, :reasoning, :artifacts, :votes, keyword_init: true) do
+          def ok?       = !%i[error insufficient_quorum].include?(verdict)
           def approved? = verdict == :approved
+          def consensus?
+            v = votes || { approved: 0, rejected: 0, neutral: 0 }
+            v[:approved].to_i.positive? && v[:rejected].to_i.zero?
+          end
         end
 
         WORKER_CLASSES = {
@@ -168,25 +172,47 @@ module Master
           lines = successes.map { |role, r| "### #{role}\n#{r.value!.to_s.strip}" }
           reasoning = lines.empty? ? "(no results)" : lines.join("\n\n")
 
+          votes = tally_votes(artifacts)
           verdict = if eligible.empty? || successes.empty? then :error
                    elsif successes.size < MIN_QUORUM then :insufficient_quorum
                    elsif conflict?(artifacts) then resolve_conflict(artifacts)
-                   elsif confidence >= 0.8 then :approved
-                   elsif confidence >= 0.5 then :mixed
-                   else :rejected
+                   else derive_verdict(confidence, votes)
                    end
           @bus&.publish("swarm:mixed_verdict", confidence:, reasoning: reasoning[0..120]) if verdict == :mixed
-          SwarmResult.new(verdict:, confidence:, reasoning:, artifacts:)
+          SwarmResult.new(verdict:, confidence:, reasoning:, artifacts:, votes:)
+        end
+
+        def tally_votes(artifacts)
+          tally = { approved: 0, rejected: 0, neutral: 0 }
+          artifacts.each_value do |v|
+            case v.is_a?(Hash) ? v["approved"] : nil
+            when true  then tally[:approved] += 1
+            when false then tally[:rejected] += 1
+            else            tally[:neutral]  += 1
+            end
+          end
+          tally
+        end
+
+        def derive_verdict(confidence, votes)
+          if votes[:approved].positive? || votes[:rejected].positive?
+            votes[:rejected] > votes[:approved] ? :rejected : :approved
+          elsif confidence.zero?     then :error
+          elsif confidence >= 0.8    then :approved
+          elsif confidence >= 0.5    then :mixed
+          else                            :rejected
+          end
         end
 
         def direct_fallback(task)
           @bus&.publish(:swarm_fallback_start, task: task[0..60])
           response = @agent.ask(task)
           SwarmResult.new(verdict: :approved, confidence: 0.5,
-                          reasoning: response.to_s, artifacts: { fallback: response })
+                          reasoning: response.to_s, artifacts: { fallback: response },
+                          votes: { approved: 0, rejected: 0, neutral: 0 })
         rescue StandardError => e
           @bus&.publish(:swarm_fallback_failed, error: e.message)
-          SwarmResult.new(verdict: :error, confidence: 0.0, reasoning: e.message, artifacts: {})
+          SwarmResult.new(verdict: :error, confidence: 0.0, reasoning: e.message, artifacts: {}, votes: { approved: 0, rejected: 0, neutral: 0 })
         end
 
         def conflict?(artifacts)
