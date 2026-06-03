@@ -727,10 +727,19 @@ const COUNCIL_VOICE = {
   Security: 'osman', User: 'ryan', Mentor: 'yasmin'
 };
 
-const BOOT_DUO = [
-  ['ryan', 'MASTER. Constitutional AI for code, prose, design, and any text artifact.'],
-  ['ryan', 'Send me code to review, a document to improve, or anything you want fixed.']
-];
+async function bootGreet() {
+  const prompt = "Greet the user. You are MASTER. Warm, direct, two or three short sentences. Mention you remember users across sessions and they can shape you into whatever they need.";
+  try {
+    const src = new EventSource(`/chat/message?${new URLSearchParams({ text: prompt })}`);
+    let pending = '';
+    src.onmessage = ev => {
+      const raw = ev.data || '';
+      if (raw === '[DONE]') { if (pending.trim()) enqueueSpeech(pending.trim()); try { src.close(); } catch (_) {} return; }
+      if (!raw.startsWith('ERROR:')) pending += raw;
+    };
+    src.onerror = () => { try { src.close(); } catch (_) {} };
+  } catch (_) {}
+}
 
 
 const colorCurrent = TINT.idle.clone();
@@ -1269,30 +1278,30 @@ function setAmbientHum(active) {
   ambientHumGain.gain.setTargetAtTime(target, actx.currentTime, 0.5);
 }
 const RADIO_TRACKS = [
-  {artist:"J Dilla",title:"Microphone Master",id:"9EGHwkDix78"},
-  {artist:"J Dilla",title:"In Space",id:"vO2nWXCVt6o"},
-  {artist:"J Dilla",title:"Timeless",id:"dbbfo9_7D8g"},
-  {artist:"AFTA-1",title:"Due Time",id:"WC09qDzU9y4"},
-  {artist:"Flying Lotus",title:"Massage Situation",id:"6oUx6wGCekM"},
-  {artist:"Slum Village",title:"Players",id:"KsULjOCYdnY"},
-  {artist:"Slum Village",title:"La La (Instrumental)",id:"EYJxxHQ7sX0"},
-  {artist:"Slum Village",title:"Get It Together",id:"t6T-Q6HMbEo"},
-  {artist:"Slum Village",title:"Fantastic",id:"a3ISYWWYgz8"},
-  {artist:"Flying Lotus",title:"me Yesterday//Corded",id:"8DgAhgmpXNA"},
-  {artist:"Flying Lotus",title:"Camel",id:"fU9YRGLPDQ8"},
-  {artist:"Flying Lotus",title:"Golden Diva",id:"iu4FVvR2QQs"},
-  {artist:"Slum Village",title:"Worlds Full of Sadness",id:"MU3nfxsz2XA"},
-  {artist:"Samiyam",title:"Rounded",id:"oeaY2h_cKsg"},
-  {artist:"Flying Lotus",title:"BTS Radio 2006",id:"6nWdggkulHk",start:1364},
-  {artist:"J Dilla",title:"Motor City 17",id:"OSg9Fwd8QSs"},
-  {artist:"AKMD",title:"Stailings",src:"/.mp3/akmd-stailings.mp3"},
-  {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:"/.mp3/akmd_mike_t-alt_kan_skje.mp3"},
-  {artist:"AKMD, Mike T & Jan Hakim",title:"Diverse",src:"/.mp3/akmd_mike_t_jan_hakim-diverse.mp3"},
-  {artist:"Angelo Reira & Johann",title:"Sandviken Hotell B",src:"/.mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3"},
-  {artist:"Chase Swayze",title:"Traffic",src:"/.mp3/chase_swayze-traffic.mp3"},
-  {artist:"Haisam & Johann",title:"PB1",src:"/.mp3/haisam_and_johann-pb1.mp3"},
-  {artist:"Jan Hakim & Johann",title:"Stailings A",src:"/.mp3/jan_hakim_and_johann-stailings_a.mp3"},
-  {artist:"Mike T Jr",title:"Rauingar",src:"/.mp3/mike_t_jr-rauingar.mp3"}
+  {artist:"J Dilla",title:"Microphone Master",id:"9EGHwkDix78",bpm:87},
+  {artist:"J Dilla",title:"In Space",id:"vO2nWXCVt6o",bpm:73},
+  {artist:"J Dilla",title:"Timeless",id:"dbbfo9_7D8g",bpm:75},
+  {artist:"AFTA-1",title:"Due Time",id:"WC09qDzU9y4",bpm:90},
+  {artist:"Flying Lotus",title:"Massage Situation",id:"6oUx6wGCekM",bpm:76},
+  {artist:"Slum Village",title:"Players",id:"KsULjOCYdnY",bpm:88},
+  {artist:"Slum Village",title:"La La (Instrumental)",id:"EYJxxHQ7sX0",bpm:83},
+  {artist:"Slum Village",title:"Get It Together",id:"t6T-Q6HMbEo",bpm:90},
+  {artist:"Slum Village",title:"Fantastic",id:"a3ISYWWYgz8",bpm:88},
+  {artist:"Flying Lotus",title:"me Yesterday//Corded",id:"8DgAhgmpXNA",bpm:82},
+  {artist:"Flying Lotus",title:"Camel",id:"fU9YRGLPDQ8",bpm:85},
+  {artist:"Flying Lotus",title:"Golden Diva",id:"iu4FVvR2QQs",bpm:88},
+  {artist:"Slum Village",title:"Worlds Full of Sadness",id:"MU3nfxsz2XA",bpm:72},
+  {artist:"Samiyam",title:"Rounded",id:"oeaY2h_cKsg",bpm:85},
+  {artist:"Flying Lotus",title:"BTS Radio 2006",id:"6nWdggkulHk",start:1364,bpm:100},
+  {artist:"J Dilla",title:"Motor City 17",id:"OSg9Fwd8QSs",bpm:86},
+  {artist:"AKMD",title:"Stailings",src:"/.mp3/akmd-stailings.mp3",bpm:84},
+  {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:"/.mp3/akmd_mike_t-alt_kan_skje.mp3",bpm:86},
+  {artist:"AKMD, Mike T & Jan Hakim",title:"Diverse",src:"/.mp3/akmd_mike_t_jan_hakim-diverse.mp3",bpm:88},
+  {artist:"Angelo Reira & Johann",title:"Sandviken Hotell B",src:"/.mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3",bpm:82},
+  {artist:"Chase Swayze",title:"Traffic",src:"/.mp3/chase_swayze-traffic.mp3",bpm:85},
+  {artist:"Haisam & Johann",title:"PB1",src:"/.mp3/haisam_and_johann-pb1.mp3",bpm:88},
+  {artist:"Jan Hakim & Johann",title:"Stailings A",src:"/.mp3/jan_hakim_and_johann-stailings_a.mp3",bpm:84},
+  {artist:"Mike T Jr",title:"Rauingar",src:"/.mp3/mike_t_jr-rauingar.mp3",bpm:86}
 ];
 const RADIO_FADE_MS = 3500;
 
@@ -1305,7 +1314,14 @@ class RadioEngine {
     this.yt = null; this.ytReady = false;
     this._watchTimer = null; this._nextTimer = null;
     this.analyser = null; this.freqBuf = null; this.compressor = null;
-    this.musicGain = null; this._beatEnv = 0;
+    this.musicGain = null; this._beatEnv = 0; this._startMs = 0;
+  }
+  getBPM() { return this.tracks[this.idx]?.bpm || 86; }
+  getSecToNextBeat(beats = 2) {
+    if (!this._startMs) return 0;
+    const unit = beats * 60 / this.getBPM();
+    const phase = ((Date.now() - this._startMs) / 1000) % unit;
+    return phase < 0.04 ? 0 : unit - phase;
   }
   initNodes() {
     if (!actx || this.analyser) return;
@@ -1360,6 +1376,7 @@ class RadioEngine {
     this._updateTrackDisplay();
   }
   _play(t, fadeIn) {
+    this._startMs = Date.now();
     if (t.src) this._playMP3(t, fadeIn);
     else this._playYT(t, fadeIn);
   }
@@ -1595,7 +1612,6 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   if (!actx || actx.state === 'closed') return;
   if (actx.state === 'suspended') await actx.resume().catch(() => {});
   if (actx.state !== 'running') return;
-  audio.playbackRate = (audio.playbackRate || 1) * 0.97;
   const msrc = actx.createMediaElementSource(audio);
   const boost = actx.createGain();
   const warmth = actx.createBiquadFilter();
@@ -1730,12 +1746,30 @@ function ttsTick() {
 
   let settled = false;
 
-  function playEdge(blob) {
+  async function playEdge(blob) {
     if (settled || token !== tts.cancelToken) return;
     settled = true;
     const src = URL.createObjectURL(blob);
     const audio = new Audio(src);
-    audio.playbackRate = getTtsRate();
+    const baseRate = getTtsRate() * 0.97;
+    // Measure duration for beat quantization
+    const dur = await new Promise(resolve => {
+      audio.onloadedmetadata = () => resolve(audio.duration);
+      audio.onerror = () => resolve(null);
+      audio.load();
+    });
+    if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
+    if (dur && radio?.started && radio._startMs) {
+      const unit = 2 * 60 / radio.getBPM(); // 2-beat unit in seconds
+      const n = Math.max(1, Math.round(dur / unit));
+      const beatRate = Math.max(0.78, Math.min(1.28, dur / (n * unit)));
+      audio.playbackRate = baseRate * beatRate;
+      const waitMs = Math.min(radio.getSecToNextBeat(2) * 1000, unit * 900);
+      if (waitMs > 40) await new Promise(r => setTimeout(r, waitMs));
+    } else {
+      audio.playbackRate = baseRate;
+    }
+    if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
     tts.audio = audio;
     connectTTSAudio(audio).catch(() => {});
     audio.onplay = () => {
@@ -2092,7 +2126,7 @@ function startEverything() {
   }
   requestMotionPermission(); acquireWakeLock();
   setTimeout(() => { morphTarget = 1.0; }, 600);
-  setTimeout(() => playDuo(BOOT_DUO), 120);
+  setTimeout(bootGreet, 120);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 let primerFired = false;
