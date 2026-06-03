@@ -2002,13 +2002,15 @@ function guardVoice(v) {
 }
 
 function playDuo(lines, onDone) {
-  if (!lines.length) { onDone?.(); return; }
+  if (!lines.length) { tts.playing = false; tts.audio = null; onDone?.(); ttsTick(); return; }
+  tts.playing = true;
   const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw);
   const rest = lines.slice(1);
   loadTTSBlob(text, voice)
     .then(async blob => {
       const src = URL.createObjectURL(blob);
       const audio = new Audio(src);
+      tts.audio = audio;
       audio.playbackRate = getTtsRate();
       try { await connectTTSAudio(audio, 1.15); } catch (_) {}
       startVisemeAnim(text);
