@@ -7,6 +7,20 @@ const input = document.getElementById('zin');
 let _streamEl = null;
 let _evtSrc = null;
 
+// ARIA live region for streamed text (FA137) — announce new tokens to SR
+const streamLive = (() => {
+  let el = document.getElementById('stream-live');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'stream-live';
+    el.className = 'sr-only';
+    el.setAttribute('aria-live', 'polite');
+    el.setAttribute('aria-atomic', 'false');
+    document.body.appendChild(el);
+  }
+  return el;
+})();
+
 window._chatCancel = () => {
   if (_evtSrc) { try { _evtSrc.close(); } catch (_) {} _evtSrc = null; }
   window._chatOnError?.();
@@ -84,9 +98,24 @@ window._chatOnChunk = (raw) => {
     _streamEl.textContent = text;
   }
   log.scrollTop = log.scrollHeight;
+  if (streamLive) {
+    streamLive.textContent = raw.replace(/[\n\r]/g, ' ').trim() || raw;
+  }
 };
-window._chatOnDone  = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => { c.style.transition = 'opacity 0.25s steps(4,end)'; c.style.opacity = '0'; setTimeout(() => c.remove(), 280); }); };
-window._chatOnError = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => c.remove()); };
+window._chatOnDone  = () => {
+  _streamEl = null;
+  document.querySelectorAll('.cursor').forEach(c => {
+    c.style.transition = 'opacity 0.25s steps(4,end)';
+    c.style.opacity = '0';
+    setTimeout(() => c.remove(), 280);
+  });
+  if (streamLive) streamLive.textContent = '';
+};
+window._chatOnError = () => {
+  _streamEl = null;
+  document.querySelectorAll('.cursor').forEach(c => c.remove());
+  if (streamLive) streamLive.textContent = '';
+};
 
 function getMsgText(msgEl) {
   const p = msgEl.querySelector('.msg-prompt')?.textContent || '';
