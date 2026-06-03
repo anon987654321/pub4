@@ -1,0 +1,11 @@
+#!/bin/ksh
+daemon="/home/dev/pub4/MASTER/bin/tts-worker"
+daemon_flags="--daemon /home/dev/pub4/MASTER/.master/tts.sock"
+daemon_user="dev"
+. /etc/rc.d/rc.subr
+rc_check() {
+  pgrep -T 0 -q -U $(id -u dev) -f "tts-worker --daemon"
+}
+rc_bg=YES
+rc_reload=NO
+rc_cmd $1

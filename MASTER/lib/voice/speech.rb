@@ -3,12 +3,15 @@
 require "securerandom"
 require "fileutils"
 require "open3"
+require "socket"
+require "json"
 
 module Master
   module Voice
     module Speech
       WORKER = File.expand_path("../../bin/tts-worker", __dir__)
       EDGE_TTS = File.executable?(WORKER)
+      TTS_SOCKET = File.expand_path("../../.master/tts.sock", __dir__)
       ESPEAK = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
 
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
@@ -191,6 +194,9 @@ module Master
         audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
         voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
 
+        sock_path = synthesize_edge_socket(text, voice_name, style_config, audio_path)
+        return sock_path if sock_path
+
         _out, _err, status = Open3.capture3(
           WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
           stdin_data: text.to_s
@@ -198,6 +204,24 @@ module Master
         return unless status.success?
 
         (File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
+      end
+
+      def synthesize_edge_socket(text, voice_name, style_config, audio_path)
+        return nil unless File.socket?(TTS_SOCKET)
+
+        req = JSON.generate(
+          voice: voice_name,
+          rate: style_config[:rate],
+          pitch: style_config[:pitch],
+          text: text.to_s
+        )
+        UNIXSocket.open(TTS_SOCKET) do |s|
+          s.write("#{req}\n")
+          File.open(audio_path, "wb") { |f| IO.copy_stream(s, f) }
+        end
+        (File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
+      rescue StandardError
+        nil
       end
 
       def synthesize_espeak(text)
