@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=57') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=58') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -569,6 +569,9 @@ uniform float uFracture;
 uniform float uBloom;
 uniform float uIdleDrift;
 uniform float uEyeClose;
+uniform float uGridAngle;
+uniform float uHeartbeat;
+uniform float uExposure;
 attribute vec3 scatter;
 attribute float seed;
 attribute float curvature;
@@ -632,6 +635,9 @@ void main(){
   float eyeRgn = smoothstep(0.30,0.50,zone) * (1.0 - smoothstep(0.50,0.65,zone));
   float eyeDim = 1.0 - uEyeClose * eyeRgn * 0.82;
   vAlpha=(hc>0.0?hc:mix(0.28+uIdleDrift*0.08,0.48+depth*0.52,m)+zoneAudio)*eyeDim;
+  float flickerFreq=0.5+seed*1.5;
+  float flicker=1.0+0.08*sin(seed*6.2831+uTime*flickerFreq);
+  vAlpha*=flicker*uExposure;
   float shade=mix(0.14,1.0,depth);
   vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.0?1.0:1.0);
   vec3 viewDir=normalize(-mv.xyz);
@@ -681,7 +687,7 @@ if (_hasWebGL && THREE) {
       uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
       uRain:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
-      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}
+      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -808,7 +814,7 @@ if (_hasWebGL && THREE && scene && facePoints) {
       uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
       uRain:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
-      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}
+      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -1046,6 +1052,11 @@ function frame(t) {
     const eyeCloseTarget = (idleS3 > 18 && !tts.playing && State.mode === 'idle') ? Math.min(1, (idleS3 - 18) / 12) : 0;
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
     morphGhost += (morphCurrent - morphGhost) * 0.035;
+    faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524;
+    faceMat.uniforms.uExposure.value = window.matchMedia( + mq + ).matches ? 0.6 : 1.0;
+    if (!State._lastBeat || t - State._lastBeat > (3000 + Math.random() * 2000)) { State._lastBeat = t; State._heartbeat = 1.0; }
+    State._heartbeat = (State._heartbeat || 0) * 0.94;
+    faceMat.uniforms.uHeartbeat.value = State._heartbeat || 0;
     if (glowPoints) {
       const gm = glowPoints.material;
       gm.uniforms.uMorph.value = morphGhost;
