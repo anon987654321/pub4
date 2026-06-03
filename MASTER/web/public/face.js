@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=45') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=46') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -1396,7 +1396,17 @@ function fetchTTS(text) {
 
 function enqueueSpeech(text) {
   if (tts.muted) return;
-  const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`~]/g, '').trim();
+  const clean = text
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]*`/g, '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .replace(/^[-_*]{3,}$/gm, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[*_~]/g, '')
+    .trim();
   if (!clean) return;
   announceTTS(clean);
   tts.lastText = clean;
@@ -1520,16 +1530,23 @@ let recognition = null;
 if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
-  recognition.continuous = false; recognition.interimResults = true;
+  recognition.continuous = true; recognition.interimResults = true;
+  let sttSilenceTimer = null, sttPartial = '';
   recognition.onresult = (e) => {
-    let final = '';
+    let interim = '', final = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
     }
-    if (final.trim()) { State.sttActive = false; sendMessage(final.trim()); }
+    if (final.trim()) { sttPartial = ''; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } State.sttActive = false; recognition.stop(); sendMessage(final.trim()); return; }
+    if (interim.trim()) {
+      sttPartial = interim.trim();
+      if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
+      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (_) {} sendMessage(t2); } }, 1200);
+    }
   };
-  recognition.onend = () => { State.sttActive = false; };
-  recognition.onerror = () => { State.sttActive = false; };
+  recognition.onend = () => { State.sttActive = false; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+  recognition.onerror = () => { State.sttActive = false; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
 }
 function startSTT() {
   if (!recognition || State.sttActive) return;
@@ -1765,6 +1782,7 @@ zshBar.addEventListener('submit', (e) => {
   zshIn.value = '';
   State.pulse = 0.4;
   State.ripplePhase = 0;
+  beep(1320, 0.018);
   sendMessage(v);
 });
 zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
