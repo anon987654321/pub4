@@ -1630,6 +1630,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
   if (src) URL.revokeObjectURL(src);
   tts.audio = null; tts.playing = false;
+  if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
   if (State.mode === 'speaking') { State.mode = 'idle'; setAmbientHum(false); radio?.duck(1.0); }
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
@@ -1684,6 +1685,9 @@ function ttsTick() {
   tts.playing = true;
   const token = ++tts.cancelToken;
   setTTSLoading(true);
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+  if (tts.watchdog) clearTimeout(tts.watchdog);
+  tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: force-clearing stuck playback'); finishTTSPlayback(null, true); } }, 45000);
   State.mode = 'speaking'; setAmbientHum(false); radio?.duck(0.06);
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
   const voice = tts.lang === 'nb' ? 'finn' : undefined;
@@ -1777,6 +1781,7 @@ function ttsSkip() {
   if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
   stopVisemeAnim();
   tts.queue.length = 0; tts.prefetch.clear(); tts.playing = false; tts.current = null;
+  if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
 }
