@@ -212,7 +212,7 @@ class ChatController < ApplicationController
       # dmesg stream — all bus activity as OpenBSD dmesg(8)-style dim lines.
       dmesg_sub = container[:bus].subscribe("**") do |ev|
         line = dmesg_format(ev[:event].to_s, ev)
-        sse.write("event: dmesg\ndata: #{line.to_json}\n\n") rescue nil
+        sse.write("event: dmesg\ndata: #{line.to_json}\n\n") rescue nil if line
       end
       thought_sub = container[:bus].subscribe("**") do |ev|
         line = thought_format(ev[:event].to_s, ev)
@@ -448,10 +448,9 @@ end
            when "backup:error"      then "error #{payload[:error]}"
            when "scan:complete"     then "#{payload[:count]} violations"
            when "autoloop:cycle"    then "autoloop #{payload[:pass]}/#{payload[:max]}"
-           when "pressure:updated"  then return nil  # too noisy — skip
-           when /\Apipeline:/       then return nil  # internal, skip
-           when /\Acanvas_/         then return nil
-           when /\Acache:/          then return nil  # cache:hit/miss noise
+           when "pressure:updated"  then "pressure #{payload[:value]}"
+           when "cache:hit"         then "cache hit #{payload[:key]}"
+           when "cache:miss"        then "cache miss #{payload[:key]}"
            else
              rest&.tr("_", " ") || sub
            end

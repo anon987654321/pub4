@@ -1610,7 +1610,7 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   compressor.threshold.value = -22; compressor.knee.value = 22; compressor.ratio.value = 7;
   compressor.attack.value = 0.004; compressor.release.value = 0.22;
   convolver.buffer = buildRoomIR(actx);
-  dryGain.gain.value = 0.78; wetGain.gain.value = 0.22; masterGain.gain.value = 1.0;
+  dryGain.gain.value = 0.78; wetGain.gain.value = 0.22; masterGain.gain.value = 1.9;
   analyser.fftSize = 256;
   msrc.connect(boost);
   boost.connect(warmth); warmth.connect(smooth); smooth.connect(presence);
@@ -1684,7 +1684,7 @@ function ttsTick() {
   tts.playing = true;
   const token = ++tts.cancelToken;
   setTTSLoading(true);
-  State.mode = 'speaking'; setAmbientHum(false); radio?.duck(0.18);
+  State.mode = 'speaking'; setAmbientHum(false); radio?.duck(0.06);
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
   const voice = tts.lang === 'nb' ? 'finn' : undefined;
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice);
