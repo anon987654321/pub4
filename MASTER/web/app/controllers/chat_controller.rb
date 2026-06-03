@@ -180,7 +180,8 @@ class ChatController < ApplicationController
   end
 
   def message
-    input = params[:message].to_s.strip
+    mp = message_params
+    input = mp[:message].to_s.strip
     return head(:bad_request) if input.empty?
     return head(:forbidden) if visitor? && input.start_with?("/")
 
@@ -231,7 +232,7 @@ class ChatController < ApplicationController
         sse.write("event: council:speech\ndata: #{payload}\n\n") rescue nil
       end
       # Publish incoming canvas state into bus so prompt-builder can include it.
-      if (st = params[:state]).present?
+      if (st = mp[:state]).present?
         mood, mode, idle_s, palette = st.to_s.split("|")
         container[:bus].publish(:canvas_state, mood:, mode:, idle_s: idle_s.to_i, palette: palette.to_i) rescue nil
       end
@@ -243,11 +244,11 @@ class ChatController < ApplicationController
       }
 
       ctx = { user_message: input, on_chunk: on_chunk }
-      ctx[:pre_enhanced] = true if params[:pre_enhanced].present?
-      ctx[:voice] = true if params[:voice].present?
-      if (img = params[:image]).present?
+      ctx[:pre_enhanced] = true if mp[:pre_enhanced].present?
+      ctx[:voice] = true if mp[:voice].present?
+      if (img = mp[:image]).present?
         ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
-      elsif (token = params[:image_token]).present?
+      elsif (token = mp[:image_token]).present?
         payload = uploaded_image_payload(token)
         ctx[:image] = payload if payload
       end
@@ -322,6 +323,10 @@ class ChatController < ApplicationController
   end
 
   private
+
+  def message_params
+    params.permit(:message, :state, :pre_enhanced, :voice, :image_token, image: %i[data mime name])
+  end
 
   def cleanup_old_photos!
     cutoff = Time.now - 86_400

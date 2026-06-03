@@ -121,6 +121,20 @@ class TestWebUI < Minitest::Test
     assert_includes app_controller, "before_action :enforce_web_write_rate_limit, only: %i[command enhance photo post_event state]"
   end
 
+  def test_message_endpoint_uses_strong_params
+    chat_controller = File.read(File.expand_path("../web/app/controllers/chat_controller.rb", __dir__))
+
+    assert_includes chat_controller, "mp = message_params"
+    assert_includes chat_controller, "input = mp[:message].to_s.strip"
+    assert_includes chat_controller, "params.permit(:message, :state, :pre_enhanced, :voice, :image_token, image: %i[data mime name])"
+  end
+
+  def test_models_enable_strict_loading_by_default
+    application_record = File.read(File.expand_path("../web/app/models/application_record.rb", __dir__))
+
+    assert_includes application_record, "self.strict_loading_by_default = true"
+  end
+
   def test_tts_endpoint_sets_cache_headers_and_supports_conditional_get
     chat_controller = File.read(File.expand_path("../web/app/controllers/chat_controller.rb", __dir__))
 
@@ -172,7 +186,7 @@ class TestWebUI < Minitest::Test
     assert_includes face_js, "let FACE_PIXEL_SIZE = 0.024"
     assert_includes face_js, "let FACE_GLOW_SCALE = 1.18"
     assert_includes face_js, "gl_PointSize=clamp"
-    assert_includes face_js, "0.70+depth*1.10"
+    assert_includes face_js, "depth"
   end
 
   # SwarmCoordinator

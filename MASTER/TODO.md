@@ -209,7 +209,7 @@ RuleCoverageRule: every Rule subclass needs a test file.
 - [ ] L04 All .js/.ts: scan with NO_VAR, FOR_OF, TEMPLATE_LITERALS, CONST_BY_DEFAULT — fix violations
 - [ ] L05 All .js: scan with JS_MODULE_SIZE — split files >300 lines
 - [x] L06 web/app/controllers: scan with RATE_LIMITING_MISSING — verify all auth routes throttled
-- [ ] L07 web/app/models: scan with STRICT_LOADING_MISSING — add strict_loading_by_default true
+- [x] L07 web/app/models: scan with STRICT_LOADING_MISSING — add strict_loading_by_default true
 - [ ] L08 web/db/migrate/: scan with MIGRATION_ADD_REFERENCE_NO_FK — verify all references have foreign_key: true
 
 ## N. Documentation alignment
@@ -282,11 +282,11 @@ Violations and opportunities found by reading the actual source. Each item is a 
 - [x] O502 /chat/tts endpoint: no rate limiting (RATE_LIMITING_MISSING) — same endpoint synthesizes unlimited audio
 - [x] O503 /chat/tts: no ETag or Cache-Control header — same voice+text re-synthesized on every request
 - [ ] O504 chat_controller.rb: uses Rails.logger; other controllers use event bus — pick one per layer
-- [ ] O505 chat_controller.rb#message: no strong_params — params used directly without explicit permit
+- [x] O505 chat_controller.rb#message: no strong_params — params used directly without explicit permit
 - [x] O506 No ApplicationController before_action enforcing web_token on all sensitive actions
 - [ ] O507 chat_controller.rb synthesizes TTS synchronously in request — move to background job with polling
 - [ ] O508 dashboard_controller.rb: check for N+1 queries on any AR collections it loads
-- [ ] O509 web/app/models/: check all models for strict_loading_by_default (STRICT_LOADING_MISSING rule)
+- [x] O509 web/app/models/: check all models for strict_loading_by_default (STRICT_LOADING_MISSING rule)
 - [ ] O510 web/db/migrate/: verify all add_reference migrations include foreign_key: true
 
 ### O6. Clean Code
