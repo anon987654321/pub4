@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=49') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=50') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -951,7 +951,8 @@ function frame(t) {
     const voiceRMS = State.voiceRMS || 0;
     const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
-    faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost;
+    const phonemeBoost = 1.0 + (State.visemeAmp || 0) * 0.18;
+    faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost * phonemeBoost;
     const hcVal = State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0);
     faceMat.uniforms.uHc.value = hcVal;
     const curlTarget = State.mode === 'thinking' ? 1.0 : 0.0;
@@ -1229,7 +1230,7 @@ function beep(freq, dur) {
 
 
 const VISEME_STEP_MS = 90;
-const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null };
+const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en' };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'ryan';
@@ -1259,6 +1260,7 @@ function announceTTS(text) {
 function ttsURL(text, voice) {
   const qs = new URLSearchParams({ text });
   if (voice) qs.set('voice', voice);
+  if (tts.pitchOffset) qs.set('pitch', String(tts.pitchOffset));
   return `/chat/tts?${qs.toString()}`;
 }
 
@@ -1579,9 +1581,14 @@ function stopSTT() {
 
 let evtSrc = null;
 async function sendMessage(text) {
-  if (/^(repeat that|say that again|repeat|again)\.?$/i.test(text.trim())) {
+  const trimmed = text.trim();
+  if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
     if (tts.lastText) { tts.queue = [tts.lastText]; ttsTick(); } return;
   }
+  const rateMatch = trimmed.match(/^\/rate\s+([\d.]+)$/i);
+  if (rateMatch) { setTtsRate(parseFloat(rateMatch[1])); return; }
+  const pitchMatch = trimmed.match(/^\/pitch\s+([+-]?[\d.]+)$/i);
+  if (pitchMatch) { tts.pitchOffset = Math.max(-20, Math.min(20, parseFloat(pitchMatch[1]))); if (uiStatus) uiStatus.textContent = `pitch ${tts.pitchOffset >= 0 ? '+' : ''}${tts.pitchOffset}Hz`; return; }
   if (evtSrc) { try { evtSrc.close(); } catch (_) {} }
   ttsSkip();
 

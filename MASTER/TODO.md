@@ -2434,7 +2434,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA01 face: Bayer 4×4 dither matrix on particle alpha — CRT scanline texture without hue
 - [ ] FA02 face: Atkinson dither pass on depth map at load time — sharper mask silhouette edges
 - [x] FA03 face: per-particle size modulated by depth (z) — foreground dots bigger, background smaller
-- [ ] FA04 face: particle size pulse on TTS phoneme — viseme amplitude drives point size uniform
+- [x] FA04 face: particle size pulse on TTS phoneme — viseme amplitude drives point size uniform
 - [x] FA05 face: mouth region particles open/close on vowel visemes (A/E/I/O/U mapped from TTS chunk boundaries)
 - [x] FA06 face: eye-region particles dim and close on long silence (blink simulation)
 - [x] FA07 face: saccade micro-jitter on eye cluster — random 2-4px offset every 200-800ms, not full saccade
@@ -2472,8 +2472,8 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 - [ ] FA37 tts: phoneme → viseme map for edge-tts chunks — parse SSML boundary events from WebSocket stream
 - [ ] FA38 tts: word-boundary events from edge-tts → highlight spoken word in chat bubble in real time
-- [ ] FA39 tts: speed slider in UI — maps to `rate` offset ±20% passed to speech.rb via query param
-- [ ] FA40 tts: pitch slider in UI — maps to `pitch` offset ±20Hz passed to speech.rb
+- [x] FA39 tts: speed slider in UI — maps to `rate` offset ±20% passed to speech.rb via query param
+- [x] FA40 tts: pitch slider in UI — maps to `pitch` offset ±20Hz passed to speech.rb
 - [ ] FA41 tts: voice picker in UI — dropdown of 13 voices with preview button (2-word sample phrase)
 - [ ] FA42 tts: voice preview plays 3-word clip without sending to chat history
 - [x] FA43 tts: auto-pause TTS when user scrolls (intent = reading, not listening)
