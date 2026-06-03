@@ -8,7 +8,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import('/three.module.js?v=42') : null;
+const THREE = _hasWebGL ? await import('/three.module.js?v=43') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -51,9 +51,8 @@ function setTtsRate(r) {
 
 
 const TINT = {
-  // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
-  // Shading and expression via Atkinson/Bayer dither patterns,
-  // alpha, size, depth, and pulse (no hue tints).
+  // Pure white phosphor pixels — monochrome terminal aesthetic.
+  // Expression via alpha, size, depth, and pulse only — no hue.
   idle: new Color(1.00, 1.00, 1.00),
   claude: new Color(1.00, 1.00, 1.00),
   deepseek: new Color(1.00, 1.00, 1.00),
@@ -83,6 +82,8 @@ const State = {
   parX: 0, parY: 0,
   viseme: 'neutral', visemeAmp: 0,
   flash: 0, shake: 0, pulse: 0, sttActive: false,
+  surpriseY: 0, ripplePhase: -1, rain: 0,
+  pinchScale: 1.0, idleAlphaDrift: 0,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches,
   highContrast: new URLSearchParams(window.location.search).get('hc') === '1',
@@ -554,6 +555,11 @@ uniform float uBeat;
 uniform float uConfidence;
 uniform float uTremor;
 uniform float uTilt;
+uniform float uRain;
+uniform float uEarPulse;
+uniform float uRipple;
+uniform float uVowel;
+uniform float uSurpriseY;
 attribute vec3 scatter;
 attribute float seed;
 attribute float curvature;
@@ -576,6 +582,24 @@ void main(){
   if(dist2d<0.20&&dist2d>0.001)p.xy+=normalize(diff2d)*(0.20-dist2d)*0.32;
   float radial=length(p.xy);
   p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*m;
+  // FA18 rain — weary mood gravity drift per-seed phase
+  p.y -= uRain * (0.5 + position.y * 0.5) * sin(seed * 6.28 + uTime * 1.8) * 0.07;
+  // FA13 ear pulse — cheek zone oscillation when listening
+  float isEar = 1.0 - smoothstep(0.0, 0.08, abs(zone - 0.2));
+  p.xy += normalize(p.xy + vec2(0.001)) * isEar * uEarPulse * sin(uTime * 9.0 + seed) * 0.022;
+  // FA08 confidence outward drift — low confidence pushes vertices out
+  p.xy *= 1.0 + (1.0 - uConfidence) * 0.045;
+  // FA10 send ripple — radial wave from center
+  if(uRipple > 0.0) {
+    float rwave = sin(radial * 10.0 - uRipple * 18.0) * exp(-uRipple * 2.5) * 0.035;
+    p.xy += normalize(p.xy + vec2(0.001)) * rwave;
+  }
+  // FA05/FA04 vowel jaw — viseme amplitude extends jaw opening
+  float jawRgnV = smoothstep(0.0,0.15,-position.y-0.05) * smoothstep(0.0,0.18,0.30-abs(position.x));
+  p.y -= uVowel * jawRgnV * 0.025;
+  // FA29 surprised Y impulse
+  p.y += uSurpriseY * smoothstep(0.0, 0.6, 0.5 + position.y * 0.8) * 0.12;
+  // FA09 council sector — radial sector glow by zone during deliberation (carried via uBeat spike)
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
   float sizeBoost=0.70+curvature*0.55+depth*1.10+boundary*0.35;
@@ -613,7 +637,7 @@ void main(){
   vec3 col=vColor+vFresnel*vColor*0.42;
   float w=1.0+uShake*0.12;
   col=clamp(col*w,0.0,1.0);
-  gl_FragColor=vec4(col,alpha);
+  gl_FragColor=vec4(col,max(0.0,alpha));
 }`;
 
 let faceGeom, faceMat, facePoints, faceEdgeGeom, faceEdgeMat, faceEdgeLines;
@@ -635,7 +659,9 @@ if (_hasWebGL && THREE) {
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
       uBass:{value:0}, uShake:{value:0}, uPulseRing:{value:0},
       uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
-      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0}
+      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
+      uRain:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
+      uVowel:{value:0}, uSurpriseY:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -758,7 +784,9 @@ if (_hasWebGL && THREE && scene && facePoints) {
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
       uBass:{value:0}, uShake:{value:0}, uPulseRing:{value:0},
       uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
-      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0}
+      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
+      uRain:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
+      uVowel:{value:0}, uSurpriseY:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -926,6 +954,20 @@ function frame(t) {
       faceEdgeLinesWeak.material.opacity += (weakTarget - faceEdgeLinesWeak.material.opacity) * 0.04;
       faceEdgeLinesWeak.material.needsUpdate = true;
     }
+    const rainTarget = State.mood === 'weary' ? 1.0 : 0.0;
+    faceMat.uniforms.uRain.value += (rainTarget - faceMat.uniforms.uRain.value) * 0.02;
+    faceMat.uniforms.uEarPulse.value += ((State.sttActive ? 1.0 : 0.0) - faceMat.uniforms.uEarPulse.value) * 0.08;
+    if (State.ripplePhase >= 0) {
+      State.ripplePhase = Math.min(1, State.ripplePhase + 0.04);
+      faceMat.uniforms.uRipple.value = State.ripplePhase;
+      if (State.ripplePhase >= 1) State.ripplePhase = -1;
+    } else {
+      faceMat.uniforms.uRipple.value = 0;
+    }
+    const vowelAmp = (State.visemeAmp || 0) * (['A','E','I','O','U'].includes(State.viseme) ? 1.0 : 0.3);
+    faceMat.uniforms.uVowel.value += (vowelAmp - faceMat.uniforms.uVowel.value) * 0.15;
+    State.surpriseY = (State.surpriseY || 0) * 0.88;
+    faceMat.uniforms.uSurpriseY.value = State.surpriseY;
     if (glowPoints) {
       const gm = glowPoints.material;
       Object.assign(gm.uniforms, {
@@ -936,7 +978,10 @@ function frame(t) {
         uShake: faceMat.uniforms.uShake, uPulseRing: faceMat.uniforms.uPulseRing,
         uMids: faceMat.uniforms.uMids, uHighs: faceMat.uniforms.uHighs,
         uBeat: faceMat.uniforms.uBeat, uConfidence: faceMat.uniforms.uConfidence,
-        uTremor: faceMat.uniforms.uTremor, uTilt: faceMat.uniforms.uTilt
+        uTremor: faceMat.uniforms.uTremor, uTilt: faceMat.uniforms.uTilt,
+        uRain: faceMat.uniforms.uRain, uEarPulse: faceMat.uniforms.uEarPulse,
+        uRipple: faceMat.uniforms.uRipple, uVowel: faceMat.uniforms.uVowel,
+        uSurpriseY: faceMat.uniforms.uSurpriseY
       });
       gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
     }
@@ -1443,6 +1488,7 @@ async function sendMessage(text) {
     const m = (ev.data || '').trim();
     if (!m) return;
     State.mood = m;
+    if (m === 'curious') State.surpriseY = 0.7;
     if (TINT[m]) fadeColorTo(TINT[m]);
     const live = document.getElementById('mood-live');
     if (live) live.textContent = 'mood: ' + m;
@@ -1603,6 +1649,7 @@ zshBar.addEventListener('submit', (e) => {
   window._chatOnUser?.(v);
   zshIn.value = '';
   State.pulse = 0.4;
+  State.ripplePhase = 0;
   sendMessage(v);
 });
 zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
