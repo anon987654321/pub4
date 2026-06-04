@@ -81,7 +81,8 @@ if [voice, rate, pitch, out_path].any?(&:nil?)
   warn "                   tts-worker --daemon SOCKET_PATH"
   exit 64
 end
-text = $stdin.read
+$stdin.set_encoding(Encoding::UTF_8)
+text = $stdin.read.force_encoding(Encoding::UTF_8)
 if text.to_s.strip.empty?
   warn "tts-worker: empty stdin"
   exit 65
