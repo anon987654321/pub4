@@ -12,6 +12,7 @@
 require "net/http"
 require "json"
 require "fileutils"
+require "uri"
 
 # ============================================================================
 # CONFIGURATION
@@ -452,13 +453,13 @@ def generate_with_lora(api, model_id, prompt)
 
   if output.is_a?(Array)
     output.each_with_index do |url, i|
-      filename = File.join(output_dir, "image_#{i}.png")
+      ext = File.extname(URI.parse(url).path).sub(/\?.*/, ""); ext = ".out" if ext.to_s.empty?; filename = File.join(output_dir, "out_#{i}#{ext}")
       puts "💾 Downloading #{url}..."
       system("curl -s -o '#{filename}' '#{url}'")
       puts "✓ #{filename}"
     end
   elsif output.is_a?(String)
-    filename = File.join(output_dir, "output.png")
+    ext = File.extname(URI.parse(output).path).sub(/\?.*/, ""); ext = ".out" if ext.to_s.empty?; filename = File.join(output_dir, "output#{ext}")
     puts "💾 Downloading #{output}..."
     system("curl -s -o '#{filename}' '#{output}'")
     puts "✓ #{filename}"

@@ -14,7 +14,9 @@ module Master
         {
           "postpro" => ->(ctx) { dispatch_master_tool(root:, tool: "postpro", arg: arg_for(ctx)) },
           "repligen" => ->(ctx) { dispatch_master_tool(root:, tool: "repligen", arg: arg_for(ctx)) },
-          "photograph" => ->(ctx) { dispatch_photograph(root:, agent: agent, ctx: ctx) }
+          "photograph" => ->(ctx) { dispatch_photograph(root:, agent: agent, ctx: ctx) },
+
+          "sing" => ->(ctx) { dispatch_sing(root:, ctx: ctx) }
         }
       end
 
@@ -85,6 +87,12 @@ module Master
           "postpro (#{results.size} files): #{processed_dir}",
           results.join("\n")
         ].join("\n")
+def dispatch_sing(root:, ctx:)
+  prompt = arg_for(ctx).to_s.strip
+  return "usage: /sing <lyrics or singing prompt>   (Replicate suno-ai/bark)" if prompt.empty?
+  dispatch_master_tool(root: root, tool: "repligen", arg: "generate suno-ai/bark #{prompt}")
+end
+
       end
     end
   end

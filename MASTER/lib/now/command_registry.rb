@@ -27,7 +27,7 @@ module Master
               "session: /save /clear /history /tokens /cost /undo /redo /checkpoint /dmesg /exit",
               "model:   /model /mode /persona /task",
               "memory:  /memory /dreams",
-              "tools:   /postpro [args] /repligen [args] /photograph <prompt>",
+              "tools:   /postpro [args] /repligen [args] /photograph <prompt> /sing <lyrics>",
               "system:  /orient [topic] /tree /diff /commit /snapshot /diag /reload /help"
             ].join("\n")
           }
