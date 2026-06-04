@@ -26,7 +26,7 @@ const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
-let FACE_PIXEL_SIZE = 0.013;
+let FACE_PIXEL_SIZE = 0.017;
 let FACE_GLOW_SCALE = 1.18;
 
 const FONT_KEY = 'master:font';
@@ -271,7 +271,7 @@ function generateFaceDepthMap(size) {
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   // Eye sockets — wide-set, almond-shaped, heavy-lidded
-  const eyeAlphas = [0.995, 0.980];
+  const eyeAlphas = [0.70, 0.65];
   for (let ei = 0; ei < 2; ei++) {
     const ex = ei === 0 ? -0.122 : 0.122;
     ctx.save();
@@ -586,17 +586,20 @@ varying float vFresnel;
 varying float vDepth;
 void main(){
   float m=smoothstep(0.,1.,uMorph);
+  vec2 cursorFace=uMouse*0.44;
+  float cursorProx=1.0-smoothstep(0.0,0.22,length(position.xy-cursorFace));
+  float lm=max(m,cursorProx*0.96);
   float curlAmp=uCurl*0.28;
   vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*curlAmp;
   float jawRgn=smoothstep(0.0,0.15,-position.y-0.12)*smoothstep(0.0,0.14,0.28-abs(position.x));
-  vec3 p=mix(scatter,position,m)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
+  vec3 p=mix(scatter,position,lm)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
   float tremorf=snoise(position*18.0+uTime*3.2+seed)*uTremor*0.003;
   p+=vec3(tremorf,tremorf*0.7,0.0);
   vec2 diff2d=p.xy-uMouse;
   float dist2d=length(diff2d);
   if(dist2d<0.20&&dist2d>0.001)p.xy+=normalize(diff2d)*(0.20-dist2d)*0.32;
   float radial=length(p.xy);
-  p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*m;
+  p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*lm;
   // FA18 rain — weary mood gravity drift per-seed phase
   p.y -= uRain * (0.5 + position.y * 0.5) * sin(seed * 6.28 + uTime * 1.8) * 0.07;
   // FA13 ear pulse — cheek zone oscillation when listening
@@ -626,7 +629,7 @@ void main(){
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
   float sizeBoost=0.70+curvature*0.55+depth*1.10+boundary*0.35;
-  gl_PointSize=clamp(uSize*(240./-mv.z)*sizeBoost,1.5,7.0);
+  gl_PointSize=clamp(uSize*(240./-mv.z)*sizeBoost,1.0,2.0);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
   float zoneAudio=0.0;
@@ -637,13 +640,14 @@ void main(){
   else zoneAudio=uMids*0.10;
   float eyeRgn = smoothstep(0.30,0.50,zone) * (1.0 - smoothstep(0.50,0.65,zone));
   float eyeDim = 1.0 - uEyeClose * eyeRgn * 0.82;
-  vAlpha=(hc>0.0?hc:mix(0.28+uIdleDrift*0.08,0.48+depth*0.52,m)+zoneAudio)*eyeDim;
+  vAlpha=(hc>0.0?hc:mix(0.28+uIdleDrift*0.08,0.48+depth*0.52,lm)+zoneAudio)*eyeDim;
   float flickerFreq=0.5+seed*1.5;
   float flicker=1.0+0.08*sin(seed*6.2831+uTime*flickerFreq);
   vAlpha*=flicker*uExposure;
   vAlpha=max(vAlpha,0.08);
   float shade=mix(0.14,1.0,depth);
-  vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*shade)*(hc>0.0?1.0:1.0);
+  vec3 warmCool=mix(vec3(0.58,0.62,0.88),vec3(1.0,0.94,0.80),depth);
+  vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmCool*shade);
   vec3 viewDir=normalize(-mv.xyz);
   vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
   vec3 vn=normalize(mat3(modelViewMatrix)*flatNorm);
@@ -660,9 +664,8 @@ uniform float uShake;
 uniform float uPulseRing;
 void main(){
   float dist=length(gl_PointCoord-0.5)*2.0;
-  float disc=1.0-smoothstep(0.55,1.0,dist);
-  float ring=smoothstep(0.62,0.72,dist)*(1.0-smoothstep(0.72,0.82,dist))*0.45;
-  float alpha=(disc+ring)*vAlpha;
+  float disc=step(dist,0.92);
+  float alpha=disc*vAlpha;
   vec3 col=vColor+vFresnel*vColor*0.42;
   float w=1.0+uShake*0.12;
   col=clamp(col*w,0.0,1.0);
