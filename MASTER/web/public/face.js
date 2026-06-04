@@ -97,20 +97,33 @@ rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1'
   } catch (_) {}
 })();
 
-const STAR_FRAMES = ['|', '/', '-', '\\'];
+const STAR_FRAMES = ['\u2736', '\u2738', '\u2737', '\u273B', '\u2722', '\u2724', '\u2733', '\u2735'];
+const STAR_COLORS = ['#ff5e3a', '#ffcc00', '#48ff7a', '#3aeaff', '#7e5cff', '#ff3aa3', '#ffffff'];
 let _starTimer = null;
 let _starIdx = 0;
+let _starColorIdx = 0;
 const spinBtn = document.getElementById('spin-btn');
+const asciiStarEl = document.getElementById('ascii-star');
+function _scheduleStar() {
+  const speed = 40 + Math.random() * 220;
+  _starTimer = setTimeout(() => {
+    _starIdx = (_starIdx + 1) % STAR_FRAMES.length;
+    if (Math.random() < 0.25) _starColorIdx = (_starColorIdx + 1) % STAR_COLORS.length;
+    const ch = STAR_FRAMES[_starIdx];
+    const co = STAR_COLORS[_starColorIdx];
+    if (asciiStarEl) { asciiStarEl.textContent = ch; asciiStarEl.style.color = co; }
+    if (spinBtn) spinBtn.textContent = ch;
+    _scheduleStar();
+  }, speed);
+}
 function startStar() {
   if (_starTimer) return;
-  _starIdx = 0;
-  _starTimer = setInterval(() => {
-    _starIdx = (_starIdx + 1) % STAR_FRAMES.length;
-    if (spinBtn) spinBtn.textContent = STAR_FRAMES[_starIdx];
-  }, 120);
+  _starIdx = 0; _starColorIdx = 0;
+  _scheduleStar();
 }
 function stopStar() {
-  if (_starTimer) { clearInterval(_starTimer); _starTimer = null; }
+  if (_starTimer) { clearTimeout(_starTimer); _starTimer = null; }
+  if (asciiStarEl) asciiStarEl.textContent = '';
   if (spinBtn) spinBtn.textContent = '';
 }
 
@@ -1474,12 +1487,13 @@ function enqueueSpeech(text) {
   if (!clean) return;
   const _v = _nextTtsVoice();
   const decorated = _quirkifyTts(clean, _v);
+  if (tts.meta.size > 32) tts.meta.clear();
   tts.meta.set(decorated, { voice: _v, style: _nextTtsStyle(_v) });
   announceTTS(decorated);
   tts.lastText = decorated;
   tts.queue.push(decorated);
   nodImpulse += 0.022;
-  if (!tts.serverUnavailable) fetchTTS(decorated);
+  if (tts.playing && !tts.serverUnavailable) fetchTTS(decorated);
   ttsTick();
 }
 
@@ -2529,11 +2543,12 @@ window._nudgeLoop = (() => {
   }
   setInterval(() => {
     if (!eligible()) return;
-    const line = _nextLine();
+    if (typeof tts !== 'undefined' && tts.queue && tts.queue.length > 0) return;
+    const line = (_nextLine() || '').slice(0, 220);
     if (!line) return;
     try { if (typeof announceTTS === 'function') announceTTS(line); } catch (_) {}
     try { if (typeof enqueueSpeech === 'function') enqueueSpeech(line); } catch (_) {}
     if (_researchCache.length < 5) _refillResearch();
-  }, 3500);
+  }, 9000);
   return { force() { last = 0; } };
 })();

@@ -475,3 +475,5 @@ body[data-tts-loading="true"] canvas { filter:saturate(var(--mood-sat, 0.7)) bri
 .tool { background:none; border:0; color:var(--face-muted); font:inherit; padding:0; margin-right:10px; cursor:pointer; letter-spacing:.02em; opacity:.6; transition:opacity .15s,color .15s; }
 .tool:hover, .tool:focus { opacity:1; color:var(--face-fg); }
 .tool.active { color:var(--c-accent); opacity:1; }
+
+#ascii-star { position: fixed; top: 14px; left: 14px; font: 600 22px/1 ui-monospace, monospace; color: #fff; mix-blend-mode: difference; pointer-events: none; z-index: 9; transition: color 220ms linear; }
