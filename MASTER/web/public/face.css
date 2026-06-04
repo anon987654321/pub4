@@ -2,7 +2,7 @@
 
 :root {
   --c-text: #d8d4cd;
-  --c-accent: #7eb3ff;
+  --c-accent: #d04848;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -154,7 +154,6 @@ body[data-mode="listening"] #mic-dot {
   white-space: nowrap;
   border: 0;
 }
-
 
 /* Primer overlay — Radio Bergen dialog style */
 #primer {
@@ -432,26 +431,12 @@ body:not(.face-ready) #zsh { opacity:.3; pointer-events:none; }
 #primer .tagline { opacity: .42; font-size: .88em; margin-top: 10px; letter-spacing: .04em; }
 #primer .hint { display: none; }
 
-
-
 /* #57 Cancel button uses mood color */
 #spin-btn { color:var(--mood-accent,var(--face-muted)); }
 
 /* #58 TTS loading shimmer */
 body[data-tts-loading="true"] #zsh-status { animation:ttsShimmer 700ms steps(4,end) infinite; }
 @keyframes ttsShimmer { 0%,100%{opacity:.4} 50%{opacity:1} }
-
-/* #59 Speaking waveform bars */
-body[data-tts-wave="true"] #zsh-status { display:flex; align-items:center; gap:2px; }
-#zsh-wave { display:none; align-items:center; gap:2px; height:14px; margin-left:4px; }
-body[data-tts-wave="true"] #zsh-wave { display:flex; }
-#zsh-wave span { display:block; width:2px; background:var(--c-accent); border-radius:0; animation:waveBar 600ms ease-in-out infinite; }
-#zsh-wave span:nth-child(1){height:4px;animation-delay:0ms}
-#zsh-wave span:nth-child(2){height:8px;animation-delay:120ms}
-#zsh-wave span:nth-child(3){height:12px;animation-delay:60ms}
-#zsh-wave span:nth-child(4){height:8px;animation-delay:180ms}
-#zsh-wave span:nth-child(5){height:4px;animation-delay:90ms}
-@keyframes waveBar { 0%,100%{transform:scaleY(.4)} 50%{transform:scaleY(1)} }
 
 /* #60 Error flash border */
 body[data-mode="error"] #zsh { border-top-color:rgba(224,82,82,.7); transition:border-top-color .2s; }
@@ -463,7 +448,6 @@ body[data-council-persona]::after { content:attr(data-council-persona); position
 .ui-status { cursor:default; }
 
 /* #63 Variable font weight with RMS */
-body[data-tts-wave="true"] .msg-body { font-variation-settings:'wght' 380; }
 
 /* #64 Ligatures on body, off on prompt */
 .msg-body { font-feature-settings:'liga' 1,'kern' 1; }

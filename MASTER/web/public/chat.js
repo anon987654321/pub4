@@ -273,6 +273,7 @@ zsh?.addEventListener('submit', (event) => {
   event.preventDefault();
   event.stopImmediatePropagation();
   const text = input.value.trim();
+  if (/^(endless white|\/ew)$/i.test(text)) { window._endlessWhite?.(); input.value = ''; return; }
   if (!text) return;
   input.value = '';
   window.MASTERVoice?.initAudio?.();

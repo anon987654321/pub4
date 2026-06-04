@@ -51,26 +51,22 @@ function setTtsRate(r) {
 
 
 const TINT = {
-  // Pure white phosphor pixels — monochrome terminal aesthetic.
-  // Expression via alpha, size, depth, and pulse only — no hue.
-  idle: new Color(1.00, 1.00, 1.00),
-  claude: new Color(1.00, 1.00, 1.00),
-  deepseek: new Color(1.00, 1.00, 1.00),
-  gemini: new Color(1.00, 1.00, 1.00),
-  gpt: new Color(1.00, 1.00, 1.00),
-  tense: new Color(1.00, 1.00, 1.00),
-  curious: new Color(1.00, 1.00, 1.00),
-  focused: new Color(1.00, 1.00, 1.00),
-  weary: new Color(1.00, 1.00, 1.00),
-  pass: new Color(1.00, 1.00, 1.00),
-  veto: new Color(1.00, 1.00, 1.00),
-  unclear: new Color(1.00, 1.00, 1.00)
+  idle: new Color(0.55, 0.20, 0.22),
+  claude: new Color(0.55, 0.20, 0.22),
+  deepseek: new Color(0.55, 0.20, 0.22),
+  gemini: new Color(0.55, 0.20, 0.22),
+  gpt: new Color(0.55, 0.20, 0.22),
+  tense: new Color(0.70, 0.18, 0.20),
+  curious: new Color(0.55, 0.20, 0.22),
+  focused: new Color(0.55, 0.20, 0.22),
+  weary: new Color(0.40, 0.16, 0.18),
+  pass: new Color(0.55, 0.20, 0.22),
+  veto: new Color(0.78, 0.15, 0.15),
+  unclear: new Color(0.55, 0.20, 0.22)
 };
 
 function dayNightTint() {
-  // Pure white — time of day no longer affects hue.
-  // Shading is dither-only in the 8-bit CRT phosphor style.
-  return new Color(1.00, 1.00, 1.00);
+  return new Color(0.55, 0.20, 0.22);
 }
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
@@ -2223,4 +2219,77 @@ if (renderer) {
     });
     window.startOsmanVoice = () => rec.start();
   }
+})();
+
+window._endlessWhite = (() => {
+  let ctx, m, playing = false, iv = null;
+  const CHORDS = [
+    [220.00, 261.63, 329.63, 392.00, 493.88],
+    [293.66, 349.23, 440.00, 523.25, 659.25],
+    [349.23, 440.00, 523.25, 659.25, 783.99],
+    [329.63, 392.00, 493.88, 587.33, 698.46]
+  ];
+  const BPM = 75, BEAT = 60 / BPM;
+  function impulse(d=2.6, k=2.4) {
+    const sr = ctx.sampleRate, n = sr * d, buf = ctx.createBuffer(2, n, sr);
+    for (let c = 0; c < 2; c++) { const x = buf.getChannelData(c); for (let i = 0; i < n; i++) x[i] = (Math.random()*2-1) * Math.pow(1-i/n, k); }
+    return buf;
+  }
+  function noise(d=1.0) {
+    const sr = ctx.sampleRate, n = sr * d, buf = ctx.createBuffer(1, n, sr);
+    const x = buf.getChannelData(0); for (let i = 0; i < n; i++) x[i] = Math.random()*2-1; return buf;
+  }
+  function pad(freqs, t, len) {
+    freqs.forEach((f, i) => [0,-7,7].forEach(c => {
+      const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = c;
+      const g = ctx.createGain(), bp = ctx.createBiquadFilter();
+      bp.type = "lowpass"; bp.frequency.value = 1400 + i*120; bp.Q.value = 0.7;
+      const peak = 0.06 / (i+1) / 3;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t+0.6);
+      g.gain.setValueAtTime(peak, t+len-0.8); g.gain.linearRampToValueAtTime(0, t+len);
+      o.connect(bp).connect(g).connect(m.pad); o.start(t); o.stop(t+len+0.1);
+    }));
+  }
+  function sub(t) {
+    const o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = 55;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.42, t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.55);
+    o.connect(g).connect(m.dry); o.start(t); o.stop(t+0.6);
+  }
+  function hat(t) {
+    const s = ctx.createBufferSource(); s.buffer = m.noise;
+    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 7000 + Math.random()*2000;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.04);
+    s.connect(hp).connect(g).connect(m.dry); s.start(t, Math.random()*0.4);
+  }
+  function snare(t) {
+    const s = ctx.createBufferSource(); s.buffer = m.noise;
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1800; bp.Q.value = 0.6;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.16, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.12);
+    s.connect(bp).connect(g).connect(m.verb); s.start(t, Math.random()*0.3);
+  }
+  function bar(idx) {
+    const t0 = ctx.currentTime + 0.05, chord = CHORDS[idx % CHORDS.length], barLen = BEAT*4;
+    pad(chord, t0, barLen);
+    for (let b = 0; b < 4; b++) {
+      const tb = t0 + b * BEAT;
+      if (b === 0 || b === 2) sub(tb);
+      if (b === 1 || b === 3) snare(tb + (Math.random()-0.5)*0.04);
+      for (let s = 0; s < 4; s++) if (Math.random() < 0.55) hat(tb + s*BEAT/4);
+    }
+  }
+  return () => {
+    if (playing) { try { clearInterval(iv); ctx.close(); } catch(_){} playing = false; return false; }
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      m = { dry: ctx.createGain(), pad: ctx.createGain(), verb: ctx.createGain(), conv: ctx.createConvolver(), noise: noise(1.0) };
+      m.dry.gain.value = 0.9; m.pad.gain.value = 0.85; m.verb.gain.value = 0.6;
+      m.conv.buffer = impulse(2.6, 2.4);
+      const wet = ctx.createGain(); wet.gain.value = 0.45;
+      m.pad.connect(m.conv); m.verb.connect(m.conv); m.conv.connect(wet).connect(ctx.destination);
+      m.dry.connect(ctx.destination); m.pad.connect(ctx.destination);
+      let i = 0; bar(i++); iv = setInterval(() => bar(i++), BEAT*4*1000);
+      playing = true; return true;
+    } catch (_) { return false; }
+  };
 })();
