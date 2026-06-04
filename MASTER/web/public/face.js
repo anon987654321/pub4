@@ -1243,13 +1243,20 @@ const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'davis';
 const TTS_VOICE_ROTATION = ['davis', 'wayne', 'ezinne'];
 const TTS_MALE_STYLES = ['dramatic', 'intense', 'energetic', 'storyteller', 'intimate', 'calm'];
-const TTS_FEMALE_STYLES = ['whispered', 'intimate', 'ethereal', 'intimate', 'storyteller', 'dramatic', 'calm'];
+const TTS_FEMALE_STYLES = ['dramatic', 'robotic', 'storyteller', 'dramatic', 'intimate', 'whispered'];
 let _ttsVoiceRot = 0;
 function _nextTtsVoice() { return TTS_VOICE_ROTATION[_ttsVoiceRot++ % TTS_VOICE_ROTATION.length]; }
 function _nextTtsStyle(voice) { const pool = voice === 'ezinne' ? TTS_FEMALE_STYLES : TTS_MALE_STYLES; return pool[(Math.random() * pool.length) | 0]; }
-function _quirkifyTts(text) {
+function _quirkifyTts(text, voice) {
   if (text.length < 12) return text;
   const r = Math.random;
+  if (voice === 'ezinne' && r() < 0.55) {
+    const dim = ['uh... ', 'duh, ', 'hmm... me think... ', 'brain hurt. ', 'oh! oh! ', 'okay um... ', 'wait... what? ', 'ohhh, ', 'me confuse. ', 'numbers? me no like numbers. '];
+    text = dim[(r() * dim.length) | 0] + text;
+  }
+  if (voice === 'ezinne' && r() < 0.4) {
+    text = text.replace(/\b(the|a|of|and|is|are|was|were)\b/gi, '').replace(/\s+/g, ' ').trim() + '. ugh.';
+  }
   if (r() < 0.06) {
     const mid = Math.max(20, Math.floor(text.length * 0.55));
     const cut = text.indexOf(' ', mid);
@@ -1465,8 +1472,8 @@ function enqueueSpeech(text) {
     .replace(/[*_~]/g, '')
     .trim();
   if (!clean) return;
-  const decorated = _quirkifyTts(clean);
   const _v = _nextTtsVoice();
+  const decorated = _quirkifyTts(clean, _v);
   tts.meta.set(decorated, { voice: _v, style: _nextTtsStyle(_v) });
   announceTTS(decorated);
   tts.lastText = decorated;
