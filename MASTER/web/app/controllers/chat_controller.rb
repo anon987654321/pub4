@@ -139,25 +139,27 @@ class ChatController < ApplicationController
   end
 
 
-def research
-  n = params[:n].to_i.clamp(1, 30)
-  n = 10 if n.zero?
-  require "net/http"
-  require "uri"
-  cats = %w[cs.AI cs.LG cs.CL cs.NE q-bio physics.gen-ph astro-ph]
-  q = cats.map { |c| "cat:#{c}" }.join("+OR+")
-  uri = URI("http://export.arxiv.org/api/query?search_query=#{q}&sortBy=submittedDate&sortOrder=descending&max_results=#{n}")
-  body = Net::HTTP.start(uri.host, uri.port, open_timeout: 4, read_timeout: 6) { |h| h.get(uri.request_uri).body }
-  items = body.to_s.scan(/<title>([^<]+)<\/title>\s*<summary>([^<]+)<\/summary>/m).map do |title, summary|
-    t = title.gsub(/\s+/, " ").strip
-    s = summary.gsub(/\s+/, " ").strip.split(/(?<=[.!?])\s+/).first(2).join(" ")
-    "#{t}. #{s}".slice(0, 480)
+  def research
+    n = params[:n].to_i.clamp(1, 30)
+    n = 10 if n.zero?
+    require "net/http"
+    require "uri"
+    cats = %w[cs.AI cs.LG cs.CL cs.NE q-bio physics.gen-ph astro-ph]
+    q = cats.map { |c| "cat:#{c}" }.join("+OR+")
+    uri = URI("https://export.arxiv.org/api/query?search_query=#{q}&sortBy=submittedDate&sortOrder=descending&max_results=#{n}")
+    body = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 4, read_timeout: 6) { |h| h.get(uri.request_uri).body }
+    items = body.to_s.scan(/<entry>(.*?)<\/entry>/m).map do |entry|
+      entry = entry.first
+      t = entry[/<title>(.*?)<\/title>/m, 1].to_s.gsub(/\s+/, " ").strip
+      s = entry[/<summary>(.*?)<\/summary>/m, 1].to_s.gsub(/\s+/, " ").strip.split(/(?<=[.!?])\s+/).first(2).to_a.join(" ")
+      next if t.empty?
+      "#{t}. #{s}".slice(0, 480)
+    end.compact
+    render json: { items: items }
+  rescue StandardError => e
+    Rails.logger.warn("research failed: #{e.class}: #{e.message}")
+    render json: { items: [] }
   end
-  render json: { items: items }
-rescue StandardError => e
-  Rails.logger.warn("research failed: #{e.class}: #{e.message}")
-  render json: { items: [] }
-end
 
 def enhance
     msg = params[:message].to_s.strip
