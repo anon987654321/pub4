@@ -218,7 +218,26 @@ async function enhanceMessage(text) {
   return { text, preEnhanced: false };
 }
 
+async function runSlashCommand(text) {
+  window._chatOnUser?.(text);
+  try {
+    const r = await fetch('/chat/command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken() },
+      body: JSON.stringify({ command: text })
+    });
+    const data = await r.json().catch(() => ({ output: '' }));
+    const out = (data.output || '(no output)').toString();
+    window._chatOnChunk?.(out);
+    window._chatOnDone?.();
+  } catch (e) {
+    window._chatOnChunk?.('error: ' + (e.message || e));
+    window._chatOnError?.();
+  }
+}
+
 async function sendMessage(text) {
+  if (text.startsWith('/')) { return runSlashCommand(text); }
   if (_evtSrc) { try { _evtSrc.close(); } catch (_) {} }
   window._chatOnUser?.(text);
 
@@ -279,3 +298,33 @@ zsh?.addEventListener('submit', (event) => {
   window.MASTERVoice?.initAudio?.();
   sendMessage(text);
 }, true);
+
+document.querySelectorAll('.tool').forEach(btn => {
+  btn.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    const cmd = btn.dataset.cmd;
+    const act = btn.dataset.act;
+    if (cmd) { input.value = cmd; input.focus(); return; }
+    if (act === 'mic') startMic(btn);
+  });
+});
+
+function startMic(btn) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { input.placeholder = 'mic unavailable in this browser'; return; }
+  if (btn._rec) { try { btn._rec.stop(); } catch(_){} btn._rec = null; btn.classList.remove('active'); return; }
+  const rec = new SR();
+  rec.lang = navigator.language || 'en-US';
+  rec.continuous = false;
+  rec.interimResults = true;
+  rec.onresult = (ev) => {
+    let s = '';
+    for (let i = 0; i < ev.results.length; i++) s += ev.results[i][0].transcript;
+    input.value = s.trim();
+  };
+  rec.onerror = () => { btn._rec = null; btn.classList.remove('active'); };
+  rec.onend = () => { btn._rec = null; btn.classList.remove('active'); };
+  rec.start();
+  btn._rec = rec;
+  btn.classList.add('active');
+}

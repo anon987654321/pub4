@@ -8,7 +8,7 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
-  --face-bg: #030303;
+  --face-bg: #000;
   --face-fg: var(--c-text);
   --face-muted: rgba(216,212,205,0.35);
   --face-dim: rgba(216,212,205,0.18);
@@ -162,9 +162,7 @@ body[data-mode="listening"] #mic-dot {
   display: grid;
   place-items: center;
   z-index: var(--z-modal);
-  background: rgba(2,2,2,.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #000;
   cursor: pointer;
   text-align: center;
   padding: 16px;
@@ -276,8 +274,8 @@ body[data-mode="listening"] #mic-dot {
   padding: 0 16px var(--safe-bottom);
   font: 13px ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
   color: var(--face-fg);
-  border-top: 1px solid rgba(255,255,255,.05);
-  background: var(--face-bg);
+  border: 0;
+  background: #000;
   z-index: 11;
   opacity: 0;
   pointer-events: none;
@@ -304,7 +302,7 @@ body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
   right: 0;
   bottom: calc(var(--face-bar-height) + var(--safe-bottom) + 22px);
   z-index: 12;
-  background: rgba(3,3,3,.72);
+  background: transparent;
   color: #fff;
   font: 10px/1.25 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
   padding: 1px 6px;
@@ -407,7 +405,6 @@ body[data-mode="speaking"] #zin { opacity:.75; }
 #char-count { font: inherit; color:var(--face-muted); opacity:0; transition:opacity .15s; white-space:nowrap; margin-left:4px; }
 
 /* #47 Focus border brighten */
-#zsh:focus-within { border-top-color:rgba(220,220,220,.45); }
 
 /* #48 Cancel button pulse during thinking */
 body[data-mode="thinking"] #spin-btn { animation:cancelPulse 1.1s ease-in-out infinite; }
@@ -439,7 +436,6 @@ body[data-tts-loading="true"] #zsh-status { animation:ttsShimmer 700ms steps(4,e
 @keyframes ttsShimmer { 0%,100%{opacity:.4} 50%{opacity:1} }
 
 /* #60 Error flash border */
-body[data-mode="error"] #zsh { border-top-color:rgba(224,82,82,.7); transition:border-top-color .2s; }
 
 /* #61 Council persona badge */
 body[data-council-persona]::after { content:attr(data-council-persona); position:fixed; top:calc(10px + var(--safe-top)); right:calc(10px + var(--safe-right)); font:9px/1.4 ui-monospace,monospace; text-transform:uppercase; letter-spacing:.14em; color:var(--face-muted); opacity:.6; z-index:var(--z-ui); pointer-events:none; }
@@ -475,4 +471,8 @@ body[data-tts-loading="true"] canvas { filter:saturate(var(--mood-sat, 0.7)) bri
 .message.assistant:hover .msg-copy { opacity:1; }
 .message.assistant .msg-copy:hover { color:var(--c-text); }
 
-::selection { background: rgba(126,179,255,.18); color: inherit; }
+::selection { background: rgba(208,72,72,.22); color: inherit; }
+
+.tool { background:none; border:0; color:var(--face-muted); font:inherit; padding:0; margin-right:10px; cursor:pointer; letter-spacing:.02em; opacity:.6; transition:opacity .15s,color .15s; }
+.tool:hover, .tool:focus { opacity:1; color:var(--face-fg); }
+.tool.active { color:var(--c-accent); opacity:1; }

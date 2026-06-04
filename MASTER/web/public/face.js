@@ -39,10 +39,10 @@ const RATE_KEY = 'master:tts-rate';
 const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
 function getTtsRate() {
   const v = parseFloat(localStorage.getItem(RATE_KEY));
-  return RATES.indexOf(v) >= 0 ? v : 1.0;
+  return RATES.indexOf(v) >= 0 ? v : 1.25;
 }
 function setTtsRate(r) {
-  const rate = RATES.indexOf(r) >= 0 ? r : 1.0;
+  const rate = RATES.indexOf(r) >= 0 ? r : 1.25;
   localStorage.setItem(RATE_KEY, rate);
   if (tts && tts.audio) tts.audio.playbackRate = rate;
   const el = document.getElementById('tts-rate');
