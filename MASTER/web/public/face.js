@@ -1237,10 +1237,57 @@ function beep(freq, dur) {
 
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
 const VISEME_STEP_MS = 90;
-const tts = { queue: [], prefetch: new Map(), attempts: new Map(), retryTimer: null, muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en' };
+const tts = { queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en' };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
-const TTS_DEFAULT_VOICE = 'ryan';
+const TTS_DEFAULT_VOICE = 'davis';
+const TTS_VOICE_ROTATION = ['davis', 'wayne', 'ezinne'];
+const TTS_MALE_STYLES = ['dramatic', 'intense', 'energetic', 'storyteller', 'intimate', 'calm'];
+const TTS_FEMALE_STYLES = ['whispered', 'intimate', 'ethereal', 'intimate', 'storyteller', 'dramatic', 'calm'];
+let _ttsVoiceRot = 0;
+function _nextTtsVoice() { return TTS_VOICE_ROTATION[_ttsVoiceRot++ % TTS_VOICE_ROTATION.length]; }
+function _nextTtsStyle(voice) { const pool = voice === 'ezinne' ? TTS_FEMALE_STYLES : TTS_MALE_STYLES; return pool[(Math.random() * pool.length) | 0]; }
+function _quirkifyTts(text) {
+  if (text.length < 12) return text;
+  const r = Math.random;
+  if (r() < 0.06) {
+    const mid = Math.max(20, Math.floor(text.length * 0.55));
+    const cut = text.indexOf(' ', mid);
+    if (cut > 0 && cut < text.length - 8) {
+      const fillers = ['... uh, wait — where was I? oh, right. ', '... hmm, lost my train of thought. ', '... um, sorry — anyway. '];
+      text = text.slice(0, cut) + fillers[(r() * fillers.length) | 0] + text.slice(cut + 1);
+    }
+  }
+  if (r() < 0.08) {
+    const m = text.match(/^(\w)(\w*)(.*)/s);
+    if (m && /[a-zA-Z]/.test(m[1])) text = `${m[1]}-${m[1]}-${m[1]}${m[2]}${m[3]}`;
+  }
+  if (r() < 0.05) {
+    const laughs = ['ha ha. ', 'heh, ', 'ha. okay, ', 'pff, '];
+    text = laughs[(r() * laughs.length) | 0] + text;
+  }
+  if (r() < 0.04) {
+    text = '... ' + text + '. sorry.';
+  }
+  if (r() < 0.05) {
+    const mid = Math.floor(text.length * 0.4);
+    const cut = text.indexOf(' ', mid);
+    if (cut > 0) text = text.slice(0, cut) + ' — *cough* — ' + text.slice(cut + 1);
+  }
+  if (r() < 0.04) {
+    const words = text.split(' ');
+    for (let i = 0; i < words.length; i++) if (r() < 0.35 && words[i].length > 3) words[i] = words[i].split('').join("'");
+    text = words.join(' ') + " — sorry, mouth full.";
+  }
+  if (r() < 0.03) {
+    text = "wait — wait. okay. okay. *breathe* — " + text.replace(/\./g, "...") + " — sorry, panicking.";
+  }
+  if (r() < 0.18) {
+    const fillers = ['uh, ', 'hmm, ', 'so, ', 'well, ', 'like, ', 'i mean, ', 'okay so, '];
+    text = fillers[(r() * fillers.length) | 0] + text;
+  }
+  return text;
+}
 const TTS_FETCH_TIMEOUT_MS = 9000; // abort Edge TTS HTTP fetch after this many ms
 let ttsDBPromise = null;
 
@@ -1254,16 +1301,17 @@ function announceTTS(text) {
   ttsLive.textContent = text.toString().slice(0, 500);
 }
 
-function ttsURL(text, voice) {
+function ttsURL(text, voice, style) {
   const qs = new URLSearchParams({ text });
   if (voice) qs.set('voice', voice);
+  if (style) qs.set('style', style);
   if (tts.pitchOffset) qs.set('pitch', String(tts.pitchOffset));
   return `/chat/tts?${qs.toString()}`;
 }
 
 async function ttsCacheKey(text, voice) {
   if (!window.crypto || !crypto.subtle || !window.TextEncoder) return null;
-  const material = `${voice || TTS_DEFAULT_VOICE}|auto|${text}`;
+  const material = `${voice || TTS_DEFAULT_VOICE}|${arguments[2] || 'auto'}|${text}`;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(material));
   return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
@@ -1304,14 +1352,14 @@ async function writeCachedTTS(key, blob) {
   } catch (_) {}
 }
 
-async function loadTTSBlob(text, voice) {
-  const key = await ttsCacheKey(text, voice).catch(() => null);
+async function loadTTSBlob(text, voice, style) {
+  const key = await ttsCacheKey(text, voice, style).catch(() => null);
   const cached = key ? await readCachedTTS(key) : null;
   if (cached) return cached;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TTS_FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(ttsURL(text, voice), { signal: controller.signal });
+    const res = await fetch(ttsURL(text, voice, style), { signal: controller.signal });
     clearTimeout(timer);
     if (!res.ok) throw new Error(res.status);
     const blob = await res.blob();
@@ -1398,7 +1446,8 @@ function clearViseme() {
 
 function fetchTTS(text) {
   if (tts.serverUnavailable || tts.prefetch.has(text)) return;
-  const p = loadTTSBlob(text).catch(() => null);
+  const meta = tts.meta.get(text) || {};
+  const p = loadTTSBlob(text, meta.voice, meta.style).catch(() => null);
   tts.prefetch.set(text, p);
 }
 
@@ -1416,11 +1465,14 @@ function enqueueSpeech(text) {
     .replace(/[*_~]/g, '')
     .trim();
   if (!clean) return;
-  announceTTS(clean);
-  tts.lastText = clean;
-  tts.queue.push(clean);
+  const decorated = _quirkifyTts(clean);
+  const _v = _nextTtsVoice();
+  tts.meta.set(decorated, { voice: _v, style: _nextTtsStyle(_v) });
+  announceTTS(decorated);
+  tts.lastText = decorated;
+  tts.queue.push(decorated);
   nodImpulse += 0.022;
-  if (tts.playing && !tts.serverUnavailable) fetchTTS(clean);
+  if (!tts.serverUnavailable) fetchTTS(decorated);
   ttsTick();
 }
 
@@ -1449,9 +1501,12 @@ function ttsTick() {
   tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: requeue'); requeueChunk(text); finishTTSPlayback(null, true); } }, wdMs);
   State.mode = 'speaking'; setAmbientHum(false);
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
-  const voice = tts.lang === 'nb' ? 'finn' : undefined;
-  const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice);
+  const meta = tts.meta.get(text) || {};
+  const voice = tts.lang === 'nb' ? 'finn' : meta.voice;
+  const style = meta.style;
+  const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice, style);
   tts.prefetch.delete(text);
+  tts.meta.delete(text);
   if (tts.queue[0]) fetchTTS(tts.queue[0]);
 
   let settled = false;
@@ -1814,7 +1869,7 @@ function startEverything() {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 let primerFired = false;
-function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); setTimeout(() => { try { window._dillaBg?.(); } catch (_) {} }, 1200); }
+function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
 primer?.addEventListener('pointerdown', firePrimer);
 primer?.addEventListener('touchstart', firePrimer, { passive: true });
 primer?.addEventListener('click', firePrimer);

@@ -246,7 +246,8 @@ async function sendMessage(text) {
   if (enhanced.preEnhanced) params.set('pre_enhanced', '1');
 
   const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
-  let assistantBuffer = '', ttsBuffer = '';
+  const FIRST_CHUNK = /(.{28,}?[,;:—]\s+|.{36,}?\s+)/;
+  let assistantBuffer = '', ttsBuffer = '', firstChunkSent = false;
   _evtSrc = new EventSource(`/chat/message?${params.toString()}`);
   _evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
@@ -272,6 +273,15 @@ async function sendMessage(text) {
     ttsBuffer += chunk;
     window._chatOnChunk?.(raw);
     let m;
+    if (!firstChunkSent) {
+      const fm = ttsBuffer.match(FIRST_CHUNK);
+      if (fm) {
+        const cut = fm.index + fm[0].length;
+        const sent = ttsBuffer.slice(0, cut).trim();
+        ttsBuffer = ttsBuffer.slice(cut);
+        if (sent) { window.MASTERVoice?.enqueue?.(sent); firstChunkSent = true; }
+      }
+    }
     while ((m = ttsBuffer.match(SENT_BREAK))) {
       const cut = m.index + m[0].length;
       const sent = ttsBuffer.slice(0, cut).trim();
