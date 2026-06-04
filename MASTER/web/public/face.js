@@ -1245,6 +1245,7 @@ function beep(freq, dur) {
 }
 
 
+const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
 const VISEME_STEP_MS = 90;
 const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en' };
 const TTS_DB_NAME = 'master-tts-v1';
@@ -1343,6 +1344,7 @@ function buildRoomIR(ctx) {
 }
 
 async function connectTTSAudio(audio, boostValue = 1.35) {
+  if (LOW_POWER) return;
   if (!actx || actx.state === 'closed') return;
   if (actx.state === 'suspended') await actx.resume().catch(() => {});
   if (actx.state !== 'running') return;
@@ -1465,7 +1467,7 @@ function ttsTick() {
       audio.load();
     });
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
-    audio.playbackRate = baseRate;
+    audio.playbackRate = LOW_POWER ? 1.0 : baseRate;
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
     if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (_) {} }
     tts.audio = audio;
