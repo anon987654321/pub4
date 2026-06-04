@@ -5,7 +5,7 @@ require_relative "cli/command_ops"
 require_relative "cli/thinking_indicator"
 
 require "open3"
-require "tty-reader"
+require "reline"
 require "tty-prompt"
 require "fileutils"
 
@@ -32,7 +32,7 @@ module Master
       def initialize(container:)
         @container = container
         assign_container_refs!(container)
-        @reader = TTY::Reader.new(track_history: true)
+        Reline::HISTORY.clear
         @running = false
         @interrupt_at = Time.now
         @last_ok = true
@@ -323,7 +323,7 @@ module Master
       end
 
       def safe_read_line
-        @reader.read_line("", echo: true).chomp
+        Reline.readline("", true)&.chomp
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.safe_read_line", event_bus: @bus)
       end
