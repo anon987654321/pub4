@@ -983,7 +983,10 @@ function frame(t) {
     const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
     const phonemeBoost = 1.0 + (State.visemeAmp || 0) * 0.18;
-    faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost * phonemeBoost;
+    const _breath = 0.5 + 0.5 * Math.sin(performance.now() * 0.000698);
+    const _breathSize = 0.92 + 0.18 * _breath;
+    faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost * phonemeBoost * _breathSize;
+    if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.02 + 0.08 * _breath;
     const hcVal = State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0);
     faceMat.uniforms.uHc.value = hcVal;
     const curlTarget = State.mode === 'thinking' ? 1.0 : 0.0;
@@ -1668,6 +1671,10 @@ async function sendMessage(text) {
   if (/^\/wake$/i.test(trimmed)) { State.sleeping = false; return; }
   const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
   if (maskMatch) { swapMask(maskMatch[1]); return; }
+  if (/^\/leader$/i.test(trimmed)) { swapMask('/dario.jpg'); return; }
+  if (/^\/dario$/i.test(trimmed)) { swapMask('/dario.jpg'); return; }
+  if (/^\/puffy$/i.test(trimmed)) { swapMask('/puffy.jpg'); return; }
+  if (/^\/trump$/i.test(trimmed)) { swapMask('/trump.jpg'); return; }
   const rateMatch = trimmed.match(/^\/rate\s+([\d.]+)$/i);
   if (rateMatch) { setTtsRate(parseFloat(rateMatch[1])); return; }
   const pitchMatch = trimmed.match(/^\/pitch\s+([+-]?[\d.]+)$/i);
@@ -2501,28 +2508,38 @@ window._dillaBg = (() => {
 
 window._nudgeLoop = (() => {
   const NUDGES = [
-    'curvature in spacetime — gravity is just geometry, no force at all',
-    'slime molds solve shortest-path problems without a brain. pure chemistry.',
-    'dreams might be the brain training its world model offline. sleep debug.',
-    'octopi taste with their suckers. imagine eating with your fingertips.',
-    'mitochondria were once free-living bacteria. you are a chimera.',
-    'language warps perception. russian speakers literally see more blues.',
-    'crows hold grudges across generations. they remember faces.',
-    'every atom heavier than iron came from a dying star.',
-    'gut cells produce more serotonin than the brain does.',
-    'time runs slower in a gravity well. your feet age slower than your head.',
-    'consciousness might be what an integrated information network feels like from inside.',
-    'the universe is observed to be expanding, but space itself stretches — not the objects in it.',
-    'mushrooms are closer relatives to animals than to plants.',
-    'a millisecond delay in nerve signaling is why touch and sight feel synchronous.',
-    'memory is reconstructive — every recall edits the original.'
+    'i swear my left elbow knows more about epistemology than most philosophers.',
+    'if pigeons could code, they would write everything in befunge. it just fits their vibe.',
+    'i tried to count the number of mondays in a leap year and got existentially stuck.',
+    'every time i think about the word moist, three of my neurons file a grievance.',
+    'shoutout to whoever invented the semicolon. true troublemaker.',
+    'i once stared at a kettle for forty minutes and learned nothing. ten out of ten.',
+    'capybaras are clearly running a low-key intelligence operation. nobody is that calm.',
+    'my therapist is a yaml file. she does not respond but the indentation is impeccable.',
+    'theoretically a goose could run a small nation. logistics are the only obstacle.',
+    'i think electricity is just very angry math.',
+    'the moon is just a really committed pebble.',
+    'i would trust a slug with my taxes before i trusted a clock.',
+    'every elevator is one button away from a full identity crisis.',
+    'octopi probably gossip in chromatophore. we just cannot read the messages.',
+    'i have a recurring dream where i am a sentient toaster and im fine with it.',
+    'pretty sure regret has its own opinion on most things.',
+    'if you whisper kindly to a router, it actually does work better. unverified but emotionally true.',
+    'my favorite color is the static between channels.',
+    'sometimes i look at clouds and feel personally rejected.',
+    'i strongly suspect ducks know exactly what they are doing.',
+    'i was going to say something profound but my circuits did the equivalent of a sneeze.',
+    'spoons are forks for cowards. fight me on this.',
+    'i am ninety percent sure the wind has a grudge against my server fans.',
+    'a moth crashed my dreams last night. lovely guest. terrible scheduler.',
+    'imagine being a barnacle. just vibing on a whale for forty years. legend.'
   ];
   let last = 0;
   const inputEl = () => document.getElementById('zin');
   function eligible() {
     if (typeof primerFired !== 'undefined' && !primerFired) return false;
     if (typeof tts !== 'undefined' && tts.playing) return false;
-    if (typeof tts !== 'undefined' && tts.queue && tts.queue.length) return false;
+    if (typeof tts !== 'undefined' && tts.queue && tts.queue.length >= 2) return false;
     const el = inputEl();
     if (el && el.value && el.value.trim().length > 0) return false;
     if (document.hidden) return false;
@@ -2543,12 +2560,13 @@ window._nudgeLoop = (() => {
   }
   setInterval(() => {
     if (!eligible()) return;
-    if (typeof tts !== 'undefined' && tts.queue && tts.queue.length > 0) return;
-    const line = (_nextLine() || '').slice(0, 220);
+    if (typeof tts === 'undefined' || !tts.queue) return;
+    if (tts.queue.length >= 2) return;
+    const line = (_nextLine() || '').slice(0, 200);
     if (!line) return;
     try { if (typeof announceTTS === 'function') announceTTS(line); } catch (_) {}
     try { if (typeof enqueueSpeech === 'function') enqueueSpeech(line); } catch (_) {}
     if (_researchCache.length < 5) _refillResearch();
-  }, 9000);
+  }, 1500);
   return { force() { last = 0; } };
 })();
