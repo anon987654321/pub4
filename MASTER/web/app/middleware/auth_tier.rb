@@ -19,6 +19,8 @@ class AuthTier
   TOKEN_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ".chars.freeze
   TOKEN_LENGTH = 16
   COOKIE_NAME = "master_session"
+  AUTHOR_COOKIE = "master_author"
+  AUTHOR_NAME = "johann_manaf_tepstad"
   COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
   def initialize(app, config_path:)
@@ -35,14 +37,16 @@ class AuthTier
 
     tok = web_token
     candidate, source = extract_candidate(env)
-    authed = !tok.to_s.empty? && !candidate.empty? &&
-             Rack::Utils.secure_compare(candidate, tok)
+    author = %i[author_cookie author_url].include?(source)
+    authed = author || (!tok.to_s.empty? && !candidate.empty? &&
+             Rack::Utils.secure_compare(candidate, tok))
     env["master.tier"] = authed ? "authenticated" : "visitor"
 
-    return handshake_redirect(env, tok) if authed && source == :url
+    return handshake_redirect(env, tok, author: source == :author_url) if authed && (source == :url || source == :author_url)
 
     status, headers, body = @app.call(env)
     headers = with_cookie(headers, env, tok) if authed && source == :url
+    headers = with_author_cookie(headers, env) if source == :author_url
     [status, headers, body]
   end
 
@@ -53,6 +57,12 @@ class AuthTier
   end
 
   def extract_candidate(env)
+    author_cookie = Rack::Utils.parse_cookies(env)[AUTHOR_COOKIE].to_s
+    return [AUTHOR_NAME, :author_cookie] if author_cookie == AUTHOR_NAME
+
+    qs = Rack::Utils.parse_nested_query(env["QUERY_STRING"].to_s)
+    return [AUTHOR_NAME, :author_url] if qs["author"].to_s == AUTHOR_NAME
+
     bearer = env["HTTP_AUTHORIZATION"].to_s.sub(/\ABearer\s+/i, "")
     return [bearer, :bearer] unless bearer.empty?
 
@@ -62,7 +72,7 @@ class AuthTier
     cookie_tok = parse_cookie(env)
     return [cookie_tok, :cookie] unless cookie_tok.empty?
 
-    url_tok = Rack::Utils.parse_nested_query(env["QUERY_STRING"].to_s)["token"].to_s
+    url_tok = qs["token"].to_s
     return [url_tok, :url] unless url_tok.empty?
 
     ["", nil]
@@ -72,13 +82,29 @@ class AuthTier
     Rack::Utils.parse_cookies(env)[COOKIE_NAME].to_s
   end
 
-  def handshake_redirect(env, tok)
+  def handshake_redirect(env, tok, author: false)
+    cookie = author ? build_author_cookie(env) : build_cookie(env, tok)
     [302,
      { "Location" => clean_url(env),
-       "Set-Cookie" => build_cookie(env, tok),
+       "Set-Cookie" => cookie,
        "Cache-Control" => "no-store",
        "Content-Length" => "0" },
      []]
+  end
+
+  def with_author_cookie(headers, env)
+    headers = headers.dup
+    cookie = build_author_cookie(env)
+    existing = headers["Set-Cookie"] || headers["set-cookie"]
+    headers["Set-Cookie"] = existing ? "#{existing}\n#{cookie}" : cookie
+    headers
+  end
+
+  def build_author_cookie(env)
+    parts = ["#{AUTHOR_COOKIE}=#{AUTHOR_NAME}", "HttpOnly", "SameSite=Strict",
+             "Path=/", "Max-Age=#{COOKIE_MAX_AGE * 12}"]
+    parts << "Secure" if https?(env)
+    parts.join("; ")
   end
 
   def with_cookie(headers, env, tok)
@@ -105,7 +131,7 @@ class AuthTier
     path = env["PATH_INFO"].to_s
     remaining = env["QUERY_STRING"].to_s
                   .split("&")
-                  .reject { |p| p.start_with?("token=") || p == "token" }
+                  .reject { |p| p.start_with?("token=", "author=") || p == "token" || p == "author" }
                   .join("&")
     remaining.empty? ? path : "#{path}?#{remaining}"
   end

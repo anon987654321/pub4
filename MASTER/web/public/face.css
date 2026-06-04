@@ -295,7 +295,7 @@ body.zen #zsh.revealed { opacity: .96; pointer-events: auto; transform: none; }
 body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 #zsh .pp { color: rgba(180,80,80,.82); font-weight: 700; }
 #zsh .sep, #zsh .sep2 { color: var(--face-muted); margin-right: 0.4ch; }
-#zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; font-size: 16px; caret-color: var(--face-fg); padding: 2px 0; }
+#zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
 #zsh input::placeholder { color: rgba(220,220,220,.22); }
 
 /* Closed-caption strip (FA141) */
@@ -318,7 +318,7 @@ body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 
 /* Inline status text — shows thinking/speaking inside the prompt bar */
 #zsh-status {
-  font: 9px/1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
+  font: inherit;
   text-transform: uppercase;
   letter-spacing: .18em;
   color: var(--face-muted);
@@ -338,7 +338,7 @@ body[data-tts-error="true"] #zsh-status { opacity: 1; color: #c44; }
   background: none;
   border: none;
   color: var(--face-muted);
-  font: 14px/1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
+  font: inherit;
   cursor: pointer;
   padding: 0 0 0 8px;
   opacity: .45;
@@ -369,13 +369,13 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 @keyframes msgIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
 
 /* #35 User message right-align */
-.message.user { flex-direction:row-reverse; text-align:right; border-right:2px solid var(--mood-mid,rgba(220,220,220,.22)); border-left:none; padding-right:8px; padding-left:0; }
+.message.user { flex-direction:row-reverse; text-align:right; border:0; padding-right:8px; padding-left:0; }
 
 /* #36 Streaming cursor blink */
 @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
 
 /* #37 Code block */
-.msg-body pre, .msg-body code { background:rgba(220,220,220,.07); font-family:ui-monospace,monospace; padding:2px 5px; border-radius:2px; font-size:.88em; }
+.msg-body pre, .msg-body code { background:transparent; border-bottom:1px dotted rgba(126,179,255,.18); font-family:ui-monospace,monospace; padding:2px 5px; font-size:.88em; }
 .msg-body pre { display:block; padding:8px 10px; margin:4px 0; white-space:pre-wrap; }
 
 /* #38 dmesg accent */
@@ -405,7 +405,7 @@ body[data-mode="thinking"] #zin { opacity:.38; }
 body[data-mode="speaking"] #zin { opacity:.75; }
 
 /* #46 Char count */
-#char-count { font:9px/1 ui-monospace,monospace; color:var(--face-muted); opacity:0; transition:opacity .15s; white-space:nowrap; margin-left:4px; }
+#char-count { font: inherit; color:var(--face-muted); opacity:0; transition:opacity .15s; white-space:nowrap; margin-left:4px; }
 
 /* #47 Focus border brighten */
 #zsh:focus-within { border-top-color:rgba(220,220,220,.45); }
@@ -445,7 +445,7 @@ body[data-tts-loading="true"] #zsh-status { animation:ttsShimmer 700ms steps(4,e
 body[data-tts-wave="true"] #zsh-status { display:flex; align-items:center; gap:2px; }
 #zsh-wave { display:none; align-items:center; gap:2px; height:14px; margin-left:4px; }
 body[data-tts-wave="true"] #zsh-wave { display:flex; }
-#zsh-wave span { display:block; width:2px; background:var(--face-fg); border-radius:1px; animation:waveBar 600ms ease-in-out infinite; }
+#zsh-wave span { display:block; width:2px; background:var(--c-accent); border-radius:0; animation:waveBar 600ms ease-in-out infinite; }
 #zsh-wave span:nth-child(1){height:4px;animation-delay:0ms}
 #zsh-wave span:nth-child(2){height:8px;animation-delay:120ms}
 #zsh-wave span:nth-child(3){height:12px;animation-delay:60ms}
@@ -478,8 +478,9 @@ body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; transition:letter
 /* #80 Safe-area gradient behind prompt bar */
 #zsh::after { content:''; position:absolute; inset-block-end:100%; inset-inline:0; height:32px; background:linear-gradient(to bottom,transparent,var(--face-bg)); pointer-events:none; }
 
-/* Mood-driven scrollbar */
-#chat-log { scrollbar-width:thin; scrollbar-color:var(--mood-mid,rgba(220,220,220,.18)) transparent; }
+/* Hidden scrollbar — no grey bar */
+#chat-log { scrollbar-width:none; }
+#chat-log::-webkit-scrollbar { display:none; }
 
 /* #29 Mood saturation filter on canvas */
 body[data-runtime-profile="full"] canvas { filter:saturate(var(--mood-sat, 0.7)) brightness(1); }

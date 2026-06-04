@@ -38,7 +38,7 @@
   <div class="ui-status" id="ui-status" aria-live="polite" aria-atomic="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
   <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
-    <span class="pp">anon@master</span><span class="sep2">$ </span>
+    <span class="pp">master</span><span class="sep2">* </span>
     <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message">
     <span id="tts-rate" aria-label="TTS speed" title="Ctrl+[ / Ctrl+]"></span>
     <span id="char-count" aria-hidden="true"></span>
@@ -49,8 +49,9 @@
   <script>
     (function(){
       var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false;
-      function go(){if(fired)return;fired=true;window._primerFired=true;p.style.transition='opacity 160ms ease';p.style.opacity='0';setTimeout(function(){if(p&&p.parentNode)p.parentNode.removeChild(p);},220);if(z)z.classList.add('live');}
-      if(p){p.addEventListener('pointerdown',go);p.addEventListener('touchstart',go,{passive:true});p.addEventListener('click',go);p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter')go();});}
+      function go(){if(fired)return;fired=true;window._primerFired=true;if(p&&p.parentNode)p.parentNode.removeChild(p);if(z)z.classList.add('live');}
+      if(p){p.addEventListener('pointerdown',go,{passive:true});p.addEventListener('touchstart',go,{passive:true});p.addEventListener('click',go);p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter')go();});}
+      addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' '||e.key==='OK'))go();},{once:false});
     })();
   </script>
   <script type="module" src="/face.js?v=64"></script>
