@@ -47,3 +47,4 @@ node_modules/
 
 # Repo-relative temp dir
 tmp/
+DEPLOY/rails/*/vendor/bundle/\nDEPLOY/rails/*/vendor/\n*.so\n
