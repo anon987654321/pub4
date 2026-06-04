@@ -26,7 +26,7 @@ const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
-let FACE_PIXEL_SIZE = 0.022;
+let FACE_PIXEL_SIZE = 0.013;
 let FACE_GLOW_SCALE = 1.18;
 
 const FONT_KEY = 'master:font';
@@ -50,7 +50,7 @@ function setTtsRate(r) {
 }
 
 
-const GOLD = new Color(0.92, 0.78, 0.48);
+const GOLD = new Color(1, 1, 1);
 const TINT = {
   idle: GOLD, claude: GOLD, deepseek: GOLD, gemini: GOLD, gpt: GOLD,
   tense: GOLD, curious: GOLD, focused: GOLD, weary: GOLD,
@@ -1187,7 +1187,7 @@ cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoT
 // FA33 battery saver LOD
 if ('getBattery' in navigator) {
   navigator.getBattery().then(b => {
-    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.018; else FACE_PIXEL_SIZE = 0.022; };
+    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.010; else FACE_PIXEL_SIZE = 0.013; };
     check();
     b.addEventListener('levelchange', check);
     b.addEventListener('chargingchange', check);
@@ -2487,16 +2487,21 @@ window._dillaBg = (() => {
 
 window._nudgeLoop = (() => {
   const NUDGES = [
-    'want me to sound different? say switch voice davis, wayne, or ezinne',
-    'swap my face? try morph to puffy or trump',
-    'tell me your music taste — i will adapt the background',
-    'set my mood — calm, playful, intimate, stoic, sharp',
-    'what kind of person attracts you? describe and i will calibrate warmth',
-    'i can be your collaborator, mirror, mentor, or companion — pick',
-    'rate my pace — slower, faster, more deliberate, more urgent',
-    'what name fits me better than master?',
-    'describe your ideal partner — i will model my tone',
-    'change my accent or gender any time'
+    'curvature in spacetime — gravity is just geometry, no force at all',
+    'slime molds solve shortest-path problems without a brain. pure chemistry.',
+    'dreams might be the brain training its world model offline. sleep debug.',
+    'octopi taste with their suckers. imagine eating with your fingertips.',
+    'mitochondria were once free-living bacteria. you are a chimera.',
+    'language warps perception. russian speakers literally see more blues.',
+    'crows hold grudges across generations. they remember faces.',
+    'every atom heavier than iron came from a dying star.',
+    'gut cells produce more serotonin than the brain does.',
+    'time runs slower in a gravity well. your feet age slower than your head.',
+    'consciousness might be what an integrated information network feels like from inside.',
+    'the universe is observed to be expanding, but space itself stretches — not the objects in it.',
+    'mushrooms are closer relatives to animals than to plants.',
+    'a millisecond delay in nerve signaling is why touch and sight feel synchronous.',
+    'memory is reconstructive — every recall edits the original.'
   ];
   let last = 0;
   const inputEl = () => document.getElementById('zin');
@@ -2509,14 +2514,26 @@ window._nudgeLoop = (() => {
     if (document.hidden) return false;
     return true;
   }
+  let _researchCache = [];
+  async function _refillResearch() {
+    try {
+      const r = await fetch('/chat/research?n=20');
+      if (r.ok) { const j = await r.json(); if (Array.isArray(j.items)) _researchCache = j.items.concat(_researchCache).slice(0, 60); }
+    } catch (_) {}
+  }
+  _refillResearch();
+  setInterval(_refillResearch, 180000);
+  function _nextLine() {
+    if (_researchCache.length && Math.random() < 0.85) return _researchCache.shift();
+    return NUDGES[Math.floor(Math.random() * NUDGES.length)];
+  }
   setInterval(() => {
     if (!eligible()) return;
-    const now = Date.now();
-    if (now - last < 90000) return;
-    last = now;
-    const n = NUDGES[Math.floor(Math.random() * NUDGES.length)];
-    try { if (typeof announceTTS === 'function') announceTTS(n); } catch (_) {}
-    try { if (typeof enqueueSpeech === 'function') enqueueSpeech(n); } catch (_) {}
-  }, 25000);
+    const line = _nextLine();
+    if (!line) return;
+    try { if (typeof announceTTS === 'function') announceTTS(line); } catch (_) {}
+    try { if (typeof enqueueSpeech === 'function') enqueueSpeech(line); } catch (_) {}
+    if (_researchCache.length < 5) _refillResearch();
+  }, 3500);
   return { force() { last = 0; } };
 })();
