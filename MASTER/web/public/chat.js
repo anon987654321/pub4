@@ -260,6 +260,9 @@ async function sendMessage(text) {
       return;
     }
     if (raw.startsWith('ERROR:')) {
+      const voice = window.MASTERVoice;
+      if (voice?.enqueue && ttsBuffer.trim()) voice.enqueue(ttsBuffer.trim());
+      ttsBuffer = '';
       window._chatOnChunk?.('\n' + raw + '\n');
       window._chatOnError?.();
       return;
@@ -283,6 +286,9 @@ async function sendMessage(text) {
     try { window._chatOnThought?.(JSON.parse(ev.data)); } catch (_) {}
   });
   _evtSrc.onerror = () => {
+    const voice = window.MASTERVoice;
+    if (voice?.enqueue && ttsBuffer.trim()) voice.enqueue(ttsBuffer.trim());
+    ttsBuffer = '';
     try { _evtSrc.close(); } catch (_) {}
     window._chatOnError?.();
   };

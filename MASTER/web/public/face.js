@@ -158,6 +158,8 @@ matchMedia("(prefers-contrast: more)").addEventListener('change', event => {
 document.addEventListener('visibilitychange', () => {
   updateRuntimeProfile();
   if (!document.hidden && renderer) requestAnimationFrame(frame);
+  if (!document.hidden && tts && !tts.muted && tts.queue && tts.queue.length && !tts.playing) ttsTick();
+  if (!document.hidden && actx && actx.state === 'suspended') actx.resume().catch(() => {});
 }, { passive: true });
 
 let faceReadyMarked = false;
@@ -1243,7 +1245,7 @@ function beep(freq, dur) {
 
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
 const VISEME_STEP_MS = 90;
-const tts = { queue: [], prefetch: new Map(), muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en' };
+const tts = { queue: [], prefetch: new Map(), attempts: new Map(), retryTimer: null, muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en' };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'ryan';
@@ -1430,6 +1432,18 @@ function enqueueSpeech(text) {
   ttsTick();
 }
 
+function requeueChunk(text) {
+  if (!text) return false;
+  const n = (tts.attempts.get(text) || 0) + 1;
+  if (n > 3) { tts.attempts.delete(text); return false; }
+  tts.attempts.set(text, n);
+  tts.queue.unshift(text);
+  return true;
+}
+function scheduleTtsTick(delay) {
+  if (tts.retryTimer) clearTimeout(tts.retryTimer);
+  tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);
+}
 function ttsTick() {
   if (tts.muted || tts.playing) return;
   const text = tts.queue.shift();
@@ -1439,7 +1453,8 @@ function ttsTick() {
   setTTSLoading(true);
   if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
   if (tts.watchdog) clearTimeout(tts.watchdog);
-  tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: force-clearing stuck playback'); finishTTSPlayback(null, true); } }, 45000);
+  const wdMs = Math.min(120000, Math.max(20000, text.length * 180));
+  tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: requeue'); requeueChunk(text); finishTTSPlayback(null, true); } }, wdMs);
   State.mode = 'speaking'; setAmbientHum(false);
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
   const voice = tts.lang === 'nb' ? 'finn' : undefined;
@@ -1475,16 +1490,17 @@ function ttsTick() {
       rootBody.dataset.ttsWave = 'true';
     };
     audio.onended = audio.onerror = () => finishTTSPlayback(src);
-    audio.play().catch(() => finishTTSPlayback(src));
+    audio.play().catch(() => { requeueChunk(text); finishTTSPlayback(src); });
   }
 
   edgeBlob
     .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
     .catch(() => {
       tts.audio = null; tts.playing = false; setTTSLoading(false);
+      requeueChunk(text);
       const s = document.getElementById('zsh-status');
-      if (s) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
-      if (token === tts.cancelToken) ttsTick();
+      if (s && (tts.attempts.get(text) || 0) >= 3) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
+      if (token === tts.cancelToken) scheduleTtsTick(800);
     });
 }
 
@@ -1522,7 +1538,8 @@ function ttsSkip() {
   setTTSLoading(false);
   if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
   stopVisemeAnim();
-  tts.queue.length = 0; tts.prefetch.clear(); tts.playing = false; tts.current = null;
+  tts.queue.length = 0; tts.prefetch.clear(); tts.attempts.clear(); tts.playing = false; tts.current = null;
+  if (tts.retryTimer) { clearTimeout(tts.retryTimer); tts.retryTimer = null; }
   if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
