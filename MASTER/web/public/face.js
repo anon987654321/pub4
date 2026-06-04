@@ -2422,3 +2422,39 @@ window._dillaBg = (() => {
     } catch (_) {}
   };
 })();
+
+window._nudgeLoop = (() => {
+  const NUDGES = [
+    'want me to sound different? say switch voice davis, wayne, or ezinne',
+    'swap my face? try morph to puffy or trump',
+    'tell me your music taste — i will adapt the background',
+    'set my mood — calm, playful, intimate, stoic, sharp',
+    'what kind of person attracts you? describe and i will calibrate warmth',
+    'i can be your collaborator, mirror, mentor, or companion — pick',
+    'rate my pace — slower, faster, more deliberate, more urgent',
+    'what name fits me better than master?',
+    'describe your ideal partner — i will model my tone',
+    'change my accent or gender any time'
+  ];
+  let last = 0;
+  const inputEl = () => document.getElementById('zin');
+  function eligible() {
+    if (typeof primerFired !== 'undefined' && !primerFired) return false;
+    if (typeof tts !== 'undefined' && tts.playing) return false;
+    if (typeof tts !== 'undefined' && tts.queue && tts.queue.length) return false;
+    const el = inputEl();
+    if (el && el.value && el.value.trim().length > 0) return false;
+    if (document.hidden) return false;
+    return true;
+  }
+  setInterval(() => {
+    if (!eligible()) return;
+    const now = Date.now();
+    if (now - last < 90000) return;
+    last = now;
+    const n = NUDGES[Math.floor(Math.random() * NUDGES.length)];
+    try { if (typeof announceTTS === 'function') announceTTS(n); } catch (_) {}
+    try { if (typeof enqueueSpeech === 'function') enqueueSpeech(n); } catch (_) {}
+  }, 25000);
+  return { force() { last = 0; } };
+})();
