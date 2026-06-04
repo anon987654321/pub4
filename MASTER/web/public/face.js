@@ -499,7 +499,7 @@ function sampleDepthMapGrid(canvas, cols, rows) {
 
 const FACE_GRID_COLS = State.coarsePointer ? 32 : 52;
 const FACE_GRID_ROWS = State.coarsePointer ? 40 : 66;
-const FACE_N_2D = 200;
+const FACE_N_2D = 480;
 let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBoundary, faceZone, faceEdgeAlpha;
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
@@ -2189,7 +2189,12 @@ if (renderer) {
         const px = rx / dz * f2 + cw2 * 0.5;
         const py = -ry / dz * f2 + ch2 * 0.5;
         const sz = Math.max(2, 2.4 * f2 / (dz * 80));
-        ctx2.fillRect(px - sz * 0.5, py - sz * 0.5, sz, sz);
+const _dz2 = Math.max(0, Math.min(1, (pts[b+2] * 0.78 + 0.5)));
+const _r2 = (0.60 + _dz2 * 0.40) * 255 | 0;
+const _g2 = (0.64 + _dz2 * 0.30) * 255 | 0;
+const _b2 = (0.88 - _dz2 * 0.08) * 255 | 0;
+ctx2.fillStyle = `rgb(${_r2},${_g2},${_b2})`;
+ctx2.fillRect((px - sz * 0.5) | 0, (py - sz * 0.5) | 0, Math.ceil(sz), Math.ceil(sz));
       }
       ctx2.globalAlpha = 1.0;
 
