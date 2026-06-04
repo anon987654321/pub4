@@ -1,18 +1,22 @@
 #!/bin/ksh
-
-daemon="/usr/local/bin/ruby"
-daemon_flags=""
+PORT=38182
+APP_DIR=/home/brgen/app
+[ -r /etc/brgen.env ] && . /etc/brgen.env
+daemon="/usr/local/bin/bundle34"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} falcon serve --threaded --bind http://127.0.0.1:${PORT}"
 daemon_user="brgen"
-daemon_timeout=30
-
+daemon_execdir="${APP_DIR}"
+daemon_logger="daemon.notice"
+daemon_timeout="90"
 . /etc/rc.d/rc.subr
-
-pexp="ruby34 /home/brgen/app/vendor/bundle/ruby/3.4/bin/rackup.*"
+pexp="ruby34.*${PORT}"
 rc_bg=YES
 rc_reload=NO
 
-rc_start() {
-    su -l brgen -c "cd /home/brgen/app && RAILS_ENV=production /usr/local/bin/bundle exec rackup -s falcon -o 0.0.0.0 -p 11006 -E production -D -P /home/brgen/app/tmp/pids/server.pid"
+rc_pre() {
+  pkill -f "falcon.*${PORT}" 2>/dev/null || true
+  pkill -f "ruby34.*${PORT}" 2>/dev/null || true
+  sleep 1
 }
 
 rc_cmd $1
