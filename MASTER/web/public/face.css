@@ -2,7 +2,7 @@
 
 :root {
   --c-text: #d8d4cd;
-  --c-accent: #d04848;
+  --c-accent: #e9d49a;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -177,7 +177,7 @@ body[data-mode="listening"] #mic-dot {
 
 #primer h1 {
   margin: 0;
-  font: 100 clamp(2.4rem,11vw,5rem)/1 "Inter",Helvetica,Arial,sans-serif;
+  font: 200 clamp(1rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif;
   letter-spacing: -.04em;
   color: var(--face-fg);
   transition: transform var(--transition-fast) var(--ease-out);

@@ -50,23 +50,15 @@ function setTtsRate(r) {
 }
 
 
+const GOLD = new Color(0.92, 0.78, 0.48);
 const TINT = {
-  idle: new Color(0.55, 0.20, 0.22),
-  claude: new Color(0.55, 0.20, 0.22),
-  deepseek: new Color(0.55, 0.20, 0.22),
-  gemini: new Color(0.55, 0.20, 0.22),
-  gpt: new Color(0.55, 0.20, 0.22),
-  tense: new Color(0.70, 0.18, 0.20),
-  curious: new Color(0.55, 0.20, 0.22),
-  focused: new Color(0.55, 0.20, 0.22),
-  weary: new Color(0.40, 0.16, 0.18),
-  pass: new Color(0.55, 0.20, 0.22),
-  veto: new Color(0.78, 0.15, 0.15),
-  unclear: new Color(0.55, 0.20, 0.22)
+  idle: GOLD, claude: GOLD, deepseek: GOLD, gemini: GOLD, gpt: GOLD,
+  tense: GOLD, curious: GOLD, focused: GOLD, weary: GOLD,
+  pass: GOLD, veto: GOLD, unclear: GOLD
 };
 
 function dayNightTint() {
-  return new Color(0.55, 0.20, 0.22);
+  return new Color(0.92, 0.78, 0.48);
 }
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
@@ -1020,7 +1012,7 @@ function frame(t) {
     State.idleAlphaDrift = Math.sin(t * 0.000785) * 0.5 + 0.5;
     faceMat.uniforms.uIdleDrift.value = State.idleAlphaDrift;
     const idleS3 = (t - State.lastTouch) / 1000;
-    const eyeCloseTarget = (idleS3 > 18 && !tts.playing && State.mode === 'idle') ? Math.min(1, (idleS3 - 18) / 12) : 0;
+    const eyeCloseTarget = 0;
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
     morphGhost += (morphCurrent - morphGhost) * 0.035;
     faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524;
