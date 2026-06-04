@@ -1206,7 +1206,7 @@ cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoT
 // FA33 battery saver LOD
 if ('getBattery' in navigator) {
   navigator.getBattery().then(b => {
-    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.010; else FACE_PIXEL_SIZE = 0.013; };
+    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.010; else FACE_PIXEL_SIZE = 0.017; };
     check();
     b.addEventListener('levelchange', check);
     b.addEventListener('chargingchange', check);
@@ -1968,8 +1968,8 @@ document.addEventListener('keyup', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); cancelStream(); ttsSkip(); }
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }
-  if (e.key === t && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); ttsToggleMute(); }
-  if (e.key === m && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); startSTTOnce?.(); }
+  if (e.key === 't' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); ttsToggleMute(); }
+  if (e.key === 'm' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); startSTT?.(); }
   if (e.ctrlKey && (e.key === '[' || e.key === ',')) {
     e.preventDefault();
     const cur = getTtsRate();
@@ -2541,6 +2541,7 @@ window._nudgeLoop = (() => {
   const inputEl = () => document.getElementById('zin');
   function eligible() {
     if (typeof primerFired !== 'undefined' && !primerFired) return false;
+    if (typeof State !== 'undefined' && State.sleeping) return false;
     if (typeof tts !== 'undefined' && tts.playing) return false;
     if (typeof tts !== 'undefined' && tts.queue && tts.queue.length >= 2) return false;
     const el = inputEl();
