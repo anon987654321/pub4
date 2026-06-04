@@ -1814,7 +1814,7 @@ function startEverything() {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 let primerFired = false;
-function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
+function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); setTimeout(() => { try { window._dillaBg?.(); } catch (_) {} }, 1200); }
 primer?.addEventListener('pointerdown', firePrimer);
 primer?.addEventListener('touchstart', firePrimer, { passive: true });
 primer?.addEventListener('click', firePrimer);
@@ -2300,5 +2300,125 @@ window._endlessWhite = (() => {
       let i = 0; bar(i++); iv = setInterval(() => bar(i++), BEAT*4*1000);
       playing = true; return true;
     } catch (_) { return false; }
+  };
+})();
+
+window._dillaBg = (() => {
+  let ctx, master, padFilt, padGain, bassBus, shelf, hatGain, conv, convGain;
+  let playing = false, barIv = null, duckIv = null;
+  const CHORDS = [
+    [123.47, 146.83, 185.00, 220.00, 277.18],
+    [82.41,  123.47, 196.00, 246.94, 329.63],
+    [130.81, 164.81, 196.00, 246.94, 293.66],
+    [92.50,  138.59, 184.99, 233.08, 277.18]
+  ];
+  const BPM = 88, BEAT = 60 / BPM, BAR = BEAT * 4, SWING = 0.16;
+  function impulse(d, k) {
+    const sr = ctx.sampleRate, n = (sr * d) | 0, b = ctx.createBuffer(2, n, sr);
+    for (let c = 0; c < 2; c++) {
+      const x = b.getChannelData(c);
+      for (let i = 0; i < n; i++) x[i] = (Math.random()*2-1) * Math.pow(1 - i/n, k);
+    }
+    return b;
+  }
+  function noiseBuf(d) {
+    const sr = ctx.sampleRate, n = (sr * d) | 0, b = ctx.createBuffer(1, n, sr);
+    const x = b.getChannelData(0);
+    for (let i = 0; i < n; i++) x[i] = Math.random()*2 - 1;
+    return b;
+  }
+  function pad(freqs, when, len) {
+    freqs.forEach(f => {
+      [-7, 7].forEach(det => {
+        const o = ctx.createOscillator();
+        o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, when);
+        g.gain.linearRampToValueAtTime(0.05, when + 0.6);
+        g.gain.linearRampToValueAtTime(0.04, when + len - 0.4);
+        g.gain.linearRampToValueAtTime(0, when + len);
+        o.connect(g).connect(padFilt);
+        o.start(when); o.stop(when + len + 0.1);
+      });
+    });
+  }
+  function sub(when) {
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(70, when);
+    o.frequency.exponentialRampToValueAtTime(35, when + 0.06);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(0.95, when + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 1.6);
+    o.connect(g).connect(bassBus);
+    o.start(when); o.stop(when + 1.7);
+  }
+  function hat(when) {
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf(0.06);
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7800;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.04, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 0.05);
+    src.connect(hp).connect(g).connect(hatGain);
+    src.start(when); src.stop(when + 0.08);
+  }
+  function rim(when) {
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf(0.04);
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2000; bp.Q.value = 6;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.05, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 0.09);
+    src.connect(bp).connect(g).connect(hatGain);
+    src.start(when); src.stop(when + 0.1);
+  }
+  function setupBus() {
+    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    const lofi = ctx.createBiquadFilter(); lofi.type = 'lowpass'; lofi.frequency.value = 2200; lofi.Q.value = 0.7;
+    lofi.connect(master);
+    padFilt = ctx.createBiquadFilter(); padFilt.type = 'lowpass'; padFilt.frequency.value = 1700;
+    padGain = ctx.createGain(); padGain.gain.value = 0.55;
+    padFilt.connect(padGain).connect(lofi);
+    hatGain = ctx.createGain(); hatGain.gain.value = 0.45;
+    hatGain.connect(master);
+    shelf = ctx.createBiquadFilter(); shelf.type = 'lowshelf'; shelf.frequency.value = 80; shelf.gain.value = 9;
+    bassBus = ctx.createGain(); bassBus.gain.value = 0.92;
+    bassBus.connect(shelf).connect(master);
+    conv = ctx.createConvolver(); conv.buffer = impulse(2.4, 2.6);
+    convGain = ctx.createGain(); convGain.gain.value = 0.20;
+    padGain.connect(conv); conv.connect(convGain).connect(master);
+  }
+  function scheduleBar(bar, when) {
+    const chord = CHORDS[(bar >> 1) % CHORDS.length];
+    pad(chord, when, BAR + 0.2);
+    sub(when);
+    sub(when + BEAT * 2);
+    if (bar % 2 === 1) rim(when + BEAT * 2 + BEAT * SWING);
+    for (let i = 0; i < 8; i++) {
+      const isOff = (i & 1) === 1;
+      const t = when + (i * BEAT / 2) + (isOff ? BEAT * SWING * 0.5 : 0);
+      if (Math.random() > (isOff ? 0.30 : 0.58)) hat(t);
+    }
+  }
+  return () => {
+    if (playing) return;
+    try {
+      ctx = (typeof actx !== 'undefined' && actx) || new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+      setupBus();
+      playing = true;
+      let bar = 0;
+      const t0 = ctx.currentTime + 0.25;
+      scheduleBar(bar++, t0);
+      barIv = setInterval(() => { if (!playing) return; scheduleBar(bar++, ctx.currentTime + 0.05); }, BAR * 1000);
+      duckIv = setInterval(() => {
+        if (!playing) return;
+        const speaking = (typeof tts !== 'undefined') && tts.playing;
+        const target = speaking ? 0.025 : 0.14;
+        try { master.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5); } catch (_) {}
+      }, 500);
+      master.gain.setValueAtTime(0, ctx.currentTime);
+      master.gain.linearRampToValueAtTime(0.14, ctx.currentTime + 5);
+    } catch (_) {}
   };
 })();

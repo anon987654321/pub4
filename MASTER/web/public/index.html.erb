@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <%= csrf_meta_tags %>
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta name="master-runtime" content="face">
+  <meta name="master-visual-profile" content="auto">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>MASTER</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <link rel="preload" href="/face.css" as="style">
+  <link rel="modulepreload" href="/three.module.js?v=29">
+  <link rel="modulepreload" href="/face.js?v=29">
+  <link rel="stylesheet" href="/face.css?v=29">
+</head>
+<body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
+  <div class="top-left-logo" aria-hidden="true">maestro</div>
+  <canvas id="face" tabindex="0" aria-hidden="true"></canvas>
+  <div id="tts-live" aria-live="polite" aria-atomic="true"></div>
+  <div id="primer" role="dialog" aria-modal="true" aria-labelledby="primer-title" tabindex="0">
+    <h1 id="primer-title">tap to start</h1>
+  </div>
+  <main id="chat-shell" aria-label="MASTER chat">
+    <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
+  </main>
+  <div class="ui-status" id="ui-status" aria-live="polite" aria-atomic="true">idle</div>
+  <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+  <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
+    <span class="pp">master</span><span class="sep2">$ </span>
+    <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message">
+    <span id="char-count" aria-hidden="true"></span>
+    <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
+    <div id="zsh-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+    <button id="cancel-btn" type="button" aria-label="Cancel">×</button>
+  </form>
+  <script>
+    (function(){
+      var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false;
+      function go(){if(fired)return;fired=true;window._primerFired=true;p.style.transition='opacity 160ms ease';p.style.opacity='0';setTimeout(function(){if(p&&p.parentNode)p.parentNode.removeChild(p);},220);if(z)z.classList.add('live');}
+      if(p){p.addEventListener('pointerdown',go);p.addEventListener('touchstart',go,{passive:true});p.addEventListener('click',go);}
+      setTimeout(function(){if(!fired)go();},1200);
+    })();
+  </script>
+  <script type="module" src="/face.js?v=29"></script>
+  <script src="/chat.js?v=29" defer></script>
+</body>
+</html>

@@ -101,7 +101,6 @@ body[data-tts-loading="true"] .ui-status {
   text-rendering: optimizeLegibility;
   transition: opacity 1.2s var(--ease-out);
 }
-.top-left-logo.dim { opacity: .32; }
 
 /* Mic indicator — top-right, visible only during STT */
 #mic-dot {

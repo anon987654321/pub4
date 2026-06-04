@@ -13,12 +13,12 @@ class ChatController < ApplicationController
   skip_before_action :verify_authenticity_token, only: :command
 
   COUNCIL_PERSONA_VOICE = {
-    "Architect" => :ryan,
-    "Skeptic" => :steffan,
-    "Pragmatist" => :finn,
-    "Security" => :osman,
-    "User" => :ryan,
-    "Mentor" => :yasmin
+    "Architect" => :davis,
+    "Skeptic" => :wayne,
+    "Pragmatist" => :davis,
+    "Security" => :wayne,
+    "User" => :davis,
+    "Mentor" => :ezinne
   }.freeze
 
   PHOTO_UPLOAD_DIR = Rails.root.join("tmp", "chat_uploads")
@@ -67,8 +67,17 @@ class ChatController < ApplicationController
   end
 
   def command
-    cmd = params[:command] || JSON.parse(request.body.read)["command"]
-    return head(:forbidden) if visitor? && cmd.to_s.strip.start_with?("/")
+    cmd = (params[:command] || JSON.parse(request.body.read)["command"]).to_s.strip
+    if cmd.start_with?("/unlock ")
+      pw = cmd.sub(/^\/unlock\s+/, "").strip
+      token = ENV["MASTER_WEB_TOKEN"].to_s
+      if token.empty? || pw != token
+        render(json: { output: "unlock denied" }, status: 401) and return
+      end
+      cookies[:master_unlocked] = { value: "1", expires: 1.year.from_now, secure: true, httponly: true, same_site: :strict }
+      render(json: { output: "unlocked — full tool access enabled." }) and return
+    end
+    return head(:forbidden) if visitor? && cmd.start_with?("/")
 
     result = container[:gateway].receive(channel: :cli, message: cmd)
     output = result.ok? ? (result.value[:rendered] || result.value.to_s) : result.message
@@ -194,6 +203,7 @@ class ChatController < ApplicationController
 
     visitor = request.env["master.tier"] != "authenticated"
     Fiber[:master_visitor] = visitor
+    Fiber[:master_elevated] = cookies[:master_unlocked].to_s == "1" || cookies[:master_author].to_s.present?
 
     sse = response.stream
     begin
@@ -310,6 +320,7 @@ class ChatController < ApplicationController
       sse.write("data: [DONE]\n\n")
     ensure
       Fiber[:master_visitor] = nil
+      Fiber[:master_elevated] = nil
       begin
         tool_sub.call if defined?(tool_sub) && tool_sub
         mutate_sub.call if defined?(mutate_sub) && mutate_sub

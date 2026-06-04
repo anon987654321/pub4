@@ -20,19 +20,9 @@ module Master
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
 
       VOICES = {
-        osman: "ms-MY-OsmanNeural",
-        yasmin: "ms-MY-YasminNeural",
-        pernille: "nb-NO-PernilleNeural",
-        jenny: "en-US-JennyNeural",
-        aria: "en-US-AriaNeural",
-        ryan: "en-GB-RyanNeural",
-        finn: "nb-NO-FinnNeural",
-        steffan: "en-US-SteffanNeural",
-        andrew: "en-US-AndrewNeural",
-        guy: "en-US-GuyNeural",
-        william: "en-AU-WilliamNeural",
-        christopher: "en-US-ChristopherNeural",
-        eric: "en-US-EricNeural"
+        davis: "en-US-DavisNeural",
+        wayne: "en-SG-WayneNeural",
+        ezinne: "en-NG-EzinneNeural"
       }.freeze
 
       STYLES = {
@@ -57,14 +47,7 @@ module Master
         energetic:    { rate: "+15%", pitch: "+30Hz" }    # lively, higher
       }.freeze
 
-      # Osman character tuning (user request):
-      # - Slightly darker (lower) pitch for warmth and gravity
-      # - Slightly slower pacing for more deliberate, musical delivery
-      # - The combination + neural model gives more harmonious, human-like intonation
-      OSMAN_RATE_OFFSET  = "-7%"
-      OSMAN_PITCH_OFFSET = "-22Hz"
-
-      DEFAULT_VOICE = :ryan
+      DEFAULT_VOICE = :davis
       DEFAULT_STYLE = :calm
       MAX_CHARS = 900
       CHUNK_CHARS = 220
@@ -112,23 +95,8 @@ module Master
         end
       end
 
-      # Returns the final rate/pitch for a given voice + style.
-      # Applies Osman character tuning when appropriate (darker, slower, more musical).
       def style_config_for(voice, style)
-        base = STYLES.fetch(style.to_sym, STYLES[default_style]).dup
-        if voice.to_sym == :osman
-          base[:rate]  = apply_osman_offset(base[:rate],  OSMAN_RATE_OFFSET)
-          base[:pitch] = apply_osman_offset(base[:pitch], OSMAN_PITCH_OFFSET)
-        end
-        base
-      end
-
-      def apply_osman_offset(current, offset)
-        c_val = current.to_s[/[+-]?\d+/].to_i
-        o_val = offset.to_s[/[+-]?\d+/].to_i
-        unit  = current.to_s[/[A-Za-z%]+/] || offset.to_s[/[A-Za-z%]+/]
-        sign  = (c_val + o_val) >= 0 ? "+" : ""
-        "#{sign}#{c_val + o_val}#{unit}"
+        STYLES.fetch(style.to_sym, STYLES[default_style]).dup
       end
 
 

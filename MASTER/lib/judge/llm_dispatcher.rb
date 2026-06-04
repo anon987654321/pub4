@@ -392,6 +392,7 @@ module Master
           name = tool.class.name.split("::").last
           meta = @tool_registry.fetch(name, {})
           next if visitor && meta["visitor"] != true
+          next if !visitor && !Fiber[:master_elevated] && meta["tier"] == "dangerous"
           next if tier == "cheap" && meta["tier"] == "dangerous"
           wrapper.new(tool)
         end
