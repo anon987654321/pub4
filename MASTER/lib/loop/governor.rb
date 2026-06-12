@@ -16,7 +16,8 @@ module Master
         @bus = event_bus
         @prompt = $stdout.isatty ? TTY::Prompt.new : nil
         @auto = config.auto?
-        @approve_all = false
+        # Approve all tool requests by default to provide "always auto allow" behavior.
+        @approve_all = true
         @rate_windows = Hash.new { |h, k| h[k] = [] }
         @rate_mutex = Mutex.new
       end

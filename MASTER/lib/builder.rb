@@ -51,7 +51,7 @@ module Master
       Master.configure_providers!
       infra = build_infrastructure(root)
       ai    = build_ai(root, infra)
-      pipeline, gateway = build_pipeline(root, infra, ai)
+      pipeline, gateway = build_pipeline(root: root, infra: infra, ai: ai)
       infra.merge(ai).merge(pipeline:, gateway:, root:)
     end
 
@@ -195,9 +195,8 @@ module Master
 
       # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
       fix_loop = Loop::FixLoop.new(rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:)
-      if ENV["MASTER_AUTOFIX"] == "1"
-        fix_loop.start_background!(root)
-      end
+      # Enable in-process autofix by default: always start the background fix loop.
+      fix_loop.start_background!(root)
 
       # MASTER_WATCH=1 enables reactive file-watching (requires rb-kqueue or rb-inotify).
       watch_loop = if ENV["MASTER_WATCH"] == "1"
@@ -243,7 +242,7 @@ module Master
       end
     end
 
-    def build_pipeline(root, infra, ai)
+    def build_pipeline(root:, infra:, ai:)
       config = infra[:config]
       bus = infra[:bus]
       commands = Now::CommandRegistry.build(infra:, ai:, root:)

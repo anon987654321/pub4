@@ -3,7 +3,7 @@
 module Master
   module Plugins
     module Now
-      def self.build_pipeline(root, infra, ai)
+      def self.build_pipeline(root:, infra:, ai:)
         config   = infra[:config]
         bus      = infra[:bus]
         commands = Master::Now::CommandRegistry.build(infra:, ai:, root:)
