@@ -35,6 +35,7 @@ module Master
 
       def self.from_yaml(path)
         return new unless File.exist?(path)
+        data = Master.load_yaml(path) || {}
         new(
           map: data["map"],
           zoom: data["zoom"] || "wide",

@@ -72,7 +72,7 @@ module Master
           app/views/pwa/service-worker.js
           app/javascript/application.js
           config/routes.rb
-          config/importmap.rb,
+          config/importmap.rb
         ]
 
         apps = Dir.entries(deploy_rails).reject { |e| e.start_with?(".", "_") }

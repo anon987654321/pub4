@@ -25,10 +25,12 @@ module Master
       def call(path:, offset: 0, limit: MAX_LINES)
         key = [path, offset, limit]
         return @cache[key] if @cache.key?(key)
+        resolved = resolve(path)
         return resolved if resolved.err?
 
         full_path = resolved.value!
         return Result.err("not found: #{path}", category: :validation) unless File.exist?(full_path)
+        return Result.err("not a file: #{path}", category: :validation) unless File.file?(full_path)
 
         lines = File.readlines(full_path)
         total = lines.size

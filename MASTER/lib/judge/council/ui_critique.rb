@@ -11,7 +11,7 @@ module Master
         UI_PANEL = %w[
           Architect Graphic\ Designer Web\ Designer Electronic\ Music\ Producer
           Hip-Hop\ Producer Google\ CSS\ Engineer NNGroup\ UX\ Researcher
-          Accessibility User\ Advocate Layperson Skeptic,
+          Accessibility User\ Advocate Layperson Skeptic
         ].freeze
 
         def initialize(agent:, event_bus: nil)
@@ -77,7 +77,7 @@ module Master
             web/public/face.js
             web/public/chat.js
             web/app/views/chat/index.html.erb
-            lib/design/platform_profiles.rb,
+            lib/design/platform_profiles.rb
           ]
         end
 
@@ -102,7 +102,7 @@ module Master
             [
               Master::Design::PlatformProfiles.brief(:brutal_minimal),
               Master::Design::PlatformProfiles.brief(:medium),
-              Master::Design::PlatformProfiles.brief(:new_yorker),
+              Master::Design::PlatformProfiles.brief(:new_yorker)
             ].join("\n")
           else
             "Platform design profiles unavailable; default to content-first measurable critique."
@@ -119,7 +119,7 @@ module Master
             "solutions must be implementable without a build step",
             "use Ruby QualityFramework design rules from Deliberation",
             "use Master::Design::PlatformProfiles for content-first and profile-specific critique",
-            "distinguish measurable violations from subjective taste",
+            "distinguish measurable violations from subjective taste"
           ]
         end
 

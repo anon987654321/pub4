@@ -11,22 +11,22 @@ require_relative "../master_paths"
 module Providers
   class CatalogIndex
     DEFAULT_DB = MasterPaths.state("provider_catalog.sqlite3")
-    SOURCES = {.freeze
+    SOURCES = {
       "openrouter" => {
         url: "https://openrouter.ai/api/v1/models",
         kind: "llm_router",
-        normalizer: "openrouter",
+        normalizer: "openrouter"
       },
       "replicate" => {
         url: "https://api.replicate.com/v1/models",
         kind: "model_marketplace",
-        normalizer: "replicate",
+        normalizer: "replicate"
       },
       "replicate_github" => {
         url: ENV["REPLICATE_MODELS_INDEX_URL"],
         kind: "github_model_index",
-        normalizer: "replicate",
-      },
+        normalizer: "replicate"
+      }
     }.freeze
 
     def initialize(db_path: DEFAULT_DB)
@@ -40,6 +40,7 @@ module Providers
       source_url = url || source.fetch(:url)
       if source_url.nil? || source_url.empty?
         raise "missing URL for #{source_name}; set REPLICATE_MODELS_INDEX_URL or pass --url"
+      end
 
       payload = fetch_json(source_url, token: token)
       upsert_snapshot(source: source_name, kind: source.fetch(:kind), url: source_url, payload:)
@@ -128,6 +129,7 @@ module Providers
         http.request(request)
       end
       raise "#{url} returned #{response.code}: #{response.body[0, 200]}" unless response.is_a?(Net::HTTPSuccess)
+      JSON.parse(response.body)
     end
 
     def upsert_snapshot(source:, kind:, url:, payload:)
@@ -154,7 +156,7 @@ module Providers
             source, row.fetch(:id), row[:name], row[:description],
             row[:context_length], row[:input_modalities], row[:output_modalities],
             row[:price_prompt], row[:price_completion], row[:tags],
-            JSON.generate(row[:raw]), Time.now.utc.iso8601,
+            JSON.generate(row[:raw]), Time.now.utc.iso8601
           ])
         end
       end
@@ -194,7 +196,7 @@ module Providers
         price_prompt: pricing["prompt"].to_f,
         price_completion: pricing["completion"].to_f,
         tags: [architecture["modality"], architecture["tokenizer"], model["top_provider"]&.dig("context_length")].compact.join(","),
-        raw: model,
+        raw: model
       }
     end
 
@@ -214,7 +216,7 @@ module Providers
         price_prompt: nil,
         price_completion: nil,
         tags: Array(model["tags"] || model["categories"]).join(","),
-        raw: model,
+        raw: model
       }
     end
   end

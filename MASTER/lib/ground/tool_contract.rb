@@ -24,7 +24,7 @@ module Master
         :category
       )
 
-      REGISTRY = {.freeze
+      REGISTRY = {
         web_fetch: Contract.new(
           name: :web_fetch, inputs: { url: :required, headers: :optional },
           output_shape: [:body], permission: :network, timeout_s: 30, max_retries: 2,
@@ -69,7 +69,7 @@ module Master
           name: :repligen, inputs: { args: :optional },
           output_shape: %i[stdout stderr exit_code], permission: :network, timeout_s: 900,
           max_retries: 0, side_effects: %i[network process filesystem], category: :reach
-        ),
+        )
       }.freeze
 
       module_function
@@ -93,6 +93,7 @@ module Master
           guard = Master::Judge::Security::InjectionGuard.new
           check = guard.safe?(shell_input.to_s)
           return Result.err("#{name}: injection detected in input", category: :policy) unless check
+        end
 
         Result.ok(contract)
       end
@@ -100,6 +101,7 @@ module Master
       def permitted_for?(name, permission_level)
         contract = find(name)
         return false unless contract
+        permission_rank(contract.permission) <= permission_rank(permission_level)
       end
 
       def permission_rank(p)

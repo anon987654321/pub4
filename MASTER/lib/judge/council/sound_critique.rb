@@ -7,13 +7,13 @@ module Master
         COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
         MAX_FILE_BYTES = 24_576
 
-        SOUND_PANEL = [.freeze
+        SOUND_PANEL = [
           "Electronic Music Producer",
           "Hip-Hop Producer",
           "User Advocate",
           "Accessibility",
           "Layperson",
-          "Skeptic",
+          "Skeptic"
         ].freeze
 
         def initialize(agent:, event_bus: nil)
@@ -80,7 +80,7 @@ module Master
             web/app/views/chat/index.html.erb
             lib/voice/speech.rb
             lib/voice/dilla.rb
-            lib/voice/production_dna.rb,
+            lib/voice/production_dna.rb
           ]
         end
 
@@ -128,7 +128,7 @@ module Master
             "use Ruby QualityFramework sound rules from Deliberation",
             "when lo-fi processing is proposed, document it as opt-in and shell out via a dedicated worker, not inline",
             "when Dilla-style timing is proposed, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
-            "TTS backend is edge-tts via bin/tts-worker; espeak is the only fallback; no other TTS backends",
+            "TTS backend is edge-tts via bin/tts-worker; espeak is the only fallback; no other TTS backends"
           ]
         end
 
@@ -143,6 +143,7 @@ module Master
           left = a.downcase.scan(/\w+/).to_set
           right = b.downcase.scan(/\w+/).to_set
           return 0.0 if left.empty? || right.empty?
+          (left & right).size.to_f / left.size
         end
       end
     end

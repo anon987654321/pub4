@@ -20,8 +20,8 @@ module Master
               lines = ["active: #{active} memories, archived: #{archived}"]
               lines << "last consolidation: #{summary}" if summary
               lines.join("\n")
-            end,
-          },
+            end
+          }
         }
       end
 
@@ -60,12 +60,14 @@ module Master
       def list_by_type(memory, type)
         hits = memory.by_type(type)
         return "(no memories of type: #{type})" if hits.empty?
+        hits.map { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }.join("\n")
       end
 
       def memory_search(memory, query)
         if memory.respond_to?(:semantic_recall)
           hits = memory.semantic_recall(query)
           return "(no matches: #{query})" if hits.empty?
+          hits.map { |h| "#{h[:key]}: #{h[:value]}" }.join("\n")
         else
           hits = memory.all.select { |k, v| k.to_s.include?(query) || v.to_s.include?(query) }
           hits.empty? ? "(no matches: #{query})" : hits.map { |k, v| "#{k}: #{v}" }.join("\n")

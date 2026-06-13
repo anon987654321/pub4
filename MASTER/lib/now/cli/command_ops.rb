@@ -112,6 +112,7 @@ module Master
         if rows.empty?
           puts @renderer.render("propose: nothing pressing — try /history or scan a dir", mode: :dim)
           return
+        end
         puts @renderer.render("propose0: top #{rows.size} suggestion(s)", mode: :dim)
         rows.each_with_index do |r, i|
           line = format("  %d. %-22s %s", i + 1, r[:action], r[:reason])
@@ -129,6 +130,7 @@ module Master
         unless result.ok?
           puts @renderer.render("#{label}: #{result.message}", mode: :warning)
           return
+        end
         data = result.value!
         picks = data[:cherry_picks]
         puts @renderer.render("#{label}: #{picks.size} cherry-pick(s)", mode: :dim)
@@ -143,13 +145,14 @@ module Master
         lib_dir = File.join(Master::ROOT, "lib")
         errors = []
         changed_lib_files(lib_dir).each do |path|
-          ok = system("ruby34", "-c", path, out: File::NULL, err: File::NULL)
+          ok = system("ruby34 -c #{path} > /dev/null 2>&1")
           errors << path unless ok
         end
         if errors.any?
           errors.each { |p| puts @renderer.render("  syntax error: #{p}", mode: :warning) }
           puts @renderer.render("rebuild: aborted — fix errors first", mode: :warning)
           return
+        end
         @session.save!
         puts @renderer.render("rebuild: ok — exec'ing fresh process", mode: :dim)
         $stdout.flush
@@ -186,7 +189,7 @@ module Master
                     lib/ground/unfinished_ledger.rb lib/ground/orchestration_policy.rb],
           symbols: %w[Master::Ground::IntentRouter Master::Ground::AttentionContext
                       Master::Ground::UnfinishedLedger Master::Ground::OrchestrationPolicy],
-          callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify],
+          callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify]
         }
         checker = Master::Ground::DoneChecker.new
         result = checker.call(plan)
@@ -202,6 +205,7 @@ module Master
         unless File.exist?(ledger_path)
           puts @renderer.render("swallow-report: no ledger at #{ledger_path}", mode: :dim)
           return
+        end
         lines = File.readlines(ledger_path, chomp: true).last(5)
         last = begin
           lines.last && JSON.parse(lines.last)
@@ -212,6 +216,7 @@ module Master
         unless last
           puts @renderer.render("swallow-report: ledger empty or unreadable", mode: :dim)
           return
+        end
         puts @renderer.render("swallow-report: total=#{last["total"]} contexts=#{last["counts"]&.size}", mode: :dim)
         last["counts"].to_a.sort_by { |_, v| -v }.first(10).each do |ctx, n|
           puts @renderer.render("  #{n.to_s.rjust(4)}x #{ctx}", mode: :warning)
@@ -241,6 +246,7 @@ module Master
         op = Master::Rails::MobilePwaOperator.new(agent: @agent, event_bus: @bus)
         result = op.audit_all_deploy
         return puts @renderer.render("rails-pwa-fix: #{result.message}", mode: :warning) unless result.ok?
+        fixed = 0
         result.value!.each do |r|
           next puts @renderer.render("  !! #{r[:app]}: #{r[:error]}", mode: :warning) if r[:error]
           next if r[:verdict] == :green

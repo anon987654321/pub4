@@ -9,30 +9,30 @@ module Master
     SNAPSHOT_MAX_BYTES = 50_000
     SNAPSHOT_DIRS      = %w[bin lib data].freeze
 
-    TOOL_MAP = {.freeze
+    TOOL_MAP = {
       "ReadFile" => ->(r, i) {
-        Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus]),
+        Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus])
       },
       "WriteFile" => ->(r, i) {
         Reach::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
-          event_bus: i[:bus], diff_stager: i[:diff_stager]),
+          event_bus: i[:bus], diff_stager: i[:diff_stager])
       },
       "StrReplace" => ->(r, i) {
         Reach::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
-          event_bus: i[:bus], diff_stager: i[:diff_stager]),
+          event_bus: i[:bus], diff_stager: i[:diff_stager])
       },
       "BatchReplace" => ->(r, i) {
-        Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]),
+        Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus])
       },
       "AstEdit" => ->(r, i) {
-        Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus]),
+        Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
       },
       "Tree" => ->(r, i) { Reach::Tree.new(root: r, event_bus: i[:bus]) },
       "ListDir" => ->(r, i) { Reach::ListDir.new(root: r, event_bus: i[:bus]) },
       "SearchFiles" => ->(r, i) { Reach::SearchFiles.new(root: r, event_bus: i[:bus]) },
       "SearchKnowledge" => ->(r, i) { Reach::SearchKnowledge.new(root: r, event_bus: i[:bus]) },
       "SymbolLookup" => ->(r, i) {
-        Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus]),
+        Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus])
       },
       "Shell" => ->(r, i) { Reach::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "GitContext" => ->(r, i) { Reach::GitContext.new(root: r, event_bus: i[:bus]) },
@@ -41,8 +41,8 @@ module Master
       "Clean" => ->(r, i) { Reach::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "FeedbackRecord" => ->(r, i) { Reach::FeedbackRecord.new(learnings: i[:learnings]) },
       "MemoryRecord" => ->(r, i) {
-        Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus]),
-      },
+        Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus])
+      }
     }.freeze
 
     module_function
@@ -236,6 +236,7 @@ module Master
       path = File.join(root, "data", "tools.yml")
       defs = Master.load_yaml(path)
       return [] unless defs.is_a?(Array)
+      defs.filter_map do |defn|
         next unless defn["default"] == true
         factory = TOOL_MAP[defn["name"].to_s]
         next infra[:bus]&.publish("builder:tool_skipped", tool: defn["name"]) unless factory
@@ -260,7 +261,7 @@ module Master
           bus:
         ),
         Now::Stages::Memory.new(memory: infra[:memory], event_bus: bus),
-        Now::Stages::Render.new(renderer: infra[:renderer]),
+        Now::Stages::Render.new(renderer: infra[:renderer])
       ]
       pipeline = Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:, scanner: ai[:scanner])
       ai[:standing].wire_pipeline(pipeline)

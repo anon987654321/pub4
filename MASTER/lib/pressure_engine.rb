@@ -5,24 +5,24 @@ module Master
   # entropy, confidence, contradiction, turbulence, gravity, scrutiny.
   # Does not mutate runtime behavior; downstream systems read pressure/stability/weather_state.
   class PressureEngine
-    DEFAULT_FIELDS = {.freeze
+    DEFAULT_FIELDS = {
       entropy: 0.0,
       confidence: 1.0,
       contradiction: 0.0,
       turbulence: 0.0,
       gravity: 0.0,
-      scrutiny: 0.0,
+      scrutiny: 0.0
     }.freeze
 
     HISTORY_CAP = 120
 
     # Pressure formula weights (must sum to 1.0 across all fields)
-    PRESSURE_W = {.freeze
+    PRESSURE_W = {
       entropy: 0.28,
       contradiction: 0.24,
       turbulence: 0.20,
       scrutiny: 0.14,
-      confidence_inv: 0.14,
+      confidence_inv: 0.14
     }.freeze
     STABILITY_GRAVITY_W = 0.25
     WEATHER_FRACTURE = 0.85
@@ -32,40 +32,40 @@ module Master
 
     # Each rule: [weight, :name|:payload_bool|:payload_float, pattern_or_key]
     # Negative weights subtract. :payload_float multiplies weight by the payload value.
-    FIELD_DELTAS = {.freeze
+    FIELD_DELTAS = {
       entropy: [
         [+0.18, :name, /error|failed|rollback|exception/],
         [+0.12, :name, /contradiction|conflict/],
         [+0.08, :payload_bool, :uncertain],
-        [-0.05, :name, /resolved|stabilized|merged/],
+        [-0.05, :name, /resolved|stabilized|merged/]
       ],
       confidence: [
         [+0.08, :payload_float, :confidence],
         [-0.12, :name, /fallback|guess|uncertain/],
         [-0.18, :name, /contradiction|failed/],
-        [+0.06, :name, /verified|confirmed|tested/],
+        [+0.06, :name, /verified|confirmed|tested/]
       ],
       contradiction: [
         [+0.35, :name, /contradiction|fracture|disagree/],
         [+0.12, :payload_bool, :veto],
-        [-0.08, :name, /consensus|aligned|merged/],
+        [-0.08, :name, /consensus|aligned|merged/]
       ],
       turbulence: [
         [+0.18, :name, /retry|loop|escalat/],
         [+0.10, :payload_bool, :parallel],
         [+0.12, :payload_bool, :recursive],
-        [-0.06, :name, /stable|idle/],
+        [-0.06, :name, /stable|idle/]
       ],
       gravity: [
         [+0.16, :name, /memory|retrieve|reference|evidence/],
         [+0.08, :payload_bool, :citations],
-        [-0.04, :name, /drift|fragment/],
+        [-0.04, :name, /drift|fragment/]
       ],
       scrutiny: [
         [+0.16, :name, /judge|scrutiny|epistemic|verify/],
         [+0.10, :payload_bool, :critique],
-        [-0.05, :name, /blind|unchecked/],
-      ],
+        [-0.05, :name, /blind|unchecked/]
+      ]
     }.freeze
 
     attr_reader :fields
@@ -97,7 +97,9 @@ module Master
 
     def weather_state
       return :fracture if pressure >= WEATHER_FRACTURE
+      return :storm if pressure >= WEATHER_STORM
       return :unstable if pressure >= WEATHER_UNSTABLE
+      return :active if pressure >= WEATHER_ACTIVE
       :calm
     end
 

@@ -37,7 +37,7 @@ module Master
 
       def wire_constitution(constitution) = @constitution = constitution
 
-      def chat(message, image: nil, stream: true, escalation_depth: 0, &blk)
+      def chat(message, stream: true, escalation_depth: 0, &blk)
         prepare_chat_turn(message)
         candidate_models = routed_models(message)
         selected_model = candidate_models.first
@@ -50,10 +50,11 @@ module Master
         rate_err = check_rate_limit(selected_model)
         return rate_err if rate_err
 
-        response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image: image, &blk)
+        response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
         if response.is_a?(Master::Result::Err)
           @deps.homeostat&.observe(:llm_failure)
           return response
+        end
         @deps.homeostat&.observe(:llm_success)
         response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
 
@@ -76,31 +77,27 @@ module Master
       rescue Reach::CircuitBreaker::CircuitError => err
         Result.err(err.message, category: err.category)
       end
-      private :prepare_chat_turn, :check_rate_limit
 
-      def ask(prompt, context: nil, operation: nil, image: nil)
+      def ask(prompt, context: nil, operation: nil)
         messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
         selected_model = operation ? model_for(operation:) : routed_models.first
-        result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image: image)
+        result = @dispatcher.send_with_cache(selected_model, messages, stream: false)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
+        result.to_s
       end
 
-      def ask_once(prompt, system: nil, model: nil, image: nil)
+      def ask_once(prompt, system: nil, model: nil)
         messages = [{ role: "user", content: prompt.to_s }]
-        result   = @dispatcher.send_with_cache(model || self.model, messages, system:, stream: false, image: image)
+        result   = @dispatcher.send_with_cache(model || self.model, messages, system:, stream: false)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
+        result.to_s
       end
 
       def call(ctx)
         on_chunk = ctx[:on_chunk]
         task_type = ctx[:task_type]&.to_s
-        image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
         with_task_type(task_type) do
-          if on_chunk
-            chat(ctx[:message].to_s, image: image, stream: true, &on_chunk)
-          else
-            chat(ctx[:message].to_s, image: image)
-          end
+          on_chunk ? chat(ctx[:message].to_s, stream: true, &on_chunk) : chat(ctx[:message].to_s)
         end
       end
 
@@ -132,6 +129,7 @@ module Master
 
       def with_task_type(type)
         return yield unless type && !type.empty?
+        old = @config["task_type"]
         @config["task_type"] = type
         yield
       ensure
@@ -143,11 +141,13 @@ module Master
       def topic_anchored(message)
         topic = @session.respond_to?(:topic) && @session.topic
         return message unless topic
+        return message if @session.messages.length < TOPIC_DRIFT_THRESHOLD
         "#{message}\n\n[task: #{topic}]"
       end
 
       def apply_reasoning_mode(message, mode: @config.reasoning_mode)
         return message unless @reasoning_modes
+        @reasoning_modes.wrap(message, mode:)
       end
 
       def static_prompt
@@ -172,9 +172,10 @@ module Master
       def conversation_context(max_messages: DEFAULT_MESSAGE_WINDOW_SIZE)
         messages = @session.messages
         return [] unless messages.respond_to?(:each)
+        messages.last(max_messages + 1)[0...-1] || []
       end
 
-      def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image: nil, &blk)
+      def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
         stage_warnings = []
         fallback_modes = mode_chain_for(candidate_models)
         last_response = nil
@@ -186,12 +187,13 @@ module Master
           response = @dispatcher.send_with_cache(
             selected_model,
             context + [{ role: "user", content: wrapped }],
-            stream:, image: image, &blk
+            stream:, &blk
           )
           if response.is_a?(Master::Result::Ok)
             publish_llm_success(selected_model, response)
             @bus&.publish("agent:stage_warnings", warnings: stage_warnings) unless stage_warnings.empty?
             return response
+          end
 
           last_response = response
           stage_warnings << "llm failed in #{mode} on #{selected_model}: #{response.message}"
@@ -221,6 +223,7 @@ module Master
 
       def maybe_escalate(last_response, original_message, stream:, escalation_depth:, &blk)
         return last_response unless @model_router
+        return last_response if escalation_depth >= 2
 
         current = routed_models.first
         escalation_model = @model_router.escalate_if_low_confidence(
@@ -229,6 +232,7 @@ module Master
           task_type: @config.task_type.to_sym
         )
         return last_response unless escalation_model
+        return last_response if escalation_model.to_s == current.to_s
 
         @bus&.publish("llm:escalation", from: current, to: escalation_model)
         escalated = attempt_chat_with_fallbacks(
@@ -243,9 +247,11 @@ module Master
 
       def routed_models(message = nil)
         return [@config.model] unless @model_router
+        task = message ? @model_router.classify_intent(message) : @config.task_type.to_sym
         chain = @model_router.fallback_chain(task_type: task)
         bias = @homeostat&.model_tier_bias
         return cheap_first(chain)  if bias == :cheap
+        return strong_first(chain) if bias == :strong
         chain
       rescue StandardError => e
         @bus&.publish("llm:route_error", error: e.message)

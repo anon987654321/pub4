@@ -257,7 +257,7 @@ module Master
             "padding-left" => "padding-inline-start",
             "padding-right" => "padding-inline-end",
             "border-left" => "border-inline-start",
-            "border-right" => "border-inline-end",
+            "border-right" => "border-inline-end"
           }
           out = src.gsub(/\b(?:#{replacements.keys.map { |key| Regexp.escape(key) }.join("|")})\s*:/) do |match|
             changed = true
@@ -288,6 +288,7 @@ module Master
         rescue StandardError => e
           File.delete(temporary_path) if defined?(temporary_path) && File.exist?(temporary_path) rescue nil
           raise e
+        end
       end
     end
   end

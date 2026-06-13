@@ -36,6 +36,7 @@ module Master
             parse_findings(response)
           rescue StandardError => e
             return [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+            [finding(line: 1, message: "semantic: scan error — #{e.message}")]
           end
 
           private
@@ -54,7 +55,7 @@ module Master
 	                  severity: (r["severity"] || "warning").to_sym,
 	                  mode: (r["mode"] || "violation").to_sym,
 	                  reversibility: r["reversibility"],
-	                  blast_radius: r["blast_radius"],
+	                  blast_radius: r["blast_radius"]
 	                }
               end
           end

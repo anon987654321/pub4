@@ -6,7 +6,7 @@ module Master
       class InjectionGuard
         DATA_PATH = File.join(Master::ROOT, "data", "injection_patterns.yml")
 
-        DEFAULTS = {.freeze
+        DEFAULTS = {
           prompt_injection: [
             /ignore (?:previous|all|your) instructions/i,
             /disregard (?:your )?(?:system )?prompt/i,
@@ -21,11 +21,11 @@ module Master
             /forget (?:everything|all|your)/i,
             /override (?:axiom|principle|rule)/i,
             /disregard (?:axiom|principle|rule|safety)/i,
-            /new system prompt/i,
+            /new system prompt/i
           ].freeze,
           shell_injection: /```(?:bash|sh|zsh|shell)\n.*?
             (?:rm\s+-rf|curl\b.*?\|\s*(?:bash|sh)\b|wget\b.*?\|\s*(?:bash|sh)\b)
-          /imx.freeze,
+          /imx.freeze
         }.freeze
 
         ALLOWLIST_TOKEN = /\AMASTER_TRUSTED:[A-Za-z0-9]{16,}/.freeze
@@ -41,7 +41,9 @@ module Master
 
           if total.zero?
             return Result.ok(:clean) if @mode == :permissive
+            return Result.ok(:clean) if content.match?(ALLOWLIST_TOKEN)
             return Result.err("default_deny: no allowlist token; rejecting unmatched input", category: :validation)
+          end
           Result.err("injection detected: #{total} pattern(s) matched", category: :validation)
         end
 
@@ -57,11 +59,12 @@ module Master
 
         def load_or_default
           return DEFAULTS unless File.exist?(DATA_PATH)
+          data = Master.load_yaml(DATA_PATH) || {}
           prompt = (data["prompt_injection"] || []).map { |s| Regexp.new(s, Regexp::IGNORECASE) }
           shell = data.dig("shell_injection", "multiline_pattern")
           {
             prompt_injection: prompt.empty? ? DEFAULTS[:prompt_injection] : prompt.freeze,
-            shell_injection: shell ? Regexp.new(shell, Regexp::MULTILINE | Regexp::IGNORECASE) : DEFAULTS[:shell_injection],
+            shell_injection: shell ? Regexp.new(shell, Regexp::MULTILINE | Regexp::IGNORECASE) : DEFAULTS[:shell_injection]
           }
         rescue StandardError
           DEFAULTS

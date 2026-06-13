@@ -16,6 +16,7 @@ module Master
 
       def check_and_compact!
         return Result.ok(:ok) unless agent
+        return Result.ok(:ok) unless safe_to_compact?
 
         compact!
       end

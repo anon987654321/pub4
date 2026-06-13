@@ -46,6 +46,7 @@ module Master
         def visit_call_node(node)
           method_name = node.name.to_s
           return super unless method_name.match?(/\A[_a-z][a-z0-9_]*[!?]?\z/i) && method_name.length > 1
+          receiver_fqn = node.receiver ? const_name_safe(node.receiver) : nil
           to_fqn = receiver_fqn ? "#{receiver_fqn}##{method_name}" : method_name
           @references << Reference.new(from_file: @file, from_line: node.location.start_line,
                                        to_fqn:, ref_type: :call)
@@ -56,6 +57,7 @@ module Master
 
         def qualified(name)
           return name if @scope.empty? || name.include?("::")
+          "#{@scope.join("::")}::#{name}"
         end
 
         def const_name(node)
@@ -157,7 +159,7 @@ module Master
           [
             "# Codebase: #{lib_count} lib symbols (indexed #{stamp})",
             "## Classes & Modules (#{classes.size})",
-            *classes,
+            *classes
           ].join("\n")
         end
       end
@@ -204,6 +206,7 @@ module Master
       def reindex_if_stale(file)
         mt = (File.mtime(file) rescue nil)
         return false if @mtimes[file] == mt
+        reindex(file)
         @mtimes[file] = mt
         true
       end
@@ -226,12 +229,15 @@ module Master
       def find_locked(name)
         exact = @symbols[name]
         return [exact] if exact
+        suffix = name.to_s
         @symbols.values.select { |sym| fqn = sym.fqn; fqn.end_with?(suffix) || fqn.include?(suffix) }
       end
 
       def summary_class?(sym)
         return false unless %i[class module].include?(sym.type)
+        file = sym.file
         return false if file.include?("/DEPLOY/") || file.match?(/fix_|patch_/)
+        fqn = sym.fqn
         SUMMARY_SKIP_NAMES.none? { |n| fqn.end_with?("::#{n}") }
       end
 
@@ -256,7 +262,7 @@ module Master
           file: relativize(sym.file),
           line: sym.line,
           parent: sym.parent,
-          used_in: refs.first(10).map { |r| "#{relativize(r.from_file)}:#{r.from_line}" },
+          used_in: refs.first(10).map { |r| "#{relativize(r.from_file)}:#{r.from_line}" }
         }
       end
 

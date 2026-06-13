@@ -18,40 +18,10 @@ module Master
     class RuleLoop
       RATE_LIMIT_SLEEP = 10
       MAX_FIX_RETRIES = 2
-      # Genetic autofix explores three variants before rescanning and choosing the lowest-violation candidate.
-      GENETIC_AUTOFIX_CANDIDATES = 3
+      CANDIDATE_COUNT = 3
 
       SEVERITY_RANK = Master::SEVERITY_RANK
       MIN_SEVERITY = SEVERITY_RANK[:warning]
-      @soul_preamble_mutex = Mutex.new
-      @soul_preamble_cache = nil
-
-      class << self
-        def clear_preamble_cache!
-          @soul_preamble_mutex.synchronize { @soul_preamble_cache = nil }
-        end
-
-        def soul_preamble
-          @soul_preamble_mutex.synchronize do
-            @soul_preamble_cache ||= build_soul_preamble
-          end
-        end
-
-        private
-
-        def build_soul_preamble
-          soul   = Master.load_yaml(Master.data_path("soul.yml"))
-          abs    = soul.fetch("absolute", {})
-          golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-          lines  = ["Golden rule: #{golden}",
-                    "Minimum change that eliminates the violation. Do not touch unrelated code."]
-          abs.fetch("code_rules", {}).each { |key, value| lines << "- #{key}: #{value}" }
-          abs.fetch("aesthetic_rules", {}).each { |key, value| lines << "- #{key}: #{value}" }
-          lines.join("\n")
-        rescue StandardError
-          "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-        end
-      end
 
       include Master::Ground::AtomicWrite
       include Master::Loop::FixHelpers
@@ -112,15 +82,19 @@ module Master
       def council_fix(violation)
         path = violation[:file]
         return unless File.exist?(path)
+        src    = File.read(path, encoding: "UTF-8")
         prompt = build_prompt_for(violation, src, path, style: :council)
         MAX_FIX_RETRIES.times do |attempt|
           sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
           response = @agent.ask(prompt).to_s
           return nil if response.strip == "UNCHANGED"
+          code = extract_code(response, File.extname(path).downcase)
           return code if code && code.strip != src.strip
+        rescue StandardError => e
           action = handle_fix_exception(e, violation, event: "rule_loop:council_error")
           next if action == :retry
           return nil
+        end
         nil
       end
 
@@ -128,6 +102,7 @@ module Master
       def request_fix(violation)
         path = violation[:file]
         return unless File.exist?(path)
+        src = File.read(path, encoding: "UTF-8")
         src.bytesize > PatchApplier::DIFF_THRESHOLD ? diff_fix(violation, src, path) : genetic_fix(violation, src, path)
       end
 
@@ -140,17 +115,19 @@ module Master
           next if response.strip == "UNCHANGED"
           result = PatchApplier.apply(src, response)
           return result.source if result.is_a?(PatchApplier::Success)
+        rescue StandardError => e
           action = handle_fix_exception(e, violation, event: "rule_loop:fix_error")
           next if action == :retry
           return nil
+        end
         nil
       end
 
-      # Architecture #9: generate candidates, rescan each, apply lowest-violation winner.
+      # Architecture #9: generate CANDIDATE_COUNT fixes, rescan each, apply lowest-violation winner.
       def genetic_fix(violation, src, path)
         ext    = File.extname(path).downcase
         prompt = build_prompt_for(violation, src, path)
-        candidates = GENETIC_AUTOFIX_CANDIDATES.times.filter_map do |attempt|
+        candidates = CANDIDATE_COUNT.times.filter_map do |attempt|
           sleep RATE_LIMIT_SLEEP if attempt.positive?
           code = extract_code(@agent.ask(prompt).to_s, ext)
           code if code && code.strip != src.strip
@@ -164,13 +141,9 @@ module Master
 
       def best_candidate(candidates, path)
         return nil if candidates.empty?
-        orig = File.read(path, encoding: "utf-8") rescue nil
-        baseline = orig ? (rescan_candidate(orig, path) rescue nil) : nil
-        scored = candidates.filter_map do |c|
-          count = rescan_candidate(c, path)
-          [count, c] unless baseline && count > baseline
-        end
-        scored.empty? ? nil : scored.min_by(&:first).last
+        return candidates.first if candidates.size == 1
+        scored = candidates.filter_map { |c| [rescan_candidate(c, path), c] }
+        scored.empty? ? candidates.first : scored.min_by(&:first).last
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "RuleLoop.best_candidate", rule: @rule.id)
         candidates.first
@@ -209,6 +182,7 @@ module Master
         message = error.message.to_s
         if Master::Loop::Constants::TRANSIENT_RE.match?(message)
           return :retry
+        elsif Master::Loop::Constants::PERMANENT_RE.match?(message)
           @bus&.publish("rule_loop:fail_fast", rule: violation[:rule], file: violation[:file], error: message[0, 120])
         elsif Master::Loop::Constants::AMBIGUOUS_RE.match?(message)
           @bus&.publish("rule_loop:human_intervention", rule: violation[:rule], file: violation[:file], error: message[0, 120])
@@ -259,12 +233,24 @@ module Master
       end
 
       def preamble
-        @injected_preamble || self.class.soul_preamble
+        @preamble ||= @injected_preamble || begin
+          soul   = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
+          abs    = soul.fetch("absolute", {})
+          golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+          lines  = ["Golden rule: #{golden}",
+                    "Minimum change that eliminates the violation. Do not touch unrelated code."]
+          abs.fetch("code_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
+          abs.fetch("aesthetic_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
+          lines.join("\n")
+        rescue StandardError
+          "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+        end
       end
 
       # Architecture #10: record fix quality in learnings store.
       def record_outcomes(files, outcome)
         return unless @learnings
+        ext = files.filter_map { |f| File.extname(f).downcase.delete(".").presence }.tally.max_by { |_, n| n }&.first || "unknown"
         @learnings.record(rule: @rule.id, file_type: ext, outcome:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rule_loop.record_outcomes", event_bus: @bus, rule: @rule.id)

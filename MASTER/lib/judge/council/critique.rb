@@ -7,14 +7,14 @@ module Master
       # Each mode is a config hash: preset key, default files/panel, context
       # briefs, constraints, ideation prompt, byte cap, event names.
       class Critique
-        MODES = {.freeze
+        MODES = {
           ui: {
             preset_key: "ui_critique",
             max_bytes: 32_768,
             panel: nil,
             files: %w[
               web/public/face.css web/public/face.js web/public/chat.js
-              web/app/views/chat/index.html.erb lib/design/platform_profiles.rb,
+              web/app/views/chat/index.html.erb lib/design/platform_profiles.rb
             ],
             quality_kind: :design,
             ideation_prompt: "Generate concrete multi-solution improvements for this web UI. " \
@@ -29,20 +29,20 @@ module Master
               "solutions must be implementable without a build step",
               "use Ruby QualityFramework design rules from Deliberation",
               "use Master::Design::PlatformProfiles for content-first and profile-specific critique",
-              "distinguish measurable violations from subjective taste",
-            ],
+              "distinguish measurable violations from subjective taste"
+            ]
           },
           sound: {
             preset_key: "sound_critique",
             max_bytes: 24_576,
             panel: %w[
               Electronic\ Music\ Producer Hip-Hop\ Producer User\ Advocate
-              Accessibility Layperson Skeptic,
+              Accessibility Layperson Skeptic
             ],
             files: %w[
               web/public/chat.js web/public/face.js web/public/visual_bridge.js
               web/app/views/chat/index.html.erb lib/voice/speech.rb lib/voice/dilla.rb
-              lib/voice/production_dna.rb,
+              lib/voice/production_dna.rb
             ],
             quality_kind: :sound,
             ideation_prompt: "Generate concrete improvements for MASTER sound design, voice " \
@@ -59,8 +59,8 @@ module Master
               "preserve existing visual identity",
               "use Ruby QualityFramework sound rules from Deliberation",
               "when Dilla-style timing is proposed, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
-            ],
-          },
+            ]
+          }
         }.freeze
 
         def initialize(mode:, agent:, event_bus: nil)
@@ -95,6 +95,7 @@ module Master
 
         def load_preset
           return {} unless File.exist?(Master::COUNCIL_PATH)
+          data = Master.load_yaml(Master::COUNCIL_PATH) || {}
           data.dig("presets", @mode[:preset_key]) || {}
         end
 
@@ -102,6 +103,7 @@ module Master
           all = Personas.load
           names = Array(preset["panel"] || @mode[:panel]).map(&:downcase)
           return all if names.empty?
+          picked = all.select { |p| names.include?(p.name.downcase) }
           picked.empty? ? Personas::DEFAULTS : picked
         end
 
@@ -114,6 +116,7 @@ module Master
         def read_truncated(rel)
           path = File.join(Master::ROOT, rel)
           return nil unless File.exist?(path)
+          raw = File.read(path, encoding: "utf-8")
           raw = raw.byteslice(0, @mode[:max_bytes]) + "\n... [truncated]" if raw.bytesize > @mode[:max_bytes]
           "file: #{rel}\n#{raw}"
         end
@@ -125,6 +128,7 @@ module Master
 
         def domain_context
           return ui_domain_context if @mode[:preset_key] == "ui_critique"
+          sound_domain_context
         end
 
         def ui_domain_context
@@ -150,10 +154,12 @@ module Master
 
         def domain_briefs
           return platform_profile_brief if @mode[:preset_key] == "ui_critique"
+          [dilla_brief].join("\n")
         end
 
         def platform_profile_brief
           return "Platform design profiles unavailable; default to content-first measurable critique." \
+            unless defined?(Master::Design::PlatformProfiles)
           %i[brutal_minimal medium new_yorker].map { |k| Master::Design::PlatformProfiles.brief(k) }.join("\n")
         rescue StandardError => e
           "Platform profile policy failed to load: #{e.message}."
@@ -161,6 +167,7 @@ module Master
 
         def dilla_brief
           return Master::Voice::Dilla.brief if defined?(Master::Voice::Dilla)
+          return Master::Voice::ProductionDna.brief if defined?(Master::Voice::ProductionDna)
           "Production DNA unavailable; keep timing human, restrained, and non-quantized when musical."
         rescue StandardError => e
           "Dilla production profile failed to load: #{e.message}."
@@ -189,6 +196,7 @@ module Master
           wa = a.downcase.scan(/\w+/).to_set
           wb = b.downcase.scan(/\w+/).to_set
           return 0.0 if wa.empty? || wb.empty?
+          (wa & wb).size.to_f / wa.size
         end
       end
     end

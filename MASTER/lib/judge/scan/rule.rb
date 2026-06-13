@@ -6,7 +6,7 @@ module Master
       require_relative "finding"
 
       class Rule
-        EXT_LANG = {.freeze
+        EXT_LANG = {
           ".rb" => "ruby", ".rake" => "ruby", ".gemspec" => "ruby",
           ".erb" => "html", ".html" => "html", ".htm" => "html",
           ".css" => "css", ".scss" => "scss", ".sass" => "scss",
@@ -44,6 +44,7 @@ module Master
 
         def check(code, path:)
           raise NotImplementedError, "#{self.class}#check not implemented"
+        end
 
         def language(path)
           EXT_LANG[File.extname(path).downcase]
@@ -51,6 +52,7 @@ module Master
 
         def applies_to?(path, languages)
           return true if languages.nil? || languages.empty?
+          lang = language(path)
           lang && languages.include?(lang)
         end
 
@@ -62,7 +64,7 @@ module Master
 
         def scan_lines(code, pattern, message:, fix: nil)
           code.each_line.with_index(1).filter_map { |line, num|
-            finding(line: num, message:, fix:) if line.match?(pattern),
+            finding(line: num, message:, fix:) if line.match?(pattern)
           }
         end
       end

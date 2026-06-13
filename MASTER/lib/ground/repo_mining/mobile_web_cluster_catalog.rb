@@ -6,7 +6,7 @@ module Master
       class MobileWebClusterCatalog
         Entry = Data.define(:repo, :pattern, :why, :risk, :tags)
 
-        CATALOG = [.freeze
+        CATALOG = [
           Entry.new(
             repo: "hotwired/turbo",
             pattern: :turbo_core,
@@ -76,14 +76,14 @@ module Master
             why: "Routes service-worker.js through Rails asset pipeline with cache-busting helpers",
             risk: :low,
             tags: %i[pwa service_worker rails cache]
-          ),
+          )
         ].freeze
 
-        INTENT_TAG_MAP = {.freeze
+        INTENT_TAG_MAP = {
           refactor_existing: %i[jquery_replacement stimulus components hotwire lifecycle],
           audit_rails_pwa: %i[pwa service_worker cache mobile_first touch_targets],
           generate_rails_pwa: %i[rails_8 hotwire pwa mobile importmap],
-          redesign_mobile_pwa: %i[css mobile_first focus_visible accessibility minimal],
+          redesign_mobile_pwa: %i[css mobile_first focus_visible accessibility minimal]
         }.freeze
 
         def top(n = 5, tags: nil)

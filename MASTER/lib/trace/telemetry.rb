@@ -18,6 +18,7 @@ module Master
 
       def self.bootstrap!(root:, service: "master")
         return if @enabled
+        require "opentelemetry/sdk"
         path = File.join(root, TRACE_PATH)
         require "fileutils"
         FileUtils.mkdir_p(File.dirname(path))
@@ -37,6 +38,7 @@ module Master
 
       def self.span(name, attrs = {})
         return yield unless @enabled && @tracer
+        @tracer.in_span(name, attributes: stringify(attrs)) { yield }
       rescue StandardError; yield
       end
 

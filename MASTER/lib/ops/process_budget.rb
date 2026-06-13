@@ -23,6 +23,7 @@ module Master
 
       def load_config
         return {} unless File.exist?(CONFIG_PATH)
+        YAML.safe_load_file(CONFIG_PATH, aliases: true) || {}
       rescue StandardError
         {}
       end
@@ -37,6 +38,7 @@ module Master
 
       def slot_loop?(name, spec = loop_config(name))
         return false if NON_SLOT_LOOPS.include?(name.to_s)
+        spec.fetch("slot", true) != false
       end
 
       def active_loops
@@ -62,7 +64,7 @@ module Master
           active_loops: active_loops,
           max_active_loops: max_active_loops,
           owner: LoopOwner.active,
-          loops: loop_names.to_h { |name| [name, loop_status(name)] },
+          loops: loop_names.to_h { |name| [name, loop_status(name)] }
         }
       end
 
@@ -89,7 +91,7 @@ module Master
           env_value: env ? ENV.fetch(env, "0") : nil,
           cooldown_elapsed: cooldown_elapsed?(name),
           max_run_seconds: spec["max_run_seconds"].to_i,
-          min_sleep_seconds: spec["min_sleep_seconds"].to_i,
+          min_sleep_seconds: spec["min_sleep_seconds"].to_i
         }
       end
 
@@ -97,6 +99,7 @@ module Master
         return true if valid_loop_slot?
 
         raise ArgumentError, "too many active MASTER loops: #{active_loops.join(', ')}; max=#{max_active_loops}"
+      end
 
       def enabled?(name)
         env = loop_config(name)["env"]
@@ -106,12 +109,14 @@ module Master
       def allowed_to_start?(name)
         validate_loop_slot!
         return false unless enabled?(name)
+        return false if LoopOwner.active
         cooldown_elapsed?(name)
       end
 
       def cooldown_elapsed?(name)
         cooldown = loop_config(name)["min_sleep_seconds"].to_i
         return true if cooldown <= 0
+        last = @last_run[name.to_s]
         last.nil? || (Time.now - last) >= cooldown
       end
 
@@ -122,6 +127,7 @@ module Master
       def run(name)
         validate_loop_slot!
         return :disabled unless enabled?(name)
+        return :busy if LoopOwner.active
         return :cooldown unless cooldown_elapsed?(name)
 
         mark!(name)

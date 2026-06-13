@@ -19,16 +19,21 @@ module Master
 
           cycles.times do |cycle|
             return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
+            return Master::Result.err("ideation: circuit open", category: :infrastructure) if circuit_open?
             brainstorm_result = brainstorm(prompt, ideas, constraints)
             return brainstorm_result if brainstorm_result.err?
+            ideas += brainstorm_result.value
             @bus&.publish("ideation:cycle", cycle: cycle + 1, ideas: ideas.size)
 
             return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
+            return Master::Result.err("ideation: circuit open", category: :infrastructure) if circuit_open?
             critique_result = critique(ideas)
             return critique_result if critique_result.err?
+            critiques << critique_result.value
           end
 
           return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
+          synth_result = synthesize(prompt:, ideas:, critiques:, constraints:)
           return synth_result if synth_result.err?
 
           Master::Result.ok(ideas: ideas, critiques: critiques, final: synth_result.value)
@@ -39,6 +44,7 @@ module Master
         def circuit_open?
           breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
           return false unless breaker.respond_to?(:open_models)
+          !breaker.open_models.empty?
         rescue StandardError
           false
         end

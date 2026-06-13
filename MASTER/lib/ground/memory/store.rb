@@ -46,6 +46,7 @@ module Master
             next unless (match = text.match(pattern))
 
             return remember_auto(type, match[1].strip)
+          end
           nil
         end
 

@@ -36,7 +36,7 @@ module Master
           id: SecureRandom.uuid,
           timestamp: now.iso8601(6),
           event: event.to_s,
-          payload: payload || {},
+          payload: payload || {}
         }
       end
 

@@ -20,6 +20,7 @@ module Master
 
       def profile
         return hidden_profile if @hidden
+        return mobile_profile if @pointer == :coarse
         desktop_profile
       end
 
@@ -44,8 +45,8 @@ module Master
           effects: {
             bloom: @average_frame_ms <= 24,
             spatial_repulsion: @average_frame_ms <= 24,
-            oscilloscope: true,
-          },
+            oscilloscope: true
+          }
         }
       end
 
@@ -57,8 +58,8 @@ module Master
           effects: {
             bloom: false,
             spatial_repulsion: false,
-            oscilloscope: true,
-          },
+            oscilloscope: true
+          }
         }
       end
 
@@ -70,8 +71,8 @@ module Master
           effects: {
             bloom: false,
             spatial_repulsion: false,
-            oscilloscope: false,
-          },
+            oscilloscope: false
+          }
         }
       end
     end

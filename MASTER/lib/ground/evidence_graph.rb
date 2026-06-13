@@ -80,7 +80,7 @@ module Master
         raw = entry.raw
         [
           *Array(raw["files"]),
-          *Array(raw["master_hooks"]).map { |h| h.to_s.split("#").first },
+          *Array(raw["master_hooks"]).map { |h| h.to_s.split("#").first }
         ].uniq.reject(&:empty?)
       end
 

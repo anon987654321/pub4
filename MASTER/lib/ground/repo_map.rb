@@ -5,10 +5,10 @@ module Master
     class RepoMap
       DEFAULT_IGNORES = %w[
         .git tmp log vendor node_modules coverage .bundle storage public/assets
-        knowledge/awesome knowledge/vendor,
+        knowledge/awesome knowledge/vendor
       ].freeze
 
-      LANGUAGE_BY_EXT = {.freeze
+      LANGUAGE_BY_EXT = {
         ".rb" => :ruby,
         ".js" => :javascript,
         ".ts" => :typescript,
@@ -19,7 +19,7 @@ module Master
         ".yaml" => :yaml,
         ".json" => :json,
         ".md" => :markdown,
-        ".sh" => :shell,
+        ".sh" => :shell
       }.freeze
 
       FileEntry = Struct.new(:path, :language, :bytes, :mtime, :score, keyword_init: true)
@@ -77,6 +77,7 @@ module Master
 
       def size_penalty(bytes)
         return 0 if bytes < 20_000
+        Math.log(bytes / 20_000.0)
       end
     end
   end

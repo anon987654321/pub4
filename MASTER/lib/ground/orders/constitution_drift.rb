@@ -10,6 +10,7 @@ module Master
         def call
           scanner = @container[:scanner]
           return Result.err("no scanner in container") unless scanner
+          report = build_report(scanner)
           publish_drift(report)
           persist(report)
           Result.ok(report)
@@ -53,6 +54,7 @@ module Master
 
         def load_previous
           return { total: 0 } unless File.exist?(state_file)
+          JSON.parse(File.read(state_file), symbolize_names: true)
         rescue StandardError => e
           Swallow.log(e, context: "constitution_drift.load_previous", event_bus: bus)
           { total: 0 }

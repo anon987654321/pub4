@@ -22,13 +22,13 @@ module Master
       WS_RE = /[ \t]+/.freeze
       BLANK_RE = /\n{3,}/.freeze
 
-      REWRITES = [.freeze
+      REWRITES = [
         [%r{\Ahttps://github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.+)\z},
          'https://raw.githubusercontent.com/\1/\2/\3/\4'],
         [%r{\Ahttps://gist\.github\.com/([^/]+)/([0-9a-f]+)/?\z},
          'https://gist.githubusercontent.com/\1/\2/raw'],
         [%r{\Ahttps://arxiv\.org/(?:abs|pdf)/([\w./-]+?)(?:v\d+)?(?:\.pdf)?/?\z},
-         'https://ar5iv.labs.arxiv.org/html/\1'],
+         'https://ar5iv.labs.arxiv.org/html/\1']
       ].freeze
 
       CODEPEN_RE = %r{\Ahttps://codepen\.io/([^/]+)/pen/([^/?#]+)/?\z}.freeze
@@ -41,6 +41,7 @@ module Master
       def call(url:)
         if (m = url.match(CODEPEN_RE))
           return fetch_codepen(m[1], m[2])
+        end
 
         rewritten = rewrite(url)
         fetch_one(rewritten)

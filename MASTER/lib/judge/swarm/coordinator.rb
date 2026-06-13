@@ -6,20 +6,16 @@ module Master
   module Judge
     module Swarm
       class Coordinator
-        SwarmResult = Struct.new(:verdict, :confidence, :reasoning, :artifacts, :votes, keyword_init: true) do
-          def ok?       = !%i[error insufficient_quorum].include?(verdict)
+        SwarmResult = Struct.new(:verdict, :confidence, :reasoning, :artifacts, keyword_init: true) do
+          def ok?      = !%i[error insufficient_quorum].include?(verdict)
           def approved? = verdict == :approved
-          def consensus?
-            v = votes || { approved: 0, rejected: 0, neutral: 0 }
-            v[:approved].to_i.positive? && v[:rejected].to_i.zero?
-          end
         end
 
-        WORKER_CLASSES = {.freeze
+        WORKER_CLASSES = {
           analyst: Workers::Analyst,
           coder: Workers::Coder,
           reviewer: Workers::Reviewer,
-          researcher: Workers::Researcher,
+          researcher: Workers::Researcher
         }.freeze
 
         WORKER_WEIGHTS = { reviewer: 3, analyst: 2, researcher: 2, coder: 1 }.freeze
@@ -45,7 +41,7 @@ module Master
         def analyse_and_review(file_path:, code:)
           fan_out([
             { role: :analyst, task: "identify all issues", context_slice: { file: file_path, code: code } },
-            { role: :reviewer, task: "security and correctness review", context_slice: { code: code } },
+            { role: :reviewer, task: "security and correctness review", context_slice: { code: code } }
           ]).and_then do |sr|
             analysis = sr.artifacts[:analyst]
             review = sr.artifacts[:reviewer]
@@ -136,6 +132,7 @@ module Master
           if ok_workers.size < MIN_QUORUM
             @bus&.publish(:swarm_vote_insufficient_quorum, count: ok_workers.size)
             return Result.ok({ consensus: nil, dissent: workers_out, arbitrated: false,
+                               workers: workers_out, verdict: :insufficient_quorum })
           end
 
           consensus, dissent, arbitrated = vote(ok_workers, tasks.first&.dig(:task).to_s)
@@ -147,12 +144,14 @@ module Master
 
         def join_or_timeout(th, timeout)
           return th.value if th.join(timeout)
+          th.kill rescue ThreadError
           @bus&.publish(:swarm_worker_timeout, timeout:)
           [:timeout, Result.err("worker timed out after #{timeout}s", category: :timeout)]
         end
 
         def join_or_parallel_timeout(th, deadline)
           return th.value if th.join(deadline)
+          th.kill rescue ThreadError
           @bus&.publish(:swarm_parallel_timeout, deadline:)
           [nil, Result.err("worker exceeded shared deadline", category: :timeout)]
         end
@@ -169,52 +168,31 @@ module Master
           lines = successes.map { |role, r| "### #{role}\n#{r.value!.to_s.strip}" }
           reasoning = lines.empty? ? "(no results)" : lines.join("\n\n")
 
-          votes = tally_votes(artifacts)
           verdict = if eligible.empty? || successes.empty? then :error
                    elsif successes.size < MIN_QUORUM then :insufficient_quorum
                    elsif conflict?(artifacts) then resolve_conflict(artifacts)
-                   else derive_verdict(confidence, votes)
+                   elsif confidence >= 0.8 then :approved
+                   elsif confidence >= 0.5 then :mixed
+                   else :rejected
                    end
           @bus&.publish("swarm:mixed_verdict", confidence:, reasoning: reasoning[0..120]) if verdict == :mixed
-          SwarmResult.new(verdict:, confidence:, reasoning:, artifacts:, votes:)
-        end
-
-        def tally_votes(artifacts)
-          tally = { approved: 0, rejected: 0, neutral: 0 }
-          artifacts.each_value do |v|
-            case v.is_a?(Hash) ? v["approved"] : nil
-            when true  then tally[:approved] += 1
-            when false then tally[:rejected] += 1
-            else            tally[:neutral]  += 1
-            end
-          end
-          tally
-        end
-
-        def derive_verdict(confidence, votes)
-          if votes[:approved].positive? || votes[:rejected].positive?
-            votes[:rejected] > votes[:approved] ? :rejected : :approved
-          elsif confidence.zero?     then :error
-          elsif confidence >= 0.8    then :approved
-          elsif confidence >= 0.5    then :mixed
-          else                            :rejected
-          end
+          SwarmResult.new(verdict:, confidence:, reasoning:, artifacts:)
         end
 
         def direct_fallback(task)
           @bus&.publish(:swarm_fallback_start, task: task[0..60])
           response = @agent.ask(task)
           SwarmResult.new(verdict: :approved, confidence: 0.5,
-                          reasoning: response.to_s, artifacts: { fallback: response },
-                          votes: { approved: 0, rejected: 0, neutral: 0 })
+                          reasoning: response.to_s, artifacts: { fallback: response })
         rescue StandardError => e
           @bus&.publish(:swarm_fallback_failed, error: e.message)
-          SwarmResult.new(verdict: :error, confidence: 0.0, reasoning: e.message, artifacts: {}, votes: { approved: 0, rejected: 0, neutral: 0 })
+          SwarmResult.new(verdict: :error, confidence: 0.0, reasoning: e.message, artifacts: {})
         end
 
         def conflict?(artifacts)
           signals = artifacts.map { |_role, v| conflict_signal(v) }.compact
           return false if signals.size < 2
+          signals.include?(:approve) && signals.include?(:reject)
         end
 
         def resolve_conflict(artifacts)
@@ -228,6 +206,7 @@ module Master
             end
           end
           return :approved if approve_weight > reject_weight
+          return :rejected if reject_weight > approve_weight
           :conflict
         end
 
@@ -273,18 +252,22 @@ module Master
 
         def extract_confidence(result)
           return 0.0 unless result.ok?
+          value = result.value!
           conf = value.is_a?(Hash) ? (value[:confidence] || value["confidence"]) : nil
           conf ? conf.to_f.clamp(0.0, 1.0) : 1.0
         end
 
         def recommendation_signal(result)
           return :neutral unless result.ok?
+          value = result.value!
           if value.is_a?(Hash)
             approved = value["approved"] || value[:approved]
             return :approve if approved == true
+            return :reject  if approved == false
           end
           text = value.to_s.downcase
           return :approve if text.match?(/\b(approv(e|ed)|looks good|no issues|lgtm)\b/)
+          return :reject  if text.match?(/\b(reject|fail|error|violation|problem|insecure)\b/)
           :neutral
         end
 
@@ -295,7 +278,7 @@ module Master
         # Agent arbitrates when workers cannot reach consensus. Sends all outputs.
         def arbitrate(ok_workers, task_context)
           context = ok_workers.map { |w|
-            "#{w[:role]} (confidence #{w[:confidence].round(2)}): #{w[:output].value!}",
+            "#{w[:role]} (confidence #{w[:confidence].round(2)}): #{w[:output].value!}"
           }.join("\n\n")
           prompt = "Workers could not reach consensus on: #{task_context}\n\nWorker outputs:\n#{context}\n\nPick the best recommendation and explain why."
           @bus&.publish(:swarm_arbitration_start, task: task_context[0..60])

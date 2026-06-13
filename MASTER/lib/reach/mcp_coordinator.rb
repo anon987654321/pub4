@@ -54,6 +54,7 @@ module Master
 
       def connect(name, cfg)
         return unless cfg.is_a?(Hash) && cfg["enabled"] != false
+        transport = (cfg["transport"] || "stdio").to_sym
         mcp_config = case transport
                      when :stdio
                        { command: cfg["command"], args: cfg["args"] || [] }
@@ -61,6 +62,7 @@ module Master
                        { url: cfg["url"] }
                      else
                        return
+                     end
         client = ::RubyLLM::MCP::Client.new(
           name: name,
           transport_type: transport,
@@ -77,6 +79,7 @@ module Master
       def load_servers
         path = File.join(@root, CONFIG_PATH)
         return {} unless File.exist?(path)
+        require "yaml"
         data = Master.load_yaml(path) || {}
         data.fetch("servers", {})
       rescue StandardError => e

@@ -3,17 +3,17 @@
 module Master
   module Ground
     class OrchestrationPolicy
-      MODEL_TIERS = {.freeze
+      MODEL_TIERS = {
         cheap: %i[low],
         fast: %i[low medium],
         strong: %i[high critical],
         local: %i[low medium],
-        browser_local: %i[low],
+        browser_local: %i[low]
       }.freeze
 
       COUNCIL_TIERS = %i[high critical].freeze
 
-      COUNCIL_ROLES = {.freeze
+      COUNCIL_ROLES = {
         "Security" => %i[auth secrets tool_execution permission_changes],
         "Reliability" => %i[network provider runtime fallback],
         "Maintainer" => %i[code_mutation refactor file_deletion],
@@ -21,7 +21,7 @@ module Master
         "User Advocate" => %i[ui mobile accessibility],
         "Accessibility" => %i[ui mobile accessibility],
         "Music Producer" => %i[sonic visual_rhythm pacing],
-        "Hip-Hop Producer" => %i[sonic visual_rhythm pacing],
+        "Hip-Hop Producer" => %i[sonic visual_rhythm pacing]
       }.freeze
 
       # Required output sections for high/critical risk responses.
@@ -45,7 +45,7 @@ module Master
           use_council: council,
           council_roles: council ? roles_for(intent) : [],
           evidence_req: council,
-          evidence_fields: council ? EVIDENCE_CONTRACT : [],
+          evidence_fields: council ? EVIDENCE_CONTRACT : []
         }
       end
 

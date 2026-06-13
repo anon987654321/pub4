@@ -11,26 +11,26 @@ module Master
       AXIOM_DISPLAY_LIMIT = 10
 
       # Fallback if data/personas.yml is missing or malformed.
-      FALLBACK_PERSONA = {.freeze
+      FALLBACK_PERSONA = {
         "voice" => "ms-MY-OsmanNeural",
         "tts_rate" => "-35%",
         "tts_pitch" => "-150Hz",
         "style" => "deep",
-        "description" => "Terse. Direct. No filler. Dark.",
+        "description" => "Terse. Direct. No filler. Dark."
       }.freeze
 
-      MOOD_LINES = {.freeze
+      MOOD_LINES = {
         tense: "Mood: tense — error rate elevated. Be conservative; verify before asserting.",
         weary: "Mood: weary — fatigue high. Cut non-essential elaboration; defer deep dives.",
         curious: "Mood: curious — novelty hunger. Explore lateral framings when warranted.",
-        focused: "Mood: focused — drives at setpoint. Default depth and tier.",
+        focused: "Mood: focused — drives at setpoint. Default depth and tier."
       }.freeze
 
-      PHASE_LINES = {.freeze
+      PHASE_LINES = {
         morning: "Phase: morning. Bias toward structural work; prefer rigorous review.",
         afternoon: "Phase: afternoon. Steady throughput; pragmatic decisions.",
         evening: "Phase: evening. Wrap loops; avoid starting large refactors.",
-        night: "Phase: night. Minimal voice; conserve cycles; defer non-urgent.",
+        night: "Phase: night. Minimal voice; conserve cycles; defer non-urgent."
       }.freeze
 
       attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
@@ -76,7 +76,7 @@ module Master
             "<master_runtime_state>",
             MOOD_LINES[@homeostat.mood],
             PHASE_LINES[@homeostat.circadian_phase],
-            "</master_runtime_state>",
+            "</master_runtime_state>"
           ].join("\n")
         end
         constitution = @rules.constitution
@@ -84,7 +84,6 @@ module Master
         banned = (constitution["banned_output"] || [])
         no_open = (strunk["preambles"] || []).first(4)
         no_end = (strunk["endings"] || []).first(3)
-        anti_sim = @rules.data(:soul).dig("absolute", "anti_simulation", "forbidden") || []
         sections["master_constitution_absolute"] = [
           "<master_constitution tier=\"absolute\">",
           "golden_rule: #{constitution["golden_rule"]}",
@@ -92,9 +91,8 @@ module Master
           "opener_never: #{no_open.join(" / ")}",
           "closer_never: #{no_end.join(" / ")}",
           "evidence_only: show diff or file content; never assert; active voice",
-          anti_sim.any? ? "anti_simulation: never use #{anti_sim.join(", ")} — state facts and evidence only" : nil,
-          "</master_constitution>",
-        ].compact.join("\n")
+          "</master_constitution>"
+        ].join("\n")
         kernel = @rules.kernel
         if kernel.any?
           sections["master_constitution_kernel"] = "<master_constitution tier=\"kernel\">\n" \
@@ -105,7 +103,7 @@ module Master
           phil_ids = phil.map { |p| p["id"] }.join(" · ")
           sections["master_constitution_kernel"] = [
             sections["master_constitution_kernel"],
-            "philosophy: #{phil_ids}",
+            "philosophy: #{phil_ids}"
           ].compact.join("\n")
         end
 
@@ -124,10 +122,6 @@ module Master
         <master_output_format>
         Plain prose. Sentence case throughout. No markdown headers, bold, bullet lists, or numbered lists.
         Code fences allowed only for code. Never use: Certainly, Of course, Great question, Absolutely, Happy to help.
-        Silence on success: routine completions emit one line. No summary, no restatement.
-        Preserve: reproduce shown code or text verbatim; never paraphrase.
-        Inverted pyramid: lead with outcome, then evidence, then detail.
-        Require evidence: modification claims show diff; completion claims show command output.
         </master_output_format>
       XML
 

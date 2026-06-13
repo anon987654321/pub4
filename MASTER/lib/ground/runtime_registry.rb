@@ -39,7 +39,7 @@ module Master
             model: cfg[:default_model],
             score: @health.score(name),
             quarantined: @quarantine.quarantined?(name),
-            strengths: cfg[:strengths],
+            strengths: cfg[:strengths]
           }
         end
       end

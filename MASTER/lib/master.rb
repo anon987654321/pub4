@@ -26,25 +26,25 @@ module Master
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
   MIN_API_KEY_LENGTH = 20
-  OPENROUTER_DEFAULT = "z-ai/glm-4.5-air:free"
+  NEMOTRON_PRIMARY = "nvidia/nemotron-3-super-120b-a12b:free"
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   CTX_WINDOW_SIZE = 200_000
   VIOLATION_TRUNCATE = 90
 
-  FILE_LANGUAGE_MAP = {.freeze
+  FILE_LANGUAGE_MAP = {
     ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
     ".js" => "javascript", ".json" => "json", ".sh" => "bash",
     ".zsh" => "bash", ".md" => "markdown", ".html" => "html",
-    ".erb" => "erb", ".css" => "css",
+    ".erb" => "erb", ".css" => "css"
   }.freeze
 
-  API_KEY_PROVIDERS = {.freeze
+  API_KEY_PROVIDERS = {
     anthropic_api_key: "ANTHROPIC_API_KEY",
     openai_api_key: "OPENAI_API_KEY",
     gemini_api_key: "GEMINI_API_KEY",
     openrouter_api_key: "OPENROUTER_API_KEY",
     mistral_api_key: "MISTRAL_API_KEY",
-    deepseek_api_key: "DEEPSEEK_API_KEY",
+    deepseek_api_key: "DEEPSEEK_API_KEY"
   }.freeze
 
   loader = Zeitwerk::Loader.new
@@ -80,7 +80,7 @@ module Master
     judge/scan/rules/ruby_rules.rb
     judge/scan/rules/web_rules.rb
     judge/scan/rules/js_rules.rb
-    judge/scan/rules/universal_rules.rb,
+    judge/scan/rules/universal_rules.rb
   ].each do |rel|
     loader.ignore(File.join(__dir__, rel))
   end
@@ -139,10 +139,13 @@ module Master
   end
 
   def self.default_model
-    return OPENROUTER_DEFAULT if api_key_present?("OPENROUTER_API_KEY")
+    return NEMOTRON_PRIMARY if api_key_present?("OPENROUTER_API_KEY")
+    return "claude-opus-4-7" if api_key_present?("ANTHROPIC_API_KEY")
     return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
+    return "gpt-4o" if api_key_present?("OPENAI_API_KEY")
     return "gemini-2.5-flash" if api_key_present?("GEMINI_API_KEY")
-    OPENROUTER_DEFAULT
+    return "mistral-large-latest" if api_key_present?("MISTRAL_API_KEY")
+    NEMOTRON_PRIMARY
   end
 
   def self.any_api_key_present?
@@ -150,7 +153,8 @@ module Master
   end
 
   def self.no_api_key_message
-    "I'm not wired to any LLM yet. Set OPENROUTER_API_KEY in /etc/master.env and restart " \
+    "I'm not wired to any LLM yet. The primary model is nemotron via OpenRouter " \
+    "(free). Set OPENROUTER_API_KEY in /etc/rc.d/master daemon_flags and restart " \
     "with `doas rcctl restart master`. Other accepted keys: ANTHROPIC_API_KEY, " \
     "DEEPSEEK_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, MISTRAL_API_KEY."
   end
@@ -196,6 +200,7 @@ module Master
 
   def self.const_missing(sym)
     return Judge::Agent if sym == :Agent
+    super
   end
 
   def self.build(root: Dir.pwd)
@@ -213,28 +218,12 @@ module Master
   end
 
   def self.bootstrap_container(root: Dir.pwd)
-    init_ground(root:)
-    container = init_judge(root:)
-    init_loop(root:, container:)
-    init_reach(container:)
-  end
-
-  def self.init_ground(root:)
     install_process_guards!
     Trace::Telemetry.bootstrap!(root: root)
-  end
-
-  def self.init_judge(root:)
-    Builder.build(root:)
-  end
-
-  def self.init_loop(root:, container:)
+    container = Builder.build(root:)
     validate_data!(root: root, bus: container[:bus])
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
-  end
-
-  def self.init_reach(container:)
     start_constitution_drift(container)
     container
   end

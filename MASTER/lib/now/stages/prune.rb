@@ -21,13 +21,14 @@ module Master
         )[!.,]*\s*/ix
 
         def call(ctx)
-          raw = ctx.respond_to?(:output) ? ctx.output : ctx[:output]
+          raw = ctx.output
           output = if raw.is_a?(Master::Result) && raw.ok?
                      raw.value!.to_s
                    elsif raw.is_a?(String)
                      raw
                    else
                      return Result.ok(ctx)
+                   end
           return Result.ok(ctx) if output.empty?
 
           cleaned = prune_mixed(output)
@@ -40,7 +41,7 @@ module Master
         def prune_mixed(text)
           segments = text.split(FENCE_RE)
           segments.map { |seg|
-            seg.start_with?("```") ? seg : strip_all(seg),
+            seg.start_with?("```") ? seg : strip_all(seg)
           }.join
         end
 

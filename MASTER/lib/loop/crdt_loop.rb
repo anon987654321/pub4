@@ -68,6 +68,7 @@ module Master
       def apply_to_disk(path, content)
         full_path = path.start_with?("/") ? path : File.join(@root, path)
         return unless File.exist?(full_path)
+        temporary_path = "#{full_path}.crdt.#{Process.pid}.tmp"
         File.write(temporary_path, content, encoding: "UTF-8")
         File.rename(temporary_path, full_path)
       rescue StandardError => e

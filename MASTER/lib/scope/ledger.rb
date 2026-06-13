@@ -16,7 +16,7 @@ module Scope
         command_class: command_class,
         network: network,
         secret_risk: secret_risk,
-        destructive: destructive,
+        destructive: destructive
       }
     end
   end
@@ -63,6 +63,7 @@ module Scope
 
     def classify(command)
       return "destructive" if command.match?(DESTRUCTIVE)
+      return "network" if command.match?(NETWORK)
       "read_or_compute"
     end
 

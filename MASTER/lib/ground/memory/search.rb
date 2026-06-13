@@ -11,6 +11,7 @@ module Master
           if Judge::Embeddings.enabled? && (qvec = Judge::Embeddings.embed(query))
             hits = vector_recall(qvec, top_n, store_snap)
             return hits unless hits.empty?
+          end
 
           tfidf_recall(query, top_n, store_snap)
         end

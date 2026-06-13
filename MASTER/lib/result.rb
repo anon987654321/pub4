@@ -2,7 +2,7 @@
 
 module Master
   class Result
-    CATEGORIES = {.freeze
+    CATEGORIES = {
       validation: "input failed preconditions",
       axiom_violation: "constitutional rule broken",
       provider_error: "upstream model / network failure",
@@ -16,13 +16,14 @@ module Master
       budget: "cost limit hit",
       policy: "blocked by policy / kernel rule",
       shutdown: "user quit / shutdown requested",
-      abort: "operation aborted",
+      abort: "operation aborted"
     }.freeze
 
     def self.ok(value) = Ok.new(value)
 
-    def self.err(msg, category: :unknown, context: nil)
+    def self.err(msg, category: :unknown)
       raise ArgumentError, "unknown category: #{category}" unless category == :unknown || CATEGORIES.key?(category)
+      Err.new(msg, category)
     end
 
     def self.wrap(val) = val.is_a?(Result) ? val : Ok.new(val)
@@ -57,17 +58,17 @@ module Master
     end
 
     class Err < Result
-      attr_reader :message, :category, :context
+      attr_reader :message, :category
 
       RETRIABLE = %i[infrastructure timeout].freeze
       PERMANENT = %i[validation axiom_violation budget].freeze
 
-      def initialize(message, category = :unknown, context = nil)
+      def initialize(message, category = :unknown)
         raise ArgumentError, "message cannot be nil" if message.nil?
+        raise ArgumentError, "category must be a symbol" unless category.is_a?(Symbol)
 
         @message = message
         @category = category
-        @context = context
         freeze
       end
 
@@ -84,9 +85,9 @@ module Master
       def retriable? = RETRIABLE.include?(@category)
       def permanent? = PERMANENT.include?(@category)
 
-      def deconstruct_keys(_keys) = { message: @message, category: @category, context: @context }
+      def deconstruct_keys(_keys) = { message: @message, category: @category }
       def to_s = @message
-      def inspect = @context ? "Err(#{@category}: #{@message} @ #{@context})" : "Err(#{@category}: #{@message})"
+      def inspect = "Err(#{@category}: #{@message})"
     end
   end
 end

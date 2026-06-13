@@ -17,6 +17,7 @@ module Master
       def render(section = nil)
         keys = section.to_s.empty? ? SECTIONS : [section.to_sym].select { |k| SECTIONS.include?(k) }
         return "diag: unknown section -- valid: #{SECTIONS.join(", ")}" if keys.empty?
+        lines = ["diag: ok"]
         lines.concat(keys.flat_map { |k| send("section_#{k}") })
         lines.join("\n")
       end
@@ -25,20 +26,24 @@ module Master
 
       def section_drives
         return ["drives: -- (no homeostat)"] unless @homeostat
+        [@homeostat.summary]
       end
 
       def section_breaker
         return ["breaker: -- (no breaker)"] unless @breaker
+        total = format("%.4f", @breaker.session_total)
         open = @breaker.open_models
         ["breaker: session=$#{total} open=(#{open.empty? ? "" : open.join(",")})"]
       end
 
       def section_rules
         return ["rules: -- (no registry)"] unless @registry
+        ["rules: #{@registry.registry.size} loaded"]
       end
 
       def section_ring
         return ["ring: -- (no logging)"] unless @logging
+        tail = @logging.dmesg(RING_LINES).split("\n").last(RING_LINES)
         ["ring (last #{tail.size}):", *tail.map { |l| "  #{l}" }]
       end
     end

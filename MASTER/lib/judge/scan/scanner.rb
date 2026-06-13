@@ -49,6 +49,7 @@ module Master
           validate_depth!(depth)
           out, _, status = Open3.capture3("git", "-C", dir, "diff", "--name-only", "#{ref}...HEAD")
           return Result.err("git diff failed", category: :validation) unless status.success?
+          paths = out.lines.map(&:strip).reject(&:empty?)
                     .map { |rel| File.join(dir, rel) }
                     .select { |p| File.exist?(p) && File.extname(p).match?(/\.(rb|erb|yml|js|css|sh|zsh)\z/) }
           Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
@@ -72,6 +73,7 @@ module Master
           return unless FORBIDDEN_DEPTHS.include?(depth)
 
           raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)"
+        end
 
         def read_file(path)
           return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
@@ -83,6 +85,7 @@ module Master
 
         def parse_ruby(code, path)
           return unless RUBY_EXT.include?(File.extname(path))
+          result = Prism.parse(code)
           result.success? ? result.value : nil
         rescue StandardError => e
           @bus&.publish("scan:parse_error", path:, error: e.message)
@@ -137,7 +140,9 @@ module Master
 
         def stream_progress(dir, path, file_result)
           return unless file_result.ok?
+          count = file_result.value!.size
           return unless count.positive?
+          rel = path.sub(dir, "").delete_prefix("/")
           $stdout.puts "scan: #{rel} #{count} violation(s)"
           $stdout.flush
         end
@@ -154,7 +159,8 @@ module Master
         def active_rules(depth)
           allowed = depth_rules[depth.to_s]
           return @rules if allowed.nil? || allowed == ["all"] || allowed == :all
-            allowed.include?(r.class.name&.split("::")&.last) || allowed.include?(r.id),
+          @rules.select { |r|
+            allowed.include?(r.class.name&.split("::")&.last) || allowed.include?(r.id)
           }
         end
 
@@ -169,6 +175,7 @@ module Master
         def should_autofix?(rule_id, observed_conf)
           t = prediction_thresholds[rule_id.to_s] || prediction_thresholds[rule_id]
           return true unless t && t["confidence"]
+          observed_conf.to_f >= t["confidence"].to_f
         end
 
         # HALLUCINATION rule: lexical/semantic detector for claim_without_reading; deferred pending council wiring.

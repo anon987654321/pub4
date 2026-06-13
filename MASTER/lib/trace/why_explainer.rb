@@ -13,6 +13,7 @@ module Master
       def explain(id)
         key = id.to_s.strip
         return if key.empty?
+        law(key) || scan_rule(key) || anti_pattern(key) || style_key(key)
       end
 
       private
@@ -32,7 +33,7 @@ module Master
           "law: #{key.upcase}",
           "  priority: #{hit["priority"]}",
           "  principle: #{hit["principle"]}",
-          "  applies: #{Array(hit["applies_to"]).join(", ")}",
+          "  applies: #{Array(hit["applies_to"]).join(", ")}"
         ].join("\n")
       end
 
@@ -40,13 +41,14 @@ module Master
         slug = key.downcase.tr("-", "_")
         path = File.join(@root, SCAN_RULES_DIR, "#{slug}_rule.rb")
         return unless File.file?(path)
+        src = File.read(path, encoding: "UTF-8")
         desc = src[/@description\s*=\s*["']([^"']+)["']/, 1] || "(no description)"
         tags = src[/@rule_tags\s*=\s*%i\[([^\]]+)\]/, 1].to_s.split.first(6).join(" ")
         [
           "scan rule: #{slug}",
           "  description: #{desc}",
           ("  axioms: #{tags}" unless tags.empty?),
-          "  source: #{SCAN_RULES_DIR}/#{slug}_rule.rb",
+          "  source: #{SCAN_RULES_DIR}/#{slug}_rule.rb"
         ].compact.join("\n")
       end
 
@@ -57,8 +59,9 @@ module Master
             reason = entry["reason"].to_s
             next unless reason.include?(key) || entry["pattern"].to_s.include?(key)
             return [
+              "anti-pattern: #{reason}",
               "  level: #{level}",
-              "  pattern: #{entry["pattern"]}",
+              "  pattern: #{entry["pattern"]}"
             ].join("\n")
           end
         end
@@ -70,6 +73,7 @@ module Master
         cursor = style
         keys.each do |k|
           return nil unless cursor.is_a?(Hash) && cursor.key?(k)
+          cursor = cursor[k]
         end
         "style: #{key}\n#{render(cursor, indent: 2).chomp}"
       end

@@ -43,6 +43,7 @@ module Master
       def triage(pkt)
         path = pkt[:violation][:file]
         return nil unless File.exist?(path)
+        pkt.merge(src: File.read(path, encoding: "UTF-8"))
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "FixPipeline.triage", event_bus: @bus, path:)
       end
@@ -50,6 +51,7 @@ module Master
       def fix(pkt)
         response = @agent.ask(fix_prompt(pkt)).to_s
         return nil if response.strip.empty? || response.strip == "UNCHANGED"
+        pkt.merge(candidate: response)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "FixPipeline.fix", event_bus: @bus)
       end
@@ -57,10 +59,12 @@ module Master
       def validate(pkt)
         candidate = pkt[:candidate]
         return nil unless candidate && candidate.strip != pkt[:src].strip
+        pkt.merge(valid: true)
       end
 
       def apply_stage(pkt)
         return nil unless pkt[:valid]
+        path = pkt[:violation][:file]
         temporary_path = "#{path}.pipeline.#{Process.pid}.tmp"
         File.write(temporary_path, pkt[:candidate], encoding: "UTF-8")
         File.rename(temporary_path, path)

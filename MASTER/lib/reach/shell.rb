@@ -45,6 +45,7 @@ module Master
 
       def call(command:)
         return Result.err("blocked command: #{command}", category: :validation) if blocked?(command)
+        return Result.err("interactive command blocked — no TTY available: #{command}",
                           category: :validation) if interactive?(command)
 
         warn_if_failing_often

@@ -61,7 +61,7 @@ module Master
           description: metadata["description"] || name,
           triggers: metadata["triggers"] || [],
           dir: dir,
-          has_ruby: File.exist?(rb_path),
+          has_ruby: File.exist?(rb_path)
         }
 
         if File.exist?(rb_path)

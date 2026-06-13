@@ -83,15 +83,8 @@ module Master
         end
 
         def merge_results(ctx, results)
-          merged = ctx
-          errors = []
-          results.each do |result|
-            if result.ok?
-              merged = merged.merge(result.value!)
-            else
-              errors << result.message
-            end
-          end
+          merged = results.filter_map { |r| r.value! if r.ok? }.reduce(ctx, &:merge)
+          errors = results.filter_map { |r| r.message if r.err? }
           errors.empty? ? merged : merged.merge(_parallel_errors: errors)
         end
       end
@@ -104,6 +97,7 @@ module Master
 
         def call(ctx)
           return @stage.call(ctx) unless ctx.pressure
+          label = pressure_label
           @bus&.publish("pipeline:skipped", stage: label, reason: "pressure")
           $stdout.puts "pipeline: skipped #{label} (pressure)"
           $stdout.flush
@@ -116,6 +110,7 @@ module Master
           stage_class = @stage.class.name
           short_name  = stage_class.split("::").last
           return short_name unless @stage.respond_to?(:stages)
+          names = @stage.stages.map { |s| s.class.name.split("::").last }.join(",")
           "parallel[#{names}]"
         end
       end
@@ -127,6 +122,7 @@ module Master
 
       def deploy_gate(ctx)
         return Result.ok(ctx) unless deploy_intent?(ctx)
+        return Result.ok(ctx) unless @scanner && @root
 
         result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call(autofix: true)
         return Result.err(result.message, category: :infrastructure) unless result.ok?
@@ -139,11 +135,13 @@ module Master
         unless tier1_violations.empty?
           @bus&.publish("pipeline:blocked", gate: "tier1_critical", violations: tier1_violations.size, score:)
           return Result.err("deploy blocked: tier1 critical violation(s): #{tier1_violations.uniq.join(", ")}",
+                            category: :policy)
         end
 
         if summary.violation_count.positive?
           @bus&.publish("pipeline:blocked", gate: "self_scan", violations: summary.violation_count, score:)
           return Result.err("deploy blocked: self-scan has #{summary.violation_count} violation(s)", category: :policy)
+        end
 
         return Result.ok(ctx) if score >= evidence_threshold
 

@@ -9,11 +9,11 @@ module Quality
   end
 
   class SlopBudget
-    DEFAULTS = {.freeze
+    DEFAULTS = {
       max_changed_files: 50,
       max_line_delta: 2_000,
       max_todo_delta: 10,
-      max_duplicate_basenames: 25,
+      max_duplicate_basenames: 25
     }.freeze
 
     def initialize(root: MasterPaths.repo, budget: DEFAULTS)
@@ -39,6 +39,7 @@ module Quality
     def git(*args)
       stdout, status = Open3.capture2e("git", *args, chdir: @root)
       raise "git #{args.join(" ")} failed: #{stdout}" unless status.success?
+      stdout
     end
 
     def changed_files
@@ -58,6 +59,7 @@ module Quality
 
     def todo_delta(files)
       return 0 if files.empty?
+      diff = git("diff", "--", *files)
       added = diff.lines.count { |line| line.start_with?("+") && line.match?(/TODO|FIXME/) }
       deleted = diff.lines.count { |line| line.start_with?("-") && line.match?(/TODO|FIXME/) }
       added - deleted

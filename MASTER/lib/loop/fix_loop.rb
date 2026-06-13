@@ -62,6 +62,7 @@ module Master
           if Time.now >= deadline
             @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
             return Result.ok("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)")
+          end
           @bus&.publish("fix_loop:pass_start", pass:, target:)
 
           fast_fixed = fast_pass(files)
@@ -83,6 +84,7 @@ module Master
             consecutive_clean += 1
             @bus&.publish("fix_loop:clean", pass:, consecutive_clean:)
             return Result.ok("clean after #{pass} pass(es)") if consecutive_clean >= clean_runs_required
+            next
           end
           consecutive_clean = 0
 
@@ -122,6 +124,7 @@ module Master
 
       def start_background!(target = @root)
         return Result.err("fix_loop already running") if @bg_thread&.alive?
+        @halted = false
         @halt_reason = nil
         @bg_thread = Thread.new { run_forever(target) }
         @bg_thread.abort_on_exception = false
@@ -131,6 +134,7 @@ module Master
 
       def stop_background!
         return Result.err("fix_loop not running") unless @bg_thread&.alive?
+        @bg_thread.kill
         @bg_thread = nil
         @bus&.publish("fix_loop:background_stop")
         Result.ok("fix_loop background stopped")
@@ -240,6 +244,7 @@ module Master
       def circuit_open?
         breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
         return false unless breaker.respond_to?(:open_models)
+        !breaker.open_models.empty?
       rescue StandardError
         false
       end
@@ -293,15 +298,15 @@ module Master
         deps = load_deps
         priors = load_priors
         ext_wts = extension_weights(@root)
-        rules = @rules.each_with_index.sort_by do |r, i|
+        rules = @rules.sort_by do |r|
           base_prior = priors.dig(r.id, "prior_p").to_f
           modifiers = priors.dig(r.id, "language_modifiers") || {}
           adjusted = ext_wts.sum { |ext, w| base_prior * (modifiers[ext] || 1.0) * w }
           density = @violation_counts[r.id].to_f + adjusted
           quality = @learnings&.fix_quality(rule: r.id) || 0.5
           tier2_priority = tier2_quality_rule?(r.id) ? 1 : 0
-          [-tier2_priority, -density, -quality, i]
-        end.map(&:first)
+          [-tier2_priority, -density, -quality]
+        end
         topo_sort(rules, deps)
       end
 
@@ -318,7 +323,7 @@ module Master
           target: target.delete_prefix("#{@root}/"),
           total_violations: violations.size,
           any_dirty: violations.any?,
-          modules: by_mod.map { |path, count| { path:, violations: count } },
+          modules: by_mod.map { |path, count| { path:, violations: count } }
         })
       end
 
@@ -367,6 +372,7 @@ module Master
       def collect_changed_files(target)
         changed = changed_since_last_commit(target)
         return collect_files(target) if changed.empty?
+        changed
       rescue StandardError => e
         @bus&.publish("fix_loop:incremental_fallback", error: e.message)
         collect_files(target)
@@ -375,6 +381,7 @@ module Master
       def changed_since_last_commit(target)
         out, _, status = Open3.capture3("git", "-C", @root, "diff", "--name-only", "HEAD")
         return [] unless status.success?
+        out.lines.map(&:strip).reject(&:empty?)
            .map { |rel| File.join(@root, rel) }
            .select { |f| File.exist?(f) && f.start_with?(target) }
            .reject { |f| SKIP_DIRS.any? { |d| f.include?(d) } }
@@ -383,6 +390,7 @@ module Master
 
       def commit_if_dirty(msg)
         return unless @git&.dirty?(".")
+        @git.add_all
         @git.commit(msg)
       rescue StandardError => e
         @bus&.publish("fix_loop:commit_error", error: e.message)
@@ -397,6 +405,7 @@ module Master
         end
         total = counts.values.sum.to_f
         return {} if total.zero?
+        counts.transform_values { |n| n / total }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix_loop.extension_weights", event_bus: @bus)
         {}
@@ -423,12 +432,14 @@ module Master
         if seen_snapshots.include?(snap)
           @bus&.publish("fix_loop:oscillation", pass:, violations: violations.size)
           return true
+        end
         seen_snapshots << snap
         history << violations.size
         window = plateau_window
         if history.size >= window && history.last(window).uniq.size == 1
           @bus&.publish("fix_loop:plateau", pass:, violations: violations.size)
           return true
+        end
         false
       end
 

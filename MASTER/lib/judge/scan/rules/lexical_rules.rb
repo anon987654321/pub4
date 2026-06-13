@@ -34,7 +34,7 @@ module Master
           description: "lines exceeding 120 characters" do |src, path:|
           next [] if path.to_s.match?(%r{/voice/personality\.rb|/reach/llm\.rb})
           src.each_line.with_index(1).filter_map { |line, n|
-            finding(line: n, message: "line #{line.chomp.length} chars (max 120)") if line.chomp.length > 120,
+            finding(line: n, message: "line #{line.chomp.length} chars (max 120)") if line.chomp.length > 120
           }
         end
 
@@ -42,7 +42,7 @@ module Master
           severity: :info, tags: %i[HYGIENE],
           description: "trailing whitespace" do |src, path:|
           src.each_line.with_index(1).filter_map { |line, n|
-            finding(line: n, message: "trailing whitespace") if line.match?(/[ \t]+\n?\z/),
+            finding(line: n, message: "trailing whitespace") if line.match?(/[ \t]+\n?\z/)
           }
         end
 
@@ -65,7 +65,7 @@ module Master
           src.each_line.with_index(1).filter_map { |line, n|
             bare_rescue = line.match?(/^\s*rescue\s*$/)
             naked_class = line.match?(/^\s*rescue\s+\S+\s*$/) && !line.match?(/=>/)
-            finding(line: n, message: "empty rescue — use Ground::Swallow.log or re-raise") if bare_rescue || naked_class,
+            finding(line: n, message: "empty rescue — use Ground::Swallow.log or re-raise") if bare_rescue || naked_class
           }
         end
 
@@ -96,6 +96,7 @@ module Master
       # Handler body — the inline `; expr` form, or lines down to the matching end.
         def self.rescue_body(lines, line_index, inline)
           return [inline] unless inline.empty?
+          collected = []
           ((line_index + 1)...lines.size).each do |j|
             stripped = lines[j].strip
             break if stripped.match?(/\A(end|else|ensure|rescue)\b/)
@@ -107,6 +108,7 @@ module Master
       # Silent: body discards, never names the error, never reaches a sink.
         def self.rescue_silent?(body, err_name)
           return false unless body.reject { |b| b.match?(RESCUE_DISCARD) }.empty?
+          return false if err_name && body.any? { |b| b.match?(/\b#{Regexp.escape(err_name)}\b/) }
           body.none? { |b| b.match?(RESCUE_SINK) }
         end
 
@@ -140,7 +142,7 @@ module Master
           src.each_line.with_index(1) { |line, n|
             blank = line.strip.empty?
             findings << finding(line: n, message: "consecutive blank line") if blank && prev_blank
-            prev_blank = blank,
+            prev_blank = blank
           }
           findings
         end
@@ -160,7 +162,7 @@ module Master
           description: "trailing comment after code" do |src, path:|
           src.each_line.with_index(1).filter_map { |line, n|
             next if line.strip.start_with?("#")
-            finding(line: n, message: "trailing comment — promote above the line or delete") if line.match?(/\S\s+#\s+\S/),
+            finding(line: n, message: "trailing comment — promote above the line or delete") if line.match?(/\S\s+#\s+\S/)
           }
         end
 
@@ -357,12 +359,12 @@ module Master
           findings = []
           findings.concat(scan_lines(src, /\beval\(.*\$\{|\beval\(.*user/i, message: "eval with user input — arbitrary code execution"))
           findings.concat(scan_lines(src, /\brm\s+-rf\s+\/(?!\w)/, message: "rm -rf / — data loss"))
-          findings.concat(scan_lines(src, /Marshal[.]load\b/, message: "Marshal load — deserialization RCE vector"))
+          findings.concat(scan_lines(src, /Marshal\.load\b/, message: "Marshal.load — deserialization RCE vector"))
           findings.concat(scan_lines(src, /\bopen\(.*#\{/, message: "open() with interpolation — shell injection via Kernel#open"))
           findings
         end
 
-      # A06 USE_THEN: sequential temp-var chains; refactor to .then/.yield_self.
+      # A06 USE_THEN — sequential temp-var chains that could be .then/.yield_self.
         RuleDSL.rule :USE_THEN,
           severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
           description: "use .then over temp variable chains" do |src, path:|
@@ -392,7 +394,7 @@ module Master
           scan_lines(src, /\S {2,}(?:=>|[^=!<>]=(?!=)|:\s)/, message: "column-aligned padding — use single space before => / = / :")
         end
 
-      # A17 SPECULATIVE_GENERALITY_LEXICAL: catches future/hypothetical TODO comments.
+      # A17 SPECULATIVE_GENERALITY_LEXICAL — future/hypothetical TODO comments.
         RuleDSL.rule :SPECULATIVE_GENERALITY_LEXICAL,
           severity: :info, tags: %i[YAGNI],
           description: "no speculative future-proofing comments" do |src, path:|

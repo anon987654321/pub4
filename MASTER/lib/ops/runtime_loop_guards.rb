@@ -14,36 +14,42 @@ module Master
 
       def guard_heartbeat
         return unless defined?(Master::Loop::Heartbeat)
+        return if Master::Loop::Heartbeat.method_defined?(:start_without_runtime_guard!)
 
         Master::Loop::Heartbeat.class_eval do
           alias_method :start_without_runtime_guard!, :start!
 
           def start!
             return unless ENV["MASTER_HEARTBEAT"] == "1"
+            start_without_runtime_guard!
           end
         end
       end
 
       def guard_watcher
         return unless defined?(Master::Loop::Watcher)
+        return if Master::Loop::Watcher.method_defined?(:run_forever_without_runtime_guard!)
 
         Master::Loop::Watcher.class_eval do
           alias_method :run_forever_without_runtime_guard!, :run_forever
 
           def run_forever
             return unless ENV["MASTER_WATCHER"] == "1"
+            run_forever_without_runtime_guard!
           end
         end
       end
 
       def guard_watch_loop
         return unless defined?(Master::Loop::WatchLoop)
+        return if Master::Loop::WatchLoop.method_defined?(:run_without_runtime_guard!)
 
         Master::Loop::WatchLoop.class_eval do
           alias_method :run_without_runtime_guard!, :run
 
           def run(*args, **kwargs, &block)
             return unless ENV["MASTER_WATCH"] == "1"
+            run_without_runtime_guard!(*args, **kwargs, &block)
           end
         end
       end

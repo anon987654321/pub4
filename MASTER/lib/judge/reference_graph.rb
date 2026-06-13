@@ -15,11 +15,11 @@ module Master
   # - governed autonomous restructuring
     class ReferenceGraph
       DEFAULT_EXTENSIONS = %w[
-        .rb .js .ts .tsx .erb .yml .yaml .json .md .sh,
+        .rb .js .ts .tsx .erb .yml .yaml .json .md .sh
       ].freeze
 
       IGNORE_DIRS = %w[
-        .git node_modules vendor tmp log coverage dist build .bundle,
+        .git node_modules vendor tmp log coverage dist build .bundle
       ].freeze
 
       Edge = Struct.new(:type, :from, :to, :weight, keyword_init: true)
@@ -41,7 +41,7 @@ module Master
         graph = {
           nodes: @nodes.to_a.sort,
           edges: @edges.map(&:to_h),
-          metrics: metrics,
+          metrics: metrics
         }
 
         @bus&.publish(
@@ -59,7 +59,7 @@ module Master
         {
           target: rel,
           inbound: impacted.select { |e| e.to == rel }.map(&:from).uniq.sort,
-          outbound: impacted.select { |e| e.from == rel }.map(&:to).uniq.sort,
+          outbound: impacted.select { |e| e.from == rel }.map(&:to).uniq.sort
         }
       end
 
@@ -147,7 +147,7 @@ module Master
           require_edges: grouped.fetch(:require, []).size,
           constant_edges: grouped.fetch(:constant, []).size,
           event_edges: grouped.fetch(:event, []).size,
-          command_edges: grouped.fetch(:command, []).size,
+          command_edges: grouped.fetch(:command, []).size
         }
       end
 

@@ -20,6 +20,7 @@ module Master
         if path
           resolved = resolve(path)
           return resolved if resolved.err?
+          target = resolved.value!
         end
         return Result.err("path not found: #{target}", category: :validation) unless Dir.exist?(target)
 

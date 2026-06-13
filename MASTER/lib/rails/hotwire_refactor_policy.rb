@@ -6,7 +6,7 @@ module Master
       Rule = Data.define(:id, :signal, :replace_with, :severity, :guide)
 
       # Common upgrade gaps after jQuery → Hotwire adoption.
-      JS_RULES = [.freeze
+      JS_RULES = [
         Rule.new(
           id: :dom_content_loaded,
           signal: /DOMContentLoaded/,
@@ -48,10 +48,10 @@ module Master
           replace_with: "add data-turbo-frame='_top' to links inside frames that should navigate the full page",
           severity: :low,
           guide: "Links inside Turbo Frames target the frame by default — add _top for full page navigation"
-        ),
+        )
       ].freeze
 
-      ERB_RULES = [.freeze
+      ERB_RULES = [
         Rule.new(
           id: :render_partial_ajax_candidate,
           signal: /render\s+partial:.*locals:/,
@@ -65,19 +65,19 @@ module Master
           replace_with: "respond_to { |f| f.turbo_stream } with turbo_stream.replace/append/prepend",
           severity: :high,
           guide: "format.js with RJS/JS.ERB templates should become Turbo Stream responses"
-        ),
+        )
       ].freeze
 
-      SW_UPGRADE = {.freeze
+      SW_UPGRADE = {
         id: :cache_strategy_upgrade,
         current: "cache-first for all GET requests",
         recommended: {
           "static assets (*.js, *.css, images)" => "CacheFirst with versioned cache name",
           "navigation (HTML pages)" => "NetworkFirst with 10s timeout, fallback to cache",
           "API / user data" => "NetworkFirst — never serve stale user content",
-          "auth routes (/login, /session)" => "NetworkOnly — never cache",
+          "auth routes (/login, /session)" => "NetworkOnly — never cache"
         },
-        severity: :medium,
+        severity: :medium
       }.freeze
 
       def violations_in(source, path: nil, type: :js)

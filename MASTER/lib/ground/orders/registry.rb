@@ -15,7 +15,7 @@ module Master
             "autocommit" => Autocommit,
             "restart_master" => RestartMaster,
             "architecture_audit" => ArchitectureAudit,
-            "constitution_drift" => ConstitutionDrift,
+            "constitution_drift" => ConstitutionDrift
           }
         end
 

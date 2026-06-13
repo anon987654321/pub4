@@ -12,7 +12,7 @@ module Master
           context: context.to_s,
           error_class: error.class.name,
           error: error.message.to_s,
-          backtrace: Array(error.backtrace).first(5),
+          backtrace: Array(error.backtrace).first(5)
         }.merge(metadata)
 
         if event_bus
@@ -28,12 +28,5 @@ module Master
         nil
       end
     end
-
-      def safe_call(context:, event_bus: nil, **meta)
-        yield
-      rescue StandardError => e
-        log(e, context: context, event_bus: event_bus, **meta)
-        nil
-      end
   end
 end

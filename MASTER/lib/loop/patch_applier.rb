@@ -17,6 +17,7 @@ module Master
 
       def self.apply(original, diff_text)
         return Failure.new(reason: "empty diff") if diff_text.strip.empty?
+        return Failure.new(reason: "not a diff") unless diff_text.include?("@@")
         new(original, diff_text).apply
       end
 
@@ -31,7 +32,9 @@ module Master
           f.flush
           _out, err, status = Open3.capture3("patch", "--no-backup-if-mismatch", "-s", f.path, stdin_data: @diff)
           return Failure.new(reason: err.strip[0, 200]) unless status.success?
+          result = File.read(f.path, encoding: "UTF-8")
           return Failure.new(reason: "no change") if result.strip == @original.strip
+          Success.new(source: result)
         end
       rescue StandardError => e
         Failure.new(reason: e.message[0, 200])

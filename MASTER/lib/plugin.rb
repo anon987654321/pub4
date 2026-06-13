@@ -24,6 +24,7 @@ module Master
       @mutex.synchronize { @registry[sym] }
     rescue LoadError => e
       raise ArgumentError, "plugin :#{name} not found (#{e.message})"
+    end
 
     def self.included(base)
       base.extend(ClassMethods)
