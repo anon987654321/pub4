@@ -20,7 +20,6 @@ module Master
         hits = @index.query(name)
         if hits.is_a?(Hash) && hits[:error]
           return Result.err("symbol_lookup: #{hits[:error]}", category: :validation)
-        end
 
         @bus&.publish("tool:symbol_lookup", name:, hits: hits.size)
         Result.ok(hits.map { |h| format_hit(h) }.join("\n\n"))

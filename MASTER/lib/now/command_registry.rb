@@ -28,8 +28,8 @@ module Master
               "model:   /model /mode /persona /task",
               "memory:  /memory /dreams",
               "tools:   /postpro [args] /repligen [args] /photograph <prompt> /sing <lyrics>",
-              "system:  /orient [topic] /tree /diff /commit /snapshot /diag /reload /help"
-            ].join("\n")
+              "system:  /orient [topic] /tree /diff /commit /snapshot /diag /reload /help",
+            ].join("\n"),
           }
         )
       end
@@ -47,14 +47,14 @@ module Master
             n = 10 if n <= 0
             recent = session.messages.last(n)
             next "history: empty" if recent.empty?
-            recent.map { |m| "[#{m[:role]}] #{m[:content].to_s.gsub(/\s+/, " ")[0, 120]}" }.join("\n")
+            recent.map { |m| "[#{m[:role]}] #{m[:content].to_s.gsub(/\s+/, " ")[0, 120]}" }.join("\n"),
           },
           "tokens" => ->(_ctx) { "~#{session.token_est} tokens" },
           "cost" => ->(_ctx) { "$#{"%.4f" % session.cost}" },
           "undo" => ->(_ctx) { r = undo.undo!; r.ok? ? "reverted: #{r.value!}" : r.message },
           "redo" => ->(_ctx) { r = undo.redo!; r.ok? ? "reapplied: #{r.value!}" : r.message },
           "dmesg" => ->(_ctx) { logging.dmesg },
-          "config" => ->(_ctx) { config.to_h.inspect }
+          "config" => ->(_ctx) { config.to_h.inspect },
         }
       end
 
@@ -68,12 +68,12 @@ module Master
             arg = ctx[:args].to_s.strip
             Master::Judge::Modes::SUPPORTED.include?(arg) ?
               (config["reasoning_mode"] = arg; config.save!; "mode: #{arg}") :
-              "mode: #{config.reasoning_mode} (supported: #{Master::Judge::Modes::SUPPORTED.join(", ")})"
+              "mode: #{config.reasoning_mode} (supported: #{Master::Judge::Modes::SUPPORTED.join(", ")})",
           },
           "task" => ->(ctx) {
             arg = ctx[:args].to_s.strip
-            arg.empty? ? "task_type: #{config.task_type}" : (config["task_type"] = arg; config.save!; "task_type: #{arg}")
-          }
+            arg.empty? ? "task_type: #{config.task_type}" : (config["task_type"] = arg; config.save!; "task_type: #{arg}"),
+          },
         }
       end
 
@@ -81,9 +81,8 @@ module Master
         {
           "persona" => ->(ctx) {
             arg = ctx[:args].to_s.strip
-            return "persona: #{config.persona}" if arg.empty?
-            config["persona"] = arg; config.save!; "persona: #{arg}"
-          }
+            return "persona: #{config.persona}" if arg.empty?,
+          },
         }
       end
 
@@ -92,7 +91,7 @@ module Master
         flags.each_with_object({}) do |flag, h|
           h[flag] = ->(ctx) {
             arg = ctx[:args].to_s.strip
-            arg.empty? ? "#{flag}: #{config[flag]}" : (config[flag] = arg == "on"; config.save!; "#{flag}: #{config[flag]}")
+            arg.empty? ? "#{flag}: #{config[flag]}" : (config[flag] = arg == "on"; config.save!; "#{flag}: #{config[flag]}"),
           }
         end
       end
@@ -100,7 +99,7 @@ module Master
       def control_commands(standing, soul)
         {
           "orders" => cmd(:dispatch_orders, standing),
-          "soul" => cmd(:dispatch_soul, soul)
+          "soul" => cmd(:dispatch_soul, soul),
         }
       end
 
@@ -119,7 +118,6 @@ module Master
       def run_due_orders(standing)
         results = standing.run_due!
         return "no orders due" if results.empty?
-        results.map { |r| "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}" }.join("\n")
       end
 
       def dispatch_soul(soul, arg)

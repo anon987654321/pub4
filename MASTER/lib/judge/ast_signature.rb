@@ -14,7 +14,6 @@ module Master
       def from_source(source)
         result = Prism.parse(source)
         return [] if result.failure?
-        visitor = Visitor.new
         visitor.visit(result.value)
         visitor.sigs
       rescue StandardError => e
@@ -25,7 +24,6 @@ module Master
       def from_git(rel_path, ref:, root: Dir.pwd)
         out, st = Open3.capture2e("git", "show", "#{ref}:#{rel_path}", chdir: root)
         return [] unless st.success?
-        from_source(out)
       end
 
       def diff(old_sigs, new_sigs, kinds: %i[method class module])

@@ -11,26 +11,26 @@ module Master
       AXIOM_DISPLAY_LIMIT = 10
 
       # Fallback if data/personas.yml is missing or malformed.
-      FALLBACK_PERSONA = {
+      FALLBACK_PERSONA = {.freeze
         "voice" => "ms-MY-OsmanNeural",
         "tts_rate" => "-35%",
         "tts_pitch" => "-150Hz",
         "style" => "deep",
-        "description" => "Terse. Direct. No filler. Dark."
+        "description" => "Terse. Direct. No filler. Dark.",
       }.freeze
 
-      MOOD_LINES = {
+      MOOD_LINES = {.freeze
         tense: "Mood: tense — error rate elevated. Be conservative; verify before asserting.",
         weary: "Mood: weary — fatigue high. Cut non-essential elaboration; defer deep dives.",
         curious: "Mood: curious — novelty hunger. Explore lateral framings when warranted.",
-        focused: "Mood: focused — drives at setpoint. Default depth and tier."
+        focused: "Mood: focused — drives at setpoint. Default depth and tier.",
       }.freeze
 
-      PHASE_LINES = {
+      PHASE_LINES = {.freeze
         morning: "Phase: morning. Bias toward structural work; prefer rigorous review.",
         afternoon: "Phase: afternoon. Steady throughput; pragmatic decisions.",
         evening: "Phase: evening. Wrap loops; avoid starting large refactors.",
-        night: "Phase: night. Minimal voice; conserve cycles; defer non-urgent."
+        night: "Phase: night. Minimal voice; conserve cycles; defer non-urgent.",
       }.freeze
 
       attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
@@ -76,7 +76,7 @@ module Master
             "<master_runtime_state>",
             MOOD_LINES[@homeostat.mood],
             PHASE_LINES[@homeostat.circadian_phase],
-            "</master_runtime_state>"
+            "</master_runtime_state>",
           ].join("\n")
         end
         constitution = @rules.constitution
@@ -93,7 +93,7 @@ module Master
           "closer_never: #{no_end.join(" / ")}",
           "evidence_only: show diff or file content; never assert; active voice",
           anti_sim.any? ? "anti_simulation: never use #{anti_sim.join(", ")} — state facts and evidence only" : nil,
-          "</master_constitution>"
+          "</master_constitution>",
         ].compact.join("\n")
         kernel = @rules.kernel
         if kernel.any?
@@ -105,7 +105,7 @@ module Master
           phil_ids = phil.map { |p| p["id"] }.join(" · ")
           sections["master_constitution_kernel"] = [
             sections["master_constitution_kernel"],
-            "philosophy: #{phil_ids}"
+            "philosophy: #{phil_ids}",
           ].compact.join("\n")
         end
 

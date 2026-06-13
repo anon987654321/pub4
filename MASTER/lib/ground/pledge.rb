@@ -19,12 +19,10 @@ module Master
         def pledge(promises, execpromises = nil)
           r = LibC.pledge(promises, execpromises || Fiddle::NULL)
           raise SystemCallError.new("pledge", Fiddle.last_error) if r == -1
-        end
 
         def unveil(path, permissions)
           r = LibC.unveil(path, permissions)
           raise SystemCallError.new("unveil", Fiddle.last_error) if r == -1
-        end
 
         def lock_unveil! = LibC.unveil(Fiddle::NULL, Fiddle::NULL)
         def openbsd? = true

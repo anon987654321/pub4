@@ -14,12 +14,12 @@ module Master
       RESULT_TRUNCATE = 200
       SECONDS_PER_HOUR = 3600
 
-      JOB_HANDLERS = {
+      JOB_HANDLERS = {.freeze
         "prune_memory" => :prune_memory,
         "check_models" => :check_model_availability,
         "self_test" => :run_self_test,
         "prune_undo" => :prune_undo_journal,
-        "snapshot" => :run_snapshot
+        "snapshot" => :run_snapshot,
       }.freeze
 
       def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil, homeostat: nil)
@@ -37,7 +37,6 @@ module Master
 
       def start!
         return unless ENV["MASTER_HEARTBEAT"] == "1"
-        return if @jobs.empty?
 
         @stop = false
         @thread = Thread.new do
@@ -106,9 +105,7 @@ module Master
 
       def check_model_availability
         return "no agent" unless @agent
-        id = @agent.model.to_s
         return "no active model" if id.empty?
-        alive = model_reachable?(id)
         "model: #{id.split("/").last} #{alive ? "reachable" : "unreachable"}"
       end
 
@@ -166,7 +163,7 @@ module Master
           { "name" => "prune_memory", "action" => "prune_memory", "interval_seconds" => SECONDS_PER_HOUR },
           { "name" => "self_test", "action" => "self_test", "interval_seconds" => SECONDS_PER_HOUR },
           { "name" => "prune_undo", "action" => "prune_undo", "interval_seconds" => 86_400 },
-          { "name" => "snapshot", "action" => "snapshot", "interval_seconds" => 14_400 }
+          { "name" => "snapshot", "action" => "snapshot", "interval_seconds" => 14_400 },
         ]
       end
 

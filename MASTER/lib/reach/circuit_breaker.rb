@@ -38,7 +38,6 @@ module Master
           @req_times.reject! { |t| now - t > @rate_window }
           over_rate = @req_times.size >= @rate_max
           raise CircuitError.new("rate limit: #{@rate_max} req/min exceeded", :rate_limit) if over_rate
-          @req_times << now
         end
       end
 
@@ -72,34 +71,28 @@ module Master
         # Config errors aren't backend failures — don't penalize the breaker.
         if error_message.match?(/missing configuration/i) || !Master.any_api_key_present?
           return Result.err(Master.no_api_key_message, category: :no_api_key)
-        end
         on_failure
         Result.err(error_message, category: :provider_error)
       end
 
       def check_budget(estimate)
         return unless @budget_max.positive?
-        synchronize do
           projected = @session_total + estimate
           if @max_per_file && estimate > @max_per_file
             raise CircuitError.new("budget: single call $#{estimate.round(4)} exceeds max_per_file $#{@max_per_file}", :budget)
-          end
           if @warn_at && projected >= @warn_at && @session_total < @warn_at
             @bus&.publish("budget:warn", projected:, warn_at: @warn_at)
           end
           raise CircuitError.new("budget: $#{projected.round(4)} exceeds $#{@budget_max}", :budget) if projected > @budget_max
-        end
       end
 
       def check_circuit
         # No retry loop here — caller decides whether to retry after catching CircuitError.
         synchronize do
           return if @state == :closed
-          if @state == :open
             elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @opened_at
             unless elapsed >= COOLDOWN_S
               raise CircuitError.new("circuit open: #{(COOLDOWN_S - elapsed).ceil}s cooldown remaining", :infrastructure)
-            end
             @state = :half_open
             @failures = 0
           end
@@ -120,7 +113,6 @@ module Master
         synchronize do
           @failures += 1
           return unless @failures >= FAILURE_THRESHOLD
-          @state = :open
           @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           @bus&.publish("circuit:open", failures: @failures)
         end

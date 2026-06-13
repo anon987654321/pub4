@@ -31,20 +31,20 @@ module Master
   CTX_WINDOW_SIZE = 200_000
   VIOLATION_TRUNCATE = 90
 
-  FILE_LANGUAGE_MAP = {
+  FILE_LANGUAGE_MAP = {.freeze
     ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
     ".js" => "javascript", ".json" => "json", ".sh" => "bash",
     ".zsh" => "bash", ".md" => "markdown", ".html" => "html",
-    ".erb" => "erb", ".css" => "css"
+    ".erb" => "erb", ".css" => "css",
   }.freeze
 
-  API_KEY_PROVIDERS = {
+  API_KEY_PROVIDERS = {.freeze
     anthropic_api_key: "ANTHROPIC_API_KEY",
     openai_api_key: "OPENAI_API_KEY",
     gemini_api_key: "GEMINI_API_KEY",
     openrouter_api_key: "OPENROUTER_API_KEY",
     mistral_api_key: "MISTRAL_API_KEY",
-    deepseek_api_key: "DEEPSEEK_API_KEY"
+    deepseek_api_key: "DEEPSEEK_API_KEY",
   }.freeze
 
   loader = Zeitwerk::Loader.new
@@ -80,7 +80,7 @@ module Master
     judge/scan/rules/ruby_rules.rb
     judge/scan/rules/web_rules.rb
     judge/scan/rules/js_rules.rb
-    judge/scan/rules/universal_rules.rb
+    judge/scan/rules/universal_rules.rb,
   ].each do |rel|
     loader.ignore(File.join(__dir__, rel))
   end
@@ -140,11 +140,8 @@ module Master
 
   def self.default_model
     return OPENROUTER_DEFAULT if api_key_present?("OPENROUTER_API_KEY")
-    return "claude-opus-4-7" if api_key_present?("ANTHROPIC_API_KEY")
     return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
-    return "gpt-4o" if api_key_present?("OPENAI_API_KEY")
     return "gemini-2.5-flash" if api_key_present?("GEMINI_API_KEY")
-    return "mistral-large-latest" if api_key_present?("MISTRAL_API_KEY")
     OPENROUTER_DEFAULT
   end
 
@@ -199,7 +196,6 @@ module Master
 
   def self.const_missing(sym)
     return Judge::Agent if sym == :Agent
-    super
   end
 
   def self.build(root: Dir.pwd)

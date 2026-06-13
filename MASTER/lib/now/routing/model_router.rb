@@ -4,12 +4,12 @@ module Master
   module Now
     module Routing
       class ModelRouter
-        UNCERTAINTY_PHRASES = [
+        UNCERTAINTY_PHRASES = [.freeze
           "i'm not sure", "i don't know", "cannot determine",
           "unclear", "uncertain", "might be", "possibly",
           "probably not", "limited information", "i cannot",
           "i am unable", "i lack the", "not enough information",
-          "i would need more"
+          "i would need more",
         ].freeze
 
         ESCALATION_CHAIN = %w[cheap default strong].freeze
@@ -45,9 +45,8 @@ module Master
 
         def continuity_models
           return [] if @rules.dig("continuity", "enabled") == false
-          latest = [
             @rules.dig("openrouter", "free_latest"),
-            @rules.dig("ferrum_web_chat", "free_latest")
+            @rules.dig("ferrum_web_chat", "free_latest"),
           ]
           flat = latest.flatten.compact
           flat.uniq
@@ -94,7 +93,6 @@ module Master
         def tier_for_model(model_id)
           @rules.fetch("models", {}).each do |tier, models|
             return tier if models.is_a?(Array) && models.any? { |m| m["id"] == model_id }
-          end
           "cheap"
         end
 
@@ -118,7 +116,6 @@ module Master
 
         def score_breakdown(task_type: :exploration)
           return [] unless enabled?
-          candidates = @rules.dig("models", current_tier(task_type:)).to_a
           weights = @rules.fetch("weights", {})
           qw = [weights.fetch("quality", 1.0).to_f, 0.01].max
           sw = [weights.fetch("speed", 1.0).to_f, 0.01].max
@@ -128,7 +125,7 @@ module Master
             q = s.fetch("quality", 0.5).to_f * qw
             sp = [s.fetch("speed", 1.0).to_f * sw, 0.01].max
             co = [s.fetch("cost", 0.5).to_f * cw, 0.001].max
-            { id: m["id"], q:, s: sp, c: co, total: q * sp * co }
+            { id: m["id"], q:, s: sp, c: co, total: q * sp * co },
           }.sort_by { |x| -x[:total] }
         end
 
@@ -138,18 +135,17 @@ module Master
           nil
         end
 
-        INTENT_PATTERNS = {
+        INTENT_PATTERNS = {.freeze
           code_generation: /\b(implement|build|add|create|write|make|generate|scaffold|port|wire)\b/i,
           refactoring: /\b(refactor|rename|clean ?up|simplify|extract|inline|dedup|consolidate|tidy)\b/i,
           architecture: /\b(design|architect|structure|plan|approach|module|boundary|layer|topology)\b/i,
           review: /\b(review|critique|audit|check|council|tribunal|inspect|evaluate|judge)\b/i,
-          explanation: /\b(explain|what is|how does|why does|describe|clarify|walk me through)\b/i
+          explanation: /\b(explain|what is|how does|why does|describe|clarify|walk me through)\b/i,
         }.freeze
 
         def classify_intent(text)
           s = text.to_s
           return :exploration if s.strip.empty?
-          INTENT_PATTERNS.each { |intent, re| return intent if re.match?(s) }
           :exploration
         end
 

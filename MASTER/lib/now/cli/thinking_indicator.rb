@@ -50,7 +50,6 @@ module Master
       def update_think_stage(payload)
         ev = payload[:event].to_s
         return unless ev.start_with?("stage:")
-        stage = payload.fetch(:stage, ev.sub("stage:", ""))
         @think_stage = stage.to_s
       end
 
@@ -66,7 +65,6 @@ module Master
       def emit_dmesg_line(payload)
         ev = payload[:event].to_s
         return if ev.empty? || DMESG_IGNORE.include?(ev)
-        ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - (@think_t0 || 0)) * 1000).to_i
         kv = payload.reject { |k, _| %i[event ts topic].include?(k) }
                     .map { |k, v| "#{k}=#{v.to_s[0, 60]}" }.join(" ")
         diff = ev == "tool:after" && MUTATING_TOOLS.include?(payload[:tool].to_s) ? diff_stat(payload[:path]) : nil
@@ -83,7 +81,6 @@ module Master
 
       def diff_stat(path)
         return nil unless path && !path.empty?
-        out, _ = Open3.capture2e("git", "-C", @root, "diff", "--numstat", "--", path)
         m = out.lines.first&.match(/^(\d+)\s+(\d+)/)
         m ? "+#{m[1]}/-#{m[2]}" : nil
       rescue StandardError => e

@@ -80,7 +80,6 @@ module Master
 
       def diff
         return "no pending proposal" unless File.exist?(PROPOSAL_PATH)
-        proposal = File.read(PROPOSAL_PATH)
         lines_old = @soul.lines
         lines_new = proposal.lines
         changes = lines_new.reject { |l| lines_old.include?(l) }
@@ -93,7 +92,6 @@ module Master
 
       def approve
         return "no pending proposal" unless File.exist?(PROPOSAL_PATH)
-        proposal = File.read(PROPOSAL_PATH)
 
         old_version = extract_version
         new_version = bump_version(old_version, :patch)
@@ -122,7 +120,6 @@ module Master
 
       def reject
         return "no pending proposal" unless File.exist?(PROPOSAL_PATH)
-        File.unlink(PROPOSAL_PATH)
         "proposal rejected"
       end
 
@@ -130,7 +127,6 @@ module Master
         log_out, = Open3.capture2e("git", "-C", @root, "log", "--oneline", "SOUL.md")
         out = log_out.lines
         return "no git history for SOUL.md" if out.size < 2
-        prev_sha = out[1].split.first
         restored, = Open3.capture2e("git", "-C", @root, "show", "#{prev_sha}:SOUL.md")
         tmp_w = "#{SOUL_PATH}.tmp.#{Process.pid}"
         File.write(tmp_w, restored)

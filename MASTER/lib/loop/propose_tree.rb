@@ -57,7 +57,6 @@ module Master
 
       def describe_entry(entry)
         return [File.basename(entry)] unless File.directory?(entry)
-        subs = Dir.glob(File.join(entry, "*")).sort.map { |f| "  #{File.basename(f)}#{File.directory?(f) ? "/" : ""}" }
         ["#{File.basename(entry)}/", *subs]
       end
 

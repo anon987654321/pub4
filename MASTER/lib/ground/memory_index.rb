@@ -7,9 +7,9 @@ require "json"
 module Master
   module Ground
     class MemoryIndex
-      DEFAULT_DIRS = [
+      DEFAULT_DIRS = [.freeze
         File.join(Master::ROOT, "data", "claude"),
-        File.join(Master::ROOT, ".master", "memory")
+        File.join(Master::ROOT, ".master", "memory"),
       ].freeze
 
       attr_reader :root, :index_path

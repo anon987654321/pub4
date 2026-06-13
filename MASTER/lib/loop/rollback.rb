@@ -28,7 +28,6 @@ module Master
 
       def rollback_eligible?(result)
         return false unless result.is_a?(Master::Result::Err)
-        return false unless ROLLBACK_CATEGORIES.include?(result.category)
 
         git_workspace? && dirty?
       end

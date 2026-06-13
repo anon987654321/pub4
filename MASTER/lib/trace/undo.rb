@@ -89,11 +89,9 @@ module Master
       rescue StandardError => e
         File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
         raise
-      end
 
       def load_journal
         return [] unless File.exist?(@journal)
-        File.readlines(@journal).filter_map do |line|
           JSON.parse(line.strip)
         rescue JSON::ParserError
           nil
@@ -111,7 +109,6 @@ module Master
       rescue StandardError => e
         File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
         raise
-      end
     end
   end
 end

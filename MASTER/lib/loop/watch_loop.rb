@@ -40,7 +40,6 @@ module Master
         require_kqueue_or_inotify
       rescue LoadError
         raise
-      end
 
       # Drains the queue with debounce — coalesces rapid file events.
       def drain_queue
@@ -61,7 +60,6 @@ module Master
 
       def run_rules_on(path)
         return unless File.exist?(path)
-        @rules.each do |rule|
           rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
           result = rl.run([path])
           @bus&.publish("watch_loop:file_pass", file: path, rule: rule.id, **result)

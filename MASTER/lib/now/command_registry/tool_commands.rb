@@ -16,7 +16,7 @@ module Master
           "repligen" => ->(ctx) { dispatch_master_tool(root:, tool: "repligen", arg: arg_for(ctx)) },
           "photograph" => ->(ctx) { dispatch_photograph(root:, agent: agent, ctx: ctx) },
 
-          "sing" => ->(ctx) { dispatch_sing(root:, ctx: ctx) }
+          "sing" => ->(ctx) { dispatch_sing(root:, ctx: ctx) },
         }
       end
 
@@ -63,7 +63,6 @@ module Master
 
         unless output_dir && Dir.exist?(output_dir)
           return "photograph: generate failed or no output dir\n#{gen_out}"
-        end
 
         # Postpro the generated images for genuinely good film photography look (kodak_portra portrait)
         # Process files in the dir using postpro script per file (supports --input file --output ...)
@@ -85,12 +84,11 @@ module Master
           "refined: #{refined_prompt[0,120]}...",
           "generated: #{output_dir}",
           "postpro (#{results.size} files): #{processed_dir}",
-          results.join("\n")
+          results.join("\n"),
         ].join("\n")
 def dispatch_sing(root:, ctx:)
   prompt = arg_for(ctx).to_s.strip
   return "usage: /sing <lyrics or singing prompt>   (Replicate suno-ai/bark)" if prompt.empty?
-  dispatch_master_tool(root: root, tool: "repligen", arg: "generate suno-ai/bark #{prompt}")
 end
 
       end

@@ -31,9 +31,7 @@ module Master
 
           def check(code, path:)
             return [] unless path.end_with?(".rb") && @agent
-            pairs = extract_pairs(code)
             return [] if pairs.empty?
-            response = @agent.ask(build_prompt(pairs, path), operation: :scan_comment_drift).to_s
             parse_findings(response, pairs)
           rescue StandardError => _e
             []
@@ -80,7 +78,6 @@ module Master
 
           def parse_findings(response, pairs)
             return [] if response.strip.upcase == "CLEAN"
-            response.lines.filter_map do |line|
               match = line.strip.match(/\A(\d+):(.+)\z/)
               next unless match
               pair_index = match[1].to_i

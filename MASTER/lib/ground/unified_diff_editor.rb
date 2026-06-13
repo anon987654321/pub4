@@ -21,7 +21,6 @@ module Master
             current[:new] = clean_path(Regexp.last_match(1)) if current
           when HUNK_RE
             raise ArgumentError, "hunk without file" unless current
-            current[:hunks] << { header: line.chomp, lines: [] }
           else
             current[:hunks].last[:lines] << line if current && current[:hunks].any?
           end
@@ -52,7 +51,7 @@ module Master
           "--- #{path}\n",
           "+++ #{path}\n",
           "@@ -1,#{before_lines.size} +1,#{after_lines.size} @@\n",
-          *diff_lines(before_lines, after_lines)
+          *diff_lines(before_lines, after_lines),
         ].join
       end
 

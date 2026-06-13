@@ -10,7 +10,7 @@ module Master
       HISTORY_MAX = 500
       DEFAULT_WEB_PORT = 53_187
 
-      DEFAULTS = {
+      DEFAULTS = {.freeze
         "model" => "z-ai/glm-4.5-air:free",
         "web_host" => "127.0.0.1",
         "web_public_url" => "https://ai.brgen.no",
@@ -24,7 +24,7 @@ module Master
         "history_max" => 500,
         "reasoning_mode" => "direct",
         "task_type" => "code_generation",
-        "auto_testing" => false
+        "auto_testing" => false,
       }.freeze
 
       def initialize(root = Dir.pwd)
@@ -81,7 +81,6 @@ module Master
       def load_config
         defaults = deep_dup(DEFAULTS)
         return defaults unless File.exist?(@path)
-        raw = Master.load_yaml(@path)
         loaded = raw.is_a?(Hash) ? raw : {}
         deep_merge(defaults, stringify_keys(loaded))
       rescue Psych::Exception => e

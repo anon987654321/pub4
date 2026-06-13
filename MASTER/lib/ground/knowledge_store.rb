@@ -54,7 +54,6 @@ module Master
         tally = rows.each_with_object(Hash.new(0)) { |r, h| h[r["outcome"]] = r["n"].to_i }
         total = tally.values.sum
         return 0.5 if total.zero?
-        tally["fixed"].to_f / total
       end
 
       def top_rules(limit: 20, min_attempts: 3)
@@ -124,21 +123,21 @@ module Master
             failure = evs.count { |e| e["event_type"] == "tool_failure" }
             total = success + failure
             rate = total.zero? ? 0.0 : failure.to_f / total
-            { category: :high_failure, dimension: tool, fail_rate: rate.round(3), total: } if rate >= RSI_FAIL_THRESHOLD && total >= 3
+            { category: :high_failure, dimension: tool, fail_rate: rate.round(3), total: } if rate >= RSI_FAIL_THRESHOLD && total >= 3,
           }
 
         corrections = recent
           .select { |r| r["event_type"] == "user_correction" }
           .group_by { |r| r["dimension"] }
           .filter_map { |dim, evs|
-            { category: :repeated_correction, dimension: dim, count: evs.size } if evs.size >= RSI_CORRECTION_MIN
+            { category: :repeated_correction, dimension: dim, count: evs.size } if evs.size >= RSI_CORRECTION_MIN,
           }
 
         provider_errs = recent
           .select { |r| r["event_type"] == "provider_error" }
           .group_by { |r| r["dimension"] }
           .filter_map { |dim, evs|
-            { category: :provider_errors, dimension: dim, count: evs.size } if evs.size >= RSI_PROVIDER_MIN
+            { category: :provider_errors, dimension: dim, count: evs.size } if evs.size >= RSI_PROVIDER_MIN,
           }
 
         tool_stats + corrections + provider_errs

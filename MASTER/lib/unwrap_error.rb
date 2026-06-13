@@ -23,7 +23,6 @@ module Master
       t = text.to_s
       hits = detectors.filter_map { |name, pat| name if pat.is_a?(Regexp) ? t.match?(pat) : false }
       return nil if hits.empty?
-      bus&.publish("phantom:detected", patterns: hits, sample: t[0, 120])
       { patterns: hits, recovery: (Master.load_yaml(Master::RULES_PATH).dig("phantom_recovery", "recovery") || []) }
     end
 

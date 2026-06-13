@@ -35,12 +35,11 @@ module Master
 
         response = Timeout.timeout(TIMEOUT * 2) {
           Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: TIMEOUT) { |h|
-            h.get(uri.request_uri)
-          }
+            h.get(uri.request_uri),
+          },
         }
 
         return Result.err("web_search: HTTP #{response.code}",
-                          category: :infrastructure) unless response.code == HTTP_OK
 
         data    = JSON.parse(response.body)
         results = extract_results(data)

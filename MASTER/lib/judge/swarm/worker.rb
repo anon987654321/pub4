@@ -55,7 +55,6 @@ module Master
           @agent.ask_once(prompt, model: preferred, system: worker_system_prompt)
         rescue StandardError => e
           raise unless fallback
-          @bus&.publish(:swarm_worker_fallback, role: @role, reason: e.class.name)
           @agent.ask_once(prompt, model: fallback, system: worker_system_prompt)
         end
 
@@ -71,7 +70,6 @@ module Master
 
         def ctx_summary(ctx)
           return "" if ctx.empty?
-          ctx.map { |k, v| "#{k}: #{v}" }.join("\n")
         end
       end
     end

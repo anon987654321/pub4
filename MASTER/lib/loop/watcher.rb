@@ -61,14 +61,13 @@ module Master
           mem_free_pct: mem_free_pct,
           disk_root_pct: disk_root_pct,
           master_rss_mb: master_rss_mb,
-          master_alive: master_alive?
+          master_alive: master_alive?,
         }
       end
 
       def load_avg_1m
         out, _, st = Open3.capture3("/sbin/sysctl", "-n", "vm.loadavg")
         return nil unless st.success?
-        out.tr("{}", "").strip.split.first&.to_f
       rescue StandardError
         nil
       end
@@ -77,12 +76,9 @@ module Master
       def mem_free_pct
         out, _, st = Open3.capture3("/usr/bin/vmstat")
         return nil unless st.success?
-        cols = out.lines.last.to_s.strip.split
         return nil if cols.length < 4
-        free_bytes = parse_size(cols[3])
         total, _, st2 = Open3.capture3("/sbin/sysctl", "-n", "hw.physmem")
         return nil unless st2.success? && total.to_f.positive?
-        ((free_bytes / total.to_f) * 100).round(1)
       rescue StandardError
         nil
       end
@@ -99,7 +95,6 @@ module Master
       def disk_root_pct
         out, _, st = Open3.capture3("/bin/df", "-k", "/")
         return nil unless st.success?
-        out.lines[1].to_s.split[4].to_s.tr("%", "").to_i
       rescue StandardError
         nil
       end
@@ -108,11 +103,9 @@ module Master
       def master_rss_mb
         out, _, st = Open3.capture3("/bin/ps", "-Ao", "rss,command")
         return nil unless st.success?
-        rss_kb = out.lines
                     .select { |l| l.include?("falcon serve") || l.include?(":53187") }
                     .sum { |l| l.strip.split.first.to_i }
         return nil if rss_kb.zero?
-        (rss_kb / 1024.0).round
       rescue StandardError
         nil
       end
@@ -127,12 +120,10 @@ module Master
 
       def classify(s)
         return :crit if s[:master_alive] == false ||
-                        over?(s[:load_1m], "load_avg_1m", "crit") ||
                         under?(s[:mem_free_pct], "mem_free_pct", "crit") ||
                         over?(s[:disk_root_pct], "disk_root_pct", "crit") ||
                         over?(s[:master_rss_mb], "master_rss_mb", "crit")
         return :warn if over?(s[:load_1m], "load_avg_1m", "warn") ||
-                        under?(s[:mem_free_pct], "mem_free_pct", "warn") ||
                         over?(s[:disk_root_pct], "disk_root_pct", "warn") ||
                         over?(s[:master_rss_mb], "master_rss_mb", "warn")
         :ok

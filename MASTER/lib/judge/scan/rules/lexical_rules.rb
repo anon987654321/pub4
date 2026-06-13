@@ -34,7 +34,7 @@ module Master
           description: "lines exceeding 120 characters" do |src, path:|
           next [] if path.to_s.match?(%r{/voice/personality\.rb|/reach/llm\.rb})
           src.each_line.with_index(1).filter_map { |line, n|
-            finding(line: n, message: "line #{line.chomp.length} chars (max 120)") if line.chomp.length > 120
+            finding(line: n, message: "line #{line.chomp.length} chars (max 120)") if line.chomp.length > 120,
           }
         end
 
@@ -42,7 +42,7 @@ module Master
           severity: :info, tags: %i[HYGIENE],
           description: "trailing whitespace" do |src, path:|
           src.each_line.with_index(1).filter_map { |line, n|
-            finding(line: n, message: "trailing whitespace") if line.match?(/[ \t]+\n?\z/)
+            finding(line: n, message: "trailing whitespace") if line.match?(/[ \t]+\n?\z/),
           }
         end
 
@@ -65,7 +65,7 @@ module Master
           src.each_line.with_index(1).filter_map { |line, n|
             bare_rescue = line.match?(/^\s*rescue\s*$/)
             naked_class = line.match?(/^\s*rescue\s+\S+\s*$/) && !line.match?(/=>/)
-            finding(line: n, message: "empty rescue — use Ground::Swallow.log or re-raise") if bare_rescue || naked_class
+            finding(line: n, message: "empty rescue — use Ground::Swallow.log or re-raise") if bare_rescue || naked_class,
           }
         end
 
@@ -96,7 +96,6 @@ module Master
       # Handler body — the inline `; expr` form, or lines down to the matching end.
         def self.rescue_body(lines, line_index, inline)
           return [inline] unless inline.empty?
-          collected = []
           ((line_index + 1)...lines.size).each do |j|
             stripped = lines[j].strip
             break if stripped.match?(/\A(end|else|ensure|rescue)\b/)
@@ -108,7 +107,6 @@ module Master
       # Silent: body discards, never names the error, never reaches a sink.
         def self.rescue_silent?(body, err_name)
           return false unless body.reject { |b| b.match?(RESCUE_DISCARD) }.empty?
-          return false if err_name && body.any? { |b| b.match?(/\b#{Regexp.escape(err_name)}\b/) }
           body.none? { |b| b.match?(RESCUE_SINK) }
         end
 
@@ -142,7 +140,7 @@ module Master
           src.each_line.with_index(1) { |line, n|
             blank = line.strip.empty?
             findings << finding(line: n, message: "consecutive blank line") if blank && prev_blank
-            prev_blank = blank
+            prev_blank = blank,
           }
           findings
         end
@@ -162,7 +160,7 @@ module Master
           description: "trailing comment after code" do |src, path:|
           src.each_line.with_index(1).filter_map { |line, n|
             next if line.strip.start_with?("#")
-            finding(line: n, message: "trailing comment — promote above the line or delete") if line.match?(/\S\s+#\s+\S/)
+            finding(line: n, message: "trailing comment — promote above the line or delete") if line.match?(/\S\s+#\s+\S/),
           }
         end
 

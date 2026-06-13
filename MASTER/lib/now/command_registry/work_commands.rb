@@ -39,7 +39,7 @@ module Master
           "topic" => cmd(:dispatch_topic, session),
           "process" => ->(_c) { JSON.pretty_generate(process: Master::Ops::ProcessBudget.status, loop_slot: Master::Ops::LoopSlot.status) },
           "propose-tree" => ->(_ctx) { propose_tree&.call || "propose-tree: not wired" },
-          "ecology" => ->(ctx) { dispatch_ecology(ecology, arg_for(ctx)) }
+          "ecology" => ->(ctx) { dispatch_ecology(ecology, arg_for(ctx)) },
         }
       end
 
@@ -68,7 +68,7 @@ module Master
           "git     #{branch}@#{head} ahead=#{ahead} behind=#{behind} #{dirty ? "dirty" : "clean"}",
           "fix     bg=#{bg} autofix=#{af}",
           "bundle  #{bndl}",
-          "events  (last #{evts.size})"
+          "events  (last #{evts.size})",
         ]
         evts.each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
         lines.join("\n")
@@ -101,7 +101,6 @@ module Master
       def recent_events(root, n)
         path = File.join(root, "runtime", "events", "activity.jsonl")
         return [] unless File.exist?(path)
-        now = Time.now.utc
         File.foreach(path).to_a.last(n).map { |line|
           rec = JSON.parse(line) rescue next
           ts = (Time.parse(rec["timestamp"]) rescue now)
@@ -109,7 +108,7 @@ module Master
           ago = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
           pay = rec["payload"]
           sum = pay.is_a?(Hash) ? pay.first(3).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
-          { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
+          { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] },
         }.compact
       rescue StandardError
         []
@@ -128,7 +127,6 @@ module Master
         if arg.include?("--dry-run")
           ahead, behind = git.ahead_behind
           return (lines + ["  dry-run: would reset --hard origin/main (ahead=#{ahead} behind=#{behind})"]).join("\n")
-        end
         git.reset_hard("origin/main"); lines << "  reset --hard origin/main → #{git.head}"
         lines << bundle_install_line(File.join(repo, "MASTER"), "MASTER")
         lines << bundle_install_line(File.join(repo, "MASTER/web"), "MASTER/web")
@@ -154,7 +152,6 @@ module Master
         n = n_arg.to_i.positive? ? n_arg.to_i : 20
         path = File.join(root, "runtime", "events", "activity.jsonl")
         return "tail: no event log at #{path}" unless File.exist?(path)
-        rx = pattern && !pattern.empty? ? Regexp.new(pattern) : nil
         lines = File.foreach(path).to_a
         lines = lines.select { |l| l.include?(pattern) } if rx && pattern.match?(/\A[a-z0-9_:.-]+\z/i)
         lines = lines.last(n)
@@ -162,7 +159,7 @@ module Master
           rec = JSON.parse(l) rescue next
           next if rx && !rec["event"].to_s.match?(rx)
           ts = rec["timestamp"].to_s.sub(/\..+/, "").sub("T", " ")
-          "#{ts} #{rec["event"].ljust(28)} #{format_payload(rec["payload"])}"
+          "#{ts} #{rec["event"].ljust(28)} #{format_payload(rec["payload"])}",
         }.compact.join("\n")
       rescue StandardError => e
         "tail: #{e.message}"
@@ -170,7 +167,6 @@ module Master
 
       def format_payload(pay)
         return pay.to_s[0, 100] unless pay.is_a?(Hash)
-        pay.map { |k, v| "#{k}=#{v.to_s.tr('"', '')[0, 30]}" }.join(" ")[0, 100]
       end
 
       def dispatch_fix(fix_loop, root, arg)
@@ -185,7 +181,6 @@ module Master
         when "preview"
           result = fix_loop.preview(expand_or_root(rest.to_s.strip, root))
           return "fix preview: #{result.message}" unless result.ok?
-          format_fix_preview(result.value!)
         else
           target = expand_or_root(arg, root)
           result = fix_loop.run(target)
@@ -196,7 +191,6 @@ module Master
       def format_fix_preview(data)
         total = data[:total]
         return "preview: clean — no violations" if total.zero?
-        rule_lines = data[:rules].map { |r, n| "  #{r.ljust(28)} #{n}" }
         file_lines = data[:files].map { |f, n| "  #{f[0, 60].ljust(60)} #{n}" }
         ["preview: #{total} violations (no changes made)",
          "by rule:", *rule_lines,
@@ -230,7 +224,6 @@ module Master
       def axiom_table(files, by_axiom)
         head = "constitution — #{files.size} files scanned"
         return "#{head}\n  clean: no axiom violations" if by_axiom.empty?
-        rows = by_axiom.sort_by { |_, n| -n }.map { |tag, n| "  #{tag.ljust(24)} #{n}" }
         ([head] + rows + ["  total#{" " * 19}#{by_axiom.values.sum}"]).join("\n")
       end
 
@@ -259,7 +252,6 @@ module Master
         profile, depth, rule_filter = resolve_scan_profile(arg, root)
         pairs = collect_scan_pairs(scanner:, root:, arg:, depth:)
         return pairs if pairs.is_a?(String)
-        format_scan_results(pairs, profile, rule_filter)
       end
 
       def collect_scan_pairs(scanner:, root:, arg:, depth:)
@@ -285,7 +277,6 @@ module Master
         total = by_rule.values.sum(&:size)
         header = profile ? "[profile: #{profile}] " : ""
         return "#{header}clean -- no violations" if total.zero?
-        lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
           ["[#{rule}] #{vs.size}"] + vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, VIOLATION_TRUNCATE]}" }
         end
         lines << "#{header}#{total} total violations"
@@ -296,7 +287,6 @@ module Master
         groups, profiles = load_workflow_profiles(root)
         profile_name = %w[critical solid axioms].find { |p| arg.start_with?(p) }
         return [nil, :deep, nil] if profile_name.nil?
-        cfg = profiles[profile_name] || {}
         rule_ids = groups[cfg["rules"].to_s]
         rule_filter = (rule_ids && cfg["rules"] != "*") ? rule_ids.map(&:to_s).to_set : nil
         [profile_name, :deep, rule_filter]
@@ -323,9 +313,7 @@ module Master
 
       def run_tribunal(deliberation:, artifact:, target:, bus: nil)
         return "tribunal: deliberation not configured" unless deliberation
-        result = deliberation.review_convergent(artifact, context: target)
         return result.message if result.err?
-        format_tribunal(result.value!, bus)
       rescue StandardError => e
         "tribunal: #{e.message}"
       end
@@ -353,41 +341,36 @@ module Master
 
       def snapshot_artifact(abs_path)
         return "not found: #{abs_path}" unless File.exist?(abs_path)
-        return File.read(abs_path).b[0, 16_000] if File.file?(abs_path)
         files = Dir.glob(File.join(abs_path, "**/*.{rb,erb,yml}")).first(40)
         files.map { |f| "--- #{f.sub(abs_path + "/", "")} ---\n#{File.read(f).b[0, 800]}" }.join("\n\n")[0, 24_000]
       end
 
       def dispatch_critique(deliberation, root, arg)
         return "usage: /critique <file|text>" if arg.empty?
-        path = File.expand_path(arg, root)
         payload = File.exist?(path) ? File.read(path, encoding: "UTF-8") : arg
         result = deliberation.review_convergent(payload, context: "explicit /critique session")
         return result.message if result.err?
-        deliberation_feedback(result.value!)
       end
 
       def deliberation_feedback(feedback)
         feedback.map { |f|
           veto = f[:veto_role] ? " [VETO ELIGIBLE]" : ""
-          "#{f[:persona]} (#{f[:role]})#{veto}:\n#{f[:feedback].to_s.strip}"
+          "#{f[:persona]} (#{f[:role]})#{veto}:\n#{f[:feedback].to_s.strip}",
         }.join("\n\n---\n\n")
       end
 
       def dispatch_model(agent:, config:, metrics:, root:, arg:)
         return list_models(root, metrics, agent) if arg == "list"
-        return "model: #{agent.model}" if arg.empty?
         agent.model = arg; config.save!; "model: #{arg}"
       end
 
       def list_models(root, metrics, agent)
         yml_path = File.join(root, "data", "models.yml")
         return "model: #{agent.model}" unless File.exist?(yml_path)
-        data = Master.load_yaml(yml_path)
         tiers = data["models"] || {}
         model_lines = tiers.flat_map { |tier, ms| ms.to_a.map { |mod| "  [#{tier}] #{mod["id"]}" } }
         quality_lines = metrics&.model_quality&.map { |mod, stat|
-          "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}"
+          "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}",
         } || []
         sections = ["available models:"] + model_lines
         sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
@@ -396,15 +379,12 @@ module Master
 
       def dispatch_why(agent, root, rule)
         return "usage: /why <law|scan_rule|anti_pattern|style.key>" if rule.empty?
-        local = Trace::WhyExplainer.new(root:).explain(rule)
         return local if local
-        agent.ask_once("Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
                        "give a before/after Ruby example, and state why it matters.")
       end
 
       def dispatch_ecology(ecology, arg)
         return "ecology: not wired" unless ecology
-        path = arg.to_s.strip.empty? ? nil : File.expand_path(arg.strip)
         report = ecology.scan(path: path)
         ecology.render(report)
       rescue StandardError => e

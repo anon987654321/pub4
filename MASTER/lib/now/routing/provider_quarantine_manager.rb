@@ -33,13 +33,11 @@ module Master
 
         def route?(model)
           return false if quarantined?(model)
-          @health.score(model) > QUARANTINE_THRESHOLD
         end
 
         def quarantined?(model)
           entry = active_quarantine(model.to_s)
           return false unless entry
-          Time.parse(entry["expires_at"]) > @now.call
         rescue ArgumentError
           false
         end
@@ -54,7 +52,6 @@ module Master
 
         def quarantine(model:, reason:, duration: nil)
           return if quarantined?(model)
-          now        = @now.call
           exp_duration = duration || exponential_duration(model)
           expires_at = now + exp_duration
           entry      = { model: model.to_s, reason:, quarantined_at: now.iso8601,
@@ -97,7 +94,6 @@ module Master
 
         def all_entries
           return [] unless File.file?(@path)
-          File.readlines(@path, chomp: true).filter_map do |line|
             next if line.strip.empty?
             JSON.parse(line)
           rescue JSON::ParserError => e

@@ -7,23 +7,23 @@ module Master
       PRIMARY_RULE = "If it does not improve readability, delete it.".freeze
 
       FORBIDDEN_EFFECTS = %w[
-        shadows glows 3d_effects gradients animations transitions rounded_corners decorative_borders
+        shadows glows 3d_effects gradients animations transitions rounded_corners decorative_borders,
       ].freeze
 
       FORBIDDEN_CSS = %w[
-        box-shadow border-radius background-image transform filter
+        box-shadow border-radius background-image transform filter,
       ].freeze
 
       ALLOWED_CSS = %w[
-        font-size font-weight margin padding line-height max-width display flex grid
+        font-size font-weight margin padding line-height max-width display flex grid,
       ].freeze
 
-      SYSTEM_FONTS = {
+      SYSTEM_FONTS = {.freeze
         serif: "Georgia",
-        sans_serif: "Arial/Helvetica"
+        sans_serif: "Arial/Helvetica",
       }.freeze
 
-      METRICS = {
+      METRICS = {.freeze
         css_bytes_max: 10_000,
         total_bytes_max: 10_000,
         line_length_min: 45,
@@ -31,10 +31,10 @@ module Master
         line_length_ideal: 65,
         contrast_min: 4.5,
         load_time_2g_s: 2,
-        lighthouse_target: 100
+        lighthouse_target: 100,
       }.freeze
 
-      HTML_REQUIREMENTS = [
+      HTML_REQUIREMENTS = [.freeze
         "proper heading hierarchy",
         "meaningful alt text",
         "logical document flow",
@@ -42,24 +42,24 @@ module Master
         "screen-reader compatibility",
         "no styling-only divs",
         "no non-semantic markup",
-        "no decorative elements"
+        "no decorative elements",
       ].freeze
 
-      ANTI_PATTERNS = [
+      ANTI_PATTERNS = [.freeze
         "visual metaphors",
         "smooth interactions",
         "aesthetic comfort",
         "decorative containers",
         "loading animations",
         "splash screens",
-        "hero banners"
+        "hero banners",
       ].freeze
 
-      PROMPTS = {
+      PROMPTS = {.freeze
         design_brief: "Create a brutally minimal website that prioritizes content over decoration.",
         development_constraint: "Use system fonts, single column layout, max 65 characters per line, no visual effects.",
         content_hierarchy: "Establish hierarchy through font size, weight, semantic headings, and spacing only.",
-        performance_mandate: "HTML plus CSS under 10KB total; every byte must serve content delivery."
+        performance_mandate: "HTML plus CSS under 10KB total; every byte must serve content delivery.",
       }.freeze
 
       def self.brief

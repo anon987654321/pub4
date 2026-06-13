@@ -2,7 +2,7 @@
 
 module Master
   class Result
-    CATEGORIES = {
+    CATEGORIES = {.freeze
       validation: "input failed preconditions",
       axiom_violation: "constitutional rule broken",
       provider_error: "upstream model / network failure",
@@ -16,14 +16,13 @@ module Master
       budget: "cost limit hit",
       policy: "blocked by policy / kernel rule",
       shutdown: "user quit / shutdown requested",
-      abort: "operation aborted"
+      abort: "operation aborted",
     }.freeze
 
     def self.ok(value) = Ok.new(value)
 
     def self.err(msg, category: :unknown, context: nil)
       raise ArgumentError, "unknown category: #{category}" unless category == :unknown || CATEGORIES.key?(category)
-      Err.new(msg, category, context)
     end
 
     def self.wrap(val) = val.is_a?(Result) ? val : Ok.new(val)
@@ -65,7 +64,6 @@ module Master
 
       def initialize(message, category = :unknown, context = nil)
         raise ArgumentError, "message cannot be nil" if message.nil?
-        raise ArgumentError, "category must be a symbol" unless category.is_a?(Symbol)
 
         @message = message
         @category = category

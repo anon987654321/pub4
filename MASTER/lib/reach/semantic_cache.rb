@@ -29,7 +29,6 @@ module Master
           if hit
             @bus&.publish("cache:hit", key:)
             return restore_value(hit)
-          end
         end
 
         @bus&.publish("cache:miss", key:)
@@ -79,9 +78,7 @@ module Master
 
       def read_entry(path)
         return unless File.exist?(path)
-        entry = JSON.parse(File.read(path), symbolize_names: true)
         return expire_entry!(path) if stale?(entry)
-        promote_lru(path)
         entry[:value]
       rescue JSON::ParserError => e
         Master::Ground::Swallow.log(e, context: "semantic_cache.read_entry", event_bus: @bus, path:)
@@ -108,7 +105,6 @@ module Master
 
       def restore_value(payload)
         return payload unless payload.is_a?(Hash)
-        kind = payload.fetch(:__master_result) { payload["__master_result"] }
         value = payload.fetch(:value) { payload["value"] }
         message = payload.fetch(:message) { payload["message"] }
         cat = payload.fetch(:category) { payload["category"] }
@@ -130,7 +126,6 @@ module Master
       def evict_lru
         oldest = @lru.shift
         return unless oldest && File.exist?(oldest)
-        File.delete(oldest) rescue nil
       end
     end
   end

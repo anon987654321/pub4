@@ -3,7 +3,7 @@
 module Master
   module Ground
     class IntentRouter
-      INTENTS = {
+      INTENTS = {.freeze
         codify_policy: %w[codify policy make it ruby turn into],
         refactor_to_ruby: %w[refactor move ruby extract simplify],
         wire_existing_module: %w[wire connect hook up route plug],
@@ -19,10 +19,10 @@ module Master
         apply_user_style_rules: %w[style format lint clean],
         continue_prior_plan: %w[go ahead continue land it proceed ship],
         write_repo_changes: %w[land write commit save push apply],
-        prefer_ruby: %w[ruby not markdown no yaml keep ruby]
+        prefer_ruby: %w[ruby not markdown no yaml keep ruby],
       }.freeze
 
-      STANDING_SEMANTICS = {
+      STANDING_SEMANTICS = {.freeze
         "go ahead" => :continue_prior_plan,
         "land it" => :write_repo_changes,
         "codify" => :codify_policy,
@@ -30,17 +30,17 @@ module Master
         "verify" => :verify_patch_landed,
         "yes" => :continue_prior_plan,
         "ship" => :write_repo_changes,
-        "proceed" => :continue_prior_plan
+        "proceed" => :continue_prior_plan,
       }.freeze
 
-      RISK_TIERS = {
+      RISK_TIERS = {.freeze
         low: %i[
           codify_policy refactor_to_ruby create_facade apply_user_style_rules
-          run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa
+          run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa,
         ],
         medium: %i[wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app],
         high: %i[write_repo_changes delete_redundant_config],
-        critical: []
+        critical: [],
       }.freeze
 
       def classify(text)

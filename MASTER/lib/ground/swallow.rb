@@ -12,7 +12,7 @@ module Master
           context: context.to_s,
           error_class: error.class.name,
           error: error.message.to_s,
-          backtrace: Array(error.backtrace).first(5)
+          backtrace: Array(error.backtrace).first(5),
         }.merge(metadata)
 
         if event_bus

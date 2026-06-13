@@ -13,7 +13,7 @@ module Master
   # Full integration into Judge + co_change_rule wiring deferred; requires council review.
     class RepoEcology
       DEFAULT_IGNORE_DIRS = %w[
-        .git .master node_modules vendor tmp log coverage storage .bundle dist build
+        .git .master node_modules vendor tmp log coverage storage .bundle dist build,
       ].freeze
       DEFAULT_EXTENSIONS = %w[.rb .js .ts .erb .html .css .scss .yml .yaml .json .md .sh .zsh].freeze
       LARGE_FILE_LINES = 420
@@ -77,7 +77,7 @@ module Master
           sprawl: sprawl(records),
           large_files: large_files(records),
           extension_mix: extension_mix(records),
-          co_change_pairs: co_change_pairs(graph)
+          co_change_pairs: co_change_pairs(graph),
         }
         @bus&.publish("repo_ecology:scan", files: records.size, score: report[:score])
         report
@@ -90,19 +90,19 @@ module Master
         lines << "files: #{report[:files]}"
         lines << ""
         lines.concat(render_section("Dead-file candidates", report[:dead_file_candidates]) { |item|
-          "#{item[:path]} — #{item[:reason]}"
+          "#{item[:path]} — #{item[:reason]}",
         })
         lines.concat(render_section("Duplicate basenames", report[:duplicate_basenames]) { |item|
-          "#{item[:basename]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
+          "#{item[:basename]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}",
         })
         lines.concat(render_section("Similar clusters", report[:similar_clusters]) { |item|
-          "#{item[:signature]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
+          "#{item[:signature]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}",
         })
         lines.concat(render_section("Large files", report[:large_files]) { |item|
-          "#{item[:path]} — #{item[:lines]} lines (#{item[:symbol_count]} symbols)"
+          "#{item[:path]} — #{item[:lines]} lines (#{item[:symbol_count]} symbols)",
         })
         lines.concat(render_section("Co-change pairs (hidden coupling)", report[:co_change_pairs]) { |item|
-          "#{item[:a]} ↔ #{item[:b]} (#{item[:count]} commits)"
+          "#{item[:a]} ↔ #{item[:b]} (#{item[:count]} commits)",
         })
         lines << ""
         sprawl = report[:sprawl]
@@ -116,7 +116,6 @@ module Master
 
       def collect_files(base)
         return [] unless File.exist?(base)
-        files = []
         Find.find(base) do |path|
           name = File.basename(path)
           if File.directory?(path)
@@ -166,9 +165,7 @@ module Master
 
       def grade_for(value)
         return "excellent" if value >= 90
-        return "good" if value >= 75
         return "strained" if value >= 55
-        "fragmented"
       end
 
       def dead_file_candidates(records)
@@ -179,10 +176,8 @@ module Master
 
       def dead_candidate(record, corpus)
         return nil if protected_path?(record.path)
-        stem = File.basename(record.basename, record.ext).downcase
         inbound = corpus.count { |path, text| path != record.path && text.include?(stem) }
         return nil unless inbound.zero?
-        return nil if record.lines < 3
         { path: record.path, reason: "no stem references found", lines: record.lines }
       end
 
@@ -212,7 +207,6 @@ module Master
         important = tokens.reject { |token| token.length < 4 || token.match?(/\A\d+\z/) }
         vocabulary = important.tally.sort_by { |token, count| [-count, token] }.first(12).map(&:first)
         return "" if vocabulary.size < 4
-        "#{File.extname(rel)}:#{vocabulary.sort.join('-')}"
       end
 
       def sprawl(records)
@@ -222,7 +216,7 @@ module Master
         {
           max_depth: depths.max || 0,
           avg_depth: depths.empty? ? 0 : (depths.sum.to_f / depths.size).round(2),
-          orphan_dirs: counts.count { |_dir, count| count == 1 }
+          orphan_dirs: counts.count { |_dir, count| count == 1 },
         }
       end
 
@@ -254,7 +248,6 @@ module Master
                                       "--pretty=format:#{COMMIT_SEPARATOR}",
                                       "-#{CO_CHANGE_COMMITS}")
         return {} unless status.success?
-        pair_counts = Hash.new(0)
         out.split(COMMIT_SEPARATOR).each do |chunk|
           files = chunk.lines.map(&:strip).reject(&:empty?).uniq
           next if files.size < 2

@@ -3,18 +3,18 @@
 module Master
   module Plugins
     module Reach
-      TOOL_MAP = {
+      TOOL_MAP = {.freeze
         "ReadFile"        => ->(r, i) { Master::Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus]) },
         "WriteFile"       => ->(r, i) {
           Master::Reach::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
-            event_bus: i[:bus], diff_stager: i[:diff_stager])
+            event_bus: i[:bus], diff_stager: i[:diff_stager]),
         },
         "StrReplace"      => ->(r, i) {
           Master::Reach::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
-            event_bus: i[:bus], diff_stager: i[:diff_stager])
+            event_bus: i[:bus], diff_stager: i[:diff_stager]),
         },
         "BatchReplace"    => ->(r, i) {
-          Master::Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus])
+          Master::Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]),
         },
         "AstEdit"         => ->(r, i) { Master::Reach::AstEdit.new(root: r, undo: i[:undo], event_bus: i[:bus]) },
         "Tree"            => ->(r, i) { Master::Reach::Tree.new(root: r, event_bus: i[:bus]) },
@@ -22,7 +22,7 @@ module Master
         "SearchFiles"     => ->(r, i) { Master::Reach::SearchFiles.new(root: r, event_bus: i[:bus]) },
         "SearchKnowledge" => ->(r, i) { Master::Reach::SearchKnowledge.new(root: r, event_bus: i[:bus]) },
         "SymbolLookup"    => ->(r, i) {
-          Master::Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus])
+          Master::Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus]),
         },
         "Shell"           => ->(r, i) { Master::Reach::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
         "GitContext"      => ->(r, i) { Master::Reach::GitContext.new(root: r, event_bus: i[:bus]) },
@@ -51,7 +51,6 @@ module Master
         path = File.join(root, "data", "tools.yml")
         defs = Master.load_yaml(path)
         return [] unless defs.is_a?(Array)
-        tools = defs.filter_map do |defn|
           next unless defn["default"] == true
           factory = TOOL_MAP[defn["name"].to_s]
           factory ? factory.call(root, infra) : (infra[:bus]&.publish("builder:tool_skipped", tool: defn["name"]); nil)

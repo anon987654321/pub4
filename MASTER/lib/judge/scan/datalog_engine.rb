@@ -68,7 +68,6 @@ module Master
           engine = new
           result = Prism.parse(source)
           return engine unless result.success?
-          extract_facts(result.value, path, engine)
           engine
         end
 
@@ -76,7 +75,6 @@ module Master
 
         def self.extract_facts(node, path, engine)
           return engine unless node.is_a?(Prism::Node)
-          case node
           when Prism::DefNode
             engine.assert(:method_def, path, node.name.to_s, node.location.start_line)
           when Prism::RescueNode

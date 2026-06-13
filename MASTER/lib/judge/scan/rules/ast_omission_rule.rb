@@ -18,7 +18,6 @@ module Master
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb")
-            omissions = @guard.check(paths: [File.basename(path)])
             omissions.map { |o| finding(line: 1, message: "#{o.type} #{o.name} dropped (last seen #{o.last_seen_at})") }
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "ast_omission_rule.check", event_bus: nil)

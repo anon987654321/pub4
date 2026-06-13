@@ -18,10 +18,10 @@ module Master
       MAX_INJECT_TOKENS = [Master::CTX_WINDOW_SIZE / MAX_INJECT_CONTEXT_RATIO, MAX_INJECT_TOKEN_CAP].min.freeze
       MAX_INJECT_ENTRIES = 5
       TYPES = %w[user feedback project reference general].freeze
-      AUTO_SAVE_PATTERNS = {
+      AUTO_SAVE_PATTERNS = {.freeze
         "user" => /\b(?:i'?m a|i am a|my role is|i work as)\s+([^.,;\n]{3,80})/i,
         "feedback" => /\b(?:don'?t|stop|never|always|prefer|from now on)\s+([^.,;\n]{3,120})/i,
-        "project" => /\b(?:we'?re|deadline|launching|deploying|migrating)\s+([^.,;\n]{3,120})/i
+        "project" => /\b(?:we'?re|deadline|launching|deploying|migrating)\s+([^.,;\n]{3,120})/i,
       }.freeze
 
       include Store

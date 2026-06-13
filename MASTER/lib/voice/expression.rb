@@ -37,7 +37,7 @@ module Master
           style: base_style,
           face: face,
           breath_boost: register == :creative ? 0.25 : 0.0,
-          eye_attention: register == :creative ? 0.15 : 0.0
+          eye_attention: register == :creative ? 0.15 : 0.0,
         }
       end
 
@@ -48,7 +48,7 @@ module Master
           spirit_charge_boost: weight,
           mouth_pressure: weight * 0.8,
           eye_confidence_drop: weight * 0.6,
-          terrain_jaggedness: (risk == :critical) ? 0.4 : 0.15
+          terrain_jaggedness: (risk == :critical) ? 0.4 : 0.15,
         }
       end
 
@@ -62,7 +62,7 @@ module Master
           arousal: hi ? 1.0 : lo ? 0.3 : 0.7,
           pressure: hi ? 0.85 : lo ? 0.25 : 0.6,
           breath_boost: hi ? 0.35 : lo ? -0.15 : 0.0,
-          valence: lo ? 0.2 : 0.0
+          valence: lo ? 0.2 : 0.0,
         }
       end
 
@@ -75,7 +75,7 @@ module Master
           pressure: high_stakes ? 0.7 : (creative ? 0.65 : 0.4),
           valence: creative ? 0.25 : -0.05,
           attention: high_stakes ? 0.85 : 0.6,
-          breath: creative ? 1.35 : 1.0
+          breath: creative ? 1.35 : 1.0,
         }
       end
     end

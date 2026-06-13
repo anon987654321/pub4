@@ -19,13 +19,13 @@ module Master
 
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
 
-      VOICES = {
+      VOICES = {.freeze
         davis: "en-US-DavisNeural",
         wayne: "en-SG-WayneNeural",
-        ezinne: "en-NG-EzinneNeural"
+        ezinne: "en-NG-EzinneNeural",
       }.freeze
 
-      STYLES = {
+      STYLES = {.freeze
         neutral: { rate: "+0%", pitch: "+0Hz" },
         normal: { rate: "+0%", pitch: "+0Hz" },
         deep: { rate: "-10%", pitch: "-30Hz" },
@@ -44,7 +44,7 @@ module Master
         robotic:      { rate: "+10%", pitch: "-80Hz" },   # flat, mechanical
         whispered:    { rate: "-25%", pitch: "-10Hz" },   # very soft, breathy feel via extreme rate
         storyteller:  { rate: "-8%",  pitch: "-15Hz" },   # narrative, measured
-        energetic:    { rate: "+15%", pitch: "+30Hz" }    # lively, higher
+        energetic:    { rate: "+15%", pitch: "+30Hz" }    # lively, higher,
       }.freeze
 
       DEFAULT_VOICE = :davis
@@ -86,28 +86,22 @@ module Master
       def default_voice
         ENV.fetch("MASTER_TTS_VOICE", DEFAULT_VOICE.to_s).to_sym.tap do |voice|
           return VOICES.key?(voice) ? voice : DEFAULT_VOICE
-        end
       end
 
       def default_style
         ENV.fetch("MASTER_TTS_STYLE", DEFAULT_STYLE.to_s).to_sym.tap do |style|
           return STYLES.key?(style) ? style : DEFAULT_STYLE
-        end
       end
 
       def style_config_for(voice, style)
         STYLES.fetch(style.to_sym, STYLES[default_style]).dup
       end
 
-
       def infer_style(text, fallback: default_style)
         t = text.to_s.strip
         return fallback if t.empty?
-        return :fail if t.match?(/\b(fail|failed|broken|blocked|error|abort)\b/i)
         return :warn if t.match?(/\b(warn|warning|careful|risk|unsafe)\b/i)
-        return :question if t.end_with?("?")
         return :brief if t.split.size <= 12
-        fallback
       end
 
       # register_for: creative vs factual bias from prompt_style_principles + voice leaks.
@@ -150,7 +144,6 @@ module Master
       def synthesize(text, voice: default_voice, style: default_style)
         text_str = clean_text(text)
         return if text_str.empty?
-        return unless available?
 
         style = infer_style(text_str, fallback: default_style) if style == :auto
         expr = Master::Voice::Expression.for_text(text_str)
@@ -164,7 +157,6 @@ module Master
         if edge_tts_available?
           path = synthesize_edge(text_str, voice: voice, style_config: style_config)
           return path if path
-        end
 
         synthesize_espeak(text_str) if espeak_path
       end
@@ -203,7 +195,6 @@ module Master
         unless status.success?
           warn_tts("edge worker failed: #{err.to_s.strip}") unless err.to_s.strip.empty?
           return cleanup_failed_audio(audio_path)
-        end
 
         return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
 

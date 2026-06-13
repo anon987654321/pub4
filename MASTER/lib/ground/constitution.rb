@@ -45,7 +45,7 @@ module Master
             name: meta["name"].to_s,
             description: meta["description"].to_s,
             type: meta["type"].to_s,
-            body: fm[:body][0, MAX_BODY_CHARS]
+            body: fm[:body][0, MAX_BODY_CHARS],
           }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "constitution.parse", path:)
@@ -62,7 +62,6 @@ module Master
 
       def system_prompt
         return nil if @principles.empty?
-        lines = @principles.map { |p| "- #{p[:name]}: #{p[:body]}" }
         "Constitutional principles (operator-declared, override defaults):\n#{lines.join("\n")}"
       end
 

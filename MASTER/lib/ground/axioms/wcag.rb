@@ -7,7 +7,7 @@ module Master
         # WCAG 2.x success criteria — applies to web, mobile, CLI, any rendered surface.
         Criterion = Data.define(:id, :level, :name, :requirement)
 
-        CRITERIA = [
+        CRITERIA = [.freeze
           Criterion.new(id: "1.4.3", level: :AA, name: "Contrast (Minimum)",
             requirement: "Text contrast >= 4.5:1 (normal), 3:1 (large text)"),
           Criterion.new(id: "1.4.4", level: :AA, name: "Resize Text",
@@ -33,7 +33,7 @@ module Master
           Criterion.new(id: "3.3.2", level: :A, name: "Labels or Instructions",
             requirement: "Labels or instructions provided for user input"),
           Criterion.new(id: "1.3.6", level: :AAA, name: "Identify Purpose",
-            requirement: "UI components, icons, regions identified programmatically")
+            requirement: "UI components, icons, regions identified programmatically"),
         ].freeze
 
         TOUCH_TARGET_AA_PX = 24

@@ -69,7 +69,6 @@ module Master
 
       def load!
         return self unless File.exist?(@path)
-        begin
           data = JSON.parse(File.read(@path), symbolize_names: true)
         rescue JSON::ParserError, Errno::ENOENT
           data = {}
@@ -102,7 +101,6 @@ module Master
       def auto_name(content)
         stripped = content.to_s.strip
         return Time.now.strftime("%Y%m%d-%H%M") if stripped.match?(SHELL_RE)
-        stripped.split.first(5).join(" ")[0, SESSION_NAME_MAX]
       end
 
       def rotate_costs!

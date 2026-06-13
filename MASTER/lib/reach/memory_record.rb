@@ -27,7 +27,6 @@ module Master
         key  = key.to_s.strip.downcase
         type = VALID_TYPES.include?(type.to_s) ? type.to_s : "general"
         return Result.err("memory_record: key must match #{KEY_RE.source}", category: :validation) unless KEY_RE.match?(key)
-        return Result.err("memory_record: body required", category: :validation) if body.to_s.strip.empty?
 
         path = File.join(@root, "data", "claude", "#{key}.md")
         FileUtils.mkdir_p(File.dirname(path))
@@ -61,7 +60,6 @@ module Master
         line  = "- [#{key.tr("_", " ")}](#{key}.md) — #{description.to_s.strip}"
         lines = File.read(index).split("\n", -1)
         return if lines.any? { |l| l.include?("](#{key}.md)") }
-        lines << line
         File.write(index, lines.join("\n"))
       end
 

@@ -21,7 +21,7 @@ module Master
           done: @verifier.ok?(checks),
           checks: checks,
           report: @verifier.report(checks),
-          missing_plan_keys: REQUIRED_KEYS - normalized.keys
+          missing_plan_keys: REQUIRED_KEYS - normalized.keys,
         }
       end
 
@@ -36,7 +36,7 @@ module Master
         {
           files: Array(data[:files] || data["files"]),
           symbols: Array(data[:symbols] || data["symbols"]),
-          callers: data[:callers] || data["callers"] || {}
+          callers: data[:callers] || data["callers"] || {},
         }
       end
     end

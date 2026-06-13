@@ -164,7 +164,7 @@ module Master
           patterns = [
             [/COUNCIL_PATH\s*=/, "define COUNCIL_PATH once in master.rb; reference Master::COUNCIL_PATH"],
             [/RULES_PATH\s*=/, "define RULES_PATH once in master.rb; reference Master::RULES_PATH"],
-            [/DATA_DIR\s*=\s*File\.join.*\bdata\b/, "use Master::DATA constant"]
+            [/DATA_DIR\s*=\s*File\.join.*\bdata\b/, "use Master::DATA constant"],
           ]
           src.each_line.with_index(1).flat_map do |line, n|
             patterns.filter_map { |re, msg| finding(line: n, message: msg) if re.match?(line) }

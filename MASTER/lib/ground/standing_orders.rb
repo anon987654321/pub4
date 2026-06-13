@@ -16,11 +16,11 @@ module Master
       VALID_STATES = %w[pending running done error].freeze
       EVENT_SUBSCRIPTIONS = %w[tool:after].freeze
 
-      BUILTIN_ORDERS = [
+      BUILTIN_ORDERS = [.freeze
         { name: "nightly_dreams", description: "Consolidate memories during low-activity periods",
           trigger: "scheduled", interval_s: 86_400, command: "dreams consolidate", enabled: true },
         { name: "weekly_scan", description: "Weekly codebase axiom scan for regressions",
-          trigger: "scheduled", interval_s: 604_800, command: "scan", enabled: false }
+          trigger: "scheduled", interval_s: 604_800, command: "scan", enabled: false },
       ].freeze
 
       def initialize(pipeline: nil, event_bus: nil, container: {})
@@ -87,7 +87,7 @@ module Master
           @orders << {
             "name" => name.to_s, "description" => description.to_s, "trigger" => trigger.to_s,
             "interval_s" => interval_s.to_i, "command" => command.to_s, "enabled" => enabled,
-            "state" => "pending", "last_run_at" => 0
+            "state" => "pending", "last_run_at" => 0,
           }
         end
         persist
@@ -100,7 +100,6 @@ module Master
       def reset(name)
         order = @orders.find { |x| x["name"] == name.to_s }
         return "no order named '#{name}'" unless order
-        order["state"] = "pending"
         order.delete("last_error")
         persist
         "'#{name}' reset -> pending"
@@ -108,7 +107,6 @@ module Master
 
       def list
         return "no standing orders defined" if @orders.empty?
-        @orders.map { |o| format_order(o) }.join("\n")
       end
 
       def format_order(o)
@@ -123,7 +121,6 @@ module Master
 
       def subscribe_events!
         return unless @bus
-        EVENT_SUBSCRIPTIONS.each do |event_name|
           @bus.subscribe(event_name) { |ev| dispatch_event(event_name, ev) }
         end
       end
@@ -139,21 +136,17 @@ module Master
 
       def event_match?(order, event_name, payload)
         return false unless order["enabled"]
-        return false unless order["trigger"] == "event"
         return false unless order["event"].to_s == event_name
-        filter_match?(order, payload) && !exclude_match?(order, payload)
       end
 
       def filter_match?(order, payload)
         pattern = order["filter"].to_s
         return true if pattern.empty?
-        payload_strings(payload).any? { |s| Regexp.new(pattern).match?(s) }
       end
 
       def exclude_match?(order, payload)
         pattern = order["exclude"].to_s
         return false if pattern.empty?
-        payload_strings(payload).any? { |s| Regexp.new(pattern).match?(s) }
       end
 
       def payload_strings(payload)
@@ -192,10 +185,8 @@ module Master
         if (callable_key = order["callable"])
           klass = Master::Ground::Orders::Registry.lookup(callable_key)
           return Result.err("unknown callable: #{callable_key}") unless klass
-          return klass.new(container: @container.merge(bus: @bus, root: Master::ROOT)).call
         end
         return Result.err("no pipeline") unless @pipeline
-        @pipeline.call(Result.ok(user_message: order["command"].to_s))
       rescue StandardError => e
         Result.err(e.message)
       end
@@ -203,7 +194,6 @@ module Master
       def toggle(name, enabled)
         order = @orders.find { |x| x["name"] == name.to_s }
         return "no order named '#{name}'" unless order
-        order["enabled"] = enabled
         persist
         "#{name} #{enabled ? 'enabled' : 'disabled'}"
       end
@@ -224,7 +214,6 @@ module Master
         if File.exist?(DEFS_PATH)
           raw = Master.load_yaml(DEFS_PATH)
           return builtin_orders unless raw.is_a?(Array)
-          raw.select { |o| o.is_a?(Hash) }
         else
           builtin_orders
         end
@@ -235,7 +224,6 @@ module Master
 
       def read_state
         return {} unless File.exist?(STATE_PATH)
-        raw = Master.load_yaml(STATE_PATH)
         raw.is_a?(Hash) ? raw : {}
       rescue Psych::Exception, Errno::ENOENT, TypeError
         {}
@@ -247,7 +235,6 @@ module Master
 
       def persist
         return unless @orders.is_a?(Array)
-        state = @orders.each_with_object({}) do |order, acc|
           acc[order["name"]] = STATE_KEYS.each_with_object({}) { |k, h| h[k] = order[k] if order.key?(k) }
         end
         FileUtils.mkdir_p(File.dirname(STATE_PATH))

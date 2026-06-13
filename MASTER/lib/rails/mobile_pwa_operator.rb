@@ -9,11 +9,11 @@ module Master
 
       DOCTRINE = Master::Ground::Axioms::RailsDoctrine::PILLARS
 
-      INTENT_MODE = {
+      INTENT_MODE = {.freeze
         generate_rails_pwa: :generate_from_blank,
         refactor_rails_app: :refactor_existing,
         redesign_mobile_pwa: :redesign_ui,
-        audit_rails_pwa: :audit_pwa
+        audit_rails_pwa: :audit_pwa,
       }.freeze
 
       def initialize(agent: nil, root: Master::ROOT, event_bus: nil)
@@ -55,7 +55,7 @@ module Master
             state: app_state,
             pwa: pwa_result,
             design: design_result,
-            verdict: verdict(pwa_result, design_result)
+            verdict: verdict(pwa_result, design_result),
           }
         end
         Result.ok(results)
@@ -65,7 +65,6 @@ module Master
 
       def resolve_app_path(app)
         return @root unless app
-        candidate = File.join(DEPLOY_RAILS, app.to_s)
         Dir.exist?(candidate) ? candidate : @root
       end
 
@@ -81,7 +80,7 @@ module Master
           design: design_result,
           references: refs.map { |r| "#{r.repo} — #{r.why}" },
           verdict: verdict(pwa_result, design_result),
-          plan: @hotwire.plan_for(app_state)
+          plan: @hotwire.plan_for(app_state),
         })
       end
 
@@ -101,7 +100,7 @@ module Master
           erb_violations:,
           plan:,
           references: refs.map { |r| "#{r.repo} — #{r.why}" },
-          goal:
+          goal:,
         })
       end
 
@@ -112,7 +111,7 @@ module Master
         Result.ok({
           design: design_result,
           recommendations: @design.recommendations(design_result),
-          references: refs.map { |r| "#{r.repo} — #{r.why}" }
+          references: refs.map { |r| "#{r.repo} — #{r.why}" },
         })
       end
 
@@ -122,7 +121,7 @@ module Master
           goal:,
           stack: %i[rails_8 hotwire turbo stimulus solid_queue solid_cache solid_cable importmap],
           plan: generation_plan(goal),
-          references: refs.map { |r| "#{r.repo} — #{r.why}" }
+          references: refs.map { |r| "#{r.repo} — #{r.why}" },
         })
       end
 
@@ -136,7 +135,6 @@ module Master
         high = pwa_result[:findings].count { |f| f.severity == :high } +
                design_result[:violations].count { |v| v.is_a?(Hash) && v[:severity] == :high }
         return :red if critical.positive?
-        return :amber if high.positive?
         :green
       end
 
@@ -150,7 +148,7 @@ module Master
           "Add 192x192 and 512x512 icons; populate app/views/pwa/manifest.json.erb",
           "Upgrade app/views/pwa/service-worker.js: network-first for HTML, cache-first for static assets, network-only for auth routes",
           "Add prefers-reduced-motion guard to all animation/transition declarations",
-          "Baseline accessibility: focus-visible, 44px touch targets, form <label> coverage"
+          "Baseline accessibility: focus-visible, 44px touch targets, form <label> coverage",
         ]
       end
 

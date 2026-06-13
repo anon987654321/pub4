@@ -112,19 +112,15 @@ module Master
       def council_fix(violation)
         path = violation[:file]
         return unless File.exist?(path)
-        src    = File.read(path, encoding: "UTF-8")
         prompt = build_prompt_for(violation, src, path, style: :council)
         MAX_FIX_RETRIES.times do |attempt|
           sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
           response = @agent.ask(prompt).to_s
           return nil if response.strip == "UNCHANGED"
-          code = extract_code(response, File.extname(path).downcase)
           return code if code && code.strip != src.strip
-        rescue StandardError => e
           action = handle_fix_exception(e, violation, event: "rule_loop:council_error")
           next if action == :retry
           return nil
-        end
         nil
       end
 
@@ -132,7 +128,6 @@ module Master
       def request_fix(violation)
         path = violation[:file]
         return unless File.exist?(path)
-        src = File.read(path, encoding: "UTF-8")
         src.bytesize > PatchApplier::DIFF_THRESHOLD ? diff_fix(violation, src, path) : genetic_fix(violation, src, path)
       end
 
@@ -145,11 +140,9 @@ module Master
           next if response.strip == "UNCHANGED"
           result = PatchApplier.apply(src, response)
           return result.source if result.is_a?(PatchApplier::Success)
-        rescue StandardError => e
           action = handle_fix_exception(e, violation, event: "rule_loop:fix_error")
           next if action == :retry
           return nil
-        end
         nil
       end
 
@@ -171,7 +164,6 @@ module Master
 
       def best_candidate(candidates, path)
         return nil if candidates.empty?
-        return candidates.first if candidates.size == 1
         orig = File.read(path, encoding: "utf-8") rescue nil
         baseline = orig ? (rescan_candidate(orig, path) rescue nil) : nil
         scored = candidates.filter_map do |c|
@@ -217,7 +209,6 @@ module Master
         message = error.message.to_s
         if Master::Loop::Constants::TRANSIENT_RE.match?(message)
           return :retry
-        elsif Master::Loop::Constants::PERMANENT_RE.match?(message)
           @bus&.publish("rule_loop:fail_fast", rule: violation[:rule], file: violation[:file], error: message[0, 120])
         elsif Master::Loop::Constants::AMBIGUOUS_RE.match?(message)
           @bus&.publish("rule_loop:human_intervention", rule: violation[:rule], file: violation[:file], error: message[0, 120])
@@ -274,7 +265,6 @@ module Master
       # Architecture #10: record fix quality in learnings store.
       def record_outcomes(files, outcome)
         return unless @learnings
-        ext = files.filter_map { |f| File.extname(f).downcase.delete(".").presence }.tally.max_by { |_, n| n }&.first || "unknown"
         @learnings.record(rule: @rule.id, file_type: ext, outcome:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rule_loop.record_outcomes", event_bus: @bus, rule: @rule.id)

@@ -32,7 +32,6 @@ module Master
       def circuit_open?(agent)
         breaker = agent.respond_to?(:circuit_breaker) ? agent.circuit_breaker : nil
         return false unless breaker.respond_to?(:open_models)
-        !breaker.open_models.empty?
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Reflexion.circuit_open?")
         false

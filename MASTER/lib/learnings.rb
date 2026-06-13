@@ -31,7 +31,7 @@ module Master
       [
         [:high_failure, "tool_failure"],
         [:repeated_correction, "user_correction"],
-        [:provider_errors, "provider_error"]
+        [:provider_errors, "provider_error"],
       ].flat_map do |category, event_type|
         events.select { |e| e["event_type"] == event_type }
               .group_by { |e| e["dimension"] }
@@ -51,7 +51,6 @@ module Master
 
     def load_jsonl(file)
       return [] unless File.exist?(path(file))
-      File.readlines(path(file)).filter_map do |line|
         JSON.parse(line)
       rescue JSON::ParserError
         nil

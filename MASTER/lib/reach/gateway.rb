@@ -9,7 +9,6 @@ module Master
       module Adapter
         def render(text, metadata = {})
           raise NotImplementedError, "#{self.class}#render not implemented"
-        end
       end
 
       def initialize(pipeline:, session:, event_bus: nil)

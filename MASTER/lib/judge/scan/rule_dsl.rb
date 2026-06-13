@@ -14,7 +14,6 @@ module Master
       module RuleDSL
         def self.rule(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil, &block)
           raise ArgumentError, "block required" unless block
-          dsl_id = id.to_s.upcase
           dsl_desc = description || dsl_id.tr("_", " ")
           dsl_tags = Array(tags)
           Class.new(Rule) do
@@ -30,7 +29,6 @@ module Master
             define_method(:check) do |code, path:|
               langs = self.class.dsl_langs
               return [] if langs && !langs.include?(language(path)&.to_sym)
-              instance_exec(code, path: path, &self.class.dsl_block)
             end
           end
         end

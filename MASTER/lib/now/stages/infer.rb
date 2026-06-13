@@ -8,7 +8,7 @@ module Master
         # Heuristic task-type detection — used by ModelRouter for tiered model selection.
         PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
 
-        TASK_TYPE_PATTERNS = {
+        TASK_TYPE_PATTERNS = {.freeze
           architecture: Regexp.new(
             '\b(?:restructur|reorganiz|hierarch|layout|folder|director|module\s+boundar|' \
             'decouple|extract\s+(?:a\s+)?(?:module|class|layer|service)|where\s+should|' \
@@ -42,7 +42,6 @@ module Master
             entry[:regexes].each do |pattern|
               next unless (m = msg.match(pattern))
               return Result.ok(ctx.merge(intent: :command, command: cmd,
-                args: extract_args(cmd:, capture: entry[:capture], match: m, msg:)))
             end
           end
 
@@ -54,7 +53,6 @@ module Master
 
         def load_patterns
           return {} unless File.exist?(PATTERNS_PATH)
-          data = Master.load_yaml(PATTERNS_PATH) || {}
           commands = data.dig("infer", "commands") || {}
           commands.each_with_object({}) do |(name, spec), out|
             regexes = (spec["patterns"] || []).map { |src| Regexp.new(src, Regexp::IGNORECASE | Regexp::EXTENDED) }

@@ -50,7 +50,6 @@ module Master
           if reject?(feedback)
             @bus&.publish("council:veto", personas: persona_names, risk: risk, message: ctx.message.to_s[0, 120])
             return Result.err("council vetoed: #{feedback.to_s[0, 240]}", category: :policy)
-          end
 
           @bus&.publish("council:pass", personas: persona_names, risk: risk)
           Result.ok(ctx.merge(council_feedback: feedback))
@@ -85,7 +84,6 @@ module Master
 
         def should_run?(ctx)
           return false if ctx.intent == :command
-          @enabled || dangerous_request?(ctx) || dangerous_tool?(ctx) || multi_file_diff?(ctx)
         end
 
         def dangerous_request?(ctx)
@@ -124,7 +122,7 @@ module Master
           entry = {
             "timestamp" => Time.now.iso8601,
             "message" => message.to_s[0, EXEMPLAR_MSG_CHARS],
-            "feedback" => feedback.to_s[0, EXEMPLAR_FEEDBACK_CHARS]
+            "feedback" => feedback.to_s[0, EXEMPLAR_FEEDBACK_CHARS],
           }
           @exemplar_mutex.synchronize do
             loaded   = File.exist?(EXEMPLARS_PATH) ? Master.load_yaml(EXEMPLARS_PATH, default: []) : []

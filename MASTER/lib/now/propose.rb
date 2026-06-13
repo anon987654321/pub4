@@ -41,14 +41,12 @@ module Master
 
       def from_violations
         return [] if @violations.zero?
-        weight = 0.9 + [@violations / 50.0, 0.1].min
         [{ action: "/polish", reason: "#{@violations} unresolved violation(s)", weight: }]
       end
 
       def from_last_assistant
         last = @session.messages.last
         return [] unless last && last[:role] == :assistant
-        text = last[:content].to_s
         out = []
         out << prop("/polish", "assistant flagged violations", 0.85) \
           if text.match?(/violation[s]? found|need(s)? fixing|to fix/i)
@@ -70,9 +68,7 @@ module Master
       def from_git
         out, _, st = Open3.capture3("git", "-C", @root, "status", "--porcelain")
         return [] unless st.success?
-        dirty = out.lines.size
         return [] if dirty.zero?
-        [prop("/commit", "#{dirty} uncommitted file(s)", 0.5 + [dirty / 40.0, 0.3].min)]
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "propose.from_git", event_bus: @bus)
         []
@@ -90,23 +86,18 @@ module Master
       def from_idle
         last = @session.messages.last
         return [] unless last
-        ts = last.fetch(:ts) { last[:timestamp] }
         return [] unless ts
-        age = Time.now.to_i - ts.to_i
         return [] if age < 600
-        [prop("/history", "idle #{age / 60} min — review what happened", 0.3 + [age / 7200.0, 0.2].min)]
       end
 
       def from_bus_tail
         return [] unless @bus.respond_to?(:tail)
-        events = begin
           @bus.tail(20)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Propose.from_bus_tail")
           []
         end
         return [] if events.empty?
-        out = []
         escalations = events.count { |e| e[:event].to_s.include?("escalation") }
         out << prop("/why", "#{escalations} model escalation(s) recently", 0.55) if escalations >= 2
         errors = events.count { |e| e[:event].to_s.match?(/error|fail/) }

@@ -6,14 +6,14 @@ module Master
   module Loop
     module Repair
       class GitHistoryMiner
-        DEFAULT_PATTERNS = [
+        DEFAULT_PATTERNS = [.freeze
           /fix/i,
           /refactor/i,
           /rollback/i,
           /repair/i,
           /runtime/i,
           /telemetry/i,
-          /namespace/i
+          /namespace/i,
         ].freeze
 
         def initialize(root: Dir.pwd)

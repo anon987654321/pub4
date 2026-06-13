@@ -15,11 +15,11 @@ module Master
           end
         end
 
-        WORKER_CLASSES = {
+        WORKER_CLASSES = {.freeze
           analyst: Workers::Analyst,
           coder: Workers::Coder,
           reviewer: Workers::Reviewer,
-          researcher: Workers::Researcher
+          researcher: Workers::Researcher,
         }.freeze
 
         WORKER_WEIGHTS = { reviewer: 3, analyst: 2, researcher: 2, coder: 1 }.freeze
@@ -45,7 +45,7 @@ module Master
         def analyse_and_review(file_path:, code:)
           fan_out([
             { role: :analyst, task: "identify all issues", context_slice: { file: file_path, code: code } },
-            { role: :reviewer, task: "security and correctness review", context_slice: { code: code } }
+            { role: :reviewer, task: "security and correctness review", context_slice: { code: code } },
           ]).and_then do |sr|
             analysis = sr.artifacts[:analyst]
             review = sr.artifacts[:reviewer]
@@ -136,7 +136,6 @@ module Master
           if ok_workers.size < MIN_QUORUM
             @bus&.publish(:swarm_vote_insufficient_quorum, count: ok_workers.size)
             return Result.ok({ consensus: nil, dissent: workers_out, arbitrated: false,
-                               workers: workers_out, verdict: :insufficient_quorum })
           end
 
           consensus, dissent, arbitrated = vote(ok_workers, tasks.first&.dig(:task).to_s)
@@ -148,14 +147,12 @@ module Master
 
         def join_or_timeout(th, timeout)
           return th.value if th.join(timeout)
-          th.kill rescue ThreadError
           @bus&.publish(:swarm_worker_timeout, timeout:)
           [:timeout, Result.err("worker timed out after #{timeout}s", category: :timeout)]
         end
 
         def join_or_parallel_timeout(th, deadline)
           return th.value if th.join(deadline)
-          th.kill rescue ThreadError
           @bus&.publish(:swarm_parallel_timeout, deadline:)
           [nil, Result.err("worker exceeded shared deadline", category: :timeout)]
         end
@@ -218,7 +215,6 @@ module Master
         def conflict?(artifacts)
           signals = artifacts.map { |_role, v| conflict_signal(v) }.compact
           return false if signals.size < 2
-          signals.include?(:approve) && signals.include?(:reject)
         end
 
         def resolve_conflict(artifacts)
@@ -232,7 +228,6 @@ module Master
             end
           end
           return :approved if approve_weight > reject_weight
-          return :rejected if reject_weight > approve_weight
           :conflict
         end
 
@@ -278,22 +273,18 @@ module Master
 
         def extract_confidence(result)
           return 0.0 unless result.ok?
-          value = result.value!
           conf = value.is_a?(Hash) ? (value[:confidence] || value["confidence"]) : nil
           conf ? conf.to_f.clamp(0.0, 1.0) : 1.0
         end
 
         def recommendation_signal(result)
           return :neutral unless result.ok?
-          value = result.value!
           if value.is_a?(Hash)
             approved = value["approved"] || value[:approved]
             return :approve if approved == true
-            return :reject  if approved == false
           end
           text = value.to_s.downcase
           return :approve if text.match?(/\b(approv(e|ed)|looks good|no issues|lgtm)\b/)
-          return :reject  if text.match?(/\b(reject|fail|error|violation|problem|insecure)\b/)
           :neutral
         end
 
@@ -304,7 +295,7 @@ module Master
         # Agent arbitrates when workers cannot reach consensus. Sends all outputs.
         def arbitrate(ok_workers, task_context)
           context = ok_workers.map { |w|
-            "#{w[:role]} (confidence #{w[:confidence].round(2)}): #{w[:output].value!}"
+            "#{w[:role]} (confidence #{w[:confidence].round(2)}): #{w[:output].value!}",
           }.join("\n\n")
           prompt = "Workers could not reach consensus on: #{task_context}\n\nWorker outputs:\n#{context}\n\nPick the best recommendation and explain why."
           @bus&.publish(:swarm_arbitration_start, task: task_context[0..60])

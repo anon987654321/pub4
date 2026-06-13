@@ -6,7 +6,7 @@ module Master
   module Ground
     module SandboxPolicy
       include Policy
-      DENY_PATTERNS = [
+      DENY_PATTERNS = [.freeze
         /\brm\s+-rf\s+(?:\/|~|\$HOME)\b/,
         /\bsudo\b/,
         /\bmkfs\b/,
@@ -16,25 +16,25 @@ module Master
         /\bforce-push\b|\bgit\s+push\s+--force/,
         /\b(drop|truncate)\s+(database|table)\b/i,
         /\bshutdown\b|\breboot\b/,
-        /\bcurl\b.*\|\s*(?:sh|bash|zsh)/
+        /\bcurl\b.*\|\s*(?:sh|bash|zsh)/,
       ].freeze
 
-      ASK_PATTERNS = [
+      ASK_PATTERNS = [.freeze
         /\bgit\s+push\b/,
         /\bgit\s+reset\s+--hard\b/,
         /\bgit\s+clean\s+-fd/,
         /\bbundle\s+exec\s+rails\s+db:/,
         /\bdelete\b/i,
-        /\bdeploy\b/i
+        /\bdeploy\b/i,
       ].freeze
 
-      ALLOW_PATTERNS = [
+      ALLOW_PATTERNS = [.freeze
         /\Agit\s+(status|diff|log|show|branch)\b/,
         /\A(?:bundle\s+exec\s+)?ruby\s+-c\b/,
         /\A(?:bundle\s+exec\s+)?rspec\b/,
         /\A(?:bundle\s+exec\s+)?rubocop\b/,
         /\A(?:bundle\s+exec\s+)?rails\s+test\b/,
-        /\Als\b|\Afind\b|\Agrep\b|\Arg\b/
+        /\Als\b|\Afind\b|\Agrep\b|\Arg\b/,
       ].freeze
 
       Decision = Struct.new(:mode, :reason, keyword_init: true) do
@@ -48,12 +48,9 @@ module Master
       def decide(command)
         source = command.to_s.strip
         return Decision.new(mode: :deny, reason: "empty command") if source.empty?
-        return Decision.new(mode: :deny, reason: "matched deny pattern") if
           DENY_PATTERNS.any? { |p| source.match?(p) }
         return Decision.new(mode: :ask, reason: "matched ask pattern") if
-          ASK_PATTERNS.any? { |p| source.match?(p) }
         return Decision.new(mode: :allow, reason: "matched safe allow pattern") if
-          ALLOW_PATTERNS.any? { |p| source.match?(p) }
 
         Decision.new(mode: :ask, reason: "unknown command risk")
       end

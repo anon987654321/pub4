@@ -27,14 +27,12 @@ module Master
         if (rate_err = check_rate_limit!(tier))
           @bus&.publish("tool:rate_limited", tool: tool_name, tier:)
           return rate_err
-        end
 
         case tier
         when :safe then return Result.ok(true)
         when :guarded then return Result.ok(true) if @auto || @approve_all
         when :dangerous
           return Result.ok(true) if @auto || @approve_all
-          return Result.ok(true) unless needs_human?(description)
         end
 
         ask_user(tool_name, tier, description)
@@ -58,13 +56,11 @@ module Master
       def check_rate_limit!(tier)
         limit = TIER_RATE_LIMITS[tier]
         return unless limit
-        now = Time.now.to_f
         @rate_mutex.synchronize do
           calls = @rate_windows[tier]
           calls.reject! { |t| now - t > RATE_WINDOW }
           if calls.size >= limit
             return Result.err("rate limit: #{tier} tier (#{limit}/min)", category: :rate_limit)
-          end
           calls << now
         end
         nil
@@ -77,7 +73,7 @@ module Master
         choice = @prompt.select("#{tier_icon(tier)} #{label}", [
           { name: "approve", value: :approve },
           { name: "deny", value: :deny },
-          { name: "quit", value: :quit }
+          { name: "quit", value: :quit },
         ])
 
         case choice

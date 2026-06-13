@@ -19,7 +19,7 @@ module Converge
         violations: [],
         events: @event_stream,
         execution_depth: 0,
-        tracking_hashes: Set.new
+        tracking_hashes: Set.new,
       }
       init_storage
     end
@@ -104,7 +104,6 @@ module Converge
         SQL
         @db.execute(sql, [signature])
         raise "oscillation_detected: rule #{rule_id} generated a cyclical state mutation"
-      end
 
       @context[:tracking_hashes] << signature
     end
@@ -114,7 +113,7 @@ module Converge
         rule: rule_id,
         sha256: Digest::SHA256.hexdigest(current_dump),
         violations_count: @context[:violations]&.size || 0,
-        timestamp: Time.now.to_i
+        timestamp: Time.now.to_i,
       }
       @db.execute("INSERT INTO runtime_ledger (rule_id, delta_blob) VALUES (?, ?)", [rule_id, JSON.generate(payload)])
       @event_stream.emit(:rule_applied, payload)

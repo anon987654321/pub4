@@ -16,15 +16,15 @@ module Master
       REPLAY_TURNS = 5
       DMESG_BUFFER = 80
 
-      SEVERITY_ICON = {
+      SEVERITY_ICON = {.freeze
         error: "!!",
         warning: "!",
         style: ".",
-        critical: "!!"
+        critical: "!!",
       }.freeze
       SLASH_COMMANDS = %w[
         /help /exit /quit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
-        /self /ui-critique /sound-critique /rebuild /context /checkpoint /verify /rails-pwa-audit /rails-pwa-fix /swallow-report
+        /self /ui-critique /sound-critique /rebuild /context /checkpoint /verify /rails-pwa-audit /rails-pwa-fix /swallow-report,
       ].freeze
 
       attr_reader :container
@@ -66,7 +66,6 @@ module Master
       def pipe(input)
         stripped = input.strip
         return if stripped.empty?
-        run_input(stripped)
       end
 
       def process(input)
@@ -166,13 +165,11 @@ module Master
       def suggested_next_prompt
         top = proposer.top
         return nil unless top
-        @last_suggestion = top[:action]
         "#{top[:action]}  (#{top[:reason]})"
       end
 
       def accept_top_suggestion
         return unless @last_suggestion
-        puts @renderer.render("↳ #{@last_suggestion}", mode: :dim)
         handle_repl_line(@last_suggestion)
       end
 
@@ -182,7 +179,7 @@ module Master
         @proposer
       end
 
-      NL_DISPATCH = [
+      NL_DISPATCH = [.freeze
         [/\b(?:show|print|list)\s+(?:undo\s+)?histor/i, :run_history],
         [/\b(?:why|how)\s+(?:this|that|did|was)\b/i, :run_why],
         [/\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i, :toggle_focus],
@@ -205,7 +202,6 @@ module Master
       def handle_repl_line(line)
         stripped = line.strip
         return accept_top_suggestion if stripped.empty?
-        NL_DISPATCH.each { |pat, meth| return send(meth) if stripped.match?(pat) }
         case stripped
         when "/help", "/?" then run_help
         when "/exit", "/quit" then exit_cli
@@ -275,7 +271,6 @@ module Master
           errors.each { |p| puts @renderer.render("  syntax error: #{p}", mode: :warning) }
           puts @renderer.render("rebuild: aborted — fix errors first", mode: :warning)
           return
-        end
         @session.save!
         puts @renderer.render("rebuild: ok — exec'ing fresh process", mode: :dim)
         $stdout.flush
@@ -312,7 +307,7 @@ module Master
                     lib/ground/unfinished_ledger.rb lib/ground/orchestration_policy.rb],
           symbols: %w[Master::Ground::IntentRouter Master::Ground::AttentionContext
                       Master::Ground::UnfinishedLedger Master::Ground::OrchestrationPolicy],
-          callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify]
+          callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify],
         }
         checker = Master::Ground::DoneChecker.new
         result = checker.call(plan)
@@ -350,7 +345,6 @@ module Master
       def replay_recent_turns
         tail = @session.messages.last(REPLAY_TURNS * 2)
         return if tail.empty?
-        puts @renderer.render("resume0: replaying last #{tail.size} messages", mode: :dim)
         tail.each do |msg|
           tag = msg[:role] == :user ? "you" : "master"
           content = msg[:content].to_s
@@ -397,7 +391,6 @@ module Master
       def changed_lib_files(lib_dir)
         out, = Open3.capture2e("git", "-C", @root, "diff", "--name-only", "HEAD")
         return [] if out.strip.empty?
-        out.lines
            .map { |l| File.join(@root, l.strip) }
            .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
       rescue StandardError => e
@@ -419,9 +412,7 @@ module Master
         lib_dir = File.join(@root, "lib")
         result  = @scanner.scan_dir(lib_dir, depth: :deep)
         return unless result.is_a?(Master::Result) && result.ok?
-        n = count_violations(result.value!)
         return if n == @violations
-        @violations = n
         $stdout.puts "\nbg: #{n} violation(s)" if n.positive?
         $stdout.flush
       rescue StandardError => e
@@ -434,7 +425,6 @@ module Master
       def print_repo_tree
         lines = Master::CommandRegistry.tree_lines(@root)
         return if lines.empty?
-        puts @renderer.render("tree0: #{File.basename(@root)} (#{lines.size} entries)", mode: :dim)
         lines.each { |l| puts @renderer.render(l, mode: :dim) }
         puts
       rescue StandardError => e
@@ -451,9 +441,7 @@ module Master
 
       def first_boot_bar
         return unless $stdout.isatty
-        flag = File.join(@root, ".master", "booted_once")
         return if File.exist?(flag)
-        INIT_FRAMES.times do |i|
           bar = ("\u25B0" * (i + 1)) + ("\u25B1" * (INIT_FRAMES - i - 1))
           pct = ((i + 1) * 100 / INIT_FRAMES).to_s.rjust(3)
           print "\rinit0: #{bar} #{pct}%"
@@ -516,14 +504,12 @@ module Master
         tokens = @session.token_est
         cents  = (delta * 100).round(2)
         return if cents.zero? && tokens.zero?
-        line = "cost: +¢#{format('%.2f', cents)} · #{tokens} tok · #{short_model(@agent.model)}"
         puts @renderer.render(line, mode: :dim)
       end
 
       def print_chips
         chips = next_action_chips
         return if chips.empty?
-        puts @renderer.render("  next: #{chips.join("  ")}", mode: :dim)
       end
 
       def next_action_chips

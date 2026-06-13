@@ -22,14 +22,14 @@ module Master
       LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
       TOOL_CALL_RE = /<tool_call>(.*?)<\/tool_call>/m.freeze
       TOOL_RESULT_ROLE = "user"
-      KEY_PATTERNS = [
+      KEY_PATTERNS = [.freeze
         /sk-[A-Za-z0-9_\-]{16,}/,
         /sk-ant-[A-Za-z0-9_\-]{16,}/,
         /Bearer\s+[A-Za-z0-9_\-\.]{16,}/i,
-        /\b[A-Za-z0-9]{32,}\b/
+        /\b[A-Za-z0-9]{32,}\b/,
       ].freeze
 
-      LLM_TOOL_MAP = {
+      LLM_TOOL_MAP = {.freeze
         Reach::ReadFile => Reach::LLM::ReadFile,
         Reach::WriteFile => Reach::LLM::WriteFile,
         Reach::StrReplace => Reach::LLM::StrReplace,
@@ -44,7 +44,7 @@ module Master
         Reach::FeedbackRecord => Reach::LLM::FeedbackRecord,
         Reach::MemoryRecord => Reach::LLM::MemoryRecord,
         Reach::Repligen => Reach::LLM::Repligen,
-        Reach::Postpro => Reach::LLM::Postpro
+        Reach::Postpro => Reach::LLM::Postpro,
       }.freeze
 
       def self.build_tool_capable_re
@@ -86,7 +86,6 @@ module Master
       rescue StandardError => err
         record_provider_outcome(selected_model, :llm_call_failure, latency_ms: elapsed_ms(started), error: err.message)
         return Result.err(Master.no_api_key_message, category: :no_api_key) if missing_key_error?(err)
-        Result.err(redact_secrets(err.message.to_s), category: :llm_call_failure)
       end
 
       def redact_secrets(text)
@@ -114,16 +113,13 @@ module Master
       def system_prompt
         result = @system_prompt_proc.call
         return result unless result.is_a?(Hash)
-        [result[:static], result[:dynamic]].compact.join("\n\n").then { |s| s.empty? ? nil : s }
       end
 
       def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, &blk)
         sys = system || system_prompt
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
-        return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:)     if web_chat_model?(selected_model)
         if !tool_capable?(selected_model) && @tools.any?
           return react_tool_loop(selected_model, messages, sys:, stream:, image: image, &blk)
-        end
         send_ruby_llm(selected_model, messages, sys:, stream:, image: image, &blk)
       end
 
@@ -132,7 +128,6 @@ module Master
         args += ["--system-prompt", sys] if sys && !sys.empty?
         out, err, status = Open3.capture3(*args, stdin_data: text_prompt_for(messages))
         return Result.err("claude-cli: #{err.strip}", category: :provider_error) unless status.success?
-        Result.ok(out.strip)
       rescue StandardError => e
         Result.err("claude-cli: #{e.message}", category: :provider_error)
       end
@@ -175,7 +170,7 @@ module Master
           name = t.class.name.split("::").last
           meta = @tool_registry.fetch(name, {})
           desc = meta["description"] || name.gsub(/([A-Z])/, ' \1').strip
-          "- #{name}: #{desc}"
+          "- #{name}: #{desc}",
         }.join("\n")
 
         react_instructions = <<~INST.strip
@@ -202,7 +197,6 @@ module Master
       def execute_react_tool(name, args)
         tool = @tools.find { |t| t.class.name.split("::").last == name }
         return "<tool_result name=\"#{name}\">error: tool not found</tool_result>" unless tool
-        sym_args = args.transform_keys(&:to_sym)
         raw = tool.respond_to?(:call) ? tool.call(**sym_args) : "unsupported"
         out = Result.wrap(raw).value_or(raw.to_s)
         "<tool_result name=\"#{name}\">\n#{out}\n</tool_result>"
@@ -275,7 +269,6 @@ module Master
 
       def record_usage(reply, model)
         return unless @session
-        input = reply.respond_to?(:input_tokens) ? reply.input_tokens.to_i : 0
         output = reply.respond_to?(:output_tokens) ? reply.output_tokens.to_i : 0
         cached = reply.respond_to?(:cached_tokens) ? reply.cached_tokens.to_i : 0
         cache_write = reply.respond_to?(:cache_creation_tokens) ? reply.cache_creation_tokens.to_i : 0
@@ -283,11 +276,8 @@ module Master
         if tokens.zero? && reply.respond_to?(:content)
           tokens = Master::Trace::Session.estimate_tokens(reply.content)
           return if tokens.zero?
-          @session.record_cost((tokens * COST_PER_TOKEN).round(6), model:, tokens:)
           return
-        end
         return if tokens.zero?
-        regular = [input - cached - cache_write, 0].max
         cost = ((regular * COST_PER_TOKEN) +
                 (cached * COST_PER_TOKEN * CACHE_READ_RATIO) +
                 (cache_write * COST_PER_TOKEN * CACHE_WRITE_RATIO) +
@@ -305,24 +295,20 @@ module Master
 
       def extract_response(reply, selected_model)
         return reply.to_s unless reply.respond_to?(:content)
-        content  = reply.content.to_s
         thinking = reply.respond_to?(:thinking) ? reply.thinking&.text.to_s.strip : ""
         if NEMOTRON3_RE.match?(selected_model) && !thinking.empty?
           return content.empty? ? thinking : "#{content}\n\n<think>\n#{thinking}\n</think>"
-        end
         content.empty? && !thinking.empty? ? thinking : content
       end
 
       def nemotron_system_prompt(selected_model, base = nil)
         sys = base || system_prompt
         return sys unless LLAMA_NEMOTRON_RE.match?(selected_model)
-        directive = @config["reasoning_mode"] != "none" ? "detailed thinking on" : "detailed thinking off"
         [directive, sys].compact.join("\n\n")
       end
 
       def build_final_system(selected_model, sys)
         return sys unless claude_model?(selected_model)
-        raw = @system_prompt_proc.call
         if raw.is_a?(Hash) && raw[:static]
           static_text = nemotron_system_prompt(selected_model, raw[:static])
           blocks = [{ type: "text", text: static_text, cache_control: { type: "ephemeral" } }]
@@ -331,14 +317,12 @@ module Master
         else
           base = nemotron_system_prompt(selected_model, sys)
           return base unless base.is_a?(String)
-          RubyLLM::Content::Raw.new([{ type: "text", text: base, cache_control: { type: "ephemeral" } }])
         end
       end
 
       def cache_key_for(message, context, model = nil)
         parts = model ? "#{model}\n#{message}" : message
         return Digest::SHA256.hexdigest(parts) if context.empty?
-        window = context.last(CACHE_WINDOW).map { |msg| "#{msg[:role]}:#{msg[:content]}" }.join("\n")
         Digest::SHA256.hexdigest("#{parts}\n#{window}")
       end
 
@@ -348,7 +332,6 @@ module Master
 
       def elapsed_ms(started)
         return 0 unless started
-        ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * MS_PER_SECOND).round
       end
 
       def record_provider_result(model, result, started)
@@ -380,7 +363,6 @@ module Master
 
       def llm_tools(selected_model)
         return [] unless tool_capable?(selected_model)
-        return build_llm_tools(visitor: true) if Fiber[:master_visitor]
         @llm_tools ||= build_llm_tools
       end
 
@@ -405,7 +387,6 @@ module Master
         path = File.join(Master::ROOT, "data", "tools.yml")
         rows = Master.load_yaml(path)
         return {} unless rows.is_a?(Array)
-        rows.each_with_object({}) { |row, h| h[row["name"].to_s] = row if row.is_a?(Hash) }
       end
     end
   end

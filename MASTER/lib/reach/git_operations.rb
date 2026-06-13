@@ -32,7 +32,6 @@ module Master
           "git", "-C", @root_path, "rev-list", "--left-right", "--count", "HEAD...@{u}"
         )
         return [0, 0] unless st.success?
-        a, b = out.strip.split.map(&:to_i)
         [a || 0, b || 0]
       end
 

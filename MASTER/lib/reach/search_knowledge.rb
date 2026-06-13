@@ -21,7 +21,6 @@ module Master
         search_dir = topic ? File.join(@knowledge_root, topic.to_s) : @knowledge_root
         unless Dir.exist?(search_dir) && File.realpath(search_dir).start_with?(@knowledge_root)
           return Result.err("unknown topic: #{topic}. Available: #{available_topics.join(", ")}", category: :validation)
-        end
 
         begin
           re = Regexp.new(query, Regexp::IGNORECASE)
@@ -59,7 +58,6 @@ module Master
 
       def available_topics
         return [] unless Dir.exist?(@knowledge_root)
-        Dir.entries(@knowledge_root).select { |e|
           File.directory?(File.join(@knowledge_root, e)) && !e.start_with?(".") }
       end
 

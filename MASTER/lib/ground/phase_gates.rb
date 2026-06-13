@@ -8,7 +8,7 @@ module Master
       include AtomicWrite
       PHASE_STATE_PATH = "data/phase_state.yml".freeze
 
-      GATES = {
+      GATES = {.freeze
         "discover" => %w[problem_stated success_measurable],
         "analyze" => %w[components_distinct dependencies_noted],
         "ideate" => %w[alternatives_gte_3],
@@ -16,7 +16,7 @@ module Master
         "implement" => %w[],
         "validate" => %w[tests_noted],
         "deliver" => %w[deployed_noted],
-        "idle" => %w[]
+        "idle" => %w[],
       }.freeze
 
       def initialize(root:, event_bus: nil)
@@ -31,12 +31,10 @@ module Master
         prev = current
         target = to&.to_s || next_phase
         return Master::Result.err("unknown phase: #{target}") unless PHASES.include?(target)
-        return Master::Result.err("already at final phase: #{prev}") if prev == "idle" && target == "idle"
 
         unmet = unmet_gates(prev)
         if unmet.any?
           return Master::Result.err(
-            "phase #{prev} gates unmet: #{unmet.join(",")} — override with /phase advance --force"
           )
         end
 
@@ -81,7 +79,6 @@ module Master
       def load_state
         path = File.join(@root, PHASE_STATE_PATH)
         return { "phase" => "idle", "met_gates" => [] } unless File.exist?(path)
-        data = Master.load_yaml(path)
         data.is_a?(Hash) ? data : { "phase" => "idle", "met_gates" => [] }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "phase_gates.load_state")

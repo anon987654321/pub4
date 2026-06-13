@@ -105,7 +105,6 @@ module Master
           def load_lib_source(root)
             lib_dir = File.join(root, "lib")
             return "" unless File.directory?(lib_dir)
-            Dir.glob(File.join(lib_dir, "**", "*.rb"))
                .filter_map { |f| File.read(f) rescue nil }
                .join("\n")
           end
