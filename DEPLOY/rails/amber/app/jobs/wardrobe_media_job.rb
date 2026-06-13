@@ -6,7 +6,7 @@ require "rbconfig"
 class WardrobeMediaJob < ApplicationJob
   queue_as :media
 
-  VARIANTS = {.freeze
+  VARIANTS = {
     thumb: { resize_to_limit: [240, 240] },
     card: { resize_to_limit: [720, 960] },
   }.freeze
