@@ -8,7 +8,6 @@ Rails.application.routes.draw do
   get  "chat/message",  to: "chat#message"
   post "chat/photo",    to: "chat#photo"
   get  "chat/tts",      to: "chat#tts"
-  get  "chat/research", to: "chat#research"
   get  "chat/enhance",  to: "chat#enhance"
   get  "chat/history", to: "chat#history"
   post "chat/command", to: "chat#command"

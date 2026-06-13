@@ -2554,17 +2554,7 @@ window._nudgeLoop = (() => {
     if (document.hidden) return false;
     return true;
   }
-  let _researchCache = [];
-  async function _refillResearch() {
-    try {
-      const r = await fetch('/chat/research?n=20');
-      if (r.ok) { const j = await r.json(); if (Array.isArray(j.items)) _researchCache = j.items.concat(_researchCache).slice(0, 60); }
-    } catch (_) {}
-  }
-  _refillResearch();
-  setInterval(_refillResearch, 180000);
   function _nextLine() {
-    if (_researchCache.length && Math.random() < 0.85) return _researchCache.shift();
     return NUDGES[Math.floor(Math.random() * NUDGES.length)];
   }
   setInterval(() => {
@@ -2575,7 +2565,6 @@ window._nudgeLoop = (() => {
     if (!line) return;
     try { if (typeof announceTTS === 'function') announceTTS(line); } catch (_) {}
     try { if (typeof enqueueSpeech === 'function') enqueueSpeech(line); } catch (_) {}
-    if (_researchCache.length < 5) _refillResearch();
   }, 1500);
   return { force() { last = 0; } };
 })();
