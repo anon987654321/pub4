@@ -23,6 +23,36 @@ module Master
       SEVERITY_RANK = Master::SEVERITY_RANK
       MIN_SEVERITY = SEVERITY_RANK[:warning]
 
+      @soul_preamble_mutex = Mutex.new
+      @soul_preamble_cache = nil
+
+      class << self
+        def clear_preamble_cache!
+          @soul_preamble_mutex.synchronize { @soul_preamble_cache = nil }
+        end
+
+        def soul_preamble
+          @soul_preamble_mutex.synchronize do
+            @soul_preamble_cache ||= build_soul_preamble
+          end
+        end
+
+        private
+
+        def build_soul_preamble
+          soul   = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
+          abs    = soul.fetch("absolute", {})
+          golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+          lines  = ["Golden rule: #{golden}",
+                    "Minimum change that eliminates the violation. Do not touch unrelated code."]
+          abs.fetch("code_rules", {}).each { |key, value| lines << "- #{key}: #{value}" }
+          abs.fetch("aesthetic_rules", {}).each { |key, value| lines << "- #{key}: #{value}" }
+          lines.join("\n")
+        rescue StandardError
+          "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+        end
+      end
+
       include Master::Ground::AtomicWrite
       include Master::Loop::FixHelpers
 
@@ -233,18 +263,7 @@ module Master
       end
 
       def preamble
-        @preamble ||= @injected_preamble || begin
-          soul   = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
-          abs    = soul.fetch("absolute", {})
-          golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-          lines  = ["Golden rule: #{golden}",
-                    "Minimum change that eliminates the violation. Do not touch unrelated code."]
-          abs.fetch("code_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
-          abs.fetch("aesthetic_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
-          lines.join("\n")
-        rescue StandardError
-          "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-        end
+        @injected_preamble || self.class.soul_preamble
       end
 
       # Architecture #10: record fix quality in learnings store.
