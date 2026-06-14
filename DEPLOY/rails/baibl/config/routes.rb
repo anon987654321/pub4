@@ -1,10 +1,15 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  jobs_constraint = ->(request) { request.cookies["session_id"].present? }
+
   resource  :session
   resources :passwords, param: :token
 
   root "scriptures#index"
+  constraints(jobs_constraint) do
+    mount SolidQueue::Engine, at: "/admin/jobs"
+  end
 
   get "scripture",                to: "scriptures#index",   as: :scripture_index
   get "scripture/:abbreviation",  to: "scriptures#book",    as: :scripture_book

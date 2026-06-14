@@ -25,11 +25,13 @@ window.addEventListener('master:visual', (ev) => {
 
   const ex = d.expression || {};
 
-  if ((d.entropy || 0) > 0.6 || d.mode === 'veto' || /veto|error|failure|pressure/.test(d.name || '')) {
-    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] || 0) + (ex.mouth_pressure || 0.6));
-    }
+  // Genuine readout: a rendered emotion patch (server Expression.emotion_for,
+  // built from council risk/reversibility and the evidence verdict) drives the
+  // face directly. This is real state — not the event-name heuristics.
+  const emo = d.emotion || ex.emotion;
+  if (emo) window.Face3DPreview?.engine?.setEmotion?.(emo);
+
+  if ((d.entropy || 0) > 0.6 || d.mode === 'veto' || /veto|error|failure/.test(d.name || '')) {
     for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
       const b = i * window.ParticleKernel.FIELDS_PER_CELL;
       eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] || 0.9) - (ex.eye_confidence_drop || 0.3));
@@ -44,16 +46,12 @@ window.addEventListener('master:visual', (ev) => {
     if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * window.ParticleKernel.FIELDS_PER_CELL;
       mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
-      mouthPool.cells[b + window.ParticleKernel.FIELD.pressure] = ex.pressure ?? (hi ? 0.85 : lo ? 0.25 : 0.6);
       if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
 
       const rate = parseFloat(d.rate || (d.raw && d.raw.rate)) || 0;
       const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
       mouthPool.cells[b + window.ParticleKernel.FIELD.velocity] = rate * 0.008;
 
-      if (hi && Math.abs(pitch) > 15) {
-        eyePool && eyePool.alive && (eyePool.cells[b + window.ParticleKernel.FIELD.attention] = Math.min(1.0, (eyePool.cells[b + window.ParticleKernel.FIELD.attention] || 0.6) + 0.18));
-      }
       if (Math.abs(pitch) > 20) eyePool && eyePool.alive && (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = 0.6);
     }
 
@@ -61,19 +59,13 @@ window.addEventListener('master:visual', (ev) => {
   }
 
   if (/council:deliberation|council:start/i.test(d.name || '')) {
-    const pBoost = ex.mouth_pressure || 0.5;
     const cDrop  = ex.eye_confidence_drop || 0.25;
-    if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i])
-      mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0) + pBoost);
     if (eyePool) for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i])
       eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9) - cDrop);
   }
 
   if (/input:long|cmd:long/i.test(d.name || '')) {
     State.jitter = Math.max(State.jitter || 0.2, 0.55);
-    const density = ex.pressure || 0.4;
-    if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i])
-      mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure] = Math.min(1, (mouthPool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.pressure]||0) + density);
   }
 
   if (ex && (ex.arousal != null || ex.valence != null || ex.attention != null)) {
@@ -94,13 +86,7 @@ function smoothExpressionValue(key, target) {
 }
 
 setInterval(() => {
-  if (State.creativeBleed > 0.01 && eyePool) {
-    for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
-      const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      eyePool.cells[b + window.ParticleKernel.FIELD.attention] = Math.max(0.3, (eyePool.cells[b + window.ParticleKernel.FIELD.attention] || 0.6) - 0.06);
-    }
-    State.creativeBleed *= 0.82;
-  }
+  if (State.creativeBleed > 0.01) State.creativeBleed *= 0.82;
 }, 420);
 
 window.addEventListener('tts:anticipate', (ev) => {
@@ -109,10 +95,6 @@ window.addEventListener('tts:anticipate', (ev) => {
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * window.ParticleKernel.FIELDS_PER_CELL;
     mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = Math.min(1.0, (mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] || 0.6) + (ex.arousal || 0.25));
-  }
-  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
-    const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-    eyePool.cells[b + window.ParticleKernel.FIELD.attention] = Math.min(1.0, (eyePool.cells[b + window.ParticleKernel.FIELD.attention] || 0.6) + (ex.attention || 0.3));
   }
   State.pulse = Math.max(State.pulse || 0, 0.35);
 });

@@ -11,6 +11,16 @@ class WeeklyStatsJob < ApplicationJob
       communities: Community.count,
       reactions: Reaction.count,
     }
-    Rails.cache.write("brgen:weekly_stats", stats, expires_in: 1.week)
+    Rails.cache.write("brgen:weekly_stats", stats, expires_in: cache_ttl_for(:weekly_stats))
+  end
+
+  private
+
+  def cache_ttl_for(key_type)
+    if defined?(Shared::CachePolicy)
+      Shared::CachePolicy.ttl_for(key_type)
+    else
+      { weekly_stats: 1.week }.fetch(key_type.to_sym)
+    end
   end
 end

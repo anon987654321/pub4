@@ -238,6 +238,10 @@ prediction_engine:
   null_usage: {confidence: 0.95, autofix: null_object_pattern}
   abbreviation: {confidence: 0.99, autofix: expand_to_full_name}
   nesting_depth: {confidence: 0.92, autofix: extract_method}
+
+# Session-learned patterns become live scan rules through
+# lib/judge/scan/rules/learned_smells_rule.rb.
+learned_smells: []
   bare_rescue: {confidence: 0.98, autofix: rescue_standard_error}
   frozen_string: {confidence: 0.99, autofix: add_frozen_string_literal}
   trailing_ws: {confidence: 0.99, autofix: strip_trailing_whitespace}
