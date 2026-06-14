@@ -120,9 +120,42 @@ module Master
           next unless fingerprint_matches?(v)
           note_unverified_fix(v)
           new_src = v[:severity].to_sym == :error ? council_fix(v) : request_fix(v)
+          new_src = reflexion_verify(v, new_src) if new_src
           apply(v[:file], new_src, v) && (fixed += 1) if new_src
         end
         fixed
+      end
+
+      def reflexion_verify(violation, proposed_src)
+        path = violation[:file]
+        return proposed_src unless File.exist?(path)
+
+        original_src = File.read(path, encoding: "UTF-8") rescue (return proposed_src)
+        prompt = <<~PROMPT
+          Verify this proposed code fix is correct. Reply ONLY with "SAFE" or "UNSAFE: <reason>".
+
+          VIOLATION: #{violation[:rule]} line #{violation[:line]} — #{violation[:message]}
+
+          ORIGINAL:
+          ```
+          #{original_src[0, 600]}
+          ```
+
+          PROPOSED FIX:
+          ```
+          #{proposed_src[0, 600]}
+          ```
+        PROMPT
+        response = @agent.ask_once(prompt).to_s.strip
+        if response.start_with?("UNSAFE")
+          @bus&.publish("rule_loop:reflexion_rejected", rule: @rule.id, file: path, reason: response[0, 160])
+          return nil
+        end
+        @bus&.publish("rule_loop:reflexion_approved", rule: @rule.id, file: path)
+        proposed_src
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "RuleLoop.reflexion_verify", rule: @rule.id)
+        proposed_src
       end
 
       # Architecture #6: three-reviewer veto for error-tier violations.

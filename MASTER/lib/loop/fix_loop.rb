@@ -300,15 +300,32 @@ module Master
 
       def dependency_levels(rules)
         deps = load_deps
-        remaining = rules.map(&:id).to_set
         id_map = rules.to_h { |rule| [rule.id, rule] }
-        levels = []
-        until remaining.empty?
-          ready = remaining.select { |id| Array(deps[id]).none? { |dep| remaining.include?(dep) } }
-          ready = [remaining.first] if ready.empty?
-          levels << ready.map { |id| id_map[id] }.compact
-          ready.each { |id| remaining.delete(id) }
+        in_degree = Hash.new(0)
+        adj = Hash.new { |h, k| h[k] = [] }
+        rules.each do |rule|
+          (deps[rule.id] || []).each do |dep_id|
+            next unless id_map[dep_id]
+            adj[dep_id] << rule.id
+            in_degree[rule.id] += 1
+          end
         end
+        queue = rules.select { |r| in_degree[r.id].zero? }.map(&:id)
+        levels = []
+        until queue.empty?
+          level_ids = queue.dup
+          queue.clear
+          levels << level_ids.map { |id| id_map[id] }.compact
+          level_ids.each do |rule_id|
+            adj[rule_id].each do |dependent|
+              in_degree[dependent] -= 1
+              queue << dependent if in_degree[dependent].zero?
+            end
+          end
+        end
+        seen = levels.flatten.to_set
+        remaining = rules.reject { |r| seen.include?(r) }
+        levels << remaining unless remaining.empty?
         levels
       end
 
@@ -347,7 +364,9 @@ module Master
       end
 
       def scan_violations(files)
-        @loop_scanner.violations(files)
+        cache_key = files.map { |f| File.exist?(f) ? "#{f}:#{File.mtime(f).to_f}" : f }.sort.join("|")
+        @scan_cache ||= {}
+        @scan_cache[cache_key] ||= @loop_scanner.violations(files)
       end
 
       def ground_truth_violations(files)
@@ -543,18 +562,22 @@ module Master
       end
 
       def load_deps
-        data = Master.load_yaml(DEPS_PATH)
-        (data&.dig("deps") || {}).transform_values { |v| Array(v["after"] || []) }
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
-        {}
+        @deps_cache ||= begin
+          data = Master.load_yaml(DEPS_PATH)
+          (data&.dig("deps") || {}).transform_values { |v| Array(v["after"] || []) }
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
+          {}
+        end
       end
 
       def load_priors
-        Master.load_yaml(PRIORS_PATH) || {}
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
-        {}
+        @priors_cache ||= begin
+          Master.load_yaml(PRIORS_PATH) || {}
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
+          {}
+        end
       end
 
       def workflow_cfg
