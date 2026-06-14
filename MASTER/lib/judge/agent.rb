@@ -31,14 +31,14 @@ module Master
       end
 
       def initialize(deps:)
-        @deps                              = deps
-        @config, @session, @tools          = deps.config, deps.session, deps.tools
-        @circuit_breaker, @cache, @bus     = deps.circuit_breaker, deps.cache, deps.bus
-        @model_router, @reasoning_modes    = deps.model_router, deps.reasoning_modes
+        @deps = deps
+        @config, @session, @tools = deps.config, deps.session, deps.tools
+        @circuit_breaker, @cache, @bus = deps.circuit_breaker, deps.cache, deps.bus
+        @model_router, @reasoning_modes = deps.model_router, deps.reasoning_modes
         @memory, @personality, @code_index = deps.memory, deps.personality, deps.code_index
-        @context_window, @homeostat        = deps.context_window, deps.homeostat
-        @constitution                      = nil
-        @dispatcher                        = Master::Judge::LLMDispatcher.new(deps:, system_prompt: -> { { static: static_prompt, dynamic: dynamic_prompt } })
+        @context_window, @homeostat = deps.context_window, deps.homeostat
+        @constitution = nil
+        @dispatcher = Master::Judge::LLMDispatcher.new(deps:, system_prompt: -> { { static: static_prompt, dynamic: dynamic_prompt } })
       end
 
       def wire_constitution(constitution) = @constitution = constitution
