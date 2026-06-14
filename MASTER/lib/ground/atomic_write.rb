@@ -7,17 +7,17 @@ module Master
 
       # Write content to path via tmp+rename. Pass fsync: true for durable config writes.
       def write_atomic(path, content, encoding: "UTF-8", fsync: false)
-        tmp_path = "#{path}.tmp.#{Process.pid}"
-        File.open(tmp_path, "w", encoding:) do |f|
+        temp_path = "#{path}.tmp.#{Process.pid}"
+        File.open(temp_path, "w", encoding:) do |f|
           f.write(content)
           if fsync
             f.flush
             f.fsync
           end
         end
-        File.rename(tmp_path, path)
+        File.rename(temp_path, path)
       rescue StandardError => e
-        File.delete(tmp_path) if tmp_path && File.exist?(tmp_path)
+        File.delete(temp_path) if temp_path && File.exist?(temp_path)
         raise e
       end
     end

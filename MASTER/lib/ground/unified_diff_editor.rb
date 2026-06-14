@@ -42,7 +42,7 @@ module Master
         end
       end
 
-      def build_single_file(path, before, after, context: 3)
+      def build_single_file(path:, before:, after:, context: 3)
         before_lines = before.to_s.lines
         after_lines = after.to_s.lines
         return "" if before_lines == after_lines
@@ -61,9 +61,9 @@ module Master
         prefix = 0
         max = [before.size, after.size].max
         lines = []
-        max.times do |idx|
-          old = before[idx]
-          new = after[idx]
+        max.times do |index|
+          old = before[index]
+          new = after[index]
           if old == new
             lines << " #{old}" if old
           else

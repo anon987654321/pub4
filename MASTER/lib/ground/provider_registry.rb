@@ -3,7 +3,7 @@
 module Master
   module Ground
     module ProviderRegistry
-      DEFAULTS = {.freeze
+      DEFAULTS = {
         openai: {
           env: %w[OPENAI_API_KEY],
           strengths: %i[reasoning coding multimodal],
@@ -60,13 +60,14 @@ module Master
       def load_providers
         path = File.join(Master::DATA, "providers.yml")
         return DEFAULTS unless File.exist?(path)
+        raw = YAML.safe_load_file(path, aliases: true) || {}
         raw.transform_keys(&:to_sym).transform_values do |v|
           v.transform_keys(&:to_sym).tap do |cfg|
             cfg[:strengths] = Array(cfg[:strengths]).map(&:to_sym)
           end
         end
       rescue StandardError => e
-        warn("provider_registry: #{e.message} — using defaults")
+        warn("provider_registry: #{e.message} \u2014 using defaults")
         DEFAULTS
       end
     end
