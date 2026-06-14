@@ -29,6 +29,16 @@ production:
     queue: bulk
     schedule: every monday at 7am
 
+  cache_health_check:
+    class: CacheHealthJob
+    queue: bulk
+    schedule: every day at 4am
+
+  queue_failure_digest:
+    class: QueueFailureDigestJob
+    queue: bulk
+    schedule: every day at 5am
+
   nightly_search_index_rebuild:
     class: NightlySearchIndexRebuildJob
     queue: bulk

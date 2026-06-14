@@ -2,6 +2,18 @@
 import "@hotwired/turbo-rails"
 import "controllers"
 
+if (window.Turbo?.config?.drive) Turbo.config.drive.progressBarDelay = 100
+
+const displayModeQuery = window.matchMedia("(display-mode: standalone)")
+const syncStandaloneMode = () => {
+  const standalone = displayModeQuery.matches
+  document.documentElement.dataset.displayMode = standalone ? "standalone" : "browser"
+  document.querySelectorAll("nav").forEach(nav => nav.classList.toggle("nav-visible", standalone))
+}
+
+syncStandaloneMode()
+displayModeQuery.addEventListener ? displayModeQuery.addEventListener("change", syncStandaloneMode) : displayModeQuery.addListener(syncStandaloneMode)
+
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-worker")
 
 // Nav swipe-to-reveal

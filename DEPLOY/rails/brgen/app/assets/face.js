@@ -1,5 +1,7 @@
 let tunnel, SCALE = 1, lastT = 0;
 
+if (window.Turbo?.config?.drive) Turbo.config.drive.progressBarDelay = 100;
+
 function initTunnel() {
   const canvas = document.getElementById("tunnel-canvas");
   if (!canvas || canvas.__tunnelInit) return;
@@ -68,16 +70,24 @@ function initSplash() {
   splash.focus();
 }
 
+function syncStandaloneMode() {
+  const standalone = window.matchMedia("(display-mode: standalone)").matches;
+  document.documentElement.dataset.displayMode = standalone ? "standalone" : "browser";
+  document.querySelectorAll("nav").forEach(nav => nav.classList.toggle("nav-visible", standalone));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initTunnel();
   initCarousel();
   initSplash();
+  syncStandaloneMode();
 });
 
 // Re-run splash + carousel prefix on Turbo page loads (tunnel/carousel persist via data-turbo-permanent)
 document.addEventListener("turbo:load", () => {
   initSplash();
   updateCarouselPrefix();
+  syncStandaloneMode();
 });
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-worker")

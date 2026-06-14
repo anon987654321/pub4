@@ -6,13 +6,12 @@ require "json"
 module Tradedoubler
   TOKEN   = ENV.fetch("TRADEDOUBLER_TOKEN", "")
   BASE    = "https://api.tradedoubler.com/1.0"
-  CACHE_TTL = 3600
 
   Deal = Data.define(:title, :description, :price, :currency, :image_url, :click_url, :merchant)
 
   def self.deals(category: nil, limit: 8)
     return [] if TOKEN.blank?
-    Rails.cache.fetch(cache_key(category), expires_in: CACHE_TTL) do
+    Rails.cache.fetch(cache_key(category), expires_in: cache_ttl_for(:search_results)) do
       fetch_deals(category:, limit:)
     end
   end
@@ -46,5 +45,13 @@ module Tradedoubler
 
   def self.cache_key(category)
     ["td_deals", category.to_s].join("_")
+  end
+
+  def self.cache_ttl_for(key_type)
+    if defined?(Shared::CachePolicy)
+      Shared::CachePolicy.ttl_for(key_type)
+    else
+      { search_results: 15.minutes }.fetch(key_type.to_sym)
+    end
   end
 end

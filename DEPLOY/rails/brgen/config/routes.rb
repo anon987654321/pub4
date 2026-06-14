@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  jobs_constraint = ->(request) { request.cookies["session_id"].present? }
+
   TV_SUBDOMAINS          = %w[tv].freeze
   DATING_SUBDOMAINS      = %w[dating].freeze
   PLAYLIST_SUBDOMAINS    = %w[playlist].freeze
@@ -143,6 +145,9 @@ Rails.application.routes.draw do
   resources :email_subscriptions, only: [:create, :destroy], param: :token
   get "confirm_email/:token" => "email_subscriptions#confirm", as: :confirm_email_subscription
 
+  constraints(jobs_constraint) do
+    mount SolidQueue::Engine, at: "/admin/jobs"
+  end
   patch "location" => "locations#update", as: :location
   resources :push_subscriptions, only: [:create, :destroy]
   get "nearby" => "nearby#index", as: :nearby
