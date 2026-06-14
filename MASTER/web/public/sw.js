@@ -1,7 +1,6 @@
 const CACHE_NAME = 'brgen-v1';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
-  '/',
   '/offline.html',
   '/face.css',
   '/face.js',
