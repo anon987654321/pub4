@@ -48,10 +48,7 @@ window.addEventListener('master:visual', (ev) => {
       mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
       if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
 
-      const rate = parseFloat(d.rate || (d.raw && d.raw.rate)) || 0;
       const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
-      mouthPool.cells[b + window.ParticleKernel.FIELD.velocity] = rate * 0.008;
-
       if (Math.abs(pitch) > 20) eyePool && eyePool.alive && (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = 0.6);
     }
 
