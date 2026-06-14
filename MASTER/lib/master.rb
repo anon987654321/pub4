@@ -31,14 +31,14 @@ module Master
   CTX_WINDOW_SIZE = 200_000
   VIOLATION_TRUNCATE = 90
 
-  FILE_LANGUAGE_MAP = {.freeze
+  FILE_LANGUAGE_MAP = {
     ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
     ".js" => "javascript", ".json" => "json", ".sh" => "bash",
     ".zsh" => "bash", ".md" => "markdown", ".html" => "html",
     ".erb" => "erb", ".css" => "css",
   }.freeze
 
-  API_KEY_PROVIDERS = {.freeze
+  API_KEY_PROVIDERS = {
     anthropic_api_key: "ANTHROPIC_API_KEY",
     openai_api_key: "OPENAI_API_KEY",
     gemini_api_key: "GEMINI_API_KEY",
