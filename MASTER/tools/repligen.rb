@@ -18,6 +18,4 @@ unless File.file?(legacy)
   exit 127
 end
 
-Dir.chdir(repo_root) do
-  exec RbConfig.ruby, legacy, *ARGV
-end
+exec RbConfig.ruby, "-C", repo_root, legacy, *ARGV

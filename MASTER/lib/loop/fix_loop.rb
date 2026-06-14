@@ -4,6 +4,11 @@ require "digest"
 require "open3"
 require "set"
 require "time"
+require_relative "fix_loop/committer"
+require_relative "fix_loop/llm_router"
+require_relative "fix_loop/scanner"
+require_relative "severity"
+require_relative "violation"
 
 module Master
   module Loop
@@ -19,7 +24,9 @@ module Master
       SKIP_DIRS = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
       DEPS_PATH = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
       PRIORS_PATH = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
+      WORKFLOW_PATH = File.join(Master::ROOT, "data", "workflow.yml").freeze
       TIER2_QUALITY_RULE_IDS = %w[DRY KISS SRP].freeze
+      PassResult = Struct.new(:status, :message, :consecutive_clean, keyword_init: true)
 
       def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil, incremental: false)
         @rules = rules
@@ -29,6 +36,9 @@ module Master
         @root = root
         @bus = bus
         @git = git || Reach::GitOperations.new(root)
+        @committer = Committer.new(git: @git, bus: bus)
+        @loop_scanner = Scanner.new(scanner: scanner, root: root, bus: bus)
+        @llm_router = LlmRouter.new(agent)
         @learnings = learnings
         @incremental = incremental
         @violation_counts = Hash.new(0)
@@ -46,6 +56,12 @@ module Master
 
       def plateau_window = convergence_cfg["stagnant_threshold"] || PLATEAU_WINDOW
 
+      def max_cycles_default = workflow_cfg.dig("autoloop", "max_cycles") || max_passes_default
+
+      def startup_delay_default = workflow_cfg.dig("autoloop", "startup_delay") || STARTUP_DELAY
+
+      def idle_sleep_default = workflow_cfg.dig("autoloop", "idle_sleep") || IDLE_SLEEP
+
       # Three guards prevent wedging when the LLM provider degrades:
       # wall-clock budget, per-pass deadline, circuit-open early-exit.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS, incremental: @incremental)
@@ -54,6 +70,7 @@ module Master
         files = incremental ? collect_changed_files(target) : collect_files(target)
         history = []
         seen_snapshots = Set.new
+        recurring_violations = Hash.new(0)
         consecutive_clean = 0
         deadline = Time.now + budget_seconds
 
@@ -62,42 +79,15 @@ module Master
           if Time.now >= deadline
             @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
             return Result.ok("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)")
-          @bus&.publish("fix_loop:pass_start", pass:, target:)
-
-          fast_fixed = fast_pass(files)
-          commit_if_dirty("fix_loop: fast-fix [pass #{pass}]") if fast_fixed > 0
-
-          violations = scan_violations(files)
-          emit_topology(violations, target)
-
-          if violations.empty?
-            ground_truth = ground_truth_violations(files)
-            unless ground_truth.empty?
-              @bus&.publish("fix_loop:ground_truth_failed", pass:, violations: ground_truth.size)
-              violations = ground_truth
-              consecutive_clean = 0
-              next
-            end
-
-            @bus&.publish("fix_loop:ground_truth_ok", pass:)
-            consecutive_clean += 1
-            @bus&.publish("fix_loop:clean", pass:, consecutive_clean:)
-            return Result.ok("clean after #{pass} pass(es)") if consecutive_clean >= clean_runs_required
-          end
-          consecutive_clean = 0
-
-          if stagnant?(history, seen_snapshots, violations, pass)
-            break
           end
 
-          if circuit_open?
-            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
-          else
-            pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
-            llm_fixed = llm_pass(violations:, files:, pass:, deadline: pass_deadline)
-            commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
-            track_recurrence(violations)
-          end
+          result = run_pass(files: files, target: target, pass: pass, deadline: deadline,
+                            history: history, seen_snapshots: seen_snapshots,
+                            recurring_violations: recurring_violations,
+                            consecutive_clean: consecutive_clean)
+          consecutive_clean = result.consecutive_clean
+          return Result.ok(result.message) if result.status == :clean
+          break if result.status == :plateau
         end
 
         Result.ok("plateau or max passes reached")
@@ -106,22 +96,27 @@ module Master
         Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
       end
 
-      # Blocks its thread; launch via Thread.new.
-      def run_forever(target = @root)
-        sleep STARTUP_DELAY
-        loop do
+      def run_forever(target = @root, max_cycles: max_cycles_default, startup_delay: startup_delay_default,
+                      idle_sleep: idle_sleep_default, cooldown_sleep: idle_sleep_default)
+        sleep startup_delay
+        cycles = 0
+        while cycles < max_cycles
           break if halted?
+          cycles += 1
           run(target)
           break if halted?
-          @bus&.publish("fix_loop:idle", sleep: IDLE_SLEEP)
-          sleep IDLE_SLEEP
+          @bus&.publish("fix_loop:idle", sleep: idle_sleep, cycle: cycles, max_cycles:)
+          sleep idle_sleep
+        rescue StandardError => e
+          @bus&.publish("fix_loop:error", error: e.message, cycle: cycles, max_cycles:)
+          sleep cooldown_sleep
         end
-      rescue StandardError => e
-        @bus&.publish("fix_loop:error", error: e.message)
+        @bus&.publish("fix_loop:max_cycles", cycles:, max_cycles:) unless halted?
       end
 
       def start_background!(target = @root)
         return Result.err("fix_loop already running") if @bg_thread&.alive?
+        @halted = false
         @halt_reason = nil
         @bg_thread = Thread.new { run_forever(target) }
         @bg_thread.abort_on_exception = false
@@ -131,6 +126,7 @@ module Master
 
       def stop_background!
         return Result.err("fix_loop not running") unless @bg_thread&.alive?
+        @bg_thread.kill
         @bg_thread = nil
         @bus&.publish("fix_loop:background_stop")
         Result.ok("fix_loop background stopped")
@@ -164,6 +160,61 @@ module Master
 
       private
 
+      def run_pass(files:, target:, pass:, deadline:, history:, seen_snapshots:, recurring_violations:, consecutive_clean:)
+        pass_mtimes = file_mtimes(files)
+        @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
+
+        fast_fixed = run_fast_stage(files, pass)
+        violations = run_scan_stage(files, target)
+        return handle_clean_pass(files, pass_mtimes, pass, consecutive_clean) if violations.empty?
+        return PassResult.new(status: :plateau, consecutive_clean: 0) if stagnant?(history, seen_snapshots, recurring_violations, violations, pass)
+
+        run_llm_stage(violations, files, pass, deadline)
+        PassResult.new(status: :continue, consecutive_clean: 0)
+      end
+
+      def run_fast_stage(files, pass)
+        fast_fixed = fast_pass(files)
+        @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]") if fast_fixed > 0
+        fast_fixed
+      end
+
+      def run_scan_stage(files, target)
+        scan_violations(files).tap { |violations| emit_topology(violations, target) }
+      end
+
+      def run_llm_stage(violations, files, pass, deadline)
+        if circuit_open?
+          @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
+          return 0
+        end
+
+        pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
+        llm_fixed = llm_pass(violations:, files:, pass:, deadline: pass_deadline)
+        @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
+        track_recurrence(violations)
+        llm_fixed
+      end
+
+      def handle_clean_pass(files, pass_mtimes, pass, consecutive_clean)
+        ground_truth = ground_truth_violations(files)
+        unless ground_truth.empty?
+          @bus&.publish("fix_loop:ground_truth_failed", pass:, violations: ground_truth.size)
+          return PassResult.new(status: :continue, consecutive_clean: 0)
+        end
+
+        @bus&.publish("fix_loop:ground_truth_ok", pass:)
+        unless files_quiescent?(files, pass_mtimes)
+          @bus&.publish("fix_loop:quiesce_wait", pass:)
+          return PassResult.new(status: :continue, consecutive_clean: 0)
+        end
+
+        clean_count = consecutive_clean + 1
+        @bus&.publish("fix_loop:clean", pass:, consecutive_clean: clean_count)
+        status = clean_count >= clean_runs_required ? :clean : :continue
+        PassResult.new(status: status, message: "clean after #{pass} pass(es)", consecutive_clean: clean_count)
+      end
+
       def halted_result
         Result.err("fix_loop halted: #{@halt_reason || "self_violation"}", category: :policy)
       end
@@ -174,7 +225,7 @@ module Master
         rb = files.select { |f| f.end_with?(".rb") }
         if rb.any?
           _, status = Open3.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
-          fixed += rb.size if status.success?
+          fixed += status.success? ? rb.size : rubocop_each_file(rb)
         end
         rb.each do |path|
           next unless File.exist?(path)
@@ -185,30 +236,77 @@ module Master
         fixed
       end
 
+      def rubocop_each_file(files)
+        files.count do |path|
+          _, status = Open3.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", path, chdir: @root)
+          @bus&.publish("fix_loop:rubocop_file_failed", file: path) unless status.success?
+          status.success?
+        end
+      end
+
       # Tier 2: one RuleLoop pass per rule, highest-priority rules first.
       # Bails early if the deadline passes or the LLM circuit opens mid-pass.
       def llm_pass(violations:, files:, pass:, deadline: nil)
         fixed = 0
-        ordered_rules.each do |rule|
-          next unless violations.any? { |v| v[:rule] == rule.id }
-          if deadline && Time.now >= deadline
-            @bus&.publish("fix_loop:pass_timeout", pass:, rule_skipped: rule.id)
-            break
+        rule_violations = violations.group_by { |v| v[:rule].to_s }
+        runnable = ordered_rules.select { |rule| rule_violations.key?(rule.id.to_s) }
+        dependency_levels(runnable).each do |group|
+          break if deadline && Time.now >= deadline
+          break if circuit_open?
+
+          results = run_rule_group(group:, files:, pass:, rule_violations:)
+          results.each do |rule, result|
+            @violation_counts[rule.id] += result[:fixed]
+            fixed += result[:fixed]
+            @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
           end
-          if circuit_open?
-            @bus&.publish("fix_loop:llm_skipped", pass:, rule_skipped: rule.id, reason: "circuit_open")
-            break
-          end
-          rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root,
-                            bus: @bus, learnings: @learnings)
-          rl.injected_preamble = @preamble
-          @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if tier2_quality_rule?(rule.id)
-          result = rl.run_once(files)
-          @violation_counts[rule.id] += result[:fixed]
-          fixed += result[:fixed]
-          @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
+        end
+        if deadline && Time.now >= deadline
+          @bus&.publish("fix_loop:pass_timeout", pass:)
+        elsif circuit_open?
+          @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
         end
         fixed
+      end
+
+      def run_rule_group(group:, files:, pass:, rule_violations:)
+        return group.map { |rule| [rule, run_rule_once(rule, files, pass)] } unless disjoint_rule_files?(group, rule_violations)
+
+        group.map do |rule|
+          Thread.new { [rule, run_rule_once(rule, files, pass)] }
+        end.map(&:value)
+      end
+
+      def run_rule_once(rule, files, pass)
+        rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root,
+                          bus: @bus, learnings: @learnings)
+        rl.injected_preamble = @preamble
+        @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if tier2_quality_rule?(rule.id)
+        rl.run_once(files)
+      end
+
+      def disjoint_rule_files?(rules, rule_violations)
+        seen = Set.new
+        rules.all? do |rule|
+          files = Array(rule_violations[rule.id.to_s]).map { |v| v[:file].to_s }.uniq
+          overlap = files.any? { |file| seen.include?(file) }
+          files.each { |file| seen << file }
+          !overlap
+        end
+      end
+
+      def dependency_levels(rules)
+        deps = load_deps
+        remaining = rules.map(&:id).to_set
+        id_map = rules.to_h { |rule| [rule.id, rule] }
+        levels = []
+        until remaining.empty?
+          ready = remaining.select { |id| Array(deps[id]).none? { |dep| remaining.include?(dep) } }
+          ready = [remaining.first] if ready.empty?
+          levels << ready.map { |id| id_map[id] }.compact
+          ready.each { |id| remaining.delete(id) }
+        end
+        levels
       end
 
       # AST-fix, type-check, and datalog-evaluate one Ruby file. Returns fix count.
@@ -238,29 +336,30 @@ module Master
       end
 
       def circuit_open?
-        breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
-        return false unless breaker.respond_to?(:open_models)
-      rescue StandardError
-        false
+        @llm_router.circuit_open?
       end
 
       def open_breakers
-        @agent.respond_to?(:circuit_breaker) ? Array(@agent.circuit_breaker&.open_models) : []
-      rescue StandardError
-        []
+        @llm_router.open_breakers
       end
 
       def scan_violations(files)
-        files.flat_map do |path|
-          next [] unless File.exist?(path)
-          result = @scanner.scan(path)
-          Result.wrap(result).value_or([]).map { |v| v.to_h.merge(file: path.delete_prefix("#{@root}/")) }
-        end
+        @loop_scanner.violations(files)
       end
 
       def ground_truth_violations(files)
         files.each { |path| File.read(path, encoding: "UTF-8") if File.file?(path) }
         scan_violations(files)
+      end
+
+      def file_mtimes(files)
+        files.to_h { |path| [path, File.exist?(path) ? File.mtime(path).to_f : nil] }
+      end
+
+      def files_quiescent?(files, before)
+        file_mtimes(files) == before
+      rescue StandardError => e
+        false
       end
 
       # Flag rules recurring across 3+ consecutive passes for soul proposals.
@@ -318,7 +417,7 @@ module Master
           target: target.delete_prefix("#{@root}/"),
           total_violations: violations.size,
           any_dirty: violations.any?,
-          modules: by_mod.map { |path, count| { path:, violations: count } },
+          modules: by_mod.map { |path, count| { path:, violations: count } }
         })
       end
 
@@ -345,28 +444,69 @@ module Master
       end
 
       def build_preamble
-        soul = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
+        self.class.preamble_from_soul
+      end
+
+      def self.preamble_from_soul
+        path = File.join(Master::ROOT, "data", "soul.yml")
+        mtime = File.mtime(path).to_i
+        return @preamble_cache[:value] if @preamble_cache && @preamble_cache[:mtime] == mtime
+
+        soul = Master.load_yaml(path)
         abs = soul.fetch("absolute", {})
         golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
         lines = ["Golden rule: #{golden}",
                  "Minimum change that eliminates the violation. Do not touch unrelated code."]
         abs.fetch("code_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
         abs.fetch("aesthetic_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
-        lines.join("\n")
-      rescue StandardError
+        @preamble_cache = { mtime:, value: lines.join("\n") }
+        @preamble_cache[:value]
+      rescue StandardError => e
         "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
       end
 
       def collect_files(target)
+        tracked = collect_tracked_files(target)
+        return tracked unless tracked.empty?
+
         Dir.glob(File.join(target, "**", "*"))
            .select { |f| File.file?(f) }
-           .reject { |f| SKIP_DIRS.any? { |d| f.include?(d) } }
+           .reject { |f| skipped_path?(f) }
            .sort
+      end
+
+      def collect_tracked_files(target)
+        out, _, status = Open3.capture3("git", "-C", @root, "ls-files", "-z")
+        return [] unless status.success?
+
+        out.split("\0").map { |rel| File.join(@root, rel) }
+           .select { |file| File.file?(file) && under_path?(file, target) }
+           .reject { |file| skipped_path?(file) }
+           .sort
+      rescue StandardError => e
+        []
+      end
+
+      def skipped_path?(path)
+        SKIP_DIRS.any? { |dir| path.include?(dir) } || binary_file?(path)
+      end
+
+      def binary_file?(path)
+        File.file?(path) && File.binary?(path)
+      rescue StandardError => e
+        true
+      end
+
+      def under_path?(path, root)
+        expanded_path = File.expand_path(path)
+        expanded_root = File.expand_path(root)
+        expanded_path == expanded_root || expanded_path.start_with?("#{expanded_root}#{File::SEPARATOR}")
       end
 
       def collect_changed_files(target)
         changed = changed_since_last_commit(target)
         return collect_files(target) if changed.empty?
+        changed
       rescue StandardError => e
         @bus&.publish("fix_loop:incremental_fallback", error: e.message)
         collect_files(target)
@@ -375,17 +515,11 @@ module Master
       def changed_since_last_commit(target)
         out, _, status = Open3.capture3("git", "-C", @root, "diff", "--name-only", "HEAD")
         return [] unless status.success?
+        out.lines.map(&:strip).reject(&:empty?)
            .map { |rel| File.join(@root, rel) }
            .select { |f| File.exist?(f) && f.start_with?(target) }
-           .reject { |f| SKIP_DIRS.any? { |d| f.include?(d) } }
+           .reject { |f| skipped_path?(f) }
            .sort
-      end
-
-      def commit_if_dirty(msg)
-        return unless @git&.dirty?(".")
-        @git.commit(msg)
-      rescue StandardError => e
-        @bus&.publish("fix_loop:commit_error", error: e.message)
       end
 
       # Fractional weight per extension; used by ordered_rules to apply language_modifiers.
@@ -397,6 +531,7 @@ module Master
         end
         total = counts.values.sum.to_f
         return {} if total.zero?
+        counts.transform_values { |n| n / total }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix_loop.extension_weights", event_bus: @bus)
         {}
@@ -417,25 +552,48 @@ module Master
         {}
       end
 
+      def workflow_cfg
+        @workflow_cfg ||= Master.load_yaml(WORKFLOW_PATH) || {}
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "fix_loop.workflow_cfg", event_bus: @bus)
+        {}
+      end
+
       # Returns true and publishes an event when oscillation or plateau is detected.
-      def stagnant?(history, seen_snapshots, violations, pass)
+      def stagnant?(history, seen_snapshots, recurring_violations, violations, pass)
         snap = violation_snapshot(violations)
         if seen_snapshots.include?(snap)
           @bus&.publish("fix_loop:oscillation", pass:, violations: violations.size)
           return true
+        end
         seen_snapshots << snap
+
+        recurring = recurring_violation(violations, recurring_violations)
+        if recurring
+          @bus&.publish("fix_loop:cycle_detected", pass:, threshold: plateau_window, violation: recurring)
+          return true
+        end
+
         history << violations.size
         window = plateau_window
         if history.size >= window && history.last(window).uniq.size == 1
           @bus&.publish("fix_loop:plateau", pass:, violations: violations.size)
           return true
+        end
         false
       end
 
+      def recurring_violation(violations, recurring_violations)
+        current = violations.to_h { |violation| [violation_key(violation), violation] }
+        (recurring_violations.keys - current.keys).each { |key| recurring_violations.delete(key) }
+        current.each do |key, violation|
+          recurring_violations[key] += 1
+          return violation if recurring_violations[key] >= plateau_window
+        end
+        nil
+      end
+
       def violation_snapshot(violations)
-        key = violations.map { |v| "#{v[:rule]}:#{v[:file]}:#{v[:line].to_i}" }.sort.join("|")
+        key = violations.map { |violation| violation_key(violation) }.sort.join("|")
         Digest::SHA256.hexdigest(key)
       end
-    end
-  end
-end
