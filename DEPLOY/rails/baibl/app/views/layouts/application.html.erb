@@ -17,6 +17,8 @@
     })();
   </script>
   <meta name="turbo-cache-control" content="no-preview">
+  <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
+  <style>:root { --turbo-progress-bar-color: #0f766e; }</style>
   <title><%= content_for?(:title) ? "#{yield :title} — Baibl" : "Baibl" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Baibl — explore and study the Bible. Search passages, read commentaries, and deepen your understanding." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
@@ -42,14 +44,14 @@
   <script type="module" src="/minimal-gesture.js"></script>
 </head>
 <body class="zen-minimal">
-<nav>
+<nav data-turbo-permanent>
   <%= link_to "Baibl", root_path, class: "brand" %>
   <%= link_to "Scripture", scripture_index_path %>
   <%= link_to "Search", scripture_search_path %>
   <%= link_to "Word study", scripture_word_study_path %>
   <% if authenticated? %>
     <%= link_to "Bookmarks", bookmarks_path %>
-    <%= link_to "Sign out", session_path, data: { turbo_method: :delete } %>
+    <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
   <% else %>
     <%= link_to "Sign in", new_session_path %>
   <% end %>

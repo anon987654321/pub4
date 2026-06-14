@@ -24,14 +24,14 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
 - [ ] AN105 Periodic background sync: register `periodicsync` for daily briefing fetch, feed pre-warm, and badge count updates
 - [ ] AN106 Push notification VAPID: generate VAPID keys once per app; store in credentials; wire webpush gem (already in brgen) to all apps; display OS-native notifications
-- [ ] AN107 Notification badge API: use `navigator.setAppBadge(count)` for unread message count; update via CableReady broadcast on new message
+- [x] AN107 Notification badge API: use `navigator.setAppBadge(count)` for unread message count; update via CableReady broadcast on new message
 - [ ] AN108 Install prompt interception: capture `beforeinstallprompt`; show custom in-app install banner after 3rd visit; store dismissal in localStorage
 - [ ] AN109 Offline fallback page: dedicated offline.html with last-cached data summary; store last 20 feed items in IndexedDB for offline reading
 - [ ] AN110 IndexedDB local store: use idb-keyval (importmap) for offline drafts, optimistic UI state, pending sync queue
-- [ ] AN111 App shortcuts: manifest `shortcuts` array — brgen: new post, new listing, dating swipe; amber: add item, create outfit; bsdports: search; blognet: new post
+- [x] AN111 App shortcuts: manifest `shortcuts` array — brgen: new post, new listing, dating swipe; amber: add item, create outfit; bsdports: search; blognet: new post
 - [ ] AN112 Share target: manifest `share_target` so native Share sheet can send URLs/text/files directly into each app (brgen post composer, amber item photo, blognet draft)
-- [ ] AN113 File handler: manifest `file_handlers` — amber handles image/* (add to wardrobe), blognet handles text/markdown (import as draft)
-- [ ] AN114 Protocol handler: manifest `protocol_handlers` — `web+brgen://post/123` opens post in standalone PWA
+- [x] AN113 File handler: manifest `file_handlers` — amber handles image/* (add to wardrobe), blognet handles text/markdown (import as draft)
+- [x] AN114 Protocol handler: manifest `protocol_handlers` — `web+brgen://post/123` opens post in standalone PWA
 - [ ] AN115 Fullscreen mode toggle: add `display: fullscreen` option for TV vertical in brgen; video player expands to true fullscreen without browser chrome
 - [ ] AN116 Screen wake lock: acquire wake lock during video playback (brgen TV), recipe view (blognet), and navigation (hjerterom map mode)
 - [ ] AN117 Orientation lock: lock to portrait for dating swipe cards; landscape for TV player; use `screen.orientation.lock()`
@@ -62,7 +62,7 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [x] AN304 Solid Queue concurrency controls: per-job `limits_concurrency` to prevent duplicate AI calls (especially amber outfit generation); use `key:` as user + job type
 - [x] AN305 Solid Cache TTLs: define explicit TTLs per cache key type — feed fragments: 5m, user profiles: 1h, search results: 15m, static pages: 24h; never use default
 - [x] AN306 Solid Cache size limits: set `max_size: 512.megabytes` per app; monitor `ActiveSupport::Cache::Store.stats` and alert when >80% full
-- [ ] AN307 Solid Cable connection tracking: use `ActionCable.server.connections` to monitor active WebSocket connections; alert when >1000 concurrent (memory pressure)
+- [x] AN307 Solid Cable connection tracking: use `ActionCable.server.connections` to monitor active WebSocket connections; alert when >1000 concurrent (memory pressure)
 - [x] AN308 Solid Queue dashboard: mount `SolidQueue::Engine` at `/admin/jobs` behind authentication; track job latency, failure rate, queue depth
 - [x] AN309 Job retries: configure `retry_on` with exponential backoff for all external API jobs (LLM calls, push notifications, email delivery); max 3 retries
 - [x] AN310 Dead letter queue: failed jobs after max retries land in `solid_queue_failed_executions`; daily digest of failures emailed to admin
@@ -72,13 +72,13 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] AN401 Turbo Frames for every list: wrap every index action response in `<turbo-frame id="posts">` with `src=` for lazy loading; eliminates full-page reloads for tab switching
 - [ ] AN402 Turbo Stream broadcasts: `broadcast_append_to`, `broadcast_replace_to`, `broadcast_remove_to` on Post, Comment, Listing, Match models; real-time feed updates without JS
 - [ ] AN403 Turbo Stream forms: `<form data-turbo="true">` on all forms; success responses return `turbo_stream.replace` or `turbo_stream.append`; errors return `turbo_stream.replace` with form+errors
-- [ ] AN404 Turbo permanent: `data-turbo-permanent` on sidebar, navigation, and media player elements — persist across Turbo Drive navigations
-- [ ] AN405 Turbo prefetch: `data-turbo-prefetch="false"` on logout/delete links; `rel="prefetch"` on next-page pagination links
+- [x] AN404 Turbo permanent: `data-turbo-permanent` on sidebar, navigation, and media player elements — persist across Turbo Drive navigations
+- [x] AN405 Turbo prefetch: `data-turbo-prefetch="false"` on logout/delete links; `rel="prefetch"` on next-page pagination links
 - [ ] AN406 Turbo morphing: Rails 8.1 `turbo_refreshes_with :morph` in ApplicationController — smooth page refresh without layout flash; use `:scroll: :preserve` to maintain position
-- [ ] AN407 Turbo progress bar: customize `Turbo.config.drive.progressBarDelay = 100` and override `--turbo-progress-bar-color` CSS var per app brand color
+- [x] AN407 Turbo progress bar: customize `Turbo.config.drive.progressBarDelay = 100` and override `--turbo-progress-bar-color` CSS var per app brand color
 - [ ] AN408 Turbo native bridge: add `turbo-ios` / `turbo-android` bridge adapter; define `BridgeComponent` Stimulus controllers for native sheet presentation and native share
 - [ ] AN409 Optimistic UI: for vote/like/follow actions, immediately update DOM via Stimulus before server confirms; revert on error via `turbo_stream.replace`
-- [ ] AN410 Page-specific Turbo caching: `<meta name="turbo-cache-control" content="no-cache">` on auth pages, checkout, and any page with CSRF-sensitive forms
+- [x] AN410 Page-specific Turbo caching: `<meta name="turbo-cache-control" content="no-cache">` on auth pages, checkout, and any page with CSRF-sensitive forms
 - [ ] AN411 Turbo form submission validation: use `requestsubmit()` with custom validators before Turbo form submission; show inline errors without page reload
 - [ ] AN412 Nested frame navigation: dating swipe cards as nested frames — swiping loads next card via `<turbo-frame src="/dating/next">` without outer layout reload
 - [ ] AN413 Turbo streams over SSE: for low-traffic apps (bsdports, baibl), use Turbo Streams over SSE (`/updates` endpoint) rather than full WebSocket — less server resource
@@ -89,12 +89,12 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] AN502 Pull-to-refresh: Stimulus controller detecting touch `overscroll` event; trigger `Turbo.visit(location, {action: "replace"})` on pull ≥60px; show spinner during load
 - [ ] AN503 Swipe gesture: HammerJS-free swipe via `touchstart`/`touchend` delta; for dating card stack, marketplace image carousel, and playlist track swipe-to-queue
 - [ ] AN504 Bottom sheet: Stimulus controller for mobile bottom sheet with `transform: translateY` + `transition: cubic-bezier(0.32, 0.72, 0, 1)` snap points at 0%, 50%, 100%
-- [ ] AN505 Toast notifications: Stimulus controller triggered by `data-controller="toast"` with `data-toast-message-value`; auto-dismiss after 4s with slide-out animation
+- [x] AN505 Toast notifications: Stimulus controller triggered by `data-controller="toast"` with `data-toast-message-value`; auto-dismiss after 4s with slide-out animation
 - [ ] AN506 Image lazy load: `data-controller="lazy-image"` using IntersectionObserver; swap `data-src` to `src` on intersection; show blur-hash placeholder until loaded
 - [ ] AN507 Blur hash: generate blurhash on server (blurhash gem) for every uploaded image; store as column; client decodes to canvas placeholder in 50ms
 - [ ] AN508 Character counter: `data-controller="char-counter"` with `data-char-counter-max-value`; show remaining count; color warning at 80%, danger at 95%
-- [ ] AN509 Auto-growing textarea: `data-controller="autogrow"` with `input` event handler resizing via `scrollHeight`; for post composer and comment box
-- [ ] AN510 Clipboard copy: `data-controller="clipboard"` with `navigator.clipboard.writeText()`; animate success state; fallback to `execCommand` on older Safari
+- [x] AN509 Auto-growing textarea: `data-controller="autogrow"` with `input` event handler resizing via `scrollHeight`; for post composer and comment box
+- [x] AN510 Clipboard copy: `data-controller="clipboard"` with `navigator.clipboard.writeText()`; animate success state; fallback to `execCommand` on older Safari
 - [ ] AN511 Keyboard shortcut: `data-controller="hotkey"` mapping `j`/`k` for feed navigation, `n` for new post, `?` for help overlay — vim-style navigation
 - [ ] AN512 Form auto-save: `data-controller="autosave"` debouncing `input` events; PATCH to `/drafts/:id` every 5s; show "saved" indicator; restore on page reload from IndexedDB
 - [ ] AN513 Dialog: native `<dialog>` element managed by Stimulus controller; `showModal()` / `close()`; trap focus; close on backdrop click; ARIA roles
@@ -221,14 +221,14 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] AN1204 N+1 elimination: run `bullet` gem in development; eliminate every N+1 with `includes`/`preload`/`eager_load`; zero tolerance policy
 - [ ] AN1205 Counter caches: add `counter_cache: true` for comment_count, vote_count, follower_count, listing_count on all association-heavy models
 - [ ] AN1206 Database indexes: verify indexes on every `foreign_key`, every `WHERE` column, every `ORDER BY` column; run `lol_dba` gem to surface missing indexes
-- [ ] AN1207 Fragment caching: `cache [@post, current_user]` for post cards; key includes user to handle voted/unvoted state; Russian doll for comment trees
-- [ ] AN1208 HTTP caching: `stale?` / `fresh_when` in show actions with `etag:` and `last_modified:`; static content pages (bsdports port list) get 10m max-age
+- [x] AN1207 Fragment caching: `cache [@post, current_user]` for post cards; key includes user to handle voted/unvoted state; Russian doll for comment trees
+- [x] AN1208 HTTP caching: `stale?` / `fresh_when` in show actions with `etag:` and `last_modified:`; static content pages (bsdports port list) get 10m max-age
 - [ ] AN1209 Asset compression: propshaft production fingerprinting + gzip/brotli compression via relayd; verify `Content-Encoding: br` in response headers
-- [ ] AN1210 Image optimization: ImageProcessing::Vips for all Active Storage variants; convert to WebP; serve via `<picture>` with JPEG fallback; lazy load all
+- [x] AN1210 Image optimization: ImageProcessing::Vips for all Active Storage variants; convert to WebP; serve via `<picture>` with JPEG fallback; lazy load all
 - [ ] AN1211 Font subsetting: subset system UI fonts; if custom font used, subset to Latin + Latin-Extended only; serve as woff2; `font-display: swap`
 - [ ] AN1212 Critical CSS inlining: extract above-the-fold CSS per layout; inline in `<style>`; defer full stylesheet load; eliminates render-blocking CSS
 - [ ] AN1213 Prefetch on hover: `data-turbo-prefetch` triggers on mouseenter (200ms threshold); reduces perceived navigation time to near-zero
-- [ ] AN1214 SQLite WAL mode: `PRAGMA journal_mode=WAL` on all databases; allows concurrent reads + one writer; essential for Falcon multi-fiber concurrency
+- [x] AN1214 SQLite WAL mode: `PRAGMA journal_mode=WAL` on all databases; allows concurrent reads + one writer; essential for Falcon multi-fiber concurrency
 - [ ] AN1215 SQLite STRICT tables: `CREATE TABLE ... STRICT` for all new tables; eliminates type coercion bugs; requires schema.rb with explicit column types
 - [ ] AN1216 SQLite FTS5: add FTS5 virtual tables for full-text search in all apps; avoid external search service dependency; `content=` option for storage efficiency
 
@@ -291,8 +291,8 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 ### AN17: Rails 8 API Patterns Applied
 
 - [ ] AN1701 params.expect() strict validation: replace all `params.require(:x).permit(...)` with `params.expect(x: [:field1, :field2])` — raises on unexpected arrays, safer against mass assignment
-- [ ] AN1702 Turbo morph refresh: `turbo_refreshes_with :morph, scroll: :preserve` in ApplicationController — smooth page refresh preserving scroll position; eliminates layout flash on feed reload
-- [ ] AN1703 Active Record strict_loading: `config.active_record.strict_loading_by_default = true` in development — raises on every N+1 before it reaches production
+- [x] AN1702 Turbo morph refresh: `turbo_refreshes_with :morph, scroll: :preserve` in ApplicationController — smooth page refresh preserving scroll position; eliminates layout flash on feed reload
+- [x] AN1703 Active Record strict_loading: `config.active_record.strict_loading_by_default = true` in development — raises on every N+1 before it reaches production
 - [ ] AN1704 find_each for bulk operations: replace `.all.each` with `.find_each(batch_size: 500)` in all admin/reporting jobs — prevents memory exhaustion on large datasets
 - [ ] AN1705 pluck over map: replace `Model.all.map(&:column)` with `Model.pluck(:column)` — 10x faster, bypasses model instantiation
 - [ ] AN1706 pick for single value: replace `Model.where(x: y).limit(1).pluck(:z).first` with `Model.where(x: y).pick(:z)` — cleaner, same performance
@@ -1878,8 +1878,8 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 ## BY: Missing Rails 8 API Patterns
 
 - [ ] BY01 All apps: replace `params.require(:x).permit(...)` with `params.expect(...)` (Rails 8 strict)
-- [ ] BY02 All apps: add `turbo_refreshes_with :morph` in ApplicationController
-- [ ] BY03 All apps: set `config.active_record.strict_loading_by_default = true` in development
+- [x] BY02 All apps: add `turbo_refreshes_with :morph` in ApplicationController
+- [x] BY03 All apps: set `config.active_record.strict_loading_by_default = true` in development
 - [ ] BY04 All apps: replace `.all.each` with `.find_each(batch_size:)` in admin jobs
 - [ ] BY05 All apps: add missing `counter_cache` declarations (posts.comments_count, etc.)
 - [ ] BY06 All apps: add `http_cache_forever` for service worker and manifest

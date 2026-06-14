@@ -241,19 +241,55 @@ prediction_engine:
 
 # Session-learned patterns become live scan rules through
 # lib/judge/scan/rules/learned_smells_rule.rb.
-learned_smells: []
-  bare_rescue: {confidence: 0.98, autofix: rescue_standard_error}
-  frozen_string: {confidence: 0.99, autofix: add_frozen_string_literal}
-  trailing_ws: {confidence: 0.99, autofix: strip_trailing_whitespace}
-  debug_output: {confidence: 0.97, autofix: remove_debug_call}
-  todo_comment: {confidence: 0.70, autofix: create_issue}
-  magic_number: {confidence: 0.85, autofix: extract_named_constant}
-  long_line: {confidence: 0.90, autofix: wrap_at_120}
-  sycophancy: {confidence: 0.99, autofix: delete_phrase}
-  future_tense: {confidence: 0.95, autofix: rewrite_indicative}
-  duplicate_code: {confidence: 0.75, autofix: extract_shared_method}
-  god_class: {confidence: 0.60, autofix: propose_decomposition}
-  n_plus_one: {confidence: 0.88, autofix: add_includes}
+learned_smells:
+  - id: bare_rescue
+    pattern: '^\s*rescue\b'
+    confidence: 0.98
+    autofix: rescue_standard_error
+  - id: frozen_string
+    pattern: '\bString\.new\b|%q\(|%Q\('
+    confidence: 0.99
+    autofix: add_frozen_string_literal
+  - id: trailing_ws
+    pattern: '[ \t]+$'
+    confidence: 0.99
+    autofix: strip_trailing_whitespace
+  - id: debug_output
+    pattern: '\b(?:puts|p|pp|warn)\b'
+    confidence: 0.97
+    autofix: remove_debug_call
+  - id: todo_comment
+    pattern: '\b(?:TODO|FIXME|HACK)\b'
+    confidence: 0.70
+    autofix: create_issue
+  - id: magic_number
+    pattern: '\b\d{2,}\b'
+    confidence: 0.85
+    autofix: extract_named_constant
+  - id: long_line
+    pattern: '^.{121,}$'
+    confidence: 0.90
+    autofix: wrap_at_120
+  - id: sycophancy
+    pattern: '\b(?:absolutely|certainly|of course|happy to help)\b'
+    confidence: 0.99
+    autofix: delete_phrase
+  - id: future_tense
+    pattern: '\b(?:will|would|might|could|perhaps|seems|appears)\b'
+    confidence: 0.95
+    autofix: rewrite_indicative
+  - id: duplicate_code
+    pattern: '\b(?:copy|duplicate|same as)\b'
+    confidence: 0.75
+    autofix: extract_shared_method
+  - id: god_class
+    pattern: '^\s*class\b'
+    confidence: 0.60
+    autofix: propose_decomposition
+  - id: n_plus_one
+    pattern: '\b(?:includes|preload|eager_load)\b'
+    confidence: 0.88
+    autofix: add_includes
 
 scan_depths:
   # deep is the only permitted scan depth — quick and standard exist for InterconnectRule

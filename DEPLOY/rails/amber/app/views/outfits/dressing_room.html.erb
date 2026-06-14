@@ -3,7 +3,7 @@
   zones_json = @zones.transform_values { |items|
     items.map { |item|
       { id: item.id, name: item.title, color: item.color.to_s,
-        url: item.photos.attached? ? url_for(item.photos.first.variant(resize_to_limit: [480, 480])) : nil }
+        url: item.photos.attached? ? responsive_image_url(item.photos.first, widths: [480]) : nil }
     }
   }.to_json
 %>

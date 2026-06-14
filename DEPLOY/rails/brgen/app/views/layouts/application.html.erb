@@ -29,6 +29,8 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Brgen" %>">
   <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "City communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
+  <style>:root { --turbo-progress-bar-color: #1d4ed8; }</style>
   <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
@@ -98,11 +100,11 @@
 
   <div class="app-shell">
     <div class="layout">
-      <aside class="sidebar">
+      <aside class="sidebar" data-turbo-permanent>
         <%= link_to root_path, class: "brand", aria: { label: "Brgen" } do %>
           <svg viewBox="0 0 36 36" width="34" height="34" fill="currentColor"><text x="3" y="27" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="800">B</text></svg>
         <% end %>
-        <nav>
+        <nav data-turbo-permanent>
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to root_path, class: nav_cls.(root_path) do %>
             <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696zM19 19.5a.5.5 0 01-.5.5H15v-6a1 1 0 00-1-1h-4a1 1 0 00-1 1v6H5.5a.5.5 0 01-.5-.5V8.429l7-4.375 7 4.375V19.5z"/></svg>
@@ -125,7 +127,7 @@
             <span>Lists</span>
           <% end %>
           <% if authenticated? %>
-            <%= link_to session_path, class: "nav-item", data: { turbo_method: :delete } do %>
+            <%= link_to session_path, class: "nav-item", data: { turbo_method: :delete, turbo_prefetch: false } do %>
               <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
               <span>Profile</span>
             <% end %>
@@ -188,7 +190,7 @@
       </aside>
     </div>
 
-    <nav class="tab-bar" aria-label="Mobile navigation">
+    <nav class="tab-bar" aria-label="Mobile navigation" data-turbo-permanent>
       <%= link_to root_path, class: "tab-item" do %>
         <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696z"/></svg>
       <% end %>

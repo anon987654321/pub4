@@ -1,4 +1,4 @@
 <% classes = ["toast", local_assigns[:variant] ? "toast--#{local_assigns[:variant]}" : nil].compact.join(" ") %>
-<div class="<%= classes %>" role="status">
+<div class="<%= classes %>" role="status" aria-live="polite" data-controller="toast" data-toast-delay-value="<%= local_assigns.fetch(:delay, 4000) %>">
   <%= local_assigns[:message] %>
 </div>

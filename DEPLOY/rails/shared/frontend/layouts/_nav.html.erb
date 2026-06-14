@@ -2,7 +2,7 @@
 <a href="#main-content" class="skip-nav">Skip to main content</a>
 <header class="site-header">
   <div class="container">
-    <nav class="nav-main" aria-label="Main navigation" role="navigation">
+    <nav class="nav-main" aria-label="Main navigation" role="navigation" data-turbo-permanent>
       <div class="nav-brand">
         <%= link_to root_path, class: "logo-link" do %>
           <span class="logo"><%= @app_name.presence || "App" %></span>
@@ -21,7 +21,7 @@
             <%= link_to t("navigation.sign_out"), destroy_user_session_path,
                         method: :delete,
                         class: "nav-link",
-                        data: { turbo_method: :delete } %>
+                        data: { turbo_method: :delete, turbo_prefetch: false } %>
           </li>
         <% else %>
           <li>

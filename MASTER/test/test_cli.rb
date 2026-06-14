@@ -144,6 +144,27 @@ class TestCLI < Minitest::Test
     config.verify
   end
 
+  def test_dispatch_persona_switches_active_persona
+    config = Struct.new(:persona) do
+      def [](key)
+        key == "persona" ? persona : nil
+      end
+
+      def []=(key, value)
+        self.persona = value if key == "persona"
+      end
+
+      def save!
+        true
+      end
+    end.new("malay")
+
+    output = Master::Now::CommandRegistry.dispatch_persona(config, ctx: { args: "ronin" })
+
+    assert_equal "persona: ronin", output
+    assert_equal "ronin", config.persona
+  end
+
   def test_scan_profile_uses_explicit_keyword
     profile, = Master::Now::CommandRegistry.resolve_scan_profile("critical lib", Dir.pwd)
     plain, = Master::Now::CommandRegistry.resolve_scan_profile("criticality.rb", Dir.pwd)

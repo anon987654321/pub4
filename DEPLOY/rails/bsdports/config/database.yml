@@ -6,6 +6,7 @@
 #
 default: &default
   adapter: sqlite3
+  journal_mode: WAL
   pool: <%= ENV.fetch("FALCON_WORKERS", ENV.fetch("RAILS_MAX_THREADS") { 5 }) %>
   timeout: 5000
 

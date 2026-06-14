@@ -25,6 +25,7 @@ Rails.application.configure do
 
   config.active_record.migration_error = :page_load
   config.active_record.verbose_query_logs = true
+  config.active_record.strict_loading_by_default = true
   config.active_record.query_log_tags_enabled = true
 
   config.action_view.annotate_rendered_view_with_filenames = true

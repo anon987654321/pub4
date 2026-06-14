@@ -17,6 +17,8 @@
     })();
   </script>
   <meta name="turbo-cache-control" content="no-preview">
+  <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
+  <style>:root { --turbo-progress-bar-color: #16a34a; }</style>
   <title><%= content_for?(:title) ? "#{yield :title} — Hjerterom Åsane" : "Hjerterom Åsane" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Hjerterom Åsane — matredistribusjon og møteplass i Åsane, Bergen. Vi deler ut overskuddsmat, klær og bøker til de som trenger det." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
@@ -43,13 +45,13 @@
   <script type="module" src="/minimal-gesture.js"></script>
 </head>
 <body class="zen-minimal">
-<nav>
+<nav data-turbo-permanent>
   <%= link_to "Hjerterom", root_path, class: "brand" %>
   <%= link_to "Mat",        food_listings_path %>
   <%= link_to "Ressurser",  resources_path %>
   <%= link_to "Fellesskap", community_path %>
   <% if authenticated? %>
-    <%= link_to "Logg ut", session_path, data: { turbo_method: :delete } %>
+    <%= link_to "Logg ut", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
   <% else %>
     <%= link_to "Logg inn", new_session_path %>
   <% end %>

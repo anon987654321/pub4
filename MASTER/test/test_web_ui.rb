@@ -239,6 +239,21 @@ class TestWebUI < Minitest::Test
     assert_same p.system_prompt, p.system_prompt
   end
 
+  def test_personality_catalog_includes_named_profiles
+    names = Master::Voice::Personality.persona_names
+
+    %i[ronin lawyer hacker architect sysadmin trader medic].each do |name|
+      assert_includes names, name
+    end
+
+    ronin = Master::Voice::Personality.new(:ronin)
+    assert_equal "en-US-AndrewNeural", ronin.voice
+    assert_equal "-25%", ronin.tts_rate
+    assert_equal "-100Hz", ronin.tts_pitch
+    assert_equal :deep, ronin.style
+    assert_includes ronin.knowledge_sources, "https://man.openbsd.org/"
+  end
+
   # UnwrapError
   def test_unwrap_error_is_runtime_error_subclass
     assert Master::UnwrapError < RuntimeError

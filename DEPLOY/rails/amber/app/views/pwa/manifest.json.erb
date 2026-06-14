@@ -24,5 +24,25 @@
   "scope": "/",
   "description": "AI wardrobe management. Build capsule wardrobes, plan outfits, and discover your personal style.",
   "theme_color": "#d97706",
-  "background_color": "#d97706"
+  "background_color": "#d97706",
+  "shortcuts": [
+    {
+      "name": "Add item",
+      "short_name": "Item",
+      "url": "/items/new"
+    },
+    {
+      "name": "Create outfit",
+      "short_name": "Outfit",
+      "url": "/outfits/new"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/items/new",
+      "accept": {
+        "image/*": [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif"]
+      }
+    }
+  ]
 }

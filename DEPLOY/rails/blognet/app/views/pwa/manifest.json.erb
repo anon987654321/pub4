@@ -24,5 +24,21 @@
   "scope": "/",
   "description": "A network of blogs. Write, publish, and discover long-form content from writers worldwide.",
   "theme_color": "#1d4ed8",
-  "background_color": "#1d4ed8"
+  "background_color": "#1d4ed8",
+  "shortcuts": [
+    {
+      "name": "New post",
+      "short_name": "Post",
+      "url": "/posts/new"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/posts/new",
+      "accept": {
+        "text/markdown": [".md", ".markdown", ".mdown"],
+        "text/plain": [".txt"]
+      }
+    }
+  ]
 }

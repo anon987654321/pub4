@@ -5,6 +5,8 @@ class PortsController < ApplicationController
   before_action :set_port, only: %i[show watch unwatch crossref_cves review]
 
   def index
+    expires_in 10.minutes, public: true if params[:q].blank? && params[:category_id].blank?
+
     scope = Port.includes(:category)
     scope = scope.search(params[:q]) if params[:q].present?
     scope = scope.by_category(params[:category_id]) if params[:category_id].present?
@@ -23,6 +25,8 @@ class PortsController < ApplicationController
   end
 
   def show
+    fresh_when(@port, public: true)
+
     @updates = @port.port_updates.order(committed_at: :desc).limit(10)
     @deps = @port.depends_on.includes(:category)
     @rdeps = @port.reverse_deps.includes(:category).limit(20)

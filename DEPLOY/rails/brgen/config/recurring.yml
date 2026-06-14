@@ -34,6 +34,11 @@ production:
     queue: bulk
     schedule: every day at 4am
 
+  cable_health_check:
+    class: CableHealthJob
+    queue: bulk
+    schedule: every hour at minute 7
+
   queue_failure_digest:
     class: QueueFailureDigestJob
     queue: bulk

@@ -4,7 +4,7 @@
   <% if @item.photos.attached? %>
     <div class="item-photos">
       <% @item.photos.each do |photo| %>
-        <%= image_tag photo.variant(resize_to_limit: [600, 600]) %>
+        <%= responsive_image_tag photo, alt: @item.title, widths: [400, 600, 800], sizes: "(max-width: 768px) 100vw, 600px", class: "item-photo" %>
       <% end %>
     </div>
   <% end %>

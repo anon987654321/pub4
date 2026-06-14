@@ -222,7 +222,8 @@ module Master
             style_lines << "Accessibility target: #{target}; keyboard-complete; focus-visible; " \
               "respect prefers-reduced-motion + color-scheme; never tabindex>0; never autoplay sound."
           end
-          if (directives = style["operator_directives"]) && directives.is_a?(Array) && directives.any?
+          directives = Array(style["operator_directives"]).compact.map(&:to_s)
+          if directives.any?
             sections["master_priority"] += "\noperator_directives: #{directives.join(" / ")}"
           end
           if (convo = style["conversation_directives"]) && convo.is_a?(Array) && convo.any?
@@ -240,7 +241,7 @@ module Master
             "Append this disclaimer to every medical response.",
             "</master_medical_disclaimer>"
           ].join("\n")
-        elsif @disclaimer.any?
+        elsif !@disclaimer.empty?
           sections["master_special_disclaimer"] = [
             "<master_special_disclaimer>",
             @disclaimer,

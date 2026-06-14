@@ -17,6 +17,8 @@
     })();
   </script>
   <meta name="turbo-cache-control" content="no-preview">
+  <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
+  <style>:root { --turbo-progress-bar-color: #0ea5e9; }</style>
   <title><%= content_for?(:title) ? "#{yield :title} — BSDports" : "BSDports" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "BSDports — browse and search the BSD ports collection. Find packages, track versions, and explore the BSD ecosystem." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
@@ -42,13 +44,13 @@
   <script type="module" src="/minimal-gesture.js"></script>
 </head>
 <body class="zen-minimal">
-<nav>
+<nav data-turbo-permanent>
   <%= link_to "BSDports", root_path, class: "brand" %>
   <%= link_to "Ports", ports_path %>
   <%= link_to "Categories", categories_path %>
   <%= link_to "Maintainers", maintainers_path %>
   <% if authenticated? %>
-    <%= link_to "Sign out", session_path, data: { turbo_method: :delete } %>
+    <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
   <% else %>
     <%= link_to "Sign in", new_session_path %>
   <% end %>

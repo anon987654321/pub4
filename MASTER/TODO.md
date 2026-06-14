@@ -527,8 +527,8 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### S1: Persona System (v49.7–v49.75 — fully specified, never ported)
 
-- [ ] S101 Port full persona system: ronin (stoic/decisive), lawyer (Norwegian law/barnevernet), hacker (OpenBSD/CVE), architect (BIM/parametric), sysadmin (pf/httpd/vmm), trader (DeFi/technicals), medic (PubMed/disclaimer) — each with voice pitch/rate, greeting phrase, focus domain, knowledge sources
-- [ ] S102 Persona switching command: `/persona ronin` changes identity, voice pitch/rate, greeting style, knowledge sources for TTS and LLM prompts
+- [x] S101 Port full persona system: ronin (stoic/decisive), lawyer (Norwegian law/barnevernet), hacker (OpenBSD/CVE), architect (BIM/parametric), sysadmin (pf/httpd/vmm), trader (DeFi/technicals), medic (PubMed/disclaimer) — each with voice pitch/rate, greeting phrase, focus domain, knowledge sources
+- [x] S102 Persona switching command: `/persona ronin` changes identity, voice pitch/rate, greeting style, knowledge sources for TTS and LLM prompts
 - [x] S103 Each persona carries its own knowledge_sources list (lovdata.no, cve.mitre.org, archdaily.com, man.openbsd.org, pubmed.ncbi.nlm.nih.gov) — inject into LLM context on switch
 - [x] S104 Medic persona requires disclaimer injection: "Not a substitute for professional medical advice" appended to every medical response
 - [x] S105 Persona voice config feeds directly into face.js TTS pitch/rate sliders — ronin speaks slow+low, medic speaks measured+mid

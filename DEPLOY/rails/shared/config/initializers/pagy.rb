@@ -13,6 +13,7 @@ require "pagy/extras/metadata" # useful for futurism / turbo responses
 
 Pagy::DEFAULT[:items]    = 25
 Pagy::DEFAULT[:overflow] = :last_page
+Pagy::DEFAULT[:link_extra] = 'data-turbo-prefetch="false" rel="prefetch"'
 
 # For Futurism + Pagy infinite scroll, controllers typically do:
 # @pagy, @records = pagy(scope, items: 20)

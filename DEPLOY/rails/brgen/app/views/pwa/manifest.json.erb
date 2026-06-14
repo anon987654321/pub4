@@ -24,5 +24,28 @@
   "scope": "/",
   "description": "City communities across Scandinavia and Europe. Connect, post, and discover your city.",
   "theme_color": "#111111",
-  "background_color": "#111111"
+  "background_color": "#111111",
+  "shortcuts": [
+    {
+      "name": "New post",
+      "short_name": "Post",
+      "url": "/posts/new"
+    },
+    {
+      "name": "New listing",
+      "short_name": "Listing",
+      "url": "/listings/new"
+    },
+    {
+      "name": "Dating swipe",
+      "short_name": "Dating",
+      "url": "/"
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+brgen",
+      "url": "/posts/%s"
+    }
+  ]
 }

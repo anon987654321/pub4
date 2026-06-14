@@ -17,6 +17,8 @@
     })();
   </script>
   <meta name="turbo-cache-control" content="no-preview">
+  <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
+  <style>:root { --turbo-progress-bar-color: #d97706; }</style>
   <title><%= content_for?(:title) ? "#{yield :title} — Amber" : "Amber" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Amber — AI wardrobe management. Build capsule wardrobes, plan outfits, and discover your personal style." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
@@ -45,7 +47,7 @@
   <%= render "shared/minimal_ui" %>
 </head>
 <body class="zen-minimal">
-<nav>
+<nav data-turbo-permanent>
   <%= link_to root_path, class: "brand", aria: { label: "Amber home" } do %>
     <%= render "shared/logo" %>
   <% end %>
@@ -58,7 +60,7 @@
     <%= link_to "Planner",       planned_outfits_path %>
     <%= link_to "Search",    ai_search_path %>
     <%= link_to "Occasions", ai_occasions_path %>
-    <%= link_to "Sign out",  session_path, data: { turbo_method: :delete } %>
+    <%= link_to "Sign out",  session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
   <% else %>
     <%= link_to "Sign in", new_session_path %>
     <%= link_to "Sign up", new_registration_path %>
