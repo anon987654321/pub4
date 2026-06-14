@@ -11,8 +11,18 @@ module Master
       end
 
       def dirty?(path = "lib/")
-        out, = Open3.capture2e("git", "-C", @root_path, "status", "--porcelain", path)
-        !out.strip.empty?
+        !status_lines(path).empty?
+      end
+
+      def status_lines(path = nil)
+        args = ["git", "-C", @root_path, "status", "--porcelain"]
+        args << path if path
+        out, = Open3.capture2e(*args)
+        out.lines.map(&:chomp)
+      end
+
+      def dirty_count(path = nil)
+        status_lines(path).size
       end
 
       def add_all
@@ -32,6 +42,7 @@ module Master
           "git", "-C", @root_path, "rev-list", "--left-right", "--count", "HEAD...@{u}"
         )
         return [0, 0] unless st.success?
+        a, b = out.strip.split.map(&:to_i)
         [a || 0, b || 0]
       end
 

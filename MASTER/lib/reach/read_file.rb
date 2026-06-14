@@ -25,6 +25,7 @@ module Master
       def call(path:, offset: 0, limit: MAX_LINES)
         key = [path, offset, limit]
         return @cache[key] if @cache.key?(key)
+        resolved = resolve(path)
         return resolved if resolved.err?
 
         full_path = resolved.value!

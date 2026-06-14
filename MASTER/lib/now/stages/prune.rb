@@ -14,7 +14,10 @@ module Master
         BULLET_RE = /^\s*[-*+]\s+/
         NUMBERED_RE = /^\s*\d+\.\s+/
         HR_RE = /^-{3,}\s*$/
-        LINK_RE = /\[([^\]]+)\]\([^)]+\)/
+        LINK_RE = /\[([^\]]+)\]\([^\)]+\)/
+        CLAIM_RE = /\b(?:completed|done|fixed|implemented|changed|updated|edited|modified|created|deleted|removed)\b/i.freeze
+        DIFF_EVIDENCE_RE = /^(?:diff --git|---\s|\+\+\+\s|@@\s)/.freeze
+        COMMAND_EVIDENCE_RE = /\b(?:command output|exit code|process exited|ran:|verification:|test(?:s)?\s+(?:passed|failed))\b/i.freeze
         SYCOPHANCY_RE = /\A\s*(?:
           certainly|of[ ]course|great[ ]question|absolutely|sure|
           happy[ ]to[ ]help|i(?:'d|[ ]would)[ ]be[ ](?:happy|glad)|no[ ]problem
@@ -22,16 +25,17 @@ module Master
 
         def call(ctx)
           raw = ctx.respond_to?(:output) ? ctx.output : ctx[:output]
-          output = if raw.is_a?(Master::Result) && raw.ok?
+          output = if raw.respond_to?(:ok?) && raw.ok?
                      raw.value!.to_s
                    elsif raw.is_a?(String)
                      raw
                    else
                      return Result.ok(ctx)
+                   end
           return Result.ok(ctx) if output.empty?
 
-          cleaned = prune_mixed(output)
-          final = raw.is_a?(Master::Result) ? Result.ok(cleaned.strip) : cleaned.strip
+          cleaned = require_evidence(prune_mixed(output).strip)
+          final = raw.respond_to?(:ok?) ? Result.ok(cleaned) : cleaned
           Result.ok(ctx.merge(output: final))
         end
 
@@ -39,8 +43,8 @@ module Master
 
         def prune_mixed(text)
           segments = text.split(FENCE_RE)
-          segments.map { |seg|
-            seg.start_with?("```") ? seg : strip_all(seg),
+          segments.map { |seg| 
+            seg.start_with?("```") ? seg : strip_all(seg)
           }.join
         end
 
@@ -59,14 +63,33 @@ module Master
           end
 
           cleaned = cleaned.gsub(HEADER_RE, "")
-          cleaned = cleaned.gsub(BOLD_RE, '\1')
-          cleaned = cleaned.gsub(ITALIC_RE, '\1')
-          cleaned = cleaned.gsub(LINK_RE, '\1')
+          cleaned = cleaned.gsub(BOLD_RE, '\\1')
+          cleaned = cleaned.gsub(ITALIC_RE, '\\1')
+          cleaned = cleaned.gsub(LINK_RE, '\\1')
           cleaned = cleaned.gsub(HR_RE, "")
           cleaned = cleaned.gsub(BULLET_RE, "")
           cleaned = cleaned.gsub(NUMBERED_RE, "")
           cleaned = cleaned.gsub(/\n{3,}/, "\n\n")
           cleaned
+        end
+
+        def require_evidence(text)
+          return text unless unsupported_claim?(text)
+
+          [text, evidence_requirement].join("\n")
+        end
+
+        def unsupported_claim?(text)
+          text.match?(CLAIM_RE) && !evidence_present?(text)
+        end
+
+        def evidence_present?(text)
+          text.each_line.any? { |line| line.match?(DIFF_EVIDENCE_RE) } ||
+            text.match?(COMMAND_EVIDENCE_RE)
+        end
+
+        def evidence_requirement
+          "evidence required: show unified diff for modifications or command output for completion claims."
         end
 
         def rules
