@@ -1,0 +1,19 @@
+<% content_for :title, "TV Shows" %>
+
+<div class="page-header">
+  <h1>Shows on <%= @channel&.name || "Brgen TV" %></h1>
+</div>
+
+<% if @shows.any? %>
+  <div class="card-grid">
+    <% @shows.each do |show| %>
+      <%= link_to tv_channel_show_path(@channel, show), class: "card" do %>
+        <h3><%= show.title %></h3>
+        <p class="dim"><%= truncate(show.description, length: 100) %></p>
+        <span class="chip"><%= show.episodes.count %> episodes</span>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="empty"><p>No shows yet.</p></div>
+<% end %>
