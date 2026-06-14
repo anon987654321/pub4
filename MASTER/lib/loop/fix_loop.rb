@@ -103,13 +103,15 @@ module Master
         while cycles < max_cycles
           break if halted?
           cycles += 1
-          run(target)
-          break if halted?
-          @bus&.publish("fix_loop:idle", sleep: idle_sleep, cycle: cycles, max_cycles:)
-          sleep idle_sleep
-        rescue StandardError => e
-          @bus&.publish("fix_loop:error", error: e.message, cycle: cycles, max_cycles:)
-          sleep cooldown_sleep
+          begin
+            run(target)
+            break if halted?
+            @bus&.publish("fix_loop:idle", sleep: idle_sleep, cycle: cycles, max_cycles:)
+            sleep idle_sleep
+          rescue StandardError => e
+            @bus&.publish("fix_loop:error", error: e.message, cycle: cycles, max_cycles:)
+            sleep cooldown_sleep
+          end
         end
         @bus&.publish("fix_loop:max_cycles", cycles:, max_cycles:) unless halted?
       end
@@ -597,3 +599,6 @@ module Master
         key = violations.map { |violation| violation_key(violation) }.sort.join("|")
         Digest::SHA256.hexdigest(key)
       end
+    end
+  end
+end
