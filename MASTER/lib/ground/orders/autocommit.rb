@@ -13,7 +13,6 @@ module Master
           commit_message = "auto: standing-order commit (#{out.lines.size} file(s))"
           _, st = Open3.capture2e("git", "-C", repo, "commit", "-m", commit_message)
           return Result.err("commit failed") unless st.success?
-          push_out, push_st = Open3.capture2e("git", "-C", repo, "push")
           if push_st.success?
             bus&.publish("autocommit:pushed", files: out.lines.size)
             Result.ok(committed: true, pushed: true)

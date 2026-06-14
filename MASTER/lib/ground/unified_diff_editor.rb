@@ -61,9 +61,9 @@ module Master
         prefix = 0
         max = [before.size, after.size].max
         lines = []
-        max.times do |index|
-          old = before[index]
-          new = after[index]
+        max.times do |idx|
+          old = before[idx]
+          new = after[idx]
           if old == new
             lines << " #{old}" if old
           else
