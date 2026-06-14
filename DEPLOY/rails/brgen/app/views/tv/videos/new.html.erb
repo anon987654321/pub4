@@ -7,7 +7,7 @@
     <%= render "shared/errors", object: @video %>
     <div class="field"><%= f.label :tv_channel_id, "Channel" %><%= f.collection_select :tv_channel_id, Current.user.tv_channels.order(:name), :id, :name, include_blank: false %></div>
     <div class="field"><%= f.label :title %><%= f.text_field :title, required: true %></div>
-    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4 %></div>
+    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4, data: { controller: "char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
     <div class="field"><%= f.label :video_file %><%= f.file_field :video_file, accept: "video/*", required: true %></div>
     <div class="field"><%= f.label :thumbnail %><%= f.file_field :thumbnail, accept: "image/*" %></div>
     <div class="field"><%= f.submit "Upload", class: "btn btn-primary" %></div>

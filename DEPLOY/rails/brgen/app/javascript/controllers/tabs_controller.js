@@ -32,6 +32,7 @@ export default class extends Controller {
   }
 
   activate(tab, fromKeyboard = false) {
+    const hash = tab.dataset.tabsHashValue
     this.tabTargets.forEach(candidate => {
       const active = candidate === tab
       candidate.setAttribute("aria-selected", active ? "true" : "false")
@@ -39,11 +40,14 @@ export default class extends Controller {
       candidate.tabIndex = active ? 0 : -1
     })
 
-    const panel = this.panelTarget
-    if (panel) panel.setAttribute("aria-labelledby", tab.id || "")
+    this.panelTargets.forEach(panel => {
+      const panelHash = panel.dataset.tabsHashValue
+      const active = !panelHash || panelHash === hash
+      panel.hidden = !active
+      panel.setAttribute("aria-labelledby", tab.id || "")
+    })
 
     if (!fromKeyboard) {
-      const hash = tab.dataset.tabsHashValue
       if (hash) history.replaceState(null, "", hash)
     }
   }

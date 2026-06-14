@@ -5,45 +5,59 @@
   <%= link_to "Edit", edit_dating_profile_path, class: "btn btn-ghost btn-sm" %>
 </div>
 
-<% if @profile.photos.attached? %>
-  <div style="display:flex;gap:8px;padding:16px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
-    <% @profile.photos.each do |photo| %>
-      <%= lazy_image_tag photo, alt: @profile.name, blurhash: photo.try(:metadata).try(:[], "blurhash"), style: "width:96px;height:96px;object-fit:cover;border-radius:6px" %>
-    <% end %>
-  </div>
-<% end %>
+<nav class="sort-tabs" aria-label="Profile sections" role="tablist" data-controller="tabs">
+  <a href="#photos" class="sort-tab active" id="profile-photos-tab" role="tab" aria-selected="true" data-tabs-target="tab" data-tabs-hash-value="#photos" data-action="click->tabs#select">Photos</a>
+  <a href="#about" class="sort-tab" id="profile-about-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tabs-hash-value="#about" data-action="click->tabs#select">About</a>
+  <a href="#details" class="sort-tab" id="profile-details-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tabs-hash-value="#details" data-action="click->tabs#select">Details</a>
+</nav>
 
-<article>
-  <p><span class="dim">Bio</span><br><%= @profile.bio.presence || "—" %></p>
-</article>
+<section data-tabs-target="panel" data-tabs-hash-value="#photos" aria-labelledby="profile-photos-tab">
+  <% if @profile.photos.attached? %>
+    <div style="display:flex;gap:8px;padding:16px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <% @profile.photos.each do |photo| %>
+        <%= lazy_image_tag photo, alt: @profile.name, blurhash: photo.try(:metadata).try(:[], "blurhash"), style: "width:96px;height:96px;object-fit:cover;border-radius:6px" %>
+      <% end %>
+    </div>
+  <% else %>
+    <article><p class="dim">No photos yet.</p></article>
+  <% end %>
+</section>
 
-<article>
-  <p>
-    <span class="dim">Age</span> · <%= @profile.age || "—" %>
-    &nbsp;
-    <span class="dim">Gender</span> · <%= @profile.gender || "—" %>
-    &nbsp;
-    <span class="dim">Looking for</span> · <%= @profile.looking_for || "—" %>
-  </p>
-</article>
+<section data-tabs-target="panel" data-tabs-hash-value="#about" aria-labelledby="profile-about-tab" hidden>
+  <article>
+    <p><span class="dim">Bio</span><br><%= @profile.bio.presence || "—" %></p>
+  </article>
+</section>
 
-<article>
-  <p>
-    <span class="dim">Location</span> · <%= @profile.location.presence || "—" %>
-    <% if @profile.neighborhood&.name.present? %> · <span class="dim">Bydel</span> · <%= @profile.neighborhood.name %><% end %>
-    &nbsp;
-    <span class="dim">Visibility</span> ·
-    <% if @profile.visible? %>
-      <span style="color:var(--green,#4caf50)">visible</span>
-    <% else %>
-      <span style="color:var(--muted,#888)">hidden</span>
-    <% end %>
-  </p>
-</article>
+<section data-tabs-target="panel" data-tabs-hash-value="#details" aria-labelledby="profile-details-tab" hidden>
+  <article>
+    <p>
+      <span class="dim">Age</span> · <%= @profile.age || "—" %>
+      &nbsp;
+      <span class="dim">Gender</span> · <%= @profile.gender || "—" %>
+      &nbsp;
+      <span class="dim">Looking for</span> · <%= @profile.looking_for || "—" %>
+    </p>
+  </article>
 
-<article>
-  <p class="dim" style="font-size:13px">
-    Your profile is <%= @profile.visible? ? "visible to others in your city" : "hidden — no one can see it" %>.
-    <%= link_to(@profile.visible? ? "Hide profile" : "Show profile", edit_dating_profile_path, style: "color:inherit;text-decoration:underline") %>.
-  </p>
-</article>
+  <article>
+    <p>
+      <span class="dim">Location</span> · <%= @profile.location.presence || "—" %>
+      <% if @profile.neighborhood&.name.present? %> · <span class="dim">Bydel</span> · <%= @profile.neighborhood.name %><% end %>
+      &nbsp;
+      <span class="dim">Visibility</span> ·
+      <% if @profile.visible? %>
+        <span style="color:var(--green,#4caf50)">visible</span>
+      <% else %>
+        <span style="color:var(--muted,#888)">hidden</span>
+      <% end %>
+    </p>
+  </article>
+
+  <article>
+    <p class="dim" style="font-size:13px">
+      Your profile is <%= @profile.visible? ? "visible to others in your city" : "hidden — no one can see it" %>.
+      <%= link_to(@profile.visible? ? "Hide profile" : "Show profile", edit_dating_profile_path, style: "color:inherit;text-decoration:underline") %>.
+    </p>
+  </article>
+</section>

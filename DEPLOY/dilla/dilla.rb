@@ -28,7 +28,7 @@ PAD_CHORDS = [
   { name: "Gbmaj9", hz: [92.50, 116.54, 138.59, 174.61, 207.65] },
   { name: "C cluster", hz: [130.81, 138.59, 196.00, 233.08, 311.13] }
 ].freeze
-COMMANDS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody harmony semantics ears play live bass grade grade_list].freeze
+COMMANDS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody harmony semantics ears play live bass grade grade_list dilla midi].freeze
 # Analog stock characters — digital signal equivalents of film stock data.
 # noise_amp: RMS amplitude of the noise floor (≈tape hiss level)
 # sat_drive: tanh waveshaper drive (1.0 = light tube warmth, 3.0 = heavy tape saturation)
@@ -603,11 +603,6 @@ end
 # Stream audio live from ffplay without writing a file — generative beat.
 def live(bars_count = 32)
   abort "ffplay required" unless tool_available?("ffplay")
-  duration = (beat_seconds * 4.0 * bars_count).round(3)
-  drunk    = drunk_offsets(4 * bars_count)
-  expr     = chord_expression
-  kick_p   = (beat_seconds * 2.0).round(6)
-  # Build the same filter as render but pipe direct to ffplay
   tmp = File.join(ROOT, ".live_tmp.wav")
   render_dilla(tmp, bars_count)
   puts "streaming #{bars_count} bars... Ctrl-C to stop"
@@ -626,10 +621,9 @@ def bass(root_hz = 55.0)
   expr_l   = "0.45*sin(2*PI*(#{root_hz}+#{lfo_amt}*sin(2*PI*#{lfo_hz}*t))*t)" \
              "+0.08*sin(2*PI*#{(root_hz * 2).round(2)}*t)" \
              "+0.03*sin(2*PI*#{(root_hz * 3).round(2)}*t)"
-  filter   = "aeval=exprs='#{expr_l}:#{expr_l}',equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"
+  filter = "aeval=exprs='#{expr_l}:#{expr_l}',equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"
   puts "playing bass #{root_hz}Hz (Ctrl-C to stop)"
-  exec "ffplay", "-f", "lavfi", "-i", "aevalsrc=0", "-nodisp",
-       "-af", "aeval=exprs='#{expr_l}:#{expr_l}',equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"
+  exec "ffplay", "-f", "lavfi", "-i", "aevalsrc=0", "-nodisp", "-af", filter
 rescue SystemCallError => e
   abort "ffplay failed: #{e.message}"
 end
@@ -653,7 +647,7 @@ def dilla_kick_expr(duration, drunk)
   end.uniq
   parts = kicks.first(64).map do |offset|
     t_mod = "mod(t-#{offset.round(6)},#{(beat_seconds * 4.0).round(6)})"
-    "0.72*sin(2*PI*(46+88*exp(-#{t_mod.inspect}*20))*#{t_mod.inspect})*exp(-#{t_mod.inspect}*10)"
+    "0.72*sin(2*PI*(46+88*exp(-#{t_mod}*20))*#{t_mod})*exp(-#{t_mod}*10)"
   end
   "(#{parts.join('+')})"
 rescue StandardError
@@ -741,6 +735,186 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
   puts "wrote #{destination}"
 end
 
+# --- MIDI stack (Raymond Scott Electronium × J Dilla × Bach) ---
+
+MIDI_F_MINOR    = [65, 67, 68, 70, 72, 73, 75].freeze
+MIDI_CHORDS     = {
+  fm7:    [65, 68, 72, 75],
+  dbmaj7: [61, 65, 68, 72],
+  eb7:    [63, 67, 70, 75],
+  bbm7:   [58, 61, 65, 68],
+  cm7b5:  [60, 63, 66, 70],
+  c7:     [60, 64, 67, 70]
+}.freeze
+MIDI_PROGRESSION = %i[fm7 dbmaj7 eb7 bbm7 cm7b5 fm7 c7 fm7].freeze
+MIDI_PPQN        = 480
+
+module BachEngine
+  FORBIDDEN_PARALLELS = [7, 12].freeze
+
+  def self.valid_counterpoint?(mel, ctr, prev_mel, prev_ctr)
+    interval = (mel - ctr).abs
+    return false if [0, 1, 11].include?(interval)
+    if prev_mel && prev_ctr
+      prev_interval = (prev_mel - prev_ctr).abs
+      m_dir = mel <=> prev_mel
+      c_dir = ctr <=> prev_ctr
+      return false if m_dir == c_dir && m_dir != 0 &&
+                      FORBIDDEN_PARALLELS.include?(interval) && interval == prev_interval
+    end
+    true
+  end
+
+  def self.generate_counterpoint(melody, scale)
+    prev_m = prev_c = nil
+    melody.map do |mel_note|
+      valid = scale.select { |c| valid_counterpoint?(mel_note, c, prev_m, prev_c) }
+      chosen = valid.sample || scale.sample
+      prev_m, prev_c = mel_note, chosen
+      chosen
+    end
+  end
+end
+
+module MelodyEngine
+  def self.generate(num_notes, scale, octave: 0)
+    notes = []
+    index = 0
+    direction = 1
+    num_notes.times do |i|
+      midi_note = scale[index] + (octave * 12)
+      duration = if rand(10).zero? then 0
+                 elsif rand(3).zero? then 0.5
+                 else 1.0
+                 end
+      notes << { note: midi_note, start: i * 0.5, duration: duration, velocity: 80 + rand(-15..15) }
+      step = rand(4).zero? ? rand(1..3) : 1
+      index += direction * step
+      if index >= scale.length
+        index = scale.length - 2
+        direction = -1
+      elsif index < 0
+        index = 1
+        direction = 1
+      end
+      direction *= -1 if rand(4).zero?
+    end
+    notes
+  end
+end
+
+module HarmonyEngine
+  def self.generate(progression)
+    chord_beats = 2.0
+    progression.each_with_index.flat_map do |chord_name, i|
+      start_ticks = (i * chord_beats * MIDI_PPQN).to_i
+      MIDI_CHORDS.fetch(chord_name, []).map do |midi_note|
+        { note: midi_note,
+          start: start_ticks + rand(-4..4),
+          duration: (chord_beats * MIDI_PPQN * 0.95).to_i,
+          velocity: rand(40..70) }
+      end
+    end
+  end
+end
+
+class MIDIExporter
+  def initialize(tempo_bpm)
+    @tempo_bpm = tempo_bpm
+  end
+
+  def export(filename, track_data)
+    begin
+      require "midilib"
+      require "midilib/sequence"
+      require "midilib/track"
+      require "midilib/consts"
+    rescue LoadError
+      abort "midilib not installed — run: gem install midilib"
+    end
+
+    seq = MIDI::Sequence.new
+    seq.ppqn = MIDI_PPQN
+
+    tempo_track = MIDI::Track.new(seq)
+    seq.tracks << tempo_track
+    tempo_track.events << MIDI::Tempo.new(MIDI::Tempo.bpm_to_mpq(@tempo_bpm))
+    tempo_track.events << MIDI::MetaEvent.new(MIDI::META_SEQ_NAME, "Dilla Electronium")
+
+    { drums: 9, bass: 0, chords: 1, melody: 2, counterpoint: 3 }.each do |part, channel|
+      events = track_data[part]
+      next if events.nil? || events.empty?
+      track = MIDI::Track.new(seq)
+      seq.tracks << track
+      events.each do |ev|
+        next if ev[:duration].to_i <= 0
+        on  = MIDI::NoteOn.new(channel, ev[:note], ev[:velocity])
+        off = MIDI::NoteOff.new(channel, ev[:note], 0)
+        on.time_from_start  = ev[:start].to_i
+        off.time_from_start = (ev[:start] + ev[:duration]).to_i
+        track.events << on << off
+      end
+      track.recalc_times
+    end
+
+    File.open(filename, "wb") { |f| seq.write(f) }
+    puts "wrote #{filename}"
+  end
+end
+
+def midi_generate(destination = File.join(ROOT, "dilla_electronium.mid"))
+  n_bars   = bars
+  beat_p   = beat_seconds
+  ppqn     = MIDI_PPQN
+
+  full_prog = []
+  (n_bars / MIDI_PROGRESSION.length.to_f).ceil.times { full_prog.concat(MIDI_PROGRESSION) }
+
+  chord_events = HarmonyEngine.generate(full_prog)
+
+  raw_melody   = MelodyEngine.generate(n_bars * 8, MIDI_F_MINOR)
+  melody_events = raw_melody.map { |n|
+    n.merge(start: (n[:start] * ppqn).to_i, duration: (n[:duration] * ppqn).to_i)
+  }
+  counter_notes  = BachEngine.generate_counterpoint(raw_melody.map { |n| n[:note] }, MIDI_F_MINOR)
+  counter_events = raw_melody.each_with_index.map { |n, i|
+    { note: counter_notes[i], start: (n[:start] * ppqn).to_i,
+      duration: (n[:duration] * ppqn).to_i, velocity: (n[:velocity] * 0.75).to_i }
+  }
+
+  drum_events = []
+  (n_bars / 2.0).ceil.times do |bar_group|
+    base = (bar_group * 8.0 * ppqn).to_i
+    [0.0, 2.0, 4.0, 6.0].each do |beat|
+      drum_events << { note: 36, start: base + (beat * ppqn).to_i + rand(-3..0), duration: ppqn / 2, velocity: 100 }
+    end
+    [1.0, 3.0, 5.0, 7.0].each do |beat|
+      drum_events << { note: 38, start: base + (beat * ppqn).to_i + rand(0..5), duration: ppqn / 2, velocity: 90 }
+    end
+    8.times do |beat|
+      [0, 3.0 / 7.0].each do |sub|
+        drum_events << { note: 42, start: base + ((beat + sub) * ppqn).to_i + rand(-2..2), duration: ppqn / 5, velocity: rand(50..70) }
+      end
+    end
+  end
+
+  bass_events = []
+  (n_bars / MIDI_PROGRESSION.length.to_f).ceil.times do |cycle|
+    MIDI_PROGRESSION.each_with_index do |chord_name, ci|
+      root = MIDI_CHORDS.fetch(chord_name, [65]).first - 24
+      base = ((cycle * MIDI_PROGRESSION.length * 2.0 + ci * 2.0) * ppqn).to_i
+      [0.0, 0.75].each do |off|
+        bass_events << { note: root, start: base + (off * ppqn).to_i + rand(-4..4), duration: ppqn / 2, velocity: rand(90..110) }
+      end
+    end
+  end
+
+  MIDIExporter.new(bpm.to_i).export(destination, {
+    drums: drum_events, bass: bass_events, chords: chord_events,
+    melody: melody_events, counterpoint: counter_events
+  })
+end
+
 case ARGV.shift
 when "scan" then scan
 when "sweep" then sweep
@@ -767,6 +941,7 @@ when "bass"       then bass((ARGV.shift || 55.0).to_f)
 when "grade"      then grade(ARGV.shift, ARGV.shift, ARGV.shift)
 when "grade_list" then grade_list
 when "dilla"      then render_dilla(ARGV.shift || File.join(ROOT, "dilla_beat.mp3"))
+when "midi"       then midi_generate(ARGV.shift || File.join(ROOT, "dilla_electronium.mid"))
 else
   puts "commands: #{COMMANDS.join(' | ')}"
 end

@@ -80,7 +80,8 @@
     <%= form_with url: tv_video_comments_path(@video) do |f| %>
       <div class="field">
         <%= f.label :body, "Add a comment" %>
-        <%= f.text_area :body, rows: 3, placeholder: "Write something…" %>
+        <%= f.text_area :body, rows: 3, placeholder: "Write something…", data: { controller: "char-counter", "char-counter-max-value": 1000 } %>
+        <span class="char-counter" data-char-counter-target="counter"></span>
       </div>
       <%= f.submit "Post comment", class: "btn btn-primary btn-sm" %>
     <% end %>

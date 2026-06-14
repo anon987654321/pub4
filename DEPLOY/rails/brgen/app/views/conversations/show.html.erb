@@ -18,7 +18,7 @@
 <%= form_with model: @message, url: conversation_messages_path(@conversation),
               id: "new_message",
               data: { turbo: true, controller: "typing-input", typing_input_url_value: conversation_typing_indicators_path(@conversation) } do |f| %>
-  <p><%= f.text_area :content, rows: 3, placeholder: "Send a message...", data: { action: "input->typing-input#ping" } %></p>
+  <p><%= f.text_area :content, rows: 3, placeholder: "Send a message...", data: { action: "input->typing-input#ping", controller: "char-counter", "char-counter-max-value": 500 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
   <%= f.hidden_field :message_type, value: "text" %>
   <p><%= f.submit "Send" %></p>
 <% end %>

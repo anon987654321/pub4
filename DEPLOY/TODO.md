@@ -318,7 +318,7 @@ Next: document in apps.yml cross-cutting, wire the concerns into the TV vertical
 - [ ] AN1615 dispatch_event to Stimulus: `cable_ready.dispatch_event(selector: "#swipe-stack", type: "new-card-available").broadcast` — server pushes event, Stimulus controller loads next card
 - [ ] AN1616 scroll_into_view: `cable_ready.scroll_into_view(selector: "#new-message-#{id}", behavior: "smooth")` — auto-scroll to new chat message after CableReady append
 - [ ] AN1617 stimulus-sortable for outfit/playlist ordering: `data-controller="stimulus-sortable"` + `data-sortable-url-value="/outfits/:id/reorder"` — drag to reorder, PATCH persists order
-- [ ] AN1618 stimulus-tabs with deep linking: `data-controller="stimulus-tabs"` with URL hash sync; dating profile tabs (Photos/About/Interests) are bookmarkable and shareable
+- [x] AN1618 stimulus-tabs with deep linking: `data-controller="stimulus-tabs"` with URL hash sync; dating profile tabs (Photos/About/Interests) are bookmarkable and shareable
 - [x] AN1619 stimulus-scroll-progress: `data-controller="stimulus-scroll-progress"` on article layout; shows reading progress bar at top; baibl verse reader, blognet articles
 - [ ] AN1620 stimulus-content-loader for lazy sections: `data-controller="stimulus-content-loader" data-stimulus-content-loader-url-value="/section"` — load expensive sections after initial paint
 - [ ] AN1621 stimulus-places-autocomplete for location: `data-controller="stimulus-places-autocomplete"` on takeaway delivery address, hjerterom pickup address, marketplace location
@@ -643,7 +643,9 @@ Next: document in apps.yml cross-cutting, wire the concerns into the TV vertical
 
 ### AP11: brgen-Specific Design Refinement
 
-- [ ] AP1101 Feed density toggle: compact (X-style, 80px cards), comfortable (default, 120px), spacious (Medium-style, 200px); user preference saved to `current_user.feed_density`; CSS class on `<body>`
+- [ ] AP11:01 Feed density toggle: compact (X-style, 80px cards), comfortable (default, 120px), spacious (Medium-style, 200px); user preference saved to `current_user.feed_density`; CSS class on `<body>`
+
+:q
 - [ ] AP1102 Subdomain theming: each vertical (dating/marketplace/tv/playlist/takeaway/maps) overrides `--color-midtone` via `<body data-vertical="dating">` CSS selector; dating = `#ec4899`, marketplace = `#f59e0b`, tv = `#7c3aed`
 - [ ] AP1103 City header: large city name header above feed with ambient weather color temperature — warm sunset hue on clear evenings, cool grey on rainy days; live weather API injection
 - [ ] AP1104 Night mode auto: detect `prefers-color-scheme: dark` AND time (22:00-07:00 local) → auto-enable dim mode; respect user's manual override
@@ -673,6 +675,13 @@ Next: document in apps.yml cross-cutting, wire the concerns into the TV vertical
 - [ ] AP1302 Overscroll behavior: `overscroll-behavior-y: contain` on scrollable panels (chat, feed columns) — prevents pull-to-refresh on Android from triggering during scrollable area interaction
 - [ ] AP1303 Tap highlight removal: `-webkit-tap-highlight-color: rgba(0,0,0,0)` globally; custom active states communicate tap instead; eliminates browser blue flash
 - [ ] AP1304 Input zoom prevention: all input `font-size` ≥ 16px on mobile; iOS zooms viewport if `font-size < 16px` on focused input; verify in device emulation
+:q!
+:q:q!
+
+
+
+
+
 - [ ] AP1305 Smooth scrolling: `scroll-behavior: smooth` on `html` element; override with `scroll-behavior: auto` inside `@media (prefers-reduced-motion: reduce)` — never apply universally without reduced-motion safeguard
 - [ ] AP1306 Momentum scrolling: `-webkit-overflow-scrolling: touch` on all `overflow-y: auto` containers; ensures iOS native momentum scroll behavior in web contexts
 - [ ] AP1307 Pinch-zoom: never `user-scalable=no` in viewport meta — mandatory for accessibility; design layouts that scale gracefully with pinch-zoom

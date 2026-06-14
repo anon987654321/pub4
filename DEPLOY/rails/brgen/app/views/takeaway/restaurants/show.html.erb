@@ -87,7 +87,8 @@
     </div>
     <div class="field">
       <%= f.label :body, "Comments (optional)" %>
-      <%= f.text_area :body, rows: 3 %>
+      <%= f.text_area :body, rows: 3, data: { controller: "char-counter", "char-counter-max-value": 1000 } %>
+      <span class="char-counter" data-char-counter-target="counter"></span>
     </div>
     <div class="field"><%= f.submit "Post review", class: "btn btn-primary btn-sm" %></div>
   <% end %>
