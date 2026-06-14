@@ -74,6 +74,36 @@ negotiable:
     strategy: highest_priority_wins
     prompt_user: false
 
+hooks:
+  - event: on_violation_found
+    action: append_constitutional_violation
+    params:
+      path: .constitutional_violations.jsonl
+  - event: on_fix_applied
+    action: publish
+    params:
+      event: hooks:fix_applied
+  - event: on_cost_threshold
+    action: warn_cost_threshold
+    params:
+      warn_at: 0.5
+  - event: on_session_start
+    action: publish
+    params:
+      event: hooks:session_start
+  - event: on_session_end
+    action: publish
+    params:
+      event: hooks:session_end
+  - event: on_phase_transition
+    action: publish
+    params:
+      event: hooks:phase_transition
+  - event: on_convergence
+    action: publish
+    params:
+      event: hooks:convergence
+
 evolution_log:
   - version: "1.0.0"
     date: "2026-04-01"

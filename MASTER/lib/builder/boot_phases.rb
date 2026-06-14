@@ -47,7 +47,13 @@ module Master
       end
 
       def call
-        breaker = Reach::CircuitBreakerRegistry.new(budget_max: @config.budget_max, req_max: @config.req_max, event_bus: @bus)
+        breaker = Reach::CircuitBreakerRegistry.new(
+          budget_max: @config.budget_max,
+          req_max: @config.req_max,
+          warn_at: @config.warn_at,
+          max_per_file: @config.max_per_file,
+          event_bus: @bus
+        )
         cache = Reach::SemanticCache.new(root: @root, ttl: @config["cache_ttl"], event_bus: @bus)
         mcp = Reach::McpCoordinator.new(root: @root, event_bus: @bus)
         mcp.connect_all

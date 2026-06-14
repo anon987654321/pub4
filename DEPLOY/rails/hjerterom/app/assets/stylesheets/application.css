@@ -272,3 +272,16 @@ h1, h2 { margin-bottom: .5rem; }
   .map-home__canvas::after { background: linear-gradient(180deg, rgba(2, 6, 23, .7), rgba(2, 6, 23, .12) 55%, rgba(2, 6, 23, .64)); }
   .map-home__fallback-list { display: none; }
 }
+
+[dir="rtl"] {
+  direction: rtl;
+}
+
+[dir="rtl"] nav .brand {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+[dir="rtl"] .form .field--check {
+  flex-direction: row-reverse;
+}

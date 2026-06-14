@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 module ApplicationHelper
-  include Pagy::Frontend
-
   def nok(amount)
     number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")
   end

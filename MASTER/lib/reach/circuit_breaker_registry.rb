@@ -8,10 +8,18 @@ module Master
     class CircuitBreakerRegistry
       include MonitorMixin
 
-      def initialize(budget_max:, req_max:, event_bus: nil, state_path: File.join(Master::ROOT, ".master", "circuit_state.yml"))
+      def initialize(budget_max:, req_max:, warn_at: nil, max_per_file: nil, event_bus: nil,
+                     state_path: File.join(Master::ROOT, ".master", "circuit_state.yml"))
         super()
         @state_path = state_path
-        @defaults = { budget_max: budget_max, req_max: req_max, event_bus: event_bus, state_path: state_path }.freeze
+        @defaults = {
+          budget_max: budget_max,
+          req_max: req_max,
+          warn_at: warn_at,
+          max_per_file: max_per_file,
+          event_bus: event_bus,
+          state_path: state_path
+        }.freeze
         @breakers = {}
         @global = CircuitBreaker.new(**@defaults.merge(state_key: "global"))
       end

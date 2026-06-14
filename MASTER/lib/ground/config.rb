@@ -16,6 +16,8 @@ module Master
         "web_public_url" => "https://ai.brgen.no",
         "web_port" => DEFAULT_WEB_PORT,
         "budget_max" => BUDGET_MAX_DEFAULT,
+        "warn_at" => 0.50,
+        "max_per_file" => 1.0,
         "req_max" => 60.0,
         "trace" => 0,
         "prescan" => true,
@@ -42,6 +44,8 @@ module Master
 
       def model = self["model"]
       def budget_max = self["budget_max"].to_f
+      def warn_at = self["warn_at"].to_f
+      def max_per_file = self["max_per_file"].to_f
       def req_max = self["req_max"].to_f
       def trace = (ENV["MASTER_TRACE"] || self["trace"]).to_i
       def prescan? = self["prescan"] == true
@@ -63,13 +67,14 @@ module Master
 
       # Frozen snapshot of boot values — safe to share across threads.
       BootConfig = Data.define(:root, :model, :web_host, :web_port, :web_public_url,
-        :budget_max, :req_max, :cache_ttl, :history_max)
+        :budget_max, :warn_at, :max_per_file, :req_max, :cache_ttl, :history_max)
 
       def freeze_boot
         snap = @mutex.synchronize { @data.dup }
         BootConfig.new(
           root: @root, model: snap["model"], web_host: snap["web_host"], web_port: snap["web_port"].to_i,
           web_public_url: snap["web_public_url"], budget_max: snap["budget_max"].to_f,
+          warn_at: snap["warn_at"].to_f, max_per_file: snap["max_per_file"].to_f,
           req_max: snap["req_max"].to_f, cache_ttl: snap["cache_ttl"].to_i, history_max: snap["history_max"].to_i
         ).freeze
       end
@@ -81,6 +86,7 @@ module Master
       def load_config
         defaults = deep_dup(DEFAULTS)
         return defaults unless File.exist?(@path)
+        raw = YAML.safe_load_file(@path, aliases: true)
         loaded = raw.is_a?(Hash) ? raw : {}
         deep_merge(defaults, stringify_keys(loaded))
       rescue Psych::Exception => e

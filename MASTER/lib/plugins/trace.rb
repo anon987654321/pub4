@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "../trace/hooks"
 
 module Master
   module Plugins
@@ -17,6 +18,7 @@ module Master
         metrics   = Master::Trace::Metrics.new(root:, event_bus: bus)
         Master::Trace::AuditLog.new(root:, event_bus: bus)
         Master::Trace::SwallowLedger.new(event_bus: bus, root:).attach
+        Master::Trace::Hooks.new(root: root, event_bus: bus, budget_max: config.budget_max).attach
         recorder  = Master::Trace::Recorder.new(root:, event_bus: bus)
         { event_log:, bus:, ring:, logging:, session:, undo:, metrics:, trace: recorder }
       end

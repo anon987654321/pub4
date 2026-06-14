@@ -35,7 +35,7 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] AN115 Fullscreen mode toggle: add `display: fullscreen` option for TV vertical in brgen; video player expands to true fullscreen without browser chrome
 - [ ] AN116 Screen wake lock: acquire wake lock during video playback (brgen TV), recipe view (blognet), and navigation (hjerterom map mode)
 - [ ] AN117 Orientation lock: lock to portrait for dating swipe cards; landscape for TV player; use `screen.orientation.lock()`
-- [ ] AN118 Viewport meta hardening: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` on all layouts; use `env(safe-area-inset-*)` for notch-aware padding
+- [x] AN118 Viewport meta hardening: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` on all layouts; use `env(safe-area-inset-*)` for notch-aware padding
 - [ ] AN119 Theme color per app: manifest `theme_color` and `background_color` unique per app brand; inject dynamic theme-color meta tag for dark mode switching
 - [ ] AN120 Standalone mode detection: `window.matchMedia('(display-mode: standalone)')` — show different UI (no back button, bottom nav instead of burger menu) in PWA mode
 
@@ -243,11 +243,11 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ### AN14: Cross-App Internationalization
 
-- [ ] AN1401 Norwegian Bokmål default: `config.i18n.default_locale = :nb`; all user-facing strings in `config/locales/nb.yml`; English fallback in `en.yml`
-- [ ] AN1402 Time zone: `config.time_zone = "Europe/Oslo"`; display relative times via `timeago` Stimulus controller; absolute on hover tooltip
-- [ ] AN1403 Currency formatting: NOK as default; `number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")` helper
-- [ ] AN1404 RTL readiness: CSS `[dir="rtl"]` overrides for any future Arabic/Hebrew locale; logical properties (`margin-inline-start`) instead of `margin-left` throughout
-- [ ] AN1405 Date format: Norwegian `dd.mm.yyyy` format in all date displays; ISO 8601 in API responses
+- [x] AN1401 Norwegian Bokmål default: `config.i18n.default_locale = :nb`; all user-facing strings in `config/locales/nb.yml`; English fallback in `en.yml`
+- [x] AN1402 Time zone: `config.time_zone = "Europe/Oslo"`; display relative times via `timeago` Stimulus controller; absolute on hover tooltip
+- [x] AN1403 Currency formatting: NOK as default; `number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")` helper
+- [x] AN1404 RTL readiness: CSS `[dir="rtl"]` overrides for any future Arabic/Hebrew locale; logical properties (`margin-inline-start`) instead of `margin-left` throughout
+- [x] AN1405 Date format: Norwegian `dd.mm.yyyy` format in all date displays; ISO 8601 in API responses
 
 ### AN15: Cross-App Testing
 

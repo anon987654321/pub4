@@ -158,3 +158,6 @@ footer {
 @media (max-width: 480px) {
   footer { transform: scale(0.8); },
 }
+
+[dir="rtl"] { direction: rtl; }
+[dir="rtl"] nav .brand { margin-right: 0; margin-left: auto; }

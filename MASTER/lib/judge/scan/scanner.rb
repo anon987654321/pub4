@@ -12,6 +12,8 @@ module Master
         SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
         SCAN_SINCE_EXT = /\.(rb|rake|gemspec|erb|yml|yaml|js|css|sh|zsh)\z/.freeze
         REQUIRED_DEPTH = :deep
+        MAX_VIOLATION_OBJECTS = 100_000
+        GC_EVERY_N_ITERATIONS = 5
 
         attr_reader :rules
 
@@ -34,7 +36,7 @@ module Master
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
           validate_depth!(depth)
           paths   = Dir.glob(File.join(dir, glob))
-          Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
+          Result.ok(prune_violation_objects(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }))
         rescue StandardError => e
           Result.err("scan_dir: #{e.message}", category: :infrastructure)
         end
@@ -48,7 +50,7 @@ module Master
           return changed if changed.err?
 
           paths = scan_since_paths(changed.value!, dir:, repo_root:)
-          Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
+          Result.ok(prune_violation_objects(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }))
         rescue StandardError => e
           Result.err("scan_since: #{e.message}", category: :infrastructure)
         end
@@ -110,6 +112,7 @@ module Master
               loop do
                 i = cursor.synchronize { (index += 1) - 1 }
                 break if i >= items.size
+                maybe_gc(i)
                 thread_results[i] = yield(items[i], i)
               rescue StandardError => e
                 @bus&.publish("scanner:thread_error", path: items[i], index: i, error: e.message)
@@ -129,6 +132,26 @@ module Master
         rescue StandardError => e
           @bus&.publish("scanner:thread_error", path:, index:, error: e.message)
           [path, Result.err(e.message, category: :infrastructure)]
+        end
+
+        def maybe_gc(index)
+          GC.start if index.positive? && (index % GC_EVERY_N_ITERATIONS).zero?
+        end
+
+        def prune_violation_objects(pairs)
+          total = pairs.sum { |_path, result| Result.wrap(result).value_or([]).size }
+          return pairs if total <= MAX_VIOLATION_OBJECTS
+
+          remaining = MAX_VIOLATION_OBJECTS
+          pruned = total - MAX_VIOLATION_OBJECTS
+          pairs.reverse_each do |_path, result|
+            findings = Result.wrap(result).value_or([])
+            keep = [findings.size, remaining].min
+            remaining -= keep
+            findings.replace(findings.last(keep))
+          end
+          @bus&.publish("scanner:violations_pruned", pruned:, kept: MAX_VIOLATION_OBJECTS)
+          pairs
         end
 
         def stream_progress(dir:, path:, file_result:)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "timeout"
 require "zeitwerk"
 require "yaml"
 
@@ -26,6 +27,8 @@ module Master
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
   MIN_API_KEY_LENGTH = 20
+  MAX_CONSTITUTION_BYTES = 10 * 1024 * 1024
+  YAML_LOAD_TIMEOUT_S = 5
   OPENROUTER_DEFAULT = "z-ai/glm-4.5-air:free"
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   CTX_WINDOW_SIZE = 200_000
@@ -156,9 +159,16 @@ module Master
   end
 
   def self.load_yaml(path, symbolize_names: false, default: {})
-    YAML.safe_load_file(path, aliases: true, symbolize_names: symbolize_names)
+    raise "yaml too large: #{path}" if File.exist?(path) && File.size(path) > MAX_CONSTITUTION_BYTES
+
+    Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
+      YAML.safe_load_file(path, aliases: true, symbolize_names: symbolize_names)
+    end
   rescue Psych::Exception, Errno::ENOENT, Errno::EACCES => e
     warn("load_yaml: #{e.message}")
+    default
+  rescue Timeout::Error => e
+    warn("load_yaml: #{path}: #{e.message}")
     default
   end
 

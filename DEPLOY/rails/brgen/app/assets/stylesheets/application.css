@@ -969,3 +969,22 @@ article mark { background: rgba(220,220,220,.08); color: var(--text-dim); paddin
 .item-subtotal { float: inline-end; }
 .menu-row { display: flex; align-items: center; justify-content: space-between; }
 .qty-field { width: 60px; }
+
+[dir="rtl"] {
+  direction: rtl;
+}
+
+[dir="rtl"] .sidebar {
+  border-left: 1px solid var(--border);
+  border-right: none;
+}
+
+[dir="rtl"] .comment .comment {
+  padding-left: 0;
+  padding-right: 56px;
+}
+
+[dir="rtl"] .live-badge {
+  margin-right: 0;
+  margin-left: 6px;
+}

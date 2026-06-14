@@ -572,11 +572,11 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### S6: Hooks System (v49.25 — specified, never wired)
 
-- [ ] S601 on_violation_found hook: append to .constitutional_violations.jsonl per file, per session
-- [ ] S602 on_cost_threshold hook: warn user when cumulative session cost exceeds 50% of max_per_session
-- [ ] S603 Hook architecture: hooks[] array in soul.yml, each entry {event, action, params} — load at boot, fire via EventBus
-- [ ] S604 Hook events needed: on_violation_found, on_fix_applied, on_cost_threshold, on_session_start, on_session_end, on_phase_transition, on_convergence
-- [ ] S605 Git hook integration: pre-commit hook that runs /scan --profile critical and blocks commit if :error findings exist
+- [x] S601 on_violation_found hook: append to .constitutional_violations.jsonl per file, per session
+- [x] S602 on_cost_threshold hook: warn user when cumulative session cost exceeds 50% of max_per_session
+- [x] S603 Hook architecture: hooks[] array in soul.yml, each entry {event, action, params} — load at boot, fire via EventBus
+- [x] S604 Hook events needed: on_violation_found, on_fix_applied, on_cost_threshold, on_session_start, on_session_end, on_phase_transition, on_convergence
+- [x] S605 Git hook integration: pre-commit hook that runs /scan --profile critical and blocks commit if :error findings exist
 
 ### S7: Multi-Model Consensus (v49.25 — specified, disabled=false toggle never built)
 

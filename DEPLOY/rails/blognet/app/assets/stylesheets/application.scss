@@ -20,3 +20,16 @@ article:last-child { border-bottom: none; }
 .form input, .form textarea { border: 1px solid #ccc; border-radius: 3px; padding: .4rem .6rem; font: inherit; }
 .form .actions { display: flex; gap: var(--space-sm); align-items: center; margin-top: var(--space-md); }
 h1, h2 { margin-bottom: var(--space-sm); }
+
+[dir="rtl"] {
+  direction: rtl;
+}
+
+[dir="rtl"] nav .brand {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+[dir="rtl"] .form .field--check {
+  flex-direction: row-reverse;
+}

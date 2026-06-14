@@ -1,26 +1,35 @@
 # frozen_string_literal: true
 
 require "digest"
+require "fileutils"
 require "prism"
+require "timeout"
 
 module Master
   module Judge
     module Scan
       class FileProcessor
         RUBY_EXT = %w[.rb .rake .gemspec].freeze
+        LOCK_DIR = ".constitutional_locks"
+        LOCK_TIMEOUT = 30
+        STALE_LOCK_AGE = 300
+        MAX_FILE_BYTES = 10 * 1024 * 1024
+        MAX_LINES = 10_000
 
         def initialize(event_bus: nil)
           @bus = event_bus
         end
 
         def call(path:, depth:, rules:)
-          code = read_file(path)
-          return code if code.err?
+          with_file_lock(path) do
+            code = read_file(path)
+            return code if code.err?
 
-          ast = parse_ruby(code.value!, path)
-          findings = apply_rules(code: code.value!, ast: ast, path: path, rule_set: rules)
-          publish_scan_result(path: path, depth: depth, findings: findings)
-          Result.ok(findings)
+            ast = parse_ruby(code.value!, path)
+            findings = apply_rules(code: code.value!, ast: ast, path: path, rule_set: rules)
+            publish_scan_result(path: path, depth: depth, findings: findings)
+            Result.ok(findings)
+          end
         rescue StandardError => e
           @bus&.publish("scan:error", path: path, error: e.message)
           Result.err("scan failed: #{e.message}", category: :infrastructure)
@@ -29,11 +38,59 @@ module Master
         private
 
         def read_file(path)
-          return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
+          validation = validate_file(path)
+          return validation if validation.err?
 
           code = File.read(path, encoding: "UTF-8")
+          return Result.err("file too long: #{path}", category: :validation) if code.lines.count > MAX_LINES
+
           @bus&.publish("scan:file_read", path: path, sha256: Digest::SHA256.hexdigest(code))
           Result.ok(code)
+        end
+
+        def validate_file(path)
+          return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
+          return Result.err("symlink not allowed: #{path}", category: :validation) if File.symlink?(path)
+          return Result.err("binary file skipped: #{path}", category: :validation) if File.binary?(path)
+          return Result.err("file too large: #{path}", category: :validation) if File.size(path) > MAX_FILE_BYTES
+
+          Result.ok(path)
+        rescue StandardError => e
+          Result.err("file validation failed: #{e.message}", category: :validation)
+        end
+
+        def with_file_lock(path)
+          lock_path = lock_path_for(path)
+          FileUtils.mkdir_p(File.dirname(lock_path))
+          deadline = Time.now + LOCK_TIMEOUT
+          loop do
+            remove_stale_lock(lock_path)
+            begin
+              File.open(lock_path, File::WRONLY | File::CREAT | File::EXCL) { |file| file.write("#{Process.pid}\n") }
+              break
+            rescue Errno::EEXIST
+              raise "lock timeout for #{path}" if Time.now >= deadline
+              sleep 0.05
+            end
+          end
+          yield
+        ensure
+          File.delete(lock_path) if lock_path && File.exist?(lock_path)
+        end
+
+        def remove_stale_lock(lock_path)
+          return unless File.exist?(lock_path)
+          return unless Time.now - File.mtime(lock_path) > STALE_LOCK_AGE
+
+          File.delete(lock_path)
+          @bus&.publish("scan:stale_lock_removed", path: lock_path)
+        rescue StandardError => e
+          @bus&.publish("scan:lock_error", path: lock_path, error: e.message)
+        end
+
+        def lock_path_for(path)
+          digest = Digest::SHA256.hexdigest(File.expand_path(path))
+          File.join(Master::ROOT, LOCK_DIR, "#{digest}.lock")
         end
 
         def parse_ruby(code, path)

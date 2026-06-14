@@ -66,7 +66,7 @@ module Master
         @root = root
         @bus = bus
         @learnings = learnings
-        @conflicts = ConflictResolver.new(root:, bus:)
+        @conflicts = ConflictResolver.new(root: root, bus: bus)
       end
 
       def injected_preamble=(text)
@@ -227,6 +227,11 @@ module Master
         before = scan_all(path)
         write_atomic(path, new_src, encoding: "UTF-8")
         after = scan_all(path)
+        if after.size > before.size
+          write_atomic(path, old_src, encoding: "UTF-8")
+          @bus&.publish("rule_loop:fix_rejected", rule: @rule.id, file: path, reason: "new_violations", before: before.size, after: after.size)
+          return false
+        end
         if @conflicts.reject_higher_priority?(original_violation: violation, before: before, after: after, path: path)
           write_atomic(path, old_src, encoding: "UTF-8")
           @bus&.publish("rule_loop:fix_rejected", rule: @rule.id, file: path, reason: "higher_priority_violation")
