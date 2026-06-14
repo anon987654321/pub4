@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "llm_dispatcher"
+require_relative "consensus"
 
 module Master
   module Judge
@@ -96,13 +97,17 @@ module Master
         result.to_s
       end
 
+      def consensus
+        @consensus ||= Master::Judge::Consensus.new(agent: self, event_bus: @bus)
+      end
+
       def call(ctx)
         on_chunk = ctx[:on_chunk]
         task_type = ctx[:task_type]&.to_s
         image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
         with_task_type(task_type) do
           if on_chunk
-            chat(ctx[:message].to_s, image: image, stream: true, &on_chunk)
+            chat(ctx[:message].to_s, image: image, stream: true) { |chunk| on_chunk.call(chunk) }
           else
             chat(ctx[:message].to_s, image: image)
           end
@@ -191,11 +196,14 @@ module Master
         fallback_modes.each do |attempt|
           selected_model = attempt.fetch(:model)
           mode = attempt.fetch(:mode)
-          wrapped = filter_prompt(apply_reasoning_mode(prompt, mode: mode))
-          response = @dispatcher.send_with_cache(
-            selected_model,
-            context + [{ role: "user", content: wrapped }],
-            stream:, image: image, &blk
+          response = attempt_model_with_retries(
+            selected_model: selected_model,
+            mode: mode,
+            prompt: prompt,
+            context: context,
+            stream: stream,
+            image: image,
+            &blk
           )
           if response.is_a?(Master::Result::Ok)
             publish_llm_success(selected_model, response)
@@ -209,6 +217,33 @@ module Master
 
         @bus&.publish("agent:all_fallbacks_exhausted", warnings: stage_warnings)
         last_response || Result.err("all LLM fallback modes exhausted", category: :llm_call_failure)
+      end
+
+      def attempt_model_with_retries(selected_model:, mode:, prompt:, context:, stream:, image: nil, &blk)
+        last_response = nil
+        retry_count = @model_router&.failover_max_retries.to_i
+        retry_count = 0 if retry_count.negative?
+        (retry_count + 1).times do |retry_index|
+          wrapped = filter_prompt(apply_reasoning_mode(prompt, mode: mode))
+          response = @dispatcher.send_with_cache(
+            selected_model,
+            context + [{ role: "user", content: wrapped }],
+            stream:, image: image, &blk
+          )
+          return response if response.is_a?(Master::Result::Ok)
+
+          last_response = response
+          backoff_before_retry(selected_model, mode, retry_index) if retry_index < retry_count
+        end
+        last_response
+      end
+
+      def backoff_before_retry(model, mode, retry_index)
+        cooldown = @model_router&.failover_cooldown_seconds.to_i
+        cooldown = 300 if cooldown <= 0
+        delay = cooldown * (2**retry_index)
+        @bus&.publish("llm:failover_backoff", model: model, mode: mode, retry: retry_index + 1, delay: delay)
+        sleep delay if ENV["MASTER_STRICT_BACKOFF"] == "1"
       end
 
       def mode_chain_for(candidates)

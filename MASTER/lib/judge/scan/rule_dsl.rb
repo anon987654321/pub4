@@ -14,6 +14,7 @@ module Master
       module RuleDSL
         def self.rule(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil, &block)
           raise ArgumentError, "block required" unless block
+          dsl_id = id.to_s
           dsl_desc = description || dsl_id.tr("_", " ")
           dsl_tags = Array(tags)
           Class.new(Rule) do
