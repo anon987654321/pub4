@@ -17,21 +17,21 @@ module Master
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:)
-          @bus                = bus
-          @committer          = committer
-          @loop_scanner       = loop_scanner
-          @llm_router         = llm_router
-          @rollback           = rollback
-          @root               = root
-          @agent              = agent
-          @scanner            = scanner
-          @learnings          = learnings
-          @preamble           = preamble
+          @bus = bus
+          @committer = committer
+          @loop_scanner = loop_scanner
+          @llm_router = llm_router
+          @rollback = rollback
+          @root = root
+          @agent = agent
+          @scanner = scanner
+          @learnings = learnings
+          @preamble = preamble
           @clean_runs_required = clean_runs_required
-          @plateau_window     = plateau_window
-          @rule_order         = RuleOrder.new(rules:, learnings:, bus:, root:)
-          @violation_counts   = Hash.new(0)
-          @rule_recurrence    = Hash.new(0)
+          @plateau_window = plateau_window
+          @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
+          @violation_counts = Hash.new(0)
+          @rule_recurrence = Hash.new(0)
         end
 
         def violations(files) = @loop_scanner.violations(files)

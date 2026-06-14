@@ -5,37 +5,37 @@ module Master
     class FixLoop
       class RuleOrder
         TIER2_QUALITY_RULE_IDS = %w[DRY KISS SRP].freeze
-        DEPS_PATH   = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
+        DEPS_PATH = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
         PRIORS_PATH = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
 
         def initialize(rules:, learnings:, bus:, root:)
-          @rules     = rules
+          @rules = rules
           @learnings = learnings
-          @bus       = bus
-          @root      = root
+          @bus = bus
+          @root = root
         end
 
         def ordered(violation_counts:)
-          deps   = load_deps
+          deps = load_deps
           priors = load_priors
           ext_wts = extension_weights
           sorted = @rules.each_with_index.sort_by do |r, i|
             base_prior = priors.dig(r.id, "prior_p").to_f
-            modifiers  = priors.dig(r.id, "language_modifiers") || {}
-            adjusted   = ext_wts.sum { |ext, w| base_prior * (modifiers[ext] || 1.0) * w }
-            density    = violation_counts[r.id].to_f + adjusted
-            quality    = @learnings&.fix_quality(rule: r.id) || 0.5
-            tier2      = tier2?(r.id) ? 1 : 0
+            modifiers = priors.dig(r.id, "language_modifiers") || {}
+            adjusted = ext_wts.sum { |ext, w| base_prior * (modifiers[ext] || 1.0) * w }
+            density = violation_counts[r.id].to_f + adjusted
+            quality = @learnings&.fix_quality(rule: r.id) || 0.5
+            tier2 = tier2?(r.id) ? 1 : 0
             [-tier2, -density, -quality, i]
           end.map(&:first)
           topo_sort(sorted, deps)
         end
 
         def dependency_levels(rules)
-          deps      = load_deps
+          deps = load_deps
           remaining = rules.map(&:id).to_set
-          id_map    = rules.to_h { |r| [r.id, r] }
-          levels    = []
+          id_map = rules.to_h { |r| [r.id, r] }
+          levels = []
           until remaining.empty?
             ready = remaining.select { |id| Array(deps[id]).none? { |dep| remaining.include?(dep) } }
             ready = [remaining.first] if ready.empty?
