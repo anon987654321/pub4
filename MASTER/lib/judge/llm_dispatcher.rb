@@ -4,9 +4,9 @@ require "ruby_llm"
 require "digest"
 require "json"
 require "open3"
-require "tempfile"
-require "base64"
-require "securerandom"
+require_relative "llm_dispatcher/react_loop"
+require_relative "llm_dispatcher/ruby_llm_sender"
+require_relative "llm_dispatcher/tool_registry"
 
 module Master
   module Judge
@@ -55,6 +55,10 @@ module Master
       end
 
       TOOL_CAPABLE_RE = build_tool_capable_re.freeze
+
+      include ReactLoop
+      include RubyLLMSender
+      include ToolRegistry
 
       def initialize(deps:, system_prompt:)
         @config, @cache, @circuit_breaker = deps.config, deps.cache, deps.circuit_breaker
@@ -143,214 +147,8 @@ module Master
         Result.err("web-chat: #{e.message}", category: :provider_error)
       end
 
-      # ReactToolLoop — emulates function calling for models that lack native tool support.
-      # Injects a text-format tool schema into the system prompt; parses <tool_call> XML
-      # from responses; executes tools directly; loops until no calls remain.
-      def react_tool_loop(selected_model, messages, sys:, stream:, image: nil, &blk)
-        react_sys = build_react_system(sys)
-        history   = messages.dup
-        last      = nil
-
-        REACT_MAX_STEPS.times do |step|
-          img = (step.zero? ? image : nil)
-          result = send_ruby_llm(selected_model, history, sys: react_sys, stream: step.zero? ? stream : false, image: img, &(step.zero? ? blk : nil))
-          return result if result.err?
-
-          text  = result.to_s
-          calls = parse_tool_calls(text)
-          last  = result
-          break if calls.empty?
-
-          @bus&.publish("react:tool_calls", model: selected_model, step:, count: calls.size)
-          history << { role: "assistant", content: text }
-          tool_results = calls.map { |c| execute_react_tool(c["name"], c["args"] || {}) }
-          history << { role: TOOL_RESULT_ROLE, content: tool_results.join("\n\n") }
-        end
-
-        last || Result.err("react: no response generated", category: :llm_call_failure)
-      end
-
-      def build_react_system(base_sys)
-        schema = @tools.filter_map { |t|
-          name = t.class.name.split("::").last
-          meta = @tool_registry.fetch(name, {})
-          next unless tool_available_for_context?(meta)
-          desc = meta["description"] || name.gsub(/([A-Z])/, ' \1').strip
-          "- #{name}: #{desc}"
-        }.join("\n")
-
-        react_instructions = <<~INST.strip
-          You have access to these tools. Call a tool with:
-          <tool_call>{"name": "ToolName", "args": {"param": "value"}}</tool_call>
-
-          Available tools:
-          #{schema}
-
-          Reason step-by-step. When finished, give your final answer without any <tool_call> blocks.
-        INST
-
-        [base_sys, react_instructions].compact.join("\n\n")
-      end
-
-      def parse_tool_calls(text)
-        text.scan(TOOL_CALL_RE).filter_map do |match|
-          JSON.parse(match.first.strip)
-        rescue JSON::ParserError
-          nil
-        end
-      end
-
-      def execute_react_tool(name, args)
-        tool = @tools.find { |t| t.class.name.split("::").last == name }
-        return "<tool_result name=\"#{name}\">error: tool not found</tool_result>" unless tool
-        sym_args = args.transform_keys(&:to_sym)
-        raw = tool.respond_to?(:call) ? tool.call(**sym_args) : "unsupported"
-        out = Result.wrap(raw).value_or(raw.to_s)
-        "<tool_result name=\"#{name}\">\n#{out}\n</tool_result>"
-      rescue StandardError => e
-        "<tool_result name=\"#{name}\">error: #{e.message}</tool_result>"
-      end
-
-      def text_prompt_for(messages)
-        prompt  = messages.last[:content].to_s
-        context = messages[0...-1].map { |m| "#{m[:role]}: #{m[:content]}" }.join("\n\n")
-        context.empty? ? prompt : "#{context}\n\nuser: #{prompt}"
-      end
-
-      def send_ruby_llm(selected_model, messages, sys:, stream:, image: nil, &blk)
-        chat_session = RubyLLM.chat(model: selected_model)
-        final_sys = build_final_system(selected_model, sys)
-        chat_session.with_instructions(final_sys) if final_sys
-
-        # Add prior context as plain text (vision is typically only for the current user turn)
-        messages[0...-1].each do |message_entry|
-          chat_session.add_message(role: message_entry[:role].to_s, content: message_entry[:content].to_s)
-        end
-
-        last_entry = messages.last || {}
-        last_text = last_entry[:content].to_s
-
-        available_tools = llm_tools(selected_model)
-        chat_session.with_tools(*available_tools) unless available_tools.empty?
-
-        ask_arg = last_text
-        temp_file = nil
-        if image && ( (!image[:path].to_s.empty? && File.file?(image[:path])) || !image[:data].to_s.empty? )
-          # Prefer disk :path from chat token meta (postpro'd uploads). Robust Tempfile fallback for direct data.
-          # Always ensure cleanup with ensure. Unique temp name.
-          if !image[:path].to_s.empty? && File.file?(image[:path])
-            attachment = RubyLLM::Attachment.new(image[:path], filename: (image[:name].to_s.empty? ? File.basename(image[:path]) : image[:name].to_s))
-          else
-            ext = (image[:mime].to_s =~ /png/i ? ".png" : (image[:mime].to_s =~ /webp/i ? ".webp" : ".jpg"))
-            temp_file = Tempfile.new(["master_vision_#{SecureRandom.hex(4)}", ext])
-            temp_file.binmode
-            temp_file.write(Base64.strict_decode64(image[:data]))
-            temp_file.rewind
-            temp_file.close
-            attachment = RubyLLM::Attachment.new(temp_file.path, filename: (image[:name].to_s.presence || "photo#{ext}"))
-          end
-          content = RubyLLM::Content.new(text: last_text, attachments: [attachment])
-          ask_arg = content
-        end
-
-        begin
-          reply = if stream && blk
-                    chat_session.ask(ask_arg) { |chunk| blk.call(chunk.content.to_s) if chunk.content }
-          else
-            chat_session.ask(ask_arg)
-          end
-          record_usage(reply, selected_model)
-          res = Result.ok(extract_response(reply, selected_model))
-          res
-        ensure
-          if temp_file
-            begin
-              temp_file.close unless temp_file.closed?
-              temp_file.unlink if File.exist?(temp_file.path)
-            rescue StandardError
-              # best effort cleanup of vision temp
-            end
-          end
-        end
-      end
-
-      def record_usage(reply, model)
-        return unless @session
-        input = reply.respond_to?(:input_tokens) ? reply.input_tokens.to_i : 0
-        output = reply.respond_to?(:output_tokens) ? reply.output_tokens.to_i : 0
-        cached = reply.respond_to?(:cached_tokens) ? reply.cached_tokens.to_i : 0
-        cache_write = reply.respond_to?(:cache_creation_tokens) ? reply.cache_creation_tokens.to_i : 0
-        tokens = input + output
-        if tokens.zero? && reply.respond_to?(:content)
-          tokens = Master::Trace::Session.estimate_tokens(reply.content)
-          return if tokens.zero?
-          cost = (tokens * COST_PER_TOKEN).round(6)
-          @session.record_cost(cost, model:, tokens:)
-          publish_llm_cost(model:, cost:, tokens:, tokens_in: tokens, tokens_out: 0, estimated: true)
-          return
-        end
-        return if tokens.zero?
-        regular = [input - cached - cache_write, 0].max
-        cost = ((regular * COST_PER_TOKEN) +
-                (cached * COST_PER_TOKEN * CACHE_READ_RATIO) +
-                (cache_write * COST_PER_TOKEN * CACHE_WRITE_RATIO) +
-                (output * COST_PER_TOKEN)).round(6)
-        @session.record_cost(cost, model:, tokens:)
-        publish_llm_cost(model:, cost:, tokens:, tokens_in: input, tokens_out: output, cached:, cache_write:)
-        @bus&.publish("cache:hit", model:, cached:, cache_write:) if cached.positive? || cache_write.positive?
-      rescue StandardError => e
-        @bus&.publish("cost:record_error", error: e.message)
-      end
-
-      def publish_llm_cost(model:, cost:, tokens:, tokens_in: 0, tokens_out: 0, cached: 0, cache_write: 0, estimated: false)
-        line = "[$#{format('%.4f', cost.to_f)}, #{tokens.to_i} tokens]"
-        payload = { model:, cost:, tokens:, cached:, cache_write:, estimated:, line: }
-        @bus&.publish("llm:cost", **payload)
-        @bus&.publish("llm:call_complete",
-          model:,
-          tokens_in:,
-          tokens_out:,
-          cost_usd: cost,
-          estimated:,
-          cached:,
-          cache_write:)
-        @bus&.publish("llm:transparency", model:, cost:, tokens:, estimated:, line:)
-      end
-
       def breaker_for(model_id)
         @circuit_breaker.respond_to?(:for) ? @circuit_breaker.for(model_id) : @circuit_breaker
-      end
-
-      def extract_response(reply, selected_model)
-        return reply.to_s unless reply.respond_to?(:content)
-        content  = reply.content.to_s
-        thinking = reply.respond_to?(:thinking) ? reply.thinking&.text.to_s.strip : ""
-        if NEMOTRON3_RE.match?(selected_model) && !thinking.empty?
-          return content.empty? ? thinking : "#{content}\n\n<think>\n#{thinking}\n</think>"
-        end
-        content.empty? && !thinking.empty? ? thinking : content
-      end
-
-      def nemotron_system_prompt(selected_model, base = nil)
-        sys = base || system_prompt
-        return sys unless LLAMA_NEMOTRON_RE.match?(selected_model)
-        directive = @config["reasoning_mode"] != "none" ? "detailed thinking on" : "detailed thinking off"
-        [directive, sys].compact.join("\n\n")
-      end
-
-      def build_final_system(selected_model, sys)
-        return sys unless claude_model?(selected_model)
-        raw = @system_prompt_proc.call
-        if raw.is_a?(Hash) && raw[:static]
-          static_text = nemotron_system_prompt(selected_model, raw[:static])
-          blocks = [{ type: "text", text: static_text, cache_control: { type: "ephemeral" } }]
-          blocks << { type: "text", text: raw[:dynamic] } if raw[:dynamic]
-          RubyLLM::Content::Raw.new(blocks)
-        else
-          base = nemotron_system_prompt(selected_model, sys)
-          return base unless base.is_a?(String)
-          RubyLLM::Content::Raw.new([{ type: "text", text: base, cache_control: { type: "ephemeral" } }])
-        end
       end
 
       def cache_key_for(message, context, model = nil)
@@ -397,70 +195,6 @@ module Master
         @bus&.publish("provider_health:record_error", model:, error: e.message)
       end
 
-      def llm_tools(selected_model)
-        return [] unless tool_capable?(selected_model)
-        return build_llm_tools(visitor: true) if Fiber[:master_visitor]
-        @llm_tools ||= build_llm_tools
-      end
-
-      def build_llm_tools(visitor: false)
-        tier = @model_router&.tier_for_model(@config.model).to_s
-        @tools.filter_map do |tool|
-          wrapper = LLM_TOOL_MAP[tool.class]
-          next unless wrapper
-          name = tool.class.name.split("::").last
-          meta = @tool_registry.fetch(name, {})
-          next unless tool_available_for_context?(meta)
-          next if visitor && meta["visitor"] != true
-          next if !visitor && !Fiber[:master_elevated] && meta["tier"] == "dangerous"
-          next if tier == "cheap" && meta["tier"] == "dangerous"
-          wrapper.new(tool)
-        end
-      rescue StandardError => err
-        @bus&.publish("agent:llm_tools_error", error: err.message)
-        []
-      end
-
-      def load_tool_registry
-        path = File.join(Master::ROOT, "data", "tools.yml")
-        rows = Master.load_yaml(path)
-        return {} unless rows.is_a?(Array)
-        rows.each_with_object({}) { |row, h| h[row["name"].to_s] = row if row.is_a?(Hash) }
-      end
-
-      def tool_available_for_context?(meta)
-        required = Array(meta["file_types"]).map { |ext| normalize_file_type(ext) }.compact
-        return true if required.empty?
-
-        active = active_file_types
-        return true if active.empty?
-
-        (required & active).any?
-      end
-
-      def active_file_types
-        sources = []
-        sources << @session.topic if @session.respond_to?(:topic)
-        sources.concat(Array(@session.respond_to?(:messages) ? @session.messages : nil).map { |msg| msg[:content] || msg["content"] })
-        sources.compact.flat_map do |text|
-          text.to_s.split(/\s+/).filter_map do |token|
-            cleaned = token.to_s.strip.delete_prefix("(").delete_suffix(")").delete_suffix(",").delete_suffix(".")
-            next unless cleaned.include?(".")
-
-            ext = File.extname(cleaned).downcase
-            next unless ext.match?(/\A\.[a-z][a-z0-9]*\z/i)
-
-            ext
-          end
-        end.uniq
-      end
-
-      def normalize_file_type(ext)
-        ext = ext.to_s.strip.downcase
-        return if ext.empty?
-
-        ext.start_with?(".") ? ext : ".#{ext}"
-      end
     end
   end
 end
