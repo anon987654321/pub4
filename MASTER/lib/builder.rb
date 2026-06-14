@@ -9,7 +9,7 @@ module Master
     SNAPSHOT_MAX_BYTES = 50_000
     SNAPSHOT_DIRS      = %w[bin lib data].freeze
 
-    TOOL_MAP = {.freeze
+    TOOL_MAP = {
       "ReadFile" => ->(r, i) {
         Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus]),
       },
