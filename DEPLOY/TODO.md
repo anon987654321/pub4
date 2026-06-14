@@ -319,11 +319,11 @@ Next: document in apps.yml cross-cutting, wire the concerns into the TV vertical
 - [ ] AN1616 scroll_into_view: `cable_ready.scroll_into_view(selector: "#new-message-#{id}", behavior: "smooth")` — auto-scroll to new chat message after CableReady append
 - [ ] AN1617 stimulus-sortable for outfit/playlist ordering: `data-controller="stimulus-sortable"` + `data-sortable-url-value="/outfits/:id/reorder"` — drag to reorder, PATCH persists order
 - [ ] AN1618 stimulus-tabs with deep linking: `data-controller="stimulus-tabs"` with URL hash sync; dating profile tabs (Photos/About/Interests) are bookmarkable and shareable
-- [ ] AN1619 stimulus-scroll-progress: `data-controller="stimulus-scroll-progress"` on article layout; shows reading progress bar at top; baibl verse reader, blognet articles
+- [x] AN1619 stimulus-scroll-progress: `data-controller="stimulus-scroll-progress"` on article layout; shows reading progress bar at top; baibl verse reader, blognet articles
 - [ ] AN1620 stimulus-content-loader for lazy sections: `data-controller="stimulus-content-loader" data-stimulus-content-loader-url-value="/section"` — load expensive sections after initial paint
 - [ ] AN1621 stimulus-places-autocomplete for location: `data-controller="stimulus-places-autocomplete"` on takeaway delivery address, hjerterom pickup address, marketplace location
-- [ ] AN1622 stimulus-animated-number for counters: `data-controller="stimulus-animated-number"` on vote counts, follower counts, impact stats; numbers count up on first view
-- [ ] AN1623 stimulus-timeago on all timestamps: replace all `time_ago_in_words` Ruby calls with `data-controller="stimulus-timeago"`; client-side live updating, no server round-trip
+- [x] AN1622 stimulus-animated-number for counters: `data-controller="stimulus-animated-number"` on vote counts, follower counts, impact stats; numbers count up on first view
+- [x] AN1623 stimulus-timeago on all timestamps: replace all `time_ago_in_words` Ruby calls with `data-controller="stimulus-timeago"`; client-side live updating, no server round-trip
 - [ ] AN1624 stimulus-rails-nested-form: `data-controller="stimulus-rails-nested-form"` for marketplace variant creation, recipe ingredient lists, portfolio item addition; add/remove dynamically
 - [ ] AN1625 stimulus-character-counter on all textareas: `data-controller="stimulus-character-counter" data-stimulus-character-counter-max-value="280"` — visible limit indicator
 

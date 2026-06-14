@@ -68,7 +68,7 @@
   <% if @reviews.any? %>
     <% @reviews.each do |r| %>
       <article>
-        <p>★<%= r.rating %> · <%= r.user&.display_name || "anon" %> · <%= time_ago_in_words(r.created_at) %> ago</p>
+        <p>★<%= r.rating %> · <%= r.user&.display_name || "anon" %> · <span data-controller="timeago"><%= time_ago_in_words(r.created_at) %> ago</span></p>
         <% if r.body.present? %><p class="dim"><%= r.body %></p><% end %>
       </article>
     <% end %>

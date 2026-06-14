@@ -8,7 +8,10 @@
   <% else %>
     <span>▲</span>
   <% end %>
-  <span data-controller="animated-number"><%= @post.score %></span>
+  <span data-controller="animated-number"
+        data-animated-number-start-value="0"
+        data-animated-number-end-value="<%= @post.score.to_i %>"
+        data-animated-number-duration-value="900"><%= @post.score %></span>
   <% if authenticated? %>
     <%= button_to "▼", post_vote_path(@post), params: { vote: { value: -1 } },
           class: ("active-down" if @post.downvoted_by?(Current.user)) %>

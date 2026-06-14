@@ -2,7 +2,7 @@
   <article>
     <header>
       <%= link_to post.user.email_address.split("@").first, user_path(post.user) %>
-      <time datetime="<%= post.created_at.iso8601 %>"><%= time_ago_in_words(post.created_at) %> ago</time>
+      <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %> ago</time>
     </header>
     <p><%= post.body %></p>
     <% if post.outfit %><p><em>Outfit: <%= link_to post.outfit.name, outfit_path(post.outfit) %></em></p><% end %>

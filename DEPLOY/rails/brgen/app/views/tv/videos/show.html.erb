@@ -25,10 +25,13 @@
 
 <article>
   <div class="chips">
-    <span class="chip"><%= pluralize(@video.views_count.to_i, "view") %></span>
+    <span class="chip"><span data-controller="animated-number"
+                             data-animated-number-start-value="0"
+                             data-animated-number-end-value="<%= @video.views_count.to_i %>"
+                             data-animated-number-duration-value="900"><%= @video.views_count.to_i %></span> views</span>
     <span class="chip"><%= @video.duration_formatted %></span>
     <span class="chip"><%= @video.status %></span>
-    <% if @video.published_at.present? %><span class="chip"><%= time_ago_in_words(@video.published_at) %> ago</span><% end %>
+    <% if @video.published_at.present? %><span class="chip"><span data-controller="timeago"><%= time_ago_in_words(@video.published_at) %> ago</span></span><% end %>
   </div>
   <% if @video.description.present? %>
     <p style="margin-top:12px"><%= simple_format(@video.description) %></p>
@@ -41,7 +44,16 @@
   <h2>Channel</h2>
   <article>
     <strong><%= link_to @video.channel.name, tv_channel_path(@video.channel) %></strong>
-    <p class="dim"><%= pluralize(@video.channel.subscribers_count.to_i, "subscriber") %> · <%= pluralize(@video.channel.total_views.to_i, "total view") %></p>
+    <p class="dim">
+      <span data-controller="animated-number"
+            data-animated-number-start-value="0"
+            data-animated-number-end-value="<%= @video.channel.subscribers_count.to_i %>"
+            data-animated-number-duration-value="900"><%= @video.channel.subscribers_count.to_i %></span> subscribers ·
+      <span data-controller="animated-number"
+            data-animated-number-start-value="0"
+            data-animated-number-end-value="<%= @video.channel.total_views.to_i %>"
+            data-animated-number-duration-value="900"><%= @video.channel.total_views.to_i %></span> total views
+    </p>
     <% if authenticated? && Current.user != @video.channel.user %>
       <% if @video.channel.subscriptions.exists?(user: Current.user) %>
         <%= button_to "Unsubscribe", unsubscribe_tv_channel_path(@video.channel), method: :delete, class: "btn btn-ghost btn-sm" %>

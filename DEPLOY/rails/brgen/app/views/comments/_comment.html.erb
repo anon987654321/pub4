@@ -2,7 +2,7 @@
 <article data-depth="<%= [comment.depth, 4].min %>">
   <header>
     <span><%= comment.user&.username || "anon" %></span>
-    <span> · <%= time_ago_in_words(comment.created_at) %> ago</span>
+    <span> · <span data-controller="timeago"><%= time_ago_in_words(comment.created_at) %> ago</span></span>
     <% if authenticated? %>
       ·
       <% root = comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable.commentable %>
