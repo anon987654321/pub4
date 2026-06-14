@@ -76,8 +76,8 @@ module Master
         }
       end
 
-      def dispatch_model(agent:, config:, metrics:, root:, ctx: nil)
-        arg = arg_for(ctx)
+      def dispatch_model(agent:, config:, metrics:, root:, ctx: nil, arg: nil)
+        arg = arg || arg_for(ctx)
         return list_models(root:, metrics:, agent:) if arg == "list"
         return "model: #{agent.model} (use /model list for available models)" if arg.empty?
         agent.model = arg; config.save!; "model: #{arg}"

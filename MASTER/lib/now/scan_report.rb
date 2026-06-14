@@ -55,7 +55,7 @@ module Master
             count: cluster.size,
             files: cluster.map { |v| v[:file] }.compact.uniq,
             lines: cluster.map { |v| v[:line] }.compact.uniq.sort,
-            confidence: confidences.empty? ? cluster.first[:confidence].to_f : confidences.sum / confidences.size.to_f,
+            confidence: confidences.empty? ? cluster.first[:confidence] : confidences.sum / confidences.size.to_f,
             impact_radius: impact_radius(cluster),
             why: cluster.first[:why] || default_why(cluster.first),
             genealogy: cluster.first[:genealogy] || default_genealogy(cluster.first)
@@ -122,6 +122,8 @@ module Master
 
       def confidence_histogram
         clustered_violations.each_with_object(Hash.new(0)) do |violation, buckets|
+          next if violation[:confidence].nil?
+
           conf = violation[:confidence].to_f
           label =
             if conf < 0.25 then "0.0-0.24"

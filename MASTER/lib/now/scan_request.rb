@@ -94,6 +94,19 @@ module Master
         self.class.workflow_profiles(path)
       end
 
+      def self.resolve_scan_profile(arg, root)
+        req = allocate
+        req.instance_variable_set(:@scanner, nil)
+        req.instance_variable_set(:@root, root)
+        req.instance_variable_set(:@arg, arg.to_s.strip)
+        req.instance_variable_set(:@depth, :deep)
+        _, profiles = req.send(:load_workflow_profiles)
+        first_word = arg.to_s.strip.split(/\s+/).first
+        return [nil, nil, nil] unless req.send(:canonical_profile, first_word, profiles)
+
+        req.send(:resolve_profile)
+      end
+
       def self.workflow_profiles(path)
         @workflow_profiles_cache ||= {}
         mtime = File.mtime(path).to_i

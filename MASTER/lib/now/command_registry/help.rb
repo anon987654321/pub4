@@ -12,7 +12,7 @@ module Master
         },
         "scan" => {
           summary: "deep-scan files or directories",
-          detail: ["/scan [--dry-run] [--profile NAME|profile] [path]", "Profiles: quick, full, axioms_only, solid_focus, critical. Dry-run reports findings without changes."]
+          detail: ["/scan [--dry-run] [profile] [path]", "Profiles: quick, full, axioms_only, solid_focus, critical. Use --profile NAME for explicit selection. Dry-run reports findings without changes."]
         },
         "self" => {
           summary: "scan MASTER itself",
@@ -71,21 +71,6 @@ module Master
           detail: ["/help", "/help <command>"]
         }
       }.freeze
-
-      def help_text(command = nil)
-        key = command.to_s.strip.sub(/\A\//, "")
-        return help_summary if key.empty?
-
-        topic = HELP_TOPICS[key]
-        return "help: unknown command /#{key}" unless topic
-
-        (["/#{key} - #{topic[:summary]}"] + topic[:detail]).join("\n")
-      end
-
-      def help_summary
-        lines = HELP_TOPICS.map { |cmd, topic| "/#{cmd} - #{topic[:summary]}" }
-        (lines + ["/help <command> - show details"]).join("\n")
-      end
 
       def help_text(command = nil)
         key = command.to_s.strip.sub(/\A\//, "")

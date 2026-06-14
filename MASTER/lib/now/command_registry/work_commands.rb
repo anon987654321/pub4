@@ -156,8 +156,8 @@ module Master
         Formatter.key_value_payload(pay)[0, 100]
       end
 
-      def dispatch_fix(fix_loop:, root:, ctx: nil)
-        arg = arg_for(ctx)
+      def dispatch_fix(fix_loop:, root:, ctx: nil, arg: nil)
+        arg = arg || arg_for(ctx)
         sub, rest = arg.split(/\s+/, 2)
         case sub
         when "--dry-run"
@@ -242,6 +242,15 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "command_registry.ungraphed_rules")
         []
+      end
+
+      def format_scan_results(pairs:, profile:, rule_filter:, severity_filter: nil, dry_run: false)
+        ScanReport.new(pairs: pairs, profile: profile, rule_filter: rule_filter,
+                       severity_filter: severity_filter, dry_run: dry_run).render
+      end
+
+      def resolve_scan_profile(arg, root)
+        ScanRequest.resolve_scan_profile(arg, root)
       end
 
       def dispatch_scan(scanner:, root:, ctx: nil)
