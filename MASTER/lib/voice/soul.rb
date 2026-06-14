@@ -22,7 +22,9 @@ module Master
       end
 
       # Wire the agent after construction (avoids circular dependency in build).
-      def wire_agent(agent) = @agent = agent
+      def wire_agent(agent)
+        @agent = agent
+      end
 
       def summary
         version = extract_version
@@ -151,7 +153,7 @@ module Master
                     "violations across multiple files and cycles:\n#{examples}\n" \
                     "Propose whether the codebase axioms or soul principles should acknowledge this pattern " \
                     "or whether the rule needs refinement."
-        propose(rationale, agent:)
+        propose(rationale, agent: agent)
       end
 
       private
@@ -182,7 +184,7 @@ module Master
       def measure_drift(old_doc, new_doc)
         absolute_changed = ABSOLUTE_PATTERNS.select { |p| old_doc.match?(p) && !new_doc.match?(p) }.map(&:source)
         protected_changed = PROTECTED_PATTERNS.select { |p| old_doc.match?(p) && !new_doc.match?(p) }.map(&:source)
-        { absolute_changed:, protected_changed: }
+        { absolute_changed: absolute_changed, protected_changed: protected_changed }
       end
     end
   end

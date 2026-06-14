@@ -22,33 +22,56 @@ module Master
         def visit_class_node(node)
           name = const_name(node.constant_path)
           fqn = qualified(name)
-          @symbols << Symbol.new(fqn:, type: :class, file: @file, line: node.location.start_line,
-                                 parent: node.superclass ? const_name(node.superclass) : "Object", includes: [])
+          @symbols << Symbol.new(
+            fqn: fqn,
+            type: :class,
+            file: @file,
+            line: node.location.start_line,
+            parent: node.superclass ? const_name(node.superclass) : "Object",
+            includes: []
+          )
           @scope.push(name); super; @scope.pop
         end
 
         def visit_module_node(node)
           name = const_name(node.constant_path)
           fqn = qualified(name)
-          @symbols << Symbol.new(fqn:, type: :module, file: @file, line: node.location.start_line,
-                                 parent: nil, includes: [])
+          @symbols << Symbol.new(
+            fqn: fqn,
+            type: :module,
+            file: @file,
+            line: node.location.start_line,
+            parent: nil,
+            includes: []
+          )
           @scope.push(name); super; @scope.pop
         end
 
         def visit_def_node(node)
           meth = node.name.to_s
           owner = @scope.last || "(top)"
-          @symbols << Symbol.new(fqn: "#{qualified(owner)}##{meth}", type: :method, file: @file,
-                                 line: node.location.start_line, parent: owner, includes: [])
+          @symbols << Symbol.new(
+            fqn: "#{qualified(owner)}##{meth}",
+            type: :method,
+            file: @file,
+            line: node.location.start_line,
+            parent: owner,
+            includes: []
+          )
           super
         end
 
         def visit_call_node(node)
           method_name = node.name.to_s
           return super unless method_name.match?(/\A[_a-z][a-z0-9_]*[!?]?\z/i) && method_name.length > 1
-          to_fqn = receiver_fqn ? "#{receiver_fqn}##{method_name}" : method_name
-          @references << Reference.new(from_file: @file, from_line: node.location.start_line,
-                                       to_fqn:, ref_type: :call)
+          receiver = receiver_name(node.receiver)
+          to_fqn = receiver ? "#{receiver}##{method_name}" : method_name
+          @references << Reference.new(
+            from_file: @file,
+            from_line: node.location.start_line,
+            to_fqn: to_fqn,
+            ref_type: :call
+          )
           super
         end
 
@@ -56,6 +79,18 @@ module Master
 
         def qualified(name)
           return name if @scope.empty? || name.include?("::")
+          (@scope + [name]).join("::")
+        end
+
+        def receiver_name(node)
+          case node
+          when Prism::SelfNode
+            @scope.join("::")
+          when Prism::ConstantReadNode, Prism::ConstantPathNode, Prism::ConstantPathTargetNode
+            const_name_safe(node)
+          else
+            nil
+          end
         end
 
         def const_name(node)
@@ -110,10 +145,21 @@ module Master
         self
       end
 
-      def ready?         = !@built_at.nil?
-      def wait_for_build = @build_thread&.join
-      def built?         = !@built_at.nil?
-      def size           = @lock.synchronize { @symbols.size }
+      def ready?
+        !@built_at.nil?
+      end
+
+      def wait_for_build
+        @build_thread&.join
+      end
+
+      def built?
+        !@built_at.nil?
+      end
+
+      def size
+        @lock.synchronize { @symbols.size }
+      end
 
       def reindex(file)
         @lock.synchronize do
@@ -145,7 +191,7 @@ module Master
           refs = references_for(fqn)
           files = refs.map(&:from_file).uniq.map { |f| relativize(f) }
           callers = refs.map { |r| "#{relativize(r.from_file)}:#{r.from_line}" }.uniq
-          { fqn:, reference_count: refs.size, files:, callers: }
+          { fqn: fqn, reference_count: refs.size, files: files, callers: callers }
         end
       end
 
@@ -226,13 +272,14 @@ module Master
       def find_locked(name)
         exact = @symbols[name]
         return [exact] if exact
+        suffix = name.to_s
         @symbols.values.select { |sym| fqn = sym.fqn; fqn.end_with?(suffix) || fqn.include?(suffix) }
       end
 
       def summary_class?(sym)
         return false unless %i[class module].include?(sym.type)
-        return false if file.include?("/DEPLOY/") || file.match?(/fix_|patch_/)
-        SUMMARY_SKIP_NAMES.none? { |n| fqn.end_with?("::#{n}") }
+        return false if sym.file.include?("/DEPLOY/") || sym.file.match?(/fix_|patch_/)
+        SUMMARY_SKIP_NAMES.none? { |n| sym.fqn.end_with?("::#{n}") }
       end
 
       def summary_classes
@@ -265,7 +312,7 @@ module Master
         parse_result = Prism.parse(src)
         return unless parse_result.success?
 
-        visitor = SymbolVisitor.new(file:, root: @root)
+        visitor = SymbolVisitor.new(file: file, root: @root)
         parse_result.value.accept(visitor)
         visitor.symbols.each { |s| @symbols[s.fqn] = s }
         @references.concat(visitor.references)

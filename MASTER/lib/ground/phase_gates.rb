@@ -151,11 +151,11 @@ module Master
         visiting = Set.new
         visited = Set.new
         cyclic = Set.new
-        graph.each_key { |node| visit_dependency(node, graph, visiting, visited, cyclic) }
+        graph.each_key { |node| visit_dependency(node, graph:, visiting:, visited:, cyclic:) }
         cyclic
       end
 
-      def visit_dependency(node, graph, visiting, visited, cyclic)
+      def visit_dependency(node, graph:, visiting:, visited:, cyclic:)
         return if visited.include?(node)
         if visiting.include?(node)
           cyclic << node
@@ -163,7 +163,7 @@ module Master
         end
 
         visiting << node
-        Array(graph[node]).map(&:to_s).each { |child| visit_dependency(child, graph, visiting, visited, cyclic) }
+        Array(graph[node]).map(&:to_s).each { |child| visit_dependency(child, graph:, visiting:, visited:, cyclic:) }
         visiting.delete(node)
         visited << node
       end

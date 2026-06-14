@@ -310,28 +310,28 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ### AO1: Typography — X.com (Chirp system)
 
-- [ ] AO101 Chirp fallback stack: `font-family: "Chirp", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif` — condensed grotesque; high x-height; use for all UI text in brgen (social app)
-- [ ] AO102 X body font size: 15px base with 1.3125rem on desktop (21px); mobile stays at 15px — study the density vs comfort balance
-- [ ] AO103 X tweet font-size: 17px / 1.4 line-height for tweet body text on desktop; 15px on mobile — matches reading distance ergonomics
-- [ ] AO104 X name typography: `font-weight: 700` for display name; `font-weight: 400` for @handle in muted color — weight contrast as hierarchy without size change
-- [ ] AO105 X metadata typography: timestamp, engagement counts at 13px / `color: rgb(113,118,123)` — tertiary information visually recedes without disappearing
-- [ ] AO106 X letter-spacing: near-zero; `letter-spacing: -0.01em` on bold display names only — grotesque type doesn't need tracking adjustment
+- [x] AO101 Chirp fallback stack: `font-family: "Chirp", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif` — condensed grotesque; high x-height; use for all UI text in brgen (social app)
+- [x] AO102 X body font size: 15px base with 1.3125rem on desktop (21px); mobile stays at 15px — study the density vs comfort balance
+- [x] AO103 X tweet font-size: 17px / 1.4 line-height for tweet body text on desktop; 15px on mobile — matches reading distance ergonomics
+- [x] AO104 X name typography: `font-weight: 700` for display name; `font-weight: 400` for @handle in muted color — weight contrast as hierarchy without size change
+- [x] AO105 X metadata typography: timestamp, engagement counts at 13px / `color: rgb(113,118,123)` — tertiary information visually recedes without disappearing
+- [x] AO106 X letter-spacing: near-zero; `letter-spacing: -0.01em` on bold display names only — grotesque type doesn't need tracking adjustment
 - [ ] AO107 X heading hierarchy: no traditional h1-h4; hierarchy entirely via `font-weight` (700/400) and color (primary/muted); tabs and section titles at 15px bold
-- [ ] AO108 X link style: `color: rgb(29,155,240)` (Twitter blue legacy) or `color: rgb(15,20,25)` with underline on hover; no underline at rest; learn the minimum affordance
-- [ ] AO109 X emoji rendering: `font-family: "Twemoji Mozilla", ...` for cross-platform emoji consistency; relevant for brgen's reaction system
+- [x] AO108 X link style: `color: rgb(29,155,240)` (Twitter blue legacy) or `color: rgb(15,20,25)` with underline on hover; no underline at rest; learn the minimum affordance
+- [x] AO109 X emoji rendering: `font-family: "Twemoji Mozilla", ...` for cross-platform emoji consistency; relevant for brgen's reaction system
 - [ ] AO110 X code/handle display: `font-family: monospace` only inside code blocks; @handles remain in Chirp stack — avoid mixing font families for inline @mentions
 
 ### AO2: Typography — Medium
 
-- [ ] AO201 Medium article body: `font-family: source-serif-4, Georgia, Cambria, "Times New Roman", serif` at 21px / 1.58 line-height — the gold standard for longform comfort
-- [ ] AO202 Medium heading: `font-family: medium-content-title-font, Georgia, Cambria, "Times New Roman", serif` at 42px bold on desktop; 32px mobile; dramatic scale contrast
-- [ ] AO203 Medium subheading: `font-size: 26px / font-weight: 600 / line-height: 1.4` — clear but subordinate to h1; uses same serif stack
-- [ ] AO204 Medium dropcap: first character of article body enlarged to 3 lines height; `float: left; font-size: 5em; line-height: 0.68; margin-right: 0.1em` — implement in blognet article view
-- [ ] AO205 Medium body paragraph spacing: `margin-bottom: 2em` between paragraphs — generous vertical rhythm; each paragraph breathes
-- [ ] AO206 Medium caption: `font-size: 13px / color: rgba(41,41,41,0.6) / font-style: italic` — image captions visually subordinate; implement for Active Storage attachment captions
+- [x] AO201 Medium article body: `font-family: source-serif-4, Georgia, Cambria, "Times New Roman", serif` at 21px / 1.58 line-height — the gold standard for longform comfort
+- [x] AO202 Medium heading: `font-family: medium-content-title-font, Georgia, Cambria, "Times New Roman", serif` at 42px bold on desktop; 32px mobile; dramatic scale contrast
+- [x] AO203 Medium subheading: `font-size: 26px / font-weight: 600 / line-height: 1.4` — clear but subordinate to h1; uses same serif stack
+- [x] AO204 Medium dropcap: first character of article body enlarged to 3 lines height; `float: left; font-size: 5em; line-height: 0.68; margin-right: 0.1em` — implement in blognet article view
+- [x] AO205 Medium body paragraph spacing: `margin-bottom: 2em` between paragraphs — generous vertical rhythm; each paragraph breathes
+- [x] AO206 Medium caption: `font-size: 13px / color: rgba(41,41,41,0.6) / font-style: italic` — image captions visually subordinate; implement for Active Storage attachment captions
 - [ ] AO207 Medium tag label: `font-size: 13px / font-weight: 500 / letter-spacing: 0.02em / text-transform: uppercase` — category pills with uppercase tracking
-- [ ] AO208 Medium reading time: `font-size: 14px / color: rgba(117,117,117,1)` next to author name; computed server-side, displayed as "7 min read"
-- [ ] AO209 Medium blockquote: `border-left: 3px solid #000; padding-left: 23px; font-style: italic; font-size: 22px` — strong typographic statement, implement in ActionText
+- [x] AO208 Medium reading time: `font-size: 14px / color: rgba(117,117,117,1)` next to author name; computed server-side, displayed as "7 min read"
+- [x] AO209 Medium blockquote: `border-left: 3px solid #000; padding-left: 23px; font-style: italic; font-size: 22px` — strong typographic statement, implement in ActionText
 - [ ] AO210 Medium pullquote: large centered quote at `font-size: 28px / line-height: 1.4 / text-align: center / max-width: 600px / margin: 2em auto` — highlight key insight
 
 ### AO3: Typography — Substack
@@ -433,16 +433,16 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ### AO10: Mobile-First Patterns
 
-- [ ] AO1001 X mobile bottom nav: 5 icons (Home, Search, Spaces, Notifications, Messages); fixed bottom; `height: 54px; border-top: 1px solid var(--border); background: var(--background); padding-bottom: env(safe-area-inset-bottom)`
-- [ ] AO1002 X mobile compose FAB: floating `+` button; `position: fixed; bottom: 70px; right: 16px; width: 54px; height: 54px; border-radius: 50%; background: var(--accent)` — always accessible compose
+- [x] AO1001 X mobile bottom nav: 5 icons (Home, Search, Spaces, Notifications, Messages); fixed bottom; `height: 54px; border-top: 1px solid var(--border); background: var(--background); padding-bottom: env(safe-area-inset-bottom)`
+- [x] AO1002 X mobile compose FAB: floating `+` button; `position: fixed; bottom: 70px; right: 16px; width: 54px; height: 54px; border-radius: 50%; background: var(--accent)` — always accessible compose
 - [ ] AO1003 X mobile swipe navigation: swipe right from left edge = open sidebar drawer; `transform: translateX(-100%)` drawer; `transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)`
 - [ ] AO1004 Medium mobile header: collapses to logo + hamburger menu; `transition: transform 0.3s` hide on scroll down, show on scroll up — smart header saves vertical space
-- [ ] AO1005 Medium mobile article: `padding: 0 20px; font-size: 18px; line-height: 1.6` — same font size as desktop, narrower container; comfortable on 375px viewport
+- [x] AO1005 Medium mobile article: `padding: 0 20px; font-size: 18px; line-height: 1.6` — same font size as desktop, narrower container; comfortable on 375px viewport
 - [ ] AO1006 Substack mobile nav: horizontal scrollable tab row; `overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch` — each section tab 64px minimum touch target
 - [ ] AO1007 New Yorker mobile adaptation: single column at 480px; hero image goes full-width; section labels become dropdown; large touch targets on nav items
 - [ ] AO1008 Mobile image optimization: `<picture>` element with WebP source + JPEG fallback; `sizes="(max-width: 768px) 100vw, 600px"` srcset; `loading="lazy"` on all below-fold images
 - [ ] AO1009 Mobile font scaling: `font-size: clamp(15px, 4vw, 19px)` for body text — scales smoothly between viewport sizes without media query breakpoints
-- [ ] AO1010 Mobile tap states: `-webkit-tap-highlight-color: transparent` globally; custom `:active` state with `background: rgba(0,0,0,0.05)` instead of browser default blue tap flash
+- [x] AO1010 Mobile tap states: `-webkit-tap-highlight-color: transparent` globally; custom `:active` state with `background: rgba(0,0,0,0.05)` instead of browser default blue tap flash
 
 ### AO11: Card and Feed Components
 
@@ -822,64 +822,64 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ### AR1: CSS Architecture and File Structure
 
-- [ ] AR101 CSS layer order: `@layer reset, tokens, base, layout, components, utilities, overrides` — explicit cascade layer declaration; later layers win; utilities always trump components; overrides for third-party
-- [ ] AR102 CSS reset: modern reset — `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }; img, video { display: block; max-width: 100% }; input, button, textarea, select { font: inherit }` — minimal, predictable base
-- [ ] AR103 Logical properties throughout: `margin-inline-start` not `margin-left`; `padding-block-end` not `padding-bottom`; `inset-inline-end` not `right`; prepares for RTL support without CSS rewrite
-- [ ] AR104 Custom property scope: global tokens on `:root`; component tokens on component root selector `[data-component="card"] { --card-padding: var(--space-4) }`; never leak component variables to global scope
-- [ ] AR105 No `!important` policy: forbidden except in utility classes (intentionally highest specificity) and `prefers-reduced-motion` overrides; if `!important` is needed elsewhere, specificity architecture is wrong
-- [ ] AR106 Selector specificity budget: maximum two-class selector depth `.card .card-title`; never three `.nav .menu .item`; ID selectors forbidden in component CSS; only on single layout anchors
-- [ ] AR107 CSS file per component: one file per component (post-card.css, nav.css, btn.css); imported via `@import` in application.css; each file ≤150 lines before splitting
-- [ ] AR108 Design token file: `tokens.css` imported first; defines all `--` custom properties; this file is the contract between design and engineering; never modify without design review
+- [x] AR101 CSS layer order: `@layer reset, tokens, base, layout, components, utilities, overrides` — explicit cascade layer declaration; later layers win; utilities always trump components; overrides for third-party
+- [x] AR102 CSS reset: modern reset — `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }; img, video { display: block; max-width: 100% }; input, button, textarea, select { font: inherit }` — minimal, predictable base
+- [x] AR103 Logical properties throughout: `margin-inline-start` not `margin-left`; `padding-block-end` not `padding-bottom`; `inset-inline-end` not `right`; prepares for RTL support without CSS rewrite
+- [x] AR104 Custom property scope: global tokens on `:root`; component tokens on component root selector `[data-component="card"] { --card-padding: var(--space-4) }`; never leak component variables to global scope
+- [x] AR105 No `!important` policy: forbidden except in utility classes (intentionally highest specificity) and `prefers-reduced-motion` overrides; if `!important` is needed elsewhere, specificity architecture is wrong
+- [x] AR106 Selector specificity budget: maximum two-class selector depth `.card .card-title`; never three `.nav .menu .item`; ID selectors forbidden in component CSS; only on single layout anchors
+- [x] AR107 CSS file per component: one file per component (post-card.css, nav.css, btn.css); imported via `@import` in application.css; each file ≤150 lines before splitting
+- [x] AR108 Design token file: `tokens.css` imported first; defines all `--` custom properties; this file is the contract between design and engineering; never modify without design review
 - [ ] AR109 Component isolation: every component CSS block opens with the component's root class; all descendant selectors scoped within; `postCard { &-title { } &-meta { } }` using CSS nesting
-- [ ] AR110 Utility classes: generate spacing utilities `mt-1` through `mt-16`, `px-1` through `px-16` from token scale; typography utilities `text-sm`, `text-base`, `text-lg`; color utilities `text-primary`, `bg-surface`
+- [x] AR110 Utility classes: generate spacing utilities `mt-1` through `mt-16`, `px-1` through `px-16` from token scale; typography utilities `text-sm`, `text-base`, `text-lg`; color utilities `text-primary`, `bg-surface`
 
 ### AR2: Grid and Layout Implementation
 
-- [ ] AR201 App shell layout: `display: grid; grid-template-areas: "sidebar main aside"; grid-template-columns: var(--sidebar-width, 240px) 1fr var(--aside-width, 320px); min-height: 100dvh` — named areas for clarity
-- [ ] AR202 Mobile layout: `@media (max-width: 768px) { grid-template-areas: "main"; grid-template-columns: 1fr; }` sidebar and aside hidden; main fills viewport
-- [ ] AR203 Content column constraint: `max-width: var(--content-max-width, 680px); margin-inline: auto; padding-inline: var(--content-padding, clamp(16px, 5vw, 48px))` — fluid padding that collapses gracefully
-- [ ] AR204 Card grid: `display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width, 280px), 1fr)); gap: var(--grid-gap, 24px)` — no media queries; cards reflow automatically
-- [ ] AR205 Sticky sidebar: `position: sticky; top: var(--header-height, 56px); height: calc(100dvh - var(--header-height, 56px)); overflow-y: auto; overscroll-behavior: contain` — sidebar scrolls independently
+- [x] AR201 App shell layout: `display: grid; grid-template-areas: "sidebar main aside"; grid-template-columns: var(--sidebar-width, 240px) 1fr var(--aside-width, 320px); min-height: 100dvh` — named areas for clarity
+- [x] AR202 Mobile layout: `@media (max-width: 768px) { grid-template-areas: "main"; grid-template-columns: 1fr; }` sidebar and aside hidden; main fills viewport
+- [x] AR203 Content column constraint: `max-width: var(--content-max-width, 680px); margin-inline: auto; padding-inline: var(--content-padding, clamp(16px, 5vw, 48px))` — fluid padding that collapses gracefully
+- [x] AR204 Card grid: `display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width, 280px), 1fr)); gap: var(--grid-gap, 24px)` — no media queries; cards reflow automatically
+- [x] AR205 Sticky sidebar: `position: sticky; top: var(--header-height, 56px); height: calc(100dvh - var(--header-height, 56px)); overflow-y: auto; overscroll-behavior: contain` — sidebar scrolls independently
 - [ ] AR206 Split view: `display: grid; grid-template-columns: 1fr 1fr; height: 100dvh; overflow: hidden` — each side `overflow-y: auto`; for baibl parallel translations, amber outfit vs wardrobe
 - [ ] AR207 Masonry layout: CSS `columns: 2; column-gap: var(--space-4); column-fill: balance` + `break-inside: avoid` on cards; falls back to single column on narrow viewport; amber moodboard, medium-style feeds
 - [ ] AR208 Magazine layout: `grid-template-areas` named grid; hero article spans full width (`grid-column: 1 / -1`); secondary articles in 3-column row below; tertiary in 4-column row; New Yorker pattern
-- [ ] AR209 Full-bleed within constraint: `.full-bleed { width: 100vw; margin-inline: calc(50% - 50vw) }` — makes element break out of content column without absolute positioning; for hero images in articles
+- [x] AR209 Full-bleed within constraint: `.full-bleed { width: 100vw; margin-inline: calc(50% - 50vw) }` — makes element break out of content column without absolute positioning; for hero images in articles
 - [ ] AR210 Subgrid: `display: subgrid; grid-row: span 4` — card children participate in parent grid; card titles align across all cards in a row without fixed heights; bleeding-edge but widely supported 2025+
 
 ### AR3: Typography Implementation Details
 
-- [ ] AR301 Variable font loading: `@font-face { font-family: "Inter"; src: url("inter-variable.woff2") format("woff2-variations"); font-weight: 100 900; font-display: swap; font-style: normal }`
-- [ ] AR302 Font size fluid scale: `--text-xs: clamp(11px, 1.5vw, 13px); --text-sm: clamp(13px, 1.8vw, 15px); --text-base: clamp(15px, 2.2vw, 17px); --text-lg: clamp(17px, 2.5vw, 20px); --text-xl: clamp(20px, 3vw, 24px); --text-2xl: clamp(24px, 4vw, 32px); --text-3xl: clamp(32px, 5vw, 48px)`
-- [ ] AR303 Prose styles: `.prose { font-size: var(--text-lg); line-height: 1.6; max-width: 68ch } .prose h2 { font-size: var(--text-2xl); margin-block: 1.5em 0.5em } .prose p { margin-bottom: 1.25em } .prose ul, ol { padding-inline-start: 1.5em; margin-bottom: 1.25em }` — single class for all longform content
-- [ ] AR304 Code blocks: `.code { font-family: var(--font-mono); font-size: 0.875em; background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-1) var(--space-2); white-space: pre-wrap; overflow-x: auto; tab-size: 2 }`
-- [ ] AR305 Blockquote: `blockquote { border-inline-start: 3px solid var(--color-midtone); padding-inline-start: var(--space-4); margin-block: var(--space-6); font-style: italic; color: var(--text-secondary) }` — left border treatment from Medium
-- [ ] AR306 Footnotes: `.footnote-ref { font-size: 0.75em; vertical-align: super; line-height: 0; color: var(--color-midtone) }` — superscript numbers that scroll to footnote section; :target pseudo highlights referenced footnote
-- [ ] AR307 Drop cap: `.prose > p:first-of-type::first-letter { font-size: 3.5em; float: left; line-height: 0.8; margin-inline-end: 0.1em; margin-block-end: -0.1em; font-weight: 700; color: var(--color-shadow) }` — Medium-style; blognet articles only
-- [ ] AR308 Reading width enforcement: `@container (min-width: 900px) { .prose { max-width: 68ch } }` — container queries ensure reading width constraint applies to the content box, not the viewport
-- [ ] AR309 Orphan/widow prevention: `p { text-wrap: balance }` on headings and short paragraphs; `orphans: 2; widows: 2` on long paragraphs in print styles; CSS Text Level 4
-- [ ] AR310 Text selection style: `::selection { background: var(--color-midtone-200); color: var(--color-shadow) }` — branded selection color matching app midtone; subtle, not jarring
+- [x] AR301 Variable font loading: `@font-face { font-family: "Inter"; src: url("inter-variable.woff2") format("woff2-variations"); font-weight: 100 900; font-display: swap; font-style: normal }`
+- [x] AR302 Font size fluid scale: `--text-xs: clamp(11px, 1.5vw, 13px); --text-sm: clamp(13px, 1.8vw, 15px); --text-base: clamp(15px, 2.2vw, 17px); --text-lg: clamp(17px, 2.5vw, 20px); --text-xl: clamp(20px, 3vw, 24px); --text-2xl: clamp(24px, 4vw, 32px); --text-3xl: clamp(32px, 5vw, 48px)`
+- [x] AR303 Prose styles: `.prose { font-size: var(--text-lg); line-height: 1.6; max-width: 68ch } .prose h2 { font-size: var(--text-2xl); margin-block: 1.5em 0.5em } .prose p { margin-bottom: 1.25em } .prose ul, ol { padding-inline-start: 1.5em; margin-bottom: 1.25em }` — single class for all longform content
+- [x] AR304 Code blocks: `.code { font-family: var(--font-mono); font-size: 0.875em; background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-1) var(--space-2); white-space: pre-wrap; overflow-x: auto; tab-size: 2 }`
+- [x] AR305 Blockquote: `blockquote { border-inline-start: 3px solid var(--color-midtone); padding-inline-start: var(--space-4); margin-block: var(--space-6); font-style: italic; color: var(--text-secondary) }` — left border treatment from Medium
+- [x] AR306 Footnotes: `.footnote-ref { font-size: 0.75em; vertical-align: super; line-height: 0; color: var(--color-midtone) }` — superscript numbers that scroll to footnote section; :target pseudo highlights referenced footnote
+- [x] AR307 Drop cap: `.prose > p:first-of-type::first-letter { font-size: 3.5em; float: left; line-height: 0.8; margin-inline-end: 0.1em; margin-block-end: -0.1em; font-weight: 700; color: var(--color-shadow) }` — Medium-style; blognet articles only
+- [x] AR308 Reading width enforcement: `@container (min-width: 900px) { .prose { max-width: 68ch } }` — container queries ensure reading width constraint applies to the content box, not the viewport
+- [x] AR309 Orphan/widow prevention: `p { text-wrap: balance }` on headings and short paragraphs; `orphans: 2; widows: 2` on long paragraphs in print styles; CSS Text Level 4
+- [x] AR310 Text selection style: `::selection { background: var(--color-midtone-200); color: var(--color-shadow) }` — branded selection color matching app midtone; subtle, not jarring
 
 ### AR4: Color Implementation Patterns
 
-- [ ] AR401 Dark mode via data attribute: `[data-theme="dark"] { --color-background: ...; --color-text: ... }` — all dark mode overrides in one block; trivial to add new dark theme
-- [ ] AR402 System preference + manual: `:root { color-scheme: light dark }` + `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { ... } }` — system preference wins unless user explicitly chose light
-- [ ] AR403 Transparent color: `--color-overlay: rgb(0 0 0 / 0.5)` using space-separated RGB — modern syntax; `/ alpha` notation; more readable than `rgba(0, 0, 0, 0.5)`
-- [ ] AR404 Color-mix for tints: `color-mix(in srgb, var(--color-midtone) 20%, white)` — derive tints without pre-computing; dynamic; changes when midtone changes; use for hover backgrounds
-- [ ] AR405 High contrast mode: `@media (prefers-contrast: high) { :root { --color-border: var(--color-shadow); --text-secondary: var(--text-primary) } }` — automatically adapt for users needing higher contrast
-- [ ] AR406 Forced colors mode: `@media (forced-colors: active) { .btn { border: 2px solid ButtonText } }` — Windows High Contrast mode; maintain usability without custom colors
-- [ ] AR407 P3 color gamut: `@media (color-gamut: p3) { :root { --color-midtone: color(display-p3 0.1 0.45 0.9) } }` — wider gamut on supported displays; falls back to sRGB; more vibrant accent colors
+- [x] AR401 Dark mode via data attribute: `[data-theme="dark"] { --color-background: ...; --color-text: ... }` — all dark mode overrides in one block; trivial to add new dark theme
+- [x] AR402 System preference + manual: `:root { color-scheme: light dark }` + `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { ... } }` — system preference wins unless user explicitly chose light
+- [x] AR403 Transparent color: `--color-overlay: rgb(0 0 0 / 0.5)` using space-separated RGB — modern syntax; `/ alpha` notation; more readable than `rgba(0, 0, 0, 0.5)`
+- [x] AR404 Color-mix for tints: `color-mix(in srgb, var(--color-midtone) 20%, white)` — derive tints without pre-computing; dynamic; changes when midtone changes; use for hover backgrounds
+- [x] AR405 High contrast mode: `@media (prefers-contrast: high) { :root { --color-border: var(--color-shadow); --text-secondary: var(--text-primary) } }` — automatically adapt for users needing higher contrast
+- [x] AR406 Forced colors mode: `@media (forced-colors: active) { .btn { border: 2px solid ButtonText } }` — Windows High Contrast mode; maintain usability without custom colors
+- [x] AR407 P3 color gamut: `@media (color-gamut: p3) { :root { --color-midtone: color(display-p3 0.1 0.45 0.9) } }` — wider gamut on supported displays; falls back to sRGB; more vibrant accent colors
 - [ ] AR408 Semantic color naming: never `--red`, `--green`, `--blue`; always `--color-danger`, `--color-success`, `--color-info`; semantic meaning survives dark mode and rebrand
-- [ ] AR409 Gradient tokens: `--gradient-hero: linear-gradient(135deg, var(--color-shadow) 0%, var(--color-midtone) 100%)`; `--gradient-card-scrim: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)` — reusable gradient definitions
-- [ ] AR410 Border color opacity: `border-color: rgb(from var(--color-shadow) r g b / 0.15)` — relative color syntax; border is shadow-hued but translucent; updates automatically when shadow color changes
+- [x] AR409 Gradient tokens: `--gradient-hero: linear-gradient(135deg, var(--color-shadow) 0%, var(--color-midtone) 100%)`; `--gradient-card-scrim: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)` — reusable gradient definitions
+- [x] AR410 Border color opacity: `border-color: rgb(from var(--color-shadow) r g b / 0.15)` — relative color syntax; border is shadow-hued but translucent; updates automatically when shadow color changes
 
 ### AR5: Animation Implementation
 
-- [ ] AR501 Keyframe library: define all app keyframes in `animations.css` — `@keyframes fadeIn`, `slideInUp`, `slideInRight`, `scaleIn`, `shimmer`, `heartbeat`, `spin`, `bounce`; import once; reference everywhere
-- [ ] AR502 Animation utility classes: `.animate-fade-in { animation: fadeIn var(--duration-standard) var(--ease-decelerate) both }` etc. — apply to elements; `animation-fill-mode: both` handles pre/post states
-- [ ] AR503 Animation delay utilities: `[style="--delay: 1"] { animation-delay: calc(1 * 40ms) }` — arbitrary delay via inline style custom property; enables staggered lists from HTML without JS
+- [x] AR501 Keyframe library: define all app keyframes in `animations.css` — `@keyframes fadeIn`, `slideInUp`, `slideInRight`, `scaleIn`, `shimmer`, `heartbeat`, `spin`, `bounce`; import once; reference everywhere
+- [x] AR502 Animation utility classes: `.animate-fade-in { animation: fadeIn var(--duration-standard) var(--ease-decelerate) both }` etc. — apply to elements; `animation-fill-mode: both` handles pre/post states
+- [x] AR503 Animation delay utilities: `[style="--delay: 1"] { animation-delay: calc(1 * 40ms) }` — arbitrary delay via inline style custom property; enables staggered lists from HTML without JS
 - [ ] AR504 View transitions API: `document.startViewTransition(() => updateDOM())` — browser-native cross-document animations; Rails 8 Turbo 8 has native support; `::view-transition-old(root)` and `::view-transition-new(root)` for custom cross-fade
 - [ ] AR505 CSS scroll timeline: `@scroll-timeline reading-progress { source: selector(#article); start: 0%; end: 100% }; .progress-bar { animation: progress-grow auto linear; animation-timeline: reading-progress }` — reading progress bar without JS
-- [ ] AR506 Container query animations: `@container (min-width: 600px) { .card { animation: expandLayout var(--duration-standard) var(--ease-standard) } }` — animate layout changes driven by container width not viewport
+- [x] AR506 Container query animations: `@container (min-width: 600px) { .card { animation: expandLayout var(--duration-standard) var(--ease-standard) } }` — animate layout changes driven by container width not viewport
 - [ ] AR507 CSS paint worklet: `CSS.paintWorklet.addModule("hatch-fill.js")` for custom painted backgrounds (amber item cards could have subtle fabric texture via CSS Houdini paint worklet)
 - [ ] AR508 will-change budgeting: `will-change: transform` only on elements actively animating; remove after animation ends via JS; never apply globally; GPU layers are expensive
 - [ ] AR509 transform-origin for card animations: `transform-origin: center bottom` for dating swipe cards (rotate around bottom center, like holding a card); `transform-origin: center` for likes/hearts
@@ -888,53 +888,53 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 ### AR6: Component CSS Patterns
 
 - [ ] AR601 BEM-lite naming: `.card`, `.card__title`, `.card__meta`, `.card--featured`; block, element (double underscore), modifier (double dash); max depth 2 elements; never `.card__header__title`
-- [ ] AR602 Data attribute styling: `[data-state="active"]`, `[data-variant="danger"]`, `[data-size="sm"]` — Stimulus-friendly; HTML attributes as API; CSS selects on state without class toggling
+- [x] AR602 Data attribute styling: `[data-state="active"]`, `[data-variant="danger"]`, `[data-size="sm"]` — Stimulus-friendly; HTML attributes as API; CSS selects on state without class toggling
 - [ ] AR603 :has() for parent selection: `.card:has(img) { grid-template-rows: auto 1fr }` — add image grid row only when image is present; eliminates JS-based conditional class toggling
-- [ ] AR604 :is() specificity flattening: `:is(h1, h2, h3, h4) { ... }` — specificity of highest-specificity argument in list; use for typography resets across heading levels
-- [ ] AR605 :where() for zero-specificity: `:where(.prose) h2 { ... }` — zero specificity; easily overridden by any consumer; good for base component styles that should be customizable
-- [ ] AR606 Aspect ratio boxes: `.embed-container { aspect-ratio: 16/9; position: relative; overflow: hidden } .embed-container > * { position: absolute; inset: 0; width: 100%; height: 100% }` — replaces padding-top hack
-- [ ] AR607 Fluid images: `img { max-width: 100%; height: auto; display: block }` as reset; `object-fit: cover` on sized containers; never explicit width/height except on avatar circles
-- [ ] AR608 Sticky table headers: `thead th { position: sticky; top: 0; background: var(--color-background); z-index: var(--z-raised) }` — data tables in admin views and bsdports comparison
-- [ ] AR609 Overflow menu: horizontal nav with `::-webkit-scrollbar { display: none }` + `scrollbar-width: none` — invisible scrollbar but still scrollable; tags row in brgen feed header
-- [ ] AR610 Clamp lines: `.truncate-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }` utility; `.truncate-3` with 3; apply to card titles and excerpts
+- [x] AR604 :is() specificity flattening: `:is(h1, h2, h3, h4) { ... }` — specificity of highest-specificity argument in list; use for typography resets across heading levels
+- [x] AR605 :where() for zero-specificity: `:where(.prose) h2 { ... }` — zero specificity; easily overridden by any consumer; good for base component styles that should be customizable
+- [x] AR606 Aspect ratio boxes: `.embed-container { aspect-ratio: 16/9; position: relative; overflow: hidden } .embed-container > * { position: absolute; inset: 0; width: 100%; height: 100% }` — replaces padding-top hack
+- [x] AR607 Fluid images: `img { max-width: 100%; height: auto; display: block }` as reset; `object-fit: cover` on sized containers; never explicit width/height except on avatar circles
+- [x] AR608 Sticky table headers: `thead th { position: sticky; top: 0; background: var(--color-background); z-index: var(--z-raised) }` — data tables in admin views and bsdports comparison
+- [x] AR609 Overflow menu: horizontal nav with `::-webkit-scrollbar { display: none }` + `scrollbar-width: none` — invisible scrollbar but still scrollable; tags row in brgen feed header
+- [x] AR610 Clamp lines: `.truncate-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }` utility; `.truncate-3` with 3; apply to card titles and excerpts
 
 ### AR7: Form Styling Implementation
 
-- [ ] AR701 Input group: `.input-group { position: relative } .input-group__icon { position: absolute; inset-inline-start: var(--space-3); top: 50%; transform: translateY(-50%); color: var(--text-tertiary) } .input-group__input { padding-inline-start: calc(var(--space-3) * 2 + 20px) }` — icon inside input, never outside
-- [ ] AR702 Floating label: `input:not(:placeholder-shown) + label, input:focus + label { transform: translateY(-1.5em) scale(0.85); color: var(--color-midtone) }` — label floats above on fill; zero JS; CSS-only
-- [ ] AR703 Toggle/switch: `input[type="checkbox"].toggle { width: 44px; height: 26px; appearance: none; background: var(--color-border); border-radius: 9999px; transition: background var(--duration-fast) } input[type="checkbox"].toggle:checked { background: var(--color-midtone) }` — pill toggle without JS
-- [ ] AR704 Radio card: `input[type="radio"]:checked + label { border-color: var(--color-midtone); background: var(--color-midtone-50) }` — visually selectable card options for dating preferences, amber style profiles
-- [ ] AR705 File drop zone: `.dropzone { border: 2px dashed var(--color-border); border-radius: var(--radius-lg); padding: var(--space-8); text-align: center; transition: all var(--duration-fast) } .dropzone.drag-over { border-color: var(--color-midtone); background: var(--color-midtone-50) }` — `drag-over` class toggled by Stimulus
-- [ ] AR706 Progress indicator: `progress { appearance: none; width: 100%; height: 4px; border-radius: 9999px; background: var(--color-border) } progress::-webkit-progress-bar { background: var(--color-border) } progress::-webkit-progress-value { background: var(--color-midtone); border-radius: 9999px }` — cross-browser styled progress
-- [ ] AR707 Star rating: `input[type="radio"].star:checked ~ .star, input[type="radio"].star:checked { color: var(--color-accent) }` — reverse-DOM star trick; CSS-only; accessible with labels
-- [ ] AR708 Inline errors: `.field-error { font-size: var(--text-sm); color: var(--color-danger); margin-block-start: var(--space-1); display: flex; align-items: center; gap: var(--space-1) }` + error icon SVG via CSS `::before`
-- [ ] AR709 Form section divider: `fieldset { border: none; padding: 0; margin: 0 } legend { font-size: var(--text-sm); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-bottom: var(--space-4) }` — semantic fieldset, styled legend
+- [x] AR701 Input group: `.input-group { position: relative } .input-group__icon { position: absolute; inset-inline-start: var(--space-3); top: 50%; transform: translateY(-50%); color: var(--text-tertiary) } .input-group__input { padding-inline-start: calc(var(--space-3) * 2 + 20px) }` — icon inside input, never outside
+- [x] AR702 Floating label: `input:not(:placeholder-shown) + label, input:focus + label { transform: translateY(-1.5em) scale(0.85); color: var(--color-midtone) }` — label floats above on fill; zero JS; CSS-only
+- [x] AR703 Toggle/switch: `input[type="checkbox"].toggle { width: 44px; height: 26px; appearance: none; background: var(--color-border); border-radius: 9999px; transition: background var(--duration-fast) } input[type="checkbox"].toggle:checked { background: var(--color-midtone) }` — pill toggle without JS
+- [x] AR704 Radio card: `input[type="radio"]:checked + label { border-color: var(--color-midtone); background: var(--color-midtone-50) }` — visually selectable card options for dating preferences, amber style profiles
+- [x] AR705 File drop zone: `.dropzone { border: 2px dashed var(--color-border); border-radius: var(--radius-lg); padding: var(--space-8); text-align: center; transition: all var(--duration-fast) } .dropzone.drag-over { border-color: var(--color-midtone); background: var(--color-midtone-50) }` — `drag-over` class toggled by Stimulus
+- [x] AR706 Progress indicator: `progress { appearance: none; width: 100%; height: 4px; border-radius: 9999px; background: var(--color-border) } progress::-webkit-progress-bar { background: var(--color-border) } progress::-webkit-progress-value { background: var(--color-midtone); border-radius: 9999px }` — cross-browser styled progress
+- [x] AR707 Star rating: `input[type="radio"].star:checked ~ .star, input[type="radio"].star:checked { color: var(--color-accent) }` — reverse-DOM star trick; CSS-only; accessible with labels
+- [x] AR708 Inline errors: `.field-error { font-size: var(--text-sm); color: var(--color-danger); margin-block-start: var(--space-1); display: flex; align-items: center; gap: var(--space-1) }` + error icon SVG via CSS `::before`
+- [x] AR709 Form section divider: `fieldset { border: none; padding: 0; margin: 0 } legend { font-size: var(--text-sm); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-bottom: var(--space-4) }` — semantic fieldset, styled legend
 
 ### AR8: Responsive Patterns
 
-- [ ] AR801 Mobile-first breakpoint system: `--bp-sm: 480px; --bp-md: 768px; --bp-lg: 1024px; --bp-xl: 1280px; --bp-2xl: 1536px`; always `@media (min-width: ...)` not `max-width` — mobile base, enhance up
-- [ ] AR802 Container queries for components: `@container (min-width: 400px) { .card { flex-direction: row } }` — card layout responds to its container width, not viewport; cards reflow correctly in sidebar and main
-- [ ] AR803 Container type declaration: `.card-grid { container-type: inline-size; container-name: grid }` — enables `@container grid (min-width: ...)` rules on descendants
-- [ ] AR804 Responsive navigation strategy: hamburger menu at mobile only — avoid hamburger on tablet+; use horizontal scrollable nav or visible condensed nav instead of hiding behind burger
-- [ ] AR805 Fluid spacing: `padding: clamp(16px, 4vw, 48px)` on major sections — no discrete breakpoints; spacing scales continuously; feels naturally proportioned at any width
-- [ ] AR806 Image srcset: `<%= image_tag @post.image, srcset: { small_url => "400w", medium_url => "800w", large_url => "1200w" }, sizes: "(max-width: 768px) 100vw, 800px" %>` — Rails helper for responsive images
-- [ ] AR807 Print styles: `@media print { .sidebar, .nav, .btn { display: none } .prose { max-width: 100%; font-size: 12pt } a[href]::after { content: " (" attr(href) ")" } }` — articles printable; blognet, baibl
-- [ ] AR808 `dvh` for full-screen: `height: 100dvh` instead of `100vh`; dynamic viewport height excludes mobile browser chrome; no content hidden under address bar or bottom toolbar
-- [ ] AR809 `svh` for stable fullscreen: `height: 100svh` for elements that should not resize when mobile browser chrome shows/hides; modals and overlays use `svh`
-- [ ] AR810 Intrinsic sizing: `width: fit-content` on badge/chip elements; `width: min-content` on narrow column headers; `width: max-content` on tooltip text — never hardcode widths on text containers
+- [x] AR801 Mobile-first breakpoint system: `--bp-sm: 480px; --bp-md: 768px; --bp-lg: 1024px; --bp-xl: 1280px; --bp-2xl: 1536px`; always `@media (min-width: ...)` not `max-width` — mobile base, enhance up
+- [x] AR802 Container queries for components: `@container (min-width: 400px) { .card { flex-direction: row } }` — card layout responds to its container width, not viewport; cards reflow correctly in sidebar and main
+- [x] AR803 Container type declaration: `.card-grid { container-type: inline-size; container-name: grid }` — enables `@container grid (min-width: ...)` rules on descendants
+- [x] AR804 Responsive navigation strategy: hamburger menu at mobile only — avoid hamburger on tablet+; use horizontal scrollable nav or visible condensed nav instead of hiding behind burger
+- [x] AR805 Fluid spacing: `padding: clamp(16px, 4vw, 48px)` on major sections — no discrete breakpoints; spacing scales continuously; feels naturally proportioned at any width
+- [x] AR806 Image srcset: `<%= image_tag @post.image, srcset: { small_url => "400w", medium_url => "800w", large_url => "1200w" }, sizes: "(max-width: 768px) 100vw, 800px" %>` — Rails helper for responsive images
+- [x] AR807 Print styles: `@media print { .sidebar, .nav, .btn { display: none } .prose { max-width: 100%; font-size: 12pt } a[href]::after { content: " (" attr(href) ")" } }` — articles printable; blognet, baibl
+- [x] AR808 `dvh` for full-screen: `height: 100dvh` instead of `100vh`; dynamic viewport height excludes mobile browser chrome; no content hidden under address bar or bottom toolbar
+- [x] AR809 `svh` for stable fullscreen: `height: 100svh` for elements that should not resize when mobile browser chrome shows/hides; modals and overlays use `svh`
+- [x] AR810 Intrinsic sizing: `width: fit-content` on badge/chip elements; `width: min-content` on narrow column headers; `width: max-content` on tooltip text — never hardcode widths on text containers
 
 ### AR9: Performance-Oriented CSS
 
-- [ ] AR901 Contain property: `contain: content` on feed items — isolates paint, layout, style; browser skips these items when unrelated DOM changes; critical for long feeds
-- [ ] AR902 content-visibility: `content-visibility: auto; contain-intrinsic-size: 0 200px` on off-screen cards — browser skips rendering; 50px scroll = 10× rendering performance improvement on long lists
-- [ ] AR903 will-change restriction: applied only within `@keyframes` animation or Stimulus controller's `connect()`, removed in `disconnect()`; browser allocates GPU memory only while needed
-- [ ] AR904 Layer promotion: `transform: translateZ(0)` on the scrolling feed container — promotes to compositor layer; scroll handled by GPU not CPU; eliminates scroll jank on low-end devices
-- [ ] AR905 Font-display: `font-display: optional` for decorative fonts (brand font in headers); `font-display: swap` for body text; never `font-display: block` which causes invisible text
-- [ ] AR906 Critical CSS extraction: above-the-fold CSS (header, hero, first fold of feed) inlined in `<style>` tag via build step; deferred stylesheet covers below-fold; eliminates render-blocking CSS
-- [ ] AR907 CSS-only dark mode switch: `<input type="checkbox" id="dark-toggle"> <label for="dark-toggle">` + `#dark-toggle:checked ~ * { --color-background: ... }` — no JavaScript needed for theme toggle; preference stored in localStorage by tiny JS snippet only for persistence
+- [x] AR901 Contain property: `contain: content` on feed items — isolates paint, layout, style; browser skips these items when unrelated DOM changes; critical for long feeds
+- [x] AR902 content-visibility: `content-visibility: auto; contain-intrinsic-size: 0 200px` on off-screen cards — browser skips rendering; 50px scroll = 10× rendering performance improvement on long lists
+- [x] AR903 will-change restriction: applied only within `@keyframes` animation or Stimulus controller's `connect()`, removed in `disconnect()`; browser allocates GPU memory only while needed
+- [x] AR904 Layer promotion: `transform: translateZ(0)` on the scrolling feed container — promotes to compositor layer; scroll handled by GPU not CPU; eliminates scroll jank on low-end devices
+- [x] AR905 Font-display: `font-display: optional` for decorative fonts (brand font in headers); `font-display: swap` for body text; never `font-display: block` which causes invisible text
+- [x] AR906 Critical CSS extraction: above-the-fold CSS (header, hero, first fold of feed) inlined in `<style>` tag via build step; deferred stylesheet covers below-fold; eliminates render-blocking CSS
+- [x] AR907 CSS-only dark mode switch: `<input type="checkbox" id="dark-toggle"> <label for="dark-toggle">` + `#dark-toggle:checked ~ * { --color-background: ... }` — no JavaScript needed for theme toggle; preference stored in localStorage by tiny JS snippet only for persistence
 - [ ] AR908 Unused CSS removal: PurgeCSS configured in propshaft build; scans ERB + JS + Ruby for class names; removes unreferenced CSS rules; 60-80% reduction in production CSS bundle size
-- [ ] AR909 CSS property inheritance: use `inherit` keyword for text colors in child elements rather than repeating values; `color: inherit` on `a` tags inside components prevents browser default blue override
-- [ ] AR910 Reduce paint: `background-color` changes are cheaper than `box-shadow` changes; `opacity` and `transform` don't trigger repaint; prefer these for hover states over color-change animations
+- [x] AR909 CSS property inheritance: use `inherit` keyword for text colors in child elements rather than repeating values; `color: inherit` on `a` tags inside components prevents browser default blue override
+- [x] AR910 Reduce paint: `background-color` changes are cheaper than `box-shadow` changes; `opacity` and `transform` don't trigger repaint; prefer these for hover states over color-change animations
 
 
 ## AS — Design System Rollout and Implementation (AP continuation)
@@ -1008,14 +1008,14 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ### AS8: Cross-App Pattern Library
 
-- [ ] AS801 Shared partials: `app/views/shared/_card.html.erb`, `_btn.html.erb`, `_avatar.html.erb`, `_badge.html.erb`, `_toast.html.erb` — common patterns across all 6 apps; DRY via shared partials not gem
-- [ ] AS802 Button variants: `.btn` base + `.btn--primary` (filled midtone), `.btn--secondary` (border), `.btn--ghost` (transparent), `.btn--danger` (filled danger), `.btn--sm` / `.btn--lg` size modifiers; all have focus, hover, active, disabled states
-- [ ] AS803 Avatar with fallback: `<% if user.avatar.attached? %> <%= image_tag(user.avatar.variant(:thumb)) %> <% else %> <span class="avatar-initials"><%= user.initials %></span> <% end %>` — never broken image; initials in brand midtone
-- [ ] AS804 Empty state: `.empty-state { text-align: center; padding: var(--space-12) var(--space-4) } .empty-state__icon { width: 64px; height: 64px; margin-inline: auto; margin-bottom: var(--space-4); opacity: 0.4 } .empty-state__title { font-size: var(--text-lg); font-weight: 600; color: var(--text-primary) } .empty-state__body { font-size: var(--text-base); color: var(--text-secondary); max-width: 40ch; margin-inline: auto }`
-- [ ] AS805 Loading skeleton: `.skeleton { background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-border) 50%, var(--color-surface) 75%); background-size: 200%%; animation: shimmer 1.4s ease-in-out infinite; border-radius: var(--radius-sm) }` — apply to any placeholder element
-- [ ] AS806 Toast component: `.toast { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--color-shadow); color: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 360px; pointer-events: all; animation: slideInRight var(--duration-standard) var(--ease-decelerate) } .toast--success { border-inline-start: 3px solid var(--color-success) } .toast--error { border-inline-start: 3px solid var(--color-danger) }`
-- [ ] AS807 Modal/dialog: `.dialog { border: none; border-radius: var(--radius-xl); padding: 0; max-width: min(560px, 90vw); max-height: 90dvh; overflow: auto; box-shadow: var(--shadow-lg) } .dialog::backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px) }` — native `<dialog>` styled; backdrop via pseudo-element
-- [ ] AS808 Tooltip: `.tooltip-wrapper { position: relative } .tooltip { position: absolute; bottom: calc(100% + var(--space-2)); left: 50%; transform: translateX(-50%); background: var(--color-shadow); color: white; font-size: var(--text-xs); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity var(--duration-fast) } .tooltip-wrapper:hover .tooltip { opacity: 1 }`
+- [x] AS801 Shared partials: `app/views/shared/_card.html.erb`, `_btn.html.erb`, `_avatar.html.erb`, `_badge.html.erb`, `_toast.html.erb` — common patterns across all 6 apps; DRY via shared partials not gem
+- [x] AS802 Button variants: `.btn` base + `.btn--primary` (filled midtone), `.btn--secondary` (border), `.btn--ghost` (transparent), `.btn--danger` (filled danger), `.btn--sm` / `.btn--lg` size modifiers; all have focus, hover, active, disabled states
+- [x] AS803 Avatar with fallback: `<% if user.avatar.attached? %> <%= image_tag(user.avatar.variant(:thumb)) %> <% else %> <span class="avatar-initials"><%= user.initials %></span> <% end %>` — never broken image; initials in brand midtone
+- [x] AS804 Empty state: `.empty-state { text-align: center; padding: var(--space-12) var(--space-4) } .empty-state__icon { width: 64px; height: 64px; margin-inline: auto; margin-bottom: var(--space-4); opacity: 0.4 } .empty-state__title { font-size: var(--text-lg); font-weight: 600; color: var(--text-primary) } .empty-state__body { font-size: var(--text-base); color: var(--text-secondary); max-width: 40ch; margin-inline: auto }`
+- [x] AS805 Loading skeleton: `.skeleton { background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-border) 50%, var(--color-surface) 75%); background-size: 200%%; animation: shimmer 1.4s ease-in-out infinite; border-radius: var(--radius-sm) }` — apply to any placeholder element
+- [x] AS806 Toast component: `.toast { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--color-shadow); color: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 360px; pointer-events: all; animation: slideInRight var(--duration-standard) var(--ease-decelerate) } .toast--success { border-inline-start: 3px solid var(--color-success) } .toast--error { border-inline-start: 3px solid var(--color-danger) }`
+- [x] AS807 Modal/dialog: `.dialog { border: none; border-radius: var(--radius-xl); padding: 0; max-width: min(560px, 90vw); max-height: 90dvh; overflow: auto; box-shadow: var(--shadow-lg) } .dialog::backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px) }` — native `<dialog>` styled; backdrop via pseudo-element
+- [x] AS808 Tooltip: `.tooltip-wrapper { position: relative } .tooltip { position: absolute; bottom: calc(100% + var(--space-2)); left: 50%; transform: translateX(-50%); background: var(--color-shadow); color: white; font-size: var(--text-xs); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity var(--duration-fast) } .tooltip-wrapper:hover .tooltip { opacity: 1 }`
 
 ### AS9: Design QA Checklist
 
@@ -2086,11 +2086,11 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 - [ ] CS01 All apps: switch from Importmap to ESBuild for apps using Stimulus components (faster dev)
 - [ ] CS02 brgen: add `face.js` + `particle_kernel.js` as Propshaft assets — no bundling required
-- [ ] CS03 brgen: add CSS custom properties for all design tokens (color, spacing, type scale)
+- [x] CS03 brgen: add CSS custom properties for all design tokens (color, spacing, type scale)
 - [ ] CS04 brgen: add `@font-face` for Helvetica Neue fallback stack (system-ui → Arial → sans-serif)
 - [ ] CS05 All apps: add `<link rel="preload">` for above-fold fonts and hero images
 - [ ] CS06 All apps: audit Lighthouse score — target 95+ performance, 100 accessibility
-- [ ] CS07 brgen: add critical CSS inlining for landing page (< 14KB inline, rest deferred)
+- [x] CS07 brgen: add critical CSS inlining for landing page (< 14KB inline, rest deferred)
 - [ ] CS08 All apps: remove unused CSS with PurgeCSS pass in production build
 - [ ] CS09 brgen: convert all PNG icons to SVG sprites (single HTTP request)
 - [ ] CS10 MASTER: add `web/public/` cache busting — fingerprint static assets via Propshaft digest

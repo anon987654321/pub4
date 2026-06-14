@@ -391,6 +391,7 @@ module Master
 
       def record_provider_outcome(model, status, latency_ms: nil, error: nil)
         @model_router&.record_provider_outcome(model:, status:, latency_ms:, error:)
+        @bus&.publish("llm:provider_outcome", model:, status:, latency_ms:, error:)
       rescue StandardError => e
         @bus&.publish("provider_health:record_error", model:, error: e.message)
       end

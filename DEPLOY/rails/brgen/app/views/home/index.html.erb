@@ -36,9 +36,11 @@
 </nav>
 
 <% if @posts.any? %>
-  <% @posts.each do |post| %>
-    <%= render "posts/post", post: post %>
-  <% end %>
+  <div class="post-grid">
+    <% @posts.each do |post| %>
+      <%= render "posts/post", post: post %>
+    <% end %>
+  </div>
 <% else %>
   <section class="empty">
     <p>No posts yet. <%= authenticated? ? link_to("Create one", new_post_path) : link_to("Sign in to post", new_session_path) %>.</p>

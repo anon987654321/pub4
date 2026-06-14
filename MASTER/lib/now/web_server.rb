@@ -13,12 +13,12 @@ module Master
 
         port = config["web_port"] || 53187
         host = config["web_host"] || "127.0.0.1"
-        RUBY_PLATFORM.include?("openbsd") ? openbsd_status(config, host, port, io) : spawn_local(config, host, port, io)
+        RUBY_PLATFORM.include?("openbsd") ? openbsd_status(config:, host:, port:, io:) : spawn_local(config:, host:, port:, io:)
       rescue StandardError => e
         io.puts "web_ui: #{e.message}"
       end
 
-      def openbsd_status(config, host, port, io)
+      def openbsd_status(config:, host:, port:, io:)
         running = system("pgrep", "-qf", "falcon.*#{port}")
         token = config["web_token"]
         url = config["web_public_url"] || "http://#{host}:#{port}"
@@ -26,7 +26,7 @@ module Master
         io.puts "web: #{url} (#{running ? "up" : "down — run: doas rcctl start master"})"
       end
 
-      def spawn_local(config, host, port, io)
+      def spawn_local(config:, host:, port:, io:)
         web_dir = File.join(Master::ROOT, "web")
         return unless Dir.exist?(web_dir)
 

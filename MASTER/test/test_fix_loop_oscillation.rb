@@ -11,18 +11,25 @@ class TestFixLoopOscillation < Minitest::Test
       @subs = {}
     end
 
-    def subscribe(pattern, &handler) = (@subs[pattern] ||= []) << handler
+    def subscribe(pattern, &handler)
+      (@subs[pattern] ||= []) << handler
+    end
 
     def publish(event, payload = {})
-      @events << { event:, payload: }
+      @events << { event: event, payload: payload }
       (@subs[event] || []).each { |h| h.call(payload) }
     end
   end
 
   # Returns the same fixed violation set on every scan call.
   class ConstantScanner
-    def initialize(violations) = @violations = violations
-    def scan(_path) = @violations.dup
+    def initialize(violations)
+      @violations = violations
+    end
+
+    def scan(_path)
+      @violations.dup
+    end
   end
 
   class SequenceScanner
@@ -41,23 +48,48 @@ class TestFixLoopOscillation < Minitest::Test
   # Agent with an open circuit — forces LLM pass to be skipped so
   # violations never clear, making oscillation observable in two passes.
   class OpenCircuitBreaker
-    def open_models = ["stub-model"]
+    def open_models
+      ["stub-model"]
+    end
   end
 
   class OpenCircuitAgent
-    def circuit_breaker = OpenCircuitBreaker.new
+    def circuit_breaker
+      OpenCircuitBreaker.new
+    end
+  end
+
+  class RollbackSpy
+    attr_reader :calls
+
+    def initialize
+      @calls = []
+    end
+
+    def call(result)
+      @calls << result
+      true
+    end
   end
 
   class StubGit
-    def dirty?(_) = false
-    def add_all = nil
-    def commit(_) = nil
+    def dirty?(_)
+      false
+    end
+
+    def add_all
+      nil
+    end
+
+    def commit(_)
+      nil
+    end
   end
 
   class CountingFixLoop < Master::Loop::FixLoop
     attr_reader :run_count
 
-    def initialize(...)
+    def initialize(*args, **kwargs)
       super
       @run_count = 0
     end
@@ -71,7 +103,7 @@ class TestFixLoopOscillation < Minitest::Test
   class CrashThenHaltFixLoop < Master::Loop::FixLoop
     attr_reader :run_count
 
-    def initialize(...)
+    def initialize(*args, **kwargs)
       super
       @run_count = 0
     end
@@ -96,14 +128,15 @@ class TestFixLoopOscillation < Minitest::Test
     FileUtils.remove_entry(@root) if @root && Dir.exist?(@root)
   end
 
-  def build_loop(violations)
+  def build_loop(violations, rollback: nil)
     Master::Loop::FixLoop.new(
       rules: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
       scanner: ConstantScanner.new(violations),
       root: @root,
       bus: @bus,
-      git: StubGit.new
+      git: StubGit.new,
+      rollback: rollback
     )
   end
 
@@ -111,7 +144,7 @@ class TestFixLoopOscillation < Minitest::Test
     Master::Loop::FixLoop.new(
       rules: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
-      scanner:,
+      scanner: scanner,
       root: @root,
       bus: @bus,
       git: StubGit.new
@@ -120,7 +153,8 @@ class TestFixLoopOscillation < Minitest::Test
 
   def test_oscillation_fires_when_violation_set_repeats
     # Pass 1: snapshot recorded. Pass 2: same snapshot -> oscillation break.
-    loop = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
+    rollback = RollbackSpy.new
+    loop = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }], rollback: rollback)
     result = loop.run(@root)
 
     assert result.ok?
@@ -129,6 +163,8 @@ class TestFixLoopOscillation < Minitest::Test
     osc = @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
     assert_equal 1, osc.size
     assert_equal 1, osc.first[:payload][:violations]
+    assert_equal 1, rollback.calls.size
+    assert_equal :policy, rollback.calls.first.category
   end
 
   def test_oscillation_does_not_fire_when_violations_clear

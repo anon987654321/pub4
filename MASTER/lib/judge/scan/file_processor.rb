@@ -26,7 +26,9 @@ module Master
             return code if code.err?
 
             ast = parse_ruby(code.value!, path)
+            fingerprint = semantic_fingerprint(code.value!, ast)
             findings = apply_rules(code: code.value!, ast: ast, path: path, rule_set: rules)
+            findings = annotate_findings(findings, fingerprint: fingerprint, ast: ast)
             publish_scan_result(path: path, depth: depth, findings: findings)
             Result.ok(findings)
           end
@@ -104,16 +106,53 @@ module Master
         end
 
         def apply_rules(code:, ast:, path:, rule_set:)
-          semantic, static = rule_set.partition { |rule| semantic_rule?(rule) }
-          findings = static.flat_map { |rule| run_rule(rule: rule, code: code, ast: ast, path: path) }
+          lexical, structural, semantic = partition_rules(rule_set, ast)
+          findings = []
+          findings.concat(run_rule_pass(pass: :lexical, rules: lexical, code: code, ast: ast, path: path))
+          findings.concat(run_rule_pass(pass: :structural, rules: structural, code: code, ast: ast, path: path))
           return findings if lexical_error?(findings)
 
-          findings + semantic.flat_map { |rule| run_rule(rule: rule, code: code, ast: ast, path: path) }
+          findings.concat(run_rule_pass(pass: :semantic, rules: semantic, code: code, ast: ast, path: path))
+        end
+
+        def partition_rules(rule_set, ast)
+          semantic = []
+          structural = []
+          lexical = []
+          rule_set.each do |rule|
+            if semantic_rule?(rule)
+              semantic << rule
+            elsif ast && rule.respond_to?(:check_ast)
+              structural << rule
+            else
+              lexical << rule
+            end
+          end
+          [lexical, structural, semantic]
+        end
+
+        def run_rule_pass(pass:, rules:, code:, ast:, path:)
+          @bus&.publish("scan:pass", path: path, pass: pass, rule_count: rules.size)
+          rules.flat_map { |rule| run_rule(rule: rule, code: code, ast: ast, path: path) }
         end
 
         def semantic_rule?(rule)
           rule.is_a?(Master::Judge::Scan::Rules::SemanticRule) ||
             (rule.respond_to?(:id) && rule.id.to_s == "semantic")
+        end
+
+        def annotate_findings(findings, fingerprint:, ast:)
+          Array(findings).map do |finding|
+            add_fingerprint(finding, fingerprint: fingerprint, ast: ast)
+          end
+        end
+
+        def add_fingerprint(finding, fingerprint:, ast:)
+          meta = { fingerprint: fingerprint }
+          return finding.merge(meta) if finding.respond_to?(:merge)
+          return finding.to_h.merge(meta) if finding.respond_to?(:to_h)
+
+          finding
         end
 
         def lexical_error?(findings)
@@ -153,6 +192,20 @@ module Master
             end
 
           rule.to_s unless rule.nil? || rule.to_s.empty?
+        end
+
+        def semantic_fingerprint(code, ast)
+          counts = {
+            line_count: code.lines.count,
+            class_count: code.scan(/^\s*class\s+/).size,
+            method_count: code.scan(/^\s*def\s+/).size,
+            def_names: code.scan(/^\s*def\s+([a-zA-Z_][\w!?=]*)/).flatten.sort,
+            constant_names: code.scan(/\b([A-Z][A-Z0-9_]*(?:::[A-Z][A-Z0-9_]*)*)\b/).flatten.sort,
+            ast_present: !ast.nil?
+          }
+          Digest::SHA256.hexdigest(Marshal.dump(counts))
+        rescue StandardError
+          Digest::SHA256.hexdigest(code.to_s)
         end
       end
     end

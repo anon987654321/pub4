@@ -12,9 +12,11 @@
 </nav>
 
 <% if @posts.any? %>
-  <% @posts.each do |post| %>
-    <%= render "posts/post", post: post %>
-  <% end %>
+  <div class="post-grid">
+    <% @posts.each do |post| %>
+      <%= render "posts/post", post: post %>
+    <% end %>
+  </div>
 <% else %>
   <p>No posts yet.</p>
 <% end %>

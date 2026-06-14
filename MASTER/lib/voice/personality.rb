@@ -36,7 +36,7 @@ module Master
       attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
 
       def self.persona_names(root: nil)
-        Ground::Rules.new(root:).data(:personas).keys.map(&:to_sym)
+        Ground::Rules.new(root: root).data(:personas).keys.map(&:to_sym)
       end
 
       def self.why_prompt(rule)
@@ -46,7 +46,7 @@ module Master
 
       def initialize(name = DEFAULT, root: nil, homeostat: nil)
         @name = name.to_sym
-        @rules = Ground::Rules.new(root:)
+        @rules = Ground::Rules.new(root: root)
         personas = @rules.data(:personas)
         persona = personas[@name.to_s] || personas[DEFAULT.to_s] || FALLBACK_PERSONA
         @voice = persona["voice"]
@@ -66,9 +66,14 @@ module Master
       def build_system_prompt
         soul = @rules.data(:soul)
         ordering = Array(soul["prompt_ordering"])
+        identity = load_identity
         sections = {}
-        sections["master_identity"] = "<master_identity>\n" \
-          "MASTER. #{@desc} OpenBSD-first. Constitutional AI.\n</master_identity>"
+        sections["master_identity"] = [
+          "<master_identity>",
+          "MASTER. #{@desc} OpenBSD-first. Constitutional AI.",
+          identity,
+          "</master_identity>"
+        ].compact.join("\n")
         sections["master_meta_instruction"] = <<~XML.strip
         <master_meta_instruction>
         For each task, identify which rules are relevant first. Apply only relevant rules and ignore unrelated domains.
@@ -220,6 +225,15 @@ module Master
 
         ordered = ordering.empty? ? sections.keys : ordering
         ordered.filter_map { |key| sections[key] }.join("\n\n")
+      end
+
+      def load_identity
+        path = File.join(Master::ROOT, "IDENTITY.md")
+        return File.read(path, encoding: "UTF-8").strip if File.exist?(path)
+
+        ""
+      rescue StandardError
+        ""
       end
     end
   end

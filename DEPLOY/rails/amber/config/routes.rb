@@ -26,6 +26,8 @@ Rails.application.routes.draw do
 
   resources :planned_outfits, only: %i[index create destroy]
 
+  resources :wardrobe_items
+
   resources :posts, only: %i[index show new create destroy] do
     member { post :like }
     collection { get :feed }

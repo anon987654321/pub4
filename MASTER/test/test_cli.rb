@@ -99,6 +99,51 @@ class TestCLI < Minitest::Test
     assert_includes detail, "Profiles:"
   end
 
+  def test_prompt_refreshes_skills_before_rendering
+    skills = Minitest::Mock.new
+    skills.expect(:discover!, [])
+    renderer = Minitest::Mock.new
+    renderer.expect(:render, "master$ ", ["master$ "], mode: :dim)
+
+    cli = Master::Now::CLI.new(
+      container: {
+        session: Object.new,
+        agent: Object.new,
+        renderer: renderer,
+        logging: Object.new,
+        undo: Object.new,
+        config: {},
+        pipeline: Object.new,
+        skills: skills
+      }
+    )
+    cli.instance_variable_set(:@focus_mode, true)
+
+    output = cli.send(:prompt_for_mode)
+
+    assert_equal "master$ ", output
+    skills.verify
+    renderer.verify
+  end
+
+  def test_dispatch_model_switches_active_model
+    agent = Struct.new(:model).new("openrouter/auto")
+    config = Minitest::Mock.new
+    config.expect(:save!, nil)
+
+    output = Master::Now::CommandRegistry.dispatch_model(
+      agent: agent,
+      config: config,
+      metrics: nil,
+      root: Dir.pwd,
+      arg: "gpt-4o"
+    )
+
+    assert_equal "model: gpt-4o", output
+    assert_equal "gpt-4o", agent.model
+    config.verify
+  end
+
   def test_scan_profile_uses_explicit_keyword
     profile, = Master::Now::CommandRegistry.resolve_scan_profile("critical lib", Dir.pwd)
     plain, = Master::Now::CommandRegistry.resolve_scan_profile("criticality.rb", Dir.pwd)

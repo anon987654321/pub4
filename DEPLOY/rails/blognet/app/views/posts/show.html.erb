@@ -1,14 +1,16 @@
 <% content_for :title, @post.title %>
-<article>
+<article class="post prose">
   <header>
-    <h1><%= @post.title %></h1>
-    <small><%= @post.user.email_address.split("@").first %> · <%= @post.published_at&.strftime("%b %-d, %Y") %> · <%= @post.views_count %> views</small>
+    <h1 class="post-title"><%= @post.title %></h1>
+    <small><%= @post.user.email_address.split("@").first %> · <%= @post.published_at&.strftime("%b %-d, %Y") %> · <%= reading_time_for(@post.body) %> · <%= @post.views_count %> views</small>
     <% if @post.user == Current.user %>
       <%= link_to "Edit", edit_blog_post_path(@blog, @post) %>
       <%= button_to "Delete", blog_post_path(@blog, @post), method: :delete, data: { turbo_confirm: "Delete post?" } %>
     <% end %>
   </header>
-  <%= @post.body %>
+  <div class="trix-content">
+    <%= @post.body %>
+  </div>
 </article>
 <section id="comments">
   <h2>Comments (<%= @post.comments_count %>)</h2>

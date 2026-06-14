@@ -2,6 +2,8 @@
 
 require "fileutils"
 require_relative "builder/boot_phases"
+require_relative "loop/rollback"
+require_relative "trace/feedback_ledger"
 
 module Master
   module Builder
@@ -79,6 +81,7 @@ module Master
       renderer = Voice::Renderer.new(config:)
       code_index = Judge::CodeIndex.new(root:, event_bus: bus)
       code_index.build_async
+      reference_graph = Judge::ReferenceGraph.new(root:, event_bus: bus)
       ecology = Judge::RepoEcology.new(root:, event_bus: bus, code_index:)
       bus.subscribe("tool:after") do |ev|
         next unless ev[:path] && MUTATING_TOOLS.include?(ev[:tool].to_s)
@@ -94,7 +97,7 @@ module Master
         Ground::Swallow.log(e, context: "builder.pressure_engine", event_bus: bus)
       end
 
-      { config:, boot_config:, renderer:, code_index:, ecology:, diag:, pressure: }
+      { config:, boot_config:, renderer:, code_index:, reference_graph:, ecology:, diag:, pressure: }
         .merge(trace).merge(loop_c).merge(reach).merge(ground)
     end
 
@@ -145,7 +148,8 @@ module Master
       autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms:)
         .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
       autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
-      { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard: }.merge(autonomous)
+      Trace::FeedbackLedger.new(event_bus: bus, learnings: autonomous[:learnings]).attach
+      { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard:, reference_graph: infra[:reference_graph] }.merge(autonomous)
     end
 
     def build_scanner(root:, agent: nil, bus: nil, ecology: nil)
@@ -172,11 +176,11 @@ module Master
       git = Reach::GitOperations.new(root)
       rules = scanner.instance_variable_get(:@rules)
       learnings = infra[:learnings]
+      rollback = Loop::Rollback.new(root:, bus:)
 
       # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
-      fix_loop = Loop::FixLoop.new(rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:)
-      # Enable in-process autofix by default: always start the background fix loop.
-      fix_loop.start_background!(root)
+      fix_loop = Loop::FixLoop.new(rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:, rollback:)
+      fix_loop.start_background!(root) if ENV["MASTER_AUTOFIX"] == "1"
 
       # MASTER_WATCH=1 enables reactive file-watching (requires rb-kqueue or rb-inotify).
       watch_loop = if ENV["MASTER_WATCH"] == "1"
@@ -193,6 +197,8 @@ module Master
       propose_tree = Loop::ProposeTree.new(root:, agent:, event_bus: bus)
       bus.subscribe("fix_loop:clean") { Thread.new { propose_tree.call } }
       bus.subscribe("fix_loop:plateau") { Thread.new { propose_tree.call } }
+      bus.subscribe("fix_loop:oscillation") { |payload| rollback.call(Master::Result.err("fix loop oscillation", category: :policy)) }
+      bus.subscribe("fix_loop:cycle_detected") { |payload| rollback.call(Master::Result.err("fix loop cycle detected", category: :policy)) }
 
       # MASTER_WATCHER=0 disables the OpenBSD load watcher; on by default.
       watcher = Loop::Watcher.new(bus:, root:)
@@ -202,7 +208,7 @@ module Master
       bus.subscribe("system:crit") { Thread.new { fix_loop.stop_background! if fix_loop.background_alive? } }
       bus.subscribe("self_violation") { |payload| fix_loop.halt!(reason: "self_violation #{payload[:violations]} violations") }
 
-      { standing:, fix_loop:, watch_loop:, heartbeat:, triggers:, propose_tree:, watcher:, git: }
+      { standing:, fix_loop:, watch_loop:, heartbeat:, triggers:, propose_tree:, watcher:, git:, rollback: }
     end
 
     def boot_skills(root, bus)

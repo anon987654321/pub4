@@ -2,7 +2,7 @@
 
 module Master
   module Loop
-    Violation = Struct.new(:file, :line, :rule, :message, :severity, :fix, :confidence, :ext, keyword_init: true) do
+    Violation = Struct.new(:file, :line, :rule, :message, :severity, :fix, :confidence, :ext, :fingerprint, keyword_init: true) do
       def self.from_finding(finding, file:, ext: nil)
         data = finding.respond_to?(:to_h) ? finding.to_h : finding
         new(
@@ -13,7 +13,8 @@ module Master
           severity: data[:severity] || data["severity"],
           fix: data[:fix] || data["fix"],
           confidence: data[:confidence] || data["confidence"],
-          ext: ext
+          ext: ext,
+          fingerprint: data[:fingerprint] || data["fingerprint"]
         )
       end
 
@@ -30,7 +31,8 @@ module Master
           severity: severity,
           fix: fix,
           confidence: confidence,
-          ext: ext
+          ext: ext,
+          fingerprint: fingerprint
         }.compact
       end
     end

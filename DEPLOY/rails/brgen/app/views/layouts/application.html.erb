@@ -22,6 +22,7 @@
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <link rel="stylesheet" href="/styles/tokens.css">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <link rel="stylesheet" href="/lightgallery.css">
   <meta name="lg-license" content="<%= ENV.fetch("LIGHTGALLERY_LICENSE", "0000-0000-000-0000") %>">
@@ -30,6 +31,14 @@
   <%= render "shared/minimal_ui" %>
 </head>
 <body class="zen-minimal">
+  <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme">
+  <label for="dark-toggle" class="theme-toggle" title="Toggle light theme" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M12 3a1 1 0 0 1 1 1v1.06a7 7 0 0 1 5.94 5.94H20a1 1 0 1 1 0 2h-1.06A7 7 0 0 1 13 18.94V20a1 1 0 1 1-2 0v-1.06A7 7 0 0 1 5.06 13H4a1 1 0 1 1 0-2h1.06A7 7 0 0 1 11 5.06V4a1 1 0 0 1 1-1zm0 4a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
+    </svg>
+  </label>
+
+  <div class="theme-root">
   <canvas id="tunnel-canvas" data-turbo-permanent aria-hidden="true"></canvas>
 
   <div id="nearby-alerts" class="nearby-alerts" data-turbo-permanent aria-live="polite"></div>
@@ -180,6 +189,24 @@
         <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
       <% end %>
     </nav>
+    <%= link_to new_post_path, class: "compose-fab", aria: { label: "New post" } do %>
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v16h-2zM4 11h16v2H4z"/></svg>
+    <% end %>
   </div>
+  </div>
+  <script>
+    (() => {
+      const toggle = document.getElementById("dark-toggle");
+      if (!toggle) return;
+      try {
+        toggle.checked = localStorage.getItem("brgen-theme") === "light";
+      } catch (e) {}
+      toggle.addEventListener("change", () => {
+        try {
+          localStorage.setItem("brgen-theme", toggle.checked ? "light" : "dark");
+        } catch (e) {}
+      });
+    })();
+  </script>
 </body>
 </html>

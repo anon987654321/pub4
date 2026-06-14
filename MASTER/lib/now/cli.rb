@@ -4,6 +4,8 @@ require_relative "cli/container"
 require_relative "cli/signals"
 require_relative "cli/command_ops"
 require_relative "cli/thinking_indicator"
+require_relative "cli/result_display"
+require_relative "cli/background_scan"
 
 require "open3"
 require "reline"
@@ -154,6 +156,7 @@ module Master
       end
 
       def prompt_for_mode
+        refresh_skills!
         @focus_mode ? focus_prompt : normal_prompt
       end
 
@@ -448,98 +451,6 @@ module Master
         puts
       end
 
-      def start_background_loop
-        @bg_thread = Thread.new do
-          boot_scan
-          loop do
-            break if background_stop_requested?
-
-            background_cycle unless @user_active
-          end
-        rescue StandardError => e
-          @refs.bus&.publish("cli:bg_error", error: e.message)
-        end
-      end
-
-      def stop_background_loop
-        return unless @bg_thread
-
-        @bg_control << :stop
-        @bg_thread.join(2)
-        @bg_thread = nil
-      end
-
-      def background_stop_requested?
-        IDLE_SLEEP_DEFAULT.times do
-          return true if background_control_message == :stop
-
-          sleep 1
-        end
-        false
-      end
-
-      def background_control_message
-        @bg_control.pop(true)
-      rescue ThreadError
-        nil
-      end
-
-      def boot_scan
-        result = Master::Judge::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus).call(autofix: true)
-        return unless result.respond_to?(:ok?) && result.ok?
-
-        summary = result.value!
-        set_violations(summary.violation_count)
-        puts
-        puts @refs.renderer.render(summary.line, mode: :dim)
-        puts
-      rescue StandardError => e
-        @refs.bus&.publish("cli:warn", error: e.message)
-      end
-
-      def run_self_scan
-        result = Master::Judge::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus).call(stream: true, autofix: true)
-        line = result.ok? ? result.value!.line : result.message
-        puts @refs.renderer.render(line, mode: result.ok? ? :dim : :warning)
-      end
-
-      def changed_lib_files(lib_dir)
-        out, = Open3.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
-        return [] if out.strip.empty?
-        out.lines
-           .map { |l| File.join(@refs.root, l.strip) }
-           .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.changed_lib_files", event_bus: @refs.bus)
-        []
-      end
-
-      def scan_files(paths)
-        Result.ok(paths.map { |p| [p, @refs.scanner.scan(p, depth: :deep)] })
-      end
-
-      def count_violations(pairs)
-        pairs.sum do |_file, file_result|
-          file_result.respond_to?(:ok?) && file_result.ok? ? file_result.value!.size : 0
-        end
-      end
-
-      def background_cycle
-        lib_dir = File.join(@refs.root, "lib")
-        result  = @refs.scanner.scan_dir(lib_dir, depth: :deep)
-        return unless result.respond_to?(:ok?) && result.ok?
-        n = count_violations(result.value!)
-        return if n == violations_count
-        set_violations(n)
-        $stdout.puts "\nbg: #{n} violation(s)" if n.positive?
-        $stdout.flush
-      rescue StandardError => e
-        @refs.bus&.publish("cli:bg_error", error: e.message)
-      end
-
-      INIT_FRAMES = 20
-      INIT_FRAME_MS = 0.04
-
       def print_repo_tree
         lines = Master::CommandRegistry.tree_lines(@refs.root)
         return if lines.empty?
@@ -576,125 +487,6 @@ module Master
         Master::Ground::Swallow.log(e, context: "cli.mark_booted", event_bus: @refs.bus)
       end
 
-      def display_result(result:, accumulated:, streamed:)
-        case result
-        in Master::Result::Ok => ok
-          @last_ok = true
-          display_ok(ok:, accumulated:, streamed:)
-        in Master::Result::Err => err
-          @last_ok = false
-          if err.category == :shutdown
-            exit_cli
-          else
-            puts
-            error_text = format_error_message(err)
-            puts @refs.renderer.render(error_text, mode: :error)
-            puts
-          end
-        end
-      end
-
-      def format_error_message(err)
-        error_text = err.message.to_s
-        return error_text if error_text.bytesize <= 200
-
-        error_text[0, 197] + "…"
-      end
-
-      def display_ok(ok:, accumulated:, streamed:)
-        if streamed
-          puts
-          puts
-        else
-          print "\r\e[K" if $stdout.isatty
-          text = success_text(ok)
-          if routine_success?(text)
-            puts text
-            return
-          end
-          puts @refs.renderer.speaker_tag
-          output_text(text)
-          puts
-        end
-        print_cost_tooltip
-        print_changed_files_summary
-        print_chips if @show_chips
-      end
-
-      def success_text(ok)
-        value = ok.value
-        rendered = value.respond_to?(:[]) ? value[:rendered] : nil
-        rendered || (value.respond_to?(:[]) ? value[:output].to_s : value.to_s)
-      end
-
-      def routine_success?(text)
-        text = text.to_s
-        !text.empty? && text.lines.size == 1 && text.length <= 120
-      end
-
-      def output_text(text)
-        return puts text unless page_output?(text)
-
-        pager = ENV["PAGER"].to_s.empty? ? "less -R" : ENV["PAGER"]
-        IO.popen(pager, "w") { |io| io.write(text) }
-      rescue StandardError
-        puts text
-      end
-
-      def page_output?(text)
-        $stdout.isatty && text.to_s.lines.size > TTY::Screen.height
-      rescue StandardError
-        false
-      end
-
-      def print_cost_tooltip
-        now_cost = @refs.session.cost.to_f
-        delta = now_cost - @last_cost
-        @last_cost = now_cost
-        tokens = @refs.session.token_est
-        cents  = (delta * 100).round(2)
-        return if cents.zero? && tokens.zero?
-        line = "cost: +¢#{format('%.2f', cents)} · #{tokens} tok · #{short_model(@refs.agent.model)}"
-        puts @refs.renderer.render(line, mode: :dim)
-      end
-
-      def print_changed_files_summary
-        out, status = Open3.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
-        return unless status.success?
-
-        count = out.lines.map(&:strip).reject(&:empty?).size
-        puts @refs.renderer.render("#{count} files changed", mode: :dim) if count.positive?
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.changed_files_summary", event_bus: @refs.bus)
-      end
-
-      def print_chips
-        chips = next_action_chips
-        return if chips.empty?
-        puts @refs.renderer.render("  next: #{chips.join("  ")}", mode: :dim)
-      end
-
-      def next_action_chips
-        base = ["[/undo]", "[/why]", "[/last]"]
-        current = violations_count
-        base.unshift("[/fix #{current}v]") if current.positive?
-        base
-      end
-
-      def violations_count
-        @violations_mutex.synchronize { @violations }
-      end
-
-      def set_violations(count)
-        @violations_mutex.synchronize do
-          @violations = count
-          @prev_violations = count
-        end
-      end
-
-      def short_model(model)
-        model.to_s.sub(/\Aclaude-cli:/, "").sub(/\Aweb-chat:/, "").split("/").last.to_s.sub(/:free$/, "")
-      end
     end
   end
 end

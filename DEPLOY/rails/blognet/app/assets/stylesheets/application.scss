@@ -1,3 +1,52 @@
+@font-face {
+  font-family: "InterVariable";
+  src: local("Inter Variable"), local("Inter");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --font-body: "InterVariable", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Source Serif 4", Georgia, Cambria, "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Monaco, Consolas, monospace;
+  --text-xs: clamp(11px, 1.5vw, 13px);
+  --text-sm: clamp(13px, 1.8vw, 15px);
+  --text-base: clamp(15px, 2.2vw, 17px);
+  --text-lg: clamp(17px, 2.5vw, 20px);
+  --text-xl: clamp(20px, 3vw, 24px);
+  --text-2xl: clamp(24px, 4vw, 32px);
+  --text-3xl: clamp(32px, 5vw, 48px);
+  --color-shadow: #111827;
+  --color-midtone: #64748b;
+  --color-highlight: #f8fafc;
+  --color-accent: #2563eb;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --color-success: #059669;
+  color-scheme: light dark;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.65;
+  color: var(--color-shadow);
+  background: var(--color-highlight);
+}
+
+main {
+  container-type: inline-size;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-midtone) 25%, white);
+  color: var(--color-shadow);
+}
 
 nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; gap: 1rem; align-items: center; padding: .5rem 1rem; background: #fff; border-bottom: 1px solid var(--color-extra-light-grey, #f0f0f0); transform: translateY(-100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 nav.nav-visible { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
@@ -20,6 +69,161 @@ article:last-child { border-bottom: none; }
 .form input, .form textarea { border: 1px solid #ccc; border-radius: 3px; padding: .4rem .6rem; font: inherit; }
 .form .actions { display: flex; gap: var(--space-sm); align-items: center; margin-top: var(--space-md); }
 h1, h2 { margin-bottom: var(--space-sm); }
+
+.prose {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  line-height: 1.58;
+  max-width: 720px;
+}
+
+.post {
+  margin-inline: auto;
+  padding: 2rem 1rem 4rem;
+}
+
+.post header {
+  margin-bottom: 2rem;
+}
+
+.post header small,
+.comment small {
+  color: rgba(117,117,117,1);
+  font-size: 14px;
+}
+
+.prose h2 {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-block: 1.5em .5em;
+}
+
+.prose p {
+  margin-bottom: 2em;
+}
+
+.prose ul,
+.prose ol {
+  padding-inline-start: 1.5em;
+  margin-bottom: 1.25em;
+}
+
+.prose > p:first-of-type::first-letter {
+  font-size: 5em;
+  float: left;
+  line-height: .68;
+  margin-inline-end: .1em;
+  margin-block-end: -.1em;
+  font-weight: 700;
+  color: var(--color-shadow);
+}
+
+.prose code,
+.code {
+  font-family: var(--font-mono);
+  font-size: .875em;
+  background: var(--color-highlight);
+  border-radius: 4px;
+  padding: .1rem .35rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  tab-size: 2;
+}
+
+.prose pre {
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: .5rem;
+  background: var(--color-highlight);
+}
+
+blockquote {
+  border-inline-start: 3px solid #000;
+  padding-inline-start: 23px;
+  margin-block: 1.5rem;
+  font-style: italic;
+  color: #475569;
+  font-size: 22px;
+  line-height: 1.5;
+}
+
+.trix-content figcaption,
+.caption {
+  font-size: 13px;
+  color: rgba(41,41,41,0.6);
+  font-style: italic;
+}
+
+.trix-content h2 {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.trix-content p {
+  margin-bottom: 2em;
+}
+
+.trix-content blockquote {
+  border-inline-start: 3px solid #000;
+  padding-inline-start: 23px;
+  margin-block: 1.5rem;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.5;
+  color: #292929;
+}
+
+.comment {
+  padding-block: 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.trix-content h1,
+.post-title {
+  font-family: var(--font-serif);
+  font-size: 42px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .prose {
+    font-size: 18px;
+    line-height: 1.6;
+    max-width: 100%;
+  }
+
+  .trix-content h1,
+  .post-title {
+    font-size: 32px;
+  }
+}
+
+.footnote-ref {
+  font-size: .75em;
+  vertical-align: super;
+  line-height: 0;
+  color: var(--color-midtone);
+}
+
+@container (min-width: 900px) {
+  .prose {
+    max-width: 68ch;
+  }
+}
+
+p, h1, h2, h3 {
+  text-wrap: balance;
+}
+
+@media print {
+  p {
+    orphans: 2;
+    widows: 2;
+  }
+}
 
 [dir="rtl"] {
   direction: rtl;

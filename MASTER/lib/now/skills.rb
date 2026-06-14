@@ -16,15 +16,18 @@ module Master
       end
 
       def discover!
-        skills_path = File.join(@root, SKILLS_DIR)
-        return [] unless Dir.exist?(skills_path)
-
-        Dir.children(skills_path).sort.each do |name|
-          dir = File.join(skills_path, name)
-          next unless File.directory?(dir)
-
-          skill = load_skill(dir, name)
-          @loaded << skill if skill
+        @loaded = []
+        skill_roots.each do |skills_path|
+          Dir.children(skills_path).sort.each do |name|
+            entry = File.join(skills_path, name)
+            skill =
+              if File.directory?(entry)
+                load_skill_dir(entry, name)
+              elsif name.end_with?(".md") && name != "README.md"
+                load_skill_md_file(entry, File.basename(name, ".md"))
+              end
+            @loaded << skill if skill
+          end
         end
 
         @bus&.publish("skills:loaded", count: @loaded.size)
@@ -49,7 +52,15 @@ module Master
 
       private
 
-      def load_skill(dir, name)
+      def skill_roots
+        roots = [
+          File.join(@root, "data", SKILLS_DIR),
+          File.join(@root, SKILLS_DIR)
+        ]
+        roots.select { |path| Dir.exist?(path) }.uniq
+      end
+
+      def load_skill_dir(dir, name)
         md_path = File.join(dir, "SKILL.md")
         rb_path = File.join(dir, "skill.rb")
 
@@ -74,6 +85,22 @@ module Master
         end
 
         skill
+        rescue StandardError => e
+        @bus&.publish("skills:load_error", skill: name, error: e.message)
+        nil
+      end
+
+      def load_skill_md_file(path, name)
+        metadata = parse_skill_md(path)
+        metadata ||= { "name" => name, "description" => name }
+
+        {
+          name: metadata["name"] || name,
+          description: metadata["description"] || name,
+          triggers: metadata["triggers"] || [],
+          dir: File.dirname(path),
+          has_ruby: false,
+        }
       rescue StandardError => e
         @bus&.publish("skills:load_error", skill: name, error: e.message)
         nil

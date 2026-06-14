@@ -2,6 +2,7 @@
 
 require "prism"
 require "open3"
+require "set"
 
 module Master
   module Judge
@@ -14,6 +15,7 @@ module Master
       def from_source(source)
         result = Prism.parse(source)
         return [] if result.failure?
+        visitor = Visitor.new
         visitor.visit(result.value)
         visitor.sigs
       rescue StandardError => e
@@ -24,6 +26,10 @@ module Master
       def from_git(rel_path, ref:, root: Dir.pwd)
         out, st = Open3.capture2e("git", "show", "#{ref}:#{rel_path}", chdir: root)
         return [] unless st.success?
+        from_source(out)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ast_signature.from_git")
+        []
       end
 
       def diff(old_sigs, new_sigs, kinds: %i[method class module])
@@ -33,7 +39,10 @@ module Master
 
       class Visitor < Prism::Visitor
         attr_reader :sigs
-        def initialize = (@sigs = []; @ns = [])
+        def initialize
+          @sigs = []
+          @ns = []
+        end
 
         def visit_module_node(node)
           name = node.constant_path.slice
@@ -71,7 +80,10 @@ module Master
         end
 
         private
-        def fqn(name) = (@ns + [name]).join("::")
+
+        def fqn(name)
+          (@ns + [name]).join("::")
+        end
       end
     end
   end

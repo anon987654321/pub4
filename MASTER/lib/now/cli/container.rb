@@ -6,7 +6,7 @@ module Master
       Container = Struct.new(
         :session, :agent, :renderer, :logging, :undo, :config, :pipeline,
         :scanner, :root, :diff_stager, :bus, :watch_loop,
-        :phase_gates,
+        :phase_gates, :skills,
         keyword_init: true
       ) do
         def self.from_hash(deps)
@@ -23,7 +23,8 @@ module Master
             diff_stager: deps[:diff_stager],
             bus: deps[:bus],
             watch_loop: deps[:watch_loop],
-            phase_gates: deps[:phase_gates]
+            phase_gates: deps[:phase_gates],
+            skills: deps[:skills]
           )
         end
       end

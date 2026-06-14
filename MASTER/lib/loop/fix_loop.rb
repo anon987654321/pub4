@@ -28,7 +28,7 @@ module Master
       TIER2_QUALITY_RULE_IDS = %w[DRY KISS SRP].freeze
       PassResult = Struct.new(:status, :message, :consecutive_clean, keyword_init: true)
 
-      def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil, incremental: false)
+      def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil, rollback: nil, incremental: false)
         @rules = rules
         @axioms = axioms
         @agent = agent
@@ -36,10 +36,11 @@ module Master
         @root = root
         @bus = bus
         @git = git || Reach::GitOperations.new(root)
-        @committer = Committer.new(git: @git, bus: bus)
+        @committer = Committer.new(git: @git, bus: bus, root: root)
         @loop_scanner = Scanner.new(scanner: scanner, root: root, bus: bus)
         @llm_router = LlmRouter.new(agent)
         @learnings = learnings
+        @rollback = rollback
         @incremental = incremental
         @violation_counts = Hash.new(0)
         @rule_recurrence = Hash.new(0)
@@ -381,10 +382,12 @@ module Master
       def append_improvement(rule_id, sample)
         files = sample.map { |v| v[:file] }.uniq.first(3).join(", ")
         @bus&.publish("loop:recurrence", rule: rule_id, files:, at: Time.now.utc.iso8601)
-        path = File.join(@root, "runtime", "improvements.md")
-        FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, "#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files}\n",
-                   mode: "a")
+        line = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files}\n"
+        %w[runtime/improvements.md runtime/rsi_improvements.md].each do |rel|
+          path = File.join(@root, rel)
+          FileUtils.mkdir_p(File.dirname(path))
+          File.open(path, "a") { |file| file.write(line) }
+        end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix_loop.append_improvement", event_bus: @bus, rule_id:)
       end
@@ -566,6 +569,7 @@ module Master
         snap = violation_snapshot(violations)
         if seen_snapshots.include?(snap)
           @bus&.publish("fix_loop:oscillation", pass:, violations: violations.size)
+          trigger_rollback("fix loop oscillation")
           return true
         end
         seen_snapshots << snap
@@ -573,6 +577,7 @@ module Master
         recurring = recurring_violation(violations, recurring_violations)
         if recurring
           @bus&.publish("fix_loop:cycle_detected", pass:, threshold: plateau_window, violation: recurring)
+          trigger_rollback("fix loop cycle detected")
           return true
         end
 
@@ -598,6 +603,14 @@ module Master
       def violation_snapshot(violations)
         key = violations.map { |violation| violation_key(violation) }.sort.join("|")
         Digest::SHA256.hexdigest(key)
+      end
+
+      def trigger_rollback(message)
+        return unless @rollback
+
+        @rollback.call(Master::Result.err(message, category: :policy))
+      rescue StandardError => e
+        @bus&.publish("fix_loop:rollback_error", error: e.message)
       end
     end
   end

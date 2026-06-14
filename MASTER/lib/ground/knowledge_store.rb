@@ -124,7 +124,7 @@ module Master
             failure = evs.count { |e| e["event_type"] == "tool_failure" }
             total = success + failure
             rate = total.zero? ? 0.0 : failure.to_f / total
-            { category: :high_failure, dimension: tool, fail_rate: rate.round(3), total: } if rate >= RSI_FAIL_THRESHOLD && total >= 3
+            { category: :high_failure, dimension: tool, fail_rate: rate.round(3), total: total } if rate >= RSI_FAIL_THRESHOLD && total >= 3
           }
 
         corrections = recent

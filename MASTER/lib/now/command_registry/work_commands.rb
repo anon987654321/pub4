@@ -10,6 +10,7 @@ require_relative "../fix_preview_report"
 require_relative "../resync_service"
 require_relative "../scan_report"
 require_relative "../scan_request"
+require_relative "../../judge/review_crew"
 require_relative "../tribunal_feedback"
 
 module Master
@@ -31,9 +32,10 @@ module Master
         deliberation = ai[:deliberation]
         council_stage = ai[:council_stage]
         agent = ai[:agent]
-        propose_tree = ai[:propose_tree]
         session = infra[:session]
         bus = infra[:bus]
+        review_crew = Judge::ReviewCrew.new(agent: agent, event_bus: bus, root: root, code_index: ai[:code_index], reference_graph: ai[:reference_graph])
+        propose_tree = ai[:propose_tree]
         config = infra[:config]
         metrics = infra[:metrics]
         git = ai[:git] || Reach::GitOperations.new(File.expand_path("..", root))
@@ -44,9 +46,9 @@ module Master
           "status" => command { |_c| dispatch_status(root:, fix_loop:, bus:, git:) },
           "resync" => command { |c| dispatch_resync(root:, fix_loop:, git:, arg: arg_for(c)) },
           "tail" => command { |c| dispatch_tail(root:, arg: arg_for(c)) },
-          "review" => command { |ctx| dispatch_review(council_stage:, deliberation:, root:, bus:, arg: arg_for(ctx)) },
+          "review" => command { |ctx| dispatch_review(council_stage:, deliberation:, root:, bus:, review_crew:, arg: arg_for(ctx)) },
           "critique" => command { |ctx| dispatch_critique(deliberation:, root:, arg: arg_for(ctx)) },
-          "triad" => command { |ctx| dispatch_triad(scanner:, fix_loop:, council_stage:, deliberation:, root:, bus:, arg: arg_for(ctx)) },
+          "triad" => command { |ctx| dispatch_triad(scanner:, fix_loop:, council_stage:, deliberation:, root:, bus:, review_crew:, arg: arg_for(ctx)) },
           "model" => command { |c| dispatch_model(agent:, config:, metrics:, root:, arg: arg_for(c)) },
           "why" => command { |ctx| dispatch_why(agent:, root:, rule: arg_for(ctx)) },
           "axioms" => command { |ctx| dispatch_axioms(scanner:, root:, arg: arg_for(ctx)) },
@@ -259,19 +261,26 @@ module Master
         arg.to_s.split(/\s+/).reject { |part| part == "--dry-run" }.join(" ")
       end
 
-      def dispatch_review(council_stage:, deliberation:, root:, bus:, arg:)
+      def dispatch_review(council_stage:, deliberation:, root:, bus:, review_crew:, arg:)
         case arg
         when "on"     then council_stage.enable!; "review: enabled in pipeline"
         when "off"    then council_stage.disable!; "review: disabled in pipeline"
         when "status" then "review: #{council_stage.enabled? ? "on" : "off"} in pipeline"
         else
           target = arg.empty? ? "." : arg
+          crew_result = review_crew&.run(target: target)
           artifact = snapshot_artifact(expand_or_root(target, root))
-          run_tribunal(deliberation:, artifact:, target:, bus:)
+          crew_text = if crew_result&.ok?
+                        crew_result.value![:summary].to_s
+                      elsif crew_result
+                        crew_result.message.to_s
+                      end
+          review_text = run_tribunal(deliberation:, artifact:, target:, bus:)
+          [crew_text, review_text].compact.reject(&:empty?).join("\n\n")
         end
       end
 
-      def dispatch_triad(scanner:, fix_loop:, council_stage:, deliberation:, root:, bus:, arg:)
+      def dispatch_triad(scanner:, fix_loop:, council_stage:, deliberation:, root:, bus:, review_crew:, arg:)
         target = arg.to_s.strip.empty? ? "." : arg.to_s.strip
         [
           "triad: scan",
@@ -281,7 +290,7 @@ module Master
           dispatch_fix(fix_loop:, root:, arg: "--dry-run #{target}"),
           "",
           "triad: review",
-          dispatch_review(council_stage:, deliberation:, root:, bus:, arg: target)
+          dispatch_review(council_stage:, deliberation:, root:, bus:, review_crew:, arg: target)
         ].join("\n")
       end
 

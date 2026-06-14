@@ -49,6 +49,7 @@ Rails.application.routes.draw do
 
   resources :conversations, only: [:index, :show] do
     resources :messages, only: [:create]
+    resources :typing_indicators, only: [:create]
   end
 
   constraints(subdomain: TV_SUBDOMAINS) do

@@ -477,38 +477,38 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### R1. Code intelligence proposals
 
-- [ ] R101 After each clean scan pass, surface all mode:opportunity findings — switch SemanticRule to opportunity-only mode and show top 3
-- [ ] R102 Pattern extraction proposal: when PATTERN_EXTRACTION fires, auto-generate a before/after showing the target pattern
-- [ ] R103 After fixing a violation, check if the same violation exists in sibling files — auto-propose extending fix to siblings
-- [ ] R104 Co-change coupling proposal: when RepoEcology finds co-change pair count ≥5, auto-propose extracting shared concern to a module
-- [ ] R105 Semantic duplicate detector: within a file, find two method bodies with TF-IDF similarity >0.8 — propose DRY refactor
-- [ ] R106 Entropy radar: track violations per module per session; if module has >10 new violations across 3 sessions, propose "architectural attention needed"
-- [ ] R107 Dead code radar: schedule weekly dead_file_candidates scan; if any file appears 3 weeks running, propose removal
-- [ ] R108 Proactive fix order: before /fix, compute topological sort of rule_deps.yml and propose the optimal sequence
-- [ ] R109 After each commit, run git diff --stat and propose "/review <changed_file>" for any file with >50 lines changed
-- [ ] R110 Test gap proposal: for every lib/ file with no test/ counterpart, surface as an opportunity with estimated effort
+- [x] R101 After each clean scan pass, surface all mode:opportunity findings — switch SemanticRule to opportunity-only mode and show top 3
+- [x] R102 Pattern extraction proposal: when PATTERN_EXTRACTION fires, auto-generate a before/after showing the target pattern
+- [x] R103 After fixing a violation, check if the same violation exists in sibling files — auto-propose extending fix to siblings
+- [x] R104 Co-change coupling proposal: when RepoEcology finds co-change pair count ≥5, auto-propose extracting shared concern to a module
+- [x] R105 Semantic duplicate detector: within a file, find two method bodies with TF-IDF similarity >0.8 — propose DRY refactor
+- [x] R106 Entropy radar: track violations per module per session; if module has >10 new violations across 3 sessions, propose "architectural attention needed"
+- [x] R107 Dead code radar: schedule weekly dead_file_candidates scan; if any file appears 3 weeks running, propose removal
+- [x] R108 Proactive fix order: before /fix, compute topological sort of rule_deps.yml and propose the optimal sequence
+- [x] R109 After each commit, run git diff --stat and propose "/review <changed_file>" for any file with >50 lines changed
+- [x] R110 Test gap proposal: for every lib/ file with no test/ counterpart, surface as an opportunity with estimated effort
 
 ### R2. Session intelligence proposals
 
-- [ ] R201 "Stuck" detector: if 3 consecutive inputs are questions (end with ?) without any /command, ask "what are you trying to accomplish?"
-- [ ] R202 Context pressure proposal: when token_est crosses 70% of model context limit, auto-propose /checkpoint + /clear
-- [ ] R203 Proactive resync: if git behind > 3 commits at session start, propose /resync before starting work
-- [ ] R204 Memory crystallization: after 20 turns, propose "shall I remember the key decisions from this session?"
-- [ ] R205 Idle ideation: when idle >5 min after a significant edit, generate 2 alternative approaches to what was just built
-- [ ] R206 Cost proposal: when session cost exceeds $1.00, propose switching to haiku for routine tasks with estimated savings
-- [ ] R207 Session topic drift: if conversation has shifted to a new domain, propose "should I save context and start fresh?"
-- [ ] R208 Proactive benchmark: after fixing a performance violation, propose running bin/smoke to verify improvement
+- [x] R201 "Stuck" detector: if 3 consecutive inputs are questions (end with ?) without any /command, ask "what are you trying to accomplish?"
+- [x] R202 Context pressure proposal: when token_est crosses 70% of model context limit, auto-propose /checkpoint + /clear
+- [x] R203 Proactive resync: if git behind > 3 commits at session start, propose /resync before starting work
+- [x] R204 Memory crystallization: after 20 turns, propose "shall I remember the key decisions from this session?"
+- [x] R205 Idle ideation: when idle >5 min after a significant edit, generate 2 alternative approaches to what was just built
+- [x] R206 Cost proposal: when session cost exceeds $1.00, propose switching to haiku for routine tasks with estimated savings
+- [x] R207 Session topic drift: if conversation has shifted to a new domain, propose "should I save context and start fresh?"
+- [x] R208 Proactive benchmark: after fixing a performance violation, propose running bin/smoke to verify improvement
 
 ### R3. Architecture proposals
 
-- [ ] R301 After scan clean, generate a one-paragraph architecture critique of the current module structure using STRUCTURAL_HONESTY rule
-- [ ] R302 Design it twice trigger: when proposing a complex solution (>3 files affected), auto-generate a simpler alternative
-- [ ] R303 Council convocation: when the same violation appears 5+ times across files in one session, propose elevating to soul.yml kernel law
-- [ ] R304 Soul evolution proposal: after each session, diff axioms applied vs axioms surfaced — if 3+ new patterns emerged, propose adding to soul.yml
-- [ ] R305 God class trajectory: if a file has grown >20 lines per session for 3 sessions, warn before it hits the god_class threshold
-- [ ] R306 Proactive decoupling: when LAW_OF_DEMETER fires between two specific modules in both directions, propose an interface/adapter
-- [ ] R307 Missing abstraction proposal: when same literal appears in 3+ files, propose extracting to a named constant or value object
-- [ ] R308 Layer purity check: after any change to lib/now/, check if it calls lib/judge/ directly (should be via Pipeline) — propose routing fix
+- [x] R301 After scan clean, generate a one-paragraph architecture critique of the current module structure using STRUCTURAL_HONESTY rule
+- [x] R302 Design it twice trigger: when proposing a complex solution (>3 files affected), auto-generate a simpler alternative
+- [x] R303 Council convocation: when the same violation appears 5+ times across files in one session, propose elevating to soul.yml kernel law
+- [x] R304 Soul evolution proposal: after each session, diff axioms applied vs axioms surfaced — if 3+ new patterns emerged, propose adding to soul.yml
+- [x] R305 God class trajectory: if a file has grown >20 lines per session for 3 sessions, warn before it hits the god_class threshold
+- [x] R306 Proactive decoupling: when LAW_OF_DEMETER fires between two specific modules in both directions, propose an interface/adapter
+- [x] R307 Missing abstraction proposal: when same literal appears in 3+ files, propose extracting to a named constant or value object
+- [x] R308 Layer purity check: after any change to lib/now/, check if it calls lib/judge/ directly (should be via Pipeline) — propose routing fix
 
 ### R4. Proposal output quality
 
@@ -580,20 +580,20 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### S7: Multi-Model Consensus (v49.25 — specified, disabled=false toggle never built)
 
-- [ ] S701 Consensus mode: send same prompt to 3 models (claude-sonnet, glm-4, kimi-k2), require 2/3 agreement before applying fix
-- [ ] S702 Consensus result shows dissenting model's reasoning — surfaces when models disagree on correctness
-- [ ] S703 Consensus used only for :error findings and architecture decisions — too expensive for :warning/:info
-- [ ] S704 Failover sequence: fast→code→medium→strong with exponential backoff (cooldown_seconds: 300, max_retries: 2)
-- [ ] S705 Model tier routing: detect_lexical → fast model, code_generation → code model, architecture → strong model
+- [x] S701 Consensus mode: send same prompt to 3 models (claude-sonnet, glm-4, kimi-k2), require 2/3 agreement before applying fix
+- [x] S702 Consensus result shows dissenting model's reasoning — surfaces when models disagree on correctness
+- [x] S703 Consensus used only for :error findings and architecture decisions — too expensive for :warning/:info
+- [x] S704 Failover sequence: fast→code→medium→strong with exponential backoff (cooldown_seconds: 300, max_retries: 2)
+- [x] S705 Model tier routing: detect_lexical → fast model, code_generation → code model, architecture → strong model
 
 ### S8: ReviewCrew / Multi-Agent Parallel Analysis (v50.8 — built, then deleted)
 
-- [ ] S801 Restore ReviewCrew: SecurityAgent + PerformanceAgent + StyleAgent + ArchitectureAgent run in parallel via Async
-- [ ] S802 BaseAgent interface: analyze(code, file_path) → findings array; add_finding(severity:, category:, message:, line:, suggestion:)
-- [ ] S803 SecurityAgent patterns: eval(), system(), exec(), backtick execution, File.read with user params, hardcoded passwords/API keys, .constantize, dynamic send(), SQL interpolation, html_safe — each with severity and suggested fix
-- [ ] S804 Deep security scan trigger: if critical pattern found OR file name matches /auth|session|user|admin|payment|credential/ → send to LLM for OWASP Top 10 audit
-- [ ] S805 ReviewCrew synthesizes findings from all agents via LLM: generates one consolidated summary rather than dumping 4 separate reports
-- [ ] S806 ReviewCrew progress reporting: "SecurityAgent: started/done (0.8s)", parallel timing visible in CLI output
+- [x] S801 Restore ReviewCrew: SecurityAgent + PerformanceAgent + StyleAgent + ArchitectureAgent run in parallel via Async
+- [x] S802 BaseAgent interface: analyze(code, file_path) → findings array; add_finding(severity:, category:, message:, line:, suggestion:)
+- [x] S803 SecurityAgent patterns: eval(), system(), exec(), backtick execution, File.read with user params, hardcoded passwords/API keys, .constantize, dynamic send(), SQL interpolation, html_safe — each with severity and suggested fix
+- [x] S804 Deep security scan trigger: if critical pattern found OR file name matches /auth|session|user|admin|payment|credential/ → send to LLM for OWASP Top 10 audit
+- [x] S805 ReviewCrew synthesizes findings from all agents via LLM: generates one consolidated summary rather than dumping 4 separate reports
+- [x] S806 ReviewCrew progress reporting: "SecurityAgent: started/done (0.8s)", parallel timing visible in CLI output
 
 ### S9: Safety System (v49.75 — specified, partially implemented)
 
@@ -676,23 +676,23 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### T2: Self-Improvement / Learning Loop (from OpenCrabs / Hermes)
 
-- [ ] T201 Feedback ledger: SQLite table logging every tool call result, user correction, and provider error — enables self-improvement analysis and audit trail
+- [x] T201 Feedback ledger: SQLite table logging every tool call result, user correction, and provider error — enables self-improvement analysis and audit trail
 - [ ] T202 Autonomous skill creation: after complex task completion, auto-generate Skill Documents in MASTER/data/skills/ following agentskills.io portable format
 - [ ] T203 Skill improvement nudges: internal prompts fire at session end asking MASTER to evaluate whether session outcome warrants skill persistence
 - [ ] T204 Recursive self-analysis tool: /analyze-self command queries feedback ledger, identifies systematic optimization opportunities and proposes rule updates
-- [ ] T205 Brain modification logging: RSI improvements logged to runtime/rsi_improvements.md — audit trail of MASTER self-modifications distinct from git history
+- [x] T205 Brain modification logging: RSI improvements logged to runtime/rsi_improvements.md — audit trail of MASTER self-modifications distinct from git history
 - [ ] T206 Upstream template sync: auto-detect new MASTER releases, merge fresh soul/rules sections without overwriting user customizations — idempotent self-update
 - [ ] T207 Skill ranking by recency: when loading skills into context, prefer recently-used over older ones — tighten learning loop
 - [ ] T208 Improvement threshold gates: only persist knowledge crossing minimum-utility threshold to skill library — prevent noise accumulation
 - [ ] T209 Closed learning loop: memory, skills, and session metadata generated during execution, not logged post-hoc
-- [ ] T210 User correction ledger: explicitly log every correction user makes to MASTER actions — train future behavior via logged patterns in data/corrections.jsonl
+- [x] T210 User correction ledger: explicitly log every correction user makes to MASTER actions — train future behavior via logged patterns in data/corrections.jsonl
 
 ### T3: Code Repair Strategies (from aider)
 
-- [ ] T301 Architect/Editor two-model pattern: strong model (opus) plans changes in natural language; fast model emits concrete diffs — separate strategy from execution cost
-- [ ] T302 Unified diff edit format: modified unified diff with @@ hunks optimized for streaming LLM responses — lower token cost than full file replacement
+- [x] T301 Architect/Editor two-model pattern: strong model (opus) plans changes in natural language; fast model emits concrete diffs — separate strategy from execution cost
+- [x] T302 Unified diff edit format: modified unified diff with @@ hunks optimized for streaming LLM responses — lower token cost than full file replacement
 - [ ] T303 Search/Replace block format: EditBlockCoder pattern — emit only changed parts, not full file rewrites — apply as LLM output format in FixLoop
-- [ ] T304 Multiple coder backends: pluggable fix strategies (EditBlockCoder, WholeFileCoder, UnifiedDiffCoder, ArchitectCoder) — select per file type and repair scenario
+- [x] T304 Multiple coder backends: pluggable fix strategies (EditBlockCoder, WholeFileCoder, UnifiedDiffCoder, ArchitectCoder) — select per file type and repair scenario
 - [ ] T305 Real-time diff visualization: stream diffs as LLM generates them — enable user course-correction mid-generation before committing
 - [ ] T306 Atomic git commits with LLM-generated messages: every MASTER fix commits with AI message — no "wip" bundling; git log reads as changelog
 - [ ] T307 Pre-commit user-edits preservation: stash/commit local changes before running repairs — prevent user work loss if agent makes mistakes
@@ -727,26 +727,26 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 ### T6: Safety & Sandboxing (from Codex CLI / OpenCrabs)
 
 - [ ] T601 Sandbox mode flag: --sandbox enables restricted execution context for untrusted agent operations — pledge(2) on OpenBSD
-- [ ] T602 Tool execution logging: every tool invocation and result recorded in feedback ledger — rollback and audit without git
+- [x] T602 Tool execution logging: every tool invocation and result recorded in feedback ledger — rollback and audit without git
 - [ ] T603 Config inheritance for subagents: subagent configs inherit parent unless explicitly overridden — prevent privilege escalation in spawned agents
 - [ ] T604 Provider error isolation: feedback ledger tracks provider failures separately — enable fallback chains without user intervention
-- [ ] T605 Automatic rollback on oscillation: if fix loop detects A→B→A→B cycle, auto-revert to pre-session state and report deadlock
+- [x] T605 Automatic rollback on oscillation: if fix loop detects A→B→A→B cycle, auto-revert to pre-session state and report deadlock
 
 ### T7: Configuration & Rule Systems (from Hermes / Codex / OpenCrabs)
 
 - [ ] T701 Portable skill document format (agentskills.io): each MASTER skill in MASTER/data/skills/<name>.md — reusable across agent frameworks
-- [ ] T702 Model switching via CLI: /model gpt-4o switches active provider without restart — per-task cost/latency optimization
-- [ ] T703 AGENTS.md as tool registry: declarative manifest listing available MASTER tools, skills, hooks, MCP endpoints
+- [x] T702 Model switching via CLI: /model gpt-4o switches active provider without restart — per-task cost/latency optimization
+- [x] T703 AGENTS.md as tool registry: declarative manifest listing available MASTER tools, skills, hooks, MCP endpoints
 - [ ] T704 Conditional tool availability: tools activated by file type (Prism tools only for .rb, jq tools only for .json) — reduce noise in LLM tool list
-- [ ] T705 Plugin hot-reload: add new tool/skill file to data/skills/ and MASTER picks it up at next prompt without restart
+- [x] T705 Plugin hot-reload: add new tool/skill file to data/skills/ and MASTER picks it up at next prompt without restart
 
 ### T8: Repo Map & Context Management (from aider)
 
-- [ ] T801 Repository map: generate ranked summary of all files + their public API signatures — send as compressed context, not full file content
-- [ ] T802 Graph relevance ranking: score files by mention frequency in user's request + recent edit history — inject most-relevant into context first
-- [ ] T803 Symbol-level context: extract def/class/module names per file into map — LLM knows what exists without reading entire file
-- [ ] T804 Stale map invalidation: invalidate AST cache for files modified since last parse — always fresh structural context
-- [ ] T805 Cross-repo context: when working across multiple apps (brgen, baibl, hjerterom), build unified cross-repo map — detect shared violations
+- [x] T801 Repository map: generate ranked summary of all files + their public API signatures — send as compressed context, not full file content
+- [x] T802 Graph relevance ranking: score files by mention frequency in user's request + recent edit history — inject most-relevant into context first
+- [x] T803 Symbol-level context: extract def/class/module names per file into map — LLM knows what exists without reading entire file
+- [x] T804 Stale map invalidation: invalidate AST cache for files modified since last parse — always fresh structural context
+- [x] T805 Cross-repo context: when working across multiple apps (brgen, baibl, hjerterom), build unified cross-repo map — detect shared violations
 
 ### T9: OpenCrabs-Specific Patterns
 
@@ -754,30 +754,30 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] T902 Brain-files-per-turn: include MASTER's own soul/rules/patterns YAML as compressed context in every LLM turn — MASTER always knows its own constitution
 - [ ] T903 Daily log compaction: end-of-day job condenses session logs to ≤10 bullet points, discards raw transcripts — bounded memory growth
 - [ ] T904 Workspace-aware indexing: index varies by current working directory — different brain for MASTER vs DEPLOY vs web/
-- [ ] T905 IDENTITY.md persona file: separate from MEMORY.md — defines WHO MASTER is, not what it knows; re-read on every session start
+- [x] T905 IDENTITY.md persona file: separate from MEMORY.md — defines WHO MASTER is, not what it knows; re-read on every session start
 
 ### T10: aider-Specific Patterns
 
-- [ ] T1001 Linting before commit: run rubocop (dry-run) on every changed file before creating git commit — block commit on :error findings
-- [ ] T1002 LLM-generated commit messages: after every fix, ask fast model to generate commit message summarizing the change — S&W style
-- [ ] T1003 Architect-then-edit flow: for files >200 lines, send to strong model for architecture plan, then send plan to fast model for implementation
-- [ ] T1004 Edit format negotiation: try preferred edit format, fall back to whole-file if LLM produces malformed diff
-- [ ] T1005 In-chat file references: @file.rb in REPL automatically includes file content in next LLM call — fast targeted context injection
+- [x] T1001 Linting before commit: run rubocop (dry-run) on every changed file before creating git commit — block commit on :error findings
+- [x] T1002 LLM-generated commit messages: after every fix, ask fast model to generate commit message summarizing the change — S&W style
+- [x] T1003 Architect-then-edit flow: for files >200 lines, send to strong model for architecture plan, then send plan to fast model for implementation
+- [x] T1004 Edit format negotiation: try preferred edit format, fall back to whole-file if LLM produces malformed diff
+- [x] T1005 In-chat file references: @file.rb in REPL automatically includes file content in next LLM call — fast targeted context injection
 
 ## U — Preventing Shallow Skimming: Deep Semantic Comprehension (item 8)
 
 ### U1: LLM Prompt Architecture to Force Depth
 
-- [ ] U101 Before any scan/fix LLM call, inject "chain-of-thought depth contract": "Before answering, enumerate all structural properties of this code: module hierarchy, data flow, side effects, implicit invariants, edge cases for nil/empty/max/unicode input. Only then proceed."
-- [ ] U102 Add "anti-skim system message" to soul.yml identity section: "Never skim. Every code artifact has a semantic iceberg — surface syntax is 10%, behavior is 90%. Excavate to bedrock before proposing changes."
-- [ ] U103 For every file read during scan, require MASTER to emit a 3-line "semantic summary" before findings: what it does, what it assumes, what could break — stored in scan context, not output
-- [ ] U104 Implement "second-pass obligation": after initial scan findings, always re-read the same file with findings in context and ask "what did I miss that a senior engineer would catch?"
-- [ ] U105 Require explicit enumeration of cross-file dependencies before any multi-file fix: "List all other files that import, call, or are called by this file" — prevents fixes that break callers
-- [ ] U106 Add "assumption audit" step: before each LLM fix call, list all assumptions the proposed fix makes (input types, object states, concurrency) and validate each assumption against the codebase
-- [ ] U107 Require "edge case checklist" for every proposed change: nil input, empty collection, max value, concurrent access, network failure, file permission failure — LLM must address each or explain why N/A
-- [ ] U108 "Inversion test" prompt: after proposing a fix, ask "if this fix is wrong, what would break, where, and when?" — forces adversarial self-review before applying
-- [ ] U109 "Diff impact analysis" before applying: enumerate every caller of a changed method/class and verify the signature change is backward-compatible
-- [ ] U110 Require LLM to state the design pattern being used (or violated) before proposing a structural fix — prevents pattern-blind refactoring
+- [x] U101 Before any scan/fix LLM call, inject "chain-of-thought depth contract": "Before answering, enumerate all structural properties of this code: module hierarchy, data flow, side effects, implicit invariants, edge cases for nil/empty/max/unicode input. Only then proceed."
+- [x] U102 Add "anti-skim system message" to soul.yml identity section: "Never skim. Every code artifact has a semantic iceberg — surface syntax is 10%, behavior is 90%. Excavate to bedrock before proposing changes."
+- [x] U103 For every file read during scan, require MASTER to emit a 3-line "semantic summary" before findings: what it does, what it assumes, what could break — stored in scan context, not output
+- [x] U104 Implement "second-pass obligation": after initial scan findings, always re-read the same file with findings in context and ask "what did I miss that a senior engineer would catch?"
+- [x] U105 Require explicit enumeration of cross-file dependencies before any multi-file fix: "List all other files that import, call, or are called by this file" — prevents fixes that break callers
+- [x] U106 Add "assumption audit" step: before each LLM fix call, list all assumptions the proposed fix makes (input types, object states, concurrency) and validate each assumption against the codebase
+- [x] U107 Require "edge case checklist" for every proposed change: nil input, empty collection, max value, concurrent access, network failure, file permission failure — LLM must address each or explain why N/A
+- [x] U108 "Inversion test" prompt: after proposing a fix, ask "if this fix is wrong, what would break, where, and when?" — forces adversarial self-review before applying
+- [x] U109 "Diff impact analysis" before applying: enumerate every caller of a changed method/class and verify the signature change is backward-compatible
+- [x] U110 Require LLM to state the design pattern being used (or violated) before proposing a structural fix — prevents pattern-blind refactoring
 
 ### U2: Research Integration (ar5iv.org + GitHub)
 
@@ -794,27 +794,27 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### U3: Depth Enforcement in MASTER's Own Processing
 
-- [ ] U301 Implement "read before fix" hard gate: MASTER cannot propose a fix for file X unless it has read file X in the current session — prevents hallucinated context
-- [ ] U302 "Semantic fingerprint" per file: hash of {line_count, class_count, method_count, def_names[], constant_names[]} — if fingerprint changes between read and fix, re-read before applying
-- [ ] U303 Multi-pass scan mandate: every file goes through at minimum lexical → structural → semantic passes before findings are finalized — no early exit on first pass
-- [ ] U304 "Dependency graph" before bulk fix: build module→module dependency graph for the target directory; fix in topological order, leaves first
-- [ ] U305 Cross-file DRY pass: after per-file scan, run a mandatory cross-file pass looking for duplicate patterns across the whole scan batch — cannot be skipped
-- [ ] U306 "Confidence score" on each finding: 0.0–1.0 based on regex certainty vs AST certainty vs LLM inference; only surface findings above 0.7 confidence by default
-- [ ] U307 Finding deduplication: before reporting, cluster findings by root cause — if 8 files have the same smell from a shared ancestor, report the ancestor once, not 8 times
-- [ ] U308 "Impact radius" annotation on every finding: {files_affected: N, callers: M, severity_multiplier: S} — high-impact findings shown first regardless of per-file severity
-- [ ] U309 Require method-level test coverage check before marking any rule violation as fixed: if the fixed method has no test, flag as "fix unverified — add test"
-- [ ] U310 "Ghost smell" detection: pattern that appears correct but conceals a deeper problem (e.g., guard clause that hides a missing abstraction) — requires semantic LLM analysis, not just lexical
+- [x] U301 Implement "read before fix" hard gate: MASTER cannot propose a fix for file X unless it has read file X in the current session — prevents hallucinated context
+- [x] U302 "Semantic fingerprint" per file: hash of {line_count, class_count, method_count, def_names[], constant_names[]} — if fingerprint changes between read and fix, re-read before applying
+- [x] U303 Multi-pass scan mandate: every file goes through at minimum lexical → structural → semantic passes before findings are finalized — no early exit on first pass
+- [x] U304 "Dependency graph" before bulk fix: build module→module dependency graph for the target directory; fix in topological order, leaves first
+- [x] U305 Cross-file DRY pass: after per-file scan, run a mandatory cross-file pass looking for duplicate patterns across the whole scan batch — cannot be skipped
+- [x] U306 "Confidence score" on each finding: 0.0–1.0 based on regex certainty vs AST certainty vs LLM inference; only surface findings above 0.7 confidence by default
+- [x] U307 Finding deduplication: before reporting, cluster findings by root cause — if 8 files have the same smell from a shared ancestor, report the ancestor once, not 8 times
+- [x] U308 "Impact radius" annotation on every finding: {files_affected: N, callers: M, severity_multiplier: S} — high-impact findings shown first regardless of per-file severity
+- [x] U309 Require method-level test coverage check before marking any rule violation as fixed: if the fixed method has no test, flag as "fix unverified — add test"
+- [x] U310 "Ghost smell" detection: pattern that appears correct but conceals a deeper problem (e.g., guard clause that hides a missing abstraction) — requires semantic LLM analysis, not just lexical
 
 ### U4: Cognitive Load / Anti-Skim UI Patterns
 
 - [ ] U401 Show scan progress as "files understood / files skimmed" not just "files scanned" — forces acknowledgement of depth
 - [ ] U402 "Deep mode" flag: /scan --deep forces all three passes + cross-file analysis + ar5iv lookup for each finding — explicit commitment to thoroughness
 - [ ] U403 After each LLM response, display: "Depth: {lexical|structural|semantic|cross-file} | Evidence: {regex|AST|LLM|research}" — makes reasoning basis visible
-- [ ] U404 "Confidence histogram" in scan summary: show distribution of finding confidence scores — reveals whether the scan was shallow or deep
+- [x] U404 "Confidence histogram" in scan summary: show distribution of finding confidence scores — reveals whether the scan was shallow or deep
 - [ ] U405 "Unknown-unknowns prompt": at end of each session, ask LLM "What questions about this codebase should I have asked but didn't?" — surfaces blind spots
 - [ ] U406 "Red team" mode: after proposing a fix set, spawn a second LLM call with "You are a senior engineer reviewing this diff for mistakes. Find every problem." before presenting to user
-- [ ] U407 Require findings to have "why this matters" annotation beyond the rule message — e.g., "CQS violation here makes this method untestable because…"
-- [ ] U408 Show "smell genealogy" for each finding: which principle → which rule → which pattern → which line — full traceability from axiom to code
+- [x] U407 Require findings to have "why this matters" annotation beyond the rule message — e.g., "CQS violation here makes this method untestable because…"
+- [x] U408 Show "smell genealogy" for each finding: which principle → which rule → which pattern → which line — full traceability from axiom to code
 - [ ] U409 "Attention heatmap": track which lines of each file received the most LLM attention tokens — reveal coverage gaps
 - [ ] U410 Block "batch-and-forget" pattern: if MASTER proposes >10 fixes without asking user to verify one, pause and require acknowledgment before continuing
 

@@ -135,6 +135,8 @@ ALL_APPS=(
   amber:amber.brgen.no
   bsdports:bsdports.org
   baibl:baibl.no
+  blognet:antibettingblog.com
+  hjerterom:hjerterom.brgen.no
 )
 
 SERVICES=()
@@ -197,6 +199,7 @@ ALL_DOMAINS=(
   antigamblingblog.com
   foball.no
   amber.brgen.no
+  hjerterom.brgen.no
   baibl.no
 )
 
@@ -447,6 +450,8 @@ configure_relayd() {
   done
   DOMAIN_BACKEND[ai.brgen.no]=master
   BACKEND_PORT[master]=${BACKEND_PORT[master]:-53187}
+  DOMAIN_BACKEND[anticasinoblog.com]=blognet
+  DOMAIN_BACKEND[antigamblingblog.com]=blognet
   for entry in $ALL_DOMAINS; do
     dom=${entry%%:*}
     [[ -n ${DOMAIN_BACKEND[$dom]:-} ]] && continue

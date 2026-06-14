@@ -27,7 +27,7 @@
   <% if @post.image.attached? %>
     <div data-controller="lightbox">
       <a href="<%= url_for(@post.image) %>" data-lg-size="1600-1200">
-        <%= image_tag @post.image, class: "post-image" %>
+        <%= responsive_image_tag @post.image, alt: @post.title, class: "post-image" %>
       </a>
     </div>
   <% end %>
