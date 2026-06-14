@@ -946,7 +946,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 ### W1: Voice and Output Discipline Not Yet in soul.yml
 
 - [ ] W101 Codify unix-silence rule: "silence on success, text only when something noteworthy" — add as `unix_silence: true` in soul.yml absolute.aesthetic_rules; CLI scan with zero findings exits 0 with no output
-- [ ] W102 Codify "exit codes carry meaning": scan violations = exit 1, internal errors = exit 2, LLM failure = exit 3 — wire to bin/cli; document in CONVENTIONS.md
+- [x] W102 Codify "exit codes carry meaning": scan violations = exit 1, internal errors = exit 2, LLM failure = exit 3 — wire to bin/cli; document in CONVENTIONS.md
 - [ ] W103 Codify "do one thing well" per invocation: each MASTER subcommand must have exactly one output channel (stdout) and one error channel (stderr) — no mixing
 - [ ] W104 Codify catchphrase discipline from v49.13: "Backing up first." before write, "Checking for side effects…" before LLM fix, "Clean. Moving on." on zero findings — add to voice/personality.rb output hooks
 - [ ] W105 Codify no-sycophancy rule at runtime: soul.yml forbidden_openings: ["great question", "certainly", "of course", "absolutely", "happy to"] — applied at response generation time
@@ -956,7 +956,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 - [x] W201 Codify crit-fix-loop as default: any scan invocation runs autoiteratively until zero findings — no --loop flag required; wired at pipeline level so loop exits only on clean pass (enabled: FixLoop started unconditionally)
 - [ ] W202 Codify "read whole file, not grep snippets": scanner must load full file content before any rule runs — no streaming partial-reads that miss context; enforce in scanner.rb#load_file
-- [ ] W203 Codify intent inference: when user input matches plain-language description (e.g. "fix face.js"), infer full workflow (read → crit → fix → commit) without requiring slash commands — wire in now/cli.rb intent router
+- [x] W203 Codify intent inference: when user input matches plain-language description (e.g. "fix face.js"), infer full workflow (read → crit → fix → commit) without requiring slash commands — wire in now/cli.rb intent router
 - [ ] W204 Codify red-team pass: after every LLM fix proposal, a second call "find every flaw in this proposed fix" before applying — add as pipeline gate before write_back
 - [ ] W205 Codify "second-pass obligation" as named pass in ScanPipeline: after finding collection, re-run with findings in context asking "what did I miss?" — not optional
 - [ ] W206 Codify DEEP_SCAN_ONLY (already in soul.yml) as a hard scanner gate: if scan_depth != :deep, raise ConfigError — never silently downgrade
@@ -1315,7 +1315,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 - [ ] AC201 Any input containing a file path → auto-run scan+fix loop on that file; no /scan needed
 - [ ] AC202 Any input containing "why" or "explain" → auto-run /why on most recent finding; no /why command needed
-- [ ] AC203 Any input containing "commit" or "push" → auto-run git commit with LLM message; no /commit needed
+- [x] AC203 Any input containing "commit" or "push" → auto-run git commit with LLM message; no /commit needed
 - [ ] AC204 Any input containing "clean" or "fix" without a path → auto-run fix loop on last scanned target
 - [ ] AC205 Any input containing "status" or "health" → auto-run /status output
 - [ ] AC206 Any input that is empty or "?" → show abbreviated /status + last finding count; never show full help
@@ -1354,11 +1354,11 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] AD101 Semantic intent classifier: before routing any input, run a fast (zero-LLM) regex+keyword classifier that maps plain-language phrases to pipeline actions — "show me what's broken" → scan, "make it cleaner" → fix+lint, "explain this" → why
 - [ ] AD102 Entity extraction: identify file paths, rule IDs, and model names in natural language input — "fix the scanner" resolves to lib/judge/scan/scanner.rb; "the CQS rule" resolves to B04
 - [ ] AD103 Pronoun resolution: "it" / "that file" / "the last one" → resolve to most recently mentioned/scanned file in session context
-- [ ] AD104 Verb-action mapping: build verb→action table: "clean/tidy/polish" → fix+lint, "check/review/audit" → scan, "explain/why/what" → why+axioms, "ship/deploy/push" → commit+push
+- [x] AD104 Verb-action mapping: build verb→action table: "clean/tidy/polish" → fix+lint, "check/review/audit" → scan, "explain/why/what" → why+axioms, "ship/deploy/push" → commit+push
 - [ ] AD105 Negation handling: "don't fix X" / "skip the magic number rule" → add rule to session suppression list; persist for session
 - [ ] AD106 Scope inference: "fix everything" → scan all tracked files; "just this method" → extract method name and run targeted scan
 - [ ] AD107 Urgency detection: "quickly" / "just give me the main issues" → still run full scan but show only :error findings first; don't downgrade scan depth
-- [ ] AD108 Multi-step intent: "scan, fix what you can, then commit" → parse as ordered pipeline; execute each step; confirm between stages only when destructive
+- [x] AD108 Multi-step intent: "scan, fix what you can, then commit" → parse as ordered pipeline; execute each step; confirm between stages only when destructive
 - [ ] AD109 Question vs command distinction: "what's wrong with this?" → report; "fix what's wrong with this" → fix; detect question mark and interrogative verbs
 
 ### AD2: Context Awareness
@@ -2478,7 +2478,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA42 tts: voice preview plays 3-word clip without sending to chat history
 - [x] FA43 tts: auto-pause TTS when user scrolls (intent = reading, not listening)
 - [ ] FA44 tts: resume TTS from last word boundary on un-pause (track char offset in streamed chunks)
-- [ ] FA45 tts: per-speaker voice in council mode — each council member uses their mapped voice (already in code, surface in UI)
+- [x] FA45 tts: per-speaker voice in council mode — each council member uses their mapped voice (already in code, surface in UI)
 - [ ] FA46 tts: emotional prosody — stress key words via SSML `<emphasis>` tags injected by expression.rb
 - [ ] FA47 tts: SSML `<break time="400ms"/>` after code blocks and lists — natural reading pace
 - [x] FA48 tts: strip markdown before TTS — `**bold**`, `` `code` ``, `#` headers → plain text, not read aloud as punctuation
@@ -2509,7 +2509,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA70 face: swipe left/right on face = cycle through recent answers
 - [ ] FA71 face: drag face to corner — pin it small while reading long output (PiP mode)
 - [ ] FA72 face: "applause" Easter egg — type "wow" and particles burst confetti pattern for 1s
-- [ ] FA73 face: "sleep" command — face dims to 5% alpha, TTS mutes, wakes on any input
+- [x] FA73 face: "sleep" command — face dims to 5% alpha, TTS mutes, wakes on any input
 - [ ] FA74 face: share face state as URL param — mood/model/voice encoded, shareable link
 - [ ] FA75 face: copy-to-clipboard button appears on hover over any assistant message
 - [ ] FA76 face: reaction emojis on message — tap to send 👍/🔁/🗑 to rate/retry/delete answer
@@ -2558,7 +2558,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA113 face: model identity badge — tiny text "claude" / "deepseek" / "gpt" near face, fades after 3s
 - [ ] FA114 face: voice character blurb on voice change — one spoken line in new voice: "I'm Christopher. Let's work."
 - [ ] FA115 face: council vote tally displayed — pass/veto counts appear as brief text overlay
-- [ ] FA116 face: constitution violation flash — red particle flash (uFlash) already wired, expose via ABSOLUTE guard event
+- [x] FA116 face: constitution violation flash — red particle flash (uFlash) already wired, expose via ABSOLUTE guard event
 - [ ] FA117 face: pipeline stage indicator — tiny label "routing…" "scanning…" fades in/out per stage
 - [ ] FA118 face: model switch animation — brief dissolve/reform of face in new tint (currently all white; future per-model tint opt-in)
 - [ ] FA119 face: "I don't know" response = particles form question-mark shape momentarily
@@ -2575,7 +2575,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA127 face: adaptive particle count — drop to 8k if frame time >25ms for two consecutive frames
 - [ ] FA128 face: preload face_mask.jpg via `<link rel="preload">` in HTML head — zero parse delay
 - [ ] FA129 face: service worker cache face.js + three.module.js + face_mask.jpg — offline shell
-- [ ] FA130 face: progressive enhancement — 2D canvas fallback already exists; add SVG fallback for no-canvas
+- [x] FA130 face: progressive enhancement — 2D canvas fallback already exists; add SVG fallback for no-canvas
 - [ ] FA131 tts: exponential backoff on TTS 503 — retry up to 3× before showing silent fallback text
 - [ ] FA132 tts: connection health ping /up every 60s; show reconnect banner if down, auto-retry
 - [ ] FA133 face: error boundary — uncaught JS exception shows degraded text UI, never blank screen

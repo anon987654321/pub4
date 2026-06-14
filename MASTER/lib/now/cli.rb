@@ -37,6 +37,7 @@ module Master
       ].freeze
 
       attr_reader :container
+      attr_reader :exit_code
 
       def initialize(container:)
         @container = container
@@ -59,6 +60,7 @@ module Master
         @last_input = nil
         @last_cost = 0.0
         @dmesg_sub = nil
+        @exit_code = 0
         set_visitor_mode_if_unauthenticated
       end
 

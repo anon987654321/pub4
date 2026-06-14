@@ -2,7 +2,8 @@
 
 // Check WebGL before paying THREE's 1.3MB parse cost
 const _wglCv = document.createElement('canvas');
-const _hasWebGL = !!(_wglCv.getContext('webgl2') || _wglCv.getContext('webgl') || _wglCv.getContext('experimental-webgl'));
+const _hasCanvas = typeof _wglCv.getContext === 'function';
+const _hasWebGL = _hasCanvas && !!(_wglCv.getContext('webgl2') || _wglCv.getContext('webgl') || _wglCv.getContext('experimental-webgl'));
 
 const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
@@ -19,7 +20,7 @@ class _Color {
 }
 const Color = _hasWebGL ? THREE.Color : _Color;
 
-const cv = document.getElementById('face');
+let cv = document.getElementById('face');
 const primer = document.getElementById('primer');
 const zshBar = document.getElementById('zsh');
 const zshIn = document.getElementById('zin');
@@ -28,6 +29,40 @@ const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
 let FACE_PIXEL_SIZE = 0.017;
 let FACE_GLOW_SCALE = 1.18;
+
+function renderNoCanvasFallback() {
+  if (!cv || typeof cv.getContext === 'function') return false;
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", "0 0 320 220");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Face fallback");
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  svg.style.width = "100%";
+  svg.style.height = "100%";
+  svg.style.display = "block";
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="fallbackGlow" x1="0" x2="1">
+        <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+        <stop offset="100%" stop-color="#888" stop-opacity="0.25"/>
+      </linearGradient>
+    </defs>
+    <rect width="320" height="220" fill="#000"/>
+    <ellipse cx="160" cy="112" rx="86" ry="102" fill="url(#fallbackGlow)" opacity="0.88"/>
+    <circle cx="128" cy="96" r="11" fill="#000"/>
+    <circle cx="192" cy="96" r="11" fill="#000"/>
+    <path d="M112 146 Q160 165 208 146" fill="none" stroke="#000" stroke-width="8" stroke-linecap="round"/>
+    <text x="160" y="198" text-anchor="middle" font-family="monospace" font-size="16" fill="#fff">no canvas fallback</text>
+  `;
+  cv.replaceWith(svg);
+  cv = svg;
+  rootBody.dataset.faceFallback = "svg";
+  if (_dbgEl) _dbgEl.textContent = 'svg fallback';
+  return true;
+}
+
+renderNoCanvasFallback();
 
 const FONT_KEY = 'master:font';
 (function initFont() {
@@ -87,6 +122,7 @@ const State = {
   flash: 0, shake: 0, pulse: 0, sttActive: false,
   surpriseY: 0, ripplePhase: -1, rain: 0,
   pinchScale: 1.0, idleAlphaDrift: 0,
+  sleeping: false, sleepMuted: false,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches,
   highContrast: new URLSearchParams(window.location.search).get('hc') === '1',

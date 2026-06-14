@@ -73,3 +73,5 @@ else
   $stdout.sync = true
   $stdin.each_line { |line| cli.pipe(line) }
 end
+
+exit(cli.exit_code || 0)

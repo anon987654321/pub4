@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../ground/orchestration_policy"
 require_relative "command_handlers"
 
 module Master
@@ -140,8 +141,111 @@ module Master
         when "/rails-pwa-fix" then run_rails_pwa_fix
         when "/swallow-report" then run_swallow_report
         when "<<" then run_input(read_multiline)
-        else stripped.start_with?("/") ? unknown_command(stripped) : run_input(line)
+        else stripped.start_with?("/") ? unknown_command(stripped) : handle_plain_language_line(line)
         end
+      end
+
+      def handle_plain_language_line(line)
+        route = inferred_intent_route(line)
+        return run_input(line) unless route
+
+        case route[:intent]
+        when :scan_then_fix_then_commit
+          target = inferred_target_path(line)
+          handle_repl_line("/scan #{target}")
+          handle_repl_line("/fix #{target}")
+          run_commit
+        when :scan_then_fix
+          target = inferred_target_path(line)
+          handle_repl_line("/scan #{target}")
+          handle_repl_line("/fix #{target}")
+        when :scan_target
+          handle_repl_line("/scan #{inferred_target_path(line)}")
+        when :scan_fix_lint
+          target = inferred_target_path(line)
+          handle_repl_line("/scan #{target}")
+          handle_repl_line("/fix #{target}")
+          run_lint(target)
+        when :why_axioms
+          run_why
+          run_axioms
+        when :run_ui_review
+          run_ui_critique
+        when :run_sound_review
+          run_sound_critique
+        when :verify_patch_landed
+          run_verify
+        when :write_repo_changes
+          run_commit
+          run_push if route[:push]
+        when :wire_existing_module, :refactor_to_ruby, :create_facade, :codify_policy
+          target = inferred_target_path(line)
+          handle_repl_line("/triad #{target}")
+          run_commit if route[:risk] != :low
+        when :continue_prior_plan
+          target = inferred_target_path(line)
+          handle_repl_line("/triad #{target}")
+        else
+          run_input(line)
+        end
+      end
+
+      def inferred_intent_route(line)
+        text = line.to_s.strip
+        return { intent: :scan_then_fix_then_commit, risk: :high } if text.match?(/\A.*\bscan\b.*\bfix\b.*\bcommit\b/i)
+        return { intent: :scan_fix_lint, risk: :medium } if text.match?(/\A(?:clean|tidy|polish)\b/i)
+        return { intent: :scan_target, risk: :low } if text.match?(/\A(?:check|review|audit)\b/i)
+        return { intent: :why_axioms, risk: :low } if text.match?(/\A(?:explain|why|what)\b/i)
+        return { intent: :refactor_to_ruby, risk: :medium } if text.match?(/\Afix\b/i)
+        return { intent: :run_ui_review, risk: :low } if text.match?(/\A(?:review|critique)\b/i)
+        return { intent: :verify_patch_landed, risk: :low } if text.match?(/\A(?:verify|check|confirm)\b/i)
+        return { intent: :write_repo_changes, risk: :high, push: text.match?(/\bpush\b/i) } if text.match?(/\b(?:commit|save|ship|push)\b/i)
+
+        policy = @intent_policy ||= Master::Ground::OrchestrationPolicy.new
+        route = policy.evaluate(text)
+        route[:intent] == :unknown ? nil : route
+      rescue StandardError
+        nil
+      end
+
+      def inferred_target_path(line)
+        text = line.to_s
+        text[%r{\b([\w./-]+\.(?:rb|js|ts|yml|yaml|md|erb|css|scss|json))\b}, 1] || "."
+      end
+
+      def run_commit
+        puts @refs.renderer.render(Master::Now::CommandRegistry.dispatch_commit(@refs.agent, @refs.root), mode: :dim)
+      rescue StandardError => e
+        puts @refs.renderer.render("commit: #{e.message}", mode: :warning)
+      end
+
+      def run_push
+        out, status = Open3.capture2e("git", "-C", @refs.root, "push")
+        message = status.success? ? out.strip : "push: #{out.strip}"
+        puts @refs.renderer.render(message.empty? ? "push: ok" : message, mode: status.success? ? :dim : :warning)
+      rescue StandardError => e
+        puts @refs.renderer.render("push: #{e.message}", mode: :warning)
+      end
+
+      def run_axioms
+        puts @refs.renderer.render(Master::Now::CommandRegistry.dispatch_axioms(scanner: @refs.scanner, root: @refs.root), mode: :dim)
+      rescue StandardError => e
+        puts @refs.renderer.render("axioms: #{e.message}", mode: :warning)
+      end
+
+      def run_lint(target)
+        ctx = Master::Now::PipelineContext.build(user_message: "lint #{target}", output: "", written_files: [File.expand_path(target, @refs.root)])
+        lint = Master::Now::Stages::Lint.new(scanner: @refs.scanner, config: @refs.config, root: @refs.root, event_bus: @refs.bus)
+        result = lint.call(ctx)
+        report = result.ok? ? result.value!.lint_report : []
+        text = if report.empty?
+                 "lint: clean"
+               else
+                 "lint: #{report.size} finding(s)"
+               end
+        puts @refs.renderer.render(text, mode: :dim)
+      rescue StandardError => e
+        puts @refs.renderer.render("lint: #{e.message}", mode: :warning)
       end
     end
   end

@@ -49,6 +49,34 @@ function ttsToggleMic() {
   else startSTT();
 }
 
+function wakeFromSleep() {
+  if (!State.sleeping) return;
+  State.sleeping = false;
+  if (State.sleepMuted) {
+    State.sleepMuted = false;
+    ttsToggleMute();
+  }
+  rootBody.style.opacity = '';
+  delete rootBody.dataset.sleeping;
+}
+
+function enterSleep() {
+  if (State.sleeping) return;
+  State.sleepMuted = !tts.muted;
+  if (!tts.muted) ttsToggleMute();
+  State.sleeping = true;
+  rootBody.dataset.sleeping = '1';
+  rootBody.style.opacity = '0.05';
+}
+
+function flashViolation() {
+  State.flash = 1;
+  State.shake = Math.max(State.shake || 0, 0.8);
+  State.mode = 'error';
+  rootBody.dataset.violationFlash = '1';
+  setTimeout(() => { delete rootBody.dataset.violationFlash; }, 700);
+}
+
 function cancelStream() {
   if (evtSrc) { try { evtSrc.close(); } catch (_) {} evtSrc = null; }
   window._chatCancel?.();
@@ -81,6 +109,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
 }
 function startSTT() {
   if (!recognition || State.sttActive) return;
+  wakeFromSleep();
   if (tts.playing) ttsSkip();
   try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
 }
@@ -92,11 +121,12 @@ function stopSTT() {
 let evtSrc = null;
 async function sendMessage(text) {
   const trimmed = text.trim();
+  wakeFromSleep();
   if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
       if (window.MASTER_FACE?.tts?.lastText) { window.MASTER_FACE.tts.queue = [window.MASTER_FACE.tts.lastText]; window.MASTER_FACE.ttsTick?.(); } return;
   }
-  if (/^\/sleep$/i.test(trimmed)) { State.sleeping = true; faceMat.uniforms.uIdleDrift.value = 0.02; return; }
-  if (/^\/wake$/i.test(trimmed)) { State.sleeping = false; return; }
+  if (/^\/sleep$/i.test(trimmed)) { enterSleep(); faceMat.uniforms.uIdleDrift.value = 0.02; return; }
+  if (/^\/wake$/i.test(trimmed)) { wakeFromSleep(); return; }
   const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
   if (maskMatch) { swapMask(maskMatch[1]); return; }
   if (/^\/leader$/i.test(trimmed)) { swapMask('/dario.jpg'); return; }
@@ -204,9 +234,16 @@ async function sendMessage(text) {
   evtSrc.addEventListener('council:speech', (ev) => {
     try {
       const { voice, text, persona } = JSON.parse(ev.data || '{}');
-      if (persona) { rootBody.dataset.councilPersona = persona; applyPersonaVisual(persona); }
+      if (persona) {
+        rootBody.dataset.councilPersona = persona;
+        applyPersonaVisual(persona);
+        if (uiStatus) uiStatus.textContent = `council: ${persona}${voice ? ` / ${voice}` : ''}`;
+      }
       if (voice && text && !tts.playing) playDuo([[guardVoice(voice), text]]);
-      setTimeout(() => { if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona; }, 8000);
+      setTimeout(() => {
+        if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
+        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
+      }, 8000);
     } catch (_) {}
   });
   evtSrc.addEventListener('confidence', (ev) => {
@@ -277,6 +314,9 @@ function handleGlobalBusEvent(payload) {
   const data = payload && (payload.data || payload);
   const type = payload && (payload.type || (data && (data.event || data.name)));
   if (!type) return;
+  if (type === 'self_violation') {
+    window.dispatchEvent(new CustomEvent('master:self_violation', { detail: data }));
+  }
   if (type === 'tts:anticipate') {
     window.dispatchEvent(new CustomEvent('tts:anticipate', { detail: data }));
   }
@@ -324,6 +364,7 @@ function startEverything() {
   setTimeout(() => { morphTarget = 1.0; }, 600);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v1')).catch(() => {});
 }
+window.addEventListener('master:self_violation', () => flashViolation());
 let primerFired = false;
 function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
 primer?.addEventListener('pointerdown', firePrimer);
@@ -391,6 +432,7 @@ document.addEventListener('keyup', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
+  wakeFromSleep();
   if (e.key === 'Escape') { e.preventDefault(); cancelStream(); window.MASTER_FACE?.ttsSkip?.(); }
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
   if (e.key === 't' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
@@ -408,6 +450,10 @@ document.addEventListener('keydown', (e) => {
     setTtsRate(RATES[(i + 1) % RATES.length]);
   }
 });
+
+document.addEventListener('pointerdown', wakeFromSleep, { passive: true });
+document.addEventListener('touchstart', wakeFromSleep, { passive: true });
+document.addEventListener('mousedown', wakeFromSleep, { passive: true });
 
 window.sendMessage = sendMessage;
 window.MASTERVoice = {
@@ -456,6 +502,8 @@ window.MASTER_FACE = {
   ttsSkip,
   ttsToggleMute,
   ttsToggleMic,
+  wakeFromSleep,
+  enterSleep,
   startSTT,
   stopSTT,
   sendMessage,

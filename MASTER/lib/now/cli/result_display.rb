@@ -9,9 +9,11 @@ module Master
         case result
         in Master::Result::Ok => ok
           @last_ok = true
+          @exit_code = 0
           display_ok(ok:, accumulated:, streamed:)
         in Master::Result::Err => err
           @last_ok = false
+          @exit_code = exit_code_for(err)
           if err.category == :shutdown
             exit_cli
           else
@@ -123,6 +125,17 @@ module Master
 
       def short_model(model)
         model.to_s.sub(/\Aclaude-cli:/, "").sub(/\Aweb-chat:/, "").split("/").last.to_s.sub(/:free$/, "")
+      end
+
+      def exit_code_for(err)
+        case err.category
+        when :validation, :policy, :axiom_violation
+          1
+        when :provider_error, :llm_failure, :llm_call_failure, :no_api_key
+          3
+        else
+          2
+        end
       end
     end
   end
