@@ -10,6 +10,8 @@ module Master
       SESSION_NAME_MAX = 40
       # 100 KB session cost log cap
       COSTS_MAX_BYTES = 102_400
+      FULL_MESSAGE_WINDOW = 40
+      SUMMARY_MAX_CHARS = 240
 
       attr_reader :name, :messages, :cost, :phase, :snapshots
       attr_accessor :topic
@@ -20,6 +22,7 @@ module Master
         @req_max = req_max
         @mutex = Mutex.new
         @messages = []
+        @token_est = 0
         @snapshots = {}
         @cost = 0.0
         @phase = :discover
@@ -34,6 +37,7 @@ module Master
         msg = { role:, content:, ts: Time.now.to_i }
         @mutex.synchronize do
           @messages << msg
+          @token_est += Session.estimate_tokens(content)
           @name ||= auto_name(content) if role == :user
         end
         msg
@@ -63,12 +67,20 @@ module Master
 
       def save!
         FileUtils.mkdir_p(File.dirname(@path))
-        data = { name: @name, phase: @phase, topic: @topic, messages: @messages, cost: @cost, ts: Time.now.to_i }
+        data = {
+          name: @name,
+          phase: @phase,
+          topic: @topic,
+          messages: pruned_messages,
+          cost: @cost,
+          ts: Time.now.to_i
+        }
         File.write(@path, JSON.generate(data))
       end
 
       def load!
         return self unless File.exist?(@path)
+        begin
           data = JSON.parse(File.read(@path), symbolize_names: true)
         rescue JSON::ParserError, Errno::ENOENT
           data = {}
@@ -77,6 +89,7 @@ module Master
         @phase = data.fetch(:phase, nil)&.to_sym || :discover
         @topic = data[:topic]
         @messages = data.fetch(:messages, [])
+        @token_est = @messages.sum { |m| Session.estimate_tokens(m[:content]) }
         @cost = data[:cost].to_f
         self
       end
@@ -85,15 +98,31 @@ module Master
 
       def exists? = File.exist?(@path)
       def clear!
-        @mutex.synchronize { @messages = []; @cost = 0.0; @name = nil; @topic = nil }
+        @mutex.synchronize { @messages = []; @token_est = 0; @cost = 0.0; @name = nil; @topic = nil }
         self
       end
 
       def token_est
-        @mutex.synchronize { @messages.sum { |m| Session.estimate_tokens(m[:content]) } }
+        @mutex.synchronize { @token_est }
       end
 
       private
+
+      def pruned_messages
+        @mutex.synchronize do
+          return @messages if @messages.size <= FULL_MESSAGE_WINDOW
+
+          older = @messages[0...-FULL_MESSAGE_WINDOW]
+          recent = @messages.last(FULL_MESSAGE_WINDOW)
+          older.map { |msg| summarize_message(msg) } + recent
+        end
+      end
+
+      def summarize_message(msg)
+        content = msg[:content].to_s.gsub(/\s+/, " ").strip
+        summary = content.bytesize > SUMMARY_MAX_CHARS ? "#{content.byteslice(0, SUMMARY_MAX_CHARS)}..." : content
+        msg.merge(content: "[summary] #{summary}", summarized: true)
+      end
 
       SHELL_CMDS = "cd|ls|pwd|grep|find|cat|echo|export|sudo|doas|git|bundle|ruby|exec|eval|bash|zsh|sh"
       SHELL_RE = /\A(?:#{SHELL_CMDS})\b|[$`|;&]/.freeze
@@ -101,6 +130,7 @@ module Master
       def auto_name(content)
         stripped = content.to_s.strip
         return Time.now.strftime("%Y%m%d-%H%M") if stripped.match?(SHELL_RE)
+        stripped.split.first(5).join(" ")[0, SESSION_NAME_MAX]
       end
 
       def rotate_costs!

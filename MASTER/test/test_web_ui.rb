@@ -138,8 +138,9 @@ class TestWebUI < Minitest::Test
 
   def test_tts_endpoint_sets_cache_headers_and_supports_conditional_get
     chat_controller = File.read(File.expand_path("../web/app/controllers/chat_controller.rb", __dir__))
+    tts_job = File.read(File.expand_path("../web/app/services/tts_job.rb", __dir__))
 
-    assert_includes chat_controller, "Digest::SHA256.hexdigest"
+    assert_includes tts_job, "Digest::SHA256.hexdigest"
     assert_includes chat_controller, 'response.headers["ETag"] = etag'
     assert_includes chat_controller, 'response.headers["Cache-Control"] = "public, max-age=3600"'
     assert_includes chat_controller, "head(:not_modified)"

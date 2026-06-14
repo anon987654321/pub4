@@ -1,18 +1,20 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --c-text: #d8d4cd;
-  --c-accent: #e9d49a;
+  --c-text: oklch(86% 0.02 80);
+  --c-accent: oklch(86% 0.08 88);
+  --c-danger: oklch(62% 0.18 28);
+  --c-code: oklch(74% 0.11 255);
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
-  --face-bg: #000;
+  --face-bg: black;
   --face-fg: var(--c-text);
-  --face-muted: rgba(216,212,205,0.35);
-  --face-dim: rgba(216,212,205,0.18);
-  --face-soft: rgba(216,212,205,0.08);
+  --face-muted: color-mix(in srgb, var(--c-text) 35%, transparent);
+  --face-dim: color-mix(in srgb, var(--c-text) 18%, transparent);
+  --face-soft: color-mix(in srgb, var(--c-text) 8%, transparent);
   --face-bar-height: 36px;
   --face-particle-size: 0.017;
   --face-glow-scale: 1.18;
@@ -45,13 +47,13 @@ body.font-mono {
 }
 
 body[data-high-contrast="1"] {
-  --face-fg: #fff;
-  --face-muted: #fff;
-  --face-dim: #fff;
-  --face-soft: #fff;
+  --face-fg: white;
+  --face-muted: white;
+  --face-dim: white;
+  --face-soft: white;
 }
-body[data-high-contrast="1"] .msg-body { color: #fff; }
-body[data-high-contrast="1"] .enhance-text { color: #fff; }
+body[data-high-contrast="1"] .msg-body { color: white; }
+body[data-high-contrast="1"] .enhance-text { color: white; }
 
 body[data-runtime-visible="false"] canvas { filter: brightness(0.45) contrast(0.85); }
 body[data-runtime-profile="battery"] canvas { filter: grayscale(0.25) brightness(0.72); }
@@ -94,7 +96,7 @@ body[data-tts-loading="true"] .ui-status {
   z-index: var(--z-ui);
   font: 700 clamp(15px,3.8vw,24px)/1 "Inter",Helvetica,sans-serif;
   letter-spacing: -.03em;
-  color: #fff !important;
+  color: white;
   opacity: 1;
   pointer-events: none;
   user-select: none;
@@ -110,7 +112,7 @@ body[data-tts-loading="true"] .ui-status {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #e05252;
+  background: var(--c-danger);
   opacity: 0;
   pointer-events: none;
   z-index: var(--z-ui);
@@ -121,8 +123,8 @@ body[data-mode="listening"] #mic-dot {
   animation: micPulse 1.4s cubic-bezier(0.4,0,0.6,1) infinite;
 }
 @keyframes micPulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(224,82,82,.5); }
-  50% { transform: scale(1.12); box-shadow: 0 0 0 5px rgba(224,82,82,0); }
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-danger) 50%, transparent); }
+  50% { transform: scale(1.12); box-shadow: 0 0 0 5px transparent; }
 }
 
 /* Bottom-right status label */
@@ -134,7 +136,7 @@ body[data-mode="listening"] #mic-dot {
   font: 9px/1.1 "JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
   text-transform: uppercase;
   letter-spacing: .28em;
-  color: rgba(245,240,232,.38);
+  color: color-mix(in srgb, var(--c-text) 38%, transparent);
   opacity: 1;
   pointer-events: none;
   user-select: none;
@@ -161,7 +163,7 @@ body[data-mode="listening"] #mic-dot {
   display: grid;
   place-items: center;
   z-index: var(--z-modal);
-  background: #000;
+  background: black;
   cursor: pointer;
   text-align: center;
   padding: 16px;
@@ -172,7 +174,7 @@ body[data-mode="listening"] #mic-dot {
 
 #primer:focus-visible { outline: 1px solid var(--face-fg); outline-offset: -8px; }
 
-#face:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+[id="face"]:focus-visible { outline: 2px solid white; outline-offset: 2px; }
 
 #primer h1 {
   margin: 0;
@@ -196,7 +198,7 @@ body[data-mode="listening"] #mic-dot {
   pointer-events: none;
   transform: translate(var(--x),var(--y)) translate(-50%,-50%) scale(.4);
   opacity: .7;
-  background: radial-gradient(circle,rgba(220,220,220,.3) 0%,rgba(220,220,220,.12) 40%,rgba(220,220,220,0) 70%);
+  background: radial-gradient(circle,color-mix(in srgb, var(--face-fg) 30%, transparent) 0%,color-mix(in srgb, var(--face-fg) 12%, transparent) 40%,transparent 70%);
   mix-blend-mode: screen;
   animation: ripple 680ms ease-out forwards;
   z-index: 999;
@@ -229,15 +231,15 @@ body[data-mode="listening"] #mic-dot {
 .msg-prompt { font-weight: 700; margin-right: 0.35em; }
 .message.user .msg-prompt { color: var(--face-fg); }
 .message.assistant .msg-prompt { color: var(--face-muted); }
-.msg-body { color: rgba(210,205,198,.82); }
+.msg-body { color: color-mix(in srgb, var(--c-text) 82%, transparent); }
 .cursor { display:inline-block; width:7px; height:1em; background:currentColor; vertical-align:text-bottom; animation:cursorBlink 900ms steps(2,end) infinite; margin-left:1px; }
 .enhance-confirm { margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; }
-.enhance-arrow { color: rgba(220,220,220,.22); animation: blink .5s step-end 4; }
-.enhance-text { color: rgba(220,220,220,.32); font-style: italic; }
+.enhance-arrow { color: color-mix(in srgb, var(--face-fg) 22%, transparent); animation: blink .5s step-end 4; }
+.enhance-text { color: color-mix(in srgb, var(--face-fg) 32%, transparent); font-style: italic; }
 .enhance-yn { color: var(--face-dim); }
 .dmesg-line { font: 11px/1.5 ui-monospace,monospace; color: var(--face-dim); margin-bottom: 1px; white-space: pre-wrap; word-break: break-all; transition: opacity .8s steps(4,end); }
 .dmesg-fade { opacity: 0; }
-.thought-trace { font: 11px/1.45 ui-monospace,monospace; color: var(--face-dim); opacity: 0.55; margin: 0 0 6px 0; padding: 0 0 4px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.thought-trace { font: 11px/1.45 ui-monospace,monospace; color: var(--face-dim); opacity: 0.55; margin: 0 0 6px 0; padding: 0 0 4px 0; border-bottom: 1px solid color-mix(in srgb, var(--face-fg) 6%, transparent); }
 .thought-line { font-style: italic; white-space: pre-wrap; margin: 0; padding: 1px 0; }
 .thought-line::before { content: '~ '; opacity: 0.45; }
 @keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
@@ -261,7 +263,7 @@ body[data-mode="listening"] #mic-dot {
   cursor: pointer;
   font: inherit;
 }
-.action-menu button:hover, .action-menu button:focus { background: rgba(255,255,255,.1); }
+.action-menu button:hover, .action-menu button:focus { background: color-mix(in srgb, var(--face-fg) 10%, transparent); }
 
 #zsh {
   position: fixed;
@@ -274,7 +276,7 @@ body[data-mode="listening"] #mic-dot {
   font: 13px ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
   color: var(--face-fg);
   border: 0;
-  background: #000;
+  background: black;
   z-index: 11;
   opacity: 0;
   pointer-events: none;
@@ -289,10 +291,10 @@ body.zen #chat-log { opacity: .08; }
 body.zen #zsh.revealed { opacity: .96; pointer-events: auto; transform: none; }
 
 body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
-#zsh .pp { color: rgba(180,80,80,.82); font-weight: 700; }
+#zsh .pp { color: color-mix(in srgb, var(--c-danger) 82%, transparent); font-weight: 700; }
 #zsh .sep, #zsh .sep2 { color: var(--face-muted); margin-right: 0.4ch; }
 #zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
-#zsh input::placeholder { color: rgba(220,220,220,.22); }
+#zsh input::placeholder { color: color-mix(in srgb, var(--face-fg) 22%, transparent); }
 
 /* Closed-caption strip (FA141) */
 #tts-live {
@@ -302,7 +304,7 @@ body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
   bottom: calc(var(--face-bar-height) + var(--safe-bottom) + 22px);
   z-index: 12;
   background: transparent;
-  color: #fff;
+  color: white;
   font: 10px/1.25 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
   padding: 1px 6px;
   text-align: center;
@@ -326,7 +328,7 @@ body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 }
 body[data-mode="thinking"] #zsh-status { opacity: .7; }
 body[data-mode="speaking"] #zsh-status { opacity: 1; }
-body[data-tts-error="true"] #zsh-status { opacity: 1; color: #c44; }
+body[data-tts-error="true"] #zsh-status { opacity: 1; color: var(--c-danger); }
 
 /* Cancel button — appears during thinking/speaking */
 #spin-btn {
@@ -371,7 +373,7 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
 
 /* #37 Code block */
-.msg-body pre, .msg-body code { background:transparent; border-bottom:1px dotted rgba(126,179,255,.18); font-family:ui-monospace,monospace; padding:2px 5px; font-size:.88em; }
+.msg-body pre, .msg-body code { background:transparent; border-bottom:1px dotted color-mix(in srgb, var(--c-code) 18%, transparent); font-family:ui-monospace,monospace; padding:2px 5px; font-size:.88em; }
 .msg-body pre { display:block; padding:8px 10px; margin:4px 0; white-space:pre-wrap; }
 
 /* #38 dmesg accent */
@@ -382,7 +384,7 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 .message[data-ts]:hover::after { opacity:1; }
 
 /* #40 Confidence band */
-.message.assistant { border-left:2px solid rgba(126,179,255,var(--conf-alpha,0.14)); padding-left:8px; }
+.message.assistant { border-left:2px solid color-mix(in srgb, var(--c-code) calc(var(--conf-alpha,0.14) * 100%), transparent); padding-left:8px; }
 
 /* #41 Scroll momentum */
 #chat-log { scroll-behavior:smooth; overscroll-behavior:contain; }
@@ -416,14 +418,14 @@ body[data-mode="speaking"] #zsh .pp { color:var(--mood-accent,var(--face-fg)); t
 body:not(.face-ready) #zsh { opacity:.3; pointer-events:none; }
 
 /* #53 Primer pulse ring */
-#primer::before { content:''; position:absolute; inset:-20px; border:1px solid rgba(220,220,220,.12); border-radius:50%; animation:primerRing 2.2s ease-out infinite; }
+#primer::before { content:''; position:absolute; inset:-20px; border:1px solid color-mix(in srgb, var(--face-fg) 12%, transparent); border-radius:50%; animation:primerRing 2.2s ease-out infinite; }
 @keyframes primerRing { 0%{transform:scale(.85);opacity:.5} 100%{transform:scale(1.35);opacity:0} }
 
 /* #55 Primer .gone fade */
 #primer.gone { opacity: 0; transform: scale(0.96); pointer-events: none; transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out); }
 
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
-.chip { font: 10px/1 "JetBrains Mono",ui-monospace,monospace; letter-spacing: .08em; padding: 5px 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 2px; color: rgba(216,212,205,.62); transition: background 120ms var(--ease-out); }
+.chip { font: 10px/1 "JetBrains Mono",ui-monospace,monospace; letter-spacing: .08em; padding: 5px 10px; border: 1px solid color-mix(in srgb, var(--face-fg) 8%, transparent); border-radius: 2px; color: color-mix(in srgb, var(--c-text) 62%, transparent); transition: background 120ms var(--ease-out); }
 #primer .tagline { opacity: .42; font-size: .88em; margin-top: 10px; letter-spacing: .04em; }
 #primer .hint { display: none; }
 
@@ -470,10 +472,10 @@ body[data-tts-loading="true"] canvas { filter:saturate(var(--mood-sat, 0.7)) bri
 .message.assistant:hover .msg-copy { opacity:1; }
 .message.assistant .msg-copy:hover { color:var(--c-text); }
 
-::selection { background: rgba(208,72,72,.22); color: inherit; }
+::selection { background: color-mix(in srgb, var(--c-danger) 22%, transparent); color: inherit; }
 
 .tool { background:none; border:0; color:var(--face-muted); font:inherit; padding:0; margin-right:10px; cursor:pointer; letter-spacing:.02em; opacity:.6; transition:opacity .15s,color .15s; }
 .tool:hover, .tool:focus { opacity:1; color:var(--face-fg); }
 .tool.active { color:var(--c-accent); opacity:1; }
 
-#ascii-star { position: fixed; top: 14px; left: 14px; font: 600 22px/1 ui-monospace, monospace; color: #fff; mix-blend-mode: difference; pointer-events: none; z-index: 9; transition: color 220ms linear; }
+#ascii-star { position: fixed; top: 14px; left: 14px; font: 600 22px/1 ui-monospace, monospace; color: white; mix-blend-mode: difference; pointer-events: none; z-index: 9; transition: color 220ms linear; }

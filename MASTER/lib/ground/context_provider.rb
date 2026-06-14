@@ -12,10 +12,10 @@ module Master
       end
 
       def gather(query:, providers: PROVIDERS, limit: 20)
-        providers.flat_map { |p| dispatch_provider(p, query, limit) }.compact
+        providers.flat_map { |p| dispatch_provider(provider: p, query:, limit:) }.compact
       end
 
-      def dispatch_provider(provider, query, limit)
+      def dispatch_provider(provider:, query:, limit:)
         case provider.to_sym
         when :repo_map then repo_map(query, limit)
         when :memory_search then memory_search(query, limit)
@@ -76,11 +76,11 @@ module Master
         ]
 
         apps = Dir.entries(deploy_rails).reject { |e| e.start_with?(".", "_") }
-        rows = apps.flat_map { |app| pwa_rows_for_app(app, deploy_rails, patterns) }
+        rows = apps.flat_map { |app| pwa_rows_for_app(app:, deploy_rails:, patterns:) }
         rows.first(limit)
       end
 
-      def pwa_rows_for_app(app, deploy_rails, patterns)
+      def pwa_rows_for_app(app:, deploy_rails:, patterns:)
         patterns.filter_map do |rel|
           path = File.join(deploy_rails, app, rel)
           next unless File.exist?(path)

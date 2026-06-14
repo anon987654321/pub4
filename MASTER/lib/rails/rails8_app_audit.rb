@@ -15,13 +15,13 @@ module Master
         app/views/pwa/manifest.json.erb
         app/views/pwa/manifest.webmanifest.erb
         public/manifest.json
-        public/manifest.webmanifest,
+        public/manifest.webmanifest
       ].freeze
 
       SW_CANDIDATES = %w[
         app/views/pwa/service-worker.js
         public/service-worker.js
-        app/javascript/service_worker.js,
+        app/javascript/service_worker.js
       ].freeze
 
       def initialize(root: Master::ROOT)
@@ -30,6 +30,7 @@ module Master
 
       def self.deploy_apps
         return [] unless Dir.exist?(DEPLOY_RAILS)
+        Dir.entries(DEPLOY_RAILS)
            .reject { |e| e.start_with?(".", "_") }
            .select { |e| Dir.exist?(File.join(DEPLOY_RAILS, e, "app")) }
            .sort
@@ -47,14 +48,14 @@ module Master
             turbo: gems.include?("turbo-rails"),
             stimulus: gems.include?("stimulus-rails"),
             importmap: gems.include?("importmap-rails"),
-            jsbundling: gems.include?("jsbundling-rails"),
+            jsbundling: gems.include?("jsbundling-rails")
           },
           assets: {
             propshaft: gems.include?("propshaft"),
-            sprockets: gems.any? { |g| g.start_with?("sprockets") },
+            sprockets: gems.any? { |g| g.start_with?("sprockets") }
           },
           app_server: {
-            falcon: gems.include?("falcon"),
+            falcon: gems.include?("falcon")
           },
           solid_adapters: subset(gems, SOLID_TRIFECTA),
           trifecta_complete: SOLID_TRIFECTA.all? { |g| gems.include?(g) },
@@ -63,11 +64,11 @@ module Master
           doctrine_gaps: doctrine_gaps(gems),
           pwa: {
             manifest: find_file(app_path, PWA_MANIFEST_CANDIDATES),
-            service_worker: find_file(app_path, SW_CANDIDATES),
+            service_worker: find_file(app_path, SW_CANDIDATES)
           },
           js_signals: js_signals(js_src, app_path),
           partial_count: count_partials(app_path),
-          shared_layout: shared_layout?(app_path),
+          shared_layout: shared_layout?(app_path)
         }
       end
 
@@ -85,6 +86,7 @@ module Master
       def gemfile_gems(path)
         gemfile = File.join(path, "Gemfile")
         return [] unless File.exist?(gemfile)
+        File.readlines(gemfile, chomp: true).filter_map do |line|
           m = line.match(/^\s*gem\s+['"]([^'"]+)['"]/)
           m[1] if m
         end
@@ -122,6 +124,7 @@ module Master
       def cache_first_sw?(path)
         sw_rel = find_file(path, SW_CANDIDATES)
         return false unless sw_rel
+        src = File.read(File.join(path, sw_rel))
         src.match?(/caches\.match.*\|\|.*fetch/m)
       rescue StandardError
         false

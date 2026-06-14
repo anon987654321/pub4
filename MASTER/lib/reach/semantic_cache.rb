@@ -3,16 +3,19 @@
 require "digest"
 require "json"
 require "monitor"
+require "yaml"
 
 module Master
   module Reach
     class SemanticCache
       MAX_ENTRIES = 1000
-      DEFAULT_TTL = 3600
+      DEFAULT_TTL = 300
       BYTES_PER_KB = 1024.0
 
       def initialize(root:, ttl: DEFAULT_TTL, event_bus: nil)
-        @root = File.join(root, ".master", "cache")
+        @master_root = File.join(root, ".master")
+        @root = File.join(@master_root, "cache")
+        @manifest_path = File.join(@master_root, "llm_cache.yml")
         @ttl = ttl
         @bus = event_bus
         @lru = []
@@ -29,22 +32,28 @@ module Master
           if hit
             @bus&.publish("cache:hit", key:)
             return restore_value(hit)
+          end
         end
 
         @bus&.publish("cache:miss", key:)
         result = blk.call
-        @lock.synchronize { write_entry(path, result, key) }
+        @lock.synchronize { write_entry(path:, value: result, key:) }
         result
       end
 
       def invalidate!(prompt, model)
-        path = cache_path(cache_key(prompt, model))
-        @lock.synchronize { File.delete(path) if File.exist?(path) }
+        key = cache_key(prompt, model)
+        path = cache_path(key)
+        @lock.synchronize do
+          File.delete(path) if File.exist?(path)
+          delete_manifest_entry(key)
+        end
       end
 
       def invalidate_all!
         @lock.synchronize do
           Dir.glob(File.join(@root, "*.json")).each { |f| File.delete(f) rescue Errno::ENOENT }
+          File.delete(@manifest_path) if File.exist?(@manifest_path)
           @lru.clear
         end
       end
@@ -67,30 +76,88 @@ module Master
       def expire_entry!(path)
         @lru.delete(path)
         File.delete(path) rescue nil
+        delete_manifest_entry(File.basename(path, ".json"))
         nil
       end
 
       def drop_entry!(path)
         File.delete(path) rescue nil
         @lru.delete(path)
+        delete_manifest_entry(File.basename(path, ".json"))
         nil
       end
 
       def read_entry(path)
-        return unless File.exist?(path)
+        return unless File.exist?(path) || manifest_entry(File.basename(path, ".json"))
+        entry = if File.exist?(path)
+                  JSON.parse(File.read(path), symbolize_names: true)
+                else
+                  manifest_entry(File.basename(path, ".json"))
+                end
         return expire_entry!(path) if stale?(entry)
+        promote_lru(path)
         entry[:value]
       rescue JSON::ParserError => e
         Master::Ground::Swallow.log(e, context: "semantic_cache.read_entry", event_bus: @bus, path:)
         drop_entry!(path)
       end
 
-      def write_entry(path, value, key)
+      def write_entry(path:, value:, key:)
         payload = serialize_value(value)
+        ts = Time.now.to_i
         evict_lru while @lru.size >= MAX_ENTRIES
-        File.write(path, JSON.generate({ ts: Time.now.to_i, value: payload }))
+        File.write(path, JSON.generate({ ts:, value: payload }))
+        write_manifest_entry(key, ts:, value: payload)
         promote_lru(path)
         @bus&.publish("cache:write", key:)
+      end
+
+      def manifest
+        return {} unless File.exist?(@manifest_path)
+
+        data = YAML.load_file(@manifest_path)
+        data.is_a?(Hash) ? data : {}
+      rescue Psych::Exception, Errno::ENOENT
+        {}
+      end
+
+      def manifest_entry(key)
+        entry = manifest.fetch(key, nil) || manifest.fetch(key.to_s, nil)
+        entry = stringify_or_symbolize(entry)
+        entry if entry.is_a?(Hash)
+      end
+
+      def write_manifest_entry(key, ts:, value:)
+        FileUtils.mkdir_p(@master_root)
+        data = manifest
+        data[key] = { "ts" => ts, "value" => stringify_for_yaml(value) }
+        File.write(@manifest_path, data.to_yaml)
+      end
+
+      def delete_manifest_entry(key)
+        data = manifest
+        data.delete(key)
+        data.delete(key.to_s)
+        if data.empty?
+          File.delete(@manifest_path) if File.exist?(@manifest_path)
+        else
+          File.write(@manifest_path, data.to_yaml)
+        end
+      end
+
+      def stringify_for_yaml(value)
+        value.transform_keys(&:to_s).transform_values do |item|
+          item.is_a?(Hash) ? stringify_for_yaml(item) : item
+        end
+      end
+
+      def stringify_or_symbolize(value)
+        return value unless value.is_a?(Hash)
+
+        value.each_with_object({}) do |(key, item), acc|
+          sym_key = key.respond_to?(:to_sym) ? key.to_sym : key
+          acc[sym_key] = item.is_a?(Hash) ? stringify_or_symbolize(item) : item
+        end
       end
 
       def serialize_value(value)
@@ -105,6 +172,7 @@ module Master
 
       def restore_value(payload)
         return payload unless payload.is_a?(Hash)
+        kind = payload.fetch(:__master_result) { payload["__master_result"] }
         value = payload.fetch(:value) { payload["value"] }
         message = payload.fetch(:message) { payload["message"] }
         cat = payload.fetch(:category) { payload["category"] }
@@ -126,6 +194,7 @@ module Master
       def evict_lru
         oldest = @lru.shift
         return unless oldest && File.exist?(oldest)
+        File.delete(oldest) rescue nil
       end
     end
   end

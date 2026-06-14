@@ -2,7 +2,7 @@
 
 module Master
   class Result
-    CATEGORIES = {.freeze
+    CATEGORIES = {
       validation: "input failed preconditions",
       axiom_violation: "constitutional rule broken",
       provider_error: "upstream model / network failure",
@@ -23,6 +23,20 @@ module Master
 
     def self.err(msg, category: :unknown, context: nil)
       raise ArgumentError, "unknown category: #{category}" unless category == :unknown || CATEGORIES.key?(category)
+
+      Err.new(msg, category, error_context(msg, context, caller_locations(1, 1).first))
+    end
+
+    def self.error_context(msg, context, location)
+      base = {
+        file: location&.path,
+        method: location&.base_label,
+        attempted: msg.to_s,
+      }
+      return base unless context
+      return base.merge(context) if context.respond_to?(:merge)
+
+      base.merge(detail: context)
     end
 
     def self.wrap(val) = val.is_a?(Result) ? val : Ok.new(val)

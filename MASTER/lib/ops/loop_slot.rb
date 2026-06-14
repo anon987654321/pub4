@@ -3,7 +3,7 @@
 module Master
   module Ops
     module LoopSlot
-      LOOP_FLAGS = {.freeze
+      LOOP_FLAGS = {
         "autofix" => "MASTER_AUTOFIX",
         "watch" => "MASTER_WATCH",
         "watcher" => "MASTER_WATCHER",

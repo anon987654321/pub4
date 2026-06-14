@@ -7,7 +7,7 @@ module Master
       # Each mode is a config hash: preset key, default files/panel, context
       # briefs, constraints, ideation prompt, byte cap, event names.
       class Critique
-        MODES = {.freeze
+        MODES = {
           ui: {
             preset_key: "ui_critique",
             max_bytes: 32_768,

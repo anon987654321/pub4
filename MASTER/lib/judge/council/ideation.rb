@@ -19,7 +19,7 @@ module Master
 
           cycles.times do |cycle|
             return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
-            brainstorm_result = brainstorm(prompt, ideas, constraints)
+            brainstorm_result = brainstorm(prompt:, prior: ideas, constraints:)
             return brainstorm_result if brainstorm_result.err?
             @bus&.publish("ideation:cycle", cycle: cycle + 1, ideas: ideas.size)
 
@@ -43,7 +43,7 @@ module Master
           false
         end
 
-        def brainstorm(prompt, prior, constraints)
+        def brainstorm(prompt:, prior:, constraints:)
           context = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
           constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
           system_msg = "Generate 3-5 novel, bold ideas. One idea per bullet (- prefix)."

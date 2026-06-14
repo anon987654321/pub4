@@ -16,7 +16,7 @@ module Master
 
         VALID_INTENT_TYPES = %i[
           llm_call tool_execution file_mutation git_op
-          provider_route session_save ui_update,
+          provider_route session_save ui_update
         ].freeze
 
         def initialize(path: STREAM_PATH, checkpoint_dir: CHECKPOINT_DIR,
@@ -30,6 +30,7 @@ module Master
         def propose(intent_type:, workflow_id:, payload: {})
           unless VALID_INTENT_TYPES.include?(intent_type.to_sym)
             return Result.err("unknown intent type: #{intent_type}", category: :validation)
+          end
           event = emit(:intent_proposed, workflow_id:, payload: payload.merge(intent_type:))
           Result.ok(event)
         end
@@ -63,6 +64,7 @@ module Master
 
         def replay(from_offset: 0, workflow_id: nil)
           return Result.err("no block given", category: :validation) unless block_given?
+          events = stream_events(from_offset:, workflow_id:)
           events.each { |e| yield e }
           Result.ok(events.size)
         rescue StandardError => e
@@ -76,7 +78,9 @@ module Master
 
         def rotate!(keep_last: 1000)
           return unless File.file?(@path)
+          lines = File.readlines(@path, chomp: true)
           return if lines.size <= keep_last
+          tail = lines.last(keep_last)
           File.write(@path, tail.join("\n") + "\n")
           emit(:stream_rotated, workflow_id: "system", payload: { kept: keep_last, dropped: lines.size - keep_last })
           Result.ok(lines.size - keep_last)
@@ -93,7 +97,7 @@ module Master
             ts: @now.call.iso8601,
             type: type.to_s,
             workflow_id: workflow_id.to_s,
-            payload:,
+            payload:
           }
           FileUtils.mkdir_p(File.dirname(@path))
           File.open(@path, "a") { |f| f.puts(JSON.generate(event)) }
@@ -103,6 +107,7 @@ module Master
 
         def stream_events(from_offset: 0, workflow_id: nil)
           return [] unless File.file?(@path)
+          lines = File.readlines(@path, chomp: true).drop(from_offset)
           lines.filter_map do |line|
             next if line.strip.empty?
             e = JSON.parse(line)
@@ -115,6 +120,7 @@ module Master
 
         def stream_size
           return 0 unless File.file?(@path)
+          File.readlines(@path).size
         end
       end
     end

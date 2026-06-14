@@ -27,7 +27,6 @@ module Master
         Kernel.warn("swallow:meta_error #{e.class}: #{e.message}")
         nil
       end
-    end
 
       def safe_call(context:, event_bus: nil, **meta)
         yield
@@ -35,5 +34,6 @@ module Master
         log(e, context: context, event_bus: event_bus, **meta)
         nil
       end
+    end
   end
 end

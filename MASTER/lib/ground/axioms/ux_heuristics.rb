@@ -5,7 +5,7 @@ module Master
     module Axioms
       module UxHeuristics
         # Nielsen's 10 Usability Heuristics — applies to CLI, web UI, API errors, and prose.
-        HEURISTICS = {.freeze
+        HEURISTICS = {
           h1_visibility: "Visibility of System Status — keep users informed through appropriate feedback within a reasonable time",
           h2_real_world: "Match Between the System and the Real World — speak the user's language, not internal jargon",
           h3_user_control: "User Control and Freedom — provide a clearly marked exit from unwanted states",
@@ -18,7 +18,7 @@ module Master
           h10_help: "Help and Documentation — documentation should help users complete tasks, not explain bad design",
         }.freeze
 
-        SIGNALS = {.freeze
+        SIGNALS = {
           web: {
             h1_visibility: { checks: %w[loading-indicator turbo:frame-missing offline-fallback],
               failing: "No feedback during navigation or offline state" },

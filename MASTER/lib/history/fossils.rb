@@ -9,7 +9,7 @@ module History
   end
 
   class Fossils
-    VALUABLE_PATTERNS = [.freeze
+    VALUABLE_PATTERNS = [
       /class\s+\w+/,
       /module\s+\w+/,
       /def\s+\w+/,

@@ -3,7 +3,7 @@
 module Master
   module Ground
     class IntentRouter
-      INTENTS = {.freeze
+      INTENTS = {
         codify_policy: %w[codify policy make it ruby turn into],
         refactor_to_ruby: %w[refactor move ruby extract simplify],
         wire_existing_module: %w[wire connect hook up route plug],
@@ -22,7 +22,7 @@ module Master
         prefer_ruby: %w[ruby not markdown no yaml keep ruby],
       }.freeze
 
-      STANDING_SEMANTICS = {.freeze
+      STANDING_SEMANTICS = {
         "go ahead" => :continue_prior_plan,
         "land it" => :write_repo_changes,
         "codify" => :codify_policy,
@@ -33,7 +33,7 @@ module Master
         "proceed" => :continue_prior_plan,
       }.freeze
 
-      RISK_TIERS = {.freeze
+      RISK_TIERS = {
         low: %i[
           codify_policy refactor_to_ruby create_facade apply_user_style_rules
           run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa,

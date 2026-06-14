@@ -84,6 +84,7 @@ module Master
 
       def summary(pastel)
         return pastel.dim("  (no staged changes)") if @pending.empty?
+        @pending.map do |e|
           short = e.path.sub(@root + "/", "")
           "  #{pastel.yellow("[#{e.id}]")} #{pastel.white(short)}" \
           " #{pastel.dim(e.diff_stats)} #{pastel.dim("via #{e.tool}")}"
@@ -121,7 +122,7 @@ module Master
           JSON.generate({
             id: entry.id, path: entry.path, tool: entry.tool,
             created_at: entry.created_at.iso8601,
-            stats: entry.diff_stats,
+            stats: entry.diff_stats
           })
         )
       rescue StandardError => e

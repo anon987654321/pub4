@@ -6,7 +6,7 @@ module Master
   module Loop
     module Repair
       class GitHistoryMiner
-        DEFAULT_PATTERNS = [.freeze
+        DEFAULT_PATTERNS = [
           /fix/i,
           /refactor/i,
           /rollback/i,

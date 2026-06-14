@@ -18,12 +18,12 @@ module Master
         font-size font-weight margin padding line-height max-width display flex grid,
       ].freeze
 
-      SYSTEM_FONTS = {.freeze
+      SYSTEM_FONTS = {
         serif: "Georgia",
         sans_serif: "Arial/Helvetica",
       }.freeze
 
-      METRICS = {.freeze
+      METRICS = {
         css_bytes_max: 10_000,
         total_bytes_max: 10_000,
         line_length_min: 45,
@@ -34,7 +34,7 @@ module Master
         lighthouse_target: 100,
       }.freeze
 
-      HTML_REQUIREMENTS = [.freeze
+      HTML_REQUIREMENTS = [
         "proper heading hierarchy",
         "meaningful alt text",
         "logical document flow",
@@ -45,7 +45,7 @@ module Master
         "no decorative elements",
       ].freeze
 
-      ANTI_PATTERNS = [.freeze
+      ANTI_PATTERNS = [
         "visual metaphors",
         "smooth interactions",
         "aesthetic comfort",
@@ -55,7 +55,7 @@ module Master
         "hero banners",
       ].freeze
 
-      PROMPTS = {.freeze
+      PROMPTS = {
         design_brief: "Create a brutally minimal website that prioritizes content over decoration.",
         development_constraint: "Use system fonts, single column layout, max 65 characters per line, no visual effects.",
         content_hierarchy: "Establish hierarchy through font size, weight, semantic headings, and spacing only.",

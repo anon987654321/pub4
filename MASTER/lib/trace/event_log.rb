@@ -28,6 +28,27 @@ module Master
         nil
       end
 
+      def recent(limit, pattern: nil)
+        return [] unless File.exist?(@path)
+
+        matcher = pattern && !pattern.empty? ? Regexp.new(pattern) : nil
+        File.foreach(@path).to_a.last(limit).filter_map do |line|
+          record = parse_line(line)
+          next unless record
+          next if matcher && !record["event"].to_s.match?(matcher)
+
+          record
+        end
+      rescue StandardError
+        []
+      end
+
+      def tail(limit, pattern: nil)
+        recent(limit, pattern: pattern)
+      rescue RegexpError
+        []
+      end
+
       private
 
       def build_record(event, payload)
@@ -43,6 +64,12 @@ module Master
       def normalize_stream(stream)
         candidate = stream.to_s
         candidate.match?(STREAM_PATTERN) ? candidate : DEFAULT_STREAM
+      end
+
+      def parse_line(line)
+        JSON.parse(line)
+      rescue JSON::ParserError
+        nil
       end
     end
   end

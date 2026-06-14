@@ -9,7 +9,7 @@ module Master
 
       DOCTRINE = Master::Ground::Axioms::RailsDoctrine::PILLARS
 
-      INTENT_MODE = {.freeze
+      INTENT_MODE = {
         generate_rails_pwa: :generate_from_blank,
         refactor_rails_app: :refactor_existing,
         redesign_mobile_pwa: :redesign_ui,

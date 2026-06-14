@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "builder/boot_phases"
 
 module Master
   module Builder
@@ -11,28 +12,28 @@ module Master
 
     TOOL_MAP = {
       "ReadFile" => ->(r, i) {
-        Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus]),
+        Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus])
       },
       "WriteFile" => ->(r, i) {
         Reach::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
-          event_bus: i[:bus], diff_stager: i[:diff_stager]),
+          event_bus: i[:bus], diff_stager: i[:diff_stager])
       },
       "StrReplace" => ->(r, i) {
         Reach::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
-          event_bus: i[:bus], diff_stager: i[:diff_stager]),
+          event_bus: i[:bus], diff_stager: i[:diff_stager])
       },
       "BatchReplace" => ->(r, i) {
-        Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]),
+        Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus])
       },
       "AstEdit" => ->(r, i) {
-        Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus]),
+        Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
       },
       "Tree" => ->(r, i) { Reach::Tree.new(root: r, event_bus: i[:bus]) },
       "ListDir" => ->(r, i) { Reach::ListDir.new(root: r, event_bus: i[:bus]) },
       "SearchFiles" => ->(r, i) { Reach::SearchFiles.new(root: r, event_bus: i[:bus]) },
       "SearchKnowledge" => ->(r, i) { Reach::SearchKnowledge.new(root: r, event_bus: i[:bus]) },
       "SymbolLookup" => ->(r, i) {
-        Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus]),
+        Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus])
       },
       "Shell" => ->(r, i) { Reach::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "GitContext" => ->(r, i) { Reach::GitContext.new(root: r, event_bus: i[:bus]) },
@@ -41,7 +42,7 @@ module Master
       "Clean" => ->(r, i) { Reach::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "FeedbackRecord" => ->(r, i) { Reach::FeedbackRecord.new(learnings: i[:learnings]) },
       "MemoryRecord" => ->(r, i) {
-        Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus]),
+        Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus])
       },
     }.freeze
 
@@ -98,40 +99,19 @@ module Master
     end
 
     def boot_trace(root:, config:)
-      event_log = Trace::EventLog.new(root:)
-      bus = Trace::EventBus.new(event_log:)
-      ring = Trace::RingBuffer.new(RING_SIZE)
-      logging = Trace::Logging.new(ring_buffer: ring, event_bus: bus)
-      session = Trace::Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
-      undo = Trace::Undo.new(session:, event_bus: bus, root:)
-      metrics = Trace::Metrics.new(root:, event_bus: bus)
-      Trace::AuditLog.new(root:, event_bus: bus)
-      Trace::SwallowLedger.new(event_bus: bus, root:).attach
-      recorder = Trace::Recorder.new(root:, event_bus: bus)
-      { event_log:, bus:, ring:, logging:, session:, undo:, metrics:, trace: recorder }
+      TraceBoot.new(root: root, config: config).call
     end
 
     def boot_loop(root:, config:, bus:)
-      homeostat = Loop::Homeostat.new(event_bus: bus)
-      governor = Loop::Governor.new(config:, event_bus: bus)
-      diff_stager = config["staging_enabled"] ? Loop::DiffStager.new(root:, event_bus: bus) : nil
-      phase_gates = Ground::PhaseGates.new(root:, event_bus: bus)
-      { homeostat:, governor:, diff_stager:, phase_gates: }
+      LoopBoot.new(root: root, config: config, bus: bus).call
     end
 
     def boot_reach(root:, config:, bus:)
-      breaker = Reach::CircuitBreakerRegistry.new(budget_max: config.budget_max, req_max: config.req_max, event_bus: bus)
-      cache = Reach::SemanticCache.new(root:, ttl: config["cache_ttl"], event_bus: bus)
-      mcp = Reach::McpCoordinator.new(root:, event_bus: bus)
-      mcp.connect_all
-      { breaker:, cache:, mcp: }
+      ReachBoot.new(root: root, config: config, bus: bus).call
     end
 
     def boot_ground(root:, config:, homeostat:)
-      memory = Ground::Memory.new(root:)
-      personality = Voice::Personality.new(config["persona"]&.to_sym || Voice::Personality::DEFAULT, root:, homeostat:)
-      learnings = Ground::KnowledgeStore.new(root:)
-      { memory:, personality:, learnings: }
+      GroundBoot.new(root: root, config: config, homeostat: homeostat).call
     end
 
     def build_ai(root, infra)
@@ -222,7 +202,7 @@ module Master
       bus.subscribe("system:crit") { Thread.new { fix_loop.stop_background! if fix_loop.background_alive? } }
       bus.subscribe("self_violation") { |payload| fix_loop.halt!(reason: "self_violation #{payload[:violations]} violations") }
 
-      { standing:, fix_loop:, watch_loop:, heartbeat:, triggers:, propose_tree:, watcher: }
+      { standing:, fix_loop:, watch_loop:, heartbeat:, triggers:, propose_tree:, watcher:, git: }
     end
 
     def boot_skills(root, bus)
@@ -235,9 +215,14 @@ module Master
       path = File.join(root, "data", "tools.yml")
       defs = Master.load_yaml(path)
       return [] unless defs.is_a?(Array)
+
+      defs.filter_map do |defn|
         next unless defn["default"] == true
         factory = TOOL_MAP[defn["name"].to_s]
-        next infra[:bus]&.publish("builder:tool_skipped", tool: defn["name"]) unless factory
+        unless factory
+          infra[:bus]&.publish("builder:tool_skipped", tool: defn["name"])
+          next
+        end
         factory.call(root, infra)
       end
     end
@@ -274,6 +259,12 @@ module Master
         .select { |f| File.file?(f) && File.size(f) < SNAPSHOT_MAX_BYTES }
         .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
         .sort
+      out = File.join(root, ".master", "snapshot.md")
+      public_out = File.join(root, "snapshot.md")
+      if snapshot_current?(files, out, public_out)
+        container[:bus]&.publish("boot:snapshot_skipped", files: files.size)
+        return
+      end
       body = files.flat_map do |f|
         rel = f.delete_prefix("#{root}/")
         lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
@@ -285,13 +276,23 @@ module Master
       end
       header = ["# MASTER Snapshot", "Generated: #{Time.now.utc.iso8601}", "Files: #{files.size}", ""]
       content = (header + body).join("\n")
-      out = File.join(root, ".master", "snapshot.md")
       FileUtils.mkdir_p(File.dirname(out))
       File.write(out, content)
-      File.write(File.join(root, "snapshot.md"), content)
+      File.write(public_out, content)
       container[:bus]&.publish("boot:snapshot", files: files.size)
     rescue StandardError => e
       container[:bus]&.publish("boot:snapshot_error", error: e.message)
+    end
+
+    def snapshot_current?(files, *outputs)
+      return false if files.empty?
+      return false unless outputs.all? { |path| File.exist?(path) }
+
+      newest_source = files.map { |path| File.mtime(path) }.max
+      oldest_output = outputs.map { |path| File.mtime(path) }.min
+      oldest_output >= newest_source
+    rescue StandardError
+      false
     end
   end
 end

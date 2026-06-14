@@ -56,6 +56,25 @@ class TestPrune < Minitest::Test
     assert_includes prompt, "No markdown headers"
   end
 
+  def test_personality_prompt_preserves_diagnostic_output
+    prompt = Master::Voice::Personality.new.system_prompt
+
+    assert_includes prompt, "Diagnostic output: structured multi-line output is intentional"
+    assert_includes prompt, "Minimize: applies to prompt tokens, not diagnostic output"
+  end
+
+  def test_requires_evidence_for_completion_claims
+    r = call("Implemented the scanner fix.")
+
+    assert_includes r.value![:output], "evidence required: show unified diff"
+  end
+
+  def test_accepts_diff_evidence_for_modification_claims
+    output = "Implemented the scanner fix.\ndiff --git a/x b/x\n"
+
+    refute_includes call(output).value![:output], "evidence required"
+  end
+
   def test_skips_code_blocks
     code = "```ruby\njust use this\n```"
     r = call(code)

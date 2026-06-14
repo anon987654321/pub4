@@ -8,7 +8,7 @@ module Master
         knowledge/awesome knowledge/vendor,
       ].freeze
 
-      LANGUAGE_BY_EXT = {.freeze
+      LANGUAGE_BY_EXT = {
         ".rb" => :ruby,
         ".js" => :javascript,
         ".ts" => :typescript,

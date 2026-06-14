@@ -19,29 +19,32 @@ module Master
         rendered voice
         image
         channel metadata turn_id
-        _timings _parallel_errors _parallel_timeout _stage_error,
+        _timings _parallel_errors _parallel_timeout _stage_error
       ].freeze
 
       REQUIRED = %i[user_message].freeze
 
-      KEY_TYPES = {.freeze
+      KEY_TYPES = {
         user_message: [String],
         task_type: [String, Symbol, NilClass],
         model: [String, NilClass],
         output: [String, NilClass],
         pressure: [TrueClass, FalseClass, NilClass],
         lint_report: [Array, NilClass],
-        voice: [String, NilClass],
+        voice: [String, NilClass]
       }.freeze
 
+      MAX_OUTPUT_BYTES = 8_192
+      MAX_TIMINGS = 20
+
       # Stage prerequisite contracts — checked before each stage runs.
-      STAGE_PREREQUISITES = {.freeze
+      STAGE_PREREQUISITES = {
         infer: %i[user_message],
         route: %i[user_message],
         execute: %i[user_message handler],
         council: %i[output],
         lint: %i[output],
-        render: %i[output],
+        render: %i[output]
       }.freeze
 
       def self.build(user_message:, **opts)
@@ -51,6 +54,7 @@ module Master
       def initialize(hash)
         unknown = hash.keys - KNOWN_KEYS
         raise KeyError, "PipelineContext: unknown keys #{unknown.inspect}" unless unknown.empty?
+        @data = hash.freeze
       end
 
       # Read by symbol or string key — Hash-compatible subscript.
@@ -69,7 +73,7 @@ module Master
 
       # Immutable update — returns a new PipelineContext merging overrides.
       def merge(overrides = {})
-        PipelineContext.new(@data.merge(symbolize(overrides)))
+        PipelineContext.new(@data.merge(normalize_overrides(overrides)))
       end
 
       def ==(other)
@@ -83,32 +87,53 @@ module Master
         hash = ctx.is_a?(PipelineContext) ? ctx.to_h : ctx
         missing = REQUIRED.reject { |k| hash.key?(k) }
         raise ArgumentError, "PipelineContext missing required keys: #{missing.join(', ')}" unless missing.empty?
+      end
 
       def self.assert_stage!(ctx, stage)
         hash = ctx.is_a?(PipelineContext) ? ctx.to_h : ctx
         prereqs = STAGE_PREREQUISITES.fetch(stage, [])
         missing = prereqs.reject { |k| hash.key?(k) }
         raise ArgumentError, "#{stage} stage missing prerequisites: #{missing.join(', ')}" unless missing.empty?
+        KEY_TYPES.each do |key, allowed|
           next unless hash.key?(key)
           value = hash[key]
           next if allowed.any? { |t| value.is_a?(t) }
           raise TypeError, "ctx[#{key.inspect}] expected #{allowed.map(&:name).join('|')}, got #{value.class}"
+        end
       end
 
       def self.fetch!(ctx, key)
         value = ctx[key]
         raise KeyError, "PipelineContext: missing key #{key.inspect}" unless ctx.key?(key)
+        value
       end
 
       # Wrap a plain Hash into a PipelineContext. Skips wrapping if already typed.
       def self.wrap(hash)
         return hash if hash.is_a?(PipelineContext)
+        new(hash)
       end
 
       private
 
-      def symbolize(hash)
-        hash.transform_keys(&:to_sym)
+      def normalize_overrides(hash)
+        data = hash.transform_keys(&:to_sym)
+        data[:output] = truncate_output(data[:output]) if data.key?(:output)
+        data[:_timings] = cap_timings(data[:_timings]) if data.key?(:_timings)
+        data
+      end
+
+      def truncate_output(value)
+        text = value.to_s
+        return value if value.nil? || text.bytesize <= MAX_OUTPUT_BYTES
+
+        text.byteslice(-MAX_OUTPUT_BYTES, MAX_OUTPUT_BYTES)
+      end
+
+      def cap_timings(value)
+        return value unless value.respond_to?(:to_a)
+
+        value.to_a.last(MAX_TIMINGS).to_h
       end
     end
   end

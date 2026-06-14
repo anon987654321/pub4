@@ -8,7 +8,7 @@ module Master
         team_create team_delete team_broadcast rebuild evolve self_improve,
       ].freeze
 
-      TYPES = {.freeze
+      TYPES = {
         general: {
           label: "general",
           prompt: "General-purpose sub-agent. Complete the task using available non-recursive tools.",

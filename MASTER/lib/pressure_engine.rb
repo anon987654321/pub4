@@ -5,7 +5,7 @@ module Master
   # entropy, confidence, contradiction, turbulence, gravity, scrutiny.
   # Does not mutate runtime behavior; downstream systems read pressure/stability/weather_state.
   class PressureEngine
-    DEFAULT_FIELDS = {.freeze
+    DEFAULT_FIELDS = {
       entropy: 0.0,
       confidence: 1.0,
       contradiction: 0.0,
@@ -17,7 +17,7 @@ module Master
     HISTORY_CAP = 120
 
     # Pressure formula weights (must sum to 1.0 across all fields)
-    PRESSURE_W = {.freeze
+    PRESSURE_W = {
       entropy: 0.28,
       contradiction: 0.24,
       turbulence: 0.20,
@@ -32,7 +32,7 @@ module Master
 
     # Each rule: [weight, :name|:payload_bool|:payload_float, pattern_or_key]
     # Negative weights subtract. :payload_float multiplies weight by the payload value.
-    FIELD_DELTAS = {.freeze
+    FIELD_DELTAS = {
       entropy: [
         [+0.18, :name, /error|failed|rollback|exception/],
         [+0.12, :name, /contradiction|conflict/],

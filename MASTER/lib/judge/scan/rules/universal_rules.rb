@@ -29,8 +29,12 @@ module Master
         RuleDSL.rule :FEW_ARGUMENTS,
           severity: :warning, tags: %i[SMALL_PARTS],
           description: "ideal is zero to two positional arguments" do |src, path:|
-          scan_lines(src, /def \w+\([^)]*,[^:)]+,[^:)]+\)/,
-            message: "3+ positional args — use keyword arguments or a value object")
+          src.each_line.with_index(1).filter_map do |line, n|
+            next unless line.match?(/\bdef\s+\w+\(/)
+            args = line[/\(([^)]*)\)/, 1].to_s.split(",").map(&:strip)
+            positional = args.reject { |arg| arg.empty? || arg.start_with?("*", "&") || arg.include?(":") || arg.include?("=") }
+            finding(line: n, message: "3+ positional args — use keyword arguments or a value object") if positional.size >= 3
+          end
         end
 
         RuleDSL.rule :N_PLUS_ONE,

@@ -70,6 +70,9 @@ negotiable:
   default_model: z-ai/glm-4.5-air:free
   tts_voice: ms-MY-OsmanNeural
   language_detection: true
+  conflict_resolution:
+    strategy: highest_priority_wins
+    prompt_user: false
 
 evolution_log:
   - version: "1.0.0"

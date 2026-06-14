@@ -3,7 +3,7 @@
 module Master
   module Voice
     module ProductionDna
-      PRODUCERS = {.freeze
+      PRODUCERS = {
         j_dilla: {
           philosophy: "humanized machine music through micro-timing, low-pass warmth, and sampler grit",
           equipment: %w[SP-12 SP-1200 MPC-60 MPC3000 SP-303 MinimoogVoyager MicroKORG DBX160X SPX900],
@@ -51,7 +51,7 @@ module Master
         },
       }.freeze
 
-      CHORDS = {.freeze
+      CHORDS = {
         j_dilla: {
           fantastic_vol2: [
             { track: "fall_in_love", key: "Fm", bpm: 91, chords: %w[Bbm Ab Fm7 Fm], roman: %w[iv bIII i7 i] },
@@ -88,7 +88,7 @@ module Master
         },
       }.freeze
 
-      LOFI_PRESETS = {.freeze
+      LOFI_PRESETS = {
         dilla_drum_bus: {
           producer: :j_dilla,
           sonitex_preset: :boom_bap,

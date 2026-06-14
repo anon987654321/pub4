@@ -35,10 +35,10 @@ module Master
         sw_rel = find_sw(app_path)
 
         manifest_findings = manifest_rel ? audit_manifest(app_path, manifest_rel) : [
-          Finding.new(field: :manifest, message: "no manifest found (expected app/views/pwa/manifest.json.erb)", severity: :critical),
+          Finding.new(field: :manifest, message: "no manifest found (expected app/views/pwa/manifest.json.erb)", severity: :critical)
         ]
         sw_findings = sw_rel ? audit_sw(app_path, sw_rel) : [
-          Finding.new(field: :service_worker, message: "no service worker found (expected app/views/pwa/service-worker.js)", severity: :high),
+          Finding.new(field: :service_worker, message: "no service worker found (expected app/views/pwa/service-worker.js)", severity: :high)
         ]
 
         csrf_findings = audit_csrf(app_path)
@@ -49,7 +49,7 @@ module Master
           installable: manifest_rel && sw_rel && all.none? { |f| f.severity == :critical },
           findings: all,
           violations: all.map(&:message),
-          recommendations: recommendations(all),
+          recommendations: recommendations(all)
         }
       end
 
@@ -60,7 +60,7 @@ module Master
           app/views/pwa/manifest.json.erb
           app/views/pwa/manifest.webmanifest.erb
           public/manifest.json
-          public/manifest.webmanifest,
+          public/manifest.webmanifest
         ].map { |r| File.join(root, r) }.find { |p| File.exist?(p) }
          &.sub("#{root}/", "")
       end
@@ -69,7 +69,7 @@ module Master
         %w[
           app/views/pwa/service-worker.js
           public/service-worker.js
-          app/javascript/service_worker.js,
+          app/javascript/service_worker.js
         ].map { |r| File.join(root, r) }.find { |p| File.exist?(p) }
          &.sub("#{root}/", "")
       end
@@ -144,7 +144,9 @@ module Master
       def audit_csrf(path)
         controller_base = File.join(path, "app", "controllers", "application_controller.rb")
         return [] unless File.exist?(controller_base)
+        source = File.read(controller_base)
         return [] unless source.match?(CSRF_LEGACY_SIGNAL)
+        [Finding.new(
           field: :csrf,
           message: "protect_from_forgery with: :null_session is deprecated in Rails 8.1 — migrate to Sec-Fetch-Site header strategy",
           severity: :medium

@@ -29,7 +29,10 @@ unless ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
 end
 
 require "set"
+require "optparse"
 require "master"
+require "now/boot_banner"
+require "now/web_server"
 require "ops/loop_slot"
 require "ops/process_budget"
 require "ops/runtime_loop_guards"
@@ -37,57 +40,19 @@ Master::Ops::LoopSlot.validate!
 Master::Ops::ProcessBudget.validate_loop_slot!
 Master::Ops::RuntimeLoopGuards.install!
 
-def stable_web_secret(config)
-  return config["web_secret_key_base"] if config["web_secret_key_base"].to_s.length >= 64
-  require "securerandom"
-  secret = SecureRandom.hex(64)
-  config["web_secret_key_base"] = secret
-  config_path = File.expand_path("../.master/config.yml", __dir__)
-  require "fileutils"
-  FileUtils.mkdir_p(File.dirname(config_path))
-  require "yaml"
-  existing = YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) rescue {}
-  File.write(config_path, existing.merge("web_secret_key_base" => secret).to_yaml)
-  secret
-rescue StandardError
-  SecureRandom.hex(64)
-end
-
-def boot_banner
-  return unless ENV["MASTER_BOOT_STATUS"] == "1"
-  status = Master::Ops::LoopSlot.status
-  budget = Master::Ops::ProcessBudget.status
-  $stderr.puts "process: safe=#{ENV.fetch("MASTER_SAFE_MODE", "1")} background=#{ENV.fetch("MASTER_BACKGROUND", "0")} web=#{ENV.fetch("MASTER_WEB", "0")} loop=#{status[:selected] || "none"} valid=#{budget[:valid]}"
-end
-
-def boot_web_ui(config)
-  return unless ENV["MASTER_WEB"] == "1"
-
-  port = config["web_port"] || 53187
-  host = config["web_host"] || "127.0.0.1"
-
-  if RUBY_PLATFORM.include?("openbsd")
-    running = system("pgrep", "-qf", "falcon.*#{port}")
-    token = config["web_token"]
-    url = config["web_public_url"] || "http://#{host}:#{port}"
-    url += "/?token=#{token}" if token
-    $stderr.puts "web: #{url} (#{running ? "up" : "down — run: doas rcctl start master"})"
-  else
-    require "open3"
-    web_dir = File.expand_path("../web", __dir__)
-    return unless Dir.exist?(web_dir)
-    pids_out, = Open3.capture2e("lsof", "-ti", ":#{port}")
-    pids_out.split.each { |pid| Process.kill("TERM", pid.to_i) rescue nil }
-    sleep 0.5
-    spawn(
-      { "RAILS_ENV" => "production", "SECRET_KEY_BASE" => stable_web_secret(config) },
-      "bundle", "exec", "falcon", "serve", "--bind", "http://#{host}:#{port}",
-      chdir: web_dir, out: File::NULL, err: File::NULL
-    )
-    $stderr.puts "web: http://#{host}:#{port}"
+def initial_message_from_argv(argv)
+  options = {}
+  parser = OptionParser.new do |opts|
+    opts.on("-m", "--message TEXT") { |text| options[:message] = text }
+    opts.on("--web") { ENV["MASTER_WEB"] = "1" }
+    opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }
+    opts.on("--boot-status") { ENV["MASTER_BOOT_STATUS"] = "1" }
   end
-rescue StandardError => e
-  $stderr.puts "web_ui: #{e.message}"
+  parser.parse!(argv)
+  (options[:message] || argv.join(" ")).to_s.strip
+rescue OptionParser::ParseError => e
+  $stderr.puts "cli: #{e.message}"
+  argv.reject { |arg| arg.start_with?("--") }.join(" ").strip
 end
 
 cli = nil
@@ -95,14 +60,14 @@ cli = nil
 trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved"; exit 0 }
 trap("TERM") { cli&.container&.dig(:session)&.save! rescue nil; exit 0 }
 
-boot_banner
+Master::Now::BootBanner.print
 cli = Master.boot(root: Dir.pwd)
 Master::Ops::RuntimeLoopGuards.install!
 
 if $stdin.tty?
-  boot_web_ui(cli.container[:config])
+  Master::Now::WebServer.start(cli.container[:config])
 
-  message = ARGV.join(" ").strip
+  message = initial_message_from_argv(ARGV)
   cli.run(message.empty? ? nil : message)
 else
   $stdout.sync = true

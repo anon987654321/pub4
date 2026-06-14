@@ -11,7 +11,7 @@ if (enabled) {
   const renderer = new Face3DCanvasRenderer(canvas);
 
   let last = performance.now();
-  let t0 = last;
+  const t0 = last;
   let maskIdx = 0;
   const masks = ['sepik', 'asmat', 'baining', 'tolai', 'neutral'];
 

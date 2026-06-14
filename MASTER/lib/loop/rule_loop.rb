@@ -2,9 +2,13 @@
 
 require "tempfile"
 require_relative "../ground/atomic_write"
+require_relative "conflict_resolver"
 require_relative "constants"
+require_relative "fix_attempt"
 require_relative "fix_helpers"
 require_relative "patch_applier"
+require_relative "severity"
+require_relative "violation"
 
 module Master
   module Loop
@@ -18,11 +22,10 @@ module Master
     class RuleLoop
       RATE_LIMIT_SLEEP = 10
       MAX_FIX_RETRIES = 2
-      # Genetic autofix explores three variants before rescanning and choosing the lowest-violation candidate.
+      RETRY_WAIT_SLICE = 0.25
       GENETIC_AUTOFIX_CANDIDATES = 3
 
-      SEVERITY_RANK = Master::SEVERITY_RANK
-      MIN_SEVERITY = SEVERITY_RANK[:warning]
+      MIN_SEVERITY = :warning
       @soul_preamble_mutex = Mutex.new
       @soul_preamble_cache = nil
 
@@ -63,6 +66,7 @@ module Master
         @root = root
         @bus = bus
         @learnings = learnings
+        @conflicts = ConflictResolver.new(root:, bus:)
       end
 
       def injected_preamble=(text)
@@ -86,6 +90,16 @@ module Master
 
       private
 
+      def convergence_cfg
+        @convergence_cfg ||= Master.load_yaml(Master::RULES_PATH).dig("thresholds", "convergence") || {}
+      rescue StandardError
+        {}
+      end
+
+      def genetic_autofix_candidates
+        convergence_cfg["genetic_autofix_candidates"] || GENETIC_AUTOFIX_CANDIDATES
+      end
+
       def scan_files(files)
         files.flat_map do |path|
           next [] unless File.exist?(path)
@@ -93,8 +107,8 @@ module Master
           next [] unless result.ok?
           ext = File.extname(path).downcase
           result.value!
-                .select { |f| (SEVERITY_RANK[f[:severity]] || 0) >= MIN_SEVERITY }
-                .map    { |f| f.to_h.merge(file: path, ext:) }
+                .select { |f| Severity.at_least?(f[:severity], MIN_SEVERITY) }
+                .map    { |f| Violation.from_finding(f, file: path, ext: ext) }
         end
       end
 
@@ -103,7 +117,7 @@ module Master
         violations.uniq { |v| v[:file] }.each do |v|
           next unless autofix_allowed?(v)
           new_src = v[:severity].to_sym == :error ? council_fix(v) : request_fix(v)
-          apply(v[:file], new_src) && (fixed += 1) if new_src
+          apply(v[:file], new_src, v) && (fixed += 1) if new_src
         end
         fixed
       end
@@ -112,58 +126,79 @@ module Master
       def council_fix(violation)
         path = violation[:file]
         return unless File.exist?(path)
-        prompt = build_prompt_for(violation, src, path, style: :council)
-        MAX_FIX_RETRIES.times do |attempt|
-          sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
-          response = @agent.ask(prompt).to_s
-          return nil if response.strip == "UNCHANGED"
-          return code if code && code.strip != src.strip
-          action = handle_fix_exception(e, violation, event: "rule_loop:council_error")
-          next if action == :retry
-          return nil
-        nil
+        src    = File.read(path, encoding: "UTF-8")
+        prompt = build_prompt_for(violation:, src:, path:, style: :council)
+        fix_attempt(violation, event: "rule_loop:council_error").first_code(
+          prompt: prompt,
+          ext: File.extname(path).downcase,
+          source: src,
+          wait_context: { rule: @rule.id, file: path, mode: :council }
+        )
       end
 
       # Architecture #5 + #9: diff for large files, genetic candidates for small.
       def request_fix(violation)
         path = violation[:file]
         return unless File.exist?(path)
-        src.bytesize > PatchApplier::DIFF_THRESHOLD ? diff_fix(violation, src, path) : genetic_fix(violation, src, path)
+        src = File.read(path, encoding: "UTF-8")
+        src.bytesize > PatchApplier::DIFF_THRESHOLD ? diff_fix(violation:, src:, path:) : genetic_fix(violation:, src:, path:)
       end
 
       # Architecture #5: unified diff patch — safe on large files.
-      def diff_fix(violation, src, path)
-        prompt = build_prompt_for(violation, src, path, style: :diff)
+      def diff_fix(violation:, src:, path:)
+        prompt = build_prompt_for(violation:, src:, path:, style: :diff)
         MAX_FIX_RETRIES.times do |attempt|
-          sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
+          wait_before_retry(attempt, rule: @rule.id, file: path, mode: :diff)
           response = @agent.ask(prompt).to_s
           next if response.strip == "UNCHANGED"
           result = PatchApplier.apply(src, response)
           return result.source if result.is_a?(PatchApplier::Success)
+        rescue StandardError => e
           action = handle_fix_exception(e, violation, event: "rule_loop:fix_error")
           next if action == :retry
           return nil
+        end
         nil
       end
 
       # Architecture #9: generate candidates, rescan each, apply lowest-violation winner.
-      def genetic_fix(violation, src, path)
+      def genetic_fix(violation:, src:, path:)
         ext    = File.extname(path).downcase
-        prompt = build_prompt_for(violation, src, path)
-        candidates = GENETIC_AUTOFIX_CANDIDATES.times.filter_map do |attempt|
-          sleep RATE_LIMIT_SLEEP if attempt.positive?
-          code = extract_code(@agent.ask(prompt).to_s, ext)
-          code if code && code.strip != src.strip
-        rescue StandardError => e
-          action = handle_fix_exception(e, violation, event: "rule_loop:fix_error")
-          next if action == :retry
-          break nil
-        end
+        prompt = build_prompt_for(violation:, src:, path:)
+        candidates = fix_attempt(violation, attempts: genetic_autofix_candidates, event: "rule_loop:fix_error").codes(
+          prompt: prompt,
+          ext: ext,
+          source: src,
+          wait_context: { rule: @rule.id, file: path, mode: :genetic }
+        )
         best_candidate(candidates || [], path)
+      end
+
+      def fix_attempt(violation, attempts: MAX_FIX_RETRIES, event:)
+        FixAttempt.new(
+          agent: @agent,
+          attempts: attempts,
+          wait: ->(attempt, context) { wait_before_retry(attempt, **context) },
+          extractor: ->(response, ext) { extract_code(response, ext) },
+          on_error: ->(error) { handle_fix_exception(error, violation, event:) }
+        )
+      end
+
+      def wait_before_retry(attempt, rule:, file:, mode:)
+        return unless attempt.positive?
+
+        delay = RATE_LIMIT_SLEEP * attempt
+        @bus&.publish("rule_loop:retry_wait", rule:, file:, mode:, attempt:, delay:)
+        deadline = Time.now + delay
+        while (remaining = deadline - Time.now).positive?
+          sleep [remaining, RETRY_WAIT_SLICE].min
+          Thread.pass
+        end
       end
 
       def best_candidate(candidates, path)
         return nil if candidates.empty?
+        return candidates.first if candidates.size == 1
         orig = File.read(path, encoding: "utf-8") rescue nil
         baseline = orig ? (rescan_candidate(orig, path) rescue nil) : nil
         scored = candidates.filter_map do |c|
@@ -187,13 +222,28 @@ module Master
         99
       end
 
-      def apply(path, new_src)
+      def apply(path, new_src, violation)
+        old_src = File.read(path, encoding: "UTF-8")
+        before = scan_all(path)
         write_atomic(path, new_src, encoding: "UTF-8")
+        after = scan_all(path)
+        if @conflicts.reject_higher_priority?(original_violation: violation, before: before, after: after, path: path)
+          write_atomic(path, old_src, encoding: "UTF-8")
+          @bus&.publish("rule_loop:fix_rejected", rule: @rule.id, file: path, reason: "higher_priority_violation")
+          return false
+        end
         @bus&.publish("rule_loop:fix_applied", rule: @rule.id, file: path)
         true
       rescue StandardError => e
         @bus&.publish("rule_loop:write_error", rule: @rule.id, file: path, error: e.message)
         false
+      end
+
+      def scan_all(path)
+        result = @scanner.scan(path)
+        result.ok? ? result.value! : []
+      rescue StandardError
+        []
       end
 
       def autofix_allowed?(violation)
@@ -209,6 +259,7 @@ module Master
         message = error.message.to_s
         if Master::Loop::Constants::TRANSIENT_RE.match?(message)
           return :retry
+        elsif Master::Loop::Constants::PERMANENT_RE.match?(message)
           @bus&.publish("rule_loop:fail_fast", rule: violation[:rule], file: violation[:file], error: message[0, 120])
         elsif Master::Loop::Constants::AMBIGUOUS_RE.match?(message)
           @bus&.publish("rule_loop:human_intervention", rule: violation[:rule], file: violation[:file], error: message[0, 120])
@@ -218,7 +269,7 @@ module Master
         :stop
       end
 
-      def build_prompt_for(violation, src, path, style: :file)
+      def build_prompt_for(violation:, src:, path:, style: :file)
         lang     = Master::Judge::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
         fix_hint = violation[:fix].to_s.strip
         fix_line = fix_hint.empty? ? "" : "How to fix: #{fix_hint}"
@@ -265,6 +316,7 @@ module Master
       # Architecture #10: record fix quality in learnings store.
       def record_outcomes(files, outcome)
         return unless @learnings
+        ext = files.filter_map { |f| File.extname(f).downcase.delete(".").presence }.tally.max_by { |_, n| n }&.first || "unknown"
         @learnings.record(rule: @rule.id, file_type: ext, outcome:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rule_loop.record_outcomes", event_bus: @bus, rule: @rule.id)

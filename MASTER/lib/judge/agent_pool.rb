@@ -23,6 +23,7 @@ module Master
         @mutex.synchronize do
           reap_dead
           return Result.err("agent_pool: at capacity (#{@max})", category: :validation) if @workers.size >= @max
+        end
 
         thread = Thread.new do
           @bus&.publish("agent:start", type:, tag:)

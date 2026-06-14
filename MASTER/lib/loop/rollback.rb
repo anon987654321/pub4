@@ -5,7 +5,7 @@ require "open3"
 module Master
   module Loop
     class Rollback
-      ROLLBACK_CATEGORIES = %i[validation axiom_violation unknown provider_error llm_call_failure].freeze
+      ROLLBACK_CATEGORIES = %i[validation axiom_violation policy unknown provider_error llm_call_failure].freeze
       ROLLBACK_MSG_TRUNCATE = 120
 
       def initialize(root:, bus: nil)
@@ -29,7 +29,7 @@ module Master
       def rollback_eligible?(result)
         return false unless result.is_a?(Master::Result::Err)
 
-        git_workspace? && dirty?
+        ROLLBACK_CATEGORIES.include?(result.category) && git_workspace? && dirty?
       end
 
       def git_workspace?

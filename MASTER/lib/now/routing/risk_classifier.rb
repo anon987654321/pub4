@@ -11,14 +11,14 @@ module Master
       class RiskClassifier
         TIERS = %i[low medium high critical].freeze
 
-        INTENT_TIERS = {.freeze
+        INTENT_TIERS = {
           critical: %i[destructive_command secret_handling permission_change public_deployment],
           high: %i[file_mutation auth_mutation security_audit production_runtime tool_execution],
           medium: %i[docs_change config_change preview_module api_design],
-          low: %i[classification summarization cluster_label ui_copy explanation],
+          low: %i[classification summarization cluster_label ui_copy explanation]
         }.freeze
 
-        PATH_OVERRIDES = {.freeze
+        PATH_OVERRIDES = {
           /\bauth\b|\bsession\b|\bcredential\b|\bpassword\b|\btoken\b/i => :high,
           /\bsecret\b|\bapi[_\-]?key\b|\bprivate[_\-]?key\b/i => :critical,
           /\bpf\.conf\b|\bdoas\.conf\b|\bsshd\b|\bsmtpd\b/i => :critical,
@@ -27,7 +27,7 @@ module Master
           /\bbin\/cli\b|\blib\/ground\/axioms\b|\bdata\/standing_orders\b/i => :critical,
           /\blib\/loop\b|\blib\/judge\/security\b/i => :high,
           /\bapp\/controllers\b|\bapp\/models\b/i => :medium,
-          /\btest\/\b|\bspec\/\b/i => :low,
+          /\btest\/\b|\bspec\/\b/i => :low
         }.freeze
 
         # Files referenced by this many clusters get tier elevation.
@@ -51,12 +51,14 @@ module Master
 
         def intent_tier_for(intent)
           return nil if intent.nil?
+          sym = intent.to_sym
           INTENT_TIERS.each { |tier, intents| return tier if intents.include?(sym) }
           nil
         end
 
         def path_tier_for(paths)
           return nil if paths.empty?
+          paths.filter_map do |path|
             PATH_OVERRIDES.each { |re, tier| return tier if re.match?(path.to_s) }
             nil
           end.max_by { |t| TIERS.index(t) }
@@ -64,6 +66,7 @@ module Master
 
         def blast_tier_for(paths)
           return nil if @graph.nil? || paths.empty?
+          paths.filter_map do |path|
             count = @graph.clusters_for_file(path.to_s).size
             BLAST_THRESHOLDS.find { |threshold, _| count >= threshold }&.last
           end.max_by { |t| TIERS.index(t) }

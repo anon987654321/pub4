@@ -163,12 +163,19 @@ module Master
   end
 
   def self.validate_data!(root: ROOT, bus: nil)
+    @data_validation_cache ||= {}
+    paths = Dir.glob(File.join(root, "data", "**/*.yml")).sort
+    signature = paths.to_h { |path| [path, File.mtime(path).to_i] }
+    cached = @data_validation_cache[root]
+    return cached[:errors] if cached && cached[:signature] == signature
+
     errors = {}
-    Dir.glob(File.join(root, "data", "**/*.yml")).sort.each do |path|
+    paths.each do |path|
       YAML.safe_load_file(path, aliases: true)
     rescue Psych::Exception => e
       errors[path.sub("#{root}/", "")] = e.message.lines.first.to_s.strip
     end
+    @data_validation_cache[root] = { signature:, errors: }
     return errors if errors.empty?
 
     errors.each do |rel, msg|

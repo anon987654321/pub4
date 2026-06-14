@@ -11,7 +11,7 @@ module Master
       AXIOM_DISPLAY_LIMIT = 10
 
       # Fallback if data/personas.yml is missing or malformed.
-      FALLBACK_PERSONA = {.freeze
+      FALLBACK_PERSONA = {
         "voice" => "ms-MY-OsmanNeural",
         "tts_rate" => "-35%",
         "tts_pitch" => "-150Hz",
@@ -19,14 +19,14 @@ module Master
         "description" => "Terse. Direct. No filler. Dark.",
       }.freeze
 
-      MOOD_LINES = {.freeze
+      MOOD_LINES = {
         tense: "Mood: tense — error rate elevated. Be conservative; verify before asserting.",
         weary: "Mood: weary — fatigue high. Cut non-essential elaboration; defer deep dives.",
         curious: "Mood: curious — novelty hunger. Explore lateral framings when warranted.",
         focused: "Mood: focused — drives at setpoint. Default depth and tier.",
       }.freeze
 
-      PHASE_LINES = {.freeze
+      PHASE_LINES = {
         morning: "Phase: morning. Bias toward structural work; prefer rigorous review.",
         afternoon: "Phase: afternoon. Steady throughput; pragmatic decisions.",
         evening: "Phase: evening. Wrap loops; avoid starting large refactors.",
@@ -37,6 +37,11 @@ module Master
 
       def self.persona_names(root: nil)
         Ground::Rules.new(root:).data(:personas).keys.map(&:to_sym)
+      end
+
+      def self.why_prompt(rule)
+        "Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
+          "give a before/after Ruby example, and state why it matters."
       end
 
       def initialize(name = DEFAULT, root: nil, homeostat: nil)
@@ -81,6 +86,7 @@ module Master
         end
         constitution = @rules.constitution
         strunk = @rules.strunk
+        preserve = @rules.preserve
         banned = (constitution["banned_output"] || [])
         no_open = (strunk["preambles"] || []).first(4)
         no_end = (strunk["endings"] || []).first(3)
@@ -126,6 +132,8 @@ module Master
         Code fences allowed only for code. Never use: Certainly, Of course, Great question, Absolutely, Happy to help.
         Silence on success: routine completions emit one line. No summary, no restatement.
         Preserve: reproduce shown code or text verbatim; never paraphrase.
+        Diagnostic output: #{preserve["diagnostic_output"]}
+        Minimize: #{preserve.dig("refinement_scope", "minimize")}
         Inverted pyramid: lead with outcome, then evidence, then detail.
         Require evidence: modification claims show diff; completion claims show command output.
         </master_output_format>

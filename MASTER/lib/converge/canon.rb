@@ -30,6 +30,7 @@ module Converge
       tsort
     rescue TSort::Cyclic => error
       raise CyclicDependencyError, "cycle detected: #{error.message}"
+    end
 
     def tsort_each_node(&block)
       @rules.each(&block)
@@ -46,5 +47,6 @@ module Converge
       return if missing.empty?
 
       raise MissingDependencyError, "missing rule dependencies: #{missing.join(", ")}"
+    end
   end
 end

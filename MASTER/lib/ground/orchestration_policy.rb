@@ -3,7 +3,7 @@
 module Master
   module Ground
     class OrchestrationPolicy
-      MODEL_TIERS = {.freeze
+      MODEL_TIERS = {
         cheap: %i[low],
         fast: %i[low medium],
         strong: %i[high critical],
@@ -13,7 +13,7 @@ module Master
 
       COUNCIL_TIERS = %i[high critical].freeze
 
-      COUNCIL_ROLES = {.freeze
+      COUNCIL_ROLES = {
         "Security" => %i[auth secrets tool_execution permission_changes],
         "Reliability" => %i[network provider runtime fallback],
         "Maintainer" => %i[code_mutation refactor file_deletion],

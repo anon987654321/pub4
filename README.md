@@ -1,6 +1,6 @@
 # pub4
 
-Constitutional AI coding agent and web platform. OpenBSD-first. Ruby-only.
+Constitutional AI for any text artifact. OpenBSD-first. Ruby-only.
 
 ## Layout
 

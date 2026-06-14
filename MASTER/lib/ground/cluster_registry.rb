@@ -9,7 +9,7 @@ module Master
     class ClusterRegistry
       Entry = Data.define(:id, :name, :source, :status, :tags, :raw)
 
-      DATA_SOURCES = {.freeze
+      DATA_SOURCES = {
         visual: File.join(Master::ROOT, "data", "visual_clusters.yml"),
         mobile_web: File.join(Master::ROOT, "data", "mobile_web_opportunities.yml"),
         repo_topics: File.join(Master::ROOT, "data", "patterns.yml"),

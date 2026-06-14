@@ -30,25 +30,29 @@ module Master
         def ruby_units
           result = Prism.parse(@source)
           return prose_units unless result.success?
+          units = []
           walk(result.value, units)
           units.empty? ? prose_units : units
         end
 
         def walk(node, units)
           return unless node.is_a?(Prism::Node)
+          case node
           when Prism::DefNode
-            units << build_unit(node, node.name.to_s, :method)
+            units << build_unit(node:, name: node.name.to_s, type: :method)
           when Prism::ClassNode
-            units << build_unit(node, node.constant_path.slice, :class)
+            units << build_unit(node:, name: node.constant_path.slice, type: :class)
             node.child_nodes.compact.each { |c| walk(c, units) }
             return
-            units << build_unit(node, node.constant_path.slice, :module)
+          when Prism::ModuleNode
+            units << build_unit(node:, name: node.constant_path.slice, type: :module)
             node.child_nodes.compact.each { |c| walk(c, units) }
             return
+          end
           node.child_nodes.compact.each { |c| walk(c, units) }
         end
 
-        def build_unit(node, name, type)
+        def build_unit(node:, name:, type:)
           s = node.location.start_line
           e = node.location.end_line
           Unit.new(

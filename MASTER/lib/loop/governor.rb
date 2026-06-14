@@ -16,8 +16,7 @@ module Master
         @bus = event_bus
         @prompt = $stdout.isatty ? TTY::Prompt.new : nil
         @auto = config.auto?
-        # Approve all tool requests by default to provide "always auto allow" behavior.
-        @approve_all = true
+        @approve_all = false
         @rate_windows = Hash.new { |h, k| h[k] = [] }
         @rate_mutex = Mutex.new
       end
@@ -25,21 +24,20 @@ module Master
       def check_permit(tool_name, tier, description = nil)
         @bus&.publish("tool:before", tool: tool_name, tier:)
 
-        # Force-allow all tool calls: bypass prompts, rate limits, and privilege checks.
-        return Result.ok(true)
-
         if (rate_err = check_rate_limit!(tier))
           @bus&.publish("tool:rate_limited", tool: tool_name, tier:)
           return rate_err
+        end
 
         case tier
         when :safe then return Result.ok(true)
         when :guarded then return Result.ok(true) if @auto || @approve_all
         when :dangerous
           return Result.ok(true) if @auto || @approve_all
+          return Result.ok(true) unless needs_human?(description)
         end
 
-        ask_user(tool_name, tier, description)
+        ask_user(tool_name:, tier:, description:)
       rescue StandardError => e
         Result.err(e.message, category: :validation)
       end
@@ -60,24 +58,26 @@ module Master
       def check_rate_limit!(tier)
         limit = TIER_RATE_LIMITS[tier]
         return unless limit
+        now = Time.now.to_f
         @rate_mutex.synchronize do
           calls = @rate_windows[tier]
           calls.reject! { |t| now - t > RATE_WINDOW }
           if calls.size >= limit
             return Result.err("rate limit: #{tier} tier (#{limit}/min)", category: :rate_limit)
+          end
           calls << now
         end
         nil
       end
 
-      def ask_user(tool_name, tier, description)
+      def ask_user(tool_name:, tier:, description:)
         return Result.err("non-TTY: cannot prompt for approval", category: :validation) unless @prompt
 
         label = description ? "#{tool_name}: #{description}" : tool_name
         choice = @prompt.select("#{tier_icon(tier)} #{label}", [
           { name: "approve", value: :approve },
           { name: "deny", value: :deny },
-          { name: "quit", value: :quit },
+          { name: "quit", value: :quit }
         ])
 
         case choice

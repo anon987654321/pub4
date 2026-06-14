@@ -26,6 +26,7 @@ module Master
           def check(code, path:)
             count = code.lines.size
             return [] if count <= LIMIT
+            [finding(line: 1, message: "file #{count} lines (limit #{LIMIT}) — split at module boundaries")]
           end
         end
 
@@ -45,12 +46,14 @@ module Master
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
           rescue StandardError
             []
           end
 
           def check_ast(ast, _code, path:)
             return [] unless ast
+            findings = []
             visit(ast) do |node|
               next unless node.is_a?(Prism::DefNode)
               len = node.location.end_line - node.location.start_line
@@ -65,6 +68,7 @@ module Master
 
           def visit(node, &block)
             return unless node.respond_to?(:child_nodes)
+            block.call(node)
             node.child_nodes.compact.each { |c| visit(c, &block) }
           end
         end
@@ -85,12 +89,14 @@ module Master
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
           rescue StandardError
             []
           end
 
           def check_ast(ast, code, path:)
             return [] unless ast
+            findings = []
             visit(ast) do |node|
               next unless node.is_a?(Prism::ClassNode)
               public_defs = count_public_methods(node)
@@ -114,6 +120,7 @@ module Master
 
           def visit(node, &block)
             return unless node.respond_to?(:child_nodes)
+            block.call(node)
             node.child_nodes.compact.each { |c| visit(c, &block) }
           end
 
@@ -121,6 +128,7 @@ module Master
             count = 0
             in_private = false
             return count unless class_node.respond_to?(:body) && class_node.body
+            class_node.body.child_nodes.compact.each do |node|
               if node.is_a?(Prism::CallNode) && %w[private protected].include?(node.name.to_s)
                 in_private = true
               end
@@ -134,7 +142,7 @@ module Master
         class NestingDepthRule < Rule
           MAX_DEPTH = 4
 
-          NESTING_TYPES = [.freeze
+          NESTING_TYPES = [
             Prism::ModuleNode, Prism::ClassNode, Prism::DefNode,
             Prism::IfNode, Prism::UnlessNode, Prism::WhileNode,
             Prism::UntilNode, Prism::ForNode, Prism::CaseNode,
@@ -152,24 +160,27 @@ module Master
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
           rescue StandardError
             []
           end
 
           def check_ast(ast, _code, path:)
             return [] unless ast
-            scan_depth(ast, 0, deep)
+            deep = []
+            scan_depth(node: ast, depth: 0, violations: deep)
             deep.map { |line| finding(line:, message: "nesting depth exceeds #{MAX_DEPTH} — flatten with guard clauses or extract methods") }
           end
 
           private
 
-          def scan_depth(node, depth, violations)
+          def scan_depth(node:, depth:, violations:)
             return unless node.respond_to?(:child_nodes)
+            new_depth = NESTING_TYPES.include?(node.class) ? depth + 1 : depth
             if new_depth > MAX_DEPTH && violations.none? { |l| (l - node.location.start_line).abs < 3 }
               violations << node.location.start_line
             end
-            node.child_nodes.compact.each { |c| scan_depth(c, new_depth, violations) }
+            node.child_nodes.compact.each { |child| scan_depth(node: child, depth: new_depth, violations:) }
           rescue StandardError
             nil
           end
@@ -188,12 +199,14 @@ module Master
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
           rescue StandardError
             []
           end
 
           def check_ast(ast, _code, path:)
             return [] unless ast
+            findings = []
             visit(ast) do |node|
               next unless node.is_a?(Prism::DefNode)
               body = node.body
@@ -212,16 +225,19 @@ module Master
 
           def visit(node, &block)
             return unless node.respond_to?(:child_nodes)
+            block.call(node)
             node.child_nodes.compact.each { |c| visit(c, &block) }
           end
 
           def body_contains?(node, *types)
             return false unless node.respond_to?(:child_nodes)
+            types.any? { |t| node.is_a?(t) } ||
               node.child_nodes.compact.any? { |c| body_contains?(c, *types) }
           end
 
           def body_has_explicit_return?(node)
             return false unless node.respond_to?(:child_nodes)
+            return true if node.is_a?(Prism::ReturnNode) && node.arguments&.arguments&.any?
             node.child_nodes.compact.any? { |c| body_has_explicit_return?(c) }
           end
         end
@@ -239,9 +255,11 @@ module Master
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
+            findings = []
             lines = code.lines
             first_non_comment = lines.find_index { |l| !l.match?(/^\s*#|^\s*$/) }
             return [] unless first_non_comment
+            unless lines.first&.include?("frozen_string_literal")
               findings << finding(line: 1, message: "missing # frozen_string_literal: true as first line")
             end
             private_idx = lines.find_index { |l| l.match?(/^\s+private\s*$|^\s+private\b/) }
@@ -271,6 +289,7 @@ module Master
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
+            findings = []
             findings.concat(scan_lines(code, /\bmethod_missing\b/, message: "method_missing without respond_to_missing? — add respond_to_missing?")) \
               if code.include?("method_missing") && !code.include?("respond_to_missing?")
             findings.concat(scan_lines(code, /\bconst_missing\b/, message: "const_missing — prefer explicit require"))
@@ -291,7 +310,7 @@ module Master
       # B08 CYCLOMATIC_COMPLEXITY — methods with cyclomatic complexity > 10.
         class CyclomaticComplexityRule < Rule
           MAX_CC = 10
-          CC_NODES = [.freeze
+          CC_NODES = [
             Prism::IfNode, Prism::UnlessNode, Prism::WhileNode, Prism::UntilNode,
             Prism::ForNode, Prism::WhenNode, Prism::RescueNode, Prism::AndNode,
             Prism::OrNode,
@@ -308,12 +327,14 @@ module Master
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
           rescue StandardError
             []
           end
 
           def check_ast(ast, _code, path:)
             return [] unless ast
+            findings = []
             visit(ast) do |node|
               next unless node.is_a?(Prism::DefNode)
               cc = 1 + count_cc_nodes(node)
@@ -328,11 +349,13 @@ module Master
 
           def visit(node, &block)
             return unless node.respond_to?(:child_nodes)
+            block.call(node)
             node.child_nodes.compact.each { |c| visit(c, &block) }
           end
 
           def count_cc_nodes(node)
             return 0 unless node.respond_to?(:child_nodes)
+            own = CC_NODES.include?(node.class) ? 1 : 0
             own + node.child_nodes.compact.sum { |c| count_cc_nodes(c) }
           end
         end
@@ -353,12 +376,14 @@ module Master
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
           rescue StandardError
             []
           end
 
           def check_ast(ast, code, path:)
             return [] unless ast
+            findings = []
             lines = code.lines
             visit(ast) do |node|
               next unless node.is_a?(Prism::DefNode)
@@ -383,6 +408,7 @@ module Master
 
           def visit(node, &block)
             return unless node.respond_to?(:child_nodes)
+            block.call(node)
             node.child_nodes.compact.each { |c| visit(c, &block) }
           end
 
@@ -396,11 +422,13 @@ module Master
               [match[1], match[2]] if match
             end
             return 0 if assignments.size < PIPELINE_STEP_THRESHOLD
+            assignments.each_cons(PIPELINE_STEP_THRESHOLD).find { |group| chained_assignments?(group) }&.size.to_i
           end
 
           def chained_assignments?(group)
             names = group.map(&:first)
             return false unless names.uniq.size == names.size
+            group.each_cons(2).all? { |left, right| right.last.match?(/\b#{Regexp.escape(left.first)}\b/) }
           end
         end
 
@@ -417,12 +445,14 @@ module Master
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
           rescue StandardError
             []
           end
 
           def check_ast(ast, _code, path:)
             return [] unless ast
+            findings = []
             visit(ast) do |node|
               next unless node.is_a?(Prism::ClassNode)
               next unless node.body
@@ -440,6 +470,7 @@ module Master
 
           def visit(node, &block)
             return unless node.respond_to?(:child_nodes)
+            block.call(node)
             node.child_nodes.compact.each { |c| visit(c, &block) }
           end
         end

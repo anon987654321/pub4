@@ -4,7 +4,7 @@ module Master
   module Judge
     module Security
       module Permissions
-        TOOL_TIERS = {.freeze
+        TOOL_TIERS = {
           "read_file" => :safe,
           "list_dir" => :safe,
           "search_files" => :safe,
@@ -16,7 +16,7 @@ module Master
           "zsh" => :dangerous,
         }.freeze
 
-        BLOCKLIST = [.freeze
+        BLOCKLIST = [
           "rm -rf",
           "sudo",
           "doas",

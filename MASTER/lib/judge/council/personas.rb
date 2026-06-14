@@ -9,7 +9,7 @@ module Master
           def veto? = veto_role == true
         end
 
-        PERSONA_DEFAULTS = {.freeze
+        PERSONA_DEFAULTS = {
           veto_role: false,
           emphasizes: [].freeze,
           weight: 0.05,
@@ -21,7 +21,7 @@ module Master
 
         ROOT_DATA_PATH = File.join(File.expand_path("../../..", __dir__), "data", "council.yml").freeze
 
-        DEFAULTS = [.freeze
+        DEFAULTS = [
           Persona.new(name: "Architect", role: "System design", bias: "Structure",
                       prompt: "Review for architectural soundness, coupling, and interface design.",
                       **PERSONA_DEFAULTS),

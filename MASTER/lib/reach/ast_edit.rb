@@ -22,6 +22,7 @@ module Master
       def call(operation:, path:, **opts)
         full = resolve(path)
         return full if full.err?
+        fp = full.value!
         return Result.err("ast_edit: not found: #{path}", category: :validation) unless File.exist?(fp)
 
         src = File.read(fp)
@@ -51,6 +52,7 @@ module Master
 
       def rename_method(fp:, src:, from:, to:)
         return Result.err("ast_edit: from/to required", category: :validation) if from.empty? || to.empty?
+        return Result.err("ast_edit: invalid name: #{to}",
           category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
 
         perm = @governor&.permit?(NAME, TIER, fp)
@@ -91,6 +93,7 @@ module Master
         ranges = method_line_ranges(src)
         entry  = ranges.find { |r| r[:name] == name }
         return Result.err("ast_edit: method not found: #{name}", category: :validation) unless entry
+        Result.ok("#{name}: lines #{entry[:start]}–#{entry[:end]}")
       end
 
       def method_line_ranges(src)

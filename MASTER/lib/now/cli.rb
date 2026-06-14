@@ -171,7 +171,7 @@ module Master
         )
         [
           (status if status),
-          (@refs.renderer.render("  \u21b3 #{sugg}", mode: :dim) if sugg),
+          (@refs.renderer.render("  ↳ #{sugg}", mode: :dim) if sugg),
           prompt_lines.first,
           prompt_lines.last
         ].compact.join("\n")
@@ -309,11 +309,11 @@ module Master
         end
         if errors.any?
           errors.each { |p| puts @refs.renderer.render("  syntax error: #{p}", mode: :warning) }
-          puts @refs.renderer.render("rebuild: aborted \u2014 fix errors first", mode: :warning)
+          puts @refs.renderer.render("rebuild: aborted — fix errors first", mode: :warning)
           return
         end
         @refs.session.save!
-        puts @refs.renderer.render("rebuild: ok \u2014 exec'ing fresh process", mode: :dim)
+        puts @refs.renderer.render("rebuild: ok — exec'ing fresh process", mode: :dim)
         $stdout.flush
         Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
       end
@@ -654,7 +654,7 @@ module Master
         tokens = @refs.session.token_est
         cents  = (delta * 100).round(2)
         return if cents.zero? && tokens.zero?
-        line = "cost: +¢#{format('%.2f', cents)} \u00b7 #{tokens} tok \u00b7 #{short_model(@refs.agent.model)}"
+        line = "cost: +¢#{format('%.2f', cents)} · #{tokens} tok · #{short_model(@refs.agent.model)}"
         puts @refs.renderer.render(line, mode: :dim)
       end
 
@@ -675,9 +675,9 @@ module Master
       end
 
       def next_action_chips
-        base = ["/undo", "/why", "/last"]
+        base = ["[/undo]", "[/why]", "[/last]"]
         current = violations_count
-        base.unshift("/fix #{current}v") if current.positive?
+        base.unshift("[/fix #{current}v]") if current.positive?
         base
       end
 

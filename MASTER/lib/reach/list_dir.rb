@@ -27,6 +27,7 @@ module Master
 
       def list_tree(base:, dir:, depth:, pattern:, indent: 0)
         return [] if depth < 0
+        entries = Dir.entries(dir).reject { |e| e.start_with?(".") }.sort
         entries.flat_map { |entry|
           full = File.join(dir, entry)
           next [] if pattern && !File.fnmatch?(pattern, entry)
@@ -35,13 +36,14 @@ module Master
             ["#{prefix}#{entry}/"] + list_tree(base:, dir: full, depth: depth - 1, pattern:, indent: indent + 1)
           else
             ["#{prefix}#{entry}"]
-          end,
+          end
         }
       end
 
       def resolve(path)
         full = File.expand_path(path, @root)
         return Result.err("path escapes project root: #{path}", category: :validation) unless full.start_with?(@root)
+        return Result.err("not a directory: #{path}", category: :validation) unless File.directory?(full)
         Result.ok(full)
       end
     end

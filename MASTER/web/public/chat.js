@@ -152,7 +152,7 @@ function openActionMenu(msgEl) {
       navigator.clipboard?.writeText(txt).catch(() => {});
       menu.remove();
     } else if (act === 'quote') {
-      if (input) { input.value = '> ' + txt + '\n'; input.focus(); }
+      if (input) { input.value = `> ${txt}\n`; input.focus(); }
       menu.remove();
     } else if (act === 'close') {
       menu.remove();
@@ -264,7 +264,7 @@ async function sendMessage(text) {
       const voice = window.MASTERVoice;
       if (voice?.enqueue && ttsBuffer.trim()) voice.enqueue(ttsBuffer.trim());
       ttsBuffer = '';
-      window._chatOnChunk?.('\n' + raw + '\n');
+      window._chatOnChunk?.(`\n${raw}\n`);
       window._chatOnError?.();
       return;
     }

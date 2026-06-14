@@ -6,7 +6,7 @@ module Master
       Rule = Data.define(:id, :signal, :replace_with, :severity, :guide)
 
       # Common upgrade gaps after jQuery → Hotwire adoption.
-      JS_RULES = [.freeze
+      JS_RULES = [
         Rule.new(
           id: :dom_content_loaded,
           signal: /DOMContentLoaded/,
@@ -51,7 +51,7 @@ module Master
         ),
       ].freeze
 
-      ERB_RULES = [.freeze
+      ERB_RULES = [
         Rule.new(
           id: :render_partial_ajax_candidate,
           signal: /render\s+partial:.*locals:/,
@@ -68,7 +68,7 @@ module Master
         ),
       ].freeze
 
-      SW_UPGRADE = {.freeze
+      SW_UPGRADE = {
         id: :cache_strategy_upgrade,
         current: "cache-first for all GET requests",
         recommended: {

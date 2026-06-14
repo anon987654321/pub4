@@ -87,7 +87,7 @@ module Master
             "protection" => absolute["protection_tiers"] || @data["protection"],
             "banned_output" => voice["banned_output"],
             "anti_simulation" => absolute["anti_simulation"] || voice["anti_simulation"],
-            "communication_style" => voice["style"],
+            "communication_style" => voice["style"]
           }.freeze
         end
       end
@@ -112,6 +112,7 @@ module Master
       def load_split_rules
         dir = File.join(@data_dir, RULES_SUBDIR)
         return @data["rules"] || {} unless File.directory?(dir)
+        Dir.glob(File.join(dir, "*.yml")).sort.each_with_object({}) do |f, merged|
           data = load_yaml(f) || {}
           data.each { |scope, rules| (merged[scope] ||= []).concat(Array(rules)) }
         end
@@ -119,6 +120,7 @@ module Master
 
       def load_yaml(path)
         return unless File.exist?(path)
+        Master.load_yaml(path)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rules.load_yaml", path:)
         nil

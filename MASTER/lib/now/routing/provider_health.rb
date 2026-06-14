@@ -27,7 +27,7 @@ module Master
             model: model.to_s,
             status: status.to_s,
             latency_ms: latency_ms,
-            error: error&.to_s,
+            error: error&.to_s
           }.compact
           FileUtils.mkdir_p(File.dirname(path))
           File.open(path, "a") { |f| f.puts(JSON.generate(event)) }
@@ -57,6 +57,7 @@ module Master
 
         def events_for(model_id)
           return [] unless File.file?(path)
+          File.readlines(path, chomp: true).filter_map do |line|
             next if line.strip.empty?
             JSON.parse(line)
           rescue JSON::ParserError

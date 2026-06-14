@@ -21,6 +21,7 @@ module Master
         @bus = bus
         @learnings = learnings
         @queue = Queue.new
+        @mtime_map = {}
         @watcher = build_watcher
       end
 
@@ -40,19 +41,23 @@ module Master
         require_kqueue_or_inotify
       rescue LoadError
         raise
+      end
 
-      # Drains the queue with debounce — coalesces rapid file events.
+      # Drains the queue with debounce and sub-second mtime quiescence.
       def drain_queue
         pending = {}
         loop do
           path = @queue.pop
           next if SKIP_DIRS.any? { |d| path.include?(d) }
-          pending[path] = Time.now.to_f
+          mtime = latest_mtime(path)
+          next if @mtime_map[path] == mtime
+
+          pending[path] = mtime
           sleep DEBOUNCE_SECONDS
-          now = Time.now.to_f
-          ready = pending.select { |_, t| now - t >= DEBOUNCE_SECONDS }.keys
+          ready = pending.select { |p, mtime| latest_mtime(p) == mtime }.keys
           ready.each do |p|
             pending.delete(p)
+            @mtime_map[p] = latest_mtime(p)
             run_rules_on(p)
           end
         end
@@ -60,12 +65,17 @@ module Master
 
       def run_rules_on(path)
         return unless File.exist?(path)
+        @rules.each do |rule|
           rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
-          result = rl.run([path])
+          result = rl.run_once([path])
           @bus&.publish("watch_loop:file_pass", file: path, rule: rule.id, **result)
         end
       rescue StandardError => e
         @bus&.publish("watch_loop:error", file: path, error: e.message)
+      end
+
+      def latest_mtime(path)
+        File.exist?(path) ? File.mtime(path).to_f : nil
       end
 
       # Platform-specific watcher. Enqueues paths into @queue on change events.

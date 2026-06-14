@@ -6,7 +6,7 @@ module Master
       Phase = Data.define(:name, :input, :output, :questions, :actions)
       Metric = Data.define(:name, :method, :threshold, :action)
 
-      LIMITS = {.freeze
+      LIMITS = {
         coverage: 0.8,
         complexity: 10,
         convergence: 0.01,
@@ -17,7 +17,7 @@ module Master
         section_count: 15,
       }.freeze
 
-      PRINCIPLES = [.freeze
+      PRINCIPLES = [
         %i[dry three_duplications abstract high],
         %i[kiss complexity_over_10 simplify high],
         %i[yagni unused remove medium],
@@ -37,7 +37,7 @@ module Master
         %i[geometric visual_confusion simplify_geometry medium],
       ].freeze
 
-      PHASES = [.freeze
+      PHASES = [
         Phase.new(:discover, :problem, :definition,
                   %w[specific_measurable who_affected_freq current_impact evidence if_nothing], []),
         Phase.new(:analyze, :definition, :analysis,
@@ -56,7 +56,7 @@ module Master
                   %w[worked failed differently patterns codify], %w[patterns measure improve codify]),
       ].freeze
 
-      WORKFLOWS = {.freeze
+      WORKFLOWS = {
         new_feature: %i[discover analyze ideate design implement validate deliver learn],
         bug: %i[analyze implement validate deliver],
         refactor: %i[analyze design implement validate],
@@ -64,7 +64,7 @@ module Master
         migration: %i[analyze design implement validate deliver],
       }.freeze
 
-      METRICS = [.freeze
+      METRICS = [
         Metric.new(:complexity, :cyclomatic, LIMITS[:complexity], :simplify),
         Metric.new(:coupling, :afferent_efferent, LIMITS[:coupling], :decouple),
         Metric.new(:duplication, :token_similarity, LIMITS[:duplication], :extract),
@@ -73,7 +73,7 @@ module Master
         Metric.new(:sections, :count, LIMITS[:section_count], :consolidate),
       ].freeze
 
-      GATES = {.freeze
+      GATES = {
         functional: { tests: true, coverage: LIMITS[:coverage] },
         secure: { vulnerabilities: 0, input_validation: true },
         maintainable: { complexity: LIMITS[:complexity], duplication: LIMITS[:duplication] },

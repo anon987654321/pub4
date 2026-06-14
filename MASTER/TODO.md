@@ -122,7 +122,7 @@ MASTER must pass its own rules. Violations found by reading lib/.
 - [x] F20 All lib/**/*.rb: verify zero `system(.*#{` command injection patterns (UNSAFE_CALLS)
 - [x] F21 All lib/**/*.rb: check for mutable constants missing .freeze (IMMUTABLE)
 - [x] F22 All lib/**/*.rb: check for long chains a.b.c.d.e not covered by existing rule exclusions (LAW_OF_DEMETER)
-- [ ] F23 All lib/**/*.rb: check for 3+ positional args needing keyword conversion (FEW_ARGUMENTS)
+- [x] F23 All lib/**/*.rb: check for 3+ positional args needing keyword conversion (FEW_ARGUMENTS)
 - [x] F24 loop/fix_helpers.rb: read and verify SRP — only fix-related helpers, no scanning logic
 - [x] F25 judge/scan/rule_dsl.rb: verify auto_build? pattern documented (SELF_EXPLAINING)
 
@@ -130,16 +130,16 @@ MASTER must pass its own rules. Violations found by reading lib/.
 
 rules.yml voice section must govern MASTER's own outputs.
 
-- [ ] G01 Anti-simulation: add forbidden word filter (will, would, could, might) to prompts MASTER sends to LLM
+- [x] G01 Anti-simulation: add forbidden word filter (will, would, could, might) to prompts MASTER sends to LLM
 - [x] G02 Strunk preambles: strip "In summary,", "Consequently,", "Therefore," from MASTER's own output generation
 - [x] G03 Strunk hedges: strip "I think that", "I believe", "seems", "appears" from MASTER output
 - [x] G04 Strunk endings: strip "as a result.", "for this reason.", "thus." from MASTER output
 - [x] G05 Banned output: enforce no headlines/bullet_lists_without_content/filler_phrases in voice/personality.rb
-- [ ] G06 Inverted pyramid: MASTER's scan reports lead with outcome, then evidence, then detail
+- [x] G06 Inverted pyramid: MASTER's scan reports lead with outcome, then evidence, then detail
 - [x] G07 Boot message: verify 5-line dmesg style; never collapse to 1 line, never expand beyond 5
-- [ ] G08 Silence on success: verify routine completions emit one line max
-- [ ] G09 Diagnostic output: multi-line structured output is intentional — verify personality.rb preserve: section enforced
-- [ ] G10 require_evidence: modification claims must show diff, completion claims must show command output
+- [x] G08 Silence on success: verify routine completions emit one line max
+- [x] G09 Diagnostic output: multi-line structured output is intentional — verify personality.rb preserve: section enforced
+- [x] G10 require_evidence: modification claims must show diff, completion claims must show command output
 
 ## H. Testing coverage
 
@@ -159,8 +159,8 @@ RuleCoverageRule: every Rule subclass needs a test file.
 - [x] H12 Test for AstFixer: collapse blank lines transform (C01)
 - [x] H13 Test for AstFixer: trailing whitespace strip (C02)
 - [x] H14 Test for AstFixer: .freeze append on mutable constant (C03)
-- [ ] H15 Self-scan test: MASTER scans its own lib/, expects zero violations
-- [ ] H16 Idempotency test: scan + fix + scan produces same result as scan + fix + fix + scan
+- [x] H15 Self-scan test: MASTER scans its own lib/, expects zero violations
+- [x] H16 Idempotency test: scan + fix + scan produces same result as scan + fix + fix + scan
 - [x] H17 Test for evidence_scoring gate (scan_clean:25 weight, pass_threshold: 80)
 - [x] H18 Test for failure_taxonomy: transient errors retry ≤3, permanent errors fail immediately
 - [x] H19 Test for SINGULARITY: rules.yml has no duplicate IDs
@@ -170,7 +170,7 @@ RuleCoverageRule: every Rule subclass needs a test file.
 
 - [x] I01 rules.yml SINGULARITY boot assertion: verify all 173 IDs unique on load (no duplicates)
 - [x] I02 rules.yml schema validator: every rule has required fields (id, name, tier, severity, autofix)
-- [ ] I03 rules.yml: fix any NO_COLUMN_ALIGN violations (multi-space alignment in YAML values)
+- [x] I03 rules.yml: fix any NO_COLUMN_ALIGN violations (multi-space alignment in YAML values)
 - [x] I04 data/soul.yml ↔ rules.yml cross-reference: ensure golden_rule in soul.yml matches rules.yml kernel tier
 - [x] I05 data/patterns.yml: audit for rules referenced here that are not in rules.yml
 - [x] I06 data/standing_orders.yml: verify voice directives match rules.yml voice section
@@ -179,46 +179,46 @@ RuleCoverageRule: every Rule subclass needs a test file.
 
 ## J. Pipeline and convergence integrity
 
-- [ ] J01 FixLoop: add cycle detector — if same violation appears N≥3 times across passes, stop and escalate
+- [x] J01 FixLoop: add cycle detector — if same violation appears N≥3 times across passes, stop and escalate
 - [x] J02 Pipeline: wire evidence_scoring — scan_clean(25) + test_pass(35) ≥80 gates the :deploy stage
-- [ ] J03 Pipeline: tier1_critical rules → halt with rollback on violation, not just :err status
-- [ ] J04 RuleLoop: genetic_fix must reject candidates that increase violation count vs original (not just differ)
-- [ ] J05 Loop::Governor: verify pressure detection accounts for OpenBSD vmm memory (no swap, 1GB RAM)
-- [ ] J06 scan_since: extend to include MASTER lib/ alongside user code (self-scan on git diff)
-- [ ] J07 Heartbeat: emit `heartbeat:scan_clean` or `heartbeat:violations N` with self-scan result
-- [ ] J08 Convergence loop: add max_iterations cap (UNBOUNDED_RETRY applies to MASTER itself)
+- [x] J03 Pipeline: tier1_critical rules → halt with rollback on violation, not just :err status
+- [x] J04 RuleLoop: genetic_fix must reject candidates that increase violation count vs original (not just differ)
+- [x] J05 Loop::Governor: verify pressure detection accounts for OpenBSD vmm memory (no swap, 1GB RAM)
+- [x] J06 scan_since: extend to include MASTER lib/ alongside user code (self-scan on git diff)
+- [x] J07 Heartbeat: emit `heartbeat:scan_clean` or `heartbeat:violations N` with self-scan result
+- [x] J08 Convergence loop: add max_iterations cap (UNBOUNDED_RETRY applies to MASTER itself)
 
 ## K. Missing behaviors
 
-- [ ] K01 COST_TRANSPARENCY: after each LLM call, MASTER emits `[$N.NNNN, NNN tokens]` on event bus
-- [ ] K02 CACHE_LLM: hash prompt + model → cache response with 5-min TTL; serve from cache on repeat calls
-- [ ] K03 ERROR_CONTEXT: every Result.err includes {file:, method:, attempted:} context hash
-- [ ] K04 USER_CONTROL: add --dry-run flag to scan/sweep — show findings without applying fixes
-- [ ] K05 SYSTEM_STATUS: scan progress stream shows `scan: path/file.rb N violations` per file (already in stream_progress — verify wired)
-- [ ] K06 IDEMPOTENT: verify scan+fix is idempotent — apply twice, second pass produces no changes
-- [ ] K07 CACHE_LLM: LLM response cache should survive process restart (persist to .master/llm_cache.yml)
-- [ ] K08 PROGRESSIVE_DISCLOSURE: /help shows one-liner per command; detail on /help <command>
-- [ ] K09 FEEDBACK_LOOPS: scan_dir streams per-file progress; verify FixLoop does same
-- [ ] K10 DESIGN_BY_CONTRACT: document preconditions on Scanner#scan (path must exist, depth must be :deep)
+- [x] K01 COST_TRANSPARENCY: after each LLM call, MASTER emits `[$N.NNNN, NNN tokens]` on event bus
+- [x] K02 CACHE_LLM: hash prompt + model → cache response with 5-min TTL; serve from cache on repeat calls
+- [x] K03 ERROR_CONTEXT: every Result.err includes {file:, method:, attempted:} context hash
+- [x] K04 USER_CONTROL: add --dry-run flag to scan/sweep — show findings without applying fixes
+- [x] K05 SYSTEM_STATUS: scan progress stream shows `scan: path/file.rb N violations` per file (already in stream_progress — verify wired)
+- [x] K06 IDEMPOTENT: verify scan+fix is idempotent — apply twice, second pass produces no changes
+- [x] K07 CACHE_LLM: LLM response cache should survive process restart (persist to .master/llm_cache.yml)
+- [x] K08 PROGRESSIVE_DISCLOSURE: /help shows one-liner per command; detail on /help <command>
+- [x] K09 FEEDBACK_LOOPS: scan_dir streams per-file progress; verify FixLoop does same
+- [x] K10 DESIGN_BY_CONTRACT: document preconditions on Scanner#scan (path must exist, depth must be :deep)
 
 ## L. Web surface (MASTER/web/)
 
-- [ ] L01 All .erb views: scan with HTML_LANG, META_CHARSET, IMG_ALT, BUTTON_OVER_ANCHOR — fix violations
-- [ ] L02 All .css/.scss: scan with MOBILE_FIRST, NO_IMPORTANT, NO_IMPORT_SCSS — fix violations
-- [ ] L03 All .css: scan with MAGIC_COLOR — extract raw hex values to CSS custom properties
-- [ ] L04 All .js/.ts: scan with NO_VAR, FOR_OF, TEMPLATE_LITERALS, CONST_BY_DEFAULT — fix violations
+- [x] L01 All .erb views: scan with HTML_LANG, META_CHARSET, IMG_ALT, BUTTON_OVER_ANCHOR — fix violations
+- [x] L02 All .css/.scss: scan with MOBILE_FIRST, NO_IMPORTANT, NO_IMPORT_SCSS — fix violations
+- [x] L03 All .css: scan with MAGIC_COLOR — extract raw hex values to CSS custom properties
+- [x] L04 All .js/.ts: scan with NO_VAR, FOR_OF, TEMPLATE_LITERALS, CONST_BY_DEFAULT — fix violations
 - [ ] L05 All .js: scan with JS_MODULE_SIZE — split files >300 lines
 - [x] L06 web/app/controllers: scan with RATE_LIMITING_MISSING — verify all auth routes throttled
 - [x] L07 web/app/models: scan with STRICT_LOADING_MISSING — add strict_loading_by_default true
-- [ ] L08 web/db/migrate/: scan with MIGRATION_ADD_REFERENCE_NO_FK — verify all references have foreign_key: true
+- [x] L08 web/db/migrate/: scan with MIGRATION_ADD_REFERENCE_NO_FK — verify all references have foreign_key: true
 
 ## N. Documentation alignment
 
 - [ ] N01 MASTER/QUICKSTART.md: verify every command in quickstart runs on OpenBSD 7.9 with ruby34
-- [ ] N02 AGENTS.md: update to reflect current 7-module structure (now/loop/judge/voice/ground/reach/trace)
-- [ ] N03 README.md: verify tagline matches project_master_mission.md ("Constitutional AI for any text artifact")
-- [ ] N04 rules.yml comments: remove any remaining TODO/FIXME markers (self-adherence to TODO_FIXME rule)
-- [ ] N05 All deferred comments in lib/: rewrite to S&W active voice per STRUNK rule
+- [x] N02 AGENTS.md: update to reflect current 7-module structure (now/loop/judge/voice/ground/reach/trace)
+- [x] N03 README.md: verify tagline matches project_master_mission.md ("Constitutional AI for any text artifact")
+- [x] N04 rules.yml comments: remove any remaining TODO/FIXME markers (self-adherence to TODO_FIXME rule)
+- [x] N05 All deferred comments in lib/: rewrite to S&W active voice per STRUNK rule
 
 ---
 
@@ -229,104 +229,104 @@ Violations and opportunities found by reading the actual source. Each item is a 
 ### O1. Single Responsibility (SRP / SOLID)
 
 - [ ] O101 cli.rb (538 lines) is a god class — split into CLI::Repl, CLI::Renderer, CLI::BackgroundScan, CLI::SignalHandler
-- [ ] O102 Builder: 9 boot_* methods — each boot phase should be a dedicated Bootable class
-- [ ] O103 FixLoop: manages convergence state, commits, scan, LLM routing, circuit breakers — extract FixLoop::Committer, FixLoop::Scanner, FixLoop::LlmRouter
-- [ ] O104 CommandRegistry: dispatch logic AND output formatting in same module — extract CommandRegistry::Formatter
-- [ ] O105 bin/cli: stable_web_secret, boot_banner, boot_web_ui defined as top-level def — move each to its own class in lib/now/
-- [ ] O106 chat_controller.rb#message: 70+ lines, mixes LLM call, TTS dispatch, SSE streaming, persona routing — extract ChatService
-- [ ] O107 chat_controller.rb#uploaded_image_payload: file I/O + image resize + Rails response — three responsibilities, extract ImagePresenter
-- [ ] O108 repo_ecology.rb#analyze_file: returns 12-key Hash — introduce FileRecord = Data.define(...)
-- [ ] O109 scanner.rb#scan: read file, parse AST, apply rules, publish events all inline — extract FileProcessor
+- [x] O102 Builder: 9 boot_* methods — each boot phase should be a dedicated Bootable class
+- [x] O103 FixLoop: manages convergence state, commits, scan, LLM routing, circuit breakers — extract FixLoop::Committer, FixLoop::Scanner, FixLoop::LlmRouter
+- [x] O104 CommandRegistry: dispatch logic AND output formatting in same module — extract CommandRegistry::Formatter
+- [x] O105 bin/cli: stable_web_secret, boot_banner, boot_web_ui defined as top-level def — move each to its own class in lib/now/
+- [x] O106 chat_controller.rb#message: 70+ lines, mixes LLM call, TTS dispatch, SSE streaming, persona routing — extract ChatService
+- [x] O107 chat_controller.rb#uploaded_image_payload: file I/O + image resize + Rails response — three responsibilities, extract ImagePresenter
+- [x] O108 repo_ecology.rb#analyze_file: returns 12-key Hash — introduce FileRecord = Data.define(...)
+- [x] O109 scanner.rb#scan: read file, parse AST, apply rules, publish events all inline — extract FileProcessor
 
 ### O2. DRY
 
-- [ ] O201 dispatch_review + dispatch_critique both call deliberation.review_convergent — extract run_deliberation(target, context:)
-- [ ] O202 format_tribunal and deliberation_feedback produce council feedback in different formats — one canonical formatter
-- [ ] O203 recent_events and dispatch_tail both parse JSONL from activity.jsonl with near-identical code — extract EventLog class
-- [ ] O204 RuleLoop#build_prompt and build_diff_prompt share 80% of structure — extract shared_prompt_header(violation, src, path)
-- [ ] O205 council_fix and genetic_fix both call preamble, extract_code, handle transient retry — extract FixAttempt class
-- [ ] O206 bundle_status calls Open3.capture2e twice with same pattern — extract bundle_ok?(dir)
-- [ ] O207 dispatch_status and from_git both run git status separately — share GitOperations instance
-- [ ] O208 RuleLoop#scan_files and FixLoop#scan_violations both filter by severity — share SEVERITY_RANK threshold check
-- [ ] O209 fast_pass and llm_pass both commit_if_dirty — extract single commit_if_dirty(label) with dirty check inside
-- [ ] O210 Multiple rescue blocks with `Ground::Swallow.log(e, context: "…")` — add `safe_call(context:) { }` helper to Swallow
+- [x] O201 dispatch_review + dispatch_critique both call deliberation.review_convergent — extract run_deliberation(target, context:)
+- [x] O202 format_tribunal and deliberation_feedback produce council feedback in different formats — one canonical formatter
+- [x] O203 recent_events and dispatch_tail both parse JSONL from activity.jsonl with near-identical code — extract EventLog class
+- [x] O204 RuleLoop#build_prompt and build_diff_prompt share 80% of structure — extract shared_prompt_header(violation, src, path)
+- [x] O205 council_fix and genetic_fix both call preamble, extract_code, handle transient retry — extract FixAttempt class
+- [x] O206 bundle_status calls Open3.capture2e twice with same pattern — extract bundle_ok?(dir)
+- [x] O207 dispatch_status and from_git both run git status separately — share GitOperations instance
+- [x] O208 RuleLoop#scan_files and FixLoop#scan_violations both filter by severity — share SEVERITY_RANK threshold check
+- [x] O209 fast_pass and llm_pass both commit_if_dirty — extract single commit_if_dirty(label) with dirty check inside
+- [x] O210 Multiple rescue blocks with `Ground::Swallow.log(e, context: "…")` — add `safe_call(context:) { }` helper to Swallow
 
 ### O3. KISS
 
-- [ ] O301 dispatch_scan → collect_scan_pairs → resolve_scan_profile → load_workflow_profiles — 4-deep call chain, flatten to 2
-- [ ] O302 from_last_assistant: 7 sequential text.match? checks — replace with a lookup table of {pattern => proposal}
-- [ ] O303 FixLoop#run is 40 lines with 3 conditional branches — extract run_pass(files, pass, deadline) method
-- [ ] O304 format_fix_preview: flattens, groups, sorts, formats in one method — too many steps for one method
-- [ ] O305 repl_loop has inline focus_mode conditional — extract prompt_for_mode → focus_prompt or normal_prompt
-- [ ] O306 stream_chunk_handler returns a lambda capturing mutable state — replace with a StreamAccumulator object
-- [ ] O307 bin/cli boot_web_ui spawns processes, kills existing, handles OpenBSD separately — extract WebServer.start(config:)
-- [ ] O308 assign_container_refs!: assigns 11 @ivars from hash — replace with Container value object (Data.define)
-- [ ] O309 FixLoop#stagnant?: MD5 of raw violations array — sort before hashing so reordering is not a false change
-- [ ] O310 `scan` command parses profile keyword by string prefix match — switch to explicit keyword table
+- [x] O301 dispatch_scan → collect_scan_pairs → resolve_scan_profile → load_workflow_profiles — 4-deep call chain, flatten to 2
+- [x] O302 from_last_assistant: 7 sequential text.match? checks — replace with a lookup table of {pattern => proposal}
+- [x] O303 FixLoop#run is 40 lines with 3 conditional branches — extract run_pass(files, pass, deadline) method
+- [x] O304 format_fix_preview: flattens, groups, sorts, formats in one method — too many steps for one method
+- [x] O305 repl_loop has inline focus_mode conditional — extract prompt_for_mode → focus_prompt or normal_prompt
+- [x] O306 stream_chunk_handler returns a lambda capturing mutable state — replace with a StreamAccumulator object
+- [x] O307 bin/cli boot_web_ui spawns processes, kills existing, handles OpenBSD separately — extract WebServer.start(config:)
+- [x] O308 assign_container_refs!: assigns 11 @ivars from hash — replace with Container value object (Data.define)
+- [x] O309 FixLoop#stagnant?: MD5 of raw violations array — sort before hashing so reordering is not a false change
+- [x] O310 `scan` command parses profile keyword by string prefix match — switch to explicit keyword table
 
 ### O4. POLA (Principle of Least Astonishment)
 
-- [ ] O401 /fix loop starts background; /fix <path> runs synchronously — same command, opposite semantics — split /fix and /watch
-- [ ] O402 /model without args returns current model; /mode without args returns current mode — but named differently (model vs mode)
-- [ ] O403 /scan with no profile silently scans lib/ — user expects . (cwd), document or change default
-- [ ] O404 TTY::Reader.new(track_history: true) — history exists in session but is not saved to disk across sessions (surprising)
-- [ ] O405 from_violations weight 0.9 + @violations/50 — magic formula, document or name (high_violation_weight)
-- [ ] O406 pipe() silently ignores empty lines — at minimum log or emit empty_input event
-- [ ] O407 /save command saves session; INT trap also saves session but says "saved" without newline — inconsistent
-- [ ] O408 /axioms scans lib/; /scan with no arg also scans lib/ — two commands with the same default target, different output format
-- [ ] O409 chunk_accumulator method name doesn't reveal it returns a lambda — rename to build_stream_handler or make a class
+- [x] O401 /fix loop starts background; /fix <path> runs synchronously — same command, opposite semantics — split /fix and /watch
+- [x] O402 /model without args returns current model; /mode without args returns current mode — but named differently (model vs mode)
+- [x] O403 /scan with no profile silently scans lib/ — user expects . (cwd), document or change default
+- [x] O404 TTY::Reader.new(track_history: true) — history exists in session but is not saved to disk across sessions (surprising)
+- [x] O405 from_violations weight 0.9 + @violations/50 — magic formula, document or name (high_violation_weight)
+- [x] O406 pipe() silently ignores empty lines — at minimum log or emit empty_input event
+- [x] O407 /save command saves session; INT trap also saves session but says "saved" without newline — inconsistent
+- [x] O408 /axioms scans lib/; /scan with no arg also scans lib/ — two commands with the same default target, different output format
+- [x] O409 chunk_accumulator method name doesn't reveal it returns a lambda — rename to build_stream_handler or make a class
 
 ### O5. Rails doctrine
 
 - [x] O501 chat_controller.rb#tts: no before_action authentication — raw bytes served without web token check
 - [x] O502 /chat/tts endpoint: no rate limiting (RATE_LIMITING_MISSING) — same endpoint synthesizes unlimited audio
 - [x] O503 /chat/tts: no ETag or Cache-Control header — same voice+text re-synthesized on every request
-- [ ] O504 chat_controller.rb: uses Rails.logger; other controllers use event bus — pick one per layer
+- [x] O504 chat_controller.rb: uses Rails.logger; other controllers use event bus — pick one per layer
 - [x] O505 chat_controller.rb#message: no strong_params — params used directly without explicit permit
 - [x] O506 No ApplicationController before_action enforcing web_token on all sensitive actions
-- [ ] O507 chat_controller.rb synthesizes TTS synchronously in request — move to background job with polling
-- [ ] O508 dashboard_controller.rb: check for N+1 queries on any AR collections it loads
+- [x] O507 chat_controller.rb synthesizes TTS synchronously in request — move to background job with polling
+- [x] O508 dashboard_controller.rb: check for N+1 queries on any AR collections it loads
 - [x] O509 web/app/models/: check all models for strict_loading_by_default (STRICT_LOADING_MISSING rule)
-- [ ] O510 web/db/migrate/: verify all add_reference migrations include foreign_key: true
+- [x] O510 web/db/migrate/: verify all add_reference migrations include foreign_key: true
 
 ### O6. Clean Code
 
-- [ ] O601 dispatch_why embeds a 2-sentence LLM prompt as a string literal — extract to voice/personality template
-- [ ] O602 format_payload in work_commands: pay.map { |k, v| "#{k}=#{v.to_s.tr('"', '')[0, 30]}" } — extract to a KeyValueFormatter
-- [ ] O603 CLI @violations updated from background thread; read in main thread without synchronize — race condition, wrap in Mutex
-- [ ] O604 repl_loop: @bg_thread&.kill on exit — Thread#kill is unsafe, send a poison-pill message instead
-- [ ] O605 from_idle: `last.fetch(:ts) { last[:timestamp] }` — inconsistent key access, normalize message struct
-- [ ] O606 REPLAY_TURNS = 5 in cli.rb — magic constant, add comment or move to config
-- [ ] O607 DMESG_BUFFER = 80 in cli.rb — never changes; if it should be configurable, read from config
-- [ ] O608 `Time.now.to_i - ts.to_i` in propose.rb — numeric subtraction of time values, use Time arithmetic
-- [ ] O609 format_tribunal: rescue 0.5 at end of confidence calc — bare rescue on a single expression, extract safely
-- [ ] O610 dispatch_resync builds lines array with side-effecting operations inline — separate build and execute phases
+- [x] O601 dispatch_why embeds a 2-sentence LLM prompt as a string literal — extract to voice/personality template
+- [x] O602 format_payload in work_commands: pay.map { |k, v| "#{k}=#{v.to_s.tr('"', '')[0, 30]}" } — extract to a KeyValueFormatter
+- [x] O603 CLI @violations updated from background thread; read in main thread without synchronize — race condition, wrap in Mutex
+- [x] O604 repl_loop: @bg_thread&.kill on exit — Thread#kill is unsafe, send a poison-pill message instead
+- [x] O605 from_idle: `last.fetch(:ts) { last[:timestamp] }` — inconsistent key access, normalize message struct
+- [x] O606 REPLAY_TURNS = 5 in cli.rb — magic constant, add comment or move to config
+- [x] O607 DMESG_BUFFER = 80 in cli.rb — never changes; if it should be configurable, read from config
+- [x] O608 `Time.now.to_i - ts.to_i` in propose.rb — numeric subtraction of time values, use Time arithmetic
+- [x] O609 format_tribunal: rescue 0.5 at end of confidence calc — bare rescue on a single expression, extract safely
+- [x] O610 dispatch_resync builds lines array with side-effecting operations inline — separate build and execute phases
 
 ### O7. Refactoring (Fowler catalog)
 
-- [ ] O701 Extract class: Proposal hash in propose.rb → Proposal = Data.define(:action, :reason, :weight)
-- [ ] O702 Extract class: ScanReport from format_scan_results in work_commands.rb
-- [ ] O703 Extract class: TribunaFeedback from format_tribunal in work_commands.rb
-- [ ] O704 Replace magic number: CANDIDATE_COUNT = 3 in rule_loop.rb — read from workflow.yml convergence config
-- [ ] O705 Replace magic number: MAX_PASSES = 15, IDLE_SLEEP = 300, STARTUP_DELAY = 90 in fix_loop.rb — read from convergence config
-- [ ] O706 Inline class: DetectionPipeline adds no abstraction over scanner — inline its logic into Scanner or delete
-- [ ] O707 Replace conditional with polymorphism: `if ruby?` / `if shell?` / `if sql_in_ruby?` in AstFixer — strategy pattern
-- [ ] O708 Introduce value object: violation hash in rule_loop has file, line, rule, message, severity — formalize as Violation
-- [ ] O709 Replace loop with pipeline: fix_loop fast_pass → llm_pass → commit sequence is a pipeline, model it as Pipeline stages
-- [ ] O710 Move method: dispatch_resync in work_commands reaches into git, bundle, rcctl — move to a ResyncService
+- [x] O701 Extract class: Proposal hash in propose.rb → Proposal = Data.define(:action, :reason, :weight)
+- [x] O702 Extract class: ScanReport from format_scan_results in work_commands.rb
+- [x] O703 Extract class: TribunaFeedback from format_tribunal in work_commands.rb
+- [x] O704 Replace magic number: CANDIDATE_COUNT = 3 in rule_loop.rb — read from workflow.yml convergence config
+- [x] O705 Replace magic number: MAX_PASSES = 15, IDLE_SLEEP = 300, STARTUP_DELAY = 90 in fix_loop.rb — read from convergence config
+- [x] O706 Inline class: DetectionPipeline adds no abstraction over scanner — inline its logic into Scanner or delete
+- [x] O707 Replace conditional with polymorphism: `if ruby?` / `if shell?` / `if sql_in_ruby?` in AstFixer — strategy pattern
+- [x] O708 Introduce value object: violation hash in rule_loop has file, line, rule, message, severity — formalize as Violation
+- [x] O709 Replace loop with pipeline: fix_loop fast_pass → llm_pass → commit sequence is a pipeline, model it as Pipeline stages
+- [x] O710 Move method: dispatch_resync in work_commands reaches into git, bundle, rcctl — move to a ResyncService
 
 ### O8. Pragmatic Programmer / Polished Ruby
 
-- [ ] O801 Circuit breaker state not persisted — survives process restart but not MASTER restart; persist to .master/circuit_state.yml
-- [ ] O802 `watch_loop.rb` uses sleep polling — replace with kqueue (OpenBSD) or inotify via rb-inotify for event-driven watching
-- [ ] O803 RuleLoop#rescan_candidate: Tempfile has no extension — language detection fails; use Tempfile.new(["prefix", ".rb"])
-- [ ] O804 Open3.capture3 called with string args in several places — use array form to prevent shell injection
-- [ ] O805 `SemanticRule#load_semantic_rules` called in constructor — if rules.yml changes at runtime, cache is stale; memoize with file mtime check
-- [ ] O806 Session#token_est recalculates on every REPL prompt render — cache and invalidate on message append
+- [x] O801 Circuit breaker state not persisted — survives process restart but not MASTER restart; persist to .master/circuit_state.yml
+- [x] O802 `watch_loop.rb` uses sleep polling — replace with kqueue (OpenBSD) or inotify via rb-inotify for event-driven watching
+- [x] O803 RuleLoop#rescan_candidate: Tempfile has no extension — language detection fails; use Tempfile.new(["prefix", ".rb"])
+- [x] O804 Open3.capture3 called with string args in several places — use array form to prevent shell injection
+- [x] O805 `SemanticRule#load_semantic_rules` called in constructor — if rules.yml changes at runtime, cache is stale; memoize with file mtime check
+- [x] O806 Session#token_est recalculates on every REPL prompt render — cache and invalidate on message append
 - [ ] O807 Multiple lambdas in command_registry capture deps via closure — convert to method objects or Command pattern for testability
-- [ ] O808 `dispatch_scan` builds scan profile from string prefix match — use a Trie or hash for O(1) lookup
-- [ ] O809 FixLoop#collect_files uses Dir.glob without .gitignore awareness — use git ls-files for tracked files only
-- [ ] O810 FixLoop#run_forever: bare `loop do` — add UNBOUNDED_RETRY-equivalent: max_cycles safety counter
+- [x] O808 `dispatch_scan` builds scan profile from string prefix match — use a Trie or hash for O(1) lookup
+- [x] O809 FixLoop#collect_files uses Dir.glob without .gitignore awareness — use git ls-files for tracked files only
+- [x] O810 FixLoop#run_forever: bare `loop do` — add UNBOUNDED_RETRY-equivalent: max_cycles safety counter
 
 ---
 
@@ -336,64 +336,64 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 
 ### P1. Parallelism and throughput
 
-- [ ] P101 Scanner POOL_SIZE = min(nprocessors, 8): on OpenBSD VM with 1 vCPU this is 1 (serial) — profile and document; consider async I/O instead of threads
-- [ ] P102 LLM pass processes rules sequentially even when rules are independent — run independent RuleLoops in parallel (respect rule_deps.yml edges)
-- [ ] P103 fast_pass runs rubocop on all files as one batch — if one file errors, rubocop non-zero exit skips reporting on all others; use --format json to isolate
-- [ ] P104 SemanticRule sends one batched LLM prompt per file — good, but the prompt is rebuilt from scratch each call; memoize the rule-list template portion
-- [ ] P105 ParallelGroup spawns all threads at once with no backpressure — cap at POOL_SIZE concurrently running threads
-- [ ] P106 scan_dir sorts paths before scanning — sorting is unnecessary overhead on large trees; remove or lazy-sort for display only
+- [x] P101 Scanner POOL_SIZE = min(nprocessors, 8): on OpenBSD VM with 1 vCPU this is 1 (serial) — profile and document; consider async I/O instead of threads
+- [x] P102 LLM pass processes rules sequentially even when rules are independent — run independent RuleLoops in parallel (respect rule_deps.yml edges)
+- [x] P103 fast_pass runs rubocop on all files as one batch — if one file errors, rubocop non-zero exit skips reporting on all others; use --format json to isolate
+- [x] P104 SemanticRule sends one batched LLM prompt per file — good, but the prompt is rebuilt from scratch each call; memoize the rule-list template portion
+- [x] P105 ParallelGroup spawns all threads at once with no backpressure — cap at POOL_SIZE concurrently running threads
+- [x] P106 scan_dir sorts paths before scanning — sorting is unnecessary overhead on large trees; remove or lazy-sort for display only
 
 ### P2. Caching and memoization
 
-- [ ] P201 co_change_graph in repo_ecology: reads 200 git commits on every call — persist to .master/co_change_cache.yml with mtime check on .git/HEAD
-- [ ] P202 Memory#context_summary: YAML parse + sort on every pipeline turn — memoize with @store version counter
-- [ ] P203 validate_data!: reads all data/*.yml on every boot — check mtime, skip if unchanged since last boot
-- [ ] P204 LLM prompt caching (CACHE_LLM): hash (prompt + model) → cache in .master/llm_cache.yml with 5-min TTL
-- [ ] P205 build_preamble in fix_loop: reads soul.yml on every FixLoop.new — class-level memoize with mtime guard
-- [ ] P206 Session#token_est: recomputes by iterating all messages on every REPL render — increment counter on message append
-- [ ] P207 `load_workflow_profiles` called per scan command invocation — memoize with file mtime guard
+- [x] P201 co_change_graph in repo_ecology: reads 200 git commits on every call — persist to .master/co_change_cache.yml with mtime check on .git/HEAD
+- [x] P202 Memory#context_summary: YAML parse + sort on every pipeline turn — memoize with @store version counter
+- [x] P203 validate_data!: reads all data/*.yml on every boot — check mtime, skip if unchanged since last boot
+- [x] P204 LLM prompt caching (CACHE_LLM): hash (prompt + model) → cache in .master/llm_cache.yml with 5-min TTL
+- [x] P205 build_preamble in fix_loop: reads soul.yml on every FixLoop.new — class-level memoize with mtime guard
+- [x] P206 Session#token_est: recomputes by iterating all messages on every REPL render — increment counter on message append
+- [x] P207 `load_workflow_profiles` called per scan command invocation — memoize with file mtime guard
 
 ### P3. Context window and payload management
 
-- [ ] P301 PipelineContext `output` key holds full LLM responses (100K+ chars possible) — truncate to last 8K on merge
-- [ ] P302 PipelineContext `_timings` hash accumulates every stage on every pass — cap at last 20 entries
-- [ ] P303 Session messages carry full content — implement sliding window: keep last N full, summarize older (already has token_est, wire the pruner)
-- [ ] P304 Snapshot.md written on every boot including 100+ files — write only if any source file newer than snapshot
-- [ ] P305 snapshot_artifact in work_commands reads up to 24K bytes per file, 40 files = 960K in one context — cap per-file and total differently
+- [x] P301 PipelineContext `output` key holds full LLM responses (100K+ chars possible) — truncate to last 8K on merge
+- [x] P302 PipelineContext `_timings` hash accumulates every stage on every pass — cap at last 20 entries
+- [x] P303 Session messages carry full content — implement sliding window: keep last N full, summarize older (already has token_est, wire the pruner)
+- [x] P304 Snapshot.md written on every boot including 100+ files — write only if any source file newer than snapshot
+- [x] P305 snapshot_artifact in work_commands reads up to 24K bytes per file, 40 files = 960K in one context — cap per-file and total differently
 
 ### P4. Correctness and race conditions
 
-- [ ] P401 CLI @violations written by bg_thread, read by main thread with no synchronize — add Mutex around @violations access
-- [ ] P402 FixLoop#stagnant? hashes violations array without sorting — reorder produces false "not stagnant" — sort by [rule, file, line] before hashing
-- [ ] P403 maybe_rollback: calls dirty? (git status) even when @root is nil or .git doesn't exist — add guard before the git call
-- [ ] P404 pipeline.rb#call: wraps initial in PipelineContext.wrap but if initial is already wrapped, wraps again — add type check
-- [ ] P405 RuleLoop#best_candidate: rescan_candidate writes to Tempfile without extension — language detection in scan() returns nil, no rule applies — add extension suffix
+- [x] P401 CLI @violations written by bg_thread, read by main thread with no synchronize — add Mutex around @violations access
+- [x] P402 FixLoop#stagnant? hashes violations array without sorting — reorder produces false "not stagnant" — sort by [rule, file, line] before hashing
+- [x] P403 maybe_rollback: calls dirty? (git status) even when @root is nil or .git doesn't exist — add guard before the git call
+- [x] P404 pipeline.rb#call: wraps initial in PipelineContext.wrap but if initial is already wrapped, wraps again — add type check
+- [x] P405 RuleLoop#best_candidate: rescan_candidate writes to Tempfile without extension — language detection in scan() returns nil, no rule applies — add extension suffix
 
 ### P5. Observability
 
-- [ ] P501 Heartbeat publishes alive/dead but no scan metrics — add violations count and last_fixed timestamp
-- [ ] P502 fix_loop:pass_start event has no file_count — add so operators can track scope
-- [ ] P503 LLM call cost not published to event bus — add llm:call_complete event with tokens_in, tokens_out, cost_usd
-- [ ] P504 scan:complete event has path and count but no rule breakdown — add top 3 rules to payload
-- [ ] P505 No event when AstFixer applies a transform — add ast_fixer:transform event with path and transforms list
-- [ ] P506 Pipeline stage timings stored in _timings but never published — emit pipeline:complete with full stage timing map
+- [x] P501 Heartbeat publishes alive/dead but no scan metrics — add violations count and last_fixed timestamp
+- [x] P502 fix_loop:pass_start event has no file_count — add so operators can track scope
+- [x] P503 LLM call cost not published to event bus — add llm:call_complete event with tokens_in, tokens_out, cost_usd
+- [x] P504 scan:complete event has path and count but no rule breakdown — add top 3 rules to payload
+- [x] P505 No event when AstFixer applies a transform — add ast_fixer:transform event with path and transforms list
+- [x] P506 Pipeline stage timings stored in _timings but never published — emit pipeline:complete with full stage timing map
 
 ### P6. Reliability and error handling
 
-- [ ] P601 FixLoop#run_forever: bare rescue StandardError publishes to bus but then exits the thread silently — restart the inner loop after a cooldown
-- [ ] P602 RuleLoop council_fix: retries MAX_FIX_RETRIES times with exponential sleep — but sleeps block the thread, preventing heartbeat — use non-blocking approach
-- [ ] P603 watch_loop: sleep polling will miss rapid file changes (two changes in one sleep window = one event) — use file mtime map with sub-second resolution
-- [ ] P604 fix_loop collect_files: Dir.glob includes non-text binaries if extension matches — add File.binary? guard
-- [ ] P605 Circuit breaker state not shared across RuleLoop instances in same pass — each RuleLoop opens its own breaker; share via FixLoop
-- [ ] P606 Convergence CLEAN_RUNS = 2 required for done — if file changes between scans (editor autosave), loop never converges — add filesystem quiesce check
+- [x] P601 FixLoop#run_forever: bare rescue StandardError publishes to bus but then exits the thread silently — restart the inner loop after a cooldown
+- [x] P602 RuleLoop council_fix: retries MAX_FIX_RETRIES times with exponential sleep — but sleeps block the thread, preventing heartbeat — use non-blocking approach
+- [x] P603 watch_loop: sleep polling will miss rapid file changes (two changes in one sleep window = one event) — use file mtime map with sub-second resolution
+- [x] P604 fix_loop collect_files: Dir.glob includes non-text binaries if extension matches — add File.binary? guard
+- [x] P605 Circuit breaker state not shared across RuleLoop instances in same pass — each RuleLoop opens its own breaker; share via FixLoop
+- [x] P606 Convergence CLEAN_RUNS = 2 required for done — if file changes between scans (editor autosave), loop never converges — add filesystem quiesce check
 
 ### P7. Stage ordering and dependency
 
-- [ ] P701 rule_deps.yml exists but fix_loop ordered_rules doesn't use it — sort rules by topological order of dep graph
-- [ ] P702 AstFixer runs before rubocop in fast_pass — but rubocop may undo some AstFixer changes — run AstFixer after rubocop
-- [ ] P703 SemanticRule runs on every file even when lexical rules already caught the violation — skip semantic if file has unresolved lexical errors first
+- [x] P701 rule_deps.yml exists but fix_loop ordered_rules doesn't use it — sort rules by topological order of dep graph
+- [x] P702 AstFixer runs before rubocop in fast_pass — but rubocop may undo some AstFixer changes — run AstFixer after rubocop
+- [x] P703 SemanticRule runs on every file even when lexical rules already caught the violation — skip semantic if file has unresolved lexical errors first
 - [x] P704 Evidence scoring (scan_clean: 25 pts, pass_threshold: 80) from rules.yml — wire into Pipeline as a gate before :deploy stage
-- [ ] P705 tier1_critical rules (PRESERVE_FIRST, DECOUPLE, etc.) should halt pipeline, not just emit :err — wire principle_priorities tier1 to Pipeline halt
+- [x] P705 tier1_critical rules (PRESERVE_FIRST, DECOUPLE, etc.) should halt pipeline, not just emit :err — wire principle_priorities tier1 to Pipeline halt
 
 ---
 
@@ -401,58 +401,58 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 
 ### Q1. Input experience
 
-- [ ] Q101 Command history not saved across sessions — persist TTY::Reader history to .master/cli_history (like shell .zsh_history)
-- [ ] Q102 No tab completion for /commands — add TTY::Reader completion proc listing SLASH_COMMANDS
-- [ ] Q103 No tab completion for filenames after /scan, /fix, /critique
-- [ ] Q104 No CTRL+R reverse history search — implement via TTY::Reader key binding
-- [ ] Q105 ARGV passthrough: ARGV.join(" ") treats --flags as literal text — parse ARGV properly with OptionParser
-- [ ] Q106 Multi-line input: read_multiline has no line count guard — large paste exhausts memory; cap at 500 lines
-- [ ] Q107 Paste detection: rapid input that looks like a paste should not trigger thinking indicator mid-paste
+- [x] Q101 Command history not saved across sessions — persist TTY::Reader history to .master/cli_history (like shell .zsh_history)
+- [x] Q102 No tab completion for /commands — add TTY::Reader completion proc listing SLASH_COMMANDS
+- [x] Q103 No tab completion for filenames after /scan, /fix, /critique
+- [x] Q104 No CTRL+R reverse history search — implement via TTY::Reader key binding
+- [x] Q105 ARGV passthrough: ARGV.join(" ") treats --flags as literal text — parse ARGV properly with OptionParser
+- [x] Q106 Multi-line input: read_multiline has no line count guard — large paste exhausts memory; cap at 500 lines
+- [x] Q107 Paste detection: rapid input that looks like a paste should not trigger thinking indicator mid-paste
 
 ### Q2. Output and display
 
-- [ ] Q201 /help shows flat list with no descriptions — each command needs a one-line description and example
-- [ ] Q202 /help <command> should show detailed usage with examples (progressive disclosure, PROGRESSIVE_DISCLOSURE)
-- [ ] Q203 Violation count in prompt is plain number — colorize: green=0, yellow=1-9, red=10+
-- [ ] Q204 Status row rendered on every prompt — only render when something changed (violations, model, cost)
-- [ ] Q205 /scan output dumps all violations without paging — pipe to TTY::Pager or show top N with "N more..."
-- [ ] Q206 /model list doesn't mark the current model — add "→" marker next to active model
-- [ ] Q207 /dmesg hardcoded to 80 lines — accept /dmesg N argument
-- [ ] Q208 suggested_next_prompt shows one inline suggestion — show top 3 in TTY::Prompt select menu (press TAB to cycle)
-- [ ] Q209 Thinking indicator is a static spinner — show elapsed seconds ("thinking 4s")
-- [ ] Q210 Long responses not pageable — pipe to TTY::Pager when output exceeds terminal height
-- [ ] Q211 Cost display shows raw float ("$0.0042") — show as "$0.00" for sub-cent, "$0.01" for larger
-- [ ] Q212 No per-turn diff display after edits — show "N files changed" summary after each pipeline run
-- [ ] Q213 /history truncates content to 120 chars but rule violations in history are illegible — show structured
-- [ ] Q214 CTRL+C "saved" message lacks newline before "saved" — appears inline with partial input
+- [x] Q201 /help shows flat list with no descriptions — each command needs a one-line description and example
+- [x] Q202 /help <command> should show detailed usage with examples (progressive disclosure, PROGRESSIVE_DISCLOSURE)
+- [x] Q203 Violation count in prompt is plain number — colorize: green=0, yellow=1-9, red=10+
+- [x] Q204 Status row rendered on every prompt — only render when something changed (violations, model, cost)
+- [x] Q205 /scan output dumps all violations without paging — pipe to TTY::Pager or show top N with "N more..."
+- [x] Q206 /model list doesn't mark the current model — add "→" marker next to active model
+- [x] Q207 /dmesg hardcoded to 80 lines — accept /dmesg N argument
+- [x] Q208 suggested_next_prompt shows one inline suggestion — show top 3 in TTY::Prompt select menu (press TAB to cycle)
+- [x] Q209 Thinking indicator is a static spinner — show elapsed seconds ("thinking 4s")
+- [x] Q210 Long responses not pageable — pipe to TTY::Pager when output exceeds terminal height
+- [x] Q211 Cost display shows raw float ("$0.0042") — show as "$0.00" for sub-cent, "$0.01" for larger
+- [x] Q212 No per-turn diff display after edits — show "N files changed" summary after each pipeline run
+- [x] Q213 /history truncates content to 120 chars but rule violations in history are illegible — show structured
+- [x] Q214 CTRL+C "saved" message lacks newline before "saved" — appears inline with partial input
 
 ### Q3. Commands and discoverability
 
-- [ ] Q301 /scan, /fix, /review are separate but often used in sequence — add /triad <path> that chains all three
-- [ ] Q302 /watch command not accessible from CLI — add /watch [on|off] to toggle file watcher at runtime
-- [ ] Q303 /grep <pattern> missing — search session history for a pattern
-- [ ] Q304 /audit missing — shows every file MASTER touched this session with before/after line counts
-- [ ] Q305 /cost missing as standalone — currently buried in status row; make /cost show a breakdown by turn
-- [ ] Q306 /dry-run missing — run /fix without applying changes, show what would change
-- [ ] Q307 /rollback missing from /help — it exists as pipeline rollback but not user-accessible
-- [ ] Q308 /self missing — trigger self-scan of lib/ and report result (self_test wiring)
-- [ ] Q309 /propose missing from /help — show proposal engine output on demand
-- [ ] Q310 /rules list — show all registered Rule subclasses with their IDs and severity
+- [x] Q301 /scan, /fix, /review are separate but often used in sequence — add /triad <path> that chains all three
+- [x] Q302 /watch command not accessible from CLI — add /watch [on|off] to toggle file watcher at runtime
+- [x] Q303 /grep <pattern> missing — search session history for a pattern
+- [x] Q304 /audit missing — shows every file MASTER touched this session with before/after line counts
+- [x] Q305 /cost missing as standalone — currently buried in status row; make /cost show a breakdown by turn
+- [x] Q306 /dry-run missing — run /fix without applying changes, show what would change
+- [x] Q307 /rollback missing from /help — it exists as pipeline rollback but not user-accessible
+- [x] Q308 /self missing — trigger self-scan of lib/ and report result (self_test wiring)
+- [x] Q309 /propose missing from /help — show proposal engine output on demand
+- [x] Q310 /rules list — show all registered Rule subclasses with their IDs and severity
 
 ### Q4. Web UI — face.js (particle 3D face)
 
 - [ ] Q401 face.js is 1,286 lines — split into face/particles.js, face/audio.js, face/expressions.js, face/tts.js, face/main.js
 - [x] Q402 No requestAnimationFrame pause on document.hidden — wastes CPU/battery on background tabs; add visibilitychange listener
 - [x] Q403 Audio analyser samples every frame regardless of playback state — skip analysis when !tts.playing
-- [ ] Q404 analyserBuf allocated once but analyserFreqBuf re-checked — unify allocation in initAudio()
-- [ ] Q405 Canvas not responsive to container resize — add ResizeObserver to reset canvas dimensions
+- [x] Q404 analyserBuf allocated once but analyserFreqBuf re-checked — unify allocation in initAudio()
+- [x] Q405 Canvas not responsive to container resize — add ResizeObserver to reset canvas dimensions
 - [x] Q406 No loading state: blank canvas while face.js initializes — add CSS skeleton or fade-in on first frame
-- [ ] Q407 Particle count hardcoded — scale N_PARTICLES based on device pixel ratio and screen area
-- [ ] Q408 THREE.js conditionally imported but never used — remove dead import or commit to 3D
+- [x] Q407 Particle count hardcoded — scale N_PARTICLES based on device pixel ratio and screen area
+- [x] Q408 THREE.js conditionally imported but never used — remove dead import or commit to 3D
 - [x] Q409 prefers-reduced-motion: JS checks matchMedia but CSS message animations don't check it — add @media (prefers-reduced-motion: reduce) to face.css
-- [ ] Q410 Face expression transitions are hard cuts — add linear interpolation (lerp) between expression parameters
-- [ ] Q411 Boot greeting Osman → Pernille plays serially with no overlap — cross-fade or chain via onended
-- [ ] Q412 Speaker identity not visually distinct in particle color/motion between Osman and Pernille — wire persona color palette
+- [x] Q410 Face expression transitions are hard cuts — add linear interpolation (lerp) between expression parameters
+- [x] Q411 Boot greeting Osman → Pernille plays serially with no overlap — cross-fade or chain via onended
+- [x] Q412 Speaker identity not visually distinct in particle color/motion between Osman and Pernille — wire persona color palette
 - [x] Q413 No visual "fetching TTS" indicator between sentence end and audio start — add a brief pulse animation
 - [x] Q414 Canvas aria-hidden=true but no aria-live region announces TTS text to screen readers
 
@@ -467,7 +467,7 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 - [x] Q507 Browser speechSynthesis fallback uses default voice — map fallback to closest available voice name
 - [x] Q508 No audio normalization: whisper and shout differ by 30dB — add gainNode with compressor before analyser
 - [x] Q509 ttsSkip() on pointer down — if user taps during loading, skip fires before audio starts — add guard for loading state
-- [ ] Q510 No offline mode — when synthesis API down, fallback to cached audio or browser TTS silently
+- [x] Q510 No offline mode — when synthesis API down, fallback to cached audio or browser TTS silently
 
 ---
 
@@ -512,16 +512,16 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### R4. Proposal output quality
 
-- [ ] R401 Proposals should include estimated tokens/cost for implementing the suggestion
-- [ ] R402 Each proposal should include a confidence score (0.0-1.0) based on evidence strength
-- [ ] R403 Proposals should be ranked by (confidence × impact) not just weight
-- [ ] R404 Proposals older than 24h without action should auto-expire and be replaced
-- [ ] R405 Proposals should include a "reject" action that logs the rejection to learnings for future tuning
-- [ ] R406 /propose command should show the proposal reasoning chain, not just the action string
-- [ ] R407 SoulProposals.md entries should include a one-line diff of what changed since the proposal was generated
-- [ ] R408 Proposal engine should self-evaluate: track which proposals were acted on vs ignored; tune weights accordingly
-- [ ] R409 Proactive proposals should never interrupt a user turn — queue for display at next REPL prompt
-- [ ] R410 Add proposal type: "opportunity" (additive) vs "violation" (corrective) — show separately in UI
+- [x] R401 Proposals should include estimated tokens/cost for implementing the suggestion
+- [x] R402 Each proposal should include a confidence score (0.0-1.0) based on evidence strength
+- [x] R403 Proposals should be ranked by (confidence × impact) not just weight
+- [x] R404 Proposals older than 24h without action should auto-expire and be replaced
+- [x] R405 Proposals should include a "reject" action that logs the rejection to learnings for future tuning
+- [x] R406 /propose command should show the proposal reasoning chain, not just the action string
+- [x] R407 SoulProposals.md entries should include a one-line diff of what changed since the proposal was generated
+- [x] R408 Proposal engine should self-evaluate: track which proposals were acted on vs ignored; tune weights accordingly
+- [x] R409 Proactive proposals should never interrupt a user turn — queue for display at next REPL prompt
+- [x] R410 Add proposal type: "opportunity" (additive) vs "violation" (corrective) — show separately in UI
 
 ## S — Git Archaeology: Lost Concepts from master.yml / master.json Predecessors
 
@@ -544,31 +544,31 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### S3: 7-Phase Workflow with Gates (v49.25 — fully specified, never enforced)
 
-- [ ] S301 Implement /phase command: show current phase (discover/analyze/ideate/design/implement/validate/deliver), gates that must pass, what's blocking
-- [ ] S302 discover phase gates: no_vague_words (detect "it", "things", "stuff" in problem statement), audience_identified, success_measurable
-- [ ] S303 analyze phase gates: components_distinct (no overlapping responsibilities), dependencies_acyclic (detect circular deps)
-- [ ] S304 ideate phase gate: count_gte_15 (at least 15 alternatives generated), trade_offs_documented
-- [ ] S305 design phase gates: interfaces_explicit (all public methods documented), errors_documented
-- [ ] S306 implement phase gates: tests_pass, zero_violations (council reports clean)
-- [ ] S307 validate phase gates: zero_test_failures, edge_cases_covered (nil/empty/max/unicode checked)
-- [ ] S308 deliver phase gates: deployed (rcctl status master = active), monitoring_configured (uptime check present)
-- [ ] S309 Phase transitions are gated — /phase next refuses if any gate is red; lists exactly what must be fixed
+- [x] S301 Implement /phase command: show current phase (discover/analyze/ideate/design/implement/validate/deliver), gates that must pass, what's blocking
+- [x] S302 discover phase gates: no_vague_words (detect "it", "things", "stuff" in problem statement), audience_identified, success_measurable
+- [x] S303 analyze phase gates: components_distinct (no overlapping responsibilities), dependencies_acyclic (detect circular deps)
+- [x] S304 ideate phase gate: count_gte_15 (at least 15 alternatives generated), trade_offs_documented
+- [x] S305 design phase gates: interfaces_explicit (all public methods documented), errors_documented
+- [x] S306 implement phase gates: tests_pass, zero_violations (council reports clean)
+- [x] S307 validate phase gates: zero_test_failures, edge_cases_covered (nil/empty/max/unicode checked)
+- [x] S308 deliver phase gates: deployed (rcctl status master = active), monitoring_configured (uptime check present)
+- [x] S309 Phase transitions are gated — /phase next refuses if any gate is red; lists exactly what must be fixed
 
 ### S4: Profiles / Principle Groups (v49.25 — specified, not implemented)
 
-- [ ] S401 Implement scan profiles: quick (core axioms only), full (all rules), axioms_only, solid_focus (SOLID + axioms), critical (veto-severity only)
-- [ ] S402 /scan --profile quick uses group:quick rule subset [clarity, KISS, SRP, names, small_functions] — fast feedback loop
-- [ ] S403 principle_groups map: group:axioms, group:solid, group:coding, group:clean_code, group:ui, group:llm, group:operations, group:design, group:architecture
-- [ ] S404 /scan --profile critical only surfaces :error + :veto severity findings — zero noise for urgent triage
-- [ ] S405 Default profile in rules.yml / soul.yml selectable at boot time, overridable per scan invocation
+- [x] S401 Implement scan profiles: quick (core axioms only), full (all rules), axioms_only, solid_focus (SOLID + axioms), critical (veto-severity only)
+- [x] S402 /scan --profile quick uses group:quick rule subset [clarity, KISS, SRP, names, small_functions] — fast feedback loop
+- [x] S403 principle_groups map: group:axioms, group:solid, group:coding, group:clean_code, group:ui, group:llm, group:operations, group:design, group:architecture
+- [x] S404 /scan --profile critical only surfaces :error + :veto severity findings — zero noise for urgent triage
+- [x] S405 Default profile in rules.yml / soul.yml selectable at boot time, overridable per scan invocation
 
 ### S5: Conflict Resolution Rules (v49.75 — specified, not wired to rule engine)
 
-- [ ] S501 Implement conflict resolver: when DRY fix would conflict with WET/AHA principle, apply "fewer than 3 duplications → favor WET" resolution automatically
-- [ ] S502 Conflict rule: "clarity conflicts with simplicity → favor clarity" — when both fire, suppress simplicity finding
-- [ ] S503 Conflict rule: "fix introduces higher-priority violation → reject fix" — FixLoop must recheck severity after every patch application
-- [ ] S504 Log all conflicts to runtime/conflict_log.jsonl: {rule_a, rule_b, resolution, file, line, timestamp}
-- [ ] S505 Conflict resolution strategy in soul.yml: highest_priority_wins, prompt_user: false — make this configurable
+- [x] S501 Implement conflict resolver: when DRY fix would conflict with WET/AHA principle, apply "fewer than 3 duplications → favor WET" resolution automatically
+- [x] S502 Conflict rule: "clarity conflicts with simplicity → favor clarity" — when both fire, suppress simplicity finding
+- [x] S503 Conflict rule: "fix introduces higher-priority violation → reject fix" — FixLoop must recheck severity after every patch application
+- [x] S504 Log all conflicts to runtime/conflict_log.jsonl: {rule_a, rule_b, resolution, file, line, timestamp}
+- [x] S505 Conflict resolution strategy in soul.yml: highest_priority_wins, prompt_user: false — make this configurable
 
 ### S6: Hooks System (v49.25 — specified, never wired)
 
@@ -597,14 +597,14 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### S9: Safety System (v49.75 — specified, partially implemented)
 
-- [ ] S901 Cost protection: max_per_file: $1.00, max_per_session: $10.00, warn_at: $0.50 — enforce hard caps, refuse further LLM calls when exceeded
-- [ ] S902 Convergence guard: detect_loops (same violation toggling back) and detect_oscillation (A→B→A→B cycle) — abort fix loop with diagnostic
-- [ ] S903 Fix validation: after applying fix, re-scan; if new violations introduced exceed max_new_violations: 0, rollback the fix
-- [ ] S904 File locking: lock_timeout: 30s, stale_lock_age: 300s, lock_dir: .constitutional_locks — prevent concurrent scans on same file
-- [ ] S905 Atomic write transactions: write to temp file, rename atomically — AstFixer already does this; extend to LLM fixes
-- [ ] S906 Memory limits: max_violation_objects: 100_000 — prune oldest violations when exceeded; gc_every_n_iterations: 5
-- [ ] S907 File validation: max_size_bytes: 10MB, max_lines: 10_000, check_binary: true, allow_symlinks: false before scanning
-- [ ] S908 YAML safety: max_constitution_size: 10MB, load_timeout: 5s on soul.yml / rules.yml parse
+- [x] S901 Cost protection: max_per_file: $1.00, max_per_session: $10.00, warn_at: $0.50 — enforce hard caps, refuse further LLM calls when exceeded
+- [x] S902 Convergence guard: detect_loops (same violation toggling back) and detect_oscillation (A→B→A→B cycle) — abort fix loop with diagnostic
+- [x] S903 Fix validation: after applying fix, re-scan; if new violations introduced exceed max_new_violations: 0, rollback the fix
+- [x] S904 File locking: lock_timeout: 30s, stale_lock_age: 300s, lock_dir: .constitutional_locks — prevent concurrent scans on same file
+- [x] S905 Atomic write transactions: write to temp file, rename atomically — AstFixer already does this; extend to LLM fixes
+- [x] S906 Memory limits: max_violation_objects: 100_000 — prune oldest violations when exceeded; gc_every_n_iterations: 5
+- [x] S907 File validation: max_size_bytes: 10MB, max_lines: 10_000, check_binary: true, allow_symlinks: false before scanning
+- [x] S908 YAML safety: max_constitution_size: 10MB, load_timeout: 5s on soul.yml / rules.yml parse
 
 ### S10: Structural Analysis Questions (v49.7 — specified, never wired as checks)
 

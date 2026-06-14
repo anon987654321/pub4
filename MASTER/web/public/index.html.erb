@@ -41,6 +41,7 @@
     <button id="cancel-btn" type="button" aria-label="Cancel">×</button>
   </form>
   <script>
+    window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v1").to_json.html_safe %>;
     (function(){
       var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false;
       function go(){if(fired)return;fired=true;window._primerFired=true;p.style.transition='opacity 160ms ease';p.style.opacity='0';setTimeout(function(){if(p&&p.parentNode)p.parentNode.removeChild(p);},220);if(z)z.classList.add('live');}

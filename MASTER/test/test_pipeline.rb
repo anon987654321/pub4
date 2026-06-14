@@ -62,6 +62,46 @@ class TestPipeline < Minitest::Test
     assert_equal "ok", result.value![:output]
   end
 
+  def test_call_accepts_already_wrapped_pipeline_context
+    pipe = Master::Now::Pipeline.new([OkStage.new])
+    ctx = Master::Now::PipelineContext.build(user_message: "hi")
+
+    result = pipe.call(ctx)
+
+    assert result.ok?
+    assert_equal "ok", result.value![:output]
+  end
+
+  def test_pipeline_complete_event_publishes_timings
+    bus = FakeBus.new
+    pipe = Master::Now::Pipeline.new([OkStage.new], bus:)
+
+    result = pipe.call(Master::Result.ok(user_message: "hi"))
+
+    assert result.ok?
+    event = bus.events.find { |name, _payload| name == "pipeline:complete" }
+    assert event
+    assert_equal true, event.last[:success]
+    assert_includes event.last[:timings].keys, "OkStage"
+  end
+
+  def test_pipeline_context_caps_large_output_on_merge
+    ctx = Master::Now::PipelineContext.build(user_message: "hi")
+    merged = ctx.merge(output: "x" * 10_000)
+
+    assert_equal Master::Now::PipelineContext::MAX_OUTPUT_BYTES, merged[:output].bytesize
+  end
+
+  def test_pipeline_context_caps_timing_entries_on_merge
+    ctx = Master::Now::PipelineContext.build(user_message: "hi")
+    timings = 25.times.to_h { |i| ["stage#{i}", i] }
+    merged = ctx.merge(_timings: timings)
+
+    assert_equal Master::Now::PipelineContext::MAX_TIMINGS, merged[:_timings].size
+    refute_includes merged[:_timings].keys, "stage0"
+    assert_includes merged[:_timings].keys, "stage24"
+  end
+
   def test_first_error_short_circuits
     pipe = Master::Now::Pipeline.new([OkStage.new, ErrStage.new, OkStage.new])
     result = pipe.call(Master::Result.ok(user_message: "hi"))
@@ -115,6 +155,27 @@ class TestPipeline < Minitest::Test
       assert_equal :policy, result.category
       assert_match(/tier1 critical/, result.message)
       assert_equal "tier1_critical", bus.events.find { |event, _| event == "pipeline:blocked" }.last[:gate]
+    end
+  end
+
+  def test_tier1_critical_deploy_block_rolls_back_dirty_workspace
+    Dir.mktmpdir do |dir|
+      init_git_repo(dir)
+      write_rules(dir)
+      FileUtils.mkdir_p(File.join(dir, "lib"))
+      File.write(File.join(dir, "lib", "tracked.rb"), "puts :clean\n")
+      system("git", "-C", dir, "add", ".")
+      system("git", "-C", dir, "commit", "-m", "baseline", out: File::NULL, err: File::NULL)
+      File.write(File.join(dir, "lib", "tracked.rb"), "puts :dirty\n")
+      bus = FakeBus.new
+      scanner = FakeScanner.new([{ rule: "PRESERVE_FIRST", rule_id: "PRESERVE_FIRST", line: 1, message: "breaks behavior" }])
+      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
+
+      result = pipe.call(Master::Result.ok(user_message: "deploy now"))
+
+      refute result.ok?
+      assert_includes bus.events.map(&:first), "pipeline:rollback"
+      assert_equal "puts :clean\n", File.read(File.join(dir, "lib", "tracked.rb"))
     end
   end
 
@@ -183,5 +244,11 @@ class TestPipeline < Minitest::Test
           code_review: 20
         pass_threshold: 80
     YAML
+  end
+
+  def init_git_repo(root)
+    system("git", "-C", root, "init", "-q")
+    system("git", "-C", root, "config", "user.email", "test@example.invalid")
+    system("git", "-C", root, "config", "user.name", "Test")
   end
 end

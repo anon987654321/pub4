@@ -1,19 +1,21 @@
 # frozen_string_literal: true
 
 require "digest"
+require "fileutils"
 require "find"
 require "open3"
 require "set"
 require "time"
+require "yaml"
 
 module Master
   module Judge
   # RepoEcology converts repo-gardening principles into executable analysis.
-  # It never deletes or rewrites; it emits evidence for later governed changes.
-  # Full integration into Judge + co_change_rule wiring deferred; requires council review.
+  # It never deletes or rewrites; it emits evidence for governed changes.
+  # Judge and co-change integrations require council review before activation.
     class RepoEcology
       DEFAULT_IGNORE_DIRS = %w[
-        .git .master node_modules vendor tmp log coverage storage .bundle dist build,
+        .git .master node_modules vendor tmp log coverage storage .bundle dist build
       ].freeze
       DEFAULT_EXTENSIONS = %w[.rb .js .ts .erb .html .css .scss .yml .yaml .json .md .sh .zsh].freeze
       LARGE_FILE_LINES = 420
@@ -24,6 +26,7 @@ module Master
       MAX_CO_CHANGE_PAIRS = 20
       CO_CHANGE_MIN_COUNT = 2
       COMMIT_SEPARATOR = "===commit===".freeze
+      CO_CHANGE_CACHE_PATH = File.join(".master", "co_change_cache.yml").freeze
       FileRecord = Data.define(:path, :full_path, :basename, :dirname, :ext, :bytes, :lines,
                                :symbol_count, :tokens, :digest, :signature, :inbound_refs)
 
@@ -40,7 +43,7 @@ module Master
       # Edges exist between files that changed together >= CO_CHANGE_MIN_COUNT times.
       # Memoized; call reindex(path) or reset_graph to invalidate.
       def co_change_graph
-        @graph_mutex.synchronize { @co_change_graph ||= build_co_change_graph }
+        @graph_mutex.synchronize { @co_change_graph ||= load_or_build_co_change_graph }
       end
 
       # Re-parse a single file's symbols in the code_index and invalidate the graph.
@@ -77,7 +80,7 @@ module Master
           sprawl: sprawl(records),
           large_files: large_files(records),
           extension_mix: extension_mix(records),
-          co_change_pairs: co_change_pairs(graph),
+          co_change_pairs: co_change_pairs(graph)
         }
         @bus&.publish("repo_ecology:scan", files: records.size, score: report[:score])
         report
@@ -90,19 +93,19 @@ module Master
         lines << "files: #{report[:files]}"
         lines << ""
         lines.concat(render_section("Dead-file candidates", report[:dead_file_candidates]) { |item|
-          "#{item[:path]} — #{item[:reason]}",
+          "#{item[:path]} — #{item[:reason]}"
         })
         lines.concat(render_section("Duplicate basenames", report[:duplicate_basenames]) { |item|
-          "#{item[:basename]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}",
+          "#{item[:basename]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
         })
         lines.concat(render_section("Similar clusters", report[:similar_clusters]) { |item|
-          "#{item[:signature]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}",
+          "#{item[:signature]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
         })
         lines.concat(render_section("Large files", report[:large_files]) { |item|
-          "#{item[:path]} — #{item[:lines]} lines (#{item[:symbol_count]} symbols)",
+          "#{item[:path]} — #{item[:lines]} lines (#{item[:symbol_count]} symbols)"
         })
         lines.concat(render_section("Co-change pairs (hidden coupling)", report[:co_change_pairs]) { |item|
-          "#{item[:a]} ↔ #{item[:b]} (#{item[:count]} commits)",
+          "#{item[:a]} ↔ #{item[:b]} (#{item[:count]} commits)"
         })
         lines << ""
         sprawl = report[:sprawl]
@@ -116,6 +119,7 @@ module Master
 
       def collect_files(base)
         return [] unless File.exist?(base)
+        files = []
         Find.find(base) do |path|
           name = File.basename(path)
           if File.directory?(path)
@@ -165,7 +169,9 @@ module Master
 
       def grade_for(value)
         return "excellent" if value >= 90
+        return "good" if value >= 75
         return "strained" if value >= 55
+        "fragmented"
       end
 
       def dead_file_candidates(records)
@@ -176,8 +182,10 @@ module Master
 
       def dead_candidate(record, corpus)
         return nil if protected_path?(record.path)
+        stem = File.basename(record.basename, record.ext).downcase
         inbound = corpus.count { |path, text| path != record.path && text.include?(stem) }
         return nil unless inbound.zero?
+        return nil if record.lines < 3
         { path: record.path, reason: "no stem references found", lines: record.lines }
       end
 
@@ -207,6 +215,7 @@ module Master
         important = tokens.reject { |token| token.length < 4 || token.match?(/\A\d+\z/) }
         vocabulary = important.tally.sort_by { |token, count| [-count, token] }.first(12).map(&:first)
         return "" if vocabulary.size < 4
+        "#{File.extname(rel)}:#{vocabulary.sort.join('-')}"
       end
 
       def sprawl(records)
@@ -216,7 +225,7 @@ module Master
         {
           max_depth: depths.max || 0,
           avg_depth: depths.empty? ? 0 : (depths.sum.to_f / depths.size).round(2),
-          orphan_dirs: counts.count { |_dir, count| count == 1 },
+          orphan_dirs: counts.count { |_dir, count| count == 1 }
         }
       end
 
@@ -248,6 +257,7 @@ module Master
                                       "--pretty=format:#{COMMIT_SEPARATOR}",
                                       "-#{CO_CHANGE_COMMITS}")
         return {} unless status.success?
+        pair_counts = Hash.new(0)
         out.split(COMMIT_SEPARATOR).each do |chunk|
           files = chunk.lines.map(&:strip).reject(&:empty?).uniq
           next if files.size < 2
@@ -263,6 +273,50 @@ module Master
       rescue StandardError => e
         @bus&.publish("repo_ecology:co_change_error", error: e.message)
         {}
+      end
+
+      def load_or_build_co_change_graph
+        cached = read_co_change_cache
+        return cached if cached
+
+        build_co_change_graph.tap { |graph| write_co_change_cache(graph) }
+      end
+
+      def read_co_change_cache
+        path = co_change_cache_path
+        return unless File.exist?(path)
+
+        data = YAML.safe_load_file(path, aliases: true)
+        return unless data.is_a?(Hash) && data["head_mtime"].to_i == git_head_mtime
+
+        thaw_graph(data["graph"] || {})
+      rescue StandardError => e
+        @bus&.publish("repo_ecology:co_change_cache_error", error: e.message)
+        nil
+      end
+
+      def write_co_change_cache(graph)
+        path = co_change_cache_path
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, { "head_mtime" => git_head_mtime, "graph" => graph }.to_yaml)
+      rescue StandardError => e
+        @bus&.publish("repo_ecology:co_change_cache_error", error: e.message)
+      end
+
+      def thaw_graph(graph)
+        graph.each_with_object({}) do |(file, peers), acc|
+          acc[file] = (peers || {}).transform_values(&:to_i).freeze
+        end.freeze
+      end
+
+      def co_change_cache_path
+        File.join(@root, CO_CHANGE_CACHE_PATH)
+      end
+
+      def git_head_mtime
+        File.mtime(File.join(@root, ".git", "HEAD")).to_i
+      rescue StandardError
+        0
       end
 
       def extension_mix(records)

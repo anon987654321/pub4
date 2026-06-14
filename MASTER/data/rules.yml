@@ -108,9 +108,9 @@ zen:
 # Apply during scan, sweep, council, and any review of an existing artifact.
 engineering_fit:
   classify: "For every problem, decide: under-engineered, over-engineered, or perfectly engineered — and say why."
-  under:  "Misses real failure modes the artifact will hit. Add only what the artifact actually carries."
-  over:   "Carries machinery the artifact will never load. Strip it; defer until the load shows up."
-  fit:    "Solution matches the load and the failure modes — no slack, no shortfall."
+  under: "Misses real failure modes the artifact will hit. Add only what the artifact actually carries."
+  over: "Carries machinery the artifact will never load. Strip it; defer until the load shows up."
+  fit: "Solution matches the load and the failure modes — no slack, no shortfall."
   why_required: "State the load the artifact carries (users, edge cases, lifetimes, blast radius). The verdict follows from the load."
 
 # Six Universal Laws — single hierarchical priority for every rule and persona.
@@ -172,22 +172,22 @@ structural_ops:
   preserve_note: "These keep getting deleted in self-runs — DO NOT REMOVE."
   verify_after_each: true
   ops:
-    merge:           {desc: "combine similar logic",       risk: medium, verify: "merged logic identical",      supports_law: SINGULARITY}
-    semantic_regroup: {desc: "reorganize logically",       risk: low,    verify: "functionality unchanged",     supports_law: PROXIMITY}
-    defrag:          {desc: "consolidate fragments",       risk: low,    verify: "all fragments accessible",    supports_law: PROXIMITY}
-    decouple:        {desc: "separate concerns",           risk: high,   verify: "interfaces preserved",        supports_law: ABSTRACTION}
-    hoist:           {desc: "move to proper scope",        risk: medium, verify: "scope correct",               supports_law: PROXIMITY}
-    flatten:         {desc: "reduce nesting",              risk: medium, verify: "logic flow identical",        supports_law: LINEARITY}
-    delete:          {desc: "remove dead code",            risk: high,   verify: "truly dead, no references",   supports_law: DENSITY}
-    expand:          {desc: "extract for clarity",         risk: low,    verify: "extracted correctly",         supports_law: ABSTRACTION}
-    reduce_noise:    {desc: "clean messy lines",           risk: low,    verify: "formatting only, no logic",   supports_law: DENSITY}
+    merge: {desc: "combine similar logic", risk: medium, verify: "merged logic identical", supports_law: SINGULARITY}
+    semantic_regroup: {desc: "reorganize logically", risk: low, verify: "functionality unchanged", supports_law: PROXIMITY}
+    defrag: {desc: "consolidate fragments", risk: low, verify: "all fragments accessible", supports_law: PROXIMITY}
+    decouple: {desc: "separate concerns", risk: high, verify: "interfaces preserved", supports_law: ABSTRACTION}
+    hoist: {desc: "move to proper scope", risk: medium, verify: "scope correct", supports_law: PROXIMITY}
+    flatten: {desc: "reduce nesting", risk: medium, verify: "logic flow identical", supports_law: LINEARITY}
+    delete: {desc: "remove dead code", risk: high, verify: "truly dead, no references", supports_law: DENSITY}
+    expand: {desc: "extract for clarity", risk: low, verify: "extracted correctly", supports_law: ABSTRACTION}
+    reduce_noise: {desc: "clean messy lines", risk: low, verify: "formatting only, no logic", supports_law: DENSITY}
 
 # Veto patterns — concrete regex detectors that block merge unconditionally.
 veto_patterns:
-  secrets:         {detect: 'sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----', apply: move_to_env,        violates_law: ROBUSTNESS}
-  sql_injection:   {detect: 'execute|query.*#\{',                                              apply: parameterize,       violates_law: ROBUSTNESS}
-  unfinished:      {detect: '\.\.\.|TODO|FIXME|pending',                                       apply: complete_or_track,  violates_law: ROBUSTNESS}
-  unsafe_calls:    {detect: 'system\s*\(|exec\s*\(|%x\{|Open3\.capture[23]\s*\([^)]*#\{', apply: add_safe_nav,       violates_law: ROBUSTNESS}
+  secrets: {detect: 'sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----', apply: move_to_env, violates_law: ROBUSTNESS}
+  sql_injection: {detect: 'execute|query.*#\{', apply: parameterize, violates_law: ROBUSTNESS}
+  unfinished: {detect: '\.\.\.|TODO|FIXME|pending', apply: complete_or_track, violates_law: ROBUSTNESS}
+  unsafe_calls: {detect: 'system\s*\(|exec\s*\(|%x\{|Open3\.capture[23]\s*\([^)]*#\{', apply: add_safe_nav, violates_law: ROBUSTNESS}
   race_conditions: {detect: 'if.*\n.*=.*\n.*if',                                               apply: add_mutex,          violates_law: ROBUSTNESS}
 
 # Beauty — aesthetic anchors from masters of their craft.
@@ -215,40 +215,41 @@ beauty:
     - error_handling_separate_from_logic
   zen_japanese:
     wabi_sabi: imperfect_authentic
-    ma:        emptiness_pause
-    kanso:     eliminate_essence
+    ma: emptiness_pause
+    kanso: eliminate_essence
 
 # thresholds — only blocks with a live reader survive. Per-rule structural
 # limits (method_length, nesting_depth, cyclomatic) live on each rule's
 # detection.structural block, not here. ONE_SOURCE: no second copy.
 thresholds:
-  class:           # read by voice/personality.rb for prompt substitution
+  class: # read by voice/personality.rb for prompt substitution
     max_methods: 6
     max_lines: 200
-  convergence:     # read by loop/fix_loop.rb — authoritative copy
+  convergence: # read by loop/fix_loop.rb — authoritative copy
     consecutive_clean_runs_required: 2
     max_iterations: 15
     stagnant_threshold: 3
+    genetic_autofix_candidates: 3
 
 # Prediction engine — per-detector autofix confidence thresholds.
 # When confidence >= threshold, autofix fires without human review.
 # Below threshold: propose fix, await approval. Never auto-delete at < 0.80.
 prediction_engine:
-  null_usage:        {confidence: 0.95, autofix: null_object_pattern}
-  abbreviation:      {confidence: 0.99, autofix: expand_to_full_name}
-  nesting_depth:     {confidence: 0.92, autofix: extract_method}
-  bare_rescue:       {confidence: 0.98, autofix: rescue_standard_error}
-  frozen_string:     {confidence: 0.99, autofix: add_frozen_string_literal}
-  trailing_ws:       {confidence: 0.99, autofix: strip_trailing_whitespace}
-  debug_output:      {confidence: 0.97, autofix: remove_debug_call}
-  todo_comment:      {confidence: 0.70, autofix: create_issue}
-  magic_number:      {confidence: 0.85, autofix: extract_named_constant}
-  long_line:         {confidence: 0.90, autofix: wrap_at_120}
-  sycophancy:        {confidence: 0.99, autofix: delete_phrase}
-  future_tense:      {confidence: 0.95, autofix: rewrite_indicative}
-  duplicate_code:    {confidence: 0.75, autofix: extract_shared_method}
-  god_class:         {confidence: 0.60, autofix: propose_decomposition}
-  n_plus_one:        {confidence: 0.88, autofix: add_includes}
+  null_usage: {confidence: 0.95, autofix: null_object_pattern}
+  abbreviation: {confidence: 0.99, autofix: expand_to_full_name}
+  nesting_depth: {confidence: 0.92, autofix: extract_method}
+  bare_rescue: {confidence: 0.98, autofix: rescue_standard_error}
+  frozen_string: {confidence: 0.99, autofix: add_frozen_string_literal}
+  trailing_ws: {confidence: 0.99, autofix: strip_trailing_whitespace}
+  debug_output: {confidence: 0.97, autofix: remove_debug_call}
+  todo_comment: {confidence: 0.70, autofix: create_issue}
+  magic_number: {confidence: 0.85, autofix: extract_named_constant}
+  long_line: {confidence: 0.90, autofix: wrap_at_120}
+  sycophancy: {confidence: 0.99, autofix: delete_phrase}
+  future_tense: {confidence: 0.95, autofix: rewrite_indicative}
+  duplicate_code: {confidence: 0.75, autofix: extract_shared_method}
+  god_class: {confidence: 0.60, autofix: propose_decomposition}
+  n_plus_one: {confidence: 0.88, autofix: add_includes}
 
 scan_depths:
   # deep is the only permitted scan depth — quick and standard exist for InterconnectRule
@@ -1900,66 +1901,66 @@ success_criteria:
   - engineers_trust_judgment_over_time
 
 failure_modes:
-  rubber_stamp:        "council approves everything — adversarial role lost"
-  blocks_everything:   "council vetoes every proposal — gridlock, no shipping"
-  self_violation:      "MASTER produces output it would itself reject — recursive quality broken"
+  rubber_stamp: "council approves everything — adversarial role lost"
+  blocks_everything: "council vetoes every proposal — gridlock, no shipping"
+  self_violation: "MASTER produces output it would itself reject — recursive quality broken"
 
 # Principle enforcement tiers — tier1 strict, tier2 strong, tier3 opportunistic.
 # Source: master.json v225 reunification.
 principle_priorities:
-  tier1_critical:                          # halts pipeline on violation
-    - evidence:    "@assumption -> validate"
-    - reversible:  "@irreversible -> add_rollback"
-    - security:    "@untrusted -> validate_sanitize"
-    - self_apply:  "@output -> must_pass_own_constitution"
-  tier2_quality:                           # warns and routes to refactor
-    - dry:         "@duplication>=3 -> abstract"
-    - kiss:        "@complexity>10 -> simplify"
-    - srp:         "@two_reasons_to_change -> split"
-  tier3_polish:                            # opportunistic improvements
-    - explicit:    "@implicit -> make_explicit"
-    - minimalism:  "@bloat -> subtract"
-    - rhythm:      "@inconsistent -> align"
+  tier1_critical: # halts pipeline on violation
+    - evidence: "@assumption -> validate"
+    - reversible: "@irreversible -> add_rollback"
+    - security: "@untrusted -> validate_sanitize"
+    - self_apply: "@output -> must_pass_own_constitution"
+  tier2_quality: # warns and routes to refactor
+    - dry: "@duplication>=3 -> abstract"
+    - kiss: "@complexity>10 -> simplify"
+    - srp: "@two_reasons_to_change -> split"
+  tier3_polish: # opportunistic improvements
+    - explicit: "@implicit -> make_explicit"
+    - minimalism: "@bloat -> subtract"
+    - rhythm: "@inconsistent -> align"
 
 # Failure taxonomy — what to retry, what to fail-fast, what to escalate.
 # Source: master.json v225 reunification.
 failure_taxonomy:
   transient:
-    examples:    [network_timeout, rate_limit, temp_file_conflict, provider_overload]
-    strategy:    exponential_backoff
+    examples: [network_timeout, rate_limit, temp_file_conflict, provider_overload]
+    strategy: exponential_backoff
     max_retries: 3
   permanent:
-    examples:    [syntax_error, missing_dependency, permission_denied, schema_violation]
-    strategy:    fail_fast
+    examples: [syntax_error, missing_dependency, permission_denied, schema_violation]
+    strategy: fail_fast
     max_retries: 0
   ambiguous:
-    examples:           [partial_write, unknown_error, half_committed_state]
-    strategy:           human_intervention
-    checkpoint_before:  true
+    examples: [partial_write, unknown_error, half_committed_state]
+    strategy: human_intervention
+    checkpoint_before: true
 
 # Evidence weights for ship/no-ship decisions. Sum >= 80 to pass tier1 gates.
 # Source: master.json v225 reunification.
 evidence_scoring:
   weights:
-    test_pass:        35
-    scan_clean:       25
-    code_review:      20
-    log_analysis:     10
-    profiling_data:   10
-  pass_threshold:     80
-  block_threshold:    50    # below this, propose rollback
+    test_pass: 35
+    scan_clean: 25
+    code_review: 20
+    log_analysis: 10
+    profiling_data: 10
+  pass_threshold: 80
+  block_threshold: 50 # below this, propose rollback
 
 # Schema metadata for every named rule. Optional fields per rule.
 # Source: master.json v225 + master.yml v49 reunification (#51, #53, #57, #64).
 schema_metadata:
   optional_fields:
-    reversibility:    "free | cheap | surgical | impossible"  # rollback cost
-    time_horizon:     "review | deploy | incident"            # when this fires
-    blast_radius:     "files_touched: integer"                # batching hint
+    reversibility: "free | cheap | surgical | impossible" # rollback cost
+    time_horizon: "review | deploy | incident" # when this fires
+    blast_radius: "files_touched: integer" # batching hint
     provenance:
       added_in_commit: sha
-      rationale:       string
-      last_revised:    iso8601
+      rationale: string
+      last_revised: iso8601
 
 # Explicit forbidden + discouraged patterns with reasons.
 # Source: master.json v225 ANALYSIS reunification (#23).
@@ -1981,12 +1982,12 @@ anti_patterns:
 # Source: master.yml v31 reunification (#58).
 self_test:
   laws_apply_to_self:
-    ROBUSTNESS:   "scan lib/ for bare_rescue + missing timeouts"
-    SINGULARITY:  "rules.yml entries unique by id; no two YAMLs define same key"
-    LINEARITY:    "no nesting_depth > 4 in lib/"
-    PROXIMITY:    "test files within 1 directory of source"
-    ABSTRACTION:  "no class > god_class threshold in lib/"
-    DENSITY:      "no method > long_method threshold in lib/"
+    ROBUSTNESS: "scan lib/ for bare_rescue + missing timeouts"
+    SINGULARITY: "rules.yml entries unique by id; no two YAMLs define same key"
+    LINEARITY: "no nesting_depth > 4 in lib/"
+    PROXIMITY: "test files within 1 directory of source"
+    ABSTRACTION: "no class > god_class threshold in lib/"
+    DENSITY: "no method > long_method threshold in lib/"
   fail_action: "publish self_violation event; refuse autoloop fixes that don't restore the law"
 
 # Before marking a task done, re-read the file fresh — never trust cached state.
@@ -2013,10 +2014,10 @@ preserve_user_intent:
 # Source: opencrabs reunification (#82).
 phantom_recovery:
   detectors:
-    gaslighting_preamble:    "/^(I('ll| will| can| would)|Let me|Sure,)/i"
-    text_repetition_loop:    "same 60-char span repeats >= 3 times"
-    xml_tool_call_failure:   "<tool> open without close OR malformed JSON in args"
-    empty_tool_response:     "tool returned nil twice in a row"
+    gaslighting_preamble: "/^(I('ll| will| can| would)|Let me|Sure,)/i"
+    text_repetition_loop: "same 60-char span repeats >= 3 times"
+    xml_tool_call_failure: "<tool> open without close OR malformed JSON in args"
+    empty_tool_response: "tool returned nil twice in a row"
   recovery:
     - "discard last response, reset context to last successful checkpoint"
     - "switch model tier (escalate or fall back) on second occurrence"

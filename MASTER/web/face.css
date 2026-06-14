@@ -2,11 +2,11 @@
 
 :root {
   color-scheme: dark;
-  --face-bg: #000;
-  --face-fg: #fff;
-  --face-muted: rgba(255,255,255,0.35);
-  --face-dim: rgba(255,255,255,0.18);
-  --face-soft: rgba(255,255,255,0.08);
+  --face-bg: black;
+  --face-fg: white;
+  --face-muted: color-mix(in srgb, var(--face-fg) 35%, transparent);
+  --face-dim: color-mix(in srgb, var(--face-fg) 18%, transparent);
+  --face-soft: color-mix(in srgb, var(--face-fg) 8%, transparent);
   --face-bar-height: 32px;
   --face-safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -78,11 +78,11 @@ canvas {
 .msg-prompt { font-weight: 700; }
 .message.user .msg-prompt { color: var(--face-fg); }
 .message.assistant .msg-prompt { color: var(--face-muted); }
-.msg-body { color: rgba(255,255,255,0.80); }
+.msg-body { color: color-mix(in srgb, var(--face-fg) 80%, transparent); }
 .cursor { display: inline-block; width: 8px; height: 8px; background: var(--face-fg); vertical-align: text-bottom; animation: blink 1s step-end infinite; }
 .enhance-confirm { margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; }
-.enhance-arrow { color: rgba(255,255,255,0.22); animation: blink 0.5s step-end 4; }
-.enhance-text { color: rgba(255,255,255,0.32); font-style: italic; }
+.enhance-arrow { color: color-mix(in srgb, var(--face-fg) 22%, transparent); animation: blink 0.5s step-end 4; }
+.enhance-text { color: color-mix(in srgb, var(--face-fg) 32%, transparent); font-style: italic; }
 .enhance-yn { color: var(--face-dim); }
 .dmesg-line { font: 11px/1.5 "Roboto Mono",ui-monospace,monospace; color: var(--face-dim); margin-bottom: 1px; white-space: pre-wrap; word-break: break-all; transition: opacity 0.8s steps(4, end); }
 .dmesg-fade { opacity: 0; }
@@ -110,7 +110,7 @@ canvas {
 #zsh .pp { color: var(--face-fg); font-weight: 700; }
 #zsh .sep, #zsh .sep2 { color: var(--face-muted); }
 #zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
-#zsh input::placeholder { color: rgba(255,255,255,0.25); }
+#zsh input::placeholder { color: color-mix(in srgb, var(--face-fg) 25%, transparent); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

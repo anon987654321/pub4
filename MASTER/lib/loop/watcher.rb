@@ -68,6 +68,8 @@ module Master
       def load_avg_1m
         out, _, st = Open3.capture3("/sbin/sysctl", "-n", "vm.loadavg")
         return nil unless st.success?
+
+        load_average_1m(out)
       rescue StandardError
         nil
       end
@@ -76,11 +78,45 @@ module Master
       def mem_free_pct
         out, _, st = Open3.capture3("/usr/bin/vmstat")
         return nil unless st.success?
-        return nil if cols.length < 4
+
+        free = vmstat_free_bytes(out)
+        return nil unless free
+
         total, _, st2 = Open3.capture3("/sbin/sysctl", "-n", "hw.physmem")
-        return nil unless st2.success? && total.to_f.positive?
+        return nil unless st2.success?
+
+        memory_free_percent(free, physmem_bytes(total))
       rescue StandardError
         nil
+      end
+
+      def load_average_1m(output)
+        output.to_s[/\d+(?:\.\d+)?/]&.to_f
+      end
+
+      def vmstat_free_bytes(output)
+        lines = output.to_s.lines.map(&:strip).reject(&:empty?)
+        header_index = lines.index { |line| line.split.include?("fre") }
+        columns = header_index ? lines[header_index].split : []
+        free_index = columns.index("fre") || 4
+        data = lines.drop((header_index || -1) + 1).find { |line| line.match?(/\A\s*\d/) } ||
+               lines.reverse.find { |line| line.match?(/\A\s*\d/) }
+        return nil unless data
+
+        value = data.split[free_index]
+        value ? parse_size(value) : nil
+      end
+
+      def physmem_bytes(output)
+        bytes = output.to_s[/\d+(?:\.\d+)?/]&.to_f
+        bytes&.positive? ? bytes : nil
+      end
+
+      def memory_free_percent(free_bytes, total_bytes)
+        return nil unless free_bytes && total_bytes&.positive?
+
+        pct = (free_bytes.to_f / total_bytes.to_f * 100.0).round(1)
+        [[pct, 0.0].max, 100.0].min
       end
 
       def parse_size(str)
@@ -95,19 +131,34 @@ module Master
       def disk_root_pct
         out, _, st = Open3.capture3("/bin/df", "-k", "/")
         return nil unless st.success?
+
+        disk_percent(out)
       rescue StandardError
         nil
+      end
+
+      def disk_percent(output)
+        line = output.to_s.lines.drop(1).find { |entry| entry.include?("%") }
+        line&.split&.find { |part| part.end_with?("%") }&.delete("%")&.to_f
       end
 
       # The master daemon runs as `falcon serve` on port 53187.
       def master_rss_mb
         out, _, st = Open3.capture3("/bin/ps", "-Ao", "rss,command")
         return nil unless st.success?
-                    .select { |l| l.include?("falcon serve") || l.include?(":53187") }
-                    .sum { |l| l.strip.split.first.to_i }
-        return nil if rss_kb.zero?
+
+        master_rss_mb_from_ps(out)
       rescue StandardError
         nil
+      end
+
+      def master_rss_mb_from_ps(output)
+        rss_kb = output.to_s.lines
+                       .select { |line| line.include?("falcon serve") || line.include?(":53187") }
+                       .sum { |line| line.strip.split.first.to_i }
+        return nil if rss_kb.zero?
+
+        (rss_kb / 1024.0).round(1)
       end
 
       # nil = unknown (e.g. rcctl errored); false = explicitly down.
@@ -124,6 +175,7 @@ module Master
                         over?(s[:disk_root_pct], "disk_root_pct", "crit") ||
                         over?(s[:master_rss_mb], "master_rss_mb", "crit")
         return :warn if over?(s[:load_1m], "load_avg_1m", "warn") ||
+                        under?(s[:mem_free_pct], "mem_free_pct", "warn") ||
                         over?(s[:disk_root_pct], "disk_root_pct", "warn") ||
                         over?(s[:master_rss_mb], "master_rss_mb", "warn")
         :ok

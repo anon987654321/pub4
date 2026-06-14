@@ -8,7 +8,7 @@ module Master
       class Selector
         ALWAYS_INCLUDED = ["Maintainer"].freeze
 
-        TASK_PERSONAS = {.freeze
+        TASK_PERSONAS = {
           mobile_ui: ["User Advocate", "Accessibility", "Web Designer", "Performance", "Google CSS Engineer"],
           ui: ["User Advocate", "Accessibility", "NNGroup UX Researcher", "Graphic Designer"],
           auth_mutation: ["Security", "Reliability", "Maintainer", "Ethics & Policy"],
@@ -24,7 +24,7 @@ module Master
           destructive: ["Security", "Reliability", "Maintainer", "Architect", "Skeptic"],
         }.freeze
 
-        RISK_PERSONAS = {.freeze
+        RISK_PERSONAS = {
           critical: ["Security", "Reliability", "Maintainer", "Architect", "Skeptic"],
           high: ["Security", "Reliability", "Maintainer"],
           medium: ["Maintainer", "Skeptic"],

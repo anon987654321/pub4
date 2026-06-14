@@ -9,8 +9,8 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] M01 Deploy: copy DEPLOY/openbsd/etc/rc.d/master to /etc/rc.d/master on VPS and verify
 - [ ] M02 Deploy: verify /etc/master.env on VPS has all keys from master.env.sample
 - [ ] M03 Deploy: `doas rcctl enable master` — verify master service enabled at boot
-- [ ] M04 openbsd.yml audit: check if MASTER's shell-out commands use doas where rules.yml says `privilege: doas`
-- [ ] M05 Backup: verify DEPLOY/openbsd/backup_priv.sh uses openrsync (not rsync) per openbsd.amsterdam docs
+- [x] M04 openbsd.yml audit: check if MASTER's shell-out commands use doas where rules.yml says `privilege: doas`
+- [x] M05 Backup: verify DEPLOY/openbsd/backup_priv.sh uses openrsync (not rsync) per openbsd.amsterdam docs
 - [ ] M06 PTR record: verify brgen.no PTR record set via ptr4.openbsd.amsterdam (run from VM, not locally)
 - [ ] M07 sshd_config on VPS: verify PermitRootLogin no, PasswordAuthentication no, MaxAuthTries 3
 
@@ -18,8 +18,8 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ### AN1: PWA Foundation (all apps)
 
-- [ ] AN101 Manifest completeness: add `display_override: ["window-controls-overlay", "standalone"]`, `edge_side_panel: {preferred_width: 400}`, `launch_handler: {client_mode: "navigate-new"}` to all manifest.json.erb
-- [ ] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
+- [x] AN101 Manifest completeness: add `display_override: ["window-controls-overlay", "standalone"]`, `edge_side_panel: {preferred_width: 400}`, `launch_handler: {client_mode: "navigate-new"}` to all manifest.json.erb
+- [x] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
 - [ ] AN103 Workbox integration: replace hand-rolled service worker with Workbox 7 strategies — CacheFirst for fonts/images, NetworkFirst for HTML, StaleWhileRevalidate for JS/CSS
 - [ ] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
 - [ ] AN105 Periodic background sync: register `periodicsync` for daily briefing fetch, feed pre-warm, and badge count updates
@@ -216,8 +216,8 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 ### AN12: Cross-App Performance
 
 - [ ] AN1201 YJIT enabled: `config.yjit = true` in production.rb for all apps; verify with `RubyVM::YJIT.enabled?`; expect 15-20% throughput improvement
-- [ ] AN1202 Eager loading: `config.eager_load = true` in production; verify no autoload violations; reduces per-request load time
-- [ ] AN1203 Database connection pool: set `pool:` in database.yml to match Falcon worker count; avoid connection timeout under load
+- [x] AN1202 Eager loading: `config.eager_load = true` in production; verify no autoload violations; reduces per-request load time
+- [x] AN1203 Database connection pool: set `pool:` in database.yml to match Falcon worker count; avoid connection timeout under load
 - [ ] AN1204 N+1 elimination: run `bullet` gem in development; eliminate every N+1 with `includes`/`preload`/`eager_load`; zero tolerance policy
 - [ ] AN1205 Counter caches: add `counter_cache: true` for comment_count, vote_count, follower_count, listing_count on all association-heavy models
 - [ ] AN1206 Database indexes: verify indexes on every `foreign_key`, every `WHERE` column, every `ORDER BY` column; run `lol_dba` gem to surface missing indexes
@@ -2229,4 +2229,3 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [x] DG08 bsdports: add maintainer page — all ports by a given maintainer with contact link
 - [x] DG09 bsdports: add RSS feed for new ports added in last 7 days
 - [x] DG10 bsdports: add CVE cross-reference — link ports to known vulnerabilities via NIST NVD API (via security_advisories table + NvdCveService
-

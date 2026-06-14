@@ -7,7 +7,7 @@ module Master
         COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
         MAX_FILE_BYTES = 24_576
 
-        SOUND_PANEL = [.freeze
+        SOUND_PANEL = [
           "Electronic Music Producer",
           "Hip-Hop Producer",
           "User Advocate",

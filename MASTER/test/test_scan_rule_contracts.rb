@@ -58,6 +58,12 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding rule("KEYWORD_ARGS"), "def call(a, b, c)\nend\n", "args.rb", "positional args"
   end
 
+  def test_few_arguments_rule_allows_keyword_arguments
+    findings = rule("FEW_ARGUMENTS").check("def call(a, b:, c: nil)\nend\n", path: "args.rb")
+
+    assert_empty findings
+  end
+
   def test_dead_code_rule_flags_unreachable_statement
     assert_finding rule("DEAD_CODE"), "def call\n  return :ok\n  puts :never\nend\n", "dead.rb", "unreachable code"
   end

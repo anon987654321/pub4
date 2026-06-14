@@ -86,7 +86,7 @@ module Master
         ahead_str = ahead > 0 ? @p.dim(" ↑#{ahead}") : ""
         behind_str = behind > 0 ? @p.yellow(" ↓#{behind}") : ""
         branch_str = @p.red(branch) + dirty_glyph + ahead_str + behind_str
-        vbadge = violations > 0 ? @p.bold.red(" [#{violations}v]") : ""
+        vbadge = violation_badge(violations)
         phase_str = phase && phase.to_s != "idle" ? phase_tinted(" :#{phase}", phase) : ""
         cost_str = cost_label(cost)
         cost_seg = cost_str.empty? ? "" : "#{cost_str} "
@@ -105,9 +105,18 @@ module Master
         end
       end
 
+      def violation_badge(count)
+        count = count.to_i
+        return @p.green(" [0v]") if count.zero?
+        return @p.yellow(" [#{count}v]") if count < 10
+
+        @p.bold.red(" [#{count}v]")
+      end
+
       def phase_prompt(last_ok, phase)
         base = "master$"
         return @p.red(base) unless last_ok
+        case phase.to_s
         when "discover" then @p.bold.yellow(base)
         when "implement" then @p.bold.cyan(base)
         when "audit" then @p.bold.red(base)
@@ -120,8 +129,10 @@ module Master
       def cost_label(cost)
         cents = (cost.to_f * 100).round(2)
         return "" if cents.zero?
+        budget = @config.respond_to?(:budget_max) ? @config.budget_max.to_f : 0.0
         label = "¢#{format('%.2f', cents)}"
         return @p.dim(label) unless budget.positive?
+        pct = (cost.to_f / budget).clamp(0.0, 1.0)
         eighths = (pct * 4 * 8).round
         full = eighths / 8
         rem  = eighths % 8
@@ -143,6 +154,7 @@ module Master
 
       def token_bar(tokens)
         return "" unless tokens && tokens > 0
+        budget = (@config["token_budget"] || TOKEN_BUDGET).to_i
         pct    = (tokens.to_f / budget).clamp(0.0, 1.0)
         eighths = (pct * BAR_CELLS * 8).round
         full   = eighths / 8
@@ -155,6 +167,7 @@ module Master
 
       def token_label(tokens)
         return "0" unless tokens && tokens > 0
+        value = tokens.to_i
         value >= 1000 ? format("%.1fk", value / 1000.0) : value.to_s
       end
 
@@ -177,6 +190,7 @@ module Master
         path = File.join(Master::ROOT, "data", "closings.yml")
         lines = (Master.load_yaml(path) || {})["closings"]
         return nil unless lines.is_a?(Array) && lines.any?
+        @p.dim(lines.sample)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "renderer.closing")
         nil
@@ -209,8 +223,11 @@ module Master
       def provider_for(model)
         m = model.to_s
         return "claude-cli" if m.start_with?("claude-cli:")
+        return "web-chat"   if m.start_with?("web-chat:")
         return "ollama"     if m.start_with?("ollama:", "ollama/")
+        return "openrouter" if m.include?("/")
         return "deepseek"   if m.start_with?("deepseek-")
+        return "google"     if m.include?("gemini")
         "openrouter"
       end
 
@@ -236,6 +253,7 @@ module Master
           "rev-list", "--left-right", "--count", "HEAD...@{u}"
         )
         return [0, 0] unless st.success?
+        parts = out.strip.split
         [parts[0].to_i, parts[1].to_i]
       rescue StandardError => _e
         [0, 0]

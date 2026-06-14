@@ -82,6 +82,8 @@ const State = {
   highContrast: new URLSearchParams(window.location.search).get('hc') === '1',
   contrastMore: matchMedia("(prefers-contrast: more)").matches
 };
+State.expressionCurrent = {};
+State.expressionTarget = {};
 
 rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
 
@@ -208,6 +210,9 @@ function resize() {
   if (cv) cv.style.imageRendering = "pixelated";
 }
 window.addEventListener('resize', resize, { passive: true });
+if ('ResizeObserver' in window && cv) {
+  new ResizeObserver(() => resize()).observe(cv.parentElement || cv);
+}
 
 // Grayscale depth map: white = near (high Z), black = background (filtered)
 // Phantom.land technique: sample pixel luminance directly as Z, no edge detection
@@ -497,9 +502,14 @@ function sampleDepthMapGrid(canvas, cols, rows) {
   return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), edgePosData, curvature, boundary, zone, edgeAlpha };
 }
 
-const FACE_GRID_COLS = State.coarsePointer ? 32 : 52;
-const FACE_GRID_ROWS = State.coarsePointer ? 40 : 66;
-const FACE_N_2D = 480;
+function particleScale() {
+  const area = Math.max(320 * 480, window.innerWidth * window.innerHeight);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  return Math.max(0.7, Math.min(1.35, Math.sqrt((area * dpr) / (1280 * 720))));
+}
+const FACE_GRID_COLS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
+const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 40 : 66) * particleScale());
+const FACE_N_2D = Math.round(480 * particleScale());
 let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBoundary, faceZone, faceEdgeAlpha;
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
@@ -727,11 +737,21 @@ if (_hasWebGL && THREE) {
 }
 
 let morphCurrent = 0.0, morphTarget = 0.88, morphGhost = 0.0;
-let mouthPool = null, eyePool = null;
+const mouthPool = null;
+const eyePool = null;
 
 const COUNCIL_VOICE = {
   Architect: 'ryan', Skeptic: 'steffan', Pragmatist: 'finn',
   Security: 'osman', User: 'ryan', Mentor: 'yasmin'
+};
+
+const PERSONA_TINT = {
+  Architect: new Color(0.75, 0.9, 1.0),
+  Skeptic: new Color(1.0, 0.78, 0.62),
+  Pragmatist: new Color(0.74, 1.0, 0.78),
+  Security: new Color(1.0, 0.68, 0.68),
+  User: new Color(0.9, 0.84, 1.0),
+  Mentor: new Color(1.0, 0.92, 0.68)
 };
 
 
@@ -739,11 +759,18 @@ const COUNCIL_VOICE = {
 const colorCurrent = TINT.idle.clone();
 const colorTarget  = TINT.idle.clone();
 function fadeColorTo(c) { colorTarget.copy(c); }
+function applyPersonaVisual(persona) {
+  const tint = PERSONA_TINT[persona];
+  if (!tint) return;
+  fadeColorTo(tint);
+  State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);
+}
 TINT.idle.copy(dayNightTint());
 colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
 setInterval(() => { if (!State.mood || State.mood === 'idle') { TINT.idle.copy(dayNightTint()); fadeColorTo(TINT.idle); } }, 60000);
 
-let bloomCtx = null, bloomCv = null;
+const bloomCtx = null;
+const bloomCv = null;
 
 function dollyZoom(intensity) {
   if (!camera) return;
@@ -867,7 +894,7 @@ function frame(t) {
   const dt = Math.min(State.coarsePointer ? 66 : 50, t - lastT); lastT = t;
   const sec = t * 0.001;
 
-  if (tts.playing && tts.analyser && tts.analyserBuf) {
+  if (hasAnalyserBuffers()) {
     tts.analyser.getByteTimeDomainData(tts.analyserBuf);
     let rmsSum = 0;
     const bufLen = tts.analyserBuf.length;
@@ -875,16 +902,14 @@ function frame(t) {
     const rms = Math.sqrt(rmsSum / bufLen);
     if (rms > 0.01) State.pulse = Math.min(0.9, State.pulse + rms * 1.5);
     State.voiceRMS = rms;
-    if (tts.analyserFreqBuf) {
-      tts.analyser.getByteFrequencyData(tts.analyserFreqBuf);
-      let bass = 0, mids = 0, highs = 0;
-      for (let bi = 0; bi < 8; bi++) bass += tts.analyserFreqBuf[bi];
-      for (let bi = 8; bi < 32; bi++) mids += tts.analyserFreqBuf[bi];
-      for (let bi = 32; bi < 80 && bi < tts.analyserFreqBuf.length; bi++) highs += tts.analyserFreqBuf[bi];
-      State.audioBass  = bass  / (8   * 255);
-      State.audioMids  = mids  / (24  * 255);
-      State.audioHighs = highs / (48  * 255);
-    }
+    tts.analyser.getByteFrequencyData(tts.analyserFreqBuf);
+    let bass = 0, mids = 0, highs = 0;
+    for (let bi = 0; bi < 8; bi++) bass += tts.analyserFreqBuf[bi];
+    for (let bi = 8; bi < 32; bi++) mids += tts.analyserFreqBuf[bi];
+    for (let bi = 32; bi < 80 && bi < tts.analyserFreqBuf.length; bi++) highs += tts.analyserFreqBuf[bi];
+    State.audioBass  = bass  / (8   * 255);
+    State.audioMids  = mids  / (24  * 255);
+    State.audioHighs = highs / (48  * 255);
     State.audioBeat = 0;
     const curBass = State.audioBass || 0;
     if (!faceMat._prevBass) faceMat._prevBass = 0;
@@ -967,6 +992,10 @@ function frame(t) {
     } else {
       head.position.set(0, 0, State.lean);
     }
+  }
+  if (State.personaPulse > 0.01) {
+    State.pulse = Math.max(State.pulse, State.personaPulse);
+    State.personaPulse *= 0.88;
   }
   State.pulse *= 0.92;
 
@@ -1293,7 +1322,7 @@ function _quirkifyTts(text, voice) {
     text = laughs[(r() * laughs.length) | 0] + text;
   }
   if (r() < 0.04) {
-    text = '... ' + text + '. sorry.';
+    text = `... ${text}. sorry.`;
   }
   if (r() < 0.05) {
     const mid = Math.floor(text.length * 0.4);
@@ -1387,6 +1416,11 @@ async function loadTTSBlob(text, voice, style) {
   try {
     const res = await fetch(ttsURL(text, voice, style), { signal: controller.signal });
     clearTimeout(timer);
+    if (res.status === 202) {
+      const job = res.headers.get('X-TTS-Job') || (await res.json().catch(() => ({}))).job;
+      if (!job) throw new Error('tts pending without job');
+      return pollTTSJob(job, controller.signal);
+    }
     if (!res.ok) throw new Error(res.status);
     const blob = await res.blob();
     writeCachedTTS(key, blob);
@@ -1395,6 +1429,17 @@ async function loadTTSBlob(text, voice, style) {
     clearTimeout(timer);
     throw e;
   }
+}
+
+async function pollTTSJob(job, signal) {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, Math.min(250 + attempt * 150, 1500)));
+    const res = await fetch(`/chat/tts/status?job=${encodeURIComponent(job)}`, { signal });
+    if (res.status === 202) continue;
+    if (!res.ok) throw new Error(res.status);
+    return res.blob();
+  }
+  throw new Error('tts timeout');
 }
 
 function buildRoomIR(ctx) {
@@ -1441,6 +1486,10 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   tts.analyser = analyser;
   tts.analyserBuf = new Uint8Array(analyser.fftSize);
   tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
+}
+
+function hasAnalyserBuffers() {
+  return !!(tts.playing && tts.analyser && tts.analyserBuf && tts.analyserFreqBuf);
 }
 
 function finishTTSPlayback(src, continueQueue = true) {
@@ -1515,6 +1564,32 @@ function scheduleTtsTick(delay) {
   if (tts.retryTimer) clearTimeout(tts.retryTimer);
   tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);
 }
+
+function speakWithBrowserTTS(text, token) {
+  if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) return false;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
+  utterance.rate = getTtsRate();
+  utterance.onstart = () => { startVisemeAnim(text); setTTSLoading(false); };
+  utterance.onend = utterance.onerror = () => {
+    if (token !== tts.cancelToken) return;
+    stopVisemeAnim();
+    clearViseme();
+    tts.playing = false;
+    tts.audio = null;
+    if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
+    if (State.mode === 'speaking') State.mode = 'idle';
+    ttsTick();
+  };
+  try {
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 function ttsTick() {
   if (tts.muted || tts.playing) return;
   const text = tts.queue.shift();
@@ -1527,6 +1602,7 @@ function ttsTick() {
   const wdMs = Math.min(120000, Math.max(20000, text.length * 180));
   tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: requeue'); requeueChunk(text); finishTTSPlayback(null, true); } }, wdMs);
   State.mode = 'speaking'; setAmbientHum(false);
+  if (tts.serverUnavailable && speakWithBrowserTTS(text, token)) return;
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
   const meta = tts.meta.get(text) || {};
   const voice = tts.lang === 'nb' ? 'finn' : meta.voice;
@@ -1570,6 +1646,8 @@ function ttsTick() {
   edgeBlob
     .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
     .catch(() => {
+      tts.serverUnavailable = true;
+      if (speakWithBrowserTTS(text, token)) return;
       tts.audio = null; tts.playing = false; setTTSLoading(false);
       requeueChunk(text);
       const s = document.getElementById('zsh-status');
@@ -1720,7 +1798,7 @@ async function sendMessage(text) {
       return;
     }
     if (raw.startsWith('ERROR:')) {
-      window._chatOnChunk?.('\n' + raw + '\n');
+      window._chatOnChunk?.(`\n${raw}\n`);
       State.mode = 'error'; State.flash = 1; State.shake = 0.8;
       fadeColorTo(TINT.veto);
       morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
@@ -1779,7 +1857,7 @@ async function sendMessage(text) {
   evtSrc.addEventListener('council:speech', (ev) => {
     try {
       const { voice, text, persona } = JSON.parse(ev.data || '{}');
-      if (persona) rootBody.dataset.councilPersona = persona;
+      if (persona) { rootBody.dataset.councilPersona = persona; applyPersonaVisual(persona); }
       if (voice && text && !tts.playing) playDuo([[guardVoice(voice), text]]);
       setTimeout(() => { if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona; }, 8000);
     } catch (_) {}
@@ -1897,7 +1975,7 @@ function startEverything() {
   document.addEventListener('pointerdown', () => { if (logo) logo.classList.remove('dim'); _schedLogoDim(); }, { passive: true });
   requestMotionPermission(); acquireWakeLock();
   setTimeout(() => { morphTarget = 1.0; }, 600);
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v1')).catch(() => {});
 }
 let primerFired = false;
 function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
@@ -2078,11 +2156,19 @@ window.addEventListener('master:visual', (ev) => {
   if (ex && (ex.arousal != null || ex.valence != null || ex.attention != null)) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      if (ex.arousal != null) mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = ex.arousal;
-      if (ex.valence != null) mouthPool.cells[b + window.ParticleKernel.FIELD.valence] = ex.valence;
+      if (ex.arousal != null) mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = smoothExpressionValue('arousal', ex.arousal);
+      if (ex.valence != null) mouthPool.cells[b + window.ParticleKernel.FIELD.valence] = smoothExpressionValue('valence', ex.valence);
     }
   }
 });
+
+function smoothExpressionValue(key, target) {
+  State.expressionTarget[key] = target;
+  const current = State.expressionCurrent[key] ?? target;
+  const next = current + (target - current) * (State.reducedMotion ? 0.35 : 0.18);
+  State.expressionCurrent[key] = next;
+  return next;
+}
 
 // Creative style bleed decay over time (small persistent "ringing" after dramatic TTS)
 setInterval(() => {

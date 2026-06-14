@@ -40,6 +40,81 @@ class TestCLI < Minitest::Test
       "tts_on should be false when Speech.available? is false"
   end
 
+  def test_scan_report_uses_inverted_pyramid_order
+    findings = [
+      { rule: "STYLE", line: 2, message: "style issue" },
+      { rule: "STYLE", line: 3, message: "another style issue" },
+      { rule: "SECURITY", line: 8, message: "security issue" }
+    ]
+    output = Master::Now::CommandRegistry.format_scan_results(
+      pairs: [["sample.rb", Master::Result.ok(findings)]],
+      profile: nil,
+      rule_filter: nil
+    )
+    lines = output.lines.map(&:chomp)
+
+    assert_equal "3 total violations", lines[0]
+    assert_equal "evidence: STYLE=2, SECURITY=1", lines[1]
+    assert_operator lines.index("[STYLE]"), :<, lines.index("  L2: style issue")
+  end
+
+  def test_scan_dry_run_report_says_no_changes_made
+    findings = [{ rule: "STYLE", line: 2, message: "style issue" }]
+
+    output = Master::Now::CommandRegistry.format_scan_results(
+      pairs: [["sample.rb", Master::Result.ok(findings)]],
+      profile: nil,
+      rule_filter: nil,
+      dry_run: true
+    )
+
+    assert_match(/\Adry-run: 1 total violations \(no changes made\)/, output)
+  end
+
+  def test_fix_dry_run_uses_preview
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:preview) do |_target|
+      Master::Result.ok(total: 0, rules: {}, files: {})
+    end
+    fix_loop.define_singleton_method(:run) do |_target|
+      raise "dry-run should not run fixer"
+    end
+
+    output = Master::Now::CommandRegistry.dispatch_fix(
+      fix_loop: fix_loop,
+      root: Dir.pwd,
+      arg: "--dry-run ."
+    )
+
+    assert_equal "preview: clean — no violations", output
+  end
+
+  def test_help_uses_progressive_disclosure
+    summary = Master::Now::CommandRegistry.help_text
+    detail = Master::Now::CommandRegistry.help_text("scan")
+
+    assert_includes summary, "/scan - deep-scan files or directories"
+    refute_includes summary, "Profiles:"
+    assert_includes detail, "/scan [--dry-run] [profile] [path]"
+    assert_includes detail, "Profiles:"
+  end
+
+  def test_scan_profile_uses_explicit_keyword
+    profile, = Master::Now::CommandRegistry.resolve_scan_profile("critical lib", Dir.pwd)
+    plain, = Master::Now::CommandRegistry.resolve_scan_profile("criticality.rb", Dir.pwd)
+
+    assert_equal "critical", profile
+    assert_nil plain
+  end
+
+  def test_routine_success_emits_one_line
+    result = Master::Result.ok(output: "saved")
+
+    out, = capture_io { @cli.send(:display_ok, ok: result, accumulated: +"", streamed: false) }
+
+    assert_equal "saved\n", out
+  end
+
   # handle_command dispatch
   def test_handle_command_returns_false_for_non_command
     skip "drifted: API moved; port to new dispatcher/CLI shape"

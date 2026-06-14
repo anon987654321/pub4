@@ -15,42 +15,58 @@ module Master
         STYLE_EXTS = %w[.css .scss].freeze
 
         Result = Struct.new(:path, :changed, :transforms, keyword_init: true)
+        Strategy = Struct.new(:predicate, :transforms, keyword_init: true)
+        STRATEGIES = [
+          Strategy.new(predicate: :ruby?, transforms: %i[add_frozen_header fix_bare_rescue freeze_mutable_constants]),
+          Strategy.new(predicate: :sql_context?, transforms: %i[normalise_null_comparison]),
+          Strategy.new(predicate: :shell?, transforms: %i[add_strict_mode]),
+          Strategy.new(predicate: :html?, transforms: %i[add_html_lang add_meta_charset add_lazy_loading]),
+          Strategy.new(predicate: :javascript?, transforms: %i[replace_unreassigned_var convert_for_in_arrays convert_string_concat convert_optional_chaining]),
+          Strategy.new(predicate: :style?, transforms: %i[logical_properties])
+        ].freeze
+        UNIVERSAL_TRANSFORMS = %i[collapse_blank_lines strip_trailing_whitespace remove_immediate_dead_code add_trailing_commas].freeze
 
-        def self.fix(path, source)
-          new(path, source).apply
+        def self.fix(path, source, event_bus: nil)
+          new(path, source, event_bus:).apply
         end
 
-        def initialize(path, source)
+        def initialize(path, source, event_bus: nil)
           @path = path
           @source = source
+          @bus = event_bus
           @transforms = []
         end
 
         def apply
           out = @source
-          out = add_frozen_header(out)         if ruby?
-          out = fix_bare_rescue(out)           if ruby?
-          out = normalise_null_comparison(out) if sql_in_ruby?
-          out = collapse_blank_lines(out)
-          out = strip_trailing_whitespace(out)
-          out = freeze_mutable_constants(out)  if ruby?
-          out = add_strict_mode(out)           if shell?
-          out = add_html_lang(out)             if html?
-          out = add_meta_charset(out)          if html?
-          out = add_lazy_loading(out)          if html?
-          out = replace_unreassigned_var(out)  if javascript?
-          out = convert_for_in_arrays(out)     if javascript?
-          out = convert_string_concat(out)     if javascript?
-          out = convert_optional_chaining(out) if javascript?
-          out = remove_immediate_dead_code(out)
-          out = add_trailing_commas(out)
-          out = logical_properties(out)        if style?
+          out = apply_strategies(out)
           changed = out != @source
           Result.new(path: @path, changed:, transforms: @transforms)
-            .tap { write_back(out) if changed }
+            .tap { publish_and_write(out) if changed }
         end
 
         private
+
+        def apply_strategies(src)
+          out = apply_transforms(src, UNIVERSAL_TRANSFORMS.first(2))
+          applicable_strategies.each do |strategy|
+            out = apply_transforms(out, strategy.transforms)
+          end
+          apply_transforms(out, UNIVERSAL_TRANSFORMS.drop(2))
+        end
+
+        def applicable_strategies
+          STRATEGIES.select { |strategy| send(strategy.predicate) }
+        end
+
+        def apply_transforms(src, transforms)
+          transforms.reduce(src) { |current, transform| send(transform, current) }
+        end
+
+        def publish_and_write(out)
+          write_back(out)
+          @bus&.publish("ast_fixer:transform", path: @path, transforms: @transforms)
+        end
 
         def add_frozen_header(src)
           return src if src.start_with?(FROZEN_HEADER)
@@ -257,7 +273,7 @@ module Master
             "padding-left" => "padding-inline-start",
             "padding-right" => "padding-inline-end",
             "border-left" => "border-inline-start",
-            "border-right" => "border-inline-end",
+            "border-right" => "border-inline-end"
           }
           out = src.gsub(/\b(?:#{replacements.keys.map { |key| Regexp.escape(key) }.join("|")})\s*:/) do |match|
             changed = true
@@ -277,7 +293,7 @@ module Master
 
         def style? = STYLE_EXTS.include?(File.extname(@path).downcase)
 
-        def sql_in_ruby?
+        def sql_context?
           ruby? || %w[.sql .erb].include?(File.extname(@path).downcase)
         end
 
@@ -288,6 +304,7 @@ module Master
         rescue StandardError => e
           File.delete(temporary_path) if defined?(temporary_path) && File.exist?(temporary_path) rescue nil
           raise e
+        end
       end
     end
   end

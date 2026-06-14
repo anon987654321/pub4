@@ -14,7 +14,7 @@ module Master
       RESULT_TRUNCATE = 200
       SECONDS_PER_HOUR = 3600
 
-      JOB_HANDLERS = {.freeze
+      JOB_HANDLERS = {
         "prune_memory" => :prune_memory,
         "check_models" => :check_model_availability,
         "self_test" => :run_self_test,
@@ -70,7 +70,10 @@ module Master
 
           @bus&.publish("heartbeat:run", job: name)
           result = execute_job(job)
-          @state[name] = { "last_run" => now, "result" => result.to_s[0, RESULT_TRUNCATE] }
+          @state[name] = @state.fetch(name, {}).merge(
+            "last_run" => now,
+            "result" => result.to_s[0, RESULT_TRUNCATE]
+          )
           results << { name: name, result: result }
         end
 
@@ -125,7 +128,20 @@ module Master
 
         summary = result.value!
         @bus&.publish("heartbeat:self_test", violations: summary.violation_count, checks: summary.to_h)
+        publish_scan_metrics(summary)
         summary.line
+      end
+
+      def publish_scan_metrics(summary)
+        if summary.violation_count.zero?
+          @state["self_test"] = @state.fetch("self_test", {}).merge("last_fixed" => Time.now.to_i)
+          @bus&.publish("heartbeat:scan_clean", violations: 0, last_fixed: @state.dig("self_test", "last_fixed"))
+          return
+        end
+
+        @bus&.publish("heartbeat:violations",
+          violations: summary.violation_count,
+          last_fixed: @state.dig("self_test", "last_fixed"))
       end
 
       def prune_undo_journal

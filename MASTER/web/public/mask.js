@@ -29,7 +29,7 @@ const state = {
   frame: 0
 };
 
-let internalW = 480, internalH = 270;
+const internalW = 480, internalH = 270;
 
 const ctx = canvas.getContext("2d", { alpha: true });
 const particles = [];

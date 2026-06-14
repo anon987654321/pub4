@@ -11,7 +11,7 @@ module Master
       TEXT_NAMES = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
       SKIP_SEGS = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
 
-      def system_commands(agent, diag, root)
+      def system_commands(agent:, diag:, root:)
         {
           "orient" => cmd(:dispatch_orient, root),
           "explain" => ->(_ctx) { dispatch_orient(root, "") },
@@ -20,34 +20,36 @@ module Master
           "commit" => ->(_ctx) { dispatch_commit(agent, root) },
           "snapshot" => ->(_ctx) { dispatch_snapshot(root) },
           "diag" => ->(ctx) { diag ? diag.render(ctx[:args].to_s.strip) : "diag: not configured" },
-          "reload" => ->(_ctx) { "reload: not supported in this context" },
+          "reload" => ->(_ctx) { "reload: not supported in this context" }
         }
       end
 
-      ORIENT_FILES = {.freeze
+      ORIENT_FILES = {
         "soul" => ["data/soul.yml", "constitution: axioms, voice, persona, prompt order"],
         "rules" => ["data/rules.yml", "universal cross-disciplinary rules"],
         "style" => ["data/ruby_style.yml", "ruby/shell/git/css/html/typography idioms"],
         "workflow" => ["data/workflow.yml", "agent loops, pipeline, council, gates"],
         "orders" => ["data/standing_orders.yml", "event triggers and standing operating procedures"],
         "patterns" => ["data/patterns.yml", "gh/openbsd/zsh tool idioms"],
-        "openbsd" => ["data/openbsd.yml", "pf/nsd/httpd/relayd config validators"],
+        "openbsd" => ["data/openbsd.yml", "pf/nsd/httpd/relayd config validators"]
       }.freeze
 
       def dispatch_orient(root, arg)
         return cat_orient(root, arg) unless arg.empty?
+        [
           "MASTER — constitutional AI runtime for any text artifact",
           "modules: now · loop · judge · voice · ground · reach · trace",
           "pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render",
           "",
           "constitution:",
-          *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{path.ljust(28)} #{desc}" },
+          *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{path.ljust(28)} #{desc}" }
         ].join("\n")
       end
 
       def cat_orient(root, arg)
         entry = ORIENT_FILES[arg]
         return "unknown: #{arg} (try: #{ORIENT_FILES.keys.join(", ")})" unless entry
+        full = File.join(root, entry[0])
         File.exist?(full) ? File.read(full) : "missing: #{full}"
       end
 
@@ -58,6 +60,7 @@ module Master
         tree_lines = []
         walker = lambda do |dir, level|
           return if level > depth || tree_lines.size >= cap
+          Dir.children(dir).sort.each do |name|
             break if tree_lines.size >= cap
             next if name.start_with?(".") || SKIP_SEGS.include?(name)
             path = File.join(dir, name)
@@ -81,6 +84,7 @@ module Master
         diff, = Open3.capture2e("git", "-C", root, "diff", "--cached", "--stat")
         diff, = Open3.capture2e("git", "-C", root, "diff", "--stat") if diff.strip.empty?
         return "nothing to commit" if diff.strip.empty?
+        prompt = "Write a concise git commit message (1 line, imperative mood) for:\n#{diff}"
         commit_message = agent.ask_once(prompt).to_s.strip.lines.first.to_s.strip
         Open3.capture2e("git", "-C", root, "add", "-u")
         out, = Open3.capture2e("git", "-C", root, "commit", "-m", commit_message)
@@ -91,13 +95,14 @@ module Master
         purge_snapshot_gists
         [
           publish_snapshot(root, "MASTER"),
-          publish_snapshot(File.expand_path("../DEPLOY", root), "DEPLOY"),
+          publish_snapshot(File.expand_path("../DEPLOY", root), "DEPLOY")
         ].join("\n")
       end
 
       def purge_snapshot_gists
         list, status = Open3.capture2e("gh", "gist", "list", "--limit", "100", "--public")
         return unless status.success?
+        list.lines.each do |line|
           id = line.split.first
           next unless line.include?("snapshot")
           Open3.capture2e("gh", "gist", "delete", "--yes", id) if id
@@ -108,6 +113,7 @@ module Master
 
       def publish_snapshot(target, label)
         return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
+        skip      = ->(rel) { rel.split("/").any? { |s| SKIP_SEGS.include?(s) } }
         text_file = ->(f) { TEXT_EXTS.include?(File.extname(f).downcase) || TEXT_NAMES.include?(File.basename(f)) }
         all   = Dir.glob(File.join(target, "**", "*"))
                    .reject { |f| File.basename(f).start_with?(".") }

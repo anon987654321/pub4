@@ -25,6 +25,19 @@ class TestFixLoopOscillation < Minitest::Test
     def scan(_path) = @violations.dup
   end
 
+  class SequenceScanner
+    def initialize(scans)
+      @scans = scans
+      @index = 0
+    end
+
+    def scan(_path)
+      scan = @scans.fetch(@index) { @scans.last }
+      @index += 1
+      scan.dup
+    end
+  end
+
   # Agent with an open circuit — forces LLM pass to be skipped so
   # violations never clear, making oscillation observable in two passes.
   class OpenCircuitBreaker
@@ -39,6 +52,36 @@ class TestFixLoopOscillation < Minitest::Test
     def dirty?(_) = false
     def add_all = nil
     def commit(_) = nil
+  end
+
+  class CountingFixLoop < Master::Loop::FixLoop
+    attr_reader :run_count
+
+    def initialize(...)
+      super
+      @run_count = 0
+    end
+
+    def run(_target)
+      @run_count += 1
+      Master::Result.ok("cycle #{@run_count}")
+    end
+  end
+
+  class CrashThenHaltFixLoop < Master::Loop::FixLoop
+    attr_reader :run_count
+
+    def initialize(...)
+      super
+      @run_count = 0
+    end
+
+    def run(_target)
+      @run_count += 1
+      raise "first cycle failed" if @run_count == 1
+
+      halt!(reason: "test complete")
+    end
   end
 
   StubRule = Struct.new(:id, :severity)
@@ -64,12 +107,25 @@ class TestFixLoopOscillation < Minitest::Test
     )
   end
 
+  def build_loop_with_scanner(scanner)
+    Master::Loop::FixLoop.new(
+      rules: [StubRule.new("TEST_RULE", :warning)],
+      agent: OpenCircuitAgent.new,
+      scanner:,
+      root: @root,
+      bus: @bus,
+      git: StubGit.new
+    )
+  end
+
   def test_oscillation_fires_when_violation_set_repeats
     # Pass 1: snapshot recorded. Pass 2: same snapshot -> oscillation break.
     loop = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
     result = loop.run(@root)
 
     assert result.ok?
+    pass_start = @bus.events.find { |e| e[:event] == "fix_loop:pass_start" }
+    assert_equal 1, pass_start[:payload][:file_count]
     osc = @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
     assert_equal 1, osc.size
     assert_equal 1, osc.first[:payload][:violations]
@@ -97,6 +153,56 @@ class TestFixLoopOscillation < Minitest::Test
     assert_equal 1, osc.size
   end
 
+  def test_cycle_detector_fires_when_same_violation_recurs_without_identical_snapshot
+    persistent = { rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "still here" }
+    scans = [
+      [persistent],
+      [persistent, { rule: "TEST_RULE", file: "dummy.yml", line: 2, message: "new" }],
+      [persistent, { rule: "TEST_RULE", file: "dummy.yml", line: 3, message: "newer" }]
+    ]
+    loop = build_loop_with_scanner(SequenceScanner.new(scans))
+    loop.run(@root, max_passes: 5)
+
+    cycles = @bus.events.select { |e| e[:event] == "fix_loop:cycle_detected" }
+    assert_equal 1, cycles.size
+    assert_equal 3, cycles.first[:payload][:threshold]
+    assert_equal persistent, cycles.first[:payload][:violation]
+  end
+
+  def test_run_forever_stops_after_max_cycles
+    loop = CountingFixLoop.new(
+      rules: [StubRule.new("TEST_RULE", :warning)],
+      agent: OpenCircuitAgent.new,
+      scanner: ConstantScanner.new([]),
+      root: @root,
+      bus: @bus,
+      git: StubGit.new
+    )
+    loop.run_forever(@root, max_cycles: 2, startup_delay: 0, idle_sleep: 0)
+
+    assert_equal 2, loop.run_count
+    max_cycles = @bus.events.select { |e| e[:event] == "fix_loop:max_cycles" }
+    assert_equal 1, max_cycles.size
+    assert_equal 2, max_cycles.first[:payload][:cycles]
+  end
+
+  def test_run_forever_continues_after_cycle_error
+    loop = CrashThenHaltFixLoop.new(
+      rules: [StubRule.new("TEST_RULE", :warning)],
+      agent: OpenCircuitAgent.new,
+      scanner: ConstantScanner.new([]),
+      root: @root,
+      bus: @bus,
+      git: StubGit.new
+    )
+    loop.run_forever(@root, max_cycles: 3, startup_delay: 0, idle_sleep: 0, cooldown_sleep: 0)
+
+    assert_equal 2, loop.run_count
+    errors = @bus.events.select { |e| e[:event] == "fix_loop:error" }
+    assert_equal 1, errors.size
+    assert_match(/first cycle failed/, errors.first[:payload][:error])
+  end
+
   def test_halt_blocks_fix_loop_run
     loop = build_loop([])
 
@@ -108,5 +214,36 @@ class TestFixLoopOscillation < Minitest::Test
     assert_equal :policy, result.category
     assert_match(/self_violation 2 violations/, result.message)
     assert @bus.events.any? { |event| event[:event] == "fix_loop:halt" }
+  end
+
+  def test_fix_loop_streams_per_file_scan_progress
+    loop = build_loop([{ rule: "TEST_RULE", line: 1, message: "boom" }])
+
+    out, = capture_io { loop.preview(@root) }
+
+    assert_includes out, "scan: dummy.yml 1 violation(s)"
+    assert @bus.events.any? { |event|
+      event[:event] == "fix_loop:scan_progress" &&
+        event[:payload][:file] == "dummy.yml" &&
+        event[:payload][:count] == 1
+    }
+  end
+
+  def test_collect_files_skips_binary_files
+    init_git_repo(@root)
+    text_path = File.join(@root, "tracked.txt")
+    binary_path = File.join(@root, "blob.bin")
+    File.write(text_path, "hello\n")
+    File.binwrite(binary_path, "\x00\x01\x02")
+    system("git", "-C", @root, "add", ".")
+
+    files = build_loop([]).send(:collect_files, @root)
+
+    assert_includes files, text_path
+    refute_includes files, binary_path
+  end
+
+  def init_git_repo(root)
+    system("git", "-C", root, "init", "-q")
   end
 end

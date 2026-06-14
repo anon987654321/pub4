@@ -5,7 +5,7 @@ module Master
     module ToolApprovalPolicy
       MODES = %i[plan ask act auto].freeze
 
-      MODE_RULES = {.freeze
+      MODE_RULES = {
         plan: { writes: false, commands: :read_only, description: "read-only planning" },
         ask: { writes: :confirm, commands: :confirm_risky, description: "ask before mutation or risky command" },
         act: { writes: true, commands: :sandboxed, description: "act with sandbox policy" },

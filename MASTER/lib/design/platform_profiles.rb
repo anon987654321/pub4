@@ -3,7 +3,7 @@
 module Master
   module Design
     module PlatformProfiles
-      PROFILES = {.freeze
+      PROFILES = {
         brutal_minimal: {
           philosophy: "content-first, invisible design, delete anything that does not improve readability",
           layout: %w[single_column semantic_html system_fonts black_white max_65ch],

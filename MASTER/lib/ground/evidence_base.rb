@@ -3,7 +3,7 @@
 module Master
   module Ground
     module EvidenceBase
-      THRESHOLDS = {.freeze
+      THRESHOLDS = {
         clone_similarity: 0.70,
         duplicate_min_tokens: 100,
         semantic_clone_f1_target: 0.90,
@@ -38,7 +38,7 @@ module Master
         output_verification,
       ].freeze
 
-      OUTPUT_POLICY = {.freeze
+      OUTPUT_POLICY = {
         edit_format: :unified_diff,
         avoid_line_numbers: true,
         prefer_function_level_edits: true,
@@ -46,7 +46,7 @@ module Master
         preserve_system_message: true,
       }.freeze
 
-      VERIFICATION_POLICY = {.freeze
+      VERIFICATION_POLICY = {
         chain_of_verification: %i[baseline verification_questions independent_check final_revision],
         semantic_entropy: { samples: THRESHOLDS[:semantic_entropy_samples], cluster_by: :meaning },
         self_consistency: { samples: THRESHOLDS[:self_consistency_samples], vote: :majority },

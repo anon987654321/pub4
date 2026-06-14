@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-require "digest"
 require "etc"
 require "open3"
-require "prism"
+require_relative "file_processor"
 
 module Master
   module Judge
@@ -11,8 +10,8 @@ module Master
       class Scanner
         POOL_SIZE = [Etc.nprocessors, 8].min.freeze
         SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
-        RUBY_EXT = %w[.rb .rake .gemspec].freeze
-        FORBIDDEN_DEPTHS = %i[quick standard shallow].freeze
+        SCAN_SINCE_EXT = /\.(rb|rake|gemspec|erb|yml|yaml|js|css|sh|zsh)\z/.freeze
+        REQUIRED_DEPTH = :deep
 
         attr_reader :rules
 
@@ -21,25 +20,20 @@ module Master
           @bus = event_bus
           @mutex = Mutex.new
           @file_sleep_s = file_sleep_s.to_f
+          @file_processor = FileProcessor.new(event_bus: event_bus)
         end
 
+        # Preconditions: path must exist and scans must run at depth :deep.
+        # MASTER is constitutionally deep-scan-only; callers needing a preview
+        # should filter findings after scanning instead of weakening depth.
         def scan(path, depth: :deep, rules: nil)
           validate_depth!(depth)
-          code = read_file(path)
-          return code if code.err?
-
-          ast = parse_ruby(code.value!, path)
-          findings = apply_rules(code.value!, ast, path, rules || active_rules(depth))
-          publish_scan_result(path, depth, findings)
-          Result.ok(findings)
-        rescue StandardError => e
-          @bus&.publish("scan:error", path:, error: e.message)
-          Result.err("scan failed: #{e.message}", category: :infrastructure)
+          @file_processor.call(path: path, depth: depth, rules: rules || active_rules(depth))
         end
 
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
           validate_depth!(depth)
-          paths   = Dir.glob(File.join(dir, glob)).sort
+          paths   = Dir.glob(File.join(dir, glob))
           Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
         rescue StandardError => e
           Result.err("scan_dir: #{e.message}", category: :infrastructure)
@@ -47,10 +41,13 @@ module Master
 
         def scan_since(ref = "HEAD~1", dir: ".", depth: :deep, stream: false)
           validate_depth!(depth)
-          out, _, status = Open3.capture3("git", "-C", dir, "diff", "--name-only", "#{ref}...HEAD")
-          return Result.err("git diff failed", category: :validation) unless status.success?
-                    .map { |rel| File.join(dir, rel) }
-                    .select { |p| File.exist?(p) && File.extname(p).match?(/\.(rb|erb|yml|js|css|sh|zsh)\z/) }
+          repo_root = git_toplevel(dir)
+          return Result.err("git root failed", category: :validation) unless repo_root
+
+          changed = changed_since(ref, repo_root)
+          return changed if changed.err?
+
+          paths = scan_since_paths(changed.value!, dir:, repo_root:)
           Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
         rescue StandardError => e
           Result.err("scan_since: #{e.message}", category: :infrastructure)
@@ -69,40 +66,39 @@ module Master
         private
 
         def validate_depth!(depth)
-          return unless FORBIDDEN_DEPTHS.include?(depth)
+          return if depth == REQUIRED_DEPTH
 
           raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)"
-
-        def read_file(path)
-          return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
-
-          code = File.read(path, encoding: "UTF-8")
-          @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
-          Result.ok(code)
         end
 
-        def parse_ruby(code, path)
-          return unless RUBY_EXT.include?(File.extname(path))
-          result.success? ? result.value : nil
-        rescue StandardError => e
-          @bus&.publish("scan:parse_error", path:, error: e.message)
-          nil
+        def git_toplevel(dir)
+          out, _, status = Open3.capture3("git", "-C", dir, "rev-parse", "--show-toplevel")
+          status.success? ? out.strip : nil
         end
 
-        def apply_rules(code, ast, path, rule_set)
-          rule_set.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
+        def changed_since(ref, repo_root)
+          out, _, status = Open3.capture3("git", "-C", repo_root, "diff", "--name-only", "#{ref}...HEAD")
+          return Result.err("git diff failed", category: :validation) unless status.success?
+
+          Result.ok(out.lines.map(&:strip).reject(&:empty?))
         end
 
-        def run_rule(rule:, code:, ast:, path:)
-          if ast && rule.respond_to?(:check_ast)
-            rule.check_ast(ast, code, path:)
-          else
-            rule.check(code, path:)
-          end
+        def scan_since_paths(changed, dir:, repo_root:)
+          scan_root = File.expand_path(dir)
+          master_lib = File.join(repo_root, "MASTER", "lib")
+          changed.filter_map do |rel|
+            path = File.expand_path(rel, repo_root)
+            next unless File.exist?(path) && File.extname(path).match?(SCAN_SINCE_EXT)
+            next unless under_path?(path, scan_root) || under_path?(path, master_lib)
+
+            path
+          end.uniq
         end
 
-        def publish_scan_result(path, depth, findings)
-          @bus&.publish("scan:complete", path:, depth:, count: findings.size)
+        def under_path?(path, root)
+          expanded_path = File.expand_path(path)
+          expanded_root = File.expand_path(root)
+          expanded_path == expanded_root || expanded_path.start_with?("#{expanded_root}#{File::SEPARATOR}")
         end
 
         def parallel_map(items)
@@ -128,16 +124,18 @@ module Master
         def scan_one(dir:, path:, depth:, stream:, index: nil)
           sleep @file_sleep_s if @file_sleep_s > 0
           file_result = scan(path, depth:)
-          stream_progress(dir, path, file_result) if stream
+          stream_progress(dir:, path:, file_result:) if stream
           [path, file_result]
         rescue StandardError => e
           @bus&.publish("scanner:thread_error", path:, index:, error: e.message)
           [path, Result.err(e.message, category: :infrastructure)]
         end
 
-        def stream_progress(dir, path, file_result)
+        def stream_progress(dir:, path:, file_result:)
           return unless file_result.ok?
+          count = file_result.value!.size
           return unless count.positive?
+          rel = path.sub(dir, "").delete_prefix("/")
           $stdout.puts "scan: #{rel} #{count} violation(s)"
           $stdout.flush
         end
@@ -154,7 +152,8 @@ module Master
         def active_rules(depth)
           allowed = depth_rules[depth.to_s]
           return @rules if allowed.nil? || allowed == ["all"] || allowed == :all
-            allowed.include?(r.class.name&.split("::")&.last) || allowed.include?(r.id),
+          @rules.select { |r|
+            allowed.include?(r.class.name&.split("::")&.last) || allowed.include?(r.id)
           }
         end
 
@@ -169,9 +168,10 @@ module Master
         def should_autofix?(rule_id, observed_conf)
           t = prediction_thresholds[rule_id.to_s] || prediction_thresholds[rule_id]
           return true unless t && t["confidence"]
+          observed_conf.to_f >= t["confidence"].to_f
         end
 
-        # HALLUCINATION rule: lexical/semantic detector for claim_without_reading; deferred pending council wiring.
+        # HALLUCINATION rule uses lexical and semantic checks for claim_without_reading.
       end
     end
   end

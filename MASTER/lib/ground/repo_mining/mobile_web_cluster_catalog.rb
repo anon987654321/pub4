@@ -6,7 +6,7 @@ module Master
       class MobileWebClusterCatalog
         Entry = Data.define(:repo, :pattern, :why, :risk, :tags)
 
-        CATALOG = [.freeze
+        CATALOG = [
           Entry.new(
             repo: "hotwired/turbo",
             pattern: :turbo_core,
@@ -79,7 +79,7 @@ module Master
           ),
         ].freeze
 
-        INTENT_TAG_MAP = {.freeze
+        INTENT_TAG_MAP = {
           refactor_existing: %i[jquery_replacement stimulus components hotwire lifecycle],
           audit_rails_pwa: %i[pwa service_worker cache mobile_first touch_targets],
           generate_rails_pwa: %i[rails_8 hotwire pwa mobile importmap],

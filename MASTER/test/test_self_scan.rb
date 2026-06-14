@@ -97,9 +97,28 @@ class TestSelfScan < Minitest::Test
     end
   end
 
+  def test_master_lib_self_scan_has_zero_violations
+    Master::Judge::Scan::RuleDSL
+    scanner = Master::Judge::Scan::Scanner.new
+    Master::Judge::Scan::Rule.registry.select(&:auto_build?).each { |klass| scanner.add_rule(klass.new) }
+
+    result = Master::Judge::Scan::SelfScan.new(scanner:, root: Master::ROOT).call
+
+    assert result.ok?
+    assert_equal 0, result.value!.violation_count, format_self_scan_failures(result.value!.pairs)
+  end
+
   private
 
   def finding(rule)
     Finding.new(rule:, message: "violation", line: 1, severity: :warning, fix: nil, tags: [])
+  end
+
+  def format_self_scan_failures(pairs)
+    pairs.flat_map do |path, file_result|
+      Master::Result.wrap(file_result).value_or([]).map do |finding|
+        "#{path}:#{finding[:line]} #{finding[:rule]} #{finding[:message]}"
+      end
+    end.first(20).join("\n")
   end
 end

@@ -272,6 +272,7 @@ module Master
             argv = ["generate"] + Shellwords.split(query.to_s)
             out, st = Open3.capture2e(RbConfig.ruby, script, *argv, chdir: repo_root)
             return st.success? ? out.strip : "repligen generate error: #{out.strip}"
+          end
           result = @tool.call(action: action.to_s, query: query&.to_s, limit: limit&.to_i)
           result.ok? ? result.value! : "Error: #{result.message}"
         end

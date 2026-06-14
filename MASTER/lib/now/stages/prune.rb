@@ -14,7 +14,7 @@ module Master
         BULLET_RE = /^\s*[-*+]\s+/
         NUMBERED_RE = /^\s*\d+\.\s+/
         HR_RE = /^-{3,}\s*$/
-        LINK_RE = /\[([^\]]+)\]\([^\)]+\)/
+        LINK_RE = /\[([^\]]+)\]\([^)]+\)/
         CLAIM_RE = /\b(?:completed|done|fixed|implemented|changed|updated|edited|modified|created|deleted|removed)\b/i.freeze
         DIFF_EVIDENCE_RE = /^(?:diff --git|---\s|\+\+\+\s|@@\s)/.freeze
         COMMAND_EVIDENCE_RE = /\b(?:command output|exit code|process exited|ran:|verification:|test(?:s)?\s+(?:passed|failed))\b/i.freeze
@@ -43,7 +43,7 @@ module Master
 
         def prune_mixed(text)
           segments = text.split(FENCE_RE)
-          segments.map { |seg| 
+          segments.map { |seg|
             seg.start_with?("```") ? seg : strip_all(seg)
           }.join
         end
@@ -63,9 +63,9 @@ module Master
           end
 
           cleaned = cleaned.gsub(HEADER_RE, "")
-          cleaned = cleaned.gsub(BOLD_RE, '\\1')
-          cleaned = cleaned.gsub(ITALIC_RE, '\\1')
-          cleaned = cleaned.gsub(LINK_RE, '\\1')
+          cleaned = cleaned.gsub(BOLD_RE, '\1')
+          cleaned = cleaned.gsub(ITALIC_RE, '\1')
+          cleaned = cleaned.gsub(LINK_RE, '\1')
           cleaned = cleaned.gsub(HR_RE, "")
           cleaned = cleaned.gsub(BULLET_RE, "")
           cleaned = cleaned.gsub(NUMBERED_RE, "")

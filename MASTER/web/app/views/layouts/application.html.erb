@@ -52,6 +52,9 @@
     <main id="app-shell" aria-label="MASTER content">
       <%= yield %>
     </main>
+    <script>
+      window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v1").to_json.html_safe %>;
+    </script>
     <script src="/topology_registry.js" defer></script>
     <script src="/particle_kernel.js" defer></script>
     <script type="module" src="/face.js"></script>
