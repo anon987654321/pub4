@@ -1,15 +1,13 @@
 <% content_for :title, "Hjerterom kart" %>
 <% content_for :description, "Fullskjerm kart over mat, ressurser og hjelp i Åsane." %>
-<% if @mapbox_token.present? %>
-  <% content_for :head do %>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet">
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.js"></script>
-  <% end %>
+<% content_for :head do %>
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
 <% end %>
 
-<section class="map-home" data-mapbox-token="<%= @mapbox_token %>" data-map-points="<%= json_escape(@map_points.to_json) %>">
+<section class="map-home" data-controller="tv-player map" data-tv-player-auto-wake-lock-value="true" data-map-points-value="<%= json_escape(@map_points.to_json) %>" data-map-center-lat-value="60.4669" data-map-center-lng-value="5.3256" data-map-zoom-value="11.7" data-map-style-url-value="https://tiles.openfreemap.org/styles/liberty">
   <template id="hjerterom-logo-template"><%= render "shared/logo" %></template>
-  <div id="hjerterom-map" class="map-home__canvas" aria-label="Kart over Hjerterom Åsane"></div>
+  <div id="hjerterom-map" class="map-home__canvas" data-map-target="canvas" aria-label="Kart over Hjerterom Åsane"></div>
 
   <%= link_to root_path, class: "map-home__logo", aria: { label: "Hjerterom home" } do %>
     <%= render "shared/logo" %>

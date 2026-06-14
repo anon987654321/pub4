@@ -1,4 +1,4 @@
-<article class="item-card" id="<%= dom_id(item) %>" data-category="<%= item.category %>">
+<article class="item-card" id="<%= dom_id(item) %>" data-id="<%= item.id %>" data-category="<%= item.category %>" data-controller="offline-feed" data-offline-feed-key-value="amber-items" data-offline-feed-title-value="<%= item.title %>" data-offline-feed-url-value="<%= item_path(item) %>" data-offline-feed-meta-value="<%= [item.category, item.color, item.brand].compact.join(" · ") %>">
   <% if item.photos.attached? %>
     <%= responsive_image_tag item.photos.first, alt: item.title, widths: [240, 320, 480], sizes: "(max-width: 768px) 50vw, 240px", class: "item-photo" %>
   <% end %>

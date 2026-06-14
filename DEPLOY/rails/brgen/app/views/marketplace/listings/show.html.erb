@@ -45,9 +45,10 @@
     <p style="font-size:18px;font-weight:800;margin-bottom:12px">Make an offer</p>
     <p class="dim">Send a short message to the seller. They can accept or decline from this listing page.</p>
     <div class="form-wrap" style="padding:0">
-      <%= form_with model: @order, url: marketplace_listing_orders_path(@listing) do |f| %>
-        <div class="field"><%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3 %></div>
-        <div class="field"><%= f.submit "Send offer", class: "btn btn-primary" %></div>
+      <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>
+      <%= form_with(model: @order, url: marketplace_listing_orders_path(@listing), data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
+        <div class="field"><%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3, data: { controller: "char-counter", "char-counter-max-value": 280 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+        <div class="field"><%= f.submit "Send offer", class: "btn btn-primary" %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>
       <% end %>
     </div>
   </div>

@@ -1,4 +1,4 @@
-<%= turbo_frame_tag dom_id(message) do %>
+<div id="<%= dom_id(message) %>">
 <article data-from="<%= message.sender == Current.user ? "self" : "peer" %>">
   <header>
     <span><%= message.sender.username %></span>
@@ -6,14 +6,13 @@
   </header>
   <p><%= message.content %></p>
   <% if message.attachment.attached? %>
-    <% case message.message_type %>
-    <% when "image" %>
-      <%= image_tag message.attachment %>
-    <% when "audio" %>
+    <% if message.message_type == "image" %>
+      <%= lazy_image_tag message.attachment, alt: message.attachment.filename.base, blurhash: message.attachment.try(:metadata).try(:[], "blurhash") %>
+    <% elsif message.message_type == "audio" %>
       <%= audio_tag message.attachment, controls: true %>
     <% else %>
       <%= link_to message.attachment.filename, message.attachment %>
     <% end %>
   <% end %>
 </article>
-<% end %>
+</div>

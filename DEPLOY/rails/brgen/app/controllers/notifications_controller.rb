@@ -24,4 +24,8 @@ class NotificationsController < ApplicationController
       f.turbo_stream
     end
   end
+
+  def badge
+    render json: { unread_count: Current.user.notifications.unread.count }
+  end
 end

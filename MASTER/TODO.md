@@ -2512,21 +2512,21 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA71 face: drag face to corner — pin it small while reading long output (PiP mode)
 - [ ] FA72 face: "applause" Easter egg — type "wow" and particles burst confetti pattern for 1s
 - [x] FA73 face: "sleep" command — face dims to 5% alpha, TTS mutes, wakes on any input
-- [ ] FA74 face: share face state as URL param — mood/model/voice encoded, shareable link
-- [ ] FA75 face: copy-to-clipboard button appears on hover over any assistant message
+- [x] FA74 face: share face state as URL param — mood/model/voice encoded, shareable link
+- [x] FA75 face: copy-to-clipboard button appears on hover over any assistant message
 - [ ] FA76 face: reaction emojis on message — tap to send 👍/🔁/🗑 to rate/retry/delete answer
 - [ ] FA77 face: "explain simpler" tap on any response — re-asks with Flesch–Kincaid grade 6 constraint
 - [ ] FA78 face: "go deeper" tap — re-asks with expanded detail and cites sources
-- [ ] FA79 face: streamed response has a pause/resume button mid-stream
-- [ ] FA80 face: typing indicator animation while streaming — 3 particle dots pulse in sequence
-- [ ] FA81 face: message timestamps shown on hover
-- [ ] FA82 face: session word count shown in corner — "1.2k words today"
-- [ ] FA83 face: "focus mode" — hide all UI except face and input, full-screen canvas
-- [ ] FA84 face: dark/light toggle persisted to localStorage (currently always black void)
-- [ ] FA85 face: font size control via pinch or slider — rem scale 0.85–1.4
-- [ ] FA86 face: haptic feedback on mobile send — navigator.vibrate(30) on submit
+- [x] FA79 face: streamed response has a pause/resume button mid-stream
+- [x] FA80 face: typing indicator animation while streaming — 3 particle dots pulse in sequence
+- [x] FA81 face: message timestamps shown on hover
+- [x] FA82 face: session word count shown in corner — "1.2k words today"
+- [x] FA83 face: "focus mode" — hide all UI except face and input, full-screen canvas
+- [x] FA84 face: dark/light toggle persisted to localStorage (currently always black void)
+- [x] FA85 face: font size control via pinch or slider — rem scale 0.85–1.4
+- [x] FA86 face: haptic feedback on mobile send — navigator.vibrate(30) on submit
 - [ ] FA87 face: confetti on first correct answer in quiz mode (see FA-D)
-- [ ] FA88 face: session timer shown optionally — "12m 34s" elapsed since first message
+- [x] FA88 face: session timer shown optionally — "12m 34s" elapsed since first message
 
 ### FA-D: Educational & quiz modes
 
@@ -2553,22 +2553,22 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### FA-E: Personality & expression
 
-- [ ] FA109 face: soul drift visible — soul.yml drift score shown as particle density variation
-- [ ] FA110 face: mood history sparkline — tiny bar chart of last 20 mood states in corner
-- [ ] FA111 face: "curious" mood particle behaviour — particles lean toward the user's cursor
-- [ ] FA112 face: "weary" mood — particles sag downward 0.04 units, slower curl noise
-- [ ] FA113 face: model identity badge — tiny text "claude" / "deepseek" / "gpt" near face, fades after 3s
-- [ ] FA114 face: voice character blurb on voice change — one spoken line in new voice: "I'm Christopher. Let's work."
-- [ ] FA115 face: council vote tally displayed — pass/veto counts appear as brief text overlay
+- [x] FA109 face: soul drift visible — soul.yml drift score shown as particle density variation
+- [x] FA110 face: mood history sparkline — tiny bar chart of last 20 mood states in corner
+- [x] FA111 face: "curious" mood particle behaviour — particles lean toward the user's cursor
+- [x] FA112 face: "weary" mood — particles sag downward 0.04 units, slower curl noise
+- [x] FA113 face: model identity badge — tiny text "claude" / "deepseek" / "gpt" near face, fades after 3s
+- [x] FA114 face: voice character blurb on voice change — one spoken line in new voice: "I'm Christopher. Let's work."
+- [x] FA115 face: council vote tally displayed — pass/veto counts appear as brief text overlay
 - [x] FA116 face: constitution violation flash — red particle flash (uFlash) already wired, expose via ABSOLUTE guard event
-- [ ] FA117 face: pipeline stage indicator — tiny label "routing…" "scanning…" fades in/out per stage
-- [ ] FA118 face: model switch animation — brief dissolve/reform of face in new tint (currently all white; future per-model tint opt-in)
-- [ ] FA119 face: "I don't know" response = particles form question-mark shape momentarily
-- [ ] FA120 face: laughter detection — if response contains "(ha" or emoji, particles do a quick jitter burst
-- [ ] FA121 face: multi-turn memory indicator — small counter "remembers N things from today" on hover
-- [ ] FA122 face: `/whoami` — face reads aloud its own soul.yml persona summary
-- [ ] FA123 face: seasonal particle tints — opt-in; Halloween = amber, Midsummer = gold, Winter = ice-blue
-- [ ] FA124 face: reaction to long silence (>90s) — face dims, TTS whispers "still here"
+- [x] FA117 face: pipeline stage indicator — tiny label "routing…" "scanning…" fades in/out per stage
+- [x] FA118 face: model switch animation — brief dissolve/reform of face in new tint (currently all white; future per-model tint opt-in)
+- [x] FA119 face: "I don't know" response = particles form question-mark shape momentarily
+- [x] FA120 face: laughter detection — if response contains "(ha" or emoji, particles do a quick jitter burst
+- [x] FA121 face: multi-turn memory indicator — small counter "remembers N things from today" on hover
+- [x] FA122 face: `/whoami` — face reads aloud its own soul.yml persona summary
+- [x] FA123 face: seasonal particle tints — opt-in; Halloween = amber, Midsummer = gold, Winter = ice-blue
+- [x] FA124 face: reaction to long silence (>90s) — face dims, TTS whispers "still here"
 
 ### FA-F: Performance & reliability
 
@@ -2580,9 +2580,9 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [x] FA130 face: progressive enhancement — 2D canvas fallback already exists; add SVG fallback for no-canvas
 - [ ] FA131 tts: exponential backoff on TTS 503 — retry up to 3× before showing silent fallback text
 - [ ] FA132 tts: connection health ping /up every 60s; show reconnect banner if down, auto-retry
-- [ ] FA133 face: error boundary — uncaught JS exception shows degraded text UI, never blank screen
+- [x] FA133 face: error boundary — uncaught JS exception shows degraded text UI, never blank screen
 - [ ] FA134 face: memory leak guard — dispose Three.js geometries/materials on face swap or page hide
-- [ ] FA135 face: FPS counter toggle (debug overlay) — `?fps=1` query param shows live frame rate
+- [x] FA135 face: FPS counter toggle (debug overlay) — `?fps=1` query param shows live frame rate
 
 ### FA-G: Accessibility
 
@@ -2622,7 +2622,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA166 face: heartbeat pulse — every 3-5s, a single radial pressure wave originates at face center, displaces vertices 0.012 units outward then inward; 280ms cycle
 - [ ] FA167 face: asymmetric eye blink — left eye vertex cluster closes 80ms before right; subtler than synchronised blink
 - [ ] FA168 face: nasolabial animation on vowels — A/O vowels deepen the nasolabial fold by 0.04 Z-offset; facial muscle simulation
-- [ ] FA169 face: depth map hot-reload — /mask command sends URL; face re-samples on next frame; no page reload; enables persona/face swap at runtime
+- [x] FA169 face: depth map hot-reload — /mask command sends URL; face re-samples on next frame; no page reload; enables persona/face swap at runtime
 - [ ] FA170 face: dual-face morph — two depth maps lerped by uMorph uniform (0→1 over 2s); one face dissolves into another; persona transition
 - [ ] FA171 face: noise-seeded personality — each session seeds RNG from session ID; tiny variation in grid offset, tilt, and flicker phase; same code, unique face
 - [ ] FA172 face: exposure response — bright ambient (prefers-color-scheme: light) reduces particle alpha by 40% so face reads in daylight

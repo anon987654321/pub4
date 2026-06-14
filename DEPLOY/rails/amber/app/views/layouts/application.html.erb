@@ -46,7 +46,7 @@
   <%= javascript_importmap_tags %>
   <%= render "shared/minimal_ui" %>
 </head>
-<body class="zen-minimal">
+<body class="zen-minimal" data-controller="hotkey">
 <nav data-turbo-permanent>
   <%= link_to root_path, class: "brand", aria: { label: "Amber home" } do %>
     <%= render "shared/logo" %>
@@ -68,5 +68,6 @@
 </nav>
 <%= render "shared/flash" %>
 <main><%= yield %></main>
+<%= render "shared/install_prompt" %>
 </body>
 </html>

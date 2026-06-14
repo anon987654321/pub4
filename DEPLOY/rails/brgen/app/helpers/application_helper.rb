@@ -1,6 +1,20 @@
 # frozen_string_literal: true
 
 module ApplicationHelper
+  def lazy_image_tag(source, alt:, blurhash: nil, **options)
+    image_options = options.dup
+    image_options[:loading] ||= "lazy"
+    blurhash ||= source.try(:blurhash) || source.try(:blob).try(:blurhash) || source.try(:metadata).try(:[], "blurhash")
+    image_options[:data] = (image_options[:data] || {}).merge(
+      controller: "lazy-image",
+      lazy_image_target: "image",
+      lazy_image_src_value: url_for(source)
+    )
+    image_options[:data][:lazy_image_blurhash_value] = blurhash if blurhash.present?
+
+    image_tag("data:image/gif;base64,R0lGODlhAQABAAAAACw=", alt: alt, **image_options)
+  end
+
   def responsive_image_tag(attachment, alt:, widths: [400, 800, 1_200], sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
     image_options = options.dup
     image_options[:loading] ||= loading

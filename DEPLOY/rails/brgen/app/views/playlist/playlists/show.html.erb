@@ -81,7 +81,13 @@
 <% end %>
 
 <% @tracks.each do |pt| %>
-  <article style="display:flex;align-items:center;justify-content:space-between">
+  <article
+    data-track-id="<%= pt.track.id %>"
+    data-controller="swipe"
+    data-swipe-listen-url-value="<%= playlist_listens_path(track_id: pt.track.id) %>"
+    data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp"
+    style="display:flex;align-items:center;justify-content:space-between"
+  >
     <div>
       <strong><%= pt.track.title %></strong> — <%= pt.track.artist %>
       <span class="dim"> · <%= pt.track.duration_formatted %></span>

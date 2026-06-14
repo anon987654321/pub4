@@ -8,7 +8,7 @@
 <% if @profile.photos.attached? %>
   <div style="display:flex;gap:8px;padding:16px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
     <% @profile.photos.each do |photo| %>
-      <%= image_tag photo, style: "width:96px;height:96px;object-fit:cover;border-radius:6px" %>
+      <%= lazy_image_tag photo, alt: @profile.name, blurhash: photo.try(:metadata).try(:[], "blurhash"), style: "width:96px;height:96px;object-fit:cover;border-radius:6px" %>
     <% end %>
   </div>
 <% end %>

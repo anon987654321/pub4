@@ -1,6 +1,25 @@
 let _dbgFrames = 0;
+const showFps = new URLSearchParams(window.location.search).get('fps') === '1';
+const fpsBadge = showFps ? (() => {
+  const el = document.createElement('div');
+  el.id = 'fps-badge';
+  el.className = 'fps-badge';
+  document.body.appendChild(el);
+  return el;
+})() : null;
+let fpsLastSample = performance.now();
+let fpsSampleFrames = 0;
 function frame(t) {
   _dbgFrames++;
+  if (fpsBadge) {
+    fpsSampleFrames++;
+    if (t - fpsLastSample >= 500) {
+      const fps = (fpsSampleFrames * 1000) / (t - fpsLastSample);
+      fpsBadge.textContent = `${fps.toFixed(0)} fps`;
+      fpsLastSample = t;
+      fpsSampleFrames = 0;
+    }
+  }
   if (!renderer) {
     lastT = t;
     requestAnimationFrame(frame);
@@ -159,6 +178,8 @@ function frame(t) {
     const beatTarget = State.audioBeat || 0;
     faceMat.uniforms.uBeat.value += (beatTarget - faceMat.uniforms.uBeat.value) * 0.35;
     faceMat.uniforms.uBeat.value *= 0.82;
+    const curiousTilt = State.mood === 'curious' ? 1.0 : 0.0;
+    faceMat.uniforms.uTilt.value += (curiousTilt - faceMat.uniforms.uTilt.value) * 0.08;
     faceMat.uniforms.uConfidence.value = State.confidence || 1.0;
     const tremorTarget = faceMat.uniforms.uCurl.value * 0.75;
     faceMat.uniforms.uTremor.value += (tremorTarget - faceMat.uniforms.uTremor.value) * 0.03;
@@ -168,6 +189,12 @@ function frame(t) {
     faceMat.uniforms.uPulseRing.value += (pulseRingTarget - faceMat.uniforms.uPulseRing.value) * 0.12;
     const rainTarget = State.mood === 'weary' ? 1.0 : 0.0;
     faceMat.uniforms.uRain.value += (rainTarget - faceMat.uniforms.uRain.value) * 0.02;
+    const modelSwitch = State.modelSwitch || 0;
+    faceMat.uniforms.uModelSwitch.value += (modelSwitch - faceMat.uniforms.uModelSwitch.value) * 0.12;
+    State.modelSwitch = Math.max(0, modelSwitch * 0.9 - 0.01);
+    const questionPulse = State.questionPulse || 0;
+    faceMat.uniforms.uQuestion.value += (questionPulse - faceMat.uniforms.uQuestion.value) * 0.15;
+    State.questionPulse = Math.max(0, questionPulse * 0.9 - 0.01);
     faceMat.uniforms.uEarPulse.value += ((State.sttActive ? 1.0 : 0.0) - faceMat.uniforms.uEarPulse.value) * 0.08;
     if (State.ripplePhase >= 0) {
       State.ripplePhase = Math.min(1, State.ripplePhase + 0.04);
@@ -192,7 +219,12 @@ function frame(t) {
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
     morphGhost += (morphCurrent - morphGhost) * 0.035;
     faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524;
-    faceMat.uniforms.uExposure.value = window.matchMedia('(prefers-color-scheme: light)').matches ? 0.6 : 1.0;
+    const soulDensity = 0.82 + soulDrift * 0.35;
+    faceMat.uniforms.uExposure.value = (window.matchMedia('(prefers-color-scheme: light)').matches ? 0.6 : 1.0) * soulDensity;
+    const driftEl = document.getElementById('soul-drift');
+    if (driftEl && (_dbgFrames % 30 === 0 || !driftEl.textContent)) {
+      driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;
+    }
     if (!State._lastBeat || t - State._lastBeat > (3000 + Math.random() * 2000)) { State._lastBeat = t; State._heartbeat = 1.0; }
     State._heartbeat = (State._heartbeat || 0) * 0.94;
     faceMat.uniforms.uHeartbeat.value = State._heartbeat || 0;

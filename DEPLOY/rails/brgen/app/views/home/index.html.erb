@@ -17,9 +17,12 @@
 <% end %>
 
 <% content_for :widgets do %>
-  <aside class="sidebar-card">
-    <h3>Communities</h3>
-    <ul>
+  <aside class="sidebar-card" data-controller="toggle" data-toggle-class="hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <h3>Communities</h3>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="click->toggle#toggle" aria-label="Toggle communities">Hide</button>
+    </div>
+    <ul data-toggle-target="item">
       <% @communities.each do |c| %>
         <li><%= link_to c.name, community_path(c) %></li>
       <% end %>
@@ -30,11 +33,12 @@
   </aside>
 <% end %>
 
-<nav class="sort-tabs" aria-label="Sort posts">
-  <span class="sort-tab active" aria-current="page">Hot</span>
-  <%= link_to "Latest", posts_path(sort: "fresh"), class: "sort-tab" %>
+<nav class="sort-tabs" aria-label="Sort posts" role="tablist" data-controller="tabs">
+  <%= link_to "Hot", root_path(anchor: "hot"), class: "sort-tab active", id: "hot-tab", role: "tab", aria: { selected: true }, data: { tabs_target: "tab", tabs_hash_value: "#hot", action: "click->tabs#select" } %>
+  <%= link_to "Latest", posts_path(sort: "fresh", anchor: "latest"), class: "sort-tab", id: "latest-tab", role: "tab", aria: { selected: false }, data: { tabs_target: "tab", tabs_hash_value: "#latest", action: "click->tabs#select" } %>
 </nav>
 
+<section id="feed-panel" role="tabpanel" aria-labelledby="hot-tab" data-tabs-target="panel">
 <% if @posts.any? %>
   <div class="post-grid">
     <% @posts.each do |post| %>
@@ -46,3 +50,4 @@
     <p>No posts yet. <%= authenticated? ? link_to("Create one", new_post_path) : link_to("Sign in to post", new_session_path) %>.</p>
   </section>
 <% end %>
+</section>

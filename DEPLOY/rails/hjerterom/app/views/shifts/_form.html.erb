@@ -1,10 +1,12 @@
-<%= form_with model: [volunteer, shift] do |f| %>
-  <% if shift.errors.any? %>
-    <ul><% shift.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %></ul>
-  <% end %>
-  <p><%= f.label :kind %><%= f.select :kind, Shift.kinds.keys.map { |k| [k.humanize, k] } %></p>
-  <p><%= f.label :starts_at %><%= f.datetime_local_field :starts_at %></p>
-  <p><%= f.label :ends_at %><%= f.datetime_local_field :ends_at %></p>
-  <p><%= f.label :notes %><%= f.text_area :notes, rows: 2 %></p>
-  <p><%= f.submit "Add shift" %></p>
+<%= form_with(model: [volunteer, shift]) do |f| %>
+  <div data-controller="datepicker">
+    <% if shift.errors.any? %>
+      <ul><% shift.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %></ul>
+    <% end %>
+    <p><%= f.label :kind %><%= f.select :kind, Shift.kinds.keys.map { |k| [k.humanize, k] } %></p>
+    <p><%= f.label :starts_at %><%= f.datetime_local_field :starts_at %></p>
+    <p><%= f.label :ends_at %><%= f.datetime_local_field :ends_at %></p>
+    <p><%= f.label :notes %><%= f.text_area :notes, rows: 2 %></p>
+    <p><%= f.submit "Add shift" %></p>
+  </div>
 <% end %>

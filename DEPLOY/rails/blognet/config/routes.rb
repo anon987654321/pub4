@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  get "offline" => "rails/pwa#offline", as: :pwa_offline
+  post "share" => "posts#share", as: :share_post
+
   jobs_constraint = ->(request) { request.cookies["session_id"].present? }
 
   resource  :session
@@ -11,6 +14,7 @@ Rails.application.routes.draw do
       resources :comments, only: %i[create destroy]
     end
   end
+  patch "drafts/:id", to: "drafts#update", as: :draft
 
   root "blogs#index"
   constraints(jobs_constraint) do

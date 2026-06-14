@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  get "offline" => "rails/pwa#offline", as: :pwa_offline
+  post "share" => "items#share", as: :share_item
+
   jobs_constraint = ->(request) { request.cookies["session_id"].present? }
 
   resource :registration, only: %i[new create]
@@ -20,6 +23,7 @@ Rails.application.routes.draw do
       get :shopping_list
     end
   end
+  patch "drafts/:id", to: "drafts#update", as: :draft
 
   resources :outfits do
     collection { get :dressing_room }

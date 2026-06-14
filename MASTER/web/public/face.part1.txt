@@ -29,6 +29,42 @@ const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
 let FACE_PIXEL_SIZE = 0.017;
 let FACE_GLOW_SCALE = 1.18;
+const soulDrift = Math.max(0, Math.min(1, Number(window.MASTER_SOUL_DRIFT || 0)));
+rootBody.dataset.soulDrift = soulDrift.toFixed(3);
+const modelBadge = (() => {
+  let el = document.getElementById('model-badge');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'model-badge';
+    el.className = 'model-badge';
+    document.body.appendChild(el);
+  }
+  return el;
+})();
+let modelBadgeTimer = null;
+const moodHistory = [];
+function showModelBadge(text) {
+  if (!modelBadge) return;
+  modelBadge.textContent = text || '';
+  if (!text) {
+    modelBadge.dataset.visible = '0';
+    return;
+  }
+  modelBadge.dataset.visible = '1';
+  if (modelBadgeTimer) clearTimeout(modelBadgeTimer);
+  modelBadgeTimer = setTimeout(() => {
+    modelBadge.dataset.visible = '0';
+    modelBadgeTimer = null;
+  }, 3000);
+}
+function updateMoodHistory(mood) {
+  if (!mood) return;
+  moodHistory.push(mood);
+  while (moodHistory.length > 20) moodHistory.shift();
+  const bar = document.getElementById('mood-sparkline');
+  if (!bar) return;
+  bar.innerHTML = moodHistory.map(entry => `<i data-mood="${entry}"></i>`).join('');
+}
 
 function renderNoCanvasFallback() {
   if (!cv || typeof cv.getContext === 'function') return false;
@@ -65,10 +101,59 @@ function renderNoCanvasFallback() {
 renderNoCanvasFallback();
 
 const FONT_KEY = 'master:font';
+const THEME_KEY = 'master:theme';
+const FOCUS_KEY = 'master:focus';
+const SCALE_KEY = 'master:ui-scale';
+(function initTheme() {
+  const theme = localStorage.getItem(THEME_KEY) || 'dark';
+  rootBody.dataset.theme = theme;
+  const themeBtn = document.getElementById('theme-btn');
+  if (themeBtn) themeBtn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
+})();
 (function initFont() {
   const root = rootBody || document.documentElement;
   if (localStorage.getItem(FONT_KEY) === 'mono') root.classList.add('font-mono');
 })();
+function applyUiScale(scale, persist = true) {
+  const value = Math.max(0.85, Math.min(1.4, Number(scale) || 1));
+  document.documentElement.style.fontSize = `${(value * 100).toFixed(0)}%`;
+  if (persist) localStorage.setItem(SCALE_KEY, String(value));
+  const slider = document.getElementById('font-scale');
+  if (slider && slider.value !== String(value)) slider.value = String(value);
+}
+function initUiScale() {
+  const stored = parseFloat(localStorage.getItem(SCALE_KEY));
+  applyUiScale(Number.isFinite(stored) ? stored : 1, false);
+}
+function applyTheme(theme, persist = true) {
+  const next = theme === 'light' ? 'light' : 'dark';
+  rootBody.dataset.theme = next;
+  if (persist) localStorage.setItem(THEME_KEY, next);
+  const themeBtn = document.getElementById('theme-btn');
+  if (themeBtn) themeBtn.setAttribute('aria-pressed', next === 'light' ? 'true' : 'false');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', next === 'light' ? '#f7f2e8' : '#000000');
+}
+function toggleTheme() {
+  applyTheme(rootBody.dataset.theme === 'light' ? 'dark' : 'light');
+}
+function applyFocusMode(enabled, persist = true) {
+  const value = !!enabled;
+  rootBody.dataset.focusMode = value ? '1' : '0';
+  if (persist) localStorage.setItem(FOCUS_KEY, value ? '1' : '0');
+  const btn = document.getElementById('focus-btn');
+  if (btn) btn.setAttribute('aria-pressed', value ? 'true' : 'false');
+  const input = document.getElementById('zin');
+  if (value && input) input.focus();
+}
+function toggleFocusMode() {
+  applyFocusMode(rootBody.dataset.focusMode !== '1');
+}
+function initFocusMode() {
+  applyFocusMode(localStorage.getItem(FOCUS_KEY) === '1', false);
+}
+initUiScale();
+initFocusMode();
 
 const RATE_KEY = 'master:tts-rate';
 const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
@@ -82,6 +167,20 @@ function setTtsRate(r) {
   if (window.MASTER_FACE?.tts?.audio) window.MASTER_FACE.tts.audio.playbackRate = rate;
   const el = document.getElementById('tts-rate');
   if (el) el.textContent = rate.toFixed(2) + 'x';
+}
+function setVoiceName(voice, opts = {}) {
+  const next = String(voice || '').trim();
+  const prev = State.voiceName || '';
+  if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
+  State.voiceName = next;
+  if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = next;
+  syncShareStateUrl();
+  if (opts.speakBlurb !== false && next && prev !== next) {
+    setTimeout(() => {
+      if (window.MASTER_FACE?.tts?.muted) return;
+      if (typeof playDuo === 'function') playDuo([[next, "I'm Christopher. Let's work."]]);
+    }, 0);
+  }
 }
 function nearestRateIndex(rate) {
   const value = Number.isFinite(rate) && rate > 0 ? rate : 1.25;
@@ -115,6 +214,7 @@ function detectLang(text) {
 
 const State = {
   mode: 'idle', mood: 'idle', model: '', modelName: '',
+  voiceName: '',
   lastTouch: performance.now(), confidence: 1.0,
   tiltX: 0, tiltY: 0, mouseX: 0, mouseY: 0,
   parX: 0, parY: 0,
@@ -122,6 +222,8 @@ const State = {
   flash: 0, shake: 0, pulse: 0, sttActive: false,
   surpriseY: 0, ripplePhase: -1, rain: 0,
   pinchScale: 1.0, idleAlphaDrift: 0,
+  modelSwitch: 0,
+  questionPulse: 0,
   sleeping: false, sleepMuted: false,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches,
@@ -131,7 +233,49 @@ const State = {
 State.expressionCurrent = {};
 State.expressionTarget = {};
 
+const _shareParams = new URLSearchParams(window.location.search);
+State.mood = _shareParams.get('mood') || State.mood;
+State.mode = _shareParams.get('mode') || State.mode;
+State.model = _shareParams.get('model') || State.model;
+State.modelName = State.model ? State.model.split('/').pop() : State.modelName;
+State.voiceName = _shareParams.get('voice') || State.voiceName;
+
+function syncShareStateUrl() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('mood', State.mood || 'idle');
+    url.searchParams.set('mode', State.mode || 'idle');
+    if (State.model) url.searchParams.set('model', State.model); else url.searchParams.delete('model');
+    if (State.voiceName) url.searchParams.set('voice', State.voiceName); else url.searchParams.delete('voice');
+    history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
+  } catch (_) {}
+}
+
 rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
+
+function enterDegradedTextUI(reason) {
+  if (rootBody.dataset.errorBoundary === '1') return;
+  rootBody.dataset.errorBoundary = '1';
+  rootBody.dataset.runtimeProfile = 'text';
+  rootBody.dataset.runtimeVisible = 'true';
+  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (_) {}
+  if (cv && cv.style) cv.style.display = 'none';
+  let banner = document.getElementById('face-error-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'face-error-banner';
+    banner.className = 'face-error-banner';
+    document.body.appendChild(banner);
+  }
+  banner.textContent = reason || 'Degraded text mode';
+}
+
+window.addEventListener('error', event => {
+  enterDegradedTextUI(event?.message ? `Degraded text mode: ${event.message}` : 'Degraded text mode');
+});
+window.addEventListener('unhandledrejection', event => {
+  enterDegradedTextUI(event?.reason?.message ? `Degraded text mode: ${event.reason.message}` : 'Degraded text mode');
+});
 
 // Read particle sizing from CSS vars (web-ui-improvements.md:97) for theming/CRT profiles.
 // Fallbacks preserve current 8-bit phosphor look.
@@ -151,6 +295,9 @@ let _starTimer = null;
 let _starIdx = 0;
 let _starColorIdx = 0;
 const spinBtn = document.getElementById('spin-btn');
+const themeBtn = document.getElementById('theme-btn');
+const focusBtn = document.getElementById('focus-btn');
+const fontScaleInput = document.getElementById('font-scale');
 const asciiStarEl = document.getElementById('ascii-star');
 function _scheduleStar() {
   const speed = 40 + Math.random() * 220;
@@ -160,7 +307,6 @@ function _scheduleStar() {
     const ch = STAR_FRAMES[_starIdx];
     const co = STAR_COLORS[_starColorIdx];
     if (asciiStarEl) { asciiStarEl.textContent = ch; asciiStarEl.style.color = co; }
-    if (spinBtn) spinBtn.textContent = ch;
     _scheduleStar();
   }, speed);
 }
@@ -172,7 +318,6 @@ function startStar() {
 function stopStar() {
   if (_starTimer) { clearTimeout(_starTimer); _starTimer = null; }
   if (asciiStarEl) asciiStarEl.textContent = '';
-  if (spinBtn) spinBtn.textContent = '';
 }
 
 let _stateMode = 'idle';

@@ -31,6 +31,16 @@
     <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
   </main>
   <div class="ui-status" id="ui-status" hidden aria-live="polite" aria-atomic="true">idle</div>
+  <div id="soul-drift" class="soul-drift" aria-hidden="true"></div>
+  <div id="mood-sparkline" class="mood-sparkline" aria-hidden="true"></div>
+  <div class="face-controls" aria-label="Face controls">
+    <button id="theme-btn" type="button" class="tool" aria-pressed="false" title="Toggle theme">◐</button>
+    <button id="focus-btn" type="button" class="tool" aria-pressed="false" title="Toggle focus mode">◎</button>
+    <label class="face-scale" for="font-scale" title="Adjust font size">
+      <span aria-hidden="true">A</span>
+      <input id="font-scale" type="range" min="0.85" max="1.4" step="0.05" value="1">
+    </label>
+  </div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
   <form id="zsh" role="search" hidden aria-label="MASTER prompt" autocomplete="off">
     <span class="pp">master</span><span class="sep2">$ </span>
@@ -38,10 +48,16 @@
     <span id="char-count" aria-hidden="true"></span>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
     <div id="zsh-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-    <button id="cancel-btn" type="button" aria-label="Cancel">×</button>
+    <button id="spin-btn" type="button" aria-label="Pause or resume" title="Pause or resume">❚❚</button>
   </form>
   <script>
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v1").to_json.html_safe %>;
+    window.MASTER_SOUL_SUMMARY = "persona malay; voice ms-MY-OsmanNeural; language english primary and norwegian secondary; golden rule preserve then improve never break";
+    window.MASTER_SOUL_DRIFT = (function(text) {
+      let hash = 0;
+      for (let i = 0; i < text.length; i++) hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
+      return Math.abs(hash % 1000) / 1000;
+    })(window.MASTER_SOUL_SUMMARY);
     (function(){
       var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false;
       function go(){if(fired)return;fired=true;window._primerFired=true;p.style.transition='opacity 160ms ease';p.style.opacity='0';setTimeout(function(){if(p&&p.parentNode)p.parentNode.removeChild(p);},220);if(z)z.classList.add('live');}

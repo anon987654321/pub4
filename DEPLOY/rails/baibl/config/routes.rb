@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  get "offline" => "rails/pwa#offline", as: :pwa_offline
+
   jobs_constraint = ->(request) { request.cookies["session_id"].present? }
 
   resource  :session

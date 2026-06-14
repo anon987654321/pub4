@@ -2,10 +2,16 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["video"]
-  static values = { orientation: { type: String, default: "landscape" } }
+  static values = {
+    orientation: { type: String, default: "landscape" },
+    autoWakeLock: Boolean,
+    autoOrientation: Boolean
+  }
 
   connect() {
     this.#bindVideoEvents()
+    if (this.autoWakeLockValue) this.#requestWakeLock()
+    if (this.autoOrientationValue) this.#lockOrientation()
   }
 
   disconnect() {

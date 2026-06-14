@@ -1,0 +1,5 @@
+<turbo-frame id="dating-next">
+  <% if @profile.present? %>
+    <%= render "card", profile: @profile, index: 0 %>
+  <% end %>
+</turbo-frame>

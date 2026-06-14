@@ -2,8 +2,10 @@
 
 class PostsController < ApplicationController
   before_action :require_real_user, only: [:edit, :update, :destroy]
+  before_action :require_real_user, only: [:share]
   before_action :set_post,          only: [:show, :edit, :update, :destroy]
   before_action :set_community,     only: [:new, :create]
+  skip_before_action :verify_authenticity_token, only: [:share]
 
   def index
     @posts = Post.hot.includes(:user, :community, :votes)
@@ -47,6 +49,21 @@ class PostsController < ApplicationController
     redirect_to posts_path
   end
 
+  def share
+    post = Post.new(
+      title: share_title,
+      content: share_content,
+      community: Community.first,
+      user: Current.user
+    )
+
+    if post.save
+      redirect_to edit_post_path(post), notice: "Shared into a draft"
+    else
+      redirect_to new_post_path, alert: "Could not create draft"
+    end
+  end
+
   private
 
   def set_post
@@ -59,5 +76,13 @@ class PostsController < ApplicationController
 
   def post_params
     params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :preset)
+  end
+
+  def share_title
+    params[:title].presence || params[:text].presence || params[:url].presence || "Shared draft"
+  end
+
+  def share_content
+    [params[:text].presence, params[:url].presence].compact.join("\n\n")
   end
 end

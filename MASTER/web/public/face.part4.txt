@@ -40,7 +40,7 @@ function beep(freq, dur) {
 
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
 const VISEME_STEP_MS = 90;
-const tts = { queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en' };
+const tts = { queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en' };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'davis';
@@ -130,7 +130,9 @@ function applyPersonaAudioDefaults() {
   if (rate) setTtsRate(rate);
   const pitch = parsePersonaPitch(persona.tts_pitch);
   if (pitch != null) tts.pitchOffset = pitch;
-  if (persona.voice) tts.voice = persona.voice;
+  if (State.voiceName) setVoiceName(State.voiceName, { speakBlurb: false });
+  else if (persona.voice) setVoiceName(persona.voice, { speakBlurb: false });
+  syncShareStateUrl();
 }
 applyPersonaAudioDefaults();
 
@@ -281,11 +283,12 @@ function finishTTSPlayback(src, continueQueue = true) {
   rootBody.dataset.ttsWave = '';
   tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
   if (src) URL.revokeObjectURL(src);
-  tts.audio = null; tts.playing = false;
+  tts.audio = null; tts.playing = false; tts.paused = false;
   if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
   if (State.mode === 'speaking') { State.mode = 'idle'; window.MASTER_FACE?.setAmbientHum?.(false); }
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
+  if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
   if (continueQueue) ttsTick();
 }
 
@@ -374,7 +377,7 @@ function speakWithBrowserTTS(text, token) {
 }
 
 function ttsTick() {
-  if (tts.muted || tts.playing) return;
+  if (tts.muted || tts.playing || tts.paused) return;
   const text = tts.queue.shift();
   if (!text) return;
   tts.playing = true;
@@ -416,6 +419,7 @@ function ttsTick() {
     if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (_) {} }
     tts.audio = audio;
     setTTSLoading(false);
+    if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
     connectTTSAudio(audio).catch(() => {});
     audio.onplay = () => {
       startVisemeAnim(text);
@@ -437,4 +441,17 @@ function ttsTick() {
       if (s && (tts.attempts.get(text) || 0) >= 3) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
       if (token === tts.cancelToken) scheduleTtsTick(800);
     });
+}
+
+function ttsTogglePause() {
+  if (!tts.audio) return;
+  if (tts.audio.paused) {
+    tts.audio.play().catch(() => {});
+    tts.paused = false;
+    if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause current response'); }
+    return;
+  }
+  tts.audio.pause();
+  tts.paused = true;
+  if (spinBtn) { spinBtn.textContent = '▶'; spinBtn.setAttribute('aria-label', 'Resume current response'); }
 }

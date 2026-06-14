@@ -3,8 +3,21 @@
 const log   = document.getElementById('chat-log');
 const zsh   = document.getElementById('zsh');
 const input = document.getElementById('zin');
+const sessionStartedAt = Date.now();
 
 let _streamEl = null;
+let _typingEl = null;
+
+const sessionStats = (() => {
+  let el = document.getElementById('session-stats');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'session-stats';
+    el.className = 'session-stats';
+    document.body.appendChild(el);
+  }
+  return el;
+})();
 
 // ARIA live region for streamed text (FA137) — announce new tokens to SR
 const streamLive = (() => {
@@ -25,6 +38,38 @@ window._chatCancel = () => {
   if (window._chatEvtSrc) { try { window._chatEvtSrc.close(); } catch (_) {} window._chatEvtSrc = null; }
   window._chatOnError?.();
 };
+
+let laughterTimer = null;
+function triggerLaughterBurst() {
+  const face = window.MASTER_FACE;
+  if (!face?.State) return;
+  face.State.shake = Math.max(face.State.shake || 0, 0.7);
+  face.State.pulse = Math.max(face.State.pulse || 0, 0.55);
+  document.body.dataset.laughter = '1';
+  if (laughterTimer) clearTimeout(laughterTimer);
+  laughterTimer = setTimeout(() => {
+    delete document.body.dataset.laughter;
+    laughterTimer = null;
+  }, 900);
+}
+
+function updateSessionStats() {
+  if (!sessionStats || !log) return;
+  const messageCount = log.querySelectorAll('.message').length;
+  const wordCount = Array.from(log.querySelectorAll('.message')).reduce((total, msgEl) => {
+    const body = msgEl.querySelector('.msg-body');
+    const text = (body?.textContent || msgEl.textContent || '').replace(/^(you\$|master\$)\s*/i, '').trim();
+    if (!text) return total;
+    return total + text.split(/\s+/).filter(Boolean).length;
+  }, 0);
+  const elapsedMs = Date.now() - sessionStartedAt;
+  const minutes = Math.floor(elapsedMs / 60000);
+  const seconds = Math.floor((elapsedMs % 60000) / 1000).toString().padStart(2, '0');
+  const wordLabel = wordCount >= 1000 ? `${(wordCount / 1000).toFixed(1).replace(/\.0$/, '')}k words today` : `${wordCount} words today`;
+  sessionStats.textContent = `${wordLabel} · ${minutes}m ${seconds}s`;
+  sessionStats.title = `remembers ${messageCount} things from today`;
+}
+setInterval(updateSessionStats, 1000);
 
 function appendMsg(role, text = '') {
   const d = document.createElement('div');
@@ -49,6 +94,9 @@ function appendMsg(role, text = '') {
   } else {
     const body = document.createElement('span');
     body.className = 'msg-body';
+    const typing = document.createElement('span');
+    typing.className = 'typing-indicator';
+    typing.innerHTML = '<span></span><span></span><span></span>';
     const cur = document.createElement('span');
     cur.className = 'cursor';
     const copyBtn = document.createElement('button');
@@ -62,12 +110,15 @@ function appendMsg(role, text = '') {
       });
     });
     d.appendChild(body);
+    d.appendChild(typing);
     d.appendChild(cur);
     d.appendChild(copyBtn);
     _streamEl = body;
+    _typingEl = typing;
   }
   log.appendChild(d);
   log.scrollTop = log.scrollHeight;
+  updateSessionStats();
   d.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -104,6 +155,7 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
 
 window._chatOnChunk = (raw) => {
   if (!_streamEl) return;
+  if (_typingEl) { _typingEl.remove(); _typingEl = null; }
   const text = _streamEl.textContent + raw.replace(/\n/g, '\n').replace(/\\\\/g, '\\');
   if (text.includes('```')) {
     _streamEl.innerHTML = text.replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
@@ -114,20 +166,26 @@ window._chatOnChunk = (raw) => {
   if (streamLive) {
     streamLive.textContent = raw.replace(/[\n\r]/g, ' ').trim() || raw;
   }
+  if (/(?:\(|\b)(?:ha(?:ha)?|heh|lol|lmao|rofl)\b|[🤣😂😆]/i.test(raw)) triggerLaughterBurst();
+  updateSessionStats();
 };
 window._chatOnDone  = () => {
   _streamEl = null;
+  if (_typingEl) { _typingEl.remove(); _typingEl = null; }
   document.querySelectorAll('.cursor').forEach(c => {
     c.style.transition = 'opacity 0.25s steps(4,end)';
     c.style.opacity = '0';
     setTimeout(() => c.remove(), 280);
   });
   if (streamLive) streamLive.textContent = '';
+  updateSessionStats();
 };
 window._chatOnError = () => {
   _streamEl = null;
+  if (_typingEl) { _typingEl.remove(); _typingEl = null; }
   document.querySelectorAll('.cursor').forEach(c => c.remove());
   if (streamLive) streamLive.textContent = '';
+  updateSessionStats();
 };
 
 function getMsgText(msgEl) {

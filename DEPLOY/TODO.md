@@ -60,20 +60,20 @@ Next: document in apps.yml cross-cutting, wire the concerns into the TV vertical
 - [x] AN101 Manifest completeness: add `display_override: ["window-controls-overlay", "standalone"]`, `edge_side_panel: {preferred_width: 400}`, `launch_handler: {client_mode: "navigate-new"}` to all manifest.json.erb
 - [x] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
 - [ ] AN103 Workbox integration: replace hand-rolled service worker with Workbox 7 strategies — CacheFirst for fonts/images, NetworkFirst for HTML, StaleWhileRevalidate for JS/CSS
-- [ ] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
-- [ ] AN105 Periodic background sync: register `periodicsync` for daily briefing fetch, feed pre-warm, and badge count updates
+- [x] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
+- [x] AN105 Periodic background sync: register `periodicsync` for daily briefing fetch, feed pre-warm, and badge count updates
 - [ ] AN106 Push notification VAPID: generate VAPID keys once per app; store in credentials; wire webpush gem (already in brgen) to all apps; display OS-native notifications
 - [x] AN107 Notification badge API: use `navigator.setAppBadge(count)` for unread message count; update via CableReady broadcast on new message
-- [ ] AN108 Install prompt interception: capture `beforeinstallprompt`; show custom in-app install banner after 3rd visit; store dismissal in localStorage
-- [ ] AN109 Offline fallback page: dedicated offline.html with last-cached data summary; store last 20 feed items in IndexedDB for offline reading
-- [ ] AN110 IndexedDB local store: use idb-keyval (importmap) for offline drafts, optimistic UI state, pending sync queue
+- [x] AN108 Install prompt interception: capture `beforeinstallprompt`; show custom in-app install banner after 3rd visit; store dismissal in localStorage
+- [x] AN109 Offline fallback page: dedicated offline.html with last-cached data summary; store last 20 feed items in IndexedDB for offline reading
+- [x] AN110 IndexedDB local store: use idb-keyval (importmap) for offline drafts, optimistic UI state, pending sync queue
 - [x] AN111 App shortcuts: manifest `shortcuts` array — brgen: new post, new listing, dating swipe; amber: add item, create outfit; bsdports: search; blognet: new post
-- [ ] AN112 Share target: manifest `share_target` so native Share sheet can send URLs/text/files directly into each app (brgen post composer, amber item photo, blognet draft)
+- [x] AN112 Share target: manifest `share_target` so native Share sheet can send URLs/text/files directly into each app (brgen post composer, amber item photo, blognet draft)
 - [x] AN113 File handler: manifest `file_handlers` — amber handles image/* (add to wardrobe), blognet handles text/markdown (import as draft)
 - [x] AN114 Protocol handler: manifest `protocol_handlers` — `web+brgen://post/123` opens post in standalone PWA
-- [ ] AN115 Fullscreen mode toggle: add `display: fullscreen` option for TV vertical in brgen; video player expands to true fullscreen without browser chrome
-- [ ] AN116 Screen wake lock: acquire wake lock during video playback (brgen TV), recipe view (blognet), and navigation (hjerterom map mode)
-- [ ] AN117 Orientation lock: lock to portrait for dating swipe cards; landscape for TV player; use `screen.orientation.lock()`
+- [x] AN115 Fullscreen mode toggle: add `display: fullscreen` option for TV vertical in brgen; video player expands to true fullscreen without browser chrome
+- [x] AN116 Screen wake lock: acquire wake lock during video playback (brgen TV), recipe view (blognet), and navigation (hjerterom map mode)
+- [x] AN117 Orientation lock: lock to portrait for dating swipe cards; landscape for TV player; use `screen.orientation.lock()`
 - [x] AN118 Viewport meta hardening: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` on all layouts; use `env(safe-area-inset-*)` for notch-aware padding
 - [x] AN119 Theme color per app: manifest `theme_color` and `background_color` unique per app brand; inject dynamic theme-color meta tag for dark mode switching
 - [x] AN120 Standalone mode detection: `window.matchMedia('(display-mode: standalone)')` — show different UI (no back button, bottom nav instead of burger menu) in PWA mode
@@ -113,37 +113,37 @@ Next: document in apps.yml cross-cutting, wire the concerns into the TV vertical
 - [ ] AN403 Turbo Stream forms: `<form data-turbo="true">` on all forms; success responses return `turbo_stream.replace` or `turbo_stream.append`; errors return `turbo_stream.replace` with form+errors
 - [x] AN404 Turbo permanent: `data-turbo-permanent` on sidebar, navigation, and media player elements — persist across Turbo Drive navigations
 - [x] AN405 Turbo prefetch: `data-turbo-prefetch="false"` on logout/delete links; `rel="prefetch"` on next-page pagination links
-- [ ] AN406 Turbo morphing: Rails 8.1 `turbo_refreshes_with :morph` in ApplicationController — smooth page refresh without layout flash; use `:scroll: :preserve` to maintain position
+- [x] AN406 Turbo morphing: Rails 8.1 `turbo_refreshes_with :morph` in ApplicationController — smooth page refresh without layout flash; use `:scroll: :preserve` to maintain position
 - [x] AN407 Turbo progress bar: customize `Turbo.config.drive.progressBarDelay = 100` and override `--turbo-progress-bar-color` CSS var per app brand color
 - [ ] AN408 Turbo native bridge: add `turbo-ios` / `turbo-android` bridge adapter; define `BridgeComponent` Stimulus controllers for native sheet presentation and native share
 - [ ] AN409 Optimistic UI: for vote/like/follow actions, immediately update DOM via Stimulus before server confirms; revert on error via `turbo_stream.replace`
 - [x] AN410 Page-specific Turbo caching: `<meta name="turbo-cache-control" content="no-cache">` on auth pages, checkout, and any page with CSRF-sensitive forms
-- [ ] AN411 Turbo form submission validation: use `requestsubmit()` with custom validators before Turbo form submission; show inline errors without page reload
-- [ ] AN412 Nested frame navigation: dating swipe cards as nested frames — swiping loads next card via `<turbo-frame src="/dating/next">` without outer layout reload
+- [x] AN411 Turbo form submission validation: use `requestsubmit()` with custom validators before Turbo form submission; show inline errors without page reload
+- [x] AN412 Nested frame navigation: dating swipe cards as nested frames — swiping loads next card via `<turbo-frame src="/dating/next">` without outer layout reload
 - [ ] AN413 Turbo streams over SSE: for low-traffic apps (bsdports, baibl), use Turbo Streams over SSE (`/updates` endpoint) rather than full WebSocket — less server resource
 
 ### AN5: Stimulus Controller Patterns
 
-- [ ] AN501 Infinite scroll: Stimulus controller with IntersectionObserver watching sentinel element; fires Turbo Frame `src` update on intersection; replace Pagy with `pagy_countless`
-- [ ] AN502 Pull-to-refresh: Stimulus controller detecting touch `overscroll` event; trigger `Turbo.visit(location, {action: "replace"})` on pull ≥60px; show spinner during load
-- [ ] AN503 Swipe gesture: HammerJS-free swipe via `touchstart`/`touchend` delta; for dating card stack, marketplace image carousel, and playlist track swipe-to-queue
-- [ ] AN504 Bottom sheet: Stimulus controller for mobile bottom sheet with `transform: translateY` + `transition: cubic-bezier(0.32, 0.72, 0, 1)` snap points at 0%, 50%, 100%
+- [x] AN501 Infinite scroll: Stimulus controller with IntersectionObserver watching sentinel element; fires Turbo Frame `src` update on intersection; replace Pagy with `pagy_countless`
+- [x] AN502 Pull-to-refresh: Stimulus controller detecting touch `overscroll` event; trigger `Turbo.visit(location, {action: "replace"})` on pull ≥60px; show spinner during load
+- [x] AN503 Swipe gesture: HammerJS-free swipe via `touchstart`/`touchend` delta; for dating card stack, marketplace image carousel, and playlist track swipe-to-queue
+- [x] AN504 Bottom sheet: Stimulus controller for mobile bottom sheet with `transform: translateY` + `transition: cubic-bezier(0.32, 0.72, 0, 1)` snap points at 0%, 50%, 100%
 - [x] AN505 Toast notifications: Stimulus controller triggered by `data-controller="toast"` with `data-toast-message-value`; auto-dismiss after 4s with slide-out animation
-- [ ] AN506 Image lazy load: `data-controller="lazy-image"` using IntersectionObserver; swap `data-src` to `src` on intersection; show blur-hash placeholder until loaded
-- [ ] AN507 Blur hash: generate blurhash on server (blurhash gem) for every uploaded image; store as column; client decodes to canvas placeholder in 50ms
-- [ ] AN508 Character counter: `data-controller="char-counter"` with `data-char-counter-max-value`; show remaining count; color warning at 80%, danger at 95%
+- [x] AN506 Image lazy load: `data-controller="lazy-image"` using IntersectionObserver; swap `data-src` to `src` on intersection; show blur-hash placeholder until loaded
+- [x] AN507 Blur hash: generate blurhash on server (blurhash gem) for every uploaded image; store as column; client decodes to canvas placeholder in 50ms
+- [x] AN508 Character counter: `data-controller="char-counter"` with `data-char-counter-max-value`; show remaining count; color warning at 80%, danger at 95%
 - [x] AN509 Auto-growing textarea: `data-controller="autogrow"` with `input` event handler resizing via `scrollHeight`; for post composer and comment box
 - [x] AN510 Clipboard copy: `data-controller="clipboard"` with `navigator.clipboard.writeText()`; animate success state; fallback to `execCommand` on older Safari
-- [ ] AN511 Keyboard shortcut: `data-controller="hotkey"` mapping `j`/`k` for feed navigation, `n` for new post, `?` for help overlay — vim-style navigation
-- [ ] AN512 Form auto-save: `data-controller="autosave"` debouncing `input` events; PATCH to `/drafts/:id` every 5s; show "saved" indicator; restore on page reload from IndexedDB
-- [ ] AN513 Dialog: native `<dialog>` element managed by Stimulus controller; `showModal()` / `close()`; trap focus; close on backdrop click; ARIA roles
-- [ ] AN514 Dropdown: Stimulus controller using `data-action="click@window->dropdown#closeAll"` pattern for click-outside dismiss; accessible with `aria-expanded`
-- [ ] AN515 Toggle: `data-controller="toggle" data-toggle-class="hidden"` — simplest possible show/hide; replaces 80% of custom JS in views
-- [ ] AN516 Reveal: `data-controller="reveal"` with intersection observer — fade in elements as they scroll into view; `animation: fadeInUp 0.4s ease both`
-- [ ] AN517 Tabs: `data-controller="tabs"` with `aria-selected` and `role="tabpanel"`; deep-linkable via URL hash; keyboard arrow navigation
-- [ ] AN518 Sortable: `data-controller="sortable"` wrapping SortableJS; for outfit item reordering, playlist track ordering; saves order via PATCH on dragend
-- [ ] AN519 Flatpickr: `data-controller="datepicker"` wrapping flatpickr; for takeaway delivery scheduling, event creation, financial date ranges
-- [ ] AN520 Maplibre: `data-controller="map"` wrapping MapLibre GL JS with OpenFreeMap tiles (zero cost); for brgen maps vertical, hjerterom pickup locations, takeaway delivery zones
+- [x] AN511 Keyboard shortcut: `data-controller="hotkey"` mapping `j`/`k` for feed navigation, `n` for new post, `?` for help overlay — vim-style navigation
+- [x] AN512 Form auto-save: `data-controller="autosave"` debouncing `input` events; PATCH to `/drafts/:id` every 5s; show "saved" indicator; restore on page reload from IndexedDB
+- [x] AN513 Dialog: native `<dialog>` element managed by Stimulus controller; `showModal()` / `close()`; trap focus; close on backdrop click; ARIA roles
+- [x] AN514 Dropdown: Stimulus controller using `data-action="click@window->dropdown#closeAll"` pattern for click-outside dismiss; accessible with `aria-expanded`
+- [x] AN515 Toggle: `data-controller="toggle" data-toggle-class="hidden"` — simplest possible show/hide; replaces 80% of custom JS in views
+- [x] AN516 Reveal: `data-controller="reveal"` with intersection observer — fade in elements as they scroll into view; `animation: fadeInUp 0.4s ease both`
+- [x] AN517 Tabs: `data-controller="tabs"` with `aria-selected` and `role="tabpanel"`; deep-linkable via URL hash; keyboard arrow navigation
+- [x] AN518 Sortable: `data-controller="sortable"` wrapping SortableJS; for outfit item reordering, playlist track ordering; saves order via PATCH on dragend
+- [x] AN519 Flatpickr: `data-controller="datepicker"` wrapping flatpickr; for takeaway delivery scheduling, event creation, financial date ranges
+- [x] AN520 Maplibre: `data-controller="map"` wrapping MapLibre GL JS with OpenFreeMap tiles (zero cost); for brgen maps vertical, hjerterom pickup locations, takeaway delivery zones
 
 ### AN6: brgen — Hyperlocal City Network
 
@@ -154,8 +154,8 @@ Next: document in apps.yml cross-cutting, wire the concerns into the TV vertical
 - [ ] AN605 Poll creation: embedded in post composer; up to 6 options; real-time vote count via Turbo Stream; auto-close at set time via Solid Queue job
 - [ ] AN606 Link preview: on URL paste in composer, fetch OpenGraph metadata via background job; render preview card with image, title, description; user can dismiss
 - [ ] AN607 Trending algorithm: score = (votes + comments × 2 + shares × 3) / (hours_since_post + 2)^1.8 — HN-style gravity; computed by Solid Queue job every 15m, stored in `trending_score` column
-- [ ] AN608 Dating — swipe interface: card stack via CSS `transform: rotate()` + `translate()`; swipe right = like (sends Like record + checks for Match), swipe left = pass; keyboard ←/→ support
-- [ ] AN609 Dating — match notification: on Match creation, broadcast CableReady notification to both users; show animated match overlay ("It's a match!"); create Conversation
+- [x] AN608 Dating — swipe interface: card stack via CSS `transform: rotate()` + `translate()`; swipe right = like (sends Like record + checks for Match), swipe left = pass; keyboard ←/→ support
+- [x] AN609 Dating — match notification: on Match creation, broadcast CableReady notification to both users; show animated match overlay ("It's a match!"); create Conversation
 - [ ] AN610 Dating — compatibility scoring: LLM-computed affinity score from profile interests, location, activity patterns; surfaced as percentage on match screen
 - [ ] AN611 Marketplace — listing creation wizard: multi-step form (category → photos → details → price → location → review); save progress as draft between steps
 - [ ] AN612 Marketplace — image upload: Active Storage direct upload to S3-compatible (or local disk on VPS); generate multiple variants (thumb 80px, card 400px, full 1200px) via ImageProcessing::Vips
@@ -225,7 +225,7 @@ Next: document in apps.yml cross-cutting, wire the concerns into the TV vertical
 ### AN10: blognet — Semantic Publishing Network
 
 - [ ] AN1001 Longform editor: ActionText-based rich editor with full-width image embeds, pullquotes, drop caps, code blocks with syntax highlight, footnotes
-- [ ] AN1002 Reading time estimate: compute from word count (200 WPM); display prominently; update live in composer as user types
+- [x] AN1002 Reading time estimate: compute from word count (200 WPM); display prominently; update live in composer as user types
 - [ ] AN1003 Draft → published workflow: posts have states (draft/review/scheduled/published/archived); transitions via state machine; scheduled publish via Solid Queue
 - [ ] AN1004 Editorial calendar: `/editorial/calendar` — month view of scheduled posts per blog/author; drag-and-drop reschedule
 - [ ] AN1005 SEO metadata: per-post OpenGraph, Twitter Card, canonical URL, structured data (Article schema JSON-LD); editable in sidebar without touching HTML

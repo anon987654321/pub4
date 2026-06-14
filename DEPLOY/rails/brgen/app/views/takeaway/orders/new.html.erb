@@ -17,7 +17,8 @@
   </div>
 </article>
 
-<%= form_with model: @order, url: takeaway_restaurant_orders_path(@restaurant) do |form| %>
+<% draft_key = "brgen-takeaway-order-#{@restaurant.to_param}-new" %>
+<%= form_with(model: @order, url: takeaway_restaurant_orders_path(@restaurant), data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |form| %>
   <%= render "shared/errors", object: @order %>
 
   <section>
@@ -65,4 +66,5 @@
   </section>
 
   <%= form.submit "Place order", class: "btn btn-primary" %>
+  <span class="dim" data-autosave-target="status" aria-live="polite"></span>
 <% end %>

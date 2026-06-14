@@ -12,11 +12,13 @@
 </nav>
 
 <% if @posts.any? %>
-  <div class="post-grid">
-    <% @posts.each do |post| %>
-      <%= render "posts/post", post: post %>
-    <% end %>
-  </div>
+    <div class="post-grid">
+      <% @posts.each do |post| %>
+      <div data-controller="offline-feed" data-offline-feed-key-value="brgen-posts" data-offline-feed-title-value="<%= post.title %>" data-offline-feed-url-value="<%= post_url(post) %>" data-offline-feed-meta-value="<%= [post.author_name, time_ago_in_words(post.created_at)].join(" · ") %>">
+        <%= render "posts/post", post: post %>
+      </div>
+      <% end %>
+    </div>
 <% else %>
   <p>No posts yet.</p>
 <% end %>

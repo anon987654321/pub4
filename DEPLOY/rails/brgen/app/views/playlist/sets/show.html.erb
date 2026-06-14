@@ -87,7 +87,13 @@
 
 <% if @set_tracks.any? %>
   <% @set_tracks.each do |set_track| %>
-    <article style="display:flex;align-items:center;justify-content:space-between">
+    <article
+      data-track-id="<%= set_track.track.id %>"
+      data-controller="swipe"
+      data-swipe-listen-url-value="<%= playlist_listens_path(track_id: set_track.track.id) %>"
+      data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp"
+      style="display:flex;align-items:center;justify-content:space-between"
+    >
       <div>
         <strong><%= set_track.track.title %></strong>
         <% if set_track.track.artist.present? %> — <%= set_track.track.artist %><% end %>

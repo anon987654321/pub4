@@ -18,6 +18,7 @@ pin "@stimulus-components/timeago", to: "@stimulus-components--timeago.js" # @5.
 pin "date-fns" # @4.1.0
 pin "@stimulus-components/animated-number", to: "@stimulus-components--animated-number.js" # @5.0.0
 pin "@stimulus-components/sortable", to: "@stimulus-components--sortable.js" # @5.0.3
+pin "idb-keyval", to: "idb-keyval.js"
 pin "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/src/fetch_request", to: "https:----cdn.jsdelivr.net--npm--@rails--request.js@0.0.13--src--fetch_request.js" # @0.0.13
 pin "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/src/fetch_response", to: "https:----cdn.jsdelivr.net--npm--@rails--request.js@0.0.13--src--fetch_response.js" # @0.0.13
 pin "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/src/lib/utils", to: "https:----cdn.jsdelivr.net--npm--@rails--request.js@0.0.13--src--lib--utils.js" # @0.0.13

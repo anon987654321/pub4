@@ -11,6 +11,7 @@
           data-action="click->share#share">Share</button>
 </div>
 
+<div data-controller="tv-player" data-tv-player-auto-wake-lock-value="true" data-tv-player-auto-orientation-value="true" data-tv-player-orientation-value="landscape">
 <% if @video.video_file.attached? %>
   <div style="border-bottom:1px solid var(--border)">
     <%= video_tag url_for(@video.video_file), controls: true, class: "video-player", style: "width:100%;max-height:420px;background:#000;display:block" %>
@@ -20,6 +21,7 @@
     <%= image_tag @video.thumbnail, style: "width:100%;max-height:420px;object-fit:cover;display:block" %>
   </div>
 <% end %>
+</div>
 
 <article>
   <div class="chips">

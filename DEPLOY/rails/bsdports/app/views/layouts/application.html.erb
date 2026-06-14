@@ -58,5 +58,6 @@
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
 <main><%= yield %></main>
+<%= render "shared/install_prompt" %>
 </body>
 </html>

@@ -27,41 +27,20 @@
   </nav>
 </div>
 
-<section>
-  <% @profiles.each do |profile| %>
-    <article style="overflow:hidden">
-      <% if profile.photos.attached? %>
-        <%= image_tag profile.photos.first, style: "width:100%;max-height:420px;object-fit:cover;border-radius:2px;margin-bottom:12px" %>
-      <% else %>
-        <div style="height:220px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--border);border-radius:2px;margin-bottom:12px">
-          <span style="font-size:64px;font-weight:900"><%= profile.user.email_address.first.upcase %></span>
-        </div>
-      <% end %>
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
-        <div>
-          <h2><%= profile.user.email_address.split("@").first %><% if profile.age %>, <%= profile.age %><% end %></h2>
-          <% if profile.location.present? %><p class="dim"><%= profile.location %></p><% end %>
-          <% if profile.neighborhood&.name.present? %><p class="dim"><%= profile.neighborhood.name %></p><% end %>
-        </div>
-        <span class="chip"><%= profile.visible? ? "visible" : "paused" %></span>
-      </div>
-      <% if profile.bio.present? %><p><%= profile.bio %></p><% end %>
-      <div class="chips">
-        <% if profile.gender.present? %><span class="chip"><%= profile.gender %></span><% end %>
-        <% if profile.looking_for.present? %><span class="chip">Looking for <%= profile.looking_for %></span><% end %>
-      </div>
-      <% if authenticated? %>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <%= button_to "Like", dating_likes_path(user_id: profile.user_id), method: :post, class: "btn" %>
-          <%= button_to "Pass", dating_dislikes_path(user_id: profile.user_id), method: :post, class: "btn btn-ghost" %>
-        </div>
-      <% else %>
-        <p class="dim"><%= link_to "Sign in", new_session_path %> to like or pass.</p>
-      <% end %>
-    </article>
-  <% end %>
+<section
+  data-controller="swipe"
+  data-swipe-like-url-value="<%= dating_likes_path %>"
+  data-swipe-dislike-url-value="<%= dating_dislikes_path %>"
+  data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp keydown.left@window->swipe#pass keydown.right@window->swipe#like"
+  style="margin-top:20px"
+>
+  <div id="swipe-stack" style="position:relative;min-height:640px">
+    <% @profiles.each_with_index do |profile, index| %>
+      <%= render "card", profile: profile, index: index %>
+    <% end %>
+  </div>
   <% if @profiles.empty? %>
     <div class="empty"><p>No profiles nearby. <%= authenticated? ? link_to("Edit your profile", edit_dating_profile_path) : link_to("Sign in", new_session_path) %>.</p></div>
   <% end %>
+  <turbo-frame id="dating-next" src="<%= dating_next_path %>" loading="lazy" style="display:none"></turbo-frame>
 </section>
-<%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>

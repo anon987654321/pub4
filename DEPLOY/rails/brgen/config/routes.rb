@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  get "offline" => "rails/pwa#offline", as: :pwa_offline
+  post "share" => "posts#share", as: :share_post
+
   jobs_constraint = ->(request) { request.cookies["session_id"].present? }
 
   TV_SUBDOMAINS          = %w[tv].freeze
@@ -14,7 +17,7 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   resources :activity_events, only: :index
   resources :notifications, only: %i[index update] do
-    collection { patch :read_all }
+    collection { patch :read_all; get :badge }
   end
   resources :reactions, only: :create
   resources :reports, only: :create
@@ -32,6 +35,7 @@ Rails.application.routes.draw do
     resources :comments, shallow: true
     resource :vote, only: [:create], controller: "votes"
   end
+  patch "drafts/:id", to: "drafts#update", as: :draft
 
   resources :comments do
     resource :vote, only: [:create], controller: "votes"
@@ -79,6 +83,7 @@ Rails.application.routes.draw do
   constraints(subdomain: DATING_SUBDOMAINS) do
     scope module: "dating", as: "dating" do
       root "home#index", as: :dating_root
+      get "next" => "home#next", as: :dating_next
       resource :profile, only: %i[new create edit update show]
       resources :likes, only: :create
       resources :dislikes, only: :create

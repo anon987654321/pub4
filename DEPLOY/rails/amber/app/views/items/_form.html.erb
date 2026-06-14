@@ -1,4 +1,5 @@
-<%= form_with model: item, class: "form" do |f| %>
+<% draft_key = "amber-item-#{item.to_param || 'new'}" %>
+<%= form_with(model: item, class: "form", data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
   <%= render "shared/errors", object: item %>
   <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
   <div class="field">
@@ -28,5 +29,5 @@
     <%= f.select :life_phase, Item::LIFE_PHASES, include_blank: "Not set" %>
   </div>
   <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
-  <div class="actions"><%= f.submit class: "btn" %> <%= link_to "Cancel", items_path %></div>
+  <div class="actions"><%= f.submit class: "btn" %> <%= link_to "Cancel", items_path %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>
 <% end %>
