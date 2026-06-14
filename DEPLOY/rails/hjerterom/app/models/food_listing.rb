@@ -18,10 +18,8 @@ class FoodListing < ApplicationRecord
   after_validation :geocode, if: :pickup_address_changed?
 
   scope :available, -> { where(status: "available").where("available_until > ?", Time.current) }
-  scope :nearby, ->(lat, lng, km = 20) {
-    where("((latitude - ?) * (latitude - ?) + (longitude - ?) * (longitude - ?)) < ?",
-      lat, lat, lng, lng, (km / 111.0)**2)
-  }
+  include Shared::GeoLocatable
+  # nearby + haversine from concern (old euclid dupe removed)
 
   before_save :expire_if_past_date
 

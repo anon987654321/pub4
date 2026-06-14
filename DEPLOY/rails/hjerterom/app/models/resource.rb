@@ -13,9 +13,7 @@ class Resource < ApplicationRecord
   after_validation :geocode, if: :address_changed?
 
   scope :verified,   -> { where(verified: true) }
-  scope :nearby,     ->(lat, lng, km = 50) {
-    where("((latitude - ?) * (latitude - ?) + (longitude - ?) * (longitude - ?)) < ?",
-      lat, lat, lng, lng, (km / 111.0)**2)
-  }
+  include Shared::GeoLocatable
+  # nearby (bbox standardized) + haversine from concern (old euclid dupe removed)
   scope :by_type,    ->(t) { where(resource_type: t) }
 end

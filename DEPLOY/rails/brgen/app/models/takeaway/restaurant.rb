@@ -17,6 +17,8 @@ class Takeaway::Restaurant < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :popular, -> { order(rating: :desc) }
 
+  include Shared::GeoLocatable
+
   def owner?(account)
     user_id == account&.id
   end
@@ -32,5 +34,10 @@ class Takeaway::Restaurant < ApplicationRecord
   def update_rating!
     avg = reviews.average(:rating)
     update_columns(rating: avg&.round(1) || 0)
+  end
+
+  # Geocode stub (lat/lon columns exist via migration). Override with geocoder if wanted.
+  def geocode!
+    super
   end
 end

@@ -15,4 +15,11 @@ class Dependency < ApplicationRecord
   def label
     [dep_type.presence || "run", depends_on&.name].compact.join(": ")
   end
+
+  # For dep tree viz (AN802)
+  def self.tree_for(port)
+    includes(:depends_on).where(port: port).map do |d|
+      { id: d.id, label: d.label, children: tree_for(d.depends_on) }
+    end
+  end
 end

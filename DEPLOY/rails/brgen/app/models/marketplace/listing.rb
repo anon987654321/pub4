@@ -28,6 +28,10 @@ class Marketplace::Listing < ApplicationRecord
   scope :popular,  -> { order(views_count: :desc) }
   scope :from_store, ->(store) { where(store: store) }
 
+  include Shared::GeoLocatable
+  # near/nearby + geo? + distance_to + haversine provided by concern (standardized pure ruby)
+  scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
+
   def price_display = "#{price_cents / 100.0} #{currency}"
   def sold? = status == "sold"
   def favorite_for(user) = favorites.find_by(user: user)

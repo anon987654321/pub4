@@ -17,7 +17,7 @@ class Follow < ApplicationRecord
   end
 
   def emit_follow_created
-    Notification.create!(user: followed, actor: follower, kind: "follow", notifiable: self) if defined?(Notification)
+    Shared::Notifiable.deliver_notification(followed, actor: follower, kind: "follow", source: self)
     Shared::EventEmitter.call("brgen.follow.created", follower_id:, followed_id:) if defined?(Shared::EventEmitter)
   end
 

@@ -14,9 +14,8 @@ class Dating::Profile < ApplicationRecord
   validates :looking_for, inclusion: { in: LOOKING_FOR }, allow_nil: true
 
   scope :visible, -> { where(visible: true) }
-  scope :nearby, ->(lat, lng, km = 50) {
-    where("ABS(latitude - ?) < ? AND ABS(longitude - ?) < ?", lat, km / 111.0, lng, km / 111.0)
-  }
+  include Shared::GeoLocatable
+  # nearby (bbox) + haversine provided by concern; old approx replaced for consistency
   scope :in_neighborhood, ->(neigh) { neigh ? where(neighborhood_id: neigh.id) : all }
 
   def liked_by?(user)    = Dating::Like.exists?(liker: user, likee: self.user)

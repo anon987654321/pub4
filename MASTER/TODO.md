@@ -1,5 +1,7 @@
 # TODO — MASTER backlog
 
+**DRY/KISS note (2026-06-14)**: See DEPLOY push (commit b8d958a7 + follow-up). Extracted Shared::Notifiable, ActivityTrackable, GeoLocatable to shared/concerns/shared/ and applied to eliminate notify/record/geo dupe in the Rails apps (brgen subapps + hjerterom + bsdports). This directly addresses S1201 cross-file DRY opportunities. Details + remaining in DEPLOY/TODO "DRY & KISS" section. New files + refactors + doc updates pushed.
+
 Work left to right, top to bottom. Mark done with [x].
 
 ---

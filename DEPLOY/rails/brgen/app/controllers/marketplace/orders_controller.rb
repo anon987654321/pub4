@@ -13,8 +13,8 @@ class Marketplace::OrdersController < Marketplace::BaseController
       quantity: quantity
     )
     if @order.save
-      notify_seller!
-      record_offer_activity!
+      Shared::Notifiable.deliver_notification(@listing.user, title: "New marketplace offer", body: "#{Current.user.display_name} sent an offer for #{@listing.title}.", source: @order)
+      @order.record_activity!("MarketplaceOfferSent", actor: Current.user, source_vertical: "marketplace", locality: @listing.location)
       redirect_to marketplace_listing_path(@listing), notice: "Offer sent"
     else
       redirect_to marketplace_listing_path(@listing), alert: "Could not send offer"
@@ -33,27 +33,4 @@ class Marketplace::OrdersController < Marketplace::BaseController
   private
 
   def set_listing = (@listing = Marketplace::Listing.find(params[:listing_id]))
-
-  def notify_seller!
-    return unless defined?(Notification)
-
-    @listing.user.notifications.create!(
-      title: "New marketplace offer",
-      body: "#{Current.user.display_name} sent an offer for #{@listing.title}.",
-      source_type: @order.class.name,
-      source_id: @order.id
-    )
-  end
-
-  def record_offer_activity!
-    return unless defined?(ActivityEventRecorder)
-
-    ActivityEventRecorder.call(
-      actor: Current.user,
-      event_name: "MarketplaceOfferSent",
-      object: @order,
-      source_vertical: "marketplace",
-      locality: @listing.location
-    )
-  end
 end

@@ -8,6 +8,9 @@ class Marketplace::ListingsController < Marketplace::BaseController
     scope = Marketplace::Listing.active.includes(:user, :category)
     scope = scope.where("title LIKE ?", "%#{params[:q]}%") if params[:q].present?
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
+    if params[:lat].present? && params[:lng].present?
+      scope = scope.near(params[:lat], params[:lng], params[:radius_km] || 5)
+    end
     @pagy, @listings = pagy(scope.recent)
     @categories = Marketplace::Category.roots.includes(:children)
 
@@ -35,7 +38,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     if @listing.save
       preset = params[:marketplace_listing][:preset].presence
       PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos") if preset && @listing.photos.attached?
-      record_listing_activity!
+      @listing.record_activity!("ListingCreated", actor: Current.user, source_vertical: "marketplace", locality: @listing.location)
       redirect_to marketplace_listing_path(@listing), notice: "Listed"
     else
       render :new, status: :unprocessable_entity
@@ -65,18 +68,6 @@ class Marketplace::ListingsController < Marketplace::BaseController
     params.require(:marketplace_listing).permit(
       :title, :description, :price_cents, :condition, :status, :location,
       :category_id, :preset, photos: []
-    )
-  end
-
-  def record_listing_activity!
-    return unless defined?(ActivityEventRecorder)
-
-    ActivityEventRecorder.call(
-      actor: Current.user,
-      event_name: "ListingCreated",
-      object: @listing,
-      source_vertical: "marketplace",
-      locality: @listing.location
     )
   end
 end

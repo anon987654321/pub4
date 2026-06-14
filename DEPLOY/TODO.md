@@ -2,6 +2,17 @@
 
 Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
+**DRY & KISS (2026-06-14) — applied + pushed**
+- Extracted 3 shared concerns in DEPLOY/rails/shared/app/models/concerns/shared/:
+  - notifiable.rb: deliver_notification (unifies the  repeated `if defined?(Notification)` + create with title/body/source or actor/kind/notifiable across brgen orders, follow, controllers).
+  - activity_trackable.rb: record_activity! (DRYs all the ActivityEventRecorder.call + defined? guards).
+  - geo_locatable.rb: nearby scope + haversine (standard portable bbox + accurate helper; replaced earth_distance, euclid, ABS/111, manual haversine in listing/dating/delivery/user/resource/food_listing + restaurant geocode stub).
+- Refactored models (includes + calls): marketplace/takeaway Order, listing (near alias + filter), dating/profile, delivery_driver, restaurant, user, follow; hjerterom resource/food_listing; controllers (marketplace orders/listings/saved_searches — removed private dupe methods); bsdports/dependency (dupe class consolidated + tree_for).
+- Updated listings index to actually use near(lat,lng) filter.
+- Also pushed supporting flesh: full TV Show/Episode stack (models, controllers, views), marketplace orders show, key Stimulus (swipe/hotkey/lazy/marketplace_chat/tv_player), hjerterom beneficiaries, PWA/shared partials.
+- See the 3 new concern files + the model/controller diffs for the cleaned call sites. Remaining opps (status concern, notification model unification, more verticals) noted for follow-up.
+- All local edits; concerns + new fleshed files + this doc update pushed.
+
 ---
 
 ## M. OpenBSD / deploy alignment
