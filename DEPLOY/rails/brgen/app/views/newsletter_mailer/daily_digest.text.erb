@@ -1,0 +1,8 @@
+Daily digest in <%= @city %>
+
+<% @posts.each do |post| %>
+- <%= post.title %> (<%= post.community&.name || "Brgen" %> · <%= post.author_name %>)
+  <%= truncate(post.content.to_s, length: 160) %>
+<% end %>
+
+Unsubscribe: <%= @unsubscribe_url %>

@@ -12,6 +12,7 @@ require_relative "../scan_report"
 require_relative "../scan_request"
 require_relative "../../judge/review_crew"
 require_relative "../tribunal_feedback"
+require_relative "work_commands_extra"
 
 module Master
   module Now
@@ -40,23 +41,23 @@ module Master
         metrics = infra[:metrics]
         git = ai[:git] || Reach::GitOperations.new(File.expand_path("..", root))
         {
-          "scan" => command { |ctx| dispatch_scan(scanner:, root:, arg: arg_for(ctx)) },
-          "self" => command { |_ctx| dispatch_self(scanner:, root:, bus:) },
-          "fix" => command { |ctx| dispatch_fix(fix_loop:, root:, arg: arg_for(ctx)) },
-          "status" => command { |_c| dispatch_status(root:, fix_loop:, bus:, git:) },
-          "resync" => command { |c| dispatch_resync(root:, fix_loop:, git:, arg: arg_for(c)) },
-          "tail" => command { |c| dispatch_tail(root:, arg: arg_for(c)) },
-          "review" => command { |ctx| dispatch_review(council_stage:, deliberation:, root:, bus:, review_crew:, arg: arg_for(ctx)) },
-          "critique" => command { |ctx| dispatch_critique(deliberation:, root:, arg: arg_for(ctx)) },
-          "triad" => command { |ctx| dispatch_triad(scanner:, fix_loop:, council_stage:, deliberation:, root:, bus:, review_crew:, arg: arg_for(ctx)) },
-          "model" => command { |c| dispatch_model(agent:, config:, metrics:, root:, arg: arg_for(c)) },
-          "why" => command { |ctx| dispatch_why(agent:, root:, rule: arg_for(ctx)) },
-          "axioms" => command { |ctx| dispatch_axioms(scanner:, root:, arg: arg_for(ctx)) },
-          "rules" => command { |ctx| dispatch_rules(arg_for(ctx)) },
-          "topic" => cmd(:dispatch_topic, session),
-          "process" => command { |_c| JSON.pretty_generate(process: Master::Ops::ProcessBudget.status, loop_slot: Master::Ops::LoopSlot.status) },
-          "propose-tree" => command { |_ctx| propose_tree&.call || "propose-tree: not wired" },
-          "ecology" => command { |ctx| dispatch_ecology(ecology, arg_for(ctx)) }
+          "scan" => command(:dispatch_scan, scanner, root),
+          "self" => command(:dispatch_self, scanner, root, bus),
+          "fix" => command(:dispatch_fix, fix_loop, root),
+          "status" => command(:dispatch_status, root, fix_loop, bus, git),
+          "resync" => command(:dispatch_resync, root, fix_loop, git),
+          "tail" => command(:dispatch_tail, root),
+          "review" => command(:dispatch_review, council_stage, deliberation, root, bus, review_crew),
+          "critique" => command(:dispatch_critique, deliberation, root),
+          "triad" => command(:dispatch_triad, scanner, fix_loop, council_stage, deliberation, root, bus, review_crew),
+          "model" => command(:dispatch_model, agent, config, metrics, root),
+          "why" => command(:dispatch_why, agent, root),
+          "axioms" => command(:dispatch_axioms, scanner, root),
+          "rules" => command(:dispatch_rules),
+          "topic" => command(:dispatch_topic, session),
+          "process" => command(:dispatch_process),
+          "propose-tree" => command(:dispatch_propose_tree, propose_tree),
+          "ecology" => command(:dispatch_ecology, ecology)
         }
       end
 
@@ -129,12 +130,13 @@ module Master
       end
 
       # /resync — divergence repair: tag, fetch, reset, bundle, restart.
-      def dispatch_resync(root:, fix_loop:, git:, arg:)
-        ResyncService.new(root:, fix_loop:, git:).call(dry_run: arg.include?("--dry-run"))
+      def dispatch_resync(root:, fix_loop:, git:, ctx: nil)
+        ResyncService.new(root:, fix_loop:, git:).call(dry_run: arg_for(ctx).include?("--dry-run"))
       end
 
       # /tail [N] [pattern] — last N events matching pattern. Default N=20.
-      def dispatch_tail(root:, arg:)
+      def dispatch_tail(root:, ctx: nil)
+        arg = arg_for(ctx)
         n_arg, pattern = arg.split(/\s+/, 2)
         n = n_arg.to_i.positive? ? n_arg.to_i : 20
         records = Trace::EventLog.new(root:).tail(n, pattern:)
@@ -154,7 +156,8 @@ module Master
         Formatter.key_value_payload(pay)[0, 100]
       end
 
-      def dispatch_fix(fix_loop:, root:, arg:)
+      def dispatch_fix(fix_loop:, root:, ctx: nil)
+        arg = arg_for(ctx)
         sub, rest = arg.split(/\s+/, 2)
         case sub
         when "--dry-run"
@@ -180,7 +183,7 @@ module Master
       # rule dep-graph completeness report.
       AXIOM_SCAN_CAP = 400
 
-      def dispatch_axioms(scanner:, root:, arg: nil)
+      def dispatch_axioms(scanner:, root:, ctx: nil)
         files = axiom_scan_files(root)
         by_axiom = tally_axioms(scanner, files)
         [axiom_table(files, by_axiom), "", dep_graph_line(root)].join("\n")
@@ -213,7 +216,8 @@ module Master
         "rule dep-graph: #{gap.size} rule(s) absent from rule_deps.yml#{tail}"
       end
 
-      def dispatch_rules(arg)
+      def dispatch_rules(ctx: nil)
+        arg = arg_for(ctx)
         return "usage: /rules list" unless arg.empty? || arg == "list"
 
         Master::Judge::Scan::Rule.registry.map do |rule_class|
@@ -240,7 +244,8 @@ module Master
         []
       end
 
-      def dispatch_scan(scanner:, root:, arg:)
+      def dispatch_scan(scanner:, root:, ctx: nil)
+        arg = arg_for(ctx)
         dry_run = dry_run_arg?(arg)
         request = ScanRequest.new(scanner:, root:, arg: strip_dry_run(arg)).call
         return request.pairs if request.pairs.is_a?(String)
@@ -261,123 +266,12 @@ module Master
         arg.to_s.split(/\s+/).reject { |part| part == "--dry-run" }.join(" ")
       end
 
-      def dispatch_review(council_stage:, deliberation:, root:, bus:, review_crew:, arg:)
-        case arg
-        when "on"     then council_stage.enable!; "review: enabled in pipeline"
-        when "off"    then council_stage.disable!; "review: disabled in pipeline"
-        when "status" then "review: #{council_stage.enabled? ? "on" : "off"} in pipeline"
-        else
-          target = arg.empty? ? "." : arg
-          crew_result = review_crew&.run(target: target)
-          artifact = snapshot_artifact(expand_or_root(target, root))
-          crew_text = if crew_result&.ok?
-                        crew_result.value![:summary].to_s
-                      elsif crew_result
-                        crew_result.message.to_s
-                      end
-          review_text = run_tribunal(deliberation:, artifact:, target:, bus:)
-          [crew_text, review_text].compact.reject(&:empty?).join("\n\n")
-        end
+      def dispatch_process(ctx: nil)
+        JSON.pretty_generate(process: Master::Ops::ProcessBudget.status, loop_slot: Master::Ops::LoopSlot.status)
       end
 
-      def dispatch_triad(scanner:, fix_loop:, council_stage:, deliberation:, root:, bus:, review_crew:, arg:)
-        target = arg.to_s.strip.empty? ? "." : arg.to_s.strip
-        [
-          "triad: scan",
-          dispatch_scan(scanner:, root:, arg: target),
-          "",
-          "triad: fix dry-run",
-          dispatch_fix(fix_loop:, root:, arg: "--dry-run #{target}"),
-          "",
-          "triad: review",
-          dispatch_review(council_stage:, deliberation:, root:, bus:, review_crew:, arg: target)
-        ].join("\n")
-      end
-
-      def run_tribunal(deliberation:, artifact:, target:, bus: nil)
-        run_deliberation(deliberation:, payload: artifact, context: target) { |feedback| TribunalFeedback.new(feedback, event_bus: bus).render }
-      rescue StandardError => e
-        "tribunal: #{e.message}"
-      end
-
-      def run_deliberation(deliberation:, payload:, context:)
-        return "deliberation: not configured" unless deliberation
-
-        result = deliberation.review_convergent(payload, context:)
-        return result.message if result.err?
-
-        yield result.value!
-      end
-
-      def snapshot_artifact(abs_path)
-        return "not found: #{abs_path}" unless File.exist?(abs_path)
-        return File.read(abs_path).b[0, SNAPSHOT_FILE_BYTES] if File.file?(abs_path)
-
-        files = Dir.glob(File.join(abs_path, "**/*.{rb,erb,yml}")).first(SNAPSHOT_DIR_FILE_LIMIT)
-        files.map { |f|
-          "--- #{f.sub(abs_path + "/", "")} ---\n#{File.read(f).b[0, SNAPSHOT_DIR_FILE_BYTES]}"
-        }.join("\n\n")[0, SNAPSHOT_DIR_TOTAL_BYTES]
-      end
-
-      def dispatch_critique(deliberation:, root:, arg:)
-        return "usage: /critique <file|text>" if arg.empty?
-        path = File.expand_path(arg, root)
-        payload = File.exist?(path) ? File.read(path, encoding: "UTF-8") : arg
-        run_deliberation(deliberation:, payload:, context: "explicit /critique session") { |feedback|
-          TribunalFeedback.new(feedback).render_full
-        }
-      end
-
-      def dispatch_model(agent:, config:, metrics:, root:, arg:)
-        return list_models(root:, metrics:, agent:) if arg == "list"
-        return "model: #{agent.model} (use /model list for available models)" if arg.empty?
-        agent.model = arg; config.save!; "model: #{arg}"
-      end
-
-      def list_models(root:, metrics:, agent:)
-        yml_path = File.join(root, "data", "models.yml")
-        return "model: #{agent.model}" unless File.exist?(yml_path)
-        data = Master.load_yaml(yml_path)
-        tiers = data["models"] || {}
-        current = agent.model.to_s
-        model_lines = tiers.flat_map do |tier, ms|
-          ms.to_a.map do |mod|
-            marker = mod["id"].to_s == current ? "→ " : "  "
-            "#{marker} [#{tier}] #{mod["id"]}"
-          end
-        end
-        quality_lines = metrics&.model_quality&.map { |mod, stat|
-          "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}"
-        } || []
-        sections = ["available models:"] + model_lines
-        sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
-        sections.join("\n")
-      end
-
-      def dispatch_why(agent:, root:, rule:)
-        return "usage: /why <law|scan_rule|anti_pattern|style.key>" if rule.empty?
-        local = Trace::WhyExplainer.new(root:).explain(rule)
-        return local if local
-        agent.ask_once(Voice::Personality.why_prompt(rule))
-      end
-
-      def dispatch_ecology(ecology, arg)
-        return "ecology: not wired" unless ecology
-        path = arg.to_s.strip.empty? ? nil : File.expand_path(arg.strip)
-        report = ecology.scan(path: path)
-        ecology.render(report)
-      rescue StandardError => e
-        "ecology: #{e.message}"
-      end
-
-      def dispatch_topic(session, arg)
-        if arg.empty?
-          current = session.respond_to?(:topic) ? session.topic : nil
-          current ? "topic: #{current}" : "no topic set  /topic <description>"
-        else
-          session.topic = arg if session.respond_to?(:topic=)
-          "topic: #{arg}"
-        end
+      def dispatch_propose_tree(propose_tree, ctx: nil)
+        propose_tree&.call || "propose-tree: not wired"
       end
     end
   end

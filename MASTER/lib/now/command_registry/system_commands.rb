@@ -13,14 +13,14 @@ module Master
 
       def system_commands(agent:, diag:, root:)
         {
-          "orient" => cmd(:dispatch_orient, root),
-          "explain" => ->(_ctx) { dispatch_orient(root, "") },
-          "tree" => cmd(:dispatch_tree, root),
-          "diff" => cmd(:dispatch_diff, root),
-          "commit" => ->(_ctx) { dispatch_commit(agent, root) },
-          "snapshot" => ->(_ctx) { dispatch_snapshot(root) },
-          "diag" => ->(ctx) { diag ? diag.render(ctx[:args].to_s.strip) : "diag: not configured" },
-          "reload" => ->(_ctx) { "reload: not supported in this context" }
+          "orient" => command(:dispatch_orient, root),
+          "explain" => command(:dispatch_orient, root),
+          "tree" => command(:dispatch_tree, root),
+          "diff" => command(:dispatch_diff, root),
+          "commit" => command(:dispatch_commit, agent, root),
+          "snapshot" => command(:dispatch_snapshot, root),
+          "diag" => command(:dispatch_diag, diag),
+          "reload" => command(:dispatch_reload)
         }
       end
 
@@ -34,7 +34,8 @@ module Master
         "openbsd" => ["data/openbsd.yml", "pf/nsd/httpd/relayd config validators"]
       }.freeze
 
-      def dispatch_orient(root, arg)
+      def dispatch_orient(root, ctx: nil)
+        arg = arg_for(ctx)
         return cat_orient(root, arg) unless arg.empty?
         [
           "MASTER — constitutional AI runtime for any text artifact",
@@ -53,7 +54,8 @@ module Master
         File.exist?(full) ? File.read(full) : "missing: #{full}"
       end
 
-      def dispatch_tree(root, arg)
+      def dispatch_tree(root, ctx: nil)
+        arg = arg_for(ctx)
         cfg   = (Master.load_yaml(File.join(root, "data", "rules.yml")) || {}).dig("paths", "tree") || {}
         depth = arg.to_i.positive? ? arg.to_i : (cfg["max_depth"] || 2)
         cap   = cfg["max_lines"] || 200
@@ -74,13 +76,14 @@ module Master
         tree_lines.join("\n")
       end
 
-      def dispatch_diff(root, arg)
+      def dispatch_diff(root, ctx: nil)
+        arg = arg_for(ctx)
         base = arg.empty? ? "HEAD" : arg
         out, = Open3.capture2e("git", "-C", root, "diff", base, "--stat")
         out.strip.empty? ? "(no changes since #{base})" : out.strip
       end
 
-      def dispatch_commit(agent, root)
+      def dispatch_commit(agent, root, ctx: nil)
         diff, = Open3.capture2e("git", "-C", root, "diff", "--cached", "--stat")
         diff, = Open3.capture2e("git", "-C", root, "diff", "--stat") if diff.strip.empty?
         return "nothing to commit" if diff.strip.empty?
@@ -91,12 +94,21 @@ module Master
         out.strip
       end
 
-      def dispatch_snapshot(root)
+      def dispatch_snapshot(root, ctx: nil)
         purge_snapshot_gists
         [
           publish_snapshot(root, "MASTER"),
           publish_snapshot(File.expand_path("../DEPLOY", root), "DEPLOY")
         ].join("\n")
+      end
+
+      def dispatch_diag(diag, ctx: nil)
+        arg = arg_for(ctx)
+        diag ? diag.render(arg) : "diag: not configured"
+      end
+
+      def dispatch_reload(ctx: nil)
+        "reload: not supported in this context"
       end
 
       def purge_snapshot_gists
@@ -147,6 +159,8 @@ module Master
         status.success? ? "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{out.strip}" :
                           "snapshot:#{label.downcase}: gist failed: #{out.strip}"
       end
+
+      def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip
     end
   end
 end

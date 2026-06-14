@@ -2,6 +2,7 @@
 
 class RecommendOutfitsJob < ApplicationJob
   queue_as :default
+  limits_concurrency to: 2, key: ->(user_id) { "llm-recommend-outfits-#{user_id}" }, duration: 5.minutes
 
   def perform(user_id, occasion: nil, season: nil)
     user = User.find(user_id)

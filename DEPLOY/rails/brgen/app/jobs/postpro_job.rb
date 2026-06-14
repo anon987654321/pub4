@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class PostproJob < ApplicationJob
-  queue_as :default
+  queue_as :bulk
 
   POSTPRO = Rails.root.join("../../../../postpro.rb").expand_path.freeze
   VALID_PRESETS = %w[portrait landscape street blockbuster].freeze

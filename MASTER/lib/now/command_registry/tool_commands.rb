@@ -12,12 +12,19 @@ module Master
       def tool_commands(root, ai = nil)
         agent = ai && ai[:agent]
         {
-          "postpro" => ->(ctx) { dispatch_master_tool(root:, tool: "postpro", arg: arg_for(ctx)) },
-          "repligen" => ->(ctx) { dispatch_master_tool(root:, tool: "repligen", arg: arg_for(ctx)) },
-          "photograph" => ->(ctx) { dispatch_photograph(root:, agent: agent, ctx: ctx) },
-
-          "sing" => ->(ctx) { dispatch_sing(root:, ctx: ctx) }
+          "postpro" => command(:dispatch_postpro, root),
+          "repligen" => command(:dispatch_repligen, root),
+          "photograph" => command(:dispatch_photograph, root, agent),
+          "sing" => command(:dispatch_sing, root)
         }
+      end
+
+      def dispatch_postpro(root, ctx: nil)
+        dispatch_master_tool(root:, tool: "postpro", arg: arg_for(ctx))
+      end
+
+      def dispatch_repligen(root, ctx: nil)
+        dispatch_master_tool(root:, tool: "repligen", arg: arg_for(ctx))
       end
 
       def dispatch_master_tool(root:, tool:, arg:)
@@ -33,7 +40,7 @@ module Master
         "#{tool}: #{e.class}: #{e.message}"
       end
 
-      def dispatch_photograph(root:, agent:, ctx:)
+      def dispatch_photograph(root, agent, ctx: nil)
         prompt = arg_for(ctx).to_s.strip
         return "usage: /photograph <prompt>   (attach photo token for ref vision analysis)" if prompt.empty?
 
@@ -49,24 +56,20 @@ module Master
             refined = agent.ask(vision_prompt, image: image)
             refined_prompt = refined.to_s.strip.lines.first(3).join(" ").strip if refined
             refined_prompt = prompt if refined_prompt.empty? || refined_prompt.length < 20
-          rescue StandardError => e
+          rescue StandardError
             refined_prompt = prompt
           end
         end
 
-        # Generate using repligen (reuses our generate support + predict + download to output/ dir)
         gen_arg = "#{model} #{refined_prompt}"
         gen_out = dispatch_master_tool(root: root, tool: "repligen", arg: "generate #{gen_arg}")
 
-        # Parse output dir from the generate print ( "Output: output/..." )
-        output_dir = gen_out[ /Output: (output\/[^\s]+)/ , 1 ] || Dir.glob("output/*").max { |a,b| File.mtime(a) <=> File.mtime(b) }
+        output_dir = gen_out[/Output: (output\/[^\s]+)/, 1] || Dir.glob("output/*").max { |a, b| File.mtime(a) <=> File.mtime(b) }
 
         unless output_dir && Dir.exist?(output_dir)
           return "photograph: generate failed or no output dir\n#{gen_out}"
         end
 
-        # Postpro the generated images for genuinely good film photography look (kodak_portra portrait)
-        # Process files in the dir using postpro script per file (supports --input file --output ...)
         processed_dir = "#{output_dir}_postpro"
         FileUtils.mkdir_p(processed_dir) rescue nil
 
@@ -82,18 +85,21 @@ module Master
 
         [
           "photograph: vision=#{!!image} model=#{model}",
-          "refined: #{refined_prompt[0,120]}...",
+          "refined: #{refined_prompt[0, 120]}...",
           "generated: #{output_dir}",
           "postpro (#{results.size} files): #{processed_dir}",
           results.join("\n")
         ].join("\n")
-def dispatch_sing(root:, ctx:)
-  prompt = arg_for(ctx).to_s.strip
-  return "usage: /sing <lyrics or singing prompt>   (Replicate suno-ai/bark)" if prompt.empty?
-  dispatch_master_tool(root: root, tool: "repligen", arg: "generate suno-ai/bark #{prompt}")
-end
-
       end
+
+      def dispatch_sing(root, ctx: nil)
+        prompt = arg_for(ctx).to_s.strip
+        return "usage: /sing <lyrics or singing prompt>   (Replicate suno-ai/bark)" if prompt.empty?
+
+        dispatch_master_tool(root: root, tool: "repligen", arg: "generate suno-ai/bark #{prompt}")
+      end
+
+      def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip
     end
   end
 end

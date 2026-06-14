@@ -18,6 +18,7 @@ Rails.application.routes.draw do
   get  "events/stream", to: "events#stream"
   post "canvas/event",  to: "canvas#post_event"
   post "canvas/state",  to: "canvas#state"
+  get  "manifest" => "pwa#manifest", as: :pwa_manifest
   get  "up" => "rails/health#show", as: :rails_health_check
   get  "health" => "health#show"
 end

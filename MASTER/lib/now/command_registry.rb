@@ -81,15 +81,16 @@ module Master
       }.freeze
 
       def build(infra:, ai:, root:)
-        session_commands(infra).merge(
-          mode_commands(infra[:config]),
-          memory_commands(infra[:memory], ai[:agent]),
-          work_commands(ai:, root:, infra:),
-          tool_commands(root, ai),
-          control_commands(ai[:standing], ai[:soul]),
-          system_commands(agent: ai[:agent], diag: infra[:diag], root:),
-          "help" => ->(ctx) { help_text(ctx[:args].to_s.strip) }
-        )
+        commands = {}
+        commands.merge!(session_commands(infra))
+        commands.merge!(mode_commands(infra[:config]))
+        commands.merge!(memory_commands(infra[:memory], ai[:agent]))
+        commands.merge!(work_commands(ai:, root:, infra:))
+        commands.merge!(tool_commands(root, ai))
+        commands.merge!(control_commands(ai[:standing], ai[:soul]))
+        commands.merge!(system_commands(agent: ai[:agent], diag: infra[:diag], root:))
+        commands["help"] = command(:help_text, nil)
+        commands
       end
 
       def help_text(command = nil)
@@ -113,27 +114,18 @@ module Master
         logging = infra[:logging]
         config = infra[:config]
         {
-          "clear" => ->(_ctx) { session.clear!; "context cleared" },
-          "save" => ->(_ctx) { session.save!; "session saved" },
-          "history" => ->(ctx) {
-            n = ctx[:args].to_s.strip.to_i
-            n = 10 if n <= 0
-            recent = session.messages.last(n)
-            next "history: empty" if recent.empty?
-            recent.map.with_index(1) { |m, i| Formatter.history_line(m, i) }.join("\n")
-          },
-          "grep" => ->(ctx) { grep_history(session, ctx[:args].to_s) },
-          "audit" => ->(_ctx) { audit_changes(config["root"] || Dir.pwd) },
-          "tokens" => ->(_ctx) { "~#{session.token_est} tokens" },
-          "cost" => ->(_ctx) { Formatter.cost(session.cost) },
-          "undo" => ->(_ctx) { r = undo.undo!; r.ok? ? "reverted: #{r.value!}" : r.message },
-          "rollback" => ->(_ctx) { r = undo.undo!; r.ok? ? "rolled back: #{r.value!}" : r.message },
-          "redo" => ->(_ctx) { r = undo.redo!; r.ok? ? "reapplied: #{r.value!}" : r.message },
-          "dmesg" => ->(ctx) {
-            n = ctx[:args].to_s.strip.to_i
-            logging.dmesg(n.positive? ? n : Master::Trace::Logging::DEFAULT_DMESG_LINES)
-          },
-          "config" => ->(_ctx) { config.to_h.inspect }
+          "clear" => command(:dispatch_clear, session),
+          "save" => command(:dispatch_save, session),
+          "history" => command(:dispatch_history, session),
+          "grep" => command(:dispatch_grep, session),
+          "audit" => command(:dispatch_audit, config),
+          "tokens" => command(:dispatch_tokens, session),
+          "cost" => command(:dispatch_cost, session),
+          "undo" => command(:dispatch_undo, undo),
+          "rollback" => command(:dispatch_rollback, undo),
+          "redo" => command(:dispatch_redo, undo),
+          "dmesg" => command(:dispatch_dmesg, logging),
+          "config" => command(:dispatch_config, config)
         }
       end
 
@@ -143,37 +135,107 @@ module Master
 
       def reasoning_commands(config)
         {
-          "mode" => ->(ctx) {
-            arg = ctx[:args].to_s.strip
-            Master::Judge::Modes::SUPPORTED.include?(arg) ?
-              (config["reasoning_mode"] = arg; config.save!; "mode: #{arg}") :
-              "mode: #{config.reasoning_mode} (supported: #{Master::Judge::Modes::SUPPORTED.join(", ")})"
-          },
-          "task" => ->(ctx) {
-            arg = ctx[:args].to_s.strip
-            arg.empty? ? "task_type: #{config.task_type}" : (config["task_type"] = arg; config.save!; "task_type: #{arg}")
-          }
+          "mode" => command(:dispatch_mode, config),
+          "task" => command(:dispatch_task, config)
         }
       end
 
       def persona_commands(config)
         {
-          "persona" => ->(ctx) {
-            arg = ctx[:args].to_s.strip
-            return "persona: #{config.persona}" if arg.empty?
-            config["persona"] = arg; config.save!; "persona: #{arg}"
-          }
+          "persona" => command(:dispatch_persona, config)
         }
       end
 
       def flag_commands(config)
         flags = %w[auto_review auto_lint auto_commit]
         flags.each_with_object({}) do |flag, h|
-          h[flag] = ->(ctx) {
-            arg = ctx[:args].to_s.strip
-            arg.empty? ? "#{flag}: #{config[flag]}" : (config[flag] = arg == "on"; config.save!; "#{flag}: #{config[flag]}")
-          }
+          h[flag] = command(:dispatch_flag, config, flag)
         end
+      end
+
+      def dispatch_clear(session, ctx: nil)
+        session.clear!
+        "context cleared"
+      end
+
+      def dispatch_save(session, ctx: nil)
+        session.save!
+        "session saved"
+      end
+
+      def dispatch_history(session, ctx: nil)
+        n = arg_for(ctx).to_i
+        n = 10 if n <= 0
+        recent = session.messages.last(n)
+        return "history: empty" if recent.empty?
+
+        recent.map.with_index(1) { |m, i| Formatter.history_line(m, i) }.join("\n")
+      end
+
+      def dispatch_grep(session, ctx: nil)
+        grep_history(session, arg_for(ctx))
+      end
+
+      def dispatch_audit(config, ctx: nil)
+        audit_changes(config["root"] || Dir.pwd)
+      end
+
+      def dispatch_tokens(session, ctx: nil)
+        "~#{session.token_est} tokens"
+      end
+
+      def dispatch_cost(session, ctx: nil)
+        Formatter.cost(session.cost)
+      end
+
+      def dispatch_undo(undo, ctx: nil)
+        r = undo.undo!
+        r.ok? ? "reverted: #{r.value!}" : r.message
+      end
+
+      def dispatch_rollback(undo, ctx: nil)
+        r = undo.undo!
+        r.ok? ? "rolled back: #{r.value!}" : r.message
+      end
+
+      def dispatch_redo(undo, ctx: nil)
+        r = undo.redo!
+        r.ok? ? "reapplied: #{r.value!}" : r.message
+      end
+
+      def dispatch_dmesg(logging, ctx: nil)
+        n = arg_for(ctx).to_i
+        logging.dmesg(n.positive? ? n : Master::Trace::Logging::DEFAULT_DMESG_LINES)
+      end
+
+      def dispatch_config(config, ctx: nil)
+        config.to_h.inspect
+      end
+
+      def dispatch_mode(config, ctx: nil)
+        arg = arg_for(ctx)
+        Master::Judge::Modes::SUPPORTED.include?(arg) ?
+          (config["reasoning_mode"] = arg; config.save!; "mode: #{arg}") :
+          "mode: #{config.reasoning_mode} (supported: #{Master::Judge::Modes::SUPPORTED.join(", ")})"
+      end
+
+      def dispatch_task(config, ctx: nil)
+        arg = arg_for(ctx)
+        arg.empty? ? "task_type: #{config.task_type}" : (config["task_type"] = arg; config.save!; "task_type: #{arg}")
+      end
+
+      def dispatch_persona(config, ctx: nil)
+        arg = arg_for(ctx)
+        return "persona: #{config.persona}" if arg.empty?
+
+        config["persona"] = arg
+        config.save!
+        "persona: #{arg}"
+      end
+
+      def dispatch_flag(config, flag, ctx: nil)
+        arg = arg_for(ctx)
+        arg.empty? ? "#{flag}: #{config[flag]}" : (config[flag] = arg == "on"; config.save!; "#{flag}: #{config[flag]}")
       end
 
       def grep_history(session, pattern)
@@ -199,12 +261,13 @@ module Master
 
       def control_commands(standing, soul)
         {
-          "orders" => cmd(:dispatch_orders, standing),
-          "soul" => cmd(:dispatch_soul, soul)
+          "orders" => command(:dispatch_orders, standing),
+          "soul" => command(:dispatch_soul, soul)
         }
       end
 
-      def dispatch_orders(standing, arg)
+      def dispatch_orders(standing, ctx: nil)
+        arg = arg_for(ctx)
         case arg
         when "list", "" then standing.list
         when /\Aenable (.+)\z/ then standing.enable($1.strip)
@@ -222,7 +285,8 @@ module Master
         results.map { |r| "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}" }.join("\n")
       end
 
-      def dispatch_soul(soul, arg)
+      def dispatch_soul(soul, ctx: nil)
+        arg = arg_for(ctx)
         case arg
         when "", "show" then soul.summary
         when "version", "changelog" then soul.changelog
@@ -235,10 +299,10 @@ module Master
         end
       end
 
-      def arg_for(ctx) = ctx[:args].to_s.strip
+      def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip
       def expand_or_root(arg, root) = arg.empty? ? root : File.expand_path(arg, root)
-      def cmd(method, *services) = ->(ctx) { send(method, *services, arg_for(ctx)) }
-      def command(&block) = Command.new(&block)
+      def command(method, *args, **kwargs) = Command.new(self, method, *args, **kwargs)
+      alias cmd command
     end
   end
 end

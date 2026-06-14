@@ -1,0 +1,4 @@
+<% classes = ["toast", local_assigns[:variant] ? "toast--#{local_assigns[:variant]}" : nil].compact.join(" ") %>
+<div class="<%= classes %>" role="status">
+  <%= local_assigns[:message] %>
+</div>

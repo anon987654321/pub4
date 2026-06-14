@@ -1,0 +1,374 @@
+# frozen_string_literal: true
+
+require "json"
+require "set"
+require "thread"
+
+module Master
+  module Judge
+    class ReviewCrew
+      Finding = Struct.new(:agent, :severity, :category, :message, :line, :suggestion, :file, keyword_init: true) do
+        def to_h
+          {
+            agent: agent,
+            severity: severity,
+            category: category,
+            message: message,
+            line: line,
+            suggestion: suggestion,
+            file: file
+          }.compact
+        end
+      end
+
+      class BaseAgent
+        attr_reader :name, :findings
+
+        def initialize(name:)
+          @name = name
+          @findings = []
+        end
+
+        def analyze(code, file_path)
+          raise NotImplementedError, "#{self.class}#analyze not implemented"
+        end
+
+        def add_finding(severity:, category:, message:, line:, suggestion:, file_path:)
+          @findings << Finding.new(
+            agent: name,
+            severity: severity,
+            category: category,
+            message: message,
+            line: line,
+            suggestion: suggestion,
+            file: file_path
+          )
+        end
+      end
+
+      class SecurityAgent < BaseAgent
+        SECURITY_PATTERNS = [
+          [/eval\s*\(/, "eval()", "replace dynamic evaluation with a method dispatch or parser"],
+          [/\bsystem\s*\(/, "system()", "prefer a dedicated helper or vetted command wrapper"],
+          [/\bexec\s*\(/, "exec()", "avoid process replacement in application code"],
+          [/\`[^`]+\`/, "backtick execution", "use Open3 or a command wrapper"],
+          [/\bFile\.read\(([^)]*params|[^)]*request|[^)]*user)/, "File.read with user params", "validate and whitelist the target path"],
+          [/\b[A-Z][A-Za-z0-9_:]*\.constantize\b/, ".constantize", "replace string constant lookup with a whitelist"],
+          [/\bdynamic\s+send\s*\(|\bsend\s*\(/, "dynamic send()", "prefer explicit method calls or a whitelist"],
+          [/\b(sql|execute)\b.*[#"]\{/, "SQL interpolation", "use parameterized queries"],
+          [/\bhtml_safe\b/, "html_safe", "escape content or use a safe partial"]
+        ].freeze
+
+        def initialize
+          super(name: "SecurityAgent")
+        end
+
+        def analyze(code, file_path)
+          SECURITY_PATTERNS.each do |pattern, label, suggestion|
+            code.each_line.with_index(1) do |line, line_no|
+              next unless line.match?(pattern)
+
+              add_finding(
+                severity: :error,
+                category: :security,
+                message: "#{label} detected",
+                line: line_no,
+                suggestion: suggestion,
+                file_path: file_path
+              )
+            end
+          end
+          findings
+        end
+      end
+
+      class PerformanceAgent < BaseAgent
+        def initialize
+          super(name: "PerformanceAgent")
+        end
+
+        def analyze(code, file_path)
+          lines = code.lines
+          if lines.size > 300
+            add_finding(
+              severity: :warning,
+              category: :performance,
+              message: "file is #{lines.size} lines",
+              line: 1,
+              suggestion: "split the file at responsibility boundaries",
+              file_path: file_path
+            )
+          end
+
+          lines.each_with_index do |line, idx|
+            next if line.length <= 120
+
+            add_finding(
+              severity: :info,
+              category: :performance,
+              message: "line #{line.chomp.length} chars",
+              line: idx + 1,
+              suggestion: "wrap the line or extract a helper",
+              file_path: file_path
+            )
+          end
+
+          findings
+        end
+      end
+
+      class StyleAgent < BaseAgent
+        def initialize
+          super(name: "StyleAgent")
+        end
+
+        def analyze(code, file_path)
+          code.each_line.with_index(1) do |line, line_no|
+            if line.match?(/[ \t]+\n?\z/)
+              add_finding(
+                severity: :info,
+                category: :style,
+                message: "trailing whitespace",
+                line: line_no,
+                suggestion: "trim trailing spaces",
+                file_path: file_path
+              )
+            end
+
+            if line.match?(/!\s*important\b/)
+              add_finding(
+                severity: :warning,
+                category: :style,
+                message: "!important used",
+                line: line_no,
+                suggestion: "prefer cascade and specificity",
+                file_path: file_path
+              )
+            end
+          end
+          findings
+        end
+      end
+
+      class ArchitectureAgent < BaseAgent
+        def initialize(root:, code_index: nil, reference_graph: nil)
+          super(name: "ArchitectureAgent")
+          @root = root
+          @code_index = code_index
+          @reference_graph = reference_graph
+          @cycle_reported = false
+        end
+
+        def analyze(code, file_path)
+          count = code.each_line.count
+          if count > 10 && code.scan(/^\s*def\s+/).size > 10
+            add_finding(
+              severity: :warning,
+              category: :architecture,
+              message: "many public methods detected",
+              line: 1,
+              suggestion: "split into smaller collaborating objects",
+              file_path: file_path
+            )
+          end
+
+          if ghost_smell?(code)
+            add_finding(
+              severity: :warning,
+              category: :architecture,
+              message: "ghost smell detected: guard clause may be hiding a missing abstraction",
+              line: 1,
+              suggestion: "look for repeated branching that wants a shared object or explicit policy",
+              file_path: file_path
+            )
+          end
+
+          if !@cycle_reported && (cycle = detect_cycle)
+            add_finding(
+              severity: :error,
+              category: :architecture,
+              message: "cyclic dependency detected: #{cycle.join(' -> ')}",
+              line: 1,
+              suggestion: "break the require chain by extracting shared code into a lower-level module",
+              file_path: file_path
+            )
+            @cycle_reported = true
+          end
+
+          if code.match?(/\b[a-z_]+(\.[a-z_]+){3,}\b/)
+            add_finding(
+              severity: :warning,
+              category: :architecture,
+              message: "message chain detected",
+              line: 1,
+              suggestion: "introduce a local variable or delegation",
+              file_path: file_path
+            )
+          end
+
+          findings
+        end
+
+        private
+
+        def detect_cycle
+          return nil unless @reference_graph
+
+          graph = @reference_graph.build
+          edges = Array(graph[:edges]).select { |edge| edge[:type].to_s == "require" }
+          adjacency = Hash.new { |hash, key| hash[key] = [] }
+          edges.each { |edge| adjacency[edge[:from]] << edge[:to] }
+
+          visited = {}
+          stack = []
+
+          adjacency.keys.each do |node|
+            cycle = visit_node(node, adjacency:, visited:, stack:)
+            return cycle if cycle
+          end
+          nil
+        rescue StandardError
+          nil
+        end
+
+        def ghost_smell?(code)
+          return false unless code.match?(/\breturn\s+(?:if|unless)\b/)
+
+          method_count = code.scan(/^\s*def\s+/).size
+          branch_count = code.scan(/^\s*(if|unless|case|when)\b/).size
+          repeated_guards = code.scan(/\breturn\s+(?:if|unless)\b/).size
+          method_count >= 4 && branch_count >= 4 && repeated_guards >= 2
+        end
+
+        def visit_node(node, adjacency:, visited:, stack:)
+          return nil if visited[node]
+          visited[node] = true
+          stack << node
+
+          Array(adjacency[node]).each do |child|
+            if stack.include?(child)
+              idx = stack.index(child) || 0
+              return stack[idx..] + [child]
+            end
+            cycle = visit_node(child, adjacency:, visited:, stack:)
+            return cycle if cycle
+          end
+
+          stack.pop
+          nil
+        end
+      end
+
+      def initialize(agent:, event_bus: nil, root:, code_index: nil, reference_graph: nil)
+        @agent = agent
+        @bus = event_bus
+        @root = root
+        @code_index = code_index
+        @reference_graph = reference_graph
+      end
+
+      def run(target:)
+        files = target_files(target)
+        return Result.err("review_crew: no files under #{target}") if files.empty?
+
+        workers = [
+          SecurityAgent.new,
+          PerformanceAgent.new,
+          StyleAgent.new,
+          ArchitectureAgent.new(root: @root, code_index: @code_index, reference_graph: @reference_graph)
+        ]
+
+        queue = Queue.new
+        workers.each do |worker|
+          Thread.new do
+            started = Time.now
+            @bus&.publish("review_crew:agent_started", agent: worker.name, files: files.size)
+            worker_findings = []
+            files.each do |file|
+              code = File.read(file, encoding: "UTF-8") rescue next
+              worker_findings.concat(Array(worker.analyze(code, file)))
+            end
+            elapsed = Time.now - started
+            @bus&.publish("review_crew:agent_done", agent: worker.name, findings: worker_findings.size, elapsed: elapsed)
+            queue << { agent: worker.name, findings: worker_findings.map(&:to_h), elapsed: elapsed }
+          rescue StandardError => e
+            @bus&.publish("review_crew:agent_error", agent: worker.name, error: e.message)
+            queue << { agent: worker.name, findings: [], elapsed: 0.0, error: e.message }
+          end
+        end
+
+        collected = []
+        workers.size.times { collected << queue.pop }
+        synthesized = synthesize(collected, target: target, files: files)
+        Result.ok({ summary: synthesized, agents: collected })
+      rescue StandardError => e
+        Result.err("review_crew: #{e.message}", category: :infrastructure)
+      end
+
+      private
+
+      def target_files(target)
+        abs = File.expand_path(target, @root)
+        return [abs] if File.file?(abs)
+
+        Dir.glob(File.join(abs, "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,yml,yaml,md}"))
+           .select { |file| File.file?(file) }
+      end
+
+      def synthesize(collected, target:, files:)
+        prompt = <<~PROMPT
+          Consolidate the following review findings into one concise review summary.
+          Keep the summary actionable and mention the highest-risk issue first.
+
+          Target: #{target}
+
+          Findings JSON:
+          #{JSON.pretty_generate(collected)}
+        PROMPT
+
+        text = @agent.ask_once(prompt)
+        summary = text.to_s.strip
+        deep = deep_security_audit(collected, files)
+        [summary, deep].reject(&:empty?).join("\n\n")
+      rescue StandardError
+        [local_summary(collected, target), deep_security_audit(collected, files)].reject(&:empty?).join("\n\n")
+      end
+
+      def deep_security_audit(collected, files)
+        security_findings = collected.flat_map { |entry| Array(entry[:findings]) }.select do |finding|
+          finding[:agent].to_s == "SecurityAgent" || finding["agent"].to_s == "SecurityAgent"
+        end
+        trigger = files.any? do |file|
+          file.to_s.match?(%r{/(auth|session|user|admin|payment|credential)}i)
+        end || security_findings.any? { |finding| finding[:severity].to_s == "error" }
+        return "" unless trigger
+
+        prompt = <<~PROMPT
+          Perform an OWASP Top 10 style security audit on these findings.
+          Return a concise paragraph and call out the most urgent issue.
+
+          Findings JSON:
+          #{JSON.pretty_generate(security_findings)}
+        PROMPT
+
+        @agent.ask_once(prompt)
+      rescue StandardError
+        ""
+      end
+
+      def local_summary(collected, target)
+        total = collected.sum { |entry| Array(entry[:findings]).size }
+        top = collected.flat_map { |entry| Array(entry[:findings]) }
+        grouped = top.group_by { |finding| finding[:category] || finding["category"] }
+        lines = ["review_crew: #{target} — #{total} finding(s)"]
+        grouped.sort_by { |category, findings| [-findings.size, category.to_s] }.each do |category, findings|
+          lines << "  #{category}: #{findings.size}"
+        end
+        top.first(8).each do |finding|
+          lines << "  - #{finding[:agent]} L#{finding[:line]} #{finding[:message]} -> #{finding[:suggestion]}"
+        end
+        lines.join("\n")
+      end
+    end
+  end
+end

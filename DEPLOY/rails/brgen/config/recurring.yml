@@ -10,11 +10,31 @@
 #     schedule: at 5am every day
 
 production:
+  daily_digest_email:
+    class: DailyDigestJob
+    queue: bulk
+    schedule: every day at 8am
+
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
   weekly_deals_digest:
     class: WeeklyDealsJob
-    queue: default
+    queue: bulk
     schedule: every monday at 8am
+
+  weekly_stats_rollup:
+    class: WeeklyStatsJob
+    queue: bulk
+    schedule: every monday at 7am
+
+  nightly_search_index_rebuild:
+    class: NightlySearchIndexRebuildJob
+    queue: bulk
+    schedule: every day at 2am
+
+  monthly_analytics_rollup:
+    class: MonthlyAnalyticsRollupJob
+    queue: bulk
+    schedule: every month on the first at 3am

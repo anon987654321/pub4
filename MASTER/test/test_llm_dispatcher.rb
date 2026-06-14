@@ -16,10 +16,12 @@ class TestLLMDispatcher < Minitest::Test
   end
 
   class FakeSession
+    attr_accessor :topic, :messages
     attr_reader :costs
 
     def initialize
       @costs = []
+      @messages = []
     end
 
     def record_cost(amount, model:, tokens:)
@@ -61,6 +63,23 @@ class TestLLMDispatcher < Minitest::Test
     complete = bus.events.find { |name, _payload| name == "llm:call_complete" }
     assert_equal 250, complete.last[:tokens_in]
     assert_equal 0, complete.last[:tokens_out]
+  end
+
+  def test_active_file_types_collects_extensions_from_session_context
+    dispatcher, session, _bus = build_dispatcher
+    session.topic = "editing MASTER/lib/judge/scan/rules/js_rules.rb and config/routes.json"
+    session.messages << { content: "also touch DEPLOY/rails/brgen/app/jobs/postpro_job.rb" }
+
+    assert_equal [".json", ".rb"], dispatcher.send(:active_file_types).sort
+  end
+
+  def test_tool_availability_respects_file_types_metadata
+    dispatcher, session, _bus = build_dispatcher
+    session.topic = "editing config/routes.json"
+
+    assert dispatcher.send(:tool_available_for_context?, {})
+    assert dispatcher.send(:tool_available_for_context?, { "file_types" => [".json"] })
+    refute dispatcher.send(:tool_available_for_context?, { "file_types" => [".rb"] })
   end
 
   private

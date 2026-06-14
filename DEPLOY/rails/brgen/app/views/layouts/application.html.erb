@@ -5,7 +5,19 @@
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
   <%= tag.meta name: "mobile-web-app-capable", content: "yes" %>
   <%= tag.meta name: "color-scheme", content: "dark" %>
-  <%= tag.meta name: "theme-color", content: "#000000" %>
+  <%= tag.meta name: "theme-color", content: "#111111", data: { light_color: "#f3f4f6", dark_color: "#111111" } %>
+  <script>
+    (() => {
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) return;
+      const light = meta.dataset.lightColor || meta.content;
+      const dark = meta.dataset.darkColor || meta.content;
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const apply = () => { meta.content = mq.matches ? dark : light; };
+      apply();
+      mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+    })();
+  </script>
   <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Brgen — city communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
@@ -17,17 +29,21 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Brgen" %>">
   <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "City communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <link rel="stylesheet" href="/styles/tokens.css">
+  <link rel="preload" href="/face.css" as="style">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <link rel="stylesheet" href="/lightgallery.css">
   <meta name="lg-license" content="<%= ENV.fetch("LIGHTGALLERY_LICENSE", "0000-0000-000-0000") %>">
   <%= yield :json_ld %>
   <%= javascript_importmap_tags %>
+  <%= javascript_include_tag "particle_kernel", defer: true, "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "face", defer: true, "data-turbo-track": "reload" %>
   <%= render "shared/minimal_ui" %>
 </head>
 <body class="zen-minimal">

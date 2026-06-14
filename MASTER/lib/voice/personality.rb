@@ -33,7 +33,7 @@ module Master
         night: "Phase: night. Minimal voice; conserve cycles; defer non-urgent.",
       }.freeze
 
-      attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
+      attr_reader :name, :voice, :tts_rate, :tts_pitch, :style, :description, :knowledge_sources, :disclaimer
 
       def self.persona_names(root: nil)
         Ground::Rules.new(root: root).data(:personas).keys.map(&:to_sym)
@@ -54,11 +54,27 @@ module Master
         @tts_pitch = persona["tts_pitch"]
         @style = persona["style"]&.to_sym
         @desc = persona["description"]
+        @description = @desc
+        @knowledge_sources = Array(persona["knowledge_sources"]).compact
+        @disclaimer = persona["disclaimer"].to_s.strip
         @homeostat = homeostat
       end
 
       def system_prompt
         @system_prompt ||= build_system_prompt
+      end
+
+      def browser_profile
+        {
+          name: @name.to_s,
+          voice: @voice,
+          tts_rate: @tts_rate,
+          tts_pitch: @tts_pitch,
+          style: @style,
+          description: @description,
+          knowledge_sources: @knowledge_sources,
+          disclaimer: @disclaimer
+        }
       end
 
       private
@@ -71,6 +87,7 @@ module Master
         sections["master_identity"] = [
           "<master_identity>",
           "MASTER. #{@desc} OpenBSD-first. Constitutional AI.",
+          persona_knowledge_sources,
           identity,
           "</master_identity>"
         ].compact.join("\n")
@@ -211,6 +228,21 @@ module Master
           sections["master_style"] = [sections["master_style"], style_lines.join("\n")].compact.join("\n")
         end
 
+        if @name == :medic
+          sections["master_medical_disclaimer"] = [
+            "<master_medical_disclaimer>",
+            @disclaimer.empty? ? "Not a substitute for professional medical advice." : @disclaimer,
+            "Append this disclaimer to every medical response.",
+            "</master_medical_disclaimer>"
+          ].join("\n")
+        elsif @disclaimer.any?
+          sections["master_special_disclaimer"] = [
+            "<master_special_disclaimer>",
+            @disclaimer,
+            "</master_special_disclaimer>"
+          ].join("\n")
+        end
+
         refusal = @rules.data(:refusal_templates)
         if refusal.is_a?(Hash)
           phrasing = refusal["refusal_phrasing"] || {}
@@ -234,6 +266,12 @@ module Master
         ""
       rescue StandardError
         ""
+      end
+
+      def persona_knowledge_sources
+        return nil if @knowledge_sources.empty?
+
+        ["<master_knowledge_sources>", *@knowledge_sources.map { |source| "- #{source}" }, "</master_knowledge_sources>"].join("\n")
       end
     end
   end

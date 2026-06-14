@@ -232,7 +232,7 @@ Ideas are actionable, small-to-medium patches preferred. Prioritize: face/visual
 199. Sound design: more procedural audio tied to face (beyond TTS).
 200. Localization of the "terminal" metaphor (different prompts per language).
 
-**Next steps recommendation**: Pick high-impact low-effort from face (1-25) and chat (26-55). Many can be done with small targeted edits to public/*.js + CSS + minor controller tweaks. Track in a new section of TODO or this doc. After batch, run full web surface scans (L items) + manual a11y/perf audit.
+**Next steps recommendation**: Pick high-impact low-effort from face (1-25) and chat (26-55). Many can be done with small targeted edits to public/*.js + CSS + minor controller tweaks. Track them in a new section of this doc. After batch, run full web surface scans (L items) + manual a11y/perf audit.
 
 **Measurement**: Add basic analytics (events for face interaction, message sent, etc.) to validate improvements.
 

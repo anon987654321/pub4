@@ -207,7 +207,7 @@ RuleCoverageRule: every Rule subclass needs a test file.
 - [x] L02 All .css/.scss: scan with MOBILE_FIRST, NO_IMPORTANT, NO_IMPORT_SCSS — fix violations
 - [x] L03 All .css: scan with MAGIC_COLOR — extract raw hex values to CSS custom properties
 - [x] L04 All .js/.ts: scan with NO_VAR, FOR_OF, TEMPLATE_LITERALS, CONST_BY_DEFAULT — fix violations
-- [ ] L05 All .js: scan with JS_MODULE_SIZE — split files >300 lines
+- [x] L05 All .js: scan with JS_MODULE_SIZE — split files >300 lines
 - [x] L06 web/app/controllers: scan with RATE_LIMITING_MISSING — verify all auth routes throttled
 - [x] L07 web/app/models: scan with STRICT_LOADING_MISSING — add strict_loading_by_default true
 - [x] L08 web/db/migrate/: scan with MIGRATION_ADD_REFERENCE_NO_FK — verify all references have foreign_key: true
@@ -228,7 +228,7 @@ Violations and opportunities found by reading the actual source. Each item is a 
 
 ### O1. Single Responsibility (SRP / SOLID)
 
-- [ ] O101 cli.rb (538 lines) is a god class — split into CLI::Repl, CLI::Renderer, CLI::BackgroundScan, CLI::SignalHandler
+- [x] O101 cli.rb (538 lines) is a god class — split into CLI::Repl, CLI::Renderer, CLI::BackgroundScan, CLI::SignalHandler
 - [x] O102 Builder: 9 boot_* methods — each boot phase should be a dedicated Bootable class
 - [x] O103 FixLoop: manages convergence state, commits, scan, LLM routing, circuit breakers — extract FixLoop::Committer, FixLoop::Scanner, FixLoop::LlmRouter
 - [x] O104 CommandRegistry: dispatch logic AND output formatting in same module — extract CommandRegistry::Formatter
@@ -323,7 +323,7 @@ Violations and opportunities found by reading the actual source. Each item is a 
 - [x] O804 Open3.capture3 called with string args in several places — use array form to prevent shell injection
 - [x] O805 `SemanticRule#load_semantic_rules` called in constructor — if rules.yml changes at runtime, cache is stale; memoize with file mtime check
 - [x] O806 Session#token_est recalculates on every REPL prompt render — cache and invalidate on message append
-- [ ] O807 Multiple lambdas in command_registry capture deps via closure — convert to method objects or Command pattern for testability
+- [x] O807 Multiple lambdas in command_registry capture deps via closure — convert to method objects or Command pattern for testability
 - [x] O808 `dispatch_scan` builds scan profile from string prefix match — use a Trie or hash for O(1) lookup
 - [x] O809 FixLoop#collect_files uses Dir.glob without .gitignore awareness — use git ls-files for tracked files only
 - [x] O810 FixLoop#run_forever: bare `loop do` — add UNBOUNDED_RETRY-equivalent: max_cycles safety counter
@@ -441,7 +441,7 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 
 ### Q4. Web UI — face.js (particle 3D face)
 
-- [ ] Q401 face.js is 1,286 lines — split into face/particles.js, face/audio.js, face/expressions.js, face/tts.js, face/main.js
+- [x] Q401 face.js is 1,286 lines — split into face/particles.js, face/audio.js, face/expressions.js, face/tts.js, face/main.js
 - [x] Q402 No requestAnimationFrame pause on document.hidden — wastes CPU/battery on background tabs; add visibilitychange listener
 - [x] Q403 Audio analyser samples every frame regardless of playback state — skip analysis when !tts.playing
 - [x] Q404 analyserBuf allocated once but analyserFreqBuf re-checked — unify allocation in initAudio()
@@ -529,9 +529,9 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 - [ ] S101 Port full persona system: ronin (stoic/decisive), lawyer (Norwegian law/barnevernet), hacker (OpenBSD/CVE), architect (BIM/parametric), sysadmin (pf/httpd/vmm), trader (DeFi/technicals), medic (PubMed/disclaimer) — each with voice pitch/rate, greeting phrase, focus domain, knowledge sources
 - [ ] S102 Persona switching command: `/persona ronin` changes identity, voice pitch/rate, greeting style, knowledge sources for TTS and LLM prompts
-- [ ] S103 Each persona carries its own knowledge_sources list (lovdata.no, cve.mitre.org, archdaily.com, man.openbsd.org, pubmed.ncbi.nlm.nih.gov) — inject into LLM context on switch
-- [ ] S104 Medic persona requires disclaimer injection: "Not a substitute for professional medical advice" appended to every medical response
-- [ ] S105 Persona voice config feeds directly into face.js TTS pitch/rate sliders — ronin speaks slow+low, medic speaks measured+mid
+- [x] S103 Each persona carries its own knowledge_sources list (lovdata.no, cve.mitre.org, archdaily.com, man.openbsd.org, pubmed.ncbi.nlm.nih.gov) — inject into LLM context on switch
+- [x] S104 Medic persona requires disclaimer injection: "Not a substitute for professional medical advice" appended to every medical response
+- [x] S105 Persona voice config feeds directly into face.js TTS pitch/rate sliders — ronin speaks slow+low, medic speaks measured+mid
 
 ### S2: Meta-Analysis / Self-Evolution (v49.8 — specified, never wired)
 
@@ -734,10 +734,10 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### T7: Configuration & Rule Systems (from Hermes / Codex / OpenCrabs)
 
-- [ ] T701 Portable skill document format (agentskills.io): each MASTER skill in MASTER/data/skills/<name>.md — reusable across agent frameworks
+- [x] T701 Portable skill document format (agentskills.io): each MASTER skill in MASTER/data/skills/<name>.md — reusable across agent frameworks
 - [x] T702 Model switching via CLI: /model gpt-4o switches active provider without restart — per-task cost/latency optimization
 - [x] T703 AGENTS.md as tool registry: declarative manifest listing available MASTER tools, skills, hooks, MCP endpoints
-- [ ] T704 Conditional tool availability: tools activated by file type (Prism tools only for .rb, jq tools only for .json) — reduce noise in LLM tool list
+- [x] T704 Conditional tool availability: tools activated by file type (Prism tools only for .rb, jq tools only for .json) — reduce noise in LLM tool list
 - [x] T705 Plugin hot-reload: add new tool/skill file to data/skills/ and MASTER picks it up at next prompt without restart
 
 ### T8: Repo Map & Context Management (from aider)
@@ -2502,9 +2502,9 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### FA-C: Interaction & gamification
 
-- [ ] FA66 face: keyboard shortcut `T` = toggle TTS on/off without opening nav
-- [ ] FA67 face: keyboard shortcut `M` = toggle mic on/off
-- [ ] FA68 face: keyboard shortcut `Escape` = skip current TTS chunk
+- [x] FA66 face: keyboard shortcut `T` = toggle TTS on/off without opening nav
+- [x] FA67 face: keyboard shortcut `M` = toggle mic on/off
+- [x] FA68 face: keyboard shortcut `Escape` = skip current TTS chunk
 - [ ] FA69 face: swipe up on face canvas = open composer (mirror swipe-down nav reveal)
 - [ ] FA70 face: swipe left/right on face = cycle through recent answers
 - [ ] FA71 face: drag face to corner — pin it small while reading long output (PiP mode)

@@ -1,0 +1,25 @@
+dbs:
+  - path: /home/brgen/app/db
+    pattern: "*.sqlite3"
+    replicas:
+      - url: file:///var/backups/litestream/brgen
+  - path: /home/amber/app/storage
+    pattern: "*.sqlite3"
+    replicas:
+      - url: file:///var/backups/litestream/amber
+  - path: /home/baibl/app/storage
+    pattern: "*.sqlite3"
+    replicas:
+      - url: file:///var/backups/litestream/baibl
+  - path: /home/blognet/app/storage
+    pattern: "*.sqlite3"
+    replicas:
+      - url: file:///var/backups/litestream/blognet
+  - path: /home/bsdports/app/storage
+    pattern: "*.sqlite3"
+    replicas:
+      - url: file:///var/backups/litestream/bsdports
+  - path: /home/hjerterom/app/storage
+    pattern: "*.sqlite3"
+    replicas:
+      - url: file:///var/backups/litestream/hjerterom

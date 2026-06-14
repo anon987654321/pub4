@@ -1,2 +1,7 @@
 #!/bin/sh
 ruby /usr/local/bin/nsd-resign
+su -l dev -c '/home/dev/pub4/DEPLOY/openbsd/backup_priv.sh'
+
+if ! drill @127.0.0.1 brgen.no SOA >/tmp/nsd-check.out 2>&1; then
+  logger -t daily.local "NSD smoke check failed for brgen.no"
+fi

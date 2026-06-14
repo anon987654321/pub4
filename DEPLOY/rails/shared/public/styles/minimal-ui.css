@@ -1,6 +1,12 @@
 /* Ultra-minimal shared UI for all apps — synced from MASTER web */
 @layer reset, tokens, base, layout, components, utilities, overrides;
 
+@font-face {
+  font-family: "Helvetica Neue Fallback";
+  src: local("Helvetica Neue"), local("HelveticaNeue");
+  font-display: swap;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;

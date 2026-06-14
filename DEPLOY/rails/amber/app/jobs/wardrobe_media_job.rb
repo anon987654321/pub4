@@ -4,7 +4,7 @@ require "tempfile"
 require "rbconfig"
 
 class WardrobeMediaJob < ApplicationJob
-  queue_as :media
+  queue_as :bulk
 
   VARIANTS = {
     thumb: { resize_to_limit: [240, 240] },

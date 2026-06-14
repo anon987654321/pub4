@@ -1,0 +1,472 @@
+// Sample the cleaned text across the audio length so the mouth moves with real prosody.
+function startVisemeAnim(text) {
+  stopVisemeAnim();
+  const words = text.split(/\s+/);
+  let lastWordIdx = -1;
+  let i = 0;
+  tts.visemeTimer = setInterval(() => {
+    const audio = tts.audio;
+    if (!audio || !audio.duration || !isFinite(audio.duration)) { setViseme(text.charAt(i)); i = (i + 3) % text.length; return; }
+    const idx = Math.min(text.length - 1, Math.floor((audio.currentTime / audio.duration) * text.length));
+    setViseme(text.charAt(idx));
+    // drive closed-caption strip (FA141) on word-boundary proxy
+    if (ttsLive) {
+      const denom = Math.max(1, text.length);
+      const wIdx = Math.min(words.length - 1, Math.floor((idx / denom) * words.length));
+      if (wIdx !== lastWordIdx) {
+        lastWordIdx = wIdx;
+        const from = Math.max(0, wIdx - 2);
+        const to = Math.min(words.length, wIdx + 3);
+        ttsLive.textContent = words.slice(from, to).join(' ');
+      }
+    }
+  }, VISEME_STEP_MS);
+}
+
+function stopVisemeAnim() {
+  if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; }
+}
+
+function ttsSkip() {
+  tts.cancelToken++;
+  setTTSLoading(false);
+  if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
+  stopVisemeAnim();
+  tts.queue.length = 0; tts.prefetch.clear(); tts.attempts.clear(); tts.playing = false; tts.current = null;
+  if (tts.retryTimer) { clearTimeout(tts.retryTimer); tts.retryTimer = null; }
+  if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
+  clearViseme();
+  if (ttsLive) ttsLive.textContent = '';
+}
+function ttsToggleMute() {
+  tts.muted = !tts.muted;
+  if (tts.muted) ttsSkip();
+  beep(tts.muted ? 220 : 880, 0.05);
+}
+
+function ttsToggleMic() {
+  if (State.sttActive) stopSTT();
+  else startSTT();
+}
+
+function cancelStream() {
+  if (evtSrc) { try { evtSrc.close(); } catch (_) {} evtSrc = null; }
+  window._chatCancel?.();
+  ttsSkip();
+  State.mode = 'idle';
+  State.flash = 0.2;
+}
+
+let recognition = null;
+if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = true; recognition.interimResults = true;
+  let sttSilenceTimer = null, sttPartial = '';
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    if (final.trim()) { sttPartial = ''; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } State.sttActive = false; recognition.stop(); sendMessage(final.trim()); return; }
+    if (interim.trim()) {
+      sttPartial = interim.trim();
+      if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
+      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (_) {} sendMessage(t2); } }, 1200);
+    }
+  };
+  recognition.onend = () => { State.sttActive = false; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+  recognition.onerror = () => { State.sttActive = false; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+}
+function startSTT() {
+  if (!recognition || State.sttActive) return;
+  if (tts.playing) ttsSkip();
+  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
+}
+function stopSTT() {
+  if (!recognition || !State.sttActive) return;
+  try { recognition.stop(); } catch (_) {}
+}
+
+let evtSrc = null;
+async function sendMessage(text) {
+  const trimmed = text.trim();
+  if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
+      if (window.MASTER_FACE?.tts?.lastText) { window.MASTER_FACE.tts.queue = [window.MASTER_FACE.tts.lastText]; window.MASTER_FACE.ttsTick?.(); } return;
+  }
+  if (/^\/sleep$/i.test(trimmed)) { State.sleeping = true; faceMat.uniforms.uIdleDrift.value = 0.02; return; }
+  if (/^\/wake$/i.test(trimmed)) { State.sleeping = false; return; }
+  const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
+  if (maskMatch) { swapMask(maskMatch[1]); return; }
+  if (/^\/leader$/i.test(trimmed)) { swapMask('/dario.jpg'); return; }
+  if (/^\/dario$/i.test(trimmed)) { swapMask('/dario.jpg'); return; }
+  if (/^\/puffy$/i.test(trimmed)) { swapMask('/puffy.jpg'); return; }
+  if (/^\/trump$/i.test(trimmed)) { swapMask('/trump.jpg'); return; }
+  const rateMatch = trimmed.match(/^\/rate\s+([\d.]+)$/i);
+  if (rateMatch) { setTtsRate(parseFloat(rateMatch[1])); return; }
+  const pitchMatch = trimmed.match(/^\/pitch\s+([+-]?[\d.]+)$/i);
+  if (pitchMatch) { tts.pitchOffset = Math.max(-20, Math.min(20, parseFloat(pitchMatch[1]))); if (uiStatus) uiStatus.textContent = `pitch ${tts.pitchOffset >= 0 ? '+' : ''}${tts.pitchOffset}Hz`; return; }
+  if (evtSrc) { try { evtSrc.close(); } catch (_) {} }
+  window.MASTER_FACE?.ttsSkip?.();
+
+  let finalText = text, preEnhanced = false;
+  try {
+    const r = await fetch(`/chat/enhance?message=${encodeURIComponent(text)}`);
+    const data = await r.json();
+    if (data.changed && data.enhanced && data.enhanced !== text) {
+      const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
+      preEnhanced = chosen === data.enhanced;
+      finalText = chosen;
+    }
+  } catch (_) {}
+
+  tts.lang = detectLang(text);
+  const isTimeSensitive = /\b(today|now|current|latest|recent|this (week|month|year)|right now|at the moment|as of)\b/i.test(text);
+  tts.prependTimestamp = isTimeSensitive;
+  State.mode = 'thinking'; State.pulse = 0.4; window.MASTER_FACE?.setAmbientHum?.(true);
+  if (input.length > 180) State.lean = 0.14;
+  const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|0`);
+  const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}`;
+  evtSrc = new EventSource(url);
+  let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
+  evtSrc.onmessage = (ev) => {
+    const raw = ev.data || '';
+    if (raw === '[DONE]') {
+      if (pending.trim() && !ttsSuppressed) {
+        tts.lastText = pending.trim();
+        enqueueSpeech(pending.trim());
+      }
+      pending = '';
+      State.mode = 'idle';
+      if (navigator.vibrate) navigator.vibrate([60]);
+      try { evtSrc.close(); } catch (_) {}
+      window._chatOnDone?.();
+      return;
+    }
+    if (raw.startsWith('ERROR:')) {
+      window._chatOnChunk?.(`\n${raw}\n`);
+      State.mode = 'error'; State.flash = 1; State.shake = 0.8;
+      fadeColorTo(TINT.veto);
+      morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
+      window._chatOnError?.();
+      return;
+    }
+    const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+    window._chatOnChunk?.(chunk);
+    pending += chunk;
+    State.pulse = Math.min(0.6, State.pulse + 0.05);
+    let m;
+    while ((m = pending.match(SENT_BREAK)) || (pending.length > TTS_CHUNK_MAX && (m = pending.match(/\s+/)))) {
+      const cut = m ? m.index + m[0].length : TTS_CHUNK_MAX;
+      const sent = pending.slice(0, cut).trim();
+      pending = pending.slice(cut);
+      if (!sent) continue;
+      totalTTSChars += sent.length;
+      const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
+      ttsFirst = false;
+      enqueueSpeech(prefix + sent);
+    }
+  };
+  evtSrc.addEventListener('mood', (ev) => {
+    const m = (ev.data || '').trim();
+    if (!m) return;
+    State.mood = m;
+    if (m === 'curious') State.surpriseY = 0.7;
+    if (TINT[m]) fadeColorTo(TINT[m]);
+    const live = document.getElementById('mood-live');
+    if (live) live.textContent = 'mood: ' + m;
+  });
+  evtSrc.addEventListener('model', (ev) => {
+    const m = (ev.data || '').trim();
+    if (!m) return;
+    State.model = m; State.modelName = m.split('/').pop();
+    const key = Object.keys(TINT).find(k => m.toLowerCase().includes(k));
+    if (key) fadeColorTo(TINT[key]);
+  });
+  evtSrc.addEventListener('verdict', (ev) => {
+    const v = (ev.data || '').trim();
+    if (TINT[v]) fadeColorTo(TINT[v]);
+    State.pulse = 0.6;
+    State.jitter = (State.confidence < 0.45 ? 0.75 : 0.15);
+    if (State.confidence > 0.75) State.pulse = 0.9;
+    if (v === 'pass') {
+      beep(880, 0.06);
+      morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
+      State.bloom = 1.0;
+    }
+    if (v === 'veto') {
+      beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
+      morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
+      State.fracture = 1.0;
+    }
+  });
+  evtSrc.addEventListener('council:speech', (ev) => {
+    try {
+      const { voice, text, persona } = JSON.parse(ev.data || '{}');
+      if (persona) { rootBody.dataset.councilPersona = persona; applyPersonaVisual(persona); }
+      if (voice && text && !tts.playing) playDuo([[guardVoice(voice), text]]);
+      setTimeout(() => { if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona; }, 8000);
+    } catch (_) {}
+  });
+  evtSrc.addEventListener('confidence', (ev) => {
+    const c = parseFloat(ev.data); if (isNaN(c)) return;
+    State.confidence = c;
+  });
+  evtSrc.addEventListener('dmesg', (ev) => {
+    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  evtSrc.onerror = () => {
+    State.flash = 1; State.shake = 0.8; State.mode = 'error';
+    try { evtSrc.close(); } catch (_) {}
+  };
+}
+
+setInterval(() => {
+  if (document.hidden) return;
+  const idleS = ((performance.now() - State.lastTouch) / 1000) | 0;
+  const body = new URLSearchParams({
+    mood: State.mood, mode: State.mode, idle: String(idleS),
+    palette: '0', confidence: State.confidence.toFixed(2),
+    tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2)
+  });
+  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (_) {}
+}, 8000);
+
+let wakeLock = null;
+async function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (_) {} }
+  await req();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
+}
+
+function guardVoice(v) {
+  if ((v === "pernille" || v === "finn") && tts.lang !== "nb") return undefined;
+  if (v === "osman" && tts.lang !== "ms") return undefined;
+  return v;
+}
+
+function playDuo(lines, onDone) {
+  if (!lines.length) { onDone?.(); return; }
+  const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw);
+  const rest = lines.slice(1);
+  loadTTSBlob(text, voice)
+    .then(async blob => {
+      const src = URL.createObjectURL(blob);
+      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
+      const audio = new Audio(src);
+      tts.audio = audio;
+      audio.playbackRate = getTtsRate();
+      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
+      startVisemeAnim(text);
+      audio.onended = audio.onerror = () => {
+        stopVisemeAnim();
+        tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
+        URL.revokeObjectURL(src);
+        clearViseme();
+        playDuo(rest, onDone);
+      };
+      audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone); });
+    })
+    .catch(() => playDuo(rest, onDone));
+}
+
+let visualEventSource = null;
+function handleGlobalBusEvent(payload) {
+  const data = payload && (payload.data || payload);
+  const type = payload && (payload.type || (data && (data.event || data.name)));
+  if (!type) return;
+  if (type === 'tts:anticipate') {
+    window.dispatchEvent(new CustomEvent('tts:anticipate', { detail: data }));
+  }
+  if (type === 'tts:style:active') {
+    window.dispatchEvent(new CustomEvent('master:visual', { detail: { ...data, name: type, raw: data } }));
+  }
+}
+
+function bindGlobalEventStream() {
+  if (!window.EventSource || visualEventSource) return;
+  try {
+    visualEventSource = new EventSource('/events/stream');
+    visualEventSource.onmessage = (ev) => {
+      try { handleGlobalBusEvent(JSON.parse(ev.data || '{}')); } catch (_) {}
+    };
+    visualEventSource.onerror = () => {
+      if (visualEventSource && visualEventSource.readyState === EventSource.CLOSED) visualEventSource = null;
+    };
+  } catch (_) {
+    visualEventSource = null;
+  }
+}
+
+function startEverything() {
+  morphCurrent = 0.72; morphTarget = 1.08;
+  initAudio();
+  bindGlobalEventStream();
+  if (window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume();
+  if (primer) { primer.style.transition = 'opacity 160ms ease, transform 160ms ease'; primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)'; setTimeout(() => primer?.remove(), 200); }
+  zshBar.classList.add('live');
+  const logo = document.querySelector('.top-left-logo');
+  if (logo) {
+    logo.style.transition = 'none';
+    logo.style.transform = 'translateX(3px)';
+    setTimeout(() => { logo.style.transition = 'transform 80ms ease'; logo.style.transform = ''; }, 80);
+  }
+  let _logoDimTimer = null;
+  function _schedLogoDim() {
+    clearTimeout(_logoDimTimer);
+    _logoDimTimer = setTimeout(() => { if (logo) logo.classList.add('dim'); }, 4000);
+  }
+  _schedLogoDim();
+  document.addEventListener('pointerdown', () => { if (logo) logo.classList.remove('dim'); _schedLogoDim(); }, { passive: true });
+  requestMotionPermission(); acquireWakeLock();
+  setTimeout(() => { morphTarget = 1.0; }, 600);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v1')).catch(() => {});
+}
+let primerFired = false;
+function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
+primer?.addEventListener('pointerdown', firePrimer);
+primer?.addEventListener('touchstart', firePrimer, { passive: true });
+primer?.addEventListener('click', firePrimer);
+primer?.addEventListener('keydown', event => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  firePrimer();
+});
+
+zshBar.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const v = zshIn.value.trim();
+  if (!v) return;
+  window._chatOnUser?.(v);
+  zshIn.value = '';
+  State.pulse = 0.4;
+  State.ripplePhase = 0;
+  beep(1320, 0.018);
+  navigator.vibrate?.(30);
+  window.MASTER_FACE?.sendMessage?.(v);
+});
+zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
+
+const PLACEHOLDERS = ['ask anything', 'what do you think?', 'challenge me', 'show your work', 'explain simply'];
+let _phIdx = 0;
+setInterval(() => {
+  if (document.activeElement === zshIn || zshIn.value) return;
+  _phIdx = (_phIdx + 1) % PLACEHOLDERS.length;
+  zshIn.placeholder = PLACEHOLDERS[_phIdx];
+}, 8000);
+
+const _charCount = document.getElementById('char-count');
+zshIn.addEventListener('input', () => {
+  const len = zshIn.value.length;
+  if (_charCount) { _charCount.textContent = len > 120 ? len : ''; _charCount.style.opacity = len > 120 ? '0.5' : '0'; }
+});
+
+let _swipeStartX = 0, _swipeStartY = 0;
+const chatLog = document.getElementById('chat-log');
+if (chatLog) {
+  chatLog.addEventListener('touchstart', e => { _swipeStartX = e.touches[0].clientX; _swipeStartY = e.touches[0].clientY; }, { passive: true });
+  chatLog.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - _swipeStartX;
+    const dy = Math.abs(e.changedTouches[0].clientY - _swipeStartY);
+    if (dx > 72 && dy < 40) cancelStream();
+  }, { passive: true });
+}
+
+const _origHaptic = enqueueSpeech;
+window.MASTERVoice && (window.MASTERVoice._hapticPatch = true);
+
+spinBtn?.addEventListener('click', () => cancelStream());
+
+// FA62 push-to-talk: hold space = record, release = submit (unless input focused)
+let pttActive = false;
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ' && !e.repeat && document.activeElement !== zshIn && primerFired) {
+    e.preventDefault(); pttActive = true; window.MASTER_FACE?.startSTT?.();
+  }
+});
+document.addEventListener('keyup', (e) => {
+  if (e.key === ' ' && pttActive) { pttActive = false; window.MASTER_FACE?.stopSTT?.(); }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { e.preventDefault(); cancelStream(); window.MASTER_FACE?.ttsSkip?.(); }
+  if (e.ctrlKey && e.key === 'm') { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
+  if (e.key === 't' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
+  if (e.key === 'm' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); window.MASTER_FACE?.ttsToggleMic?.(); }
+  if (e.ctrlKey && (e.key === '[' || e.key === ',')) {
+    e.preventDefault();
+    const cur = getTtsRate();
+    const i = nearestRateIndex(cur);
+    setTtsRate(RATES[(i - 1 + RATES.length) % RATES.length]);
+  }
+  if (e.ctrlKey && (e.key === ']' || e.key === '.')) {
+    e.preventDefault();
+    const cur = getTtsRate();
+    const i = nearestRateIndex(cur);
+    setTtsRate(RATES[(i + 1) % RATES.length]);
+  }
+});
+
+window.sendMessage = sendMessage;
+window.MASTERVoice = {
+  enqueue: enqueueSpeech,
+  initAudio: () => window.MASTER_FACE?.initAudio?.(),
+  skip: () => window.MASTER_FACE?.ttsSkip?.(),
+  toggleMute: () => window.MASTER_FACE?.ttsToggleMute?.(),
+  toggleMic: () => window.MASTER_FACE?.ttsToggleMic?.(),
+  speak: (t) => enqueueSpeech(t),
+  get muted() { return window.MASTER_FACE?.tts?.muted; },
+  get playing() { return window.MASTER_FACE?.tts?.playing; },
+  get voice() { return window.MASTER_FACE?.tts?.voice; },
+  setLastText(text) { if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.lastText = String(text || ""); },
+  get lastText() { return window.MASTER_FACE?.tts?.lastText || ""; },
+  get ttsRate() { return getTtsRate(); },
+  setTtsRate,
+};
+window._chatSpeakLast = () => {
+  const text = window.MASTER_FACE?.tts?.lastText || "";
+  if (text) enqueueSpeech(text);
+};
+
+window.MASTER_FACE = {
+  State,
+  tts,
+  get actx() { return actx; },
+  set actx(value) { actx = value; },
+  get primerFired() { return primerFired; },
+  get mouthPool() { return mouthPool; },
+  get eyePool() { return eyePool; },
+  get renderer() { return renderer; },
+  get cv() { return cv; },
+  get faceHome() { return faceHome; },
+  get faceScatter() { return faceScatter; },
+  get faceSeeds() { return faceSeeds; },
+  get FACE_N_2D() { return FACE_N_2D; },
+  get dbgFrames() { return _dbgFrames; },
+  get morphCurrent() { return morphCurrent; },
+  setMorphCurrent(value) { morphCurrent = value; },
+  incrementDbgFrames() { _dbgFrames += 1; },
+  markFaceReady,
+  resize,
+  frame,
+  startEverything,
+  ttsTick,
+  ttsSkip,
+  ttsToggleMute,
+  ttsToggleMic,
+  startSTT,
+  stopSTT,
+  sendMessage,
+  initAudio,
+  setAmbientHum
+};
+window.announceTTS = announceTTS;
+window.enqueueSpeech = enqueueSpeech;
+window.mouthPool = mouthPool;
+window.eyePool = eyePool;
+await import('/face_semantics.js');
+await import('/face_minimal_ui.js');
+await import('/face_loops_music.js');
+await import('/face_loops_nudge.js');

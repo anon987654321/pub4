@@ -1,6 +1,6 @@
 "use strict";
 
-import { ZONE_NAMES } from '/face3d_engine.js';
+import { ZONE_NAMES } from '/face3d_geometry.js';
 
 function clamp(v, lo = 0, hi = 1) {
   return Math.max(lo, Math.min(hi, v));

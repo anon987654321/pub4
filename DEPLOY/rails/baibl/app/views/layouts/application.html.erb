@@ -3,7 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1a1a1a">
+  <meta name="theme-color" content="#0f766e" data-light-color="#ccfbf1" data-dark-color="#0f766e">
+  <script>
+    (() => {
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) return;
+      const light = meta.dataset.lightColor || meta.content;
+      const dark = meta.dataset.darkColor || meta.content;
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const apply = () => { meta.content = mq.matches ? dark : light; };
+      apply();
+      mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+    })();
+  </script>
   <meta name="turbo-cache-control" content="no-preview">
   <title><%= content_for?(:title) ? "#{yield :title} — Baibl" : "Baibl" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Baibl — explore and study the Bible. Search passages, read commentaries, and deepen your understanding." %>">
@@ -18,6 +30,7 @@
   <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "Explore and study the Bible. Search passages, read commentaries, and deepen your understanding." %>">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>

@@ -36,7 +36,7 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] AN116 Screen wake lock: acquire wake lock during video playback (brgen TV), recipe view (blognet), and navigation (hjerterom map mode)
 - [ ] AN117 Orientation lock: lock to portrait for dating swipe cards; landscape for TV player; use `screen.orientation.lock()`
 - [x] AN118 Viewport meta hardening: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` on all layouts; use `env(safe-area-inset-*)` for notch-aware padding
-- [ ] AN119 Theme color per app: manifest `theme_color` and `background_color` unique per app brand; inject dynamic theme-color meta tag for dark mode switching
+- [x] AN119 Theme color per app: manifest `theme_color` and `background_color` unique per app brand; inject dynamic theme-color meta tag for dark mode switching
 - [ ] AN120 Standalone mode detection: `window.matchMedia('(display-mode: standalone)')` — show different UI (no back button, bottom nav instead of burger menu) in PWA mode
 
 ### AN2: Rails 8 Authentication and Authorization
@@ -56,15 +56,15 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ### AN3: Solid Stack Optimization
 
-- [ ] AN301 Solid Queue job classes: define one ActiveJob subclass per async operation per app; never use `perform_later` with anonymous blocks
-- [ ] AN302 Queue priority tiers: configure 3 queues — `critical` (notifications, auth emails), `default` (AI calls, search index), `bulk` (export, batch email, analytics aggregation)
-- [ ] AN303 Solid Queue recurring jobs: define in `config/recurring.yml` — daily digest email, weekly stats, nightly search index rebuild, monthly analytics rollup
-- [ ] AN304 Solid Queue concurrency controls: per-job `limits_concurrency` to prevent duplicate AI calls (especially amber outfit generation); use `key:` as user + job type
+- [x] AN301 Solid Queue job classes: define one ActiveJob subclass per async operation per app; never use `perform_later` with anonymous blocks
+- [x] AN302 Queue priority tiers: configure 3 queues — `critical` (notifications, auth emails), `default` (AI calls, search index), `bulk` (export, batch email, analytics aggregation)
+- [x] AN303 Solid Queue recurring jobs: define in `config/recurring.yml` — daily digest email, weekly stats, nightly search index rebuild, monthly analytics rollup
+- [x] AN304 Solid Queue concurrency controls: per-job `limits_concurrency` to prevent duplicate AI calls (especially amber outfit generation); use `key:` as user + job type
 - [ ] AN305 Solid Cache TTLs: define explicit TTLs per cache key type — feed fragments: 5m, user profiles: 1h, search results: 15m, static pages: 24h; never use default
 - [ ] AN306 Solid Cache size limits: set `max_size: 512.megabytes` per app; monitor `ActiveSupport::Cache::Store.stats` and alert when >80% full
 - [ ] AN307 Solid Cable connection tracking: use `ActionCable.server.connections` to monitor active WebSocket connections; alert when >1000 concurrent (memory pressure)
 - [ ] AN308 Solid Queue dashboard: mount `SolidQueue::Engine` at `/admin/jobs` behind authentication; track job latency, failure rate, queue depth
-- [ ] AN309 Job retries: configure `retry_on` with exponential backoff for all external API jobs (LLM calls, push notifications, email delivery); max 3 retries
+- [x] AN309 Job retries: configure `retry_on` with exponential backoff for all external API jobs (LLM calls, push notifications, email delivery); max 3 retries
 - [ ] AN310 Dead letter queue: failed jobs after max retries land in `solid_queue_failed_executions`; daily digest of failures emailed to admin
 
 ### AN4: Turbo and Hotwire Patterns
@@ -215,7 +215,7 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ### AN12: Cross-App Performance
 
-- [ ] AN1201 YJIT enabled: `config.yjit = true` in production.rb for all apps; verify with `RubyVM::YJIT.enabled?`; expect 15-20% throughput improvement
+- [x] AN1201 YJIT enabled: `config.yjit = true` in production.rb for all apps; verify with `RubyVM::YJIT.enabled?`; expect 15-20% throughput improvement
 - [x] AN1202 Eager loading: `config.eager_load = true` in production; verify no autoload violations; reduces per-request load time
 - [x] AN1203 Database connection pool: set `pool:` in database.yml to match Falcon worker count; avoid connection timeout under load
 - [ ] AN1204 N+1 elimination: run `bullet` gem in development; eliminate every N+1 with `includes`/`preload`/`eager_load`; zero tolerance policy
@@ -299,7 +299,7 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] AN1707 where.missing for orphan detection: `Comment.where.missing(:post)` — find orphaned records for cleanup jobs; replaces LEFT JOIN + IS NULL pattern
 - [ ] AN1708 counter_cache with touch: `belongs_to :post, counter_cache: true, touch: true` — free comment_count on posts, free cache invalidation; zero SQL overhead in views
 - [ ] AN1709 Solid Queue recurring.yml: define `config/recurring.yml` with daily digest, weekly stats, nightly full-text index rebuild, monthly analytics rollup for all apps
-- [ ] AN1710 limits_concurrency in jobs: `limits_concurrency on: -> { "llm-#{arguments.first}" }` — prevent parallel LLM calls for same user; one LLM request per user at a time
+- [x] AN1710 limits_concurrency in jobs: `limits_concurrency on: -> { "llm-#{arguments.first}" }` — prevent parallel LLM calls for same user; one LLM request per user at a time
 - [ ] AN1711 http_cache_forever for manifests: `http_cache_forever(public: false)` on PWA manifest and service-worker.js — immutable caching with etag fallback
 - [ ] AN1712 Thruster asset caching: Thruster (default Rails 8 proxy) handles gzip/brotli automatically; verify `Content-Encoding: br` on all JS/CSS assets; zero config needed
 - [ ] AN1713 fresh_when with ETag on show actions: `fresh_when(@post, etag: @post, last_modified: @post.updated_at, public: false)` — 304 responses for unchanged posts; no DB hit after first load
@@ -1855,15 +1855,15 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ## BW: Missing OpenBSD Deployment Hardening
 
-- [ ] BW01 All apps: add `newsyslog.conf` entry for log rotation (weekly, compress, signal)
-- [ ] BW02 All apps: ensure `rcctl enable` and `rcctl start` are idempotent in deploy scripts
-- [ ] BW03 All apps: add `check_ports.sh` to CI to prevent port collisions
-- [ ] BW04 All apps: add `verify_deploy_identity.rb` to deploy pipeline
-- [ ] BW05 DEPLOY/openbsd: install and configure Litestream for all SQLite databases
-- [ ] BW06 DEPLOY/openbsd: add cron job for `backup_priv.sh` (daily)
-- [ ] BW07 DEPLOY/openbsd: ensure `relayd.conf` health checks exist for every app (`check http "/up" code 200`)
-- [ ] BW08 DEPLOY/openbsd: configure `doas` for postpro and repligen commands
-- [ ] BW09 DEPLOY/openbsd: set `PermitRootLogin no`, `PasswordAuthentication no`, `MaxAuthTries 3` in `sshd_config`
+- [x] BW01 All apps: add `newsyslog.conf` entry for log rotation (weekly, compress, signal)
+- [x] BW02 All apps: ensure `rcctl enable` and `rcctl start` are idempotent in deploy scripts
+- [x] BW03 All apps: add `check_ports.sh` to CI to prevent port collisions
+- [x] BW04 All apps: add `verify_deploy_identity.rb` to deploy pipeline
+- [x] BW05 DEPLOY/openbsd: install and configure Litestream for all SQLite databases
+- [x] BW06 DEPLOY/openbsd: add cron job for `backup_priv.sh` (daily)
+- [x] BW07 DEPLOY/openbsd: ensure `relayd.conf` health checks exist for every app (`check http "/up" code 200`)
+- [x] BW08 DEPLOY/openbsd: configure `doas` for postpro and repligen commands
+- [x] BW09 DEPLOY/openbsd: set `PermitRootLogin no`, `PasswordAuthentication no`, `MaxAuthTries 3` in `sshd_config`
 
 ## BX: Missing Frontend Baseline (shared/WIRING_NOTES.md)
 
@@ -1906,12 +1906,12 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] CC07 VM: configure `doas rcctl restart master` as a scheduled recovery if MASTER crashes (watchdog)
 - [ ] CC08 VM: set up `pf` bruteforce table flush cron (`pfctl -t bruteforce -T expire 86400` weekly)
 - [ ] CC09 VM: verify PTR / rDNS for 46.23.89.226 resolves to brgen.no
-- [ ] CC10 VM: add Litestream replication for all SQLite databases to backup target
-- [ ] CC11 VM: configure `relayd.conf` health check for MASTER — `check http "/up" code 200`
-- [ ] CC12 VM: add `relayd.conf` health checks for all Rails app backends (brgen, amber, bsdports, etc.)
-- [ ] CC13 VM: verify NSD is serving authoritative DNS for brgen.no; add monitoring check
-- [ ] CC14 DEPLOY: add `openbsd.sh` idempotency check — re-running must not destroy existing data
-- [ ] CC15 DEPLOY: write `health_check.rb` Ruby script — verifies all services, pf rules, certs, DNS in one pass
+- [x] CC10 VM: add Litestream replication for all SQLite databases to backup target
+- [x] CC11 VM: configure `relayd.conf` health check for MASTER — `check http "/up" code 200`
+- [x] CC12 VM: add `relayd.conf` health checks for all Rails app backends (brgen, amber, bsdports, etc.)
+- [x] CC13 VM: verify NSD is serving authoritative DNS for brgen.no; add monitoring check
+- [x] CC14 DEPLOY: add `openbsd.sh` idempotency check — re-running must not destroy existing data
+- [x] CC15 DEPLOY: write `health_check.rb` Ruby script — verifies all services, pf rules, certs, DNS in one pass
 
 ## CF: brgen PWA & Mobile
 
@@ -2085,15 +2085,15 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 ## CS: Asset Pipeline & Frontend Build
 
 - [ ] CS01 All apps: switch from Importmap to ESBuild for apps using Stimulus components (faster dev)
-- [ ] CS02 brgen: add `face.js` + `particle_kernel.js` as Propshaft assets — no bundling required
+- [x] CS02 brgen: add `face.js` + `particle_kernel.js` as Propshaft assets — no bundling required
 - [x] CS03 brgen: add CSS custom properties for all design tokens (color, spacing, type scale)
-- [ ] CS04 brgen: add `@font-face` for Helvetica Neue fallback stack (system-ui → Arial → sans-serif)
-- [ ] CS05 All apps: add `<link rel="preload">` for above-fold fonts and hero images
+- [x] CS04 brgen: add `@font-face` for Helvetica Neue fallback stack (system-ui → Arial → sans-serif)
+- [x] CS05 All apps: add `<link rel="preload">` for above-fold fonts and hero images
 - [ ] CS06 All apps: audit Lighthouse score — target 95+ performance, 100 accessibility
 - [x] CS07 brgen: add critical CSS inlining for landing page (< 14KB inline, rest deferred)
 - [ ] CS08 All apps: remove unused CSS with PurgeCSS pass in production build
 - [ ] CS09 brgen: convert all PNG icons to SVG sprites (single HTTP request)
-- [ ] CS10 MASTER: add `web/public/` cache busting — fingerprint static assets via Propshaft digest
+- [x] CS10 MASTER: add `web/public/` cache busting — fingerprint static assets via Propshaft digest
 
 ## CT: Repligen — Model Quality & Intelligence
 

@@ -2,6 +2,7 @@
 
 class EmbedGarmentJob < ApplicationJob
   queue_as :default
+  limits_concurrency to: 2, key: ->(item_id) { "llm-embed-garment-#{Item.find(item_id).user_id}" }, duration: 5.minutes
 
   def perform(item_id)
     item = Item.find(item_id)

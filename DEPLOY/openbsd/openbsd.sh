@@ -213,7 +213,7 @@ stage_1() {
   typeset -a _df_var; _df_var=("${(@f)$(df -k /var)}"); typeset _var_avail=${${(z)_df_var[2]}[4]}
   (( _var_avail < 512000 )) && { log ERROR "Insufficient disk space on /var"; exit 1 }
 
-  pkg_add -U ldns-utils ruby%3.4 zap zsh fish neovim tmux fontconfig fzf ripgrep fd 2>/tmp/pkg_add.log \
+  pkg_add -U ldns-utils ruby%3.4 litestream zap zsh fish neovim tmux fontconfig fzf ripgrep fd 2>/tmp/pkg_add.log \
     || { log ERROR "pkg_add failed. See /tmp/pkg_add.log"; exit 1 }
 
   [[ -f /etc/rc.conf.local && $(<"/etc/rc.conf.local") == *"pf=NO"* ]] && log WARN "pf disabled in rc.conf.local"
@@ -384,6 +384,20 @@ setup_services() {
   /usr/bin/timeout 5 telnet $BRGEN_IP 25 >/dev/null 2>&1 || log WARN "SMTP port 25 not responding"
   /usr/sbin/rcctl enable relayd
   log INFO "Services configured. relayd enabled but not started (awaiting configuration)"
+}
+
+setup_litestream() {
+  log INFO "Setting up litestream"
+  mkdir -p /var/backups/litestream
+  install_template etc/litestream.yml /etc/litestream.yml
+  install_template etc/rc.d/litestream /etc/rc.d/litestream
+  chmod 755 /etc/rc.d/litestream
+  /usr/sbin/rcctl enable litestream
+  /usr/sbin/rcctl restart litestream || /usr/sbin/rcctl start litestream \
+    || { log ERROR "litestream failed"; exit 1 }
+  sleep 2
+  typeset _c; _c=$(/usr/sbin/rcctl check litestream)
+  [[ $_c == *"litestream(ok)"* ]] || { log ERROR "litestream not running"; exit 1 }
 }
 
 bootstrap_rails_app() {
@@ -573,6 +587,8 @@ stage_2() {
     bootstrap_rails_app "$app" "$port" || { log ERROR "bootstrap failed: $app"; exit 1 }
   done
 
+  setup_litestream
+
   for svc_entry in $SERVICES; do
     typeset svc_name=${svc_entry%%:*}
     typeset svc_rest=${svc_entry#*:}
@@ -615,6 +631,8 @@ main() {
 Usage: doas zsh openbsd.sh [--help]"
     exit 0
   fi
+  ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
+  ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
   stage_1
   stage_2
 }

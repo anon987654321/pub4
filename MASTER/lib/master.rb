@@ -83,7 +83,7 @@ module Master
     judge/scan/rules/ruby_rules.rb
     judge/scan/rules/web_rules.rb
     judge/scan/rules/js_rules.rb
-    judge/scan/rules/universal_rules.rb,
+    judge/scan/rules/universal_rules.rb
   ].each do |rel|
     loader.ignore(File.join(__dir__, rel))
   end
@@ -97,6 +97,7 @@ module Master
   loader.ignore(File.join(__dir__, "quality/slop_budget.rb"))
   loader.ignore(File.join(__dir__, "repo/inventory.rb"))
   loader.ignore(File.join(__dir__, "scope/ledger.rb"))
+  loader.ignore(File.join(__dir__, "builder/boot_phases.rb"))
   loader.setup
 
   require_relative "converge/converge"

@@ -1,0 +1,81 @@
+:root {
+  color-scheme: light dark;
+  --color-shadow: #111827;
+  --color-midtone: #64748b;
+  --color-highlight: #f8fafc;
+  --color-accent: #2563eb;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --color-success: #059669;
+  --color-overlay: rgb(0 0 0 / 0.5);
+  --color-border: rgb(from var(--color-shadow) r g b / 0.15);
+  --color-midtone-tint: color-mix(in srgb, var(--color-midtone) 20%, white);
+  --gradient-hero: linear-gradient(135deg, var(--color-shadow) 0%, var(--color-midtone) 100%);
+  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
+  --text-primary: var(--color-shadow);
+  --text-secondary: color-mix(in srgb, var(--color-shadow) 72%, white);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-11: 44px;
+  --space-12: 48px;
+  --space-13: 52px;
+  --space-14: 56px;
+  --space-15: 60px;
+  --space-16: 64px;
+  --bp-sm: 480px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1536px;
+  --color-primary: var(--color-shadow);
+  --color-surface: var(--color-highlight);
+}
+
+[data-theme="dark"] {
+  --color-shadow: #111827;
+  --color-midtone: #94a3b8;
+  --color-highlight: #0f172a;
+  --color-accent: #60a5fa;
+  --color-border: rgb(from var(--color-shadow) r g b / 0.14);
+  --color-midtone-tint: color-mix(in srgb, var(--color-midtone) 20%, black);
+  --gradient-hero: linear-gradient(135deg, var(--color-shadow) 0%, var(--color-midtone) 100%);
+  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
+  --text-primary: #f8fafc;
+  --text-secondary: color-mix(in srgb, #f8fafc 72%, black);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-shadow: #111827;
+    --color-midtone: #94a3b8;
+    --color-highlight: #0f172a;
+    --color-accent: #60a5fa;
+    --color-border: rgb(255 255 255 / 0.14);
+    --color-midtone-tint: color-mix(in srgb, var(--color-midtone) 20%, black);
+    --gradient-hero: linear-gradient(135deg, var(--color-shadow) 0%, var(--color-midtone) 100%);
+    --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
+    --text-primary: #f8fafc;
+    --text-secondary: color-mix(in srgb, #f8fafc 72%, black);
+  }
+}
+
+@media (color-gamut: p3) {
+  :root {
+    --color-midtone: color(display-p3 0.1 0.45 0.9);
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --color-border: var(--color-shadow);
+    --text-secondary: var(--text-primary);
+  }
+}

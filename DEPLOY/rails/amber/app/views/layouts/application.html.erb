@@ -3,7 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1a1a1a">
+  <meta name="theme-color" content="#d97706" data-light-color="#fef3c7" data-dark-color="#d97706">
+  <script>
+    (() => {
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) return;
+      const light = meta.dataset.lightColor || meta.content;
+      const dark = meta.dataset.darkColor || meta.content;
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const apply = () => { meta.content = mq.matches ? dark : light; };
+      apply();
+      mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+    })();
+  </script>
   <meta name="turbo-cache-control" content="no-preview">
   <title><%= content_for?(:title) ? "#{yield :title} — Amber" : "Amber" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Amber — AI wardrobe management. Build capsule wardrobes, plan outfits, and discover your personal style." %>">
@@ -18,11 +30,13 @@
   <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "AI wardrobe management. Build capsule wardrobes, plan outfits, and discover your personal style." %>">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Caprasimo&display=optional">
   <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=optional" rel="stylesheet">
   <link rel="stylesheet" href="/styles/tokens.css">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>

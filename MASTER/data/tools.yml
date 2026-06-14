@@ -7,6 +7,7 @@
 #   tier        — safe | dangerous (filters which tools the LLM can call)
 #   visitor     — true if visitors can call (visitor allow-list)
 #   default     — true to enable on boot; false leaves it off until /enable
+#   file_types  — optional list of file extensions that should activate the tool
 #   description — one-line, surfaced in tool list
 
 ---
@@ -15,7 +16,7 @@
 - { name: WriteFile,      tier: dangerous, visitor: false, default: true,  description: Write a new file, required_context: "Target path and complete content.", usage_rules: ["Prefer patch-like edits when file exists.", "Keep writes minimal and reversible."], error_recovery: "If uncertain, read the file first and propose a diff." }
 - { name: StrReplace,     tier: dangerous, visitor: false, default: true,  description: Replace exact string in a file, required_context: "Exact unique old string and replacement.", usage_rules: ["Fail if old string is ambiguous."], error_recovery: "If multiple matches, refine old_string with more context." }
 - { name: BatchReplace,   tier: dangerous, visitor: false, default: true,  description: Replace many files in one call }
-- { name: AstEdit,        tier: dangerous, visitor: false, default: true,  description: Prism AST-aware Ruby edit }
+- { name: AstEdit,        tier: dangerous, visitor: false, default: true,  file_types: [".rb"], description: Prism AST-aware Ruby edit }
 - { name: Tree,           tier: safe,      visitor: false, default: true,  description: Directory tree summary }
 - { name: ListDir,        tier: safe,      visitor: false, default: true,  description: List a single directory }
 - { name: SearchFiles,    tier: safe,      visitor: false, default: true,  description: Glob/grep file search }
