@@ -9,7 +9,7 @@ module Quality
   end
 
   class SlopBudget
-    DEFAULTS = {.freeze
+    DEFAULTS = {
       max_changed_files: 50,
       max_line_delta: 2_000,
       max_todo_delta: 10,
@@ -39,6 +39,7 @@ module Quality
     def git(*args)
       stdout, status = Open3.capture2e("git", *args, chdir: @root)
       raise "git #{args.join(" ")} failed: #{stdout}" unless status.success?
+      stdout
     end
 
     def changed_files
@@ -58,13 +59,14 @@ module Quality
 
     def todo_delta(files)
       return 0 if files.empty?
-      added = diff.lines.count { |line| line.start_with?("+") && line.match?(/TODO|FIXME/) }
-      deleted = diff.lines.count { |line| line.start_with?("-") && line.match?(/TODO|FIXME/) }
+      patch = git("diff")
+      added = patch.lines.count { |line| line.start_with?("+") && line.match?(/TODO|FIXME/) }
+      deleted = patch.lines.count { |line| line.start_with?("-") && line.match?(/TODO|FIXME/) }
       added - deleted
     end
 
     def duplicate_basenames
-      files = Dir.chdir(@root) { Dir.glob("**/*").select { |path| File.file?(path) } }
+      files = Dir.glob(File.join(@root, "**/*")).select { |path| File.file?(path) }
       files.group_by { |path| File.basename(path) }.values.count { |paths| paths.size > 1 }
     end
   end

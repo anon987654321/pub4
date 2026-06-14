@@ -32,16 +32,14 @@ module Repo
     attr_reader :root
 
     def repo_paths
-      Dir.chdir(root) do
-        Dir.glob("**/*", File::FNM_DOTMATCH).reject do |path|
-          next true if [".", ".."].include?(File.basename(path))
-          path.split(File::SEPARATOR).any? { |part| SKIP_DIRS.include?(part) }
-        end
+      Dir.glob(File.join(root, "**/*"), File::FNM_DOTMATCH).reject do |path|
+        next true if [".", ".."].include?(File.basename(path))
+        path.split(File::SEPARATOR).any? { |part| SKIP_DIRS.include?(part) }
       end
     end
 
     def root_entries
-      Dir.chdir(root) { Dir.children(".").reject { |name| name == ".git" }.sort }
+      Dir.children(root).reject { |name| name == ".git" }.sort
     end
 
     def loose_root_entries
