@@ -49,11 +49,104 @@
 #   detect_*: …
 #   fix: instructional sentence
 
-paths:
-  skip_dirs: [.git, vendor, tmp, var, node_modules, .bundle, coverage, log, dist, knowledge]
-  tree:
-    max_depth: 2
-    max_lines: 200
+
+# Six Universal Laws — single hierarchical priority for every rule and persona.
+# When two rules conflict, the lower-numbered law wins.
+laws:
+  ROBUSTNESS:
+    priority: 1
+    principle: "Errors fail safely; security first; handle edge cases."
+    applies_to: [security, errors, input_validation, resource_management]
+  SINGULARITY:
+    priority: 2
+    principle: "One source of truth; no duplication; data integrity."
+    applies_to: [duplication, consistency, data_integrity]
+  LINEARITY:
+    priority: 3
+    principle: "Sequential flow; minimal branches; clear path."
+    applies_to: [control_flow, nesting, complexity]
+  PROXIMITY:
+    priority: 4
+    principle: "Related code together; cohesive modules."
+    applies_to: [organization, coupling, modules]
+  ABSTRACTION:
+    priority: 5
+    principle: "Right level; no leaky abstractions; appropriate hiding."
+    applies_to: [interfaces, encapsulation, apis]
+  DENSITY:
+    priority: 6
+    principle: "Information dense; no noise; signal not noise."
+    applies_to: [verbosity, comments, naming]
+
+zen:
+  observe: "Read current behavior before changing anything."
+  simplify: "Reduce moving parts before adding new components."
+  isolate: "Change one axis at a time with clear boundaries."
+  verify: "Run checks and gather objective evidence."
+  reflect: "Capture learning and improve defaults."
+
+# Engineering fit — classify every problem against the load it actually carries.
+# Apply during scan, sweep, council, and any review of an existing artifact.
+engineering_fit:
+  classify: "For every problem, decide: under-engineered, over-engineered, or perfectly engineered — and say why."
+  under: "Misses real failure modes the artifact will hit. Add only what the artifact actually carries."
+  over: "Carries machinery the artifact will never load. Strip it; defer until the load shows up."
+  fit: "Solution matches the load and the failure modes — no slack, no shortfall."
+  why_required: "State the load the artifact carries (users, edge cases, lifetimes, blast radius). The verdict follows from the load."
+
+# Cognitive biases and anti-patterns — meta-rules above lexical detection.
+biases:
+  critical:
+    hallucination:
+      detect: [claim_without_reading, quote_without_source, invented_stats]
+      apply: cite_or_remove
+      violates_law: ROBUSTNESS
+    simulation:
+      detect: [future_tense, "imperative_we_must", "lets_do_this"]
+      apply: rewrite_indicative_past
+      violates_law: DENSITY
+    completion_theater:
+      detect: [ellipsis, etcetera, rest_of_placeholder]
+      apply: complete_or_delete
+      violates_law: ROBUSTNESS
+  high:
+    sycophancy:
+      detect: ["great question", "absolutely", "excellent", "wonderful"]
+      apply: delete
+      violates_law: DENSITY
+    false_confidence:
+      detect: hidden_uncertainty
+      apply: state_uncertainty_explicitly
+      violates_law: ROBUSTNESS
+  cognitive_traps: [anchoring, recency, verbosity, pattern_completion, premature_commitment]
+
+# Beauty — aesthetic anchors from masters of their craft.
+# The user is an architect; these are first-class engineering anchors, not decoration.
+beauty:
+  typography_bringhurst:
+    - choose_appropriate_typeface_for_function
+    - set_text_in_sizes_that_suit_its_nature
+    - use_vertical_motion_that_suits_typeface
+    - rhythm_proportion_modulation_harmony
+  architecture_ando:
+    - simplicity_silence_emptiness
+    - light_shadow_materiality
+    - geometry_nature_coexistence
+    - space_between_as_important_as_form
+  design_rams:
+    - innovative_useful_aesthetic
+    - unobtrusive_honest_long_lasting
+    - thorough_environmentally_friendly
+    - as_little_design_as_possible
+  code_martin:
+    - meaningful_names_intention_revealing
+    - functions_do_one_thing_small
+    - comments_explain_why_not_what
+    - error_handling_separate_from_logic
+  zen_japanese:
+    wabi_sabi: imperfect_authentic
+    ma: emptiness_pause
+    kanso: eliminate_essence
 
 voice:
   style: openbsd_dmesg
@@ -97,75 +190,46 @@ voice:
       polish: "refine wording, not delete output"
       minimize: "applies to prompt tokens, not diagnostic output"
 
-zen:
-  observe: "Read current behavior before changing anything."
-  simplify: "Reduce moving parts before adding new components."
-  isolate: "Change one axis at a time with clear boundaries."
-  verify: "Run checks and gather objective evidence."
-  reflect: "Capture learning and improve defaults."
+# Falsifiable identity — what MASTER explicitly does NOT aim for, and the
+# failure modes that mean the system has lost its way.
+# Source: master2 v4 MANIFEST reunification.
+anti_goals:
+  - replace_human_judgment       # MASTER augments, never automates the decision
+  - enforce_style_preferences    # only timeless axioms — never trend or taste
+  - optimize_for_speed           # correctness precedes performance
+  - support_every_language       # depth over breadth
+  - be_easy_to_use               # demands precision, not friendliness
 
-# Engineering fit — classify every problem against the load it actually carries.
-# Apply during scan, sweep, council, and any review of an existing artifact.
-engineering_fit:
-  classify: "For every problem, decide: under-engineered, over-engineered, or perfectly engineered — and say why."
-  under: "Misses real failure modes the artifact will hit. Add only what the artifact actually carries."
-  over: "Carries machinery the artifact will never load. Strip it; defer until the load shows up."
-  fit: "Solution matches the load and the failure modes — no slack, no shortfall."
-  why_required: "State the load the artifact carries (users, edge cases, lifetimes, blast radius). The verdict follows from the load."
+success_criteria:
+  - every_output_respects_axioms
+  - council_surfaces_real_concerns_not_theater
+  - system_applies_to_itself_without_exception
+  - engineers_trust_judgment_over_time
 
-# Six Universal Laws — single hierarchical priority for every rule and persona.
-# When two rules conflict, the lower-numbered law wins.
-laws:
-  ROBUSTNESS:
-    priority: 1
-    principle: "Errors fail safely; security first; handle edge cases."
-    applies_to: [security, errors, input_validation, resource_management]
-  SINGULARITY:
-    priority: 2
-    principle: "One source of truth; no duplication; data integrity."
-    applies_to: [duplication, consistency, data_integrity]
-  LINEARITY:
-    priority: 3
-    principle: "Sequential flow; minimal branches; clear path."
-    applies_to: [control_flow, nesting, complexity]
-  PROXIMITY:
-    priority: 4
-    principle: "Related code together; cohesive modules."
-    applies_to: [organization, coupling, modules]
-  ABSTRACTION:
-    priority: 5
-    principle: "Right level; no leaky abstractions; appropriate hiding."
-    applies_to: [interfaces, encapsulation, apis]
-  DENSITY:
-    priority: 6
-    principle: "Information dense; no noise; signal not noise."
-    applies_to: [verbosity, comments, naming]
+failure_modes:
+  rubber_stamp: "council approves everything — adversarial role lost"
+  blocks_everything: "council vetoes every proposal — gridlock, no shipping"
+  self_violation: "MASTER produces output it would itself reject — recursive quality broken"
 
-# Cognitive biases and anti-patterns — meta-rules above lexical detection.
-biases:
-  critical:
-    hallucination:
-      detect: [claim_without_reading, quote_without_source, invented_stats]
-      apply: cite_or_remove
-      violates_law: ROBUSTNESS
-    simulation:
-      detect: [future_tense, "imperative_we_must", "lets_do_this"]
-      apply: rewrite_indicative_past
-      violates_law: DENSITY
-    completion_theater:
-      detect: [ellipsis, etcetera, rest_of_placeholder]
-      apply: complete_or_delete
-      violates_law: ROBUSTNESS
-  high:
-    sycophancy:
-      detect: ["great question", "absolutely", "excellent", "wonderful"]
-      apply: delete
-      violates_law: DENSITY
-    false_confidence:
-      detect: hidden_uncertainty
-      apply: state_uncertainty_explicitly
-      violates_law: ROBUSTNESS
-  cognitive_traps: [anchoring, recency, verbosity, pattern_completion, premature_commitment]
+# Recursive proof — for each Universal Law, MASTER must satisfy the law itself.
+# Source: master.yml v31 reunification (#58).
+self_test:
+  laws_apply_to_self:
+    ROBUSTNESS: "scan lib/ for bare_rescue + missing timeouts"
+    SINGULARITY: "rules.yml entries unique by id; no two YAMLs define same key"
+    LINEARITY: "no nesting_depth > 4 in lib/"
+    PROXIMITY: "test files within 1 directory of source"
+    ABSTRACTION: "no class > god_class threshold in lib/"
+    DENSITY: "no method > long_method threshold in lib/"
+  fail_action: "publish self_violation event; refuse autoloop fixes that don't restore the law"
+
+# Veto patterns — concrete regex detectors that block merge unconditionally.
+veto_patterns:
+  secrets: {detect: 'sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----', apply: move_to_env, violates_law: ROBUSTNESS}
+  sql_injection: {detect: 'execute|query.*#\{', apply: parameterize, violates_law: ROBUSTNESS}
+  unfinished: {detect: '\.\.\.|TODO|FIXME|pending', apply: complete_or_track, violates_law: ROBUSTNESS}
+  unsafe_calls: {detect: 'system\s*\(|exec\s*\(|%x\{|Open3\.capture[23]\s*\([^)]*#\{', apply: add_safe_nav, violates_law: ROBUSTNESS}
+  race_conditions: {detect: 'if.*\n.*=.*\n.*if',                                               apply: add_mutex,          violates_law: ROBUSTNESS}
 
 # Structural operations — verbs the rewriter may apply, with risk and verify spec.
 structural_ops:
@@ -182,41 +246,125 @@ structural_ops:
     expand: {desc: "extract for clarity", risk: low, verify: "extracted correctly", supports_law: ABSTRACTION}
     reduce_noise: {desc: "clean messy lines", risk: low, verify: "formatting only, no logic", supports_law: DENSITY}
 
-# Veto patterns — concrete regex detectors that block merge unconditionally.
-veto_patterns:
-  secrets: {detect: 'sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----', apply: move_to_env, violates_law: ROBUSTNESS}
-  sql_injection: {detect: 'execute|query.*#\{', apply: parameterize, violates_law: ROBUSTNESS}
-  unfinished: {detect: '\.\.\.|TODO|FIXME|pending', apply: complete_or_track, violates_law: ROBUSTNESS}
-  unsafe_calls: {detect: 'system\s*\(|exec\s*\(|%x\{|Open3\.capture[23]\s*\([^)]*#\{', apply: add_safe_nav, violates_law: ROBUSTNESS}
-  race_conditions: {detect: 'if.*\n.*=.*\n.*if',                                               apply: add_mutex,          violates_law: ROBUSTNESS}
+# Explicit forbidden + discouraged patterns with reasons.
+# Source: master.json v225 ANALYSIS reunification (#23).
+anti_patterns:
+  forbidden:
+    - {pattern: 'eval\(.*user.*\)',   reason: arbitrary_code_execution}
+    - {pattern: "rm -rf /",              reason: data_loss}
+    - {pattern: "while true.*no sleep",  reason: resource_exhaustion}
+    - {pattern: 'system\(.*\$\{',     reason: command_injection}
+    - {pattern: 'Marshal\.load',        reason: deserialization_rce}
+    - {pattern: 'open\(.*\$\{',       reason: shell_through_open}
+  discouraged:
+    - {pattern: god_object,                reason: violates_solid_srp}
+    - {pattern: premature_optimization,    reason: violates_yagni}
+    - {pattern: defensive_copying_everywhere, reason: complexity_for_imagined_failure}
+    - {pattern: speculative_generality,    reason: yagni_in_disguise}
 
-# Beauty — aesthetic anchors from masters of their craft.
-# The user is an architect; these are first-class engineering anchors, not decoration.
-beauty:
-  typography_bringhurst:
-    - choose_appropriate_typeface_for_function
-    - set_text_in_sizes_that_suit_its_nature
-    - use_vertical_motion_that_suits_typeface
-    - rhythm_proportion_modulation_harmony
-  architecture_ando:
-    - simplicity_silence_emptiness
-    - light_shadow_materiality
-    - geometry_nature_coexistence
-    - space_between_as_important_as_form
-  design_rams:
-    - innovative_useful_aesthetic
-    - unobtrusive_honest_long_lasting
-    - thorough_environmentally_friendly
-    - as_little_design_as_possible
-  code_martin:
-    - meaningful_names_intention_revealing
-    - functions_do_one_thing_small
-    - comments_explain_why_not_what
-    - error_handling_separate_from_logic
-  zen_japanese:
-    wabi_sabi: imperfect_authentic
-    ma: emptiness_pause
-    kanso: eliminate_essence
+# Principle enforcement tiers — tier1 strict, tier2 strong, tier3 opportunistic.
+# Source: master.json v225 reunification.
+principle_priorities:
+  tier1_critical: # halts pipeline on violation
+    - evidence: "@assumption -> validate"
+    - reversible: "@irreversible -> add_rollback"
+    - security: "@untrusted -> validate_sanitize"
+    - self_apply: "@output -> must_pass_own_constitution"
+  tier2_quality: # warns and routes to refactor
+    - dry: "@duplication>=3 -> abstract"
+    - kiss: "@complexity>10 -> simplify"
+    - srp: "@two_reasons_to_change -> split"
+  tier3_polish: # opportunistic improvements
+    - explicit: "@implicit -> make_explicit"
+    - minimalism: "@bloat -> subtract"
+    - rhythm: "@inconsistent -> align"
+
+# Refactors must not silently change behavior. Cleaner is not a license to differ.
+# Source: Cursor v2.0 reunification (#66).
+preserve_user_intent:
+  forbidden_changes_during_refactor:
+    - public_method_signature
+    - error_class_raised
+    - return_type_shape
+    - side_effects_order
+    - log_format_consumed_by_others
+  require_explicit_approval_for: behavior_change
+
+# Before marking a task done, re-read the file fresh — never trust cached state.
+# Source: Junie reunification (#71).
+ground_truth_check:
+  require_fresh_read_before:
+    - claim_task_complete
+    - council_vote_on_change
+    - commit_creation
+  cache_max_age_seconds: 5
+
+# Detect and recover from LLM gaslighting / repetition / bad XML.
+# Source: opencrabs reunification (#82).
+phantom_recovery:
+  detectors:
+    gaslighting_preamble: "/^(I('ll| will| can| would)|Let me|Sure,)/i"
+    text_repetition_loop: "same 60-char span repeats >= 3 times"
+    xml_tool_call_failure: "<tool> open without close OR malformed JSON in args"
+    empty_tool_response: "tool returned nil twice in a row"
+  recovery:
+    - "discard last response, reset context to last successful checkpoint"
+    - "switch model tier (escalate or fall back) on second occurrence"
+    - "publish phantom:detected event, halt loop on third"
+
+# Never assume a gem is available. Check Gemfile / require_relative target before use.
+# Source: Devin reunification (#36).
+library_verify:
+  pre_flight_checks:
+    - "Gemfile.lock contains the gem at the expected version"
+    - "require_relative path exists on disk"
+    - "binary on PATH (which / command -v) before shell-out"
+  fail_action: "Result.err :missing_dependency; do not retry without human"
+
+# Failure taxonomy — what to retry, what to fail-fast, what to escalate.
+# Source: master.json v225 reunification.
+failure_taxonomy:
+  transient:
+    examples: [network_timeout, rate_limit, temp_file_conflict, provider_overload]
+    strategy: exponential_backoff
+    max_retries: 3
+  permanent:
+    examples: [syntax_error, missing_dependency, permission_denied, schema_violation]
+    strategy: fail_fast
+    max_retries: 0
+  ambiguous:
+    examples: [partial_write, unknown_error, half_committed_state]
+    strategy: human_intervention
+    checkpoint_before: true
+
+# Evidence weights for ship/no-ship decisions. Sum >= 80 to pass tier1 gates.
+# Source: master.json v225 reunification.
+evidence_scoring:
+  weights:
+    test_pass: 35
+    scan_clean: 25
+    code_review: 20
+    log_analysis: 10
+    profiling_data: 10
+  pass_threshold: 80
+  block_threshold: 50 # below this, propose rollback
+
+# Schema metadata for every named rule. Optional fields per rule.
+# Source: master.json v225 + master.yml v49 reunification (#51, #53, #57, #64).
+schema_metadata:
+  optional_fields:
+    reversibility: "free | cheap | surgical | impossible" # rollback cost
+    time_horizon: "review | deploy | incident" # when this fires
+    blast_radius: "files_touched: integer" # batching hint
+    provenance:
+      added_in_commit: sha
+      rationale: string
+      last_revised: iso8601
+paths:
+  skip_dirs: [.git, vendor, tmp, var, node_modules, .bundle, coverage, log, dist, knowledge]
+  tree:
+    max_depth: 2
+    max_lines: 200
 
 # thresholds — only blocks with a live reader survive. Per-rule structural
 # limits (method_length, nesting_depth, cyclomatic) live on each rule's
@@ -230,66 +378,6 @@ thresholds:
     max_iterations: 15
     stagnant_threshold: 3
     genetic_autofix_candidates: 3
-
-# Prediction engine — per-detector autofix confidence thresholds.
-# When confidence >= threshold, autofix fires without human review.
-# Below threshold: propose fix, await approval. Never auto-delete at < 0.80.
-prediction_engine:
-  null_usage: {confidence: 0.95, autofix: null_object_pattern}
-  abbreviation: {confidence: 0.99, autofix: expand_to_full_name}
-  nesting_depth: {confidence: 0.92, autofix: extract_method}
-
-# Session-learned patterns become live scan rules through
-# lib/judge/scan/rules/learned_smells_rule.rb.
-learned_smells:
-  - id: bare_rescue
-    pattern: '^\s*rescue\b'
-    confidence: 0.98
-    autofix: rescue_standard_error
-  - id: frozen_string
-    pattern: '\bString\.new\b|%q\(|%Q\('
-    confidence: 0.99
-    autofix: add_frozen_string_literal
-  - id: trailing_ws
-    pattern: '[ \t]+$'
-    confidence: 0.99
-    autofix: strip_trailing_whitespace
-  - id: debug_output
-    pattern: '\b(?:puts|p|pp|warn)\b'
-    confidence: 0.97
-    autofix: remove_debug_call
-  - id: todo_comment
-    pattern: '\b(?:TODO|FIXME|HACK)\b'
-    confidence: 0.70
-    autofix: create_issue
-  - id: magic_number
-    pattern: '\b\d{2,}\b'
-    confidence: 0.85
-    autofix: extract_named_constant
-  - id: long_line
-    pattern: '^.{121,}$'
-    confidence: 0.90
-    autofix: wrap_at_120
-  - id: sycophancy
-    pattern: '\b(?:absolutely|certainly|of course|happy to help)\b'
-    confidence: 0.99
-    autofix: delete_phrase
-  - id: future_tense
-    pattern: '\b(?:will|would|might|could|perhaps|seems|appears)\b'
-    confidence: 0.95
-    autofix: rewrite_indicative
-  - id: duplicate_code
-    pattern: '\b(?:copy|duplicate|same as)\b'
-    confidence: 0.75
-    autofix: extract_shared_method
-  - id: god_class
-    pattern: '^\s*class\b'
-    confidence: 0.60
-    autofix: propose_decomposition
-  - id: n_plus_one
-    pattern: '\b(?:includes|preload|eager_load)\b'
-    confidence: 0.88
-    autofix: add_includes
 
 scan_depths:
   # deep is the only permitted scan depth — quick and standard exist for InterconnectRule
@@ -451,6 +539,66 @@ languages:
   norwegian:
     dialect: "bokmål"
     rules: ["Short sentences", "Avoid anglicisms", "Active voice", "Plain language"]
+
+# Prediction engine — per-detector autofix confidence thresholds.
+# When confidence >= threshold, autofix fires without human review.
+# Below threshold: propose fix, await approval. Never auto-delete at < 0.80.
+prediction_engine:
+  null_usage: {confidence: 0.95, autofix: null_object_pattern}
+  abbreviation: {confidence: 0.99, autofix: expand_to_full_name}
+  nesting_depth: {confidence: 0.92, autofix: extract_method}
+
+# Session-learned patterns become live scan rules through
+# lib/judge/scan/rules/learned_smells_rule.rb.
+learned_smells:
+  - id: bare_rescue
+    pattern: '^\s*rescue\b'
+    confidence: 0.98
+    autofix: rescue_standard_error
+  - id: frozen_string
+    pattern: '\bString\.new\b|%q\(|%Q\('
+    confidence: 0.99
+    autofix: add_frozen_string_literal
+  - id: trailing_ws
+    pattern: '[ \t]+$'
+    confidence: 0.99
+    autofix: strip_trailing_whitespace
+  - id: debug_output
+    pattern: '\b(?:puts|p|pp|warn)\b'
+    confidence: 0.97
+    autofix: remove_debug_call
+  - id: todo_comment
+    pattern: '\b(?:TODO|FIXME|HACK)\b'
+    confidence: 0.70
+    autofix: create_issue
+  - id: magic_number
+    pattern: '\b\d{2,}\b'
+    confidence: 0.85
+    autofix: extract_named_constant
+  - id: long_line
+    pattern: '^.{121,}$'
+    confidence: 0.90
+    autofix: wrap_at_120
+  - id: sycophancy
+    pattern: '\b(?:absolutely|certainly|of course|happy to help)\b'
+    confidence: 0.99
+    autofix: delete_phrase
+  - id: future_tense
+    pattern: '\b(?:will|would|might|could|perhaps|seems|appears)\b'
+    confidence: 0.95
+    autofix: rewrite_indicative
+  - id: duplicate_code
+    pattern: '\b(?:copy|duplicate|same as)\b'
+    confidence: 0.75
+    autofix: extract_shared_method
+  - id: god_class
+    pattern: '^\s*class\b'
+    confidence: 0.60
+    autofix: propose_decomposition
+  - id: n_plus_one
+    pattern: '\b(?:includes|preload|eager_load)\b'
+    confidence: 0.88
+    autofix: add_includes
 
 rules:
 
@@ -2096,151 +2244,3 @@ rules:
       autofix: true
       detect_lexical: "\\S {2,}(?:=>|[^=!<>]=[^=>]|:\\s)"
       fix: "Remove padding; one space before operators. Column alignment decays and hides diffs."
-
-# Falsifiable identity — what MASTER explicitly does NOT aim for, and the
-# failure modes that mean the system has lost its way.
-# Source: master2 v4 MANIFEST reunification.
-anti_goals:
-  - replace_human_judgment       # MASTER augments, never automates the decision
-  - enforce_style_preferences    # only timeless axioms — never trend or taste
-  - optimize_for_speed           # correctness precedes performance
-  - support_every_language       # depth over breadth
-  - be_easy_to_use               # demands precision, not friendliness
-
-success_criteria:
-  - every_output_respects_axioms
-  - council_surfaces_real_concerns_not_theater
-  - system_applies_to_itself_without_exception
-  - engineers_trust_judgment_over_time
-
-failure_modes:
-  rubber_stamp: "council approves everything — adversarial role lost"
-  blocks_everything: "council vetoes every proposal — gridlock, no shipping"
-  self_violation: "MASTER produces output it would itself reject — recursive quality broken"
-
-# Principle enforcement tiers — tier1 strict, tier2 strong, tier3 opportunistic.
-# Source: master.json v225 reunification.
-principle_priorities:
-  tier1_critical: # halts pipeline on violation
-    - evidence: "@assumption -> validate"
-    - reversible: "@irreversible -> add_rollback"
-    - security: "@untrusted -> validate_sanitize"
-    - self_apply: "@output -> must_pass_own_constitution"
-  tier2_quality: # warns and routes to refactor
-    - dry: "@duplication>=3 -> abstract"
-    - kiss: "@complexity>10 -> simplify"
-    - srp: "@two_reasons_to_change -> split"
-  tier3_polish: # opportunistic improvements
-    - explicit: "@implicit -> make_explicit"
-    - minimalism: "@bloat -> subtract"
-    - rhythm: "@inconsistent -> align"
-
-# Failure taxonomy — what to retry, what to fail-fast, what to escalate.
-# Source: master.json v225 reunification.
-failure_taxonomy:
-  transient:
-    examples: [network_timeout, rate_limit, temp_file_conflict, provider_overload]
-    strategy: exponential_backoff
-    max_retries: 3
-  permanent:
-    examples: [syntax_error, missing_dependency, permission_denied, schema_violation]
-    strategy: fail_fast
-    max_retries: 0
-  ambiguous:
-    examples: [partial_write, unknown_error, half_committed_state]
-    strategy: human_intervention
-    checkpoint_before: true
-
-# Evidence weights for ship/no-ship decisions. Sum >= 80 to pass tier1 gates.
-# Source: master.json v225 reunification.
-evidence_scoring:
-  weights:
-    test_pass: 35
-    scan_clean: 25
-    code_review: 20
-    log_analysis: 10
-    profiling_data: 10
-  pass_threshold: 80
-  block_threshold: 50 # below this, propose rollback
-
-# Schema metadata for every named rule. Optional fields per rule.
-# Source: master.json v225 + master.yml v49 reunification (#51, #53, #57, #64).
-schema_metadata:
-  optional_fields:
-    reversibility: "free | cheap | surgical | impossible" # rollback cost
-    time_horizon: "review | deploy | incident" # when this fires
-    blast_radius: "files_touched: integer" # batching hint
-    provenance:
-      added_in_commit: sha
-      rationale: string
-      last_revised: iso8601
-
-# Explicit forbidden + discouraged patterns with reasons.
-# Source: master.json v225 ANALYSIS reunification (#23).
-anti_patterns:
-  forbidden:
-    - {pattern: 'eval\(.*user.*\)',   reason: arbitrary_code_execution}
-    - {pattern: "rm -rf /",              reason: data_loss}
-    - {pattern: "while true.*no sleep",  reason: resource_exhaustion}
-    - {pattern: 'system\(.*\$\{',     reason: command_injection}
-    - {pattern: 'Marshal\.load',        reason: deserialization_rce}
-    - {pattern: 'open\(.*\$\{',       reason: shell_through_open}
-  discouraged:
-    - {pattern: god_object,                reason: violates_solid_srp}
-    - {pattern: premature_optimization,    reason: violates_yagni}
-    - {pattern: defensive_copying_everywhere, reason: complexity_for_imagined_failure}
-    - {pattern: speculative_generality,    reason: yagni_in_disguise}
-
-# Recursive proof — for each Universal Law, MASTER must satisfy the law itself.
-# Source: master.yml v31 reunification (#58).
-self_test:
-  laws_apply_to_self:
-    ROBUSTNESS: "scan lib/ for bare_rescue + missing timeouts"
-    SINGULARITY: "rules.yml entries unique by id; no two YAMLs define same key"
-    LINEARITY: "no nesting_depth > 4 in lib/"
-    PROXIMITY: "test files within 1 directory of source"
-    ABSTRACTION: "no class > god_class threshold in lib/"
-    DENSITY: "no method > long_method threshold in lib/"
-  fail_action: "publish self_violation event; refuse autoloop fixes that don't restore the law"
-
-# Before marking a task done, re-read the file fresh — never trust cached state.
-# Source: Junie reunification (#71).
-ground_truth_check:
-  require_fresh_read_before:
-    - claim_task_complete
-    - council_vote_on_change
-    - commit_creation
-  cache_max_age_seconds: 5
-
-# Refactors must not silently change behavior. Cleaner is not a license to differ.
-# Source: Cursor v2.0 reunification (#66).
-preserve_user_intent:
-  forbidden_changes_during_refactor:
-    - public_method_signature
-    - error_class_raised
-    - return_type_shape
-    - side_effects_order
-    - log_format_consumed_by_others
-  require_explicit_approval_for: behavior_change
-
-# Detect and recover from LLM gaslighting / repetition / bad XML.
-# Source: opencrabs reunification (#82).
-phantom_recovery:
-  detectors:
-    gaslighting_preamble: "/^(I('ll| will| can| would)|Let me|Sure,)/i"
-    text_repetition_loop: "same 60-char span repeats >= 3 times"
-    xml_tool_call_failure: "<tool> open without close OR malformed JSON in args"
-    empty_tool_response: "tool returned nil twice in a row"
-  recovery:
-    - "discard last response, reset context to last successful checkpoint"
-    - "switch model tier (escalate or fall back) on second occurrence"
-    - "publish phantom:detected event, halt loop on third"
-
-# Never assume a gem is available. Check Gemfile / require_relative target before use.
-# Source: Devin reunification (#36).
-library_verify:
-  pre_flight_checks:
-    - "Gemfile.lock contains the gem at the expected version"
-    - "require_relative path exists on disk"
-    - "binary on PATH (which / command -v) before shell-out"
-  fail_action: "Result.err :missing_dependency; do not retry without human"
