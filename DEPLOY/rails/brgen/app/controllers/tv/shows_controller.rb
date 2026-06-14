@@ -11,6 +11,7 @@ module Tv
       @channel = Tv::Channel.find_by!(slug: params[:channel_slug])
       @show = @channel.shows.find_by!(slug: params[:slug])
       @episodes = @show.episodes.order(:number)
+      @show.record_activity!("TvShowViewed", source_vertical: "tv", locality: @channel&.slug) # wired via shared concern
     end
   end
 end

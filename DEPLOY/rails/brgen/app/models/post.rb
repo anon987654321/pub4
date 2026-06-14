@@ -1,15 +1,16 @@
 # frozen_string_literal: true
 
 class Post < ApplicationRecord
-  include Votable
+  include Shared::Votable
+  include Shared::Commentable
+  include Shared::Taggable
 
   has_one_attached :image
 
   belongs_to :user
   belongs_to :community, optional: true
 
-  has_many :comments, as: :commentable, dependent: :destroy
-  has_many :votes, as: :votable, dependent: :destroy
+
   has_many :taggings, dependent: :destroy
   has_many :hashtags, through: :taggings
   has_many :mentions, dependent: :destroy

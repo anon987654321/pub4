@@ -48,7 +48,8 @@ apps:
         - { name: moderation tools,                                        status: missing }
         - { name: media pipeline (Active Storage variants),                status: missing }
         - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see WIRING_NOTES.md" }
-        - { name: unified Activity graph emission,                         status: port, notes: "core to recommendations & discovery across verticals; see brgen_CORE.md + WIRING_NOTES.md" }
+        - { name: unified Activity graph emission,                         status: port, notes: "core to recommendations & discovery across verticals; see brgen_CORE.md + WIRING_NOTES.md. ActivityTrackable concern + EventEmitter in shared; wired to TV." }
+        - { name: shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted), status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + WIRING_NOTES" }
         - { name: AI feed ranking,                                         status: planned }
         - { name: creator monetization,                                    status: planned }
         - { name: maps surface,                                            status: planned }

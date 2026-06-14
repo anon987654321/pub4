@@ -13,6 +13,34 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - See the 3 new concern files + the model/controller diffs for the cleaned call sites. Remaining opps (status concern, notification model unification, more verticals) noted for follow-up.
 - All local edits; concerns + new fleshed files + this doc update pushed.
 
+### Major Architectural Restructure Wins (2026-06-14 analysis)
+See full reasoning + evidence in shared/WIRING_NOTES.md (engine goal + expanded concerns), brgen/brgen_CORE.md (one city activity graph), apps.yml, ARCHITECTURE_NOTES.md, and the User model.
+
+**Top opportunities:**
+
+1. **Engine-ize shared/** (highest leverage — literally called the "long-term goal" in WIRING_NOTES). Copy-via-script is the current model. Our 4 new/ported concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable) + EventEmitter etc. make this the perfect time. One-time cost, massive consistency win across all apps.
+
+2. **Domain services + god class reduction** (User has 30+ associations + cross-vertical methods; order state/notify was scattered before concerns). Create proper services/ vertical folders + lib/brgen/ domains while keeping the unified graph.
+
+3. **Activity/Event graph as real platform spine**. brgen_CORE and WIRING_NOTES declare it. We have the pieces (EventEmitter in shared, ActivityTrackable concern, recorder). Make emission mandatory and trivial for every important action (orders, matches, posts, views, etc.). This powers the feed, recs, notifications, and moderation.
+
+4. **Auth + Current + Policy unification** (the AN2 backlog). Per-app custom auth is duplicated technical debt.
+
+5. **Notification convergence** (brgen vs shared models). Notifiable helper helps callsites but not the root model/table split.
+
+6. **Continue concern promotion + component ownership** (Votable done this pass; Commentable/Mentionable/Taggable/Pushable next. shared/frontend + brgen Stimulus as the official library).
+
+7. **Monolith boundaries for brgen verticals**. Namespaces work today for the "one city" model. As marketplace/takeaway/orders grow, introduce clearer bounded contexts (or internal engines) without breaking the shared activity/search/moderation layers.
+
+**Quick wins completed this pass (in addition to the 3 big concerns):**
+- Votable extracted to shared/app/models/concerns/shared/votable.rb + Post/Comment updated to `include Shared::Votable` (removed local dupe has_many + methods). Local brgen version now delegates + marked deprecated.
+- WIRING_NOTES updated with the current set of shared model concerns.
+- (See git history for the exact small diffs.)
+
+Next: document in apps.yml cross-cutting, wire the concerns into the TV vertical we just fleshed, spike the shared engine on a branch when ready.
+
+### AN1: PWA Foundation (all apps)
+
 ---
 
 ## M. OpenBSD / deploy alignment

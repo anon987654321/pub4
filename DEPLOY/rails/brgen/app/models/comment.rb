@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 class Comment < ApplicationRecord
-  include Votable
+  include Shared::Votable
 
   belongs_to :user
   belongs_to :commentable, polymorphic: true, touch: true
   belongs_to :parent, class_name: "Comment", optional: true
 
   has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
-  has_many :votes, as: :votable, dependent: :destroy
+
 
   validates :content, presence: true, length: { minimum: 1, maximum: 10000 }
 

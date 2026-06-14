@@ -2,6 +2,8 @@
 
 module Tv
   class Episode < ApplicationRecord
+    include Shared::ActivityTrackable
+
     self.table_name = "tv_episodes"
 
     belongs_to :show, class_name: "Tv::Show"
