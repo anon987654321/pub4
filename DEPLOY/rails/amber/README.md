@@ -28,6 +28,19 @@ doas zsh DEPLOY/rails/amber/amber.sh
 - **Activity Graph**: Should emit to the shared city activity stream (see `brgen/brgen_CORE.md` and `shared/WIRING_NOTES.md`).
 - **Photo / Multimodal**: Photo creation is allowed for visitors on the public surface. Amber can use the shared photo upload patterns for wardrobe uploads.
 - **Shared concerns**: Reactable, Followable, LiveSearchable, etc. available via `shared/`.
+
+## Architecture Layers (condensed from ARCHITECTURE.md)
+1. Identity and privacy: User, Profile, PrivacySetting, etc.
+2. Wardrobe graph: Item, Outfit, OutfitItem, WearLog, etc.
+3. Intelligence and media: GarmentEmbedding, Recommendation, jobs for segment/remove background.
+4. Sustainability/commerce: SustainabilityMetric, AffiliateLink, etc.
+
+Vector direction: Currently JSON-backed for SQLite; future pgvector.
+
+## Stimulus / Rails 8 Rollout (condensed)
+Prioritize: Lightbox for photos, Sortable for outfits, Notification, Timeago, Clipboard, Dropdown/AutoSubmit for filters, Content Loader.
+
+Rails 8: Solid Queue for processing, Active Storage variants, Solid Cache.
 - **Deploy**: Uses thin script + tracked tree model (prefers this over heavy @*.sh generators).
 
 See `DEPLOY/rails/ARCHITECTURE_NOTES.md` and `WIRING_NOTES.md` for family-wide guidance.

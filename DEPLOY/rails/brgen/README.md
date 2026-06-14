@@ -44,3 +44,16 @@ The deploy script must copy the tracked app tree, run Bundler, migrate, seed whe
 - TV and takeaway operational dashboards need explicit views for driver updates, stream chats, and moderation queues.
 - Dating needs event integration and premium visibility controls.
 - City routing needs a visible locality switcher and domain-to-city audit task.
+
+## Authentication (condensed from brgen_AUTH.md)
+Use Rails 8 custom authentication (not Devise core). Support Vipps/BankID, generic OIDC, guest identity for anonymous.
+
+## Core (condensed from brgen_CORE.md)
+One Rails app for the city platform: posts/communities, marketplace, takeaway, dating, TV, playlist, messaging, nearby. Unified activity graph for feeds, trust signals, recommendations. Stack: Rails 8, SQLite, Falcon, Hotwire, OpenBSD/relayd. One search, one media pipeline, one moderation kernel.
+
+## Domain Matrix (condensed from brgen_DOMAIN_MATRIX.md)
+Request host decides: city, locale, currency, active subapp (tv, dating, playlist, takeaway, marketplace). Mirrors DEPLOY/openbsd/openbsd.sh.
+
+## Stimulus / Rails 8 Rollout (condensed from STIMULUS_ROLLOUT.md)
+Core: Notification, Clipboard, Reveal, Dropdown, Auto Submit, Timeago, Confirmation.
+Subapps: tv (lightbox, content loader, notification), dating (hotkey/swipe, dialog, lightbox, turbo streams), etc. See full in history if needed.

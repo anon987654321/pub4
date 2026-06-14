@@ -168,6 +168,11 @@ rc.d services (falcon/puma per-app on distinct ports), relayd tables/healthcheck
 
 **Pure Zsh preference**: New provisioning logic should favor zsh parameter expansion and builtins over external tools (grep, sed, awk, etc.) where practical, per the broader pub4 conventions. See current thin deploy scripts (e.g. `brgen/brgen.sh`) as the model rather than the heavier legacy @*.sh helpers.
 
+## Frontend Baselines (condensed from shared/frontend/*.md, pruned to reduce .md sprawl)
+Stimulus Components (from STIMULUS_COMPONENTS_BASELINE.md): Use @stimulus-components/* (auto-submit, clipboard, content-loader, etc.). App-neutral, progressive enhancement.
+
+LLM-safe rules (from LLM_SAFE_FRONTEND_RULES.md): Split large mixed HTML/CSS/JS/ERB into external files before LLM edits. Prefer minimal unified diffs.
+
 ## Engine Extraction Prep (to reduce current sprawl + duplication)
 To move from "copy via install_frontend_baseline.sh" (fragile, per top of this file) to a real engine:
 - All shared code must live only under shared/ (concerns, services, models/shared, views/shared, etc.). No app-specific logic.
