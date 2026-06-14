@@ -2,13 +2,16 @@
 
 require_relative "llm_dispatcher"
 require_relative "consensus"
+require_relative "prompt_filter"
+require_relative "agent/model_selector"
 
 module Master
   module Judge
     class Agent
+      include PromptFilter
+      include ModelSelector
+
       DEFAULT_MESSAGE_WINDOW_SIZE = 16
-      PROMPT_FENCE_RE = /(```.*?```)/m.freeze
-      DEFAULT_ANTI_SIMULATION_WORDS = %w[will would could might].freeze
 
       Dependencies = Data.define(
         :config, :session, :tools, :circuit_breaker, :cache, :bus,
@@ -288,53 +291,6 @@ module Master
         escalated.is_a?(Master::Result::Err) ? last_response : escalated
       end
 
-      def routed_models(message = nil)
-        return [@config.model] unless @model_router
-        task = message ? @model_router.classify_intent(message) : @config.task_type.to_sym
-        chain = @model_router.fallback_chain(task_type: task)
-        bias = @homeostat&.model_tier_bias
-        return cheap_first(chain)  if bias == :cheap
-        return strong_first(chain) if bias == :strong
-        chain
-      rescue StandardError => e
-        @bus&.publish("llm:route_error", error: e.message)
-        [@config.model]
-      end
-
-      def cheap_first(chain)
-        cheap = chain.select { |m| @model_router.tier_for_model(m) == "cheap" }
-        rest  = chain.reject { |m| @model_router.tier_for_model(m) == "cheap" }
-        cheap.empty? ? chain : (cheap + rest)
-      end
-
-      def strong_first(chain)
-        strong = chain.select { |m| @model_router.tier_for_model(m) == "strong" }
-        rest   = chain.reject { |m| @model_router.tier_for_model(m) == "strong" }
-        strong.empty? ? chain : (strong + rest)
-      end
-
-      def filter_prompt(text)
-        return text unless text
-
-        re = forbidden_prompt_word_re
-        text.to_s.split(PROMPT_FENCE_RE).map.with_index do |part, idx|
-          idx.odd? ? part : part.gsub(re, "").gsub(/[ \t]{2,}/, " ").gsub(/\s+([,.;:!?])/, '\1')
-        end.join.strip
-      end
-
-      def forbidden_prompt_word_re
-        words = anti_simulation_words
-        /\b(?:#{words.map { |word| Regexp.escape(word) }.join("|")})\b/i
-      end
-
-      def anti_simulation_words
-        @anti_simulation_words ||= begin
-          words = Master.load_yaml(Master.data_path("soul.yml")).dig("absolute", "anti_simulation", "forbidden")
-          Array(words).map(&:to_s).reject(&:empty?)
-        rescue StandardError
-          DEFAULT_ANTI_SIMULATION_WORDS
-        end
-      end
     end
   end
 end

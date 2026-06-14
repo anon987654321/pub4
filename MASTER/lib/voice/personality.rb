@@ -44,11 +44,6 @@ module Master
           "give a before/after Ruby example, and state why it matters."
       end
 
-      def self.why_prompt(rule)
-        "Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
-          "give a before/after Ruby example, and state why it matters."
-      end
-
       def initialize(name = DEFAULT, root: nil, homeostat: nil)
         @name = name.to_sym
         @rules = Ground::Rules.new(root: root)
