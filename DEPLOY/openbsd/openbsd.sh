@@ -193,7 +193,7 @@ sync_openbsd_apply() {
       || log WARN "$svc restart/start failed"
   done
   # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
-  typeset -A app_ports=(brgen_rails 38182 amber_rails 61352 bsdports_rails 47312 blognet_rails 0 hjerterom_rails 0 baibl 10007)
+  typeset -A app_ports=(brgen_rails 38182 amber_rails 61352 bsdports_rails 47312 blognet_rails 10002 hjerterom_rails 38891 baibl 10007)
   for svc in brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream; do
     [[ -x /etc/rc.d/$svc ]] || continue
     /usr/sbin/rcctl enable $svc 2>/dev/null || true
@@ -221,7 +221,15 @@ typeset -r LOCALHOST="127.0.0.1"
 typeset -r EMAIL_ADDRESS="bergen@pub.attorney"
 
 typeset -a PUBLIC_RESOLVERS=(8.8.8.8 1.1.1.1 9.9.9.9)
-typeset -A APP_PORTS
+typeset -A APP_PORTS=(
+  brgen 38182
+  amber 61352
+  bsdports 47312
+  baibl 10007
+  blognet 10002
+  hjerterom 38891
+  master 53187
+)
 typeset -A FAILED_CERTS
 
 validate_ip "$BRGEN_IP" || { log ERROR "Invalid BRGEN_IP: $BRGEN_IP"; exit 1 }
@@ -232,7 +240,7 @@ ALL_APPS=(
   amber:amber.brgen.no
   bsdports:bsdports.org
   baibl:baibl.no
-  blognet:antibettingblog.com
+  blognet:blognet.no
   hjerterom:hjerterom.brgen.no
 )
 
@@ -298,6 +306,7 @@ ALL_DOMAINS=(
   amber.brgen.no
   hjerterom.brgen.no
   baibl.no
+  blognet.no
 )
 
 # ── Stage 1: DNS, DNSSEC, TLS certificates ────────────────────────────────────
@@ -546,9 +555,12 @@ configure_relayd() {
     BACKEND_PORT[$app]=${APP_PORTS[$app]:-0}
   done
   DOMAIN_BACKEND[ai.brgen.no]=master
-  BACKEND_PORT[master]=${BACKEND_PORT[master]:-53187}
+  BACKEND_PORT[master]=${APP_PORTS[master]:-53187}
+  DOMAIN_BACKEND[blognet.no]=blognet
+  DOMAIN_BACKEND[www.blognet.no]=blognet
   DOMAIN_BACKEND[anticasinoblog.com]=blognet
   DOMAIN_BACKEND[antigamblingblog.com]=blognet
+  DOMAIN_BACKEND[antibettingblog.com]=blognet
   for entry in $ALL_DOMAINS; do
     dom=${entry%%:*}
     [[ -n ${DOMAIN_BACKEND[$dom]:-} ]] && continue
@@ -579,6 +591,8 @@ configure_relayd() {
 
   {
     print -r -- "log connection errors"
+    print -r -- "interval 30"
+    print -r -- "timeout 2000"
     print -r -- ""
     for backend in ${(k)BACKEND_PORT}; do
       print -r -- "table <${backend}> { 127.0.0.1 }"
@@ -589,13 +603,15 @@ configure_relayd() {
       [[ -L /etc/ssl/${dom}.crt ]] && print -r -- "  tls keypair \"${dom}\""
     done
     print -r -- "  match request header set \"X-Forwarded-Proto\" value \"https\""
-    print -r -- "  match request header set \"X-Forwarded-For\"   value \"\$REMOTE_ADDR\""
+    print -r -- "  match request header set \"X-Forwarded-For\" value \"\$REMOTE_ADDR\""
     print -r -- "  match response header set \"Strict-Transport-Security\" value \"max-age=31536000; includeSubDomains; preload\""
-    print -r -- "  match response header set \"Content-Security-Policy\" value \"upgrade-insecure-requests; default-src https: 'self'\""
+    print -r -- "  match response header set \"Content-Security-Policy\" value \"upgrade-insecure-requests; default-src https: 'self' 'unsafe-inline' blob:; media-src 'self' blob:; connect-src 'self'\""
     print -r -- "  match response header set \"Referrer-Policy\" value \"strict-origin\""
     print -r -- "  match response header set \"X-Content-Type-Options\" value \"nosniff\""
     print -r -- "  match response header set \"X-Frame-Options\" value \"SAMEORIGIN\""
-    print -r -- "  match response header set \"X-XSS-Protection\" value \"1; mode=block\""
+    print -r -- "  match response header set \"X-XSS-Protection\" value \"0\""
+    print -r -- "  match response header set \"Permissions-Policy\" value \"accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()\""
+    print -r -- "  match response header remove \"Server\""
     print -r -- "  http websockets"
     for dom in ${(k)DOMAIN_BACKEND}; do
       backend=${DOMAIN_BACKEND[$dom]}
@@ -618,7 +634,7 @@ configure_relayd() {
     print -r -- "  listen on 0.0.0.0 port 443 tls"
     print -r -- "  protocol \"https_proxy\""
     for backend in ${(k)BACKEND_PORT}; do
-      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check tcp"
+      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check http \"/up\" code 200"
     done
     print -r -- "}"
   } > /etc/relayd.conf

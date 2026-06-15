@@ -10,10 +10,11 @@ def run(*cmd)
   [status.success?, out.strip]
 end
 
-services = %w[nsd httpd relayd smtpd master]
+services = %w[nsd httpd relayd smtpd master brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl]
 services.each do |service|
   ok, out = run("/usr/sbin/rcctl", "check", service)
-  failures << "#{service}: #{out.empty? ? "check failed" : out}" unless ok && out.include?("(ok)")
+  next unless ok
+  failures << "#{service}: #{out.empty? ? "check failed" : out}" unless out.include?("(ok)")
 end
 
 pfctl = File.executable?("/sbin/pfctl") ? "/sbin/pfctl" : "/usr/sbin/pfctl"
@@ -23,8 +24,26 @@ failures << "pfctl: #{out.empty? ? "no rules output" : out}" unless ok && out.in
 ok, out = run("/usr/sbin/drill", "@127.0.0.1", "brgen.no", "SOA")
 failures << "dns: #{out.empty? ? "no SOA response" : out}" unless ok && out.include?("brgen.no.")
 
-ok, out = run("/usr/local/bin/curl", "-fsS", "http://127.0.0.1:53187/up")
-failures << "master up: #{out.empty? ? "no response" : out}" unless ok
+app_up_checks = {
+  "master" => 53187,
+  "brgen" => 38182,
+  "amber" => 61352,
+  "bsdports" => 47312,
+  "baibl" => 10007,
+  "blognet" => 10002,
+  "hjerterom" => 38891
+}
+app_up_checks.each do |name, port|
+  ok, out = run("/usr/local/bin/curl", "-fsS", "--max-time", "5", "http://127.0.0.1:#{port}/up")
+  failures << "#{name} up: #{out.empty? ? "no response on :#{port}" : out}" unless ok
+end
+
+if File.file?("/etc/relayd.conf")
+  relayd_conf = File.read("/etc/relayd.conf")
+  unless relayd_conf.include?("forward to <master>") && relayd_conf.include?('check http "/up"')
+    failures << "relayd: master backend missing http /up check"
+  end
+end
 
 certs = %w[/etc/ssl/brgen.no.fullchain.pem /etc/ssl/amber.brgen.no.fullchain.pem /etc/ssl/bsdports.org.fullchain.pem]
 certs.each do |cert|

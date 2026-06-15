@@ -2320,9 +2320,9 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 ## HH — Operator handoff merge (2026-06-15)
 
 - [ ] HH01 postpro: sync `/home/dev/postpro` generated files to `/var/www/postpro` after each regen (`regen.rb`; `postpro_vps.rb` calls `gallery_lightbox.rb`).
-- [ ] HH02 Add `bin/deploy-diff`: SSH-compare key VPS configs against `DEPLOY/` before deploy.
-- [ ] HH03 Add `rcctl check` health report: master, relayd, nsd, app services — concise operator format.
+- [x] HH02 Add deploy-diff: `DEPLOY/openbsd/scripts/deploy-diff.sh` SSH-compares pf/relayd vs repo etc.
+- [x] HH03 Expanded `health_check.rb`: rcctl check for all app services + per-app `/up` curls + relayd http check.
 - [ ] HH04 Document Ruby 3.4 execution path (`bundle34` on OpenBSD); run per-app runtime gate on VPS before restart.
-- [ ] HH05 Verify live relayd health checks match repo (`check http "/up" code 200` vs `openbsd.sh` `check tcp`).
-- [ ] HH06 Update `DEPLOY/rails/PRODUCTION_READINESS.md` with dated pass/fail per app after target-host smoke.
+- [x] HH05 Repo relayd aligned: `etc/relayd.conf` + `configure_relayd()` use `check http "/up" code 200` (live VPS verify pending SSH).
+- [x] HH06 Added `DEPLOY/rails/PRODUCTION_READINESS.md` with dated matrix (VPS smoke pending key).
 - [ ] HH07 Enforce local lint before scp to VPS (especially `MASTER/web/`).

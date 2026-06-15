@@ -70,7 +70,10 @@ vmctl console vm23          # inside: login, pfctl -t bruteforce -T flush ; exit
 - Light sync: `doas zsh DEPLOY/openbsd/openbsd.sh --sync-configs` (runs MASTER scan gate + health).
 - Per-app (brgen subapps, amber, ...): `doas zsh DEPLOY/rails/brgen/brgen.sh` (or just `doas rcctl restart brgen_rails` after pull if no bundle changes). All .sh now have pre-apply MASTER /scan DEPLOY (blocks on rules violations) + /up guards + sleeps.
 - Recovery (if direct ssh blocked by pf): `ssh -p 31415 ... dev@server4.openbsd.amsterdam` → `vmctl console vm23` → `doas pfctl -t bruteforce -T flush`.
-- Always tmux. Use host console for anything wedged. Health: curl /up + ruby health_check.rb.
+- Always tmux. Use host console for anything wedged. Health: `ruby34 health_check.rb` (rcctl + per-app `/up`).
+- Ruby 3.4 on VPS: `ruby34`, `bundle34` (not system ruby). Per-app gate: `cd DEPLOY/rails/<app> && bundle34 exec bin/ci`.
+- Pre-deploy diff (workstation): `zsh DEPLOY/openbsd/scripts/deploy-diff.sh` — compares live `/etc/pf.conf` + `/etc/relayd.conf` to repo.
+- Production matrix: `DEPLOY/rails/PRODUCTION_READINESS.md`.
 - Web seeds on VPS: only when needed (resource-heavy due to Ferrum+LLM); prefer locally then git push/pull. Final wave: full integration (rake *_seed + optional in seeds.rb) for brgen subapps + amber.
 
 - Rapid reconnects trip pf — use tmux; flush `<bruteforce>` via host console when locked out.

@@ -2,7 +2,7 @@
 
 Repository: local `/Users/mac/Documents/GitHub/pub4` (VPS: `/home/dev/pub4`), remote `anon987654321/pub4`, branch `main`.
 
-**HEAD:** `5cd483230` — ReflexionLedger in `trace/`; wired in builder + ai_boot.
+**HEAD:** (see `git log -1 --oneline`) — gap-fix pass: smoke, production gate, relayd, readiness matrix.
 
 Itemized backlogs:
 
@@ -28,11 +28,11 @@ Do not overclaim production readiness. `brgen` is closest; `amber`, `bsdports`, 
 ## Verification (before push)
 
 ```sh
-DEPLOY/rails/check_production_gate.rb
+ruby DEPLOY/rails/check_production_gate.rb
 git ls-files 'DEPLOY/rails/*/config/master.key'
 ruby -c DEPLOY/rails/check_production_gate.rb
 git diff --check
-bin/smoke
+cd MASTER && bin/smoke
 ```
 
 ## VPS recovery (when `~/.ssh/id_ed25519_brgen` is on workstation)
@@ -61,8 +61,9 @@ Hypervisor if VM SSH times out: `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@ser
 
 ## Critical (active)
 
-- [ ] Verify face at `https://ai.brgen.no/`: fresh private window, tap primer, confirm WebGL face and ecology particles.
-- [ ] Verify live `/etc/relayd.conf` uses `check http "/up" code 200` (repo `DEPLOY/openbsd/etc/relayd.conf` does; `openbsd.sh configure_relayd()` may emit weaker `check tcp` only).
+- [ ] Verify face at `https://ai.brgen.no/`: fresh private window, tap primer, confirm WebGL face and ecology particles (VPS/SSH blocked until Mischa installs key).
+- [x] Repo relayd aligned: `etc/relayd.conf` + `openbsd.sh configure_relayd()` emit `check http "/up" code 200` for all backends; blognet + hjerterom included.
+- [x] Local gates: `self_test.rb` syntax fixed; `check_production_gate.rb` reads `config/ci.rb`; `PRODUCTION_READINESS.md` added; `deploy-diff.sh` + expanded `health_check.rb`.
 
 ## Operator philosophy
 

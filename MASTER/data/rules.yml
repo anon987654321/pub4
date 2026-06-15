@@ -398,9 +398,6 @@ scan_depths:
     - time_zone_unsafe
     - no_ascii_line_art
     - single_private_section
-  # sh/erb specifics per rules.yml extension for DEPLOY media
-  sh: [strict_mode_zsh, no_magic, openrsync_prefer, library_verify]
-  erb: [aria_labels, no_todo_in_views, density]
     - strict_loading_missing
     - rate_limiting_missing
     - migration_add_reference_no_fk
@@ -457,6 +454,8 @@ scan_depths:
     - no_var
     - js_module_size
     - no_column_align
+  sh: [strict_mode_zsh, no_magic, openrsync_prefer, library_verify]
+  erb: [aria_labels, no_todo_in_views, density]
   frontend: &frontend
     - html_lang
     - semantic_elements

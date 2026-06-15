@@ -35,6 +35,7 @@ memory/*.jsonl
 
 # Operator secrets (keys live in priv/; see priv/.gitignore)
 priv/ssh/
+!priv/ssh/*.pub
 
 # Environment files with secrets
 .env

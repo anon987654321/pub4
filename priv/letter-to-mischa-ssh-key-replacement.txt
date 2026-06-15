@@ -1,0 +1,28 @@
+Subject: SSH key replacement — server4 / vm23 (brgen.no)
+
+Mischa,
+
+I lost the private key for account dev on server4. Please replace the authorized key on the hypervisor, VM, and backup host.
+
+Account
+  dev          user
+  vm23         VM name
+  server4.openbsd.amsterdam:31415   VMM host
+  46.23.89.226   VM (brgen.no, ai.brgen.no)
+
+Hosts to update
+  1. dev@server4.openbsd.amsterdam (port 31415)
+  2. dev@46.23.89.226
+  3. s4vm23@wingman1.openbsd.amsterdam (if provisioned)
+
+New public key (ED25519)
+
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIvQvuXFIeKTs6vZbni6iePov95D6Hfd+eYmDc5KJq5E dev@brgen.no vm23 server4
+
+Fingerprint: SHA256:iX+HOmSH21kuWBFhFasBNlhwnHSJUsRDah11na5cUfA
+
+Remove the previous key. No reply needed.
+
+Thank you,
+[your name]
+bergen@pub.attorney

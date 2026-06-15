@@ -59,12 +59,14 @@ module Master
         end
 
         def deploy_duplicate_id_findings
-          # For yml/conf in DEPLOY
-          deploy_paths.select { |p| p.end_with?('.yml', '.conf') }.flat_map do |path|
-            ids = rule_ids(Master.load_yaml(path) rescue {})
+          deploy_paths.select { |p| p.end_with?(".yml") }.flat_map do |path|
+            yaml = Master.load_yaml(path)
+            ids = rule_ids(yaml)
             ids.group_by(&:itself).filter_map do |id, values|
               finding(path:, line: 1, message: "duplicate id #{id} in DEPLOY config") if values.size > 1
             end
+          rescue StandardError
+            []
           end
         end
 

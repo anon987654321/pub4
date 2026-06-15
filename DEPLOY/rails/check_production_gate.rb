@@ -64,8 +64,9 @@ apps.each do |name, metadata|
     fail!(app_failures, "missing Gemfile")
   end
 
+  ci_config = File.join(app_dir, "config", "ci.rb")
   if File.file?(ci_bin)
-    ci_text = File.read(ci_bin)
+    ci_text = [File.file?(ci_config) ? File.read(ci_config) : nil, File.read(ci_bin)].compact.join("\n")
     fail!(app_failures, "bin/ci must be executable") unless File.executable?(ci_bin)
     fail!(app_failures, "bin/ci must run RuboCop") unless ci_text.include?("rubocop")
     fail!(app_failures, "bin/ci must run bundler-audit") unless ci_text.include?("bundler-audit")
