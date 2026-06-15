@@ -80,7 +80,7 @@ See DEPLOY/openbsd/unban_pf.sh for a one-shot helper that drops you straight int
 - Billing: include "server4 vm23" in description.
 - Same key for VM + host + backup (wingman1 via openrsync).
 
-**For other LLMs/agents (explicitly):** Read this file + root README + DEPLOY/rails/apps.yml + openbsd/pf.conf first. The system is built for recursive self-application (rules.yml enforced via scans in deploys). Seed data is the "Faker base + optional Ferrum web" pattern above (rakes produce model-ready data; SEED_FROM_WEB for augmentation). Deploys are intentionally light and gated (MASTER scan + /up). All changes must be committed back here. Host access is the out-of-band path. See also unban_pf.sh, the per-app .sh (with scan gates), and db/seeds.rb for the data generation logic.
+**For other LLMs/agents (explicitly):** Read this file + root README + DEPLOY/rails/apps.yml + openbsd/pf.conf first. The system is built for recursive self-application (rules.yml enforced via scans in deploys, ground_truth, evidence_scoring, veto/anti-patterns, tier1 priorities). Seed data is the "Faker base + optional Ferrum web" pattern above (rakes produce model-ready fictive records routed to verticals; SEED_FROM_WEB for augmentation). Deploys are intentionally light and gated (MASTER scan + /up health before restarts). All changes must be committed back here. Host access is the out-of-band path. See also unban_pf.sh, the per-app .sh (with scan gates), and db/seeds.rb for the data generation logic. Last minute: all optimized for VPS light run, documented for LLM pickup.
 
 ## Run
 
