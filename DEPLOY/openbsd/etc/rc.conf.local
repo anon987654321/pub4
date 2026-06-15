@@ -1,6 +1,6 @@
 pf=YES
 httpd_flags=
 nsd_flags=
-pkg_scripts=master
 relayd_flags=
+pkg_scripts=master brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream
 sndiod_flags=NO

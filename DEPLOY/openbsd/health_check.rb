@@ -16,7 +16,8 @@ services.each do |service|
   failures << "#{service}: #{out.empty? ? "check failed" : out}" unless ok && out.include?("(ok)")
 end
 
-ok, out = run("/usr/sbin/pfctl", "-s", "rules")
+pfctl = File.executable?("/sbin/pfctl") ? "/sbin/pfctl" : "/usr/sbin/pfctl"
+ok, out = run(pfctl, "-s", "rules")
 failures << "pfctl: #{out.empty? ? "no rules output" : out}" unless ok && out.include?("block log all")
 
 ok, out = run("/usr/sbin/drill", "@127.0.0.1", "brgen.no", "SOA")
