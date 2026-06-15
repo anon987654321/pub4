@@ -18,7 +18,7 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ### AN1: PWA Foundation (all apps)
 
-- [ ] AN101 Manifest completeness: add `display_override: ["window-controls-overlay", "standalone"]`, `edge_side_panel: {preferred_width: 400}`, `launch_handler: {client_mode: "navigate-new"}` to all manifest.json.erb
+- [x] AN101 Manifest completeness: add `display_override: ["window-controls-overlay", "standalone"]`, `edge_side_panel: {preferred_width: 400}`, `launch_handler: {client_mode: "navigate-new"}` to all manifest.json.erb
 - [ ] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
 - [ ] AN103 Workbox integration: replace hand-rolled service worker with Workbox 7 strategies — CacheFirst for fonts/images, NetworkFirst for HTML, StaleWhileRevalidate for JS/CSS
 - [ ] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
@@ -35,8 +35,8 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] AN115 Fullscreen mode toggle: add `display: fullscreen` option for TV vertical in brgen; video player expands to true fullscreen without browser chrome
 - [ ] AN116 Screen wake lock: acquire wake lock during video playback (brgen TV), recipe view (blognet), and navigation (hjerterom map mode)
 - [ ] AN117 Orientation lock: lock to portrait for dating swipe cards; landscape for TV player; use `screen.orientation.lock()`
-- [ ] AN118 Viewport meta hardening: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` on all layouts; use `env(safe-area-inset-*)` for notch-aware padding
-- [ ] AN119 Theme color per app: manifest `theme_color` and `background_color` unique per app brand; inject dynamic theme-color meta tag for dark mode switching
+- [x] AN118 Viewport meta hardening: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` on all layouts; use `env(safe-area-inset-*)` for notch-aware padding
+- [x] AN119 Theme color per app: manifest `theme_color` and `background_color` unique per app brand; inject dynamic theme-color meta tag for dark mode switching
 - [ ] AN120 Standalone mode detection: `window.matchMedia('(display-mode: standalone)')` — show different UI (no back button, bottom nav instead of burger menu) in PWA mode
 
 ### AN2: Rails 8 Authentication and Authorization
