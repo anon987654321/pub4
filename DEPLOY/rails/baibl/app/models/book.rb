@@ -6,13 +6,15 @@ class Book < ApplicationRecord
   has_many :chapters, dependent: :destroy
   has_many :verses, dependent: :destroy
 
-  TESTAMENTS = %w[Old New].freeze
+  TRADITIONS = %w[bible quran gita other].freeze
 
-  validates :name, :abbreviation, :testament, presence: true
-  validates :testament, inclusion: { in: TESTAMENTS }
+  validates :name, :abbreviation, presence: true
+  validates :tradition, inclusion: { in: TRADITIONS }, allow_nil: true
   validates :abbreviation, uniqueness: true
 
-  scope :old_testament, -> { where(testament: "Old").order(:order_index) }
-  scope :new_testament, -> { where(testament: "New").order(:order_index) }
-  scope :ordered,       -> { order(:order_index) }
+  scope :by_tradition, ->(t) { where(tradition: t).order(:order_index) }
+  scope :bible,        -> { by_tradition("bible") }
+  scope :quran,        -> { by_tradition("quran") }
+  scope :gita,         -> { by_tradition("gita") }
+  scope :ordered,      -> { order(:order_index) }
 end

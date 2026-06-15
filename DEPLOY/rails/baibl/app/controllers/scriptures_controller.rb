@@ -36,4 +36,32 @@ class ScripturesController < ApplicationController
     @verse   = verse
     render partial: "word_study", locals: { study: @study, xrefs: @xrefs, verse: @verse }
   end
+
+  # New improved multi-tradition comparisons + visualizations for Bible, Quran, Bhagavad Gita etc.
+  # Supports theme keyword or specific refs; leverages cross_references + parallel display + viz.
+  def compare
+    @traditions = Book::TRADITIONS
+    @theme = params[:theme].presence || "creation"
+    @results = {}
+
+    # Gather verses by tradition for the theme (simple content/keyword match + cross-refs)
+    Book::TRADITIONS.each do |trad|
+      books = Book.by_tradition(trad)
+      verses = Verse.where(book: books).includes(:book, :chapter, :cross_references)
+      matching = verses.where("content LIKE ?", "%#{@theme}%").limit(3)
+      if matching.empty?
+        # fallback to any + linked via xref
+        matching = verses.limit(2)
+      end
+      @results[trad] = matching
+    end
+
+    # Curated cross-tradition links for visualization (thematic/parallel)
+    @cross_links = CrossReference.includes(verse: [:book, :chapter], target_verse: [:book, :chapter])
+                                 .where(kind: ["thematic", "parallel"]).limit(12)
+
+    if turbo_frame_request?
+      render partial: "scriptures/compare_results", locals: { results: @results, cross_links: @cross_links, theme: @theme }
+    end
+  end
 end

@@ -9,6 +9,7 @@
     <% if @next_chapter %>
       <%= link_to "#{@book.abbreviation} #{@next_chapter} →", scripture_chapter_path(@book.abbreviation, @next_chapter) %>
     <% end %>
+    <span style="margin-left:1rem;">| <%= link_to "Compare this passage", scripture_compare_path(theme: @chapter.verses.first&.content&.split&.first || "creation"), data: { turbo_frame: "compare-results" } %></span>
   </nav>
 </header>
 

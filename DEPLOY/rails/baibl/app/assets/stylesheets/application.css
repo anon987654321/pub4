@@ -47,6 +47,14 @@ h1, h2 { margin-bottom: .75rem; color: var(--primary); }
 .ws-xrefs blockquote { margin: .15rem 0 0; color: #555; font-size: .8rem; }
 .xr-kind { font-size: .65rem; background: #f0f0f0; border-radius: 3px; padding: .1rem .3rem; margin-left: .25rem; }
 
+/* baibl comparisons + visualizations (Wave 1) */
+.compare-promo { border-left: 3px solid var(--primary); }
+.parallel .trad-card { min-height: 120px; }
+.thread { cursor: pointer; }
+.thread.active .thread-bar { background: linear-gradient(90deg, #f59e0b, #d97706); box-shadow: 0 0 0 2px #f59e0b33; }
+.thread-bar { transition: width .3s, background .2s; }
+.compare-controls button { margin-top: .5rem; padding: .4rem .9rem; background: var(--primary); color: var(--bg); border: none; border-radius: 4px; cursor: pointer; }
+
 [dir="rtl"] { direction: rtl; }
 [dir="rtl"] nav .brand { margin-right: 0; margin-left: auto; }
 [dir="rtl"] .verse-num { margin-right: 0; margin-left: .15em; }

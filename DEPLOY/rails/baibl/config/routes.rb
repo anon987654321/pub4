@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   get "scripture/:book_abbreviation/:number", to: "scriptures#chapter", as: :scripture_chapter
   get "search",                   to: "scriptures#search",    as: :scripture_search
   get "word_study",               to: "scriptures#word_study", as: :scripture_word_study
+  get "compare",                  to: "scriptures#compare",    as: :scripture_compare  # multi-tradition: Bible / Quran / Bhagavad Gita etc. + viz
 
   resources :highlights, only: %i[create destroy]
   resources :bookmarks
