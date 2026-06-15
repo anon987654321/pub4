@@ -1,0 +1,13 @@
+<div class="tag-row">
+  <span class="tag"><%= pluralize(@outfits.sum { |outfit| outfit.items.count }, "linked item") %></span>
+  <span class="tag"><%= pluralize(@outfits.sum { |outfit| outfit.likes_count.to_i }, "like") %></span>
+  <span class="tag"><%= pluralize(@outfits.sum(&:total_wears), "combined wear") %></span>
+</div>
+
+<div class="item-grid" id="outfits"><%= render @outfits %></div>
+
+<% if @outfits.empty? %>
+  <div class="empty"><p>No outfits yet. Start with a capsule, event, season, or mood.</p></div>
+<% end %>
+
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>

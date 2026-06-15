@@ -43,15 +43,22 @@ module Shared
       Rails.application.class.module_parent_name.to_s.downcase
     end
 
-    def render_live_search(collection:, partial:, locals: {})
+    def finish_live_search(partial:, locals: {})
       respond_to do |format|
         format.html
         format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(
+          streams = []
+          streams << turbo_stream.replace(
+            "search_suggestions",
+            partial: "shared/search_suggestions",
+            locals: { suggestions: search_suggestions }
+          )
+          streams << turbo_stream.replace(
             "live_search_results",
             partial: partial,
-            locals: locals.merge(collection: collection, query: live_search_query)
+            locals: locals
           )
+          render turbo_stream: streams
         end
       end
     end

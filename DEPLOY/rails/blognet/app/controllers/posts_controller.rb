@@ -13,6 +13,7 @@ class PostsController < ApplicationController
     scope = @blog.posts.published.includes(:user, :tags)
     scope = apply_live_search(scope, columns: %w[title], vertical: "posts") if live_search_query.present?
     @pagy, @posts = pagy(scope)
+    finish_live_search(partial: "posts/live_search_results")
   end
 
   def show

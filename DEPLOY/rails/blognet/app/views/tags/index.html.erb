@@ -6,11 +6,6 @@
 
 <%= live_search_form url: tags_path, placeholder: "Search tags…", label: "Tag search", show_submit: false %>
 
-<turbo-frame id="live_search_results">
-  <ul>
-    <% @tags.each do |tag| %>
-      <li><%= tag.name %></li>
-    <% end %>
-  </ul>
-  <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
-</turbo-frame>
+<div id="live_search_results">
+  <%= render "tags/live_search_results" %>
+</div>

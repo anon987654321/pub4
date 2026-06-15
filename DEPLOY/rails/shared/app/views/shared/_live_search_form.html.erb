@@ -1,6 +1,6 @@
-<%# Shared live-search form — used by all pub4 Rails apps via pub4-shared engine view path %>
+<%# Shared live-search form — Turbo Stream responses via pub4-shared %>
 <div data-controller="live-search" role="search" aria-label="<%= label %>">
-  <%= form_with url: url, method: :get, data: { turbo_frame: turbo_frame } do |f| %>
+  <%= form_with url: url, method: :get, data: { turbo_stream: true } do |f| %>
     <div class="search-form">
       <%= f.search_field :q,
             value: query,
@@ -19,6 +19,8 @@
   <% end %>
 </div>
 
-<% if local_assigns.fetch(:show_suggestions, true) && defined?(search_suggestions) && search_suggestions.present? %>
-  <%= render "shared/search_suggestions", suggestions: search_suggestions %>
-<% end %>
+<div id="search_suggestions">
+  <% if local_assigns.fetch(:show_suggestions, true) && respond_to?(:search_suggestions) && search_suggestions.present? %>
+    <%= render "shared/search_suggestions", suggestions: search_suggestions %>
+  <% end %>
+</div>

@@ -1,0 +1,13 @@
+<% if @sets.any? %>
+  <% @sets.each do |set| %>
+    <article>
+      <h2><%= link_to set.name, playlist_set_path(set) %></h2>
+      <p class="dim"><%= set.privacy.presence&.humanize || "Public" %> · <%= set.tracks.count %> tracks · <%= set.formatted_duration %></p>
+      <% if set.description.present? %>
+        <p><%= set.description %></p>
+      <% end %>
+    </article>
+  <% end %>
+<% else %>
+  <div class="empty"><p>No sets yet.</p></div>
+<% end %>

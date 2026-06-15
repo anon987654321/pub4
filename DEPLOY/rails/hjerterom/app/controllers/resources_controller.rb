@@ -13,6 +13,7 @@ class ResourcesController < ApplicationController
     scope = apply_live_search(scope, columns: %w[title description resource_type], vertical: "resources") if live_search_query.present?
     @pagy, @resources = pagy(scope)
     @crisis_lines = Crisis.all
+    finish_live_search(partial: "resources/live_search_results")
   end
 
   def show; end

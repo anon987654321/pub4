@@ -12,6 +12,7 @@ class ItemsController < ApplicationController
     scope = Current.user.items.recent
     scope = apply_live_search(scope, columns: %w[title brand category color material], vertical: "wardrobe") if live_search_query.present?
     @pagy, @items = pagy(scope)
+    finish_live_search(partial: "items/live_search_results")
   end
 
   def show; end

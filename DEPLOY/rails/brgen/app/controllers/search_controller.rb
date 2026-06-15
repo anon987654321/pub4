@@ -23,7 +23,6 @@ class SearchController < ApplicationController
     @results[:places] = apply_live_search(Place.all, columns: %w[name kind], vertical: "maps")
 
     respond_to do |format|
-      format.html
       format.json do
         render json: {
           query: @query,
@@ -32,6 +31,9 @@ class SearchController < ApplicationController
         }
       end
     end
+    return if performed?
+
+    finish_live_search(partial: "search/live_search_results")
   end
 
   private

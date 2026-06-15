@@ -25,7 +25,7 @@ module Shared
       filtered = filtered_scope
       count = safe_count(filtered)
       latency_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
-      log_analytics(count, latency_ms)
+      notify_analytics(count, latency_ms)
       suggestions = count.zero? && query.present? ? related_terms : []
       Result.new(scope: filtered, result_count: count, latency_ms: latency_ms, suggestions: suggestions)
     end
@@ -63,7 +63,7 @@ module Shared
       filtered.limit(500).count
     end
 
-    def log_analytics(count, latency_ms)
+    def notify_analytics(count, latency_ms)
       return if query.blank?
 
       payload = {
@@ -73,8 +73,7 @@ module Shared
         vertical: vertical,
         app: app_name
       }
-      Rails.logger.info("search_analytics #{payload.to_json}")
-      Shared::EventEmitter.call("search.query", **payload) if defined?(Shared::EventEmitter)
+      Shared::EventEmitter.call("search.query", **payload)
     end
 
     def related_terms

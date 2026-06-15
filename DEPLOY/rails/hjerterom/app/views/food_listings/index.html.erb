@@ -6,18 +6,6 @@
 
 <%= live_search_form url: food_listings_path, placeholder: "Search food listings…", label: "Food listing search" %>
 
-<turbo-frame id="live_search_results">
-<section id="food_listings">
-  <% @listings.each do |listing| %>
-    <article>
-      <%= link_to listing.title, food_listing_path(listing) %>
-      <p><%= listing.quantity %> <%= listing.unit %> · <%= listing.city %></p>
-      <p>Until <%= listing.available_until&.strftime("%b %-d, %H:%M") %></p>
-      <% if listing.dietary_info.present? %>
-        <small><%= listing.dietary_info %></small>
-      <% end %>
-    </article>
-  <% end %>
-</section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
-</turbo-frame>
+<div id="live_search_results">
+  <%= render "food_listings/live_search_results" %>
+</div>

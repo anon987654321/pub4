@@ -4,19 +4,6 @@
   <%= link_to "RSS (new last 7 days)", ports_path(format: :rss) %>
   <%= live_search_form url: ports_path, placeholder: "Search ports…", label: "Search ports" %>
 </header>
-<turbo-frame id="live_search_results">
-<% if @category %>
-  <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
-<% end %>
-<ul id="ports">
-  <% @ports.each do |port| %>
-    <li>
-      <%= link_to port.name, port %>
-      <small><%= port.version %></small>
-      <small><%= link_to port.category.name, category_path(port.category) %></small>
-      <small><%= port.comment %></small>
-    </li>
-  <% end %>
-</ul>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
-</turbo-frame>
+<div id="live_search_results">
+  <%= render "ports/live_search_results" %>
+</div>

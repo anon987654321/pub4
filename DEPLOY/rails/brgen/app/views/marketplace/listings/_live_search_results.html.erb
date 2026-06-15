@@ -1,0 +1,37 @@
+<% if authenticated? && (params[:q].present? || params[:category_id].present?) %>
+  <div class="form-wrap" style="padding:12px 16px">
+    <%= form_with model: Marketplace::SavedSearch.new, url: marketplace_saved_searches_path do |form| %>
+      <%= form.hidden_field :query, value: params[:q] %>
+      <%= form.hidden_field :category_id, value: params[:category_id] %>
+      <%= form.hidden_field :location, value: params[:location] %>
+      <%= form.hidden_field :name, value: "Marketplace search" %>
+      <%= form.submit "Save this search", class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @categories.any? %>
+  <div class="deal-cats">
+    <%= link_to "All", marketplace_listings_path, class: "deal-cat#{" active" unless params[:category_id]}" %>
+    <% @categories.each do |cat| %>
+      <%= link_to cat.name, marketplace_listings_path(category_id: cat.id, q: params[:q].presence), class: "deal-cat#{" active" if params[:category_id].to_s == cat.id.to_s}" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @listings.any? %>
+  <div class="deal-grid" id="marketplace-listings">
+    <% @listings.each do |listing| %>
+      <%= render "marketplace/listings/card", listing: listing %>
+    <% end %>
+  </div>
+
+  <% if @pagy.next %>
+    <div class="load-more-sentinel" data-controller="futurism-load-more"
+         data-url="<%= marketplace_listings_path(page: @pagy.next, q: params[:q], category_id: params[:category_id]) %>">
+      <div class="loading-placeholder">Loading more deals…</div>
+    </div>
+  <% end %>
+<% else %>
+  <div class="empty"><p>No listings match this search. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
+<% end %>

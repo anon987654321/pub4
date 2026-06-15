@@ -24,18 +24,6 @@
   <%= f.select :cuisine, [["All cuisines", ""]] + Takeaway::Restaurant::CUISINE_TYPES.map { |c| [c, c] }, { selected: params[:cuisine] }, {} %>
 <% end %>
 
-<turbo-frame id="live_search_results">
-<section>
-  <% @restaurants.each do |r| %>
-    <article>
-      <h2><%= link_to r.name, takeaway_restaurant_path(r) %></h2>
-      <p><%= r.cuisine_type %> · <%= r.city %> · ★ <%= r.rating || "—" %></p>
-      <p>Min order: <%= r.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= r.delivery_fee_cents.to_i / 100.0 %> NOK</p>
-    </article>
-  <% end %>
-  <% if @restaurants.empty? %>
-    <div class="empty"><p>No restaurants yet. <%= link_to("Add one", new_takeaway_restaurant_path) if authenticated? %></p></div>
-  <% end %>
-</section>
-<%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>
-</turbo-frame>
+<div id="live_search_results">
+  <%= render "takeaway/restaurants/live_search_results" %>
+</div>

@@ -6,18 +6,6 @@
 
 <%= live_search_form url: global_search_path, placeholder: "Search posts, listings, TV, playlists…", label: "Search all verticals", query: @query %>
 
-<turbo-frame id="live_search_results">
-  <% if @query.present? %>
-    <% @results.each do |vertical, records| %>
-      <% next if records.blank? %>
-      <section>
-        <h2><%= vertical.to_s.humanize %></h2>
-        <ul>
-          <% records.limit(8).each do |record| %>
-            <li><%= record.try(:title) || record.try(:name) %></li>
-          <% end %>
-        </ul>
-      </section>
-    <% end %>
-  <% end %>
-</turbo-frame>
+<div id="live_search_results">
+  <%= render "search/live_search_results" %>
+</div>

@@ -15,18 +15,6 @@
 
 <%= live_search_form url: outfits_path, placeholder: "Search outfits by name, occasion, season, items…", label: "Outfit search" %>
 
-<turbo-frame id="live_search_results">
-<div class="tag-row">
-  <span class="tag"><%= pluralize(@outfits.sum { |outfit| outfit.items.count }, "linked item") %></span>
-  <span class="tag"><%= pluralize(@outfits.sum { |outfit| outfit.likes_count.to_i }, "like") %></span>
-  <span class="tag"><%= pluralize(@outfits.sum(&:total_wears), "combined wear") %></span>
+<div id="live_search_results">
+  <%= render "outfits/live_search_results" %>
 </div>
-
-<div class="item-grid" id="outfits"><%= render @outfits %></div>
-
-<% if @outfits.empty? %>
-  <div class="empty"><p>No outfits yet. Start with a capsule, event, season, or mood.</p></div>
-<% end %>
-
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
-</turbo-frame>

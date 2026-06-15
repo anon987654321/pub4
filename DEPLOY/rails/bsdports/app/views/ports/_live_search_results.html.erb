@@ -1,0 +1,14 @@
+<% if @category %>
+  <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
+<% end %>
+<ul id="ports">
+  <% @ports.each do |port| %>
+    <li>
+      <%= link_to port.name, port %>
+      <small><%= port.version %></small>
+      <small><%= link_to port.category.name, category_path(port.category) %></small>
+      <small><%= port.comment %></small>
+    </li>
+  <% end %>
+</ul>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

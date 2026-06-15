@@ -22,33 +22,7 @@
 
   <%= live_search_form url: items_path, placeholder: "Search wardrobe by title, brand, category…", label: "Wardrobe search" %>
 
-  <turbo-frame id="live_search_results">
-  <div class="tag-row">
-    <span class="tag"><%= pluralize(@items.sum { |item| item.times_worn.to_i }, "wear") %> on this page</span>
-    <span class="tag"><%= @items.count(&:spark_joy?) %> joy keepers</span>
-    <span class="tag"><%= @items.map(&:category).compact.uniq.size %> categories</span>
+  <div id="live_search_results">
+    <%= render "items/live_search_results" %>
   </div>
-
-  <div class="field">
-    <label for="category-filter">Filter by category</label>
-    <select id="category-filter" data-action="change->filter#filter" data-filter-target="select">
-      <option value="">All</option>
-      <% Item::CATEGORIES.each do |category| %>
-        <option value="<%= category %>"><%= category %></option>
-      <% end %>
-    </select>
-  </div>
-
-  <div class="item-grid" id="items" data-filter-target="grid">
-    <%= render @items %>
-  </div>
-
-  <% if @items.empty? %>
-    <div class="empty">
-      <p>No wardrobe items yet. Add your first item to start recommendations, capsules, and decluttering.</p>
-    </div>
-  <% end %>
-
-  <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
-  </turbo-frame>
 </section>

@@ -14,6 +14,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
       scope = scope.near(params[:lat], params[:lng], params[:radius_km] || 5) if scope.respond_to?(:near)
     end
     @pagy, @restaurants = pagy(live_search_query.present? ? scope : scope.popular)
+    finish_live_search(partial: "takeaway/restaurants/live_search_results")
   end
 
   def show

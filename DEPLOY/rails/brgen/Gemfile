@@ -46,6 +46,7 @@ gem "ferrum"
 
 group :development, :test do
   gem "brakeman"
+  gem "bundler-audit"
   gem "rubocop-rails-omakase"
   gem "faker"
 end

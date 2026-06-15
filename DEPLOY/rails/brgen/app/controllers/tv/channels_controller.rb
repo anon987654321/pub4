@@ -16,6 +16,7 @@ class Tv::ChannelsController < Tv::BaseController
       scope = scope.popular
     end
     @pagy, @channels = pagy(scope)
+    finish_live_search(partial: "tv/channels/live_search_results")
   end
   def show     = (@pagy, @videos = pagy(@channel.videos.published))
   def new      = (@channel = Tv::Channel.new)

@@ -25,7 +25,7 @@ class ScripturesController < ApplicationController
     scope = Verse.all.includes(:book, :chapter)
     scope = apply_live_search(scope, columns: %w[content], vertical: "scripture") if live_search_query.present?
     @pagy, @verses = pagy(scope, items: 20)
-    render :search
+    finish_live_search(partial: "scriptures/live_search_results")
   end
 
   def word_study

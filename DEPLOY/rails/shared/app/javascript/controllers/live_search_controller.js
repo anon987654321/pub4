@@ -20,6 +20,10 @@ export default class extends Controller {
   submitForm() {
     const form = this.element.querySelector("form")
     if (!form) return
+
+    const action = new URL(form.action, window.location.origin)
+    action.searchParams.set("format", "turbo_stream")
+    form.action = action.pathname + action.search
     form.requestSubmit()
   }
 }

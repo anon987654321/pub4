@@ -14,6 +14,7 @@ class FoodListingsController < ApplicationController
       scope = scope.near(params[:lat], params[:lng], params[:radius_km] || 10)
     end
     @pagy, @listings = pagy(scope)
+    finish_live_search(partial: "food_listings/live_search_results")
   end
 
   def show

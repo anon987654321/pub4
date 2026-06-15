@@ -15,6 +15,7 @@ module Playlist
         scope = scope.where(id: (set_ids + track_ids).uniq)
       end
       @sets = scope.limit(100)
+      finish_live_search(partial: "playlist/sets/live_search_results")
     end
 
     def show

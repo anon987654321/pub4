@@ -6,16 +6,6 @@
 
 <%= live_search_form url: resources_path, placeholder: "Search resources…", label: "Resource search" %>
 
-<turbo-frame id="live_search_results">
-<section id="resources">
-  <% @resources.each do |resource| %>
-    <article data-resource-type="<%= resource.resource_type %>">
-      <%= link_to resource.title, resource %>
-      <small><%= resource.resource_type %></small>
-      <p><%= resource.description %></p>
-      <p><%= [resource.city, resource.phone].compact.join(" · ") %></p>
-    </article>
-  <% end %>
-</section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
-</turbo-frame>
+<div id="live_search_results">
+  <%= render "resources/live_search_results" %>
+</div>

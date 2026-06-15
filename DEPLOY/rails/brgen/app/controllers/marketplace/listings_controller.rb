@@ -22,6 +22,8 @@ class Marketplace::ListingsController < Marketplace::BaseController
     if @listings.any?
       content_for :json_ld, item_list_schema(@listings, title: "Markedsplass")
     end
+
+    finish_live_search(partial: "marketplace/listings/live_search_results")
   end
 
   def show

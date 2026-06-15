@@ -15,6 +15,7 @@ class OutfitsController < ApplicationController
       scope = scope.joins(:outfit_items).where(outfit_items: { item_id: item_ids }).distinct if item_ids.any?
     end
     @pagy, @outfits = pagy(scope)
+    finish_live_search(partial: "outfits/live_search_results")
   end
 
   def dressing_room
