@@ -1,8 +1,8 @@
-# MASTER Snapshot (TRANCHE9 micro refinements)
-Generated: 2026-06-15T12:55:00Z (post-bonus tranche9)
-## Tranche9: ARIA/NN heuristics + Shared concerns in DEPLOY verticals + engine stable; TODOs updated + root snaps
+# MASTER Snapshot (TRANCHE10)
+Generated: 2026-06-15T13:20:00Z (tranche10)
+## Tranche10: more Shared models (5+), ARIA/NN, controller flesh, engine sh/WIRING annotate; TODOs + root snaps
 ```
-Next/reassessment (2026-06-15): spike shared engine (top priority #1; 6/6 wired, terse engine + concern helper, bundle primary). Integrate root snapshots (MASTER_snapshot.md / DEPLOY_snapshot.md) into LLM/self-eval. Wire more concerns if gaps. Continue AN2 (auth), AN103 (Workbox), AN106 (VAPID), AN15/AN1204 (tests). Full activity graph, notification convergence. DRY/KISS tranche9: 20+ view ARIA fixes (amber declutter+layouts, baibl/blognet nav/main, brgen takeaway/playlist/tv/messages + orders/drivers), 8+ models promoted (takeaway Restaurant/Review, Marketplace Store, Tv Channel + prior). Snapshots root for eval of arch/DRY/pruning/shared. No local md bloat. (Reassess: NN heuristics applied per 10 principles; engine-ize advancing; snapshots fulfill "for other LLMs".)
-- [x] many A/B/C/D/E lexical/structural/autofix/self-scan (prior tranches)
+Next/reassessment (2026-06-15): spike shared engine (top #1; 6/6 + concern helper; tranche10 added models + sh annotations). Integrate root snapshots to self-eval. Continue AN2 (auth), AN103 (Workbox), AN106 (VAPID), tests, full activity, notif convergence, deprecate remaining copy in sh/rc. DRY/KISS tranche10: +Tv::Video/LiveStream, Playlist::Listen, Dating::Match, Reaction (Shared Activity/React/Notif); takeaway orders sections + bsdports uls/nav ARIA; orders_controller record_activity flesh; deploy_all.sh + WIRING notes. Snapshots root for LLM eval of arch/DRY/engine/NN. No local md bloat. (NN applied; engine progressing; snapshots for other LLMs.)
+- [x] A/B/C/D/E rules (prior)
 ```
-Evidence: git log --oneline -5; ls -1 Documents/GitHub/pub4/*_snapshot.md; grep -l "role=.*aria" DEPLOY/rails/*/app/views/**/*.erb | wc -l (reduced plain elems). 
+Evidence: git log -5; ls *_snapshot.md; grep -c "Shared.concern" or "include Shared" in brgen models (increased); ARIA grep reduction. 

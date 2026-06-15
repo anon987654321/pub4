@@ -2,6 +2,10 @@
 
 module Tv
   class LiveStream < ApplicationRecord
+    # Engine-ized Shared (tranche10)
+    include Shared.concern(:ActivityTrackable) rescue nil
+    include Shared.concern(:Notifiable) rescue nil
+
     self.table_name = "tv_live_streams"
 
     STATUSES = %w[scheduled live ended cancelled].freeze

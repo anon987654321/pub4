@@ -16,9 +16,9 @@
 
   <% if @dependencies.any? %>
     <h2>Dependencies</h2>
-    <ul>
+    <ul role="list" aria-label="Port dependencies">
       <% @dependencies.each do |dep| %>
-        <li>
+        <li role="listitem">
           <%= link_to dep.depends_on.name, port_path(dep.depends_on) %>
           <small><%= dep.dep_type %></small>
         </li>
@@ -81,7 +81,7 @@
   <p>Scan <code>Makefile</code> and patches for quality issues.</p>
   <%= button_to "Run MASTER review", review_port_path(@port), method: :post %>
 
-  <nav>
+  <nav role="navigation" aria-label="Port actions">
     <% if authenticated? %>
       <% if @watching %>
         <%= button_to "Unwatch", unwatch_port_path(@port), method: :delete %>
@@ -92,7 +92,7 @@
   </nav>
 </article>
 
-<section id="comments">
+<section id="comments" role="region" aria-label="Comments">
   <h2>Comments</h2>
   <%= render @comments %>
   <% if authenticated? %>

@@ -72,7 +72,8 @@ This keeps polymorphic user-facing action targets tamper-resistant.
 
 - Add app-local authorization before review updates.
 - Add tests for every mounted route.
-- Replace copy/install with a Rails engine once app structure stabilizes.
+- Replace copy/install with a Rails engine once app structure stabilizes. (Tranche10: 6/6 apps wired; more models promoted (Video, Listen, LiveStream, Match, Reaction); sh/deploy_all + openbsd annotated DEPRECATED for legacy copies.)
+
 
 ## Visual System & Component Inheritance (Brgen as Base)
 
@@ -93,6 +94,7 @@ This ensures a single coherent "watch from afar" aesthetic across Brgen, Amber, 
 2. Import `shared/frontend/stimulus_components.js` baseline.
 3. Align major components (cards, nav, forms) to Brgen tokens.
 4. Test reduced-motion + coarse pointer profiles.
+(Tranche10: engine + Shared concerns standard for all vertical models + ARIA NN in subapp views.)
 
 ## Stimulus Components Baseline
 

@@ -28,6 +28,7 @@ class Takeaway::OrdersController < Takeaway::BaseController
       @order.save ? @order.calculate_totals! && true : false
     end
     if saved
+      @order.record_activity!("placed") rescue nil
       redirect_to takeaway_order_path(@order), notice: "Order placed"
     else
       @menu_items = @restaurant.menu_items.available

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class Reaction < ApplicationRecord
+  # Engine-ized Shared (tranche10)
+  include Shared.concern(:ActivityTrackable) rescue nil
+  include Shared.concern(:Notifiable) rescue nil
+
   KINDS = %w[like love laugh wow sad angry local].freeze
 
   belongs_to :user

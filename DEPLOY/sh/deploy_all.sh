@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # Complete VPS deployment orchestrator per master.yml v72.1.0
 # Deploys all 15 Rails apps to OpenBSD VPS 46.23.89.226
+# Engine-ize note (tranche10): per-app bundle install now pulls pub4-shared (Gemfiles); legacy copy from shared/ via install_*.sh DEPRECATED (see WIRING_NOTES + shared/install_an_stack.sh). Prefer bundle.
 set -euo pipefail
 readonly VPS_HOST="46.23.89.226"
 readonly VPS_USER="dev"

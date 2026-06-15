@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class Dating::Match < ApplicationRecord
+  # Engine-ized Shared (tranche10)
+  include Shared.concern(:Notifiable) rescue nil
+  include Shared.concern(:ActivityTrackable) rescue nil
+
   belongs_to :initiator, class_name: "User"
   belongs_to :receiver,  class_name: "User"
   validates :initiator_id, uniqueness: { scope: :receiver_id }

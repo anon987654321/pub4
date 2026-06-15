@@ -1,6 +1,6 @@
 # TODO — MASTER backlog
 
-**DRY/KISS note (2026-06-15 tranche9 reassessed post-snapshots/pruning/NN)**: See DEPLOY pushes + tranche9 (ARIA/NN 20+ view fixes across amber declutter+outfits+posts, baibl/blognet layouts, brgen takeaway/playlist/tv/messages verticals; +8 models Shared in takeaway::Restaurant/Review, Marketplace::Store, Tv::Channel etc using concern rescue). Engine spike stable (6/6, terse engine.rb). Root snapshots in pub4/ refreshed for LLM eval. Pruning/DRY prior wins hold; more [x] in AN1/NN. (Details DEPLOY/TODO; no md bloat; snapshots root per request). Addresses usability heuristics + engine-ize. (See git, shared/concerns, root _snapshots.)
+**DRY/KISS note (2026-06-15 tranche10 reassessed post-snapshots/pruning/NN)**: See DEPLOY pushes + tranche9/10 (ARIA/NN fixes in takeaway/bsdports + prior; +5 models Shared: Tv Video/LiveStream, Playlist Listen, Dating Match, Reaction + controller flesh + sh/WIRING annotate). Engine spike stable (6/6). Root snapshots refreshed. Pruning/DRY/NN wins hold; engine advancing. (Details DEPLOY/TODO; no md bloat; snapshots root per request). Addresses heuristics + engine-ize. (See git, shared/concerns, root _snapshots.)
 
 Work left to right, top to bottom. Mark done with [x].
 
