@@ -4,12 +4,16 @@ require_relative "llm_dispatcher"
 require_relative "consensus"
 require_relative "prompt_filter"
 require_relative "agent/model_selector"
+require_relative "agent/prompt_builder"
+require_relative "agent/fallback_chain"
 
 module Master
   module Judge
     class Agent
       include PromptFilter
       include ModelSelector
+      include PromptBuilder
+      include FallbackChain
 
       DEFAULT_MESSAGE_WINDOW_SIZE = 16
 
@@ -151,146 +155,6 @@ module Master
       ensure
         @config["task_type"] = old
       end
-
-      TOPIC_DRIFT_THRESHOLD = 6
-
-      def topic_anchored(message)
-        topic = @session.respond_to?(:topic) && @session.topic
-        return message unless topic
-        return message if @session.messages.length < TOPIC_DRIFT_THRESHOLD
-        "#{message}\n\n[task: #{topic}]"
-      end
-
-      def apply_reasoning_mode(message, mode: @config.reasoning_mode)
-        return message unless @reasoning_modes
-        @reasoning_modes.wrap(message, mode:)
-      end
-
-      def static_prompt
-        parts = []
-        parts << @constitution.system_prompt if @constitution && !@constitution.empty?
-        parts << @personality.system_prompt if @personality
-        parts.compact.join("\n\n").then { |s| s.empty? ? nil : filter_prompt(s) }
-      end
-
-      def dynamic_prompt
-        parts = []
-        parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic
-        parts << @code_index.summary if @code_index&.built?
-        parts << @memory.context_summary if @memory&.context_summary
-        parts.compact.join("\n\n").then { |s| s.empty? ? nil : filter_prompt(s) }
-      end
-
-      def system_prompt
-        [static_prompt, dynamic_prompt].compact.join("\n\n").then { |s| s.empty? ? nil : filter_prompt(s) }
-      end
-
-      def conversation_context(max_messages: DEFAULT_MESSAGE_WINDOW_SIZE)
-        messages = @session.messages
-        return [] unless messages.respond_to?(:each)
-        messages.last(max_messages + 1)[0...-1] || []
-      end
-
-      def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image: nil, &blk)
-        stage_warnings = []
-        fallback_modes = mode_chain_for(candidate_models)
-        last_response = nil
-
-        fallback_modes.each do |attempt|
-          selected_model = attempt.fetch(:model)
-          mode = attempt.fetch(:mode)
-          response = attempt_model_with_retries(
-            selected_model: selected_model,
-            mode: mode,
-            prompt: prompt,
-            context: context,
-            stream: stream,
-            image: image,
-            &blk
-          )
-          if response.is_a?(Master::Result::Ok)
-            publish_llm_success(selected_model, response)
-            @bus&.publish("agent:stage_warnings", warnings: stage_warnings) unless stage_warnings.empty?
-            return response
-          end
-
-          last_response = response
-          stage_warnings << "llm failed in #{mode} on #{selected_model}: #{response.message}"
-        end
-
-        @bus&.publish("agent:all_fallbacks_exhausted", warnings: stage_warnings)
-        last_response || Result.err("all LLM fallback modes exhausted", category: :llm_call_failure)
-      end
-
-      def attempt_model_with_retries(selected_model:, mode:, prompt:, context:, stream:, image: nil, &blk)
-        last_response = nil
-        retry_count = @model_router&.failover_max_retries.to_i
-        retry_count = 0 if retry_count.negative?
-        (retry_count + 1).times do |retry_index|
-          wrapped = filter_prompt(apply_reasoning_mode(prompt, mode: mode))
-          response = @dispatcher.send_with_cache(
-            selected_model,
-            context + [{ role: "user", content: wrapped }],
-            stream:, image: image, &blk
-          )
-          return response if response.is_a?(Master::Result::Ok)
-
-          last_response = response
-          backoff_before_retry(selected_model, mode, retry_index) if retry_index < retry_count
-        end
-        last_response
-      end
-
-      def backoff_before_retry(model, mode, retry_index)
-        cooldown = @model_router&.failover_cooldown_seconds.to_i
-        cooldown = 300 if cooldown <= 0
-        delay = cooldown * (2**retry_index)
-        @bus&.publish("llm:failover_backoff", model: model, mode: mode, retry: retry_index + 1, delay: delay)
-        sleep delay if ENV["MASTER_STRICT_BACKOFF"] == "1"
-      end
-
-      def mode_chain_for(candidates)
-        models = Array(candidates).empty? ? [@config.model] : candidates
-        primary = models.first
-        modes = if @dispatcher.claude_cli_model?(primary) || @dispatcher.tool_capable?(primary)
-                  [@config.reasoning_mode.to_s, "code_agent", "react"]
-                else
-                  ["code_agent", "react", "direct"]
-                end
-        chain = models.map { |m| { model: m, mode: modes.first } }
-        chain.concat(modes.drop(1).map { |mode| { model: primary, mode: mode } })
-        chain
-      end
-
-      def publish_llm_success(model, response)
-        tokens_approx = Trace::Session.estimate_tokens(response)
-        @bus&.publish("llm:response", model:, success: true, tokens_approx:)
-      end
-
-      def maybe_escalate(last_response, original_message, stream:, escalation_depth:, &blk)
-        return last_response unless @model_router
-        return last_response if escalation_depth >= 2
-
-        current = routed_models.first
-        escalation_model = @model_router.escalate_if_low_confidence(
-          last_response.to_s,
-          current_model: current,
-          task_type: @config.task_type.to_sym
-        )
-        return last_response unless escalation_model
-        return last_response if escalation_model.to_s == current.to_s
-
-        @bus&.publish("llm:escalation", from: current, to: escalation_model)
-        escalated = attempt_chat_with_fallbacks(
-          candidate_models: [escalation_model],
-          prompt: original_message,
-          context: conversation_context,
-          stream: stream,
-          &blk
-        )
-        escalated.is_a?(Master::Result::Err) ? last_response : escalated
-      end
-
     end
   end
 end
