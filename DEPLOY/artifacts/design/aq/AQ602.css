@@ -1,6 +1,0 @@
-/* AQ602: AQ602 City as tenant: `City` model as tenant; every request sets `ActsAsTenant.current_tenant = City.find_by(subdomain: request.subdomain)`; all models scoped automatically */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ602.css */
-[data-todo="aq602"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ602";
-}

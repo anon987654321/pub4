@@ -1,6 +1,0 @@
-/* AQ301: AQ301 Turbo Native setup: add `turbo-ios` gem + `turbo_ios` Stimulus bridge; wrap existing web views in native iOS app shell; reuse all Rails views without duplication */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ301.css */
-[data-todo="aq301"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ301";
-}

@@ -1,6 +1,0 @@
-/* AR302: AR302 Font size fluid scale: `--text-xs: clamp(11px, 1.5vw, 13px); --text-sm: clamp(13px, 1.8vw, 15px); --text-base: clamp(15px, 2.2vw, 17px); --text-lg: clamp(17px, 2.5vw, 20px); --text-xl: clamp(20px, 3vw, 24px); --text-2xl: clamp(24px, 4vw, 32px); --text-3xl: clamp(32px, 5vw, 48px)` */
-/* Artifact: DEPLOY/artifacts/design/ar/AR302.css */
-[data-todo="ar302"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR302";
-}

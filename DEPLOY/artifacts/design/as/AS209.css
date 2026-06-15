@@ -1,6 +1,0 @@
-/* AS209: AS209 brgen marketplace grid: `display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1px; background: var(--color-border)` — gap creates border effect between tiles; tiles have `background: var(--color-background)` — Instagram grid pattern */
-/* Artifact: DEPLOY/artifacts/design/as/AS209.css */
-[data-todo="as209"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS209";
-}

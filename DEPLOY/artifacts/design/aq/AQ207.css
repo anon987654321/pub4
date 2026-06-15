@@ -1,6 +1,0 @@
-/* AQ207: AQ207 Mirror service for CDN: configure `Mirror` storage service that writes to both local disk and Cloudflare R2; read from CDN for public content; local disk as fallback origin */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ207.css */
-[data-todo="aq207"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ207";
-}

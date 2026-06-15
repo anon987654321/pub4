@@ -1,6 +1,0 @@
-/* AQ902: AQ902 Role feed: `<main role="feed" aria-label="Innlegg">` on timeline; `article` elements with `aria-posinset` and `aria-setsize` for screen reader position announcement */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ902.css */
-[data-todo="aq902"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ902";
-}

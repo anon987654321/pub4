@@ -1,4 +1,0 @@
-/* AP1008: AP1008 Token inheritance between apps: shared base tokens in a `_shared_tokens.css` partial; app-specific overrides in `application.css`; never copy-paste tokens between apps — import shared */
-[data-todo="ap1008"] {
-  --artifact-id: "AP1008";
-}

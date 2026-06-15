@@ -1,6 +1,0 @@
-/* AP803: AP803 Error state: `border-color: var(--color-danger); box-shadow: 0 0 0 3px rgba(220,38,38,0.15)` + error message below in `--color-danger` 13px; icon optional (!) */
-/* Artifact: DEPLOY/artifacts/design/ap/AP803.css */
-[data-todo="ap803"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP803";
-}

@@ -1,6 +1,0 @@
-/* AQ409: AQ409 Norwegian search: FTS5 tokenize with `unicode61` handles Norwegian characters (æ ø å) correctly; add synonym table mapping Norwegian → Bokmål variants */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ409.css */
-[data-todo="aq409"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ409";
-}

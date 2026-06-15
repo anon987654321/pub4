@@ -1,6 +1,0 @@
-/* AO304: AO304 Substack letter preview typography: email preview text at 15px / lighter weight / muted color — distinguish from full article in feed */
-/* Artifact: DEPLOY/artifacts/design/ao/AO304.css */
-[data-todo="ao304"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO304";
-}

@@ -1,4 +1,0 @@
-/* AO1006: AO1006 Substack mobile nav: horizontal scrollable tab row; `overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch` — each section tab 64px minimum touch target */
-[data-todo="ao1006"] {
-  --artifact-id: "AO1006";
-}

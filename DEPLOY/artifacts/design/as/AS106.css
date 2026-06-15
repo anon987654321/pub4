@@ -1,6 +1,0 @@
-/* AS106: AS106 Phase 5 — typography: apply per-app font stack, fluid type scale, prose styles; verify reading comfort at 375px, 768px, 1280px viewports; 1-2 days per app */
-/* Artifact: DEPLOY/artifacts/design/as/AS106.css */
-[data-todo="as106"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS106";
-}

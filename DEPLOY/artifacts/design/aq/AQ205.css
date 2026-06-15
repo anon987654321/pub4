@@ -1,6 +1,0 @@
-/* AQ205: AQ205 Content-type validation: `validates :photo, content_type: ["image/jpg", "image/jpeg", "image/png", "image/webp", "image/heic"]` — explicit allowlist; reject all other types server-side */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ205.css */
-[data-todo="aq205"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ205";
-}

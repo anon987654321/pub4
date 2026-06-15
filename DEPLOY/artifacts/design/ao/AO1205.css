@@ -1,4 +1,0 @@
-/* AO1205: AO1205 Dark mode shadow adjustment: light-mode shadows use opacity-black; dark-mode shadows use opacity-white or glow; `box-shadow: 0 2px 8px rgba(255,255,255,0.08)` in dark */
-[data-todo="ao1205"] {
-  --artifact-id: "AO1205";
-}

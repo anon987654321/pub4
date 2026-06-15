@@ -1,4 +1,0 @@
-/* AP1403: AP1403 Icon meaning consistency: same action = same icon across all apps; "like" = heart; "share" = box-with-arrow; "comment" = speech bubble; "delete" = trash — never deviate per-app */
-[data-todo="ap1403"] {
-  --artifact-id: "AP1403";
-}

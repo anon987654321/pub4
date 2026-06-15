@@ -1,6 +1,0 @@
-/* AR606: AR606 Aspect ratio boxes: `.embed-container { aspect-ratio: 16/9; position: relative; overflow: hidden } .embed-container > * { position: absolute; inset: 0; width: 100%; height: 100% }` — replaces padding-top hack */
-/* Artifact: DEPLOY/artifacts/design/ar/AR606.css */
-[data-todo="ar606"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR606";
-}

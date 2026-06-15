@@ -1,6 +1,0 @@
-/* AP906: AP906 Touch target padding: minimum 44×44px tap target even if visual element is smaller; achieve via `padding` or pseudo-element extension; critical for icon-only buttons */
-/* Artifact: DEPLOY/artifacts/design/ap/AP906.css */
-[data-todo="ap906"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP906";
-}

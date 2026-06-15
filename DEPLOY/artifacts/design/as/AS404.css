@@ -1,6 +1,0 @@
-/* AS404: AS404 blognet pullquote: `.pullquote { text-align: center; font-size: var(--text-xl); font-style: italic; line-height: 1.4; margin-block: var(--space-8); padding-block: var(--space-4); border-block: 1px solid var(--color-border); max-width: 600px; margin-inline: auto; color: var(--color-shadow) }` — editorial statement */
-/* Artifact: DEPLOY/artifacts/design/as/AS404.css */
-[data-todo="as404"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS404";
-}

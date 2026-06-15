@@ -1,6 +1,0 @@
-/* AO807: AO807 Medium clap button: animated hand icon with particle burst on click; count increments optimistically; can clap up to 50 times; number cycles with each clap */
-/* Artifact: DEPLOY/artifacts/design/ao/AO807.css */
-[data-todo="ao807"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO807";
-}

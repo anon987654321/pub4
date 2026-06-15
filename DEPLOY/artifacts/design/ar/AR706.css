@@ -1,6 +1,0 @@
-/* AR706: AR706 Progress indicator: `progress { appearance: none; width: 100%; height: 4px; border-radius: 9999px; background: var(--color-border) } progress::-webkit-progress-bar { background: var(--color-border) } progress::-webkit-progress-value { background: var(--color-midtone); border-radius: 9999px }` — cross-browser styled progress */
-/* Artifact: DEPLOY/artifacts/design/ar/AR706.css */
-[data-todo="ar706"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR706";
-}

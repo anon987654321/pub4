@@ -1,6 +1,0 @@
-/* AO706: AO706 Medium masonry feed: `columns: 2; column-gap: 32px` for curated feed on homepage; `break-inside: avoid` per card; CSS Masonry (or JS fallback) */
-/* Artifact: DEPLOY/artifacts/design/ao/AO706.css */
-[data-todo="ao706"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO706";
-}

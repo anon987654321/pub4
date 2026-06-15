@@ -1,4 +1,0 @@
-/* AO1108: AO1108 Engagement metrics row: icon + number pairs; `color: var(--text-secondary)`; hover to `var(--accent)`; `font-size: 13px; gap: 4px` between icon and number; `gap: 16px` between pairs */
-[data-todo="ao1108"] {
-  --artifact-id: "AO1108";
-}

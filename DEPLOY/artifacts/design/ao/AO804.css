@@ -1,6 +1,0 @@
-/* AO804: AO804 X thread connector: vertical line between tweets in thread; `border-left: 2px solid var(--border)` from avatar bottom to next avatar; margin aligns with avatar center */
-/* Artifact: DEPLOY/artifacts/design/ao/AO804.css */
-[data-todo="ao804"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO804";
-}

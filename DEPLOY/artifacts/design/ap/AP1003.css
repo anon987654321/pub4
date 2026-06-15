@@ -1,4 +1,0 @@
-/* AP1003: AP1003 Border radius tokens: `--radius-sm: 4px; --radius-md: 6px; --radius-lg: 10px; --radius-xl: 16px; --radius-full: 9999px` — never arbitrary values; assign per component in component CSS */
-[data-todo="ap1003"] {
-  --artifact-id: "AP1003";
-}

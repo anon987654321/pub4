@@ -1,4 +1,0 @@
-/* AQ1008: AQ1008 Rate limiting auth endpoints: `Rack::Attack` middleware; limit `/session` to 5 POST/minute per IP; limit `/password_reset` to 3/hour per IP; return 429 with `Retry-After` header */
-[data-todo="aq1008"] {
-  --artifact-id: "AQ1008";
-}

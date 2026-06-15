@@ -1,6 +1,0 @@
-/* AQ210: AQ210 Concurrent upload: `data-controller="direct-upload"` Stimulus controller tracking multiple concurrent `DirectUpload` instances; progress bar per file; total progress aggregated */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ210.css */
-[data-todo="aq210"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ210";
-}

@@ -1,6 +1,0 @@
-/* AO705: AO705 Medium hero image: full-width image above article (`width: 100%; max-height: 500px; object-fit: cover`) with credit caption overlay at bottom-right in small italic */
-/* Artifact: DEPLOY/artifacts/design/ao/AO705.css */
-[data-todo="ao705"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO705";
-}

@@ -1,6 +1,0 @@
-/* AO605: AO605 Medium article max-width: `max-width: 740px` for article body; `max-width: 1192px` for feed; `margin: 0 auto` centers both; 56px side padding on desktop collapses to 16px mobile */
-/* Artifact: DEPLOY/artifacts/design/ao/AO605.css */
-[data-todo="ao605"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO605";
-}

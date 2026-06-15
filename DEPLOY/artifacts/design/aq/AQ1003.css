@@ -1,4 +1,0 @@
-/* AQ1003: AQ1003 CSRF protection: `config.action_controller.forgery_protection_origin_check = true`; verify `Origin` header on all non-GET requests; token embedded in Turbo meta tag */
-[data-todo="aq1003"] {
-  --artifact-id: "AQ1003";
-}

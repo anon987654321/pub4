@@ -1,6 +1,0 @@
-/* AS904: AS904 Dark mode visual audit: every component in light and dark mode; screenshot both; verify no invisible text, broken icons, or washed-out colors in either mode */
-/* Artifact: DEPLOY/artifacts/design/as/AS904.css */
-[data-todo="as904"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS904";
-}

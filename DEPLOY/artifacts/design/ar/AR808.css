@@ -1,6 +1,0 @@
-/* AR808: AR808 `dvh` for full-screen: `height: 100dvh` instead of `100vh`; dynamic viewport height excludes mobile browser chrome; no content hidden under address bar or bottom toolbar */
-/* Artifact: DEPLOY/artifacts/design/ar/AR808.css */
-[data-todo="ar808"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR808";
-}

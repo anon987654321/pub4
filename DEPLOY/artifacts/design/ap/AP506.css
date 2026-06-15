@@ -1,6 +1,0 @@
-/* AP506: AP506 No loops at rest: never animate elements that are sitting idle; pulse/spin only on explicitly loading states; continuous animation is cognitive noise */
-/* Artifact: DEPLOY/artifacts/design/ap/AP506.css */
-[data-todo="ap506"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP506";
-}

@@ -1,6 +1,0 @@
-/* AQ604: AQ604 Cross-city content: some content is global (platform policies, help docs); use `city_id: nil` + scope override: `unscoped.where(global: true)` */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ604.css */
-[data-todo="aq604"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ604";
-}

@@ -1,4 +1,0 @@
-/* AQ1107: AQ1107 Admin analytics dashboard: `/admin/analytics` — 30-day chart (pure SVG, no chart.js) of DAU/WAU/MAU, new users, revenue, top content; server-rendered for maximum speed */
-[data-todo="aq1107"] {
-  --artifact-id: "AQ1107";
-}

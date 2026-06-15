@@ -1,6 +1,0 @@
-/* AO901: AO901 X hover state: `background: rgba(15,20,25,0.05)` on card hover (light); `rgba(247,249,249,0.05)` (dark); barely-there hover keeps focus on content not chrome */
-/* Artifact: DEPLOY/artifacts/design/ao/AO901.css */
-[data-todo="ao901"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO901";
-}

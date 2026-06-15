@@ -1,6 +1,0 @@
-/* AP609: AP609 blognet article card: full-width hero image 16:9; author byline with avatar; reading time; title at 24px serif bold; 3-line excerpt; tags in lowercase pill chips; no border, generous margin */
-/* Artifact: DEPLOY/artifacts/design/ap/AP609.css */
-[data-todo="ap609"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP609";
-}

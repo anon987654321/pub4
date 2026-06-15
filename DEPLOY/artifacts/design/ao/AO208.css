@@ -1,6 +1,0 @@
-/* AO208: AO208 Medium reading time: `font-size: 14px / color: rgba(117,117,117,1)` next to author name; computed server-side, displayed as "7 min read" */
-/* Artifact: DEPLOY/artifacts/design/ao/AO208.css */
-[data-todo="ao208"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO208";
-}

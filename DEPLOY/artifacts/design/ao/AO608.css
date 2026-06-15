@@ -1,6 +1,0 @@
-/* AO608: AO608 Substack avatar: 88×88px profile; 40×40px in feed; always circular with `border-radius: 50%`; subtle border `1px solid var(--border)` */
-/* Artifact: DEPLOY/artifacts/design/ao/AO608.css */
-[data-todo="ao608"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO608";
-}

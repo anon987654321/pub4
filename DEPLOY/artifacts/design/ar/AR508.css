@@ -1,6 +1,0 @@
-/* AR508: AR508 will-change budgeting: `will-change: transform` only on elements actively animating; remove after animation ends via JS; never apply globally; GPU layers are expensive */
-/* Artifact: DEPLOY/artifacts/design/ar/AR508.css */
-[data-todo="ar508"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR508";
-}

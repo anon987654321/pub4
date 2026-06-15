@@ -1,6 +1,0 @@
-/* AP805: AP805 Label positioning: label always above input; `display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text-primary)` — never placeholder-as-label */
-/* Artifact: DEPLOY/artifacts/design/ap/AP805.css */
-[data-todo="ap805"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP805";
-}

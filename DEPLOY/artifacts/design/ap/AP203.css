@@ -1,6 +1,0 @@
-/* AP203: AP203 bsdports palette (technical): shadow `#0d1117` (GitHub dark), midtone `#58a6ff` (code blue), highlight `#e6edf3` (light grey); monochrome red `#ff4444` for security advisories; developer tool aesthetic */
-/* Artifact: DEPLOY/artifacts/design/ap/AP203.css */
-[data-todo="ap203"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP203";
-}

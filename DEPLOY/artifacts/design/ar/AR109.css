@@ -1,6 +1,0 @@
-/* AR109: AR109 Component isolation: every component CSS block opens with the component's root class; all descendant selectors scoped within; `postCard { &-title { } &-meta { } }` using CSS nesting */
-/* Artifact: DEPLOY/artifacts/design/ar/AR109.css */
-[data-todo="ar109"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR109";
-}

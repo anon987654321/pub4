@@ -1,6 +1,0 @@
-/* AO305: AO305 Substack podcast metadata: episode number, duration, published date in monospace or tabular-nums — align numbers in episode lists */
-/* Artifact: DEPLOY/artifacts/design/ao/AO305.css */
-[data-todo="ao305"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO305";
-}

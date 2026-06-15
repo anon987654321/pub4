@@ -1,6 +1,0 @@
-/* AO811: AO811 Substack like animation: heart fills with bounce; `animation: heartbeat 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)` — springy overshoot feel */
-/* Artifact: DEPLOY/artifacts/design/ao/AO811.css */
-[data-todo="ao811"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO811";
-}

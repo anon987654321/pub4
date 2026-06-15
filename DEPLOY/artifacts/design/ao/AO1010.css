@@ -1,4 +1,0 @@
-/* AO1010: AO1010 Mobile tap states: `-webkit-tap-highlight-color: transparent` globally; custom `:active` state with `background: rgba(0,0,0,0.05)` instead of browser default blue tap flash */
-[data-todo="ao1010"] {
-  --artifact-id: "AO1010";
-}

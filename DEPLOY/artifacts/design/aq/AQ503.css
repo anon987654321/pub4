@@ -1,6 +1,0 @@
-/* AQ503: AQ503 Job payload minimization: pass only IDs to jobs, never full objects: `AnalyzeItemJob.perform_later(item.id)` not `AnalyzeItemJob.perform_later(item)`; objects serialize + deserialize; IDs don't */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ503.css */
-[data-todo="aq503"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ503";
-}

@@ -1,6 +1,0 @@
-/* AP802: AP802 Focus state: `outline: none; border-color: var(--color-midtone); box-shadow: 0 0 0 3px var(--color-midtone-200)` — ring-style focus, not outline; visible and branded */
-/* Artifact: DEPLOY/artifacts/design/ap/AP802.css */
-[data-todo="ap802"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP802";
-}

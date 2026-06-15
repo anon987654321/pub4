@@ -1,6 +1,0 @@
-/* AR205: AR205 Sticky sidebar: `position: sticky; top: var(--header-height, 56px); height: calc(100dvh - var(--header-height, 56px)); overflow-y: auto; overscroll-behavior: contain` — sidebar scrolls independently */
-/* Artifact: DEPLOY/artifacts/design/ar/AR205.css */
-[data-todo="ar205"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR205";
-}

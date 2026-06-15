@@ -1,6 +1,0 @@
-/* AS503: AS503 baibl parallel view: `display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); overflow: hidden` — two translations side by side; each `overflow-y: auto; height: calc(100dvh - var(--header-height))`; scroll sync via Stimulus */
-/* Artifact: DEPLOY/artifacts/design/as/AS503.css */
-[data-todo="as503"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS503";
-}

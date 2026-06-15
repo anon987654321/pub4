@@ -1,6 +1,0 @@
-/* AS403: AS403 blognet drop cap: `.article > .prose > p:first-of-type::first-letter { font-size: 4.5em; float: left; line-height: 0.75; margin-inline-end: 0.08em; font-weight: 700; color: var(--color-shadow) }` — activated only on articles flagged `featured: true` */
-/* Artifact: DEPLOY/artifacts/design/as/AS403.css */
-[data-todo="as403"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS403";
-}

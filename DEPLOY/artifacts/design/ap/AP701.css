@@ -1,6 +1,0 @@
-/* AP701: AP701 brgen desktop sidebar: fixed-width 240px; icon + label navigation links; active state = filled icon + bold label + `background: var(--color-midtone-100)` bar; new post FAB at bottom */
-/* Artifact: DEPLOY/artifacts/design/ap/AP701.css */
-[data-todo="ap701"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP701";
-}

@@ -1,4 +1,0 @@
-/* AP1004: AP1004 Shadow tokens: in dark mode apps only: `--shadow-sm: 0 1px 3px rgba(0,0,0,0.12); --shadow-md: 0 4px 12px rgba(0,0,0,0.15); --shadow-lg: 0 8px 32px rgba(0,0,0,0.2)` — used only for overlapping elements */
-[data-todo="ap1004"] {
-  --artifact-id: "AP1004";
-}

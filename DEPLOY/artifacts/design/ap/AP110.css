@@ -1,6 +1,0 @@
-/* AP110: AP110 Property order discipline: within every CSS rule: `display/position` first, then `dimensions`, then `spacing`, then `typography`, then `colors`, then `transitions` — consistent ordering enables scanning */
-/* Artifact: DEPLOY/artifacts/design/ap/AP110.css */
-[data-todo="ap110"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP110";
-}

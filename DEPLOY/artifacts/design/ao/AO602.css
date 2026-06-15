@@ -1,6 +1,0 @@
-/* AO602: AO602 X tweet card padding: `padding: 12px 16px` on mobile; `padding: 12px 16px` on desktop — consistent horizontal gutters; never 0 padding on any card */
-/* Artifact: DEPLOY/artifacts/design/ao/AO602.css */
-[data-todo="ao602"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO602";
-}

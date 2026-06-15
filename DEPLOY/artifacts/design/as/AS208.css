@@ -1,6 +1,0 @@
-/* AS208: AS208 brgen notification badge: `.badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding-inline: 4px; background: var(--color-danger); color: white; border-radius: 9999px; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; border: 2px solid var(--color-background) }` — red dot with count over icon */
-/* Artifact: DEPLOY/artifacts/design/as/AS208.css */
-[data-todo="as208"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS208";
-}

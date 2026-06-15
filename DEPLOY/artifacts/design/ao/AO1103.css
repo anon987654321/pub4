@@ -1,4 +1,0 @@
-/* AO1103: AO1103 Image aspect ratio: X timeline images: 16:9 or 4:3 cropped; Medium hero: 1.6:1; Substack: any (full bleed); New Yorker: 3:4 portrait or 16:9 landscape — enforce via `aspect-ratio` CSS property */
-[data-todo="ao1103"] {
-  --artifact-id: "AO1103";
-}

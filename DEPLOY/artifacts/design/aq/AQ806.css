@@ -1,6 +1,0 @@
-/* AQ806: AQ806 Pagination cursor: `GET /api/posts?cursor=<opaque_token>&limit=20` — cursor-based pagination stable under inserts; avoid offset pagination (items shift as new content is added) */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ806.css */
-[data-todo="aq806"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ806";
-}

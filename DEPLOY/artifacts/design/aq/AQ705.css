@@ -1,6 +1,0 @@
-/* AQ705: AQ705 Email preference center: `/account/notifications` shows matrix of event types × delivery channels (email/push/in-app); stored in `notification_preferences` JSONB column */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ705.css */
-[data-todo="aq705"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ705";
-}

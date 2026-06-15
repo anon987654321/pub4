@@ -1,6 +1,0 @@
-/* AO610: AO610 New Yorker article width: `max-width: 680px` for article body; 80px side margins on desktop — narrower than Medium but taller line-height compensates */
-/* Artifact: DEPLOY/artifacts/design/ao/AO610.css */
-[data-todo="ao610"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO610";
-}

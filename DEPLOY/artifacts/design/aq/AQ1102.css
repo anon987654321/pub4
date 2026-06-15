@@ -1,4 +1,0 @@
-/* AQ1102: AQ1102 Unique visitor counting: HyperLogLog estimate via `HLL` SQLite extension; exact count prohibitively expensive; 2% error acceptable for analytics */
-[data-todo="aq1102"] {
-  --artifact-id: "AQ1102";
-}

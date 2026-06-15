@@ -1,6 +1,0 @@
-/* AS207: AS207 brgen bottom nav: `.bottom-nav { position: fixed; bottom: 0; inset-inline: 0; height: 54px; padding-bottom: env(safe-area-inset-bottom); display: flex; background: var(--color-background); border-top: 1px solid var(--color-border); z-index: var(--z-sticky) } .bottom-nav__item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--text-secondary); font-size: var(--text-xs); transition: color var(--duration-fast) } .bottom-nav__item[aria-current] { color: var(--color-midtone) }` */
-/* Artifact: DEPLOY/artifacts/design/as/AS207.css */
-[data-todo="as207"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS207";
-}

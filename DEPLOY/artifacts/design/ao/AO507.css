@@ -1,6 +1,0 @@
-/* AO507: AO507 Substack premium: `--accent-pro: #5b21b6` (purple) for paid subscriber features — Substack adopts purple = paid tier */
-/* Artifact: DEPLOY/artifacts/design/ao/AO507.css */
-[data-todo="ao507"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO507";
-}

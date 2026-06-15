@@ -1,6 +1,0 @@
-/* AR803: AR803 Container type declaration: `.card-grid { container-type: inline-size; container-name: grid }` — enables `@container grid (min-width: ...)` rules on descendants */
-/* Artifact: DEPLOY/artifacts/design/ar/AR803.css */
-[data-todo="ar803"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR803";
-}

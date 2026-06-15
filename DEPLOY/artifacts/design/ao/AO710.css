@@ -1,6 +1,0 @@
-/* AO710: AO710 New Yorker section grid: `grid-template-columns: repeat(4, 1fr); gap: 24px` for article listing; collapses to 2-col at 768px, 1-col at 480px */
-/* Artifact: DEPLOY/artifacts/design/ao/AO710.css */
-[data-todo="ao710"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO710";
-}

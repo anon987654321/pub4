@@ -1,4 +1,0 @@
-/* AP1208: AP1208 Quote mark styling: `open-quote: "«"; close-quote: "»"` for Norwegian text; `open-quote: "\u201C"; close-quote: "\u201D"` for English; CSS `content: open-quote` on `blockquote::before` */
-[data-todo="ap1208"] {
-  --artifact-id: "AP1208";
-}

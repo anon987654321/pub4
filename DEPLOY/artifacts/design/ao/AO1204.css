@@ -1,4 +1,0 @@
-/* AO1204: AO1204 Transparent images in dark: images with transparent backgrounds (icons, logos) need `filter: invert(1) hue-rotate(180deg)` or separate dark-mode source; plan at design time */
-[data-todo="ao1204"] {
-  --artifact-id: "AO1204";
-}

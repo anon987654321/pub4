@@ -1,6 +1,0 @@
-/* AP407: AP407 Grid gap over margin: prefer `gap` in CSS Grid/Flex over individual margins; `gap: 24px` on grid container is cleaner than `margin-bottom: 24px` on each child; easier to maintain */
-/* Artifact: DEPLOY/artifacts/design/ap/AP407.css */
-[data-todo="ap407"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP407";
-}

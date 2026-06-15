@@ -1,6 +1,0 @@
-/* AP810: AP810 Select element: custom-styled via `appearance: none` + background SVG chevron; `background-image: url("data:image/svg+xml,...")` — native functionality, custom appearance */
-/* Artifact: DEPLOY/artifacts/design/ap/AP810.css */
-[data-todo="ap810"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP810";
-}

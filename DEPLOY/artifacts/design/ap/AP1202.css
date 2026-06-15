@@ -1,4 +1,0 @@
-/* AP1202: AP1202 Hyphenation: `hyphens: auto; overflow-wrap: break-word` on all prose containers (baibl, blognet, hjerterom descriptions) — prevents long Norwegian compound words from breaking layout */
-[data-todo="ap1202"] {
-  --artifact-id: "AP1202";
-}

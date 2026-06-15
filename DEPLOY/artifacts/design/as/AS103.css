@@ -1,6 +1,0 @@
-/* AS103: AS103 Phase 2 — layout: implement app-shell grid, content column constraint, card grid in each app; replace float-based or fixed-px layouts; 2-3 days per app */
-/* Artifact: DEPLOY/artifacts/design/as/AS103.css */
-[data-todo="as103"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS103";
-}

@@ -1,6 +1,0 @@
-/* AO809: AO809 Substack subscribe button: prominent CTA button; `background: var(--accent); color: white; border: none; border-radius: 9999px; padding: 12px 24px; font-weight: 600` — pill shape, strong contrast */
-/* Artifact: DEPLOY/artifacts/design/ao/AO809.css */
-[data-todo="ao809"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO809";
-}

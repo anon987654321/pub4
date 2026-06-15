@@ -1,4 +1,0 @@
-/* AP1304: AP1304 Input zoom prevention: all input `font-size` ≥ 16px on mobile; iOS zooms viewport if `font-size < 16px` on focused input; verify in device emulation */
-[data-todo="ap1304"] {
-  --artifact-id: "AP1304";
-}

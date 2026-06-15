@@ -1,4 +1,0 @@
-/* AO1009: AO1009 Mobile font scaling: `font-size: clamp(15px, 4vw, 19px)` for body text — scales smoothly between viewport sizes without media query breakpoints */
-[data-todo="ao1009"] {
-  --artifact-id: "AO1009";
-}

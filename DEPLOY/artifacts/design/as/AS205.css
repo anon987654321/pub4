@@ -1,6 +1,0 @@
-/* AS205: AS205 brgen subdomain theming: `[data-vertical="dating"] { --color-midtone: #ec4899 } [data-vertical="marketplace"] { --color-midtone: #f59e0b } [data-vertical="tv"] { --color-midtone: #7c3aed } [data-vertical="playlist"] { --color-midtone: #10b981 } [data-vertical="takeaway"] { --color-midtone: #ef4444 } [data-vertical="maps"] { --color-midtone: #06b6d4 }` — set `data-vertical` on `<body>` in layout */
-/* Artifact: DEPLOY/artifacts/design/as/AS205.css */
-[data-todo="as205"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS205";
-}

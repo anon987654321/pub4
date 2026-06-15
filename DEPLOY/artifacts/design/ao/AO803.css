@@ -1,6 +1,0 @@
-/* AO803: AO803 X like button animation: heart icon scales to 1.2 on click then settles at 1; fill color transitions from `transparent` to `#f91880` with `transition: all 0.15s`; bubble particle burst via keyframe */
-/* Artifact: DEPLOY/artifacts/design/ao/AO803.css */
-[data-todo="ao803"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO803";
-}

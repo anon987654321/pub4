@@ -1,6 +1,0 @@
-/* AR703: AR703 Toggle/switch: `input[type="checkbox"].toggle { width: 44px; height: 26px; appearance: none; background: var(--color-border); border-radius: 9999px; transition: background var(--duration-fast) } input[type="checkbox"].toggle:checked { background: var(--color-midtone) }` — pill toggle without JS */
-/* Artifact: DEPLOY/artifacts/design/ar/AR703.css */
-[data-todo="ar703"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR703";
-}

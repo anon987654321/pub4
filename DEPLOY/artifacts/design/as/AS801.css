@@ -1,6 +1,0 @@
-/* AS801: AS801 Shared partials: `app/views/shared/_card.html.erb`, `_btn.html.erb`, `_avatar.html.erb`, `_badge.html.erb`, `_toast.html.erb` — common patterns across all 6 apps; DRY via shared partials not gem */
-/* Artifact: DEPLOY/artifacts/design/as/AS801.css */
-[data-todo="as801"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS801";
-}

@@ -1,6 +1,0 @@
-/* AP708: AP708 Breadcrumb pattern: `<nav aria-label="Breadcrumb"><ol>` with `aria-current="page"` on last item; `>` separator via CSS `::before` on `li + li`; never JS-generated, always server-rendered */
-/* Artifact: DEPLOY/artifacts/design/ap/AP708.css */
-[data-todo="ap708"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP708";
-}

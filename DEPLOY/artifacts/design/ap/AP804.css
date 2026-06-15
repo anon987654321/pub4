@@ -1,6 +1,0 @@
-/* AP804: AP804 Disabled state: `opacity: 0.5; cursor: not-allowed` — never remove from DOM, always disable in-place; assistive technology needs to encounter it */
-/* Artifact: DEPLOY/artifacts/design/ap/AP804.css */
-[data-todo="ap804"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP804";
-}

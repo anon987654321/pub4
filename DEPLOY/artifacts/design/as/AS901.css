@@ -1,6 +1,0 @@
-/* AS901: AS901 Visual regression testing: Capybara + Cuprite screenshots; compare against baseline; fail CI on pixel diff >1%; implement for all major views in all 6 apps */
-/* Artifact: DEPLOY/artifacts/design/as/AS901.css */
-[data-todo="as901"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS901";
-}

@@ -1,6 +1,0 @@
-/* AP311: AP311 Minimum font size: 13px absolute minimum for any text in any app; 14px for secondary; 15px for primary body; 16px mobile body (prevents iOS zoom on input focus) */
-/* Artifact: DEPLOY/artifacts/design/ap/AP311.css */
-[data-todo="ap311"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP311";
-}

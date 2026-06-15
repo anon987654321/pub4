@@ -1,4 +1,0 @@
-/* AO1002: AO1002 X mobile compose FAB: floating `+` button; `position: fixed; bottom: 70px; right: 16px; width: 54px; height: 54px; border-radius: 50%; background: var(--accent)` — always accessible compose */
-[data-todo="ao1002"] {
-  --artifact-id: "AO1002";
-}

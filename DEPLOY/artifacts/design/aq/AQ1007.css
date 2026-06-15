@@ -1,4 +1,0 @@
-/* AQ1007: AQ1007 File upload security: validate content-type via `Marcel` gem (reads magic bytes, not MIME header); reject files where declared type ≠ magic byte type; store outside web root */
-[data-todo="aq1007"] {
-  --artifact-id: "AQ1007";
-}

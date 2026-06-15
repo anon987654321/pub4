@@ -1,6 +1,0 @@
-/* AO607: AO607 Substack spacing scale: 16px base; key values: `padding: 24px 16px` on mobile article; `padding: 40px 24px` desktop sidebar; `gap: 24px` between feed items */
-/* Artifact: DEPLOY/artifacts/design/ao/AO607.css */
-[data-todo="ao607"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO607";
-}

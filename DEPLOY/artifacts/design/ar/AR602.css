@@ -1,6 +1,0 @@
-/* AR602: AR602 Data attribute styling: `[data-state="active"]`, `[data-variant="danger"]`, `[data-size="sm"]` — Stimulus-friendly; HTML attributes as API; CSS selects on state without class toggling */
-/* Artifact: DEPLOY/artifacts/design/ar/AR602.css */
-[data-todo="ar602"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR602";
-}

@@ -1,6 +1,0 @@
-/* AR904: AR904 Layer promotion: `transform: translateZ(0)` on the scrolling feed container — promotes to compositor layer; scroll handled by GPU not CPU; eliminates scroll jank on low-end devices */
-/* Artifact: DEPLOY/artifacts/design/ar/AR904.css */
-[data-todo="ar904"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR904";
-}

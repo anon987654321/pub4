@@ -1,6 +1,0 @@
-/* AR607: AR607 Fluid images: `img { max-width: 100%; height: auto; display: block }` as reset; `object-fit: cover` on sized containers; never explicit width/height except on avatar circles */
-/* Artifact: DEPLOY/artifacts/design/ar/AR607.css */
-[data-todo="ar607"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR607";
-}

@@ -1,6 +1,0 @@
-/* AP503: AP503 Reduced motion: `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }` — global; all animations must respect this */
-/* Artifact: DEPLOY/artifacts/design/ap/AP503.css */
-[data-todo="ap503"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP503";
-}

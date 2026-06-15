@@ -1,6 +1,0 @@
-/* AR204: AR204 Card grid: `display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width, 280px), 1fr)); gap: var(--grid-gap, 24px)` — no media queries; cards reflow automatically */
-/* Artifact: DEPLOY/artifacts/design/ar/AR204.css */
-[data-todo="ar204"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR204";
-}

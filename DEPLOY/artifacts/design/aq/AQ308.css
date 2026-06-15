@@ -1,6 +1,0 @@
-/* AQ308: AQ308 Push via APNs: `webpush` gem handles both Web Push (VAPID) and bridges to APNs for Turbo Native iOS; single notification sending path regardless of client platform */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ308.css */
-[data-todo="aq308"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ308";
-}

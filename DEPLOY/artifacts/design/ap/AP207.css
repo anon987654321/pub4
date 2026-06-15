@@ -1,6 +1,0 @@
-/* AP207: AP207 Per-app CSS variable declarations: each app's `application.css` opens with `:root { --color-shadow: ...; --color-midtone: ...; --color-highlight: ...; --color-accent: ...; --color-danger: #dc2626; --color-warning: #d97706; --color-success: #059669; }` */
-/* Artifact: DEPLOY/artifacts/design/ap/AP207.css */
-[data-todo="ap207"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP207";
-}

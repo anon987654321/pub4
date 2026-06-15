@@ -1,6 +1,0 @@
-/* AR501: AR501 Keyframe library: define all app keyframes in `animations.css` — `@keyframes fadeIn`, `slideInUp`, `slideInRight`, `scaleIn`, `shimmer`, `heartbeat`, `spin`, `bounce`; import once; reference everywhere */
-/* Artifact: DEPLOY/artifacts/design/ar/AR501.css */
-[data-todo="ar501"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR501";
-}

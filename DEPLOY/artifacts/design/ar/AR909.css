@@ -1,6 +1,0 @@
-/* AR909: AR909 CSS property inheritance: use `inherit` keyword for text colors in child elements rather than repeating values; `color: inherit` on `a` tags inside components prevents browser default blue override */
-/* Artifact: DEPLOY/artifacts/design/ar/AR909.css */
-[data-todo="ar909"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR909";
-}

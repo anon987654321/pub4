@@ -1,6 +1,0 @@
-/* AQ601: AQ601 acts_as_tenant configuration: `ActsAsTenant.configure { |config| config.require_tenant = true }` — raises if tenant not set; prevents accidental cross-tenant data access */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ601.css */
-[data-todo="aq601"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ601";
-}

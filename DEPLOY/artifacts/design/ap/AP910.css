@@ -1,6 +1,0 @@
-/* AP910: AP910 Language declaration: `<html lang="nb">` (Norwegian Bokmål) on all pages; `lang` attribute on any inline text in other language — screen readers use this for pronunciation */
-/* Artifact: DEPLOY/artifacts/design/ap/AP910.css */
-[data-todo="ap910"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP910";
-}

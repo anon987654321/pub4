@@ -1,6 +1,0 @@
-/* AO903: AO903 X scroll behavior: `scroll-behavior: smooth` on anchor links; feed scrolls independently of sidebar; restore scroll position on back navigation (Turbo Drive handles this) */
-/* Artifact: DEPLOY/artifacts/design/ao/AO903.css */
-[data-todo="ao903"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO903";
-}

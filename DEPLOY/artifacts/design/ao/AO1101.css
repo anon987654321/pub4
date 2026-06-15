@@ -1,4 +1,0 @@
-/* AO1101: AO1101 Card shadow system: X uses no shadows; Medium uses `box-shadow: 0 2px 8px rgba(0,0,0,0.06)` on hover only; Substack uses subtle border; New Yorker uses no shadow — minimal depth language */
-[data-todo="ao1101"] {
-  --artifact-id: "AO1101";
-}

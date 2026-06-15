@@ -1,6 +1,0 @@
-/* AO204: AO204 Medium dropcap: first character of article body enlarged to 3 lines height; `float: left; font-size: 5em; line-height: 0.68; margin-right: 0.1em` — implement in blognet article view */
-/* Artifact: DEPLOY/artifacts/design/ao/AO204.css */
-[data-todo="ao204"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO204";
-}

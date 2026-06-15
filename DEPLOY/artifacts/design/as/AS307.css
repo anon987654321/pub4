@@ -1,6 +1,0 @@
-/* AS307: AS307 amber sustainability score: `.sustain-score { display: flex; align-items: center; gap: var(--space-2) } .sustain-meter { height: 6px; border-radius: 3px; background: var(--color-border); flex: 1 } .sustain-meter__fill { height: 100%; border-radius: 3px; background: linear-gradient(to right, var(--color-danger), var(--color-success)); width: calc(var(--score) * 1%) }` — CSS custom property drives meter width */
-/* Artifact: DEPLOY/artifacts/design/as/AS307.css */
-[data-todo="as307"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS307";
-}

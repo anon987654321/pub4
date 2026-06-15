@@ -1,6 +1,0 @@
-/* AS210: AS210 brgen TV player: `video { width: 100%; aspect-ratio: 16/9; background: #000; display: block } .player-wrapper { background: #000; position: relative } .player-controls { position: absolute; bottom: 0; inset-inline: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: var(--space-4); opacity: 0; transition: opacity var(--duration-fast) } .player-wrapper:hover .player-controls, .player-wrapper:focus-within .player-controls { opacity: 1 }` */
-/* Artifact: DEPLOY/artifacts/design/as/AS210.css */
-[data-todo="as210"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS210";
-}

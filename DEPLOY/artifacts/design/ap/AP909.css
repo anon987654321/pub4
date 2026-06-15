@@ -1,6 +1,0 @@
-/* AP909: AP909 Form autocomplete: `autocomplete="email"` on email fields, `autocomplete="current-password"` on password fields, `autocomplete="given-name"` on name fields — browser autofill, password manager compatibility */
-/* Artifact: DEPLOY/artifacts/design/ap/AP909.css */
-[data-todo="ap909"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP909";
-}

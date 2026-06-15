@@ -1,6 +1,0 @@
-/* AR608: AR608 Sticky table headers: `thead th { position: sticky; top: 0; background: var(--color-background); z-index: var(--z-raised) }` — data tables in admin views and bsdports comparison */
-/* Artifact: DEPLOY/artifacts/design/ar/AR608.css */
-[data-todo="ar608"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR608";
-}

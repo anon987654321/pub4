@@ -1,6 +1,0 @@
-/* AR308: AR308 Reading width enforcement: `@container (min-width: 900px) { .prose { max-width: 68ch } }` — container queries ensure reading width constraint applies to the content box, not the viewport */
-/* Artifact: DEPLOY/artifacts/design/ar/AR308.css */
-[data-todo="ar308"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR308";
-}

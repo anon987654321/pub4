@@ -1,6 +1,0 @@
-/* AQ703: AQ703 Text version: every HTML email has a matching `.text.erb` template; Action Mailer sends multipart by default when both exist; plain text for clients that can't render HTML */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ703.css */
-[data-todo="aq703"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ703";
-}

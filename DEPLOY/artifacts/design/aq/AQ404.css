@@ -1,6 +1,0 @@
-/* AQ404: AQ404 Highlight snippets: `SELECT snippet(posts_fts, 0, '<mark>', '</mark>', '...', 10) as title_snippet FROM posts_fts WHERE posts_fts MATCH ?` — FTS5 native snippet function; highlights matched terms in results */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ404.css */
-[data-todo="aq404"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ404";
-}

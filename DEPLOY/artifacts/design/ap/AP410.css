@@ -1,6 +1,0 @@
-/* AP410: AP410 Breathing room on headlines: headline `padding-top` equals approximately 1.5× body line-height; gives the title visual weight without needing a heavier font */
-/* Artifact: DEPLOY/artifacts/design/ap/AP410.css */
-[data-todo="ap410"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP410";
-}

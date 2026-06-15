@@ -1,6 +1,0 @@
-/* AQ305: AQ305 Native bottom tabs: define in path config; each tab maps to a `TabBar` item with icon + label; tab state persists across navigations; badge count from CableReady */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ305.css */
-[data-todo="aq305"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ305";
-}

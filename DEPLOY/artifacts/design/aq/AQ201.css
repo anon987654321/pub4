@@ -1,6 +1,0 @@
-/* AQ201: AQ201 Direct upload to disk: configure `config/storage.yml` with `service: Disk` for development, `service: Mirror` (local + S3) for production; Active Storage handles upload → storage → retrieval */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ201.css */
-[data-todo="aq201"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ201";
-}

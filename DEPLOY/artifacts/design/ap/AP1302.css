@@ -1,4 +1,0 @@
-/* AP1302: AP1302 Overscroll behavior: `overscroll-behavior-y: contain` on scrollable panels (chat, feed columns) — prevents pull-to-refresh on Android from triggering during scrollable area interaction */
-[data-todo="ap1302"] {
-  --artifact-id: "AP1302";
-}

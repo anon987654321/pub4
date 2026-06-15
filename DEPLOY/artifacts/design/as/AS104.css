@@ -1,6 +1,0 @@
-/* AS104: AS104 Phase 3 — navigation: implement new nav (desktop sidebar, mobile bottom nav, breadcrumbs) per app spec; test keyboard navigation and screen reader; 1-2 days per app */
-/* Artifact: DEPLOY/artifacts/design/as/AS104.css */
-[data-todo="as104"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS104";
-}

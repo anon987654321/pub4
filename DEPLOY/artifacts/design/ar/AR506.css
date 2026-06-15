@@ -1,6 +1,0 @@
-/* AR506: AR506 Container query animations: `@container (min-width: 600px) { .card { animation: expandLayout var(--duration-standard) var(--ease-standard) } }` — animate layout changes driven by container width not viewport */
-/* Artifact: DEPLOY/artifacts/design/ar/AR506.css */
-[data-todo="ar506"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR506";
-}

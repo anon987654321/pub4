@@ -1,6 +1,0 @@
-/* AQ505: AQ505 Job observability: `around_perform { Rails.logger.tagged("job:#{self.class.name}") { yield } }` — every job logs with class name tag; greppable in production logs */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ505.css */
-[data-todo="aq505"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ505";
-}

@@ -1,6 +1,0 @@
-/* AO308: AO308 Substack note (short post): 16px / sans-serif / looser line-height (1.7) — differentiated from full post; implement as `format: :note` variant in brgen/blognet */
-/* Artifact: DEPLOY/artifacts/design/ao/AO308.css */
-[data-todo="ao308"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO308";
-}

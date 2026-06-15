@@ -1,6 +1,0 @@
-/* AR610: AR610 Clamp lines: `.truncate-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }` utility; `.truncate-3` with 3; apply to card titles and excerpts */
-/* Artifact: DEPLOY/artifacts/design/ar/AR610.css */
-[data-todo="ar610"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR610";
-}

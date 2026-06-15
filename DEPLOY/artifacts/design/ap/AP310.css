@@ -1,6 +1,0 @@
-/* AP310: AP310 System font fallback hierarchy: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif` as second fallback after custom font — covers all major OS in order */
-/* Artifact: DEPLOY/artifacts/design/ap/AP310.css */
-[data-todo="ap310"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP310";
-}

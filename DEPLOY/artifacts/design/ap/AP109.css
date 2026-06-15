@@ -1,6 +1,0 @@
-/* AP109: AP109 Single source of truth for design tokens: all colors, sizes, spacing as CSS custom properties on `:root`; no hex codes in component CSS — only `var(--color-accent)`, never `#1a8917` */
-/* Artifact: DEPLOY/artifacts/design/ap/AP109.css */
-[data-todo="ap109"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP109";
-}

@@ -1,6 +1,0 @@
-/* AP809: AP809 File upload: custom styled `<label>` over hidden `<input type="file">`; drag-and-drop zone with `dragover` → `border-color: var(--color-midtone); background: var(--color-midtone-50)` feedback */
-/* Artifact: DEPLOY/artifacts/design/ap/AP809.css */
-[data-todo="ap809"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP809";
-}

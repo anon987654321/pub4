@@ -1,6 +1,0 @@
-/* AP315: AP315 Responsive typography: `font-size: clamp(15px, 2.5vw, 20px)` for body; scales continuously without breakpoints; `clamp(28px, 5vw, 48px)` for display headings */
-/* Artifact: DEPLOY/artifacts/design/ap/AP315.css */
-[data-todo="ap315"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP315";
-}

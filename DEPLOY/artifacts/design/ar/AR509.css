@@ -1,6 +1,0 @@
-/* AR509: AR509 transform-origin for card animations: `transform-origin: center bottom` for dating swipe cards (rotate around bottom center, like holding a card); `transform-origin: center` for likes/hearts */
-/* Artifact: DEPLOY/artifacts/design/ar/AR509.css */
-[data-todo="ar509"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR509";
-}

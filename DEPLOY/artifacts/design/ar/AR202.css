@@ -1,6 +1,0 @@
-/* AR202: AR202 Mobile layout: `@media (max-width: 768px) { grid-template-areas: "main"; grid-template-columns: 1fr; }` sidebar and aside hidden; main fills viewport */
-/* Artifact: DEPLOY/artifacts/design/ar/AR202.css */
-[data-todo="ar202"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR202";
-}

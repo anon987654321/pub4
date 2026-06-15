@@ -1,4 +1,0 @@
-/* AQ1010: AQ1010 Secret rotation: `rails credentials:edit` per environment; rotate `SECRET_KEY_BASE` quarterly; rotation invalidates all sessions (acceptable security tradeoff); announce rotation 24h in advance */
-[data-todo="aq1010"] {
-  --artifact-id: "AQ1010";
-}

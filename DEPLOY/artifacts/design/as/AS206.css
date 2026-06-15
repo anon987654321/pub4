@@ -1,6 +1,0 @@
-/* AS206: AS206 brgen dating swipe stack: `.swipe-stack { position: relative; width: 320px; height: 480px; margin: auto } .swipe-card { position: absolute; inset: 0; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-lg); transition: transform var(--duration-standard) var(--ease-spring) } .swipe-card:nth-child(2) { transform: scale(0.94) translateY(12px) } .swipe-card:nth-child(3) { transform: scale(0.88) translateY(24px) }` */
-/* Artifact: DEPLOY/artifacts/design/as/AS206.css */
-[data-todo="as206"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS206";
-}

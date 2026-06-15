@@ -1,4 +1,0 @@
-/* AP1308: AP1308 Portrait keyboard: when keyboard appears on mobile, `100dvh` accounts for the keyboard; use `dvh` (dynamic viewport height) units instead of `vh` for full-screen mobile layouts */
-[data-todo="ap1308"] {
-  --artifact-id: "AP1308";
-}

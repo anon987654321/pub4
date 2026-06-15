@@ -1,6 +1,0 @@
-/* AR105: AR105 No `!important` policy: forbidden except in utility classes (intentionally highest specificity) and `prefers-reduced-motion` overrides; if `!important` is needed elsewhere, specificity architecture is wrong */
-/* Artifact: DEPLOY/artifacts/design/ar/AR105.css */
-[data-todo="ar105"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR105";
-}

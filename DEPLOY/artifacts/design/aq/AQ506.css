@@ -1,6 +1,0 @@
-/* AQ506: AQ506 AI job rate limiting: `limits_concurrency on: :model_name, to: 2` on all LLM-calling jobs — max 2 concurrent LLM calls per job type; prevent API rate limit errors */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ506.css */
-[data-todo="aq506"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ506";
-}

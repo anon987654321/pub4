@@ -1,6 +1,0 @@
-/* AR106: AR106 Selector specificity budget: maximum two-class selector depth `.card .card-title`; never three `.nav .menu .item`; ID selectors forbidden in component CSS; only on single layout anchors */
-/* Artifact: DEPLOY/artifacts/design/ar/AR106.css */
-[data-todo="ar106"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR106";
-}

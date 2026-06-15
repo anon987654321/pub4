@@ -1,6 +1,0 @@
-/* AO103: AO103 X tweet font-size: 17px / 1.4 line-height for tweet body text on desktop; 15px on mobile — matches reading distance ergonomics */
-/* Artifact: DEPLOY/artifacts/design/ao/AO103.css */
-[data-todo="ao103"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO103";
-}

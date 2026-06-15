@@ -1,6 +1,0 @@
-/* AP709: AP709 Skip navigation: `<a href="#main" class="skip-nav">Skip to main content</a>` as first element in `<body>`; `position: absolute; transform: translateY(-100%)` at rest; `translateY(0)` on `:focus` — keyboard accessibility */
-/* Artifact: DEPLOY/artifacts/design/ap/AP709.css */
-[data-todo="ap709"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP709";
-}

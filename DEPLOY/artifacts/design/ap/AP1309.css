@@ -1,4 +1,0 @@
-/* AP1309: AP1309 Bottom navigation thumb zone: all critical actions within 70px of bottom edge on mobile — thumb reaches there without repositioning grip; place primary CTA in this zone */
-[data-todo="ap1309"] {
-  --artifact-id: "AP1309";
-}

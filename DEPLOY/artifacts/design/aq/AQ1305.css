@@ -1,4 +1,0 @@
-/* AQ1305: AQ1305 Secrets via Kamal: `kamal secrets push` uploads encrypted secrets to server; never store secrets in `.env` committed to git; `config/deploy.yml` references `KAMAL_REGISTRIES_PASSWORD` etc. */
-[data-todo="aq1305"] {
-  --artifact-id: "AQ1305";
-}

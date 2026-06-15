@@ -1,6 +1,0 @@
-/* AP105: AP105 STRUNK_ACTIVE in CSS naming: class names use concrete nouns and verbs — `.post-card` not `.post-display-wrapper`; `.btn-vote` not `.interactive-voting-element` */
-/* Artifact: DEPLOY/artifacts/design/ap/AP105.css */
-[data-todo="ap105"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP105";
-}

@@ -1,6 +1,0 @@
-/* AR306: AR306 Footnotes: `.footnote-ref { font-size: 0.75em; vertical-align: super; line-height: 0; color: var(--color-midtone) }` — superscript numbers that scroll to footnote section; :target pseudo highlights referenced footnote */
-/* Artifact: DEPLOY/artifacts/design/ar/AR306.css */
-[data-todo="ar306"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR306";
-}

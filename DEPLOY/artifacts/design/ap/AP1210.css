@@ -1,4 +1,0 @@
-/* AP1210: AP1210 Gradient text for headings: app-specific gradient on hero headings — brgen: `background: linear-gradient(135deg, var(--color-midtone), var(--color-highlight)); -webkit-background-clip: text; -webkit-text-fill-color: transparent` — sparingly, only hero contexts */
-[data-todo="ap1210"] {
-  --artifact-id: "AP1210";
-}

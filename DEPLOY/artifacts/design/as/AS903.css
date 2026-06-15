@@ -1,6 +1,0 @@
-/* AS903: AS903 Device testing: 375px (iPhone SE), 428px (iPhone 14 Pro Max), 768px (iPad), 1280px (laptop), 1920px (desktop); each app must be fully functional at all widths */
-/* Artifact: DEPLOY/artifacts/design/as/AS903.css */
-[data-todo="as903"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS903";
-}

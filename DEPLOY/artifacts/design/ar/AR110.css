@@ -1,6 +1,0 @@
-/* AR110: AR110 Utility classes: generate spacing utilities `mt-1` through `mt-16`, `px-1` through `px-16` from token scale; typography utilities `text-sm`, `text-base`, `text-lg`; color utilities `text-primary`, `bg-surface` */
-/* Artifact: DEPLOY/artifacts/design/ar/AR110.css */
-[data-todo="ar110"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR110";
-}

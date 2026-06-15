@@ -1,6 +1,0 @@
-/* AQ101: AQ101 Channel per vertical in brgen: separate ActionCable channels — `FeedChannel`, `DatingChannel`, `MarketplaceChannel`, `TVChannel`, `PlaylistChannel`; subscribe only to active vertical's channel; reduce unnecessary broadcasts */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ101.css */
-[data-todo="aq101"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ101";
-}

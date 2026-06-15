@@ -1,6 +1,0 @@
-/* AQ909: AQ909 Currency localization: hjerterom donation values displayed in NOK; amber wardrobe costs in NOK; blognet subscription prices in NOK with ISO code fallback for non-NO users */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ909.css */
-[data-todo="aq909"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ909";
-}

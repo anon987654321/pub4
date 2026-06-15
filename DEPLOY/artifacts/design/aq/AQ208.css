@@ -1,6 +1,0 @@
-/* AQ208: AQ208 Expiring URLs: `rails_blob_path(@post.image, expires_in: 1.hour)` for sensitive content (dating photos, private marketplace items); public content uses permanent URLs */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ208.css */
-[data-todo="aq208"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ208";
-}

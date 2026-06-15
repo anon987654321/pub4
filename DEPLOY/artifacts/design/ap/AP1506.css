@@ -1,4 +1,0 @@
-/* AP1506: AP1506 Bundle size audit: importmap manifest shows exact version + size of each dependency; total JS on first load ≤ 150KB gzipped; audit quarterly; remove unused imports */
-[data-todo="ap1506"] {
-  --artifact-id: "AP1506";
-}

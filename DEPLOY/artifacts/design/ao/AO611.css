@@ -1,6 +1,0 @@
-/* AO611: AO611 Touch target sizing: minimum 44×44px on all interactive elements per WCAG 2.5.5; X/Medium/Substack all meet this; apply via `min-height: 44px; min-width: 44px` on all buttons and links */
-/* Artifact: DEPLOY/artifacts/design/ao/AO611.css */
-[data-todo="ao611"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO611";
-}

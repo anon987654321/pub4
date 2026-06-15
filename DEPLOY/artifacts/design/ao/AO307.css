@@ -1,6 +1,0 @@
-/* AO307: AO307 Substack comment reply indent: left-border + `margin-left: 2em` for nested replies; no more than 3 nesting levels before collapsing */
-/* Artifact: DEPLOY/artifacts/design/ao/AO307.css */
-[data-todo="ao307"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO307";
-}

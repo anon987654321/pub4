@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
+  include Shared::UserAuthExtensions
+
   has_secure_password
 
   has_many :account_merges, dependent: :destroy

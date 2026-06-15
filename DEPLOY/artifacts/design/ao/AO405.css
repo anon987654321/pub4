@@ -1,6 +1,0 @@
-/* AO405: AO405 New Yorker department header: `font-size: 11px / letter-spacing: 0.15em / text-transform: uppercase / color: #d40000` — section label in red; the only color accent in the design */
-/* Artifact: DEPLOY/artifacts/design/ao/AO405.css */
-[data-todo="ao405"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO405";
-}

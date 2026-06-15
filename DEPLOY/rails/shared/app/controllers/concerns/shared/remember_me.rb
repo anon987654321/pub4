@@ -27,6 +27,7 @@ module Shared
       return unless user&.remember_token_valid?
 
       start_new_session_for(user)
+      Current.user = user if defined?(Current) && Current.respond_to?(:user=)
       user
     end
 

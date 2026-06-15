@@ -1,4 +1,0 @@
-/* AP1201: AP1201 Optical size correction: at display sizes (>40px), reduce font-weight by one step — 700 at body size becomes 600 at display to prevent heaviness; variable font `font-weight` axis enables this precisely */
-[data-todo="ap1201"] {
-  --artifact-id: "AP1201";
-}

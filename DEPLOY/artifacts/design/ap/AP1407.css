@@ -1,4 +1,0 @@
-/* AP1407: AP1407 Retina images: all Active Storage variants generate 2× size; served via `srcset="image.webp 1x, image@2x.webp 2x"` — sharp on retina without serving to non-retina */
-[data-todo="ap1407"] {
-  --artifact-id: "AP1407";
-}

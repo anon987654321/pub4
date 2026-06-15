@@ -1,6 +1,0 @@
-/* AQ407: AQ407 Search history: store last 20 unique queries per user in `search_histories` table; surface as chips below empty search input; delete on click + X button per chip */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ407.css */
-[data-todo="aq407"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ407";
-}

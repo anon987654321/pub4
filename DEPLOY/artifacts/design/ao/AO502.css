@@ -1,6 +1,0 @@
-/* AO502: AO502 X dark mode palette: `--background: #000000; --surface: #16181c; --surface-raised: #1d2028; --text-primary: #e7e9ea; --text-secondary: #71767b; --accent: #1d9bf0; --border: #2f3336` */
-/* Artifact: DEPLOY/artifacts/design/ao/AO502.css */
-[data-todo="ao502"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO502";
-}

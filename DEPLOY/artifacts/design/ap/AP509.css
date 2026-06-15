@@ -1,6 +1,0 @@
-/* AP509: AP509 Skeleton loader shimmer: `@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }` with 1.4s linear infinite; direction = reading direction */
-/* Artifact: DEPLOY/artifacts/design/ap/AP509.css */
-[data-todo="ap509"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP509";
-}

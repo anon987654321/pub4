@@ -1,4 +1,0 @@
-/* AP1105: AP1105 Conversation thread indentation: reply indentation via `padding-left: calc(40px + var(--space-3))` — avatar width + gap; thread connector line via `::before` pseudo on li */
-[data-todo="ap1105"] {
-  --artifact-id: "AP1105";
-}

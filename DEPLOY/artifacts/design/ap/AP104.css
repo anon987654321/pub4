@@ -1,6 +1,0 @@
-/* AP104: AP104 IMPORTANCE_ORDER in CSS architecture: layout rules first (grid, flexbox, positioning), typography next, colors/backgrounds, spacing, interactivity (hover/focus), animations last */
-/* Artifact: DEPLOY/artifacts/design/ap/AP104.css */
-[data-todo="ap104"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP104";
-}

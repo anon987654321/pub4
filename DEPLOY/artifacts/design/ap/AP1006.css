@@ -1,4 +1,0 @@
-/* AP1006: AP1006 Transition tokens: `--transition-fast: var(--duration-fast) var(--ease-standard); --transition-standard: var(--duration-standard) var(--ease-standard)` — compose from duration + easing tokens; use in `transition:` shorthand */
-[data-todo="ap1006"] {
-  --artifact-id: "AP1006";
-}

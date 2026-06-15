@@ -1,6 +1,0 @@
-/* AO601: AO601 X spacing scale: 4px base unit; multiples: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64px — 8px system with 4px half-step for tight mobile touch targets */
-/* Artifact: DEPLOY/artifacts/design/ao/AO601.css */
-[data-todo="ao601"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO601";
-}

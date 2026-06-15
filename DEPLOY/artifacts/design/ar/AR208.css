@@ -1,6 +1,0 @@
-/* AR208: AR208 Magazine layout: `grid-template-areas` named grid; hero article spans full width (`grid-column: 1 / -1`); secondary articles in 3-column row below; tertiary in 4-column row; New Yorker pattern */
-/* Artifact: DEPLOY/artifacts/design/ar/AR208.css */
-[data-todo="ar208"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR208";
-}

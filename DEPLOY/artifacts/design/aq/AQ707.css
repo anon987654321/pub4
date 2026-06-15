@@ -1,6 +1,0 @@
-/* AQ707: AQ707 Transactional vs marketing: use separate `from:` addresses — `no-reply@brgen.no` for transactional (match notifications, order updates), `hello@brgen.no` for marketing (digest, recommendations) */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ707.css */
-[data-todo="aq707"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ707";
-}

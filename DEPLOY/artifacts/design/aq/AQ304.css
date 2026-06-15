@@ -1,6 +1,0 @@
-/* AQ304: AQ304 Path configuration: `path_configuration.json` routes which URLs use native views vs web views; dating swipe = native, post compose = web, settings = web */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ304.css */
-[data-todo="aq304"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ304";
-}

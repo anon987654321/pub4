@@ -1,6 +1,0 @@
-/* AQ704: AQ704 Unsubscribe header: `headers["List-Unsubscribe"] = "<mailto:unsubscribe@brgen.no?subject=unsubscribe>, <https://brgen.no/unsubscribe/#{token}>"` — one-click unsubscribe per RFC 8058 */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ704.css */
-[data-todo="aq704"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ704";
-}

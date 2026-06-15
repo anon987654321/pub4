@@ -1,6 +1,0 @@
-/* AP605: AP605 amber item card: portrait 3:4 image; color swatch dots below (5 dominant colors); category tag top-left; CPW badge bottom-right `font-size: 12px; background: rgba(0,0,0,0.6); color: white; border-radius: 4px; padding: 2px 6px` */
-/* Artifact: DEPLOY/artifacts/design/ap/AP605.css */
-[data-todo="ap605"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP605";
-}

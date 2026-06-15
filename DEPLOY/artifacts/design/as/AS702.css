@@ -1,6 +1,0 @@
-/* AS702: AS702 hjerterom donation card: `.donation-card { border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-sm) } .donation-card__header { background: var(--color-midtone); padding: var(--space-4); display: flex; align-items: center; gap: var(--space-3) }` — header in app green with white icon and title */
-/* Artifact: DEPLOY/artifacts/design/as/AS702.css */
-[data-todo="as702"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS702";
-}

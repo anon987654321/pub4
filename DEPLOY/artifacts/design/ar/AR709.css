@@ -1,6 +1,0 @@
-/* AR709: AR709 Form section divider: `fieldset { border: none; padding: 0; margin: 0 } legend { font-size: var(--text-sm); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-bottom: var(--space-4) }` — semantic fieldset, styled legend */
-/* Artifact: DEPLOY/artifacts/design/ar/AR709.css */
-[data-todo="ar709"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR709";
-}

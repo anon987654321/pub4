@@ -1,4 +1,0 @@
-/* AO1201: AO1201 CSS variable dark mode: all colors as CSS variables; `@media (prefers-color-scheme: dark)` overrides on `:root`; one source of truth; no JS needed for system preference */
-[data-todo="ao1201"] {
-  --artifact-id: "AO1201";
-}

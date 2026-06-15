@@ -1,6 +1,0 @@
-/* AQ102: AQ102 Presence tracking: `ConnectionsChannel` broadcasts online user IDs to subscribers; `before_subscribe { track_presence }`, `after_unsubscribe { remove_presence }`; stored in Solid Cache with 30s TTL */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ102.css */
-[data-todo="aq102"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ102";
-}

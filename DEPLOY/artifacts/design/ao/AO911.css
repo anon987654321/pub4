@@ -1,6 +1,0 @@
-/* AO911: AO911 Focus visible styles: all four sites use `outline: 2px solid var(--accent)` on keyboard focus (`:focus-visible`); never remove focus outlines; customize but always present */
-/* Artifact: DEPLOY/artifacts/design/ao/AO911.css */
-[data-todo="ao911"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO911";
-}

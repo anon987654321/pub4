@@ -1,4 +1,0 @@
-/* AP1305: AP1305 Smooth scrolling: `scroll-behavior: smooth` on `html` element; override with `scroll-behavior: auto` inside `@media (prefers-reduced-motion: reduce)` — never apply universally without reduced-motion safeguard */
-[data-todo="ap1305"] {
-  --artifact-id: "AP1305";
-}

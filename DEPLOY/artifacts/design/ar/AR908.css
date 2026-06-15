@@ -1,6 +1,0 @@
-/* AR908: AR908 Unused CSS removal: PurgeCSS configured in propshaft build; scans ERB + JS + Ruby for class names; removes unreferenced CSS rules; 60-80% reduction in production CSS bundle size */
-/* Artifact: DEPLOY/artifacts/design/ar/AR908.css */
-[data-todo="ar908"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR908";
-}

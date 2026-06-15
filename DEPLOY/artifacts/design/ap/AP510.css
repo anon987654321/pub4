@@ -1,6 +1,0 @@
-/* AP510: AP510 Page transition: Turbo Drive handles navigation; add `@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }` on `body.turbo-loading` → remove on `turbo:load`; sub-200ms fade */
-/* Artifact: DEPLOY/artifacts/design/ap/AP510.css */
-[data-todo="ap510"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP510";
-}

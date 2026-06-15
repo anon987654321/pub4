@@ -1,6 +1,0 @@
-/* AR609: AR609 Overflow menu: horizontal nav with `::-webkit-scrollbar { display: none }` + `scrollbar-width: none` — invisible scrollbar but still scrollable; tags row in brgen feed header */
-/* Artifact: DEPLOY/artifacts/design/ar/AR609.css */
-[data-todo="ar609"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR609";
-}

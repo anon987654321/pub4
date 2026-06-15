@@ -1,6 +1,0 @@
-/* AQ402: AQ402 FTS5 triggers: `CREATE TRIGGER posts_ai AFTER INSERT ON posts BEGIN INSERT INTO posts_fts(rowid, title, body) VALUES (new.id, new.title, new.body); END` — keep FTS index in sync automatically */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ402.css */
-[data-todo="aq402"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ402";
-}

@@ -1,6 +1,0 @@
-/* AO604: AO604 Medium spacing scale: 16px base unit; multiples: 16, 24, 32, 40, 56, 80px — generous rhythm; article content uses 80px top/bottom padding */
-/* Artifact: DEPLOY/artifacts/design/ao/AO604.css */
-[data-todo="ao604"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO604";
-}

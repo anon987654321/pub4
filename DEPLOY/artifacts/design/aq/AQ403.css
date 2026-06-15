@@ -1,6 +1,0 @@
-/* AQ403: AQ403 FTS5 search query: `Post.where("posts_fts MATCH ?", query.gsub(/[^a-zA-Z0-9æøåÆØÅ ]/, "") + "*").joins("JOIN posts_fts ON posts_fts.rowid = posts.id").order("rank")` */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ403.css */
-[data-todo="aq403"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ403";
-}

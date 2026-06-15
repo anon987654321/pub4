@@ -1,4 +1,0 @@
-/* AQ1004: AQ1004 Secure headers gem: `SecureHeaders.configure` — `X-Frame-Options: DENY`, `X-XSS-Protection: 0` (deprecated but belt-and-suspenders), `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=()` */
-[data-todo="aq1004"] {
-  --artifact-id: "AQ1004";
-}

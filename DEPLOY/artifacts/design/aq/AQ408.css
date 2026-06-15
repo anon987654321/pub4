@@ -1,6 +1,0 @@
-/* AQ408: AQ408 Zero results handling: when search returns 0 results, surface 3 alternative suggestions via LLM (`"Did you mean: ..."`); log zero-result query for content gap analysis */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ408.css */
-[data-todo="aq408"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ408";
-}

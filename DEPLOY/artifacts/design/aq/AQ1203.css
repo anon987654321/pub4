@@ -1,4 +1,0 @@
-/* AQ1203: AQ1203 Service objects: `app/services/` directory; `rails generate service OutfitGenerator` creates `OutfitGeneratorService` with `call` method; SRP — one service, one responsibility */
-[data-todo="aq1203"] {
-  --artifact-id: "AQ1203";
-}

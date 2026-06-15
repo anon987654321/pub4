@@ -1,6 +1,0 @@
-/* AS808: AS808 Tooltip: `.tooltip-wrapper { position: relative } .tooltip { position: absolute; bottom: calc(100% + var(--space-2)); left: 50%; transform: translateX(-50%); background: var(--color-shadow); color: white; font-size: var(--text-xs); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity var(--duration-fast) } .tooltip-wrapper:hover .tooltip { opacity: 1 }` */
-/* Artifact: DEPLOY/artifacts/design/as/AS808.css */
-[data-todo="as808"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS808";
-}

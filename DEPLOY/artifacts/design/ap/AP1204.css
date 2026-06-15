@@ -1,4 +1,0 @@
-/* AP1204: AP1204 Ordinal formatting: `font-variant-numeric: ordinal` for Norwegian dates (1ste, 2nde); `font-variant-numeric: slashed-zero` in bsdports code contexts — prevent `0` / `O` confusion */
-[data-todo="ap1204"] {
-  --artifact-id: "AP1204";
-}

@@ -1,6 +1,0 @@
-/* AP102: AP102 NO_COLUMN_ALIGN in CSS declarations: one space after property colon, ragged values — never pad `background:    white` to align with `color:         black` */
-/* Artifact: DEPLOY/artifacts/design/ap/AP102.css */
-[data-todo="ap102"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP102";
-}

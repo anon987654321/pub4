@@ -1,6 +1,0 @@
-/* AQ708: AQ708 Email open tracking: `<img src="/track/email/#{token}" width="1" height="1">` pixel; on request, mark email as opened, log timestamp; use for engagement analytics, not manipulation */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ708.css */
-[data-todo="aq708"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ708";
-}

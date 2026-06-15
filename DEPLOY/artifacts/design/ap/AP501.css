@@ -1,6 +1,0 @@
-/* AP501: AP501 Easing vocabulary: define only 4 named curves: `--ease-standard: cubic-bezier(0.4, 0, 0.2, 1)` (enter+exit), `--ease-decelerate: cubic-bezier(0, 0, 0.2, 1)` (elements entering), `--ease-accelerate: cubic-bezier(0.4, 0, 1, 1)` (elements leaving), `--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1)` (playful micro-interactions) */
-/* Artifact: DEPLOY/artifacts/design/ap/AP501.css */
-[data-todo="ap501"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP501";
-}

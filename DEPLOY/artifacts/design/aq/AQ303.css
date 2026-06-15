@@ -1,6 +1,0 @@
-/* AQ303: AQ303 Native navigation: `Turbo.visit(url, {action: "advance"})` = push; `{action: "replace"}` = replace; `{action: "restore"}` = pop; map to UINavigationController operations */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ303.css */
-[data-todo="aq303"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ303";
-}

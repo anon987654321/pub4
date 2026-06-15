@@ -1,6 +1,0 @@
-/* AQ203: AQ203 WebP conversion: `variant :webp, convert: :webp, quality: 85` for all image attachments; serve WebP with JPEG fallback via `<picture>` tag helper */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ203.css */
-[data-todo="aq203"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ203";
-}

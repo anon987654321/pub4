@@ -1,6 +1,0 @@
-/* AR902: AR902 content-visibility: `content-visibility: auto; contain-intrinsic-size: 0 200px` on off-screen cards — browser skips rendering; 50px scroll = 10× rendering performance improvement on long lists */
-/* Artifact: DEPLOY/artifacts/design/ar/AR902.css */
-[data-todo="ar902"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR902";
-}

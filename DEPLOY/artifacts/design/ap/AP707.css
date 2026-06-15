@@ -1,6 +1,0 @@
-/* AP707: AP707 hjerterom nav: large friendly logo; "Donate", "Request", "Volunteer", "About" as equal-weight top nav items; warm green active state; simple, non-intimidating for non-technical users */
-/* Artifact: DEPLOY/artifacts/design/ap/AP707.css */
-[data-todo="ap707"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP707";
-}

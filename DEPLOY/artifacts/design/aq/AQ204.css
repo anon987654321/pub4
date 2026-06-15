@@ -1,6 +1,0 @@
-/* AQ204: AQ204 Blurhash on upload: after Active Storage attachment completes, enqueue `GenerateBlurhashJob` which reads image bytes, computes blurhash, stores in `attachments.metadata` JSON column */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ204.css */
-[data-todo="aq204"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ204";
-}

@@ -1,4 +1,0 @@
-/* AP1301: AP1301 iOS safe area: `padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom))` on bottom nav; `padding-top: env(safe-area-inset-top)` on top header — notch and home indicator clearance */
-[data-todo="ap1301"] {
-  --artifact-id: "AP1301";
-}

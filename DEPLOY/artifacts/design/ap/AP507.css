@@ -1,6 +1,0 @@
-/* AP507: AP507 Physics-based spring for interactive elements: vote button, like button, follow button use `--ease-spring` with `--duration-fast`; overshoot communicates responsiveness */
-/* Artifact: DEPLOY/artifacts/design/ap/AP507.css */
-[data-todo="ap507"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP507";
-}

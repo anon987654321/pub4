@@ -1,6 +1,0 @@
-/* AP107: AP107 CINEMA_PALETTE enforcement: never raw primaries (`#ff0000`, `#0000ff`, `#00ff00`) in any app; all accent colors via shadow/midtone/highlight triplets; specify all three variants per hue */
-/* Artifact: DEPLOY/artifacts/design/ap/AP107.css */
-[data-todo="ap107"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP107";
-}

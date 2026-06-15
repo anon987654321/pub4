@@ -1,4 +1,0 @@
-/* AP1104: AP1104 Night mode auto: detect `prefers-color-scheme: dark` AND time (22:00-07:00 local) → auto-enable dim mode; respect user's manual override */
-[data-todo="ap1104"] {
-  --artifact-id: "AP1104";
-}

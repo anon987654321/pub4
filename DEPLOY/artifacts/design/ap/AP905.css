@@ -1,6 +1,0 @@
-/* AP905: AP905 Motion-sensitive design: every animation has a `prefers-reduced-motion` fallback; test by enabling "reduce motion" in OS accessibility settings */
-/* Artifact: DEPLOY/artifacts/design/ap/AP905.css */
-[data-todo="ap905"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP905";
-}

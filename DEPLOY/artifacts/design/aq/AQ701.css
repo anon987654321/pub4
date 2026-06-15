@@ -1,6 +1,0 @@
-/* AQ701: AQ701 Action Mailer preview: `/rails/mailers` in development shows every email template rendered; define `WelcomeMailerPreview`, `MatchMailerPreview`, `OrderMailerPreview` etc. */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ701.css */
-[data-todo="aq701"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ701";
-}

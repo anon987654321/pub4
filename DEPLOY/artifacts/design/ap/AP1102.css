@@ -1,4 +1,0 @@
-/* AP1102: AP1102 Subdomain theming: each vertical (dating/marketplace/tv/playlist/takeaway/maps) overrides `--color-midtone` via `<body data-vertical="dating">` CSS selector; dating = `#ec4899`, marketplace = `#f59e0b`, tv = `#7c3aed` */
-[data-todo="ap1102"] {
-  --artifact-id: "AP1102";
-}

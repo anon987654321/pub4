@@ -1,4 +1,0 @@
-/* AP1107: AP1107 Map overlay design: map takes full viewport; POI pins use app accent color; info card slides up from bottom on pin click; `border-radius: 16px 16px 0 0; background: var(--color-background)` */
-[data-todo="ap1107"] {
-  --artifact-id: "AP1107";
-}

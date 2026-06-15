@@ -1,6 +1,0 @@
-/* AO501: AO501 X light mode palette: `--background: #ffffff; --surface: #f7f9f9; --text-primary: #0f1419; --text-secondary: #536471; --text-tertiary: #657786; --accent: #1d9bf0; --border: #eff3f4; --danger: #f4212e; --success: #00ba7c` */
-/* Artifact: DEPLOY/artifacts/design/ao/AO501.css */
-[data-todo="ao501"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO501";
-}

@@ -1,4 +1,0 @@
-/* AP1306: AP1306 Momentum scrolling: `-webkit-overflow-scrolling: touch` on all `overflow-y: auto` containers; ensures iOS native momentum scroll behavior in web contexts */
-[data-todo="ap1306"] {
-  --artifact-id: "AP1306";
-}

@@ -1,6 +1,0 @@
-/* AR704: AR704 Radio card: `input[type="radio"]:checked + label { border-color: var(--color-midtone); background: var(--color-midtone-50) }` — visually selectable card options for dating preferences, amber style profiles */
-/* Artifact: DEPLOY/artifacts/design/ar/AR704.css */
-[data-todo="ar704"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR704";
-}

@@ -1,6 +1,0 @@
-/* AQ406: AQ406 Typeahead endpoint: `GET /search/suggestions?q=` returns JSON array of {label, url} pairs; cached 60s per query; no authentication required for suggestions */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ406.css */
-[data-todo="aq406"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ406";
-}

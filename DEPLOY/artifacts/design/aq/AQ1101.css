@@ -1,4 +1,0 @@
-/* AQ1101: AQ1101 Self-hosted analytics: `PageView` model with `{path, referrer, user_agent, country, device_type, session_id, created_at}`; log via `after_action` in ApplicationController; exclude bot user agents */
-[data-todo="aq1101"] {
-  --artifact-id: "AQ1101";
-}

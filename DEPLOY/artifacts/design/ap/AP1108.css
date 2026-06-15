@@ -1,4 +1,0 @@
-/* AP1108: AP1108 Marketplace grid: 2-column on mobile, 3 on tablet, 4 on desktop; `grid-template-columns: repeat(auto-fill, minmax(180px, 1fr))`; cards edge-to-edge with 1px gap between */
-[data-todo="ap1108"] {
-  --artifact-id: "AP1108";
-}

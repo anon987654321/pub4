@@ -1,6 +1,0 @@
-/* AQ209: AQ209 Preview generation: `has_one_attached :document; has_many_attached :images` — for PDFs, use `preview` to generate first-page thumbnail; show in card without PDF download */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ209.css */
-[data-todo="aq209"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ209";
-}

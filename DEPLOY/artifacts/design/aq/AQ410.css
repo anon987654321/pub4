@@ -1,6 +1,0 @@
-/* AQ410: AQ410 Semantic search fallback: if FTS5 returns <3 results, fall back to embedding search — `SELECT id, 1 - (embedding <=> ?) AS score FROM posts ORDER BY score DESC LIMIT 10` (requires sqlite-vec extension) */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ410.css */
-[data-todo="aq410"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ410";
-}

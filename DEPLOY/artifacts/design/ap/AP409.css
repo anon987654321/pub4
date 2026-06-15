@@ -1,6 +1,0 @@
-/* AP409: AP409 Screen real estate audit: run a quarterly review of every layout; ask "what element is competing with the primary content?"; remove or subordinate any element that loses this evaluation */
-/* Artifact: DEPLOY/artifacts/design/ap/AP409.css */
-[data-todo="ap409"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP409";
-}

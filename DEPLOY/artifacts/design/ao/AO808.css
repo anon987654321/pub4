@@ -1,6 +1,0 @@
-/* AO808: AO808 Medium follow button: `border: 1px solid #1a8917; color: #1a8917; background: transparent` at rest; fills green on hover; transitions with `0.2s ease`; transforms to "Following" after click */
-/* Artifact: DEPLOY/artifacts/design/ao/AO808.css */
-[data-todo="ao808"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO808";
-}

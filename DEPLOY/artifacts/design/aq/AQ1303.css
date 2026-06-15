@@ -1,4 +1,0 @@
-/* AQ1303: AQ1303 Zero-downtime deploy: Kamal blue-green with `proxy.buffering.enabled: true`; new container starts, health check passes, traffic switches, old container stops; no dropped requests */
-[data-todo="aq1303"] {
-  --artifact-id: "AQ1303";
-}

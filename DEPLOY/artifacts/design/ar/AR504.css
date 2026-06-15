@@ -1,6 +1,0 @@
-/* AR504: AR504 View transitions API: `document.startViewTransition(() => updateDOM())` — browser-native cross-document animations; Rails 8 Turbo 8 has native support; `::view-transition-old(root)` and `::view-transition-new(root)` for custom cross-fade */
-/* Artifact: DEPLOY/artifacts/design/ar/AR504.css */
-[data-todo="ar504"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR504";
-}

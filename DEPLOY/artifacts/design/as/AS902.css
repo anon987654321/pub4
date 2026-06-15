@@ -1,6 +1,0 @@
-/* AS902: AS902 Cross-browser testing: Chrome, Firefox, Safari (webkit), Edge; verify CSS features (subgrid, container queries, :has()) in all; polyfill only where usage warrants */
-/* Artifact: DEPLOY/artifacts/design/as/AS902.css */
-[data-todo="as902"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS902";
-}

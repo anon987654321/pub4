@@ -1,6 +1,0 @@
-/* AR401: AR401 Dark mode via data attribute: `[data-theme="dark"] { --color-background: ...; --color-text: ... }` — all dark mode overrides in one block; trivial to add new dark theme */
-/* Artifact: DEPLOY/artifacts/design/ar/AR401.css */
-[data-todo="ar401"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR401";
-}

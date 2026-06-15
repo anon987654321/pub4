@@ -1,6 +1,0 @@
-/* AQ401: AQ401 SQLite FTS5 setup: in each app's migration, `execute "CREATE VIRTUAL TABLE posts_fts USING fts5(title, body, content='posts', content_rowid='id', tokenize='porter unicode61')"` — porter stemming for English; unicode61 for Norwegian */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ401.css */
-[data-todo="aq401"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ401";
-}

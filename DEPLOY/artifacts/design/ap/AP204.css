@@ -1,6 +1,0 @@
-/* AP204: AP204 baibl palette (scripture): shadow `#1a1209` (parchment dark), midtone `#92400e` (sepia brown), highlight `#fef9ef` (cream vellum); complementary `#065f46` (deep green) for wisdom/life references; ancient manuscript */
-/* Artifact: DEPLOY/artifacts/design/ap/AP204.css */
-[data-todo="ap204"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP204";
-}

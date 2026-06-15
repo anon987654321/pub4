@@ -1,6 +1,0 @@
-/* AP608: AP608 baibl verse display: verse reference in small-caps `font-variant: small-caps; font-size: 0.8em; color: var(--color-midtone)` above the verse; verse body at reading size; annotation count as subtle superscript */
-/* Artifact: DEPLOY/artifacts/design/ap/AP608.css */
-[data-todo="ap608"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP608";
-}

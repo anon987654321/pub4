@@ -1,6 +1,0 @@
-/* AS805: AS805 Loading skeleton: `.skeleton { background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-border) 50%, var(--color-surface) 75%); background-size: 200%%; animation: shimmer 1.4s ease-in-out infinite; border-radius: var(--radius-sm) }` — apply to any placeholder element */
-/* Artifact: DEPLOY/artifacts/design/as/AS805.css */
-[data-todo="as805"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS805";
-}

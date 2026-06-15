@@ -1,6 +1,0 @@
-/* AQ501: AQ501 Job naming convention: all job classes end in `Job`; named as `Verb + Noun + Job` — `SendWelcomeEmailJob`, `GenerateOutfitJob`, `IndexSearchJob`; never `ProcessJob` or `HandleJob` */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ501.css */
-[data-todo="aq501"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ501";
-}

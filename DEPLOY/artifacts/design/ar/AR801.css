@@ -1,6 +1,0 @@
-/* AR801: AR801 Mobile-first breakpoint system: `--bp-sm: 480px; --bp-md: 768px; --bp-lg: 1024px; --bp-xl: 1280px; --bp-2xl: 1536px`; always `@media (min-width: ...)` not `max-width` — mobile base, enhance up */
-/* Artifact: DEPLOY/artifacts/design/ar/AR801.css */
-[data-todo="ar801"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR801";
-}

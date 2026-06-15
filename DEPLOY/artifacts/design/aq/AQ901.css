@@ -1,6 +1,0 @@
-/* AQ901: AQ901 ARIA live regions: `<div aria-live="polite" aria-atomic="true">` containing notification area; screen readers announce new Turbo Stream updates without user navigating there */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ901.css */
-[data-todo="aq901"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ901";
-}

@@ -1,6 +1,0 @@
-/* AR409: AR409 Gradient tokens: `--gradient-hero: linear-gradient(135deg, var(--color-shadow) 0%, var(--color-midtone) 100%)`; `--gradient-card-scrim: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)` — reusable gradient definitions */
-/* Artifact: DEPLOY/artifacts/design/ar/AR409.css */
-[data-todo="ar409"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR409";
-}

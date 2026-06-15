@@ -1,6 +1,0 @@
-/* AS304: AS304 amber CPW badge: `.cpw-badge { position: absolute; bottom: var(--space-2); right: var(--space-2); background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); color: white; font-size: 11px; border-radius: var(--radius-sm); padding: 2px 6px }` — cost-per-wear overlay */
-/* Artifact: DEPLOY/artifacts/design/as/AS304.css */
-[data-todo="as304"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AS304";
-}

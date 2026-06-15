@@ -1,6 +1,0 @@
-/* AR406: AR406 Forced colors mode: `@media (forced-colors: active) { .btn { border: 2px solid ButtonText } }` — Windows High Contrast mode; maintain usability without custom colors */
-/* Artifact: DEPLOY/artifacts/design/ar/AR406.css */
-[data-todo="ar406"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR406";
-}

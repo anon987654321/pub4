@@ -1,6 +1,0 @@
-/* AP404: AP404 No decorative dividers: `<hr>`, horizontal rules, `border-bottom` as section dividers — never; sufficient margin between sections communicates separation; if separation isn't clear, the sections may not belong together */
-/* Artifact: DEPLOY/artifacts/design/ap/AP404.css */
-[data-todo="ap404"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP404";
-}

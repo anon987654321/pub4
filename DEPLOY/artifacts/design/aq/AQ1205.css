@@ -1,4 +1,0 @@
-/* AQ1205: AQ1205 View components: `rails generate view_component PostCard` creates `PostCardComponent` + template; replaces partials for complex, reusable UI; testable without full controller stack */
-[data-todo="aq1205"] {
-  --artifact-id: "AQ1205";
-}

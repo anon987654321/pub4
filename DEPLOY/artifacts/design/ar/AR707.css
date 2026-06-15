@@ -1,6 +1,0 @@
-/* AR707: AR707 Star rating: `input[type="radio"].star:checked ~ .star, input[type="radio"].star:checked { color: var(--color-accent) }` — reverse-DOM star trick; CSS-only; accessible with labels */
-/* Artifact: DEPLOY/artifacts/design/ar/AR707.css */
-[data-todo="ar707"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR707";
-}

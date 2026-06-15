@@ -1,6 +1,0 @@
-/* AP309: AP309 Font loading strategy: `<link rel="preload" as="font" crossorigin>` for the single woff2 variable font file; `font-display: swap`; no FOIT; accept FOUT as tradeoff for performance */
-/* Artifact: DEPLOY/artifacts/design/ap/AP309.css */
-[data-todo="ap309"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AP309";
-}

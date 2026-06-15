@@ -1,6 +1,0 @@
-/* AR901: AR901 Contain property: `contain: content` on feed items — isolates paint, layout, style; browser skips these items when unrelated DOM changes; critical for long feeds */
-/* Artifact: DEPLOY/artifacts/design/ar/AR901.css */
-[data-todo="ar901"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR901";
-}

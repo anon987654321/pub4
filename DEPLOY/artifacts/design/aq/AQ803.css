@@ -1,6 +1,0 @@
-/* AQ803: AQ803 Delta sync: `GET /api/posts?since=<timestamp>` returns only records modified after timestamp; client merges delta into IndexedDB; full sync only on fresh install */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ803.css */
-[data-todo="aq803"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ803";
-}

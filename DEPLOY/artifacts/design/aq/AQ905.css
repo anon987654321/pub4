@@ -1,6 +1,0 @@
-/* AQ905: AQ905 i18n pluralization: `t("post.count", count: n)` uses `config/locales/nb.yml` with `one:` and `other:` keys; Norwegian irregular plurals handled via explicit keys */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ905.css */
-[data-todo="aq905"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ905";
-}

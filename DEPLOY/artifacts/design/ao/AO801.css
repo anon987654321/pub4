@@ -1,6 +1,0 @@
-/* AO801: AO801 X tweet card: flexbox row; 40px avatar left; right column (name row + body + engagement row); `border-bottom: 1px solid var(--border)` as separator; `padding: 12px 16px` */
-/* Artifact: DEPLOY/artifacts/design/ao/AO801.css */
-[data-todo="ao801"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AO801";
-}

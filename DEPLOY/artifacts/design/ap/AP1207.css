@@ -1,4 +1,0 @@
-/* AP1207: AP1207 Prose first-line indent alternative: `text-indent: 1.5em` on paragraphs after first (`.prose p + p { text-indent: 1.5em; margin-top: 0 }`) as alternative to paragraph spacing — denser, more typographically classical */
-[data-todo="ap1207"] {
-  --artifact-id: "AP1207";
-}

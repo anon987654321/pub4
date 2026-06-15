@@ -1,6 +1,0 @@
-/* AQ105: AQ105 Live notification count: `NotificationsChannel` broadcasts `{count: unread_count}` on every new notification; client updates badge via `cable_ready.set_attribute(selector: "[data-badge]", name: "data-count", value: count)` */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ105.css */
-[data-todo="aq105"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ105";
-}

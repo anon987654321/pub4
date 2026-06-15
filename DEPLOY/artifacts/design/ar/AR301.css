@@ -1,6 +1,0 @@
-/* AR301: AR301 Variable font loading: `@font-face { font-family: "Inter"; src: url("inter-variable.woff2") format("woff2-variations"); font-weight: 100 900; font-display: swap; font-style: normal }` */
-/* Artifact: DEPLOY/artifacts/design/ar/AR301.css */
-[data-todo="ar301"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR301";
-}

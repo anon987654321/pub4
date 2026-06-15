@@ -1,6 +1,0 @@
-/* AQ104: AQ104 Read receipts: `MessagesChannel#mark_read` Nothing Morph reflex; updates `read_at` timestamp; CableReady `set_attribute` on sender's message to show double-tick */
-/* Artifact: DEPLOY/artifacts/design/aq/AQ104.css */
-[data-todo="aq104"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AQ104";
-}

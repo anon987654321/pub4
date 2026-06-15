@@ -1,6 +1,0 @@
-/* AR806: AR806 Image srcset: `<%= image_tag @post.image, srcset: { small_url => "400w", medium_url => "800w", large_url => "1200w" }, sizes: "(max-width: 768px) 100vw, 800px" %>` — Rails helper for responsive images */
-/* Artifact: DEPLOY/artifacts/design/ar/AR806.css */
-[data-todo="ar806"] {
-  /* design token placeholder — wire in app stylesheets */
-  --artifact-id: "AR806";
-}
