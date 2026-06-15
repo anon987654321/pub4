@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 class Marketplace::ListingsController < Marketplace::BaseController
+  include Shared::LiveSearchable
+
   allow_unauthenticated_access only: %i[index show]
   before_action :set_listing, only: %i[show edit update destroy]
 
   def index
     scope = Marketplace::Listing.active.includes(:user, :category)
-    scope = scope.where("title LIKE ?", "%#{params[:q]}%") if params[:q].present?
+    scope = Shared::LiveSearch.call(scope, query: live_search_query, columns: %w[title description location]) if live_search_query.present?
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
     @pagy, @listings = pagy(scope.recent)
     @categories = Marketplace::Category.roots.includes(:children)

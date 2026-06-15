@@ -1,6 +1,6 @@
 # Production Readiness
 
-Status as of this audit: not fully production-ready until the checks below pass on the OpenBSD target.
+Status as of 2026-06-15: static production gate passes locally (`check_production_gate.rb`). Apps remain not fully production-ready until Ruby 3.4 bundle/test/security/deploy smoke passes on the OpenBSD target.
 
 Run the static gate before every deploy:
 
@@ -15,6 +15,18 @@ DEPLOY/rails/check_production_gate.rb
 - TLS terminates at OpenBSD `relayd`. Rails production configs should keep `config.assume_ssl = true` and leave `config.force_ssl` disabled.
 - Run `bin/rails db:prepare`, `bin/rails test`, `bin/brakeman`, and `bin/bundler-audit` per app.
 - Deploy to the OpenBSD target and verify `/up`, TLS, host authorization, logs, database writes, background jobs, and service restart.
+
+## Landed in this pass (2026-06-15)
+
+- `check_production_gate.rb` parses `apps.yml` on Ruby 2.6+ and passes for all six apps.
+- `baibl`, `bsdports`, and `hjerterom` use `solid_cable` in production (no Redis dependency).
+- Custom `HealthController` checks database, Solid Cache, and Solid Queue on `GET /up`.
+- SMTP settings wired in all six `production.rb` files (credentials + `SMTP_ADDRESS`/`SMTP_PORT` env).
+- `recurring.yml` added for `bsdports`, `baibl`, and `hjerterom`; extended for `blognet`.
+- `amber` hosts include `www.amber.brgen.no`.
+- Marketplace listings use FTS5 + `Shared::LiveSearch` (migration `20260615000100_create_marketplace_listings_fts`).
+- Frontend baseline installed (`stimulus_components.js`, shared concerns) across all apps.
+- `color-scheme` meta added to all app layouts.
 
 ## brgen
 

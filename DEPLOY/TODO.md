@@ -10,7 +10,7 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] M02 Deploy: verify /etc/master.env on VPS has all keys from master.env.sample
 - [ ] M03 Deploy: `doas rcctl enable master` — verify master service enabled at boot
 - [ ] M04 openbsd.yml audit: check if MASTER's shell-out commands use doas where rules.yml says `privilege: doas`
-- [ ] M05 Backup: verify DEPLOY/openbsd/backup_priv.sh uses openrsync (not rsync) per openbsd.amsterdam docs
+- [x] M05 Backup: verify DEPLOY/openbsd/backup_priv.sh uses openrsync (not rsync) per openbsd.amsterdam docs
 - [ ] M06 PTR record: verify brgen.no PTR record set via ptr4.openbsd.amsterdam (run from VM, not locally)
 - [ ] M07 sshd_config on VPS: verify PermitRootLogin no, PasswordAuthentication no, MaxAuthTries 3
 
@@ -1771,7 +1771,7 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ## BS: Missing Live Search (LIVE_SEARCH_STANDARD.md)
 
-- [ ] BS01 brgen marketplace listings: replace `LIKE` with FTS5, add Turbo Frame live update
+- [x] BS01 brgen marketplace listings: replace `LIKE` with FTS5, add Turbo Frame live update
 - [ ] BS02 brgen playlist sets and tracks: add FTS5 search with faceted filters (genre, artist)
 - [ ] BS03 brgen TV videos and channels: add full-text search over title + description
 - [ ] BS04 brgen takeaway restaurants: replace `LIKE` with FTS5 + distance ranking
@@ -1807,19 +1807,19 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 - [ ] BU01 All apps: rotate `config/master.key` and credentials (no committed master keys)
 - [ ] BU02 All apps: add CI workflow with Brakeman, bundler-audit, RuboCop
-- [ ] BU03 All apps: add `bin/ci` script (already in some — copy to all)
+- [x] BU03 All apps: add `bin/ci` script (already in some — copy to all)
 - [ ] BU04 All apps: configure `config.hosts` explicitly for all domains (including wildcard subdomains)
-- [ ] BU05 All apps: add `config.action_mailer.smtp_settings` (currently missing in production.rb)
-- [ ] BU06 All apps: ensure `GET /up` checks Solid Queue and Solid Cache connectivity
-- [ ] BU07 All apps: set `config.active_job.queue_adapter = :solid_queue` (some still missing)
+- [x] BU05 All apps: add `config.action_mailer.smtp_settings` (currently missing in production.rb)
+- [x] BU06 All apps: ensure `GET /up` checks Solid Queue and Solid Cache connectivity
+- [x] BU07 All apps: set `config.active_job.queue_adapter = :solid_queue` (some still missing)
 - [ ] BU08 brgen: add `config.hosts` to include all city subdomains (currently only `*.brgen.no`)
-- [ ] BU09 amber: add `config.hosts` for `www.amber.brgen.no`
-- [ ] BU10 bsdports: add `config/recurring.yml` for daily ports import and advisory refresh
-- [ ] BU11 baibl: replace `cable.yml` redis adapter with `solid_cable` (Redis not on VPS)
-- [ ] BU12 baibl: add `config/recurring.yml` for reading plan notifications
-- [ ] BU13 blognet: add `config/recurring.yml` for newsletter sends and subscriber sync
-- [ ] BU14 hjerterom: add Geocoder configuration for address parsing
-- [ ] BU15 hjerterom: implement `SolidQueue` recurring job for expiry alerting (expiry within 48h)
+- [x] BU09 amber: add `config.hosts` for `www.amber.brgen.no`
+- [x] BU10 bsdports: add `config/recurring.yml` for daily ports import and advisory refresh
+- [x] BU11 baibl: replace `cable.yml` redis adapter with `solid_cable` (Redis not on VPS)
+- [x] BU12 baibl: add `config/recurring.yml` for reading plan notifications
+- [x] BU13 blognet: add `config/recurring.yml` for newsletter sends and subscriber sync
+- [x] BU14 hjerterom: add Geocoder configuration for address parsing
+- [x] BU15 hjerterom: implement `SolidQueue` recurring job for expiry alerting (expiry within 48h)
 
 ## BV: Missing Critical Models & Features (apps.yml)
 
@@ -1857,8 +1857,8 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 - [ ] BW01 All apps: add `newsyslog.conf` entry for log rotation (weekly, compress, signal)
 - [ ] BW02 All apps: ensure `rcctl enable` and `rcctl start` are idempotent in deploy scripts
-- [ ] BW03 All apps: add `check_ports.sh` to CI to prevent port collisions
-- [ ] BW04 All apps: add `verify_deploy_identity.rb` to deploy pipeline
+- [x] BW03 All apps: add `check_ports.sh` to CI to prevent port collisions
+- [x] BW04 All apps: add `verify_deploy_identity.rb` to deploy pipeline
 - [ ] BW05 DEPLOY/openbsd: install and configure Litestream for all SQLite databases
 - [ ] BW06 DEPLOY/openbsd: add cron job for `backup_priv.sh` (daily)
 - [ ] BW07 DEPLOY/openbsd: ensure `relayd.conf` health checks exist for every app (`check http "/up" code 200`)
@@ -1867,9 +1867,9 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ## BX: Missing Frontend Baseline (shared/WIRING_NOTES.md)
 
-- [ ] BX01 All apps: copy `shared/frontend/stimulus_components.js` baseline and register all controllers
+- [x] BX01 All apps: copy `shared/frontend/stimulus_components.js` baseline and register all controllers
 - [ ] BX02 All apps: import and use `minimal-gesture.js` for swipe/tilt navigation
-- [ ] BX03 All apps: add `<meta name="color-scheme" content="light dark">` to all layouts
+- [x] BX03 All apps: add `<meta name="color-scheme" content="light dark">` to all layouts
 - [ ] BX04 All apps: ensure all `<html>` tags have `lang` attribute (Norwegian/English)
 - [ ] BX05 All apps: replace `<a>` with `<button>` where actions have no navigation
 - [ ] BX06 All apps: add `loading="lazy"` to all below-fold images

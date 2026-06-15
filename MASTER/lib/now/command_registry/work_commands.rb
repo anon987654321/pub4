@@ -171,6 +171,14 @@ module Master
       end
 
       def dispatch_fix(fix_loop, root, arg)
+        if arg.include?("--dry-run")
+          preview_arg = arg.gsub("--dry-run", "").strip
+          sub, rest = preview_arg.split(/\s+/, 2)
+          preview_arg = (sub == "preview") ? rest.to_s.strip : preview_arg
+          result = fix_loop.preview(expand_or_root(preview_arg.empty? ? "." : preview_arg, root))
+          return "dry-run: no changes applied\n#{format_fix_preview(result.value!)}" if result.ok?
+          return "dry-run: #{result.message}"
+        end
         sub, rest = arg.split(/\s+/, 2)
         case sub
         when "loop"
@@ -248,10 +256,13 @@ module Master
       end
 
       def dispatch_scan(scanner, root, arg)
-        profile, depth, rule_filter = resolve_scan_profile(arg, root)
-        pairs = collect_scan_pairs(scanner:, root:, arg:, depth:)
+        dry_run = arg.include?("--dry-run")
+        scan_arg = arg.gsub("--dry-run", "").strip
+        profile, depth, rule_filter = resolve_scan_profile(scan_arg, root)
+        pairs = collect_scan_pairs(scanner:, root:, arg: scan_arg, depth:)
         return pairs if pairs.is_a?(String)
-        format_scan_results(pairs, profile, rule_filter)
+        report = format_scan_results(pairs, profile, rule_filter)
+        dry_run ? "dry-run: no changes applied\n#{report}" : report
       end
 
       def collect_scan_pairs(scanner:, root:, arg:, depth:)
@@ -277,11 +288,11 @@ module Master
         total = by_rule.values.sum(&:size)
         header = profile ? "[profile: #{profile}] " : ""
         return "#{header}clean -- no violations" if total.zero?
+        summary = "#{header}#{total} total violations"
         lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
           ["[#{rule}] #{vs.size}"] + vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, VIOLATION_TRUNCATE]}" }
         end
-        lines << "#{header}#{total} total violations"
-        lines.join("\n")
+        ([summary] + lines).join("\n")
       end
 
       def resolve_scan_profile(arg, root)

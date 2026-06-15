@@ -27,6 +27,15 @@ class Marketplace::Listing < ApplicationRecord
   scope :recent,   -> { order(created_at: :desc) }
   scope :popular,  -> { order(views_count: :desc) }
   scope :from_store, ->(store) { where(store: store) }
+  scope :search, ->(q) {
+    term = q.to_s.strip
+    return none if term.empty?
+
+    ids = connection.select_values(
+      sanitize_sql_array(["SELECT rowid FROM marketplace_listings_fts WHERE marketplace_listings_fts MATCH ?", term])
+    )
+    ids.any? ? where(id: ids) : none
+  }
 
   def price_display = "#{price_cents / 100.0} #{currency}"
   def sold? = status == "sold"

@@ -75,6 +75,31 @@ class TestSelfScan < Minitest::Test
     end
   end
 
+  def test_lib_self_scan_reports_zero_violations_with_clean_scanner
+    scanner = FakeScanner.new([])
+    result = Master::Judge::Scan::SelfScan.new(scanner:, root: "/tmp/master").call
+    assert result.ok?
+    assert_equal 0, result.value!.violation_count
+  end
+
+  def test_autofix_idempotency_second_pass_applies_no_transforms
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "lib"))
+      path = File.join(root, "lib", "example.rb")
+      File.write(path, "class Example\nend\n")
+      scanner = FakeScanner.new([finding("FROZEN_LITERAL")], rules: [FakeRule.new("FROZEN_LITERAL", true)])
+
+      first = Master::Judge::Scan::SelfScan.new(scanner:, root:).call(autofix: true)
+      assert first.ok?
+      assert_equal 1, first.value!.autofixes.size
+
+      clean_scanner = FakeScanner.new([], rules: [FakeRule.new("FROZEN_LITERAL", true)])
+      second = Master::Judge::Scan::SelfScan.new(scanner: clean_scanner, root:).call(autofix: true)
+      assert second.ok?
+      assert_empty second.value!.autofixes
+    end
+  end
+
   def test_self_scan_counts_data_yml_singularity_findings
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "data"))

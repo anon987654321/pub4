@@ -23,7 +23,11 @@ end
 
 failures = []
 warnings = []
-apps = YAML.safe_load_file(APPS_YML).fetch("apps")
+apps = if YAML.respond_to?(:safe_load_file)
+         YAML.safe_load_file(APPS_YML)
+       else
+         YAML.safe_load(File.read(APPS_YML), permitted_classes: [], aliases: true)
+       end.fetch("apps")
 env_sample = File.join(RAILS_ROOT, "env.sample")
 
 tracked_master_keys = git_ls_files("DEPLOY/rails/*/config/master.key")

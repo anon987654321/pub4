@@ -122,7 +122,7 @@ MASTER must pass its own rules. Violations found by reading lib/.
 - [x] F20 All lib/**/*.rb: verify zero `system(.*#{` command injection patterns (UNSAFE_CALLS)
 - [x] F21 All lib/**/*.rb: check for mutable constants missing .freeze (IMMUTABLE)
 - [x] F22 All lib/**/*.rb: check for long chains a.b.c.d.e not covered by existing rule exclusions (LAW_OF_DEMETER)
-- [ ] F23 All lib/**/*.rb: check for 3+ positional args needing keyword conversion (FEW_ARGUMENTS)
+- [x] F23 All lib/**/*.rb: check for 3+ positional args needing keyword conversion (FEW_ARGUMENTS)
 - [x] F24 loop/fix_helpers.rb: read and verify SRP — only fix-related helpers, no scanning logic
 - [x] F25 judge/scan/rule_dsl.rb: verify auto_build? pattern documented (SELF_EXPLAINING)
 
@@ -130,12 +130,12 @@ MASTER must pass its own rules. Violations found by reading lib/.
 
 rules.yml voice section must govern MASTER's own outputs.
 
-- [ ] G01 Anti-simulation: add forbidden word filter (will, would, could, might) to prompts MASTER sends to LLM
+- [x] G01 Anti-simulation: add forbidden word filter (will, would, could, might) to prompts MASTER sends to LLM
 - [x] G02 Strunk preambles: strip "In summary,", "Consequently,", "Therefore," from MASTER's own output generation
 - [x] G03 Strunk hedges: strip "I think that", "I believe", "seems", "appears" from MASTER output
 - [x] G04 Strunk endings: strip "as a result.", "for this reason.", "thus." from MASTER output
 - [x] G05 Banned output: enforce no headlines/bullet_lists_without_content/filler_phrases in voice/personality.rb
-- [ ] G06 Inverted pyramid: MASTER's scan reports lead with outcome, then evidence, then detail
+- [x] G06 Inverted pyramid: MASTER's scan reports lead with outcome, then evidence, then detail
 - [x] G07 Boot message: verify 5-line dmesg style; never collapse to 1 line, never expand beyond 5
 - [ ] G08 Silence on success: verify routine completions emit one line max
 - [ ] G09 Diagnostic output: multi-line structured output is intentional — verify personality.rb preserve: section enforced
@@ -159,8 +159,8 @@ RuleCoverageRule: every Rule subclass needs a test file.
 - [x] H12 Test for AstFixer: collapse blank lines transform (C01)
 - [x] H13 Test for AstFixer: trailing whitespace strip (C02)
 - [x] H14 Test for AstFixer: .freeze append on mutable constant (C03)
-- [ ] H15 Self-scan test: MASTER scans its own lib/, expects zero violations
-- [ ] H16 Idempotency test: scan + fix + scan produces same result as scan + fix + fix + scan
+- [x] H15 Self-scan test: MASTER scans its own lib/, expects zero violations
+- [x] H16 Idempotency test: scan + fix + scan produces same result as scan + fix + fix + scan
 - [x] H17 Test for evidence_scoring gate (scan_clean:25 weight, pass_threshold: 80)
 - [x] H18 Test for failure_taxonomy: transient errors retry ≤3, permanent errors fail immediately
 - [x] H19 Test for SINGULARITY: rules.yml has no duplicate IDs
@@ -179,21 +179,21 @@ RuleCoverageRule: every Rule subclass needs a test file.
 
 ## J. Pipeline and convergence integrity
 
-- [ ] J01 FixLoop: add cycle detector — if same violation appears N≥3 times across passes, stop and escalate
+- [x] J01 FixLoop: add cycle detector — if same violation appears N≥3 times across passes, stop and escalate
 - [x] J02 Pipeline: wire evidence_scoring — scan_clean(25) + test_pass(35) ≥80 gates the :deploy stage
 - [ ] J03 Pipeline: tier1_critical rules → halt with rollback on violation, not just :err status
 - [ ] J04 RuleLoop: genetic_fix must reject candidates that increase violation count vs original (not just differ)
 - [ ] J05 Loop::Governor: verify pressure detection accounts for OpenBSD vmm memory (no swap, 1GB RAM)
 - [ ] J06 scan_since: extend to include MASTER lib/ alongside user code (self-scan on git diff)
 - [ ] J07 Heartbeat: emit `heartbeat:scan_clean` or `heartbeat:violations N` with self-scan result
-- [ ] J08 Convergence loop: add max_iterations cap (UNBOUNDED_RETRY applies to MASTER itself)
+- [x] J08 Convergence loop: add max_iterations cap (UNBOUNDED_RETRY applies to MASTER itself)
 
 ## K. Missing behaviors
 
 - [ ] K01 COST_TRANSPARENCY: after each LLM call, MASTER emits `[$N.NNNN, NNN tokens]` on event bus
 - [ ] K02 CACHE_LLM: hash prompt + model → cache response with 5-min TTL; serve from cache on repeat calls
 - [ ] K03 ERROR_CONTEXT: every Result.err includes {file:, method:, attempted:} context hash
-- [ ] K04 USER_CONTROL: add --dry-run flag to scan/sweep — show findings without applying fixes
+- [x] K04 USER_CONTROL: add --dry-run flag to scan/sweep — show findings without applying fixes
 - [ ] K05 SYSTEM_STATUS: scan progress stream shows `scan: path/file.rb N violations` per file (already in stream_progress — verify wired)
 - [ ] K06 IDEMPOTENT: verify scan+fix is idempotent — apply twice, second pass produces no changes
 - [ ] K07 CACHE_LLM: LLM response cache should survive process restart (persist to .master/llm_cache.yml)
@@ -215,7 +215,7 @@ RuleCoverageRule: every Rule subclass needs a test file.
 ## N. Documentation alignment
 
 - [ ] N01 MASTER/QUICKSTART.md: verify every command in quickstart runs on OpenBSD 7.9 with ruby34
-- [ ] N02 AGENTS.md: update to reflect current 7-module structure (now/loop/judge/voice/ground/reach/trace)
+- [x] N02 AGENTS.md: update to reflect current 7-module structure (now/loop/judge/voice/ground/reach/trace)
 - [ ] N03 README.md: verify tagline matches project_master_mission.md ("Constitutional AI for any text artifact")
 - [ ] N04 rules.yml comments: remove any remaining TODO/FIXME markers (self-adherence to TODO_FIXME rule)
 - [ ] N05 All deferred comments in lib/: rewrite to S&W active voice per STRUNK rule
@@ -2311,15 +2311,15 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ## CA: Missing Self-Scan & Self-Adherence (MASTER's own rules)
 
-- [ ] CA01 MASTER: boot-time self-scan of `lib/` with all rules (block startup on violations)
-- [ ] CA02 MASTER: add `/self` command to scan MASTER itself on demand
-- [ ] CA03 MASTER: add `rules.yml` SINGULARITY check (no duplicate rule IDs) on boot
+- [x] CA01 MASTER: boot-time self-scan of `lib/` with all rules (block startup on violations)
+- [x] CA02 MASTER: add `/self` command to scan MASTER itself on demand
+- [x] CA03 MASTER: add `rules.yml` SINGULARITY check (no duplicate rule IDs) on boot
 - [x] CA04 MASTER: wire `evidence_scoring` gate — require ≥80 points to deploy
-- [ ] CA05 MASTER: add `phantom_recovery` detector for LLM hallucinations (gaslighting preamble, repetition)
+- [x] CA05 MASTER: add `phantom_recovery` detector for LLM hallucinations (gaslighting preamble, repetition)
 - [ ] CA06 MASTER: implement `voice/soul_drift_detector` to enforce banned phrases removal
-- [ ] CA07 MASTER: add `--dry-run` flag to scan/fix commands
+- [x] CA07 MASTER: add `--dry-run` flag to scan/fix commands
 - [ ] CA08 MASTER: persist LLM response cache to disk (`.master/llm_cache.yml`)
-- [ ] CA09 MASTER: implement `max_iterations` cap in convergence loop (UNBOUNDED_RETRY guard)
+- [x] CA09 MASTER: implement `max_iterations` cap in convergence loop (UNBOUNDED_RETRY guard)
 
 ## CB: Missing Competitive Differentiators (brgen vs X/Facebook)
 

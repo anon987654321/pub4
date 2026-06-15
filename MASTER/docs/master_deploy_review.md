@@ -37,18 +37,25 @@ Reviewed against:
 
 ## Current gaps and opportunities
 
-1. `bin/cli` cannot be executed end-to-end on this host until the MASTER bundle is installed.
+1. `bin/cli` cannot be executed end-to-end on this host until the MASTER bundle is installed under Ruby 3.4.
 2. The greeting path needs a repeatable CLI smoke that does not depend on manual interpretation.
 3. `bin/gate` covers command classes, but not a dedicated social/chitchat smoke.
 4. The social contract is present in tests, but the behavior is still mostly documented by examples instead of a single executable acceptance harness.
-5. `rules.yml` has a rich prediction engine, but the autofix threshold and rule-by-rule enforcement deserve a tighter proof harness.
-6. The structural ops surface still wants a single command-router path, not scattered wrappers.
-7. The hallucination detector remains a known stub area.
-8. The self-test wiring declared in `rules.yml` still needs a reader that executes laws against the runtime itself.
-9. Several `MASTER/web` assets are still unreferenced and should either be wired or deleted.
-10. `DEPLOY/openbsd` still benefits from a dry-run diff and a service-health report before restart.
-11. The Rails production gate is good as a static guard, but target-host runtime verification is still the missing proof of readiness.
-12. `baibl`, `blognet`, and `hjerterom` still need the full Ruby 3.4 bundle/test/security pass on the deploy target.
+5. The structural ops surface still wants a single command-router path, not scattered wrappers.
+6. The hallucination detector remains a known stub area.
+7. Several `MASTER/web` assets are still unreferenced and should either be wired or deleted.
+8. `DEPLOY/openbsd` still benefits from a dry-run diff and a service-health report before restart.
+9. Target-host Ruby 3.4 bundle/test/security/deploy smoke is still the missing proof of readiness for all six Rails apps.
+
+## Landed (2026-06-15)
+
+- Anti-simulation and require_evidence wired into `voice/personality.rb` system prompts.
+- `/scan` and `/fix` accept `--dry-run`; scan reports lead with violation totals (inverted pyramid).
+- Self-scan idempotency tests added in `test/test_self_scan.rb`.
+- `check_production_gate.rb` passes for all six Rails apps.
+- Custom `HealthController` on `GET /up` checks Solid Cache and Solid Queue.
+- `solid_cable` production adapter on `baibl`, `bsdports`, and `hjerterom`.
+- Marketplace FTS5 live search wired via `Shared::LiveSearch`.
 
 ## DEPLOY signal
 

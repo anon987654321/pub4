@@ -150,5 +150,5 @@ Rails.application.routes.draw do
   post "nearby" => "nearby#create"
 
   root "home#index"
-  get "up" => "rails/health#show", as: :rails_health_check
+  get "up" => "health#show", as: :rails_health_check
 end

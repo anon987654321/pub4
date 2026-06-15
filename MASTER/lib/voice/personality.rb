@@ -84,6 +84,9 @@ module Master
         banned = (constitution["banned_output"] || [])
         no_open = (strunk["preambles"] || []).first(4)
         no_end = (strunk["endings"] || []).first(3)
+        anti = soul["anti_simulation"] || {}
+        forbidden_modals = Array(anti["forbidden"])
+        evidence = anti["require_evidence"] || {}
         sections["master_constitution_absolute"] = [
           "<master_constitution tier=\"absolute\">",
           "golden_rule: #{constitution["golden_rule"]}",
@@ -91,8 +94,10 @@ module Master
           "opener_never: #{no_open.join(" / ")}",
           "closer_never: #{no_end.join(" / ")}",
           "evidence_only: show diff or file content; never assert; active voice",
+          forbidden_modals.any? ? "anti_simulation: never use #{forbidden_modals.join(", ")}" : nil,
+          evidence.any? ? "require_evidence: #{evidence.map { |k, v| "#{k}=#{v}" }.join("; ")}" : nil,
           "</master_constitution>"
-        ].join("\n")
+        ].compact.join("\n")
         kernel = @rules.kernel
         if kernel.any?
           sections["master_constitution_kernel"] = "<master_constitution tier=\"kernel\">\n" \
