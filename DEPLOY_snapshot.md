@@ -1,7 +1,10 @@
 # DEPLOY Snapshot (TRANCHE8 continue)
-Generated: 2026-06-15T07:36:01Z
+Generated: 2026-06-15T07:37:02Z
 ## Evidence
 ```
-brgen takeaway orders show: ARIA on articles/nav
+amber items: empty/header/nav ARIA
+baibl scriptures: header/nav/article ARIA
+shared examples: form/input/ul ARIA
+brgen admin/reports/notifications/layouts: ARIA
 More models Shared
 ```
