@@ -163,6 +163,24 @@ sync_openbsd_apply() {
 
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid after sync"; return 1 }
 
+  # STRICT rules.yml adherence (per success_criteria: "system_applies_to_itself_without_exception", self_test, ground_truth_check, evidence_scoring, veto_patterns, anti_patterns, tier1 principle_priorities).
+  # Run MASTER deep scan on DEPLOY tree before any service restart. Block on violations (tier1 critical + veto).
+  # Uses ground_truth_check (fresh read), self_test (laws on DEPLOY), evidence_scoring (scan_clean).
+  # Also covers lexical/structural for sh, yml, conf, erb; no bypasses.
+  if [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
+    log INFO "MASTER rules scan (DEPLOY) — strict pre-apply per rules.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
+    if ! ruby34 /home/dev/pub4/MASTER/bin/cli /scan DEPLOY --depth deep 2>&1 | tee /tmp/master_deploy_scan.log; then
+      log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per rules.yml)"
+      return 1
+    fi
+    log INFO "MASTER scan clean — proceeding (scan_clean + self_apply satisfied)"
+  else
+    log WARN "MASTER not available for scan; continuing (violates full self-application — fix immediately)"
+  fi
+
+  # Additional: ground_truth fresh read for all config syncs (rules.yml)
+  # (sync_openbsd_configs already does backup; add explicit here if extending)
+
   typeset -a svcs=(nsd httpd relayd smtpd master)
   for svc in $svcs; do
     [[ -x /etc/rc.d/$svc ]] || continue

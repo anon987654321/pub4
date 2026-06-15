@@ -38,13 +38,74 @@ module Master
 
         def build_checks
           [
-            check("ROBUSTNESS") { bare_rescue_findings },
-            check("SINGULARITY") { duplicate_rule_id_findings },
-            check("LINEARITY") { structural_findings(Rules::NestingDepthRule.new) },
+            check("ROBUSTNESS") { bare_rescue_findings + deploy_bare_rescue_findings },
+            check("SINGULARITY") { duplicate_rule_id_findings + deploy_duplicate_id_findings },
+            check("LINEARITY") { structural_findings(Rules::NestingDepthRule.new) + deploy_nesting_findings },
             check("PROXIMITY") { rule_test_proximity_findings },
-            check("ABSTRACTION") { structural_findings(Rules::GodClassRule.new) },
-            check("DENSITY") { structural_findings(Rules::SmallFunctionsRule.new) },
+            check("ABSTRACTION") { structural_findings(Rules::GodClassRule.new) + deploy_god_class_findings },
+            check("DENSITY") { structural_findings(Rules::SmallFunctionsRule.new) + deploy_small_files_findings },
           ]
+        end
+
+        # DEPLOY extensions for full self-application (rules.yml self_test + success_criteria)
+        def deploy_bare_rescue_findings
+          deploy_paths.flat_map do |path|
+            next [] unless path.end_with?('.rb', '.sh')
+            File.readlines(path, chomp: true).each_with_index.filter_map do |line, index|
+              next unless line.match?(/^\s*rescue\s*(?:$|=>)/) || line.match?(/^\s*trap\s+.*\s+do/)
+              finding(path:, line: index + 1, message: "bare rescue/trap in DEPLOY — use explicit error handling")
+            end
+          end
+        end
+
+        def deploy_duplicate_id_findings
+          # For yml/conf in DEPLOY
+          deploy_paths.select { |p| p.end_with?('.yml', '.conf') }.flat_map do |path|
+            ids = rule_ids(Master.load_yaml(path) rescue {})
+            ids.group_by(&:itself).filter_map do |id, values|
+              finding(path:, line: 1, message: "duplicate id #{id} in DEPLOY config") if values.size > 1
+            end
+          end
+        end
+
+        def deploy_nesting_findings
+          # Lightweight for sh/erb
+          deploy_paths.flat_map do |path|
+            next [] unless path.end_with?('.sh', '.erb')
+            # Simple depth check for if/do/case nesting (extend with proper parser later)
+            lines = File.readlines(path, chomp: true)
+            depth = 0
+            max = 0
+            findings = []
+            lines.each_with_index do |line, i|
+              depth += 1 if line.match?(/^\s*(if|do|case|while|for)\b/)
+              depth -= 1 if line.match?(/^\s*(fi|done|esac|end)\b/)
+              max = [max, depth].max
+              if depth > 4
+                findings << finding(path:, line: i+1, message: "nesting >4 in DEPLOY (violates LINEARITY)")
+              end
+            end
+            findings
+          end
+        end
+
+        def deploy_god_class_findings
+          # For Ruby in rails/
+          deploy_paths.select { |p| p.end_with?('.rb') }.flat_map do |path|
+            code = File.read(path, encoding: "UTF-8") rescue ""
+            # Reuse GodClassRule logic if possible, else simple
+            if code.scan(/^\s*def\s+\w+/).size > 10
+              [finding(path:, line: 1, message: "potential god class in DEPLOY rails ( >10 defs )")]
+            else
+              []
+            end
+          end
+        end
+
+        def deploy_small_files_findings
+          deploy_paths.select { |p| File.size(p) > 300 * 80 rescue false }.map do |path|  # rough >300 lines
+            finding(path:, line: 1, message: "DEPLOY file >~300 lines (violates DENSITY/SMALL_FILES)")
+          end
         end
 
         def check(law)
@@ -53,6 +114,11 @@ module Master
 
         def ruby_lib_paths
           Dir.glob(File.join(@root, "lib", "**", "*.rb")).sort
+        end
+
+        def deploy_paths
+          # Strict self-application: DEPLOY must be scanned for laws too (rules.yml success_criteria)
+          Dir.glob(File.join(@root, "DEPLOY", "**", "*.{rb,sh,yml,conf,erb}")).sort
         end
 
         def bare_rescue_findings
