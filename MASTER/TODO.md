@@ -2411,14 +2411,14 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ## CZ: Dilla Audio Engine & Generative Music
 
-- [ ] CZ01 MASTER voice/dilla: implement beat sequencer — 16-step grid, tempo-locked to session mood
-- [ ] CZ02 MASTER voice/dilla: add swing quantisation parameter (0–100% Dilla-style laid-back feel)
-- [ ] CZ03 MASTER voice/dilla: generate ambient drone layer tied to pipeline pressure (`pressure: true`)
-- [ ] CZ04 MASTER voice/dilla: add chord progression generator — soul/jazz voicings (ii-V-I, tritone subs)
-- [ ] CZ05 MASTER voice/dilla: add `--groove` flag to CLI — plays background beat during long scans
-- [ ] CZ06 MASTER voice/dilla: export generated beat as `.wav` with loop metadata (ACID-compatible)
-- [ ] CZ07 MASTER voice/dilla: add velocity humanisation — random ±10% per hit, gaussian distribution
-- [ ] CZ08 MASTER voice/dilla: add polyrhythm mode — 3-against-4 or 5-against-4 patterns
+- [x] CZ01 MASTER voice/dilla: implement beat sequencer — 16-step grid, tempo-locked to session mood
+- [x] CZ02 MASTER voice/dilla: add swing quantisation parameter (0–100% Dilla-style laid-back feel)
+- [x] CZ03 MASTER voice/dilla: generate ambient drone layer tied to pipeline pressure (`pressure: true`)
+- [x] CZ04 MASTER voice/dilla: add chord progression generator — soul/jazz voicings (ii-V-I, tritone subs)
+- [x] CZ05 MASTER voice/dilla: add `--groove` flag to CLI — plays background beat during long scans
+- [x] CZ06 MASTER voice/dilla: export generated beat as `.wav` with loop metadata (ACID-compatible)
+- [x] CZ07 MASTER voice/dilla: add velocity humanisation — random ±10% per hit, gaussian distribution
+- [x] CZ08 MASTER voice/dilla: add polyrhythm mode — 3-against-4 or 5-against-4 patterns
 - [ ] CZ09 brgen playlist: use Dilla engine for AI-generated intro music on playlist pages
 - [ ] CZ10 MASTER voice: crossfade TTS response audio with Dilla ambient (ducking on speech start)
 

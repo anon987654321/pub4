@@ -139,6 +139,36 @@ GRADE_PRESETS = {
 # characteristic feel of an MPC3000 played slightly loose on purpose.
 DRUNK_MAX_MS = 22
 
+# Dilla Time (Charnas / Flypaper / Soundfly): NOT random slop. Each role has a
+# habitual displacement — snares early, upbeat hats late, kicks anchor the grid.
+# Roger Linn MPC swing delays even 16ths; Dilla finger-drummed with intentional
+# per-hit nudge. Ranges are ms; deterministic from bar/step so loops repeat.
+DILLA_TIMING_MS = {
+  kick_anchor: 0..5,
+  kick_sync: 4..14,
+  snare: -18..-6,
+  ghost: -10..10,
+  hat_down: -3..4,
+  hat_up: 12..24,
+  bass: 18..32,
+  pad: 6..18
+}.freeze
+
+DILLA_KICK_PATTERNS = [
+  [0, 7, 10, 14],
+  [0, 5, 7, 10, 14],
+  [0, 3, 7, 10, 12, 14],
+  [0, 1, 7, 10, 14],
+  [0, 6, 9, 14]
+].freeze
+
+PAD_CHORD_LOOKUP = PAD_CHORDS.each_with_object({}) { |chord, memo| memo[chord[:name]] = chord }.freeze
+DILLA_PROGRESSIONS = {
+  soul: %w[Fm9 Dbmaj9 Ebmaj9 Abmaj9],
+  jazz: %w[Dm9 Gm9 C7#9\ Hendrix Fmaj13],
+  tritone: %w[Cm9 Gbmaj9 Bbm9 E\ altered]
+}.freeze
+
 CHORD_TEMPLATES = {
   "maj" => [0, 4, 7],
   "min" => [0, 3, 7],
@@ -201,7 +231,19 @@ def chord_expression
   end.join("+")
 end
 
-def scan
+def start_groove_preview
+  return nil unless tool_available?("ffplay")
+
+  tmp = File.join(ROOT, ".groove_tmp.wav")
+  render_dilla(tmp, [8, bars].max)
+  pid = spawn("ffplay", "-nodisp", "-loop", "0", tmp, out: "/dev/null", err: "/dev/null")
+  [pid, tmp]
+rescue SystemCallError
+  nil
+end
+
+def scan(groove: false)
+  groove_pid, groove_tmp = groove ? start_groove_preview : [nil, nil]
   puts JSON.pretty_generate(
     root: ROOT,
     bpm: bpm,
@@ -220,6 +262,12 @@ def scan
     },
     commands: COMMANDS
   )
+ensure
+  if groove_pid
+    Process.kill("TERM", groove_pid) rescue nil
+    Process.wait(groove_pid) rescue nil
+  end
+  FileUtils.rm_f(groove_tmp) if groove_tmp
 end
 
 def council
@@ -758,6 +806,247 @@ end
 
 # --- J Dilla style beat engine ---
 
+def dilla_timing_ms(role, bar_index, step_index)
+  range = DILLA_TIMING_MS.fetch(role)
+  span  = range.end - range.begin
+  seed  = (bar_index * 97) + (step_index * 31) + role.hash.abs
+  range.begin + (seed % (span + 1))
+end
+
+def dilla_progression(mode = :soul)
+  names = DILLA_PROGRESSIONS.fetch(mode.to_sym, DILLA_PROGRESSIONS[:soul])
+  names.map { |name| PAD_CHORD_LOOKUP.fetch(name) }
+end
+
+def dilla_swing_offset(step_index, step_p, swing)
+  return 0.0 if swing.to_f <= 0.0
+  return 0.0 if step_index.even?
+
+  swing_ratio = swing.to_f.clamp(0.0, 100.0) / 100.0
+  (step_p * swing_ratio * 0.5).round(6)
+end
+
+def dilla_velocity(base, bar_index, step_index, spread: 0.10)
+  seed = (bar_index * 1_009) + (step_index * 313) + (base * 10_000).to_i
+  rng  = Random.new(seed)
+  u1   = [rng.rand, 1e-9].max
+  u2   = rng.rand
+  gaussian = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math::PI * u2)
+  [[base * (1.0 + (gaussian * spread)), 0.03].max, 1.0].min.round(3)
+end
+
+def dilla_poly_steps(mode)
+  case mode.to_s
+  when "3" then [0, 5, 10]
+  when "5" then [0, 3, 6, 10, 13]
+  else nil
+  end
+end
+
+def pressure_drone_expr(t, v, root_hz = 38.0)
+  drift = 1.0 + (0.014 * Math.sin(t * 0.19))
+  "between(t,#{t},#{(t + 16.0).round(6)})*#{v}*0.18*exp(-(t-#{t})*0.11)*(sin(2*PI*#{(root_hz * drift).round(4)}*(t-#{t}))+0.42*sin(2*PI*#{(root_hz * 0.5).round(4)}*(t-#{t})))"
+end
+
+def loop_metadata_path(destination)
+  "#{destination}.loop.json"
+end
+
+def write_loop_metadata(destination, beat_p, n_bars, duration)
+  data = {
+    source: File.basename(destination),
+    bpm: bpm.round(3),
+    beat_seconds: beat_p.round(6),
+    bars: n_bars,
+    duration_seconds: duration.round(3),
+    loop_start: 0.0,
+    loop_end: duration.round(3),
+    acid_compatible: true
+  }
+  File.write(loop_metadata_path(destination), JSON.pretty_generate(data) + "\n")
+end
+
+def loop_metadata_args(duration)
+  [
+    "-metadata", "loop_start=0",
+    "-metadata", "loop_end=#{(duration * SAMPLE_RATE).to_i}",
+    "-metadata", "ACID_LOOP=1"
+  ]
+end
+
+def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, drums_only: false, swing: 58.0, pressure: false, polyrhythm: nil)
+  bar_p  = (beat_p * 4.0).round(6)
+  step_p = (beat_p / 4.0).round(6)
+  events = Hash.new { |h, k| h[k] = [] }
+  poly_steps = dilla_poly_steps(polyrhythm)
+
+  n_bars.times do |bar|
+    base = bar * bar_p
+    pattern = DILLA_KICK_PATTERNS[(bar / 4 + bar % 3) % DILLA_KICK_PATTERNS.length]
+    pattern = poly_steps if poly_steps && (bar % 2).zero?
+    pattern = [0, 10] if bar.zero?
+    pattern = [0, 3, 6, 7, 10, 12, 14, 15] if bar == n_bars - 1
+
+    pattern.each_with_index do |step, i|
+      role = step.zero? ? :kick_anchor : :kick_sync
+      t = [base + (step * step_p) + dilla_swing_offset(step, step_p, swing) + (dilla_timing_ms(role, bar, step) / 1000.0), 0.0].max
+      events[:kick] << [t.round(6), dilla_velocity(0.95, bar, step)]
+      events[:bass] << [[t + dilla_timing_ms(:bass, bar, step) / 1000.0, 0.0].max.round(6), dilla_velocity(0.42, bar, step, spread: 0.06)] unless bar.zero?
+    end
+
+    [4, 12].each do |step|
+      t = [base + (step * step_p) + dilla_swing_offset(step, step_p, swing) + (dilla_timing_ms(:snare, bar, step) / 1000.0), 0.0].max
+      events[:snare] << [t.round(6), dilla_velocity(0.60, bar, step)]
+    end
+
+    ghost_steps = bar.even? ? [3, 6, 11] : [6, 11, 15]
+    ghost_steps.each do |step|
+      t = [base + (step * step_p) + dilla_swing_offset(step, step_p, swing) + (dilla_timing_ms(:ghost, bar, step) / 1000.0), 0.0].max
+      events[:ghost] << [t.round(6), dilla_velocity(0.28, bar, step, spread: 0.05)]
+    end
+
+    hat_steps = bar % 8 == 7 ? [0, 4, 8, 12] : (0..15).step(2).to_a
+    hat_steps.each_with_index do |step, i|
+      role = i.even? ? :hat_down : :hat_up
+      t = [base + (step * step_p) + dilla_swing_offset(step, step_p, swing) + (dilla_timing_ms(role, bar, step) / 1000.0), 0.0].max
+      events[:hat] << [t.round(6), dilla_velocity(i.even? ? 0.48 : 0.38, bar, step, spread: 0.08)]
+    end
+
+    open_step = 6
+    events[:open] << [[base + (open_step * step_p) + dilla_swing_offset(open_step, step_p, swing) + 0.008, 0.0].max.round(6), dilla_velocity(0.28, bar, open_step, spread: 0.04)] if [1, 3].include?(bar % 4)
+
+    unless drums_only
+      if bar >= 1 && (bar % chord_bars).zero?
+        chord = pad_chords[(bar / chord_bars) % pad_chords.length]
+        pad_t = base + (dilla_timing_ms(:pad, bar, 0) / 1000.0)
+        sustain = (chord_bars * bar_p * 0.92).round(4)
+        events[:pad] << [pad_t.round(6), dilla_velocity(0.85, bar, 0, spread: 0.03), chord, sustain]
+        chop_step = [1, 2, 5, 9, 13][bar % 5]
+        chop_t = [base + (chop_step * step_p) + dilla_swing_offset(chop_step, step_p, swing), 0.0].max
+        events[:chop] << [chop_t.round(6), dilla_velocity(0.55, bar, chop_step, spread: 0.04), chord]
+      end
+    end
+
+    if pressure
+      pressure_step = [0, 8][bar % 2]
+      pressure_t = [base + (pressure_step * step_p), 0.0].max
+      events[:pressure] << [pressure_t.round(6), dilla_velocity(0.18, bar, pressure_step, spread: 0.02), 38.0 + ((bar % 4) * 0.5)]
+    end
+  end
+  events
+end
+
+def event_expr(events, key, &waveform)
+  events.fetch(key).map { |t, v, *rest| waveform.call(t, v, *rest) }.join("+")
+end
+
+def kick_wave(t, v, *)
+  c = @dilla_cycle
+  tm = (t % c).round(6)
+  "between(mod(t,#{c}),#{tm},#{(tm + 0.42).round(6)})*#{v}*exp(-(mod(t,#{c})-#{tm})*7.4)*sin(2*PI*(45+115*exp(-20*(mod(t,#{c})-#{tm})))*(mod(t,#{c})-#{tm}))"
+end
+
+def bass_wave(t, v, root_hz = 43.0)
+  c = @dilla_cycle
+  tm = (t % c).round(6)
+  lfo = "0.03*sin(2*PI*0.12*(mod(t,#{c})-#{tm}))"
+  "between(mod(t,#{c}),#{tm},#{(tm + 0.46).round(6)})*#{v}*exp(-(mod(t,#{c})-#{tm})*3.2)*sin(2*PI*(#{root_hz}+#{root_hz}*#{lfo})*(mod(t,#{c})-#{tm}))"
+end
+
+def snare_env(events)
+  c = @dilla_cycle
+  hits = events[:snare].map { |t, v| [t, v, 0.18] } + events[:ghost].map { |t, v| [t, v, 0.09] }
+  hits.map do |t, v, d|
+    tm = (t % c).round(6)
+    "between(mod(t,#{c}),#{tm},#{(tm + d).round(6)})*#{v}*exp(-(mod(t,#{c})-#{tm})*#{(d < 0.12 ? 35 : 23).round(1)})"
+  end.join("+")
+end
+
+def hat_env(events, key, decay: 78)
+  c = @dilla_cycle
+  dur = key == :open ? 0.25 : 0.06
+  events.fetch(key).map do |t, v|
+    tm = (t % c).round(6)
+    "between(mod(t,#{c}),#{tm},#{(tm + dur).round(6)})*#{v}*exp(-(mod(t,#{c})-#{tm})*#{decay})"
+  end.join("+")
+end
+
+def pad_voice_layers(f, t, sustain, bar_i, gain: 0.035)
+  drift = 1.0 + (Math.sin((bar_i + 1) * 1.7) * 0.0009)
+  ff = (f * drift).round(4)
+  layers = [
+    "sin(2*PI*#{ff}*(t-#{t}))",
+    "0.55*sin(2*PI*#{(ff * 1.004).round(4)}*(t-#{t}))",
+    "0.32*sin(2*PI*#{(ff * 2.005).round(4)}*(t-#{t}))",
+    "0.20*sin(2*PI*#{(ff * 0.5).round(4)}*(t-#{t}))"
+  ].join("+")
+  "between(t,#{t},#{(t + sustain).round(4)})*#{gain}*exp(-(t-#{t})*0.26)*(0.78+0.22*sin(2*PI*0.23*(t-#{t})))*(#{layers})"
+end
+
+def pad_wave(t, v, chord, sustain, bar_i = 0)
+  voices = chord[:hz].each_with_index.map { |f, i| pad_voice_layers(f, t, sustain, bar_i + i, gain: 0.028 + i * 0.003) }
+  "(#{voices.join('+')})"
+end
+
+def chop_wave(t, v, chord)
+  f = chord[:hz][(t * 10).to_i % chord[:hz].length]
+  "between(t,#{t},#{(t + 0.55).round(6)})*#{v}*0.11*exp(-(t-#{t})*1.7)*(sin(2*PI*#{f}*(t-#{t}))+0.35*sin(2*PI*#{(f * 1.5).round(4)}*(t-#{t})))"
+end
+
+def pressure_wave(t, v, root_hz = 38.0)
+  pressure_drone_expr(t, v, root_hz)
+end
+
+def voice_lead_chords(chords)
+  return chords if chords.length <= 1
+  led = [chords.first]
+  chords.each_cons(2) do |prev, nxt|
+    prev_hz = prev[:hz]
+    next_hz = nxt[:hz].map do |target|
+      candidates = prev_hz.map { |p| [p, p + 12, p - 12, target, target + 12, target - 12] }.flatten.uniq
+      candidates.min_by { |c| (c - target).abs }
+    end
+    led << { name: nxt[:name], hz: next_hz.sort.uniq.first(5) }
+  end
+  led
+end
+
+def dilla_drum_filter(snare_env, hat_env, open_env, pad_expr, chop_expr, duration, sample_input: nil, pressure_input: nil)
+  pad_idx = 4
+  chop_idx = 5
+  filter = []
+  filter << "[0:a]aformat=channel_layouts=stereo[kick]"
+  filter << "[1:a]aformat=channel_layouts=stereo,lowpass=f=140[bass]"
+  filter << "[2:a]aformat=channel_layouts=stereo,asplit=3[ns][nh][no]"
+  filter << "[ns]volume='(#{snare_env})':eval=frame,highpass=f=160,bandpass=f=1600:w=2600[snare]"
+  filter << "[nh]volume='(#{hat_env})':eval=frame,highpass=f=6500[hats]"
+  filter << "[no]volume='(#{open_env})':eval=frame,bandpass=f=5600:w=5200[open]"
+  filter << "[#{pad_idx}:a]aformat=channel_layouts=stereo,lowpass=f=2800,aphaser=speed=0.12:decay=0.35,adelay=9|13,aecho=0.18:0.22:120:0.22[pads]"
+  filter << "[#{chop_idx}:a]aformat=channel_layouts=stereo,highpass=f=120,lowpass=f=5000,aecho=0.18:0.22:90:0.28[chop]"
+  labels  = %w[[kick] [bass] [snare] [hats] [open] [pads] [chop]]
+  weights = %w[1.15 0.88 0.82 0.42 0.35 0.90 0.55]
+  if sample_input
+    filter << "[#{sample_input}:a]aformat=channel_layouts=stereo,atrim=0:#{duration},asetpts=PTS-STARTPTS," \
+              "highpass=f=80,lowpass=f=14000,acrusher=bits=12:samples=2:mix=0.22[sample]"
+    labels  << "[sample]"
+    weights << "0.72"
+  end
+  if pressure_input
+    filter << "[#{pressure_input}:a]aformat=channel_layouts=stereo,lowpass=f=160,highpass=f=28,volume=0.20,acompressor=threshold=-24dB:ratio=3:attack=30:release=220[pressure]"
+    labels  << "[pressure]"
+    weights << "0.28"
+  end
+  filter << "[3:a]volume=0.14,highpass=f=90,lowpass=f=8000[vinyl]"
+  sat = Math.tanh(1.55).round(6)
+  filter << "#{labels.join}[vinyl]amix=inputs=#{labels.length + 1}:weights=#{weights.join(' ')} 0.22:duration=first," \
+            "aeval=exprs='tanh(1.55*val(0))/#{sat}|tanh(1.55*val(1))/#{sat}'," \
+            "acompressor=threshold=-22dB:ratio=2.8:attack=18:release=110:makeup=4," \
+            "acrusher=bits=12:samples=1.69:mix=0.18," \
+            "equalizer=f=45:width_type=o:width=1.2:g=2," \
+            "alimiter=limit=0.93:level_out=0.95[out]"
+  filter.join(";")
+end
+
 # Drunk quantization: return an array of per-beat timing offsets in seconds.
 # Dilla's signature feel — hits land slightly before or after the grid,
 # never random but never locked, like a human with perfect rhythm who chose not to use it.
@@ -807,60 +1096,57 @@ def dilla_bass_expr(root_hz = 43.0)
   "0.60*sin(2*PI*(#{fund})*t)+0.10*sin(2*PI*2*(#{fund})*t)"
 end
 
-# Full Dilla-style render: drunk drums, warbling bass, pad chords, soul sample.
+# Full Dilla-style render: event-scheduled drums, voice-led pads, sample chops.
 def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = nil)
   abort "ffmpeg required" unless tool_available?("ffmpeg")
   FileUtils.mkdir_p(File.dirname(destination))
   n_bars   = bars_count || bars
-  duration = (beat_seconds * 4.0 * n_bars).round(3)
-  drunk    = drunk_offsets(n_bars * 4)
+  beat_p   = beat_seconds
+  duration = (beat_p * 4.0 * n_bars).round(3)
+  swing    = (ENV["SWING"] || "58").to_f
+  pressure = ENV["PRESSURE"] == "1"
+  polyrhythm = ENV["POLYRHYTHM"]
+  pads     = voice_lead_chords(dilla_progression((ENV["PROGRESSION"] || :soul).to_sym))
+  @dilla_cycle = (beat_p * 8.0).round(6)
+  drums    = dilla_schedule(2, beat_p, pads, chord_bars: 4, drums_only: true, swing: swing, pressure: pressure, polyrhythm: polyrhythm)
+  harmony  = dilla_schedule(n_bars, beat_p, pads, chord_bars: 4, swing: swing, pressure: pressure, polyrhythm: polyrhythm)
+  events   = drums.merge(pad: harmony[:pad], chop: harmony[:chop])
 
-  kick_expr  = dilla_kick_expr(duration, drunk)
-  snare_expr = dilla_snare_expr(duration, drunk)
-  bass_expr  = dilla_bass_expr
-  hat_off    = (drunk[0] || 0.0) * 0.5
-  hat_p      = (beat_seconds / 2.0).round(6)
-  hat_expr   = "0.11*(random(0)-0.5)*lt(mod(t+#{hat_off.abs.round(4)},#{hat_p}),0.025)*exp(-mod(t,#{hat_p})*90)"
+  kick_expr = event_expr(events, :kick) { |t, v, *| kick_wave(t, v) }
+  kick_expr = "0" if kick_expr.empty?
+  bass_expr = events[:bass].map { |t, v| bass_wave(t, v, 43.0) }.join("+")
+  bass_expr = "0" if bass_expr.empty?
+  pad_expr  = events[:pad].each_with_index.map { |(t, v, chord, sustain), i| pad_wave(t, v, chord, sustain, i) }.join("+")
+  pad_expr  = "0" if pad_expr.empty?
+  chop_expr = events[:chop].map { |t, v, chord| chop_wave(t, v, chord) }.join("+")
+  chop_expr = "0" if chop_expr.empty?
+  snare_env = snare_env(events)
+  hat_env   = hat_env(events, :hat)
+  open_env  = hat_env(events, :open, decay: 11)
+  pressure_expr = events.fetch(:pressure, []).map { |t, v, root_hz| pressure_wave(t, v, root_hz) }.join("+")
+  pressure_expr = "0" if pressure_expr.empty?
 
   command = ["ffmpeg", "-y",
-             "-f", "lavfi", "-i", "aevalsrc='#{chord_expression}':d=#{duration}:s=#{SAMPLE_RATE}",
-             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
              "-f", "lavfi", "-i", "aevalsrc='#{kick_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
-             "-f", "lavfi", "-i", "aevalsrc='#{snare_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
-             "-f", "lavfi", "-i", "aevalsrc='#{hat_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
+             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "anoisesrc=color=white:r=#{SAMPLE_RATE}:amplitude=0.5:d=#{duration}",
+             "-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.04:d=#{duration}",
+             "-f", "lavfi", "-i", "aevalsrc='#{pad_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{chop_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
 
-  sample_input = nil
-  if File.exist?(SAMPLE_CLEAN)
-    sample_input = 5
-    command += ["-stream_loop", "-1", "-i", SAMPLE_CLEAN]
+  sample_input = File.exist?(SAMPLE_CLEAN) ? 6 : nil
+  command += ["-stream_loop", "-1", "-i", SAMPLE_CLEAN] if sample_input
+  pressure_input = nil
+  if pressure
+    pressure_input = sample_input ? 7 : 6
+    command += ["-f", "lavfi", "-i", "aevalsrc='#{pressure_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
   end
 
-  labels  = %w[[pads] [bass] [kick] [snare] [hats]]
-  weights = %w[0.85 0.90 0.82 0.58 0.20]
-  filter  = []
-  filter << "[0:a]aformat=channel_layouts=stereo,lowpass=f=4000,adelay=5|11[pads]"
-  filter << "[1:a]aformat=channel_layouts=stereo,lowpass=f=180,equalizer=f=80:width_type=o:width=2:g=4[bass]"
-  filter << "[2:a]aformat=channel_layouts=stereo,lowpass=f=160[kick]"
-  filter << "[3:a]aformat=channel_layouts=stereo,highpass=f=200,lowpass=f=6000[snare]"
-  filter << "[4:a]aformat=channel_layouts=stereo,highpass=f=7000[hats]"
-
-  if sample_input
-    filter << "[#{sample_input}:a]aformat=channel_layouts=stereo,atrim=0:#{duration},asetpts=PTS-STARTPTS," \
-              "highpass=f=80,lowpass=f=14000,acrusher=bits=12:samples=2:mix=0.25[sample]"
-    labels  << "[sample]"
-    weights << "0.78"
-  end
-
-  mix_chain = "#{labels.join}amix=inputs=#{labels.length}:weights=#{weights.join(' ')}:duration=first," \
-              "aeval=exprs='tanh(1.6*val(0))/#{Math.tanh(1.6).round(6)}|tanh(1.6*val(1))/#{Math.tanh(1.6).round(6)}'," \
-              "acompressor=threshold=-18dB:ratio=2.5:attack=20:release=120," \
-              "acrusher=bits=12:samples=2:mix=0.15," \
-              "alimiter=limit=0.93:level_out=0.95[out]"
-  filter << mix_chain
-
-  command += ["-filter_complex", filter.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
+  command += ["-filter_complex", dilla_drum_filter(snare_env, hat_env, open_env, pad_expr, chop_expr, duration, sample_input: sample_input, pressure_input: pressure_input),
+              "-map", "[out]", "-t", duration.to_s, *loop_metadata_args(duration), *codec_for(destination), destination]
   sh!(*command)
-  puts "wrote #{destination}"
+  write_loop_metadata(destination, beat_p, n_bars, duration)
+  puts "wrote #{destination} (#{bpm.to_i} BPM, #{n_bars} bars, Dilla Time scheduling)"
 end
 
 # --- Industrial techno engine (Hate podcast aesthetic) ---
@@ -1362,78 +1648,50 @@ def render_dilla_variant(seed, destination)
   srand(seed)
 
   d_bpm      = 84 + rand(15)
-  drunk_ms   = (12 + rand(20)) / 1000.0
   pad_rotate = rand(PAD_CHORDS.length)
-  pad_set    = PAD_CHORDS.rotate(pad_rotate)
-  pad_lfo    = (0.04 + rand * 0.10).round(3)
+  pad_set    = voice_lead_chords(dilla_progression((ENV["PROGRESSION"] || :soul).to_sym).rotate(pad_rotate))
   bass_root  = (40.0 + rand * 10.0).round(2)
-  lfo_rate   = (0.07 + rand * 0.12).round(3)
 
   beat_p   = (60.0 / d_bpm.to_f).round(6)
   n_bars   = [bars, (120.0 / (beat_p * 4)).ceil].max
   duration = (beat_p * 4.0 * n_bars).round(3)
-  bar_p    = (beat_p * 4.0).round(6)
-  half_p   = (beat_p * 2.0).round(6)
-  hat_p    = (beat_p / 2.0).round(6)
+  @dilla_cycle = (beat_p * 8.0).round(6)
+  swing    = (ENV["SWING"] || "58").to_f
+  pressure = ENV["PRESSURE"] == "1"
+  polyrhythm = ENV["POLYRHYTHM"]
+  drums    = dilla_schedule(2, beat_p, pad_set, chord_bars: 4, drums_only: true, swing: swing, pressure: pressure, polyrhythm: polyrhythm)
+  harmony  = dilla_schedule(n_bars, beat_p, pad_set, chord_bars: 4, swing: swing, pressure: pressure, polyrhythm: polyrhythm)
+  events   = drums.merge(pad: harmony[:pad], chop: harmony[:chop])
 
-  drunk  = n_bars.times.flat_map { 4.times.map { (rand * 2 - 1) * drunk_ms } }
-  n_beat = n_bars * 4
-
-  chord_expr = chord_expr_for(pad_set, beat_p, pad_lfo)
-
-  kick_p   = beat_p * 2.0
-  kicks    = drunk.each_slice(4).flat_map { |s| [0.0 + s[0].to_f, beat_p * 2.0 + s[2].to_f] }.uniq
-  kick_parts = kicks.first(64).map do |off|
-    tm = "mod(t-#{off.round(6)},#{(beat_p * 4.0).round(6)})"
-    "0.72*sin(2*PI*(46+88*exp(-#{tm}*20))*#{tm})*exp(-#{tm}*10)"
-  end
-  kick_expr  = "(#{kick_parts.join('+')})"
-
-  beat2      = beat_p + (drunk[1] || 0.0)
-  beat4      = beat_p * 3.0 + (drunk[3] || 0.0)
-  bar_val    = (beat_p * 4.0).round(6)
-  ghosts     = [beat_p * 0.5, beat_p * 1.5, beat_p * 2.5, beat_p * 3.5].map do |pos|
-    tm = "mod(t-#{pos.round(4)},#{bar_val})"
-    "0.05*(random(0)-0.5)*lt(#{tm},0.04)*exp(-#{tm}*50)"
-  end
-  snare_main = [beat2, beat4].map do |pos|
-    tm = "mod(t-#{pos.round(4)},#{bar_val})"
-    "0.52*(random(1)-0.5)*lt(#{tm},0.06)*exp(-#{tm}*28)"
-  end
-  snare_expr = "(#{(snare_main + ghosts).join('+').gsub(/"/, '')})"
-
-  hat_off   = (drunk[0] || 0.0) * 0.5
-  hat_expr  = "0.11*(random(2)-0.5)*lt(mod(t+#{hat_off.abs.round(4)},#{hat_p}),0.025)*exp(-mod(t,#{hat_p})*90)"
-  lfo_amt   = bass_root * 0.03
-  bass_expr = "0.60*sin(2*PI*(#{bass_root}+#{lfo_amt.round(3)}*sin(2*PI*#{lfo_rate}*t))*t)" \
-              "+0.10*sin(2*PI*2*(#{bass_root}+#{lfo_amt.round(3)}*sin(2*PI*#{lfo_rate}*t))*t)"
+  kick_expr = event_expr(events, :kick) { |t, v, *| kick_wave(t, v) }
+  kick_expr = "0" if kick_expr.empty?
+  bass_expr = events[:bass].map { |t, v| bass_wave(t, v, bass_root) }.join("+")
+  bass_expr = "0" if bass_expr.empty?
+  pad_expr  = events[:pad].each_with_index.map { |(t, v, chord, sustain), i| pad_wave(t, v, chord, sustain, i) }.join("+")
+  pad_expr  = "0" if pad_expr.empty?
+  chop_expr = events[:chop].map { |t, v, chord| chop_wave(t, v, chord) }.join("+")
+  chop_expr = "0" if chop_expr.empty?
+  pressure_expr = events.fetch(:pressure, []).map { |t, v, root_hz| pressure_wave(t, v, root_hz) }.join("+")
+  pressure_expr = "0" if pressure_expr.empty?
 
   command = ["ffmpeg", "-y",
-             "-f", "lavfi", "-i", "aevalsrc='#{chord_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
-             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
              "-f", "lavfi", "-i", "aevalsrc='#{kick_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
-             "-f", "lavfi", "-i", "aevalsrc='#{snare_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
-             "-f", "lavfi", "-i", "aevalsrc='#{hat_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
+             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "anoisesrc=color=white:r=#{SAMPLE_RATE}:amplitude=0.5:d=#{duration}",
+             "-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.04:d=#{duration}",
+             "-f", "lavfi", "-i", "aevalsrc='#{pad_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{chop_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
 
-  labels  = %w[[pads] [bass] [kick] [snare] [hats]]
-  weights = %w[0.85 0.90 0.82 0.58 0.20]
-  filter  = []
-  filter << "[0:a]aformat=channel_layouts=stereo,lowpass=f=4000,adelay=5|11[pads]"
-  filter << "[1:a]aformat=channel_layouts=stereo,lowpass=f=180,equalizer=f=80:width_type=o:width=2:g=4[bass]"
-  filter << "[2:a]aformat=channel_layouts=stereo,lowpass=f=160[kick]"
-  filter << "[3:a]aformat=channel_layouts=stereo,highpass=f=200,lowpass=f=6000[snare]"
-  filter << "[4:a]aformat=channel_layouts=stereo,highpass=f=7000[hats]"
-  sat = Math.tanh(1.6).round(6)
-  mix_chain = "#{labels.join}amix=inputs=#{labels.length}:weights=#{weights.join(' ')}:duration=first," \
-              "aeval=exprs='tanh(1.6*val(0))/#{sat}|tanh(1.6*val(1))/#{sat}'," \
-              "acompressor=threshold=-18dB:ratio=2.5:attack=20:release=120," \
-              "acrusher=bits=12:samples=2:mix=0.15," \
-              "alimiter=limit=0.93:level_out=0.95[out]"
-  filter << mix_chain
+  command += ["-f", "lavfi", "-i", "aevalsrc='#{pressure_expr}':d=#{duration}:s=#{SAMPLE_RATE}"] if pressure
 
-  command += ["-filter_complex", filter.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
+  command += ["-filter_complex",
+              dilla_drum_filter(snare_env(events), hat_env(events, :hat), hat_env(events, :open, decay: 11),
+                                pad_expr, chop_expr, duration,
+                                pressure_input: pressure ? 6 : nil),
+              "-map", "[out]", "-t", duration.to_s, *loop_metadata_args(duration), *codec_for(destination), destination]
   sh!(*command)
-  puts "    #{d_bpm} BPM  drunk=#{(drunk_ms * 1000).round}ms  pad_rotate=#{pad_rotate}  bass=#{bass_root}Hz"
+  write_loop_metadata(destination, beat_p, n_bars, duration)
+  puts "    #{d_bpm} BPM  Dilla Time  pad_rotate=#{pad_rotate}  bass=#{bass_root}Hz"
 end
 
 def batch_industrial(n = 5, destination = File.join(ROOT, "industrial.mp3"))
@@ -1445,15 +1703,15 @@ def batch_dilla(n = 5, destination = File.join(ROOT, "dilla_beat.mp3"))
 end
 
 def batch_neosoul(n = 5, destination = File.join(ROOT, "neosoul.mp3"))
-  batch_render(n, destination) { |seed, dest| render_dilla_variant(seed, dest) }
+  batch_render(n, destination) { |seed, dest| srand(seed); render_neosoul(dest) }
 end
 
 def batch_modal(n = 5, destination = File.join(ROOT, "modal.mp3"))
-  batch_render(n, destination) { |seed, dest| render_dilla_variant(seed, dest) }
+  batch_render(n, destination) { |seed, dest| srand(seed); render_modal(dest) }
 end
 
 def batch_gospel(n = 5, destination = File.join(ROOT, "gospel.mp3"))
-  batch_render(n, destination) { |seed, dest| render_dilla_variant(seed, dest) }
+  batch_render(n, destination) { |seed, dest| srand(seed); render_gospel(dest) }
 end
 
 # --- MIDI stack (Raymond Scott Electronium × J Dilla × Bach) ---
@@ -1472,12 +1730,13 @@ MIDI_PPQN        = 480
 
 module BachEngine
   FORBIDDEN_PARALLELS = [7, 12].freeze
+  PREFERRED_INTERVALS = [3, 4, 5, 8, 9].freeze
 
   def self.valid_counterpoint?(mel, ctr, prev_mel, prev_ctr)
-    interval = (mel - ctr).abs
+    interval = (mel - ctr).abs % 12
     return false if [0, 1, 11].include?(interval)
     if prev_mel && prev_ctr
-      prev_interval = (prev_mel - prev_ctr).abs
+      prev_interval = (prev_mel - prev_ctr).abs % 12
       m_dir = mel <=> prev_mel
       c_dir = ctr <=> prev_ctr
       return false if m_dir == c_dir && m_dir != 0 &&
@@ -1486,11 +1745,30 @@ module BachEngine
     true
   end
 
+  def self.score_candidate(mel, ctr, prev_mel, prev_ctr)
+    score = 0.0
+    interval = (mel - ctr).abs % 12
+    score += 3.0 if PREFERRED_INTERVALS.include?(interval)
+    score -= 2.0 if [0, 1, 11].include?(interval)
+    if prev_mel && prev_ctr
+      mel_motion = (mel - prev_mel).abs
+      ctr_motion = (ctr - prev_ctr).abs
+      score += 2.0 if mel_motion <= 2 && ctr_motion <= 2
+      score += 1.5 if (mel <=> prev_mel) != (ctr <=> prev_ctr) && mel != prev_mel && ctr != prev_ctr
+      score -= 3.0 if mel_motion.zero? && ctr_motion.zero?
+    end
+    score
+  end
+
   def self.generate_counterpoint(melody, scale)
     prev_m = prev_c = nil
     melody.map do |mel_note|
       valid = scale.select { |c| valid_counterpoint?(mel_note, c, prev_m, prev_c) }
-      chosen = valid.sample || scale.sample
+      chosen = if valid.empty?
+                 scale.sample
+               else
+                 valid.max_by { |c| score_candidate(mel_note, c, prev_m, prev_c) + rand * 0.4 }
+               end
       prev_m, prev_c = mel_note, chosen
       chosen
     end
@@ -1636,8 +1914,10 @@ def midi_generate(destination = File.join(ROOT, "dilla_electronium.mid"))
   })
 end
 
+groove_requested = ARGV.delete("--groove")
+
 case ARGV.shift
-when "scan" then scan
+when "scan" then scan(groove: groove_requested)
 when "sweep" then sweep
 when "council" then council
 when "debug" then debug
