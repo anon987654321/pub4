@@ -10,8 +10,9 @@ Rails.application.configure do
   # Code is not reloaded between requests.
   config.enable_reloading = false
 
-  # Eager load code on boot for better performance and memory savings (ignored by Rake tasks).
-  config.eager_load = true
+  # Master gem uses manual require_relative for nested modules; eager_load trips Zeitwerk.
+  # Falcon boots /up immediately; Master.bootstrap_container loads the agent stack lazily.
+  config.eager_load = false
 
   # Full error reports are disabled.
   config.consider_all_requests_local = false
