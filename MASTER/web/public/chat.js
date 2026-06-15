@@ -341,6 +341,13 @@ document.querySelectorAll('.tool').forEach(btn => {
     const cmd = btn.dataset.cmd;
     const act = btn.dataset.act;
     if (cmd) { input.value = cmd; input.focus(); return; }
-    if (act === 'mic') startMic(btn);
+    if (act === 'mic') {
+      // startMic lives in chat_actions.js, which is not loaded on every entry
+      // point. Fall back to the always-loaded face voice API so the mic button
+      // never throws ReferenceError. (PRESERVE_THEN_IMPROVE_NEVER_BREAK)
+      if (typeof startMic === 'function') { startMic(btn); return; }
+      btn.classList.toggle('active');
+      (window.MASTERVoice?.toggleMic || window.MASTER_FACE?.ttsToggleMic)?.();
+    }
   });
 });

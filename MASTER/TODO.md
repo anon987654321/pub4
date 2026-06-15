@@ -205,6 +205,13 @@ RuleCoverageRule: every Rule subclass needs a test file.
 
 ## L. Web surface (MASTER/web/)
 
+**2026-06-15 web layer pass (WCAG + robustness)**: Applied per provided review/patch.
+- FIXED: Removed tabindex="0" from all <canvas id="face" aria-hidden="true"> (WCAG 4.1.2; decorative canvas; keyboard is document-level). Affected: chat/index, layouts/application, plus index.html.erb variants for hygiene.
+- FIXED: chat.js .tool mic handler guarded (startMic may be in unloaded chat_actions.js on direct chat entrypoint). Falls back to window.MASTERVoice?.toggleMic || MASTER_FACE?.ttsToggleMic; startMic path preserved. Includes PRESERVE_THEN_IMPROVE comment. node --check OK.
+- Created MASTER/web/MASTER_web_layer_pass_2026-06-15.md with full review (fixed + flagged + non-issues + not-done).
+- Flagged (left as-is): dupe entrypoints (web/{face.css,face.js,index.html.erb} vs public/ copies; public/index.html.erb is unprocessed ERB with richer UI), Inter font gap in served chat vs face.css, face.css append-dupe rules (#chat-log etc.).
+- See the .md for full text + rationale. All live served canvases + mic now correct. (Cross-ref Q4 face.js, FA* particle, O* web controller items.)
+
 - [x] L01 All .erb views: scan with HTML_LANG, META_CHARSET, IMG_ALT, BUTTON_OVER_ANCHOR — fix violations
 - [x] L02 All .css/.scss: scan with MOBILE_FIRST, NO_IMPORTANT, NO_IMPORT_SCSS — fix violations
 - [x] L03 All .css: scan with MAGIC_COLOR — extract raw hex values to CSS custom properties
