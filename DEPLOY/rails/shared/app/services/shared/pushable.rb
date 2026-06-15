@@ -4,14 +4,9 @@
 # and centralize push notification logic. Used by locations and messages.
 module Shared
   module Pushable
-    VAPID = {
-      subject:     -> { "mailto:#{ENV.fetch("VAPID_SUBJECT", "admin@brgen.no")}" },
-      public_key:  -> { ENV.fetch("VAPID_PUBLIC_KEY",  "") },
-      private_key: -> { ENV.fetch("VAPID_PRIVATE_KEY", "") }
-    }.freeze
-
     def push_to(user, title:, body: "", url: "/")
-      return if VAPID[:public_key].call.empty?
+      return unless Shared::Vapid.configured?
+      return unless user.respond_to?(:push_subscriptions)
 
       user.push_subscriptions.each do |sub|
         Webpush.payload_send(
@@ -19,7 +14,7 @@ module Shared
           endpoint: sub.endpoint,
           p256dh:   sub.p256dh,
           auth:     sub.auth,
-          vapid:    { subject: VAPID[:subject].call, public_key: VAPID[:public_key].call, private_key: VAPID[:private_key].call }
+          vapid:    Shared::Vapid.webpush_options
         )
       rescue Webpush::ExpiredSubscription, Webpush::InvalidSubscription
         sub.destroy

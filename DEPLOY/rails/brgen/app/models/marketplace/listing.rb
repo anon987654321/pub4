@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class Marketplace::Listing < ApplicationRecord
-  # Engine-ized: Shared concerns via pub4-shared (autoloaded)
+  include Shared::ActivityTrackable
+  tracks_activity created: "ListingCreated", source_vertical: "marketplace", actor: :user
+
   include Shared.concern(:Reactable) rescue nil
   include Shared.concern(:Notifiable) rescue nil
   belongs_to :user

@@ -67,7 +67,7 @@
     <%= turbo_stream_from "brgen:matches:#{Current.user.id}" %>
     <% unread = Conversation.for_user(Current.user).sum { |c| c.unread_count_for(Current.user) } %>
     <div data-controller="push"
-         data-push-vapid-key-value="<%= ENV.fetch("VAPID_PUBLIC_KEY", "") %>"
+         data-push-vapid-key-value="<%= Shared::Vapid.public_key %>"
          data-push-subscribe-url-value="<%= push_subscriptions_path %>"
          data-push-unread-value="<%= unread %>"
          data-turbo-permanent></div>

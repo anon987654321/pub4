@@ -2,7 +2,8 @@
 
 class Reaction < ApplicationRecord
   # Engine-ized Shared (tranche10)
-  include Shared.concern(:ActivityTrackable) rescue nil
+  include Shared::ActivityTrackable
+  tracks_activity created: "ReactionCreated", source_vertical: "social"
   include Shared.concern(:Notifiable) rescue nil
 
   KINDS = %w[like love laugh wow sad angry local].freeze

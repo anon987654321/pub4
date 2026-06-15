@@ -6,6 +6,7 @@ module Shared
     %w[app/models app/models/concerns app/services app/controllers app/controllers/concerns app/policies app/helpers].each do |dir|
       config.autoload_paths << root.join(dir).to_s
     end
+    config.paths["db/migrate"] << root.join("db/migrate").to_s
     config.active_record.schema_format = :ruby if config.respond_to?(:active_record)
 
     initializer "shared.view_paths" do

@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Dating::Like < ApplicationRecord
+  include Shared::ActivityTrackable
+  tracks_activity created: "DatingLike", source_vertical: "dating", visibility: "private", actor: :liker
+
   belongs_to :liker, class_name: "User"
   belongs_to :likee, class_name: "User"
   validates :liker_id, uniqueness: { scope: :likee_id }

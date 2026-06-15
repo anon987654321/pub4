@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class Message < ApplicationRecord
-  # Engine-ize: Shared via pub4-shared
+  include Shared::ActivityTrackable
+  tracks_activity created: "MessageSent", source_vertical: "messages", actor: :sender
+
   include Shared.concern(:Notifiable) rescue nil
   include Shared.concern(:Reactable) rescue nil
   belongs_to :conversation

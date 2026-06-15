@@ -2,6 +2,8 @@
 
 class Comment < ApplicationRecord
   include Shared::Votable
+  include Shared::ActivityTrackable
+  tracks_activity created: "CommentCreated", source_vertical: "social", actor: :user
 
   belongs_to :user
   belongs_to :commentable, polymorphic: true, touch: true

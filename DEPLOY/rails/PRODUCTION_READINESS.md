@@ -45,12 +45,13 @@ Ports: see `DEPLOY/rails/apps.yml`.
 4. Verify `curl https://ai.brgen.no/up` and WebGL face in private window.
 5. Run `bundle34 exec bin/ci` on each app on VPS; update this table with dates.
 
-## Wave 1 (still open)
+## Wave 1 (repo runtime — 2026-06-15)
 
-- AN201: full `rails generate authentication` + migrations (baselines copied only).
-- Activity graph: mandatory `record_activity!` on all core actions.
-- Engine deprecate: remove `install_an_stack.sh` copy path; bundle-only.
-- AN106: VAPID keys in credentials + push wired on all apps.
+- [x] AN201: `Shared::Authentication` in engine; 6 apps alias via thin concern.
+- [x] Activity: `tracks_activity` macro + `Shared::ActivityEventRecorder`; brgen core models wired.
+- [x] Engine: `install_an_stack.sh` no-op; bundle-only.
+- [x] AN106: `Shared::Vapid` + initializer; `master.env.sample`; `Pushable` uses engine config.
+- [ ] VPS: `bundle34 exec bin/ci` per app; run engine guest migration.
 
 ## relayd alignment (2026-06-15)
 

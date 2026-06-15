@@ -47,7 +47,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     if @listing.save
       preset = params[:marketplace_listing][:preset].presence
       PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos") if preset && @listing.photos.attached?
-      @listing.record_activity!("ListingCreated", actor: Current.user, source_vertical: "marketplace", locality: @listing.location)
+
       redirect_to marketplace_listing_path(@listing), notice: "Listed"
     else
       render :new, status: :unprocessable_entity

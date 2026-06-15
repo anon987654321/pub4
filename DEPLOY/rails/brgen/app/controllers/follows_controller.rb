@@ -8,7 +8,7 @@ class FollowsController < ApplicationController
     @follow = Follow.find_or_initialize_by(follower: Current.user, followed: @user)
     if @follow.new_record?
       @follow.save!
-      @follow.record_activity!("FollowCreated", actor: Current.user) rescue nil
+
       @active = true
     else
       @follow.destroy!

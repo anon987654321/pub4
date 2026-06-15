@@ -7,7 +7,8 @@ class Post < ApplicationRecord
   include Shared.concern(:Votable) rescue include Shared::Votable
   include Shared.concern(:Commentable) rescue include Shared::Commentable
   include Shared.concern(:Taggable) rescue include Shared::Taggable
-  include Shared.concern(:ActivityTrackable) rescue include Shared::ActivityTrackable  # Wave 1: mandatory spine
+  include Shared::ActivityTrackable
+  tracks_activity created: "PostCreated", source_vertical: "social", actor: :user
 
   has_one_attached :image
 
