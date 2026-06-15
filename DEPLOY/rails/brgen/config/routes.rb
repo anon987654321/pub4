@@ -162,6 +162,7 @@ Rails.application.routes.draw do
   resources :push_subscriptions, only: [:create, :destroy]
   get "nearby" => "nearby#index", as: :nearby
   post "nearby" => "nearby#create"
+  get "search" => "search#index", as: :global_search
 
   root "home#index"
   get "up" => "rails/health#show", as: :rails_health_check

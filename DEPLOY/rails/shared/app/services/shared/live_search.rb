@@ -2,28 +2,89 @@
 
 module Shared
   class LiveSearch
-    def self.call(scope, query:, columns:)
-      new(scope, query:, columns:).call
+    Result = Data.define(:scope, :result_count, :latency_ms, :suggestions)
+
+    def self.search(scope, query:, columns:, vertical: nil, app: nil)
+      new(scope, query:, columns:, vertical:, app:).search
     end
 
-    def initialize(scope, query:, columns:)
+    def self.call(scope, query:, columns:)
+      search(scope, query:, columns:).scope
+    end
+
+    def initialize(scope, query:, columns:, vertical: nil, app: nil)
       @scope = scope
       @query = query.to_s.strip
       @columns = Array(columns)
+      @vertical = vertical
+      @app = app
     end
 
-    def call
-      return scope if query.empty? || columns.empty?
-
-      like = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
-      operator = sqlite? ? "LIKE" : "ILIKE"
-      predicate = columns.map { |column| "#{column} #{operator} :query" }.join(" OR ")
-      scope.where(predicate, query: like)
+    def search
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      filtered = filtered_scope
+      count = safe_count(filtered)
+      latency_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+      log_analytics(count, latency_ms)
+      suggestions = count.zero? && query.present? ? related_terms : []
+      Result.new(scope: filtered, result_count: count, latency_ms: latency_ms, suggestions: suggestions)
     end
 
     private
 
-    attr_reader :scope, :query, :columns
+    attr_reader :scope, :query, :columns, :vertical, :app
+
+    def filtered_scope
+      return scope if query.blank? || columns.empty?
+
+      if fts_scope?
+        begin
+          return scope.merge(scope.klass.search(query))
+        rescue StandardError => e
+          Rails.logger.warn("live_search fts fallback: #{e.message}")
+        end
+      end
+
+      like = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
+      operator = sqlite? ? "LIKE" : "ILIKE"
+      table = scope.klass.table_name
+      predicate = columns.map { |column| "#{table}.#{column} #{operator} :query" }.join(" OR ")
+      scope.where(predicate, query: like)
+    end
+
+    def fts_scope?
+      scope.klass.respond_to?(:search) &&
+        scope.connection.data_source_exists?("#{scope.klass.table_name}_fts")
+    rescue StandardError
+      false
+    end
+
+    def safe_count(filtered)
+      filtered.limit(500).count
+    end
+
+    def log_analytics(count, latency_ms)
+      return if query.blank?
+
+      payload = {
+        query: query,
+        result_count: count,
+        latency_ms: latency_ms,
+        vertical: vertical,
+        app: app_name
+      }
+      Rails.logger.info("search_analytics #{payload.to_json}")
+      Shared::EventEmitter.call("search.query", **payload) if defined?(Shared::EventEmitter)
+    end
+
+    def related_terms
+      tokens = query.downcase.split(/\W+/).reject { |token| token.length < 3 }
+      tokens.flat_map { |token| [token, token.chop, "#{token}s"] }.uniq.first(5)
+    end
+
+    def app_name
+      app.presence || Rails.application.class.module_parent_name.to_s.downcase
+    end
 
     def sqlite?
       ActiveRecord::Base.connection.adapter_name.downcase.include?("sqlite")

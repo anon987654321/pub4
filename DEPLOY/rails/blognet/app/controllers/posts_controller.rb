@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class PostsController < ApplicationController
+  include Shared::LiveSearchable
+
   before_action :require_authentication, except: %i[index show]
   before_action :set_blog, except: %i[share]
   before_action :set_post, only: %i[show edit update destroy]
@@ -8,7 +10,9 @@ class PostsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:share]
 
   def index
-    @pagy, @posts = pagy(@blog.posts.published.includes(:user, :tags))
+    scope = @blog.posts.published.includes(:user, :tags)
+    scope = apply_live_search(scope, columns: %w[title], vertical: "posts") if live_search_query.present?
+    @pagy, @posts = pagy(scope)
   end
 
   def show

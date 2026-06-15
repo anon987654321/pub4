@@ -1,0 +1,12 @@
+<% if defined?(Brgen::DomainRegistry) %>
+  <details class="city-switcher">
+    <summary><%= Current.city.presence || "City" %></summary>
+    <ul>
+      <% Brgen::DomainRegistry::ENTRIES.each do |entry| %>
+        <li>
+          <%= link_to entry.city, "https://#{entry.domain}", rel: "noopener" %>
+        </li>
+      <% end %>
+    </ul>
+  </details>
+<% end %>

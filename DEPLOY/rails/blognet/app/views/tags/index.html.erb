@@ -1,0 +1,23 @@
+<% content_for :title, "Tags" %>
+
+<header class="page-header">
+  <h1>Tags</h1>
+</header>
+
+<div data-controller="live-search" role="search" aria-label="Search tags">
+  <%= form_with url: tags_path, method: :get, data: { turbo_frame: "live_search_results" } do |f| %>
+    <%= f.search_field :q, value: params[:q], placeholder: "Search tags…",
+          data: { live_search_target: "input", action: "input->live-search#input" } %>
+  <% end %>
+</div>
+
+<%= render "shared/search_suggestions", suggestions: search_suggestions %>
+
+<turbo-frame id="live_search_results">
+  <ul>
+    <% @tags.each do |tag| %>
+      <li><%= tag.name %></li>
+    <% end %>
+  </ul>
+  <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+</turbo-frame>

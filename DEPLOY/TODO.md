@@ -1902,7 +1902,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] BV23 blognet: implement paywall (metered free articles, Stripe Checkout)
 - [ ] BV24 blognet: add newsletter integration (email on publish, unsubscribe)
 - [ ] BV25 blognet: add author analytics dashboard
-- [ ] BV26 hjerterom: implement beneficiary matching algorithm (inventory to profile)
+- [x] BV26 hjerterom: implement beneficiary matching algorithm (inventory to profile)
 - [ ] BV27 hjerterom: add public impact dashboard (`/impact`)
 - [ ] BV28 hjerterom: add Partner model and transfer tracking
 - [ ] BV29 hjerterom: integrate OSRM for route optimisation

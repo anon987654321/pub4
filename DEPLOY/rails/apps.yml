@@ -38,12 +38,12 @@ apps:
         - { name: Hotwire broadcasts_refreshes,                            status: done }
         - { name: OmniAuth (Vipps / Google / Snapchat),                       status: port }
         - { name: Reaction (polymorphic on posts/messages, ActionCable),    status: port }
-        - { name: Follow (self-join, no self-follows, notifications),       status: port }
-        - { name: Notification (like/follow/custom, mark_as_read),          status: port }
-        - { name: DirectMessage (conversation_between, mark_as_read),       status: port }
-        - { name: full-text search (SQLite FTS5),                           status: port }
+        - { name: Follow (self-join, no self-follows, notifications),       status: done }
+        - { name: Notification (like/follow/custom, mark_as_read),          status: done }
+        - { name: DirectMessage (conversation_between, mark_as_read),       status: done }
+        - { name: full-text search (SQLite FTS5),                           status: done, notes: "posts_fts + marketplace live search + /search global endpoint" }
         - { name: reading_time_minutes on posts,                            status: port }
-        - { name: city-scoped subdomain routing,                           status: missing }
+        - { name: city-scoped subdomain routing,                           status: done, notes: "DomainRegistry + city switcher UI" }
         - { name: proximity / geolocation filtering,                       status: missing }
         - { name: moderation tools,                                        status: missing }
         - { name: media pipeline (Active Storage variants),                status: missing }
@@ -65,11 +65,11 @@ apps:
         - { name: live stream infrastructure,                              status: planned }
         - { name: VideoPublished / BroadcastScheduled events,             status: missing }
       subapp_dating:
-        - { name: Dating::Profile (user, bio, interests),                   status: port }
-        - { name: Dating::Like (user, liked_user),                          status: port }
-        - { name: Dating::Dislike (user, disliked_user),                    status: port }
-        - { name: Dating::Match (MatchmakingService — mutual likes),        status: port }
-        - { name: swipe UI (Turbo Streams, Stimulus),                       status: port }
+        - { name: Dating::Profile (user, bio, interests),                   status: done }
+        - { name: Dating::Like (user, liked_user),                          status: done }
+        - { name: Dating::Dislike (user, disliked_user),                    status: done }
+        - { name: Dating::Match (MatchmakingService — mutual likes),        status: done }
+        - { name: swipe UI (Turbo Streams, Stimulus),                       status: done }
         - { name: city + radius filter,                                     status: missing }
         - { name: match → messaging handoff,                                status: missing }
         - { name: photos on profile,                                        status: missing }
@@ -77,19 +77,19 @@ apps:
       subapp_marketplace:
         notes: Old impl used Solidus — pub4 needs native Rails 8 models instead
         items:
-        - { name: Marketplace::Product (name, description, price, image),   status: port }
-        - { name: Marketplace::Category,                                    status: port }
+        - { name: Marketplace::Product (name, description, price, image),   status: done, notes: "Marketplace::Listing native Rails 8" }
+        - { name: Marketplace::Category,                                    status: done }
         - { name: Marketplace::Review,                                      status: port }
-        - { name: schema.org Product microdata in views,                    status: port }
-        - { name: Marketplace::Order (state machine),                       status: missing }
-        - { name: buyer–seller Chat,                                        status: missing }
+        - { name: schema.org Product microdata in views,                    status: done }
+        - { name: Marketplace::Order (state machine),                       status: done }
+        - { name: buyer–seller Chat,                                        status: done, notes: "Conversation#create from listing show" }
         - { name: geo-localized listings,                                   status: missing }
         - { name: locale subdomain routing (markedsplass/markadur/…),      status: missing }
         - { name: FTS filtering,                                            status: port }
         - { name: AI recommendations,                                       status: planned }
       subapp_playlist:
-        - { name: Playlist::Set (name, description, user),                  status: port }
-        - { name: Playlist::Track (name, artist, audio_url, set),           status: port }
+        - { name: Playlist::Set (name, description, user),                  status: done }
+        - { name: Playlist::Track (name, artist, audio_url, set),           status: done }
         - { name: schema.org microdata in views,                            status: port }
         - { name: Playlist::Listen,                                         status: missing }
         - { name: embeddable player,                                        status: port }
@@ -98,8 +98,8 @@ apps:
         - { name: expiration dates on tracks,                               status: missing }
         - { name: creator donations / ad-free tier,                         status: planned }
       subapp_takeaway:
-        - { name: Takeaway::Item (name, description, price),                status: port }
-        - { name: Takeaway::Order (user, status:string),                    status: port }
+        - { name: Takeaway::Item (name, description, price),                status: done, notes: "Takeaway::MenuItem" }
+        - { name: Takeaway::Order (user, status:string),                    status: done }
         - { name: Restaurant model (geocoding),                             status: missing }
         - { name: MenuItem availability state machine,                      status: missing }
         - { name: Order full state machine (placed→delivered),              status: missing }
@@ -160,17 +160,17 @@ apps:
     public: true
     features:
       core:
-        - { name: Verse model,                                             status: port }
+        - { name: Verse model,                                             status: done }
         - { name: Translation model (Aramaic/KJV/multi-language),         status: port }
         - { name: Analysis model (AI linguistic, confidence scoring),      status: port }
         - { name: Comment model (threaded),                                status: port }
-        - { name: full-text scripture search,                              status: port }
+        - { name: full-text scripture search,                              status: done, notes: "verses_fts + scriptures#search" }
         - { name: real-time translation (Hotwire),                        status: port }
         - { name: AI linguistic analysis (OpenAI / Langchain),             status: port }
         - { name: Norwegian interface,                                     status: port }
         - { name: Genesis Ch.1 trilingual seed data,                      status: port }
-        - { name: Book / Chapter navigation,                               status: missing }
-        - { name: collaborative annotation (Annotation model),             status: missing }
+        - { name: Book / Chapter navigation,                               status: done }
+        - { name: collaborative annotation (Annotation model),             status: port, notes: "model + broadcasts; UI still open (BV17)" }
         - { name: Theme / Doctrine cross-reference,                        status: missing }
         - { name: historical context layer,                                status: missing }
         - { name: linguistic context (Hebrew/Greek morphology),            status: missing }
@@ -193,10 +193,10 @@ apps:
     public: true
     features:
       core:
-        - { name: Blog model,                                              status: port }
-        - { name: Post / Article model,                                    status: port }
-        - { name: Category model,                                          status: port }
-        - { name: Comment model (polymorphic),                             status: port }
+        - { name: Blog model,                                              status: done }
+        - { name: Post / Article model,                                    status: done }
+        - { name: Category model,                                          status: done }
+        - { name: Comment model (polymorphic),                             status: done }
         - { name: Like model (polymorphic),                                status: port }
         - { name: multi-domain megablog routing (foodielicio.us etc.),    status: port }
         - { name: public/megablog/private privacy tiers,                   status: port }
@@ -246,10 +246,10 @@ apps:
         - { name: Platform (name) — OpenBSD/FreeBSD/NetBSD,                  status: port }
         - { name: Category (name, platform),                                status: port }
         - { name: Port (name, summary, url, description, category, platform), status: port, notes: generator calls model Port not Package }
-        - { name: Dependency model,                                         status: missing, notes: described in README but not in generator }
-        - { name: SecurityAdvisory model,                                   status: missing, notes: described in README but not in generator }
-        - { name: Maintainer model,                                         status: missing }
-        - { name: live search on name/summary/description (Hotwire),       status: port }
+        - { name: Dependency model,                                         status: done }
+        - { name: SecurityAdvisory model,                                   status: done }
+        - { name: Maintainer model,                                         status: done }
+        - { name: live search on name/summary/description (Hotwire),       status: done, notes: "ports_fts + PortsSearch" }
         - { name: FTP import of real ports tree (OpenBSD/FreeBSD/NetBSD),  status: port }
         - { name: dependency tree visualization,                            status: missing }
         - { name: ports tree scheduled re-import job,                       status: missing }
@@ -271,12 +271,12 @@ apps:
     public: true
     features:
       core:
-        - { name: Donation / FoodItem intake model,                        status: missing }
-        - { name: Box (weekly food parcel) coordination,                   status: missing }
-        - { name: Volunteer model (shifts, availability),                  status: missing }
-        - { name: shift scheduling + notifications,                        status: missing }
-        - { name: Donor model + management,                                status: missing }
-        - { name: Beneficiary model + matching,                            status: missing }
+        - { name: Donation / FoodItem intake model,                        status: done }
+        - { name: Box (weekly food parcel) coordination,                   status: done }
+        - { name: Volunteer model (shifts, availability),                  status: done }
+        - { name: shift scheduling + notifications,                        status: port }
+        - { name: Donor model + management,                                status: done }
+        - { name: Beneficiary model + matching,                            status: done, notes: "beneficiaries#match dietary tag matching" }
         - { name: clothing / toy / book reuse tracking,                    status: missing }
         - { name: distribution route optimization,                         status: missing }
       planned:

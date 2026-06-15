@@ -1,12 +1,19 @@
 # frozen_string_literal: true
 
 class FoodListingsController < ApplicationController
+  include Shared::LiveSearchable
+
   allow_unauthenticated_access only: %i[index show]
   before_action :set_listing, only: %i[show edit update destroy]
   before_action :authorize!, only: %i[edit update destroy]
 
   def index
-    @pagy, @listings = pagy(FoodListing.available.order(created_at: :desc))
+    scope = FoodListing.available.order(created_at: :desc)
+    scope = apply_live_search(scope, columns: %w[title description city dietary_info], vertical: "food_listings") if live_search_query.present?
+    if params[:lat].present? && params[:lng].present? && scope.respond_to?(:near)
+      scope = scope.near(params[:lat], params[:lng], params[:radius_km] || 10)
+    end
+    @pagy, @listings = pagy(scope)
   end
 
   def show

@@ -36,6 +36,7 @@
             class: "btn btn-primary" %>
 
       <a href="#make-offer" class="btn btn-ghost">Make custom offer</a>
+      <%= button_to "Message seller", user_conversations_path(@listing.user), method: :post, class: "btn btn-ghost" %>
     </div>
   <% end %>
 </article>

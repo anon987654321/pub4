@@ -1,10 +1,22 @@
 # frozen_string_literal: true
 
 class Tv::ChannelsController < Tv::BaseController
+  include Shared::LiveSearchable
+
   allow_unauthenticated_access only: %i[index show]
   before_action :set_channel, only: %i[show edit update destroy subscribe unsubscribe]
 
-  def index    = (@pagy, @channels = pagy(Tv::Channel.popular.includes(:user)))
+  def index
+    scope = Tv::Channel.all.includes(:user)
+    if live_search_query.present?
+      channel_ids = apply_live_search(scope, columns: %w[name description], vertical: "tv").pluck(:id)
+      video_ids = apply_live_search(Tv::Video.published, columns: %w[title description], vertical: "tv").pluck(:tv_channel_id)
+      scope = scope.where(id: (channel_ids + video_ids).uniq)
+    else
+      scope = scope.popular
+    end
+    @pagy, @channels = pagy(scope)
+  end
   def show     = (@pagy, @videos = pagy(@channel.videos.published))
   def new      = (@channel = Tv::Channel.new)
   def edit;    end

@@ -12,8 +12,11 @@ class Resource < ApplicationRecord
   geocoded_by :address
   after_validation :geocode, if: :address_changed?
 
-  scope :verified,   -> { where(verified: true) }
+  scope :verified, -> { where(verified: true) }
   include Shared::GeoLocatable
-  # nearby (bbox standardized) + haversine from concern (old euclid dupe removed)
-  scope :by_type,    ->(t) { where(resource_type: t) }
+  scope :by_type, ->(t) { where(resource_type: t) }
+  scope :search, ->(q) {
+    ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM resources_fts WHERE resources_fts MATCH ?", q]))
+    ids.any? ? where(id: ids) : none
+  }
 end

@@ -27,4 +27,7 @@ for app in ${1:-$APPS}; do
   copy_one "$app" app/services/shared/live_search.rb app/services/shared/live_search.rb
   copy_one "$app" app/services/shared/event_emitter.rb app/services/shared/event_emitter.rb
   copy_one "$app" app/views/shared/_copyable.html.erb app/views/shared/_copyable.html.erb
+  copy_one "$app" app/javascript/controllers/live_search_controller.js app/javascript/controllers/live_search_controller.js
+  copy_one "$app" app/views/shared/_search_loading.html.erb app/views/shared/_search_loading.html.erb
+  copy_one "$app" app/views/shared/_search_suggestions.html.erb app/views/shared/_search_suggestions.html.erb
 done

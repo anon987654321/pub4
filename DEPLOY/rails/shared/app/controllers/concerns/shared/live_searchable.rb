@@ -5,7 +5,7 @@ module Shared
     extend ActiveSupport::Concern
 
     included do
-      helper_method :live_search_query if respond_to?(:helper_method)
+      helper_method :live_search_query, :search_suggestions if respond_to?(:helper_method)
     end
 
     private
@@ -14,20 +14,33 @@ module Shared
       params[:q].to_s.strip
     end
 
-    def live_search_scope(scope, columns:)
-      query = live_search_query
-      return scope if query.empty?
+    def search_suggestions
+      @search_suggestions || []
+    end
 
-      adapter = ActiveRecord::Base.connection.adapter_name.downcase
-      if adapter.include?("sqlite")
-        like = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
-        predicate = columns.map { |column| "#{column} LIKE :query" }.join(" OR ")
-        scope.where(predicate, query: like)
-      else
-        like = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
-        predicate = columns.map { |column| "#{column} ILIKE :query" }.join(" OR ")
-        scope.where(predicate, query: like)
+    def live_search_scope(scope, columns:)
+      apply_live_search(scope, columns: columns)
+    end
+
+    def apply_live_search(scope, columns:, vertical: nil, filters: {})
+      filters.each do |key, value|
+        scope = scope.where(key => value) if value.present?
       end
+      return scope if live_search_query.blank?
+
+      @live_search_result = Shared::LiveSearch.search(
+        scope,
+        query: live_search_query,
+        columns: columns,
+        vertical: vertical,
+        app: live_search_app_name
+      )
+      @search_suggestions = @live_search_result.suggestions
+      @live_search_result.scope
+    end
+
+    def live_search_app_name
+      Rails.application.class.module_parent_name.to_s.downcase
     end
 
     def render_live_search(collection:, partial:, locals: {})

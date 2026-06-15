@@ -1,14 +1,19 @@
 # frozen_string_literal: true
 
 class Takeaway::RestaurantsController < Takeaway::BaseController
+  include Shared::LiveSearchable
+
   allow_unauthenticated_access only: %i[index show]
   before_action :set_restaurant, only: %i[show edit update destroy]
 
   def index
     scope = Takeaway::Restaurant.active.includes(:user)
     scope = scope.where(cuisine_type: params[:cuisine]) if params[:cuisine].present?
-    scope = scope.where("name LIKE ?", "%#{params[:q]}%") if params[:q].present?
-    @pagy, @restaurants = pagy(scope.popular)
+    scope = apply_live_search(scope, columns: %w[name city cuisine_type description], vertical: "takeaway") if live_search_query.present?
+    if params[:lat].present? && params[:lng].present?
+      scope = scope.near(params[:lat], params[:lng], params[:radius_km] || 5) if scope.respond_to?(:near)
+    end
+    @pagy, @restaurants = pagy(live_search_query.present? ? scope : scope.popular)
   end
 
   def show

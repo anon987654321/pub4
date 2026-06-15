@@ -1,0 +1,19 @@
+<% content_for :title, "Match for #{@beneficiary.name}" %>
+
+<header class="page-header">
+  <h1>Matches for <%= @beneficiary.name %></h1>
+</header>
+
+<% if @matches.any? %>
+  <ul>
+    <% @matches.each do |item| %>
+      <li>
+        <strong><%= item.name %></strong>
+        <% if item.best_before.present? %><span class="dim"> · best before <%= item.best_before %></span><% end %>
+        <%= button_to "Claim", claim_beneficiary_path(@beneficiary, item_id: item.id), class: "btn btn-sm" %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="dim">No matching inventory right now.</p>
+<% end %>

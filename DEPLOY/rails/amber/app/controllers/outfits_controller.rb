@@ -1,12 +1,20 @@
 # frozen_string_literal: true
 
 class OutfitsController < ApplicationController
+  include Shared::LiveSearchable
+
   before_action :require_authentication
   before_action :set_outfit, only: %i[show edit update destroy like reorder share wear]
   before_action :authorize!, only: %i[edit update destroy share wear]
 
   def index
-    @pagy, @outfits = pagy(Current.user.outfits.order(created_at: :desc))
+    scope = Current.user.outfits.order(created_at: :desc)
+    if live_search_query.present?
+      scope = apply_live_search(scope, columns: %w[name season category occasion], vertical: "outfits")
+      item_ids = Current.user.items.where("title LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(live_search_query)}%").pluck(:id)
+      scope = scope.joins(:outfit_items).where(outfit_items: { item_id: item_ids }).distinct if item_ids.any?
+    end
+    @pagy, @outfits = pagy(scope)
   end
 
   def dressing_room

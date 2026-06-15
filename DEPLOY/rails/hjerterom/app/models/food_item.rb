@@ -6,10 +6,12 @@ class FoodItem < ApplicationRecord
 
   belongs_to :donation
   belongs_to :box, optional: true
+  belongs_to :beneficiary, optional: true
 
   validates :name, presence: true
   validates :quantity, numericality: { greater_than: 0 }, allow_nil: true
+  validates :status, inclusion: { in: %w[available claimed packed distributed] }
 
-  scope :available, -> { where(box_id: nil).where.not(quality_state: :unusable) }
+  scope :available, -> { where(status: "available", box_id: nil).where.not(quality_state: :unusable) }
   scope :urgent, -> { where(quality_state: :urgent) }
 end

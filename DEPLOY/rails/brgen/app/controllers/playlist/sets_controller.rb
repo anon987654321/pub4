@@ -2,11 +2,19 @@
 
 module Playlist
   class SetsController < ApplicationController
+    include Shared::LiveSearchable
+
     before_action :set_set, only: %i[show edit update destroy]
     before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
     def index
-      @sets = Playlist::Set.publicly_listed.limit(100)
+      scope = Playlist::Set.publicly_listed
+      if live_search_query.present?
+        set_ids = apply_live_search(scope, columns: %w[name description], vertical: "playlist").pluck(:id)
+        track_ids = Playlist::Track.where("name LIKE :q OR artist LIKE :q", q: "%#{ActiveRecord::Base.sanitize_sql_like(live_search_query)}%").pluck(:playlist_set_id)
+        scope = scope.where(id: (set_ids + track_ids).uniq)
+      end
+      @sets = scope.limit(100)
     end
 
     def show

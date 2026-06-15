@@ -27,6 +27,13 @@ Rails.application.routes.draw do
     resources :comments, only: %i[create destroy]
   end
 
+  resources :beneficiaries, only: %i[index show] do
+    member do
+      get :match
+      post :claim
+    end
+  end
+
   resources :donations
   resources :boxes
   resources :volunteers do

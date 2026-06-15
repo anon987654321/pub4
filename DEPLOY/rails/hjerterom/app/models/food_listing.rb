@@ -19,7 +19,10 @@ class FoodListing < ApplicationRecord
 
   scope :available, -> { where(status: "available").where("available_until > ?", Time.current) }
   include Shared::GeoLocatable
-  # nearby + haversine from concern (old euclid dupe removed)
+  scope :search, ->(q) {
+    ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM food_listings_fts WHERE food_listings_fts MATCH ?", q]))
+    ids.any? ? where(id: ids) : none
+  }
 
   before_save :expire_if_past_date
 

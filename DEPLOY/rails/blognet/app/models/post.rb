@@ -20,6 +20,10 @@ class Post < ApplicationRecord
   scope :published, -> { where(published: true).order(published_at: :desc) }
   scope :drafts,    -> { where(published: false) }
   scope :recent,    -> { order(created_at: :desc) }
+  scope :search, ->(q) {
+    ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?", q]))
+    ids.any? ? where(id: ids) : none
+  }
 
   def to_param = slug
 

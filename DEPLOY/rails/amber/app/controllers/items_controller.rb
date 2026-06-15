@@ -1,13 +1,17 @@
 # frozen_string_literal: true
 
 class ItemsController < ApplicationController
+  include Shared::LiveSearchable
+
   before_action :require_authentication
   before_action :set_item, only: %i[show edit update destroy spark_joy declutter wear]
   before_action :authorize!, only: %i[edit update destroy spark_joy declutter wear]
   skip_before_action :verify_authenticity_token, only: [:share]
 
   def index
-    @pagy, @items = pagy(Current.user.items.recent)
+    scope = Current.user.items.recent
+    scope = apply_live_search(scope, columns: %w[title brand category color material], vertical: "wardrobe") if live_search_query.present?
+    @pagy, @items = pagy(scope)
   end
 
   def show; end
