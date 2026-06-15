@@ -1,0 +1,80 @@
+no:
+  ai3:
+    welcome: "Velkommen til AI³ (AI Cubed) - Din bedrifts AI-plattform!"
+    messages:
+      processing: "Behandler din forespørsel"
+      fallback_activated: "Reserve LLM aktivert"
+      cognitive_overload: "Kognitiv overbelastning oppdaget - tar en pause"
+      goodbye: "Takk for at du brukte AI³!"
+    
+    errors:
+      command_not_found: "Ukjent kommando: %{command}"
+    
+    cognitive:
+      circuit_breaker:
+        activated: "Sikring aktivert - kognitiv belastning for høy"
+    
+    rag:
+      searching: "Søker i kunnskapsbase"
+      no_results: "Ingen relevante resultater funnet"
+      results_found: "Fant %{count} relevante resultater"
+    
+    scraper:
+      scraping: "Skraper %{url}"
+      content_extracted: "Innhold ekstrahert vellykket"
+      error: "Skraping feilet"
+    
+    legal:
+      norwegian:
+        searching_lovdata: "Søker i Lovdata.no"
+        specialization_selected: "Norsk juridisk spesialisering: %{area}"
+        document_analyzed: "Juridisk dokumentanalyse fullført"
+        precedent_found: "Fant %{count} relevante prejudikater"
+        compliance_check: "Compliance-sjekk: %{status}"
+        
+        specializations:
+          familierett: "Familierett"
+          straffrett: "Straffrett"
+          sivilrett: "Sivilrett"
+          forvaltningsrett: "Forvaltningsrett"
+          grunnlovsrett: "Grunnlovsrett"
+          selskapsrett: "Selskapsrett"
+          eiendomsrett: "Eiendomsrett"
+          arbeidsrett: "Arbeidsrett"
+          skatterett: "Skatterett"
+          utlendingsrett: "Utlendingsrett"
+        
+        terms:
+          lovdata: "Lovdata"
+          høyesterett: "Høyesterett"
+          lagmannsrett: "Lagmannsrett"
+          tingrett: "Tingrett"
+          dom: "Dom"
+          prejudikat: "Prejudikat"
+          lovtekst: "Lovtekst"
+          forskrift: "Forskrift"
+          rundskriv: "Rundskriv"
+          stortingsmelding: "Stortingsmelding"
+          proposisjon: "Proposisjon"
+    
+    assistants:
+      swarm:
+        orchestration_started: "Multi-agent orkestrering startet"
+        coordination_active: "Agent koordinering aktiv"
+        load_balanced: "Kognitiv belastning balansert på tvers av agenter"
+    
+    help:
+      usage: |
+        AI³ Kommandoer:
+        
+        chat <spørsmål>      - Chat med gjeldende assistent
+        rag <spørsmål>       - Søk i kunnskapsbase
+        scrape <url>         - Skrap webinnhold
+        switch <llm>         - Bytt LLM leverandør
+        assistant <navn>     - Bytt til spesifikk assistent
+        legal <spørsmål>     - Norsk juridisk forskning
+        swarm <oppgave>      - Multi-agent oppgave koordinering
+        list <type>          - List assistenter/llms/verktøy
+        status               - Vis kognitiv status
+        help                 - Vis denne hjelpen
+        exit                 - Avslutt AI³

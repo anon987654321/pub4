@@ -1,0 +1,77 @@
+🛋️ Comfy Voice - Android Autostart Guide
+==========================================
+
+✅ ALREADY CONFIGURED:
+1. Comfy Voice starts automatically when you open Termux
+
+2. Boot script created at: ~/.termux/boot/start_comfy_voice.sh
+
+🔧 TO START ON ANDROID BOOT (Optional):
+You need to install Termux:Boot app from F-Droid:
+1. Open F-Droid
+
+2. Search for "Termux:Boot"
+
+3. Install the app
+
+4. Open Termux:Boot once to enable it
+
+5. Grant "autostart" permission in Android settings
+
+Once Termux:Boot is installed:
+- Comfy Voice will start automatically when your phone boots
+
+- It runs in the background
+
+- Uses wake-lock to prevent sleep
+
+CURRENT STATUS:
+✅ Comfy Voice is your default voice
+
+✅ Starts automatically when opening Termux
+
+✅ Boot script ready (needs Termux:Boot app)
+
+✅ All shortcuts configured in ~/.bashrc
+
+QUICK COMMANDS:
+- comfy       → Start Comfy Voice
+
+- talk        → Natural voice
+
+- robot       → Vocoder robot voice
+
+- deep        → Deep voice
+
+- autotune    → Autotune effects
+
+- joke        → Joke mode
+
+- abstract    → Adult Swim abstract comedy
+
+- scottish    → Scottish jokes
+
+- ultimate    → All effects combined
+
+INSTALLED VOICE FILES:
+- comfy_voice.rb (DEFAULT)
+
+- local_ai_voice.rb (Piper TTS - offline AI)
+
+- adult_swim_comedy.rb
+
+- scottish_jokes.rb
+
+- ultimate_voice.rb
+
+- vocoder_voice.rb
+
+- autotune_voice.rb
+
+- deep_voice.rb
+
+- natural_talk.rb
+
+- constant_talk.rb
+
+Enjoy your comfy voice experience!

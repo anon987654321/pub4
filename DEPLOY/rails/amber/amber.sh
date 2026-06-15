@@ -31,15 +31,17 @@ doas mkdir -p "$APP_DIR"
 
 # Per-app tracked tree last (specialized instances + custom overrides win)
 doas cp -R "${SRC_DIR}/." "${APP_DIR}/"
+doas rm -rf "/home/${APP_NAME}/shared"
+doas cp -R /home/dev/pub4/DEPLOY/rails/shared "/home/${APP_NAME}/shared"
+doas chown -R "${APP_NAME}:${APP_NAME}" "/home/${APP_NAME}/shared"
+doas chown -R "${APP_NAME}:${APP_NAME}" "$APP_DIR"
+overlay_shared_initializers "$APP_DIR"
 doas chown -R "${APP_NAME}:${APP_NAME}" "$APP_DIR"
 
 # Strict rules.yml gate: MASTER scan DEPLOY before bundle (per success_criteria, self_test, evidence_scoring)
-if [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
-  log "MASTER rules scan (DEPLOY) pre-bundle"
-  if ! ruby34 /home/dev/pub4/MASTER/bin/cli /scan DEPLOY --depth deep 2>&1 | tee /tmp/master_#{APP_NAME}_scan.log; then
-    log "MASTER scan violations — aborting per rules.yml"
-    exit 1
-  fi
+if ! master_scan_dep "$APP_NAME"; then
+  log "MASTER scan violations — aborting per rules.yml"
+  exit 1
 fi
 
 cd "$APP_DIR"
@@ -66,9 +68,9 @@ doas mkdir -p "${APP_DIR}/.bundle"
 print -- "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" | doas tee "${APP_DIR}/.bundle/config" >/dev/null
 doas chown -R "${APP_NAME}:${APP_NAME}" "${APP_DIR}/.bundle"
 
-doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && bundle config set --local deployment true && bundle config set --local without 'development test' && RAILS_ENV=production bundle install"
-doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bin/rails db:create db:migrate"
-[[ -f ${APP_DIR}/db/seeds.rb ]] && doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bin/rails db:seed" || true
+doas sh -c "su -m ${APP_NAME} -c 'cd ${APP_DIR} && bundle config set --local frozen false && bundle config set --local deployment true && bundle config set --local without \"development test\" && RAILS_ENV=production bundle install'"
+db_create_migrate_as_app "$APP_NAME" "$APP_DIR"
+[[ -f ${APP_DIR}/db/seeds.rb ]] && db_seed_as_app "$APP_NAME" "$APP_DIR" || true
 
 install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"
 [[ -n $APP_DOMAIN ]] && relayd_add_relay "$APP_DOMAIN" "$APP_PORT"

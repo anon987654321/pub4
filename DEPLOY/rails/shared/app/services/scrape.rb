@@ -3,7 +3,11 @@
 # Used by brgen and amber rake tasks for seed augmentation.
 # Requires OPENROUTER_API_KEY (or configure MODEL/ENDPOINT).
 
-require "ferrum"
+begin
+  require "ferrum"
+rescue LoadError
+  nil
+end
 require "net/http"
 require "json"
 require "base64"
@@ -14,6 +18,8 @@ class Scrape
   HTML_MAX = 60_000
 
   def self.call(url, schema:, hint: nil)
+    raise LoadError, "gem install ferrum — required for Scrape.call" unless defined?(Ferrum::Browser)
+
     browser = Ferrum::Browser.new(headless: true, timeout: 30,
                                   browser_options: { "no-sandbox": nil })
     browser.go_to(url)

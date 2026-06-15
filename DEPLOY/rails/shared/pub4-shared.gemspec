@@ -18,5 +18,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "omniauth-google-oauth2", ">= 1.1"
   spec.add_dependency "omniauth-github", ">= 2.0"
   spec.add_dependency "omniauth-rails_csrf_protection", ">= 1.0"
-  spec.add_dependency "webpush", ">= 3.0"
+  spec.add_dependency "webpush", ">= 1.1"
 end

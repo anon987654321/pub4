@@ -1,6 +1,7 @@
 #!/bin/ksh
+[ -r /etc/brgen.env ] && . /etc/brgen.env
 daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=__REDACTED__ HOME=/home/brgen falcon serve --bind http://127.0.0.1:38182"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/brgen falcon serve --bind http://127.0.0.1:38182"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_logger="daemon.notice"

@@ -48,6 +48,8 @@ class Item < ApplicationRecord
 
   def cost_per_wear
     return nil unless price.present? && times_worn.to_i > 0
+
+    (price.to_f / times_worn).round(2)
   end
 
   def value_label

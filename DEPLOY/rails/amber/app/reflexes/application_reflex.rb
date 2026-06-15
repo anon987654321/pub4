@@ -1,4 +1,9 @@
 # frozen_string_literal: true
 
-class ApplicationReflex < StimulusReflex::Reflex
+if defined?(StimulusReflex::Reflex)
+  class ApplicationReflex < StimulusReflex::Reflex
+  end
+else
+  class ApplicationReflex
+  end
 end

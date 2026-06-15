@@ -1,0 +1,44 @@
+source 'https://rubygems.org'
+
+ruby '>= 3.0.0'
+
+# Core AI³ dependencies
+gem 'langchain', '~> 0.1'
+gem 'ruby-openai', '~> 3.0'
+
+# Multi-LLM providers
+gem 'anthropic', '~> 0.1'
+gem 'ollama-ai', '~> 1.0'
+
+# Caching and performance
+gem 'lru_redux', '~> 1.1'
+
+# Web scraping and data processing
+gem 'faraday', '~> 2.7'
+gem 'ferrum', '~> 0.13'
+gem 'nokogiri', '~> 1.15'
+
+# Database and storage
+gem 'sqlite3', '~> 1.6'
+
+# Vector database (we'll implement our own simple version for now)
+# gem "weaviate-ruby", "~> 0.8"
+
+# Security and encryption
+gem 'bcrypt', '~> 3.1'
+
+# TTY interface
+gem 'tty-box', '~> 0.7'
+gem 'tty-prompt', '~> 0.23'
+gem 'tty-spinner', '~> 0.9'
+
+# Utilities
+gem 'dotenv', '~> 2.8'
+gem 'i18n', '~> 1.12'
+gem 'reline', '~> 0.3'
+gem 'yaml', '~> 0.2'
+
+group :development, :test do
+  gem 'minitest', '~> 5.18'
+  gem 'rubocop', '~> 1.50'
+end

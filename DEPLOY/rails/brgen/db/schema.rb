@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -12,23 +10,62 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
-
-  create_table "push_subscriptions", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.text "endpoint", null: false
-    t.string "p256dh", null: false
-    t.string "auth", null: false
+ActiveRecord::Schema[8.1].define(version: 2026_06_14_235959) do
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.integer "blob_id", null: false
     t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["user_id", "endpoint"], name: "index_push_subscriptions_on_user_id_and_endpoint", unique: true
+    t.string "name", null: false
+    t.integer "record_id", null: false
+    t.string "record_type", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "blurhash"
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.string "content_type"
+    t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.string "key", null: false
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.integer "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "activity_events", force: :cascade do |t|
+    t.integer "actor_id"
+    t.datetime "created_at", null: false
+    t.string "event_name", null: false
+    t.string "locality"
+    t.json "metadata"
+    t.string "moderation_state", default: "clean", null: false
+    t.integer "object_id", null: false
+    t.string "object_type", null: false
+    t.string "source_vertical", null: false
+    t.datetime "updated_at", null: false
+    t.string "visibility", default: "public", null: false
+    t.index ["actor_id"], name: "index_activity_events_on_actor_id"
+    t.index ["locality", "created_at"], name: "index_activity_events_on_locality_and_created_at"
+    t.index ["object_type", "object_id"], name: "index_activity_events_on_object_type_and_object_id"
+    t.index ["source_vertical", "created_at"], name: "index_activity_events_on_source_vertical_and_created_at"
+  end
+
   create_table "comments", force: :cascade do |t|
     t.integer "commentable_id", null: false
     t.string "commentable_type", null: false
     t.text "content"
     t.datetime "created_at", null: false
     t.integer "parent_id"
+    t.datetime "summary_updated_at"
+    t.text "thread_summary"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
@@ -95,16 +132,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
   create_table "dating_profiles", force: :cascade do |t|
     t.integer "age"
     t.text "bio"
+    t.string "bydel"
     t.datetime "created_at", null: false
     t.string "gender"
     t.decimal "latitude"
     t.string "location"
     t.decimal "longitude"
     t.string "looking_for"
+    t.integer "neighborhood_id"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.boolean "visible"
+    t.index ["neighborhood_id"], name: "index_dating_profiles_on_neighborhood_id"
     t.index ["user_id"], name: "index_dating_profiles_on_user_id"
+  end
+
+  create_table "email_subscriptions", force: :cascade do |t|
+    t.boolean "agreed_to_marketing", default: false, null: false
+    t.string "city"
+    t.boolean "confirmed", default: false, null: false
+    t.datetime "confirmed_at"
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.text "interests"
+    t.string "locale"
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_email_subscriptions_on_email", unique: true
+    t.index ["token"], name: "index_email_subscriptions_on_token", unique: true
   end
 
   create_table "follows", force: :cascade do |t|
@@ -132,6 +187,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "marketplace_deals", force: :cascade do |t|
+    t.string "badge"
+    t.datetime "created_at", null: false
+    t.integer "discount_percent"
+    t.datetime "ends_at"
+    t.boolean "featured", default: false, null: false
+    t.string "headline", null: false
+    t.integer "listing_id", null: false
+    t.integer "priority", default: 0, null: false
+    t.datetime "starts_at"
+    t.datetime "updated_at", null: false
+    t.index ["featured", "priority"], name: "index_marketplace_deals_on_featured_and_priority"
+    t.index ["listing_id"], name: "index_marketplace_deals_on_listing_id"
+    t.index ["starts_at", "ends_at"], name: "index_marketplace_deals_on_starts_at_and_ends_at"
+  end
+
+  create_table "marketplace_listing_favorites", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "listing_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["listing_id"], name: "index_marketplace_listing_favorites_on_listing_id"
+    t.index ["user_id", "listing_id"], name: "idx_marketplace_favorites_user_listing", unique: true
+    t.index ["user_id"], name: "index_marketplace_listing_favorites_on_user_id"
+  end
+
   create_table "marketplace_listings", force: :cascade do |t|
     t.integer "category_id", null: false
     t.string "condition"
@@ -141,11 +222,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.string "location"
     t.integer "price_cents"
     t.string "status"
+    t.integer "store_id"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.integer "views_count"
     t.index ["category_id"], name: "index_marketplace_listings_on_category_id"
+    t.index ["store_id"], name: "index_marketplace_listings_on_store_id"
     t.index ["user_id"], name: "index_marketplace_listings_on_user_id"
   end
 
@@ -159,6 +242,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.datetime "updated_at", null: false
     t.index ["buyer_id"], name: "index_marketplace_orders_on_buyer_id"
     t.index ["listing_id"], name: "index_marketplace_orders_on_listing_id"
+  end
+
+  create_table "marketplace_saved_searches", force: :cascade do |t|
+    t.integer "category_id"
+    t.datetime "created_at", null: false
+    t.string "location"
+    t.string "name"
+    t.boolean "notify", default: false, null: false
+    t.string "query"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_marketplace_saved_searches_on_user_id"
+  end
+
+  create_table "marketplace_stores", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.integer "owner_id", null: false
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "verified", default: false, null: false
+    t.string "vertical"
+    t.index ["owner_id"], name: "index_marketplace_stores_on_owner_id"
+    t.index ["slug"], name: "index_marketplace_stores_on_slug", unique: true
+    t.index ["vertical", "active"], name: "index_marketplace_stores_on_vertical_and_active"
   end
 
   create_table "mentions", force: :cascade do |t|
@@ -193,6 +303,75 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
   end
 
+  create_table "moderation_reports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "details"
+    t.string "reason", null: false
+    t.integer "reportable_id", null: false
+    t.string "reportable_type", null: false
+    t.string "status", default: "open", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["reportable_type", "reportable_id"], name: "index_moderation_reports_on_reportable_type_and_reportable_id"
+    t.index ["status", "created_at"], name: "index_moderation_reports_on_status_and_created_at"
+    t.index ["user_id"], name: "index_moderation_reports_on_user_id"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.datetime "read_at"
+    t.integer "source_id"
+    t.string "source_type"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["source_type", "source_id"], name: "index_notifications_on_source_type_and_source_id"
+    t.index ["user_id", "read_at"], name: "index_notifications_on_user_id_and_read_at"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
+  create_table "playlist_collaborations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "playlist_id"
+    t.string "role", default: "editor", null: false
+    t.integer "set_id"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["playlist_id"], name: "index_playlist_collaborations_on_playlist_id"
+    t.index ["set_id"], name: "index_playlist_collaborations_on_set_id"
+    t.index ["user_id", "set_id", "playlist_id"], name: "idx_playlist_collab_unique", unique: true
+    t.index ["user_id"], name: "index_playlist_collaborations_on_user_id"
+  end
+
+  create_table "playlist_dilla_sketches", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.text "notes"
+    t.integer "playlist_id"
+    t.integer "set_id"
+    t.json "state", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["playlist_id", "created_at"], name: "index_playlist_dilla_sketches_on_playlist_id_and_created_at"
+    t.index ["playlist_id"], name: "index_playlist_dilla_sketches_on_playlist_id"
+    t.index ["set_id", "created_at"], name: "index_playlist_dilla_sketches_on_set_id_and_created_at"
+    t.index ["set_id"], name: "index_playlist_dilla_sketches_on_set_id"
+    t.index ["user_id"], name: "index_playlist_dilla_sketches_on_user_id"
+  end
+
+  create_table "playlist_likes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "playlist_id"
+    t.integer "set_id"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["playlist_id"], name: "index_playlist_likes_on_playlist_id"
+    t.index ["set_id"], name: "index_playlist_likes_on_set_id"
+    t.index ["user_id", "set_id", "playlist_id"], name: "idx_playlist_likes_unique", unique: true
+    t.index ["user_id"], name: "index_playlist_likes_on_user_id"
+  end
+
   create_table "playlist_listens", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "playlist_track_id", null: false
@@ -215,6 +394,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
   end
 
   create_table "playlist_playlists", force: :cascade do |t|
+    t.boolean "collaborative", default: false, null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.integer "likes_count"
@@ -225,6 +405,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_playlist_playlists_on_user_id"
+  end
+
+  create_table "playlist_set_tracks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "playlist_set_id", null: false
+    t.integer "playlist_track_id", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["playlist_set_id", "playlist_track_id"], name: "idx_on_playlist_set_id_playlist_track_id_60911f71fd", unique: true
+    t.index ["playlist_set_id"], name: "index_playlist_set_tracks_on_playlist_set_id"
+    t.index ["playlist_track_id"], name: "index_playlist_set_tracks_on_playlist_track_id"
+    t.index ["user_id"], name: "index_playlist_set_tracks_on_user_id"
+  end
+
+  create_table "playlist_sets", force: :cascade do |t|
+    t.boolean "collaborative", default: false, null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.string "privacy", default: "public"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_playlist_sets_on_user_id"
   end
 
   create_table "playlist_tracks", force: :cascade do |t|
@@ -252,13 +456,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
+  create_table "push_subscriptions", force: :cascade do |t|
+    t.string "auth", null: false
+    t.datetime "created_at", null: false
+    t.text "endpoint", null: false
+    t.string "p256dh", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "endpoint"], name: "index_push_subscriptions_on_user_id_and_endpoint", unique: true
+  end
+
   create_table "reactions", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "kind"
-    t.integer "post_id", null: false
+    t.string "kind", default: "like"
+    t.integer "post_id"
+    t.integer "reactable_id"
+    t.string "reactable_type"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["post_id"], name: "index_reactions_on_post_id"
+    t.index ["reactable_type", "reactable_id"], name: "index_reactions_on_reactable"
+    t.index ["user_id", "reactable_type", "reactable_id", "post_id", "kind"], name: "idx_reactions_unique_user_target_kind", unique: true
     t.index ["user_id"], name: "index_reactions_on_user_id"
   end
 
@@ -293,6 +511,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.index ["taggable_type", "taggable_id"], name: "index_taggings_on_taggable"
   end
 
+  create_table "takeaway_delivery_drivers", force: :cascade do |t|
+    t.boolean "available", default: false, null: false
+    t.datetime "created_at", null: false
+    t.decimal "current_lat", precision: 10, scale: 6
+    t.decimal "current_lng", precision: 10, scale: 6
+    t.string "license_number"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.string "vehicle_type"
+    t.index ["available", "current_lat", "current_lng"], name: "idx_takeaway_drivers_available_location"
+    t.index ["user_id"], name: "index_takeaway_delivery_drivers_on_user_id"
+  end
+
+  create_table "takeaway_favorite_restaurants", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "restaurant_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["restaurant_id"], name: "index_takeaway_favorite_restaurants_on_restaurant_id"
+    t.index ["user_id", "restaurant_id"], name: "idx_takeaway_favorites_user_restaurant", unique: true
+    t.index ["user_id"], name: "index_takeaway_favorite_restaurants_on_user_id"
+  end
+
   create_table "takeaway_menu_items", force: :cascade do |t|
     t.boolean "available"
     t.datetime "created_at", null: false
@@ -320,6 +561,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
   create_table "takeaway_orders", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "delivery_address"
+    t.integer "delivery_driver_id"
     t.integer "delivery_fee_cents"
     t.integer "restaurant_id", null: false
     t.text "special_instructions"
@@ -328,6 +570,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.integer "total_cents"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["delivery_driver_id", "status"], name: "index_takeaway_orders_on_delivery_driver_id_and_status"
+    t.index ["delivery_driver_id"], name: "index_takeaway_orders_on_delivery_driver_id"
     t.index ["restaurant_id"], name: "index_takeaway_orders_on_restaurant_id"
     t.index ["user_id"], name: "index_takeaway_orders_on_user_id"
   end
@@ -340,6 +584,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.string "cuisine_type"
     t.integer "delivery_fee_cents"
     t.text "description"
+    t.decimal "latitude", precision: 10, scale: 7
+    t.decimal "longitude", precision: 10, scale: 7
     t.integer "min_order_cents"
     t.string "name"
     t.string "phone"
@@ -348,6 +594,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_takeaway_restaurants_on_user_id"
+  end
+
+  create_table "takeaway_reviews", force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.integer "order_id", null: false
+    t.integer "rating", null: false
+    t.integer "restaurant_id", null: false
+    t.decimal "reviewer_lat", precision: 10, scale: 7
+    t.decimal "reviewer_lng", precision: 10, scale: 7
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["order_id"], name: "index_takeaway_reviews_on_order_id"
+    t.index ["restaurant_id", "created_at"], name: "index_takeaway_reviews_on_restaurant_id_and_created_at"
+    t.index ["restaurant_id"], name: "index_takeaway_reviews_on_restaurant_id"
+    t.index ["user_id"], name: "index_takeaway_reviews_on_user_id"
   end
 
   create_table "tv_broadcasts", force: :cascade do |t|
@@ -378,6 +640,45 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.index ["user_id"], name: "index_tv_channels_on_user_id"
   end
 
+  create_table "tv_comments", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "video_id", null: false
+    t.index ["user_id"], name: "index_tv_comments_on_user_id"
+    t.index ["video_id"], name: "index_tv_comments_on_video_id"
+  end
+
+  create_table "tv_live_streams", force: :cascade do |t|
+    t.integer "channel_id"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.datetime "ended_at"
+    t.datetime "started_at"
+    t.string "status", default: "scheduled", null: false
+    t.string "stream_key"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "viewer_count", default: 0, null: false
+    t.index ["channel_id"], name: "index_tv_live_streams_on_channel_id"
+    t.index ["status", "updated_at"], name: "index_tv_live_streams_on_status_and_updated_at"
+    t.index ["stream_key"], name: "index_tv_live_streams_on_stream_key", unique: true
+    t.index ["user_id"], name: "index_tv_live_streams_on_user_id"
+  end
+
+  create_table "tv_stream_chats", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "live_stream_id", null: false
+    t.text "message", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["live_stream_id", "created_at"], name: "index_tv_stream_chats_on_live_stream_id_and_created_at"
+    t.index ["live_stream_id"], name: "index_tv_stream_chats_on_live_stream_id"
+    t.index ["user_id"], name: "index_tv_stream_chats_on_user_id"
+  end
+
   create_table "tv_subscriptions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.boolean "notify_on_upload"
@@ -386,6 +687,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.integer "user_id", null: false
     t.index ["tv_channel_id"], name: "index_tv_subscriptions_on_tv_channel_id"
     t.index ["user_id"], name: "index_tv_subscriptions_on_user_id"
+  end
+
+  create_table "tv_video_notes", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.integer "timestamp"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "video_id", null: false
+    t.index ["user_id"], name: "index_tv_video_notes_on_user_id"
+    t.index ["video_id", "timestamp", "created_at"], name: "index_tv_video_notes_on_video_id_and_timestamp_and_created_at"
+    t.index ["video_id"], name: "index_tv_video_notes_on_video_id"
   end
 
   create_table "tv_videos", force: :cascade do |t|
@@ -433,9 +746,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.string "email_address", null: false
     t.boolean "guest", default: false, null: false
     t.integer "karma"
-    t.decimal "latitude",  precision: 10, scale: 7
-    t.decimal "longitude", precision: 10, scale: 7
+    t.decimal "latitude", precision: 10, scale: 7
     t.datetime "location_updated_at"
+    t.decimal "longitude", precision: 10, scale: 7
     t.string "password_digest", null: false
     t.datetime "updated_at", null: false
     t.string "username"
@@ -453,6 +766,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.index ["votable_type", "votable_id"], name: "index_votes_on_votable"
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "activity_events", "users", column: "actor_id"
   add_foreign_key "comments", "users"
   add_foreign_key "conversation_participants", "conversations"
   add_foreign_key "conversation_participants", "users"
@@ -463,20 +779,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
   add_foreign_key "dating_matches", "initiators"
   add_foreign_key "dating_matches", "receivers"
   add_foreign_key "dating_profiles", "users"
-  add_foreign_key "marketplace_listings", "categories"
+  add_foreign_key "marketplace_deals", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_listing_favorites", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_listing_favorites", "users"
+  add_foreign_key "marketplace_listings", "marketplace_categories", column: "category_id"
+  add_foreign_key "marketplace_listings", "marketplace_stores", column: "store_id"
   add_foreign_key "marketplace_listings", "users"
   add_foreign_key "marketplace_orders", "buyers"
   add_foreign_key "marketplace_orders", "listings"
+  add_foreign_key "marketplace_saved_searches", "users"
+  add_foreign_key "marketplace_stores", "users", column: "owner_id"
   add_foreign_key "mentions", "users", column: "mentioned_user_id"
   add_foreign_key "message_receipts", "messages"
   add_foreign_key "message_receipts", "users"
   add_foreign_key "messages", "conversations"
+  add_foreign_key "moderation_reports", "users"
+  add_foreign_key "notifications", "users"
+  add_foreign_key "playlist_collaborations", "playlist_sets", column: "set_id"
+  add_foreign_key "playlist_collaborations", "users"
+  add_foreign_key "playlist_dilla_sketches", "playlist_playlists", column: "playlist_id"
+  add_foreign_key "playlist_dilla_sketches", "playlist_sets", column: "set_id"
+  add_foreign_key "playlist_dilla_sketches", "users"
+  add_foreign_key "playlist_likes", "playlist_sets", column: "set_id"
+  add_foreign_key "playlist_likes", "users"
   add_foreign_key "playlist_listens", "playlist_tracks"
   add_foreign_key "playlist_listens", "users"
   add_foreign_key "playlist_playlist_tracks", "playlist_playlists"
   add_foreign_key "playlist_playlist_tracks", "playlist_tracks"
   add_foreign_key "playlist_playlist_tracks", "users"
   add_foreign_key "playlist_playlists", "users"
+  add_foreign_key "playlist_set_tracks", "playlist_sets"
+  add_foreign_key "playlist_set_tracks", "playlist_tracks"
+  add_foreign_key "playlist_set_tracks", "users"
+  add_foreign_key "playlist_sets", "users"
   add_foreign_key "posts", "communities"
   add_foreign_key "posts", "users"
   add_foreign_key "reactions", "posts"
@@ -485,17 +820,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
   add_foreign_key "streams", "posts"
   add_foreign_key "streams", "users"
   add_foreign_key "taggings", "hashtags"
-  add_foreign_key "takeaway_menu_items", "restaurants"
+  add_foreign_key "takeaway_delivery_drivers", "users"
+  add_foreign_key "takeaway_favorite_restaurants", "takeaway_restaurants", column: "restaurant_id"
+  add_foreign_key "takeaway_favorite_restaurants", "users"
+  add_foreign_key "takeaway_menu_items", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_order_items", "menu_items"
   add_foreign_key "takeaway_order_items", "orders"
-  add_foreign_key "takeaway_orders", "restaurants"
+  add_foreign_key "takeaway_orders", "takeaway_delivery_drivers", column: "delivery_driver_id"
+  add_foreign_key "takeaway_orders", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_orders", "users"
   add_foreign_key "takeaway_restaurants", "users"
+  add_foreign_key "takeaway_reviews", "takeaway_orders", column: "order_id"
+  add_foreign_key "takeaway_reviews", "takeaway_restaurants", column: "restaurant_id"
+  add_foreign_key "takeaway_reviews", "users"
   add_foreign_key "tv_broadcasts", "tv_channels"
   add_foreign_key "tv_broadcasts", "users"
   add_foreign_key "tv_channels", "users"
+  add_foreign_key "tv_comments", "tv_videos", column: "video_id"
+  add_foreign_key "tv_comments", "users"
+  add_foreign_key "tv_live_streams", "tv_channels", column: "channel_id"
+  add_foreign_key "tv_live_streams", "users"
+  add_foreign_key "tv_stream_chats", "tv_live_streams", column: "live_stream_id"
+  add_foreign_key "tv_stream_chats", "users"
   add_foreign_key "tv_subscriptions", "tv_channels"
   add_foreign_key "tv_subscriptions", "users"
+  add_foreign_key "tv_video_notes", "tv_videos", column: "video_id"
+  add_foreign_key "tv_video_notes", "users"
   add_foreign_key "tv_videos", "tv_channels"
   add_foreign_key "tv_videos", "users"
   add_foreign_key "tv_view_events", "tv_videos"

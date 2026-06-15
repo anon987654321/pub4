@@ -44,7 +44,9 @@ class FoodListingsController < ApplicationController
   private
 
   def set_listing  = @listing = FoodListing.find(params[:id])
-  def authorize!   = redirect_to(food_listings_path, alert: "Unauthorized") unless @listing.user == Current.user
+  def authorize!
+    redirect_to(food_listings_path, alert: "Unauthorized") unless @listing.user == Current.user
+  end
 
   def listing_params
     params.require(:food_listing).permit(

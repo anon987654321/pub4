@@ -7,13 +7,12 @@ class CreatePlaylistDillaSketches < ActiveRecord::Migration[8.1]
       t.references :playlist, foreign_key: { to_table: :playlist_playlists }
       t.references :set, foreign_key: { to_table: :playlist_sets }
       t.string :name, null: false
-      t.jsonb :state, null: false, default: {}
+      t.json :state, null: false, default: {}
       t.text :notes
       t.timestamps
     end
 
-    add_index :playlist_dilla_sketches, [:playlist_id, :created_at]
-    add_index :playlist_dilla_sketches, [:set_id, :created_at]
-    add_index :playlist_dilla_sketches, :user_id
+    add_index :playlist_dilla_sketches, %i[playlist_id created_at], if_not_exists: true
+    add_index :playlist_dilla_sketches, %i[set_id created_at], if_not_exists: true
   end
 end

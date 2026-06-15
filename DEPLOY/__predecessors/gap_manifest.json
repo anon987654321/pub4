@@ -1,0 +1,51 @@
+{
+  "updated": "2026-06-15",
+  "archived_apps": [
+    {
+      "name": "privcam",
+      "status": "installer_only",
+      "recovery_source": "pub3-installers/privcam.sh",
+      "notes": "Video upload, infinite scroll reflexes, comments"
+    },
+    {
+      "name": "pub_attorney",
+      "status": "installer_only",
+      "recovery_source": "pub3-installers/pub_attorney.sh",
+      "notes": "Lawyer/Case/Document, CaseMatchReflex, wicked_pdf"
+    },
+    {
+      "name": "mytoonz",
+      "status": "installer_only",
+      "recovery_source": "pub3-installers/mytoonz.sh",
+      "notes": "ReplicateService, comic strip jobs"
+    }
+  ],
+  "archived_subsystems": [
+    {
+      "name": "aight_production_ai",
+      "recovery_source": "pub2-aight/lib",
+      "notes": "RAG, weaviate, scraper, assistant_orchestrator"
+    },
+    {
+      "name": "ai3_assistants",
+      "recovery_source": "pub-ai3",
+      "notes": "57 assistants, cognitive_orchestrator, langchainrb"
+    },
+    {
+      "name": "multimedia_tts",
+      "recovery_source": "pub3-multimedia/tts",
+      "notes": "Piper/Sherpa/Kokoro, claude_speak, narrate_reasoning"
+    },
+    {
+      "name": "blognet_ai_content",
+      "recovery_source": "pub2-rails/build_blognet.rb",
+      "notes": "AiContentService, ai_generated column"
+    },
+    {
+      "name": "shared_installer_patterns",
+      "recovery_source": "pub3-installers/__shared",
+      "notes": "InfiniteScrollReflex, AnonymousPostService, messenger disappearing messages"
+    }
+  ],
+  "deployed_apps": ["brgen", "amber", "baibl", "blognet", "bsdports", "hjerterom"]
+}

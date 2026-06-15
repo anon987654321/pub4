@@ -1,68 +1,36 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Pure zsh script to fix hardcoded passwords in ALL installer scripts
+# Fix hardcoded password123 in DEPLOY/rails deploy scripts (pure zsh).
 
-# NO bash, sed, awk, perl, python - pure zsh only
+SCRIPT_DIR=${0:a:h}
+RAILS_ROOT=${SCRIPT_DIR:h}/rails
 
-setopt extended_glob
 log() { print "[$(date '+%H:%M:%S')] $*" }
+
 fix_passwords_in_file() {
   local file="$1"
+  [[ -f "$file" ]] || { log "skip (missing): $file"; return 0 }
 
-  if [[ ! -f "$file" ]]; then
-    log "⚠️  File not found: $file"
-
-    return 1
-
-  fi
-
-  log "Fixing: $file"
-  # Pure zsh: read entire file into variable
+  log "fixing: $file"
   local content=$(<"$file")
-
-  # Pure zsh: global string replacement using parameter expansion
   content="${content//password: \"password123\"/password: SecureRandom.alphanumeric(20)}"
-
   content="${content//password: \'password123\'/password: SecureRandom.alphanumeric(20)}"
-
-  # Write back to file
   print -r -- "$content" > "$file"
-
-  log "✅ Fixed: $file"
+  log "ok: $file"
 }
 
-log "Starting password fixes using pure zsh patterns..."
-# Array of files to fix
+log "Scanning ${RAILS_ROOT} for deploy scripts..."
 typeset -a files_to_fix
+files_to_fix=(${RAILS_ROOT}/*/*.sh(N))
 
-files_to_fix=(
+if (( ${#files_to_fix[@]} == 0 )); then
+  log "no *.sh deploy scripts found under ${RAILS_ROOT}"
+  exit 0
+fi
 
-  apps/privcam.sh
-
-  apps/hjerterom.sh
-
-  apps/pubattorney.sh
-
-  apps/brgen.sh
-
-  brgen_dating.sh
-
-  brgen_marketplace.sh
-
-  brgen_playlist.sh
-
-  brgen_takeaway.sh
-
-  brgen_tv.sh
-
-)
-
-# Fix each file
 for file in "${files_to_fix[@]}"; do
-
   fix_passwords_in_file "$file"
-
 done
 
-log "✅ All passwords fixed with pure zsh!"
+log "done (${#files_to_fix[@]} scripts)"

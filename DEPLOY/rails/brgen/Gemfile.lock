@@ -1,3 +1,17 @@
+PATH
+  remote: ../shared
+  specs:
+    pub4-shared (0.1.0)
+      omniauth (>= 2.1)
+      omniauth-github (>= 2.0)
+      omniauth-google-oauth2 (>= 1.1)
+      omniauth-rails_csrf_protection (>= 1.0)
+      pundit (>= 2.3)
+      rails (>= 8.0)
+      rotp (>= 6.3)
+      rqrcode (>= 2.2)
+      webpush (>= 1.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -113,6 +127,8 @@ GEM
       async
       async-container (~> 0.16)
       string-format (~> 0.2)
+    auth-sanitizer (0.2.1)
+      version_gem (~> 1.1, >= 1.1.10)
     bake (0.24.1)
       bigdecimal
       samovar (~> 2.1)
@@ -122,6 +138,17 @@ GEM
     brakeman (8.0.4)
       racc
     builder (3.3.0)
+    bundler-audit (0.9.3)
+      bundler (>= 1.2.0)
+      thor (~> 1.0)
+    cable_ready (5.0.6)
+      actionpack (>= 5.2)
+      actionview (>= 5.2)
+      activesupport (>= 5.2)
+      observer (~> 0.1)
+      railties (>= 5.2)
+      thread-local (>= 1.1.0)
+    chunky_png (1.4.0)
     concurrent-ruby (1.3.5)
     connection_pool (2.5.4)
     console (1.34.2)
@@ -136,6 +163,7 @@ GEM
     erubi (1.13.1)
     et-orbi (1.4.0)
       tzinfo
+    event_stream_parser (1.0.0)
     faker (3.6.1)
       i18n (>= 1.8.11, < 2)
     falcon (0.53.0)
@@ -151,6 +179,22 @@ GEM
       protocol-http (~> 0.31)
       protocol-rack (~> 0.7)
       samovar (~> 2.3)
+    faraday (2.14.2)
+      faraday-net_http (>= 2.0, < 3.5)
+      json
+      logger
+    faraday-multipart (1.2.0)
+      multipart-post (~> 2.0)
+    faraday-net_http (3.4.4)
+      net-http (~> 0.5)
+    faraday-retry (2.4.0)
+      faraday (~> 2.0)
+    ferrum (0.17.2)
+      addressable (~> 2.5)
+      base64 (~> 0.2)
+      concurrent-ruby (~> 1.1)
+      webrick (~> 1.7)
+      websocket-driver (~> 0.7)
     ffi (1.17.3)
     ffi (1.17.3-aarch64-linux-gnu)
     ffi (1.17.3-aarch64-linux-musl)
@@ -167,11 +211,18 @@ GEM
     fugit (1.12.1)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
+    futurism (1.4.2)
+      cable_ready (>= 5.0)
+      rack (>= 2, < 4)
+      rails (>= 5.2)
     geocoder (1.8.6)
       base64 (>= 0.1.0)
       csv (>= 3.0.0)
     globalid (1.3.0)
       activesupport (>= 6.1)
+    hashie (5.1.0)
+      logger
+    hkdf (0.3.0)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
     image_processing (1.14.0)
@@ -193,6 +244,8 @@ GEM
     json-schema (5.2.2)
       addressable (~> 2.8)
       bigdecimal (~> 3.1)
+    jwt (2.10.3)
+      base64
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     localhost (1.6.0)
@@ -222,6 +275,11 @@ GEM
     mini_portile2 (2.8.9)
     minitest (5.26.1)
     msgpack (1.8.0)
+    multi_xml (0.9.1)
+      bigdecimal (>= 3.1, < 5)
+    multipart-post (2.4.1)
+    net-http (0.9.1)
+      uri (>= 0.11.1)
     net-imap (0.5.12)
       date
       net-protocol
@@ -251,6 +309,35 @@ GEM
       racc (~> 1.4)
     nokogiri (1.18.10-x86_64-linux-musl)
       racc (~> 1.4)
+    oauth2 (2.0.23)
+      auth-sanitizer (~> 0.2, >= 0.2.1)
+      faraday (>= 0.17.3, < 4.0)
+      jwt (>= 1.0, < 4.0)
+      logger (~> 1.2)
+      multi_xml (~> 0.5)
+      rack (>= 1.2, < 4)
+      snaky_hash (~> 2.0, >= 2.0.6)
+      version_gem (~> 1.1, >= 1.1.11)
+    observer (0.1.2)
+    omniauth (2.1.4)
+      hashie (>= 3.4.6)
+      logger
+      rack (>= 2.2.3)
+      rack-protection
+    omniauth-github (2.0.1)
+      omniauth (~> 2.0)
+      omniauth-oauth2 (~> 1.8)
+    omniauth-google-oauth2 (1.2.2)
+      jwt (>= 2.9.2)
+      oauth2 (~> 2.0)
+      omniauth (~> 2.0)
+      omniauth-oauth2 (~> 1.8)
+    omniauth-oauth2 (1.9.0)
+      oauth2 (>= 2.0.2, < 3)
+      omniauth (~> 2.0)
+    omniauth-rails_csrf_protection (2.0.1)
+      actionpack (>= 4.2)
+      omniauth (~> 2.0)
     openssl (3.3.2)
     pagy (43.3.2)
       json
@@ -284,9 +371,15 @@ GEM
       date
       stringio
     public_suffix (7.0.5)
+    pundit (2.5.2)
+      activesupport (>= 3.0.0)
     raabro (1.4.0)
     racc (1.8.1)
     rack (3.2.4)
+    rack-protection (4.2.1)
+      base64 (>= 0.1.0)
+      logger (>= 1.6.0)
+      rack (>= 3.0.0, < 4)
     rack-session (2.1.1)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
@@ -333,6 +426,11 @@ GEM
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
+    rotp (6.3.0)
+    rqrcode (3.2.0)
+      chunky_png (~> 1.0)
+      rqrcode_core (~> 2.0)
+    rqrcode_core (2.1.0)
     rubocop (1.85.1)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -366,10 +464,24 @@ GEM
     ruby-vips (2.3.0)
       ffi (~> 1.12)
       logger
+    ruby_llm (1.16.0)
+      base64
+      event_stream_parser (~> 1)
+      faraday (>= 1.10.0)
+      faraday-multipart (>= 1)
+      faraday-net_http (>= 1)
+      faraday-retry (>= 1)
+      marcel (~> 1)
+      ruby_llm-schema (~> 0)
+      zeitwerk (~> 2)
+    ruby_llm-schema (0.4.0)
     samovar (2.4.1)
       console (~> 1.0)
       mapping (~> 1.0)
     securerandom (0.4.1)
+    snaky_hash (2.0.6)
+      hashie (>= 0.1.0, < 6)
+      version_gem (>= 1.1.8, < 3)
     solid_cable (3.0.12)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -401,6 +513,7 @@ GEM
     string-format (0.2.0)
     stringio (3.1.8)
     thor (1.4.0)
+    thread-local (1.1.0)
     timeout (0.4.4)
     traces (0.18.2)
     tsort (0.2.0)
@@ -414,6 +527,11 @@ GEM
     unicode-emoji (4.2.0)
     uri (1.1.1)
     useragent (0.16.11)
+    version_gem (1.1.12)
+    webpush (1.1.0)
+      hkdf (~> 0.2)
+      jwt (~> 2.0)
+    webrick (1.9.2)
     websocket-driver (0.8.0)
       base64
       websocket-extensions (>= 0.1.0)
@@ -441,23 +559,37 @@ DEPENDENCIES
   async-http
   bcrypt (~> 3.1)
   brakeman
+  bundler-audit
   faker
   falcon
+  ferrum
+  futurism
   geocoder
   image_processing
   importmap-rails
+  omniauth
+  omniauth-github
+  omniauth-google-oauth2
+  omniauth-rails_csrf_protection
   pagy
-  rails (~> 8.0)
+  pub4-shared!
+  pundit
+  rails (~> 8.1)
+  rotp
+  rqrcode
   rubocop-rails-omakase
+  ruby-vips
+  ruby_llm
   solid_cable
   solid_cache
   solid_queue
   sqlite3 (~> 2.1)
   stimulus-rails
   turbo-rails
+  webpush
 
 RUBY VERSION
-   ruby 3.3.7p123
+   ruby 3.4.9p82
 
 BUNDLED WITH
    2.7.2

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Marketplace
-  class ListingPolicy < ApplicationPolicy
+  class ListingPolicy < ::ApplicationPolicy
     def index?
       true
     end

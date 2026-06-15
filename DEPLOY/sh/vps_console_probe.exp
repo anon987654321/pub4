@@ -1,0 +1,13 @@
+#!/usr/bin/expect -f
+set timeout 60
+set keyfile $env(HOME)/.ssh/id_ed25519_brgen
+spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
+sleep 2
+send "\r\r\r"
+expect {
+  -re {login:} { puts "LOGIN_PROMPT"; send "dev\r"; exp_continue }
+  -re {OpenBSD} { puts "OPENBSD_BANNER\n$expect_out(buffer)"; exp_continue }
+  -re {password:} { puts "PASSWORD_PROMPT"; exp_continue }
+  timeout { puts "TIMEOUT_BUF:\n$expect_out(buffer)" }
+  eof { puts "EOF" }
+}

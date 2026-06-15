@@ -1,0 +1,117 @@
+{
+  "types": {
+
+    "text-to-image": {
+
+      "patterns": ["text.*image", "txt2img", "t2i", "dalle", "stable.*diffusion", "flux", "sdxl", "imagen"],
+
+      "input": { "prompt": "string" },
+
+      "cost_avg": 0.05
+
+    },
+
+    "image-to-video": {
+
+      "patterns": ["image.*video", "img2vid", "i2v", "animate"],
+
+      "input": { "image": "url", "prompt": "string?" },
+
+      "cost_avg": 0.15
+
+    },
+
+    "upscale": {
+
+      "patterns": ["upscale", "super.*res", "enhance"],
+
+      "input": { "image": "url", "scale": "int?" },
+
+      "cost_avg": 0.03
+
+    },
+
+    "image-processing": {
+
+      "patterns": ["background", "rembg", "segment", "mask"],
+
+      "input": { "image": "url" },
+
+      "cost_avg": 0.02
+
+    },
+
+    "style-transfer": {
+
+      "patterns": ["style", "artistic"],
+
+      "input": { "image": "url", "prompt": "string?" },
+
+      "cost_avg": 0.05
+
+    },
+
+    "video": {
+
+      "patterns": ["video", "motion"],
+
+      "input": { "prompt": "string", "duration": "int?" },
+
+      "cost_avg": 0.20
+
+    },
+
+    "audio": {
+
+      "patterns": ["audio", "music", "sound", "tts", "speech"],
+
+      "input": { "prompt": "string", "duration": "int?" },
+
+      "cost_avg": 0.10
+
+    },
+
+    "3d": {
+
+      "patterns": ["3d", "mesh", "model"],
+
+      "input": { "prompt": "string" },
+
+      "cost_avg": 0.08
+
+    }
+
+  },
+
+  "chain_templates": {
+
+    "masterpiece": {
+
+      "phases": [
+
+        { "type": "text-to-image", "count": 1 },
+
+        { "types": ["upscale", "style-transfer", "image-processing"], "count": [3, 8] },
+
+        { "types": ["upscale", "image-to-video"], "count": 1 }
+
+      ]
+
+    },
+
+    "quick": {
+
+      "phases": [
+
+        { "type": "text-to-image", "count": 1 },
+
+        { "type": "upscale", "count": 1 }
+
+      ]
+
+    }
+
+  }
+
+}
+

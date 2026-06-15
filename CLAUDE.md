@@ -131,26 +131,53 @@ brgen landing: `#000` OLED-black background, "brgen" in bold Helvetica top-left,
 
 ## VPS and deployment
 
-vm23 on **server4** (`46.23.89.226`, user `dev`) — full network/hypervisor details in `DEPLOY/openbsd/README.md`.
+vm23 on **server4** (`46.23.89.226`, user `dev`) — full network/hypervisor details in `DEPLOY/openbsd/README.md`. Repo on VPS: `/home/dev/pub4`. Operator keys may also live on `dev@brgen.no` (see operator notes; never commit secrets).
 
 ```zsh
-# VM
+# VM (flush pf bruteforce if SSH times out)
 ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226
 
-# Hypervisor (vmctl when VM SSH is blocked)
+# Hypervisor jump when VM SSH is blocked
 ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam
+vmctl console vm23   # then: doas pfctl -t bruteforce -T flush
 
-# Deploy MASTER
+# MASTER web face
 doas rcctl restart master
+curl -fsS http://127.0.0.1:53187/up
+curl -fsS https://ai.brgen.no/up
 
-# Full stack deploy
+# Full OpenBSD stack (DNS, relayd, TLS, in-place Rails bootstrap)
 doas zsh DEPLOY/openbsd/openbsd.sh
 
-# After web/ edit
-doas rcctl restart master
+# Copy-tree Rails deploy (six apps from master.json)
+SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_on_vm_install.sh
+# or on workstation → hypervisor → VM:
+zsh DEPLOY/sh/vps_run_remote.sh
+
+# Retry failed apps only
+SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_retry_failed.sh
 ```
 
-One tmux session per operation — rapid reconnects trigger pf bruteforce protection. Edit files directly on VPS. Sync any installed config back to `DEPLOY/openbsd/` and commit.
+**Production URLs (after relayd + rcctl are green):**
+
+| Host | Backend |
+|------|---------|
+| `https://ai.brgen.no` | MASTER web (Falcon :53187) |
+| `https://brgen.no` | brgen Rails (:38182) |
+| `https://markedsplass.brgen.no`, `dating.`, `takeaway.`, `tv.`, `playlist.`, `maps.`, `messenger.` | brgen subdomain routes (same app) |
+| `https://blognet.no` | blognet (:10002) |
+| `https://bsdports.org` | bsdports (:47312) |
+| `https://baibl.no` | baibl (:10007) |
+| `https://hjerterom.no` | hjerterom (:38891) |
+| `https://amber.brgen.no` | amber (:61352) |
+
+TLS terminates at relayd; Rails uses `config.assume_ssl = true` only.
+
+**Deploy scripts (`DEPLOY/sh/`):** `vps_install_all.sh` and `vps_on_vm_install.sh` install MASTER + six Rails apps. Per-app `DEPLOY/rails/<app>/<app>.sh` copies the tracked tree to `/home/<app>/app`, copies `pub4-shared` to `/home/<app>/shared`, runs `bundle install` as the app user, ensures `/etc/<app>.env` with `SECRET_KEY_BASE`, overlays shared initializers, migrates DB, installs rc.d. Do not wrap deploy scripts in outer `doas` (nested doas fails). Use `SKIP_MASTER_SCAN=1` until MASTER `/scan DEPLOY` is non-interactive on VPS.
+
+**Predecessor archive:** `DEPLOY/__predecessors/` holds recovered logic from pub/pub2/pub3 (privcam, ai3, multimedia/tts, etc.). Regenerate manifest: `DEPLOY/sh/sync_predecessors.sh`. Archived apps listed in `DEPLOY/rails/apps.yml`.
+
+One tmux session per operation — rapid reconnects trigger pf bruteforce protection. Edit files on VPS, sync back to `DEPLOY/openbsd/` and commit. Pure Ruby for automation — no Python on deploy paths.
 
 **OpenBSD stack:** relayd for reverse proxy (never nginx). httpd serves ACME challenges only. doas not sudo. pledge(2) + unveil(2) on new daemons. rcctl manages all services. relayd, httpd, pf, acme-client are base tools — never `pkg_add` them.
 

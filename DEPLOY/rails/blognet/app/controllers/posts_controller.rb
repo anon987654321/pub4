@@ -62,7 +62,9 @@ class PostsController < ApplicationController
 
   def set_blog   = @blog = Blog.find_by!(slug: params[:blog_id])
   def set_post   = @post = @blog.posts.find_by!(slug: params[:id])
-  def authorize! = redirect_to(@blog, alert: "Unauthorized") unless @post.user == Current.user
+  def authorize!
+    redirect_to(@blog, alert: "Unauthorized") unless @post.user == Current.user
+  end
 
   def post_params
     params.require(:post).permit(:title, :body, :published, :slug, images: [])

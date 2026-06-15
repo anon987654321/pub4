@@ -101,6 +101,20 @@ relayd is the reverse proxy. httpd serves ACME challenges only. doas not sudo.
 pledge(2) + unveil(2) for any new daemon. Never nginx. Never pkg_add base tools.
 rcctl manages services. Every rc.d script implements stop/start/check/restart.
 
+VPS vm23 (`46.23.89.226`, user `dev`) runs the production stack. Hypervisor:
+`ssh -p 31415 dev@server4.openbsd.amsterdam` → `vmctl console vm23` when SSH is pf-blocked.
+
+Install path after `git pull` on VPS:
+`SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_on_vm_install.sh` (MASTER bundle + six Rails apps).
+Per-app scripts live in `DEPLOY/rails/<app>/<app>.sh`. Shared helpers:
+`DEPLOY/rails/shared/deploy/@shared_functions.sh`.
+
+Production faces: `https://ai.brgen.no` (MASTER), `https://brgen.no` and subdomains
+(markedsplass, dating, takeaway, tv, messenger, etc.) via brgen Rails + relayd SNI.
+
+Recovered predecessor trees: `DEPLOY/__predecessors/` (gap manifest in `gap_manifest.json`).
+Pure Ruby for deploy automation — never Python on operator paths.
+
 ---
 
 ## Git discipline

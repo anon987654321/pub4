@@ -277,3 +277,44 @@ apps:
       planned:
         - { name: reporting jobs (Solid Queue),                            status: planned }
         - { name: operational forecasting,                                 status: planned }
+
+# ── Archived / not in DEPLOY/rails (recovery sources in __predecessors/) ──────
+
+archived_apps:
+
+  privcam:
+    title: Privcam
+    status: missing
+    recovery_source: DEPLOY/__predecessors/pub3-installers/privcam.sh
+    notes: Video upload, VideosInfiniteScrollReflex, comments. Referenced by old deploy_all.sh — removed from master.json.
+
+  pub_attorney:
+    title: Pub Attorney
+    domain: pub.attorney
+    status: missing
+    recovery_source: DEPLOY/__predecessors/pub3-installers/pub_attorney.sh
+    notes: Lawyer/Case/Document models, CaseMatchReflex, wicked_pdf/prawn.
+
+  mytoonz:
+    title: MyToonz
+    status: missing
+    recovery_source: DEPLOY/__predecessors/pub3-installers/mytoonz.sh
+    notes: ReplicateService comic-strip generation, GenerateComicStripJob.
+
+archived_subsystems:
+
+  aight_production_ai:
+    recovery_source: DEPLOY/__predecessors/pub2-aight/lib
+    notes: pub2 RAG/weaviate/scraper — not wired into DEPLOY; MASTER is dev harness only.
+
+  ai3_assistants:
+    recovery_source: DEPLOY/__predecessors/pub-ai3
+    notes: pub ai3 orchestration + 57 assistants.
+
+  multimedia_tts:
+    recovery_source: DEPLOY/__predecessors/pub3-multimedia/tts
+    notes: TTS pipeline absent from DEPLOY; blognet AI narration still missing.
+
+  blognet_ai_content:
+    recovery_source: DEPLOY/__predecessors/pub2-rails/build_blognet.rb
+    notes: AiContentService + ai_generated column from pub2.

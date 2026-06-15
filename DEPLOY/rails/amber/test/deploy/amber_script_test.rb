@@ -3,7 +3,7 @@
 require "test_helper"
 
 class AmberScriptTest < ActiveSupport::TestCase
-  SCRIPT = Rails.root.join("..", "amber.sh")
+  SCRIPT = Rails.root.join("amber.sh")
 
   test "deploy script is configured for amber instead of a template placeholder" do
     content = SCRIPT.read

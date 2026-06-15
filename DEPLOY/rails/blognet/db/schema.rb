@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -12,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_01_020920) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_15_000100) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -51,6 +49,65 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_020920) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "blogs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name"
+    t.integer "posts_count", default: 0
+    t.boolean "published", default: false
+    t.string "slug"
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["slug"], name: "index_blogs_on_slug", unique: true
+    t.index ["user_id"], name: "index_blogs_on_user_id"
+  end
+
+  create_table "categories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name"
+    t.string "slug"
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_categories_on_slug", unique: true
+  end
+
+  create_table "categorizations", force: :cascade do |t|
+    t.integer "category_id"
+    t.datetime "created_at", null: false
+    t.integer "post_id"
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_categorizations_on_category_id"
+    t.index ["post_id"], name: "index_categorizations_on_post_id"
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.boolean "approved", default: true
+    t.text "content"
+    t.datetime "created_at", null: false
+    t.integer "parent_id"
+    t.integer "post_id"
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["post_id"], name: "index_comments_on_post_id"
+    t.index ["user_id"], name: "index_comments_on_user_id"
+  end
+
+  create_table "posts", force: :cascade do |t|
+    t.integer "blog_id"
+    t.integer "comments_count", default: 0
+    t.datetime "created_at", null: false
+    t.boolean "published", default: false
+    t.datetime "published_at"
+    t.string "slug"
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.integer "views_count", default: 0
+    t.index ["blog_id"], name: "index_posts_on_blog_id"
+    t.index ["slug"], name: "index_posts_on_slug", unique: true
+    t.index ["user_id"], name: "index_posts_on_user_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -58,6 +115,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_020920) do
     t.string "user_agent"
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "taggings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "post_id"
+    t.integer "tag_id"
+    t.datetime "updated_at", null: false
+    t.index ["post_id"], name: "index_taggings_on_post_id"
+    t.index ["tag_id"], name: "index_taggings_on_tag_id"
+  end
+
+  create_table "tags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.integer "posts_count", default: 0
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_tags_on_name", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -70,5 +144,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_020920) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "blogs", "users"
+  add_foreign_key "categorizations", "categories"
+  add_foreign_key "categorizations", "posts"
+  add_foreign_key "comments", "posts"
+  add_foreign_key "comments", "users"
+  add_foreign_key "posts", "blogs"
+  add_foreign_key "posts", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "taggings", "posts"
+  add_foreign_key "taggings", "tags"
 end

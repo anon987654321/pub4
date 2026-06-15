@@ -1,0 +1,260 @@
+# AI³ (AI Cubed) Platform Configuration
+# Enterprise-Grade AI Assistant Platform with Cognitive Orchestration
+
+# AI³ Core Configuration
+ai3:
+  version: "12.3.0"
+  name: "AI³ - AI Cubed Platform"
+  description: "Enterprise AI Assistant Platform with Cognitive Load Management"
+
+# Multi-LLM Manager Configuration
+llm:
+  # Primary provider selection
+  primary: "xai"  # Options: xai, anthropic, openai, ollama
+  
+  # Fallback configuration
+  fallback_enabled: true
+  fallback_chain:
+    - "anthropic"
+    - "openai"
+    - "ollama"
+  
+  # Provider configurations
+  providers:
+    xai:
+      name: "Grok (xAI)"
+      api_key: "${XAI_API_KEY}"
+      base_url: "https://api.x.ai/v1"
+      model: "grok-beta"
+      timeout: 30
+      max_retries: 3
+      
+    anthropic:
+      name: "Claude (Anthropic)"
+      api_key: "${ANTHROPIC_API_KEY}"
+      model: "claude-3-sonnet-20240229"
+      timeout: 30
+      max_retries: 3
+      
+    openai:
+      name: "OpenAI GPT"
+      api_key: "${OPENAI_API_KEY}"
+      model: "gpt-4"
+      timeout: 30
+      max_retries: 3
+      
+    ollama:
+      name: "Ollama Local"
+      base_url: "http://localhost:11434"
+      model: "llama2"
+      timeout: 60
+      max_retries: 2
+
+# Cognitive Orchestration (7±2 Principle)
+cognitive:
+  # Working memory limits
+  max_working_memory: 7
+  optimal_load: 5
+  circuit_breaker_threshold: 8
+  
+  # Flow state management
+  flow_state:
+    optimal_threshold: 0.7
+    stress_threshold: 0.9
+    recovery_time: 300  # seconds
+  
+  # Context switching penalties
+  context_switch_penalty: 0.1
+  cognitive_decay_rate: 0.05
+
+# Session Management
+session:
+  max_sessions: 10
+  eviction_strategy: "cognitive_load_aware"  # Options: lru, cognitive_load_aware, priority_based
+  session_timeout: 3600  # 1 hour
+  context_window: 4000
+  
+  # Cognitive health monitoring
+  cognitive_health:
+    monitoring_enabled: true
+    health_check_interval: 60  # seconds
+    auto_recovery: true
+
+# RAG Engine Configuration
+rag:
+  enabled: true
+  vector_db_path: "data/vector_store.db"
+  
+  # Vector database settings
+  vector_db:
+    embedding_dimension: 1536
+    similarity_threshold: 0.7
+    max_results: 10
+    
+  # Collection management
+  collections:
+    default: "general_knowledge"
+    scraped_content: "web_scraped"
+    legal_documents: "norwegian_legal"
+    
+  # Weaviate integration (if enabled)
+  weaviate:
+    enabled: false
+    url: "http://localhost:8080"
+    api_key: "${WEAVIATE_API_KEY}"
+
+# Universal Scraper Configuration
+scraper:
+  enabled: true
+  screenshot_dir: "data/screenshots"
+  max_depth: 3
+  timeout: 30
+  user_agent: "AI3-Bot/12.3.0 (Enterprise AI Platform)"
+  
+  # Cognitive integration
+  cognitive_aware: true
+  defer_on_overload: true
+  
+  # Content processing
+  content_filters:
+    - "article"
+    - "section" 
+    - "main"
+    - "div.content"
+    - "p"
+    - "h1, h2, h3, h4"
+
+# Assistant Configuration
+assistants:
+  # Default assistant
+  default_assistant: "general"
+  
+  # Auto-registration of assistants
+  auto_register: true
+  assistant_directory: "assistants"
+  
+  # Swarm orchestration
+  swarm:
+    enabled: true
+    max_concurrent_assistants: 5
+    coordination_strategy: "cognitive_load_balanced"
+
+# Norwegian Legal Assistant Configuration
+norwegian_legal:
+  enabled: true
+  
+  # Lovdata.no integration
+  lovdata:
+    enabled: true
+    base_url: "https://lovdata.no"
+    scraping_enabled: true
+    cache_duration: 86400  # 24 hours
+    
+  # Legal specializations
+  specializations:
+    - name: "Familierett"
+      description: "Family Law - Marriage, divorce, child custody"
+      keywords: ["familie", "skilsmisse", "foreldrerett", "barnebidrag"]
+      
+    - name: "Straffrett"
+      description: "Criminal Law - Criminal cases and procedures"
+      keywords: ["straffesak", "domstol", "anklage", "forsvar"]
+      
+    - name: "Sivilrett"
+      description: "Civil Law - Contracts, property, obligations"
+      keywords: ["kontrakt", "eiendom", "erstatning", "avtale"]
+      
+    - name: "Forvaltningsrett"
+      description: "Administrative Law - Government decisions and appeals"
+      keywords: ["forvaltning", "vedtak", "klage", "offentlig"]
+      
+    - name: "Grunnlovsrett"
+      description: "Constitutional Law - Constitutional principles and rights"
+      keywords: ["grunnlov", "menneskerettigheter", "demokrati"]
+      
+    - name: "Selskapsrett"
+      description: "Corporate Law - Company formation and governance"
+      keywords: ["selskap", "aksjer", "styre", "AS", "aksjeselskap"]
+      
+    - name: "Eiendomsrett"
+      description: "Property Law - Real estate and property rights"
+      keywords: ["eiendom", "grunn", "bygning", "tinglysing"]
+      
+    - name: "Arbeidsrett"
+      description: "Employment Law - Worker rights and labor relations"
+      keywords: ["arbeid", "ansatt", "oppsigelse", "tariffavtale"]
+      
+    - name: "Skatterett"
+      description: "Tax Law - Tax obligations and tax planning"
+      keywords: ["skatt", "avgift", "skattemelding", "mva"]
+      
+    - name: "Utlendingsrett"
+      description: "Immigration Law - Visa, residence, citizenship"
+      keywords: ["innvandring", "opphold", "statsborgerskap", "asyl"]
+
+# Performance and Caching
+performance:
+  cache:
+    enabled: true
+    ttl: 3600  # 1 hour
+    max_size: 1000
+    
+  # LRU caching
+  lru_cache:
+    enabled: true
+    max_entries: 500
+    
+  # Query optimization
+  query_optimization:
+    enabled: true
+    min_query_length: 3
+    max_query_length: 1000
+
+# Error Handling and Logging
+error_handling:
+  log_level: "INFO"  # DEBUG, INFO, WARN, ERROR
+  log_file: "logs/ai3.log"
+  
+  # Circuit breaker pattern
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5
+    timeout: 60
+    
+  # Retry configuration
+  retry:
+    max_attempts: 3
+    backoff_factor: 2
+    initial_delay: 1
+
+# Security Configuration (OpenBSD Integration)
+security:
+  # OpenBSD pledge/unveil integration
+  openbsd:
+    pledge_enabled: true
+    unveil_enabled: true
+    permitted_paths:
+      - "data"
+      - "logs"
+      - "config"
+      - "tmp"
+    
+  # Rate limiting
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 60
+    burst_limit: 10
+
+# Localization
+localization:
+  default_locale: "en"
+  supported_locales:
+    - "en"
+    - "no"  # Norwegian for legal assistant
+  locale_directory: "config/locales"
+
+# Development and Testing
+development:
+  debug_mode: false
+  verbose_logging: false
+  mock_llm_responses: false

@@ -1,63 +1,87 @@
 #!/usr/bin/env zsh
-# Complete VPS deployment orchestrator per master.yml v72.1.0
-# Deploys all 15 Rails apps to OpenBSD VPS 46.23.89.226
-# Engine-ize note (tranche10): per-app bundle install now pulls pub4-shared (Gemfiles); legacy copy from shared/ via install_*.sh DEPRECATED (see WIRING_NOTES + shared/install_an_stack.sh). Prefer bundle.
+# Workstation orchestrator: sync pub4 to VPS and run DEPLOY/openbsd/openbsd.sh.
+#
+# Canonical app list: DEPLOY/master.json (6 Rails apps).
+# NOT deployed (archived installers only): privcam, pub_attorney, mytoonz
+#   → see DEPLOY/__predecessors/ and gap_manifest.json
+#
+# Usage:
+#   zsh DEPLOY/sh/deploy_all.sh
+#   VPS_HOST=dev@46.23.89.226 SSH_KEY=~/.ssh/id_ed25519 zsh DEPLOY/sh/deploy_all.sh
+#   zsh DEPLOY/sh/deploy_all.sh --per-app   # also run rails/<app>/<app>.sh (copies to /home/<app>/app)
 set -euo pipefail
-readonly VPS_HOST="46.23.89.226"
-readonly VPS_USER="dev"
-readonly SSH_KEY="/cygdrive/g/priv/passwd/id_rsa"
-readonly LOCAL_BASE="/cygdrive/g/pub"
-readonly REMOTE_BASE="/home/dev"
-# Status reporting
-log() {
-  printf '[%s] %s
-' "$(date +%H:%M:%S)" "$*"
-}
-error() {
-  log "ERROR: $*"
-  exit 1
-}
-# SSH wrapper
-vssh() {
-  ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=10 "${VPS_USER}@${VPS_HOST}" "$@"
-}
-# File transfer
-vscp() {
-  scp -i "$SSH_KEY" -o StrictHostKeyChecking=no -r "$@"
-}
-log "Starting complete VPS deployment"
-# 1. Test connectivity
-log "Testing VPS connectivity..."
-vssh 'uname -a' || error "Cannot connect to VPS"
-# 2. Upload files
-log "Uploading rails generators..."
-vscp "${LOCAL_BASE}/rails" "${VPS_USER}@${VPS_HOST}:${REMOTE_BASE}/" || error "Upload failed"
-log "Uploading openbsd infrastructure..."
-vscp "${LOCAL_BASE}/openbsd" "${VPS_USER}@${VPS_HOST}:${REMOTE_BASE}/" || error "Upload failed"
-log "Uploading master.yml..."
-vscp "${LOCAL_BASE}/master.yml" "${VPS_USER}@${VPS_HOST}:${REMOTE_BASE}/" || error "Upload failed"
-# 3. Run infrastructure setup
-log "Running infrastructure setup (openbsd.sh --pre-point)..."
-vssh "cd ${REMOTE_BASE}/openbsd && doas zsh openbsd.sh --pre-point" || log "WARN: Infrastructure may need manual intervention"
-# 4. Deploy Rails apps sequentially
+
+SCRIPT_DIR=${0:a:h}
+DEPLOY_ROOT=${SCRIPT_DIR:h}
+PUB4_ROOT=${PUB4_ROOT:-${DEPLOY_ROOT:h}}
+
+: "${VPS_HOST:=46.23.89.226}"
+: "${VPS_USER:=dev}"
+: "${SSH_KEY:=${HOME}/.ssh/id_rsa}"
+: "${REMOTE_PUB4:=/home/dev/pub4}"
+: "${USE_GIT_PULL:=1}"
+
+typeset -a ssh_opts=(-o StrictHostKeyChecking=no -o ConnectTimeout=15)
+[[ -f $SSH_KEY ]] && ssh_opts+=(-i "$SSH_KEY")
+
+log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
+error() { log "ERROR: $*"; exit 1 }
+
+vssh() { ssh "${ssh_opts[@]}" "${VPS_USER}@${VPS_HOST}" "$@" }
+
+typeset run_per_app=0
+[[ ${1:-} == --per-app ]] && run_per_app=1
+
 typeset -a APPS
-APPS=(brgen amber blognet bsdports hjerterom privcam pub_attorney)
-for app in $APPS; do
-  log "Deploying ${app}..."
-  vssh "cd ${REMOTE_BASE}/rails && zsh ${app}.sh 2>&1 | tee /tmp/${app}_deploy.log" || log "WARN: ${app} deployment issues - check /tmp/${app}_deploy.log"
-done
-# 5. Verify deployments
-log "Verifying app processes..."
-vssh 'ps aux | grep -E "falcon|puma|rails" | grep -v grep' || log "WARN: No Rails processes detected"
-log "Checking listening ports..."
-vssh 'netstat -an | grep LISTEN | grep -E "1000[1-7]|11006"' || log "WARN: Expected ports not listening"
-# 6. Summary
-log "Deployment complete!"
-log ""
-log "Next steps:"
-log "  1. Point DNS records to ns.brgen.no (46.23.89.226)"
-log "  2. Wait 24-48h for propagation"
-log "  3. Run: ssh ${VPS_USER}@${VPS_HOST} 'cd ${REMOTE_BASE}/openbsd && doas zsh openbsd.sh --post-point'"
-log ""
-log "Access VPS: ssh -i ${SSH_KEY} ${VPS_USER}@${VPS_HOST}"
-log "Check logs: ssh ${VPS_USER}@${VPS_HOST} 'tail -f /var/log/rails/*.log'"
+if command -v jq >/dev/null 2>&1 && [[ -f ${DEPLOY_ROOT}/master.json ]]; then
+  APPS=("${(@f)$(jq -r '.apps[].name' "${DEPLOY_ROOT}/master.json")}")
+else
+  APPS=(brgen amber blognet bsdports baibl hjerterom)
+fi
+
+log "pub4 deploy — ${#APPS[@]} apps from master.json"
+log "Archived (not in this run): privcam, pub_attorney, mytoonz"
+
+log "Testing VPS connectivity..."
+vssh 'uname -a' || error "Cannot connect to ${VPS_USER}@${VPS_HOST}"
+
+if [[ $USE_GIT_PULL == 1 ]]; then
+  log "Git pull on VPS at ${REMOTE_PUB4}..."
+  vssh "test -d ${REMOTE_PUB4}/.git" || error "Clone pub4 on VPS first: git clone https://github.com/anon987654321/pub4.git ${REMOTE_PUB4}"
+  vssh "cd ${REMOTE_PUB4} && git pull origin main"
+else
+  command -v rsync >/dev/null 2>&1 || error "rsync required when USE_GIT_PULL=0"
+  log "Rsync DEPLOY/ → ${REMOTE_PUB4}/DEPLOY/ ..."
+  rsync -az --delete \
+    -e "ssh ${(j: :)ssh_opts}" \
+    "${DEPLOY_ROOT}/" "${VPS_USER}@${VPS_HOST}:${REMOTE_PUB4}/DEPLOY/" \
+    || error "rsync failed"
+fi
+
+log "Running openbsd.sh (infra + Rails bootstrap from DEPLOY/rails trees)..."
+vssh "cd ${REMOTE_PUB4}/DEPLOY/openbsd && doas zsh openbsd.sh" \
+  || log "WARN: openbsd.sh reported issues — check /var/log/openbsd_setup.log on VPS"
+
+if (( run_per_app )); then
+  log "Optional per-app deploy scripts (/home/<app>/app layout)..."
+  for app in $APPS; do
+    typeset script="${REMOTE_PUB4}/DEPLOY/rails/${app}/${app}.sh"
+    log "  ${app}..."
+    vssh "test -f ${script}" || { log "WARN: missing ${script}"; continue; }
+    vssh "doas zsh ${script} 2>&1 | tee /tmp/${app}_deploy.log" \
+      || log "WARN: ${app} — see /tmp/${app}_deploy.log"
+  done
+fi
+
+log "Smoke checks..."
+vssh 'ps aux | grep -E "falcon|puma" | grep -v grep' || log "WARN: no Falcon/Puma processes"
+if command -v jq >/dev/null 2>&1; then
+  while IFS=$'\t' read -r app port; do
+    vssh "nc -z 127.0.0.1 ${port}" 2>/dev/null && log "  ${app} listening on :${port}" \
+      || log "WARN: ${app} not listening on :${port}"
+  done < <(jq -r '.apps[] | [.name, .port] | @tsv' "${DEPLOY_ROOT}/master.json")
+fi
+
+log "Deploy finished."
+log "VPS: ssh ${ssh_opts[*]} ${VPS_USER}@${VPS_HOST}"
+log "Health: ruby ${REMOTE_PUB4}/DEPLOY/openbsd/health_check.rb (on VPS)"

@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class Post < ApplicationRecord
-  include ActionText::RichText
-
   belongs_to :user
   belongs_to :category
   has_rich_text :body

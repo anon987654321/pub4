@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class FoodItem < ApplicationRecord
-  enum :category, { dry_goods: 0, fresh: 1, frozen: 2, hygiene: 3, clothing: 4, books: 5, other: 6 }, default: :other
+  enum :category, { dry_goods: 0, fresh: 1, frozen: 2, hygiene: 3, clothing: 4, books: 5, other: 6 }, prefix: :category, default: :other
   enum :quality_state, { usable: 0, urgent: 1, unusable: 2 }, default: :usable
 
   belongs_to :donation

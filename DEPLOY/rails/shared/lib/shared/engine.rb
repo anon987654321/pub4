@@ -17,6 +17,7 @@ module Shared
 
     initializer "shared.search_helper" do
       ActiveSupport.on_load(:action_controller_base) do
+        require_dependency Shared::Engine.root.join("app/helpers/shared/search_helper").to_s
         helper Shared::SearchHelper
       end
     end

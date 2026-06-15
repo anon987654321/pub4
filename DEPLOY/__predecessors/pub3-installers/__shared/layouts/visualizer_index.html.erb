@@ -1,0 +1,53 @@
+<%# Audio Visualizer View - Template for brgen_playlist integration %>
+<%# Place in: app/views/visualizer/index.html.erb %>
+<%# Uses visualizer layout (see visualizer_layout.html.erb) %>
+
+<noscript>
+  <div style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#dcdcdc;">
+    Radio Bergen requires JavaScript enabled.
+  </div>
+</noscript>
+
+<h1 class="city-carousel" id="cityCarousel" aria-live="polite">
+  <div class="carousel-container">
+    <% @cities.each_with_index do |(subdomain, name), index| %>
+      <span class="carousel-slide <%= 'active' if index.zero? %>">
+        playlist.<%= subdomain %>.<%= request.host.split('.').last(2).join('.') rescue 'brgen.no' %>
+      </span>
+    <% end %>
+  </div>
+</h1>
+
+<canvas id="canvas" aria-label="Audio-reactive warp tunnel visualizer" tabindex="0"></canvas>
+
+<div id="overlay" class="overlay" role="dialog" aria-labelledby="start-title" aria-modal="true" tabindex="0">
+  <div>
+    <h2 id="start-title">Tap to start</h2>
+  </div>
+</div>
+
+<div class="ui" id="ui" role="status" aria-live="polite" aria-atomic="true">
+  <span class="label" id="uiLabel">Streaming</span>
+  <span class="dots" id="uiDots" aria-hidden="true"></span>
+</div>
+
+<div class="swipe-hint" id="swipeHint">← Swipe for tracks →</div>
+
+<!-- YouTube player containers (hidden) -->
+<div id="yt-player-a" aria-hidden="true" role="none" 
+     style="position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1"></div>
+<div id="yt-player-b" aria-hidden="true" role="none" 
+     style="position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1"></div>
+
+<!-- Fallback iframes for YouTube -->
+<iframe id="player-fallback-a" src="about:blank" title="YouTube audio player A (hidden)" 
+        aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" 
+        allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" 
+        style="position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1"></iframe>
+
+<iframe id="player-fallback-b" src="about:blank" title="YouTube audio player B (hidden)" 
+        aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" 
+        allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" 
+        style="position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1"></iframe>
+
+<%= javascript_include_tag "visualizer", "data-turbo-track": "reload" %>

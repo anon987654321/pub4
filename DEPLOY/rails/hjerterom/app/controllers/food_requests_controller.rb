@@ -16,6 +16,8 @@ class FoodRequestsController < ApplicationController
 
   private
 
-  def authorize_owner! = redirect_to(root_path, alert: "Unauthorized") unless @request.food_listing.user == Current.user
+  def authorize_owner!
+    redirect_to(root_path, alert: "Unauthorized") unless @request.food_listing.user == Current.user
+  end
   def request_params   = params.require(:food_request).permit(:message, :pickup_time)
 end

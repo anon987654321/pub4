@@ -19,11 +19,32 @@ log_ok()   { print -P "%F{green}ok%f $*"; }
 log_warn() { print -P "%F{yellow}WARN%f $*" >&2; }
 log_err()  { print -P "%F{red}ERR%f $*" >&2; }
 
+# master_scan_dep APP_NAME — rules.yml gate via MASTER CLI (requires bundle exec in MASTER/).
+master_scan_dep() {
+  local app_name=$1
+  local master=${MASTER_ROOT:-/home/dev/pub4/MASTER}
+  [[ -x ${master}/bin/cli ]] || return 0
+  [[ -n ${SKIP_MASTER_SCAN:-} ]] && { log "MASTER scan skipped (SKIP_MASTER_SCAN)"; return 0; }
+  log "MASTER rules scan (DEPLOY) pre-bundle"
+  (cd "$master" && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle exec ruby bin/cli "/scan DEPLOY") \
+    </dev/null 2>&1 | tee /tmp/master_${app_name}_scan.log
+}
+
 need_cmd() {
   for cmd in "$@"; do
     command -v "$cmd" >/dev/null 2>&1 || { log_err "Required: $cmd"; exit 1; }
     log_ok "$cmd found"
   done
+}
+
+# overlay_shared_initializers APP_DIR — shared config wins over stale per-app copies
+overlay_shared_initializers() {
+  local app_dir=$1
+  local shared_init=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/config/initializers
+  [[ -d $shared_init ]] || return 0
+  ${_PRIV} mkdir -p "${app_dir}/config/initializers"
+  ${_PRIV} cp -R "${shared_init}/." "${app_dir}/config/initializers/"
+  log_ok "shared initializers overlaid"
 }
 
 already_done() {
@@ -141,6 +162,39 @@ db_setup() {
   log_ok "Database ready"
 }
 
+# app_secret_for APP_NAME — read or create SECRET_KEY_BASE in /etc/<app>.env
+app_secret_for() {
+  local app_name=$1 env_file secret
+
+  for env_file in /etc/${app_name}.env /etc/rails/${app_name}.env; do
+    if ${_PRIV} test -r "$env_file"; then
+      secret=$(${_PRIV} grep '^SECRET_KEY_BASE=' "$env_file" | head -1 | cut -d= -f2-)
+      [[ -n $secret ]] && { print -r -- "$secret"; return 0; }
+    fi
+  done
+
+  secret=$(ruby34 -e "require 'securerandom'; puts SecureRandom.hex(64)")
+  ${_PRIV} sh -c "print -r 'SECRET_KEY_BASE=${secret}' > /etc/${app_name}.env && chmod 640 /etc/${app_name}.env"
+  log_ok "created /etc/${app_name}.env" >&2
+  print -r -- "$secret"
+}
+
+# db_create_migrate_as_app APP_NAME APP_DIR
+db_create_migrate_as_app() {
+  local app_name=$1 app_dir=$2 secret
+  secret=$(app_secret_for "$app_name")
+  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bin/rails db:create db:migrate'"
+  log_ok "Database ready"
+}
+
+# db_seed_as_app APP_NAME APP_DIR
+db_seed_as_app() {
+  local app_name=$1 app_dir=$2 secret
+  secret=$(app_secret_for "$app_name")
+  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bin/rails db:seed'" \
+    || log_warn "db:seed skipped for ${app_name}"
+}
+
 db_migrate() {
   RAILS_ENV=${RAILS_ENV:-production} bin/rails db:migrate
   log_ok "Migrations complete"
@@ -178,7 +232,8 @@ random_port() {
 # Installs or updates the rc.d service file for a Rails app on OpenBSD.
 install_rcd() {
   local app_name=$1 app_dir=$2 port=$3 svc=${4:-$1}
-  local rcd_src="$(dirname "$0")/../../openbsd/etc/rc.d/${svc}"
+  local deploy_root=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}
+  local rcd_src="${deploy_root}/openbsd/etc/rc.d/${svc}"
   local rcd_dst="/etc/rc.d/${svc}"
   if [[ ! -f $rcd_src ]]; then
     log_warn "rc.d template not found: $rcd_src — skipping install_rcd"
@@ -196,19 +251,29 @@ relayd_add_relay() {
   local domain=$1 port=$2
   local app=${domain%%.*}
   local conf=/etc/relayd.conf
-  # Add table if missing
+
+  [[ -f $conf ]] || { log_warn "relayd: ${conf} missing — skipping"; return 0; }
+
   if ! grep -q "table <${app}>" "$conf" 2>/dev/null; then
-    ${_PRIV} sed -i "1a table <${app}> { 127.0.0.1 }" "$conf"
+    ${_PRIV} sed -i "1a\\
+table <${app}> { 127.0.0.1 }\\
+" "$conf" 2>/dev/null \
+      || { log_warn "relayd: could not add table <${app}>"; return 0; }
     log_ok "relayd: added table <${app}>"
   fi
-  # Add forward rule if missing
   if ! grep -q "forward to <${app}>" "$conf" 2>/dev/null; then
-    ${_PRIV} sed -i "/match request header.*forward to <master>/a\\  match request header \"Host\" value \"${domain}\" forward to <${app}>" "$conf"
+    ${_PRIV} sed -i "/match request header.*forward to <master>/a\\
+  match request header \"Host\" value \"${domain}\" forward to <${app}>\\
+" "$conf" 2>/dev/null \
+      || { log_warn "relayd: could not add Host routing for ${domain}"; return 0; }
     log_ok "relayd: added Host routing for ${domain}"
   fi
-  # Add forward target if missing
   if ! grep -q "forward to <${app}> port" "$conf" 2>/dev/null; then
-    ${_PRIV} sed -i "/forward to <master> port/a\\  forward to <${app}> port ${port} check http \"/up\" code 200" "$conf"
+    ${_PRIV} sed -i "/forward to <master> port/a\\
+  forward to <${app}> port ${port} check http \"/up\" code 200\\
+" "$conf" 2>/dev/null \
+      || { log_warn "relayd: could not add forward for ${app}:${port}"; return 0; }
     log_ok "relayd: added forward to <${app}> port ${port}"
   fi
+  return 0
 }

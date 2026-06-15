@@ -1,0 +1,36 @@
+#!/usr/bin/expect -f
+# Sync deploy scripts tarball + run MASTER + Rails install on vm23 console.
+set timeout 30
+set keyfile $env(HOME)/.ssh/id_ed25519_brgen
+set tgzfile /tmp/pub4_deploy_sync.tgz
+set b64 [exec base64 -i $tgzfile]
+
+proc at_prompt {} {
+  expect -re {brgen\$ $}
+}
+
+spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
+expect -re {Connected to /dev/ttypx}
+send "\r"
+at_prompt
+
+send "doas pfctl -t bruteforce -T flush 2>/dev/null; echo PF_FLUSH_OK\r"
+at_prompt
+
+send "echo $b64 | base64 -d > /tmp/pub4_deploy_sync.tgz && tar xzf /tmp/pub4_deploy_sync.tgz -C /home/dev/pub4 && echo SYNC_OK\r"
+at_prompt
+
+send "chmod +x /home/dev/pub4/DEPLOY/sh/vps_on_vm_install.sh /home/dev/pub4/DEPLOY/sh/vps_install_all.sh\r"
+at_prompt
+
+send "pkill -f vps_on_vm_install.sh 2>/dev/null; pkill -f vps_install_all.sh 2>/dev/null; true\r"
+at_prompt
+
+send "nohup zsh /home/dev/pub4/DEPLOY/sh/vps_on_vm_install.sh > /tmp/pub4_on_vm_install.log 2>&1 & echo INSTALL_PID:\$!\r"
+at_prompt
+
+send "sleep 2; head -8 /tmp/pub4_on_vm_install.log\r"
+at_prompt
+
+send "~.\r"
+expect eof

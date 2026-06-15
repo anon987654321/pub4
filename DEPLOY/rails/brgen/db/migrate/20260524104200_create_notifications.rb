@@ -2,6 +2,8 @@
 
 class CreateNotifications < ActiveRecord::Migration[8.1]
   def change
+    return if table_exists?(:notifications)
+
     create_table :notifications do |t|
       t.references :user, null: false, foreign_key: true
       t.string :title, null: false

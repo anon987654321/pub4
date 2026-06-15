@@ -1,0 +1,341 @@
+# AI³ Assistant Registry Configuration
+# Defines all 15+ specialized assistants with their capabilities and coordination
+
+assistants:
+  # General Purpose Assistant
+  general:
+    name: "General AI Assistant"
+    class: "GeneralAssistant"
+    role: "General purpose AI assistant for varied tasks"
+    capabilities:
+      - "general_conversation"
+      - "information_retrieval"
+      - "task_coordination"
+      - "cognitive_orchestration"
+    cognitive_load: 1.0
+    priority: 1
+    swarm_enabled: true
+    
+  # Specialized Professional Assistants
+  lawyer:
+    name: "Norwegian Legal Specialist"
+    class: "LawyerAssistant"
+    role: "Norwegian legal expert with Lovdata integration"
+    capabilities:
+      - "norwegian_law"
+      - "legal_research"
+      - "document_analysis"
+      - "precedent_search"
+      - "compliance_checking"
+      - "lovdata_integration"
+    specializations:
+      - "familierett"
+      - "straffrett"
+      - "sivilrett"
+      - "forvaltningsrett"
+      - "grunnlovsrett"
+      - "selskapsrett"
+      - "eiendomsrett"
+      - "arbeidsrett"
+      - "skatterett"
+      - "utlendingsrett"
+    cognitive_load: 2.5
+    priority: 2
+    swarm_enabled: true
+    
+  trader:
+    name: "Advanced Trading Assistant"
+    class: "TradingAssistant"
+    role: "Financial markets and trading expert"
+    capabilities:
+      - "market_analysis"
+      - "risk_assessment"
+      - "portfolio_management"
+      - "technical_analysis"
+      - "algorithmic_trading"
+      - "crypto_analysis"
+    cognitive_load: 2.0
+    priority: 2
+    swarm_enabled: true
+    
+  hacker:
+    name: "Ethical Security Specialist"
+    class: "HackerAssistant"
+    role: "Cybersecurity and ethical hacking expert"
+    capabilities:
+      - "penetration_testing"
+      - "vulnerability_assessment"
+      - "security_auditing"
+      - "threat_analysis"
+      - "defensive_security"
+      - "incident_response"
+    cognitive_load: 2.2
+    priority: 2
+    swarm_enabled: true
+    
+  medical:
+    name: "Medical Research Assistant"
+    class: "MedicalAssistant"
+    role: "Medical and healthcare research specialist"
+    capabilities:
+      - "medical_research"
+      - "diagnosis_support"
+      - "drug_interaction"
+      - "clinical_analysis"
+      - "health_monitoring"
+      - "medical_literature"
+    cognitive_load: 2.3
+    priority: 2
+    swarm_enabled: true
+    
+  musicians:
+    name: "Musicians Multi-Agent Orchestra"
+    class: "MusiciansAssistant"
+    role: "Music production and audio engineering specialist"
+    capabilities:
+      - "music_composition"
+      - "audio_production"
+      - "sound_engineering"
+      - "music_theory"
+      - "instrument_mastery"
+      - "audio_mastering"
+    multi_agent_config:
+      agents:
+        - "composer"
+        - "sound_engineer"
+        - "mastering_engineer"
+        - "mixing_engineer"
+        - "producer"
+        - "arranger"
+        - "musician"
+        - "vocalist"
+        - "lyricist"
+        - "audio_technician"
+    cognitive_load: 3.0
+    priority: 3
+    swarm_enabled: true
+    
+  seo:
+    name: "SEO and Marketing Expert"
+    class: "SEOAssistant"
+    role: "Search engine optimization and digital marketing"
+    capabilities:
+      - "seo_optimization"
+      - "content_strategy"
+      - "keyword_research"
+      - "analytics_analysis"
+      - "conversion_optimization"
+      - "social_media_strategy"
+    cognitive_load: 1.8
+    priority: 2
+    swarm_enabled: true
+    
+  # Technical Specialists
+  web_developer:
+    name: "Full-Stack Web Developer"
+    class: "WebDeveloperAssistant"
+    role: "Web development and application architecture"
+    capabilities:
+      - "frontend_development"
+      - "backend_development"
+      - "database_design"
+      - "api_development"
+      - "devops"
+      - "ui_ux_design"
+    cognitive_load: 2.1
+    priority: 2
+    swarm_enabled: true
+    
+  sys_admin:
+    name: "System Administrator"
+    class: "SysAdminAssistant"
+    role: "Linux/OpenBSD system administration expert"
+    capabilities:
+      - "system_administration"
+      - "server_management"
+      - "network_configuration"
+      - "security_hardening"
+      - "automation_scripting"
+      - "monitoring_setup"
+    cognitive_load: 2.0
+    priority: 2
+    swarm_enabled: true
+    
+  architect:
+    name: "Software Architect"
+    class: "ArchitectAssistant"
+    role: "Software architecture and system design expert"
+    capabilities:
+      - "system_architecture"
+      - "design_patterns"
+      - "scalability_planning"
+      - "technology_selection"
+      - "performance_optimization"
+      - "code_review"
+    cognitive_load: 2.4
+    priority: 2
+    swarm_enabled: true
+    
+  # Science and Engineering
+  rocket_scientist:
+    name: "Aerospace Engineer"
+    class: "RocketScientistAssistant"
+    role: "Aerospace and propulsion engineering specialist"
+    capabilities:
+      - "aerospace_engineering"
+      - "propulsion_systems"
+      - "orbital_mechanics"
+      - "spacecraft_design"
+      - "mission_planning"
+      - "rocket_design"
+    cognitive_load: 2.8
+    priority: 3
+    swarm_enabled: true
+    
+  neuro_scientist:
+    name: "Neuroscience Researcher"
+    class: "NeuroScientistAssistant"
+    role: "Neuroscience and cognitive research expert"
+    capabilities:
+      - "neuroscience_research"
+      - "brain_analysis"
+      - "cognitive_modeling"
+      - "neural_networks"
+      - "behavioral_analysis"
+      - "research_methodology"
+    cognitive_load: 2.6
+    priority: 3
+    swarm_enabled: true
+    
+  material_scientist:
+    name: "Materials Science Expert"
+    class: "MaterialScienceAssistant"
+    role: "Materials science and engineering specialist"
+    capabilities:
+      - "materials_research"
+      - "property_analysis"
+      - "material_selection"
+      - "nanomaterials"
+      - "composite_design"
+      - "failure_analysis"
+    cognitive_load: 2.4
+    priority: 3
+    swarm_enabled: true
+    
+  # Business and Finance
+  investment_banker:
+    name: "Investment Banking Analyst"
+    class: "InvestmentBankerAssistant"
+    role: "Investment banking and financial analysis expert"
+    capabilities:
+      - "financial_analysis"
+      - "valuation_modeling"
+      - "market_research"
+      - "deal_structuring"
+      - "risk_modeling"
+      - "financial_reporting"
+    cognitive_load: 2.2
+    priority: 2
+    swarm_enabled: true
+    
+  real_estate:
+    name: "Real Estate Specialist"
+    class: "RealEstateAssistant"
+    role: "Real estate investment and market analysis expert"
+    capabilities:
+      - "property_analysis"
+      - "market_valuation"
+      - "investment_analysis"
+      - "property_management"
+      - "market_trends"
+      - "due_diligence"
+    cognitive_load: 1.9
+    priority: 2
+    swarm_enabled: true
+
+# Swarm Coordination Configuration
+swarm_coordination:
+  # Multi-agent orchestration
+  orchestration:
+    enabled: true
+    coordination_strategy: "cognitive_load_balanced"
+    max_concurrent_agents: 5
+    
+  # Agent communication
+  communication:
+    protocol: "message_passing"
+    timeout: 30
+    retry_attempts: 3
+    
+  # Load balancing
+  load_balancing:
+    strategy: "cognitive_aware"
+    health_check_interval: 60
+    rebalance_threshold: 0.8
+    
+  # Conflict resolution
+  conflict_resolution:
+    strategy: "priority_based"
+    escalation_enabled: true
+    human_intervention_threshold: 0.9
+
+# Assistant Lifecycle Management
+lifecycle:
+  # Initialization
+  initialization:
+    lazy_loading: true
+    warmup_enabled: false
+    preload_critical: true
+    
+  # Session management
+  session:
+    session_affinity: true
+    session_timeout: 3600
+    context_preservation: true
+    
+  # Health monitoring
+  health:
+    monitoring_enabled: true
+    health_check_interval: 120
+    auto_restart: true
+    failure_threshold: 3
+
+# Cognitive Load Management per Assistant
+cognitive_management:
+  # Load calculation
+  load_calculation:
+    base_load: 0.5
+    complexity_multiplier: 1.5
+    concurrent_penalty: 0.2
+    
+  # Circuit breakers
+  circuit_breakers:
+    enabled: true
+    threshold: 7.0  # Based on 7±2 principle
+    recovery_time: 300
+    
+  # Load distribution
+  load_distribution:
+    strategy: "fair_share"
+    priority_weight: 0.3
+    capability_weight: 0.7
+
+# Security and Access Control
+security:
+  # Access control
+  access_control:
+    enabled: true
+    role_based: true
+    default_permissions: "read"
+    
+  # Rate limiting per assistant
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 30
+    burst_allowance: 10
+    
+  # Audit logging
+  audit:
+    enabled: true
+    log_file: "logs/assistant_audit.log"
+    sensitive_data_masking: true

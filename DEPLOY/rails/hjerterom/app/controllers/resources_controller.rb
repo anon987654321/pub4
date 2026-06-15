@@ -41,7 +41,9 @@ class ResourcesController < ApplicationController
   private
 
   def set_resource  = @resource = Resource.find(params[:id])
-  def authorize!    = redirect_to(resources_path, alert: "Unauthorized") unless @resource.user == Current.user
+  def authorize!
+    redirect_to(resources_path, alert: "Unauthorized") unless @resource.user == Current.user
+  end
 
   def resource_params
     params.require(:resource).permit(

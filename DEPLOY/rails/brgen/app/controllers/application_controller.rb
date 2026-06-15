@@ -3,7 +3,7 @@
 class ApplicationController < ActionController::Base
   include Authentication
   include Shared::PunditAuthorization
-  include Pagy::Method
+  include Shared::PagyPagination
   turbo_refreshes_with :morph, scroll: :preserve
 
   before_action :set_domain_context

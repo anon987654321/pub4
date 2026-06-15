@@ -42,12 +42,15 @@ ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam
 vmctl console vm23
 # login, then: doas pfctl -t bruteforce -T flush; exit ~.
 ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226
-doas rcctl restart master relayd
+cd /home/dev/pub4 && git pull origin main
+SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_on_vm_install.sh
+# or retry: SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_retry_failed.sh
+doas rcctl check master brgen amber blognet bsdports baibl hjerterom
 curl -fsS http://127.0.0.1:53187/up
 curl -fsS https://ai.brgen.no/up
 ```
 
-Hypervisor if VM SSH times out: `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam` → `vmctl console vm23`.
+Hypervisor if VM SSH times out: `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam` → `vmctl console vm23`. Operator keys may also be on `dev@brgen.no` (password in operator vault — never commit).
 
 ## Next waves (sequential)
 

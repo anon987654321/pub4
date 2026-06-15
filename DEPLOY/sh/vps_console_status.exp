@@ -1,0 +1,13 @@
+#!/usr/bin/expect -f
+set timeout 20
+set keyfile $env(HOME)/.ssh/id_ed25519_brgen
+spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
+expect -re {Connected to /dev/ttypx}
+send "\r"
+expect -re {brgen\$ }
+send "tail -15 /tmp/pub4_install_latest.log 2>/dev/null; ps aux | grep bundle | grep -v grep | head -3\r"
+expect -re {brgen\$ }
+send "doas rcctl check master brgen_rails amber_rails 2>/dev/null\r"
+expect -re {brgen\$ }
+send "~.\r"
+expect eof

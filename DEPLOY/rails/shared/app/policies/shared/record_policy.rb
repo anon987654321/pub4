@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Shared
-  class RecordPolicy < ApplicationPolicy
+  class RecordPolicy < ::ApplicationPolicy
     def show?
       public_record? || owner? || user.present?
     end

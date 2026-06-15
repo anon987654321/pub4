@@ -1,0 +1,30 @@
+# Bundle and dependencies
+.bundle/
+Gemfile.lock
+vendor/
+
+# Data directories 
+data/
+logs/
+tmp/
+screenshots/
+
+# API keys and config
+.env
+.ai3_keys
+config/keys.yml
+
+# Runtime files
+*.pid
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

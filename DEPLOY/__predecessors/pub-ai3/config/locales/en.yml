@@ -1,0 +1,55 @@
+en:
+  ai3:
+    welcome: "Welcome to AI³ (AI Cubed) - Your Enterprise AI Platform!"
+    messages:
+      processing: "Processing your request"
+      fallback_activated: "Fallback LLM activated"
+      cognitive_overload: "Cognitive overload detected - taking a break"
+      goodbye: "Thank you for using AI³!"
+    
+    errors:
+      command_not_found: "Unknown command: %{command}"
+    
+    cognitive:
+      circuit_breaker:
+        activated: "Circuit breaker activated - cognitive load too high"
+    
+    rag:
+      searching: "Searching knowledge base"
+      no_results: "No relevant results found"
+      results_found: "Found %{count} relevant results"
+    
+    scraper:
+      scraping: "Scraping %{url}"
+      content_extracted: "Content extracted successfully"
+      error: "Scraping failed"
+    
+    legal:
+      norwegian:
+        searching_lovdata: "Searching Lovdata.no"
+        specialization_selected: "Norwegian legal specialization: %{area}"
+        document_analyzed: "Legal document analysis complete"
+        precedent_found: "Found %{count} relevant precedents"
+        compliance_check: "Compliance check: %{status}"
+    
+    assistants:
+      swarm:
+        orchestration_started: "Multi-agent orchestration started"
+        coordination_active: "Agent coordination active"
+        load_balanced: "Cognitive load balanced across agents"
+    
+    help:
+      usage: |
+        AI³ Commands:
+        
+        chat <query>     - Chat with the current assistant
+        rag <query>      - Search knowledge base
+        scrape <url>     - Scrape web content
+        switch <llm>     - Switch LLM provider
+        assistant <name> - Switch to specific assistant
+        legal <query>    - Norwegian legal research
+        swarm <task>     - Multi-agent task coordination
+        list <type>      - List assistants/llms/tools
+        status           - Show cognitive status
+        help             - Show this help
+        exit             - Exit AI³
