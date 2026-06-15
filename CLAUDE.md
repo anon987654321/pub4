@@ -129,9 +129,14 @@ brgen landing: `#000` OLED-black background, "brgen" in bold Helvetica top-left,
 
 ## VPS and deployment
 
+vm23 on **server4** (`46.23.89.226`, user `dev`) — full network/hypervisor details in `DEPLOY/openbsd/README.md`.
+
 ```zsh
-# SSH
-ssh dev@server4.openbsd.amsterdam -p 31415  # key: id_ed25519_brgen
+# VM
+ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226
+
+# Hypervisor (vmctl when VM SSH is blocked)
+ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam
 
 # Deploy MASTER
 doas rcctl restart master
