@@ -1,0 +1,11 @@
+$ORIGIN hjerterom.no.
+$TTL 3600
+@ IN SOA ns.brgen.no. hostmaster.hjerterom.no. (
+    2026061601 1800 900 604800 86400)
+@ IN NS ns.brgen.no.
+@ IN NS ns.hyp.net.
+@ IN A 46.23.89.226
+www IN CNAME @
+@ IN MX 10 mail.hjerterom.no.
+mail IN A 46.23.89.226
+@ IN CAA 0 issue "letsencrypt.org"
