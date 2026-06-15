@@ -17,7 +17,7 @@ DEPLOY/
 
 ## OpenBSD
 
-Run from tmux — rapid SSH reconnects trip pf bruteforce rules:
+Run from tmux — rapid SSH reconnects trip pf bruteforce rules (see openbsd/README.md + unban_pf.sh for host console + `pfctl -t bruteforce -T flush` via vmctl).
 
 ```zsh
 cd ~/pub4/DEPLOY/openbsd

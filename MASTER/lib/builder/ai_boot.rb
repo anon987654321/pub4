@@ -36,6 +36,7 @@ module Master
         .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
       autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
       Trace::FeedbackLedger.new(event_bus: bus, learnings: autonomous[:learnings]).attach
+      Trace::ReflexionLedger.new(event_bus: bus, root: root).attach
       { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard:, reference_graph: infra[:reference_graph] }.merge(autonomous)
     end
 

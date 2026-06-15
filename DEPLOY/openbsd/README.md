@@ -32,26 +32,31 @@ Provider welcome email from Mischa, 2026-05-17. Operator record — not secrets.
 **Access**
 
 ```zsh
-# VM (app host)
+# VM (app host) — direct once unbanned
 ssh dev@46.23.89.226
 
-# Hypervisor — vmctl console/start/stop when VM networking is wedged
-ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam
+# Hypervisor (for pf bruteforce ban, wedged networking, or console)
+ssh -p 31415 -i ~/.ssh/id_ed25519_brgen -o VerifyHostKeyDNS=yes dev@server4.openbsd.amsterdam
 vmctl status vm23
-vmctl console vm23          # exit console: ~.
+vmctl console vm23          # inside: login, pfctl -t bruteforce -T flush ; exit with ~.
 ```
 
-**Operator docs**
+See DEPLOY/openbsd/unban_pf.sh for a one-shot helper that drops you straight into the console with the exact pfctl command.
 
-- [Onboarding](https://openbsd.amsterdam/onboard.html) — doas, syspatch, console via vmctl
-- [Backup](https://openbsd.amsterdam/backup.html) — wingman1 (`s4vm23@wingman1.openbsd.amsterdam`)
-- [PTR / rDNS](https://openbsd.amsterdam/ptr.html) — set from VM, not locally
+**Operator docs** (read 2026-06-15)
+
+- [Onboarding](https://openbsd.amsterdam/onboard.html) — console via vmctl/cu(1), ~. to exit, doas setup, syspatch, initial root password from authorized_keys
+- [Backup](https://openbsd.amsterdam/backup.html) — wingman1 (s4vm23@wingman1.openbsd.amsterdam, same port/key, openrsync recommended; 10G free)
+- [PTR / rDNS](https://openbsd.amsterdam/ptr.html) — set from inside VM only (token + ftp/http to ptr4/ptr6); protect endpoint
+- [Upgrade](https://openbsd.amsterdam/upgrade.html) — sysupgrade or manual bsd.rd
+- [Known issues](https://openbsd.amsterdam/known.html) — mostly resolved in 7.3+ (use ping cron to gateway only if needed)
 
 **Notes**
 
-- Rapid SSH reconnects trip pf `<bruteforce>` — use one tmux session; flush with `doas pfctl -t bruteforce -T flush`.
-- FDE the VM only if you accept that the provider cannot cold-start it for you.
-- Billing: €71/yr via [openbsd.amsterdam/pay.html](https://openbsd.amsterdam/pay.html).
+- Rapid SSH reconnects trip pf `<bruteforce>` table (see pf.conf + unban_pf.sh). Always use tmux; prefer host console when direct is blocked.
+- FDE the VM only if you accept that the provider cannot cold-start it.
+- Billing: €71/yr via pay.html (include "server4 vm23" in description).
+- Same key works for VM + host + backup wingman.
 
 ## Run
 

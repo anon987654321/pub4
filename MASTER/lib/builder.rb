@@ -5,6 +5,7 @@ require_relative "builder/boot_phases"
 require_relative "builder/ai_boot"
 require_relative "loop/rollback"
 require_relative "trace/feedback_ledger"
+require_relative "trace/reflexion_ledger"
 
 module Master
   module Builder
