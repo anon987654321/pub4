@@ -4,14 +4,14 @@
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
 <% end %>
 
-<section data-controller="map" data-map-points-value="<%= json_escape(@places_json) %>" data-map-center-lat-value="60.39" data-map-center-lng-value="5.33" data-map-zoom-value="12" data-map-style-url-value="https://tiles.openfreemap.org/styles/liberty">
-  <div id="map" data-map-target="canvas" style="position:fixed;inset:0;z-index:0"></div>
+<section role="application" aria-label="Interactive map for business discovery" data-controller="map" data-map-points-value="<%= json_escape(@places_json) %>" data-map-center-lat-value="60.39" data-map-center-lng-value="5.33" data-map-zoom-value="12" data-map-style-url-value="https://tiles.openfreemap.org/styles/liberty">
+  <div id="map" data-map-target="canvas" style="position:fixed;inset:0;z-index:0" aria-hidden="true"></div>
 
-  <div style="position:fixed;top:16px;left:16px;z-index:10;display:flex;flex-direction:column;gap:8px;max-width:280px">
+  <div style="position:fixed;top:16px;left:16px;z-index:10;display:flex;flex-direction:column;gap:8px;max-width:280px" role="region" aria-label="Map search and info">
     <div style="display:flex;gap:8px">
-      <input id="map-search" type="search" placeholder="Search places…" data-map-target="search"
+      <input id="map-search" type="search" placeholder="Search places…" data-map-target="search" role="searchbox" aria-label="Search places on map"
         style="flex:1;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:inherit;font-size:14px">
     </div>
-    <div id="place-popup" data-map-target="popup" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:14px"></div>
+    <div id="place-popup" data-map-target="popup" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:14px" role="status" aria-live="polite"></div>
   </div>
 </section>

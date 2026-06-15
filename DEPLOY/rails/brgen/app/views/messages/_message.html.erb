@@ -1,5 +1,5 @@
-<div id="<%= dom_id(message) %>">
-<article data-from="<%= message.sender == Current.user ? "self" : "peer" %>">
+<div id="<%= dom_id(message) %>" role="listitem">
+<article data-from="<%= message.sender == Current.user ? "self" : "peer" %>" aria-label="Message from <%= message.sender.username %>">
   <header>
     <span><%= message.sender.username %></span>
     <time datetime="<%= message.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(message.created_at) %> ago</time>

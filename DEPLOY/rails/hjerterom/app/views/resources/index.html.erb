@@ -1,11 +1,15 @@
 <% content_for :title, "Resources" %>
-<header>
+<header role="banner" aria-label="Resources header">
   <h1>Resources</h1>
-  <% if authenticated? %><%= link_to "Add resource", new_resource_path %><% end %>
+  <nav role="navigation" aria-label="Resource actions">
+    <% if authenticated? %><%= link_to "Add resource", new_resource_path %><% end %>
+  </nav>
 </header>
 
 <%= live_search_form url: resources_path, placeholder: "Search resources…", label: "Resource search" %>
 
-<div id="live_search_results">
+<turbo-frame id="hjerterom-resources" data-turbo-action="replace">
+<div id="live_search_results" role="region" aria-label="Resources results">
   <%= render "resources/live_search_results" %>
 </div>
+</turbo-frame>

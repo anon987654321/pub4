@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Message < ApplicationRecord
+  # Engine-ize: Shared via pub4-shared
+  include Shared.concern(:Notifiable) rescue nil
+  include Shared.concern(:Reactable) rescue nil
   belongs_to :conversation
   belongs_to :sender, class_name: "User", foreign_key: :sender_id
   has_many :message_receipts, dependent: :destroy

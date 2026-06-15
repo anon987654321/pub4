@@ -1,12 +1,14 @@
 <% content_for :title, @place.name %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Place details header">
   <h1><%= @place.name %></h1>
-  <%= link_to "Back", :back, class: "btn" %>
+  <nav role="navigation" aria-label="Place navigation">
+    <%= link_to "Back", :back, class: "btn" %>
+  </nav>
 </div>
 
-<article class="place">
-  <dl>
+<article class="place" role="article" aria-label="Place information">
+  <dl role="list">
     <dt>Type</dt>
     <dd><%= @place.kind %></dd>
     <% if @place.city %>

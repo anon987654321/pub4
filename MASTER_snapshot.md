@@ -1,11 +1,9 @@
-# MASTER Snapshot (auto-iter tranche2)
-Generated: 2026-06-15T06:18:54Z
-## Post-tranche2 evidence (Turbo/ARIA/DRY/Shared)
+# MASTER Snapshot (auto-iter tranche3 update)
+Generated: 2026-06-15T07:07:14Z
+## Tranche3 + hjerterom fix
 ```
-**Engine-ize spike (cross-cutting, 2026):** shared/ promoted to real engine gem (pub4-shared path in 6/6 Gemfiles). Terse Unixy engine.rb (10L): isolate + autoload concerns/services + `Shared.concern(n)` helper. Install scripts + WIRING + openbsd.sh annotated DEPRECATED (bundle primary). Stray nested "amber brgen..." dir pruned. Root MASTER/DEPLOY _snapshot.md generated for LLM eval of spike/DRY/pruning. All per "terse unixy" + "do more before respond". 6/6 verified. Remaining: full deprecate in deploy_all, bundle verify in rc.d, more concerns promotion if gaps.
-- [x] Engine-ize + prune + snapshots + deprecate: complete (see top AN note + root snapshots + WIRING). 6/6 Gemfiles, stray gone, scripts annotated, openbsd updated. NN/ARIA + flesh: takeaway orders (role+aria-label on form+header), amber Item (Shared.concern(:Reactable) via engine), bsdports search already wired; more in shared partials + layouts prior. Ongoing perfect loop.
-- [x partial] AN401 Turbo Frames for every list: tranche2 added turbo-frames + ARIA nav/header/role on playlist/sets + tv/channels + amber items/new (now 6+ verticals); empties enhanced with role=status aria-live. Shared.concern on Playlist::Playlist/Track. Evidence in views.
-- [x] AN412 Nested frame navigation: dating swipe cards as nested frames — swiping loads next card via `<turbo-frame src="/dating/next">` without outer layout reload
-- [ ] AN603 Community creation flow: step-by-step `<turbo-frame>`-based wizard — name, description, rules, category, privacy; preview before publish
+  - geo_locatable.rb: nearby + haversine (replaced inconsistent math in 7+ places: listing, dating, delivery, user, hjerterom resources, restaurant).
+- Major pruning (file sprawl reduction): removed entire brgen/app/models/concerns/ dir (after promotion), 6x bogus app/controllers/rails/ nested dirs (across amber/baibl/blognet/brgen/bsdports/hjerterom, each with duplicate pwa_controller), root marketplace/ stub, reduced .md files to exactly 1 README.md per app (amber/baibl/blognet/brgen/bsdports/hjerterom) + root README + shared/WIRING_NOTES (no other per-app ARCHITECTURE/STIMULUS etc. left).
+- [x] AN116 Screen wake lock: acquire wake lock during video playback (brgen TV), recipe view (blognet), and navigation (hjerterom map mode)
+- [x partial] AN401 Turbo Frames for every list: tranche3 added to maps/home (interactive ARIA searchbox/popup role=status), places/show (header/nav/article/dl), messages new (form role/aria-label, errors alert), _message (listitem/aria-label), hjerterom food_listings + resources indexes. Models: Message/Conversation Notifiable/Reactable, Place GeoLocatable. ARIA/NN on maps/messages per AN624/625/AN9.
 ```
-Playlist/TV/amber enhanced. See full.
