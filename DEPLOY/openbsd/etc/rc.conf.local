@@ -1,3 +1,4 @@
+pf=YES
 httpd_flags=
 nsd_flags=
 pkg_scripts=master

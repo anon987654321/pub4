@@ -103,26 +103,76 @@ install_static() {
 is_step_completed()  { [[ -f "${STATE_FILE}.steps" ]] && [[ $(<"${STATE_FILE}.steps") == *"$1"* ]] }
 mark_step_completed() { print -r -- "$1" >> "${STATE_FILE}.steps" }
 
-# Safe pure-Zsh sync for DEPLOY/openbsd tree (used on target VPS)
-# Usage: sync_openbsd_configs /path/to/checked-out/DEPLOY/openbsd
+# Mirror DEPLOY/openbsd tree onto live /etc (VPS source of truth = repo).
+# Usage: doas zsh openbsd.sh --sync-configs
 sync_openbsd_configs() {
-  typeset src=${1:-.}
-  [[ -d $src/etc ]] || { log WARN "No etc/ in $src"; return 0 }
+  typeset src=${1:-${SCRIPT_DIR}}
+  [[ -d $src/etc ]] || { log ERROR "No etc/ in $src"; return 1 }
   backup_directory /etc "etc-pre-sync" || return 1
-  for f in pf.conf rc.conf.local relayd.conf httpd.conf acme-client.conf doas.conf login.conf; do
-    [[ -e $src/etc/$f ]] && cp -R "$src/etc/$f" /etc/ && log INFO "synced /etc/$f"
+
+  typeset -a etc_files=(
+    pf.conf rc.conf.local relayd.conf httpd.conf acme-client.conf
+    doas.conf login.conf newsyslog.conf litestream.yml
+  )
+  for f in $etc_files; do
+    [[ -e $src/etc/$f ]] || continue
+    cp "$src/etc/$f" "/etc/$f"
+    log INFO "synced /etc/$f"
   done
-  [[ -d $src/etc/rc.d ]] && cp -R "$src/etc/rc.d/"* /etc/rc.d/ 2>/dev/null || true
-  [[ -d $src/usr/local/bin ]] && cp -R "$src/usr/local/bin/"* /usr/local/bin/ 2>/dev/null || true
-  # Also sync user env .zshrc if present (compare/sync with live model)
+
+  [[ -f $src/etc/ssh/sshd_config ]] && cp "$src/etc/ssh/sshd_config" /etc/ssh/sshd_config && log INFO "synced /etc/ssh/sshd_config"
+  [[ -f $src/etc/mail/smtpd.conf ]] && cp "$src/etc/mail/smtpd.conf" /etc/mail/smtpd.conf && log INFO "synced /etc/mail/smtpd.conf"
+  [[ -f $src/var/nsd/etc/nsd.conf ]] && cp "$src/var/nsd/etc/nsd.conf" /var/nsd/etc/nsd.conf && log INFO "synced /var/nsd/etc/nsd.conf"
+
+  if [[ -d $src/etc/rc.d ]]; then
+    for f in $src/etc/rc.d/*(.); do
+      typeset name=${f:t}
+      cp "$f" "/etc/rc.d/$name"
+      chmod 755 "/etc/rc.d/$name"
+      [[ $name = master ]] && chmod 555 "/etc/rc.d/master"
+      log INFO "synced /etc/rc.d/$name"
+    done
+  fi
+
+  if [[ -d $src/usr/local/bin ]]; then
+    for f in $src/usr/local/bin/*(.); do
+      cp "$f" "/usr/local/bin/${f:t}"
+      chmod 755 "/usr/local/bin/${f:t}"
+      log INFO "synced /usr/local/bin/${f:t}"
+    done
+  fi
+
   if [[ -f $src/etc/.zshrc ]]; then
     install -d -o dev -g dev -m 700 /home/dev 2>/dev/null || true
     cp "$src/etc/.zshrc" /home/dev/.zshrc
     chown dev:dev /home/dev/.zshrc 2>/dev/null || true
     chmod 644 /home/dev/.zshrc 2>/dev/null || true
-    log INFO "synced .zshrc to /home/dev (VPS dev env)"
+    log INFO "synced .zshrc to /home/dev"
   fi
+
   log INFO "OpenBSD config tree sync complete (with backup)"
+}
+
+sync_openbsd_apply() {
+  typeset src=${1:-${SCRIPT_DIR}}
+  sync_openbsd_configs "$src" || return 1
+
+  /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid after sync"; return 1 }
+  /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf reload failed"; return 1 }
+  /sbin/pfctl -e 2>/dev/null || log WARN "pf already enabled or enable skipped"
+
+  relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid after sync"; return 1 }
+
+  typeset -a svcs=(nsd httpd relayd smtpd master brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream)
+  for svc in $svcs; do
+    [[ -x /etc/rc.d/$svc ]] || continue
+    /usr/sbin/rcctl enable $svc 2>/dev/null || true
+    /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
+      || log WARN "$svc restart/start failed"
+  done
+
+  ruby34 "${SCRIPT_DIR}/health_check.rb" && log INFO "health_check ok" \
+    || log WARN "health_check reported issues (see above)"
 }
 
 source "${SCRIPT_DIR}/_net.sh"
@@ -640,8 +690,12 @@ stage_2() {
 main() {
   if [[ ${1:-} = --help ]]; then
     print -r -- "Configure OpenBSD 7.8 for Rails with DNSSEC and relayd TLS+SNI.
-Usage: doas zsh openbsd.sh [--help]"
+Usage: doas zsh openbsd.sh [--help|--sync-configs]"
     exit 0
+  fi
+  if [[ ${1:-} = --sync-configs ]]; then
+    sync_openbsd_apply "${SCRIPT_DIR}"
+    exit $?
   fi
   ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
   ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1

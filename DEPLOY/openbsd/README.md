@@ -54,6 +54,17 @@ doas zsh openbsd.sh --resume
 - Secrets must come from environment, local root-owned files, or operator input, never committed docs.
 - Certificate renewal must be idempotent and must not append duplicate TLSA records.
 
+## Mirror repo configs onto the VPS
+
+When `/etc` has drifted from the checked-out tree, sync from `DEPLOY/openbsd` without re-running stage 1:
+
+```zsh
+cd ~/pub4 && git pull
+doas zsh DEPLOY/openbsd/openbsd.sh --sync-configs
+```
+
+This backs up `/etc`, copies `pf.conf`, `relayd.conf`, `rc.d/*`, helper scripts, validates PF/relayd, and restarts services.
+
 ## Checks
 
 After deploy:
