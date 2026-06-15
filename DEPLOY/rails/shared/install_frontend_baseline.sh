@@ -5,6 +5,9 @@ BASE="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 SHARED="$BASE/shared"
 APPS="amber brgen baibl blognet bsdports hjerterom"
 
+# DEPRECATED (engine-ize complete): use Gemfile 'gem "pub4-shared", path: "../../shared"' + bundle.
+# This script kept only for one-off bootstrap. Update all deploys/openbsd to pure bundle. See WIRING_NOTES.md.
+
 copy_one() {
   app="$1"
   src="$2"

@@ -1,6 +1,6 @@
 <% content_for :title, "Order from #{@restaurant.name}" %>
 
-<header class="page-header">
+<header class="page-header" role="banner" aria-label="Restaurant header">
   <div>
     <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.city %></p>
     <h1>Order from <%= @restaurant.name %></h1>
@@ -17,7 +17,7 @@
   </div>
 </article>
 
-<%= form_with model: @order, url: takeaway_restaurant_orders_path(@restaurant) do |form| %>
+<%= form_with model: @order, url: takeaway_restaurant_orders_path(@restaurant), html: { role: "form", "aria-label": "Place takeaway order from #{@restaurant.name}" } do |form| %>
   <%= render "shared/errors", object: @order %>
 
   <section>

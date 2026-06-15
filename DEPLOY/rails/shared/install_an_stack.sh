@@ -5,6 +5,9 @@ BASE="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 SHARED="$BASE/shared"
 APPS="amber brgen baibl blognet bsdports hjerterom"
 
+# DEPRECATED (engine-ize): shared concerns/jobs now via pub4-shared engine gem (autoload + Shared.concern(n)).
+# Legacy copies removed from primary path. Bundle is source of truth. Prune after verify.
+
 copy_one() {
   app="$1"
   src="$2"

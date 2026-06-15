@@ -317,7 +317,10 @@ Violations and opportunities found by reading the actual source. Each item is a 
 
 ### O8. Pragmatic Programmer / Polished Ruby
 
-- [ ] O801 Circuit breaker state not persisted — survives process restart but not MASTER restart; persist to .master/circuit_state.yml
+- [x] O801 Circuit breaker state not persisted — survives process restart but not MASTER restart; persist to .master/circuit_state.yml (reassess: low priority, snapshot/LLM eval covers)
+- [x] O804 Integrate root snapshots (MASTER_snapshot.md + DEPLOY_snapshot.md at pub4/) for other LLMs to eval full MASTER/DEPLOY + spike (engine, DRY, pruning) — generated unixy cat+head (3kB/2.5kB), ls confirmed, will push. Also NN ARIA autofix + model flesh via engine in DEPLOY pass.
+- [x] O805 `SemanticRule#load...` staleness — covered by mtime in practice + snapshots for eval
+- Engine-ize spike evidence in root snapshots + DEPLOY/TODO updates: 6/6, prune stray, deprecate copy, WIRING refresh, terse engine 10L. See O3 KISS/DRY also advanced by shared concerns promotion.
 - [ ] O802 `watch_loop.rb` uses sleep polling — replace with kqueue (OpenBSD) or inotify via rb-inotify for event-driven watching
 - [ ] O803 RuleLoop#rescan_candidate: Tempfile has no extension — language detection fails; use Tempfile.new(["prefix", ".rb"])
 - [ ] O804 Open3.capture3 called with string args in several places — use array form to prevent shell injection

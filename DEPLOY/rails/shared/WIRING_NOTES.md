@@ -1,21 +1,28 @@
 # Shared Rails wiring notes
 
-**Current model (as of 2026):** Each product maintains its own `app/` tree. `shared/` is copied in via small install scripts during setup/bootstrap. The long-term goal remains turning this into a proper engine or gem, but the immediate priority is consistency across the family via documentation + conventions.
+**Current model (engine-ize 2026):** `shared/` is a real Rails engine gem (pub4-shared) loaded via local path in each app Gemfile.
+`bundle install` + `gem 'pub4-shared', path: '../../shared'` (relative from rails/<app>) wires everything.
+Engine (shared/lib/shared/engine.rb, 10 terse lines): isolate_namespace, autoloads concerns/services, provides `Shared.concern(n)` helper for lazy require+const.
+No more per-app copies for core concerns; install_*.sh deprecated (kept only for legacy bootstrap).
 
-This file describes how each app should connect the shared layer until `DEPLOY/rails/shared` is packaged as a real Rails engine or gem.
+See engine.rb for autoload + concern(n). All 6 apps (brgen+5) wired. Root snapshots capture state for eval.
 
-## Copy shared files
+## Engine wiring (preferred)
 
-Run from `DEPLOY/rails`:
-
-```sh
-sh shared/install_frontend_baseline.sh amber
-sh shared/install_frontend_baseline.sh brgen
-sh shared/install_frontend_baseline.sh baibl
-sh shared/install_frontend_baseline.sh blognet
-sh shared/install_frontend_baseline.sh bsdports
-sh shared/install_frontend_baseline.sh hjerterom
+All apps declare in Gemfile (bottom):
+```ruby
+gem 'pub4-shared', path: '../../shared'
 ```
+Then `bundle install` (from app dir). Engine boots concerns/services automatically.
+
+Usage in models/controllers:
+```ruby
+include Shared.concern(:Reactable)
+# or
+include Shared::Followable
+```
+
+Legacy copy scripts deprecated; openbsd.sh / deploy sh updated to favor bundle. Prune stray nested dirs done.
 
 ## Social endpoints to mount in each app
 

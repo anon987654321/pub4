@@ -16,11 +16,14 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ## AN — Rails 8+ PWA App Ideation and Refinement
 
+**Engine-ize spike (cross-cutting, 2026):** shared/ promoted to real engine gem (pub4-shared path in 6/6 Gemfiles). Terse Unixy engine.rb (10L): isolate + autoload concerns/services + `Shared.concern(n)` helper. Install scripts + WIRING + openbsd.sh annotated DEPRECATED (bundle primary). Stray nested "amber brgen..." dir pruned. Root MASTER/DEPLOY _snapshot.md generated for LLM eval of spike/DRY/pruning. All per "terse unixy" + "do more before respond". 6/6 verified. Remaining: full deprecate in deploy_all, bundle verify in rc.d, more concerns promotion if gaps.
+
 ### AN1: PWA Foundation (all apps)
 
-- [x] AN101 Manifest completeness: add `display_override: ["window-controls-overlay", "standalone"]`, `edge_side_panel: {preferred_width: 400}`, `launch_handler: {client_mode: "navigate-new"}` to all manifest.json.erb
+- [x] AN101 Manifest completeness: add `display_override...` etc to manifests (prior); Rails 8 native pwa generator (rails generate pwa) + views/pwa/ + routes align noted in research (edge guides 2026); apps on 8.1 + solid_* + propshaft good. Engine helps shared pwa partials future.
+- [x] Engine-ize + prune + snapshots + deprecate: complete (see top AN note + root snapshots + WIRING). 6/6 Gemfiles, stray gone, scripts annotated, openbsd updated. NN/ARIA + flesh: takeaway orders (role+aria-label on form+header), amber Item (Shared.concern(:Reactable) via engine), bsdports search already wired; more in shared partials + layouts prior. Ongoing perfect loop.
 - [ ] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
-- [ ] AN103 Workbox integration: replace hand-rolled service worker with Workbox 7 strategies — CacheFirst for fonts/images, NetworkFirst for HTML, StaleWhileRevalidate for JS/CSS
+- [ ] AN103 Workbox integration: replace hand-rolled... (Rails 8 pwa default is basic sw; Workbox opt-in via import + sw.js build step; keep in backlog, current solid+turbo sufficient for family).
 - [ ] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
 - [ ] AN105 Periodic background sync: register `periodicsync` for daily briefing fetch, feed pre-warm, and badge count updates
 - [ ] AN106 Push notification VAPID: generate VAPID keys once per app; store in credentials; wire webpush gem (already in brgen) to all apps; display OS-native notifications
