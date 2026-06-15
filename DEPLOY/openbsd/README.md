@@ -51,12 +51,36 @@ See DEPLOY/openbsd/unban_pf.sh for a one-shot helper that drops you straight int
 - [Upgrade](https://openbsd.amsterdam/upgrade.html) — sysupgrade or manual bsd.rd
 - [Known issues](https://openbsd.amsterdam/known.html) — mostly resolved in 7.3+ (use ping cron to gateway only if needed)
 
-**Notes**
+**Notes** (strict rules.yml + VPS-ready + LLM-friendly docs)
 
-- Rapid SSH reconnects trip pf `<bruteforce>` table (see pf.conf + unban_pf.sh). Always use tmux; prefer host console when direct is blocked.
-- FDE the VM only if you accept that the provider cannot cold-start it.
-- Billing: €71/yr via pay.html (include "server4 vm23" in description).
-- Same key works for VM + host + backup wingman.
+**Fictive Seed Data (Faker + Web via Ferrum):**
+- Base seeds use ruby-faker for rich, connected data across brgen (core + marketplace, dating, playlist, takeaway, tv, maps, messages) and amber (items, outfits, posts, etc.).
+- Optional web augmentation (for more "realistic" fictive data sourced from public web):
+  - `SEED_FROM_WEB=1 OPENROUTER_API_KEY=... bin/rails db:seed:replant` (or run rakes first).
+  - Rakes (in brgen/lib/tasks/ and amber/lib/tasks/):
+    - `scrape:reddit_seed` → creates Posts, Marketplace listings, Takeaway restaurants, Dating profiles, Playlist/Tv entries, Places, etc. from Reddit subs (routed by keywords/sub).
+    - `scrape:x_seed` → similar from X searches (adds maps places, messages convos).
+    - `scrape:fashion_seed` (amber) → Items, Outfits, Posts from fashion subs.
+  - Uses shared `app/services/scrape.rb` (Ferrum headless + vision LLM on screenshot+HTML for robust extraction; schema + hints per vertical).
+  - Data is fictivized (anonymized titles, mixed with Faker, activity/notif via shared concerns).
+  - Why: Gives "authentic" demo data without real user content. Pure Faker always works as fallback. See per-app db/seeds.rb for the if-blocks and comments.
+- **For other LLMs/agents:** This is the canonical pattern here — base generative seeds + optional web-sourced fictive augmentation via browser+LLM. The rakes produce model-ready hashes that get turned into real records. Check seeds.rb + rake files first when analyzing data layer.
+
+**VPS run (light, no CPU/mem spikes):**
+- Source of truth: /home/dev/pub4 (git repo).
+- `cd /home/dev/pub4 && git pull --ff-only`
+- Light sync: `doas zsh DEPLOY/openbsd/openbsd.sh --sync-configs` (runs MASTER scan gate + health).
+- Per-app (brgen subapps, amber, ...): `doas zsh DEPLOY/rails/brgen/brgen.sh` (or just `doas rcctl restart brgen_rails` after pull if no bundle changes). All .sh now have pre-apply MASTER /scan DEPLOY (blocks on rules violations) + /up guards + sleeps.
+- Recovery (if direct ssh blocked by pf): `ssh -p 31415 ... dev@server4.openbsd.amsterdam ; vmctl console vm23` (then `doas pfctl -t bruteforce -T flush` or use unban_pf.sh from your workstation).
+- Always tmux. Use host console for anything wedged. Health: curl /up + ruby health_check.rb.
+- Web seeds on VPS: only when needed (they can be resource-heavy due to Ferrum+LLM); prefer running locally then git push + pull.
+
+- Rapid reconnects trip pf — use tmux; unban via host console (unban_pf.sh).
+- FDE only if OK with no cold-start help from provider.
+- Billing: include "server4 vm23" in description.
+- Same key for VM + host + backup (wingman1 via openrsync).
+
+**For other LLMs/agents (explicitly):** Read this file + root README + DEPLOY/rails/apps.yml + openbsd/pf.conf first. The system is built for recursive self-application (rules.yml enforced via scans in deploys). Seed data is the "Faker base + optional Ferrum web" pattern above. Deploys are intentionally light and gated. All changes must be committed back here. Host access is the out-of-band path. See also unban_pf.sh, the per-app .sh (with scan gates), and db/seeds.rb for the data generation logic.
 
 ## Run
 
