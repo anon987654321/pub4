@@ -163,10 +163,23 @@ sync_openbsd_apply() {
 
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid after sync"; return 1 }
 
-  typeset -a svcs=(nsd httpd relayd smtpd master brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream)
+  typeset -a svcs=(nsd httpd relayd smtpd master)
   for svc in $svcs; do
     [[ -x /etc/rc.d/$svc ]] || continue
     /usr/sbin/rcctl enable $svc 2>/dev/null || true
+    /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
+      || log WARN "$svc restart/start failed"
+  done
+  # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
+  typeset -A app_ports=(brgen_rails 38182 amber_rails 61352 bsdports_rails 47312 blognet_rails 0 hjerterom_rails 0 baibl 10007)
+  for svc in brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream; do
+    [[ -x /etc/rc.d/$svc ]] || continue
+    /usr/sbin/rcctl enable $svc 2>/dev/null || true
+    typeset port=${app_ports[$svc]:-0}
+    if (( port > 0 )); then
+      typeset code; code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://127.0.0.1:${port}/up 2>/dev/null)
+      [[ $code == 200 ]] || { log WARN "skip $svc restart (/up=$code)"; continue }
+    fi
     /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
       || log WARN "$svc restart/start failed"
   done
