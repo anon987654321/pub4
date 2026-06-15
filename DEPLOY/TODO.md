@@ -2,7 +2,17 @@
 
 Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
-**DRY & KISS (2026-06-15 tranche9) — applied + pushed (reassessed post-snapshots/pruning/NN)**
+**Critical Gaps (2026-06-15 reassess — after tranche10 + web pass)**:
+- AN201: Rails 8 `rails generate authentication` never run; no replacement of custom auth in the 6 apps (biggest open in AN2).
+- Engine full deprecate: scripts annotated DEPRECATED but old copy/install paths and non-bundle logic still exist in sh/deploy_all, openbsd/*.sh, per-app .sh, rc.d (bundle primary not enforced).
+- Activity graph spine: pieces (EventEmitter, concerns, some record_activity! in TV/orders) exist but emission not mandatory/trivial for posts, matches, listings, follows, reactions across verticals.
+- AN106: VAPID keys + webpush gem + credentials not wired to all apps (brgen has some; others lack).
+- AN103: Workbox still backlog (hand-rolled SW accepted for now).
+- Snapshot quality for LLM eval: root _snapshot.md are now tiny tranche summaries (~0.4kB); original request was substantial filtered exports of arch/DRY/pruning/engine/shared for external LLMs.
+- M06/M07 + real deploy verify: VPS-only (cannot touch locally per no-hammer rule).
+(See top DRY note + AN sections for context. Many AN1 items [x] on paper.)
+
+**DRY & KISS (2026-06-15 tranche10) — applied + pushed (reassessed post-snapshots/pruning/NN)**
 - Extracted/promoted 6+ shared concerns in DEPLOY/rails/shared/app/models/concerns/shared/ (full list now: notifiable.rb, activity_trackable.rb, geo_locatable.rb, votable.rb, commentable.rb, taggable.rb; pushable relocated to shared/services/shared/pushable.rb):
   - notifiable.rb: deliver_notification (unifies repeated `if defined?(Notification)` + create... across orders, follow, controllers).
   - activity_trackable.rb: record_activity! (DRYs ActivityEventRecorder.call + guards).
