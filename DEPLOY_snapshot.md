@@ -1,10 +1,10 @@
-# DEPLOY Snapshot (TRANCHE8)
-Generated: 2026-06-15T07:29:47Z
+# DEPLOY Snapshot (TRANCHE8 continue)
+Generated: 2026-06-15T07:30:30Z
 ## Evidence
 ```
-playlist show: ARIA + role
-marketplace stores: ARIA + turbo
-amber ai: ARIA + turbo
-hjerterom food: role on article
-15+ models Shared
+blognet tags: header ARIA
+hjerterom boxes: header ARIA
+bsdports categories: header ARIA
+brgen takeaway orders: header ARIA
+More models Shared
 ```
