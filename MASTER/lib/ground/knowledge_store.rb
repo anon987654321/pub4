@@ -106,10 +106,34 @@ module Master
       def record_event(event_type:, dimension:, value: nil, metadata: nil)
         @db.execute(
           "INSERT INTO feedback_events (ts, event_type, dimension, value, metadata) VALUES (?, ?, ?, ?, ?)",
-          [Time.now.to_i, event_type.to_s, dimension.to_s, value&.to_s, metadata&.to_json]
+          [Time.now.to_i, event_type.to_s, dimension.to_s, value&.to_s, encoded_metadata(metadata)]
         )
       rescue SQLite3::Exception => e
         warn "knowledge_store: #{e.message}"
+      end
+
+      def provider_errors(model: nil, limit: 20)
+        args = ["provider_error"]
+        where = ["event_type = ?"]
+        if model
+          where << "dimension = ?"
+          args << model.to_s
+        end
+        args << limit
+        @db.execute(<<~SQL, args).map do |row|
+          SELECT ts, dimension, value, metadata
+          FROM feedback_events
+          WHERE #{where.join(" AND ")}
+          ORDER BY ts DESC, id DESC
+          LIMIT ?
+        SQL
+          {
+            ts: row["ts"].to_i,
+            model: row["dimension"],
+            status: row["value"],
+            metadata: decoded_metadata(row["metadata"])
+          }
+        end
       end
 
       def opportunities
@@ -152,6 +176,22 @@ module Master
 
       def open_db(root)
         open_sqlite(root, DEFAULT_PATH)
+      end
+
+      def encoded_metadata(metadata)
+        return nil if metadata.nil?
+        return metadata if metadata.is_a?(String)
+
+        metadata.to_json
+      end
+
+      def decoded_metadata(raw)
+        return {} if raw.to_s.empty?
+
+        decoded = JSON.parse(raw)
+        decoded.is_a?(String) ? JSON.parse(decoded) : decoded
+      rescue JSON::ParserError
+        { "raw" => raw.to_s }
       end
 
       def ensure_schema

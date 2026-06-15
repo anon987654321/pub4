@@ -109,7 +109,6 @@
         <%= link_to root_path, class: "brand", aria: { label: "Brgen" } do %>
           <svg viewBox="0 0 36 36" width="34" height="34" fill="currentColor"><text x="3" y="27" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="800">B</text></svg>
         <% end %>
-        <%= render "shared/city_switcher" %>
         <nav data-turbo-permanent>
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to root_path, class: nav_cls.(root_path) do %>

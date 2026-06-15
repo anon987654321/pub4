@@ -44,7 +44,8 @@ class Dating::ProfilesController < Dating::BaseController
   end
 
   def available_neighborhoods
-    city = Current.city || City.find_by(slug: "bergen") || City.first
+    # City is always resolved automatically from the request domain/TLD before we reach here.
+    city = Current.city_record || City.find_by(domain: Current.domain) || City.first
     city ? city.neighborhoods.order(:name) : Neighborhood.none
   end
 end

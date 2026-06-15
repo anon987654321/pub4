@@ -5,6 +5,10 @@
 
 require "faker"
 
+# Ensure Cities exist for automatic TLD/domain-based resolution (no city switcher).
+# Each city domain is an isolated experience.
+Brgen::CitySeed.sync! if defined?(Brgen::CitySeed)
+
 puts "Seeding Brgen (core + subapps) with rich fictive data..."
 
 # Cleanup for dev replant (safe in seeds)

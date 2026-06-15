@@ -55,7 +55,7 @@ module Master
 
         cached = hits.sum { |hit| hit[:cached].to_i }
         writes = hits.sum { |hit| hit[:cache_write].to_i }
-        models = hits.filter_map { |hit| hit[:model] }.uniq
+        models = hits.map { |hit| hit[:model] }.compact.uniq
         line = "cache: hits=#{hits.size} cached_tokens=#{cached} cache_writes=#{writes}"
         line = "#{line} models=#{models.join(",")}" unless models.empty?
         [line]

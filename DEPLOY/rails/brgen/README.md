@@ -24,6 +24,17 @@ curl -fsS http://127.0.0.1:38182/up
 
 Uses `pub4-shared` concerns (`Votable`, `Commentable`, `Taggable`, `ActivityTrackable`, `GeoLocatable`, `Notifiable`). Activity graph via `Shared::EventEmitter` — wire more actions over time.
 
+## City resolution (automatic, TLD-based)
+
+City context (including locale, currency, neighborhoods, data isolation) is resolved **automatically and exclusively** from the incoming request's domain/TLD via `Brgen::DomainRegistry`.
+
+- A visitor on `lsangeles.com` only ever experiences the Los Angeles city data and verticals (tv.lsangeles.com, etc.).
+- They have no awareness of, or links to, `brgen.no`, `oshlo.no`, or any other city domains.
+- There is no city switcher UI or cross-city navigation exposed to end users.
+- Each city domain is a completely isolated experience.
+
+Local development falls back to the Bergen (brgen.no) configuration.
+
 ## Open items
 
-See `apps.yml` → `brgen.features` for port/missing/planned matrix. Priority: marketplace order chat reuse, playlist set routes, dating match → DM handoff, city switcher audit.
+See `apps.yml` → `brgen.features` for port/missing/planned matrix. Priority: marketplace order chat reuse, playlist set routes, dating match → DM handoff.

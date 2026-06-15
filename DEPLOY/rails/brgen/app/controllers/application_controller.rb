@@ -17,6 +17,9 @@ class ApplicationController < ActionController::Base
   private
 
   def set_domain_context
+    # City (and full branding/locale) is resolved automatically from the request's TLD/domain.
+    # There is no city switcher UI — a visitor on lsangeles.com only ever sees the Los Angeles
+    # experience and has no knowledge of brgen.no, oshlo.no or any other city domains.
     result = Brgen::DomainRegistry.resolve(request.host)
 
     Current.city = result.entry.city
@@ -25,8 +28,15 @@ class ApplicationController < ActionController::Base
     Current.domain = result.entry.domain
     Current.locale = result.entry.locale
     Current.subapp = result.subapp
+    Current.city_record = result.city_record
 
     I18n.locale = result.entry.locale
+
+    # Wire ActsAsTenant if the gem is in use (for row-level city scoping on models)
+    if defined?(ActsAsTenant)
+      city_record = result.city_record || City.find_by(domain: result.entry.domain)
+      ActsAsTenant.current_tenant = city_record if city_record
+    end
   rescue Brgen::DomainRegistry::UnknownHost, Brgen::DomainRegistry::UnknownSubdomain
     render plain: "Unknown host", status: :not_found
   end

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Post < ApplicationRecord
+  acts_as_tenant :city, optional: true  # Automatic city scoping based on request TLD/domain
+
   # Engine-ize: use Shared.concern for consistency
   include Shared.concern(:Votable) rescue include Shared::Votable
   include Shared.concern(:Commentable) rescue include Shared::Commentable
@@ -9,6 +11,7 @@ class Post < ApplicationRecord
 
   has_one_attached :image
 
+  belongs_to :city, optional: true
   belongs_to :user
   belongs_to :community, optional: true
 

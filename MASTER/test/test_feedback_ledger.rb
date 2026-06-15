@@ -77,4 +77,26 @@ class TestFeedbackLedger < Minitest::Test
     learnings&.close
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
+
+  def test_provider_errors_are_queryable_separately_with_metadata
+    root = Dir.mktmpdir("provider_errors")
+    learnings = Master::Ground::KnowledgeStore.new(root: root)
+    learnings.record_event(
+      event_type: "provider_error",
+      dimension: "flaky-model",
+      value: "rate_limit",
+      metadata: { model: "flaky-model", error: "429" }
+    )
+    learnings.record_event(event_type: "tool_failure", dimension: "shell", value: "1")
+
+    rows = learnings.provider_errors(model: "flaky-model")
+
+    assert_equal 1, rows.size
+    assert_equal "flaky-model", rows.first[:model]
+    assert_equal "rate_limit", rows.first[:status]
+    assert_equal "429", rows.first[:metadata]["error"]
+  ensure
+    learnings&.close
+    FileUtils.remove_entry(root) if root && Dir.exist?(root)
+  end
 end

@@ -1,3 +1,8 @@
+# City/branding is determined automatically from the request host/TLD.
+# There is no city switcher. A user on lsangeles.com sees only the Los Angeles instance.
+# The DomainRegistry (lib/brgen/domain_registry.rb) + City records are the source of truth.
+# Vertical subdomains live under the city domain (e.g. tv.lsangeles.com).
+
 primary:
   name: Brgen
   city: Bergen
@@ -10,3 +15,8 @@ primary:
     playlist: spilleliste.brgen.no
     tv: tv.brgen.no
     takeaway: takeaway.brgen.no
+
+# Additional city domains (examples; full list maintained in DomainRegistry + CitySeed):
+# lsangeles.com (Los Angeles, US)
+# oshlo.no (Oslo)
+# etc.

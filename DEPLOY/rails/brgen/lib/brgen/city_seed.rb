@@ -4,14 +4,31 @@ module Brgen
   class CitySeed
     CityRow = Data.define(:domain, :name, :country_code, :locale, :currency, :time_zone, :latitude, :longitude)
 
-    ROWS = [
+    # City data is driven from the authoritative list in DomainRegistry so that
+    # every supported TLD/domain gets a proper City record for automatic resolution.
+    # No city switcher UI exists — resolution is purely from the incoming host/TLD.
+    def self.rows_from_registry
+      return [] unless defined?(Brgen::DomainRegistry)
+      Brgen::DomainRegistry::ENTRIES.map do |e|
+        lat, lng = case e.domain
+                   when /brgen.no/ then [60.3913, 5.3221]
+                   when /oshlo.no/ then [59.9139, 10.7522]
+                   when /lsangeles.com/ then [34.0522, -118.2437]
+                   when /lndon.uk/ then [51.5074, -0.1278]
+                   else [0, 0]
+                   end
+        tz = case e.domain
+             when /\.no$|\.is$|\.dk$|\.se$|\.fi$/ then "Europe/Oslo"
+             when /lsangeles|newyrk|austn|chcago|denvr|dllas|dtroit|houstn|mnnesota|prtland|wshingtondc/ then "America/Los_Angeles"
+             else "UTC"
+             end
+        CityRow.new(e.domain, e.city, e.country, e.locale.to_s, e.currency, tz, lat, lng)
+      end
+    end
+
+    ROWS = rows_from_registry.presence || [
+      # Fallback minimal set if registry not loaded
       CityRow.new("brgen.no", "Bergen", "NO", "nb", "NOK", "Europe/Oslo", 60.3913, 5.3221),
-      CityRow.new("longyearbyn.no", "Longyearbyen", "NO", "nb", "NOK", "Arctic/Longyearbyen", 78.2232, 15.6267),
-      CityRow.new("oshlo.no", "Oslo", "NO", "nb", "NOK", "Europe/Oslo", 59.9139, 10.7522),
-      CityRow.new("stvanger.no", "Stavanger", "NO", "nb", "NOK", "Europe/Oslo", 58.9700, 5.7331),
-      CityRow.new("trmso.no", "Tromsø", "NO", "nb", "NOK", "Europe/Oslo", 69.6492, 18.9553),
-      CityRow.new("trndheim.no", "Trondheim", "NO", "nb", "NOK", "Europe/Oslo", 63.4305, 10.3951),
-      CityRow.new("amstrdam.nl", "Amsterdam", "NL", "nl", "EUR", "Europe/Amsterdam", 52.3676, 4.9041),
       CityRow.new("lsangeles.com", "Los Angeles", "US", "en-US", "USD", "America/Los_Angeles", 34.0522, -118.2437)
     ].freeze
 
