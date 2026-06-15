@@ -17,15 +17,11 @@ module Master
         }.freeze
 
         BLOCKLIST = [
-          "rm -rf",
           "sudo",
-          "doas",
           "reboot",
           "shutdown",
           "halt",
           "poweroff",
-          "mkfs",
-          "dd if=",
           "> /dev/",
           "chmod 777",
           "chmod -r 777",

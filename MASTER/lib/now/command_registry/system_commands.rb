@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require_relative "../../trace/self_evolution_trigger"
 
 module Master
   module Now
@@ -60,19 +61,7 @@ module Master
         depth = arg.to_i.positive? ? arg.to_i : (cfg["max_depth"] || 2)
         cap   = cfg["max_lines"] || 200
         tree_lines = []
-        walker = lambda do |dir, level|
-          return if level > depth || tree_lines.size >= cap
-          Dir.children(dir).sort.each do |name|
-            break if tree_lines.size >= cap
-            next if name.start_with?(".") || SKIP_SEGS.include?(name)
-            path = File.join(dir, name)
-            tree_lines << "#{"  " * (level - 1)}#{name}#{File.directory?(path) ? "/" : ""}"
-            walker.call(path, level + 1) if File.directory?(path)
-          end
-        rescue Errno::EACCES, Errno::ENOENT
-          nil
-        end
-        walker.call(root, 1)
+        walk_tree(root, 1, depth:, cap:, tree_lines:)
         tree_lines.join("\n")
       end
 
@@ -87,11 +76,12 @@ module Master
         diff, = Open3.capture2e("git", "-C", root, "diff", "--cached", "--stat")
         diff, = Open3.capture2e("git", "-C", root, "diff", "--stat") if diff.strip.empty?
         return "nothing to commit" if diff.strip.empty?
+        evolution = Master::Trace::SelfEvolutionTrigger.new(root:).call
         prompt = "Write a concise git commit message (1 line, imperative mood) for:\n#{diff}"
         commit_message = agent.ask_once(prompt).to_s.strip.lines.first.to_s.strip
         Open3.capture2e("git", "-C", root, "add", "-u")
         out, = Open3.capture2e("git", "-C", root, "commit", "-m", commit_message)
-        out.strip
+        [evolution, out.strip].reject(&:empty?).join("\n")
       end
 
       def dispatch_snapshot(root, ctx: nil)
@@ -125,13 +115,11 @@ module Master
 
       def publish_snapshot(target, label)
         return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
-        skip      = ->(rel) { rel.split("/").any? { |s| SKIP_SEGS.include?(s) } }
-        text_file = ->(f) { TEXT_EXTS.include?(File.extname(f).downcase) || TEXT_NAMES.include?(File.basename(f)) }
         all   = Dir.glob(File.join(target, "**", "*"))
                    .reject { |f| File.basename(f).start_with?(".") }
-                   .reject { |f| skip.(f.delete_prefix("#{target}/")) }.sort
+                   .reject { |f| skipped_snapshot_path?(f.delete_prefix("#{target}/")) }.sort
         dirs  = all.select { |f| File.directory?(f) }
-        files = all.select { |f| File.file?(f) && text_file.(f) && File.size(f) < Master::CTX_WINDOW_SIZE }
+        files = all.select { |f| File.file?(f) && snapshot_text_file?(f) && File.size(f) < Master::CTX_WINDOW_SIZE }
         stamp = Time.now.utc.iso8601
         md    = ["# #{label} Snapshot — #{stamp}", "", "## Tree", "```"]
         entries = (dirs.map { |d| [d, :dir] } + files.map { |f| [f, :file] })
@@ -173,6 +161,29 @@ module Master
       end
 
       def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip
+
+      def walk_tree(dir, level, depth:, cap:, tree_lines:)
+        return if level > depth || tree_lines.size >= cap
+
+        Dir.children(dir).sort.each do |name|
+          break if tree_lines.size >= cap
+          next if name.start_with?(".") || SKIP_SEGS.include?(name)
+
+          path = File.join(dir, name)
+          tree_lines << "#{"  " * (level - 1)}#{name}#{File.directory?(path) ? "/" : ""}"
+          walk_tree(path, level + 1, depth:, cap:, tree_lines:) if File.directory?(path)
+        end
+      rescue Errno::EACCES, Errno::ENOENT
+        nil
+      end
+
+      def skipped_snapshot_path?(rel)
+        rel.split("/").any? { |segment| SKIP_SEGS.include?(segment) }
+      end
+
+      def snapshot_text_file?(file)
+        TEXT_EXTS.include?(File.extname(file).downcase) || TEXT_NAMES.include?(File.basename(file))
+      end
     end
   end
 end

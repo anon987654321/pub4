@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
+require_relative "../../trace/session_capture"
+
 module Master
   module Now
     module CommandRegistry
       module_function
 
-      def memory_commands(memory, agent)
+      def memory_commands(memory, agent, root: Master::ROOT)
         {
           "memory" => command(:dispatch_memory, memory),
-          "dreams" => command(:dispatch_dreams, memory, agent)
+          "dreams" => command(:dispatch_dreams, memory, agent),
+          "capture" => command(:dispatch_capture, root)
         }
       end
 
@@ -75,6 +78,17 @@ module Master
           hits = memory.all.select { |k, v| k.to_s.include?(query) || v.to_s.include?(query) }
           hits.empty? ? "(no matches: #{query})" : hits.map { |k, v| "#{k}: #{v}" }.join("\n")
         end
+      end
+
+      def dispatch_capture(root, ctx: nil)
+        text = arg_for(ctx)
+        return capture_usage if text.empty?
+
+        Master::Trace::SessionCapture.new(root:).call(text)
+      end
+
+      def capture_usage
+        "usage: /capture summary techniques=... recurring_patterns=... automations=... prompts=... providers=... learned_behavior=..."
       end
     end
   end

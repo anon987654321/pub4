@@ -89,6 +89,19 @@ class TestCLI < Minitest::Test
     assert_equal "preview: clean — no violations", output
   end
 
+  def test_command_maps_positional_dependencies_to_keyword_handler
+    receiver = Module.new do
+      module_function
+
+      def dispatch_example(root:, ctx: nil)
+        "#{root}:#{ctx[:args]}"
+      end
+    end
+    command = Master::Now::CommandRegistry::Command.new(receiver, :dispatch_example, "/tmp/root")
+
+    assert_equal "/tmp/root:ok", command.call(args: "ok")
+  end
+
   def test_help_uses_progressive_disclosure
     summary = Master::Now::CommandRegistry.help_text
     detail = Master::Now::CommandRegistry.help_text("scan")

@@ -17,9 +17,25 @@ module Master
 
           @receiver.public_send(@method_name, *@args, **@kwargs.merge(ctx: ctx))
         rescue ArgumentError => e
-          raise unless e.message.include?("unknown keyword: :ctx")
+          return @receiver.public_send(@method_name, *@args, **@kwargs) if e.message.include?("unknown keyword: :ctx")
+          raise unless keyword_dependency_error?(e)
 
-          @receiver.public_send(@method_name, *@args, **@kwargs)
+          @receiver.public_send(@method_name, **dependency_kwargs(ctx))
+        end
+
+        private
+
+        def keyword_dependency_error?(error)
+          error.message.include?("wrong number of arguments") ||
+            error.message.include?("missing keywords")
+        end
+
+        def dependency_kwargs(ctx)
+          keys = @receiver.method(@method_name).parameters.filter_map do |type, name|
+            name if %i[key keyreq].include?(type) && name != :ctx
+          end
+          mapped = keys.zip(@args).to_h.compact
+          mapped.merge(@kwargs).merge(ctx: ctx)
         end
       end
     end

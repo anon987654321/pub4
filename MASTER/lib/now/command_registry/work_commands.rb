@@ -11,6 +11,8 @@ require_relative "../resync_service"
 require_relative "../scan_report"
 require_relative "../scan_request"
 require_relative "../../judge/review_crew"
+require_relative "../../judge/scan/cross_file_analysis"
+require_relative "../../judge/scan/edge_case_stub_generator"
 require_relative "../tribunal_feedback"
 require_relative "work_commands_extra"
 
@@ -43,7 +45,7 @@ module Master
         {
           "scan" => command(:dispatch_scan, scanner, root),
           "self" => command(:dispatch_self, scanner, root, bus),
-          "fix" => command(:dispatch_fix, fix_loop, root),
+          "fix" => command(:dispatch_fix, fix_loop, root, scanner),
           "status" => command(:dispatch_status, root, fix_loop, bus, git),
           "resync" => command(:dispatch_resync, root, fix_loop, git),
           "tail" => command(:dispatch_tail, root),
@@ -54,6 +56,7 @@ module Master
           "why" => command(:dispatch_why, agent, root),
           "axioms" => command(:dispatch_axioms, scanner, root),
           "rules" => command(:dispatch_rules),
+          "edge-cases" => command(:dispatch_edge_cases, root),
           "topic" => command(:dispatch_topic, session),
           "process" => command(:dispatch_process),
           "propose-tree" => command(:dispatch_propose_tree, propose_tree),
@@ -156,7 +159,7 @@ module Master
         Formatter.key_value_payload(pay)[0, 100]
       end
 
-      def dispatch_fix(fix_loop:, root:, ctx: nil, arg: nil)
+      def dispatch_fix(fix_loop:, root:, scanner: nil, ctx: nil, arg: nil)
         arg = arg || arg_for(ctx)
         sub, rest = arg.split(/\s+/, 2)
         case sub
@@ -174,9 +177,35 @@ module Master
           FixPreviewReport.new(result.value!).render
         else
           target = expand_or_root(arg, root)
+          prescan = anti_sprawl_prescan(scanner:, target:, root:)
           result = fix_loop.run(target)
-          result.ok? ? result.value! : "fix: #{result.message}"
+          output = result.ok? ? result.value! : "fix: #{result.message}"
+          [prescan, output].reject(&:empty?).join("\n")
         end
+      end
+
+      def anti_sprawl_prescan(scanner:, target:, root:)
+        paths = prescan_paths(target)
+        return "" if paths.empty?
+
+        pairs = Master::Judge::Scan::CrossFileAnalysis.new(root:).call(paths)
+        findings = pairs.flat_map { |_path, result| Result.wrap(result).value_or([]) }
+        return "prescan: clean. Moving on." if findings.empty?
+
+        lines = ["prescan: #{findings.size} cross-file risk(s) before fix"]
+        findings.first(8).each { |finding| lines << "  #{finding[:rule]}: #{finding[:message]}" }
+        lines.join("\n")
+      rescue StandardError => e
+        scanner&.instance_variable_get(:@bus)&.publish("fix:prescan_error", path: target, error: e.message)
+        "prescan: unavailable (#{e.class})"
+      end
+
+      def prescan_paths(target)
+        path = target.to_s.empty? ? "." : target
+        return [path] if File.file?(path)
+        return [] unless File.directory?(path)
+
+        Dir.glob(File.join(path, Master::Judge::Scan::Scanner::SCAN_GLOB)).select { |entry| File.file?(entry) }
       end
 
       # Constitutional scoreboard: per-axiom violation counts over lib/, plus a
@@ -227,6 +256,15 @@ module Master
         end.sort.join("\n")
       rescue StandardError => e
         "rules: #{e.message}"
+      end
+
+      def dispatch_edge_cases(root:, ctx: nil)
+        arg = arg_for(ctx)
+        return "usage: /edge-cases <ruby-file>" if arg.empty?
+
+        Master::Judge::Scan::EdgeCaseStubGenerator.new(root:).call(arg).then do |result|
+          result.ok? ? result.value! : result.message
+        end
       end
 
       def ungraphed_rules(root)

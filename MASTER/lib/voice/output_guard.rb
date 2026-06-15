@@ -35,7 +35,10 @@ module Master
 
       def validate(text, context: :routine)
         issues = []
+        issues << "boot message must remain 5-line dmesg style" if context == :boot && boot_message_collapsed?(text)
         issues << "diagnostic output collapsed" if diagnostic_context?(context) && collapsed_diagnostic?(text)
+        issues << "help output missing syntax/example detail" if context == :help && incomplete_help?(text)
+        issues << "minimize rule misapplied to diagnostic output" if minimize_misapplied?(text)
         issues << "modification claim without diff" if modification_claim?(text) && !diff_evidence?(text)
         issues << "completion claim without command output" if completion_claim?(text) && !command_evidence?(text)
         issues.empty? ? Result.ok(text) : Result.err(issues.join("; "), category: :axiom_violation)
@@ -59,6 +62,24 @@ module Master
         lines = text.to_s.lines.map(&:strip).reject(&:empty?)
         return false if lines.size >= 2
         lines.first.to_s.length > 120
+      end
+
+      def boot_message_collapsed?(text)
+        lines = text.to_s.lines.map(&:strip).reject(&:empty?)
+        lines.size != 5 || lines.any? { |line| !line.start_with?("master:") }
+      end
+
+      def incomplete_help?(text)
+        lines = text.to_s.lines.map(&:strip).reject(&:empty?)
+        return true if lines.size < 3
+
+        command_line = lines.any? { |line| line.start_with?("/") && line.include?(" - ") }
+        syntax_line = lines.any? { |line| line.start_with?("/") && line.match?(/\s|\[/) }
+        command_line && syntax_line ? false : true
+      end
+
+      def minimize_misapplied?(text)
+        text.to_s.match?(/minimi[sz]e.*diagnostic output|diagnostic output.*minimi[sz]e/i)
       end
 
       def modification_claim?(text) = text.to_s.match?(MODIFICATION_CLAIM)

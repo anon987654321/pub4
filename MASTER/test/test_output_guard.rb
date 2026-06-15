@@ -30,4 +30,37 @@ class TestOutputGuard < Minitest::Test
     result = @guard.validate(text, context: :modification)
     assert result.ok?, result.message
   end
+
+  def test_rejects_collapsed_boot_banner
+    result = @guard.validate("master: one line only", context: :boot)
+
+    refute result.ok?
+    assert_match(/5-line/, result.message)
+  end
+
+  def test_accepts_five_line_boot_banner
+    text = [
+      "master: boot safe=1 web=0",
+      "master: background=0 watch=0",
+      "master: loop=none owner=none",
+      "master: budget valid=true slot=unknown",
+      "master: ready dmesg=preserved"
+    ].join("\n")
+
+    assert @guard.validate(text, context: :boot).ok?
+  end
+
+  def test_rejects_help_without_detail
+    result = @guard.validate("/scan - deep scan files", context: :help)
+
+    refute result.ok?
+    assert_match(/help output/, result.message)
+  end
+
+  def test_rejects_minimize_applied_to_diagnostics
+    result = @guard.validate("Minimize diagnostic output into one short line.", context: :routine)
+
+    refute result.ok?
+    assert_match(/minimize rule/, result.message)
+  end
 end

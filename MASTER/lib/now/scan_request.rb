@@ -78,11 +78,7 @@ module Master
       def canonical_profile(name, profiles)
         normalized = name.to_s.strip
         return nil if normalized.empty?
-        return normalized if profiles.key?(normalized) && profiles[normalized].is_a?(Hash)
-
-        profiles.find do |_profile, cfg|
-          Array(cfg["aliases"]).map(&:to_s).include?(normalized)
-        end&.first
+        profile_alias_index(profiles)[normalized]
       end
 
       def arg_parts
@@ -119,6 +115,20 @@ module Master
         value
       rescue StandardError
         EMPTY_WORKFLOW_PROFILES
+      end
+
+      def profile_alias_index(profiles)
+        @profile_alias_index ||= {}
+        cache_key = profiles.object_id
+        cached = @profile_alias_index[cache_key]
+        return cached if cached
+
+        @profile_alias_index[cache_key] = profiles.each_with_object({}) do |(profile, cfg), index|
+          next unless cfg.is_a?(Hash)
+
+          index[profile.to_s] = profile.to_s
+          Array(cfg["aliases"]).each { |name| index[name.to_s] = profile.to_s }
+        end
       end
     end
   end

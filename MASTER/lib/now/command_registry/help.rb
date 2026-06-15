@@ -46,6 +46,10 @@ module Master
           summary: "list registered scan rules",
           detail: ["/rules list", "Shows rule IDs, severity, and implementation class."]
         },
+        "edge-cases" => {
+          summary: "generate edge-case test stubs",
+          detail: ["/edge-cases <ruby-file>", "Creates skipped tests for nil, empty, max, unicode, invalid JSON, truncation, and injection inputs."]
+        },
         "triad" => {
           summary: "scan, preview fix, and review",
           detail: ["/triad <path>", "Runs scan, fix dry-run, and review for the same target."]

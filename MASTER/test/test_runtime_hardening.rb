@@ -10,6 +10,24 @@ class RuntimeHardeningTest < Minitest::Test
     end
   end
 
+  class PermitAll
+    def permit?(_name, _tier, _command)
+      Master::Result.ok(true)
+    end
+  end
+
+  class EventBus
+    attr_reader :events
+
+    def initialize
+      @events = []
+    end
+
+    def publish(name, payload = nil, **kwargs)
+      @events << [name, payload || kwargs]
+    end
+  end
+
   def test_execute_propagates_handler_error
     stage = Master::Now::Stages::Execute.new
     err = Master::Result.err("boom", category: :provider_error)
@@ -93,6 +111,28 @@ class RuntimeHardeningTest < Minitest::Test
 
       assert_equal "persisted", second
       assert_equal 0, calls
+    end
+  end
+
+  def test_shell_blocks_destructive_commands_without_force_sentinel
+    Dir.mktmpdir do |dir|
+      shell = Master::Reach::Shell.new(root: dir, governor: PermitAll.new)
+
+      result = shell.call(command: "rm -rf tmp")
+
+      refute result.ok?
+      assert_match(/without --force/, result.message)
+    end
+  end
+
+  def test_shell_warns_on_doas_escalation
+    Dir.mktmpdir do |dir|
+      bus = EventBus.new
+      shell = Master::Reach::Shell.new(root: dir, governor: PermitAll.new, event_bus: bus)
+
+      shell.call(command: "doas true")
+
+      assert bus.events.any? { |name, _payload| name == "zsh:privilege_escalation_warning" }
     end
   end
 

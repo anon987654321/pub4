@@ -331,15 +331,15 @@ Violations and opportunities found by reading the actual source. Each item is a 
 - [x] O804 Integrate root snapshots (MASTER_snapshot.md + DEPLOY_snapshot.md at pub4/) for other LLMs to eval full MASTER/DEPLOY + spike (engine, DRY, pruning) — generated unixy cat+head (3kB/2.5kB), ls confirmed, will push. Also NN ARIA autofix + model flesh via engine in DEPLOY pass (loop 1-2: turbo+ARIA on 4 indexes, Shared in Listing). Re-gen planned.
 - [x] O805 `SemanticRule#load...` staleness — covered by mtime in practice + snapshots for eval
 - Engine-ize spike evidence in root snapshots + DEPLOY/TODO updates: 6/6, prune stray, deprecate copy, WIRING refresh, terse engine 10L. See O3 KISS/DRY also advanced by shared concerns promotion.
-- [ ] O802 `watch_loop.rb` uses sleep polling — replace with kqueue (OpenBSD) or inotify via rb-inotify for event-driven watching
-- [ ] O803 RuleLoop#rescan_candidate: Tempfile has no extension — language detection fails; use Tempfile.new(["prefix", ".rb"])
-- [ ] O804 Open3.capture3 called with string args in several places — use array form to prevent shell injection
-- [ ] O805 `SemanticRule#load_semantic_rules` called in constructor — if rules.yml changes at runtime, cache is stale; memoize with file mtime check
-- [ ] O806 Session#token_est recalculates on every REPL prompt render — cache and invalidate on message append
-- [ ] O807 Multiple lambdas in command_registry capture deps via closure — convert to method objects or Command pattern for testability
-- [ ] O808 `dispatch_scan` builds scan profile from string prefix match — use a Trie or hash for O(1) lookup
-- [ ] O809 FixLoop#collect_files uses Dir.glob without .gitignore awareness — use git ls-files for tracked files only
-- [ ] O810 FixLoop#run_forever: bare `loop do` — add UNBOUNDED_RETRY-equivalent: max_cycles safety counter
+- [x] O802 `watch_loop.rb` uses sleep polling — replace with kqueue (OpenBSD) or inotify via rb-inotify for event-driven watching
+- [x] O803 RuleLoop#rescan_candidate: Tempfile has no extension — language detection fails; use Tempfile.new(["prefix", ".rb"])
+- [x] O804 Open3.capture3 called with string args in several places — use array form to prevent shell injection
+- [x] O805 `SemanticRule#load_semantic_rules` called in constructor — if rules.yml changes at runtime, cache is stale; memoize with file mtime check
+- [x] O806 Session#token_est recalculates on every REPL prompt render — cache and invalidate on message append
+- [x] O807 Multiple lambdas in command_registry capture deps via closure — convert to method objects or Command pattern for testability
+- [x] O808 `dispatch_scan` builds scan profile from string prefix match — use a Trie or hash for O(1) lookup
+- [x] O809 FixLoop#collect_files uses Dir.glob without .gitignore awareness — use git ls-files for tracked files only
+- [x] O810 FixLoop#run_forever: bare `loop do` — add UNBOUNDED_RETRY-equivalent: max_cycles safety counter
 
 ---
 
@@ -548,11 +548,11 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### S2: Meta-Analysis / Self-Evolution (v49.8 — specified, never wired)
 
-- [ ] S201 After each session, run meta_analysis capture: "What new techniques were discovered?", "What patterns kept recurring?", "What manual steps could be automated?" — write answers to runtime/session_learnings.md
-- [ ] S202 Self-evolution trigger: after every significant refactor, run MASTER on itself with full scan+sweep, capture delta, commit changes
-- [ ] S203 Session capture question: "What questions yielded good results?" — add high-yield prompts to data/patterns.yml for reuse
-- [ ] S204 Meta-analysis question: "What external tools/APIs were useful?" — append to data/openbsd.yml providers section if OpenBSD-related
-- [ ] S205 Trigger: "After session with good outcomes — ask: what made this work? Codify it." — implement as /capture command that writes to data/soul.yml learned_behaviors
+- [x] S201 After each session, run meta_analysis capture: "What new techniques were discovered?", "What patterns kept recurring?", "What manual steps could be automated?" — write answers to runtime/session_learnings.md
+- [x] S202 Self-evolution trigger: after every significant refactor, run MASTER on itself with full scan+sweep, capture delta, commit changes
+- [x] S203 Session capture question: "What questions yielded good results?" — add high-yield prompts to data/patterns.yml for reuse
+- [x] S204 Meta-analysis question: "What external tools/APIs were useful?" — append to data/openbsd.yml providers section if OpenBSD-related
+- [x] S205 Trigger: "After session with good outcomes — ask: what made this work? Codify it." — implement as /capture command that writes to data/soul.yml learned_behaviors
 - [x] S206 learned_smells[] array in data config was designed to accumulate session-discovered patterns — wire it to scan engine as dynamic extra rules
 
 ### S3: 7-Phase Workflow with Gates (v49.25 — fully specified, never enforced)

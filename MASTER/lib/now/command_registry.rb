@@ -18,7 +18,7 @@ module Master
         commands = {}
         commands.merge!(session_commands(infra))
         commands.merge!(mode_commands(infra[:config]))
-        commands.merge!(memory_commands(infra[:memory], ai[:agent]))
+        commands.merge!(memory_commands(infra[:memory], ai[:agent], root:))
         commands.merge!(work_commands(ai:, root:, infra:))
         commands.merge!(tool_commands(root, ai))
         commands.merge!(control_commands(ai[:standing], ai[:soul]))

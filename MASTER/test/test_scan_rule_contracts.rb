@@ -74,6 +74,55 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding rule("TRAILING_COMMAS"), code, "items.rb", "missing trailing comma"
   end
 
+  def test_config_hierarchy_rule_flags_deep_duplicate_yaml
+    code = <<~YAML
+      app:
+        nested:
+          deeper:
+            too:
+              far: true
+      app:
+        duplicate: true
+    YAML
+
+    assert_finding Rules::ConfigHierarchyRule.new, code, "config.yml", "configuration nesting depth"
+    assert_finding Rules::ConfigHierarchyRule.new, code, "config.yml", "duplicate configuration key"
+  end
+
+  def test_code_hierarchy_rule_flags_many_top_level_constants
+    code = %w[Alpha Beta Gamma Delta Epsilon Zeta].map { |name| "class #{name}; end" }.join("\n")
+
+    assert_finding Rules::CodeHierarchyRule.new, code, "many.rb", "top-level constants"
+  end
+
+  def test_long_parameter_list_rule_flags_large_api
+    code = "def call(a, b, c, d, e)\nend\n"
+
+    assert_finding Rules::LongParameterListRule.new, code, "params.rb", "parameters"
+  end
+
+  def test_primitive_obsession_rule_flags_traveling_primitives
+    code = "def create_order(user_id, status, price, email)\nend\n"
+
+    assert_finding Rules::PrimitiveObsessionRule.new, code, "primitive.rb", "primitive obsession"
+  end
+
+  def test_coupler_rule_flags_message_chains
+    code = "def call\n  user.account.profile.address.city.name\nend\n"
+
+    assert_finding Rules::CouplerRule.new, code, "chain.rb", "message chain"
+  end
+
+  def test_lazy_class_rule_flags_delegate_only_class
+    code = <<~RUBY
+      class Wrapper
+        def call; target.call; end
+      end
+    RUBY
+
+    assert_finding Rules::LazyClassRule.new, code, "lazy.rb", "lazy class"
+  end
+
   private
 
   def rule(id, path: nil)

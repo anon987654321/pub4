@@ -118,6 +118,20 @@ class TestScanner < Minitest::Test
     end
   end
 
+  def test_scan_dir_appends_cross_file_dry_findings
+    Dir.mktmpdir do |dir|
+      3.times do |idx|
+        File.write(File.join(dir, "sample#{idx}.rb"), "DATA = File.read(\"config/app.yml\")\n")
+      end
+      scanner = Master::Judge::Scan::Scanner.new(rules: [])
+
+      result = scanner.scan_dir(dir)
+      findings = result.value!.flat_map { |_path, file_result| Master::Result.wrap(file_result).value_or([]) }
+
+      assert findings.any? { |finding| finding[:rule] == "CROSS_FILE_DRY" }
+    end
+  end
+
   def test_semantic_rule_skipped_when_static_errors_exist
     Dir.mktmpdir do |dir|
       path = File.join(dir, "sample.rb")

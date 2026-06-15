@@ -18,6 +18,10 @@ module Master
       TIMEOUT = 30
       FAILURE_WINDOW = 5
       FAILURE_WARN_AT = 3
+      FORCE_REQUIRED_RE = /\b(?:rm\s+-rf|dd\s+if=|mkfs(?:\.\w+)?)\b/.freeze
+      FORCE_FLAG_RE = /(?:\A|\s)--force(?:\s|\z)/.freeze
+      REDIRECT_RE = /(?:^|\s)(?:>|>>)\s*([^\s;&|]+)/.freeze
+      PRIVILEGE_RE = /\bdoas\b/.freeze
 
       BLOCKLIST   = Judge::Security::Permissions::BLOCKLIST
       ZSH_BANNED  = begin
@@ -45,6 +49,8 @@ module Master
 
       def call(command:)
         return Result.err("blocked command: #{command}", category: :validation) if blocked?(command)
+        return Result.err("blocked destructive command without --force: #{command}", category: :validation) if force_required_without_flag?(command)
+        return Result.err("write target not writable: #{unwritable_target(command)}", category: :validation) if unwritable_target(command)
         return Result.err("interactive command blocked — no TTY available: #{command}",
                           category: :validation) if interactive?(command)
 
@@ -53,15 +59,17 @@ module Master
         perm = @governor.permit?(NAME, TIER, command)
         return perm if perm.err?
 
+        @bus&.publish("zsh:privilege_escalation_warning", command:) if command.match?(PRIVILEGE_RE)
         @bus&.publish("tool:before", tool: NAME, command:)
 
         banned = ZSH_BANNED.select { |b| command.match?(/\b#{Regexp.escape(b)}\b/) }
         @bus&.publish("zsh:banned_tool_warning", tools: banned, command:) if banned.any?
 
         zdotdir = File.writable?("/tmp") ? "/tmp" : Dir.home
+        executable_command = strip_force_sentinel(command)
         wrapped = "#!/usr/bin/env zsh\nset -euo pipefail\nsetopt nullglob extendedglob\n" \
                   "export ZDOTDIR=#{Shellwords.escape(zdotdir)}\nexport LC_ALL=C.UTF-8\n" \
-                  "cd #{Shellwords.escape(@root)}\n#{command}\n"
+                  "cd #{Shellwords.escape(@root)}\n#{executable_command}\n"
 
         out, err = Timeout.timeout(TIMEOUT) { @cmd.run!("zsh", input: wrapped) }
         @bus&.publish("tool:after", tool: NAME, exit_code: out.exit_status)
@@ -83,6 +91,23 @@ module Master
 
       def blocked?(command) = BLOCKLIST.any? { |b| command.include?(b) }
       def interactive?(command) = INTERACTIVE_RE.match?(command)
+
+      def force_required_without_flag?(command)
+        command.match?(FORCE_REQUIRED_RE) && !command.match?(FORCE_FLAG_RE)
+      end
+
+      def strip_force_sentinel(command)
+        command.match?(FORCE_REQUIRED_RE) ? command.gsub(FORCE_FLAG_RE, " ") : command
+      end
+
+      def unwritable_target(command)
+        match = command.match(REDIRECT_RE)
+        return nil unless match
+
+        path = File.expand_path(match[1].delete_prefix("./"), @root)
+        dir = File.directory?(path) ? path : File.dirname(path)
+        File.writable?(dir) ? nil : path
+      end
 
       def track_result(outcome)
         @mutex.synchronize do

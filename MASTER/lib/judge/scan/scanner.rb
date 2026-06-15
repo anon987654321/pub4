@@ -2,6 +2,7 @@
 
 require "etc"
 require "open3"
+require_relative "cross_file_analysis"
 require_relative "file_processor"
 
 module Master
@@ -9,7 +10,7 @@ module Master
     module Scan
       class Scanner
         POOL_SIZE = [Etc.nprocessors, 8].min.freeze
-        SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
+        SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,json,md}".freeze
         SCAN_SINCE_EXT = /\.(rb|rake|gemspec|erb|yml|yaml|js|css|sh|zsh)\z/.freeze
         REQUIRED_DEPTH = :deep
         MAX_VIOLATION_OBJECTS = 100_000
@@ -35,8 +36,10 @@ module Master
 
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
           validate_depth!(depth)
-          paths   = Dir.glob(File.join(dir, glob))
-          Result.ok(prune_violation_objects(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }))
+          paths = Dir.glob(File.join(dir, glob))
+          pairs = parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }
+          pairs.concat(cross_file_pairs(dir, paths))
+          Result.ok(prune_violation_objects(pairs))
         rescue StandardError => e
           Result.err("scan_dir: #{e.message}", category: :infrastructure)
         end
@@ -132,6 +135,13 @@ module Master
         rescue StandardError => e
           @bus&.publish("scanner:thread_error", path:, index:, error: e.message)
           [path, Result.err(e.message, category: :infrastructure)]
+        end
+
+        def cross_file_pairs(dir, paths)
+          CrossFileAnalysis.new(root: dir).call(paths)
+        rescue StandardError => e
+          @bus&.publish("scanner:cross_file_error", path: dir, error: e.message)
+          []
         end
 
         def maybe_gc(index)
