@@ -64,4 +64,28 @@ class TestSkills < Minitest::Test
       assert_equal "scan files and directories", loaded.first[:description]
     end
   end
+
+  def test_recently_used_skills_sort_first
+    Dir.mktmpdir do |root|
+      skills_dir = File.join(root, "data", "skills")
+      FileUtils.mkdir_p(skills_dir)
+      %w[alpha beta].each do |name|
+        File.write(File.join(skills_dir, "#{name}.md"), <<~MD)
+          ---
+          name: #{name}
+          description: #{name}
+          triggers:
+            - #{name}
+          ---
+        MD
+      end
+
+      skills = Master::Now::Skills.new(root: root)
+      skills.discover!
+      skills.record_used("beta")
+      reloaded = Master::Now::Skills.new(root: root)
+
+      assert_equal "beta", reloaded.discover!.first[:name]
+    end
+  end
 end

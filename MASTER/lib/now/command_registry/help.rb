@@ -50,6 +50,10 @@ module Master
           summary: "generate edge-case test stubs",
           detail: ["/edge-cases <ruby-file>", "Creates skipped tests for nil, empty, max, unicode, invalid JSON, truncation, and injection inputs."]
         },
+        "analyze-self" => {
+          summary: "summarize recurring self-improvement signals",
+          detail: ["/analyze-self", "Reads the feedback ledger and reports repeated corrections, provider errors, and failing tools."]
+        },
         "workflow" => {
           summary: "scan, preview fix, and deliberation (usually inferred)",
           detail: ["Say: run this through MASTER, or: full pass on lib/foo.rb", "/workflow <path> — explicit escape hatch only."]

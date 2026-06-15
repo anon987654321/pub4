@@ -49,6 +49,11 @@ Rails.application.configure do
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"
 
+  # AN106 VAPID for webpush (push notifications). Generate keys with `webpush generate:keys` or openssl.
+  # Store in /etc/master.env as VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... (base64).
+  # Used via webpush gem (in Gemfile); see push_subscriptions model and Cable for delivery.
+  # TODO full: add to credentials or env, wire in all apps per AN106.
+
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 

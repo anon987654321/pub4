@@ -47,6 +47,9 @@ Rails.application.configure do
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"
 
+  # AN106 VAPID stub for webpush (future push notifs in amber). Keys in env/credentials.
+  # TODO: generate per-app, wire webpush gem + push_subscriptions if adding notifs.
+
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 

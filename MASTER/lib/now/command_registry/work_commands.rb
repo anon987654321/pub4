@@ -41,6 +41,7 @@ module Master
         propose_tree = ai[:propose_tree]
         config = infra[:config]
         metrics = infra[:metrics]
+        learnings = infra[:learnings]
         git = ai[:git] || Reach::GitOperations.new(File.expand_path("..", root))
         {
           "scan" => command(:dispatch_scan, scanner, root),
@@ -58,6 +59,7 @@ module Master
           "axioms" => command(:dispatch_axioms, scanner, root),
           "rules" => command(:dispatch_rules),
           "edge-cases" => command(:dispatch_edge_cases, root),
+          "analyze-self" => command(:dispatch_analyze_self, learnings),
           "topic" => command(:dispatch_topic, session),
           "process" => command(:dispatch_process),
           "propose-tree" => command(:dispatch_propose_tree, propose_tree),
@@ -276,6 +278,26 @@ module Master
         Master::Judge::Scan::EdgeCaseStubGenerator.new(root:).call(arg).then do |result|
           result.ok? ? result.value! : result.message
         end
+      end
+
+      def dispatch_analyze_self(learnings:, ctx: nil)
+        return "analyze-self: feedback ledger unavailable" unless learnings&.respond_to?(:opportunities)
+
+        rows = learnings.opportunities
+        return "analyze-self: no recurring optimization opportunities" if rows.empty?
+
+        rows.map do |row|
+          case row[:category]
+          when :high_failure
+            "high_failure #{row[:dimension]} fail_rate=#{row[:fail_rate]} total=#{row[:total]}"
+          when :repeated_correction
+            "repeated_correction #{row[:dimension]} count=#{row[:count]}"
+          when :provider_errors
+            "provider_errors #{row[:dimension]} count=#{row[:count]}"
+          else
+            "#{row[:category]} #{row[:dimension]}"
+          end
+        end.join("\n")
       end
 
       def ungraphed_rules(root)

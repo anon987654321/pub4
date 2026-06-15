@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "yaml"
 
 module Master
@@ -13,6 +14,7 @@ module Master
         @root   = root
         @bus    = event_bus
         @loaded = []
+        @usage  = load_usage
       end
 
       def discover!
@@ -30,6 +32,7 @@ module Master
           end
         end
 
+        @loaded = sort_by_recency(@loaded)
         @bus&.publish("skills:loaded", count: @loaded.size)
         @loaded
       end
@@ -45,9 +48,16 @@ module Master
       end
 
       def trigger_for(input)
-        @loaded.select do |s|
+        matches = @loaded.select do |s|
           s[:triggers]&.any? { |t| input.match?(Regexp.new(t, Regexp::IGNORECASE)) }
         end
+        matches.each { |skill| record_used(skill[:name]) }
+        matches
+      end
+
+      def record_used(name)
+        @usage[name.to_s] = Time.now.to_i
+        persist_usage
       end
 
       private
@@ -58,6 +68,31 @@ module Master
           File.join(@root, SKILLS_DIR)
         ]
         roots.select { |path| Dir.exist?(path) }.uniq
+      end
+
+      def sort_by_recency(skills)
+        skills.sort_by { |skill| [-@usage.fetch(skill[:name].to_s, 0).to_i, skill[:name].to_s] }
+      end
+
+      def usage_path
+        File.join(@root, "runtime", "skill_usage.yml")
+      end
+
+      def load_usage
+        return {} unless File.exist?(usage_path)
+
+        data = Master.load_yaml(usage_path)
+        data.is_a?(Hash) ? data : {}
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "skills.load_usage", event_bus: @bus)
+        {}
+      end
+
+      def persist_usage
+        FileUtils.mkdir_p(File.dirname(usage_path))
+        File.write(usage_path, @usage.to_yaml)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "skills.persist_usage", event_bus: @bus)
       end
 
       def load_skill_dir(dir, name)
