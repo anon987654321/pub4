@@ -2,6 +2,7 @@
 
 class ApplicationController < ActionController::Base
   include Authentication
+  include Shared::PunditAuthorization
   include Pagy::Method
   include Shared::CacheableShow
 

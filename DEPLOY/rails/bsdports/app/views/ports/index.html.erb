@@ -2,8 +2,8 @@
 <header>
   <h1>OpenBSD ports</h1>
   <%= link_to "RSS (new last 7 days)", ports_path(format: :rss) %>
-  <%= form_with url: ports_path, method: :get do |f| %>
-    <%= f.search_field :q, value: params[:q], placeholder: "Search ports…" %>
+  <%= form_with url: ports_path, method: :get, role: "search", aria: { label: "Search ports" } do |f| %>
+    <%= f.search_field :q, value: params[:q], placeholder: "Search ports…", aria: { label: "Search query" } %>
   <% end %>
 </header>
 <% if @category %>

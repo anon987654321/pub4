@@ -29,11 +29,11 @@
   <%= render "shared/minimal_ui" %>
 </head>
 <body class="zen-minimal" data-pwa-key="bsdports" data-controller="pwa-standalone">
-<nav data-pwa-primary-nav>
-  <%= link_to "BSDports", root_path, class: "brand" %>
-  <%= link_to "Ports", ports_path %>
-  <%= link_to "Categories", categories_path %>
-  <%= link_to "Maintainers", maintainers_path %>
+<nav data-pwa-primary-nav aria-label="Primary navigation">
+  <%= link_to "BSDports", root_path, class: "brand", aria: { current: current_page?(root_path) ? 'page' : nil } %>
+  <%= link_to "Ports", ports_path, aria: { current: current_page?(ports_path) ? 'page' : nil } %>
+  <%= link_to "Categories", categories_path, aria: { current: current_page?(categories_path) ? 'page' : nil } %>
+  <%= link_to "Maintainers", maintainers_path, aria: { current: current_page?(maintainers_path) ? 'page' : nil } %>
   <% if authenticated? %>
     <%= link_to "Sign out", session_path, data: { turbo_method: :delete } %>
   <% else %>

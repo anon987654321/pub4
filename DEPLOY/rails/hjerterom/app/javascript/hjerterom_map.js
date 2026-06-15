@@ -31,7 +31,8 @@ function heartMarker(point) {
   const wrap = document.createElement("a");
   wrap.href = point.url || "#";
   wrap.className = `hjerterom-heart-marker hjerterom-heart-marker--${point.type || "resource"}`;
-  wrap.setAttribute("aria-label", point.title || "Hjerterom punkt");
+  wrap.setAttribute("aria-label", `${point.type || "Resource"}: ${point.title || "Hjerterom punkt"}`);
+  wrap.setAttribute("role", "button");
   wrap.appendChild(logoClone("hjerterom-heart-marker__logo"));
   return wrap;
 }

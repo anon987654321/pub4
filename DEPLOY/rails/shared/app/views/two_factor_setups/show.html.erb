@@ -1,0 +1,13 @@
+<h1>Two-factor authentication</h1>
+
+<% if @qr.present? %>
+  <div><%= @qr.html_safe %></div>
+<% end %>
+
+<p>Scan the QR code or enter the secret in your authenticator app.</p>
+
+<%= form_with url: two_factor_setup_path, method: :post do |f| %>
+  <%= f.label :code, "Verification code" %>
+  <%= f.text_field :code, autocomplete: "one-time-code", required: true %>
+  <%= f.submit "Enable 2FA" %>
+<% end %>

@@ -127,10 +127,11 @@ module Master
         @repl.handle_line(@last_suggestion)
       end
 
-      def run_help
-        summary = CommandRegistry::HelpTopics.summary
-        puts @display.render(summary, mode: :dim)
-        puts @display.render("<< for multiline. anything else is a prompt.", mode: :dim)
+      def run_help(line = "/help")
+        arg = line.to_s.strip.sub(%r{\A/\??help\s*}i, "").strip
+        text = arg.empty? ? CommandRegistry::HelpTopics.summary : CommandRegistry::HelpTopics.detail(arg)
+        puts @display.render(text, mode: :dim)
+        puts @display.render("<< for multiline. anything else is a prompt.", mode: :dim) if arg.empty?
       end
 
       def unknown_command(stripped)

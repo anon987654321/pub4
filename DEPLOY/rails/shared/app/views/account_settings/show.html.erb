@@ -1,0 +1,12 @@
+<h1>Account</h1>
+
+<p><%= Current.user.email_address %></p>
+
+<% if Current.user.deletion_pending? %>
+  <p>Deletion scheduled for <%= l Current.user.deletion_scheduled_at, format: :long %>.</p>
+  <%= button_to "Cancel deletion", cancel_deletion_account_path, method: :post %>
+<% else %>
+  <%= link_to "Export data", export_account_path %>
+  <%= link_to "Two-factor setup", two_factor_setup_path %>
+  <%= button_to "Delete account", account_path, method: :delete, data: { turbo_confirm: "Delete account in 30 days?" } %>
+<% end %>

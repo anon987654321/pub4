@@ -28,11 +28,12 @@ export default class extends Controller {
     if (overlay) {
       if (item?.url) {
         overlay.src = item.url
-        overlay.alt = item.name
+        overlay.alt = item.name || "Wardrobe item"
         overlay.style.opacity = "1"
       } else {
         overlay.src = ""
         overlay.style.opacity = "0"
+        overlay.alt = ""
       }
     }
     if (nameEl) nameEl.textContent = item?.name ?? "—"

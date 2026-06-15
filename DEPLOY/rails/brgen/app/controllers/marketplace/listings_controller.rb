@@ -2,12 +2,14 @@
 
 class Marketplace::ListingsController < Marketplace::BaseController
   include Shared::LiveSearchable
+  include Shared::TwoFactorAuth
 
   allow_unauthenticated_access only: %i[index show]
   before_action :set_listing, only: %i[show edit update destroy]
+  before_action -> { require_two_factor!(Current.user) }, only: %i[new create], if: :authenticated?
 
   def index
-    scope = Marketplace::Listing.active.includes(:user, :category)
+    scope = policy_scope(Marketplace::Listing).includes(:user, :category)
     scope = apply_live_search(scope, columns: %w[title description location], vertical: "marketplace", filters: { category_id: params[:category_id] }.compact) if live_search_query.present?
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
     @pagy, @listings = pagy(scope.recent)
@@ -20,6 +22,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
   end
 
   def show
+    authorize @listing
     @listing.increment!(:views_count)
     @order = Marketplace::Order.new if authenticated?
 
@@ -28,11 +31,13 @@ class Marketplace::ListingsController < Marketplace::BaseController
   end
 
   def new
+    authorize Marketplace::Listing
     @listing   = Marketplace::Listing.new
     @categories = Marketplace::Category.all
   end
 
   def create
+    authorize Marketplace::Listing
     @listing = Current.user.marketplace_listings.build(listing_params)
     if @listing.save
       preset = params[:marketplace_listing][:preset].presence
@@ -45,16 +50,19 @@ class Marketplace::ListingsController < Marketplace::BaseController
   end
 
   def edit
+    authorize @listing
     @categories = Marketplace::Category.all
   end
 
   def update
+    authorize @listing
     @listing.update(listing_params) ?
       redirect_to(marketplace_listing_path(@listing)) :
       render(:edit, status: :unprocessable_entity)
   end
 
   def destroy
+    authorize @listing
     @listing.update!(status: "removed")
     redirect_to marketplace_listings_path
   end

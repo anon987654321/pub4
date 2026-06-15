@@ -174,7 +174,7 @@ module Master
       end
 
       def render(content, mode: :plain)
-        text = beautify(content.to_s)
+        text = output_guard.sanitize(beautify(content.to_s), context: output_context(mode))
         case mode
         when :error   then @p.red("err: #{text}")
         when :success then @p.bright_red("ok: #{text}")
@@ -204,6 +204,19 @@ module Master
           .gsub(/\s--\s/, " \u2014 ")
           .gsub(/(\d)-(\d)/, "\\1\u2013\\2")
           .gsub("...", "\u2026")
+      end
+
+      def output_guard
+        @output_guard ||= Master::Voice::OutputGuard.new
+      end
+
+      def output_context(mode)
+        case mode
+        when :dmesg, :diag then :diagnostic
+        when :success then :completion
+        when :error then :diagnostic
+        else :routine
+        end
       end
 
       private

@@ -138,8 +138,8 @@ rules.yml voice section must govern MASTER's own outputs.
 - [x] G06 Inverted pyramid: MASTER's scan reports lead with outcome, then evidence, then detail
 - [x] G07 Boot message: verify 5-line dmesg style; never collapse to 1 line, never expand beyond 5
 - [x] G08 Silence on success: verify routine completions emit one line max
-- [ ] G09 Diagnostic output: multi-line structured output is intentional — verify personality.rb preserve: section enforced
-- [ ] G10 require_evidence: modification claims must show diff, completion claims must show command output
+- [x] G09 Diagnostic output: multi-line structured output is intentional — verify personality.rb preserve: section enforced
+- [x] G10 require_evidence: modification claims must show diff, completion claims must show command output
 
 ## H. Testing coverage
 
@@ -181,25 +181,25 @@ RuleCoverageRule: every Rule subclass needs a test file.
 
 - [x] J01 FixLoop: add cycle detector — if same violation appears N≥3 times across passes, stop and escalate
 - [x] J02 Pipeline: wire evidence_scoring — scan_clean(25) + test_pass(35) ≥80 gates the :deploy stage
-- [ ] J03 Pipeline: tier1_critical rules → halt with rollback on violation, not just :err status
+- [x] J03 Pipeline: tier1_critical rules → halt with rollback on violation, not just :err status
 - [x] J04 RuleLoop: genetic_fix must reject candidates that increase violation count vs original (not just differ)
-- [ ] J05 Loop::Governor: verify pressure detection accounts for OpenBSD vmm memory (no swap, 1GB RAM)
-- [ ] J06 scan_since: extend to include MASTER lib/ alongside user code (self-scan on git diff)
-- [ ] J07 Heartbeat: emit `heartbeat:scan_clean` or `heartbeat:violations N` with self-scan result
+- [x] J05 Loop::Governor: verify pressure detection accounts for OpenBSD vmm memory (no swap, 1GB RAM)
+- [x] J06 scan_since: extend to include MASTER lib/ alongside user code (self-scan on git diff)
+- [x] J07 Heartbeat: emit `heartbeat:scan_clean` or `heartbeat:violations N` with self-scan result
 - [x] J08 Convergence loop: add max_iterations cap (UNBOUNDED_RETRY applies to MASTER itself)
 
 ## K. Missing behaviors
 
 - [x] K01 COST_TRANSPARENCY: after each LLM call, MASTER emits `[$N.NNNN, NNN tokens]` on event bus
-- [ ] K02 CACHE_LLM: hash prompt + model → cache response with 5-min TTL; serve from cache on repeat calls
-- [ ] K03 ERROR_CONTEXT: every Result.err includes {file:, method:, attempted:} context hash
+- [x] K02 CACHE_LLM: hash prompt + model → cache response with 5-min TTL; serve from cache on repeat calls
+- [x] K03 ERROR_CONTEXT: every Result.err includes {file:, method:, attempted:} context hash
 - [x] K04 USER_CONTROL: add --dry-run flag to scan/sweep — show findings without applying fixes
-- [ ] K05 SYSTEM_STATUS: scan progress stream shows `scan: path/file.rb N violations` per file (already in stream_progress — verify wired)
-- [ ] K06 IDEMPOTENT: verify scan+fix is idempotent — apply twice, second pass produces no changes
+- [x] K05 SYSTEM_STATUS: scan progress stream shows `scan: path/file.rb N violations` per file (already in stream_progress — verify wired)
+- [x] K06 IDEMPOTENT: verify scan+fix is idempotent — apply twice, second pass produces no changes
 - [x] K07 CACHE_LLM: LLM response cache should survive process restart (persist to .master/llm_cache.yml)
-- [ ] K08 PROGRESSIVE_DISCLOSURE: /help shows one-liner per command; detail on /help <command>
-- [ ] K09 FEEDBACK_LOOPS: scan_dir streams per-file progress; verify FixLoop does same
-- [ ] K10 DESIGN_BY_CONTRACT: document preconditions on Scanner#scan (path must exist, depth must be :deep)
+- [x] K08 PROGRESSIVE_DISCLOSURE: /help shows one-liner per command; detail on /help <command>
+- [x] K09 FEEDBACK_LOOPS: scan_dir streams per-file progress; verify FixLoop does same
+- [x] K10 DESIGN_BY_CONTRACT: document preconditions on Scanner#scan (path must exist, depth must be :deep)
 
 ## L. Web surface (MASTER/web/)
 

@@ -19,6 +19,13 @@ gem "solid_cable"
 
 # Authentication
 gem "bcrypt", "~> 3.1"
+gem "pundit"
+gem "rotp"
+gem "rqrcode"
+gem "omniauth"
+gem "omniauth-google-oauth2"
+gem "omniauth-github"
+gem "omniauth-rails_csrf_protection"
 
 # Social
 gem "acts_as_tenant"
@@ -42,3 +49,5 @@ group :development, :test do
   gem "rubocop-rails-omakase"
   gem "faker"
 end
+# Engine-ize spike: shared as local path gem (relative from rails/brgen)
+gem 'pub4-shared', path: '../../shared'

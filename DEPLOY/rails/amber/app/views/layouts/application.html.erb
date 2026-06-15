@@ -32,17 +32,17 @@
   <%= render "shared/minimal_ui" %>
 </head>
 <body class="zen-minimal" data-pwa-key="amber" data-controller="pwa-standalone">
-<nav data-pwa-primary-nav>
+<nav data-pwa-primary-nav aria-label="Primary navigation">
   <%= link_to root_path, class: "brand", aria: { label: "Amber home" } do %>
     <%= render "shared/logo" %>
   <% end %>
   <% if authenticated? %>
-    <%= link_to "Feed",      feed_posts_path %>
+    <%= link_to "Feed",      feed_posts_path, aria: { current: current_page?(feed_posts_path) ? 'page' : nil } %>
     <%= link_to "Post",      new_post_path %>
-    <%= link_to "Wardrobe",  items_path %>
-    <%= link_to "Outfits",       outfits_path %>
-    <%= link_to "Style",         dressing_room_outfits_path %>
-    <%= link_to "Planner",       planned_outfits_path %>
+    <%= link_to "Wardrobe",  items_path, aria: { current: current_page?(items_path) ? 'page' : nil } %>
+    <%= link_to "Outfits",       outfits_path, aria: { current: current_page?(outfits_path) ? 'page' : nil } %>
+    <%= link_to "Style",         dressing_room_outfits_path, aria: { current: current_page?(dressing_room_outfits_path) ? 'page' : nil } %>
+    <%= link_to "Planner",       planned_outfits_path, aria: { current: current_page?(planned_outfits_path) ? 'page' : nil } %>
     <%= link_to "Search",    ai_search_path %>
     <%= link_to "Occasions", ai_occasions_path %>
     <%= link_to "Sign out",  session_path, data: { turbo_method: :delete } %>

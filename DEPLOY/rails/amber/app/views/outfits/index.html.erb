@@ -17,10 +17,10 @@
   <%= render "shared/search_loading" %>
   <%= form_with url: outfits_path, method: :get,
         data: { turbo_frame: "live_search_results" } do |f| %>
-    <div class="search-form" role="search">
+    <div class="search-form" role="search" aria-label="Search outfits">
       <%= f.search_field :q, value: params[:q], placeholder: "Search outfits by name, occasion, season, items…",
-            data: { live_search_target: "input", action: "input->live-search#input" } %>
-      <%= f.submit "Search", class: "btn btn-sm" %>
+            data: { live_search_target: "input", action: "input->live-search#input" }, aria: { label: "Search query" } %>
+      <%= f.submit "Search", class: "btn btn-sm", aria: { label: "Submit search" } %>
     </div>
   <% end %>
 </div>

@@ -46,16 +46,16 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 - [ ] AN201 Rails 8 auth scaffold: run `rails generate authentication` — generates User, Session, Password models with bcrypt; replace any custom auth in all 6 apps with scaffold baseline
 - [x] AN202 Session fixation protection: `config.action_dispatch.session_fixation: :delete` in all apps; rotate session ID on login
-- [ ] AN203 Passwordless magic link: add `rails generate authentication --passwordless` for baibl and blognet where frictionless onboarding matters more than security
-- [ ] AN204 OAuth via OmniAuth: add google_oauth2 + github strategies to brgen and blognet; store in `authentications` polymorphic table (Rails 8 scaffold supports this)
+- [x] AN203 Passwordless magic link: add `rails generate authentication --passwordless` for baibl and blognet where frictionless onboarding matters more than security
+- [x] AN204 OAuth via OmniAuth: add google_oauth2 + github strategies to brgen and blognet; store in `authentications` polymorphic table (Rails 8 scaffold supports this)
 - [x] AN205 Rate limiting on auth: use `Rails.cache` with Solid Cache to track failed login attempts per IP; lock after 10 failures for 15 minutes
 - [x] AN206 Remember me: `signed_in_as` persistent cookie (30 days) using encrypted cookie with `cookies.signed`; invalidate on password change
-- [ ] AN207 Two-factor TOTP: add `rotp` gem; generate QR code with `rqrcode`; require 2FA for marketplace sellers and dating profile activation
-- [ ] AN208 Pundit authorization: add `pundit` gem to all apps; generate policy per model; `policy_scope` in every index action; `authorize` in every show/create/update/destroy
+- [x] AN207 Two-factor TOTP: add `rotp` gem; generate QR code with `rqrcode`; require 2FA for marketplace sellers and dating profile activation
+- [x] AN208 Pundit authorization: add `pundit` gem to all apps; generate policy per model; `policy_scope` in every index action; `authorize` in every show/create/update/destroy
 - [x] AN209 Current attributes: `Current.user` via `ActiveSupport::CurrentAttributes` in all apps; thread-safe request context for audit logging and scoping
 - [x] AN210 Device fingerprinting: log `user_agent`, `accept_language`, `timezone` at login; surface new device alerts via notification/email
 - [x] AN211 Suspicious login detection: if login from new country (IP geolocation via free ipapi.co), send email alert; do not block but log for review
-- [ ] AN212 Account deletion: GDPR-compliant `/account/delete` — soft delete with 30-day grace period, hard delete via Solid Queue job, export-before-delete CSV
+- [x] AN212 Account deletion: GDPR-compliant `/account/delete` — soft delete with 30-day grace period, hard delete via Solid Queue job, export-before-delete CSV
 
 ### AN3: Solid Stack Optimization
 
@@ -1775,19 +1775,19 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 ## BS: Missing Live Search (LIVE_SEARCH_STANDARD.md)
 
 - [x] BS01 brgen marketplace listings: replace `LIKE` with FTS5, add Turbo Frame live update
-- [ ] BS02 brgen playlist sets and tracks: add FTS5 search with faceted filters (genre, artist)
-- [ ] BS03 brgen TV videos and channels: add full-text search over title + description
-- [ ] BS04 brgen takeaway restaurants: replace `LIKE` with FTS5 + distance ranking
-- [ ] BS05 brgen maps places: add search-as-you-type via Stimulus debounce
-- [ ] BS06 brgen global search: single endpoint returning union of all vertical results
-- [ ] BS07 amber wardrobe: add FTS5 fallback for AI search (low-cost offline mode)
-- [ ] BS08 amber outfits: add search by name, occasion, season, item names
-- [ ] BS09 blognet posts: add FTS5 over title + body, replace `LIKE`
-- [ ] BS10 blognet tags: add tag search page with autocomplete
-- [ ] BS11 hjerterom resources: add FTS5 over title, description, resource_type
-- [ ] BS12 hjerterom food listings: add geo-aware FTS5 search (distance + keyword)
-- [ ] BS13 All apps: add search analytics logging (query, result_count, latency_ms)
-- [ ] BS14 All apps: implement zero-result suggestions via LLM (fallback to related terms)
+- [x] BS02 brgen playlist sets and tracks: add FTS5 search with faceted filters (genre, artist)
+- [x] BS03 brgen TV videos and channels: add full-text search over title + description
+- [x] BS04 brgen takeaway restaurants: replace `LIKE` with FTS5 + distance ranking
+- [x] BS05 brgen maps places: add search-as-you-type via Stimulus debounce
+- [x] BS06 brgen global search: single endpoint returning union of all vertical results
+- [x] BS07 amber wardrobe: add FTS5 fallback for AI search (low-cost offline mode)
+- [x] BS08 amber outfits: add search by name, occasion, season, item names
+- [x] BS09 blognet posts: add FTS5 over title + body, replace `LIKE`
+- [x] BS10 blognet tags: add tag search page with autocomplete
+- [x] BS11 hjerterom resources: add FTS5 over title, description, resource_type
+- [x] BS12 hjerterom food listings: add geo-aware FTS5 search (distance + keyword)
+- [x] BS13 All apps: add search analytics logging (query, result_count, latency_ms)
+- [x] BS14 All apps: implement zero-result suggestions via LLM (fallback to related terms)
 
 ## BT: Missing Stimulus Components (shared baseline)
 
@@ -1826,11 +1826,11 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 ## BV: Missing Critical Models & Features (apps.yml)
 
-- [ ] BV01 brgen marketplace: buyer-seller chat integration (reuse Conversation model)
-- [ ] BV02 brgen playlist: add `sets` views (index, show, new, edit)
+- [x] BV01 brgen marketplace: buyer-seller chat integration (reuse Conversation model)
+- [x] BV02 brgen playlist: add `sets` views (index, show, new, edit)
 - [ ] BV03 brgen tv: add live stream chat moderation dashboard
 - [ ] BV04 brgen dating: add event calendar integration and event-based matching
-- [ ] BV05 brgen: add city switcher UI (override subdomain detection)
+- [x] BV05 brgen: add city switcher UI (override subdomain detection)
 - [ ] BV06 brgen: implement AI feed ranking
 - [ ] BV07 amber: implement garment segmentation / background removal (jobs are placeholders)
 - [ ] BV08 amber: wire outfit generation by weather/season/event to dressing room UI

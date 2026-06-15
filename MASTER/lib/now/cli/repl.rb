@@ -53,7 +53,8 @@ module Master
           return @cli.accept_top_suggestion if stripped.empty?
           NL_DISPATCH.each { |pat, meth| return @cli.send(meth) if stripped.match?(pat) }
           case stripped
-          when "/help", "/?" then @cli.run_help
+          when "/help", "/?" then @cli.run_help(stripped)
+          when %r{\A/help\s+(\S+)\z}i then @cli.run_help(stripped)
           when "/exit", "/quit" then @cli.exit_cli
           when "/undo" then @cli.run_undo
           when "/redo" then @cli.run_redo

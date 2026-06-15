@@ -50,6 +50,8 @@ export default class extends Controller {
     card.style.transition = "transform 220ms ease"
     card.style.transform = direction === "like" ? "translate(120%, -10%) rotate(18deg)" : "translate(-120%, -10%) rotate(-18deg)"
 
+    card.setAttribute("aria-busy", "true")
+
     try {
       await fetch(url, {
         method: "POST",
@@ -69,6 +71,7 @@ export default class extends Controller {
       if (this.current) {
         this.#resetCard()
         this.current.dataset.datingSwipeActive = "true"
+        this.current.removeAttribute("aria-busy")
       }
     }, 220)
   }
