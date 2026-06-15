@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Marketplace::Category < ApplicationRecord
+  # Engine-ize
+  include Shared.concern(:Reactable) rescue nil
+  include Shared.concern(:Notifiable) rescue nil
   belongs_to :parent, class_name: "Marketplace::Category", optional: true
   has_many :children, class_name: "Marketplace::Category", foreign_key: :parent_id, dependent: :nullify
   has_many :listings, class_name: "Marketplace::Listing", foreign_key: :category_id, dependent: :nullify

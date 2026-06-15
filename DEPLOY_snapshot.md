@@ -1,6 +1,9 @@
-# DEPLOY Snapshot (autocontinue)
-Generated: 2026-06-15T07:24:59Z
-## Models updated
+# DEPLOY Snapshot (autocontinue tranche7)
+Generated: 2026-06-15T07:26:05Z
+## Evidence
 ```
-marketplace/deal + hjerterom/donation Shared
+playlist new: turbo/ARIA
+marketplace deals: turbo/ARIA
+dating matches: turbo/ARIA
+models: tv/episode, marketplace/category Shared
 ```

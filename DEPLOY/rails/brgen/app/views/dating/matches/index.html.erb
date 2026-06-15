@@ -1,12 +1,15 @@
 <% content_for :title, "Matches" %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Dating matches header">
   <h1>Matches</h1>
-  <%= link_to "Discover", dating_root_path, class: "btn btn-ghost btn-sm" %>
+  <nav role="navigation" aria-label="Matches nav">
+    <%= link_to "Discover", dating_root_path, class: "btn btn-ghost btn-sm" %>
+  </nav>
 </div>
 
+<turbo-frame id="dating-matches" data-turbo-action="replace">
 <% if @matches.none? %>
-  <div class="empty"><p>No matches yet.</p></div>
+  <div class="empty" role="status" aria-live="polite"><p>No matches yet.</p></div>
 <% else %>
   <% @matches.each do |m| %>
     <% other = m.other_user(Current.user) %>

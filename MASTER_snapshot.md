@@ -1,9 +1,11 @@
-# MASTER Snapshot (autocontinue more)
-Generated: 2026-06-15T07:24:59Z
-## Fixed model Shared for marketplace/deal, hjerterom/donation; TODO updated.
+# MASTER Snapshot (autocontinue to plateau tranche7)
+Generated: 2026-06-15T07:26:04Z
+## Tranche7: more turbo/ARIA in playlist new, marketplace deals, dating matches; Shared in tv/episode, marketplace/category; AN6 partials.
 ```
-  - geo_locatable.rb: nearby + haversine (replaced inconsistent math in 7+ places: listing, dating, delivery, user, hjerterom resources, restaurant).
-- Major pruning (file sprawl reduction): removed entire brgen/app/models/concerns/ dir (after promotion), 6x bogus app/controllers/rails/ nested dirs (across amber/baibl/blognet/brgen/bsdports/hjerterom, each with duplicate pwa_controller), root marketplace/ stub, reduced .md files to exactly 1 README.md per app (amber/baibl/blognet/brgen/bsdports/hjerterom) + root README + shared/WIRING_NOTES (no other per-app ARCHITECTURE/STIMULUS etc. left).
-7. **Monolith boundaries for brgen verticals + LLM eval snapshots**. Namespaces work today for the "one city" model. As marketplace/takeaway/orders grow, introduce clearer bounded contexts (or internal engines) without breaking the shared activity/search/moderation layers. (New: root MASTER_snapshot.md + DEPLOY_snapshot.md added/pushed in pub4 root for external LLM evaluation of architecture/DRY/pruning/shared layer; integrate into self-snapshot process.)
-- Full pruning: removed 6 nested controllers/rails/ dirs (duplicate pwa broken under wrong module), root marketplace/ stub, reduced .md bloat to 1 README/app + essentials.
+- [x partial] AN401 Turbo Frames for every list: tranche7 added turbo to marketplace deals, playlist new, dating matches; ARIA in headers/navs/empties. Models: tv/episode, marketplace/category + Shared (Reactable/Notifiable).
+### AN6: brgen — Hyperlocal City Network
+- [ ] AN601 City onboarding: `/onboard` flow — pick city, pick interests (categories), pick verticals (dating/marketplace/tv/etc.); redirect to personalized feed
+- [ ] AN602 Subdomain feed merging: unified `/` feed that merges posts from all verticals user follows; scored by recency × engagement × personal affinity
+- [ ] AN603 Community creation flow: step-by-step `<turbo-frame>`-based wizard — name, description, rules, category, privacy; preview before publish
+- [ ] AN604 Post composer rich text: ActionText-based composer with slash-commands (`/image`, `/link`, `/poll`, `/code`); markdown shortcut support (`**bold**`, `#heading`)
 ```

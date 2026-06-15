@@ -1,9 +1,12 @@
 <% content_for :title, "New playlist" %>
 
-<div class="page-header"><h1>New playlist</h1></div>
+<div class="page-header" role="banner" aria-label="New playlist header">
+  <h1>New playlist</h1>
+</div>
 
+<turbo-frame id="playlist-new" data-turbo-action="replace">
 <div class="form-wrap">
-  <%= form_with model: @playlist, url: playlist_playlists_path do |f| %>
+  <%= form_with model: @playlist, url: playlist_playlists_path, html: { role: "form", "aria-label": "Create playlist" } do |f| %>
     <%= render "shared/errors", object: @playlist %>
     <div class="field"><%= f.label :name %><%= f.text_field :name %></div>
     <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>

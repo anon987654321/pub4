@@ -1,15 +1,16 @@
 <% content_for :title, t("marketplace.deals.title", default: "Deals") %>
 
-<%= tag.section class: "marketplace-deals" do %>
-  <%= tag.header do %>
+<%= tag.section class: "marketplace-deals", role: "region", "aria-label": "Marketplace deals" do %>
+  <%= tag.header role: "banner", "aria-label": "Deals header" do %>
     <%= tag.h1 t("marketplace.deals.title", default: "Deals") %>
   <% end %>
 
+  <turbo-frame id="marketplace-deals" data-turbo-action="replace">
   <% if @featured_deals.any? %>
     <%= tag.section class: "featured-deals" do %>
       <%= tag.h2 t("marketplace.deals.featured", default: "Featured deals") %>
       <% @featured_deals.each do |deal| %>
-        <%= tag.article class: "deal-card featured" do %>
+        <%= tag.article class: "deal-card featured" role="listitem" do %>
           <%= tag.h3 link_to(deal.headline, marketplace_deal_path(deal)) %>
           <%= tag.p deal.badge if deal.badge.present? %>
         <% end %>
