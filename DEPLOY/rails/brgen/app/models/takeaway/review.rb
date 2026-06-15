@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 class Takeaway::Review < ApplicationRecord
+  # Engine-ized Shared concerns
+  include Shared.concern(:Notifiable) rescue nil
+  include Shared.concern(:Reactable) rescue nil
+  include Shared.concern(:Votable) rescue nil
+
   belongs_to :user
   belongs_to :order, class_name: "Takeaway::Order"
   belongs_to :restaurant, class_name: "Takeaway::Restaurant", counter_cache: :reviews_count

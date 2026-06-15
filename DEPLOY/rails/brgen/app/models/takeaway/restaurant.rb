@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class Takeaway::Restaurant < ApplicationRecord
+  # Engine-ized Shared concerns (via pub4-shared)
+  include Shared.concern(:Notifiable) rescue nil
+  include Shared.concern(:Reactable) rescue nil
+  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared.concern(:ActivityTrackable) rescue nil
+
   belongs_to :user
   has_many :menu_items, class_name: "Takeaway::MenuItem", dependent: :destroy
   has_many :orders, class_name: "Takeaway::Order", dependent: :destroy

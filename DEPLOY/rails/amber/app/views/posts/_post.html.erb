@@ -1,6 +1,6 @@
 <% cache [post, Current.user&.id] do %>
-  <article>
-    <header>
+  <article role="article" aria-label="Post by <%= post.user.email_address.split("@").first %>">
+    <header role="banner" aria-label="Post header">
       <%= link_to post.user.email_address.split("@").first, user_path(post.user) %>
       <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %> ago</time>
     </header>

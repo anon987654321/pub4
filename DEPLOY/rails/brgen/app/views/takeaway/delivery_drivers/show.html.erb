@@ -8,7 +8,7 @@
   <%= link_to "All drivers", takeaway_delivery_drivers_path, class: "btn btn-ghost btn-sm" %>
 </div>
 
-<article>
+<article role="article" aria-label="Driver details">
   <p class="dim"><%= @delivery_driver.vehicle_type.presence&.humanize || "Vehicle not set" %> · <%= @delivery_driver.available? ? "Available" : "Unavailable" %></p>
   <% if @delivery_driver.location? %>
     <p><%= @delivery_driver.current_lat %>, <%= @delivery_driver.current_lng %></p>

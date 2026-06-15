@@ -1,11 +1,11 @@
 <% content_for :title, "Capsule Optimizer" %>
 
-<header>
+<header role="banner" aria-label="Capsule optimizer header">
   <div>
     <p class="dim">Capsule builder</p>
     <h1>Capsule Wardrobe Optimizer</h1>
   </div>
-  <nav>
+  <nav role="navigation" aria-label="Capsule actions">
     <%= link_to "Wardrobe", items_path, class: "btn" %>
     <%= link_to "Outfits", outfits_path, class: "btn" %>
   </nav>
@@ -35,5 +35,5 @@
     </section>
   <% end %>
 <% else %>
-  <div class="empty"><p>Add more items to your wardrobe first.</p></div>
+  <div class="empty" role="status" aria-live="polite"><p>Add more items to your wardrobe first.</p></div>
 <% end %>

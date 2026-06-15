@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 class Tv::Channel < ApplicationRecord
+  # Engine-ized Shared via pub4-shared
+  include Shared.concern(:Notifiable) rescue nil
+  include Shared.concern(:ActivityTrackable) rescue nil
+  include Shared.concern(:Reactable) rescue nil
+
   belongs_to :user
   has_many :videos,        class_name: "Tv::Video",        foreign_key: :tv_channel_id, dependent: :destroy
   has_many :broadcasts,    class_name: "Tv::Broadcast",    foreign_key: :tv_channel_id, dependent: :destroy

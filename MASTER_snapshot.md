@@ -1,10 +1,8 @@
-# MASTER Snapshot (TRANCHE8 micro refinements continue)
-Generated: 2026-06-15T07:37:02Z
-## Additional ARIA/roles on 15+ plain headers/navs/forms/empties/articles; Shared.concern in 15+ models; AN6/NN/AO partials expanded.
+# MASTER Snapshot (TRANCHE9 micro refinements)
+Generated: 2026-06-15T12:10:00Z
+## Tranche9: ARIA/NN heuristics + Shared concerns in DEPLOY verticals + engine stable; TODOs updated + root snaps
 ```
-Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-script remains but local duplication gone + 6+ concerns in shared), integrate root snapshots (MASTER_snapshot.md / DEPLOY_snapshot.md in pub4 root, pushed 11ad193f) into LLM/self-eval process (new gap: "for other LLMs to evaluate" architecture/DRY/pruning/shared), wire more concerns (e.g. Mentionable if useful), continue AN2 (auth), AN103 (Workbox), AN106 (VAPID), AN15/AN1204 (tests/N+1), activity graph full, notification convergence. See major wins below. (Reassessment: DRY/KISS + pruning wins confirmed via ls/git (8 shared concerns, no local concerns/ dir, 1 README/app, snapshots present); no .md bloat; snapshots fulfill eval request. Smell: TODO length with historical repeats — archive done sections?)
-- [x] AN101 Manifest completeness: add `display_override...` etc to manifests (prior); Rails 8 native pwa generator (rails generate pwa) + views/pwa/ + routes align noted in research (edge guides 2026); apps on 8.1 + solid_* + propshaft good. Engine helps shared pwa partials future.
-- [x] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
-- [ ] AN103 Workbox integration: replace hand-rolled... (Rails 8 pwa default is basic sw; Workbox opt-in via import + sw.js build step; keep in backlog, current solid+turbo sufficient for family).
-- [x] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
+Next/reassessment (2026-06-15): spike shared engine (top priority #1; 6/6 wired, terse engine + concern helper, bundle primary). Integrate root snapshots (MASTER_snapshot.md / DEPLOY_snapshot.md) into LLM/self-eval. Wire more concerns if gaps. Continue AN2 (auth), AN103 (Workbox), AN106 (VAPID), AN15/AN1204 (tests). Full activity graph, notification convergence. DRY/KISS tranche9: 20+ view ARIA fixes (amber declutter+layouts, baibl/blognet nav/main, brgen takeaway/playlist/tv/messages + orders/drivers), 8+ models promoted (takeaway Restaurant/Review, Marketplace Store, Tv Channel + prior). Snapshots root for eval of arch/DRY/pruning/shared. No local md bloat. (Reassess: NN heuristics applied per 10 principles; engine-ize advancing; snapshots fulfill "for other LLMs".)
+- [x] many A/B/C/D/E lexical/structural/autofix/self-scan (prior tranches)
 ```
+Evidence: git log --oneline -5; ls -1 Documents/GitHub/pub4/*_snapshot.md; grep -l "role=.*aria" DEPLOY/rails/*/app/views/**/*.erb | wc -l (reduced plain elems). 

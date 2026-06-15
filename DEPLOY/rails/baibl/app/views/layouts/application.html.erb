@@ -44,7 +44,7 @@
   <script type="module" src="/minimal-gesture.js"></script>
 </head>
 <body class="zen-minimal">
-<nav data-turbo-permanent>
+<nav data-turbo-permanent role="navigation" aria-label="Primary navigation">
   <%= link_to "Baibl", root_path, class: "brand" %>
   <%= link_to "Scripture", scripture_index_path %>
   <%= link_to "Search", scripture_search_path %>
@@ -58,7 +58,7 @@
 </nav>
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
-<main><%= yield %></main>
+<main role="main" aria-label="Main content"><%= yield %></main>
 <%= render "shared/install_prompt" %>
 </body>
 </html>

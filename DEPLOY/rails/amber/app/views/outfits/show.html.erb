@@ -1,6 +1,6 @@
 <% content_for :title, @outfit.name %>
 
-<header>
+<header role="banner" aria-label="Outfit header">
   <div>
     <p class="dim"><%= @outfit.context_label.presence || "Outfit" %></p>
     <h1><%= @outfit.name %></h1>
@@ -38,7 +38,7 @@
   <p class="dim">Use this outfit as a signal for future capsules, weather-aware recommendations, event styling, and declutter decisions.</p>
 </section>
 
-<nav>
+<nav role="navigation" aria-label="Outfit actions">
   <%= button_to "Like (#{@outfit.likes_count.to_i})", like_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= button_to "Share to brgen", share_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= button_to "Wear again", wear_outfit_path(@outfit), method: :post, class: "btn" %>

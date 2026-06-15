@@ -1,11 +1,13 @@
-<h1>Messages</h1>
+<div class="page-header" role="banner" aria-label="Messages header">
+  <h1>Messages</h1>
+</div>
 
 <% if @conversations.any? %>
-  <ul>
+  <ul role="list" aria-label="Conversations">
     <% @conversations.each do |c| %>
       <% other = (c.participants - [Current.user]).first %>
       <% last  = c.messages.last %>
-      <li>
+      <li role="listitem">
         <%= link_to conversation_path(c) do %>
           <strong><%= other&.display_name || "anon" %></strong>
           <% if last %>
@@ -19,5 +21,5 @@
     <% end %>
   </ul>
 <% else %>
-  <p>No conversations yet.</p>
+  <p role="status">No conversations yet.</p>
 <% end %>

@@ -8,7 +8,7 @@
   <span class="chip"><%= @order.status.humanize %></span>
 </div>
 
-<article>
+<article role="article" aria-label="Order item">
   <h2>Status timeline</h2>
   <div class="chips">
     <% Takeaway::Order::STATUSES.each do |status| %>
@@ -24,14 +24,14 @@
 <section>
   <h2>Items</h2>
   <% @order.order_items.each do |order_item| %>
-    <article>
+    <article role="article" aria-label="Order item">
       <strong><%= order_item.menu_item.name %></strong> × <%= order_item.quantity %>
       <span class="dim item-subtotal"><%= order_item.subtotal_display %></span>
     </article>
   <% end %>
 </section>
 
-<article>
+<article role="article" aria-label="Order item">
   <p class="dim">Subtotal: <%= @order.subtotal_display %></p>
   <p class="dim">Delivery: <%= @order.delivery_fee_display %></p>
   <strong>Total: <%= @order.total_display %></strong>

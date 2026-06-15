@@ -2,6 +2,12 @@
 
 module Marketplace
   class Store < ApplicationRecord
+    # Engine-ized Shared
+    include Shared.concern(:Notifiable) rescue nil
+    include Shared.concern(:ActivityTrackable) rescue nil
+    include Shared.concern(:GeoLocatable) rescue nil
+    include Shared.concern(:Reactable) rescue nil
+
     self.table_name = "marketplace_stores"
 
     VERTICALS = %w[

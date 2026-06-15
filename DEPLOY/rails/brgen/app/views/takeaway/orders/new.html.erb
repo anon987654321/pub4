@@ -8,7 +8,7 @@
   </div>
 </header>
 
-<article>
+<article role="article" aria-label="Restaurant info">
   <p><%= @restaurant.description %></p>
   <div class="chips">
     <span class="chip">Minimum <%= number_to_currency(@restaurant.min_order_cents.to_i / 100.0, unit: "kr ") %></span>
@@ -20,7 +20,7 @@
 <%= form_with model: @order, url: takeaway_restaurant_orders_path(@restaurant), html: { role: "form", "aria-label": "Place takeaway order from #{@restaurant.name}" } do |form| %>
   <%= render "shared/errors", object: @order %>
 
-  <section>
+  <section role="region" aria-label="Menu">
     <h2>Menu</h2>
     <% if @menu_items.any? %>
       <% @menu_items.each do |item| %>

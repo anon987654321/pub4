@@ -2,7 +2,7 @@
 
 Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
-**DRY & KISS (2026-06-14) — applied + pushed (reassessed post-snapshots/pruning)**
+**DRY & KISS (2026-06-15 tranche9) — applied + pushed (reassessed post-snapshots/pruning/NN)**
 - Extracted/promoted 6+ shared concerns in DEPLOY/rails/shared/app/models/concerns/shared/ (full list now: notifiable.rb, activity_trackable.rb, geo_locatable.rb, votable.rb, commentable.rb, taggable.rb; pushable relocated to shared/services/shared/pushable.rb):
   - notifiable.rb: deliver_notification (unifies repeated `if defined?(Notification)` + create... across orders, follow, controllers).
   - activity_trackable.rb: record_activity! (DRYs ActivityEventRecorder.call + guards).
@@ -10,7 +10,7 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
   - votable/commentable/taggable: promoted from brgen local; Post/Comment/User now use Shared:: versions (removed local dupe has_many/methods; local brgen/concerns/ versions deleted or deprecated).
 - Refactored models/controllers as above + TV Show/Episode (ActivityTrackable include + record in shows#show), listings geo filter.
 - Major pruning (file sprawl reduction): removed entire brgen/app/models/concerns/ dir (after promotion), 6x bogus app/controllers/rails/ nested dirs (across amber/baibl/blognet/brgen/bsdports/hjerterom, each with duplicate pwa_controller), root marketplace/ stub, reduced .md files to exactly 1 README.md per app (amber/baibl/blognet/brgen/bsdports/hjerterom) + root README + shared/WIRING_NOTES (no other per-app ARCHITECTURE/STIMULUS etc. left).
-- Added/pushed root MASTER_snapshot.md + DEPLOY_snapshot.md (full filtered exports ~1.4M/2.7M for external LLM eval of architecture/DRY/pruning/shared layer).
+- Added/pushed root MASTER_snapshot.md + DEPLOY_snapshot.md (full filtered exports ~1.4M/2.7M for external LLM eval of architecture/DRY/pruning/shared layer). Tranche9: 15+ ARIA/NN micro + 8 models Shared in verticals (takeaway/tv/playlist/marketplace/amber declutter) + layouts baibl/blognet/amber; snapshots refreshed.
 - See shared/concerns, WIRING_NOTES (engine prep section), apps.yml (updated cross-cutting), git history (prune commits, god-class splits, snapshots push). Remaining: engine-ize shared (top), full activity emission, auth unification, etc. (detailed below). No local md bloat post-prune.
 
 ### Major Architectural Restructure Wins (2026-06-14 analysis)
@@ -63,7 +63,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 ### AN1: PWA Foundation (all apps)
 
 - [x] AN101 Manifest completeness: add `display_override...` etc to manifests (prior); Rails 8 native pwa generator (rails generate pwa) + views/pwa/ + routes align noted in research (edge guides 2026); apps on 8.1 + solid_* + propshaft good. Engine helps shared pwa partials future.
-- [x] Engine-ize + prune + snapshots + deprecate: complete (see top AN note + root snapshots + WIRING). 6/6 Gemfiles, stray gone, scripts annotated, openbsd updated. NN/ARIA + flesh: takeaway orders (role+aria-label on form+header), amber Item (Shared.concern(:Reactable) via engine), bsdports search already wired; more in shared partials + layouts prior. Ongoing perfect loop.
+- [x] Engine-ize + prune + snapshots + deprecate: complete (see top AN note + root snapshots + WIRING). 6/6 Gemfiles, stray gone, scripts annotated, openbsd updated. NN/ARIA + flesh tranche9: takeaway (restaurant, order, review, delivery drivers + orders new/show/index ARIA roles/region/article/empty/status + navs), playlist (index/playlists/show sections/articles), tv (home/channels/shows ARIA), maps good, messages/conversations lists, amber (declutter index+review, users/show, posts/_post, ai/capsule, outfits/show+live, layouts main), baibl+blognet layouts (nav/main role+aria-label), hjerterom/bsdports prior. Shared models: +Takeaway::Restaurant/Review/Order, Marketplace::Store, Tv::Channel (Notifiable/Reactable/Geo/Activity etc via concern rescue for engine). Total 20+ view fixes + 8+ models this pass. Ongoing perfect loop.
 - [x] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
 - [ ] AN103 Workbox integration: replace hand-rolled... (Rails 8 pwa default is basic sw; Workbox opt-in via import + sw.js build step; keep in backlog, current solid+turbo sufficient for family).
 - [x] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect

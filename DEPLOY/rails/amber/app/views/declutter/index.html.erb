@@ -1,11 +1,11 @@
-<main>
-  <header>
+<main role="main" aria-label="Declutter main">
+  <header role="banner" aria-label="Declutter header">
     <h1>Declutter</h1>
     <p>Review low-use, duplicate, and decision-ready wardrobe items.</p>
   </header>
 
   <% if @summary.present? %>
-    <section>
+    <section role="region" aria-label="Declutter summary">
       <h2>Summary</h2>
       <dl>
         <% @summary.each do |key, value| %>
@@ -16,11 +16,11 @@
     </section>
   <% end %>
 
-  <section>
+  <section role="region" aria-label="Duplicate groups">
     <h2>Duplicate groups</h2>
     <% if @duplicates.present? %>
       <% @duplicates.each do |group| %>
-        <article>
+        <article role="article" aria-label="Duplicate group">
           <% items = group.respond_to?(:items) ? group.items : Array(group[:items] || group["items"] || group) %>
           <h3><%= pluralize(items.size, "item") %></h3>
           <div class="items-grid">

@@ -21,7 +21,7 @@
 </article>
 
 <% if authenticated? %>
-<section>
+<section role="region" aria-label="Collaborators">
   <h2>Collaborators</h2>
   <% if @playlist.collaborations.any? %>
     <% @playlist.collaborations.includes(:user).each do |c| %>
@@ -49,7 +49,7 @@
 <% end %>
 
 <% if authenticated? %>
-<section>
+<section role="region" aria-label="Dilla sketches">
   <h2>Dilla sketches / beats</h2>
   <p class="dim">Collaborative beat patterns (pat/seq/aud/mix state). Edit in the dilla lab, paste JSON here to persist for the group.</p>
   <% if @dilla_sketches.any? %>
@@ -115,7 +115,7 @@
 <% end %>
 
 <% if authenticated? %>
-<section>
+<section role="region" aria-label="Listening party">
   <h2>Listening party</h2>
   <p class="dim">Start or join a real-time synced listening session with embedded player and chat.</p>
   <%= button_to "Start party", "#", class: "btn btn-primary btn-sm", disabled: true %>

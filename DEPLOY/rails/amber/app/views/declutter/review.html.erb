@@ -1,28 +1,28 @@
-<main>
-  <header>
+<main role="main" aria-label="Declutter review">
+  <header role="banner" aria-label="Declutter review header">
     <h1>Declutter review</h1>
     <p><%= @item.title %></p>
   </header>
 
-  <section>
+  <section role="region" aria-label="Item under review">
     <%= render "items/item", item: @item %>
   </section>
 
   <% if @score.present? %>
-    <section>
+    <section role="region" aria-label="Score">
       <h2>Score</h2>
       <p><%= @score %></p>
     </section>
   <% end %>
 
   <% if @action.present? %>
-    <section>
+    <section role="region" aria-label="Recommended action">
       <h2>Recommended action</h2>
       <p><%= @action[:recommendation] || @action["recommendation"] || @action %></p>
     </section>
   <% end %>
 
-  <section>
+  <section role="region" aria-label="Decision form">
     <h2>Decision</h2>
     <%= form_with model: @review, url: update_review_declutter_path(@item), method: :patch do |form| %>
       <div>

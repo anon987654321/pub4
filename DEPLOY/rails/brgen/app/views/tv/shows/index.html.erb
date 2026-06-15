@@ -1,11 +1,11 @@
 <% content_for :title, "TV Shows" %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="TV shows header">
   <h1>Shows on <%= @channel&.name || "Brgen TV" %></h1>
 </div>
 
 <% if @shows.any? %>
-  <div class="card-grid">
+  <div class="card-grid" role="list" aria-label="TV shows">
     <% @shows.each do |show| %>
       <%= link_to tv_channel_show_path(@channel, show), class: "card" do %>
         <h3><%= show.title %></h3>
@@ -15,5 +15,5 @@
     <% end %>
   </div>
 <% else %>
-  <div class="empty"><p>No shows yet.</p></div>
+  <div class="empty" role="status" aria-live="polite"><p>No shows yet.</p></div>
 <% end %>

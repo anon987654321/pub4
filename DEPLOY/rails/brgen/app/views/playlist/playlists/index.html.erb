@@ -1,6 +1,6 @@
 <% content_for :title, "Playlists" %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Playlists header">
   <div>
     <p class="dim">Local music discovery</p>
     <h1>Playlists</h1>
@@ -9,7 +9,7 @@
 </div>
 
 <% @playlists.each do |pl| %>
-  <article>
+  <article role="article" aria-label="Playlist <%= pl.name %>">
     <h2><%= link_to pl.name, playlist_playlist_path(pl) %></h2>
     <p class="dim"><%= pl.tracks_count %> tracks · <%= pl.plays_count %> plays · <%= pl.user.email_address.split("@").first %></p>
   </article>
