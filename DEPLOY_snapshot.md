@@ -1,9 +1,10 @@
-# DEPLOY Snapshot (FINAL PUSH)
-Generated: 2026-06-15T07:27:39Z
-## Evidence of ALL remaining basic complete + push
+# DEPLOY Snapshot (TRANCHE8)
+Generated: 2026-06-15T07:29:47Z
+## Evidence
 ```
-playlist show: ARIA + turbo + Shared
+playlist show: ARIA + role
 marketplace stores: ARIA + turbo
-amber ai/suggest: ARIA + turbo + form
-tv/episode: Shared
+amber ai: ARIA + turbo
+hjerterom food: role on article
+15+ models Shared
 ```
