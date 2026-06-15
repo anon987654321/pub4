@@ -26,9 +26,79 @@ PAD_CHORDS = [
   { name: "Am9", hz: [110.00, 130.81, 164.81, 196.00, 246.94] },
   { name: "Bbm9", hz: [116.54, 138.59, 174.61, 207.65, 261.63] },
   { name: "Gbmaj9", hz: [92.50, 116.54, 138.59, 174.61, 207.65] },
-  { name: "C cluster", hz: [130.81, 138.59, 196.00, 233.08, 311.13] }
+  { name: "C cluster", hz: [130.81, 138.59, 196.00, 233.08, 311.13] },
+  { name: "Gmaj9", hz: [98.00, 123.47, 146.83, 185.00, 220.00] },
+  { name: "Fmaj13", hz: [87.31, 110.00, 130.81, 164.81, 293.66] },
+  { name: "Bbmaj9", hz: [116.54, 146.83, 174.61, 220.00, 261.63] },
+  { name: "G13sus4", hz: [98.00, 130.81, 146.83, 174.61, 220.00] },
+  { name: "Cm(maj9)", hz: [130.81, 155.56, 196.00, 246.94, 293.66] },
+  { name: "C7#9 Hendrix", hz: [130.81, 164.81, 196.00, 233.08, 311.13] },
+  { name: "Emaj9#11 Lydian", hz: [164.81, 207.65, 246.94, 369.99, 466.16] },
+  { name: "Dm6/9", hz: [146.83, 174.61, 220.00, 246.94, 261.63] },
+  { name: "Bbm6/9", hz: [116.54, 138.59, 174.61, 196.00, 261.63] },
+  { name: "F#m11", hz: [92.50, 110.00, 138.59, 164.81, 246.94] },
+  { name: "Abm9", hz: [103.83, 123.47, 155.56, 185.00, 233.08] },
+  { name: "Ebmaj13", hz: [155.56, 196.00, 233.08, 293.66, 220.00] },
+  { name: "E quartal", hz: [82.41, 110.00, 146.83, 196.00, 246.94] },
+  { name: "A quartal", hz: [110.00, 146.83, 196.00, 261.63, 349.23] },
+  { name: "D quartal", hz: [73.42, 98.00, 130.81, 174.61, 233.08] }
 ].freeze
-COMMANDS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody harmony semantics ears play live bass grade grade_list dilla midi].freeze
+COMMANDS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody harmony semantics ears play live bass grade grade_list dilla midi industrial batch_industrial batch_dilla neosoul modal gospel batch_neosoul batch_modal batch_gospel].freeze
+JAZZ_CHORDS = [
+  { name: "Dmaj9",     hz: [146.83, 185.00, 220.00, 277.18, 329.63] },
+  { name: "Bm11",      hz: [123.47, 146.83, 185.00, 220.00, 329.63] },
+  { name: "Gmaj9",     hz: [98.00,  123.47, 146.83, 185.00, 220.00] },
+  { name: "Em11",      hz: [82.41,  98.00,  123.47, 146.83, 220.00] },
+  { name: "Cmaj7#11",  hz: [130.81, 164.81, 196.00, 246.94, 369.99] },
+  { name: "A13sus",    hz: [110.00, 146.83, 164.81, 196.00, 369.99] },
+  { name: "F#7b9",     hz: [92.50,  116.54, 138.59, 164.81, 196.00] },
+  { name: "Dmaj9",     hz: [146.83, 185.00, 220.00, 277.18, 329.63] },
+].freeze
+
+GOSPEL_CHORDS = [
+  { name: "Fm9",        hz: [174.61, 207.65, 261.63, 311.13, 392.00] },
+  { name: "Dbmaj7add9", hz: [138.59, 174.61, 207.65, 261.63, 311.13] },
+  { name: "Eb7",        hz: [155.56, 196.00, 233.08, 277.18, 311.13] },
+  { name: "Fm/C",       hz: [130.81, 174.61, 207.65, 261.63, 311.13] },
+  { name: "Bbm7",       hz: [116.54, 138.59, 174.61, 207.65, 233.08] },
+  { name: "C7alt",      hz: [130.81, 164.81, 196.00, 233.08, 311.13] },
+  { name: "Abmaj7",     hz: [103.83, 130.81, 155.56, 196.00, 261.63] },
+  { name: "Fm9",        hz: [174.61, 207.65, 261.63, 311.13, 392.00] },
+].freeze
+
+MODAL_CHORDS = [
+  { name: "E quartal",  hz: [82.41,  110.00, 146.83, 196.00, 246.94] },
+  { name: "A quartal",  hz: [110.00, 146.83, 196.00, 261.63, 349.23] },
+  { name: "D quartal",  hz: [73.42,  98.00,  130.81, 174.61, 233.08] },
+  { name: "Bb quartal", hz: [116.54, 155.56, 207.65, 277.18, 349.23] },
+  { name: "F quartal",  hz: [87.31,  116.54, 155.56, 207.65, 261.63] },
+  { name: "C quartal",  hz: [130.81, 174.61, 233.08, 311.13, 392.00] },
+  { name: "G quartal",  hz: [98.00,  130.81, 174.61, 233.08, 311.13] },
+  { name: "E quartal",  hz: [82.41,  110.00, 146.83, 196.00, 246.94] },
+].freeze
+
+DARK_CHORDS = [
+  { name: "Cm9",   hz: [130.81, 155.56, 196.00, 233.08, 293.66] },
+  { name: "Gb7#9", hz: [92.50,  116.54, 138.59, 164.81, 207.65] },
+  { name: "Ebm9",  hz: [77.78,  92.50,  116.54, 138.59, 174.61] },
+  { name: "A7#9",  hz: [110.00, 138.59, 164.81, 196.00, 311.13] },
+  { name: "Abm9",  hz: [103.83, 123.47, 155.56, 185.00, 233.08] },
+  { name: "D7#9",  hz: [146.83, 185.00, 220.00, 261.63, 311.13] },
+  { name: "Dbm9",  hz: [69.30,  82.41,  103.83, 123.47, 155.56] },
+  { name: "C7#9",  hz: [130.81, 164.81, 196.00, 233.08, 311.13] },
+].freeze
+
+DONUT_CHORDS = [
+  { name: "Fm9",       hz: [174.61, 207.65, 261.63, 311.13, 392.00] },
+  { name: "Dbmaj9",    hz: [138.59, 174.61, 207.65, 261.63, 311.13] },
+  { name: "Bbm9",      hz: [116.54, 138.59, 174.61, 207.65, 261.63] },
+  { name: "Eb7",       hz: [155.56, 196.00, 233.08, 277.18, 311.13] },
+  { name: "Abmaj9low", hz: [103.83, 130.81, 155.56, 196.00, 233.08] },
+  { name: "C7b9",      hz: [130.81, 138.59, 164.81, 196.00, 233.08] },
+  { name: "Fm/C",      hz: [130.81, 174.61, 207.65, 261.63, 311.13] },
+  { name: "Bb7sus",    hz: [116.54, 174.61, 196.00, 233.08, 311.13] },
+].freeze
+
 # Analog stock characters — digital signal equivalents of film stock data.
 # noise_amp: RMS amplitude of the noise floor (≈tape hiss level)
 # sat_drive: tanh waveshaper drive (1.0 = light tube warmth, 3.0 = heavy tape saturation)
@@ -628,6 +698,64 @@ rescue SystemCallError => e
   abort "ffplay failed: #{e.message}"
 end
 
+def euclidean_rhythm(k, n)
+  return Array.new(n, 0) if k <= 0
+  return Array.new(n, 1) if k >= n
+
+  ones  = Array.new(k) { [1] }
+  zeros = Array.new(n - k) { [0] }
+
+  loop do
+    break if zeros.length <= 1
+    count    = [ones.length, zeros.length].min
+    new_ones = ones[0...count].zip(zeros[0...count]).map(&:flatten)
+    leftover_ones  = ones[count..]
+    leftover_zeros = zeros[count..]
+    if leftover_ones.length >= leftover_zeros.length
+      ones  = new_ones + leftover_ones
+      zeros = leftover_zeros
+    else
+      ones  = new_ones
+      zeros = leftover_ones + leftover_zeros
+    end
+    break if zeros.empty?
+  end
+
+  (ones + zeros).flatten
+end
+
+def euclidean_hat_expr(k, n, hat16_p, amplitude: 0.19)
+  rhythm  = euclidean_rhythm(k, n)
+  bar_p   = (hat16_p * 16.0).round(6)
+  step_p  = (hat16_p * 16.0 / n).round(6)
+  terms   = rhythm.each_with_index.map do |hit, i|
+    next if hit != 1
+    offset = (i * step_p).round(6)
+    tm     = "mod(t-#{offset},#{bar_p})"
+    "#{amplitude}*(random(3)-0.5)*lt(#{tm},0.013)*exp(-#{tm}*70)"
+  end.compact
+  terms.join("+")
+end
+
+def halftime_kick_expr(beat_p)
+  bar_p = (beat_p * 4.0).round(6)
+  tm    = "mod(t,#{bar_p})"
+  "0.72*sin(2*PI*(46+88*exp(-#{tm}*18))*#{tm})*exp(-#{tm}*8)"
+end
+
+def polyrhythm_kick_expr(beat_p)
+  bar_p  = (beat_p * 4.0).round(6)
+  step_p = (beat_p / 4.0).round(6)
+  rhythm = euclidean_rhythm(5, 16)
+  terms  = rhythm.each_with_index.map do |hit, i|
+    next if hit != 1
+    offset = (i * step_p).round(6)
+    tm     = "mod(t-#{offset},#{bar_p})"
+    "0.52*sin(2*PI*(46+88*exp(-#{tm}*20))*#{tm})*exp(-#{tm}*10)"
+  end.compact
+  terms.join("+")
+end
+
 # --- J Dilla style beat engine ---
 
 # Drunk quantization: return an array of per-beat timing offsets in seconds.
@@ -724,7 +852,7 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
   end
 
   mix_chain = "#{labels.join}amix=inputs=#{labels.length}:weights=#{weights.join(' ')}:duration=first," \
-              "aeval=exprs='tanh(1.6*val(0))/#{Math.tanh(1.6).round(6)}:tanh(1.6*val(1))/#{Math.tanh(1.6).round(6)}'," \
+              "aeval=exprs='tanh(1.6*val(0))/#{Math.tanh(1.6).round(6)}|tanh(1.6*val(1))/#{Math.tanh(1.6).round(6)}'," \
               "acompressor=threshold=-18dB:ratio=2.5:attack=20:release=120," \
               "acrusher=bits=12:samples=2:mix=0.15," \
               "alimiter=limit=0.93:level_out=0.95[out]"
@@ -733,6 +861,599 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
   command += ["-filter_complex", filter.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
   sh!(*command)
   puts "wrote #{destination}"
+end
+
+# --- Industrial techno engine (Hate podcast aesthetic) ---
+# 130 BPM, E Phrygian, sawtooth/square waveforms, probability hats,
+# sidechain compression, dotted-8th delay, long-tail reverb.
+
+INDUSTRIAL_BPM_DEFAULT = 130.0
+
+def render_industrial(destination = File.join(ROOT, "industrial.mp3"))
+  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  FileUtils.mkdir_p(File.dirname(destination))
+  ibpm      = ENV.fetch("IBPM", INDUSTRIAL_BPM_DEFAULT.to_s).to_f
+  beat_p    = (60.0 / ibpm).round(6)
+  n_bars    = [bars, (120.0 / (beat_p * 4)).ceil].max
+  duration  = (beat_p * 4.0 * n_bars).round(3)
+  bar_p     = (beat_p * 4.0).round(6)
+  hat16_p   = (beat_p / 4.0).round(6)
+  eighth_p  = (beat_p / 2.0).round(6)
+  step_p    = (bar_p / 16.0).round(6)
+
+  # Kick: sine sweep + sawtooth body, tanh saturation, strict 4/4, zero swing
+  kick_expr = "tanh(4.0*(" \
+              "0.28*(2*mod(50.0*t,1)-1)+" \
+              "sin(2*PI*(50+165*exp(-mod(t,#{beat_p})*28))*t)" \
+              ")*exp(-mod(t,#{beat_p})*7))"
+
+  # Clap on 2+4: noise burst with per-bar amplitude variation (micro-dynamics)
+  b2        = beat_p.round(6)
+  b4        = (beat_p * 3.0).round(6)
+  clap_vel  = "0.52+0.43*abs(sin(floor(t/#{bar_p})*43.758+12.1))"
+  clap_expr = "(#{clap_vel})*(random(1)-0.5)*lt(mod(t-#{b2},#{bar_p}),0.038)*exp(-mod(t-#{b2},#{bar_p})*26)" \
+              "+(#{clap_vel})*(random(2)-0.5)*lt(mod(t-#{b4},#{bar_p}),0.038)*exp(-mod(t-#{b4},#{bar_p})*26)"
+
+  # Hi-hats: ~70% probability per 16th note via deterministic step hash
+  hat_rand  = "abs(sin(floor(t/#{hat16_p})*127.1+311.7))"
+  hat_expr  = "gt(#{hat_rand},0.35)*0.19*(random(3)-0.5)*lt(mod(t,#{hat16_p}),0.013)*exp(-mod(t,#{hat16_p})*70)"
+
+  # Bass: sawtooth, E2 root (82.41 Hz), Bb1 tritone (58.27 Hz) on steps 8-9
+  # Slow LFO simulates resonant filter sweep; gate on 8th notes
+  step8_mid = (step_p * 9.0).round(4)
+  note_expr = "if(lte(abs(mod(t,#{bar_p})-#{step8_mid}),#{step_p}),58.27,82.41)"
+  bass_lfo  = "(0.50+0.50*sin(2*PI*0.15*t))"
+  bass_gate = "lt(mod(t,#{eighth_p}),#{(eighth_p * 0.60).round(6)})"
+  bass_expr = "0.88*(2*mod((#{note_expr})*t,1)-1)*#{bass_gate}*#{bass_lfo}*exp(-mod(t,#{eighth_p})*6)"
+
+  # Chord stab: E minor square (E3+B3), short burst per bar, slow LFO envelope
+  stab_lfo  = "0.44+0.56*abs(sin(2*PI*0.09*t))"
+  stab_gate = "0.48*lt(mod(t,#{bar_p}),0.042)*exp(-mod(t,#{bar_p})*28)"
+  stab_expr = "(0.24*sgn(sin(2*PI*164.81*t))+0.18*sgn(sin(2*PI*246.94*t)))*#{stab_gate}*(#{stab_lfo})"
+
+  # Noise atmosphere: white noise with very slow breathing LFO (~20s cycle)
+  noise_expr = "(random(7)-0.5)*(0.18+0.82*abs(sin(2*PI*0.05*t)))*0.08"
+
+  dotted_8th_ms = (3.0 * beat_p / 4.0 * 1000.0).round(1)
+
+  command = ["ffmpeg", "-y",
+             "-f", "lavfi", "-i", "aevalsrc='#{kick_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{clap_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{hat_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{stab_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{noise_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
+
+  filter = []
+  # Kick: shape, boost 58Hz, split into 3 for two sidechain feeds + main mix
+  filter << "[0:a]aformat=channel_layouts=stereo," \
+            "lowpass=f=250,acompressor=threshold=-8dB:ratio=12:attack=1:release=28," \
+            "equalizer=f=58:width_type=o:width=2:g=6,asplit=3[kick][kick_sc1][kick_sc2]"
+  # Clap: highpass, compress
+  filter << "[1:a]aformat=channel_layouts=stereo," \
+            "highpass=f=900,lowpass=f=14000,acompressor=threshold=-14dB:ratio=6:attack=2:release=40[clap]"
+  # Hats: highpass only (probability already encoded in expression)
+  filter << "[2:a]aformat=channel_layouts=stereo,highpass=f=7000[hats]"
+  # Bass: shape, then sidechain-compress from kick — the "pumping" effect
+  filter << "[3:a]aformat=channel_layouts=stereo," \
+            "lowpass=f=450,equalizer=f=80:width_type=o:width=2:g=4[bass_pre]"
+  filter << "[bass_pre][kick_sc1]sidechaincompress=threshold=-20dB:ratio=8:attack=1:release=80:level_sc=0.9[bass]"
+  # Stab: shape, sidechain-compress from kick
+  filter << "[4:a]aformat=channel_layouts=stereo,lowpass=f=5000,highpass=f=100[stab_pre]"
+  filter << "[stab_pre][kick_sc2]sidechaincompress=threshold=-18dB:ratio=6:attack=3:release=120:level_sc=0.7[stab]"
+  # Noise atmosphere: bandpass
+  filter << "[5:a]aformat=channel_layouts=stereo,highpass=f=200,lowpass=f=6000[noise]"
+  # Mix
+  filter << "[kick][clap][hats][bass][stab][noise]" \
+            "amix=inputs=6:weights=1.00 0.50 0.25 0.70 0.32 0.15:duration=first[mix]"
+  # Reverb: long dark hall (4-6s tail) via multi-tap aecho
+  filter << "[mix]asplit=2[dry][rev_send]"
+  filter << "[rev_send]highpass=f=150," \
+            "aecho=0.62:0.72:700|1300|2200|3800|6000:0.52|0.42|0.32|0.22|0.12[verb]"
+  filter << "[dry][verb]amix=inputs=2:weights=0.70 0.30[with_reverb]"
+  # Dotted 8th delay synced to tempo, 70-80% feedback, stereo spread
+  filter << "[with_reverb]asplit=2[dry2][dly_send]"
+  filter << "[dly_send]highpass=f=400," \
+            "aecho=0.52:0.58:#{dotted_8th_ms}|#{(dotted_8th_ms * 1.48).round(1)}:0.75|0.65[dly]"
+  filter << "[dry2][dly]amix=inputs=2:weights=0.78 0.22[predist]"
+  # Master: tanh saturation, heavy compression, bit crush, tilt EQ, hard limit
+  sat = Math.tanh(3.0).round(6)
+  filter << "[predist]" \
+            "aeval=exprs='tanh(3.0*val(0))/#{sat}|tanh(3.0*val(1))/#{sat}'," \
+            "acompressor=threshold=-14dB:ratio=8:attack=1:release=55:makeup=4," \
+            "acrusher=bits=14:samples=2:mix=0.12," \
+            "equalizer=f=70:width_type=o:width=2:g=3," \
+            "equalizer=f=9500:width_type=o:width=2:g=-3," \
+            "alimiter=limit=0.94:level_out=0.96[out]"
+
+  command += ["-filter_complex", filter.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
+  sh!(*command)
+  puts "wrote #{destination} (#{ibpm.to_i} BPM, #{n_bars} bars, #{duration}s)"
+end
+
+def render_neosoul(destination = File.join(ROOT, "neosoul.mp3"))
+  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  FileUtils.mkdir_p(File.dirname(destination))
+  srand(rand(999_999))
+
+  d_bpm      = 80 + rand(12)
+  drunk_ms   = (10 + rand(18)) / 1000.0
+  pad_rotate = rand(JAZZ_CHORDS.length)
+  pad_set    = JAZZ_CHORDS.rotate(pad_rotate)
+  pad_lfo    = (0.03 + rand * 0.08).round(3)
+  bass_root  = (38.0 + rand * 10.0).round(2)
+  lfo_rate   = (0.06 + rand * 0.10).round(3)
+
+  beat_p   = (60.0 / d_bpm.to_f).round(6)
+  n_bars   = [bars, (120.0 / (beat_p * 4)).ceil].max
+  duration = (beat_p * 4.0 * n_bars).round(3)
+  bar_p    = (beat_p * 4.0).round(6)
+  hat_p    = (beat_p / 2.0).round(6)
+
+  drunk  = n_bars.times.flat_map { 4.times.map { (rand * 2 - 1) * drunk_ms } }
+
+  chord_expr = chord_expr_for(pad_set, beat_p, pad_lfo, style: :rhodes)
+
+  kicks = drunk.each_slice(4).flat_map { |s| [0.0 + s[0].to_f, beat_p * 2.0 + s[2].to_f] }.uniq
+  kick_parts = kicks.first(64).map do |off|
+    tm = "mod(t-#{off.round(6)},#{(beat_p * 4.0).round(6)})"
+    "0.65*sin(2*PI*(44+80*exp(-#{tm}*22))*#{tm})*exp(-#{tm}*11)"
+  end
+  kick_expr = "(#{kick_parts.join('+')})"
+
+  beat2   = beat_p + (drunk[1] || 0.0)
+  beat4   = beat_p * 3.0 + (drunk[3] || 0.0)
+  bar_val = (beat_p * 4.0).round(6)
+  ghosts  = [beat_p * 0.5, beat_p * 1.5, beat_p * 2.5, beat_p * 3.5].map do |pos|
+    tm = "mod(t-#{pos.round(4)},#{bar_val})"
+    "0.04*(random(0)-0.5)*lt(#{tm},0.04)*exp(-#{tm}*50)"
+  end
+  snare_main = [beat2, beat4].map do |pos|
+    tm = "mod(t-#{pos.round(4)},#{bar_val})"
+    "0.48*(random(1)-0.5)*lt(#{tm},0.06)*exp(-#{tm}*28)"
+  end
+  snare_expr = "(#{(snare_main + ghosts).join('+').gsub(/"/, '')})"
+
+  hat_off  = (drunk[0] || 0.0) * 0.5
+  hat_expr = euclidean_hat_expr(11, 16, hat_p, amplitude: 0.14)
+  hat_expr = "0.11*(random(2)-0.5)*lt(mod(t+#{hat_off.abs.round(4)},#{hat_p}),0.025)*exp(-mod(t,#{hat_p})*90)" if hat_expr.empty?
+  lfo_amt  = bass_root * 0.03
+  bass_expr = "0.55*sin(2*PI*(#{bass_root}+#{lfo_amt.round(3)}*sin(2*PI*#{lfo_rate}*t))*t)" \
+              "+0.09*sin(2*PI*2*(#{bass_root}+#{lfo_amt.round(3)}*sin(2*PI*#{lfo_rate}*t))*t)"
+
+  command = ["ffmpeg", "-y",
+             "-f", "lavfi", "-i", "aevalsrc='#{chord_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{kick_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{snare_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{hat_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
+
+  labels  = %w[[pads] [bass] [kick] [snare] [hats]]
+  weights = %w[0.88 0.88 0.78 0.55 0.18]
+  filter  = []
+  filter << "[0:a]aformat=channel_layouts=stereo,lowpass=f=5000,adelay=4|9[pads]"
+  filter << "[1:a]aformat=channel_layouts=stereo,lowpass=f=200,equalizer=f=80:width_type=o:width=2:g=3[bass]"
+  filter << "[2:a]aformat=channel_layouts=stereo,lowpass=f=160[kick]"
+  filter << "[3:a]aformat=channel_layouts=stereo,highpass=f=180,lowpass=f=7000[snare]"
+  filter << "[4:a]aformat=channel_layouts=stereo,highpass=f=6000[hats]"
+  sat = Math.tanh(1.4).round(6)
+  mix_chain = "#{labels.join}amix=inputs=#{labels.length}:weights=#{weights.join(' ')}:duration=first," \
+              "aeval=exprs='tanh(1.4*val(0))/#{sat}|tanh(1.4*val(1))/#{sat}'," \
+              "acompressor=threshold=-20dB:ratio=2.2:attack=22:release=140," \
+              "acrusher=bits=13:samples=2:mix=0.10," \
+              "alimiter=limit=0.92:level_out=0.94[out]"
+  filter << mix_chain
+
+  command += ["-filter_complex", filter.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
+  sh!(*command)
+  puts "    #{d_bpm} BPM  neosoul  pad_rotate=#{pad_rotate}  bass=#{bass_root}Hz"
+end
+
+def render_modal(destination = File.join(ROOT, "modal.mp3"))
+  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  FileUtils.mkdir_p(File.dirname(destination))
+  srand(rand(999_999))
+
+  d_bpm      = 78 + rand(16)
+  drunk_ms   = (8 + rand(16)) / 1000.0
+  pad_rotate = rand(MODAL_CHORDS.length)
+  pad_set    = MODAL_CHORDS.rotate(pad_rotate)
+  pad_lfo    = (0.02 + rand * 0.06).round(3)
+  bass_root  = (36.0 + rand * 12.0).round(2)
+  lfo_rate   = (0.05 + rand * 0.09).round(3)
+
+  beat_p   = (60.0 / d_bpm.to_f).round(6)
+  n_bars   = [bars, (120.0 / (beat_p * 4)).ceil].max
+  duration = (beat_p * 4.0 * n_bars).round(3)
+  bar_p    = (beat_p * 4.0).round(6)
+  hat_p    = (beat_p / 2.0).round(6)
+
+  drunk  = n_bars.times.flat_map { 4.times.map { (rand * 2 - 1) * drunk_ms } }
+
+  chord_expr = chord_expr_for(pad_set, beat_p, pad_lfo, style: :sine)
+
+  kick_expr = halftime_kick_expr(beat_p)
+
+  beat2   = beat_p + (drunk[1] || 0.0)
+  beat4   = beat_p * 3.0 + (drunk[3] || 0.0)
+  bar_val = (beat_p * 4.0).round(6)
+  ghosts  = [beat_p * 0.75, beat_p * 1.75, beat_p * 2.75].map do |pos|
+    tm = "mod(t-#{pos.round(4)},#{bar_val})"
+    "0.04*(random(0)-0.5)*lt(#{tm},0.035)*exp(-#{tm}*55)"
+  end
+  snare_main = [beat2, beat4].map do |pos|
+    tm = "mod(t-#{pos.round(4)},#{bar_val})"
+    "0.45*(random(1)-0.5)*lt(#{tm},0.055)*exp(-#{tm}*30)"
+  end
+  snare_expr = "(#{(snare_main + ghosts).join('+').gsub(/"/, '')})"
+
+  hat_expr = euclidean_hat_expr(7, 12, hat_p, amplitude: 0.12)
+  hat_expr = "0.10*(random(2)-0.5)*lt(mod(t,#{hat_p}),0.022)*exp(-mod(t,#{hat_p})*95)" if hat_expr.empty?
+  lfo_amt  = bass_root * 0.025
+  bass_expr = "0.58*sin(2*PI*(#{bass_root}+#{lfo_amt.round(3)}*sin(2*PI*#{lfo_rate}*t))*t)" \
+              "+0.08*sin(2*PI*2*(#{bass_root}+#{lfo_amt.round(3)}*sin(2*PI*#{lfo_rate}*t))*t)"
+
+  command = ["ffmpeg", "-y",
+             "-f", "lavfi", "-i", "aevalsrc='#{chord_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{kick_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{snare_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{hat_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
+
+  labels  = %w[[pads] [bass] [kick] [snare] [hats]]
+  weights = %w[0.90 0.85 0.75 0.52 0.16]
+  filter  = []
+  filter << "[0:a]aformat=channel_layouts=stereo,lowpass=f=6000,adelay=6|14[pads]"
+  filter << "[1:a]aformat=channel_layouts=stereo,lowpass=f=190,equalizer=f=75:width_type=o:width=2:g=3[bass]"
+  filter << "[2:a]aformat=channel_layouts=stereo,lowpass=f=170[kick]"
+  filter << "[3:a]aformat=channel_layouts=stereo,highpass=f=190,lowpass=f=7500[snare]"
+  filter << "[4:a]aformat=channel_layouts=stereo,highpass=f=7500[hats]"
+  sat = Math.tanh(1.3).round(6)
+  mix_chain = "#{labels.join}amix=inputs=#{labels.length}:weights=#{weights.join(' ')}:duration=first," \
+              "aeval=exprs='tanh(1.3*val(0))/#{sat}|tanh(1.3*val(1))/#{sat}'," \
+              "acompressor=threshold=-21dB:ratio=2.0:attack=25:release=150," \
+              "alimiter=limit=0.91:level_out=0.93[out]"
+  filter << mix_chain
+
+  command += ["-filter_complex", filter.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
+  sh!(*command)
+  puts "    #{d_bpm} BPM  modal  pad_rotate=#{pad_rotate}  bass=#{bass_root}Hz"
+end
+
+def render_gospel(destination = File.join(ROOT, "gospel.mp3"))
+  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  FileUtils.mkdir_p(File.dirname(destination))
+  srand(rand(999_999))
+
+  d_bpm      = 72 + rand(20)
+  drunk_ms   = (6 + rand(14)) / 1000.0
+  pad_rotate = rand(GOSPEL_CHORDS.length)
+  pad_set    = GOSPEL_CHORDS.rotate(pad_rotate)
+  pad_lfo    = (0.04 + rand * 0.09).round(3)
+  bass_root  = (41.0 + rand * 8.0).round(2)
+  lfo_rate   = (0.05 + rand * 0.08).round(3)
+
+  beat_p   = (60.0 / d_bpm.to_f).round(6)
+  n_bars   = [bars, (120.0 / (beat_p * 4)).ceil].max
+  duration = (beat_p * 4.0 * n_bars).round(3)
+  bar_p    = (beat_p * 4.0).round(6)
+  hat_p    = (beat_p / 2.0).round(6)
+
+  drunk  = n_bars.times.flat_map { 4.times.map { (rand * 2 - 1) * drunk_ms } }
+
+  chord_expr = chord_expr_for(pad_set, beat_p, pad_lfo, style: :hammond)
+
+  kicks = drunk.each_slice(4).flat_map { |s| [0.0 + s[0].to_f, beat_p * 2.0 + s[2].to_f] }.uniq
+  kick_parts = kicks.first(64).map do |off|
+    tm = "mod(t-#{off.round(6)},#{(beat_p * 4.0).round(6)})"
+    "0.68*sin(2*PI*(44+82*exp(-#{tm}*19))*#{tm})*exp(-#{tm}*9)"
+  end
+  kick_expr = "(#{kick_parts.join('+')})"
+
+  beat2   = beat_p + (drunk[1] || 0.0)
+  beat4   = beat_p * 3.0 + (drunk[3] || 0.0)
+  bar_val = (beat_p * 4.0).round(6)
+  snare_main = [beat2, beat4].map do |pos|
+    tm = "mod(t-#{pos.round(4)},#{bar_val})"
+    "0.55*(random(1)-0.5)*lt(#{tm},0.065)*exp(-#{tm}*25)"
+  end
+  snare_expr = "(#{snare_main.join('+').gsub(/"/, '')})"
+
+  hat_expr = euclidean_hat_expr(9, 16, hat_p, amplitude: 0.15)
+  hat_expr = "0.12*(random(2)-0.5)*lt(mod(t,#{hat_p}),0.022)*exp(-mod(t,#{hat_p})*88)" if hat_expr.empty?
+  lfo_amt  = bass_root * 0.035
+  bass_expr = "0.62*sin(2*PI*(#{bass_root}+#{lfo_amt.round(3)}*sin(2*PI*#{lfo_rate}*t))*t)" \
+              "+0.11*sin(2*PI*2*(#{bass_root}+#{lfo_amt.round(3)}*sin(2*PI*#{lfo_rate}*t))*t)"
+
+  command = ["ffmpeg", "-y",
+             "-f", "lavfi", "-i", "aevalsrc='#{chord_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{kick_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{snare_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{hat_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
+
+  labels  = %w[[pads] [bass] [kick] [snare] [hats]]
+  weights = %w[0.82 0.92 0.80 0.60 0.19]
+  filter  = []
+  filter << "[0:a]aformat=channel_layouts=stereo,lowpass=f=4500,adelay=3|8[pads]"
+  filter << "[1:a]aformat=channel_layouts=stereo,lowpass=f=210,equalizer=f=85:width_type=o:width=2:g=4[bass]"
+  filter << "[2:a]aformat=channel_layouts=stereo,lowpass=f=165[kick]"
+  filter << "[3:a]aformat=channel_layouts=stereo,highpass=f=195,lowpass=f=6500[snare]"
+  filter << "[4:a]aformat=channel_layouts=stereo,highpass=f=6500[hats]"
+  sat = Math.tanh(1.5).round(6)
+  mix_chain = "#{labels.join}amix=inputs=#{labels.length}:weights=#{weights.join(' ')}:duration=first," \
+              "aeval=exprs='tanh(1.5*val(0))/#{sat}|tanh(1.5*val(1))/#{sat}'," \
+              "acompressor=threshold=-18dB:ratio=2.4:attack=20:release=130," \
+              "acrusher=bits=13:samples=2:mix=0.12," \
+              "alimiter=limit=0.93:level_out=0.95[out]"
+  filter << mix_chain
+
+  command += ["-filter_complex", filter.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
+  sh!(*command)
+  puts "    #{d_bpm} BPM  gospel  pad_rotate=#{pad_rotate}  bass=#{bass_root}Hz"
+end
+
+# --- Batch generation: fitness-scored stochastic variants ---
+# Fitness: target -14 dBFS mean loudness (streaming standard).
+# Each variant is seeded for reproducibility; best seed is logged.
+
+def track_score(path)
+  return 0.0 unless tool_available?("ffprobe") && File.exist?(path)
+  report = media_metadata(path).merge(volume_metadata(path))
+  mean   = report[:mean_volume_db].to_f
+  peak   = report[:max_volume_db].to_f
+  return 0.0 if mean.zero? || mean < -32.0 || peak > -0.1
+  100.0 - (mean + 14.0).abs * 2.5
+rescue StandardError
+  0.0
+end
+
+def batch_render(n, base_dest)
+  ext      = File.extname(base_dest)
+  variants = n.times.map do |i|
+    seed = rand(999_999)
+    dest = base_dest.sub(/#{Regexp.escape(ext)}\z/, "_v#{i + 1}s#{seed}#{ext}")
+    puts "\n[#{i + 1}/#{n}] seed=#{seed}"
+    yield seed, dest
+    score = track_score(dest)
+    puts "    score=#{score.round(1)}"
+    { dest: dest, score: score, seed: seed }
+  end
+  best = variants.max_by { |v| v[:score] }
+  puts "\nbest: seed #{best[:seed]}  score #{best[:score].round(1)}"
+  FileUtils.cp(best[:dest], base_dest)
+  variants.each { |v| File.delete(v[:dest]) rescue nil }
+  puts "wrote #{base_dest}"
+  best
+end
+
+def chord_expr_for(pad_chords, beat_s, lfo_rate, style: :sine)
+  cycle = (pad_chords.length * 8.0 * beat_s).round(4)
+  parts = pad_chords.each_with_index.map do |chord, ci|
+    t0 = (ci * 8.0 * beat_s).round(4)
+    t1 = (t0 + 8.0 * beat_s).round(4)
+    voices = chord[:hz].each_with_index.map do |f, vi|
+      detune = 1.0 + ((vi - 2) * 0.0015)
+      gain   = (0.018 + vi * 0.002).round(4)
+      fd     = (f * detune).round(4)
+      case style
+      when :sine
+        "#{gain}*sin(2*PI*#{fd}*t)"
+      when :rhodes
+        "#{gain}*(sin(2*PI*#{fd}*t)+0.08*sin(2*PI*#{(fd * 3).round(4)}*t))*(0.78+0.22*sin(2*PI*6.5*t))"
+      when :wurlitzer
+        "#{gain}*(sin(2*PI*#{fd}*t)+0.25*sin(2*PI*#{(fd * 3).round(4)}*t)+0.12*sin(2*PI*#{(fd * 5).round(4)}*t))"
+      when :hammond
+        "#{gain}*(0.9*sin(2*PI*#{(fd * 0.5).round(4)}*t)+sin(2*PI*#{fd}*t)+0.8*sin(2*PI*#{(fd * 1.5).round(4)}*t)+0.5*sin(2*PI*#{(fd * 2.0).round(4)}*t))"
+      when :super_saw
+        [-0.008, 0.0, 0.008].map do |d|
+          df = (fd * (1 + d)).round(4)
+          "#{gain}*(2*mod(#{df}*t,1)-1)"
+        end.join("+")
+      when :choir
+        [0.0, 0.52, 1.05, 1.57].each_with_index.map do |phase, pvi|
+          cf = (fd * (1 + (pvi - 1.5) * 0.0008)).round(4)
+          "#{gain}*sin(2*PI*#{cf}*t+#{phase})"
+        end.join("+")
+      when :fm_bell
+        "#{gain}*sin(2*PI*#{fd}*t+3.0*sin(2*PI*#{(fd * 1.007).round(4)}*t))"
+      end
+    end.join("+")
+    "between(mod(t,#{cycle}),#{t0},#{t1})*(#{voices})"
+  end.join("+")
+  "(#{parts})*(0.52+0.48*sin(2*PI*#{lfo_rate}*t))"
+end
+
+def render_industrial_variant(seed, destination)
+  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  FileUtils.mkdir_p(File.dirname(destination))
+  srand(seed)
+
+  ibpm       = 128 + rand(11)
+  kick_base  = 46 + rand(14)
+  kick_sweep = (kick_base * 2.2 + rand(20)).round(1)
+  kick_drive = (3.2 + rand * 2.2).round(2)
+  root_hz    = [82.41, 73.42, 92.50, 69.30, 98.00, 77.78].sample
+  tritone_hz = (root_hz * Math.sqrt(2)).round(2)
+  stab_root  = (root_hz * 2).round(2)
+  stab_fifth = (root_hz * 3).round(2)
+  bass_lfo   = (0.08 + rand * 0.17).round(3)
+  stab_lfo   = (0.05 + rand * 0.12).round(3)
+  noise_lfo  = (0.03 + rand * 0.06).round(3)
+  hat_thr    = (0.22 + rand * 0.28).round(3)
+  rev_times  = 4.times.map { |j| 500 + j * 700 + rand(300) }
+  rev_decays = [0.55, 0.44, 0.33, 0.22]
+  dotted_ratio = 1.40 + rand * 0.20
+
+  beat_p   = (60.0 / ibpm.to_f).round(6)
+  n_bars   = [bars, (120.0 / (beat_p * 4)).ceil].max
+  duration = (beat_p * 4.0 * n_bars).round(3)
+  bar_p    = (beat_p * 4.0).round(6)
+  hat16_p  = (beat_p / 4.0).round(6)
+  eighth_p = (beat_p / 2.0).round(6)
+  step_p   = (bar_p / 16.0).round(6)
+  b2 = beat_p.round(6)
+  b4 = (beat_p * 3.0).round(6)
+  dotted_8th_ms = (3.0 * beat_p / 4.0 * 1000.0).round(1)
+
+  kick_expr = "tanh(#{kick_drive}*(0.28*(2*mod(#{kick_base}.0*t,1)-1)+" \
+              "sin(2*PI*(#{kick_base}+#{kick_sweep}*exp(-mod(t,#{beat_p})*28))*t))" \
+              "*exp(-mod(t,#{beat_p})*7))"
+  clap_vel  = "0.52+0.43*abs(sin(floor(t/#{bar_p})*43.758+12.1))"
+  clap_expr = "(#{clap_vel})*(random(1)-0.5)*lt(mod(t-#{b2},#{bar_p}),0.038)*exp(-mod(t-#{b2},#{bar_p})*26)" \
+              "+(#{clap_vel})*(random(2)-0.5)*lt(mod(t-#{b4},#{bar_p}),0.038)*exp(-mod(t-#{b4},#{bar_p})*26)"
+  hat_expr  = "gt(abs(sin(floor(t/#{hat16_p})*127.1+311.7)),#{hat_thr})" \
+              "*0.19*(random(3)-0.5)*lt(mod(t,#{hat16_p}),0.013)*exp(-mod(t,#{hat16_p})*70)"
+  step8_mid = (step_p * 9.0).round(4)
+  note_expr = "if(lte(abs(mod(t,#{bar_p})-#{step8_mid}),#{step_p}),#{tritone_hz},#{root_hz})"
+  bass_expr = "0.88*(2*mod((#{note_expr})*t,1)-1)" \
+              "*lt(mod(t,#{eighth_p}),#{(eighth_p * 0.60).round(6)})" \
+              "*(0.50+0.50*sin(2*PI*#{bass_lfo}*t))*exp(-mod(t,#{eighth_p})*6)"
+  stab_expr = "(0.24*sgn(sin(2*PI*#{stab_root}*t))+0.18*sgn(sin(2*PI*#{stab_fifth}*t)))" \
+              "*0.48*lt(mod(t,#{bar_p}),0.042)*exp(-mod(t,#{bar_p})*28)" \
+              "*(0.44+0.56*abs(sin(2*PI*#{stab_lfo}*t)))"
+  noise_expr = "(random(7)-0.5)*(0.18+0.82*abs(sin(2*PI*#{noise_lfo}*t)))*0.08"
+
+  command = ["ffmpeg", "-y",
+             "-f", "lavfi", "-i", "aevalsrc='#{kick_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{clap_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{hat_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{stab_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{noise_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
+  filter = []
+  filter << "[0:a]aformat=channel_layouts=stereo,lowpass=f=250," \
+            "acompressor=threshold=-8dB:ratio=12:attack=1:release=28," \
+            "equalizer=f=#{kick_base}:width_type=o:width=2:g=6,asplit=3[kick][kick_sc1][kick_sc2]"
+  filter << "[1:a]aformat=channel_layouts=stereo,highpass=f=900,lowpass=f=14000," \
+            "acompressor=threshold=-14dB:ratio=6:attack=2:release=40[clap]"
+  filter << "[2:a]aformat=channel_layouts=stereo,highpass=f=7000[hats]"
+  filter << "[3:a]aformat=channel_layouts=stereo,lowpass=f=450," \
+            "equalizer=f=#{root_hz.to_i}:width_type=o:width=2:g=4[bass_pre]"
+  filter << "[bass_pre][kick_sc1]sidechaincompress=threshold=-20dB:ratio=8:attack=1:release=80:level_sc=0.9[bass]"
+  filter << "[4:a]aformat=channel_layouts=stereo,lowpass=f=5000,highpass=f=100[stab_pre]"
+  filter << "[stab_pre][kick_sc2]sidechaincompress=threshold=-18dB:ratio=6:attack=3:release=120:level_sc=0.7[stab]"
+  filter << "[5:a]aformat=channel_layouts=stereo,highpass=f=200,lowpass=f=6000[noise]"
+  filter << "[kick][clap][hats][bass][stab][noise]" \
+            "amix=inputs=6:weights=1.00 0.50 0.25 0.70 0.32 0.15:duration=first[mix]"
+  filter << "[mix]asplit=2[dry][rev_send]"
+  filter << "[rev_send]highpass=f=150," \
+            "aecho=0.62:0.72:#{rev_times.join('|')}:#{rev_decays.join('|')}[verb]"
+  filter << "[dry][verb]amix=inputs=2:weights=0.70 0.30[with_reverb]"
+  filter << "[with_reverb]asplit=2[dry2][dly_send]"
+  filter << "[dly_send]highpass=f=400," \
+            "aecho=0.52:0.58:#{dotted_8th_ms}|#{(dotted_8th_ms * dotted_ratio).round(1)}:0.75|0.65[dly]"
+  filter << "[dry2][dly]amix=inputs=2:weights=0.78 0.22[predist]"
+  sat = Math.tanh(3.0).round(6)
+  filter << "[predist]aeval=exprs='tanh(3.0*val(0))/#{sat}|tanh(3.0*val(1))/#{sat}'," \
+            "acompressor=threshold=-14dB:ratio=8:attack=1:release=55:makeup=4," \
+            "acrusher=bits=14:samples=2:mix=0.12," \
+            "equalizer=f=70:width_type=o:width=2:g=3," \
+            "equalizer=f=9500:width_type=o:width=2:g=-3," \
+            "alimiter=limit=0.94:level_out=0.96[out]"
+  command += ["-filter_complex", filter.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
+  sh!(*command)
+  puts "    #{ibpm} BPM  root=#{root_hz}Hz  hat_thr=#{hat_thr}  bass_lfo=#{bass_lfo}"
+end
+
+def render_dilla_variant(seed, destination)
+  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  FileUtils.mkdir_p(File.dirname(destination))
+  srand(seed)
+
+  d_bpm      = 84 + rand(15)
+  drunk_ms   = (12 + rand(20)) / 1000.0
+  pad_rotate = rand(PAD_CHORDS.length)
+  pad_set    = PAD_CHORDS.rotate(pad_rotate)
+  pad_lfo    = (0.04 + rand * 0.10).round(3)
+  bass_root  = (40.0 + rand * 10.0).round(2)
+  lfo_rate   = (0.07 + rand * 0.12).round(3)
+
+  beat_p   = (60.0 / d_bpm.to_f).round(6)
+  n_bars   = [bars, (120.0 / (beat_p * 4)).ceil].max
+  duration = (beat_p * 4.0 * n_bars).round(3)
+  bar_p    = (beat_p * 4.0).round(6)
+  half_p   = (beat_p * 2.0).round(6)
+  hat_p    = (beat_p / 2.0).round(6)
+
+  drunk  = n_bars.times.flat_map { 4.times.map { (rand * 2 - 1) * drunk_ms } }
+  n_beat = n_bars * 4
+
+  chord_expr = chord_expr_for(pad_set, beat_p, pad_lfo)
+
+  kick_p   = beat_p * 2.0
+  kicks    = drunk.each_slice(4).flat_map { |s| [0.0 + s[0].to_f, beat_p * 2.0 + s[2].to_f] }.uniq
+  kick_parts = kicks.first(64).map do |off|
+    tm = "mod(t-#{off.round(6)},#{(beat_p * 4.0).round(6)})"
+    "0.72*sin(2*PI*(46+88*exp(-#{tm}*20))*#{tm})*exp(-#{tm}*10)"
+  end
+  kick_expr  = "(#{kick_parts.join('+')})"
+
+  beat2      = beat_p + (drunk[1] || 0.0)
+  beat4      = beat_p * 3.0 + (drunk[3] || 0.0)
+  bar_val    = (beat_p * 4.0).round(6)
+  ghosts     = [beat_p * 0.5, beat_p * 1.5, beat_p * 2.5, beat_p * 3.5].map do |pos|
+    tm = "mod(t-#{pos.round(4)},#{bar_val})"
+    "0.05*(random(0)-0.5)*lt(#{tm},0.04)*exp(-#{tm}*50)"
+  end
+  snare_main = [beat2, beat4].map do |pos|
+    tm = "mod(t-#{pos.round(4)},#{bar_val})"
+    "0.52*(random(1)-0.5)*lt(#{tm},0.06)*exp(-#{tm}*28)"
+  end
+  snare_expr = "(#{(snare_main + ghosts).join('+').gsub(/"/, '')})"
+
+  hat_off   = (drunk[0] || 0.0) * 0.5
+  hat_expr  = "0.11*(random(2)-0.5)*lt(mod(t+#{hat_off.abs.round(4)},#{hat_p}),0.025)*exp(-mod(t,#{hat_p})*90)"
+  lfo_amt   = bass_root * 0.03
+  bass_expr = "0.60*sin(2*PI*(#{bass_root}+#{lfo_amt.round(3)}*sin(2*PI*#{lfo_rate}*t))*t)" \
+              "+0.10*sin(2*PI*2*(#{bass_root}+#{lfo_amt.round(3)}*sin(2*PI*#{lfo_rate}*t))*t)"
+
+  command = ["ffmpeg", "-y",
+             "-f", "lavfi", "-i", "aevalsrc='#{chord_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{kick_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{snare_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{hat_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
+
+  labels  = %w[[pads] [bass] [kick] [snare] [hats]]
+  weights = %w[0.85 0.90 0.82 0.58 0.20]
+  filter  = []
+  filter << "[0:a]aformat=channel_layouts=stereo,lowpass=f=4000,adelay=5|11[pads]"
+  filter << "[1:a]aformat=channel_layouts=stereo,lowpass=f=180,equalizer=f=80:width_type=o:width=2:g=4[bass]"
+  filter << "[2:a]aformat=channel_layouts=stereo,lowpass=f=160[kick]"
+  filter << "[3:a]aformat=channel_layouts=stereo,highpass=f=200,lowpass=f=6000[snare]"
+  filter << "[4:a]aformat=channel_layouts=stereo,highpass=f=7000[hats]"
+  sat = Math.tanh(1.6).round(6)
+  mix_chain = "#{labels.join}amix=inputs=#{labels.length}:weights=#{weights.join(' ')}:duration=first," \
+              "aeval=exprs='tanh(1.6*val(0))/#{sat}|tanh(1.6*val(1))/#{sat}'," \
+              "acompressor=threshold=-18dB:ratio=2.5:attack=20:release=120," \
+              "acrusher=bits=12:samples=2:mix=0.15," \
+              "alimiter=limit=0.93:level_out=0.95[out]"
+  filter << mix_chain
+
+  command += ["-filter_complex", filter.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
+  sh!(*command)
+  puts "    #{d_bpm} BPM  drunk=#{(drunk_ms * 1000).round}ms  pad_rotate=#{pad_rotate}  bass=#{bass_root}Hz"
+end
+
+def batch_industrial(n = 5, destination = File.join(ROOT, "industrial.mp3"))
+  batch_render(n, destination) { |seed, dest| render_industrial_variant(seed, dest) }
+end
+
+def batch_dilla(n = 5, destination = File.join(ROOT, "dilla_beat.mp3"))
+  batch_render(n, destination) { |seed, dest| render_dilla_variant(seed, dest) }
+end
+
+def batch_neosoul(n = 5, destination = File.join(ROOT, "neosoul.mp3"))
+  batch_render(n, destination) { |seed, dest| render_dilla_variant(seed, dest) }
+end
+
+def batch_modal(n = 5, destination = File.join(ROOT, "modal.mp3"))
+  batch_render(n, destination) { |seed, dest| render_dilla_variant(seed, dest) }
+end
+
+def batch_gospel(n = 5, destination = File.join(ROOT, "gospel.mp3"))
+  batch_render(n, destination) { |seed, dest| render_dilla_variant(seed, dest) }
 end
 
 # --- MIDI stack (Raymond Scott Electronium × J Dilla × Bach) ---
@@ -942,6 +1663,15 @@ when "grade"      then grade(ARGV.shift, ARGV.shift, ARGV.shift)
 when "grade_list" then grade_list
 when "dilla"      then render_dilla(ARGV.shift || File.join(ROOT, "dilla_beat.mp3"))
 when "midi"       then midi_generate(ARGV.shift || File.join(ROOT, "dilla_electronium.mid"))
+when "industrial"       then render_industrial(ARGV.shift || File.join(ROOT, "industrial.mp3"))
+when "batch_industrial" then batch_industrial((ARGV.shift || 5).to_i, ARGV.shift || File.join(ROOT, "industrial.mp3"))
+when "batch_dilla"      then batch_dilla((ARGV.shift || 5).to_i, ARGV.shift || File.join(ROOT, "dilla_beat.mp3"))
+when "neosoul"          then render_neosoul(ARGV.shift || File.join(ROOT, "neosoul.mp3"))
+when "modal"            then render_modal(ARGV.shift || File.join(ROOT, "modal.mp3"))
+when "gospel"           then render_gospel(ARGV.shift || File.join(ROOT, "gospel.mp3"))
+when "batch_neosoul"    then batch_neosoul((ARGV.shift || 5).to_i, ARGV.shift || File.join(ROOT, "neosoul.mp3"))
+when "batch_modal"      then batch_modal((ARGV.shift || 5).to_i, ARGV.shift || File.join(ROOT, "modal.mp3"))
+when "batch_gospel"     then batch_gospel((ARGV.shift || 5).to_i, ARGV.shift || File.join(ROOT, "gospel.mp3"))
 else
   puts "commands: #{COMMANDS.join(' | ')}"
 end

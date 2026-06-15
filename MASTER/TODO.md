@@ -1,6 +1,6 @@
 # TODO — MASTER backlog
 
-**DRY/KISS note (2026-06-14)**: See DEPLOY push (commit b8d958a7 + follow-up). Extracted Shared::Notifiable, ActivityTrackable, GeoLocatable to shared/concerns/shared/ and applied to eliminate notify/record/geo dupe in the Rails apps (brgen subapps + hjerterom + bsdports). This directly addresses S1201 cross-file DRY opportunities. Details + remaining in DEPLOY/TODO "DRY & KISS" section. New files + refactors + doc updates pushed.
+**DRY/KISS note (2026-06-14 reassessed post-snapshots/pruning)**: See DEPLOY pushes (b8d958a7 + follow-ups + 11ad193f snapshots). Extracted/promoted 6+ shared concerns to shared/concerns/shared/ (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable; Pushable relocated to shared/services) + eliminated notify/record/geo + other dupe in brgen/hjerterom/bsdports apps (orders, listings, profiles, follow, TV, user, etc.). Full pruning: removed brgen/app/models/concerns/ dir (post-promotion), 6 nested app/controllers/rails/ bogus dirs, root marketplace/ stub, reduced .md bloat to 1 README/app + essentials. Root MASTER_snapshot.md + DEPLOY_snapshot.md added/pushed in pub4 root (1.4M/2.7M full filtered exports) for external LLM eval of architecture/DRY/pruning/shared layer. Details in DEPLOY/TODO "DRY & KISS" + "Major Wins" (reassessment confirms success; no local .md bloat post-prune; snapshots in root per user request). Recent: god-class splits (14 files <300 lines in MASTER commit e659b863). This addresses S1201 etc. (manual cross-file DRY done; scanner pending). New files/refactors + snapshots pushed. (See shared/concerns ls, WIRING_NOTES, git log, root snapshots.)
 
 Work left to right, top to bottom. Mark done with [x].
 
@@ -316,6 +316,14 @@ Violations and opportunities found by reading the actual source. Each item is a 
 - [x] O708 Introduce value object: violation hash in rule_loop has file, line, rule, message, severity — formalize as Violation
 - [x] O709 Replace loop with pipeline: fix_loop fast_pass → llm_pass → commit sequence is a pipeline, model it as Pipeline stages
 - [x] O710 Move method: dispatch_resync in work_commands reaches into git, bundle, rcctl — move to a ResyncService
+
+### O8. Reassessment (2026-06-14: Snapshots, Pruning, DEPLOY DRY cross-over, LLM Eval)
+- [x] O801 Root snapshots added/pushed: MASTER_snapshot.md (full MASTER/ export ~1.4M) + DEPLOY_snapshot.md (full filtered DEPLOY/ ~2.7M, incl. shared concerns code, apps.yml, TODO, pruning evidence) in pub4 root for external LLM evaluation (per user request; simulates/gists contents without local bloat beyond requested).
+- [x] O802 DEPLOY pruning success (reflected here): local brgen concerns/ dir removed (after 6+ concern promotions), 6 nested rails/ dirs gone, marketplace stub gone, .md reduced to 1 README/app + root + WIRING_NOTES (no sprawl; evidence in ls/git). Addresses S1201 cross-file DRY manually in DEPLOY (even if scanner S1201+ still open below).
+- [x] O803 God-class progress: recent commit e659b863 "split 14 god-class files under 300-line limit" (aligns B03/O1/O101 etc.; reassess full O1 list post-split).
+- [ ] O804 Integrate root snapshots into self-snapshot/LLM context (new gap: boot_snapshot still writes local; these root ones for "other LLMs to evaluate" — wire or document).
+- [ ] O805 Update MASTER DRY note + cross-file (S1201+) to reflect full DEPLOY work + pruning (this reassessment does partial; full scanner pass pending). Smell: TODO length (historical [x] bloat? consider archive fully-done A/B/C sections).
+- Evidence: root ls (snapshots present), shared/concerns (8 files), no brgen/concerns/, WIRING_NOTES (updated), git (prune/snapshots commits), DEPLOY/TODO (reassessed in parallel). No new local .md bloat. (See also DEPLOY major wins for engine-ize etc. that affect overall.)
 
 ### O8. Pragmatic Programmer / Polished Ruby
 

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Master
   module Loop
   # Architecture #7: file-watcher reactive trigger — no polling.
@@ -10,10 +12,10 @@ module Master
   # Usage (VPS, after `gem install rb-kqueue` or `rb-inotify`):
   #   WatchLoop.new(rules:, agent:, scanner:, root:, bus:).run
     class WatchLoop
-      DEBOUNCE_SECONDS  = 5.0
+      DEBOUNCE_SECONDS   = 5.0
       MAX_EVENTS_PER_MIN = 20
-      WATCH_EXTENSIONS  = %w[.rb .erb .yml .yaml .json .toml .js .css .html].freeze
-      SKIP_DIRS         = FixLoop::SKIP_DIRS
+      WATCH_EXTENSIONS   = %w[.rb .erb .yml .yaml .json .toml .js .css .html].freeze
+      SKIP_DIRS          = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
 
       def initialize(rules:, agent:, scanner:, root:, bus: nil, learnings: nil)
         @rules    = rules

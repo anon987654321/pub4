@@ -2,42 +2,45 @@
 
 Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
-**DRY & KISS (2026-06-14) — applied + pushed**
-- Extracted 3 shared concerns in DEPLOY/rails/shared/app/models/concerns/shared/:
-  - notifiable.rb: deliver_notification (unifies the  repeated `if defined?(Notification)` + create with title/body/source or actor/kind/notifiable across brgen orders, follow, controllers).
-  - activity_trackable.rb: record_activity! (DRYs all the ActivityEventRecorder.call + defined? guards).
-  - geo_locatable.rb: nearby scope + haversine (standard portable bbox + accurate helper; replaced earth_distance, euclid, ABS/111, manual haversine in listing/dating/delivery/user/resource/food_listing + restaurant geocode stub).
-- Refactored models (includes + calls): marketplace/takeaway Order, listing (near alias + filter), dating/profile, delivery_driver, restaurant, user, follow; hjerterom resource/food_listing; controllers (marketplace orders/listings/saved_searches — removed private dupe methods); bsdports/dependency (dupe class consolidated + tree_for).
-- Updated listings index to actually use near(lat,lng) filter.
-- Also pushed supporting flesh: full TV Show/Episode stack (models, controllers, views), marketplace orders show, key Stimulus (swipe/hotkey/lazy/marketplace_chat/tv_player), hjerterom beneficiaries, PWA/shared partials.
-- See the 3 new concern files + the model/controller diffs for the cleaned call sites. Remaining opps (status concern, notification model unification, more verticals) noted for follow-up.
-- All local edits; concerns + new fleshed files + this doc update pushed.
+**DRY & KISS (2026-06-14) — applied + pushed (reassessed post-snapshots/pruning)**
+- Extracted/promoted 6+ shared concerns in DEPLOY/rails/shared/app/models/concerns/shared/ (full list now: notifiable.rb, activity_trackable.rb, geo_locatable.rb, votable.rb, commentable.rb, taggable.rb; pushable relocated to shared/services/shared/pushable.rb):
+  - notifiable.rb: deliver_notification (unifies repeated `if defined?(Notification)` + create... across orders, follow, controllers).
+  - activity_trackable.rb: record_activity! (DRYs ActivityEventRecorder.call + guards).
+  - geo_locatable.rb: nearby + haversine (replaced inconsistent math in 7+ places: listing, dating, delivery, user, hjerterom resources, restaurant).
+  - votable/commentable/taggable: promoted from brgen local; Post/Comment/User now use Shared:: versions (removed local dupe has_many/methods; local brgen/concerns/ versions deleted or deprecated).
+- Refactored models/controllers as above + TV Show/Episode (ActivityTrackable include + record in shows#show), listings geo filter.
+- Major pruning (file sprawl reduction): removed entire brgen/app/models/concerns/ dir (after promotion), 6x bogus app/controllers/rails/ nested dirs (across amber/baibl/blognet/brgen/bsdports/hjerterom, each with duplicate pwa_controller), root marketplace/ stub, reduced .md files to exactly 1 README.md per app (amber/baibl/blognet/brgen/bsdports/hjerterom) + root README + shared/WIRING_NOTES (no other per-app ARCHITECTURE/STIMULUS etc. left).
+- Added/pushed root MASTER_snapshot.md + DEPLOY_snapshot.md (full filtered exports ~1.4M/2.7M for external LLM eval of architecture/DRY/pruning/shared layer).
+- See shared/concerns, WIRING_NOTES (engine prep section), apps.yml (updated cross-cutting), git history (prune commits, god-class splits, snapshots push). Remaining: engine-ize shared (top), full activity emission, auth unification, etc. (detailed below). No local md bloat post-prune.
 
 ### Major Architectural Restructure Wins (2026-06-14 analysis)
 See full reasoning + evidence in shared/WIRING_NOTES.md (engine goal + expanded concerns), brgen/brgen_CORE.md (one city activity graph), apps.yml, ARCHITECTURE_NOTES.md, and the User model.
 
 **Top opportunities:**
 
-1. **Engine-ize shared/** (highest leverage — literally called the "long-term goal" in WIRING_NOTES). Copy-via-script is the current model. Our 4 new/ported concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable) + EventEmitter etc. make this the perfect time. One-time cost, massive consistency win across all apps.
+1. **Engine-ize shared/** (highest leverage — literally called the "long-term goal" in WIRING_NOTES). Copy-via-script is the current model. Our 6+ promoted/relocated concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable + Pushable in services) + EventEmitter make this the perfect time. One-time cost, massive consistency win across all apps. (Reassessment: local duplication eliminated, concerns dir gone.)
 
-2. **Domain services + god class reduction** (User has 30+ associations + cross-vertical methods; order state/notify was scattered before concerns). Create proper services/ vertical folders + lib/brgen/ domains while keeping the unified graph.
+2. **Domain services + god class reduction** (User has 30+ associations + cross-vertical methods; order state/notify was scattered before concerns; recent MASTER commit split 14 god-class files <300 lines). Create proper services/ vertical folders + lib/brgen/ domains while keeping the unified graph.
 
-3. **Activity/Event graph as real platform spine**. brgen_CORE and WIRING_NOTES declare it. We have the pieces (EventEmitter in shared, ActivityTrackable concern, recorder). Make emission mandatory and trivial for every important action (orders, matches, posts, views, etc.). This powers the feed, recs, notifications, and moderation.
+3. **Activity/Event graph as real platform spine**. brgen_CORE and WIRING_NOTES declare it. We have the pieces (EventEmitter in shared, ActivityTrackable concern, recorder; wired to TV). Make emission mandatory and trivial for every important action (orders, matches, posts, views, etc.). This powers the feed, recs, notifications, and moderation.
 
 4. **Auth + Current + Policy unification** (the AN2 backlog). Per-app custom auth is duplicated technical debt.
 
 5. **Notification convergence** (brgen vs shared models). Notifiable helper helps callsites but not the root model/table split.
 
-6. **Continue concern promotion + component ownership** (Votable done this pass; Commentable/Mentionable/Taggable/Pushable next. shared/frontend + brgen Stimulus as the official library).
+6. **Continue concern promotion + component ownership** (Votable/Commentable/Taggable done + used; Mentionable if cross-useful; shared/frontend + brgen Stimulus as the official library). Full pruning achieved (1 README/app, no .md bloat).
 
-7. **Monolith boundaries for brgen verticals**. Namespaces work today for the "one city" model. As marketplace/takeaway/orders grow, introduce clearer bounded contexts (or internal engines) without breaking the shared activity/search/moderation layers.
+7. **Monolith boundaries for brgen verticals + LLM eval snapshots**. Namespaces work today for the "one city" model. As marketplace/takeaway/orders grow, introduce clearer bounded contexts (or internal engines) without breaking the shared activity/search/moderation layers. (New: root MASTER_snapshot.md + DEPLOY_snapshot.md added/pushed in pub4 root for external LLM evaluation of architecture/DRY/pruning/shared layer; integrate into self-snapshot process.)
 
-**Quick wins completed this pass (in addition to the 3 big concerns):**
-- Votable extracted to shared/app/models/concerns/shared/votable.rb + Post/Comment updated to `include Shared::Votable` (removed local dupe has_many + methods). Local brgen version now delegates + marked deprecated.
-- WIRING_NOTES updated with the current set of shared model concerns.
-- (See git history for the exact small diffs.)
+**Quick wins + Reassessment (2026-06-14 post-snapshots/pruning) — in addition to core concerns:**
+- Votable/Commentable/Taggable promoted + used (Post/Comment/User); local brgen/concerns/ dir fully removed (git rm'd after migration; no more local duplication).
+- Pushable relocated to shared/services (callers updated to Shared::Pushable; old local deleted).
+- Full pruning: removed 6 nested controllers/rails/ dirs (duplicate pwa broken under wrong module), root marketplace/ stub, reduced .md bloat to 1 README/app + essentials.
+- Root snapshots added/pushed: MASTER_snapshot.md (1.4M full MASTER/ export), DEPLOY_snapshot.md (2.7M filtered DEPLOY/ with shared/pruning evidence) for LLM eval (no local md bloat; in pub4 root, committed).
+- WIRING_NOTES updated (concerns list + engine prep). apps.yml cross-cutting refreshed. Recent commits: prune many .md, god-class splits, snapshots.
+- Evidence: ls shared/concerns (8 total), no brgen concerns/ dir, root snapshots present, git log (ee3a56e3 prune, 11ad193f snapshots).
 
-Next: document in apps.yml cross-cutting, wire the concerns into the TV vertical we just fleshed, spike the shared engine on a branch when ready.
+Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-script remains but local duplication gone + 6+ concerns in shared), integrate root snapshots (MASTER_snapshot.md / DEPLOY_snapshot.md in pub4 root, pushed 11ad193f) into LLM/self-eval process (new gap: "for other LLMs to evaluate" architecture/DRY/pruning/shared), wire more concerns (e.g. Mentionable if useful), continue AN2 (auth), AN103 (Workbox), AN106 (VAPID), AN15/AN1204 (tests/N+1), activity graph full, notification convergence. See major wins below. (Reassessment: DRY/KISS + pruning wins confirmed via ls/git (8 shared concerns, no local concerns/ dir, 1 README/app, snapshots present); no .md bloat; snapshots fulfill eval request. Smell: TODO length with historical repeats — archive done sections?)
 
 ### AN1: PWA Foundation (all apps)
 
