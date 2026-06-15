@@ -540,8 +540,10 @@ configure_relayd() {
   done
   # Subdomains share the parent cert+key — create both symlinks so relayd
   # tls keypair finds /etc/ssl/${dom}.crt AND /etc/ssl/private/${dom}.key.
+  # Skip only domains that have their own fullchain.pem (handled above).
+  # Use -sf so existing .crt symlinks don't prevent missing .key from being created.
   for dom in ${(k)DOMAIN_BACKEND}; do
-    [[ -L /etc/ssl/${dom}.crt ]] && continue   # already handled above
+    [[ -f /etc/ssl/${dom}.fullchain.pem ]] && continue
     typeset parent="" try=${dom#*.}
     while [[ -n $try ]]; do
       if [[ -f /etc/ssl/${try}.fullchain.pem ]]; then parent=$try; break; fi
