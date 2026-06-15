@@ -26,4 +26,12 @@
       <li><%= link_to c.name, community_path(c) %></li>
     <% end %>
   </ul>
+  <% if @trending_tags.present? %>
+    <h3>Trending tags</h3>
+    <ul>
+      <% @trending_tags.each do |tag| %>
+        <li><%= link_to "##{tag.name}", tag_path(tag.name) %> <span class="dim">(<%= tag.usage_count %>)</span></li>
+      <% end %>
+    </ul>
+  <% end %>
 </aside>

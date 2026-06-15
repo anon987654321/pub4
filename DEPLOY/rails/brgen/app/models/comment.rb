@@ -2,6 +2,7 @@
 
 class Comment < ApplicationRecord
   include Votable
+  include Mentionable
 
   belongs_to :user
   belongs_to :commentable, polymorphic: true, touch: true
@@ -22,8 +23,13 @@ class Comment < ApplicationRecord
       .order("ABS(SUM(votes.value)) ASC")
   }
 
-  def root?  = parent_id.nil?
-  def depth  = parent ? parent.depth + 1 : 0
+  def root?
+    parent_id.nil?
+  end
+
+  def depth
+    parent ? parent.depth + 1 : 0
+  end
 
   LONG_THREAD_THRESHOLD = 20
 

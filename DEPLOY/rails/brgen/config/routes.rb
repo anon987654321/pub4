@@ -16,6 +16,8 @@ Rails.application.routes.draw do
   end
   resources :reactions, only: :create
   resources :reports, only: :create
+  resources :tags, only: :show, param: :name
+  resource :notification_preferences, only: :update
 
   resources :communities do
     resources :posts, shallow: true do

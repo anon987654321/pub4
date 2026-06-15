@@ -159,6 +159,17 @@
           <div class="who-follow">brgen.no <button class="btn btn-ghost btn-sm">Follow</button></div>
           <div class="who-follow">longyearbyn.no <button class="btn btn-ghost btn-sm">Follow</button></div>
         </div>
+        <% if Current.user %>
+          <div class="sidebar-card">
+            <h3>Mention alerts</h3>
+            <%= form_with scope: :user, url: notification_preferences_path, method: :patch do |f| %>
+              <%= f.label :mention_notification_delivery, "Delivery" %>
+              <%= f.select :mention_notification_delivery,
+                           options_for_select([["Push", "push"], ["Email", "email"], ["None", "none"]], Current.user.mention_notification_delivery_mode) %>
+              <%= f.submit "Save", class: "btn btn-ghost btn-sm" %>
+            <% end %>
+          </div>
+        <% end %>
         <%= render "shared/email_subscribe" %>
       </aside>
     </div>

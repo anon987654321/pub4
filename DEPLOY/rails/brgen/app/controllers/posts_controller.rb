@@ -7,11 +7,13 @@ class PostsController < ApplicationController
 
   def index
     @posts = Post.hot.includes(:user, :community, :votes)
+    @trending_tags = Hashtag.trending.limit(10)
   end
 
   def show
     @comments    = @post.comments.where(parent_id: nil).best.includes(:user, :votes, replies: [:user, :votes])
     @new_comment = Comment.new
+    @trending_tags = Hashtag.trending.limit(10)
   end
 
   def new

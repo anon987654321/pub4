@@ -135,8 +135,8 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [ ] AN625 Maps — user check-in: tap "I'm here" at any venue; creates check-in record; friends who follow you see update in activity feed
 - [ ] AN626 Notification center: unified `/notifications` Turbo Frame; grouped by type (mentions, matches, order updates, likes); mark-all-read via one PATCH request
 - [ ] AN627 Activity feed: `/activity` shows everything following users did recently; paginated with Pagy; Turbo Stream new activity at top on broadcast
-- [ ] AN628 Hashtag discovery: `/tags/:name` Turbo-framed feed of all posts with tag; trending tags sidebar; auto-link `#word` in post body via ActionText extension
-- [ ] AN629 Mention system: auto-link `@username` in post body; create Notification on mention; user preferences for mention notification type (push/email/none)
+- [x] AN628 Hashtag discovery: `/tags/:name` Turbo-framed feed of all posts with tag; trending tags sidebar; auto-link `#word` in post body via ActionText extension
+- [x] AN629 Mention system: auto-link `@username` in post body; create Notification on mention; user preferences for mention notification type (push/email/none)
 - [ ] AN630 Report/moderation: report any post/listing/profile with category (spam/hate/illegal); Solid Queue job notifies moderators; moderator dashboard at `/admin/reports`
 
 ### AN7: amber — Wardrobe Intelligence
@@ -2229,4 +2229,3 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [x] DG08 bsdports: add maintainer page — all ports by a given maintainer with contact link
 - [x] DG09 bsdports: add RSS feed for new ports added in last 7 days
 - [x] DG10 bsdports: add CVE cross-reference — link ports to known vulnerabilities via NIST NVD API (via security_advisories table + NvdCveService
-

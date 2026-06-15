@@ -12,7 +12,7 @@
       <% end %>
     <% end %>
   </header>
-  <p><%= comment.content %></p>
+  <%= brgen_content(comment.content) %>
 
   <% if comment.long_thread? %>
     <% if comment.has_thread_summary? %>

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_15_120000) do
 
   create_table "push_subscriptions", force: :cascade do |t|
     t.integer "user_id", null: false
@@ -436,6 +436,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_144635) do
     t.decimal "latitude",  precision: 10, scale: 7
     t.decimal "longitude", precision: 10, scale: 7
     t.datetime "location_updated_at"
+    t.string "mention_notification_delivery", default: "push", null: false
     t.string "password_digest", null: false
     t.datetime "updated_at", null: false
     t.string "username"

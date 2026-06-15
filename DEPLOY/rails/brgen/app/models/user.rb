@@ -46,12 +46,19 @@ class User < ApplicationRecord
 
   validates :email_address, presence: true, uniqueness: true
   validates :username, uniqueness: true, allow_nil: true
+  validates :mention_notification_delivery, inclusion: { in: %w[push email none] }, allow_blank: true
 
   normalizes :email_address, with: ->(email_address) { email_address.strip.downcase }
 
   EARTH_KM = 6371.0
 
-  def display_name = guest? ? "anon" : (username.presence || email_address.split("@").first)
+  def display_name
+    guest? ? "anon" : (username.presence || email_address.split("@").first)
+  end
+
+  def mention_notification_delivery_mode
+    mention_notification_delivery.presence || "push"
+  end
 
   def self.nearby(lat, lng, radius_km: 2)
     lat, lng = lat.to_f, lng.to_f
@@ -69,7 +76,9 @@ class User < ApplicationRecord
     EARTH_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   end
 
-  def anon_handle = "Stranger ##{Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase}"
+  def anon_handle
+    "Stranger ##{Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase}"
+  end
 
   def assured?(level)
     identity_assurances.where(level: level).where("expires_at IS NULL OR expires_at > ?", Time.current).exists?
@@ -81,7 +90,9 @@ class User < ApplicationRecord
     follows_as_follower.find_or_create_by!(followed: other)
   end
 
-  def following?(other) = follows_as_follower.exists?(followed: other)
+  def following?(other)
+    follows_as_follower.exists?(followed: other)
+  end
 
   def timeline_posts
     Post.where(user: [self] + following).order(created_at: :desc)

@@ -32,7 +32,7 @@
     </div>
   <% end %>
   <% if @post.content.present? %>
-    <p><%= @post.content %></p>
+    <%= brgen_content(@post.content) %>
   <% end %>
   <div style="display:flex;gap:8px;margin-top:12px">
     <button class="btn-share" data-controller="share"
@@ -71,5 +71,13 @@
     <%= link_to "View community", community_path(@post.community) %>
   <% else %>
     <p>brgen — Bergen community platform</p>
+  <% end %>
+  <% if @trending_tags.present? %>
+    <h3>Trending tags</h3>
+    <ul>
+      <% @trending_tags.each do |tag| %>
+        <li><%= link_to "##{tag.name}", tag_path(tag.name) %> <span class="dim">(<%= tag.usage_count %>)</span></li>
+      <% end %>
+    </ul>
   <% end %>
 </aside>
