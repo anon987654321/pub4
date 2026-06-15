@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 class Post < ApplicationRecord
-  include Shared::Votable
-  include Shared::Commentable
-  include Shared::Taggable
+  # Engine-ize: use Shared.concern for consistency
+  include Shared.concern(:Votable) rescue include Shared::Votable
+  include Shared.concern(:Commentable) rescue include Shared::Commentable
+  include Shared.concern(:Taggable) rescue include Shared::Taggable
 
   has_one_attached :image
 

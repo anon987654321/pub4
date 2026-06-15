@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Dating::Profile < ApplicationRecord
+  # Engine-ize Shared
+  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared.concern(:Reactable) rescue nil
   belongs_to :user
   belongs_to :neighborhood, optional: true
   has_many_attached :photos

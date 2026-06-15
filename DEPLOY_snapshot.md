@@ -1,11 +1,11 @@
-# DEPLOY Snapshot (big push all remaining easy items)
-Generated: 2026-06-15T07:19:01Z
-## Evidence
+# DEPLOY Snapshot (tranche5 autoloop)
+Generated: 2026-06-15T07:20:57Z
+## Evidence of fixes
 ```
-bsdports: ports index/show + _live + Port model
-baibl: scriptures book + Verse/Book models
-blognet: posts show + Post/Blog models
-amber: items/index + Item model
-hjerterom: volunteers + prior
-brgen maps places checkin stub
+hjerterom donations: ARIA header + role
+brgen post: concern style
+dating profile: Shared
+marketplace new: turbo + ARIA
+tv live: turbo + ARIA + empty
+maps places: checkin form stub
 ```

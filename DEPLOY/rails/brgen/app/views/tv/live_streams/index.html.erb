@@ -1,17 +1,22 @@
 <% content_for :title, t("tv.live_streams.title", default: "Live streams") %>
 
-<%= tag.section class: "tv-live-streams" do %>
-  <%= tag.header do %>
+<%= tag.section class: "tv-live-streams", role: "region", "aria-label": "Live streams" do %>
+  <%= tag.header role: "banner", "aria-label": "Live streams header" do %>
     <%= tag.h1 t("tv.live_streams.title", default: "Live streams") %>
   <% end %>
 
-  <%= tag.div class: "live-stream-grid" do %>
+  <turbo-frame id="tv-live-streams" data-turbo-action="replace">
+  <%= tag.div class: "live-stream-grid", role: "list", "aria-label": "Live streams list" do %>
     <% @live_streams.each do |live_stream| %>
-      <%= tag.article class: "live-stream-card" do %>
+      <%= tag.article class: "live-stream-card", role: "listitem" do %>
         <%= tag.h2 link_to(live_stream.title, tv_live_stream_path(live_stream)) %>
         <%= tag.p live_stream.status %>
         <%= tag.p live_stream.description if live_stream.description.present? %>
       <% end %>
     <% end %>
+    <% if @live_streams.empty? %>
+      <div class="empty" role="status" aria-live="polite"><p>No live streams yet.</p></div>
+    <% end %>
   <% end %>
+  </turbo-frame>
 <% end %>

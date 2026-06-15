@@ -1,16 +1,18 @@
 <% content_for :title, "Donations" %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Donations header">
   <div>
     <p class="dim">Hjerterom intake</p>
     <h1>Donations</h1>
   </div>
-  <%= link_to "New donation", new_donation_path, class: "btn btn-primary" %>
+  <nav role="navigation" aria-label="Donation actions">
+    <%= link_to "New donation", new_donation_path, class: "btn btn-primary" %>
+  </nav>
 </div>
 
 <% if @donations.any? %>
   <%= turbo_stream_from "hjerterom:donations" %>
-  <div id="donations">
+  <div id="donations" role="region" aria-label="Donations list">
     <% @donations.each do |donation| %>
       <article id="<%= dom_id(donation) %>">
         <h2><%= link_to donation.source_name, donation %></h2>

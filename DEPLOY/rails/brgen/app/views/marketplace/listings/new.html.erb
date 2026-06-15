@@ -1,9 +1,13 @@
 <% content_for :title, "New listing" %>
 
-<div class="page-header"><h1>New listing</h1></div>
+<div class="page-header" role="banner" aria-label="New marketplace listing header">
+  <h1>New listing</h1>
+  <nav role="navigation" aria-label="Listing actions"></nav>
+</div>
 
+<turbo-frame id="marketplace-new-listing" data-turbo-action="replace">
 <div class="form-wrap">
-  <%= form_with model: @listing, url: marketplace_listings_path do |f| %>
+  <%= form_with model: @listing, url: marketplace_listings_path, html: { role: "form", "aria-label": "Create marketplace listing" } do |f| %>
     <%= render "shared/errors", object: @listing %>
     <div class="field"><%= f.label :title %><%= f.text_field :title %></div>
     <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4, data: { controller: "char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
