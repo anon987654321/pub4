@@ -1642,7 +1642,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 ### AK1: Agent Architecture Advances
 
 - [ ] AK101 ReAct pattern (Reason + Act): every tool invocation preceded by explicit reasoning step written to trace — not LLM thinking, but recorded rationale
-- [ ] AK102 Reflexion (self-correction): after each failed fix attempt, generate verbal self-critique; use critique to adjust next attempt
+- [x] AK102 Reflexion (self-correction): after each failed fix attempt, generate verbal self-critique; use critique to adjust next attempt. Implemented via Trace::ReflexionLedger (wired in Builder::AIBoot + ai_boot; subscribes fix_loop:commit_blocked/error, writes natural-lang reflections to runtime/reflexions.ndjson, exposes .recent for next prompts). Caps at 50, swallows errors. Refs in code: Shinn et al. arXiv:2303.11366, ReVeal arXiv:2506.11442. Test: test/test_reflexion_ledger.rb. (See also FeedbackLedger, T708, AE104, AL101 etc for memory tiering.)
 - [ ] AK103 Tree of Thought: for architectural decisions, generate 3 distinct reasoning branches; evaluate each; select best — not linear chain-of-thought
 - [ ] AK104 Graph of Thought: for multi-file dependency problems, build explicit dependency graph before reasoning — structured topology over flat sequence
 - [ ] AK105 Skeleton-of-Thought: generate outline first, then fill each section in parallel — reduces latency for long documents/reports
