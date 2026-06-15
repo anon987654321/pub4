@@ -78,6 +78,7 @@ module Master
 
       def initialize(message, category = :unknown, context = nil)
         raise ArgumentError, "message cannot be nil" if message.nil?
+        raise ArgumentError, "category must be a symbol" unless category.is_a?(Symbol)
 
         @message = message
         @category = category

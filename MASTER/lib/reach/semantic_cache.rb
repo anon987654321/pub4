@@ -2,6 +2,7 @@
 
 require "digest"
 require "json"
+require "fileutils"
 require "monitor"
 require "yaml"
 
@@ -16,11 +17,12 @@ module Master
         @master_root = File.join(root, ".master")
         @root = File.join(@master_root, "cache")
         @manifest_path = File.join(@master_root, "llm_cache.yml")
-        @ttl = ttl
+        @ttl = ttl.to_i.positive? ? ttl.to_i : DEFAULT_TTL
         @bus = event_bus
         @lru = []
         @lock = Monitor.new
         FileUtils.mkdir_p(@root)
+        FileUtils.mkdir_p(File.dirname(@manifest_path))
       end
 
       def fetch(prompt, model, &blk)
@@ -115,9 +117,10 @@ module Master
       def manifest
         return {} unless File.exist?(@manifest_path)
 
-        data = YAML.load_file(@manifest_path)
+        data = YAML.safe_load_file(@manifest_path, permitted_classes: [Symbol], aliases: false)
         data.is_a?(Hash) ? data : {}
-      rescue Psych::Exception, Errno::ENOENT
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "semantic_cache.read_manifest", event_bus: @bus, path: @manifest_path)
         {}
       end
 

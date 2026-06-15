@@ -157,7 +157,6 @@ module Master
         def stream_progress(dir:, path:, file_result:)
           return unless file_result.ok?
           count = file_result.value!.size
-          return unless count.positive?
           rel = path.sub(dir, "").delete_prefix("/")
           $stdout.puts "scan: #{rel} #{count} violation(s)"
           $stdout.flush

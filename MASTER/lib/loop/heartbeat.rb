@@ -37,6 +37,7 @@ module Master
 
       def start!
         return unless ENV["MASTER_HEARTBEAT"] == "1"
+        return if @jobs.empty?
 
         @stop = false
         @thread = Thread.new do
@@ -108,7 +109,9 @@ module Master
 
       def check_model_availability
         return "no agent" unless @agent
+        id = @agent.model.to_s
         return "no active model" if id.empty?
+        alive = model_reachable?(id)
         "model: #{id.split("/").last} #{alive ? "reachable" : "unreachable"}"
       end
 
