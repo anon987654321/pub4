@@ -464,53 +464,39 @@ setup_litestream() {
 
 bootstrap_rails_app() {
   typeset app=$1 port=$2
-  typeset src=/home/dev/pub4/DEPLOY/rails/$app/app
-  typeset app_dir=/home/$app/app
-  typeset bundle_home=/home/$app/.bundle
+  typeset app_dir=/home/dev/pub4/DEPLOY/rails/$app
   typeset secret
 
-  [[ -d $src ]] || { log ERROR "source tree missing: $src"; return 1 }
-  log INFO "bootstrapping $app -> $app_dir on :$port"
+  [[ -d $app_dir ]] || { log ERROR "app tree missing: $app_dir"; return 1 }
+  log INFO "bootstrapping $app from pub4 tree on :$port"
 
-  id "$app" >/dev/null 2>&1 || useradd -m -L daemon -s /bin/ksh "$app"
-  mkdir -p "$app_dir"
-  cp -R "${src}/." "${app_dir}/"
-  chown -R "${app}:${app}" "/home/$app"
-
-  if [[ ! -d $bundle_home/gems && $app != amber && -d /home/amber/.bundle/gems ]]; then
-    log INFO "  seeding gems from amber donor"
-    mkdir -p "$bundle_home"
-    cp -R /home/amber/.bundle/gems "$bundle_home/"
-    chown -R "${app}:${app}" "$bundle_home"
-    mkdir -p "$app_dir/.bundle"
-    print -r -- "---" > "$app_dir/.bundle/config"
-    print -r -- "BUNDLE_PATH: \"${bundle_home}/gems\"" >> "$app_dir/.bundle/config"
-    chown "${app}:${app}" "$app_dir/.bundle/config"
-  fi
-
-  su -l "$app" -c "gem install --user-install rails bundler falcon" >/dev/null 2>&1 || :
-  su -l "$app" -c "cd $app_dir && bundle config set --local deployment true && bundle config set --local without development:test && RAILS_ENV=production bundle install" \
+  su -l dev -c "gem install --user-install rails bundler falcon" >/dev/null 2>&1 || :
+  su -l dev -c "cd $app_dir && bundle config set --local deployment true && bundle config set --local without development:test && RAILS_ENV=production bundle install" \
     || { log ERROR "bundle install failed for $app"; return 1 }
-  su -l "$app" -c "cd $app_dir && RAILS_ENV=production bin/rails db:create db:migrate" \
+  su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:create db:migrate" \
     || log WARN "db:create/migrate non-zero for $app (idempotent skip likely)"
   [[ -f $app_dir/db/seeds.rb ]] && \
-    su -l "$app" -c "cd $app_dir && RAILS_ENV=production bin/rails db:seed" || :
+    su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:seed" || true
 
   typeset -a _secret_lines
-  _secret_lines=("${(@f)$(su -l "$app" -c "cd $app_dir && RAILS_ENV=production bundle exec rails secret 2>/dev/null")}")
+  _secret_lines=("${(@f)$(su -l dev -c "cd $app_dir && RAILS_ENV=production bundle exec rails secret 2>/dev/null")}")
   secret=${_secret_lines[-1]}
   [[ ${#secret} -ge 64 ]] || { log ERROR "$app: secret capture failed (got ${#secret} chars)"; return 1 }
-  install_template etc/rc.d/rails-app.tmpl /etc/rc.d/$app
-  chmod 755 /etc/rc.d/$app
-  /usr/sbin/rcctl enable $app
-  /usr/sbin/rcctl restart $app || /usr/sbin/rcctl start $app \
-    || { log ERROR "$app failed to start"; return 1 }
-  sleep 5
-  typeset _c; _c=$(/usr/sbin/rcctl check $app)
-  [[ $_c == *"${app}(ok)"* ]] || { log ERROR "$app not running"; return 1 }
-  typeset _http; _http=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://127.0.0.1:${port}/up 2>/dev/null)
-  [[ $_http == "200" ]] || log WARN "$app /up returned $_http — SECRET_KEY_BASE or DB may need attention"
-  log INFO "  $app live on :$port"
+  [[ -f /etc/${app}.env ]] || print -r -- "SECRET_KEY_BASE=${secret}" > /etc/${app}.env
+  chmod 640 /etc/${app}.env 2>/dev/null || true
+
+  typeset svc=${app}_rails
+  [[ -f ${SCRIPT_DIR}/etc/rc.d/${svc} ]] || install_template etc/rc.d/rails-app.tmpl /etc/rc.d/${svc}
+  chmod 755 /etc/rc.d/${svc}
+  /usr/sbin/rcctl enable ${svc}
+  /usr/sbin/rcctl restart ${svc} || /usr/sbin/rcctl start ${svc} \
+    || { log ERROR "${svc} failed to start"; return 1 }
+  sleep 10
+  typeset _c; _c=$(/usr/sbin/rcctl check ${svc})
+  [[ $_c == *"${svc}(ok)"* ]] || { log ERROR "${svc} not running"; return 1 }
+  typeset _http; _http=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 http://127.0.0.1:${port}/up 2>/dev/null)
+  [[ $_http == "200" ]] || log WARN "${svc} /up returned $_http — SECRET_KEY_BASE or DB may need attention"
+  log INFO "  ${svc} live on :$port"
 }
 
 configure_relayd() {

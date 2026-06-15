@@ -1,13 +1,13 @@
 #!/bin/ksh
 PORT=38182
-APP_DIR=/home/brgen/app
+APP_DIR=/home/dev/pub4/DEPLOY/rails/brgen
 [ -r /etc/brgen.env ] && . /etc/brgen.env
 daemon="/usr/local/bin/bundle34"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} falcon serve --threaded --bind http://127.0.0.1:${PORT}"
-daemon_user="brgen"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} falcon serve --bind http://127.0.0.1:${PORT}"
+daemon_user="dev"
 daemon_execdir="${APP_DIR}"
 daemon_logger="daemon.notice"
-daemon_timeout="90"
+daemon_timeout="120"
 . /etc/rc.d/rc.subr
 pexp="ruby34.*${PORT}"
 rc_bg=YES

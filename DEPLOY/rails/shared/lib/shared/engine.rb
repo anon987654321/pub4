@@ -2,16 +2,10 @@
 module Shared
   class Engine < ::Rails::Engine
     isolate_namespace Shared
-    config.autoload_paths += %W[
-      #{root}/app/models
-      #{root}/app/models/concerns
-      #{root}/app/services
-      #{root}/app/controllers
-      #{root}/app/controllers/concerns
-      #{root}/app/policies
-      #{root}/app/helpers
-    ]
-    config.eager_load_paths += config.autoload_paths
+    # Use << not += — Rails 8.1 freezes path arrays during engine boot; += breaks later engines.
+    %w[app/models app/models/concerns app/services app/controllers app/controllers/concerns app/policies app/helpers].each do |dir|
+      config.autoload_paths << root.join(dir).to_s
+    end
     config.active_record.schema_format = :ruby if config.respond_to?(:active_record)
 
     initializer "shared.view_paths" do
