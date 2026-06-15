@@ -64,7 +64,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 
 - [x] AN101 Manifest completeness: add `display_override...` etc to manifests (prior); Rails 8 native pwa generator (rails generate pwa) + views/pwa/ + routes align noted in research (edge guides 2026); apps on 8.1 + solid_* + propshaft good. Engine helps shared pwa partials future.
 - [x] Engine-ize + prune + snapshots + deprecate: complete (see top AN note + root snapshots + WIRING). 6/6 Gemfiles, stray gone, scripts annotated, openbsd updated. NN/ARIA + flesh: takeaway orders (role+aria-label on form+header), amber Item (Shared.concern(:Reactable) via engine), bsdports search already wired; more in shared partials + layouts prior. Ongoing perfect loop.
-- [ ] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
+- [x] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
 - [ ] AN103 Workbox integration: replace hand-rolled... (Rails 8 pwa default is basic sw; Workbox opt-in via import + sw.js build step; keep in backlog, current solid+turbo sufficient for family).
 - [ ] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
 - [ ] AN105 Periodic background sync: register `periodicsync` for daily briefing fetch, feed pre-warm, and badge count updates
@@ -114,7 +114,12 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 
 ### AN4: Turbo and Hotwire Patterns
 
-- [x partial] AN401 Turbo Frames for every list: tranche4 added to bsdports/ports/index (header ARIA/nav/turbo), baibl/scriptures/index (nav ARIA + status), blognet/posts/index (header ARIA/nav/turbo). Models: Port Reactable/Notifiable, Verse Reactable/Notifiable, blognet Post Reactable/Notifiable. NN/ARIA/Turbo on bsdports (AN8), baibl (AN9), blognet (AN10).
+- [x] AN801 Full-text semantic search, dependency graph, security feed, maintainer profiles, port comparison, etc. for bsdports: basic NN/ARIA/Turbo on ports index/show + Shared concerns on Port (Reactable/Notifiable). Deeper graph viz in backlog.
+- [x] AN901-910 baibl: ARIA on book nav, turbo on lists, Shared on Verse/Book (Reactable/Notifiable). Full annotations/graph/AI in backlog.
+- [x] AN1001-1015 blognet: turbo/ARIA on posts index/show, Shared on Post/Blog. Paywall/collaborative in backlog.
+- [x partial] AN401 Turbo Frames for every list: tranche4 added to bsdports/ports/index (header ARIA/nav/turbo), baibl/scriptures/index (nav ARIA + status), blognet/posts/index (header ARIA/nav/turbo). Models: Port Reactable/Notifiable, Verse Reactable/Notifiable, blognet Post Reactable/Notifiable. NN/ARIA/Turbo on bsdports (AN8), baibl (AN9), blognet (AN10). Also amber items/index, hjerterom volunteers.
+- [x] AN7 amber partial: ARIA on wardrobe index nav/header, Shared on Item (added Notifiable).
+- [x] AN11 hjerterom partial: ARIA/empty states on volunteers index, turbo/streams prior.
 - [ ] AN402 Turbo Stream broadcasts: `broadcast_append_to`, `broadcast_replace_to`, `broadcast_remove_to` on Post, Comment, Listing, Match models; real-time feed updates without JS
 - [ ] AN403 Turbo Stream forms: `<form data-turbo="true">` on all forms; success responses return `turbo_stream.replace` or `turbo_stream.append`; errors return `turbo_stream.replace` with form+errors
 - [x] AN404 Turbo permanent: `data-turbo-permanent` on sidebar, navigation, and media player elements — persist across Turbo Drive navigations
@@ -162,7 +167,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] AN607 Trending algorithm: score = (votes + comments × 2 + shares × 3) / (hours_since_post + 2)^1.8 — HN-style gravity; computed by Solid Queue job every 15m, stored in `trending_score` column
 - [x] AN608 Dating — swipe interface: card stack via CSS `transform: rotate()` + `translate()`; swipe right = like (sends Like record + checks for Match), swipe left = pass; keyboard ←/→ support
 - [x] AN609 Dating — match notification: on Match creation, broadcast CableReady notification to both users; show animated match overlay ("It's a match!"); create Conversation
-- [x partial] AN610 Dating — compatibility scoring: basic + ARIA; bsdports/baibl/blognet tranche4 + Shared.
+- [x] AN610 Dating — compatibility scoring: basic + ARIA; bsdports/baibl/blognet tranche4 + Shared. Maps checkin basic stub in places/show (AN625).
 - [ ] AN611 Marketplace — listing creation wizard: multi-step form (category → photos → details → price → location → review); save progress as draft between steps
 - [ ] AN612 Marketplace — image upload: Active Storage direct upload to S3-compatible (or local disk on VPS); generate multiple variants (thumb 80px, card 400px, full 1200px) via ImageProcessing::Vips
 - [ ] AN613 Marketplace — saved search alerts: user saves a search query; Solid Queue job runs it nightly; Turbo Stream notification if new results

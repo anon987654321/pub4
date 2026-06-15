@@ -1,13 +1,13 @@
 <% content_for :title, "Wardrobe" %>
 <%= turbo_stream_from "items" %>
 
-<section data-controller="filter">
-  <header>
+<section data-controller="filter" role="region" aria-label="Wardrobe items">
+  <header role="banner" aria-label="Wardrobe header">
     <div>
       <p class="dim">Closet intelligence</p>
       <h1>Wardrobe (<%= @pagy.count %>)</h1>
     </div>
-    <nav>
+    <nav role="navigation" aria-label="Wardrobe actions">
       <%= link_to "Add item", new_item_path, class: "btn" %>
       <%= link_to "Plan outfit", new_outfit_path, class: "btn" %>
       <%= link_to "Shopping list (gaps)", shopping_list_items_path, class: "btn" %>

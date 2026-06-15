@@ -1,10 +1,13 @@
-# MASTER Snapshot (auto-iter tranche4)
-Generated: 2026-06-15T07:17:37Z
-## Tranche4: bsdports/baibl/blognet NN/Turbo/Shared
+# MASTER Snapshot (final big push tranche4+)
+Generated: 2026-06-15T07:19:01Z
+## Massive push: NN/ARIA/Turbo/Shared across bsdports/baibl/blognet/amber/hjerterom + models + brgen maps stub
 ```
-- Major pruning (file sprawl reduction): removed entire brgen/app/models/concerns/ dir (after promotion), 6x bogus app/controllers/rails/ nested dirs (across amber/baibl/blognet/brgen/bsdports/hjerterom, each with duplicate pwa_controller), root marketplace/ stub, reduced .md files to exactly 1 README.md per app (amber/baibl/blognet/brgen/bsdports/hjerterom) + root README + shared/WIRING_NOTES (no other per-app ARCHITECTURE/STIMULUS etc. left).
-- [x] Engine-ize + prune + snapshots + deprecate: complete (see top AN note + root snapshots + WIRING). 6/6 Gemfiles, stray gone, scripts annotated, openbsd updated. NN/ARIA + flesh: takeaway orders (role+aria-label on form+header), amber Item (Shared.concern(:Reactable) via engine), bsdports search already wired; more in shared partials + layouts prior. Ongoing perfect loop.
-- [x] AN111 App shortcuts: manifest `shortcuts` array — brgen: new post, new listing, dating swipe; amber: add item, create outfit; bsdports: search; blognet: new post
-- [x] AN112 Share target: manifest `share_target` so native Share sheet can send URLs/text/files directly into each app (brgen post composer, amber item photo, blognet draft)
-- [x] AN113 File handler: manifest `file_handlers` — amber handles image/* (add to wardrobe), blognet handles text/markdown (import as draft)
+Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-script remains but local duplication gone + 6+ concerns in shared), integrate root snapshots (MASTER_snapshot.md / DEPLOY_snapshot.md in pub4 root, pushed 11ad193f) into LLM/self-eval process (new gap: "for other LLMs to evaluate" architecture/DRY/pruning/shared), wire more concerns (e.g. Mentionable if useful), continue AN2 (auth), AN103 (Workbox), AN106 (VAPID), AN15/AN1204 (tests/N+1), activity graph full, notification convergence. See major wins below. (Reassessment: DRY/KISS + pruning wins confirmed via ls/git (8 shared concerns, no local concerns/ dir, 1 README/app, snapshots present); no .md bloat; snapshots fulfill eval request. Smell: TODO length with historical repeats — archive done sections?)
+- [x] AN101 Manifest completeness: add `display_override...` etc to manifests (prior); Rails 8 native pwa generator (rails generate pwa) + views/pwa/ + routes align noted in research (edge guides 2026); apps on 8.1 + solid_* + propshaft good. Engine helps shared pwa partials future.
+- [x] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
+- [ ] AN103 Workbox integration: replace hand-rolled... (Rails 8 pwa default is basic sw; Workbox opt-in via import + sw.js build step; keep in backlog, current solid+turbo sufficient for family).
+- [ ] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
+- [ ] AN105 Periodic background sync: register `periodicsync` for daily briefing fetch, feed pre-warm, and badge count updates
+- [ ] AN106 Push notification VAPID: generate VAPID keys once per app; store in credentials; wire webpush gem (already in brgen) to all apps; display OS-native notifications
+- [x] AN107 Notification badge API: use `navigator.setAppBadge(count)` for unread message count; update via CableReady broadcast on new message
 ```

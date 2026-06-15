@@ -5,6 +5,7 @@ require "tempfile"
 class Item < ApplicationRecord
   # Engine-ize: pull shared behavior via pub4-shared (Gemfile path). Use Shared.concern for lazy load.
   include (defined?(Shared) ? Shared.concern(:Reactable) : Module.new) rescue nil
+  include (defined?(Shared) ? Shared.concern(:Notifiable) : Module.new) rescue nil
   belongs_to :user
   has_one :garment_embedding, dependent: :destroy
   has_one :sustainability_metric, dependent: :destroy

@@ -1,6 +1,6 @@
 <% content_for :title, @port.name %>
-<article>
-  <header>
+<article role="article" aria-label="Port details">
+  <header role="banner" aria-label="Port header">
     <h1><%= @port.name %> <small><%= @port.version %></small></h1>
     <small><%= link_to @port.category.name, category_path(@port.category) %></small>
   </header>

@@ -27,5 +27,8 @@
     <%= link_to "Open in map",
         "https://www.openstreetmap.org/?mlat=#{@place.latitude}&mlon=#{@place.longitude}#map=16/#{@place.latitude}/#{@place.longitude}",
         class: "btn", target: "_blank", rel: "noopener" %>
+    <% if authenticated? %>
+      <%= button_to "I'm here (check-in)", "#", class: "btn", form: { data: { turbo: true } } %> <!-- stub for AN625 -->
+    <% end %>
   </p>
 </article>

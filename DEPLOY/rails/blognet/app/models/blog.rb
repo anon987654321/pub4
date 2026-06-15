@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Blog < ApplicationRecord
+  # Engine-ize
+  include Shared.concern(:Reactable) rescue nil
+  include Shared.concern(:Notifiable) rescue nil
   belongs_to :user
   has_many :posts, dependent: :destroy
   has_one_attached :banner

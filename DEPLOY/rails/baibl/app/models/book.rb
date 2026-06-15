@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Book < ApplicationRecord
+  # Engine-ize
+  include Shared.concern(:Reactable) rescue nil
   has_many :chapters, dependent: :destroy
   has_many :verses, dependent: :destroy
 

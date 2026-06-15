@@ -1,9 +1,9 @@
 <% if @category %>
   <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
 <% end %>
-<ul id="ports">
+<ul id="ports" role="list" aria-label="OpenBSD ports list">
   <% @ports.each do |port| %>
-    <li>
+    <li role="listitem">
       <%= link_to port.name, port %>
       <small><%= port.version %></small>
       <small><%= link_to port.category.name, category_path(port.category) %></small>
@@ -11,4 +11,7 @@
     </li>
   <% end %>
 </ul>
+<% if @ports.empty? %>
+  <div class="empty" role="status" aria-live="polite"><p>No ports found.</p></div>
+<% end %>
 <%= @pagy.series_nav if @pagy.pages > 1 %>
