@@ -4,7 +4,8 @@ Operator context (intent, constraints, VPS recovery, next waves): [`../TODO.md`]
 
 Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
-**Critical Gaps (2026-06-15 reassess — after tranche10 + web pass + proceed-all fixes + strict rules.yml adherence push)**:
+**Critical Gaps (2026-06-15 reassess — after tranche10 + web pass + proceed-all fixes + strict rules.yml adherence push + faker seeds)**:
+- [x] Fictive seeds with ruby-faker for brgen + subapps (marketplace/dating/playlist/takeaway/tv/maps/messages: users, listings, profiles, orders, shows, places, convos etc.) and amber (items, outfits, posts). Comprehensive, idempotent, activity-wired. Added to amber Gemfile. See new db/seeds.rb files.
 - Strict rules.yml self-application: MASTER scan now in openbsd.sh pre-apply (blocks on violation per success_criteria). Extend to all per-app .sh, use openrsync (not cp) for singularity, enforce veto/anti-patterns in deploys (no TODOs, secrets in code), ground_truth fresh reads before every config sync, evidence_scoring (scan_clean) gate before rcctl restarts. Self-test laws must cover DEPLOY paths (ROBUSTNESS in sh, SINGULARITY in configs, etc.). No exceptions for "deploy only" code.
 - [~] AN201: Rails 8 `rails generate authentication` never run; no replacement of custom auth in the 6 apps (biggest open in AN2). Progress: authentication.rb + Rails 8 scaffold comment + baseline note (brgen; others similar).
 - [~] Engine full deprecate: scripts annotated DEPRECATED but old copy/install paths and non-bundle logic still exist in sh/deploy_all, openbsd/*.sh, per-app .sh, rc.d (bundle primary not enforced). Progress: all 6 per-app *.sh (amber/baibl/blognet/brgen/bsdports/hjerterom) legacy cp -R blocks commented + DEPRECATED; bundle via engine.
