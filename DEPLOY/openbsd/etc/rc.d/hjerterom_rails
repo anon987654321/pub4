@@ -1,14 +1,22 @@
 #!/bin/ksh
-
-daemon="/usr/local/bin/ruby34"
-daemon_flags="/home/hjerterom/app/config/falcon.rb"
+PORT=38891
+APP_DIR=/home/hjerterom/app
+[ -r /etc/hjerterom.env ] && . /etc/hjerterom.env
+daemon="/usr/local/bin/bundle34"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} falcon serve --bind http://127.0.0.1:${PORT}"
 daemon_user="hjerterom"
-daemon_timeout=30
-
+daemon_execdir="${APP_DIR}"
+daemon_logger="daemon.notice"
+daemon_timeout="120"
 . /etc/rc.d/rc.subr
-
-pexp="ruby34 /home/hjerterom/app/config/falcon.rb"
+pexp="ruby34.*${PORT}"
 rc_bg=YES
 rc_reload=NO
+
+rc_pre() {
+  pkill -f "falcon.*${PORT}" 2>/dev/null || true
+  pkill -f "ruby34.*${PORT}" 2>/dev/null || true
+  sleep 1
+}
 
 rc_cmd $1
