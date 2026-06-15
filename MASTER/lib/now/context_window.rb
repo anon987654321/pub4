@@ -3,7 +3,7 @@
 module Master
   module Now
     class ContextWindow
-      COMPACT_THRESHOLD = 0.80
+      COMPACT_THRESHOLD = 0.70
       private_constant :COMPACT_THRESHOLD
 
       attr_reader :session, :agent, :model_context

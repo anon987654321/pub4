@@ -1,7 +1,7 @@
 <% content_for :title, "#{@book.name} #{@chapter.number}" %>
-<header>
+<header role="banner" aria-label="Chapter header">
   <h1><%= @book.name %> <%= @chapter.number %></h1>
-  <nav>
+  <nav role="navigation" aria-label="Chapter navigation">
     <% if @prev_chapter %>
       <%= link_to "← #{@book.abbreviation} #{@prev_chapter}", scripture_chapter_path(@book.abbreviation, @prev_chapter) %>
     <% end %>

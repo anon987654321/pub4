@@ -8,10 +8,21 @@ class TestRenderer < Minitest::Test
       Array.new(9) { |i| "boot line #{i}" }.first(self.class::BOOT_DMESG_LINES)
     end
 
-    def git_rev = "test"
-    def soul_version = "test"
-    def imports_loaded = []
-    def active_orders_count = 0
+    def git_rev
+      "test"
+    end
+
+    def soul_version
+      "test"
+    end
+
+    def imports_loaded
+      []
+    end
+
+    def active_orders_count
+      0
+    end
   end
 
   def test_boot_dmesg_is_capped_at_five_lines
@@ -25,5 +36,12 @@ class TestRenderer < Minitest::Test
     assert_operator lines.size, :>, 5
     assert_operator lines.count { |line| line.include?("boot line") }, :>=, 2
     assert_operator lines.count { |line| line.include?("boot line") }, :<=, 5
+  end
+
+  def test_prompt_line_shows_context_usage
+    line = FakeRenderer.new(config: {}).prompt_line("model", "idle", tokens: 45_000).first
+
+    assert_includes line, "ctx:"
+    assert_includes line, "/200.0k"
   end
 end

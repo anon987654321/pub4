@@ -23,8 +23,8 @@
 </section>
 
 <%# Content loader + auto submit: live search container %>
-<form action="<%= local_assigns.fetch(:search_path, request.path) %>" method="get" data-controller="auto-submit">
-  <input type="search" name="q" value="<%= params[:q] %>" placeholder="Search" data-action="input->auto-submit#submit">
+<form action="<%= local_assigns.fetch(:search_path, request.path) %>" method="get" data-controller="auto-submit" role="search" aria-label="Example search">
+  <input type="search" name="q" value="<%= params[:q] %>" placeholder="Search" data-action="input->auto-submit#submit" aria-label="Search query">
 </form>
 <div data-controller="content-loader" data-content-loader-url-value="<%= local_assigns.fetch(:search_path, request.path) %>">
   <p>Loading…</p>
@@ -38,7 +38,7 @@
 </div>
 
 <%# Sortable list %>
-<ul data-controller="sortable" data-sortable-resource-name-value="item">
+<ul data-controller="sortable" data-sortable-resource-name-value="item" role="list" aria-label="Sortable items">
   <% Array(local_assigns[:items]).each do |item| %>
     <li data-sortable-update-url="<%= item.respond_to?(:to_param) ? url_for(item) : '#' %>"><%= item %></li>
   <% end %>

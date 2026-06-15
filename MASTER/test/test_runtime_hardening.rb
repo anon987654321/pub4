@@ -130,7 +130,7 @@ class RuntimeHardeningTest < Minitest::Test
       bus = EventBus.new
       shell = Master::Reach::Shell.new(root: dir, governor: PermitAll.new, event_bus: bus)
 
-      shell.call(command: "doas true")
+      shell.call(command: "doas vim /tmp/example")
 
       assert bus.events.any? { |name, _payload| name == "zsh:privilege_escalation_warning" }
     end

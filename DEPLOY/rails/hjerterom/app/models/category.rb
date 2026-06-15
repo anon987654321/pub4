@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Category < ApplicationRecord
+  # Engine-ize Shared
+  include Shared.concern(:Reactable) rescue nil
   has_many :resources, dependent: :nullify
   has_many :posts, dependent: :nullify
 

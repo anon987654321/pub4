@@ -20,6 +20,7 @@ module Master
       end
 
       def snapshot(path)
+        @bus&.publish("voice:catchphrase", phrase: "Backing up first.", path: path)
         content = File.exist?(path) ? File.read(path) : nil
         @session.snapshot(path, content)
         @stack << { "path" => path, "content" => content, "ts" => Time.now.to_i }
@@ -67,7 +68,9 @@ module Master
         Result.ok(paths.size == 1 ? paths.first : paths)
       end
 
-      def depth = @stack.size
+      def depth
+        @stack.size
+      end
 
       def history(limit: 10)
         @stack.last(limit).reverse.map.with_index(1) do |entry, i|

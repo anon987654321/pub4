@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class FoodRequest < ApplicationRecord
+  # Engine-ize Shared
+  include Shared.concern(:Notifiable) rescue nil
+  include Shared.concern(:GeoLocatable) rescue nil
   belongs_to :food_listing
   belongs_to :user
 

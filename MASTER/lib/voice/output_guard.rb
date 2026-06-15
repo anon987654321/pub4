@@ -82,8 +82,13 @@ module Master
         text.to_s.match?(/minimi[sz]e.*diagnostic output|diagnostic output.*minimi[sz]e/i)
       end
 
-      def modification_claim?(text) = text.to_s.match?(MODIFICATION_CLAIM)
-      def completion_claim?(text) = text.to_s.match?(COMPLETION_CLAIM)
+      def modification_claim?(text)
+        text.to_s.match?(MODIFICATION_CLAIM)
+      end
+
+      def completion_claim?(text)
+        text.to_s.match?(COMPLETION_CLAIM)
+      end
 
       def diff_evidence?(text)
         text.include?("```") || text.match?(/^diff --git/m) || text.match?(/^@@ /m)

@@ -5,7 +5,7 @@
   <%= link_to item.title, item, class: "item-title" %>
   <span class="dim"><%= item.category %><%= " · #{item.color}" if item.color.present? %></span>
   <span class="dim">Worn <%= item.times_worn.to_i %>× · <%= item.value_label %></span>
-  <nav>
+  <nav role="navigation" aria-label="Item actions">
     <%= button_to "Wear", wear_item_path(item), method: :post, class: "btn-sm" %>
     <% unless item.spark_joy? %>
       <%= button_to "Joy", spark_joy_item_path(item), method: :post, class: "btn-sm" %>

@@ -23,6 +23,8 @@ module Master
       }.freeze
 
       FileEntry = Struct.new(:path, :language, :bytes, :mtime, :score, keyword_init: true)
+      DEFAULT_TOKEN_LIMIT = 1_024
+      TOKEN_BYTES = 4.0
 
       attr_reader :root, :roots
 
@@ -54,12 +56,24 @@ module Master
         end.sort_by { |entry| -entry.score }.first(limit)
       end
 
-      def brief(query = nil, limit: 20)
+      def brief(query = nil, limit: 20, token_limit: DEFAULT_TOKEN_LIMIT)
         rows = query ? relevant(query, limit: limit) : files.first(limit)
-        rows.map { |entry| "#{entry.path} #{entry.language} #{entry.bytes}B score=#{format('%.2f', entry.score || 0)}" }
+        budgeted_rows(rows, token_limit: token_limit)
       end
 
       private
+
+      def budgeted_rows(rows, token_limit:)
+        tokens = 0.0
+        rows.filter_map do |entry|
+          line = "#{entry.path} #{entry.language} #{entry.bytes}B score=#{format('%.2f', entry.score || 0)}"
+          estimate = line.bytesize / TOKEN_BYTES
+          next if tokens + estimate > token_limit.to_f
+
+          tokens += estimate
+          line
+        end
+      end
 
       def files_in_root(base)
         Dir.glob(File.join(base, "**", "*"), File::FNM_DOTMATCH)

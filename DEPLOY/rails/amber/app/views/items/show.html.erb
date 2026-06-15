@@ -9,7 +9,7 @@
     </div>
   <% end %>
 
-  <header>
+  <header role="banner" aria-label="Item header">
     <div>
       <p class="dim"><%= @item.category %><%= " · #{@item.brand}" if @item.brand.present? %></p>
       <h1><%= @item.title %></h1>
@@ -50,7 +50,7 @@
     <div id="item_<%= @item.id %>_tags"></div>
   </section>
 
-  <nav>
+  <nav role="navigation" aria-label="Item actions">
     <%= button_to "Worn today", wear_item_path(@item), method: :post, class: "btn" %>
     <%= button_to "AI analyse", ai_analyze_item_path(@item), method: :post, class: "btn" %>
     <%= button_to "AI tag mood", ai_tag_item_path(@item), method: :post, class: "btn" %>

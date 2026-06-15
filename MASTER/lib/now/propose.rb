@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require "time"
+require_relative "../ground/bias_guard"
 require_relative "propose/candidate_sources"
 
 module Master
@@ -91,6 +92,7 @@ module Master
         candidates
           .group_by { |c| c[:action] }
           .map { |_, group| group.max_by { |c| c[:rank] } }
+          .map { |candidate| bias_guard.annotate(candidate) }
           .sort_by { |c| [-c[:rank], -c[:weight]] }
           .first(MAX_PROPOSALS)
       end
@@ -139,6 +141,10 @@ module Master
           estimated_tokens: estimated_tokens,
           estimated_cost: estimate_cost(estimated_tokens)
         )
+      end
+
+      def bias_guard
+        @bias_guard ||= Master::Ground::BiasGuard.new(root: @root)
       end
 
       def confidence_for(weight)

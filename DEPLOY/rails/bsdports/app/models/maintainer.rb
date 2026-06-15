@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Maintainer < ApplicationRecord
+  # Engine-ize Shared
+  include Shared.concern(:Notifiable) rescue nil
+  include Shared.concern(:Reactable) rescue nil
   has_many :ports, dependent: :nullify
 
   validates :name, presence: true

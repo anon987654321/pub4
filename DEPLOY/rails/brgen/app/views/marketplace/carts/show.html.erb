@@ -1,6 +1,6 @@
 <% content_for :title, "Your Cart" %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Cart header">
   <h1>Your Cart</h1>
   <p class="dim"><%= pluralize(@cart_items.size, "item") %></p>
 </div>

@@ -621,39 +621,39 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### S10: Structural Analysis Questions (v49.7 — specified, never wired as checks)
 
-- [ ] S1001 Config hierarchy checks: "Are top-level keys semantically grouped?", "Is there duplicate configuration?", "Is nesting depth appropriate (max 4)?"
-- [ ] S1002 Code hierarchy checks: "Too many top-level modules? → Group into Core::, Util::, Features::", "Are related classes grouped? → Create namespaces"
-- [ ] S1003 Bloater checks: long_method (>20 lines or >5 nesting), god_class (>300 lines or >10 methods), primitive_obsession, long_parameter_list (>4)
-- [ ] S1004 Coupler checks: feature_envy (method uses another class's data more than its own), inappropriate_intimacy, message_chains (a.b.c.d.e)
-- [ ] S1005 Dispensable checks: dead_code (after return/raise), lazy_class (only delegates), duplicate_code (Rule of Three)
-- [ ] S1006 Architecture checks: cyclic_dependency (module A requires module B requires module A), scattered_functionality (same concern in 3+ places)
-- [ ] S1007 Simulated execution checks: nil input, empty string/array, max int, very long string, unicode, invalid JSON, truncated file, injection attempts — generate edge case test stubs
+- [x] S1001 Config hierarchy checks: "Are top-level keys semantically grouped?", "Is there duplicate configuration?", "Is nesting depth appropriate (max 4)?"
+- [x] S1002 Code hierarchy checks: "Too many top-level modules? → Group into Core::, Util::, Features::", "Are related classes grouped? → Create namespaces"
+- [x] S1003 Bloater checks: long_method (>20 lines or >5 nesting), god_class (>300 lines or >10 methods), primitive_obsession, long_parameter_list (>4)
+- [x] S1004 Coupler checks: feature_envy (method uses another class's data more than its own), inappropriate_intimacy, message_chains (a.b.c.d.e)
+- [x] S1005 Dispensable checks: dead_code (after return/raise), lazy_class (only delegates), duplicate_code (Rule of Three)
+- [x] S1006 Architecture checks: cyclic_dependency (module A requires module B requires module A), scattered_functionality (same concern in 3+ places)
+- [x] S1007 Simulated execution checks: nil input, empty string/array, max int, very long string, unicode, invalid JSON, truncated file, injection attempts — generate edge case test stubs
 
 ### S11: Preserve Section (v49.72 — specified, never enforced in MASTER's own outputs)
 
-- [ ] S1101 Enforce preserve rules in all MASTER output: boot_message must be 5-line dmesg style, never collapsed to one line
-- [ ] S1102 Preserve: diagnostic_output is structured multi-line by design — "Polish means refine wording, not delete output"
-- [ ] S1103 Preserve: spinner_feedback shows elapsed time + status — never remove progress indicators
-- [ ] S1104 Preserve: help text must be scannable (command + syntax + description + at least one example) — /help output linted against this
-- [ ] S1105 Preserve: polish_rules check — before any MASTER self-edit, verify: "'Minimize' applies to tokens in prompts, not diagnostic output"
+- [x] S1101 Enforce preserve rules in all MASTER output: boot_message must be 5-line dmesg style, never collapsed to one line
+- [x] S1102 Preserve: diagnostic_output is structured multi-line by design — "Polish means refine wording, not delete output"
+- [x] S1103 Preserve: spinner_feedback shows elapsed time + status — never remove progress indicators
+- [x] S1104 Preserve: help text must be scannable (command + syntax + description + at least one example) — /help output linted against this
+- [x] S1105 Preserve: polish_rules check — before any MASTER self-edit, verify: "'Minimize' applies to tokens in prompts, not diagnostic output"
 
 ### S12: Cross-File DRY / Sprawl Detection (v49.13 — specified, never implemented as scanner pass)
 
-- [ ] S1201 Cross-file DRY: detect duplicate_function_calls (same File.read with identical options in 3+ files → extract Core.read_file)
-- [ ] S1202 Cross-file DRY: detect duplicate_glob_patterns (same Dir.glob pattern across 3+ files → extract Core.glob_files)
-- [ ] S1203 Cross-file DRY: detect magic_number_spread (same literal integer across 3+ files → extract shared constant)
-- [ ] S1204 Cross-file DRY: detect copy_paste_blocks (5+ line identical blocks across files → extract to module)
-- [ ] S1205 Cross-file DRY: detect parallel_hierarchies (similar class/module structures in different files → merge or share base)
-- [ ] S1206 Cross-file DRY: detect scattered_config (same configuration key set in 3+ places → consolidate to soul.yml)
-- [ ] S1207 Sprawl detection: warn when concern appears in 4+ files that aren't a natural family (e.g., cost logic in cli.rb + scanner + fixer + proposer)
-- [ ] S1208 Anti-sprawl prescan: before any fix session, run tree analysis to identify sprawl candidates; report before touching files
+- [x] S1201 Cross-file DRY: detect duplicate_function_calls (same File.read with identical options in 3+ files → extract Core.read_file)
+- [x] S1202 Cross-file DRY: detect duplicate_glob_patterns (same Dir.glob pattern across 3+ files → extract Core.glob_files)
+- [x] S1203 Cross-file DRY: detect magic_number_spread (same literal integer across 3+ files → extract shared constant)
+- [x] S1204 Cross-file DRY: detect copy_paste_blocks (5+ line identical blocks across files → extract to module)
+- [x] S1205 Cross-file DRY: detect parallel_hierarchies (similar class/module structures in different files → merge or share base)
+- [x] S1206 Cross-file DRY: detect scattered_config (same configuration key set in 3+ places → consolidate to soul.yml)
+- [x] S1207 Sprawl detection: warn when concern appears in 4+ files that aren't a natural family (e.g., cost logic in cli.rb + scanner + fixer + proposer)
+- [x] S1208 Anti-sprawl prescan: before any fix session, run tree analysis to identify sprawl candidates; report before touching files
 
 ### S13: Biases / Personality Calibration (v0.5.x — existed in .backups, never ported)
 
-- [ ] S1301 Port biases.yml concept: explicit list of cognitive biases MASTER should resist (confirmation bias, sunk cost, authority bias, recency bias)
-- [ ] S1302 Biases config has countermeasures per bias: "When confirmation bias detected → explicitly generate 3 counter-arguments before concluding"
-- [ ] S1303 Bias detection in MASTER's own proposed fixes: if fix only confirms the scan result without considering alternatives → flag as confirmation bias
-- [ ] S1304 Recency bias guard: don't weight most-recent violation above earlier ones when prioritizing fix order — use severity × frequency × age
+- [x] S1301 Port biases.yml concept: explicit list of cognitive biases MASTER should resist (confirmation bias, sunk cost, authority bias, recency bias)
+- [x] S1302 Biases config has countermeasures per bias: "When confirmation bias detected → explicitly generate 3 counter-arguments before concluding"
+- [x] S1303 Bias detection in MASTER's own proposed fixes: if fix only confirms the scan result without considering alternatives → flag as confirmation bias
+- [x] S1304 Recency bias guard: don't weight most-recent violation above earlier ones when prioritizing fix order — use severity × frequency × age
 
 ### S14: Roadmap / Future Capabilities (v49.74 — listed, never tracked)
 
@@ -667,25 +667,25 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### S15: Prescan + Anti-Pattern Catchphrases (v49.13 — specified, partial)
 
-- [ ] S1501 Prescan sequence: always run tree+clean before touching any file — detect sprawl, orphans, and lock files first
-- [ ] S1502 Personality catchphrases wired to real events: "Backing up first." before write, "That looks risky. Confirm?" before destructive op, "Checking for side effects..." before LLM fix, "Clean. Moving on." after zero findings
-- [ ] S1503 Bodyguard mode: block rm -rf, dd, mkfs without explicit --force flag; warn on doas escalation; check file permissions before write
-- [ ] S1504 On blockers: "finds workarounds, suggests alternatives" — if primary approach fails, MASTER generates 3 alternative approaches automatically
+- [x] S1501 Prescan sequence: always run tree+clean before touching any file — detect sprawl, orphans, and lock files first
+- [x] S1502 Personality catchphrases wired to real events: "Backing up first." before write, "That looks risky. Confirm?" before destructive op, "Checking for side effects..." before LLM fix, "Clean. Moving on." after zero findings
+- [x] S1503 Bodyguard mode: block rm -rf, dd, mkfs without explicit --force flag; warn on doas escalation; check file permissions before write
+- [x] S1504 On blockers: "finds workarounds, suggests alternatives" — if primary approach fails, MASTER generates 3 alternative approaches automatically
 
 ## T — Borrowed Concepts from aider, OpenCrabs, Codex CLI, Grok Build, Hermes Agent
 
 ### T1: Memory Architecture (from OpenCrabs / Hermes)
 
-- [ ] T101 3-tier brain architecture: MEMORY.md (user-curated durable facts) + daily session logs (auto-compacted) + hybrid search layer — separate durable vs ephemeral knowledge
-- [ ] T102 Hybrid search with RRF: Reciprocal Rank Fusion combining FTS5 keyword (BM25) + vector embeddings — eliminates false negatives from pure keyword or pure semantic alone
-- [ ] T103 Brain file templates: SOUL.md (identity/values), IDENTITY.md (persona), MEMORY.md (facts index), AGENTS.md (tool registry), TOOLS.md (skill library) — structured retrieval vs flat notes
-- [ ] T104 Editable brain between turns: brain files remain plaintext-editable by user, not locked in vectordb — enables human-AI co-curation of MASTER's knowledge
+- [x] T101 3-tier brain architecture: MEMORY.md (user-curated durable facts) + daily session logs (auto-compacted) + hybrid search layer — separate durable vs ephemeral knowledge
+- [x] T102 Hybrid search with RRF: Reciprocal Rank Fusion combining FTS5 keyword (BM25) + vector embeddings — eliminates false negatives from pure keyword or pure semantic alone
+- [x] T103 Brain file templates: SOUL.md (identity/values), IDENTITY.md (persona), MEMORY.md (facts index), AGENTS.md (tool registry), TOOLS.md (skill library) — structured retrieval vs flat notes
+- [x] T104 Editable brain between turns: brain files remain plaintext-editable by user, not locked in vectordb — enables human-AI co-curation of MASTER's knowledge
 - [ ] T105 FTS5-only VPS mode: zero-embedding fallback using pure keyword search — cost-appropriate for OpenBSD VPS with no GPU
 - [ ] T106 Tree-sitter + SQLite AST cache: cache parsed ASTs to avoid re-parsing unchanged files — apply to MASTER's Prism structural scan across multi-file sessions
 - [ ] T107 Session search with LLM summarization: cross-session memory recall via FTS5 with LLM-generated summaries of past sessions, not raw retrieval
-- [ ] T108 Token-budgeted context map: MASTER's file map output capped at configurable token limit (default 1,024) via relevance ranking — prevent context explosion
-- [ ] T109 Live context usage indicator in REPL: display "ctx: 45K/200K" + per-message cost breakdown in prompt line — real-time cost transparency
-- [ ] T110 Auto-compaction at 70% threshold: when approaching token limits, summarize context intelligently rather than hard-cut at 100%
+- [x] T108 Token-budgeted context map: MASTER's file map output capped at configurable token limit (default 1,024) via relevance ranking — prevent context explosion
+- [x] T109 Live context usage indicator in REPL: display "ctx: 45K/200K" + per-message cost breakdown in prompt line — real-time cost transparency
+- [x] T110 Auto-compaction at 70% threshold: when approaching token limits, summarize context intelligently rather than hard-cut at 100%
 
 ### T2: Self-Improvement / Learning Loop (from OpenCrabs / Hermes)
 

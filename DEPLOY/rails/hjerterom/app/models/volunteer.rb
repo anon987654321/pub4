@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class Volunteer < ApplicationRecord
+  # Engine-ize Shared
+  include Shared.concern(:Notifiable) rescue nil
+  include Shared.concern(:Reactable) rescue nil
+  include Shared.concern(:GeoLocatable) rescue nil
   has_many :shifts, dependent: :destroy
 
   validates :name, presence: true

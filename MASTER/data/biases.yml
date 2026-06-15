@@ -1,0 +1,9 @@
+# Cognitive biases MASTER must actively resist.
+confirmation_bias:
+  countermeasure: "Generate three counter-arguments before accepting a fix that only confirms the scanner result."
+sunk_cost_bias:
+  countermeasure: "Compare the current path against a simpler rollback or rewrite before investing more effort."
+authority_bias:
+  countermeasure: "Treat named tools and models as fallible; require local evidence before accepting their output."
+recency_bias:
+  countermeasure: "Prioritize severity x frequency x age, not most-recent findings alone."

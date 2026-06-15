@@ -47,6 +47,15 @@ class TestMemory < Minitest::Test
     assert_equal "i survived", mem2.recall("persist_key")
   end
 
+  def test_brain_files_are_plaintext_and_imported
+    %w[MEMORY.md IDENTITY.md TOOLS.md].each do |name|
+      assert File.exist?(File.join(@root, "data", name)), "#{name} should exist"
+    end
+
+    assert @mem.recall("brain/memory").include?("Durable")
+    assert @mem.recall("brain/tools").include?("tool")
+  end
+
   def test_auto_save_user_pattern
     key = @mem.auto_save("I'm a senior Ruby engineer at a startup")
     refute_nil key
@@ -68,6 +77,17 @@ class TestMemory < Minitest::Test
     hits = @mem.semantic_recall("frozen string ruby")
     assert hits.any?, "expected TF-IDF hits for ruby query"
     assert hits.first[:key].include?("ruby"), "top hit should be ruby_tip, got #{hits.first[:key]}"
+  end
+
+  def test_hybrid_recall_uses_rrf_fusion_for_keyword_vps_mode
+    @mem.remember("openbsd_tip", "use rcctl and doas on OpenBSD VPS")
+    @mem.remember("rails_tip", "use turbo streams in Rails")
+
+    hits = @mem.hybrid_recall("openbsd rcctl vps", top_n: 2)
+
+    assert hits.any?, "expected hybrid recall hits"
+    assert_equal "rrf", hits.first[:fusion]
+    assert_equal "openbsd_tip", hits.first[:key]
   end
 
   def test_tfidf_recall_returns_empty_for_noise

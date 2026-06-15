@@ -12,7 +12,7 @@
         <% end %>
       </div>
 
-      <ul class="nav-links">
+      <ul class="nav-links" role="list" aria-label="Main navigation">
         <% if user_signed_in? %>
           <li>
             <span class="nav-user" aria-label="<%= current_user.email %>"><%= current_user.email %></span>

@@ -1,6 +1,6 @@
 <section id="food_listings">
   <% @listings.each do |listing| %>
-    <article>
+    <article role="article" aria-label="Food listing">
       <%= link_to listing.title, food_listing_path(listing) %>
       <p><%= listing.quantity %> <%= listing.unit %> · <%= listing.city %></p>
       <p>Until <%= listing.available_until&.strftime("%b %-d, %H:%M") %></p>

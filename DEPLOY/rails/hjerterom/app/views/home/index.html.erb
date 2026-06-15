@@ -36,7 +36,7 @@
   <div class="map-home__sheet">
     <h2>Tilgjengelig nå</h2>
     <% @food_listings.first(5).each do |listing| %>
-      <article>
+      <article role="article" aria-label="Home section">
         <%= link_to listing.title, food_listing_path(listing) %>
         <p><%= listing.city.presence || "Åsane" %> · til <%= listing.available_until&.strftime("%b %-d") || "snart" %></p>
       </article>

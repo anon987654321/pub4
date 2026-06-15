@@ -1,6 +1,6 @@
 <% content_for :title, "Delivery driver" %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Delivery driver header">
   <div>
     <p class="dim">Takeaway operations</p>
     <h1><%= @delivery_driver.user.display_name.presence || @delivery_driver.user.email_address.split("@").first %></h1>

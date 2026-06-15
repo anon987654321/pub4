@@ -12,6 +12,7 @@ module Master
           @mutex = Mutex.new
           @store = load_store
           @store_version = 0
+          ensure_brain_files!
           import_external!
         end
 
@@ -19,14 +20,14 @@ module Master
           type = TYPES.include?(type.to_s) ? type.to_s : "general"
           @mutex.synchronize do
             prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
-            @store[key.to_s] = entry_for(key:, value:, type:)
+            @store[key.to_s] = entry_for(key: key, value: value, type: type)
             persist
           end
         end
 
         def by_type(type)
           @mutex.synchronize do
-            @store.select { |key, value| typed_entry?(key:, value:, type: type.to_s) }
+            @store.select { |key, value| typed_entry?(key: key, value: value, type: type.to_s) }
           end
         end
 
@@ -93,12 +94,53 @@ module Master
         end
 
         def import_external!
+          import_brain_files!
           dir = File.join(@root, "data", "claude")
           return unless Dir.exist?(dir)
 
           Dir.glob(File.join(dir, "*.md")).each { |path| import_external_file(path) }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "memory.preload_claude_md")
+        end
+
+        def ensure_brain_files!
+          dir = File.join(@root, "data")
+          FileUtils.mkdir_p(dir)
+          brain_templates.each do |name, content|
+            path = File.join(dir, name)
+            next if File.exist?(path)
+
+            File.write(path, content, encoding: "UTF-8")
+          end
+        end
+
+        def brain_templates
+          {
+            "MEMORY.md" => "# MEMORY\n\nDurable user-curated facts for MASTER.\n",
+            "IDENTITY.md" => "# IDENTITY\n\nActive persona, voice, and operator preferences.\n",
+            "TOOLS.md" => "# TOOLS\n\nHuman-editable registry notes for local tools, skills, and MCP endpoints.\n"
+          }
+        end
+
+        def import_brain_files!
+          %w[MEMORY.md IDENTITY.md TOOLS.md SOUL.md AGENTS.md].each do |name|
+            path = File.join(@root, "data", name)
+            next unless File.exist?(path)
+
+            key = "brain/#{File.basename(name, ".md").downcase}"
+            next if @store.key?(key)
+
+            body = File.read(path, encoding: "UTF-8").strip
+            remember(key, body, type: brain_type(name)) unless body.empty?
+          end
+        end
+
+        def brain_type(name)
+          case name
+          when "MEMORY.md" then "user"
+          when "TOOLS.md" then "reference"
+          else "general"
+          end
         end
 
         def import_external_file(path)

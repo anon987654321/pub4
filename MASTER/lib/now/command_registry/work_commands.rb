@@ -179,7 +179,7 @@ module Master
           target = expand_or_root(arg, root)
           prescan = anti_sprawl_prescan(scanner:, target:, root:)
           result = fix_loop.run(target)
-          output = result.ok? ? result.value! : "fix: #{result.message}"
+          output = result.ok? ? result.value! : fix_failure_with_alternatives(result.message, target)
           [prescan, output].reject(&:empty?).join("\n")
         end
       end
@@ -190,9 +190,9 @@ module Master
 
         pairs = Master::Judge::Scan::CrossFileAnalysis.new(root:).call(paths)
         findings = pairs.flat_map { |_path, result| Result.wrap(result).value_or([]) }
-        return "prescan: clean. Moving on." if findings.empty?
+        return "Checking for side effects...\nprescan: clean. Moving on." if findings.empty?
 
-        lines = ["prescan: #{findings.size} cross-file risk(s) before fix"]
+        lines = ["Checking for side effects...", "prescan: #{findings.size} cross-file risk(s) before fix"]
         findings.first(8).each { |finding| lines << "  #{finding[:rule]}: #{finding[:message]}" }
         lines.join("\n")
       rescue StandardError => e
@@ -206,6 +206,16 @@ module Master
         return [] unless File.directory?(path)
 
         Dir.glob(File.join(path, Master::Judge::Scan::Scanner::SCAN_GLOB)).select { |entry| File.file?(entry) }
+      end
+
+      def fix_failure_with_alternatives(message, target)
+        [
+          "fix: #{message}",
+          "alternatives:",
+          "  1. /fix --dry-run #{target} to inspect intended changes without writing",
+          "  2. /scan #{target} to isolate the highest-confidence findings first",
+          "  3. /review #{target} to get a council critique before retrying the repair"
+        ].join("\n")
       end
 
       # Constitutional scoreboard: per-axiom violation counts over lib/, plus a

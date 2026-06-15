@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../ground/bias_guard"
+
 module Master
   module Loop
     class FixLoop
@@ -7,6 +9,7 @@ module Master
         TIER2_QUALITY_RULE_IDS = %w[DRY KISS SRP].freeze
         DEPS_PATH = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
         PRIORS_PATH = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
+        AGE_PATH = File.join("data", "violation_age.yml").freeze
         SKIP_DIRS_RE = %r{/(\.git|vendor|tmp|var|node_modules|\.bundle|coverage|log|dist|knowledge)/}.freeze
 
         def initialize(rules:, learnings:, bus:, root:)
@@ -20,11 +23,17 @@ module Master
           deps = load_deps
           priors = load_priors
           ext_wts = extension_weights
+          bias_guard = Master::Ground::BiasGuard.new(root: @root)
           sorted = @rules.each_with_index.sort_by do |r, i|
             base_prior = priors.dig(r.id, "prior_p").to_f
             modifiers = priors.dig(r.id, "language_modifiers") || {}
             adjusted = ext_wts.sum { |ext, w| base_prior * (modifiers[ext] || 1.0) * w }
-            density = violation_counts[r.id].to_f + adjusted
+            frequency = violation_counts[r.id].to_f + adjusted
+            density = bias_guard.priority_score(
+              severity: rule_severity(r),
+              frequency: frequency,
+              age_days: violation_age_days(r.id)
+            )
             quality = @learnings&.fix_quality(rule: r.id) || 0.5
             tier2 = tier2?(r.id) ? 1 : 0
             [-tier2, -density, -quality, i]
@@ -46,9 +55,22 @@ module Master
           levels
         end
 
-        def tier2?(rule_id) = TIER2_QUALITY_RULE_IDS.include?(rule_id.to_s)
+        def tier2?(rule_id)
+          TIER2_QUALITY_RULE_IDS.include?(rule_id.to_s)
+        end
 
         private
+
+        def rule_severity(rule)
+          rule.respond_to?(:severity) ? rule.severity : :warning
+        end
+
+        def violation_age_days(rule_id)
+          age = load_age[rule_id.to_s]
+          return age.to_f if age
+
+          0.0
+        end
 
         def topo_sort(rules, deps)
           id_map = rules.to_h { |r| [r.id, r] }
@@ -104,6 +126,16 @@ module Master
               Master.load_yaml(PRIORS_PATH) || {}
             rescue StandardError => e
               Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
+              {}
+            end
+        end
+
+        def load_age
+          @age_cache ||=
+            begin
+              Master.load_yaml(File.join(@root, AGE_PATH)) || {}
+            rescue StandardError => e
+              Master::Ground::Swallow.log(e, context: "fix_loop.load_age", event_bus: @bus)
               {}
             end
         end

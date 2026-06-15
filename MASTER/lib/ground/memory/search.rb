@@ -4,16 +4,29 @@ module Master
   module Ground
     class Memory
       module Search
+        RRF_K = 60.0
+
         def semantic_recall(query, top_n: 3)
+          hybrid_recall(query, top_n: top_n)
+        end
+
+        def hybrid_recall(query, top_n: 3)
           store_snap = @mutex.synchronize { @store.dup }
           return [] if store_snap.empty?
 
+          keyword_hits = tfidf_recall(query: query, top_n: top_n * 3, store: store_snap)
+          vector_hits = []
           if Judge::Embeddings.enabled? && (qvec = Judge::Embeddings.embed(query))
-            hits = vector_recall(qvec:, top_n:, store: store_snap)
-            return hits unless hits.empty?
+            vector_hits = vector_recall(qvec: qvec, top_n: top_n * 3, store: store_snap)
           end
 
-          tfidf_recall(query:, top_n:, store: store_snap)
+          fused = rrf(keyword_hits, vector_hits)
+          fused.empty? ? keyword_hits.first(top_n) : fused.first(top_n)
+        end
+
+        def keyword_recall(query, top_n: 3)
+          store_snap = @mutex.synchronize { @store.dup }
+          tfidf_recall(query: query, top_n: top_n, store: store_snap)
         end
 
         private
@@ -42,13 +55,30 @@ module Master
           end.sort_by { |e| -e[:score] }.first(top_n)
         end
 
-        def tokenize(text) = text.downcase.scan(/\b[a-z]{2,}\b/)
+        def tokenize(text)
+          text.downcase.scan(/\b[a-z]{2,}\b/)
+        end
 
         def tfidf_score(query_terms, doc_terms)
           return 0.0 if doc_terms.empty?
 
           freq = doc_terms.tally
           query_terms.sum { |t| Math.log(1.0 + freq.fetch(t, 0).to_f) }
+        end
+
+        def rrf(*ranked_lists)
+          scores = Hash.new(0.0)
+          payloads = {}
+          ranked_lists.each do |list|
+            list.each_with_index do |hit, index|
+              key = hit[:key]
+              scores[key] += 1.0 / (RRF_K + index + 1)
+              payloads[key] ||= hit
+            end
+          end
+          scores.sort_by { |key, score| [-score, key.to_s] }.map do |key, score|
+            payloads[key].merge(score: score, fusion: "rrf")
+          end
         end
       end
     end

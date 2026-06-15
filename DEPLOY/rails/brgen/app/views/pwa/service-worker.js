@@ -1,8 +1,10 @@
-const CACHE = "brgen-v2"
+const CACHE_VERSION = "__CACHE_VERSION__"
+const CACHE = `brgen-${CACHE_VERSION}`
 const PERIODIC_FEED = "feed-prewarm"
 const PERIODIC_BADGE = "badge-refresh"
 const DB_NAME = "brgen-draft-store"
 const QUEUE = "queue"
+const OFFLINE_FORMS = "offline-forms"
 
 const openDb = () => new Promise((resolve, reject) => {
   const request = indexedDB.open(DB_NAME, 1)
@@ -53,6 +55,20 @@ const clearQueue = async key => {
   db.close()
 }
 
+const requestEntry = async request => ({
+  action: request.url,
+  method: request.method,
+  headers: Object.fromEntries(request.headers.entries()),
+  body: await request.clone().text()
+})
+
+const queueRequest = async request => {
+  const queues = await readQueue()
+  const entries = queues[OFFLINE_FORMS] || []
+  entries.push(await requestEntry(request))
+  await writeQueue(OFFLINE_FORMS, entries)
+}
+
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/"])))
   self.skipWaiting()
@@ -66,7 +82,15 @@ self.addEventListener("activate", e => {
 })
 
 self.addEventListener("fetch", e => {
-  if (e.request.method !== "GET") return
+  if (e.request.method !== "GET") {
+    const request = e.request.clone()
+    e.respondWith(fetch(e.request).catch(async () => {
+      await queueRequest(request)
+      await self.registration.sync?.register(OFFLINE_FORMS).catch(() => {})
+      return new Response("", { status: 202, statusText: "Queued offline" })
+    }))
+    return
+  }
   const url = new URL(e.request.url)
   const isNav = e.request.mode === "navigate"
   const isAsset = /\.(js|css|png|jpg|jpeg|webp|svg|woff2?|ico)$/.test(url.pathname)
@@ -85,7 +109,7 @@ self.addEventListener("fetch", e => {
 })
 
 self.addEventListener("sync", e => {
-  if (e.tag !== "draft-store") return
+  if (e.tag !== "draft-store" && e.tag !== OFFLINE_FORMS) return
   e.waitUntil((async () => {
     const queues = await readQueue()
     for (const [key, entries] of Object.entries(queues)) {

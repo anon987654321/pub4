@@ -84,6 +84,7 @@ module Master
         ahead, behind = git_ahead_behind
         bar = token_bar(tokens)
         usage = token_label(tokens)
+        ctx = context_label(tokens)
         model_str = @p.dim(short_model(model))
         dirty_glyph = dirty ? @p.red("●") : @p.dim("○")
         ahead_str = ahead > 0 ? @p.dim(" ↑#{ahead}") : ""
@@ -94,7 +95,7 @@ module Master
         cost_str = cost_label(cost)
         cost_seg = cost_str.empty? ? "" : "#{cost_str} "
         prompt = phase_prompt(last_ok, phase)
-        ["#{branch_str}  #{model_str}  ↖ #{bar}#{usage}  #{cost_seg}#{vbadge}#{phase_str}", prompt + " "]
+        ["#{branch_str}  #{model_str}  ↖ #{bar}#{usage}  #{ctx}  #{cost_seg}#{vbadge}#{phase_str}", prompt + " "]
       end
 
       def phase_tinted(text, phase)
@@ -174,6 +175,12 @@ module Master
         value >= 1000 ? format("%.1fk", value / 1000.0) : value.to_s
       end
 
+      def context_label(tokens)
+        current = token_label(tokens)
+        max = token_label(Master::CTX_WINDOW_SIZE)
+        @p.dim("ctx: #{current}/#{max}")
+      end
+
       def render(content, mode: :plain)
         text = output_guard.sanitize(beautify(content.to_s), context: output_context(mode))
         case mode
@@ -186,8 +193,13 @@ module Master
         end
       end
 
-      def format_error(message) = render(message, mode: :error)
-      def format_dmesg(line) = @p.dim(line.to_s)
+      def format_error(message)
+        render(message, mode: :error)
+      end
+
+      def format_dmesg(line)
+        @p.dim(line.to_s)
+      end
 
       def closing
         path = File.join(Master::ROOT, "data", "closings.yml")
@@ -222,7 +234,9 @@ module Master
 
       private
 
-      def d(text) = @p.dim(text)
+      def d(text)
+        @p.dim(text)
+      end
     end
   end
 end
