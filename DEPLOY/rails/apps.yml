@@ -49,21 +49,21 @@ apps:
         - { name: creator monetization,                                    status: planned }
         - { name: maps surface,                                            status: planned }
       subapp_tv:
-        - { name: Tv::Channel (slug, avatar, banner, subscribers_count),   status: done, notes: patch_tv_models.sh }
-        - { name: Tv::Video (status machine, duration_formatted),          status: done }
-        - { name: Tv::Broadcast (stream_key, go_live!/end_live!),          status: done }
-        - { name: Tv::Subscription,                                        status: done }
-        - { name: Tv::ViewEvent,                                           status: done }
-        - { name: Tv::Show,                                                status: missing }
-        - { name: Tv::Episode,                                             status: missing }
+        - { name: "Tv::Channel (slug, avatar, banner, subscribers_count)", status: done, notes: "patch_tv_models.sh" }
+        - { name: "Tv::Video (status machine, duration_formatted)", status: done }
+        - { name: "Tv::Broadcast (stream_key, go_live!/end_live!)", status: done }
+        - { name: "Tv::Subscription", status: done }
+        - { name: "Tv::ViewEvent", status: done }
+        - { name: "Tv::Show", status: missing }
+        - { name: "Tv::Episode", status: missing }
         - { name: video upload + Active Storage variants,                  status: missing }
         - { name: live stream infrastructure,                              status: planned }
         - { name: VideoPublished / BroadcastScheduled events,             status: missing }
       subapp_dating:
-        - { name: Dating::Profile (user, bio, interests),                   status: done }
-        - { name: Dating::Like (user, liked_user),                          status: done }
-        - { name: Dating::Dislike (user, disliked_user),                    status: done }
-        - { name: Dating::Match (MatchmakingService — mutual likes),        status: done }
+        - { name: "Dating::Profile (user, bio, interests)", status: done }
+        - { name: "Dating::Like (user, liked_user)", status: done }
+        - { name: "Dating::Dislike (user, disliked_user)", status: done }
+        - { name: "Dating::Match (MatchmakingService — mutual likes)", status: done }
         - { name: swipe UI (Turbo Streams, Stimulus),                       status: done }
         - { name: city + radius filter,                                     status: missing }
         - { name: match → messaging handoff,                                status: missing }
@@ -72,29 +72,29 @@ apps:
       subapp_marketplace:
         notes: Old impl used Solidus — pub4 needs native Rails 8 models instead
         items:
-        - { name: Marketplace::Product (name, description, price, image),   status: done, notes: "Marketplace::Listing native Rails 8" }
-        - { name: Marketplace::Category,                                    status: done }
-        - { name: Marketplace::Review,                                      status: port }
+        - { name: "Marketplace::Product (name, description, price, image)", status: done, notes: "Marketplace::Listing native Rails 8" }
+        - { name: "Marketplace::Category", status: done }
+        - { name: "Marketplace::Review", status: port }
         - { name: schema.org Product microdata in views,                    status: done }
-        - { name: Marketplace::Order (state machine),                       status: done }
+        - { name: "Marketplace::Order (state machine)", status: done }
         - { name: buyer–seller Chat,                                        status: done, notes: "Conversation#create from listing show" }
         - { name: geo-localized listings,                                   status: missing }
         - { name: locale subdomain routing (markedsplass/markadur/…),      status: missing }
         - { name: FTS filtering,                                            status: port }
         - { name: AI recommendations,                                       status: planned }
       subapp_playlist:
-        - { name: Playlist::Set (name, description, user),                  status: done }
-        - { name: Playlist::Track (name, artist, audio_url, set),           status: done }
+        - { name: "Playlist::Set (name, description, user)", status: done }
+        - { name: "Playlist::Track (name, artist, audio_url, set)", status: done }
         - { name: schema.org microdata in views,                            status: port }
-        - { name: Playlist::Listen,                                         status: missing }
+        - { name: "Playlist::Listen", status: missing }
         - { name: embeddable player,                                        status: port }
         - { name: Spotify/YouTube/SoundCloud import,                        status: missing }
         - { name: city-scoped trending feed,                                status: missing }
         - { name: expiration dates on tracks,                               status: missing }
         - { name: creator donations / ad-free tier,                         status: planned }
       subapp_takeaway:
-        - { name: Takeaway::Item (name, description, price),                status: done, notes: "Takeaway::MenuItem" }
-        - { name: Takeaway::Order (user, status:string),                    status: done }
+        - { name: "Takeaway::Item (name, description, price)", status: done, notes: "Takeaway::MenuItem" }
+        - { name: "Takeaway::Order (user, status:string)", status: done }
         - { name: Restaurant model (geocoding),                             status: missing }
         - { name: MenuItem availability state machine,                      status: missing }
         - { name: Order full state machine (placed→delivered),              status: missing }
