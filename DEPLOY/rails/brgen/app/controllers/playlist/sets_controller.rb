@@ -32,6 +32,7 @@ module Playlist
       @set.user = current_user if respond_to?(:current_user, true)
 
       if @set.save
+        @set.record_activity!("PlaylistSetCreated", actor: Current.user, source_vertical: "playlist") rescue nil
         redirect_to playlist_set_path(@set), notice: t("playlist.set_created", default: "Set created")
       else
         render :new, status: :unprocessable_entity

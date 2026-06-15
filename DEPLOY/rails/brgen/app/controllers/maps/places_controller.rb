@@ -17,6 +17,7 @@ module Maps
 
     def show
       @place = Place.includes(:city, :neighborhood).find(params[:id])
+      @place.record_activity!("PlaceViewed", source_vertical: "maps") rescue nil
     end
   end
 end

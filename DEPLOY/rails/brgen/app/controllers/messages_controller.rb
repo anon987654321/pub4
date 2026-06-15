@@ -9,6 +9,7 @@ class MessagesController < ApplicationController
     @message.sender = Current.user
 
     if @message.save
+      @message.record_activity!("MessageSent", actor: Current.user, source_vertical: "messages") rescue nil
       @conversation.participants.excluding(Current.user).each do |recipient|
         Shared::Pushable.push_to(recipient,
           title: Current.user.display_name,

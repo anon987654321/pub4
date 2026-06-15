@@ -26,6 +26,7 @@ class PostsController < ApplicationController
     @post.anonymous = true if Current.user.guest?
     @post.community = @community if @community
     if @post.save
+      @post.record_activity!("PostCreated", actor: Current.user, source_vertical: "social") rescue nil
       preset = post_params[:preset].presence
       PostproJob.perform_later(@post.to_gid.to_s, preset) if preset && @post.image.attached?
       redirect_to @post, notice: "Posted."

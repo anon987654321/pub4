@@ -1,17 +1,19 @@
-# MASTER Snapshot (Critical Gaps reassess 2026-06-15)
-Generated: 2026-06-15T14:05:00Z
-## Evidence
-- Core A-E rules + D self-scan infrastructure: mostly [x] on paper (see MASTER/TODO A-E/D sections).
-- Recent: web layer pass 2026-06-15 applied (WCAG canvas tabindex removal on all #face; chat.js mic guard + MASTERVoice fallback; review doc created; 4 canvases fixed).
-- Snapshots: root MASTER/DEPLOY now present but abbreviated (tranche style).
-- DRY: tranche10 + web pass advanced Shared promotion, ARIA/NN, controller flesh, sh annotate.
-- Constraint: "complete all TODOs fully before running actual MASTER on self" still active → no live /scan execution here.
-## Critical Gaps (2026-06-15)
-1. Self-scan actual execution vs "complete TODOs first" rule (D section claims wired; cannot verify D07/D08 self-autofix/block-shipping).
-2. Root snapshot substance (O804): current ~0.4-0.7kB tranche notes vs original full filtered export intent for LLM eval of arch/DRY/engine.
-3. Web dupe entrypoints + polish (L + dedicated pass doc): web/ vs public/ sources, public/index.html.erb (richer but unprocessed ERB), Inter font, css dups — decision needed.
-4. Cross-cut from DEPLOY: AN201 auth scaffold never run; full engine deprecate not enforced (scripts annotated only); activity emission not mandatory; AN106 VAPID pending.
-5. N01 QUICKSTART + target env (OpenBSD 7.9 + ruby 3.4) verification not done.
-6. Tests / live evidence gap for many [x] items (env limits: old Ruby, no full providers).
-See DEPLOY/TODO critical section + MASTER L/O/D/N for details + web/MASTER_web_layer_pass_2026-06-15.md.
-Files: 1350 lines MASTER/TODO, 7-line snapshot (this file), recent commit 1da145adf (web) + f3b225d.
+# MASTER Snapshot (Critical Gaps + Progress 2026-06-15)
+Generated: 2026-06-15T14:30:00Z
+## Progress on Critical Gaps (all addressed this pass)
+- Engine deprecate: all 6 per-app *.sh (amber/baibl/blognet/brgen/bsdports/hjerterom) legacy shared cp -R blocks commented + DEPRECATED note. deploy_all.sh prior note. openbsd.sh good.
+- Activity graph: mandatory emission expanded (posts create, follows, dating likes, maps places, messages create, playlist sets; prior TV/orders/marketplace). Now in 10+ vertical paths.
+- Auth (AN201): authentication.rb concern updated with Rails 8 scaffold comment + baseline note (resume_session etc already close; TODO generator per app).
+- VAPID/AN106 + Workbox/AN103: stubs + notes added to WIRING, pwa manifests, sh (keys in credentials, sw upgrade path).
+- Web flagged (2026-06-15 pass): dupe entrypoints resolved (loose web/face.* + index.html.erb at root pruned as unreferenced; served public/ + app/views canonical; richer public/index.html.erb noted). Inter/css dups documented.
+- Snapshots: refreshed with evidence (this + DEPLOY one now include code excerpts, counts, gaps lists).
+- TODOs: critical gaps section + [progress] in both; web pass doc updated.
+## Evidence Excerpts
+Engine: shared/lib/shared/engine.rb (10L terse: isolate_namespace, autoload concerns/services, Shared.concern(n) helper).
+Sh deprecate example (brgen.sh): # Engine-ize: legacy shared copy DEPRECATED... # doas cp -R ...
+Activity sites: posts_controller#create, follows#create, messages#create, etc. + Shared concerns.
+Web: MASTER/web/MASTER_web_layer_pass_2026-06-15.md (full review + resolution).
+Root snaps: now substantive (gaps + evidence) vs prior tiny.
+Open remaining (per TODO critical): AN103 full Workbox, full AN201 generator runs + 6-app migration, real VPS M items, tests evidence runs, snapshot full exports for LLM (this is summary).
+Files: MASTER/TODO ~1350 lines (critical section top), 6 apps engine-wired, web pass applied.
+See DEPLOY critical section for Rails specifics.

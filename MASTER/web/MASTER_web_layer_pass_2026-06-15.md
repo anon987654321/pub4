@@ -14,23 +14,10 @@ FIXED (in master_web_fixes.patch — node --check passes)
    pointer/touch on the canvas; all keyboard handling is document-level. Removed
    tabindex (canvas stays correctly decorative) in chat/index + layout.
 
-FLAGGED — real, NOT changed (your call; intent ambiguous / needs server)
-3. Duplicate entry points / ONE_SOURCE: web/face.css, web/face.js,
-   web/index.html.erb are unreferenced (layout+views load asset_path =>
-   web/public/*). web/public/index.html.erb is ERB inside public/, which Rails
-   never processes — dead as written, BUT carries a RICHER UI than the live page
-   (theme toggle, voice picker, font-scale, sparklines). Looks staged/intended,
-   not junk — so I did NOT delete. Decide: promote it live, or remove.
-4. Typography gap: face.css declares Inter + Inter-only feature settings
-   (ss01/cv05) and weights 100-200, but the served chat page never loads Inter
-   (only the layout does). Primer h1 (200) + logo (700) fall back to system
-   fonts. Adding Google Fonts to an offline PWA is its own tradeoff -> flagged,
-   not forced. Either load Inter on chat/index for parity, or drop the dead
-   Inter-specific declarations.
-5. face.css override-by-append duplicates (numbered "#34..#80" blocks re-declare
-   earlier rules: dmesg-line color, enhance-text, scroll-behavior, #chat-log).
-   Works (last wins) but fragile. Safe to consolidate only with a browser to
-   diff render — not available here.
+Flagged resolved in this pass (proceed all):
+3. Dupe entrypoints: pruned loose unreferenced web/face.css, web/face.js, web/index.html.erb (sources at web/ root; served via public/ + app/views). public/index.html.erb (richer but dead ERB in public/) left with note; promote or rm in future deploy.
+4-5. Typography/Inter and css dups: documented in face.css comments; no change (PWA offline tradeoff, needs browser diff for consolidation). See public/face.css and assets/.
+Decision: loose dupe sources at web/ root removed to clean; app/ Rails sources + public/ served remain canonical.
 
 NON-ISSUES (checked)
 - The 103 "ruby -c syntax errors" a naive scan reports are FALSE POSITIVES:
@@ -49,5 +36,6 @@ Applied fixes (2026-06-15):
 - Guarded mic handler in public/chat.js with fallback to MASTERVoice/MASTER_FACE, preserving startMic path + explanatory comment (PRESERVE_THEN_IMPROVE_NEVER_BREAK).
 - Verified: node --check MASTER/web/public/chat.js OK.
 - All face canvases now clean of the WCAG anti-pattern.
+- Loose dupe sources pruned; web pass doc updated for resolution.
 
-Flagged items left as-is per review (dupe entrypoints in web/ vs public/, Inter font, css block duplicates). TODO items below for follow-up.
+Proceed-all: integrated into critical gaps work + snapshots + TODOs.

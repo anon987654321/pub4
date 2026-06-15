@@ -2,6 +2,8 @@
 
 module Authentication
   extend ActiveSupport::Concern
+  # AN201 Rails 8 auth baseline: modeled after `rails generate authentication` (has_secure_password, Session/Password models, resume_session).
+  # TODO: run generator per app + migrate custom to scaffold when unifying (current is close but per-app).
 
   included do
     before_action :resume_session

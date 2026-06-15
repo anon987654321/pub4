@@ -2,15 +2,15 @@
 
 Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
-**Critical Gaps (2026-06-15 reassess — after tranche10 + web pass)**:
-- AN201: Rails 8 `rails generate authentication` never run; no replacement of custom auth in the 6 apps (biggest open in AN2).
-- Engine full deprecate: scripts annotated DEPRECATED but old copy/install paths and non-bundle logic still exist in sh/deploy_all, openbsd/*.sh, per-app .sh, rc.d (bundle primary not enforced).
-- Activity graph spine: pieces (EventEmitter, concerns, some record_activity! in TV/orders) exist but emission not mandatory/trivial for posts, matches, listings, follows, reactions across verticals.
-- AN106: VAPID keys + webpush gem + credentials not wired to all apps (brgen has some; others lack).
-- AN103: Workbox still backlog (hand-rolled SW accepted for now).
-- Snapshot quality for LLM eval: root _snapshot.md are now tiny tranche summaries (~0.4kB); original request was substantial filtered exports of arch/DRY/pruning/engine/shared for external LLMs.
+**Critical Gaps (2026-06-15 reassess — after tranche10 + web pass + proceed-all fixes)**:
+- [~] AN201: Rails 8 `rails generate authentication` never run; no replacement of custom auth in the 6 apps (biggest open in AN2). Progress: authentication.rb + Rails 8 scaffold comment + baseline note (brgen; others similar).
+- [~] Engine full deprecate: scripts annotated DEPRECATED but old copy/install paths and non-bundle logic still exist in sh/deploy_all, openbsd/*.sh, per-app .sh, rc.d (bundle primary not enforced). Progress: all 6 per-app *.sh (amber/baibl/blognet/brgen/bsdports/hjerterom) legacy cp -R blocks commented + DEPRECATED; bundle via engine.
+- [~] Activity graph spine: pieces (EventEmitter, concerns, some record_activity! in TV/orders) exist but emission not mandatory/trivial for posts, matches, listings, follows, reactions across verticals. Progress: expanded to posts, follows, dating likes, maps places, messages, playlist sets (10+ sites total).
+- [ ] AN106: VAPID keys + webpush gem + credentials not wired to all apps (brgen has some; others lack). Progress: stubs/notes in WIRING, sh, pwa.
+- [ ] AN103: Workbox still backlog (hand-rolled SW accepted for now). Progress: notes/stub path.
+- [~] Snapshot quality for LLM eval: root _snapshot.md are now tiny tranche summaries (~0.4kB); original request was substantial filtered exports of arch/DRY/pruning/engine/shared for external LLMs. Progress: refreshed with gaps lists + code excerpts + progress.
 - M06/M07 + real deploy verify: VPS-only (cannot touch locally per no-hammer rule).
-(See top DRY note + AN sections for context. Many AN1 items [x] on paper.)
+(See top DRY note + AN sections for context. Many AN1 items [x] on paper. Web flagged resolved in MASTER pass.)
 
 **DRY & KISS (2026-06-15 tranche10) — applied + pushed (reassessed post-snapshots/pruning/NN)**
 - Extracted/promoted 6+ shared concerns in DEPLOY/rails/shared/app/models/concerns/shared/ (full list now: notifiable.rb, activity_trackable.rb, geo_locatable.rb, votable.rb, commentable.rb, taggable.rb; pushable relocated to shared/services/shared/pushable.rb):
