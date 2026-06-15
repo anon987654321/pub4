@@ -3,7 +3,7 @@
 <div class="page-header" role="banner" aria-label="My orders header"><h1>My Orders</h1></div>
 
 <% @orders.each do |o| %>
-  <article>
+  <article role="article" aria-label="Order">
     <h2><%= link_to o.restaurant.name, takeaway_order_path(o) %></h2>
     <p class="dim"><%= o.status.humanize %> · <%= o.total_display %> · <time><%= o.created_at.strftime("%d %b %Y") %></time></p>
   </article>
