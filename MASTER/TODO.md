@@ -1,5 +1,14 @@
 # TODO — MASTER backlog
 
+**Critical Gaps (2026-06-15 reassess — after web layer pass + tranche10)**:
+- Self-scan / D section vs rule "complete all TODO.md files fully before running actual MASTER commands over its own self": infrastructure [x] on paper (D01-D10), but cannot execute real /scan / master start / self-autofix without violating the explicit constraint. Circular dependency.
+- Snapshot quality (O804): root MASTER/DEPLOY_snapshot.md are abbreviated "tranche" notes (hundreds of bytes); intent was full-ish filtered exports for external LLM eval of architecture/DRY/pruning/engine/shared layer.
+- Web flagged (L section + dedicated 2026-06-15 pass doc): dupe entrypoints (web/ sources vs public/ served; public/index.html.erb richer but dead unprocessed ERB), Inter font gap, face.css append dups. Decision pending.
+- N01: QUICKSTART not verified on target OpenBSD 7.9 + ruby 3.4.
+- Core engine deprecate + auth unification cross-cut from DEPLOY (see DEPLOY critical gaps).
+- Many O/S/P/Q/R items remain open (refactors, proposals, archaeology); A-E/D self rules look complete on paper but lack live execution evidence in this env.
+(See L web pass, O DRY, D self-scan, N docs sections.)
+
 **DRY/KISS note (2026-06-15 tranche10 reassessed post-snapshots/pruning/NN)**: See DEPLOY pushes + tranche9/10 (ARIA/NN fixes in takeaway/bsdports + prior; +5 models Shared: Tv Video/LiveStream, Playlist Listen, Dating Match, Reaction + controller flesh + sh/WIRING annotate). Engine spike stable (6/6). Root snapshots refreshed. Pruning/DRY/NN wins hold; engine advancing. (Details DEPLOY/TODO; no md bloat; snapshots root per request). Addresses heuristics + engine-ize. (See git, shared/concerns, root _snapshots.)
 
 Work left to right, top to bottom. Mark done with [x].
