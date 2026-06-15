@@ -98,6 +98,7 @@ module Master
   loader.ignore(File.join(__dir__, "repo/inventory.rb"))
   loader.ignore(File.join(__dir__, "scope/ledger.rb"))
   loader.ignore(File.join(__dir__, "builder/boot_phases.rb"))
+  loader.ignore(File.join(__dir__, "builder/ai_boot.rb"))
   loader.setup
 
   require_relative "converge/converge"
