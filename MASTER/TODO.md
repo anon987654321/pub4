@@ -2690,6 +2690,14 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA174 face: GLSL snoise → hash23 replacement — hash-based noise cheaper on mobile GPU; swap for devices with frame time >20ms
 - [ ] FA175 face: edge length normalization — compute median hex edge length at sample time; normalize all edge positions to unit grid; prevents depth-map scale artifacts
 
+## CC: Verified Code-Quality Debt (2026-06-16 audit)
+
+Direct grep/read verification, not scan-rule existence — B01-B03 rule implementations pass, but these live violations remain unfixed in the code itself.
+
+- [ ] CC01 God class: `lib/now/command_registry/work_commands.rb` is 358 lines (hard limit 300) with ~30 `def`s — split by command domain.
+- [ ] CC02 `lib/judge/council/deliberation.rb` is 311 lines (hard limit 300); line 74 has a bare `rescue => e` while four other rescues in the same file correctly use `rescue StandardError => e` — fix the one outlier and split the file.
+- [ ] CC03 Abbreviated identifiers: `cfg` used as a full variable name 5x in `lib/ground/provider_registry.rb` (lines 46, 51, 52, 53, 64, 65); `arr` in `lib/trace/metrics.rb:110` (`def average(arr)`) — rename to `provider_config`/`values` per CLAUDE.md's own example (`configuration` not `cfg`).
+
 ## BF Design backlog — from 100-item proposal
 
 - BF01 Logo entry: 300ms opacity delay of 800ms after primer dismiss (CSS animation-delay on .top-left-logo)
