@@ -2,10 +2,9 @@
 <header>
   <h1>OpenBSD ports</h1>
   <%= link_to "RSS (new last 7 days)", ports_path(format: :rss) %>
-  <%= form_with url: ports_path, method: :get, role: "search", aria: { label: "Search ports" } do |f| %>
-    <%= f.search_field :q, value: params[:q], placeholder: "Search ports…", aria: { label: "Search query" } %>
-  <% end %>
+  <%= live_search_form url: ports_path, placeholder: "Search ports…", label: "Search ports" %>
 </header>
+<turbo-frame id="live_search_results">
 <% if @category %>
   <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
 <% end %>
@@ -20,3 +19,4 @@
   <% end %>
 </ul>
 <%= @pagy.series_nav if @pagy.pages > 1 %>
+</turbo-frame>

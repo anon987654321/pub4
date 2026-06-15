@@ -20,14 +20,11 @@
   <%= link_to "Add restaurant", new_takeaway_restaurant_path, class: "btn" if authenticated? %>
 </div>
 
-<%= form_with url: takeaway_restaurants_path, method: :get, local: true do |f| %>
-  <div style="display:flex;gap:8px;margin-bottom:16px">
-    <%= f.text_field :q, value: params[:q], placeholder: "Search restaurants…", style: "flex:1" %>
-    <%= f.select :cuisine, [["All cuisines", ""]] + Takeaway::Restaurant::CUISINE_TYPES.map { |c| [c, c] }, {selected: params[:cuisine]}, {} %>
-    <%= f.submit "Search", class: "btn" %>
-  </div>
+<%= live_search_form url: takeaway_restaurants_path, placeholder: "Search restaurants…", label: "Restaurant search" do |f| %>
+  <%= f.select :cuisine, [["All cuisines", ""]] + Takeaway::Restaurant::CUISINE_TYPES.map { |c| [c, c] }, { selected: params[:cuisine] }, {} %>
 <% end %>
 
+<turbo-frame id="live_search_results">
 <section>
   <% @restaurants.each do |r| %>
     <article>
@@ -41,3 +38,4 @@
   <% end %>
 </section>
 <%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>
+</turbo-frame>

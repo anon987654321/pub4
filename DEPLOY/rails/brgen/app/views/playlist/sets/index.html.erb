@@ -8,6 +8,9 @@
   <%= link_to "New set", new_playlist_set_path, class: "btn btn-primary btn-sm" if authenticated? %>
 </div>
 
+<%= live_search_form url: playlist_sets_path, placeholder: "Search sets, tracks, artists…", label: "Playlist search" %>
+
+<turbo-frame id="live_search_results">
 <% if @sets.any? %>
   <% @sets.each do |set| %>
     <article>
@@ -21,3 +24,4 @@
 <% else %>
   <div class="empty"><p>No sets yet.</p></div>
 <% end %>
+</turbo-frame>

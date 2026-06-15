@@ -4,15 +4,7 @@
   <h1>Search Brgen</h1>
 </header>
 
-<div data-controller="live-search" role="search" aria-label="Search all verticals">
-  <%= form_with url: global_search_path, method: :get, data: { turbo_frame: "live_search_results" } do |f| %>
-    <%= f.search_field :q, value: @query, placeholder: "Search posts, listings, TV, playlists…",
-          data: { live_search_target: "input", action: "input->live-search#input" } %>
-    <%= f.submit "Search", class: "btn btn-sm" %>
-  <% end %>
-</div>
-
-<%= render "shared/search_suggestions", suggestions: search_suggestions %>
+<%= live_search_form url: global_search_path, placeholder: "Search posts, listings, TV, playlists…", label: "Search all verticals", query: @query %>
 
 <turbo-frame id="live_search_results">
   <% if @query.present? %>

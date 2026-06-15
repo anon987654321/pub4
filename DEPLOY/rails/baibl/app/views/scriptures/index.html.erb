@@ -1,4 +1,7 @@
 <% content_for :title, "Scripture" %>
+
+<%= live_search_form url: scripture_search_path, placeholder: "Search scripture…", label: "Scripture search" %>
+
 <nav>
   <% @books.each do |book| %>
     <%= link_to book.abbreviation, scripture_book_path(book.abbreviation), title: book.name %>

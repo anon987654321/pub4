@@ -20,6 +20,9 @@
     </nav>
   </header>
 
+  <%= live_search_form url: items_path, placeholder: "Search wardrobe by title, brand, category…", label: "Wardrobe search" %>
+
+  <turbo-frame id="live_search_results">
   <div class="tag-row">
     <span class="tag"><%= pluralize(@items.sum { |item| item.times_worn.to_i }, "wear") %> on this page</span>
     <span class="tag"><%= @items.count(&:spark_joy?) %> joy keepers</span>
@@ -47,4 +50,5 @@
   <% end %>
 
   <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+  </turbo-frame>
 </section>

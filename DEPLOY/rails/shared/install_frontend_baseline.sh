@@ -30,4 +30,6 @@ for app in ${1:-$APPS}; do
   copy_one "$app" app/javascript/controllers/live_search_controller.js app/javascript/controllers/live_search_controller.js
   copy_one "$app" app/views/shared/_search_loading.html.erb app/views/shared/_search_loading.html.erb
   copy_one "$app" app/views/shared/_search_suggestions.html.erb app/views/shared/_search_suggestions.html.erb
+  copy_one "$app" app/views/shared/_live_search_form.html.erb app/views/shared/_live_search_form.html.erb
+  copy_one "$app" app/helpers/shared/search_helper.rb app/helpers/shared/search_helper.rb
 done

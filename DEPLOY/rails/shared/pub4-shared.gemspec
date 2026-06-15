@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.files = Dir.chdir(__dir__) do
     `git ls-files -z`.split("\x0").reject { |f| f.start_with?("vendor/") }
   end
-  spec.files = Dir["{app,config,db,frontend,lib,public}/**/*", "README.md", "WIRING_NOTES.md"].select { |f| File.file?(f) }
+  spec.files = Dir["{app,config,db,frontend,lib,public}/**/*", "README.md", "WIRING_NOTES.md", "test/**/*"].select { |f| File.file?(f) }
   spec.require_paths = ["lib"]
   spec.add_dependency "rails", ">= 8.0"
   spec.add_dependency "pundit", ">= 2.3"

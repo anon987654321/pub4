@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ScripturesController < ApplicationController
+  include Shared::LiveSearchable
+
   allow_unauthenticated_access only: %i[index book chapter search word_study]
 
   def index
@@ -20,7 +22,9 @@ class ScripturesController < ApplicationController
   end
 
   def search
-    @pagy, @verses = pagy(Verse.full_text_search(params[:q]).includes(:book, :chapter), items: 20)
+    scope = Verse.all.includes(:book, :chapter)
+    scope = apply_live_search(scope, columns: %w[content], vertical: "scripture") if live_search_query.present?
+    @pagy, @verses = pagy(scope, items: 20)
     render :search
   end
 

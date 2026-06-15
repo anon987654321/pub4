@@ -8,6 +8,9 @@
   <% end %>
 </header>
 
+<%= live_search_form url: blog_posts_path(@blog), placeholder: "Search posts…", label: "Post search" %>
+
+<turbo-frame id="live_search_results">
 <section id="posts">
   <% if @posts.any? %>
     <% @posts.each do |post| %>
@@ -22,3 +25,4 @@
 </section>
 
 <%= @pagy.series_nav if @pagy.pages > 1 %>
+</turbo-frame>

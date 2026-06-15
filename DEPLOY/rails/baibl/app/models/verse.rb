@@ -18,6 +18,7 @@ class Verse < ApplicationRecord
     ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM verses_fts WHERE verses_fts MATCH ?", q]))
     ids.any? ? where(id: ids) : none
   }
+  scope :search, ->(q) { full_text_search(q) }
 
   def reference
     "#{book.name} #{chapter.number}:#{number}"

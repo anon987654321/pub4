@@ -3,8 +3,12 @@
   <h1>Available food</h1>
   <% if authenticated? %><%= link_to "List food", new_food_listing_path %><% end %>
 </header>
+
+<%= live_search_form url: food_listings_path, placeholder: "Search food listings…", label: "Food listing search" %>
+
+<turbo-frame id="live_search_results">
 <section id="food_listings">
-  <% @food_listings.each do |listing| %>
+  <% @listings.each do |listing| %>
     <article>
       <%= link_to listing.title, food_listing_path(listing) %>
       <p><%= listing.quantity %> <%= listing.unit %> · <%= listing.city %></p>
@@ -16,3 +20,4 @@
   <% end %>
 </section>
 <%= @pagy.series_nav if @pagy.pages > 1 %>
+</turbo-frame>

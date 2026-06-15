@@ -1,0 +1,24 @@
+<%# Shared live-search form — used by all pub4 Rails apps via pub4-shared engine view path %>
+<div data-controller="live-search" role="search" aria-label="<%= label %>">
+  <%= form_with url: url, method: :get, data: { turbo_frame: turbo_frame } do |f| %>
+    <div class="search-form">
+      <%= f.search_field :q,
+            value: query,
+            placeholder: placeholder,
+            data: { live_search_target: "input", action: "input->live-search#input" },
+            aria: { label: "Search query" } %>
+      <% if block_given? %>
+        <%= yield f %>
+      <% elsif local_assigns[:extra_fields].present? %>
+        <%= extra_fields %>
+      <% end %>
+      <% if local_assigns.fetch(:show_submit, true) %>
+        <%= f.submit "Search", class: local_assigns.fetch(:submit_class, "btn btn-sm"), aria: { label: "Submit search" } %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<% if local_assigns.fetch(:show_suggestions, true) && defined?(search_suggestions) && search_suggestions.present? %>
+  <%= render "shared/search_suggestions", suggestions: search_suggestions %>
+<% end %>
