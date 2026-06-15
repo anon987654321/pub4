@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Outfit < ApplicationRecord
+  # Engine-ize Shared via pub4-shared
+  include Shared.concern(:Reactable) rescue nil
+  include Shared.concern(:Notifiable) rescue nil
   belongs_to :user
   has_many :outfit_items, dependent: :destroy
   has_many :items, through: :outfit_items

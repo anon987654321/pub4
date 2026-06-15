@@ -1,11 +1,21 @@
 <% content_for :title, @category.name %>
 
-<div class="page-header"><h1><%= @category.name %></h1></div>
+<div class="page-header" role="banner" aria-label="Marketplace category header">
+  <h1><%= @category.name %></h1>
+  <nav role="navigation" aria-label="Category actions"></nav>
+</div>
 
+<turbo-frame id="marketplace-category" data-turbo-action="replace">
+<div role="region" aria-label="Category listings">
 <% @listings.each do |l| %>
-  <article>
+  <article role="listitem">
     <h2><%= link_to l.title, marketplace_listing_path(l) %></h2>
     <p class="dim"><strong><%= l.price_display %></strong></p>
   </article>
 <% end %>
+<% if @listings.empty? %>
+  <div class="empty" role="status" aria-live="polite"><p>No listings in this category.</p></div>
+<% end %>
+</div>
+</turbo-frame>
 <%= @pagy.series_nav if @pagy.pages > 1 %>

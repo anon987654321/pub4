@@ -6,6 +6,9 @@ module Playlist
 
     PRIVACY_LEVELS = %w[public private unlisted].freeze
 
+    # Engine-ize Shared
+    include Shared.concern(:Reactable) rescue nil
+    include Shared.concern(:Notifiable) rescue nil
     belongs_to :user
     has_many :tracks, -> { order(:position) }, class_name: "Playlist::Track", dependent: :destroy
     has_many :collaborations, class_name: "Playlist::Collaboration", dependent: :destroy

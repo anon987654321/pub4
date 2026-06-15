@@ -1,8 +1,9 @@
-# DEPLOY Snapshot (tranche5+ autoloop)
-Generated: 2026-06-15T07:21:13Z
+# DEPLOY Snapshot (autocontinue tranche6+)
+Generated: 2026-06-15T07:24:43Z
 ## Evidence
 ```
-takeaway show: ARIA
-conversations show: ARIA
-models: tv/show, takeaway/restaurant, playlist/playlist Shared
+marketplace categories: turbo/ARIA
+amber outfits new: turbo/ARIA
+hjerterom donations new: turbo/ARIA
+models: playlist/set, marketplace/deal, amber/outfit, hjerterom/donation Shared
 ```

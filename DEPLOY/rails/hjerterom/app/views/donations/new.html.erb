@@ -1,11 +1,15 @@
 <% content_for :title, "New donation" %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="New donation header">
   <div>
     <p class="dim">Donation intake</p>
     <h1>New donation</h1>
   </div>
-  <%= link_to "All donations", donations_path, class: "btn btn-ghost" %>
+  <nav role="navigation" aria-label="Donation nav">
+    <%= link_to "All donations", donations_path, class: "btn btn-ghost" %>
+  </nav>
 </div>
 
+<turbo-frame id="hjerterom-donation-new" data-turbo-action="replace">
 <%= render "form", donation: @donation %>
+</turbo-frame>

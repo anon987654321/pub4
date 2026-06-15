@@ -1,3 +1,7 @@
 <% content_for :title, "New outfit" %>
-<h1>New outfit</h1>
+<header role="banner" aria-label="New outfit header">
+  <h1>New outfit</h1>
+</header>
+<turbo-frame id="amber-outfit-new" data-turbo-action="replace">
 <%= render "form", outfit: @outfit %>
+</turbo-frame>
