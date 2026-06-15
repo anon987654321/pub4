@@ -163,6 +163,15 @@ module Master
           { provider: :local, model: preferred, score: 0.5, quarantined: [] }
         end
 
+        def failover_max_retries
+          @rules.dig("failover", "max_retries").to_i
+        end
+
+        def failover_cooldown_seconds
+          val = @rules.dig("failover", "cooldown_seconds").to_i
+          val.positive? ? val : 300
+        end
+
         private
 
         def enabled?

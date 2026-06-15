@@ -167,8 +167,8 @@ module Master
       end
 
       def exit_cli
-        @session.save!
-        line = @display.closing
+        @session&.save!
+        line = @display&.closing
         puts line if line
         @running = false
       end

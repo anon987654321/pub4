@@ -65,7 +65,7 @@ module Master
         }
       end
 
-      def dispatch_self(scanner:, root:, bus:)
+      def dispatch_self(scanner:, root:, bus:, ctx: nil)
         result = Master::Judge::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(stream: true, autofix: true)
         return result.message unless result.ok?
 
@@ -73,7 +73,7 @@ module Master
       end
 
       # /status — one-frame health panel. Replaces seven probing tool calls.
-      def dispatch_status(root:, fix_loop:, bus:, git: Reach::GitOperations.new(File.expand_path("..", root)))
+      def dispatch_status(root:, fix_loop:, bus:, git: Reach::GitOperations.new(File.expand_path("..", root)), ctx: nil)
         ahead, behind = git.ahead_behind
         head = git.head || "?"
         dirty = git.dirty?(".")

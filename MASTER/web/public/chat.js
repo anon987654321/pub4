@@ -312,16 +312,32 @@ window._chatOnThought = (line) => {
 };
 
 window._chatOnDmesg = (line) => {
-  if (!line) return;
+  if (!line || !log) return;
   const d = document.createElement('div');
   d.className = 'dmesg-line';
-  d.style.opacity = '0.25';
-  d.textContent = line;
+  d.setAttribute('role', 'status');
+  d.setAttribute('aria-live', 'off');
+  const ts = new Date();
+  const stamp = ts.getHours().toString().padStart(2, '0') + ':' +
+    ts.getMinutes().toString().padStart(2, '0') + ':' +
+    ts.getSeconds().toString().padStart(2, '0');
+  const prompt = document.createElement('span');
+  prompt.className = 'dmesg-ts';
+  prompt.textContent = stamp + ' ';
+  const body = document.createElement('span');
+  body.className = 'dmesg-body';
+  body.textContent = String(line);
+  d.appendChild(prompt);
+  d.appendChild(body);
   const asst = log.querySelector('.message.assistant:last-of-type');
   asst ? log.insertBefore(d, asst) : log.appendChild(d);
   log.scrollTop = log.scrollHeight;
-  requestAnimationFrame(() => { d.style.transition = 'opacity 0.18s steps(3,end)'; d.style.opacity = '1'; });
-  setTimeout(() => { d.classList.add('dmesg-fade'); setTimeout(() => d.remove(), 800); }, 7000);
+  requestAnimationFrame(() => d.classList.add('dmesg-live'));
+  setTimeout(() => {
+    d.classList.remove('dmesg-live');
+    d.classList.add('dmesg-fade');
+    setTimeout(() => d.remove(), 820);
+  }, 7200);
 };
 
 zsh?.addEventListener('submit', (event) => {

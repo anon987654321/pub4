@@ -198,6 +198,7 @@ async function sendMessage(text) {
   }
   if (evtSrc) { try { evtSrc.close(); } catch (_) {} }
   window.MASTER_FACE?.ttsSkip?.();
+  window._chatOnUser?.(text);
   showStage("routing…", 1000);
 
   let finalText = text, preEnhanced = false;
@@ -480,7 +481,6 @@ zshBar.addEventListener('submit', (e) => {
   e.preventDefault();
   const v = zshIn.value.trim();
   if (!v) return;
-  window._chatOnUser?.(v);
   zshIn.value = '';
   State.pulse = 0.4;
   State.ripplePhase = 0;

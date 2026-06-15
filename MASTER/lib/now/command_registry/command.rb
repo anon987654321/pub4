@@ -35,7 +35,7 @@ module Master
             name if %i[key keyreq].include?(type) && name != :ctx
           end
           mapped = keys.zip(@args).to_h.compact
-          mapped.merge(@kwargs).merge(ctx: ctx)
+          mapped.merge(@kwargs)
         end
       end
     end

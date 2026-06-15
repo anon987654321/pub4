@@ -468,8 +468,11 @@ body[data-mode="listening"] #mic-dot {
 .enhance-arrow { color: color-mix(in srgb, var(--face-fg) 22%, transparent); animation: blink .5s step-end 4; }
 .enhance-text { color: color-mix(in srgb, var(--face-fg) 32%, transparent); font-style: italic; }
 .enhance-yn { color: var(--face-dim); }
-.dmesg-line { font: 11px/1.5 ui-monospace,monospace; color: var(--face-dim); margin-bottom: 1px; white-space: pre-wrap; word-break: break-all; transition: opacity .8s steps(4,end); }
-.dmesg-fade { opacity: 0; }
+.dmesg-line { font: 11px/1.5 "Roboto Mono",ui-monospace,monospace; color: var(--face-dim); margin-bottom: 1px; white-space: pre-wrap; word-break: break-word; opacity: 0.28; transition: opacity .22s steps(4,end), color .22s ease; }
+.dmesg-line.dmesg-live { opacity: 1; color: var(--c-accent, var(--face-dim)); }
+.dmesg-ts { opacity: 0.42; font-variant-numeric: tabular-nums; user-select: none; }
+.dmesg-body { letter-spacing: 0.01em; }
+.dmesg-fade { opacity: 0 !important; }
 .thought-trace { font: 11px/1.45 ui-monospace,monospace; color: var(--face-dim); opacity: 0.55; margin: 0 0 6px 0; padding: 0 0 4px 0; border-bottom: 1px solid color-mix(in srgb, var(--face-fg) 6%, transparent); }
 .thought-line { font-style: italic; white-space: pre-wrap; margin: 0; padding: 1px 0; }
 .thought-line::before { content: '~ '; opacity: 0.45; }
