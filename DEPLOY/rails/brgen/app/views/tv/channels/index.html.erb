@@ -1,12 +1,16 @@
 <% content_for :title, "Channels" %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="TV channels header">
   <h1>Channels</h1>
-  <%= link_to "New channel", new_tv_channel_path, class: "btn btn-primary btn-sm" if authenticated? %>
+  <nav role="navigation" aria-label="TV channel actions">
+    <%= link_to "New channel", new_tv_channel_path, class: "btn btn-primary btn-sm" if authenticated? %>
+  </nav>
 </div>
 
 <%= live_search_form url: tv_channels_path, placeholder: "Search channels and videos…", label: "TV search" %>
 
-<div id="live_search_results">
+<turbo-frame id="tv-channels" data-turbo-action="replace">
+<div id="live_search_results" role="region" aria-label="TV channels results">
   <%= render "tv/channels/live_search_results" %>
 </div>
+</turbo-frame>

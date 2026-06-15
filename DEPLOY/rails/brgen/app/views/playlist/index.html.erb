@@ -30,6 +30,6 @@
     </article>
   <% end %>
   <% if @playlists.empty? %>
-    <div class="empty"><p>No playlists yet. <%= authenticated? ? link_to("Create one", new_playlist_playlist_path) : link_to("Sign in", new_session_path) %>.</p></div>
+    <div class="empty" role="status" aria-live="polite"><p>No playlists yet. <%= authenticated? ? link_to("Create one", new_playlist_playlist_path) : link_to("Sign in", new_session_path) %>.</p></div>
   <% end %>
 </section>

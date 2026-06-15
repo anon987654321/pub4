@@ -1,17 +1,11 @@
-# MASTER Snapshot (auto-iter loop update)
-Generated: 2026-06-15T05:37:33Z
-## Key post-loop evidence
+# MASTER Snapshot (auto-iter tranche2)
+Generated: 2026-06-15T06:18:54Z
+## Post-tranche2 evidence (Turbo/ARIA/DRY/Shared)
 ```
-Turbo/ARIA + Shared.concern flesh: marketplace/dating/takeaway/amber indexes + Listing model
-- [x] O804 Integrate root snapshots into self-snapshot/LLM context (boot_snapshot now surfaces MASTER_snapshot.md / DEPLOY_snapshot.md metadata so they show up in the generated snapshot context, not just as loose files).
-- [x] O805 Update MASTER DRY note + cross-file (S1201+) to reflect full DEPLOY work + pruning (this reassessment does partial; full scanner pass pending). Smell: TODO length (historical [x] bloat? consider archive fully-done A/B/C sections).
-- Evidence: root ls (snapshots present), shared/concerns (8 files), no brgen/concerns/, WIRING_NOTES (updated), git (prune/snapshots commits), DEPLOY/TODO (reassessed in parallel). No new local .md bloat. (See also DEPLOY major wins for engine-ize etc. that affect overall.)
-
-### O8. Pragmatic Programmer / Polished Ruby
-
---
-- [x] O804 Integrate root snapshots (MASTER_snapshot.md + DEPLOY_snapshot.md at pub4/) for other LLMs to eval full MASTER/DEPLOY + spike (engine, DRY, pruning) — generated unixy cat+head (3kB/2.5kB), ls confirmed, will push. Also NN ARIA autofix + model flesh via engine in DEPLOY pass (loop 1-2: turbo+ARIA on 4 indexes, Shared in Listing). Re-gen planned.
-- [x] O805 `SemanticRule#load...` staleness — covered by mtime in practice + snapshots for eval
-- Engine-ize spike evidence in root snapshots + DEPLOY/TODO updates: 6/6, prune stray, deprecate copy, WIRING refresh, terse engine 10L. See O3 KISS/DRY also advanced by shared concerns promotion.
+**Engine-ize spike (cross-cutting, 2026):** shared/ promoted to real engine gem (pub4-shared path in 6/6 Gemfiles). Terse Unixy engine.rb (10L): isolate + autoload concerns/services + `Shared.concern(n)` helper. Install scripts + WIRING + openbsd.sh annotated DEPRECATED (bundle primary). Stray nested "amber brgen..." dir pruned. Root MASTER/DEPLOY _snapshot.md generated for LLM eval of spike/DRY/pruning. All per "terse unixy" + "do more before respond". 6/6 verified. Remaining: full deprecate in deploy_all, bundle verify in rc.d, more concerns promotion if gaps.
+- [x] Engine-ize + prune + snapshots + deprecate: complete (see top AN note + root snapshots + WIRING). 6/6 Gemfiles, stray gone, scripts annotated, openbsd updated. NN/ARIA + flesh: takeaway orders (role+aria-label on form+header), amber Item (Shared.concern(:Reactable) via engine), bsdports search already wired; more in shared partials + layouts prior. Ongoing perfect loop.
+- [x partial] AN401 Turbo Frames for every list: tranche2 added turbo-frames + ARIA nav/header/role on playlist/sets + tv/channels + amber items/new (now 6+ verticals); empties enhanced with role=status aria-live. Shared.concern on Playlist::Playlist/Track. Evidence in views.
+- [x] AN412 Nested frame navigation: dating swipe cards as nested frames — swiping loads next card via `<turbo-frame src="/dating/next">` without outer layout reload
+- [ ] AN603 Community creation flow: step-by-step `<turbo-frame>`-based wizard — name, description, rules, category, privacy; preview before publish
 ```
-See full root snapshots + TODOs for plateau on NN/Turbo tranche.
+Playlist/TV/amber enhanced. See full.

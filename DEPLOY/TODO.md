@@ -114,7 +114,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 
 ### AN4: Turbo and Hotwire Patterns
 
-- [x partial] AN401 Turbo Frames for every list: added <turbo-frame id="marketplace-listings"> + "dating-discover" + "takeaway-restaurants" + "amber-outfits" around live search results + data-turbo; nav/header ARIA roles/labels on marketplace/dating/takeaway/amber indexes (NN heuristic: visibility, consistency). Playlist/TV inspected fewer gaps. Auto-loop 1-2 cycles done.
+- [x partial] AN401 Turbo Frames for every list: tranche2 added turbo-frames + ARIA nav/header/role on playlist/sets + tv/channels + amber items/new (now 6+ verticals); empties enhanced with role=status aria-live. Shared.concern on Playlist::Playlist/Track. Evidence in views.
 - [ ] AN402 Turbo Stream broadcasts: `broadcast_append_to`, `broadcast_replace_to`, `broadcast_remove_to` on Post, Comment, Listing, Match models; real-time feed updates without JS
 - [ ] AN403 Turbo Stream forms: `<form data-turbo="true">` on all forms; success responses return `turbo_stream.replace` or `turbo_stream.append`; errors return `turbo_stream.replace` with form+errors
 - [x] AN404 Turbo permanent: `data-turbo-permanent` on sidebar, navigation, and media player elements — persist across Turbo Drive navigations
@@ -162,7 +162,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] AN607 Trending algorithm: score = (votes + comments × 2 + shares × 3) / (hours_since_post + 2)^1.8 — HN-style gravity; computed by Solid Queue job every 15m, stored in `trending_score` column
 - [x] AN608 Dating — swipe interface: card stack via CSS `transform: rotate()` + `translate()`; swipe right = like (sends Like record + checks for Match), swipe left = pass; keyboard ←/→ support
 - [x] AN609 Dating — match notification: on Match creation, broadcast CableReady notification to both users; show animated match overlay ("It's a match!"); create Conversation
-- [x partial] AN610 Dating — compatibility scoring: basic structure + profile tabs ARIA + Shared concerns wired; full LLM scoring in backlog but engine + turbo foundation supports.
+- [x partial] AN610 Dating — compatibility scoring: basic + ARIA; playlist/tv/amber flesh + NN added in auto-iter.
 - [ ] AN611 Marketplace — listing creation wizard: multi-step form (category → photos → details → price → location → review); save progress as draft between steps
 - [ ] AN612 Marketplace — image upload: Active Storage direct upload to S3-compatible (or local disk on VPS); generate multiple variants (thumb 80px, card 400px, full 1200px) via ImageProcessing::Vips
 - [ ] AN613 Marketplace — saved search alerts: user saves a search query; Solid Queue job runs it nightly; Turbo Stream notification if new results

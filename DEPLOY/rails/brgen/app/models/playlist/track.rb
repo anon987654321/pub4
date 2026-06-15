@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Playlist::Track < ApplicationRecord
+  # Engine-ize Shared via pub4-shared
+  include Shared.concern(:Reactable) rescue nil
   has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
            foreign_key: :playlist_track_id, dependent: :destroy
   has_many :playlists, through: :playlist_tracks, class_name: "Playlist::Playlist"
