@@ -93,7 +93,7 @@ module Shared
     end
 
     def anonymous_user
-      ::User.order(:id).first || raise(ActiveRecord::RecordNotFound, "No users — run db:seed")
+      ::User.order(:id).first
     end
 
     def create_guest_user

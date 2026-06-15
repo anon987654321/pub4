@@ -30,7 +30,11 @@ module Master
         persist_event(event, enriched)
 
         Master::Trace::Telemetry.span("event_bus.publish", event:, n_handlers: handlers.size) do
-          handlers.each { |h| h.call(enriched) rescue nil }
+          handlers.each do |h|
+            h.call(enriched)
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "event_bus.handler", event:)
+          end
         end
 
         self

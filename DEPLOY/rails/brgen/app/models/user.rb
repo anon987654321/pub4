@@ -57,12 +57,6 @@ class User < ApplicationRecord
 
   def display_name = guest? ? "anon" : (username.presence || email_address.split("@").first)
 
-  # Accurate nearby (bbox pre + haversine filter) for small sets. Uses concern impls.
-  def self.nearby(lat, lng, radius_km: 2)
-    nearby(lat, lng, radius_km).to_a.select { |u| haversine(lat, lng, u.latitude.to_f, u.longitude.to_f) <= radius_km }
-  end
-  # haversine provided by Shared::GeoLocatable
-
 
   def anon_handle = "Stranger ##{Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase}"
 

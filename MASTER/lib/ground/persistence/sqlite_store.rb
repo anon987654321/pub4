@@ -19,7 +19,7 @@ module Master
             begin
               db.execute("PRAGMA journal_mode = DELETE")
             rescue SQLite3::IOException
-              db.close rescue nil
+              db.close rescue SQLite3::Exception
               warn "sqlite_store: file DB unavailable at #{path} — using :memory:"
               db = SQLite3::Database.new(":memory:")
             end

@@ -60,7 +60,7 @@ module Master
       def load_providers
         path = File.join(Master::DATA, "providers.yml")
         return DEFAULTS unless File.exist?(path)
-        raw.transform_keys(&:to_sym).transform_values do |v|
+        Master.load_yaml(path).transform_keys(&:to_sym).transform_values do |v|
           v.transform_keys(&:to_sym).tap do |cfg|
             cfg[:strengths] = Array(cfg[:strengths]).map(&:to_sym)
           end

@@ -20,10 +20,9 @@ module Master
 
       def openbsd_status(config:, host:, port:, io:)
         running = system("pgrep", "-qf", "falcon.*#{port}")
-        token = config["web_token"]
-        url = config["web_public_url"] || "http://#{host}:#{port}"
-        url += "/?token=#{token}" if token
-        io.puts "web: #{url} (#{running ? "up" : "down — run: doas rcctl start master"})"
+        base_url = config["web_public_url"] || "http://#{host}:#{port}"
+        io.puts "web: #{base_url} (#{running ? "up" : "down — run: doas rcctl start master"})"
+        io.puts "web: token set (see .master/config.yml)" if config["web_token"].to_s.length >= 8
       end
 
       def spawn_local(config:, host:, port:, io:)
@@ -31,7 +30,7 @@ module Master
         return unless Dir.exist?(web_dir)
 
         pids_out, = Open3.capture2e("lsof", "-ti", ":#{port}")
-        pids_out.split.each { |pid| Process.kill("TERM", pid.to_i) rescue nil }
+        pids_out.split.each { |pid| Process.kill("TERM", pid.to_i) rescue Errno::ESRCH }
         sleep 0.5
         spawn(
           { "RAILS_ENV" => "production", "SECRET_KEY_BASE" => WebSecret.stable(config) },

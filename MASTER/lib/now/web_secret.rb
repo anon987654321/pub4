@@ -24,7 +24,9 @@ module Master
         config_path = File.join(Master::ROOT, ".master", "config.yml")
         FileUtils.mkdir_p(File.dirname(config_path))
         existing = YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) rescue {}
-        File.write(config_path, existing.merge("web_secret_key_base" => secret).to_yaml)
+        tmp_path = "#{config_path}.tmp"
+        File.write(tmp_path, existing.merge("web_secret_key_base" => secret).to_yaml)
+        File.rename(tmp_path, config_path)
       end
     end
   end

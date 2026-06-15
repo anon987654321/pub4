@@ -6,8 +6,7 @@ LOG=/tmp/pub4_on_vm_install_$(date +%Y%m%d_%H%M%S).log
 exec > >(tee -a "$LOG") 2>&1
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 
-export SKIP_MASTER_SCAN=1
-log "MASTER bundle (SKIP_MASTER_SCAN=1 — scan gate fixed separately)"
+log "MASTER bundle"
 cd "$PUB4/MASTER" && bundle install
 cd "$PUB4/MASTER/web" && bundle install
 doas rcctl restart master || doas rcctl start master
