@@ -30,36 +30,85 @@ namespace :scrape do
       )
 
       items.each do |item|
-        # Fictivize + route to subapps
+        # Fictivize + route to subapps intelligently
         title = "[r/#{sub}] #{item['title']}"
-        body  = [item['body'], "— scraped & fictivized from Reddit (score: #{item['score']})"].compact.join("\n\n")
+        body  = [item['body'], "— scraped & fictivized from Reddit (score: #{item['score']}, comments: #{item['comments']})"].compact.join("\n\n")
 
-        if sub =~ /food|mat|oslo|bergen/i || item['title'] =~ /restaurant|food|delivery/i
-          # Takeaway inspiration
-          Takeaway::Restaurant.find_or_create_by!(name: item['title'][0..60]) do |r|
-            r.user = seed_user
-            r.cuisine_type = %w[Norwegian Italian Pizza].sample
-            r.address = "Bergen"
-            r.description = body[0..200]
-          end
-        elsif sub =~ /buy|sell|market/i || item['title'] =~ /sale|selger|kjøp/i
-          # Marketplace
+        # Core social feed (always)
+        post = Post.create!(
+          user: seed_user,
+          title: title,
+          content: body,
+          community: Community.find_by(slug: sub) || Community.find_by(slug: "bergen") || Community.first
+        )
+        post.record_activity!("RedditScrapeSeed") if post.respond_to?(:record_activity!)
+
+        # Marketplace
+        if sub =~ /buy|sell|market|oslo|bergen/i || item['title'] =~ /sale|selger|kjøp|til salgs/i
           Marketplace::Listing.create!(
             user: seed_user,
-            title: title,
+            title: item['title'][0..80],
             description: body,
-            price_cents: rand(5000..50000),
-            category: Marketplace::Category.first || Marketplace::Category.create!(name: "Misc", slug: "misc")
+            price_cents: rand(1000..100000),
+            category: Marketplace::Category.all.sample || Marketplace::Category.create!(name: "Misc", slug: "misc-#{SecureRandom.hex(4)}")
           )
-        else
-          # Default to core Post (visible in feed for all subapps)
-          post = Post.create!(
-            user: seed_user,
-            title: title,
-            content: body,
-            community: Community.find_by(slug: "bergen") || Community.first
+        end
+
+        # Takeaway / restaurants
+        if sub =~ /food|mat|oslo|bergen|restaurant|oslofood/i || item['title'] =~ /restaurant|kafe|mat|delivery|takeaway/i
+          rest = Takeaway::Restaurant.find_or_create_by!(name: item['title'][0..60]) do |r|
+            r.user = seed_user
+            r.cuisine_type = %w[Norwegian Italian Chinese Japanese Indian Thai Mexican Pizza].sample
+            r.address = Faker::Address.street_address + ", Bergen"
+            r.description = body[0..300]
+            r.delivery_fee_cents = rand(2000..5000)
+            r.min_order_cents = rand(5000..15000)
+          end
+          # Add a menu item
+          Takeaway::MenuItem.create!(
+            restaurant: rest,
+            name: Faker::Food.dish,
+            price_cents: rand(8000..25000),
+            description: Faker::Food.description
           )
-          post.record_activity!("RedditScrapeSeed") if post.respond_to?(:record_activity!)
+        end
+
+        # Dating / social prompts (if relationship or local social)
+        if sub =~ /dating|relationship|oslo|bergen|social/i
+          profile = Dating::Profile.find_or_create_by!(user: seed_user) do |p|
+            p.bio = body[0..200]
+            p.age = rand(20..45)
+            p.interests = Faker::Lorem.words(number: 4).join(", ")
+          end
+        end
+
+        # Playlist / music (if music sub)
+        if sub =~ /music|musikk|oslo|bergen/i || item['title'] =~ /musikk|band|konsert|playlist/i
+          pl = Playlist::Playlist.find_or_create_by!(name: item['title'][0..50], user: seed_user) do |p|
+            p.description = body[0..150]
+          end
+          Playlist::Track.create!(
+            title: Faker::Music.song_name,
+            artist: Faker::Music.band,
+            playlist: pl  # simplistic; real would use join
+          ) if pl
+        end
+
+        # TV / media
+        if sub =~ /tv|film|movie|serie|netflix/i
+          ch = Tv::Channel.find_or_create_by!(name: "r/#{sub} TV", user: seed_user) do |c|
+            c.description = "Fictive channel from Reddit scrape"
+          end
+          show = Tv::Show.create!(
+            channel: ch,
+            title: item['title'][0..60],
+            description: body[0..200]
+          )
+          Tv::Episode.create!(
+            show: show,
+            title: "Ep 1: #{Faker::Lorem.words(number: 3).join(' ')}",
+            description: Faker::Lorem.sentence
+          )
         end
       end
       puts "Seeded #{items.size} Reddit items from r/#{sub} (fictive, routed to subapps)."

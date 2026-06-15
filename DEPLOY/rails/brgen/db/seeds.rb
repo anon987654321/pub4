@@ -385,5 +385,7 @@ if ENV['SEED_FROM_WEB'] && ENV['OPENROUTER_API_KEY']
   rescue => e
     puts "  x_seed skipped: #{e.message}"
   end
+  # Optional additional for maps/messages if not covered in rakes
+  puts "  (Maps and messages can be augmented via local posts or additional rakes.)"
   puts "Web-augmented seeding complete."
 end

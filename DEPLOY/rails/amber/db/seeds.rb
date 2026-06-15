@@ -101,4 +101,5 @@ if ENV['SEED_FROM_WEB'] && ENV['OPENROUTER_API_KEY']
   rescue => e
     puts "  fashion_seed skipped: #{e.message}"
   end
+  puts "  (Creates Items, Outfits, Posts from Reddit fashion subs like malefashion, streetwear.)"
 end

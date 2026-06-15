@@ -32,23 +32,37 @@ namespace :scrape do
         # Create Item as fictive wardrobe piece inspired by scrape
         item_rec = Item.create!(
           user: seed_user,
-          title: "#{item['title'][0..50]} (inspired)",
-          category: %w[shirt jacket pants shoes].sample,
-          color: %w[black navy olive beige].sample,
-          brand: %w[Acne COS Uniqlo].sample,
-          description: [item['description'], "Sourced/fictivized from r/#{sub} via Ferrum vision scrape."].compact.join(" "),
-          price_cents: rand(2000..8000)
+          title: "#{item['title'][0..50]} (inspired by r/#{sub})",
+          category: %w[shirt jacket pants shoes dress coat sweater accessory hat].sample,
+          color: %w[black navy white gray beige olive burgundy teal mustard].sample,
+          brand: %w[Acne Arket COS Uniqlo Zara H&M Everlane Patagonia].sample,
+          description: [item['description'] || item['title'], "Sourced/fictivized from r/#{sub} via Ferrum vision scrape (upvotes: #{item['upvotes']})."].compact.join(" "),
+          price_cents: rand(1500..15000),
+          worn_count: rand(0..25),
+          last_worn_at: rand(1..90).days.ago
         )
 
-        # Occasionally make an Outfit from it + random
-        if rand < 0.4 && seed_user.items.count > 3
-          outfit_items = seed_user.items.last(4)
+        # Create Outfit incorporating this + some random existing items for richer capsules
+        if rand < 0.5 && seed_user.items.count > 2
+          outfit_items = (seed_user.items.last(3) + [item_rec]).uniq.sample(4)
           Outfit.create!(
             user: seed_user,
-            name: "Look inspired by #{sub}",
-            description: "Fictive outfit from web scrape",
+            name: "#{sub.titleize} Look #{rand(100)}",
+            description: "Fictive outfit capsule inspired by scraped Reddit content",
             items: outfit_items,
-            context_label: %w[casual work date].sample
+            context_label: %w[casual work date travel party].sample,
+            estimated_value: outfit_items.sum(&:price_cents),
+            total_wears: rand(0..15),
+            last_worn_at: rand(1..60).days.ago
+          )
+        end
+
+        # Occasionally a Post sharing the style (ties to social feed in brgen too if cross-posted)
+        if rand < 0.3
+          Post.create!(
+            user: seed_user,
+            body: "Styled this #{item_rec.category} from r/#{sub} inspo. #wardrobe #ootd",
+            item: item_rec
           )
         end
       end

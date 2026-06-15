@@ -26,19 +26,84 @@ namespace :scrape do
       items = Scrape.call(url, schema: schema, hint: "Extract visible tweets... (same as :x)")
 
       items.each do |item|
-        # Fictivize: anonymize, mix with local flavor, use for Post or subapp content
+        # Fictivize + route to subapps
+        title = "#{q.capitalize} buzz: #{item['text'][0..60]}..."
+        body  = [item['text'], "— scraped & fictivized from X search '#{q}' (#{item['timestamp']}, likes: #{item['likes']})"].compact.join("\n\n")
+
+        # Core social (always for feed)
         post = Post.create!(
           user: user,
-          title: "#{q.capitalize} buzz: #{item['text'][0..60]}...",
-          content: [item['text'], "— scraped & fictivized from X search '#{q}' (#{item['timestamp']})"].join("\n\n"),
-          community: Community.find_by(slug: "tech") || Community.first
+          title: title,
+          content: body,
+          community: Community.find_by(slug: "tech") || Community.find_by(slug: "bergen") || Community.first
         )
         post.record_activity!("XScrapeSeed") if post.respond_to?(:record_activity!)
 
-        # Example: if text mentions food/deal -> takeaway or marketplace inspiration
-        if item['text'] =~ /mat|food|deal|tilbud/i
-          # Could create Takeaway::Restaurant or Marketplace::Listing seed here
-          puts "  -> potential takeaway/marketplace lead from X: #{item['text'][0..50]}"
+        text_lower = item['text'].to_s.downcase
+
+        # Marketplace
+        if text_lower =~ /sale|selger|kjøp|deal|tilbud|market/i
+          Marketplace::Listing.create!(
+            user: user,
+            title: item['text'][0..80],
+            description: body,
+            price_cents: rand(1000..100000),
+            category: Marketplace::Category.all.sample || Marketplace::Category.create!(name: "Misc", slug: "misc-#{SecureRandom.hex(4)}")
+          )
+        end
+
+        # Takeaway
+        if text_lower =~ /mat|food|restaurant|kafe|delivery|takeaway|spise/i
+          rest = Takeaway::Restaurant.find_or_create_by!(name: item['text'][0..50]) do |r|
+            r.user = user
+            r.cuisine_type = %w[Norwegian Italian Pizza].sample
+            r.address = "Bergen"
+            r.description = body[0..200]
+          end
+          Takeaway::MenuItem.create!(restaurant: rest, name: Faker::Food.dish, price_cents: rand(8000..25000)) if rest
+        end
+
+        # Dating / social
+        if text_lower =~ /dating|date|single|relationship|venner/i
+          Dating::Profile.find_or_create_by!(user: user) do |p|
+            p.bio = body[0..150]
+            p.age = rand(20..45)
+          end
+        end
+
+        # Playlist / music
+        if text_lower =~ /musikk|musikk|band|konsert|playlist|spilleliste|song|track/i
+          pl = Playlist::Playlist.find_or_create_by!(name: item['text'][0..40], user: user) do |p|
+            p.description = body[0..100]
+          end
+          Playlist::Track.create!(title: Faker::Music.song_name, artist: Faker::Music.band) if pl
+        end
+
+        # TV / media
+        if text_lower =~ /tv|film|serie|netflix|watch|se på/i
+          ch = Tv::Channel.find_or_create_by!(name: "#{q} Media", user: user) do |c|
+            c.description = "Fictive from X scrape"
+          end
+          show = Tv::Show.create!(channel: ch, title: item['text'][0..50], description: body[0..150])
+          Tv::Episode.create!(show: show, title: "Ep 1", description: Faker::Lorem.sentence)
+        end
+
+        # Maps / local places (if location or local buzz)
+        if text_lower =~ /bergen|oslo|place|spot|cafe|park|bar|location/i || q =~ /bergen|oslo/i
+          Place.find_or_create_by!(name: item['text'][0..40]) do |p|
+            p.kind = %w[cafe bar shop park restaurant].sample
+            p.address = "Bergen area"
+            p.latitude = 60.39 + rand(-0.05..0.05)
+            p.longitude = 5.33 + rand(-0.05..0.05)
+            p.description = body[0..100]
+          end
+        end
+
+        # Messages / social convos (sample from posts)
+        if rand < 0.2
+          conv = Conversation.create!
+          [user, users.sample].uniq.each { |u| conv.conversation_participants.create!(user: u) }
+          2.times { Message.create!(conversation: conv, sender: [user, users.sample].sample, content: Faker::Lorem.sentence) }
         end
       end
       puts "Seeded #{items.size} X items for query #{q} into Posts (fictive)."
