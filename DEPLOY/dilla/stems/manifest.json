@@ -13,6 +13,19 @@
         "center.mp3",
         "sides.mp3"
       ]
+    },
+    "neosoul": {
+      "dir": ".",
+      "bpm": 90,
+      "source": "neosoul.mp3",
+      "files": [
+        "bass.mp3",
+        "center.mp3",
+        "highs_pluck.mp3",
+        "mids.mp3",
+        "sides.mp3",
+        "sub_bass.mp3"
+      ]
     }
   }
 }
