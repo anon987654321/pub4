@@ -367,3 +367,23 @@ puts "Users: #{User.count}, Posts: #{Post.count}, Marketplace listings: #{Market
 puts "Dating profiles: #{Dating::Profile.count}, Takeaway restaurants: #{Takeaway::Restaurant.count}"
 puts "TV channels: #{Tv::Channel.count}, Places: #{Place.count}"
 puts "Ready for demo / development."
+
+# Optional web-augmented fictive seeds using Ferrum + vision LLM (see lib/tasks/{reddit,x}.rake)
+# Requires OPENROUTER_API_KEY. These pull live public content (e.g. r/bergen, X searches for "bergen")
+# then fictivize/anonymize into Posts, Takeaway, Marketplace etc. for more "real" seed data.
+# Usage: SEED_FROM_WEB=1 OPENROUTER_API_KEY=... bin/rails db:seed
+# Or run standalone: rake scrape:reddit_seed scrape:x_seed
+if ENV['SEED_FROM_WEB'] && ENV['OPENROUTER_API_KEY']
+  puts "\nAugmenting with web-scraped fictive data via Ferrum (reddit + x)..."
+  begin
+    Rake::Task['scrape:reddit_seed'].invoke
+  rescue => e
+    puts "  reddit_seed skipped: #{e.message}"
+  end
+  begin
+    Rake::Task['scrape:x_seed'].invoke
+  rescue => e
+    puts "  x_seed skipped: #{e.message}"
+  end
+  puts "Web-augmented seeding complete."
+end

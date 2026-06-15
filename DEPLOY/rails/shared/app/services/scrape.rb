@@ -1,4 +1,7 @@
 # frozen_string_literal: true
+# Shared Ferrum + vision-LLM scraper for fictive data generation (Reddit, X, Amazon, fashion etc.).
+# Used by brgen and amber rake tasks for seed augmentation.
+# Requires OPENROUTER_API_KEY (or configure MODEL/ENDPOINT).
 
 require "ferrum"
 require "net/http"

@@ -90,3 +90,15 @@ end
 
 puts "Seeded Amber fictive data successfully."
 puts "Users: #{User.count}, Items: #{Item.count}, Outfits: #{Outfit.count}, Posts: #{Post.count}"
+
+# Optional web-augmented fictive seeds using Ferrum (see lib/tasks/fashion.rake)
+# Requires OPENROUTER_API_KEY. Supplements with real fashion inspiration from Reddit.
+# Usage: SEED_FROM_WEB=1 OPENROUTER_API_KEY=... bin/rails db:seed
+if ENV['SEED_FROM_WEB'] && ENV['OPENROUTER_API_KEY']
+  puts "\nAugmenting Amber with web-scraped fashion data via Ferrum..."
+  begin
+    Rake::Task['scrape:fashion_seed'].invoke
+  rescue => e
+    puts "  fashion_seed skipped: #{e.message}"
+  end
+end

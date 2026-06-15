@@ -64,6 +64,7 @@ gem "pagy", "~> 9.3"
 gem "ruby-openai"
 gem "ruby-vips"
 gem "falcon"
+gem "ferrum"
 
 # Engine-ize spike: shared as local path gem (relative from rails/amber)
 gem 'pub4-shared', path: '../shared'
