@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Post < ApplicationRecord
+  # Engine-ize Shared via pub4-shared
+  include Shared.concern(:Reactable) rescue nil
+  include Shared.concern(:Notifiable) rescue nil
   belongs_to :blog
   belongs_to :user
   has_rich_text :body

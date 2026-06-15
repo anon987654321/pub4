@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Port < ApplicationRecord
+  # Engine-ize Shared via pub4-shared
+  include Shared.concern(:Reactable) rescue nil
+  include Shared.concern(:Notifiable) rescue nil
   belongs_to :category
   belongs_to :maintainer, optional: true
   has_many :dependencies, dependent: :destroy

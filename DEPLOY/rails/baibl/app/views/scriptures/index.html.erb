@@ -2,11 +2,11 @@
 
 <%= live_search_form url: scripture_search_path, placeholder: "Search scripture…", label: "Scripture search" %>
 
-<nav>
+<nav role="navigation" aria-label="Bible books navigation">
   <% @books.each do |book| %>
     <%= link_to book.abbreviation, scripture_book_path(book.abbreviation), title: book.name %>
   <% end %>
 </nav>
 <% if @books.any? %>
-  <p>Select a book to begin reading.</p>
+  <p role="status">Select a book to begin reading.</p>
 <% end %>

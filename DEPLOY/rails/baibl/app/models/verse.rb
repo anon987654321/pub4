@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Verse < ApplicationRecord
+  # Engine-ize: Shared for annotations/comments (AN9)
+  include Shared.concern(:Reactable) rescue nil
+  include Shared.concern(:Notifiable) rescue nil
   belongs_to :chapter
   belongs_to :book
 

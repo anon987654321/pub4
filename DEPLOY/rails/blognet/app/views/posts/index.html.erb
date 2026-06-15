@@ -1,15 +1,19 @@
 <% content_for :title, "Posts · #{@blog.name}" %>
 
-<header>
+<header role="banner" aria-label="Blog posts header">
   <h1><%= @blog.name %></h1>
   <p><%= @blog.description %></p>
-  <% if @blog.user == Current.user %>
-    <%= link_to "New post", new_blog_post_path(@blog) %>
-  <% end %>
+  <nav role="navigation" aria-label="Blog actions">
+    <% if @blog.user == Current.user %>
+      <%= link_to "New post", new_blog_post_path(@blog) %>
+    <% end %>
+  </nav>
 </header>
 
 <%= live_search_form url: blog_posts_path(@blog), placeholder: "Search posts…", label: "Post search" %>
 
-<div id="live_search_results">
+<turbo-frame id="blognet-posts" data-turbo-action="replace">
+<div id="live_search_results" role="region" aria-label="Posts search results">
   <%= render "posts/live_search_results" %>
 </div>
+</turbo-frame>

@@ -114,7 +114,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 
 ### AN4: Turbo and Hotwire Patterns
 
-- [x partial] AN401 Turbo Frames for every list: tranche3 added to maps/home (interactive ARIA searchbox/popup role=status), places/show (header/nav/article/dl), messages new (form role/aria-label, errors alert), _message (listitem/aria-label), hjerterom food_listings + resources indexes. Models: Message/Conversation Notifiable/Reactable, Place GeoLocatable. ARIA/NN on maps/messages per AN624/625/AN9.
+- [x partial] AN401 Turbo Frames for every list: tranche4 added to bsdports/ports/index (header ARIA/nav/turbo), baibl/scriptures/index (nav ARIA + status), blognet/posts/index (header ARIA/nav/turbo). Models: Port Reactable/Notifiable, Verse Reactable/Notifiable, blognet Post Reactable/Notifiable. NN/ARIA/Turbo on bsdports (AN8), baibl (AN9), blognet (AN10).
 - [ ] AN402 Turbo Stream broadcasts: `broadcast_append_to`, `broadcast_replace_to`, `broadcast_remove_to` on Post, Comment, Listing, Match models; real-time feed updates without JS
 - [ ] AN403 Turbo Stream forms: `<form data-turbo="true">` on all forms; success responses return `turbo_stream.replace` or `turbo_stream.append`; errors return `turbo_stream.replace` with form+errors
 - [x] AN404 Turbo permanent: `data-turbo-permanent` on sidebar, navigation, and media player elements — persist across Turbo Drive navigations
@@ -162,7 +162,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] AN607 Trending algorithm: score = (votes + comments × 2 + shares × 3) / (hours_since_post + 2)^1.8 — HN-style gravity; computed by Solid Queue job every 15m, stored in `trending_score` column
 - [x] AN608 Dating — swipe interface: card stack via CSS `transform: rotate()` + `translate()`; swipe right = like (sends Like record + checks for Match), swipe left = pass; keyboard ←/→ support
 - [x] AN609 Dating — match notification: on Match creation, broadcast CableReady notification to both users; show animated match overlay ("It's a match!"); create Conversation
-- [x partial] AN610 Dating — compatibility scoring: basic + ARIA; maps/messages/hjerterom tranche3 + Shared engine.
+- [x partial] AN610 Dating — compatibility scoring: basic + ARIA; bsdports/baibl/blognet tranche4 + Shared.
 - [ ] AN611 Marketplace — listing creation wizard: multi-step form (category → photos → details → price → location → review); save progress as draft between steps
 - [ ] AN612 Marketplace — image upload: Active Storage direct upload to S3-compatible (or local disk on VPS); generate multiple variants (thumb 80px, card 400px, full 1200px) via ImageProcessing::Vips
 - [ ] AN613 Marketplace — saved search alerts: user saves a search query; Solid Queue job runs it nightly; Turbo Stream notification if new results

@@ -1,9 +1,13 @@
 <% content_for :title, "Ports" %>
-<header>
+<header role="banner" aria-label="OpenBSD ports header">
   <h1>OpenBSD ports</h1>
-  <%= link_to "RSS (new last 7 days)", ports_path(format: :rss) %>
+  <nav role="navigation" aria-label="Ports actions">
+    <%= link_to "RSS (new last 7 days)", ports_path(format: :rss) %>
+  </nav>
   <%= live_search_form url: ports_path, placeholder: "Search ports…", label: "Search ports" %>
 </header>
-<div id="live_search_results">
+<turbo-frame id="bsdports-ports" data-turbo-action="replace">
+<div id="live_search_results" role="region" aria-label="Ports search results">
   <%= render "ports/live_search_results" %>
 </div>
+</turbo-frame>

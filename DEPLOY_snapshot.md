@@ -1,6 +1,9 @@
-# DEPLOY Snapshot (tranche3 hjerterom + maps/messages)
-Generated: 2026-06-15T07:07:14Z
+# DEPLOY Snapshot (tranche4 + LLM eval)
+Generated: 2026-06-15T07:17:37Z
 ## Updates
 ```
-hjerterom food_listings/resources: turbo + header ARIA nav
+bsdports ports: turbo + ARIA header/nav
+baibl scriptures: ARIA nav + status
+blognet posts: turbo + ARIA header/nav
+Models: Shared concerns added
 ```
