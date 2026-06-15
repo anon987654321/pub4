@@ -10,19 +10,24 @@ module Master
   # Usage (VPS, after `gem install rb-kqueue` or `rb-inotify`):
   #   WatchLoop.new(rules:, agent:, scanner:, root:, bus:).run
     class WatchLoop
-      DEBOUNCE_SECONDS = 1.0
-      SKIP_DIRS = FixLoop::SKIP_DIRS
+      DEBOUNCE_SECONDS  = 5.0
+      MAX_EVENTS_PER_MIN = 20
+      WATCH_EXTENSIONS  = %w[.rb .erb .yml .yaml .json .toml .js .css .html].freeze
+      SKIP_DIRS         = FixLoop::SKIP_DIRS
 
       def initialize(rules:, agent:, scanner:, root:, bus: nil, learnings: nil)
-        @rules = rules
-        @agent = agent
-        @scanner = scanner
-        @root = root
-        @bus = bus
+        @rules    = rules
+        @agent    = agent
+        @scanner  = scanner
+        @root     = root
+        @bus      = bus
         @learnings = learnings
-        @queue = Queue.new
+        @queue     = Queue.new
         @mtime_map = {}
-        @watcher = build_watcher
+        @in_progress = Mutex.new
+        @in_progress_set = Set.new
+        @event_times = []
+        @watcher   = build_watcher
       end
 
       def run
@@ -43,20 +48,21 @@ module Master
         raise
       end
 
-      # Drains the queue with debounce and sub-second mtime quiescence.
       def drain_queue
         pending = {}
         loop do
           path = @queue.pop
-          next if SKIP_DIRS.any? { |d| path.include?(d) }
+          next unless watchable?(path)
           mtime = latest_mtime(path)
           next if @mtime_map[path] == mtime
 
           pending[path] = mtime
           sleep DEBOUNCE_SECONDS
-          ready = pending.select { |p, mtime| latest_mtime(p) == mtime }.keys
+          ready = pending.select { |p, _m| latest_mtime(p) == pending[p] }.keys
           ready.each do |p|
             pending.delete(p)
+            next if in_progress?(p)
+            next unless rate_ok?
             @mtime_map[p] = latest_mtime(p)
             run_rules_on(p)
           end
@@ -65,20 +71,46 @@ module Master
 
       def run_rules_on(path)
         return unless File.exist?(path)
-        @rules.each do |rule|
-          rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
-          result = rl.run_once([path])
-          @bus&.publish("watch_loop:file_pass", file: path, rule: rule.id, **result)
+        mark_in_progress(path) do
+          applicable = @rules.select { |r| r.respond_to?(:applies_to?) ? r.applies_to?(path) : true }
+          applicable.each do |rule|
+            rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
+            result = rl.run_once([path])
+            @bus&.publish("watch_loop:file_pass", file: path, rule: rule.id, **result)
+          end
         end
       rescue StandardError => e
         @bus&.publish("watch_loop:error", file: path, error: e.message)
+      end
+
+      def watchable?(path)
+        return false if SKIP_DIRS.any? { |d| path.include?(d) }
+        WATCH_EXTENSIONS.include?(File.extname(path))
+      end
+
+      def in_progress?(path)
+        @in_progress.synchronize { @in_progress_set.include?(path) }
+      end
+
+      def mark_in_progress(path)
+        @in_progress.synchronize { @in_progress_set.add(path) }
+        yield
+      ensure
+        @in_progress.synchronize { @in_progress_set.delete(path) }
+      end
+
+      def rate_ok?
+        now = Time.now.to_f
+        @event_times.reject! { |t| now - t > 60.0 }
+        return false if @event_times.size >= MAX_EVENTS_PER_MIN
+        @event_times << now
+        true
       end
 
       def latest_mtime(path)
         File.exist?(path) ? File.mtime(path).to_f : nil
       end
 
-      # Platform-specific watcher. Enqueues paths into @queue on change events.
       def require_kqueue_or_inotify
         if RUBY_PLATFORM.include?("openbsd") || RUBY_PLATFORM.include?("freebsd")
           require "rb-kqueue"

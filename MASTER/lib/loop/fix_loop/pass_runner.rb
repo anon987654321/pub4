@@ -67,6 +67,11 @@ module Master
             @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
             return 0
           end
+          if (avg = system_load_avg) && avg > Ops::ProcessBudget.config.dig("load", "load_avg_1m", "crit").to_f
+            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "load_shed", load: avg)
+            sleep 60
+            return 0
+          end
           pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
           llm_fixed = llm_pass(violations: found, files:, pass:, deadline: pass_deadline)
           @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
@@ -285,6 +290,14 @@ module Master
 
         def circuit_open? = @llm_router.circuit_open?
         def open_breakers = @llm_router.open_breakers
+
+        def system_load_avg
+          out, _, st = Open3.capture3("/sbin/sysctl", "-n", "vm.loadavg")
+          return nil unless st.success?
+          out.to_s[/\d+(?:\.\d+)?/]&.to_f
+        rescue StandardError
+          nil
+        end
       end
     end
   end

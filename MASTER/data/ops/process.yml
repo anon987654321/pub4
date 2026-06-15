@@ -11,7 +11,7 @@ loops:
   watch:
     env: MASTER_WATCH
     max_run_seconds: 900
-    min_sleep_seconds: 1
+    min_sleep_seconds: 30
   watcher:
     env: MASTER_WATCHER
     max_run_seconds: 0
