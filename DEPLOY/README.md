@@ -48,7 +48,17 @@ Canonical inventory: **`DEPLOY/rails/apps.yml`** (domains, ports, feature status
 
 Each script: copy tracked tree → `bundle install` → migrate → rc.d → relayd backend → `/up` smoke.
 
-Shared engine: `DEPLOY/rails/shared` (`pub4-shared` gem path in each Gemfile).
+**Shared engine:** `DEPLOY/rails/shared` (`pub4-shared` gem path in each Gemfile). Promotes concerns (Notifiable, ActivityTrackable, etc.) and services (including the Ferrum-based Scrape service).
+
+**Fictive Seeds (Faker + Web):**
+- Base: ruby-faker for rich data in brgen (core + marketplace/dating/playlist/takeaway/tv/maps/messages) and amber (items/outfits/posts).
+- Web-augmented (optional): `SEED_FROM_WEB=1 OPENROUTER_API_KEY=... bin/rails db:seed:replant`
+  - Uses Ferrum (headless) + vision LLM to scrape Reddit/X/etc.
+  - Rakes: `scrape:reddit_seed`, `scrape:x_seed` (brgen verticals), `scrape:fashion_seed` (amber).
+  - Scraped content is fictivized and routed to models (e.g. local posts → social + maps; deals/food → marketplace/takeaway; fashion → wardrobe).
+  - Service: `shared/app/services/scrape.rb` (reusable).
+
+See per-app `db/seeds.rb` and `lib/tasks/*.rake` for details. Other LLMs: this is the canonical way to bootstrap realistic demo data (base Faker + optional web scrape for authenticity).
 
 ## Checks
 
