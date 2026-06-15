@@ -38,8 +38,9 @@ bin/smoke
 ## VPS recovery (when `~/.ssh/id_ed25519_brgen` is on workstation)
 
 ```sh
-zsh DEPLOY/openbsd/unban_pf.sh
-# console: doas pfctl -t bruteforce -T flush; exit ~.
+ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam
+vmctl console vm23
+# login, then: doas pfctl -t bruteforce -T flush; exit ~.
 ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226
 doas rcctl restart master relayd
 curl -fsS http://127.0.0.1:53187/up

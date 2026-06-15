@@ -41,8 +41,6 @@ vmctl status vm23
 vmctl console vm23          # inside: login, pfctl -t bruteforce -T flush ; exit with ~.
 ```
 
-See DEPLOY/openbsd/unban_pf.sh for a one-shot helper that drops you straight into the console with the exact pfctl command.
-
 **Operator docs** (read 2026-06-15)
 
 - [Onboarding](https://openbsd.amsterdam/onboard.html) — console via vmctl/cu(1), ~. to exit, doas setup, syspatch, initial root password from authorized_keys
@@ -71,16 +69,16 @@ See DEPLOY/openbsd/unban_pf.sh for a one-shot helper that drops you straight int
 - `cd /home/dev/pub4 && git pull --ff-only`
 - Light sync: `doas zsh DEPLOY/openbsd/openbsd.sh --sync-configs` (runs MASTER scan gate + health).
 - Per-app (brgen subapps, amber, ...): `doas zsh DEPLOY/rails/brgen/brgen.sh` (or just `doas rcctl restart brgen_rails` after pull if no bundle changes). All .sh now have pre-apply MASTER /scan DEPLOY (blocks on rules violations) + /up guards + sleeps.
-- Recovery (if direct ssh blocked by pf): `ssh -p 31415 ... dev@server4.openbsd.amsterdam ; vmctl console vm23` (then `doas pfctl -t bruteforce -T flush` or use unban_pf.sh from your workstation).
+- Recovery (if direct ssh blocked by pf): `ssh -p 31415 ... dev@server4.openbsd.amsterdam` → `vmctl console vm23` → `doas pfctl -t bruteforce -T flush`.
 - Always tmux. Use host console for anything wedged. Health: curl /up + ruby health_check.rb.
 - Web seeds on VPS: only when needed (resource-heavy due to Ferrum+LLM); prefer locally then git push/pull. Final wave: full integration (rake *_seed + optional in seeds.rb) for brgen subapps + amber.
 
-- Rapid reconnects trip pf — use tmux; unban via host console (unban_pf.sh).
+- Rapid reconnects trip pf — use tmux; flush `<bruteforce>` via host console when locked out.
 - FDE only if OK with no cold-start help from provider.
 - Billing: include "server4 vm23" in description.
 - Same key for VM + host + backup (wingman1 via openrsync).
 
-**For other LLMs/agents (explicitly):** Read this file + root README + DEPLOY/rails/apps.yml + openbsd/pf.conf first. The system is built for recursive self-application (rules.yml enforced via scans in deploys, ground_truth, evidence_scoring, veto/anti-patterns, tier1 priorities). Seed data is the "Faker base + optional Ferrum web" pattern above (rakes produce model-ready fictive records routed to verticals; SEED_FROM_WEB for augmentation). Deploys are intentionally light and gated (MASTER scan + /up health before restarts). All changes must be committed back here. Host access is the out-of-band path. See also unban_pf.sh, the per-app .sh (with scan gates), and db/seeds.rb for the data generation logic. Last minute: all optimized for VPS light run, documented for LLM pickup.
+**For other LLMs/agents (explicitly):** Read this file + root README + DEPLOY/rails/apps.yml + openbsd/pf.conf first. The system is built for recursive self-application (rules.yml enforced via scans in deploys, ground_truth, evidence_scoring, veto/anti-patterns, tier1 priorities). Seed data is the "Faker base + optional Ferrum web" pattern above (rakes produce model-ready fictive records routed to verticals; SEED_FROM_WEB for augmentation). Deploys are intentionally light and gated (MASTER scan + /up health before restarts). All changes must be committed back here. Host access is the out-of-band path (hypervisor → vmctl console → pfctl flush). See also the per-app .sh (with scan gates) and db/seeds.rb for the data generation logic. Last minute: all optimized for VPS light run, documented for LLM pickup.
 
 ## Run
 

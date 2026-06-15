@@ -60,7 +60,7 @@ Target: vm23 on server4.openbsd.amsterdam (brgen.no).
 
 **Access (if direct VM ssh blocked by pf):**
 - Host: `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen -o VerifyHostKeyDNS=yes dev@server4.openbsd.amsterdam`
-- Then: `vmctl console vm23` (exit with `~.`). See `DEPLOY/openbsd/unban_pf.sh` for one-shot pf bruteforce flush.
+- Then: `vmctl console vm23` → login → `doas pfctl -t bruteforce -T flush` → exit with `~.`.
 
 **Safe, light updates (no CPU/mem spikes):**
 ```zsh
