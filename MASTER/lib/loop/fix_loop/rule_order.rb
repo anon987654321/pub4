@@ -7,6 +7,7 @@ module Master
         TIER2_QUALITY_RULE_IDS = %w[DRY KISS SRP].freeze
         DEPS_PATH = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
         PRIORS_PATH = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
+        SKIP_DIRS_RE = %r{/(\.git|vendor|tmp|var|node_modules|\.bundle|coverage|log|dist|knowledge)/}.freeze
 
         def initialize(rules:, learnings:, bus:, root:)
           @rules = rules
@@ -72,10 +73,12 @@ module Master
 
         def extension_weights
           counts = Hash.new(0)
-          Dir.glob(File.join(@root, "**", "*")).select { |f| File.file?(f) }.each do |f|
-            ext = File.extname(f).delete(".").downcase
-            counts[ext] += 1 unless ext.empty?
-          end
+          Dir.glob(File.join(@root, "**", "*"))
+            .select { |f| File.file?(f) && !f.match?(SKIP_DIRS_RE) }
+            .each do |f|
+              ext = File.extname(f).delete(".").downcase
+              counts[ext] += 1 unless ext.empty?
+            end
           total = counts.values.sum.to_f
           return {} if total.zero?
           counts.transform_values { |n| n / total }
@@ -85,18 +88,24 @@ module Master
         end
 
         def load_deps
-          data = Master.load_yaml(DEPS_PATH)
-          (data&.dig("deps") || {}).transform_values { |v| Array(v["after"] || []) }
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
-          {}
+          @deps_cache ||=
+            begin
+              data = Master.load_yaml(DEPS_PATH)
+              (data&.dig("deps") || {}).transform_values { |v| Array(v["after"] || []) }
+            rescue StandardError => e
+              Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
+              {}
+            end
         end
 
         def load_priors
-          Master.load_yaml(PRIORS_PATH) || {}
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
-          {}
+          @priors_cache ||=
+            begin
+              Master.load_yaml(PRIORS_PATH) || {}
+            rescue StandardError => e
+              Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
+              {}
+            end
         end
       end
     end

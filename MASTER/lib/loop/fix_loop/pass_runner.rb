@@ -140,6 +140,7 @@ module Master
 
           ast_result = Judge::Scan::AstFixer.fix(path, src)
           if ast_result&.changed
+            src = File.read(path, encoding: "UTF-8")
             fixed += ast_result.transforms.size
             @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: ast_result.transforms)
           end
