@@ -523,6 +523,21 @@ configure_relayd() {
   for dom in ${(k)DOMAIN_BACKEND}; do
     [[ -f /etc/ssl/${dom}.fullchain.pem ]] || continue
     ln -sf /etc/ssl/${dom}.fullchain.pem /etc/ssl/${dom}.crt
+    # Primary domain: key is the real file, not a symlink — nothing to do.
+  done
+  # Subdomains share the parent cert+key — create both symlinks so relayd
+  # tls keypair finds /etc/ssl/${dom}.crt AND /etc/ssl/private/${dom}.key.
+  for dom in ${(k)DOMAIN_BACKEND}; do
+    [[ -L /etc/ssl/${dom}.crt ]] && continue   # already handled above
+    typeset parent="" try=${dom#*.}
+    while [[ -n $try ]]; do
+      if [[ -f /etc/ssl/${try}.fullchain.pem ]]; then parent=$try; break; fi
+      [[ $try == *.* ]] || break
+      try=${try#*.}
+    done
+    [[ -n $parent ]] || continue
+    ln -sf /etc/ssl/${parent}.fullchain.pem /etc/ssl/${dom}.crt
+    ln -sf /etc/ssl/private/${parent}.key    /etc/ssl/private/${dom}.key
   done
 
   {
