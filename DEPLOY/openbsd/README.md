@@ -72,6 +72,7 @@ vmctl console vm23          # inside: login, pfctl -t bruteforce -T flush ; exit
 - Recovery (if direct ssh blocked by pf): `ssh -p 31415 ... dev@server4.openbsd.amsterdam` → `vmctl console vm23` → `doas pfctl -t bruteforce -T flush`.
 - Always tmux. Use host console for anything wedged. Health: `ruby34 health_check.rb` (rcctl + per-app `/up`).
 - Ruby 3.4 on VPS: `ruby34`, `bundle34` (not system ruby). Per-app gate: `cd DEPLOY/rails/<app> && bundle34 exec bin/ci`.
+- MASTER gate on VPS: `cd /home/dev/pub4/MASTER && bundle34 check && bin/probe all`.
 - Pre-deploy diff (workstation): `zsh DEPLOY/openbsd/scripts/deploy-diff.sh` — compares live `/etc/pf.conf` + `/etc/relayd.conf` to repo.
 - Production matrix: `DEPLOY/rails/PRODUCTION_READINESS.md`.
 - Web seeds on VPS: only when needed (resource-heavy due to Ferrum+LLM); prefer locally then git push/pull. Final wave: full integration (rake *_seed + optional in seeds.rb) for brgen subapps + amber.

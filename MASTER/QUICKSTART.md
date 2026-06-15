@@ -63,6 +63,26 @@ The recommended way for most work:
 
 Legacy explicit commands still work for power users (`/scan`, `/fix`, `/why`, etc.), but `/run` is preferred for LLM/agent ergonomics. See `/cmd` for the current explicit list.
 
+For shell-side readiness checks, use `bin/probe` from `MASTER/`:
+
+```sh
+bin/probe          # quick: smoke + namespace audit + Rails production gate
+bin/probe all      # smoke + namespace audit + preflight + staged audit + Rails gate
+bin/probe security # staged audit + namespace audit + Rails gate
+```
+
+On OpenBSD 7.9, run these through the Ruby 3.4 toolchain installed by packages:
+
+```sh
+cd /home/dev/pub4/MASTER
+ruby34 -v
+bundle34 check
+bundle34 exec ruby bin/cli
+bin/probe all
+```
+
+If local workstation Ruby is older than 3.4, treat it as syntax/probe-only and do the final runtime check on the VPS.
+
 ## Current Known Friction Points (2026)
 
 This system was built with extremely high standards. Some resulting pain points for LLMs:

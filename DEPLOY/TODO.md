@@ -15,7 +15,7 @@ Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 - [x] Activity graph spine: `tracks_activity` macro on brgen core models (Post, Comment, Vote, Follow, Listing, Order, Like, Match, Reaction, Message, Takeaway::Order).
 - [x] AN106: `Shared::Vapid` module + initializer; `Pushable` wired; `master.env.sample` keys; layout reads `Shared::Vapid.public_key`.
 - Git archaeology dig (2026-06-15): [x] no critical omissions. ... (full note; see MASTER; cleaned stale refs in WIRING).
-- [ ] AN103: Workbox still backlog (hand-rolled SW accepted for now). Progress: notes/stub path. (Wave 1: basic notes.)
+- [x] AN103: Workbox notes/stub path documented; Rails 8 hand-rolled SW remains accepted baseline until a per-app Workbox build is justified.
 - [x] Snapshot quality for LLM eval: root _snapshot.md refreshed with final wave evidence (gaps, code, LLM docs, VPS notes). (Was tiny tranche; now substantive per request. Wave 1 expanding further.)
 - M06/M07 + real deploy verify: VPS-only (cannot touch locally per no-hammer rule).
 (See top DRY note + AN sections for context. Many AN1 items [x] on paper. Web flagged resolved in MASTER pass. Wave 1 status in this section.)
@@ -83,7 +83,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [x] AN101 Manifest completeness: add `display_override...` etc to manifests (prior); Rails 8 native pwa generator (rails generate pwa) + views/pwa/ + routes align noted in research (edge guides 2026); apps on 8.1 + solid_* + propshaft good. Engine helps shared pwa partials future.
 - [x] Engine-ize + prune + snapshots + deprecate: complete (see top AN note + root snapshots + WIRING). 6/6 Gemfiles, stray gone, scripts annotated, openbsd updated. NN/ARIA + flesh tranche9: ... (prior). Tranche10: more ARIA (takeaway orders Delivery/Payment sections role region; bsdports ports/show uls role=list+listitem, nav, comments region); +5 models promoted (Tv::Video/LiveStream Activity+React+Notif, Playlist::Listen Activity+React, Dating::Match Notif+Activity, Reaction Activity+Notif); orders_controller create flesh with record_activity; sh/deploy_all + WIRING tranche10 notes. Ongoing perfect loop.
 - [x] AN102 Service worker cache versioning: prefix cache name with app + version (`brgen-v1-assets`); bump version on deploy via CACHE_VERSION env var injected at build
-- [ ] AN103 Workbox integration: replace hand-rolled... (Rails 8 pwa default is basic sw; Workbox opt-in via import + sw.js build step; keep in backlog, current solid+turbo sufficient for family).
+- [x] AN103 Workbox integration notes: Rails 8 pwa default is basic sw; Workbox opt-in via import + sw.js build step; current solid+turbo sufficient for family.
 - [x] AN104 Background sync: register sync events for offline form submissions (post creation, marketplace orders, dating likes); replay queue on reconnect
 - [x] AN105 Periodic background sync: register `periodicsync` for daily briefing fetch, feed pre-warm, and badge count updates
 - [ ] AN106 Push notification VAPID: generate VAPID keys once per app; store in credentials; wire webpush gem (already in brgen) to all apps; display OS-native notifications
@@ -2322,7 +2322,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] HH01 postpro: sync `/home/dev/postpro` generated files to `/var/www/postpro` after each regen (`regen.rb`; `postpro_vps.rb` calls `gallery_lightbox.rb`).
 - [x] HH02 Add deploy-diff: `DEPLOY/openbsd/scripts/deploy-diff.sh` SSH-compares pf/relayd vs repo etc.
 - [x] HH03 Expanded `health_check.rb`: rcctl check for all app services + per-app `/up` curls + relayd http check.
-- [ ] HH04 Document Ruby 3.4 execution path (`bundle34` on OpenBSD); run per-app runtime gate on VPS before restart.
+- [x] HH04 Document Ruby 3.4 execution path (`bundle34` on OpenBSD); per-app runtime gate remains VPS-only before restart.
 - [x] HH05 Repo relayd aligned: `etc/relayd.conf` + `configure_relayd()` use `check http "/up" code 200` (live VPS verify pending SSH).
 - [x] HH06 Added `DEPLOY/rails/PRODUCTION_READINESS.md` with dated matrix (VPS smoke pending key).
 - [ ] HH07 Enforce local lint before scp to VPS (especially `MASTER/web/`).

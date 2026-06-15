@@ -1,0 +1,111 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+# frozen_string_literal: true
+
+# master-probe — one entrypoint for local and VPS readiness checks.
+# Usage:
+#   bin/probe              # quick local signal
+#   bin/probe all          # smoke + namespace + preflight + staged audit + rails gate
+#   bin/probe smoke rails  # selected checks
+
+Encoding.default_external = Encoding::UTF_8
+
+require "open3"
+require "rbconfig"
+
+MASTER_ROOT = File.expand_path("..", __dir__)
+REPO_ROOT = File.expand_path("..", MASTER_ROOT)
+RUBY = RbConfig.ruby
+RUBY3 = Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.0.0")
+
+CHECKS = {
+  "smoke" => {
+    desc: "MASTER boot/wiring smoke",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "smoke")],
+    cwd: MASTER_ROOT,
+    needs_ruby3: true,
+  },
+  "nsaudit" => {
+    desc: "MASTER namespace reference audit",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "nsaudit")],
+    cwd: MASTER_ROOT,
+    needs_ruby3: true,
+  },
+  "preflight" => {
+    desc: "MASTER deploy preflight",
+    cmd: [File.join(MASTER_ROOT, "bin", "preflight")],
+    cwd: MASTER_ROOT,
+  },
+  "audit" => {
+    desc: "Staged-file constitutional audit",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "audit")],
+    cwd: REPO_ROOT,
+    needs_ruby3: true,
+    skip: lambda {
+      out, = Open3.capture2e("git", "diff", "--cached", "--name-only", chdir: REPO_ROOT)
+      out.lines.none? { |line| !line.strip.empty? }
+    },
+    skip_reason: "no staged files",
+  },
+  "rails" => {
+    desc: "DEPLOY Rails production gate",
+    cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "rails", "check_production_gate.rb")],
+    cwd: REPO_ROOT,
+  },
+}.freeze
+
+ALIASES = {
+  "quick" => %w[smoke nsaudit rails],
+  "all" => %w[smoke nsaudit preflight audit rails],
+  "security" => %w[audit nsaudit rails],
+}.freeze
+
+def expand_args(args)
+  selected = args.empty? ? %w[quick] : args
+  selected.flat_map { |arg| ALIASES.fetch(arg, [arg]) }.uniq
+end
+
+def print_usage
+  warn "usage: bin/probe [#{(CHECKS.keys + ALIASES.keys).sort.join("|")}]..."
+  warn
+  warn "checks:"
+  CHECKS.each { |name, meta| warn "  #{name.ljust(9)} #{meta[:desc]}" }
+  warn
+  warn "aliases:"
+  ALIASES.each { |name, checks| warn "  #{name.ljust(9)} #{checks.join(", ")}" }
+end
+
+checks = expand_args(ARGV)
+unknown = checks - CHECKS.keys
+unless unknown.empty?
+  print_usage
+  warn "\nunknown probe check(s): #{unknown.join(", ")}"
+  exit 64
+end
+
+failures = []
+checks.each do |name|
+  meta = CHECKS.fetch(name)
+  if meta[:needs_ruby3] && !RUBY3
+    puts "probe: #{name.ljust(9)} skip - Ruby #{RUBY_VERSION} cannot parse MASTER Ruby 3 syntax; rerun with ruby34"
+    next
+  end
+
+  if meta[:skip]&.call
+    puts "probe: #{name.ljust(9)} skip - #{meta.fetch(:skip_reason)}"
+    next
+  end
+
+  puts "probe: #{name.ljust(9)} #{meta[:desc]}"
+  out, status = Open3.capture2e(*meta[:cmd], chdir: meta[:cwd])
+  puts out unless out.empty?
+  failures << name unless status.success?
+end
+
+if failures.empty?
+  puts "probe: clean"
+  exit 0
+end
+
+warn "probe: #{failures.size} failure(s): #{failures.join(", ")}"
+exit 1

@@ -21,9 +21,13 @@ def git_ls_files(pattern)
   status.success? ? stdout.lines.map(&:chomp).reject(&:empty?) : []
 end
 
+def load_yaml(path)
+  YAML.safe_load(File.read(path))
+end
+
 failures = []
 warnings = []
-apps = YAML.safe_load_file(APPS_YML).fetch("apps")
+apps = load_yaml(APPS_YML).fetch("apps")
 env_sample = File.join(RAILS_ROOT, "env.sample")
 
 tracked_master_keys = git_ls_files("DEPLOY/rails/*/config/master.key")

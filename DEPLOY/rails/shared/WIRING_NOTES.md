@@ -183,6 +183,8 @@ Stimulus Components: Use @stimulus-components/* (auto-submit, clipboard, content
 
 LLM-safe rules (from LLM_SAFE_FRONTEND_RULES.md): Split large mixed HTML/CSS/JS/ERB into external files before LLM edits. Prefer minimal unified diffs.
 
+PWA/Workbox rule: Rails 8's service worker remains the shared baseline. Introduce Workbox only per app, with a documented build output path, feature-detected background sync/push code, and no route churn for the manifest or service worker endpoint. Treat Workbox as an enhancement after `/up`, Rails production gate, and offline fallback pass.
+
 ## Engine Extraction Prep (to reduce current sprawl + duplication)
 To move from "copy via install_frontend_baseline.sh" (fragile, per top of this file) to a real engine:
 - All shared code must live only under shared/ (concerns, services, models/shared, views/shared, etc.). No app-specific logic.

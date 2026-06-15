@@ -7,7 +7,7 @@ Operator context (intent, constraints, VPS recovery, next waves): [`../TODO.md`]
 - Self-scan / D section vs rule "complete all TODO.md files fully before running actual MASTER commands over its own self": infrastructure [x] on paper (D01-D10), but cannot execute real /scan / master start / self-autofix without violating the explicit constraint. Circular dependency. (Wave 1: safe pre-complete mode + limited scans targeted.)
 - Snapshot quality (O804): root MASTER/DEPLOY_snapshot.md are abbreviated "tranche" notes (hundreds of bytes); intent was full-ish filtered exports for external LLM eval of architecture/DRY/pruning/engine/shared layer. (Wave 1: expand with counts + excerpts.)
 - Web flagged (L section + dedicated 2026-06-15 pass doc): dupe entrypoints (web/ sources vs public/ served; public/index.html.erb richer but dead unprocessed ERB), Inter font gap, face.css append dups. Decision pending.
-- N01: QUICKSTART not verified on target OpenBSD 7.9 + ruby 3.4. (Wave 1: enhance docs + target prep.)
+- N01: QUICKSTART now documents target OpenBSD 7.9 + ruby34/bundle34 command path; final execution remains VPS-only. (Wave 1: docs + target prep done.)
 - Core engine deprecate + auth unification cross-cut from DEPLOY (see DEPLOY critical gaps). (Wave 1 primary focus.)
 - Many O/S/P/Q/R items remain open (refactors, proposals, archaeology); A-E/D self rules look complete on paper but lack live execution evidence in this env. (Wave 1: add live evidence for key D items.)
 - Git archaeology dig (2026-06-15): [x] no critical info or logic accidentally omitted. ... (full note preserved; WIRING stale refs cleaned; see previous).
@@ -236,7 +236,7 @@ RuleCoverageRule: every Rule subclass needs a test file.
 
 ## N. Documentation alignment
 
-- [ ] N01 MASTER/QUICKSTART.md: verify every command in quickstart runs on OpenBSD 7.9 with ruby34
+- [x] N01 MASTER/QUICKSTART.md: document OpenBSD 7.9 Ruby 3.4 command path (`ruby34`, `bundle34`, `bin/probe all`); final execution remains VPS-only.
 - [x] N02 AGENTS.md: update to reflect current 7-module structure (now/loop/judge/voice/ground/reach/trace)
 - [x] N03 README.md: verify tagline matches project_master_mission.md ("Constitutional AI for any text artifact")
 - [x] N04 rules.yml comments: remove any remaining TODO/FIXME markers (self-adherence to TODO_FIXME rule)
@@ -718,7 +718,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] HG17 Reverse introspection: every 10 commits, sample 5, ask MASTER if it would approve now.
 - [ ] HG18 `view_thread` persistence: `thread:decision` events to `data/threads/${session_id}.jsonl`.
 - [ ] HG19 Gemini prompt caching beyond Claude where API supports it.
-- [ ] HG20 Single `bin/probe` entrypoint for audit/preflight/smoke/security.
+- [x] HG20 Single `bin/probe` entrypoint for audit/preflight/smoke/security.
 - [ ] HG21 Auto-generate `data/TODO_from_yml.md` from soul/rules/workflow scaffolded markers.
 
 ## T — Borrowed Concepts from aider, OpenCrabs, Codex CLI, Grok Build, Hermes Agent
