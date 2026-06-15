@@ -65,4 +65,4 @@ gem "ruby-vips"
 gem "falcon"
 
 # Engine-ize spike: shared as local path gem (relative from rails/amber)
-gem 'pub4-shared', path: '../../shared'
+gem 'pub4-shared', path: '../shared'

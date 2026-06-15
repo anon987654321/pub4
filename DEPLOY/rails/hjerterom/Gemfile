@@ -62,4 +62,4 @@ end
 gem "pagy"
 gem "falcon"
 # Engine-ize spike: shared as local path gem (relative from rails/hjerterom)
-gem 'pub4-shared', path: '../../shared'
+gem 'pub4-shared', path: '../shared'

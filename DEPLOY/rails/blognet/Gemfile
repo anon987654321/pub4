@@ -63,4 +63,4 @@ gem "pagy"
 gem "friendly_id"
 gem "falcon"
 # Engine-ize spike: shared as local path gem (relative from rails/$app)
-gem 'pub4-shared', path: '../../shared'
+gem 'pub4-shared', path: '../shared'
