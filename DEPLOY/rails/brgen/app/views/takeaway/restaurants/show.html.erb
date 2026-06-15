@@ -54,7 +54,8 @@
       </div>
       <div class="field">
         <%= f.label :special_instructions, "Special instructions (optional)" %>
-        <%= f.text_area :special_instructions %>
+        <%= f.text_area :special_instructions, data: { controller: "char-counter", "char-counter-max-value": 500 } %>
+        <span class="char-counter" data-char-counter-target="counter"></span>
       </div>
       <div class="field"><%= f.submit "Place order", class: "btn btn-primary" %></div>
     <% end %>

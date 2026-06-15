@@ -11,7 +11,8 @@
 
     <%= tag.fieldset do %>
       <%= form.label :description %>
-      <%= form.text_area :description, rows: 5 %>
+      <%= form.text_area :description, rows: 5, data: { controller: "char-counter", "char-counter-max-value": 2000 } %>
+      <span class="char-counter" data-char-counter-target="counter"></span>
     <% end %>
 
     <%= form.submit %>

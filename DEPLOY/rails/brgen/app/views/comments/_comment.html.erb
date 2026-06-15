@@ -26,7 +26,7 @@
     <section id="reply-<%= comment.id %>" hidden>
       <%= form_with url: post_comments_path(comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable), data: { turbo: true } do |f| %>
         <%= f.hidden_field :parent_id, value: comment.id %>
-        <p><%= f.text_area :content, placeholder: "Reply...", rows: 3 %></p>
+        <p><%= f.text_area :content, placeholder: "Reply...", rows: 3, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
         <p><%= f.submit "Reply" %></p>
       <% end %>
     </section>

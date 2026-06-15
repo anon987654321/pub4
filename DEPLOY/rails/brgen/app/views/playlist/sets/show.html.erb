@@ -76,8 +76,8 @@
     <div class="form-wrap">
       <%= form_with url: playlist_set_dilla_sketches_path(@set), scope: :playlist_dilla_sketch do |f| %>
         <div class="field"><%= f.text_field :name, placeholder: "Beat name (e.g. dusty flip)", required: true %></div>
-        <div class="field"><%= f.text_area :state, placeholder: 'Paste JSON state from lab (e.g. {"pat_":{...},"aud_":{...},"mix_":{...}} or full from clipboard)', rows: 3 %></div>
-        <div class="field"><%= f.text_area :notes, placeholder: "notes / instructions (optional)", rows: 2 %></div>
+        <div class="field"><%= f.text_area :state, placeholder: 'Paste JSON state from lab (e.g. {"pat_":{...},"aud_":{...},"mix_":{...}} or full from clipboard)', rows: 3, data: { controller: "char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+        <div class="field"><%= f.text_area :notes, placeholder: "notes / instructions (optional)", rows: 2, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
         <div class="field"><%= f.submit "Save sketch for collab", class: "btn btn-primary btn-sm" %></div>
       <% end %>
     </div>

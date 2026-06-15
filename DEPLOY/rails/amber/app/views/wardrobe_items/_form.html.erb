@@ -27,7 +27,9 @@
 
   <%= tag.fieldset do %>
     <%= form.label :notes %>
-    <%= form.text_area :notes, rows: 4, data: { controller: "textarea-autogrow" } %>
+    <%= form.text_area :notes, rows: 4, data: { controller: "textarea-autogrow char-counter", "char-counter-max-value": 2000 } %>
+    <span class="char-counter" data-char-counter-target="counter"></span>
+    <span class="char-counter" data-char-counter-target="counter"></span>
   <% end %>
 
   <%= form.submit %>
