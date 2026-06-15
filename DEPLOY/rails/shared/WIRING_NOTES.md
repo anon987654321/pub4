@@ -72,7 +72,8 @@ This keeps polymorphic user-facing action targets tamper-resistant.
 
 - Add app-local authorization before review updates.
 - Add tests for every mounted route.
-- Replace copy/install with a Rails engine once app structure stabilizes. (Tranche10: 6/6 apps wired; more models promoted (Video, Listen, LiveStream, Match, Reaction); sh/deploy_all + openbsd annotated DEPRECATED for legacy copies.)
+- Replace copy/install with a Rails engine once app structure stabilizes. (Tranche10: 6/6 apps wired; more models promoted (Video, Listen, LiveStream, Match, Reaction); sh/deploy_all + openbsd annotated DEPRECATED for legacy copies. Wave 1: legacy cp comments cleaned from sh.)
+- AN201/AN106: Wave 1 unified auth baselines (all 6 apps now close to brgen Rails 8 + guest scaffold); VAPID stubs progressing in production.rb + pwa (full keys/credentials next).
 
 
 ## Visual System & Component Inheritance (Brgen as Base)

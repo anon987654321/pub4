@@ -18,5 +18,6 @@ Web: MASTER/web/MASTER_web_layer_pass_2026-06-15.md (full review + resolution).
 Root snaps: now substantive (gaps + evidence) vs prior tiny.
 Open remaining (per TODO critical): AN103 full Workbox, full AN201 generator runs + 6-app migration, real VPS M items, tests evidence runs, snapshot full exports for LLM (this is summary).
 Files: MASTER/TODO ~1350 lines (critical section top), 6 apps engine-wired, web pass applied.
-Git archaeology (2026-06-15): no accidental omissions (prunes ee3a56e33 etc intentional+condensed+verified; unban/pf ee29827b0/e6d5d5712 deliberate self-lock fix + docs; no master.yml loss; seeds/rules/VPS gates stuck). See MASTER/TODO critical for details + commits.
+Git archaeology (2026-06-15): [x] no accidental omissions (prunes ee3a56e33 etc intentional+condensed+verified; unban/pf ee29827b0/e6d5d5712 deliberate self-lock fix + docs; no master.yml loss; seeds/rules/VPS gates stuck). See MASTER/TODO critical for details + commits.
+Wave 1 start (2026-06-15): Reprioritized criticals in both TODOs. AN201 auth unification: aligned amber/hjerterom/baibl/blognet/bsdports to brgen's rich Rails 8 + guest baseline (5 files). Activity: added ActivityTrackable include to brgen Post (mandatory spine progress). Engine deprecate: cleaned legacy commented cp blocks in brgen.sh. Snapshots/TODOs expanded with Wave 1 + open counts (~2,794 total). See TODO Wave 1 section.
 See DEPLOY critical section for Rails specifics.
