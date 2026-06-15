@@ -16,17 +16,18 @@
   <% end %>
 <% end %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Dating discover header">
   <div>
     <p class="dim">Local discovery</p>
     <h1>Discover</h1>
   </div>
-  <nav>
+  <nav role="navigation" aria-label="Dating navigation">
     <%= link_to "Matches", dating_matches_path, class: "btn btn-ghost" %>
     <% if authenticated? %><%= link_to "Edit profile", edit_dating_profile_path, class: "btn btn-ghost" %><% end %>
   </nav>
 </div>
 
+<turbo-frame id="dating-discover" data-turbo-action="replace">
 <section
   data-controller="swipe"
   data-swipe-like-url-value="<%= dating_likes_path %>"

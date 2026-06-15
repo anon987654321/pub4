@@ -15,15 +15,19 @@
   <% end %>
 <% end %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Takeaway header">
   <h1>Order food</h1>
-  <%= link_to "Add restaurant", new_takeaway_restaurant_path, class: "btn" if authenticated? %>
+  <nav role="navigation" aria-label="Takeaway actions">
+    <%= link_to "Add restaurant", new_takeaway_restaurant_path, class: "btn" if authenticated? %>
+  </nav>
 </div>
 
 <%= live_search_form url: takeaway_restaurants_path, placeholder: "Search restaurants…", label: "Restaurant search" do |f| %>
   <%= f.select :cuisine, [["All cuisines", ""]] + Takeaway::Restaurant::CUISINE_TYPES.map { |c| [c, c] }, { selected: params[:cuisine] }, {} %>
 <% end %>
 
-<div id="live_search_results">
+<turbo-frame id="takeaway-restaurants" data-turbo-action="replace">
+<div id="live_search_results" role="region" aria-label="Restaurant search results">
   <%= render "takeaway/restaurants/live_search_results" %>
 </div>
+</turbo-frame>

@@ -16,9 +16,9 @@
   <% end %>
 <% end %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Markedsplass header">
   <h1>Markedsplass</h1>
-  <nav>
+  <nav role="navigation" aria-label="Marketplace actions">
     <%= link_to "Sell", new_marketplace_listing_path, class: "btn btn-sm" if authenticated? %>
     <%= link_to "Saved searches", marketplace_saved_searches_path, class: "btn btn-ghost btn-sm" if authenticated? %>
     <%= link_to "Cart", marketplace_cart_path, class: "btn btn-ghost btn-sm" if authenticated? %>
@@ -31,9 +31,11 @@
         { include_blank: "All categories" }, aria: { label: "Filter by category" } %>
 <% end %>
 
-<div id="live_search_results">
+<turbo-frame id="marketplace-listings" data-turbo-action="replace">
+<div id="live_search_results" role="region" aria-label="Marketplace listings results">
   <%= render "marketplace/listings/live_search_results" %>
 </div>
+</turbo-frame>
 
 <% content_for :widgets do %>
   <%= render "shared/affiliate_deals", category: params[:category_id] %>

@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Marketplace::Listing < ApplicationRecord
+  # Engine-ized: Shared concerns via pub4-shared (autoloaded)
+  include Shared.concern(:Reactable) rescue nil
+  include Shared.concern(:Notifiable) rescue nil
   belongs_to :user
   belongs_to :store, class_name: "Marketplace::Store", optional: true
   belongs_to :category, class_name: "Marketplace::Category",

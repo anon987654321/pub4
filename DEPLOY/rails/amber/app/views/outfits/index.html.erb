@@ -1,12 +1,12 @@
 <% content_for :title, "Outfits" %>
 <%= turbo_stream_from "outfits" %>
 
-<header>
+<header role="banner" aria-label="Outfits header">
   <div>
     <p class="dim">Style combinations</p>
     <h1>Outfits</h1>
   </div>
-  <nav>
+  <nav role="navigation" aria-label="Outfit actions">
     <%= link_to "New outfit", new_outfit_path, class: "btn" %>
     <%= link_to "Dressing room", dressing_room_outfits_path, class: "btn" %>
     <%= link_to t("amber.nav.ai_suggest", default: "AI outfit suggestions (vision)"), ai_suggest_outfits_path, class: "btn" %>
@@ -15,6 +15,8 @@
 
 <%= live_search_form url: outfits_path, placeholder: "Search outfits by name, occasion, season, items…", label: "Outfit search" %>
 
-<div id="live_search_results">
+<turbo-frame id="amber-outfits" data-turbo-action="replace">
+<div id="live_search_results" role="region" aria-label="Outfit search results">
   <%= render "outfits/live_search_results" %>
 </div>
+</turbo-frame>

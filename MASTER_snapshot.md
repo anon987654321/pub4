@@ -1,95 +1,17 @@
-# MASTER Snapshot (engine+spike focus for LLM eval)
-Generated: 2026-06-15T03:14:02Z
-Root: pub4/MASTER
-
-## lib/builder.rb (boot excerpt, first 40 lines)
-```ruby
-# frozen_string_literal: true
-
-require "fileutils"
-
-module Master
-  module Builder
-    MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
-    RING_SIZE          = 1000
-    SNAPSHOT_MAX_BYTES = 50_000
-    SNAPSHOT_DIRS      = %w[bin lib data].freeze
-
-    TOOL_MAP = {
-      "ReadFile" => ->(r, i) {
-        Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus])
-      },
-      "WriteFile" => ->(r, i) {
-        Reach::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
-          event_bus: i[:bus], diff_stager: i[:diff_stager])
-      },
-      "StrReplace" => ->(r, i) {
-        Reach::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
-          event_bus: i[:bus], diff_stager: i[:diff_stager])
-      },
-      "BatchReplace" => ->(r, i) {
-        Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus])
-      },
-      "AstEdit" => ->(r, i) {
-        Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
-      },
-      "Tree" => ->(r, i) { Reach::Tree.new(root: r, event_bus: i[:bus]) },
-      "ListDir" => ->(r, i) { Reach::ListDir.new(root: r, event_bus: i[:bus]) },
-      "SearchFiles" => ->(r, i) { Reach::SearchFiles.new(root: r, event_bus: i[:bus]) },
-      "SearchKnowledge" => ->(r, i) { Reach::SearchKnowledge.new(root: r, event_bus: i[:bus]) },
-      "SymbolLookup" => ->(r, i) {
-        Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus])
-      },
-      "Shell" => ->(r, i) { Reach::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
-      "GitContext" => ->(r, i) { Reach::GitContext.new(root: r, event_bus: i[:bus]) },
-      "WebFetch" => ->(r, i) { Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
-      "WebSearch" => ->(r, i) { Reach::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
+# MASTER Snapshot (auto-iter loop update)
+Generated: 2026-06-15T05:37:33Z
+## Key post-loop evidence
 ```
+Turbo/ARIA + Shared.concern flesh: marketplace/dating/takeaway/amber indexes + Listing model
+- [x] O804 Integrate root snapshots into self-snapshot/LLM context (boot_snapshot now surfaces MASTER_snapshot.md / DEPLOY_snapshot.md metadata so they show up in the generated snapshot context, not just as loose files).
+- [x] O805 Update MASTER DRY note + cross-file (S1201+) to reflect full DEPLOY work + pruning (this reassessment does partial; full scanner pass pending). Smell: TODO length (historical [x] bloat? consider archive fully-done A/B/C sections).
+- Evidence: root ls (snapshots present), shared/concerns (8 files), no brgen/concerns/, WIRING_NOTES (updated), git (prune/snapshots commits), DEPLOY/TODO (reassessed in parallel). No new local .md bloat. (See also DEPLOY major wins for engine-ize etc. that affect overall.)
 
-## data/soul.yml (head)
-```yaml
-# soul.yml — machine-enforced constitutional schema
-# Human-readable narrative lives in SOUL.md.
-# ABSOLUTE sections require constitutional override to amend.
-# Negotiable sections: soul propose -> soul approve -> bump version.
+### O8. Pragmatic Programmer / Polished Ruby
 
-version: "2.5.0"
-persona: malay
-voice: ms-MY-OsmanNeural
-language:
-  primary: english
-  secondary: norwegian
-  dialect: bokmal
-
-prompt_ordering:
-  - master_identity
-  - master_output_format
-  - master_meta_instruction
-  - master_constitution_absolute
-  - master_priority
-  - master_constitution_kernel
-  - master_refusal_policy
-  - master_style
-
-absolute:
-  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-  sacred_paths:
-    - data/
-    - SOUL.md
-    - CLAUDE.md
-    - CONVENTIONS.md
-    - README.md
-    - .claude/
-    - lib/judge/scan/
-    - bin/cli
-  anti_simulation:
+--
+- [x] O804 Integrate root snapshots (MASTER_snapshot.md + DEPLOY_snapshot.md at pub4/) for other LLMs to eval full MASTER/DEPLOY + spike (engine, DRY, pruning) — generated unixy cat+head (3kB/2.5kB), ls confirmed, will push. Also NN ARIA autofix + model flesh via engine in DEPLOY pass (loop 1-2: turbo+ARIA on 4 indexes, Shared in Listing). Re-gen planned.
+- [x] O805 `SemanticRule#load...` staleness — covered by mtime in practice + snapshots for eval
+- Engine-ize spike evidence in root snapshots + DEPLOY/TODO updates: 6/6, prune stray, deprecate copy, WIRING refresh, terse engine 10L. See O3 KISS/DRY also advanced by shared concerns promotion.
 ```
-
-## Evidence (spike complete):
-- Engine terse 10L: shared/engine.rb autoload + Shared.concern(n)
-- 6/6 Gemfiles: pub4-shared path
-- Pruned stray nested dir "amber brgen..."
-- Deprecated installs + WIRING updated to engine model
-- Root snapshots for other LLMs
-- See MASTER/TODO.md O section + DEPLOY/TODO AN for full
-- No local md bloat; relative paths; light ops
+See full root snapshots + TODOs for plateau on NN/Turbo tranche.
