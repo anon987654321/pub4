@@ -11,6 +11,7 @@ class ReportsController < ApplicationController
       reason: params[:reason].presence || "other",
       status: "open"
     )
+    ModerationReportNotificationJob.perform_later(@report.id)
     respond_to do |f|
       f.html { redirect_back fallback_location: root_path, notice: "Report submitted." }
       f.turbo_stream

@@ -175,11 +175,11 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] AN623 Takeaway — menu search: full-text search across all restaurant menus in city; rank by distance + rating; filter by dietary tags (vegan, halal, gluten-free)
 - [ ] AN624 Maps — business discovery: render businesses as clustered pins on MapLibre; click cluster to zoom; click pin for inline info card without page navigation
 - [ ] AN625 Maps — user check-in: tap "I'm here" at any venue; creates check-in record; friends who follow you see update in activity feed
-- [ ] AN626 Notification center: unified `/notifications` Turbo Frame; grouped by type (mentions, matches, order updates, likes); mark-all-read via one PATCH request
+- [x] AN626 Notification center: unified `/notifications` Turbo Frame; grouped by type (mentions, matches, order updates, likes); mark-all-read via one PATCH request
 - [ ] AN627 Activity feed: `/activity` shows everything following users did recently; paginated with Pagy; Turbo Stream new activity at top on broadcast
 - [ ] AN628 Hashtag discovery: `/tags/:name` Turbo-framed feed of all posts with tag; trending tags sidebar; auto-link `#word` in post body via ActionText extension
 - [ ] AN629 Mention system: auto-link `@username` in post body; create Notification on mention; user preferences for mention notification type (push/email/none)
-- [ ] AN630 Report/moderation: report any post/listing/profile with category (spam/hate/illegal); Solid Queue job notifies moderators; moderator dashboard at `/admin/reports`
+- [x] AN630 Report/moderation: report any post/listing/profile with category (spam/hate/illegal); Solid Queue job notifies moderators; moderator dashboard at `/admin/reports`
 
 ### AN7: amber — Wardrobe Intelligence
 

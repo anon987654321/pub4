@@ -1,32 +1,41 @@
 <% content_for :title, "Notifications" %>
 
-<div class="page-header">
-  <div>
-    <p class="dim">Brgen inbox</p>
-    <h1>
-      Notifications
-      <% if @unread_count.to_i.positive? %>
-        <span class="badge"><%= pluralize(@unread_count, "unread") %></span>
-      <% end %>
-    </h1>
+<%= turbo_frame_tag "notifications" do %>
+  <div class="page-header">
+    <div>
+      <p class="dim">Brgen inbox</p>
+      <h1>
+        Notifications
+        <% if @unread_count.to_i.positive? %>
+          <span class="badge"><%= pluralize(@unread_count, "unread") %></span>
+        <% end %>
+      </h1>
+    </div>
+
+    <% if @unread_count.to_i.positive? %>
+      <%= button_to "Mark all read", read_all_notifications_path, method: :patch, class: "btn btn-primary" %>
+    <% end %>
   </div>
 
-  <% if @unread_count.to_i.positive? %>
-    <%= button_to "Mark all read", read_all_notifications_path, method: :patch, class: "btn btn-primary" %>
+  <% if @notifications.any? %>
+    <% @group_order.each do |kind| %>
+      <% items = @grouped_notifications[kind] || [] %>
+      <% next if items.empty? %>
+      <section style="margin-bottom: 18px">
+        <h2 style="font-size: 18px; margin: 0 0 8px"><%= kind.humanize %></h2>
+        <% items.each do |notification| %>
+          <article>
+            <h3><%= notification.title %></h3>
+            <% if notification.body.present? %><p><%= notification.body %></p><% end %>
+            <p class="dim"><span data-controller="timeago"><%= time_ago_in_words(notification.created_at) %> ago</span><% if notification.read? %> · read<% end %></p>
+            <% unless notification.read? %>
+              <%= button_to "Mark as read", notification_path(notification), method: :patch, class: "btn btn-ghost btn-sm" %>
+            <% end %>
+          </article>
+        <% end %>
+      </section>
+    <% end %>
+  <% else %>
+    <div class="empty"><p>No notifications. Offers, orders, and local updates will appear here.</p></div>
   <% end %>
-</div>
-
-<% if @notifications.any? %>
-  <% @notifications.each do |notification| %>
-    <article>
-      <h2><%= notification.title %></h2>
-      <% if notification.body.present? %><p><%= notification.body %></p><% end %>
-      <p class="dim"><span data-controller="timeago"><%= time_ago_in_words(notification.created_at) %> ago</span><% if notification.read? %> · read<% end %></p>
-      <% unless notification.read? %>
-        <%= button_to "Mark as read", notification_path(notification), method: :patch, class: "btn btn-ghost btn-sm" %>
-      <% end %>
-    </article>
-  <% end %>
-<% else %>
-  <div class="empty"><p>No notifications. Offers, orders, and local updates will appear here.</p></div>
 <% end %>

@@ -6,6 +6,8 @@ class NotificationsController < ApplicationController
   def index
     @notifications = Current.user.notifications.recent.limit(100)
     @unread_count = Current.user.notifications.unread.count
+    @grouped_notifications = @notifications.group_by { |notification| notification.kind.to_s }
+    @group_order = %w[mention match message reply like reaction custom]
   end
 
   def update

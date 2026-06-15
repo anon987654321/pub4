@@ -22,6 +22,10 @@ Rails.application.routes.draw do
   resources :reactions, only: :create
   resources :reports, only: :create
 
+  namespace :admin do
+    resources :reports, only: %i[index update]
+  end
+
   resources :communities do
     resources :posts, shallow: true do
       resources :comments, shallow: true do
