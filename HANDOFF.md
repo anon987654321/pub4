@@ -120,8 +120,9 @@ This section mirrors the repo backlog and should be treated as the working queue
 
 ### Critical
 
-- Verify face renders at `https://ai.brgen.no/`: open a fresh private window, tap primer, confirm WebGL face and ecology particles appear.
-- Council deliberation should live behind the single command/orders surface, not a revived `/triad` wrapper.
+- Verify face renders at `https://ai.brgen.no/`: open a fresh private window, tap primer, confirm WebGL face and ecology particles appear (`cognition_ecology.js` z-index:1 over face canvas; blocked while vm23 down).
+- Council deliberation: `/triad` internal chain now runs `run_tribunal` on step 3 (CV01 fixed); user-facing path remains REPL intent routing, not a public `/triad` command.
+- OpenBSD M01–M03: after vm23 recovery run `doas zsh DEPLOY/openbsd/openbsd.sh --sync-configs` then `doas ksh DEPLOY/openbsd/verify_deploy.sh`.
 
 ### postpro
 

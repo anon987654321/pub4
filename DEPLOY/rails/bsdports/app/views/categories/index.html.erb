@@ -1,6 +1,6 @@
 <% content_for :title, "Categories" %>
 <h1>Categories</h1>
-<ul id="categories">
+<ul id="categories" role="list" aria-label="Categories">
   <% @categories.each do |cat| %>
     <li>
       <%= link_to cat.name, category_path(cat) %>

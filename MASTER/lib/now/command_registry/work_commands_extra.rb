@@ -29,6 +29,8 @@ module Master
 
       def dispatch_triad(scanner:, fix_loop:, council_stage:, deliberation:, root:, bus:, review_crew:, ctx: nil)
         target = arg_for(ctx).to_s.strip.empty? ? "." : arg_for(ctx).to_s.strip
+        abs = expand_or_root(target, root)
+        artifact = snapshot_artifact(abs)
         [
           "triad: scan",
           dispatch_scan(scanner:, root:, ctx: { args: target }),
@@ -36,8 +38,8 @@ module Master
           "triad: fix dry-run",
           dispatch_fix(fix_loop:, root:, ctx: { args: "--dry-run #{target}" }),
           "",
-          "triad: review",
-          dispatch_review(council_stage:, deliberation:, root:, bus:, review_crew:, ctx: { args: target })
+          "triad: deliberation",
+          run_tribunal(deliberation:, artifact:, target:, bus:)
         ].join("\n")
       end
 

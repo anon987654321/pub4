@@ -1,6 +1,6 @@
 <% content_for :title, "Order ##{@order.id}" %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Order details header">
   <div>
     <p class="dim"><%= link_to @order.restaurant.name, takeaway_restaurant_path(@order.restaurant) %></p>
     <h1>Order #<%= @order.id %></h1>
@@ -37,7 +37,7 @@
   <strong>Total: <%= @order.total_display %></strong>
 </article>
 
-<nav>
+<nav role="navigation" aria-label="Order actions">
   <%= link_to "Reorder", takeaway_restaurant_path(@order.restaurant), class: "btn" %>
   <%= link_to "All orders", takeaway_orders_path, class: "btn btn-ghost" %>
   <% if authenticated? && @order.restaurant.owner?(Current.user) && @order.advanceable? %>

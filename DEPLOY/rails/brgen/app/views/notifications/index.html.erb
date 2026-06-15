@@ -1,7 +1,7 @@
 <% content_for :title, "Notifications" %>
 
 <%= turbo_frame_tag "notifications" do %>
-  <div class="page-header">
+  <div class="page-header" role="banner" aria-label="Notifications header">
     <div>
       <p class="dim">Brgen inbox</p>
       <h1>
@@ -24,7 +24,7 @@
       <section style="margin-bottom: 18px">
         <h2 style="font-size: 18px; margin: 0 0 8px"><%= kind.humanize %></h2>
         <% items.each do |notification| %>
-          <article>
+          <article role="article" aria-label="Notification">
             <h3><%= notification.title %></h3>
             <% if notification.body.present? %><p><%= notification.body %></p><% end %>
             <p class="dim"><span data-controller="timeago"><%= time_ago_in_words(notification.created_at) %> ago</span><% if notification.read? %> · read<% end %></p>
@@ -36,6 +36,6 @@
       </section>
     <% end %>
   <% else %>
-    <div class="empty"><p>No notifications. Offers, orders, and local updates will appear here.</p></div>
+    <div class="empty" role="status" aria-live="polite"><p>No notifications. Offers, orders, and local updates will appear here.</p></div>
   <% end %>
 <% end %>

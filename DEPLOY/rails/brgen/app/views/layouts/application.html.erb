@@ -97,7 +97,7 @@
   <% if content_for?(:splash) %>
     <dialog id="splash" class="splash" data-controller="dialog" data-dialog-target="dialog" data-dialog-open-value="true" data-action="click->dialog#backdropClose">
       <%= yield :splash %>
-      <form method="dialog" style="margin-top:16px">
+      <form method="dialog" style="margin-top:16px" role="dialog" aria-label="Dialog">
         <button type="submit" class="btn btn-primary">Continue</button>
       </form>
     </dialog>
@@ -194,7 +194,7 @@
       <aside class="widgets">
         <div class="widget-search">
           <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5 4.694 0 8.5 3.806 8.5 8.5 0 1.986-.682 3.815-1.814 5.262l4.776 4.776-1.414 1.414-4.776-4.776A8.461 8.461 0 0110.25 18.75c-4.694 0-8.5-3.806-8.5-8.5z"/></svg>
-          <input type="search" placeholder="Search Brgen">
+          <input type="search" placeholder="Search Brgen" aria-label="Search Brgen">
         </div>
         <%= yield :widgets %>
         <div class="sidebar-card" data-controller="reveal" data-minimal-reveal>

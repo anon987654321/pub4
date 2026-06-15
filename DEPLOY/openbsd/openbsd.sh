@@ -150,6 +150,13 @@ sync_openbsd_configs() {
     log INFO "synced .zshrc to /home/dev"
   fi
 
+  if [[ ! -f /etc/master.env && -f $src/etc/master.env.sample ]]; then
+    install -m 600 /dev/null /etc/master.env
+    cp "$src/etc/master.env.sample" /etc/master.env
+    chmod 600 /etc/master.env
+    log INFO "installed /etc/master.env from master.env.sample (fill API keys)"
+  fi
+
   log INFO "OpenBSD config tree sync complete (with backup)"
 }
 

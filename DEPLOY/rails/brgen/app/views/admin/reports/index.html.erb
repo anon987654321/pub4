@@ -1,6 +1,6 @@
 <% content_for :title, "Moderation reports" %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Reports header">
   <div>
     <p class="dim">Admin / moderation</p>
     <h1>Reports</h1>
@@ -13,7 +13,7 @@
 
 <% if @reports.any? %>
   <% @reports.each do |report| %>
-    <article>
+    <article role="article" aria-label="Report">
       <h2><%= report.reason.humanize %> · <%= report.status.humanize %></h2>
       <p class="dim">
         <%= report.reportable_type %>#<%= report.reportable_id %>
@@ -29,5 +29,5 @@
     </article>
   <% end %>
 <% else %>
-  <div class="empty"><p>No reports yet.</p></div>
+  <div class="empty" role="status" aria-live="polite"><p>No reports yet.</p></div>
 <% end %>
