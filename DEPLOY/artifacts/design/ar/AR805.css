@@ -1,0 +1,6 @@
+/* AR805: AR805 Fluid spacing: `padding: clamp(16px, 4vw, 48px)` on major sections — no discrete breakpoints; spacing scales continuously; feels naturally proportioned at any width */
+/* Artifact: DEPLOY/artifacts/design/ar/AR805.css */
+[data-todo="ar805"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR805";
+}

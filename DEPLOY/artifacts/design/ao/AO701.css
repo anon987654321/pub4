@@ -1,0 +1,6 @@
+/* AO701: AO701 X sidebar layout: fixed-width left sidebar (256px) + fluid feed column (600px) + optional right sidebar (350px); collapses to single column on mobile; CSS Grid: `grid-template-columns: 256px minmax(0,1fr) 350px` */
+/* Artifact: DEPLOY/artifacts/design/ao/AO701.css */
+[data-todo="ao701"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO701";
+}

@@ -11,6 +11,6 @@ class NotificationPreferencesController < ApplicationController
   private
 
   def notification_preferences_params
-    params.require(:user).permit(:mention_notification_delivery)
+    params.expect(:user => [:mention_notification_delivery])
   end
 end

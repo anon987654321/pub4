@@ -1,0 +1,6 @@
+/* AO612: AO612 Mobile bottom nav heights: X bottom nav is 54px tall; Medium uses 56px; add bottom padding equal to nav height to main content to avoid overlap */
+/* Artifact: DEPLOY/artifacts/design/ao/AO612.css */
+[data-todo="ao612"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO612";
+}

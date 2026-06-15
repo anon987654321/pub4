@@ -1,0 +1,6 @@
+/* AS302: AS302 amber item card: `aspect-ratio: 3/4; border-radius: var(--radius-md); overflow: hidden; position: relative; background: var(--color-surface)` — portrait orientation; `img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--duration-standard) var(--ease-decelerate) }` — zoom on hover */
+/* Artifact: DEPLOY/artifacts/design/as/AS302.css */
+[data-todo="as302"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS302";
+}

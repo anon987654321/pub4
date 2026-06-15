@@ -1,0 +1,6 @@
+/* AQ809: AQ809 Webhook events: for partner integrations (hjerterom→food bank APIs), emit `POST` webhooks on key events; `HmacSHA256` signature header for verification; `WebhookDeliveryJob` handles retries */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ809.css */
+[data-todo="aq809"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ809";
+}

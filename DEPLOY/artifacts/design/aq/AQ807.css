@@ -1,0 +1,6 @@
+/* AQ807: AQ807 Partial response fields: `GET /api/posts?fields[posts]=title,author,created_at` — client requests only needed fields; reduces payload for list views vs detail views */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ807.css */
+[data-todo="aq807"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ807";
+}

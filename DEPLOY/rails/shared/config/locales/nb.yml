@@ -1,0 +1,12 @@
+nb:
+  time:
+    formats:
+      default: "%d.%m.%Y"
+      short: "%d.%m.%y"
+  number:
+    currency:
+      format:
+        unit: "kr"
+        separator: ","
+        delimiter: " "
+        format: "%n %u"

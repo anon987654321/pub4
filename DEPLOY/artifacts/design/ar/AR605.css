@@ -1,0 +1,6 @@
+/* AR605: AR605 :where() for zero-specificity: `:where(.prose) h2 { ... }` — zero specificity; easily overridden by any consumer; good for base component styles that should be customizable */
+/* Artifact: DEPLOY/artifacts/design/ar/AR605.css */
+[data-todo="ar605"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR605";
+}

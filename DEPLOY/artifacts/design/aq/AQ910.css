@@ -1,0 +1,6 @@
+/* AQ910: AQ910 Locale switching: `?locale=en` URL param overrides default; stored in session; `ApplicationController#set_locale` reads `params[:locale] || session[:locale] || I18n.default_locale` */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ910.css */
+[data-todo="aq910"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ910";
+}

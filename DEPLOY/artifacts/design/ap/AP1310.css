@@ -1,0 +1,4 @@
+/* AP1310: AP1310 Passive scroll listeners: `addEventListener("scroll", handler, { passive: true })` on all scroll listeners — prevents jank by telling browser handler won't call `preventDefault()` */
+[data-todo="ap1310"] {
+  --artifact-id: "AP1310";
+}

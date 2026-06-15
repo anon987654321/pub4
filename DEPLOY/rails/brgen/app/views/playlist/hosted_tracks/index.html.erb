@@ -1,0 +1,36 @@
+<% content_for :title, "Tracks" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Hosted audio</p>
+    <h1>Tracks</h1>
+  </div>
+  <%= link_to "Upload track", new_playlist_hosted_track_path, class: "btn btn-primary btn-sm" if authenticated? %>
+</div>
+
+<div data-controller="live-search">
+  <%= render "shared/search_loading" %>
+  <%= form_with url: playlist_hosted_tracks_path, method: :get, local: true,
+        data: { turbo_frame: "live_search_results" } do |f| %>
+    <div class="search-form" role="search">
+      <%= f.search_field :q, value: params[:q], placeholder: "Search tracks…",
+            data: { live_search_target: "input", action: "input->live-search#input" } %>
+      <%= f.select :genre, options_for_select(@genres, params[:genre]), { include_blank: "All genres" } %>
+      <%= f.select :artist, options_for_select(@artists, params[:artist]), { include_blank: "All artists" } %>
+      <%= f.submit "Search", class: "btn btn-sm" %>
+    </div>
+  <% end %>
+
+  <%= turbo_frame_tag "live_search_results" do %>
+    <% if @tracks.any? %>
+      <% @tracks.each do |track| %>
+        <%= render "playlist/hosted_tracks/track", track: track %>
+      <% end %>
+      <%= @pagy.series_nav if @pagy.pages > 1 %>
+    <% elsif params[:q].present? %>
+      <%= render "shared/search_empty", query: params[:q], search_meta: search_meta %>
+    <% else %>
+      <div class="empty"><p>No tracks yet.</p></div>
+    <% end %>
+  <% end %>
+</div>

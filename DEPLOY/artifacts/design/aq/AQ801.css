@@ -1,0 +1,6 @@
+/* AQ801: AQ801 JSON:API responses: standardized `{data: {id:, type:, attributes:, relationships:}, links:, meta:}` format for all API endpoints; use `jsonapi-serializer` gem */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ801.css */
+[data-todo="aq801"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ801";
+}

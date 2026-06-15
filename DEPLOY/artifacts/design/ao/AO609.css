@@ -1,0 +1,6 @@
+/* AO609: AO609 New Yorker spacing: 24px base unit; very generous — article padding `64px 48px`; between sections `48px`; whitespace as editorial statement not waste */
+/* Artifact: DEPLOY/artifacts/design/ao/AO609.css */
+[data-todo="ao609"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO609";
+}

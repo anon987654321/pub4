@@ -1,0 +1,6 @@
+/* AR309: AR309 Orphan/widow prevention: `p { text-wrap: balance }` on headings and short paragraphs; `orphans: 2; widows: 2` on long paragraphs in print styles; CSS Text Level 4 */
+/* Artifact: DEPLOY/artifacts/design/ar/AR309.css */
+[data-todo="ar309"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR309";
+}

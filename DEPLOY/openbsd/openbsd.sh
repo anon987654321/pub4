@@ -2,6 +2,17 @@
 # Configure OpenBSD 7.8: NSD/DNSSEC, acme-client, Rails, pf, relayd, smtpd.
 # Usage: doas zsh openbsd.sh [--help]
 # VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-01-06)
+#
+# IDEMPOTENCY NOTES (CC14):
+# - Safe to re-run: bootstrap_rails_app (cp tree, bundle install, db:migrate), sync_openbsd_configs
+#   (backs up /etc first), relayd/pf template installs when configs already match, rcctl enable/start.
+# - DESTRUCTIVE on re-run: stage_1 deletes /var/nsd/etc/* and /var/nsd/zones/master/* before
+#   regenerating signed zones. Never re-run stage_1 on a live authoritative server without backup.
+# - State tracking: STATE_FILE=/var/db/openbsd_setup.state — is_step_completed/mark_step_completed
+#   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
+# - Data preserved: Rails SQLite under /home/<app>/app/db, ~/priv, acme certs in /etc/ssl when
+#   stage_1 is skipped. Re-running stage_2 does not drop databases.
+# - Post-deploy verification: ruby /home/dev/pub4/DEPLOY/health_check.rb
 
 set -euo pipefail
 setopt no_unset nullglob local_traps
@@ -10,6 +21,7 @@ zmodload zsh/datetime
 
 typeset -a TMPFILES
 SCRIPT_DIR=${0:a:h}
+typeset -r STATE_FILE=/var/db/openbsd_setup.state
 
 # Helpers inlined ( _lib.sh removed for ONE_SOURCE/singularity). Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs (now ships .zshrc to /home/dev too).
 log() {
@@ -97,9 +109,12 @@ sync_openbsd_configs() {
   typeset src=${1:-.}
   [[ -d $src/etc ]] || { log WARN "No etc/ in $src"; return 0 }
   backup_directory /etc "etc-pre-sync" || return 1
-  for f in pf.conf rc.conf.local relayd.conf httpd.conf acme-client.conf doas.conf login.conf; do
+  for f in pf.conf rc.conf.local relayd.conf httpd.conf acme-client.conf doas.conf login.conf litestream.yml; do
     [[ -e $src/etc/$f ]] && cp -R "$src/etc/$f" /etc/ && log INFO "synced /etc/$f"
   done
+  [[ -d $src/etc/newsyslog.conf.d ]] && install -d /etc/newsyslog.conf.d && cp -R "$src/etc/newsyslog.conf.d/"* /etc/newsyslog.conf.d/ 2>/dev/null || true
+  [[ -f $src/etc/ssh/sshd_config ]] && install -d /etc/ssh && cp "$src/etc/ssh/sshd_config" /etc/ssh/sshd_config.d/pub4.conf 2>/dev/null \
+    && log INFO "synced sshd hardening to /etc/ssh/sshd_config.d/pub4.conf" || true
   [[ -d $src/etc/rc.d ]] && cp -R "$src/etc/rc.d/"* /etc/rc.d/ 2>/dev/null || true
   [[ -d $src/usr/local/bin ]] && cp -R "$src/usr/local/bin/"* /usr/local/bin/ 2>/dev/null || true
   # Also sync user env .zshrc if present (compare/sync with live model)
@@ -499,7 +514,7 @@ configure_relayd() {
     print -r -- "  listen on 0.0.0.0 port 443 tls"
     print -r -- "  protocol \"https_proxy\""
     for backend in ${(k)BACKEND_PORT}; do
-      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check tcp"
+      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check http \"/up\" code 200"
     done
     print -r -- "}"
   } > /etc/relayd.conf

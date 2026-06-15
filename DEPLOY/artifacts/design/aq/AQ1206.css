@@ -1,0 +1,4 @@
+/* AQ1206: AQ1206 Decorator pattern: `app/decorators/PostDecorator` wraps model with view-specific methods; `@post.formatted_created_at`, `@post.truncated_body` live here; never in model or view */
+[data-todo="aq1206"] {
+  --artifact-id: "AQ1206";
+}

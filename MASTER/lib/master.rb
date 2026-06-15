@@ -69,9 +69,13 @@ module Master
   loader.ignore(File.join(__dir__, "reach", "ruby_llm_patch.rb"))
   loader.ignore(File.join(__dir__, "reach", "bedrock_stub.rb"))
   %w[
-    now/cli/signals.rb
+    now/cli/signal_handler.rb
     now/cli/command_ops.rb
     now/cli/thinking_indicator.rb
+    now/cli/repl.rb
+    now/cli/renderer_delegate.rb
+    now/cli/background_scan.rb
+    now/cli/stream_accumulator.rb
     now/command_registry/memory_commands.rb
     now/command_registry/work_commands.rb
     now/command_registry/system_commands.rb

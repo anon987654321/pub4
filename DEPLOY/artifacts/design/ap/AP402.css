@@ -1,0 +1,6 @@
+/* AP402: AP402 Margin-not-padding for section separation: use `margin` between sections (collapsible); `padding` inside sections (for click area and readability); never double-space with both */
+/* Artifact: DEPLOY/artifacts/design/ap/AP402.css */
+[data-todo="ap402"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP402";
+}

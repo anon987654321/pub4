@@ -1,0 +1,6 @@
+/* AP205: AP205 blognet palette (publishing): shadow `#111827` (editorial dark), midtone `#374151` (ink grey), highlight `#f9fafb` (paper white); accent `#dc2626` (editorial red) for section labels; broadsheet newspaper */
+/* Artifact: DEPLOY/artifacts/design/ap/AP205.css */
+[data-todo="ap205"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP205";
+}

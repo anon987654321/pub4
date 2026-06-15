@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AiController < ApplicationController
+  include Shared::LiveSearchable
+
   before_action :require_authentication
 
   def analyze_item
@@ -68,12 +70,22 @@ class AiController < ApplicationController
   end
 
   def search
-    @query = params[:q].to_s.strip
+    @query = live_search_query
+    @items = Current.user.items.active_wardrobe
+    @explanation = nil
+
     if @query.present?
-      result = WardrobeAiService.new(Current.user).natural_language_search(@query)
-      ids = Array(result["item_ids"])
-      @items = Current.user.items.where(id: ids)
-      @explanation = result["explanation"]
+      fts_scope = apply_live_search(@items, columns: %w[title category color material brand season occasion_tags], vertical: "wardrobe")
+      if fts_scope.exists?
+        @items = fts_scope
+        @explanation = "Offline wardrobe search"
+      else
+        result = WardrobeAiService.new(Current.user).natural_language_search(@query)
+        ids = Array(result["item_ids"])
+        @items = Current.user.items.where(id: ids)
+        @explanation = result["explanation"]
+        @search_meta = (search_meta || {}).merge(suggestions: search_meta[:suggestions].presence || Array(result["suggestions"]))
+      end
     else
       @items = Current.user.items.none
     end

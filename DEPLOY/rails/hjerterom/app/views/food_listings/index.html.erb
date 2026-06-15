@@ -3,16 +3,27 @@
   <h1>Available food</h1>
   <% if authenticated? %><%= link_to "List food", new_food_listing_path %><% end %>
 </header>
-<section id="food_listings">
-  <% @food_listings.each do |listing| %>
-    <article>
-      <%= link_to listing.title, food_listing_path(listing) %>
-      <p><%= listing.quantity %> <%= listing.unit %> · <%= listing.city %></p>
-      <p>Until <%= listing.available_until&.strftime("%b %-d, %H:%M") %></p>
-      <% if listing.dietary_info.present? %>
-        <small><%= listing.dietary_info %></small>
-      <% end %>
-    </article>
+
+<div data-controller="live-search">
+  <%= render "shared/search_loading" %>
+  <%= form_with url: food_listings_path, method: :get, local: true,
+        data: { turbo_frame: "live_search_results" } do |f| %>
+    <div class="search-form" role="search">
+      <%= f.search_field :q, value: params[:q], placeholder: "Search food listings…",
+            data: { live_search_target: "input", action: "input->live-search#input" } %>
+      <%= f.submit "Search", class: "btn btn-sm" %>
+    </div>
   <% end %>
-</section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+
+  <%= turbo_frame_tag "live_search_results" do %>
+    <section id="food_listings">
+      <% @listings.each do |listing| %>
+        <%= render "food_listings/listing", listing: listing %>
+      <% end %>
+    </section>
+    <% if @listings.empty? && params[:q].present? %>
+      <%= render "shared/search_empty", query: params[:q], search_meta: search_meta %>
+    <% end %>
+    <%= @pagy.series_nav if @pagy.pages > 1 %>
+  <% end %>
+</div>

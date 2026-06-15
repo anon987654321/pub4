@@ -26,7 +26,7 @@ module Takeaway
     end
 
     def driver_params
-      params.require(:delivery_driver).permit(:vehicle_type, :license_number, :available, :current_lat, :current_lng)
+      params.expect(:delivery_driver => [:vehicle_type, :license_number, :available, :current_lat, :current_lng])
     end
   end
 end

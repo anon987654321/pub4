@@ -10,6 +10,18 @@
 
 <div class="dressing-room" data-controller="wardrobe-carousel" data-wardrobe-carousel-zones-value="<%= zones_json %>">
 
+  <div class="dressing-room-context">
+    <% if @weather %>
+      <p class="dim">Weather: <%= @weather[:summary] || @weather[:temp] %>° · Season: <%= @season %></p>
+    <% end %>
+    <%= form_with url: dressing_room_outfits_path, method: :get, local: true do |f| %>
+      <%= f.select :event, options_for_select(Item::OCCASIONS.map { |o| [o, o] }, @event), include_blank: "Any occasion" %>
+      <%= f.submit "Suggest outfit", class: "btn btn-sm" %>
+    <% end %>
+    <%= link_to "Analytics", analytics_path, class: "btn btn-ghost btn-sm" %>
+    <%= link_to "Style evolution", style_evolution_path, class: "btn btn-ghost btn-sm" %>
+  </div>
+
   <div class="mannequin-stage">
     <div class="mannequin">
       <svg class="mannequin-svg" viewBox="0 0 160 390" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

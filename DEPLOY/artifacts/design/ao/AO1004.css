@@ -1,0 +1,4 @@
+/* AO1004: AO1004 Medium mobile header: collapses to logo + hamburger menu; `transition: transform 0.3s` hide on scroll down, show on scroll up — smart header saves vertical space */
+[data-todo="ao1004"] {
+  --artifact-id: "AO1004";
+}

@@ -1,0 +1,6 @@
+/* AO902: AO902 X like transition: `transition: color 0.1s ease, transform 0.1s ease`; `transform: scale(1.2)` on active; quick, responsive — 100ms not 300ms */
+/* Artifact: DEPLOY/artifacts/design/ao/AO902.css */
+[data-todo="ao902"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO902";
+}

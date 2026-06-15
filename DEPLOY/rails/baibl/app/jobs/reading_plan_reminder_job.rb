@@ -5,7 +5,7 @@ class ReadingPlanReminderJob < ApplicationJob
 
   def perform
     ReadingPlan.includes(:reading_plan_days).find_each do |plan|
-      day = plan.reading_plan_days.find_by(completed_at: nil, scheduled_on: Date.current)
+      day = plan.reading_plan_days.ordered.find { |d| d.scheduled_on == Date.current && !d.completed? }
       next unless day
 
       Shared::EventEmitter.call(

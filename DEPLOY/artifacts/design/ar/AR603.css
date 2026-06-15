@@ -1,0 +1,6 @@
+/* AR603: AR603 :has() for parent selection: `.card:has(img) { grid-template-rows: auto 1fr }` — add image grid row only when image is present; eliminates JS-based conditional class toggling */
+/* Artifact: DEPLOY/artifacts/design/ar/AR603.css */
+[data-todo="ar603"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR603";
+}

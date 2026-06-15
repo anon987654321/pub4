@@ -1,0 +1,6 @@
+/* AS704: AS704 hjerterom impact numbers: `.impact-stat { text-align: center } .impact-stat__value { font-size: var(--text-3xl); font-weight: 800; color: var(--color-midtone); font-variant-numeric: tabular-nums } .impact-stat__label { font-size: var(--text-sm); color: var(--text-secondary) }` — animated number component */
+/* Artifact: DEPLOY/artifacts/design/as/AS704.css */
+[data-todo="as704"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS704";
+}

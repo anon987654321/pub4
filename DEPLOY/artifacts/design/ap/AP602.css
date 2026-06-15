@@ -1,0 +1,6 @@
+/* AP602: AP602 brgen vote button: pill-shaped, not icon-only; `▲ 42` format; upvoted state fills with `--color-midtone`; downvoted fills with `--color-danger`; springy scale on click */
+/* Artifact: DEPLOY/artifacts/design/ap/AP602.css */
+[data-todo="ap602"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP602";
+}

@@ -1,0 +1,6 @@
+/* AR507: AR507 CSS paint worklet: `CSS.paintWorklet.addModule("hatch-fill.js")` for custom painted backgrounds (amber item cards could have subtle fabric texture via CSS Houdini paint worklet) */
+/* Artifact: DEPLOY/artifacts/design/ar/AR507.css */
+[data-todo="ar507"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR507";
+}

@@ -1,0 +1,6 @@
+/* AS102: AS102 Phase 1 — reset + base: implement CSS reset + base typography in shared `base.css`; apply to all apps; fix any regressions; no new features; 1 day */
+/* Artifact: DEPLOY/artifacts/design/as/AS102.css */
+[data-todo="as102"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS102";
+}

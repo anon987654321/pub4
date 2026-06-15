@@ -1,0 +1,6 @@
+/* AP403: AP403 Void budget per view: assign explicit whitespace budget — mobile views: 16px horizontal gutters, 24px between sections; desktop: 24px horizontal gutters, 48px between sections; no exceptions */
+/* Artifact: DEPLOY/artifacts/design/ap/AP403.css */
+[data-todo="ap403"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP403";
+}

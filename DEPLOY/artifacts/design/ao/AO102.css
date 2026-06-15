@@ -1,0 +1,6 @@
+/* AO102: AO102 X body font size: 15px base with 1.3125rem on desktop (21px); mobile stays at 15px — study the density vs comfort balance */
+/* Artifact: DEPLOY/artifacts/design/ao/AO102.css */
+[data-todo="ao102"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO102";
+}

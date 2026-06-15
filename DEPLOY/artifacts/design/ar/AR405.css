@@ -1,0 +1,6 @@
+/* AR405: AR405 High contrast mode: `@media (prefers-contrast: high) { :root { --color-border: var(--color-shadow); --text-secondary: var(--text-primary) } }` — automatically adapt for users needing higher contrast */
+/* Artifact: DEPLOY/artifacts/design/ar/AR405.css */
+[data-todo="ar405"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR405";
+}

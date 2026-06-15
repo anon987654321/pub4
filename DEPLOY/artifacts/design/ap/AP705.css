@@ -1,0 +1,6 @@
+/* AP705: AP705 baibl nav: book/chapter/verse breadcrumb always visible; Bible navigator slide-in from left; `position: fixed; left: 0; top: 0; height: 100vh; width: 280px; transform: translateX(-100%)` → open state */
+/* Artifact: DEPLOY/artifacts/design/ap/AP705.css */
+[data-todo="ap705"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP705";
+}

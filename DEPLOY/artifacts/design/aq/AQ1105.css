@@ -1,0 +1,4 @@
+/* AQ1105: AQ1105 Retention cohorts: weekly cohort analysis query — `SELECT week(created_at) as cohort, week(last_seen_at) - week(created_at) as retention_week, count(*) FROM users GROUP BY 1, 2` */
+[data-todo="aq1105"] {
+  --artifact-id: "AQ1105";
+}

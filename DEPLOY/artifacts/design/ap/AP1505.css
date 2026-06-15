@@ -1,0 +1,4 @@
+/* AP1505: AP1505 No layout thrash: read all DOM geometry before writing; never alternate `element.getBoundingClientRect()` with `element.style.height = ...` in loops; batch reads then batch writes */
+[data-todo="ap1505"] {
+  --artifact-id: "AP1505";
+}

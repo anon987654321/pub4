@@ -1,0 +1,6 @@
+/* AO201: AO201 Medium article body: `font-family: source-serif-4, Georgia, Cambria, "Times New Roman", serif` at 21px / 1.58 line-height — the gold standard for longform comfort */
+/* Artifact: DEPLOY/artifacts/design/ao/AO201.css */
+[data-todo="ao201"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO201";
+}

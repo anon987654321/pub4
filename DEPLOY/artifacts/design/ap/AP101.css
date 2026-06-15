@@ -1,0 +1,6 @@
+/* AP101: AP101 NO_ASCII_DECORATION in CSS comments: purge all `/* ====== */` and `/* ------ */` dividers from CSS/SCSS files; content separates content — blank line suffices */
+/* Artifact: DEPLOY/artifacts/design/ap/AP101.css */
+[data-todo="ap101"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP101";
+}

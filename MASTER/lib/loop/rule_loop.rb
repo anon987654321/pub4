@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "tempfile"
 require_relative "../ground/atomic_write"
 require_relative "constants"
@@ -18,7 +19,13 @@ module Master
     class RuleLoop
       RATE_LIMIT_SLEEP = 10
       MAX_FIX_RETRIES = 2
-      CANDIDATE_COUNT = 3
+      def self.candidate_count
+        @candidate_count ||= begin
+          cfg = Master.load_yaml(File.join(Master::ROOT, "data", "rules.yml")) || {}
+          cfg.dig("thresholds", "convergence", "candidate_count") ||
+            cfg.dig("prediction_engine", "genetic_fix", "candidates") || 3
+        end.to_i
+      end
 
       SEVERITY_RANK = Master::SEVERITY_RANK
       MIN_SEVERITY = SEVERITY_RANK[:warning]
@@ -63,6 +70,7 @@ module Master
         @root = root
         @bus = bus
         @learnings = learnings
+        @file_shas = {}
       end
 
       def injected_preamble=(text)
@@ -93,8 +101,8 @@ module Master
           next [] unless result.ok?
           ext = File.extname(path).downcase
           result.value!
-                .select { |f| (SEVERITY_RANK[f[:severity]] || 0) >= MIN_SEVERITY }
-                .map    { |f| f.to_h.merge(file: path, ext:) }
+                .select { |f| Judge::Scan::Violation.meets_threshold?(f, min_severity: :warning) }
+                .map    { |f| Judge::Scan::Violation.from_hash(f.to_h.merge(file: path, ext:)).to_h }
         end
       end
 
@@ -157,7 +165,7 @@ module Master
       def genetic_fix(violation, src, path)
         ext    = File.extname(path).downcase
         prompt = build_prompt_for(violation, src, path)
-        candidates = CANDIDATE_COUNT.times.filter_map do |attempt|
+        candidates = self.class.candidate_count.times.filter_map do |attempt|
           sleep RATE_LIMIT_SLEEP if attempt.positive?
           code = extract_code(@agent.ask(prompt).to_s, ext)
           code if code && code.strip != src.strip
@@ -172,10 +180,12 @@ module Master
       def best_candidate(candidates, path)
         return nil if candidates.empty?
         orig = File.read(path, encoding: "utf-8") rescue nil
-        baseline = orig ? (rescan_candidate(orig, path) rescue nil) : nil
+        return nil unless orig
+        baseline = rescan_candidate(orig, path)
         scored = candidates.filter_map do |c|
           count = rescan_candidate(c, path)
-          [count, c] unless baseline && count > baseline
+          next if count > baseline
+          [count, c]
         end
         scored.empty? ? nil : scored.min_by(&:first).last
       rescue StandardError => e
@@ -226,25 +236,50 @@ module Master
         :stop
       end
 
-      def build_prompt_for(violation, src, path, style: :file)
-        lang     = Master::Judge::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
+      def shared_prompt_header(violation, src, path)
+        lang = Master::Judge::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
         fix_hint = violation[:fix].to_s.strip
-        fix_line = fix_hint.empty? ? "" : "How to fix: #{fix_hint}"
-        action = prompt_action(style)
-        <<~PROMPT
+        fix_line = fix_hint.empty? ? "" : "How to fix: #{compress_rule_line(violation[:rule], fix_hint)}"
+        ops = Ground::StructuralOps.prompt_section
+        <<~HEADER
         #{preamble}
+
+        #{ops}
 
         File: #{File.basename(path)} (#{lang})
         Rule violated: #{violation[:rule]}
         Line #{violation[:line]}: #{violation[:message]}
         #{fix_line}
+        HEADER
+      end
+
+      def build_prompt_for(violation, src, path, style: :file)
+        lang = Master::Judge::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
+        action = prompt_action(style)
+        body = file_body_for_prompt(path, src)
+        <<~PROMPT
+        #{shared_prompt_header(violation, src, path)}
 
         #{action}
 
         ```#{lang}
-        #{src}
+        #{body}
         ```
       PROMPT
+      end
+
+      def compress_rule_line(rule_id, text)
+        sentence = text.to_s.strip.split(/[.!?]/).first.to_s.strip
+        sentence = sentence[0, 120]
+        "#{rule_id}: #{sentence}"
+      end
+
+      def file_body_for_prompt(path, src)
+        sha = Digest::SHA256.hexdigest(src)
+        prev = @file_shas[path]
+        @file_shas[path] = sha
+        return "[unchanged SHA-256=#{sha}]" if prev == sha
+        src
       end
 
       def prompt_action(style)

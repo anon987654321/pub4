@@ -1,0 +1,6 @@
+/* AS905: AS905 Animation audit: play each animation at 0.25× speed; verify enter/exit states, timing, easing feel; reject over-animated elements; check reduced-motion disable */
+/* Artifact: DEPLOY/artifacts/design/as/AS905.css */
+[data-todo="as905"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS905";
+}

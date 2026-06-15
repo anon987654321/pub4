@@ -1,0 +1,4 @@
+/* AO1104: AO1104 Two-line title clamp: `display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden` — standard in all four sites for feed card titles */
+[data-todo="ao1104"] {
+  --artifact-id: "AO1104";
+}

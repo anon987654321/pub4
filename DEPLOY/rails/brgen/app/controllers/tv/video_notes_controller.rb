@@ -23,7 +23,7 @@ module Tv
     end
 
     def video_note_params
-      params.require(:video_note).permit(:body, :timestamp)
+      params.expect(:video_note => [:body, :timestamp])
     end
   end
 end

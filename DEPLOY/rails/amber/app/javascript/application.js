@@ -2,11 +2,7 @@
 import "@hotwired/turbo-rails"
 import "controllers"
 
-import { application } from "controllers/application"
-import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
-eagerLoadControllersFrom("controllers", application)
-
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-worker")
+import "pwa/bootstrap"
 
 // Nav swipe-to-reveal
 document.addEventListener("turbo:load", () => {

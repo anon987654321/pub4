@@ -1,0 +1,24 @@
+<% content_for :title, "Dating events" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Meet people at local events</p>
+    <h1>Events</h1>
+  </div>
+  <% if authenticated? %>
+    <%= link_to "New event", new_dating_event_path, class: "btn btn-primary btn-sm" %>
+  <% end %>
+</div>
+
+<% @events.each do |event| %>
+  <article>
+    <h2><%= link_to event.title, dating_event_path(event) %></h2>
+    <p class="dim"><%= event.starts_at.strftime("%a %d %b %H:%M") %> · <%= event.venue.presence || event.city %></p>
+    <p><%= truncate(event.description.to_s, length: 140) %></p>
+    <span class="chip"><%= pluralize(event.rsvps.count, "RSVP") %></span>
+  </article>
+<% end %>
+
+<% if @events.empty? %>
+  <p class="dim">No upcoming events in <%= Current.city %>.</p>
+<% end %>

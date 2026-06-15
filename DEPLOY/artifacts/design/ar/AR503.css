@@ -1,0 +1,6 @@
+/* AR503: AR503 Animation delay utilities: `[style="--delay: 1"] { animation-delay: calc(1 * 40ms) }` — arbitrary delay via inline style custom property; enables staggered lists from HTML without JS */
+/* Artifact: DEPLOY/artifacts/design/ar/AR503.css */
+[data-todo="ar503"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR503";
+}

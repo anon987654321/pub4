@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <%= csrf_meta_tags %>
   <meta name="theme-color" content="#000000">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="dark light">
   <meta name="master-runtime" content="face">
   <meta name="master-visual-profile" content="auto">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,14 +20,23 @@
   <link rel="modulepreload" href="/face.js?v=64">
   <link rel="stylesheet" href="/face.css?v=64">
 </head>
-<body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
+<body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark">
+  <input type="checkbox" id="theme-toggle" class="theme-toggle-input" aria-label="Toggle light mode">
+  <label for="theme-toggle" class="theme-toggle" title="Light/dark mode">◐</label>
+  <span id="conn-status" class="conn-status" aria-live="polite" title="Connection">●</span>
+  <div id="pipeline-bar" class="pipeline-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden></div>
+  <aside id="history-sidebar" class="history-sidebar" aria-label="Turn history" hidden>
+    <header>history <button type="button" id="history-close" aria-label="Close history">×</button></header>
+    <ol id="history-list"></ol>
+  </aside>
+  <button type="button" id="history-open" class="history-open" aria-label="Open turn history">hist</button>
   <div class="top-left-logo" aria-hidden="true">brgen</div>
   <canvas id="face" tabindex="0" aria-hidden="true"></canvas>
   <div id="mic-dot" aria-hidden="true"></div>
-  <div id="yt-player-a" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
-  <div id="yt-player-b" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
-  <iframe id="yt-fallback-a" src="about:blank" title="Radio A" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
-  <iframe id="yt-fallback-b" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
+  <div id="yt-player-a" class="sr-offscreen" aria-hidden="true"></div>
+  <div id="yt-player-b" class="sr-offscreen" aria-hidden="true"></div>
+  <iframe id="yt-fallback-a" class="sr-offscreen" src="about:blank" title="Radio A" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media"></iframe>
+  <iframe id="yt-fallback-b" class="sr-offscreen" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media"></iframe>
   <div id="tts-live" aria-live="polite" aria-atomic="true"></div>
   <div id="primer" role="dialog" aria-modal="true" aria-labelledby="primer-title" tabindex="0">
     <h1 id="primer-title">tap to start</h1>
@@ -47,7 +56,8 @@
   </form>
   <script>
     (function(){
-      var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false;
+      const p=document.getElementById('primer'),z=document.getElementById('zsh');
+      let fired=false;
       function go(){if(fired)return;fired=true;window._primerFired=true;if(p&&p.parentNode)p.parentNode.removeChild(p);if(z)z.classList.add('live');}
       if(p){p.addEventListener('pointerdown',go,{passive:true});p.addEventListener('touchstart',go,{passive:true});p.addEventListener('click',go);p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter')go();});}
       addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' '||e.key==='OK'))go();},{once:false});

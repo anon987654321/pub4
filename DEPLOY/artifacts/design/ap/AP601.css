@@ -1,0 +1,6 @@
+/* AP601: AP601 brgen post card: dark edge-to-edge card on mobile; no border-radius; `border-bottom: 1px solid var(--color-border)`; avatar 40px circular; vote count left, timestamp right; inspired by X but with electric blue accents */
+/* Artifact: DEPLOY/artifacts/design/ap/AP601.css */
+[data-todo="ap601"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP601";
+}

@@ -1,0 +1,6 @@
+/* AS804: AS804 Empty state: `.empty-state { text-align: center; padding: var(--space-12) var(--space-4) } .empty-state__icon { width: 64px; height: 64px; margin-inline: auto; margin-bottom: var(--space-4); opacity: 0.4 } .empty-state__title { font-size: var(--text-lg); font-weight: 600; color: var(--text-primary) } .empty-state__body { font-size: var(--text-base); color: var(--text-secondary); max-width: 40ch; margin-inline: auto }` */
+/* Artifact: DEPLOY/artifacts/design/as/AS804.css */
+[data-todo="as804"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS804";
+}

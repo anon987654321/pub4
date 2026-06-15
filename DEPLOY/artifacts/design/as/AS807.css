@@ -1,0 +1,6 @@
+/* AS807: AS807 Modal/dialog: `.dialog { border: none; border-radius: var(--radius-xl); padding: 0; max-width: min(560px, 90vw); max-height: 90dvh; overflow: auto; box-shadow: var(--shadow-lg) } .dialog::backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px) }` — native `<dialog>` styled; backdrop via pseudo-element */
+/* Artifact: DEPLOY/artifacts/design/as/AS807.css */
+[data-todo="as807"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS807";
+}

@@ -1,0 +1,4 @@
+/* AP1001: AP1001 Token hierarchy: Global tokens (raw values: `--blue-500: #3b82f6`) → Semantic tokens (meaning: `--color-link: var(--blue-500)`) → Component tokens (scope: `--button-bg: var(--color-link)`) — three layers, never skip */
+[data-todo="ap1001"] {
+  --artifact-id: "AP1001";
+}

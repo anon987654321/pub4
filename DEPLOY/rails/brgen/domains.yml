@@ -8,5 +8,9 @@ primary:
     core: brgen.no
     marketplace: markedsplass.brgen.no
     playlist: spilleliste.brgen.no
+    playlist_dns: playlist.brgen.no
+    dating: dating.brgen.no
     tv: tv.brgen.no
     takeaway: takeaway.brgen.no
+    maps: maps.brgen.no
+    ai: ai.brgen.no

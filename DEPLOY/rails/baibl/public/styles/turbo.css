@@ -1,0 +1,8 @@
+:root {
+  --turbo-progress-bar-color: var(--accent, #1d9bf0);
+}
+
+.turbo-progress-bar {
+  height: 3px;
+  background: var(--turbo-progress-bar-color);
+}

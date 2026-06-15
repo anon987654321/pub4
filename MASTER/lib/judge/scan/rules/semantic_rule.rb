@@ -77,7 +77,7 @@ module Master
           end
 
           def violation_block(rules)
-            list = rules.map { |id, a| "#{id}: #{a[:prompt]}" }.join("\n")
+            list = rules.map { |id, a| "#{id}: #{compress_prompt(a[:prompt])}" }.join("\n")
             <<~BLOCK
             VIOLATIONS — list ONLY clear breaches. Format: RULE_ID:LINE:description.
             If clean, write CLEAN on its own line.
@@ -85,8 +85,12 @@ module Master
           BLOCK
           end
 
+          def compress_prompt(text)
+            text.to_s.strip.split(/[.!?]/).first.to_s.strip[0, 120]
+          end
+
           def opportunity_block(rules)
-            list = rules.map { |id, a| "#{id}: #{a[:prompt]}" }.join("\n")
+            list = rules.map { |id, a| "#{id}: #{compress_prompt(a[:prompt])}" }.join("\n")
             <<~BLOCK
             OPPORTUNITIES — list refactors only if they would simplify. Format: RULE_ID:LINE:reason.
             If none, write NONE on its own line.

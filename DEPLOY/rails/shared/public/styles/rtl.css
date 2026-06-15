@@ -1,0 +1,5 @@
+/* AN1404: RTL readiness */
+[dir="rtl"] .main-nav {
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+}

@@ -1,0 +1,6 @@
+/* AP901: AP901 Color contrast policy: 4.5:1 minimum for body text (AA); 7:1 for small text <18px (AAA target); 3:1 for large text ≥24px bold (AA); test with `axe` in CI */
+/* Artifact: DEPLOY/artifacts/design/ap/AP901.css */
+[data-todo="ap901"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP901";
+}

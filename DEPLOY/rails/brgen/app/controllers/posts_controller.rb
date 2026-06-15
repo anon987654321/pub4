@@ -14,6 +14,7 @@ class PostsController < ApplicationController
     @comments    = @post.comments.where(parent_id: nil).best.includes(:user, :votes, replies: [:user, :votes])
     @new_comment = Comment.new
     @trending_tags = Hashtag.trending.limit(10)
+    respond_to_cached_show(@post, only: %i[id title content created_at score community_id user_id])
   end
 
   def new
@@ -60,6 +61,6 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :preset)
+    params.expect(post: [:title, :content, :community_id, :anonymous, :image, :preset])
   end
 end

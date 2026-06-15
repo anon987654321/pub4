@@ -1,0 +1,4 @@
+/* AQ1201: AQ1201 Custom generators: `rails generate brgen:vertical DatingProfile` creates model + migration + controller + views + routes + Stimulus controller in one command; enforce app-specific conventions */
+[data-todo="aq1201"] {
+  --artifact-id: "AQ1201";
+}

@@ -1,0 +1,6 @@
+/* AO401: AO401 New Yorker Irvin masthead: `font-family: "NYIrvin", Georgia, serif` — proprietary Art Deco display; heavy, condensed, decorative; only for hero/masthead; implement via web font or approximate with Playfair Display */
+/* Artifact: DEPLOY/artifacts/design/ao/AO401.css */
+[data-todo="ao401"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO401";
+}

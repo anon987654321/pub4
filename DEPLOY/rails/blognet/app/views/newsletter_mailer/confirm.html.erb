@@ -1,0 +1,3 @@
+<h1>Confirm your subscription</h1>
+<p>You're subscribing to <%= @subscription.blog.name %>.</p>
+<p><a href="<%= confirm_newsletter_subscription_url(@subscription.token) %>">Confirm subscription</a></p>

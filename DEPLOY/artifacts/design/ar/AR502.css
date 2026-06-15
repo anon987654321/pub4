@@ -1,0 +1,6 @@
+/* AR502: AR502 Animation utility classes: `.animate-fade-in { animation: fadeIn var(--duration-standard) var(--ease-decelerate) both }` etc. — apply to elements; `animation-fill-mode: both` handles pre/post states */
+/* Artifact: DEPLOY/artifacts/design/ar/AR502.css */
+[data-todo="ar502"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR502";
+}

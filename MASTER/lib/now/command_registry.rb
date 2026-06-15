@@ -4,6 +4,7 @@ require_relative "command_registry/memory_commands"
 require_relative "command_registry/work_commands"
 require_relative "command_registry/system_commands"
 require_relative "command_registry/tool_commands"
+require_relative "command_registry/help_topics"
 
 module Master
   module Now
@@ -18,18 +19,9 @@ module Master
           tool_commands(root),
           control_commands(ai[:standing], ai[:soul]),
           system_commands(ai[:agent], infra[:diag], root),
-          "help" => ->(_ctx) {
-            [
-              "unified: /run <natural language task>   # recommended for most work (intent inferred)",
-              "scan:    /scan /self /fix [loop|preview|stop] /why /axioms /topic /propose-tree /ecology",
-              "review:  /critique /review",
-              "health:  /status /resync [--dry-run] /tail [N] [pattern]",
-              "session: /save /clear /history /tokens /cost /undo /redo /checkpoint /dmesg /exit",
-              "model:   /model /mode /persona /task",
-              "memory:  /memory /dreams",
-              "tools:   /postpro [args] /repligen [args]",
-              "system:  /orient [topic] /tree /diff /commit /snapshot /diag /reload /help"
-            ].join("\n")
+          "help" => ->(ctx) {
+            arg = ctx[:args].to_s.strip.delete_prefix("/")
+            arg.empty? ? HelpTopics.summary : HelpTopics.detail(arg)
           }
         )
       end
@@ -50,7 +42,11 @@ module Master
             recent.map { |m| "[#{m[:role]}] #{m[:content].to_s.gsub(/\s+/, " ")[0, 120]}" }.join("\n")
           },
           "tokens" => ->(_ctx) { "~#{session.token_est} tokens" },
-          "cost" => ->(_ctx) { "$#{"%.4f" % session.cost}" },
+          "cost" => ->(_ctx) {
+            c = session.cost.to_f
+            label = c < 0.01 ? "$0.00" : (c < 0.1 ? "$#{"%.2f" % c}" : "$#{"%.4f" % c}")
+            "cost: #{label} · #{session.token_est} tok"
+          },
           "undo" => ->(_ctx) { r = undo.undo!; r.ok? ? "reverted: #{r.value!}" : r.message },
           "redo" => ->(_ctx) { r = undo.redo!; r.ok? ? "reapplied: #{r.value!}" : r.message },
           "dmesg" => ->(_ctx) { logging.dmesg },

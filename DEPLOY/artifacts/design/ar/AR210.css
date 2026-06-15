@@ -1,0 +1,6 @@
+/* AR210: AR210 Subgrid: `display: subgrid; grid-row: span 4` — card children participate in parent grid; card titles align across all cards in a row without fixed heights; bleeding-edge but widely supported 2025+ */
+/* Artifact: DEPLOY/artifacts/design/ar/AR210.css */
+[data-todo="ar210"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR210";
+}

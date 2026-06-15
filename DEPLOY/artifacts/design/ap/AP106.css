@@ -1,0 +1,6 @@
+/* AP106: AP106 FLAT_UI enforcement: zero `box-shadow` on flat surfaces; depth only when elements physically overlap (dropdown menus over content, modals over page); no fake elevation on cards */
+/* Artifact: DEPLOY/artifacts/design/ap/AP106.css */
+[data-todo="ap106"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP106";
+}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= I18n.locale %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -23,12 +23,12 @@
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-  <link rel="stylesheet" href="/styles/minimal-ui.css">
+  <link rel="stylesheet" href="/styles/pwa.css">
   <%= yield :json_ld %>
   <%= javascript_importmap_tags %>
-  <script type="module" src="/minimal-gesture.js"></script>
+  <%= render "shared/minimal_ui" %>
 </head>
-<body class="zen-minimal">
+<body class="zen-minimal" data-pwa-key="baibl" data-controller="pwa-standalone">
 <nav>
   <%= link_to "Baibl", root_path, class: "brand" %>
   <%= link_to "Scripture", scripture_index_path %>
@@ -44,5 +44,6 @@
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
 <main><%= yield %></main>
+<%= render "shared/pwa_shell" %>
 </body>
 </html>

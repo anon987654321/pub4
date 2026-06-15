@@ -5,14 +5,42 @@
   <% if @blog.user == Current.user %>
     <%= link_to "New post", new_blog_post_path(@blog) %>
     <%= link_to "Edit", edit_blog_path(@blog) %>
+    <%= link_to "Analytics", blog_analytics_path(@blog) %>
+    <%= link_to "New recipe", new_recipe_path %>
   <% end %>
 </header>
-<section id="posts">
-  <% @posts.each do |post| %>
-    <article>
-      <%= link_to post.title, blog_post_path(@blog, post) %>
-      <small><%= post.published_at&.strftime("%b %-d, %Y") %> · <%= post.views_count %> views · <%= post.comments_count %> comments</small>
-    </article>
+
+<%= form_with url: blog_newsletter_subscriptions_path(@blog), local: true do |f| %>
+  <%= f.email_field :email, placeholder: "Newsletter email", required: true %>
+  <%= f.submit "Subscribe", class: "btn btn-sm" %>
+<% end %>
+<% if @blog.paywall_enabled? && authenticated? %>
+  <%= button_to "Subscribe to blog", checkout_blog_path(@blog), class: "btn btn-ghost btn-sm" %>
+<% end %>
+
+<div data-controller="live-search">
+  <%= render "shared/search_loading" %>
+  <%= form_with url: blog_path(@blog), method: :get, local: true,
+        data: { turbo_frame: "live_search_results" } do |f| %>
+    <div class="search-form" role="search">
+      <%= f.search_field :q, value: params[:q], placeholder: "Search posts…",
+            data: { live_search_target: "input", action: "input->live-search#input" } %>
+      <%= f.submit "Search", class: "btn btn-sm" %>
+    </div>
   <% end %>
-</section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+
+  <%= turbo_frame_tag "live_search_results" do %>
+    <section id="posts">
+      <% @posts.each do |post| %>
+        <article>
+          <%= link_to post.title, blog_post_path(@blog, post) %>
+          <small><%= post.published_at&.strftime("%b %-d, %Y") %> · <%= post.views_count %> views · <%= post.comments_count %> comments</small>
+        </article>
+      <% end %>
+    </section>
+    <% if @posts.empty? && params[:q].present? %>
+      <%= render "shared/search_empty", query: params[:q], search_meta: search_meta %>
+    <% end %>
+    <%= @pagy.series_nav if @pagy.pages > 1 %>
+  <% end %>
+</div>

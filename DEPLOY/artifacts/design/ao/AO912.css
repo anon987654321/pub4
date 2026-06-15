@@ -1,0 +1,6 @@
+/* AO912: AO912 Skeleton loaders: X uses grey pulsing rectangles matching tweet card shape; Medium uses lighter rectangles for card placeholders; implement via `background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200%%; animation: shimmer 1.5s infinite` */
+/* Artifact: DEPLOY/artifacts/design/ao/AO912.css */
+[data-todo="ao912"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO912";
+}

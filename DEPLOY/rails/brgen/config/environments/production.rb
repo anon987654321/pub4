@@ -84,6 +84,7 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  config.hosts = ["brgen.no", /.*\.brgen\.no\z/]
+  # Explicit allow-list: domains.yml verticals + all city domains/subapps (no wildcards).
+  config.hosts = Brgen::ProductionHosts.allowed
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end

@@ -1,0 +1,6 @@
+/* AP502: AP502 Duration vocabulary: `--duration-instant: 80ms` (state toggles), `--duration-fast: 150ms` (hover effects), `--duration-standard: 250ms` (page transitions, dropdowns), `--duration-slow: 400ms` (hero animations); never arbitrary values */
+/* Artifact: DEPLOY/artifacts/design/ap/AP502.css */
+[data-todo="ap502"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP502";
+}

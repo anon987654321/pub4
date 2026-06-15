@@ -1,0 +1,6 @@
+/* AO406: AO406 New Yorker pull quote: centered, larger, italic, generous margins — classic magazine pull quote; `font-size: 24px / font-style: italic / text-align: center / margin: 3em auto / max-width: 480px` */
+/* Artifact: DEPLOY/artifacts/design/ao/AO406.css */
+[data-todo="ao406"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO406";
+}

@@ -1,0 +1,6 @@
+/* AO110: AO110 X code/handle display: `font-family: monospace` only inside code blocks; @handles remain in Chirp stack — avoid mixing font families for inline @mentions */
+/* Artifact: DEPLOY/artifacts/design/ao/AO110.css */
+[data-todo="ao110"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO110";
+}

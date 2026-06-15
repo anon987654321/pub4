@@ -1,0 +1,4 @@
+/* AP1507: AP1507 CSS size audit: application.css ≤ 30KB gzipped per app; if larger, split into critical (inlined) and deferred (linked); PurgeCSS pass to remove unused selectors in production */
+[data-todo="ap1507"] {
+  --artifact-id: "AP1507";
+}

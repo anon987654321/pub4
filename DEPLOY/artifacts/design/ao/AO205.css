@@ -1,0 +1,6 @@
+/* AO205: AO205 Medium body paragraph spacing: `margin-bottom: 2em` between paragraphs — generous vertical rhythm; each paragraph breathes */
+/* Artifact: DEPLOY/artifacts/design/ao/AO205.css */
+[data-todo="ao205"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO205";
+}

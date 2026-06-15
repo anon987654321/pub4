@@ -20,7 +20,7 @@ module Master
         "trace" => 0,
         "prescan" => true,
         "auto" => false,
-        "cache_ttl" => 3_600,
+        "cache_ttl" => 300,
         "history_max" => 500,
         "reasoning_mode" => "direct",
         "task_type" => "code_generation",

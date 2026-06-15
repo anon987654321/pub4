@@ -127,6 +127,12 @@ module Master
         return "scan failed" unless Result.wrap(result).ok?
 
         summary = result.value!
+        if summary.violation_count.zero?
+          @bus&.publish("heartbeat:scan_clean", violations: 0, last_fixed: @state.dig("self_test", "last_fixed"))
+        else
+          @bus&.publish("heartbeat:violations", count: summary.violation_count, last_fixed: @state.dig("self_test", "last_fixed"))
+        end
+        @state["self_test"] = { "last_run" => Time.now.to_i, "violations" => summary.violation_count }
         @bus&.publish("heartbeat:self_test", violations: summary.violation_count, checks: summary.to_h)
         summary.line
       end

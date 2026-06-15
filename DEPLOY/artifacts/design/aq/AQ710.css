@@ -1,0 +1,6 @@
+/* AQ710: AQ710 Web push payload: `webpush` gem payload: `{title:, body:, icon:, badge:, url:, tag:}` — `tag:` groups notifications (replaces old with same tag); badge is monochrome icon for notification tray */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ710.css */
+[data-todo="aq710"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ710";
+}

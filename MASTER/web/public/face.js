@@ -1985,12 +1985,31 @@ document.addEventListener('keydown', (e) => {
 });
 
 window.sendMessage = sendMessage;
+const STAGE_EXPRESSION = {
+  intake: 'thinking',
+  infer: 'thinking',
+  route: 'thinking',
+  guard: 'alert',
+  execute: 'focused',
+  council: 'deliberate',
+  lint: 'audit',
+  memory: 'idle',
+  render: 'speak'
+};
+
 window.MASTERVoice = {
   enqueue: enqueueSpeech,
   initAudio,
   skip: ttsSkip,
   toggleMute: ttsToggleMute,
   speak: (t) => enqueueSpeech(t),
+  setStage(stage) {
+    const mode = STAGE_EXPRESSION[String(stage || '').toLowerCase()] || 'thinking';
+    State.mode = mode;
+    document.body.dataset.faceStage = mode;
+    if (mode === 'thinking') { State.pulse = 0.4; setAmbientHum(true); }
+    else if (mode === 'speak') { setAmbientHum(false); }
+  },
   get muted() { return tts.muted; },
   get playing() { return tts.playing; },
   get voice() { return tts.voice; },

@@ -1,0 +1,6 @@
+/* AS908: AS908 Touch audit: use touch emulation in Chrome DevTools; verify all touch targets ≥44px; no hover-only affordances; swipe gestures work smoothly */
+/* Artifact: DEPLOY/artifacts/design/as/AS908.css */
+[data-todo="as908"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS908";
+}

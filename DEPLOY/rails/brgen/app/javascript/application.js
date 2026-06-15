@@ -1,5 +1,6 @@
 import "@hotwired/turbo-rails"
 import "controllers"
+import "pwa/bootstrap"
 
 // ── Warp tunnel + city carousel ──────────────────────────────────────────────
 // Runs once on first load; canvas/carousel are data-turbo-permanent so they
@@ -211,9 +212,6 @@ document.addEventListener("turbo:load", () => {
   initSplash();
   updateCarouselPrefix();
 });
-
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-worker")
-
 
 // Nav swipe-to-reveal
 document.addEventListener("turbo:load", () => {

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class BlogsController < ApplicationController
+  include Shared::LiveSearchable
+
   before_action :require_authentication, except: %i[index show]
   before_action :set_blog, only: %i[show edit update destroy]
   before_action :authorize!, only: %i[edit update destroy]
@@ -10,7 +12,10 @@ class BlogsController < ApplicationController
   end
 
   def show
-    @pagy, @posts = pagy(@blog.posts.published.includes(:user, :tags))
+    scope = @blog.posts.published.includes(:user, :tags)
+    scope = apply_live_search(scope, columns: %w[title], vertical: "posts") if live_search_query.present?
+    @pagy, @posts = pagy(scope)
+    respond_to_cached_show(@blog, only: %i[id name slug description published])
   end
 
   def new
@@ -37,5 +42,5 @@ class BlogsController < ApplicationController
 
   def set_blog   = @blog = Blog.find_by!(slug: params[:id])
   def authorize! = redirect_to(blogs_path, alert: "Unauthorized") unless @blog.user == Current.user
-  def blog_params = params.require(:blog).permit(:name, :description, :published, :banner)
+  def blog_params = params.expect(:blog => [:name, :description, :published, :banner])
 end

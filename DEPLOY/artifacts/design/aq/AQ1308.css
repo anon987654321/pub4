@@ -1,0 +1,4 @@
+/* AQ1308: AQ1308 Staging environment: mirror of production config; deploys to staging on every merge to `main`; production deploys require explicit `kamal deploy --destination production` */
+[data-todo="aq1308"] {
+  --artifact-id: "AQ1308";
+}

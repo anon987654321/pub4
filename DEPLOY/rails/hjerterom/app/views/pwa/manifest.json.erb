@@ -1,23 +1,11 @@
 {
-  "name": "Hjerterom Åsane",
+  "name": "Hjerterom",
   "short_name": "Hjerterom",
+  "categories": ["food", "lifestyle"],
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "/icon.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    },
-    {
-      "src": "/icon.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
-    }
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icon.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "/icon.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
   ],
   "display_override": ["window-controls-overlay", "standalone"],
   "edge_side_panel": { "preferred_width": 400 },
@@ -25,7 +13,10 @@
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
-  "description": "Matredistribusjon og møteplass i Åsane, Bergen. Overskuddsmat, klær og bøker til de som trenger det.",
-  "theme_color": "#1a1a1a",
-  "background_color": "#1a1a1a"
+  "description": "Food and resource rescue network.",
+  "theme_color": "#14532d",
+  "background_color": "#14532d",
+  "shortcuts": [
+    { "name": "Find pickups", "short_name": "Map", "url": "/", "icons": [{ "src": "/icon.png", "sizes": "96x96" }] }
+  ]
 }

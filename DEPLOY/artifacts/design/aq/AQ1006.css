@@ -1,0 +1,4 @@
+/* AQ1006: AQ1006 Parameter pollution: `params.expect()` (Rails 8) or `params.require().permit()` — never pass `params` directly to model; Pundit policy checks authorization before record mutation */
+[data-todo="aq1006"] {
+  --artifact-id: "AQ1006";
+}

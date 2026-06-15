@@ -1,0 +1,40 @@
+# CH04: service monitor — install monit, copy to /etc/monitrc, rcctl enable monit.
+# Checks tracked Rails apps and MASTER; restarts on failure.
+
+set daemon 60
+set logfile /var/log/monit.log
+
+check process master with pidfile /var/run/master.pid
+  start program = "/usr/sbin/rcctl start master"
+  stop program = "/usr/sbin/rcctl stop master"
+  if failed host 127.0.0.1 port 53187 protocol http request "/up" status = 200 for 3 cycles then restart
+
+check process brgen with pidfile /var/run/brgen.pid
+  start program = "/usr/sbin/rcctl start brgen"
+  stop program = "/usr/sbin/rcctl stop brgen"
+  if failed host 127.0.0.1 port 38182 protocol http request "/up" status = 200 for 3 cycles then restart
+
+check process amber with pidfile /var/run/amber.pid
+  start program = "/usr/sbin/rcctl start amber"
+  stop program = "/usr/sbin/rcctl stop amber"
+  if failed host 127.0.0.1 port 61352 protocol http request "/up" status = 200 for 3 cycles then restart
+
+check process bsdports with pidfile /var/run/bsdports.pid
+  start program = "/usr/sbin/rcctl start bsdports"
+  stop program = "/usr/sbin/rcctl stop bsdports"
+  if failed host 127.0.0.1 port 47312 protocol http request "/up" status = 200 for 3 cycles then restart
+
+check process baibl with pidfile /var/run/baibl.pid
+  start program = "/usr/sbin/rcctl start baibl"
+  stop program = "/usr/sbin/rcctl stop baibl"
+  if failed host 127.0.0.1 port 10007 protocol http request "/up" status = 200 for 3 cycles then restart
+
+check process blognet with pidfile /var/run/blognet.pid
+  start program = "/usr/sbin/rcctl start blognet"
+  stop program = "/usr/sbin/rcctl stop blognet"
+  if failed host 127.0.0.1 port 10002 protocol http request "/up" status = 200 for 3 cycles then restart
+
+check process hjerterom with pidfile /var/run/hjerterom.pid
+  start program = "/usr/sbin/rcctl start hjerterom"
+  stop program = "/usr/sbin/rcctl stop hjerterom"
+  if failed host 127.0.0.1 port 38891 protocol http request "/up" status = 200 for 3 cycles then restart

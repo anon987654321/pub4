@@ -1,0 +1,6 @@
+/* AP807: AP807 Submit button: full-width on mobile; auto-width on desktop; `background: var(--color-midtone); color: var(--color-highlight); border: none; border-radius: 6px; padding: 12px 24px; font-weight: 600` — unambiguous primary action */
+/* Artifact: DEPLOY/artifacts/design/ap/AP807.css */
+[data-todo="ap807"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP807";
+}

@@ -1,0 +1,6 @@
+/* AO404: AO404 New Yorker byline: `font-family: caps-variant sans / font-size: 11px / letter-spacing: 0.1em / text-transform: uppercase` — authoritative small caps treatment */
+/* Artifact: DEPLOY/artifacts/design/ao/AO404.css */
+[data-todo="ao404"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO404";
+}

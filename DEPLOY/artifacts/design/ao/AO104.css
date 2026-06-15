@@ -1,0 +1,6 @@
+/* AO104: AO104 X name typography: `font-weight: 700` for display name; `font-weight: 400` for @handle in muted color — weight contrast as hierarchy without size change */
+/* Artifact: DEPLOY/artifacts/design/ao/AO104.css */
+[data-todo="ao104"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO104";
+}

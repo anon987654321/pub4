@@ -1,0 +1,4 @@
+/* AQ1202: AQ1202 Concern templates: `rails generate concern Votable` generates boilerplate Votable concern with `included do ... end` block; attach to model in one line */
+[data-todo="aq1202"] {
+  --artifact-id: "AQ1202";
+}

@@ -10,6 +10,16 @@ class Outfit < ApplicationRecord
 
   broadcasts_refreshes
 
+  scope :search, ->(q) {
+    term = q.to_s.strip
+    return none if term.empty?
+
+    ids = connection.select_values(
+      sanitize_sql_array(["SELECT rowid FROM outfits_fts WHERE outfits_fts MATCH ?", term])
+    )
+    ids.any? ? where(id: ids) : none
+  }
+
   def like!
     increment!(:likes_count)
   end

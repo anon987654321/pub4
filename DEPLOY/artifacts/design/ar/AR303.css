@@ -1,0 +1,6 @@
+/* AR303: AR303 Prose styles: `.prose { font-size: var(--text-lg); line-height: 1.6; max-width: 68ch } .prose h2 { font-size: var(--text-2xl); margin-block: 1.5em 0.5em } .prose p { margin-bottom: 1.25em } .prose ul, ol { padding-inline-start: 1.5em; margin-bottom: 1.25em }` — single class for all longform content */
+/* Artifact: DEPLOY/artifacts/design/ar/AR303.css */
+[data-todo="ar303"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR303";
+}

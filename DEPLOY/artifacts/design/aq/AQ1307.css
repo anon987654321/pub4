@@ -1,0 +1,4 @@
+/* AQ1307: AQ1307 Backup strategy: SQLite database backed up via `litestream` replication to S3-compatible (Cloudflare R2 free tier); continuous replication; point-in-time restore to any second */
+[data-todo="aq1307"] {
+  --artifact-id: "AQ1307";
+}

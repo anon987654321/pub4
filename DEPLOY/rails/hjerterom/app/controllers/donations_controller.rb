@@ -8,7 +8,9 @@ class DonationsController < ApplicationController
     @donations = Donation.active.order(created_at: :desc)
   end
 
-  def show; end
+  def show
+    respond_to_cached_show(@donation, only: %i[id source_name pickup_window notes status created_at])
+  end
 
   def new
     @donation = Donation.new
@@ -18,7 +20,7 @@ class DonationsController < ApplicationController
     @donation = Donation.new(donation_params)
     if @donation.save
       respond_to do |f|
-        f.html { redirect_to @donation }
+        f.html { redirect_to @donation, flash: { toast: "Donasjon registrert — takk!" } }
         f.turbo_stream
       end
     else
@@ -49,6 +51,6 @@ class DonationsController < ApplicationController
   end
 
   def donation_params
-    params.require(:donation).permit(:source_name, :pickup_window, :notes, :status)
+    params.expect(:donation => [:source_name, :pickup_window, :notes, :status])
   end
 end

@@ -11,6 +11,10 @@
     <%= tag.p t("tv.live_streams.viewers", count: @live_stream.viewer_count, default: "%{count} viewers") %>
   <% end %>
 
+  <% if authenticated? %>
+    <%= link_to "Moderation dashboard", tv_live_stream_stream_chat_moderations_path(@live_stream), class: "btn btn-ghost btn-sm" %>
+  <% end %>
+
   <%= tag.section class: "live-stream-chat" do %>
     <%= tag.h2 t("tv.live_streams.chat", default: "Chat") %>
     <%= turbo_stream_from "tv:live_stream:#{@live_stream.id}:entries" %>

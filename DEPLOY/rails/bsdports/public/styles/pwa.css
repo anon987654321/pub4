@@ -1,0 +1,72 @@
+.pwa-install-banner,
+.pwa-update-banner {
+  position: fixed;
+  inset-inline: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(10, 10, 10, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.pwa-install-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pwa-offline-page {
+  margin: 0;
+  min-height: 100dvh;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, -apple-system, sans-serif;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.pwa-offline-page main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+.pwa-offline-page h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+}
+
+.pwa-offline-page ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.pwa-offline-page li {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pwa-offline-page li span {
+  display: block;
+  opacity: 0.65;
+  font-size: 0.85rem;
+}
+
+html[data-pwa-standalone] .sidebar nav.desktop-only {
+  display: none;
+}
+
+html[data-pwa-standalone] .tab-bar {
+  display: flex;
+}
+
+html[data-pwa-standalone] .pwa-back-button {
+  display: none;
+}

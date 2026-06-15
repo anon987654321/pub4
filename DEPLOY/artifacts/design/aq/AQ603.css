@@ -1,0 +1,6 @@
+/* AQ603: AQ603 Tenant-agnostic admin: `/admin` routes bypass tenant scoping via `ActsAsTenant.without_tenant { ... }` — admin can see all cities' data */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ603.css */
+[data-todo="aq603"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ603";
+}

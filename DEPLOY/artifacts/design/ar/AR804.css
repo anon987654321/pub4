@@ -1,0 +1,6 @@
+/* AR804: AR804 Responsive navigation strategy: hamburger menu at mobile only — avoid hamburger on tablet+; use horizontal scrollable nav or visible condensed nav instead of hiding behind burger */
+/* Artifact: DEPLOY/artifacts/design/ar/AR804.css */
+[data-todo="ar804"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR804";
+}

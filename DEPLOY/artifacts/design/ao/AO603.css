@@ -1,0 +1,6 @@
+/* AO603: AO603 X avatar sizes: 40px (thread), 48px (tweet), 56px (profile card), 66px (profile header); always circular; 2px white border in dark contexts */
+/* Artifact: DEPLOY/artifacts/design/ao/AO603.css */
+[data-todo="ao603"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO603";
+}

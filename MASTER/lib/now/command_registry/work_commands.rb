@@ -47,7 +47,9 @@ module Master
         result = Master::Judge::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(stream: true, autofix: true)
         return result.message unless result.ok?
 
-        result.value!.line
+        summary = result.value!
+        return "" if summary.violation_count.zero?
+        summary.line
       end
 
       # /status — one-frame health panel. Replaces seven probing tool calls.
@@ -85,29 +87,23 @@ module Master
         { state: "?", detail: "rcctl err: #{e.class}: #{e.message[0, 60]}" }
       end
 
+      def bundle_ok?(dir)
+        out, = Open3.capture2e("bundle34", "check", chdir: dir)
+        out.include?("dependencies are satisfied")
+      rescue StandardError
+        false
+      end
+
       def bundle_status(repo)
-        mas, = Open3.capture2e("bundle34", "check", chdir: File.join(repo, "MASTER"))
-        web, = Open3.capture2e("bundle34", "check", chdir: File.join(repo, "MASTER/web"))
-        mas_ok = mas.include?("dependencies are satisfied")
-        web_ok = web.include?("dependencies are satisfied")
+        mas_ok = bundle_ok?(File.join(repo, "MASTER"))
+        web_ok = bundle_ok?(File.join(repo, "MASTER/web"))
         mas_ok && web_ok ? "ok (MASTER+web satisfied)" : "drift — run bundle install"
       rescue StandardError => e
         "unknown (#{e.class})"
       end
 
       def recent_events(root, n)
-        path = File.join(root, "runtime", "events", "activity.jsonl")
-        return [] unless File.exist?(path)
-        now = Time.now.utc
-        File.foreach(path).to_a.last(n).map { |line|
-          rec = JSON.parse(line) rescue next
-          ts = (Time.parse(rec["timestamp"]) rescue now)
-          secs = (now - ts).to_i.abs
-          ago = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
-          pay = rec["payload"]
-          sum = pay.is_a?(Hash) ? pay.first(3).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
-          { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
-        }.compact
+        Trace::EventLog.new(root:).recent(n)
       rescue StandardError
         []
       end
@@ -149,25 +145,18 @@ module Master
       def dispatch_tail(root:, arg:)
         n_arg, pattern = arg.split(/\s+/, 2)
         n = n_arg.to_i.positive? ? n_arg.to_i : 20
-        path = File.join(root, "runtime", "events", "activity.jsonl")
-        return "tail: no event log at #{path}" unless File.exist?(path)
+        log = Trace::EventLog.new(root:)
+        return "tail: no event log at #{log.path}" if log.read_lines.empty?
         rx = pattern && !pattern.empty? ? Regexp.new(pattern) : nil
-        lines = File.foreach(path).to_a
-        lines = lines.select { |l| l.include?(pattern) } if rx && pattern.match?(/\A[a-z0-9_:.-]+\z/i)
-        lines = lines.last(n)
-        lines.map { |l|
-          rec = JSON.parse(l) rescue next
-          next if rx && !rec["event"].to_s.match?(rx)
-          ts = rec["timestamp"].to_s.sub(/\..+/, "").sub("T", " ")
-          "#{ts} #{rec["event"].ljust(28)} #{format_payload(rec["payload"])}"
-        }.compact.join("\n")
+        log.tail(n, pattern:).filter_map { |rec|
+          CommandRegistry::Formatter.format_event_line(rec, rx:)
+        }.join("\n")
       rescue StandardError => e
         "tail: #{e.message}"
       end
 
       def format_payload(pay)
-        return pay.to_s[0, 100] unless pay.is_a?(Hash)
-        pay.map { |k, v| "#{k}=#{v.to_s.tr('"', '')[0, 30]}" }.join(" ")[0, 100]
+        CommandRegistry::Formatter.format_payload(pay)
       end
 
       def dispatch_fix(fix_loop, root, arg)
@@ -287,7 +276,7 @@ module Master
         end
         total = by_rule.values.sum(&:size)
         header = profile ? "[profile: #{profile}] " : ""
-        return "#{header}clean -- no violations" if total.zero?
+        return "" if total.zero?
         summary = "#{header}#{total} total violations"
         lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
           ["[#{rule}] #{vs.size}"] + vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, VIOLATION_TRUNCATE]}" }
@@ -305,9 +294,20 @@ module Master
         [profile_name, :deep, rule_filter]
       end
 
+      @workflow_cache = {}
+      @workflow_mtime = nil
+
       def load_workflow_profiles(root)
-        data = Master.load_yaml(File.join(root, "data", "workflow.yml"))
-        [data["principle_groups"] || {}, data["scan_profiles"] || {}]
+        path = File.join(root, "data", "workflow.yml")
+        mtime = File.mtime(path)
+        if @workflow_cache[root] && @workflow_mtime == mtime
+          return @workflow_cache[root]
+        end
+        data = Master.load_yaml(path)
+        pair = [data["principle_groups"] || {}, data["scan_profiles"] || {}]
+        @workflow_cache[root] = pair
+        @workflow_mtime = mtime
+        pair
       rescue StandardError
         [{}, {}]
       end
@@ -320,38 +320,25 @@ module Master
         else
           target = arg.empty? ? "." : arg
           artifact = snapshot_artifact(expand_or_root(target, root))
-          run_tribunal(deliberation:, artifact:, target:, bus:)
+          run_deliberation(deliberation:, artifact:, target:, bus:, formatter: :tribunal)
         end
+      end
+
+      def run_deliberation(deliberation:, artifact:, target:, bus: nil, formatter: :tribunal)
+        return "deliberation: not configured" unless deliberation
+        result = deliberation.review_convergent(artifact, context: target)
+        return result.message if result.err?
+        Judge::Council::FeedbackFormatter.format(result.value!, style: formatter, bus:)
+      rescue StandardError => e
+        "deliberation: #{e.message}"
       end
 
       def run_tribunal(deliberation:, artifact:, target:, bus: nil)
-        return "tribunal: deliberation not configured" unless deliberation
-        result = deliberation.review_convergent(artifact, context: target)
-        return result.message if result.err?
-        format_tribunal(result.value!, bus)
-      rescue StandardError => e
-        "tribunal: #{e.message}"
+        run_deliberation(deliberation:, artifact:, target:, bus:, formatter: :tribunal)
       end
 
       def format_tribunal(feedback, bus = nil)
-        judge = feedback.find { |f| f[:role] == "Synthesis" }
-        jurors = feedback.reject { |f| f[:role] == "Synthesis" }
-        vetoes = jurors.select { |f| f[:veto_role] && f[:feedback].to_s.strip =~ /\AVETO:/i }
-        out = []
-        out << "verdict: #{judge[:feedback].to_s.strip}" if judge
-        unless vetoes.empty?
-          out << "" << "vetoes:"
-          vetoes.each { |v| out << "  #{v[:persona]}: #{v[:feedback].to_s.strip.sub(/\AVETO:\s*/i, "")}" }
-        end
-        out << "" << "jurors:"
-        jurors.each do |f|
-          axiom = f[:axiom] ? "[#{f[:axiom]}] " : ""
-          body = f[:feedback].to_s.strip.lines.first(3).map(&:chomp).join(" ")
-          out << "  #{axiom}#{f[:persona]} (#{f[:role]}): #{body}"
-        end
-        conf = (jurors.filter_map { |j| j[:confidence] || 0.5 }.sum / [jurors.size, 1].max).round(2) rescue 0.5
-        bus&.publish("tribunal:rendered", jurors: jurors.size, vetoes: vetoes.size, judge: !judge.nil?, confidence: conf)
-        out.join("\n")
+        Judge::Council::FeedbackFormatter.format(feedback, style: :tribunal, bus:)
       end
 
       def snapshot_artifact(abs_path)
@@ -365,16 +352,11 @@ module Master
         return "usage: /critique <file|text>" if arg.empty?
         path = File.expand_path(arg, root)
         payload = File.exist?(path) ? File.read(path, encoding: "UTF-8") : arg
-        result = deliberation.review_convergent(payload, context: "explicit /critique session")
-        return result.message if result.err?
-        deliberation_feedback(result.value!)
+        run_deliberation(deliberation:, artifact: payload, target: "explicit /critique session", formatter: :feedback)
       end
 
       def deliberation_feedback(feedback)
-        feedback.map { |f|
-          veto = f[:veto_role] ? " [VETO ELIGIBLE]" : ""
-          "#{f[:persona]} (#{f[:role]})#{veto}:\n#{f[:feedback].to_s.strip}"
-        }.join("\n\n---\n\n")
+        Judge::Council::FeedbackFormatter.format(feedback, style: :feedback)
       end
 
       def dispatch_model(agent:, config:, metrics:, root:, arg:)
@@ -388,7 +370,14 @@ module Master
         return "model: #{agent.model}" unless File.exist?(yml_path)
         data = Master.load_yaml(yml_path)
         tiers = data["models"] || {}
-        model_lines = tiers.flat_map { |tier, ms| ms.to_a.map { |mod| "  [#{tier}] #{mod["id"]}" } }
+        current = agent.model.to_s
+        model_lines = tiers.flat_map { |tier, ms|
+          ms.to_a.map { |mod|
+            id = mod["id"].to_s
+            mark = id == current ? "→ " : "  "
+            "#{mark}[#{tier}] #{id}"
+          }
+        }
         quality_lines = metrics&.model_quality&.map { |mod, stat|
           "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}"
         } || []

@@ -1,0 +1,6 @@
+/* AS406: AS406 blognet section label: `.section-label { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-danger) }` — red department header; New Yorker pattern applied to blognet vertical labels */
+/* Artifact: DEPLOY/artifacts/design/as/AS406.css */
+[data-todo="as406"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS406";
+}

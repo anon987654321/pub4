@@ -1,0 +1,6 @@
+/* AO909: AO909 New Yorker header shrink: on scroll past 100px, header height animates from 80px to 48px; nav font-size 11px throughout; logo scales proportionally via `transform: scale(0.8)` */
+/* Artifact: DEPLOY/artifacts/design/ao/AO909.css */
+[data-todo="ao909"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO909";
+}

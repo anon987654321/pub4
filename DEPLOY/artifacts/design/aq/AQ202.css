@@ -1,0 +1,6 @@
+/* AQ202: AQ202 Image variants pipeline: `variant :thumb, resize_to_fill: [80, 80]; variant :card, resize_to_fill: [400, 300]; variant :full, resize_to_limit: [1200, nil]` — define on model, never in view */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ202.css */
+[data-todo="aq202"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ202";
+}

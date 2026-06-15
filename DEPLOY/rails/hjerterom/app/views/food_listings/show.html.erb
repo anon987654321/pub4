@@ -1,4 +1,7 @@
 <% content_for :title, @listing.title %>
+<% if flash[:toast].present? %>
+  <div data-controller="toast" data-toast-message-value="<%= flash[:toast] %>" data-toast-variant-value="info" hidden></div>
+<% end %>
 <article>
   <h1><%= @listing.title %></h1>
   <p><%= @listing.description %></p>

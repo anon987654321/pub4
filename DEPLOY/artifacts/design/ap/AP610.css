@@ -1,0 +1,6 @@
+/* AP610: AP610 hjerterom donation card: large icon (128px) for category (food/clothing/toy); expiry date prominent if food; distance badge top-right; "Claim" button fills card bottom; warm green CTA */
+/* Artifact: DEPLOY/artifacts/design/ap/AP610.css */
+[data-todo="ap610"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP610";
+}

@@ -1,0 +1,64 @@
+name: DEPLOY CI
+
+on:
+  pull_request:
+    paths:
+      - 'DEPLOY/**'
+      - '.github/workflows/ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'DEPLOY/**'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  deploy-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: false
+
+      - name: Install gate dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Production gate (assume_ssl, hosts, Solid stack)
+        run: ruby DEPLOY/rails/check_production_gate.rb
+
+      - name: Deploy identity verification
+        run: ruby DEPLOY/verify_deploy_identity.rb
+
+      - name: Port consistency check
+        run: DEPLOY/rails/check_ports.sh
+
+  rails-apps:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [amber, baibl, blognet, brgen, bsdports, hjerterom]
+    defaults:
+      run:
+        working-directory: DEPLOY/rails/${{ matrix.app }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: DEPLOY/rails/${{ matrix.app }}
+
+      - name: Run app CI (RuboCop, bundler-audit, Brakeman, tests)
+        working-directory: DEPLOY/rails/${{ matrix.app }}
+        env:
+          SECRET_KEY_BASE: ci-secret-key-base-for-github-actions-only-0123456789abcdef
+          RAILS_ENV: test
+        run: bin/ci

@@ -1,0 +1,6 @@
+/* AP710: AP710 Active link state: use Rails `current_page?` helper to add `aria-current="page"` and a CSS class; `font-weight: 600; color: var(--color-midtone)` for active; `color: var(--text-secondary)` for inactive */
+/* Artifact: DEPLOY/artifacts/design/ap/AP710.css */
+[data-todo="ap710"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP710";
+}

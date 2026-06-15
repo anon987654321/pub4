@@ -1,0 +1,6 @@
+/* AP703: AP703 amber top nav: minimal — logo left, search icon + profile avatar right; no hamburger menu; categories as horizontal scrollable chips below nav; fashion-minimalist approach */
+/* Artifact: DEPLOY/artifacts/design/ap/AP703.css */
+[data-todo="ap703"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP703";
+}

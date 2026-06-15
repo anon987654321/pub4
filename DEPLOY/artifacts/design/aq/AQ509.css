@@ -1,0 +1,6 @@
+/* AQ509: AQ509 Email delivery job: `ActionMailer::MailDeliveryJob` routes through `critical` queue; never delay email delivery to `default` or `bulk` queues; users expect email immediately */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ509.css */
+[data-todo="aq509"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ509";
+}

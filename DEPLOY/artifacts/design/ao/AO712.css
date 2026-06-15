@@ -1,0 +1,6 @@
+/* AO712: AO712 Horizontal scroll for tags: `overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none` — tag chips scroll horizontally on mobile without layout break */
+/* Artifact: DEPLOY/artifacts/design/ao/AO712.css */
+[data-todo="ao712"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO712";
+}

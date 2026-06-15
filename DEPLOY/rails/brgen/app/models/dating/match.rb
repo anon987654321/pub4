@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Dating::Match < ApplicationRecord
+  include MatchNotifications
+
   belongs_to :initiator, class_name: "User"
   belongs_to :receiver,  class_name: "User"
   validates :initiator_id, uniqueness: { scope: :receiver_id }

@@ -1,0 +1,6 @@
+/* AP209: AP209 Color usage rules: shadow = backgrounds and large surfaces only; midtone = interactive elements, icons, links; highlight = text on dark surfaces, inverted UI; accent = maximum 10% of any view's color budget */
+/* Artifact: DEPLOY/artifacts/design/ap/AP209.css */
+[data-todo="ap209"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP209";
+}

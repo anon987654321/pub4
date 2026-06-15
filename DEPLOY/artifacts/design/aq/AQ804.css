@@ -1,0 +1,6 @@
+/* AQ804: AQ804 Conflict resolution: `updated_at` optimistic locking — server rejects writes where client's `updated_at` doesn't match server's; client receives 409 + server version; user resolves */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ804.css */
+[data-todo="aq804"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ804";
+}

@@ -1,0 +1,6 @@
+/* AP512: AP512 Match media for animation performance: check `window.matchMedia('(prefers-reduced-motion: no-preference)')` before registering scroll-based animations; degrade gracefully */
+/* Artifact: DEPLOY/artifacts/design/ap/AP512.css */
+[data-todo="ap512"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP512";
+}

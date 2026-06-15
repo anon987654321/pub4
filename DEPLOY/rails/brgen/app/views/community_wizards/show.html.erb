@@ -1,0 +1,36 @@
+<% content_for :title, "Create community" %>
+
+<%= turbo_frame_tag "community_wizard" do %>
+  <div class="page-header">
+    <p class="dim">Community wizard · <%= @step.humanize %></p>
+    <h1>Create community</h1>
+  </div>
+
+  <%= form_with scope: :community, url: community_wizard_path, method: :patch,
+                data: { controller: "offline-draft", offline_draft_key_value: "community-wizard", action: "input->offline-draft#save" } do |f| %>
+    <%= hidden_field_tag :step, @step %>
+
+    <% case @step %>
+    <% when "basics" %>
+      <div class="field"><%= f.label :name %><%= f.text_field :name, value: @draft["name"] %></div>
+      <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4, value: @draft["description"] %></div>
+    <% when "rules" %>
+      <p class="dim">Be respectful. No spam. Keep it local. (Editable rules UI stub.)</p>
+    <% when "category" %>
+      <p class="dim">Category selection stub — defaults to general on publish.</p>
+    <% when "privacy" %>
+      <p class="dim">Public community (private communities deferred).</p>
+    <% when "preview" %>
+      <article>
+        <h2><%= @draft["name"] %></h2>
+        <p><%= @draft["description"] %></p>
+      </article>
+      <%= render "shared/errors", object: @community if @community&.errors&.any? %>
+    <% end %>
+
+    <div class="field">
+      <%= f.submit (@step == "preview" ? "Publish community" : "Continue"), class: "btn btn-primary" %>
+      <span class="dim" data-offline-draft-target="status"></span>
+    </div>
+  <% end %>
+<% end %>

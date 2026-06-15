@@ -7,9 +7,16 @@
   <% end %>
 <% end %>
 
-<section class="map-home" data-mapbox-token="<%= @mapbox_token %>" data-map-points="<%= json_escape(@map_points.to_json) %>">
-  <template id="hjerterom-logo-template"><%= render "shared/logo" %></template>
-  <div id="hjerterom-map" class="map-home__canvas" aria-label="Kart over Hjerterom Åsane"></div>
+<section class="map-home"
+         data-controller="map"
+         data-map-token-value="<%= @mapbox_token %>"
+         data-map-places-value="<%= json_escape(@map_points.to_json) %>"
+         data-map-center-value="[5.3256, 60.4669]"
+         data-map-zoom-value="11.7"
+         data-map-style-value="mapbox://styles/mapbox/standard"
+         data-map-pitch-value="56"
+         data-map-bearing-value="-18">
+  <div data-map-target="canvas" id="hjerterom-map" class="map-home__canvas" aria-label="Kart over Hjerterom Åsane"></div>
 
   <%= link_to root_path, class: "map-home__logo", aria: { label: "Hjerterom home" } do %>
     <%= render "shared/logo" %>
@@ -23,6 +30,9 @@
     <div class="map-home__actions">
       <%= link_to "Legg ut mat", new_food_listing_path, class: "btn btn-primary" %>
       <%= link_to "Se ressurser", resources_path, class: "btn btn-ghost" %>
+      <%= link_to "Impact", impact_path, class: "btn btn-ghost" %>
+      <%= link_to "Matching", matching_path, class: "btn btn-ghost" %>
+      <%= link_to "Partners", partners_path, class: "btn btn-ghost" %>
     </div>
 
     <% if @crisis_lines.any? %>

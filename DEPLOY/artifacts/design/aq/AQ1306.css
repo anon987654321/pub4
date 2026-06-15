@@ -1,0 +1,4 @@
+/* AQ1306: AQ1306 Log aggregation: all apps log to stdout in production; `dmesg`-format one-liners; Kamal captures to `docker logs`; `logrotate` on VPS; no external log service needed */
+[data-todo="aq1306"] {
+  --artifact-id: "AQ1306";
+}

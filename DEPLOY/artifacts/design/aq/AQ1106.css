@@ -1,0 +1,4 @@
+/* AQ1106: AQ1106 Revenue tracking: `RevenueEvent` model; log subscription starts, upgrades, downgrades, churns; MRR computed as `sum(amount) WHERE billing_cycle = 'monthly'`; no Stripe dashboard dependency */
+[data-todo="aq1106"] {
+  --artifact-id: "AQ1106";
+}

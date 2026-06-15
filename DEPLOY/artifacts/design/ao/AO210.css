@@ -1,0 +1,6 @@
+/* AO210: AO210 Medium pullquote: large centered quote at `font-size: 28px / line-height: 1.4 / text-align: center / max-width: 600px / margin: 2em auto` — highlight key insight */
+/* Artifact: DEPLOY/artifacts/design/ao/AO210.css */
+[data-todo="ao210"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO210";
+}

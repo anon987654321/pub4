@@ -6,6 +6,86 @@ const input = document.getElementById('zin');
 
 let _streamEl = null;
 let _evtSrc = null;
+const connStatus = document.getElementById('conn-status');
+const pipelineBar = document.getElementById('pipeline-bar');
+const historySidebar = document.getElementById('history-sidebar');
+const historyList = document.getElementById('history-list');
+const historyOpen = document.getElementById('history-open');
+const historyClose = document.getElementById('history-close');
+const themeToggle = document.getElementById('theme-toggle');
+const PIPELINE_STAGES = ['intake','infer','route','guard','execute','council','lint','memory','render'];
+let _turnHistory = [];
+
+function setConn(state) {
+  if (!connStatus) return;
+  connStatus.dataset.state = state;
+  connStatus.textContent = state === 'open' ? '●' : (state === 'reconnecting' ? '◌' : '○');
+  connStatus.setAttribute('aria-label', 'Connection ' + state);
+}
+
+function setPipelineStage(stage) {
+  if (!pipelineBar) return;
+  const idx = PIPELINE_STAGES.indexOf(String(stage || '').toLowerCase());
+  pipelineBar.hidden = idx < 0;
+  if (idx < 0) return;
+  const pct = Math.round(((idx + 1) / PIPELINE_STAGES.length) * 100);
+  pipelineBar.style.setProperty('--pipeline-pct', pct + '%');
+  pipelineBar.setAttribute('aria-valuenow', String(pct));
+}
+
+function attachCodeCopyButtons(root) {
+  root?.querySelectorAll('pre code').forEach(block => {
+    const pre = block.parentElement;
+    if (!pre || pre.querySelector('.code-copy')) return;
+    const btn = document.createElement('button');
+    btn.className = 'code-copy';
+    btn.type = 'button';
+    btn.textContent = 'copy';
+    btn.setAttribute('aria-label', 'Copy code');
+    btn.addEventListener('click', () => {
+      navigator.clipboard?.writeText(block.textContent || '').then(() => {
+        btn.textContent = '✓';
+        setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+      });
+    });
+    pre.appendChild(btn);
+  });
+}
+
+function pushTurn(role, text) {
+  _turnHistory.unshift({ role, text: (text || '').slice(0, 120), ts: Date.now() });
+  _turnHistory = _turnHistory.slice(0, 20);
+  if (!historyList) return;
+  historyList.innerHTML = '';
+  _turnHistory.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.textContent = (t.role === 'user' ? 'you: ' : 'master: ') + t.text;
+    li.title = 'Expand turn';
+    li.addEventListener('click', () => {
+      const msg = log?.children[log.children.length - 1 - i];
+      msg?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+    historyList.appendChild(li);
+  });
+}
+
+themeToggle?.addEventListener('change', () => {
+  document.body.dataset.theme = themeToggle.checked ? 'light' : 'dark';
+});
+
+historyOpen?.addEventListener('click', () => { if (historySidebar) historySidebar.hidden = false; });
+historyClose?.addEventListener('click', () => { if (historySidebar) historySidebar.hidden = true; });
+
+input?.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    e.preventDefault();
+    zsh?.requestSubmit();
+  }
+  if (e.key === 'Escape') {
+    window._chatCancel?.();
+    input.blur();
+  }
+});
 
 // ARIA live region for streamed text (FA137) — announce new tokens to SR
 const streamLive = (() => {
@@ -76,7 +156,7 @@ function appendMsg(role, text = '') {
   });
 }
 
-window._chatOnUser  = (text) => { appendMsg('user', text); appendMsg('assistant'); };
+window._chatOnUser  = (text) => { pushTurn('user', text); appendMsg('user', text); appendMsg('assistant'); };
 
 window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
   const note = document.createElement('div');
@@ -107,6 +187,7 @@ window._chatOnChunk = (raw) => {
   const text = _streamEl.textContent + raw.replace(/\n/g, '\n').replace(/\\\\/g, '\\');
   if (text.includes('```')) {
     _streamEl.innerHTML = text.replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
+    attachCodeCopyButtons(_streamEl);
   } else {
     _streamEl.textContent = text;
   }
@@ -116,6 +197,10 @@ window._chatOnChunk = (raw) => {
   }
 };
 window._chatOnDone  = () => {
+  const last = log?.querySelector('.message.assistant:last-of-type .msg-body');
+  if (last) pushTurn('assistant', last.textContent || '');
+  setConn('open');
+  setPipelineStage(null);
   _streamEl = null;
   document.querySelectorAll('.cursor').forEach(c => {
     c.style.transition = 'opacity 0.25s steps(4,end)';
@@ -248,7 +333,15 @@ async function sendMessage(text) {
   const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
   const FIRST_CHUNK = /(.{28,}?[,;:—]\s+|.{36,}?\s+)/;
   let assistantBuffer = '', ttsBuffer = '', firstChunkSent = false;
+  setConn('reconnecting');
+  pipelineBar && (pipelineBar.hidden = false);
   _evtSrc = new EventSource(`/chat/message?${params.toString()}`);
+  _evtSrc.onopen = () => setConn('open');
+  _evtSrc.addEventListener('pipeline', (ev) => {
+    setPipelineStage(ev.data);
+    document.body.dataset.pipelineStage = ev.data || '';
+    window.MASTERVoice?.setStage?.(ev.data);
+  });
   _evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
     if (raw === '[DONE]') {
@@ -296,6 +389,7 @@ async function sendMessage(text) {
     try { window._chatOnThought?.(JSON.parse(ev.data)); } catch (_) {}
   });
   _evtSrc.onerror = () => {
+    setConn('closed');
     const voice = window.MASTERVoice;
     if (voice?.enqueue && ttsBuffer.trim()) voice.enqueue(ttsBuffer.trim());
     ttsBuffer = '';

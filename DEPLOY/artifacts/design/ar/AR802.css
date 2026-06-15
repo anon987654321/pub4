@@ -1,0 +1,6 @@
+/* AR802: AR802 Container queries for components: `@container (min-width: 400px) { .card { flex-direction: row } }` — card layout responds to its container width, not viewport; cards reflow correctly in sidebar and main */
+/* Artifact: DEPLOY/artifacts/design/ar/AR802.css */
+[data-todo="ar802"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR802";
+}

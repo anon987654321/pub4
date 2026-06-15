@@ -1,0 +1,6 @@
+/* AS504: AS504 baibl annotation: `.annotation { border-inline-start: 3px solid var(--color-accent); padding-inline-start: var(--space-2); font-size: var(--text-sm); color: var(--text-secondary); margin-block-start: var(--space-1) }` — appears below annotated verse; toggleable via Stimulus */
+/* Artifact: DEPLOY/artifacts/design/as/AS504.css */
+[data-todo="as504"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS504";
+}

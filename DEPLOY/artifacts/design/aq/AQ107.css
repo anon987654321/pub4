@@ -1,0 +1,6 @@
+/* AQ107: AQ107 ActionCable identity: `identified_by :current_user`; reject anonymous WebSocket connections to all channels except public TV channel; never trust client-sent user IDs */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ107.css */
+[data-todo="aq107"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ107";
+}

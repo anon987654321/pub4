@@ -1,0 +1,6 @@
+/* AR807: AR807 Print styles: `@media print { .sidebar, .nav, .btn { display: none } .prose { max-width: 100%; font-size: 12pt } a[href]::after { content: " (" attr(href) ")" } }` — articles printable; blognet, baibl */
+/* Artifact: DEPLOY/artifacts/design/ar/AR807.css */
+[data-todo="ar807"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR807";
+}

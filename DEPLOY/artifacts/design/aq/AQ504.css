@@ -1,0 +1,6 @@
+/* AQ504: AQ504 Dead letter alerting: `config/recurring.yml` defines nightly job that queries `solid_queue_failed_executions` and emails admin if count > 0; never silently drop failed jobs */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ504.css */
+[data-todo="aq504"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ504";
+}

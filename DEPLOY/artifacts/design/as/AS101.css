@@ -1,0 +1,6 @@
+/* AS101: AS101 Phase 0 — token extraction: extract every hardcoded color, size, and spacing value from all 6 apps' CSS into `tokens.css`; replace with `var(--token-name)`; no visual change; 1-2 days */
+/* Artifact: DEPLOY/artifacts/design/as/AS101.css */
+[data-todo="as101"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS101";
+}

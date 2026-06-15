@@ -1,0 +1,6 @@
+/* AP706: AP706 blognet nav: editorial top bar — publication name left (masthead typography); `Subscribe` pill CTA right; section navigation below in smaller caps; New Yorker pattern */
+/* Artifact: DEPLOY/artifacts/design/ap/AP706.css */
+[data-todo="ap706"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP706";
+}

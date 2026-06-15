@@ -1,0 +1,21 @@
+<% content_for :title, "Style evolution" %>
+
+<h1>Style evolution</h1>
+<p class="dim">Aesthetic phases from your wear history</p>
+
+<% @timeline[:aesthetic_phases].each do |phase| %>
+  <article>
+    <strong><%= phase[:month] %></strong>
+    <span class="chip"><%= phase[:phase] %></span>
+    <span class="dim"><%= phase[:wears] %> wears</span>
+  </article>
+<% end %>
+
+<h2>Color trends</h2>
+<ul>
+  <% @timeline[:dominant_colors].each do |color, count| %>
+    <li><span style="display:inline-block;width:12px;height:12px;background:<%= color %>"></span> <%= color %> (<%= count %>)</li>
+  <% end %>
+</ul>
+
+<p class="dim"><%= @timeline[:underused_count] %> items never worn</p>

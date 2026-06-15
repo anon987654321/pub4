@@ -6,6 +6,13 @@ Rails.application.routes.draw do
 
   root "home#index"
 
+  get "impact", to: "impact#show", as: :impact
+  resource :matching, only: :show, controller: "matching"
+  resources :partners
+  resources :transfers, only: :create do
+    collection { get :optimize_route }
+  end
+
   resources :resources
   resources :food_listings do
     resources :food_requests, only: %i[create update]
@@ -28,7 +35,8 @@ Rails.application.routes.draw do
 
   resources :users, only: %i[show]
 
-  get 'manifest' => 'rails/pwa#manifest', as: :pwa_manifest
-  get 'service-worker' => 'rails/pwa#service_worker', as: :pwa_service_worker
+  get "offline" => "offline#show", as: :offline
+  get "manifest" => "pwa#manifest", as: :pwa_manifest
+  get "service-worker" => "pwa#service_worker", as: :pwa_service_worker
   get "up", to: "health#show", as: :rails_health_check
 end

@@ -1,0 +1,6 @@
+/* AR307: AR307 Drop cap: `.prose > p:first-of-type::first-letter { font-size: 3.5em; float: left; line-height: 0.8; margin-inline-end: 0.1em; margin-block-end: -0.1em; font-weight: 700; color: var(--color-shadow) }` — Medium-style; blognet articles only */
+/* Artifact: DEPLOY/artifacts/design/ar/AR307.css */
+[data-todo="ar307"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR307";
+}

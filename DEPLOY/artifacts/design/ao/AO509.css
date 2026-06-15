@@ -1,0 +1,6 @@
+/* AO509: AO509 Four-site contrast ratios: all four sites achieve AA minimum (4.5:1) on body text; X dark mode achieves AAA (7:1) — never drop below 4.5:1 in any app */
+/* Artifact: DEPLOY/artifacts/design/ao/AO509.css */
+[data-todo="ao509"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO509";
+}

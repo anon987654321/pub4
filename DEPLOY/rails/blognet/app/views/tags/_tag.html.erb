@@ -1,0 +1,4 @@
+<article>
+  <%= link_to tag.name, tags_path(q: tag.name) %>
+  <span class="dim"><%= pluralize(tag.posts_count.to_i, "post") %></span>
+</article>

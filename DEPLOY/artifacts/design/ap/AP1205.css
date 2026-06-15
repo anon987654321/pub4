@@ -1,0 +1,4 @@
+/* AP1205: AP1205 Ligatures: `font-variant-ligatures: common-ligatures` on long-form text (blognet, baibl) — `fi`, `fl`, `ffi` ligatures improve paragraph texture; disable in UI chrome */
+[data-todo="ap1205"] {
+  --artifact-id: "AP1205";
+}

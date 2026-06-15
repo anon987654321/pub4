@@ -1,0 +1,6 @@
+/* AR906: AR906 Critical CSS extraction: above-the-fold CSS (header, hero, first fold of feed) inlined in `<style>` tag via build step; deferred stylesheet covers below-fold; eliminates render-blocking CSS */
+/* Artifact: DEPLOY/artifacts/design/ar/AR906.css */
+[data-todo="ar906"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR906";
+}

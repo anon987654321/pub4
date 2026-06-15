@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Conversation < ApplicationRecord
+  belongs_to :marketplace_listing, class_name: "Marketplace::Listing", optional: true
+
   has_many :conversation_participants, dependent: :destroy
   has_many :participants, through: :conversation_participants, source: :user
   has_many :messages, dependent: :destroy

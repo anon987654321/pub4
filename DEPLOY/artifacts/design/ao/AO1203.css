@@ -1,0 +1,4 @@
+/* AO1203: AO1203 X true black dark: `--background: #000000` not `#1a1a1a` in dark mode — OLED screen battery optimization; pixels off = no power drain; user preference for OLED-black */
+[data-todo="ao1203"] {
+  --artifact-id: "AO1203";
+}

@@ -1,0 +1,15 @@
+<% content_for :title, "Beneficiary matching" %>
+
+<h1>Inventory → beneficiary matches</h1>
+
+<% @matches.each do |match| %>
+  <article>
+    <strong><%= match[:item].name %></strong>
+    <span class="dim">→ <%= match[:beneficiary].name %></span>
+    <span class="chip">score <%= match[:score] %></span>
+  </article>
+<% end %>
+
+<% if @matches.empty? %>
+  <p class="dim">No high-confidence matches right now.</p>
+<% end %>

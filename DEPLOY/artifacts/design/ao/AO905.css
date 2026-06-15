@@ -1,0 +1,6 @@
+/* AO905: AO905 Medium image hover zoom: `img { transition: transform 0.3s ease; } card:hover img { transform: scale(1.02) }` — subtle content preview signal */
+/* Artifact: DEPLOY/artifacts/design/ao/AO905.css */
+[data-todo="ao905"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO905";
+}

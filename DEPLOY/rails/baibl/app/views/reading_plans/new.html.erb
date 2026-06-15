@@ -1,0 +1,8 @@
+<% content_for :title, "New reading plan" %>
+
+<h1>New reading plan</h1>
+<%= form_with model: @plan do |f| %>
+  <div class="field"><%= f.label :name %><%= f.text_field :name, required: true %></div>
+  <div class="field"><%= f.label :duration_days %><%= f.number_field :duration_days, min: 7, max: 365 %></div>
+  <%= f.submit "Create plan", class: "btn btn-primary" %>
+<% end %>

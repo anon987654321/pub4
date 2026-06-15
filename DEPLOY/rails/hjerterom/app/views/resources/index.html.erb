@@ -3,14 +3,28 @@
   <h1>Resources</h1>
   <% if authenticated? %><%= link_to "Add resource", new_resource_path %><% end %>
 </header>
-<section id="resources">
-  <% @resources.each do |resource| %>
-    <article data-resource-type="<%= resource.resource_type %>">
-      <%= link_to resource.title, resource %>
-      <small><%= resource.resource_type %></small>
-      <p><%= resource.description %></p>
-      <p><%= [resource.city, resource.phone].compact.join(" · ") %></p>
-    </article>
+
+<div data-controller="live-search">
+  <%= render "shared/search_loading" %>
+  <%= form_with url: resources_path, method: :get, local: true,
+        data: { turbo_frame: "live_search_results" } do |f| %>
+    <div class="search-form" role="search">
+      <%= f.search_field :q, value: params[:q], placeholder: "Search resources…",
+            data: { live_search_target: "input", action: "input->live-search#input" } %>
+      <%= f.select :type, options_for_select(Resource::RESOURCE_TYPES.map { |t| [t.humanize, t] }, params[:type]), { include_blank: "All types" } %>
+      <%= f.submit "Search", class: "btn btn-sm" %>
+    </div>
   <% end %>
-</section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+
+  <%= turbo_frame_tag "live_search_results" do %>
+    <section id="resources">
+      <% @resources.each do |resource| %>
+        <%= render "resources/resource", resource: resource %>
+      <% end %>
+    </section>
+    <% if @resources.empty? && params[:q].present? %>
+      <%= render "shared/search_empty", query: params[:q], search_meta: search_meta %>
+    <% end %>
+    <%= @pagy.series_nav if @pagy.pages > 1 %>
+  <% end %>
+</div>

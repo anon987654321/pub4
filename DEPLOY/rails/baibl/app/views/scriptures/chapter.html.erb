@@ -31,7 +31,16 @@
         <% bookmark  = @bookmarks&.[](verse.id) %>
         <%= button_to highlight ? "★" : "☆", highlights_path(verse_id: verse.id), method: highlight ? :delete : :post, params: highlight ? { id: highlight.id } : {}, class: ("active" if highlight), data: { turbo_stream: true } %>
         <%= button_to bookmark ? "🔖" : "📌", bookmark ? bookmark_path(bookmark) : bookmarks_path(verse_id: verse.id), method: bookmark ? :delete : :post, class: ("active" if bookmark), data: { turbo_stream: true } %>
+        <%= link_to "X-refs", verse_cross_reference_graph_path(verse), class: "btn btn-ghost btn-sm" %>
       <% end %>
     </span>
+    <% if authenticated? %>
+      <%= turbo_frame_tag "annotations_#{verse.id}" do %>
+        <%= render "annotations/list", annotations: verse.annotations.recent.limit(5), verse: verse %>
+        <%= render "annotations/form", annotation: Annotation.new, verse: verse %>
+      <% end %>
+    <% end %>
   <% end %>
 </section>
+
+<p><%= link_to "Reading plans", reading_plans_path %> · <%= link_to "Theological assistant", theological_assistant_path %></p>

@@ -1,0 +1,6 @@
+/* AQ605: AQ605 Tenant switching: users can follow communities in other cities; display cross-city content in "Explore" tab without changing tenant; query with explicit `city_id:` condition */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ605.css */
+[data-todo="aq605"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ605";
+}

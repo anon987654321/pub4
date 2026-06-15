@@ -1,0 +1,6 @@
+/* AS906: AS906 Typography audit: print each view as PDF; verify line lengths, heading hierarchy, hyphenation; good typography survives print */
+/* Artifact: DEPLOY/artifacts/design/as/AS906.css */
+[data-todo="as906"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS906";
+}

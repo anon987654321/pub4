@@ -32,6 +32,6 @@ class MessagesController < ApplicationController
   end
 
   def message_params
-    params.require(:message).permit(:content, :message_type)
+    params.expect(:message => [:content, :message_type])
   end
 end

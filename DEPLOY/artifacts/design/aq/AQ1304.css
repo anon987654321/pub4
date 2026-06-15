@@ -1,0 +1,4 @@
+/* AQ1304: AQ1304 Database migrations safety: `rake db:migrate:status` in deploy pipeline; alert on pending migrations older than 24h; never deploy with destructive migration without maintenance window */
+[data-todo="aq1304"] {
+  --artifact-id: "AQ1304";
+}

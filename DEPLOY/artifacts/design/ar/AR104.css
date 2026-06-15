@@ -1,0 +1,6 @@
+/* AR104: AR104 Custom property scope: global tokens on `:root`; component tokens on component root selector `[data-component="card"] { --card-padding: var(--space-4) }`; never leak component variables to global scope */
+/* Artifact: DEPLOY/artifacts/design/ar/AR104.css */
+[data-todo="ar104"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR104";
+}

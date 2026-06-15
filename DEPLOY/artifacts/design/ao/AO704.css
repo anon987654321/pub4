@@ -1,0 +1,6 @@
+/* AO704: AO704 Medium two-column article layout: reading column left; author card + related posts right; `grid-template-columns: 1fr 340px; gap: 80px` on desktop; single column mobile */
+/* Artifact: DEPLOY/artifacts/design/ao/AO704.css */
+[data-todo="ao704"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO704";
+}

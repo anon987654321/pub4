@@ -1,0 +1,6 @@
+/* AQ405: AQ405 Faceted search Rails: `scope :by_category, ->(cat) { where(category: cat) }` + `scope :by_date_range, ->(from, to) { where(created_at: from..to) }` — composable scopes chain cleanly */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ405.css */
+[data-todo="aq405"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ405";
+}

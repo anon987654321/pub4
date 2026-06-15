@@ -1,4 +1,7 @@
 <% content_for :title, @post.title %>
+<div data-controller="scroll-progress" class="scroll-progress">
+  <div data-scroll-progress-target="bar" class="scroll-progress__bar"></div>
+</div>
 <article>
   <header>
     <h1><%= @post.title %></h1>
@@ -8,8 +11,21 @@
       <%= button_to "Delete", blog_post_path(@blog, @post), method: :delete, data: { turbo_confirm: "Delete post?" } %>
     <% end %>
   </header>
-  <%= @post.body %>
+  <% if @paywall_allowed %>
+    <%= @post.body %>
+  <% else %>
+    <p><%= @post.body.to_plain_text.truncate(280) %></p>
+    <div class="paywall-cta">
+      <p>This article is behind a paywall.</p>
+      <% if authenticated? %>
+        <%= button_to "Subscribe (Stripe Checkout)", checkout_blog_path(@blog), class: "btn btn-primary" %>
+      <% else %>
+        <%= link_to "Sign in to subscribe", new_session_path, class: "btn btn-primary" %>
+      <% end %>
+    </div>
+  <% end %>
 </article>
+<% if @paywall_allowed %>
 <section id="comments">
   <h2>Comments (<%= @post.comments_count %>)</h2>
   <%= render @comments %>
@@ -20,3 +36,4 @@
     <% end %>
   <% end %>
 </section>
+<% end %>

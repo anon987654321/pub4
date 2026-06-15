@@ -1,0 +1,6 @@
+/* AP314: AP314 Paragraph spacing: `margin-bottom: 1.25em` between paragraphs; no `margin-top` on first paragraph after heading — heading's bottom margin provides the gap */
+/* Artifact: DEPLOY/artifacts/design/ap/AP314.css */
+[data-todo="ap314"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP314";
+}

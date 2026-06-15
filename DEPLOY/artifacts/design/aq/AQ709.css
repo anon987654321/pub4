@@ -1,0 +1,6 @@
+/* AQ709: AQ709 Bounce handling: webhook from mail provider on hard bounce → deactivate email address, flag user account, prompt to update email on next login */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ709.css */
+[data-todo="aq709"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ709";
+}

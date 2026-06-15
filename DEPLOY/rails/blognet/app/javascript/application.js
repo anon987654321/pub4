@@ -2,7 +2,7 @@
 import "@hotwired/turbo-rails"
 import "controllers"
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-worker")
+import "pwa/bootstrap"
 
 // Nav swipe-to-reveal
 document.addEventListener("turbo:load", () => {

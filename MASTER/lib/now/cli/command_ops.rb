@@ -3,8 +3,6 @@
 module Master
   module Now
     class CLI
-      private
-
       def run_restart
         @session.save!
         puts @renderer.render("restart: exec'ing fresh master in place", mode: :dim)

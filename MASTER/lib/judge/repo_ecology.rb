@@ -9,7 +9,7 @@ module Master
   module Judge
   # RepoEcology converts repo-gardening principles into executable analysis.
   # It never deletes or rewrites; it emits evidence for later governed changes.
-  # Full integration into Judge + co_change_rule wiring deferred; requires council review.
+  # Judge and co_change_rule wiring remain outside this class; council reviews integration.
     class RepoEcology
       DEFAULT_IGNORE_DIRS = %w[
         .git .master node_modules vendor tmp log coverage storage .bundle dist build
@@ -130,7 +130,7 @@ module Master
         content = File.read(file, encoding: "UTF-8", invalid: :replace, undef: :replace)
         tokens = content.downcase.scan(/[a-z][a-z0-9_]{2,}/)
         symbol_count = @code_index ? (@code_index.symbols_in(rel).size rescue 0) : 0
-        {
+        FileRecord.new(
           path: rel,
           full_path: file,
           basename: File.basename(file),
@@ -143,7 +143,7 @@ module Master
           digest: Digest::SHA256.hexdigest(content),
           signature: signature(tokens, rel),
           inbound_refs: 0
-        }
+        )
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "repo_ecology.analyze_file", event_bus: @bus, path: file)
         nil

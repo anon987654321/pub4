@@ -38,6 +38,11 @@ class AuthTier
     tok = web_token
     candidate, source = extract_candidate(env)
     author = %i[author_cookie author_url].include?(source)
+    invalid_token = !candidate.empty? && !tok.to_s.empty? && !authed_candidate?(candidate, tok, author)
+    if invalid_token && !public?(path)
+      return token_error_response(env)
+    end
+
     authed = author || (!tok.to_s.empty? && !candidate.empty? &&
              Rack::Utils.secure_compare(candidate, tok))
     env["master.tier"] = authed ? "authenticated" : "visitor"
@@ -54,6 +59,21 @@ class AuthTier
 
   def public?(path)
     PUBLIC_PATHS.include?(path) || PUBLIC_PREFIX.any? { |p| path.start_with?(p) }
+  end
+
+  def authed_candidate?(candidate, tok, author)
+    author || Rack::Utils.secure_compare(candidate, tok)
+  end
+
+  def token_error_response(env)
+    path = env["PATH_INFO"].to_s
+    if path.start_with?("/chat") || env["HTTP_ACCEPT"].to_s.include?("text/html")
+      html = File.read(Rails.root.join("public", "401.html")) rescue "<h1>invalid token</h1>"
+      [401, { "Content-Type" => "text/html", "Cache-Control" => "no-store" }, [html]]
+    else
+      [401, { "Content-Type" => "application/json", "Cache-Control" => "no-store" },
+       ['{"error":"invalid token"}']]
+    end
   end
 
   def extract_candidate(env)

@@ -1,0 +1,4 @@
+/* AP1203: AP1203 Tabular numbers: `font-variant-numeric: tabular-nums` on all price displays, counts, statistics — numbers don't shift width as they change, preventing layout jump */
+[data-todo="ap1203"] {
+  --artifact-id: "AP1203";
+}

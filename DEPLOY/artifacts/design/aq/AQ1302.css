@@ -1,0 +1,4 @@
+/* AQ1302: AQ1302 Health check endpoint: `GET /up` returns 200 if app, DB, and cache are reachable; 503 otherwise; Kamal and relayd use this for liveness; implement with `ActiveRecord::Base.connection.execute("SELECT 1")` */
+[data-todo="aq1302"] {
+  --artifact-id: "AQ1302";
+}

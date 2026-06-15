@@ -1,0 +1,6 @@
+/* AR404: AR404 Color-mix for tints: `color-mix(in srgb, var(--color-midtone) 20%, white)` — derive tints without pre-computing; dynamic; changes when midtone changes; use for hover backgrounds */
+/* Artifact: DEPLOY/artifacts/design/ar/AR404.css */
+[data-todo="ar404"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR404";
+}

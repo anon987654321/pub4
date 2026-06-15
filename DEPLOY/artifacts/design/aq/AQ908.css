@@ -1,0 +1,6 @@
+/* AQ908: AQ908 Date localization: `I18n.l(date, format: :long)` → "31. mai 2026" in nb; "May 31, 2026" in en; never hardcode date format strings in views */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ908.css */
+[data-todo="aq908"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ908";
+}

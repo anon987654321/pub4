@@ -9,7 +9,9 @@ class ItemsController < ApplicationController
     @pagy, @items = pagy(Current.user.items.recent)
   end
 
-  def show; end
+  def show
+    respond_to_cached_show(@item, only: %i[id title category color brand size material times_worn])
+  end
 
   def new
     @item = Current.user.items.build
@@ -82,11 +84,11 @@ class ItemsController < ApplicationController
   end
 
   def item_params
-    params.require(:item).permit(
+    params.expect(:item => [
       :title, :category, :color, :size, :material,
       :brand, :price, :times_worn, :purchase_date,
       :mood_effect, :life_phase, :occasion_tags, :season,
       photos: []
-    )
+    ])
   end
 end

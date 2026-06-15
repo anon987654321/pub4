@@ -1,0 +1,6 @@
+/* AO805: AO805 Medium post card: thumbnail image (16:9, 100% width); title (bold serif 22px); subtitle (muted 15px); author avatar (20px) + name + date + read-time in one metadata row */
+/* Artifact: DEPLOY/artifacts/design/ao/AO805.css */
+[data-todo="ao805"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO805";
+}

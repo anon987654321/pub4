@@ -50,11 +50,30 @@ module Dating
       excluded_ids += Dating::Like.where(liker: user).pluck(:likee_id)
       excluded_ids += Dating::Dislike.where(disliker: user).pluck(:dislikee_id)
 
+      event_attendee_ids = Dating::EventRsvp.where(user_id: user.id, status: "going")
+                                            .joins(:dating_event)
+                                            .where("dating_events.starts_at >= ?", Time.current)
+                                            .pluck(:dating_event_id)
+      event_match_ids = if event_attendee_ids.any?
+                          Dating::EventRsvp.where(dating_event_id: event_attendee_ids, status: "going")
+                                           .where.not(user_id: excluded_ids)
+                                           .pluck(:user_id)
+                        else
+                          []
+                        end
+
       scope = Dating::Profile.visible.where.not(user_id: excluded_ids)
       if profile.neighborhood
         scope = scope.in_neighborhood(profile.neighborhood)
       end
-      scope.nearby(profile.latitude, profile.longitude, radius_km).limit(20)
+      scope = scope.nearby(profile.latitude, profile.longitude, radius_km)
+      if event_match_ids.any?
+        scope = scope.order(Arel.sql(ActiveRecord::Base.sanitize_sql_array([
+          "CASE WHEN user_id IN (?) THEN 0 ELSE 1 END",
+          event_match_ids
+        ])))
+      end
+      scope.limit(20)
     end
   end
 end

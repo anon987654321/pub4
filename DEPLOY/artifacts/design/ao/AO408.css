@@ -1,0 +1,6 @@
+/* AO408: AO408 New Yorker deck (subheadline): `font-size: 16px / font-style: italic / color: #333 / margin-top: -0.5em` — sits between headline and body; introduces the piece */
+/* Artifact: DEPLOY/artifacts/design/ao/AO408.css */
+[data-todo="ao408"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO408";
+}

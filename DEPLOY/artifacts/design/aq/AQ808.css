@@ -1,0 +1,6 @@
+/* AQ808: AQ808 Compression: `Accept-Encoding: br, gzip` in all API requests; server returns brotli-compressed JSON; 70-80% size reduction on typical JSON responses */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ808.css */
+[data-todo="aq808"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ808";
+}

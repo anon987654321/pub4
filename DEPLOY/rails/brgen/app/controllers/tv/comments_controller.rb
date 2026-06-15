@@ -20,6 +20,6 @@ class Tv::CommentsController < Tv::BaseController
   end
 
   def comment_params
-    params.require(:tv_comment).permit(:body)
+    params.expect(:tv_comment => [:body])
   end
 end

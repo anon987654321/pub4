@@ -1,0 +1,6 @@
+/* AQ606: AQ606 Per-city config: `cities` table has `{config: jsonb}` with per-city feature flags — dating enabled, marketplace enabled, TV enabled; read via `Current.city.config["dating_enabled"]` */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ606.css */
+[data-todo="aq606"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ606";
+}

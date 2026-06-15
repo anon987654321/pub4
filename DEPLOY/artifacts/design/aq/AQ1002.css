@@ -1,0 +1,4 @@
+/* AQ1002: AQ1002 CSP nonce for inline scripts: `content_security_policy_nonce` helper; `script_tag nonce: true` on any inline scripts; Turbo and Stimulus use `nonce` attribute automatically in Rails 8 */
+[data-todo="aq1002"] {
+  --artifact-id: "AQ1002";
+}

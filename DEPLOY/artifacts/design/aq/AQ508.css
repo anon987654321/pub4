@@ -1,0 +1,6 @@
+/* AQ508: AQ508 Scheduled cleanup: `PurgeExpiredDataJob` in `recurring.yml` — runs nightly; purges soft-deleted records older than 30 days, expired sessions, stale cache, unconfirmed users >7 days */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ508.css */
+[data-todo="aq508"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ508";
+}

@@ -1,0 +1,6 @@
+/* AO407: AO407 New Yorker cartoon caption: `font-family: monospace / font-size: 14px / text-align: center / padding-top: 8px` — captions beneath cartoons in consistent style */
+/* Artifact: DEPLOY/artifacts/design/ao/AO407.css */
+[data-todo="ao407"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO407";
+}

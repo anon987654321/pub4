@@ -1,0 +1,4 @@
+/* AQ1108: AQ1108 Privacy-first: no cross-site tracking; no cookies beyond session; no fingerprinting; all analytics aggregated before display; GDPR-compliant by architecture not policy */
+[data-todo="aq1108"] {
+  --artifact-id: "AQ1108";
+}

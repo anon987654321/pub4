@@ -1,23 +1,11 @@
 {
   "name": "Baibl",
   "short_name": "Baibl",
+  "categories": ["books", "education"],
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "/icon.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    },
-    {
-      "src": "/icon.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
-    }
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icon.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "/icon.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
   ],
   "display_override": ["window-controls-overlay", "standalone"],
   "edge_side_panel": { "preferred_width": 400 },
@@ -25,7 +13,10 @@
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
-  "description": "Dead Sea Scrolls, Old and New Testament, and the Arabic Quran — sacred texts in one place.",
-  "theme_color": "#1a1a1a",
-  "background_color": "#1a1a1a"
+  "description": "Scripture and theology platform with offline reading.",
+  "theme_color": "#1c1917",
+  "background_color": "#1c1917",
+  "shortcuts": [
+    { "name": "Continue reading", "short_name": "Read", "url": "/", "icons": [{ "src": "/icon.png", "sizes": "96x96" }] }
+  ]
 }

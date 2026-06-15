@@ -1,0 +1,6 @@
+/* AP607: AP607 bsdports port card: monospace port name `font-size: 0.9em; font-family: monospace`; one-line description; metadata row (version, size, maintainer) in muted 12px; security badge red if advisory exists */
+/* Artifact: DEPLOY/artifacts/design/ap/AP607.css */
+[data-todo="ap607"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP607";
+}

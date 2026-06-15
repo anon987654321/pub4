@@ -1,0 +1,6 @@
+/* AO702: AO702 X feed column cap: feed max-width 600px, centered; desktop whitespace intentional — narrow column forces eye focus; prevents line lengths over 70 characters */
+/* Artifact: DEPLOY/artifacts/design/ao/AO702.css */
+[data-todo="ao702"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO702";
+}

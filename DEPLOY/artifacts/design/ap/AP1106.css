@@ -1,0 +1,4 @@
+/* AP1106: AP1106 Dating card stack visual: 3 cards visible; card behind at `transform: scale(0.94) translateY(8px)`; card behind that at `scale(0.88) translateY(16px)`; parallax depth illusion with pure CSS */
+[data-todo="ap1106"] {
+  --artifact-id: "AP1106";
+}

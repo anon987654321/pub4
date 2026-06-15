@@ -1,0 +1,6 @@
+/* AP902: AP902 Focus visible always: `:focus-visible` ring on every interactive element; `outline: 2px solid var(--color-midtone); outline-offset: 2px` — never `outline: none` without replacement */
+/* Artifact: DEPLOY/artifacts/design/ap/AP902.css */
+[data-todo="ap902"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP902";
+}

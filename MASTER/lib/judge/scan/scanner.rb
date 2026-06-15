@@ -2,6 +2,7 @@
 
 require "digest"
 require "etc"
+require "fileutils"
 require "open3"
 require "prism"
 
@@ -13,23 +14,36 @@ module Master
         SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
         RUBY_EXT = %w[.rb .rake .gemspec].freeze
         FORBIDDEN_DEPTHS = %i[quick standard shallow].freeze
+        MTIME_STATE_PATH = ".master/scan_mtime.yml".freeze
+        SCAN_SINCE_EXT = /\.(rb|erb|yml|js|css|sh|zsh)\z/i.freeze
+        SEMANTIC_RULE_NAMES = %w[SemanticRule].freeze
 
         attr_reader :rules
 
-        def initialize(rules: nil, event_bus: nil, file_sleep_s: 0)
+        # Preconditions for #scan:
+        # - path must exist and be readable
+        # - depth must be :deep (quick/standard/shallow raise ArgumentError)
+        def initialize(rules: nil, event_bus: nil, file_sleep_s: 0, root: nil)
           @rules = Array(rules)
           @bus = event_bus
           @mutex = Mutex.new
           @file_sleep_s = file_sleep_s.to_f
+          @root = root || Master::ROOT
+          @mtime_state = load_mtime_state
+          @processor = FileProcessor.new(event_bus: @bus)
         end
 
         def scan(path, depth: :deep, rules: nil)
           validate_depth!(depth)
-          code = read_file(path)
+          return Result.err("file not found: #{path}", category: :validation,
+                            context: { file: "judge/scan/scanner.rb", method: "scan", attempted: path }) unless File.exist?(path)
+          code = @processor.read_file(path)
           return code if code.err?
 
-          ast = parse_ruby(code.value!, path)
-          findings = apply_rules(code.value!, ast, path, rules || active_rules(depth))
+          ast = @processor.parse_ruby(code.value!, path)
+          rule_set = rules || active_rules(depth)
+          findings = @processor.process(path, code: code.value!, ast:, rule_set:)
+          touch_mtime(path)
           publish_scan_result(path, depth, findings)
           Result.ok(findings)
         rescue StandardError => e
@@ -47,11 +61,9 @@ module Master
 
         def scan_since(ref = "HEAD~1", dir: ".", depth: :deep, stream: false)
           validate_depth!(depth)
-          out, _, status = Open3.capture3("git", "-C", dir, "diff", "--name-only", "#{ref}...HEAD")
-          return Result.err("git diff failed", category: :validation) unless status.success?
-          paths = out.lines.map(&:strip).reject(&:empty?)
-                    .map { |rel| File.join(dir, rel) }
-                    .select { |p| File.exist?(p) && File.extname(p).match?(/\.(rb|erb|yml|js|css|sh|zsh)\z/) }
+          paths = changed_paths_since(ref, dir)
+          paths.concat(master_lib_paths_since(ref)) unless File.expand_path(dir) == Master::ROOT
+          paths = paths.uniq.select { |p| File.exist?(p) && p.match?(SCAN_SINCE_EXT) }
           Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
         rescue StandardError => e
           Result.err("scan_since: #{e.message}", category: :infrastructure)
@@ -76,8 +88,6 @@ module Master
         end
 
         def read_file(path)
-          return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
-
           code = File.read(path, encoding: "UTF-8")
           @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
           Result.ok(code)
@@ -93,7 +103,23 @@ module Master
         end
 
         def apply_rules(code, ast, path, rule_set)
-          rule_set.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
+          fast_rules, semantic_rules = partition_rules(rule_set)
+          findings = fast_rules.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
+          return findings if semantic_rules.empty?
+          return findings if findings.empty?
+
+          findings + semantic_rules.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
+        end
+
+        def partition_rules(rule_set)
+          semantic = []
+          fast = rule_set.reject do |rule|
+            name = rule.class.name&.split("::")&.last
+            next false unless SEMANTIC_RULE_NAMES.include?(name)
+            semantic << rule
+            true
+          end
+          [fast, semantic]
         end
 
         def run_rule(rule:, code:, ast:, path:)
@@ -129,6 +155,7 @@ module Master
         end
 
         def scan_one(dir:, path:, depth:, stream:, index: nil)
+          return [path, Result.ok([])] if unchanged_since_last_scan?(path)
           sleep @file_sleep_s if @file_sleep_s > 0
           file_result = scan(path, depth:)
           stream_progress(dir, path, file_result) if stream
@@ -178,7 +205,52 @@ module Master
           observed_conf.to_f >= t["confidence"].to_f
         end
 
-        # HALLUCINATION rule: lexical/semantic detector for claim_without_reading; deferred pending council wiring.
+        def changed_paths_since(ref, dir)
+          out, _, status = Open3.capture3("git", "-C", dir, "diff", "--name-only", "#{ref}...HEAD")
+          return [] unless status.success?
+          out.lines.map(&:strip).reject(&:empty?).map { |rel| File.join(dir, rel) }
+        end
+
+        def master_lib_paths_since(ref)
+          lib_root = File.join(Master::ROOT, "lib")
+          out, _, status = Open3.capture3("git", "-C", Master::ROOT, "diff", "--name-only", "#{ref}...HEAD")
+          return [] unless status.success?
+          out.lines.map(&:strip).reject(&:empty?)
+             .select { |rel| rel.start_with?("lib/") }
+             .map { |rel| File.join(Master::ROOT, rel) }
+             .select { |p| File.exist?(p) && p.start_with?(lib_root) }
+        end
+
+        def unchanged_since_last_scan?(path)
+          mtime = (File.mtime(path).to_i rescue nil)
+          return false unless mtime
+          @mutex.synchronize { @mtime_state[path] == mtime }
+        end
+
+        def touch_mtime(path)
+          mtime = (File.mtime(path).to_i rescue nil)
+          return unless mtime
+          @mutex.synchronize do
+            @mtime_state[path] = mtime
+            persist_mtime_state!
+          end
+        end
+
+        def load_mtime_state
+          path = File.join(@root, MTIME_STATE_PATH)
+          return {} unless File.exist?(path)
+          Master.load_yaml(path) || {}
+        rescue StandardError
+          {}
+        end
+
+        def persist_mtime_state!
+          path = File.join(@root, MTIME_STATE_PATH)
+          FileUtils.mkdir_p(File.dirname(path))
+          File.write(path, @mtime_state.to_yaml)
+        rescue StandardError => e
+          @bus&.publish("scanner:mtime_persist_error", error: e.message)
+        end
       end
     end
   end

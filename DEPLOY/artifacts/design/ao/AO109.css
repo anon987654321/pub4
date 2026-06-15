@@ -1,0 +1,6 @@
+/* AO109: AO109 X emoji rendering: `font-family: "Twemoji Mozilla", ...` for cross-platform emoji consistency; relevant for brgen's reaction system */
+/* Artifact: DEPLOY/artifacts/design/ao/AO109.css */
+[data-todo="ao109"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO109";
+}

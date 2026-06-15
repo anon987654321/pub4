@@ -1,0 +1,25 @@
+<% content_for :title, "Search" %>
+
+<div class="page-header">
+  <h1>Search Brgen</h1>
+</div>
+
+<div data-controller="live-search"
+     data-live-search-url-value="<%= search_path(format: :json) %>">
+  <%= render "shared/search_loading" %>
+  <%= form_with url: search_path, method: :get, local: true,
+        data: { turbo_frame: "live_search_results", live_search_target: "frame" } do |f| %>
+    <div class="search-form" role="search">
+      <%= f.search_field :q,
+            value: @query,
+            placeholder: "Search marketplace, TV, playlist, takeaway, posts, places…",
+            aria: { label: "Search everything" },
+            data: { live_search_target: "input", action: "input->live-search#input" } %>
+      <%= f.submit "Search", class: "btn btn-sm" %>
+    </div>
+  <% end %>
+
+  <%= turbo_frame_tag "live_search_results" do %>
+    <%= render "search/results", results: @results, groups: @groups, query: @query, search_meta: @search_meta %>
+  <% end %>
+</div>

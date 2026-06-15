@@ -1,0 +1,6 @@
+/* AS806: AS806 Toast component: `.toast { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--color-shadow); color: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 360px; pointer-events: all; animation: slideInRight var(--duration-standard) var(--ease-decelerate) } .toast--success { border-inline-start: 3px solid var(--color-success) } .toast--error { border-inline-start: 3px solid var(--color-danger) }` */
+/* Artifact: DEPLOY/artifacts/design/as/AS806.css */
+[data-todo="as806"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS806";
+}

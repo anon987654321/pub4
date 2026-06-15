@@ -1,0 +1,6 @@
+/* AR107: AR107 CSS file per component: one file per component (post-card.css, nav.css, btn.css); imported via `@import` in application.css; each file ≤150 lines before splitting */
+/* Artifact: DEPLOY/artifacts/design/ar/AR107.css */
+[data-todo="ar107"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR107";
+}

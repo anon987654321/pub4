@@ -1,0 +1,4 @@
+/* AP1504: AP1504 INP ≤ 200ms: Interaction to Next Paint; Stimulus handlers do zero synchronous DOM measurement; debounce search inputs; split long tasks with `setTimeout(fn, 0)` or `queueMicrotask` */
+[data-todo="ap1504"] {
+  --artifact-id: "AP1504";
+}

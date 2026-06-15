@@ -1,0 +1,6 @@
+/* AO806: AO806 Medium member-only card: subtle gradient overlay bottom of card with "Member-only story" badge; gold accent color; CTA to upgrade inline */
+/* Artifact: DEPLOY/artifacts/design/ao/AO806.css */
+[data-todo="ao806"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO806";
+}

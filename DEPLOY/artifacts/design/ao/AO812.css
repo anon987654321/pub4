@@ -1,0 +1,6 @@
+/* AO812: AO812 New Yorker article card: text-dominant; small image (square, left-aligned) + text block right in horizontal card; or image-top vertical card; minimal metadata */
+/* Artifact: DEPLOY/artifacts/design/ao/AO812.css */
+[data-todo="ao812"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO812";
+}

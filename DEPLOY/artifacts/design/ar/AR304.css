@@ -1,0 +1,6 @@
+/* AR304: AR304 Code blocks: `.code { font-family: var(--font-mono); font-size: 0.875em; background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-1) var(--space-2); white-space: pre-wrap; overflow-x: auto; tab-size: 2 }` */
+/* Artifact: DEPLOY/artifacts/design/ar/AR304.css */
+[data-todo="ar304"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR304";
+}

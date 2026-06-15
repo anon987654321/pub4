@@ -1,13 +1,30 @@
 # frozen_string_literal: true
 
 class Tv::ChannelsController < Tv::BaseController
+  include Shared::LiveSearchable
+
   allow_unauthenticated_access only: %i[index show]
   before_action :set_channel, only: %i[show edit update destroy subscribe unsubscribe]
 
-  def index    = (@pagy, @channels = pagy(Tv::Channel.popular.includes(:user)))
-  def show     = (@pagy, @videos = pagy(@channel.videos.published))
-  def new      = (@channel = Tv::Channel.new)
-  def edit;    end
+  def index
+    scope = Tv::Channel.all
+    scope = apply_live_search(scope, columns: %w[name description], vertical: "tv") if live_search_query.present?
+    @pagy, @channels = pagy(scope.popular.includes(:user))
+
+    render_live_search(collection: @channels, partial: "tv/channels/channel") if request.format.turbo_stream?
+  end
+
+  def show
+    scope = @channel.videos.published
+    scope = apply_live_search(scope, columns: %w[title description], vertical: "tv") if live_search_query.present?
+    @pagy, @videos = pagy(scope)
+  end
+
+  def new
+    @channel = Tv::Channel.new
+  end
+
+  def edit; end
 
   def create
     @channel = Current.user.tv_channels.build(channel_params)
@@ -31,6 +48,7 @@ class Tv::ChannelsController < Tv::BaseController
   end
 
   private
-  def set_channel    = (@channel = Tv::Channel.find_by!(slug: params[:id]))
-  def channel_params = params.require(:tv_channel).permit(:name, :description, :banner, :avatar)
+
+  def set_channel = (@channel = Tv::Channel.find_by!(slug: params[:id]))
+  def channel_params = params.expect(:tv_channel => [:name, :description, :banner, :avatar])
 end

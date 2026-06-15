@@ -1,0 +1,6 @@
+/* AR604: AR604 :is() specificity flattening: `:is(h1, h2, h3, h4) { ... }` — specificity of highest-specificity argument in list; use for typography resets across heading levels */
+/* Artifact: DEPLOY/artifacts/design/ar/AR604.css */
+[data-todo="ar604"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR604";
+}

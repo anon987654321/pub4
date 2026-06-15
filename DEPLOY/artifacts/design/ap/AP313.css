@@ -1,0 +1,6 @@
+/* AP313: AP313 Heading rhythm: `margin-top: 1.5em; margin-bottom: 0.5em` on all headings — space above heading signals new section; space below attaches heading to its content */
+/* Artifact: DEPLOY/artifacts/design/ap/AP313.css */
+[data-todo="ap313"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP313";
+}

@@ -32,6 +32,8 @@ module Master
         end
         @orchestrator&.checkpoint(workflow_id: wf_id, label: final.ok? ? "ok" : "err")
         @orchestrator&.rotate!(keep_last: 1000)
+        @last_timings = timings
+        @bus&.publish("pipeline:complete", timings:, ok: final.ok?)
         maybe_rollback(final)
         final
       end
@@ -134,8 +136,11 @@ module Master
         tier1_violations = tier1_critical_violations(summary)
         unless tier1_violations.empty?
           @bus&.publish("pipeline:blocked", gate: "tier1_critical", violations: tier1_violations.size, score:)
-          return Result.err("deploy blocked: tier1 critical violation(s): #{tier1_violations.uniq.join(", ")}",
-                            category: :policy)
+          err = Result.err("deploy blocked: tier1 critical violation(s): #{tier1_violations.uniq.join(", ")}",
+                           category: :policy,
+                           context: { file: "now/pipeline.rb", method: "deploy_gate", attempted: "tier1_halt" })
+          @rollback&.call(err)
+          return err
         end
 
         if summary.violation_count.positive?

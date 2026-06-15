@@ -1,0 +1,6 @@
+/* AS604: AS604 bsdports search result: `.search-result { padding: var(--space-3); border-bottom: 1px solid var(--color-border) } .search-result mark { background: var(--color-midtone-200); border-radius: 2px; padding: 0 2px }` — FTS5 snippet with highlight marks styled */
+/* Artifact: DEPLOY/artifacts/design/as/AS604.css */
+[data-todo="as604"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS604";
+}

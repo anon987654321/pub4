@@ -48,6 +48,6 @@ class WardrobeItemsController < ApplicationController
   end
 
   def wardrobe_item_params
-    params.require(:wardrobe_item).permit(:item_id, :acquisition_date, :condition, :notes)
+    params.expect(:wardrobe_item => [:item_id, :acquisition_date, :condition, :notes])
   end
 end

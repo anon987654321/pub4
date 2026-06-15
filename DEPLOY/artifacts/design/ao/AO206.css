@@ -1,0 +1,6 @@
+/* AO206: AO206 Medium caption: `font-size: 13px / color: rgba(41,41,41,0.6) / font-style: italic` — image captions visually subordinate; implement for Active Storage attachment captions */
+/* Artifact: DEPLOY/artifacts/design/ao/AO206.css */
+[data-todo="ao206"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO206";
+}

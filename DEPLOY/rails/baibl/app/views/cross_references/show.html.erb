@@ -1,0 +1,16 @@
+<% content_for :title, "Cross-references: #{@verse.reference}" %>
+
+<h1><%= @verse.reference %></h1>
+<p><%= @verse.content %></p>
+
+<div data-controller="cross-reference-graph"
+     data-cross-reference-graph-nodes-value="<%= @nodes.to_json %>"
+     data-cross-reference-graph-links-value="<%= @links.to_json %>"
+     style="min-height:320px;border:1px solid #ddd"></div>
+
+<ul>
+  <% @verse.cross_references.each do |xr| %>
+    <% tv = xr.target_verse %>
+    <li><%= link_to tv.reference, scripture_chapter_path(tv.book.abbreviation, tv.chapter.number) + "#v#{tv.number}" %> — <%= xr.kind %></li>
+  <% end %>
+</ul>

@@ -1,0 +1,6 @@
+/* AQ507: AQ507 Webhook delivery: `DeliverWebhookJob` with exponential backoff — retry delays: 5s, 30s, 5m, 30m, 2h; after 5 failures, deactivate endpoint and email user */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ507.css */
+[data-todo="aq507"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ507";
+}

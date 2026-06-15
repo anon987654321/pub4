@@ -1,0 +1,4 @@
+/* AO1005: AO1005 Medium mobile article: `padding: 0 20px; font-size: 18px; line-height: 1.6` — same font size as desktop, narrower container; comfortable on 375px viewport */
+[data-todo="ao1005"] {
+  --artifact-id: "AO1005";
+}

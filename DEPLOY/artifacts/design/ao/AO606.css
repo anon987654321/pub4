@@ -1,0 +1,6 @@
+/* AO606: AO606 Medium card spacing: `gap: 24px` between cards in feed; `padding: 24px 0` per card; separator via border-bottom not gap — consistent separation */
+/* Artifact: DEPLOY/artifacts/design/ao/AO606.css */
+[data-todo="ao606"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO606";
+}

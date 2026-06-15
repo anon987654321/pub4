@@ -1,0 +1,6 @@
+/* AO904: AO904 Medium article fade-in: `animation: fadeIn 0.5s ease-out` on article body; gives impression of content loading gracefully even if it was instant */
+/* Artifact: DEPLOY/artifacts/design/ao/AO904.css */
+[data-todo="ao904"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO904";
+}

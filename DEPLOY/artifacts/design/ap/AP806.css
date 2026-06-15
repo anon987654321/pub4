@@ -1,0 +1,6 @@
+/* AP806: AP806 Placeholder style: `color: var(--text-tertiary); opacity: 1` — browser default opacity varies; set explicitly; placeholder is a hint not a label; never required information */
+/* Artifact: DEPLOY/artifacts/design/ap/AP806.css */
+[data-todo="ap806"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP806";
+}

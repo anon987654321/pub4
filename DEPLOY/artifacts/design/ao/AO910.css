@@ -1,0 +1,6 @@
+/* AO910: AO910 New Yorker article image reveal: images fade in as they scroll into view via IntersectionObserver; `opacity: 0 → 1; transform: translateY(8px) → translateY(0)` over `0.6s ease-out` */
+/* Artifact: DEPLOY/artifacts/design/ao/AO910.css */
+[data-todo="ao910"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO910";
+}

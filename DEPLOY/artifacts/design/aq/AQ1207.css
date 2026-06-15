@@ -1,0 +1,4 @@
+/* AQ1207: AQ1207 Form objects: `app/forms/RegistrationForm` validates multi-step form data before model creation; no model validation pollution for wizard flows */
+[data-todo="aq1207"] {
+  --artifact-id: "AQ1207";
+}

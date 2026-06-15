@@ -1,0 +1,6 @@
+/* AR209: AR209 Full-bleed within constraint: `.full-bleed { width: 100vw; margin-inline: calc(50% - 50vw) }` — makes element break out of content column without absolute positioning; for hero images in articles */
+/* Artifact: DEPLOY/artifacts/design/ar/AR209.css */
+[data-todo="ar209"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR209";
+}

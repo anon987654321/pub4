@@ -1,0 +1,6 @@
+/* AR310: AR310 Text selection style: `::selection { background: var(--color-midtone-200); color: var(--color-shadow) }` — branded selection color matching app midtone; subtle, not jarring */
+/* Artifact: DEPLOY/artifacts/design/ar/AR310.css */
+[data-todo="ar310"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR310";
+}

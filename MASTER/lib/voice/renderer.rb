@@ -86,7 +86,7 @@ module Master
         ahead_str = ahead > 0 ? @p.dim(" ↑#{ahead}") : ""
         behind_str = behind > 0 ? @p.yellow(" ↓#{behind}") : ""
         branch_str = @p.red(branch) + dirty_glyph + ahead_str + behind_str
-        vbadge = violations > 0 ? @p.bold.red(" [#{violations}v]") : ""
+        vbadge = " #{violation_badge(violations)}"
         phase_str = phase && phase.to_s != "idle" ? phase_tinted(" :#{phase}", phase) : ""
         cost_str = cost_label(cost)
         cost_seg = cost_str.empty? ? "" : "#{cost_str} "
@@ -138,8 +138,18 @@ module Master
 
       def status_row(uptime:, turns:, violations: 0)
         bits = ["stat0:", uptime, "#{turns} turns"]
-        bits << "#{violations}v" if violations > 0
+        bits << violation_badge(violations).to_s if violations > 0
         @p.dim(bits.join(" "))
+      end
+
+      def violation_badge(count)
+        n = count.to_i
+        label = "[#{n}v]"
+        case n
+        when 0 then @p.green(label)
+        when 1..9 then @p.yellow(label)
+        else @p.bold.red(label)
+        end
       end
 
       BAR_FRACTIONS = ["\u00A0", "\u258F", "\u258E", "\u258D", "\u258C", "\u258B", "\u258A", "\u2589", "\u2588"].freeze

@@ -7,6 +7,13 @@ module Master
     module Swallow
       module_function
 
+      def safe_call(context:, event_bus: nil, **metadata)
+        yield
+      rescue StandardError => e
+        log(e, context:, event_bus:, **metadata)
+        nil
+      end
+
       def log(error, context:, event_bus: nil, **metadata)
         payload = {
           context: context.to_s,

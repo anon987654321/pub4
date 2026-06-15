@@ -1,0 +1,6 @@
+/* AP907: AP907 Landmark regions: every page has exactly one `<main>`, one `<header>`, appropriate `<nav>`, `<aside>`, `<footer>`; assistive technology uses these for navigation */
+/* Artifact: DEPLOY/artifacts/design/ap/AP907.css */
+[data-todo="ap907"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP907";
+}

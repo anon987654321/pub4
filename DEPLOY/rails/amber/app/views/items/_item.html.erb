@@ -1,8 +1,19 @@
 <article class="item-card" id="<%= dom_id(item) %>" data-category="<%= item.category %>">
   <% if item.photos.attached? %>
-    <%= image_tag item.photos.first.variant(resize_to_fill: [300, 300]), class: "item-photo" %>
+    <%= image_tag item.photos.first.variant(resize_to_fill: [300, 300]), class: "item-photo", loading: "lazy" %>
   <% end %>
   <%= link_to item.title, item, class: "item-title" %>
+  <button type="button" class="btn-sm" data-controller="dialog" data-action="dialog#open">Quick view</button>
+  <dialog data-dialog-target="dialog">
+    <h3><%= item.title %></h3>
+    <p class="dim"><%= item.category %><%= " · #{item.color}" if item.color.present? %></p>
+    <% if item.photos.attached? %>
+      <%= image_tag item.photos.first.variant(resize_to_limit: [400, 400]), loading: "lazy" %>
+    <% end %>
+    <p><%= item.description.presence || "No description yet." %></p>
+    <%= link_to "Full details", item, class: "btn-sm" %>
+    <button type="button" class="btn-sm" data-action="dialog#close">Close</button>
+  </dialog>
   <span class="dim"><%= item.category %><%= " · #{item.color}" if item.color.present? %></span>
   <span class="dim">Worn <%= item.times_worn.to_i %>× · <%= item.value_label %></span>
   <nav>

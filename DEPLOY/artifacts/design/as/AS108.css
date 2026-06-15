@@ -1,0 +1,6 @@
+/* AS108: AS108 Phase 7 — motion: add easing vocabulary, animation keyframes, transition tokens to all interactive elements; verify reduced-motion; 1 day per app */
+/* Artifact: DEPLOY/artifacts/design/as/AS108.css */
+[data-todo="as108"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS108";
+}

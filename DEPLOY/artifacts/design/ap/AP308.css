@@ -1,0 +1,6 @@
+/* AP308: AP308 Variable fonts: load Inter, DM Sans, Source Serif 4 as variable fonts (one file, all weights/widths); `font-variation-settings` for precise weight control; `wght` axis only; no optical size axis needed */
+/* Artifact: DEPLOY/artifacts/design/ap/AP308.css */
+[data-todo="ap308"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP308";
+}

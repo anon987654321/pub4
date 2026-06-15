@@ -1,0 +1,6 @@
+/* AQ306: AQ306 Native share sheet: `BridgeComponent` intercepts `share` button taps; calls `window.nativeShare({url:, title:})` → native iOS Share sheet with all apps; no PWA Web Share API needed */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ306.css */
+[data-todo="aq306"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ306";
+}

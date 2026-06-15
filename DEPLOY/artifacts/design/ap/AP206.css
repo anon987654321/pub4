@@ -1,0 +1,6 @@
+/* AP206: AP206 hjerterom palette (community warmth): shadow `#1f2937` (gentle dark), midtone `#10b981` (warm green for life/giving), highlight `#ecfdf5` (mint cream); accent `#f97316` (harvest orange) for urgency/expiry alerts */
+/* Artifact: DEPLOY/artifacts/design/ap/AP206.css */
+[data-todo="ap206"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP206";
+}

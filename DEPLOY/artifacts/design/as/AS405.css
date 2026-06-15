@@ -1,0 +1,6 @@
+/* AS405: AS405 blognet paywall scrim: `.paywall-scrim { position: relative } .paywall-scrim::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 200px; background: linear-gradient(to bottom, transparent, var(--color-background)) }` — fade content to CTA */
+/* Artifact: DEPLOY/artifacts/design/as/AS405.css */
+[data-todo="as405"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS405";
+}

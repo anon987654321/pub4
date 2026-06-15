@@ -1,0 +1,6 @@
+/* AP303: AP303 bsdports type: `font-family: "JetBrains Mono", "Fira Code", monospace` for code/port names; `"Inter"` for prose descriptions; terminal-native aesthetic */
+/* Artifact: DEPLOY/artifacts/design/ap/AP303.css */
+[data-todo="ap303"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP303";
+}

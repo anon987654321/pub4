@@ -1,0 +1,4 @@
+/* AO1106: AO1106 Author row: avatar (circular, 20-32px) + `display: flex; align-items: center; gap: 8px` + name + metadata — standard horizontal author attribution across all sites */
+[data-todo="ao1106"] {
+  --artifact-id: "AO1106";
+}

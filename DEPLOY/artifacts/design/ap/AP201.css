@@ -1,0 +1,6 @@
+/* AP201: AP201 brgen palette (social city): shadow `#0a0e1a` (deep navy-black), midtone `#2563eb` (electric blue), highlight `#93c5fd` (sky); complementary warm accent `#f59e0b` (amber) for CTAs; inspired by city-at-night */
+/* Artifact: DEPLOY/artifacts/design/ap/AP201.css */
+[data-todo="ap201"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP201";
+}

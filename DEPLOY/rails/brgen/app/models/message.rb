@@ -13,6 +13,7 @@ class Message < ApplicationRecord
 
   after_create :deliver_receipts
   after_create :clear_typing_indicators
+  after_create_commit :broadcast_badge_counts
 
   scope :recent, -> { order(created_at: :desc) }
 
@@ -28,5 +29,16 @@ class Message < ApplicationRecord
 
   def clear_typing_indicators
     TypingIndicator.where(conversation:, user: sender).delete_all
+  end
+
+  def broadcast_badge_counts
+    conversation.participants.where.not(id: sender_id).each do |recipient|
+      Turbo::StreamsChannel.broadcast_replace_to(
+        "app_badge_#{recipient.id}",
+        target: "app-badge-count",
+        partial: "shared/app_badge",
+        locals: { count: Conversation.for_user(recipient).sum { |c| c.unread_count_for(recipient) } }
+      )
+    end
   end
 end

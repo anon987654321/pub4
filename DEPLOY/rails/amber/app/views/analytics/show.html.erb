@@ -1,0 +1,31 @@
+<% content_for :title, "Wardrobe analytics" %>
+
+<h1>Wardrobe analytics</h1>
+
+<div class="chips">
+  <span class="chip"><%= @dashboard[:total_items] %> items</span>
+  <span class="chip"><%= @dashboard[:total_wears] %> wears logged</span>
+  <% if @dashboard[:cost_per_wear_avg] %>
+    <span class="chip">avg CPW <%= @dashboard[:cost_per_wear_avg] %></span>
+  <% end %>
+  <% if @dashboard[:sustainability_score] %>
+    <span class="chip">sustainability <%= @dashboard[:sustainability_score] %></span>
+  <% end %>
+</div>
+
+<h2>By category</h2>
+<ul>
+  <% @dashboard[:category_breakdown].each do |cat, count| %>
+    <li><%= cat %>: <%= count %></li>
+  <% end %>
+</ul>
+
+<h2>Most worn</h2>
+<% @dashboard[:most_worn].each do |item| %>
+  <p><%= link_to item.title, item %> · <%= item.times_worn %> wears</p>
+<% end %>
+
+<h2>Least worn</h2>
+<% @dashboard[:least_worn].each do |item| %>
+  <p><%= link_to item.title, item %> · never worn</p>
+<% end %>

@@ -4,7 +4,7 @@
   <% if @item.photos.attached? %>
     <div class="item-photos">
       <% @item.photos.each do |photo| %>
-        <%= image_tag photo.variant(resize_to_limit: [600, 600]) %>
+        <%= image_tag photo.variant(resize_to_limit: [600, 600]), loading: "lazy" %>
       <% end %>
     </div>
   <% end %>

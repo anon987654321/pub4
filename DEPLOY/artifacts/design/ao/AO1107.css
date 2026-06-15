@@ -1,0 +1,4 @@
+/* AO1107: AO1107 Horizontal tag chips: `display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none` — tags scroll horizontally on card; max 3 visible before scroll */
+[data-todo="ao1107"] {
+  --artifact-id: "AO1107";
+}

@@ -1,0 +1,14 @@
+<% content_for :title, "New event" %>
+
+<div class="form-wrap">
+  <h1>New dating event</h1>
+  <%= form_with model: @event, url: dating_events_path do |f| %>
+    <div class="field"><%= f.label :title %><%= f.text_field :title, required: true %></div>
+    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4 %></div>
+    <div class="field"><%= f.label :venue %><%= f.text_field :venue %></div>
+    <div class="field"><%= f.label :city %><%= f.text_field :city, value: @event.city || Current.city %></div>
+    <div class="field"><%= f.label :starts_at %><%= f.datetime_local_field :starts_at %></div>
+    <div class="field"><%= f.label :ends_at %><%= f.datetime_local_field :ends_at %></div>
+    <%= f.submit "Create event", class: "btn btn-primary" %>
+  <% end %>
+</div>

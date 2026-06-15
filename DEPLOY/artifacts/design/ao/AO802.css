@@ -1,0 +1,6 @@
+/* AO802: AO802 X engagement row: reply, repost, like, bookmark, share icons; `justify-content: space-between` with `max-width: 400px`; icon + count in muted color; count hides on mobile */
+/* Artifact: DEPLOY/artifacts/design/ao/AO802.css */
+[data-todo="ao802"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO802";
+}

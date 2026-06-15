@@ -16,11 +16,24 @@ class ScripturesController < ApplicationController
   def chapter
     @book    = Book.find_by!(abbreviation: params[:book_abbreviation])
     @chapter = @book.chapters.find_by!(number: params[:number])
-    @verses  = @chapter.verses.order(:number).includes(:highlights, :bookmarks)
+    @verses  = @chapter.verses.order(:number).includes(:highlights, :bookmarks, :annotations)
   end
 
   def search
-    @pagy, @verses = pagy(Verse.full_text_search(params[:q]).includes(:book, :chapter), items: 20)
+    query = params[:q].to_s.strip
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    scope = Verse.full_text_search(query).includes(:book, :chapter)
+    @pagy, @verses = pagy(scope, items: 20)
+    latency_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+    Shared::SearchAnalytics.log(
+      query: query,
+      result_count: @verses.size,
+      latency_ms: latency_ms,
+      vertical: "scriptures",
+      actor: Current.user,
+      app: "baibl"
+    )
+    @search_suggestions = @verses.empty? && query.present? ? Shared::SearchSuggestions.for(query, vertical: "scriptures") : []
     render :search
   end
 

@@ -1,0 +1,6 @@
+/* AP312: AP312 Line length control: `max-width: 68ch` on all prose containers (article body, post body, comment text) — 60-70 characters per line is optimal for reading; implement via `ch` unit not px */
+/* Artifact: DEPLOY/artifacts/design/ap/AP312.css */
+[data-todo="ap312"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP312";
+}

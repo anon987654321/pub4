@@ -1,0 +1,6 @@
+/* AS306: AS306 amber outfit canvas: `display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: var(--space-2); width: 360px; height: 360px` — 3×3 grid for outfit items; top row = outerwear, middle = tops, bottom = bottoms+shoes */
+/* Artifact: DEPLOY/artifacts/design/as/AS306.css */
+[data-todo="as306"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS306";
+}

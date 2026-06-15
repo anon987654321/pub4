@@ -1,0 +1,19 @@
+<% content_for :title, "New recipe" %>
+
+<h1>New recipe</h1>
+<%= form_with model: @recipe do |f| %>
+  <div class="field"><%= f.label :title %><%= f.text_field :title %></div>
+  <div class="field"><%= f.label :description %><%= f.text_area :description %></div>
+  <div class="field"><%= f.label :prep_time_minutes %><%= f.number_field :prep_time_minutes %></div>
+  <div class="field"><%= f.label :cook_time_minutes %><%= f.number_field :cook_time_minutes %></div>
+  <div class="field"><%= f.label :servings %><%= f.number_field :servings %></div>
+  <h2>Ingredients</h2>
+  <%= f.fields_for :recipe_ingredients do |ing| %>
+    <div class="field">
+      <%= ing.text_field :quantity, placeholder: "Qty" %>
+      <%= ing.text_field :unit, placeholder: "Unit" %>
+      <%= ing.text_field :name, placeholder: "Ingredient" %>
+    </div>
+  <% end %>
+  <%= f.submit "Save recipe", class: "btn btn-primary" %>
+<% end %>

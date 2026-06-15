@@ -1,0 +1,6 @@
+/* AO107: AO107 X heading hierarchy: no traditional h1-h4; hierarchy entirely via `font-weight` (700/400) and color (primary/muted); tabs and section titles at 15px bold */
+/* Artifact: DEPLOY/artifacts/design/ao/AO107.css */
+[data-todo="ao107"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO107";
+}

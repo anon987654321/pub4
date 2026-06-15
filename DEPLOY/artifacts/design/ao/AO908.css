@@ -1,0 +1,6 @@
+/* AO908: AO908 Substack link hover: underline draw animation; `background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px` → `background-size: 100% 1px` on hover; `transition: background-size 0.2s` */
+/* Artifact: DEPLOY/artifacts/design/ao/AO908.css */
+[data-todo="ao908"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO908";
+}

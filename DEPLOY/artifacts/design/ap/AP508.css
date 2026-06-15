@@ -1,0 +1,6 @@
+/* AP508: AP508 Card hover lift: `transform: translateY(-2px)` + `box-shadow: 0 4px 16px rgba(0,0,0,0.1)` on card hover; 2px maximum — any more is theatrical; `transition: var(--duration-fast) var(--ease-standard)` */
+/* Artifact: DEPLOY/artifacts/design/ap/AP508.css */
+[data-todo="ap508"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP508";
+}

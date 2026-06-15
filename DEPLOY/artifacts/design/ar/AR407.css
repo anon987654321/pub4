@@ -1,0 +1,6 @@
+/* AR407: AR407 P3 color gamut: `@media (color-gamut: p3) { :root { --color-midtone: color(display-p3 0.1 0.45 0.9) } }` — wider gamut on supported displays; falls back to sRGB; more vibrant accent colors */
+/* Artifact: DEPLOY/artifacts/design/ar/AR407.css */
+[data-todo="ar407"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR407";
+}

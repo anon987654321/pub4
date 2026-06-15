@@ -8,7 +8,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def index
     scope = Marketplace::Listing.active.includes(:user, :category)
-    scope = Shared::LiveSearch.call(scope, query: live_search_query, columns: %w[title description location]) if live_search_query.present?
+    scope = apply_live_search(scope, columns: %w[title description location], vertical: "marketplace", filters: { category_id: params[:category_id] }.compact) if live_search_query.present?
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
     @pagy, @listings = pagy(scope.recent)
     @categories = Marketplace::Category.roots.includes(:children)
@@ -64,10 +64,10 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def set_listing = (@listing = Marketplace::Listing.find(params[:id]))
 
   def listing_params
-    params.require(:marketplace_listing).permit(
+    params.expect(:marketplace_listing => [
       :title, :description, :price_cents, :condition, :status, :location,
       :category_id, :preset, photos: []
-    )
+    ])
   end
 
   def record_listing_activity!

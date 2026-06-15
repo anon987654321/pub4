@@ -1,0 +1,18 @@
+<%= turbo_frame_tag "live_search_results" do %>
+  <% if query.present? %>
+    <p class="search-meta dim">
+      <%= pluralize(collection.size, "result") %>
+      <% if search_meta[:latency_ms].to_i.positive? %>
+        · <%= search_meta[:latency_ms] %>ms
+      <% end %>
+    </p>
+  <% end %>
+
+  <% if collection.any? %>
+    <div class="search-results">
+      <%= render partial: partial, collection: collection, as: partial.to_s.split("/").last.to_sym %>
+    </div>
+  <% elsif query.present? %>
+    <%= render "shared/search_empty", query: query, search_meta: search_meta %>
+  <% end %>
+<% end %>

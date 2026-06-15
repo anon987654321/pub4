@@ -1,0 +1,6 @@
+/* AQ103: AQ103 Typing indicators: `TypingChannel` with `transmit(typing: true)` on keydown debounce; `typing: false` on blur or 2s idle; broadcast to conversation partner only */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ103.css */
+[data-todo="aq103"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ103";
+}

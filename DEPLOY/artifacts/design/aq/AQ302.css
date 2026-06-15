@@ -1,0 +1,6 @@
+/* AQ302: AQ302 Bridge components: `data-controller="bridge--menu"` triggers native iOS action sheet; `data-controller="bridge--form"` triggers native keyboard handling; define in `app/javascript/controllers/bridge/` */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ302.css */
+[data-todo="aq302"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ302";
+}

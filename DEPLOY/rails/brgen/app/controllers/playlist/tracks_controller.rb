@@ -20,5 +20,5 @@ class Playlist::TracksController < Playlist::BaseController
 
   private
   def set_playlist  = (@playlist = Playlist::Playlist.find(params[:playlist_id]))
-  def track_params  = params.require(:playlist_track).permit(:title, :artist, :album, :duration_seconds, :source_type, :source_url, :genre)
+  def track_params  = params.expect(:playlist_track => [:title, :artist, :album, :duration_seconds, :source_type, :source_url, :genre])
 end

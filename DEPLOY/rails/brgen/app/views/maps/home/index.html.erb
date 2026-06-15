@@ -6,11 +6,19 @@
 
 <div id="map" style="position:fixed;inset:0;z-index:0"></div>
 
-<div style="position:fixed;top:16px;left:16px;z-index:10;display:flex;flex-direction:column;gap:8px;max-width:280px">
+<div style="position:fixed;top:16px;left:16px;z-index:10;display:flex;flex-direction:column;gap:8px;max-width:280px"
+     data-controller="live-search"
+     data-live-search-url-value="<%= maps_places_path(format: :json) %>"
+     data-live-search-delay-value="300">
+  <%= render "shared/search_loading" %>
   <div style="display:flex;gap:8px">
     <input id="map-search" type="search" placeholder="Search places…"
+      data-live-search-target="input"
+      data-action="input->live-search#input"
       style="flex:1;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:inherit;font-size:14px">
   </div>
+  <p class="dim" data-live-search-target="count"></p>
+  <div id="map-search-results" data-live-search-target="results"></div>
   <div id="place-popup" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:14px"></div>
 </div>
 
@@ -25,7 +33,7 @@
   map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
   map.addControl(new mapboxgl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true }), "bottom-right");
 
-  const places = <%= raw @places_json %>;
+  let places = <%= raw @places_json %>;
   const popup = document.getElementById("place-popup");
   const markers = [];
 
@@ -48,12 +56,13 @@
 
   map.on("load", () => renderMarkers(places));
 
-  document.getElementById("map-search").addEventListener("input", e => {
-    const q = e.target.value.toLowerCase();
-    renderMarkers(q ? places.filter(p => p.name.toLowerCase().includes(q) || (p.kind || "").toLowerCase().includes(q)) : places);
-  });
-
   document.addEventListener("click", e => {
     if (!popup.contains(e.target) && e.target.id !== "map-search") popup.style.display = "none";
+  });
+
+  document.addEventListener("live-search:results", (event) => {
+    if (!event.detail?.results) return;
+    places = event.detail.results;
+    renderMarkers(places);
   });
 </script>

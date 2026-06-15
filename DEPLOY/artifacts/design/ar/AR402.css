@@ -1,0 +1,6 @@
+/* AR402: AR402 System preference + manual: `:root { color-scheme: light dark }` + `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { ... } }` — system preference wins unless user explicitly chose light */
+/* Artifact: DEPLOY/artifacts/design/ar/AR402.css */
+[data-todo="ar402"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR402";
+}

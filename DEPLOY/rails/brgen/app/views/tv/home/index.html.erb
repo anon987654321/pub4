@@ -24,27 +24,56 @@
   </div>
 </div>
 
-<% if @live.any? %>
-  <section>
-    <h2>Live now</h2>
-    <% @live.each do |b| %>
-      <article>
-        <%= link_to tv_channel_path(b.channel) do %>
-          <span class="live-badge">Live</span>
-          <strong><%= b.title %></strong> — <%= b.channel.name %>
+<div data-controller="live-search">
+  <%= render "shared/search_loading" %>
+  <%= form_with url: tv_root_path, method: :get, local: true,
+        data: { turbo_frame: "live_search_results" } do |f| %>
+    <div class="search-form" role="search">
+      <%= f.search_field :q, value: params[:q], placeholder: "Search videos and channels…",
+            data: { live_search_target: "input", action: "input->live-search#input" } %>
+      <%= f.submit "Search", class: "btn btn-sm" %>
+    </div>
+  <% end %>
+
+  <%= turbo_frame_tag "live_search_results" do %>
+    <% if @live.any? %>
+      <section>
+        <h2>Live now</h2>
+        <% @live.each do |b| %>
+          <article>
+            <%= link_to tv_channel_path(b.channel) do %>
+              <span class="live-badge">Live</span>
+              <strong><%= b.title %></strong> — <%= b.channel.name %>
+            <% end %>
+          </article>
         <% end %>
-      </article>
+      </section>
     <% end %>
-  </section>
-<% end %>
 
-<section>
-  <h2>Trending</h2>
-  <%= render @trending %>
-  <%= pagy_nav(@pagy_trending) if @pagy_trending&.pages.to_i > 1 %>
-</section>
+    <section>
+      <h2><%= params[:q].present? ? "Matching videos" : "Trending" %></h2>
+      <%= render @trending %>
+      <%= pagy_nav(@pagy_trending) if @pagy_trending&.pages.to_i > 1 %>
+      <% if params[:q].present? && @trending.empty? %>
+        <%= render "shared/search_empty", query: params[:q], search_meta: search_meta %>
+      <% end %>
+    </section>
 
-<section>
-  <h2>Recent</h2>
-  <%= render @recent %>
-</section>
+    <% if @channels.present? %>
+      <section>
+        <h2>Matching channels</h2>
+        <% @channels.each do |channel| %>
+          <%= render "tv/channels/channel", channel: channel %>
+        <% end %>
+        <%= pagy_nav(@pagy_channels) if @pagy_channels&.pages.to_i > 1 %>
+      </section>
+    <% end %>
+
+    <% unless params[:q].present? %>
+      <section>
+        <h2>Recent</h2>
+        <%= render @recent %>
+      </section>
+    <% end %>
+  <% end %>
+</div>

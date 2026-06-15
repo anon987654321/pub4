@@ -1,0 +1,6 @@
+/* AO810: AO810 Substack post card: newsletter title (small caps above); post title (bold serif 24px); excerpt (muted 16px 2-line clamp); footer with publish date + like count + comment count */
+/* Artifact: DEPLOY/artifacts/design/ao/AO810.css */
+[data-todo="ao810"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO810";
+}

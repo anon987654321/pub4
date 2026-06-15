@@ -1,0 +1,6 @@
+/* AP904: AP904 Image alt text: every `<img>` has `alt`; decorative images use `alt=""` (empty, not missing); Active Storage variants auto-generate alt from filename — override with meaningful text in `image_tag` */
+/* Artifact: DEPLOY/artifacts/design/ap/AP904.css */
+[data-todo="ap904"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP904";
+}

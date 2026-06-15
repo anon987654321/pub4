@@ -1,0 +1,6 @@
+/* AO510: AO510 Semantic color variables: define `--color-danger`, `--color-warning`, `--color-success`, `--color-info` per app; never hardcode hex in component CSS; all change via single variable update */
+/* Artifact: DEPLOY/artifacts/design/ao/AO510.css */
+[data-todo="ao510"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO510";
+}

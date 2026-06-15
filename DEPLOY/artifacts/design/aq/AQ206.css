@@ -1,0 +1,6 @@
+/* AQ206: AQ206 File size validation: `validates :photo, size: { less_than: 10.megabytes, message: "must be less than 10MB" }` — hard limit server-side regardless of client-side check */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ206.css */
+[data-todo="aq206"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ206";
+}

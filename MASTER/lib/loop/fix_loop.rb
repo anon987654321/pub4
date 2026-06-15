@@ -36,6 +36,10 @@ module Master
         @halted = false
         @halt_reason = nil
         @preamble = build_preamble
+        @committer = Committer.new(git: @git, bus: @bus)
+        @file_scanner = Scanner.new(scanner: @scanner, root: @root, bus: @bus)
+        @llm_router = LlmRouter.new(rules: @rules, agent: @agent, scanner: @scanner, root: @root,
+                                    bus: @bus, learnings: @learnings, preamble: @preamble)
       end
 
       def convergence_cfg = @convergence ||= (@axioms&.thresholds&.[]("convergence") || {})
@@ -46,12 +50,16 @@ module Master
 
       def plateau_window = convergence_cfg["stagnant_threshold"] || PLATEAU_WINDOW
 
+      def startup_delay = convergence_cfg["startup_delay"] || STARTUP_DELAY
+
+      def idle_sleep = convergence_cfg["idle_sleep"] || IDLE_SLEEP
+
       # Three guards prevent wedging when the LLM provider degrades:
       # wall-clock budget, per-pass deadline, circuit-open early-exit.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS, incremental: @incremental)
         return halted_result if halted?
 
-        files = incremental ? collect_changed_files(target) : collect_files(target)
+        files = incremental ? @file_scanner.collect_changed_files(target, git: @git) : @file_scanner.collect_files(target)
         history = []
         seen_snapshots = Set.new
         consecutive_clean = 0
@@ -63,16 +71,16 @@ module Master
             @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
             return Result.ok("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)")
           end
-          @bus&.publish("fix_loop:pass_start", pass:, target:)
+          @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
 
           fast_fixed = fast_pass(files)
-          commit_if_dirty("fix_loop: fast-fix [pass #{pass}]") if fast_fixed > 0
+          @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]") if fast_fixed > 0
 
-          violations = scan_violations(files)
+          violations = @file_scanner.scan_violations(files)
           emit_topology(violations, target)
 
           if violations.empty?
-            ground_truth = ground_truth_violations(files)
+            ground_truth = @file_scanner.ground_truth_violations(files)
             unless ground_truth.empty?
               @bus&.publish("fix_loop:ground_truth_failed", pass:, violations: ground_truth.size)
               violations = ground_truth
@@ -92,12 +100,12 @@ module Master
             break
           end
 
-          if circuit_open?
-            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
+          if @llm_router.circuit_open?
+            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: @llm_router.open_breakers)
           else
             pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
-            llm_fixed = llm_pass(violations:, files:, pass:, deadline: pass_deadline)
-            commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
+            llm_fixed = @llm_router.llm_pass(violations:, files:, pass:, deadline: pass_deadline)
+            @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
             track_recurrence(violations)
           end
         end
@@ -110,16 +118,18 @@ module Master
 
       # Blocks its thread; launch via Thread.new.
       def run_forever(target = @root)
-        sleep STARTUP_DELAY
+        sleep startup_delay
         loop do
           break if halted?
           run(target)
           break if halted?
-          @bus&.publish("fix_loop:idle", sleep: IDLE_SLEEP)
-          sleep IDLE_SLEEP
+          @bus&.publish("fix_loop:idle", sleep: idle_sleep)
+          sleep idle_sleep
+        rescue StandardError => e
+          @bus&.publish("fix_loop:error", error: e.message)
+          @bus&.publish("fix_loop:restart", cooldown: 30)
+          sleep 30
         end
-      rescue StandardError => e
-        @bus&.publish("fix_loop:error", error: e.message)
       end
 
       def start_background!(target = @root)
@@ -155,8 +165,8 @@ module Master
 
       # Scan only — no commit, no mutation. Always full scan regardless of incremental flag.
       def preview(target = @root)
-        files = collect_files(target)
-        violations = scan_violations(files)
+        files = @file_scanner.collect_files(target)
+        violations = @file_scanner.scan_violations(files)
         by_rule = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
         by_file = violations.group_by { |v| v[:file].to_s }.transform_values(&:size)
         Result.ok(
@@ -176,15 +186,15 @@ module Master
       def fast_pass(files)
         fixed = 0
         rb = files.select { |f| f.end_with?(".rb") }
-        if rb.any?
-          _, status = Open3.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
-          fixed += rb.size if status.success?
-        end
         rb.each do |path|
           next unless File.exist?(path)
           fixed += analyze_ruby_file(path)
         rescue StandardError => e
           @bus&.publish("fix_loop:fast_error", file: path, error: e.message)
+        end
+        if rb.any?
+          _, status = Open3.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
+          fixed += rb.size if status.success?
         end
         fixed
       end
@@ -259,8 +269,18 @@ module Master
         files.flat_map do |path|
           next [] unless File.exist?(path)
           result = @scanner.scan(path)
-          Result.wrap(result).value_or([]).map { |v| v.to_h.merge(file: path.delete_prefix("#{@root}/")) }
+          findings = Result.wrap(result).value_or([])
+          stream_scan_progress(path, findings.size)
+          findings.map { |v| v.to_h.merge(file: path.delete_prefix("#{@root}/")) }
         end
+      end
+
+      def stream_scan_progress(path, count)
+        rel = path.delete_prefix("#{@root}/").delete_prefix("/")
+        @bus&.publish("fix_loop:scan_progress", path: rel, violations: count)
+        return unless count.positive?
+        $stdout.puts "fix: #{rel} #{count} violation(s)"
+        $stdout.flush
       end
 
       def ground_truth_violations(files)
@@ -357,6 +377,8 @@ module Master
                  "Minimum change that eliminates the violation. Do not touch unrelated code."]
         abs.fetch("code_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
         abs.fetch("aesthetic_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
+        lines << ""
+        lines << Ground::StructuralOps.prompt_section
         lines.join("\n")
       rescue StandardError
         "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"

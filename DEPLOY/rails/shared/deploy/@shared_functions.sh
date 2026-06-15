@@ -185,8 +185,20 @@ install_rcd() {
     return 0
   fi
   ${_PRIV} install -o root -g wheel -m 0555 "$rcd_src" "$rcd_dst"
-  ${_PRIV} rcctl enable "$svc"
+  rcctl_ensure_service "$svc"
   log_ok "rc.d ${svc} installed and enabled"
+}
+
+# rcctl_ensure_service — idempotent enable + restart-or-start.
+# Safe on first deploy (start) and subsequent deploys (restart).
+rcctl_ensure_service() {
+  local svc=$1
+  ${_PRIV} rcctl enable "$svc" 2>/dev/null || true
+  if ${_PRIV} rcctl check "$svc" 2>/dev/null | grep -q '(ok)'; then
+    ${_PRIV} rcctl restart "$svc" 2>/dev/null || ${_PRIV} rcctl start "$svc"
+  else
+    ${_PRIV} rcctl start "$svc"
+  fi
 }
 
 # relayd_add_relay DOMAIN PORT

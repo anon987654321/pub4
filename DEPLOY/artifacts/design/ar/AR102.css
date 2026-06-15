@@ -1,0 +1,6 @@
+/* AR102: AR102 CSS reset: modern reset — `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }; img, video { display: block; max-width: 100% }; input, button, textarea, select { font: inherit }` — minimal, predictable base */
+/* Artifact: DEPLOY/artifacts/design/ar/AR102.css */
+[data-todo="ar102"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR102";
+}

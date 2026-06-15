@@ -1,0 +1,6 @@
+/* AP603: AP603 brgen dating swipe card: `border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.2)` — only context where elevation is appropriate (card physically above surface in affordance); photo full-bleed, info overlay at bottom */
+/* Artifact: DEPLOY/artifacts/design/ap/AP603.css */
+[data-todo="ap603"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP603";
+}

@@ -26,6 +26,15 @@ class Playlist::Track < ApplicationRecord
   scope :publicly_visible, -> { where(privacy: "public") }
   scope :unexpired, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
   scope :recent, -> { order(created_at: :desc) }
+  scope :search, ->(q) {
+    term = q.to_s.strip
+    return none if term.empty?
+
+    ids = connection.select_values(
+      sanitize_sql_array(["SELECT rowid FROM playlist_tracks_fts WHERE playlist_tracks_fts MATCH ?", term])
+    )
+    ids.any? ? where(id: ids) : none
+  }
 
   def duration_formatted
     return "—" unless duration_seconds

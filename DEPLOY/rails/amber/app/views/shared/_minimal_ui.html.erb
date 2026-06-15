@@ -1,0 +1,150 @@
+<%# Parametric include for ultra-minimal gesture/sensor/cam/Osman UI (synced from MASTER web) %>
+<%# Usage: <%= render "shared/minimal_ui" %> in layouts (after body class="zen-minimal") %>
+<link rel="stylesheet" href="/styles/minimal-ui.css">
+<style>
+  html.standalone-mode body { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+  html.standalone-mode [data-pwa-primary-nav] { display: none !important; }
+  html.standalone-mode .pwa-bottom-nav { display: flex !important; }
+  .pwa-bottom-nav {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    display: none;
+    justify-content: space-around;
+    gap: 6px;
+    padding: 10px calc(12px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+    background: rgba(10, 12, 16, 0.96);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 140;
+    backdrop-filter: blur(18px);
+  }
+  .pwa-bottom-nav a {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-size: 12px;
+    color: inherit;
+  }
+  .pwa-install-banner {
+    position: fixed;
+    inset-inline: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(10, 12, 16, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+    z-index: 150;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+  }
+  .pwa-install-banner.is-visible { display: flex; }
+  .pwa-install-banner p { margin: 0; font-size: 14px; line-height: 1.35; }
+  .pwa-install-banner-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+  .pwa-install-banner button {
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .pwa-install-banner .later { background: rgba(255, 255, 255, 0.12); color: #f8fafc; }
+  .pwa-install-banner .install { background: #f8fafc; color: #0f172a; }
+</style>
+<script type="module">
+  (() => {
+    const setup = () => {
+      const appKey = document.body?.dataset?.pwaKey || "app";
+      const standaloneQuery = window.matchMedia?.("(display-mode: standalone)");
+      const visitsKey = `${appKey}:pwa-install-visits`;
+      const dismissedKey = `${appKey}:pwa-install-dismissed`;
+      let deferredPrompt = null;
+      let banner = null;
+
+      const isStandalone = () => Boolean(window.navigator.standalone || standaloneQuery?.matches);
+      const syncStandalone = () => document.documentElement.classList.toggle("standalone-mode", isStandalone());
+      const ensureBottomNav = () => {
+        const existing = document.querySelector("[data-pwa-bottom-nav]");
+        if (existing) return existing;
+        const source = document.querySelector("[data-pwa-primary-nav]");
+        if (!source) return null;
+        const nav = document.createElement("nav");
+        nav.className = "pwa-bottom-nav";
+        nav.dataset.pwaBottomNav = "generated";
+        nav.setAttribute("aria-label", "App navigation");
+        source.querySelectorAll("a").forEach((link) => nav.appendChild(link.cloneNode(true)));
+        document.body.appendChild(nav);
+        return nav;
+      };
+      const syncBottomNav = () => {
+        const nav = ensureBottomNav();
+        if (!nav) return;
+        nav.style.display = isStandalone() ? "flex" : (nav.dataset.pwaBottomNav === "generated" ? "none" : "");
+      };
+      const hideBanner = (persist = false) => {
+        banner?.classList.remove("is-visible");
+        if (persist) localStorage.setItem(dismissedKey, "1");
+      };
+      const ensureBanner = () => {
+        if (banner) return banner;
+        banner = document.createElement("div");
+        banner.className = "pwa-install-banner";
+        banner.id = `${appKey}-pwa-install-banner`;
+        banner.innerHTML = `
+          <p>Install the app for faster return visits and a cleaner fullscreen view.</p>
+          <div class="pwa-install-banner-actions">
+            <button type="button" class="later">Later</button>
+            <button type="button" class="install">Install</button>
+          </div>
+        `;
+        banner.querySelector(".later").addEventListener("click", () => hideBanner(true));
+        banner.querySelector(".install").addEventListener("click", async () => {
+          if (!deferredPrompt) return;
+          deferredPrompt.prompt();
+          await deferredPrompt.userChoice.catch(() => null);
+          deferredPrompt = null;
+          hideBanner(true);
+        });
+        document.body.appendChild(banner);
+        return banner;
+      };
+      const maybeShowBanner = () => {
+        if (isStandalone() || localStorage.getItem(dismissedKey) === "1" || !deferredPrompt) return;
+        const visits = Number(localStorage.getItem(visitsKey) || 0);
+        if (visits < 3) return;
+        ensureBanner().classList.add("is-visible");
+      };
+      const noteVisit = () => {
+        if (isStandalone() || localStorage.getItem(dismissedKey) === "1") return;
+        const visits = Number(localStorage.getItem(visitsKey) || 0) + 1;
+        localStorage.setItem(visitsKey, String(visits));
+      };
+
+      syncStandalone();
+      syncBottomNav();
+      noteVisit();
+      maybeShowBanner();
+      standaloneQuery?.addEventListener?.("change", () => {
+        syncStandalone();
+        syncBottomNav();
+      });
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        deferredPrompt = event;
+        maybeShowBanner();
+      });
+      window.addEventListener("appinstalled", () => hideBanner(true));
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setup, { once: true });
+    } else {
+      setup();
+    }
+  })();
+</script>
+<script type="module" src="/minimal-gesture.js"></script>
+<%# For apps with importmap/Stimulus, can also import the JS for customization %>

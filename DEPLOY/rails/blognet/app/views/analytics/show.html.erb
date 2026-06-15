@@ -1,0 +1,13 @@
+<% content_for :title, "Analytics — #{@blog.name}" %>
+
+<h1>Author analytics</h1>
+<div class="chips">
+  <span class="chip"><%= @stats[:total_posts] %> posts</span>
+  <span class="chip"><%= @stats[:total_views] %> views</span>
+  <% if @stats[:avg_views] %><span class="chip">avg <%= @stats[:avg_views] %> views/post</span><% end %>
+</div>
+
+<h2>Top posts</h2>
+<% @posts.limit(10).each do |post| %>
+  <p><%= link_to post.title, [@blog, post] %> — <%= post.views_count %> views · <%= post.comments_count %> comments</p>
+<% end %>

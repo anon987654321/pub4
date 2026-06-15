@@ -17,7 +17,7 @@
   </div>
 <% elsif @video.thumbnail.attached? %>
   <div style="border-bottom:1px solid var(--border)">
-    <%= image_tag @video.thumbnail, style: "width:100%;max-height:420px;object-fit:cover;display:block" %>
+    <%= image_tag @video.thumbnail, style: "width:100%;max-height:420px;object-fit:cover;display:block", loading: "lazy" %>
   </div>
 <% end %>
 

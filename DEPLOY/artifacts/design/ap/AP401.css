@@ -1,0 +1,6 @@
+/* AP401: AP401 Content-to-chrome ratio: in any view, content (text, images) must occupy ≥60% of pixels; navigation, sidebars, headers ≤40% — if chrome exceeds 40%, ruthlessly cut */
+/* Artifact: DEPLOY/artifacts/design/ap/AP401.css */
+[data-todo="ap401"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP401";
+}

@@ -1,0 +1,6 @@
+/* AQ502: AQ502 Job idempotency: every job must be safe to run twice; check pre-conditions before executing: `return if @post.already_indexed?`; use database unique constraints as guards */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ502.css */
+[data-todo="aq502"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ502";
+}

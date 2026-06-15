@@ -1,0 +1,6 @@
+/* AQ307: AQ307 Native image picker: `data-controller="bridge--photo-picker"` invokes native camera/gallery picker; returns base64 → direct upload starts immediately; better than `<input type="file">` */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ307.css */
+[data-todo="aq307"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ307";
+}

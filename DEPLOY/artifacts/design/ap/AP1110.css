@@ -1,0 +1,4 @@
+/* AP1110: AP1110 Playlist now-playing: persistent bottom player bar; `position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: var(--color-surface); border-top: 1px solid var(--color-border); backdrop-filter: blur(12px)` */
+[data-todo="ap1110"] {
+  --artifact-id: "AP1110";
+}

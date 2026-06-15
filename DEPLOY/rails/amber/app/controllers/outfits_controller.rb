@@ -1,25 +1,29 @@
 # frozen_string_literal: true
 
 class OutfitsController < ApplicationController
+  include Shared::LiveSearchable
+
   before_action :require_authentication
   before_action :set_outfit, only: %i[show edit update destroy like reorder share wear]
   before_action :authorize!, only: %i[edit update destroy share wear]
 
   def index
-    @pagy, @outfits = pagy(Current.user.outfits.order(created_at: :desc))
+    scope = Current.user.outfits.includes(:items).order(created_at: :desc)
+    scope = apply_live_search(scope, columns: %w[name description category season occasion], vertical: "outfits") if live_search_query.present?
+    @pagy, @outfits = pagy(scope)
   end
 
   def dressing_room
-    base = Current.user.items.active_wardrobe.with_attached_photos
-    @zones = {
-      head:   base.where(category: "Accessories"),
-      top:    base.where(category: %w[Tops Outerwear]),
-      bottom: base.where(category: %w[Bottoms Dresses]),
-      shoes:  base.where(category: "Shoes"),
-    }
+    @event = params[:event].presence
+    suggestion = WeatherOutfitService.suggest_for(Current.user, event: @event)
+    @weather = suggestion[:weather]
+    @season = suggestion[:season]
+    @zones = suggestion[:zones]
   end
 
-  def show; end
+  def show
+    respond_to_cached_show(@outfit, only: %i[id name description category season occasion likes_count])
+  end
 
   def new
     @outfit = Current.user.outfits.build
@@ -78,6 +82,6 @@ class OutfitsController < ApplicationController
   end
 
   def outfit_params
-    params.require(:outfit).permit(:name, :description, :category, :season, :occasion)
+    params.expect(:outfit => [:name, :description, :category, :season, :occasion])
   end
 end

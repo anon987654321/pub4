@@ -1,0 +1,4 @@
+/* AQ1208: AQ1208 Policy objects (Pundit): `app/policies/PostPolicy` with `create?`, `update?`, `destroy?`, `index?` per role; `policy_scope(Post)` returns scoped relation; 100% of authorization lives here */
+[data-todo="aq1208"] {
+  --artifact-id: "AQ1208";
+}

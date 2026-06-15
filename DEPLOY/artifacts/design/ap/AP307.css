@@ -1,0 +1,6 @@
+/* AP307: AP307 Type scale: all apps use a 4-level modular scale — body, small (0.875em), large (1.125em), heading-sm (1.25em), heading-md (1.5em), heading-lg (2em), display (3em); never arbitrary font sizes */
+/* Artifact: DEPLOY/artifacts/design/ap/AP307.css */
+[data-todo="ap307"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP307";
+}

@@ -1,0 +1,6 @@
+/* AO202: AO202 Medium heading: `font-family: medium-content-title-font, Georgia, Cambria, "Times New Roman", serif` at 42px bold on desktop; 32px mobile; dramatic scale contrast */
+/* Artifact: DEPLOY/artifacts/design/ao/AO202.css */
+[data-todo="ao202"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO202";
+}

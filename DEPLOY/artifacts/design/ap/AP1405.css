@@ -1,0 +1,4 @@
+/* AP1405: AP1405 Aspect ratio enforcement: `aspect-ratio: 16/9` on all media images; `aspect-ratio: 1` on avatars; `aspect-ratio: 3/4` on amber item photos — never let images reflow on load */
+[data-todo="ap1405"] {
+  --artifact-id: "AP1405";
+}

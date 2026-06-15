@@ -1,0 +1,6 @@
+/* AQ907: AQ907 Norwegian phone number: `+47 XXX XX XXX` format validation; `validates :phone, format: { with: /\A(\+47)?[0-9]{8}\z/ }` after stripping spaces */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ907.css */
+[data-todo="aq907"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ907";
+}

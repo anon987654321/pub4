@@ -1,0 +1,4 @@
+/* AQ1001: AQ1001 Content Security Policy: `config.content_security_policy` in `config/initializers/content_security_policy.rb` — `default_src :none; script_src :self; style_src :self; img_src :self :data: blob:; connect_src :self wss:; font_src :self; frame_ancestors :none` */
+[data-todo="aq1001"] {
+  --artifact-id: "AQ1001";
+}

@@ -1,0 +1,6 @@
+/* AP408: AP408 No full-width backgrounds on text sections: text reads better on white/near-white regardless of section background; if background color is needed for section identity, use subtle (5-10% lightness delta from base) */
+/* Artifact: DEPLOY/artifacts/design/ap/AP408.css */
+[data-todo="ap408"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP408";
+}

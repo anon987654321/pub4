@@ -8,16 +8,20 @@ module Master
   module Reach
     class SemanticCache
       MAX_ENTRIES = 1000
-      DEFAULT_TTL = 3600
+      DEFAULT_TTL = 300
       BYTES_PER_KB = 1024.0
+      INDEX_PATH = "llm_cache.yml".freeze
 
       def initialize(root:, ttl: DEFAULT_TTL, event_bus: nil)
+        @project_root = root
         @root = File.join(root, ".master", "cache")
-        @ttl = ttl
+        @index_path = File.join(root, ".master", INDEX_PATH)
+        @ttl = ttl.to_i.positive? ? ttl.to_i : DEFAULT_TTL
         @bus = event_bus
         @lru = []
         @lock = Monitor.new
         FileUtils.mkdir_p(@root)
+        load_index!
       end
 
       def fetch(prompt, model, &blk)
@@ -68,13 +72,24 @@ module Master
       def expire_entry!(path)
         @lru.delete(path)
         File.delete(path) rescue nil
+        prune_index_for(path)
         nil
       end
 
       def drop_entry!(path)
         File.delete(path) rescue nil
         @lru.delete(path)
+        prune_index_for(path)
         nil
+      end
+
+      def prune_index_for(path)
+        return unless File.exist?(@index_path)
+        rows = Master.load_yaml(@index_path) || {}
+        rows.reject! { |_, entry| (entry["path"] || entry[:path]) == path }
+        File.write(@index_path, rows.to_yaml)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "semantic_cache.prune_index_for", event_bus: @bus)
       end
 
       def read_entry(path)
@@ -91,9 +106,32 @@ module Master
       def write_entry(path, value, key)
         payload = serialize_value(value)
         evict_lru while @lru.size >= MAX_ENTRIES
-        File.write(path, JSON.generate({ ts: Time.now.to_i, value: payload }))
+        ts = Time.now.to_i
+        File.write(path, JSON.generate({ ts:, value: payload }))
         promote_lru(path)
+        persist_index!(key, path, ts)
         @bus&.publish("cache:write", key:)
+      end
+
+      def load_index!
+        return unless File.exist?(@index_path)
+        rows = Master.load_yaml(@index_path) || {}
+        rows.each_value do |entry|
+          path = entry["path"] || entry[:path]
+          next unless path && File.exist?(path)
+          promote_lru(path)
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "semantic_cache.load_index!", event_bus: @bus)
+      end
+
+      def persist_index!(key, path, ts)
+        rows = File.exist?(@index_path) ? (Master.load_yaml(@index_path) || {}) : {}
+        rows[key] = { "ts" => ts, "path" => path }
+        FileUtils.mkdir_p(File.dirname(@index_path))
+        File.write(@index_path, rows.to_yaml)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "semantic_cache.persist_index!", event_bus: @bus)
       end
 
       def serialize_value(value)

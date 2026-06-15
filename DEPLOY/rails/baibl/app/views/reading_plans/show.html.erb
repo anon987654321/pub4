@@ -1,0 +1,24 @@
+<% content_for :title, @plan.name %>
+
+<h1><%= @plan.name %></h1>
+
+<% if @today %>
+  <article>
+    <h2>Today's reading</h2>
+    <p><%= @today.reading_reference %></p>
+    <% if @today.book %>
+      <p><%= link_to "Open in scripture", scripture_book_path(@today.book.abbreviation) %></p>
+    <% end %>
+    <% unless @today.completed_at? %>
+      <%= button_to "Mark complete", complete_day_reading_plan_path(@plan, day_id: @today.id), method: :post, class: "btn btn-primary" %>
+    <% else %>
+      <p class="dim">Completed <%= @today.completed_at.strftime("%d %b %H:%M") %></p>
+    <% end %>
+  </article>
+<% end %>
+
+<ul>
+  <% @plan.reading_plan_days.ordered.each do |day| %>
+    <li class="<%= "dim" if day.completed_at? %>">Day <%= day.day_number %> (<%= day.scheduled_on %>) — <%= day.reading_reference %></li>
+  <% end %>
+</ul>

@@ -1,0 +1,6 @@
+/* AP505: AP505 Exit animation pattern: elements leaving `opacity: 1 → 0` + `transform: scale(0.97)` over `--duration-fast` with `--ease-accelerate`; faster than enter — exits feel snappier */
+/* Artifact: DEPLOY/artifacts/design/ap/AP505.css */
+[data-todo="ap505"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP505";
+}

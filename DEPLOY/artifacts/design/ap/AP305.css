@@ -1,0 +1,6 @@
+/* AP305: AP305 blognet type: `font-family: "Source Serif 4", Georgia, serif` at 20px/1.65 for articles; `"Source Sans 3"` for UI chrome — the Medium model done right; warmly editorial */
+/* Artifact: DEPLOY/artifacts/design/ap/AP305.css */
+[data-todo="ap305"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP305";
+}

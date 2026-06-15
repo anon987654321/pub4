@@ -1,0 +1,6 @@
+/* AR903: AR903 will-change restriction: applied only within `@keyframes` animation or Stimulus controller's `connect()`, removed in `disconnect()`; browser allocates GPU memory only while needed */
+/* Artifact: DEPLOY/artifacts/design/ar/AR903.css */
+[data-todo="ar903"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR903";
+}

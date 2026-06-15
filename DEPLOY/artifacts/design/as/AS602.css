@@ -1,0 +1,6 @@
+/* AS602: AS602 bsdports security badge: `.security-badge { background: var(--color-danger); color: white; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: var(--radius-sm) }` — red security advisory indicator; `display: none` when no advisory */
+/* Artifact: DEPLOY/artifacts/design/as/AS602.css */
+[data-todo="as602"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS602";
+}

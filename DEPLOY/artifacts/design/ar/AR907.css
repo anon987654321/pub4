@@ -1,0 +1,6 @@
+/* AR907: AR907 CSS-only dark mode switch: `<input type="checkbox" id="dark-toggle"> <label for="dark-toggle">` + `#dark-toggle:checked ~ * { --color-background: ... }` — no JavaScript needed for theme toggle; preference stored in localStorage by tiny JS snippet only for persistence */
+/* Artifact: DEPLOY/artifacts/design/ar/AR907.css */
+[data-todo="ar907"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR907";
+}

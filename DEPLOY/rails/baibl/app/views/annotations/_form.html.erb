@@ -1,0 +1,5 @@
+<%= form_with model: Annotation.new, url: verse_annotations_path(verse), data: { turbo_frame: "annotations_#{verse.id}" } do |f| %>
+  <%= f.text_area :body, rows: 3, placeholder: "Your note on this verse…" %>
+  <%= f.select :visibility, Annotation.visibilities.keys.map { |k| [k.humanize, k] } %>
+  <%= f.submit "Annotate", class: "btn btn-primary btn-sm" %>
+<% end %>

@@ -1,0 +1,6 @@
+/* AS501: AS501 baibl verse container: `.verse { display: grid; grid-template-columns: 2.5rem 1fr; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); transition: background var(--duration-fast) } .verse:hover { background: var(--color-surface) } .verse:target { background: var(--amber-warm-50); border-inline-start: 3px solid var(--color-midtone) }` */
+/* Artifact: DEPLOY/artifacts/design/as/AS501.css */
+[data-todo="as501"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS501";
+}

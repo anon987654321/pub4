@@ -1,0 +1,6 @@
+/* AO101: AO101 Chirp fallback stack: `font-family: "Chirp", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif` — condensed grotesque; high x-height; use for all UI text in brgen (social app) */
+/* Artifact: DEPLOY/artifacts/design/ao/AO101.css */
+[data-todo="ao101"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO101";
+}

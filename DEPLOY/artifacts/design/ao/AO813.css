@@ -1,0 +1,6 @@
+/* AO813: AO813 New Yorker nav: horizontal list of sections in 12px uppercase; no dropdown; sticky; `letter-spacing: 0.08em`; active section underline; hover underline transition */
+/* Artifact: DEPLOY/artifacts/design/ao/AO813.css */
+[data-todo="ao813"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO813";
+}

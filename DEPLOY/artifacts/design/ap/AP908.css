@@ -1,0 +1,6 @@
+/* AP908: AP908 Heading hierarchy: never skip heading levels (`h1 → h3` without `h2`); document outline must be logical; `h1` = page title, appears once; `h2` = major sections */
+/* Artifact: DEPLOY/artifacts/design/ap/AP908.css */
+[data-todo="ap908"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP908";
+}

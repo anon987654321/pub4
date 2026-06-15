@@ -1,0 +1,4 @@
+/* AP1402: AP1402 Icon stroke weight: 1.5px stroke on all icons for normal contexts; 2px for emphasis; never 1px (too thin on low-DPI) or 2.5px+ (too heavy in body text) */
+[data-todo="ap1402"] {
+  --artifact-id: "AP1402";
+}

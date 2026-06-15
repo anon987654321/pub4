@@ -17,5 +17,5 @@ class Takeaway::MenuItemsController < Takeaway::BaseController
 
   private
   def set_restaurant = (@restaurant = Current.user.takeaway_restaurants.find(params[:restaurant_id]))
-  def item_params    = params.require(:takeaway_menu_item).permit(:name, :description, :price_cents, :available, :vegetarian, :vegan, :photo)
+  def item_params    = params.expect(:takeaway_menu_item => [:name, :description, :price_cents, :available, :vegetarian, :vegan, :photo])
 end

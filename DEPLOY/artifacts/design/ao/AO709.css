@@ -1,0 +1,6 @@
+/* AO709: AO709 New Yorker featured article: large image (100vw) + title overlay at bottom with white text on dark scrim; `position: absolute; bottom: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7))` */
+/* Artifact: DEPLOY/artifacts/design/ao/AO709.css */
+[data-todo="ao709"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO709";
+}

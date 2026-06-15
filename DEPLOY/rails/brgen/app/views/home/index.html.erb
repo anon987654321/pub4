@@ -25,7 +25,7 @@
       <% end %>
     </ul>
     <% if authenticated? %>
-      <p><%= link_to "+ New community", new_community_path, class: "btn btn-ghost btn-sm" %></p>
+      <p><%= link_to "+ New community", community_wizard_path, class: "btn btn-ghost btn-sm" %></p>
     <% end %>
   </aside>
 <% end %>
@@ -35,12 +35,21 @@
   <%= link_to "Latest", posts_path(sort: "fresh"), class: "sort-tab" %>
 </nav>
 
+<div id="feed-posts">
 <% if @posts.any? %>
   <% @posts.each do |post| %>
     <%= render "posts/post", post: post %>
+  <% end %>
+  <% if @pagy&.next %>
+    <div data-controller="content-loader"
+         data-content-loader-url-value="<%= root_path(page: @pagy.next, format: :html) %>"
+         data-content-loader-insert-value="append">
+      <p class="dim">Loading more posts…</p>
+    </div>
   <% end %>
 <% else %>
   <section class="empty">
     <p>No posts yet. <%= authenticated? ? link_to("Create one", new_post_path) : link_to("Sign in to post", new_session_path) %>.</p>
   </section>
 <% end %>
+</div>

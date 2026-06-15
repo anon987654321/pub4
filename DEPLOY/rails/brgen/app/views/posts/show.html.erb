@@ -20,19 +20,34 @@
     <% if @post.community %>
       <%= link_to @post.community.name, community_path(@post.community) %> ·
     <% end %>
-    posted by <%= @post.author_name %> ·
+    posted by
+    <span data-controller="popover">
+      <button type="button" class="btn btn-ghost btn-sm" data-popover-target="button" data-action="popover#toggle">
+        <%= @post.author_name %>
+      </button>
+      <div data-popover-target="content" hidden>
+        <strong><%= @post.author_name %></strong>
+        <% if @post.user && !@post.anonymous? %>
+          <p class="dim"><%= @post.user.email_address %></p>
+          <%= link_to "View profile", user_path(@post.user) %>
+        <% end %>
+      </div>
+    </span> ·
     <time datetime="<%= @post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(@post.created_at) %> ago</time>
   </header>
   <h1><%= @post.title %></h1>
   <% if @post.image.attached? %>
     <div data-controller="lightbox">
       <a href="<%= url_for(@post.image) %>" data-lg-size="1600-1200">
-        <%= image_tag @post.image, class: "post-image" %>
+        <%= image_tag @post.image, class: "post-image", loading: "lazy" %>
       </a>
     </div>
   <% end %>
   <% if @post.content.present? %>
-    <%= brgen_content(@post.content) %>
+    <div data-controller="read-more" data-read-more-limit-value="600">
+      <div data-read-more-target="content"><%= brgen_content(@post.content) %></div>
+      <button type="button" class="btn btn-ghost btn-sm" data-read-more-target="button" data-action="read-more#toggle" hidden>Read more</button>
+    </div>
   <% end %>
   <div style="display:flex;gap:8px;margin-top:12px">
     <button class="btn-share" data-controller="share"

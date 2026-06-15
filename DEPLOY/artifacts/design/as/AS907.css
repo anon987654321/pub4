@@ -1,0 +1,6 @@
+/* AS907: AS907 Color contrast audit: run Polypane accessibility panel or axe on every view; zero AA failures; document AAA failures with rationale for each */
+/* Artifact: DEPLOY/artifacts/design/as/AS907.css */
+[data-todo="as907"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS907";
+}

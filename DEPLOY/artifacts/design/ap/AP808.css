@@ -1,0 +1,6 @@
+/* AP808: AP808 Inline validation: validate on `blur` not `input` — don't punish before user finishes typing; show success check on valid field; show error on invalid field after touch */
+/* Artifact: DEPLOY/artifacts/design/ap/AP808.css */
+[data-todo="ap808"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP808";
+}

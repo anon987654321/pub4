@@ -1,0 +1,26 @@
+<% content_for :title, "Chat moderation" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim"><%= @live_stream.title %></p>
+    <h1>Chat moderation</h1>
+  </div>
+  <%= link_to "Back to stream", tv_live_stream_path(@live_stream), class: "btn btn-ghost btn-sm" %>
+</div>
+
+<p class="dim"><%= pluralize(@hidden_count, "hidden message") %></p>
+
+<% @entries.each do |entry| %>
+  <article id="stream_chat_<%= entry.id %>" class="<%= "dim" if entry.moderation_status == "hidden" %>">
+    <strong><%= entry.user&.email_address&.split("@")&.first || "anon" %></strong>
+    <span class="dim"> · <%= entry.created_at.strftime("%H:%M") %> · <%= entry.moderation_status %></span>
+    <p><%= entry.message %></p>
+    <div style="display:flex;gap:8px">
+      <% if entry.moderation_status == "hidden" %>
+        <%= button_to "Restore", tv_live_stream_stream_chat_moderation_path(@live_stream, entry), method: :patch, params: { status: "visible" }, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%= button_to "Hide", tv_live_stream_stream_chat_moderation_path(@live_stream, entry), method: :patch, params: { status: "hidden" }, class: "btn btn-danger btn-sm" %>
+      <% end %>
+    </div>
+  </article>
+<% end %>

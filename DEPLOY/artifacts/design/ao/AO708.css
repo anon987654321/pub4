@@ -1,0 +1,6 @@
+/* AO708: AO708 Substack email-friendly layout: max-width 600px for all email-rendered content; single column; inline styles for email client compatibility */
+/* Artifact: DEPLOY/artifacts/design/ao/AO708.css */
+[data-todo="ao708"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO708";
+}

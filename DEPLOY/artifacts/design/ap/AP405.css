@@ -1,0 +1,6 @@
+/* AP405: AP405 Eliminate dead zones: any area of the UI with >200px of empty space that isn't intentional void is a layout bug — fix with better content flow, not filler elements or background patterns */
+/* Artifact: DEPLOY/artifacts/design/ap/AP405.css */
+[data-todo="ap405"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP405";
+}

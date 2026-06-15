@@ -969,3 +969,5 @@ article mark { background: rgba(220,220,220,.08); color: var(--text-dim); paddin
 .item-subtotal { float: inline-end; }
 .menu-row { display: flex; align-items: center; justify-content: space-between; }
 .qty-field { width: 60px; }
+
+@import "map_page.css";

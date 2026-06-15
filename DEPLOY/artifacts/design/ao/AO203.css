@@ -1,0 +1,6 @@
+/* AO203: AO203 Medium subheading: `font-size: 26px / font-weight: 600 / line-height: 1.4` — clear but subordinate to h1; uses same serif stack */
+/* Artifact: DEPLOY/artifacts/design/ao/AO203.css */
+[data-todo="ao203"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO203";
+}

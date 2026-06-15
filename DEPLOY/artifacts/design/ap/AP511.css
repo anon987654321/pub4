@@ -1,0 +1,6 @@
+/* AP511: AP511 Stagger for lists: when a list loads, stagger children's enter animations by 40ms per item; `animation-delay: calc(var(--index) * 40ms)`; maximum 5 items staggered then simultaneous */
+/* Artifact: DEPLOY/artifacts/design/ap/AP511.css */
+[data-todo="ap511"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP511";
+}

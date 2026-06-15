@@ -1,0 +1,6 @@
+/* AO303: AO303 Substack sans-serif variant: `font-family: "Söhne", Helvetica, Arial, sans-serif` — alt style for more modern newsletters; implement as font option in blognet */
+/* Artifact: DEPLOY/artifacts/design/ao/AO303.css */
+[data-todo="ao303"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO303";
+}

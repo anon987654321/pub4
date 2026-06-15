@@ -1,0 +1,4 @@
+/* AP1307: AP1307 Pinch-zoom: never `user-scalable=no` in viewport meta — mandatory for accessibility; design layouts that scale gracefully with pinch-zoom */
+[data-todo="ap1307"] {
+  --artifact-id: "AP1307";
+}

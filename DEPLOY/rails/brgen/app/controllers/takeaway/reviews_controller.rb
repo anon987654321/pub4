@@ -40,6 +40,6 @@ class Takeaway::ReviewsController < Takeaway::BaseController
   end
 
   def review_params
-    params.require(:takeaway_review).permit(:rating, :body)
+    params.expect(:takeaway_review => [:rating, :body])
   end
 end

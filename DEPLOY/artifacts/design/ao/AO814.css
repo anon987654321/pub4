@@ -1,0 +1,6 @@
+/* AO814: AO814 Avatar with online indicator: `position: relative` avatar container; `::after` pseudo-element as 10px green circle `position: absolute; bottom: 2px; right: 2px; border: 2px solid white` */
+/* Artifact: DEPLOY/artifacts/design/ao/AO814.css */
+[data-todo="ao814"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO814";
+}

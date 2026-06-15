@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="<%= I18n.locale %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -23,14 +23,14 @@
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-  <link rel="stylesheet" href="/styles/minimal-ui.css">
+  <link rel="stylesheet" href="/styles/pwa.css">
   <%= yield :json_ld %>
   <%= javascript_importmap_tags %>
   <%= yield :head if content_for?(:head) %>
-  <script type="module" src="/minimal-gesture.js"></script>
+  <%= render "shared/minimal_ui" %>
 </head>
-<body class="zen-minimal">
-<nav>
+<body class="zen-minimal" data-pwa-key="hjerterom" data-controller="pwa-standalone">
+<nav data-pwa-primary-nav>
   <%= link_to "Hjerterom", root_path, class: "brand" %>
   <%= link_to "Mat",        food_listings_path %>
   <%= link_to "Ressurser",  resources_path %>
@@ -43,6 +43,10 @@
 </nav>
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
+<% if flash[:toast].present? %>
+  <div data-controller="toast" data-toast-message-value="<%= flash[:toast] %>" data-toast-variant-value="success" hidden></div>
+<% end %>
 <main><%= yield %></main>
+<%= render "shared/pwa_shell" %>
 </body>
 </html>

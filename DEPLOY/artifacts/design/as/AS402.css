@@ -1,0 +1,6 @@
+/* AS402: AS402 blognet reading progress: `.progress-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--color-border); z-index: var(--z-sticky) } .progress-bar__fill { height: 100%; background: var(--color-midtone); width: 0; transition: width 0.1s linear }` — driven by Stimulus scroll controller */
+/* Artifact: DEPLOY/artifacts/design/as/AS402.css */
+[data-todo="as402"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS402";
+}

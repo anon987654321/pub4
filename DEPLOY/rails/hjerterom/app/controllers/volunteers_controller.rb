@@ -46,6 +46,6 @@ class VolunteersController < ApplicationController
   end
 
   def volunteer_params
-    params.require(:volunteer).permit(:name, :email, :phone, :active, :notes)
+    params.expect(:volunteer => [:name, :email, :phone, :active, :notes])
   end
 end

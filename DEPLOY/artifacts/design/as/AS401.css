@@ -1,0 +1,6 @@
+/* AS401: AS401 blognet article layout: `.article { max-width: 740px; margin-inline: auto; padding: var(--space-8) var(--space-4) } .article-hero { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: var(--radius-md); margin-bottom: var(--space-6) }` — Medium article pattern */
+/* Artifact: DEPLOY/artifacts/design/as/AS401.css */
+[data-todo="as401"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS401";
+}

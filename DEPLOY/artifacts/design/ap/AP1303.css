@@ -1,0 +1,4 @@
+/* AP1303: AP1303 Tap highlight removal: `-webkit-tap-highlight-color: rgba(0,0,0,0)` globally; custom active states communicate tap instead; eliminates browser blue flash */
+[data-todo="ap1303"] {
+  --artifact-id: "AP1303";
+}

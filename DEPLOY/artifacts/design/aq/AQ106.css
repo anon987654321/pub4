@@ -1,0 +1,6 @@
+/* AQ106: AQ106 Throttle broadcasts: wrap `ActionCable.server.broadcast` in `Rails.cache.fetch("broadcast:#{key}", expires_in: 1.second) { broadcast! }`; prevent storm from rapid successive writes */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ106.css */
+[data-todo="aq106"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ106";
+}

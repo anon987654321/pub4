@@ -1,0 +1,6 @@
+/* AQ802: AQ802 Etag-based sync: `If-None-Match` header on GET /api/posts — return 304 if unchanged; client uses cached response; reduces bandwidth for reconnected offline PWAs */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ802.css */
+[data-todo="aq802"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ802";
+}

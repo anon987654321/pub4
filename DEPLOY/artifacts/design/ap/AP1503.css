@@ -1,0 +1,4 @@
+/* AP1503: AP1503 LCP ≤ 2.5s: Largest Contentful Paint; hero image is `loading="eager"` + `fetchpriority="high"`; preloaded in `<head>`; served as WebP; never LCP element inside lazy-loaded frame */
+[data-todo="ap1503"] {
+  --artifact-id: "AP1503";
+}

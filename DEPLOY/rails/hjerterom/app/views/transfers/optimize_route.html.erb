@@ -1,0 +1,14 @@
+<% content_for :title, "Route optimization" %>
+
+<h1>OSRM optimized route</h1>
+<% if @route[:distance_km] %>
+  <p class="dim"><%= @route[:distance_km] %> km · <%= @route[:duration_min] %> min</p>
+<% else %>
+  <p class="dim">Fallback order (OSRM unavailable)</p>
+<% end %>
+
+<ol>
+  <% @route[:stops].each do |stop| %>
+    <li><%= stop[:name] %></li>
+  <% end %>
+</ol>

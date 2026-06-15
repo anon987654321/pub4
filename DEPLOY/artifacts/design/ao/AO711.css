@@ -1,0 +1,6 @@
+/* AO711: AO711 New Yorker sticky header: full-width header shrinks on scroll — `transition: height 0.3s`; large on load (80px), compact (48px) after 100px scroll; content reflows via CSS variable */
+/* Artifact: DEPLOY/artifacts/design/ao/AO711.css */
+[data-todo="ao711"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO711";
+}

@@ -1,0 +1,6 @@
+/* AQ904: AQ904 Keyboard navigation for swipe cards: dating swipe cards respond to `ArrowRight` (like), `ArrowLeft` (pass), `ArrowUp` (superlike), `Escape` (close profile); announced via `aria-label` updates */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ904.css */
+[data-todo="aq904"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ904";
+}

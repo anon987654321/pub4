@@ -1,0 +1,6 @@
+/* AP208: AP208 Tint scale generation: from midtone, derive 5 tints (10/20/30/40/50% white blend) and 5 shades (10/20/30/40/50% black blend) — 11-step scale per hue; name as `--color-midtone-{100..900}` */
+/* Artifact: DEPLOY/artifacts/design/ap/AP208.css */
+[data-todo="ap208"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP208";
+}

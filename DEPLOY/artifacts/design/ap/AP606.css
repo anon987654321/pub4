@@ -1,0 +1,6 @@
+/* AP606: AP606 amber outfit builder: grid of item thumbnails; drag-to-reorder; selected items get `outline: 2px solid var(--color-accent)`; outfit name editable inline via `contenteditable` */
+/* Artifact: DEPLOY/artifacts/design/ap/AP606.css */
+[data-todo="ap606"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP606";
+}

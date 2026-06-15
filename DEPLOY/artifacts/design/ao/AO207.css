@@ -1,0 +1,6 @@
+/* AO207: AO207 Medium tag label: `font-size: 13px / font-weight: 500 / letter-spacing: 0.02em / text-transform: uppercase` — category pills with uppercase tracking */
+/* Artifact: DEPLOY/artifacts/design/ao/AO207.css */
+[data-todo="ao207"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO207";
+}

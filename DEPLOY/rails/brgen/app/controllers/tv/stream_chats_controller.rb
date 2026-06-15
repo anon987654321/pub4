@@ -23,7 +23,7 @@ module Tv
     end
 
     def stream_chat_params
-      params.require(:stream_chat).permit(:message)
+      params.expect(:stream_chat => [:message])
     end
   end
 end

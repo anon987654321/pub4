@@ -1,0 +1,6 @@
+/* AR510: AR510 Motion path: `offset-path: path("M0,0 C50,-50 100,50 150,0")` for particle effects (confetti on match in dating); CSS Motion Path instead of canvas; hardware accelerated */
+/* Artifact: DEPLOY/artifacts/design/ar/AR510.css */
+[data-todo="ar510"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR510";
+}

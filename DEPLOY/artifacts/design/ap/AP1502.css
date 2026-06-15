@@ -1,0 +1,4 @@
+/* AP1502: AP1502 CLS ≤ 0.1: Cumulative Layout Shift; every image has `width` + `height` attributes; fonts use `font-display: swap`; ads/embeds have reserved space; skeleton loaders match content dimensions */
+[data-todo="ap1502"] {
+  --artifact-id: "AP1502";
+}

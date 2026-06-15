@@ -1,0 +1,6 @@
+/* AR708: AR708 Inline errors: `.field-error { font-size: var(--text-sm); color: var(--color-danger); margin-block-start: var(--space-1); display: flex; align-items: center; gap: var(--space-1) }` + error icon SVG via CSS `::before` */
+/* Artifact: DEPLOY/artifacts/design/ar/AR708.css */
+[data-todo="ar708"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR708";
+}

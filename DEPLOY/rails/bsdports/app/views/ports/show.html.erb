@@ -27,17 +27,11 @@
   <% end %>
 
   <% if @deps.any? %>
-    <h2>Dependency graph (plain SVG)</h2>
-    <svg width="400" height="<%= [200, 30 + @deps.size * 25].max %>" style="border:1px solid #ccc; background:#fafafa">
-      <circle cx="300" cy="100" r="18" fill="#fff" stroke="#000" />
-      <text x="300" y="104" text-anchor="middle" font-size="7"><%= @port.name[0,10] %></text>
-      <% @deps.each_with_index do |dep, i| %>
-        <% y = 20 + i * 25 %>
-        <line x1="282" y1="100" x2="120" y2="<%= y %>" stroke="#666" stroke-width="1" />
-        <circle cx="100" cy="<%= y %>" r="12" fill="#eee" stroke="#000" />
-        <text x="100" y="<%= y + 3 %>" text-anchor="middle" font-size="6"><%= dep.depends_on.name[0,8] %></text>
-      <% end %>
-    </svg>
+    <h2>Dependency graph</h2>
+    <div data-controller="dependency-graph"
+         data-dependency-graph-nodes-value="<%= @graph_nodes.to_json %>"
+         data-dependency-graph-links-value="<%= @graph_links.to_json %>"
+         style="border:1px solid #ccc;background:#fafafa;min-height:360px"></div>
   <% end %>
 
   <% if @updates.any? %>

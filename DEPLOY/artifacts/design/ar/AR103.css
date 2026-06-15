@@ -1,0 +1,6 @@
+/* AR103: AR103 Logical properties throughout: `margin-inline-start` not `margin-left`; `padding-block-end` not `padding-bottom`; `inset-inline-end` not `right`; prepares for RTL support without CSS rewrite */
+/* Artifact: DEPLOY/artifacts/design/ar/AR103.css */
+[data-todo="ar103"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR103";
+}

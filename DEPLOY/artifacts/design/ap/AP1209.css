@@ -1,0 +1,4 @@
+/* AP1209: AP1209 Underline refinement: `text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--color-midtone-400)` — thin, offset underline; not browser default thick underline */
+[data-todo="ap1209"] {
+  --artifact-id: "AP1209";
+}

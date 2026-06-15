@@ -1,0 +1,6 @@
+/* AO108: AO108 X link style: `color: rgb(29,155,240)` (Twitter blue legacy) or `color: rgb(15,20,25)` with underline on hover; no underline at rest; learn the minimum affordance */
+/* Artifact: DEPLOY/artifacts/design/ao/AO108.css */
+[data-todo="ao108"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO108";
+}

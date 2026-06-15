@@ -1,0 +1,6 @@
+/* AO703: AO703 X sticky sidebar nav: `position: sticky; top: 0; height: 100vh; overflow-y: auto` — sidebar scrolls independently; feed scrolls separately; implement with CSS Grid */
+/* Artifact: DEPLOY/artifacts/design/ao/AO703.css */
+[data-todo="ao703"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO703";
+}

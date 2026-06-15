@@ -1,0 +1,6 @@
+/* AP210: AP210 Dark mode palette inversion strategy: in dark mode, shadow becomes background (inverted use — now the surface), highlight becomes text; midtone accent remains; never auto-invert all colors, invert semantically */
+/* Artifact: DEPLOY/artifacts/design/ap/AP210.css */
+[data-todo="ap210"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP210";
+}

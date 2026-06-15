@@ -51,6 +51,9 @@ Rails.application.configure do
   # Highlight code that triggered database queries in logs.
   config.active_record.verbose_query_logs = true
 
+  # Catch N+1 queries early (Rails 8 strict loading).
+  config.active_record.strict_loading_by_default = true
+
   # Append comments with runtime information tags to SQL queries in logs.
   config.active_record.query_log_tags_enabled = true
 

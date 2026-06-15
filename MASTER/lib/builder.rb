@@ -66,6 +66,7 @@ module Master
     end
 
     def build_infrastructure(root)
+      Master::Backlog::Engines.wire_all! if defined?(Master::Backlog::Engines)
       config = Ground::Config.new(root)
       config["model"] ||= Master.default_model
       boot_config = config.freeze_boot

@@ -1,0 +1,17 @@
+<% content_for :title, "Partners" %>
+
+<h1>Partners & transfers</h1>
+<%= link_to "New partner", new_partner_path, class: "btn btn-primary" %>
+<%= link_to "Optimize routes (OSRM)", optimize_route_transfers_path, class: "btn btn-ghost" %>
+
+<% @partners.each do |partner| %>
+  <article>
+    <h2><%= link_to partner.name, partner %></h2>
+    <p class="dim"><%= partner.kind %> · <%= partner.address %></p>
+  </article>
+<% end %>
+
+<h2>Recent transfers</h2>
+<% @transfers.each do |transfer| %>
+  <p><%= transfer.partner.name %> · <%= transfer.status %> · <%= transfer.scheduled_at&.strftime("%d %b") %></p>
+<% end %>

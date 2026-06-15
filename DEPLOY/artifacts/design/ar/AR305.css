@@ -1,0 +1,6 @@
+/* AR305: AR305 Blockquote: `blockquote { border-inline-start: 3px solid var(--color-midtone); padding-inline-start: var(--space-4); margin-block: var(--space-6); font-style: italic; color: var(--text-secondary) }` — left border treatment from Medium */
+/* Artifact: DEPLOY/artifacts/design/ar/AR305.css */
+[data-todo="ar305"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR305";
+}

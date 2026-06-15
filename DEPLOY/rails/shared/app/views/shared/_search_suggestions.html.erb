@@ -1,0 +1,10 @@
+<% if suggestions.present? %>
+  <div class="search-suggestions">
+    <p class="dim">Try searching for:</p>
+    <div class="chips">
+      <% suggestions.each do |term| %>
+        <%= link_to term, url_for(request.query_parameters.merge(q: term)), class: "chip" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

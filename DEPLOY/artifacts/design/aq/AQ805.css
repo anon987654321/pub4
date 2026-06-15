@@ -1,0 +1,6 @@
+/* AQ805: AQ805 Offline write queue: client queues mutations in IndexedDB when offline; on reconnect, `background-sync` fires queued POST/PATCH requests; server processes idempotently */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ805.css */
+[data-todo="aq805"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ805";
+}

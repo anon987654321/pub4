@@ -23,7 +23,7 @@ module Playlist
     end
 
     def comment_params
-      params.require(:timestamped_comment).permit(:body, :timestamp_seconds)
+      params.expect(:timestamped_comment => [:body, :timestamp_seconds])
     end
   end
 end

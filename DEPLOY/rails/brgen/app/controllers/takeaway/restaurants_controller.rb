@@ -1,14 +1,23 @@
 # frozen_string_literal: true
 
 class Takeaway::RestaurantsController < Takeaway::BaseController
+  include Shared::LiveSearchable
+
   allow_unauthenticated_access only: %i[index show]
   before_action :set_restaurant, only: %i[show edit update destroy]
 
   def index
     scope = Takeaway::Restaurant.active.includes(:user)
     scope = scope.where(cuisine_type: params[:cuisine]) if params[:cuisine].present?
-    scope = scope.where("name LIKE ?", "%#{params[:q]}%") if params[:q].present?
-    @pagy, @restaurants = pagy(scope.popular)
+    filters = { cuisine: params[:cuisine] }.compact
+    scope = apply_live_search(scope, columns: %w[name description address city cuisine_type], vertical: "takeaway", filters: filters)
+
+    lat = Current.user&.latitude || params[:lat]
+    lng = Current.user&.longitude || params[:lng]
+    scope = scope.ranked_by_distance(lat, lng)
+
+    @pagy, @restaurants = pagy(scope)
+    render_live_search(collection: @restaurants, partial: "takeaway/restaurants/restaurant") if request.format.turbo_stream?
   end
 
   def show
@@ -46,7 +55,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
 
   def set_restaurant = (@restaurant = Takeaway::Restaurant.find(params[:id]))
 
-  def restaurant_params = params.require(:takeaway_restaurant).permit(
+  def restaurant_params = params.expect(:takeaway_restaurant => [
     :name,
     :description,
     :address,
@@ -56,7 +65,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
     :delivery_fee_cents,
     :min_order_cents,
     :active,
-  )
+  ])
 
   def load_neighbour_reviews
     base = @restaurant.reviews.includes(:user).order(created_at: :desc).limit(12)

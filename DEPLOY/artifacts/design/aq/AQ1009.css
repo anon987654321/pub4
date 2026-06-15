@@ -1,0 +1,4 @@
+/* AQ1009: AQ1009 Audit log: `AuditLog` model with `{user_id, action, resource_type, resource_id, ip, user_agent, created_at}`; log all create/update/destroy via `after_action` callback in ApplicationController */
+[data-todo="aq1009"] {
+  --artifact-id: "AQ1009";
+}

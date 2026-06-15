@@ -1,0 +1,4 @@
+/* AP1401: AP1401 Icon system: Heroicons (MIT) via importmap for all apps; `<svg class="icon icon-sm">` at 16px, `icon-md` at 20px, `icon-lg` at 24px; never icon fonts */
+[data-todo="ap1401"] {
+  --artifact-id: "AP1401";
+}

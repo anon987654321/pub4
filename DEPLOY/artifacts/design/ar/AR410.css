@@ -1,0 +1,6 @@
+/* AR410: AR410 Border color opacity: `border-color: rgb(from var(--color-shadow) r g b / 0.15)` — relative color syntax; border is shadow-hued but translucent; updates automatically when shadow color changes */
+/* Artifact: DEPLOY/artifacts/design/ar/AR410.css */
+[data-todo="ar410"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR410";
+}

@@ -1,0 +1,6 @@
+/* AR601: AR601 BEM-lite naming: `.card`, `.card__title`, `.card__meta`, `.card--featured`; block, element (double underscore), modifier (double dash); max depth 2 elements; never `.card__header__title` */
+/* Artifact: DEPLOY/artifacts/design/ar/AR601.css */
+[data-todo="ar601"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR601";
+}

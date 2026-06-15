@@ -1,0 +1,6 @@
+/* AO503: AO503 X dim mode (intermediate dark): `--background: #15202b; --surface: #1e2732; --text-primary: #f7f9f9; --text-secondary: #8b98a5; --border: #38444d` — three distinct themes, not just light/dark toggle */
+/* Artifact: DEPLOY/artifacts/design/ao/AO503.css */
+[data-todo="ao503"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO503";
+}

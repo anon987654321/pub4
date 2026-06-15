@@ -1,0 +1,4 @@
+/* AO1008: AO1008 Mobile image optimization: `<picture>` element with WebP source + JPEG fallback; `sizes="(max-width: 768px) 100vw, 600px"` srcset; `loading="lazy"` on all below-fold images */
+[data-todo="ao1008"] {
+  --artifact-id: "AO1008";
+}

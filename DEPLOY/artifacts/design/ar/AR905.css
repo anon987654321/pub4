@@ -1,0 +1,6 @@
+/* AR905: AR905 Font-display: `font-display: optional` for decorative fonts (brand font in headers); `font-display: swap` for body text; never `font-display: block` which causes invisible text */
+/* Artifact: DEPLOY/artifacts/design/ar/AR905.css */
+[data-todo="ar905"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR905";
+}

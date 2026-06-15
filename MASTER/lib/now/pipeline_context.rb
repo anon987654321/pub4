@@ -69,8 +69,16 @@ module Master
       def freeze = self # already immutable
 
       # Immutable update — returns a new PipelineContext merging overrides.
+      OUTPUT_CAP = 8_000
+      TIMINGS_CAP = 20
+
       def merge(overrides = {})
-        PipelineContext.new(@data.merge(symbolize(overrides)))
+        merged = @data.merge(symbolize(overrides))
+        merged[:output] = merged[:output].to_s[-OUTPUT_CAP, OUTPUT_CAP] if merged[:output]
+        if merged[:_timings].is_a?(Hash) && merged[:_timings].size > TIMINGS_CAP
+          merged[:_timings] = merged[:_timings].to_a.last(TIMINGS_CAP).to_h
+        end
+        PipelineContext.new(merged)
       end
 
       def ==(other)

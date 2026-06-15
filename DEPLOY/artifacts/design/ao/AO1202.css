@@ -1,0 +1,4 @@
+/* AO1202: AO1202 Manual dark mode toggle: class-based `[data-theme="dark"]` on `<html>`; overrides `prefers-color-scheme`; persist preference in localStorage; sync across tabs via StorageEvent */
+[data-todo="ao1202"] {
+  --artifact-id: "AO1202";
+}

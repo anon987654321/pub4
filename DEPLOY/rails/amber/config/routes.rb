@@ -63,8 +63,14 @@ Rails.application.routes.draw do
     get "pack", to: "ai#packing_list", as: :ai_packing_list
   end
 
+  resource :analytics, only: :show, controller: "analytics"
+  resource :style_evolution, only: :show, controller: "style_evolution"
+
+  post "share-target" => "share_targets#create", as: :share_target
+
   root "home#index"
-  get 'manifest' => 'rails/pwa#manifest', as: :pwa_manifest
-  get 'service-worker' => 'rails/pwa#service_worker', as: :pwa_service_worker
+  get "offline" => "offline#show", as: :offline
+  get "manifest" => "pwa#manifest", as: :pwa_manifest
+  get "service-worker" => "pwa#service_worker", as: :pwa_service_worker
   get "up", to: "health#show", as: :rails_health_check
 end

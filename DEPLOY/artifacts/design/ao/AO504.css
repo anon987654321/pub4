@@ -1,0 +1,6 @@
+/* AO504: AO504 Medium light palette: `--background: #fff; --text-primary: #292929; --text-secondary: rgba(41,41,41,0.6); --border: rgba(41,41,41,0.15); --accent: #1a8917; --link: #1a8917; --surface: #fafafa` */
+/* Artifact: DEPLOY/artifacts/design/ao/AO504.css */
+[data-todo="ao504"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO504";
+}

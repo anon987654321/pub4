@@ -13,6 +13,10 @@
     <% @posts.each do |post| %>
       <article>
         <h2><%= link_to post.title, blog_post_path(@blog, post) %></h2>
+        <div data-controller="read-more" data-read-more-limit-value="280">
+          <div data-read-more-target="content"><%= truncate(post.body.to_s, length: 500) %></div>
+          <button type="button" data-read-more-target="button" data-action="read-more#toggle" hidden>Read more</button>
+        </div>
         <small><%= post.published_at&.strftime("%b %-d, %Y") %> · <%= post.views_count %> views · <%= post.comments_count %> comments</small>
       </article>
     <% end %>

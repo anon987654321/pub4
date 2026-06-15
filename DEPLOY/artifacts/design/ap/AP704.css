@@ -1,0 +1,6 @@
+/* AP704: AP704 bsdports nav: top horizontal nav; logo + "OpenBSD Ports" wordmark left; `Search` field center; `Sign in` + `Contribute` right; no mobile hamburger — responsive via breakpoint */
+/* Artifact: DEPLOY/artifacts/design/ap/AP704.css */
+[data-todo="ap704"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP704";
+}

@@ -1,0 +1,6 @@
+/* AR403: AR403 Transparent color: `--color-overlay: rgb(0 0 0 / 0.5)` using space-separated RGB — modern syntax; `/ alpha` notation; more readable than `rgba(0, 0, 0, 0.5)` */
+/* Artifact: DEPLOY/artifacts/design/ar/AR403.css */
+[data-todo="ar403"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR403";
+}

@@ -1,0 +1,6 @@
+/* AO907: AO907 Substack subscribe form animation: email input expands from `width: 200px` to `width: 320px` on focus; submit button slides in from right; `transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)` */
+/* Artifact: DEPLOY/artifacts/design/ao/AO907.css */
+[data-todo="ao907"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO907";
+}

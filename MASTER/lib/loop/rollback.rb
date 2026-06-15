@@ -5,7 +5,7 @@ require "open3"
 module Master
   module Loop
     class Rollback
-      ROLLBACK_CATEGORIES = %i[validation axiom_violation unknown provider_error llm_call_failure].freeze
+      ROLLBACK_CATEGORIES = %i[validation axiom_violation policy unknown provider_error llm_call_failure].freeze
       ROLLBACK_MSG_TRUNCATE = 120
 
       def initialize(root:, bus: nil)

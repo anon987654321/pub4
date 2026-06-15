@@ -1,0 +1,6 @@
+/* AR203: AR203 Content column constraint: `max-width: var(--content-max-width, 680px); margin-inline: auto; padding-inline: var(--content-padding, clamp(16px, 5vw, 48px))` — fluid padding that collapses gracefully */
+/* Artifact: DEPLOY/artifacts/design/ar/AR203.css */
+[data-todo="ar203"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR203";
+}

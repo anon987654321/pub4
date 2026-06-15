@@ -123,12 +123,30 @@ module Master
         </master_priority>
       XML
 
+        preserve = @rules.preserve
+        if preserve.any?
+          preserve_lines = preserve.map { |k, v| "preserve_#{k}: #{v}" }.join("\n")
+          sections["master_constitution_absolute"] = [
+            sections["master_constitution_absolute"],
+            "<master_preserve>",
+            preserve_lines,
+            "</master_preserve>"
+          ].join("\n")
+        end
+
         sections["master_output_format"] = <<~XML.strip
         <master_output_format>
         Plain prose. Sentence case throughout. No markdown headers, bold, bullet lists, or numbered lists.
         Code fences allowed only for code. Never use: Certainly, Of course, Great question, Absolutely, Happy to help.
         </master_output_format>
       XML
+
+        if evidence.any?
+          sections["master_constitution_absolute"] = [
+            sections["master_constitution_absolute"],
+            "require_evidence_paths: modification=unified diff; completion=command output; file_read=content+SHA-256"
+          ].join("\n")
+        end
 
         code_rules = @rules.code_rules
         if code_rules.any?
@@ -210,7 +228,7 @@ module Master
         end
 
         ordered = ordering.empty? ? sections.keys : ordering
-        ordered.filter_map { |key| sections[key] }.join("\n\n")
+        (ordered + (sections.keys - ordered)).filter_map { |key| sections[key] }.join("\n\n")
       end
     end
   end

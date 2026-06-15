@@ -1,0 +1,6 @@
+/* AO906: AO906 Medium progress bar: thin `4px` line at top of viewport tracking reading progress; `background: var(--accent); width: 0; transition: width 0.1s linear` via JS scroll listener */
+/* Artifact: DEPLOY/artifacts/design/ao/AO906.css */
+[data-todo="ao906"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO906";
+}

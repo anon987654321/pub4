@@ -1,0 +1,38 @@
+<% content_for :title, "Moderation" %>
+
+<header>
+  <h1>Moderation queue</h1>
+  <p class="dim">Review reported content and take bulk actions.</p>
+</header>
+
+<% if @reports.any? %>
+  <%= form_with url: bulk_update_moderation_reports_path, method: :patch, data: { controller: "checkbox-select-all" } do %>
+    <p>
+      <label>
+        <input type="checkbox" data-checkbox-select-all-target="checkbox" data-action="checkbox-select-all#toggle">
+        Select all
+      </label>
+    </p>
+    <ul>
+      <% @reports.each do |report| %>
+        <li>
+          <label>
+            <input type="checkbox" name="report_ids[]" value="<%= report.id %>" data-checkbox-select-all-target="checkbox">
+            <strong><%= report.reportable_type %></strong> #<%= report.reportable_id %>
+            — <%= report.reason %> (<%= report.status %>)
+          </label>
+        </li>
+      <% end %>
+    </ul>
+    <div data-controller="dialog">
+      <button type="button" class="btn btn-danger btn-sm" data-action="dialog#open">Dismiss selected</button>
+      <dialog data-dialog-target="dialog">
+        <p>Dismiss selected reports?</p>
+        <button type="submit" name="status" value="dismissed" class="btn btn-danger btn-sm">Confirm dismiss</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="dialog#close">Cancel</button>
+      </dialog>
+    </div>
+  <% end %>
+<% else %>
+  <p>No open reports.</p>
+<% end %>

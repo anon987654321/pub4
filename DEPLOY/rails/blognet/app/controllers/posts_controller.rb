@@ -11,9 +11,11 @@ class PostsController < ApplicationController
   end
 
   def show
-    @post.increment!(:views_count)
-    @comments = @post.comments.approved.roots.includes(:user, :replies)
+    @paywall_allowed = PaywallService.can_read?(post: @post, viewer_token: viewer_token, user: Current.user)
+    @post.increment!(:views_count) if @paywall_allowed
+    @comments = @post.comments.approved.roots.includes(:user, :replies) if @paywall_allowed
     @comment  = Comment.new
+    respond_to_cached_show(@post, only: %i[id title body slug published_at views_count comments_count])
   end
 
   def new
@@ -43,6 +45,10 @@ class PostsController < ApplicationController
   def authorize! = redirect_to(@blog, alert: "Unauthorized") unless @post.user == Current.user
 
   def post_params
-    params.require(:post).permit(:title, :body, :published, :slug, images: [])
+    params.expect(post: [:title, :body, :published, :slug, :paywalled, { images: [] }])
+  end
+
+  def viewer_token
+    cookies.permanent[:blognet_viewer] ||= SecureRandom.urlsafe_base64(16)
   end
 end

@@ -1,0 +1,4 @@
+/* AQ1204: AQ1204 Query objects: `app/queries/` directory; `FeedQuery.new(user: current_user, page: params[:page]).call` — extract complex AR queries from controllers and models; testable in isolation */
+[data-todo="aq1204"] {
+  --artifact-id: "AQ1204";
+}

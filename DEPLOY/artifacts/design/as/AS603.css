@@ -1,0 +1,6 @@
+/* AS603: AS603 bsdports dependency graph: SVG-based; nodes as `<circle>` with port name `<text>`; edges as `<line>`; D3 force layout via Stimulus controller; port card color = version freshness (green=recent, yellow=aging, red=outdated) */
+/* Artifact: DEPLOY/artifacts/design/as/AS603.css */
+[data-todo="as603"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AS603";
+}

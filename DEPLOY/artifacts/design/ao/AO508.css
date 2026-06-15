@@ -1,0 +1,6 @@
+/* AO508: AO508 New Yorker palette: `--background: #ffffff; --text: #000000; --text-secondary: #333333; --accent: #d40000; --border: #cccccc; --surface: #f5f5f5` — minimalist four-color system; red is the only chromatic note */
+/* Artifact: DEPLOY/artifacts/design/ao/AO508.css */
+[data-todo="ao508"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO508";
+}

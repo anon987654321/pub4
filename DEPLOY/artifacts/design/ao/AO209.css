@@ -1,0 +1,6 @@
+/* AO209: AO209 Medium blockquote: `border-left: 3px solid #000; padding-left: 23px; font-style: italic; font-size: 22px` — strong typographic statement, implement in ActionText */
+/* Artifact: DEPLOY/artifacts/design/ao/AO209.css */
+[data-todo="ao209"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO209";
+}

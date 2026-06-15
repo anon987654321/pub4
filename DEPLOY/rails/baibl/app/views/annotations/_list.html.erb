@@ -1,0 +1,11 @@
+<div id="annotations_<%= verse.id %>">
+  <% annotations.each do |annotation| %>
+    <article>
+      <p><%= annotation.body %></p>
+      <small class="dim"><%= annotation.visibility %> · <%= annotation.created_at.strftime("%d %b") %></small>
+      <% if annotation.user == Current.user %>
+        <%= button_to "Delete", annotation_path(annotation), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% end %>
+    </article>
+  <% end %>
+</div>

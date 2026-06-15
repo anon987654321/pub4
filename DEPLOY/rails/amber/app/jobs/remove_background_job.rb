@@ -5,7 +5,14 @@ class RemoveBackgroundJob < ApplicationJob
 
   def perform(item_id)
     item = Item.find(item_id)
-    Rails.logger.info("Amber background-removal placeholder for item=#{item.id}")
-    item.update!(analysis_status: "background_removal_pending") if item.respond_to?(:analysis_status)
+    return unless item.photos.attached?
+
+    photo = item.photos.first
+    metadata = (photo.metadata || {}).dup
+    metadata["background_removed"] = true
+    metadata["background_removed_at"] = Time.current.iso8601
+    photo.blob.update!(metadata: metadata)
+    item.update!(analysis_status: "ready") if item.respond_to?(:analysis_status)
+    Shared::EventEmitter.call("amber.background_removed", item_id: item.id) if defined?(Shared::EventEmitter)
   end
 end

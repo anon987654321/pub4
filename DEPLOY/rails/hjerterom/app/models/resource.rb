@@ -18,4 +18,13 @@ class Resource < ApplicationRecord
       lat, lat, lng, lng, (km / 111.0)**2)
   }
   scope :by_type,    ->(t) { where(resource_type: t) }
+  scope :search, ->(q) {
+    term = q.to_s.strip
+    return none if term.empty?
+
+    ids = connection.select_values(
+      sanitize_sql_array(["SELECT rowid FROM resources_fts WHERE resources_fts MATCH ?", term])
+    )
+    ids.any? ? where(id: ids) : none
+  }
 end

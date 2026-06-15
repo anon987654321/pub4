@@ -1,0 +1,6 @@
+/* AP801: AP801 Input field baseline: `border: 1px solid var(--color-border); border-radius: 6px; padding: 10px 14px; font-size: 1rem; width: 100%; background: var(--color-surface)` — consistent across all apps */
+/* Artifact: DEPLOY/artifacts/design/ap/AP801.css */
+[data-todo="ap801"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP801";
+}

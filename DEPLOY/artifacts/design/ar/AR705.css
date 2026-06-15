@@ -1,0 +1,6 @@
+/* AR705: AR705 File drop zone: `.dropzone { border: 2px dashed var(--color-border); border-radius: var(--radius-lg); padding: var(--space-8); text-align: center; transition: all var(--duration-fast) } .dropzone.drag-over { border-color: var(--color-midtone); background: var(--color-midtone-50) }` — `drag-over` class toggled by Stimulus */
+/* Artifact: DEPLOY/artifacts/design/ar/AR705.css */
+[data-todo="ar705"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR705";
+}

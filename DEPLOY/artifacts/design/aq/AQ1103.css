@@ -1,0 +1,4 @@
+/* AQ1103: AQ1103 Event tracking: `AnalyticsEvent` model with `{event_name, properties: jsonb, user_id, session_id, created_at}`; log via `track("post.created", {category_id: @post.category_id})` */
+[data-todo="aq1103"] {
+  --artifact-id: "AQ1103";
+}

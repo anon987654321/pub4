@@ -1,0 +1,6 @@
+/* AQ108: AQ108 Connection health ping: `ActionCable.server.config.ping_interval = 15`; client auto-reconnects on dropped connection; display "Reconnecting…" indicator via Stimulus */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ108.css */
+[data-todo="aq108"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ108";
+}

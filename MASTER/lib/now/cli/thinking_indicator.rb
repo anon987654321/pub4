@@ -27,7 +27,8 @@ module Master
           loop do
             @think_mutex.synchronize do
               frame = SPIN_FRAMES[i % SPIN_FRAMES.size]
-              print "\r\e[K#{@renderer.render("#{frame} #{@think_stage}", mode: :dim)}"
+              elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - (@think_t0 || 0))).to_i
+              print "\r\e[K#{@renderer.render("#{frame} #{@think_stage} #{elapsed}s", mode: :dim)}"
               $stdout.flush
             end
             sleep SPIN_INTERVAL

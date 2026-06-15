@@ -1,0 +1,6 @@
+/* AR910: AR910 Reduce paint: `background-color` changes are cheaper than `box-shadow` changes; `opacity` and `transform` don't trigger repaint; prefer these for hover states over color-change animations */
+/* Artifact: DEPLOY/artifacts/design/ar/AR910.css */
+[data-todo="ar910"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR910";
+}

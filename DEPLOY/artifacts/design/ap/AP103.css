@@ -1,0 +1,6 @@
+/* AP103: AP103 NO_CONSECUTIVE_BLANK_LINES in stylesheets: maximum one blank line between rule blocks; two blank lines between major sections (layout, components, utilities) */
+/* Artifact: DEPLOY/artifacts/design/ap/AP103.css */
+[data-todo="ap103"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP103";
+}

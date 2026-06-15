@@ -1,0 +1,6 @@
+/* AO707: AO707 Substack home layouts: list view (`flex-direction: column`), grid view (`grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))`), magazine view (featured post full-width + grid below) */
+/* Artifact: DEPLOY/artifacts/design/ao/AO707.css */
+[data-todo="ao707"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO707";
+}

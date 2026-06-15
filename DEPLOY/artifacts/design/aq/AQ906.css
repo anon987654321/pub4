@@ -1,0 +1,6 @@
+/* AQ906: AQ906 Norwegian address format: `SteetName Number, Postal City`; `PostalCode` is 4 digits; `hjerterom` and `brgen` delivery addresses validate against this format */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ906.css */
+[data-todo="aq906"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ906";
+}

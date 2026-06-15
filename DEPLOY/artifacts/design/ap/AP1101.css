@@ -1,0 +1,4 @@
+/* AP1101: AP1101 Feed density toggle: compact (X-style, 80px cards), comfortable (default, 120px), spacious (Medium-style, 200px); user preference saved to `current_user.feed_density`; CSS class on `<body>` */
+[data-todo="ap1101"] {
+  --artifact-id: "AP1101";
+}

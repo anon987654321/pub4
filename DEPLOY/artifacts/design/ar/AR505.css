@@ -1,0 +1,6 @@
+/* AR505: AR505 CSS scroll timeline: `@scroll-timeline reading-progress { source: selector(#article); start: 0%; end: 100% }; .progress-bar { animation: progress-grow auto linear; animation-timeline: reading-progress }` — reading progress bar without JS */
+/* Artifact: DEPLOY/artifacts/design/ar/AR505.css */
+[data-todo="ar505"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR505";
+}

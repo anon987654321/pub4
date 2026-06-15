@@ -1,0 +1,6 @@
+/* AP202: AP202 amber palette (wardrobe): shadow `#1c1917` (warm almost-black), midtone `#d4a843` (warm gold), highlight `#fef3c7` (cream); complementary cool `#6366f1` (indigo) for AI/tech features; fashion editorial warmth */
+/* Artifact: DEPLOY/artifacts/design/ap/AP202.css */
+[data-todo="ap202"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP202";
+}

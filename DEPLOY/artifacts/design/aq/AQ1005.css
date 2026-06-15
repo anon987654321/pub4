@@ -1,0 +1,4 @@
+/* AQ1005: AQ1005 SQL injection prevention: never string-interpolate into `where()` clauses; always `where("column = ?", value)` or hash syntax `where(column: value)`; Brakeman catches violations in CI */
+[data-todo="aq1005"] {
+  --artifact-id: "AQ1005";
+}

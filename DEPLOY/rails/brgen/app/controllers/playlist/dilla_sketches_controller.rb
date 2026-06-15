@@ -53,7 +53,7 @@ class Playlist::DillaSketchesController < Playlist::BaseController
   end
 
   def dilla_sketch_params
-    params.require(:playlist_dilla_sketch).permit(:name, :state, :notes).tap do |p|
+    params.expect(:playlist_dilla_sketch => [:name, :state, :notes]).tap do |p|
       # state can come as JSON string from form or already hash
       if p[:state].is_a?(String) && p[:state].present?
         begin

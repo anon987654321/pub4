@@ -1,0 +1,6 @@
+/* AP406: AP406 Negative space as signal: whitespace around an element signals its importance; the call-to-action button gets more surrounding void than body text; implement via asymmetric margin budgets */
+/* Artifact: DEPLOY/artifacts/design/ap/AP406.css */
+[data-todo="ap406"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP406";
+}

@@ -25,6 +25,7 @@ module Master
         @phase = :discover
         @name = nil
         @topic = nil
+        @token_est_cache = 0
         @path = File.join(root, ".master", "session.json")
         @costs_path = File.join(root, ".master", "costs.jsonl")
         Dir.mkdir(File.join(root, ".master")) unless Dir.exist?(File.join(root, ".master"))
@@ -34,6 +35,7 @@ module Master
         msg = { role:, content:, ts: Time.now.to_i }
         @mutex.synchronize do
           @messages << msg
+          @token_est_cache += Session.estimate_tokens(content)
           @name ||= auto_name(content) if role == :user
         end
         msg
@@ -79,6 +81,7 @@ module Master
         @topic = data[:topic]
         @messages = data.fetch(:messages, [])
         @cost = data[:cost].to_f
+        @token_est_cache = @messages.sum { |m| Session.estimate_tokens(m[:content]) }
         self
       end
 
@@ -86,12 +89,18 @@ module Master
 
       def exists? = File.exist?(@path)
       def clear!
-        @mutex.synchronize { @messages = []; @cost = 0.0; @name = nil; @topic = nil }
+        @mutex.synchronize do
+          @messages = []
+          @cost = 0.0
+          @name = nil
+          @topic = nil
+          @token_est_cache = 0
+        end
         self
       end
 
       def token_est
-        @mutex.synchronize { @messages.sum { |m| Session.estimate_tokens(m[:content]) } }
+        @mutex.synchronize { @token_est_cache }
       end
 
       private

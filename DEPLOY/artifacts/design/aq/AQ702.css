@@ -1,0 +1,6 @@
+/* AQ702: AQ702 Email layout: single `mailer_layout.html.erb` with inline CSS (email clients don't support linked CSS); max-width 600px; single column; dark mode via `@media (prefers-color-scheme: dark)` in `<style>` */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ702.css */
+[data-todo="aq702"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ702";
+}

@@ -1,0 +1,4 @@
+/* AP1404: AP1404 Image border radius: 4px on rectangular images in cards; 50% on avatars; 0 on full-bleed hero images; `--radius-md` token ensures consistency */
+[data-todo="ap1404"] {
+  --artifact-id: "AP1404";
+}

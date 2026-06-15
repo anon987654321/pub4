@@ -4,6 +4,8 @@ require "open3"
 
 module Master
   module Now
+    Proposal = Data.define(:action, :reason, :weight)
+
     class Propose
       MAX_PROPOSALS = 5
       STALE_HOURS = 24
@@ -45,26 +47,23 @@ module Master
         [{ action: "/polish", reason: "#{@violations} unresolved violation(s)", weight: }]
       end
 
+      ASSISTANT_PATTERNS = [
+        [/violation[s]? found|need(s)? fixing|to fix/i, "/polish", "assistant flagged violations", 0.85],
+        [/\bunchanged\b|\balready\b/i, "/undo", "assistant says nothing changed", 0.75],
+        [/\bdiff\b|\bedit\b|\bpatch\b/i, "show the diff", "assistant referenced an edit/patch", 0.65],
+        [/(error|fail|exception|crash)/i, "what went wrong?", "error/failure in last reply", 0.7],
+        [/\b(routed|tier|escalat|chose|picked)\b/i, "/why", "decision/score worth inspecting", 0.6],
+        [/\bshould we\b|\btradeoff\b|\beither\b/i, "/council", "constitutional question raised", 0.55],
+        [/\b(applied|wrote|patched|edited)\b/i, "/commit", "patch landed, ready to commit", 0.8],
+      ].freeze
+
       def from_last_assistant
         last = @session.messages.last
         return [] unless last && last[:role] == :assistant
         text = last[:content].to_s
-        out = []
-        out << prop("/polish", "assistant flagged violations", 0.85) \
-          if text.match?(/violation[s]? found|need(s)? fixing|to fix/i)
-        out << prop("/undo", "assistant says nothing changed", 0.75) \
-          if text.match?(/\bunchanged\b|\balready\b/i)
-        out << prop("show the diff", "assistant referenced an edit/patch", 0.65) \
-          if text.match?(/\bdiff\b|\bedit\b|\bpatch\b/i)
-        out << prop("what went wrong?", "error/failure in last reply", 0.7) \
-          if text.match?(/(error|fail|exception|crash)/i)
-        out << prop("/why", "decision/score worth inspecting", 0.6) \
-          if text.match?(/\b(routed|tier|escalat|chose|picked)\b/i)
-        out << prop("/council", "constitutional question raised", 0.55) \
-          if text.match?(/\bshould we\b|\btradeoff\b|\beither\b/i)
-        out << prop("/commit", "patch landed, ready to commit", 0.8) \
-          if text.match?(/\b(applied|wrote|patched|edited)\b/i)
-        out
+        ASSISTANT_PATTERNS.filter_map do |pat, action, reason, weight|
+          prop(action, reason, weight) if text.match?(pat)
+        end
       end
 
       def from_git
@@ -115,7 +114,7 @@ module Master
       end
 
       def prop(action, reason, weight)
-        { action: action, reason: reason, weight: weight }
+        Proposal.new(action:, reason:, weight:).to_h
       end
     end
   end

@@ -16,8 +16,6 @@ if File.readable?("/etc/master.env")
   end
 end
 
-# CPU incident containment: CLI boots safe-idle unless explicitly overridden.
-# Active background loops require MASTER_UNSAFE_PROCESS_DEFAULTS=1 plus explicit env.
 unless ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
   ENV["MASTER_SAFE_MODE"] ||= "1"
   ENV["MASTER_BACKGROUND"] ||= "0"
@@ -28,6 +26,7 @@ unless ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
   ENV["MASTER_DRIFT"] ||= "0"
 end
 
+require "optparse"
 require "set"
 require "master"
 require "ops/loop_slot"
@@ -37,73 +36,44 @@ Master::Ops::LoopSlot.validate!
 Master::Ops::ProcessBudget.validate_loop_slot!
 Master::Ops::RuntimeLoopGuards.install!
 
-def stable_web_secret(config)
-  return config["web_secret_key_base"] if config["web_secret_key_base"].to_s.length >= 64
-  require "securerandom"
-  secret = SecureRandom.hex(64)
-  config["web_secret_key_base"] = secret
-  config_path = File.expand_path("../.master/config.yml", __dir__)
-  require "fileutils"
-  FileUtils.mkdir_p(File.dirname(config_path))
-  require "yaml"
-  existing = YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) rescue {}
-  File.write(config_path, existing.merge("web_secret_key_base" => secret).to_yaml)
-  secret
-rescue StandardError
-  SecureRandom.hex(64)
+options = { version: false, config: false, quiet: false, message: nil }
+parser = OptionParser.new do |opts|
+  opts.banner = "usage: bin/cli [options] [message]"
+  opts.on("--version", "print git SHA + build date") { options[:version] = true }
+  opts.on("--config", "show effective config") { options[:config] = true }
+  opts.on("--quiet", "suppress non-essential output") { options[:quiet] = true }
 end
+parser.parse!
+options[:message] = ARGV.join(" ").strip unless ARGV.empty?
 
-def boot_banner
-  return unless ENV["MASTER_BOOT_STATUS"] == "1"
-  status = Master::Ops::LoopSlot.status
-  budget = Master::Ops::ProcessBudget.status
-  $stderr.puts "process: safe=#{ENV.fetch("MASTER_SAFE_MODE", "1")} background=#{ENV.fetch("MASTER_BACKGROUND", "0")} web=#{ENV.fetch("MASTER_WEB", "0")} loop=#{status[:selected] || "none"} valid=#{budget[:valid]}"
-end
-
-def boot_web_ui(config)
-  return unless ENV["MASTER_WEB"] == "1"
-
-  port = config["web_port"] || 53187
-  host = config["web_host"] || "127.0.0.1"
-
-  if RUBY_PLATFORM.include?("openbsd")
-    running = system("pgrep", "-qf", "falcon.*#{port}")
-    token = config["web_token"]
-    url = config["web_public_url"] || "http://#{host}:#{port}"
-    url += "/?token=#{token}" if token
-    $stderr.puts "web: #{url} (#{running ? "up" : "down — run: doas rcctl start master"})"
-  else
-    require "open3"
-    web_dir = File.expand_path("../web", __dir__)
-    return unless Dir.exist?(web_dir)
-    pids_out, = Open3.capture2e("lsof", "-ti", ":#{port}")
-    pids_out.split.each { |pid| Process.kill("TERM", pid.to_i) rescue nil }
-    sleep 0.5
-    spawn(
-      { "RAILS_ENV" => "production", "SECRET_KEY_BASE" => stable_web_secret(config) },
-      "bundle", "exec", "falcon", "serve", "--bind", "http://#{host}:#{port}",
-      chdir: web_dir, out: File::NULL, err: File::NULL
-    )
-    $stderr.puts "web: http://#{host}:#{port}"
-  end
-rescue StandardError => e
-  $stderr.puts "web_ui: #{e.message}"
+if options[:version]
+  rev = `git -C #{Master::ROOT} rev-parse --short HEAD 2>/dev/null`.strip
+  rev = "unknown" if rev.empty?
+  puts "master #{rev} #{Time.now.utc.strftime("%Y-%m-%d")}"
+  exit 0
 end
 
 cli = nil
 
-trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved"; exit 0 }
+trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved\n"; exit 0 }
 trap("TERM") { cli&.container&.dig(:session)&.save! rescue nil; exit 0 }
 
-boot_banner
+Master::Now::BootBanner.print
 cli = Master.boot(root: Dir.pwd)
 Master::Ops::RuntimeLoopGuards.install!
 
-if $stdin.tty?
-  boot_web_ui(cli.container[:config])
+if options[:config]
+  cfg = cli.container[:config]
+  puts "model=#{cfg['model']} persona=#{cfg.persona} reasoning=#{cfg.reasoning_mode}"
+  puts "safe=#{ENV.fetch('MASTER_SAFE_MODE', '1')} web=#{ENV.fetch('MASTER_WEB', '0')}"
+  exit 0
+end
 
-  message = ARGV.join(" ").strip
-  cli.run(message.empty? ? nil : message)
+ENV["MASTER_QUIET"] = "1" if options[:quiet]
+
+if $stdin.tty?
+  Master::Now::WebServer.start(config: cli.container[:config])
+  cli.run(options[:message].empty? ? nil : options[:message])
 else
   $stdout.sync = true
   $stdin.each_line { |line| cli.pipe(line) }

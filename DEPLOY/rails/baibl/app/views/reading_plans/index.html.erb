@@ -1,0 +1,11 @@
+<% content_for :title, "Reading plans" %>
+
+<h1>Reading plans</h1>
+<%= link_to "New plan", new_reading_plan_path, class: "btn btn-primary" %>
+
+<% @plans.each do |plan| %>
+  <article>
+    <h2><%= link_to plan.name, plan %></h2>
+    <p class="dim"><%= plan.reading_plan_days.count %> days · <%= plan.reading_plan_days.where.not(completed_at: nil).count %> completed</p>
+  </article>
+<% end %>

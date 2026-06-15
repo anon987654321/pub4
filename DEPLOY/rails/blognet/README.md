@@ -135,7 +135,7 @@ Support:
 
 ## Stack
 
-Rails 8, PostgreSQL, pgvector, Hotwire, OpenBSD.
+Rails 8, SQLite3, Hotwire, Falcon, OpenBSD. PostgreSQL/pgvector planned later.
 
 ## AI direction
 

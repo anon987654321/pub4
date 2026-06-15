@@ -1,0 +1,6 @@
+/* AO106: AO106 X letter-spacing: near-zero; `letter-spacing: -0.01em` on bold display names only — grotesque type doesn't need tracking adjustment */
+/* Artifact: DEPLOY/artifacts/design/ao/AO106.css */
+[data-todo="ao106"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AO106";
+}

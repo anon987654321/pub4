@@ -5,10 +5,24 @@
   <%= link_to "New channel", new_tv_channel_path, class: "btn btn-primary btn-sm" if authenticated? %>
 </div>
 
-<% @channels.each do |c| %>
-  <article>
-    <h2><%= link_to c.name, tv_channel_path(c) %><% if c.live? %> <span class="live-badge">Live</span><% end %></h2>
-    <p class="dim"><%= c.subscribers_count %> subscribers</p>
-  </article>
-<% end %>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<div data-controller="live-search">
+  <%= render "shared/search_loading" %>
+  <%= form_with url: tv_channels_path, method: :get, local: true,
+        data: { turbo_frame: "live_search_results" } do |f| %>
+    <div class="search-form" role="search">
+      <%= f.search_field :q, value: params[:q], placeholder: "Search channels…",
+            data: { live_search_target: "input", action: "input->live-search#input" } %>
+      <%= f.submit "Search", class: "btn btn-sm" %>
+    </div>
+  <% end %>
+
+  <%= turbo_frame_tag "live_search_results" do %>
+    <% @channels.each do |c| %>
+      <%= render "tv/channels/channel", channel: c %>
+    <% end %>
+    <% if @channels.empty? && params[:q].present? %>
+      <%= render "shared/search_empty", query: params[:q], search_meta: search_meta %>
+    <% end %>
+    <%= @pagy.series_nav if @pagy.pages > 1 %>
+  <% end %>
+</div>

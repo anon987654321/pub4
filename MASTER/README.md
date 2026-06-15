@@ -1,6 +1,6 @@
 # MASTER
 
-Constitutional AI runtime for any text artifact — code, prose, design, structure. Ruby. OpenBSD-first. Self-hosting.
+Constitutional AI for any text artifact — code, prose, design, structure. Ruby. OpenBSD-first. Self-hosting.
 
 Models propose. The constitution validates. Convergence loops digest violations. Memory learns what fixes stick. Pressure fields track epistemic health. Providers compete by capability, cost, and evidence.
 

@@ -1,0 +1,6 @@
+/* AP504: AP504 Enter animation pattern: elements entering the viewport should `opacity: 0 → 1` + `transform: translateY(8px) → translateY(0)` over `--duration-standard` with `--ease-decelerate`; subtle, not dramatic */
+/* Artifact: DEPLOY/artifacts/design/ap/AP504.css */
+[data-todo="ap504"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AP504";
+}

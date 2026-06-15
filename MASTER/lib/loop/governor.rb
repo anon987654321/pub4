@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "tty-prompt"
+require_relative "system_pressure"
 
 module Master
   module Loop
@@ -23,6 +24,10 @@ module Master
 
       def check_permit(tool_name, tier, description = nil)
         @bus&.publish("tool:before", tool: tool_name, tier:)
+
+        if (pressure_err = check_memory_pressure!(tool_name, tier))
+          return pressure_err
+        end
 
         if (rate_err = check_rate_limit!(tier))
           @bus&.publish("tool:rate_limited", tool: tool_name, tier:)
@@ -53,6 +58,15 @@ module Master
 
       def needs_human?(description)
         description.to_s.match?(PRIVILEGE_RE)
+      end
+
+      def check_memory_pressure!(tool_name, tier)
+        sample = SystemPressure.sample
+        return unless sample[:memory_pressure]
+        @bus&.publish("tool:memory_pressure", tool: tool_name, tier:, mem_free_pct: sample[:mem_free_pct])
+        return Result.err("memory pressure: #{sample[:mem_free_pct]}% free — defer #{tier} tool",
+                          category: :policy,
+                          context: { file: "loop/governor.rb", method: "check_memory_pressure!", attempted: tool_name })
       end
 
       def check_rate_limit!(tier)

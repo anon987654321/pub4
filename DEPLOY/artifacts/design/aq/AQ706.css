@@ -1,0 +1,6 @@
+/* AQ706: AQ706 Digest emails: `DigestEmailJob` aggregates last 24h of unread notifications into single email; send only if user has >3 unread and hasn't visited in 24h; opt-out option */
+/* Artifact: DEPLOY/artifacts/design/aq/AQ706.css */
+[data-todo="aq706"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AQ706";
+}

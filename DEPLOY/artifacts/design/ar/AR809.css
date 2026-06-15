@@ -1,0 +1,6 @@
+/* AR809: AR809 `svh` for stable fullscreen: `height: 100svh` for elements that should not resize when mobile browser chrome shows/hides; modals and overlays use `svh` */
+/* Artifact: DEPLOY/artifacts/design/ar/AR809.css */
+[data-todo="ar809"] {
+  /* design token placeholder — wire in app stylesheets */
+  --artifact-id: "AR809";
+}

@@ -1,0 +1,4 @@
+/* AO1001: AO1001 X mobile bottom nav: 5 icons (Home, Search, Spaces, Notifications, Messages); fixed bottom; `height: 54px; border-top: 1px solid var(--border); background: var(--background); padding-bottom: env(safe-area-inset-bottom)` */
+[data-todo="ao1001"] {
+  --artifact-id: "AO1001";
+}
