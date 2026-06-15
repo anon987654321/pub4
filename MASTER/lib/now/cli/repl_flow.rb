@@ -141,9 +141,14 @@ module Master
         when "/rails-pwa-fix" then run_rails_pwa_fix
         when "/swallow-report" then run_swallow_report
         when "<<" then run_input(read_multiline)
-        else stripped.start_with?("/") ? unknown_command(stripped) : handle_plain_language_line(line)
+        else stripped.start_with?("/") ? run_input(stripped) : handle_plain_language_line(line)
         end
       end
+
+      WORKFLOW_INTENTS = %i[
+        wire_existing_module refactor_to_ruby create_facade codify_policy
+        continue_prior_plan run_full_workflow
+      ].freeze
 
       def handle_plain_language_line(line)
         route = inferred_intent_route(line)
@@ -152,19 +157,17 @@ module Master
         case route[:intent]
         when :scan_then_fix_then_commit
           target = inferred_target_path(line)
-          handle_repl_line("/scan #{target}")
-          handle_repl_line("/fix #{target}")
+          run_workflow(target)
           run_commit
         when :scan_then_fix
           target = inferred_target_path(line)
-          handle_repl_line("/scan #{target}")
-          handle_repl_line("/fix #{target}")
+          run_work_command("scan", target)
+          run_work_command("fix", target)
         when :scan_target
-          handle_repl_line("/scan #{inferred_target_path(line)}")
+          run_work_command("scan", inferred_target_path(line))
         when :scan_fix_lint
           target = inferred_target_path(line)
-          handle_repl_line("/scan #{target}")
-          handle_repl_line("/fix #{target}")
+          run_workflow(target)
           run_lint(target)
         when :why_axioms
           run_why
@@ -178,27 +181,36 @@ module Master
         when :write_repo_changes
           run_commit
           run_push if route[:push]
-        when :wire_existing_module, :refactor_to_ruby, :create_facade, :codify_policy
+        when *WORKFLOW_INTENTS
           target = inferred_target_path(line)
-          handle_repl_line("/triad #{target}")
+          run_workflow(target)
           run_commit if route[:risk] != :low
-        when :continue_prior_plan
-          target = inferred_target_path(line)
-          handle_repl_line("/triad #{target}")
         else
           run_input(line)
         end
       end
 
+      def run_workflow(target)
+        run_work_command("workflow", target)
+      end
+
+      def run_work_command(command, args = "")
+        run_input(["/#{command}", args.to_s.strip].join(" ").strip)
+      end
+
       def inferred_intent_route(line)
         text = line.to_s.strip
+        if text.match?(/\b(?:run|put|send|take)\s+(?:this|it|that)?\s*through\s+master\b/i) ||
+           text.match?(/\b(?:full\s+)?(?:pass|tribunal)\b/i)
+          return { intent: :run_full_workflow, risk: :medium }
+        end
         return { intent: :scan_then_fix_then_commit, risk: :high } if text.match?(/\A.*\bscan\b.*\bfix\b.*\bcommit\b/i)
         return { intent: :scan_fix_lint, risk: :medium } if text.match?(/\A(?:clean|tidy|polish)\b/i)
-        return { intent: :scan_target, risk: :low } if text.match?(/\A(?:check|review|audit)\b/i)
+        return { intent: :scan_target, risk: :low } if text.match?(/\A(?:check|audit)\b/i)
         return { intent: :why_axioms, risk: :low } if text.match?(/\A(?:explain|why|what)\b/i)
         return { intent: :refactor_to_ruby, risk: :medium } if text.match?(/\Afix\b/i)
-        return { intent: :run_ui_review, risk: :low } if text.match?(/\A(?:review|critique)\b/i)
-        return { intent: :verify_patch_landed, risk: :low } if text.match?(/\A(?:verify|check|confirm)\b/i)
+        return { intent: :run_ui_review, risk: :low } if text.match?(/\A(?:ui[\s-]?)?critique\b/i)
+        return { intent: :verify_patch_landed, risk: :low } if text.match?(/\A(?:verify|confirm)\b/i)
         return { intent: :write_repo_changes, risk: :high, push: text.match?(/\bpush\b/i) } if text.match?(/\b(?:commit|save|ship|push)\b/i)
 
         policy = @intent_policy ||= Master::Ground::OrchestrationPolicy.new

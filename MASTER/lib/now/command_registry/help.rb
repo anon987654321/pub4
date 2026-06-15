@@ -50,9 +50,9 @@ module Master
           summary: "generate edge-case test stubs",
           detail: ["/edge-cases <ruby-file>", "Creates skipped tests for nil, empty, max, unicode, invalid JSON, truncation, and injection inputs."]
         },
-        "triad" => {
-          summary: "scan, preview fix, and review",
-          detail: ["/triad <path>", "Runs scan, fix dry-run, and review for the same target."]
+        "workflow" => {
+          summary: "scan, preview fix, and deliberation (usually inferred)",
+          detail: ["Say: run this through MASTER, or: full pass on lib/foo.rb", "/workflow <path> — explicit escape hatch only."]
         },
         "rollback" => {
           summary: "revert the last recorded change",

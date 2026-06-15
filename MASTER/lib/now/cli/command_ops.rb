@@ -107,9 +107,9 @@ module Master
       end
 
       def run_cmd
-        puts @refs.renderer.render("unified: /run <task description>   (recommended primary interface for most work)", mode: :dim)
-        puts @refs.renderer.render("explicit: #{SLASH_COMMANDS.join("  ")}", mode: :dim)
-        puts @refs.renderer.render("or just describe what you want — full pipeline intent inference", mode: :dim)
+        puts @refs.renderer.render("describe what you want — scan/fix/review workflows are inferred", mode: :dim)
+        puts @refs.renderer.render("ops: #{SLASH_COMMANDS.join("  ")}", mode: :dim)
+        puts @refs.renderer.render("work: /scan /fix /workflow … or plain language", mode: :dim)
       end
 
       def run_phase(arg = "")

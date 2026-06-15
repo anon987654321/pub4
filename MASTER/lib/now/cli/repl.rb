@@ -79,7 +79,7 @@ module Master
           when "/rails-pwa-fix" then @cli.run_rails_pwa_fix
           when "/swallow-report" then @cli.run_swallow_report
           when "<<" then @cli.run_input(read_multiline)
-          else stripped.start_with?("/") ? @cli.unknown_command(stripped) : @cli.run_input(line)
+          else stripped.start_with?("/") ? @cli.run_input(stripped) : @cli.run_input(line)
           end
         end
 

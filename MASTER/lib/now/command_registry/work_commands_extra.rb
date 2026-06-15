@@ -27,20 +27,25 @@ module Master
         end
       end
 
-      def dispatch_triad(scanner:, fix_loop:, council_stage:, deliberation:, root:, bus:, review_crew:, ctx: nil)
+      # Scan → fix dry-run → council deliberation. Invoked via infer/workflow intent, not user-facing /triad.
+      def dispatch_workflow(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, **_legacy)
         target = arg_for(ctx).to_s.strip.empty? ? "." : arg_for(ctx).to_s.strip
         abs = expand_or_root(target, root)
         artifact = snapshot_artifact(abs)
         [
-          "triad: scan",
+          "workflow: scan",
           dispatch_scan(scanner:, root:, ctx: { args: target }),
           "",
-          "triad: fix dry-run",
+          "workflow: fix dry-run",
           dispatch_fix(fix_loop:, root:, ctx: { args: "--dry-run #{target}" }),
           "",
-          "triad: deliberation",
+          "workflow: deliberation",
           run_tribunal(deliberation:, artifact:, target:, bus:)
         ].join("\n")
+      end
+
+      def dispatch_triad(**kwargs)
+        dispatch_workflow(**kwargs)
       end
 
       def run_tribunal(deliberation:, artifact:, target:, bus: nil)

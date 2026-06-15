@@ -321,6 +321,12 @@ infer:
       patterns:
       - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(deep))?\\b"
       capture: scan_depth
+    workflow:
+      patterns:
+      - "\\b(?:run|put|send|take)\\s+(?:this|it|that)?\\s*through\\s+master\\b"
+      - "\\b(?:full\\s+)?(?:pass|tribunal)\\b(?:\\s+(?:on|over)\\s+)?([\\w./-]+)?"
+      - "\\bfix\\s+(?:and\\s+)?review\\s+([\\w./-]+)"
+      capture: path
     dmesg:
       patterns:
       - "\\b(?:show\\s+(?:logs?|events?)|system\\s+log|dmesg|what\\s+(?:happened|has\\s+happened)|recent\\s+activity)\\b"

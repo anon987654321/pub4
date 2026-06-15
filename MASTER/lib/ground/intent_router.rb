@@ -20,6 +20,7 @@ module Master
         continue_prior_plan: %w[go ahead continue land it proceed ship],
         write_repo_changes: %w[land write commit save push apply],
         prefer_ruby: %w[ruby not markdown no yaml keep ruby],
+        run_full_workflow: %w[through master tribunal full pass review deliberat],
       }.freeze
 
       STANDING_SEMANTICS = {
@@ -38,7 +39,7 @@ module Master
           codify_policy refactor_to_ruby create_facade apply_user_style_rules
           run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa,
         ],
-        medium: %i[wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app],
+        medium: %i[wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app run_full_workflow],
         high: %i[write_repo_changes delete_redundant_config],
         critical: [],
       }.freeze

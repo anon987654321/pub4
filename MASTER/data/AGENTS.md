@@ -33,7 +33,7 @@ The runtime command registry currently exposes:
 - `tail`
 - `review`
 - `critique`
-- `triad`
+- `workflow` (inferred — scan, fix preview, deliberation)
 - `model`
 - `why`
 - `axioms`
