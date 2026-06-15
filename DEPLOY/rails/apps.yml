@@ -1,18 +1,13 @@
-# Canonical deploy metadata and feature matrix for Rails apps under DEPLOY/rails.
+# Rails deploy matrix — canonical inventory for DEPLOY/rails.
 #
-# Status values:
-#   done    verified in pub4/DEPLOY/rails/<app>/app
-#   port    old implementation exists in anon987654321/pub repo — needs porting to Rails 8 / Hotwire / Falcon / SQLite
-#   missing no implementation found anywhere
-#   planned roadmap only, no code
+# deploy_root: tracked tree copied to /home/<app>/app by <app>.sh
+# status: done | port | missing | planned
 #
-# Cross-cutting dimensions tracked below:
-#   visual_inheritance, activity_graph, multimodal_photo, openbsd_readiness, llm_scan_ready
+# Verify claims: cd MASTER && bundle exec ruby bin/cli  →  /scan DEPLOY/rails/<app>
+# Human summary: DEPLOY/rails/README.md and per-app README.md
+# Shared engine: DEPLOY/rails/shared (pub4-shared gem)
 #
-# Run `/scan deep DEPLOY/rails/<app>/app` through MASTER to verify `done` claims.
-# Sources: pub4 orbs/ extracted models, patch_tv_models.sh, brgen_seeds.rb,
-#          anon987654321/pub repo READMEs, brgen_app/ models,
-#          ~/pub4/tmp/pub_extract/ (generator scripts from __OLD_BACKUPS tgz archives).
+# Stack default: Rails 8.1, Ruby 3.4, SQLite, Falcon, Solid Queue/Cache, relayd TLS
 
 apps:
 
@@ -23,7 +18,7 @@ apps:
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, Solid Queue, Solid Cache, OpenBSD, relayd
     stack_later: PostgreSQL where needed, city graph scaling, richer SNI/domain routing
     deploy_script: DEPLOY/rails/brgen/brgen.sh
-    app_path: DEPLOY/rails/brgen/app
+    deploy_root: DEPLOY/rails/brgen
     public: true
     features:
       core:
@@ -111,7 +106,7 @@ apps:
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, multimodal retrieval, richer PWA/offline features
     deploy_script: DEPLOY/rails/amber/amber.sh
-    app_path: DEPLOY/rails/amber/app
+    deploy_root: DEPLOY/rails/amber
     public: true
     features:
       core:
@@ -156,7 +151,7 @@ apps:
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, GraphRAG, semantic scripture retrieval
     deploy_script: DEPLOY/rails/baibl/baibl.sh
-    app_path: DEPLOY/rails/baibl/app
+    deploy_root: DEPLOY/rails/baibl
     public: true
     features:
       core:
@@ -189,7 +184,7 @@ apps:
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, editorial knowledge graph, Foodielicious vertical routing
     deploy_script: DEPLOY/rails/blognet/blognet.sh
-    app_path: DEPLOY/rails/blognet/app
+    deploy_root: DEPLOY/rails/blognet
     public: true
     features:
       core:
@@ -239,7 +234,7 @@ apps:
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, infrastructure knowledge graph, OpenBSD package intelligence
     deploy_script: DEPLOY/rails/bsdports/bsdports.sh
-    app_path: DEPLOY/rails/bsdports/app
+    deploy_root: DEPLOY/rails/bsdports
     public: true
     features:
       core:
@@ -267,7 +262,7 @@ apps:
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, route optimization, reporting jobs, operational forecasting
     deploy_script: DEPLOY/rails/hjerterom/hjerterom.sh
-    app_path: DEPLOY/rails/hjerterom/app
+    deploy_root: DEPLOY/rails/hjerterom
     public: true
     features:
       core:
