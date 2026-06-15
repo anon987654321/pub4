@@ -1,59 +1,29 @@
-# brgen — hyperlocal city network
+# brgen
 
-brgen is the aggregate Rails app for city-scoped social publishing, marketplace, dating, playlist, TV, takeaway, maps, notifications, and local identity.
-
-It keeps the `railsy` product intent, but follows the current pub4 production contract: Rails 8, SQLite, Solid Queue, Solid Cache, Solid Cable, built-in authentication, Falcon, importmap, Hotwire, and OpenBSD rc.d services. The old generator-era assumptions around Devise, Redis, and mandatory PostgreSQL are lineage, not the active deployment shape.
+Hyperlocal city network — one Rails app, many verticals scoped by host/subdomain.
 
 ## Surfaces
 
-- Main social network: communities, posts, comments, votes, reactions, follows, messaging, notifications, moderation reports.
-- Marketplace: listings, categories, stores, deals, favorites, saved searches, and listing orders.
-- Dating: profiles, likes, dislikes, matches, and city-local discovery.
-- Playlist: playlists, sets, tracks, listens, audio versions, collaboration, likes, and timestamped comments.
-- TV: channels, videos, live streams, stream chats, subscriptions, comments, notes, and view events.
-- Takeaway: restaurants, menus, orders, favorite restaurants, delivery drivers.
-- Locality: cities, neighborhoods, places, nearby alerts, geolocation, and push subscriptions.
-- Trust: external identities, assurance checks, reputation scores, trust signals, account merges.
+Posts, communities, marketplace, dating, playlist, TV, takeaway, maps, messaging, notifications. City tenant via `acts_as_tenant`; per-city SQLite at `db/cities/<slug>.sqlite3`.
 
-## Domains
+Subdomains: `tv`, `dating`, `playlist`, `takeaway`, `markedsplass` (+ localized marketplace aliases), `maps`, `ai`.
 
-Primary domain: `brgen.no`.
+## Stack
 
-City/domain aliases and subdomains route through OpenBSD `relayd`; app behavior is selected by host and subdomain context inside Rails.
-
-Subdomain apps:
-
-- `tv`
-- `dating`
-- `playlist`
-- `takeaway`
-- `marketplace`, plus localized marketplace aliases
+Rails 8.1 · SQLite · Falcon · Hotwire · Solid Queue/Cache/Cable · Active Storage · OpenBSD relayd
 
 ## Deploy
 
 ```zsh
 doas zsh DEPLOY/rails/brgen/brgen.sh
+doas rcctl check brgen_rails
+curl -fsS http://127.0.0.1:38182/up
 ```
 
-The deploy script must copy the tracked app tree, run Bundler, migrate, seed when present, update rc.d, register relayd, restart the service, and verify `/up`.
+## Shared
 
-## Missing logic backlog
+Uses `pub4-shared` concerns (`Votable`, `Commentable`, `Taggable`, `ActivityTrackable`, `GeoLocatable`, `Notifiable`). Activity graph via `Shared::EventEmitter` — wire more actions over time.
 
-- Marketplace buyer-seller chat should reuse conversations instead of creating a parallel message system.
-- Playlist sets need routed views for index, show, new, and edit.
-- TV and takeaway operational dashboards need explicit views for driver updates, stream chats, and moderation queues.
-- Dating needs event integration and premium visibility controls.
-- City routing needs a visible locality switcher and domain-to-city audit task.
+## Open items
 
-## Authentication (condensed from brgen_AUTH.md)
-Use Rails 8 custom authentication (not Devise core). Support Vipps/BankID, generic OIDC, guest identity for anonymous.
-
-## Core (condensed from brgen_CORE.md)
-One Rails app for the city platform: posts/communities, marketplace, takeaway, dating, TV, playlist, messaging, nearby. Unified activity graph for feeds, trust signals, recommendations. Stack: Rails 8, SQLite, Falcon, Hotwire, OpenBSD/relayd. One search, one media pipeline, one moderation kernel.
-
-## Domain Matrix (condensed from brgen_DOMAIN_MATRIX.md)
-Request host decides: city, locale, currency, active subapp (tv, dating, playlist, takeaway, marketplace). Mirrors DEPLOY/openbsd/openbsd.sh.
-
-## Stimulus / Rails 8 Rollout (condensed from STIMULUS_ROLLOUT.md)
-Core: Notification, Clipboard, Reveal, Dropdown, Auto Submit, Timeago, Confirmation.
-Subapps: tv (lightbox, content loader, notification), dating (hotkey/swipe, dialog, lightbox, turbo streams), etc. See full in history if needed.
+See `apps.yml` → `brgen.features` for port/missing/planned matrix. Priority: marketplace order chat reuse, playlist set routes, dating match → DM handoff, city switcher audit.

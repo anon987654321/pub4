@@ -1,25 +1,19 @@
-# Business Plans
-Interactive business plans with data visualization and responsive design.
-## Usage
-```bash
-ruby generate.rb
+# bp — business plans
+
+Static HTML/CSS/JS business-plan sites. No generator — hand-maintained pages.
+
+## Layout
 
 ```
+bp/
+  *.html *.css *.js    site pages
+  mg_*.yml             structured plan data (footwear, space, …)
+```
 
-## Structure
-- `data/*.json` - Business plan data
-- `__shared/template.html.erb` - HTML template
+Open `*.html` in a browser or serve via httpd. YAML files hold tabular/plan data consumed by inline scripts where wired.
 
-- `generated/*.html` - Output files
+## Rules
 
-- `assets/` - Images and media
-
-## Features
-- ERB templating with JSON data
-- Chart.js visualizations
-
-- Swiper image carousels
-
-- Responsive mobile-first design
-
-- Self-contained HTML output
+- Self-contained assets per site
+- No committed secrets
+- Changes reviewed like any DEPLOY surface

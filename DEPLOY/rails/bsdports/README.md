@@ -1,26 +1,18 @@
-# bsdports — OpenBSD ports index
+# bsdports
 
-Semantic search and AI-assisted exploration of the OpenBSD ports tree.
-
-## Features
-
-- Full-text and semantic package search
-- Dependency graph visualization
-- Security advisory cross-reference
-- Infrastructure and toolchain recommendations
-- AI exploration assistant
+OpenBSD ports search — FTS5 live search, dependencies, advisories, maintainers.
 
 ## Stack
 
-Rails 8 · SQLite · Falcon · Hotwire · OpenBSD
+Rails 8.1 · SQLite · Falcon · Hotwire · OpenBSD relayd
 
 ## Deploy
 
 ```zsh
 doas zsh DEPLOY/rails/bsdports/bsdports.sh
+curl -fsS http://127.0.0.1:47312/up
 ```
 
-## Stimulus / Rails 8 Rollout (condensed from STIMULUS_ROLLOUT.md)
-Prioritize: Auto Submit + Content Loader for search, Clipboard for commands, Reveal for details, Timeago, Notification, Popover, Read More, Checkbox Select All.
+## Status
 
-Rails 8: SQLite FTS5, Solid Queue for scheduled import, Solid Cache for fragments.
+Feature matrix: `apps.yml` → `bsdports`. Planned: ports tree import job, dependency visualization, AI exploration assistant.

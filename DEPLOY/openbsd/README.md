@@ -1,6 +1,6 @@
-# OpenBSD Deploy
+# OpenBSD deploy
 
-Full VPS stack deploy for OpenBSD 7.8 at `46.23.89.226`.
+Two-stage VPS installer for pub4. Target: OpenBSD 7.8+, vm23 (`46.23.89.226`).
 
 ## Run
 
@@ -10,92 +10,42 @@ tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"
 tmux attach -t deploy
 ```
 
-Resume after interruption:
-
 ```zsh
-doas zsh openbsd.sh --resume
+doas zsh openbsd.sh --sync-configs    # mirror repo etc/ → /etc, restart services
+doas zsh openbsd.sh --resume          # continue interrupted stage run
+doas ksh emergency_cpu.sh             # stop crash-looping Rails services (CPU relief)
 ```
 
-## What it deploys
+## Stages
 
-### Stage 1 — DNS, TLS, packages
+**Stage 1** — NSD + DNSSEC, acme-client TLS, httpd ACME, base pf, packages.
 
-- validates OpenBSD interface and disk space
-- installs base deploy packages
-- configures minimal PF for bootstrap
-- configures NSD authoritative DNS
-- signs zones with DNSSEC
-- configures httpd for ACME challenges
-- requests certificates with `acme-client`
-- writes TLSA records
-- installs certificate-renewal cron
+**Stage 2** — Rails app trees, relayd SNI, smtpd, final pf, rc.d services, health_check.
 
-### Stage 2 — application services
+## Rules
 
-- installs Rails app trees from `DEPLOY/rails/*`
-- configures app rc.d services
-- configures relayd TLS termination
-- configures httpd static/ACME serving
-- configures smtpd
-- loads final PF rules
-- verifies service health
+- Public ingress: SSH, SMTP, 80, 443 only. App ports bind loopback; relayd terminates TLS.
+- SQLite + Solid Queue/Cache by default. No PostgreSQL/Redis unless explicitly added.
+- Secrets in `/etc/master.env`, `/etc/<app>.env` — never in git. Operator secrets in `~/priv/`.
+- Any file installed on VPS must be copied back to `DEPLOY/openbsd/` and committed.
 
-### Dev terminal environment (for operator `dev` user)
-
-- terminal packages: zsh fish neovim tmux fontconfig fzf ripgrep fd
-- enriched /home/dev/.zshrc (Starship if present, nvim editor, quality aliases, brgen helper)
-- enables the rich local dev experience (Nerd Fonts, modern prompt, Neovim) on the VPS itself for tmux sessions and non-CLI work
-
-## Boundary rules
-
-- Public ingress should be limited to SSH, SMTP, HTTP, and HTTPS.
-- Raw Rails/Falcon/internal ports should stay behind relayd or loopback bindings.
-- PostgreSQL and Redis are not part of this deploy path unless explicitly reintroduced.
-- Secrets must come from environment, local root-owned files, or operator input, never committed docs.
-- Certificate renewal must be idempotent and must not append duplicate TLSA records.
-
-## Mirror repo configs onto the VPS
-
-When `/etc` has drifted from the checked-out tree, sync from `DEPLOY/openbsd` without re-running stage 1:
+## Post-deploy
 
 ```zsh
-cd ~/pub4 && git pull
-doas zsh DEPLOY/openbsd/openbsd.sh --sync-configs
-```
-
-This backs up `/etc`, copies `pf.conf`, `relayd.conf`, `rc.d/*`, helper scripts, validates PF/relayd, and restarts services.
-
-## Checks
-
-After deploy:
-
-```zsh
-doas rcctl check master
-doas pfctl -s rules
-curl -sk https://ai.brgen.no/chat/metrics
-```
-
-Inspect logs:
-
-```zsh
+doas rcctl check master relayd pf
+curl -fsS http://127.0.0.1:53187/up
+curl -sk https://ai.brgen.no/up
 doas tail -f /var/log/openbsd_setup.log
-doas tail -f /var/log/openbsd_transactions.log
-doas tail -f /var/log/cert-renewal.log
 ```
 
-## MASTER sweep notes
+## MASTER review
 
-`DEPLOY/` is high-risk infrastructure code. Run it through MASTER with deploy policy enabled before changing live systems:
+Before changing live infra:
 
 ```zsh
-bundle exec ruby exe/master /scan DEPLOY
-bundle exec ruby exe/master /sweep DEPLOY
+cd ~/pub4/MASTER && bundle exec ruby bin/cli
+# /scan DEPLOY/openbsd
+# /sweep DEPLOY/openbsd
 ```
 
-Reject any change that:
-
-- opens raw app ports publicly
-- makes destructive filesystem changes without backup
-- weakens PF, relayd, httpd, smtpd, or NSD validation
-- stores credentials in repository files
-- removes idempotence from cron, DNS, TLS, or rc.d setup
+Reject changes that open raw app ports, weaken pf/relayd validation, or drop backup/idempotence.

@@ -1,167 +1,43 @@
-# Rails deployment portfolio
+# Rails apps
 
-`DEPLOY/rails` is the active production surface for pub4 Rails apps.
+Six production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.**
 
-The generated Rails trees are deployment artifacts. The important source of truth is the tracked app tree plus its app-specific deploy script. Older one-shot Zsh generators in `study/` and `pub/__OLD_BACKUPS` are design lineage, not the current production contract.
+## Apps
 
-## Active apps
+| App | Domain | Port | Role |
+|-----|--------|------|------|
+| brgen | brgen.no | 38182 | City social + marketplace, dating, TV, takeaway, playlist |
+| amber | amber.brgen.no | 61352 | Wardrobe / outfit intelligence |
+| bsdports | bsdports.org | 47312 | Ports search and advisories |
+| baibl | baibl.no | — | Scripture study graph |
+| blognet | — | — | Editorial / recipe publishing |
+| hjerterom | hjerterom.no | 38891 | Food rescue and volunteer ops |
 
-| App | Script | Domain | Role |
-|---|---|---|---|
-| `brgen` | `brgen/brgen.sh` | `brgen.no` plus city/domain aliases | Hyperlocal social platform with marketplace, dating, playlist, tv, takeaway, maps, ai |
-| `amber` | `amber/amber.sh` | `amber.brgen.no` | Fashion / wardrobe / recommendation app |
-| `bsdports` | `bsdports/bsdports.sh` | `bsdports.org` | OpenBSD ports search/index app |
-| `baibl` | `baibl/baibl.sh` | `baibl.no` | Bible / reading / content service |
-| `blognet` | `blognet/blognet.sh` | app-specific | Blog/content network utility |
-| `hjerterom` | `hjerterom/hjerterom.sh` | app-specific | Food donation / pickup lineage from old backups |
-| `privcam` | `privcam/privcam.sh` | app-specific | Subscription/video platform lineage from old backups |
+Deploy: `doas zsh DEPLOY/rails/<app>/<app>.sh`
 
-## Production contract
+## Contract
 
-## Live Search Standard (condensed from LIVE_SEARCH_STANDARD.md, pruned)
-All apps must provide live search on primary surfaces (brgen feed, marketplace, playlists, TV, takeaway, etc.). Use shared baseline or StimulusReflex/Turbo. Progressive enhancement required. Reference: colby.so live-search post.
+1. Tracked tree at `DEPLOY/rails/<app>/` copied to `/home/<app>/app`
+2. `pub4-shared` via `path: '../shared'` in Gemfile
+3. Ruby 3.4, `RAILS_ENV=production`, Falcon behind relayd
+4. `config.assume_ssl = true` — no `force_ssl`
+5. Health at `/up`; rc.d service per app in `DEPLOY/openbsd/etc/rc.d/`
+6. Secrets in `/etc/<app>.env` on VPS — no `config/master.key` in git
 
-## Production Readiness (condensed from PRODUCTION_READINESS.md, pruned)
-Run DEPLOY/rails/check_production_gate.rb before deploys. Blockers: rotate master.key for all apps, use Ruby 3.4, assume_ssl=true (TLS at relayd).
+## Shared
 
-## Architecture / Relayd / Legacy (condensed from ARCHITECTURE_NOTES.md, pruned)
-Tracked app trees + thin deploy scripts are the contract (not one-shot generators). Relayd for SNI routing, one table per app, health checks. Legacy @*.sh moved to legacy/. Completion: every app has one README, live search, etc. Brgen verticals stay inside unless separation required. Amber as baseline.
+`DEPLOY/rails/shared/` — engine gem, concerns, Stimulus baseline, `WIRING_NOTES.md`
 
-Each app deploy script should:
-
-1. copy the tracked `app/` tree into `/home/<app>/app`
-2. run Bundler in deployment mode
-3. run `RAILS_ENV=production bin/rails db:create db:migrate`
-4. seed only when `db/seeds.rb` exists
-5. install or update rc.d service
-6. register relayd backend
-7. restart service
-8. verify local `/up`
-9. verify relayd route if the public hostname is configured
-10. leave logs in `/var/log/<app>.log` or the app-specific rc.d target
-
-## Hard requirements
-
-- No production app should expose raw Rails/Falcon ports publicly.
-- Public ingress goes through relayd/httpd/acme only.
-- Secrets live outside Git in `/etc/<app>.env` or `/etc/rails/<app>.env`.
-- App deploy scripts are idempotent.
-- Database migrations must be safe to re-run.
-- Background queue/cache services must be Solid Queue/Solid Cache or explicitly documented.
-- Every app must have a `/up` health endpoint.
-- Every app must have an rc.d restart smoke check.
-
-## Legacy feature scripts (@*.sh)
-
-The many `@*.sh` files (now under `legacy/`) are extracted patterns from earlier generator work (see also `github_repos/rails-style-guide/`). They are **not** the current production contract.
-
-Current model (per ARCHITECTURE_NOTES.md):
-- Prefer tracked, hand-maintained `app/` trees inside each product folder.
-- Deploy scripts are thin (copy tree → bundle → migrate → rc.d + relayd).
-- Heavy one-shot generators are legacy.
-
-These scripts (now in `legacy/`) remain useful as reference material for common patterns (auth, social, frontend, Solid stack, etc.) when bootstrapping a new vertical or recovering an old one. Do not run them blindly against production trees.
-
-## Backup-era lineage
-
-`pub/__OLD_BACKUPS/MEGA_ALL_APPS.md` describes the original app family:
-
-- `brgen`
-- `amber`
-- `privcam`
-- `bsdports`
-- `hjerterom`
-
-That document used older assumptions: PostgreSQL, Redis, Devise, `devise-guests`, OmniAuth Vipps, StimulusReflex, PWA scaffolding, and generated-from-scratch app scripts.
-
-pub4 intentionally converges this into a simpler production shape:
-
-- tracked app source trees
-- SQLite or external DB instead of mandatory PostgreSQL
-- Solid Queue / Solid Cache instead of mandatory Redis
-- OpenBSD rc.d services
-- relayd SNI routing
-- app-specific deploy scripts
-
-## Production hardening checklist
-
-For every app:
-
-- [ ] `/up` responds locally
-- [ ] rc.d service starts cleanly
-- [ ] relayd backend is configured
-- [ ] no raw app port is open in pf
-- [ ] database migrations run cleanly
-- [ ] credentials are not committed
-- [ ] user identity does not leak email-derived names
-- [ ] uniqueness constraints exist for join tables
-- [ ] upload/content paths are bounded
-- [ ] background jobs are observable
-- [ ] service restart is verified after deploy
-
-## Recommended CI & Smoke Standardization
-
-All apps should include (see existing patterns in `brgen/app/.github/workflows/ci.yml`, `amber/app/.github`, etc.):
-
-- Security scans: `brakeman`, `bundler-audit`, `importmap audit`
-- Lint: RuboCop (with cache)
-- Basic test run (if tests exist)
-- Deploy script smoke (e.g. syntax check on the `*.sh`)
-- Each app tree should expose a `bin/ci` entrypoint that runs RuboCop, Brakeman, bundler-audit, and Minitest from the app root.
-
-See `test_check_ports.sh` and individual app test/deploy/ folders for smoke examples. Add a `ci.yml` to any app missing one using the brgen/amber pattern as baseline. This supports MASTER `/scan` and council reviews.
-
-Repository-level checks should go through `bin/probe`. Use `bin/probe repo` for static production gates, `bin/probe rails` for per-app CI wrapper checks, and `bin/probe openbsd` on the target host for `rcctl` service state.
-
-## Secrets & Environment Management (OpenBSD-friendly)
-
-- Store secrets in `/etc/rails/<app>.env` (or `/etc/<app>.env`) on the target server.
-- Source them in the rc.d service or falcon/puma command line (never commit to git).
-- Use `SECRET_KEY_BASE` and app-specific keys (e.g. `OPENAI_API_KEY`, `VIPPS_*`).
-- The thin deploy scripts should not embed secrets; they only set up the service to read the external env file.
-- For local dev, use `config/credentials.yml.enc` or `.env` in the tracked tree (gitignored).
-- Consistent pattern across brgen, amber, bsdports, etc. reduces operational surprises. See individual `*.sh` and the rc.d templates in `DEPLOY/openbsd/` for current examples.
-- `DEPLOY/rails/env.sample` inventories the shared keys plus app-specific ones so operators can trim a deploy env file without hunting through code.
-
-## Gem & Dependency Alignment
-
-All apps should target a consistent baseline (Rails 8, Solid Queue/Cache, Active Storage, importmap + Hotwire). Use `SHARED_BUNDLE_CACHE` in deploy scripts where possible. Pin major gems in individual Gemfiles but align on the family-wide set from `brgen` as the reference. Run `bundle update` coordinated across apps when upgrading shared dependencies. This reduces divergence and eases MASTER scans for security/compatibility.
-
-## Internationalization & Locale Strategy (starter)
-
-The city family should converge on a shared locale approach:
-- Use Rails i18n with `config/locales/` in each app + shared fallbacks where possible.
-- Brgen as the reference for city-specific terms (Norwegian + English).
-- Centralize common strings (errors, navigation, moderation) in `shared/` once the pattern stabilizes.
-- Support locale via subdomain or param consistently across verticals.
-
-See `amber/config/locales/` and `brgen/config/locales/` as current examples. This is early-stage — coordinate before heavy investment.
-
-## Performance & Caching Baseline (starter)
-
-Target consistent use of the Solid stack (Solid Cache + Solid Queue) across apps.
-- Use `config/cache.yml` and `config/queue.yml` from the reference apps.
-- Prefer low-level caching for expensive queries and fragment caching in views.
-- Monitor with the existing pressure/observability in MASTER.
-- N+1 prevention and query analysis should be part of the review checklist when adding features.
-
-See `amber/config/` and `brgen/config/` for current setups. Align before scaling individual verticals.
-
-## Directory map
-
-```text
-rails/
-├─ @core.sh          bootstrap, gem management, db, security
-├─ @assets.sh        Dart Sass, SCSS/CSS generation
-├─ @server.sh        rc.d, relayd, Falcon, Thruster
-├─ @frontend.sh      Stimulus, Pagy
-├─ @views.sh         partials, auth views, registration, layout
-├─ @social.sh        votes+comments, hashtags, direct messaging
-├─ amber/
-├─ baibl/
-├─ blognet/
-├─ brgen/
-├─ bsdports/
-├─ hjerterom/
-└─ privcam/
+```ruby
+include Shared.concern(:Votable)   # Notifiable, ActivityTrackable, GeoLocatable, …
 ```
+
+## Gates
+
+```zsh
+ruby DEPLOY/rails/check_production_gate.rb
+cd DEPLOY/rails/<app> && bin/ci    # per-app RuboCop, Brakeman, bundler-audit, test
+bin/probe rails
+```
+
+Legacy `@*.sh` generators and `study/` trees are removed. Do not reintroduce one-shot scaffold deploys.

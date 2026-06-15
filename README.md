@@ -1,52 +1,50 @@
 # pub4
 
-Constitutional AI for any text artifact. OpenBSD-first. Ruby-only.
+Constitutional AI runtime and OpenBSD-first deploy stack. Ruby.
 
 ## Layout
 
 ```
 pub4/
-  MASTER/          Constitutional AI agent (~6K LOC Ruby)
-  DEPLOY/openbsd/  Two-stage OpenBSD deploy script (openbsd.sh)
-  DEPLOY/rails/    Rails 8 sub-apps (brgen, amber, baibl, bsdports, …)
-  multimedia/      Audio tools: TTS, Dilla, Postpro, Repligen
-  dilla/           Audio mixes and dilla.html canvas
-  sh/              Shell scripts
-  index.html       Radio Bergen — warp tunnel visualizer
+  MASTER/           AI agent (~6K LOC) + web face
+  DEPLOY/
+    openbsd/        VPS stack (pf, relayd, nsd, rc.d)
+    rails/          Rails 8 apps + shared engine
+    dilla/          Audio lab
+    bp/             Business-plan HTML sites
+    postpro/        Image post-processing
+    sh/             Deploy helpers
+  index.html        Radio Bergen — warp tunnel visualizer
 ```
-
-## Radio Bergen (`index.html`)
-
-Audio-reactive 3D warp tunnel. Three.js for scene + particle rings; p5.js audio FFT modulates ring radius, particle density, and color gradient; Cannon.js gives particle physics. Mobile parallax via deviceorientation. City carousel cycles brgen domain names. Open in any modern browser, click to start audio.
 
 ## MASTER
 
-Self-hosting AI agent that replaces Claude Code CLI on the VPS.
-
-**For LLMs and autonomous agents:** Start here → `MASTER/QUICKSTART.md`
+Self-hosting agent on the VPS. Replaces external CLI tooling for repo work.
 
 ```zsh
 cd MASTER && bundle exec ruby bin/cli
 ```
 
-11-stage pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render
+Pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render
 
-Key features: scan, sweep (self-refactor), autoloop (continuous fix), council (adversarial review), TTS, soul (identity evolution).
+Operator docs: `MASTER/QUICKSTART.md`, `MASTER/data/rules.yml`
+
+Web face: Falcon on `:53187`, relayd → `https://ai.brgen.no`
 
 ## Deploy
 
 ```zsh
-cd MASTER/DEPLOY/openbsd
-doas zsh openbsd.sh
+doas zsh DEPLOY/openbsd/openbsd.sh          # full two-stage install
+doas zsh DEPLOY/openbsd/openbsd.sh --sync-configs   # mirror /etc from repo
 ```
 
-Deploys full OpenBSD stack: pf, relayd, httpd, smtpd, nsd, Rails apps, masterweb rc.d service.
+Rails app matrix: `DEPLOY/rails/apps.yml`
 
 ## Requirements
 
-- OpenBSD 7.8 (VPS) or proot Ubuntu (Termux)
-- Ruby 3.3+, Bundler
-- `OPENROUTER_API_KEY`
+- OpenBSD 7.8+ on VPS; Ruby **3.4** for Rails apps
+- `OPENROUTER_API_KEY` (and other keys in `/etc/master.env` on VPS)
+- TLS terminates at **relayd** — Rails uses `assume_ssl`, not `force_ssl`
 
 ## License
 

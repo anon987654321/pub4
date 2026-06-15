@@ -1,8 +1,6 @@
 # postpro
 
-MASTER-owned entrypoint for cinematic image post-processing.
-
-The current processing implementation is still `DEPLOY/postpro.rb`; `MASTER/tools/postpro.rb` is the stable tool surface used by MASTER command dispatch and tool contracts.
+Cinematic image post-processing. MASTER tool surface; implementation in `DEPLOY/postpro/postpro.rb`.
 
 ## Run
 
@@ -10,23 +8,15 @@ The current processing implementation is still `DEPLOY/postpro.rb`; `MASTER/tool
 ruby MASTER/tools/postpro.rb --help
 ```
 
-Arguments are forwarded unchanged to the legacy implementation.
+Forwards args to `DEPLOY/postpro/postpro.rb`.
 
 ## Dependencies
 
-- Ruby
-- libvips / `ruby-vips`
-- optional `tty-prompt`
+Ruby, libvips (`ruby-vips`), optional `tty-prompt`. May shell out for image ops — treat as side-effecting.
 
-The legacy implementation may attempt to install missing gems or system packages. Treat this as an executable side-effecting tool.
+## Wiring
 
-## MASTER wiring
+- CLI: `/postpro`
+- Contract: `postpro` (permission: `exec`)
 
-- Slash command: `/postpro ...`
-- Tool contract: `postpro`
-- Permission: `exec`
-- Side effects: filesystem, process
-
-## Migration rule
-
-Do not add new DEPLOY-facing call sites. New callers should use this MASTER entrypoint or the `/postpro` command.
+New callers use this entrypoint, not ad-hoc `DEPLOY/postpro.rb` paths.

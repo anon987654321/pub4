@@ -1,31 +1,22 @@
-# hjerterom — food and reuse network
+# hjerterom
 
-Runs local resource redistribution like a food bank, not a social network. Receive, sort, pack, distribute, track.
-
-## Features
-
-- Food rescue and weekly box coordination
-- Clothing, toy, and book reuse tracking
-- Volunteer shift scheduling and notifications
-- Donor and beneficiary matching
-- Distribution route optimization
+Food rescue and redistribution — donations, boxes, volunteers, shifts, beneficiaries.
 
 ## Stack
 
-Rails 8 · SQLite · Falcon · Hotwire · OpenBSD
-
-## Current Integration Status (2026)
-
-- **Visual system**: Target Brgen cinema palette + NNG tokens (see family `WIRING_NOTES.md`).
-- **Activity Graph**: Should emit donation, distribution, and volunteer events to the shared graph.
-- **Photo / Multimodal**: Can leverage public photo upload for donation photos.
-- **Shared patterns**: Use shared social concerns (Reactable, Followable, Notification) and EventEmitter where relevant.
-- Deploy follows the thin tracked-tree model.
-
-See `DEPLOY/rails/ARCHITECTURE_NOTES.md` and `WIRING_NOTES.md`.
+Rails 8.1 · SQLite · Falcon · Hotwire · OpenBSD relayd
 
 ## Deploy
 
 ```zsh
 doas zsh DEPLOY/rails/hjerterom/hjerterom.sh
+curl -fsS http://127.0.0.1:38891/up
 ```
+
+## Integration
+
+Shared concerns and activity emission per `DEPLOY/rails/shared/WIRING_NOTES.md`.
+
+## Status
+
+Feature matrix: `apps.yml` → `hjerterom`.
