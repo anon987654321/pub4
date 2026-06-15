@@ -2484,7 +2484,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA38 tts: word-boundary events from edge-tts → highlight spoken word in chat bubble in real time
 - [x] FA39 tts: speed slider in UI — maps to `rate` offset ±20% passed to speech.rb via query param
 - [x] FA40 tts: pitch slider in UI — maps to `pitch` offset ±20Hz passed to speech.rb
-- [ ] FA41 tts: voice picker in UI — dropdown of 13 voices with preview button (2-word sample phrase)
+- [x] FA41 tts: voice picker in UI — dropdown of 13 voices with preview button (2-word sample phrase)
 - [x] FA42 tts: voice preview plays 3-word clip without sending to chat history
 - [x] FA43 tts: auto-pause TTS when user scrolls (intent = reading, not listening)
 - [x] FA44 tts: resume TTS from last word boundary on un-pause (track char offset in streamed chunks)

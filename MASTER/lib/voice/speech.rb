@@ -20,9 +20,32 @@ module Master
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
 
       VOICES = {
+        :"ms-MY-OsmanNeural" => "ms-MY-OsmanNeural",
+        :"en-GB-RyanNeural" => "en-GB-RyanNeural",
+        :"nb-NO-FinnNeural" => "nb-NO-FinnNeural",
+        :"en-US-AndrewNeural" => "en-US-AndrewNeural",
+        :"en-US-GuyNeural" => "en-US-GuyNeural",
+        :"en-AU-WilliamNeural" => "en-AU-WilliamNeural",
+        :"en-US-ChristopherNeural" => "en-US-ChristopherNeural",
+        :"en-US-EricNeural" => "en-US-EricNeural",
+        :"nb-NO-PernilleNeural" => "nb-NO-PernilleNeural",
+        :"en-US-DavisNeural" => "en-US-DavisNeural",
+        :"en-SG-WayneNeural" => "en-SG-WayneNeural",
+        :"en-NG-EzinneNeural" => "en-NG-EzinneNeural",
+        :"en-US-JennyNeural" => "en-US-JennyNeural",
+        osman: "ms-MY-OsmanNeural",
+        ryan: "en-GB-RyanNeural",
+        finn: "nb-NO-FinnNeural",
+        andrew: "en-US-AndrewNeural",
+        guy: "en-US-GuyNeural",
+        william: "en-AU-WilliamNeural",
+        christopher: "en-US-ChristopherNeural",
+        eric: "en-US-EricNeural",
+        pernille: "nb-NO-PernilleNeural",
         davis: "en-US-DavisNeural",
         wayne: "en-SG-WayneNeural",
-        ezinne: "en-NG-EzinneNeural"
+        ezinne: "en-NG-EzinneNeural",
+        jenny: "en-US-JennyNeural"
       }.freeze
 
       STYLES = {

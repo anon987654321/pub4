@@ -2219,7 +2219,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 ## DC: brgen Marketplace — Commerce & Trust
 
 - [x] DC01 marketplace: implement listing creation — title, description, price (øre), images, city
-- [ ] DC02 marketplace: add category taxonomy (electronics, clothing, furniture, vehicles, services)
+- [x] DC02 marketplace: add category taxonomy (electronics, clothing, furniture, vehicles, services)
 - [x] DC03 marketplace: add price negotiation — buyer sends offer, seller accepts/counters/declines
 - [ ] DC04 marketplace: add seller rating system — 1-5 stars after completed transaction
 - [x] DC05 marketplace: add "reserved" status — seller can mark listing while in negotiation

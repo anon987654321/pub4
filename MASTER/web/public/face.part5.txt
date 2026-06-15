@@ -370,9 +370,11 @@ async function acquireWakeLock() {
 }
 
 function guardVoice(v) {
-  if ((v === "pernille" || v === "finn") && tts.lang !== "nb") return undefined;
-  if (v === "osman" && tts.lang !== "ms") return undefined;
-  return v;
+  const voice = String(v || '').trim();
+  if (!voice) return undefined;
+  if ((voice === "pernille" || voice === "finn" || voice.startsWith("nb-")) && tts.lang !== "nb") return undefined;
+  if ((voice === "osman" || voice.startsWith("ms-")) && tts.lang !== "ms") return undefined;
+  return voice;
 }
 
 function previewVoice(voice) {

@@ -168,8 +168,24 @@ function setTtsRate(r) {
   const el = document.getElementById('tts-rate');
   if (el) el.textContent = rate.toFixed(2) + 'x';
 }
+const VOICE_ALIASES = {
+  osman: 'ms-MY-OsmanNeural',
+  ryan: 'en-GB-RyanNeural',
+  finn: 'nb-NO-FinnNeural',
+  andrew: 'en-US-AndrewNeural',
+  guy: 'en-US-GuyNeural',
+  william: 'en-AU-WilliamNeural',
+  christopher: 'en-US-ChristopherNeural',
+  eric: 'en-US-EricNeural',
+  pernille: 'nb-NO-PernilleNeural',
+  davis: 'en-US-DavisNeural',
+  wayne: 'en-SG-WayneNeural',
+  ezinne: 'en-NG-EzinneNeural',
+  jenny: 'en-US-JennyNeural'
+};
 function setVoiceName(voice, opts = {}) {
-  const next = String(voice || '').trim();
+  const raw = String(voice || '').trim();
+  const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
   State.voiceName = next;
