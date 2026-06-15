@@ -89,7 +89,7 @@ module Master
         next unless ev[:path] && MUTATING_TOOLS.include?(ev[:tool].to_s)
         ecology.reindex(ev[:path])
       end
-      diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging])
+      diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging], event_bus: bus)
       pressure = PressureEngine.new(event_bus: bus)
       bus.subscribe("*") do |ev|
         event_name = ev[:event] || ev["event"] || ev[:type] || ev["type"] || "event"

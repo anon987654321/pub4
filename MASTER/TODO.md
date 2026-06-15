@@ -711,7 +711,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] HG12 `patterns.yml` absorbs `infer_patterns.yml`, `repo_topic_clusters.yml`, `prompt_archaeology.yml` (namespaced).
 - [ ] HG13 Audit `web/app/assets` vs `public/` — `app.js`, `chat.js`, `application.css`, `canvas.css` unreferenced? delete or wire.
 - [ ] HG14 Two-stage council: independent round one + dissent-only round two when dissent >30% (`workflow.yml`).
-- [ ] HG15 `/diag` cache hit display from `cache:hit` events in CLI cost output.
+- [x] HG15 `/diag` cache hit display from `cache:hit` events in CLI cost output.
 - [ ] HG16 Evidence scoring before autocommit (≥80); extend beyond `:deploy` stage if git autofix paths bypass gate.
 - [ ] HG17 Reverse introspection: every 10 commits, sample 5, ask MASTER if it would approve now.
 - [ ] HG18 `view_thread` persistence: `thread:decision` events to `data/threads/${session_id}.jsonl`.
