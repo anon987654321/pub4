@@ -33,6 +33,15 @@ doas mkdir -p "$APP_DIR"
 doas cp -R "${SRC_DIR}/." "${APP_DIR}/"
 doas chown -R "${APP_NAME}:${APP_NAME}" "$APP_DIR"
 
+# Strict rules.yml gate: MASTER scan DEPLOY before bundle (per success_criteria, self_test, evidence_scoring)
+if [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
+  log "MASTER rules scan (DEPLOY) pre-bundle"
+  if ! ruby34 /home/dev/pub4/MASTER/bin/cli /scan DEPLOY --depth deep 2>&1 | tee /tmp/master_#{APP_NAME}_scan.log; then
+    log "MASTER scan violations — aborting per rules.yml"
+    exit 1
+  fi
+fi
+
 cd "$APP_DIR"
 
 typeset bundle_home="/home/${APP_NAME}/.bundle"

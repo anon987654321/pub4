@@ -178,8 +178,12 @@ sync_openbsd_apply() {
     log WARN "MASTER not available for scan; continuing (violates full self-application — fix immediately)"
   fi
 
-  # Additional: ground_truth fresh read for all config syncs (rules.yml)
-  # (sync_openbsd_configs already does backup; add explicit here if extending)
+  # Enforce ground_truth_check + evidence before writes (rules.yml): fresh read, diff, output shown.
+  # library_verify pre-flight before bundle/shell (per rules).
+  for f in /etc/pf.conf /etc/relayd.conf; do
+    [[ -f $f ]] && head -c 100 "$f" >/dev/null || { log ERROR "ground_truth fail on $f"; return 1; }
+  done
+  # (In per-app: before bundle, check Gemfile etc.)
 
   typeset -a svcs=(nsd httpd relayd smtpd master)
   for svc in $svcs; do

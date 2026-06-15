@@ -45,6 +45,8 @@ module Master
           clean_runs_required: clean_runs_required,
           plateau_window:      plateau_window
         )
+        # Wire ReflexionLedger for strict self-correction per rules.yml (AK102, self-application)
+        @reflexions = Trace::ReflexionLedger.new(event_bus: bus, root: root) if bus
       end
 
       def convergence_cfg = @convergence ||= (@axioms&.thresholds&.[]("convergence") || {})
@@ -77,7 +79,8 @@ module Master
             files: files, target: target, pass: pass, deadline: deadline,
             history: history, seen_snapshots: seen_snapshots,
             recurring_violations: recurring_violations,
-            consecutive_clean: consecutive_clean
+            consecutive_clean: consecutive_clean,
+            reflexions: @reflexions&.recent(5) || []  # Inject recent self-critiques for rule violations
           )
           consecutive_clean = result.consecutive_clean
           return Result.ok(result.message) if result.status == :clean

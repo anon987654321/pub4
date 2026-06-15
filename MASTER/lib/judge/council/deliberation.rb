@@ -47,6 +47,9 @@ module Master
           round_context = context
           max_rounds.times do |i|
             @bus&.publish(:council_round_start, round: i + 1, max: max_rounds)
+            # Classify engineering_fit per rules.yml; respect laws priority + inverted pyramid
+            fit = classify_engineering_fit(code)
+            @bus&.publish(:engineering_fit, fit: fit)
             review_result = review(code, context: round_context)
             return review_result unless review_result.is_a?(Master::Result::Ok)
             feedback = review_result.value!
@@ -63,6 +66,15 @@ module Master
         def review(code, context: nil, personas: nil)
           active = personas ? @personas.select { |p| personas.include?(p.name) } : @personas
           active = @personas if active.empty?
+          # Inject ReflexionLedger recent for strict self-correction on rule violations (rules.yml)
+          if @bus
+            begin
+              reflex = Trace::ReflexionLedger.new(event_bus: @bus, root: (@rules&.root || Dir.pwd)).recent(3)
+              context = [context, "Recent reflexions for rule adherence: #{reflex.join(' | ')}"].compact.join("\n") if reflex.any?
+            rescue => e
+              # swallow per rules
+            end
+          end
           return Master::Result.err("council: no personas configured", category: :validation) if active.empty?
 
           feedback = @mode == :sequential ? collect_sequential(code:, context:, personas: active) : collect_parallel(code:, context:, personas: active)

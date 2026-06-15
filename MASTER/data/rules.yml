@@ -382,6 +382,7 @@ thresholds:
 scan_depths:
   # deep is the only permitted scan depth — quick and standard exist for InterconnectRule
   # coverage checks only; never pass either as a depth argument. DEEP_SCAN_ONLY in soul.yml.
+  # Extended for strict adherence: treat sh/erb/conf/yml as first-class (sh: STRICT_MODE, erb: ARIA/DENSITY, etc.)
   quick: &quick
     - no_debug
     - no_puts
@@ -397,6 +398,9 @@ scan_depths:
     - time_zone_unsafe
     - no_ascii_line_art
     - single_private_section
+  # sh/erb specifics per rules.yml extension for DEPLOY media
+  sh: [strict_mode_zsh, no_magic, openrsync_prefer, library_verify]
+  erb: [aria_labels, no_todo_in_views, density]
     - strict_loading_missing
     - rate_limiting_missing
     - migration_add_reference_no_fk
