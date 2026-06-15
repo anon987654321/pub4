@@ -62,11 +62,37 @@ function frame(t) {
     if (!faceMat._prevBass) faceMat._prevBass = 0;
     if (curBass - faceMat._prevBass > 0.15) State.audioBeat = 1.0;
     faceMat._prevBass = curBass * 0.7 + faceMat._prevBass * 0.3;
+    const wave = document.getElementById('zsh-wave');
+    if (wave) {
+      const bars = wave.querySelectorAll('span');
+      const levels = [
+        State.audioBass || 0,
+        State.audioMids || 0,
+        State.audioHighs || 0,
+        Math.max(State.audioBass || 0, State.audioMids || 0),
+        Math.max(State.audioMids || 0, State.audioHighs || 0)
+      ];
+      bars.forEach((bar, i) => {
+        const level = levels[i] || 0;
+        const h = Math.max(3, Math.min(14, 3 + level * 12));
+        bar.style.height = `${h}px`;
+        bar.style.opacity = String(0.25 + level * 0.65);
+      });
+    }
   } else {
     State.voiceRMS = (State.voiceRMS || 0) * 0.9;
     State.audioBass  = (State.audioBass  || 0) * 0.88;
     State.audioMids  = (State.audioMids  || 0) * 0.88;
     State.audioHighs = (State.audioHighs || 0) * 0.88;
+    const wave = document.getElementById('zsh-wave');
+    if (wave) {
+      wave.querySelectorAll('span').forEach(bar => {
+        const current = parseFloat(bar.style.height || '4') || 4;
+        const next = Math.max(3, current * 0.92);
+        bar.style.height = `${next}px`;
+        bar.style.opacity = String(Math.max(0.15, (parseFloat(bar.style.opacity || '0.25') || 0.25) * 0.95));
+      });
+    }
   }
 
   const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
@@ -251,6 +277,8 @@ function frame(t) {
   }
 
   State.flash *= 0.9;
+  if (State.flash > 0.15) rootBody.dataset.faceFlash = '1';
+  else delete rootBody.dataset.faceFlash;
   renderer.render(scene, camera);
   markFaceReady();
 
@@ -260,6 +288,16 @@ function frame(t) {
 let pressTimer = null, pressStart = 0;
 let cursorActive = false;
 let dragOrigin = null;
+let gestureStart = null;
+function setFacePip(enabled, corner = 'bottom-right') {
+  if (enabled) {
+    rootBody.dataset.facePip = '1';
+    rootBody.dataset.facePipCorner = corner;
+  } else {
+    delete rootBody.dataset.facePip;
+    delete rootBody.dataset.facePipCorner;
+  }
+}
 function updateCursor(e) {
   State.mouseX = (e.clientX / innerWidth  - 0.5) * 1.6;
   State.mouseY = (e.clientY / innerHeight - 0.5) * 0.9;
@@ -289,18 +327,52 @@ document.addEventListener('pointercancel', () => {
   if (State.coarsePointer) cursorActive = false;
 }, { passive: true });
 
-cv.addEventListener('pointerdown', () => {
+cv.addEventListener('pointerdown', (e) => {
   pressStart = performance.now();
   State.lastTouch = pressStart;
+  gestureStart = { x: e.clientX, y: e.clientY, t: pressStart };
   pressTimer = setTimeout(() => window.MASTER_FACE?.startSTT?.(), 420);
 });
-cv.addEventListener('pointerup', () => {
+cv.addEventListener('pointermove', (e) => {
+  if (!gestureStart) return;
+  const dx = e.clientX - gestureStart.x;
+  const dy = e.clientY - gestureStart.y;
+  if (Math.hypot(dx, dy) > 12) gestureStart.moved = true;
+}, { passive: true });
+cv.addEventListener('pointerup', (e) => {
   if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  const gesture = gestureStart;
+  gestureStart = null;
+  if (gesture) {
+    const dx = e.clientX - gesture.x;
+    const dy = e.clientY - gesture.y;
+    const adx = Math.abs(dx);
+    const ady = Math.abs(dy);
+    const elapsed = performance.now() - gesture.t;
+    if (elapsed < 800 && (adx > 70 || ady > 70)) {
+      if (ady > adx && dy < -70) {
+        zshIn?.focus();
+        zshIn?.select?.();
+        navigator.vibrate?.(10);
+        return;
+      }
+      if (adx > ady) {
+        window._chatCycleRecentReply?.(dx > 0 ? 1 : -1);
+        navigator.vibrate?.(10);
+        return;
+      }
+    }
+    if (elapsed < 1400 && Math.hypot(dx, dy) > 180) {
+      const corner = `${e.clientY < innerHeight / 2 ? 'top' : 'bottom'}-${e.clientX < innerWidth / 2 ? 'left' : 'right'}`;
+      setFacePip(true, corner);
+    }
+  }
   if (State.sttActive) { window.MASTER_FACE?.stopSTT?.(); return; }
   if (performance.now() - pressStart < 240) window.MASTER_FACE?.ttsSkip?.();
 });
 cv.addEventListener('pointercancel', () => {
   if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  gestureStart = null;
 });
 
 function bindOrientation() {
@@ -365,6 +437,7 @@ cv.addEventListener('pointerup', () => {
     State.parX = 0; State.parY = 0;
     if (head) { head.scale.setScalar(1.0); head.position.set(0, 0, 0); }
     State.bloom = 0.4;
+    setFacePip(false);
   }
   lastTapT = now;
 }, { passive: true });

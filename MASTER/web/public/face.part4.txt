@@ -40,7 +40,7 @@ function beep(freq, dur) {
 
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
 const VISEME_STEP_MS = 90;
-const tts = { queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en' };
+const tts = { queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'davis';
@@ -281,7 +281,9 @@ function finishTTSPlayback(src, continueQueue = true) {
   setTTSLoading(false);
   stopVisemeAnim();
   rootBody.dataset.ttsWave = '';
+  clearThinkingAloud?.();
   tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
+  tts.resumeTime = null; tts.resumeWordIndex = null;
   if (src) URL.revokeObjectURL(src);
   tts.audio = null; tts.playing = false; tts.paused = false;
   if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
@@ -332,6 +334,8 @@ function enqueueSpeech(text) {
   tts.meta.set(decorated, { voice: _v, style: _nextTtsStyle(_v) });
   announceTTS(decorated);
   tts.lastText = decorated;
+  tts.resumeTime = null;
+  tts.resumeWordIndex = null;
   tts.queue.push(decorated);
   nodImpulse += 0.022;
   if (tts.playing && !tts.serverUnavailable) fetchTTS(decorated);
@@ -446,10 +450,22 @@ function ttsTick() {
 function ttsTogglePause() {
   if (!tts.audio) return;
   if (tts.audio.paused) {
+    if (tts.resumeTime != null && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
+      const seek = Math.max(0, Math.min(tts.audio.duration, tts.resumeTime));
+      try { tts.audio.currentTime = seek; } catch (_) {}
+    }
     tts.audio.play().catch(() => {});
     tts.paused = false;
     if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause current response'); }
     return;
+  }
+  if (typeof tts.audio.currentTime === 'number' && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
+    const text = tts.lastText || '';
+    const words = text.split(/\s+/).filter(Boolean);
+    const ratio = Math.max(0, Math.min(1, tts.audio.currentTime / tts.audio.duration));
+    const idx = words.length ? Math.max(0, Math.min(words.length - 1, Math.floor(ratio * words.length))) : 0;
+    tts.resumeWordIndex = idx;
+    tts.resumeTime = words.length ? (idx / words.length) * tts.audio.duration : tts.audio.currentTime;
   }
   tts.audio.pause();
   tts.paused = true;

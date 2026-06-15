@@ -4,6 +4,8 @@ const log   = document.getElementById('chat-log');
 const zsh   = document.getElementById('zsh');
 const input = document.getElementById('zin');
 const sessionStartedAt = Date.now();
+const recentReplies = [];
+let recentReplyCursor = -1;
 
 let _streamEl = null;
 let _typingEl = null;
@@ -113,6 +115,38 @@ function appendMsg(role, text = '') {
     d.appendChild(typing);
     d.appendChild(cur);
     d.appendChild(copyBtn);
+    const actions = document.createElement('div');
+    actions.className = 'msg-actions';
+    actions.innerHTML = '<button type="button" data-act="like" title="Rate up">👍</button><button type="button" data-act="retry" title="Retry">🔁</button><button type="button" data-act="delete" title="Delete">🗑</button><button type="button" data-act="simpler" title="Explain simpler">⇣</button><button type="button" data-act="deeper" title="Go deeper">⇡</button>';
+    actions.addEventListener('click', (ev) => {
+      const act = ev.target?.dataset?.act;
+      if (!act) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (act === 'like') {
+        d.dataset.reaction = 'like';
+        navigator.vibrate?.(10);
+        return;
+      }
+      if (act === 'retry') {
+        const last = window._lastUserMessageText || input.value || '';
+        if (last && window.sendMessage) window.sendMessage(last);
+        return;
+      }
+      if (act === 'delete') {
+        d.remove();
+        return;
+      }
+      if (act === 'simpler') {
+        if (window.sendMessage) window.sendMessage(`Please explain this more simply:\n${body.textContent || ''}`);
+        return;
+      }
+      if (act === 'deeper') {
+        if (window.sendMessage) window.sendMessage(`Go deeper on this answer:\n${body.textContent || ''}`);
+        return;
+      }
+    });
+    d.appendChild(actions);
     _streamEl = body;
     _typingEl = typing;
   }
@@ -127,7 +161,11 @@ function appendMsg(role, text = '') {
   });
 }
 
-window._chatOnUser  = (text) => { appendMsg('user', text); appendMsg('assistant'); };
+window._chatOnUser  = (text) => {
+  window._lastUserMessageText = text;
+  appendMsg('user', text);
+  appendMsg('assistant');
+};
 
 window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
   const note = document.createElement('div');
@@ -170,6 +208,8 @@ window._chatOnChunk = (raw) => {
   updateSessionStats();
 };
 window._chatOnDone  = () => {
+  const finished = (_streamEl?.textContent || '').trim();
+  if (finished) window._chatRememberReply?.(finished);
   _streamEl = null;
   if (_typingEl) { _typingEl.remove(); _typingEl = null; }
   document.querySelectorAll('.cursor').forEach(c => {
@@ -194,12 +234,30 @@ function getMsgText(msgEl) {
   return (p + ' ' + (b.textContent || '')).trim();
 }
 
+window._chatRememberReply = (text) => {
+  const reply = String(text || '').trim();
+  if (!reply) return;
+  if (recentReplies[recentReplies.length - 1] === reply) return;
+  recentReplies.push(reply);
+  while (recentReplies.length > 12) recentReplies.shift();
+  recentReplyCursor = recentReplies.length;
+};
+
+window._chatCycleRecentReply = (direction) => {
+  if (!recentReplies.length || !input) return;
+  recentReplyCursor = Math.max(0, Math.min(recentReplies.length - 1, recentReplyCursor + (direction > 0 ? 1 : -1)));
+  input.value = recentReplies[recentReplyCursor] || '';
+  input.focus();
+  input.setSelectionRange?.(input.value.length, input.value.length);
+};
+
 function openActionMenu(msgEl) {
   document.querySelectorAll('.action-menu').forEach(m => m.remove());
   const menu = document.createElement('div');
   menu.className = 'action-menu';
   const txt = getMsgText(msgEl);
-  menu.innerHTML = '<button data-act="copy">Copy</button><button data-act="quote">Quote</button><button data-act="close">Close</button>';
+  const bodyText = msgEl.querySelector('.msg-body')?.textContent || txt;
+  menu.innerHTML = '<button data-act="copy">Copy</button><button data-act="quote">Quote</button><button data-act="simpler">Simpler</button><button data-act="deeper">Deeper</button><button data-act="close">Close</button>';
   const rect = msgEl.getBoundingClientRect();
   menu.style.left = (rect.left + window.scrollX + 8) + 'px';
   menu.style.top = (rect.bottom + window.scrollY + 2) + 'px';
@@ -211,6 +269,12 @@ function openActionMenu(msgEl) {
       menu.remove();
     } else if (act === 'quote') {
       if (input) { input.value = `> ${txt}\n`; input.focus(); }
+      menu.remove();
+    } else if (act === 'simpler') {
+      if (window.sendMessage) window.sendMessage(`Please explain this more simply:\n${bodyText}`);
+      menu.remove();
+    } else if (act === 'deeper') {
+      if (window.sendMessage) window.sendMessage(`Go deeper on this answer:\n${bodyText}`);
       menu.remove();
     } else if (act === 'close') {
       menu.remove();

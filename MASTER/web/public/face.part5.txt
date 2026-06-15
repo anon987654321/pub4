@@ -33,6 +33,7 @@ function ttsSkip() {
   if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
   stopVisemeAnim();
   tts.queue.length = 0; tts.prefetch.clear(); tts.attempts.clear(); tts.playing = false; tts.current = null;
+  tts.resumeTime = null; tts.resumeWordIndex = null;
   if (tts.retryTimer) { clearTimeout(tts.retryTimer); tts.retryTimer = null; }
   if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
   clearViseme();
@@ -120,6 +121,7 @@ function stopSTT() {
 
 let evtSrc = null;
 let stageTimer = null;
+let thinkingAloudTimer = null;
 function showStage(label, ms = 1200) {
   if (!uiStatus) return;
   uiStatus.textContent = label;
@@ -130,12 +132,40 @@ function showStage(label, ms = 1200) {
   }, ms);
 }
 
+function clearThinkingAloud() {
+  if (!thinkingAloudTimer) return;
+  clearTimeout(thinkingAloudTimer);
+  thinkingAloudTimer = null;
+}
+
+function scheduleThinkingAloud(stage = "thinking") {
+  clearThinkingAloud();
+  thinkingAloudTimer = setTimeout(() => {
+    if (State.mode !== 'thinking' || tts.playing || tts.muted) return;
+    const aside = stage === 'routing' ? 'routing' : stage === 'scanning' ? 'scanning' : 'still thinking';
+    enqueueSpeech(aside);
+  }, 3200);
+}
+
+function speakFailure(reason = "Sorry, I hit a snag.") {
+  announceTTS(reason);
+  if (!tts.muted) enqueueSpeech(reason);
+}
+
 async function sendMessage(text) {
   const trimmed = text.trim();
   wakeFromSleep();
   if (navigator.vibrate) navigator.vibrate(30);
   if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
       if (window.MASTER_FACE?.tts?.lastText) { window.MASTER_FACE.tts.queue = [window.MASTER_FACE.tts.lastText]; window.MASTER_FACE.ttsTick?.(); } return;
+  }
+  if (/^wow!?$/i.test(trimmed)) {
+    State.mode = 'pass';
+    State.bloom = 1.0;
+    State.fracture = 0.85;
+    State.shake = Math.max(State.shake || 0, 0.45);
+    State.pulse = Math.max(State.pulse || 0, 0.85);
+    return;
   }
   if (/^\/sleep$/i.test(trimmed)) { enterSleep(); faceMat.uniforms.uIdleDrift.value = 0.02; return; }
   if (/^\/wake$/i.test(trimmed)) { wakeFromSleep(); return; }
@@ -186,6 +216,7 @@ async function sendMessage(text) {
   tts.prependTimestamp = isTimeSensitive;
   State.mode = 'thinking'; State.pulse = 0.4; window.MASTER_FACE?.setAmbientHum?.(true);
   showStage("scanning…", 1200);
+  scheduleThinkingAloud("scanning");
   syncShareStateUrl();
   if (input.length > 180) State.lean = 0.14;
   const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|0`);
@@ -207,6 +238,7 @@ async function sendMessage(text) {
       }
       pending = '';
       State.mode = 'idle';
+      clearThinkingAloud();
       showStage("");
       if (navigator.vibrate) navigator.vibrate([60]);
       try { evtSrc.close(); } catch (_) {}
@@ -218,6 +250,8 @@ async function sendMessage(text) {
       State.mode = 'error'; State.flash = 1; State.shake = 0.8;
       fadeColorTo(TINT.veto);
       morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
+      clearThinkingAloud();
+      speakFailure("Sorry, I hit a snag.");
       window._chatOnError?.();
       return;
     }
@@ -304,6 +338,8 @@ async function sendMessage(text) {
   });
   evtSrc.onerror = () => {
     State.flash = 1; State.shake = 0.8; State.mode = 'error';
+    clearThinkingAloud();
+    speakFailure("Sorry, I hit a snag.");
     try { evtSrc.close(); } catch (_) {}
   };
 }
@@ -337,6 +373,13 @@ function guardVoice(v) {
   if ((v === "pernille" || v === "finn") && tts.lang !== "nb") return undefined;
   if (v === "osman" && tts.lang !== "ms") return undefined;
   return v;
+}
+
+function previewVoice(voice) {
+  const chosen = guardVoice(voice) || guardVoice(State.voiceName) || TTS_DEFAULT_VOICE;
+  if (!chosen) return;
+  window.MASTER_FACE?.initAudio?.();
+  playDuo([[chosen, "Let's work now."]]);
 }
 
 function playDuo(lines, onDone) {
@@ -534,6 +577,7 @@ window.MASTERVoice = {
   get playing() { return window.MASTER_FACE?.tts?.playing; },
   get voice() { return window.MASTER_FACE?.tts?.voice; },
   setVoice: (voice) => setVoiceName(voice),
+  previewVoice: () => previewVoice(State.voiceName),
   setLastText(text) { if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.lastText = String(text || ""); },
   get lastText() { return window.MASTER_FACE?.tts?.lastText || ""; },
   get ttsRate() { return getTtsRate(); },
@@ -573,6 +617,7 @@ window.MASTER_FACE = {
   ttsToggleMic,
   toggleTheme,
   toggleFocusMode,
+  previewVoice,
   setUiScale: applyUiScale,
   wakeFromSleep,
   enterSleep,

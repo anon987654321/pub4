@@ -7,6 +7,7 @@ class Outfit < ApplicationRecord
   has_one_attached :image
 
   validates :name, presence: true
+  accepts_nested_attributes_for :outfit_items, allow_destroy: true, reject_if: :reject_blank_outfit_item
 
   broadcasts_refreshes
 
@@ -24,5 +25,9 @@ class Outfit < ApplicationRecord
 
   def estimated_value
     items.sum { |item| item.price.to_f }
+  end
+
+  def reject_blank_outfit_item(attrs)
+    attrs["item_id"].blank? && attrs["_destroy"].blank?
   end
 end

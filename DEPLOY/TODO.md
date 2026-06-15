@@ -327,8 +327,8 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] AN1621 stimulus-places-autocomplete for location: `data-controller="stimulus-places-autocomplete"` on takeaway delivery address, hjerterom pickup address, marketplace location
 - [x] AN1622 stimulus-animated-number for counters: `data-controller="stimulus-animated-number"` on vote counts, follower counts, impact stats; numbers count up on first view
 - [x] AN1623 stimulus-timeago on all timestamps: replace all `time_ago_in_words` Ruby calls with `data-controller="stimulus-timeago"`; client-side live updating, no server round-trip
-- [ ] AN1624 stimulus-rails-nested-form: `data-controller="stimulus-rails-nested-form"` for marketplace variant creation, recipe ingredient lists, portfolio item addition; add/remove dynamically
-- [ ] AN1625 stimulus-character-counter on all textareas: `data-controller="stimulus-character-counter" data-stimulus-character-counter-max-value="280"` — visible limit indicator
+- [x] AN1624 stimulus-rails-nested-form: `data-controller="stimulus-rails-nested-form"` for marketplace variant creation, recipe ingredient lists, portfolio item addition; add/remove dynamically
+- [x] AN1625 stimulus-character-counter on all textareas: `data-controller="stimulus-character-counter" data-stimulus-character-counter-max-value="280"` — visible limit indicator
 
 ### AN17: Rails 8 API Patterns Applied
 
@@ -2023,8 +2023,8 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] CJ03 MASTER: add `docs/rules.md` — auto-generated from `rules.yml` (ID, severity, example)
 - [ ] CJ04 MASTER: add `docs/voice.md` — soul drift, register detection, TTS voices, style mapping
 - [ ] CJ05 All apps: add OpenAPI spec for JSON endpoints (via `rswag` or handwritten YAML)
-- [ ] CJ06 DEPLOY: document `openbsd.sh` sections inline — each phase gets a one-line comment block
-- [ ] CJ07 DEPLOY: add `DEPLOY/openbsd/README.md` — step-by-step provisioning narrative
+- [x] CJ06 DEPLOY: document `openbsd.sh` sections inline — each phase gets a one-line comment block
+- [x] CJ07 DEPLOY: add `DEPLOY/openbsd/README.md` — step-by-step provisioning narrative
 - [ ] CJ08 brgen: add `ARCHITECTURE.md` — subdomain routing, tenant isolation, feed algorithm
 - [ ] CJ09 MASTER: expose `GET /rules` endpoint — returns rules.yml as JSON for external tooling
 - [ ] CJ10 MASTER: auto-generate CHANGELOG.md entry on each `/release` command
@@ -2218,14 +2218,14 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 
 ## DC: brgen Marketplace — Commerce & Trust
 
-- [ ] DC01 marketplace: implement listing creation — title, description, price (øre), images, city
+- [x] DC01 marketplace: implement listing creation — title, description, price (øre), images, city
 - [ ] DC02 marketplace: add category taxonomy (electronics, clothing, furniture, vehicles, services)
-- [ ] DC03 marketplace: add price negotiation — buyer sends offer, seller accepts/counters/declines
+- [x] DC03 marketplace: add price negotiation — buyer sends offer, seller accepts/counters/declines
 - [ ] DC04 marketplace: add seller rating system — 1-5 stars after completed transaction
-- [ ] DC05 marketplace: add "reserved" status — seller can mark listing while in negotiation
+- [x] DC05 marketplace: add "reserved" status — seller can mark listing while in negotiation
 - [ ] DC06 marketplace: add saved search alerts — email when new listing matches saved filter
 - [ ] DC07 marketplace: add MASTER listing quality check — flag vague descriptions or missing images
-- [ ] DC08 marketplace: add distance filter — listings within X km of city centre
+- [x] DC08 marketplace: add distance filter — listings within X km of city centre
 - [ ] DC09 marketplace: city isolation enforced — listings not visible across city boundaries
 - [ ] DC10 marketplace: add report listing flow (scam/prohibited/incorrect category)
 
@@ -2237,9 +2237,9 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] DD04 blognet: add Stripe integration for subscription payments (recurring monthly)
 - [ ] DD05 blognet: add RSS feed per blog (valid RSS 2.0, updated on publish)
 - [ ] DD06 blognet: add SEO meta — og:title, og:description, og:image auto-generated per post
-- [ ] DD07 blognet: add reading time estimate (`ceil(word_count / 200)` minutes)
+- [x] DD07 blognet: add reading time estimate (`ceil(word_count / 200)` minutes)
 - [ ] DD08 blognet: add MASTER post quality scan on publish — grammar, structure, readability
-- [ ] DD09 blognet: add `canonical` URL for posts — prevent duplicate content on import
+- [x] DD09 blognet: add `canonical` URL for posts — prevent duplicate content on import
 - [ ] DD10 blognet: add multi-author support — invite co-authors by email
 
 ## DE: hjerterom — Resource Rescue Network

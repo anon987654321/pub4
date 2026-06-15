@@ -23,6 +23,7 @@ class OutfitsController < ApplicationController
 
   def new
     @outfit = Current.user.outfits.build
+    @outfit.outfit_items.build if @outfit.outfit_items.empty?
   end
 
   def create
@@ -30,7 +31,9 @@ class OutfitsController < ApplicationController
     @outfit.save ? redirect_to(@outfit, notice: "Outfit created") : render(:new, status: :unprocessable_entity)
   end
 
-  def edit; end
+  def edit
+    @outfit.outfit_items.build if @outfit.outfit_items.empty?
+  end
 
   def update
     @outfit.update(outfit_params) ? redirect_to(@outfit, notice: "Updated") : render(:edit, status: :unprocessable_entity)
@@ -64,20 +67,22 @@ class OutfitsController < ApplicationController
   def reorder
     positions = params.require(:positions)
     positions.each_with_index do |item_id, index|
-      @outfit.outfit_items.where(item_id:).update_all(position: index)
+      @outfit.outfit_items.where(item_id: item_id).update_all(position: index)
     end
     head :ok
   end
 
   private
 
-  def set_outfit = @outfit = Outfit.find(params[:id])
+  def set_outfit
+    @outfit = Outfit.find(params[:id])
+  end
 
   def authorize!
     redirect_to(outfits_path, alert: "Unauthorized") unless @outfit.user == Current.user
   end
 
   def outfit_params
-    params.require(:outfit).permit(:name, :description, :category, :season, :occasion)
+    params.require(:outfit).permit(:name, :description, :category, :season, :occasion, outfit_items_attributes: %i[id item_id position _destroy])
   end
 end

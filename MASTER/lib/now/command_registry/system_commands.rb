@@ -138,6 +138,7 @@ module Master
                     .sort_by { |p, _| p.split("/") }
                     .map { |p, k| "#{"  " * p.delete_prefix("#{target}/").count("/")}#{File.basename(p)}#{k == :dir ? "/" : ""}" }
         md.concat(entries) << "```" << ""
+        md.concat(snapshot_artifacts(target)) if label == "MASTER"
         n_lines = 0
         files.each do |f|
           rel  = f.delete_prefix("#{target}/")
@@ -158,6 +159,17 @@ module Master
           stdin_data: md.join("\n"))
         status.success? ? "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{out.strip}" :
                           "snapshot:#{label.downcase}: gist failed: #{out.strip}"
+      end
+
+      def snapshot_artifacts(root)
+        paths = %w[MASTER_snapshot.md DEPLOY_snapshot.md].filter_map do |name|
+          path = File.join(root, name)
+          next unless File.file?(path)
+          "- `#{name}` (#{File.size(path)} bytes, updated #{File.mtime(path).utc.iso8601})"
+        end
+        return [] if paths.empty?
+
+        ["## Root snapshot artifacts", *paths, ""]
       end
 
       def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip

@@ -174,6 +174,8 @@ function setVoiceName(voice, opts = {}) {
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
   State.voiceName = next;
   if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = next;
+  const picker = document.getElementById('voice-picker');
+  if (picker && picker.value !== next) picker.value = next;
   syncShareStateUrl();
   if (opts.speakBlurb !== false && next && prev !== next) {
     setTimeout(() => {
@@ -298,6 +300,8 @@ const spinBtn = document.getElementById('spin-btn');
 const themeBtn = document.getElementById('theme-btn');
 const focusBtn = document.getElementById('focus-btn');
 const fontScaleInput = document.getElementById('font-scale');
+const voicePicker = document.getElementById('voice-picker');
+const voicePreviewBtn = document.getElementById('voice-preview-btn');
 const asciiStarEl = document.getElementById('ascii-star');
 function _scheduleStar() {
   const speed = 40 + Math.random() * 220;
@@ -319,6 +323,12 @@ function stopStar() {
   if (_starTimer) { clearTimeout(_starTimer); _starTimer = null; }
   if (asciiStarEl) asciiStarEl.textContent = '';
 }
+
+voicePicker?.addEventListener('change', () => {
+  const voice = voicePicker.value.trim();
+  if (voice) setVoiceName(voice);
+});
+voicePreviewBtn?.addEventListener('click', () => window.MASTER_FACE?.previewVoice?.());
 
 let _stateMode = 'idle';
 Object.defineProperty(State, 'mode', {

@@ -11,5 +11,19 @@
     <%= f.select :season, Item::SEASONS, include_blank: "Select…" %>
   </div>
   <div class="field"><%= f.label :occasion %><%= f.text_field :occasion %></div>
+  <section class="nested-form" data-controller="stimulus-rails-nested-form">
+    <h3>Items</h3>
+    <template data-stimulus-rails-nested-form-target="template">
+      <%= f.fields_for :outfit_items, OutfitItem.new, child_index: "NEW_RECORD" do |outfit_item_fields| %>
+        <%= render "outfit_item_fields", f: outfit_item_fields %>
+      <% end %>
+    </template>
+    <div data-stimulus-rails-nested-form-target="container">
+      <%= f.fields_for :outfit_items do |outfit_item_fields| %>
+        <%= render "outfit_item_fields", f: outfit_item_fields %>
+      <% end %>
+    </div>
+    <button type="button" class="btn-link" data-action="stimulus-rails-nested-form#add">Add item</button>
+  </section>
   <div class="actions"><%= f.submit class: "btn" %> <%= link_to "Cancel", outfits_path %></div>
 <% end %>

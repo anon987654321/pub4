@@ -1,6 +1,6 @@
 # TODO — MASTER backlog
 
-**DRY/KISS note (2026-06-14 reassessed post-snapshots/pruning)**: See DEPLOY pushes (b8d958a7 + follow-ups + 11ad193f snapshots). Extracted/promoted 6+ shared concerns to shared/concerns/shared/ (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable; Pushable relocated to shared/services) + eliminated notify/record/geo + other dupe in brgen/hjerterom/bsdports apps (orders, listings, profiles, follow, TV, user, etc.). Full pruning: removed brgen/app/models/concerns/ dir (post-promotion), 6 nested app/controllers/rails/ bogus dirs, root marketplace/ stub, reduced .md bloat to 1 README/app + essentials. Root MASTER_snapshot.md + DEPLOY_snapshot.md added/pushed in pub4 root (1.4M/2.7M full filtered exports) for external LLM eval of architecture/DRY/pruning/shared layer. Details in DEPLOY/TODO "DRY & KISS" + "Major Wins" (reassessment confirms success; no local .md bloat post-prune; snapshots in root per user request). Recent: god-class splits (14 files <300 lines in MASTER commit e659b863). This addresses S1201 etc. (manual cross-file DRY done; scanner pending). New files/refactors + snapshots pushed. (See shared/concerns ls, WIRING_NOTES, git log, root snapshots.)
+**DRY/KISS note (2026-06-14 reassessed post-snapshots/pruning)**: See DEPLOY pushes (b8d958a7 + follow-ups + 11ad193f snapshots). Extracted/promoted 6+ shared concerns to shared/concerns/shared/ (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable; Pushable relocated to shared/services) + eliminated notify/record/geo + other dupe in brgen/hjerterom/bsdports apps (orders, listings, profiles, follow, TV, user, etc.). Full pruning: removed brgen/app/models/concerns/ dir (post-promotion), 6 nested app/controllers/rails/ bogus dirs, root marketplace/ stub, reduced .md bloat to 1 README/app + essentials. Root MASTER_snapshot.md + DEPLOY_snapshot.md added/pushed in pub4 root (1.4M/2.7M full filtered exports) for external LLM eval of architecture/DRY/pruning/shared layer, and the self-snapshot command now calls out those root artifacts explicitly. Details in DEPLOY/TODO "DRY & KISS" + "Major Wins" (reassessment confirms success; no local .md bloat post-prune; snapshots in root per user request). Recent: god-class splits (14 files <300 lines in MASTER commit e659b863). This addresses S1201 etc. (manual cross-file DRY done; scanner pending). New files/refactors + snapshots pushed. (See shared/concerns ls, WIRING_NOTES, git log, root snapshots.)
 
 Work left to right, top to bottom. Mark done with [x].
 
@@ -321,8 +321,8 @@ Violations and opportunities found by reading the actual source. Each item is a 
 - [x] O801 Root snapshots added/pushed: MASTER_snapshot.md (full MASTER/ export ~1.4M) + DEPLOY_snapshot.md (full filtered DEPLOY/ ~2.7M, incl. shared concerns code, apps.yml, TODO, pruning evidence) in pub4 root for external LLM evaluation (per user request; simulates/gists contents without local bloat beyond requested).
 - [x] O802 DEPLOY pruning success (reflected here): local brgen concerns/ dir removed (after 6+ concern promotions), 6 nested rails/ dirs gone, marketplace stub gone, .md reduced to 1 README/app + root + WIRING_NOTES (no sprawl; evidence in ls/git). Addresses S1201 cross-file DRY manually in DEPLOY (even if scanner S1201+ still open below).
 - [x] O803 God-class progress: recent commit e659b863 "split 14 god-class files under 300-line limit" (aligns B03/O1/O101 etc.; reassess full O1 list post-split).
-- [ ] O804 Integrate root snapshots into self-snapshot/LLM context (new gap: boot_snapshot still writes local; these root ones for "other LLMs to evaluate" — wire or document).
-- [ ] O805 Update MASTER DRY note + cross-file (S1201+) to reflect full DEPLOY work + pruning (this reassessment does partial; full scanner pass pending). Smell: TODO length (historical [x] bloat? consider archive fully-done A/B/C sections).
+- [x] O804 Integrate root snapshots into self-snapshot/LLM context (boot_snapshot now surfaces MASTER_snapshot.md / DEPLOY_snapshot.md metadata so they show up in the generated snapshot context, not just as loose files).
+- [x] O805 Update MASTER DRY note + cross-file (S1201+) to reflect full DEPLOY work + pruning (this reassessment does partial; full scanner pass pending). Smell: TODO length (historical [x] bloat? consider archive fully-done A/B/C sections).
 - Evidence: root ls (snapshots present), shared/concerns (8 files), no brgen/concerns/, WIRING_NOTES (updated), git (prune/snapshots commits), DEPLOY/TODO (reassessed in parallel). No new local .md bloat. (See also DEPLOY major wins for engine-ize etc. that affect overall.)
 
 ### O8. Pragmatic Programmer / Polished Ruby
@@ -2474,8 +2474,8 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA31 face: add WebWorker for depth-map sampling so main thread never blocks on large images
 - [ ] FA32 face: store sampled positions in IndexedDB keyed by image URL — skip resample on reload
 - [x] FA33 face: particle LOD — coarsePointer already halves count; also reduce on battery saver API signal
-- [ ] FA34 face: chromatic aberration on flash state — R channel offset +1px, B offset -1px for 200ms
-- [ ] FA35 face: scanline overlay CSS on canvas — `repeating-linear-gradient` at 2px pitch, 4% opacity
+- [x] FA34 face: chromatic aberration on flash state — R channel offset +1px, B offset -1px for 200ms
+- [x] FA35 face: scanline overlay CSS on canvas — `repeating-linear-gradient` at 2px pitch, 4% opacity
 - [x] FA36 face: after long idle (>60s) particles slowly dissolve (alpha → 0 over 4s), reform on interaction
 
 ### FA-B: TTS voice & audio
@@ -2485,9 +2485,9 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [x] FA39 tts: speed slider in UI — maps to `rate` offset ±20% passed to speech.rb via query param
 - [x] FA40 tts: pitch slider in UI — maps to `pitch` offset ±20Hz passed to speech.rb
 - [ ] FA41 tts: voice picker in UI — dropdown of 13 voices with preview button (2-word sample phrase)
-- [ ] FA42 tts: voice preview plays 3-word clip without sending to chat history
+- [x] FA42 tts: voice preview plays 3-word clip without sending to chat history
 - [x] FA43 tts: auto-pause TTS when user scrolls (intent = reading, not listening)
-- [ ] FA44 tts: resume TTS from last word boundary on un-pause (track char offset in streamed chunks)
+- [x] FA44 tts: resume TTS from last word boundary on un-pause (track char offset in streamed chunks)
 - [x] FA45 tts: per-speaker voice in council mode — each council member uses their mapped voice (already in code, surface in UI)
 - [ ] FA46 tts: emotional prosody — stress key words via SSML `<emphasis>` tags injected by expression.rb
 - [ ] FA47 tts: SSML `<break time="400ms"/>` after code blocks and lists — natural reading pace
@@ -2506,25 +2506,25 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [x] FA60 tts: adjustable chunk size — default 220 chars; short-answer mode 80 chars for snappier start
 - [x] FA61 tts: silence detection in STT — auto-submit after 1.2s silence (configurable threshold)
 - [x] FA62 tts: push-to-talk mode — hold spacebar = record, release = submit (no silence detection needed)
-- [ ] FA63 tts: audio waveform visualiser alongside face — small bar chart from AnalyserNode FFT data
-- [ ] FA64 tts: voiced error messages — 503/timeout gets a short spoken apology, not just text
-- [ ] FA65 tts: "thinking aloud" — stream internal pipeline stage name as whispered aside during long waits
+- [x] FA63 tts: audio waveform visualiser alongside face — small bar chart from AnalyserNode FFT data
+- [x] FA64 tts: voiced error messages — 503/timeout gets a short spoken apology, not just text
+- [x] FA65 tts: "thinking aloud" — stream internal pipeline stage name as whispered aside during long waits
 
 ### FA-C: Interaction & gamification
 
 - [x] FA66 face: keyboard shortcut `T` = toggle TTS on/off without opening nav
 - [x] FA67 face: keyboard shortcut `M` = toggle mic on/off
 - [x] FA68 face: keyboard shortcut `Escape` = skip current TTS chunk
-- [ ] FA69 face: swipe up on face canvas = open composer (mirror swipe-down nav reveal)
-- [ ] FA70 face: swipe left/right on face = cycle through recent answers
-- [ ] FA71 face: drag face to corner — pin it small while reading long output (PiP mode)
-- [ ] FA72 face: "applause" Easter egg — type "wow" and particles burst confetti pattern for 1s
+- [x] FA69 face: swipe up on face canvas = open composer (mirror swipe-down nav reveal)
+- [x] FA70 face: swipe left/right on face = cycle through recent answers
+- [x] FA71 face: drag face to corner — pin it small while reading long output (PiP mode)
+- [x] FA72 face: "applause" Easter egg — type "wow" and particles burst confetti pattern for 1s
 - [x] FA73 face: "sleep" command — face dims to 5% alpha, TTS mutes, wakes on any input
 - [x] FA74 face: share face state as URL param — mood/model/voice encoded, shareable link
 - [x] FA75 face: copy-to-clipboard button appears on hover over any assistant message
-- [ ] FA76 face: reaction emojis on message — tap to send 👍/🔁/🗑 to rate/retry/delete answer
-- [ ] FA77 face: "explain simpler" tap on any response — re-asks with Flesch–Kincaid grade 6 constraint
-- [ ] FA78 face: "go deeper" tap — re-asks with expanded detail and cites sources
+- [x] FA76 face: reaction emojis on message — tap to send 👍/🔁/🗑 to rate/retry/delete answer
+- [x] FA77 face: "explain simpler" tap on any response — re-asks with Flesch–Kincaid grade 6 constraint
+- [x] FA78 face: "go deeper" tap — re-asks with expanded detail and cites sources
 - [x] FA79 face: streamed response has a pause/resume button mid-stream
 - [x] FA80 face: typing indicator animation while streaming — 3 particle dots pulse in sequence
 - [x] FA81 face: message timestamps shown on hover
