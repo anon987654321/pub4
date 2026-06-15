@@ -4,7 +4,7 @@ Operator context (intent, constraints, VPS recovery, next waves): [`../TODO.md`]
 
 Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
-**Critical Gaps (2026-06-15 reassess — after tranche10 + web pass + proceed-all fixes + strict rules.yml adherence push + faker seeds + VPS optimize + Ferrum web seeds)**:
+**Critical Gaps (2026-06-15 reassess — after tranche10 + web pass + proceed-all fixes + strict rules.yml adherence push + faker seeds + VPS optimize + Ferrum web seeds + last-minute polish)**:
 - [x] Fictive seeds with ruby-faker for brgen + subapps (marketplace/dating/playlist/takeaway/tv/maps/messages: users, listings, profiles, orders, shows, places, convos etc.) and amber (items, outfits, posts). Comprehensive, idempotent, activity-wired. Added to amber Gemfile. See new db/seeds.rb files.
 - [x] Web-augmented seeds via Ferrum + vision LLM: new rake tasks scrape:reddit_seed, scrape:x_seed (brgen), scrape:fashion_seed (amber). Optional in seeds.rb when SEED_FROM_WEB + OPENROUTER_API_KEY. Scrape service moved to shared for reuse across apps. Rakes route scraped posts/content to create fictive records in each vertical (e.g. local buzz -> Posts/Maps, food/deals -> Takeaway/Marketplace, music/media -> Playlist/Tv, social -> Dating/Messages). See lib/tasks/*.rake and updated seeds. Full integration for brgen subapps + amber.
 - Strict rules.yml self-application: MASTER scan now in openbsd.sh pre-apply (blocks on violation per success_criteria). Extend to all per-app .sh, use openrsync (not cp) for singularity, enforce veto/anti-patterns in deploys (no TODOs, secrets in code), ground_truth fresh reads before every config sync, evidence_scoring (scan_clean) gate before rcctl restarts. Self-test laws must cover DEPLOY paths (ROBUSTNESS in sh, SINGULARITY in configs, etc.). No exceptions for "deploy only" code.
@@ -375,7 +375,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] AN1708 counter_cache with touch: `belongs_to :post, counter_cache: true, touch: true` — free comment_count on posts, free cache invalidation; zero SQL overhead in views
 - [ ] AN1709 Solid Queue recurring.yml: define `config/recurring.yml` with daily digest, weekly stats, nightly full-text index rebuild, monthly analytics rollup for all apps
 - [x] AN1710 limits_concurrency in jobs: `limits_concurrency on: -> { "llm-#{arguments.first}" }` — prevent parallel LLM calls for same user; one LLM request per user at a time
-- [ ] AN1711 http_cache_forever for manifests: `http_cache_forever(public: false)` on PWA manifest and service-worker.js — immutable caching with etag fallback
+- [x] AN1711 http_cache_forever for manifests: `http_cache_forever(public: false)` on PWA manifest and service-worker.js — immutable caching with etag fallback
 - [ ] AN1712 Thruster asset caching: Thruster (default Rails 8 proxy) handles gzip/brotli automatically; verify `Content-Encoding: br` on all JS/CSS assets; zero config needed
 - [ ] AN1713 fresh_when with ETag on show actions: `fresh_when(@post, etag: @post, last_modified: @post.updated_at, public: false)` — 304 responses for unchanged posts; no DB hit after first load
 - [ ] AN1714 format.md responses: `respond_to { |format| format.json { render json: @post } }` — add JSON responses to all show actions for PWA offline/share features

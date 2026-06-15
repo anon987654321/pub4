@@ -727,7 +727,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [x] T102 Hybrid search with RRF: Reciprocal Rank Fusion combining FTS5 keyword (BM25) + vector embeddings — eliminates false negatives from pure keyword or pure semantic alone
 - [x] T103 Brain file templates: SOUL.md (identity/values), IDENTITY.md (persona), MEMORY.md (facts index), AGENTS.md (tool registry), TOOLS.md (skill library) — structured retrieval vs flat notes
 - [x] T104 Editable brain between turns: brain files remain plaintext-editable by user, not locked in vectordb — enables human-AI co-curation of MASTER's knowledge
-- [ ] T105 FTS5-only VPS mode: zero-embedding fallback using pure keyword search — cost-appropriate for OpenBSD VPS with no GPU
+- [x] T105 FTS5-only VPS mode: zero-embedding fallback using pure keyword search — cost-appropriate for OpenBSD VPS with no GPU
 - [ ] T106 Tree-sitter + SQLite AST cache: cache parsed ASTs to avoid re-parsing unchanged files — apply to MASTER's Prism structural scan across multi-file sessions
 - [ ] T107 Session search with LLM summarization: cross-session memory recall via FTS5 with LLM-generated summaries of past sessions, not raw retrieval
 - [x] T108 Token-budgeted context map: MASTER's file map output capped at configurable token limit (default 1,024) via relevance ranking — prevent context explosion

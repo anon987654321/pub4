@@ -73,14 +73,14 @@ See DEPLOY/openbsd/unban_pf.sh for a one-shot helper that drops you straight int
 - Per-app (brgen subapps, amber, ...): `doas zsh DEPLOY/rails/brgen/brgen.sh` (or just `doas rcctl restart brgen_rails` after pull if no bundle changes). All .sh now have pre-apply MASTER /scan DEPLOY (blocks on rules violations) + /up guards + sleeps.
 - Recovery (if direct ssh blocked by pf): `ssh -p 31415 ... dev@server4.openbsd.amsterdam ; vmctl console vm23` (then `doas pfctl -t bruteforce -T flush` or use unban_pf.sh from your workstation).
 - Always tmux. Use host console for anything wedged. Health: curl /up + ruby health_check.rb.
-- Web seeds on VPS: only when needed (they can be resource-heavy due to Ferrum+LLM); prefer running locally then git push + pull.
+- Web seeds on VPS: only when needed (resource-heavy due to Ferrum+LLM); prefer locally then git push/pull. Final wave: full integration (rake *_seed + optional in seeds.rb) for brgen subapps + amber.
 
 - Rapid reconnects trip pf — use tmux; unban via host console (unban_pf.sh).
 - FDE only if OK with no cold-start help from provider.
 - Billing: include "server4 vm23" in description.
 - Same key for VM + host + backup (wingman1 via openrsync).
 
-**For other LLMs/agents (explicitly):** Read this file + root README + DEPLOY/rails/apps.yml + openbsd/pf.conf first. The system is built for recursive self-application (rules.yml enforced via scans in deploys). Seed data is the "Faker base + optional Ferrum web" pattern above. Deploys are intentionally light and gated. All changes must be committed back here. Host access is the out-of-band path. See also unban_pf.sh, the per-app .sh (with scan gates), and db/seeds.rb for the data generation logic.
+**For other LLMs/agents (explicitly):** Read this file + root README + DEPLOY/rails/apps.yml + openbsd/pf.conf first. The system is built for recursive self-application (rules.yml enforced via scans in deploys). Seed data is the "Faker base + optional Ferrum web" pattern above (rakes produce model-ready data; SEED_FROM_WEB for augmentation). Deploys are intentionally light and gated (MASTER scan + /up). All changes must be committed back here. Host access is the out-of-band path. See also unban_pf.sh, the per-app .sh (with scan gates), and db/seeds.rb for the data generation logic.
 
 ## Run
 

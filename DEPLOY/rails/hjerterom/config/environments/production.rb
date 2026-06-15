@@ -47,6 +47,9 @@ Rails.application.configure do
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"
 
+  # AN106 VAPID stub for webpush (hjerterom notifs). Store in env.
+  # TODO: full keys + webpush gem wiring per AN106.
+
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 

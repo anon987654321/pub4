@@ -33,6 +33,9 @@ memory/*.jsonl
 .constitutional_costs.jsonl
 .constitutional_memory.json
 
+# Operator secrets (keys live in priv/; see priv/.gitignore)
+priv/ssh/
+
 # Environment files with secrets
 .env
 .env.local

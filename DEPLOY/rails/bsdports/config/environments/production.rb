@@ -47,6 +47,9 @@ Rails.application.configure do
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"
 
+  # AN106 VAPID stub (for future webpush in bsdports). Keys via env/credentials.
+  # TODO: generate, wire webpush + push_subscriptions if adding notifs per rules.
+
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 

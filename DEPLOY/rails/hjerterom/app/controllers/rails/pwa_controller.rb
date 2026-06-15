@@ -5,11 +5,15 @@ module Rails
     CACHE_VERSION_PLACEHOLDER = "__CACHE_VERSION__"
 
     def manifest
-      render template: "pwa/manifest", formats: :json
+      http_cache_forever(public: false) do
+        render template: "pwa/manifest", formats: :json
+      end
     end
 
     def service_worker
-      render js: service_worker_source, content_type: "application/javascript"
+      http_cache_forever(public: false) do
+        render js: service_worker_source, content_type: "application/javascript"
+      end
     end
 
     def offline

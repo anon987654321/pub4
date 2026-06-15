@@ -68,7 +68,7 @@ module Master
       end
 
       def dispatch_self(scanner:, root:, bus:, ctx: nil)
-        result = Master::Judge::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(stream: true, autofix: true)
+        result = Master::Judge::Scan::SelfScan.new(scanner: scanner, root: root, event_bus: bus).call(stream: true, autofix: true)
         return result.message unless result.ok?
 
         result.value!.line
@@ -123,7 +123,7 @@ module Master
 
       def recent_events(root, n)
         now = Time.now.utc
-        Trace::EventLog.new(root:).recent(n).map { |rec|
+        Trace::EventLog.new(root: root).recent(n).map { |rec|
           ts = (Time.parse(rec["timestamp"]) rescue now)
           secs = (now - ts).to_i.abs
           ago = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
@@ -137,7 +137,7 @@ module Master
 
       # /resync — divergence repair: tag, fetch, reset, bundle, restart.
       def dispatch_resync(root:, fix_loop:, git:, ctx: nil)
-        ResyncService.new(root:, fix_loop:, git:).call(dry_run: arg_for(ctx).include?("--dry-run"))
+        ResyncService.new(root: root, fix_loop: fix_loop, git: git).call(dry_run: arg_for(ctx).include?("--dry-run"))
       end
 
       # /tail [N] [pattern] — last N events matching pattern. Default N=20.
@@ -145,7 +145,7 @@ module Master
         arg = arg_for(ctx)
         n_arg, pattern = arg.split(/\s+/, 2)
         n = n_arg.to_i.positive? ? n_arg.to_i : 20
-        records = Trace::EventLog.new(root:).tail(n, pattern:)
+        records = Trace::EventLog.new(root: root).tail(n, pattern: pattern)
         return "tail: no events" if records.empty?
 
         records.map { |rec|
@@ -180,7 +180,7 @@ module Master
           FixPreviewReport.new(result.value!).render
         else
           target = expand_or_root(arg, root)
-          prescan = anti_sprawl_prescan(scanner:, target:, root:)
+          prescan = anti_sprawl_prescan(scanner: scanner, target: target, root: root)
           result = fix_loop.run(target)
           output = result.ok? ? result.value! : fix_failure_with_alternatives(result.message, target)
           [prescan, output].reject(&:empty?).join("\n")
@@ -191,7 +191,7 @@ module Master
         paths = prescan_paths(target)
         return "" if paths.empty?
 
-        pairs = Master::Judge::Scan::CrossFileAnalysis.new(root:).call(paths)
+        pairs = Master::Judge::Scan::CrossFileAnalysis.new(root: root).call(paths)
         findings = pairs.flat_map { |_path, result| Result.wrap(result).value_or([]) }
         return "Checking for side effects...\nprescan: clean. Moving on." if findings.empty?
 
@@ -275,7 +275,7 @@ module Master
         arg = arg_for(ctx)
         return "usage: /edge-cases <ruby-file>" if arg.empty?
 
-        Master::Judge::Scan::EdgeCaseStubGenerator.new(root:).call(arg).then do |result|
+        Master::Judge::Scan::EdgeCaseStubGenerator.new(root: root).call(arg).then do |result|
           result.ok? ? result.value! : result.message
         end
       end
@@ -327,7 +327,7 @@ module Master
       def dispatch_scan(scanner:, root:, ctx: nil)
         arg = arg_for(ctx)
         dry_run = dry_run_arg?(arg)
-        request = ScanRequest.new(scanner:, root:, arg: strip_dry_run(arg)).call
+        request = ScanRequest.new(scanner: scanner, root: root, arg: strip_dry_run(arg)).call
         return request.pairs if request.pairs.is_a?(String)
         ScanReport.new(
           pairs: request.pairs,

@@ -90,6 +90,26 @@ class TestMemory < Minitest::Test
     assert_equal "openbsd_tip", hits.first[:key]
   end
 
+  def test_fts5_only_recall_works_without_embeddings
+    skip "sqlite3 gem unavailable" unless defined?(SQLite3::Database)
+
+    previous_search = ENV["MASTER_MEMORY_SEARCH"]
+    previous_zero = ENV["MASTER_ZERO_EMBEDDINGS"]
+    ENV["MASTER_MEMORY_SEARCH"] = "fts5"
+    ENV["MASTER_ZERO_EMBEDDINGS"] = "1"
+
+    @mem.remember("vps_mode", "OpenBSD VPS memory recall uses FTS5 keyword search")
+    @mem.remember("wardrobe", "amber outfit palette and wardrobe notes")
+
+    hits = @mem.semantic_recall("openbsd keyword memory", top_n: 1)
+
+    assert_equal "vps_mode", hits.first[:key]
+    assert_equal "fts5", hits.first[:fusion]
+  ensure
+    ENV["MASTER_MEMORY_SEARCH"] = previous_search
+    ENV["MASTER_ZERO_EMBEDDINGS"] = previous_zero
+  end
+
   def test_tfidf_recall_returns_empty_for_noise
     @mem.remember("x", "unrelated content here")
     hits = @mem.semantic_recall("zzzzzzz nonsense 12345")
