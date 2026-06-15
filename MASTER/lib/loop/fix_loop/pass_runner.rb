@@ -96,10 +96,7 @@ module Master
           PassResult.new(status: status, message: "clean after #{pass} pass(es)", consecutive_clean: clean_count)
         end
 
-        def ground_truth_violations(files)
-          files.each { |path| File.read(path, encoding: "UTF-8") if File.file?(path) }
-          violations(files)
-        end
+        def ground_truth_violations(files) = violations(files)
 
         def mtimes(files) = files.to_h { |p| [p, File.exist?(p) ? File.mtime(p).to_f : nil] }
 

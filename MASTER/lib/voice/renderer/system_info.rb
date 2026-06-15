@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "open3"
-require "yaml"
 
 module Master
   module Voice
@@ -27,14 +26,13 @@ module Master
         end
 
         def soul_version
-          data = YAML.safe_load(File.read(File.join(Master::DATA, "soul.yml"), encoding: "UTF-8"))
-          data["version"] || "unknown"
+          (Master.load_yaml(File.join(Master::DATA, "soul.yml")) || {})["version"] || "unknown"
         rescue StandardError => _e
           "unknown"
         end
 
         def active_orders_count
-          orders = YAML.safe_load(File.read(File.join(Master::DATA, "standing_orders.yml"), encoding: "UTF-8"))
+          orders = Master.load_yaml(File.join(Master::DATA, "standing_orders.yml"))
           Array(orders).count { |o| o["enabled"] != false }
         rescue StandardError => _e
           "?"

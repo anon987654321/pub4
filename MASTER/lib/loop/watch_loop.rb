@@ -44,11 +44,7 @@ module Master
 
       private
 
-      def build_watcher
-        require_kqueue_or_inotify
-      rescue LoadError
-        raise
-      end
+      def build_watcher = require_kqueue_or_inotify
 
       def drain_queue
         pending = {}
