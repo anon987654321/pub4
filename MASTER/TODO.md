@@ -1,5 +1,7 @@
 # TODO — MASTER backlog
 
+Operator context (intent, constraints, VPS recovery, next waves): [`../TODO.md`](../TODO.md).
+
 **Critical Gaps (2026-06-15 reassess — after web layer pass + tranche10)**:
 - Self-scan / D section vs rule "complete all TODO.md files fully before running actual MASTER commands over its own self": infrastructure [x] on paper (D01-D10), but cannot execute real /scan / master start / self-autofix without violating the explicit constraint. Circular dependency.
 - Snapshot quality (O804): root MASTER/DEPLOY_snapshot.md are abbreviated "tranche" notes (hundreds of bytes); intent was full-ish filtered exports for external LLM eval of architecture/DRY/pruning/engine/shared layer.
@@ -687,6 +689,35 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [x] S1502 Personality catchphrases wired to real events: "Backing up first." before write, "That looks risky. Confirm?" before destructive op, "Checking for side effects..." before LLM fix, "Clean. Moving on." after zero findings
 - [x] S1503 Bodyguard mode: block rm -rf, dd, mkfs without explicit --force flag; warn on doas escalation; check file permissions before write
 - [x] S1504 On blockers: "finds workarounds, suggests alternatives" — if primary approach fails, MASTER generates 3 alternative approaches automatically
+
+### S16: Pending git integration (operator handoff merge)
+
+- [ ] S1601 Cherry-pick `vps/refactor/seven-modules`: 9 commits onto `main` via `tmp/cherry_seven_modules.rb` on VPS (`ruby34`); skip `f282ee20` and `b96d7f21` (doc-sync conflicts with `fix_loop` rename on main). Brings SILENT_RESCUE, Swallow.log routing, ground enhancements, CANON.md, Opus 4.7 patches.
+- [ ] S1602 Merge `cleanup-attempt-backup`: review `8a584e9` (drop stale snapshot dumps) and `0a4434c` (drop stubs, relocate analysis dump); merge if clean.
+
+## HG — Operator handoff merge (2026-06-15)
+
+- [ ] HG01 Verify deployed face + particles at `https://ai.brgen.no/` (primer → WebGL + ecology).
+- [ ] HG02 TTS consolidation: four implementations in `lib/voice/` — pick one backend, delete others, move subprocess logic from `bin/tts-worker` into `lib/voice/`.
+- [ ] HG03 Swarm workers: implement voting, consensus, failure fallback in `lib/judge/swarm/`.
+- [ ] HG04 Rule detector audit: cross-reference every `rules.yml` id against `lib/judge/scan/rules/` coverage.
+- [ ] HG05 Pipeline context: replace plain hash in `lib/now/pipeline.rb` with typed context; typo failures loud.
+- [ ] HG06 Datalog/cybernetics/homeostat: grep callers in `lib/loop/` and `lib/judge/`; finish wired paths or delete dead scope after proof.
+- [ ] HG07 `structural_ops`: wire merge/defrag/decouple/hoist/flatten/delete/expand/reduce_noise as orders callables (no `/triad` wrapper).
+- [ ] HG08 HALLUCINATION rule: full lexical/semantic detector (stub exists).
+- [ ] HG09 `self_test.laws_apply_to_self`: Ruby executor for per-law scans (`rules.yml` specifies, no reader yet).
+- [ ] HG10 Rename `lib/ops/` → `lib/loop/ops/`; `Master::Ops` → `Master::Loop::Ops`; update `master.rb` + `work_commands.rb`.
+- [ ] HG11 Relocate orphaned root `lib/*.rb` into owning modules (`master.rb`, `builder.rb`, `plugin.rb`, etc.).
+- [ ] HG12 `patterns.yml` absorbs `infer_patterns.yml`, `repo_topic_clusters.yml`, `prompt_archaeology.yml` (namespaced).
+- [ ] HG13 Audit `web/app/assets` vs `public/` — `app.js`, `chat.js`, `application.css`, `canvas.css` unreferenced? delete or wire.
+- [ ] HG14 Two-stage council: independent round one + dissent-only round two when dissent >30% (`workflow.yml`).
+- [ ] HG15 `/diag` cache hit display from `cache:hit` events in CLI cost output.
+- [ ] HG16 Evidence scoring before autocommit (≥80); extend beyond `:deploy` stage if git autofix paths bypass gate.
+- [ ] HG17 Reverse introspection: every 10 commits, sample 5, ask MASTER if it would approve now.
+- [ ] HG18 `view_thread` persistence: `thread:decision` events to `data/threads/${session_id}.jsonl`.
+- [ ] HG19 Gemini prompt caching beyond Claude where API supports it.
+- [ ] HG20 Single `bin/probe` entrypoint for audit/preflight/smoke/security.
+- [ ] HG21 Auto-generate `data/TODO_from_yml.md` from soul/rules/workflow scaffolded markers.
 
 ## T — Borrowed Concepts from aider, OpenCrabs, Codex CLI, Grok Build, Hermes Agent
 

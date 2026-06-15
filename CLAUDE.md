@@ -13,7 +13,9 @@ pub4/
   DEPLOY/rails/     Rails 8 sub-apps: brgen, amber, baibl, bsdports, blognet, hjerterom, marketplace
   DEPLOY/repligen.rb  Replicate.com AI image generation CLI (544 LOC)
   DEPLOY/postpro/   Cinematic post-processing via ruby-vips (film stocks, grain, LUTs)
-  TODO.md           Living backlog — 3550+ lines, 57 sections (A–BE)
+  TODO.md           Operator handoff — intent, constraints, VPS recovery, next waves
+  MASTER/TODO.md    MASTER itemized backlog (sections A–BF)
+  DEPLOY/TODO.md    DEPLOY itemized backlog (Rails, OpenBSD, postpro)
 ```
 
 ## MASTER — commands

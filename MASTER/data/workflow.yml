@@ -480,7 +480,7 @@ adversarial_questioning:
     non_trivial: "propose 3 concrete options (OPTION 1/2/3 + RECOMMEND), await cherry-pick"
     threshold: "non-trivial if the fix spans more than one file, touches architecture, or has security implications"
 
-# Known issues — active bugs and watch-outs from HANDOFF.md.
+# Known issues — active bugs and watch-outs from TODO.md / operator backlog.
 known_issues:
   tts_broken: "Master::Voice::Speech.synthesize_bytes shells to bin/tts-worker; if edge-tts is missing or tts-worker crashes, speech silently falls back to espeak. Verify bin/tts-worker exists and edge-tts is installed (pkg_add py3-edge-tts or pip)."
   particle_swarm: "cognition_ecology.js trail/weather/memory-node system suspected broken — visual_bridge.js dispatches master:visual CustomEvents but cognition_ecology.js event listener may not be registering. Check addEventListener target and event name match."

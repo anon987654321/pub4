@@ -1,5 +1,7 @@
 # TODO — DEPLOY backlog
 
+Operator context (intent, constraints, VPS recovery, next waves): [`../TODO.md`](../TODO.md).
+
 Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
 **Critical Gaps (2026-06-15 reassess — after tranche10 + web pass + proceed-all fixes)**:
@@ -2308,3 +2310,13 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [x] DG08 bsdports: add maintainer page — all ports by a given maintainer with contact link
 - [x] DG09 bsdports: add RSS feed for new ports added in last 7 days
 - [x] DG10 bsdports: add CVE cross-reference — link ports to known vulnerabilities via NIST NVD API (via security_advisories table + NvdCveService
+
+## HH — Operator handoff merge (2026-06-15)
+
+- [ ] HH01 postpro: sync `/home/dev/postpro` generated files to `/var/www/postpro` after each regen (`regen.rb`; `postpro_vps.rb` calls `gallery_lightbox.rb`).
+- [ ] HH02 Add `bin/deploy-diff`: SSH-compare key VPS configs against `DEPLOY/` before deploy.
+- [ ] HH03 Add `rcctl check` health report: master, relayd, nsd, app services — concise operator format.
+- [ ] HH04 Document Ruby 3.4 execution path (`bundle34` on OpenBSD); run per-app runtime gate on VPS before restart.
+- [ ] HH05 Verify live relayd health checks match repo (`check http "/up" code 200` vs `openbsd.sh` `check tcp`).
+- [ ] HH06 Update `DEPLOY/rails/PRODUCTION_READINESS.md` with dated pass/fail per app after target-host smoke.
+- [ ] HH07 Enforce local lint before scp to VPS (especially `MASTER/web/`).
