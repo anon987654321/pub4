@@ -18,4 +18,5 @@ VAPID stub example in WIRING + env notes.
 Fictive seeds: comprehensive Faker + optional web scrape for brgen subapps/amber. See db/seeds.rb, lib/tasks/*_seed.rake, shared/scrape.rb.
 Critical remaining (see TODO): full AN201 migration, complete activity for every action, VAPID keys gen per app, Workbox build step, full snapshot exports, tests.
 See critical section in DEPLOY/TODO + engine note.
+Git archaeology (2026-06-15): no critical info/logic omitted (ee3a56e33 MD prune condensed+verified in canonicals; unban removal + pf rate drop ee29827b0/e6d5d5712 intentional+fully documented in openbsd/README + "For LLMs"; WIRING stale refs cleaned; all seeds/Ferrum/rules gates/VPS preserved). See DEPLOY/TODO critical.
 Push after.

@@ -18,4 +18,5 @@ Web: MASTER/web/MASTER_web_layer_pass_2026-06-15.md (full review + resolution).
 Root snaps: now substantive (gaps + evidence) vs prior tiny.
 Open remaining (per TODO critical): AN103 full Workbox, full AN201 generator runs + 6-app migration, real VPS M items, tests evidence runs, snapshot full exports for LLM (this is summary).
 Files: MASTER/TODO ~1350 lines (critical section top), 6 apps engine-wired, web pass applied.
+Git archaeology (2026-06-15): no accidental omissions (prunes ee3a56e33 etc intentional+condensed+verified; unban/pf ee29827b0/e6d5d5712 deliberate self-lock fix + docs; no master.yml loss; seeds/rules/VPS gates stuck). See MASTER/TODO critical for details + commits.
 See DEPLOY critical section for Rails specifics.

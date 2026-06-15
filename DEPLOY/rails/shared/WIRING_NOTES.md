@@ -98,7 +98,7 @@ This ensures a single coherent "watch from afar" aesthetic across Brgen, Amber, 
 
 ## Stimulus Components Baseline
 
-`shared/frontend/stimulus_components.js` + Brgen's controller set (clipboard, lightbox, media_picker, geolocation, notification, timeago, typing, etc.) is the shared component library. New apps and verticals should start from these rather than duplicating. See `shared/STIMULUS_COMPONENTS_BASELINE.md` (and Brgen's `app/javascript/controllers/`).
+`shared/frontend/stimulus_components.js` + Brgen's controller set (clipboard, lightbox, media_picker, geolocation, notification, timeago, typing, etc.) is the shared component library. New apps and verticals should start from these rather than duplicating. (STIMULUS_COMPONENTS_BASELINE.md pruned ee3a56e33 for .md reduction; guidance inlined in this "Stimulus Components Baseline" section + the JS + Brgen controllers.)
 
 ## LLM / AI Readiness
 
@@ -178,7 +178,7 @@ rc.d services (falcon/puma per-app on distinct ports), relayd tables/healthcheck
 **Pure Zsh preference**: New provisioning logic should favor zsh parameter expansion and builtins over external tools (grep, sed, awk, etc.) where practical, per the broader pub4 conventions. See current thin deploy scripts (e.g. `brgen/brgen.sh`) as the model rather than the heavier legacy @*.sh helpers.
 
 ## Frontend Baselines (condensed from shared/frontend/*.md, pruned to reduce .md sprawl)
-Stimulus Components (from STIMULUS_COMPONENTS_BASELINE.md): Use @stimulus-components/* (auto-submit, clipboard, content-loader, etc.). App-neutral, progressive enhancement.
+Stimulus Components: Use @stimulus-components/* (auto-submit, clipboard, content-loader, etc.). App-neutral, progressive enhancement. (Condensed from pruned STIMULUS_COMPONENTS_BASELINE.md; see section header + shared/frontend/stimulus_components.js.)
 
 LLM-safe rules (from LLM_SAFE_FRONTEND_RULES.md): Split large mixed HTML/CSS/JS/ERB into external files before LLM edits. Prefer minimal unified diffs.
 
