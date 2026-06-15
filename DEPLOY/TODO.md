@@ -48,9 +48,9 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 
 ## M. OpenBSD / deploy alignment
 
-- [ ] M01 Deploy: copy DEPLOY/openbsd/etc/rc.d/master to /etc/rc.d/master on VPS and verify
-- [ ] M02 Deploy: verify /etc/master.env on VPS has all keys from master.env.sample
-- [ ] M03 Deploy: `doas rcctl enable master` — verify master service enabled at boot
+- [ ] M01 Deploy: `doas zsh DEPLOY/openbsd/openbsd.sh --sync-configs` then `doas ksh DEPLOY/openbsd/verify_deploy.sh` (cmp rc.d/master)
+- [ ] M02 Deploy: verify /etc/master.env keys via verify_deploy.sh (auto-seeded from master.env.sample on first sync)
+- [ ] M03 Deploy: verify_deploy.sh checks `rcctl enabled master` + `master(ok)` + `/up` on :53187
 - [x] M04 openbsd.yml audit: check if MASTER's shell-out commands use doas where rules.yml says `privilege: doas`
 - [x] M05 Backup: verify DEPLOY/openbsd/backup_priv.sh uses openrsync (not rsync) per openbsd.amsterdam docs
 - [ ] M06 PTR record: verify brgen.no PTR record set via ptr4.openbsd.amsterdam (run from VM, not locally)
