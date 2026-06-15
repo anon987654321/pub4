@@ -2,9 +2,11 @@
 <% content_for :body_attrs do %>data-action="turbo:load->push#clearBadge"<% end %>
 
 <% other = (@conversation.participants - [Current.user]).first %>
-<header>
+<header role="banner" aria-label="Conversation header">
   <h1><%= other&.display_name || "conversation" %></h1>
-  <%= link_to "← all", conversations_path %>
+  <nav role="navigation" aria-label="Conversation nav">
+    <%= link_to "← all", conversations_path %>
+  </nav>
 </header>
 
 <ul id="messages">

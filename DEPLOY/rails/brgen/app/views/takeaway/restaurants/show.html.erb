@@ -1,8 +1,8 @@
 <% content_for :title, @restaurant.name %>
 
-<div class="page-header">
+<div class="page-header" role="banner" aria-label="Takeaway restaurant header">
   <h1><%= @restaurant.name %></h1>
-  <nav>
+  <nav role="navigation" aria-label="Restaurant actions">
     <% if authenticated? && @restaurant.owner?(Current.user) %>
       <%= link_to "Edit", edit_takeaway_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
     <% elsif authenticated? && @favorited %>

@@ -117,7 +117,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [x] AN801 Full-text semantic search, dependency graph, security feed, maintainer profiles, port comparison, etc. for bsdports: basic NN/ARIA/Turbo on ports index/show + Shared concerns on Port (Reactable/Notifiable). Deeper graph viz in backlog.
 - [x] AN901-910 baibl: ARIA on book nav, turbo on lists, Shared on Verse/Book (Reactable/Notifiable). Full annotations/graph/AI in backlog.
 - [x] AN1001-1015 blognet: turbo/ARIA on posts index/show, Shared on Post/Blog. Paywall/collaborative in backlog.
-- [x partial] AN401 Turbo Frames for every list: tranche5 added turbo to marketplace new, tv live_streams, hjerterom donations, maps checkin; ARIA in many (dining new already, takeaway show, etc.). Models updates in brgen post (to concern style), dating/profile (Geo/Reactable).
+- [x partial] AN401 Turbo Frames for every list: tranche5 added turbo to marketplace new, tv live_streams, hjerterom donations, maps checkin; ARIA in takeaway show, conversations show; more. Models: tv/show, takeaway/restaurant, playlist/playlist updated to concern style + more Shared.
 - [x] AN7 amber partial: ARIA on wardrobe index nav/header, Shared on Item (added Notifiable).
 - [x] AN11 hjerterom partial: ARIA/empty states on volunteers index, turbo/streams prior.
 - [ ] AN402 Turbo Stream broadcasts: `broadcast_append_to`, `broadcast_replace_to`, `broadcast_remove_to` on Post, Comment, Listing, Match models; real-time feed updates without JS
@@ -171,6 +171,8 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [x partial] AN611 Marketplace — listing creation wizard: basic new form with ARIA header/form role/turbo, char-counter, media-picker (AN611 partial flesh).
 - [x partial] AN616 TV — live stream: ARIA roles, turbo-frame, empty state, status in live_streams/index (AN616 partial).
 - [x partial] AN625 Maps — user check-in: basic form stub in places/show (AN625).
+- [x partial] AN620 Playlist collaborative: Shared on playlist model + ARIA in views prior.
+- [x partial] AN622 Takeaway real-time: ARIA on show + model Shared.
 - [x partial] AN7 amber: more ARIA on outfits (prior), donations/hjerterom flesh.
 - [x] AN4 more Turbo: added streams/frames in tv, marketplace new, maps checkin, hjerterom donations.
 - [ ] AN611 Marketplace — listing creation wizard: multi-step form (category → photos → details → price → location → review); save progress as draft between steps
