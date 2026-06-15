@@ -2375,7 +2375,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ## CV: MASTER Council & Deliberation
 
-- [x] CV01 MASTER: fix council — `/triad` 3rd step runs `run_tribunal` deliberation (not review on/off toggle)
+- [ ] CV01 MASTER: fix council — current `/triad` 3rd step is a toggle, not actual deliberation
 - [ ] CV02 MASTER: add `council/swarm.rb` — parallel specialist agents (style/security/perf/soul)
 - [ ] CV03 MASTER: add `council/dissent.rb` — adversarial agent that argues opposite position
 - [ ] CV04 MASTER: add council vote aggregation — majority wins, tie goes to soul.yml principle

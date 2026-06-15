@@ -129,21 +129,9 @@ brgen landing: `#000` OLED-black background, "brgen" in bold Helvetica top-left,
 
 ## VPS and deployment
 
-**vm23** on **server4.openbsd.amsterdam** — IPv4 `46.23.89.226`, user `dev`. Secrets live on the VM in `~/priv/` (not in git); encrypted backup via `DEPLOY/openbsd/backup_priv.sh` → `s4vm23@wingman1.openbsd.amsterdam`.
-
 ```zsh
-# VM (when reachable)
-ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226
-
-# Hypervisor (same key; use when VM :22 is wedged)
-ssh -i ~/.ssh/id_ed25519_brgen -p 31415 dev@server4.openbsd.amsterdam
-vmctl status vm23
-vmctl console vm23          # ~. to exit
-vmctl stop -fw vm23           # force stop if saturated
-vmctl start -c vm23           # boot + console
-
-# Emergency CPU relief (on VM, as root via doas)
-doas ksh /home/dev/pub4/DEPLOY/openbsd/emergency_cpu.sh
+# SSH
+ssh dev@server4.openbsd.amsterdam -p 31415  # key: id_ed25519_brgen
 
 # Deploy MASTER
 doas rcctl restart master
