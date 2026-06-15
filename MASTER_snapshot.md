@@ -1,13 +1,9 @@
-# MASTER Snapshot (autocontinue tranche6+)
-Generated: 2026-06-15T07:24:42Z
-## Tranche6: more turbo/ARIA in marketplace/amber/hjerterom + Shared in playlist/set, marketplace/deal, amber/outfit, hjerterom/donation; AN6 partials marked.
+# MASTER Snapshot (autocontinue more)
+Generated: 2026-06-15T07:24:59Z
+## Fixed model Shared for marketplace/deal, hjerterom/donation; TODO updated.
 ```
-- [x partial] AN401 Turbo Frames for every list: tranche6 added turbo to marketplace categories, amber outfits new, hjerterom donations new; ARIA headers/navs in same + playlist sets already. Models: playlist/set, marketplace/deal, amber/outfit, hjerterom/donation + Shared (Reactable/Notifiable/Geo).
-- [x] AN7 amber partial: ARIA on wardrobe index nav/header, Shared on Item (added Notifiable).
-### AN6: brgen — Hyperlocal City Network
-- [ ] AN601 City onboarding: `/onboard` flow — pick city, pick interests (categories), pick verticals (dating/marketplace/tv/etc.); redirect to personalized feed
-- [ ] AN602 Subdomain feed merging: unified `/` feed that merges posts from all verticals user follows; scored by recency × engagement × personal affinity
-- [ ] AN603 Community creation flow: step-by-step `<turbo-frame>`-based wizard — name, description, rules, category, privacy; preview before publish
-- [ ] AN604 Post composer rich text: ActionText-based composer with slash-commands (`/image`, `/link`, `/poll`, `/code`); markdown shortcut support (`**bold**`, `#heading`)
-- [ ] AN605 Poll creation: embedded in post composer; up to 6 options; real-time vote count via Turbo Stream; auto-close at set time via Solid Queue job
+  - geo_locatable.rb: nearby + haversine (replaced inconsistent math in 7+ places: listing, dating, delivery, user, hjerterom resources, restaurant).
+- Major pruning (file sprawl reduction): removed entire brgen/app/models/concerns/ dir (after promotion), 6x bogus app/controllers/rails/ nested dirs (across amber/baibl/blognet/brgen/bsdports/hjerterom, each with duplicate pwa_controller), root marketplace/ stub, reduced .md files to exactly 1 README.md per app (amber/baibl/blognet/brgen/bsdports/hjerterom) + root README + shared/WIRING_NOTES (no other per-app ARCHITECTURE/STIMULUS etc. left).
+7. **Monolith boundaries for brgen verticals + LLM eval snapshots**. Namespaces work today for the "one city" model. As marketplace/takeaway/orders grow, introduce clearer bounded contexts (or internal engines) without breaking the shared activity/search/moderation layers. (New: root MASTER_snapshot.md + DEPLOY_snapshot.md added/pushed in pub4 root for external LLM evaluation of architecture/DRY/pruning/shared layer; integrate into self-snapshot process.)
+- Full pruning: removed 6 nested controllers/rails/ dirs (duplicate pwa broken under wrong module), root marketplace/ stub, reduced .md bloat to 1 README/app + essentials.
 ```

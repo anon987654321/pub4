@@ -4,6 +4,9 @@ module Marketplace
   class Deal < ApplicationRecord
     self.table_name = "marketplace_deals"
 
+    # Engine-ize Shared
+    include Shared.concern(:Reactable) rescue nil
+    include Shared.concern(:Notifiable) rescue nil
     belongs_to :listing, class_name: "Marketplace::Listing"
 
     validates :headline, presence: true, length: { maximum: 160 }
