@@ -1,18 +1,21 @@
 <% content_for :title, t("marketplace.stores.title", default: "Stores") %>
 
-<%= tag.section class: "marketplace-stores" do %>
-  <%= tag.header do %>
+<%= tag.section class: "marketplace-stores", role: "region", "aria-label": "Marketplace stores" do %>
+  <%= tag.header role: "banner", "aria-label": "Stores header" do %>
     <%= tag.h1 t("marketplace.stores.title", default: "Stores") %>
-    <%= link_to t("marketplace.stores.open", default: "Open a store"), new_marketplace_shop_path %>
+    <nav role="navigation" aria-label="Open store action">
+      <%= link_to t("marketplace.stores.open", default: "Open a store"), new_marketplace_shop_path %>
+    </nav>
   <% end %>
 
-  <%= tag.nav aria: { label: t("marketplace.verticals", default: "Store categories") } do %>
+  <%= tag.nav role="navigation" aria-label="Store categories" do %>
     <% Marketplace::Store::VERTICALS.each do |vertical| %>
       <%= link_to vertical.humanize, marketplace_shops_path(vertical: vertical) %>
     <% end %>
   <% end %>
 
-  <%= tag.div class: "store-grid" do %>
+  <turbo-frame id="marketplace-stores" data-turbo-action="replace">
+  <%= tag.div class: "store-grid" role="list" aria-label="Stores list" do %>
     <% @stores.each do |store| %>
       <%= tag.article class: "store-card" do %>
         <%= tag.h2 link_to(store.name, marketplace_shop_path(store.slug)) %>

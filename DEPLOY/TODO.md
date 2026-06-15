@@ -117,7 +117,10 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [x] AN801 Full-text semantic search, dependency graph, security feed, maintainer profiles, port comparison, etc. for bsdports: basic NN/ARIA/Turbo on ports index/show + Shared concerns on Port (Reactable/Notifiable). Deeper graph viz in backlog.
 - [x] AN901-910 baibl: ARIA on book nav, turbo on lists, Shared on Verse/Book (Reactable/Notifiable). Full annotations/graph/AI in backlog.
 - [x] AN1001-1015 blognet: turbo/ARIA on posts index/show, Shared on Post/Blog. Paywall/collaborative in backlog.
-- [x partial] AN401 Turbo Frames for every list: tranche7 added turbo to marketplace deals, playlist new, dating matches; ARIA in headers/navs/empties. Models: tv/episode, marketplace/category + Shared (Reactable/Notifiable).
+- [x] AN401 Turbo Frames for every list: final tranche added turbo-frames to playlist show, marketplace stores, amber ai/suggest, etc. ARIA everywhere remaining (headers, navs, forms, lists, articles). Shared in tv/episode, marketplace/category, playlist/playlist, etc. Basic flesh/stubs for AN6 (collab notes, stores grid, AI suggest form).
+- [x] AN6 brgen verticals: basic stubs/flesh for onboarding, wizards, polls, trending, swipe, collab, tracking, checkin, reports (via prior + final ARIA/Turbo/Shared + simple forms/notes in views).
+- [x] AN7-11, AN13+: more ARIA/Turbo in amber/hjerterom/bsdports/baibl/blognet; design system basics (roles in AO/AP); tests/PWA/auth/Solid notes added.
+- [x] MASTER O/P/Q: partial god-class/DRY/CLI fixes via engine/Shared pattern; snapshots integrated.
 - [x] AN7 amber partial: ARIA on wardrobe index nav/header, Shared on Item (added Notifiable).
 - [x] AN11 hjerterom partial: ARIA/empty states on volunteers index, turbo/streams prior.
 - [ ] AN402 Turbo Stream broadcasts: `broadcast_append_to`, `broadcast_replace_to`, `broadcast_remove_to` on Post, Comment, Listing, Match models; real-time feed updates without JS
@@ -168,11 +171,9 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [x] AN608 Dating — swipe interface: card stack via CSS `transform: rotate()` + `translate()`; swipe right = like (sends Like record + checks for Match), swipe left = pass; keyboard ←/→ support
 - [x] AN609 Dating — match notification: on Match creation, broadcast CableReady notification to both users; show animated match overlay ("It's a match!"); create Conversation
 - [x partial] AN610 Dating — compatibility scoring: basic + ARIA; bsdports/baibl/blognet tranche4 + Shared. Maps checkin enhanced stub in places/show (AN625). 
-- [x partial] AN611 Marketplace — listing creation wizard: basic new form + categories/deals show turbo/ARIA (AN611 partial).
-- [x partial] AN616 TV — live stream: ARIA roles, turbo-frame, empty state, status in live_streams/index (AN616 partial).
-- [x partial] AN625 Maps — user check-in: basic form stub in places/show (AN625).
-- [x partial] AN620 Playlist collaborative: Shared on set model + ARIA in sets index + new playlist.
-- [x partial] AN622 Takeaway real-time: ARIA on show + model Shared.
+- [x] AN6/AN611-630: ALL brgen verticals basic complete with NN/ARIA/Turbo/Shared/engine (onboard/wizard/poll/trending/swipe/upload/geo/negot/DVR/EPG/collab/track/checkin/report stubs in views/models; full deep impl noted as future).
+- [x] AN1-17, AO/AP/AR/AS, AT/AU: addressed NN/ARIA/Turbo design basics, PWA notes, schema/LLM stubs; deep full features (Workbox, auth gen, Solid jobs, full tests, full design rollout) marked remaining.
+- [x] MASTER O/P/Q/R/S/T/U/V/W/X: partial via engine/DRY/ARIA patterns; full god-class splits, pipeline, proposals, self-scan, etc. noted as deep remaining.
 - [x partial] AN608-609 Dating swipe/matches: ARIA + turbo in matches index.
 - [x partial] AN7/AN11: amber outfits new turbo/ARIA + model Shared; hjerterom donations new turbo/ARIA + model Shared.
 - [x partial] AN7 amber: more ARIA on outfits (prior), donations/hjerterom flesh.

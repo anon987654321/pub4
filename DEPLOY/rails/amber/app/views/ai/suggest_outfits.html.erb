@@ -1,8 +1,11 @@
 <% content_for :title, t("amber.outfits.suggest_title", default: "Outfit suggestions (MASTER vision)") %>
+<header role="banner" aria-label="AI outfit suggestions header">
 <h1><%= t("amber.outfits.suggest_title", default: "Outfit suggestions (MASTER vision)") %></h1>
 <p class="dim"><%= t("amber.outfits.vision_hint", default: "MASTER vision analyses your item photos + metadata to pick 3-item combinations.") %></p>
+</header>
 
-<%= form_with url: ai_suggest_outfits_path, method: :get, class: "form" do |f| %>
+<turbo-frame id="amber-ai-suggest" data-turbo-action="replace">
+<%= form_with url: ai_suggest_outfits_path, method: :get, class: "form", html: { role: "form", "aria-label": "Generate outfit suggestions" } do |f| %>
   <div class="field">
     <label><%= t("amber.outfits.occasion", default: "Occasion") %></label>
     <%= f.text_field :occasion, value: params[:occasion], placeholder: t("amber.outfits.occasion_ph", default: "e.g. date, work, travel") %>

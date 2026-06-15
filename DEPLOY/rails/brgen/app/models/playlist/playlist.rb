@@ -5,6 +5,7 @@ class Playlist::Playlist < ApplicationRecord
   include Shared.concern(:ActivityTrackable) rescue nil
   include Shared.concern(:Reactable) rescue nil
   include Shared.concern(:Notifiable) rescue nil
+  include Shared.concern(:GeoLocatable) rescue nil
   belongs_to :user
   has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
            foreign_key: :playlist_playlist_id, dependent: :destroy
