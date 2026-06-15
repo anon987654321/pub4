@@ -1,11 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static classes = ["toggle"]
-  static targets = ["content"]
+  static targets = ["item"]
+  static values = { class: { type: String, default: "hidden" } }
+
+  connect() {
+    this.toggleClassName = this.element.dataset.toggleClass || this.classValue
+  }
 
   toggle() {
-    const cls = this.hasToggleClass ? this.toggleClass : "hidden"
-    this.contentTargets.forEach(el => el.classList.toggle(cls))
+    this.itemTargets.forEach(item => item.classList.toggle(this.toggleClassName))
   }
 }

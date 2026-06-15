@@ -7,7 +7,6 @@ class Tv::VideosController < Tv::BaseController
   def show
     @video.view_events.create!(user: Current.user) if authenticated?
     @video.increment!(:views_count)
-    respond_to_cached_show(@video, only: %i[id title description views_count comments_count tv_channel_id])
   end
 
   def new  = (@video = Tv::Video.new)
@@ -22,5 +21,5 @@ class Tv::VideosController < Tv::BaseController
 
   private
   def set_video    = (@video = Tv::Video.find(params[:id]))
-  def video_params = params.expect(:tv_video => [:title, :description, :video_file, :thumbnail, :tv_channel_id])
+  def video_params = params.require(:tv_video).permit(:title, :description, :video_file, :thumbnail, :tv_channel_id)
 end

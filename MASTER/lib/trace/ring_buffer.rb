@@ -32,7 +32,6 @@ module Master
 
       def each
         return enum_for(__method__) unless block_given?
-        synchronize { @size.times { |i| yield @buffer[(@start + i) % @capacity] } }
       end
 
       def to_a = synchronize { @size.times.map { |i| @buffer[(@start + i) % @capacity] } }

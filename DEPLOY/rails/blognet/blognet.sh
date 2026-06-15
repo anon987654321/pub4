@@ -60,5 +60,5 @@ doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bin/rails db:cr
 install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"
 [[ -n $APP_DOMAIN ]] && relayd_add_relay "$APP_DOMAIN" "$APP_PORT"
 
-rcctl_ensure_service "$APP_NAME"
+doas rcctl restart "$APP_NAME" || doas rcctl start "$APP_NAME"
 log_ok "$APP_NAME live on :$APP_PORT"

@@ -55,6 +55,47 @@ class RuntimeHardeningTest < Minitest::Test
     end
   end
 
+  def test_semantic_cache_uses_five_minute_default_and_expires_stale_entries
+    assert_equal 300, Master::Reach::SemanticCache::DEFAULT_TTL
+    Dir.mktmpdir do |dir|
+      cache = Master::Reach::SemanticCache.new(root: dir)
+      calls = 0
+      first = cache.fetch("prompt", "model") { calls += 1; "first" }
+      second = cache.fetch("prompt", "model") { calls += 1; "cached miss" }
+      key = cache.send(:cache_key, "prompt", "model")
+      path = cache.send(:cache_path, key)
+      entry = JSON.parse(File.read(path))
+      entry["ts"] = Time.now.to_i - 301
+      File.write(path, JSON.generate(entry))
+      third = cache.fetch("prompt", "model") { calls += 1; "second" }
+
+      assert_equal "first", first
+      assert_equal "first", second
+      assert_equal "second", third
+      assert_equal 2, calls
+    end
+  end
+
+  def test_semantic_cache_survives_restart_from_llm_cache_yml
+    Dir.mktmpdir do |dir|
+      cache = Master::Reach::SemanticCache.new(root: dir)
+      key = cache.send(:cache_key, "prompt", "model")
+      path = cache.send(:cache_path, key)
+      first = cache.fetch("prompt", "model") { "persisted" }
+
+      assert_equal "persisted", first
+      assert File.exist?(File.join(dir, ".master", "llm_cache.yml"))
+      File.delete(path)
+
+      reloaded = Master::Reach::SemanticCache.new(root: dir)
+      calls = 0
+      second = reloaded.fetch("prompt", "model") { calls += 1; "miss" }
+
+      assert_equal "persisted", second
+      assert_equal 0, calls
+    end
+  end
+
   def test_model_router_uses_provider_health_to_avoid_unhealthy_primary
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))

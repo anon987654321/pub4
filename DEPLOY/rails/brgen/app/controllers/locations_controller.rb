@@ -19,7 +19,7 @@ class LocationsController < ApplicationController
         partial: "nearby/alert",
         locals: { handle: me.anon_handle, user_id: me.id }
       )
-      Pushable.push_to(other, title: "Someone nearby", body: "#{me.anon_handle} is within 2 km — tap to chat", url: "/nearby")
+      Shared::Pushable.push_to(other, title: "Someone nearby", body: "#{me.anon_handle} is within 2 km — tap to chat", url: "/nearby")
     end
 
     head :ok

@@ -55,7 +55,8 @@
     </div>
     <div class="field">
       <%= form.label :special_instructions %>
-      <%= form.text_area :special_instructions, rows: 3, placeholder: "Door code, allergies, delivery notes…" %>
+      <%= form.text_area :special_instructions, rows: 3, placeholder: "Door code, allergies, delivery notes…", data: { controller: "char-counter", "char-counter-max-value": 500 } %>
+      <span class="char-counter" data-char-counter-target="counter"></span>
     </div>
   </section>
 
@@ -65,4 +66,5 @@
   </section>
 
   <%= form.submit "Place order", class: "btn btn-primary" %>
+  <span class="dim" data-autosave-target="status" aria-live="polite"></span>
 <% end %>

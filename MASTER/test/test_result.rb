@@ -17,6 +17,27 @@ class TestResult < Minitest::Test
     assert_equal "boom", r.message
   end
 
+  def test_err_includes_required_context_keys
+    r = Master::Result.err("boom", category: :unknown)
+
+    assert_includes r.context.keys, :file
+    assert_includes r.context.keys, :method
+    assert_equal "boom", r.context[:attempted]
+  end
+
+  def test_err_preserves_supplied_context
+    r = Master::Result.err(
+      "boom",
+      category: :unknown,
+      context: { file: "custom.rb", method: "call", attempted: "open socket", detail: "timeout" }
+    )
+
+    assert_equal "custom.rb", r.context[:file]
+    assert_equal "call", r.context[:method]
+    assert_equal "open socket", r.context[:attempted]
+    assert_equal "timeout", r.context[:detail]
+  end
+
   def test_and_then_chains_on_ok
     r = Master::Result.ok(2).and_then { |v| Master::Result.ok(v * 3) }
     assert r.ok?
@@ -33,5 +54,16 @@ class TestResult < Minitest::Test
     r = Master::Result.ok(5).and_then { |v| v * 2 }
     assert r.ok?
     assert_equal 10, r.value!
+  end
+end
+
+class TestResultContext < Minitest::Test
+  def test_err_always_carries_evidence_context
+    result = Master::Result.err("boom", category: :validation)
+
+    assert_kind_of Hash, result.context
+    assert result.context[:file].end_with?("test_result.rb")
+    assert_equal "test_err_always_carries_evidence_context", result.context[:method]
+    assert_equal "boom", result.context[:attempted]
   end
 end

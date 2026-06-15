@@ -1,20 +1,16 @@
 # frozen_string_literal: true
 
 class ResourcesController < ApplicationController
-  include Shared::LiveSearchable
-
   allow_unauthenticated_access only: %i[index show]
   before_action :set_resource, only: %i[show edit update destroy]
   before_action :authorize!, only: %i[edit update destroy]
 
   def index
-    scope = Resource.includes(:category).verified
+    scope = Resource.includes(:category)
     scope = scope.by_type(params[:type]) if params[:type].present?
-    scope = apply_live_search(scope, columns: %w[title description resource_type], vertical: "resources", filters: { type: params[:type] }.compact)
-    @pagy, @resources = pagy(scope.order(:title))
+    scope = scope.where("title LIKE ?", "%#{params[:q]}%") if params[:q].present?
+    @pagy, @resources = pagy(scope.verified.order(:title))
     @crisis_lines = Crisis.all
-
-    render_live_search(collection: @resources, partial: "resources/resource") if request.format.turbo_stream?
   end
 
   def show; end

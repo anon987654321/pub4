@@ -138,8 +138,9 @@ class TestWebUI < Minitest::Test
 
   def test_tts_endpoint_sets_cache_headers_and_supports_conditional_get
     chat_controller = File.read(File.expand_path("../web/app/controllers/chat_controller.rb", __dir__))
+    tts_job = File.read(File.expand_path("../web/app/services/tts_job.rb", __dir__))
 
-    assert_includes chat_controller, "Digest::SHA256.hexdigest"
+    assert_includes tts_job, "Digest::SHA256.hexdigest"
     assert_includes chat_controller, 'response.headers["ETag"] = etag'
     assert_includes chat_controller, 'response.headers["Cache-Control"] = "public, max-age=3600"'
     assert_includes chat_controller, "head(:not_modified)"
@@ -236,6 +237,21 @@ class TestWebUI < Minitest::Test
   def test_personality_system_prompt_memoized
     p = Master::Voice::Personality.new(:malay)
     assert_same p.system_prompt, p.system_prompt
+  end
+
+  def test_personality_catalog_includes_named_profiles
+    names = Master::Voice::Personality.persona_names
+
+    %i[ronin lawyer hacker architect sysadmin trader medic].each do |name|
+      assert_includes names, name
+    end
+
+    ronin = Master::Voice::Personality.new(:ronin)
+    assert_equal "en-US-AndrewNeural", ronin.voice
+    assert_equal "-25%", ronin.tts_rate
+    assert_equal "-100Hz", ronin.tts_pitch
+    assert_equal :deep, ronin.style
+    assert_includes ronin.knowledge_sources, "https://man.openbsd.org/"
   end
 
   # UnwrapError

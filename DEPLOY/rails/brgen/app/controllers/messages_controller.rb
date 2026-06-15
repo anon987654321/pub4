@@ -10,7 +10,7 @@ class MessagesController < ApplicationController
 
     if @message.save
       @conversation.participants.excluding(Current.user).each do |recipient|
-        Pushable.push_to(recipient,
+        Shared::Pushable.push_to(recipient,
           title: Current.user.display_name,
           body:  @message.content.to_s.truncate(120),
           url:   conversation_path(@conversation)
@@ -32,6 +32,6 @@ class MessagesController < ApplicationController
   end
 
   def message_params
-    params.expect(:message => [:content, :message_type])
+    params.require(:message).permit(:content, :message_type)
   end
 end

@@ -5,14 +5,17 @@ module Master
     class Memory
       module Consolidate
         def context_summary
+          version = store_version
+          return @context_summary_cache[:summary] if @context_summary_cache && @context_summary_cache[:version] == version
+
           active = active_entries
-          return if active.empty?
+          return cache_context_summary(version, nil) if active.empty?
 
           lines = summary_lines(active)
-          return if lines.empty?
+          return cache_context_summary(version, nil) if lines.empty?
 
           header = summary_header
-          "#{header}\n#{lines.join("\n")}"
+          cache_context_summary(version, "#{header}\n#{lines.join("\n")}")
         end
 
         def consolidate!(agent: nil)
@@ -26,6 +29,11 @@ module Master
         end
 
         private
+
+        def cache_context_summary(version, summary)
+          @context_summary_cache = { version:, summary: }
+          summary
+        end
 
         def active_entries
           @mutex.synchronize do

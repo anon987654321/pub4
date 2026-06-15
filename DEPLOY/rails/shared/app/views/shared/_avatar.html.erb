@@ -1,0 +1,12 @@
+<%# Usage: render "shared/avatar", user: current_user, size: 40 %>
+<% size ||= 40 %>
+<% if local_assigns[:user]&.respond_to?(:avatar) && local_assigns[:user].avatar.attached? %>
+  <%= image_tag(local_assigns[:user].avatar, class: "avatar", width: size, height: size, alt: local_assigns[:user].respond_to?(:name) ? local_assigns[:user].name : "Avatar") %>
+<% else %>
+  <% initials = if local_assigns[:user]&.respond_to?(:initials)
+                  local_assigns[:user].initials
+                else
+                  (local_assigns[:user]&.respond_to?(:name) ? local_assigns[:user].name.to_s : "U").split.map { |part| part[0] }.join[0, 2].upcase
+                end %>
+  <span class="avatar-initials" style="width: <%= size %>px; height: <%= size %>px;"><%= initials %></span>
+<% end %>

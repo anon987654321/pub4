@@ -14,15 +14,6 @@ class Tv::Channel < ApplicationRecord
   before_validation { self.slug ||= name.to_s.parameterize }
 
   scope :popular, -> { order(subscribers_count: :desc) }
-  scope :search, ->(q) {
-    term = q.to_s.strip
-    return none if term.empty?
-
-    ids = connection.select_values(
-      sanitize_sql_array(["SELECT rowid FROM tv_channels_fts WHERE tv_channels_fts MATCH ?", term])
-    )
-    ids.any? ? where(id: ids) : none
-  }
 
   def to_param = slug
   def live?    = broadcasts.where(status: "live").exists?

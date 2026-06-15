@@ -40,7 +40,7 @@ class Dating::ProfilesController < Dating::BaseController
   end
 
   def profile_params
-    params.expect(dating_profile: [:bio, :gender, :looking_for, :age, :location, :latitude, :longitude, :neighborhood_id, :bydel, :visible, { photos: [] }])
+    params.require(:dating_profile).permit(:bio, :gender, :looking_for, :age, :location, :latitude, :longitude, :neighborhood_id, :bydel, :visible, photos: [])
   end
 
   def available_neighborhoods

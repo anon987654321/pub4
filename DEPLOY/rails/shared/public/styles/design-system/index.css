@@ -1,9 +1,0 @@
-/* AO–AS design system entry — import per-app from Propshaft */
-@import "./tokens.css";
-@import "./typography-x.css";
-@import "./typography-medium.css";
-@import "./typography-substack.css";
-@import "./typography-newyorker.css";
-@import "./layout-brgen-dark.css";
-@import "./components.css";
-@import "./rollout.css";

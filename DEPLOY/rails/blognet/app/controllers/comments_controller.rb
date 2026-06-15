@@ -30,6 +30,6 @@ class CommentsController < ApplicationController
   def set_post = @post = Post.find_by!(slug: params[:post_id])
 
   def comment_params
-    params.expect(:comment => [:content, :parent_id])
+    params.require(:comment).permit(:content, :parent_id)
   end
 end

@@ -33,7 +33,7 @@ module RubyLLM
         input_price_per_million: 0.0,
         output_price_per_million: 0.0,
         modalities: { input: ["text"], output: ["text"] },
-        metadata: {}
+        metadata: {},
       })
     end
   end

@@ -53,7 +53,7 @@ module Master
         nodes = (g.keys | g.values.flat_map(&:to_a)).uniq
         return {} if nodes.empty?
         rank = seed(nodes, focus)
-        ITERATIONS.times { rank = step(g:, nodes:, rank:, focus:) }
+        ITERATIONS.times { rank = step(g: g, nodes: nodes, rank: rank, focus: focus) }
         rank
       end
 
@@ -101,12 +101,17 @@ module Master
       def format_file(path)
         symbols = @index.symbols_in(path)
         return [] if symbols.empty?
-        rel = path.sub("#{@root}/", "")
         defs = symbols.first(MAX_DEFS_PER_FILE).map { |s| "  #{s.type}: #{s.fqn} (line #{s.line})" }
-        ["## #{rel}", *defs, ""]
+        ["## #{relative(path)}", *defs, ""]
       end
 
-      def estimate(text) = text.bytesize / CHARS_PER_TOKEN
+      def estimate(text)
+        text.bytesize / CHARS_PER_TOKEN
+      end
+
+      def relative(path)
+        path.sub("#{@root}/", "")
+      end
     end
   end
 end

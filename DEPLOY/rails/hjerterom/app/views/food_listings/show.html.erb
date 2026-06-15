@@ -1,7 +1,4 @@
 <% content_for :title, @listing.title %>
-<% if flash[:toast].present? %>
-  <div data-controller="toast" data-toast-message-value="<%= flash[:toast] %>" data-toast-variant-value="info" hidden></div>
-<% end %>
 <article>
   <h1><%= @listing.title %></h1>
   <p><%= @listing.description %></p>
@@ -13,7 +10,7 @@
   </dl>
   <% if authenticated? && @listing.user != Current.user && @listing.status == "available" %>
     <%= form_with url: food_listing_food_requests_path(@listing) do |f| %>
-      <p><%= f.text_area :message, rows: 2, placeholder: "Message (optional)…" %></p>
+      <p><%= f.text_area :message, rows: 2, placeholder: "Message (optional)…", data: { controller: "char-counter", "char-counter-max-value": 500 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
       <p><%= f.datetime_local_field :pickup_time %></p>
       <p><%= f.submit "Request pickup" %></p>
     <% end %>

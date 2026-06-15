@@ -33,7 +33,7 @@ module Master
           Criterion.new(id: "3.3.2", level: :A, name: "Labels or Instructions",
             requirement: "Labels or instructions provided for user input"),
           Criterion.new(id: "1.3.6", level: :AAA, name: "Identify Purpose",
-            requirement: "UI components, icons, regions identified programmatically")
+            requirement: "UI components, icons, regions identified programmatically"),
         ].freeze
 
         TOUCH_TARGET_AA_PX = 24

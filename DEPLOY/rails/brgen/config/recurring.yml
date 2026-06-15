@@ -1,28 +1,55 @@
-# AN303/AN1709: Solid Queue recurring jobs template
+# examples:
+#   periodic_cleanup:
+#     class: CleanSoftDeletedRecordsJob
+#     queue: background
+#     args: [ 1000, { batch_size: 500 } ]
+#     schedule: every hour
+#   periodic_cleanup_with_command:
+#     command: "SoftDeletedRecord.due.delete_all"
+#     priority: 2
+#     schedule: at 5am every day
 
 production:
-  daily_digest:
-    class: Shared::NotificationDeliveryJob
-    queue: critical
-    schedule: at 8am every day
-  weekly_stats:
-    class: Shared::AnalyticsRollupJob
+  daily_digest_email:
+    class: DailyDigestJob
     queue: bulk
-    args: [{ period: "weekly" }]
-    schedule: at 6am every Monday
-  nightly_search_rebuild:
-    class: Shared::SearchIndexRebuildJob
-    queue: default
-    schedule: at 3am every day
-  monthly_analytics:
-    class: Shared::AnalyticsRollupJob
-    queue: bulk
-    args: [{ period: "monthly" }]
-    schedule: at 4am on day 1
-  dead_letter_digest:
-    class: Shared::DeadLetterDigestJob
-    queue: bulk
-    schedule: at 7am every day
-  clear_finished_jobs:
+    schedule: every day at 8am
+
+  clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+  weekly_deals_digest:
+    class: WeeklyDealsJob
+    queue: bulk
+    schedule: every monday at 8am
+
+  weekly_stats_rollup:
+    class: WeeklyStatsJob
+    queue: bulk
+    schedule: every monday at 7am
+
+  cache_health_check:
+    class: CacheHealthJob
+    queue: bulk
+    schedule: every day at 4am
+
+  cable_health_check:
+    class: CableHealthJob
+    queue: bulk
+    schedule: every hour at minute 7
+
+  queue_failure_digest:
+    class: QueueFailureDigestJob
+    queue: bulk
+    schedule: every day at 5am
+
+  nightly_search_index_rebuild:
+    class: NightlySearchIndexRebuildJob
+    queue: bulk
+    schedule: every day at 2am
+
+  monthly_analytics_rollup:
+    class: MonthlyAnalyticsRollupJob
+    queue: bulk
+    schedule: every month on the first at 3am

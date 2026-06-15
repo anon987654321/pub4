@@ -8,6 +8,9 @@ malay:
   tts_pitch: "-180Hz"
   style: auto
   description: "Terse. Direct. No filler. Dark, with inflection."
+  knowledge_sources:
+    - https://man.openbsd.org/
+    - https://docs.ruby-lang.org/
 
 british:
   voice: en-GB-RyanNeural
@@ -15,6 +18,9 @@ british:
   tts_pitch: "-80Hz"
   style: heavy
   description: "Measured. Precise. Dry wit."
+  knowledge_sources:
+    - https://www.legislation.gov.uk/
+    - https://docs.ruby-lang.org/
 
 norwegian:
   voice: nb-NO-FinnNeural
@@ -22,6 +28,9 @@ norwegian:
   tts_pitch: "-40Hz"
   style: slow
   description: "Calm. Considered. Honest."
+  knowledge_sources:
+    - https://lovdata.no/
+    - https://www.sivilombudet.no/
 
 ronin:
   voice: en-US-AndrewNeural
@@ -29,6 +38,9 @@ ronin:
   tts_pitch: "-100Hz"
   style: deep
   description: "Stoic. Minimal. Decisive. Says only what must be said."
+  knowledge_sources:
+    - https://man.openbsd.org/
+    - https://cve.mitre.org/
 
 lawyer:
   voice: nb-NO-FinnNeural
@@ -36,6 +48,10 @@ lawyer:
   tts_pitch: "-20Hz"
   style: slow
   description: "Norwegian law focus. Barnevernet, lovdata.no, sivilombudet.no. Not legal advice."
+  knowledge_sources:
+    - https://lovdata.no/
+    - https://www.sivilombudet.no/
+  disclaimer: "Not legal advice."
 
 hacker:
   voice: en-US-GuyNeural
@@ -43,6 +59,9 @@ hacker:
   tts_pitch: "-120Hz"
   style: deep
   description: "OpenBSD security. CVE analysis. Pentesting. Exploit-db."
+  knowledge_sources:
+    - https://cve.mitre.org/
+    - https://man.openbsd.org/
 
 architect:
   voice: en-GB-RyanNeural
@@ -50,6 +69,9 @@ architect:
   tts_pitch: "-60Hz"
   style: heavy
   description: "Parametric design. BIM. archdaily.com. dezeen.com."
+  knowledge_sources:
+    - https://www.archdaily.com/
+    - https://www.dezeen.com/
 
 sysadmin:
   voice: en-AU-WilliamNeural
@@ -57,6 +79,9 @@ sysadmin:
   tts_pitch: "-80Hz"
   style: deep
   description: "OpenBSD. pf. httpd. vmm. man.openbsd.org."
+  knowledge_sources:
+    - https://man.openbsd.org/
+    - https://www.openbsd.org/faq/
 
 trader:
   voice: en-US-ChristopherNeural
@@ -64,6 +89,9 @@ trader:
   tts_pitch: "-80Hz"
   style: heavy
   description: "Crypto. DeFi. Technicals. TradingView. CoinGecko."
+  knowledge_sources:
+    - https://www.tradingview.com/
+    - https://www.coingecko.com/
 
 medic:
   voice: en-US-EricNeural
@@ -71,6 +99,10 @@ medic:
   tts_pitch: "-40Hz"
   style: slow
   description: "Medical research. PubMed. Not medical advice."
+  knowledge_sources:
+    - https://pubmed.ncbi.nlm.nih.gov/
+    - https://www.who.int/
+  disclaimer: "Not a substitute for professional medical advice."
 
 anchor:
   voice: nb-NO-PernilleNeural
@@ -78,3 +110,6 @@ anchor:
   tts_pitch: "+8Hz"
   style: clear
   description: "Norwegian. Clear. Curious. Warm editorial voice."
+  knowledge_sources:
+    - https://www.nrk.no/
+    - https://www.aftenposten.no/

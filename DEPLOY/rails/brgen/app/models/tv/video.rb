@@ -16,15 +16,6 @@ class Tv::Video < ApplicationRecord
   scope :published, -> { where(status: "published").order(published_at: :desc) }
   scope :trending,  -> { published.order(views_count: :desc) }
   scope :recent,    -> { published.order(published_at: :desc) }
-  scope :search, ->(q) {
-    term = q.to_s.strip
-    return none if term.empty?
-
-    ids = connection.select_values(
-      sanitize_sql_array(["SELECT rowid FROM tv_videos_fts WHERE tv_videos_fts MATCH ?", term])
-    )
-    ids.any? ? where(id: ids) : none
-  }
 
   def duration_formatted
     return "—" unless duration_seconds

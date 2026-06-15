@@ -31,6 +31,23 @@ class TestRuleLoopPolicy < Minitest::Test
     end
   end
 
+  class RecordingScanner
+    attr_reader :paths
+
+    def initialize
+      @paths = []
+    end
+
+    def scan(path, rules: nil)
+      @paths << path
+      source = File.read(path)
+      findings = Array.new(source.scan("violation").size) do |index|
+        { rule: "TEST_RULE", severity: :warning, line: index + 1, message: "fix me" }
+      end
+      Master::Result.ok(findings)
+    end
+  end
+
   class Agent
     attr_reader :calls
 
@@ -118,6 +135,33 @@ class TestRuleLoopPolicy < Minitest::Test
       original.call(path, symbolize_names:, default:)
     end
     Master::Loop::RuleLoop.clear_preamble_cache!
+  end
+
+  def test_rescan_candidate_preserves_original_file_extension
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      scanner = RecordingScanner.new
+      loop = build_loop(root:, bus: FakeBus.new, scanner:, agent: Agent.new)
+
+      count = loop.__send__(:rescan_candidate, "clean\n", path)
+
+      assert_equal 0, count
+      assert_equal ".rb", File.extname(scanner.paths.last)
+    end
+  end
+
+  def test_best_candidate_rejects_candidates_that_increase_violations
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      scanner = RecordingScanner.new
+      loop = build_loop(root:, bus: FakeBus.new, scanner:, agent: Agent.new)
+
+      best = loop.__send__(:best_candidate, ["violation\nviolation\n", "clean\n"], path)
+
+      assert_equal "clean\n", best
+    end
   end
 
   private

@@ -12,14 +12,9 @@ module Master
         def call(ctx)
           output = ctx.output
           rendered = case output
-                     when Result::Ok
-                       text = output.value!.to_s
-                       text = Master::Voice::SoulDriftDetector.clean(text)
-                       @renderer.render(text, mode: :plain)
+                     when Result::Ok  then @renderer.render(output.value!, mode: :plain)
                      when Result::Err then @renderer.render(output.message, mode: :error)
-                     else
-                       text = Master::Voice::SoulDriftDetector.clean(output.to_s)
-                       @renderer.render(text, mode: :plain)
+                     else                  @renderer.render(output.to_s, mode: :plain)
                      end
 
           Result.ok(ctx.merge(rendered:))

@@ -12,7 +12,7 @@ module Master
       DATA_SOURCES = {
         visual: File.join(Master::ROOT, "data", "visual_clusters.yml"),
         mobile_web: File.join(Master::ROOT, "data", "mobile_web_opportunities.yml"),
-        repo_topics: File.join(Master::ROOT, "data", "patterns.yml")
+        repo_topics: File.join(Master::ROOT, "data", "patterns.yml"),
       }.freeze
 
       def initialize
@@ -46,7 +46,7 @@ module Master
         [
           *load_visual,
           *load_mobile_web,
-          *load_repo_topics
+          *load_repo_topics,
         ].uniq(&:id)
       end
 

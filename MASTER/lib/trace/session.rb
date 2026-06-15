@@ -10,6 +10,8 @@ module Master
       SESSION_NAME_MAX = 40
       # 100 KB session cost log cap
       COSTS_MAX_BYTES = 102_400
+      FULL_MESSAGE_WINDOW = 40
+      SUMMARY_MAX_CHARS = 240
 
       attr_reader :name, :messages, :cost, :phase, :snapshots
       attr_accessor :topic
@@ -20,12 +22,12 @@ module Master
         @req_max = req_max
         @mutex = Mutex.new
         @messages = []
+        @token_est = 0
         @snapshots = {}
         @cost = 0.0
         @phase = :discover
         @name = nil
         @topic = nil
-        @token_est_cache = 0
         @path = File.join(root, ".master", "session.json")
         @costs_path = File.join(root, ".master", "costs.jsonl")
         Dir.mkdir(File.join(root, ".master")) unless Dir.exist?(File.join(root, ".master"))
@@ -35,7 +37,7 @@ module Master
         msg = { role:, content:, ts: Time.now.to_i }
         @mutex.synchronize do
           @messages << msg
-          @token_est_cache += Session.estimate_tokens(content)
+          @token_est += Session.estimate_tokens(content)
           @name ||= auto_name(content) if role == :user
         end
         msg
@@ -65,7 +67,14 @@ module Master
 
       def save!
         FileUtils.mkdir_p(File.dirname(@path))
-        data = { name: @name, phase: @phase, topic: @topic, messages: @messages, cost: @cost, ts: Time.now.to_i }
+        data = {
+          name: @name,
+          phase: @phase,
+          topic: @topic,
+          messages: pruned_messages,
+          cost: @cost,
+          ts: Time.now.to_i
+        }
         File.write(@path, JSON.generate(data))
       end
 
@@ -80,8 +89,8 @@ module Master
         @phase = data.fetch(:phase, nil)&.to_sym || :discover
         @topic = data[:topic]
         @messages = data.fetch(:messages, [])
+        @token_est = @messages.sum { |m| Session.estimate_tokens(m[:content]) }
         @cost = data[:cost].to_f
-        @token_est_cache = @messages.sum { |m| Session.estimate_tokens(m[:content]) }
         self
       end
 
@@ -89,21 +98,31 @@ module Master
 
       def exists? = File.exist?(@path)
       def clear!
-        @mutex.synchronize do
-          @messages = []
-          @cost = 0.0
-          @name = nil
-          @topic = nil
-          @token_est_cache = 0
-        end
+        @mutex.synchronize { @messages = []; @token_est = 0; @cost = 0.0; @name = nil; @topic = nil }
         self
       end
 
       def token_est
-        @mutex.synchronize { @token_est_cache }
+        @mutex.synchronize { @token_est }
       end
 
       private
+
+      def pruned_messages
+        @mutex.synchronize do
+          return @messages if @messages.size <= FULL_MESSAGE_WINDOW
+
+          older = @messages[0...-FULL_MESSAGE_WINDOW]
+          recent = @messages.last(FULL_MESSAGE_WINDOW)
+          older.map { |msg| summarize_message(msg) } + recent
+        end
+      end
+
+      def summarize_message(msg)
+        content = msg[:content].to_s.gsub(/\s+/, " ").strip
+        summary = content.bytesize > SUMMARY_MAX_CHARS ? "#{content.byteslice(0, SUMMARY_MAX_CHARS)}..." : content
+        msg.merge(content: "[summary] #{summary}", summarized: true)
+      end
 
       SHELL_CMDS = "cd|ls|pwd|grep|find|cat|echo|export|sudo|doas|git|bundle|ruby|exec|eval|bash|zsh|sh"
       SHELL_RE = /\A(?:#{SHELL_CMDS})\b|[$`|;&]/.freeze

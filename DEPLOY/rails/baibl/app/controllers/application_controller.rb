@@ -5,8 +5,6 @@ class ApplicationController < ActionController::Base
   include Shared::PunditAuthorization
   include Shared::PasswordlessAuth
   include Pagy::Method
-  include Shared::CacheableShow
-
-  turbo_refreshes_with :morph
   allow_browser versions: :modern
+  turbo_refreshes_with :morph, scroll: :preserve
 end

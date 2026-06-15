@@ -6,7 +6,7 @@
   <%= form_with model: @restaurant, url: takeaway_restaurants_path do |f| %>
     <%= render "shared/errors", object: @restaurant %>
     <div class="field"><%= f.label :name %><%= f.text_field :name %></div>
-    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
+    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
     <div class="field"><%= f.label :address %><%= f.text_field :address %></div>
     <div class="field"><%= f.label :city %><%= f.text_field :city %></div>
     <div class="field"><%= f.label :phone %><%= f.text_field :phone %></div>

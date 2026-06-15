@@ -2,25 +2,15 @@
 
 module Playlist
   class SetsController < ApplicationController
-    include Shared::LiveSearchable
-
     before_action :set_set, only: %i[show edit update destroy]
     before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
     def index
-      scope = Playlist::Set.publicly_listed
-      filters = { genre: params[:genre], artist: params[:artist] }.compact
-      scope = apply_live_search(scope, columns: %w[name description], vertical: "playlist", filters: filters)
-      scope = scope.with_track_facets(genre: params[:genre], artist: params[:artist])
-      @pagy, @sets = pagy(scope.order(created_at: :desc))
-      @genres = Playlist::Track.where.not(genre: [nil, ""]).distinct.order(:genre).pluck(:genre)
-      @artists = Playlist::Track.where.not(artist: [nil, ""]).distinct.order(:artist).pluck(:artist)
-
-      render_live_search(collection: @sets, partial: "playlist/sets/set") if request.format.turbo_stream?
+      @sets = Playlist::Set.publicly_listed.limit(100)
     end
 
     def show
-      @set_tracks = @set.set_tracks.includes(:track).order(:position)
+      @tracks = @set.tracks
       @dilla_sketches = @set.dilla_sketches.recent.includes(:user)
     end
 
@@ -62,7 +52,7 @@ module Playlist
     end
 
     def set_params
-      params.expect(:set => [:name, :description, :privacy, :collaborative])
+      params.require(:set).permit(:name, :description, :privacy, :collaborative)
     end
 
     def authorize_owner_or_editor

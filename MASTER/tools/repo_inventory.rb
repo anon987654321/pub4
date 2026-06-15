@@ -34,19 +34,15 @@ SKIP_DIRS = %w[
 Entry = Struct.new(:path, :kind, :reason, keyword_init: true)
 
 def repo_paths
-  Dir.chdir(ROOT) do
-    Dir.glob("**/*", File::FNM_DOTMATCH).reject do |path|
-      next true if [".", ".."].include?(File.basename(path))
-      parts = path.split(File::SEPARATOR)
-      parts.any? { |part| SKIP_DIRS.include?(part) }
-    end
+  Dir.glob(File.join(ROOT, "**/*"), File::FNM_DOTMATCH).reject do |path|
+    next true if [".", ".."].include?(File.basename(path))
+    parts = path.split(File::SEPARATOR)
+    parts.any? { |part| SKIP_DIRS.include?(part) }
   end
 end
 
 def root_entries
-  Dir.chdir(ROOT) do
-    Dir.children(".").reject { |name| name == ".git" }.sort
-  end
+  Dir.children(ROOT).reject { |name| name == ".git" }.sort
 end
 
 def loose_root_entries

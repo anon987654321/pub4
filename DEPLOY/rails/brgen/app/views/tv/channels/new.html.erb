@@ -6,7 +6,7 @@
   <%= form_with model: @channel, url: tv_channels_path do |f| %>
     <%= render "shared/errors", object: @channel %>
     <div class="field"><%= f.label :name %><%= f.text_field :name, required: true %></div>
-    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4 %></div>
+    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
     <div class="field"><%= f.label :avatar %><%= f.file_field :avatar, accept: "image/*" %></div>
     <div class="field"><%= f.label :banner %><%= f.file_field :banner, accept: "image/*" %></div>
     <div class="field"><%= f.submit "Create channel", class: "btn btn-primary" %></div>

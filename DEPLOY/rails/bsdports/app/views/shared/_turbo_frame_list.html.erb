@@ -1,5 +1,0 @@
-<turbo-frame id="<%= frame_id %>" src="<%= request.path %>?page=<%= params[:page] || 1 %>">
-  <% collection.each do |item| %>
-    <%= render partial: partial, locals: locals.merge(record: item) %>
-  <% end %>
-</turbo-frame>

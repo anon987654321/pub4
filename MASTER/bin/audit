@@ -5,20 +5,24 @@
 # master-audit — pre-commit constitution check.
 # Runs the scanner over staged files and exits non-zero on any kernel-tier
 # or critical/error violation. Wire as a git pre-commit hook:
-#   exec bin/audit
+#   exec MASTER/bin/audit --profile critical
 # Other tiers (design, style, etc.) are reported but do not fail the commit —
 # the scan rule registry is the place to tighten or loosen the bar.
 
 Encoding.default_external = Encoding::UTF_8
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
+require "open3"
+require "set"
 require "yaml"
+
+CRITICAL_SEVERITIES = %i[critical error veto].freeze
 
 KERNEL_RULES = begin
   data = YAML.safe_load_file(File.join(Master::ROOT, "data", "rules.yml"), aliases: true)
   rules = (data["rules"] || {}).values.flatten
   rules.select { |r| r["tier"] == "kernel" }.map { |r| r["id"].to_s.downcase }.to_set
-rescue StandardError
+rescue StandardError => e
   Set.new
 end
 
@@ -36,7 +40,7 @@ end
 
 failing = violations.select do |v|
   KERNEL_RULES.include?(v[:rule].to_s.downcase) ||
-    %i[critical error].include?(v[:severity])
+    CRITICAL_SEVERITIES.include?(v[:severity].to_sym)
 end
 
 failing.each { |v| warn "#{v[:file]}:#{v[:line]}: [#{v[:severity]}] #{v[:rule]}: #{v[:message]}" }

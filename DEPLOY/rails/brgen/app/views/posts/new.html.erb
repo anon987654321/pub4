@@ -3,7 +3,8 @@
 <div class="page-header"><h1>New post</h1></div>
 
 <div class="form-wrap">
-  <%= form_with model: [@community, @post].compact do |f| %>
+  <% draft_key = "brgen-post-#{@community&.to_param || 'global'}-new" %>
+  <%= form_with(model: [@community, @post].compact, data: { controller: "draft-store autosave form-submit", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
     <%= render "shared/errors", object: @post %>
     <div class="field">
       <%= f.label :community_id, "Community (optional)" %>
@@ -11,11 +12,12 @@
     </div>
     <div class="field">
       <%= f.label :title %>
-      <%= f.text_field :title, placeholder: "Title", autofocus: true %>
+      <%= f.text_field :title, placeholder: "Title", autofocus: true, required: true %>
     </div>
     <div class="field">
       <%= f.label :content, "Body (optional)" %>
-      <%= f.text_area :content, placeholder: "Text (optional)", rows: 5 %>
+      <%= f.text_area :content, placeholder: "Text (optional)", rows: 5, data: { controller: "char-counter", "char-counter-max-value": 10000 } %>
+      <span class="char-counter" data-char-counter-target="counter"></span>
     </div>
     <div class="field" data-controller="media-picker">
       <%= f.file_field :image,
@@ -50,6 +52,7 @@
     <div class="field">
       <%= f.submit "Post", class: "btn btn-primary" %>
       <%= link_to "Cancel", posts_path, class: "btn btn-ghost" %>
+      <span class="dim" data-autosave-target="status" aria-live="polite"></span>
     </div>
   <% end %>
 </div>

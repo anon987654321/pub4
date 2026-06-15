@@ -10,6 +10,12 @@ module Shared
     KEYFRAMES_PATTERN = /@keyframes\s+[a-zA-Z0-9_-]+/
     FONT_FACE_PATTERN = /@font-face/
     CHART_PATTERN = /new\s+Chart\s*\(|Chart\.getChart|chart\.js/i
+    IMPORTANT_PATTERN = /!important\b/
+    LOGICAL_PROPERTY_PATTERN = /^\s*(margin|padding|inset)-(left|right)\s*:|^\s*left\s*:|^\s*right\s*:/
+    CLASS_SELECTOR_PATTERN = /(^|[\s,{>+~])\.([a-zA-Z0-9_-]+)/
+    WILL_CHANGE_PATTERN = /will-change\s*:/
+    BOX_SHADOW_HOVER_PATTERN = /:hover[^{]*\{[^}]*box-shadow\s*:|box-shadow\s*:[^;]+;[^}]*:hover/i
+    COLOR_INHERIT_PATTERN = /color:\s*inherit\b/
 
     def self.call(root:, changed_paths: nil)
       new(root: root, changed_paths: changed_paths).call
@@ -64,6 +70,13 @@ module Shared
     def scan_style(path, body)
       add(:info, path, :keyframes, "Keyframes detected; mark restored animations as protected") if body.match?(KEYFRAMES_PATTERN)
       add(:info, path, :font_face, "Font-face detected; keep font declarations in dedicated/protected file") if body.match?(FONT_FACE_PATTERN)
+      add(:warning, path, :important, "Use of !important detected; prefer cascade and specificity") if body.match?(IMPORTANT_PATTERN)
+      add(:warning, path, :logical_properties, "Physical left/right properties detected; prefer logical properties") if body.match?(LOGICAL_PROPERTY_PATTERN)
+      add(:warning, path, :css_file_size, "CSS file exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines]} lines; split into smaller files") if body.lines.size > Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines]
+      add(:warning, path, :selector_specificity, "Selector exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes]} class selectors; flatten the selector chain") if selector_depths(body).any? { |depth| depth > Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes] }
+      add(:warning, path, :will_change, "will-change detected; restrict it to active animations or component connect/disconnect hooks") if body.match?(WILL_CHANGE_PATTERN)
+      add(:warning, path, :paint_cost, "box-shadow hover detected; prefer background-color, opacity, or transform for hover states") if body.match?(BOX_SHADOW_HOVER_PATTERN)
+      add(:info, path, :color_inherit, "color: inherit detected; good for preventing default link colors") if body.match?(COLOR_INHERIT_PATTERN)
       body.scan(/font-size:\s*(\d+(?:\.\d+)?)px/i).flatten.each do |size|
         add(:warning, path, :small_font, "Font size #{size}px is below 16px") if size.to_f < Shared::FrontendRuleSet::TYPOGRAPHY[:body_font_px][:min]
       end
@@ -75,6 +88,16 @@ module Shared
 
     def add(severity, path, rule, message)
       findings << Finding.new(severity: severity, path: path, rule: rule, message: message)
+    end
+
+    def selector_depths(body)
+      body.lines.filter_map do |line|
+        next unless line.include?("{")
+        selector = line.split("{", 2).first
+        next if selector.include?("@media") || selector.include?("@supports") || selector.include?("@keyframes")
+
+        selector.scan(CLASS_SELECTOR_PATTERN).size
+      end
     end
   end
 end

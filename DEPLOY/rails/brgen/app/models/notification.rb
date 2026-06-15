@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Notification < ApplicationRecord
-  KINDS = %w[like reaction follow mention reply message custom].freeze
+  KINDS = %w[like reaction follow mention reply message match custom].freeze
 
   belongs_to :user
   belongs_to :actor, class_name: "User", optional: true
@@ -32,6 +32,7 @@ class Notification < ApplicationRecord
     when "mention" then "#{actor_name} mentioned you"
     when "reply" then "#{actor_name} replied to your comment"
     when "message" then "New message from #{actor_name}"
+    when "match" then "It's a match with #{actor_name}"
     else "New notification"
     end
   end

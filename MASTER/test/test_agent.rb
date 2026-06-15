@@ -73,4 +73,12 @@ class TestAgent < Minitest::Test
   def test_public_method_count_stays_below_god_class_threshold
     assert_operator Master::Judge::Agent.public_instance_methods(false).size, :<=, 10
   end
+
+  def test_prompt_filter_removes_anti_simulation_words_outside_code_fences
+    filtered = @agent.send(:filter_prompt, "This will pass and might help.\n```ruby\nwill = :kept\n```")
+
+    prose, code = filtered.split("```ruby", 2)
+    refute_match(/\b(will|would|could|might)\b/i, prose)
+    assert_includes code, "will = :kept"
+  end
 end

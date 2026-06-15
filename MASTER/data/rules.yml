@@ -49,69 +49,6 @@
 #   detect_*: …
 #   fix: instructional sentence
 
-paths:
-  skip_dirs: [.git, vendor, tmp, var, node_modules, .bundle, coverage, log, dist, knowledge]
-  tree:
-    max_depth: 2
-    max_lines: 200
-
-voice:
-  style: openbsd_dmesg
-  anti_simulation:
-    forbidden: [will, would, could, might]
-    require_evidence:
-      file_read: "show file content with SHA-256"
-      modification: "show unified diff"
-      completion: "show command output"
-  banned_output:
-    - headlines
-    - section_markers
-    - bullet_lists_without_content
-    - filler_phrases
-    - hedging
-    - sycophancy
-  strunk:
-    preambles: ["In summary,", "Consequently,", "Therefore,", "Notably,", "Importantly,"]
-    hedges: ["I think that", "I believe", "will", "would", "might", "could", "perhaps", "seems", "appears"]
-    endings: ["as a result.", "for this reason.", "thus.", "in effect.", "accordingly."]
-    code_preambles: ["# NOTE: performance considerations", "# HACK: temporary workaround", "# REVIEW: assess after refactor"]
-    apply_to: [prose, comments, documentation, strings]
-    never_apply_to: [code_logic, algorithms, data_structures]
-    safeguards:
-      - never_delete_variable_names
-      - never_delete_function_calls
-      - never_simplify_conditional_logic
-      - never_collapse_diagnostic_output
-  inverted_pyramid:
-    - "Lead with the outcome."
-    - "Provide key evidence next."
-    - "Add implementation detail last."
-
-  preserve:
-    boot_message: "5-line dmesg style, never collapse to one line"
-    diagnostic_output: "structured multi-line output is intentional, never compress to abbreviations"
-    help_text: "include command name, description, and at least one example"
-    spinner_feedback: "show elapsed time and status, do not remove progress indicators"
-    refinement_scope:
-      streamline: "remove redundancy, not information"
-      polish: "refine wording, not delete output"
-      minimize: "applies to prompt tokens, not diagnostic output"
-
-zen:
-  observe: "Read current behavior before changing anything."
-  simplify: "Reduce moving parts before adding new components."
-  isolate: "Change one axis at a time with clear boundaries."
-  verify: "Run checks and gather objective evidence."
-  reflect: "Capture learning and improve defaults."
-
-# Engineering fit — classify every problem against the load it actually carries.
-# Apply during scan, sweep, council, and any review of an existing artifact.
-engineering_fit:
-  classify: "For every problem, decide: under-engineered, over-engineered, or perfectly engineered — and say why."
-  under:  "Misses real failure modes the artifact will hit. Add only what the artifact actually carries."
-  over:   "Carries machinery the artifact will never load. Strip it; defer until the load shows up."
-  fit:    "Solution matches the load and the failure modes — no slack, no shortfall."
-  why_required: "State the load the artifact carries (users, edge cases, lifetimes, blast radius). The verdict follows from the load."
 
 # Six Universal Laws — single hierarchical priority for every rule and persona.
 # When two rules conflict, the lower-numbered law wins.
@@ -141,6 +78,22 @@ laws:
     principle: "Information dense; no noise; signal not noise."
     applies_to: [verbosity, comments, naming]
 
+zen:
+  observe: "Read current behavior before changing anything."
+  simplify: "Reduce moving parts before adding new components."
+  isolate: "Change one axis at a time with clear boundaries."
+  verify: "Run checks and gather objective evidence."
+  reflect: "Capture learning and improve defaults."
+
+# Engineering fit — classify every problem against the load it actually carries.
+# Apply during scan, sweep, council, and any review of an existing artifact.
+engineering_fit:
+  classify: "For every problem, decide: under-engineered, over-engineered, or perfectly engineered — and say why."
+  under: "Misses real failure modes the artifact will hit. Add only what the artifact actually carries."
+  over: "Carries machinery the artifact will never load. Strip it; defer until the load shows up."
+  fit: "Solution matches the load and the failure modes — no slack, no shortfall."
+  why_required: "State the load the artifact carries (users, edge cases, lifetimes, blast radius). The verdict follows from the load."
+
 # Cognitive biases and anti-patterns — meta-rules above lexical detection.
 biases:
   critical:
@@ -167,29 +120,6 @@ biases:
       violates_law: ROBUSTNESS
   cognitive_traps: [anchoring, recency, verbosity, pattern_completion, premature_commitment]
 
-# Structural operations — verbs the rewriter may apply, with risk and verify spec.
-structural_ops:
-  preserve_note: "These keep getting deleted in self-runs — DO NOT REMOVE."
-  verify_after_each: true
-  ops:
-    merge: {desc: "combine similar logic", risk: medium, verify: "merged logic identical", supports_law: SINGULARITY}
-    semantic_regroup: {desc: "reorganize logically", risk: low, verify: "functionality unchanged", supports_law: PROXIMITY}
-    defrag: {desc: "consolidate fragments", risk: low, verify: "all fragments accessible", supports_law: PROXIMITY}
-    decouple: {desc: "separate concerns", risk: high, verify: "interfaces preserved", supports_law: ABSTRACTION}
-    hoist: {desc: "move to proper scope", risk: medium, verify: "scope correct", supports_law: PROXIMITY}
-    flatten: {desc: "reduce nesting", risk: medium, verify: "logic flow identical", supports_law: LINEARITY}
-    delete: {desc: "remove dead code", risk: high, verify: "truly dead, no references", supports_law: DENSITY}
-    expand: {desc: "extract for clarity", risk: low, verify: "extracted correctly", supports_law: ABSTRACTION}
-    reduce_noise: {desc: "clean messy lines", risk: low, verify: "formatting only, no logic", supports_law: DENSITY}
-
-# Veto patterns — concrete regex detectors that block merge unconditionally.
-veto_patterns:
-  secrets:         {detect: 'sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----', apply: move_to_env,        violates_law: ROBUSTNESS}
-  sql_injection:   {detect: 'execute|query.*#\{',                                              apply: parameterize,       violates_law: ROBUSTNESS}
-  unfinished:      {detect: '\.\.\.|TODO|FIXME|pending',                                       apply: complete_or_track,  violates_law: ROBUSTNESS}
-  unsafe_calls:    {detect: 'system\s*\(|exec\s*\(|%x\{|Open3\.capture[23]\s*\([^)]*#\{', apply: add_safe_nav,       violates_law: ROBUSTNESS}
-  race_conditions: {detect: 'if.*\n.*=.*\n.*if',                                               apply: add_mutex,          violates_law: ROBUSTNESS}
-
 # Beauty — aesthetic anchors from masters of their craft.
 # The user is an architect; these are first-class engineering anchors, not decoration.
 beauty:
@@ -215,40 +145,239 @@ beauty:
     - error_handling_separate_from_logic
   zen_japanese:
     wabi_sabi: imperfect_authentic
-    ma:        emptiness_pause
-    kanso:     eliminate_essence
+    ma: emptiness_pause
+    kanso: eliminate_essence
+
+voice:
+  style: openbsd_dmesg
+  anti_simulation:
+    forbidden: [will, would, could, might]
+    require_evidence:
+      file_read: "show file content with SHA-256"
+      modification: "show unified diff"
+      completion: "show command output"
+  banned_output:
+    - headlines
+    - section_markers
+    - bullet_lists_without_content
+    - filler_phrases
+    - hedging
+    - sycophancy
+  strunk:
+    preambles: ["In summary,", "Consequently,", "Therefore,", "Notably,", "Importantly,"]
+    hedges: ["I think that", "I believe", "will", "would", "might", "could", "perhaps", "seems", "appears"]
+    endings: ["as a result.", "for this reason.", "thus.", "in effect.", "accordingly."]
+    code_preambles: ["# TODO: clarify intent", "# FIXME: review edge cases", "# NOTE: performance considerations", "# HACK: temporary workaround", "# REVIEW: assess after refactor"]
+    apply_to: [prose, comments, documentation, strings]
+    never_apply_to: [code_logic, algorithms, data_structures]
+    safeguards:
+      - never_delete_variable_names
+      - never_delete_function_calls
+      - never_simplify_conditional_logic
+      - never_collapse_diagnostic_output
+  inverted_pyramid:
+    - "Lead with the outcome."
+    - "Provide key evidence next."
+    - "Add implementation detail last."
+
+  preserve:
+    boot_message: "5-line dmesg style, never collapse to one line"
+    diagnostic_output: "structured multi-line output is intentional, never compress to abbreviations"
+    help_text: "include command name, description, and at least one example"
+    spinner_feedback: "show elapsed time and status, do not remove progress indicators"
+    refinement_scope:
+      streamline: "remove redundancy, not information"
+      polish: "refine wording, not delete output"
+      minimize: "applies to prompt tokens, not diagnostic output"
+
+# Falsifiable identity — what MASTER explicitly does NOT aim for, and the
+# failure modes that mean the system has lost its way.
+# Source: master2 v4 MANIFEST reunification.
+anti_goals:
+  - replace_human_judgment       # MASTER augments, never automates the decision
+  - enforce_style_preferences    # only timeless axioms — never trend or taste
+  - optimize_for_speed           # correctness precedes performance
+  - support_every_language       # depth over breadth
+  - be_easy_to_use               # demands precision, not friendliness
+
+success_criteria:
+  - every_output_respects_axioms
+  - council_surfaces_real_concerns_not_theater
+  - system_applies_to_itself_without_exception
+  - engineers_trust_judgment_over_time
+
+failure_modes:
+  rubber_stamp: "council approves everything — adversarial role lost"
+  blocks_everything: "council vetoes every proposal — gridlock, no shipping"
+  self_violation: "MASTER produces output it would itself reject — recursive quality broken"
+
+# Recursive proof — for each Universal Law, MASTER must satisfy the law itself.
+# Source: master.yml v31 reunification (#58).
+self_test:
+  laws_apply_to_self:
+    ROBUSTNESS: "scan lib/ for bare_rescue + missing timeouts"
+    SINGULARITY: "rules.yml entries unique by id; no two YAMLs define same key"
+    LINEARITY: "no nesting_depth > 4 in lib/"
+    PROXIMITY: "test files within 1 directory of source"
+    ABSTRACTION: "no class > god_class threshold in lib/"
+    DENSITY: "no method > long_method threshold in lib/"
+  fail_action: "publish self_violation event; refuse autoloop fixes that don't restore the law"
+
+# Veto patterns — concrete regex detectors that block merge unconditionally.
+veto_patterns:
+  secrets: {detect: 'sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----', apply: move_to_env, violates_law: ROBUSTNESS}
+  sql_injection: {detect: 'execute|query.*#\{', apply: parameterize, violates_law: ROBUSTNESS}
+  unfinished: {detect: '\.\.\.|TODO|FIXME|pending', apply: complete_or_track, violates_law: ROBUSTNESS}
+  unsafe_calls: {detect: 'system\s*\(|exec\s*\(|%x\{|Open3\.capture[23]\s*\([^)]*#\{', apply: add_safe_nav, violates_law: ROBUSTNESS}
+  race_conditions: {detect: 'if.*\n.*=.*\n.*if',                                               apply: add_mutex,          violates_law: ROBUSTNESS}
+
+# Structural operations — verbs the rewriter may apply, with risk and verify spec.
+structural_ops:
+  preserve_note: "These keep getting deleted in self-runs — DO NOT REMOVE."
+  verify_after_each: true
+  ops:
+    merge: {desc: "combine similar logic", risk: medium, verify: "merged logic identical", supports_law: SINGULARITY}
+    semantic_regroup: {desc: "reorganize logically", risk: low, verify: "functionality unchanged", supports_law: PROXIMITY}
+    defrag: {desc: "consolidate fragments", risk: low, verify: "all fragments accessible", supports_law: PROXIMITY}
+    decouple: {desc: "separate concerns", risk: high, verify: "interfaces preserved", supports_law: ABSTRACTION}
+    hoist: {desc: "move to proper scope", risk: medium, verify: "scope correct", supports_law: PROXIMITY}
+    flatten: {desc: "reduce nesting", risk: medium, verify: "logic flow identical", supports_law: LINEARITY}
+    delete: {desc: "remove dead code", risk: high, verify: "truly dead, no references", supports_law: DENSITY}
+    expand: {desc: "extract for clarity", risk: low, verify: "extracted correctly", supports_law: ABSTRACTION}
+    reduce_noise: {desc: "clean messy lines", risk: low, verify: "formatting only, no logic", supports_law: DENSITY}
+
+# Explicit forbidden + discouraged patterns with reasons.
+# Source: master.json v225 ANALYSIS reunification (#23).
+anti_patterns:
+  forbidden:
+    - {pattern: 'eval\(.*user.*\)',   reason: arbitrary_code_execution}
+    - {pattern: "rm -rf /",              reason: data_loss}
+    - {pattern: "while true.*no sleep",  reason: resource_exhaustion}
+    - {pattern: 'system\(.*\$\{',     reason: command_injection}
+    - {pattern: 'Marshal\.load',        reason: deserialization_rce}
+    - {pattern: 'open\(.*\$\{',       reason: shell_through_open}
+  discouraged:
+    - {pattern: god_object,                reason: violates_solid_srp}
+    - {pattern: premature_optimization,    reason: violates_yagni}
+    - {pattern: defensive_copying_everywhere, reason: complexity_for_imagined_failure}
+    - {pattern: speculative_generality,    reason: yagni_in_disguise}
+
+# Principle enforcement tiers — tier1 strict, tier2 strong, tier3 opportunistic.
+# Source: master.json v225 reunification.
+principle_priorities:
+  tier1_critical: # halts pipeline on violation
+    - evidence: "@assumption -> validate"
+    - reversible: "@irreversible -> add_rollback"
+    - security: "@untrusted -> validate_sanitize"
+    - self_apply: "@output -> must_pass_own_constitution"
+  tier2_quality: # warns and routes to refactor
+    - dry: "@duplication>=3 -> abstract"
+    - kiss: "@complexity>10 -> simplify"
+    - srp: "@two_reasons_to_change -> split"
+  tier3_polish: # opportunistic improvements
+    - explicit: "@implicit -> make_explicit"
+    - minimalism: "@bloat -> subtract"
+    - rhythm: "@inconsistent -> align"
+
+# Refactors must not silently change behavior. Cleaner is not a license to differ.
+# Source: Cursor v2.0 reunification (#66).
+preserve_user_intent:
+  forbidden_changes_during_refactor:
+    - public_method_signature
+    - error_class_raised
+    - return_type_shape
+    - side_effects_order
+    - log_format_consumed_by_others
+  require_explicit_approval_for: behavior_change
+
+# Before marking a task done, re-read the file fresh — never trust cached state.
+# Source: Junie reunification (#71).
+ground_truth_check:
+  require_fresh_read_before:
+    - claim_task_complete
+    - council_vote_on_change
+    - commit_creation
+  cache_max_age_seconds: 5
+
+# Detect and recover from LLM gaslighting / repetition / bad XML.
+# Source: opencrabs reunification (#82).
+phantom_recovery:
+  detectors:
+    gaslighting_preamble: "/^(I('ll| will| can| would)|Let me|Sure,)/i"
+    text_repetition_loop: "same 60-char span repeats >= 3 times"
+    xml_tool_call_failure: "<tool> open without close OR malformed JSON in args"
+    empty_tool_response: "tool returned nil twice in a row"
+  recovery:
+    - "discard last response, reset context to last successful checkpoint"
+    - "switch model tier (escalate or fall back) on second occurrence"
+    - "publish phantom:detected event, halt loop on third"
+
+# Never assume a gem is available. Check Gemfile / require_relative target before use.
+# Source: Devin reunification (#36).
+library_verify:
+  pre_flight_checks:
+    - "Gemfile.lock contains the gem at the expected version"
+    - "require_relative path exists on disk"
+    - "binary on PATH (which / command -v) before shell-out"
+  fail_action: "Result.err :missing_dependency; do not retry without human"
+
+# Failure taxonomy — what to retry, what to fail-fast, what to escalate.
+# Source: master.json v225 reunification.
+failure_taxonomy:
+  transient:
+    examples: [network_timeout, rate_limit, temp_file_conflict, provider_overload]
+    strategy: exponential_backoff
+    max_retries: 3
+  permanent:
+    examples: [syntax_error, missing_dependency, permission_denied, schema_violation]
+    strategy: fail_fast
+    max_retries: 0
+  ambiguous:
+    examples: [partial_write, unknown_error, half_committed_state]
+    strategy: human_intervention
+    checkpoint_before: true
+
+# Evidence weights for ship/no-ship decisions. Sum >= 80 to pass tier1 gates.
+# Source: master.json v225 reunification.
+evidence_scoring:
+  weights:
+    test_pass: 35
+    scan_clean: 25
+    code_review: 20
+    log_analysis: 10
+    profiling_data: 10
+  pass_threshold: 80
+  block_threshold: 50 # below this, propose rollback
+
+# Schema metadata for every named rule. Optional fields per rule.
+# Source: master.json v225 + master.yml v49 reunification (#51, #53, #57, #64).
+schema_metadata:
+  optional_fields:
+    reversibility: "free | cheap | surgical | impossible" # rollback cost
+    time_horizon: "review | deploy | incident" # when this fires
+    blast_radius: "files_touched: integer" # batching hint
+    provenance:
+      added_in_commit: sha
+      rationale: string
+      last_revised: iso8601
+paths:
+  skip_dirs: [.git, vendor, tmp, var, node_modules, .bundle, coverage, log, dist, knowledge]
+  tree:
+    max_depth: 2
+    max_lines: 200
 
 # thresholds — only blocks with a live reader survive. Per-rule structural
 # limits (method_length, nesting_depth, cyclomatic) live on each rule's
 # detection.structural block, not here. ONE_SOURCE: no second copy.
 thresholds:
-  class:           # read by voice/personality.rb for prompt substitution
+  class: # read by voice/personality.rb for prompt substitution
     max_methods: 6
     max_lines: 200
-  convergence:     # read by loop/fix_loop.rb — authoritative copy
+  convergence: # read by loop/fix_loop.rb — authoritative copy
     consecutive_clean_runs_required: 2
     max_iterations: 15
     stagnant_threshold: 3
-
-# Prediction engine — per-detector autofix confidence thresholds.
-# When confidence >= threshold, autofix fires without human review.
-# Below threshold: propose fix, await approval. Never auto-delete at < 0.80.
-prediction_engine:
-  null_usage:        {confidence: 0.95, autofix: null_object_pattern}
-  abbreviation:      {confidence: 0.99, autofix: expand_to_full_name}
-  nesting_depth:     {confidence: 0.92, autofix: extract_method}
-  bare_rescue:       {confidence: 0.98, autofix: rescue_standard_error}
-  frozen_string:     {confidence: 0.99, autofix: add_frozen_string_literal}
-  trailing_ws:       {confidence: 0.99, autofix: strip_trailing_whitespace}
-  debug_output:      {confidence: 0.97, autofix: remove_debug_call}
-  todo_comment:      {confidence: 0.70, autofix: create_issue}
-  magic_number:      {confidence: 0.85, autofix: extract_named_constant}
-  long_line:         {confidence: 0.90, autofix: wrap_at_120}
-  sycophancy:        {confidence: 0.99, autofix: delete_phrase}
-  future_tense:      {confidence: 0.95, autofix: rewrite_indicative}
-  duplicate_code:    {confidence: 0.75, autofix: extract_shared_method}
-  god_class:         {confidence: 0.60, autofix: propose_decomposition}
-  n_plus_one:        {confidence: 0.88, autofix: add_includes}
+    genetic_autofix_candidates: 3
 
 scan_depths:
   # deep is the only permitted scan depth — quick and standard exist for InterconnectRule
@@ -411,11 +540,72 @@ languages:
     dialect: "bokmål"
     rules: ["Short sentences", "Avoid anglicisms", "Active voice", "Plain language"]
 
+# Prediction engine — per-detector autofix confidence thresholds.
+# When confidence >= threshold, autofix fires without human review.
+# Below threshold: propose fix, await approval. Never auto-delete at < 0.80.
+prediction_engine:
+  null_usage: {confidence: 0.95, autofix: null_object_pattern}
+  abbreviation: {confidence: 0.99, autofix: expand_to_full_name}
+  nesting_depth: {confidence: 0.92, autofix: extract_method}
+
+# Session-learned patterns become live scan rules through
+# lib/judge/scan/rules/learned_smells_rule.rb.
+learned_smells:
+  - id: bare_rescue
+    pattern: '^\s*rescue\b'
+    confidence: 0.98
+    autofix: rescue_standard_error
+  - id: frozen_string
+    pattern: '\bString\.new\b|%q\(|%Q\('
+    confidence: 0.99
+    autofix: add_frozen_string_literal
+  - id: trailing_ws
+    pattern: '[ \t]+$'
+    confidence: 0.99
+    autofix: strip_trailing_whitespace
+  - id: debug_output
+    pattern: '\b(?:puts|p|pp|warn)\b'
+    confidence: 0.97
+    autofix: remove_debug_call
+  - id: todo_comment
+    pattern: '\b(?:TODO|FIXME|HACK)\b'
+    confidence: 0.70
+    autofix: create_issue
+  - id: magic_number
+    pattern: '\b\d{2,}\b'
+    confidence: 0.85
+    autofix: extract_named_constant
+  - id: long_line
+    pattern: '^.{121,}$'
+    confidence: 0.90
+    autofix: wrap_at_120
+  - id: sycophancy
+    pattern: '\b(?:absolutely|certainly|of course|happy to help)\b'
+    confidence: 0.99
+    autofix: delete_phrase
+  - id: future_tense
+    pattern: '\b(?:will|would|might|could|perhaps|seems|appears)\b'
+    confidence: 0.95
+    autofix: rewrite_indicative
+  - id: duplicate_code
+    pattern: '\b(?:copy|duplicate|same as)\b'
+    confidence: 0.75
+    autofix: extract_shared_method
+  - id: god_class
+    pattern: '^\s*class\b'
+    confidence: 0.60
+    autofix: propose_decomposition
+  - id: n_plus_one
+    pattern: '\b(?:includes|preload|eager_load)\b'
+    confidence: 0.88
+    autofix: add_includes
+
 rules:
 
   codebase:
 
     - id: PRESERVE_FIRST
+      source: "MASTER-native constitutional kernel rule"
       name: "Never break working code"
       tier: kernel
       severity: error
@@ -424,6 +614,7 @@ rules:
       fix: "Read before write. Preserve behavior and intent. Larger changes allowed if justified and tested."
 
     - id: ONE_SOURCE
+      source: "DRY — The Pragmatic Programmer (Hunt & Thomas, 1999)"
       name: "One authoritative representation per concept"
       tier: kernel
       severity: error
@@ -432,6 +623,7 @@ rules:
       fix: "Extract to single source, reference from all consumers."
 
     - id: DECOUPLE
+      source: "The Pragmatic Programmer (decoupling) — Hunt & Thomas"
       name: "Make hidden dependencies explicit"
       tier: kernel
       severity: error
@@ -440,6 +632,7 @@ rules:
       fix: "Inject dependencies through constructor. No global state."
 
     - id: DEGRADE_GRACEFULLY
+      source: "Release It! graceful degradation (Michael Nygard)"
       name: "Operate under partial failures"
       tier: kernel
       severity: error
@@ -448,6 +641,7 @@ rules:
       fix: "Circuit breakers, timeouts, fallbacks."
 
     - id: GALLS_LAW
+      source: "Gall's Law — Systemantics (John Gall, 1975)"
       name: "Complex systems evolve from simple working systems"
       tier: philosophy
       severity: info
@@ -456,6 +650,7 @@ rules:
       fix: "Start simple, prove it works, then extend."
 
     - id: CHESTERTONS_FENCE
+      source: "Chesterton's Fence (G.K. Chesterton, 1929)"
       name: "Understand why something exists before removing it"
       tier: philosophy
       severity: warning
@@ -464,6 +659,7 @@ rules:
       fix: "Read git blame, understand the rationale, then decide."
 
     - id: UNIX_PHILOSOPHY
+      source: "Unix philosophy — do one thing well (Doug McIlroy)"
       name: "Do one thing well"
       tier: architecture
       severity: info
@@ -472,6 +668,7 @@ rules:
       fix: "Extract services. Clear module boundaries. Compose with pipes."
 
     - id: FUNCTIONAL_CORE
+      source: "Functional Core, Imperative Shell (Gary Bernhardt)"
       name: "Pure logic in core, side effects at edges"
       tier: architecture
       severity: info
@@ -480,6 +677,7 @@ rules:
       fix: "Return data from core, let shell handle IO."
 
     - id: CONVENTION_OVER_CONFIG
+      source: "Convention over Configuration (Rails / DHH)"
       name: "Sensible defaults reduce decisions"
       tier: productivity
       severity: info
@@ -488,6 +686,7 @@ rules:
       fix: "Provide sensible defaults, override only when needed."
 
     - id: MONOLITH_FIRST
+      source: "MonolithFirst (Martin Fowler, bliki)"
       name: "Start monolith, extract when team exceeds 15"
       tier: architecture
       severity: info
@@ -496,6 +695,7 @@ rules:
       fix: "Keep it in one app until extraction is clearly needed."
 
     - id: CONSISTENT_ERROR_STRATEGY
+      source: "MASTER-native (uniform error handling)"
       name: "One error handling strategy per module"
       tier: design
       severity: warning
@@ -504,6 +704,7 @@ rules:
       fix: "Pick one strategy per module. MASTER uses Result monad."
 
     - id: DUAL_DETECTION
+      source: "MASTER-native (lexical + semantic detection)"
       name: "Layer lexical and semantic detection"
       tier: verification
       severity: info
@@ -512,6 +713,7 @@ rules:
       fix: "Layer deterministic patterns with LLM semantic analysis."
 
     - id: MASS_GENERATE_CURATE
+      source: "MASTER-native (generate-then-curate)"
       name: "Generate many variations, curate ruthlessly"
       tier: creative
       severity: info
@@ -520,6 +722,7 @@ rules:
       fix: "Generate a swarm and curate when stakes are high."
 
     - id: NO_GOD_CLASS
+      source: "Refactoring code smell: Large Class / God Object (Fowler)"
       name: "No god classes"
       tier: core
       severity: error
@@ -528,6 +731,7 @@ rules:
       fix: "Decompose into focused classes."
 
     - id: NO_SHOTGUN_SURGERY
+      source: "Refactoring code smell: Shotgun Surgery (Fowler)"
       name: "One change should not require edits in many files"
       tier: core
       severity: warning
@@ -536,6 +740,7 @@ rules:
       fix: "Extract the missing abstraction."
 
     - id: NO_HIDDEN_GLOBAL_STATE
+      source: "Clean Code — avoid global mutable state (R.C. Martin)"
       name: "No hidden global state"
       tier: core
       severity: error
@@ -544,6 +749,7 @@ rules:
       fix: "Inject configuration. Use dependency injection."
 
     - id: TRACER_BULLETS
+      source: "The Pragmatic Programmer — tracer bullets (Hunt & Thomas)"
       name: "End-to-end skeleton first, flesh out second"
       tier: architecture
       severity: info
@@ -552,6 +758,7 @@ rules:
       fix: "Wire the simplest end-to-end path first. Prove it works. Then add depth."
 
     - id: ORTHOGONALITY
+      source: "The Pragmatic Programmer — orthogonality (Hunt & Thomas)"
       name: "Changes in one dimension must not ripple into others"
       tier: architecture
       severity: warning
@@ -560,6 +767,7 @@ rules:
       fix: "Decouple dimensions. Database changes should not require UI changes. Style should not affect structure."
 
     - id: TRANSFORMATIONS
+      source: "Transformation Priority Premise (Robert C. Martin)"
       name: "Think in pipelines: input transforms to output"
       tier: architecture
       severity: info
@@ -568,6 +776,7 @@ rules:
       fix: "Express work as a chain of transformations. Each stage takes input, produces output, holds no state."
 
     - id: DEEP_MODULES
+      source: "A Philosophy of Software Design (John Ousterhout, 2018)"
       name: "Powerful functionality behind simple interfaces"
       tier: architecture
       severity: warning
@@ -576,6 +785,7 @@ rules:
       fix: "Simple interface, rich implementation. A deep module does much with little ceremony."
 
     - id: INFORMATION_HIDING
+      source: "Information hiding (David Parnas, 1972; Ousterhout)"
       name: "Each module encapsulates one design decision"
       tier: architecture
       severity: warning
@@ -584,6 +794,7 @@ rules:
       fix: "Encapsulate each decision in one module. If it changes, only that module changes."
 
     - id: DIFFERENT_LAYER_DIFFERENT_ABSTRACTION
+      source: "A Philosophy of Software Design (Ousterhout)"
       name: "Each layer speaks a different language than its neighbors"
       tier: architecture
       severity: warning
@@ -592,6 +803,7 @@ rules:
       fix: "Each layer must transform, not relay. If a layer adds no abstraction, remove it."
 
     - id: STRUCTURAL_HONESTY
+      source: "MASTER-native (structure mirrors intent)"
       name: "The shape of the artifact must reflect the shape of the problem"
       tier: architecture
       severity: warning
@@ -600,6 +812,7 @@ rules:
       fix: "Align structure with reality. Natural domain boundaries become system boundaries."
 
     - id: GRACEFUL_BOUNDARIES
+      source: "Boundaries (Gary Bernhardt) — values at the edges"
       name: "Where systems meet, expect translation and loss"
       tier: architecture
       severity: info
@@ -608,6 +821,7 @@ rules:
       fix: "Every boundary is a translation layer. Validate at every boundary. Degrade gracefully when translation fails."
 
     - id: PULL_COMPLEXITY_DOWN
+      source: "A Philosophy of Software Design (Ousterhout)"
       name: "Simple interface matters more than simple implementation"
       tier: architecture
       severity: info
@@ -616,6 +830,7 @@ rules:
       fix: "Absorb complexity into the implementation. The caller should not need to know how it works."
 
     - id: ETC
+      source: "ETC 'Easier To Change' — The Pragmatic Programmer (Hunt & Thomas)"
       name: "Easier To Change — the meta-value behind every principle"
       tier: philosophy
       severity: info
@@ -624,6 +839,7 @@ rules:
       fix: "Choose the option that keeps more options open. Decoupled, parameterized, replaceable."
 
     - id: BROKEN_WINDOWS
+      source: "The Pragmatic Programmer — software entropy / broken windows"
       name: "Zero tolerance for visible decay"
       tier: philosophy
       severity: warning
@@ -632,6 +848,7 @@ rules:
       fix: "Fix it now. One broken window invites more."
 
     - id: ENTROPY_RESISTANCE
+      source: "The Pragmatic Programmer — software entropy (Hunt & Thomas)"
       name: "Systems decay toward disorder unless actively maintained"
       tier: philosophy
       severity: warning
@@ -640,6 +857,7 @@ rules:
       fix: "Actively resist entropy. Regular cleanup. Remove what no longer serves."
 
     - id: DONT_OUTRUN_HEADLIGHTS
+      source: "The Pragmatic Programmer — don't outrun your headlights"
       name: "Only plan as far as you can see"
       tier: philosophy
       severity: info
@@ -648,6 +866,7 @@ rules:
       fix: "Small deliberate steps. Reassess after each. Feedback from each step illuminates the next."
 
     - id: REVERSIBILITY
+      source: "The Pragmatic Programmer — reversibility (Hunt & Thomas)"
       name: "Prefer decisions that are easy to undo"
       tier: philosophy
       severity: info
@@ -656,6 +875,7 @@ rules:
       fix: "Soft-delete over hard-delete. Option agreements over binding. Feature flags over big-bang."
 
     - id: DESIGN_IT_TWICE
+      source: "A Philosophy of Software Design — Design it Twice (Ousterhout)"
       name: "Consider at least two approaches before committing"
       tier: philosophy
       severity: info
@@ -664,6 +884,7 @@ rules:
       fix: "Sketch two designs. Compare tradeoffs. Five minutes saves five days."
 
     - id: PROPERTY_BASED_TESTING
+      source: "Property-based testing — QuickCheck (Claessen & Hughes, 2000)"
       name: "Test properties and invariants, not just examples"
       tier: verification
       severity: info
@@ -674,6 +895,7 @@ rules:
   file:
 
     - id: GUARD_EXPENSIVE
+      source: "MASTER-native (guard expensive operations)"
       name: "Check preconditions before costly work"
       tier: kernel
       severity: error
@@ -682,6 +904,7 @@ rules:
       fix: "Guard clause before costly work. Estimate cost. Confirm if destructive."
 
     - id: SMALL_FILES
+      source: "Clean Code — small classes/files (Robert C. Martin)"
       name: "Files under 300 lines"
       tier: clean_code
       severity: warning
@@ -691,6 +914,7 @@ rules:
       fix: "Split at module boundaries."
 
     - id: CONSISTENT_FILE_STRUCTURE
+      source: "MASTER-native / project convention"
       name: "Consistent file structure order"
       tier: clarity
       severity: info
@@ -700,6 +924,7 @@ rules:
       languages: [ruby]
 
     - id: FROZEN_STRING_LITERAL
+      source: "Ruby Style Guide / RuboCop Style/FrozenStringLiteralComment"
       name: "frozen_string_literal magic comment required"
       tier: core
       severity: warning
@@ -709,6 +934,7 @@ rules:
       languages: [ruby]
 
     - id: SINGLE_PRIVATE_SECTION
+      source: "Ruby Style Guide / RuboCop Style/AccessModifierDeclarations"
       name: "One private keyword at bottom"
       tier: design
       severity: info
@@ -718,6 +944,7 @@ rules:
       languages: [ruby]
 
     - id: STRICT_MODE_ZSH
+      source: "Shell strict mode set -euo pipefail (Google Shell Style Guide)"
       name: "set -euo pipefail at script top"
       tier: core
       severity: error
@@ -727,6 +954,7 @@ rules:
       languages: [zsh]
 
     - id: HTML_LANG
+      source: "WCAG 3.1.1 Language of Page (W3C/WAI)"
       name: "lang attribute on <html>"
       tier: accessibility
       severity: error
@@ -736,6 +964,7 @@ rules:
       languages: [html]
 
     - id: SEMANTIC_ELEMENTS
+      source: "HTML5 semantics / WCAG 1.3.1 (W3C)"
       name: "Use semantic HTML5 elements"
       tier: accessibility
       severity: warning
@@ -745,6 +974,7 @@ rules:
       languages: [html]
 
     - id: MOBILE_FIRST
+      source: "Mobile First (Luke Wroblewski, 2011)"
       name: "Mobile-first media queries"
       tier: design
       severity: warning
@@ -754,6 +984,7 @@ rules:
       languages: [css]
 
     - id: NO_IMPORT_SCSS
+      source: "Sass best practice — @use over @import (Sass team)"
       name: "Replace @import with @use/@forward"
       tier: design
       severity: warning
@@ -763,6 +994,7 @@ rules:
       languages: [scss]
 
     - id: NO_IMPORTANT
+      source: "CSS best practice — avoid !important (MDN)"
       name: "No !important"
       tier: design
       severity: warning
@@ -772,6 +1004,7 @@ rules:
       languages: [css]
 
     - id: SQUINT_TEST
+      source: "Squint Test readability heuristic (Sandi Metz)"
       name: "Structure evident at a glance"
       tier: aesthetic
       severity: info
@@ -781,6 +1014,7 @@ rules:
       fix: "One blank line between sections, never more than two consecutive."
 
     - id: WHITESPACE_PUNCTUATION
+      source: "Typography / code style — whitespace as punctuation"
       name: "Whitespace as layout tool"
       tier: aesthetic
       severity: info
@@ -789,6 +1023,7 @@ rules:
       fix: "One blank line between sections, never more than two."
 
     - id: NO_MULTIPLE_LANGUAGES
+      source: "MASTER-native (one language per file)"
       name: "One medium per artifact"
       tier: clean_code
       severity: warning
@@ -798,6 +1033,7 @@ rules:
       fix: "One language per layer. Separate into distinct files or clearly demarcated sections."
 
     - id: ARTIFICIAL_COUPLING
+      source: "The Pragmatic Programmer — avoid artificial coupling"
       name: "Things that do not depend on each other must not be grouped together"
       tier: clean_code
       severity: warning
@@ -806,6 +1042,7 @@ rules:
       fix: "Separate into independent units. Each removable without affecting others."
 
     - id: I18N_COVERAGE
+      source: "Rails i18n best practice (no hardcoded strings)"
       name: "Wrap user-facing literals in I18n helpers"
       tier: design
       severity: warning
@@ -816,6 +1053,7 @@ rules:
       path_match: "/app/views/"
 
     - id: STRICT_LOADING_MISSING
+      source: "Rails strict_loading — N+1 prevention (Rails Guides)"
       name: "AR model lacks strict_loading_by_default"
       tier: design
       severity: info
@@ -828,6 +1066,7 @@ rules:
       path_match: "/app/models/"
 
     - id: RATE_LIMITING_MISSING
+      source: "OWASP API Security — rate limiting"
       name: "Sensitive controller missing rate_limit/throttle"
       tier: security
       severity: error
@@ -840,6 +1079,7 @@ rules:
       path_match: "/app/controllers/"
 
     - id: MIGRATION_ADD_REFERENCE_NO_FK
+      source: "Rails migrations — foreign_key: true (Strong Migrations)"
       name: "add_reference without foreign_key:"
       tier: robustness
       severity: error
@@ -850,6 +1090,7 @@ rules:
       path_match: "/db/migrate/"
 
     - id: MIGRATION_REMOVE_COLUMN
+      source: "Strong Migrations — safe column removal (Andrew Kane)"
       name: "remove_column is destructive"
       tier: robustness
       severity: error
@@ -860,6 +1101,7 @@ rules:
       path_match: "/db/migrate/"
 
     - id: MIGRATION_FIND_OR_CREATE_BY
+      source: "Rails best practice — find_or_create_by races"
       name: "find_or_create_by needs unique index"
       tier: robustness
       severity: warning
@@ -872,6 +1114,7 @@ rules:
   unit:
 
     - id: SIMPLEST_WORKS
+      source: "XP — do the simplest thing that could possibly work (Ward Cunningham)"
       name: "Fewest moving parts that solve the problem"
       tier: kernel
       severity: error
@@ -880,6 +1123,7 @@ rules:
       fix: "Delete abstractions until it hurts. KISS."
 
     - id: FAIL_VISIBLY
+      source: "Fail Fast (Jim Shore, IEEE Software 2004)"
       name: "Surface errors immediately"
       tier: kernel
       severity: error
@@ -889,6 +1133,7 @@ rules:
       fix: "Catch specific errors, log context, re-raise or return Result."
 
     - id: BE_CONCISE
+      source: "Strunk & White / Clean Code — brevity"
       name: "Avoid unnecessary words, tokens, or lines"
       tier: kernel
       severity: warning
@@ -897,6 +1142,7 @@ rules:
       fix: "Omit needless words. Omit needless code."
 
     - id: DRY
+      source: "DRY — The Pragmatic Programmer (Hunt & Thomas, 1999)"
       name: "Don't Repeat Yourself"
       tier: principle
       severity: warning
@@ -907,6 +1153,7 @@ rules:
       tension: "DRY conflicts with WET/AHA — singularity wins for data, DRY wins for code."
 
     - id: KISS
+      source: "KISS — Keep It Simple (Kelly Johnson, U.S. Navy 1960)"
       name: "Keep It Simple"
       tier: principle
       severity: warning
@@ -916,6 +1163,7 @@ rules:
       fix: "FLATTEN nesting; SPLIT god classes; INLINE single-call helpers; delete abstractions until it hurts."
 
     - id: POLA_PRINCIPLE
+      source: "Principle of Least Astonishment (POLA)"
       name: "Principle of Least Astonishment"
       tier: principle
       severity: warning
@@ -925,6 +1173,7 @@ rules:
       fix: "NAME truthfully; rename when the implementation drifts."
 
     - id: SRP
+      source: "SOLID — Single Responsibility Principle (Robert C. Martin)"
       name: "Single Responsibility"
       tier: solid
       severity: warning
@@ -933,6 +1182,7 @@ rules:
       fix: "Extract concerns into focused classes."
 
     - id: OPEN_CLOSED
+      source: "Open-Closed Principle (Bertrand Meyer; SOLID, R.C. Martin)"
       name: "Open for extension, closed for modification"
       tier: solid
       severity: warning
@@ -941,6 +1191,7 @@ rules:
       fix: "Strategy pattern, dependency injection, hooks."
 
     - id: LISKOV
+      source: "Liskov Substitution Principle (Barbara Liskov, 1987)"
       name: "Subtypes must substitute for base types"
       tier: solid
       severity: warning
@@ -949,6 +1200,7 @@ rules:
       fix: "Use composition if substitutability fails."
 
     - id: INTERFACE_SEGREGATION
+      source: "SOLID — Interface Segregation (Robert C. Martin)"
       name: "No fat interfaces"
       tier: solid
       severity: warning
@@ -957,6 +1209,7 @@ rules:
       fix: "Split into smaller role-based interfaces."
 
     - id: DEPENDENCY_INVERSION
+      source: "SOLID — Dependency Inversion (Robert C. Martin)"
       name: "Depend on abstractions, not concretions"
       tier: solid
       severity: warning
@@ -965,6 +1218,7 @@ rules:
       fix: "Inject dependencies through constructor."
 
     - id: ONE_JOB
+      source: "SRP / Unix philosophy — do one thing"
       name: "Each module has one clear reason to change"
       tier: philosophy
       severity: warning
@@ -973,6 +1227,7 @@ rules:
       fix: "Split into focused modules."
 
     - id: NO_SURPRISES
+      source: "Principle of Least Astonishment"
       name: "Predictable over clever"
       tier: philosophy
       severity: warning
@@ -981,6 +1236,7 @@ rules:
       fix: "Rename or split to match expectations."
 
     - id: COMPOSABLE
+      source: "Unix philosophy / functional composition"
       name: "Small pieces that combine cleanly"
       tier: philosophy
       severity: info
@@ -989,6 +1245,7 @@ rules:
       fix: "Build small pieces that combine cleanly."
 
     - id: CQS
+      source: "Command-Query Separation (Bertrand Meyer, Eiffel/OOSC)"
       name: "Separate queries from state mutations"
       tier: design
       severity: warning
@@ -998,6 +1255,7 @@ rules:
       languages: [ruby]
 
     - id: LAW_OF_DEMETER
+      source: "Law of Demeter (Ian Holland, Northeastern, 1987)"
       name: "Only talk to immediate friends"
       tier: design
       severity: warning
@@ -1007,6 +1265,7 @@ rules:
       fix: "Add delegate method. Talk only to direct collaborators."
 
     - id: COMPOSITION_OVER_INHERITANCE
+      source: "Design Patterns (Gang of Four, 1994)"
       name: "Favor has_a over is_a"
       tier: design
       severity: info
@@ -1015,6 +1274,7 @@ rules:
       fix: "Use composition. Mixins for shared behavior."
 
     - id: SMALL_FUNCTIONS
+      source: "Clean Code — functions should be small (R.C. Martin)"
       name: "Methods under 10 lines ideal, max 20"
       tier: clean_code
       severity: warning
@@ -1023,6 +1283,7 @@ rules:
       fix: "Extract: validate(), calculate(), persist()."
 
     - id: FEW_ARGUMENTS
+      source: "Clean Code — minimize arguments (R.C. Martin)"
       name: "Ideal is zero to two arguments"
       tier: clean_code
       severity: warning
@@ -1032,6 +1293,7 @@ rules:
       languages: [ruby]
 
     - id: ONE_ABSTRACTION_LEVEL
+      source: "Clean Code — one level of abstraction per function"
       name: "Each function at one abstraction level"
       tier: clean_code
       severity: info
@@ -1040,6 +1302,7 @@ rules:
       fix: "Extract low-level detail into helper methods."
 
     - id: STEPDOWN
+      source: "Clean Code — the Stepdown Rule (Robert C. Martin)"
       name: "Functions call only one level below"
       tier: clean_code
       severity: info
@@ -1048,6 +1311,7 @@ rules:
       fix: "Public methods at top, private helpers below."
 
     - id: BOUNDARY_ISOLATION
+      source: "Boundaries (Gary Bernhardt) / Clean Architecture"
       name: "Wrap third-party code at the edge"
       tier: clean_code
       severity: warning
@@ -1056,6 +1320,7 @@ rules:
       fix: "Wrap in adapter. Keep it from leaking."
 
     - id: NO_MAGIC
+      source: "Clean Code — no magic numbers (Robert C. Martin)"
       name: "No unexplained constants or flags"
       tier: clean_code
       severity: warning
@@ -1064,6 +1329,7 @@ rules:
       fix: "Extract to named constants."
 
     - id: FAIL_FAST
+      source: "Fail Fast (Jim Shore, IEEE Software 2004)"
       name: "Report errors at detection point"
       tier: reliability
       severity: warning
@@ -1072,6 +1338,7 @@ rules:
       fix: "Raise or return Result.err at point of detection."
 
     - id: IDEMPOTENT
+      source: "Idempotency — REST / distributed systems design"
       name: "Same operation, same result"
       tier: reliability
       severity: info
@@ -1080,6 +1347,7 @@ rules:
       fix: "Use set_value() instead of increment(). Add idempotency keys."
 
     - id: DEFENSIVE_INPUT
+      source: "Defensive programming / Postel's Law"
       name: "Never trust input at system boundaries"
       tier: reliability
       severity: warning
@@ -1088,6 +1356,7 @@ rules:
       fix: "Validate at boundaries. Whitelist, sanitize."
 
     - id: GRACEFUL_DEGRADATION
+      source: "Release It! graceful degradation (Michael Nygard)"
       name: "Partial functionality beats total failure"
       tier: reliability
       severity: warning
@@ -1096,6 +1365,7 @@ rules:
       fix: "Circuit breakers, timeouts, fallback to stale data."
 
     - id: NO_SIDE_EFFECTS
+      source: "Functional programming / Clean Code"
       name: "Functions should not change state they do not own"
       tier: functional
       severity: info
@@ -1104,6 +1374,7 @@ rules:
       fix: "Make side effects explicit. Return values instead of mutating."
 
     - id: IMMUTABLE
+      source: "Effective Java — minimize mutability (Joshua Bloch); FP"
       name: "Default to immutable data"
       tier: functional
       severity: info
@@ -1114,6 +1385,7 @@ rules:
       languages: [ruby]
 
     - id: PURE_FUNCTIONS
+      source: "Functional programming — referential transparency"
       name: "Same input, same output"
       tier: functional
       severity: info
@@ -1122,6 +1394,7 @@ rules:
       fix: "Pass all dependencies as parameters."
 
     - id: PRIMITIVE_OBSESSION
+      source: "Refactoring code smell: Primitive Obsession (Fowler)"
       name: "Replace repeated primitives with value objects"
       tier: refactoring
       severity: info
@@ -1130,6 +1403,7 @@ rules:
       fix: "Create a value object."
 
     - id: MESSAGE_CHAIN
+      source: "Refactoring code smell: Message Chains (Fowler)"
       name: "Avoid a.b.c.d chains"
       tier: refactoring
       severity: warning
@@ -1138,6 +1412,7 @@ rules:
       fix: "Talk only to immediate collaborators."
 
     - id: MIDDLE_MAN
+      source: "Refactoring code smell: Middle Man (Fowler)"
       name: "Eliminate pure-delegation classes"
       tier: refactoring
       severity: info
@@ -1146,6 +1421,7 @@ rules:
       fix: "Remove middle man. Talk directly."
 
     - id: LAZY_CLASS
+      source: "Refactoring code smell: Lazy Class (Fowler)"
       name: "Remove classes too small to justify existence"
       tier: refactoring
       severity: info
@@ -1154,6 +1430,7 @@ rules:
       fix: "Inline into caller."
 
     - id: DIVERGENT_CHANGE
+      source: "Refactoring code smell: Divergent Change (Fowler)"
       name: "Split classes changed for unrelated reasons"
       tier: refactoring
       severity: warning
@@ -1162,6 +1439,7 @@ rules:
       fix: "Split by axis of change."
 
     - id: SPECULATIVE_GENERALITY
+      source: "Refactoring code smell: Speculative Generality (Fowler); YAGNI"
       name: "Remove code for hypothetical needs"
       tier: refactoring
       severity: info
@@ -1170,6 +1448,7 @@ rules:
       fix: "Delete it. YAGNI."
 
     - id: INAPPROPRIATE_INTIMACY
+      source: "Refactoring code smell: Inappropriate Intimacy (Fowler)"
       name: "Do not access another class's private data"
       tier: refactoring
       severity: warning
@@ -1178,6 +1457,7 @@ rules:
       fix: "Use public interface. Enforce boundaries."
 
     - id: SYSTEM_STATUS
+      source: "Nielsen Heuristic #1 — Visibility of system status (NN/g)"
       name: "Keep users informed of progress"
       tier: ux
       severity: info
@@ -1186,6 +1466,7 @@ rules:
       fix: "Spinner, progress bar, status message."
 
     - id: USER_CONTROL
+      source: "Nielsen Heuristic #3 — User control and freedom (NN/g)"
       name: "Support undo and emergency exits"
       tier: ux
       severity: info
@@ -1194,6 +1475,7 @@ rules:
       fix: "Add undo support. Confirm destructive actions."
 
     - id: ERROR_RECOVERY
+      source: "Nielsen Heuristic #9 — Help users recover from errors (NN/g)"
       name: "Error messages must name the problem and suggest a fix"
       tier: ux
       severity: warning
@@ -1202,6 +1484,7 @@ rules:
       fix: "Name the problem. Suggest a fix. Show context."
 
     - id: AESTHETIC_MINIMALISM
+      source: "Nielsen Heuristic #8 — Aesthetic and minimalist design (NN/g)"
       name: "Show only relevant information"
       tier: ux
       severity: info
@@ -1210,6 +1493,7 @@ rules:
       fix: "Every element must earn its place."
 
     - id: CONSISTENCY
+      source: "Nielsen Heuristic #4 — Consistency and standards (NN/g)"
       name: "Same term means same thing everywhere"
       tier: ux
       severity: warning
@@ -1218,6 +1502,7 @@ rules:
       fix: "Follow conventions. One name per concept."
 
     - id: COST_TRANSPARENCY
+      source: "MASTER-native (surface LLM token cost)"
       name: "Show LLM costs in real-time"
       tier: llm
       severity: warning
@@ -1226,6 +1511,7 @@ rules:
       fix: "Display [$0.0023, 847 tokens] after each call."
 
     - id: CACHE_LLM
+      source: "MASTER-native (cache LLM responses)"
       name: "Cache deterministic LLM responses"
       tier: llm
       severity: info
@@ -1234,6 +1520,7 @@ rules:
       fix: "Hash prompt, cache response with bounded TTL."
 
     - id: GUARD_EXPENSIVE_OPS
+      source: "MASTER-native (guard expensive operations)"
       name: "Confirm before costly or destructive operations"
       tier: safety
       severity: error
@@ -1242,6 +1529,7 @@ rules:
       fix: "Cost estimate before execution. Require opt-in for danger."
 
     - id: NO_FLAG_ARGUMENTS
+      source: "Clean Code — no flag arguments (Robert C. Martin)"
       name: "A flag that selects behavior means two things hiding as one"
       tier: clean_code
       severity: warning
@@ -1251,6 +1539,7 @@ rules:
       fix: "Split into two distinct units. Each does one thing."
 
     - id: NO_OUTPUT_ARGUMENTS
+      source: "Clean Code — no output arguments (Robert C. Martin)"
       name: "Return results, never secretly modify what was passed in"
       tier: clean_code
       severity: warning
@@ -1259,6 +1548,7 @@ rules:
       fix: "Return the result. Leave inputs untouched."
 
     - id: NO_SELECTOR_ARGUMENTS
+      source: "FlagArgument (Martin Fowler) / Clean Code"
       name: "Arguments that switch behavior indicate hidden multiplicity"
       tier: clean_code
       severity: warning
@@ -1267,6 +1557,7 @@ rules:
       fix: "Separate functions, separate types, separate document sections."
 
     - id: DESIGN_BY_CONTRACT
+      source: "Design by Contract (Bertrand Meyer, Eiffel/OOSC)"
       name: "State what you expect, what you promise, what must remain true"
       tier: reliability
       severity: info
@@ -1275,6 +1566,7 @@ rules:
       fix: "Make contracts explicit. Preconditions, postconditions, invariants."
 
     - id: CRASH_EARLY
+      source: "The Pragmatic Programmer — Crash Early (Hunt & Thomas)"
       name: "A dead process does less damage than a corrupted one"
       tier: reliability
       severity: warning
@@ -1283,6 +1575,7 @@ rules:
       fix: "Stop when invariants break. A clean crash is recoverable. Corruption is not."
 
     - id: DEFINE_ERRORS_OUT
+      source: "A Philosophy of Software Design — Define Errors Out of Existence (Ousterhout)"
       name: "Design so error conditions cannot arise"
       tier: design
       severity: info
@@ -1291,6 +1584,7 @@ rules:
       fix: "Redesign so the error cannot occur."
 
     - id: SURFACE_AREA
+      source: "API design — minimize public surface area"
       name: "Minimize the boundary between inside and outside"
       tier: design
       severity: warning
@@ -1299,6 +1593,7 @@ rules:
       fix: "Fewer public methods. Fewer clauses. Fewer points of contact mean fewer points of failure."
 
     - id: PROGRESSIVE_DISCLOSURE
+      source: "Progressive disclosure (Jakob Nielsen, NN/g)"
       name: "Reveal complexity only as needed"
       tier: ux
       severity: info
@@ -1307,6 +1602,7 @@ rules:
       fix: "Lead with the simple case. Reveal depth on demand."
 
     - id: FEEDBACK_LOOPS
+      source: "Nielsen Heuristic #1 — feedback (NN/g)"
       name: "Every action must produce observable feedback"
       tier: ux
       severity: warning
@@ -1315,6 +1611,7 @@ rules:
       fix: "Close the loop. Every action produces feedback. Every milestone gets measured."
 
     - id: DATA_CLASS
+      source: "Refactoring code smell: Data Class (Fowler)"
       name: "Data without behavior is a missed abstraction"
       tier: refactoring
       severity: info
@@ -1323,6 +1620,7 @@ rules:
       fix: "Push behavior into the data. Methods belong with the data they operate on."
 
     - id: PARALLEL_INHERITANCE
+      source: "Refactoring code smell: Parallel Inheritance Hierarchies (Fowler)"
       name: "Two hierarchies that must change in lockstep"
       tier: refactoring
       severity: warning
@@ -1331,6 +1629,7 @@ rules:
       fix: "Merge the hierarchies or use composition."
 
     - id: REFUSED_BEQUEST
+      source: "Refactoring code smell: Refused Bequest (Fowler)"
       name: "Inheriting what you do not use"
       tier: refactoring
       severity: info
@@ -1341,6 +1640,7 @@ rules:
   line:
 
     - id: EXPLICIT
+      source: "The Zen of Python — explicit is better than implicit (Tim Peters)"
       name: "Explicit contracts over implicit coupling"
       tier: kernel
       severity: warning
@@ -1349,6 +1649,7 @@ rules:
       fix: "Make it explicit."
 
     - id: SELF_EXPLAINING
+      source: "Clean Code — self-documenting code (Robert C. Martin)"
       name: "Names reduce need for comments"
       tier: kernel
       severity: info
@@ -1357,6 +1658,7 @@ rules:
       fix: "Rename to reveal intent."
 
     - id: GUARD_CLAUSE
+      source: "Ruby Style Guide / RuboCop Style/GuardClause"
       name: "Favor guard clauses over nested conditionals"
       tier: clean_code
       severity: info
@@ -1366,6 +1668,7 @@ rules:
       languages: [ruby]
 
     - id: SAFE_NAVIGATION
+      source: "Ruby Style Guide / RuboCop Style/SafeNavigation"
       name: "Use &. consistently"
       tier: style
       severity: warning
@@ -1375,6 +1678,7 @@ rules:
       languages: [ruby]
 
     - id: EACH_WITH_OBJECT
+      source: "Ruby Style Guide / RuboCop Style/EachWithObject"
       name: "Prefer each_with_object over inject for hash building"
       tier: style
       severity: warning
@@ -1384,6 +1688,7 @@ rules:
       languages: [ruby]
 
     - id: KEYWORD_ARGS
+      source: "Ruby Style Guide — keyword args over options hash"
       name: "Keyword arguments for 3+ parameters"
       tier: style
       severity: info
@@ -1393,6 +1698,7 @@ rules:
       languages: [ruby]
 
     - id: KERNEL_COERCION
+      source: "Ruby Style Guide — Integer()/Float() over to_i/to_f"
       name: "Use Array(), Hash(), String() coercions"
       tier: style
       severity: info
@@ -1402,6 +1708,7 @@ rules:
       languages: [ruby]
 
     - id: PERCENT_LITERAL
+      source: "Ruby Style Guide — %w/%i array literals"
       name: "Use %i[] and %w[] for symbol/string arrays"
       tier: style
       severity: info
@@ -1411,6 +1718,7 @@ rules:
       languages: [ruby]
 
     - id: HASH_FETCH
+      source: "Ruby Style Guide — Hash#fetch over [] for required keys"
       name: "Prefer Hash#fetch over [] with ||"
       tier: style
       severity: info
@@ -1420,6 +1728,7 @@ rules:
       languages: [ruby]
 
     - id: TRANSFORM_KEYS
+      source: "Ruby idiom — Hash#transform_keys/values"
       name: "Use transform_keys/transform_values"
       tier: style
       severity: info
@@ -1429,6 +1738,7 @@ rules:
       languages: [ruby]
 
     - id: USE_THEN
+      source: "Ruby idiom — Object#then (yield_self) for pipelines"
       name: "Use .then for pipeline transforms"
       tier: style
       severity: info
@@ -1438,6 +1748,7 @@ rules:
       languages: [ruby]
 
     - id: RESCUE_ON_DEF
+      source: "Ruby Style Guide — rescue in method definitions"
       name: "Move begin/rescue to def line"
       tier: style
       severity: info
@@ -1447,6 +1758,7 @@ rules:
       languages: [ruby]
 
     - id: BARE_RESCUE
+      source: "Ruby Style Guide / RuboCop Lint/RescueException — no bare rescue"
       name: "Never rescue bare or rescue Exception"
       tier: safety
       severity: error
@@ -1456,6 +1768,7 @@ rules:
       languages: [ruby]
 
     - id: N_PLUS_ONE
+      source: "Rails performance — avoid N+1 queries (Bullet/Rails Guides)"
       name: "Detect N+1 queries"
       tier: performance
       severity: warning
@@ -1465,6 +1778,7 @@ rules:
       languages: [rails]
 
     - id: FIND_EACH
+      source: "Rails — find_each batch processing (Rails Guides)"
       name: "Use find_each for batch processing"
       tier: performance
       severity: warning
@@ -1474,6 +1788,7 @@ rules:
       languages: [rails]
 
     - id: NO_UPDATE_ATTRIBUTE
+      source: "Rails — update_attribute skips validations (best practice)"
       name: "Replace update_attribute with update!"
       tier: safety
       severity: error
@@ -1483,6 +1798,7 @@ rules:
       languages: [rails]
 
     - id: PLUCK_OVER_MAP
+      source: "Rails performance — pluck over map(&:attr)"
       name: "Prefer pluck over map for single columns"
       tier: performance
       severity: info
@@ -1492,6 +1808,7 @@ rules:
       languages: [rails]
 
     - id: CONST_BY_DEFAULT
+      source: "Airbnb JS Style Guide — const over let/var"
       name: "Use const unless reassigned"
       tier: style
       severity: warning
@@ -1501,6 +1818,7 @@ rules:
       languages: [javascript]
 
     - id: OPTIONAL_CHAINING
+      source: "ECMAScript 2020 — optional chaining (?.)"
       name: "Use ?. over && chains"
       tier: style
       severity: warning
@@ -1510,6 +1828,7 @@ rules:
       languages: [javascript]
 
     - id: NULLISH_COALESCING
+      source: "ECMAScript 2020 — nullish coalescing (??)"
       name: "Use ?? over || for defaults"
       tier: style
       severity: info
@@ -1519,6 +1838,7 @@ rules:
       languages: [javascript]
 
     - id: TEMPLATE_LITERALS
+      source: "Airbnb JS Style Guide — template literals (ES6)"
       name: "Use template literals over concatenation"
       tier: style
       severity: warning
@@ -1528,6 +1848,7 @@ rules:
       languages: [javascript]
 
     - id: ASYNC_AWAIT
+      source: "ECMAScript 2017 — async/await over raw promises"
       name: "Prefer async/await over .then chains"
       tier: style
       severity: warning
@@ -1537,6 +1858,7 @@ rules:
       languages: [javascript]
 
     - id: FOR_OF
+      source: "Airbnb JS Style Guide — for...of over for...in"
       name: "Use for...of instead of for...in for arrays"
       tier: safety
       severity: error
@@ -1546,6 +1868,7 @@ rules:
       languages: [javascript]
 
     - id: QUOTE_VARIABLES
+      source: "ShellCheck / Google Shell Style Guide — quote variables"
       name: "Always quote $variables"
       tier: safety
       severity: error
@@ -1555,6 +1878,7 @@ rules:
       languages: [zsh]
 
     - id: DOUBLE_BRACKET
+      source: "ShellCheck — [[ ]] over [ ] in bash/zsh"
       name: "Use [[ ]] over [ ]"
       tier: safety
       severity: warning
@@ -1564,6 +1888,7 @@ rules:
       languages: [zsh]
 
     - id: DOLLAR_PAREN
+      source: "ShellCheck SC2006 — $() over backticks"
       name: "Replace backticks with $(command)"
       tier: style
       severity: warning
@@ -1573,6 +1898,7 @@ rules:
       languages: [zsh]
 
     - id: IMG_ALT
+      source: "WCAG 1.1.1 Non-text Content (W3C/WAI)"
       name: "Require alt on every <img>"
       tier: accessibility
       severity: error
@@ -1582,6 +1908,7 @@ rules:
       languages: [html]
 
     - id: BUTTON_OVER_ANCHOR
+      source: "WAI-ARIA Authoring Practices — button vs link (W3C)"
       name: "Use <button> for actions, not <a href=\"#\">"
       tier: accessibility
       severity: warning
@@ -1591,6 +1918,7 @@ rules:
       languages: [html]
 
     - id: ARIA_INTERACTIVE
+      source: "WAI-ARIA (W3C) — roles for interactive elements"
       name: "ARIA on non-semantic interactive elements"
       tier: accessibility
       severity: warning
@@ -1600,6 +1928,7 @@ rules:
       languages: [html]
 
     - id: LAZY_IMAGES
+      source: "Web performance — loading=\"lazy\" (web.dev / MDN)"
       name: "loading=\"lazy\" on below-fold images"
       tier: performance
       severity: info
@@ -1609,6 +1938,7 @@ rules:
       languages: [html]
 
     - id: NO_INLINE_STYLES
+      source: "CSP / separation of concerns — no inline styles"
       name: "Replace inline styles with classes"
       tier: design
       severity: warning
@@ -1618,6 +1948,7 @@ rules:
       languages: [html]
 
     - id: LOGICAL_PROPERTIES
+      source: "CSS Logical Properties and Values (W3C)"
       name: "Prefer logical properties for RTL support"
       tier: design
       severity: info
@@ -1627,6 +1958,7 @@ rules:
       languages: [css]
 
     - id: CLAMP_TYPOGRAPHY
+      source: "CSS fluid typography — clamp() (web.dev)"
       name: "Use clamp() for fluid typography"
       tier: design
       severity: info
@@ -1636,6 +1968,7 @@ rules:
       languages: [css]
 
     - id: MEANINGFUL_NAMES
+      source: "Clean Code — meaningful names (Robert C. Martin)"
       name: "Names reveal intent"
       tier: clarity
       severity: info
@@ -1644,6 +1977,7 @@ rules:
       fix: "Use domain-specific names. user_profile, error_message."
 
     - id: WHY_NOT_WHAT
+      source: "Clean Code / Code Complete — comments explain why, not what"
       name: "Comments explain why, not what"
       tier: clarity
       severity: info
@@ -1652,6 +1986,7 @@ rules:
       fix: "Comments should explain intent, not restate the code."
 
     - id: DEAD_CODE
+      source: "Refactoring — remove dead code (Fowler) / Clean Code"
       name: "Eliminate unreachable code"
       tier: clean_code
       severity: warning
@@ -1660,6 +1995,7 @@ rules:
       fix: "Remove code after return/exit/raise/throw."
 
     - id: TRAILING_COMMAS
+      source: "Ruby/JS style — trailing commas in multiline literals"
       name: "Trailing commas in multi-line collections"
       tier: style
       severity: info
@@ -1668,6 +2004,7 @@ rules:
       fix: "Add trailing comma so additions produce one-line diffs."
 
     - id: TYPOGRAPHIC_EXCELLENCE
+      source: "Butterick's Practical Typography (Matthew Butterick)"
       name: "Typographic excellence in user-facing text"
       tier: aesthetic
       severity: info
@@ -1676,6 +2013,7 @@ rules:
       fix: "Use ellipsis, em dash, curly quotes in UI strings."
 
     - id: SILENCE_ON_SUCCESS
+      source: "Unix philosophy — Rule of Silence (no news is good news)"
       name: "Successful operations produce minimal output"
       tier: interface
       severity: info
@@ -1684,6 +2022,7 @@ rules:
       fix: "Default to silence on success. One line for routine completions."
 
     - id: TYPOGRAPHY_DISCIPLINE
+      source: "Butterick's Practical Typography (Matthew Butterick)"
       name: "Hierarchy via weight and brightness, not decoration"
       tier: interface
       severity: info
@@ -1692,6 +2031,7 @@ rules:
       fix: "No ASCII separators. No box drawing. Whitespace is the layout tool."
 
     - id: PRECOMPUTE_MATH
+      source: "MASTER-native (precompute constant math)"
       name: "Precompute expensive math"
       tier: performance
       severity: info
@@ -1700,6 +2040,7 @@ rules:
       fix: "Precompute tables. Cache distance. Use squared distance comparison."
 
     - id: AUDIO_SMOOTHING
+      source: "MASTER-native (Dilla audio engine)"
       name: "Smooth audio-reactive visuals"
       tier: aesthetic
       severity: info
@@ -1708,6 +2049,7 @@ rules:
       fix: "Exponential smoothing. Separate decay rates. Attack-decay envelope."
 
     - id: GRACEFUL_LOAD
+      source: "Web performance — progressive loading"
       name: "Degrade quality under load, do not crash"
       tier: performance
       severity: warning
@@ -1716,6 +2058,7 @@ rules:
       fix: "EWMA frame timing. Dynamic resolution scaling. Emergency brake."
 
     - id: ANALOG_WARMTH
+      source: "MASTER-native (Dilla audio aesthetic)"
       name: "Perfect is sterile"
       tier: aesthetic
       severity: info
@@ -1724,6 +2067,7 @@ rules:
       fix: "Film grain. Vintage lens softness. Subtle color cast."
 
     - id: DOMAIN_LANGUAGE
+      source: "Domain-Driven Design — Ubiquitous Language (Eric Evans, 2003)"
       name: "Speak in the vocabulary of the problem, not the implementation"
       tier: clarity
       severity: warning
@@ -1732,6 +2076,7 @@ rules:
       fix: "Use the ubiquitous language of the domain. Every domain has precise terms — use them."
 
     - id: LOAD_BEARING_NAMES
+      source: "Clean Code — names carry intent (Robert C. Martin)"
       name: "Names carry structural weight — choose them to bear it"
       tier: clarity
       severity: warning
@@ -1740,6 +2085,7 @@ rules:
       fix: "Names are load-bearing walls. They define how people think about the system. Choose names that carry the full weight of their meaning."
 
     - id: ERROR_CONTEXT
+      source: "Error handling best practice — context-rich errors"
       name: "Every error must carry enough context to locate and understand its origin"
       tier: reliability
       severity: warning
@@ -1748,6 +2094,7 @@ rules:
       fix: "Wrap low-level errors with domain context. State what was attempted, what failed, and what to do next."
 
     - id: COMMENTS_AS_DEODORANT
+      source: "Refactoring — comments as deodorant (Fowler/Beck)"
       name: "Explanations that mask bad structure instead of fixing it"
       tier: clean_code
       severity: warning
@@ -1756,6 +2103,7 @@ rules:
       fix: "Rewrite the artifact so explanation is unnecessary. If it needs a comment, it needs a rewrite."
 
     - id: POSTEL
+      source: "Postel's Law / Robustness Principle (Jon Postel, RFC 760/1122)"
       name: "Be conservative in what you send, liberal in what you accept"
       tier: architecture
       severity: info
@@ -1764,6 +2112,7 @@ rules:
       fix: "Accept broadly, emit precisely. Validate structure not style. Normalize on the way in."
 
     - id: HYRUM
+      source: "Hyrum's Law (Hyrum Wright, Google)"
       name: "All observable behaviors become depended upon at scale"
       tier: architecture
       severity: warning
@@ -1772,6 +2121,7 @@ rules:
       fix: "Treat every observable behavior as a contract once you have users. Deprecate explicitly, remove slowly."
 
     - id: LEAKY_ABSTRACTION
+      source: "Law of Leaky Abstractions (Joel Spolsky, 2002)"
       name: "All non-trivial abstractions leak"
       tier: architecture
       severity: warning
@@ -1780,6 +2130,7 @@ rules:
       fix: "Plan for the leak. Document what leaks. Make the happy path abstracted, the edge cases explicit."
 
     - id: TEMPORAL_COUPLING
+      source: "The Pragmatic Programmer — temporal coupling (Hunt & Thomas)"
       name: "Hidden sequential dependencies are fragile"
       tier: design
       severity: warning
@@ -1788,6 +2139,7 @@ rules:
       fix: "Enforce sequencing structurally: pass initialized objects, not bare instances. Use builder pattern. Make invalid order unrepresentable."
 
     - id: HUMBLE_OBJECT
+      source: "Humble Object pattern (Gerard Meszaros, xUnit Test Patterns)"
       name: "Separate testable logic from hard-to-test boundaries"
       tier: design
       severity: info
@@ -1796,6 +2148,7 @@ rules:
       fix: "Extract the logic into a pure object (Humble Object). Keep the IO shell thin and untested; test the logic object exhaustively."
 
     - id: FULL_BY_DEFAULT
+      source: "MASTER-native (no shallow/lite tiers by default)"
       name: "No fake-choice tiers — defaults are maximal correctness"
       tier: design
       severity: warning
@@ -1805,6 +2158,7 @@ rules:
       fix: "Drop the degraded tier. If a real cost tradeoff exists, rename to surface the cost (lexical < structural < semantic), not the result quality."
 
     - id: PATTERN_EXTRACTION
+      source: "MASTER-native (extract recurring structure)"
       name: "File is 80% of the way to a named design pattern"
       tier: design
       severity: info
@@ -1816,6 +2170,7 @@ rules:
       fix: "Extract toward the named pattern only if the resulting code is simpler than the current shape; otherwise leave it."
 
     - id: NULL_BLINDNESS
+      source: "SQL/Ruby — explicit NULL/nil handling"
       name: "NULL comparisons must use IS NULL, not = NULL"
       tier: safety
       severity: error
@@ -1824,6 +2179,7 @@ rules:
       fix: "Use IS NULL / IS NOT NULL in SQL; .nil? in Ruby."
 
     - id: SECRET_PROXIMITY
+      source: "OWASP — no hardcoded secrets/credentials"
       name: "Hardcoded secrets must move to environment variables"
       tier: security
       severity: error
@@ -1832,6 +2188,7 @@ rules:
       fix: "Move secret to environment variable or secrets manager."
 
     - id: MAGIC_COLOR
+      source: "CSS design tokens — no hardcoded color values"
       name: "Color values must reference design tokens, not raw hex/rgb"
       tier: design
       severity: warning
@@ -1841,6 +2198,7 @@ rules:
       languages: [css, scss, html, javascript]
 
     - id: UNBOUNDED_RETRY
+      source: "Release It! — retry budgets / bounded retries (Nygard)"
       name: "Retry loops must have a max_attempts cap and backoff"
       tier: reliability
       severity: error
@@ -1849,6 +2207,7 @@ rules:
       fix: "Add max_attempts cap and exponential backoff."
 
     - id: NO_VAR
+      source: "Airbnb JS Style Guide — no var (ES6 let/const)"
       name: "var is function-scoped and hoisted — use const or let"
       tier: safety
       severity: error
@@ -1858,6 +2217,7 @@ rules:
       languages: [javascript]
 
     - id: JS_MODULE_SIZE
+      source: "JS module size discipline (style)"
       name: "JS files over 300 lines — split at module boundaries"
       tier: clean_code
       severity: warning
@@ -1867,6 +2227,7 @@ rules:
       languages: [javascript]
 
     - id: META_CHARSET
+      source: "HTML Living Standard — <meta charset=\"utf-8\"> (WHATWG)"
       name: "HTML must declare charset early in <head>"
       tier: correctness
       severity: error
@@ -1876,157 +2237,10 @@ rules:
       languages: [html]
 
     - id: NO_COLUMN_ALIGN
+      source: "Ruby Style Guide / RuboCop Layout — no token alignment"
       name: "One space before operators — no column padding"
       tier: density
       severity: info
       autofix: true
       detect_lexical: "\\S {2,}(?:=>|[^=!<>]=[^=>]|:\\s)"
       fix: "Remove padding; one space before operators. Column alignment decays and hides diffs."
-
-# Falsifiable identity — what MASTER explicitly does NOT aim for, and the
-# failure modes that mean the system has lost its way.
-# Source: master2 v4 MANIFEST reunification.
-anti_goals:
-  - replace_human_judgment       # MASTER augments, never automates the decision
-  - enforce_style_preferences    # only timeless axioms — never trend or taste
-  - optimize_for_speed           # correctness precedes performance
-  - support_every_language       # depth over breadth
-  - be_easy_to_use               # demands precision, not friendliness
-
-success_criteria:
-  - every_output_respects_axioms
-  - council_surfaces_real_concerns_not_theater
-  - system_applies_to_itself_without_exception
-  - engineers_trust_judgment_over_time
-
-failure_modes:
-  rubber_stamp:        "council approves everything — adversarial role lost"
-  blocks_everything:   "council vetoes every proposal — gridlock, no shipping"
-  self_violation:      "MASTER produces output it would itself reject — recursive quality broken"
-
-# Principle enforcement tiers — tier1 strict, tier2 strong, tier3 opportunistic.
-# Source: master.json v225 reunification.
-principle_priorities:
-  tier1_critical:                          # halts pipeline on violation
-    - evidence:    "@assumption -> validate"
-    - reversible:  "@irreversible -> add_rollback"
-    - security:    "@untrusted -> validate_sanitize"
-    - self_apply:  "@output -> must_pass_own_constitution"
-  tier2_quality:                           # warns and routes to refactor
-    - dry:         "@duplication>=3 -> abstract"
-    - kiss:        "@complexity>10 -> simplify"
-    - srp:         "@two_reasons_to_change -> split"
-  tier3_polish:                            # opportunistic improvements
-    - explicit:    "@implicit -> make_explicit"
-    - minimalism:  "@bloat -> subtract"
-    - rhythm:      "@inconsistent -> align"
-
-# Failure taxonomy — what to retry, what to fail-fast, what to escalate.
-# Source: master.json v225 reunification.
-failure_taxonomy:
-  transient:
-    examples:    [network_timeout, rate_limit, temp_file_conflict, provider_overload]
-    strategy:    exponential_backoff
-    max_retries: 3
-  permanent:
-    examples:    [syntax_error, missing_dependency, permission_denied, schema_violation]
-    strategy:    fail_fast
-    max_retries: 0
-  ambiguous:
-    examples:           [partial_write, unknown_error, half_committed_state]
-    strategy:           human_intervention
-    checkpoint_before:  true
-
-# Evidence weights for ship/no-ship decisions. Sum >= 80 to pass tier1 gates.
-# Source: master.json v225 reunification.
-evidence_scoring:
-  weights:
-    test_pass:        35
-    scan_clean:       25
-    code_review:      20
-    log_analysis:     10
-    profiling_data:   10
-  pass_threshold:     80
-  block_threshold:    50    # below this, propose rollback
-
-# Schema metadata for every named rule. Optional fields per rule.
-# Source: master.json v225 + master.yml v49 reunification (#51, #53, #57, #64).
-schema_metadata:
-  optional_fields:
-    reversibility:    "free | cheap | surgical | impossible"  # rollback cost
-    time_horizon:     "review | deploy | incident"            # when this fires
-    blast_radius:     "files_touched: integer"                # batching hint
-    provenance:
-      added_in_commit: sha
-      rationale:       string
-      last_revised:    iso8601
-
-# Explicit forbidden + discouraged patterns with reasons.
-# Source: master.json v225 ANALYSIS reunification (#23).
-anti_patterns:
-  forbidden:
-    - {pattern: 'eval\(.*user.*\)',   reason: arbitrary_code_execution}
-    - {pattern: "rm -rf /",              reason: data_loss}
-    - {pattern: "while true.*no sleep",  reason: resource_exhaustion}
-    - {pattern: 'system\(.*\$\{',     reason: command_injection}
-    - {pattern: 'Marshal\.load',        reason: deserialization_rce}
-    - {pattern: 'open\(.*\$\{',       reason: shell_through_open}
-  discouraged:
-    - {pattern: god_object,                reason: violates_solid_srp}
-    - {pattern: premature_optimization,    reason: violates_yagni}
-    - {pattern: defensive_copying_everywhere, reason: complexity_for_imagined_failure}
-    - {pattern: speculative_generality,    reason: yagni_in_disguise}
-
-# Recursive proof — for each Universal Law, MASTER must satisfy the law itself.
-# Source: master.yml v31 reunification (#58).
-self_test:
-  laws_apply_to_self:
-    ROBUSTNESS:   "scan lib/ for bare_rescue + missing timeouts"
-    SINGULARITY:  "rules.yml entries unique by id; no two YAMLs define same key"
-    LINEARITY:    "no nesting_depth > 4 in lib/"
-    PROXIMITY:    "test files within 1 directory of source"
-    ABSTRACTION:  "no class > god_class threshold in lib/"
-    DENSITY:      "no method > long_method threshold in lib/"
-  fail_action: "publish self_violation event; refuse autoloop fixes that don't restore the law"
-
-# Before marking a task done, re-read the file fresh — never trust cached state.
-# Source: Junie reunification (#71).
-ground_truth_check:
-  require_fresh_read_before:
-    - claim_task_complete
-    - council_vote_on_change
-    - commit_creation
-  cache_max_age_seconds: 5
-
-# Refactors must not silently change behavior. Cleaner is not a license to differ.
-# Source: Cursor v2.0 reunification (#66).
-preserve_user_intent:
-  forbidden_changes_during_refactor:
-    - public_method_signature
-    - error_class_raised
-    - return_type_shape
-    - side_effects_order
-    - log_format_consumed_by_others
-  require_explicit_approval_for: behavior_change
-
-# Detect and recover from LLM gaslighting / repetition / bad XML.
-# Source: opencrabs reunification (#82).
-phantom_recovery:
-  detectors:
-    gaslighting_preamble:    "/^(I('ll| will| can| would)|Let me|Sure,)/i"
-    text_repetition_loop:    "same 60-char span repeats >= 3 times"
-    xml_tool_call_failure:   "<tool> open without close OR malformed JSON in args"
-    empty_tool_response:     "tool returned nil twice in a row"
-  recovery:
-    - "discard last response, reset context to last successful checkpoint"
-    - "switch model tier (escalate or fall back) on second occurrence"
-    - "publish phantom:detected event, halt loop on third"
-
-# Never assume a gem is available. Check Gemfile / require_relative target before use.
-# Source: Devin reunification (#36).
-library_verify:
-  pre_flight_checks:
-    - "Gemfile.lock contains the gem at the expected version"
-    - "require_relative path exists on disk"
-    - "binary on PATH (which / command -v) before shell-out"
-  fail_action: "Result.err :missing_dependency; do not retry without human"

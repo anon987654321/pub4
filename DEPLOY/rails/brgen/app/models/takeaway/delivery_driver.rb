@@ -13,9 +13,10 @@ module Takeaway
     validates :license_number, length: { maximum: 128 }, allow_blank: true
 
     scope :available, -> { where(available: true) }
+    include Shared::GeoLocatable
+    # custom lat/lng columns (current_*); keep specialized bbox + expose haversine via concern
     scope :nearby, ->(lat, lng, km = 10) {
       return all if lat.blank? || lng.blank?
-
       where(current_lat: (lat.to_f - km.to_f / 111)..(lat.to_f + km.to_f / 111))
         .where(current_lng: (lng.to_f - km.to_f / 111)..(lng.to_f + km.to_f / 111))
     }
@@ -23,5 +24,9 @@ module Takeaway
     def location?
       current_lat.present? && current_lng.present?
     end
+
+    def geo? = location?
+    def latitude = current_lat
+    def longitude = current_lng
   end
 end

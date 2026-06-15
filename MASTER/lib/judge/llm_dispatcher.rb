@@ -4,6 +4,9 @@ require "ruby_llm"
 require "digest"
 require "json"
 require "open3"
+require_relative "llm_dispatcher/react_loop"
+require_relative "llm_dispatcher/ruby_llm_sender"
+require_relative "llm_dispatcher/tool_registry"
 
 module Master
   module Judge
@@ -39,7 +42,9 @@ module Master
         Reach::AstEdit => Reach::LLM::AstEdit,
         Reach::SearchKnowledge => Reach::LLM::SearchKnowledge,
         Reach::FeedbackRecord => Reach::LLM::FeedbackRecord,
-        Reach::MemoryRecord => Reach::LLM::MemoryRecord
+        Reach::MemoryRecord => Reach::LLM::MemoryRecord,
+        Reach::Repligen => Reach::LLM::Repligen,
+        Reach::Postpro => Reach::LLM::Postpro
       }.freeze
 
       def self.build_tool_capable_re
@@ -51,6 +56,10 @@ module Master
 
       TOOL_CAPABLE_RE = build_tool_capable_re.freeze
 
+      include ReactLoop
+      include RubyLLMSender
+      include ToolRegistry
+
       def initialize(deps:, system_prompt:)
         @config, @cache, @circuit_breaker = deps.config, deps.cache, deps.circuit_breaker
         @tools, @bus, @system_prompt_proc = deps.tools, deps.bus, system_prompt
@@ -59,15 +68,21 @@ module Master
         @tool_registry = load_tool_registry
       end
 
-      def send_with_cache(selected_model, messages, system: nil, stream: false, &blk)
-        cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model)
+      def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, &blk)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
-          @cache.fetch(cache_key, selected_model) do
-            send_llm_request(selected_model, messages, system:, stream:, &blk)
+        if !image.nil? && image != ""
+          # auto bias to vision free models (e.g. gemini-2.0-flash-exp:free) when image in ctx
+          unless selected_model.to_s =~ /gemini|vision|claude-3|gpt-4o/
+            selected_model = "z-ai/glm-4.5-air:free"
           end
         end
-        record_provider_result(selected_model, result, started)
+        cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model)
+        result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
+          @cache.fetch(cache_key, selected_model) do
+            send_llm_request(selected_model, messages, system:, stream:, image: image, &blk)
+          end
+        end
+        record_provider_result(model: selected_model, result:, started:)
         result
       rescue Reach::CircuitBreaker::CircuitError => err
         record_provider_outcome(selected_model, err.category, latency_ms: elapsed_ms(started), error: err.message)
@@ -106,14 +121,14 @@ module Master
         [result[:static], result[:dynamic]].compact.join("\n\n").then { |s| s.empty? ? nil : s }
       end
 
-      def send_llm_request(selected_model, messages, system: nil, stream: false, &blk)
+      def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, &blk)
         sys = system || system_prompt
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:)     if web_chat_model?(selected_model)
         if !tool_capable?(selected_model) && @tools.any?
-          return react_tool_loop(selected_model, messages, sys:, stream:, &blk)
+          return react_tool_loop(selected_model, messages, sys:, stream:, image: image, &blk)
         end
-        send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
+        send_ruby_llm(selected_model, messages, sys:, stream:, image: image, &blk)
       end
 
       def send_claude_cli(model_alias, messages, sys:)
@@ -132,160 +147,8 @@ module Master
         Result.err("web-chat: #{e.message}", category: :provider_error)
       end
 
-      # ReactToolLoop — emulates function calling for models that lack native tool support.
-      # Injects a text-format tool schema into the system prompt; parses <tool_call> XML
-      # from responses; executes tools directly; loops until no calls remain.
-      def react_tool_loop(selected_model, messages, sys:, stream:, &blk)
-        react_sys = build_react_system(sys)
-        history   = messages.dup
-        last      = nil
-
-        REACT_MAX_STEPS.times do |step|
-          result = send_ruby_llm(selected_model, history, sys: react_sys, stream: step.zero? ? stream : false, &(step.zero? ? blk : nil))
-          return result if result.err?
-
-          text  = result.to_s
-          calls = parse_tool_calls(text)
-          last  = result
-          break if calls.empty?
-
-          @bus&.publish("react:tool_calls", model: selected_model, step:, count: calls.size)
-          history << { role: "assistant", content: text }
-          tool_results = calls.map { |c| execute_react_tool(c["name"], c["args"] || {}) }
-          history << { role: TOOL_RESULT_ROLE, content: tool_results.join("\n\n") }
-        end
-
-        last || Result.err("react: no response generated", category: :llm_call_failure)
-      end
-
-      def build_react_system(base_sys)
-        schema = @tools.filter_map { |t|
-          name = t.class.name.split("::").last
-          meta = @tool_registry.fetch(name, {})
-          desc = meta["description"] || name.gsub(/([A-Z])/, ' \1').strip
-          "- #{name}: #{desc}"
-        }.join("\n")
-
-        react_instructions = <<~INST.strip
-          You have access to these tools. Call a tool with:
-          <tool_call>{"name": "ToolName", "args": {"param": "value"}}</tool_call>
-
-          Available tools:
-          #{schema}
-
-          Reason step-by-step. When finished, give your final answer without any <tool_call> blocks.
-        INST
-
-        [base_sys, react_instructions].compact.join("\n\n")
-      end
-
-      def parse_tool_calls(text)
-        text.scan(TOOL_CALL_RE).filter_map do |match|
-          JSON.parse(match.first.strip)
-        rescue JSON::ParserError
-          nil
-        end
-      end
-
-      def execute_react_tool(name, args)
-        tool = @tools.find { |t| t.class.name.split("::").last == name }
-        return "<tool_result name=\"#{name}\">error: tool not found</tool_result>" unless tool
-        sym_args = args.transform_keys(&:to_sym)
-        raw = tool.respond_to?(:call) ? tool.call(**sym_args) : "unsupported"
-        out = Result.wrap(raw).value_or(raw.to_s)
-        "<tool_result name=\"#{name}\">\n#{out}\n</tool_result>"
-      rescue StandardError => e
-        "<tool_result name=\"#{name}\">error: #{e.message}</tool_result>"
-      end
-
-      def text_prompt_for(messages)
-        prompt  = messages.last[:content].to_s
-        context = messages[0...-1].map { |m| "#{m[:role]}: #{m[:content]}" }.join("\n\n")
-        context.empty? ? prompt : "#{context}\n\nuser: #{prompt}"
-      end
-
-      def send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
-        chat_session = RubyLLM.chat(model: selected_model)
-        final_sys = build_final_system(selected_model, sys)
-        chat_session.with_instructions(final_sys) if final_sys
-        messages.each { |message_entry| chat_session.add_message(role: message_entry[:role].to_s, content: message_entry[:content].to_s) }
-
-        available_tools = llm_tools(selected_model)
-        chat_session.with_tools(*available_tools) unless available_tools.empty?
-
-        reply = if stream && blk
-                  chat_session.ask(messages.last[:content]) { |chunk| blk.call(chunk.content.to_s) if chunk.content }
-        else
-          chat_session.ask(messages.last[:content])
-        end
-        record_usage(reply, selected_model)
-        Result.ok(extract_response(reply, selected_model))
-      end
-
-      def record_usage(reply, model)
-        return unless @session
-        input = reply.respond_to?(:input_tokens) ? reply.input_tokens.to_i : 0
-        output = reply.respond_to?(:output_tokens) ? reply.output_tokens.to_i : 0
-        cached = reply.respond_to?(:cached_tokens) ? reply.cached_tokens.to_i : 0
-        cache_write = reply.respond_to?(:cache_creation_tokens) ? reply.cache_creation_tokens.to_i : 0
-        tokens = input + output
-        if tokens.zero? && reply.respond_to?(:content)
-          tokens = Master::Trace::Session.estimate_tokens(reply.content)
-          return if tokens.zero?
-          est_cost = (tokens * COST_PER_TOKEN).round(6)
-          @session.record_cost(est_cost, model:, tokens:)
-          @bus&.publish("llm:cost", formatted: format("[%s, %d tokens]", format("$%.4f", est_cost), tokens),
-                                    cost: est_cost, tokens:, model:)
-          return
-        end
-        return if tokens.zero?
-        regular = [input - cached - cache_write, 0].max
-        cost = ((regular * COST_PER_TOKEN) +
-                (cached * COST_PER_TOKEN * CACHE_READ_RATIO) +
-                (cache_write * COST_PER_TOKEN * CACHE_WRITE_RATIO) +
-                (output * COST_PER_TOKEN)).round(6)
-        @session.record_cost(cost, model:, tokens:)
-        @bus&.publish("llm:cost", formatted: format("[%s, %d tokens]", format("$%.4f", cost), tokens),
-                                  cost:, tokens:, model:)
-        @bus&.publish("cache:hit", model:, cached:, cache_write:) if cached.positive? || cache_write.positive?
-      rescue StandardError => e
-        @bus&.publish("cost:record_error", error: e.message)
-      end
-
       def breaker_for(model_id)
         @circuit_breaker.respond_to?(:for) ? @circuit_breaker.for(model_id) : @circuit_breaker
-      end
-
-      def extract_response(reply, selected_model)
-        return reply.to_s unless reply.respond_to?(:content)
-        if NEMOTRON3_RE.match?(selected_model) && reply.respond_to?(:reasoning_content)
-          thinking = reply.reasoning_content.to_s.strip
-          content  = reply.content.to_s
-          return thinking.empty? ? content : "#{content}\n\n<think>\n#{thinking}\n</think>"
-        end
-        reply.content.to_s
-      end
-
-      def nemotron_system_prompt(selected_model, base = nil)
-        sys = base || system_prompt
-        return sys unless LLAMA_NEMOTRON_RE.match?(selected_model)
-        directive = @config["reasoning_mode"] != "none" ? "detailed thinking on" : "detailed thinking off"
-        [directive, sys].compact.join("\n\n")
-      end
-
-      def build_final_system(selected_model, sys)
-        return sys unless claude_model?(selected_model)
-        raw = @system_prompt_proc.call
-        if raw.is_a?(Hash) && raw[:static]
-          static_text = nemotron_system_prompt(selected_model, raw[:static])
-          blocks = [{ type: "text", text: static_text, cache_control: { type: "ephemeral" } }]
-          blocks << { type: "text", text: raw[:dynamic] } if raw[:dynamic]
-          RubyLLM::Content::Raw.new(blocks)
-        else
-          base = nemotron_system_prompt(selected_model, sys)
-          return base unless base.is_a?(String)
-          RubyLLM::Content::Raw.new([{ type: "text", text: base, cache_control: { type: "ephemeral" } }])
-        end
       end
 
       def cache_key_for(message, context, model = nil)
@@ -300,10 +163,11 @@ module Master
       end
 
       def elapsed_ms(started)
+        return 0 unless started
         ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * MS_PER_SECOND).round
       end
 
-      def record_provider_result(model, result, started)
+      def record_provider_result(model:, result:, started:)
         latency_ms = elapsed_ms(started)
         if Result.wrap(result).ok?
           record_provider_outcome(model, :success, latency_ms:)
@@ -326,38 +190,11 @@ module Master
 
       def record_provider_outcome(model, status, latency_ms: nil, error: nil)
         @model_router&.record_provider_outcome(model:, status:, latency_ms:, error:)
+        @bus&.publish("llm:provider_outcome", model:, status:, latency_ms:, error:)
       rescue StandardError => e
         @bus&.publish("provider_health:record_error", model:, error: e.message)
       end
 
-      def llm_tools(selected_model)
-        return [] unless tool_capable?(selected_model)
-        return build_llm_tools(visitor: true) if Fiber[:master_visitor]
-        @llm_tools ||= build_llm_tools
-      end
-
-      def build_llm_tools(visitor: false)
-        tier = @model_router&.tier_for_model(@config.model).to_s
-        @tools.filter_map do |tool|
-          wrapper = LLM_TOOL_MAP[tool.class]
-          next unless wrapper
-          name = tool.class.name.split("::").last
-          meta = @tool_registry.fetch(name, {})
-          next if visitor && meta["visitor"] != true
-          next if tier == "cheap" && meta["tier"] == "dangerous"
-          wrapper.new(tool)
-        end
-      rescue StandardError => err
-        @bus&.publish("agent:llm_tools_error", error: err.message)
-        []
-      end
-
-      def load_tool_registry
-        path = File.join(Master::ROOT, "data", "tools.yml")
-        rows = Master.load_yaml(path)
-        return {} unless rows.is_a?(Array)
-        rows.each_with_object({}) { |row, h| h[row["name"].to_s] = row if row.is_a?(Hash) }
-      end
     end
   end
 end

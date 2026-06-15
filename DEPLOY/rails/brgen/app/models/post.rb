@@ -1,17 +1,19 @@
 # frozen_string_literal: true
 
 class Post < ApplicationRecord
-  include Votable
-  include Taggable
-  include Mentionable
+  include Shared::Votable
+  include Shared::Commentable
+  include Shared::Taggable
 
   has_one_attached :image
 
   belongs_to :user
   belongs_to :community, optional: true
 
-  has_many :comments, as: :commentable, dependent: :destroy
-  has_many :votes, as: :votable, dependent: :destroy
+
+  has_many :taggings, dependent: :destroy
+  has_many :hashtags, through: :taggings
+  has_many :mentions, dependent: :destroy
 
   validates :title,   presence: true, length: { maximum: 300 }
   validates :content, length: { maximum: 40_000 }
@@ -29,11 +31,6 @@ class Post < ApplicationRecord
     ids.any? ? where(id: ids) : none
   }
 
-  def comment_count
-    comments.count
-  end
-
-  def author_name
-    (anonymous? || user&.guest?) ? "anon" : (user&.username.presence || "anon")
-  end
+  def comment_count = comments.count
+  def author_name   = (anonymous? || user&.guest?) ? "anon" : (user&.username.presence || "anon")
 end

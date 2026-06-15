@@ -16,14 +16,27 @@ module Master
       budget: "cost limit hit",
       policy: "blocked by policy / kernel rule",
       shutdown: "user quit / shutdown requested",
-      abort: "operation aborted"
+      abort: "operation aborted",
     }.freeze
 
     def self.ok(value) = Ok.new(value)
 
     def self.err(msg, category: :unknown, context: nil)
       raise ArgumentError, "unknown category: #{category}" unless category == :unknown || CATEGORIES.key?(category)
-      Err.new(msg, category, context)
+
+      Err.new(msg, category, error_context(msg, context, caller_locations(1, 1).first))
+    end
+
+    def self.error_context(msg, context, location)
+      base = {
+        file: location&.path,
+        method: location&.base_label,
+        attempted: msg.to_s,
+      }
+      return base unless context
+      return base.merge(context) if context.respond_to?(:merge)
+
+      base.merge(detail: context)
     end
 
     def self.wrap(val) = val.is_a?(Result) ? val : Ok.new(val)
@@ -69,7 +82,7 @@ module Master
 
         @message = message
         @category = category
-        @context = normalize_context(context)
+        @context = context
         freeze
       end
 
@@ -88,15 +101,7 @@ module Master
 
       def deconstruct_keys(_keys) = { message: @message, category: @category, context: @context }
       def to_s = @message
-      def inspect = "Err(#{@category}: #{@message})"
-
-      private
-
-      def normalize_context(context)
-        return nil unless context.is_a?(Hash)
-        ctx = context.transform_keys(&:to_sym)
-        ctx.slice(:file, :method, :attempted).compact.freeze
-      end
+      def inspect = @context ? "Err(#{@category}: #{@message} @ #{@context})" : "Err(#{@category}: #{@message})"
     end
   end
 end

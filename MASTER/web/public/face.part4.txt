@@ -1,0 +1,473 @@
+let actx = null;
+let ambientHumGain = null;
+function initAudio() {
+  if (actx) return;
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    const silentGain = actx.createGain();
+    silentGain.gain.value = 0;
+    const silentOsc = actx.createOscillator();
+    silentOsc.frequency.value = 0;
+    silentOsc.connect(silentGain);
+    silentGain.connect(actx.destination);
+    silentOsc.start();
+    // FA51 ambient thinking hum — 40Hz sine at 3% volume, ducked during TTS
+    ambientHumGain = actx.createGain();
+    ambientHumGain.gain.value = 0;
+    const humOsc = actx.createOscillator();
+    humOsc.type = 'sine'; humOsc.frequency.value = 40;
+    humOsc.connect(ambientHumGain);
+    ambientHumGain.connect(actx.destination);
+    humOsc.start();
+  } catch (_) {}
+}
+function setAmbientHum(active) {
+  if (!ambientHumGain || !actx) return;
+  const target = active ? 0.03 : 0;
+  ambientHumGain.gain.setTargetAtTime(target, actx.currentTime, 0.5);
+}
+
+function beep(freq, dur) {
+  if (!actx) return;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = 'square'; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.08, actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(); o.stop(actx.currentTime + dur);
+}
+
+
+const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
+const VISEME_STEP_MS = 90;
+const tts = { queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
+const TTS_DB_NAME = 'master-tts-v1';
+const TTS_STORE = 'blobs';
+const TTS_DEFAULT_VOICE = 'davis';
+const TTS_VOICE_ROTATION = ['davis', 'wayne', 'ezinne'];
+const TTS_MALE_STYLES = ['dramatic', 'intense', 'energetic', 'storyteller', 'intimate', 'calm'];
+const TTS_FEMALE_STYLES = ['dramatic', 'robotic', 'storyteller', 'dramatic', 'intimate', 'whispered'];
+let _ttsVoiceRot = 0;
+function _nextTtsVoice() { return TTS_VOICE_ROTATION[_ttsVoiceRot++ % TTS_VOICE_ROTATION.length]; }
+function _nextTtsStyle(voice) { const pool = voice === 'ezinne' ? TTS_FEMALE_STYLES : TTS_MALE_STYLES; return pool[(Math.random() * pool.length) | 0]; }
+function _quirkifyTts(text, voice) {
+  if (text.length < 12) return text;
+  const r = Math.random;
+  if (voice === 'ezinne' && r() < 0.55) {
+    const dim = ['uh... ', 'duh, ', 'hmm... me think... ', 'brain hurt. ', 'oh! oh! ', 'okay um... ', 'wait... what? ', 'ohhh, ', 'me confuse. ', 'numbers? me no like numbers. '];
+    text = dim[(r() * dim.length) | 0] + text;
+  }
+  if (voice === 'ezinne' && r() < 0.4) {
+    text = text.replace(/\b(the|a|of|and|is|are|was|were)\b/gi, '').replace(/\s+/g, ' ').trim() + '. ugh.';
+  }
+  if (r() < 0.06) {
+    const mid = Math.max(20, Math.floor(text.length * 0.55));
+    const cut = text.indexOf(' ', mid);
+    if (cut > 0 && cut < text.length - 8) {
+      const fillers = ['... uh, wait — where was I? oh, right. ', '... hmm, lost my train of thought. ', '... um, sorry — anyway. '];
+      text = text.slice(0, cut) + fillers[(r() * fillers.length) | 0] + text.slice(cut + 1);
+    }
+  }
+  if (r() < 0.08) {
+    const m = text.match(/^(\w)(\w*)(.*)/s);
+    if (m && /[a-zA-Z]/.test(m[1])) text = `${m[1]}-${m[1]}-${m[1]}${m[2]}${m[3]}`;
+  }
+  if (r() < 0.05) {
+    const laughs = ['ha ha. ', 'heh, ', 'ha. okay, ', 'pff, '];
+    text = laughs[(r() * laughs.length) | 0] + text;
+  }
+  if (r() < 0.04) {
+    text = `... ${text}. sorry.`;
+  }
+  if (r() < 0.05) {
+    const mid = Math.floor(text.length * 0.4);
+    const cut = text.indexOf(' ', mid);
+    if (cut > 0) text = text.slice(0, cut) + ' — *cough* — ' + text.slice(cut + 1);
+  }
+  if (r() < 0.04) {
+    const words = text.split(' ');
+    for (let i = 0; i < words.length; i++) if (r() < 0.35 && words[i].length > 3) words[i] = words[i].split('').join("'");
+    text = words.join(' ') + " — sorry, mouth full.";
+  }
+  if (r() < 0.03) {
+    text = "wait — wait. okay. okay. *breathe* — " + text.replace(/\./g, "...") + " — sorry, panicking.";
+  }
+  if (r() < 0.18) {
+    const fillers = ['uh, ', 'hmm, ', 'so, ', 'well, ', 'like, ', 'i mean, ', 'okay so, '];
+    text = fillers[(r() * fillers.length) | 0] + text;
+  }
+  return text;
+}
+const TTS_FETCH_TIMEOUT_MS = 9000; // abort Edge TTS HTTP fetch after this many ms
+let ttsDBPromise = null;
+
+function setTTSLoading(loading) {
+  tts.loading = !!loading;
+  rootBody.dataset.ttsLoading = tts.loading ? 'true' : 'false';
+}
+
+function parsePersonaRate(rate) {
+  const text = String(rate || "").trim();
+  if (!text) return null;
+  if (/%$/.test(text)) {
+    const pct = parseFloat(text);
+    return Number.isFinite(pct) ? Math.max(0.5, Math.min(2.0, 1 + (pct / 100))) : null;
+  }
+  const value = parseFloat(text);
+  return Number.isFinite(value) && value > 0 ? Math.max(0.5, Math.min(2.0, value)) : null;
+}
+
+function parsePersonaPitch(pitch) {
+  const text = String(pitch || "").trim();
+  if (!text) return null;
+  const value = parseFloat(text);
+  return Number.isFinite(value) ? value : null;
+}
+
+function applyPersonaAudioDefaults() {
+  const persona = window.MASTER_PERSONA || {};
+  const rate = parsePersonaRate(persona.tts_rate);
+  if (rate) setTtsRate(rate);
+  const pitch = parsePersonaPitch(persona.tts_pitch);
+  if (pitch != null) tts.pitchOffset = pitch;
+  if (State.voiceName) setVoiceName(State.voiceName, { speakBlurb: false });
+  else if (persona.voice) setVoiceName(persona.voice, { speakBlurb: false });
+  syncShareStateUrl();
+}
+applyPersonaAudioDefaults();
+
+function announceTTS(text) {
+  if (!ttsLive) return;
+  ttsLive.textContent = text.toString().slice(0, 500);
+}
+
+function ttsURL(text, voice, style) {
+  const qs = new URLSearchParams({ text });
+  if (voice) qs.set('voice', voice);
+  if (style) qs.set('style', style);
+  if (tts.pitchOffset) qs.set('pitch', String(tts.pitchOffset));
+  return `/chat/tts?${qs.toString()}`;
+}
+
+async function ttsCacheKey(text, voice) {
+  if (!window.crypto || !crypto.subtle || !window.TextEncoder) return null;
+  const material = `${voice || TTS_DEFAULT_VOICE}|${arguments[2] || 'auto'}|${text}`;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(material));
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function openTTSDB() {
+  if (!window.indexedDB) return Promise.resolve(null);
+  if (ttsDBPromise) return ttsDBPromise;
+  ttsDBPromise = new Promise((resolve) => {
+    const req = indexedDB.open(TTS_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(TTS_STORE)) db.createObjectStore(TTS_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+    req.onblocked = () => resolve(null);
+  });
+  return ttsDBPromise;
+}
+
+async function readCachedTTS(key) {
+  const db = await openTTSDB();
+  if (!db || !key) return null;
+  return new Promise((resolve) => {
+    const tx = db.transaction(TTS_STORE, 'readonly');
+    const req = tx.objectStore(TTS_STORE).get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+async function writeCachedTTS(key, blob) {
+  const db = await openTTSDB();
+  if (!db || !key || !blob) return;
+  try {
+    const tx = db.transaction(TTS_STORE, 'readwrite');
+    tx.objectStore(TTS_STORE).put(blob, key);
+  } catch (_) {}
+}
+
+async function loadTTSBlob(text, voice, style) {
+  const key = await ttsCacheKey(text, voice, style).catch(() => null);
+  const cached = key ? await readCachedTTS(key) : null;
+  if (cached) return cached;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TTS_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(ttsURL(text, voice, style), { signal: controller.signal });
+    clearTimeout(timer);
+    if (res.status === 202) {
+      const job = res.headers.get('X-TTS-Job') || (await res.json().catch(() => ({}))).job;
+      if (!job) throw new Error('tts pending without job');
+      return pollTTSJob(job, controller.signal);
+    }
+    if (!res.ok) throw new Error(res.status);
+    const blob = await res.blob();
+    writeCachedTTS(key, blob);
+    return blob;
+  } catch (e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+async function pollTTSJob(job, signal) {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, Math.min(250 + attempt * 150, 1500)));
+    const res = await fetch(`/chat/tts/status?job=${encodeURIComponent(job)}`, { signal });
+    if (res.status === 202) continue;
+    if (!res.ok) throw new Error(res.status);
+    return res.blob();
+  }
+  throw new Error('tts timeout');
+}
+
+function buildRoomIR(ctx) {
+  const sr = ctx.sampleRate, len = Math.floor(sr * 0.28);
+  const ir = ctx.createBuffer(2, len, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = ir.getChannelData(ch);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4.2);
+  }
+  return ir;
+}
+
+async function connectTTSAudio(audio, boostValue = 1.35) {
+  if (LOW_POWER) return;
+  if (!actx || actx.state === 'closed') return;
+  if (actx.state === 'suspended') await actx.resume().catch(() => {});
+  if (actx.state !== 'running') return;
+  const msrc = actx.createMediaElementSource(audio);
+  const boost = actx.createGain();
+  const warmth = actx.createBiquadFilter();
+  const smooth = actx.createBiquadFilter();
+  const presence = actx.createBiquadFilter();
+  const compressor = actx.createDynamicsCompressor();
+  const convolver = actx.createConvolver();
+  const dryGain = actx.createGain();
+  const wetGain = actx.createGain();
+  const masterGain = actx.createGain();
+  const analyser = actx.createAnalyser();
+  boost.gain.value = boostValue;
+  warmth.type = 'lowshelf'; warmth.frequency.value = 220; warmth.gain.value = 3.5;
+  smooth.type = 'highshelf'; smooth.frequency.value = 8500; smooth.gain.value = -3;
+  presence.type = 'peaking'; presence.frequency.value = 3200; presence.Q.value = 1.2; presence.gain.value = -1.8;
+  compressor.threshold.value = -22; compressor.knee.value = 22; compressor.ratio.value = 7;
+  compressor.attack.value = 0.004; compressor.release.value = 0.22;
+  convolver.buffer = buildRoomIR(actx);
+  dryGain.gain.value = 0.78; wetGain.gain.value = 0.22; masterGain.gain.value = 1.9;
+  analyser.fftSize = 256;
+  msrc.connect(boost);
+  boost.connect(warmth); warmth.connect(smooth); smooth.connect(presence);
+  presence.connect(dryGain); presence.connect(convolver);
+  convolver.connect(wetGain);
+  dryGain.connect(masterGain); wetGain.connect(masterGain);
+  masterGain.connect(compressor); compressor.connect(analyser); analyser.connect(actx.destination);
+  tts.analyser = analyser;
+  tts.analyserBuf = new Uint8Array(analyser.fftSize);
+  tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
+}
+
+function hasAnalyserBuffers() {
+  return !!(tts.playing && tts.analyser && tts.analyserBuf && tts.analyserFreqBuf);
+}
+
+function finishTTSPlayback(src, continueQueue = true) {
+  setTTSLoading(false);
+  stopVisemeAnim();
+  rootBody.dataset.ttsWave = '';
+  clearThinkingAloud?.();
+  tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
+  tts.resumeTime = null; tts.resumeWordIndex = null;
+  if (src) URL.revokeObjectURL(src);
+  tts.audio = null; tts.playing = false; tts.paused = false;
+  if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
+  if (State.mode === 'speaking') { State.mode = 'idle'; window.MASTER_FACE?.setAmbientHum?.(false); }
+  clearViseme();
+  if (ttsLive) ttsLive.textContent = '';
+  if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
+  if (continueQueue) ttsTick();
+}
+
+const VOWEL_VISEME = { a:'A', e:'E', i:'I', o:'O', u:'U' };
+
+function setViseme(ch) {
+  const c = (ch || '').toLowerCase();
+  State.viseme = VOWEL_VISEME[c] || (('mbpfwv'.indexOf(c) >= 0) ? 'M' : 'E');
+  State.visemeAmp = 1.0;
+}
+
+function clearViseme() {
+  State.viseme = 'neutral';
+  State.visemeAmp = 0;
+}
+
+function fetchTTS(text) {
+  if (tts.serverUnavailable || tts.prefetch.has(text)) return;
+  const meta = tts.meta.get(text) || {};
+  const p = loadTTSBlob(text, meta.voice, meta.style).catch(() => null);
+  tts.prefetch.set(text, p);
+}
+
+function enqueueSpeech(text) {
+  if (tts.muted) return;
+  const clean = text
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]*`/g, '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .replace(/^[-_*]{3,}$/gm, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[*_~]/g, '')
+    .trim();
+  if (!clean) return;
+  const _v = _nextTtsVoice();
+  const decorated = _quirkifyTts(clean, _v);
+  if (tts.meta.size > 32) tts.meta.clear();
+  tts.meta.set(decorated, { voice: _v, style: _nextTtsStyle(_v) });
+  announceTTS(decorated);
+  tts.lastText = decorated;
+  tts.resumeTime = null;
+  tts.resumeWordIndex = null;
+  tts.queue.push(decorated);
+  nodImpulse += 0.022;
+  if (tts.playing && !tts.serverUnavailable) fetchTTS(decorated);
+  ttsTick();
+}
+
+function requeueChunk(text) {
+  if (!text) return false;
+  const n = (tts.attempts.get(text) || 0) + 1;
+  if (n > 3) { tts.attempts.delete(text); return false; }
+  tts.attempts.set(text, n);
+  tts.queue.unshift(text);
+  return true;
+}
+function scheduleTtsTick(delay) {
+  if (tts.retryTimer) clearTimeout(tts.retryTimer);
+  tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);
+}
+
+function speakWithBrowserTTS(text, token) {
+  if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) return false;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
+  utterance.rate = getTtsRate();
+  utterance.onstart = () => { startVisemeAnim(text); setTTSLoading(false); };
+  utterance.onend = utterance.onerror = () => {
+    if (token !== tts.cancelToken) return;
+    stopVisemeAnim();
+    clearViseme();
+    tts.playing = false;
+    tts.audio = null;
+    if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
+    if (State.mode === 'speaking') State.mode = 'idle';
+    ttsTick();
+  };
+  try {
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function ttsTick() {
+  if (tts.muted || tts.playing || tts.paused) return;
+  const text = tts.queue.shift();
+  if (!text) return;
+  tts.playing = true;
+  const token = ++tts.cancelToken;
+  setTTSLoading(true);
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+  if (tts.watchdog) clearTimeout(tts.watchdog);
+  const wdMs = Math.min(120000, Math.max(20000, text.length * 180));
+  tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: requeue'); requeueChunk(text); finishTTSPlayback(null, true); } }, wdMs);
+  State.mode = 'speaking'; setAmbientHum(false);
+  if (tts.serverUnavailable && speakWithBrowserTTS(text, token)) return;
+  if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
+  const meta = tts.meta.get(text) || {};
+  const voice = tts.lang === 'nb' ? 'finn' : meta.voice;
+  const style = meta.style;
+  const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice, style);
+  tts.prefetch.delete(text);
+  tts.meta.delete(text);
+  if (tts.queue[0]) fetchTTS(tts.queue[0]);
+
+  let settled = false;
+
+  async function playEdge(blob) {
+    if (settled || token !== tts.cancelToken) return;
+    settled = true;
+    const src = URL.createObjectURL(blob);
+    const audio = new Audio(src);
+    const baseRate = getTtsRate() * 0.97;
+    // Measure duration for beat quantization — 1.5s timeout guards against silent hang
+    const dur = await new Promise(resolve => {
+      const t = setTimeout(() => resolve(null), 1500);
+      audio.onloadedmetadata = () => { clearTimeout(t); resolve(audio.duration); };
+      audio.onerror = () => { clearTimeout(t); resolve(null); };
+      audio.load();
+    });
+    if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
+    audio.playbackRate = LOW_POWER ? 1.0 : baseRate;
+    if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
+    if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (_) {} }
+    tts.audio = audio;
+    setTTSLoading(false);
+    if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
+    connectTTSAudio(audio).catch(() => {});
+    audio.onplay = () => {
+      startVisemeAnim(text);
+      if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
+      rootBody.dataset.ttsWave = 'true';
+    };
+    audio.onended = audio.onerror = () => finishTTSPlayback(src);
+    audio.play().catch(() => { requeueChunk(text); finishTTSPlayback(src); });
+  }
+
+  edgeBlob
+    .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
+    .catch(() => {
+      tts.serverUnavailable = true;
+      if (speakWithBrowserTTS(text, token)) return;
+      tts.audio = null; tts.playing = false; setTTSLoading(false);
+      requeueChunk(text);
+      const s = document.getElementById('zsh-status');
+      if (s && (tts.attempts.get(text) || 0) >= 3) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
+      if (token === tts.cancelToken) scheduleTtsTick(800);
+    });
+}
+
+function ttsTogglePause() {
+  if (!tts.audio) return;
+  if (tts.audio.paused) {
+    if (tts.resumeTime != null && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
+      const seek = Math.max(0, Math.min(tts.audio.duration, tts.resumeTime));
+      try { tts.audio.currentTime = seek; } catch (_) {}
+    }
+    tts.audio.play().catch(() => {});
+    tts.paused = false;
+    if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause current response'); }
+    return;
+  }
+  if (typeof tts.audio.currentTime === 'number' && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
+    const text = tts.lastText || '';
+    const words = text.split(/\s+/).filter(Boolean);
+    const ratio = Math.max(0, Math.min(1, tts.audio.currentTime / tts.audio.duration));
+    const idx = words.length ? Math.max(0, Math.min(words.length - 1, Math.floor(ratio * words.length))) : 0;
+    tts.resumeWordIndex = idx;
+    tts.resumeTime = words.length ? (idx / words.length) * tts.audio.duration : tts.audio.currentTime;
+  }
+  tts.audio.pause();
+  tts.paused = true;
+  if (spinBtn) { spinBtn.textContent = '▶'; spinBtn.setAttribute('aria-label', 'Resume current response'); }
+}

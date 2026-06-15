@@ -1795,13 +1795,12 @@ def tonemap_hbd(linear)
 end
 
 def preset(image, name)
-  p = name.is_a?(Hash) ? name : PRESETS[name.to_sym]
+  p = PRESETS[name.to_sym]
   return image unless p
-  label   = name.is_a?(Hash) ? "chain" : name
   result  = image
   t_start = Time.now
   n_steps = p[:fx].length
-  PostproBootstrap.dmesg "preset=#{label} stock=#{p[:stock]} steps=#{n_steps} intensity=#{p[:intensity]}"
+  PostproBootstrap.dmesg "preset=#{name} stock=#{p[:stock]} steps=#{n_steps} intensity=#{p[:intensity]}"
 
   p[:fx].each_with_index do |fx, i|
     t0 = Time.now
@@ -2182,47 +2181,6 @@ def one_shot_mode?
   argv_flag("--input") && argv_flag("--output") && argv_flag("--preset")
 end
 
-# Chain mode — composable ad-hoc fx pipeline (uisato-style finishing chains):
-#   ruby postpro.rb --input in.jpg --output out.jpg --chain grain,halation,film_curl_vignette
-#   optional: --stock kodak_portra --temp 6504 --intensity 1.0
-# Reuses preset()'s full fx dispatch; unknown fx names no-op via its else branch.
-def chain_mode?
-  argv_flag("--input") && argv_flag("--output") && argv_flag("--chain")
-end
-
-def run_chain
-  input_path  = argv_flag("--input")
-  output_path = argv_flag("--output")
-  fx = argv_flag("--chain").to_s.split(",").map(&:strip).reject(&:empty?)
-
-  unless File.exist?(input_path)
-    $cli_logger.error "Input not found: #{input_path}"
-    exit 1
-  end
-  if fx.empty?
-    $cli_logger.error "Empty --chain. Comma-separate fx, e.g. --chain grain,halation,paper_texture"
-    exit 1
-  end
-
-  ad_hoc = {
-    fx: fx,
-    stock: (argv_flag("--stock") || "kodak_portra").to_sym,
-    temp: (argv_flag("--temp") || "6504").to_i,
-    intensity: (argv_flag("--intensity") || "1.0").to_f,
-  }
-
-  image = load_image(input_path)
-  unless image
-    $cli_logger.error "Failed to load: #{input_path}"
-    exit 1
-  end
-
-  processed = preset(image, ad_hoc)
-  processed = rgb_bands(processed)
-  processed.write_to_file(output_path, Q: CONFIG["jpeg_quality"] || 95)
-  $cli_logger.info "ok chain=[#{fx.join(',')}] out=#{output_path}"
-end
-
 def introspect_mode?
   (ARGV & %w[--list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut]).any?
 end
@@ -2382,7 +2340,6 @@ end
 def auto_launch
   return run_introspect if introspect_mode?
   return run_watch       if watch_mode?
-  return run_chain       if chain_mode?
   return run_one_shot    if one_shot_mode?
   return run_random      if random_mode?
   if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-repligen"))

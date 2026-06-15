@@ -43,7 +43,7 @@ module Master
             check("LINEARITY") { structural_findings(Rules::NestingDepthRule.new) },
             check("PROXIMITY") { rule_test_proximity_findings },
             check("ABSTRACTION") { structural_findings(Rules::GodClassRule.new) },
-            check("DENSITY") { structural_findings(Rules::SmallFunctionsRule.new) }
+            check("DENSITY") { structural_findings(Rules::SmallFunctionsRule.new) },
           ]
         end
 

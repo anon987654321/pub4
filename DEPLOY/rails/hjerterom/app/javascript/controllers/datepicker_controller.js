@@ -1,17 +1,19 @@
 import { Controller } from "@hotwired/stimulus"
+import flatpickr from "flatpickr"
 
 export default class extends Controller {
-  static values = { mode: { type: String, default: "single" } }
-
   connect() {
-    if (window.flatpickr) {
-      this.picker = window.flatpickr(this.element, { mode: this.modeValue })
-    } else {
-      this.element.type = "date"
-    }
+    this.pickers = Array.from(this.element.querySelectorAll("input[type='date'], input[type='datetime-local']"))
+      .map(input => flatpickr(input, {
+        allowInput: true,
+        enableTime: input.type === "datetime-local",
+        dateFormat: input.type === "datetime-local" ? "Y-m-d\\TH:i" : "Y-m-d",
+        altInput: true,
+        altFormat: input.type === "datetime-local" ? "M j, Y H:i" : "M j, Y"
+      }))
   }
 
   disconnect() {
-    this.picker?.destroy()
+    this.pickers?.forEach(picker => picker?.destroy?.())
   }
 }

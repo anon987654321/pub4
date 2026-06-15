@@ -44,7 +44,7 @@ module Master
           private
 
           def rubocop_available?
-            system("which rubocop > /dev/null 2>&1") ||
+            ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, "rubocop")) } ||
               File.exist?(File.join(@root, "bin", "rubocop"))
           end
         end

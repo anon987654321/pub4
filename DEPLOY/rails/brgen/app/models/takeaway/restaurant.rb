@@ -16,29 +16,8 @@ class Takeaway::Restaurant < ApplicationRecord
 
   scope :active, -> { where(active: true) }
   scope :popular, -> { order(rating: :desc) }
-  scope :search, ->(q) {
-    term = q.to_s.strip
-    return none if term.empty?
 
-    ids = connection.select_values(
-      sanitize_sql_array(["SELECT rowid FROM takeaway_restaurants_fts WHERE takeaway_restaurants_fts MATCH ?", term])
-    )
-    ids.any? ? where(id: ids) : none
-  }
-  scope :ranked_by_distance, ->(lat, lng) {
-    return popular if lat.blank? || lng.blank?
-
-    lat = lat.to_f
-    lng = lng.to_f
-    order(
-      Arel.sql(sanitize_sql_array([
-        "CASE WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN " \
-        "((latitude - ?) * (latitude - ?) + (longitude - ?) * (longitude - ?)) " \
-        "ELSE 999 END ASC, rating DESC",
-        lat, lat, lng, lng
-      ]))
-    )
-  }
+  include Shared::GeoLocatable
 
   def owner?(account)
     user_id == account&.id
@@ -55,5 +34,10 @@ class Takeaway::Restaurant < ApplicationRecord
   def update_rating!
     avg = reviews.average(:rating)
     update_columns(rating: avg&.round(1) || 0)
+  end
+
+  # Geocode stub (lat/lon columns exist via migration). Override with geocoder if wanted.
+  def geocode!
+    super
   end
 end

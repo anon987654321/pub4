@@ -24,7 +24,6 @@ module Master
       def parse_schema
         path = File.join(@root, "db", "schema.rb")
         return unless File.exist?(path)
-        table_name = nil
         File.readlines(path, chomp: true).each do |line|
           if line =~ /^\s*create_table\s+"([^"]+)"/
             table_name = Regexp.last_match(1)

@@ -1,19 +1,8 @@
-<article class="item-card" id="<%= dom_id(item) %>" data-category="<%= item.category %>">
+<article class="item-card" id="<%= dom_id(item) %>" data-id="<%= item.id %>" data-category="<%= item.category %>" data-controller="offline-feed" data-offline-feed-key-value="amber-items" data-offline-feed-title-value="<%= item.title %>" data-offline-feed-url-value="<%= item_path(item) %>" data-offline-feed-meta-value="<%= [item.category, item.color, item.brand].compact.join(" · ") %>">
   <% if item.photos.attached? %>
-    <%= image_tag item.photos.first.variant(resize_to_fill: [300, 300]), class: "item-photo", loading: "lazy" %>
+    <%= responsive_image_tag item.photos.first, alt: item.title, widths: [240, 320, 480], sizes: "(max-width: 768px) 50vw, 240px", class: "item-photo" %>
   <% end %>
   <%= link_to item.title, item, class: "item-title" %>
-  <button type="button" class="btn-sm" data-controller="dialog" data-action="dialog#open">Quick view</button>
-  <dialog data-dialog-target="dialog">
-    <h3><%= item.title %></h3>
-    <p class="dim"><%= item.category %><%= " · #{item.color}" if item.color.present? %></p>
-    <% if item.photos.attached? %>
-      <%= image_tag item.photos.first.variant(resize_to_limit: [400, 400]), loading: "lazy" %>
-    <% end %>
-    <p><%= item.description.presence || "No description yet." %></p>
-    <%= link_to "Full details", item, class: "btn-sm" %>
-    <button type="button" class="btn-sm" data-action="dialog#close">Close</button>
-  </dialog>
   <span class="dim"><%= item.category %><%= " · #{item.color}" if item.color.present? %></span>
   <span class="dim">Worn <%= item.times_worn.to_i %>× · <%= item.value_label %></span>
   <nav>

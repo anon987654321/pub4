@@ -1,0 +1,37 @@
+<% content_for :title, "Order ##{@order.id}" %>
+
+<div class="page-header">
+  <h1>Order #<%= @order.id %></h1>
+  <p class="dim">For <%= link_to @order.listing.name, marketplace_listing_path(@order.listing) %></p>
+</div>
+
+<div class="order-meta">
+  <p><strong>Status:</strong> <span class="chip"><%= @order.status %></span></p>
+  <p><strong>Quantity:</strong> <%= @order.quantity %></p>
+  <p><strong>Total:</strong> <%= @order.total_display %></p>
+  <p><strong>Buyer:</strong> <%= @order.buyer.display_name %></p>
+  <p><strong>Seller:</strong> <%= @order.seller.display_name %></p>
+  <% if @order.message.present? %>
+    <p><strong>Message:</strong> <%= @order.message %></p>
+  <% end %>
+</div>
+
+<% if policy(@order).update? %>
+  <div class="order-actions">
+    <%= button_to "Accept", marketplace_order_path(@order, accept: true), method: :patch, class: "btn" %>
+    <%= button_to "Decline", marketplace_order_path(@order, decline: true), method: :patch, class: "btn btn-ghost" %>
+  </div>
+<% end %>
+
+<% if @order.buyer == Current.user || @order.seller == Current.user %>
+  <h3>Chat with <%= @order.buyer == Current.user ? @order.seller.display_name : @order.buyer.display_name %></h3>
+  <div id="chat-log" data-controller="marketplace-chat" data-marketplace-chat-target="log">
+    <!-- messages would stream here -->
+  </div>
+  <form data-action="submit->marketplace-chat#send">
+    <input type="text" data-marketplace-chat-target="input" placeholder="Type message...">
+    <button type="submit">Send</button>
+  </form>
+<% end %>
+
+

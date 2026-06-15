@@ -3,7 +3,7 @@
 module Master
   module Ground
     class ContextProvider
-      PROVIDERS = %i[repo_map memory_search brain_overlay current_files rails_pwa_files].freeze
+      PROVIDERS = %i[repo_map cross_repo_map memory_search brain_overlay current_files rails_pwa_files].freeze
 
       RAILS_PWA_QUERY_TERMS = %w[rails pwa manifest service_worker hotwire turbo stimulus mobile audit].freeze
 
@@ -12,12 +12,13 @@ module Master
       end
 
       def gather(query:, providers: PROVIDERS, limit: 20)
-        providers.flat_map { |p| dispatch_provider(p, query, limit) }.compact
+        providers.flat_map { |p| dispatch_provider(provider: p, query: query, limit: limit) }.compact
       end
 
-      def dispatch_provider(provider, query, limit)
+      def dispatch_provider(provider:, query:, limit:)
         case provider.to_sym
         when :repo_map then repo_map(query, limit)
+        when :cross_repo_map then cross_repo_map(query, limit)
         when :memory_search then memory_search(query, limit)
         when :brain_overlay then brain_overlay
         when :current_files then current_files(query, limit)
@@ -37,6 +38,17 @@ module Master
 
         Master::Ground::RepoMap.new(root: @root).relevant(query, limit: limit).map do |entry|
           { source: :repo_map, path: entry.path, text: "#{entry.path} #{entry.language} #{entry.bytes}B" }
+        end
+      end
+
+      def cross_repo_map(query, limit)
+        return [] unless defined?(Master::Ground::RepoMap)
+
+        roots = cross_repo_roots
+        return [] if roots.empty?
+
+        Master::Ground::RepoMap.new(root: @root, roots: roots).relevant(query, limit: limit).map do |entry|
+          { source: :cross_repo_map, path: entry.path, text: "#{entry.path} #{entry.language} #{entry.bytes}B" }
         end
       end
 
@@ -72,15 +84,15 @@ module Master
           app/views/pwa/service-worker.js
           app/javascript/application.js
           config/routes.rb
-          config/importmap.rb
+          config/importmap.rb,
         ]
 
         apps = Dir.entries(deploy_rails).reject { |e| e.start_with?(".", "_") }
-        rows = apps.flat_map { |app| pwa_rows_for_app(app, deploy_rails, patterns) }
+        rows = apps.flat_map { |app| pwa_rows_for_app(app: app, deploy_rails: deploy_rails, patterns: patterns) }
         rows.first(limit)
       end
 
-      def pwa_rows_for_app(app, deploy_rails, patterns)
+      def pwa_rows_for_app(app:, deploy_rails:, patterns:)
         patterns.filter_map do |rel|
           path = File.join(deploy_rails, app, rel)
           next unless File.exist?(path)
@@ -105,6 +117,18 @@ module Master
       def current_files_row(path)
         rel = path.sub(%r{\A#{Regexp.escape(@root)}/?}, "")
         { source: :current_files, path: rel, text: rel }
+      end
+
+      def cross_repo_roots
+        deploy_rails = File.join(@root, "DEPLOY", "rails")
+        return [] unless Dir.exist?(deploy_rails)
+
+        Dir.children(deploy_rails)
+           .reject { |entry| entry.start_with?(".") || entry.start_with?("_") }
+           .map { |entry| File.join(deploy_rails, entry) }
+           .select { |path| File.directory?(path) }
+      rescue StandardError
+        []
       end
     end
   end

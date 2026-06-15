@@ -6,10 +6,17 @@ Bootstrap for autonomous coding agents (Claude Code, Cursor, Aider, Codex, Conti
 
 Only after you have a working model should you dive into the deep sources:
 - `MASTER/data/soul.yml`
-- `MASTER/data/rules.yml`, `ruby_style.yml`, `workflow.yml`, `standing_orders.yml`
+- `data/rules.yml`, `ruby_style.yml`, `workflow.yml`, `standing_orders.yml`
 - `CLAUDE.md` (operator environment, SSH, deploy details)
 
-Seven runtime modules: `now/` (CLI, pipeline), `loop/` (fix/convergence), `judge/` (scan, agent), `voice/` (personality, TTS), `ground/` (rules, memory), `reach/` (LLM, git), `trace/` (events, metrics).
+Current MASTER module layout under `MASTER/lib/`:
+- `now/` — pipeline, CLI, command registry, routing
+- `loop/` — fix loop, rule loop, watch loop, convergence
+- `judge/` — scanner, AST fixer, council, swarm, security, embeddings
+- `voice/` — personality, renderer, TTS, soul drift, expression
+- `ground/` — constitution, rules, memory, config, contracts, provider registry, axioms
+- `reach/` — file I/O, git, shell, LLM, web, search, semantic cache
+- `trace/` — event bus, telemetry, audit log, session, undo, why-explainer
 
 Read every file in full before editing. Match surrounding style. Run `/scan deep <path>` inside MASTER before structural changes.
 

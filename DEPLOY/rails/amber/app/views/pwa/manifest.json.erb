@@ -1,41 +1,63 @@
 {
   "name": "Amber",
   "short_name": "Amber",
-  "categories": ["lifestyle", "shopping"],
   "icons": [
-    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
-    { "src": "/icon.png", "type": "image/png", "sizes": "512x512" },
-    { "src": "/icon.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
   ],
-  "display_override": ["window-controls-overlay", "standalone"],
-  "edge_side_panel": { "preferred_width": 400 },
-  "launch_handler": { "client_mode": "navigate-new" },
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
   "description": "AI wardrobe management. Build capsule wardrobes, plan outfits, and discover your personal style.",
-  "theme_color": "#1a1a1a",
-  "background_color": "#1a1a1a",
+  "theme_color": "#d97706",
+  "background_color": "#d97706",
   "shortcuts": [
-    { "name": "Add item", "short_name": "Add", "url": "/items/new", "icons": [{ "src": "/icon.png", "sizes": "96x96" }] },
-    { "name": "Create outfit", "short_name": "Outfit", "url": "/outfits/dressing_room", "icons": [{ "src": "/icon.png", "sizes": "96x96" }] }
+    {
+      "name": "Add item",
+      "short_name": "Item",
+      "url": "/items/new"
+    },
+    {
+      "name": "Create outfit",
+      "short_name": "Outfit",
+      "url": "/outfits/new"
+    }
   ],
   "share_target": {
-    "action": "/share-target",
+    "action": "/share",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
       "title": "title",
       "text": "text",
       "url": "url",
-      "files": [{ "name": "media", "accept": ["image/*"] }]
+      "files": [
+        {
+          "name": "photos",
+          "accept": ["image/*"]
+        }
+      ]
     }
   },
   "file_handlers": [
     {
       "action": "/items/new",
       "accept": {
-        "image/*": [".jpg", ".jpeg", ".png", ".webp", ".heic"]
+        "image/*": [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif"]
       }
     }
   ]

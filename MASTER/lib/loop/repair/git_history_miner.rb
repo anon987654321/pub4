@@ -13,7 +13,7 @@ module Master
           /repair/i,
           /runtime/i,
           /telemetry/i,
-          /namespace/i
+          /namespace/i,
         ].freeze
 
         def initialize(root: Dir.pwd)

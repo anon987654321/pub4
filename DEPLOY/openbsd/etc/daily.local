@@ -1,50 +1,7 @@
 #!/bin/sh
-# Daily maintenance — append-only; openbsd.sh must not duplicate these entries.
-
-# DNSSEC zone resign (idempotent).
 ruby /usr/local/bin/nsd-resign
+su -l dev -c '/home/dev/pub4/DEPLOY/openbsd/backup_priv.sh'
 
-# Encrypted priv/ backup to wingman1 (idempotent per run; skips if ~/priv missing).
-if [ -x /home/dev/pub4/DEPLOY/openbsd/backup_priv.sh ]; then
-  su -m dev -c '/home/dev/pub4/DEPLOY/openbsd/backup_priv.sh >> /var/log/backup_priv.log 2>&1' || true
+if ! drill @127.0.0.1 brgen.no SOA >/tmp/nsd-check.out 2>&1; then
+  logger -t daily.local "NSD smoke check failed for brgen.no"
 fi
-
-# CC04: kill orphaned chrome/chromium from MASTER reach/web.rb.
-if [ -x /home/dev/pub4/DEPLOY/openbsd/scripts/kill_orphan_chrome.sh ]; then
-  /home/dev/pub4/DEPLOY/openbsd/scripts/kill_orphan_chrome.sh >> /var/log/chrome_cleanup.log 2>&1 || true
-fi
-
-# CC05 / CC06: swap and memory alerts.
-swap_pct=$(sysctl -n vm.swapusage | awk -F'%' '{print $2}' | tr -d ' ')
-if [ -n "$swap_pct" ] && [ "$swap_pct" -gt 50 ] 2>/dev/null; then
-  logger -t daily-local "ALERT swap usage ${swap_pct}% > 50%"
-fi
-free_mb=$(vmstat -m 2>/dev/null | awk '/free/ {print $4}' | head -1)
-if [ -n "$free_mb" ] && [ "$free_mb" -lt 100 ] 2>/dev/null; then
-  logger -t daily-local "ALERT free RAM ${free_mb}MB < 100MB"
-fi
-
-# CC07: MASTER watchdog recovery.
-if [ -x /home/dev/pub4/DEPLOY/openbsd/scripts/master_watchdog.sh ]; then
-  /home/dev/pub4/DEPLOY/openbsd/scripts/master_watchdog.sh >> /var/log/master_watchdog.log 2>&1 || true
-fi
-
-# CY08: verify acme-client renewal cron present.
-if ! crontab -l -u root 2>/dev/null | grep -q acme-client; then
-  logger -t daily-local "WARN acme-client cron not found in root crontab"
-fi
-
-# CY09: flag unexpected enabled services.
-for svc in $(rcctl ls on 2>/dev/null); do
-  case "$svc" in
-    master|brgen|amber|bsdports|baibl|blognet|hjerterom|relayd|httpd|nsd|smtpd|litestream|sshd|ntpd|pflogd|sensorsd) ;;
-    *) logger -t daily-local "AUDIT unexpected enabled service: $svc" ;;
-  esac
-done
-
-# CH05: email alert when any tracked service fails rcctl check.
-for svc in master brgen amber bsdports baibl blognet hjerterom relayd nsd litestream; do
-  if ! rcctl check "$svc" 2>/dev/null | grep -q '(ok)'; then
-    logger -t daily-local "ALERT rcctl check failed: $svc"
-  fi
-done

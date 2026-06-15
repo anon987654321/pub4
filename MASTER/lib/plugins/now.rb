@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
-
 module Master
   module Plugins
     module Now
-      def self.build_pipeline(root, infra, ai)
+      def self.build_pipeline(root:, infra:, ai:)
         config   = infra[:config]
         bus      = infra[:bus]
         commands = Master::Now::CommandRegistry.build(infra:, ai:, root:)
@@ -19,7 +18,7 @@ module Master
             council: ai[:council_stage], scanner: ai[:scanner], config:, root:, event_bus: bus
           ), bus:),
           Master::Now::Stages::Memory.new(memory: infra[:memory], event_bus: bus),
-          Master::Now::Stages::Render.new(renderer: infra[:renderer])
+          Master::Now::Stages::Render.new(renderer: infra[:renderer]),
         ]
         pipeline = Master::Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:, scanner: ai[:scanner])
         ai[:standing].wire_pipeline(pipeline)

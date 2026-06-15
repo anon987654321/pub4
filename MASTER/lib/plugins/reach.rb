@@ -30,6 +30,8 @@ module Master
         "WebSearch"       => ->(r, i) { Master::Reach::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
         "Clean"           => ->(r, i) { Master::Reach::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
         "FeedbackRecord"  => ->(r, i) { Master::Reach::FeedbackRecord.new(learnings: i[:learnings]) },
+        "Repligen"        => ->(r, i) { Master::Reach::Repligen.new(root: r, event_bus: i[:bus]) },
+        "Postpro"         => ->(r, i) { Master::Reach::Postpro.new(root: r, event_bus: i[:bus]) },
       }.freeze
 
       def self.boot(root:, config:, bus:)

@@ -1,31 +1,27 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Reading progress bar for long-form content (articles, posts).
 export default class extends Controller {
-  static targets = ["bar"]
-  static values = { color: { type: String, default: "var(--accent, #1d9bf0)" } }
-
   connect() {
-    this.#update = this.#update.bind(this)
-    window.addEventListener("scroll", this.#update, { passive: true })
-    this.#update()
+    this.bar = document.createElement("div")
+    this.bar.className = "scroll-progress"
+    this.bar.setAttribute("aria-hidden", "true")
+    document.body.prepend(this.bar)
+    this.update = this.update.bind(this)
+    this.update()
+    window.addEventListener("scroll", this.update, { passive: true })
+    window.addEventListener("resize", this.update)
   }
 
   disconnect() {
-    window.removeEventListener("scroll", this.#update)
+    window.removeEventListener("scroll", this.update)
+    window.removeEventListener("resize", this.update)
+    this.bar?.remove()
   }
 
-  #update() {
+  update() {
     const doc = document.documentElement
-    const scrollTop = doc.scrollTop || document.body.scrollTop
-    const height = doc.scrollHeight - doc.clientHeight
-    const progress = height > 0 ? Math.min(1, scrollTop / height) : 0
-
-    if (this.hasBarTarget) {
-      this.barTarget.style.width = `${(progress * 100).toFixed(1)}%`
-      this.barTarget.style.background = this.colorValue
-    } else {
-      doc.style.setProperty("--scroll-progress", progress.toFixed(4))
-    }
+    const max = Math.max(1, doc.scrollHeight - window.innerHeight)
+    const value = Math.min(1, Math.max(0, window.scrollY / max))
+    if (this.bar) this.bar.style.transform = `scaleX(${value})`
   }
 }

@@ -1,10 +1,16 @@
-const CACHE_NAME = 'brgen-v1';
+const CACHE_VERSION_MATCH = self.location.search.match(/[?&]v=([^&]+)/);
+const CACHE_VERSION = CACHE_VERSION_MATCH ? CACHE_VERSION_MATCH[1] : 'v1';
+const CACHE_NAME = `brgen-${CACHE_VERSION}-assets`;
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
-  '/',
   '/offline.html',
   '/face.css',
   '/face.js',
+  '/face.part1.txt',
+  '/face.part2.txt',
+  '/face.part3.txt',
+  '/face.part4.txt',
+  '/face.part5.txt',
   '/chat.js',
   '/three.module.js',
   '/manifest.json',

@@ -1,7 +1,0 @@
-<article>
-  <h2><%= link_to channel.name, tv_channel_path(channel) %><% if channel.live? %> <span class="live-badge">Live</span><% end %></h2>
-  <p class="dim"><%= channel.subscribers_count %> subscribers</p>
-  <% if channel.description.present? %>
-    <p><%= truncate(channel.description, length: 140) %></p>
-  <% end %>
-</article>

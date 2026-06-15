@@ -16,13 +16,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/icon.png">
-    <link rel="preload" href="/face.css" as="style">
-    <link rel="modulepreload" href="/three.module.js">
-    <link rel="modulepreload" href="/face.js">
-    <link rel="stylesheet" href="/face.css">
-    <link rel="stylesheet" href="/photo_upload.css">
+    <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
+    <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
+    <script>
+      window.MASTER_ASSET_PATHS = {
+        threeModule: "<%= asset_path("three.module.js") %>"
+      };
+    </script>
+    <script>
+      <% persona = Rails.application.config.x.master_container&.[](:personality) %>
+      window.MASTER_PERSONA = <%= raw((persona.respond_to?(:browser_profile) ? persona.browser_profile : {}).to_json) %>;
+    </script>
+    <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
+    <link rel="modulepreload" href="<%= asset_path("three.module.js") %>">
+    <link rel="modulepreload" href="<%= asset_path("face.js") %>">
+    <link rel="stylesheet" href="<%= asset_path("face.css") %>">
+    <link rel="stylesheet" href="<%= asset_path("photo_upload.css") %>">
   </head>
   <body class="zen" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
     <div class="top-left-logo" aria-hidden="true">brgen</div>
@@ -52,12 +61,17 @@
     <main id="app-shell" aria-label="MASTER content">
       <%= yield %>
     </main>
-    <script src="/topology_registry.js" defer></script>
-    <script src="/particle_kernel.js" defer></script>
-    <script type="module" src="/face.js"></script>
-    <script src="/visual_bridge.js" defer></script>
-    <script src="/cognition_ecology.js" defer></script>
-    <script src="/codebase.js" defer></script>
-    <script src="/chat.js" defer></script>
+    <script>
+      window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v1").to_json.html_safe %>;
+    </script>
+    <script src="<%= asset_path("topology_registry.js") %>" defer></script>
+    <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
+    <script src="<%= asset_path("chat_actions.js") %>" defer></script>
+    <script src="<%= asset_path("cognition_ecology_render.js") %>" defer></script>
+    <script type="module" src="<%= asset_path("face.js") %>"></script>
+    <script src="<%= asset_path("visual_bridge.js") %>" defer></script>
+    <script src="<%= asset_path("cognition_ecology.js") %>" defer></script>
+    <script src="<%= asset_path("codebase.js") %>" defer></script>
+    <script src="<%= asset_path("chat.js") %>" defer></script>
   </body>
 </html>

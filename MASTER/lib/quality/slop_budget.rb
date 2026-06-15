@@ -13,7 +13,7 @@ module Quality
       max_changed_files: 50,
       max_line_delta: 2_000,
       max_todo_delta: 10,
-      max_duplicate_basenames: 25
+      max_duplicate_basenames: 25,
     }.freeze
 
     def initialize(root: MasterPaths.repo, budget: DEFAULTS)
@@ -59,14 +59,14 @@ module Quality
 
     def todo_delta(files)
       return 0 if files.empty?
-      diff = git("diff", "--", *files)
-      added = diff.lines.count { |line| line.start_with?("+") && line.match?(/TODO|FIXME/) }
-      deleted = diff.lines.count { |line| line.start_with?("-") && line.match?(/TODO|FIXME/) }
+      patch = git("diff")
+      added = patch.lines.count { |line| line.start_with?("+") && line.match?(/TODO|FIXME/) }
+      deleted = patch.lines.count { |line| line.start_with?("-") && line.match?(/TODO|FIXME/) }
       added - deleted
     end
 
     def duplicate_basenames
-      files = Dir.chdir(@root) { Dir.glob("**/*").select { |path| File.file?(path) } }
+      files = Dir.glob(File.join(@root, "**/*")).select { |path| File.file?(path) }
       files.group_by { |path| File.basename(path) }.values.count { |paths| paths.size > 1 }
     end
   end

@@ -27,6 +27,6 @@ class CommunityController < ApplicationController
   private
 
   def post_params
-    params.expect(:post => [:title, :body, :category_id, :anonymous])
+    params.require(:post).permit(:title, :body, :category_id, :anonymous)
   end
 end

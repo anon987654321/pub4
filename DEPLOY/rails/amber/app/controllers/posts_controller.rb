@@ -35,5 +35,5 @@ class PostsController < ApplicationController
   private
 
   def set_post = @post = Post.find(params[:id])
-  def post_params = params.expect(:post => [:body, :outfit_id, :item_id])
+  def post_params = params.require(:post).permit(:body, :outfit_id, :item_id)
 end

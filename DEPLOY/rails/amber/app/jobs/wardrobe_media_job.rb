@@ -4,7 +4,7 @@ require "tempfile"
 require "rbconfig"
 
 class WardrobeMediaJob < ApplicationJob
-  queue_as :media
+  queue_as :bulk
 
   VARIANTS = {
     thumb: { resize_to_limit: [240, 240] },
@@ -18,7 +18,6 @@ class WardrobeMediaJob < ApplicationJob
     end
     Shared::EventEmitter.call("amber.photo.queued", item_id: item.id) if defined?(Shared::EventEmitter)
     item.extract_dominant_color! if item.photos.attached?
-    SegmentGarmentImageJob.perform_later(item.id) if item.photos.attached?
 
     # auto postpro film stock on item image upload (DF06)
     if item.photos.attached?

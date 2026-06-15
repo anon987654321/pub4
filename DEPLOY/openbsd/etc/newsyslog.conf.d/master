@@ -1,4 +1,0 @@
-# CH09: MASTER log rotation — install to /etc/newsyslog.conf.d/master
-
-/var/log/master.log    dev:dev    640  7  *  $W0D0  Z  /var/run/master.pid  30
-/var/log/master_watchdog.log    root:wheel    640  7  *  $W0D0  Z

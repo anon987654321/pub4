@@ -2,7 +2,7 @@
 
 module Shared
   class MediaProcessingJob < ApplicationJob
-    queue_as :media
+    queue_as :bulk
 
     def perform(record_class_name, record_id, attachment_name, variants: {})
       record = record_class_name.constantize.find(record_id)

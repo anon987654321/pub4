@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-require "digest"
 require "etc"
-require "fileutils"
 require "open3"
-require "prism"
+require_relative "file_processor"
 
 module Master
   module Judge
@@ -12,59 +10,47 @@ module Master
       class Scanner
         POOL_SIZE = [Etc.nprocessors, 8].min.freeze
         SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
-        RUBY_EXT = %w[.rb .rake .gemspec].freeze
-        FORBIDDEN_DEPTHS = %i[quick standard shallow].freeze
-        MTIME_STATE_PATH = ".master/scan_mtime.yml".freeze
-        SCAN_SINCE_EXT = /\.(rb|erb|yml|js|css|sh|zsh)\z/i.freeze
-        SEMANTIC_RULE_NAMES = %w[SemanticRule].freeze
+        SCAN_SINCE_EXT = /\.(rb|rake|gemspec|erb|yml|yaml|js|css|sh|zsh)\z/.freeze
+        REQUIRED_DEPTH = :deep
+        MAX_VIOLATION_OBJECTS = 100_000
+        GC_EVERY_N_ITERATIONS = 5
 
         attr_reader :rules
 
-        # Preconditions for #scan:
-        # - path must exist and be readable
-        # - depth must be :deep (quick/standard/shallow raise ArgumentError)
-        def initialize(rules: nil, event_bus: nil, file_sleep_s: 0, root: nil)
+        def initialize(rules: nil, event_bus: nil, file_sleep_s: 0)
           @rules = Array(rules)
           @bus = event_bus
           @mutex = Mutex.new
           @file_sleep_s = file_sleep_s.to_f
-          @root = root || Master::ROOT
-          @mtime_state = load_mtime_state
-          @processor = FileProcessor.new(event_bus: @bus)
+          @file_processor = FileProcessor.new(event_bus: event_bus)
         end
 
+        # Preconditions: path must exist and scans must run at depth :deep.
+        # MASTER is constitutionally deep-scan-only; callers needing a preview
+        # should filter findings after scanning instead of weakening depth.
         def scan(path, depth: :deep, rules: nil)
           validate_depth!(depth)
-          return Result.err("file not found: #{path}", category: :validation,
-                            context: { file: "judge/scan/scanner.rb", method: "scan", attempted: path }) unless File.exist?(path)
-          code = @processor.read_file(path)
-          return code if code.err?
-
-          ast = @processor.parse_ruby(code.value!, path)
-          rule_set = rules || active_rules(depth)
-          findings = @processor.process(path, code: code.value!, ast:, rule_set:)
-          touch_mtime(path)
-          publish_scan_result(path, depth, findings)
-          Result.ok(findings)
-        rescue StandardError => e
-          @bus&.publish("scan:error", path:, error: e.message)
-          Result.err("scan failed: #{e.message}", category: :infrastructure)
+          @file_processor.call(path: path, depth: depth, rules: rules || active_rules(depth))
         end
 
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
           validate_depth!(depth)
-          paths   = Dir.glob(File.join(dir, glob)).sort
-          Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
+          paths   = Dir.glob(File.join(dir, glob))
+          Result.ok(prune_violation_objects(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }))
         rescue StandardError => e
           Result.err("scan_dir: #{e.message}", category: :infrastructure)
         end
 
         def scan_since(ref = "HEAD~1", dir: ".", depth: :deep, stream: false)
           validate_depth!(depth)
-          paths = changed_paths_since(ref, dir)
-          paths.concat(master_lib_paths_since(ref)) unless File.expand_path(dir) == Master::ROOT
-          paths = paths.uniq.select { |p| File.exist?(p) && p.match?(SCAN_SINCE_EXT) }
-          Result.ok(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) })
+          repo_root = git_toplevel(dir)
+          return Result.err("git root failed", category: :validation) unless repo_root
+
+          changed = changed_since(ref, repo_root)
+          return changed if changed.err?
+
+          paths = scan_since_paths(changed.value!, dir:, repo_root:)
+          Result.ok(prune_violation_objects(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }))
         rescue StandardError => e
           Result.err("scan_since: #{e.message}", category: :infrastructure)
         end
@@ -82,56 +68,39 @@ module Master
         private
 
         def validate_depth!(depth)
-          return unless FORBIDDEN_DEPTHS.include?(depth)
+          return if depth == REQUIRED_DEPTH
 
           raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)"
         end
 
-        def read_file(path)
-          code = File.read(path, encoding: "UTF-8")
-          @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
-          Result.ok(code)
+        def git_toplevel(dir)
+          out, _, status = Open3.capture3("git", "-C", dir, "rev-parse", "--show-toplevel")
+          status.success? ? out.strip : nil
         end
 
-        def parse_ruby(code, path)
-          return unless RUBY_EXT.include?(File.extname(path))
-          result = Prism.parse(code)
-          result.success? ? result.value : nil
-        rescue StandardError => e
-          @bus&.publish("scan:parse_error", path:, error: e.message)
-          nil
+        def changed_since(ref, repo_root)
+          out, _, status = Open3.capture3("git", "-C", repo_root, "diff", "--name-only", "#{ref}...HEAD")
+          return Result.err("git diff failed", category: :validation) unless status.success?
+
+          Result.ok(out.lines.map(&:strip).reject(&:empty?))
         end
 
-        def apply_rules(code, ast, path, rule_set)
-          fast_rules, semantic_rules = partition_rules(rule_set)
-          findings = fast_rules.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
-          return findings if semantic_rules.empty?
-          return findings if findings.empty?
+        def scan_since_paths(changed, dir:, repo_root:)
+          scan_root = File.expand_path(dir)
+          master_lib = File.join(repo_root, "MASTER", "lib")
+          changed.filter_map do |rel|
+            path = File.expand_path(rel, repo_root)
+            next unless File.exist?(path) && File.extname(path).match?(SCAN_SINCE_EXT)
+            next unless under_path?(path, scan_root) || under_path?(path, master_lib)
 
-          findings + semantic_rules.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
+            path
+          end.uniq
         end
 
-        def partition_rules(rule_set)
-          semantic = []
-          fast = rule_set.reject do |rule|
-            name = rule.class.name&.split("::")&.last
-            next false unless SEMANTIC_RULE_NAMES.include?(name)
-            semantic << rule
-            true
-          end
-          [fast, semantic]
-        end
-
-        def run_rule(rule:, code:, ast:, path:)
-          if ast && rule.respond_to?(:check_ast)
-            rule.check_ast(ast, code, path:)
-          else
-            rule.check(code, path:)
-          end
-        end
-
-        def publish_scan_result(path, depth, findings)
-          @bus&.publish("scan:complete", path:, depth:, count: findings.size)
+        def under_path?(path, root)
+          expanded_path = File.expand_path(path)
+          expanded_root = File.expand_path(root)
+          expanded_path == expanded_root || expanded_path.start_with?("#{expanded_root}#{File::SEPARATOR}")
         end
 
         def parallel_map(items)
@@ -143,6 +112,7 @@ module Master
               loop do
                 i = cursor.synchronize { (index += 1) - 1 }
                 break if i >= items.size
+                maybe_gc(i)
                 thread_results[i] = yield(items[i], i)
               rescue StandardError => e
                 @bus&.publish("scanner:thread_error", path: items[i], index: i, error: e.message)
@@ -155,20 +125,38 @@ module Master
         end
 
         def scan_one(dir:, path:, depth:, stream:, index: nil)
-          return [path, Result.ok([])] if unchanged_since_last_scan?(path)
           sleep @file_sleep_s if @file_sleep_s > 0
           file_result = scan(path, depth:)
-          stream_progress(dir, path, file_result) if stream
+          stream_progress(dir:, path:, file_result:) if stream
           [path, file_result]
         rescue StandardError => e
           @bus&.publish("scanner:thread_error", path:, index:, error: e.message)
           [path, Result.err(e.message, category: :infrastructure)]
         end
 
-        def stream_progress(dir, path, file_result)
+        def maybe_gc(index)
+          GC.start if index.positive? && (index % GC_EVERY_N_ITERATIONS).zero?
+        end
+
+        def prune_violation_objects(pairs)
+          total = pairs.sum { |_path, result| Result.wrap(result).value_or([]).size }
+          return pairs if total <= MAX_VIOLATION_OBJECTS
+
+          remaining = MAX_VIOLATION_OBJECTS
+          pruned = total - MAX_VIOLATION_OBJECTS
+          pairs.reverse_each do |_path, result|
+            findings = Result.wrap(result).value_or([])
+            keep = [findings.size, remaining].min
+            remaining -= keep
+            findings.replace(findings.last(keep))
+          end
+          @bus&.publish("scanner:violations_pruned", pruned:, kept: MAX_VIOLATION_OBJECTS)
+          pairs
+        end
+
+        def stream_progress(dir:, path:, file_result:)
           return unless file_result.ok?
           count = file_result.value!.size
-          return unless count.positive?
           rel = path.sub(dir, "").delete_prefix("/")
           $stdout.puts "scan: #{rel} #{count} violation(s)"
           $stdout.flush
@@ -205,52 +193,7 @@ module Master
           observed_conf.to_f >= t["confidence"].to_f
         end
 
-        def changed_paths_since(ref, dir)
-          out, _, status = Open3.capture3("git", "-C", dir, "diff", "--name-only", "#{ref}...HEAD")
-          return [] unless status.success?
-          out.lines.map(&:strip).reject(&:empty?).map { |rel| File.join(dir, rel) }
-        end
-
-        def master_lib_paths_since(ref)
-          lib_root = File.join(Master::ROOT, "lib")
-          out, _, status = Open3.capture3("git", "-C", Master::ROOT, "diff", "--name-only", "#{ref}...HEAD")
-          return [] unless status.success?
-          out.lines.map(&:strip).reject(&:empty?)
-             .select { |rel| rel.start_with?("lib/") }
-             .map { |rel| File.join(Master::ROOT, rel) }
-             .select { |p| File.exist?(p) && p.start_with?(lib_root) }
-        end
-
-        def unchanged_since_last_scan?(path)
-          mtime = (File.mtime(path).to_i rescue nil)
-          return false unless mtime
-          @mutex.synchronize { @mtime_state[path] == mtime }
-        end
-
-        def touch_mtime(path)
-          mtime = (File.mtime(path).to_i rescue nil)
-          return unless mtime
-          @mutex.synchronize do
-            @mtime_state[path] = mtime
-            persist_mtime_state!
-          end
-        end
-
-        def load_mtime_state
-          path = File.join(@root, MTIME_STATE_PATH)
-          return {} unless File.exist?(path)
-          Master.load_yaml(path) || {}
-        rescue StandardError
-          {}
-        end
-
-        def persist_mtime_state!
-          path = File.join(@root, MTIME_STATE_PATH)
-          FileUtils.mkdir_p(File.dirname(path))
-          File.write(path, @mtime_state.to_yaml)
-        rescue StandardError => e
-          @bus&.publish("scanner:mtime_persist_error", error: e.message)
-        end
+        # HALLUCINATION rule uses lexical and semantic checks for claim_without_reading.
       end
     end
   end

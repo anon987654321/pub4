@@ -15,14 +15,17 @@ module Master
         NUMBERED_RE = /^\s*\d+\.\s+/
         HR_RE = /^-{3,}\s*$/
         LINK_RE = /\[([^\]]+)\]\([^)]+\)/
+        CLAIM_RE = /\b(?:completed|done|fixed|implemented|changed|updated|edited|modified|created|deleted|removed)\b/i.freeze
+        DIFF_EVIDENCE_RE = /^(?:diff --git|---\s|\+\+\+\s|@@\s)/.freeze
+        COMMAND_EVIDENCE_RE = /\b(?:command output|exit code|process exited|ran:|verification:|test(?:s)?\s+(?:passed|failed))\b/i.freeze
         SYCOPHANCY_RE = /\A\s*(?:
           certainly|of[ ]course|great[ ]question|absolutely|sure|
           happy[ ]to[ ]help|i(?:'d|[ ]would)[ ]be[ ](?:happy|glad)|no[ ]problem
         )[!.,]*\s*/ix
 
         def call(ctx)
-          raw = ctx.output
-          output = if raw.is_a?(Master::Result) && raw.ok?
+          raw = ctx.respond_to?(:output) ? ctx.output : ctx[:output]
+          output = if raw.respond_to?(:ok?) && raw.ok?
                      raw.value!.to_s
                    elsif raw.is_a?(String)
                      raw
@@ -31,8 +34,8 @@ module Master
                    end
           return Result.ok(ctx) if output.empty?
 
-          cleaned = prune_mixed(output)
-          final = raw.is_a?(Master::Result) ? Result.ok(cleaned.strip) : cleaned.strip
+          cleaned = require_evidence(prune_mixed(output).strip)
+          final = raw.respond_to?(:ok?) ? Result.ok(cleaned) : cleaned
           Result.ok(ctx.merge(output: final))
         end
 
@@ -68,6 +71,25 @@ module Master
           cleaned = cleaned.gsub(NUMBERED_RE, "")
           cleaned = cleaned.gsub(/\n{3,}/, "\n\n")
           cleaned
+        end
+
+        def require_evidence(text)
+          return text unless unsupported_claim?(text)
+
+          [text, evidence_requirement].join("\n")
+        end
+
+        def unsupported_claim?(text)
+          text.match?(CLAIM_RE) && !evidence_present?(text)
+        end
+
+        def evidence_present?(text)
+          text.each_line.any? { |line| line.match?(DIFF_EVIDENCE_RE) } ||
+            text.match?(COMMAND_EVIDENCE_RE)
+        end
+
+        def evidence_requirement
+          "evidence required: show unified diff for modifications or command output for completion claims."
         end
 
         def rules

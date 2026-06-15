@@ -70,7 +70,6 @@ GEM
       concurrent-ruby (~> 1.1)
       webrick (~> 1.7)
       websocket-driver (~> 0.7)
-    ffi (1.17.4)
     fiddle (1.1.8)
     flay (2.14.4)
       erubi (~> 1.10)
@@ -126,8 +125,6 @@ GEM
       rack (>= 1.3)
     rainbow (3.1.1)
     rake (13.4.2)
-    rb-kqueue (0.2.8)
-      ffi (>= 0.5.0)
     reek (6.5.0)
       dry-schema (~> 1.13)
       logger (~> 1.6)
@@ -177,6 +174,7 @@ GEM
     simplecov_json_formatter (0.1.4)
     sqlite3 (2.9.4)
       mini_portile2 (~> 2.8.0)
+    sqlite3 (2.9.4-arm64-darwin)
     strings (0.2.1)
       strings-ansi (~> 0.2)
       unicode-display_width (>= 1.5, < 3.0)
@@ -213,6 +211,7 @@ GEM
     tty-reader (0.9.0)
       tty-cursor (~> 0.7)
       tty-screen (~> 0.8)
+      wisper (~> 2.0)
     tty-screen (0.8.2)
     tty-spinner (0.9.3)
       tty-cursor (~> 0.7)
@@ -234,6 +233,7 @@ GEM
 
 PLATFORMS
   arm-linux-androideabi
+  arm64-darwin-25
   x86_64-openbsd
 
 DEPENDENCIES
@@ -247,7 +247,6 @@ DEPENDENCIES
   rack-test (~> 2.1)
   rake (~> 13.2)
   rb-edge-tts!
-  rb-kqueue (~> 0.2)
   reek (~> 6.4)
   rouge (~> 4.4)
   rubocop (~> 1.60)
@@ -294,7 +293,6 @@ CHECKSUMS
   faraday-retry (2.4.0) sha256=7b79c48fb7e56526faf247b12d94a680071ff40c9fda7cf1ec1549439ad11ebe
   faye-websocket (0.12.0) sha256=ad9f7dfcd0306d0a13baeee450729657661129af15bb5f38716c242484ab42e1
   ferrum (0.17.1) sha256=51d591120fc593e5a13b5d9d6474389f5145bb92a91e36eab147b5d096c8cbe7
-  ffi (1.17.4)
   fiddle (1.1.8) sha256=7fa8ee3627271497f3add5503acdbc3f40b32f610fc1cf49634f083ef3f32eee
   flay (2.14.4) sha256=a62d96a51d1da185aa41ba95b696966df9f7d1d91a457709277f24515895de77
   http-2 (1.1.3) sha256=1b2f379d35a11dbae94f8a1a52c053d8c161eb4a0c98b5d1605ff1b2bf171c9c
@@ -328,7 +326,6 @@ CHECKSUMS
   rainbow (3.1.1) sha256=039491aa3a89f42efa1d6dec2fc4e62ede96eb6acd95e52f1ad581182b79bc6a
   rake (13.4.2)
   rb-edge-tts (1.0.1)
-  rb-kqueue (0.2.8)
   reek (6.5.0) sha256=d26d3a492773b2bbc228888067a21afe33ac07954a17dbd64cdeae42c4c69be1
   regexp_parser (2.11.3) sha256=ca13f381a173b7a93450e53459075c9b76a10433caadcb2f1180f2c741fc55a4
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
@@ -344,6 +341,7 @@ CHECKSUMS
   simplecov-html (0.13.2) sha256=bd0b8e54e7c2d7685927e8d6286466359b6f16b18cb0df47b508e8d73c777246
   simplecov_json_formatter (0.1.4) sha256=529418fbe8de1713ac2b2d612aa3daa56d316975d307244399fa4838c601b428
   sqlite3 (2.9.4) sha256=6161c5b9c17886b289558e6c8082b28a22a814736d2433c9a67f4c6bfcde5c97
+  sqlite3 (2.9.4-arm64-darwin)
   strings (0.2.1) sha256=933293b3c95cf85b81eb44b3cf673e3087661ba739bbadfeadf442083158d6fb
   strings-ansi (0.2.0) sha256=90262d760ea4a94cc2ae8d58205277a343409c288cbe7c29416b1826bd511c88
   terminal-table (3.0.2) sha256=f951b6af5f3e00203fb290a669e0a85c5dd5b051b3b023392ccfd67ba5abae91

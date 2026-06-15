@@ -4,22 +4,42 @@ module Master
   module Judge
     module Scan
       module Rules
+        VENDORED_JS_RE = %r{/public/three\.module\.js\z}.freeze
 
         RuleDSL.rule :CONST_BY_DEFAULT,
           severity: :warning, tags: %i[IMMUTABLE], applies_to: %i[javascript],
           description: "use const unless reassigned" do |src, path:|
-          scan_lines(src, /\blet\s+(\w+)\s*=/, message: "let — use const unless value is reassigned")
+          next [] if path.to_s.match?(VENDORED_JS_RE)
+
+          lines = src.lines
+          lines.each_with_index.filter_map do |line, idx|
+            match = line.match(/\blet\s+([A-Za-z_$][\w$]*)\s*=/)
+            next unless match
+
+            name = Regexp.escape(match[1])
+            tail = line[match.end(0)..].to_s
+            rest = lines[(idx + 1)..].join
+            reassigned = tail.match?(/\b#{name}\s*(?:[+\-*\/%&|^]?=|\+\+|--)/) ||
+                         rest.match?(/\b#{name}\s*(?:[+\-*\/%&|^]?=|\+\+|--)/)
+            next if reassigned
+
+            finding(line: idx + 1, message: "let — use const unless value is reassigned")
+          end
         end
 
         RuleDSL.rule :NULLISH_COALESCING,
           severity: :info, tags: %i[READABILITY], applies_to: %i[javascript],
           description: "use ?? over || for defaults" do |src, path:|
+          next [] if path.to_s.match?(VENDORED_JS_RE)
+
           scan_lines(src, /(\w+)\s*\|\|\s*\w+/, message: "foo || default — use foo ?? default to avoid falsy traps")
         end
 
         RuleDSL.rule :TEMPLATE_LITERALS,
           severity: :warning, tags: %i[READABILITY], applies_to: %i[javascript],
           description: "use template literals over concatenation" do |src, path:|
+          next [] if path.to_s.match?(VENDORED_JS_RE)
+
           scan_lines(src, /["']\s*\+\s*\w+\s*\+\s*["']/,
                      message: "string concatenation — use template literal \`…\${var}…\`")
         end
@@ -27,12 +47,16 @@ module Master
         RuleDSL.rule :ASYNC_AWAIT,
           severity: :warning, tags: %i[READABILITY], applies_to: %i[javascript],
           description: "prefer async/await over .then chains" do |src, path:|
+          next [] if path.to_s.match?(VENDORED_JS_RE)
+
           scan_lines(src, /\.then\(.*\.then\(.*\.then\(/, message: "3+ .then chain — convert to async/await")
         end
 
         RuleDSL.rule :FOR_OF,
           severity: :error, tags: %i[CORRECTNESS], applies_to: %i[javascript],
           description: "use for...of instead of for...in for arrays" do |src, path:|
+          next [] if path.to_s.match?(VENDORED_JS_RE)
+
           scan_lines(src, /for\s*\(\s*(const|let|var)\s+\w+\s+in\s+/,
             message: "for...in iterates keys — use for...of for array values")
         end
@@ -58,12 +82,16 @@ module Master
         RuleDSL.rule :NO_VAR,
           severity: :error, tags: %i[CORRECTNESS], applies_to: %i[javascript],
           description: "var is function-scoped and hoisted — use const or let" do |src, path:|
+          next [] if path.to_s.match?(VENDORED_JS_RE)
+
           scan_lines(src, /\bvar\s+\w/, message: "var declaration — use const (default) or let (when reassigned)")
         end
 
         RuleDSL.rule :JS_MODULE_SIZE,
           severity: :warning, tags: %i[SMALL_PARTS], applies_to: %i[javascript],
           description: "JS files over 300 lines — split at module boundaries" do |src, path:|
+          next [] if path.to_s.match?(VENDORED_JS_RE)
+
           line_count = src.lines.size
           next [] if line_count <= 300
           [finding(line: 1, message: "JS file #{line_count} lines — split at 300; extract cohesive modules")]

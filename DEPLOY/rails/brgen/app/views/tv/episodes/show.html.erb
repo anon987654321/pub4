@@ -1,0 +1,19 @@
+<% content_for :title, "#{@show.title} - Episode #{@episode.number}" %>
+
+<div class="page-header">
+  <h1><%= @show.title %> — Episode <%= @episode.number %></h1>
+  <h2><%= @episode.title %></h2>
+</div>
+
+<% if @video %>
+  <div class="video-player" data-controller="tv-player">
+    <%= render "tv/videos/_tv_video", video: @video %>
+  </div>
+<% else %>
+  <div class="empty"><p>Video coming soon.</p></div>
+<% end %>
+
+<div class="notes">
+  <h3>Notes</h3>
+  <%= render "shared/_media_gallery" if @episode.video&.notes&.any? %>
+</div>

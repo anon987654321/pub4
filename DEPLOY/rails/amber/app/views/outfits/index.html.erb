@@ -31,16 +31,10 @@
   <span class="tag"><%= pluralize(@outfits.sum(&:total_wears), "combined wear") %></span>
 </div>
 
-<%= turbo_frame_tag "live_search_results" do %>
-  <div class="item-grid" id="outfits"><%= render @outfits %></div>
+<div class="item-grid" id="outfits"><%= render @outfits %></div>
 
-  <% if @outfits.empty? %>
-    <% if params[:q].present? %>
-      <%= render "shared/search_empty", query: params[:q], search_meta: search_meta %>
-    <% else %>
-      <div class="empty"><p>No outfits yet. Start with a capsule, event, season, or mood.</p></div>
-    <% end %>
-  <% end %>
+<% if @outfits.empty? %>
+  <div class="empty"><p>No outfits yet. Start with a capsule, event, season, or mood.</p></div>
 <% end %>
 
 <%= pagy_nav(@pagy) if @pagy.pages > 1 %>

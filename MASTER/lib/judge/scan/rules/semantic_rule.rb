@@ -18,8 +18,7 @@ module Master
             @id = "semantic"
             @description = "LLM-based rule review (violations + opportunities)"
             @severity = :warning
-            @rules = load_semantic_rules
-            @rule_tags = @rules.keys.map(&:to_sym)
+            reload_semantic_rules!
           end
 
           def self.auto_build? = false
@@ -32,11 +31,11 @@ module Master
           def check(code, path:)
             return [] unless language(path) && @agent
 
+            reload_semantic_rules_if_stale
             response = @agent.ask(build_prompt(code, path), operation: :scan_semantic).to_s
             parse_findings(response)
           rescue StandardError => e
             return [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
-            [finding(line: 1, message: "semantic: scan error — #{e.message}")]
           end
 
           private
@@ -44,40 +43,61 @@ module Master
           # Each axiom is { prompt:, severity:, mode: }. info-tier violations stay
           # out of the prompt — they're noise that doubles cost. info-tier
           # opportunities stay in: that's their whole point.
+          def reload_semantic_rules!
+            @rules = load_semantic_rules
+            @rule_tags = @rules.keys.map(&:to_sym)
+            @rules_mtime = rules_mtime
+            @prompt_frame = build_prompt_frame
+          end
+
+          def reload_semantic_rules_if_stale
+            reload_semantic_rules! if @rules_mtime != rules_mtime
+          end
+
+          def rules_mtime
+            File.mtime(Master::RULES_PATH).to_i
+          rescue StandardError
+            nil
+          end
+
           def load_semantic_rules
             data = Master.load_rules
             (data["rules"] || {}).values.flatten
               .select { |r| r["detect_semantic"] }
               .reject { |r| r["severity"] == "info" && r["mode"] != "opportunity" && r["tier"] != "kernel" }
               .each_with_object({}) do |r, h|
-	                h[r["id"]] = {
-	                  prompt: r["detect_semantic"],
-	                  severity: (r["severity"] || "warning").to_sym,
-	                  mode: (r["mode"] || "violation").to_sym,
-	                  reversibility: r["reversibility"],
-	                  blast_radius: r["blast_radius"]
-	                }
+                h[r["id"]] = {
+                  prompt: r["detect_semantic"],
+                  severity: (r["severity"] || "warning").to_sym,
+                  mode: (r["mode"] || "violation").to_sym,
+                  reversibility: r["reversibility"],
+                  blast_radius: r["blast_radius"],
+                }
               end
           end
 
           def build_prompt(code, path)
-            violations = @rules.select { |_, a| a[:mode] == :violation }
-            opportunities = @rules.select { |_, a| a[:mode] == :opportunity }
-            parts = []
-            parts << violation_block(violations) unless violations.empty?
-            parts << opportunity_block(opportunities) unless opportunities.empty?
             <<~PROMPT
             Review #{File.basename(path)}.
 
-            #{parts.join("\n\n")}
+            #{@prompt_frame}
 
             Code (first #{CODE_SNIPPET_LIMIT} chars):
             #{code[0, CODE_SNIPPET_LIMIT]}
           PROMPT
           end
 
+          def build_prompt_frame
+            violations = @rules.select { |_, a| a[:mode] == :violation }
+            opportunities = @rules.select { |_, a| a[:mode] == :opportunity }
+            parts = []
+            parts << violation_block(violations) unless violations.empty?
+            parts << opportunity_block(opportunities) unless opportunities.empty?
+            parts.join("\n\n")
+          end
+
           def violation_block(rules)
-            list = rules.map { |id, a| "#{id}: #{compress_prompt(a[:prompt])}" }.join("\n")
+            list = rules.map { |id, a| "#{id}: #{a[:prompt]}" }.join("\n")
             <<~BLOCK
             VIOLATIONS — list ONLY clear breaches. Format: RULE_ID:LINE:description.
             If clean, write CLEAN on its own line.
@@ -85,12 +105,8 @@ module Master
           BLOCK
           end
 
-          def compress_prompt(text)
-            text.to_s.strip.split(/[.!?]/).first.to_s.strip[0, 120]
-          end
-
           def opportunity_block(rules)
-            list = rules.map { |id, a| "#{id}: #{compress_prompt(a[:prompt])}" }.join("\n")
+            list = rules.map { |id, a| "#{id}: #{a[:prompt]}" }.join("\n")
             <<~BLOCK
             OPPORTUNITIES — list refactors only if they would simplify. Format: RULE_ID:LINE:reason.
             If none, write NONE on its own line.

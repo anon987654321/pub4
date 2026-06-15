@@ -22,6 +22,11 @@ fallback_policy:
     - rate_limit
     - quota_exceeded
 
+failover:
+  sequence: [fast, default, medium, strong]
+  cooldown_seconds: 300
+  max_retries: 2
+
 defaults: &model_defaults
   score: { quality: 0.0, speed: 0.0, cost: 0.0 }
 
@@ -184,6 +189,12 @@ models:
     - *gpt_4o
     - *gemini_flash
     - *command_r_plus
+  medium:
+    - *deepseek_chat
+    - *gemini_flash_openrouter
+    - *mistral_large
+    - *grok_4_fast
+    - *command_r_plus
   cheap:
     - *gemini_2_flash_exp_free
     - *gemini_flash_openrouter
@@ -219,7 +230,9 @@ models:
     - *ollama_qwen
 
 routes:
+  detect_lexical: fast
   code_generation: default
+  code: default
   refactoring: default
   architecture: strong
   review: default
@@ -269,6 +282,9 @@ operation_constraints:
   council:          { min_quality: 0.88, preferred_tier: strong }
   scan_semantic:  { min_quality: 0.88, preferred_tier: strong }
   scan_adversarial: { min_quality: 0.88, preferred_tier: strong }
+  detect_lexical: { min_quality: 0.70, preferred_tier: fast }
+  code_generation: { min_quality: 0.80, preferred_tier: default }
+  architecture:    { min_quality: 0.88, preferred_tier: strong }
   destructive:      { min_quality: 0.90, preferred_tier: strong }
 
 continuity:
@@ -298,7 +314,7 @@ three_mirror_redundancy:
   # Three models vote; ship only on >= 2 agreement for critical fixes.
   # Source: cross-cutting reunification (#95).
   enabled_for:   [tier1_critical, security_relevant, irreversible]
-  pool:          [openrouter_primary, openrouter_secondary, claude_cli]
+  pool:          ["anthropic/claude-sonnet-4-6", "z-ai/glm-4.5-air:free", "moonshotai/kimi-k2"]
   quorum:        2
   on_disagreement: "fall back to council vote with all dissent recorded"
 

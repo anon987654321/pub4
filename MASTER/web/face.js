@@ -71,6 +71,9 @@ function resize() {
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize, { passive: true });
+if ('ResizeObserver' in window && cv) {
+  new ResizeObserver(() => resize()).observe(cv.parentElement || cv);
+}
 
 function buildHeadGeometry() {
   const base = new THREE.IcosahedronGeometry(1.0, 4);
@@ -236,7 +239,8 @@ function frame(t) {
                 : (State.viseme === 'M') ? 0.05 : 0.0;
   for (let i = 0; i < VERT_COUNT; i++) {
     const i3 = i * 3;
-    let hx = vertHome[i3], hy = vertHome[i3+1], hz = vertHome[i3+2];
+    const hx = vertHome[i3];
+    let hy = vertHome[i3+1], hz = vertHome[i3+2];
     if (mouthMask[i]) {
       const open = visOpen * visAmp;
       hy -= open * 0.05;
@@ -441,7 +445,7 @@ async function sendMessage(text) {
       return;
     }
     if (raw.startsWith('ERROR:')) {
-      window._chatOnChunk?.('\n' + raw + '\n');
+      window._chatOnChunk?.(`\n${raw}\n`);
       State.mode = 'error'; State.flash = 1; State.shake = 0.8;
       fadeColorTo(TINT.veto);
       window._chatOnError?.();
@@ -539,7 +543,7 @@ function startEverything() {
       zshBar.classList.add('live');
       requestMotionPermission(); acquireWakeLock();
       setTimeout(() => enqueueSpeech('ready'), 200);
-      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v1')).catch(() => {});
     }
   };
   setTimeout(tick, 80);

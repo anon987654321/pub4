@@ -11,7 +11,7 @@ class EmailSubscriptionsController < ApplicationController
       sub.agreed_to_marketing = params[:email_subscription][:agreed_to_marketing] == "1"
       sub.interests           = params[:email_subscription][:interests].presence
       if sub.save
-        EmailSubscriptionMailer.confirm(sub).deliver_later
+        EmailSubscriptionConfirmationJob.perform_later(sub.id)
         redirect_back fallback_location: root_path, notice: "Check your inbox to confirm."
       else
         redirect_back fallback_location: root_path, alert: sub.errors.full_messages.first

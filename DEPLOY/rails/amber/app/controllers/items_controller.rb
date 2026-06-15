@@ -4,14 +4,13 @@ class ItemsController < ApplicationController
   before_action :require_authentication
   before_action :set_item, only: %i[show edit update destroy spark_joy declutter wear]
   before_action :authorize!, only: %i[edit update destroy spark_joy declutter wear]
+  skip_before_action :verify_authenticity_token, only: [:share]
 
   def index
     @pagy, @items = pagy(Current.user.items.recent)
   end
 
-  def show
-    respond_to_cached_show(@item, only: %i[id title category color brand size material times_worn])
-  end
+  def show; end
 
   def new
     @item = Current.user.items.build
@@ -41,6 +40,21 @@ class ItemsController < ApplicationController
   def destroy
     @item.destroy
     redirect_to items_path, notice: "Removed from wardrobe"
+  end
+
+  def share
+    @item = Current.user.items.build(
+      title: share_title,
+      category: Item::CATEGORIES.first || "Tops",
+      price: nil
+    )
+    attach_shared_photos(@item)
+
+    if @item.save
+      redirect_to edit_item_path(@item), notice: "Shared into your wardrobe draft"
+    else
+      redirect_to new_item_path, alert: "Could not create item draft"
+    end
   end
 
   def spark_joy
@@ -84,11 +98,21 @@ class ItemsController < ApplicationController
   end
 
   def item_params
-    params.expect(:item => [
+    params.require(:item).permit(
       :title, :category, :color, :size, :material,
       :brand, :price, :times_worn, :purchase_date,
       :mood_effect, :life_phase, :occasion_tags, :season,
       photos: []
-    ])
+    )
+  end
+
+  def share_title
+    params[:title].presence || params[:text].presence || params[:url].presence || "Shared item"
+  end
+
+  def attach_shared_photos(item)
+    Array.wrap(params[:files] || params[:file] || params[:photos]).compact.each do |file|
+      item.photos.attach(file)
+    end
   end
 end

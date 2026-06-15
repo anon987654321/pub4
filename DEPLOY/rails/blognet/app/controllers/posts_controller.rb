@@ -2,20 +2,19 @@
 
 class PostsController < ApplicationController
   before_action :require_authentication, except: %i[index show]
-  before_action :set_blog
+  before_action :set_blog, except: %i[share]
   before_action :set_post, only: %i[show edit update destroy]
   before_action :authorize!, only: %i[edit update destroy]
+  skip_before_action :verify_authenticity_token, only: [:share]
 
   def index
     @pagy, @posts = pagy(@blog.posts.published.includes(:user, :tags))
   end
 
   def show
-    @paywall_allowed = PaywallService.can_read?(post: @post, viewer_token: viewer_token, user: Current.user)
-    @post.increment!(:views_count) if @paywall_allowed
-    @comments = @post.comments.approved.roots.includes(:user, :replies) if @paywall_allowed
+    @post.increment!(:views_count)
+    @comments = @post.comments.approved.roots.includes(:user, :replies)
     @comment  = Comment.new
-    respond_to_cached_show(@post, only: %i[id title body slug published_at views_count comments_count])
   end
 
   def new
@@ -38,6 +37,22 @@ class PostsController < ApplicationController
     redirect_to @blog, notice: "Post deleted"
   end
 
+  def share
+    blog = Current.user.blogs.first || Current.user.blogs.create!(name: "Shared Drafts", description: "Imported shares")
+    post = blog.posts.build(
+      title: share_title,
+      body: share_body,
+      published: false,
+      user: Current.user
+    )
+
+    if post.save
+      redirect_to edit_blog_post_path(blog, post), notice: "Shared into a draft"
+    else
+      redirect_to blog_path(blog), alert: "Could not create draft"
+    end
+  end
+
   private
 
   def set_blog   = @blog = Blog.find_by!(slug: params[:blog_id])
@@ -45,10 +60,14 @@ class PostsController < ApplicationController
   def authorize! = redirect_to(@blog, alert: "Unauthorized") unless @post.user == Current.user
 
   def post_params
-    params.expect(post: [:title, :body, :published, :slug, :paywalled, { images: [] }])
+    params.require(:post).permit(:title, :body, :published, :slug, images: [])
   end
 
-  def viewer_token
-    cookies.permanent[:blognet_viewer] ||= SecureRandom.urlsafe_base64(16)
+  def share_title
+    params[:title].presence || params[:text].presence || params[:url].presence || "Shared draft"
+  end
+
+  def share_body
+    [params[:text].presence, params[:url].presence].compact.join("\n\n")
   end
 end

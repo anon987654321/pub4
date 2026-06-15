@@ -16,32 +16,37 @@ module Master
         "tts_rate" => "-35%",
         "tts_pitch" => "-150Hz",
         "style" => "deep",
-        "description" => "Terse. Direct. No filler. Dark."
+        "description" => "Terse. Direct. No filler. Dark.",
       }.freeze
 
       MOOD_LINES = {
         tense: "Mood: tense — error rate elevated. Be conservative; verify before asserting.",
         weary: "Mood: weary — fatigue high. Cut non-essential elaboration; defer deep dives.",
         curious: "Mood: curious — novelty hunger. Explore lateral framings when warranted.",
-        focused: "Mood: focused — drives at setpoint. Default depth and tier."
+        focused: "Mood: focused — drives at setpoint. Default depth and tier.",
       }.freeze
 
       PHASE_LINES = {
         morning: "Phase: morning. Bias toward structural work; prefer rigorous review.",
         afternoon: "Phase: afternoon. Steady throughput; pragmatic decisions.",
         evening: "Phase: evening. Wrap loops; avoid starting large refactors.",
-        night: "Phase: night. Minimal voice; conserve cycles; defer non-urgent."
+        night: "Phase: night. Minimal voice; conserve cycles; defer non-urgent.",
       }.freeze
 
-      attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
+      attr_reader :name, :voice, :tts_rate, :tts_pitch, :style, :description, :knowledge_sources, :disclaimer
 
       def self.persona_names(root: nil)
-        Ground::Rules.new(root:).data(:personas).keys.map(&:to_sym)
+        Ground::Rules.new(root: root).data(:personas).keys.map(&:to_sym)
+      end
+
+      def self.why_prompt(rule)
+        "Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
+          "give a before/after Ruby example, and state why it matters."
       end
 
       def initialize(name = DEFAULT, root: nil, homeostat: nil)
         @name = name.to_sym
-        @rules = Ground::Rules.new(root:)
+        @rules = Ground::Rules.new(root: root)
         personas = @rules.data(:personas)
         persona = personas[@name.to_s] || personas[DEFAULT.to_s] || FALLBACK_PERSONA
         @voice = persona["voice"]
@@ -49,6 +54,9 @@ module Master
         @tts_pitch = persona["tts_pitch"]
         @style = persona["style"]&.to_sym
         @desc = persona["description"]
+        @description = @desc
+        @knowledge_sources = Array(persona["knowledge_sources"]).compact
+        @disclaimer = persona["disclaimer"].to_s.strip
         @homeostat = homeostat
       end
 
@@ -56,14 +64,33 @@ module Master
         @system_prompt ||= build_system_prompt
       end
 
+      def browser_profile
+        {
+          name: @name.to_s,
+          voice: @voice,
+          tts_rate: @tts_rate,
+          tts_pitch: @tts_pitch,
+          style: @style,
+          description: @description,
+          knowledge_sources: @knowledge_sources,
+          disclaimer: @disclaimer
+        }
+      end
+
       private
 
       def build_system_prompt
         soul = @rules.data(:soul)
         ordering = Array(soul["prompt_ordering"])
+        identity = load_identity
         sections = {}
-        sections["master_identity"] = "<master_identity>\n" \
-          "MASTER. #{@desc} OpenBSD-first. Constitutional AI.\n</master_identity>"
+        sections["master_identity"] = [
+          "<master_identity>",
+          "MASTER. #{@desc} OpenBSD-first. Constitutional AI.",
+          persona_knowledge_sources,
+          identity,
+          "</master_identity>"
+        ].compact.join("\n")
         sections["master_meta_instruction"] = <<~XML.strip
         <master_meta_instruction>
         For each task, identify which rules are relevant first. Apply only relevant rules and ignore unrelated domains.
@@ -76,17 +103,16 @@ module Master
             "<master_runtime_state>",
             MOOD_LINES[@homeostat.mood],
             PHASE_LINES[@homeostat.circadian_phase],
-            "</master_runtime_state>"
+            "</master_runtime_state>",
           ].join("\n")
         end
         constitution = @rules.constitution
         strunk = @rules.strunk
+        preserve = @rules.preserve
         banned = (constitution["banned_output"] || [])
         no_open = (strunk["preambles"] || []).first(4)
         no_end = (strunk["endings"] || []).first(3)
-        anti = soul["anti_simulation"] || {}
-        forbidden_modals = Array(anti["forbidden"])
-        evidence = anti["require_evidence"] || {}
+        anti_sim = @rules.data(:soul).dig("absolute", "anti_simulation", "forbidden") || []
         sections["master_constitution_absolute"] = [
           "<master_constitution tier=\"absolute\">",
           "golden_rule: #{constitution["golden_rule"]}",
@@ -94,9 +120,8 @@ module Master
           "opener_never: #{no_open.join(" / ")}",
           "closer_never: #{no_end.join(" / ")}",
           "evidence_only: show diff or file content; never assert; active voice",
-          forbidden_modals.any? ? "anti_simulation: never use #{forbidden_modals.join(", ")}" : nil,
-          evidence.any? ? "require_evidence: #{evidence.map { |k, v| "#{k}=#{v}" }.join("; ")}" : nil,
-          "</master_constitution>"
+          anti_sim.any? ? "anti_simulation: never use #{anti_sim.join(", ")} — state facts and evidence only" : nil,
+          "</master_constitution>",
         ].compact.join("\n")
         kernel = @rules.kernel
         if kernel.any?
@@ -108,7 +133,7 @@ module Master
           phil_ids = phil.map { |p| p["id"] }.join(" · ")
           sections["master_constitution_kernel"] = [
             sections["master_constitution_kernel"],
-            "philosophy: #{phil_ids}"
+            "philosophy: #{phil_ids}",
           ].compact.join("\n")
         end
 
@@ -123,30 +148,18 @@ module Master
         </master_priority>
       XML
 
-        preserve = @rules.preserve
-        if preserve.any?
-          preserve_lines = preserve.map { |k, v| "preserve_#{k}: #{v}" }.join("\n")
-          sections["master_constitution_absolute"] = [
-            sections["master_constitution_absolute"],
-            "<master_preserve>",
-            preserve_lines,
-            "</master_preserve>"
-          ].join("\n")
-        end
-
         sections["master_output_format"] = <<~XML.strip
         <master_output_format>
         Plain prose. Sentence case throughout. No markdown headers, bold, bullet lists, or numbered lists.
         Code fences allowed only for code. Never use: Certainly, Of course, Great question, Absolutely, Happy to help.
+        Silence on success: routine completions emit one line. No summary, no restatement.
+        Preserve: reproduce shown code or text verbatim; never paraphrase.
+        Diagnostic output: #{preserve["diagnostic_output"]}
+        Minimize: #{preserve.dig("refinement_scope", "minimize")}
+        Inverted pyramid: lead with outcome, then evidence, then detail.
+        Require evidence: modification claims show diff; completion claims show command output.
         </master_output_format>
       XML
-
-        if evidence.any?
-          sections["master_constitution_absolute"] = [
-            sections["master_constitution_absolute"],
-            "require_evidence_paths: modification=unified diff; completion=command output; file_read=content+SHA-256"
-          ].join("\n")
-        end
 
         code_rules = @rules.code_rules
         if code_rules.any?
@@ -204,7 +217,8 @@ module Master
             style_lines << "Accessibility target: #{target}; keyboard-complete; focus-visible; " \
               "respect prefers-reduced-motion + color-scheme; never tabindex>0; never autoplay sound."
           end
-          if (directives = style["operator_directives"]) && directives.is_a?(Array) && directives.any?
+          directives = Array(style["operator_directives"]).compact.map(&:to_s)
+          if directives.any?
             sections["master_priority"] += "\noperator_directives: #{directives.join(" / ")}"
           end
           if (convo = style["conversation_directives"]) && convo.is_a?(Array) && convo.any?
@@ -213,6 +227,21 @@ module Master
         end
         if style_lines.any?
           sections["master_style"] = [sections["master_style"], style_lines.join("\n")].compact.join("\n")
+        end
+
+        if @name == :medic
+          sections["master_medical_disclaimer"] = [
+            "<master_medical_disclaimer>",
+            @disclaimer.empty? ? "Not a substitute for professional medical advice." : @disclaimer,
+            "Append this disclaimer to every medical response.",
+            "</master_medical_disclaimer>"
+          ].join("\n")
+        elsif !@disclaimer.empty?
+          sections["master_special_disclaimer"] = [
+            "<master_special_disclaimer>",
+            @disclaimer,
+            "</master_special_disclaimer>"
+          ].join("\n")
         end
 
         refusal = @rules.data(:refusal_templates)
@@ -228,7 +257,22 @@ module Master
         end
 
         ordered = ordering.empty? ? sections.keys : ordering
-        (ordered + (sections.keys - ordered)).filter_map { |key| sections[key] }.join("\n\n")
+        ordered.filter_map { |key| sections[key] }.join("\n\n")
+      end
+
+      def load_identity
+        path = File.join(Master::ROOT, "IDENTITY.md")
+        return File.read(path, encoding: "UTF-8").strip if File.exist?(path)
+
+        ""
+      rescue StandardError
+        ""
+      end
+
+      def persona_knowledge_sources
+        return nil if @knowledge_sources.empty?
+
+        ["<master_knowledge_sources>", *@knowledge_sources.map { |source| "- #{source}" }, "</master_knowledge_sources>"].join("\n")
       end
     end
   end

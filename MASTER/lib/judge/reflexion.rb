@@ -17,7 +17,7 @@ module Master
 
         (max + 1).times do |i|
           break if Time.now >= deadline
-          prompt = i.zero? ? task : build_revision_prompt(task, last_result, last_critique)
+          prompt = i.zero? ? task : build_revision_prompt(task:, previous_result: last_result, critique: last_critique)
           last_result = yield(prompt, i)
           return last_result if last_result.is_a?(Master::Result) && last_result.ok?
 
@@ -32,7 +32,6 @@ module Master
       def circuit_open?(agent)
         breaker = agent.respond_to?(:circuit_breaker) ? agent.circuit_breaker : nil
         return false unless breaker.respond_to?(:open_models)
-        !breaker.open_models.empty?
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Reflexion.circuit_open?")
         false
@@ -52,7 +51,7 @@ module Master
         "previous attempt failed — try a different approach"
       end
 
-      def build_revision_prompt(task, previous_result, critique)
+      def build_revision_prompt(task:, previous_result:, critique:)
         <<~PROMPT
         #{task}
 

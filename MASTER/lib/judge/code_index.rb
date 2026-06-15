@@ -3,6 +3,7 @@
 require "prism"
 require "set"
 require "monitor"
+require_relative "code_index/symbol_visitor"
 
 module Master
   module Judge
@@ -10,73 +11,6 @@ module Master
     class CodeIndex
       Symbol = Struct.new(:fqn, :type, :file, :line, :parent, :includes, keyword_init: true)
       Reference = Struct.new(:from_file, :from_line, :to_fqn, :ref_type, keyword_init: true)
-
-      class SymbolVisitor < Prism::Visitor
-        attr_reader :symbols, :references
-
-        def initialize(file:, root:)
-          @file = file; @root = root
-          @symbols = []; @references = []; @scope = []
-        end
-
-        def visit_class_node(node)
-          name = const_name(node.constant_path)
-          fqn = qualified(name)
-          @symbols << Symbol.new(fqn:, type: :class, file: @file, line: node.location.start_line,
-                                 parent: node.superclass ? const_name(node.superclass) : "Object", includes: [])
-          @scope.push(name); super; @scope.pop
-        end
-
-        def visit_module_node(node)
-          name = const_name(node.constant_path)
-          fqn = qualified(name)
-          @symbols << Symbol.new(fqn:, type: :module, file: @file, line: node.location.start_line,
-                                 parent: nil, includes: [])
-          @scope.push(name); super; @scope.pop
-        end
-
-        def visit_def_node(node)
-          meth = node.name.to_s
-          owner = @scope.last || "(top)"
-          @symbols << Symbol.new(fqn: "#{qualified(owner)}##{meth}", type: :method, file: @file,
-                                 line: node.location.start_line, parent: owner, includes: [])
-          super
-        end
-
-        def visit_call_node(node)
-          method_name = node.name.to_s
-          return super unless method_name.match?(/\A[_a-z][a-z0-9_]*[!?]?\z/i) && method_name.length > 1
-          receiver_fqn = node.receiver ? const_name_safe(node.receiver) : nil
-          to_fqn = receiver_fqn ? "#{receiver_fqn}##{method_name}" : method_name
-          @references << Reference.new(from_file: @file, from_line: node.location.start_line,
-                                       to_fqn:, ref_type: :call)
-          super
-        end
-
-        private
-
-        def qualified(name)
-          return name if @scope.empty? || name.include?("::")
-          "#{@scope.join("::")}::#{name}"
-        end
-
-        def const_name(node)
-          case node
-          when Prism::ConstantReadNode then node.name.to_s
-          when Prism::ConstantPathNode, Prism::ConstantPathTargetNode
-            "#{const_name(node.parent)}::#{node.name}"
-          else node.respond_to?(:name) ? node.name.to_s : ""
-          end
-        end
-
-        def const_name_safe(node)
-          name = const_name(node)
-          name.empty? ? nil : name
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "code_index.const_name_safe")
-          nil
-        end
-      end
 
       SUMMARY_SKIP_NAMES = %w[Entry Message Symbol CircuitError].freeze
 
@@ -112,10 +46,21 @@ module Master
         self
       end
 
-      def ready?         = !@built_at.nil?
-      def wait_for_build = @build_thread&.join
-      def built?         = !@built_at.nil?
-      def size           = @lock.synchronize { @symbols.size }
+      def ready?
+        !@built_at.nil?
+      end
+
+      def wait_for_build
+        @build_thread&.join
+      end
+
+      def built?
+        !@built_at.nil?
+      end
+
+      def size
+        @lock.synchronize { @symbols.size }
+      end
 
       def reindex(file)
         @lock.synchronize do
@@ -147,7 +92,7 @@ module Master
           refs = references_for(fqn)
           files = refs.map(&:from_file).uniq.map { |f| relativize(f) }
           callers = refs.map { |r| "#{relativize(r.from_file)}:#{r.from_line}" }.uniq
-          { fqn:, reference_count: refs.size, files:, callers: }
+          { fqn: fqn, reference_count: refs.size, files: files, callers: callers }
         end
       end
 
@@ -159,7 +104,7 @@ module Master
           [
             "# Codebase: #{lib_count} lib symbols (indexed #{stamp})",
             "## Classes & Modules (#{classes.size})",
-            *classes
+            *classes,
           ].join("\n")
         end
       end
@@ -206,7 +151,6 @@ module Master
       def reindex_if_stale(file)
         mt = (File.mtime(file) rescue nil)
         return false if @mtimes[file] == mt
-        reindex(file)
         @mtimes[file] = mt
         true
       end
@@ -235,10 +179,8 @@ module Master
 
       def summary_class?(sym)
         return false unless %i[class module].include?(sym.type)
-        file = sym.file
-        return false if file.include?("/DEPLOY/") || file.match?(/fix_|patch_/)
-        fqn = sym.fqn
-        SUMMARY_SKIP_NAMES.none? { |n| fqn.end_with?("::#{n}") }
+        return false if sym.file.include?("/DEPLOY/") || sym.file.match?(/fix_|patch_/)
+        SUMMARY_SKIP_NAMES.none? { |n| sym.fqn.end_with?("::#{n}") }
       end
 
       def summary_classes
@@ -262,7 +204,7 @@ module Master
           file: relativize(sym.file),
           line: sym.line,
           parent: sym.parent,
-          used_in: refs.first(10).map { |r| "#{relativize(r.from_file)}:#{r.from_line}" }
+          used_in: refs.first(10).map { |r| "#{relativize(r.from_file)}:#{r.from_line}" },
         }
       end
 
@@ -271,7 +213,7 @@ module Master
         parse_result = Prism.parse(src)
         return unless parse_result.success?
 
-        visitor = SymbolVisitor.new(file:, root: @root)
+        visitor = SymbolVisitor.new(file: file, root: @root)
         parse_result.value.accept(visitor)
         visitor.symbols.each { |s| @symbols[s.fqn] = s }
         @references.concat(visitor.references)

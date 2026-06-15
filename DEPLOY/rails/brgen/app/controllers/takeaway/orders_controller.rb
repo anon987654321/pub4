@@ -43,6 +43,6 @@ class Takeaway::OrdersController < Takeaway::BaseController
 
   private
   def set_restaurant = (@restaurant = Takeaway::Restaurant.find(params[:restaurant_id]))
-  def order_params   = params.expect(:takeaway_order => [:delivery_address, :special_instructions])
+  def order_params   = params.require(:takeaway_order).permit(:delivery_address, :special_instructions)
   def item_params    = params.dig(:takeaway_order, :items) || {}
 end

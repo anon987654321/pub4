@@ -10,7 +10,7 @@
   <% if authenticated? %>
     <%= form_with url: community_comments_path do |f| %>
       <%= f.hidden_field :post_id, value: @post.id %>
-      <p><%= f.text_area :content, rows: 3, placeholder: "Comment…" %></p>
+      <p><%= f.text_area :content, rows: 3, placeholder: "Comment…", data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
       <p><%= f.submit "Comment" %></p>
     <% end %>
   <% end %>

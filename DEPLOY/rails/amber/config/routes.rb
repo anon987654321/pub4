@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  get "offline" => "rails/pwa#offline", as: :pwa_offline
+  post "share" => "items#share", as: :share_item
+
+  jobs_constraint = ->(request) { request.cookies["session_id"].present? }
+
   resource :registration, only: %i[new create]
 
   resource  :session
@@ -19,6 +24,7 @@ Rails.application.routes.draw do
       get :shopping_list
     end
   end
+  patch "drafts/:id", to: "drafts#update", as: :draft
 
   resources :outfits do
     collection { get :dressing_room }
@@ -26,6 +32,8 @@ Rails.application.routes.draw do
   end
 
   resources :planned_outfits, only: %i[index create destroy]
+
+  resources :wardrobe_items
 
   resources :posts, only: %i[index show new create destroy] do
     member { post :like }
@@ -64,14 +72,11 @@ Rails.application.routes.draw do
     get "pack", to: "ai#packing_list", as: :ai_packing_list
   end
 
-  resource :analytics, only: :show, controller: "analytics"
-  resource :style_evolution, only: :show, controller: "style_evolution"
-
-  post "share-target" => "share_targets#create", as: :share_target
-
   root "home#index"
-  get "offline" => "offline#show", as: :offline
-  get "manifest" => "pwa#manifest", as: :pwa_manifest
-  get "service-worker" => "pwa#service_worker", as: :pwa_service_worker
-  get "up", to: "health#show", as: :rails_health_check
+  constraints(jobs_constraint) do
+    mount SolidQueue::Engine, at: "/admin/jobs"
+  end
+  get 'manifest' => 'rails/pwa#manifest', as: :pwa_manifest
+  get 'service-worker' => 'rails/pwa#service_worker', as: :pwa_service_worker
+  get "up", to: "rails/health#show", as: :rails_health_check
 end

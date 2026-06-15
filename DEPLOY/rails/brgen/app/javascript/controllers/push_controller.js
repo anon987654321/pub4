@@ -1,13 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["badge"]
   static values = { vapidKey: String, subscribeUrl: String, unread: Number }
 
   async connect() {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return
-    this.observer = new MutationObserver(() => this.#syncBadge())
-    this.observer.observe(this.element, { childList: true, subtree: true, characterData: true })
     this.#syncBadge()
     const reg = await navigator.serviceWorker.ready
     const existing = await reg.pushManager.getSubscription()
@@ -21,13 +18,9 @@ export default class extends Controller {
   }
 
   #syncBadge() {
-    const n = Number(this.hasBadgeTarget ? this.badgeTarget.textContent.trim() : this.unreadValue)
+    const n = this.unreadValue
     if (n > 0) navigator.setAppBadge?.(n)
     else navigator.clearAppBadge?.()
-  }
-
-  disconnect() {
-    this.observer?.disconnect()
   }
 
   #prompt(reg) {

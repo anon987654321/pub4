@@ -11,7 +11,7 @@ module Master
         error_rate: { setpoint: 0.0, decay: 0.05 },
         novelty_hunger: { setpoint: 0.5, decay: 0.01 },
         fatigue: { setpoint: 0.0, decay: 0.03 },
-        satiety: { setpoint: 0.6, decay: 0.01 }
+        satiety: { setpoint: 0.6, decay: 0.01 },
       }.freeze
 
       EVENT_DELTAS = {
@@ -21,13 +21,13 @@ module Master
         tool_call: { fatigue: +0.01 },
         tool_failure: { error_rate: +0.08, fatigue: +0.02 },
         novel_task: { novelty_hunger: -0.20, energy: +0.03 },
-        idle_tick: {}
+        idle_tick: {},
       }.freeze
 
       # Thresholds for health predicates — cognitive error pressure + exhaustion signal.
       HEALTH_THRESHOLDS = {
         degraded: { error_rate: 0.25, fatigue: 0.6, energy: 0.35 },
-        critical: { error_rate: 0.50, fatigue: 0.8, energy: 0.20 }
+        critical: { error_rate: 0.50, fatigue: 0.8, energy: 0.20 },
       }.freeze
 
       def state = @mutex.synchronize { @state.dup }
@@ -64,7 +64,6 @@ module Master
 
       def degraded?
         return false if critical?
-        t = HEALTH_THRESHOLDS[:degraded]
         @state[:error_rate] >= t[:error_rate] ||
           @state[:fatigue] >= t[:fatigue] ||
           @state[:energy] <= t[:energy]
@@ -72,29 +71,23 @@ module Master
 
       def health_status
         return :critical if critical?
-        return :degraded if degraded?
         :healthy
       end
 
       def model_tier_bias
         return :cheap if @state[:error_rate] > 0.4 || @state[:fatigue] > 0.7
-        return :strong if @state[:novelty_hunger] > 0.7 && @state[:energy] > 0.5
         :default
       end
 
       def mood
         return :tense if @state[:error_rate] > 0.4
-        return :weary if @state[:fatigue] > 0.6 || @state[:energy] < 0.3
         return :curious if @state[:novelty_hunger] > 0.6
-        :focused
       end
 
       def circadian_phase
         h = Time.now.hour
         return :morning if (5..11).cover?(h)
-        return :afternoon if (12..17).cover?(h)
         return :evening if (18..22).cover?(h)
-        :night
       end
 
       def summary
@@ -112,7 +105,6 @@ module Master
       def publish_health_transition(snap)
         current = health_status
         return if current == @prev_health
-        @bus&.publish("system:health", status: current, previous: @prev_health, state: snap)
         @prev_health = current
       end
 

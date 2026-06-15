@@ -1,7 +1,8 @@
-<%= form_with model: [@blog, post] do |f| %>
+<% draft_key = "blognet-post-#{@blog.to_param}-#{post.slug.presence || 'new'}" %>
+<%= form_with(model: [@blog, post], data: { controller: "draft-store autosave reading-time", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
   <%= render "shared/errors", object: post %>
-  <p><%= f.label :title %><%= f.text_field :title, autofocus: true %></p>
-  <p><%= f.label :body %><%= f.rich_text_area :body %></p>
+  <p><%= f.label :title %><%= f.text_field :title, autofocus: true, data: { reading_time_source: true } %></p>
+  <p><%= f.label :body %><%= f.rich_text_area :body, data: { reading_time_source: true, controller: "char-counter", "char-counter-max-value": 10000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
   <p><%= f.label :published %><%= f.check_box :published %></p>
-  <p><%= f.submit %> <%= link_to "Cancel", blog_path(@blog) %></p>
+  <p><%= f.submit %> <%= link_to "Cancel", blog_path(@blog) %> <span class="dim" data-autosave-target="status" aria-live="polite"></span> <span class="dim" data-reading-time-target="output" aria-live="polite"></span></p>
 <% end %>

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class NotificationDeliveryJob < ApplicationJob
-  queue_as :default
+  queue_as :critical
 
   def perform(notification_id)
     notification = Notification.find(notification_id)

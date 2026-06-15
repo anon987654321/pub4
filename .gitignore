@@ -47,4 +47,10 @@ node_modules/
 
 # Repo-relative temp dir
 tmp/
-DEPLOY/rails/*/vendor/bundle/\nDEPLOY/rails/*/vendor/\n*.so\n
+DEPLOY/rails/*/vendor/bundle/
+DEPLOY/rails/*/vendor/
+*.so
+
+# Generated MASTER snapshots / runtime
+/snapshot.md
+.master/

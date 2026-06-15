@@ -1,0 +1,24 @@
+<% content_for :title, @show.title %>
+
+<div class="page-header">
+  <h1><%= @show.title %></h1>
+  <p class="dim"><%= @show.description %></p>
+</div>
+
+<h2>Episodes</h2>
+<% if @episodes.any? %>
+  <ul class="list">
+    <% @episodes.each do |ep| %>
+      <li>
+        <%= link_to tv_channel_show_episode_path(@channel, @show, ep.number), class: "episode-link" do %>
+          <strong>Episode <%= ep.number %>: <%= ep.title %></strong>
+          <% if ep.video %>
+            <span class="chip"><%= ep.video.duration_formatted %></span>
+          <% end %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="dim">No episodes yet.</p>
+<% end %>

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "builder/boot_phases"
+require_relative "builder/ai_boot"
+require_relative "loop/rollback"
+require_relative "trace/feedback_ledger"
 
 module Master
   module Builder
@@ -42,7 +46,7 @@ module Master
       "FeedbackRecord" => ->(r, i) { Reach::FeedbackRecord.new(learnings: i[:learnings]) },
       "MemoryRecord" => ->(r, i) {
         Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus])
-      }
+      },
     }.freeze
 
     module_function
@@ -51,7 +55,7 @@ module Master
       Master.configure_providers!
       infra = build_infrastructure(root)
       ai    = build_ai(root, infra)
-      pipeline, gateway = build_pipeline(root, infra, ai)
+      pipeline, gateway = build_pipeline(root: root, infra: infra, ai: ai)
       infra.merge(ai).merge(pipeline:, gateway:, root:)
     end
 
@@ -78,6 +82,7 @@ module Master
       renderer = Voice::Renderer.new(config:)
       code_index = Judge::CodeIndex.new(root:, event_bus: bus)
       code_index.build_async
+      reference_graph = Judge::ReferenceGraph.new(root:, event_bus: bus)
       ecology = Judge::RepoEcology.new(root:, event_bus: bus, code_index:)
       bus.subscribe("tool:after") do |ev|
         next unless ev[:path] && MUTATING_TOOLS.include?(ev[:tool].to_s)
@@ -93,158 +98,43 @@ module Master
         Ground::Swallow.log(e, context: "builder.pressure_engine", event_bus: bus)
       end
 
-      { config:, boot_config:, renderer:, code_index:, ecology:, diag:, pressure: }
+      { config:, boot_config:, renderer:, code_index:, reference_graph:, ecology:, diag:, pressure: }
         .merge(trace).merge(loop_c).merge(reach).merge(ground)
     end
 
     def boot_trace(root:, config:)
-      event_log = Trace::EventLog.new(root:)
-      bus = Trace::EventBus.new(event_log:)
-      ring = Trace::RingBuffer.new(RING_SIZE)
-      logging = Trace::Logging.new(ring_buffer: ring, event_bus: bus)
-      session = Trace::Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
-      undo = Trace::Undo.new(session:, event_bus: bus, root:)
-      metrics = Trace::Metrics.new(root:, event_bus: bus)
-      Trace::AuditLog.new(root:, event_bus: bus)
-      Trace::SwallowLedger.new(event_bus: bus, root:).attach
-      recorder = Trace::Recorder.new(root:, event_bus: bus)
-      { event_log:, bus:, ring:, logging:, session:, undo:, metrics:, trace: recorder }
+      TraceBoot.new(root: root, config: config).call
     end
 
     def boot_loop(root:, config:, bus:)
-      homeostat = Loop::Homeostat.new(event_bus: bus)
-      governor = Loop::Governor.new(config:, event_bus: bus)
-      diff_stager = config["staging_enabled"] ? Loop::DiffStager.new(root:, event_bus: bus) : nil
-      phase_gates = Ground::PhaseGates.new(root:, event_bus: bus)
-      { homeostat:, governor:, diff_stager:, phase_gates: }
+      LoopBoot.new(root: root, config: config, bus: bus).call
     end
 
     def boot_reach(root:, config:, bus:)
-      breaker = Reach::CircuitBreakerRegistry.new(budget_max: config.budget_max, req_max: config.req_max, event_bus: bus)
-      cache = Reach::SemanticCache.new(root:, ttl: config["cache_ttl"], event_bus: bus)
-      mcp = Reach::McpCoordinator.new(root:, event_bus: bus)
-      mcp.connect_all
-      { breaker:, cache:, mcp: }
+      ReachBoot.new(root: root, config: config, bus: bus).call
     end
 
     def boot_ground(root:, config:, homeostat:)
-      memory = Ground::Memory.new(root:)
-      personality = Voice::Personality.new(config["persona"]&.to_sym || Voice::Personality::DEFAULT, root:, homeostat:)
-      learnings = Ground::KnowledgeStore.new(root:)
-      { memory:, personality:, learnings: }
-    end
-
-    def build_ai(root, infra)
-      bus = infra[:bus]
-      tools = build_tools(root:, infra:) + infra[:mcp].tools
-      deps = Judge::Agent::Dependencies.from_kwargs(
-        config: infra[:config], session: infra[:session], tools:,
-        circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus,
-        model_router: Now::Routing::ModelRouter.new(config: infra[:config]),
-        reasoning_modes: Judge::Modes.new,
-        memory: infra[:memory], personality: infra[:personality],
-        code_index: infra[:code_index], homeostat: infra[:homeostat]
-      )
-      agent = Judge::Agent.new(deps:)
-      soul_doc = Voice::Soul.new(root:, agent:)
-      tools << Reach::AskLlm.new(agent:, governor: infra[:governor],
-        circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
-      ctx = Now::ContextWindow.new(session: infra[:session], agent:, model_context: Master::CTX_WINDOW_SIZE)
-      ctx.check_and_compact!
-      agent.wire_context_window(ctx)
-      agent.wire_constitution(Ground::Constitution.new)
-      ecology = infra[:ecology]
-      scanner = build_scanner(root:, agent:, bus:, ecology:)
-      swarm = Judge::Swarm::Coordinator.new(agent:, event_bus: bus)
-      personas = Judge::Council::Personas.load(File.join(Master::ROOT, "data", "council.yml"))
-      axioms = Ground::Rules.new(root:)
-      deliberation = Judge::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
-      ideation = Judge::Council::Ideation.new(agent:, event_bus: bus)
-      council_stage = Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus)
-      guard = Judge::Security::InjectionGuard.new
-      autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms:)
-        .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
-      autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
-      { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard: }.merge(autonomous)
-    end
-
-    def build_scanner(root:, agent: nil, bus: nil, ecology: nil)
-      Judge::Scan::RuleDSL
-      wf = Master.load_yaml(File.join(root, "data", "workflow.yml")) rescue {}
-      sleep_s = wf.dig("autoloop", "scan_file_sleep_s").to_f
-      scanner = Judge::Scan::Scanner.new(event_bus: bus, file_sleep_s: sleep_s)
-      Judge::Scan::Rule.registry.select(&:auto_build?).each { |k| scanner.add_rule(k.new) }
-      scanner.add_rule(Judge::Scan::Rules::CoChangeCouplingRule.new(root:, ecology:))
-      scanner.add_rule(Judge::Scan::Rules::RuleCoverageRule.new(root:))
-      scanner.add_rule(Judge::Scan::Rules::RubocopRule.new(root:))
-      scanner.add_rule(Judge::Scan::Rules::ReekRule.new(root:))
-      scanner.add_rule(Judge::Scan::Rules::InterconnectRule.new(root:))
-      scanner.add_rule(Judge::Scan::Rules::SemanticRule.new(agent:))
-      scanner.add_rule(Judge::Scan::Rules::AdversarialRule.new(agent:))
-      scanner.add_rule(Judge::Scan::Rules::CommentDriftRule.new(agent:))
-      scanner.add_rule(Judge::Scan::Rules::AstOmissionRule.new(root:))
-      scanner
-    end
-
-    def boot_autonomous(root:, infra:, agent:, scanner:, axioms: nil)
-      bus = infra[:bus]
-      standing = Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
-      git = Reach::GitOperations.new(root)
-      rules = scanner.instance_variable_get(:@rules)
-      learnings = infra[:learnings]
-
-      # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
-      fix_loop = Loop::FixLoop.new(rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:)
-      if ENV["MASTER_AUTOFIX"] == "1"
-        fix_loop.start_background!(root)
-      end
-
-      # MASTER_WATCH=1 enables reactive file-watching (requires rb-kqueue or rb-inotify).
-      watch_loop = if ENV["MASTER_WATCH"] == "1"
-                     wl = Loop::WatchLoop.new(rules:, agent:, scanner:, root:, bus:, learnings:)
-        Thread.new { wl.run }.tap { |t| t.abort_on_exception = false }
-        wl
-      end
-
-      heartbeat = Loop::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory],
-        event_bus: bus, homeostat: infra[:homeostat])
-      triggers = Trace::Triggers.new(event_bus: bus, scanner:, agent:)
-      triggers.install_defaults!
-
-      propose_tree = Loop::ProposeTree.new(root:, agent:, event_bus: bus)
-      bus.subscribe("fix_loop:clean") { Thread.new { propose_tree.call } }
-      bus.subscribe("fix_loop:plateau") { Thread.new { propose_tree.call } }
-
-      # MASTER_WATCHER=0 disables the OpenBSD load watcher; on by default.
-      watcher = Loop::Watcher.new(bus:, root:)
-      if ENV["MASTER_WATCHER"] != "0"
-        Thread.new { watcher.run_forever }.tap { |t| t.abort_on_exception = false }
-      end
-      bus.subscribe("system:crit") { Thread.new { fix_loop.stop_background! if fix_loop.background_alive? } }
-      bus.subscribe("self_violation") { |payload| fix_loop.halt!(reason: "self_violation #{payload[:violations]} violations") }
-
-      { standing:, fix_loop:, watch_loop:, heartbeat:, triggers:, propose_tree:, watcher: }
-    end
-
-    def boot_skills(root, bus)
-      skills = Now::Skills.new(root:, event_bus: bus)
-      skills.discover!
-      skills
+      GroundBoot.new(root: root, config: config, homeostat: homeostat).call
     end
 
     def build_tools(root:, infra:)
       path = File.join(root, "data", "tools.yml")
       defs = Master.load_yaml(path)
       return [] unless defs.is_a?(Array)
+
       defs.filter_map do |defn|
         next unless defn["default"] == true
         factory = TOOL_MAP[defn["name"].to_s]
-        next infra[:bus]&.publish("builder:tool_skipped", tool: defn["name"]) unless factory
+        unless factory
+          infra[:bus]&.publish("builder:tool_skipped", tool: defn["name"])
+          next
+        end
         factory.call(root, infra)
       end
     end
 
-    def build_pipeline(root, infra, ai)
+    def build_pipeline(root:, infra:, ai:)
       config = infra[:config]
       bus = infra[:bus]
       commands = Now::CommandRegistry.build(infra:, ai:, root:)
@@ -261,7 +151,7 @@ module Master
           bus:
         ),
         Now::Stages::Memory.new(memory: infra[:memory], event_bus: bus),
-        Now::Stages::Render.new(renderer: infra[:renderer])
+        Now::Stages::Render.new(renderer: infra[:renderer]),
       ]
       pipeline = Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:, scanner: ai[:scanner])
       ai[:standing].wire_pipeline(pipeline)
@@ -276,6 +166,12 @@ module Master
         .select { |f| File.file?(f) && File.size(f) < SNAPSHOT_MAX_BYTES }
         .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
         .sort
+      out = File.join(root, ".master", "snapshot.md")
+      public_out = File.join(root, "snapshot.md")
+      if snapshot_current?(files, out, public_out)
+        container[:bus]&.publish("boot:snapshot_skipped", files: files.size)
+        return
+      end
       body = files.flat_map do |f|
         rel = f.delete_prefix("#{root}/")
         lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
@@ -286,14 +182,36 @@ module Master
         []
       end
       header = ["# MASTER Snapshot", "Generated: #{Time.now.utc.iso8601}", "Files: #{files.size}", ""]
-      content = (header + body).join("\n")
-      out = File.join(root, ".master", "snapshot.md")
+      root_snapshots = snapshot_artifacts(root)
+      content = (header + root_snapshots + body).join("\n")
       FileUtils.mkdir_p(File.dirname(out))
       File.write(out, content)
-      File.write(File.join(root, "snapshot.md"), content)
+      File.write(public_out, content)
       container[:bus]&.publish("boot:snapshot", files: files.size)
     rescue StandardError => e
       container[:bus]&.publish("boot:snapshot_error", error: e.message)
+    end
+
+    def snapshot_artifacts(root)
+      paths = %w[MASTER_snapshot.md DEPLOY_snapshot.md].filter_map do |name|
+        path = File.join(root, name)
+        next unless File.file?(path)
+        "- `#{name}` (#{File.size(path)} bytes, updated #{File.mtime(path).utc.iso8601})"
+      end
+      return [] if paths.empty?
+
+      ["## Root snapshot artifacts", *paths, ""]
+    end
+
+    def snapshot_current?(files, *outputs)
+      return false if files.empty?
+      return false unless outputs.all? { |path| File.exist?(path) }
+
+      newest_source = files.map { |path| File.mtime(path) }.max
+      oldest_output = outputs.map { |path| File.mtime(path) }.min
+      oldest_output >= newest_source
+    rescue StandardError
+      false
     end
   end
 end

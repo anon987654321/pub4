@@ -9,7 +9,7 @@
 <% end %>
 
 <%= form_with model: @message, url: conversation_messages_path(@conversation), id: "new_message" do |f| %>
-  <p><%= f.text_area :content, rows: 4, placeholder: "Message..." %></p>
+  <p><%= f.text_area :content, rows: 4, placeholder: "Message...", data: { controller: "char-counter", "char-counter-max-value": 500 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
   <%= f.hidden_field :message_type, value: "text" %>
   <p><%= f.submit "Send" %></p>
 <% end %>

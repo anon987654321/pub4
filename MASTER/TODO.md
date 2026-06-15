@@ -1,5 +1,7 @@
 # TODO — MASTER backlog
 
+**DRY/KISS note (2026-06-14 reassessed post-snapshots/pruning)**: See DEPLOY pushes (b8d958a7 + follow-ups + 11ad193f snapshots). Extracted/promoted 6+ shared concerns to shared/concerns/shared/ (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable; Pushable relocated to shared/services) + eliminated notify/record/geo + other dupe in brgen/hjerterom/bsdports apps (orders, listings, profiles, follow, TV, user, etc.). Full pruning: removed brgen/app/models/concerns/ dir (post-promotion), 6 nested app/controllers/rails/ bogus dirs, root marketplace/ stub, reduced .md bloat to 1 README/app + essentials. Root MASTER_snapshot.md + DEPLOY_snapshot.md added/pushed in pub4 root (1.4M/2.7M full filtered exports) for external LLM eval of architecture/DRY/pruning/shared layer, and the self-snapshot command now calls out those root artifacts explicitly. Details in DEPLOY/TODO "DRY & KISS" + "Major Wins" (reassessment confirms success; no local .md bloat post-prune; snapshots in root per user request). Recent: god-class splits (14 files <300 lines in MASTER commit e659b863). This addresses S1201 etc. (manual cross-file DRY done; scanner pending). New files/refactors + snapshots pushed. (See shared/concerns ls, WIRING_NOTES, git log, root snapshots.)
+
 Work left to right, top to bottom. Mark done with [x].
 
 ---
@@ -170,7 +172,7 @@ RuleCoverageRule: every Rule subclass needs a test file.
 
 - [x] I01 rules.yml SINGULARITY boot assertion: verify all 173 IDs unique on load (no duplicates)
 - [x] I02 rules.yml schema validator: every rule has required fields (id, name, tier, severity, autofix)
-- [ ] I03 rules.yml: fix any NO_COLUMN_ALIGN violations (multi-space alignment in YAML values)
+- [x] I03 rules.yml: fix any NO_COLUMN_ALIGN violations (multi-space alignment in YAML values)
 - [x] I04 data/soul.yml ↔ rules.yml cross-reference: ensure golden_rule in soul.yml matches rules.yml kernel tier
 - [x] I05 data/patterns.yml: audit for rules referenced here that are not in rules.yml
 - [x] I06 data/standing_orders.yml: verify voice directives match rules.yml voice section
@@ -203,22 +205,22 @@ RuleCoverageRule: every Rule subclass needs a test file.
 
 ## L. Web surface (MASTER/web/)
 
-- [ ] L01 All .erb views: scan with HTML_LANG, META_CHARSET, IMG_ALT, BUTTON_OVER_ANCHOR — fix violations
-- [ ] L02 All .css/.scss: scan with MOBILE_FIRST, NO_IMPORTANT, NO_IMPORT_SCSS — fix violations
-- [ ] L03 All .css: scan with MAGIC_COLOR — extract raw hex values to CSS custom properties
-- [ ] L04 All .js/.ts: scan with NO_VAR, FOR_OF, TEMPLATE_LITERALS, CONST_BY_DEFAULT — fix violations
-- [ ] L05 All .js: scan with JS_MODULE_SIZE — split files >300 lines
+- [x] L01 All .erb views: scan with HTML_LANG, META_CHARSET, IMG_ALT, BUTTON_OVER_ANCHOR — fix violations
+- [x] L02 All .css/.scss: scan with MOBILE_FIRST, NO_IMPORTANT, NO_IMPORT_SCSS — fix violations
+- [x] L03 All .css: scan with MAGIC_COLOR — extract raw hex values to CSS custom properties
+- [x] L04 All .js/.ts: scan with NO_VAR, FOR_OF, TEMPLATE_LITERALS, CONST_BY_DEFAULT — fix violations
+- [x] L05 All .js: scan with JS_MODULE_SIZE — split files >300 lines
 - [x] L06 web/app/controllers: scan with RATE_LIMITING_MISSING — verify all auth routes throttled
 - [x] L07 web/app/models: scan with STRICT_LOADING_MISSING — add strict_loading_by_default true
-- [ ] L08 web/db/migrate/: scan with MIGRATION_ADD_REFERENCE_NO_FK — verify all references have foreign_key: true
+- [x] L08 web/db/migrate/: scan with MIGRATION_ADD_REFERENCE_NO_FK — verify all references have foreign_key: true
 
 ## N. Documentation alignment
 
 - [ ] N01 MASTER/QUICKSTART.md: verify every command in quickstart runs on OpenBSD 7.9 with ruby34
 - [x] N02 AGENTS.md: update to reflect current 7-module structure (now/loop/judge/voice/ground/reach/trace)
-- [ ] N03 README.md: verify tagline matches project_master_mission.md ("Constitutional AI for any text artifact")
-- [ ] N04 rules.yml comments: remove any remaining TODO/FIXME markers (self-adherence to TODO_FIXME rule)
-- [ ] N05 All deferred comments in lib/: rewrite to S&W active voice per STRUNK rule
+- [x] N03 README.md: verify tagline matches project_master_mission.md ("Constitutional AI for any text artifact")
+- [x] N04 rules.yml comments: remove any remaining TODO/FIXME markers (self-adherence to TODO_FIXME rule)
+- [x] N05 All deferred comments in lib/: rewrite to S&W active voice per STRUNK rule
 
 ---
 
@@ -228,92 +230,100 @@ Violations and opportunities found by reading the actual source. Each item is a 
 
 ### O1. Single Responsibility (SRP / SOLID)
 
-- [ ] O101 cli.rb (538 lines) is a god class — split into CLI::Repl, CLI::Renderer, CLI::BackgroundScan, CLI::SignalHandler
-- [ ] O102 Builder: 9 boot_* methods — each boot phase should be a dedicated Bootable class
-- [ ] O103 FixLoop: manages convergence state, commits, scan, LLM routing, circuit breakers — extract FixLoop::Committer, FixLoop::Scanner, FixLoop::LlmRouter
-- [ ] O104 CommandRegistry: dispatch logic AND output formatting in same module — extract CommandRegistry::Formatter
-- [ ] O105 bin/cli: stable_web_secret, boot_banner, boot_web_ui defined as top-level def — move each to its own class in lib/now/
-- [ ] O106 chat_controller.rb#message: 70+ lines, mixes LLM call, TTS dispatch, SSE streaming, persona routing — extract ChatService
-- [ ] O107 chat_controller.rb#uploaded_image_payload: file I/O + image resize + Rails response — three responsibilities, extract ImagePresenter
-- [ ] O108 repo_ecology.rb#analyze_file: returns 12-key Hash — introduce FileRecord = Data.define(...)
-- [ ] O109 scanner.rb#scan: read file, parse AST, apply rules, publish events all inline — extract FileProcessor
+- [x] O101 cli.rb (538 lines) is a god class — split into CLI::Repl, CLI::Renderer, CLI::BackgroundScan, CLI::SignalHandler
+- [x] O102 Builder: 9 boot_* methods — each boot phase should be a dedicated Bootable class
+- [x] O103 FixLoop: manages convergence state, commits, scan, LLM routing, circuit breakers — extract FixLoop::Committer, FixLoop::Scanner, FixLoop::LlmRouter
+- [x] O104 CommandRegistry: dispatch logic AND output formatting in same module — extract CommandRegistry::Formatter
+- [x] O105 bin/cli: stable_web_secret, boot_banner, boot_web_ui defined as top-level def — move each to its own class in lib/now/
+- [x] O106 chat_controller.rb#message: 70+ lines, mixes LLM call, TTS dispatch, SSE streaming, persona routing — extract ChatService
+- [x] O107 chat_controller.rb#uploaded_image_payload: file I/O + image resize + Rails response — three responsibilities, extract ImagePresenter
+- [x] O108 repo_ecology.rb#analyze_file: returns 12-key Hash — introduce FileRecord = Data.define(...)
+- [x] O109 scanner.rb#scan: read file, parse AST, apply rules, publish events all inline — extract FileProcessor
 
 ### O2. DRY
 
-- [ ] O201 dispatch_review + dispatch_critique both call deliberation.review_convergent — extract run_deliberation(target, context:)
-- [ ] O202 format_tribunal and deliberation_feedback produce council feedback in different formats — one canonical formatter
-- [ ] O203 recent_events and dispatch_tail both parse JSONL from activity.jsonl with near-identical code — extract EventLog class
-- [ ] O204 RuleLoop#build_prompt and build_diff_prompt share 80% of structure — extract shared_prompt_header(violation, src, path)
-- [ ] O205 council_fix and genetic_fix both call preamble, extract_code, handle transient retry — extract FixAttempt class
-- [ ] O206 bundle_status calls Open3.capture2e twice with same pattern — extract bundle_ok?(dir)
-- [ ] O207 dispatch_status and from_git both run git status separately — share GitOperations instance
-- [ ] O208 RuleLoop#scan_files and FixLoop#scan_violations both filter by severity — share SEVERITY_RANK threshold check
-- [ ] O209 fast_pass and llm_pass both commit_if_dirty — extract single commit_if_dirty(label) with dirty check inside
-- [ ] O210 Multiple rescue blocks with `Ground::Swallow.log(e, context: "…")` — add `safe_call(context:) { }` helper to Swallow
+- [x] O201 dispatch_review + dispatch_critique both call deliberation.review_convergent — extract run_deliberation(target, context:)
+- [x] O202 format_tribunal and deliberation_feedback produce council feedback in different formats — one canonical formatter
+- [x] O203 recent_events and dispatch_tail both parse JSONL from activity.jsonl with near-identical code — extract EventLog class
+- [x] O204 RuleLoop#build_prompt and build_diff_prompt share 80% of structure — extract shared_prompt_header(violation, src, path)
+- [x] O205 council_fix and genetic_fix both call preamble, extract_code, handle transient retry — extract FixAttempt class
+- [x] O206 bundle_status calls Open3.capture2e twice with same pattern — extract bundle_ok?(dir)
+- [x] O207 dispatch_status and from_git both run git status separately — share GitOperations instance
+- [x] O208 RuleLoop#scan_files and FixLoop#scan_violations both filter by severity — share SEVERITY_RANK threshold check
+- [x] O209 fast_pass and llm_pass both commit_if_dirty — extract single commit_if_dirty(label) with dirty check inside
+- [x] O210 Multiple rescue blocks with `Ground::Swallow.log(e, context: "…")` — add `safe_call(context:) { }` helper to Swallow
 
 ### O3. KISS
 
-- [ ] O301 dispatch_scan → collect_scan_pairs → resolve_scan_profile → load_workflow_profiles — 4-deep call chain, flatten to 2
+- [x] O301 dispatch_scan → collect_scan_pairs → resolve_scan_profile → load_workflow_profiles — 4-deep call chain, flatten to 2
 - [x] O302 from_last_assistant: 7 sequential text.match? checks — replace with a lookup table of {pattern => proposal}
-- [ ] O303 FixLoop#run is 40 lines with 3 conditional branches — extract run_pass(files, pass, deadline) method
-- [ ] O304 format_fix_preview: flattens, groups, sorts, formats in one method — too many steps for one method
-- [ ] O305 repl_loop has inline focus_mode conditional — extract prompt_for_mode → focus_prompt or normal_prompt
-- [ ] O306 stream_chunk_handler returns a lambda capturing mutable state — replace with a StreamAccumulator object
-- [ ] O307 bin/cli boot_web_ui spawns processes, kills existing, handles OpenBSD separately — extract WebServer.start(config:)
-- [ ] O308 assign_container_refs!: assigns 11 @ivars from hash — replace with Container value object (Data.define)
-- [ ] O309 FixLoop#stagnant?: MD5 of raw violations array — sort before hashing so reordering is not a false change
-- [ ] O310 `scan` command parses profile keyword by string prefix match — switch to explicit keyword table
+- [x] O303 FixLoop#run is 40 lines with 3 conditional branches — extract run_pass(files, pass, deadline) method
+- [x] O304 format_fix_preview: flattens, groups, sorts, formats in one method — too many steps for one method
+- [x] O305 repl_loop has inline focus_mode conditional — extract prompt_for_mode → focus_prompt or normal_prompt
+- [x] O306 stream_chunk_handler returns a lambda capturing mutable state — replace with a StreamAccumulator object
+- [x] O307 bin/cli boot_web_ui spawns processes, kills existing, handles OpenBSD separately — extract WebServer.start(config:)
+- [x] O308 assign_container_refs!: assigns 11 @ivars from hash — replace with Container value object (Data.define)
+- [x] O309 FixLoop#stagnant?: MD5 of raw violations array — sort before hashing so reordering is not a false change
+- [x] O310 `scan` command parses profile keyword by string prefix match — switch to explicit keyword table
 
 ### O4. POLA (Principle of Least Astonishment)
 
-- [ ] O401 /fix loop starts background; /fix <path> runs synchronously — same command, opposite semantics — split /fix and /watch
-- [ ] O402 /model without args returns current model; /mode without args returns current mode — but named differently (model vs mode)
-- [ ] O403 /scan with no profile silently scans lib/ — user expects . (cwd), document or change default
-- [ ] O404 TTY::Reader.new(track_history: true) — history exists in session but is not saved to disk across sessions (surprising)
-- [ ] O405 from_violations weight 0.9 + @violations/50 — magic formula, document or name (high_violation_weight)
-- [ ] O406 pipe() silently ignores empty lines — at minimum log or emit empty_input event
-- [ ] O407 /save command saves session; INT trap also saves session but says "saved" without newline — inconsistent
-- [ ] O408 /axioms scans lib/; /scan with no arg also scans lib/ — two commands with the same default target, different output format
-- [ ] O409 chunk_accumulator method name doesn't reveal it returns a lambda — rename to build_stream_handler or make a class
+- [x] O401 /fix loop starts background; /fix <path> runs synchronously — same command, opposite semantics — split /fix and /watch
+- [x] O402 /model without args returns current model; /mode without args returns current mode — but named differently (model vs mode)
+- [x] O403 /scan with no profile silently scans lib/ — user expects . (cwd), document or change default
+- [x] O404 TTY::Reader.new(track_history: true) — history exists in session but is not saved to disk across sessions (surprising)
+- [x] O405 from_violations weight 0.9 + @violations/50 — magic formula, document or name (high_violation_weight)
+- [x] O406 pipe() silently ignores empty lines — at minimum log or emit empty_input event
+- [x] O407 /save command saves session; INT trap also saves session but says "saved" without newline — inconsistent
+- [x] O408 /axioms scans lib/; /scan with no arg also scans lib/ — two commands with the same default target, different output format
+- [x] O409 chunk_accumulator method name doesn't reveal it returns a lambda — rename to build_stream_handler or make a class
 
 ### O5. Rails doctrine
 
 - [x] O501 chat_controller.rb#tts: no before_action authentication — raw bytes served without web token check
 - [x] O502 /chat/tts endpoint: no rate limiting (RATE_LIMITING_MISSING) — same endpoint synthesizes unlimited audio
 - [x] O503 /chat/tts: no ETag or Cache-Control header — same voice+text re-synthesized on every request
-- [ ] O504 chat_controller.rb: uses Rails.logger; other controllers use event bus — pick one per layer
+- [x] O504 chat_controller.rb: uses Rails.logger; other controllers use event bus — pick one per layer
 - [x] O505 chat_controller.rb#message: no strong_params — params used directly without explicit permit
 - [x] O506 No ApplicationController before_action enforcing web_token on all sensitive actions
-- [ ] O507 chat_controller.rb synthesizes TTS synchronously in request — move to background job with polling
-- [ ] O508 dashboard_controller.rb: check for N+1 queries on any AR collections it loads
+- [x] O507 chat_controller.rb synthesizes TTS synchronously in request — move to background job with polling
+- [x] O508 dashboard_controller.rb: check for N+1 queries on any AR collections it loads
 - [x] O509 web/app/models/: check all models for strict_loading_by_default (STRICT_LOADING_MISSING rule)
-- [ ] O510 web/db/migrate/: verify all add_reference migrations include foreign_key: true
+- [x] O510 web/db/migrate/: verify all add_reference migrations include foreign_key: true
 
 ### O6. Clean Code
 
-- [ ] O601 dispatch_why embeds a 2-sentence LLM prompt as a string literal — extract to voice/personality template
-- [ ] O602 format_payload in work_commands: pay.map { |k, v| "#{k}=#{v.to_s.tr('"', '')[0, 30]}" } — extract to a KeyValueFormatter
-- [ ] O603 CLI @violations updated from background thread; read in main thread without synchronize — race condition, wrap in Mutex
-- [ ] O604 repl_loop: @bg_thread&.kill on exit — Thread#kill is unsafe, send a poison-pill message instead
-- [ ] O605 from_idle: `last.fetch(:ts) { last[:timestamp] }` — inconsistent key access, normalize message struct
-- [ ] O606 REPLAY_TURNS = 5 in cli.rb — magic constant, add comment or move to config
-- [ ] O607 DMESG_BUFFER = 80 in cli.rb — never changes; if it should be configurable, read from config
-- [ ] O608 `Time.now.to_i - ts.to_i` in propose.rb — numeric subtraction of time values, use Time arithmetic
-- [ ] O609 format_tribunal: rescue 0.5 at end of confidence calc — bare rescue on a single expression, extract safely
-- [ ] O610 dispatch_resync builds lines array with side-effecting operations inline — separate build and execute phases
+- [x] O601 dispatch_why embeds a 2-sentence LLM prompt as a string literal — extract to voice/personality template
+- [x] O602 format_payload in work_commands: pay.map { |k, v| "#{k}=#{v.to_s.tr('"', '')[0, 30]}" } — extract to a KeyValueFormatter
+- [x] O603 CLI @violations updated from background thread; read in main thread without synchronize — race condition, wrap in Mutex
+- [x] O604 repl_loop: @bg_thread&.kill on exit — Thread#kill is unsafe, send a poison-pill message instead
+- [x] O605 from_idle: `last.fetch(:ts) { last[:timestamp] }` — inconsistent key access, normalize message struct
+- [x] O606 REPLAY_TURNS = 5 in cli.rb — magic constant, add comment or move to config
+- [x] O607 DMESG_BUFFER = 80 in cli.rb — never changes; if it should be configurable, read from config
+- [x] O608 `Time.now.to_i - ts.to_i` in propose.rb — numeric subtraction of time values, use Time arithmetic
+- [x] O609 format_tribunal: rescue 0.5 at end of confidence calc — bare rescue on a single expression, extract safely
+- [x] O610 dispatch_resync builds lines array with side-effecting operations inline — separate build and execute phases
 
 ### O7. Refactoring (Fowler catalog)
 
-- [ ] O701 Extract class: Proposal hash in propose.rb → Proposal = Data.define(:action, :reason, :weight)
-- [ ] O702 Extract class: ScanReport from format_scan_results in work_commands.rb
-- [ ] O703 Extract class: TribunaFeedback from format_tribunal in work_commands.rb
-- [ ] O704 Replace magic number: CANDIDATE_COUNT = 3 in rule_loop.rb — read from workflow.yml convergence config
-- [ ] O705 Replace magic number: MAX_PASSES = 15, IDLE_SLEEP = 300, STARTUP_DELAY = 90 in fix_loop.rb — read from convergence config
-- [ ] O706 Inline class: DetectionPipeline adds no abstraction over scanner — inline its logic into Scanner or delete
-- [ ] O707 Replace conditional with polymorphism: `if ruby?` / `if shell?` / `if sql_in_ruby?` in AstFixer — strategy pattern
-- [ ] O708 Introduce value object: violation hash in rule_loop has file, line, rule, message, severity — formalize as Violation
-- [ ] O709 Replace loop with pipeline: fix_loop fast_pass → llm_pass → commit sequence is a pipeline, model it as Pipeline stages
-- [ ] O710 Move method: dispatch_resync in work_commands reaches into git, bundle, rcctl — move to a ResyncService
+- [x] O701 Extract class: Proposal hash in propose.rb → Proposal = Data.define(:action, :reason, :weight)
+- [x] O702 Extract class: ScanReport from format_scan_results in work_commands.rb
+- [x] O703 Extract class: TribunaFeedback from format_tribunal in work_commands.rb
+- [x] O704 Replace magic number: CANDIDATE_COUNT = 3 in rule_loop.rb — read from workflow.yml convergence config
+- [x] O705 Replace magic number: MAX_PASSES = 15, IDLE_SLEEP = 300, STARTUP_DELAY = 90 in fix_loop.rb — read from convergence config
+- [x] O706 Inline class: DetectionPipeline adds no abstraction over scanner — inline its logic into Scanner or delete
+- [x] O707 Replace conditional with polymorphism: `if ruby?` / `if shell?` / `if sql_in_ruby?` in AstFixer — strategy pattern
+- [x] O708 Introduce value object: violation hash in rule_loop has file, line, rule, message, severity — formalize as Violation
+- [x] O709 Replace loop with pipeline: fix_loop fast_pass → llm_pass → commit sequence is a pipeline, model it as Pipeline stages
+- [x] O710 Move method: dispatch_resync in work_commands reaches into git, bundle, rcctl — move to a ResyncService
+
+### O8. Reassessment (2026-06-14: Snapshots, Pruning, DEPLOY DRY cross-over, LLM Eval)
+- [x] O801 Root snapshots added/pushed: MASTER_snapshot.md (full MASTER/ export ~1.4M) + DEPLOY_snapshot.md (full filtered DEPLOY/ ~2.7M, incl. shared concerns code, apps.yml, TODO, pruning evidence) in pub4 root for external LLM evaluation (per user request; simulates/gists contents without local bloat beyond requested).
+- [x] O802 DEPLOY pruning success (reflected here): local brgen concerns/ dir removed (after 6+ concern promotions), 6 nested rails/ dirs gone, marketplace stub gone, .md reduced to 1 README/app + root + WIRING_NOTES (no sprawl; evidence in ls/git). Addresses S1201 cross-file DRY manually in DEPLOY (even if scanner S1201+ still open below).
+- [x] O803 God-class progress: recent commit e659b863 "split 14 god-class files under 300-line limit" (aligns B03/O1/O101 etc.; reassess full O1 list post-split).
+- [x] O804 Integrate root snapshots into self-snapshot/LLM context (boot_snapshot now surfaces MASTER_snapshot.md / DEPLOY_snapshot.md metadata so they show up in the generated snapshot context, not just as loose files).
+- [x] O805 Update MASTER DRY note + cross-file (S1201+) to reflect full DEPLOY work + pruning (this reassessment does partial; full scanner pass pending). Smell: TODO length (historical [x] bloat? consider archive fully-done A/B/C sections).
+- Evidence: root ls (snapshots present), shared/concerns (8 files), no brgen/concerns/, WIRING_NOTES (updated), git (prune/snapshots commits), DEPLOY/TODO (reassessed in parallel). No new local .md bloat. (See also DEPLOY major wins for engine-ize etc. that affect overall.)
 
 ### O8. Pragmatic Programmer / Polished Ruby
 
@@ -339,64 +349,64 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 
 ### P1. Parallelism and throughput
 
-- [ ] P101 Scanner POOL_SIZE = min(nprocessors, 8): on OpenBSD VM with 1 vCPU this is 1 (serial) — profile and document; consider async I/O instead of threads
-- [ ] P102 LLM pass processes rules sequentially even when rules are independent — run independent RuleLoops in parallel (respect rule_deps.yml edges)
-- [ ] P103 fast_pass runs rubocop on all files as one batch — if one file errors, rubocop non-zero exit skips reporting on all others; use --format json to isolate
-- [ ] P104 SemanticRule sends one batched LLM prompt per file — good, but the prompt is rebuilt from scratch each call; memoize the rule-list template portion
-- [ ] P105 ParallelGroup spawns all threads at once with no backpressure — cap at POOL_SIZE concurrently running threads
-- [ ] P106 scan_dir sorts paths before scanning — sorting is unnecessary overhead on large trees; remove or lazy-sort for display only
+- [x] P101 Scanner POOL_SIZE = min(nprocessors, 8): on OpenBSD VM with 1 vCPU this is 1 (serial) — profile and document; consider async I/O instead of threads
+- [x] P102 LLM pass processes rules sequentially even when rules are independent — run independent RuleLoops in parallel (respect rule_deps.yml edges)
+- [x] P103 fast_pass runs rubocop on all files as one batch — if one file errors, rubocop non-zero exit skips reporting on all others; use --format json to isolate
+- [x] P104 SemanticRule sends one batched LLM prompt per file — good, but the prompt is rebuilt from scratch each call; memoize the rule-list template portion
+- [x] P105 ParallelGroup spawns all threads at once with no backpressure — cap at POOL_SIZE concurrently running threads
+- [x] P106 scan_dir sorts paths before scanning — sorting is unnecessary overhead on large trees; remove or lazy-sort for display only
 
 ### P2. Caching and memoization
 
-- [ ] P201 co_change_graph in repo_ecology: reads 200 git commits on every call — persist to .master/co_change_cache.yml with mtime check on .git/HEAD
-- [ ] P202 Memory#context_summary: YAML parse + sort on every pipeline turn — memoize with @store version counter
-- [ ] P203 validate_data!: reads all data/*.yml on every boot — check mtime, skip if unchanged since last boot
-- [ ] P204 LLM prompt caching (CACHE_LLM): hash (prompt + model) → cache in .master/llm_cache.yml with 5-min TTL
-- [ ] P205 build_preamble in fix_loop: reads soul.yml on every FixLoop.new — class-level memoize with mtime guard
-- [ ] P206 Session#token_est: recomputes by iterating all messages on every REPL render — increment counter on message append
-- [ ] P207 `load_workflow_profiles` called per scan command invocation — memoize with file mtime guard
+- [x] P201 co_change_graph in repo_ecology: reads 200 git commits on every call — persist to .master/co_change_cache.yml with mtime check on .git/HEAD
+- [x] P202 Memory#context_summary: YAML parse + sort on every pipeline turn — memoize with @store version counter
+- [x] P203 validate_data!: reads all data/*.yml on every boot — check mtime, skip if unchanged since last boot
+- [x] P204 LLM prompt caching (CACHE_LLM): hash (prompt + model) → cache in .master/llm_cache.yml with 5-min TTL
+- [x] P205 build_preamble in fix_loop: reads soul.yml on every FixLoop.new — class-level memoize with mtime guard
+- [x] P206 Session#token_est: recomputes by iterating all messages on every REPL render — increment counter on message append
+- [x] P207 `load_workflow_profiles` called per scan command invocation — memoize with file mtime guard
 
 ### P3. Context window and payload management
 
-- [ ] P301 PipelineContext `output` key holds full LLM responses (100K+ chars possible) — truncate to last 8K on merge
-- [ ] P302 PipelineContext `_timings` hash accumulates every stage on every pass — cap at last 20 entries
-- [ ] P303 Session messages carry full content — implement sliding window: keep last N full, summarize older (already has token_est, wire the pruner)
-- [ ] P304 Snapshot.md written on every boot including 100+ files — write only if any source file newer than snapshot
-- [ ] P305 snapshot_artifact in work_commands reads up to 24K bytes per file, 40 files = 960K in one context — cap per-file and total differently
+- [x] P301 PipelineContext `output` key holds full LLM responses (100K+ chars possible) — truncate to last 8K on merge
+- [x] P302 PipelineContext `_timings` hash accumulates every stage on every pass — cap at last 20 entries
+- [x] P303 Session messages carry full content — implement sliding window: keep last N full, summarize older (already has token_est, wire the pruner)
+- [x] P304 Snapshot.md written on every boot including 100+ files — write only if any source file newer than snapshot
+- [x] P305 snapshot_artifact in work_commands reads up to 24K bytes per file, 40 files = 960K in one context — cap per-file and total differently
 
 ### P4. Correctness and race conditions
 
-- [ ] P401 CLI @violations written by bg_thread, read by main thread with no synchronize — add Mutex around @violations access
-- [ ] P402 FixLoop#stagnant? hashes violations array without sorting — reorder produces false "not stagnant" — sort by [rule, file, line] before hashing
-- [ ] P403 maybe_rollback: calls dirty? (git status) even when @root is nil or .git doesn't exist — add guard before the git call
-- [ ] P404 pipeline.rb#call: wraps initial in PipelineContext.wrap but if initial is already wrapped, wraps again — add type check
-- [ ] P405 RuleLoop#best_candidate: rescan_candidate writes to Tempfile without extension — language detection in scan() returns nil, no rule applies — add extension suffix
+- [x] P401 CLI @violations written by bg_thread, read by main thread with no synchronize — add Mutex around @violations access
+- [x] P402 FixLoop#stagnant? hashes violations array without sorting — reorder produces false "not stagnant" — sort by [rule, file, line] before hashing
+- [x] P403 maybe_rollback: calls dirty? (git status) even when @root is nil or .git doesn't exist — add guard before the git call
+- [x] P404 pipeline.rb#call: wraps initial in PipelineContext.wrap but if initial is already wrapped, wraps again — add type check
+- [x] P405 RuleLoop#best_candidate: rescan_candidate writes to Tempfile without extension — language detection in scan() returns nil, no rule applies — add extension suffix
 
 ### P5. Observability
 
-- [ ] P501 Heartbeat publishes alive/dead but no scan metrics — add violations count and last_fixed timestamp
-- [ ] P502 fix_loop:pass_start event has no file_count — add so operators can track scope
-- [ ] P503 LLM call cost not published to event bus — add llm:call_complete event with tokens_in, tokens_out, cost_usd
-- [ ] P504 scan:complete event has path and count but no rule breakdown — add top 3 rules to payload
-- [ ] P505 No event when AstFixer applies a transform — add ast_fixer:transform event with path and transforms list
-- [ ] P506 Pipeline stage timings stored in _timings but never published — emit pipeline:complete with full stage timing map
+- [x] P501 Heartbeat publishes alive/dead but no scan metrics — add violations count and last_fixed timestamp
+- [x] P502 fix_loop:pass_start event has no file_count — add so operators can track scope
+- [x] P503 LLM call cost not published to event bus — add llm:call_complete event with tokens_in, tokens_out, cost_usd
+- [x] P504 scan:complete event has path and count but no rule breakdown — add top 3 rules to payload
+- [x] P505 No event when AstFixer applies a transform — add ast_fixer:transform event with path and transforms list
+- [x] P506 Pipeline stage timings stored in _timings but never published — emit pipeline:complete with full stage timing map
 
 ### P6. Reliability and error handling
 
-- [ ] P601 FixLoop#run_forever: bare rescue StandardError publishes to bus but then exits the thread silently — restart the inner loop after a cooldown
-- [ ] P602 RuleLoop council_fix: retries MAX_FIX_RETRIES times with exponential sleep — but sleeps block the thread, preventing heartbeat — use non-blocking approach
-- [ ] P603 watch_loop: sleep polling will miss rapid file changes (two changes in one sleep window = one event) — use file mtime map with sub-second resolution
-- [ ] P604 fix_loop collect_files: Dir.glob includes non-text binaries if extension matches — add File.binary? guard
-- [ ] P605 Circuit breaker state not shared across RuleLoop instances in same pass — each RuleLoop opens its own breaker; share via FixLoop
-- [ ] P606 Convergence CLEAN_RUNS = 2 required for done — if file changes between scans (editor autosave), loop never converges — add filesystem quiesce check
+- [x] P601 FixLoop#run_forever: bare rescue StandardError publishes to bus but then exits the thread silently — restart the inner loop after a cooldown
+- [x] P602 RuleLoop council_fix: retries MAX_FIX_RETRIES times with exponential sleep — but sleeps block the thread, preventing heartbeat — use non-blocking approach
+- [x] P603 watch_loop: sleep polling will miss rapid file changes (two changes in one sleep window = one event) — use file mtime map with sub-second resolution
+- [x] P604 fix_loop collect_files: Dir.glob includes non-text binaries if extension matches — add File.binary? guard
+- [x] P605 Circuit breaker state not shared across RuleLoop instances in same pass — each RuleLoop opens its own breaker; share via FixLoop
+- [x] P606 Convergence CLEAN_RUNS = 2 required for done — if file changes between scans (editor autosave), loop never converges — add filesystem quiesce check
 
 ### P7. Stage ordering and dependency
 
-- [ ] P701 rule_deps.yml exists but fix_loop ordered_rules doesn't use it — sort rules by topological order of dep graph
-- [ ] P702 AstFixer runs before rubocop in fast_pass — but rubocop may undo some AstFixer changes — run AstFixer after rubocop
-- [ ] P703 SemanticRule runs on every file even when lexical rules already caught the violation — skip semantic if file has unresolved lexical errors first
+- [x] P701 rule_deps.yml exists but fix_loop ordered_rules doesn't use it — sort rules by topological order of dep graph
+- [x] P702 AstFixer runs before rubocop in fast_pass — but rubocop may undo some AstFixer changes — run AstFixer after rubocop
+- [x] P703 SemanticRule runs on every file even when lexical rules already caught the violation — skip semantic if file has unresolved lexical errors first
 - [x] P704 Evidence scoring (scan_clean: 25 pts, pass_threshold: 80) from rules.yml — wire into Pipeline as a gate before :deploy stage
-- [ ] P705 tier1_critical rules (PRESERVE_FIRST, DECOUPLE, etc.) should halt pipeline, not just emit :err — wire principle_priorities tier1 to Pipeline halt
+- [x] P705 tier1_critical rules (PRESERVE_FIRST, DECOUPLE, etc.) should halt pipeline, not just emit :err — wire principle_priorities tier1 to Pipeline halt
 
 ---
 
@@ -404,58 +414,58 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 
 ### Q1. Input experience
 
-- [ ] Q101 Command history not saved across sessions — persist TTY::Reader history to .master/cli_history (like shell .zsh_history)
-- [ ] Q102 No tab completion for /commands — add TTY::Reader completion proc listing SLASH_COMMANDS
-- [ ] Q103 No tab completion for filenames after /scan, /fix, /critique
-- [ ] Q104 No CTRL+R reverse history search — implement via TTY::Reader key binding
-- [ ] Q105 ARGV passthrough: ARGV.join(" ") treats --flags as literal text — parse ARGV properly with OptionParser
-- [ ] Q106 Multi-line input: read_multiline has no line count guard — large paste exhausts memory; cap at 500 lines
-- [ ] Q107 Paste detection: rapid input that looks like a paste should not trigger thinking indicator mid-paste
+- [x] Q101 Command history not saved across sessions — persist TTY::Reader history to .master/cli_history (like shell .zsh_history)
+- [x] Q102 No tab completion for /commands — add TTY::Reader completion proc listing SLASH_COMMANDS
+- [x] Q103 No tab completion for filenames after /scan, /fix, /critique
+- [x] Q104 No CTRL+R reverse history search — implement via TTY::Reader key binding
+- [x] Q105 ARGV passthrough: ARGV.join(" ") treats --flags as literal text — parse ARGV properly with OptionParser
+- [x] Q106 Multi-line input: read_multiline has no line count guard — large paste exhausts memory; cap at 500 lines
+- [x] Q107 Paste detection: rapid input that looks like a paste should not trigger thinking indicator mid-paste
 
 ### Q2. Output and display
 
-- [ ] Q201 /help shows flat list with no descriptions — each command needs a one-line description and example
-- [ ] Q202 /help <command> should show detailed usage with examples (progressive disclosure, PROGRESSIVE_DISCLOSURE)
-- [ ] Q203 Violation count in prompt is plain number — colorize: green=0, yellow=1-9, red=10+
-- [ ] Q204 Status row rendered on every prompt — only render when something changed (violations, model, cost)
-- [ ] Q205 /scan output dumps all violations without paging — pipe to TTY::Pager or show top N with "N more..."
-- [ ] Q206 /model list doesn't mark the current model — add "→" marker next to active model
-- [ ] Q207 /dmesg hardcoded to 80 lines — accept /dmesg N argument
-- [ ] Q208 suggested_next_prompt shows one inline suggestion — show top 3 in TTY::Prompt select menu (press TAB to cycle)
-- [ ] Q209 Thinking indicator is a static spinner — show elapsed seconds ("thinking 4s")
-- [ ] Q210 Long responses not pageable — pipe to TTY::Pager when output exceeds terminal height
-- [ ] Q211 Cost display shows raw float ("$0.0042") — show as "$0.00" for sub-cent, "$0.01" for larger
-- [ ] Q212 No per-turn diff display after edits — show "N files changed" summary after each pipeline run
-- [ ] Q213 /history truncates content to 120 chars but rule violations in history are illegible — show structured
-- [ ] Q214 CTRL+C "saved" message lacks newline before "saved" — appears inline with partial input
+- [x] Q201 /help shows flat list with no descriptions — each command needs a one-line description and example
+- [x] Q202 /help <command> should show detailed usage with examples (progressive disclosure, PROGRESSIVE_DISCLOSURE)
+- [x] Q203 Violation count in prompt is plain number — colorize: green=0, yellow=1-9, red=10+
+- [x] Q204 Status row rendered on every prompt — only render when something changed (violations, model, cost)
+- [x] Q205 /scan output dumps all violations without paging — pipe to TTY::Pager or show top N with "N more..."
+- [x] Q206 /model list doesn't mark the current model — add "→" marker next to active model
+- [x] Q207 /dmesg hardcoded to 80 lines — accept /dmesg N argument
+- [x] Q208 suggested_next_prompt shows one inline suggestion — show top 3 in TTY::Prompt select menu (press TAB to cycle)
+- [x] Q209 Thinking indicator is a static spinner — show elapsed seconds ("thinking 4s")
+- [x] Q210 Long responses not pageable — pipe to TTY::Pager when output exceeds terminal height
+- [x] Q211 Cost display shows raw float ("$0.0042") — show as "$0.00" for sub-cent, "$0.01" for larger
+- [x] Q212 No per-turn diff display after edits — show "N files changed" summary after each pipeline run
+- [x] Q213 /history truncates content to 120 chars but rule violations in history are illegible — show structured
+- [x] Q214 CTRL+C "saved" message lacks newline before "saved" — appears inline with partial input
 
 ### Q3. Commands and discoverability
 
-- [ ] Q301 /scan, /fix, /review are separate but often used in sequence — add /triad <path> that chains all three
-- [ ] Q302 /watch command not accessible from CLI — add /watch [on|off] to toggle file watcher at runtime
-- [ ] Q303 /grep <pattern> missing — search session history for a pattern
-- [ ] Q304 /audit missing — shows every file MASTER touched this session with before/after line counts
-- [ ] Q305 /cost missing as standalone — currently buried in status row; make /cost show a breakdown by turn
-- [ ] Q306 /dry-run missing — run /fix without applying changes, show what would change
-- [ ] Q307 /rollback missing from /help — it exists as pipeline rollback but not user-accessible
-- [ ] Q308 /self missing — trigger self-scan of lib/ and report result (self_test wiring)
-- [ ] Q309 /propose missing from /help — show proposal engine output on demand
-- [ ] Q310 /rules list — show all registered Rule subclasses with their IDs and severity
+- [x] Q301 /scan, /fix, /review are separate but often used in sequence — add /triad <path> that chains all three
+- [x] Q302 /watch command not accessible from CLI — add /watch [on|off] to toggle file watcher at runtime
+- [x] Q303 /grep <pattern> missing — search session history for a pattern
+- [x] Q304 /audit missing — shows every file MASTER touched this session with before/after line counts
+- [x] Q305 /cost missing as standalone — currently buried in status row; make /cost show a breakdown by turn
+- [x] Q306 /dry-run missing — run /fix without applying changes, show what would change
+- [x] Q307 /rollback missing from /help — it exists as pipeline rollback but not user-accessible
+- [x] Q308 /self missing — trigger self-scan of lib/ and report result (self_test wiring)
+- [x] Q309 /propose missing from /help — show proposal engine output on demand
+- [x] Q310 /rules list — show all registered Rule subclasses with their IDs and severity
 
 ### Q4. Web UI — face.js (particle 3D face)
 
-- [ ] Q401 face.js is 1,286 lines — split into face/particles.js, face/audio.js, face/expressions.js, face/tts.js, face/main.js
+- [x] Q401 face.js is 1,286 lines — split into face/particles.js, face/audio.js, face/expressions.js, face/tts.js, face/main.js
 - [x] Q402 No requestAnimationFrame pause on document.hidden — wastes CPU/battery on background tabs; add visibilitychange listener
 - [x] Q403 Audio analyser samples every frame regardless of playback state — skip analysis when !tts.playing
-- [ ] Q404 analyserBuf allocated once but analyserFreqBuf re-checked — unify allocation in initAudio()
-- [ ] Q405 Canvas not responsive to container resize — add ResizeObserver to reset canvas dimensions
+- [x] Q404 analyserBuf allocated once but analyserFreqBuf re-checked — unify allocation in initAudio()
+- [x] Q405 Canvas not responsive to container resize — add ResizeObserver to reset canvas dimensions
 - [x] Q406 No loading state: blank canvas while face.js initializes — add CSS skeleton or fade-in on first frame
-- [ ] Q407 Particle count hardcoded — scale N_PARTICLES based on device pixel ratio and screen area
-- [ ] Q408 THREE.js conditionally imported but never used — remove dead import or commit to 3D
+- [x] Q407 Particle count hardcoded — scale N_PARTICLES based on device pixel ratio and screen area
+- [x] Q408 THREE.js conditionally imported but never used — remove dead import or commit to 3D
 - [x] Q409 prefers-reduced-motion: JS checks matchMedia but CSS message animations don't check it — add @media (prefers-reduced-motion: reduce) to face.css
-- [ ] Q410 Face expression transitions are hard cuts — add linear interpolation (lerp) between expression parameters
-- [ ] Q411 Boot greeting Osman → Pernille plays serially with no overlap — cross-fade or chain via onended
-- [ ] Q412 Speaker identity not visually distinct in particle color/motion between Osman and Pernille — wire persona color palette
+- [x] Q410 Face expression transitions are hard cuts — add linear interpolation (lerp) between expression parameters
+- [x] Q411 Boot greeting Osman → Pernille plays serially with no overlap — cross-fade or chain via onended
+- [x] Q412 Speaker identity not visually distinct in particle color/motion between Osman and Pernille — wire persona color palette
 - [x] Q413 No visual "fetching TTS" indicator between sentence end and audio start — add a brief pulse animation
 - [x] Q414 Canvas aria-hidden=true but no aria-live region announces TTS text to screen readers
 
@@ -470,7 +480,7 @@ Request lifecycle: user input → Pipeline → stages → agent → scanner → 
 - [x] Q507 Browser speechSynthesis fallback uses default voice — map fallback to closest available voice name
 - [x] Q508 No audio normalization: whisper and shout differ by 30dB — add gainNode with compressor before analyser
 - [x] Q509 ttsSkip() on pointer down — if user taps during loading, skip fires before audio starts — add guard for loading state
-- [ ] Q510 No offline mode — when synthesis API down, fallback to cached audio or browser TTS silently
+- [x] Q510 No offline mode — when synthesis API down, fallback to cached audio or browser TTS silently
 
 ---
 
@@ -480,61 +490,61 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### R1. Code intelligence proposals
 
-- [ ] R101 After each clean scan pass, surface all mode:opportunity findings — switch SemanticRule to opportunity-only mode and show top 3
-- [ ] R102 Pattern extraction proposal: when PATTERN_EXTRACTION fires, auto-generate a before/after showing the target pattern
-- [ ] R103 After fixing a violation, check if the same violation exists in sibling files — auto-propose extending fix to siblings
-- [ ] R104 Co-change coupling proposal: when RepoEcology finds co-change pair count ≥5, auto-propose extracting shared concern to a module
-- [ ] R105 Semantic duplicate detector: within a file, find two method bodies with TF-IDF similarity >0.8 — propose DRY refactor
-- [ ] R106 Entropy radar: track violations per module per session; if module has >10 new violations across 3 sessions, propose "architectural attention needed"
-- [ ] R107 Dead code radar: schedule weekly dead_file_candidates scan; if any file appears 3 weeks running, propose removal
-- [ ] R108 Proactive fix order: before /fix, compute topological sort of rule_deps.yml and propose the optimal sequence
-- [ ] R109 After each commit, run git diff --stat and propose "/review <changed_file>" for any file with >50 lines changed
-- [ ] R110 Test gap proposal: for every lib/ file with no test/ counterpart, surface as an opportunity with estimated effort
+- [x] R101 After each clean scan pass, surface all mode:opportunity findings — switch SemanticRule to opportunity-only mode and show top 3
+- [x] R102 Pattern extraction proposal: when PATTERN_EXTRACTION fires, auto-generate a before/after showing the target pattern
+- [x] R103 After fixing a violation, check if the same violation exists in sibling files — auto-propose extending fix to siblings
+- [x] R104 Co-change coupling proposal: when RepoEcology finds co-change pair count ≥5, auto-propose extracting shared concern to a module
+- [x] R105 Semantic duplicate detector: within a file, find two method bodies with TF-IDF similarity >0.8 — propose DRY refactor
+- [x] R106 Entropy radar: track violations per module per session; if module has >10 new violations across 3 sessions, propose "architectural attention needed"
+- [x] R107 Dead code radar: schedule weekly dead_file_candidates scan; if any file appears 3 weeks running, propose removal
+- [x] R108 Proactive fix order: before /fix, compute topological sort of rule_deps.yml and propose the optimal sequence
+- [x] R109 After each commit, run git diff --stat and propose "/review <changed_file>" for any file with >50 lines changed
+- [x] R110 Test gap proposal: for every lib/ file with no test/ counterpart, surface as an opportunity with estimated effort
 
 ### R2. Session intelligence proposals
 
-- [ ] R201 "Stuck" detector: if 3 consecutive inputs are questions (end with ?) without any /command, ask "what are you trying to accomplish?"
-- [ ] R202 Context pressure proposal: when token_est crosses 70% of model context limit, auto-propose /checkpoint + /clear
-- [ ] R203 Proactive resync: if git behind > 3 commits at session start, propose /resync before starting work
-- [ ] R204 Memory crystallization: after 20 turns, propose "shall I remember the key decisions from this session?"
-- [ ] R205 Idle ideation: when idle >5 min after a significant edit, generate 2 alternative approaches to what was just built
-- [ ] R206 Cost proposal: when session cost exceeds $1.00, propose switching to haiku for routine tasks with estimated savings
-- [ ] R207 Session topic drift: if conversation has shifted to a new domain, propose "should I save context and start fresh?"
-- [ ] R208 Proactive benchmark: after fixing a performance violation, propose running bin/smoke to verify improvement
+- [x] R201 "Stuck" detector: if 3 consecutive inputs are questions (end with ?) without any /command, ask "what are you trying to accomplish?"
+- [x] R202 Context pressure proposal: when token_est crosses 70% of model context limit, auto-propose /checkpoint + /clear
+- [x] R203 Proactive resync: if git behind > 3 commits at session start, propose /resync before starting work
+- [x] R204 Memory crystallization: after 20 turns, propose "shall I remember the key decisions from this session?"
+- [x] R205 Idle ideation: when idle >5 min after a significant edit, generate 2 alternative approaches to what was just built
+- [x] R206 Cost proposal: when session cost exceeds $1.00, propose switching to haiku for routine tasks with estimated savings
+- [x] R207 Session topic drift: if conversation has shifted to a new domain, propose "should I save context and start fresh?"
+- [x] R208 Proactive benchmark: after fixing a performance violation, propose running bin/smoke to verify improvement
 
 ### R3. Architecture proposals
 
-- [ ] R301 After scan clean, generate a one-paragraph architecture critique of the current module structure using STRUCTURAL_HONESTY rule
-- [ ] R302 Design it twice trigger: when proposing a complex solution (>3 files affected), auto-generate a simpler alternative
-- [ ] R303 Council convocation: when the same violation appears 5+ times across files in one session, propose elevating to soul.yml kernel law
-- [ ] R304 Soul evolution proposal: after each session, diff axioms applied vs axioms surfaced — if 3+ new patterns emerged, propose adding to soul.yml
-- [ ] R305 God class trajectory: if a file has grown >20 lines per session for 3 sessions, warn before it hits the god_class threshold
-- [ ] R306 Proactive decoupling: when LAW_OF_DEMETER fires between two specific modules in both directions, propose an interface/adapter
-- [ ] R307 Missing abstraction proposal: when same literal appears in 3+ files, propose extracting to a named constant or value object
-- [ ] R308 Layer purity check: after any change to lib/now/, check if it calls lib/judge/ directly (should be via Pipeline) — propose routing fix
+- [x] R301 After scan clean, generate a one-paragraph architecture critique of the current module structure using STRUCTURAL_HONESTY rule
+- [x] R302 Design it twice trigger: when proposing a complex solution (>3 files affected), auto-generate a simpler alternative
+- [x] R303 Council convocation: when the same violation appears 5+ times across files in one session, propose elevating to soul.yml kernel law
+- [x] R304 Soul evolution proposal: after each session, diff axioms applied vs axioms surfaced — if 3+ new patterns emerged, propose adding to soul.yml
+- [x] R305 God class trajectory: if a file has grown >20 lines per session for 3 sessions, warn before it hits the god_class threshold
+- [x] R306 Proactive decoupling: when LAW_OF_DEMETER fires between two specific modules in both directions, propose an interface/adapter
+- [x] R307 Missing abstraction proposal: when same literal appears in 3+ files, propose extracting to a named constant or value object
+- [x] R308 Layer purity check: after any change to lib/now/, check if it calls lib/judge/ directly (should be via Pipeline) — propose routing fix
 
 ### R4. Proposal output quality
 
-- [ ] R401 Proposals should include estimated tokens/cost for implementing the suggestion
-- [ ] R402 Each proposal should include a confidence score (0.0-1.0) based on evidence strength
-- [ ] R403 Proposals should be ranked by (confidence × impact) not just weight
-- [ ] R404 Proposals older than 24h without action should auto-expire and be replaced
-- [ ] R405 Proposals should include a "reject" action that logs the rejection to learnings for future tuning
-- [ ] R406 /propose command should show the proposal reasoning chain, not just the action string
-- [ ] R407 SoulProposals.md entries should include a one-line diff of what changed since the proposal was generated
-- [ ] R408 Proposal engine should self-evaluate: track which proposals were acted on vs ignored; tune weights accordingly
-- [ ] R409 Proactive proposals should never interrupt a user turn — queue for display at next REPL prompt
-- [ ] R410 Add proposal type: "opportunity" (additive) vs "violation" (corrective) — show separately in UI
+- [x] R401 Proposals should include estimated tokens/cost for implementing the suggestion
+- [x] R402 Each proposal should include a confidence score (0.0-1.0) based on evidence strength
+- [x] R403 Proposals should be ranked by (confidence × impact) not just weight
+- [x] R404 Proposals older than 24h without action should auto-expire and be replaced
+- [x] R405 Proposals should include a "reject" action that logs the rejection to learnings for future tuning
+- [x] R406 /propose command should show the proposal reasoning chain, not just the action string
+- [x] R407 SoulProposals.md entries should include a one-line diff of what changed since the proposal was generated
+- [x] R408 Proposal engine should self-evaluate: track which proposals were acted on vs ignored; tune weights accordingly
+- [x] R409 Proactive proposals should never interrupt a user turn — queue for display at next REPL prompt
+- [x] R410 Add proposal type: "opportunity" (additive) vs "violation" (corrective) — show separately in UI
 
 ## S — Git Archaeology: Lost Concepts from master.yml / master.json Predecessors
 
 ### S1: Persona System (v49.7–v49.75 — fully specified, never ported)
 
-- [ ] S101 Port full persona system: ronin (stoic/decisive), lawyer (Norwegian law/barnevernet), hacker (OpenBSD/CVE), architect (BIM/parametric), sysadmin (pf/httpd/vmm), trader (DeFi/technicals), medic (PubMed/disclaimer) — each with voice pitch/rate, greeting phrase, focus domain, knowledge sources
-- [ ] S102 Persona switching command: `/persona ronin` changes identity, voice pitch/rate, greeting style, knowledge sources for TTS and LLM prompts
-- [ ] S103 Each persona carries its own knowledge_sources list (lovdata.no, cve.mitre.org, archdaily.com, man.openbsd.org, pubmed.ncbi.nlm.nih.gov) — inject into LLM context on switch
-- [ ] S104 Medic persona requires disclaimer injection: "Not a substitute for professional medical advice" appended to every medical response
-- [ ] S105 Persona voice config feeds directly into face.js TTS pitch/rate sliders — ronin speaks slow+low, medic speaks measured+mid
+- [x] S101 Port full persona system: ronin (stoic/decisive), lawyer (Norwegian law/barnevernet), hacker (OpenBSD/CVE), architect (BIM/parametric), sysadmin (pf/httpd/vmm), trader (DeFi/technicals), medic (PubMed/disclaimer) — each with voice pitch/rate, greeting phrase, focus domain, knowledge sources
+- [x] S102 Persona switching command: `/persona ronin` changes identity, voice pitch/rate, greeting style, knowledge sources for TTS and LLM prompts
+- [x] S103 Each persona carries its own knowledge_sources list (lovdata.no, cve.mitre.org, archdaily.com, man.openbsd.org, pubmed.ncbi.nlm.nih.gov) — inject into LLM context on switch
+- [x] S104 Medic persona requires disclaimer injection: "Not a substitute for professional medical advice" appended to every medical response
+- [x] S105 Persona voice config feeds directly into face.js TTS pitch/rate sliders — ronin speaks slow+low, medic speaks measured+mid
 
 ### S2: Meta-Analysis / Self-Evolution (v49.8 — specified, never wired)
 
@@ -543,71 +553,71 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] S203 Session capture question: "What questions yielded good results?" — add high-yield prompts to data/patterns.yml for reuse
 - [ ] S204 Meta-analysis question: "What external tools/APIs were useful?" — append to data/openbsd.yml providers section if OpenBSD-related
 - [ ] S205 Trigger: "After session with good outcomes — ask: what made this work? Codify it." — implement as /capture command that writes to data/soul.yml learned_behaviors
-- [ ] S206 learned_smells[] array in data config was designed to accumulate session-discovered patterns — wire it to scan engine as dynamic extra rules
+- [x] S206 learned_smells[] array in data config was designed to accumulate session-discovered patterns — wire it to scan engine as dynamic extra rules
 
 ### S3: 7-Phase Workflow with Gates (v49.25 — fully specified, never enforced)
 
-- [ ] S301 Implement /phase command: show current phase (discover/analyze/ideate/design/implement/validate/deliver), gates that must pass, what's blocking
-- [ ] S302 discover phase gates: no_vague_words (detect "it", "things", "stuff" in problem statement), audience_identified, success_measurable
-- [ ] S303 analyze phase gates: components_distinct (no overlapping responsibilities), dependencies_acyclic (detect circular deps)
-- [ ] S304 ideate phase gate: count_gte_15 (at least 15 alternatives generated), trade_offs_documented
-- [ ] S305 design phase gates: interfaces_explicit (all public methods documented), errors_documented
-- [ ] S306 implement phase gates: tests_pass, zero_violations (council reports clean)
-- [ ] S307 validate phase gates: zero_test_failures, edge_cases_covered (nil/empty/max/unicode checked)
-- [ ] S308 deliver phase gates: deployed (rcctl status master = active), monitoring_configured (uptime check present)
-- [ ] S309 Phase transitions are gated — /phase next refuses if any gate is red; lists exactly what must be fixed
+- [x] S301 Implement /phase command: show current phase (discover/analyze/ideate/design/implement/validate/deliver), gates that must pass, what's blocking
+- [x] S302 discover phase gates: no_vague_words (detect "it", "things", "stuff" in problem statement), audience_identified, success_measurable
+- [x] S303 analyze phase gates: components_distinct (no overlapping responsibilities), dependencies_acyclic (detect circular deps)
+- [x] S304 ideate phase gate: count_gte_15 (at least 15 alternatives generated), trade_offs_documented
+- [x] S305 design phase gates: interfaces_explicit (all public methods documented), errors_documented
+- [x] S306 implement phase gates: tests_pass, zero_violations (council reports clean)
+- [x] S307 validate phase gates: zero_test_failures, edge_cases_covered (nil/empty/max/unicode checked)
+- [x] S308 deliver phase gates: deployed (rcctl status master = active), monitoring_configured (uptime check present)
+- [x] S309 Phase transitions are gated — /phase next refuses if any gate is red; lists exactly what must be fixed
 
 ### S4: Profiles / Principle Groups (v49.25 — specified, not implemented)
 
-- [ ] S401 Implement scan profiles: quick (core axioms only), full (all rules), axioms_only, solid_focus (SOLID + axioms), critical (veto-severity only)
-- [ ] S402 /scan --profile quick uses group:quick rule subset [clarity, KISS, SRP, names, small_functions] — fast feedback loop
-- [ ] S403 principle_groups map: group:axioms, group:solid, group:coding, group:clean_code, group:ui, group:llm, group:operations, group:design, group:architecture
-- [ ] S404 /scan --profile critical only surfaces :error + :veto severity findings — zero noise for urgent triage
-- [ ] S405 Default profile in rules.yml / soul.yml selectable at boot time, overridable per scan invocation
+- [x] S401 Implement scan profiles: quick (core axioms only), full (all rules), axioms_only, solid_focus (SOLID + axioms), critical (veto-severity only)
+- [x] S402 /scan --profile quick uses group:quick rule subset [clarity, KISS, SRP, names, small_functions] — fast feedback loop
+- [x] S403 principle_groups map: group:axioms, group:solid, group:coding, group:clean_code, group:ui, group:llm, group:operations, group:design, group:architecture
+- [x] S404 /scan --profile critical only surfaces :error + :veto severity findings — zero noise for urgent triage
+- [x] S405 Default profile in rules.yml / soul.yml selectable at boot time, overridable per scan invocation
 
 ### S5: Conflict Resolution Rules (v49.75 — specified, not wired to rule engine)
 
-- [ ] S501 Implement conflict resolver: when DRY fix would conflict with WET/AHA principle, apply "fewer than 3 duplications → favor WET" resolution automatically
-- [ ] S502 Conflict rule: "clarity conflicts with simplicity → favor clarity" — when both fire, suppress simplicity finding
-- [ ] S503 Conflict rule: "fix introduces higher-priority violation → reject fix" — FixLoop must recheck severity after every patch application
-- [ ] S504 Log all conflicts to runtime/conflict_log.jsonl: {rule_a, rule_b, resolution, file, line, timestamp}
-- [ ] S505 Conflict resolution strategy in soul.yml: highest_priority_wins, prompt_user: false — make this configurable
+- [x] S501 Implement conflict resolver: when DRY fix would conflict with WET/AHA principle, apply "fewer than 3 duplications → favor WET" resolution automatically
+- [x] S502 Conflict rule: "clarity conflicts with simplicity → favor clarity" — when both fire, suppress simplicity finding
+- [x] S503 Conflict rule: "fix introduces higher-priority violation → reject fix" — FixLoop must recheck severity after every patch application
+- [x] S504 Log all conflicts to runtime/conflict_log.jsonl: {rule_a, rule_b, resolution, file, line, timestamp}
+- [x] S505 Conflict resolution strategy in soul.yml: highest_priority_wins, prompt_user: false — make this configurable
 
 ### S6: Hooks System (v49.25 — specified, never wired)
 
-- [ ] S601 on_violation_found hook: append to .constitutional_violations.jsonl per file, per session
-- [ ] S602 on_cost_threshold hook: warn user when cumulative session cost exceeds 50% of max_per_session
-- [ ] S603 Hook architecture: hooks[] array in soul.yml, each entry {event, action, params} — load at boot, fire via EventBus
-- [ ] S604 Hook events needed: on_violation_found, on_fix_applied, on_cost_threshold, on_session_start, on_session_end, on_phase_transition, on_convergence
-- [ ] S605 Git hook integration: pre-commit hook that runs /scan --profile critical and blocks commit if :error findings exist
+- [x] S601 on_violation_found hook: append to .constitutional_violations.jsonl per file, per session
+- [x] S602 on_cost_threshold hook: warn user when cumulative session cost exceeds 50% of max_per_session
+- [x] S603 Hook architecture: hooks[] array in soul.yml, each entry {event, action, params} — load at boot, fire via EventBus
+- [x] S604 Hook events needed: on_violation_found, on_fix_applied, on_cost_threshold, on_session_start, on_session_end, on_phase_transition, on_convergence
+- [x] S605 Git hook integration: pre-commit hook that runs /scan --profile critical and blocks commit if :error findings exist
 
 ### S7: Multi-Model Consensus (v49.25 — specified, disabled=false toggle never built)
 
-- [ ] S701 Consensus mode: send same prompt to 3 models (claude-sonnet, glm-4, kimi-k2), require 2/3 agreement before applying fix
-- [ ] S702 Consensus result shows dissenting model's reasoning — surfaces when models disagree on correctness
-- [ ] S703 Consensus used only for :error findings and architecture decisions — too expensive for :warning/:info
-- [ ] S704 Failover sequence: fast→code→medium→strong with exponential backoff (cooldown_seconds: 300, max_retries: 2)
-- [ ] S705 Model tier routing: detect_lexical → fast model, code_generation → code model, architecture → strong model
+- [x] S701 Consensus mode: send same prompt to 3 models (claude-sonnet, glm-4, kimi-k2), require 2/3 agreement before applying fix
+- [x] S702 Consensus result shows dissenting model's reasoning — surfaces when models disagree on correctness
+- [x] S703 Consensus used only for :error findings and architecture decisions — too expensive for :warning/:info
+- [x] S704 Failover sequence: fast→code→medium→strong with exponential backoff (cooldown_seconds: 300, max_retries: 2)
+- [x] S705 Model tier routing: detect_lexical → fast model, code_generation → code model, architecture → strong model
 
 ### S8: ReviewCrew / Multi-Agent Parallel Analysis (v50.8 — built, then deleted)
 
-- [ ] S801 Restore ReviewCrew: SecurityAgent + PerformanceAgent + StyleAgent + ArchitectureAgent run in parallel via Async
-- [ ] S802 BaseAgent interface: analyze(code, file_path) → findings array; add_finding(severity:, category:, message:, line:, suggestion:)
-- [ ] S803 SecurityAgent patterns: eval(), system(), exec(), backtick execution, File.read with user params, hardcoded passwords/API keys, .constantize, dynamic send(), SQL interpolation, html_safe — each with severity and suggested fix
-- [ ] S804 Deep security scan trigger: if critical pattern found OR file name matches /auth|session|user|admin|payment|credential/ → send to LLM for OWASP Top 10 audit
-- [ ] S805 ReviewCrew synthesizes findings from all agents via LLM: generates one consolidated summary rather than dumping 4 separate reports
-- [ ] S806 ReviewCrew progress reporting: "SecurityAgent: started/done (0.8s)", parallel timing visible in CLI output
+- [x] S801 Restore ReviewCrew: SecurityAgent + PerformanceAgent + StyleAgent + ArchitectureAgent run in parallel via Async
+- [x] S802 BaseAgent interface: analyze(code, file_path) → findings array; add_finding(severity:, category:, message:, line:, suggestion:)
+- [x] S803 SecurityAgent patterns: eval(), system(), exec(), backtick execution, File.read with user params, hardcoded passwords/API keys, .constantize, dynamic send(), SQL interpolation, html_safe — each with severity and suggested fix
+- [x] S804 Deep security scan trigger: if critical pattern found OR file name matches /auth|session|user|admin|payment|credential/ → send to LLM for OWASP Top 10 audit
+- [x] S805 ReviewCrew synthesizes findings from all agents via LLM: generates one consolidated summary rather than dumping 4 separate reports
+- [x] S806 ReviewCrew progress reporting: "SecurityAgent: started/done (0.8s)", parallel timing visible in CLI output
 
 ### S9: Safety System (v49.75 — specified, partially implemented)
 
-- [ ] S901 Cost protection: max_per_file: $1.00, max_per_session: $10.00, warn_at: $0.50 — enforce hard caps, refuse further LLM calls when exceeded
-- [ ] S902 Convergence guard: detect_loops (same violation toggling back) and detect_oscillation (A→B→A→B cycle) — abort fix loop with diagnostic
-- [ ] S903 Fix validation: after applying fix, re-scan; if new violations introduced exceed max_new_violations: 0, rollback the fix
-- [ ] S904 File locking: lock_timeout: 30s, stale_lock_age: 300s, lock_dir: .constitutional_locks — prevent concurrent scans on same file
-- [ ] S905 Atomic write transactions: write to temp file, rename atomically — AstFixer already does this; extend to LLM fixes
-- [ ] S906 Memory limits: max_violation_objects: 100_000 — prune oldest violations when exceeded; gc_every_n_iterations: 5
-- [ ] S907 File validation: max_size_bytes: 10MB, max_lines: 10_000, check_binary: true, allow_symlinks: false before scanning
-- [ ] S908 YAML safety: max_constitution_size: 10MB, load_timeout: 5s on soul.yml / rules.yml parse
+- [x] S901 Cost protection: max_per_file: $1.00, max_per_session: $10.00, warn_at: $0.50 — enforce hard caps, refuse further LLM calls when exceeded
+- [x] S902 Convergence guard: detect_loops (same violation toggling back) and detect_oscillation (A→B→A→B cycle) — abort fix loop with diagnostic
+- [x] S903 Fix validation: after applying fix, re-scan; if new violations introduced exceed max_new_violations: 0, rollback the fix
+- [x] S904 File locking: lock_timeout: 30s, stale_lock_age: 300s, lock_dir: .constitutional_locks — prevent concurrent scans on same file
+- [x] S905 Atomic write transactions: write to temp file, rename atomically — AstFixer already does this; extend to LLM fixes
+- [x] S906 Memory limits: max_violation_objects: 100_000 — prune oldest violations when exceeded; gc_every_n_iterations: 5
+- [x] S907 File validation: max_size_bytes: 10MB, max_lines: 10_000, check_binary: true, allow_symlinks: false before scanning
+- [x] S908 YAML safety: max_constitution_size: 10MB, load_timeout: 5s on soul.yml / rules.yml parse
 
 ### S10: Structural Analysis Questions (v49.7 — specified, never wired as checks)
 
@@ -679,23 +689,23 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### T2: Self-Improvement / Learning Loop (from OpenCrabs / Hermes)
 
-- [ ] T201 Feedback ledger: SQLite table logging every tool call result, user correction, and provider error — enables self-improvement analysis and audit trail
+- [x] T201 Feedback ledger: SQLite table logging every tool call result, user correction, and provider error — enables self-improvement analysis and audit trail
 - [ ] T202 Autonomous skill creation: after complex task completion, auto-generate Skill Documents in MASTER/data/skills/ following agentskills.io portable format
 - [ ] T203 Skill improvement nudges: internal prompts fire at session end asking MASTER to evaluate whether session outcome warrants skill persistence
 - [ ] T204 Recursive self-analysis tool: /analyze-self command queries feedback ledger, identifies systematic optimization opportunities and proposes rule updates
-- [ ] T205 Brain modification logging: RSI improvements logged to runtime/rsi_improvements.md — audit trail of MASTER self-modifications distinct from git history
+- [x] T205 Brain modification logging: RSI improvements logged to runtime/rsi_improvements.md — audit trail of MASTER self-modifications distinct from git history
 - [ ] T206 Upstream template sync: auto-detect new MASTER releases, merge fresh soul/rules sections without overwriting user customizations — idempotent self-update
 - [ ] T207 Skill ranking by recency: when loading skills into context, prefer recently-used over older ones — tighten learning loop
 - [ ] T208 Improvement threshold gates: only persist knowledge crossing minimum-utility threshold to skill library — prevent noise accumulation
 - [ ] T209 Closed learning loop: memory, skills, and session metadata generated during execution, not logged post-hoc
-- [ ] T210 User correction ledger: explicitly log every correction user makes to MASTER actions — train future behavior via logged patterns in data/corrections.jsonl
+- [x] T210 User correction ledger: explicitly log every correction user makes to MASTER actions — train future behavior via logged patterns in data/corrections.jsonl
 
 ### T3: Code Repair Strategies (from aider)
 
-- [ ] T301 Architect/Editor two-model pattern: strong model (opus) plans changes in natural language; fast model emits concrete diffs — separate strategy from execution cost
-- [ ] T302 Unified diff edit format: modified unified diff with @@ hunks optimized for streaming LLM responses — lower token cost than full file replacement
+- [x] T301 Architect/Editor two-model pattern: strong model (opus) plans changes in natural language; fast model emits concrete diffs — separate strategy from execution cost
+- [x] T302 Unified diff edit format: modified unified diff with @@ hunks optimized for streaming LLM responses — lower token cost than full file replacement
 - [ ] T303 Search/Replace block format: EditBlockCoder pattern — emit only changed parts, not full file rewrites — apply as LLM output format in FixLoop
-- [ ] T304 Multiple coder backends: pluggable fix strategies (EditBlockCoder, WholeFileCoder, UnifiedDiffCoder, ArchitectCoder) — select per file type and repair scenario
+- [x] T304 Multiple coder backends: pluggable fix strategies (EditBlockCoder, WholeFileCoder, UnifiedDiffCoder, ArchitectCoder) — select per file type and repair scenario
 - [ ] T305 Real-time diff visualization: stream diffs as LLM generates them — enable user course-correction mid-generation before committing
 - [ ] T306 Atomic git commits with LLM-generated messages: every MASTER fix commits with AI message — no "wip" bundling; git log reads as changelog
 - [ ] T307 Pre-commit user-edits preservation: stash/commit local changes before running repairs — prevent user work loss if agent makes mistakes
@@ -730,26 +740,26 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 ### T6: Safety & Sandboxing (from Codex CLI / OpenCrabs)
 
 - [ ] T601 Sandbox mode flag: --sandbox enables restricted execution context for untrusted agent operations — pledge(2) on OpenBSD
-- [ ] T602 Tool execution logging: every tool invocation and result recorded in feedback ledger — rollback and audit without git
+- [x] T602 Tool execution logging: every tool invocation and result recorded in feedback ledger — rollback and audit without git
 - [ ] T603 Config inheritance for subagents: subagent configs inherit parent unless explicitly overridden — prevent privilege escalation in spawned agents
 - [ ] T604 Provider error isolation: feedback ledger tracks provider failures separately — enable fallback chains without user intervention
-- [ ] T605 Automatic rollback on oscillation: if fix loop detects A→B→A→B cycle, auto-revert to pre-session state and report deadlock
+- [x] T605 Automatic rollback on oscillation: if fix loop detects A→B→A→B cycle, auto-revert to pre-session state and report deadlock
 
 ### T7: Configuration & Rule Systems (from Hermes / Codex / OpenCrabs)
 
-- [ ] T701 Portable skill document format (agentskills.io): each MASTER skill in MASTER/data/skills/<name>.md — reusable across agent frameworks
-- [ ] T702 Model switching via CLI: /model gpt-4o switches active provider without restart — per-task cost/latency optimization
-- [ ] T703 AGENTS.md as tool registry: declarative manifest listing available MASTER tools, skills, hooks, MCP endpoints
-- [ ] T704 Conditional tool availability: tools activated by file type (Prism tools only for .rb, jq tools only for .json) — reduce noise in LLM tool list
-- [ ] T705 Plugin hot-reload: add new tool/skill file to data/skills/ and MASTER picks it up at next prompt without restart
+- [x] T701 Portable skill document format (agentskills.io): each MASTER skill in MASTER/data/skills/<name>.md — reusable across agent frameworks
+- [x] T702 Model switching via CLI: /model gpt-4o switches active provider without restart — per-task cost/latency optimization
+- [x] T703 AGENTS.md as tool registry: declarative manifest listing available MASTER tools, skills, hooks, MCP endpoints
+- [x] T704 Conditional tool availability: tools activated by file type (Prism tools only for .rb, jq tools only for .json) — reduce noise in LLM tool list
+- [x] T705 Plugin hot-reload: add new tool/skill file to data/skills/ and MASTER picks it up at next prompt without restart
 
 ### T8: Repo Map & Context Management (from aider)
 
-- [ ] T801 Repository map: generate ranked summary of all files + their public API signatures — send as compressed context, not full file content
-- [ ] T802 Graph relevance ranking: score files by mention frequency in user's request + recent edit history — inject most-relevant into context first
-- [ ] T803 Symbol-level context: extract def/class/module names per file into map — LLM knows what exists without reading entire file
-- [ ] T804 Stale map invalidation: invalidate AST cache for files modified since last parse — always fresh structural context
-- [ ] T805 Cross-repo context: when working across multiple apps (brgen, baibl, hjerterom), build unified cross-repo map — detect shared violations
+- [x] T801 Repository map: generate ranked summary of all files + their public API signatures — send as compressed context, not full file content
+- [x] T802 Graph relevance ranking: score files by mention frequency in user's request + recent edit history — inject most-relevant into context first
+- [x] T803 Symbol-level context: extract def/class/module names per file into map — LLM knows what exists without reading entire file
+- [x] T804 Stale map invalidation: invalidate AST cache for files modified since last parse — always fresh structural context
+- [x] T805 Cross-repo context: when working across multiple apps (brgen, baibl, hjerterom), build unified cross-repo map — detect shared violations
 
 ### T9: OpenCrabs-Specific Patterns
 
@@ -757,30 +767,30 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] T902 Brain-files-per-turn: include MASTER's own soul/rules/patterns YAML as compressed context in every LLM turn — MASTER always knows its own constitution
 - [ ] T903 Daily log compaction: end-of-day job condenses session logs to ≤10 bullet points, discards raw transcripts — bounded memory growth
 - [ ] T904 Workspace-aware indexing: index varies by current working directory — different brain for MASTER vs DEPLOY vs web/
-- [ ] T905 IDENTITY.md persona file: separate from MEMORY.md — defines WHO MASTER is, not what it knows; re-read on every session start
+- [x] T905 IDENTITY.md persona file: separate from MEMORY.md — defines WHO MASTER is, not what it knows; re-read on every session start
 
 ### T10: aider-Specific Patterns
 
-- [ ] T1001 Linting before commit: run rubocop (dry-run) on every changed file before creating git commit — block commit on :error findings
-- [ ] T1002 LLM-generated commit messages: after every fix, ask fast model to generate commit message summarizing the change — S&W style
-- [ ] T1003 Architect-then-edit flow: for files >200 lines, send to strong model for architecture plan, then send plan to fast model for implementation
-- [ ] T1004 Edit format negotiation: try preferred edit format, fall back to whole-file if LLM produces malformed diff
-- [ ] T1005 In-chat file references: @file.rb in REPL automatically includes file content in next LLM call — fast targeted context injection
+- [x] T1001 Linting before commit: run rubocop (dry-run) on every changed file before creating git commit — block commit on :error findings
+- [x] T1002 LLM-generated commit messages: after every fix, ask fast model to generate commit message summarizing the change — S&W style
+- [x] T1003 Architect-then-edit flow: for files >200 lines, send to strong model for architecture plan, then send plan to fast model for implementation
+- [x] T1004 Edit format negotiation: try preferred edit format, fall back to whole-file if LLM produces malformed diff
+- [x] T1005 In-chat file references: @file.rb in REPL automatically includes file content in next LLM call — fast targeted context injection
 
 ## U — Preventing Shallow Skimming: Deep Semantic Comprehension (item 8)
 
 ### U1: LLM Prompt Architecture to Force Depth
 
-- [ ] U101 Before any scan/fix LLM call, inject "chain-of-thought depth contract": "Before answering, enumerate all structural properties of this code: module hierarchy, data flow, side effects, implicit invariants, edge cases for nil/empty/max/unicode input. Only then proceed."
-- [ ] U102 Add "anti-skim system message" to soul.yml identity section: "Never skim. Every code artifact has a semantic iceberg — surface syntax is 10%, behavior is 90%. Excavate to bedrock before proposing changes."
-- [ ] U103 For every file read during scan, require MASTER to emit a 3-line "semantic summary" before findings: what it does, what it assumes, what could break — stored in scan context, not output
-- [ ] U104 Implement "second-pass obligation": after initial scan findings, always re-read the same file with findings in context and ask "what did I miss that a senior engineer would catch?"
-- [ ] U105 Require explicit enumeration of cross-file dependencies before any multi-file fix: "List all other files that import, call, or are called by this file" — prevents fixes that break callers
-- [ ] U106 Add "assumption audit" step: before each LLM fix call, list all assumptions the proposed fix makes (input types, object states, concurrency) and validate each assumption against the codebase
-- [ ] U107 Require "edge case checklist" for every proposed change: nil input, empty collection, max value, concurrent access, network failure, file permission failure — LLM must address each or explain why N/A
-- [ ] U108 "Inversion test" prompt: after proposing a fix, ask "if this fix is wrong, what would break, where, and when?" — forces adversarial self-review before applying
-- [ ] U109 "Diff impact analysis" before applying: enumerate every caller of a changed method/class and verify the signature change is backward-compatible
-- [ ] U110 Require LLM to state the design pattern being used (or violated) before proposing a structural fix — prevents pattern-blind refactoring
+- [x] U101 Before any scan/fix LLM call, inject "chain-of-thought depth contract": "Before answering, enumerate all structural properties of this code: module hierarchy, data flow, side effects, implicit invariants, edge cases for nil/empty/max/unicode input. Only then proceed."
+- [x] U102 Add "anti-skim system message" to soul.yml identity section: "Never skim. Every code artifact has a semantic iceberg — surface syntax is 10%, behavior is 90%. Excavate to bedrock before proposing changes."
+- [x] U103 For every file read during scan, require MASTER to emit a 3-line "semantic summary" before findings: what it does, what it assumes, what could break — stored in scan context, not output
+- [x] U104 Implement "second-pass obligation": after initial scan findings, always re-read the same file with findings in context and ask "what did I miss that a senior engineer would catch?"
+- [x] U105 Require explicit enumeration of cross-file dependencies before any multi-file fix: "List all other files that import, call, or are called by this file" — prevents fixes that break callers
+- [x] U106 Add "assumption audit" step: before each LLM fix call, list all assumptions the proposed fix makes (input types, object states, concurrency) and validate each assumption against the codebase
+- [x] U107 Require "edge case checklist" for every proposed change: nil input, empty collection, max value, concurrent access, network failure, file permission failure — LLM must address each or explain why N/A
+- [x] U108 "Inversion test" prompt: after proposing a fix, ask "if this fix is wrong, what would break, where, and when?" — forces adversarial self-review before applying
+- [x] U109 "Diff impact analysis" before applying: enumerate every caller of a changed method/class and verify the signature change is backward-compatible
+- [x] U110 Require LLM to state the design pattern being used (or violated) before proposing a structural fix — prevents pattern-blind refactoring
 
 ### U2: Research Integration (ar5iv.org + GitHub)
 
@@ -797,27 +807,27 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### U3: Depth Enforcement in MASTER's Own Processing
 
-- [ ] U301 Implement "read before fix" hard gate: MASTER cannot propose a fix for file X unless it has read file X in the current session — prevents hallucinated context
-- [ ] U302 "Semantic fingerprint" per file: hash of {line_count, class_count, method_count, def_names[], constant_names[]} — if fingerprint changes between read and fix, re-read before applying
-- [ ] U303 Multi-pass scan mandate: every file goes through at minimum lexical → structural → semantic passes before findings are finalized — no early exit on first pass
-- [ ] U304 "Dependency graph" before bulk fix: build module→module dependency graph for the target directory; fix in topological order, leaves first
-- [ ] U305 Cross-file DRY pass: after per-file scan, run a mandatory cross-file pass looking for duplicate patterns across the whole scan batch — cannot be skipped
-- [ ] U306 "Confidence score" on each finding: 0.0–1.0 based on regex certainty vs AST certainty vs LLM inference; only surface findings above 0.7 confidence by default
-- [ ] U307 Finding deduplication: before reporting, cluster findings by root cause — if 8 files have the same smell from a shared ancestor, report the ancestor once, not 8 times
-- [ ] U308 "Impact radius" annotation on every finding: {files_affected: N, callers: M, severity_multiplier: S} — high-impact findings shown first regardless of per-file severity
-- [ ] U309 Require method-level test coverage check before marking any rule violation as fixed: if the fixed method has no test, flag as "fix unverified — add test"
-- [ ] U310 "Ghost smell" detection: pattern that appears correct but conceals a deeper problem (e.g., guard clause that hides a missing abstraction) — requires semantic LLM analysis, not just lexical
+- [x] U301 Implement "read before fix" hard gate: MASTER cannot propose a fix for file X unless it has read file X in the current session — prevents hallucinated context
+- [x] U302 "Semantic fingerprint" per file: hash of {line_count, class_count, method_count, def_names[], constant_names[]} — if fingerprint changes between read and fix, re-read before applying
+- [x] U303 Multi-pass scan mandate: every file goes through at minimum lexical → structural → semantic passes before findings are finalized — no early exit on first pass
+- [x] U304 "Dependency graph" before bulk fix: build module→module dependency graph for the target directory; fix in topological order, leaves first
+- [x] U305 Cross-file DRY pass: after per-file scan, run a mandatory cross-file pass looking for duplicate patterns across the whole scan batch — cannot be skipped
+- [x] U306 "Confidence score" on each finding: 0.0–1.0 based on regex certainty vs AST certainty vs LLM inference; only surface findings above 0.7 confidence by default
+- [x] U307 Finding deduplication: before reporting, cluster findings by root cause — if 8 files have the same smell from a shared ancestor, report the ancestor once, not 8 times
+- [x] U308 "Impact radius" annotation on every finding: {files_affected: N, callers: M, severity_multiplier: S} — high-impact findings shown first regardless of per-file severity
+- [x] U309 Require method-level test coverage check before marking any rule violation as fixed: if the fixed method has no test, flag as "fix unverified — add test"
+- [x] U310 "Ghost smell" detection: pattern that appears correct but conceals a deeper problem (e.g., guard clause that hides a missing abstraction) — requires semantic LLM analysis, not just lexical
 
 ### U4: Cognitive Load / Anti-Skim UI Patterns
 
 - [ ] U401 Show scan progress as "files understood / files skimmed" not just "files scanned" — forces acknowledgement of depth
 - [ ] U402 "Deep mode" flag: /scan --deep forces all three passes + cross-file analysis + ar5iv lookup for each finding — explicit commitment to thoroughness
 - [ ] U403 After each LLM response, display: "Depth: {lexical|structural|semantic|cross-file} | Evidence: {regex|AST|LLM|research}" — makes reasoning basis visible
-- [ ] U404 "Confidence histogram" in scan summary: show distribution of finding confidence scores — reveals whether the scan was shallow or deep
+- [x] U404 "Confidence histogram" in scan summary: show distribution of finding confidence scores — reveals whether the scan was shallow or deep
 - [ ] U405 "Unknown-unknowns prompt": at end of each session, ask LLM "What questions about this codebase should I have asked but didn't?" — surfaces blind spots
 - [ ] U406 "Red team" mode: after proposing a fix set, spawn a second LLM call with "You are a senior engineer reviewing this diff for mistakes. Find every problem." before presenting to user
-- [ ] U407 Require findings to have "why this matters" annotation beyond the rule message — e.g., "CQS violation here makes this method untestable because…"
-- [ ] U408 Show "smell genealogy" for each finding: which principle → which rule → which pattern → which line — full traceability from axiom to code
+- [x] U407 Require findings to have "why this matters" annotation beyond the rule message — e.g., "CQS violation here makes this method untestable because…"
+- [x] U408 Show "smell genealogy" for each finding: which principle → which rule → which pattern → which line — full traceability from axiom to code
 - [ ] U409 "Attention heatmap": track which lines of each file received the most LLM attention tokens — reveal coverage gaps
 - [ ] U410 Block "batch-and-forget" pattern: if MASTER proposes >10 fixes without asking user to verify one, pause and require acknowledgment before continuing
 
@@ -949,7 +959,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 ### W1: Voice and Output Discipline Not Yet in soul.yml
 
 - [ ] W101 Codify unix-silence rule: "silence on success, text only when something noteworthy" — add as `unix_silence: true` in soul.yml absolute.aesthetic_rules; CLI scan with zero findings exits 0 with no output
-- [ ] W102 Codify "exit codes carry meaning": scan violations = exit 1, internal errors = exit 2, LLM failure = exit 3 — wire to bin/cli; document in CONVENTIONS.md
+- [x] W102 Codify "exit codes carry meaning": scan violations = exit 1, internal errors = exit 2, LLM failure = exit 3 — wire to bin/cli; document in CONVENTIONS.md
 - [ ] W103 Codify "do one thing well" per invocation: each MASTER subcommand must have exactly one output channel (stdout) and one error channel (stderr) — no mixing
 - [ ] W104 Codify catchphrase discipline from v49.13: "Backing up first." before write, "Checking for side effects…" before LLM fix, "Clean. Moving on." on zero findings — add to voice/personality.rb output hooks
 - [ ] W105 Codify no-sycophancy rule at runtime: soul.yml forbidden_openings: ["great question", "certainly", "of course", "absolutely", "happy to"] — applied at response generation time
@@ -957,9 +967,9 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### W2: Scanning and Review Discipline Not Yet Wired
 
-- [ ] W201 Codify crit-fix-loop as default: any scan invocation runs autoiteratively until zero findings — no --loop flag required; wired at pipeline level so loop exits only on clean pass
+- [x] W201 Codify crit-fix-loop as default: any scan invocation runs autoiteratively until zero findings — no --loop flag required; wired at pipeline level so loop exits only on clean pass (enabled: FixLoop started unconditionally)
 - [ ] W202 Codify "read whole file, not grep snippets": scanner must load full file content before any rule runs — no streaming partial-reads that miss context; enforce in scanner.rb#load_file
-- [ ] W203 Codify intent inference: when user input matches plain-language description (e.g. "fix face.js"), infer full workflow (read → crit → fix → commit) without requiring slash commands — wire in now/cli.rb intent router
+- [x] W203 Codify intent inference: when user input matches plain-language description (e.g. "fix face.js"), infer full workflow (read → crit → fix → commit) without requiring slash commands — wire in now/cli.rb intent router
 - [ ] W204 Codify red-team pass: after every LLM fix proposal, a second call "find every flaw in this proposed fix" before applying — add as pipeline gate before write_back
 - [ ] W205 Codify "second-pass obligation" as named pass in ScanPipeline: after finding collection, re-run with findings in context asking "what did I miss?" — not optional
 - [ ] W206 Codify DEEP_SCAN_ONLY (already in soul.yml) as a hard scanner gate: if scan_depth != :deep, raise ConfigError — never silently downgrade
@@ -1318,7 +1328,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 - [ ] AC201 Any input containing a file path → auto-run scan+fix loop on that file; no /scan needed
 - [ ] AC202 Any input containing "why" or "explain" → auto-run /why on most recent finding; no /why command needed
-- [ ] AC203 Any input containing "commit" or "push" → auto-run git commit with LLM message; no /commit needed
+- [x] AC203 Any input containing "commit" or "push" → auto-run git commit with LLM message; no /commit needed
 - [ ] AC204 Any input containing "clean" or "fix" without a path → auto-run fix loop on last scanned target
 - [ ] AC205 Any input containing "status" or "health" → auto-run /status output
 - [ ] AC206 Any input that is empty or "?" → show abbreviated /status + last finding count; never show full help
@@ -1357,11 +1367,11 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] AD101 Semantic intent classifier: before routing any input, run a fast (zero-LLM) regex+keyword classifier that maps plain-language phrases to pipeline actions — "show me what's broken" → scan, "make it cleaner" → fix+lint, "explain this" → why
 - [ ] AD102 Entity extraction: identify file paths, rule IDs, and model names in natural language input — "fix the scanner" resolves to lib/judge/scan/scanner.rb; "the CQS rule" resolves to B04
 - [ ] AD103 Pronoun resolution: "it" / "that file" / "the last one" → resolve to most recently mentioned/scanned file in session context
-- [ ] AD104 Verb-action mapping: build verb→action table: "clean/tidy/polish" → fix+lint, "check/review/audit" → scan, "explain/why/what" → why+axioms, "ship/deploy/push" → commit+push
+- [x] AD104 Verb-action mapping: build verb→action table: "clean/tidy/polish" → fix+lint, "check/review/audit" → scan, "explain/why/what" → why+axioms, "ship/deploy/push" → commit+push
 - [ ] AD105 Negation handling: "don't fix X" / "skip the magic number rule" → add rule to session suppression list; persist for session
 - [ ] AD106 Scope inference: "fix everything" → scan all tracked files; "just this method" → extract method name and run targeted scan
 - [ ] AD107 Urgency detection: "quickly" / "just give me the main issues" → still run full scan but show only :error findings first; don't downgrade scan depth
-- [ ] AD108 Multi-step intent: "scan, fix what you can, then commit" → parse as ordered pipeline; execute each step; confirm between stages only when destructive
+- [x] AD108 Multi-step intent: "scan, fix what you can, then commit" → parse as ordered pipeline; execute each step; confirm between stages only when destructive
 - [ ] AD109 Question vs command distinction: "what's wrong with this?" → report; "fix what's wrong with this" → fix; detect question mark and interrogative verbs
 
 ### AD2: Context Awareness
@@ -2314,15 +2324,15 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ## CA: Missing Self-Scan & Self-Adherence (MASTER's own rules)
 
-- [x] CA01 MASTER: boot-time self-scan of `lib/` with all rules (block startup on violations)
-- [x] CA02 MASTER: add `/self` command to scan MASTER itself on demand
-- [x] CA03 MASTER: add `rules.yml` SINGULARITY check (no duplicate rule IDs) on boot
+- [ ] CA01 MASTER: boot-time self-scan of `lib/` with all rules (block startup on violations)
+- [ ] CA02 MASTER: add `/self` command to scan MASTER itself on demand
+- [ ] CA03 MASTER: add `rules.yml` SINGULARITY check (no duplicate rule IDs) on boot
 - [x] CA04 MASTER: wire `evidence_scoring` gate — require ≥80 points to deploy
-- [x] CA05 MASTER: add `phantom_recovery` detector for LLM hallucinations (gaslighting preamble, repetition)
+- [ ] CA05 MASTER: add `phantom_recovery` detector for LLM hallucinations (gaslighting preamble, repetition)
 - [ ] CA06 MASTER: implement `voice/soul_drift_detector` to enforce banned phrases removal
-- [x] CA07 MASTER: add `--dry-run` flag to scan/fix commands
+- [ ] CA07 MASTER: add `--dry-run` flag to scan/fix commands
 - [ ] CA08 MASTER: persist LLM response cache to disk (`.master/llm_cache.yml`)
-- [x] CA09 MASTER: implement `max_iterations` cap in convergence loop (UNBOUNDED_RETRY guard)
+- [ ] CA09 MASTER: implement `max_iterations` cap in convergence loop (UNBOUNDED_RETRY guard)
 
 ## CB: Missing Competitive Differentiators (brgen vs X/Facebook)
 
@@ -2404,14 +2414,14 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ## CZ: Dilla Audio Engine & Generative Music
 
-- [ ] CZ01 MASTER voice/dilla: implement beat sequencer — 16-step grid, tempo-locked to session mood
-- [ ] CZ02 MASTER voice/dilla: add swing quantisation parameter (0–100% Dilla-style laid-back feel)
-- [ ] CZ03 MASTER voice/dilla: generate ambient drone layer tied to pipeline pressure (`pressure: true`)
-- [ ] CZ04 MASTER voice/dilla: add chord progression generator — soul/jazz voicings (ii-V-I, tritone subs)
-- [ ] CZ05 MASTER voice/dilla: add `--groove` flag to CLI — plays background beat during long scans
-- [ ] CZ06 MASTER voice/dilla: export generated beat as `.wav` with loop metadata (ACID-compatible)
-- [ ] CZ07 MASTER voice/dilla: add velocity humanisation — random ±10% per hit, gaussian distribution
-- [ ] CZ08 MASTER voice/dilla: add polyrhythm mode — 3-against-4 or 5-against-4 patterns
+- [x] CZ01 MASTER voice/dilla: implement beat sequencer — 16-step grid, tempo-locked to session mood
+- [x] CZ02 MASTER voice/dilla: add swing quantisation parameter (0–100% Dilla-style laid-back feel)
+- [x] CZ03 MASTER voice/dilla: generate ambient drone layer tied to pipeline pressure (`pressure: true`)
+- [x] CZ04 MASTER voice/dilla: add chord progression generator — soul/jazz voicings (ii-V-I, tritone subs)
+- [x] CZ05 MASTER voice/dilla: add `--groove` flag to CLI — plays background beat during long scans
+- [x] CZ06 MASTER voice/dilla: export generated beat as `.wav` with loop metadata (ACID-compatible)
+- [x] CZ07 MASTER voice/dilla: add velocity humanisation — random ±10% per hit, gaussian distribution
+- [x] CZ08 MASTER voice/dilla: add polyrhythm mode — 3-against-4 or 5-against-4 patterns
 - [ ] CZ09 brgen playlist: use Dilla engine for AI-generated intro music on playlist pages
 - [ ] CZ10 MASTER voice: crossfade TTS response audio with Dilla ambient (ducking on speech start)
 
@@ -2467,8 +2477,8 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA31 face: add WebWorker for depth-map sampling so main thread never blocks on large images
 - [ ] FA32 face: store sampled positions in IndexedDB keyed by image URL — skip resample on reload
 - [x] FA33 face: particle LOD — coarsePointer already halves count; also reduce on battery saver API signal
-- [ ] FA34 face: chromatic aberration on flash state — R channel offset +1px, B offset -1px for 200ms
-- [ ] FA35 face: scanline overlay CSS on canvas — `repeating-linear-gradient` at 2px pitch, 4% opacity
+- [x] FA34 face: chromatic aberration on flash state — R channel offset +1px, B offset -1px for 200ms
+- [x] FA35 face: scanline overlay CSS on canvas — `repeating-linear-gradient` at 2px pitch, 4% opacity
 - [x] FA36 face: after long idle (>60s) particles slowly dissolve (alpha → 0 over 4s), reform on interaction
 
 ### FA-B: TTS voice & audio
@@ -2477,11 +2487,11 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA38 tts: word-boundary events from edge-tts → highlight spoken word in chat bubble in real time
 - [x] FA39 tts: speed slider in UI — maps to `rate` offset ±20% passed to speech.rb via query param
 - [x] FA40 tts: pitch slider in UI — maps to `pitch` offset ±20Hz passed to speech.rb
-- [ ] FA41 tts: voice picker in UI — dropdown of 13 voices with preview button (2-word sample phrase)
-- [ ] FA42 tts: voice preview plays 3-word clip without sending to chat history
+- [x] FA41 tts: voice picker in UI — dropdown of 13 voices with preview button (2-word sample phrase)
+- [x] FA42 tts: voice preview plays 3-word clip without sending to chat history
 - [x] FA43 tts: auto-pause TTS when user scrolls (intent = reading, not listening)
-- [ ] FA44 tts: resume TTS from last word boundary on un-pause (track char offset in streamed chunks)
-- [ ] FA45 tts: per-speaker voice in council mode — each council member uses their mapped voice (already in code, surface in UI)
+- [x] FA44 tts: resume TTS from last word boundary on un-pause (track char offset in streamed chunks)
+- [x] FA45 tts: per-speaker voice in council mode — each council member uses their mapped voice (already in code, surface in UI)
 - [ ] FA46 tts: emotional prosody — stress key words via SSML `<emphasis>` tags injected by expression.rb
 - [ ] FA47 tts: SSML `<break time="400ms"/>` after code blocks and lists — natural reading pace
 - [x] FA48 tts: strip markdown before TTS — `**bold**`, `` `code` ``, `#` headers → plain text, not read aloud as punctuation
@@ -2499,35 +2509,35 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [x] FA60 tts: adjustable chunk size — default 220 chars; short-answer mode 80 chars for snappier start
 - [x] FA61 tts: silence detection in STT — auto-submit after 1.2s silence (configurable threshold)
 - [x] FA62 tts: push-to-talk mode — hold spacebar = record, release = submit (no silence detection needed)
-- [ ] FA63 tts: audio waveform visualiser alongside face — small bar chart from AnalyserNode FFT data
-- [ ] FA64 tts: voiced error messages — 503/timeout gets a short spoken apology, not just text
-- [ ] FA65 tts: "thinking aloud" — stream internal pipeline stage name as whispered aside during long waits
+- [x] FA63 tts: audio waveform visualiser alongside face — small bar chart from AnalyserNode FFT data
+- [x] FA64 tts: voiced error messages — 503/timeout gets a short spoken apology, not just text
+- [x] FA65 tts: "thinking aloud" — stream internal pipeline stage name as whispered aside during long waits
 
 ### FA-C: Interaction & gamification
 
-- [ ] FA66 face: keyboard shortcut `T` = toggle TTS on/off without opening nav
-- [ ] FA67 face: keyboard shortcut `M` = toggle mic on/off
-- [ ] FA68 face: keyboard shortcut `Escape` = skip current TTS chunk
-- [ ] FA69 face: swipe up on face canvas = open composer (mirror swipe-down nav reveal)
-- [ ] FA70 face: swipe left/right on face = cycle through recent answers
-- [ ] FA71 face: drag face to corner — pin it small while reading long output (PiP mode)
-- [ ] FA72 face: "applause" Easter egg — type "wow" and particles burst confetti pattern for 1s
-- [ ] FA73 face: "sleep" command — face dims to 5% alpha, TTS mutes, wakes on any input
-- [ ] FA74 face: share face state as URL param — mood/model/voice encoded, shareable link
-- [ ] FA75 face: copy-to-clipboard button appears on hover over any assistant message
-- [ ] FA76 face: reaction emojis on message — tap to send 👍/🔁/🗑 to rate/retry/delete answer
-- [ ] FA77 face: "explain simpler" tap on any response — re-asks with Flesch–Kincaid grade 6 constraint
-- [ ] FA78 face: "go deeper" tap — re-asks with expanded detail and cites sources
-- [ ] FA79 face: streamed response has a pause/resume button mid-stream
-- [ ] FA80 face: typing indicator animation while streaming — 3 particle dots pulse in sequence
-- [ ] FA81 face: message timestamps shown on hover
-- [ ] FA82 face: session word count shown in corner — "1.2k words today"
-- [ ] FA83 face: "focus mode" — hide all UI except face and input, full-screen canvas
-- [ ] FA84 face: dark/light toggle persisted to localStorage (currently always black void)
-- [ ] FA85 face: font size control via pinch or slider — rem scale 0.85–1.4
-- [ ] FA86 face: haptic feedback on mobile send — navigator.vibrate(30) on submit
+- [x] FA66 face: keyboard shortcut `T` = toggle TTS on/off without opening nav
+- [x] FA67 face: keyboard shortcut `M` = toggle mic on/off
+- [x] FA68 face: keyboard shortcut `Escape` = skip current TTS chunk
+- [x] FA69 face: swipe up on face canvas = open composer (mirror swipe-down nav reveal)
+- [x] FA70 face: swipe left/right on face = cycle through recent answers
+- [x] FA71 face: drag face to corner — pin it small while reading long output (PiP mode)
+- [x] FA72 face: "applause" Easter egg — type "wow" and particles burst confetti pattern for 1s
+- [x] FA73 face: "sleep" command — face dims to 5% alpha, TTS mutes, wakes on any input
+- [x] FA74 face: share face state as URL param — mood/model/voice encoded, shareable link
+- [x] FA75 face: copy-to-clipboard button appears on hover over any assistant message
+- [x] FA76 face: reaction emojis on message — tap to send 👍/🔁/🗑 to rate/retry/delete answer
+- [x] FA77 face: "explain simpler" tap on any response — re-asks with Flesch–Kincaid grade 6 constraint
+- [x] FA78 face: "go deeper" tap — re-asks with expanded detail and cites sources
+- [x] FA79 face: streamed response has a pause/resume button mid-stream
+- [x] FA80 face: typing indicator animation while streaming — 3 particle dots pulse in sequence
+- [x] FA81 face: message timestamps shown on hover
+- [x] FA82 face: session word count shown in corner — "1.2k words today"
+- [x] FA83 face: "focus mode" — hide all UI except face and input, full-screen canvas
+- [x] FA84 face: dark/light toggle persisted to localStorage (currently always black void)
+- [x] FA85 face: font size control via pinch or slider — rem scale 0.85–1.4
+- [x] FA86 face: haptic feedback on mobile send — navigator.vibrate(30) on submit
 - [ ] FA87 face: confetti on first correct answer in quiz mode (see FA-D)
-- [ ] FA88 face: session timer shown optionally — "12m 34s" elapsed since first message
+- [x] FA88 face: session timer shown optionally — "12m 34s" elapsed since first message
 
 ### FA-D: Educational & quiz modes
 
@@ -2554,22 +2564,22 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ### FA-E: Personality & expression
 
-- [ ] FA109 face: soul drift visible — soul.yml drift score shown as particle density variation
-- [ ] FA110 face: mood history sparkline — tiny bar chart of last 20 mood states in corner
-- [ ] FA111 face: "curious" mood particle behaviour — particles lean toward the user's cursor
-- [ ] FA112 face: "weary" mood — particles sag downward 0.04 units, slower curl noise
-- [ ] FA113 face: model identity badge — tiny text "claude" / "deepseek" / "gpt" near face, fades after 3s
-- [ ] FA114 face: voice character blurb on voice change — one spoken line in new voice: "I'm Christopher. Let's work."
-- [ ] FA115 face: council vote tally displayed — pass/veto counts appear as brief text overlay
-- [ ] FA116 face: constitution violation flash — red particle flash (uFlash) already wired, expose via ABSOLUTE guard event
-- [ ] FA117 face: pipeline stage indicator — tiny label "routing…" "scanning…" fades in/out per stage
-- [ ] FA118 face: model switch animation — brief dissolve/reform of face in new tint (currently all white; future per-model tint opt-in)
-- [ ] FA119 face: "I don't know" response = particles form question-mark shape momentarily
-- [ ] FA120 face: laughter detection — if response contains "(ha" or emoji, particles do a quick jitter burst
-- [ ] FA121 face: multi-turn memory indicator — small counter "remembers N things from today" on hover
-- [ ] FA122 face: `/whoami` — face reads aloud its own soul.yml persona summary
-- [ ] FA123 face: seasonal particle tints — opt-in; Halloween = amber, Midsummer = gold, Winter = ice-blue
-- [ ] FA124 face: reaction to long silence (>90s) — face dims, TTS whispers "still here"
+- [x] FA109 face: soul drift visible — soul.yml drift score shown as particle density variation
+- [x] FA110 face: mood history sparkline — tiny bar chart of last 20 mood states in corner
+- [x] FA111 face: "curious" mood particle behaviour — particles lean toward the user's cursor
+- [x] FA112 face: "weary" mood — particles sag downward 0.04 units, slower curl noise
+- [x] FA113 face: model identity badge — tiny text "claude" / "deepseek" / "gpt" near face, fades after 3s
+- [x] FA114 face: voice character blurb on voice change — one spoken line in new voice: "I'm Christopher. Let's work."
+- [x] FA115 face: council vote tally displayed — pass/veto counts appear as brief text overlay
+- [x] FA116 face: constitution violation flash — red particle flash (uFlash) already wired, expose via ABSOLUTE guard event
+- [x] FA117 face: pipeline stage indicator — tiny label "routing…" "scanning…" fades in/out per stage
+- [x] FA118 face: model switch animation — brief dissolve/reform of face in new tint (currently all white; future per-model tint opt-in)
+- [x] FA119 face: "I don't know" response = particles form question-mark shape momentarily
+- [x] FA120 face: laughter detection — if response contains "(ha" or emoji, particles do a quick jitter burst
+- [x] FA121 face: multi-turn memory indicator — small counter "remembers N things from today" on hover
+- [x] FA122 face: `/whoami` — face reads aloud its own soul.yml persona summary
+- [x] FA123 face: seasonal particle tints — opt-in; Halloween = amber, Midsummer = gold, Winter = ice-blue
+- [x] FA124 face: reaction to long silence (>90s) — face dims, TTS whispers "still here"
 
 ### FA-F: Performance & reliability
 
@@ -2578,12 +2588,12 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA127 face: adaptive particle count — drop to 8k if frame time >25ms for two consecutive frames
 - [ ] FA128 face: preload face_mask.jpg via `<link rel="preload">` in HTML head — zero parse delay
 - [ ] FA129 face: service worker cache face.js + three.module.js + face_mask.jpg — offline shell
-- [ ] FA130 face: progressive enhancement — 2D canvas fallback already exists; add SVG fallback for no-canvas
+- [x] FA130 face: progressive enhancement — 2D canvas fallback already exists; add SVG fallback for no-canvas
 - [ ] FA131 tts: exponential backoff on TTS 503 — retry up to 3× before showing silent fallback text
 - [ ] FA132 tts: connection health ping /up every 60s; show reconnect banner if down, auto-retry
-- [ ] FA133 face: error boundary — uncaught JS exception shows degraded text UI, never blank screen
+- [x] FA133 face: error boundary — uncaught JS exception shows degraded text UI, never blank screen
 - [ ] FA134 face: memory leak guard — dispose Three.js geometries/materials on face swap or page hide
-- [ ] FA135 face: FPS counter toggle (debug overlay) — `?fps=1` query param shows live frame rate
+- [x] FA135 face: FPS counter toggle (debug overlay) — `?fps=1` query param shows live frame rate
 
 ### FA-G: Accessibility
 
@@ -2623,7 +2633,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 - [ ] FA166 face: heartbeat pulse — every 3-5s, a single radial pressure wave originates at face center, displaces vertices 0.012 units outward then inward; 280ms cycle
 - [ ] FA167 face: asymmetric eye blink — left eye vertex cluster closes 80ms before right; subtler than synchronised blink
 - [ ] FA168 face: nasolabial animation on vowels — A/O vowels deepen the nasolabial fold by 0.04 Z-offset; facial muscle simulation
-- [ ] FA169 face: depth map hot-reload — /mask command sends URL; face re-samples on next frame; no page reload; enables persona/face swap at runtime
+- [x] FA169 face: depth map hot-reload — /mask command sends URL; face re-samples on next frame; no page reload; enables persona/face swap at runtime
 - [ ] FA170 face: dual-face morph — two depth maps lerped by uMorph uniform (0→1 over 2s); one face dissolves into another; persona transition
 - [ ] FA171 face: noise-seeded personality — each session seeds RNG from session ID; tiny variation in grid offset, tilt, and flicker phase; same code, unique face
 - [ ] FA172 face: exposure response — bright ambient (prefers-color-scheme: light) reduces particle alpha by 40% so face reads in daylight

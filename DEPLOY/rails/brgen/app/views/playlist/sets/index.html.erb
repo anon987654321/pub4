@@ -8,31 +8,16 @@
   <%= link_to "New set", new_playlist_set_path, class: "btn btn-primary btn-sm" if authenticated? %>
 </div>
 
-<div data-controller="live-search">
-  <%= render "shared/search_loading" %>
-  <%= form_with url: playlist_sets_path, method: :get, local: true,
-        data: { turbo_frame: "live_search_results" } do |f| %>
-    <div class="search-form" role="search">
-      <%= f.search_field :q, value: params[:q], placeholder: "Search sets…",
-            data: { live_search_target: "input", action: "input->live-search#input" } %>
-      <%= f.select :genre, options_for_select(@genres, params[:genre]), { include_blank: "All genres" } %>
-      <%= f.select :artist, options_for_select(@artists, params[:artist]), { include_blank: "All artists" } %>
-      <%= f.submit "Search", class: "btn btn-sm" %>
-    </div>
-  <% end %>
-
-  <%= turbo_frame_tag "live_search_results" do %>
-    <% if @sets.any? %>
-      <% @sets.each do |set| %>
-        <%= render "playlist/sets/set", set: set %>
+<% if @sets.any? %>
+  <% @sets.each do |set| %>
+    <article>
+      <h2><%= link_to set.name, playlist_set_path(set) %></h2>
+      <p class="dim"><%= set.privacy.presence&.humanize || "Public" %> · <%= set.tracks.count %> tracks · <%= set.formatted_duration %></p>
+      <% if set.description.present? %>
+        <p><%= set.description %></p>
       <% end %>
-      <%= @pagy.series_nav if @pagy.pages > 1 %>
-    <% else %>
-      <% if params[:q].present? %>
-        <%= render "shared/search_empty", query: params[:q], search_meta: search_meta %>
-      <% else %>
-        <div class="empty"><p>No sets yet.</p></div>
-      <% end %>
-    <% end %>
+    </article>
   <% end %>
-</div>
+<% else %>
+  <div class="empty"><p>No sets yet.</p></div>
+<% end %>

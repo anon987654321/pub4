@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  include Shared::UserAuthExtensions
-
   has_secure_password
 
   has_many :account_merges, dependent: :destroy
@@ -48,39 +46,21 @@ class User < ApplicationRecord
 
   validates :email_address, presence: true, uniqueness: true
   validates :username, uniqueness: true, allow_nil: true
-  validates :mention_notification_delivery, inclusion: { in: %w[push email none] }, allow_blank: true
 
   normalizes :email_address, with: ->(email_address) { email_address.strip.downcase }
 
-  EARTH_KM = 6371.0
+  include Shared::GeoLocatable
 
-  def display_name
-    guest? ? "anon" : (username.presence || email_address.split("@").first)
-  end
+  def display_name = guest? ? "anon" : (username.presence || email_address.split("@").first)
 
-  def mention_notification_delivery_mode
-    mention_notification_delivery.presence || "push"
-  end
-
+  # Accurate nearby (bbox pre + haversine filter) for small sets. Uses concern impls.
   def self.nearby(lat, lng, radius_km: 2)
-    lat, lng = lat.to_f, lng.to_f
-    d_lat = radius_km / EARTH_KM * (180.0 / Math::PI)
-    d_lng = d_lat / Math.cos(lat * Math::PI / 180.0)
-    candidates = where(latitude: (lat - d_lat)..(lat + d_lat), longitude: (lng - d_lng)..(lng + d_lng))
-                   .where.not(latitude: nil)
-    candidates.select { |u| haversine(lat, lng, u.latitude.to_f, u.longitude.to_f) <= radius_km }
+    nearby(lat, lng, radius_km).to_a.select { |u| haversine(lat, lng, u.latitude.to_f, u.longitude.to_f) <= radius_km }
   end
+  # haversine provided by Shared::GeoLocatable
 
-  def self.haversine(lat1, lng1, lat2, lng2)
-    dlat = (lat2 - lat1) * Math::PI / 180.0
-    dlng = (lng2 - lng1) * Math::PI / 180.0
-    a = Math.sin(dlat / 2)**2 + Math.cos(lat1 * Math::PI / 180.0) * Math.cos(lat2 * Math::PI / 180.0) * Math.sin(dlng / 2)**2
-    EARTH_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  end
 
-  def anon_handle
-    "Stranger ##{Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase}"
-  end
+  def anon_handle = "Stranger ##{Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase}"
 
   def assured?(level)
     identity_assurances.where(level: level).where("expires_at IS NULL OR expires_at > ?", Time.current).exists?
@@ -92,9 +72,7 @@ class User < ApplicationRecord
     follows_as_follower.find_or_create_by!(followed: other)
   end
 
-  def following?(other)
-    follows_as_follower.exists?(followed: other)
-  end
+  def following?(other) = follows_as_follower.exists?(followed: other)
 
   def timeline_posts
     Post.where(user: [self] + following).order(created_at: :desc)

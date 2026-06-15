@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 class PortsController < ApplicationController
-  include Shared::LiveSearchable
-
   allow_unauthenticated_access only: %i[index show crossref_cves review]
   before_action :set_port, only: %i[show watch unwatch crossref_cves review]
 
   def index
+    expires_in 10.minutes, public: true if params[:q].blank? && params[:category_id].blank?
+
     scope = Port.includes(:category)
-    scope = apply_live_search(scope, columns: %w[name comment], vertical: "ports", filters: { category_id: params[:category_id] }.compact) if live_search_query.present?
+    scope = scope.search(params[:q]) if params[:q].present?
     scope = scope.by_category(params[:category_id]) if params[:category_id].present?
     scope = scope.order(params[:sort] == "updated" ? "last_updated DESC" : :name)
 
@@ -25,11 +25,10 @@ class PortsController < ApplicationController
   end
 
   def show
+    fresh_when(@port, public: true)
+
     @updates = @port.port_updates.order(committed_at: :desc).limit(10)
     @deps = @port.depends_on.includes(:category)
-    @graph_nodes = [{ id: @port.id, label: @port.name, root: true }] +
-      @deps.map { |d| { id: d.depends_on_id, label: d.depends_on.name } }
-    @graph_links = @deps.map { |d| { source: @port.id, target: d.depends_on_id } }
     @rdeps = @port.reverse_deps.includes(:category).limit(20)
     @comments = @port.comments.roots.includes(:user, replies: :user)
     @comment = Comment.new
@@ -39,7 +38,6 @@ class PortsController < ApplicationController
       out, = Open3.capture2e("pkg_info", "-q", @port.name) rescue ["(pkg_info not available in this env)"]
       out.strip
     end
-    respond_to_cached_show(@port, only: %i[id name version pkgpath comment maintainer last_updated])
   end
 
   def watch

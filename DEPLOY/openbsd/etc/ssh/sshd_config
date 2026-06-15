@@ -1,9 +1,6 @@
-# OpenBSD sshd hardening — merge into /etc/ssh/sshd_config or include via Match blocks.
-# Tracked template: DEPLOY/openbsd/etc/ssh/sshd_config
+# OpenBSD sshd hardening for the deploy host.
+# Keep this file in sync with the live VPS /etc/ssh/sshd_config.
 
 PermitRootLogin no
 PasswordAuthentication no
 MaxAuthTries 3
-PubkeyAuthentication yes
-ChallengeResponseAuthentication no
-KbdInteractiveAuthentication no

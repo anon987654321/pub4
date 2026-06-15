@@ -41,6 +41,7 @@ module Master
 
           Files: #{files.empty? ? "unknown" : files}
           Lines: #{lines.empty? ? "unknown" : lines}
+          Delta: + recurring `#{rule_id}` finding(s) in #{files.empty? ? "unknown files" : files} at #{lines.empty? ? "unknown lines" : "line(s) #{lines}"}
 
           Proposed actions:
           - Tighten the autofix for `#{rule_id}` in `lib/judge/scan/rules/`

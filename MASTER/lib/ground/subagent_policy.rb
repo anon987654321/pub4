@@ -5,36 +5,36 @@ module Master
     module SubagentPolicy
       ALWAYS_EXCLUDED = %w[
         spawn_agent resume_agent wait_agent send_input close_agent
-        team_create team_delete team_broadcast rebuild evolve self_improve
+        team_create team_delete team_broadcast rebuild evolve self_improve,
       ].freeze
 
       TYPES = {
         general: {
           label: "general",
           prompt: "General-purpose sub-agent. Complete the task using available non-recursive tools.",
-          allow: nil
+          allow: nil,
         },
         explore: {
           label: "explore",
           prompt: "Codebase exploration agent. Search and read thoroughly. Do not modify files.",
-          allow: %w[read_file glob grep ls search fetch fetch_file]
+          allow: %w[read_file glob grep ls search fetch fetch_file],
         },
         plan: {
           label: "plan",
           prompt: "Architecture planning agent. Read current state and produce a concrete " \
                   "file-by-file plan. Do not modify files.",
-          allow: %w[read_file glob grep ls search fetch fetch_file bash]
+          allow: %w[read_file glob grep ls search fetch fetch_file bash],
         },
         code: {
           label: "code",
           prompt: "Implementation agent. Make precise changes, follow existing patterns, and verify the result.",
-          allow: nil
+          allow: nil,
         },
         research: {
           label: "research",
           prompt: "Research agent. Search/read public or local sources. Do not modify files.",
-          allow: %w[read_file glob grep ls search fetch fetch_file web_search http_request]
-        }
+          allow: %w[read_file glob grep ls search fetch fetch_file web_search http_request],
+        },
       }.freeze
 
       module_function

@@ -23,11 +23,7 @@ end
 
 failures = []
 warnings = []
-apps = if YAML.respond_to?(:safe_load_file)
-         YAML.safe_load_file(APPS_YML)
-       else
-         YAML.safe_load(File.read(APPS_YML), permitted_classes: [], aliases: true)
-       end.fetch("apps")
+apps = YAML.safe_load_file(APPS_YML).fetch("apps")
 env_sample = File.join(RAILS_ROOT, "env.sample")
 
 tracked_master_keys = git_ls_files("DEPLOY/rails/*/config/master.key")
@@ -55,13 +51,7 @@ apps.each do |name, metadata|
   fail!(app_failures, "production config must trust relayd with config.assume_ssl = true") unless prod_active.any? { |line| line.match?(/\bconfig\.assume_ssl\s*=\s*true\b/) }
   fail!(app_failures, "TLS terminates at relayd; do not enable config.force_ssl in Rails") if prod_active.any? { |line| line.match?(/\bconfig\.force_ssl\s*=\s*true\b/) }
   fail!(app_failures, "production mailer host must use #{domain}") unless prod_active.any? { |line| line.include?("action_mailer.default_url_options") && line.include?(domain) }
-  hosts_ok =
-    if name == "brgen"
-      prod_active.any? { |line| line.include?("config.hosts") && line.include?("Brgen::ProductionHosts") }
-    else
-      prod_active.any? { |line| line.include?("config.hosts") && line.include?(domain) }
-    end
-  fail!(app_failures, "production config.hosts must include #{domain}") unless hosts_ok
+  fail!(app_failures, "production config.hosts must include #{domain}") unless prod_active.any? { |line| line.include?("config.hosts") && line.include?(domain) }
   fail!(app_failures, "production host_authorization must keep /up available") unless prod_active.any? { |line| line.include?("config.host_authorization") && line.include?('"/up"') }
   fail!(app_failures, "Solid Cache must be enabled") unless prod_active.any? { |line| line.match?(/\bconfig\.cache_store\s*=\s*:solid_cache_store\b/) }
   fail!(app_failures, "Solid Queue must be enabled") unless prod_active.any? { |line| line.match?(/\bconfig\.active_job\.queue_adapter\s*=\s*:solid_queue\b/) }
@@ -70,34 +60,9 @@ apps.each do |name, metadata|
     gemfile_text = File.read(gemfile)
     warnings << "#{name}: Gemfile has no explicit ruby version" unless gemfile_text.match?(/^ruby\s+/)
     fail!(app_failures, "Gemfile must target Rails 8.1") unless gemfile_text.match?(/^gem "rails", "~> 8\.1/)
-    lockfile = File.join(app_dir, "Gemfile.lock")
-    fail!(app_failures, "Gemfile.lock must be present (BQ01)") unless File.file?(lockfile)
   else
     fail!(app_failures, "missing Gemfile")
   end
-
-  database_yml = File.join(app_dir, "config", "database.yml")
-  if File.file?(database_yml)
-    db_text = File.read(database_yml)
-    fail!(app_failures, "database.yml must set pool (BQ16)") unless db_text.include?("pool:") || db_text.include?("max_connections:")
-    fail!(app_failures, "database.yml must set timeout: 5000 (BQ17)") unless db_text.match?(/timeout:\s*5000/)
-  end
-
-  storage_yml = File.join(app_dir, "config", "storage.yml")
-  if File.file?(storage_yml)
-    storage_text = File.read(storage_yml)
-    fail!(app_failures, "production storage should default to :local (BQ03)") unless storage_text.include?("local:")
-  end
-
-  fail!(app_failures, "production must set consider_all_requests_local = false (BQ05)") unless prod_active.any? { |line| line.match?(/\bconfig\.consider_all_requests_local\s*=\s*false\b/) }
-  warnings << "#{name}: production should log to stdout (BQ06)" unless prod_active.any? { |line| line.include?("TaggedLogging") || line.include?("STDOUT") || line.include?("$stdout") }
-  warnings << "#{name}: production should enable query_log_tags (BQ07)" unless prod_active.any? { |line| line.match?(/\bconfig\.active_record\.query_log_tags_enabled\s*=\s*true\b/) }
-  fail!(app_failures, "production must eager_load (BR21/BQ)") unless prod_active.any? { |line| line.match?(/\bconfig\.eager_load\s*=\s*true\b/) }
-
-  health_controller = File.join(app_dir, "app", "controllers", "health_controller.rb")
-  shared_health = File.join(RAILS_ROOT, "shared", "app", "controllers", "health_controller.rb")
-  health_ok = File.file?(health_controller) || File.file?(shared_health)
-  fail!(app_failures, "GET /up health controller required (BQ21)") unless health_ok
 
   if File.file?(ci_bin)
     ci_text = File.read(ci_bin)

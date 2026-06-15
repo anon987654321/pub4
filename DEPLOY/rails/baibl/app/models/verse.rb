@@ -7,7 +7,6 @@ class Verse < ApplicationRecord
   has_many :highlights,       dependent: :destroy
   has_many :bookmarks,        dependent: :destroy
   has_many :word_studies,     dependent: :destroy
-  has_many :annotations, dependent: :destroy
   has_many :cross_references, dependent: :destroy
   has_many :target_verses,    through: :cross_references
 

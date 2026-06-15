@@ -16,7 +16,6 @@ module Master
         rel = full.delete_prefix(@root + "/")
         if sacred?(rel)
           return Result.err(
-            "#{rel} is sacred-tier (constitutional). Amend via `soul propose`.",
             category: :validation
           )
         end

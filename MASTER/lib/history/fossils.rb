@@ -21,7 +21,7 @@ module History
       /public_key|private_key/i,
       /rcctl|relayd|httpd|pfctl|doas/,
       /Stimulus|Turbo|Rails|Falcon/,
-      /MASTER|DEPLOY|converge|council|critique/i
+      /MASTER|DEPLOY|converge|council|critique/i,
     ].freeze
 
     def initialize(root: MasterPaths.repo, window: ENV.fetch("HISTORY_WINDOW", "--since=90.days.ago"))
@@ -44,7 +44,6 @@ module History
         chdir: root
       )
       raise "git history audit failed: #{stdout}" unless status.success?
-      stdout
     end
 
     def parse(log)

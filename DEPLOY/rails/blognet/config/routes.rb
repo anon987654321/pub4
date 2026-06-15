@@ -1,33 +1,27 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  get "offline" => "rails/pwa#offline", as: :pwa_offline
+  post "share" => "posts#share", as: :share_post
+
+  jobs_constraint = ->(request) { request.cookies["session_id"].present? }
+
   resource  :session
   instance_eval(File.read(File.expand_path("../shared/config/routes/auth.rb", __dir__)))
   resources :passwords, param: :token
 
-  resources :tags, only: :index do
-    collection { get :autocomplete }
-  end
-
-  resources :recipes, only: %i[show new create edit update]
-  resources :newsletter_subscriptions, only: :destroy, param: :token do
-    member { get :confirm }
-  end
-
   resources :blogs, path: "b" do
-    resource :analytics, only: :show, controller: "analytics"
-    post :checkout, to: "paywall#checkout"
-    resources :newsletter_subscriptions, only: :create
     resources :posts, path: "p" do
       resources :comments, only: %i[create destroy]
     end
   end
-
-  post "share-target" => "share_targets#create", as: :share_target
+  patch "drafts/:id", to: "drafts#update", as: :draft
 
   root "blogs#index"
-  get "offline" => "offline#show", as: :offline
-  get "manifest" => "pwa#manifest", as: :pwa_manifest
-  get "service-worker" => "pwa#service_worker", as: :pwa_service_worker
-  get "up", to: "health#show", as: :rails_health_check
+  constraints(jobs_constraint) do
+    mount SolidQueue::Engine, at: "/admin/jobs"
+  end
+  get 'manifest' => 'rails/pwa#manifest', as: :pwa_manifest
+  get 'service-worker' => 'rails/pwa#service_worker', as: :pwa_service_worker
+  get "up", to: "rails/health#show", as: :rails_health_check
 end

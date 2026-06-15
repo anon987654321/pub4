@@ -122,12 +122,20 @@ See `shared/app/services/shared/event_emitter.rb` and `shared/app/controllers/co
 
 ## Shared Concerns & Mixins
 
-The `shared/app/models/concerns/shared/` and `shared/app/controllers/concerns/shared/` provide reusable behavior:
+The `shared/app/models/concerns/shared/` and `shared/app/controllers/concerns/shared/` provide reusable behavior (expanded 2026-06):
 
-- **Reactable** (models): `include Shared::Reactable` → adds `reactions`, `reacted_by?`, `reaction_count`.
-- **Followable** (models): `include Shared::Followable` → adds `follows_received`, `followed_by?`, `followers_count`.
-- **LiveSearchable** (controllers): `include Shared::LiveSearchable` → provides `live_search_query`, `live_search_scope`, `render_live_search` for Turbo Streams.
-- **ActorIdentity**, **MediaGuard**, **StructuredEvents**: Supporting mixins for current user, upload guards, and event emission.
+**Models:**
+- **Reactable**, **Followable**, **Votable** — social primitives (reactions, follows, votes).
+- **Notifiable** — `deliver_notification(recipient, title:..., source:...)` or structured kind/notifiable path. Eliminates `defined?(Notification)` + create boilerplate.
+- **ActivityTrackable** — `record_activity!("EventName", actor:, source_vertical:...)`. Centralizes ActivityEventRecorder usage.
+- **GeoLocatable** — `nearby(lat, lng, km)`, `haversine`, `geo?`, `distance_to`, `geocode!` stub. One portable implementation (replaced 6+ ad-hoc versions).
+
+**Controllers:**
+- **LiveSearchable**, **ActorIdentity**, **MediaGuard**, **StructuredEvents**.
+
+Usage: `include Shared::Votable` (or Notifiable/ActivityTrackable/GeoLocatable) in your models. See recent brgen Post/Comment/User/Orders + hjerterom Resource for examples.
+
+**Next:** Turn the whole shared/ tree into a real Rails engine (see long-term goal note at top of this file) so concerns/services auto-load and routes mount cleanly.
 
 **Usage pattern** (in your app models/controllers):
 
@@ -166,3 +174,17 @@ See `chat_controller.rb` (photo + uploaded_image_payload) and recent security ca
 rc.d services (falcon/puma per-app on distinct ports), relayd tables/healthchecks, and per-vertical feature scripts (auth, voting, styles, social, models) provide a repeatable template. All family apps should converge on the same rc.d + relayd + Solid stack baseline for doas rcctl consistency. Shared functions for gem groups, db setup, and layout/CSS baselines reduce drift across brgen, amber, blognet, hjerterom.
 
 **Pure Zsh preference**: New provisioning logic should favor zsh parameter expansion and builtins over external tools (grep, sed, awk, etc.) where practical, per the broader pub4 conventions. See current thin deploy scripts (e.g. `brgen/brgen.sh`) as the model rather than the heavier legacy @*.sh helpers.
+
+## Frontend Baselines (condensed from shared/frontend/*.md, pruned to reduce .md sprawl)
+Stimulus Components (from STIMULUS_COMPONENTS_BASELINE.md): Use @stimulus-components/* (auto-submit, clipboard, content-loader, etc.). App-neutral, progressive enhancement.
+
+LLM-safe rules (from LLM_SAFE_FRONTEND_RULES.md): Split large mixed HTML/CSS/JS/ERB into external files before LLM edits. Prefer minimal unified diffs.
+
+## Engine Extraction Prep (to reduce current sprawl + duplication)
+To move from "copy via install_frontend_baseline.sh" (fragile, per top of this file) to a real engine:
+- All shared code must live only under shared/ (concerns, services, models/shared, views/shared, etc.). No app-specific logic.
+- Consistent `include Shared::XXX` (no bare includes).
+- Remove/deprecate all local copies of concerns in apps (e.g. brgen/app/models/concerns/* now point to or are replaced by shared versions; locals can be git-rm'd after migration).
+- Ensure Shared::EventEmitter, LiveSearch, health services etc. are the single source.
+- Then introduce shared/lib/shared/engine.rb with `isolate_namespace Shared`, update consuming Gemfiles to path gem, replace copy script with bundle step.
+This directly supports the major restructure wins (shared layer as foundation for activity graph, concerns, etc.) while actively reducing file sprawl/duplication today. Prep steps (promotions + cleanups) are being done in small PRs without new .md files.

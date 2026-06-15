@@ -46,7 +46,7 @@ module Master
           private
 
           def reek_available?
-            system("which reek > /dev/null 2>&1") ||
+            ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, "reek")) } ||
               File.exist?(File.join(@root, "bin", "reek"))
           end
         end

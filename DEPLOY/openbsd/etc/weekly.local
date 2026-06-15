@@ -1,6 +1,0 @@
-#!/bin/sh
-# CC08: weekly bruteforce table expiry.
-
-if [ -x /home/dev/pub4/DEPLOY/openbsd/scripts/pf_bruteforce_flush.sh ]; then
-  /home/dev/pub4/DEPLOY/openbsd/scripts/pf_bruteforce_flush.sh expire
-fi

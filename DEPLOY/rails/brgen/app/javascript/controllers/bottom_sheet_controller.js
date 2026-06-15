@@ -1,31 +1,63 @@
 import { Controller } from "@hotwired/stimulus"
 
-const SNAP = [0, 0.5, 1]
-
 export default class extends Controller {
-  static targets = ["panel", "handle"]
-  static values = { snap: { type: Number, default: 0 } }
+  static targets = ["sheet", "backdrop"]
+  static values = { level: { type: Number, default: 0 } }
 
   connect() {
-    this.panelTarget.style.transition = "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)"
-    this.updateSnap()
+    this.dragging = false
+    this.startY = 0
+    this.currentY = 0
+    this.sync()
   }
 
-  drag(event) {
-    const y = Math.max(0, event.detail?.offsetY || 0)
-    this.panelTarget.style.transform = `translateY(${y}px)`
+  toggle() {
+    this.levelValue = this.levelValue >= 2 ? 0 : this.levelValue + 1
+    this.sync()
   }
 
-  release(event) {
-    const height = this.panelTarget.offsetHeight
-    const offset = Math.max(0, event.detail?.offsetY || 0)
-    const ratio = offset / height
-    this.snapValue = SNAP.reduce((best, point) => Math.abs(point - ratio) < Math.abs(best - ratio) ? point : best)
-    this.updateSnap()
+  open() {
+    this.levelValue = 2
+    this.sync()
   }
 
-  updateSnap() {
-    const offset = (1 - this.snapValue) * this.panelTarget.offsetHeight
-    this.panelTarget.style.transform = `translateY(${offset}px)`
+  close() {
+    this.levelValue = 0
+    this.sync()
+  }
+
+  sync() {
+    const sheet = this.sheetTarget
+    if (!sheet) return
+    sheet.dataset.level = String(this.levelValue)
+    sheet.style.transform = `translateY(${100 - (this.levelValue * 50)}%)`
+    if (this.hasBackdropTarget) {
+      this.backdropTarget.dataset.open = this.levelValue > 0 ? "1" : "0"
+    }
+  }
+
+  pointerDown(event) {
+    this.dragging = true
+    this.startY = event.clientY || event.touches?.[0]?.clientY || 0
+    this.currentY = this.startY
+    this.sheetTarget.style.transition = "none"
+  }
+
+  pointerMove(event) {
+    if (!this.dragging) return
+    this.currentY = event.clientY || event.touches?.[0]?.clientY || 0
+    const delta = this.currentY - this.startY
+    const offset = Math.max(0, Math.min(100, 100 - (this.levelValue * 50) + (delta / 4)))
+    this.sheetTarget.style.transform = `translateY(${offset}%)`
+  }
+
+  pointerUp() {
+    if (!this.dragging) return
+    this.dragging = false
+    this.sheetTarget.style.transition = ""
+    const delta = this.currentY - this.startY
+    if (delta > 80) this.levelValue = Math.max(0, this.levelValue - 1)
+    else if (delta < -80) this.levelValue = Math.min(2, this.levelValue + 1)
+    this.sync()
   }
 }

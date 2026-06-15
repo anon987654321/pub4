@@ -8,7 +8,10 @@
   <% else %>
     <span>▲</span>
   <% end %>
-  <span data-controller="animated-number"><%= @post.score %></span>
+  <span data-controller="animated-number"
+        data-animated-number-start-value="0"
+        data-animated-number-end-value="<%= @post.score.to_i %>"
+        data-animated-number-duration-value="900"><%= @post.score %></span>
   <% if authenticated? %>
     <%= button_to "▼", post_vote_path(@post), params: { vote: { value: -1 } },
           class: ("active-down" if @post.downvoted_by?(Current.user)) %>
@@ -20,34 +23,19 @@
     <% if @post.community %>
       <%= link_to @post.community.name, community_path(@post.community) %> ·
     <% end %>
-    posted by
-    <span data-controller="popover">
-      <button type="button" class="btn btn-ghost btn-sm" data-popover-target="button" data-action="popover#toggle">
-        <%= @post.author_name %>
-      </button>
-      <div data-popover-target="content" hidden>
-        <strong><%= @post.author_name %></strong>
-        <% if @post.user && !@post.anonymous? %>
-          <p class="dim"><%= @post.user.email_address %></p>
-          <%= link_to "View profile", user_path(@post.user) %>
-        <% end %>
-      </div>
-    </span> ·
+    posted by <%= @post.author_name %> ·
     <time datetime="<%= @post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(@post.created_at) %> ago</time>
   </header>
   <h1><%= @post.title %></h1>
   <% if @post.image.attached? %>
     <div data-controller="lightbox">
       <a href="<%= url_for(@post.image) %>" data-lg-size="1600-1200">
-        <%= image_tag @post.image, class: "post-image", loading: "lazy" %>
+        <%= responsive_image_tag @post.image, alt: @post.title, class: "post-image" %>
       </a>
     </div>
   <% end %>
   <% if @post.content.present? %>
-    <div data-controller="read-more" data-read-more-limit-value="600">
-      <div data-read-more-target="content"><%= brgen_content(@post.content) %></div>
-      <button type="button" class="btn btn-ghost btn-sm" data-read-more-target="button" data-action="read-more#toggle" hidden>Read more</button>
-    </div>
+    <p><%= @post.content %></p>
   <% end %>
   <div style="display:flex;gap:8px;margin-top:12px">
     <button class="btn-share" data-controller="share"
@@ -59,11 +47,11 @@
 
 <section id="comments-section">
   <h3>Comment as <strong><%= Current.user&.guest? ? "anon" : (Current.user&.username || "anon") %></strong><% unless authenticated? %> · <%= link_to "sign in", new_session_path %><% end %></h3>
-  <%= form_with model: [@post, @new_comment], data: { turbo: true } do |f| %>
+  <%= form_with(model: [@post, @new_comment], data: { turbo: true }) do |f| %>
     <div class="field">
       <%= f.text_area :content, placeholder: "What do you think?", rows: 4,
-            data: { controller: "textarea-autogrow character-counter", "character-counter-max-value": 10000 } %>
-      <span data-character-counter-target="counter"></span>
+            data: { controller: "textarea-autogrow char-counter", "char-counter-max-value": 10000 } %>
+      <span class="char-counter" data-char-counter-target="counter"></span>
     </div>
     <div class="field"><%= f.submit "Comment", class: "btn btn-primary btn-sm" %></div>
   <% end %>
@@ -86,13 +74,5 @@
     <%= link_to "View community", community_path(@post.community) %>
   <% else %>
     <p>brgen — Bergen community platform</p>
-  <% end %>
-  <% if @trending_tags.present? %>
-    <h3>Trending tags</h3>
-    <ul>
-      <% @trending_tags.each do |tag| %>
-        <li><%= link_to "##{tag.name}", tag_path(tag.name) %> <span class="dim">(<%= tag.usage_count %>)</span></li>
-      <% end %>
-    </ul>
   <% end %>
 </aside>

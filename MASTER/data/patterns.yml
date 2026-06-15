@@ -754,8 +754,8 @@ repo_topics:
     confidence: high
     local_evidence:
     # (awesome-llm-apps personal assistant example removed 2026-05 as dead external bloat)
-    - github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
-    - github_repos/system_prompts_leaks/Perplexity/comet-browser-assistant.md
+    - MASTER/knowledge/github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
+    - MASTER/knowledge/github_repos/system_prompts_leaks/Perplexity/comet-browser-assistant.md
     - MASTER/web/public/face.js
     pattern: 'Personal assistants combine persistent context, speech, tools, calendar/mail/files,
       interruption handling, and social presentation.
@@ -770,8 +770,8 @@ repo_topics:
     status: latent
     confidence: medium
     local_evidence:
-    - github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
-    - github_repos/CL4R1T4S/META/Llama4_WhatsApp.txt
+    - MASTER/knowledge/github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
+    - MASTER/knowledge/github_repos/CL4R1T4S/META/Llama4_WhatsApp.txt
     - MASTER/web/public/face.js
     # (older leaked-system-prompts examples removed 2026-05 during repo bloat cleanup)
     pattern: 'Social intelligence appears as prompt archaeology and expressive UI
@@ -788,8 +788,8 @@ repo_topics:
     status: live
     confidence: high
     local_evidence:
-    - github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
-    - github_repos/CL4R1T4S/META/Llama4_WhatsApp.txt
+    - MASTER/knowledge/github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
+    - MASTER/knowledge/github_repos/CL4R1T4S/META/Llama4_WhatsApp.txt
     pattern: 'Generalized principles extracted from high-signal prompt archaeology
       for council, agents, enhance stage, and face personality prompts.
 

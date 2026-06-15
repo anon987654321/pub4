@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "monitor"
+require "fileutils"
+require "yaml"
 
 module Master
   module Reach
@@ -17,7 +19,8 @@ module Master
         def initialize(msg, category) = (super(msg); @category = category)
       end
 
-      def initialize(budget_max:, req_max:, event_bus: nil, rate_window_s: RATE_WINDOW_S, rate_max: nil, warn_at: nil, max_per_file: nil)
+      def initialize(budget_max:, req_max:, event_bus: nil, rate_window_s: RATE_WINDOW_S, rate_max: nil,
+                     warn_at: nil, max_per_file: nil, state_path: nil, state_key: "global")
         super()
         @budget_max = budget_max
         @warn_at = warn_at
@@ -30,6 +33,9 @@ module Master
         @req_times = []
         @rate_window = rate_window_s
         @rate_max = normalize_rate_max(rate_max || req_max)
+        @state_path = state_path
+        @state_key = state_key.to_s
+        load_state
       end
 
       def check_rate!
@@ -102,6 +108,7 @@ module Master
             end
             @state = :half_open
             @failures = 0
+            persist_state
           end
         end
       end
@@ -111,6 +118,7 @@ module Master
           @failures = 0
           if @state == :half_open
             @state = :closed
+            persist_state
             @bus&.publish("circuit:closed", breaker: object_id)
           end
         end
@@ -122,8 +130,44 @@ module Master
           return unless @failures >= FAILURE_THRESHOLD
           @state = :open
           @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          @opened_wall_at = Time.now.to_f
+          persist_state
           @bus&.publish("circuit:open", failures: @failures)
         end
+      end
+
+      def load_state
+        return unless @state_path && File.exist?(@state_path)
+
+        data = YAML.safe_load_file(@state_path, aliases: true) || {}
+        record = data[@state_key] || {}
+        restored_state = record["state"].to_s
+        return unless restored_state == "open"
+
+        elapsed = Time.now.to_f - record["opened_wall_at"].to_f
+        return if elapsed >= COOLDOWN_S
+
+        @state = :open
+        @failures = record["failures"].to_i
+        @opened_wall_at = record["opened_wall_at"].to_f
+        @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC) - elapsed
+      rescue StandardError => e
+        @bus&.publish("circuit:state_load_error", key: @state_key, error: e.message)
+      end
+
+      def persist_state
+        return unless @state_path
+
+        FileUtils.mkdir_p(File.dirname(@state_path))
+        data = File.exist?(@state_path) ? YAML.safe_load_file(@state_path, aliases: true) || {} : {}
+        data[@state_key] = {
+          "state" => @state.to_s,
+          "failures" => @failures,
+          "opened_wall_at" => @opened_wall_at
+        }
+        File.write(@state_path, YAML.dump(data))
+      rescue StandardError => e
+        @bus&.publish("circuit:state_persist_error", key: @state_key, error: e.message)
       end
 
       def normalize_rate_max(value)

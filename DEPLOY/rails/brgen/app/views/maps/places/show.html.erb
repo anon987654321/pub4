@@ -1,0 +1,29 @@
+<% content_for :title, @place.name %>
+
+<div class="page-header">
+  <h1><%= @place.name %></h1>
+  <%= link_to "Back", :back, class: "btn" %>
+</div>
+
+<article class="place">
+  <dl>
+    <dt>Type</dt>
+    <dd><%= @place.kind %></dd>
+    <% if @place.city %>
+      <dt>City</dt>
+      <dd><%= @place.city.name %></dd>
+    <% end %>
+    <% if @place.neighborhood %>
+      <dt>Neighborhood</dt>
+      <dd><%= @place.neighborhood.name %></dd>
+    <% end %>
+    <dt>Coordinates</dt>
+    <dd><%= @place.latitude %>, <%= @place.longitude %></dd>
+  </dl>
+
+  <p>
+    <%= link_to "Open in map",
+        "https://www.openstreetmap.org/?mlat=#{@place.latitude}&mlon=#{@place.longitude}#map=16/#{@place.latitude}/#{@place.longitude}",
+        class: "btn", target: "_blank", rel: "noopener" %>
+  </p>
+</article>

@@ -1,20 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "dilla/sequencer"
-
 module Master
   module Voice
     module Dilla
       module_function
-
-      def sequencer(bpm: nil, swing_percent: nil, mood: :neutral)
-        timing = swing
-        Sequencer.new(
-          bpm: bpm || timing.fetch(:bpm, 92),
-          swing_percent: swing_percent || timing.fetch(:swing_percent, 58),
-          mood:
-        )
-      end
 
       def profile
         ProductionDna.producer(:j_dilla)

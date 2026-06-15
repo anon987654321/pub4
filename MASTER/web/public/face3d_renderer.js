@@ -1,6 +1,6 @@
 "use strict";
 
-import { ZONE_NAMES } from '/face3d_engine.js';
+import { ZONE_NAMES } from '/face3d_geometry.js';
 
 function clamp(v, lo = 0, hi = 1) {
   return Math.max(lo, Math.min(hi, v));
@@ -141,7 +141,7 @@ class Face3DCanvasRenderer {
     for (let y = 0; y < lh; y++) {
       for (let x = 0; x < lw; x++) {
         const idx = y * lw + x;
-        let v = clamp(fbuf[idx] + (this.dither === 'atkinson' ? this.ebuf[idx] : 0));
+        const v = clamp(fbuf[idx] + (this.dither === 'atkinson' ? this.ebuf[idx] : 0));
         let on;
         if (this.dither === 'bayer') {
           on = v > bayer[(y & 3) * 4 + (x & 3)] / 16;

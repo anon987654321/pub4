@@ -1,27 +1,16 @@
 <% content_for :title, "Search Wardrobe" %>
 <h1>Search your wardrobe</h1>
-
-<div data-controller="live-search">
-  <%= render "shared/search_loading" %>
-  <%= form_with url: ai_search_path, method: :get,
-        data: { turbo_frame: "live_search_results" } do |f| %>
-    <div class="field-row search-form" role="search">
-      <%= f.search_field :q, value: @query,
-            placeholder: "e.g. something warm but not bulky for a meeting",
-            autofocus: true, class: "input input--wide",
-            data: { live_search_target: "input", action: "input->live-search#input" } %>
-      <%= f.submit "Search", class: "btn" %>
-    </div>
-  <% end %>
-
-  <%= turbo_frame_tag "live_search_results" do %>
-    <% if @explanation.present? %>
-      <p class="dim"><%= @explanation %></p>
-    <% end %>
-    <% if @items&.any? %>
-      <div class="item-grid"><%= render @items %></div>
-    <% elsif @query.present? %>
-      <%= render "shared/search_empty", query: @query, search_meta: search_meta %>
-    <% end %>
-  <% end %>
-</div>
+<%= form_with url: ai_search_path, method: :get do |f| %>
+  <div class="field-row">
+    <%= f.search_field :q, value: @query, placeholder: "e.g. something warm but not bulky for a meeting", autofocus: true, class: "input input--wide" %>
+    <%= f.submit "Search", class: "btn" %>
+  </div>
+<% end %>
+<% if @explanation.present? %>
+  <p class="dim"><%= @explanation %></p>
+<% end %>
+<% if @items&.any? %>
+  <div class="item-grid"><%= render @items %></div>
+<% elsif @query.present? %>
+  <p class="dim">No matches found.</p>
+<% end %>

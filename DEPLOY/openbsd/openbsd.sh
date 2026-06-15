@@ -22,7 +22,6 @@ zmodload zsh/datetime
 
 typeset -a TMPFILES
 SCRIPT_DIR=${0:a:h}
-typeset -r STATE_FILE=/var/db/openbsd_setup.state
 
 # Helpers inlined ( _lib.sh removed for ONE_SOURCE/singularity). Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs (now ships .zshrc to /home/dev too).
 log() {
@@ -110,12 +109,9 @@ sync_openbsd_configs() {
   typeset src=${1:-.}
   [[ -d $src/etc ]] || { log WARN "No etc/ in $src"; return 0 }
   backup_directory /etc "etc-pre-sync" || return 1
-  for f in pf.conf rc.conf.local relayd.conf httpd.conf acme-client.conf doas.conf login.conf litestream.yml; do
+  for f in pf.conf rc.conf.local relayd.conf httpd.conf acme-client.conf doas.conf login.conf; do
     [[ -e $src/etc/$f ]] && cp -R "$src/etc/$f" /etc/ && log INFO "synced /etc/$f"
   done
-  [[ -d $src/etc/newsyslog.conf.d ]] && install -d /etc/newsyslog.conf.d && cp -R "$src/etc/newsyslog.conf.d/"* /etc/newsyslog.conf.d/ 2>/dev/null || true
-  [[ -f $src/etc/ssh/sshd_config ]] && install -d /etc/ssh && cp "$src/etc/ssh/sshd_config" /etc/ssh/sshd_config.d/pub4.conf 2>/dev/null \
-    && log INFO "synced sshd hardening to /etc/ssh/sshd_config.d/pub4.conf" || true
   [[ -d $src/etc/rc.d ]] && cp -R "$src/etc/rc.d/"* /etc/rc.d/ 2>/dev/null || true
   [[ -d $src/usr/local/bin ]] && cp -R "$src/usr/local/bin/"* /usr/local/bin/ 2>/dev/null || true
   # Also sync user env .zshrc if present (compare/sync with live model)
@@ -151,6 +147,8 @@ ALL_APPS=(
   amber:amber.brgen.no
   bsdports:bsdports.org
   baibl:baibl.no
+  blognet:antibettingblog.com
+  hjerterom:hjerterom.brgen.no
 )
 
 SERVICES=()
@@ -213,6 +211,7 @@ ALL_DOMAINS=(
   antigamblingblog.com
   foball.no
   amber.brgen.no
+  hjerterom.brgen.no
   baibl.no
 )
 
@@ -226,7 +225,7 @@ stage_1() {
   typeset -a _df_var; _df_var=("${(@f)$(df -k /var)}"); typeset _var_avail=${${(z)_df_var[2]}[4]}
   (( _var_avail < 512000 )) && { log ERROR "Insufficient disk space on /var"; exit 1 }
 
-  pkg_add -U ldns-utils ruby%3.4 zap zsh fish neovim tmux fontconfig fzf ripgrep fd 2>/tmp/pkg_add.log \
+  pkg_add -U ldns-utils ruby%3.4 litestream zap zsh fish neovim tmux fontconfig fzf ripgrep fd 2>/tmp/pkg_add.log \
     || { log ERROR "pkg_add failed. See /tmp/pkg_add.log"; exit 1 }
 
   [[ -f /etc/rc.conf.local && $(<"/etc/rc.conf.local") == *"pf=NO"* ]] && log WARN "pf disabled in rc.conf.local"
@@ -399,6 +398,20 @@ setup_services() {
   log INFO "Services configured. relayd enabled but not started (awaiting configuration)"
 }
 
+setup_litestream() {
+  log INFO "Setting up litestream"
+  mkdir -p /var/backups/litestream
+  install_template etc/litestream.yml /etc/litestream.yml
+  install_template etc/rc.d/litestream /etc/rc.d/litestream
+  chmod 755 /etc/rc.d/litestream
+  /usr/sbin/rcctl enable litestream
+  /usr/sbin/rcctl restart litestream || /usr/sbin/rcctl start litestream \
+    || { log ERROR "litestream failed"; exit 1 }
+  sleep 2
+  typeset _c; _c=$(/usr/sbin/rcctl check litestream)
+  [[ $_c == *"litestream(ok)"* ]] || { log ERROR "litestream not running"; exit 1 }
+}
+
 bootstrap_rails_app() {
   typeset app=$1 port=$2
   typeset src=/home/dev/pub4/DEPLOY/rails/$app/app
@@ -463,6 +476,8 @@ configure_relayd() {
   done
   DOMAIN_BACKEND[ai.brgen.no]=master
   BACKEND_PORT[master]=${BACKEND_PORT[master]:-53187}
+  DOMAIN_BACKEND[anticasinoblog.com]=blognet
+  DOMAIN_BACKEND[antigamblingblog.com]=blognet
   for entry in $ALL_DOMAINS; do
     dom=${entry%%:*}
     [[ -n ${DOMAIN_BACKEND[$dom]:-} ]] && continue
@@ -515,7 +530,7 @@ configure_relayd() {
     print -r -- "  listen on 0.0.0.0 port 443 tls"
     print -r -- "  protocol \"https_proxy\""
     for backend in ${(k)BACKEND_PORT}; do
-      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check http \"/up\" code 200"
+      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check tcp"
     done
     print -r -- "}"
   } > /etc/relayd.conf
@@ -584,6 +599,8 @@ stage_2() {
     bootstrap_rails_app "$app" "$port" || { log ERROR "bootstrap failed: $app"; exit 1 }
   done
 
+  setup_litestream
+
   for svc_entry in $SERVICES; do
     typeset svc_name=${svc_entry%%:*}
     typeset svc_rest=${svc_entry#*:}
@@ -626,6 +643,8 @@ main() {
 Usage: doas zsh openbsd.sh [--help]"
     exit 0
   fi
+  ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
+  ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
   stage_1
   stage_2
 }

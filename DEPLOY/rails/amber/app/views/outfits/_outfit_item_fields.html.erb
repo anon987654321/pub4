@@ -1,0 +1,10 @@
+<div class="nested-field" data-new-record="<%= f.object.new_record? %>">
+  <%= f.hidden_field :id if f.object.persisted? %>
+  <%= f.hidden_field :position, value: (f.object.position || 0) %>
+  <div class="field">
+    <%= f.label :item_id, "Item" %>
+    <%= f.select :item_id, Current.user.items.order(:title).map { |item| [item.title, item.id] }, { include_blank: "Select item…" } %>
+  </div>
+  <%= f.hidden_field :_destroy %>
+  <button type="button" class="btn-link" data-action="stimulus-rails-nested-form#remove">Remove</button>
+</div>

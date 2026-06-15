@@ -54,4 +54,18 @@ class TestRepoEcology < Minitest::Test
       assert_equal [{ a: "a.rb", b: "b.rb", count: 3 }], report[:co_change_pairs]
     end
   end
+
+  def test_co_change_graph_persists_between_instances
+    Dir.mktmpdir("repo_ecology_cache") do |dir|
+      FileUtils.mkdir_p(File.join(dir, ".git"))
+      File.write(File.join(dir, ".git", "HEAD"), "ref: refs/heads/main\n")
+
+      first = CountingEcology.new(root: dir)
+      first.snapshot
+
+      second = CountingEcology.new(root: dir)
+      assert_equal({ "a.rb" => { "b.rb" => 3 }, "b.rb" => { "a.rb" => 3 } }, second.co_change_graph)
+      assert_nil second.build_count
+    end
+  end
 end

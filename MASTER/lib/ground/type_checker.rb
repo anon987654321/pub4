@@ -34,19 +34,19 @@ module Master
         result = Prism.parse(source)
         return [] unless result.success?
         errors = []
-        walk(result.value, source, errors)
+        walk(node: result.value, source:, errors:)
         errors
       end
 
       private
 
-      def walk(node, source, errors)
+      def walk(node:, source:, errors:)
         return unless node.is_a?(Prism::Node)
         @constraints.each do |rule_id, constraint|
           violation = constraint.call(node, source)
           errors << TypeError.new(node: node, rule: rule_id, **violation) if violation
         end
-        node.child_nodes.compact.each { |c| walk(c, source, errors) }
+        node.child_nodes.compact.each { |child| walk(node: child, source:, errors:) }
       end
 
       # Built-in structural type constraints that don't require LLM inference.

@@ -22,23 +22,15 @@
 
 <% if @outfit.image.attached? %>
   <div class="outfit-visual">
-    <%= image_tag @outfit.image, style: "max-width: 400px; height: auto;", loading: "lazy" %>
+    <%= responsive_image_tag @outfit.image, alt: @outfit.name, widths: [400, 800, 1_200], sizes: "(max-width: 768px) 100vw, 400px", style: "max-width: 400px; height: auto;" %>
   </div>
 <% end %>
 
 <section>
   <h2>Items</h2>
-  <ul data-controller="sortable"
-      data-sortable-resource-name-value="item"
-      data-sortable-handle-value=".sortable-handle">
-    <% @outfit.outfit_items.order(:position).each do |outfit_item| %>
-      <li data-sortable-update-url="<%= reorder_outfit_path(@outfit) %>"
-          data-item-id="<%= outfit_item.item_id %>">
-        <span class="sortable-handle" aria-hidden="true">⠿</span>
-        <%= render outfit_item.item %>
-      </li>
-    <% end %>
-  </ul>
+  <div class="item-grid" data-controller="sortable" data-sortable-update-url-value="<%= reorder_outfit_path(@outfit) %>">
+    <%= render @outfit.items %>
+  </div>
 </section>
 
 <section>

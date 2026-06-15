@@ -37,6 +37,9 @@
     <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
     <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message">
   </form>
+  <script>
+    window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v1").to_json.html_safe %>;
+  </script>
   <script src="/topology_registry.js" defer></script>
   <script src="/particle_kernel.js" defer></script>
   <script type="module" src="/face.js"></script>

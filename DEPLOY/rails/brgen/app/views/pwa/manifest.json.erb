@@ -1,38 +1,61 @@
 {
   "name": "Brgen",
   "short_name": "Brgen",
-  "categories": ["social", "news", "lifestyle"],
   "icons": [
-    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
-    { "src": "/icon.png", "type": "image/png", "sizes": "512x512" },
-    { "src": "/icon.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
   ],
-  "display_override": ["fullscreen", "window-controls-overlay", "standalone"],
-  "edge_side_panel": { "preferred_width": 400 },
-  "launch_handler": { "client_mode": "navigate-new" },
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
   "description": "City communities across Scandinavia and Europe. Connect, post, and discover your city.",
-  "theme_color": "#000000",
-  "background_color": "#000000",
+  "theme_color": "#111111",
+  "background_color": "#111111",
   "shortcuts": [
-    { "name": "New post", "short_name": "Post", "url": "/posts/new", "icons": [{ "src": "/icon.png", "sizes": "96x96" }] },
-    { "name": "Nearby", "short_name": "Nearby", "url": "/nearby", "icons": [{ "src": "/icon.png", "sizes": "96x96" }] },
-    { "name": "Notifications", "short_name": "Alerts", "url": "/notifications", "icons": [{ "src": "/icon.png", "sizes": "96x96" }] }
+    {
+      "name": "New post",
+      "short_name": "Post",
+      "url": "/posts/new"
+    },
+    {
+      "name": "New listing",
+      "short_name": "Listing",
+      "url": "/listings/new"
+    },
+    {
+      "name": "Dating swipe",
+      "short_name": "Dating",
+      "url": "/"
+    }
   ],
   "share_target": {
-    "action": "/share-target",
+    "action": "/share",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
       "title": "title",
       "text": "text",
-      "url": "url",
-      "files": [{ "name": "media", "accept": ["image/*", "text/plain"] }]
+      "url": "url"
     }
   },
   "protocol_handlers": [
-    { "protocol": "web+brgen", "url": "/posts/%s" }
+    {
+      "protocol": "web+brgen",
+      "url": "/posts/%s"
+    }
   ]
 }

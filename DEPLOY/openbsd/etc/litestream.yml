@@ -1,85 +1,25 @@
-# Litestream replication for Rails SQLite databases.
-# Set LITESTREAM_REPLICA_URL (s3://bucket or file:///var/backups/litestream) in /etc/master.env.
-# Install: pkg_add litestream; cp to /etc/litestream.yml; rcctl enable litestream; rcctl start litestream
-
-access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
-secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
-
 dbs:
-  - path: /home/brgen/app/db/production.sqlite3
+  - path: /home/brgen/app/db
+    pattern: "*.sqlite3"
     replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/brgen/production
-  - path: /home/brgen/app/db/production_cache.sqlite3
+      - url: file:///var/backups/litestream/brgen
+  - path: /home/amber/app/storage
+    pattern: "*.sqlite3"
     replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/brgen/cache
-  - path: /home/brgen/app/db/production_queue.sqlite3
+      - url: file:///var/backups/litestream/amber
+  - path: /home/baibl/app/storage
+    pattern: "*.sqlite3"
     replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/brgen/queue
-  - path: /home/brgen/app/db/production_cable.sqlite3
+      - url: file:///var/backups/litestream/baibl
+  - path: /home/blognet/app/storage
+    pattern: "*.sqlite3"
     replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/brgen/cable
-
-  - path: /home/amber/app/db/production.sqlite3
+      - url: file:///var/backups/litestream/blognet
+  - path: /home/bsdports/app/storage
+    pattern: "*.sqlite3"
     replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/amber/production
-  - path: /home/amber/app/db/production_cache.sqlite3
+      - url: file:///var/backups/litestream/bsdports
+  - path: /home/hjerterom/app/storage
+    pattern: "*.sqlite3"
     replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/amber/cache
-  - path: /home/amber/app/db/production_queue.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/amber/queue
-  - path: /home/amber/app/db/production_cable.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/amber/cable
-
-  - path: /home/bsdports/app/db/production.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/bsdports/production
-  - path: /home/bsdports/app/db/production_cache.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/bsdports/cache
-  - path: /home/bsdports/app/db/production_queue.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/bsdports/queue
-  - path: /home/bsdports/app/db/production_cable.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/bsdports/cable
-
-  - path: /home/baibl/app/db/production.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/baibl/production
-  - path: /home/baibl/app/db/production_cache.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/baibl/cache
-  - path: /home/baibl/app/db/production_queue.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/baibl/queue
-  - path: /home/baibl/app/db/production_cable.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/baibl/cable
-
-  - path: /home/blognet/app/db/production.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/blognet/production
-  - path: /home/blognet/app/db/production_cache.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/blognet/cache
-  - path: /home/blognet/app/db/production_queue.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/blognet/queue
-  - path: /home/blognet/app/db/production_cable.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/blognet/cable
-
-  - path: /home/hjerterom/app/db/production.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/hjerterom/production
-  - path: /home/hjerterom/app/db/production_cache.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/hjerterom/cache
-  - path: /home/hjerterom/app/db/production_queue.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/hjerterom/queue
-  - path: /home/hjerterom/app/db/production_cable.sqlite3
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}/hjerterom/cable
+      - url: file:///var/backups/litestream/hjerterom

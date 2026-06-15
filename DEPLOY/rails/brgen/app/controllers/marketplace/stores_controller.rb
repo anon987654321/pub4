@@ -31,7 +31,7 @@ module Marketplace
     private
 
     def store_params
-      params.expect(:store => [:name, :slug, :description, :vertical])
+      params.require(:store).permit(:name, :slug, :description, :vertical)
     end
   end
 end

@@ -18,7 +18,7 @@ module Master
 
         category = result.category
         tag = "master:rollback:#{category}:#{Process.pid}"
-        @bus&.publish("pipeline:rollback", category:, message: result.message[0, ROLLBACK_MSG_TRUNCATE], tag:)
+        @bus&.publish("pipeline:rollback", { category: category, message: result.message[0, ROLLBACK_MSG_TRUNCATE], tag: tag })
         Open3.capture2e("git", "-C", @root, "stash", "push", "-u", "-m", tag)
         Open3.capture2e("git", "-C", @root, "reset", "--hard", "HEAD")
         true
@@ -27,10 +27,9 @@ module Master
       private
 
       def rollback_eligible?(result)
-        return false unless result.is_a?(Master::Result::Err)
-        return false unless ROLLBACK_CATEGORIES.include?(result.category)
+        return false unless result.respond_to?(:err?) && result.err?
 
-        git_workspace? && dirty?
+        ROLLBACK_CATEGORIES.include?(result.category) && git_workspace? && dirty?
       end
 
       def git_workspace?

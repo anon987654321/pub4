@@ -25,14 +25,11 @@ module Master
 
           def check(_code, path:)
             return [] unless path.end_with?(".rb")
-            rel = relativize(path)
             return [] unless rel
-            peers = neighbors(rel).reject { |peer, _| same_module?(rel, peer) }
                                   .select { |_, weight| weight >= WEIGHT_THRESHOLD }
                                   .sort_by { |_, weight| -weight }
                                   .first(3)
             return [] if peers.empty?
-            coupling_message = "co-changes with " + peers.map { |peer, weight| "#{peer} (#{weight}x)" }.join(", ")
             [finding(line: 1, message: coupling_message)]
           end
 

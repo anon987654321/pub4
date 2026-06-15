@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../loop/rollback"
+require "etc"
 
 module Master
   module Now
@@ -24,22 +25,21 @@ module Master
         wf_id   = "pipeline-#{Process.pid}-#{Time.now.to_i}"
         timings = {}
         @orchestrator&.execute(intent_type: :llm_call, workflow_id: wf_id, payload: { stage: "start" }) { nil }
-        # Wrap plain Hash into typed PipelineContext at the pipeline boundary.
-        wrapped = initial.map { |h| PipelineContext.wrap(h) }
+        wrapped = initial_context_result(initial)
         gated = wrapped.and_then("deploy_gate") { |ctx| deploy_gate(ctx) }
         final = @stages.reduce(gated) do |result, stage|
-          result.and_then(stage_label(stage)) { |ctx| run_stage(stage, ctx, timings) }
+          result.and_then(stage_label(stage)) { |ctx| run_stage(stage:, ctx:, timings:) }
         end
+        publish_complete(final, timings)
         @orchestrator&.checkpoint(workflow_id: wf_id, label: final.ok? ? "ok" : "err")
         @orchestrator&.rotate!(keep_last: 1000)
-        @last_timings = timings
-        @bus&.publish("pipeline:complete", timings:, ok: final.ok?)
         maybe_rollback(final)
         final
       end
 
       class ParallelGroup
         PARALLEL_TIMEOUT_S = 30
+        POOL_SIZE = [Etc.nprocessors, 8].min.freeze
 
         def initialize(*stages, bus: nil)
           @stages = stages
@@ -48,8 +48,7 @@ module Master
 
         def call(ctx)
           frozen  = ctx.freeze
-          threads = spawn_stage_threads(frozen)
-          results = collect_results(threads, frozen)
+          results = run_stage_pool(frozen)
           Result.ok(merge_results(ctx, results))
         rescue StandardError => e
           Result.ok(ctx.merge(_parallel_errors: [e.message]))
@@ -57,36 +56,59 @@ module Master
 
         private
 
-        def spawn_stage_threads(frozen)
-          @stages.map do |stage|
+        def run_stage_pool(frozen)
+          jobs = Queue.new
+          @stages.each_with_index { |stage, index| jobs << [stage, index] }
+          results = Array.new(@stages.size)
+          workers = Array.new([@stages.size, POOL_SIZE].min) do
             Thread.new do
-              stage.call(frozen)
-            rescue StandardError => e
-              @bus&.publish("pipeline:stage_error", stage: stage.class.name, error: e.message)
-              Result.ok(frozen.merge(_stage_error: e.message))
+              while (job = next_job(jobs))
+                stage, index = job
+                results[index] = run_parallel_stage(stage, frozen)
+              end
             end
           end
+          collect_pool_results(workers, results, frozen)
         end
 
-        def collect_results(threads, frozen)
-          threads.each_with_index.map do |thread, i|
-            next thread.value if thread.join(PARALLEL_TIMEOUT_S)
-            handle_timeout(thread, @stages[i], frozen)
+        def next_job(jobs)
+          jobs.pop(true)
+        rescue ThreadError
+          nil
+        end
+
+        def run_parallel_stage(stage, frozen)
+          stage.call(frozen)
+        rescue StandardError => e
+          @bus&.publish("pipeline:stage_error", stage: stage.class.name, error: e.message)
+          Result.ok(frozen.merge(_stage_error: e.message))
+        end
+
+        def collect_pool_results(workers, results, frozen)
+          deadline = Time.now + PARALLEL_TIMEOUT_S
+          workers.each do |worker|
+            remaining = [deadline - Time.now, 0].max
+            worker.join(remaining)
+            next unless worker.alive?
+
+            worker.kill
+            @bus&.publish("pipeline:stage_timeout", stage: "parallel")
           end
-        end
-
-        def handle_timeout(thread, stage, frozen)
-          thread.kill
-          @bus&.publish("pipeline:stage_timeout", stage: stage.class.name)
-          Result.ok(frozen.merge(_parallel_timeout: stage.class.name))
-        rescue ThreadError => e
-          Master::Ground::Swallow.log(e, context: "Pipeline::ParallelGroup.handle_timeout")
-          Result.ok(frozen.merge(_parallel_timeout: stage.class.name))
+          results.each_with_index.map do |result, index|
+            result || Result.ok(frozen.merge(_parallel_timeout: @stages[index].class.name))
+          end
         end
 
         def merge_results(ctx, results)
-          merged = results.filter_map { |r| r.value! if r.ok? }.reduce(ctx, &:merge)
-          errors = results.filter_map { |r| r.message if r.err? }
+          merged = ctx
+          errors = []
+          results.each do |result|
+            if result.ok?
+              merged = merged.merge(result.value!)
+            else
+              errors << result.message
+            end
+          end
           errors.empty? ? merged : merged.merge(_parallel_errors: errors)
         end
       end
@@ -122,6 +144,12 @@ module Master
       DEPLOY_RE = /\b(deploy|ship|shipping|release|publish)\b/i
       TIER1_CRITICAL_RULE_IDS = %w[PRESERVE_FIRST DECOUPLE DEGRADE_GRACEFULLY].freeze
 
+      def initial_context_result(initial)
+        return Result.ok(initial) if initial.is_a?(PipelineContext)
+
+        Result.wrap(initial).map { |h| PipelineContext.wrap(h) }
+      end
+
       def deploy_gate(ctx)
         return Result.ok(ctx) unless deploy_intent?(ctx)
         return Result.ok(ctx) unless @scanner && @root
@@ -136,11 +164,8 @@ module Master
         tier1_violations = tier1_critical_violations(summary)
         unless tier1_violations.empty?
           @bus&.publish("pipeline:blocked", gate: "tier1_critical", violations: tier1_violations.size, score:)
-          err = Result.err("deploy blocked: tier1 critical violation(s): #{tier1_violations.uniq.join(", ")}",
-                           category: :policy,
-                           context: { file: "now/pipeline.rb", method: "deploy_gate", attempted: "tier1_halt" })
-          @rollback&.call(err)
-          return err
+          return Result.err("deploy blocked: tier1 critical violation(s): #{tier1_violations.uniq.join(", ")}",
+                            category: :policy)
         end
 
         if summary.violation_count.positive?
@@ -193,7 +218,7 @@ module Master
         {}
       end
 
-      def run_stage(stage, ctx, timings)
+      def run_stage(stage:, ctx:, timings:)
         label = stage_label(stage)
         Master::Now::PipelineContext.assert_stage!(ctx, label.downcase.to_sym)
 
@@ -208,6 +233,15 @@ module Master
         @last_timings = timings.dup
         @bus&.publish("pipeline:stage_complete", stage: label, ms:, success: true)
         stage_result.map { |c| c.merge(_timings: timings.dup) }
+      end
+
+      def publish_complete(result, timings)
+        @last_timings = timings.dup
+        @bus&.publish("pipeline:complete",
+          success: result.ok?,
+          timings: timings.dup,
+          stages: timings.keys,
+          error: result.err? ? result.message : nil)
       end
 
       def maybe_rollback(result)

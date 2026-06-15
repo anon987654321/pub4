@@ -16,6 +16,8 @@ if File.readable?("/etc/master.env")
   end
 end
 
+# CPU incident containment: CLI boots safe-idle unless explicitly overridden.
+# Active background loops require MASTER_UNSAFE_PROCESS_DEFAULTS=1 plus explicit env.
 unless ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
   ENV["MASTER_SAFE_MODE"] ||= "1"
   ENV["MASTER_BACKGROUND"] ||= "0"
@@ -26,9 +28,11 @@ unless ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
   ENV["MASTER_DRIFT"] ||= "0"
 end
 
-require "optparse"
 require "set"
+require "optparse"
 require "master"
+require "now/boot_banner"
+require "now/web_server"
 require "ops/loop_slot"
 require "ops/process_budget"
 require "ops/runtime_loop_guards"
@@ -36,45 +40,38 @@ Master::Ops::LoopSlot.validate!
 Master::Ops::ProcessBudget.validate_loop_slot!
 Master::Ops::RuntimeLoopGuards.install!
 
-options = { version: false, config: false, quiet: false, message: nil }
-parser = OptionParser.new do |opts|
-  opts.banner = "usage: bin/cli [options] [message]"
-  opts.on("--version", "print git SHA + build date") { options[:version] = true }
-  opts.on("--config", "show effective config") { options[:config] = true }
-  opts.on("--quiet", "suppress non-essential output") { options[:quiet] = true }
-end
-parser.parse!
-options[:message] = ARGV.join(" ").strip unless ARGV.empty?
-
-if options[:version]
-  rev = `git -C #{Master::ROOT} rev-parse --short HEAD 2>/dev/null`.strip
-  rev = "unknown" if rev.empty?
-  puts "master #{rev} #{Time.now.utc.strftime("%Y-%m-%d")}"
-  exit 0
+def initial_message_from_argv(argv)
+  options = {}
+  parser = OptionParser.new do |opts|
+    opts.on("-m", "--message TEXT") { |text| options[:message] = text }
+    opts.on("--web") { ENV["MASTER_WEB"] = "1" }
+    opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }
+    opts.on("--boot-status") { ENV["MASTER_BOOT_STATUS"] = "1" }
+  end
+  parser.parse!(argv)
+  (options[:message] || argv.join(" ")).to_s.strip
+rescue OptionParser::ParseError => e
+  $stderr.puts "cli: #{e.message}"
+  argv.reject { |arg| arg.start_with?("--") }.join(" ").strip
 end
 
 cli = nil
 
-trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved\n"; exit 0 }
+trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved"; exit 0 }
 trap("TERM") { cli&.container&.dig(:session)&.save! rescue nil; exit 0 }
 
 Master::Now::BootBanner.print
 cli = Master.boot(root: Dir.pwd)
 Master::Ops::RuntimeLoopGuards.install!
 
-if options[:config]
-  cfg = cli.container[:config]
-  puts "model=#{cfg['model']} persona=#{cfg.persona} reasoning=#{cfg.reasoning_mode}"
-  puts "safe=#{ENV.fetch('MASTER_SAFE_MODE', '1')} web=#{ENV.fetch('MASTER_WEB', '0')}"
-  exit 0
-end
-
-ENV["MASTER_QUIET"] = "1" if options[:quiet]
-
 if $stdin.tty?
-  Master::Now::WebServer.start(config: cli.container[:config])
-  cli.run(options[:message].empty? ? nil : options[:message])
+  Master::Now::WebServer.start(cli.container[:config])
+
+  message = initial_message_from_argv(ARGV)
+  cli.run(message.empty? ? nil : message)
 else
   $stdout.sync = true
   $stdin.each_line { |line| cli.pipe(line) }
 end
+
+exit(cli.exit_code || 0)

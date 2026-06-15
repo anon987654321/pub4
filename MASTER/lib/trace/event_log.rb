@@ -11,8 +11,6 @@ module Master
       DEFAULT_STREAM = "activity"
       STREAM_PATTERN = /\A[a-z0-9_\-]+\z/
 
-      attr_reader :path
-
       def initialize(root: Master::ROOT, stream: DEFAULT_STREAM)
         @root = root
         @stream = normalize_stream(stream)
@@ -30,36 +28,25 @@ module Master
         nil
       end
 
-      # O203: shared JSONL reader for recent_events and dispatch_tail.
-      def read_lines
+      def recent(limit, pattern: nil)
         return [] unless File.exist?(@path)
 
-        File.foreach(@path).to_a
+        matcher = pattern && !pattern.empty? ? Regexp.new(pattern) : nil
+        File.foreach(@path).to_a.last(limit).filter_map do |line|
+          record = parse_line(line)
+          next unless record
+          next if matcher && !record["event"].to_s.match?(matcher)
+
+          record
+        end
       rescue StandardError
         []
       end
 
-      def recent(n, now: Time.now.utc)
-        read_lines.last(n).filter_map do |line|
-          rec = JSON.parse(line) rescue next
-          ts = (Time.parse(rec["timestamp"]) rescue now)
-          secs = (now - ts).to_i.abs
-          ago = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
-          pay = rec["payload"]
-          sum = pay.is_a?(Hash) ? pay.first(3).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
-          { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
-        end
-      end
-
-      def tail(n, pattern: nil)
-        lines = read_lines
-        rx = pattern && !pattern.empty? ? Regexp.new(pattern) : nil
-        lines = lines.select { |l| l.include?(pattern) } if rx && pattern.match?(/\A[a-z0-9_:.-]+\z/i)
-        lines.last(n).filter_map do |line|
-          rec = JSON.parse(line) rescue next
-          next if rx && !rec["event"].to_s.match?(rx)
-          rec
-        end
+      def tail(limit, pattern: nil)
+        recent(limit, pattern: pattern)
+      rescue RegexpError
+        []
       end
 
       private
@@ -70,13 +57,19 @@ module Master
           id: SecureRandom.uuid,
           timestamp: now.iso8601(6),
           event: event.to_s,
-          payload: payload || {}
+          payload: payload || {},
         }
       end
 
       def normalize_stream(stream)
         candidate = stream.to_s
         candidate.match?(STREAM_PATTERN) ? candidate : DEFAULT_STREAM
+      end
+
+      def parse_line(line)
+        JSON.parse(line)
+      rescue JSON::ParserError
+        nil
       end
     end
   end

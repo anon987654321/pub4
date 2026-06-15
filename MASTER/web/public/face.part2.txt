@@ -1,0 +1,392 @@
+const VERT_SHADER = `
+vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
+vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
+vec4 permute4(vec4 x){return mod289v4(((x*34.)+1.)*x);}
+vec4 taylorInvSqrt4(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+float snoise(vec3 v){
+  const vec2 C=vec2(1./6.,1./3.);const vec4 D=vec4(0.,.5,1.,2.);
+  vec3 i=floor(v+dot(v,C.yyy));vec3 x0=v-i+dot(i,C.xxx);
+  vec3 g=step(x0.yzx,x0.xyz);vec3 l=1.-g;
+  vec3 i1=min(g.xyz,l.zxy);vec3 i2=max(g.xyz,l.zxy);
+  vec3 x1=x0-i1+C.xxx;vec3 x2=x0-i2+C.yyy;vec3 x3=x0-D.yyy;
+  i=mod289v3(i);
+  vec4 p=permute4(permute4(permute4(i.z+vec4(0.,i1.z,i2.z,1.))+i.y+vec4(0.,i1.y,i2.y,1.))+i.x+vec4(0.,i1.x,i2.x,1.));
+  float n_=.142857142857;vec3 ns=n_*D.wyz-D.xzx;
+  vec4 j=p-49.*floor(p*ns.z*ns.z);
+  vec4 x_=floor(j*ns.z);vec4 y_=floor(j-7.*x_);
+  vec4 x=x_*ns.x+ns.yyyy;vec4 y=y_*ns.x+ns.yyyy;vec4 h=1.-abs(x)-abs(y);
+  vec4 b0=vec4(x.xy,y.xy);vec4 b1=vec4(x.zw,y.zw);
+  vec4 s0=floor(b0)*2.+1.;vec4 s1=floor(b1)*2.+1.;vec4 sh=-step(h,vec4(0.));
+  vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+  vec3 p0=vec3(a0.xy,h.x);vec3 p1=vec3(a0.zw,h.y);vec3 p2=vec3(a1.xy,h.z);vec3 p3=vec3(a1.zw,h.w);
+  vec4 norm=taylorInvSqrt4(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+  p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+  vec4 m=max(.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.);m=m*m;
+  return 42.*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+}
+vec3 curlNoise(vec3 p){
+  const float e=.07;
+  float n1,n2,n3,n4;
+  n1=snoise(p+vec3(0,e,0));n2=snoise(p-vec3(0,e,0));
+  n3=snoise(p+vec3(0,0,e));n4=snoise(p-vec3(0,0,e));
+  float cx=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
+  vec3 q=p+vec3(31.416);
+  n1=snoise(q+vec3(0,0,e));n2=snoise(q-vec3(0,0,e));
+  n3=snoise(q+vec3(e,0,0));n4=snoise(q-vec3(e,0,0));
+  float cy=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
+  vec3 r=p+vec3(17.);
+  n1=snoise(r+vec3(e,0,0));n2=snoise(r-vec3(e,0,0));
+  n3=snoise(r+vec3(0,e,0));n4=snoise(r-vec3(0,e,0));
+  float cz=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
+  return vec3(cx,cy,cz);
+}
+uniform float uMorph;
+uniform float uTime;
+uniform float uSize;
+uniform vec3 uColor;
+uniform float uHc;
+uniform float uCurl;
+uniform float uJaw;
+uniform vec2 uMouse;
+uniform float uBass;
+uniform float uMids;
+uniform float uHighs;
+uniform float uBeat;
+uniform float uConfidence;
+uniform float uTremor;
+uniform float uTilt;
+uniform float uRain;
+uniform float uModelSwitch;
+uniform float uEarPulse;
+uniform float uRipple;
+uniform float uVowel;
+uniform float uSurpriseY;
+uniform float uFracture;
+uniform float uBloom;
+uniform float uIdleDrift;
+uniform float uEyeClose;
+uniform float uGridAngle;
+uniform float uHeartbeat;
+uniform float uExposure;
+uniform float uQuestion;
+attribute vec3 scatter;
+attribute float seed;
+attribute float curvature;
+attribute float boundary;
+attribute float zone;
+varying float vAlpha;
+varying vec3 vColor;
+varying float vFresnel;
+varying float vDepth;
+void main(){
+  float m=smoothstep(0.,1.,uMorph);
+  vec2 cursorFace=uMouse*0.44;
+  float cursorProx=1.0-smoothstep(0.0,0.22,length(position.xy-cursorFace));
+  float lm=max(m,cursorProx*0.96);
+  float curiousPull = uTilt * cursorProx * 0.045;
+  float curlAmp=uCurl*0.28*(1.0-uRain*0.18);
+  vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*curlAmp;
+  float jawRgn=smoothstep(0.0,0.15,-position.y-0.12)*smoothstep(0.0,0.14,0.28-abs(position.x));
+  vec3 p=mix(scatter,position,lm)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
+  p.xy += normalize(cursorFace - p.xy + vec2(0.001)) * curiousPull;
+  float tremorf=snoise(position*18.0+uTime*3.2+seed)*uTremor*0.003;
+  p+=vec3(tremorf,tremorf*0.7,0.0);
+  vec2 diff2d=p.xy-uMouse;
+  float dist2d=length(diff2d);
+  if(dist2d<0.20&&dist2d>0.001)p.xy+=normalize(diff2d)*(0.20-dist2d)*0.32;
+  float radial=length(p.xy);
+  p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*lm;
+  // FA18 rain — weary mood gravity drift per-seed phase
+  p.y -= uRain * (0.5 + position.y * 0.5) * sin(seed * 6.28 + uTime * 1.8) * 0.07;
+  // FA13 ear pulse — cheek zone oscillation when listening
+  float isEar = 1.0 - smoothstep(0.0, 0.08, abs(zone - 0.2));
+  p.xy += normalize(p.xy + vec2(0.001)) * isEar * uEarPulse * sin(uTime * 9.0 + seed) * 0.022;
+  // FA08 confidence outward drift — low confidence pushes vertices out
+  p.xy *= 1.0 + (1.0 - uConfidence) * 0.045;
+  // FA10 send ripple — radial wave from center
+  if(uRipple > 0.0) {
+    float rwave = sin(radial * 10.0 - uRipple * 18.0) * exp(-uRipple * 2.5) * 0.035;
+    p.xy += normalize(p.xy + vec2(0.001)) * rwave;
+  }
+  // FA05/FA04 vowel jaw — viseme amplitude extends jaw opening
+  float jawRgnV = smoothstep(0.0,0.15,-position.y-0.05) * smoothstep(0.0,0.18,0.30-abs(position.x));
+  p.y -= uVowel * jawRgnV * 0.025;
+  // FA29 surprised Y impulse
+  p.y += uSurpriseY * smoothstep(0.0, 0.6, 0.5 + position.y * 0.8) * 0.12;
+  // FA19 veto fracture — scatter to 8 radial shards by position angle
+  if(uFracture > 0.0) {
+    float ang = atan(position.y, position.x);
+    float shardAng = floor(ang * 4.0 / 3.14159 + 0.5) * 3.14159 / 4.0;
+    p.xy += vec2(cos(shardAng), sin(shardAng)) * uFracture * (0.22 + seed * 0.32);
+  }
+  if(uModelSwitch > 0.0) {
+    float dissolve = smoothstep(0.0, 0.45, uModelSwitch) * (1.0 - smoothstep(0.55, 1.0, uModelSwitch));
+    p += curlNoise(position * 0.9 + seed + vec3(uTime * 0.2)) * dissolve * 0.045;
+  }
+  if(uQuestion > 0.0) {
+    float qt = clamp(uQuestion, 0.0, 1.0);
+    float qSeed = fract(seed * 13.37 + uTime * 0.12);
+    vec2 qStem = vec2(0.02 * sin(qSeed * 18.0), 0.10 - qSeed * 0.34);
+    vec2 qHook = vec2(0.11 * cos(qSeed * 6.2831), 0.12 + 0.10 * sin(qSeed * 6.2831));
+    vec2 qTarget = qSeed < 0.62 ? qHook : qStem;
+    p.xy = mix(p.xy, qTarget, qt * 0.88);
+    p.z += qt * 0.02 * sin(seed * 6.2831);
+  }
+  // FA20 pass bloom — brief outward radial spring then snap back
+  if(uBloom > 0.0) p.xy += normalize(p.xy + vec2(0.001)) * uBloom * 0.30 * (1.0 - radial * 0.6);
+  // FA09 council sector — radial sector glow by zone during deliberation (carried via uBeat spike)
+  vec4 mv=modelViewMatrix*vec4(p,1.);
+  float depth=clamp(p.z/0.82,0.,1.);
+  float sizeBoost=0.70+curvature*0.55+depth*1.10+boundary*0.35;
+  gl_PointSize=clamp(uSize*(240./-mv.z)*sizeBoost,1.0,2.0);
+  gl_Position=projectionMatrix*mv;
+  float hc=uHc;
+  float zoneAudio=0.0;
+  if(zone<0.1) zoneAudio=uBass*0.18;
+  else if(zone<0.3) zoneAudio=uMids*0.12;
+  else if(zone<0.5) zoneAudio=uBass*0.08;
+  else if(zone<0.7) zoneAudio=uHighs*0.14;
+  else zoneAudio=uMids*0.10;
+  float eyeRgn = smoothstep(0.30,0.50,zone) * (1.0 - smoothstep(0.50,0.65,zone));
+  float eyeDim = 1.0 - uEyeClose * eyeRgn * 0.82;
+  vAlpha=(hc>0.0?hc:mix(0.28+uIdleDrift*0.08,0.48+depth*0.52,lm)+zoneAudio)*eyeDim;
+  float flickerFreq=0.5+seed*1.5;
+  float flicker=1.0+0.08*sin(seed*6.2831+uTime*flickerFreq);
+  vAlpha*=flicker*uExposure;
+  vAlpha*=1.0-0.45*clamp(uModelSwitch,0.0,1.0);
+  vAlpha*=1.0-0.35*clamp(uQuestion,0.0,1.0);
+  vAlpha=max(vAlpha,0.08);
+  float shade=mix(0.14,1.0,depth);
+  vec3 warmCool=mix(vec3(0.58,0.62,0.88),vec3(1.0,0.94,0.80),depth);
+  vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmCool*shade);
+  vec3 viewDir=normalize(-mv.xyz);
+  vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
+  vec3 vn=normalize(mat3(modelViewMatrix)*flatNorm);
+  vFresnel=pow(1.0-abs(dot(viewDir,vn)),1.8);
+  vDepth=depth;
+}`;
+
+const FRAG_SHADER = `
+varying float vAlpha;
+varying vec3 vColor;
+varying float vFresnel;
+varying float vDepth;
+uniform float uShake;
+uniform float uPulseRing;
+void main(){
+  float dist=length(gl_PointCoord-0.5)*2.0;
+  float disc=step(dist,0.92);
+  float alpha=disc*vAlpha;
+  vec3 col=vColor+vFresnel*vColor*0.42;
+  float w=1.0+uShake*0.12;
+  col=clamp(col*w,0.0,1.0);
+  gl_FragColor=vec4(col,max(0.0,alpha));
+}`;
+
+let faceGeom, faceMat, facePoints, faceEdgeGeom, faceEdgeMat, faceEdgeLines;
+let faceEdgeLinesStrong, faceEdgeLinesWeak;
+if (_hasWebGL && THREE) {
+  faceGeom = new THREE.BufferGeometry();
+  faceGeom.setAttribute('position', new THREE.BufferAttribute(faceHome, 3));
+  faceGeom.setAttribute('scatter',  new THREE.BufferAttribute(faceScatter, 3));
+  faceGeom.setAttribute('seed',     new THREE.BufferAttribute(faceSeeds, 1));
+  faceGeom.setAttribute('curvature', new THREE.BufferAttribute(faceCurvature, 1));
+  faceGeom.setAttribute('boundary',  new THREE.BufferAttribute(faceBoundary, 1));
+  faceGeom.setAttribute('zone',      new THREE.BufferAttribute(faceZone, 1));
+  faceMat = new THREE.ShaderMaterial({
+    vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
+    uniforms: {
+      uMorph:{value:0}, uTime:{value:0}, uSize:{value:FACE_PIXEL_SIZE},
+      uColor:{value:new Color(1,1,1)},
+      uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
+      uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
+      uBass:{value:0}, uShake:{value:0}, uPulseRing:{value:0},
+      uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
+      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
+      uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
+      uVowel:{value:0}, uSurpriseY:{value:0},
+      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0}
+    },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+  });
+  facePoints = new THREE.Points(faceGeom, faceMat);
+
+  if (faceEdgePosData && faceEdgePosData.length > 0 && faceEdgeAlpha) {
+    const edgeCount = faceEdgeAlpha.length;
+    const strongIdxArr = [], weakIdxArr = [];
+    for (let ei = 0; ei < edgeCount; ei++) {
+      if (faceEdgeAlpha[ei] > 0.65) { strongIdxArr.push(ei*2, ei*2+1); }
+      else { weakIdxArr.push(ei*2, ei*2+1); }
+    }
+    function buildEdgeLines(idxArr, opacity) {
+      if (!idxArr.length) return null;
+      const posArr = new Float32Array(idxArr.length * 3);
+      for (let i = 0; i < idxArr.length; i++) {
+        const vi = idxArr[i] * 3;
+        posArr[i*3] = faceEdgePosData[vi]; posArr[i*3+1] = faceEdgePosData[vi+1]; posArr[i*3+2] = faceEdgePosData[vi+2];
+      }
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+      const mat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+      return new THREE.LineSegments(geom, mat);
+    }
+    faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.10);
+    faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.04);
+    // Legacy single-line ref kept null — two-tier replaces it
+    faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;
+  }
+}
+
+let morphCurrent = 0.0, morphTarget = 0.88, morphGhost = 0.0;
+const mouthPool = null;
+const eyePool = null;
+
+const COUNCIL_VOICE = {
+  Architect: 'ryan', Skeptic: 'steffan', Pragmatist: 'finn',
+  Security: 'osman', User: 'ryan', Mentor: 'yasmin'
+};
+
+const PERSONA_TINT = {
+  Architect: new Color(0.75, 0.9, 1.0),
+  Skeptic: new Color(1.0, 0.78, 0.62),
+  Pragmatist: new Color(0.74, 1.0, 0.78),
+  Security: new Color(1.0, 0.68, 0.68),
+  User: new Color(0.9, 0.84, 1.0),
+  Mentor: new Color(1.0, 0.92, 0.68)
+};
+
+
+
+const colorCurrent = TINT.idle.clone();
+const colorTarget  = TINT.idle.clone();
+function fadeColorTo(c) { colorTarget.copy(c); }
+function applyPersonaVisual(persona) {
+  const tint = PERSONA_TINT[persona];
+  if (!tint) return;
+  fadeColorTo(tint);
+  State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);
+}
+const seasonalTintEnabled = new URLSearchParams(window.location.search).get('seasonal') === '1';
+function refreshIdleTint() {
+  if (seasonalTintEnabled) {
+    const month = new Date().getMonth();
+    if (month === 9) TINT.idle.copy(new Color(1.0, 0.72, 0.36));
+    else if (month >= 5 && month <= 6) TINT.idle.copy(new Color(0.98, 0.85, 0.42));
+    else if (month >= 11 || month <= 1) TINT.idle.copy(new Color(0.78, 0.9, 1.0));
+    else TINT.idle.copy(dayNightTint());
+  } else {
+    TINT.idle.copy(dayNightTint());
+  }
+  colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
+}
+refreshIdleTint();
+setInterval(() => { if (!State.mood || State.mood === 'idle') { refreshIdleTint(); fadeColorTo(TINT.idle); } }, 60000);
+
+const bloomCtx = null;
+const bloomCv = null;
+
+function dollyZoom(intensity) {
+  if (!camera) return;
+  const startFOV = camera.fov, startZ = camera.position.z;
+  const targetFOV = Math.max(20, startFOV - intensity * 10);
+  const targetZ   = startZ + intensity * 0.55;
+  const t0 = performance.now();
+  function forward(now) {
+    const p = Math.min(1, (now - t0) / 1200);
+    const e = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
+    camera.fov = startFOV + (targetFOV - startFOV) * e;
+    camera.position.z = startZ + (targetZ - startZ) * e;
+    camera.updateProjectionMatrix();
+    if (p < 1) { requestAnimationFrame(forward); return; }
+    const t1 = performance.now();
+    function back(now2) {
+      const p2 = Math.min(1, (now2 - t1) / 2000);
+      camera.fov = targetFOV + (38 - targetFOV) * p2;
+      camera.position.z = targetZ + (4.6 - targetZ) * p2;
+      camera.updateProjectionMatrix();
+      if (p2 < 1) requestAnimationFrame(back);
+    }
+    requestAnimationFrame(back);
+  }
+  requestAnimationFrame(forward);
+}
+
+const _photoEl = document.getElementById('photo');
+if (_photoEl) _photoEl.addEventListener('change', () => {
+  if (_photoEl.files[0]) { morphCurrent = 0; morphTarget = 1.0; }
+});
+
+
+let lastT = performance.now();
+let saccadeX = 0, nextSaccade = performance.now() + Math.random() * 6000 + 3000;
+let microJitter = 0, nextMicroJitter = performance.now() + Math.random() * 600 + 200;
+let nextBlink = performance.now() + Math.random() * 5000 + 3000;
+function doBlink() {
+  if (!faceMat) return;
+  const orig = faceMat.uniforms.uSize.value;
+  let phase = 0;
+  const blinkTimer = setInterval(() => {
+    phase += 0.18;
+    if (phase < 1) {
+      faceMat.uniforms.uSize.value = orig * (1 - 0.55 * Math.sin(phase * Math.PI));
+    } else {
+      faceMat.uniforms.uSize.value = orig;
+      clearInterval(blinkTimer);
+    }
+  }, 14);
+}
+let nodImpulse = 0;
+let glowPoints;
+let head;
+if (_hasWebGL && THREE && scene && facePoints) {
+  head = new THREE.Object3D();
+  scene.add(head);
+  head.add(facePoints);
+  const glowMat = new THREE.ShaderMaterial({
+    vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
+    uniforms: {
+      uMorph:{value:0}, uTime:{value:0}, uSize:{value:FACE_PIXEL_SIZE * FACE_GLOW_SCALE},
+      uColor:{value:new Color(1,1,1)},
+      uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
+      uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
+      uBass:{value:0}, uShake:{value:0}, uPulseRing:{value:0},
+      uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
+      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
+      uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
+      uVowel:{value:0}, uSurpriseY:{value:0},
+      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0}
+    },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+  });
+  glowPoints = new THREE.Points(faceGeom, glowMat);
+  glowPoints.renderOrder = -1;
+  head.add(glowPoints);
+}
+
+async function swapMask(imageUrl) {
+  if (!_hasWebGL || !THREE || !facePoints) return;
+  try {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imageUrl; });
+    const tmp = document.createElement('canvas');
+    tmp.width = tmp.height = 512;
+    tmp.getContext('2d').drawImage(img, 0, 0, 512, 512);
+    const nd = sampleDepthMapGrid(tmp, FACE_GRID_COLS, FACE_GRID_ROWS);
+    const ng = new THREE.BufferGeometry();
+    ng.setAttribute('position',  new THREE.BufferAttribute(nd.home, 3));
+    ng.setAttribute('scatter',   new THREE.BufferAttribute(nd.scatter, 3));
+    ng.setAttribute('seed',      new THREE.BufferAttribute(nd.seeds, 1));
+    ng.setAttribute('curvature', new THREE.BufferAttribute(nd.curvature, 1));
+    ng.setAttribute('boundary',  new THREE.BufferAttribute(nd.boundary, 1));
+    ng.setAttribute('zone',      new THREE.BufferAttribute(nd.zone, 1));
+    facePoints.geometry.dispose();
+    facePoints.geometry = ng;
+    if (glowPoints) { glowPoints.geometry.dispose(); glowPoints.geometry = ng; }
+    morphCurrent = 0; morphTarget = 1.0;
+    State.flash = 0.5; State.pulse = 0.8;
+    if (uiStatus) uiStatus.textContent = 'mask loaded';
+  } catch (_) {
+    if (uiStatus) uiStatus.textContent = 'mask load failed';
+  }
+}

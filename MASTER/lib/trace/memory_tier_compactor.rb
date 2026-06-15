@@ -37,14 +37,12 @@ module Master
       def compact_working
         msgs = @session.messages
         return 0 if msgs.size <= MAX_WORKING
-        dropped = msgs.size - MAX_WORKING
         @session.messages.replace(msgs.last(MAX_WORKING))
         dropped
       end
 
       def compact_episodic
         return 0 unless Dir.exist?(EPISODIC_DIR)
-        total_dropped = 0
         Dir.glob(File.join(EPISODIC_DIR, "*.ndjson")).each do |path|
           lines = File.readlines(path, chomp: true).reject(&:empty?)
           next if lines.size <= MAX_EPISODIC
@@ -57,7 +55,6 @@ module Master
 
       def compact_semantic
         return 0 unless @db
-        @db.compact!(keep_last: MAX_SEMANTIC)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "MemoryTierCompactor.compact_semantic")
         0

@@ -1,39 +1,24 @@
 <% content_for :title, @post.title %>
-<div data-controller="scroll-progress" class="scroll-progress">
-  <div data-scroll-progress-target="bar" class="scroll-progress__bar"></div>
-</div>
-<article>
+<article class="post prose">
   <header>
-    <h1><%= @post.title %></h1>
-    <small><%= @post.user.email_address.split("@").first %> · <%= @post.published_at&.strftime("%b %-d, %Y") %> · <%= @post.views_count %> views</small>
+    <h1 class="post-title"><%= @post.title %></h1>
+    <small><%= @post.user.email_address.split("@").first %> · <%= @post.published_at&.strftime("%b %-d, %Y") %> · <%= reading_time_for(@post.body) %> · <%= @post.views_count %> views</small>
     <% if @post.user == Current.user %>
       <%= link_to "Edit", edit_blog_post_path(@blog, @post) %>
       <%= button_to "Delete", blog_post_path(@blog, @post), method: :delete, data: { turbo_confirm: "Delete post?" } %>
     <% end %>
   </header>
-  <% if @paywall_allowed %>
+  <div class="trix-content">
     <%= @post.body %>
-  <% else %>
-    <p><%= @post.body.to_plain_text.truncate(280) %></p>
-    <div class="paywall-cta">
-      <p>This article is behind a paywall.</p>
-      <% if authenticated? %>
-        <%= button_to "Subscribe (Stripe Checkout)", checkout_blog_path(@blog), class: "btn btn-primary" %>
-      <% else %>
-        <%= link_to "Sign in to subscribe", new_session_path, class: "btn btn-primary" %>
-      <% end %>
-    </div>
-  <% end %>
+  </div>
 </article>
-<% if @paywall_allowed %>
 <section id="comments">
   <h2>Comments (<%= @post.comments_count %>)</h2>
   <%= render @comments %>
   <% if authenticated? %>
     <%= form_with url: blog_post_comments_path(@blog, @post) do |f| %>
-      <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…" %></p>
+      <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…", data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
       <p><%= f.submit "Comment" %></p>
     <% end %>
   <% end %>
 </section>
-<% end %>

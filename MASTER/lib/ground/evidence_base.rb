@@ -27,7 +27,7 @@ module Master
         semantic_entropy_samples: 5,
         ast_chunk_nodes: 175,
         diff_context_lines: 5,
-        permission_order: %i[pre_tool_hook deny allow ask mode_check]
+        permission_order: %i[pre_tool_hook deny allow ask mode_check],
       }.freeze
 
       ENFORCEMENT_ORDER = %i[
@@ -35,7 +35,7 @@ module Master
         permission_authorization
         input_validation_normalization
         quality_style
-        output_verification
+        output_verification,
       ].freeze
 
       OUTPUT_POLICY = {
@@ -43,14 +43,14 @@ module Master
         avoid_line_numbers: true,
         prefer_function_level_edits: true,
         continue_on_finish_reason_length: true,
-        preserve_system_message: true
+        preserve_system_message: true,
       }.freeze
 
       VERIFICATION_POLICY = {
         chain_of_verification: %i[baseline verification_questions independent_check final_revision],
         semantic_entropy: { samples: THRESHOLDS[:semantic_entropy_samples], cluster_by: :meaning },
         self_consistency: { samples: THRESHOLDS[:self_consistency_samples], vote: :majority },
-        swe_bench_style: %i[fail_to_pass pass_to_pass regression]
+        swe_bench_style: %i[fail_to_pass pass_to_pass regression],
       }.freeze
 
       def self.threshold(name)

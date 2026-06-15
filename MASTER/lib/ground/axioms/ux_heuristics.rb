@@ -15,7 +15,7 @@ module Master
           h7_flexibility: "Flexibility and Efficiency of Use — support both novice and expert users",
           h8_minimalism: "Aesthetic and Minimalist Design — every extra unit competes with relevant units",
           h9_error_recovery: "Help Users Recognize, Diagnose, and Recover from Errors — plain language, precise problem, constructive solution",
-          h10_help: "Help and Documentation — documentation should help users complete tasks, not explain bad design"
+          h10_help: "Help and Documentation — documentation should help users complete tasks, not explain bad design",
         }.freeze
 
         SIGNALS = {
@@ -33,7 +33,7 @@ module Master
             h8_minimalism: { checks: %w[information-density whitespace raw-primaries animation],
               failing: "Visual noise: raw colors, unguarded animations, dense layout" },
             h9_error_recovery: { checks: %w[flash error-format turbo-stream-error],
-              failing: "Error messages generic or missing recovery path" }
+              failing: "Error messages generic or missing recovery path" },
           },
           cli: {
             h1_visibility: { checks: %w[progress spinner result-line],
@@ -43,8 +43,8 @@ module Master
             h8_minimalism: { checks: %w[no-filler terse single-line],
               failing: "Output contains filler phrases or multi-line where one line suffices" },
             h9_error_recovery: { checks: %w[actionable-error suggestion],
-              failing: "Error output does not suggest a corrective action" }
-          }
+              failing: "Error output does not suggest a corrective action" },
+          },
         }.freeze
 
         def self.cite(heuristic_key, violation, medium: :web)

@@ -19,7 +19,7 @@ module Master
         "check_models" => :check_model_availability,
         "self_test" => :run_self_test,
         "prune_undo" => :prune_undo_journal,
-        "snapshot" => :run_snapshot
+        "snapshot" => :run_snapshot,
       }.freeze
 
       def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil, homeostat: nil)
@@ -71,7 +71,10 @@ module Master
 
           @bus&.publish("heartbeat:run", job: name)
           result = execute_job(job)
-          @state[name] = { "last_run" => now, "result" => result.to_s[0, RESULT_TRUNCATE] }
+          @state[name] = @state.fetch(name, {}).merge(
+            "last_run" => now,
+            "result" => result.to_s[0, RESULT_TRUNCATE]
+          )
           results << { name: name, result: result }
         end
 
@@ -127,14 +130,21 @@ module Master
         return "scan failed" unless Result.wrap(result).ok?
 
         summary = result.value!
-        if summary.violation_count.zero?
-          @bus&.publish("heartbeat:scan_clean", violations: 0, last_fixed: @state.dig("self_test", "last_fixed"))
-        else
-          @bus&.publish("heartbeat:violations", count: summary.violation_count, last_fixed: @state.dig("self_test", "last_fixed"))
-        end
-        @state["self_test"] = { "last_run" => Time.now.to_i, "violations" => summary.violation_count }
         @bus&.publish("heartbeat:self_test", violations: summary.violation_count, checks: summary.to_h)
+        publish_scan_metrics(summary)
         summary.line
+      end
+
+      def publish_scan_metrics(summary)
+        if summary.violation_count.zero?
+          @state["self_test"] = @state.fetch("self_test", {}).merge("last_fixed" => Time.now.to_i)
+          @bus&.publish("heartbeat:scan_clean", violations: 0, last_fixed: @state.dig("self_test", "last_fixed"))
+          return
+        end
+
+        @bus&.publish("heartbeat:violations",
+          violations: summary.violation_count,
+          last_fixed: @state.dig("self_test", "last_fixed"))
       end
 
       def prune_undo_journal
@@ -172,7 +182,7 @@ module Master
           { "name" => "prune_memory", "action" => "prune_memory", "interval_seconds" => SECONDS_PER_HOUR },
           { "name" => "self_test", "action" => "self_test", "interval_seconds" => SECONDS_PER_HOUR },
           { "name" => "prune_undo", "action" => "prune_undo", "interval_seconds" => 86_400 },
-          { "name" => "snapshot", "action" => "snapshot", "interval_seconds" => 14_400 }
+          { "name" => "snapshot", "action" => "snapshot", "interval_seconds" => 14_400 },
         ]
       end
 

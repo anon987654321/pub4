@@ -128,3 +128,10 @@ Token in `~/pub4/.master/config.yml` is accepted via `Authorization: Bearer`, `X
 ## Slash commands
 
 `/scan [profile] [path]`, `/fix [path]`, `/ecology [path]`, `/review [on|off|path]`, `/critique <file|text>`, `/swarm <role> <task>`, `/ideate <prompt>`, `/topic`, `/rsi [stats]`, `/model [list|<id>]`, `/why <rule>`, `/diag [section]`, `/snapshot`, `/tts`, `/brief`, `/heartbeat`, `/orders`, `/soul`, `/dmesg`. `/scan` reports violations (read-only). `/fix` iterates scan→LLM-rewrite→scan until violations plateau, stall, or reach zero — stops on diminishing returns automatically. `/review` runs council deliberation. `/snapshot` publishes two GitHub gists — MASTER + DEPLOY. `/why` resolves locally first; LLM fires only on a miss.
+
+## Exit codes
+
+- `0` for successful completion or shutdown
+- `1` for validation, policy, or constitutional violations
+- `2` for infrastructure and other internal failures
+- `3` for provider or LLM dispatch failures

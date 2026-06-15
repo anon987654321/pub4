@@ -1,0 +1,476 @@
+let _dbgFrames = 0;
+const showFps = new URLSearchParams(window.location.search).get('fps') === '1';
+const fpsBadge = showFps ? (() => {
+  const el = document.createElement('div');
+  el.id = 'fps-badge';
+  el.className = 'fps-badge';
+  document.body.appendChild(el);
+  return el;
+})() : null;
+let fpsLastSample = performance.now();
+let fpsSampleFrames = 0;
+function frame(t) {
+  _dbgFrames++;
+  if (fpsBadge) {
+    fpsSampleFrames++;
+    if (t - fpsLastSample >= 500) {
+      const fps = (fpsSampleFrames * 1000) / (t - fpsLastSample);
+      fpsBadge.textContent = `${fps.toFixed(0)} fps`;
+      fpsLastSample = t;
+      fpsSampleFrames = 0;
+    }
+  }
+  if (!renderer) {
+    lastT = t;
+    requestAnimationFrame(frame);
+    return;
+  }
+  if (State.hidden) {
+    lastT = t;
+    return;
+  }
+
+  const dt = Math.min(State.coarsePointer ? 66 : 50, t - lastT); lastT = t;
+  const sec = t * 0.001;
+
+  if (State.sleeping) {
+    rootBody.style.opacity = '0.05';
+    rootBody.dataset.sleeping = '1';
+  } else if (rootBody.dataset.sleeping) {
+    rootBody.style.opacity = '';
+    delete rootBody.dataset.sleeping;
+  }
+
+  if (hasAnalyserBuffers()) {
+    tts.analyser.getByteTimeDomainData(tts.analyserBuf);
+    let rmsSum = 0;
+    const bufLen = tts.analyserBuf.length;
+    for (let bi = 0; bi < bufLen; bi++) { const s = (tts.analyserBuf[bi] - 128) / 128; rmsSum += s * s; }
+    const rms = Math.sqrt(rmsSum / bufLen);
+    if (rms > 0.01) State.pulse = Math.min(0.9, State.pulse + rms * 1.5);
+    State.voiceRMS = rms;
+    tts.analyser.getByteFrequencyData(tts.analyserFreqBuf);
+    let bass = 0, mids = 0, highs = 0;
+    for (let bi = 0; bi < 8; bi++) bass += tts.analyserFreqBuf[bi];
+    for (let bi = 8; bi < 32; bi++) mids += tts.analyserFreqBuf[bi];
+    for (let bi = 32; bi < 80 && bi < tts.analyserFreqBuf.length; bi++) highs += tts.analyserFreqBuf[bi];
+    State.audioBass  = bass  / (8   * 255);
+    State.audioMids  = mids  / (24  * 255);
+    State.audioHighs = highs / (48  * 255);
+    State.audioBeat = 0;
+    const curBass = State.audioBass || 0;
+    if (!faceMat._prevBass) faceMat._prevBass = 0;
+    if (curBass - faceMat._prevBass > 0.15) State.audioBeat = 1.0;
+    faceMat._prevBass = curBass * 0.7 + faceMat._prevBass * 0.3;
+    const wave = document.getElementById('zsh-wave');
+    if (wave) {
+      const bars = wave.querySelectorAll('span');
+      const levels = [
+        State.audioBass || 0,
+        State.audioMids || 0,
+        State.audioHighs || 0,
+        Math.max(State.audioBass || 0, State.audioMids || 0),
+        Math.max(State.audioMids || 0, State.audioHighs || 0)
+      ];
+      bars.forEach((bar, i) => {
+        const level = levels[i] || 0;
+        const h = Math.max(3, Math.min(14, 3 + level * 12));
+        bar.style.height = `${h}px`;
+        bar.style.opacity = String(0.25 + level * 0.65);
+      });
+    }
+  } else {
+    State.voiceRMS = (State.voiceRMS || 0) * 0.9;
+    State.audioBass  = (State.audioBass  || 0) * 0.88;
+    State.audioMids  = (State.audioMids  || 0) * 0.88;
+    State.audioHighs = (State.audioHighs || 0) * 0.88;
+    const wave = document.getElementById('zsh-wave');
+    if (wave) {
+      wave.querySelectorAll('span').forEach(bar => {
+        const current = parseFloat(bar.style.height || '4') || 4;
+        const next = Math.max(3, current * 0.92);
+        bar.style.height = `${next}px`;
+        bar.style.opacity = String(Math.max(0.15, (parseFloat(bar.style.opacity || '0.25') || 0.25) * 0.95));
+      });
+    }
+  }
+
+  const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
+  colorCurrent.lerp(colorTarget, lerpSpeed);
+  if ((_dbgFrames & 7) === 0) {
+    const r = (colorCurrent.r * 255)|0, g = (colorCurrent.g * 255)|0, b = (colorCurrent.b * 255)|0;
+    const cr = (255-r)|0, cg = (255-g)|0, cb = (255-b)|0;
+    rootBody.style.setProperty('--mood-r', r);
+    rootBody.style.setProperty('--mood-g', g);
+    rootBody.style.setProperty('--mood-b', b);
+    rootBody.style.setProperty('--mood-accent', `rgb(${r},${g},${b})`);
+    rootBody.style.setProperty('--mood-complement', `rgb(${cr},${cg},${cb})`);
+    rootBody.style.setProperty('--mood-shadow', `rgba(${r},${g},${b},0.12)`);
+    rootBody.style.setProperty('--mood-mid', `rgba(${r},${g},${b},0.45)`);
+    rootBody.style.setProperty('--mood-hi', `rgba(${r},${g},${b},0.88)`);
+    const moodSat = State.mood === 'weary' ? 0.15 : (State.mood === 'tense' ? 1.0 : 0.7);
+    rootBody.style.setProperty('--mood-sat', moodSat.toFixed(2));
+    if (State.mode === 'error' && !rootBody.dataset.moodCold) {
+      rootBody.dataset.moodCold = '1';
+      // White-only error indication: shake + pulse (no hue per pure phosphor).
+      State.shake = 1.5;
+      State.pulse = 0.9;
+      State.flash = 1.0;
+      setTimeout(() => { delete rootBody.dataset.moodCold; }, 1800);
+    }
+  }
+
+  if (head) {
+    if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
+      saccadeX = (Math.random() - 0.5) * 0.28;
+      nextSaccade = t + Math.random() * 6000 + 3000;
+    }
+    if (!State.reducedMotion && t > nextMicroJitter) {
+      microJitter = (Math.random() - 0.5) * 0.045;
+      nextMicroJitter = t + Math.random() * 600 + 200;
+    }
+    if (!State.reducedMotion && t > nextBlink) {
+      doBlink();
+      nextBlink = t + Math.random() * 5000 + 2500;
+    }
+    saccadeX *= 0.93;
+    microJitter *= 0.78;
+    const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX + microJitter;
+    const pitch = State.mouseY * 0.4 + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
+    if (camera) {
+      const pInput = State.coarsePointer
+        ? { x: State.tiltX, y: -State.tiltY }
+        : { x: State.mouseX, y: -State.mouseY };
+      State.parX += (pInput.x * 0.055 - State.parX) * 0.04;
+      State.parY += (pInput.y * 0.032 - State.parY) * 0.04;
+      const camOffX = 0.015 + State.parX, camOffY = 0.008 + State.parY;
+      camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.04;
+      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.04;
+    }
+    head.rotation.y += (yaw   - head.rotation.y) * 0.06;
+    head.rotation.x += (pitch - head.rotation.x) * 0.06;
+    nodImpulse *= 0.87;
+    head.rotation.x += nodImpulse;
+    const microOrbit = Math.sin(sec * 0.157) * 0.014;
+    head.rotation.z = -0.021 + microOrbit * 0.3;
+    const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
+    const breath = silenceScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005) + State.pulse * 0.08);
+    head.scale.setScalar(breath);
+    State.lean = (State.lean || 0) * 0.97;
+    if (State.shake > 0.01 && !State.reducedMotion) {
+      head.position.x = (Math.random() - 0.5) * State.shake * 0.18;
+      head.position.y = (Math.random() - 0.5) * State.shake * 0.18;
+      head.position.z = State.lean;
+      State.shake *= 0.86;
+    } else {
+      head.position.set(0, 0, State.lean);
+    }
+  }
+  if (State.personaPulse > 0.01) {
+    State.pulse = Math.max(State.pulse, State.personaPulse);
+    State.personaPulse *= 0.88;
+  }
+  State.pulse *= 0.92;
+
+  if (faceMat) {
+    const idleS = (t - State.lastTouch) / 1000;
+    const confTight = 0.78 + State.confidence * 0.22;
+    morphTarget = !primerFired ? 0.88 : (idleS > 60 ? Math.max(0, 1 - (idleS - 60) / 30) : confTight);
+    const springK = 0.038, springDamp = 0.72;
+    if (!faceMat._morphVel) faceMat._morphVel = 0;
+    faceMat._morphVel += (morphTarget - morphCurrent) * springK;
+    faceMat._morphVel *= springDamp;
+    morphCurrent += faceMat._morphVel;
+    faceMat.uniforms.uMorph.value = morphCurrent;
+    faceMat.uniforms.uTime.value = t * 0.001;
+    faceMat.uniforms.uColor.value.copy(colorCurrent);
+    const voiceRMS = State.voiceRMS || 0;
+    const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
+    const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
+    const phonemeBoost = 1.0 + (State.visemeAmp || 0) * 0.18;
+    const _breath = 0.5 + 0.5 * Math.sin(performance.now() * 0.000698);
+    const _breathSize = 0.92 + 0.18 * _breath;
+    faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost * phonemeBoost * _breathSize;
+    if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.02 + 0.08 * _breath;
+    const hcVal = State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0);
+    faceMat.uniforms.uHc.value = hcVal;
+    const curlTarget = State.mode === 'thinking' ? 1.0 : 0.0;
+    faceMat.uniforms.uCurl.value += (curlTarget - faceMat.uniforms.uCurl.value) * 0.025;
+    faceMat.uniforms.uJaw.value = voiceRMS * 2.5;
+    faceMat.uniforms.uMouse.value = { x: State.mouseX * 1.4, y: -State.mouseY * 1.2 };
+    faceMat.uniforms.uBass.value = (State.audioBass || 0) * 0.9 + faceMat.uniforms.uBass.value * 0.1;
+    faceMat.uniforms.uMids.value = (State.audioMids || 0);
+    faceMat.uniforms.uHighs.value = (State.audioHighs || 0);
+    const beatTarget = State.audioBeat || 0;
+    faceMat.uniforms.uBeat.value += (beatTarget - faceMat.uniforms.uBeat.value) * 0.35;
+    faceMat.uniforms.uBeat.value *= 0.82;
+    const curiousTilt = State.mood === 'curious' ? 1.0 : 0.0;
+    faceMat.uniforms.uTilt.value += (curiousTilt - faceMat.uniforms.uTilt.value) * 0.08;
+    faceMat.uniforms.uConfidence.value = State.confidence || 1.0;
+    const tremorTarget = faceMat.uniforms.uCurl.value * 0.75;
+    faceMat.uniforms.uTremor.value += (tremorTarget - faceMat.uniforms.uTremor.value) * 0.03;
+    const shakeTarget = State.shake || 0;
+    faceMat.uniforms.uShake.value += (shakeTarget - faceMat.uniforms.uShake.value) * 0.18;
+    const pulseRingTarget = State.pulse > 0.55 ? (State.pulse - 0.55) * 2.2 : 0;
+    faceMat.uniforms.uPulseRing.value += (pulseRingTarget - faceMat.uniforms.uPulseRing.value) * 0.12;
+    const rainTarget = State.mood === 'weary' ? 1.0 : 0.0;
+    faceMat.uniforms.uRain.value += (rainTarget - faceMat.uniforms.uRain.value) * 0.02;
+    const modelSwitch = State.modelSwitch || 0;
+    faceMat.uniforms.uModelSwitch.value += (modelSwitch - faceMat.uniforms.uModelSwitch.value) * 0.12;
+    State.modelSwitch = Math.max(0, modelSwitch * 0.9 - 0.01);
+    const questionPulse = State.questionPulse || 0;
+    faceMat.uniforms.uQuestion.value += (questionPulse - faceMat.uniforms.uQuestion.value) * 0.15;
+    State.questionPulse = Math.max(0, questionPulse * 0.9 - 0.01);
+    faceMat.uniforms.uEarPulse.value += ((State.sttActive ? 1.0 : 0.0) - faceMat.uniforms.uEarPulse.value) * 0.08;
+    if (State.ripplePhase >= 0) {
+      State.ripplePhase = Math.min(1, State.ripplePhase + 0.04);
+      faceMat.uniforms.uRipple.value = State.ripplePhase;
+      if (State.ripplePhase >= 1) State.ripplePhase = -1;
+    } else {
+      faceMat.uniforms.uRipple.value = 0;
+    }
+    const vowelAmp = (State.visemeAmp || 0) * (['A','E','I','O','U'].includes(State.viseme) ? 1.0 : 0.3);
+    faceMat.uniforms.uVowel.value += (vowelAmp - faceMat.uniforms.uVowel.value) * 0.15;
+    State.surpriseY = (State.surpriseY || 0) * 0.88;
+    faceMat.uniforms.uSurpriseY.value = State.surpriseY;
+    State.fracture = (State.fracture || 0) * 0.91;
+    faceMat.uniforms.uFracture.value = State.fracture;
+    State.bloom = (State.bloom || 0) * 0.88;
+    faceMat.uniforms.uBloom.value = State.bloom;
+    const idleS2 = (t - State.lastTouch) / 1000;
+    State.idleAlphaDrift = Math.sin(t * 0.000785) * 0.5 + 0.5;
+    faceMat.uniforms.uIdleDrift.value = State.idleAlphaDrift;
+    const idleS3 = (t - State.lastTouch) / 1000;
+    const eyeCloseTarget = 0;
+    faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
+    morphGhost += (morphCurrent - morphGhost) * 0.035;
+    faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524;
+    const soulDensity = 0.82 + soulDrift * 0.35;
+    faceMat.uniforms.uExposure.value = (window.matchMedia('(prefers-color-scheme: light)').matches ? 0.6 : 1.0) * soulDensity;
+    const driftEl = document.getElementById('soul-drift');
+    if (driftEl && (_dbgFrames % 30 === 0 || !driftEl.textContent)) {
+      driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;
+    }
+    if (!State._lastBeat || t - State._lastBeat > (3000 + Math.random() * 2000)) { State._lastBeat = t; State._heartbeat = 1.0; }
+    State._heartbeat = (State._heartbeat || 0) * 0.94;
+    faceMat.uniforms.uHeartbeat.value = State._heartbeat || 0;
+    if (glowPoints) {
+      const gm = glowPoints.material;
+      gm.uniforms.uMorph.value = morphGhost;
+      Object.assign(gm.uniforms, {
+        uTime: faceMat.uniforms.uTime,
+        uColor: faceMat.uniforms.uColor, uHc: faceMat.uniforms.uHc,
+        uCurl: faceMat.uniforms.uCurl, uJaw: faceMat.uniforms.uJaw,
+        uMouse: faceMat.uniforms.uMouse, uBass: faceMat.uniforms.uBass,
+        uShake: faceMat.uniforms.uShake, uPulseRing: faceMat.uniforms.uPulseRing,
+        uMids: faceMat.uniforms.uMids, uHighs: faceMat.uniforms.uHighs,
+        uBeat: faceMat.uniforms.uBeat, uConfidence: faceMat.uniforms.uConfidence,
+        uTremor: faceMat.uniforms.uTremor, uTilt: faceMat.uniforms.uTilt,
+        uRain: faceMat.uniforms.uRain, uEarPulse: faceMat.uniforms.uEarPulse,
+        uRipple: faceMat.uniforms.uRipple, uVowel: faceMat.uniforms.uVowel,
+        uSurpriseY: faceMat.uniforms.uSurpriseY,
+        uFracture: faceMat.uniforms.uFracture, uBloom: faceMat.uniforms.uBloom,
+        uIdleDrift: faceMat.uniforms.uIdleDrift, uEyeClose: faceMat.uniforms.uEyeClose
+      });
+      gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
+    }
+  }
+
+  State.flash *= 0.9;
+  if (State.flash > 0.15) rootBody.dataset.faceFlash = '1';
+  else delete rootBody.dataset.faceFlash;
+  renderer.render(scene, camera);
+  markFaceReady();
+
+  requestAnimationFrame(frame);
+}
+
+let pressTimer = null, pressStart = 0;
+let cursorActive = false;
+let dragOrigin = null;
+let gestureStart = null;
+function setFacePip(enabled, corner = 'bottom-right') {
+  if (enabled) {
+    rootBody.dataset.facePip = '1';
+    rootBody.dataset.facePipCorner = corner;
+  } else {
+    delete rootBody.dataset.facePip;
+    delete rootBody.dataset.facePipCorner;
+  }
+}
+function updateCursor(e) {
+  State.mouseX = (e.clientX / innerWidth  - 0.5) * 1.6;
+  State.mouseY = (e.clientY / innerHeight - 0.5) * 0.9;
+  cursorActive = true;
+}
+function onPointerMove(e) {
+  if (State.coarsePointer && dragOrigin) {
+    const dx = (e.clientX - dragOrigin.x) / innerWidth;
+    const dy = (e.clientY - dragOrigin.y) / innerHeight;
+    State.tiltX = Math.max(-1, Math.min(1, dx * 2.8));
+    State.tiltY = Math.max(-1, Math.min(1, dy * 2.0));
+  } else {
+    updateCursor(e);
+  }
+}
+document.addEventListener('pointermove', onPointerMove, { passive: true });
+document.addEventListener('pointerdown', e => {
+  dragOrigin = { x: e.clientX, y: e.clientY };
+  updateCursor(e);
+}, { passive: true });
+document.addEventListener('pointerup', () => {
+  dragOrigin = null;
+  if (State.coarsePointer) cursorActive = false;
+}, { passive: true });
+document.addEventListener('pointercancel', () => {
+  dragOrigin = null;
+  if (State.coarsePointer) cursorActive = false;
+}, { passive: true });
+
+cv.addEventListener('pointerdown', (e) => {
+  pressStart = performance.now();
+  State.lastTouch = pressStart;
+  gestureStart = { x: e.clientX, y: e.clientY, t: pressStart };
+  pressTimer = setTimeout(() => window.MASTER_FACE?.startSTT?.(), 420);
+});
+cv.addEventListener('pointermove', (e) => {
+  if (!gestureStart) return;
+  const dx = e.clientX - gestureStart.x;
+  const dy = e.clientY - gestureStart.y;
+  if (Math.hypot(dx, dy) > 12) gestureStart.moved = true;
+}, { passive: true });
+cv.addEventListener('pointerup', (e) => {
+  if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  const gesture = gestureStart;
+  gestureStart = null;
+  if (gesture) {
+    const dx = e.clientX - gesture.x;
+    const dy = e.clientY - gesture.y;
+    const adx = Math.abs(dx);
+    const ady = Math.abs(dy);
+    const elapsed = performance.now() - gesture.t;
+    if (elapsed < 800 && (adx > 70 || ady > 70)) {
+      if (ady > adx && dy < -70) {
+        zshIn?.focus();
+        zshIn?.select?.();
+        navigator.vibrate?.(10);
+        return;
+      }
+      if (adx > ady) {
+        window._chatCycleRecentReply?.(dx > 0 ? 1 : -1);
+        navigator.vibrate?.(10);
+        return;
+      }
+    }
+    if (elapsed < 1400 && Math.hypot(dx, dy) > 180) {
+      const corner = `${e.clientY < innerHeight / 2 ? 'top' : 'bottom'}-${e.clientX < innerWidth / 2 ? 'left' : 'right'}`;
+      setFacePip(true, corner);
+    }
+  }
+  if (State.sttActive) { window.MASTER_FACE?.stopSTT?.(); return; }
+  if (performance.now() - pressStart < 240) window.MASTER_FACE?.ttsSkip?.();
+});
+cv.addEventListener('pointercancel', () => {
+  if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  gestureStart = null;
+});
+
+function bindOrientation() {
+  window.addEventListener('deviceorientation', (e) => {
+    if (e.gamma != null) State.tiltX = e.gamma / 90;
+    if (e.beta  != null) State.tiltY = (e.beta - 45) / 90;
+  }, { passive: true });
+}
+async function requestMotionPermission() {
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (_) {}
+  } else if (window.DeviceOrientationEvent) {
+    bindOrientation();
+  }
+}
+
+let lastShake = 0, lastAccel = [0, 0, 0];
+if (window.DeviceMotionEvent) {
+  window.addEventListener('devicemotion', (e) => {
+    const a = e.accelerationIncludingGravity || e.acceleration;
+    if (!a) return;
+    const dx = a.x - lastAccel[0], dy = a.y - lastAccel[1], dz = a.z - lastAccel[2];
+    const m = Math.hypot(dx, dy, dz);
+    lastAccel = [a.x, a.y, a.z];
+    const now = performance.now();
+    if (m > 24 && now - lastShake > 800) {
+      lastShake = now; window.MASTER_FACE?.ttsSkip?.(); State.shake = 1.2;
+      morphCurrent = Math.max(0, morphCurrent - 0.6); morphTarget = 1.0;
+    }
+  }, { passive: true });
+}
+
+// FA24 pinch-to-zoom
+let pinchDist0 = null;
+cv.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    pinchDist0 = Math.hypot(dx, dy);
+  }
+}, { passive: true });
+cv.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 2 && pinchDist0) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const d = Math.hypot(dx, dy);
+    State.pinchScale = Math.max(0.5, Math.min(2.0, State.pinchScale * (d / pinchDist0)));
+    pinchDist0 = d;
+    if (head) head.scale.setScalar(State.pinchScale);
+  }
+}, { passive: true });
+cv.addEventListener('touchend', () => { pinchDist0 = null; }, { passive: true });
+
+// FA26 double-tap reset
+let lastTapT = 0;
+cv.addEventListener('pointerup', () => {
+  const now = performance.now();
+  if (now - lastTapT < 320) {
+    State.pinchScale = 1.0;
+    State.tiltX = 0; State.tiltY = 0;
+    State.parX = 0; State.parY = 0;
+    if (head) { head.scale.setScalar(1.0); head.position.set(0, 0, 0); }
+    State.bloom = 0.4;
+    setFacePip(false);
+  }
+  lastTapT = now;
+}, { passive: true });
+
+// FA27 long-press mood demo (1400ms, distinct from 420ms STT trigger)
+let demoTimer = null;
+cv.addEventListener('pointerdown', () => {
+  demoTimer = setTimeout(() => {
+    const seq = ['curious', 'tense', 'weary', 'pass', 'veto', 'idle'];
+    let i = 0;
+    const step = () => {
+      if (i >= seq.length) return;
+      const m = seq[i++];
+      State.mood = m;
+      if (TINT[m]) fadeColorTo(TINT[m]);
+      if (m === 'curious') State.surpriseY = 0.8;
+      if (m === 'pass') State.bloom = 1.0;
+      if (m === 'veto') State.fracture = 1.0;
+      if (m === 'weary') State.rain = 1.0;
+      setTimeout(step, 1100);
+    };
+    step();
+  }, 1400);
+});
+cv.addEventListener('pointerup', () => { if (demoTimer) { clearTimeout(demoTimer); demoTimer = null; } }, { passive: true });
+cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoTimer); demoTimer = null; } }, { passive: true });
+
+// FA33 battery saver LOD
+if ('getBattery' in navigator) {
+  navigator.getBattery().then(b => {
+    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.010; else FACE_PIXEL_SIZE = 0.017; };
+    check();
+    b.addEventListener('levelchange', check);
+    b.addEventListener('chargingchange', check);
+  }).catch(() => {});
+}

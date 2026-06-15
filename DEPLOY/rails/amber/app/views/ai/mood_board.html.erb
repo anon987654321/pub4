@@ -3,7 +3,7 @@
 <%= form_with url: ai_mood_board_path, method: :get do |f| %>
   <div class="field">
     <%= f.label :description, "Describe the aesthetic or paste a style reference" %>
-    <%= f.text_area :description, value: @description, rows: 3, class: "input input--wide" %>
+    <%= f.text_area :description, value: @description, rows: 3, class: "input input--wide", data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span>
   </div>
   <div class="actions"><%= f.submit "Match from wardrobe", class: "btn" %></div>
 <% end %>

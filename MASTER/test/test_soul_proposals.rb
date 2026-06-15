@@ -43,6 +43,7 @@ class TestSoulProposals < Minitest::Test
     content = File.read(proposal_path)
     assert_includes content, "BARE_RESCUE"
     assert_includes content, "lib/foo.rb"
+    assert_includes content, "Delta: + recurring `BARE_RESCUE` finding(s)"
   end
 
   def test_publishes_soul_proposal_ready

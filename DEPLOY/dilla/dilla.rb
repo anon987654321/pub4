@@ -259,6 +259,36 @@ DILLA_TRACK_PRESETS = {
 }.freeze
 INDUSTRIAL_BPM_DEFAULT = 132.0
 
+# Dilla Time (Charnas / Flypaper / Soundfly): NOT random slop. Each role has a
+# habitual displacement — snares early, upbeat hats late, kicks anchor the grid.
+# Roger Linn MPC swing delays even 16ths; Dilla finger-drummed with intentional
+# per-hit nudge. Ranges are ms; deterministic from bar/step so loops repeat.
+DILLA_TIMING_MS = {
+  kick_anchor: 0..5,
+  kick_sync: 4..14,
+  snare: -18..-6,
+  ghost: -10..10,
+  hat_down: -3..4,
+  hat_up: 12..24,
+  bass: 18..32,
+  pad: 6..18
+}.freeze
+
+DILLA_KICK_PATTERNS = [
+  [0, 7, 10, 14],
+  [0, 5, 7, 10, 14],
+  [0, 3, 7, 10, 12, 14],
+  [0, 1, 7, 10, 14],
+  [0, 6, 9, 14]
+].freeze
+
+PAD_CHORD_LOOKUP = PAD_CHORDS.each_with_object({}) { |chord, memo| memo[chord[:name]] = chord }.freeze
+DILLA_PROGRESSIONS = {
+  soul: %w[Fm9 Dbmaj9 Ebmaj9 Abmaj9],
+  jazz: %w[Dm9 Gm9 C7#9\ Hendrix Fmaj13],
+  tritone: %w[Cm9 Gbmaj9 Bbm9 E\ altered]
+}.freeze
+
 CHORD_TEMPLATES = {
   "maj" => [0, 4, 7],
   "min" => [0, 3, 7],
@@ -355,7 +385,19 @@ def chord_expression
   end.join("+")
 end
 
-def scan
+def start_groove_preview
+  return nil unless tool_available?("ffplay")
+
+  tmp = File.join(ROOT, ".groove_tmp.wav")
+  render_dilla(tmp, [8, bars].max)
+  pid = spawn("ffplay", "-nodisp", "-loop", "0", tmp, out: "/dev/null", err: "/dev/null")
+  [pid, tmp]
+rescue SystemCallError
+  nil
+end
+
+def scan(groove: false)
+  groove_pid, groove_tmp = groove ? start_groove_preview : [nil, nil]
   puts JSON.pretty_generate(
     root: ROOT,
     bpm: bpm,
@@ -374,6 +416,12 @@ def scan
     },
     commands: COMMANDS
   )
+ensure
+  if groove_pid
+    Process.kill("TERM", groove_pid) rescue nil
+    Process.wait(groove_pid) rescue nil
+  end
+  FileUtils.rm_f(groove_tmp) if groove_tmp
 end
 
 def council
@@ -925,10 +973,9 @@ def bass(root_hz = 55.0)
   expr_l   = "0.45*sin(2*PI*(#{root_hz}+#{lfo_amt}*sin(2*PI*#{lfo_hz}*t))*t)" \
              "+0.08*sin(2*PI*#{(root_hz * 2).round(2)}*t)" \
              "+0.03*sin(2*PI*#{(root_hz * 3).round(2)}*t)"
-  filter   = "aeval=exprs='#{expr_l}:#{expr_l}',equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"
+  filter = "aeval=exprs='#{expr_l}:#{expr_l}',equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"
   puts "playing bass #{root_hz}Hz (Ctrl-C to stop)"
-  exec "ffplay", "-f", "lavfi", "-i", "aevalsrc=0", "-nodisp",
-       "-af", "aeval=exprs='#{expr_l}:#{expr_l}',equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"
+  exec "ffplay", "-f", "lavfi", "-i", "aevalsrc=0", "-nodisp", "-af", filter
 rescue SystemCallError => e
   abort "ffplay failed: #{e.message}"
 end

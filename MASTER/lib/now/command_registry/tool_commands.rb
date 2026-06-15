@@ -2,17 +2,29 @@
 
 require "open3"
 require "shellwords"
+require "fileutils"
 
 module Master
   module Now
     module CommandRegistry
       module_function
 
-      def tool_commands(root)
+      def tool_commands(root, ai = nil)
+        agent = ai && ai[:agent]
         {
-          "postpro" => ->(ctx) { dispatch_master_tool(root:, tool: "postpro", arg: arg_for(ctx)) },
-          "repligen" => ->(ctx) { dispatch_master_tool(root:, tool: "repligen", arg: arg_for(ctx)) }
+          "postpro" => command(:dispatch_postpro, root),
+          "repligen" => command(:dispatch_repligen, root),
+          "photograph" => command(:dispatch_photograph, root, agent),
+          "sing" => command(:dispatch_sing, root)
         }
+      end
+
+      def dispatch_postpro(root, ctx: nil)
+        dispatch_master_tool(root:, tool: "postpro", arg: arg_for(ctx))
+      end
+
+      def dispatch_repligen(root, ctx: nil)
+        dispatch_master_tool(root:, tool: "repligen", arg: arg_for(ctx))
       end
 
       def dispatch_master_tool(root:, tool:, arg:)
@@ -27,6 +39,67 @@ module Master
       rescue StandardError => e
         "#{tool}: #{e.class}: #{e.message}"
       end
+
+      def dispatch_photograph(root, agent, ctx: nil)
+        prompt = arg_for(ctx).to_s.strip
+        return "usage: /photograph <prompt>   (attach photo token for ref vision analysis)" if prompt.empty?
+
+        image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
+        model = "black-forest-labs/flux-1.1-pro"
+
+        refined_prompt = prompt
+        if image && agent
+          # Use free vision model (gemini-2.0-flash-exp:free via routing) for ref analysis + prompt refine.
+          # Leverages the image attachment wiring (path or data).
+          vision_prompt = "You are an expert photography prompt engineer. Given the user request and attached reference image (if present), output ONE highly detailed photorealistic prompt optimized for Flux. Include subject details, lighting, composition, camera, film stock emulation intent (e.g. kodak portra), mood, depth of field. Output ONLY the prompt text, no quotes or explanation."
+          begin
+            refined = agent.ask(vision_prompt, image: image)
+            refined_prompt = refined.to_s.strip.lines.first(3).join(" ").strip if refined
+            refined_prompt = prompt if refined_prompt.empty? || refined_prompt.length < 20
+          rescue StandardError
+            refined_prompt = prompt
+          end
+        end
+
+        gen_arg = "#{model} #{refined_prompt}"
+        gen_out = dispatch_master_tool(root: root, tool: "repligen", arg: "generate #{gen_arg}")
+
+        output_dir = gen_out[/Output: (output\/[^\s]+)/, 1] || Dir.glob("output/*").max { |a, b| File.mtime(a) <=> File.mtime(b) }
+
+        unless output_dir && Dir.exist?(output_dir)
+          return "photograph: generate failed or no output dir\n#{gen_out}"
+        end
+
+        processed_dir = "#{output_dir}_postpro"
+        FileUtils.mkdir_p(processed_dir) rescue nil
+
+        images = Dir.glob(File.join(output_dir, "*.{jpg,jpeg,png,webp}")).sort
+        results = []
+        images.each do |img|
+          base = File.basename(img, ".*")
+          outf = File.join(processed_dir, "#{base}.jpg")
+          p_arg = "--input #{img} --output #{outf} --preset portrait --stock kodak_portra"
+          p_out = dispatch_master_tool(root: root, tool: "postpro", arg: p_arg)
+          results << (File.exist?(outf) ? outf : p_out)
+        end
+
+        [
+          "photograph: vision=#{!!image} model=#{model}",
+          "refined: #{refined_prompt[0, 120]}...",
+          "generated: #{output_dir}",
+          "postpro (#{results.size} files): #{processed_dir}",
+          results.join("\n")
+        ].join("\n")
+      end
+
+      def dispatch_sing(root, ctx: nil)
+        prompt = arg_for(ctx).to_s.strip
+        return "usage: /sing <lyrics or singing prompt>   (Replicate suno-ai/bark)" if prompt.empty?
+
+        dispatch_master_tool(root: root, tool: "repligen", arg: "generate suno-ai/bark #{prompt}")
+      end
+
+      def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip
     end
   end
 end

@@ -27,47 +27,20 @@
   </nav>
 </div>
 
-<section data-controller="dating-swipe orientation-lock hotkey"
-         data-dating-swipe-like-url-value="<%= dating_likes_path %>"
-         data-dating-swipe-pass-url-value="<%= dating_dislikes_path %>"
-         data-orientation-lock-mode-value="portrait"
-         data-hotkey-j-value="click->hotkey#dispatch:button[data-hotkey-pass]"
-         data-hotkey-k-value="click->hotkey#dispatch:button[data-hotkey-like]"
-         data-hotkey-arrow-left-value="click->hotkey#dispatch:button[data-hotkey-pass]"
-         data-hotkey-arrow-right-value="click->hotkey#dispatch:button[data-hotkey-like]">
-  <div data-dating-swipe-target="stack" style="position:relative;min-height:460px">
+<section
+  data-controller="swipe"
+  data-swipe-like-url-value="<%= dating_likes_path %>"
+  data-swipe-dislike-url-value="<%= dating_dislikes_path %>"
+  data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp keydown.left@window->swipe#pass keydown.right@window->swipe#like"
+  style="margin-top:20px"
+>
+  <div id="swipe-stack" style="position:relative;min-height:640px">
     <% @profiles.each_with_index do |profile, index| %>
-      <article data-dating-swipe-target="card"
-               data-user-id="<%= profile.user_id %>"
-               style="position:<%= index.zero? ? 'relative' : 'absolute' %>;inset:0;transform-origin:center bottom;touch-action:none;<%= 'display:none' unless index.zero? %>">
-        <% if profile.photos.attached? %>
-          <%= image_tag profile.photos.first, style: "width:100%;max-height:420px;object-fit:cover;border-radius:2px;margin-bottom:12px", loading: "lazy" %>
-        <% else %>
-          <div style="height:220px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--border);border-radius:2px;margin-bottom:12px">
-            <span style="font-size:64px;font-weight:900"><%= profile.user.email_address.first.upcase %></span>
-          </div>
-        <% end %>
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
-          <div>
-            <h2><%= profile.user.email_address.split("@").first %><% if profile.age %>, <%= profile.age %><% end %></h2>
-            <% if profile.location.present? %><p class="dim"><%= profile.location %></p><% end %>
-          </div>
-          <span class="chip"><%= profile.visible? ? "visible" : "paused" %></span>
-        </div>
-        <% if profile.bio.present? %><p><%= profile.bio %></p><% end %>
-        <% if authenticated? %>
-          <div style="display:flex;gap:8px;margin-top:12px">
-            <%= button_to "Like", dating_likes_path(user_id: profile.user_id), method: :post, class: "btn", data: { hotkey_like: true, action: "click->dating-swipe#like" } %>
-            <%= button_to "Pass", dating_dislikes_path(user_id: profile.user_id), method: :post, class: "btn btn-ghost", data: { hotkey_pass: true, action: "click->dating-swipe#pass" } %>
-          </div>
-        <% else %>
-          <p class="dim"><%= link_to "Sign in", new_session_path %> to like or pass.</p>
-        <% end %>
-      </article>
+      <%= render "card", profile: profile, index: index %>
     <% end %>
   </div>
   <% if @profiles.empty? %>
     <div class="empty"><p>No profiles nearby. <%= authenticated? ? link_to("Edit your profile", edit_dating_profile_path) : link_to("Sign in", new_session_path) %>.</p></div>
   <% end %>
+  <turbo-frame id="dating-next" src="<%= dating_next_path %>" loading="lazy" style="display:none"></turbo-frame>
 </section>
-<%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>

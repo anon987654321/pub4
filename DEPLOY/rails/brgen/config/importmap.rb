@@ -18,6 +18,7 @@ pin "@stimulus-components/timeago", to: "@stimulus-components--timeago.js" # @5.
 pin "date-fns" # @4.1.0
 pin "@stimulus-components/animated-number", to: "@stimulus-components--animated-number.js" # @5.0.0
 pin "@stimulus-components/sortable", to: "@stimulus-components--sortable.js" # @5.0.3
+pin "idb-keyval", to: "idb-keyval.js"
 pin "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/src/fetch_request", to: "https:----cdn.jsdelivr.net--npm--@rails--request.js@0.0.13--src--fetch_request.js" # @0.0.13
 pin "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/src/fetch_response", to: "https:----cdn.jsdelivr.net--npm--@rails--request.js@0.0.13--src--fetch_response.js" # @0.0.13
 pin "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/src/lib/utils", to: "https:----cdn.jsdelivr.net--npm--@rails--request.js@0.0.13--src--lib--utils.js" # @0.0.13
@@ -33,17 +34,3 @@ pin "@stimulus-components/carousel" # @2.1.0
 pin "stimulus_reflex" # @3.5
 pin "cable_ready" # @5.0
 pin "@stimulus_reflex/futurism" # Futurism for Pagy infinite scroll (ruby_style.yml)
-pin "@stimulus-components/content-loader", to: "https://esm.sh/@stimulus-components/content-loader@1.0.1"
-pin "@stimulus-components/read-more", to: "https://esm.sh/@stimulus-components/read-more@5.0.0"
-pin "@stimulus-components/popover", to: "https://esm.sh/@stimulus-components/popover@1.0.0"
-pin "@stimulus-components/checkbox-select-all", to: "https://esm.sh/@stimulus-components/checkbox-select-all@1.0.0"
-pin "@stimulus-components/hotkey", to: "https://esm.sh/@stimulus-components/hotkey@1.0.0"
-pin "@stimulus-components/speech-recognition", to: "https://esm.sh/@stimulus-components/speech-recognition@1.0.0"
-pin "@stimulus-components/reveal", to: "https://esm.sh/@stimulus-components/reveal@5.0.0"
-pin "@stimulus-components/scroll-to", to: "https://esm.sh/@stimulus-components/scroll-to@5.0.0"
-pin "@stimulus-components/sound", to: "https://esm.sh/@stimulus-components/sound@1.0.0"
-pin "@stimulus-components/textarea-autogrow", to: "https://esm.sh/@stimulus-components/textarea-autogrow@5.0.0"
-pin "register_stimulus_components", to: "register_stimulus_components.js"
-pin "idb-keyval", to: "https://esm.sh/idb-keyval@6.2.1"
-pin "pwa/offline_store", to: "pwa/offline_store.js"
-pin "pwa/bootstrap", to: "pwa/bootstrap.js"

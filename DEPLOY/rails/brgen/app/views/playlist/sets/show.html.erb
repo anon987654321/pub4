@@ -76,8 +76,8 @@
     <div class="form-wrap">
       <%= form_with url: playlist_set_dilla_sketches_path(@set), scope: :playlist_dilla_sketch do |f| %>
         <div class="field"><%= f.text_field :name, placeholder: "Beat name (e.g. dusty flip)", required: true %></div>
-        <div class="field"><%= f.text_area :state, placeholder: 'Paste JSON state from lab (e.g. {"pat_":{...},"aud_":{...},"mix_":{...}} or full from clipboard)', rows: 3 %></div>
-        <div class="field"><%= f.text_area :notes, placeholder: "notes / instructions (optional)", rows: 2 %></div>
+        <div class="field"><%= f.text_area :state, placeholder: 'Paste JSON state from lab (e.g. {"pat_":{...},"aud_":{...},"mix_":{...}} or full from clipboard)', rows: 3, data: { controller: "char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+        <div class="field"><%= f.text_area :notes, placeholder: "notes / instructions (optional)", rows: 2, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
         <div class="field"><%= f.submit "Save sketch for collab", class: "btn btn-primary btn-sm" %></div>
       <% end %>
     </div>
@@ -87,7 +87,13 @@
 
 <% if @set_tracks.any? %>
   <% @set_tracks.each do |set_track| %>
-    <article style="display:flex;align-items:center;justify-content:space-between">
+    <article
+      data-track-id="<%= set_track.track.id %>"
+      data-controller="swipe"
+      data-swipe-listen-url-value="<%= playlist_listens_path(track_id: set_track.track.id) %>"
+      data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp"
+      style="display:flex;align-items:center;justify-content:space-between"
+    >
       <div>
         <strong><%= set_track.track.title %></strong>
         <% if set_track.track.artist.present? %> — <%= set_track.track.artist %><% end %>
@@ -121,6 +127,6 @@
   <h2>Listening party</h2>
   <p class="dim">Start or join a real-time synced listening session with embedded player and chat.</p>
   <%= button_to "Start party", "#", class: "btn btn-primary btn-sm", disabled: true %>
-  <span class="dim"> (full cable sync + party model TODO in follow-up)</span>
+  <span class="dim"> (full cable sync + party model planned for a follow-up)</span>
 </section>
 <% end %>

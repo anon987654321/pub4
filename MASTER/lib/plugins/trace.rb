@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "../trace/hooks"
 
 module Master
   module Plugins
@@ -17,6 +18,7 @@ module Master
         metrics   = Master::Trace::Metrics.new(root:, event_bus: bus)
         Master::Trace::AuditLog.new(root:, event_bus: bus)
         Master::Trace::SwallowLedger.new(event_bus: bus, root:).attach
+        Master::Trace::Hooks.new(root: root, event_bus: bus, budget_max: config.budget_max).attach
         recorder  = Master::Trace::Recorder.new(root:, event_bus: bus)
         { event_log:, bus:, ring:, logging:, session:, undo:, metrics:, trace: recorder }
       end
@@ -40,7 +42,8 @@ module Master
           []
         end
         header  = ["# MASTER Snapshot", "Generated: #{Time.now.utc.iso8601}", "Files: #{files.size}", ""]
-        content = (header + body).join("\n")
+        root_snapshots = snapshot_artifacts(root)
+        content = (header + root_snapshots + body).join("\n")
         out     = File.join(root, ".master", "snapshot.md")
         FileUtils.mkdir_p(File.dirname(out))
         File.write(out, content)
@@ -48,6 +51,17 @@ module Master
         container[:bus]&.publish("boot:snapshot", files: files.size)
       rescue StandardError => e
         container[:bus]&.publish("boot:snapshot_error", error: e.message)
+      end
+
+      def self.snapshot_artifacts(root)
+        paths = %w[MASTER_snapshot.md DEPLOY_snapshot.md].filter_map do |name|
+          path = File.join(root, name)
+          next unless File.file?(path)
+          "- `#{name}` (#{File.size(path)} bytes, updated #{Time.at(File.mtime(path).to_i).utc.iso8601})"
+        end
+        return [] if paths.empty?
+
+        ["## Root snapshot artifacts", *paths, ""]
       end
 
       Master::Plugin.register(:trace, self)

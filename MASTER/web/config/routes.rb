@@ -8,6 +8,8 @@ Rails.application.routes.draw do
   get  "chat/message",  to: "chat#message"
   post "chat/photo",    to: "chat#photo"
   get  "chat/tts",      to: "chat#tts"
+  get  "chat/tts/status", to: "chat#tts_status"
+  get  "chat/research", to: "chat#research"
   get  "chat/enhance",  to: "chat#enhance"
   get  "chat/history", to: "chat#history"
   post "chat/command", to: "chat#command"
@@ -16,6 +18,7 @@ Rails.application.routes.draw do
   get  "events/stream", to: "events#stream"
   post "canvas/event",  to: "canvas#post_event"
   post "canvas/state",  to: "canvas#state"
+  get  "manifest" => "pwa#manifest", as: :pwa_manifest
   get  "up" => "rails/health#show", as: :rails_health_check
   get  "health" => "health#show"
 end

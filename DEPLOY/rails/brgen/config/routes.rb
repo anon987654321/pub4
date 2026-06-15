@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  get "offline" => "rails/pwa#offline", as: :pwa_offline
+  post "share" => "posts#share", as: :share_post
+
+  jobs_constraint = ->(request) { request.cookies["session_id"].present? }
+
   TV_SUBDOMAINS          = %w[tv].freeze
   DATING_SUBDOMAINS      = %w[dating].freeze
   PLAYLIST_SUBDOMAINS    = %w[playlist].freeze
@@ -12,21 +17,15 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   instance_eval(File.read(File.expand_path("../shared/config/routes/auth.rb", __dir__)))
   resources :activity_events, only: :index
-  get "activity" => "activity_events#index", as: :activity
   resources :notifications, only: %i[index update] do
-    collection { patch :read_all }
+    collection { patch :read_all; get :badge }
   end
   resources :reactions, only: :create
   resources :reports, only: :create
-  resources :moderation_reports, only: :index do
-    collection { patch :bulk_update }
-  end
-  resources :tags, only: :show, param: :name
-  resource :notification_preferences, only: :update
 
-  resource :onboarding, only: %i[show update], controller: "onboardings", path: "onboard"
-  post "share-target" => "share_targets#create", as: :share_target
-  resource :community_wizard, only: %i[show update], controller: "community_wizards", path: "communities/wizard"
+  namespace :admin do
+    resources :reports, only: %i[index update]
+  end
 
   resources :communities do
     resources :posts, shallow: true do
@@ -41,6 +40,7 @@ Rails.application.routes.draw do
     resources :comments, shallow: true
     resource :vote, only: [:create], controller: "votes"
   end
+  patch "drafts/:id", to: "drafts#update", as: :draft
 
   resources :comments do
     resource :vote, only: [:create], controller: "votes"
@@ -60,6 +60,7 @@ Rails.application.routes.draw do
 
   resources :conversations, only: [:index, :show] do
     resources :messages, only: [:create]
+    resources :typing_indicators, only: [:create]
   end
 
   constraints(subdomain: TV_SUBDOMAINS) do
@@ -76,7 +77,6 @@ Rails.application.routes.draw do
       end
       resources :live_streams, only: %i[index show update destroy] do
         resources :stream_chats, only: :create
-        resources :stream_chat_moderations, only: %i[index update]
         member do
           patch :go_live
           patch :end_live
@@ -88,13 +88,11 @@ Rails.application.routes.draw do
   constraints(subdomain: DATING_SUBDOMAINS) do
     scope module: "dating", as: "dating" do
       root "home#index", as: :dating_root
+      get "next" => "home#next", as: :dating_next
       resource :profile, only: %i[new create edit update show]
       resources :likes, only: :create
       resources :dislikes, only: :create
       resources :matches, only: :index
-      resources :events do
-        member { post :rsvp }
-      end
     end
   end
 
@@ -112,7 +110,6 @@ Rails.application.routes.draw do
         resources :dilla_sketches, only: %i[create update destroy]
         resource :like, only: %i[create destroy]
       end
-      resources :hosted_tracks, path: "tracks", only: %i[index show new create edit update destroy]
       resources :listens, only: :create
     end
   end
@@ -136,11 +133,9 @@ Rails.application.routes.draw do
       root "listings#index", as: :marketplace_root
       resources :shops, controller: "stores"
       resources :deals, only: %i[index show]
-      resource :listing_wizard, only: %i[show update], controller: "listing_wizards", path: "listings/wizard"
       resources :listings do
         resource :favorite, only: %i[create destroy]
         resources :orders, only: %i[create update]
-        resource :chat, only: :create, controller: "listing_chats"
       end
 
       # Amazon-like cart (pending orders act as cart items for the buyer)
@@ -160,20 +155,14 @@ Rails.application.routes.draw do
   resources :email_subscriptions, only: [:create, :destroy], param: :token
   get "confirm_email/:token" => "email_subscriptions#confirm", as: :confirm_email_subscription
 
-  resource :city, only: %i[update], controller: "cities"
-  get "cities" => "cities#index", as: :cities
-
+  constraints(jobs_constraint) do
+    mount SolidQueue::Engine, at: "/admin/jobs"
+  end
   patch "location" => "locations#update", as: :location
   resources :push_subscriptions, only: [:create, :destroy]
   get "nearby" => "nearby#index", as: :nearby
   post "nearby" => "nearby#create"
 
-  get "offline" => "offline#show", as: :offline
-  get "manifest" => "pwa#manifest", as: :pwa_manifest
-  get "service-worker" => "pwa#service_worker", as: :pwa_service_worker
-
-  get "search" => "search#index", as: :search
-
   root "home#index"
-  get "up" => "health#show", as: :rails_health_check
+  get "up" => "rails/health#show", as: :rails_health_check
 end

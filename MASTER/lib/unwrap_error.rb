@@ -13,7 +13,7 @@ module Master
     def detectors
       @detectors ||= begin
         data = Master.load_yaml(Master::RULES_PATH)
-        (data.dig("phantom_recovery", "detectors") || {}).transform_values { |v| v.is_a?(String) ? Regexp.new(v, Regexp::IGNORECASE) : v }
+        (data.dig("phantom_recovery", "detectors") || {}).transform_values { |v| compile_detector(v) }
       end
     rescue StandardError
       {}
@@ -23,8 +23,19 @@ module Master
       t = text.to_s
       hits = detectors.filter_map { |name, pat| name if pat.is_a?(Regexp) ? t.match?(pat) : false }
       return nil if hits.empty?
-      bus&.publish("phantom:detected", patterns: hits, sample: t[0, 120])
       { patterns: hits, recovery: (Master.load_yaml(Master::RULES_PATH).dig("phantom_recovery", "recovery") || []) }
+    end
+
+    def compile_detector(value)
+      return value unless value.is_a?(String)
+
+      literal = value.match(%r{\A/(.*)/([imx]*)\z})
+      return Regexp.new(value, Regexp::IGNORECASE) unless literal
+
+      flags = literal[2].chars.reduce(0) do |opts, flag|
+        opts | { "i" => Regexp::IGNORECASE, "m" => Regexp::MULTILINE, "x" => Regexp::EXTENDED }.fetch(flag, 0)
+      end
+      Regexp.new(literal[1], flags)
     end
   end
 end

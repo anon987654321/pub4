@@ -44,6 +44,6 @@ class BoxesController < ApplicationController
   end
 
   def box_params
-    params.expect(:box => [:week_start, :beneficiary_id, :notes, :status])
+    params.require(:box).permit(:week_start, :beneficiary_id, :notes, :status)
   end
 end

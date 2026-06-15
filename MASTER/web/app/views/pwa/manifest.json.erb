@@ -2,12 +2,12 @@
   "name": "MASTER",
   "icons": [
     {
-      "src": "/icon.png",
+      "src": "<%= asset_path("icon.png") %>",
       "type": "image/png",
       "sizes": "512x512"
     },
     {
-      "src": "/icon.png",
+      "src": "<%= asset_path("icon.png") %>",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
@@ -15,6 +15,13 @@
   ],
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  },
   "scope": "/",
   "description": "MASTER web operator surface.",
   "theme_color": "#000000",

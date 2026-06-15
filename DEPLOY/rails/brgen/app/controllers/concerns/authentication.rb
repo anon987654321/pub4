@@ -2,7 +2,6 @@
 
 module Authentication
   extend ActiveSupport::Concern
-  include Shared::AuthSessionHooks
 
   included do
     before_action :resume_session
@@ -31,15 +30,7 @@ module Authentication
 
   def resume_session
     Current.session = find_session_by_cookie
-    if Current.session
-      Current.user = Current.session.user
-      return
-    end
-
-    resume_authenticated_user
-    return if Current.user.present?
-
-    Current.user = find_or_create_guest_user
+    Current.user = Current.session&.user || find_or_create_guest_user
   end
 
   def start_new_session_for(user)

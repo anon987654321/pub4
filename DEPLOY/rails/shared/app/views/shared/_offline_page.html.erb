@@ -1,0 +1,101 @@
+<% app_name ||= "App" %>
+<% storage_key ||= app_name.downcase %>
+<style>
+  .offline-page {
+    max-width: 42rem;
+    margin: 3rem auto;
+    padding: 0 1rem 2rem;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .offline-page__lead {
+    color: #555;
+    line-height: 1.5;
+  }
+
+  .offline-page__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: .75rem;
+  }
+
+  .offline-page__item {
+    display: grid;
+    gap: .25rem;
+    padding: .9rem 1rem;
+    border: 1px solid rgba(0, 0, 0, .1);
+    border-radius: .5rem;
+    background: #fff;
+  }
+
+  .offline-page__item a {
+    color: inherit;
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .offline-page__meta {
+    color: #666;
+    font-size: .92rem;
+  }
+</style>
+
+<section class="offline-page" data-offline-page data-offline-storage-key="<%= storage_key %>">
+  <div>
+    <p class="offline-page__meta">Offline</p>
+    <h1><%= app_name %> is offline</h1>
+    <p class="offline-page__lead">We’ll show the last cached items from this device when they’re available.</p>
+  </div>
+
+  <ul class="offline-page__list" data-offline-page-target="list">
+    <li class="offline-page__item">Loading cached items…</li>
+  </ul>
+</section>
+
+<script>
+  (() => {
+    const root = document.querySelector("[data-offline-page]");
+    if (!root || !("indexedDB" in window)) return;
+
+    const key = root.dataset.offlineStorageKey;
+    const list = root.querySelector("[data-offline-page-target='list']");
+    const dbName = "pwa-offline-feed";
+    const storeName = "snapshots";
+
+    const openDb = () => new Promise((resolve, reject) => {
+      const request = indexedDB.open(dbName, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(storeName)) db.createObjectStore(storeName);
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    const render = items => {
+      if (!items.length) {
+        list.innerHTML = "<li class=\"offline-page__item\">No cached items yet.</li>";
+        return;
+      }
+
+      list.innerHTML = items.map(item => `
+        <li class="offline-page__item">
+          <a href="${item.url}">${item.title}</a>
+          <div class="offline-page__meta">${item.meta || ""}</div>
+        </li>
+      `).join("");
+    };
+
+    openDb().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, "readonly");
+      const request = tx.objectStore(storeName).get(key);
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    }).finally(() => db.close())).then(render).catch(() => {
+      list.innerHTML = "<li class=\"offline-page__item\">No cached items yet.</li>";
+    });
+  })();
+</script>

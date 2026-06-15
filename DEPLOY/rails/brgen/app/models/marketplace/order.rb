@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Marketplace::Order < ApplicationRecord
+  include Shared::Notifiable
+  include Shared::ActivityTrackable
+
   belongs_to :buyer,   class_name: "User"
   belongs_to :listing, class_name: "Marketplace::Listing"
 
@@ -18,19 +21,11 @@ class Marketplace::Order < ApplicationRecord
 
   def accept!
     update!(status: "accepted")
-    notify_buyer!("Offer accepted", "Your offer for #{listing.title} was accepted.")
+    deliver_notification(buyer, title: "Offer accepted", body: "Your offer for #{listing.title} was accepted.", source: self)
   end
 
   def decline!
     update!(status: "declined")
-    notify_buyer!("Offer declined", "Your offer for #{listing.title} was declined.")
-  end
-
-  private
-
-  def notify_buyer!(title, body)
-    return unless defined?(Notification)
-
-    buyer.notifications.create!(title: title, body: body, source_type: self.class.name, source_id: id)
+    deliver_notification(buyer, title: "Offer declined", body: "Your offer for #{listing.title} was declined.", source: self)
   end
 end

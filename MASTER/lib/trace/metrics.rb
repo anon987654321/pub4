@@ -69,7 +69,7 @@ module Master
           avg_diff_lines: average(@diff_sizes).round,
           rollback_rate: (@writes > 0 ? @undos.to_f / @writes : 0.0).round(3),
           writes: @writes,
-          undos: @undos
+          undos: @undos,
         }
       end
 
@@ -104,13 +104,11 @@ module Master
           else return
           end
         return unless value > threshold
-        @bus&.publish("metrics:threshold_exceeded", metric:, value:)
         warn "#{METRICS_PREFIX}: #{metric} #{value} exceeds #{threshold}"
       end
 
       def average(arr)
         return 0.0 if arr.empty?
-        arr.sum.to_f / arr.size
       end
 
       def append(entry)

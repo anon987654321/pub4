@@ -12,8 +12,4 @@ class Beneficiary < ApplicationRecord
     people = household_size.to_i.positive? ? "#{household_size} people" : "household size unknown"
     [name, people, area.presence].compact.join(" · ")
   end
-
-  def preferred_category_list
-    preferred_categories.to_s.split(",").map(&:strip).reject(&:blank?)
-  end
 end

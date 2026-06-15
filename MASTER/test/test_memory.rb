@@ -83,6 +83,18 @@ class TestMemory < Minitest::Test
     assert summary.include?("ctx_key")
   end
 
+  def test_context_summary_cache_invalidates_when_memory_changes
+    @mem.remember("first", "alpha")
+    first = @mem.context_summary
+
+    @mem.remember("second", "beta")
+    second = @mem.context_summary
+
+    assert_includes first, "first"
+    refute_includes first, "second"
+    assert_includes second, "second"
+  end
+
   def test_context_summary_nil_when_empty
     mem = Master::Ground::Memory.new(root: Dir.mktmpdir("empty_mem_test", Dir.home))
     assert_nil mem.context_summary

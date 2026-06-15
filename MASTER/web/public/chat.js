@@ -3,89 +3,23 @@
 const log   = document.getElementById('chat-log');
 const zsh   = document.getElementById('zsh');
 const input = document.getElementById('zin');
+const sessionStartedAt = Date.now();
+const recentReplies = [];
+let recentReplyCursor = -1;
 
 let _streamEl = null;
-let _evtSrc = null;
-const connStatus = document.getElementById('conn-status');
-const pipelineBar = document.getElementById('pipeline-bar');
-const historySidebar = document.getElementById('history-sidebar');
-const historyList = document.getElementById('history-list');
-const historyOpen = document.getElementById('history-open');
-const historyClose = document.getElementById('history-close');
-const themeToggle = document.getElementById('theme-toggle');
-const PIPELINE_STAGES = ['intake','infer','route','guard','execute','council','lint','memory','render'];
-let _turnHistory = [];
+let _typingEl = null;
 
-function setConn(state) {
-  if (!connStatus) return;
-  connStatus.dataset.state = state;
-  connStatus.textContent = state === 'open' ? '●' : (state === 'reconnecting' ? '◌' : '○');
-  connStatus.setAttribute('aria-label', 'Connection ' + state);
-}
-
-function setPipelineStage(stage) {
-  if (!pipelineBar) return;
-  const idx = PIPELINE_STAGES.indexOf(String(stage || '').toLowerCase());
-  pipelineBar.hidden = idx < 0;
-  if (idx < 0) return;
-  const pct = Math.round(((idx + 1) / PIPELINE_STAGES.length) * 100);
-  pipelineBar.style.setProperty('--pipeline-pct', pct + '%');
-  pipelineBar.setAttribute('aria-valuenow', String(pct));
-}
-
-function attachCodeCopyButtons(root) {
-  root?.querySelectorAll('pre code').forEach(block => {
-    const pre = block.parentElement;
-    if (!pre || pre.querySelector('.code-copy')) return;
-    const btn = document.createElement('button');
-    btn.className = 'code-copy';
-    btn.type = 'button';
-    btn.textContent = 'copy';
-    btn.setAttribute('aria-label', 'Copy code');
-    btn.addEventListener('click', () => {
-      navigator.clipboard?.writeText(block.textContent || '').then(() => {
-        btn.textContent = '✓';
-        setTimeout(() => { btn.textContent = 'copy'; }, 1200);
-      });
-    });
-    pre.appendChild(btn);
-  });
-}
-
-function pushTurn(role, text) {
-  _turnHistory.unshift({ role, text: (text || '').slice(0, 120), ts: Date.now() });
-  _turnHistory = _turnHistory.slice(0, 20);
-  if (!historyList) return;
-  historyList.innerHTML = '';
-  _turnHistory.forEach((t, i) => {
-    const li = document.createElement('li');
-    li.textContent = (t.role === 'user' ? 'you: ' : 'master: ') + t.text;
-    li.title = 'Expand turn';
-    li.addEventListener('click', () => {
-      const msg = log?.children[log.children.length - 1 - i];
-      msg?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
-    historyList.appendChild(li);
-  });
-}
-
-themeToggle?.addEventListener('change', () => {
-  document.body.dataset.theme = themeToggle.checked ? 'light' : 'dark';
-});
-
-historyOpen?.addEventListener('click', () => { if (historySidebar) historySidebar.hidden = false; });
-historyClose?.addEventListener('click', () => { if (historySidebar) historySidebar.hidden = true; });
-
-input?.addEventListener('keydown', (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-    e.preventDefault();
-    zsh?.requestSubmit();
+const sessionStats = (() => {
+  let el = document.getElementById('session-stats');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'session-stats';
+    el.className = 'session-stats';
+    document.body.appendChild(el);
   }
-  if (e.key === 'Escape') {
-    window._chatCancel?.();
-    input.blur();
-  }
-});
+  return el;
+})();
 
 // ARIA live region for streamed text (FA137) — announce new tokens to SR
 const streamLive = (() => {
@@ -101,10 +35,43 @@ const streamLive = (() => {
   return el;
 })();
 
+window._chatEvtSrc = null;
 window._chatCancel = () => {
-  if (_evtSrc) { try { _evtSrc.close(); } catch (_) {} _evtSrc = null; }
+  if (window._chatEvtSrc) { try { window._chatEvtSrc.close(); } catch (_) {} window._chatEvtSrc = null; }
   window._chatOnError?.();
 };
+
+let laughterTimer = null;
+function triggerLaughterBurst() {
+  const face = window.MASTER_FACE;
+  if (!face?.State) return;
+  face.State.shake = Math.max(face.State.shake || 0, 0.7);
+  face.State.pulse = Math.max(face.State.pulse || 0, 0.55);
+  document.body.dataset.laughter = '1';
+  if (laughterTimer) clearTimeout(laughterTimer);
+  laughterTimer = setTimeout(() => {
+    delete document.body.dataset.laughter;
+    laughterTimer = null;
+  }, 900);
+}
+
+function updateSessionStats() {
+  if (!sessionStats || !log) return;
+  const messageCount = log.querySelectorAll('.message').length;
+  const wordCount = Array.from(log.querySelectorAll('.message')).reduce((total, msgEl) => {
+    const body = msgEl.querySelector('.msg-body');
+    const text = (body?.textContent || msgEl.textContent || '').replace(/^(you\$|master\$)\s*/i, '').trim();
+    if (!text) return total;
+    return total + text.split(/\s+/).filter(Boolean).length;
+  }, 0);
+  const elapsedMs = Date.now() - sessionStartedAt;
+  const minutes = Math.floor(elapsedMs / 60000);
+  const seconds = Math.floor((elapsedMs % 60000) / 1000).toString().padStart(2, '0');
+  const wordLabel = wordCount >= 1000 ? `${(wordCount / 1000).toFixed(1).replace(/\.0$/, '')}k words today` : `${wordCount} words today`;
+  sessionStats.textContent = `${wordLabel} · ${minutes}m ${seconds}s`;
+  sessionStats.title = `remembers ${messageCount} things from today`;
+}
+setInterval(updateSessionStats, 1000);
 
 function appendMsg(role, text = '') {
   const d = document.createElement('div');
@@ -129,6 +96,9 @@ function appendMsg(role, text = '') {
   } else {
     const body = document.createElement('span');
     body.className = 'msg-body';
+    const typing = document.createElement('span');
+    typing.className = 'typing-indicator';
+    typing.innerHTML = '<span></span><span></span><span></span>';
     const cur = document.createElement('span');
     cur.className = 'cursor';
     const copyBtn = document.createElement('button');
@@ -142,12 +112,47 @@ function appendMsg(role, text = '') {
       });
     });
     d.appendChild(body);
+    d.appendChild(typing);
     d.appendChild(cur);
     d.appendChild(copyBtn);
+    const actions = document.createElement('div');
+    actions.className = 'msg-actions';
+    actions.innerHTML = '<button type="button" data-act="like" title="Rate up">👍</button><button type="button" data-act="retry" title="Retry">🔁</button><button type="button" data-act="delete" title="Delete">🗑</button><button type="button" data-act="simpler" title="Explain simpler">⇣</button><button type="button" data-act="deeper" title="Go deeper">⇡</button>';
+    actions.addEventListener('click', (ev) => {
+      const act = ev.target?.dataset?.act;
+      if (!act) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (act === 'like') {
+        d.dataset.reaction = 'like';
+        navigator.vibrate?.(10);
+        return;
+      }
+      if (act === 'retry') {
+        const last = window._lastUserMessageText || input.value || '';
+        if (last && window.sendMessage) window.sendMessage(last);
+        return;
+      }
+      if (act === 'delete') {
+        d.remove();
+        return;
+      }
+      if (act === 'simpler') {
+        if (window.sendMessage) window.sendMessage(`Please explain this more simply:\n${body.textContent || ''}`);
+        return;
+      }
+      if (act === 'deeper') {
+        if (window.sendMessage) window.sendMessage(`Go deeper on this answer:\n${body.textContent || ''}`);
+        return;
+      }
+    });
+    d.appendChild(actions);
     _streamEl = body;
+    _typingEl = typing;
   }
   log.appendChild(d);
   log.scrollTop = log.scrollHeight;
+  updateSessionStats();
   d.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -156,7 +161,11 @@ function appendMsg(role, text = '') {
   });
 }
 
-window._chatOnUser  = (text) => { pushTurn('user', text); appendMsg('user', text); appendMsg('assistant'); };
+window._chatOnUser  = (text) => {
+  window._lastUserMessageText = text;
+  appendMsg('user', text);
+  appendMsg('assistant');
+};
 
 window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
   const note = document.createElement('div');
@@ -184,10 +193,10 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
 
 window._chatOnChunk = (raw) => {
   if (!_streamEl) return;
+  if (_typingEl) { _typingEl.remove(); _typingEl = null; }
   const text = _streamEl.textContent + raw.replace(/\n/g, '\n').replace(/\\\\/g, '\\');
   if (text.includes('```')) {
     _streamEl.innerHTML = text.replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
-    attachCodeCopyButtons(_streamEl);
   } else {
     _streamEl.textContent = text;
   }
@@ -195,24 +204,28 @@ window._chatOnChunk = (raw) => {
   if (streamLive) {
     streamLive.textContent = raw.replace(/[\n\r]/g, ' ').trim() || raw;
   }
+  if (/(?:\(|\b)(?:ha(?:ha)?|heh|lol|lmao|rofl)\b|[🤣😂😆]/i.test(raw)) triggerLaughterBurst();
+  updateSessionStats();
 };
 window._chatOnDone  = () => {
-  const last = log?.querySelector('.message.assistant:last-of-type .msg-body');
-  if (last) pushTurn('assistant', last.textContent || '');
-  setConn('open');
-  setPipelineStage(null);
+  const finished = (_streamEl?.textContent || '').trim();
+  if (finished) window._chatRememberReply?.(finished);
   _streamEl = null;
+  if (_typingEl) { _typingEl.remove(); _typingEl = null; }
   document.querySelectorAll('.cursor').forEach(c => {
     c.style.transition = 'opacity 0.25s steps(4,end)';
     c.style.opacity = '0';
     setTimeout(() => c.remove(), 280);
   });
   if (streamLive) streamLive.textContent = '';
+  updateSessionStats();
 };
 window._chatOnError = () => {
   _streamEl = null;
+  if (_typingEl) { _typingEl.remove(); _typingEl = null; }
   document.querySelectorAll('.cursor').forEach(c => c.remove());
   if (streamLive) streamLive.textContent = '';
+  updateSessionStats();
 };
 
 function getMsgText(msgEl) {
@@ -221,12 +234,30 @@ function getMsgText(msgEl) {
   return (p + ' ' + (b.textContent || '')).trim();
 }
 
+window._chatRememberReply = (text) => {
+  const reply = String(text || '').trim();
+  if (!reply) return;
+  if (recentReplies[recentReplies.length - 1] === reply) return;
+  recentReplies.push(reply);
+  while (recentReplies.length > 12) recentReplies.shift();
+  recentReplyCursor = recentReplies.length;
+};
+
+window._chatCycleRecentReply = (direction) => {
+  if (!recentReplies.length || !input) return;
+  recentReplyCursor = Math.max(0, Math.min(recentReplies.length - 1, recentReplyCursor + (direction > 0 ? 1 : -1)));
+  input.value = recentReplies[recentReplyCursor] || '';
+  input.focus();
+  input.setSelectionRange?.(input.value.length, input.value.length);
+};
+
 function openActionMenu(msgEl) {
   document.querySelectorAll('.action-menu').forEach(m => m.remove());
   const menu = document.createElement('div');
   menu.className = 'action-menu';
   const txt = getMsgText(msgEl);
-  menu.innerHTML = '<button data-act="copy">Copy</button><button data-act="quote">Quote</button><button data-act="close">Close</button>';
+  const bodyText = msgEl.querySelector('.msg-body')?.textContent || txt;
+  menu.innerHTML = '<button data-act="copy">Copy</button><button data-act="quote">Quote</button><button data-act="simpler">Simpler</button><button data-act="deeper">Deeper</button><button data-act="close">Close</button>';
   const rect = msgEl.getBoundingClientRect();
   menu.style.left = (rect.left + window.scrollX + 8) + 'px';
   menu.style.top = (rect.bottom + window.scrollY + 2) + 'px';
@@ -237,7 +268,13 @@ function openActionMenu(msgEl) {
       navigator.clipboard?.writeText(txt).catch(() => {});
       menu.remove();
     } else if (act === 'quote') {
-      if (input) { input.value = '> ' + txt + '\n'; input.focus(); }
+      if (input) { input.value = `> ${txt}\n`; input.focus(); }
+      menu.remove();
+    } else if (act === 'simpler') {
+      if (window.sendMessage) window.sendMessage(`Please explain this more simply:\n${bodyText}`);
+      menu.remove();
+    } else if (act === 'deeper') {
+      if (window.sendMessage) window.sendMessage(`Go deeper on this answer:\n${bodyText}`);
       menu.remove();
     } else if (act === 'close') {
       menu.remove();
@@ -287,117 +324,6 @@ window._chatOnDmesg = (line) => {
   setTimeout(() => { d.classList.add('dmesg-fade'); setTimeout(() => d.remove(), 800); }, 7000);
 };
 
-function csrfToken() {
-  return document.querySelector('meta[name="csrf-token"]')?.content || '';
-}
-
-async function enhanceMessage(text) {
-  try {
-    const r = await fetch(`/chat/enhance?message=${encodeURIComponent(text)}`);
-    const data = await r.json();
-    if (data.changed && data.enhanced && data.enhanced !== text) {
-      const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
-      return { text: chosen, preEnhanced: chosen === data.enhanced };
-    }
-  } catch (_) {}
-  return { text, preEnhanced: false };
-}
-
-async function runSlashCommand(text) {
-  window._chatOnUser?.(text);
-  try {
-    const r = await fetch('/chat/command', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken() },
-      body: JSON.stringify({ command: text })
-    });
-    const data = await r.json().catch(() => ({ output: '' }));
-    const out = (data.output || '(no output)').toString();
-    window._chatOnChunk?.(out);
-    window._chatOnDone?.();
-  } catch (e) {
-    window._chatOnChunk?.('error: ' + (e.message || e));
-    window._chatOnError?.();
-  }
-}
-
-async function sendMessage(text) {
-  if (text.startsWith('/')) { return runSlashCommand(text); }
-  if (_evtSrc) { try { _evtSrc.close(); } catch (_) {} }
-  window._chatOnUser?.(text);
-
-  const enhanced = await enhanceMessage(text);
-  const params = new URLSearchParams({ message: enhanced.text, state: 'idle|thinking|0|0' });
-  if (enhanced.preEnhanced) params.set('pre_enhanced', '1');
-
-  const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
-  const FIRST_CHUNK = /(.{28,}?[,;:—]\s+|.{36,}?\s+)/;
-  let assistantBuffer = '', ttsBuffer = '', firstChunkSent = false;
-  setConn('reconnecting');
-  pipelineBar && (pipelineBar.hidden = false);
-  _evtSrc = new EventSource(`/chat/message?${params.toString()}`);
-  _evtSrc.onopen = () => setConn('open');
-  _evtSrc.addEventListener('pipeline', (ev) => {
-    setPipelineStage(ev.data);
-    document.body.dataset.pipelineStage = ev.data || '';
-    window.MASTERVoice?.setStage?.(ev.data);
-  });
-  _evtSrc.onmessage = (ev) => {
-    const raw = ev.data || '';
-    if (raw === '[DONE]') {
-      const voice = window.MASTERVoice;
-      if (voice?.setLastText) voice.setLastText(assistantBuffer);
-      if (voice?.enqueue && ttsBuffer.trim()) voice.enqueue(ttsBuffer.trim());
-      ttsBuffer = '';
-      try { _evtSrc.close(); } catch (_) {}
-      window._chatOnDone?.();
-      return;
-    }
-    if (raw.startsWith('ERROR:')) {
-      const voice = window.MASTERVoice;
-      if (voice?.enqueue && ttsBuffer.trim()) voice.enqueue(ttsBuffer.trim());
-      ttsBuffer = '';
-      window._chatOnChunk?.('\n' + raw + '\n');
-      window._chatOnError?.();
-      return;
-    }
-    const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
-    assistantBuffer += chunk;
-    ttsBuffer += chunk;
-    window._chatOnChunk?.(raw);
-    let m;
-    if (!firstChunkSent) {
-      const fm = ttsBuffer.match(FIRST_CHUNK);
-      if (fm) {
-        const cut = fm.index + fm[0].length;
-        const sent = ttsBuffer.slice(0, cut).trim();
-        ttsBuffer = ttsBuffer.slice(cut);
-        if (sent) { window.MASTERVoice?.enqueue?.(sent); firstChunkSent = true; }
-      }
-    }
-    while ((m = ttsBuffer.match(SENT_BREAK))) {
-      const cut = m.index + m[0].length;
-      const sent = ttsBuffer.slice(0, cut).trim();
-      ttsBuffer = ttsBuffer.slice(cut);
-      if (sent) window.MASTERVoice?.enqueue?.(sent);
-    }
-  };
-  _evtSrc.addEventListener('dmesg', (ev) => {
-    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
-  });
-  _evtSrc.addEventListener('thought', (ev) => {
-    try { window._chatOnThought?.(JSON.parse(ev.data)); } catch (_) {}
-  });
-  _evtSrc.onerror = () => {
-    setConn('closed');
-    const voice = window.MASTERVoice;
-    if (voice?.enqueue && ttsBuffer.trim()) voice.enqueue(ttsBuffer.trim());
-    ttsBuffer = '';
-    try { _evtSrc.close(); } catch (_) {}
-    window._chatOnError?.();
-  };
-}
-
 zsh?.addEventListener('submit', (event) => {
   event.preventDefault();
   event.stopImmediatePropagation();
@@ -418,23 +344,3 @@ document.querySelectorAll('.tool').forEach(btn => {
     if (act === 'mic') startMic(btn);
   });
 });
-
-function startMic(btn) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { input.placeholder = 'mic unavailable in this browser'; return; }
-  if (btn._rec) { try { btn._rec.stop(); } catch(_){} btn._rec = null; btn.classList.remove('active'); return; }
-  const rec = new SR();
-  rec.lang = navigator.language || 'en-US';
-  rec.continuous = false;
-  rec.interimResults = true;
-  rec.onresult = (ev) => {
-    let s = '';
-    for (let i = 0; i < ev.results.length; i++) s += ev.results[i][0].transcript;
-    input.value = s.trim();
-  };
-  rec.onerror = () => { btn._rec = null; btn.classList.remove('active'); };
-  rec.onend = () => { btn._rec = null; btn.classList.remove('active'); };
-  rec.start();
-  btn._rec = rec;
-  btn.classList.add('active');
-}

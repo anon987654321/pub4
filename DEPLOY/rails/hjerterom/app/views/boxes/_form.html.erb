@@ -1,27 +1,29 @@
-<%= form_with model: box do |form| %>
-  <% if box.errors.any? %>
-    <div class="error"><%= box.errors.full_messages.to_sentence %></div>
-  <% end %>
+<%= form_with(model: box) do |form| %>
+  <div data-controller="datepicker">
+    <% if box.errors.any? %>
+      <div class="error"><%= box.errors.full_messages.to_sentence %></div>
+    <% end %>
 
-  <div class="field">
-    <%= form.label :week_start %>
-    <%= form.date_field :week_start, required: true %>
+    <div class="field">
+      <%= form.label :week_start %>
+      <%= form.date_field :week_start, required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :status %>
+      <%= form.select :status, Box.statuses.keys.map { |status| [status.humanize, status] } %>
+    </div>
+
+    <div class="field">
+      <%= form.label :beneficiary_id %>
+      <%= form.number_field :beneficiary_id %>
+    </div>
+
+    <div class="field">
+      <%= form.label :notes %>
+      <%= form.text_area :notes, rows: 4, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span>
+    </div>
+
+    <%= form.submit class: "btn btn-primary" %>
   </div>
-
-  <div class="field">
-    <%= form.label :status %>
-    <%= form.select :status, Box.statuses.keys.map { |status| [status.humanize, status] } %>
-  </div>
-
-  <div class="field">
-    <%= form.label :beneficiary_id %>
-    <%= form.number_field :beneficiary_id %>
-  </div>
-
-  <div class="field">
-    <%= form.label :notes %>
-    <%= form.text_area :notes, rows: 4 %>
-  </div>
-
-  <%= form.submit class: "btn btn-primary" %>
 <% end %>

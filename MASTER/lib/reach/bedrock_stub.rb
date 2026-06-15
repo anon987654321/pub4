@@ -14,6 +14,7 @@ module RubyLLM
       def self.api_base = ""
       def self.headers(_cfg) = {}
       def self.models = []
+      def self.configuration_options = []
       def self.slug = "bedrock"
     end
   end

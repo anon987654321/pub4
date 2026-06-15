@@ -19,3 +19,8 @@ Rails 8 · SQLite · Falcon · Hotwire · OpenBSD
 ```zsh
 doas zsh DEPLOY/rails/bsdports/bsdports.sh
 ```
+
+## Stimulus / Rails 8 Rollout (condensed from STIMULUS_ROLLOUT.md)
+Prioritize: Auto Submit + Content Loader for search, Clipboard for commands, Reveal for details, Timeago, Notification, Popover, Read More, Checkbox Select All.
+
+Rails 8: SQLite FTS5, Solid Queue for scheduled import, Solid Cache for fragments.

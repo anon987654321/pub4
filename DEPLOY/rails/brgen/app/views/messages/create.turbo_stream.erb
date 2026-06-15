@@ -3,7 +3,7 @@
                 id: "new_message",
                 data: { turbo: true, controller: "typing-input", typing_input_url_value: conversation_typing_indicators_path(@conversation) } do |f| %>
     <div class="field">
-      <%= f.text_area :content, rows: 3, placeholder: "Send a message...", data: { action: "input->typing-input#ping" } %>
+      <%= f.text_area :content, rows: 3, placeholder: "Send a message...", data: { action: "input->typing-input#ping", controller: "char-counter", "char-counter-max-value": 500 } %><span class="char-counter" data-char-counter-target="counter"></span>
     </div>
     <%= f.hidden_field :message_type, value: "text" %>
     <%= f.submit "Send", class: "btn" %>

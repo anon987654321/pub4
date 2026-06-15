@@ -2,7 +2,9 @@
 
 require "digest"
 require "json"
+require "fileutils"
 require "monitor"
+require "yaml"
 
 module Master
   module Reach
@@ -10,18 +12,17 @@ module Master
       MAX_ENTRIES = 1000
       DEFAULT_TTL = 300
       BYTES_PER_KB = 1024.0
-      INDEX_PATH = "llm_cache.yml".freeze
 
       def initialize(root:, ttl: DEFAULT_TTL, event_bus: nil)
-        @project_root = root
-        @root = File.join(root, ".master", "cache")
-        @index_path = File.join(root, ".master", INDEX_PATH)
+        @master_root = File.join(root, ".master")
+        @root = File.join(@master_root, "cache")
+        @manifest_path = File.join(@master_root, "llm_cache.yml")
         @ttl = ttl.to_i.positive? ? ttl.to_i : DEFAULT_TTL
         @bus = event_bus
         @lru = []
         @lock = Monitor.new
         FileUtils.mkdir_p(@root)
-        load_index!
+        FileUtils.mkdir_p(File.dirname(@manifest_path))
       end
 
       def fetch(prompt, model, &blk)
@@ -38,18 +39,23 @@ module Master
 
         @bus&.publish("cache:miss", key:)
         result = blk.call
-        @lock.synchronize { write_entry(path, result, key) }
+        @lock.synchronize { write_entry(path:, value: result, key:) }
         result
       end
 
       def invalidate!(prompt, model)
-        path = cache_path(cache_key(prompt, model))
-        @lock.synchronize { File.delete(path) if File.exist?(path) }
+        key = cache_key(prompt, model)
+        path = cache_path(key)
+        @lock.synchronize do
+          File.delete(path) if File.exist?(path)
+          delete_manifest_entry(key)
+        end
       end
 
       def invalidate_all!
         @lock.synchronize do
           Dir.glob(File.join(@root, "*.json")).each { |f| File.delete(f) rescue Errno::ENOENT }
+          File.delete(@manifest_path) if File.exist?(@manifest_path)
           @lru.clear
         end
       end
@@ -72,29 +78,24 @@ module Master
       def expire_entry!(path)
         @lru.delete(path)
         File.delete(path) rescue nil
-        prune_index_for(path)
+        delete_manifest_entry(File.basename(path, ".json"))
         nil
       end
 
       def drop_entry!(path)
         File.delete(path) rescue nil
         @lru.delete(path)
-        prune_index_for(path)
+        delete_manifest_entry(File.basename(path, ".json"))
         nil
       end
 
-      def prune_index_for(path)
-        return unless File.exist?(@index_path)
-        rows = Master.load_yaml(@index_path) || {}
-        rows.reject! { |_, entry| (entry["path"] || entry[:path]) == path }
-        File.write(@index_path, rows.to_yaml)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "semantic_cache.prune_index_for", event_bus: @bus)
-      end
-
       def read_entry(path)
-        return unless File.exist?(path)
-        entry = JSON.parse(File.read(path), symbolize_names: true)
+        return unless File.exist?(path) || manifest_entry(File.basename(path, ".json"))
+        entry = if File.exist?(path)
+                  JSON.parse(File.read(path), symbolize_names: true)
+                else
+                  manifest_entry(File.basename(path, ".json"))
+                end
         return expire_entry!(path) if stale?(entry)
         promote_lru(path)
         entry[:value]
@@ -103,35 +104,63 @@ module Master
         drop_entry!(path)
       end
 
-      def write_entry(path, value, key)
+      def write_entry(path:, value:, key:)
         payload = serialize_value(value)
-        evict_lru while @lru.size >= MAX_ENTRIES
         ts = Time.now.to_i
+        evict_lru while @lru.size >= MAX_ENTRIES
         File.write(path, JSON.generate({ ts:, value: payload }))
+        write_manifest_entry(key, ts:, value: payload)
         promote_lru(path)
-        persist_index!(key, path, ts)
         @bus&.publish("cache:write", key:)
       end
 
-      def load_index!
-        return unless File.exist?(@index_path)
-        rows = Master.load_yaml(@index_path) || {}
-        rows.each_value do |entry|
-          path = entry["path"] || entry[:path]
-          next unless path && File.exist?(path)
-          promote_lru(path)
-        end
+      def manifest
+        return {} unless File.exist?(@manifest_path)
+
+        data = YAML.safe_load_file(@manifest_path, permitted_classes: [Symbol], aliases: false)
+        data.is_a?(Hash) ? data : {}
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "semantic_cache.load_index!", event_bus: @bus)
+        Master::Ground::Swallow.log(e, context: "semantic_cache.read_manifest", event_bus: @bus, path: @manifest_path)
+        {}
       end
 
-      def persist_index!(key, path, ts)
-        rows = File.exist?(@index_path) ? (Master.load_yaml(@index_path) || {}) : {}
-        rows[key] = { "ts" => ts, "path" => path }
-        FileUtils.mkdir_p(File.dirname(@index_path))
-        File.write(@index_path, rows.to_yaml)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "semantic_cache.persist_index!", event_bus: @bus)
+      def manifest_entry(key)
+        entry = manifest.fetch(key, nil) || manifest.fetch(key.to_s, nil)
+        entry = stringify_or_symbolize(entry)
+        entry if entry.is_a?(Hash)
+      end
+
+      def write_manifest_entry(key, ts:, value:)
+        FileUtils.mkdir_p(@master_root)
+        data = manifest
+        data[key] = { "ts" => ts, "value" => stringify_for_yaml(value) }
+        File.write(@manifest_path, data.to_yaml)
+      end
+
+      def delete_manifest_entry(key)
+        data = manifest
+        data.delete(key)
+        data.delete(key.to_s)
+        if data.empty?
+          File.delete(@manifest_path) if File.exist?(@manifest_path)
+        else
+          File.write(@manifest_path, data.to_yaml)
+        end
+      end
+
+      def stringify_for_yaml(value)
+        value.transform_keys(&:to_s).transform_values do |item|
+          item.is_a?(Hash) ? stringify_for_yaml(item) : item
+        end
+      end
+
+      def stringify_or_symbolize(value)
+        return value unless value.is_a?(Hash)
+
+        value.each_with_object({}) do |(key, item), acc|
+          sym_key = key.respond_to?(:to_sym) ? key.to_sym : key
+          acc[sym_key] = item.is_a?(Hash) ? stringify_or_symbolize(item) : item
+        end
       end
 
       def serialize_value(value)

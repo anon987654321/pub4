@@ -3,30 +3,49 @@
 require "securerandom"
 require "fileutils"
 require "open3"
+require "socket"
+require "json"
+require "timeout"
 
 module Master
   module Voice
     module Speech
-      WORKER = File.expand_path("../../../bin/tts-worker", __dir__)
+      WORKER = File.expand_path("../../bin/tts-worker", __dir__)
       EDGE_TTS = File.executable?(WORKER)
-      ESPEAK = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
+      TTS_SOCKET = File.expand_path("../../.master/tts.sock", __dir__)
+      ESPEAK_PATHS = %w[/usr/bin/espeak /usr/local/bin/espeak].freeze
+      ESPEAK = ESPEAK_PATHS.find { |p| File.executable?(p) }
+      WORKER_TIMEOUT = 20
 
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
 
       VOICES = {
+        :"ms-MY-OsmanNeural" => "ms-MY-OsmanNeural",
+        :"en-GB-RyanNeural" => "en-GB-RyanNeural",
+        :"nb-NO-FinnNeural" => "nb-NO-FinnNeural",
+        :"en-US-AndrewNeural" => "en-US-AndrewNeural",
+        :"en-US-GuyNeural" => "en-US-GuyNeural",
+        :"en-AU-WilliamNeural" => "en-AU-WilliamNeural",
+        :"en-US-ChristopherNeural" => "en-US-ChristopherNeural",
+        :"en-US-EricNeural" => "en-US-EricNeural",
+        :"nb-NO-PernilleNeural" => "nb-NO-PernilleNeural",
+        :"en-US-DavisNeural" => "en-US-DavisNeural",
+        :"en-SG-WayneNeural" => "en-SG-WayneNeural",
+        :"en-NG-EzinneNeural" => "en-NG-EzinneNeural",
+        :"en-US-JennyNeural" => "en-US-JennyNeural",
         osman: "ms-MY-OsmanNeural",
-        yasmin: "ms-MY-YasminNeural",
-        pernille: "nb-NO-PernilleNeural",
-        jenny: "en-US-JennyNeural",
-        aria: "en-US-AriaNeural",
         ryan: "en-GB-RyanNeural",
         finn: "nb-NO-FinnNeural",
-        steffan: "en-US-SteffanNeural",
         andrew: "en-US-AndrewNeural",
         guy: "en-US-GuyNeural",
         william: "en-AU-WilliamNeural",
         christopher: "en-US-ChristopherNeural",
-        eric: "en-US-EricNeural"
+        eric: "en-US-EricNeural",
+        pernille: "nb-NO-PernilleNeural",
+        davis: "en-US-DavisNeural",
+        wayne: "en-SG-WayneNeural",
+        ezinne: "en-NG-EzinneNeural",
+        jenny: "en-US-JennyNeural"
       }.freeze
 
       STYLES = {
@@ -51,22 +70,40 @@ module Master
         energetic:    { rate: "+15%", pitch: "+30Hz" }    # lively, higher
       }.freeze
 
-      # Osman character tuning (user request):
-      # - Slightly darker (lower) pitch for warmth and gravity
-      # - Slightly slower pacing for more deliberate, musical delivery
-      # - The combination + neural model gives more harmonious, human-like intonation
-      OSMAN_RATE_OFFSET  = "-7%"
-      OSMAN_PITCH_OFFSET = "-22Hz"
-
-      DEFAULT_VOICE = :christopher
-      DEFAULT_STYLE = :clear
+      DEFAULT_VOICE = :davis
+      DEFAULT_STYLE = :calm
       MAX_CHARS = 900
       CHUNK_CHARS = 220
 
       module_function
 
       def available?
-        EDGE_TTS || !ESPEAK.nil?
+        edge_tts_available? || !espeak_path.nil?
+      end
+
+      def edge_tts_available?
+        worker_executable? && eventmachine_ssl_available?
+      end
+
+      def worker_executable?
+        File.executable?(WORKER)
+      end
+
+      def espeak_path
+        ESPEAK_PATHS.find { |p| File.executable?(p) }
+      end
+
+      def eventmachine_ssl_available?
+        require "eventmachine"
+        return true unless EventMachine.respond_to?(:ssl?)
+
+        EventMachine.ssl?
+      rescue LoadError => e
+        warn_tts("edge unavailable: eventmachine cannot be loaded (#{e.message})")
+        false
+      rescue StandardError => e
+        warn_tts("edge availability probe failed: #{e.class}: #{e.message}")
+        false
       end
 
       def default_voice
@@ -81,23 +118,8 @@ module Master
         end
       end
 
-      # Returns the final rate/pitch for a given voice + style.
-      # Applies Osman character tuning when appropriate (darker, slower, more musical).
       def style_config_for(voice, style)
-        base = STYLES.fetch(style.to_sym, STYLES[default_style]).dup
-        if voice.to_sym == :osman
-          base[:rate]  = apply_osman_offset(base[:rate],  OSMAN_RATE_OFFSET)
-          base[:pitch] = apply_osman_offset(base[:pitch], OSMAN_PITCH_OFFSET)
-        end
-        base
-      end
-
-      def apply_osman_offset(current, offset)
-        c_val = current.to_s[/[+-]?\d+/].to_i
-        o_val = offset.to_s[/[+-]?\d+/].to_i
-        unit  = current.to_s[/[A-Za-z%]+/] || offset.to_s[/[A-Za-z%]+/]
-        sign  = (c_val + o_val) >= 0 ? "+" : ""
-        "#{sign}#{c_val + o_val}#{unit}"
+        STYLES.fetch(style.to_sym, STYLES[default_style]).dup
       end
 
 
@@ -162,12 +184,12 @@ module Master
         # Use the resolved config (applies Osman character when needed)
         style_config = style_config_for(voice, style)
 
-        if EDGE_TTS
+        if edge_tts_available?
           path = synthesize_edge(text_str, voice: voice, style_config: style_config)
           return path if path
         end
 
-        synthesize_espeak(text_str) if ESPEAK
+        synthesize_espeak(text_str) if espeak_path
       end
 
       def synthesize_audio(text, **opts)
@@ -191,23 +213,89 @@ module Master
         audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
         voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
 
-        _out, _err, status = Open3.capture3(
-          WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
-          stdin_data: text.to_s
-        )
-        return unless status.success?
+        sock_path = synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
+        return sock_path if sock_path
 
-        (File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
+        timeout = worker_timeout
+        _out, err, status = Timeout.timeout(timeout) do
+          Open3.capture3(
+            WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
+            stdin_data: text.to_s
+          )
+        end
+        unless status.success?
+          warn_tts("edge worker failed: #{err.to_s.strip}") unless err.to_s.strip.empty?
+          return cleanup_failed_audio(audio_path)
+        end
+
+        return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
+
+        warn_tts("edge worker produced empty audio")
+        cleanup_failed_audio(audio_path)
+      rescue Timeout::Error
+        warn_tts("edge worker timed out after #{worker_timeout}s")
+        cleanup_failed_audio(audio_path)
+      rescue StandardError => e
+        warn_tts("edge worker error: #{e.class}: #{e.message}")
+        cleanup_failed_audio(audio_path)
+      end
+
+      def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
+        return nil unless File.socket?(TTS_SOCKET)
+
+        req = JSON.generate(
+          voice: voice_name,
+          rate: style_config[:rate],
+          pitch: style_config[:pitch],
+          text: text.to_s
+        )
+        Timeout.timeout(worker_timeout) do
+          UNIXSocket.open(TTS_SOCKET) do |s|
+            s.write("#{req}\n")
+            File.open(audio_path, "wb") { |f| IO.copy_stream(s, f) }
+          end
+        end
+        return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
+
+        warn_tts("edge socket produced empty audio")
+        cleanup_failed_audio(audio_path)
+      rescue Timeout::Error
+        warn_tts("edge socket timed out after #{worker_timeout}s")
+        cleanup_failed_audio(audio_path)
+      rescue StandardError => e
+        warn_tts("edge socket failed: #{e.class}: #{e.message}")
+        cleanup_failed_audio(audio_path)
       end
 
       def synthesize_espeak(text)
         audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.wav"
         ok = system(
-          ESPEAK, "-s", "162", "-p", "42", "-a", "125",
+          espeak_path, "-s", "162", "-p", "42", "-a", "125",
           "-w", audio_path, text.to_s,
           out: File::NULL, err: File::NULL
         )
-        (ok && File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
+        return audio_path if ok && File.exist?(audio_path) && File.size(audio_path) > 0
+
+        warn_tts("espeak failed or produced empty audio")
+        cleanup_failed_audio(audio_path)
+      rescue StandardError => e
+        warn_tts("espeak error: #{e.class}: #{e.message}")
+        cleanup_failed_audio(audio_path)
+      end
+
+      def cleanup_failed_audio(path)
+        File.unlink(path) rescue nil if path
+        nil
+      end
+
+      def worker_timeout
+        Integer(ENV.fetch("MASTER_TTS_TIMEOUT", WORKER_TIMEOUT.to_s))
+      rescue ArgumentError
+        WORKER_TIMEOUT
+      end
+
+      def warn_tts(message)
+        Kernel.warn("tts: #{message}")
       end
     end
   end

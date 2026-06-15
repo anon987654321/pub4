@@ -1,0 +1,68 @@
+# frozen_string_literal: true
+
+# DRY + KISS for geographic proximity across apps (brgen marketplace/dating/takeaway, hjerterom, etc).
+# Standardizes on pure-Ruby haversine + bbox prefilter for chainable scopes (no PostGIS/earthdistance dep).
+# Replaces 5+ near-identical ad-hoc scopes with inconsistent math (euclid, deg approx, earth_distance, haversine).
+# Usage:
+#   include Shared::GeoLocatable
+#   scope = Listing.nearby(lat, lng, 5)   # returns relation (bbox); for exact: .to_a.select { |l| Listing.haversine(...) <= 5 }
+#   listing.geo? ; listing.distance_to(user_lat, user_lng)
+module Shared
+  module GeoLocatable
+    extend ActiveSupport::Concern
+
+    EARTH_KM = 6371.0
+
+    included do
+      # Models should have decimal latitude, longitude columns (or override lat/lng readers).
+    end
+
+    class_methods do
+      # Bbox-filtered nearby (fast, chainable like .nearby(lat, lng, 5).limit(20).includes(...) ).
+      # For high precision on small result sets, post-filter with haversine or call .select.
+      # Signature compatible with prior dupe scopes (positional km default).
+      def nearby(lat, lng, km = 5)
+        lat = lat.to_f
+        lng = lng.to_f
+        radius_km = km.to_f
+        return none if lat == 0 && lng == 0
+
+        d_lat = radius_km / EARTH_KM * (180.0 / Math::PI)
+        d_lng = d_lat / Math.cos([lat.abs, 0.0001].max * Math::PI / 180.0)
+
+        where(latitude: (lat - d_lat)..(lat + d_lat))
+          .where(longitude: (lng - d_lng)..(lng + d_lng))
+          .where.not(latitude: nil)
+      end
+
+      # Accurate haversine in km. Use for post-filter or distance checks.
+      def haversine(lat1, lng1, lat2, lng2)
+        dlat = (lat2.to_f - lat1.to_f) * Math::PI / 180.0
+        dlng = (lng2.to_f - lng1.to_f) * Math::PI / 180.0
+        a = Math.sin(dlat / 2)**2 +
+            Math.cos(lat1.to_f * Math::PI / 180.0) *
+            Math.cos(lat2.to_f * Math::PI / 180.0) *
+            Math.sin(dlng / 2)**2
+        EARTH_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+      end
+    end
+
+    def geo?
+      latitude.present? && longitude.present?
+    end
+
+    def distance_to(other_lat, other_lng)
+      return nil unless geo? && other_lat && other_lng
+      self.class.haversine(latitude, longitude, other_lat, other_lng)
+    end
+
+    # Optional: simple geocode hook. Apps using geocoder gem can override.
+    # For models with address column: after_validation :geocode_if_needed, if: :address_changed?
+    def geocode!
+      # No-op stub or integrate 'geocoder' gem + geocoded_by :address
+      # Example override in Restaurant: geocoded_by :address; after_validation :geocode, if: :address_changed?
+      Rails.logger&.debug("geocode! stub called for #{self.class}##{id}") if defined?(Rails)
+      self
+    end
+  end
+end

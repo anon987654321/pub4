@@ -2,6 +2,21 @@
 
 module Master
   module Now
+    class StreamAccumulator
+      def initialize(buffer, &on_text)
+        @buffer = buffer
+        @on_text = on_text
+      end
+
+      def call(chunk)
+        text = chunk.respond_to?(:content) ? chunk.content.to_s : chunk.to_s
+        return if text.empty?
+
+        @on_text.call(text)
+        @buffer << text
+      end
+    end
+
     class CLI
       SPIN_FRAMES = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
       SPIN_INTERVAL = 0.25
@@ -17,7 +32,7 @@ module Master
         @think_mutex = Mutex.new
         @think_t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @think_stage = "intake"
-        @think_sub   = @bus&.subscribe("*") do |payload|
+        @think_sub   = @refs.bus&.subscribe("*") do |payload|
           update_think_stage(payload)
           emit_dmesg_line(payload)
         end
@@ -27,15 +42,14 @@ module Master
           loop do
             @think_mutex.synchronize do
               frame = SPIN_FRAMES[i % SPIN_FRAMES.size]
-              elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - (@think_t0 || 0))).to_i
-              print "\r\e[K#{@renderer.render("#{frame} #{@think_stage} #{elapsed}s", mode: :dim)}"
+              print "\r\e[K#{@refs.renderer.render("#{frame} thinking #{elapsed_seconds}s #{@think_stage}", mode: :dim)}"
               $stdout.flush
             end
             sleep SPIN_INTERVAL
             i += 1
           end
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "cli.spinner", event_bus: @bus)
+          Master::Ground::Swallow.log(e, context: "cli.spinner", event_bus: @refs.bus)
         end
       end
 
@@ -51,8 +65,7 @@ module Master
       def update_think_stage(payload)
         ev = payload[:event].to_s
         return unless ev.start_with?("stage:")
-        stage = payload.fetch(:stage, ev.sub("stage:", ""))
-        @think_stage = stage.to_s
+        @think_stage = ev.delete_prefix("stage:")
       end
 
       def glyph_for_event(ev)
@@ -67,38 +80,39 @@ module Master
       def emit_dmesg_line(payload)
         ev = payload[:event].to_s
         return if ev.empty? || DMESG_IGNORE.include?(ev)
-        ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - (@think_t0 || 0)) * 1000).to_i
         kv = payload.reject { |k, _| %i[event ts topic].include?(k) }
                     .map { |k, v| "#{k}=#{v.to_s[0, 60]}" }.join(" ")
         diff = ev == "tool:after" && MUTATING_TOOLS.include?(payload[:tool].to_s) ? diff_stat(payload[:path]) : nil
         tail = diff ? " #{diff}" : ""
-        line = "  %s [%7d] %s%s%s" % [glyph_for_event(ev), ms, ev, kv.empty? ? "" : " #{kv}", tail]
+        line = "  %s [%7d] %s%s%s" % [glyph_for_event(ev), elapsed_ms, ev, kv.empty? ? "" : " #{kv}", tail]
         @think_mutex&.synchronize do
           print "\r\e[K"
-          $stdout.puts @renderer.render(line, mode: :dim)
+          $stdout.puts @refs.renderer.render(line, mode: :dim)
           $stdout.flush
         end
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.print_event", event_bus: @bus)
+        Master::Ground::Swallow.log(e, context: "cli.print_event", event_bus: @refs.bus)
       end
 
       def diff_stat(path)
         return nil unless path && !path.empty?
-        out, _ = Open3.capture2e("git", "-C", @root, "diff", "--numstat", "--", path)
+        out, = Open3.capture2e("git", "-C", @refs.root, "diff", "--numstat", "--", path)
         m = out.lines.first&.match(/^(\d+)\s+(\d+)/)
         m ? "+#{m[1]}/-#{m[2]}" : nil
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.diff_stat", event_bus: @bus)
+        Master::Ground::Swallow.log(e, context: "cli.diff_stat", event_bus: @refs.bus)
       end
 
-      def chunk_accumulator(buffer)
-        lambda do |chunk|
-          text = chunk.respond_to?(:content) ? chunk.content.to_s : chunk.to_s
-          next if text.empty?
+      def elapsed_ms
+        ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - @think_t0.to_f) * 1000).round
+      end
 
-          yield text
-          buffer << text
-        end
+      def elapsed_seconds
+        (elapsed_ms / 1000.0).floor
+      end
+
+      def build_stream_handler(buffer, &on_text)
+        Master::Now::StreamAccumulator.new(buffer, &on_text)
       end
     end
   end

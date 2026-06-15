@@ -11,7 +11,9 @@ module Shared
       all_caps_letter_spacing_em: { min: 0.05, max: 0.15 },
       max_font_families: 2,
       max_font_weights: 3,
-      max_type_sizes: 8
+      max_type_sizes: 8,
+      max_selector_classes: 2,
+      max_css_file_lines: 150
     }.freeze
 
     SPACING = {

@@ -18,6 +18,15 @@ The generated Rails trees are deployment artifacts. The important source of trut
 
 ## Production contract
 
+## Live Search Standard (condensed from LIVE_SEARCH_STANDARD.md, pruned)
+All apps must provide live search on primary surfaces (brgen feed, marketplace, playlists, TV, takeaway, etc.). Use shared baseline or StimulusReflex/Turbo. Progressive enhancement required. Reference: colby.so live-search post.
+
+## Production Readiness (condensed from PRODUCTION_READINESS.md, pruned)
+Run DEPLOY/rails/check_production_gate.rb before deploys. Blockers: rotate master.key for all apps, use Ruby 3.4, assume_ssl=true (TLS at relayd).
+
+## Architecture / Relayd / Legacy (condensed from ARCHITECTURE_NOTES.md, pruned)
+Tracked app trees + thin deploy scripts are the contract (not one-shot generators). Relayd for SNI routing, one table per app, health checks. Legacy @*.sh moved to legacy/. Completion: every app has one README, live search, etc. Brgen verticals stay inside unless separation required. Amber as baseline.
+
 Each app deploy script should:
 
 1. copy the tracked `app/` tree into `/home/<app>/app`

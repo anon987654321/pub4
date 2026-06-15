@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Comment < ApplicationRecord
-  belongs_to :post, counter_cache: :comments_count
+  belongs_to :post
   belongs_to :user
   belongs_to :parent, class_name: "Comment", optional: true
   has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
@@ -17,6 +17,6 @@ class Comment < ApplicationRecord
 
   def broadcast_comment
     broadcast_append_to [post, "comments"], partial: "comments/comment", locals: { comment: self }
-
+    post.increment!(:comments_count)
   end
 end

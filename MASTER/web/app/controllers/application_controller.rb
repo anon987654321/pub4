@@ -19,6 +19,7 @@ class ApplicationController < ActionController::Base
   WEB_WRITE_RATE_LIMIT = 60
   WEB_WRITE_WINDOW_S   = 60
 
+  before_action :require_container!
   before_action :require_authenticated!, only: AUTHENTICATED_ACTIONS
   before_action :enforce_chat_rate_limit, only: [:message]
   before_action :enforce_tts_rate_limit, only: [:tts]
@@ -72,6 +73,26 @@ class ApplicationController < ActionController::Base
   def container
     Rails.application.config.x.master_container
   end
+
+  def require_container!
+    return if container
+    return if request.path == "/up" || request.path == "/health"
+
+    respond_to do |fmt|
+      fmt.html { render inline: WARMING_HTML, layout: false, status: :service_unavailable }
+      fmt.json { render json: { error: "warming up" }, status: :service_unavailable }
+      fmt.any  { head :service_unavailable }
+    end
+  end
+
+  WARMING_HTML = <<~HTML.freeze
+    <!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>Starting up…</title>
+    <meta http-equiv="refresh" content="5">
+    <style>body{background:#000;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    p{opacity:.6}</style></head>
+    <body><p>Starting up, please wait…</p></body></html>
+  HTML
 
   def start_ms
     Rails.application.config.x.master_start_ms

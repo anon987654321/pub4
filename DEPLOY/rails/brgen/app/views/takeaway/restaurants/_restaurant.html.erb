@@ -1,5 +1,0 @@
-<article>
-  <h2><%= link_to restaurant.name, takeaway_restaurant_path(restaurant) %></h2>
-  <p><%= restaurant.cuisine_type %> · <%= restaurant.city %> · ★ <%= restaurant.rating || "—" %></p>
-  <p>Min order: <%= restaurant.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= restaurant.delivery_fee_cents.to_i / 100.0 %> NOK</p>
-</article>

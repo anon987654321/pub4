@@ -2,7 +2,7 @@
 <article data-depth="<%= [comment.depth, 4].min %>">
   <header>
     <span><%= comment.user&.username || "anon" %></span>
-    <span> · <%= time_ago_in_words(comment.created_at) %> ago</span>
+    <span> · <span data-controller="timeago"><%= time_ago_in_words(comment.created_at) %> ago</span></span>
     <% if authenticated? %>
       ·
       <% root = comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable.commentable %>
@@ -12,7 +12,7 @@
       <% end %>
     <% end %>
   </header>
-  <%= brgen_content(comment.content) %>
+  <p><%= comment.content %></p>
 
   <% if comment.long_thread? %>
     <% if comment.has_thread_summary? %>
@@ -26,7 +26,7 @@
     <section id="reply-<%= comment.id %>" hidden>
       <%= form_with url: post_comments_path(comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable), data: { turbo: true } do |f| %>
         <%= f.hidden_field :parent_id, value: comment.id %>
-        <p><%= f.text_area :content, placeholder: "Reply...", rows: 3 %></p>
+        <p><%= f.text_area :content, placeholder: "Reply...", rows: 3, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
         <p><%= f.submit "Reply" %></p>
       <% end %>
     </section>

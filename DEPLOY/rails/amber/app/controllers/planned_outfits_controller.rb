@@ -20,5 +20,5 @@ class PlannedOutfitsController < ApplicationController
 
   private
 
-  def plan_params = params.expect(:planned_outfit => [:outfit_id, :planned_date, :notes])
+  def plan_params = params.require(:planned_outfit).permit(:outfit_id, :planned_date, :notes)
 end

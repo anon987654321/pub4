@@ -1,0 +1,91 @@
+<%# Shared PWA install prompt banner. Shown after the third visit once the browser emits beforeinstallprompt. %>
+<style>
+  .install-prompt {
+    position: fixed;
+    right: 1rem;
+    bottom: 4.5rem;
+    z-index: 60;
+    display: grid;
+    gap: .5rem;
+    max-width: 22rem;
+    padding: .875rem 1rem;
+    border: 1px solid rgba(0, 0, 0, .12);
+    border-radius: .5rem;
+    background: rgba(255, 255, 255, .98);
+    color: #111;
+    box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .15);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  .install-prompt__actions {
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+  }
+
+  .install-prompt button {
+    border: 0;
+    border-radius: .375rem;
+    padding: .5rem .75rem;
+    font: inherit;
+  }
+
+  .install-prompt__primary {
+    background: #1d4ed8;
+    color: #fff;
+  }
+
+  .install-prompt__secondary {
+    background: rgba(0, 0, 0, .08);
+    color: #111;
+  }
+</style>
+
+<div id="install-prompt" class="install-prompt" hidden>
+  <strong>Install this app</strong>
+  <p>Get quicker access from your home screen.</p>
+  <div class="install-prompt__actions">
+    <button type="button" class="install-prompt__secondary" data-install-prompt-action="dismiss">Not now</button>
+    <button type="button" class="install-prompt__primary" data-install-prompt-action="install">Install</button>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const banner = document.getElementById("install-prompt");
+    if (!banner) return;
+
+    const visitsKey = "install-prompt-visits";
+    const dismissedKey = "install-prompt-dismissed";
+    let deferredPrompt = null;
+    const visits = Number(localStorage.getItem(visitsKey) || "0") + 1;
+
+    localStorage.setItem(visitsKey, String(visits));
+
+    const canShow = () => visits >= 3 && localStorage.getItem(dismissedKey) !== "1" && deferredPrompt;
+    const reveal = () => {
+      if (canShow()) banner.hidden = false;
+    };
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredPrompt = event;
+      reveal();
+    });
+
+    banner.querySelector('[data-install-prompt-action="dismiss"]').addEventListener("click", () => {
+      localStorage.setItem(dismissedKey, "1");
+      banner.hidden = true;
+    });
+
+    banner.querySelector('[data-install-prompt-action="install"]').addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      banner.hidden = true;
+    });
+
+    reveal();
+  })();
+</script>

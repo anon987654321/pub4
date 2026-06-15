@@ -2,7 +2,25 @@
 import "@hotwired/turbo-rails"
 import "controllers"
 
-import "pwa/bootstrap"
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-worker")
+
+if ("periodicSync" in navigator && "serviceWorker" in navigator) {
+  navigator.serviceWorker.ready.then(reg => {
+    reg.periodicSync?.register("feed-prewarm", { minInterval: 24 * 60 * 60 * 1000 }).catch(() => {})
+  })
+}
+
+if (window.Turbo?.config?.drive) Turbo.config.drive.progressBarDelay = 100
+
+const displayModeQuery = window.matchMedia("(display-mode: standalone)")
+const syncStandaloneMode = () => {
+  const standalone = displayModeQuery.matches
+  document.documentElement.dataset.displayMode = standalone ? "standalone" : "browser"
+  document.querySelectorAll("nav").forEach(nav => nav.classList.toggle("nav-visible", standalone))
+}
+
+syncStandaloneMode()
+displayModeQuery.addEventListener ? displayModeQuery.addEventListener("change", syncStandaloneMode) : displayModeQuery.addListener(syncStandaloneMode)
 
 // Nav swipe-to-reveal
 document.addEventListener("turbo:load", () => {

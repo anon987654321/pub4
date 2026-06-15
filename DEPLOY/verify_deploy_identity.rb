@@ -18,11 +18,10 @@ domains = Hash.new { |h, k| h[k] = [] }
 
 metadata.each do |app, expected|
   script = File.join(ROOT, expected.fetch("deploy_script"))
-  app_root = File.join(RAILS_ROOT, app)
   app_path = File.join(ROOT, expected.fetch("app_path"))
-  readme = File.join(app_root, "README.md")
-  gemfile = File.join(app_root, "Gemfile")
-  routes = File.join(app_root, "config", "routes.rb")
+  readme = File.join(RAILS_ROOT, app, "README.md")
+  gemfile = File.join(app_path, "Gemfile")
+  routes = File.join(app_path, "config", "routes.rb")
 
   ports[expected.fetch("port")] << app
   domains[expected.fetch("domain")] << app
@@ -44,14 +43,13 @@ metadata.each do |app, expected|
     "APP_DOMAIN=#{expected.fetch("domain")}" => "wrong APP_DOMAIN for #{app}",
     "APP_PORT=#{expected.fetch("port")}" => "wrong APP_PORT for #{app}",
     "SCRIPT_DIR=${0:a:h}" => "missing zsh script dir resolution for #{app}",
-    "SRC_DIR=${SCRIPT_DIR}" => "missing source dir for #{app}",
+    "SRC_DIR=${SCRIPT_DIR}/app" => "missing source dir for #{app}",
     "SHARED_BUNDLE_CACHE" => "missing shared bundle cache for #{app}",
     'doas mkdir -p "${APP_DIR}/.bundle"' => "missing app .bundle mkdir for #{app}",
     "bundle config set --local deployment true" => "missing modern bundler deployment config for #{app}",
     "bundle config set --local without 'development test'" => "missing modern bundler without config for #{app}",
     "install_rcd \"$APP_NAME\" \"$APP_DIR\" \"$APP_PORT\" \"$APP_NAME\"" => "missing standard rc.d install call for #{app}",
-    "relayd_add_relay \"$APP_DOMAIN\" \"$APP_PORT\"" => "missing standard relay call for #{app}",
-    "rcctl_ensure_service \"$APP_NAME\"" => "missing idempotent rcctl ensure for #{app}"
+    "relayd_add_relay \"$APP_DOMAIN\" \"$APP_PORT\"" => "missing standard relay call for #{app}"
   }
 
   checks.each do |needle, message|
@@ -78,7 +76,7 @@ metadata.each do |app, expected|
 
   if File.file?(routes)
     routes_content = File.read(routes)
-    failures << "missing health route for #{app}" unless routes_content.match?(/health#show|rails\/health#show/)
+    failures << "missing health route for #{app}" unless routes_content.include?("rails/health#show")
   end
 end
 

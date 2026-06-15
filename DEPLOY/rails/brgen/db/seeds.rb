@@ -13,4 +13,21 @@ end
   end
 end
 
+{
+  "electronics" => %w[phones computers audio gaming],
+  "clothing" => %w[shirts trousers shoes outerwear],
+  "furniture" => %w[sofas tables chairs storage],
+  "vehicles" => %w[cars bikes motorcycles parts],
+  "services" => %w[repair moving cleaning tutoring]
+}.each do |root_name, children|
+  root = Marketplace::Category.find_or_create_by!(name: root_name.titleize, slug: root_name)
+  children.each do |child_name|
+    Marketplace::Category.find_or_create_by!(
+      name: child_name.titleize,
+      slug: "#{root_name}-#{child_name}",
+      parent: root
+    )
+  end
+end
+
 puts "Seeded #{Community.count} communities, admin id #{admin.id}"

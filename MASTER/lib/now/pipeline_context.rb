@@ -34,6 +34,9 @@ module Master
         voice: [String, NilClass]
       }.freeze
 
+      MAX_OUTPUT_BYTES = 8_192
+      MAX_TIMINGS = 20
+
       # Stage prerequisite contracts — checked before each stage runs.
       STAGE_PREREQUISITES = {
         infer: %i[user_message],
@@ -69,16 +72,8 @@ module Master
       def freeze = self # already immutable
 
       # Immutable update — returns a new PipelineContext merging overrides.
-      OUTPUT_CAP = 8_000
-      TIMINGS_CAP = 20
-
       def merge(overrides = {})
-        merged = @data.merge(symbolize(overrides))
-        merged[:output] = merged[:output].to_s[-OUTPUT_CAP, OUTPUT_CAP] if merged[:output]
-        if merged[:_timings].is_a?(Hash) && merged[:_timings].size > TIMINGS_CAP
-          merged[:_timings] = merged[:_timings].to_a.last(TIMINGS_CAP).to_h
-        end
-        PipelineContext.new(merged)
+        PipelineContext.new(@data.merge(normalize_overrides(overrides)))
       end
 
       def ==(other)
@@ -121,8 +116,24 @@ module Master
 
       private
 
-      def symbolize(hash)
-        hash.transform_keys(&:to_sym)
+      def normalize_overrides(hash)
+        data = hash.transform_keys(&:to_sym)
+        data[:output] = truncate_output(data[:output]) if data.key?(:output)
+        data[:_timings] = cap_timings(data[:_timings]) if data.key?(:_timings)
+        data
+      end
+
+      def truncate_output(value)
+        text = value.to_s
+        return value if value.nil? || text.bytesize <= MAX_OUTPUT_BYTES
+
+        text.byteslice(-MAX_OUTPUT_BYTES, MAX_OUTPUT_BYTES)
+      end
+
+      def cap_timings(value)
+        return value unless value.respond_to?(:to_a)
+
+        value.to_a.last(MAX_TIMINGS).to_h
       end
     end
   end

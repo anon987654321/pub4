@@ -13,7 +13,7 @@ module Master
           "apply_diff" => :guarded,
           "ask_llm" => :guarded,
           "web_search" => :guarded,
-          "zsh" => :dangerous
+          "zsh" => :dangerous,
         }.freeze
 
         BLOCKLIST = [
@@ -33,7 +33,7 @@ module Master
           "wget | sh",
           "chown root",
           "passwd root",
-          "visudo"
+          "visudo",
         ].freeze
 
         def self.tier_for(tool_name)

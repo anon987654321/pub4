@@ -3,9 +3,6 @@
 class Blog < ApplicationRecord
   belongs_to :user
   has_many :posts, dependent: :destroy
-  has_many :newsletter_subscriptions, dependent: :destroy
-  has_many :subscriptions, dependent: :destroy
-  has_many :recipes, through: :posts
   has_one_attached :banner
 
   validates :name, :slug, presence: true

@@ -11,6 +11,7 @@ module Master
           @path = File.join(root, ".master", "memory.yml")
           @mutex = Mutex.new
           @store = load_store
+          @store_version = 0
           import_external!
         end
 
@@ -18,14 +19,14 @@ module Master
           type = TYPES.include?(type.to_s) ? type.to_s : "general"
           @mutex.synchronize do
             prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
-            @store[key.to_s] = entry_for(key, value, type)
+            @store[key.to_s] = entry_for(key:, value:, type:)
             persist
           end
         end
 
         def by_type(type)
           @mutex.synchronize do
-            @store.select { |key, value| typed_entry?(key, value, type.to_s) }
+            @store.select { |key, value| typed_entry?(key:, value:, type: type.to_s) }
           end
         end
 
@@ -64,13 +65,17 @@ module Master
 
         private
 
-        def entry_for(key, value, type)
+        def store_version
+          @mutex.synchronize { @store_version }
+        end
+
+        def entry_for(key:, value:, type:)
           entry = { "value" => value.to_s, "ts" => Time.now.to_i, "type" => type }
           entry["vec"] = vec if (vec = Judge::Embeddings.embed("#{key} #{value}"))
           entry
         end
 
-        def typed_entry?(key, value, type)
+        def typed_entry?(key:, value:, type:)
           value.is_a?(Hash) && value["type"] == type && !key.start_with?("archive/")
         end
 
@@ -141,6 +146,7 @@ module Master
         def persist
           FileUtils.mkdir_p(File.dirname(@path))
           write_atomic(@path, @store.to_yaml)
+          @store_version += 1
         end
       end
     end

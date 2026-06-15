@@ -81,7 +81,14 @@ scan_rules:
 principle_groups:
   axioms:      [frozen_string, explicit, immutable, self_explaining]
   solid:       [srp, cqs, pola]
+  solid_focus: [srp, cqs, pola, frozen_string, explicit, immutable, self_explaining]
+  coding:      [explicit, immutable, cqs, frozen_string, bare_rescue]
   clean_code:  [long_method, god_class, duplicate_code, bare_rescue]
+  ui:          [nielsen, prune]
+  llm:         [semantic, adversarial]
+  operations:  [bare_rescue, explicit, immutable]
+  design:      [srp, cqs, pola, prune]
+  architecture: [god_class, duplicate_code, srp, cqs]
   interface:   [nielsen, prune]
   llm_rules:   [semantic, adversarial]
   heavy:       [rubocop, reek]
@@ -89,11 +96,29 @@ principle_groups:
   critical:    [frozen_string, bare_rescue, explicit, immutable, srp, cqs]
 
 scan_profiles:
+  default: full
+  quick:
+    rules: quick
+    aliases: [core]
+    description: "Fast feedback over core axioms and small-function signals"
+  full:
+    rules: "*"
+    aliases: [all]
+    description: "All registered scan rules"
+  axioms_only:
+    rules: axioms
+    aliases: [axioms]
+    description: "Constitutional axioms only"
+  solid_focus:
+    rules: solid_focus
+    aliases: [solid]
+    description: "SOLID principles plus axioms"
   critical:
-    rules: critical
-    description: "Critical issues blocking ship"
+    rules: "*"
+    severity: [error, veto]
+    description: "Only error and veto findings for urgent triage"
   solid:
-    rules: solid
+    rules: solid_focus
     description: "SOLID principles focus"
   axioms:
     rules: axioms
@@ -137,6 +162,7 @@ incremental_scanning:
 
 autoloop:
   background: true
+  startup_delay: 90
   idle_sleep: 300
   scan_depth: deep
   scan_nice: 15

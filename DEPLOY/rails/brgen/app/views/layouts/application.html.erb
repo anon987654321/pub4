@@ -2,10 +2,22 @@
 <html lang="<%= Current.locale || I18n.locale %>" dir="ltr">
 <head>
   <%= tag.meta charset: "utf-8" %>
-  <%= tag.meta name: "viewport", content: "width=device-width,initial-scale=1,viewport-fit=cover" %>
+  <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
   <%= tag.meta name: "mobile-web-app-capable", content: "yes" %>
   <%= tag.meta name: "color-scheme", content: "dark" %>
-  <%= tag.meta name: "theme-color", content: "#000000" %>
+  <%= tag.meta name: "theme-color", content: "#111111", data: { light_color: "#f3f4f6", dark_color: "#111111" } %>
+  <script>
+    (() => {
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) return;
+      const light = meta.dataset.lightColor || meta.content;
+      const dark = meta.dataset.darkColor || meta.content;
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const apply = () => { meta.content = mq.matches ? dark : light; };
+      apply();
+      mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+    })();
+  </script>
   <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Brgen — city communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
@@ -17,36 +29,48 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Brgen" %>">
   <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "City communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
+  <style>:root { --turbo-progress-bar-color: #1d4ed8; }</style>
+  <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <link rel="stylesheet" href="/styles/tokens.css">
+  <link rel="preload" href="/face.css" as="style">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <link rel="stylesheet" href="/styles/pwa.css">
   <link rel="stylesheet" href="/lightgallery.css">
   <meta name="lg-license" content="<%= ENV.fetch("LIGHTGALLERY_LICENSE", "0000-0000-000-0000") %>">
   <%= yield :json_ld %>
   <%= javascript_importmap_tags %>
+  <%= javascript_include_tag "particle_kernel", defer: true, "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "face", defer: true, "data-turbo-track": "reload" %>
   <%= render "shared/minimal_ui" %>
-  <div data-controller="speech-recognition" data-speech-recognition-lang-value="<%= I18n.locale %>" hidden></div>
 </head>
-<body class="zen-minimal" data-pwa-key="brgen" data-controller="pwa-standalone">
+<body class="zen-minimal" data-controller="hotkey">
+  <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme">
+  <label for="dark-toggle" class="theme-toggle" title="Toggle light theme" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M12 3a1 1 0 0 1 1 1v1.06a7 7 0 0 1 5.94 5.94H20a1 1 0 1 1 0 2h-1.06A7 7 0 0 1 13 18.94V20a1 1 0 1 1-2 0v-1.06A7 7 0 0 1 5.06 13H4a1 1 0 1 1 0-2h1.06A7 7 0 0 1 11 5.06V4a1 1 0 0 1 1-1zm0 4a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
+    </svg>
+  </label>
+
+  <div class="theme-root" data-controller="bottom-sheet">
   <canvas id="tunnel-canvas" data-turbo-permanent aria-hidden="true"></canvas>
 
   <div id="nearby-alerts" class="nearby-alerts" data-turbo-permanent aria-live="polite"></div>
+  <div id="match-overlays" data-turbo-permanent aria-live="polite"></div>
   <div data-controller="geolocation" data-geolocation-url-value="<%= location_path %>" data-turbo-permanent></div>
   <% if Current.user %>
     <%= turbo_stream_from "nearby_alerts_#{Current.user.id}" %>
-    <%= turbo_stream_from "app_badge_#{Current.user.id}" %>
+    <%= turbo_stream_from "brgen:matches:#{Current.user.id}" %>
     <% unread = Conversation.for_user(Current.user).sum { |c| c.unread_count_for(Current.user) } %>
     <div data-controller="push"
          data-push-vapid-key-value="<%= ENV.fetch("VAPID_PUBLIC_KEY", "") %>"
          data-push-subscribe-url-value="<%= push_subscriptions_path %>"
          data-push-unread-value="<%= unread %>"
-         data-turbo-permanent>
-      <span id="app-badge-count" hidden data-push-target="badge"><%= unread %></span>
-    </div>
+         data-turbo-permanent></div>
     <button id="push-enable-btn" class="push-enable-btn" hidden>Enable notifications</button>
   <% end %>
 
@@ -71,18 +95,21 @@
   </h1>
 
   <% if content_for?(:splash) %>
-    <div id="splash" class="splash" role="dialog" aria-modal="true" tabindex="0">
+    <dialog id="splash" class="splash" data-controller="dialog" data-dialog-target="dialog" data-dialog-open-value="true" data-action="click->dialog#backdropClose">
       <%= yield :splash %>
-    </div>
+      <form method="dialog" style="margin-top:16px">
+        <button type="submit" class="btn btn-primary">Continue</button>
+      </form>
+    </dialog>
   <% end %>
 
   <div class="app-shell">
     <div class="layout">
-      <aside class="sidebar" data-pwa-primary-nav>
+      <aside class="sidebar" data-turbo-permanent>
         <%= link_to root_path, class: "brand", aria: { label: "Brgen" } do %>
           <svg viewBox="0 0 36 36" width="34" height="34" fill="currentColor"><text x="3" y="27" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="800">B</text></svg>
         <% end %>
-        <nav>
+        <nav data-turbo-permanent>
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to root_path, class: nav_cls.(root_path) do %>
             <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696zM19 19.5a.5.5 0 01-.5.5H15v-6a1 1 0 00-1-1h-4a1 1 0 00-1 1v6H5.5a.5.5 0 01-.5-.5V8.429l7-4.375 7 4.375V19.5z"/></svg>
@@ -105,7 +132,7 @@
             <span>Lists</span>
           <% end %>
           <% if authenticated? %>
-            <%= link_to session_path, class: "nav-item", data: { turbo_method: :delete } do %>
+            <%= link_to session_path, class: "nav-item", data: { turbo_method: :delete, turbo_prefetch: false } do %>
               <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
               <span>Profile</span>
             <% end %>
@@ -116,19 +143,28 @@
             <% end %>
           <% end %>
         </nav>
+        <% if authenticated? %>
+          <div class="sidebar-dropdown" data-controller="dropdown" data-action="click@window->dropdown#hide">
+            <button type="button" class="btn btn-ghost btn-sm" data-dropdown-button aria-expanded="false" data-action="click->dropdown#toggle">More</button>
+            <div class="sidebar-dropdown__menu hidden" data-dropdown-target="menu">
+              <%= link_to "Profile", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
+              <%= link_to "New post", new_post_path %>
+              <%= link_to "New community", new_community_path %>
+            </div>
+          </div>
+        <% end %>
         <a href="<%= new_post_path %>" class="compose-btn">
           <svg class="compose-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
           <span class="compose-label">Post</span>
         </a>
       </aside>
 
-      <main>
+      <main data-controller="pull-to-refresh">
         <div class="feed-header">
           <h1><%= content_for?(:title) ? yield(:title) : "Home" %></h1>
-          <%= render "shared/city_switcher" %>
           <div class="feed-tabs">
-            <button type="button" class="feed-tab active">For you</button>
-            <button type="button" class="feed-tab">Following</button>
+            <a href="#" class="feed-tab active">For you</a>
+            <a href="#" class="feed-tab">Following</a>
           </div>
         </div>
         <% if current_page?(root_path) && Current.user.present? %>
@@ -156,31 +192,20 @@
           <input type="search" placeholder="Search Brgen">
         </div>
         <%= yield :widgets %>
-        <div class="sidebar-card">
+        <div class="sidebar-card" data-controller="reveal" data-minimal-reveal>
           <h3>What's happening</h3>
           <p class="dim">City communities across Scandinavia and Europe.</p>
         </div>
-        <div class="sidebar-card">
+        <div class="sidebar-card" data-controller="reveal" data-minimal-reveal>
           <h3>Who to follow</h3>
           <div class="who-follow">brgen.no <button class="btn btn-ghost btn-sm">Follow</button></div>
           <div class="who-follow">longyearbyn.no <button class="btn btn-ghost btn-sm">Follow</button></div>
         </div>
-        <% if Current.user %>
-          <div class="sidebar-card">
-            <h3>Mention alerts</h3>
-            <%= form_with scope: :user, url: notification_preferences_path, method: :patch do |f| %>
-              <%= f.label :mention_notification_delivery, "Delivery" %>
-              <%= f.select :mention_notification_delivery,
-                           options_for_select([["Push", "push"], ["Email", "email"], ["None", "none"]], Current.user.mention_notification_delivery_mode) %>
-              <%= f.submit "Save", class: "btn btn-ghost btn-sm" %>
-            <% end %>
-          </div>
-        <% end %>
         <%= render "shared/email_subscribe" %>
       </aside>
     </div>
 
-    <nav class="tab-bar pwa-bottom-nav" aria-label="Mobile navigation" data-pwa-bottom-nav>
+    <nav class="tab-bar" aria-label="Mobile navigation" data-turbo-permanent>
       <%= link_to root_path, class: "tab-item" do %>
         <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696z"/></svg>
       <% end %>
@@ -196,8 +221,38 @@
       <%= link_to nearby_path, class: "tab-item" do %>
         <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
       <% end %>
+      <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" aria-label="More">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M4 7h16v2H4zm0 8h16v2H4zm0-4h16v2H4z"/></svg>
+      </button>
     </nav>
+    <%= link_to new_post_path, class: "compose-fab", aria: { label: "New post" } do %>
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v16h-2zM4 11h16v2H4z"/></svg>
+    <% end %>
+    <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>
+    <section class="mobile-sheet" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">
+      <div class="mobile-sheet__handle"></div>
+      <div class="mobile-sheet__links">
+        <%= link_to "New post", new_post_path %>
+        <%= link_to "New community", new_community_path %>
+        <%= link_to "Profile", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
+      </div>
+    </section>
   </div>
-  <%= render "shared/pwa_shell" %>
+  </div>
+  <%= render "shared/install_prompt" %>
+  <script>
+    (() => {
+      const toggle = document.getElementById("dark-toggle");
+      if (!toggle) return;
+      try {
+        toggle.checked = localStorage.getItem("brgen-theme") === "light";
+      } catch (e) {}
+      toggle.addEventListener("change", () => {
+        try {
+          localStorage.setItem("brgen-theme", toggle.checked ? "light" : "dark");
+        } catch (e) {}
+      });
+    })();
+  </script>
 </body>
 </html>

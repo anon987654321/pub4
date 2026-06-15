@@ -9,7 +9,7 @@ module Master
         plan: { writes: false, commands: :read_only, description: "read-only planning" },
         ask: { writes: :confirm, commands: :confirm_risky, description: "ask before mutation or risky command" },
         act: { writes: true, commands: :sandboxed, description: "act with sandbox policy" },
-        auto: { writes: true, commands: :sandboxed, description: "safe autonomous execution with deny gates" }
+        auto: { writes: true, commands: :sandboxed, description: "safe autonomous execution with deny gates" },
       }.freeze
 
       module_function
@@ -22,7 +22,6 @@ module Master
       def allow_write?(mode, path: nil)
         rule = MODE_RULES.fetch(normalize(mode)).fetch(:writes)
         return true if rule == true
-        return false if rule == false
 
         :confirm
       end

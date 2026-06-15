@@ -9,16 +9,16 @@ module Master
           return [] if store_snap.empty?
 
           if Judge::Embeddings.enabled? && (qvec = Judge::Embeddings.embed(query))
-            hits = vector_recall(qvec, top_n, store_snap)
+            hits = vector_recall(qvec:, top_n:, store: store_snap)
             return hits unless hits.empty?
           end
 
-          tfidf_recall(query, top_n, store_snap)
+          tfidf_recall(query:, top_n:, store: store_snap)
         end
 
         private
 
-        def vector_recall(qvec, top_n, store)
+        def vector_recall(qvec:, top_n:, store:)
           store.filter_map do |key, data|
             next unless data.is_a?(Hash) && data["vec"].is_a?(Array)
 
@@ -29,7 +29,7 @@ module Master
           end.sort_by { |e| -e[:score] }.first(top_n)
         end
 
-        def tfidf_recall(query, top_n, store)
+        def tfidf_recall(query:, top_n:, store:)
           terms = tokenize(query)
           return [] if terms.empty?
 

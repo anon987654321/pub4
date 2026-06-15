@@ -60,11 +60,11 @@ class DeclutterController < ApplicationController
   end
 
   def review_params
-    params.expect(:declutter_review => [:reason_kept, :decision, :notes])
+    params.require(:declutter_review).permit(:reason_kept, :decision, :notes)
   end
 
   def outcome_params
-    params.expect(:declutter_outcome => [:action, :amount_recovered, :notes])
+    params.require(:declutter_outcome).permit(:action, :amount_recovered, :notes)
   end
 
   def lifecycle_state_for(action)

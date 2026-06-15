@@ -1,10 +1,20 @@
 # frozen_string_literal: true
 
 require_relative "llm_dispatcher"
+require_relative "consensus"
+require_relative "prompt_filter"
+require_relative "agent/model_selector"
+require_relative "agent/prompt_builder"
+require_relative "agent/fallback_chain"
 
 module Master
   module Judge
     class Agent
+      include PromptFilter
+      include ModelSelector
+      include PromptBuilder
+      include FallbackChain
+
       DEFAULT_MESSAGE_WINDOW_SIZE = 16
 
       Dependencies = Data.define(
@@ -25,19 +35,19 @@ module Master
       end
 
       def initialize(deps:)
-        @deps                              = deps
-        @config, @session, @tools          = deps.config, deps.session, deps.tools
-        @circuit_breaker, @cache, @bus     = deps.circuit_breaker, deps.cache, deps.bus
-        @model_router, @reasoning_modes    = deps.model_router, deps.reasoning_modes
+        @deps = deps
+        @config, @session, @tools = deps.config, deps.session, deps.tools
+        @circuit_breaker, @cache, @bus = deps.circuit_breaker, deps.cache, deps.bus
+        @model_router, @reasoning_modes = deps.model_router, deps.reasoning_modes
         @memory, @personality, @code_index = deps.memory, deps.personality, deps.code_index
-        @context_window, @homeostat        = deps.context_window, deps.homeostat
-        @constitution                      = nil
-        @dispatcher                        = Master::Judge::LLMDispatcher.new(deps:, system_prompt: -> { { static: static_prompt, dynamic: dynamic_prompt } })
+        @context_window, @homeostat = deps.context_window, deps.homeostat
+        @constitution = nil
+        @dispatcher = Master::Judge::LLMDispatcher.new(deps:, system_prompt: -> { { static: static_prompt, dynamic: dynamic_prompt } })
       end
 
       def wire_constitution(constitution) = @constitution = constitution
 
-      def chat(message, stream: true, escalation_depth: 0, &blk)
+      def chat(message, image: nil, stream: true, escalation_depth: 0, &blk)
         prepare_chat_turn(message)
         candidate_models = routed_models(message)
         selected_model = candidate_models.first
@@ -50,7 +60,7 @@ module Master
         rate_err = check_rate_limit(selected_model)
         return rate_err if rate_err
 
-        response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
+        response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image: image, &blk)
         if response.is_a?(Master::Result::Err)
           @deps.homeostat&.observe(:llm_failure)
           return response
@@ -77,27 +87,37 @@ module Master
       rescue Reach::CircuitBreaker::CircuitError => err
         Result.err(err.message, category: err.category)
       end
+      private :prepare_chat_turn, :check_rate_limit
 
-      def ask(prompt, context: nil, operation: nil)
-        messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
+      def ask(prompt, context: nil, operation: nil, image: nil)
+        messages = Array(context) + [{ role: "user", content: filter_prompt(apply_reasoning_mode(prompt)) }]
         selected_model = operation ? model_for(operation:) : routed_models.first
-        result = @dispatcher.send_with_cache(selected_model, messages, stream: false)
+        result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image: image)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
 
-      def ask_once(prompt, system: nil, model: nil)
-        messages = [{ role: "user", content: prompt.to_s }]
-        result   = @dispatcher.send_with_cache(model || self.model, messages, system:, stream: false)
+      def ask_once(prompt, system: nil, model: nil, image: nil)
+        messages = [{ role: "user", content: filter_prompt(prompt) }]
+        result   = @dispatcher.send_with_cache(model || self.model, messages, system: filter_prompt(system), stream: false, image: image)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
+      end
+
+      def consensus
+        @consensus ||= Master::Judge::Consensus.new(agent: self, event_bus: @bus)
       end
 
       def call(ctx)
         on_chunk = ctx[:on_chunk]
         task_type = ctx[:task_type]&.to_s
+        image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
         with_task_type(task_type) do
-          on_chunk ? chat(ctx[:message].to_s, stream: true, &on_chunk) : chat(ctx[:message].to_s)
+          if on_chunk
+            chat(ctx[:message].to_s, image: image, stream: true) { |chunk| on_chunk.call(chunk) }
+          else
+            chat(ctx[:message].to_s, image: image)
+          end
         end
       end
 
@@ -134,140 +154,6 @@ module Master
         yield
       ensure
         @config["task_type"] = old
-      end
-
-      TOPIC_DRIFT_THRESHOLD = 6
-
-      def topic_anchored(message)
-        topic = @session.respond_to?(:topic) && @session.topic
-        return message unless topic
-        return message if @session.messages.length < TOPIC_DRIFT_THRESHOLD
-        "#{message}\n\n[task: #{topic}]"
-      end
-
-      def apply_reasoning_mode(message, mode: @config.reasoning_mode)
-        return message unless @reasoning_modes
-        @reasoning_modes.wrap(message, mode:)
-      end
-
-      def static_prompt
-        parts = []
-        parts << @constitution.system_prompt if @constitution && !@constitution.empty?
-        parts << @personality.system_prompt if @personality
-        parts.compact.join("\n\n").then { |s| s.empty? ? nil : s }
-      end
-
-      def dynamic_prompt
-        parts = []
-        parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic
-        parts << @code_index.summary if @code_index&.built?
-        parts << @memory.context_summary if @memory&.context_summary
-        parts.compact.join("\n\n").then { |s| s.empty? ? nil : s }
-      end
-
-      def system_prompt
-        [static_prompt, dynamic_prompt].compact.join("\n\n").then { |s| s.empty? ? nil : s }
-      end
-
-      def conversation_context(max_messages: DEFAULT_MESSAGE_WINDOW_SIZE)
-        messages = @session.messages
-        return [] unless messages.respond_to?(:each)
-        messages.last(max_messages + 1)[0...-1] || []
-      end
-
-      def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
-        stage_warnings = []
-        fallback_modes = mode_chain_for(candidate_models)
-        last_response = nil
-
-        fallback_modes.each do |attempt|
-          selected_model = attempt.fetch(:model)
-          mode = attempt.fetch(:mode)
-          wrapped = apply_reasoning_mode(prompt, mode: mode)
-          response = @dispatcher.send_with_cache(
-            selected_model,
-            context + [{ role: "user", content: wrapped }],
-            stream:, &blk
-          )
-          if response.is_a?(Master::Result::Ok)
-            publish_llm_success(selected_model, response)
-            @bus&.publish("agent:stage_warnings", warnings: stage_warnings) unless stage_warnings.empty?
-            return response
-          end
-
-          last_response = response
-          stage_warnings << "llm failed in #{mode} on #{selected_model}: #{response.message}"
-        end
-
-        @bus&.publish("agent:all_fallbacks_exhausted", warnings: stage_warnings)
-        last_response || Result.err("all LLM fallback modes exhausted", category: :llm_call_failure)
-      end
-
-      def mode_chain_for(candidates)
-        models = Array(candidates).empty? ? [@config.model] : candidates
-        primary = models.first
-        modes = if @dispatcher.claude_cli_model?(primary) || @dispatcher.tool_capable?(primary)
-                  [@config.reasoning_mode.to_s, "code_agent", "react"]
-                else
-                  ["code_agent", "react", "direct"]
-                end
-        chain = models.map { |m| { model: m, mode: modes.first } }
-        chain.concat(modes.drop(1).map { |mode| { model: primary, mode: mode } })
-        chain
-      end
-
-      def publish_llm_success(model, response)
-        tokens_approx = Trace::Session.estimate_tokens(response)
-        @bus&.publish("llm:response", model:, success: true, tokens_approx:)
-      end
-
-      def maybe_escalate(last_response, original_message, stream:, escalation_depth:, &blk)
-        return last_response unless @model_router
-        return last_response if escalation_depth >= 2
-
-        current = routed_models.first
-        escalation_model = @model_router.escalate_if_low_confidence(
-          last_response.to_s,
-          current_model: current,
-          task_type: @config.task_type.to_sym
-        )
-        return last_response unless escalation_model
-        return last_response if escalation_model.to_s == current.to_s
-
-        @bus&.publish("llm:escalation", from: current, to: escalation_model)
-        escalated = attempt_chat_with_fallbacks(
-          candidate_models: [escalation_model],
-          prompt: original_message,
-          context: conversation_context,
-          stream: stream,
-          &blk
-        )
-        escalated.is_a?(Master::Result::Err) ? last_response : escalated
-      end
-
-      def routed_models(message = nil)
-        return [@config.model] unless @model_router
-        task = message ? @model_router.classify_intent(message) : @config.task_type.to_sym
-        chain = @model_router.fallback_chain(task_type: task)
-        bias = @homeostat&.model_tier_bias
-        return cheap_first(chain)  if bias == :cheap
-        return strong_first(chain) if bias == :strong
-        chain
-      rescue StandardError => e
-        @bus&.publish("llm:route_error", error: e.message)
-        [@config.model]
-      end
-
-      def cheap_first(chain)
-        cheap = chain.select { |m| @model_router.tier_for_model(m) == "cheap" }
-        rest  = chain.reject { |m| @model_router.tier_for_model(m) == "cheap" }
-        cheap.empty? ? chain : (cheap + rest)
-      end
-
-      def strong_first(chain)
-        strong = chain.select { |m| @model_router.tier_for_model(m) == "strong" }
-        rest   = chain.reject { |m| @model_router.tier_for_model(m) == "strong" }
-        strong.empty? ? chain : (strong + rest)
       end
     end
   end

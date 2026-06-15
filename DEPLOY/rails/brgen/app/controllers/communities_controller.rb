@@ -10,7 +10,6 @@ class CommunitiesController < ApplicationController
 
   def show
     @posts = @community.posts.hot.includes(:user, :votes)
-    respond_to_cached_show(@community, only: %i[id name slug description])
   end
 
   def new
@@ -30,5 +29,5 @@ class CommunitiesController < ApplicationController
   private
 
   def set_community    = @community = Community.find(params[:id])
-  def community_params = params.expect(:community => [:name, :description])
+  def community_params = params.require(:community).permit(:name, :description)
 end

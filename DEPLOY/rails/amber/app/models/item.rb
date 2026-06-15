@@ -37,15 +37,6 @@ class Item < ApplicationRecord
   scope :declutter_box, -> { where(lifecycle_state: "declutter_box") }
   scope :sentimental, -> { where(lifecycle_state: "sentimental_archive") }
   scope :seasonal_archived, -> { where(lifecycle_state: "seasonal_archive") }
-  scope :search, ->(q) {
-    term = q.to_s.strip
-    return none if term.empty?
-
-    ids = connection.select_values(
-      sanitize_sql_array(["SELECT rowid FROM items_fts WHERE items_fts MATCH ?", term])
-    )
-    ids.any? ? where(id: ids) : none
-  }
 
   CATEGORIES   = %w[Tops Bottoms Dresses Shoes Accessories Outerwear].freeze
   SEASONS      = %w[Spring Summer Autumn Winter All-Season].freeze

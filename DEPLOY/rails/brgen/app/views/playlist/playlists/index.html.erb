@@ -5,10 +5,7 @@
     <p class="dim">Local music discovery</p>
     <h1>Playlists</h1>
   </div>
-  <nav style="display:flex;gap:8px">
-    <%= link_to "Sets", playlist_sets_path, class: "btn btn-ghost btn-sm" %>
-    <%= link_to "New playlist", new_playlist_playlist_path, class: "btn btn-primary btn-sm" if authenticated? %>
-  </nav>
+  <%= link_to "New playlist", new_playlist_playlist_path, class: "btn btn-primary btn-sm" if authenticated? %>
 </div>
 
 <% @playlists.each do |pl| %>

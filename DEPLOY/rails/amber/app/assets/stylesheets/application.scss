@@ -348,3 +348,16 @@ h1, h2 { margin-bottom: var(--space-sm); }
 .dressing-room-actions {
   margin-top: var(--space-sm);
 }
+
+[dir="rtl"] {
+  direction: rtl;
+}
+
+[dir="rtl"] nav .brand {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+[dir="rtl"] .form .field--check {
+  flex-direction: row-reverse;
+}

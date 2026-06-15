@@ -1,7 +1,7 @@
 <div class="deal-card" data-product-id="<%= listing.id %>">
   <a href="<%= marketplace_listing_path(listing) %>" class="deal-card-img">
     <% if listing.photos.attached? %>
-      <%= image_tag listing.photos.first, alt: listing.title, loading: "lazy" %>
+      <%= lazy_image_tag listing.photos.first, alt: listing.title, blurhash: listing.photos.first.try(:metadata).try(:[], "blurhash") %>
     <% else %>
       <span><%= listing.title.first %></span>
     <% end %>

@@ -9,7 +9,7 @@ module Tv
     end
 
     def show
-      @stream_chats = @live_stream.stream_chats.visible.chronological.limit(200)
+      @stream_chats = @live_stream.stream_chats.chronological.limit(200)
     end
 
     def new
@@ -60,7 +60,7 @@ module Tv
     end
 
     def live_stream_params
-      params.expect(:live_stream => [:title, :description, :status, :stream_key])
+      params.require(:live_stream).permit(:title, :description, :status, :stream_key)
     end
   end
 end

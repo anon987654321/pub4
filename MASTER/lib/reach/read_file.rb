@@ -30,7 +30,6 @@ module Master
 
         full_path = resolved.value!
         return Result.err("not found: #{path}", category: :validation) unless File.exist?(full_path)
-        return Result.err("not a file: #{path}", category: :validation) unless File.file?(full_path)
 
         lines = File.readlines(full_path)
         total = lines.size

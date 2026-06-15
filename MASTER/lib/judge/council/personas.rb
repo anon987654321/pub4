@@ -16,7 +16,7 @@ module Master
           aliases: [].freeze,
           question: nil,
           cognitive_lens: nil,
-          model: nil
+          model: nil,
         }.freeze
 
         ROOT_DATA_PATH = File.join(File.expand_path("../../..", __dir__), "data", "council.yml").freeze
@@ -39,7 +39,7 @@ module Master
                       **PERSONA_DEFAULTS),
           Persona.new(name: "Mentor", role: "Code review", bias: "Clarity",
                       prompt: "Is this code readable? Do names reveal intent?",
-                      **PERSONA_DEFAULTS)
+                      **PERSONA_DEFAULTS),
         ].freeze
 
         persona_members = Persona.members
@@ -64,7 +64,6 @@ module Master
 
         def self.build_persona(attrs)
           return unless attrs.is_a?(Hash) && attrs[:name]
-          normalised = PERSONA_DEFAULTS.merge(attrs)
           normalised[:veto_role] = normalised.delete(:can_veto) if normalised.key?(:can_veto)
           normalised = normalised.slice(*ALLOWED_KEYS)
           Persona.new(**normalised)

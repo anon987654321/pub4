@@ -2,12 +2,17 @@
 <% title = local_assigns.fetch(:title, "Gallery") %>
 
 <% if attachments.any? %>
-  <section data-controller="lightbox" aria-label="<%= title %>">
+  <section
+    data-controller="lightbox swipe"
+    data-swipe-mode-value="carousel"
+    data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp"
+    aria-label="<%= title %>"
+  >
     <div class="media-gallery">
       <% attachments.each do |attachment| %>
-        <%= link_to url_for(attachment), class: "media-gallery__item" do %>
-          <%= image_tag attachment, alt: title, loading: "lazy" %>
-        <% end %>
+        <a href="<%= url_for(attachment) %>" class="media-gallery__item">
+          <%= lazy_image_tag attachment, alt: title, blurhash: attachment.try(:metadata).try(:[], "blurhash") %>
+        </a>
       <% end %>
     </div>
   </section>

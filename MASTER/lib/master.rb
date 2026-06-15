@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "timeout"
 require "zeitwerk"
 require "yaml"
 
@@ -26,7 +27,9 @@ module Master
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
   MIN_API_KEY_LENGTH = 20
-  NEMOTRON_PRIMARY = "nvidia/nemotron-3-super-120b-a12b:free"
+  MAX_CONSTITUTION_BYTES = 10 * 1024 * 1024
+  YAML_LOAD_TIMEOUT_S = 5
+  OPENROUTER_DEFAULT = "z-ai/glm-4.5-air:free"
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   CTX_WINDOW_SIZE = 200_000
   VIOLATION_TRUNCATE = 90
@@ -35,7 +38,7 @@ module Master
     ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
     ".js" => "javascript", ".json" => "json", ".sh" => "bash",
     ".zsh" => "bash", ".md" => "markdown", ".html" => "html",
-    ".erb" => "erb", ".css" => "css"
+    ".erb" => "erb", ".css" => "css",
   }.freeze
 
   API_KEY_PROVIDERS = {
@@ -44,7 +47,7 @@ module Master
     gemini_api_key: "GEMINI_API_KEY",
     openrouter_api_key: "OPENROUTER_API_KEY",
     mistral_api_key: "MISTRAL_API_KEY",
-    deepseek_api_key: "DEEPSEEK_API_KEY"
+    deepseek_api_key: "DEEPSEEK_API_KEY",
   }.freeze
 
   loader = Zeitwerk::Loader.new
@@ -69,13 +72,9 @@ module Master
   loader.ignore(File.join(__dir__, "reach", "ruby_llm_patch.rb"))
   loader.ignore(File.join(__dir__, "reach", "bedrock_stub.rb"))
   %w[
-    now/cli/signal_handler.rb
+    now/cli/signals.rb
     now/cli/command_ops.rb
     now/cli/thinking_indicator.rb
-    now/cli/repl.rb
-    now/cli/renderer_delegate.rb
-    now/cli/background_scan.rb
-    now/cli/stream_accumulator.rb
     now/command_registry/memory_commands.rb
     now/command_registry/work_commands.rb
     now/command_registry/system_commands.rb
@@ -98,6 +97,7 @@ module Master
   loader.ignore(File.join(__dir__, "quality/slop_budget.rb"))
   loader.ignore(File.join(__dir__, "repo/inventory.rb"))
   loader.ignore(File.join(__dir__, "scope/ledger.rb"))
+  loader.ignore(File.join(__dir__, "builder/boot_phases.rb"))
   loader.setup
 
   require_relative "converge/converge"
@@ -143,13 +143,10 @@ module Master
   end
 
   def self.default_model
-    return NEMOTRON_PRIMARY if api_key_present?("OPENROUTER_API_KEY")
-    return "claude-opus-4-7" if api_key_present?("ANTHROPIC_API_KEY")
+    return OPENROUTER_DEFAULT if api_key_present?("OPENROUTER_API_KEY")
     return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
-    return "gpt-4o" if api_key_present?("OPENAI_API_KEY")
     return "gemini-2.5-flash" if api_key_present?("GEMINI_API_KEY")
-    return "mistral-large-latest" if api_key_present?("MISTRAL_API_KEY")
-    NEMOTRON_PRIMARY
+    OPENROUTER_DEFAULT
   end
 
   def self.any_api_key_present?
@@ -157,26 +154,39 @@ module Master
   end
 
   def self.no_api_key_message
-    "I'm not wired to any LLM yet. The primary model is nemotron via OpenRouter " \
-    "(free). Set OPENROUTER_API_KEY in /etc/rc.d/master daemon_flags and restart " \
+    "I'm not wired to any LLM yet. Set OPENROUTER_API_KEY in /etc/master.env and restart " \
     "with `doas rcctl restart master`. Other accepted keys: ANTHROPIC_API_KEY, " \
     "DEEPSEEK_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, MISTRAL_API_KEY."
   end
 
   def self.load_yaml(path, symbolize_names: false, default: {})
-    YAML.safe_load_file(path, aliases: true, symbolize_names: symbolize_names)
+    raise "yaml too large: #{path}" if File.exist?(path) && File.size(path) > MAX_CONSTITUTION_BYTES
+
+    Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
+      YAML.safe_load_file(path, aliases: true, symbolize_names: symbolize_names)
+    end
   rescue Psych::Exception, Errno::ENOENT, Errno::EACCES => e
     warn("load_yaml: #{e.message}")
+    default
+  rescue Timeout::Error => e
+    warn("load_yaml: #{path}: #{e.message}")
     default
   end
 
   def self.validate_data!(root: ROOT, bus: nil)
+    @data_validation_cache ||= {}
+    paths = Dir.glob(File.join(root, "data", "**/*.yml")).sort
+    signature = paths.to_h { |path| [path, File.mtime(path).to_i] }
+    cached = @data_validation_cache[root]
+    return cached[:errors] if cached && cached[:signature] == signature
+
     errors = {}
-    Dir.glob(File.join(root, "data", "**/*.yml")).sort.each do |path|
+    paths.each do |path|
       YAML.safe_load_file(path, aliases: true)
     rescue Psych::Exception => e
       errors[path.sub("#{root}/", "")] = e.message.lines.first.to_s.strip
     end
+    @data_validation_cache[root] = { signature:, errors: }
     return errors if errors.empty?
 
     errors.each do |rel, msg|
@@ -204,7 +214,6 @@ module Master
 
   def self.const_missing(sym)
     return Judge::Agent if sym == :Agent
-    super
   end
 
   def self.build(root: Dir.pwd)
@@ -222,12 +231,28 @@ module Master
   end
 
   def self.bootstrap_container(root: Dir.pwd)
+    init_ground(root:)
+    container = init_judge(root:)
+    init_loop(root:, container:)
+    init_reach(container:)
+  end
+
+  def self.init_ground(root:)
     install_process_guards!
     Trace::Telemetry.bootstrap!(root: root)
-    container = Builder.build(root:)
+  end
+
+  def self.init_judge(root:)
+    Builder.build(root:)
+  end
+
+  def self.init_loop(root:, container:)
     validate_data!(root: root, bus: container[:bus])
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
+  end
+
+  def self.init_reach(container:)
     start_constitution_drift(container)
     container
   end
