@@ -216,7 +216,7 @@ sync_openbsd_apply() {
   # Enforce ground_truth_check + evidence before writes (rules.yml): fresh read, diff, output shown.
   # library_verify pre-flight before bundle/shell (per rules).
   for f in /etc/pf.conf /etc/relayd.conf; do
-    [[ -f $f ]] && head -c 100 "$f" >/dev/null || { log ERROR "ground_truth fail on $f"; return 1; }
+    [[ -s $f ]] || { log ERROR "ground_truth fail on $f"; return 1; }
   done
   # (In per-app: before bundle, check Gemfile etc.)
 
