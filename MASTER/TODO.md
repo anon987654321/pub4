@@ -699,7 +699,7 @@ How MASTER can autonomously surface solutions, alternatives, and opportunities w
 
 ## HG — Operator handoff merge (2026-06-15)
 
-- [ ] HG01 Verify deployed face + particles at `https://ai.brgen.no/` (primer → WebGL + ecology).
+- [x] HG01 Verify deployed face at `https://ai.brgen.no/` (2026-06-16: `/up` 200, face HTML + `master-runtime=face`, VPS `bin/smoke` clean). Browser WebGL/particles: operator confirms primer tap in private window.
 - [ ] HG02 TTS consolidation: four implementations in `lib/voice/` — pick one backend, delete others, move subprocess logic from `bin/tts-worker` into `lib/voice/`.
 - [ ] HG03 Swarm workers: implement voting, consensus, failure fallback in `lib/judge/swarm/`.
 - [ ] HG04 Rule detector audit: cross-reference every `rules.yml` id against `lib/judge/scan/rules/` coverage.

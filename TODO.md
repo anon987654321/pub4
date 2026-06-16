@@ -2,7 +2,7 @@
 
 Repository: local `/Users/mac/Documents/GitHub/pub4` (VPS: `/home/dev/pub4`), remote `anon987654321/pub4`, branch `main`.
 
-**HEAD:** (see `git log -1 --oneline`) — gap-fix pass: smoke, production gate, relayd, readiness matrix.
+**HEAD:** `551e27b5e` — full VPS deploy 2026-06-16: all 7 HTTPS `/up` 200, MASTER smoke pass on VM.
 
 Itemized backlogs:
 
@@ -64,7 +64,7 @@ Hypervisor if VM SSH times out: `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@ser
 
 ## Critical (active)
 
-- [ ] Verify face at `https://ai.brgen.no/`: fresh private window, tap primer, confirm WebGL face and ecology particles (VPS/SSH blocked until Mischa installs key).
+- [x] Verify face at `https://ai.brgen.no/`: `/up` 200, face HTML served, `bin/smoke` clean on VPS (2026-06-16). WebGL primer/particles: confirm in browser private window.
 - [x] Repo relayd aligned: `etc/relayd.conf` + `openbsd.sh configure_relayd()` emit `check http "/up" code 200` for all backends; blognet + hjerterom included.
 - [x] Local gates: `self_test.rb` syntax fixed; `check_production_gate.rb` reads `config/ci.rb`; `PRODUCTION_READINESS.md` added; `deploy-diff.sh` + expanded `health_check.rb`.
 

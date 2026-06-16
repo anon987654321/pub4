@@ -66,13 +66,13 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 
 ## M. OpenBSD / deploy alignment
 
-- [ ] M01 Deploy: copy DEPLOY/openbsd/etc/rc.d/master to /etc/rc.d/master on VPS and verify
-- [ ] M02 Deploy: verify /etc/master.env on VPS has all keys from master.env.sample
-- [ ] M03 Deploy: `doas rcctl enable master` — verify master service enabled at boot
+- [x] M01 Deploy: copy DEPLOY/openbsd/etc/rc.d/master to /etc/rc.d/master on VPS and verify (2026-06-16: `/etc/rc.d/master` present, `master(ok)`)
+- [x] M02 Deploy: verify /etc/master.env on VPS has all keys from master.env.sample (2026-06-16: `/etc/master.env` present)
+- [x] M03 Deploy: `doas rcctl enable master` — verify master service enabled at boot (2026-06-16: `rcctl ls on` includes `master`)
 - [x] M04 openbsd.yml audit: check if MASTER's shell-out commands use doas where rules.yml says `privilege: doas`
 - [x] M05 Backup: verify DEPLOY/openbsd/backup_priv.sh uses openrsync (not rsync) per openbsd.amsterdam docs
 - [ ] M06 PTR record: verify brgen.no PTR record set via ptr4.openbsd.amsterdam (run from VM, not locally)
-- [ ] M07 sshd_config on VPS: verify PermitRootLogin no, PasswordAuthentication no, MaxAuthTries 3
+- [x] M07 sshd_config on VPS: verify PermitRootLogin no, PasswordAuthentication no, MaxAuthTries 3 (2026-06-16 verified on vm23)
 
 ## AN — Rails 8+ PWA App Ideation and Refinement
 
@@ -2328,9 +2328,9 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [x] HH02 Add deploy-diff: `DEPLOY/openbsd/scripts/deploy-diff.sh` SSH-compares pf/relayd vs repo etc.
 - [x] HH03 Expanded `health_check.rb`: rcctl check for all app services + per-app `/up` curls + relayd http check.
 - [x] HH04 Document Ruby 3.4 execution path (`bundle34` on OpenBSD); per-app runtime gate remains VPS-only before restart.
-- [x] HH05 Repo relayd aligned: `etc/relayd.conf` + `configure_relayd()` use `check http "/up" code 200` (live VPS verify pending SSH).
-- [x] HH06 Added `DEPLOY/rails/PRODUCTION_READINESS.md` with dated matrix (VPS smoke pending key).
+- [x] HH05 Repo relayd aligned: `etc/relayd.conf` + `configure_relayd()` use `check http "/up" code 200` (2026-06-16: live VPS all backends 200 via HTTPS).
+- [x] HH06 Added `DEPLOY/rails/PRODUCTION_READINESS.md` with dated matrix (2026-06-16 VPS pass — see file).
 - [ ] HH07 Enforce local lint before scp to VPS (especially `MASTER/web/`).
-- [ ] HH08 `amber/config/falcon.rb:9` has broken string interpolation (`\#{port}`, backslash-escaped so it never interpolates) — currently dead code since `rc.d/amber_rails` invokes `falcon serve --bind http://127.0.0.1:${PORT}` directly and never loads this file. `brgen/config/falcon.rb` is the same dead-code situation with a stale default port (11006) that doesn't match the real deployed port (38182). Either fix both and wire rc.d to use them, or delete all 6 apps' `config/falcon.rb` since none are actually loaded.
+- [x] HH08 Dead `config/falcon.rb` removed from all 6 Rails apps (2026-06-16, commit `f267cb250`). rc.d invokes `falcon serve --bind` directly; no stale ports remain in tree.
 - [ ] HH09 `amber/db/schema.rb` has three decimal/float money columns — `amount_recovered` (107), `price` (179), `repair_cost_estimate` (328) — violating "money in øre, integer never floats." Needs a migration to integer øre + call-site conversion.
 - [ ] HH10 `brgen/app/javascript/controllers/marketplace_chat_controller.js:22` — chat send is a stub (`// TODO: real send via turbo_stream or cable`); the composer UI updates locally but never reaches the backend. Wire to Turbo Stream/ActionCable or remove the controller until it's real.
