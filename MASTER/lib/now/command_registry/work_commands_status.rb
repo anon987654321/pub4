@@ -1,0 +1,162 @@
+# frozen_string_literal: true
+
+require "open3"
+require_relative "../../trace/event_log"
+require_relative "formatter"
+require_relative "../resync_service"
+require_relative "../fix_preview_report"
+
+module Master
+  module Now
+    module CommandRegistry
+      module_function
+
+      # /status — one-frame health panel. Replaces seven probing tool calls.
+      def dispatch_status(root:, fix_loop:, bus:, git: Reach::GitOperations.new(File.expand_path("..", root)), ctx: nil)
+        ahead, behind = git.ahead_behind
+        head = git.head || "?"
+        dirty = git.dirty?(".")
+        svc = service_status
+        bg = fix_loop&.background_alive? ? "running" : "stopped"
+        af = ENV["MASTER_AUTOFIX"] == "1" ? "on" : "off"
+        bndl = bundle_status(File.expand_path("..", root))
+        evts = recent_events(root, 5)
+        branch = git.branch || "?"
+        lines = [
+          "status",
+          "service master/#{svc[:state]} #{svc[:detail]}",
+          "git     #{branch}@#{head} ahead=#{ahead} behind=#{behind} #{dirty ? "dirty" : "clean"}",
+          "fix     bg=#{bg} autofix=#{af}",
+          "bundle  #{bndl}",
+          "events  (last #{evts.size})"
+        ]
+        evts.each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
+        lines.join("\n")
+      rescue StandardError => e
+        "status: #{e.message}"
+      end
+
+      def service_status
+        out, _, st = Open3.capture3("/usr/sbin/rcctl", "check", "master")
+        { state: st.success? ? "ok" : "down", detail: out.strip }
+      rescue Errno::ENOENT
+        { state: "n/a", detail: "rcctl absent — not OpenBSD" }
+      rescue StandardError => e
+        { state: "?", detail: "rcctl err: #{e.class}: #{e.message[0, 60]}" }
+      end
+
+      def bundle_ok?(dir)
+        out, = Open3.capture2e("bundle34", "check", chdir: dir)
+        out.include?("dependencies are satisfied")
+      end
+
+      def bundle_status(repo)
+        mas_ok = bundle_ok?(File.join(repo, "MASTER"))
+        web_ok = bundle_ok?(File.join(repo, "MASTER/web"))
+        mas_ok && web_ok ? "ok (MASTER+web satisfied)" : "drift — run bundle install"
+      rescue StandardError => e
+        "unknown (#{e.class})"
+      end
+
+      def recent_events(root, n)
+        now = Time.now.utc
+        Trace::EventLog.new(root: root).recent(n).map { |rec|
+          ts = (Time.parse(rec["timestamp"]) rescue now)
+          secs = (now - ts).to_i.abs
+          ago = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
+          pay = rec["payload"]
+          sum = pay.is_a?(Hash) ? pay.first(3).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
+          { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
+        }.compact
+      rescue StandardError
+        []
+      end
+
+      # /resync — divergence repair: tag, fetch, reset, bundle, restart.
+      def dispatch_resync(root:, fix_loop:, git:, ctx: nil)
+        ResyncService.new(root: root, fix_loop: fix_loop, git: git).call(dry_run: arg_for(ctx).include?("--dry-run"))
+      end
+
+      # /tail [N] [pattern] — last N events matching pattern. Default N=20.
+      def dispatch_tail(root:, ctx: nil)
+        arg = arg_for(ctx)
+        n_arg, pattern = arg.split(/\s+/, 2)
+        n = n_arg.to_i.positive? ? n_arg.to_i : 20
+        records = Trace::EventLog.new(root: root).tail(n, pattern: pattern)
+        return "tail: no events" if records.empty?
+
+        records.map { |rec|
+          ts = rec["timestamp"].to_s.sub(/\..+/, "").sub("T", " ")
+          "#{ts} #{rec["event"].ljust(28)} #{format_payload(rec["payload"])}"
+        }.compact.join("\n")
+      rescue StandardError => e
+        "tail: #{e.message}"
+      end
+
+      def format_payload(pay)
+        return pay.to_s[0, 100] unless pay.is_a?(Hash)
+
+        Formatter.key_value_payload(pay)[0, 100]
+      end
+
+      def dispatch_fix(fix_loop:, root:, scanner: nil, ctx: nil, arg: nil)
+        arg = arg || arg_for(ctx)
+        sub, rest = arg.split(/\s+/, 2)
+        case sub
+        when "--dry-run"
+          result = fix_loop.preview(expand_or_root(rest.to_s.strip, root))
+          return "fix dry-run: #{result.message}" unless result.ok?
+          FixPreviewReport.new(result.value!).render
+        when "loop"
+          "fix loop: use /watch on for background watching"
+        when "stop"
+          "fix stop: use /watch off for background watching"
+        when "preview"
+          result = fix_loop.preview(expand_or_root(rest.to_s.strip, root))
+          return "fix preview: #{result.message}" unless result.ok?
+          FixPreviewReport.new(result.value!).render
+        else
+          target = expand_or_root(arg, root)
+          prescan = anti_sprawl_prescan(scanner: scanner, target: target, root: root)
+          result = fix_loop.run(target)
+          output = result.ok? ? result.value! : fix_failure_with_alternatives(result.message, target)
+          [prescan, output].reject(&:empty?).join("\n")
+        end
+      end
+
+      def anti_sprawl_prescan(scanner:, target:, root:)
+        paths = prescan_paths(target)
+        return "" if paths.empty?
+
+        pairs = Master::Judge::Scan::CrossFileAnalysis.new(root: root).call(paths)
+        findings = pairs.flat_map { |_path, result| Master::Result.wrap(result).value_or([]) }
+        return "Checking for side effects...\nprescan: clean. Moving on." if findings.empty?
+
+        lines = ["Checking for side effects...", "prescan: #{findings.size} cross-file risk(s) before fix"]
+        findings.first(8).each { |finding| lines << "  #{finding[:rule]}: #{finding[:message]}" }
+        lines.join("\n")
+      rescue StandardError => e
+        scanner&.instance_variable_get(:@bus)&.publish("fix:prescan_error", path: target, error: e.message)
+        "prescan: unavailable (#{e.class})"
+      end
+
+      def prescan_paths(target)
+        path = target.to_s.empty? ? "." : target
+        return [path] if File.file?(path)
+        return [] unless File.directory?(path)
+
+        Dir.glob(File.join(path, Master::Judge::Scan::Scanner::SCAN_GLOB)).select { |entry| File.file?(entry) }
+      end
+
+      def fix_failure_with_alternatives(message, target)
+        [
+          "fix: #{message}",
+          "alternatives:",
+          "  1. /fix --dry-run #{target} to inspect intended changes without writing",
+          "  2. /scan #{target} to isolate the highest-confidence findings first",
+          "  3. /review #{target} to get a council critique before retrying the repair"
+        ].join("\n")
+      end
+    end
+  end
+end

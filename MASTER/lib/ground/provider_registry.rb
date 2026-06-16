@@ -43,14 +43,16 @@ module Master
       end
 
       def available
-        providers.select { |_name, cfg| Array(cfg[:env]).empty? || cfg[:env].any? { |key| ENV[key].to_s != "" } }
+        providers.select do |_name, provider_config|
+          Array(provider_config[:env]).empty? || provider_config[:env].any? { |key| ENV[key].to_s != "" }
+        end
       end
 
       def choose(task: :coding)
         candidates = available
-        exact = candidates.find { |_name, cfg| cfg[:strengths].include?(task.to_sym) }
-        name, cfg = exact || candidates.first || [:local, providers[:local]]
-        { provider: name, model: cfg[:default_model], strengths: cfg[:strengths] }
+        exact = candidates.find { |_name, provider_config| provider_config[:strengths].include?(task.to_sym) }
+        name, provider_config = exact || candidates.first || [:local, providers[:local]]
+        { provider: name, model: provider_config[:default_model], strengths: provider_config[:strengths] }
       end
 
       def brief
@@ -61,8 +63,8 @@ module Master
         path = File.join(Master::DATA, "providers.yml")
         return DEFAULTS unless File.exist?(path)
         Master.load_yaml(path).transform_keys(&:to_sym).transform_values do |v|
-          v.transform_keys(&:to_sym).tap do |cfg|
-            cfg[:strengths] = Array(cfg[:strengths]).map(&:to_sym)
+          v.transform_keys(&:to_sym).tap do |provider_config|
+            provider_config[:strengths] = Array(provider_config[:strengths]).map(&:to_sym)
           end
         end
       rescue StandardError => e

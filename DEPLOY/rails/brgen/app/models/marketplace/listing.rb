@@ -28,6 +28,8 @@ class Marketplace::Listing < ApplicationRecord
 
   before_validation { self.status ||= "active"; self.currency ||= "NOK" }
 
+  after_create_commit { broadcast_append_later_to "marketplace:listings", partial: "marketplace/listings/listing", locals: { listing: self } }
+
   scope :active,   -> { where(status: "active") }
   scope :recent,   -> { order(created_at: :desc) }
   scope :popular,  -> { order(views_count: :desc) }

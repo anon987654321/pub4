@@ -107,8 +107,10 @@ module Master
         warn "#{METRICS_PREFIX}: #{metric} #{value} exceeds #{threshold}"
       end
 
-      def average(arr)
-        return 0.0 if arr.empty?
+      def average(values)
+        return 0.0 if values.empty?
+
+        values.sum.to_f / values.size
       end
 
       def append(entry)

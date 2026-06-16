@@ -71,8 +71,8 @@ module Master
             begin
               reflex = Trace::ReflexionLedger.new(event_bus: @bus, root: (@rules&.root || Dir.pwd)).recent(3)
               context = [context, "Recent reflexions for rule adherence: #{reflex.join(' | ')}"].compact.join("\n") if reflex.any?
-            rescue => e
-              # swallow per rules
+            rescue StandardError => e
+              Master::Ground::Swallow.log(e, context: "deliberation.reflexion")
             end
           end
           return Master::Result.err("council: no personas configured", category: :validation) if active.empty?

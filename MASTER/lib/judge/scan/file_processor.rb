@@ -110,7 +110,7 @@ module Master
           findings = []
           findings.concat(run_rule_pass(pass: :lexical, rules: lexical, code: code, ast: ast, path: path))
           findings.concat(run_rule_pass(pass: :structural, rules: structural, code: code, ast: ast, path: path))
-          return findings if lexical_error?(findings)
+          return findings if findings.empty? || lexical_error?(findings)
 
           findings.concat(run_rule_pass(pass: :semantic, rules: semantic, code: code, ast: ast, path: path))
         end

@@ -14,6 +14,8 @@ class Comment < ApplicationRecord
 
   validates :content, presence: true, length: { minimum: 1, maximum: 10000 }
 
+  after_create_commit -> { broadcast_append_to [commentable, "comments"], partial: "comments/comment", locals: { comment: self } }
+
   scope :best,          -> { left_joins(:votes).group(:id).order("SUM(COALESCE(votes.value, 0)) DESC") }
   scope :top,           -> { best }
   scope :new_first,     -> { order(created_at: :desc) }
