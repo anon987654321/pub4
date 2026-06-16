@@ -2225,11 +2225,11 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] CY08 VM: verify TLS cert auto-renewal via `acme-client` cron — check `daily.local`
 - [ ] CY09 VM: add `rcctl ls` audit to `daily.local` — flag any unexpected enabled services
 - [ ] CY10 VM: add outbound connection allow-list in `pf.conf` — block unexpected egress (except API endpoints)
-- [ ] CY11 VM: relayd has no self-supervision — a SIGHUP/reload can crash it (`pfe: pfe_dispatch_relay: invalid relay id`), leaving every HTTPS endpoint connection-refused with no alert until someone notices (happened 2026-06-16). Add an rc.d/cron watchdog: `rcctl check relayd` every minute, auto `rcctl restart relayd` + alert on failure. Existing health checks (AQ1302/AV109/CC11/12/CH02/HH03) only cover relayd's *backend* targets, not relayd's own process.
+- [x] CY11 VM: `usr/local/bin/relayd-watchdog` — `rcctl check relayd` every minute via root cron, auto-restart + syslog alert (2026-06-16).
 - [ ] CY12 VM: NSD zone edits land on the unsigned `.zone` file while a stale `.zone.signed` + DNSSEC keys (`K*.key/.private/.ds`) sit alongside it — no automated re-signing step. Wire `ldns-signzone` into the zone-deploy path so any SOA-serial bump re-signs before `rcctl reload nsd`, or confirm DNSSEC is intentionally unused and remove the stale `.signed`/key files.
-- [ ] CY13 VM: acme-client SAN lists can silently drift from relayd.conf's routed subdomains — `messenger.brgen.no` ran a fully working relayd route for an unknown period with a cert missing it from the SAN list (`curl -v` showed "subjectAltName does not match"). Add a check (cron or pre-deploy) diffing relayd.conf hostnames against each domain's acme-client.conf `alternative names`, fail loudly on mismatch. (AV401 covers renewal cron only, not this cross-check.)
-- [ ] CY14 VM: nsd.conf can silently omit zone files present on disk — found only 1 of 61 `/var/nsd/zones/master/*.zone` files registered as a `zone:` block (2026-06-16). Add a drift-checker (cron or deploy-time) listing zone files with no matching nsd.conf entry.
-- [ ] CY15 Rails rc.d: `daemon_user`/`APP_DIR` can point at the wrong user/path (was `dev`/`/home/dev/pub4/...` instead of per-app `/home/<app>/app`), which silently loads the dev/test Gemfile group and crashes with `Bundler::GemNotFound` in production. Add a deploy-time assertion that each `/etc/rc.d/<app>` daemon_user/APP_DIR matches the app's actual deploy user and deploy_root before `rcctl start`.
+- [x] CY13 VM: `usr/local/bin/config-drift-check` diffs relayd Host headers vs acme-client SANs; runs from `daily.local` + deploy (2026-06-16).
+- [x] CY14 VM: `config-drift-check` lists zone files missing from `nsd.conf` (2026-06-16).
+- [x] CY15 Rails rc.d: `assert_rcd_identity` in `@shared_functions.sh` `install_rcd` — verifies `daemon_user` + `APP_DIR` before enable (2026-06-16).
 
 ## DA: brgen Dating — Hyperlocal Matching
 
@@ -2332,5 +2332,5 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [x] HH06 Added `DEPLOY/rails/PRODUCTION_READINESS.md` with dated matrix (2026-06-16 VPS pass — see file).
 - [ ] HH07 Enforce local lint before scp to VPS (especially `MASTER/web/`).
 - [x] HH08 Dead `config/falcon.rb` removed from all 6 Rails apps (2026-06-16, commit `f267cb250`). rc.d invokes `falcon serve --bind` directly; no stale ports remain in tree.
-- [ ] HH09 `amber/db/schema.rb` has three decimal/float money columns — `amount_recovered` (107), `price` (179), `repair_cost_estimate` (328) — violating "money in øre, integer never floats." Needs a migration to integer øre + call-site conversion.
-- [ ] HH10 `brgen/app/javascript/controllers/marketplace_chat_controller.js:22` — chat send is a stub (`// TODO: real send via turbo_stream or cable`); the composer UI updates locally but never reaches the backend. Wire to Turbo Stream/ActionCable or remove the controller until it's real.
+- [x] HH09 Money in øre: migration `20260616040000_convert_money_to_ore` + `MoneyInOre` concern; `price_cents`, `amount_recovered_cents`, `repair_cost_estimate_cents`, `resale_value_cents` (2026-06-16).
+- [x] HH10 Marketplace order chat: `orders#show` + `OrderPolicy` + Turbo Stream form via `conversation_messages_path`; stub Stimulus controller removed (2026-06-16).

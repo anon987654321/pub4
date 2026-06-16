@@ -45,9 +45,29 @@ if File.file?("/etc/relayd.conf")
   end
 end
 
-certs = %w[/etc/ssl/brgen.no.fullchain.pem /etc/ssl/amber.brgen.no.fullchain.pem /etc/ssl/bsdports.org.fullchain.pem]
+certs = %w[
+  /etc/ssl/brgen.no.fullchain.pem
+  /etc/ssl/amber.brgen.no.fullchain.pem
+  /etc/ssl/bsdports.org.fullchain.pem
+  /etc/ssl/baibl.brgen.no.crt
+  /etc/ssl/blognet.brgen.no.crt
+]
 certs.each do |cert|
   failures << "cert missing: #{cert}" unless File.exist?(cert)
+end
+
+https_checks = {
+  "ai.brgen.no" => "https://ai.brgen.no/up",
+  "brgen.no" => "https://brgen.no/up",
+  "amber.brgen.no" => "https://amber.brgen.no/up",
+  "baibl.brgen.no" => "https://baibl.brgen.no/up",
+  "blognet.brgen.no" => "https://blognet.brgen.no/up",
+  "hjerterom.brgen.no" => "https://hjerterom.brgen.no/up",
+  "bsdports.org" => "https://bsdports.org/up"
+}
+https_checks.each do |name, url|
+  ok, out = run("/usr/local/bin/curl", "-fsS", "--max-time", "10", url)
+  failures << "#{name} https: #{out.empty? ? "no response" : out}" unless ok
 end
 
 if failures.any?

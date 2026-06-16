@@ -137,6 +137,7 @@ Rails.application.routes.draw do
         resource :favorite, only: %i[create destroy]
         resources :orders, only: %i[create update]
       end
+      resources :orders, only: %i[show update]
 
       # Amazon-like cart (pending orders act as cart items for the buyer)
       resource :cart, only: :show, controller: "carts"

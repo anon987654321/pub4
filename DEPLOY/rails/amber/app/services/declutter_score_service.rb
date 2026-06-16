@@ -65,8 +65,8 @@ class DeclutterScoreService
   end
 
   def cost_pressure
-    return 0.0 unless @item.price.present?
-    return 0.8 if @item.times_worn.to_i.zero? && @item.price.to_f > 500
+    return 0.0 unless @item.price_cents.present?
+    return 0.8 if @item.times_worn.to_i.zero? && @item.price_cents > 50_000
     return 0.5 if @item.cost_per_wear.to_f > 250
 
     0.1
@@ -75,7 +75,7 @@ class DeclutterScoreService
   def repair_pressure
     return 0.0 unless @item.lifecycle_state.in?(%w[repair clean_needed tailor])
     estimate = @item.sustainability_metric&.repair_cost_estimate.to_f
-    price = @item.price.to_f
+    price = @item.price_cents.to_i / 100.0
     return 0.5 if price.zero?
 
     [estimate / price, 1.0].min
@@ -106,7 +106,7 @@ class DeclutterScoreService
   end
 
   def resale_candidate?
-    @item.price.to_f >= 300 && @item.photos.attached? && total_release_score > 0.45
+    @item.price_cents.to_i >= 30_000 && @item.photos.attached? && total_release_score > 0.45
   end
 
   def donation_candidate?

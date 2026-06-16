@@ -3,6 +3,9 @@
 require "tempfile"
 
 class Item < ApplicationRecord
+  include MoneyInOre
+  money_reader :price
+
   # Engine-ize: pull shared behavior via pub4-shared (Gemfile path). Use Shared.concern for lazy load.
   include (defined?(Shared) ? Shared.concern(:Reactable) : Module.new) rescue nil
   include (defined?(Shared) ? Shared.concern(:Notifiable) : Module.new) rescue nil
@@ -20,7 +23,7 @@ class Item < ApplicationRecord
 
   validates :title, :category, presence: true
   validates :times_worn, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
-  validates :price, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :price_cents, numericality: { greater_than_or_equal_to: 0, only_integer: true }, allow_nil: true
 
   broadcasts_refreshes
 
@@ -47,9 +50,9 @@ class Item < ApplicationRecord
   LIFECYCLE_STATES = %w[active repair clean_needed tailor declutter_box sentimental_archive seasonal_archive resale donate sold donated recycled released].freeze
 
   def cost_per_wear
-    return nil unless price.present? && times_worn.to_i > 0
+    return nil unless price_cents.present? && times_worn.to_i.positive?
 
-    (price.to_f / times_worn).round(2)
+    (price_cents / 100.0 / times_worn).round(2)
   end
 
   def value_label

@@ -41,13 +41,14 @@ gem "ruby-vips"
 gem "futurism"
 gem "ruby_llm"
 
+gem "faker", require: false
+
 group :development, :test do
   gem "ferrum"
 
   gem "brakeman"
   gem "bundler-audit"
   gem "rubocop-rails-omakase"
-  gem "faker"
 end
 # Engine-ize spike: shared as local path gem (relative from rails/brgen)
 gem 'pub4-shared', path: '../shared'

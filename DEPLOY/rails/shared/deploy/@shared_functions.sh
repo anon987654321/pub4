@@ -240,8 +240,26 @@ install_rcd() {
     return 0
   fi
   ${_PRIV} install -o root -g wheel -m 0555 "$rcd_src" "$rcd_dst"
+  assert_rcd_identity "$svc" "$app_name" "$app_dir"
   ${_PRIV} rcctl enable "$svc"
   log_ok "rc.d ${svc} installed and enabled"
+}
+
+# assert_rcd_identity — CY15: rc.d daemon_user and APP_DIR must match deploy target.
+assert_rcd_identity() {
+  local svc=$1 expected_user=$2 expected_dir=$3
+  local rcd="/etc/rc.d/${svc}"
+  [[ -f $rcd ]] || return 0
+  local body; body=$(<"$rcd")
+  [[ $body == *"daemon_user=\"${expected_user}\""* ]] || {
+    log_err "rc.d ${svc}: daemon_user must be ${expected_user}"
+    return 1
+  }
+  [[ $body == *"APP_DIR=${expected_dir}"* ]] || {
+    log_err "rc.d ${svc}: APP_DIR must be ${expected_dir}"
+    return 1
+  }
+  log_ok "rc.d ${svc} identity ok (${expected_user} → ${expected_dir})"
 }
 
 # relayd_add_relay DOMAIN PORT

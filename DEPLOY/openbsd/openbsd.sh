@@ -142,6 +142,17 @@ sync_openbsd_configs() {
     done
   fi
 
+  if [[ -x /usr/local/bin/relayd-watchdog ]]; then
+    typeset root_cron=/tmp/root_crontab.$$
+    crontab -l 2>/dev/null > $root_cron || :
+    if ! grep -q relayd-watchdog $root_cron 2>/dev/null; then
+      print -r -- "* * * * * /usr/local/bin/relayd-watchdog" >> $root_cron
+      crontab $root_cron
+      log INFO "installed root cron: relayd-watchdog"
+    fi
+    rm -f $root_cron
+  fi
+
   if [[ -f $src/etc/.zshrc ]]; then
     install -d -o dev -g dev -m 700 /home/dev 2>/dev/null || true
     cp "$src/etc/.zshrc" /home/dev/.zshrc

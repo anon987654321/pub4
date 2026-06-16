@@ -17,14 +17,17 @@ class CalculateSustainabilityJob < ApplicationJob
   private
 
   def estimated_resale_value(item)
-    return nil unless item.price.present?
+    return nil unless item.price_cents.present?
+
+    price = item.price_cents / 100.0
     wear_discount = [item.times_worn.to_i * 0.015, 0.75].min
-    (item.price * (0.65 - wear_discount)).clamp(0, item.price).round(2)
+    (price * (0.65 - wear_discount)).clamp(0, price).round(2)
   end
 
   def estimated_repair_cost(item)
-    return nil unless item.price.present?
-    (item.price * 0.12).round(2)
+    return nil unless item.price_cents.present?
+
+    (item.price_cents / 100.0 * 0.12).round(2)
   end
 
   def environmental_score(item)

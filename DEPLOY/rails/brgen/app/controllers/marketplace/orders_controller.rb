@@ -1,7 +1,17 @@
 # frozen_string_literal: true
 
 class Marketplace::OrdersController < Marketplace::BaseController
-  before_action :set_listing
+  before_action :require_user_session
+  before_action :set_listing, only: :create
+  before_action :set_order, only: %i[show update]
+
+  def show
+    authorize @order
+    other = @order.buyer == Current.user ? @order.seller : @order.buyer
+    @conversation = Conversation.find_or_create_direct(Current.user, other)
+    @messages = @conversation.messages.order(:created_at)
+    @message = Message.new
+  end
 
   def create
     quantity = params[:quantity].to_i.positive? ? params[:quantity].to_i : 1
@@ -22,15 +32,17 @@ class Marketplace::OrdersController < Marketplace::BaseController
   end
 
   def update
-    @order = Marketplace::Order.find(params[:id])
+    authorize @order
     if @order.seller == Current.user
       @order.accept! if params[:accept]
       @order.decline! if params[:decline]
     end
-    redirect_to marketplace_listing_path(@listing)
+    redirect_to marketplace_order_path(@order)
   end
 
   private
 
   def set_listing = (@listing = Marketplace::Listing.find(params[:listing_id]))
+
+  def set_order = (@order = Marketplace::Order.find(params[:id]))
 end

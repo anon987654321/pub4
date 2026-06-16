@@ -1,0 +1,10 @@
+#!/bin/sh
+# relayd-watchdog — restart relayd if rcctl check fails (CY11).
+# Cron: * * * * * /usr/local/bin/relayd-watchdog
+
+if /usr/sbin/rcctl check relayd 2>&1 | grep -q 'relayd(ok)'; then
+  exit 0
+fi
+
+logger -t relayd-watchdog "relayd unhealthy — restarting"
+/usr/sbin/rcctl restart relayd 2>&1 | logger -t relayd-watchdog

@@ -27,7 +27,7 @@ class Outfit < ApplicationRecord
   end
 
   def estimated_value
-    items.sum { |item| item.price.to_f }
+    items.sum { |item| item.price_cents.to_i } / 100.0
   end
 
   def reject_blank_outfit_item(attrs)

@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class DeclutterOutcome < ApplicationRecord
+  include MoneyInOre
+  money_reader :amount_recovered
+
   belongs_to :user
   belongs_to :item
 
@@ -8,7 +11,7 @@ class DeclutterOutcome < ApplicationRecord
 
   validates :action, inclusion: { in: ACTIONS }
   validates :notes, length: { maximum: 1_000 }
-  validates :amount_recovered, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :amount_recovered_cents, numericality: { greater_than_or_equal_to: 0, only_integer: true }, allow_nil: true
 
   before_validation :assign_user
   after_create :sync_item_lifecycle

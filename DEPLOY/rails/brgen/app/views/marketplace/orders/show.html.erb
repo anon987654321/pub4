@@ -1,8 +1,9 @@
 <% content_for :title, "Order ##{@order.id}" %>
+<%= turbo_stream_from @conversation if @conversation %>
 
 <div class="page-header" role="banner" aria-label="Order details header">
   <h1>Order #<%= @order.id %></h1>
-  <p class="dim">For <%= link_to @order.listing.name, marketplace_listing_path(@order.listing) %></p>
+  <p class="dim">For <%= link_to @order.listing.title, marketplace_listing_path(@order.listing) %></p>
 </div>
 
 <div class="order-meta">
@@ -23,15 +24,19 @@
   </div>
 <% end %>
 
-<% if @order.buyer == Current.user || @order.seller == Current.user %>
+<% if @conversation %>
   <h3>Chat with <%= @order.buyer == Current.user ? @order.seller.display_name : @order.buyer.display_name %></h3>
-  <div id="chat-log" data-controller="marketplace-chat" data-marketplace-chat-target="log">
-    <!-- messages would stream here -->
-  </div>
-  <form data-action="submit->marketplace-chat#send">
-    <input type="text" data-marketplace-chat-target="input" placeholder="Type message...">
-    <button type="submit">Send</button>
-  </form>
+  <ul id="messages" role="list" aria-label="Order messages">
+    <% @messages.each do |m| %>
+      <%= render "messages/message", message: m %>
+    <% end %>
+  </ul>
+
+  <%= form_with model: @message, url: conversation_messages_path(@conversation),
+                id: "new_message",
+                data: { turbo: true } do |f| %>
+    <p><%= f.text_area :content, rows: 3, placeholder: "Type message...", data: { controller: "char-counter", "char-counter-max-value": 500 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
+    <%= f.hidden_field :message_type, value: "text" %>
+    <p><%= f.submit "Send", class: "btn" %></p>
+  <% end %>
 <% end %>
-
-
