@@ -66,15 +66,60 @@ end
 
 module Zipper
   IMAGE_GLOB = "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}"
+  RECOMMENDED_MIN = 12
+  RECOMMENDED_MAX = 18
 
-  def self.zip(photos_dir, out_path)
+  def self.collect_images(photos_dir)
+    Dir.glob(File.join(photos_dir, IMAGE_GLOB))
+      .select { |path| File.file?(path) }
+      .uniq { |path| File.expand_path(path) }
+      .sort
+  end
+
+  # Replicate ostris/flux-dev-lora-trainer expects caption filenames, e.g.
+  # a_photo_of_TOK.png — not raw camera rolls (1.jpg, IMG_0423.heic).
+  def self.captioned_copies(images, trigger_word, staging_dir)
+    FileUtils.mkdir_p(staging_dir)
+    images.each_with_index.map do |src, index|
+      ext = File.extname(src).downcase
+      ext = ".jpg" if ext.empty?
+      caption = format("a_photo_of_%s_%02d%s", trigger_word, index + 1, ext)
+      dest = File.join(staging_dir, caption)
+      FileUtils.cp(src, dest)
+      dest
+    end
+  end
+
+  def self.zip(photos_dir, out_path, trigger_word: "subjectxyz")
     ensure_zip_binary
-    images = Dir.glob(File.join(photos_dir, IMAGE_GLOB))
+    images = collect_images(photos_dir)
     abort "[repligen] no images found in #{photos_dir}" if images.empty?
 
+    staging_dir = File.join(File.dirname(out_path), "repligen_staging_#{Process.pid}")
+    FileUtils.rm_rf(staging_dir)
+    captioned = captioned_copies(images, trigger_word, staging_dir)
+
     File.delete(out_path) if File.exist?(out_path)
-    system("zip", "-jq", out_path, *images) || abort("[repligen] zip failed")
+    system("zip", "-jq", out_path, *captioned) || abort("[repligen] zip failed")
+    FileUtils.rm_rf(staging_dir)
     out_path
+  end
+
+  def self.validate(photos_dir, trigger_word: "subjectxyz")
+    images = collect_images(photos_dir)
+    issues = []
+    warnings = []
+
+    issues << "no images in #{photos_dir}" if images.empty?
+    warnings << "only #{images.size} images (Replicate recommends #{RECOMMENDED_MIN}-#{RECOMMENDED_MAX} for character LoRAs)" if images.size.positive? && images.size < RECOMMENDED_MIN
+    warnings << "#{images.size} images exceeds typical #{RECOMMENDED_MAX}-image sweet spot" if images.size > RECOMMENDED_MAX
+
+    images.each do |path|
+      size = File.size(path)
+      warnings << "#{File.basename(path)} is only #{size} bytes — may be too small" if size < 20_000
+    end
+
+    { images: images, issues: issues, warnings: warnings, trigger_word: trigger_word }
   end
 
   def self.ensure_zip_binary
@@ -89,10 +134,28 @@ end
 # ============================================================================
 
 module Config
+  def self.token?
+    !load_token.to_s.strip.empty?
+  rescue StandardError
+    false
+  end
+
   def self.load
-    return ENV["REPLICATE_API_TOKEN"] if ENV["REPLICATE_API_TOKEN"]
-    return load_from_file if File.exist?(CONFIG_PATH)
+    token = load_token.to_s.strip
+    return token unless token.empty?
     fail_with_instructions
+  end
+
+  def self.load_token
+    token = ENV["REPLICATE_API_TOKEN"].to_s.strip
+    return token unless token.empty?
+
+    # VPS master.env and rc.d use REPLICATE_API_KEY; accept either name.
+    token = ENV["REPLICATE_API_KEY"].to_s.strip
+    return token unless token.empty?
+
+    return load_from_file if File.exist?(CONFIG_PATH)
+    nil
   end
 
   def self.save(token)
@@ -618,9 +681,19 @@ end
 
 # Train a LoRA on a folder of plain photos, returning a base image URL generated
 # from the freshly trained weights.
+def print_lora_validation(photos_dir, trigger_word)
+  report = Zipper.validate(photos_dir, trigger_word: trigger_word)
+  puts "\n📋 LoRA dataset check (#{report[:images].size} images, trigger=#{trigger_word})"
+  report[:warnings].each { |w| puts "  ⚠️  #{w}" }
+  report[:issues].each { |i| puts "  ❌ #{i}" }
+  abort "[repligen] dataset not ready" unless report[:issues].empty?
+  report
+end
+
 def train_and_generate_base(api, photos_dir, destination, trigger_word)
-  puts "\n📦 Zipping #{photos_dir}..."
-  zip_path = Zipper.zip(photos_dir, "/tmp/repligen_lora_#{Time.now.to_i}.zip")
+  print_lora_validation(photos_dir, trigger_word)
+  puts "\n📦 Zipping #{photos_dir} (captioned for Replicate)..."
+  zip_path = Zipper.zip(photos_dir, "/tmp/repligen_lora_#{Time.now.to_i}.zip", trigger_word: trigger_word)
 
   puts "☁️  Uploading training images..."
   zip_url = api.upload_zip(zip_path)
@@ -724,6 +797,23 @@ if __FILE__ == $PROGRAM_NAME
       puts "Example: ruby repligen.rb lora_chaos ./my_photos myuser/my-lora subjectxyz"
     end
 
+  when "validate_lora"
+    photos_dir = ARGV[1]
+    trigger_word = ARGV[2] || "subjectxyz"
+    abort "Usage: ruby repligen.rb validate_lora <photos_dir> [trigger_word]" unless photos_dir
+
+    report = Zipper.validate(photos_dir, trigger_word: trigger_word)
+    print_lora_validation(photos_dir, trigger_word)
+    zip_path = "/tmp/repligen_validate_#{Time.now.to_i}.zip"
+    Zipper.zip(photos_dir, zip_path, trigger_word: trigger_word)
+    puts "  ✓ zip dry-run: #{zip_path} (#{File.size(zip_path)} bytes)"
+    if Config.token?
+      puts "  ✓ REPLICATE token present (#{Config.load_token.length} chars)"
+    else
+      puts "  ❌ REPLICATE_API_TOKEN / REPLICATE_API_KEY not set — training will fail until configured"
+    end
+    exit(report[:issues].empty? ? 0 : 1)
+
   when "--help", "-h"
     puts <<~HELP
       Repligen - Replicate.com AI Generation CLI
@@ -735,6 +825,7 @@ if __FILE__ == $PROGRAM_NAME
         ruby repligen.rb stats
         ruby repligen.rb generate black-forest-labs/flux-1.1-pro "pro photo prompt here"
         ruby repligen.rb lora_chaos ./my_photos myuser/my-lora subjectxyz
+        ruby repligen.rb validate_lora ./my_photos sarah
 
       Features:
         - Model discovery & database
