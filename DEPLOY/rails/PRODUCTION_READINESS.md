@@ -2,7 +2,7 @@
 
 Dated pass/fail matrix. **VPS target-host `/up` checks passed 2026-06-16.**
 
-Last updated: **2026-06-16**
+Last updated: **2026-06-16** (health_check ok on vm23 after gap-fix pass)
 
 ## Gate commands
 
@@ -46,7 +46,7 @@ Ports: see `DEPLOY/rails/apps.yml`.
 2. **bin/ci per app**: not run on VPS this pass (1GB VM, long runtime). Run when CPU headroom allows.
 3. **db:seed**: brgen/amber seeds need `faker` in production bundle or guarded `require` in `db/seeds.rb`.
 4. **PTR**: M06 — set via ptr4.openbsd.amsterdam from inside VM.
-5. **pf.conf sync**: fixed `to $ext_if` → `to $brgen_ip` (line 17 syntax error blocked `--sync-configs`).
+5. **MASTER bundle on VPS**: `bundle install` in `MASTER/` needed before strict scan in `--sync-configs` (use `SKIP_MASTER_SCAN=1` until then).
 
 ## Wave 1 (repo runtime — 2026-06-16 VPS verify)
 
