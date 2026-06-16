@@ -2332,5 +2332,46 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [x] HH06 Added `DEPLOY/rails/PRODUCTION_READINESS.md` with dated matrix (2026-06-16 VPS pass — see file).
 - [ ] HH07 Enforce local lint before scp to VPS (especially `MASTER/web/`).
 - [x] HH08 Dead `config/falcon.rb` removed from all 6 Rails apps (2026-06-16, commit `f267cb250`). rc.d invokes `falcon serve --bind` directly; no stale ports remain in tree.
+
+## CK — Canon compliance across Rails apps (2026)
+
+MASTER `rules.yml` gained security, correctness, accessibility, and typography
+rules (see `MASTER/TODO.md` section CG). Apply them to the six apps on OpenBSD.
+brgen is canonical; amber, bsdports, baibl, blognet, hjerterom follow.
+
+Security (Saltzer & Schroeder — map to the OpenBSD + Rails stack):
+- [ ] LEAST_PRIVILEGE — audit `doas.conf`, app user scope, DB grants, token scopes; drop each to task minimum.
+- [ ] FAIL_SAFE_DEFAULTS — verify `pf` default-deny, deny-by-default authorization (Pundit/policy), strong params allow-list (never permit!).
+- [ ] COMPLETE_MEDIATION — re-check authorization per request, not once per session; no cached allow across role changes.
+- [ ] ECONOMY_OF_MECHANISM — keep the auth/session path (AN201 baseline) small enough to read in one sitting; isolate it.
+- [ ] PSYCHOLOGICAL_ACCEPTABILITY — guest support must not push users to weaker auth; secure path stays the easy path.
+
+Correctness (type-driven design — Active Record + form objects):
+- [ ] MAKE_ILLEGAL_STATES_UNREPRESENTABLE — replace string status columns with enums; DB constraints alongside validations (cross-ref BV models).
+- [ ] PARSE_DONT_VALIDATE — parse params once at the boundary into a form object / value type; controllers receive parsed types, not raw params.
+- [ ] POKA_YOKE — service objects reject wrong call order via state, not comments; no two same-typed positional args.
+
+Accessibility (WCAG — extends AO/AR visual work):
+- [ ] WCAG POUR audit per app once the rule lands; contrast ratios against `MAGIC_COLOR`; keyboard operability on all Stimulus components (cross-ref BT).
+
+Typography (Bringhurst — extends AO/AR CSS reference):
+- [ ] MEASURE_OPTIMUM — cap running-text columns at ~66ch (≈33rem); replace wide px max-widths in shared CSS.
+- [ ] EN_DASH_RANGE — en dash for ranges in copy (prices, dates, hours) across landing pages (cross-ref BA).
+- [ ] Run repligen/postpro output through the new Strunk prose rules — active voice, omit qualifiers — for generated copy and commit messages.
+
+Gate:
+- [ ] After wiring (MASTER section CG), run `/scan` over each app; record open counts in the readiness matrix; do not overclaim production readiness.
 - [x] HH09 Money in øre: migration `20260616040000_convert_money_to_ore` + `MoneyInOre` concern; `price_cents`, `amount_recovered_cents`, `repair_cost_estimate_cents`, `resale_value_cents` (2026-06-16).
 - [x] HH10 Marketplace order chat: `orders#show` + `OrderPolicy` + Turbo Stream form via `conversation_messages_path`; stub Stimulus controller removed (2026-06-16).
+
+## BW: Agent-ops borrow targets (from openclaw / opencrabs; mirror of MASTER/TODO BW)
+
+DEPLOY-side items the reference agents make worthwhile. Falcon migration is done
+(HEAD); these extend the self-healing + security posture. [x] = present, [ ] = open.
+
+- [ ] BW-D01 net-policy as pf — express the agent's egress allowlist as OpenBSD pf rules (deny-by-default outbound for the agent user), mirroring openclaw's net-policy package.
+- [ ] BW-D02 doctor migrations for deploy config — every breaking change in openbsd/ ships a `doctor --fix` step; no silent aliases (openclaw crestodian pattern).
+- [ ] BW-D03 self-update with health-check + rollback for deployed services (opencrabs evolve) — gate `rcctl restart` on a health probe, auto-revert on fail.
+- [x] BW-D04 evidence-gate before `rcctl restart` (scan_clean) — already in openbsd.sh pre-apply; keep, and add the BW-D03 health-probe rollback on top.
+- [ ] BW-D05 a2a gateway for multi-app — agent-to-agent channel so brgen subapps and MASTER exchange signals without shared-DB coupling.
+- [ ] BW-D06 secret hygiene at deploy — route prod.rb / env secrets through a leak-proof Secret type (opencrabs SecretString); pre-push `git grep -nE 'sk-|ghp_|BEGIN.*KEY'` gate (pub4 is public; prior SSH-cred leak).

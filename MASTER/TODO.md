@@ -2732,3 +2732,76 @@ Direct grep/read verification, not scan-rule existence — B01-B03 rule implemen
 - BF30 City onboarding: first response acknowledges city from subdomain
 - BF31 Session token: 4-char poetic word (moss/iron/dusk) not hex
 - BF32 Sound logo: 400ms beep shaped as minor third (A4+E5)
+
+## CG — Cross-disciplinary canon and scientific grounding (2026)
+
+Encoded the missing canon into `data/rules.yml` and grounded existing rules in the
+sciences that explain them. Source texts cloned and analysed: Ruby/Rails style
+guides (already vendored), Polished Ruby (Evans), Strunk 1918, Bringhurst,
+Saltzer & Schroeder, Alexander, Grice, Lehman, Sweller, Shannon, Cook.
+
+Landed:
+- [x] `foundations:` block — information theory, cognitive load, Gestalt, software evolution, Grice's cooperative principle; each maps to the laws/rules it grounds.
+- [x] +9 `line` rules — Ruby lexical (snake/Camel/SCREAMING case, numeric underscore, &:proc, block delimiter, no nested ternary) + Bringhurst micro-typography (en-dash ranges, optimum measure).
+- [x] +7 `unit` rules — Strunk Rules 8–18 as scannable prose rules (active voice, positive form, omit qualifiers, parallel form, related words, one topic/paragraph) + Grice cooperative.
+- [x] +12 `codebase` rules — Evans trade-off; Saltzer & Schroeder (least privilege, fail-safe defaults, complete mediation, economy of mechanism, psychological acceptability); make-illegal-states-unrepresentable; parse-don't-validate; poka-yoke; complex-systems-fail; Alexander strong-centers + levels-of-scale.
+- [x] Vendored Strunk 1918 to `knowledge/style_guides/elements-of-style.md` (public domain, beside ruby/rails).
+- [x] Validated: parses, regexes compile, no duplicate ids (201 rules total).
+
+Next:
+- [ ] Wire new `detect_lexical` rules into `lib/judge/scan/rules/` + `infra_helpers.rb` so each runs every scan (currently data-only; see section A).
+- [ ] Wire `detect_semantic` rules into the batched per-file LLM pass.
+- [ ] Decide severities: Ruby lexical rules sit at info/warning; promote to error where the codebase already conforms, to lock the gain.
+- [ ] Conflict lattice — resolve genuine inter-source conflicts (Strunk "omit needless words" vs legal-drafting redundancy; economy-of-mechanism vs complete-mediation) through the Six Laws priority order; flag unresolved pairs. Depends on `rule_deps.yml`.
+- [ ] `prose`/`markdown`/`css` are used as rule `languages` tags but absent from the top-level `languages:` map — add medium definitions or document them as free tags.
+
+Deferred Tier B/C (own pass each, to avoid rule bloat — see chat rationale):
+- [ ] WCAG POUR + contrast ratios — completes ARIA/IMG_ALT/MAGIC_COLOR (large; own pass).
+- [ ] Tufte data-ink ratio / chartjunk — for Dilla viz + dashboards (`DENSITY` for pixels).
+- [ ] Lean muda (waste) beyond DEAD_CODE/BE_CONCISE; Ousterhout full set beyond DEEP_MODULES/DEFINE_ERRORS_OUT.
+- [ ] Kernighan & Plauger, Elements of Programming Style — Strunk-for-code twin.
+- [ ] Music theory (voice leading, tension/resolution, microtiming) as code-pacing rules — ties to vertical rhythm.
+
+Anomaly found during this pass:
+- [x] `knowledge/README.md` was 26 bytes containing `circuit open: retry in 20s` — a caught circuit-breaker exception written to disk as file content. Audited the rest of `knowledge/`: 435 files clobbered the same way (`axioms.yml`, `constitution.yml`, `language_axioms.yml`, 1 `ruby_llm/` file, all 192 `gems/*.md` plus more at non-"20s" retry values) — all restored from their last good git blob (2026-06-16). Root cause (some sweep/fetch step swallows the breaker exception and writes its message instead of skipping the file) still open.
+
+## BW: Borrow targets (openclaw / opencrabs / research) + kernel distillation
+
+Distilled the agent to a 5-file spine in `MASTER/kernel/` (Effect/Verdict/World/
+Constitution/Memory; ~330 lines, stdlib-only, kernel_smoke green). Capability lives
+in World, judgement in Constitution, the Kernel only sequences them — to add an
+ability add a World handler, to add a constraint add a Constitution rule; the spine
+never grows. Items below are every worthwhile feature the two reference agents +
+recent papers are worth taking. [x] = landed in kernel/ (or merged), [ ] = open.
+
+### BW-A: from opencrabs (Rust, local-first — closest to our OpenBSD ethos)
+- [x] BW01 Secret type — leak-proof credential (redacts on inspect/to_s/to_json/Marshal; `.expose` is the one named exit). kernel/master.rb
+- [x] BW02 brain_file_safety chokepoint — append-only protected files, backup-before-write, shrink-rejection unless proven dedup; the syntax gate (ruby_parses) makes the {.freeze class impossible. kernel/constitution.rb
+- [x] BW03 honest tool-error diagnostics — a tool error is an observation the model must react to, never a swallowed success (FAIL_VISIBLY). kernel/world.rb#perform
+- [ ] BW04 RSI loop — periodic cycle, gated on >=N feedback entries, SHA-256 opportunity-hashing so an unchanged cycle is a no-op (idempotent).
+- [ ] BW05 RSI proposal -> inbox -> human-approval queue + append-only improvements.md journal. Self-improvement under a gate with an audit trail, not silent self-rewrite.
+- [ ] BW06 scheduled brain-file dedup scan — the structural fix for rules.yml re-ballooning (dedup as code, not discipline).
+- [ ] BW07 evolve — self-update with health-check + auto-rollback.
+- [ ] BW08 two-model split — separate self_improvement_provider/model (cheap architect plans, strong editor edits). Already half-present in kernel via providers:{architect:,editor:}.
+- [ ] BW09 a2a (agent-to-agent) send/gateway — lets council/swarm run as separate processes instead of an in-loop subsystem.
+- [ ] BW10 tool_search — dynamic tool discovery instead of a static registry.
+
+### BW-B: from openclaw (TS, multi-channel)
+- [x] BW11 single Claude-Code-style loop + one commit per admitted turn as the audit log. kernel/kernel.rb + World#commit
+- [x] BW12 turn-aware compaction — cut only at turn boundaries, never orphan a tool result. kernel/memory.rb
+- [x] BW13 tool-call repair as an isolated step — parse/promote gated by the allowed set, never fabricate a call. Folds into model.propose (arg type-check still open, BW17).
+- [ ] BW14 agent-controlled compaction — give the model a `compact` tool to call at task boundaries, alongside the automatic budget trigger.
+- [ ] BW15 net-policy — egress allowlisting as a first-class concern (maps to OpenBSD pf; see DEPLOY/TODO BW-D01).
+- [ ] BW16 doctor — self-healing config migrations: no silent config aliases; every breaking change ships a `doctor --fix`.
+
+### BW-C: from recent papers / github
+- [x] BW17a AgentSpec runtime-enforcement DSL — every constraint is Rule(trigger, predicate, enforcement); one admit() gate folds council/scan/veto/evidence/guard. kernel/constitution.rb
+- [ ] BW17 keep repair+reprompt over grammar-constrained decoding (no token-logit access behind ruby_llm); ADD arg type-check against the ToolContract schema to reject invented parameters (the error grammar can't catch).
+- [ ] BW18 Prism AST for the syntax gate — replace shelling `ruby -c` (no fork) and reuse the AST for the repo-map.
+- [ ] BW19 adaptive/importance-aware compaction — keep by relevance, not only by turn recency.
+- [ ] BW20 structured note-taking / "LLM wiki" — brain files as a maintained knowledge file the agent re-reads after compaction.
+
+### BW-D: migration (collapse the sprawl into the spine)
+- [ ] BW21 re-point bin/ at kernel; run one workflow (web chat) through it beside FixLoop, then retire lib/judge (council/swarm/scan), lib/converge, lib/loop.
+- [ ] BW22 move rules.yml prohibitions into Constitution rules one at a time; delete the YAML each becomes (track the line count down from ~2k).
+- [x] BW23 face shows real state — council risk/reversibility + evidence verdict -> rendered emotion; dead pressure/attention writes cut. MERGED (lib/voice/expression.rb emotion_for; face_semantics.js setEmotion forward).
