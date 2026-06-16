@@ -31,7 +31,8 @@ module Master
       deliberation = Judge::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
       ideation = Judge::Council::Ideation.new(agent:, event_bus: bus)
       council_stage = Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus)
-      guard = Judge::Security::InjectionGuard.new(mode: :strict)
+      # Permissive for user chat (CLI + web); strict guard remains in ToolContract for shell/git.
+      guard = Judge::Security::InjectionGuard.new(mode: :permissive)
       autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms:)
         .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
       autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
