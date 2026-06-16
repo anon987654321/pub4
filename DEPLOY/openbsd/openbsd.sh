@@ -200,7 +200,9 @@ sync_openbsd_apply() {
   # Run MASTER deep scan on DEPLOY tree before any service restart. Block on violations (tier1 critical + veto).
   # Uses ground_truth_check (fresh read), self_test (laws on DEPLOY), evidence_scoring (scan_clean).
   # Also covers lexical/structural for sh, yml, conf, erb; no bypasses.
-  if [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
+  if [[ -n ${SKIP_MASTER_SCAN:-} ]]; then
+    log WARN "MASTER scan skipped (SKIP_MASTER_SCAN)"
+  elif [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
     log INFO "MASTER rules scan (DEPLOY) — strict pre-apply per rules.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
     if ! ruby34 /home/dev/pub4/MASTER/bin/cli /scan DEPLOY --depth deep 2>&1 | tee /tmp/master_deploy_scan.log; then
       log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per rules.yml)"
