@@ -3,6 +3,12 @@ ruby /usr/local/bin/nsd-resign
 /usr/local/bin/config-drift-check || logger -t daily.local "config-drift-check failed"
 su -l dev -c '/home/dev/pub4/DEPLOY/openbsd/backup_priv.sh'
 
-if ! drill @127.0.0.1 brgen.no SOA >/tmp/nsd-check.out 2>&1; then
-  logger -t daily.local "NSD smoke check failed for brgen.no"
+if command -v drill >/dev/null 2>&1; then
+  drill @127.0.0.1 brgen.no SOA >/tmp/nsd-check.out 2>&1 || \
+    logger -t daily.local "NSD smoke check failed for brgen.no"
+elif command -v dig >/dev/null 2>&1; then
+  dig @127.0.0.1 brgen.no SOA +short >/tmp/nsd-check.out 2>&1 || \
+    logger -t daily.local "NSD smoke check failed for brgen.no"
+else
+  logger -t daily.local "NSD smoke check skipped — no drill or dig"
 fi

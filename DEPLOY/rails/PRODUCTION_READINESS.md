@@ -46,7 +46,7 @@ Ports: see `DEPLOY/rails/apps.yml`.
 2. **bin/ci per app**: not run on VPS this pass (1GB VM, long runtime). Run when CPU headroom allows.
 3. **db:seed**: brgen/amber seeds need `faker` in production bundle or guarded `require` in `db/seeds.rb`.
 4. **PTR**: M06 — set via ptr4.openbsd.amsterdam from inside VM.
-5. **CY11–CY14**: relayd/NSD/acme drift watchdogs still open (see `DEPLOY/TODO.md`).
+5. **pf.conf sync**: fixed `to $ext_if` → `to $brgen_ip` (line 17 syntax error blocked `--sync-configs`).
 
 ## Wave 1 (repo runtime — 2026-06-16 VPS verify)
 

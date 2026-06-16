@@ -13,14 +13,16 @@ end
 
 puts "Seeding Brgen (core + subapps) with rich fictive data..."
 
-# Cleanup for dev replant (safe in seeds)
-[User, Community, Post, Comment, Reaction, Vote, Follow,
- Marketplace::Store, Marketplace::Listing, Marketplace::Order,
- Dating::Profile, Dating::Like, Dating::Match,
- Playlist::Playlist, Playlist::Track, Playlist::Set,
- Takeaway::Restaurant, Takeaway::MenuItem, Takeaway::Order,
- Tv::Channel, Tv::Show, Tv::Episode, Tv::Video,
- Place, Conversation, Message].each(&:destroy_all) rescue nil
+if Rails.env.development? || Rails.env.test?
+  # Cleanup for dev replant only — never wipe production data.
+  [User, Community, Post, Comment, Reaction, Vote, Follow,
+   Marketplace::Store, Marketplace::Listing, Marketplace::Order,
+   Dating::Profile, Dating::Like, Dating::Match,
+   Playlist::Playlist, Playlist::Track, Playlist::Set,
+   Takeaway::Restaurant, Takeaway::MenuItem, Takeaway::Order,
+   Tv::Channel, Tv::Show, Tv::Episode, Tv::Video,
+   Place, Conversation, Message].each(&:destroy_all) rescue nil
+end
 
 # --- Core: Users, Communities, Posts ---
 admin = User.find_or_create_by!(email_address: "admin@brgen.no") do |u|

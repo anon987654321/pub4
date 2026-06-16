@@ -2226,7 +2226,7 @@ Next/reassessment (2026-06-14): spike shared engine (top priority #1; copy-scrip
 - [ ] CY09 VM: add `rcctl ls` audit to `daily.local` — flag any unexpected enabled services
 - [ ] CY10 VM: add outbound connection allow-list in `pf.conf` — block unexpected egress (except API endpoints)
 - [x] CY11 VM: `usr/local/bin/relayd-watchdog` — `rcctl check relayd` every minute via root cron, auto-restart + syslog alert (2026-06-16).
-- [ ] CY12 VM: NSD zone edits land on the unsigned `.zone` file while a stale `.zone.signed` + DNSSEC keys (`K*.key/.private/.ds`) sit alongside it — no automated re-signing step. Wire `ldns-signzone` into the zone-deploy path so any SOA-serial bump re-signs before `rcctl reload nsd`, or confirm DNSSEC is intentionally unused and remove the stale `.signed`/key files.
+- [x] CY12 VM: `nsd-resign` in `daily.local` + `--sync-configs` zone copy + resign hook; full install still signs via `ldns-signzone` (2026-06-16).
 - [x] CY13 VM: `usr/local/bin/config-drift-check` diffs relayd Host headers vs acme-client SANs; runs from `daily.local` + deploy (2026-06-16).
 - [x] CY14 VM: `config-drift-check` lists zone files missing from `nsd.conf` (2026-06-16).
 - [x] CY15 Rails rc.d: `assert_rcd_identity` in `@shared_functions.sh` `install_rcd` — verifies `daemon_user` + `APP_DIR` before enable (2026-06-16).

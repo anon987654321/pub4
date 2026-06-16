@@ -124,6 +124,20 @@ sync_openbsd_configs() {
   [[ -f $src/etc/mail/smtpd.conf ]] && cp "$src/etc/mail/smtpd.conf" /etc/mail/smtpd.conf && log INFO "synced /etc/mail/smtpd.conf"
   [[ -f $src/var/nsd/etc/nsd.conf ]] && cp "$src/var/nsd/etc/nsd.conf" /var/nsd/etc/nsd.conf && log INFO "synced /var/nsd/etc/nsd.conf"
 
+  if [[ -d $src/var/nsd/zones/master ]]; then
+    install -d -o _nsd -g _nsd -m 750 /var/nsd/zones/master 2>/dev/null || true
+    for f in $src/var/nsd/zones/master/*.zone(.); do
+      cp "$f" "/var/nsd/zones/master/${f:t}"
+      log INFO "synced zone ${f:t}"
+    done
+  fi
+
+  [[ -f $src/etc/daily.local ]] && {
+    cp "$src/etc/daily.local" /etc/daily.local
+    chmod 755 /etc/daily.local
+    log INFO "synced /etc/daily.local"
+  }
+
   if [[ -d $src/etc/rc.d ]]; then
     for f in $src/etc/rc.d/*(.); do
       typeset name=${f:t}
@@ -142,14 +156,18 @@ sync_openbsd_configs() {
     done
   fi
 
-  if [[ -x /usr/local/bin/relayd-watchdog ]]; then
+  if [[ -x /usr/local/bin/relayd-watchdog ]] || [[ -x /usr/local/bin/config-drift-check ]]; then
     typeset root_cron=/tmp/root_crontab.$$
     crontab -l 2>/dev/null > $root_cron || :
-    if ! grep -q relayd-watchdog $root_cron 2>/dev/null; then
+    if [[ -x /usr/local/bin/relayd-watchdog ]] && ! grep -q relayd-watchdog $root_cron 2>/dev/null; then
       print -r -- "* * * * * /usr/local/bin/relayd-watchdog" >> $root_cron
-      crontab $root_cron
       log INFO "installed root cron: relayd-watchdog"
     fi
+    if [[ -x /usr/local/bin/config-drift-check ]] && ! grep -q config-drift-check $root_cron 2>/dev/null; then
+      print -r -- "*/15 * * * * /usr/local/bin/config-drift-check >> /var/log/config_drift.log 2>&1" >> $root_cron
+      log INFO "installed root cron: config-drift-check"
+    fi
+    crontab $root_cron
     rm -f $root_cron
   fi
 
@@ -173,6 +191,10 @@ sync_openbsd_apply() {
   /sbin/pfctl -e 2>/dev/null || log WARN "pf already enabled or enable skipped"
 
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid after sync"; return 1 }
+
+  if [[ -x /usr/local/bin/nsd-resign ]]; then
+    ruby /usr/local/bin/nsd-resign || log WARN "nsd-resign failed after zone sync"
+  fi
 
   # STRICT rules.yml adherence (per success_criteria: "system_applies_to_itself_without_exception", self_test, ground_truth_check, evidence_scoring, veto_patterns, anti_patterns, tier1 principle_priorities).
   # Run MASTER deep scan on DEPLOY tree before any service restart. Block on violations (tier1 critical + veto).
