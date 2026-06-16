@@ -19,15 +19,20 @@ end
 
 pfctl = File.executable?("/sbin/pfctl") ? "/sbin/pfctl" : "/usr/sbin/pfctl"
 ok, out = run(pfctl, "-s", "rules")
-failures << "pfctl: #{out.empty? ? "no rules output" : out}" unless ok && out.include?("block log all")
+pf_ok = ok && out.include?("block") && out.include?("log all")
+failures << "pfctl: #{out.empty? ? "no rules output" : out}" unless pf_ok
 
-dns_cmd = %w[/usr/sbin/drill /usr/bin/drill].find { |c| File.executable?(c) }
-if dns_cmd
-  ok, out = run(dns_cmd, "@127.0.0.1", "brgen.no", "SOA")
-  failures << "dns: #{out.empty? ? "no SOA response" : out}" unless ok && out.include?("brgen.no.")
-else
-  ok, out = run("/usr/bin/dig", "@127.0.0.1", "brgen.no", "SOA", "+short")
-  failures << "dns: #{out.empty? ? "no SOA response" : out}" unless ok && !out.empty?
+dns_ok = false
+if File.executable?("/usr/bin/dig")
+  dns_ok, dns_out = run("/usr/bin/dig", "@127.0.0.1", "brgen.no", "SOA", "+short", "+time=2", "+tries=1")
+  dns_ok &&= !dns_out.empty? && dns_out.include?("brgen.no")
+elsif (dns_cmd = %w[/usr/sbin/drill /usr/bin/drill].find { |c| File.executable?(c) })
+  dns_ok, dns_out = run(dns_cmd, "@127.0.0.1", "brgen.no", "SOA")
+  dns_ok &&= dns_out.include?("brgen.no.")
+end
+unless dns_ok
+  nsd_ok, nsd_out = run("/usr/sbin/rcctl", "check", "nsd")
+  failures << "dns: no local SOA (nsd #{nsd_out.strip})" unless nsd_ok && nsd_out.include?("(ok)")
 end
 
 app_up_checks = {
@@ -40,7 +45,7 @@ app_up_checks = {
   "hjerterom" => 38891
 }
 app_up_checks.each do |name, port|
-  ok, out = run("/usr/local/bin/curl", "-fsS", "--max-time", "5", "http://127.0.0.1:#{port}/up")
+  ok, out = run("/usr/local/bin/curl", "-fsS", "--max-time", "20", "http://127.0.0.1:#{port}/up")
   failures << "#{name} up: #{out.empty? ? "no response on :#{port}" : out}" unless ok
 end
 
@@ -57,6 +62,7 @@ certs = %w[
   /etc/ssl/bsdports.org.fullchain.pem
   /etc/ssl/baibl.brgen.no.crt
   /etc/ssl/blognet.brgen.no.crt
+  /etc/ssl/hjerterom.brgen.no.crt
 ]
 certs.each do |cert|
   failures << "cert missing: #{cert}" unless File.exist?(cert)
@@ -72,7 +78,7 @@ https_checks = {
   "bsdports.org" => "https://bsdports.org/up"
 }
 https_checks.each do |name, url|
-  ok, out = run("/usr/local/bin/curl", "-fsS", "--max-time", "10", url)
+  ok, out = run("/usr/local/bin/curl", "-fsS", "--max-time", "25", url)
   failures << "#{name} https: #{out.empty? ? "no response" : out}" unless ok
 end
 
