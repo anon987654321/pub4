@@ -21,8 +21,14 @@ pfctl = File.executable?("/sbin/pfctl") ? "/sbin/pfctl" : "/usr/sbin/pfctl"
 ok, out = run(pfctl, "-s", "rules")
 failures << "pfctl: #{out.empty? ? "no rules output" : out}" unless ok && out.include?("block log all")
 
-ok, out = run("/usr/sbin/drill", "@127.0.0.1", "brgen.no", "SOA")
-failures << "dns: #{out.empty? ? "no SOA response" : out}" unless ok && out.include?("brgen.no.")
+dns_cmd = %w[/usr/sbin/drill /usr/bin/drill].find { |c| File.executable?(c) }
+if dns_cmd
+  ok, out = run(dns_cmd, "@127.0.0.1", "brgen.no", "SOA")
+  failures << "dns: #{out.empty? ? "no SOA response" : out}" unless ok && out.include?("brgen.no.")
+else
+  ok, out = run("/usr/bin/dig", "@127.0.0.1", "brgen.no", "SOA", "+short")
+  failures << "dns: #{out.empty? ? "no SOA response" : out}" unless ok && !out.empty?
+end
 
 app_up_checks = {
   "master" => 53187,
