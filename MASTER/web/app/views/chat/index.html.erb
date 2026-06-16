@@ -24,6 +24,9 @@
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
     window.MASTER_PERSONA = <%= raw((persona.respond_to?(:browser_profile) ? persona.browser_profile : {}).to_json) %>;
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
   <link rel="modulepreload" href="<%= asset_path("three.module.js") %>">
   <link rel="modulepreload" href="<%= asset_path("face.js") %>">
