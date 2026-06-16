@@ -255,8 +255,8 @@ assert_rcd_identity() {
     log_err "rc.d ${svc}: daemon_user must be ${expected_user}"
     return 1
   }
-  [[ $body == *"APP_DIR=${expected_dir}"* ]] || {
-    log_err "rc.d ${svc}: APP_DIR must be ${expected_dir}"
+  [[ $body == *"daemon_execdir=\"${expected_dir}\""* ]] || {
+    log_err "rc.d ${svc}: daemon_execdir must be ${expected_dir}"
     return 1
   }
   log_ok "rc.d ${svc} identity ok (${expected_user} → ${expected_dir})"

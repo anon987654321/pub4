@@ -6,15 +6,16 @@ require "faker"
 
 puts "Seeding Amber with fictive data..."
 
-# Clear existing for idempotency in dev (use find_or_create in prod-like)
-User.destroy_all
-Item.destroy_all
-Outfit.destroy_all
-Post.destroy_all
+if Rails.env.development? || Rails.env.test?
+  User.destroy_all
+  Item.destroy_all
+  Outfit.destroy_all
+  Post.destroy_all
+end
 
-# Create users
+# Create users (strict_loading off — ensure_identity_records touches profile)
 users = 20.times.map do
-  User.create!(
+  User.strict_loading(false).create!(
     email_address: Faker::Internet.unique.email,
     password: "password123",
     password_confirmation: "password123"

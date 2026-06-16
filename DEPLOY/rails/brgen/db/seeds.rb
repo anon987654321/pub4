@@ -7,7 +7,9 @@ require "faker"
 
 # Ensure Cities exist for automatic TLD/domain-based resolution (no city switcher).
 # Each city domain is an isolated experience.
-Brgen::CitySeed.sync! if defined?(Brgen::CitySeed)
+if defined?(Brgen::CitySeed) && ActiveRecord::Base.connection.table_exists?(:cities)
+  Brgen::CitySeed.sync!
+end
 
 puts "Seeding Brgen (core + subapps) with rich fictive data..."
 

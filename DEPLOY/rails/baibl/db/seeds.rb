@@ -17,6 +17,7 @@ end
 
 def seed_verse!(chapter, number:, content:)
   chapter.verses.find_or_create_by!(number: number) do |verse|
+    verse.book = chapter.book
     verse.content = content
   end
 end
