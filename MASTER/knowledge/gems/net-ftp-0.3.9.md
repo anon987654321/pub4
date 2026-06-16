@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'net-ftp', '~> 0.3.9'

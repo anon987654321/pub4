@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'faraday-net_http', '~> 3.4.2'

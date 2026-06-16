@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'wisper', '2.0.1'

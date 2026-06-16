@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install net-imap -v 0.6.3

@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem "ferrum", "~> 0.17.1"

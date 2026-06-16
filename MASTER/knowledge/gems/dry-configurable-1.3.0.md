@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install dry-configurable -v 1.3.0

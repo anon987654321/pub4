@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'tty-screen', '~> 0.8.2'

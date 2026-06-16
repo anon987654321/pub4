@@ -1,1 +1,2 @@
-circuit open: retry in 20s
+Strings::ANSI.ansi?("\e[32mHello\e[0m")
+# => true

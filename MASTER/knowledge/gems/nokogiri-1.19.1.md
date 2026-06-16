@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install nokogiri -v 1.19.1

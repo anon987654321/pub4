@@ -1,1 +1,2 @@
-circuit open: retry in 20s
+gem 'simplecov'
+gem 'simplecov-html', '~> 0.13.2'

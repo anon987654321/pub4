@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install websocket-driver -v 0.8.0

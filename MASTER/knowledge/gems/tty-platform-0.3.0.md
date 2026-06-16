@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install tty-platform -v 0.3.0

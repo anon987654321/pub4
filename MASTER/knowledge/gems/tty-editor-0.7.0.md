@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install tty-editor -v 0.7.0

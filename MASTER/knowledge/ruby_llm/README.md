@@ -1,1 +1,3 @@
-circuit open: retry in 20s
+# Ask questions
+chat = RubyLLM.chat
+chat.ask "What's the best way to learn Ruby?"

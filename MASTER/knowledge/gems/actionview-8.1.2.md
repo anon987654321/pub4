@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install actionview -v 8.1.2

@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'redlock', '~> 2.1.0'

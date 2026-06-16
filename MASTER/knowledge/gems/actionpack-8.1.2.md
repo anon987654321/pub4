@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install actionpack -v 8.1.2

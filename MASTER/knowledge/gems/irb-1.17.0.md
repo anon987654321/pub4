@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'irb', '~> 1.17.0'

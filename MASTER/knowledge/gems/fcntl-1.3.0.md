@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'fcntl', '~> 1.3.0'

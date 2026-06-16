@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'mime-types', '~> 3.7'

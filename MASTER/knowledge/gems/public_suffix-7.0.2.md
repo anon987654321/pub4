@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install public_suffix -v 7.0.2

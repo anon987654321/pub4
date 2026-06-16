@@ -1,1 +1,2 @@
-circuit open: retry in 20s
+# Gemfile
+gem 'stoplight', '~> 4.1.1'

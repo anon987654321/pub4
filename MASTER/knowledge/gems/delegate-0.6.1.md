@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'delegate', '~> 0.6.1'

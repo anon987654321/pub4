@@ -1,1 +1,3 @@
-circuit open: retry in 20s
+
+## Creating a GlobalID
+

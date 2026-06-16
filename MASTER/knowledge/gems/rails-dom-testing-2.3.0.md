@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+assert_dom(html, selector, expected_text)

@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'hashdiff', '~> 1.2.1'

@@ -1,1 +1,2 @@
-circuit open: retry in 20s
+value = Psych.safe_load('--- foo')
+# => "foo"

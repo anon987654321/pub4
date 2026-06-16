@@ -1,1 +1,2 @@
-circuit open: retry in 20s
+or add to `Gemfile`:
+

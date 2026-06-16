@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install redis -v 5.4.1

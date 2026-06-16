@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem 'dotenv', '~> 3.2.0', groups: [:development, :test]

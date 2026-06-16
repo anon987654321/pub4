@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+gem install openssl -v 4.0.0

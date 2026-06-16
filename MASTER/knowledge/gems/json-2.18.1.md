@@ -1,1 +1,1 @@
-circuit open: retry in 20s
+bundle add json --version "~> 2.18"

@@ -1,1 +1,3 @@
-circuit open: retry in 20s
+loader = Zeitwerk::Loader.new
+loader.push_dir('lib')
+loader.setup
