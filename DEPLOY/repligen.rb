@@ -42,8 +42,13 @@ CHAIN_TEMPLATES = {
   "quick" => [
     { type: "text-to-image", count: 1 },
     { type: "upscale", count: 1 }
+  ],
+  "chaos" => [
+    { types: MODEL_TYPES.keys, count_range: [8, 15] }
   ]
 }.freeze
+
+LORA_TRAINER = "ostris/flux-dev-lora-trainer"
 
 # ============================================================================
 # BOOTSTRAP
@@ -53,6 +58,30 @@ def ensure_gems
   require "sqlite3"
 rescue LoadError
   abort "[repligen] missing sqlite3 gem. Install dependencies outside repligen before running."
+end
+
+# ============================================================================
+# ZIPPER (training images -> flat zip, for upload to Replicate)
+# ============================================================================
+
+module Zipper
+  IMAGE_GLOB = "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}"
+
+  def self.zip(photos_dir, out_path)
+    ensure_zip_binary
+    images = Dir.glob(File.join(photos_dir, IMAGE_GLOB))
+    abort "[repligen] no images found in #{photos_dir}" if images.empty?
+
+    File.delete(out_path) if File.exist?(out_path)
+    system("zip", "-jq", out_path, *images) || abort("[repligen] zip failed")
+    out_path
+  end
+
+  def self.ensure_zip_binary
+    return if system("which zip", out: File::NULL, err: File::NULL)
+
+    abort "[repligen] 'zip' not found. Install: doas pkg_add zip / apt install zip (macOS already has it)."
+  end
 end
 
 # ============================================================================
@@ -196,20 +225,66 @@ class API
   end
 
   def predict(model_id, input)
-    owner, name = model_id.split("/")
-    model = get(URI("#{BASE}/models/#{owner}/#{name}"))
-    version = model.dig("latest_version", "id")
-    raise "No version for #{model_id}" unless version
-
-    pred = post(URI("#{BASE}/predictions"), {
-      version: version,
-      input: input
-    })
-
+    pred = post(URI("#{BASE}/predictions"), { version: latest_version(model_id), input: input })
     wait_for(pred["id"])
   end
 
+  def model_exists?(model_id)
+    owner, name = model_id.split("/")
+    get(URI("#{BASE}/models/#{owner}/#{name}"))
+    true
+  rescue StandardError
+    false
+  end
+
+  def create_model(model_id, hardware: "cpu")
+    owner, name = model_id.split("/")
+    post(URI("#{BASE}/models"), { owner: owner, name: name, visibility: "private", hardware: hardware })
+  end
+
+  # Uploads a local file (e.g. a training-images zip) and returns its serving URL.
+  def upload_zip(path)
+    boundary = "RepligenBoundary#{rand(1_000_000_000)}"
+    req = Net::HTTP::Post.new(URI("#{BASE}/files"))
+    req["Authorization"] = "Token #{@token}"
+    req["Content-Type"] = "multipart/form-data; boundary=#{boundary}"
+    req.body = multipart_body(path, boundary)
+    data = request(req, URI("#{BASE}/files"))
+    data.dig("urls", "get") || data["serving_url"] || data["url"] || raise("Upload did not return a URL: #{data}")
+  end
+
+  def train_lora(photos_zip_url, destination, trigger_word: "subjectxyz")
+    create_model(destination) unless model_exists?(destination)
+
+    trainer_owner, trainer_name = LORA_TRAINER.split("/")
+    trainer_version = latest_version(LORA_TRAINER)
+    trainings_uri = URI("#{BASE}/models/#{trainer_owner}/#{trainer_name}/versions/#{trainer_version}/trainings")
+    training = post(trainings_uri, {
+      destination: destination,
+      input: { input_images: photos_zip_url, trigger_word: trigger_word }
+    })
+
+    wait_for_training(training["id"])
+  end
+
   private
+
+  def latest_version(model_id)
+    owner, name = model_id.split("/")
+    model = get(URI("#{BASE}/models/#{owner}/#{name}"))
+    model.dig("latest_version", "id") || raise("No version for #{model_id}")
+  end
+
+  # Hand-rolled multipart body: the file bytes must pass through untouched, so
+  # only the ASCII boundary text is forced to binary encoding for concatenation.
+  def multipart_body(path, boundary)
+    filename = File.basename(path)
+    "--#{boundary}\r\n".b +
+      "Content-Disposition: form-data; name=\"content\"; filename=\"#{filename}\"\r\n".b +
+      "Content-Type: application/zip\r\n\r\n".b +
+      File.binread(path) +
+      "\r\n--#{boundary}--\r\n".b
+  end
 
   def get(uri)
     req = Net::HTTP::Get.new(uri)
@@ -245,6 +320,21 @@ class API
       raise "Timeout after #{timeout}s" if Time.now - start > timeout
       print "."
       sleep 3
+    end
+  end
+
+  def wait_for_training(id, timeout: 1800)
+    start = Time.now
+    loop do
+      training = get(URI("#{BASE}/trainings/#{id}"))
+      case training["status"]
+      when "succeeded" then return training.dig("output", "version") || training["output"]
+      when "failed" then raise "Training failed: #{training['error']}"
+      when "canceled" then raise "Training canceled"
+      end
+      raise "Training timeout after #{timeout}s" if Time.now - start > timeout
+      print "."
+      sleep 5
     end
   end
 
@@ -292,7 +382,6 @@ class ChainBuilder
     cost = 0.0
 
     template.each do |phase|
-      type = phase[:type] || phase[:types]&.sample
       count = if phase[:count_range]
                 rand(phase[:count_range][0]..phase[:count_range][1])
               else
@@ -300,6 +389,9 @@ class ChainBuilder
               end
 
       count.times do
+        # A fixed phase[:type] holds for every step; a phase[:types] pool is
+        # re-sampled per step, so a long "chaos" phase varies model by model.
+        type = phase[:type] || phase[:types].sample
         candidates = @db.by_type(type, 20)
         next if candidates.empty?
 
@@ -372,10 +464,11 @@ def show_menu
   puts "2. Search Models"
   puts "3. Generate with LoRA URL"
   puts "4. Run Chain Workflow"
-  puts "5. Show Statistics"
-  puts "6. Exit"
+  puts "5. Train LoRA from photos -> chaos chain -> postpro"
+  puts "6. Show Statistics"
+  puts "7. Exit"
   puts
-  print "Choose [1-6]: "
+  print "Choose [1-7]: "
   gets.chomp
 end
 
@@ -416,15 +509,29 @@ def interactive_mode
       end
 
     when "4"
-      print "Template [masterpiece/quick]: "
+      print "Template [masterpiece/quick/chaos]: "
       template = gets.chomp
       template = "masterpiece" if template.empty?
       run_chain(db, api, template)
 
     when "5"
+      print "Photos directory: "
+      photos_dir = gets.chomp
+      print "Destination model (owner/name): "
+      destination = gets.chomp
+      print "Trigger word [subjectxyz]: "
+      trigger_word = gets.chomp
+      trigger_word = "subjectxyz" if trigger_word.empty?
+      if Dir.exist?(photos_dir) && !destination.empty?
+        run_lora_chaos(api, db, photos_dir, destination, trigger_word)
+      else
+        puts "❌ Need a valid photos directory and destination model"
+      end
+
+    when "6"
       show_stats(db)
 
-    when "6", "q", "quit", "exit"
+    when "7", "q", "quit", "exit"
       puts "\n👋 Goodbye!"
       exit 0
 
@@ -445,25 +552,24 @@ def sync_models(api, db, limit)
   puts "✓ Synced #{models.size} models"
 end
 
+def download_file(url, dir, name = "out")
+  FileUtils.mkdir_p(dir)
+  ext = File.extname(URI.parse(url).path).sub(/\?.*/, "")
+  ext = ".out" if ext.empty?
+  filename = File.join(dir, "#{name}#{ext}")
+  puts "💾 Downloading #{url}..."
+  system("curl", "-s", "-o", filename, url)
+  puts "✓ #{filename}"
+  filename
+end
+
 def generate_with_lora(api, model_id, prompt)
   puts "\n🚀 Generating with #{model_id}..."
   output = api.predict(model_id, { prompt: prompt })
   output_dir = "output/#{model_id.gsub('/', '_')}_#{Time.now.to_i}"
-  FileUtils.mkdir_p(output_dir)
 
-  if output.is_a?(Array)
-    output.each_with_index do |url, i|
-      ext = File.extname(URI.parse(url).path).sub(/\?.*/, ""); ext = ".out" if ext.to_s.empty?; filename = File.join(output_dir, "out_#{i}#{ext}")
-      puts "💾 Downloading #{url}..."
-      system("curl -s -o '#{filename}' '#{url}'")
-      puts "✓ #{filename}"
-    end
-  elsif output.is_a?(String)
-    ext = File.extname(URI.parse(output).path).sub(/\?.*/, ""); ext = ".out" if ext.to_s.empty?; filename = File.join(output_dir, "output#{ext}")
-    puts "💾 Downloading #{output}..."
-    system("curl -s -o '#{filename}' '#{output}'")
-    puts "✓ #{filename}"
-  end
+  urls = output.is_a?(Array) ? output : [output].compact
+  urls.each_with_index { |url, i| download_file(url, output_dir, "out_#{i}") }
 
   puts "\n✓ Complete! Output: #{output_dir}"
 end
@@ -493,6 +599,74 @@ def show_stats(db)
   puts "Total models: #{stats[:total]}"
   puts "\nBy Type:"
   stats[:by_type].each { |row| puts "  #{row['type']&.ljust(20)} #{row['count']}" }
+end
+
+POSTPRO_PRESETS = %i[portrait cinematic magic_hour blockbuster golden_age reversal
+                     warmth noir masterpiece anamorphic aged_kodachrome].freeze
+
+def run_postpro(input_path, output_path, preset_name)
+  postpro = File.expand_path("postpro/postpro.rb", __dir__)
+  unless File.exist?(postpro)
+    puts "⚠️  postpro.rb not found at #{postpro}, skipping post-processing"
+    return input_path
+  end
+
+  system("ruby", postpro, "--input", input_path, "--output", output_path, "--preset", preset_name.to_s,
+         chdir: File.dirname(postpro))
+  File.exist?(output_path) ? output_path : input_path
+end
+
+# Train a LoRA on a folder of plain photos, returning a base image URL generated
+# from the freshly trained weights.
+def train_and_generate_base(api, photos_dir, destination, trigger_word)
+  puts "\n📦 Zipping #{photos_dir}..."
+  zip_path = Zipper.zip(photos_dir, "/tmp/repligen_lora_#{Time.now.to_i}.zip")
+
+  puts "☁️  Uploading training images..."
+  zip_url = api.upload_zip(zip_path)
+
+  puts "🏋️  Training LoRA -> #{destination} (this can take 10-20 min)..."
+  trained_version = api.train_lora(zip_url, destination, trigger_word: trigger_word)
+  puts "\n✓ Trained: #{trained_version}"
+
+  puts "\n🚀 Generating base image with the trained LoRA..."
+  base_output = api.predict(destination, { prompt: "#{trigger_word}, masterpiece, best quality" })
+  base_output.is_a?(Array) ? base_output.first : base_output
+end
+
+def download_chain_result(result, base_url, output_dir)
+  chained_url = result[:output]
+  chained_is_url = chained_url.is_a?(String) && chained_url.start_with?("http")
+  return download_file(base_url, output_dir, "base") unless chained_is_url
+
+  download_file(chained_url, output_dir, "chained")
+end
+
+# Run a base image through a long randomly-sampled "chaos" chain of other
+# Replicate models, then hand the final frame to postpro.rb for film grading.
+def chase_and_grade(api, db, base_url)
+  puts "\n🎬 Building chaos chain..."
+  builder = ChainBuilder.new(db, api)
+  chain = builder.build("chaos")
+  puts "  #{chain.models.size} steps, est. $#{chain.cost}"
+  result = builder.execute(chain, base_url)
+
+  output_dir = "output/lora_chaos_#{Time.now.to_i}"
+  chained_file = download_chain_result(result, base_url, output_dir)
+
+  preset_name = POSTPRO_PRESETS.sample
+  graded_file = chained_file.sub(/(\.\w+)\z/, "_graded\\1")
+  puts "\n🎞️  Post-processing with preset=#{preset_name}..."
+  [run_postpro(chained_file, graded_file, preset_name), chain.cost]
+end
+
+def run_lora_chaos(api, db, photos_dir, destination, trigger_word)
+  base_url = train_and_generate_base(api, photos_dir, destination, trigger_word)
+  final_file, chain_cost = chase_and_grade(api, db, base_url)
+
+  puts "\n✓ Complete! Chain cost: $#{chain_cost.round(3)} (+ training cost on your Replicate bill)"
+  puts "  Final: #{final_file}"
+  final_file
 end
 
 # ============================================================================
@@ -535,6 +709,21 @@ if __FILE__ == $PROGRAM_NAME
       puts "Example: ruby repligen.rb generate black-forest-labs/flux-1.1-pro 'cinematic portrait, natural light, kodak portra'"
     end
 
+  when "lora_chaos"
+    ensure_gems
+    token = Config.load
+    api = API.new(token)
+    db = Database.new
+    photos_dir = ARGV[1]
+    destination = ARGV[2]
+    trigger_word = ARGV[3] || "subjectxyz"
+    if photos_dir && destination
+      run_lora_chaos(api, db, photos_dir, destination, trigger_word)
+    else
+      puts "Usage: ruby repligen.rb lora_chaos <photos_dir> <owner/destination-model> [trigger_word]"
+      puts "Example: ruby repligen.rb lora_chaos ./my_photos myuser/my-lora subjectxyz"
+    end
+
   when "--help", "-h"
     puts <<~HELP
       Repligen - Replicate.com AI Generation CLI
@@ -545,14 +734,17 @@ if __FILE__ == $PROGRAM_NAME
         ruby repligen.rb search upscale
         ruby repligen.rb stats
         ruby repligen.rb generate black-forest-labs/flux-1.1-pro "pro photo prompt here"
+        ruby repligen.rb lora_chaos ./my_photos myuser/my-lora subjectxyz
 
       Features:
         - Model discovery & database
         - Direct generation (t2i via Replicate Flux/SD etc.)
         - LoRA generation
-        - Chain workflows (masterpiece/quick)
+        - LoRA training from a local photo folder, then a long random "chaos"
+          chain across every model type, then postpro.rb film grading (lora_chaos)
+        - Chain workflows (masterpiece/quick/chaos)
         - Cost tracking
-        - Pair with /postpro for filmic photography polish (grain, kodak stocks, cinematic)
+        - Pair with postpro.rb for filmic photography polish (grain, kodak stocks, cinematic)
     HELP
 
   else
