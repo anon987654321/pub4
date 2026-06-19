@@ -2,7 +2,7 @@
 
 Repository: local `/Users/mac/Documents/GitHub/pub4` (VPS: `/home/dev/pub4`), remote `anon987654321/pub4`, branch `main`.
 
-**HEAD:** `3a617de01` — MASTER/TODO.md + DEPLOY/TODO.md fully [x] as of 2026-06-16 wave2; 0 open checkboxes.
+**HEAD:** `9e93f2cb0` — MASTER/TODO.md + DEPLOY/TODO.md fully [x] as of 2026-06-16 wave2; wave3 routing pass (WebChat, KeyRotator, SemanticIndex, EvalHarness) pushed 2026-06-19; 0 open checkboxes.
 
 Itemized backlogs:
 
