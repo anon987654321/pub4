@@ -5,6 +5,7 @@ require "json"
 require "fileutils"
 require "monitor"
 require "yaml"
+require_relative "semantic_index"
 
 module Master
   module Reach
@@ -37,10 +38,22 @@ module Master
           end
         end
 
+        near = fuzzy_index.nearest(prompt)
+        if near
+          @bus&.publish("cache:fuzzy_hit", key:)
+          return near
+        end
+
         @bus&.publish("cache:miss", key:)
         result = blk.call
+        fuzzy_index.remember(prompt, result)
         @lock.synchronize { write_entry(path:, value: result, key:) }
         result
+      end
+
+      # Fuzzy near-hit layer over the exact disk cache; no-op when embeddings are disabled.
+      def fuzzy_index
+        @fuzzy_index ||= SemanticIndex.new(embedder: Master::Judge::Embeddings)
       end
 
       def invalidate!(prompt, model)
