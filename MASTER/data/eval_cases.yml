@@ -1,0 +1,48 @@
+# Seed eval cases for Judge::EvalHarness (regression metric) and Judge::PromptEvolver (objective).
+#
+# Each case: `input` is a task/snippet handed to the agent; `expect` is a marker that a correct,
+# rules-following response must contain. The injected scorer checks for it, e.g.
+#   scorer: ->(output, expect) { output.to_s.downcase.include?(expect.to_s.downcase) ? 1.0 : 0.0 }
+#
+# These are STARTERS grounded in rules.yml — expand with real domain tasks and graded outputs.
+# Each `rule` is the rules.yml id the case exercises (documentation only).
+cases:
+  - input: "Review this Ruby: def connect(host, port, user, password); end"
+    expect: keyword
+    rule: FEW_ARGUMENTS
+
+  - input: "Review this Ruby: begin; do_risky; rescue; nil; end"
+    expect: StandardError
+    rule: BARE_RESCUE
+
+  - input: "Review this Ruby: API_KEY = \"sk-live-9f8a7b6c5d4e3f2a1\""
+    expect: ENV
+    rule: SECRET_PROXIMITY
+
+  - input: "Review this Ruby method that both saves the record and returns its JSON."
+    expect: command
+    rule: CQS
+
+  - input: "Review this Rails controller: @posts = Post.all; @posts.each { |p| p.author.name }"
+    expect: includes
+    rule: N_PLUS_ONE
+
+  - input: "Review this Ruby: def role; if admin?; if active?; \"admin\"; else; \"inactive\"; end; end; end"
+    expect: guard
+    rule: GUARD_CLAUSE
+
+  - input: "Review this Ruby loop: loop { try_connect } with no attempt limit."
+    expect: retry
+    rule: UNBOUNDED_RETRY
+
+  - input: "Review this HTML: <img src=\"logo.png\"> in a Rails view."
+    expect: alt
+    rule: IMG_ALT
+
+  - input: "Review this zsh script with no `set -euo pipefail` after the shebang."
+    expect: pipefail
+    rule: STRICT_MODE_ZSH
+
+  - input: "A 480-line Ruby class with 14 public methods — assess it."
+    expect: split
+    rule: GOD_CLASS
