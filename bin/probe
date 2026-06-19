@@ -61,10 +61,10 @@ end
 def quarantine_checks
   paths, err, status = git_lines("ls-files", "DEPLOY/quarantine/virus_museum")
   mode_lines, mode_err, mode_status = git_lines("ls-files", "-s", "DEPLOY/quarantine/virus_museum")
-  executable = mode_lines.filter_map do |line|
+  executable = mode_lines.map do |line|
     mode, _type, _sha, _stage, path = line.split(/\s+/, 5)
     path unless mode == "100644"
-  end
+  end.compact
   bad_extensions = paths.reject { |path| path.end_with?(".txt") || path.end_with?("/README.md") }
 
   [
@@ -89,6 +89,10 @@ end
 def repo_checks
   [
     run_check("Rails production gate", File.join(RAILS_ROOT, "check_production_gate.rb")),
+    run_check("Rails runtime gate (static)", "ruby", File.join(RAILS_ROOT, "rails_runtime_gate.rb")),
+    run_check("Security sweep", "ruby", File.join(ROOT, "DEPLOY", "security_sweep.rb")),
+    run_check("Frontend production gate", "ruby", File.join(RAILS_ROOT, "frontend_production_gate.rb")),
+    run_check("Deploy smoke gate", "ruby", File.join(ROOT, "DEPLOY", "openbsd", "deploy_smoke_gate.rb")),
     no_tracked_master_keys_check,
     *quarantine_checks,
     run_check("git diff whitespace check", "git", "-C", ROOT, "diff", "--check")

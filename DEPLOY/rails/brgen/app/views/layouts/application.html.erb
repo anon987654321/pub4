@@ -167,8 +167,8 @@
         <div class="feed-header">
           <h1><%= content_for?(:title) ? yield(:title) : "Home" %></h1>
           <div class="feed-tabs">
-            <a href="#" class="feed-tab active">For you</a>
-            <a href="#" class="feed-tab">Following</a>
+            <button type="button" class="feed-tab active">For you</button>
+            <button type="button" class="feed-tab">Following</button>
           </div>
         </div>
         <% if current_page?(root_path) && Current.user.present? %>
