@@ -38,6 +38,15 @@ module Master
       autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
       Trace::FeedbackLedger.new(event_bus: bus, learnings: autonomous[:learnings]).attach
       Trace::ReflexionLedger.new(event_bus: bus, root: root).attach
+      Judge::GraphRetriever.new(reference_graph: infra[:reference_graph], root: root).tap do |graph_retriever|
+        bus.subscribe("tool:after") do |event|
+          path = event[:path] || event["path"]
+          next unless path
+
+          neighbours = graph_retriever.neighbors([path])
+          bus.publish("graph:neighbours", path: path, neighbours: neighbours) unless neighbours.empty?
+        end
+      end
       # Strict in build: always run self_test + require evidence (rules.yml ground_truth, self_apply)
       self_test = Judge::Scan::SelfTest.new(root: root, event_bus: bus).call
       bus&.publish("builder:self_test", ok: self_test.ok?) unless self_test.ok?

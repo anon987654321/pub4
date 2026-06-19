@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "tainted"
+
 module Master
   module Ground
     module ToolApprovalPolicy
@@ -44,6 +46,11 @@ module Master
       def brief(mode = :ask)
         rule = MODE_RULES.fetch(normalize(mode))
         "Tool approval mode=#{normalize(mode)}: #{rule[:description]}."
+      end
+
+      # CaMeL capability check: privileged actions must refuse inputs carrying untrusted taint.
+      def taint_safe?(args)
+        Master::Ground::Taint.safe_for_privileged?(args)
       end
     end
   end

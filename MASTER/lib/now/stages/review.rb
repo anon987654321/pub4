@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../judge/verdict"
+
 module Master
   module Now
     module Stages
@@ -15,6 +17,7 @@ module Master
         def call(ctx)
           ctx = run_council(ctx)
           ctx = run_stage(@lint, ctx).value_or(ctx)
+          publish_verdict(ctx)
           run_stage(@prune, ctx)
         rescue StandardError => e
           @bus&.publish("review:error", message: e.message)
@@ -38,6 +41,31 @@ module Master
         rescue StandardError => e
           @bus&.publish("review:stage_error", stage: stage.class.name, message: e.message)
           Result.ok(ctx)
+        end
+
+        # Hybrid-Norm verdict: deterministic lint signal + council rubric, published (non-blocking).
+        def publish_verdict(ctx)
+          rubric = council_confidence(ctx)
+          errors = lint_errors(ctx)
+          return if rubric.nil? && errors.nil?
+
+          verdict = Master::Judge::Verdict.new.call(deterministic: { lint: (errors || 0).zero? }, rubric_score: rubric || 0.5)
+          @bus&.publish("review:verdict", pass: verdict.pass?, score: verdict.score, reasons: verdict.reasons)
+        rescue StandardError => e
+          @bus&.publish("review:verdict_error", message: e.message)
+        end
+
+        def council_confidence(ctx)
+          scores = Array(ctx.council_feedback).filter_map { |item| item[:confidence] if item.respond_to?(:[]) }
+          scores.empty? ? nil : scores.sum.to_f / scores.size
+        rescue StandardError
+          nil
+        end
+
+        def lint_errors(ctx)
+          Array(ctx.lint_report).count { |finding| finding.respond_to?(:severity) && finding.severity.to_s == "error" }
+        rescue StandardError
+          nil
         end
       end
     end

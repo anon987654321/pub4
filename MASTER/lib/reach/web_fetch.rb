@@ -83,6 +83,7 @@ module Master
         body     = raw_body.byteslice(0, MAX_BYTES * 4)
         stripped = strip_html(body)[0, MAX_BYTES]
         @bus&.publish("tool:after", tool: NAME, url:)
+        @bus&.publish("tool:untrusted_output", tool: NAME, source: url)
         Result.ok(stripped)
       end
 
