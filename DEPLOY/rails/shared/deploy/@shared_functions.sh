@@ -103,6 +103,18 @@ bundle_install() {
   log_ok "bundle install done"
 }
 
+# rails_runtime_gate APP_DIR — Wave 1: bundle check + db:prepare before rcctl restart.
+rails_runtime_gate() {
+  local app_dir=$1
+  [[ -d $app_dir ]] || { log_warn "rails_runtime_gate: missing ${app_dir}"; return 0; }
+  [[ -n ${SKIP_RUNTIME_GATE:-} ]] && { log "runtime gate skipped (SKIP_RUNTIME_GATE)"; return 0; }
+  log "runtime gate: bundle check + db:prepare"
+  (cd "$app_dir" && bundle check) || { log_err "bundle check failed"; return 1; }
+  (cd "$app_dir" && RAILS_ENV=production bundle exec rails db:prepare) \
+    || { log_err "db:prepare failed"; return 1; }
+  log_ok "runtime gate passed"
+}
+
 add_gem_group() {
   local groups=$1; shift
   local -a gems=("$@")

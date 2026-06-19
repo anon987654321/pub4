@@ -50,12 +50,16 @@ apps.each do |name, metadata|
     next
   end
 
+  baseline = File.join(RAILS_ROOT, "shared", "config", "environments", "production_baseline.rb")
   prod_active = active_lines(production)
+  prod_active += active_lines(baseline) if File.read(production).include?("production_baseline")
   fail!(app_failures, "production config still has active example.com placeholder") if prod_active.any? { |line| line.include?("example.com") }
   fail!(app_failures, "production config must trust relayd with config.assume_ssl = true") unless prod_active.any? { |line| line.match?(/\bconfig\.assume_ssl\s*=\s*true\b/) }
   fail!(app_failures, "TLS terminates at relayd; do not enable config.force_ssl in Rails") if prod_active.any? { |line| line.match?(/\bconfig\.force_ssl\s*=\s*true\b/) }
-  fail!(app_failures, "production mailer host must use #{domain}") unless prod_active.any? { |line| line.include?("action_mailer.default_url_options") && line.include?(domain) }
-  fail!(app_failures, "production config.hosts must include #{domain}") unless prod_active.any? { |line| line.include?("config.hosts") && line.include?(domain) }
+  mailer_ok = prod_active.any? { |line| line.include?(domain) && (line.include?("action_mailer.default_url_options") || line.include?("mailer_host:")) }
+  fail!(app_failures, "production mailer host must use #{domain}") unless mailer_ok
+  hosts_ok = prod_active.any? { |line| line.include?(domain) && (line.include?("config.hosts") || line.include?("hosts:")) }
+  fail!(app_failures, "production config.hosts must include #{domain}") unless hosts_ok
   fail!(app_failures, "production host_authorization must keep /up available") unless prod_active.any? { |line| line.include?("config.host_authorization") && line.include?('"/up"') }
   fail!(app_failures, "Solid Cache must be enabled") unless prod_active.any? { |line| line.match?(/\bconfig\.cache_store\s*=\s*:solid_cache_store\b/) }
   fail!(app_failures, "Solid Queue must be enabled") unless prod_active.any? { |line| line.match?(/\bconfig\.active_job\.queue_adapter\s*=\s*:solid_queue\b/) }
@@ -69,8 +73,12 @@ apps.each do |name, metadata|
   end
 
   ci_config = File.join(app_dir, "config", "ci.rb")
+  shared_ci = File.join(RAILS_ROOT, "shared", "config", "ci.rb")
   if File.file?(ci_bin)
-    ci_text = [File.file?(ci_config) ? File.read(ci_config) : nil, File.read(ci_bin)].compact.join("\n")
+    ci_parts = [File.read(ci_bin)]
+    ci_parts << File.read(ci_config) if File.file?(ci_config)
+    ci_parts << File.read(shared_ci) if File.file?(shared_ci) && ci_parts.join.include?("shared/config/ci")
+    ci_text = ci_parts.join("\n")
     fail!(app_failures, "bin/ci must be executable") unless File.executable?(ci_bin)
     fail!(app_failures, "bin/ci must run RuboCop") unless ci_text.include?("rubocop")
     fail!(app_failures, "bin/ci must run bundler-audit") unless ci_text.include?("bundler-audit")

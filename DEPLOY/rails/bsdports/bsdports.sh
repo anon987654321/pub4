@@ -71,5 +71,6 @@ db_create_migrate_as_app "$APP_NAME" "$APP_DIR"
 install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"
 [[ -n $APP_DOMAIN ]] && relayd_add_relay "$APP_DOMAIN" "$APP_PORT"
 
+rails_runtime_gate "$APP_DIR" || exit 1
 doas rcctl restart "$APP_NAME" || doas rcctl start "$APP_NAME"
 log_ok "$APP_NAME live on :$APP_PORT"
