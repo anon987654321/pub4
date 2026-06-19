@@ -39,18 +39,50 @@ module Master
 
           pref = preferred(task_type:)
           all = @rules.fetch("models", {}).values.flat_map { |tier| tier.filter_map { |m| m["id"] } }
-          chain = ([pref] + all + continuity_models + [@config.model]).uniq
+          chain = (primary_models + [pref] + all + continuity_models + [@config.model]).uniq
           @provider_health ? @provider_health.rank(chain) : chain
+        end
+
+        # Opus via the local claude subscription costs no tokens, so it leads whenever the
+        # binary is present. The paid Opus API stays in the flattened tiers (escalation only).
+        def primary_models
+          return [] unless claude_cli_available?
+          Array(@rules.dig("models", "primary")).filter_map { |m| m["id"] }
+                                                .select { |id| id.to_s.start_with?("claude-cli:") }
+        end
+
+        def claude_cli_available?
+          return false if ENV["MASTER_NO_CLAUDE_CLI"] == "1"
+          return @claude_cli_available unless @claude_cli_available.nil?
+          @claude_cli_available = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+            exe = File.join(dir, "claude")
+            File.file?(exe) && File.executable?(exe)
+          end
         end
 
         def continuity_models
           return [] if @rules.dig("continuity", "enabled") == false
-          latest = [
-            @rules.dig("openrouter", "free_latest"),
-            @rules.dig("ferrum_web_chat", "free_latest")
-          ]
-          flat = latest.flatten.compact
-          flat.uniq
+          latest = [@rules.dig("openrouter", "free_latest"), live_free_models]
+          latest << @rules.dig("ferrum_web_chat", "free_latest") if web_chat_enabled?
+          latest.flatten.compact.uniq
+        end
+
+        def web_chat_enabled?
+          gate = @rules.dig("ferrum_web_chat", "enabled_when_env").to_s
+          gate.empty? ? false : ENV[gate].to_s != ""
+        end
+
+        # Live free slugs refreshed into the SQLite catalog; read-only, never creates the DB.
+        def live_free_models
+          return [] unless @rules.dig("openrouter", "use_live_catalog")
+          require_relative "../../providers/catalog_index"
+          db = Providers::CatalogIndex::DEFAULT_DB
+          return [] unless File.exist?(db)
+          rows = Providers::CatalogIndex.new(db_path: db).search(":free", source: "openrouter", limit: 40)
+          rows.filter_map { |row| row["id"] }.select { |id| id.to_s.end_with?(":free") }
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "model_router.live_free_models")
+          []
         end
 
         def escalate?(response, threshold: DEFAULT_THRESHOLD)

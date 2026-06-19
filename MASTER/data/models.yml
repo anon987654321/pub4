@@ -100,9 +100,13 @@ model_defs:
     <<: *model_defaults
     score: { quality: 0.95, speed: 0.70, cost: 0.60 }
   claude_cli_opus: &claude_cli_opus
-    id: claude-cli:claude-opus-4-7
+    id: claude-cli:claude-opus-4-8
     <<: *model_defaults
-    score: { quality: 0.99, speed: 0.50, cost: 0.30 }
+    score: { quality: 0.99, speed: 0.55, cost: 1.0 }
+  claude_opus_api: &claude_opus_api
+    id: anthropic/claude-opus-4-8
+    <<: *model_defaults
+    score: { quality: 0.99, speed: 0.50, cost: 0.20 }
   gemma_2_9b_free: &gemma_2_9b_free
     id: google/gemma-2-9b-it:free
     <<: *model_defaults
@@ -159,6 +163,10 @@ model_defs:
     id: cerebras/llama-3.1-8b
     <<: *model_defaults
     score: { quality: 0.70, speed: 0.99, cost: 0.92 }
+  llama_4_maverick_free: &llama_4_maverick_free
+    id: meta-llama/llama-4-maverick:free
+    <<: *model_defaults
+    score: { quality: 0.85, speed: 0.75, cost: 1.0 }
 ollama_qwen: &ollama_qwen
   id: ollama:qwen2.5-coder:7b
   <<: *model_defaults
@@ -180,7 +188,12 @@ models:
     - *qwen3_next
     - *llama_70b
     - *qwen_coder
+  primary:
+    - *claude_cli_opus
+    - *claude_opus_api
   strong:
+    - *claude_cli_opus
+    - *claude_opus_api
     - *deepseek_reasoner
     - *deepseek_chat
     - *gemini_pro
@@ -189,6 +202,11 @@ models:
     - *gpt_4o
     - *gemini_flash
     - *command_r_plus
+  vision:
+    - *llama_4_scout_free
+    - *llama_4_maverick_free
+    - *gemini_flash
+    - *claude_sonnet
   medium:
     - *deepseek_chat
     - *gemini_flash_openrouter
@@ -215,7 +233,7 @@ models:
     - *gemma_2_9b_free
     - *llama_4_scout_free
     - *phi_4_free
-    - *glm_4_5_air_free
+    - *deepseek_v3_free
     - *reka_flash
     - *nemotron_super
     - *qwen_coder
@@ -236,9 +254,10 @@ routes:
   refactoring: default
   architecture: strong
   review: default
-  explanation: cheap
-  exploration: cheap
-  fallback_default: cheap
+  explanation: free
+  exploration: free
+  fallback_default: free
+  vision: vision
 
 tool_capable_prefixes:
   - claude
@@ -292,13 +311,45 @@ continuity:
   updated_at: "2026-05-01T00:00:00Z"
 
 openrouter:
+  # When true, the router merges live :free slugs from the SQLite provider catalog
+  # (populated by Providers::CatalogIndex#refresh). Read-only; no-ops until refreshed.
+  use_live_catalog: true
+  # Multiple keys rotate LRU to spread free-tier rate limits (20 req/min, 200/day each).
+  keys_env:
+    - OPENROUTER_API_KEY
+    - OPENROUTER_API_KEY_2
+    - OPENROUTER_API_KEY_3
   free_latest:
     - z-ai/glm-4.5-air:free
     - nvidia/nemotron-3-super-120b-a12b:free
     - openai/gpt-oss-120b:free
-    - qwen/qwen3-next-80b-a3b-instruct:free
-    - meta-llama/llama-3.3-70b-instruct:free
     - qwen/qwen3-coder:free
+    - qwen/qwen3-next-80b-a3b-instruct:free
+    - deepseek/deepseek-chat-v3.1:free
+    - meta-llama/llama-3.3-70b-instruct:free
+    - meta-llama/llama-4-scout:free
+    - google/gemma-2-9b-it:free
+
+# Opt-in, ToS-sensitive last-resort free fallback via headless Chrome (ferrum gem).
+# Activates only when MASTER_WEB_CHAT is set; otherwise these models stay out of the chain.
+# Selectors are best-effort and will need maintenance as sites change; login cookies must
+# already exist in the browser profile. Models use the web-chat: prefix.
+ferrum_web_chat:
+  enabled_when_env: MASTER_WEB_CHAT
+  free_latest:
+    - web-chat:gemini
+    - web-chat:chatgpt
+  providers:
+    gemini:
+      url: https://gemini.google.com/app
+      input_selector: "div.ql-editor[contenteditable='true']"
+      reply_selector: "message-content"
+      timeout: 120
+    chatgpt:
+      url: https://chatgpt.com/
+      input_selector: "div#prompt-textarea"
+      reply_selector: "div[data-message-author-role='assistant']"
+      timeout: 120
 
 # Provider trust tracked over time; weights routing beyond raw cost.
 # Source: master.json v225 reunification (#52).

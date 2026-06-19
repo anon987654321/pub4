@@ -7,12 +7,12 @@ module Master
         openai: {
           env: %w[OPENAI_API_KEY],
           strengths: %i[reasoning coding multimodal],
-          default_model: "gpt-5.5-thinking",
+          default_model: "gpt-4o",
         },
         anthropic: {
           env: %w[ANTHROPIC_API_KEY],
           strengths: %i[coding long_context instruction_following],
-          default_model: "claude-sonnet-4-6",
+          default_model: "claude-opus-4-8",
         },
         gemini: {
           env: %w[GOOGLE_API_KEY GEMINI_API_KEY],

@@ -18,6 +18,7 @@ module Master
       REACT_MAX_STEPS = 8
       MS_PER_SECOND = 1000
       CLAUDE_RE = /\Aclaude-|anthropic\/claude/i.freeze
+      VISION_RE = /gemini-[12]|claude|gpt-4o|gpt-4\.1|llama-4|qwen.*vl|pixtral|gemma-[34]|vision/i.freeze
       NEMOTRON3_RE = /nemotron-3/i.freeze
       LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
       TOOL_CALL_RE = /<tool_call>(.*?)<\/tool_call>/m.freeze
@@ -70,12 +71,7 @@ module Master
 
       def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, &blk)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        if !image.nil? && image != ""
-          # auto bias to vision free models (e.g. gemini-2.0-flash-exp:free) when image in ctx
-          unless selected_model.to_s =~ /gemini|vision|claude-3|gpt-4o/
-            selected_model = "z-ai/glm-4.5-air:free"
-          end
-        end
+        selected_model = vision_model_for(selected_model) if image_present?(image)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
           @cache.fetch(cache_key, selected_model) do
@@ -112,8 +108,20 @@ module Master
       def web_chat_model?(model_id)   = model_id.to_s.start_with?("web-chat:")
       def tool_capable?(model_id)     = TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
       def claude_model?(model_id)     = CLAUDE_RE.match?(model_id.to_s)
+      def vision_capable?(model_id)   = VISION_RE.match?(model_id.to_s)
 
       private
+
+      def image_present?(image)
+        return false if image.nil?
+        return !image.empty? if image.respond_to?(:empty?)
+        image != ""
+      end
+
+      def vision_model_for(current)
+        return current if vision_capable?(current)
+        @model_router&.preferred(task_type: :vision) || current
+      end
 
       def system_prompt
         result = @system_prompt_proc.call
@@ -142,7 +150,7 @@ module Master
       end
 
       def send_web_chat(provider, messages, sys:)
-        Result.ok(WebChat.call(provider:, prompt: text_prompt_for(messages), system: sys))
+        Result.ok(Reach::WebChat.call(provider:, prompt: text_prompt_for(messages), system: sys))
       rescue StandardError => e
         Result.err("web-chat: #{e.message}", category: :provider_error)
       end
@@ -191,6 +199,7 @@ module Master
       def record_provider_outcome(model, status, latency_ms: nil, error: nil)
         @model_router&.record_provider_outcome(model:, status:, latency_ms:, error:)
         @bus&.publish("llm:provider_outcome", model:, status:, latency_ms:, error:)
+        Ground::KeyRotator.rotate_for(model) if %i[rate_limit quota_exceeded].include?(status)
       rescue StandardError => e
         @bus&.publish("provider_health:record_error", model:, error: e.message)
       end

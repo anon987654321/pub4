@@ -115,6 +115,7 @@ module Master
         cfg.public_send("#{attr}=", api_key) if api_key.length >= MIN_API_KEY_LENGTH
       end
     end
+    Ground::KeyRotator.configure_current!
   end
 
   def self.apply_process_defaults!
