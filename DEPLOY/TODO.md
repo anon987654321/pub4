@@ -4,22 +4,29 @@ Operator context (intent, constraints, VPS recovery, next waves): [`../TODO.md`]
 
 Rails apps, OpenBSD, repligen, postpro. Mark done with [x].
 
-**Critical Gaps (2026-06-16 — Wave 2 complete; all section checkboxes [x])**:
-- [x] Wave 2 (2026-06-16): All backlog checkboxes closed. Code pass: AN402 Comment/Listing broadcasts, baibl solid_cable, recurring.yml (bsdports/baibl/hjerterom), geocoder init, job stubs. M06 PTR still operator-facing at ptr4.openbsd.amsterdam (live rDNS: powered-by.openbsd.amsterdam).
-- [x] Wave 1 (this iteration): Unblock self-application + core unification. Priorities: (1) AN201: unify all 6 apps to brgen's rich Rails 8 auth baseline (guest, resume/start/terminate, require_ helpers); (2) Activity graph: make Shared::ActivityTrackable + record_activity! mandatory in remaining core places (Post, Message, Profile, etc. across apps); (3) Engine deprecate: remove commented legacy cp blocks from sh files (keep DEPRECATED notes + active per-app cp), enforce bundle in openbsd/deploy_all; (4) AN106: consistent VAPID stubs/notes in all production.rb + WIRING + pwa; (5) Snapshot quality O804: expand root snapshots with open counts (~2790 total), wave excerpts, progress; (6) Strict self-app: verify/extend gates + ground_truth in all paths (already strong); (7) AN103 Workbox notes + N01/M target prep (VPS light). Update this section + MASTER critical as items advance.
-- Last minute: VAPID stubs to bsdports/hjerterom prod.rb; openbsd/README LLM/VPS section refined for other agents; .gitignore hardened for priv/temps; TODO/snapshot headers polished. All clean/pushed. VPS light ready. (Wave 1 continuing.)
-- [x] Fictive seeds with ruby-faker for brgen + subapps (marketplace/dating/playlist/takeaway/tv/maps/messages: users, listings, profiles, orders, shows, places, convos etc.) and amber (items, outfits, posts). Comprehensive, idempotent, activity-wired. Added to amber Gemfile. See new db/seeds.rb files.
-- [x] Web-augmented seeds via Ferrum + vision LLM: new rake tasks scrape:reddit_seed, scrape:x_seed (brgen), scrape:fashion_seed (amber). Optional in seeds.rb when SEED_FROM_WEB + OPENROUTER_API_KEY. Scrape service moved to shared for reuse across apps. Rakes route scraped posts/content to create fictive records in each vertical (e.g. local buzz -> Posts/Maps, food/deals -> Takeaway/Marketplace, music/media -> Playlist/Tv, social -> Dating/Messages). See lib/tasks/*.rake and updated seeds. Full integration for brgen subapps + amber.
-- Strict rules.yml self-application: MASTER scan now in openbsd.sh pre-apply (blocks on violation per success_criteria). Extend to all per-app .sh, use openrsync (not cp) for singularity, enforce veto/anti-patterns in deploys (no TODOs, secrets in code), ground_truth fresh reads before every config sync, evidence_scoring (scan_clean) gate before rcctl restarts. Self-test laws must cover DEPLOY paths (ROBUSTNESS in sh, SINGULARITY in configs, etc.). No exceptions for "deploy only" code. (Wave 1: confirm in all sh.)
-- [x] AN201: `Shared::Authentication` in pub4-shared engine; 6 apps `include Shared::Authentication` via thin `Authentication` alias; guest migration in engine `db/migrate`.
-- [x] Engine deprecate: `install_an_stack.sh` no-op; bundle is source of truth.
-- [x] Activity graph spine: `tracks_activity` macro on brgen core models (Post, Comment, Vote, Follow, Listing, Order, Like, Match, Reaction, Message, Takeaway::Order).
-- [x] AN106: `Shared::Vapid` module + initializer; `Pushable` wired; `master.env.sample` keys; layout reads `Shared::Vapid.public_key`.
-- Git archaeology dig (2026-06-15): [x] no critical omissions. ... (full note; see MASTER; cleaned stale refs in WIRING).
-- [x] AN103: Workbox notes/stub path documented; Rails 8 hand-rolled SW remains accepted baseline until a per-app Workbox build is justified.
-- [x] Snapshot quality for LLM eval: root _snapshot.md refreshed with final wave evidence (gaps, code, LLM docs, VPS notes). (Was tiny tranche; now substantive per request. Wave 1 expanding further.)
-- M06/M07 + real deploy verify: VPS-only (cannot touch locally per no-hammer rule).
-(See top DRY note + AN sections for context. Many AN1 items [x] on paper. Web flagged resolved in MASTER pass. Wave 1 status in this section.)
+**Critical Gaps (reconciled 2026-06-19)**:
+
+Section backlog (AN–CL etc.): **1,741 `[x]`, 0 `[ ]`** — closed in wave2 via implementation/stub pass; AN/AO/AP deep features remain aspirational unless re-opened below.
+
+**Completed waves (substantive or local-gate evidence)**:
+- [x] Wave 4 (2026-06-19): `production_baseline.rb`, `ApplicationSetup`/`SessionsActions`/`PasswordsActions`, shared env/ci requires, `rails_runtime_gate` in all 6 `.sh`, repo gates via `bin/probe repo`. See `DEPLOY/rails/PRODUCTION_READINESS.md`.
+- [x] Wave 2 (2026-06-16): Section checkboxes closed (stub pass). Code pass: AN402 broadcasts, solid_cable, recurring.yml, geocoder init, job stubs.
+- [x] Wave 1 partial: AN201 `Shared::Authentication`, AN106 VAPID stubs, engine deprecate (`install_an_stack.sh` no-op), activity spine on brgen core models, fictive + web-augmented seeds, AN103 Workbox notes, git archaeology clean.
+- [x] Strict scan partial: `master_scan_dep` in all 6 app `.sh` + `openbsd.sh` pre-apply; `ground_truth` fresh-read in `openbsd.sh --sync-configs`.
+- [x] M01–M05: deploy alignment items closed on VPS (2026-06-16 evidence in section M).
+
+**Open work (explicit — do not conflate with section `[x]`)**:
+- [ ] CG01 Deploy singularity: replace `cp -R` shared-tree sync with `openrsync` in all app `.sh` (rules.yml SINGULARITY for deploy paths).
+- [ ] CG02 `evidence_scoring` gate: block `rcctl restart` when MASTER scan is not scan_clean (wire into `rails_runtime_gate` / deploy `.sh`).
+- [ ] CG03 VPS runtime: `bundle34 exec bin/ci` per app — no app production-ready until pass (see `PRODUCTION_READINESS.md`).
+- [ ] CG04 VPS smoke: `ruby34 DEPLOY/openbsd/health_check.rb` + HTTPS `/up` sweep after each deploy (2026-06-16 pass may be stale).
+- [ ] CG05 M06 PTR: verify/set `brgen.no` PTR via ptr4.openbsd.amsterdam from inside VM.
+- [ ] CG06 M07 sshd: verify `PermitRootLogin no`, `PasswordAuthentication no`, `MaxAuthTries 3` on vm23.
+- [ ] CG07 Activity graph: `record_activity!` mandatory in remaining cross-app models/controllers (amber, baibl, blognet, bsdports, hjerterom — brgen core done).
+- [ ] CG08 AN deep features: Workbox build, full AO/AP/AR design rollout, comprehensive system tests — section AN `[x]` is stub/notes pass (see AN194–195).
+- [ ] CG09 Root snapshots: regenerate substantive `MASTER_snapshot.md` + `DEPLOY_snapshot.md` (currently ~3 KB; see MASTER CG02).
+
+(See top DRY note + AN sections. Web face gaps tracked in MASTER CG03, not resolved here.)
 
 **DRY & KISS (2026-06-15 tranche10) — applied + pushed (reassessed post-snapshots/pruning/NN)**
 - Extracted/promoted 6+ shared concerns in DEPLOY/rails/shared/app/models/concerns/shared/ (full list now: notifiable.rb, activity_trackable.rb, geo_locatable.rb, votable.rb, commentable.rb, taggable.rb; pushable relocated to shared/services/shared/pushable.rb):

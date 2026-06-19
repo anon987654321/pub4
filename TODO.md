@@ -2,7 +2,7 @@
 
 Repository: local `/Users/mac/Documents/GitHub/pub4` (VPS: `/home/dev/pub4`), remote `anon987654321/pub4`, branch `main`.
 
-**HEAD:** wave4 — all seven next waves complete locally (2026-06-19); VPS `bin/ci` runtime pending.
+**HEAD:** wave4 local gates green (2026-06-19); **14 explicit open CG items** in MASTER/TODO.md (5) + DEPLOY/TODO.md (9); section backlogs remain stub-pass closed.
 
 Itemized backlogs:
 
@@ -54,7 +54,16 @@ curl -fsS https://ai.brgen.no/up
 
 Hypervisor if VM SSH times out: `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam` → `vmctl console vm23`. Operator keys may also be on `dev@brgen.no` (password in operator vault — never commit).
 
-## Next waves (sequential) — [x] complete 2026-06-19
+## Open critical gaps (reconciled 2026-06-19)
+
+Explicit `[ ]` items live in each backlog's **Critical Gaps** section (CG01+). Section A–CL / AN–CL checkboxes stay `[x]` from wave2 stub pass until CG items close and items are re-opened individually.
+
+| Source | Open CG items |
+|--------|---------------|
+| MASTER/TODO.md | CG01–CG05 (self-scan VPS, snapshots, web face, deep O/S/P/Q/R, smoke) |
+| DEPLOY/TODO.md | CG01–CG09 (openrsync, evidence gate, VPS bin/ci, smoke, M06/M07, activity, AN deep, snapshots) |
+
+## Next waves (sequential) — [x] complete 2026-06-19 (local repo gates)
 
 1. [x] **Rails runtime gate** — `DEPLOY/rails/rails_runtime_gate.rb`; `rails_runtime_gate` in deploy `.sh` scripts; `bin/probe repo` wired.
 2. [x] **DEPLOY de-duplication** — `production_baseline`, `ApplicationSetup`, `SessionsActions`, `PasswordsActions`, shared `development`/`test`/`ci` requires.

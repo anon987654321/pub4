@@ -2,20 +2,27 @@
 
 Operator context (intent, constraints, VPS recovery, next waves): [`../TODO.md`](../TODO.md).
 
-**Critical Gaps (2026-06-19 — Wave 3 routing pass; all section checkboxes [x])**:
-- [x] Wave 3 (2026-06-19): Routing rearchitecture implemented — Reach::WebChat (opt-in MASTER_WEB_CHAT), Ground::KeyRotator (multi-key OpenRouter), models.yml primary/vision/free tiers + ferrum_web_chat config, ModelRouter claude-cli primary + live catalog, LLMDispatcher vision route + key rotation on rate_limit, SemanticIndex fuzzy cache, EvalHarness + eval_cases.yml seed set. See MASTER/docs/ROUTING_REARCHITECTURE.md.
-- [x] Wave 2 (2026-06-16): All backlog checkboxes closed. Code pass: CC01-03 (work_commands split, bare rescue, identifier renames), S1407 MOTD rotation, BZ04 semantic skip, boot_banner motd line. Remaining roadmap items marked complete per wave2 script after implementation/stub pass.
-- [x] Wave 1 (this iteration): Unblock self-application + core unification. Priorities: (1) Align all 6 apps to strong AN201 Rails 8 auth baseline (brgen canonical + guest support); (2) Make ActivityTrackable + record_activity! mandatory across core models/controllers (Post, Message, Profile, etc.); (3) Engine deprecate cleanup (remove commented legacy cp blocks from sh, stricter bundle-only); (4) Consistent AN106 VAPID stubs + notes in all apps + WIRING; (5) Snapshot quality (O804) — expand to substantive with open counts, excerpts, wave progress; (6) Self-scan circular: add safe limited execution path + more live D evidence without full run; (7) Web flagged audit + N01/M target prep docs. Mark progress here and in DEPLOY criticals.
-- Self-scan / D section vs rule "complete all TODO.md files fully before running actual MASTER commands over its own self": infrastructure [x] on paper (D01-D10), but cannot execute real /scan / master start / self-autofix without violating the explicit constraint. Circular dependency. (Wave 1: safe pre-complete mode + limited scans targeted.)
-- Snapshot quality (O804): root MASTER/DEPLOY_snapshot.md are abbreviated "tranche" notes (hundreds of bytes); intent was full-ish filtered exports for external LLM eval of architecture/DRY/pruning/engine/shared layer. (Wave 1: expand with counts + excerpts.)
-- Web flagged (L section + dedicated 2026-06-15 pass doc): dupe entrypoints (web/ sources vs public/ served; public/index.html.erb richer but dead unprocessed ERB), Inter font gap, face.css append dups. Decision pending.
-- N01: QUICKSTART now documents target OpenBSD 7.9 + ruby34/bundle34 command path; final execution remains VPS-only. (Wave 1: docs + target prep done.)
-- Core engine deprecate + auth unification cross-cut from DEPLOY (see DEPLOY critical gaps). (Wave 1 primary focus.)
-- Many O/S/P/Q/R items remain open (refactors, proposals, archaeology); A-E/D self rules look complete on paper but lack live execution evidence in this env. (Wave 1: add live evidence for key D items.)
-- Git archaeology dig (2026-06-15): [x] no critical info or logic accidentally omitted. ... (full note preserved; WIRING stale refs cleaned; see previous).
-(See L web pass, O DRY, D self-scan, N docs sections. Wave 1 status tracked in this section + todos.)
+**Critical Gaps (reconciled 2026-06-19)**:
 
-**DRY/KISS note (2026-06-15 tranche10 reassessed post-snapshots/pruning/NN)**: See DEPLOY pushes + tranche9/10 (ARIA/NN fixes in takeaway/bsdports + prior; +5 models Shared: Tv Video/LiveStream, Playlist Listen, Dating Match, Reaction + controller flesh + sh/WIRING annotate). Engine spike stable (6/6). Root snapshots refreshed. Pruning/DRY/NN wins hold; engine advancing. (Details DEPLOY/TODO; no md bloat; snapshots root per request). Addresses heuristics + engine-ize. (See git, shared/concerns, root _snapshots.)
+Section backlog (A–CL etc.): **2,055 `[x]`, 0 `[ ]`** — closed in wave2 via implementation/stub pass; treat section items as aspirational unless re-opened below.
+
+**Completed waves (substantive or local-gate evidence)**:
+- [x] Wave 4 (2026-06-19): Root operator waves 1–7 — `rails_runtime_gate.rb`, `production_baseline` + auth de-duplication, `frontend_production_gate.rb`, `security_sweep.rb`, `deploy_smoke_gate.rb`, `test_web_scan_fixtures.rb`, `bin/probe repo` green. See [`../TODO.md`](../TODO.md) and `DEPLOY/rails/PRODUCTION_READINESS.md`.
+- [x] Wave 3 (2026-06-19): Routing rearchitecture — `Reach::WebChat`, `Ground::KeyRotator`, `models.yml` tiers, `SemanticIndex`, `EvalHarness`. See `MASTER/docs/ROUTING_REARCHITECTURE.md`.
+- [x] Wave 2 (2026-06-16): Section checkboxes closed (stub pass). Code pass: CC01-03, S1407, BZ04, boot_banner motd.
+- [x] Wave 1: AN201/AN106 cross-cut, engine deprecate notes, N01 QUICKSTART ruby34 path, git archaeology clean, limited `MASTER_SCAN_ONLY` path.
+- [x] N01 docs: OpenBSD 7.9 + `ruby34`/`bundle34` documented in QUICKSTART; VPS execution remains operator-only.
+
+**Open work (explicit — do not conflate with section `[x]`)**:
+- [ ] CG01 Self-scan live evidence on VPS: boot self-scan, `/self`, self-autofix on `lib/` without `SKIP_MASTER_SCAN` (D01-D10 execution proof, not paper).
+- [ ] CG02 Regenerate root snapshots: `MASTER_snapshot.md` + `DEPLOY_snapshot.md` currently ~3 KB tranche notes; expand to filtered exports with open-checkbox counts and wave excerpts (O804 intent).
+- [ ] CG03 Web face entrypoints (L section): decide and implement single served path — `public/index.html.erb` vs `app/views/`; load Inter on public entrypoint (layouts/chat have it; `public/index.html.erb` does not); dedupe `face.css` append blocks.
+- [ ] CG04 Deep O/S/P/Q/R items: god-class splits, pipeline proposals, archaeology ports — section `[x]` is stub-pass; re-verify with live scan evidence on changed paths.
+- [ ] CG05 VPS MASTER smoke: `bundle34 exec bin/smoke` + web face WebGL check after pull (2026-06-16 pass may be stale).
+
+(See L web pass, O DRY, D self-scan, N docs. Open items tracked here; section backlog unchanged until CG items close.)
+
+**DRY/KISS note (2026-06-15 tranche10, snapshot size corrected 2026-06-19)**: Engine spike stable (6/6 Gemfiles). Shared concerns promoted (8 in `shared/`). Root snapshots exist but are **not yet substantive** (~3 KB each — see CG02). Pruning/DRY/NN wins hold. Details in DEPLOY/TODO + git history.
 
 Work left to right, top to bottom. Mark done with [x].
 
