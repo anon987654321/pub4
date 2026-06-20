@@ -1,22 +1,9 @@
 # frozen_string_literal: true
 
+require_relative "../stream_accumulator"
+
 module Master
   module Now
-    class StreamAccumulator
-      def initialize(buffer, &on_text)
-        @buffer = buffer
-        @on_text = on_text
-      end
-
-      def call(chunk)
-        text = chunk.respond_to?(:content) ? chunk.content.to_s : chunk.to_s
-        return if text.empty?
-
-        @on_text.call(text)
-        @buffer << text
-      end
-    end
-
     class CLI
       SPIN_FRAMES = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
       SPIN_INTERVAL = 0.25

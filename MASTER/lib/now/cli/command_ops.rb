@@ -80,7 +80,7 @@ module Master
       end
 
       def run_why
-        router = Master::Routing::ModelRouter.new(config: @refs.config, root: Master::ROOT)
+        router = Master::Now::Routing::ModelRouter.new(config: @refs.config, root: Master::ROOT)
         task = @refs.session.phase == :implement ? :implement : :exploration
         tier = router.current_tier(task_type: task)
         rows = router.score_breakdown(task_type: task).first(5)

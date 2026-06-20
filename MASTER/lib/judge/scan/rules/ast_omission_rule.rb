@@ -13,15 +13,29 @@ module Master
             super()
             @id = "ast_omission"; @description = "symbol dropped vs recent commits"
             @severity = :warning; @rule_tags = %i[COMPLETENESS]; @auto_fix = false
-            @guard = CommitGuard.new(root:, depth:)
+            @root = File.expand_path(root)
+            @guard = CommitGuard.new(root: @root, depth:)
           end
 
-          def check(code, path:)
+          def check(_code, path:)
             return [] unless path.to_s.end_with?(".rb")
+
+            rel = relativize(path)
+            return [] unless rel
+
+            omissions = @guard.check(paths: [rel])
             omissions.map { |o| finding(line: 1, message: "#{o.type} #{o.name} dropped (last seen #{o.last_seen_at})") }
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "ast_omission_rule.check", event_bus: nil)
             []
+          end
+
+          private
+
+          def relativize(path)
+            full = File.expand_path(path)
+            prefix = @root + File::SEPARATOR
+            full.start_with?(prefix) ? full.delete_prefix(prefix) : File.basename(full)
           end
         end
       end

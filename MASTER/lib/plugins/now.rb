@@ -9,6 +9,7 @@ module Master
         commands = Master::Now::CommandRegistry.build(infra:, ai:, root:)
         stages   = [
           Master::Now::Stages::Intake.new,
+          Master::Now::Stages::Enhance.new(agent: ai[:agent], event_bus: bus),
           Master::Now::Stages::Infer.new,
           Master::Now::Stages::Route.new(commands:, agent: ai[:agent]),
           Master::Now::Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
@@ -23,7 +24,7 @@ module Master
         pipeline = Master::Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:, scanner: ai[:scanner])
         ai[:standing].wire_pipeline(pipeline)
         gateway = Master::Reach::Gateway.new(pipeline:, session: infra[:session], event_bus: bus)
-        commands["gateway"] = ->(ctx) { gateway.channels }
+        commands["gateway"] = ->(_ctx) { gateway.channels }
         [pipeline, gateway]
       end
 

@@ -156,7 +156,7 @@ module Master
 
       def system_prompt
         return nil if @principles.empty?
-        "Constitutional principles (operator-declared, override defaults):\n#{lines.join("\n")}"
+        "Constitutional principles (operator-declared, override defaults):\n#{list.join("\n")}"
       end
 
       def list

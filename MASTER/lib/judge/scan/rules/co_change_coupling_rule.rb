@@ -25,15 +25,27 @@ module Master
 
           def check(_code, path:)
             return [] unless path.end_with?(".rb")
+
+            rel = relativize(path)
             return [] unless rel
-                                  .select { |_, weight| weight >= WEIGHT_THRESHOLD }
-                                  .sort_by { |_, weight| -weight }
-                                  .first(3)
+
+            peers = neighbors(rel)
+              .reject { |peer, _| same_module?(rel, peer) }
+              .select { |_, weight| weight >= WEIGHT_THRESHOLD }
+              .sort_by { |_, weight| -weight }
+              .take(3)
+              .to_a
             return [] if peers.empty?
-            [finding(line: 1, message: coupling_message)]
+
+            [finding(line: 1, message: coupling_message(rel, peers))]
           end
 
           private
+
+          def coupling_message(rel, peers)
+            names = peers.map { |peer, weight| "#{peer} (#{weight})" }.join(", ")
+            "co-changes across modules with #{peers.size} peer(s): #{names} — #{rel}"
+          end
 
           def neighbors(rel)
             graph[rel] || {}
@@ -53,7 +65,6 @@ module Master
 
           def module_of(path)
             parts = path.split("/")
-            # MASTER/lib/<module>/... → use the module dir (judge/trace/etc.)
             parts[0] == "MASTER" ? (parts[2] || parts[0]) : parts[0]
           end
         end

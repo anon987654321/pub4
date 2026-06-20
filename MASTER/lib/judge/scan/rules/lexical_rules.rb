@@ -59,6 +59,20 @@ module Master
     scan_lines(src, /rescue\s+Exception\b/, message: "catches signals — use StandardError")
   end
 
+  RuleDSL.rule :SILENT_RESCUE,
+    severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
+    description: "blanket rescue discards error without logging or re-raising" do |src, path:|
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    SilentRescue.scan(src, narrow: false).map { |hit| finding(line: hit[:line], message: hit[:message]) }
+  end
+
+  RuleDSL.rule :NARROW_SILENT_RESCUE,
+    severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
+    description: "narrow-class rescue discards error without logging or re-raising" do |src, path:|
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    SilentRescue.scan(src, narrow: true).map { |hit| finding(line: hit[:line], message: hit[:message]) }
+  end
+
   RuleDSL.rule :EMPTY_RESCUE,
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     description: "empty rescue swallows errors silently" do |src, path:|
@@ -118,6 +132,60 @@ module Master
     severity: :warning, tags: %i[BE_CONCISE],
     description: "ASCII divider decorations" do |src, path:|
     scan_lines(src, /(?:^|\s)(?:={3,}|-{3,})(?:\s|$)/, message: "remove ASCII divider decorations")
+  end
+
+  module SilentRescue
+    module_function
+
+    def scan(src, narrow:)
+      lines = src.lines
+      lines.each_with_index.flat_map do |line, index|
+        lineno = index + 1
+        next [] unless matches_mode?(line, narrow:)
+        next [] unless discard_body?(lines, index)
+
+        [{ line: lineno, message: "rescue discards error — log, re-raise, or return a meaningful value" }]
+      end
+    end
+
+    def matches_mode?(line, narrow:)
+      stripped = line.strip
+      return false unless stripped.start_with?("rescue")
+
+      if narrow
+        stripped.match?(/\Arescue\s+(?!StandardError\b|Exception\b)[A-Za-z][\w:]*(?:\s*=>\s*\w+)?\b/)
+      else
+        return false if stripped.match?(/\Arescue\s+(?!StandardError\b|Exception\b)[A-Za-z][\w:]*(?:\s*=>\s*\w+)?\b/)
+
+        stripped.match?(/\Arescue(?:\s+StandardError(?:\s*=>\s*\w+)?|\s+Exception(?:\s*=>\s*\w+)?)?\b/) ||
+          stripped.match?(/\Arescue\s*;/)
+      end
+    end
+
+    def discard_body?(lines, index)
+      line = lines[index]
+      if line.include?(";")
+        tail = line.split(";", 2)[1].to_s.strip
+        return discard_token?(tail) unless tail.empty?
+      end
+
+      ((index + 1)...lines.size).each do |i|
+        body = lines[i].strip
+        next if body.empty?
+        return false if handled_body?(body)
+
+        return discard_token?(body)
+      end
+      false
+    end
+
+    def handled_body?(body)
+      body.match?(/\A(?:raise\b|warn\b|logger\.|@bus\.publish|Ground::Swallow\.log)/)
+    end
+
+    def discard_token?(body)
+      body.match?(/\A(?:nil|false|\[\]|\{\}|_\w+)\s*\z/)
+    end
   end
   end
   end

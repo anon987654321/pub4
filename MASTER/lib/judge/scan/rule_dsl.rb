@@ -30,6 +30,8 @@ module Master
             define_method(:check) do |code, path:|
               langs = self.class.dsl_langs
               return [] if langs && !langs.include?(language(path)&.to_sym)
+
+              instance_exec(code, path:, &self.class.dsl_block) || []
             end
           end
         end
