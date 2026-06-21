@@ -16,6 +16,7 @@ const FACE_TEXT = await Promise.all(FACE_PARTS.map(async (part) => {
 
 const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
 const absoluteAsset = (path) => path ? new URL(path, document.baseURI).href : null;
+if (ASSET_PATHS.threeModule) ASSET_PATHS.threeModule = absoluteAsset(ASSET_PATHS.threeModule);
 const MODULE_PATHS = {
   "/three.module.js?v=59": absoluteAsset(ASSET_PATHS.threeModule),
   ...Object.fromEntries(Object.entries(ASSET_PATHS.faceModules || {}).map(([name, path]) => [`/${name}`, absoluteAsset(path)]))
