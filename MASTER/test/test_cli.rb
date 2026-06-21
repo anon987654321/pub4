@@ -194,6 +194,36 @@ class TestCLI < Minitest::Test
     assert_equal "saved\n", out
   end
 
+  def test_pipe_dispatches_slash_commands
+    @cli.define_singleton_method(:handle_repl_line) { |line| @piped_command = line }
+
+    @cli.pipe("/self\n")
+
+    assert_equal "/self", @cli.instance_variable_get(:@piped_command)
+  end
+
+  def test_self_scan_uses_container_dependencies
+    scanner = Object.new
+    bus = Object.new
+    renderer = Object.new
+    renderer.define_singleton_method(:render) { |text, mode:| "#{mode}:#{text}" }
+    cli = Master::Now::CLI.new(container: @container.merge(config: {}, scanner:, bus:, renderer:, root: "/tmp/master"))
+    summary = Struct.new(:violation_count, :line).new(1, "judge: lib/ 1 rules, 1 violations")
+    scan = Minitest::Mock.new
+    scan.expect(:call, Master::Result.ok(summary), stream: true, autofix: true)
+
+    Master::Judge::Scan::SelfScan.stub(:new, ->(scanner:, root:, event_bus:) {
+      assert_same scanner, cli.container[:scanner]
+      assert_equal "/tmp/master", root
+      assert_same bus, event_bus
+      scan
+    }) do
+      out, = capture_io { cli.send(:run_self_scan) }
+      assert_equal "dim:judge: lib/ 1 rules, 1 violations\n", out
+    end
+    scan.verify
+  end
+
   # handle_command dispatch
   def test_handle_command_returns_false_for_non_command
     skip "drifted: API moved; port to new dispatcher/CLI shape"

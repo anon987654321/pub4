@@ -66,7 +66,7 @@ body[data-high-contrast="1"] .enhance-text { color: white; }
 
 body[data-runtime-visible="false"] canvas { filter: brightness(0.45) contrast(0.85); }
 body[data-runtime-profile="battery"] canvas { filter: grayscale(0.25) brightness(0.72); }
-body[data-runtime-profile="full"] canvas { filter: none; }
+body[data-runtime-profile="full"] canvas { filter: saturate(var(--mood-sat, 0.7)) brightness(1); }
 body[data-long-silence="1"] canvas { filter: brightness(0.76) contrast(0.9); }
 body[data-laughter="1"] canvas { filter: contrast(1.08) saturate(1.06); }
 body[data-face-flash="1"] canvas {
@@ -248,6 +248,7 @@ body[data-mode="listening"] #mic-dot {
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
+  cursor: default;
 }
 
 .face-controls {
@@ -454,21 +455,25 @@ body[data-mode="listening"] #mic-dot {
   pointer-events: none;
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
 }
 
+#chat-log::-webkit-scrollbar { display: none; }
+
 #chat-log:not(:empty) { pointer-events: auto; }
-.message { position:relative; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; }
+.message { position:relative; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; animation: msgIn 220ms cubic-bezier(0.32,0.72,0,1) both; }
 .message:focus-visible { outline: 1px solid var(--face-fg); outline-offset: 1px; }
 .msg-prompt { font-weight: 700; margin-right: 0.35em; }
 .message.user .msg-prompt { color: var(--face-fg); }
 .message.assistant .msg-prompt { color: var(--face-muted); }
-.msg-body { color: color-mix(in srgb, var(--c-text) 82%, transparent); }
+.msg-body { color: color-mix(in srgb, var(--c-text) 82%, transparent); font-feature-settings:'liga' 1,'kern' 1; }
 .cursor { display:inline-block; width:7px; height:1em; background:currentColor; vertical-align:text-bottom; animation:cursorBlink 900ms steps(2,end) infinite; margin-left:1px; }
-.enhance-confirm { margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; }
-.enhance-arrow { color: color-mix(in srgb, var(--face-fg) 22%, transparent); animation: blink .5s step-end 4; }
-.enhance-text { color: color-mix(in srgb, var(--face-fg) 32%, transparent); font-style: italic; }
-.enhance-yn { color: var(--face-dim); }
-.dmesg-line { font: 11px/1.5 "Roboto Mono",ui-monospace,monospace; color: var(--face-dim); margin-bottom: 1px; white-space: pre-wrap; word-break: break-word; opacity: 0.28; transition: opacity .22s steps(4,end), color .22s ease; }
+.enhance-confirm { margin-bottom: 8px; padding: 4px 0; white-space: pre-wrap; word-break: break-word; font-size: .88em; }
+.enhance-arrow { color: color-mix(in srgb, var(--face-fg) 22%, transparent); animation: blink .5s step-end 4; opacity: .5; }
+.enhance-text { color: color-mix(in srgb, var(--face-fg) 32%, transparent); font-style: italic; opacity: .75; }
+.enhance-yn { color: var(--face-muted); letter-spacing: .08em; }
+.dmesg-line { font: 11px/1.5 "Roboto Mono",ui-monospace,monospace; color: var(--c-accent); margin-bottom: 1px; white-space: pre-wrap; word-break: break-word; opacity: 0.28; transition: opacity .22s steps(4,end), color .22s ease; }
 .dmesg-line.dmesg-live { opacity: 1; color: var(--c-accent, var(--face-dim)); }
 .dmesg-ts { opacity: 0.42; font-variant-numeric: tabular-nums; user-select: none; }
 .dmesg-body { letter-spacing: 0.01em; }
@@ -582,7 +587,7 @@ body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
   letter-spacing: .18em;
   color: var(--face-muted);
   opacity: 0;
-  transition: opacity .2s;
+  transition: opacity .2s, letter-spacing .4s ease;
   white-space: nowrap;
   pointer-events: none;
   margin-left: 4px;
@@ -596,7 +601,7 @@ body[data-tts-error="true"] #zsh-status { opacity: 1; color: var(--c-danger); }
   display: none;
   background: none;
   border: none;
-  color: var(--face-muted);
+  color: var(--mood-accent,var(--face-muted));
   font: inherit;
   cursor: pointer;
   padding: 0 0 0 8px;
@@ -623,8 +628,6 @@ body[data-mode="speaking"] #spin-btn { display: block; }
   #zsh { padding-inline: 24px; }
 }
 
-/* #34 Message fade-in slide */
-.message { animation: msgIn 220ms cubic-bezier(0.32,0.72,0,1) both; }
 @keyframes msgIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
 
 /* #35 User message right-align */
@@ -642,24 +645,12 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 .typing-indicator span:nth-child(3) { animation-delay: .32s; }
 @keyframes typingPulse { 0%, 80%, 100% { transform: translateY(0); opacity:.25; } 40% { transform: translateY(-2px); opacity:1; } }
 
-/* #38 dmesg accent */
-.dmesg-line { color:var(--c-accent); }
-
 /* #39 Message timestamp on hover */
 .message[data-ts]::after { content:attr(data-ts); font-size:9px; color:var(--face-muted); opacity:0; transition:opacity .15s; margin-left:8px; display:inline-block; vertical-align:middle; }
 .message[data-ts]:hover::after { opacity:1; }
 
 /* #40 Confidence band */
 .message.assistant { border-left:2px solid color-mix(in srgb, var(--c-code) calc(var(--conf-alpha,0.14) * 100%), transparent); padding-left:8px; }
-
-/* #41 Scroll momentum */
-#chat-log { scroll-behavior:smooth; overscroll-behavior:contain; }
-
-/* #42 Enhance confirm */
-.enhance-confirm { padding:4px 0; font-size:.88em; }
-.enhance-text { font-style:italic; opacity:.75; }
-.enhance-yn { color:var(--face-muted); letter-spacing:.08em; }
-.enhance-arrow { opacity:.5; }
 
 /* #43 Empty state ghost */
 #chat-log:empty::after { content:'no history'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:var(--face-dim); font-size:11px; text-transform:uppercase; letter-spacing:.2em; pointer-events:none; }
@@ -670,8 +661,6 @@ body[data-mode="speaking"] #zin { opacity:.75; }
 
 /* #46 Char count */
 #char-count { font: inherit; color:var(--face-muted); opacity:0; transition:opacity .15s; white-space:nowrap; margin-left:4px; }
-
-/* #47 Focus border brighten */
 
 /* #48 Cancel button pulse during thinking */
 body[data-mode="thinking"] #spin-btn { animation:cancelPulse 1.1s ease-in-out infinite; }
@@ -695,42 +684,25 @@ body:not(.face-ready) #zsh { opacity:.3; pointer-events:none; }
 #primer .tagline { opacity: .42; font-size: .88em; margin-top: 10px; letter-spacing: .04em; }
 #primer .hint { display: none; }
 
-/* #57 Cancel button uses mood color */
-#spin-btn { color:var(--mood-accent,var(--face-muted)); }
-
 /* #58 TTS loading shimmer */
 body[data-tts-loading="true"] #zsh-status { animation:ttsShimmer 700ms steps(4,end) infinite; }
 @keyframes ttsShimmer { 0%,100%{opacity:.4} 50%{opacity:1} }
 
-/* #60 Error flash border */
-
 /* #61 Council persona badge */
 body[data-council-persona]::after { content:attr(data-council-persona); position:fixed; top:calc(10px + var(--safe-top)); right:calc(10px + var(--safe-right)); font:9px/1.4 ui-monospace,monospace; text-transform:uppercase; letter-spacing:.14em; color:var(--face-muted); opacity:.6; z-index:var(--z-ui); pointer-events:none; }
 
-/* #62 Model name in ui-status on hover */
-.ui-status { cursor:default; }
-
-/* #63 Variable font weight with RMS */
-
-/* #64 Ligatures on body, off on prompt */
-.msg-body { font-feature-settings:'liga' 1,'kern' 1; }
+/* Prompt typography */
 #zsh input,#zsh .pp,#zsh .sep,#zsh .sep2 { font-feature-settings:'liga' 0; }
 
 /* #65 Line-height breathe during speaking */
 body[data-mode="speaking"] .msg-body { line-height:1.62; transition:line-height .6s ease; }
 
 /* #66 Letter-spacing expand during thinking */
-body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; transition:letter-spacing .4s ease; }
+body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; }
 
 /* #80 Safe-area gradient behind prompt bar */
 #zsh::after { content:''; position:absolute; inset-block-end:100%; inset-inline:0; height:32px; background:linear-gradient(to bottom,transparent,var(--face-bg)); pointer-events:none; }
 
-/* Hidden scrollbar — no grey bar */
-#chat-log { scrollbar-width:none; }
-#chat-log::-webkit-scrollbar { display:none; }
-
-/* #29 Mood saturation filter on canvas */
-body[data-runtime-profile="full"] canvas { filter:saturate(var(--mood-sat, 0.7)) brightness(1); }
 body[data-tts-loading="true"] canvas { filter:saturate(var(--mood-sat, 0.7)) brightness(1.04); }
 
 /* FA75 copy button */

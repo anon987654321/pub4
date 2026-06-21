@@ -14,7 +14,8 @@ Rails 8 + Falcon. Loopback `:53187`; relayd → `https://ai.brgen.no`.
 
 ## Face runtime
 
-Scripts under `public/`:
+The single HTML entrypoint is `app/views/chat/index.html.erb`, served by
+`ChatController#index` at `/`. Runtime assets live under `public/`:
 
 - `face.js` — wireframe mesh (THREE.js)
 - `cognition_ecology.js` — ecology particle layer (`z-index: 1` over face canvas)

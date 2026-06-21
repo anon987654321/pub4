@@ -47,6 +47,13 @@ class TestWebUI < Minitest::Test
     @container = FakeContainer.new
   end
 
+  def face_runtime_source
+    base = File.expand_path("../web/public", __dir__)
+    parts = Dir.glob(File.join(base, "face.part*.txt")).sort.map { |path| File.read(path) }
+    loader = File.read(File.join(base, "face.js"))
+    (parts + [loader]).join("\n")
+  end
+
   # Result monad
   def test_result_ok_wraps_value
     r = Master::Result.ok("hello")
@@ -99,7 +106,7 @@ class TestWebUI < Minitest::Test
     app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes app_controller, "TTS_RATE_LIMIT  = 30"
-    assert_includes app_controller, "before_action :enforce_tts_rate_limit, only: [:tts]"
+    assert_includes app_controller, "before_action :enforce_tts_rate_limit, if: -> { action_in?(:tts) }"
     assert_includes app_controller, "Retry-After"
   end
 
@@ -108,7 +115,7 @@ class TestWebUI < Minitest::Test
 
     assert_includes app_controller, "AUTHENTICATED_ACTIONS = %i["
     assert_includes app_controller, "command dmesg enhance history live metrics photo post_event state stream tts"
-    assert_includes app_controller, "before_action :require_authenticated!, only: AUTHENTICATED_ACTIONS"
+    assert_includes app_controller, "before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }"
     assert_match(/def\s+visitor\?\s*\n\s*false\s*\n\s*end/, app_controller)
     assert_match(/def\s+require_authenticated!\s*\n\s*end/, app_controller)
   end
@@ -118,8 +125,8 @@ class TestWebUI < Minitest::Test
 
     assert_includes app_controller, "WEB_READ_RATE_LIMIT  = 120"
     assert_includes app_controller, "WEB_WRITE_RATE_LIMIT = 60"
-    assert_includes app_controller, "before_action :enforce_web_read_rate_limit, only: %i[dmesg history live metrics]"
-    assert_includes app_controller, "before_action :enforce_web_write_rate_limit, only: %i[command enhance photo post_event state]"
+    assert_includes app_controller, "before_action :enforce_web_read_rate_limit, if: -> { action_in?(%i[dmesg history live metrics]) }"
+    assert_includes app_controller, "before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }"
   end
 
   def test_message_endpoint_uses_strong_params
@@ -141,44 +148,47 @@ class TestWebUI < Minitest::Test
     tts_job = File.read(File.expand_path("../web/app/services/tts_job.rb", __dir__))
 
     assert_includes tts_job, "Digest::SHA256.hexdigest"
+    assert_includes tts_job, "def failed?"
+    assert_includes tts_job, "record_failure"
     assert_includes chat_controller, 'response.headers["ETag"] = etag'
     assert_includes chat_controller, 'response.headers["Cache-Control"] = "public, max-age=3600"'
     assert_includes chat_controller, "head(:not_modified)"
+    assert_includes chat_controller, 'status: "failed"'
   end
 
   def test_face_tts_uses_indexeddb_blob_cache
-    face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
+    source = face_runtime_source
 
-    assert_includes face_js, "indexedDB.open(TTS_DB_NAME"
-    assert_includes face_js, "crypto.subtle.digest('SHA-256'"
-    assert_includes face_js, "readCachedTTS(key)"
-    assert_includes face_js, "writeCachedTTS(key, blob)"
+    assert_includes source, "indexedDB.open(TTS_DB_NAME"
+    assert_includes source, "crypto.subtle.digest('SHA-256'"
+    assert_includes source, "readCachedTTS(key)"
+    assert_includes source, "writeCachedTTS(key, blob)"
   end
 
   def test_face_tts_bridges_global_style_events
-    face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
+    source = face_runtime_source
 
-    assert_includes face_js, "new EventSource('/events/stream')"
-    assert_includes face_js, "type === 'tts:anticipate'"
-    assert_includes face_js, "type === 'tts:style:active'"
-    assert_includes face_js, "new CustomEvent('master:visual'"
+    assert_includes source, "new EventSource('/events/stream')"
+    assert_includes source, "type === 'tts:anticipate'"
+    assert_includes source, "type === 'tts:style:active'"
+    assert_includes source, "new CustomEvent('master:visual'"
   end
 
   def test_face_tts_audio_graph_uses_compressor_before_analyser
-    face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
+    source = face_runtime_source
 
-    assert_includes face_js, "createDynamicsCompressor()"
-    assert_includes face_js, "compressor.connect(analyser)"
-    assert_includes face_js, "connectTTSAudio(audio"
+    assert_includes source, "createDynamicsCompressor()"
+    assert_includes source, "compressor.connect(analyser)"
+    assert_includes source, "connectTTSAudio(audio"
   end
 
   def test_face_particles_are_crisp_depth_sized_pixels
-    face_js = File.read(File.expand_path("../web/public/face.js", __dir__))
+    source = face_runtime_source
 
-    assert_includes face_js, "let FACE_PIXEL_SIZE = 0.022"
-    assert_includes face_js, "let FACE_GLOW_SCALE = 1.18"
-    assert_includes face_js, "gl_PointSize=clamp"
-    assert_includes face_js, "depth"
+    assert_includes source, "let FACE_PIXEL_SIZE = 0.017"
+    assert_includes source, "let FACE_GLOW_SCALE = 1.18"
+    assert_includes source, "gl_PointSize=clamp"
+    assert_includes source, "depth"
   end
 
   # SwarmCoordinator
@@ -210,6 +220,7 @@ class TestWebUI < Minitest::Test
   def test_memory_context_summary_nil_when_empty
     Dir.mktmpdir do |dir|
       m = Master::Memory.new(root: dir)
+      %w[brain/memory brain/tools brain/identity].each { |key| m.forget(key) }
       assert_nil m.context_summary
     end
   end

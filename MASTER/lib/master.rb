@@ -260,10 +260,15 @@ module Master
     container
   end
 
+  def self.ensure_services!(root: ROOT)
+    Voice::TtsSupervisor.ensure_daemon!(root: root)
+  end
+
   def self.boot(root: Dir.pwd)
     apply_process_defaults!
     install_process_guards!
     Ground::Pledge.stage1_boot!(root)
+    ensure_services!(root: root)
     container = bootstrap_container(root: root)
     install_process_guards!
     Ground::Pledge.stage2_lock!

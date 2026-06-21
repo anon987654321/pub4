@@ -18,6 +18,10 @@ module Master
           summary: "scan MASTER itself",
           detail: ["/self", "Runs the MASTER self-scan with stream output."]
         },
+        "kernel" => {
+          summary: "run kernel fold smoke test",
+          detail: ["/kernel", "Runs kernel/spec/kernel_smoke.rb — Effect → Constitution → World loop."]
+        },
         "fix" => {
           summary: "run or preview fixes for a target",
           detail: ["/fix [path]", "/fix --dry-run [path]", "/fix preview [path]", "Background control lives under /watch on|off|status."]

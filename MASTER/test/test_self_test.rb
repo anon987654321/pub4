@@ -32,7 +32,7 @@ class TestSelfTest < Minitest::Test
     end
   end
 
-  def test_duplicate_rule_ids_are_reported_under_singularity
+  def test_only_rules_yml_ids_are_checked_under_singularity
     Dir.mktmpdir do |root|
       write_fixture_tree(root)
       File.write(File.join(root, "data", "patterns.yml"), <<~YAML)
@@ -45,7 +45,7 @@ class TestSelfTest < Minitest::Test
       singularity = result.value!.checks.find { |check| check.law == "SINGULARITY" }
 
       assert singularity.findings.any? { |finding| finding[:message].include?("duplicate rule id DUPLICATE_RULE") }
-      assert singularity.findings.any? { |finding| finding[:message].include?("duplicate rule id DUPLICATE_PATTERN") }
+      refute singularity.findings.any? { |finding| finding[:message].include?("duplicate rule id DUPLICATE_PATTERN") }
     end
   end
 

@@ -34,8 +34,9 @@ module Master
           keys = @receiver.method(@method_name).parameters.filter_map do |type, name|
             name if %i[key keyreq].include?(type) && name != :ctx
           end
-          mapped = keys.zip(@args).to_h.compact
-          mapped.merge(@kwargs)
+          mapped = keys.zip(@args).to_h.compact.merge(@kwargs)
+          accepts_ctx = @receiver.method(@method_name).parameters.any? { |type, name| %i[key keyreq].include?(type) && name == :ctx }
+          accepts_ctx ? mapped.merge(ctx:) : mapped
         end
       end
     end

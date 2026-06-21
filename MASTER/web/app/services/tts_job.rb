@@ -10,6 +10,7 @@ class TtsJob
   def self.enqueue(text:, voice:, style:, bus: nil)
     job = new(text: text, voice: voice, style: style, bus: bus)
     return job if job.ready?
+    return job if job.failed?
 
     Thread.new do
       Thread.current.report_on_exception = false
@@ -45,8 +46,26 @@ class TtsJob
     CACHE_DIR.join("#{@job_id}.mp3")
   end
 
+  def error_path
+    CACHE_DIR.join("#{@job_id}.err")
+  end
+
   def ready?
-    File.file?(cache_path)
+    File.file?(cache_path) && !File.zero?(cache_path)
+  end
+
+  def failed?
+    File.file?(error_path)
+  end
+
+  def pending?
+    !ready? && !failed?
+  end
+
+  def error
+    return nil unless failed?
+
+    File.read(error_path).strip
   end
 
   def bytes
@@ -57,11 +76,27 @@ class TtsJob
     return if ready?
 
     FileUtils.mkdir_p(CACHE_DIR)
+    File.delete(error_path) if File.exist?(error_path)
     File.write(CACHE_DIR.join("#{@job_id}.job"), JSON.generate(text: @text, voice: @voice, style: @style))
     data = Master::Voice::Speech.synthesize_bytes(@text, voice: @voice, style: @style)
-    File.binwrite(cache_path, data) if data && !data.empty?
-    @bus&.publish("tts:job_complete", job_id: @job_id, ready: ready?)
+    if data.nil? || data.empty?
+      message = Master::Voice::Speech.last_error || "synthesis produced empty audio"
+      record_failure(message)
+      return
+    end
+
+    File.binwrite(cache_path, data)
+    @bus&.publish("tts:job_complete", job_id: @job_id, ready: true)
   rescue StandardError => e
-    @bus&.publish("tts:job_error", job_id: @job_id, error: e.message)
+    record_failure(e.message)
+  end
+
+  private
+
+  def record_failure(message)
+    FileUtils.mkdir_p(CACHE_DIR)
+    File.write(error_path, message.to_s)
+    File.delete(cache_path) if File.exist?(cache_path)
+    @bus&.publish("tts:job_error", job_id: @job_id, error: message)
   end
 end

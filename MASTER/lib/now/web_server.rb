@@ -29,12 +29,15 @@ module Master
         web_dir = File.join(Master::ROOT, "web")
         return unless Dir.exist?(web_dir)
 
+        Master.ensure_services!(root: Master::ROOT)
         pids_out, = Open3.capture2e("lsof", "-ti", ":#{port}")
         pids_out.split.each { |pid| Process.kill("TERM", pid.to_i) rescue Errno::ESRCH }
         sleep 0.5
+        count = ENV.fetch("FALCON_COUNT", "2")
+        env = { "RAILS_ENV" => "production", "SECRET_KEY_BASE" => WebSecret.stable(config) }
         spawn(
-          { "RAILS_ENV" => "production", "SECRET_KEY_BASE" => WebSecret.stable(config) },
-          "bundle", "exec", "falcon", "serve", "--bind", "http://#{host}:#{port}",
+          env, "bundle", "exec", "falcon", "serve",
+          "--bind", "http://#{host}:#{port}", "-n", count,
           chdir: web_dir, out: File::NULL, err: File::NULL
         )
         io.puts "web: http://#{host}:#{port}"

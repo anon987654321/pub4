@@ -1,6 +1,6 @@
 "use strict";
 
-const FACE_PARTS = [
+const FACE_PARTS = window.MASTER_ASSET_PATHS?.faceParts || [
   "face.part1.txt",
   "face.part2.txt",
   "face.part3.txt",
@@ -8,14 +8,23 @@ const FACE_PARTS = [
   "face.part5.txt"
 ];
 
-const FACE_BASE = new URL(import.meta.url);
 const FACE_TEXT = await Promise.all(FACE_PARTS.map(async (part) => {
-  const res = await fetch(new URL(part, FACE_BASE));
+  const res = await fetch(part);
   if (!res.ok) throw new Error(`failed to load ${part}: ${res.status}`);
   return res.text();
 }));
 
-const FACE_BLOB = new Blob([FACE_TEXT.join("\n")], { type: "text/javascript" });
+const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
+const absoluteAsset = (path) => path ? new URL(path, document.baseURI).href : null;
+const MODULE_PATHS = {
+  "/three.module.js?v=59": absoluteAsset(ASSET_PATHS.threeModule),
+  ...Object.fromEntries(Object.entries(ASSET_PATHS.faceModules || {}).map(([name, path]) => [`/${name}`, absoluteAsset(path)]))
+};
+const FACE_SOURCE = Object.entries(MODULE_PATHS).reduce(
+  (source, [name, path]) => path ? source.replaceAll(`'${name}'`, JSON.stringify(path)) : source,
+  FACE_TEXT.join("\n")
+);
+const FACE_BLOB = new Blob([FACE_SOURCE], { type: "text/javascript" });
 const FACE_BLOB_URL = URL.createObjectURL(FACE_BLOB);
 try {
   await import(FACE_BLOB_URL);

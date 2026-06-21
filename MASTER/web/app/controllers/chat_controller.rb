@@ -75,23 +75,17 @@ class ChatController < ApplicationController
     response.headers["ETag"] = etag
     response.headers["Cache-Control"] = "public, max-age=3600"
     return head(:not_modified) if request.headers["If-None-Match"].to_s.split(",").map(&:strip).include?(etag)
-    return render(json: { job: job.job_id, status: "pending" }, status: :accepted) unless job.ready?
-
-    bytes = job.bytes
-    return head(:service_unavailable) if bytes.nil? || bytes.empty?
-
-    send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
+    return tts_job_response(job)
   rescue StandardError => e
     web_logger.warn("tts failed: #{e.class}: #{e.message}")
-    head(:internal_server_error)
+    render(json: { error: e.message, status: "failed" }, status: :service_unavailable)
   end
 
   def tts_status
     job = TtsJob.find(params[:job].to_s)
     return head(:not_found) unless job
-    return render(json: { job: job.job_id, status: "pending" }, status: :accepted) unless job.ready?
 
-    send_data job.bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
+    tts_job_response(job)
   end
 
 
@@ -169,6 +163,18 @@ def enhance
     style = params[:style].to_s.strip.to_sym
     synth_style = Master::Voice::Speech::STYLES.key?(style) ? style : :auto
     [voice_key, synth_style]
+  end
+
+  def tts_job_response(job)
+    if job.failed?
+      return render(json: { job: job.job_id, status: "failed", error: job.error }, status: :service_unavailable)
+    end
+    return render(json: { job: job.job_id, status: "pending" }, status: :accepted) if job.pending?
+
+    bytes = job.bytes
+    return render(json: { job: job.job_id, status: "failed", error: "empty audio" }, status: :service_unavailable) if bytes.nil? || bytes.empty?
+
+    send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
   end
 
   def publish_tts_style(voice_key, synth_style)

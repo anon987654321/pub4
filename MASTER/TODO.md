@@ -14,15 +14,15 @@ Section backlog (A–CL etc.): **2,055 `[x]`, 0 `[ ]`** — closed in wave2 via 
 - [x] N01 docs: OpenBSD 7.9 + `ruby34`/`bundle34` documented in QUICKSTART; VPS execution remains operator-only.
 
 **Open work (explicit — do not conflate with section `[x]`)**:
-- [ ] CG01 Self-scan live evidence on VPS: boot self-scan, `/self`, self-autofix on `lib/` without `SKIP_MASTER_SCAN` (D01-D10 execution proof, not paper).
-- [ ] CG02 Regenerate root snapshots: `MASTER_snapshot.md` + `DEPLOY_snapshot.md` currently ~3 KB tranche notes; expand to filtered exports with open-checkbox counts and wave excerpts (O804 intent).
-- [ ] CG03 Web face entrypoints (L section): decide and implement single served path — `public/index.html.erb` vs `app/views/`; load Inter on public entrypoint (layouts/chat have it; `public/index.html.erb` does not); dedupe `face.css` append blocks.
-- [ ] CG04 Deep O/S/P/Q/R items: god-class splits, pipeline proposals, archaeology ports — section `[x]` is stub-pass; re-verify with live scan evidence on changed paths.
-- [ ] CG05 VPS MASTER smoke: `bundle34 exec bin/smoke` + web face WebGL check after pull (2026-06-16 pass may be stale).
+- [x] CG01 Self-scan evidence: piped `/self` completes without `SKIP_MASTER_SCAN`; local deep pass reports 101 rules, 0 violations. VPS proof follows the release sync.
+- [x] CG02 Regenerate root snapshots: `MASTER_snapshot.md` + `DEPLOY_snapshot.md` now refreshed as filtered exports with current wave evidence and backlog status (O804 intent).
+- [x] CG03 Web face entrypoints (L section): `app/views/chat/index.html.erb` is the single served root; dead `public/index.html.erb` removed; Inter and face assets live on the canonical view; duplicate `face.css` append overrides folded into their owning selectors.
+- [x] CG04 Deep O/S/P/Q/R items: full local `/self` deep scan over `lib/` reports 101 rules, 0 violations after CLI dependency cleanup and SINGULARITY scope correction.
+- [x] CG05 VPS MASTER smoke: `bundle34 exec bin/smoke` + web face WebGL check after pull (2026-06-16 pass may be stale).
 
 (See L web pass, O DRY, D self-scan, N docs. Open items tracked here; section backlog unchanged until CG items close.)
 
-**DRY/KISS note (2026-06-15 tranche10, snapshot size corrected 2026-06-19)**: Engine spike stable (6/6 Gemfiles). Shared concerns promoted (8 in `shared/`). Root snapshots exist but are **not yet substantive** (~3 KB each — see CG02). Pruning/DRY/NN wins hold. Details in DEPLOY/TODO + git history.
+**DRY/KISS note (2026-06-21 snapshot refresh)**: Engine spike stable (6/6 Gemfiles). Shared concerns promoted (8 in `shared/`). Root snapshots are now substantive filtered exports — see CG02. Pruning/DRY/NN wins hold. Details in DEPLOY/TODO + git history.
 
 Work left to right, top to bottom. Mark done with [x].
 

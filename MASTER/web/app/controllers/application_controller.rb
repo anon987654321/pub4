@@ -20,13 +20,17 @@ class ApplicationController < ActionController::Base
   WEB_WRITE_WINDOW_S   = 60
 
   before_action :require_container!
-  before_action :require_authenticated!, only: AUTHENTICATED_ACTIONS
-  before_action :enforce_chat_rate_limit, only: [:message]
-  before_action :enforce_tts_rate_limit, only: [:tts]
-  before_action :enforce_web_read_rate_limit, only: %i[dmesg history live metrics]
-  before_action :enforce_web_write_rate_limit, only: %i[command enhance photo post_event state]
+  before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }
+  before_action :enforce_chat_rate_limit, if: -> { action_in?(:message) }
+  before_action :enforce_tts_rate_limit, if: -> { action_in?(:tts) }
+  before_action :enforce_web_read_rate_limit, if: -> { action_in?(%i[dmesg history live metrics]) }
+  before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }
 
   private
+
+  def action_in?(actions)
+    Array(actions).include?(action_name.to_sym)
+  end
 
   def visitor?
     false
@@ -76,13 +80,26 @@ class ApplicationController < ActionController::Base
 
   def require_container!
     return if container
-    return if request.path == "/up" || request.path == "/health"
+    return if warming_exempt_path?
+
+    MasterContainerLoader.ensure!
+
+    return if container
 
     respond_to do |fmt|
       fmt.html { render inline: WARMING_HTML, layout: false, status: :service_unavailable }
       fmt.json { render json: { error: "warming up" }, status: :service_unavailable }
       fmt.any  { head :service_unavailable }
     end
+  end
+
+  def warming_exempt_path?
+    path = request.path
+    return true if path == "/up" || path == "/health"
+    return true if path.start_with?("/assets/")
+    return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|topology_|cluster_|mask|sw\.js|manifest\.json|icon\.|offline\.html)})
+
+    false
   end
 
   WARMING_HTML = <<~HTML.freeze

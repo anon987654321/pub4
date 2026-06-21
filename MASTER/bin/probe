@@ -52,11 +52,25 @@ CHECKS = {
     cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "rails", "check_production_gate.rb")],
     cwd: REPO_ROOT,
   },
+  "kernel" => {
+    desc: "Kernel fold smoke (Effect → Constitution → World)",
+    cmd: [RUBY, File.join(MASTER_ROOT, "kernel", "spec", "kernel_smoke.rb")],
+    cwd: MASTER_ROOT,
+    needs_ruby3: true,
+  },
+  "selfscan" => {
+    desc: "Deep-scan lib/master.rb (set MASTER_PROBE_SELF=1)",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "probe_selfscan")],
+    cwd: MASTER_ROOT,
+    needs_ruby3: true,
+    skip: -> { ENV["MASTER_PROBE_SELF"] != "1" },
+    skip_reason: "set MASTER_PROBE_SELF=1",
+  },
 }.freeze
 
 ALIASES = {
   "quick" => %w[smoke nsaudit rails],
-  "all" => %w[smoke nsaudit preflight audit rails],
+  "all" => %w[smoke nsaudit kernel preflight audit rails],
   "security" => %w[audit nsaudit rails],
 }.freeze
 

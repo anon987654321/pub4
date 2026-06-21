@@ -9,6 +9,10 @@ class TestMemory < Minitest::Test
     @mem  = Master::Ground::Memory.new(root: @root)
   end
 
+  def without_brain_keys(mem = @mem)
+    %w[brain/memory brain/tools brain/identity].each { |key| mem.forget(key) }
+  end
+
   def teardown
     FileUtils.remove_entry(@root)
   end
@@ -33,6 +37,7 @@ class TestMemory < Minitest::Test
   end
 
   def test_type_counts
+    without_brain_keys
     @mem.remember("a", "one", type: "user")
     @mem.remember("b", "two", type: "user")
     @mem.remember("c", "three", type: "feedback")
@@ -137,6 +142,7 @@ class TestMemory < Minitest::Test
 
   def test_context_summary_nil_when_empty
     mem = Master::Ground::Memory.new(root: Dir.mktmpdir("empty_mem_test", Dir.home))
+    without_brain_keys(mem)
     assert_nil mem.context_summary
   end
 

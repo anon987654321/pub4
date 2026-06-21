@@ -16,6 +16,7 @@ module Master
       ESPEAK_PATHS = %w[/usr/bin/espeak /usr/local/bin/espeak].freeze
       ESPEAK = ESPEAK_PATHS.find { |p| File.executable?(p) }
       WORKER_TIMEOUT = 20
+      @last_error = nil
 
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
 
@@ -76,6 +77,10 @@ module Master
       CHUNK_CHARS = 220
 
       module_function
+
+      def last_error = @last_error
+
+      def clear_last_error! = (@last_error = nil)
 
       def available?
         edge_tts_available? || !espeak_path.nil?
@@ -202,7 +207,15 @@ module Master
       end
 
       def synthesize_bytes(text, **opts)
-        synthesize_audio(text, **opts)&.bytes
+        clear_last_error!
+        TtsSupervisor.ensure_daemon!
+        audio = synthesize_audio(text, **opts)
+        bytes = audio&.bytes
+        if bytes.nil? || bytes.empty?
+          @last_error ||= "synthesis produced empty audio"
+          return nil
+        end
+        bytes
       end
 
       def mime_type_for(path)
@@ -295,6 +308,7 @@ module Master
       end
 
       def warn_tts(message)
+        @last_error = message
         Kernel.warn("tts: #{message}")
       end
     end
