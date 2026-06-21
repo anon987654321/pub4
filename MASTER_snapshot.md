@@ -1,23 +1,36 @@
-# MASTER Snapshot (Critical Gaps + Progress 2026-06-15)
-Generated: 2026-06-15T14:30:00Z
-## Recent implementation (opus 4.8 patch)
-- ReflexionLedger (lib/trace/reflexion_ledger.rb + test): subscribes fix_loop:commit_blocked/error; persists natural-lang self-critiques (episodic memory per Shinn Reflexion arXiv + ReVeal); .recent() for prompt injection in next fix attempts; capped 50 entries; wired in Builder::AIBoot + ai_boot.rb (after FeedbackLedger); require in builder.rb. Swallow on errors. Addresses AK102 etc.
-## Progress on Critical Gaps (all addressed this pass)
-- Engine deprecate: all 6 per-app *.sh (amber/baibl/blognet/brgen/bsdports/hjerterom) legacy shared cp -R blocks commented + DEPRECATED note. deploy_all.sh prior note. openbsd.sh good.
-- Activity graph: mandatory emission expanded (posts create, follows, dating likes, maps places, messages create, playlist sets; prior TV/orders/marketplace). Now in 10+ vertical paths.
-- Auth (AN201): authentication.rb concern updated with Rails 8 scaffold comment + baseline note (resume_session etc already close; TODO generator per app).
-- VAPID/AN106 + Workbox/AN103: stubs + notes added to WIRING, pwa manifests, sh (keys in credentials, sw upgrade path).
-- Web flagged (2026-06-15 pass): dupe entrypoints resolved (loose web/face.* + index.html.erb at root pruned as unreferenced; served public/ + app/views canonical; richer public/index.html.erb noted). Inter/css dups documented.
-- Snapshots: refreshed with evidence (this + DEPLOY one now include code excerpts, counts, gaps lists).
-- TODOs: critical gaps section + [progress] in both; web pass doc updated.
-## Evidence Excerpts
-Engine: shared/lib/shared/engine.rb (10L terse: isolate_namespace, autoload concerns/services, Shared.concern(n) helper).
-Sh deprecate example (brgen.sh): # Engine-ize: legacy shared copy DEPRECATED... # doas cp -R ...
-Activity sites: posts_controller#create, follows#create, messages#create, etc. + Shared concerns.
-Web: MASTER/web/MASTER_web_layer_pass_2026-06-15.md (full review + resolution).
-Root snaps: now substantive (gaps + evidence) vs prior tiny.
-Open remaining (per TODO critical): AN103 full Workbox, full AN201 generator runs + 6-app migration, real VPS M items, tests evidence runs, snapshot full exports for LLM (this is summary).
-Files: MASTER/TODO ~1350 lines (critical section top), 6 apps engine-wired, web pass applied.
-Git archaeology (2026-06-15): [x] no accidental omissions (prunes ee3a56e33 etc intentional+condensed+verified; unban/pf ee29827b0/e6d5d5712 deliberate self-lock fix + docs; no master.yml loss; seeds/rules/VPS gates stuck). See MASTER/TODO critical for details + commits.
-Wave 1 start (2026-06-15): Reprioritized criticals in both TODOs. AN201 auth unification: aligned amber/hjerterom/baibl/blognet/bsdports to brgen's rich Rails 8 + guest baseline (5 files). Activity: added ActivityTrackable include to brgen Post (mandatory spine progress). Engine deprecate: cleaned legacy commented cp blocks in brgen.sh. Snapshots/TODOs expanded with Wave 1 + open counts (~2,794 total). See TODO Wave 1 section.
-See DEPLOY critical section for Rails specifics.
+# MASTER Snapshot (Critical Gaps + Progress 2026-06-21)
+Generated: 2026-06-21T00:00:00Z
+
+## This pass
+- Shared `ApplicationRecord` now includes `Shared::ActivityTrackable`, so app controllers can call `record_activity!` without repeating concern plumbing.
+- Deploy sync moved from legacy `cp -R` tree copies to `openrsync` in every app deploy script plus the shared initializer overlay.
+- `rails_runtime_gate` now enforces the MASTER scan gate, `bundle check`, `db:prepare`, and `bin/ci` before restart.
+- MASTER's piped slash-command path now dispatches `/self` directly and all CLI startup/self-scan dependencies use the canonical container refs.
+- The Rails chat view is the single face entrypoint; dead `public/index.html.erb` is removed and late `face.css` overrides are folded into their owning selectors.
+- SINGULARITY checks duplicate rule IDs only in `data/rules.yml`, avoiding false positives from repeated model catalog IDs.
+
+## Evidence
+- `DEPLOY/rails/shared/app/models/application_record.rb`
+- `DEPLOY/rails/shared/deploy/@shared_functions.sh`
+- `DEPLOY/rails/{amber,baibl,blognet,brgen,bsdports,hjerterom}/*.sh`
+- `MASTER/web/app/views/chat/index.html.erb`
+- `MASTER/web/public/face.css`
+- `MASTER/lib/now/cli.rb`
+- `MASTER/lib/judge/scan/self_test.rb`
+- `DEPLOY/openbsd/health_check.rb`
+- `MASTER/bin/smoke`
+
+## Activity wiring added this pass
+- Amber: items, outfits, posts, follows, planned outfits, wardrobe items.
+- Baibl: bookmarks, highlights, scripture book/chapter/verse study views.
+- Blognet: blogs, posts, comments.
+- BSDPorts: ports, comments, maintainers, categories.
+- Hjerterom: donations, food listings, food requests, shifts, volunteers, resources, community posts, boxes.
+
+## Local completion evidence
+- `MASTER/bin/smoke`: clean.
+- Focused CLI/self-test suites: green.
+- Piped `/self`: `judge: lib/ 101 rules, 0 violations`.
+
+## Note
+- Final VPS self-scan and web restart evidence is recorded after the release sync.

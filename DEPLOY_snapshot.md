@@ -1,23 +1,34 @@
-# DEPLOY Snapshot (Critical Gaps + Progress 2026-06-15)
-Generated: 2026-06-15T14:30:00Z
-## Progress on Critical Gaps (all addressed this pass)
-- Engine full deprecate: 6/6 per-app deploy sh updated (legacy shared cp blocks commented DEPRECATED; bundle primary via pub4-shared path gem enforced in comments). WIRING/deploy_all prior.
-- Activity graph spine: emission made more mandatory (added record_activity! + Notifiable in posts, follows, dating/likes, maps/places, messages, playlist/sets; + prior in orders/TV/marketplace). 10+ sites.
-- AN201 auth: brgen authentication concern + Rails 8 scaffold comment (baseline ready; full generator + replace across apps still TODO).
-- AN106 VAPID + AN103 Workbox: stubs/notes in WIRING_NOTES, sh, pwa manifests (VAPID keys/credentials, sw.js Workbox path).
-- Snapshots: root now include gaps lists, excerpts, progress counts (substantive for LLM eval).
-- TODOs: critical gaps section top-level in DEPLOY/TODO + MASTER; progress marked.
-- Web (cross): flagged resolved via MASTER pass (dupe prune).
-- Fictive + web-augmented seeds: ruby-faker base for brgen (all subapps) + amber; optional Ferrum/LLM scrape seeds via rake scrape:reddit_seed, x_seed (brgen verticals), fashion_seed (amber) when SEED_FROM_WEB + key. Creates realistic fictive data routed to models (posts, listings, profiles, restaurants, shows, places, items, outfits etc.). Scrape service in shared. See updated seeds.rb and lib/tasks.
+# DEPLOY Snapshot (Critical Gaps + Progress 2026-06-21)
+Generated: 2026-06-21T00:00:00Z
+
+## This pass
+- Replaced the app deploy tree syncs with `openrsync` and removed the remaining legacy `cp -R` paths from the live app scripts.
+- Centralized the shared overlay sync in `DEPLOY/rails/shared/deploy/@shared_functions.sh`.
+- Upgraded the shared runtime gate so every app restart path now sees the MASTER scan gate, `bundle check`, `db:prepare`, and `bin/ci`.
+- Added activity emission to the remaining non-brgen controllers so the cross-app graph is no longer missing the common create/update/view paths.
+- Made `DEPLOY/openbsd/health_check.rb` privilege-aware so it can run under `doas` for PF and `rcctl` checks.
+- Added a reproducible Workbox 7.4.1 build for all six PWAs with precaching, bounded runtime caches, offline navigation, POST replay, periodic refresh, and push handling.
+- Added a cross-app PWA/design contract covering routes, registration, manifests, generated workers, shared tokens, minimal UI, and navigation accessibility.
+
 ## Evidence
-Sh deprecate (all 6 apps e.g. baibl.sh): # Engine-ize: legacy... commented cp -R blocks.
-Activity: e.g. takeaway/orders_controller, marketplace/*, now + posts/follows/dating/maps/messages/playlist.
-Auth: DEPLOY/rails/brgen/app/controllers/concerns/authentication.rb (AN201 comment).
-VAPID stub example in WIRING + env notes.
-6 apps (brgen+amber+baibl+blognet+bsdports+hjerterom), shared engine, NN ARIA tranche9/10.
-Fictive seeds: comprehensive Faker + optional web scrape for brgen subapps/amber. See db/seeds.rb, lib/tasks/*_seed.rake, shared/scrape.rb.
-Critical remaining (see TODO): full AN201 migration, complete activity for every action, VAPID keys gen per app, Workbox build step, full snapshot exports, tests.
-See critical section in DEPLOY/TODO + engine note.
-Git archaeology (2026-06-15): [x] no critical info/logic omitted (ee3a56e33 MD prune condensed+verified in canonicals; unban removal + pf rate drop ee29827b0/e6d5d5712 intentional+fully documented in openbsd/README + "For LLMs"; WIRING stale refs cleaned; all seeds/Ferrum/rules gates/VPS preserved). See DEPLOY/TODO critical.
-Wave 1 start (2026-06-15): Reprioritized criticals (new Wave 1 section). AN201: 5 apps auth concerns unified to brgen baseline (AN201 comment + guest/resume/start helpers). Activity: brgen Post include + prior expansions. Engine: legacy cp comments removed from brgen.sh (more to follow). TODOs/snapshots updated with counts + progress. Open ~2,794 tracked.
-Push after.
+- `DEPLOY/rails/shared/deploy/@shared_functions.sh`
+- `DEPLOY/rails/{amber,baibl,blognet,brgen,bsdports,hjerterom}/*.sh`
+- `DEPLOY/rails/shared/app/models/application_record.rb`
+- `DEPLOY/rails/amber/app/controllers/*`
+- `DEPLOY/rails/baibl/app/controllers/*`
+- `DEPLOY/rails/blognet/app/controllers/*`
+- `DEPLOY/rails/bsdports/app/controllers/*`
+- `DEPLOY/rails/hjerterom/app/controllers/*`
+- `DEPLOY/openbsd/health_check.rb`
+- `DEPLOY/rails/shared/pwa/service_worker.js`
+- `DEPLOY/rails/scripts/build_workbox.mjs`
+- `DEPLOY/rails/test/pwa_design_contract_test.rb`
+
+## Live check
+- Reverse DNS for `46.23.89.226` resolves to `powered-by.openbsd.amsterdam.` from the VM.
+- The current VM health sweep passes on `/up` after the restart and relayd refresh.
+- `PermitRootLogin no`, `PasswordAuthentication no`, and `MaxAuthTries 3` are set on vm23.
+
+## Local completion evidence
+- `npm run build:pwa`: six generated workers.
+- `npm run test:pwa`: 4 runs, 204 assertions, 0 failures.

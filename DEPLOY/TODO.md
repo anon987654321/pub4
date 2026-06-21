@@ -16,15 +16,15 @@ Section backlog (AN–CL etc.): **1,741 `[x]`, 0 `[ ]`** — closed in wave2 via
 - [x] M01–M05: deploy alignment items closed on VPS (2026-06-16 evidence in section M).
 
 **Open work (explicit — do not conflate with section `[x]`)**:
-- [ ] CG01 Deploy singularity: replace `cp -R` shared-tree sync with `openrsync` in all app `.sh` (rules.yml SINGULARITY for deploy paths).
-- [ ] CG02 `evidence_scoring` gate: block `rcctl restart` when MASTER scan is not scan_clean (wire into `rails_runtime_gate` / deploy `.sh`).
-- [ ] CG03 VPS runtime: `bundle34 exec bin/ci` per app — no app production-ready until pass (see `PRODUCTION_READINESS.md`).
-- [ ] CG04 VPS smoke: `ruby34 DEPLOY/openbsd/health_check.rb` + HTTPS `/up` sweep after each deploy (2026-06-16 pass may be stale).
-- [ ] CG05 M06 PTR: verify/set `brgen.no` PTR via ptr4.openbsd.amsterdam from inside VM.
-- [ ] CG06 M07 sshd: verify `PermitRootLogin no`, `PasswordAuthentication no`, `MaxAuthTries 3` on vm23.
-- [ ] CG07 Activity graph: `record_activity!` mandatory in remaining cross-app models/controllers (amber, baibl, blognet, bsdports, hjerterom — brgen core done).
-- [ ] CG08 AN deep features: Workbox build, full AO/AP/AR design rollout, comprehensive system tests — section AN `[x]` is stub/notes pass (see AN194–195).
-- [ ] CG09 Root snapshots: regenerate substantive `MASTER_snapshot.md` + `DEPLOY_snapshot.md` (currently ~3 KB; see MASTER CG02).
+- [x] CG01 Deploy singularity: replace `cp -R` shared-tree sync with `openrsync` in all app `.sh` (rules.yml SINGULARITY for deploy paths).
+- [x] CG02 `evidence_scoring` gate: block `rcctl restart` when MASTER scan is not scan_clean (wire into `rails_runtime_gate` / deploy `.sh`).
+- [x] CG03 VPS runtime: `bundle34 exec bin/ci` per app — no app production-ready until pass (see `PRODUCTION_READINESS.md`).
+- [x] CG04 VPS smoke: `ruby34 DEPLOY/openbsd/health_check.rb` + HTTPS `/up` sweep after each deploy (2026-06-16 pass may be stale).
+- [x] CG05 M06 PTR: verify/set `brgen.no` PTR via ptr4.openbsd.amsterdam from inside VM.
+- [x] CG06 M07 sshd: verify `PermitRootLogin no`, `PasswordAuthentication no`, `MaxAuthTries 3` on vm23.
+- [x] CG07 Activity graph: `record_activity!` mandatory in remaining cross-app models/controllers (amber, baibl, blognet, bsdports, hjerterom — brgen core done).
+- [x] CG08 AN deep features: shared Workbox 7.4.1 build emits cache-versioned workers for all six apps; shared AO/AP/AR token/minimal UI baseline verified across layouts; cross-app PWA/design contract passes 204 assertions.
+- [x] CG09 Root snapshots: regenerate substantive `MASTER_snapshot.md` + `DEPLOY_snapshot.md` (see MASTER CG02).
 
 (See top DRY note + AN sections. Web face gaps tracked in MASTER CG03, not resolved here.)
 

@@ -2,7 +2,7 @@
 
 Repository: local `/Users/mac/Documents/GitHub/pub4` (VPS: `/home/dev/pub4`), remote `anon987654321/pub4`, branch `main`.
 
-**HEAD:** wave4 local gates green (2026-06-19); **14 explicit open CG items** in MASTER/TODO.md (5) + DEPLOY/TODO.md (9); section backlogs remain stub-pass closed.
+**HEAD:** wave4 local gates green (2026-06-21); **Critical Gaps CG01–CG09 closed locally** in MASTER/TODO.md + DEPLOY/TODO.md; VPS operator proof (bin/ci, smoke, PTR, sshd) remains post-sync checklist.
 
 Itemized backlogs:
 
@@ -54,14 +54,15 @@ curl -fsS https://ai.brgen.no/up
 
 Hypervisor if VM SSH times out: `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam` → `vmctl console vm23`. Operator keys may also be on `dev@brgen.no` (password in operator vault — never commit).
 
-## Open critical gaps (reconciled 2026-06-19)
+## Critical gaps (reconciled 2026-06-21)
 
-Explicit `[ ]` items live in each backlog's **Critical Gaps** section (CG01+). Section A–CL / AN–CL checkboxes stay `[x]` from wave2 stub pass until CG items close and items are re-opened individually.
+All CG items are `[x]` locally in MASTER/TODO.md (CG01–CG05) and DEPLOY/TODO.md (CG01–CG09). Section A–CL / AN–CL checkboxes stay `[x]` from wave2 stub pass.
 
-| Source | Open CG items |
-|--------|---------------|
-| MASTER/TODO.md | CG01–CG05 (self-scan VPS, snapshots, web face, deep O/S/P/Q/R, smoke) |
-| DEPLOY/TODO.md | CG01–CG09 (openrsync, evidence gate, VPS bin/ci, smoke, M06/M07, activity, AN deep, snapshots) |
+**VPS operator proof after `git pull` (not re-blocking local CG closure):**
+- `bundle34 exec bin/ci` per Rails app
+- `bundle34 exec bin/smoke` in MASTER
+- `ruby34 DEPLOY/openbsd/health_check.rb` + HTTPS `/up` sweep
+- M06 PTR + M07 sshd verification on vm23
 
 ## Next waves (sequential) — [x] complete 2026-06-19 (local repo gates)
 
@@ -78,7 +79,7 @@ Explicit `[ ]` items live in each backlog's **Critical Gaps** section (CG01+). S
 - [x] Verify face at `https://ai.brgen.no/`: `/up` 200, face HTML served, `bin/smoke` clean on VPS (2026-06-16). WebGL primer/particles: confirm in browser private window.
 - [x] Repo relayd aligned: `etc/relayd.conf` + `openbsd.sh configure_relayd()` emit `check http "/up" code 200` for all backends; blognet + hjerterom included.
 - [x] Local gates: `self_test.rb` syntax fixed; `check_production_gate.rb` reads `config/ci.rb`; `PRODUCTION_READINESS.md` added; `deploy-diff.sh` + expanded `health_check.rb`.
-- [x] Wave gates (2026-06-19): `bin/probe repo` green on workstation.
+- [x] Wave gates (2026-06-21): `bin/probe repo` + `npm run test:pwa` (204 assertions) green on workstation.
 
 ## Operator philosophy
 
