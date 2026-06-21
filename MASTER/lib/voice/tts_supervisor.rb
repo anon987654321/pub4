@@ -18,8 +18,7 @@ module Master
         return false unless Speech.worker_executable?
 
         FileUtils.mkdir_p(File.dirname(path))
-        File.open(lock_path(root), File::RDWR | File::CREAT, 0o600) do |lock|
-          lock.flock(File::LOCK_EX)
+        with_daemon_lock(root) do
           return true if socket_alive?(path)
 
           File.unlink(path) if File.exist?(path)
@@ -61,12 +60,33 @@ module Master
         false
       end
 
+      def with_daemon_lock(root)
+        path = lock_path(root)
+        deadline = Time.now + START_TIMEOUT_S
+        acquired = false
+        until acquired = lock_directory(path)
+          return false if Time.now >= deadline
+
+          sleep POLL_INTERVAL_S
+        end
+        yield
+      ensure
+        Dir.rmdir(path) if acquired && Dir.exist?(path)
+      end
+
+      def lock_directory(path)
+        Dir.mkdir(path, 0o700)
+        true
+      rescue Errno::EEXIST
+        false
+      end
+
       def log_path(root)
         File.join(root, ".master", "tts-worker.log")
       end
 
       def lock_path(root)
-        File.join(root, ".master", "tts-worker.lock")
+        File.join(root, ".master", "tts-worker.starting")
       end
     end
   end
