@@ -10,6 +10,7 @@ class VolunteersController < ApplicationController
 
   def show
     @shifts = @volunteer.shifts.future
+    @volunteer.record_activity!("VolunteerViewed", source_vertical: "hjerterom")
   end
 
   def new
@@ -19,6 +20,7 @@ class VolunteersController < ApplicationController
   def create
     @volunteer = Volunteer.new(volunteer_params)
     if @volunteer.save
+      @volunteer.record_activity!("VolunteerCreated", source_vertical: "hjerterom")
       respond_to do |format|
         format.html { redirect_to @volunteer }
         format.turbo_stream
@@ -30,6 +32,7 @@ class VolunteersController < ApplicationController
 
   def update
     if @volunteer.update(volunteer_params)
+      @volunteer.record_activity!("VolunteerUpdated", source_vertical: "hjerterom")
       respond_to do |f|
         f.html { redirect_to @volunteer }
         f.turbo_stream

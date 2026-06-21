@@ -13,12 +13,14 @@ class ScripturesController < ApplicationController
   def book
     @book     = Book.find_by!(abbreviation: params[:abbreviation])
     @chapters = @book.chapters.order(:number)
+    @book.record_activity!("BookViewed", source_vertical: "baibl")
   end
 
   def chapter
     @book    = Book.find_by!(abbreviation: params[:book_abbreviation])
     @chapter = @book.chapters.find_by!(number: params[:number])
     @verses  = @chapter.verses.order(:number).includes(:highlights, :bookmarks)
+    @chapter.record_activity!("ChapterViewed", source_vertical: "baibl")
   end
 
   def search
@@ -34,6 +36,7 @@ class ScripturesController < ApplicationController
     @study   = verse.word_studies.find_by(position:)
     @xrefs   = verse.cross_references.includes(target_verse: %i[book chapter])
     @verse   = verse
+    verse.record_activity!("VerseStudied", source_vertical: "baibl", metadata: { position: position })
     render partial: "word_study", locals: { study: @study, xrefs: @xrefs, verse: @verse }
   end
 

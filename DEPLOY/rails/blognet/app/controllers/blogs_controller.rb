@@ -11,6 +11,7 @@ class BlogsController < ApplicationController
 
   def show
     @pagy, @posts = pagy(@blog.posts.published.includes(:user, :tags))
+    @blog.record_activity!("BlogViewed", source_vertical: "blognet")
   end
 
   def new
@@ -19,16 +20,27 @@ class BlogsController < ApplicationController
 
   def create
     @blog = Current.user.blogs.build(blog_params)
-    @blog.save ? redirect_to(@blog, notice: "Blog created") : render(:new, status: :unprocessable_entity)
+    if @blog.save
+      @blog.record_activity!("BlogCreated", source_vertical: "blognet")
+      redirect_to(@blog, notice: "Blog created")
+    else
+      render(:new, status: :unprocessable_entity)
+    end
   end
 
   def edit; end
 
   def update
-    @blog.update(blog_params) ? redirect_to(@blog, notice: "Updated") : render(:edit, status: :unprocessable_entity)
+    if @blog.update(blog_params)
+      @blog.record_activity!("BlogUpdated", source_vertical: "blognet")
+      redirect_to(@blog, notice: "Updated")
+    else
+      render(:edit, status: :unprocessable_entity)
+    end
   end
 
   def destroy
+    @blog.record_activity!("BlogRemoved", source_vertical: "blognet")
     @blog.destroy
     redirect_to blogs_path, notice: "Blog deleted"
   end

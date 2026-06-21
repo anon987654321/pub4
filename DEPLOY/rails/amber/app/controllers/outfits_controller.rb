@@ -28,7 +28,9 @@ class OutfitsController < ApplicationController
     }
   end
 
-  def show; end
+  def show
+    @outfit.record_activity!("AmberOutfitViewed", source_vertical: "amber")
+  end
 
   def new
     @outfit = Current.user.outfits.build
@@ -37,7 +39,12 @@ class OutfitsController < ApplicationController
 
   def create
     @outfit = Current.user.outfits.build(outfit_params)
-    @outfit.save ? redirect_to(@outfit, notice: "Outfit created") : render(:new, status: :unprocessable_entity)
+    if @outfit.save
+      @outfit.record_activity!("AmberOutfitCreated", source_vertical: "amber")
+      redirect_to(@outfit, notice: "Outfit created")
+    else
+      render(:new, status: :unprocessable_entity)
+    end
   end
 
   def edit
@@ -45,16 +52,23 @@ class OutfitsController < ApplicationController
   end
 
   def update
-    @outfit.update(outfit_params) ? redirect_to(@outfit, notice: "Updated") : render(:edit, status: :unprocessable_entity)
+    if @outfit.update(outfit_params)
+      @outfit.record_activity!("AmberOutfitUpdated", source_vertical: "amber")
+      redirect_to(@outfit, notice: "Updated")
+    else
+      render(:edit, status: :unprocessable_entity)
+    end
   end
 
   def destroy
+    @outfit.record_activity!("AmberOutfitRemoved", source_vertical: "amber")
     @outfit.destroy
     redirect_to outfits_path, notice: "Outfit deleted"
   end
 
   def like
     @outfit.like!
+    @outfit.record_activity!("AmberOutfitLiked", source_vertical: "amber")
     redirect_to @outfit
   end
 
@@ -62,6 +76,7 @@ class OutfitsController < ApplicationController
     body = "Outfit: #{@outfit.name}\n\nItems:\n#{@outfit.items.map { |i| "- #{i.title}" }.join("\n")}"
     post = Current.user.posts.build(body: body, outfit_id: @outfit.id)
     if post.save
+      @outfit.record_activity!("AmberOutfitShared", source_vertical: "amber")
       redirect_to post, notice: "Outfit shared to brgen!"
     else
       redirect_to @outfit, alert: "Could not share: #{post.errors.full_messages.to_sentence}"
@@ -70,6 +85,7 @@ class OutfitsController < ApplicationController
 
   def wear
     @outfit.touch
+    @outfit.record_activity!("AmberOutfitWorn", source_vertical: "amber")
     redirect_to @outfit, notice: "Marked as worn again!"
   end
 
@@ -78,6 +94,7 @@ class OutfitsController < ApplicationController
     positions.each_with_index do |item_id, index|
       @outfit.outfit_items.where(item_id: item_id).update_all(position: index)
     end
+    @outfit.record_activity!("AmberOutfitReordered", source_vertical: "amber")
     head :ok
   end
 

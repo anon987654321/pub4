@@ -10,5 +10,6 @@ class MaintainersController < ApplicationController
   def show
     @maintainer = Maintainer.find(params[:id])
     @pagy, @ports = pagy(@maintainer.ports.order(:name))
+    @maintainer.record_activity!("MaintainerViewed", source_vertical: "bsdports")
   end
 end

@@ -7,6 +7,7 @@ class CommentsController < ApplicationController
   def create
     @comment = @post.comments.build(comment_params.merge(user: Current.user))
     if @comment.save
+      @comment.record_activity!("BlogCommentCreated", source_vertical: "blognet")
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to [@post.blog, @post] }
@@ -19,6 +20,7 @@ class CommentsController < ApplicationController
   def destroy
     @comment = @post.comments.find(params[:id])
     @comment.destroy! if @comment.user == Current.user
+    @comment.record_activity!("BlogCommentRemoved", source_vertical: "blognet")
     respond_to do |format|
       format.turbo_stream
       format.html { redirect_to [@post.blog, @post] }

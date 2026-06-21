@@ -11,6 +11,7 @@ class CommunityController < ApplicationController
   def show
     @post     = Post.find(params[:id])
     @post.increment!(:views_count)
+    @post.record_activity!("CommunityPostViewed", source_vertical: "hjerterom")
     @comments = @post.comments.roots.includes(:user, replies: :user)
     @comment  = Comment.new
   end
@@ -21,7 +22,12 @@ class CommunityController < ApplicationController
 
   def create
     @post = Current.user.posts.build(post_params)
-    @post.save ? redirect_to(community_show_path(@post), notice: "Posted") : render(:new, status: :unprocessable_entity)
+    if @post.save
+      @post.record_activity!("CommunityPostCreated", source_vertical: "hjerterom")
+      redirect_to(community_show_path(@post), notice: "Posted")
+    else
+      render(:new, status: :unprocessable_entity)
+    end
   end
 
   private

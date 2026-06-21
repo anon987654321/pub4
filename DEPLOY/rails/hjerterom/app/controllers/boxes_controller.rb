@@ -8,7 +8,9 @@ class BoxesController < ApplicationController
     @boxes = Box.open.order(week_start: :desc)
   end
 
-  def show; end
+  def show
+    @box.record_activity!("BoxViewed", source_vertical: "hjerterom")
+  end
 
   def new
     @box = Box.new(week_start: Date.current.beginning_of_week)
@@ -17,6 +19,7 @@ class BoxesController < ApplicationController
   def create
     @box = Box.new(box_params)
     if @box.save
+      @box.record_activity!("BoxCreated", source_vertical: "hjerterom")
       respond_to do |f|
         f.html { redirect_to @box }
         f.turbo_stream
@@ -28,6 +31,7 @@ class BoxesController < ApplicationController
 
   def update
     if @box.update(box_params)
+      @box.record_activity!("BoxUpdated", source_vertical: "hjerterom")
       respond_to do |f|
         f.html { redirect_to @box }
         f.turbo_stream

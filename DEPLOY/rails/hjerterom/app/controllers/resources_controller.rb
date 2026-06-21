@@ -16,7 +16,9 @@ class ResourcesController < ApplicationController
     finish_live_search(partial: "resources/live_search_results")
   end
 
-  def show; end
+  def show
+    @resource.record_activity!("ResourceViewed", source_vertical: "hjerterom")
+  end
 
   def new
     @resource = Current.user.resources.build
@@ -24,16 +26,27 @@ class ResourcesController < ApplicationController
 
   def create
     @resource = Current.user.resources.build(resource_params)
-    @resource.save ? redirect_to(@resource, notice: "Resource submitted for review") : render(:new, status: :unprocessable_entity)
+    if @resource.save
+      @resource.record_activity!("ResourceCreated", source_vertical: "hjerterom")
+      redirect_to(@resource, notice: "Resource submitted for review")
+    else
+      render(:new, status: :unprocessable_entity)
+    end
   end
 
   def edit; end
 
   def update
-    @resource.update(resource_params) ? redirect_to(@resource, notice: "Updated") : render(:edit, status: :unprocessable_entity)
+    if @resource.update(resource_params)
+      @resource.record_activity!("ResourceUpdated", source_vertical: "hjerterom")
+      redirect_to(@resource, notice: "Updated")
+    else
+      render(:edit, status: :unprocessable_entity)
+    end
   end
 
   def destroy
+    @resource.record_activity!("ResourceRemoved", source_vertical: "hjerterom")
     @resource.destroy
     redirect_to resources_path, notice: "Removed"
   end

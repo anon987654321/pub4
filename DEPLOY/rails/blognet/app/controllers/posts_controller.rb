@@ -18,6 +18,7 @@ class PostsController < ApplicationController
 
   def show
     @post.increment!(:views_count)
+    @post.record_activity!("BlogPostViewed", source_vertical: "blognet")
     @comments = @post.comments.approved.roots.includes(:user, :replies)
     @comment  = Comment.new
   end
@@ -28,16 +29,27 @@ class PostsController < ApplicationController
 
   def create
     @post = @blog.posts.build(post_params.merge(user: Current.user))
-    @post.save ? redirect_to([@blog, @post], notice: "Post created") : render(:new, status: :unprocessable_entity)
+    if @post.save
+      @post.record_activity!("BlogPostCreated", source_vertical: "blognet")
+      redirect_to([@blog, @post], notice: "Post created")
+    else
+      render(:new, status: :unprocessable_entity)
+    end
   end
 
   def edit; end
 
   def update
-    @post.update(post_params) ? redirect_to([@blog, @post], notice: "Updated") : render(:edit, status: :unprocessable_entity)
+    if @post.update(post_params)
+      @post.record_activity!("BlogPostUpdated", source_vertical: "blognet")
+      redirect_to([@blog, @post], notice: "Updated")
+    else
+      render(:edit, status: :unprocessable_entity)
+    end
   end
 
   def destroy
+    @post.record_activity!("BlogPostRemoved", source_vertical: "blognet")
     @post.destroy
     redirect_to @blog, notice: "Post deleted"
   end
@@ -52,6 +64,7 @@ class PostsController < ApplicationController
     )
 
     if post.save
+      post.record_activity!("BlogPostShared", source_vertical: "blognet")
       redirect_to edit_blog_post_path(blog, post), notice: "Shared into a draft"
     else
       redirect_to blog_path(blog), alert: "Could not create draft"

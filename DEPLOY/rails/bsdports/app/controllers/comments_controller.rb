@@ -7,6 +7,7 @@ class CommentsController < ApplicationController
   def create
     @comment = @port.comments.build(comment_params.merge(user: Current.user))
     if @comment.save
+      @comment.record_activity!("PortCommentCreated", source_vertical: "bsdports")
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to @port }
@@ -19,6 +20,7 @@ class CommentsController < ApplicationController
   def destroy
     @comment = @port.comments.find(params[:id])
     @comment.destroy! if @comment.user == Current.user
+    @comment.record_activity!("PortCommentRemoved", source_vertical: "bsdports")
     respond_to do |format|
       format.turbo_stream
       format.html { redirect_to @port }

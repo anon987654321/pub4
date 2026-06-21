@@ -8,7 +8,9 @@ class DonationsController < ApplicationController
     @donations = Donation.active.order(created_at: :desc)
   end
 
-  def show; end
+  def show
+    @donation.record_activity!("DonationViewed", source_vertical: "hjerterom")
+  end
 
   def new
     @donation = Donation.new
@@ -17,6 +19,7 @@ class DonationsController < ApplicationController
   def create
     @donation = Donation.new(donation_params)
     if @donation.save
+      @donation.record_activity!("DonationCreated", source_vertical: "hjerterom")
       respond_to do |f|
         f.html { redirect_to @donation }
         f.turbo_stream
@@ -28,6 +31,7 @@ class DonationsController < ApplicationController
 
   def update
     if @donation.update(donation_params)
+      @donation.record_activity!("DonationUpdated", source_vertical: "hjerterom")
       respond_to do |f|
         f.html { redirect_to @donation }
         f.turbo_stream
@@ -38,6 +42,7 @@ class DonationsController < ApplicationController
   end
 
   def destroy
+    @donation.record_activity!("DonationRemoved", source_vertical: "hjerterom")
     @donation.destroy!
     redirect_to donations_path
   end

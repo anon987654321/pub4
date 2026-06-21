@@ -15,7 +15,9 @@ class ItemsController < ApplicationController
     finish_live_search(partial: "items/live_search_results")
   end
 
-  def show; end
+  def show
+    @item.record_activity!("AmberItemViewed", source_vertical: "amber")
+  end
 
   def new
     @item = Current.user.items.build
@@ -25,6 +27,7 @@ class ItemsController < ApplicationController
     @item = Current.user.items.build(item_params)
     if @item.save
       WardrobeMediaJob.perform_later(@item.id) if @item.photos.attached?
+      @item.record_activity!("AmberItemCreated", source_vertical: "amber")
       redirect_to(@item, notice: "Item added")
     else
       render(:new, status: :unprocessable_entity)
@@ -36,6 +39,7 @@ class ItemsController < ApplicationController
   def update
     if @item.update(item_params)
       WardrobeMediaJob.perform_later(@item.id) if @item.photos.attached?
+      @item.record_activity!("AmberItemUpdated", source_vertical: "amber")
       redirect_to(@item, notice: "Updated")
     else
       render(:edit, status: :unprocessable_entity)
@@ -43,6 +47,7 @@ class ItemsController < ApplicationController
   end
 
   def destroy
+    @item.record_activity!("AmberItemRemoved", source_vertical: "amber")
     @item.destroy
     redirect_to items_path, notice: "Removed from wardrobe"
   end
@@ -56,6 +61,7 @@ class ItemsController < ApplicationController
     attach_shared_photos(@item)
 
     if @item.save
+      @item.record_activity!("AmberItemShared", source_vertical: "amber")
       redirect_to edit_item_path(@item), notice: "Shared into your wardrobe draft"
     else
       redirect_to new_item_path, alert: "Could not create item draft"
@@ -64,16 +70,19 @@ class ItemsController < ApplicationController
 
   def spark_joy
     @item.update!(spark_joy: true)
+    @item.record_activity!("AmberItemSparkedJoy", source_vertical: "amber")
     redirect_to items_path, notice: "This item sparks joy!"
   end
 
   def declutter
     @item.update!(spark_joy: false)
+    @item.record_activity!("AmberItemDecluttered", source_vertical: "amber")
     redirect_to items_path, notice: "Marked for declutter"
   end
 
   def wear
     @item.wear!
+    @item.record_activity!("AmberItemWorn", source_vertical: "amber")
     redirect_to @item, notice: "Worn today — +1"
   end
 

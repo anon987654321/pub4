@@ -19,6 +19,7 @@ class FoodListingsController < ApplicationController
 
   def show
     @request = FoodRequest.new
+    @listing.record_activity!("FoodListingViewed", source_vertical: "hjerterom")
   end
 
   def new
@@ -27,16 +28,27 @@ class FoodListingsController < ApplicationController
 
   def create
     @listing = Current.user.food_listings.build(listing_params)
-    @listing.save ? redirect_to(@listing, notice: "Food listing created") : render(:new, status: :unprocessable_entity)
+    if @listing.save
+      @listing.record_activity!("FoodListingCreated", source_vertical: "hjerterom")
+      redirect_to(@listing, notice: "Food listing created")
+    else
+      render(:new, status: :unprocessable_entity)
+    end
   end
 
   def edit; end
 
   def update
-    @listing.update(listing_params) ? redirect_to(@listing, notice: "Updated") : render(:edit, status: :unprocessable_entity)
+    if @listing.update(listing_params)
+      @listing.record_activity!("FoodListingUpdated", source_vertical: "hjerterom")
+      redirect_to(@listing, notice: "Updated")
+    else
+      render(:edit, status: :unprocessable_entity)
+    end
   end
 
   def destroy
+    @listing.record_activity!("FoodListingRemoved", source_vertical: "hjerterom")
     @listing.destroy
     redirect_to food_listings_path, notice: "Listing removed"
   end

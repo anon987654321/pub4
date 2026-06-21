@@ -10,11 +10,18 @@ class PlannedOutfitsController < ApplicationController
 
   def create
     @plan = Current.user.planned_outfits.build(plan_params)
-    @plan.save ? redirect_to(planned_outfits_path, notice: "Planned") : redirect_to(planned_outfits_path, alert: @plan.errors.full_messages.first)
+    if @plan.save
+      @plan.record_activity!("AmberPlannedOutfitCreated", source_vertical: "amber")
+      redirect_to(planned_outfits_path, notice: "Planned")
+    else
+      redirect_to(planned_outfits_path, alert: @plan.errors.full_messages.first)
+    end
   end
 
   def destroy
-    Current.user.planned_outfits.find(params[:id]).destroy!
+    plan = Current.user.planned_outfits.find(params[:id])
+    plan.record_activity!("AmberPlannedOutfitRemoved", source_vertical: "amber")
+    plan.destroy!
     redirect_to planned_outfits_path
   end
 

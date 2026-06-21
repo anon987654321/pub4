@@ -8,6 +8,7 @@ class WardrobeItemsController < ApplicationController
   end
 
   def show
+    @wardrobe_item.record_activity!("AmberWardrobeItemViewed", source_vertical: "amber")
   end
 
   def new
@@ -19,6 +20,7 @@ class WardrobeItemsController < ApplicationController
     @wardrobe_item.user = current_user if respond_to?(:current_user, true)
 
     if @wardrobe_item.save
+      @wardrobe_item.record_activity!("AmberWardrobeItemCreated", source_vertical: "amber")
       redirect_to wardrobe_items_path, notice: t("amber.wardrobe_item_created", default: "Item added")
     else
       render :new, status: :unprocessable_entity
@@ -30,6 +32,7 @@ class WardrobeItemsController < ApplicationController
 
   def update
     if @wardrobe_item.update(wardrobe_item_params)
+      @wardrobe_item.record_activity!("AmberWardrobeItemUpdated", source_vertical: "amber")
       redirect_to wardrobe_items_path, notice: t("amber.wardrobe_item_updated", default: "Item updated")
     else
       render :edit, status: :unprocessable_entity
@@ -37,6 +40,7 @@ class WardrobeItemsController < ApplicationController
   end
 
   def destroy
+    @wardrobe_item.record_activity!("AmberWardrobeItemRemoved", source_vertical: "amber")
     @wardrobe_item.destroy
     redirect_to wardrobe_items_path, notice: t("amber.wardrobe_item_deleted", default: "Item removed")
   end

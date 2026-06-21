@@ -41,11 +41,13 @@ class PortsController < ApplicationController
       out, = Open3.capture2e("pkg_info", "-q", @port.name) rescue ["(pkg_info not available in this env)"]
       out.strip
     end
+    @port.record_activity!("PortViewed", source_vertical: "bsdports")
   end
 
   def watch
     require_authentication
     @port.watches.find_or_create_by!(user: Current.user)
+    @port.record_activity!("PortWatched", source_vertical: "bsdports", actor: Current.user)
     respond_to do |format|
       format.turbo_stream
       format.html { redirect_to @port }
@@ -55,6 +57,7 @@ class PortsController < ApplicationController
   def unwatch
     require_authentication
     @port.watches.find_by(user: Current.user)&.destroy!
+    @port.record_activity!("PortUnwatched", source_vertical: "bsdports", actor: Current.user)
     respond_to do |format|
       format.turbo_stream
       format.html { redirect_to @port }
@@ -63,6 +66,7 @@ class PortsController < ApplicationController
 
   def crossref_cves
     NvdCveService.crossref(@port)
+    @port.record_activity!("PortCvesCrossreferenced", source_vertical: "bsdports")
     redirect_to @port, notice: "CVE cross-reference complete."
   end
 
@@ -73,6 +77,7 @@ class PortsController < ApplicationController
     issues << "missing HOMEPAGE" if @port.homepage.blank?
     issues << "weak COMMENT" if @port.comment.to_s.length < 20
     notice = issues.any? ? "MASTER review: #{issues.join(', ')}" : "MASTER review: clean (no issues found in demo scan)"
+    @port.record_activity!("PortReviewed", source_vertical: "bsdports", metadata: { issues: issues })
     redirect_to @port, notice: notice
   end
 

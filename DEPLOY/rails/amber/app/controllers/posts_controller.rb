@@ -11,7 +11,9 @@ class PostsController < ApplicationController
     @pagy, @posts = pagy(Current.user.feed_posts.includes(:user, :outfit, :item))
   end
 
-  def show; end
+  def show
+    @post.record_activity!("AmberPostViewed", source_vertical: "amber")
+  end
 
   def new
     @post = Post.new
@@ -19,16 +21,23 @@ class PostsController < ApplicationController
 
   def create
     @post = Current.user.posts.build(post_params)
-    @post.save ? redirect_to(posts_path, notice: "Posted") : render(:new, status: :unprocessable_entity)
+    if @post.save
+      @post.record_activity!("AmberPostCreated", source_vertical: "amber")
+      redirect_to(posts_path, notice: "Posted")
+    else
+      render(:new, status: :unprocessable_entity)
+    end
   end
 
   def destroy
+    @post.record_activity!("AmberPostRemoved", source_vertical: "amber")
     @post.destroy!
     redirect_to posts_path
   end
 
   def like
     @post.like!
+    @post.record_activity!("AmberPostLiked", source_vertical: "amber")
     redirect_back fallback_location: posts_path
   end
 

@@ -12,6 +12,7 @@ class ShiftsController < ApplicationController
   def create
     @shift = @volunteer.shifts.build(shift_params)
     if @shift.save
+      @shift.record_activity!("ShiftCreated", source_vertical: "hjerterom")
       respond_to do |f|
         f.html { redirect_to volunteer_path(@volunteer) }
         f.turbo_stream
@@ -23,6 +24,7 @@ class ShiftsController < ApplicationController
 
   def update
     if @shift.update(shift_params)
+      @shift.record_activity!("ShiftUpdated", source_vertical: "hjerterom")
       respond_to do |f|
         f.html { redirect_to shifts_path }
         f.turbo_stream
