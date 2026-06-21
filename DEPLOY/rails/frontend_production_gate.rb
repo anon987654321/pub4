@@ -14,7 +14,7 @@ end
 
 def web_layout_files
   Dir.glob(File.join(WEB_ROOT, "app/views/layouts/*.html.erb")) +
-    [File.join(WEB_ROOT, "public", "index.html.erb")]
+    [File.join(WEB_ROOT, "app/views/chat/index.html.erb")]
 end
 
 def check_layout(path)

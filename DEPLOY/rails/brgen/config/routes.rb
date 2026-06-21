@@ -2,6 +2,8 @@
 
 Rails.application.routes.draw do
   get "offline" => "rails/pwa#offline", as: :pwa_offline
+  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
+  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   post "share" => "posts#share", as: :share_post
 
   jobs_constraint = ->(request) { request.cookies["session_id"].present? }

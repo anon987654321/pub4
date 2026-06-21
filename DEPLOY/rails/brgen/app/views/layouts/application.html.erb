@@ -109,7 +109,7 @@
         <%= link_to root_path, class: "brand", aria: { label: "Brgen" } do %>
           <svg viewBox="0 0 36 36" width="34" height="34" fill="currentColor"><text x="3" y="27" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="800">B</text></svg>
         <% end %>
-        <nav data-turbo-permanent>
+        <nav data-turbo-permanent aria-label="Primary navigation">
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to root_path, class: nav_cls.(root_path) do %>
             <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696zM19 19.5a.5.5 0 01-.5.5H15v-6a1 1 0 00-1-1h-4a1 1 0 00-1 1v6H5.5a.5.5 0 01-.5-.5V8.429l7-4.375 7 4.375V19.5z"/></svg>
