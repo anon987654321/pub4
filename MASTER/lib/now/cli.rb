@@ -81,6 +81,8 @@ module Master
       def pipe(input)
         stripped = input.strip
         return empty_input(:pipe) if stripped.empty?
+        return handle_repl_line(stripped) if stripped.start_with?("/")
+
         run_input(stripped)
       end
 
@@ -148,40 +150,29 @@ module Master
 
       def accept_top_suggestion
         return unless @last_suggestion
-        puts @display.render("↳ #{@last_suggestion}", mode: :dim)
+        puts @refs.renderer.render("↳ #{@last_suggestion}", mode: :dim)
         @repl.handle_line(@last_suggestion)
       end
 
       def run_help(line = "/help")
         arg = line.to_s.strip.sub(%r{\A/\??help\s*}i, "").strip
-        text = arg.empty? ? CommandRegistry::HelpTopics.summary : CommandRegistry::HelpTopics.detail(arg)
-        puts @display.render(text, mode: :dim)
-        puts @display.render("<< for multiline. anything else is a prompt.", mode: :dim) if arg.empty?
+        text = arg.empty? ? CommandRegistry.help_summary : CommandRegistry.help_text(arg)
+        puts @refs.renderer.render(text, mode: :dim)
+        puts @refs.renderer.render("<< for multiline. anything else is a prompt.", mode: :dim) if arg.empty?
       end
 
       def unknown_command(stripped)
         name = stripped.split(/\s/).first
-        detail = CommandRegistry::HelpTopics.detail(name.delete_prefix("/"))
-        puts @display.render("unknown command: #{name}.", mode: :dim)
-        puts @display.render(detail, mode: :dim) if detail && !detail.start_with?("help: no detail")
+        detail = CommandRegistry.help_text(name.delete_prefix("/"))
+        puts @refs.renderer.render("unknown command: #{name}.", mode: :dim)
+        puts @refs.renderer.render(detail, mode: :dim) if detail && !detail.start_with?("help: no detail")
       end
 
       def exit_cli
-        @session&.save!
-        line = @display&.closing
+        @refs.session&.save!
+        line = @refs.renderer&.closing
         puts line if line
         @running = false
-      end
-
-      def run_self_scan
-        result = Master::Judge::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call(stream: true, autofix: true)
-        if result.ok?
-          summary = result.value!
-          return if summary.violation_count.zero?
-          puts @display.render(summary.line, mode: :dim)
-        else
-          puts @display.render(result.message, mode: :warning)
-        end
       end
 
       def next_action_chips
@@ -200,32 +191,13 @@ module Master
             state[:thinking_shown] = false
           end
           unless state[:streamed]
-            puts @display.speaker_tag
+            puts @refs.renderer.speaker_tag
           end
           print text
           $stdout.flush
           state[:streamed] = true
         end
         handler
-      end
-
-      def set_visitor_mode_if_unauthenticated
-        web_token = @config&.dig("web_token")
-        Fiber[:master_visitor] = true if web_token.nil? || web_token.empty?
-      end
-
-      def assign_container_refs!(deps)
-        @session = deps[:session]
-        @agent = deps[:agent]
-        @renderer = deps[:renderer]
-        @logging = deps[:logging]
-        @undo = deps[:undo]
-        @config = deps[:config]
-        @pipeline = deps[:pipeline]
-        @scanner = deps[:scanner]
-        @root = deps.fetch(:root, Dir.pwd)
-        @diff_stager = deps[:diff_stager]
-        @bus = deps[:bus]
       end
 
       def proposer
@@ -235,43 +207,40 @@ module Master
       end
 
       def replay_recent_turns
-        tail = @session.messages.last(REPLAY_TURNS * 2)
+        tail = @refs.session.messages.last(REPLAY_TURNS * 2)
         return if tail.empty?
-        puts @display.render("resume0: replaying last #{tail.size} messages", mode: :dim)
+        puts @refs.renderer.render("resume0: replaying last #{tail.size} messages", mode: :dim)
         tail.each do |msg|
           tag = msg[:role] == :user ? "you" : "master"
           content = msg[:content].to_s
           first_line = content.lines.first.to_s
           snippet = first_line.strip[0, 100]
-          puts @display.render("  #{tag}: #{snippet}", mode: :dim)
+          puts @refs.renderer.render("  #{tag}: #{snippet}", mode: :dim)
         end
         puts
       end
 
       def print_repo_tree
-        lines = Master::CommandRegistry.tree_lines(@root)
+        lines = Master::CommandRegistry.tree_lines(@refs.root)
         return if lines.empty?
-        puts @display.render("tree0: #{File.basename(@root)} (#{lines.size} entries)", mode: :dim)
-        lines.each { |l| puts @display.render(l, mode: :dim) }
+        puts @refs.renderer.render("tree0: #{File.basename(@refs.root)} (#{lines.size} entries)", mode: :dim)
+        lines.each { |l| puts @refs.renderer.render(l, mode: :dim) }
         puts
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.print_repo_tree", event_bus: @bus)
+        Master::Ground::Swallow.log(e, context: "cli.print_repo_tree", event_bus: @refs.bus)
       end
 
       def booted_before?
-        flag = File.join(@root, ".master", "booted_once")
+        flag = File.join(@refs.root, ".master", "booted_once")
         File.exist?(flag)
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.booted_before?", event_bus: @bus)
+        Master::Ground::Swallow.log(e, context: "cli.booted_before?", event_bus: @refs.bus)
         false
       end
 
-      INIT_FRAMES = 20
-      INIT_FRAME_MS = 0.04
-
       def first_boot_bar
         return unless $stdout.isatty
-        flag = File.join(@root, ".master", "booted_once")
+        flag = File.join(@refs.root, ".master", "booted_once")
         return if File.exist?(flag)
         INIT_FRAMES.times do |i|
           bar = ("\u25B0" * (i + 1)) + ("\u25B1" * (INIT_FRAMES - i - 1))
@@ -284,7 +253,7 @@ module Master
         FileUtils.mkdir_p(File.dirname(flag))
         File.write(flag, Time.now.to_s)
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.mark_booted", event_bus: @bus)
+        Master::Ground::Swallow.log(e, context: "cli.mark_booted", event_bus: @refs.bus)
       end
     end
   end
