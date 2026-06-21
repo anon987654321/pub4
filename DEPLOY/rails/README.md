@@ -48,15 +48,20 @@ bundle34 check
 bundle34 exec bin/ci
 ```
 
-## PWA Workbox Path
+## PWA Workbox Build
 
-Rails 8's generated PWA service worker is the accepted baseline for now. Workbox is an opt-in upgrade, not a deploy blocker.
+All six apps serve generated Workbox workers through their stable
+`/service-worker` Rails route. Rebuild and verify them from this directory:
 
-When a specific app needs Workbox routing, add it in this order:
+```zsh
+npm ci
+npm run build:pwa
+npm run test:pwa
+```
 
-1. Keep the existing Rails service worker route and manifest path stable.
-2. Add a build step that emits the Workbox-backed worker into the app's normal public asset path.
-3. Keep offline fallback, background sync, and push subscription code behind feature checks.
-4. Run `MASTER/bin/probe rails` before restart and verify `/up` through relayd after deploy.
+The shared source is `shared/pwa/service_worker.js`; generated app workers are
+committed so production deploys do not require Node. They provide precaching,
+offline navigation, bounded runtime caches, POST replay, periodic refresh, and
+push notification handling.
 
 Legacy `@*.sh` generators and `study/` trees are removed. Do not reintroduce one-shot scaffold deploys.

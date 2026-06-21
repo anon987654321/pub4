@@ -1,0 +1,19 @@
+{
+  "name": "pub4-rails-pwa",
+  "private": true,
+  "scripts": {
+    "build:pwa": "node scripts/build_workbox.mjs",
+    "test:pwa": "ruby test/pwa_design_contract_test.rb"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1",
+    "workbox-background-sync": "7.4.1",
+    "workbox-build": "7.4.1",
+    "workbox-cacheable-response": "7.4.1",
+    "workbox-core": "7.4.1",
+    "workbox-expiration": "7.4.1",
+    "workbox-precaching": "7.4.1",
+    "workbox-routing": "7.4.1",
+    "workbox-strategies": "7.4.1"
+  }
+}
