@@ -2,7 +2,10 @@
 # frozen_string_literal: true
 
 require "open3"
+require "rbconfig"
 require "yaml"
+
+RUBY_BIN = RbConfig.ruby
 
 ROOT = File.expand_path("../..", __dir__)
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
@@ -102,6 +105,15 @@ end
 if warnings.any?
   warn "Production gate warnings:"
   warnings.each { |warning| warn "  - #{warning}" }
+end
+
+master_assets_gate = File.join(RAILS_ROOT, "master_web_assets_gate.rb")
+if File.file?(master_assets_gate)
+  stdout, status = Open3.capture2(RUBY_BIN, master_assets_gate, chdir: ROOT)
+  print stdout
+  fail!(failures, "MASTER/web assets gate failed") unless status.success?
+else
+  fail!(failures, "missing DEPLOY/rails/master_web_assets_gate.rb")
 end
 
 if failures.any?

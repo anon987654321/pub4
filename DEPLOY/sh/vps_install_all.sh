@@ -26,6 +26,8 @@ bundle install
 cd "${PUB4}/MASTER/web"
 bundle config set --local path vendor/bundle
 bundle install
+RAILS_ENV=production SECRET_KEY_BASE="${SECRET_KEY_BASE:-dummy}" bundle exec rails assets:precompile
+bundle exec ruby "${PUB4}/DEPLOY/rails/master_web_assets_gate.rb"
 doas rcctl restart master 2>/dev/null || doas rcctl start master
 doas rcctl check master || log "WARN: master not ok"
 

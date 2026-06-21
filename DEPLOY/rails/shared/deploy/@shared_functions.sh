@@ -131,6 +131,19 @@ bundle_install() {
   log_ok "bundle install done"
 }
 
+# master_web_assets_precompile — Propshaft digest manifest + digested files for production face UI.
+master_web_assets_precompile() {
+  local web_root=${1:-${PUB4:-/home/dev/pub4}/MASTER/web}
+  [[ -d $web_root ]] || { log_warn "master_web_assets_precompile: missing ${web_root}"; return 0; }
+  log "MASTER web assets:precompile"
+  (
+    cd "$web_root"
+    RAILS_ENV=production SECRET_KEY_BASE="${SECRET_KEY_BASE:-dummy}" bundle_exec exec rails assets:precompile
+    bundle_exec exec ruby "${PUB4:-/home/dev/pub4}/DEPLOY/rails/master_web_assets_gate.rb"
+  ) || { log_err "MASTER web assets precompile failed"; return 1; }
+  log_ok "MASTER web assets ready"
+}
+
 # rails_runtime_gate APP_NAME APP_DIR — bundle check + db:prepare + bin/ci + master scan before rcctl restart.
 rails_runtime_gate() {
   local app_name=${1:-}

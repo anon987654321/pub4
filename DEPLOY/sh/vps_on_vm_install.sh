@@ -9,6 +9,8 @@ log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 log "MASTER bundle"
 cd "$PUB4/MASTER" && bundle install
 cd "$PUB4/MASTER/web" && bundle install
+cd "$PUB4/MASTER/web" && RAILS_ENV=production SECRET_KEY_BASE="${SECRET_KEY_BASE:-dummy}" bundle exec rails assets:precompile
+ruby "$PUB4/DEPLOY/rails/master_web_assets_gate.rb"
 doas rcctl restart master || doas rcctl start master
 
 APPS=(brgen amber blognet bsdports baibl hjerterom)
