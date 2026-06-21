@@ -23,11 +23,39 @@ log_err()  { print -P "%F{red}ERR%f $*" >&2; }
 master_scan_dep() {
   local app_name=$1
   local master=${MASTER_ROOT:-/home/dev/pub4/MASTER}
+  local log=/tmp/master_${app_name}_scan.log
   [[ -x ${master}/bin/cli ]] || return 0
   [[ -n ${SKIP_MASTER_SCAN:-} ]] && { log "MASTER scan skipped (SKIP_MASTER_SCAN)"; return 0; }
   log "MASTER rules scan (DEPLOY) pre-bundle"
-  (cd "$master" && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle exec ruby bin/cli "/scan DEPLOY") \
-    </dev/null 2>&1 | tee /tmp/master_${app_name}_scan.log
+  if ! (cd "$master" && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle_exec exec ruby bin/cli "/scan DEPLOY") \
+    </dev/null >"$log" 2>&1; then
+    cat "$log" >&2
+    log_err "MASTER scan CLI failed"
+    return 1
+  fi
+  cat "$log" >&2
+  if grep -qE '[1-9][0-9]* total violations' "$log"; then
+    log_err "MASTER scan found violations (evidence_scoring scan_clean gate)"
+    return 1
+  fi
+  log_ok "MASTER scan clean"
+}
+
+bundle_exec() {
+  local bundle_bin
+  bundle_bin=$(command -v bundle34 2>/dev/null || command -v bundle)
+  "$bundle_bin" "$@"
+}
+
+sync_tree() {
+  local src=$1 dst=$2
+  local delete=${3:-1}
+  ${_PRIV} mkdir -p "$dst"
+  if [[ $delete == 1 ]]; then
+    ${_PRIV} openrsync -a --delete "${src%/}/." "${dst%/}/"
+  else
+    ${_PRIV} openrsync -a "${src%/}/." "${dst%/}/"
+  fi
 }
 
 need_cmd() {
@@ -42,8 +70,7 @@ overlay_shared_initializers() {
   local app_dir=$1
   local shared_init=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/config/initializers
   [[ -d $shared_init ]] || return 0
-  ${_PRIV} mkdir -p "${app_dir}/config/initializers"
-  ${_PRIV} cp -R "${shared_init}/." "${app_dir}/config/initializers/"
+  sync_tree "$shared_init" "${app_dir}/config/initializers"
   log_ok "shared initializers overlaid"
 }
 
@@ -71,8 +98,9 @@ create_rails_app() {
     if [[ ! -d "${bundle_home}/gems" ]]; then
       log "Bootstrapping gems from amber"
       mkdir -p "${bundle_home}"
-      cp -r /home/amber/.bundle/gems "${bundle_home}/"
-      cp -r /home/amber/.bundle/cache "${bundle_home}/" 2>/dev/null || true
+      ${_PRIV} mkdir -p "${bundle_home}/gems" "${bundle_home}/cache"
+      ${_PRIV} openrsync -a /home/amber/.bundle/gems/ "${bundle_home}/gems/"
+      ${_PRIV} openrsync -a /home/amber/.bundle/cache/ "${bundle_home}/cache/" 2>/dev/null || true
     fi
     mkdir -p "${app_dir}/.bundle"
     print "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" > "${app_dir}/.bundle/config"
@@ -103,15 +131,22 @@ bundle_install() {
   log_ok "bundle install done"
 }
 
-# rails_runtime_gate APP_DIR — Wave 1: bundle check + db:prepare before rcctl restart.
+# rails_runtime_gate APP_NAME APP_DIR — bundle check + db:prepare + bin/ci + master scan before rcctl restart.
 rails_runtime_gate() {
-  local app_dir=$1
+  local app_name=${1:-}
+  local app_dir=${2:-$1}
   [[ -d $app_dir ]] || { log_warn "rails_runtime_gate: missing ${app_dir}"; return 0; }
   [[ -n ${SKIP_RUNTIME_GATE:-} ]] && { log "runtime gate skipped (SKIP_RUNTIME_GATE)"; return 0; }
-  log "runtime gate: bundle check + db:prepare"
-  (cd "$app_dir" && bundle check) || { log_err "bundle check failed"; return 1; }
-  (cd "$app_dir" && RAILS_ENV=production bundle exec rails db:prepare) \
+  if [[ -n $app_name ]]; then
+    master_scan_dep "$app_name" || { log_err "MASTER scan failed"; return 1; }
+  fi
+  log "runtime gate: bundle check + db:prepare + bin/ci"
+  (cd "$app_dir" && bundle_exec check) || { log_err "bundle check failed"; return 1; }
+  (cd "$app_dir" && RAILS_ENV=production bundle_exec exec rails db:prepare) \
     || { log_err "db:prepare failed"; return 1; }
+  if [[ -x ${app_dir}/bin/ci ]]; then
+    (cd "$app_dir" && bundle_exec exec bin/ci) || { log_err "bin/ci failed"; return 1; }
+  fi
   log_ok "runtime gate passed"
 }
 

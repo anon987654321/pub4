@@ -10,15 +10,21 @@ def run(*cmd)
   [status.success?, out.strip]
 end
 
+def privileged(*cmd)
+  return cmd if Process.uid.zero?
+  return ["doas", "-n", *cmd] if File.executable?("/usr/bin/doas") || File.executable?("/bin/doas")
+  cmd
+end
+
 services = %w[nsd httpd relayd smtpd master brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl]
 services.each do |service|
-  ok, out = run("/usr/sbin/rcctl", "check", service)
+  ok, out = run(*privileged("/usr/sbin/rcctl", "check", service))
   next unless ok
   failures << "#{service}: #{out.empty? ? "check failed" : out}" unless out.include?("(ok)")
 end
 
 pfctl = File.executable?("/sbin/pfctl") ? "/sbin/pfctl" : "/usr/sbin/pfctl"
-ok, out = run(pfctl, "-s", "rules")
+ok, out = run(*privileged(pfctl, "-s", "rules"))
 pf_ok = ok && out.include?("block") && out.include?("log all")
 failures << "pfctl: #{out.empty? ? "no rules output" : out}" unless pf_ok
 
@@ -31,7 +37,7 @@ elsif (dns_cmd = %w[/usr/sbin/drill /usr/bin/drill].find { |c| File.executable?(
   dns_ok &&= dns_out.include?("brgen.no.")
 end
 unless dns_ok
-  nsd_ok, nsd_out = run("/usr/sbin/rcctl", "check", "nsd")
+  nsd_ok, nsd_out = run(*privileged("/usr/sbin/rcctl", "check", "nsd"))
   failures << "dns: no local SOA (nsd #{nsd_out.strip})" unless nsd_ok && nsd_out.include?("(ok)")
 end
 

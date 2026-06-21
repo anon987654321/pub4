@@ -25,9 +25,9 @@ doas mkdir -p "$APP_DIR"
 # (Commented legacy cp -R blocks removed; bundle is primary.)
 
 # Per-app tracked tree last (specialized instances + custom overrides win)
-doas cp -R "${SRC_DIR}/." "${APP_DIR}/"
+sync_tree "${SRC_DIR}/" "${APP_DIR}"
 doas rm -rf "/home/${APP_NAME}/shared"
-doas cp -R /home/dev/pub4/DEPLOY/rails/shared "/home/${APP_NAME}/shared"
+sync_tree /home/dev/pub4/DEPLOY/rails/shared "/home/${APP_NAME}/shared"
 doas chown -R "${APP_NAME}:${APP_NAME}" "/home/${APP_NAME}/shared"
 doas chown -R "${APP_NAME}:${APP_NAME}" "$APP_DIR"
 overlay_shared_initializers "$APP_DIR"
@@ -47,8 +47,9 @@ doas mkdir -p "$bundle_home"
 if [[ ! -d ${bundle_home}/gems ]]; then
   if [[ -d ${SHARED_BUNDLE_CACHE}/gems ]]; then
     log "Bootstrapping gems from ${SHARED_BUNDLE_CACHE}"
-    doas cp -R "${SHARED_BUNDLE_CACHE}/gems" "$bundle_home/"
-    [[ -d ${SHARED_BUNDLE_CACHE}/cache ]] && doas cp -R "${SHARED_BUNDLE_CACHE}/cache" "$bundle_home/" || true
+    doas mkdir -p "${bundle_home}/gems" "${bundle_home}/cache"
+    doas openrsync -a "${SHARED_BUNDLE_CACHE}/gems/" "${bundle_home}/gems/"
+    [[ -d ${SHARED_BUNDLE_CACHE}/cache ]] && doas openrsync -a "${SHARED_BUNDLE_CACHE}/cache/" "${bundle_home}/cache/" || true
   else
     log_warn "No shared bundle cache found; bundle install will resolve gems normally"
   fi
@@ -66,6 +67,6 @@ db_create_migrate_as_app "$APP_NAME" "$APP_DIR"
 install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"
 [[ -n $APP_DOMAIN ]] && relayd_add_relay "$APP_DOMAIN" "$APP_PORT"
 
-rails_runtime_gate "$APP_DIR" || exit 1
+rails_runtime_gate "$APP_NAME" "$APP_DIR" || exit 1
 doas rcctl restart "$APP_NAME" || doas rcctl start "$APP_NAME"
 log_ok "$APP_NAME live on :$APP_PORT"
