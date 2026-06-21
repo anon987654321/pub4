@@ -39,6 +39,7 @@ module Master
         preamble     = self.class.preamble_from_soul
 
         @file_collector = FileCollector.new(root: root, bus: bus)
+        @rule_order     = RuleOrder.new(rules: rules, learnings: learnings, bus: bus, root: root)
         @pass_runner    = PassRunner.new(
           bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
           rules:, agent:, scanner:, learnings:, preamble:,
@@ -79,8 +80,7 @@ module Master
             files: files, target: target, pass: pass, deadline: deadline,
             history: history, seen_snapshots: seen_snapshots,
             recurring_violations: recurring_violations,
-            consecutive_clean: consecutive_clean,
-            reflexions: @reflexions&.recent(5) || []  # Inject recent self-critiques for rule violations
+            consecutive_clean: consecutive_clean
           )
           consecutive_clean = result.consecutive_clean
           return Result.ok(result.message) if result.status == :clean
@@ -156,23 +156,13 @@ module Master
         )
       end
 
-      def self.preamble_from_soul
-        path  = File.join(Master::ROOT, "data", "soul.yml")
-        mtime = File.mtime(path).to_i
-        return @preamble_cache[:value] if @preamble_cache && @preamble_cache[:mtime] == mtime
+      def collect_files(target) = @file_collector.collect(target)
 
-        soul   = Master.load_yaml(path)
-        abs    = soul.fetch("absolute", {})
-        golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-        lines  = ["Golden rule: #{golden}",
-                  "Minimum change that eliminates the violation. Do not touch unrelated code."]
-        abs.fetch("code_rules",      {}).each { |k, v| lines << "- #{k}: #{v}" }
-        abs.fetch("aesthetic_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
-        @preamble_cache = { mtime:, value: lines.join("\n") }
-        @preamble_cache[:value]
-      rescue StandardError
-        "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+      def ordered_rules(violation_counts: {})
+        @rule_order.ordered(violation_counts:)
       end
+
+      def self.preamble_from_soul = RuleLoop.soul_preamble
 
       private
 

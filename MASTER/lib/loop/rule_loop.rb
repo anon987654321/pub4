@@ -33,12 +33,20 @@ module Master
 
       class << self
         def clear_preamble_cache!
-          @soul_preamble_mutex.synchronize { @soul_preamble_cache = nil }
+          @soul_preamble_mutex.synchronize do
+            @soul_preamble_cache = nil
+            @soul_preamble_mtime = nil
+          end
         end
 
         def soul_preamble
           @soul_preamble_mutex.synchronize do
-            @soul_preamble_cache ||= build_soul_preamble
+            path = Master.data_path("soul.yml")
+            mtime = File.mtime(path).to_i
+            return @soul_preamble_cache if @soul_preamble_cache && @soul_preamble_mtime == mtime
+
+            @soul_preamble_mtime = mtime
+            @soul_preamble_cache = build_soul_preamble
           end
         end
 

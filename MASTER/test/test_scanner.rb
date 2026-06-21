@@ -176,9 +176,10 @@ class TestScanner < Minitest::Test
       result = scanner.scan_since("HEAD~1", dir: File.join(repo, "web"))
       paths = result.value!.map(&:first)
 
-      assert_includes paths, web_path
-      assert_includes paths, master_path
-      refute_includes paths, deploy_path
+      normalized = paths.map { |path| File.realpath(path) }
+      assert_includes normalized, File.realpath(web_path)
+      assert_includes normalized, File.realpath(master_path)
+      refute_includes normalized, File.realpath(deploy_path)
     end
   end
 

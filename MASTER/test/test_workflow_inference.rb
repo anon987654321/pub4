@@ -31,14 +31,16 @@ class WorkflowInferenceTest < Minitest::Test
   end
 
   class FakeScanner
-    def scan(_path)
-      "scan: ok"
+    def scan(_path) = Master::Result.ok([])
+
+    def scan_dir(_dir, depth: :deep, glob: nil, stream: false)
+      Master::Result.ok([])
     end
   end
 
   class FakeFixLoop
     def preview(_target)
-      Master::Result.ok({ changes: [] })
+      Master::Result.ok({ total: 0, rules: {}, files: {} })
     end
   end
 end

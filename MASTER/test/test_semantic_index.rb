@@ -20,25 +20,25 @@ class TestSemanticIndex < Minitest::Test
     end
   end
 
-  def index(vectors, enabled: true, threshold: 0.92)
+  def make_semantic_index(vectors, enabled: true, threshold: 0.92)
     embedder = FakeEmbedder.new(vectors, enabled: enabled)
     Master::Reach::SemanticIndex.new(embedder: embedder, threshold: threshold)
   end
 
   def test_paraphrase_is_a_near_hit
-    idx = index("what is X" => [1.0, 0.0, 0.0], "whats X" => [0.99, 0.02, 0.0])
+    idx = make_semantic_index({ "what is X" => [1.0, 0.0, 0.0], "whats X" => [0.99, 0.02, 0.0] })
     idx.remember("what is X", "ANSWER")
     assert_equal "ANSWER", idx.nearest("whats X")
   end
 
   def test_dissimilar_prompt_misses
-    idx = index("what is X" => [1.0, 0.0, 0.0], "unrelated" => [0.0, 1.0, 0.0])
+    idx = make_semantic_index({ "what is X" => [1.0, 0.0, 0.0], "unrelated" => [0.0, 1.0, 0.0] })
     idx.remember("what is X", "ANSWER")
     assert_nil idx.nearest("unrelated")
   end
 
   def test_fetch_computes_on_miss_then_reuses
-    idx = index("q1" => [1.0, 0.0], "q1-ish" => [0.999, 0.01])
+    idx = make_semantic_index({ "q1" => [1.0, 0.0], "q1-ish" => [0.999, 0.01] })
     calls = 0
     first = idx.fetch("q1") { calls += 1; "COMPUTED" }
     second = idx.fetch("q1-ish") { calls += 1; "SHOULD_NOT_RUN" }
@@ -48,7 +48,7 @@ class TestSemanticIndex < Minitest::Test
   end
 
   def test_disabled_embedder_is_a_noop
-    idx = index({ "q" => [1.0] }, enabled: false)
+    idx = make_semantic_index({ "q" => [1.0] }, enabled: false)
     idx.remember("q", "ANSWER")
     assert_nil idx.nearest("q")
   end

@@ -228,6 +228,15 @@ module Master
           end
         end
 
+        RuleDSL.rule :STRICT_MODE_ZSH,
+          severity: :error, tags: %i[ROBUSTNESS], applies_to: %i[zsh bash sh],
+          description: "set -euo pipefail at script top" do |src, path:|
+          next [] unless path.to_s.end_with?(".zsh", ".sh")
+          next [] if src.match?(/^\s*set\s+-[eE]/m)
+
+          [finding(line: 1, message: "missing set -euo pipefail after shebang")]
+        end
+
       end
     end
   end

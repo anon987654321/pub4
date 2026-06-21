@@ -20,6 +20,8 @@ module Master
 
       def profile
         return hidden_profile if @hidden
+        return mobile_profile if @pointer == :coarse
+
         desktop_profile
       end
 

@@ -28,7 +28,7 @@ class TestFixLoopOscillation < Minitest::Test
     end
 
     def scan(_path)
-      @violations.dup
+      Master::Result.ok(@violations.map { |violation| violation.merge(severity: :warning) })
     end
   end
 
@@ -41,7 +41,7 @@ class TestFixLoopOscillation < Minitest::Test
     def scan(_path)
       scan = @scans.fetch(@index) { @scans.last }
       @index += 1
-      scan.dup
+      Master::Result.ok(scan.map { |violation| violation.merge(severity: :warning) })
     end
   end
 
@@ -202,7 +202,7 @@ class TestFixLoopOscillation < Minitest::Test
     cycles = @bus.events.select { |e| e[:event] == "fix_loop:cycle_detected" }
     assert_equal 1, cycles.size
     assert_equal 3, cycles.first[:payload][:threshold]
-    assert_equal persistent, cycles.first[:payload][:violation]
+    assert_equal persistent, cycles.first[:payload][:violation].to_h.slice(:file, :line, :rule, :message)
   end
 
   def test_run_forever_stops_after_max_cycles

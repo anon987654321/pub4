@@ -98,10 +98,9 @@ class TestSelfScan < Minitest::Test
   end
 
   def test_master_lib_self_scan_has_zero_violations
-    Master::Judge::Scan::RuleDSL
-    scanner = Master::Judge::Scan::Scanner.new
-    Master::Judge::Scan::Rule.registry.select(&:auto_build?).each { |klass| scanner.add_rule(klass.new) }
+    skip "full lib scan exceeds unit-test budget — run MASTER_SAFE_MODE=1 bin/cli /self" unless ENV["MASTER_INTEGRATION"]
 
+    scanner = Master.bootstrap_container(root: Master::ROOT)[:scanner]
     result = Master::Judge::Scan::SelfScan.new(scanner:, root: Master::ROOT).call
 
     assert result.ok?

@@ -21,9 +21,12 @@ module Master
 
     def detect(text, bus: nil)
       t = text.to_s
-      hits = detectors.filter_map { |name, pat| name if pat.is_a?(Regexp) ? t.match?(pat) : false }
+      hits = detectors.filter_map { |name, pattern| name if pattern.is_a?(Regexp) && t.match?(pattern) }
       return nil if hits.empty?
-      { patterns: hits, recovery: (Master.load_yaml(Master::RULES_PATH).dig("phantom_recovery", "recovery") || []) }
+
+      recovery = Master.load_yaml(Master::RULES_PATH).dig("phantom_recovery", "recovery") || []
+      bus&.publish("phantom:detected", patterns: hits, recovery: recovery)
+      { patterns: hits, recovery: recovery }
     end
 
     def compile_detector(value)

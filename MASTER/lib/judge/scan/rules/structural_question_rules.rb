@@ -132,7 +132,7 @@ module Master
         end
 
         class PrimitiveObsessionRule < Rule
-          PRIMITIVE_HINTS = /\b(id|name|type|status|flag|count|price|amount|date|email|phone|url)\b/i
+          PRIMITIVE_HINTS = /\b(id|name|type|status|flag|count|price|amount|date|email|phone|url)\b|_id\z/i
 
           def initialize
             super()

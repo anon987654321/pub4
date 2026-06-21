@@ -160,7 +160,11 @@ module Master
       end
 
       def list
-        @principles.map { |p| "#{p[:type]}: #{p[:name]} — #{p[:description]}" }
+        @principles.map do |principle|
+          detail = principle[:body].to_s.strip
+          detail = principle[:description] if detail.empty?
+          "#{principle[:type]}: #{principle[:name]} — #{detail}"
+        end
       end
 
       def reload!

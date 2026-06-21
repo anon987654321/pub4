@@ -12,6 +12,17 @@ rescue LoadError => e
   warn "openssl: #{e.message} — LLM calls will fail"
 end
 
+unless File.respond_to?(:binary?)
+  def File.binary?(path)
+    return false unless File.file?(path)
+
+    chunk = File.open(path, "rb") { |io| io.read(4096) } || ""
+    chunk.include?("\x00")
+  rescue StandardError
+    true
+  end
+end
+
 module Master
   ROOT = File.expand_path("..", __dir__).freeze
   DATA = File.join(ROOT, "data").freeze

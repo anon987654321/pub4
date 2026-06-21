@@ -120,6 +120,45 @@ module Master
           scan_lines(src, /\.\w+\.map\(&:\w+\)/, message: "use pluck(:column) to avoid loading full objects")
         end
 
+        RuleDSL.rule :KEYWORD_ARGS,
+          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
+          description: "keyword arguments for 3+ parameters" do |src, path:|
+          src.each_line.with_index(1).filter_map do |line, number|
+            next unless (match = line.match(/\bdef\s+\w+\(([^)]*)\)/))
+
+            positional = match[1].split(",").map(&:strip).reject do |arg|
+              arg.empty? || arg.start_with?("*", "&") || arg.include?(":")
+            end
+            finding(line: number, message: "3+ positional args — use keyword arguments") if positional.size >= 3
+          end
+        end
+
+        RuleDSL.rule :DEAD_CODE,
+          severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
+          description: "eliminate unreachable code" do |src, path:|
+          lines = src.lines
+          lines.each_with_index.filter_map do |line, index|
+            next unless line.match?(/\b(return|exit|raise|throw)\b/)
+            next if index + 1 >= lines.size
+
+            following = lines[index + 1]
+            next unless following&.match?(/^\s*\w+/)
+
+            finding(line: index + 2, message: "unreachable code after #{line.strip}")
+          end
+        end
+
+        RuleDSL.rule :TRAILING_COMMAS,
+          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          description: "trailing commas in multi-line collections" do |src, path:|
+          src.each_line.with_index(1).filter_map do |line, number|
+            next unless line.match?(/^\s*"[^"]+",?\s*$/)
+            next if line.match?(/,\s*$/)
+
+            finding(line: number, message: "missing trailing comma in multi-line collection")
+          end
+        end
+
       end
     end
   end

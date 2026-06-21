@@ -101,6 +101,10 @@ module Master
         end
 
         def under_path?(path, root)
+          expanded_path = File.realpath(path)
+          expanded_root = File.realpath(root)
+          expanded_path == expanded_root || expanded_path.start_with?("#{expanded_root}#{File::SEPARATOR}")
+        rescue StandardError
           expanded_path = File.expand_path(path)
           expanded_root = File.expand_path(root)
           expanded_path == expanded_root || expanded_path.start_with?("#{expanded_root}#{File::SEPARATOR}")

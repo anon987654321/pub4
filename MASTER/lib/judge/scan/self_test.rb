@@ -24,8 +24,8 @@ module Master
                           .dig("self_test", "laws_apply_to_self") || {}
         end
 
-        def call
-          summary = Summary.new(checks: build_checks)
+        def call(laws: nil)
+          summary = Summary.new(checks: build_checks(laws:))
           @bus&.publish("self_test:complete", violations: summary.violation_count, checks: summary.to_h)
           @bus&.publish("self_violation", violations: summary.violation_count, checks: summary.to_h) unless summary.ok?
           Result.ok(summary)
@@ -36,8 +36,8 @@ module Master
 
         private
 
-        def build_checks
-          [
+        def build_checks(laws: nil)
+          checks = [
             check("ROBUSTNESS") { bare_rescue_findings + deploy_bare_rescue_findings },
             check("SINGULARITY") { duplicate_rule_id_findings + deploy_duplicate_id_findings },
             check("LINEARITY") { structural_findings(Rules::NestingDepthRule.new) + deploy_nesting_findings },
@@ -45,6 +45,7 @@ module Master
             check("ABSTRACTION") { structural_findings(Rules::GodClassRule.new) + deploy_god_class_findings },
             check("DENSITY") { structural_findings(Rules::SmallFunctionsRule.new) + deploy_small_files_findings },
           ]
+          laws.nil? ? checks : checks.select { |item| laws.include?(item.law) }
         end
 
         # DEPLOY extensions for full self-application (rules.yml self_test + success_criteria)
@@ -118,9 +119,34 @@ module Master
           Dir.glob(File.join(@root, "lib", "**", "*.rb")).sort
         end
 
+        DEPLOY_SKIP_SEGMENTS = %w[
+          node_modules tmp vendor storage log public db .git coverage spec/fixtures cache
+        ].freeze
+
         def deploy_paths
-          # Strict self-application: DEPLOY must be scanned for laws too (rules.yml success_criteria)
-          Dir.glob(File.join(@root, "DEPLOY", "**", "*.{rb,sh,yml,conf,erb}")).sort
+          @deploy_paths ||= build_deploy_paths
+        end
+
+        def build_deploy_paths
+          deploy_root = File.expand_path("../DEPLOY", @root)
+          return [] unless File.directory?(deploy_root)
+
+          patterns = [
+            File.join(deploy_root, "rails", "**", "*.rb"),
+            File.join(deploy_root, "openbsd", "**", "*"),
+            File.join(deploy_root, "sh", "**", "*"),
+            File.join(deploy_root, "postpro", "**", "*.rb"),
+            File.join(deploy_root, "*.rb"),
+          ]
+          patterns.flat_map { |pattern| Dir.glob(pattern) }
+                  .select { |path| File.file?(path) }
+                  .select { |path| deploy_path_allowed?(path, deploy_root) }
+                  .uniq.sort
+        end
+
+        def deploy_path_allowed?(path, deploy_root)
+          rel = path.delete_prefix("#{deploy_root}/")
+          DEPLOY_SKIP_SEGMENTS.none? { |segment| rel.split("/").include?(segment) }
         end
 
         def bare_rescue_findings

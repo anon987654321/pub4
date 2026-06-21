@@ -21,7 +21,7 @@ module Master
             findings = Result.wrap(result).value_or([])
             stream_scan_progress(path, findings)
             findings
-              .select { |finding| Severity.at_least?(finding[:severity], :warning) }
+              .select { |finding| Severity.at_least?(finding[:severity] || :warning, :warning) }
               .map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) }
           end
         end

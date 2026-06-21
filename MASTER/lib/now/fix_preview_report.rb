@@ -8,7 +8,7 @@ module Master
       end
 
       def render
-        return "preview: clean — no violations" if total.zero?
+        return "preview: clean — no violations" if total.to_i.zero?
 
         ["preview: #{total} violations (no changes made)",
          "by rule:", *rule_lines,

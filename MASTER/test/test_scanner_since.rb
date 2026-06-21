@@ -31,8 +31,9 @@ class TestScannerSince < Minitest::Test
 
       assert result.ok?
       paths = result.value!.map(&:first)
-      assert_includes paths, File.join(app_dir, "app.rb")
-      assert_includes paths, File.join(master_lib, "self_scan.rb")
+      expected = [File.join(app_dir, "app.rb"), File.join(master_lib, "self_scan.rb")].map { |path| File.realpath(path) }
+      normalized = paths.map { |path| File.realpath(path) }
+      expected.each { |path| assert_includes normalized, path }
     end
   end
 

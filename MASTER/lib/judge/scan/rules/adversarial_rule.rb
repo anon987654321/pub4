@@ -53,6 +53,7 @@ module Master
           end
 
           def check(code, path:)
+            return [] unless @agent
             return [] unless (lang = language(path))
 
             prompt = format(PROMPT_TEMPLATE, path: File.basename(path),

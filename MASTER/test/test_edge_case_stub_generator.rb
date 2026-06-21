@@ -12,7 +12,7 @@ class TestEdgeCaseStubGenerator < Minitest::Test
 
       result = Master::Judge::Scan::EdgeCaseStubGenerator.new(root: dir).call("lib/sample_service.rb")
 
-      assert result.ok?, result.message
+      assert result.ok?, result.err? ? result.message : "edge-case stub generation failed"
       generated = File.join(dir, "test", "edge_cases", "test_sample_service_rb")
       assert File.exist?(generated)
       content = File.read(generated)

@@ -158,6 +158,8 @@ module Master
         def lexical_error?(findings)
           findings.any? do |finding|
             severity = finding.respond_to?(:severity) ? finding.severity : finding[:severity]
+            next false if severity.nil?
+
             %i[error critical].include?(severity.to_sym)
           end
         end
