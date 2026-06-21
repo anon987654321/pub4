@@ -14,11 +14,18 @@ module Master
 
       def ensure_daemon!(root: Master::ROOT)
         path = socket_path(root)
-        return true if File.socket?(path)
+        return true if socket_alive?(path)
         return false unless Speech.worker_executable?
 
-        spawn_daemon(root:, path:)
-        wait_for_socket(path)
+        FileUtils.mkdir_p(File.dirname(path))
+        File.open(lock_path(root), File::RDWR | File::CREAT, 0o600) do |lock|
+          lock.flock(File::LOCK_EX)
+          return true if socket_alive?(path)
+
+          File.unlink(path) if File.exist?(path)
+          spawn_daemon(root:, path:)
+          wait_for_socket(path)
+        end
       end
 
       def socket_path(root = Master::ROOT)
@@ -27,10 +34,21 @@ module Master
 
       def spawn_daemon(root:, path:)
         worker = File.join(root, "bin", "tts-worker")
-        FileUtils.mkdir_p(File.dirname(path))
         env = { "BUNDLE_GEMFILE" => File.join(root, "Gemfile") }
-        pid = Process.spawn(env, Gem.ruby, worker, "--daemon", path, chdir: root, out: log_path(root), err: log_path(root))
+        pid = Process.spawn(
+          env, Gem.ruby, worker, "--daemon", path,
+          chdir: root, out: log_path(root), err: log_path(root), close_others: true
+        )
         Process.detach(pid)
+      end
+
+      def socket_alive?(path)
+        return false unless File.socket?(path)
+
+        UNIXSocket.open(path, &:close)
+        true
+      rescue SystemCallError
+        false
       end
 
       def wait_for_socket(path)
@@ -45,6 +63,10 @@ module Master
 
       def log_path(root)
         File.join(root, ".master", "tts-worker.log")
+      end
+
+      def lock_path(root)
+        File.join(root, ".master", "tts-worker.lock")
       end
     end
   end
