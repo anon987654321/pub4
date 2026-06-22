@@ -12,11 +12,30 @@ module Master
         POOL_SIZE = [Etc.nprocessors, 8].min.freeze
         SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,json,md}".freeze
         SCAN_SINCE_EXT = /\.(rb|rake|gemspec|erb|yml|yaml|js|css|sh|zsh)\z/.freeze
+        SKIP_PATH_SEGMENTS = %w[
+          .git vendor node_modules tmp log coverage .bundle storage cache dist build
+          knowledge fixtures public var
+        ].freeze
         REQUIRED_DEPTH = :deep
         MAX_VIOLATION_OBJECTS = 100_000
         GC_EVERY_N_ITERATIONS = 5
 
         attr_reader :rules
+
+        def self.skip_path?(path, root: nil)
+          segments = relative_segments(path, root)
+          SKIP_PATH_SEGMENTS.any? { |segment| segments.include?(segment) }
+        end
+
+        def self.relative_segments(path, root)
+          return path.to_s.split(File::SEPARATOR) unless root
+
+          expanded = File.expand_path(path)
+          base = File.expand_path(root)
+          return [] unless expanded == base || expanded.start_with?("#{base}#{File::SEPARATOR}")
+
+          expanded.delete_prefix(base).delete_prefix(File::SEPARATOR).split(File::SEPARATOR)
+        end
 
         def initialize(rules: nil, event_bus: nil, file_sleep_s: 0)
           @rules = Array(rules)
@@ -36,7 +55,7 @@ module Master
 
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
           validate_depth!(depth)
-          paths = Dir.glob(File.join(dir, glob))
+          paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
           pairs = parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }
           pairs.concat(cross_file_pairs(dir, paths))
           Result.ok(prune_violation_objects(pairs))
@@ -95,9 +114,14 @@ module Master
             path = File.expand_path(rel, repo_root)
             next unless File.exist?(path) && File.extname(path).match?(SCAN_SINCE_EXT)
             next unless under_path?(path, scan_root) || under_path?(path, master_lib)
+            next if self.class.skip_path?(path, root: repo_root)
 
             path
           end.uniq
+        end
+
+        def scannable_path?(path, root)
+          File.file?(path) && !self.class.skip_path?(path, root: root)
         end
 
         def under_path?(path, root)

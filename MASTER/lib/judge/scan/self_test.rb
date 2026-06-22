@@ -119,10 +119,6 @@ module Master
           Dir.glob(File.join(@root, "lib", "**", "*.rb")).sort
         end
 
-        DEPLOY_SKIP_SEGMENTS = %w[
-          node_modules tmp vendor storage log public db .git coverage spec/fixtures cache
-        ].freeze
-
         def deploy_paths
           @deploy_paths ||= build_deploy_paths
         end
@@ -146,7 +142,7 @@ module Master
 
         def deploy_path_allowed?(path, deploy_root)
           rel = path.delete_prefix("#{deploy_root}/")
-          DEPLOY_SKIP_SEGMENTS.none? { |segment| rel.split("/").include?(segment) }
+          !Scanner.skip_path?(rel) && !rel.split("/").include?("db")
         end
 
         def bare_rescue_findings

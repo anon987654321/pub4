@@ -136,14 +136,20 @@ module Master
           out
         end
 
-        MUTABLE_CONST_RE = /^(\s*[A-Z][A-Z_]*\s*=\s*[\[{])(.*)(?<!\.freeze)\s*$/.freeze
+        SINGLE_LINE_MUTABLE_CONST_RE = /
+          ^\s*[A-Z][A-Z_]*\s*=\s*
+          (?:
+            [\[{][^\n]*[\]}]
+            |%w\[[^\n]*\]
+            |%i\[[^\n]*\]
+          )
+          (?<!\.freeze)\s*$
+        /x.freeze
 
         def freeze_mutable_constants(src)
           changed = false
           out = src.lines.map do |line|
-            next line unless line.match?(MUTABLE_CONST_RE)
-            next line if line.match?(/\.freeze\s*$/)
-            next line if line.strip.end_with?(",", "(", "\\")
+            next line unless line.match?(SINGLE_LINE_MUTABLE_CONST_RE)
 
             changed = true
             line.chomp.rstrip + ".freeze\n"
@@ -178,16 +184,30 @@ module Master
               next
             end
             keep << line
-            skip_next = line.match?(/^\s*(return|raise|exit|throw)\b/) && executable_line?(lines[index + 1].to_s)
+            skip_next = unconditional_terminal?(line) && skippable_dead_line?(lines[index + 1].to_s)
           end
           @transforms << :dead_code if changed
           keep.join
         end
 
-        def executable_line?(line)
+        def unconditional_terminal?(line)
           stripped = line.strip
-          !stripped.empty? && !stripped.start_with?("#", "//")
+          return false unless stripped.match?(/\A(?:return|raise|exit|throw)\b/)
+          return false if stripped.match?(/\b(?:if|unless)\s/)
+
+          true
         end
+
+        def skippable_dead_line?(line)
+          stripped = line.strip
+          return false if stripped.empty?
+          return false if stripped.start_with?("#", "//")
+          return false if stripped.match?(/\A(?:end|else|elsif|when|rescue|ensure)\b/)
+
+          true
+        end
+
+        def executable_line?(line) = skippable_dead_line?(line)
 
         def add_trailing_commas(src)
           lines = src.lines

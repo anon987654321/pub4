@@ -145,7 +145,8 @@ module Master
         return [path] if File.file?(path)
         return [] unless File.directory?(path)
 
-        Dir.glob(File.join(path, Master::Judge::Scan::Scanner::SCAN_GLOB)).select { |entry| File.file?(entry) }
+        Dir.glob(File.join(path, Master::Judge::Scan::Scanner::SCAN_GLOB))
+           .select { |entry| File.file?(entry) && !Master::Judge::Scan::Scanner.skip_path?(entry, root: path) }
       end
 
       def fix_failure_with_alternatives(message, target)

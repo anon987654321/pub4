@@ -82,6 +82,35 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:transforms], :freeze_constants
   end
 
+  def test_freeze_mutable_constant_skips_multiline_openers
+    source = <<~RUBY
+      PHRASES = [
+        "one",
+        "two",
+      ].freeze
+    RUBY
+    result = fix("phrases.rb", source)
+
+    refute_includes result[:content], "[.freeze"
+    refute_includes result[:transforms], :freeze_constants
+  end
+
+  def test_dead_code_keeps_end_after_return_and_conditional_return
+    source = <<~RUBY
+      def tier_for_model(model_id)
+        return false if model_id.nil?
+        return "cheap" if model_id.empty?
+        model_id
+      end
+    RUBY
+    result = fix("router.rb", source)
+
+    assert_includes result[:content], "return false if model_id.nil?"
+    assert_includes result[:content], 'return "cheap" if model_id.empty?'
+    assert_includes result[:content], "model_id\n"
+    refute_includes result[:transforms], :dead_code
+  end
+
   def test_logical_properties
     result = fix("styles.css", <<~CSS)
       .panel {

@@ -118,6 +118,22 @@ class TestScanner < Minitest::Test
     end
   end
 
+  def test_scan_dir_skips_vendor_and_tmp_segments
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "vendor", "bundle", "gems"))
+      FileUtils.mkdir_p(File.join(dir, "app"))
+      FileUtils.mkdir_p(File.join(dir, "tmp"))
+      File.write(File.join(dir, "vendor", "bundle", "gems", "bad.rb"), "puts 'vendor'\n")
+      File.write(File.join(dir, "app", "good.rb"), "puts 'app'\n")
+      File.write(File.join(dir, "tmp", "scratch.rb"), "puts 'tmp'\n")
+      scanner = PathScanner.new(rules: [])
+
+      scanner.scan_dir(dir)
+
+      assert_equal [File.join(dir, "app", "good.rb")], scanner.seen
+    end
+  end
+
   def test_scan_dir_appends_cross_file_dry_findings
     Dir.mktmpdir do |dir|
       3.times do |idx|
