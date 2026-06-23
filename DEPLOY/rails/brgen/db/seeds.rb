@@ -14,15 +14,16 @@ end
 puts "Seeding Brgen (core + subapps) with rich fictive data..."
 
 if Rails.env.development? || Rails.env.test?
-  # Cleanup for dev replant only — never wipe production data. Children before parents.
+  # Cleanup for dev replant only — never wipe production data.
   Faker::UniqueGenerator.clear
-  [Reaction, Vote, Comment, Message, Follow,
-   Marketplace::Order, Marketplace::Listing, Marketplace::Store,
-   Dating::Match, Dating::Like, Dating::Profile,
-   Playlist::Set, Playlist::Playlist, Playlist::Track,
-   Takeaway::Order, Takeaway::MenuItem, Takeaway::Restaurant,
-   Tv::Video, Tv::Episode, Tv::Show, Tv::Channel,
-   Place, Conversation, Post, Community, User].each(&:destroy_all) rescue nil
+  keep = %w[schema_migrations ar_internal_metadata cities]
+  conn = ActiveRecord::Base.connection
+  conn.disable_referential_integrity do
+    conn.tables.each do |table|
+      next if keep.include?(table)
+      conn.execute("DELETE FROM #{conn.quote_table_name(table)}")
+    end
+  end
 end
 
 # --- Core: Users, Communities, Posts ---
