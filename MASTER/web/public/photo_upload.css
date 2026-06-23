@@ -25,6 +25,12 @@
 #photo-button[data-state="raw"] {
   background: var(--face-fg);
   color: var(--face-bg);
+  transition: background .42s steps(4,end), color .42s steps(4,end);
+}
+
+#photo-button.photo-fail {
+  outline: 1px solid color-mix(in srgb, var(--c-danger) 70%, transparent);
+  outline-offset: 2px;
 }
 
 #photo-button:focus-visible {

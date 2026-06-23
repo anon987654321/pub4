@@ -177,9 +177,24 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
   log.appendChild(note);
   log.scrollTop = log.scrollHeight;
 
+  const timeout = setTimeout(() => {
+    window.MASTERVisual?.event?.('enhance:settle', { topology: 'papua-mask', entropy: 0.1, confidence: 0.9, mode: 'settle' });
+    finish(original);
+  }, 12000);
+
   function finish(chosen) {
+    clearTimeout(timeout);
     note.remove();
     document.removeEventListener('keydown', onKey);
+    if (chosen === enhanced) {
+      const face = window.MASTER_FACE;
+      const mp = face?.mouthPool || window.mouthPool;
+      const K = window.ParticleKernel;
+      if (mp && K) for (let i = 0; i < mp.count; i++) if (mp.alive[i]) {
+        const b = i * K.FIELDS_PER_CELL;
+        mp.cells[b + K.FIELD.arousal] = Math.min(1, (mp.cells[b + K.FIELD.arousal] || 0.3) + 0.4);
+      }
+    }
     resolve(chosen);
   }
 
@@ -191,16 +206,23 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
   document.addEventListener('keydown', onKey);
 });
 
+let _chunkCount = 0;
 window._chatOnChunk = (raw) => {
   if (!_streamEl) return;
   if (_typingEl) { _typingEl.remove(); _typingEl = null; }
+  _chunkCount++;
+  if (raw.startsWith('ERROR:')) {
+    _streamEl.closest('.message')?.classList.add('msg-error-flash');
+    setTimeout(() => _streamEl.closest('.message')?.classList.remove('msg-error-flash'), 120);
+  }
   const text = _streamEl.textContent + raw.replace(/\n/g, '\n').replace(/\\\\/g, '\\');
   if (text.includes('```')) {
     _streamEl.innerHTML = text.replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
   } else {
     _streamEl.textContent = text;
   }
-  log.scrollTop = log.scrollHeight;
+  const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 48;
+  if (nearBottom) requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
   if (streamLive) {
     streamLive.textContent = raw.replace(/[\n\r]/g, ' ').trim() || raw;
   }
@@ -210,6 +232,12 @@ window._chatOnChunk = (raw) => {
 window._chatOnDone  = () => {
   const finished = (_streamEl?.textContent || '').trim();
   if (finished) window._chatRememberReply?.(finished);
+  const lastAsst = log?.querySelector('.message.assistant:last-of-type');
+  if (lastAsst && parseFloat(document.body.dataset.confidence || '1') > 0.75) {
+    lastAsst.classList.add('msg-settled');
+    setTimeout(() => lastAsst.classList.remove('msg-settled'), 1800);
+  }
+  _chunkCount = 0;
   _streamEl = null;
   if (_typingEl) { _typingEl.remove(); _typingEl = null; }
   document.querySelectorAll('.cursor').forEach(c => {
@@ -311,12 +339,19 @@ window._chatOnThought = (line) => {
   log.scrollTop = log.scrollHeight;
 };
 
+const _dmesgFadeRing = [];
+window._chatPassHairline = () => {
+  const last = log?.querySelector('.message.assistant:last-of-type, .message.user:last-of-type');
+  if (!last) return;
+  last.classList.add('msg-pass-flash');
+  setTimeout(() => last.classList.remove('msg-pass-flash'), 420);
+};
+
 window._chatOnDmesg = (line) => {
   if (!line || !log) return;
   const d = document.createElement('div');
   d.className = 'dmesg-line';
-  d.setAttribute('role', 'status');
-  d.setAttribute('aria-live', 'off');
+  d.setAttribute('aria-hidden', 'true');
   const ts = new Date();
   const stamp = ts.getHours().toString().padStart(2, '0') + ':' +
     ts.getMinutes().toString().padStart(2, '0') + ':' +
@@ -332,13 +367,73 @@ window._chatOnDmesg = (line) => {
   const asst = log.querySelector('.message.assistant:last-of-type');
   asst ? log.insertBefore(d, asst) : log.appendChild(d);
   log.scrollTop = log.scrollHeight;
+  if (/veto|pass/i.test(String(line))) window.MASTEREcology?.burst?.(4, 0.25);
+  if (/tool|scan|sweep/i.test(String(line))) d.dataset.tool = '1';
   requestAnimationFrame(() => d.classList.add('dmesg-live'));
-  setTimeout(() => {
+  const fadeDelay = d.dataset.tool ? 7800 : 7200;
+  const slot = _dmesgFadeRing.shift() || {};
+  if (slot.t1) clearTimeout(slot.t1);
+  if (slot.t2) clearTimeout(slot.t2);
+  slot.t1 = setTimeout(() => {
     d.classList.remove('dmesg-live');
     d.classList.add('dmesg-fade');
-    setTimeout(() => d.remove(), 820);
-  }, 7200);
+    slot.t2 = setTimeout(() => d.remove(), 820);
+  }, fadeDelay);
+  _dmesgFadeRing.push(slot);
+  while (_dmesgFadeRing.length > 3) {
+    const old = _dmesgFadeRing.shift();
+    if (old?.t1) clearTimeout(old.t1);
+    if (old?.t2) clearTimeout(old.t2);
+  }
 };
+
+(function wirePhotoUpload() {
+  const photoBtn = document.getElementById('photo-button');
+  const photoInput = document.getElementById('photo');
+  if (!photoBtn || !photoInput) return;
+  const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
+  let pressTimer = null;
+  photoBtn.addEventListener('click', () => {
+    if (photoBtn.dataset.state === 'busy') return;
+    photoInput.click();
+  });
+  photoBtn.addEventListener('pointerdown', () => {
+    window.MASTERVisual?.event?.('photo:capture', { topology: 'papua-mask', entropy: 0.12, confidence: 0.9, mode: 'capture' });
+    pressTimer = setTimeout(() => {
+      if (photoBtn.dataset.state !== 'busy' && photoBtn.dataset.state !== 'ready') {
+        window.MASTERVisual?.event?.('photo:preview', { topology: 'papua-mask', entropy: 0.1, confidence: 0.85, mode: 'preview' });
+      }
+    }, 420);
+  });
+  photoBtn.addEventListener('pointerup', () => { if (pressTimer) clearTimeout(pressTimer); });
+  photoBtn.addEventListener('pointercancel', () => { if (pressTimer) clearTimeout(pressTimer); });
+  photoBtn.addEventListener('pointerenter', () => {
+    if (photoBtn.dataset.state === 'ready') {
+      window.MASTERVisual?.event?.('photo:ready', { topology: 'papua-mask', entropy: 0.12, confidence: 0.88, mode: 'ready' });
+    }
+  });
+  photoInput.addEventListener('change', async () => {
+    const file = photoInput.files?.[0];
+    photoInput.value = '';
+    if (!file) return;
+    photoBtn.dataset.state = 'busy';
+    const body = new FormData();
+    body.append('photo', file);
+    try {
+      const r = await fetch('/chat/photo', { method: 'POST', headers: { 'X-CSRF-Token': csrf() }, body });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || 'upload failed');
+      window._imageToken = data.token;
+      photoBtn.dataset.state = 'ready';
+      window.MASTERVisual?.event?.('photo:ready', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, mode: 'ready' });
+    } catch (_) {
+      photoBtn.dataset.state = '';
+      setTimeout(() => photoBtn.classList.add('photo-fail'), 200);
+      setTimeout(() => photoBtn.classList.remove('photo-fail'), 1200);
+      window._chatOnDmesg?.('photo upload failed');
+    }
+  });
+})();
 
 zsh?.addEventListener('submit', (event) => {
   event.preventDefault();

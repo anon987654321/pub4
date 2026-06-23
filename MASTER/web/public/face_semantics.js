@@ -18,19 +18,61 @@ const _dbgEl = F_FACE_SEM.dbgEl || document.getElementById('_dbg');
 // This structure makes the remaining 50+ ideas from runtime_ui_direction.md
 // (pre-speech anticipation, style bleed, mood arc, vertical timbre, etc.)
 // implementable with small deltas on the Ruby side instead of JS sprawl.
+function boostEyePool(delta, field = 'attention') {
+  const K = window.ParticleKernel;
+  if (!eyePool || !K) return;
+  const key = K.FIELD[field] ?? K.FIELD.attention;
+  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    eyePool.cells[b + key] = Math.min(1, (eyePool.cells[b + key] || 0.5) + delta);
+  }
+}
+
+function dropMouthConfidence(drop) {
+  const K = window.ParticleKernel;
+  if (!mouthPool || !K) return;
+  const n = Math.min(6, mouthPool.count);
+  let dropped = 0;
+  for (let i = 0; i < mouthPool.count && dropped < n; i++) {
+    if (!mouthPool.alive[i]) continue;
+    const b = i * K.FIELDS_PER_CELL;
+    mouthPool.cells[b + K.FIELD.confidence] = Math.max(0.15, (mouthPool.cells[b + K.FIELD.confidence] || 0.8) - drop);
+    dropped++;
+  }
+}
+
 window.addEventListener('master:visual', (ev) => {
   const d = ev.detail || {};
   State.entropy = d.entropy ?? State.entropy ?? 0.2;
   State.confidence = d.confidence ?? State.confidence ?? 1.0;
   const name = String(d.name || d.mode || '');
-  if (/error|failure|veto|rollback/.test(name)) {
+  if (/input:focus|input:focus-visible/.test(name)) boostEyePool(0.07);
+  if (/input:paste/.test(name)) boostEyePool(0.04, 'attention');
+  if (/user:interrupt/.test(name)) {
+    State.shake = Math.max(State.shake || 0, 0.35);
+    State.pulse = Math.max(State.pulse || 0, 0.2);
+  }
+  if ((d.confidence ?? State.confidence) > 0.85) State.calmStareUntil = performance.now() + 900;
+  if ((d.confidence ?? State.confidence) < 0.3) State.nervousUntil = performance.now() + 2500;
+  if (/error|failure|veto|rollback|events:disconnected/.test(name)) {
     State.fracture = Math.max(State.fracture || 0, 0.55);
     State.shake = Math.max(State.shake || 0, 0.45);
     State.mood = 'veto';
+    dropMouthConfidence(0.35);
   }
   if (/complete|success|done|pass/.test(name)) {
     State.bloom = Math.max(State.bloom || 0, 0.65);
     State.mood = /pass/.test(name) ? 'pass' : State.mood;
+    if (/pass/.test(name)) window._chatPassHairline?.();
+  }
+  if (/chat:first/.test(name) && mouthPool && window.ParticleKernel) {
+    const K = window.ParticleKernel;
+    for (let i = 0; i < 5; i++) K.spawn(mouthPool, 0, 0.55, { kind: 4, zone: 1, valence: 0.7, confidence: 0.85, decay: 0.004, label: d.provider || 'seed' });
+  }
+  if (/photo:preview/.test(name)) boostEyePool(0.12);
+  if (/photo:ready/.test(name) && mouthPool && window.ParticleKernel) {
+    const K = window.ParticleKernel;
+    K.spawn(mouthPool, 0, 0.5, { kind: 4, zone: 1, valence: 0.6, attention: 0.8, decay: 0.006 });
   }
   if (/council:deliberation|council:start/.test(name)) {
     State.pulse = Math.max(State.pulse || 0, 0.48);

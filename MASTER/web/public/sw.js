@@ -12,7 +12,7 @@ const STATIC_ASSETS = [
   '/face.part4.txt',
   '/face.part5.txt',
   '/chat.js',
-  '/three.module.js',
+  '/three.face.module.js',
   '/manifest.json',
   '/icon.png'
 ];

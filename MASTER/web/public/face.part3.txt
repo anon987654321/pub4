@@ -168,10 +168,14 @@ function frame(t) {
       saccadeX = (Math.random() - 0.5) * 0.28;
       nextSaccade = t + Math.random() * 6000 + 3000;
     }
+    const calmStare = State.calmStareUntil && t < State.calmStareUntil;
+    const nervous = State.nervousUntil && t < State.nervousUntil;
     if (!State.reducedMotion && t > nextMicroJitter) {
-      microJitter = (Math.random() - 0.5) * 0.045;
-      nextMicroJitter = t + Math.random() * 600 + 200;
+      const amp = calmStare ? 0.028 : nervous ? 0.065 : 0.045;
+      microJitter = (Math.random() - 0.5) * amp;
+      nextMicroJitter = t + (calmStare ? 820 : nervous ? 240 : Math.random() * 600 + 200);
     }
+    if (nervous && (_dbgFrames % 4 === 0)) microJitter += (Math.random() - 0.5) * 0.02;
     if (!State.reducedMotion && t > nextBlink) {
       doBlink();
       nextBlink = t + Math.random() * 5000 + 2500;
@@ -412,7 +416,8 @@ cv.addEventListener('pointerdown', (e) => {
   pressStart = performance.now();
   State.lastTouch = pressStart;
   gestureStart = { x: e.clientX, y: e.clientY, t: pressStart };
-  pressTimer = setTimeout(() => window.MASTER_FACE?.startSTT?.(), 420);
+  const sttDelay = State.coarsePointer ? 520 : 420;
+  pressTimer = setTimeout(() => window.MASTER_FACE?.startSTT?.(), sttDelay);
 });
 cv.addEventListener('pointermove', (e) => {
   if (!gestureStart) return;
@@ -508,17 +513,20 @@ cv.addEventListener('touchmove', (e) => {
 }, { passive: true });
 cv.addEventListener('touchend', () => { pinchDist0 = null; }, { passive: true });
 
-// FA26 double-tap reset
+// FA26 double-tap profile cycle (full <-> battery)
 let lastTapT = 0;
 cv.addEventListener('pointerup', () => {
   const now = performance.now();
   if (now - lastTapT < 320) {
-    State.pinchScale = 1.0;
-    State.tiltX = 0; State.tiltY = 0;
-    State.parX = 0; State.parY = 0;
-    if (head) { head.scale.setScalar(1.0); head.position.set(0, 0, 0); }
-    State.bloom = 0.4;
-    setFacePip(false);
+    const cur = rootBody.dataset.runtimeProfile || 'full';
+    const next = cur === 'battery' ? 'full' : 'battery';
+    rootBody.dataset.runtimeProfile = next;
+    State.profileOverride = next;
+    if (window.ParticleKernel && eyePool) {
+      window.ParticleKernel.spawn(eyePool, 0, 0.2, { kind: 2, zone: 2, valence: 0.7, confidence: 0.9, decay: 0.08 });
+    }
+    window.MASTERVisual?.event?.('profile:cycle', { topology: 'papua-mask', entropy: 0.12, confidence: 0.9, mode: next });
+    resize();
   }
   lastTapT = now;
 }, { passive: true });

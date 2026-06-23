@@ -156,7 +156,13 @@
       else if (/memory|retriev|context/.test(name) && agent.name === "memory") agent.charge = 1;
       else if (/tool|scan|sweep|audit/.test(name) && agent.name === "coder") agent.charge = 0.95;
       else if (/error|rollback|escalat/.test(name) && agent.name === "judge") agent.charge = 1;
-      else if (/council:deliberation|reversibility:low/.test(name)) agent.charge = Math.min(1, agent.charge + 0.25);
+      else if (/council:deliberation|council:start|reversibility:low/.test(name)) {
+        agent.charge = Math.min(1, agent.charge + 0.25);
+        const base = agent._radiusBase ?? agent.radius;
+        agent._radiusBase = base;
+        agent.radius = base * 1.08;
+        setTimeout(() => { agent.radius = base; }, 600);
+      }
       else agent.charge = Math.max(agent.charge, 0.55);
     }
     // Mirror charges into the kernel cells (ecology habitats port).
@@ -191,7 +197,8 @@
     let kind = "rise";
     if (/error|rollback|failed|failure/.test(name)) kind = "fracture";
     else if (/memory|retriev|context|compact/.test(name)) kind = "basin";
-    else if (/escalat|fallback|retry/.test(name)) kind = "rift";
+    else if (/escalat|fallback|retry|user:interrupt/.test(name)) kind = "rift";
+    else if (/input:paste/.test(name)) kind = "basin";
     else if (/complete|success|done/.test(name)) kind = "stabilize";
 
     terrainImpacts.push({

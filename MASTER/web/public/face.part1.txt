@@ -9,7 +9,7 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import(window.MASTER_ASSET_PATHS?.threeModule || '/three.module.js?v=59') : null;
+const THREE = _hasWebGL ? await import(window.MASTER_ASSET_PATHS?.threeModule || '/three.face.module.js?v=1') : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
@@ -240,7 +240,8 @@ const State = {
   tiltX: 0, tiltY: 0, mouseX: 0, mouseY: 0,
   parX: 0, parY: 0,
   viseme: 'neutral', visemeAmp: 0,
-  flash: 0, shake: 0, pulse: 0, sttActive: false,
+  flash: 0, shake: 0, pulse: 0, sttActive: false, profileOverride: null,
+  calmStareUntil: 0, nervousUntil: 0, breath: 1.0,
   surpriseY: 0, ripplePhase: -1, rain: 0,
   pinchScale: 1.0, idleAlphaDrift: 0,
   modelSwitch: 0,
@@ -367,7 +368,9 @@ Object.defineProperty(State, 'mode', {
 function updateRuntimeProfile() {
   State.hidden = document.hidden;
   rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
-  rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'full';
+  if (!State.profileOverride) {
+    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'full';
+  }
   rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
 }
 

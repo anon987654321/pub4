@@ -45,7 +45,26 @@
   // This reduces signal fragmentation so particle reactions (kernel arousal/pressure,
   // tints, terrain, agents) are more coherent and calm to watch from afar.
 
+  let _visualBatch = null;
+  let _visualBatchTimer = null;
+
+  function flushVisualBatch() {
+    _visualBatchTimer = null;
+    if (!_visualBatch || !_visualBatch.length) return;
+    const items = _visualBatch.splice(0, _visualBatch.length);
+    const last = items[items.length - 1];
+    emitVisualNow(last.name, last.detail);
+  }
+
   function emitVisual(name, detail = {}) {
+    if (!_visualBatch) _visualBatch = [];
+    _visualBatch.push({ name, detail });
+    if (!_visualBatchTimer) {
+      _visualBatchTimer = requestAnimationFrame(flushVisualBatch);
+    }
+  }
+
+  function emitVisualNow(name, detail = {}) {
     state.lastEventAt = performance.now();
     state.entropy = clamp(detail.entropy ?? state.entropy, 0, 1);
     state.confidence = clamp(detail.confidence ?? state.confidence, 0, 1);
@@ -69,6 +88,8 @@
     if (canonical && canonical !== state.canonicalTopology) {
       state.canonicalTopology = canonical;
       window.dispatchEvent(new CustomEvent("master:topology", { detail: { id: canonical, source: name } }));
+      document.documentElement.dataset.topologyFlash = "1";
+      setTimeout(() => { delete document.documentElement.dataset.topologyFlash; }, 90);
     }
 
     if (window.MASTERMask && typeof window.MASTERMask.event === "function") {
@@ -132,19 +153,40 @@
     };
     source.onerror = () => {
       state.connected = false;
-      emitVisual("events:disconnected", { topology: "serpent", entropy: 0.52, confidence: 0.38, mode: "disconnected" });
+      state.confidence = Math.max(0.2, state.confidence - 0.1);
+      emitVisual("events:disconnected", { topology: "serpent", entropy: 0.52, confidence: state.confidence, mode: "disconnected" });
+      window._chatOnDmesg?.("link quiet");
     };
   }
 
   function observeDomSignals() {
     if (input) {
+      input.addEventListener("focus", () => {
+        emitVisual("input:focus", {
+          topology: "papua-mask",
+          entropy: 0.14,
+          confidence: 0.88,
+          mode: "attending"
+        });
+      }, { passive: true });
+      input.addEventListener("paste", () => {
+        emitVisual("input:paste", {
+          topology: "papua-mask",
+          entropy: 0.25,
+          confidence: 0.82,
+          mode: "paste"
+        });
+      }, { passive: true });
       input.addEventListener("input", () => {
         const length = input.value.length;
-        emitVisual("input:change", {
+        const dense = length > 180;
+        if (dense) document.documentElement.dataset.inputDense = "1";
+        else delete document.documentElement.dataset.inputDense;
+        emitVisual(dense ? "input:long" : "input:change", {
           topology: length > 120 ? "neural" : "papua-mask",
           entropy: Math.min(0.55, length / 360),
           confidence: length ? 0.66 : 0.86,
-          mode: "typing"
+          mode: dense ? "dense" : "typing"
         });
       }, { passive: true });
     }
@@ -191,7 +233,7 @@
 
   window.MASTERVisual = {
     state,
-    event: emitVisual,
+    event: emitVisualNow,
     runtime: handleRuntimeEvent,
     classify
   };

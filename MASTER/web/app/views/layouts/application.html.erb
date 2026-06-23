@@ -20,7 +20,7 @@
     <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
     <script>
       window.MASTER_ASSET_PATHS = {
-        threeModule: "<%= asset_path("three.module.js") %>"
+        threeModule: "<%= asset_path("three.face.module.js") %>"
       };
     </script>
     <script>
@@ -28,7 +28,7 @@
       window.MASTER_PERSONA = <%= raw((persona.respond_to?(:browser_profile) ? persona.browser_profile : {}).to_json) %>;
     </script>
     <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
-    <link rel="modulepreload" href="<%= asset_path("three.module.js") %>">
+    <link rel="modulepreload" href="<%= asset_path("three.face.module.js") %>">
     <link rel="modulepreload" href="<%= asset_path("face.js") %>">
     <link rel="stylesheet" href="<%= asset_path("face.css") %>">
     <link rel="stylesheet" href="<%= asset_path("photo_upload.css") %>">

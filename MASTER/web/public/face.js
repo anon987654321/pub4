@@ -18,7 +18,7 @@ const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
 const absoluteAsset = (path) => path ? new URL(path, document.baseURI).href : null;
 if (ASSET_PATHS.threeModule) ASSET_PATHS.threeModule = absoluteAsset(ASSET_PATHS.threeModule);
 const MODULE_PATHS = {
-  "/three.module.js?v=59": absoluteAsset(ASSET_PATHS.threeModule),
+  "/three.face.module.js?v=1": absoluteAsset(ASSET_PATHS.threeModule),
   ...Object.fromEntries(Object.entries(ASSET_PATHS.faceModules || {}).map(([name, path]) => [`/${name}`, absoluteAsset(path)]))
 };
 const FACE_SOURCE = Object.entries(MODULE_PATHS).reduce(

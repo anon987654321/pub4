@@ -78,6 +78,7 @@ body[data-high-contrast="1"] .enhance-text { color: white; }
 
 body[data-runtime-visible="false"] canvas { filter: brightness(0.45) contrast(0.85); }
 body[data-runtime-profile="battery"] canvas { filter: grayscale(0.35) brightness(0.72) contrast(0.95); }
+html[data-topology-flash="1"] canvas { filter: contrast(1.05); transition: filter .09s steps(2,end); }
 body[data-runtime-profile="full"] canvas { filter: saturate(var(--mood-sat, 0.7)) brightness(1); }
 body[data-long-silence="1"] canvas { filter: brightness(0.76) contrast(0.9) saturate(0.55); }
 body[data-laughter="1"] canvas { filter: contrast(1.08) saturate(1.06); }
@@ -516,7 +517,11 @@ body[data-mode="listening"] #mic-dot {
 .enhance-arrow { color: color-mix(in srgb, var(--face-fg) 22%, transparent); animation: blink .5s step-end 4; opacity: .5; }
 .enhance-text { color: color-mix(in srgb, var(--face-fg) 32%, transparent); font-style: italic; opacity: .75; }
 .enhance-yn { color: var(--face-muted); letter-spacing: .08em; }
-.dmesg-line { font: 11px/1.5 "Roboto Mono",ui-monospace,monospace; color: var(--c-accent); margin-bottom: 1px; white-space: pre-wrap; word-break: break-word; opacity: 0.28; transition: opacity .22s steps(4,end), color .22s var(--ease-out); }
+.dmesg-line { font: 11px/1.5 "Roboto Mono",ui-monospace,monospace; color: var(--c-accent); margin-bottom: 1px; white-space: pre-wrap; word-break: break-word; opacity: 0.4; transition: opacity .18s steps(4,end), color .22s var(--ease-out); }
+.dmesg-line[data-tool="1"] { opacity: 0.5; }
+.message.msg-error-flash .msg-body { outline: 1px solid color-mix(in srgb, var(--c-danger) 55%, transparent); outline-offset: 2px; }
+.message.msg-pass-flash { border-bottom: 1px solid var(--face-fg); }
+.message.msg-settled { border-left: 1px solid color-mix(in srgb, var(--face-fg) 35%, transparent); transition: border-color 1.8s var(--ease-out); }
 .dmesg-line.dmesg-live { opacity: 1; color: var(--c-accent, var(--face-dim)); }
 .dmesg-line.dmesg-fade { opacity: 0; }
 .dmesg-ts { opacity: 0.42; font-variant-numeric: tabular-nums; user-select: none; }
@@ -589,7 +594,7 @@ body[data-mode="listening"] #mic-dot {
   z-index: 11;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .2s steps(4,end), transform .2s var(--ease-out);
+  transition: opacity .14s steps(5,end), transform .2s var(--ease-out);
   transform: translateY(30%);
 }
 
@@ -604,6 +609,7 @@ body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 #zsh .sep, #zsh .sep2 { color: var(--face-muted); margin-right: 0.4ch; }
 #zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
 #zsh input::placeholder { color: color-mix(in srgb, var(--face-fg) 22%, transparent); }
+html[data-input-dense="1"] #zsh { border-top: 1.5px solid color-mix(in srgb, var(--face-fg) 28%, transparent); transition: border-top-width .2s var(--ease-out); }
 
 /* Closed-caption strip (FA141) */
 #tts-live {

@@ -108,10 +108,21 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   recognition.onend = () => { State.sttActive = false; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
   recognition.onerror = () => { State.sttActive = false; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
 }
+function boostEyeAttention(delta = 0.25) {
+  const K = window.ParticleKernel;
+  if (!eyePool || !K) return;
+  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + delta);
+  }
+}
+
 function startSTT() {
   if (!recognition || State.sttActive) return;
   wakeFromSleep();
   if (tts.playing) ttsSkip();
+  boostEyeAttention(0.25);
+  window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
   try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
 }
 function stopSTT() {
@@ -152,9 +163,12 @@ function speakFailure(reason = "Sorry, I hit a snag.") {
   if (!tts.muted) enqueueSpeech(reason);
 }
 
+let _firstChatSent = false;
 async function sendMessage(text) {
   const trimmed = text.trim();
   wakeFromSleep();
+  State.pulse = Math.max(State.pulse || 0, 0.35);
+  window.MASTERVisual?.event?.('chat:submit', { topology: 'papua-mask', entropy: 0.2, confidence: State.confidence || 0.86, mode: 'submit' });
   if (navigator.vibrate) navigator.vibrate(30);
   if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
       if (window.MASTER_FACE?.tts?.lastText) { window.MASTER_FACE.tts.queue = [window.MASTER_FACE.tts.lastText]; window.MASTER_FACE.ttsTick?.(); } return;
@@ -221,11 +235,22 @@ async function sendMessage(text) {
   syncShareStateUrl();
   if (input.length > 180) State.lean = 0.14;
   const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|0`);
-  const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}`;
+  const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
+  const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
+  if (window._imageToken) window._imageToken = null;
+  if (!_firstChatSent) {
+    _firstChatSent = true;
+    window.MASTERVisual?.event?.('chat:first', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, provider: State.modelName || State.model, mode: 'first' });
+  }
   evtSrc = new EventSource(url);
   let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
+  let _stallTimer = setTimeout(() => {
+    window._chatOnDmesg?.('link thinking');
+    State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
+  }, 4000);
   evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
+    clearTimeout(_stallTimer);
     if (raw === '[DONE]') {
       if (pending.trim() && !ttsSuppressed) {
         tts.lastText = pending.trim();
@@ -290,6 +315,20 @@ async function sendMessage(text) {
     State.model = m; State.modelName = m.split('/').pop();
     const key = Object.keys(TINT).find(k => m.toLowerCase().includes(k));
     if (key) fadeColorTo(TINT[key]);
+    if (mouthPool && window.ParticleKernel) {
+      const K = window.ParticleKernel;
+      for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+        const b = i * K.FIELDS_PER_CELL;
+        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);
+      }
+      setTimeout(() => {
+        if (!mouthPool) return;
+        for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+          const b = i * K.FIELDS_PER_CELL;
+          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);
+        }
+      }, 1000);
+    }
     showModelBadge(State.modelName || m);
     State.modelSwitch = 1.0;
     syncShareStateUrl();
@@ -309,6 +348,8 @@ async function sendMessage(text) {
       beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
       State.fracture = 1.0;
+      const prevPh = zshIn?.placeholder;
+      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
     }
     const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
     if (v === 'pass') tally.pass += 1;
@@ -338,8 +379,11 @@ async function sendMessage(text) {
     try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
   });
   evtSrc.onerror = () => {
+    clearTimeout(_stallTimer);
     State.flash = 1; State.shake = 0.8; State.mode = 'error';
+    window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
     clearThinkingAloud();
+    window._chatOnDmesg?.('link quiet');
     speakFailure("Sorry, I hit a snag.");
     try { evtSrc.close(); } catch (_) {}
   };
@@ -488,7 +532,11 @@ zshBar.addEventListener('submit', (e) => {
   navigator.vibrate?.(30);
   window.MASTER_FACE?.sendMessage?.(v);
 });
-zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
+zshIn.addEventListener('focus', () => {
+  State.lastTouch = performance.now();
+  boostEyeAttention(0.07);
+  window.MASTERVisual?.event?.('input:focus', { topology: 'papua-mask', entropy: 0.14, confidence: 0.88, mode: 'attending' });
+});
 
 const PLACEHOLDERS = ['ask anything', 'what do you think?', 'challenge me', 'show your work', 'explain simply'];
 let _phIdx = 0;
@@ -505,6 +553,23 @@ zshIn.addEventListener('input', () => {
 });
 
 let _swipeStartX = 0, _swipeStartY = 0;
+const chatShell = document.getElementById('chat-shell');
+if (chatShell) {
+  let shellPress = null;
+  chatShell.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('#zsh, #zin, #photo-button, input, button, a')) return;
+    shellPress = setTimeout(() => {
+      cancelStream();
+      window.MASTER_FACE?.ttsSkip?.();
+      window.MASTEREcology?.burst?.(8, 0.3);
+      window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.38, confidence: 0.5, mode: 'interrupt' });
+    }, 420);
+  }, { passive: true });
+  const clearShellPress = () => { if (shellPress) { clearTimeout(shellPress); shellPress = null; } };
+  chatShell.addEventListener('pointerup', clearShellPress, { passive: true });
+  chatShell.addEventListener('pointercancel', clearShellPress, { passive: true });
+}
+
 const chatLog = document.getElementById('chat-log');
 if (chatLog) {
   chatLog.addEventListener('touchstart', e => { _swipeStartX = e.touches[0].clientX; _swipeStartY = e.touches[0].clientY; }, { passive: true });
@@ -541,7 +606,12 @@ document.addEventListener('keyup', (e) => {
 
 document.addEventListener('keydown', (e) => {
   wakeFromSleep();
-  if (e.key === 'Escape') { e.preventDefault(); cancelStream(); window.MASTER_FACE?.ttsSkip?.(); }
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    cancelStream();
+    window.MASTER_FACE?.ttsSkip?.();
+    window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.42, confidence: 0.55, mode: 'interrupt' });
+  }
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
   if (e.key === 't' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
   if (e.key === 'm' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); window.MASTER_FACE?.ttsToggleMic?.(); }
