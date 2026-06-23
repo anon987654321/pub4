@@ -26,6 +26,7 @@ else
   end
 
   failures << "relayd: master backend missing" unless relayd.include?("forward to <master>")
+  failures << "relayd: master missing http / check" unless relayd.include?('forward to <master> port 53187 check http "/" code 200')
 end
 
 apps.each do |name, metadata|

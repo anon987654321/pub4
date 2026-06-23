@@ -41,6 +41,14 @@ Master::Ops::ProcessBudget.validate_loop_slot!
 Master::Ops::RuntimeLoopGuards.install!
 
 def initial_message_from_argv(argv)
+  options = parse_initial_message_options(argv)
+  (options[:message] || argv.join(" ")).to_s.strip
+rescue OptionParser::ParseError => e
+  $stderr.puts "cli: #{e.message}"
+  argv.reject { |arg| arg.start_with?("--") }.join(" ").strip
+end
+
+def parse_initial_message_options(argv)
   options = {}
   parser = OptionParser.new do |opts|
     opts.on("-m", "--message TEXT") { |text| options[:message] = text }
@@ -49,10 +57,7 @@ def initial_message_from_argv(argv)
     opts.on("--boot-status") { ENV["MASTER_BOOT_STATUS"] = "1" }
   end
   parser.parse!(argv)
-  (options[:message] || argv.join(" ")).to_s.strip
-rescue OptionParser::ParseError => e
-  $stderr.puts "cli: #{e.message}"
-  argv.reject { |arg| arg.start_with?("--") }.join(" ").strip
+  options
 end
 
 cli = nil
@@ -72,6 +77,11 @@ if $stdin.tty?
 else
   $stdout.sync = true
   $stdin.each_line { |line| cli.pipe(line) }
+  cli.send(:stop_background_loop) rescue nil
+  cli.container&.dig(:session)&.save! rescue nil
+  $stdout.flush
+  $stderr.flush
+  exit!(cli.exit_code || 0)
 end
 
 exit(cli.exit_code || 0)

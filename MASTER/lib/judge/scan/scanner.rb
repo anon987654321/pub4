@@ -2,6 +2,7 @@
 
 require "etc"
 require "open3"
+require "timeout"
 require_relative "cross_file_analysis"
 require_relative "file_processor"
 
@@ -17,6 +18,7 @@ module Master
           knowledge fixtures public var
         ].freeze
         REQUIRED_DEPTH = :deep
+        GIT_TIMEOUT_SECONDS = 5
         MAX_VIOLATION_OBJECTS = 100_000
         GC_EVERY_N_ITERATIONS = 5
 
@@ -72,7 +74,8 @@ module Master
           return changed if changed.err?
 
           paths = scan_since_paths(changed.value!, dir:, repo_root:)
-          Result.ok(prune_violation_objects(parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }))
+          pairs = parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }
+          Result.ok(prune_violation_objects(pairs))
         rescue StandardError => e
           Result.err("scan_since: #{e.message}", category: :infrastructure)
         end
@@ -96,28 +99,39 @@ module Master
         end
 
         def git_toplevel(dir)
-          out, _, status = Open3.capture3("git", "-C", dir, "rev-parse", "--show-toplevel")
+          out, _, status = git_capture("git", "-C", dir, "rev-parse", "--show-toplevel")
           status.success? ? out.strip : nil
         end
 
         def changed_since(ref, repo_root)
-          out, _, status = Open3.capture3("git", "-C", repo_root, "diff", "--name-only", "#{ref}...HEAD")
+          out, _, status = git_capture("git", "-C", repo_root, "diff", "--name-only", "#{ref}...HEAD")
           return Result.err("git diff failed", category: :validation) unless status.success?
 
           Result.ok(out.lines.map(&:strip).reject(&:empty?))
         end
 
+        def git_capture(*argv)
+          Timeout.timeout(GIT_TIMEOUT_SECONDS) { Open3.capture3(*argv) }
+        rescue Timeout::Error
+          ["", "git command timed out after #{GIT_TIMEOUT_SECONDS}s", failure_status]
+        end
+
+        def failure_status
+          Struct.new(:success?).new(false)
+        end
+
         def scan_since_paths(changed, dir:, repo_root:)
           scan_root = File.expand_path(dir)
           master_lib = File.join(repo_root, "MASTER", "lib")
-          changed.filter_map do |rel|
+          paths = changed.filter_map do |rel|
             path = File.expand_path(rel, repo_root)
             next unless File.exist?(path) && File.extname(path).match?(SCAN_SINCE_EXT)
             next unless under_path?(path, scan_root) || under_path?(path, master_lib)
             next if self.class.skip_path?(path, root: repo_root)
 
             path
-          end.uniq
+          end
+          paths.uniq
         end
 
         def scannable_path?(path, root)

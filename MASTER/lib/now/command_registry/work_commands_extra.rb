@@ -7,6 +7,11 @@ module Master
     module CommandRegistry
       module_function
 
+      SNAPSHOT_EXTENSIONS = %w[.rb .erb .yml].freeze
+      SNAPSHOT_SKIP_SEGMENTS = %w[
+        .git .bundle node_modules vendor tmp log coverage storage cache dist build knowledge public var
+      ].freeze
+
       def dispatch_review(council_stage:, deliberation:, root:, bus:, review_crew:, ctx: nil)
         arg = arg_for(ctx)
         case arg
@@ -67,10 +72,43 @@ module Master
         return "not found: #{abs_path}" unless File.exist?(abs_path)
         return File.read(abs_path).b[0, SNAPSHOT_FILE_BYTES] if File.file?(abs_path)
 
-        files = Dir.glob(File.join(abs_path, "**/*.{rb,erb,yml}")).first(SNAPSHOT_DIR_FILE_LIMIT)
+        files = snapshot_files(abs_path)
         files.map { |f|
           "--- #{f.sub(abs_path + "/", "")} ---\n#{File.read(f).b[0, SNAPSHOT_DIR_FILE_BYTES]}"
         }.join("\n\n")[0, SNAPSHOT_DIR_TOTAL_BYTES]
+      end
+
+      def snapshot_files(abs_path)
+        pending = [abs_path]
+        files = []
+        until pending.empty? || files.size >= SNAPSHOT_DIR_FILE_LIMIT
+          current = pending.shift
+          begin
+            entries = Dir.children(current).sort
+            entries.each do |entry|
+              path = File.join(current, entry)
+              next if snapshot_skip_path?(path)
+              if File.directory?(path)
+                pending << path
+              elsif snapshot_file?(path)
+                files << path
+                break if files.size >= SNAPSHOT_DIR_FILE_LIMIT
+              end
+            end
+          rescue StandardError
+            nil
+          end
+        end
+        files
+      end
+
+      def snapshot_skip_path?(path)
+        segments = path.split(File::SEPARATOR)
+        SNAPSHOT_SKIP_SEGMENTS.any? { |segment| segments.include?(segment) }
+      end
+
+      def snapshot_file?(path)
+        File.file?(path) && SNAPSHOT_EXTENSIONS.include?(File.extname(path))
       end
 
       def dispatch_critique(deliberation:, root:, ctx: nil)

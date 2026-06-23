@@ -7,7 +7,7 @@ ROOT = File.expand_path("../..", __dir__)
 WEB_ROOT = File.join(ROOT, "MASTER", "web")
 ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
 MANIFEST = File.join(ASSETS_DIR, ".manifest.json")
-REQUIRED = %w[face.css face.js chat.js three.module.js].freeze
+REQUIRED = %w[face.css face.js chat.js three.face.module.js].freeze
 
 failures = []
 unless File.file?(MANIFEST)

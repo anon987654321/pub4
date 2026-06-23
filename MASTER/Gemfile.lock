@@ -185,6 +185,7 @@ GEM
     strings-ansi (0.2.0)
     terminal-table (3.0.2)
       unicode-display_width (>= 1.1.1, < 3)
+    tsort (0.2.0)
     tty-box (0.7.0)
       pastel (~> 0.8)
       strings (~> 0.2.0)
@@ -258,6 +259,7 @@ DEPENDENCIES
   ruby_llm-mcp
   simplecov
   sqlite3 (~> 2.9)
+  tsort
   tty-box (~> 0.7)
   tty-command (~> 0.10)
   tty-config (~> 0.6)
@@ -351,6 +353,7 @@ CHECKSUMS
   strings (0.2.1) sha256=933293b3c95cf85b81eb44b3cf673e3087661ba739bbadfeadf442083158d6fb
   strings-ansi (0.2.0) sha256=90262d760ea4a94cc2ae8d58205277a343409c288cbe7c29416b1826bd511c88
   terminal-table (3.0.2) sha256=f951b6af5f3e00203fb290a669e0a85c5dd5b051b3b023392ccfd67ba5abae91
+  tsort (0.2.0)
   tty-box (0.7.0) sha256=17f453a0c1df43871fdb6de461ee797b78574dacc652372fa2ae98a00785df8b
   tty-color (0.6.0) sha256=6f9c37ca3a4e2367fb2e6d09722762647d6f455c111f05b59f35730eeb24332a
   tty-command (0.10.1) sha256=0c6c471fcb932d55518734eb4e2e07e9efdd2918713cc39bb7393ba862471192

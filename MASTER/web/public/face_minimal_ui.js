@@ -20,6 +20,12 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
   }, { passive: true });
   document.addEventListener('touchend', () => delete body.dataset.edgeSwipe);
 
+  document.addEventListener('mousemove', (e) => {
+    if (!body.classList.contains('zen')) return;
+    if (innerHeight - e.clientY < 56) body.dataset.edgeHover = '1';
+    else delete body.dataset.edgeHover;
+  }, { passive: true });
+
   const cvEl = document.getElementById('face');
   if (cvEl) {
     let t = null;

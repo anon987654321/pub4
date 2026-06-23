@@ -245,12 +245,14 @@ async function sendMessage(text) {
   evtSrc = new EventSource(url);
   let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
   let _stallTimer = setTimeout(() => {
+    rootBody.dataset.networkStall = '1';
     window._chatOnDmesg?.('link thinking');
     State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
   }, 4000);
   evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
     clearTimeout(_stallTimer);
+    delete rootBody.dataset.networkStall;
     if (raw === '[DONE]') {
       if (pending.trim() && !ttsSuppressed) {
         tts.lastText = pending.trim();

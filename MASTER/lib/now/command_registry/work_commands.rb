@@ -192,6 +192,8 @@ module Master
         dry_run = dry_run_arg?(arg)
         request = ScanRequest.new(scanner: scanner, root: root, arg: strip_dry_run(arg)).call
         return request.pairs if request.pairs.is_a?(String)
+        return clean_scan_line(dry_run:) if request.pairs.empty?
+
         ScanReport.new(
           pairs: request.pairs,
           profile: request.profile,
@@ -199,6 +201,12 @@ module Master
           severity_filter: request.severity_filter,
           dry_run: dry_run
         ).render
+      end
+
+      def clean_scan_line(dry_run:)
+        return "clean -- no violations" unless dry_run
+
+        "dry-run: clean -- no violations (no changes made)"
       end
 
       def dry_run_arg?(arg)

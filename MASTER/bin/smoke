@@ -10,8 +10,11 @@ Encoding.default_external = Encoding::UTF_8
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "open3"
+require "timeout"
 require "net/http"
 require "uri"
+
+PIPE_TIMEOUT_SECONDS = 30
 
 def step(name)
   print "smoke: #{name.ljust(28)} "
@@ -45,17 +48,21 @@ end
   end
 end
 
-port = (container.dig(:config) && container[:config].respond_to?(:web_port) ? container[:config].web_port : nil) || 53187
+config = container.dig(:config)
+port = (config&.respond_to?(:web_port) ? config.web_port : nil) || 53187
 
-failures << "chat" unless step("chat turn (pipe mode)") do
+failures << "pipe" unless step("pipe command") do
   exe = File.expand_path("cli", __dir__)
   env = { "MASTER_QUIET" => "1" }
   if File.readable?("/etc/master.env")
     File.foreach("/etc/master.env") { |l| k, v = l.chomp.split("=", 2); env[k] = v if k && v }
   end
-  out, _st = Open3.capture2e(env, exe, stdin_data: "ping\n")
+  out, _st = Timeout.timeout(PIPE_TIMEOUT_SECONDS) { Open3.capture2e(env, exe, stdin_data: "/help\n") }
   bug = out =~ /\b(unknown category|NameError|NoMethodError|uninitialized constant)/i
-  [bug.nil?, bug ? out.lines.find { |l| l =~ /\b(unknown category|NameError|NoMethodError|uninitialized constant)/i }&.strip : nil]
+  message = out.lines.find { |line| line =~ /\b(unknown category|NameError|NoMethodError|uninitialized constant)/i }
+  [bug.nil?, message&.strip]
+rescue Timeout::Error
+  [false, "pipe command timed out after #{PIPE_TIMEOUT_SECONDS}s"]
 end
 
 if ARGV.include?("--tts")
@@ -68,10 +75,18 @@ if ARGV.include?("--tts")
 end
 
 if ARGV.include?("--web")
-  failures << "web" unless step("web GET /up") do
+  failures << "web_up" unless step("web GET /up") do
     uri = URI("http://127.0.0.1:#{port}/up")
     res = Net::HTTP.start(uri.host, uri.port, open_timeout: 2, read_timeout: 5) { |h| h.get(uri.path) }
     [res.code.to_i.between?(200, 399), "HTTP #{res.code}"]
+  end
+
+  failures << "web_root" unless step("web GET /") do
+    uri = URI("http://127.0.0.1:#{port}/")
+    res = Net::HTTP.start(uri.host, uri.port, open_timeout: 2, read_timeout: 15) { |h| h.get(uri.path) }
+    body = res.body.to_s
+    ok = res.code.to_i == 200 && body.include?("face") && body.include?("three.face.module")
+    [ok, ok ? nil : "HTTP #{res.code} missing face assets"]
   end
 
   failures << "log" unless step("daemon log errors") do
