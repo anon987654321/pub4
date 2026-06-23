@@ -94,14 +94,14 @@ categories.each do |root_name, children|
   end
 end
 
-stores = 12.times.map do
+stores = 12.times.map do |i|
+  name = Faker::Company.name
   Marketplace::Store.create!(
     owner: users.sample,
-    name: Faker::Company.name,
+    name: name,
+    slug: "seed-store-#{i}-#{Faker::Internet.slug}",
     description: Faker::Company.catch_phrase,
-    address: Faker::Address.street_address,
-    latitude: 60.39 + rand(-0.05..0.05),
-    longitude: 5.33 + rand(-0.05..0.05)
+    vertical: Marketplace::Store::VERTICALS.sample
   )
 end
 
@@ -112,10 +112,10 @@ listings = stores.flat_map do |store|
       store: store,
       title: Faker::Commerce.product_name,
       description: Faker::Lorem.paragraph,
-      price_cents: rand(1000..50000),
+      price_cents: rand(1000..50_000),
       category: Marketplace::Category.all.sample,
-      latitude: store.latitude + rand(-0.01..0.01),
-      longitude: store.longitude + rand(-0.01..0.01),
+      location: Faker::Address.city,
+      status: "active",
       created_at: rand(1..60).days.ago
     )
   end
@@ -127,8 +127,8 @@ listings.sample(20).each do |listing|
   order = Marketplace::Order.create!(
     buyer: buyer,
     listing: listing,
-    quantity: rand(1..3),
     status: %w[pending accepted completed].sample,
+    message: Faker::Lorem.sentence,
     created_at: rand(1..30).days.ago
   )
   order.record_activity!("MarketplaceOrder") if order.respond_to?(:record_activity!)
