@@ -32,12 +32,12 @@ admin = User.find_or_create_by!(email_address: "admin@brgen.no") do |u|
   u.password = u.password_confirmation = "password123"
 end
 
-users = 50.times.map do |_i|
+users = 50.times.map do |i|
   User.create!(
-    email_address: Faker::Internet.unique.email(domain: "brgen.no"),
+    email_address: "seed#{i}@#{Faker::Internet.domain_name}",
     password: "password123",
     password_confirmation: "password123",
-    username: Faker::Internet.username(specifier: 5..12),
+    username: "seed#{i}_#{Faker::Internet.username(specifier: 3..8)}",
     latitude: 60.39 + rand(-0.1..0.1),
     longitude: 5.33 + rand(-0.1..0.1)
   )
