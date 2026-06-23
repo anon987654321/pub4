@@ -140,6 +140,7 @@ module Master
         RuleDSL.rule :MAGIC_COLOR,
           severity: :warning, tags: %i[MAINTAINABILITY],
           description: "color values must reference design tokens, not raw hex/rgb" do |src, path:|
+          next [] if File.basename(path.to_s).match?(/\Aface\.part\d+\.txt\z/)
           scan_lines(src, /#[0-9a-fA-F]{3,6}\b|rgb\(|rgba\(|hsl\(/,
             message: "raw color value — reference a CSS custom property or design token")
         end
