@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "net/http"
+require "uri"
+
+HOST = ENV.fetch("MASTER_TTS_HOST", "http://127.0.0.1:53187")
+TEXT = ENV.fetch("MASTER_TTS_TEXT", "MASTER TTS end to end check.")
+VOICE = ENV.fetch("MASTER_TTS_VOICE", "")
+MAX_POLLS = Integer(ENV.fetch("MASTER_TTS_MAX_POLLS", "24"))
+SLEEP_S = Float(ENV.fetch("MASTER_TTS_POLL_SLEEP", "0.5"))
+
+def http_get(path)
+  uri = URI("#{HOST}#{path}")
+  Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 5, read_timeout: 30) do |http|
+    http.get(uri.request_uri)
+  end
+end
+
+def fail!(message)
+  warn("tts_e2e: #{message}")
+  exit 1
+end
+
+query = "/chat/tts?text=#{URI.encode_www_form_component(TEXT)}"
+query += "&voice=#{URI.encode_www_form_component(VOICE)}" unless VOICE.empty?
+res = http_get(query)
+job = res["X-TTS-Job"].to_s
+
+if res.code.to_i == 200 && res.content_type.to_s.include?("audio")
+  puts "tts_e2e: ok immediate mp3 (#{res.body.bytesize} bytes)"
+  exit 0
+end
+
+fail!("initial status #{res.code}, expected 200 audio or 202 pending") unless res.code.to_i == 202
+fail!("missing X-TTS-Job header") if job.empty?
+
+MAX_POLLS.times do |attempt|
+  sleep SLEEP_S
+  poll = http_get("/chat/tts/status?job=#{URI.encode_www_form_component(job)}")
+  case poll.code.to_i
+  when 202
+    print "."
+    $stdout.flush
+    next
+  when 200
+    fail!("empty audio body") if poll.body.to_s.empty?
+    unless poll.content_type.to_s.include?("audio")
+      fail!("unexpected content-type #{poll.content_type}")
+    end
+    puts "\ntts_e2e: ok polled mp3 (#{poll.body.bytesize} bytes, attempt #{attempt + 1})"
+    exit 0
+  when 503
+    body = JSON.parse(poll.body) rescue {}
+    fail!("job failed: #{body["error"] || poll.body}")
+  else
+    fail!("poll status #{poll.code}")
+  end
+end
+
+fail!("timed out after #{MAX_POLLS} polls for job #{job}")

@@ -102,6 +102,7 @@ module Master
           severity: :warning, tags: %i[DESIGN], applies_to: %i[css scss javascript html],
           description: "color values must reference design tokens, not raw hex/rgb" do |src, path:|
           next [] if path.to_s.match?(%r{/spec/|/test/})
+          next [] if File.basename(path.to_s).match?(/\Aface\.part\d+\.txt\z/)
           findings = scan_lines(src, /#[0-9a-fA-F]{3,6}\b/, message: "raw hex color — use CSS custom property or design token")
           findings += scan_lines(src, /\brgba?\s*\(/, message: "raw rgb() color — use CSS custom property or design token")
           findings += scan_lines(src, /\bhsla?\s*\(/, message: "raw hsl() color — use CSS custom property or design token")

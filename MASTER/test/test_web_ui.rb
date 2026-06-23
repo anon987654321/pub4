@@ -106,7 +106,8 @@ class TestWebUI < Minitest::Test
     app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes app_controller, "TTS_RATE_LIMIT  = 30"
-    assert_includes app_controller, "before_action :enforce_tts_rate_limit, if: -> { action_in?(:tts) }"
+    assert_includes app_controller, 'before_action :enforce_tts_rate_limit, if: -> { controller_name == "tts" && action_in?(TTS_ACTIONS) }'
+    assert_includes app_controller, "TTS_ACTIONS = %i[show status].freeze"
     assert_includes app_controller, "Retry-After"
   end
 
@@ -114,7 +115,7 @@ class TestWebUI < Minitest::Test
     app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes app_controller, "AUTHENTICATED_ACTIONS = %i["
-    assert_includes app_controller, "command dmesg enhance history live metrics photo post_event state stream tts"
+    assert_includes app_controller, "command dmesg enhance history live metrics photo post_event state stream"
     assert_includes app_controller, "before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }"
     assert_match(/def\s+visitor\?\s*\n\s*false\s*\n\s*end/, app_controller)
     assert_match(/def\s+require_authenticated!\s*\n\s*end/, app_controller)
@@ -144,16 +145,25 @@ class TestWebUI < Minitest::Test
   end
 
   def test_tts_endpoint_sets_cache_headers_and_supports_conditional_get
-    chat_controller = File.read(File.expand_path("../web/app/controllers/chat_controller.rb", __dir__))
+    tts_controller = File.read(File.expand_path("../web/app/controllers/tts_controller.rb", __dir__))
     tts_job = File.read(File.expand_path("../web/app/services/tts_job.rb", __dir__))
 
     assert_includes tts_job, "Digest::SHA256.hexdigest"
     assert_includes tts_job, "def failed?"
     assert_includes tts_job, "record_failure"
-    assert_includes chat_controller, 'response.headers["ETag"] = etag'
-    assert_includes chat_controller, 'response.headers["Cache-Control"] = "public, max-age=3600"'
-    assert_includes chat_controller, "head(:not_modified)"
-    assert_includes chat_controller, 'status: "failed"'
+    assert_includes tts_controller, 'response.headers["ETag"] = etag'
+    assert_includes tts_controller, 'response.headers["Cache-Control"] = "public, max-age=3600"'
+    assert_includes tts_controller, "head(:not_modified)"
+    assert_includes tts_controller, 'status: "failed"'
+    assert_includes tts_controller, 'response.headers["X-TTS-Job"] = job.job_id'
+  end
+
+  def test_face_tts_polls_job_status_header
+    source = face_runtime_source
+
+    assert_includes source, "res.headers.get('X-TTS-Job')"
+    assert_includes source, "pollTTSJob(job"
+    assert_includes source, "/chat/tts/status?job="
   end
 
   def test_face_tts_uses_indexeddb_blob_cache
