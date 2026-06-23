@@ -2,6 +2,7 @@
 
 class Current < ActiveSupport::CurrentAttributes
   attribute :city
+  attribute :city_record
   attribute :country
   attribute :currency
   attribute :domain
