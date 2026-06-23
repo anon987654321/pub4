@@ -430,7 +430,11 @@ function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, State.coarsePointer ? 1.25 : 2);
 
   const profile = rootBody.dataset.runtimeProfile || 'full';
-  FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : 0.72);
+  const scaleMax = typeof FACE_RENDER_SCALE_MAX !== 'undefined' ? FACE_RENDER_SCALE_MAX : 0.72;
+  const scaleMin = typeof FACE_RENDER_SCALE_MIN !== 'undefined' ? FACE_RENDER_SCALE_MIN : 0.48;
+  if (FACE_RENDER_SCALE > scaleMax || FACE_RENDER_SCALE < scaleMin) {
+    FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : scaleMax);
+  }
   const internalW = Math.max(280, Math.floor(W * FACE_RENDER_SCALE));
   const internalH = Math.max(200, Math.floor(H * FACE_RENDER_SCALE));
 

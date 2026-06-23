@@ -9,16 +9,57 @@ const fpsBadge = showFps ? (() => {
 })() : null;
 let fpsLastSample = performance.now();
 let fpsSampleFrames = 0;
+let fpsEma = 24;
+const FACE_RENDER_SCALE_MIN = 0.48;
+const FACE_RENDER_SCALE_MAX = 0.72;
+function syncSemanticPools(dtSec) {
+  const K = window.ParticleKernel;
+  if (!K || !faceMat) return;
+  if (mouthPool) {
+    K.step(mouthPool, dtSec);
+    let arousal = 0, n = 0;
+    for (let i = 0; i < mouthPool.count; i++) {
+      if (!mouthPool.alive[i]) continue;
+      const b = i * K.FIELDS_PER_CELL;
+      arousal += mouthPool.cells[b + K.FIELD.arousal];
+      n++;
+    }
+    if (n > 0) {
+      const target = arousal / n;
+      faceMat.uniforms.uVowel.value += (target - faceMat.uniforms.uVowel.value) * 0.08;
+    }
+  }
+  if (eyePool) {
+    K.step(eyePool, dtSec);
+    let conf = 0, n = 0;
+    for (let i = 0; i < eyePool.count; i++) {
+      if (!eyePool.alive[i]) continue;
+      const b = i * K.FIELDS_PER_CELL;
+      conf += eyePool.cells[b + K.FIELD.confidence];
+      n++;
+    }
+    if (n > 0) {
+      const close = Math.max(0, 1.0 - conf / n);
+      faceMat.uniforms.uEyeClose.value += (close * 0.35 - faceMat.uniforms.uEyeClose.value) * 0.05;
+    }
+  }
+}
 function frame(t) {
   _dbgFrames++;
-  if (fpsBadge) {
-    fpsSampleFrames++;
-    if (t - fpsLastSample >= 500) {
-      const fps = (fpsSampleFrames * 1000) / (t - fpsLastSample);
-      fpsBadge.textContent = `${fps.toFixed(0)} fps`;
-      fpsLastSample = t;
-      fpsSampleFrames = 0;
+  fpsSampleFrames++;
+  if (t - fpsLastSample >= 500) {
+    const fps = (fpsSampleFrames * 1000) / (t - fpsLastSample);
+    fpsEma = fpsEma * 0.65 + fps * 0.35;
+    if (fpsBadge) fpsBadge.textContent = `${fpsEma.toFixed(0)} fps`;
+    if (!State.reducedMotion && fpsEma < 18 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
+      FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.04);
+      resize();
+    } else if (fpsEma > 23 && FACE_RENDER_SCALE < FACE_RENDER_SCALE_MAX - 0.02) {
+      FACE_RENDER_SCALE = Math.min(FACE_RENDER_SCALE_MAX, FACE_RENDER_SCALE + 0.02);
+      resize();
     }
+    fpsLastSample = t;
+    fpsSampleFrames = 0;
   }
   if (!renderer) {
     lastT = t;
@@ -27,11 +68,13 @@ function frame(t) {
   }
   if (State.hidden) {
     lastT = t;
+    requestAnimationFrame(frame);
     return;
   }
 
   const dt = Math.min(State.coarsePointer ? 66 : 50, t - lastT); lastT = t;
   const sec = t * 0.001;
+  syncSemanticPools(dt * 0.001);
 
   if (State.sleeping) {
     rootBody.style.opacity = '0.05';
@@ -253,14 +296,18 @@ function frame(t) {
     faceMat.uniforms.uFocusDim.value += (focusDim - faceMat.uniforms.uFocusDim.value) * 0.06;
     const phosphorSoft = State.reducedMotion ? 0.35 : 0.55;
     faceMat.uniforms.uPhosphorSoft.value += (phosphorSoft - faceMat.uniforms.uPhosphorSoft.value) * 0.04;
+    const scanTarget = State.mode === 'thinking' ? 0.38 : (State.mode === 'speaking' ? 0.18 : 0.12);
+    faceMat.uniforms.uScanline.value += (scanTarget - faceMat.uniforms.uScanline.value) * 0.05;
+    faceMat.uniforms.uTime.value = sec;
     if (idleS2 > 45) rootBody.dataset.longSilence = '1';
     else delete rootBody.dataset.longSilence;
+    const beatEdge = (State.audioBeat || 0) * 0.06 + (State.audioBass || 0) * 0.04;
     if (faceEdgeLinesStrong) {
-      const edgeStrong = 0.05 + morphCurrent * 0.09 + (State._heartbeat || 0) * 0.05 + (State.pulse || 0) * 0.04;
+      const edgeStrong = 0.05 + morphCurrent * 0.09 + (State._heartbeat || 0) * 0.05 + (State.pulse || 0) * 0.04 + beatEdge;
       faceEdgeLinesStrong.material.opacity += (edgeStrong - faceEdgeLinesStrong.material.opacity) * 0.08;
     }
     if (faceEdgeLinesWeak) {
-      const edgeWeak = 0.02 + morphCurrent * 0.035 + (State.mode === 'thinking' ? 0.02 : 0);
+      const edgeWeak = 0.02 + morphCurrent * 0.035 + (State.mode === 'thinking' ? 0.02 : 0) + beatEdge * 0.5;
       faceEdgeLinesWeak.material.opacity += (edgeWeak - faceEdgeLinesWeak.material.opacity) * 0.06;
     }
     const driftEl = document.getElementById('soul-drift');
@@ -289,7 +336,8 @@ function frame(t) {
         uIdleDrift: faceMat.uniforms.uIdleDrift, uEyeClose: faceMat.uniforms.uEyeClose,
         uGridAngle: faceMat.uniforms.uGridAngle, uHeartbeat: faceMat.uniforms.uHeartbeat,
         uPulseRing: faceMat.uniforms.uPulseRing, uExposure: faceMat.uniforms.uExposure,
-        uFocusDim: faceMat.uniforms.uFocusDim, uPhosphorSoft: faceMat.uniforms.uPhosphorSoft
+        uFocusDim: faceMat.uniforms.uFocusDim, uPhosphorSoft: faceMat.uniforms.uPhosphorSoft,
+        uScanline: faceMat.uniforms.uScanline, uTime: faceMat.uniforms.uTime
       });
       gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
     }
@@ -300,7 +348,10 @@ function frame(t) {
   else delete rootBody.dataset.faceFlash;
   const phosphorOn = !State.reducedMotion && FACE_PHOSPHOR_DECAY > 0.12 && FACE_PHOSPHOR_DECAY < 0.98;
   if (phosphorOn && phosphorFadeMesh && phosphorFadeScene && phosphorFadeCam && faceMat?._phosphorPrimed) {
-    const decay = State.coarsePointer ? Math.max(0.55, FACE_PHOSPHOR_DECAY - 0.12) : FACE_PHOSPHOR_DECAY;
+    let decay = State.coarsePointer ? Math.max(0.55, FACE_PHOSPHOR_DECAY - 0.12) : FACE_PHOSPHOR_DECAY;
+    if (tts.playing) decay = Math.max(0.52, decay - 0.05);
+    if (State.mood === 'weary') decay = Math.min(0.92, decay + 0.06);
+    if (State.mode === 'thinking') decay = Math.max(0.58, decay - 0.03);
     phosphorFadeMesh.material.color.setRGB(decay, decay, decay);
     renderer.autoClear = false;
     renderer.render(phosphorFadeScene, phosphorFadeCam);

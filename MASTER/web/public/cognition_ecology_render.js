@@ -1,22 +1,14 @@
 (() => {
   "use strict";
 
-  function colorFor(name, detail) {
-    const conf = detail.confidence ?? state.confidence ?? 0.88;
-    const base = Math.round(210 + conf * 35);
-    const warm = Math.round(base * 0.90);
-    const cool = Math.round(base * 0.78);
-    if (/error|rollback|failed|failure/.test(name)) return `${Math.round(base * 0.62)},${warm},${cool}`;
-    if (/memory|retriev|context/.test(name)) return `${base},${warm},${Math.round(cool * 1.04)}`;
-    if (/tool|scan|sweep|audit/.test(name)) return `${Math.round(base * 0.88)},${warm},${cool}`;
-    if (/complete|success|done/.test(name)) return `${base},${base},${Math.round(base * 0.94)}`;
-    return `${base},${warm},${cool}`;
+  function eco() {
+    return window.MASTEREcology;
   }
 
-  function terrainHeight(x, y, t) {
-    const base = fieldNoise(x, y, t) * (0.35 + state.entropy * 0.75);
+  function terrainHeight(x, y, t, E) {
+    const base = E.fieldNoise(x, y, t) * (0.35 + E.state.entropy * 0.75);
     let impacts = 0;
-    for (const impact of terrainImpacts) {
+    for (const impact of E.terrainImpacts) {
       const dx = x - impact.x;
       const dy = y - impact.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
@@ -29,9 +21,10 @@
     return base + impacts;
   }
 
-  function drawSemanticTerrain(dt) {
+  function drawSemanticTerrain(dt, E) {
+    const { state, ctx, internalW, internalH, reducedMotion } = E;
     state.terrainPhase += dt * 0.00016 * (0.4 + state.activity);
-    const [cx, cy] = center();
+    const [cx, cy] = E.center();
     const rows = reducedMotion ? 7 : 13;
     const cols = reducedMotion ? 12 : 24;
     const spanX = internalW * 0.86;
@@ -47,7 +40,7 @@
       for (let c = 0; c < cols; c++) {
         const u = c / Math.max(1, cols - 1);
         const x = cx - spanX * 0.5 + u * spanX;
-        const h = terrainHeight(x, y, t);
+        const h = terrainHeight(x, y, t, E);
         const perspective = 0.55 + v * 0.45;
         const jagged = 10 + state.entropy * 12;
         const px = x + Math.sin(t + v * 6) * jagged;
@@ -69,7 +62,7 @@
       for (let r = 0; r < rows; r++) {
         const v = r / Math.max(1, rows - 1);
         const y = cy - spanY * 0.5 + v * spanY;
-        const h = terrainHeight(x, y, t + 7.3);
+        const h = terrainHeight(x, y, t + 7.3, E);
         const px = x + Math.sin(t + v * 6) * 10 * state.entropy;
         const py = y + h * 28 * (0.55 + v * 0.45);
         if (r === 0) ctx.moveTo(px, py);
@@ -80,11 +73,11 @@
       ctx.stroke();
     }
 
-    for (let i = terrainImpacts.length - 1; i >= 0; i--) {
-      const impact = terrainImpacts[i];
+    for (let i = E.terrainImpacts.length - 1; i >= 0; i--) {
+      const impact = E.terrainImpacts[i];
       impact.life -= dt * 0.00036;
       if (impact.life <= 0) {
-        terrainImpacts.splice(i, 1);
+        E.terrainImpacts.splice(i, 1);
         continue;
       }
       const radius = impact.radius * (1.15 - impact.life * 0.15);
@@ -96,12 +89,12 @@
     }
   }
 
-  function drawAgentSpirits(dt) {
-    const [cx, cy] = center();
+  function drawAgentSpirits(dt, E) {
+    const { agents, agentsPool, state, ctx, internalW, internalH, reducedMotion } = E;
+    const [cx, cy] = E.center();
     const base = Math.min(internalW, internalH);
     for (let idx = 0; idx < agents.length; idx++) {
       const agent = agents[idx];
-      // Read charge from kernel cell when available (ecology port).
       let kCharge = agent.charge;
       if (agentsPool && agentsPool.alive[idx]) {
         const b = idx * window.ParticleKernel.FIELDS_PER_CELL;
@@ -114,21 +107,19 @@
       const x = cx + Math.cos(agent.angle) * (radius + wobble);
       const y = cy + Math.sin(agent.angle * 0.91) * radius * 0.62;
       const glow = 0.12 + kCharge * 0.42;
+      const sz = (2 + kCharge * 4) | 0;
 
-      ctx.beginPath();
       ctx.fillStyle = `rgba(${agent.hue},${glow})`;
-      ctx.arc(x, y, 3 + kCharge * 6, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillRect((x - sz * 0.5) | 0, (y - sz * 0.5) | 0, sz, sz);
 
-      ctx.beginPath();
       ctx.strokeStyle = `rgba(${agent.hue},${0.06 + kCharge * 0.12})`;
       ctx.lineWidth = 1;
-      ctx.arc(x, y, 12 + kCharge * 16, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.strokeRect((x - 6 - kCharge * 8) | 0, (y - 6 - kCharge * 8) | 0, (12 + kCharge * 16) | 0, (12 + kCharge * 16) | 0);
     }
   }
 
-  function drawTrails(dt) {
+  function drawTrails(dt, E) {
+    const { trails, ctx, state } = E;
     for (let i = trails.length - 1; i >= 0; i--) {
       const trail = trails[i];
       trail.life -= dt * 0.0008;
@@ -149,7 +140,8 @@
     }
   }
 
-  function drawMemories(dt) {
+  function drawMemories(dt, E) {
+    const { memories, ctx, internalW, internalH } = E;
     for (let i = memories.length - 1; i >= 0; i--) {
       const memory = memories[i];
       memory.life -= dt * 0.00018;
@@ -159,10 +151,9 @@
         continue;
       }
       const alpha = memory.life * (0.16 + Math.sin(memory.pulse) * 0.05);
-      ctx.beginPath();
+      const sz = (2 + memory.z * 3) | 0;
       ctx.fillStyle = `rgba(220,205,175,${alpha})`;
-      ctx.arc(memory.x, memory.y, 2 + memory.z * 3, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillRect((memory.x - sz * 0.5) | 0, (memory.y - sz * 0.5) | 0, sz, sz);
 
       for (let j = i - 1; j >= 0; j--) {
         const other = memories[j];
@@ -182,7 +173,8 @@
     }
   }
 
-  function drawWeather(dt) {
+  function drawWeather(dt, E) {
+    const { weather, ctx, state } = E;
     const storm = state.weather === "storm" || state.weather === "serpent";
     for (let i = weather.length - 1; i >= 0; i--) {
       const bit = weather[i];
@@ -196,33 +188,59 @@
         continue;
       }
       const color = storm ? "170,130,115" : "215,192,162";
-      ctx.beginPath();
-      ctx.fillStyle = `rgba(${color},${bit.life * (storm ? 0.20 : 0.09)})`;
-      ctx.arc(bit.x, bit.y, bit.radius, 0, Math.PI * 2);
-      ctx.fill();
+      const alpha = bit.life * (storm ? 0.20 : 0.09);
+      if (bit.kind === "streak") {
+        ctx.strokeStyle = `rgba(${color},${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(bit.x, bit.y);
+        ctx.lineTo(bit.x - bit.vx * 8, bit.y - bit.vy * 2);
+        ctx.stroke();
+      } else {
+        const sz = Math.max(1, (bit.radius * 2) | 0);
+        ctx.fillStyle = `rgba(${color},${alpha})`;
+        ctx.fillRect((bit.x - sz * 0.5) | 0, (bit.y - sz * 0.5) | 0, sz, sz);
+      }
     }
   }
 
   let previous = performance.now();
   function frame(now) {
+    const E = eco();
+    if (!E) {
+      requestAnimationFrame(frame);
+      return;
+    }
+    if (document.hidden) {
+      previous = now;
+      requestAnimationFrame(frame);
+      return;
+    }
     const dt = Math.min(48, now - previous);
     previous = now;
-    state.time = now;
-    state.activity += (((now - state.lastEventAt) < 3200 ? 0.72 : 0.16) - state.activity) * 0.012;
+    E.state.time = now;
+    E.state.activity += (((now - E.state.lastEventAt) < 3200 ? 0.72 : 0.16) - E.state.activity) * 0.012;
 
     const focusMode = document.body?.dataset.focusMode === "1";
-    const ecologyAlpha = focusMode ? 0.14 : (document.body?.dataset.longSilence === "1" ? 0.55 : 1.0);
-    canvas.style.opacity = String(ecologyAlpha);
-    ctx.clearRect(0, 0, state.width, state.height);
-    ctx.globalCompositeOperation = "lighter";
-    drawSemanticTerrain(dt);
-    drawWeather(dt);
-    drawMemories(dt);
-    drawTrails(dt);
-    drawAgentSpirits(dt);
+    const speaking = document.body?.dataset.mode === "speaking";
+    let ecologyAlpha = focusMode ? 0.14 : (document.body?.dataset.longSilence === "1" ? 0.55 : 1.0);
+    if (speaking) ecologyAlpha *= 0.32;
+    E.canvas.style.opacity = String(ecologyAlpha);
 
-    if (!reducedMotion && Math.random() < 0.025 + state.activity * 0.025) spawnWeatherBurst(1, 0.25 + state.activity * 0.5);
+    const { ctx, canvas } = E;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = "lighter";
+    drawSemanticTerrain(dt, E);
+    drawWeather(dt, E);
+    drawMemories(dt, E);
+    drawTrails(dt, E);
+    drawAgentSpirits(dt, E);
+
+    if (!E.reducedMotion && !speaking && Math.random() < 0.025 + E.state.activity * 0.025) {
+      E.spawnWeatherBurst(1, 0.25 + E.state.activity * 0.5);
+    }
     requestAnimationFrame(frame);
   }
 
+  requestAnimationFrame(frame);
 })();

@@ -130,6 +130,8 @@
     return "thinking";
   }
 
+  let lastBurstAt = 0;
+
   function ingestVisual(detail = {}) {
     const name = String(detail.name || detail.mode || "event");
     state.lastEventAt = performance.now();
@@ -218,8 +220,25 @@
   }
 
   function spawnWeatherBurst(count, force) {
+    const now = performance.now();
+    if (now - lastBurstAt < 200) return;
+    lastBurstAt = now;
+    const storm = state.weather === "storm" || state.weather === "serpent";
     const [cx, cy] = center();
     for (let i = 0; i < count && weather.length < MAX_WEATHER; i++) {
+      if (storm) {
+        weather.push({
+          x: rand(0, internalW),
+          y: rand(-0.12, 0.12) * internalH + cy,
+          vx: rand(2.2, 5.5) * force,
+          vy: rand(-0.15, 0.15),
+          life: rand(0.5, 1),
+          spin: 0,
+          radius: rand(1, 2),
+          kind: "streak"
+        });
+        continue;
+      }
       const a = rand(0, Math.PI * 2);
       const speed = rand(0.2, 2.8) * force;
       weather.push({
@@ -229,10 +248,23 @@
         vy: Math.sin(a) * speed,
         life: rand(0.4, 1),
         spin: rand(-0.04, 0.04),
-        radius: rand(1, 4 + force * 4)
+        radius: rand(1, 4 + force * 4),
+        kind: "square"
       });
     }
     while (weather.length > MAX_WEATHER) weather.shift();
+  }
+
+  function colorFor(name, detail) {
+    const conf = detail.confidence ?? state.confidence ?? 0.88;
+    const base = Math.round(210 + conf * 35);
+    const warm = Math.round(base * 0.90);
+    const cool = Math.round(base * 0.78);
+    if (/error|rollback|failed|failure/.test(name)) return `${Math.round(base * 0.62)},${warm},${cool}`;
+    if (/memory|retriev|context/.test(name)) return `${base},${warm},${Math.round(cool * 1.04)}`;
+    if (/tool|scan|sweep|audit/.test(name)) return `${Math.round(base * 0.88)},${warm},${cool}`;
+    if (/complete|success|done/.test(name)) return `${base},${base},${Math.round(base * 0.94)}`;
+    return `${base},${warm},${cool}`;
   }
 
   window.addEventListener("resize", resize, { passive: true });
@@ -264,7 +296,18 @@
     agents,
     memories,
     trails,
+    weather,
     terrainImpacts,
+    canvas,
+    ctx,
+    agentsPool,
+    reducedMotion,
+    get internalW() { return internalW; },
+    get internalH() { return internalH; },
+    center,
+    fieldNoise,
+    colorFor,
+    spawnWeatherBurst,
     event: (name, detail = {}) => ingestVisual({ ...detail, name }),
     memory: spawnMemory,
     terrain: spawnTerrainImpact,
@@ -273,5 +316,4 @@
 
   resize();
   for (let i = 0; i < 12; i++) spawnMemory({ provider: "seed" });
-  requestAnimationFrame(frame);
 })();

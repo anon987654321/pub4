@@ -47,6 +47,20 @@ window.addEventListener('master:visual', (ev) => {
   if (/memory|retriev|context/.test(name)) {
     State.ripplePhase = State.ripplePhase < 0 ? 0 : State.ripplePhase;
   }
+  const K = window.ParticleKernel;
+  if (mouthPool && K) {
+    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * K.FIELDS_PER_CELL;
+      if (/speaking|tts/.test(name)) mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.3) + 0.2);
+      if (d.expression?.arousal != null) mouthPool.cells[b + K.FIELD.arousal] = d.expression.arousal;
+    }
+  }
+  if (eyePool && K && /council:deliberation|council:start|error|veto/.test(name)) {
+    for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
+      const b = i * K.FIELDS_PER_CELL;
+      eyePool.cells[b + K.FIELD.confidence] = Math.max(0.25, (eyePool.cells[b + K.FIELD.confidence] || 0.9) - 0.18);
+    }
+  }
   if (!mouthPool || !eyePool) return;
 
   const ex = d.expression || {};
