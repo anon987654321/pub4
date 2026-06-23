@@ -4,6 +4,8 @@ This is the primary entry point for any LLM or autonomous agent. It provides a p
 
 Read this document first. Treat the deep YAML files (`data/soul.yml`, `rules.yml`, etc.) as reference material you consult when you need precision, not as mandatory pre-reading.
 
+For production friction (relayd, VPS shedding, Rails phantom FKs, seed drift): run `bin/playbook` or read `data/operator_playbook.yml` — lessons are codified from real operator sessions.
+
 ## The Big Picture (Mental Model)
 
 MASTER is a **constitutional self-improving coding agent**. Its core loop is:
