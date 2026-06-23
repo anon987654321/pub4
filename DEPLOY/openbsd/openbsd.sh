@@ -686,11 +686,7 @@ configure_relayd() {
     print -r -- "  listen on 0.0.0.0 port 443 tls"
     print -r -- "  protocol \"https_proxy\""
     for backend in ${(k)BACKEND_PORT}; do
-      if [[ $backend == master ]]; then
-        print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check http \"/\" code 200"
-      else
-        print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check http \"/up\" code 200"
-      fi
+      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check http \"/up\" code 200"
     done
     print -r -- "}"
   } > /etc/relayd.conf

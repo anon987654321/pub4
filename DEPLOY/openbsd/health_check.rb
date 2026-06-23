@@ -62,8 +62,8 @@ end
 
 if File.file?("/etc/relayd.conf")
   relayd_conf = File.read("/etc/relayd.conf")
-  unless relayd_conf.include?("forward to <master>") && relayd_conf.include?('check http "/" code 200')
-    failures << "relayd: master backend missing http / check"
+  unless relayd_conf.include?("forward to <master>") && relayd_conf.include?('check http "/up"')
+    failures << "relayd: master backend missing http /up check"
   end
 end
 
