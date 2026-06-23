@@ -142,10 +142,12 @@ dating_profiles = users.sample(35).map do |user|
     user: user,
     bio: Faker::Lorem.paragraph(sentence_count: 3),
     age: rand(22..45),
-    interests: Faker::Lorem.words(number: 5).join(", "),
+    gender: Dating::Profile::GENDERS.sample,
+    looking_for: Dating::Profile::LOOKING_FOR.sample,
     latitude: user.latitude,
     longitude: user.longitude,
-    neighborhood: ["Sentrum", "Nordnes", "Sandviken", "Kalfaret"].sample
+    bydel: %w[Sentrum Nordnes Sandviken Kalfaret].sample,
+    visible: true
   )
 end
 
@@ -184,23 +186,22 @@ tracks = 40.times.map do
   Playlist::Track.create!(
     title: Faker::Music.song_name,
     artist: Faker::Music.band,
-    duration_formatted: "#{rand(2..5)}:#{rand(10..59).to_s.rjust(2,'0')}"
+    duration_seconds: rand(120..300),
+    source_type: "upload"
   )
 end
 
 playlists.each do |pl|
   tracks.sample(rand(4..8)).each do |track|
-    pl.playlist_tracks.create!(track: track, user: users.sample)
+    pl.add_track!(track, user: users.sample)
   end
 end
 
-# Playlist sets
-sets = playlists.sample(8).map do |pl|
+sets = users.sample(8).map do |user|
   Playlist::Set.create!(
-    user: pl.user,
-    playlist: pl,
+    user: user,
     name: "Set #{Faker::Number.number(digits: 2)}",
-    privacy_level: %w[public private].sample
+    privacy: %w[public private unlisted].sample
   )
 end
 
@@ -256,7 +257,7 @@ restaurants.sample(10).each do |rest|
     restaurant: rest,
     order: order,
     rating: rand(3..5),
-    comment: Faker::Restaurant.review
+    body: Faker::Restaurant.review
   ) if order.status == "delivered"
 end
 
@@ -274,47 +275,25 @@ end
 puts "Takeaway: #{restaurants.size} restaurants, menu items, orders, reviews, drivers"
 
 # --- TV subapp ---
-channels = 8.times.map do
+channels = 8.times.map do |i|
   Tv::Channel.create!(
     user: users.sample,
     name: "#{Faker::Company.name} TV",
-    slug: Faker::Internet.slug,
+    slug: "seed-tv-#{i}-#{Faker::Internet.slug}",
     description: Faker::Lorem.sentence
   )
 end
 
-shows = channels.flat_map do |ch|
+videos = channels.flat_map do |ch|
   3.times.map do
-    Tv::Show.create!(
+    Tv::Video.create!(
+      user: ch.user,
       channel: ch,
       title: Faker::Movie.title,
-      description: Faker::Lorem.paragraph,
-      published: true
-    )
-  end
-end
-
-shows.each do |show|
-  rand(3..8).times do |n|
-    Tv::Episode.create!(
-      show: show,
-      title: "Episode #{n+1}: #{Faker::Lorem.words(number: 3).join(' ')}",
-      number: n + 1,
-      description: Faker::Lorem.sentence
-    )
-  end
-end
-
-# Videos and broadcasts
-videos = shows.flat_map do |show|
-  2.times.map do
-    Tv::Video.create!(
-      user: show.channel.user,
-      channel: show.channel,
-      title: "#{show.title} - Trailer",
       description: Faker::Lorem.sentence,
       status: "published",
-      duration_seconds: rand(60..300)
+      duration_seconds: rand(60..300),
+      published_at: rand(1..30).days.ago
     )
   end
 end
@@ -322,26 +301,31 @@ end
 channels.each do |ch|
   Tv::Broadcast.create!(
     channel: ch,
+    user: ch.user,
     title: "Live: #{Faker::Music.genre}",
-    scheduled_at: rand(1..14).days.from_now
+    status: "scheduled"
   )
 end
 
-puts "TV: #{channels.size} channels, #{shows.size} shows, episodes, videos, broadcasts"
+puts "TV: #{channels.size} channels, #{videos.size} videos, broadcasts"
 
 # --- Maps subapp ---
-places = 25.times.map do
-  Place.create!(
-    name: Faker::Company.name + " " + %w[Cafe Bar Shop Park].sample,
-    kind: %w[cafe bar shop park restaurant].sample,
-    address: Faker::Address.street_address,
-    latitude: 60.39 + rand(-0.06..0.06),
-    longitude: 5.33 + rand(-0.06..0.06),
-    description: Faker::Lorem.sentence
-  )
+places = []
+if ActiveRecord::Base.connection.table_exists?(:places)
+  city = City.first
+  places = 25.times.map do
+    Place.create!(
+      city: city,
+      name: "#{Faker::Company.name} #{ %w[Cafe Bar Shop Park].sample }",
+      kind: %w[cafe bar shop park restaurant].sample,
+      latitude: 60.39 + rand(-0.06..0.06),
+      longitude: 5.33 + rand(-0.06..0.06)
+    )
+  end
+  puts "Maps: #{places.size} places"
+else
+  puts "Maps: skipped (places table not migrated)"
 end
-
-puts "Maps: #{places.size} places"
 
 # --- Messages subapp ---
 users.sample(12).each do |u1|
@@ -361,19 +345,23 @@ end
 puts "Messages: conversations and messages seeded"
 
 # --- Final activity/notifications for feed ---
-users.sample(20).each do |u|
-  u.activity_events.create!(
-    action: "visited",
-    subject_type: "Place",
-    subject_id: places.sample.id,
-    created_at: rand(1..10).hours.ago
-  ) if u.respond_to?(:activity_events)
+if places.any?
+  users.sample(20).each do |u|
+    next unless u.respond_to?(:activity_events)
+    u.activity_events.create!(
+      action: "visited",
+      subject_type: "Place",
+      subject_id: places.sample.id,
+      created_at: rand(1..10).hours.ago
+    )
+  end
 end
 
 puts "\nBrgen + subapps fully seeded with fictive Faker data."
 puts "Users: #{User.count}, Posts: #{Post.count}, Marketplace listings: #{Marketplace::Listing.count}"
 puts "Dating profiles: #{Dating::Profile.count}, Takeaway restaurants: #{Takeaway::Restaurant.count}"
-puts "TV channels: #{Tv::Channel.count}, Places: #{Place.count}"
+place_count = ActiveRecord::Base.connection.table_exists?(:places) ? Place.count : 0
+puts "TV channels: #{Tv::Channel.count}, Places: #{place_count}"
 puts "Ready for demo / development."
 
 # Optional web-augmented fictive seeds using Ferrum + vision LLM (see lib/tasks/{reddit,x}.rake)
