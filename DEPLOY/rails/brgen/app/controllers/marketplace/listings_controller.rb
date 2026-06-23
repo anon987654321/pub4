@@ -4,6 +4,9 @@ class Marketplace::ListingsController < Marketplace::BaseController
   include Shared::LiveSearchable
   include Shared::TwoFactorAuth
 
+  rate_limit to: 20, within: 3.minutes, only: %i[create],
+    with: -> { redirect_to marketplace_listings_path, alert: "Try again later." }
+
   allow_unauthenticated_access only: %i[index show]
   before_action :set_listing, only: %i[show edit update destroy]
   before_action -> { require_two_factor!(Current.user) }, only: %i[new create], if: :authenticated?

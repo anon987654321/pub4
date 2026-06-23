@@ -1,4 +1,4 @@
-// Hotkey controller — vim-style j/k navigation, ? help, n new post etc.
+// Hotkey controller — vim-style j/k navigation, ? help, n new post
 // Micro-refinement for feeds, dating, lists (AN511 style). Low impact, no heavy listeners.
 import { Controller } from "@hotwired/stimulus"
 

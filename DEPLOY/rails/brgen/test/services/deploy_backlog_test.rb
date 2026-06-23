@@ -191,7 +191,8 @@ class DeployBacklogTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, "brgen/app/views/pwa/manifest.json.erb")), "web+brgen"
     assert_includes File.read(File.join(ROOT, "brgen/app/javascript/controllers/push_controller.js")), "navigator.setAppBadge"
     assert_includes File.read(File.join(ROOT, "brgen/app/javascript/controllers/push_controller.js")), "navigator.clearAppBadge"
-    assert_includes File.read(File.join(ROOT, "brgen/app/views/pwa/service-worker.js")), "navigator.setAppBadge"
+    assert_includes File.read(File.join(ROOT, "brgen/public/pwa/workbox-sw.js")), "navigator.setAppBadge"
+    assert_includes File.read(File.join(ROOT, "brgen/app/views/pwa/service-worker.js")), "importScripts"
     assert_includes File.read(File.join(ROOT, "brgen/app/views/layouts/application.html.erb")), 'data-push-unread-value='
     assert_includes File.read(File.join(ROOT, "amber/app/views/pwa/manifest.json.erb")), "Create outfit"
     assert_includes File.read(File.join(ROOT, "blognet/app/views/pwa/manifest.json.erb")), "New post"

@@ -26,7 +26,8 @@ class QueueFailureDigestJob < ApplicationJob
       ORDER BY failures DESC, last_failed_at DESC
     SQL
     connection.exec_query(sql).to_a.map { |row| row.transform_keys(&:to_sym) }
-  rescue StandardError
+  rescue StandardError => e
+    Ground::Swallow.log(e, context: "QueueFailureDigestJob.failed_execution_rows")
     []
   end
 

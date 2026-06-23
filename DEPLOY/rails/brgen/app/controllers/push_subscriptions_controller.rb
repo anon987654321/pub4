@@ -8,7 +8,8 @@ class PushSubscriptionsController < ApplicationController
       s.auth   = data.dig("keys", "auth")
     end
     head :created
-  rescue JSON::ParserError
+  rescue JSON::ParserError => e
+    Ground::Swallow.log(e, context: "PushSubscriptionsController.create")
     head :bad_request
   end
 

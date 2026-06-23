@@ -1,6 +1,6 @@
 <p id="typing-indicator">
   <% typers = conversation.typing_indicators.active.includes(:user).reject { |t| t.user_id == except_user&.id } %>
   <% if typers.any? %>
-    <%= typers.map { |t| t.user.username }.join(", ") %> typing...
+    <%= typers.map { |t| t.user.username }.join(", ") %> is typing
   <% end %>
 </p>

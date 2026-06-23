@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class PostsController < ApplicationController
+  rate_limit to: 30, within: 3.minutes, only: %i[create share],
+    with: -> { redirect_to posts_path, alert: "Try again later." }
+
   before_action :require_real_user, only: [:edit, :update, :destroy]
   before_action :require_real_user, only: [:share]
   before_action :set_post,          only: [:show, :edit, :update, :destroy]

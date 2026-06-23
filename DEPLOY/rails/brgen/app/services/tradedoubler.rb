@@ -24,7 +24,8 @@ module Tradedoubler
     res = Net::HTTP.get_response(uri)
     return [] unless res.is_a?(Net::HTTPSuccess)
     parse(JSON.parse(res.body))
-  rescue StandardError
+  rescue StandardError => e
+    Ground::Swallow.log(e, context: "Tradedoubler.fetch_deals")
     []
   end
 

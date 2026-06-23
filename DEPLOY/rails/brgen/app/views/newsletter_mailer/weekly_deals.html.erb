@@ -8,7 +8,7 @@
         <tr>
           <% if deal.image_url.present? %>
             <td width="80" style="padding:0;vertical-align:top">
-              <img src="<%= deal.image_url %>" width="80" height="80" style="display:block;object-fit:cover" alt="">
+              <img alt="<%= deal.title.presence || "Deal" %>" src="<%= deal.image_url %>" width="80" height="80" style="display:block;object-fit:cover">
             </td>
           <% end %>
           <td style="padding:12px;vertical-align:top">

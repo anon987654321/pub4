@@ -58,7 +58,8 @@ class Playlist::DillaSketchesController < Playlist::BaseController
       if p[:state].is_a?(String) && p[:state].present?
         begin
           p[:state] = JSON.parse(p[:state])
-        rescue JSON::ParserError
+        rescue JSON::ParserError => e
+          Ground::Swallow.log(e, context: "DillaSketchesController.dilla_sketch_params")
           p[:state] = {}
         end
       end

@@ -7,7 +7,7 @@ import { Controller } from "@hotwired/stimulus"
  * Usage on sentinel:
  *   <div data-controller="futurism-load-more"
  *        data-futurism-load-more-url-value="...next page url...">
- *     Loading more...
+ *     Loading next page
  *   </div>
  */
 export default class extends Controller {
@@ -71,7 +71,7 @@ export default class extends Controller {
       }
     } catch (error) {
       console.error("[futurism-load-more]", error)
-      this.element.textContent = "Failed to load more. Scroll to retry."
+      this.element.textContent = "Failed to load more. Scroll to load again."
       this.loading = false
     }
   }

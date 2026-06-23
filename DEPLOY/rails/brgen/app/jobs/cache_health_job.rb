@@ -21,7 +21,8 @@ class CacheHealthJob < ApplicationJob
     return Rails.cache.stats[:byte_size].to_i if Rails.cache.respond_to?(:stats) && Rails.cache.stats.respond_to?(:[])
 
     0
-  rescue StandardError
+  rescue StandardError => e
+    Ground::Swallow.log(e, context: "CacheHealthJob.cache_bytes_used")
     0
   end
 end
