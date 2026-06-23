@@ -587,7 +587,6 @@ const _origHaptic = enqueueSpeech;
 window.MASTERVoice && (window.MASTERVoice._hapticPatch = true);
 
 spinBtn?.addEventListener('click', () => window.MASTER_FACE?.ttsTogglePause?.());
-themeBtn?.addEventListener('click', () => toggleTheme());
 focusBtn?.addEventListener('click', () => toggleFocusMode());
 fontScaleInput?.addEventListener('input', () => applyUiScale(parseFloat(fontScaleInput.value)));
 

@@ -15,12 +15,6 @@
   --face-muted: color-mix(in srgb, var(--c-text) 35%, transparent);
   --face-dim: color-mix(in srgb, var(--c-text) 18%, transparent);
   --face-soft: color-mix(in srgb, var(--c-text) 8%, transparent);
-  --face-bg-light: oklch(96% 0.02 88);
-  --face-fg-light: oklch(12% 0 0);
-  --scanline-faint: color-mix(in srgb, var(--face-fg) 4%, transparent);
-  --scanline-thinking: color-mix(in srgb, var(--face-fg) 5.5%, transparent);
-  --vignette-edge: color-mix(in srgb, var(--face-bg) 52%, transparent);
-  --vignette-edge-light: color-mix(in srgb, var(--face-fg-light) 12%, transparent);
   --flash-chroma-r: color-mix(in srgb, var(--c-danger) 65%, transparent);
   --flash-chroma-b: color-mix(in srgb, var(--c-code) 62%, transparent);
   --shadow-pip: color-mix(in srgb, var(--face-bg) 45%, transparent);
@@ -58,15 +52,6 @@ body.font-mono {
   font-family: "JetBrains Mono","Cascadia Code","Fira Code",ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
 }
 
-body[data-theme="light"] {
-  --face-bg: #000;
-  --face-fg: var(--face-fg-light);
-  --face-muted: color-mix(in srgb, var(--face-fg-light) 44%, transparent);
-  --face-dim: color-mix(in srgb, var(--face-fg-light) 18%, transparent);
-  --face-soft: color-mix(in srgb, var(--face-fg-light) 8%, transparent);
-  color-scheme: light;
-}
-
 body[data-high-contrast="1"] {
   --face-fg: white;
   --face-muted: white;
@@ -76,8 +61,7 @@ body[data-high-contrast="1"] {
 body[data-high-contrast="1"] .msg-body { color: white; }
 body[data-high-contrast="1"] .enhance-text { color: white; }
 
-body[data-runtime-visible="false"] canvas { filter: brightness(0.45) contrast(0.85); }
-body[data-runtime-profile="battery"] canvas { filter: grayscale(0.35) brightness(0.72) contrast(0.95); }
+body[data-runtime-profile="battery"] canvas { filter: none; }
 html[data-topology-flash="1"] canvas { filter: contrast(1.05); transition: filter .09s steps(2,end); }
 body[data-runtime-profile="full"] canvas { filter: saturate(var(--mood-sat, 0.7)) brightness(1); }
 body[data-long-silence="1"] canvas { filter: brightness(0.76) contrast(0.9) saturate(0.55); }
@@ -88,14 +72,6 @@ body[data-face-flash="1"] canvas {
     drop-shadow(-1px 0 0 var(--flash-chroma-b))
     saturate(1.08)
     contrast(1.04);
-}
-
-body[data-theme="light"] canvas {
-  background: var(--face-bg);
-}
-
-body[data-theme="dark"] canvas {
-  background: var(--face-bg);
 }
 
 body[data-focus-mode="1"] .top-left-logo,
@@ -129,52 +105,9 @@ canvas {
   transition: filter var(--transition-fast) var(--ease-out);
 }
 
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    var(--scanline-faint) 0,
-    var(--scanline-faint) 1px,
-    transparent 1px,
-    transparent 2px
-  );
-  opacity: 1;
-  mix-blend-mode: soft-light;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  background: radial-gradient(ellipse 78% 72% at 50% 46%, transparent 42%, var(--vignette-edge) 100%);
-  opacity: 0.88;
-}
-
-body[data-theme="light"]::before {
-  background: radial-gradient(ellipse 78% 72% at 50% 46%, transparent 48%, var(--vignette-edge-light) 100%);
-  opacity: 0.65;
-}
-
 body[data-focus-mode="1"] #cognition-ecology {
   opacity: 0.12;
   transition: opacity 280ms var(--ease-out);
-}
-
-body[data-mode="thinking"]::after {
-  opacity: 1.18;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    var(--scanline-thinking) 0,
-    var(--scanline-thinking) 1px,
-    transparent 1px,
-    transparent 2px
-  );
 }
 
 body[data-face-pip="1"] canvas {
@@ -220,8 +153,6 @@ body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
   transition: height 90ms var(--ease-linear), opacity 90ms var(--ease-linear), transform 90ms var(--ease-linear);
 }
 
-body.face-loading::before, body.face-ready::before { display: none; }
-
 body[data-tts-loading="true"] .ui-status {
   opacity: .9;
   animation: ttsPulse 620ms steps(4,end) infinite;
@@ -252,13 +183,6 @@ body[data-tts-loading="true"] .ui-status {
   text-rendering: optimizeLegibility;
   transition: opacity 1.2s var(--ease-out);
 }
-body[data-theme="light"] .top-left-logo,
-body[data-theme="light"] .ui-status,
-body[data-theme="light"] .tool,
-body[data-theme="light"] #spin-btn {
-  color: var(--face-fg);
-}
-
 /* Mic indicator — top-right, visible only during STT */
 #mic-dot {
   position: fixed;
@@ -310,8 +234,7 @@ body[data-mode="listening"] #mic-dot {
   padding: 6px 8px;
   border: 1px solid color-mix(in srgb, var(--face-fg) 10%, transparent);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--face-bg) 78%, transparent);
-  backdrop-filter: blur(14px);
+  background: #000;
 }
 
 .model-badge {
@@ -322,7 +245,7 @@ body[data-mode="listening"] #mic-dot {
   padding: 5px 8px;
   border: 1px solid color-mix(in srgb, var(--face-fg) 10%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--face-bg) 78%, transparent);
+  background: #000;
   color: var(--face-muted);
   font: 9px/1 "JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
   letter-spacing: .14em;
@@ -351,7 +274,7 @@ body[data-mode="listening"] #mic-dot {
   padding: 5px 8px;
   border: 1px solid color-mix(in srgb, var(--face-fg) 10%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--face-bg) 78%, transparent);
+  background: #000;
   color: var(--face-muted);
   font: 9px/1 "JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
   letter-spacing: .14em;
@@ -443,7 +366,7 @@ body[data-mode="listening"] #mic-dot {
   display: grid;
   place-items: center;
   z-index: var(--z-modal);
-  background: black;
+  background: transparent;
   cursor: pointer;
   text-align: center;
   padding: 16px;
@@ -478,8 +401,7 @@ body[data-mode="listening"] #mic-dot {
   pointer-events: none;
   transform: translate(var(--x),var(--y)) translate(-50%,-50%) scale(.4);
   opacity: .7;
-  background: radial-gradient(circle,color-mix(in srgb, var(--face-fg) 30%, transparent) 0%,color-mix(in srgb, var(--face-fg) 12%, transparent) 40%,transparent 70%);
-  mix-blend-mode: screen;
+  background: color-mix(in srgb, var(--face-fg) 24%, transparent);
   animation: ripple 680ms var(--ease-out) forwards;
   z-index: 999;
 }
@@ -744,10 +666,6 @@ body:not(.face-ready) #zsh { opacity:.3; pointer-events:none; }
 /* #52 Violation flash */
 body[data-violation-flash="1"] canvas { filter: contrast(1.12) saturate(0.55); }
 
-/* #53 Primer pulse ring */
-#primer::before { content:''; position:absolute; inset:-20px; border:1px solid color-mix(in srgb, var(--face-fg) 12%, transparent); border-radius:50%; animation:primerRing 2.2s var(--ease-out) infinite; }
-@keyframes primerRing { 0%{transform:scale(.85);opacity:.5} 100%{transform:scale(1.35);opacity:0} }
-
 /* #54 Uncertain shimmer */
 body[data-uncertain="1"] #zsh-status { opacity: 1; animation: uncertainBlink 900ms steps(3,end) infinite; }
 @keyframes uncertainBlink { 0%,100%{opacity:.55} 50%{opacity:1} }
@@ -771,21 +689,6 @@ body[data-mood-cold="1"] canvas { filter: brightness(0.88) saturate(0.35); }
 body[data-tts-loading="true"] #zsh-status { animation:ttsShimmer 700ms steps(4,end) infinite; }
 @keyframes ttsShimmer { 0%,100%{opacity:.4} 50%{opacity:1} }
 
-/* #59 Primer attention cells */
-#primer::after {
-  content: '';
-  position: absolute;
-  inset: 18%;
-  background:
-    radial-gradient(circle at 20% 30%, color-mix(in srgb, var(--face-fg) 6%, transparent) 0 1px, transparent 1px),
-    radial-gradient(circle at 80% 70%, color-mix(in srgb, var(--face-fg) 5%, transparent) 0 1px, transparent 1px);
-  background-size: 24px 24px, 28px 28px;
-  opacity: .35;
-  pointer-events: none;
-  animation: primerCells 3.6s var(--ease-out) infinite;
-}
-@keyframes primerCells { 0%,100%{opacity:.22} 50%{opacity:.48} }
-
 /* #60 Network stall */
 body[data-network-stall="1"] #zsh-status { opacity: .85; color: var(--c-accent); }
 body[data-network-stall="1"] canvas { filter: brightness(0.94) saturate(0.82); }
@@ -801,9 +704,6 @@ body[data-mode="speaking"] .msg-body { line-height:1.62; transition:line-height 
 
 /* #66 Letter-spacing expand during thinking */
 body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; }
-
-/* #80 Safe-area gradient behind prompt bar */
-#zsh::after { content:''; position:absolute; inset-block-end:100%; inset-inline:0; height:32px; background:linear-gradient(to bottom,transparent,#000); pointer-events:none; }
 
 body[data-tts-loading="true"] canvas { filter:saturate(var(--mood-sat, 0.7)) brightness(1.04); }
 

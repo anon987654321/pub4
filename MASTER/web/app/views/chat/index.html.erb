@@ -37,7 +37,7 @@
   <style nonce="<%= content_security_policy_nonce %>">
     html, body { background: #000; color: #f5f0e8; }
     canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; }
-    #primer { background: #000; }
+    #primer { background: transparent; }
     #zsh { background: #000; }
   </style>
 </head>
@@ -59,7 +59,6 @@
   <div class="ui-status" id="ui-status" aria-live="polite" aria-atomic="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
   <div class="face-controls" aria-label="Face controls">
-    <button id="theme-btn" type="button" class="tool" aria-pressed="false" title="Toggle theme">◐</button>
     <button id="focus-btn" type="button" class="tool" aria-pressed="false" title="Toggle focus mode">◎</button>
     <label class="face-scale" for="font-scale" title="Adjust font size">
       <span aria-hidden="true">A</span>
@@ -72,7 +71,6 @@
         <option value="pernille">pernille</option>
         <option value="finn">finn</option>
         <option value="ryan">ryan</option>
-        <option value="davis">davis</option>
         <option value="wayne">wayne</option>
         <option value="ezinne">ezinne</option>
       </select>

@@ -294,7 +294,7 @@ function frame(t) {
     faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524 + (State.entropy || 0) * 0.002;
     const soulDensity = 0.82 + soulDrift * 0.35;
     const confExposure = 0.68 + (State.confidence || 1) * 0.42;
-    const baseExposure = (window.matchMedia('(prefers-color-scheme: light)').matches ? 0.6 : 1.0) * soulDensity * confExposure;
+    const baseExposure = soulDensity * confExposure;
     faceMat.uniforms.uExposure.value = baseExposure;
     const focusDim = rootBody.dataset.focusMode === '1' ? 0.88 : 1.0;
     faceMat.uniforms.uFocusDim.value += (focusDim - faceMat.uniforms.uFocusDim.value) * 0.06;

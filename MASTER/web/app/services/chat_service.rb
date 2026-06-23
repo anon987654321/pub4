@@ -5,11 +5,11 @@ require "open3"
 
 class ChatService
   COUNCIL_PERSONA_VOICE = {
-    "Architect" => :davis,
+    "Architect" => :osman,
     "Skeptic" => :wayne,
-    "Pragmatist" => :davis,
+    "Pragmatist" => :osman,
     "Security" => :wayne,
-    "User" => :davis,
+    "User" => :osman,
     "Mentor" => :ezinne
   }.freeze
 

@@ -179,13 +179,13 @@ const VOICE_ALIASES = {
   christopher: 'en-US-ChristopherNeural',
   eric: 'en-US-EricNeural',
   pernille: 'nb-NO-PernilleNeural',
-  davis: 'en-US-DavisNeural',
   wayne: 'en-SG-WayneNeural',
   ezinne: 'en-NG-EzinneNeural',
   jenny: 'en-US-JennyNeural'
 };
 function setVoiceName(voice, opts = {}) {
-  const raw = String(voice || '').trim();
+  let raw = String(voice || '').trim();
+  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'osman';
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
