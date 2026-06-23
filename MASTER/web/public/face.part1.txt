@@ -376,6 +376,7 @@ Object.defineProperty(State, 'mode', {
 function updateRuntimeProfile() {
   State.hidden = document.hidden;
   rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
+  rootBody.dataset.hiddenTab = State.hidden ? '1' : '';
   if (!State.profileOverride) {
     rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'full';
   }
@@ -397,7 +398,7 @@ matchMedia("(prefers-contrast: more)").addEventListener('change', event => {
 });
 document.addEventListener('visibilitychange', () => {
   updateRuntimeProfile();
-  if (!document.hidden && renderer) requestAnimationFrame(frame);
+  if (!document.hidden) ensureFrameLoop?.();
   if (!document.hidden && window.MASTER_FACE?.tts && !window.MASTER_FACE.tts.muted && window.MASTER_FACE.tts.queue && window.MASTER_FACE.tts.queue.length && !window.MASTER_FACE.tts.playing) window.MASTER_FACE.ttsTick?.();
   if (!document.hidden && window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume().catch(() => {});
 }, { passive: true });

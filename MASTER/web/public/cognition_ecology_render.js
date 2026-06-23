@@ -205,15 +205,23 @@
   }
 
   let previous = performance.now();
+  let ecologyFrameActive = false;
+  function ensureEcologyFrame() {
+    if (ecologyFrameActive || document.hidden) return;
+    ecologyFrameActive = true;
+    requestAnimationFrame(frame);
+  }
+
   function frame(now) {
     const E = eco();
     if (!E) {
-      requestAnimationFrame(frame);
+      if (!document.hidden) requestAnimationFrame(frame);
+      else ecologyFrameActive = false;
       return;
     }
     if (document.hidden) {
       previous = now;
-      requestAnimationFrame(frame);
+      ecologyFrameActive = false;
       return;
     }
     const dt = Math.min(48, now - previous);
@@ -239,8 +247,12 @@
     if (!E.reducedMotion && !speaking && Math.random() < 0.025 + E.state.activity * 0.025) {
       E.spawnWeatherBurst(1, 0.25 + E.state.activity * 0.5);
     }
-    requestAnimationFrame(frame);
+    if (!document.hidden) requestAnimationFrame(frame);
+    else ecologyFrameActive = false;
   }
 
-  requestAnimationFrame(frame);
+  ensureEcologyFrame();
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) ensureEcologyFrame();
+  }, { passive: true });
 })();

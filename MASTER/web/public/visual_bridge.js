@@ -132,22 +132,31 @@
     }
   }
 
-  function connectSse() {
-    if (!window.EventSource) return;
+  let eventSource = null;
 
-    const source = new EventSource("/events/stream");
-    source.onopen = () => {
+  function disconnectSse() {
+    if (!eventSource) return;
+    try { eventSource.close(); } catch (_error) {}
+    eventSource = null;
+    state.connected = false;
+  }
+
+  function connectSse() {
+    if (!window.EventSource || eventSource || document.hidden) return;
+
+    eventSource = new EventSource("/events/stream");
+    eventSource.onopen = () => {
       state.connected = true;
       emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.90, mode: "connected" });
     };
-    source.onmessage = (message) => {
+    eventSource.onmessage = (message) => {
       try {
         handleRuntimeEvent(JSON.parse(message.data));
       } catch (_error) {
         emitVisual("events:raw", { topology: "sphere", entropy: 0.24, confidence: 0.62, raw: message.data });
       }
     };
-    source.onerror = () => {
+    eventSource.onerror = () => {
       state.connected = false;
       state.confidence = Math.max(0.2, state.confidence - 0.1);
       emitVisual("events:disconnected", { topology: "serpent", entropy: 0.52, confidence: state.confidence, mode: "disconnected" });
@@ -233,6 +242,11 @@
     runtime: handleRuntimeEvent,
     classify
   };
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) disconnectSse();
+    else connectSse();
+  }, { passive: true });
 
   observeDomSignals();
   connectSse();

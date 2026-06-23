@@ -451,3 +451,125 @@ document.querySelectorAll('.tool').forEach(btn => {
     }
   });
 });
+
+(function wireCommandPalette() {
+  const COMMANDS = [
+    { cmd: '/run ', hint: 'natural-language task entry' },
+    { cmd: '/scan ', hint: 'deep-scan path' },
+    { cmd: '/fix ', hint: 'autofix target' },
+    { cmd: '/review ', hint: 'review changes' },
+    { cmd: '/why ', hint: 'explain rule or law' },
+    { cmd: '/help', hint: 'list commands' },
+    { cmd: '/status', hint: 'service and repo health' },
+    { cmd: '/self', hint: 'scan MASTER itself' },
+    { cmd: 'ping', hint: 'smoke test connection' },
+    { cmd: '/voice last osman', hint: 'replay last reply' },
+    { action: 'focus', label: 'toggle focus mode', hint: 'hide chrome, face only' },
+    { action: 'mute', label: 'toggle TTS mute', hint: 'keyboard: t' },
+    { action: 'preview', label: 'preview voice', hint: 'play voice blurb' }
+  ];
+
+  let root = document.getElementById('cmd-palette');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'cmd-palette';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-modal', 'true');
+    root.setAttribute('aria-label', 'Command palette');
+    root.innerHTML = '<div id="cmd-palette-panel"><input id="cmd-palette-input" type="search" autocomplete="off" spellcheck="false" placeholder="command or action" aria-label="Filter commands"><ul id="cmd-palette-list" role="listbox"></ul></div>';
+    document.body.appendChild(root);
+  }
+
+  const panelInput = document.getElementById('cmd-palette-input');
+  const list = document.getElementById('cmd-palette-list');
+  let activeIndex = 0;
+  let filtered = COMMANDS.slice();
+
+  function runEntry(entry) {
+    closePalette();
+    if (entry.action === 'focus') { window.MASTER_FACE?.toggleFocusMode?.(); return; }
+    if (entry.action === 'mute') { window.MASTERVoice?.toggleMute?.(); return; }
+    if (entry.action === 'preview') { window.MASTERVoice?.previewVoice?.(); return; }
+    const text = entry.cmd || '';
+    if (!text) return;
+    if (input) { input.value = text; input.focus(); }
+    if (text === 'ping' || text.startsWith('/')) window.sendMessage?.(text);
+  }
+
+  function renderList() {
+    if (!list) return;
+    list.innerHTML = '';
+    filtered.forEach((entry, index) => {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.dataset.active = index === activeIndex ? '1' : '0';
+      const label = entry.cmd || entry.label || '';
+      li.innerHTML = `${label}<span class="cmd-hint">${entry.hint || ''}</span>`;
+      li.addEventListener('mousedown', (ev) => { ev.preventDefault(); runEntry(entry); });
+      list.appendChild(li);
+    });
+  }
+
+  function filterItems(query) {
+    const q = query.trim().toLowerCase();
+    filtered = !q ? COMMANDS.slice() : COMMANDS.filter((entry) => {
+      const hay = `${entry.cmd || ''} ${entry.label || ''} ${entry.hint || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+    activeIndex = 0;
+    renderList();
+  }
+
+  function openPalette(seed = '') {
+    root.dataset.open = '1';
+    filterItems(seed);
+    panelInput.value = seed;
+    panelInput.focus();
+    panelInput.select();
+    window.MASTERVisual?.event?.('palette:open', { topology: 'neural', entropy: 0.12, confidence: 0.9, mode: 'palette' });
+  }
+
+  function closePalette() {
+    delete root.dataset.open;
+    if (panelInput) panelInput.value = '';
+    input?.focus();
+  }
+
+  panelInput?.addEventListener('input', () => filterItems(panelInput.value));
+  panelInput?.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') { ev.preventDefault(); closePalette(); return; }
+    if (ev.key === 'ArrowDown') {
+      ev.preventDefault();
+      activeIndex = Math.min(filtered.length - 1, activeIndex + 1);
+      renderList();
+      return;
+    }
+    if (ev.key === 'ArrowUp') {
+      ev.preventDefault();
+      activeIndex = Math.max(0, activeIndex - 1);
+      renderList();
+      return;
+    }
+    if (ev.key === 'Enter' && filtered[activeIndex]) {
+      ev.preventDefault();
+      runEntry(filtered[activeIndex]);
+    }
+  });
+
+  root.addEventListener('click', (ev) => { if (ev.target === root) closePalette(); });
+  document.addEventListener('keydown', (ev) => {
+    const mod = ev.metaKey || ev.ctrlKey;
+    if (mod && ev.key.toLowerCase() === 'k') {
+      ev.preventDefault();
+      if (root.dataset.open === '1') closePalette();
+      else openPalette();
+      return;
+    }
+    if (ev.key === '/' && document.activeElement === input && !input.value) {
+      ev.preventDefault();
+      openPalette('/');
+    }
+  });
+
+  window.MASTERCommandPalette = { open: openPalette, close: closePalette };
+})();

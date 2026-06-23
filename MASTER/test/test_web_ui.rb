@@ -170,6 +170,31 @@ class TestWebUI < Minitest::Test
 
     refute_includes source, "blur("
     assert_includes source, 'face.style.filter = ""'
+    assert_includes source, "disconnectSse"
+    assert_includes source, 'document.addEventListener("visibilitychange"'
+  end
+
+  def test_face_pauses_animation_loop_when_tab_hidden
+    source = face_runtime_source
+
+    assert_includes source, "ensureFrameLoop"
+    assert_includes source, "frameLoopActive = false"
+    assert_includes source, 'dataset.hiddenTab'
+  end
+
+  def test_command_palette_wired_in_chat_js
+    source = File.read(File.expand_path("../web/public/chat.js", __dir__))
+
+    assert_includes source, "wireCommandPalette"
+    assert_includes source, "MASTERCommandPalette"
+    assert_includes source, "cmd-palette"
+  end
+
+  def test_ecology_render_pauses_when_tab_hidden
+    source = File.read(File.expand_path("../web/public/cognition_ecology_render.js", __dir__))
+
+    assert_includes source, "ecologyFrameActive = false"
+    assert_includes source, "ensureEcologyFrame"
   end
 
   def test_models_enable_strict_loading_by_default

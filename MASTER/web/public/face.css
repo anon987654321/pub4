@@ -117,6 +117,76 @@ body[data-focus-mode="1"] #cognition-ecology {
   transition: opacity 280ms var(--ease-out);
 }
 
+body[data-runtime-visible="false"] canvas,
+body[data-hidden-tab="1"] canvas {
+  visibility: hidden;
+}
+
+body[data-runtime-visible="false"] #cognition-ecology,
+body[data-hidden-tab="1"] #cognition-ecology {
+  opacity: 0;
+  transition: opacity 280ms var(--ease-out);
+}
+
+#cmd-palette {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: none;
+  place-items: start center;
+  padding: calc(12vh + var(--safe-top)) 16px 16px;
+  background: color-mix(in srgb, var(--face-bg) 72%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+#cmd-palette[data-open="1"] { display: grid; }
+
+#cmd-palette-panel {
+  width: min(520px, 100%);
+  border: 1px solid color-mix(in srgb, var(--face-fg) 12%, transparent);
+  background: color-mix(in srgb, var(--face-bg) 94%, transparent);
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--face-bg) 55%, transparent);
+}
+
+#cmd-palette-input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--face-fg) 10%, transparent);
+  background: transparent;
+  color: var(--face-fg);
+  font: 14px/1.4 ui-monospace, monospace;
+  padding: 12px 14px;
+  outline: none;
+}
+
+#cmd-palette-list {
+  list-style: none;
+  max-height: 42vh;
+  overflow: auto;
+  margin: 0;
+  padding: 6px 0;
+}
+
+#cmd-palette-list li {
+  padding: 8px 14px;
+  font: 13px/1.35 ui-monospace, monospace;
+  color: color-mix(in srgb, var(--face-fg) 78%, transparent);
+  cursor: pointer;
+}
+
+#cmd-palette-list li[data-active="1"],
+#cmd-palette-list li:hover {
+  background: color-mix(in srgb, var(--face-fg) 8%, transparent);
+  color: var(--face-fg);
+}
+
+#cmd-palette-list .cmd-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--face-muted);
+  margin-top: 2px;
+}
+
 body[data-face-pip="1"] canvas {
   width: min(34vw, 320px);
   height: min(34vw, 320px);

@@ -1,3 +1,10 @@
+let frameLoopActive = false;
+function ensureFrameLoop() {
+  if (frameLoopActive || State.hidden || document.hidden) return;
+  frameLoopActive = true;
+  requestAnimationFrame(frame);
+}
+
 let _dbgFrames = 0;
 const showFps = new URLSearchParams(window.location.search).get('fps') === '1';
 const fpsBadge = showFps ? (() => {
@@ -45,6 +52,11 @@ function syncSemanticPools(dtSec) {
   }
 }
 function frame(t) {
+  if (State.hidden || document.hidden) {
+    frameLoopActive = false;
+    return;
+  }
+  frameLoopActive = true;
   _dbgFrames++;
   fpsSampleFrames++;
   if (t - fpsLastSample >= 500) {
@@ -63,12 +75,13 @@ function frame(t) {
   }
   if (!renderer) {
     lastT = t;
-    requestAnimationFrame(frame);
+    if (!State.hidden) requestAnimationFrame(frame);
+    else frameLoopActive = false;
     return;
   }
   if (State.hidden) {
     lastT = t;
-    requestAnimationFrame(frame);
+    frameLoopActive = false;
     return;
   }
 
@@ -367,7 +380,8 @@ function frame(t) {
   renderer.render(scene, camera);
   markFaceReady();
 
-  requestAnimationFrame(frame);
+  if (!State.hidden) requestAnimationFrame(frame);
+  else frameLoopActive = false;
 }
 
 let pressTimer = null, pressStart = 0;
