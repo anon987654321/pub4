@@ -2,16 +2,28 @@
 
 class FixMarketplaceOrderForeignKeys < ActiveRecord::Migration[8.1]
   def up
-    remove_foreign_key :marketplace_orders, :buyers if foreign_key_exists?(:marketplace_orders, :buyers)
-    remove_foreign_key :marketplace_orders, :listings if foreign_key_exists?(:marketplace_orders, :listings)
-    add_foreign_key :marketplace_orders, :users, column: :buyer_id unless foreign_key_exists?(:marketplace_orders, column: :buyer_id)
-    add_foreign_key :marketplace_orders, :marketplace_listings, column: :listing_id unless foreign_key_exists?(:marketplace_orders, column: :listing_id)
+    return unless table_exists?(:marketplace_orders)
+
+    execute "PRAGMA foreign_keys = OFF"
+    rename_table :marketplace_orders, :marketplace_orders_legacy
+    create_table :marketplace_orders do |t|
+      t.references :buyer, null: false, foreign_key: { to_table: :users }
+      t.references :listing, null: false, foreign_key: { to_table: :marketplace_listings }
+      t.string :status
+      t.text :message
+      t.integer :price_cents
+      t.timestamps
+    end
+    execute <<~SQL.squish
+      INSERT INTO marketplace_orders (id, buyer_id, listing_id, status, message, price_cents, created_at, updated_at)
+      SELECT id, buyer_id, listing_id, status, message, price_cents, created_at, updated_at
+      FROM marketplace_orders_legacy
+    SQL
+    drop_table :marketplace_orders_legacy
+    execute "PRAGMA foreign_keys = ON"
   end
 
   def down
-    remove_foreign_key :marketplace_orders, :users, column: :buyer_id if foreign_key_exists?(:marketplace_orders, column: :buyer_id)
-    remove_foreign_key :marketplace_orders, :marketplace_listings, column: :listing_id if foreign_key_exists?(:marketplace_orders, column: :listing_id)
-    add_foreign_key :marketplace_orders, :buyers, column: :buyer_id
-    add_foreign_key :marketplace_orders, :listings, column: :listing_id
+    raise ActiveRecord::IrreversibleMigration
   end
 end
