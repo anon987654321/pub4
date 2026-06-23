@@ -21,12 +21,14 @@ class Playlist::Track < ApplicationRecord
   validates :title, presence: true
   validates :artist, presence: true, allow_blank: true
   validates :source_type, inclusion: { in: SOURCE_TYPES }, allow_nil: true
-  validates :privacy, inclusion: { in: PRIVACY_LEVELS }, allow_blank: true
+  validates :privacy, inclusion: { in: PRIVACY_LEVELS }, allow_blank: true, if: :privacy_column?
 
   before_validation :default_audio_hosting_fields
 
-  scope :publicly_visible, -> { where(privacy: "public") }
-  scope :unexpired, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
+  scope :publicly_visible, -> { privacy_column? ? where(privacy: "public") : all }
+  scope :unexpired, -> {
+    column_names.include?("expires_at") ? where("expires_at IS NULL OR expires_at > ?", Time.current) : all
+  }
   scope :recent, -> { order(created_at: :desc) }
 
   def duration_formatted
@@ -45,13 +47,17 @@ class Playlist::Track < ApplicationRecord
   end
 
   def expired?
-    expires_at.present? && expires_at <= Time.current
+    has_attribute?(:expires_at) && expires_at.present? && expires_at <= Time.current
   end
+
+  def self.privacy_column? = column_names.include?("privacy")
 
   private
 
+  def privacy_column? = self.class.privacy_column?
+
   def default_audio_hosting_fields
     self.source_type = "upload" if source_type.blank?
-    self.privacy = "private" if has_attribute?(:privacy) && privacy.blank?
+    self.privacy = "private" if privacy_column? && privacy.blank?
   end
 end
