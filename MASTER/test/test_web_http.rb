@@ -9,7 +9,7 @@ require "json"
 require "socket"
 require "minitest/autorun"
 
-WEB_PORT = 10002
+WEB_PORT = Integer(ENV.fetch("MASTER_WEB_PORT", "53187"))
 
 SKIP_HTTP = begin
   TCPSocket.new("127.0.0.1", WEB_PORT).close
@@ -35,10 +35,13 @@ class TestWebHTTP < Minitest::Test
     assert_equal "200", res.code, "homepage should return 200"
   end
 
-  def test_02_homepage_contains_overlay
+  def test_02_homepage_contains_face_runtime
     skip_unless_server
     res = get("/")
-    assert_includes res.body, "overlay", "homepage should contain overlay element"
+    body = res.body
+    assert_includes body, 'id="face"', "homepage should contain face canvas"
+    assert_includes body, "three.face.module", "homepage should load face runtime assets"
+    refute_includes body, "davis", "davis voice should not be in picker"
   end
 
   def test_03_homepage_js_no_stray_paren
@@ -64,8 +67,7 @@ class TestWebHTTP < Minitest::Test
   def test_05_message_endpoint_streams_sse
     skip_unless_server
     Net::HTTP.start("127.0.0.1", WEB_PORT, read_timeout: 15) do |http|
-      req = Net::HTTP::Post.new("/chat/message")
-      req.set_form_data("message" => "ping")
+      req = Net::HTTP::Get.new("/chat/message?message=ping")
       data = ""
       http.request(req) do |res|
         assert_equal "200", res.code, "message endpoint should return 200"

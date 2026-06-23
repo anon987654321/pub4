@@ -151,7 +151,7 @@ function frame(t) {
     rootBody.style.setProperty('--mood-shadow', `rgba(${r},${g},${b},0.12)`);
     rootBody.style.setProperty('--mood-mid', `rgba(${r},${g},${b},0.45)`);
     rootBody.style.setProperty('--mood-hi', `rgba(${r},${g},${b},0.88)`);
-    const moodSat = State.mood === 'weary' ? 0.15 : (State.mood === 'tense' ? 1.0 : 0.7);
+    const moodSat = State.mood === 'weary' ? 0.5 : 1.0;
     rootBody.style.setProperty('--mood-sat', moodSat.toFixed(2));
     if (State.mode === 'error' && !rootBody.dataset.moodCold) {
       rootBody.dataset.moodCold = '1';

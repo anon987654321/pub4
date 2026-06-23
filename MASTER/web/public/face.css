@@ -63,8 +63,8 @@ body[data-high-contrast="1"] .enhance-text { color: white; }
 
 body[data-runtime-profile="battery"] canvas { filter: none; }
 html[data-topology-flash="1"] canvas { filter: contrast(1.05); transition: filter .09s steps(2,end); }
-body[data-runtime-profile="full"] canvas { filter: saturate(var(--mood-sat, 0.7)) brightness(1); }
-body[data-long-silence="1"] canvas { filter: brightness(0.76) contrast(0.9) saturate(0.55); }
+body[data-runtime-profile="full"] canvas { filter: none; }
+body[data-long-silence="1"] canvas { filter: none; }
 body[data-laughter="1"] canvas { filter: contrast(1.08) saturate(1.06); }
 body[data-face-flash="1"] canvas {
   filter:
@@ -96,6 +96,7 @@ canvas#face {
 canvas {
   position: fixed;
   inset: 0;
+  z-index: 0;
   display: block;
   width: 100dvw;
   height: 100dvh;
@@ -176,7 +177,7 @@ body[data-tts-loading="true"] .ui-status {
   z-index: var(--z-ui);
   font: 700 clamp(15px,3.8vw,24px)/1 "Inter",Helvetica,sans-serif;
   letter-spacing: -.03em;
-  color: white;
+  color: var(--c-text);
   opacity: 1;
   pointer-events: none;
   user-select: none;
@@ -365,7 +366,7 @@ body[data-mode="listening"] #mic-dot {
   inset: 0;
   display: grid;
   place-items: center;
-  z-index: var(--z-modal);
+  z-index: 5;
   background: transparent;
   cursor: pointer;
   text-align: center;
@@ -377,7 +378,7 @@ body[data-mode="listening"] #mic-dot {
 
 #primer:focus-visible { outline: 1px solid var(--face-fg); outline-offset: -8px; }
 
-[id="face"]:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+[id="face"]:focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
 
 #primer h1 {
   margin: 0;
@@ -547,7 +548,7 @@ html[data-input-dense="1"] #zsh { border-top: 1.5px solid color-mix(in srgb, var
   bottom: calc(var(--face-bar-height) + var(--safe-bottom) + 22px);
   z-index: 12;
   background: transparent;
-  color: white;
+  color: var(--face-fg);
   font: 10px/1.25 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
   padding: 1px 6px;
   text-align: center;
@@ -679,11 +680,11 @@ body[data-uncertain="1"] #zsh-status { opacity: 1; animation: uncertainBlink 900
 #primer .hint { display: none; }
 
 /* #56 Sleeping dim */
-body[data-sleeping="1"] canvas { filter: brightness(0.62) saturate(0.45); }
+body[data-sleeping="1"] canvas { filter: brightness(0.85); }
 body[data-sleeping="1"] #zsh { opacity: .18; }
 
 /* #57 Mood cold */
-body[data-mood-cold="1"] canvas { filter: brightness(0.88) saturate(0.35); }
+body[data-mood-cold="1"] canvas { filter: none; }
 
 /* #58 TTS loading shimmer */
 body[data-tts-loading="true"] #zsh-status { animation:ttsShimmer 700ms steps(4,end) infinite; }
@@ -691,7 +692,7 @@ body[data-tts-loading="true"] #zsh-status { animation:ttsShimmer 700ms steps(4,e
 
 /* #60 Network stall */
 body[data-network-stall="1"] #zsh-status { opacity: .85; color: var(--c-accent); }
-body[data-network-stall="1"] canvas { filter: brightness(0.94) saturate(0.82); }
+body[data-network-stall="1"] canvas { filter: none; }
 
 /* #61 Council persona badge */
 body[data-council-persona]::after { content:attr(data-council-persona); position:fixed; top:calc(10px + var(--safe-top)); right:calc(10px + var(--safe-right)); font:9px/1.4 ui-monospace,monospace; text-transform:uppercase; letter-spacing:.14em; color:var(--face-muted); opacity:.6; z-index:var(--z-ui); pointer-events:none; }
@@ -705,7 +706,7 @@ body[data-mode="speaking"] .msg-body { line-height:1.62; transition:line-height 
 /* #66 Letter-spacing expand during thinking */
 body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; }
 
-body[data-tts-loading="true"] canvas { filter:saturate(var(--mood-sat, 0.7)) brightness(1.04); }
+body[data-tts-loading="true"] canvas { filter: none; }
 
 /* FA75 copy button */
 .message.assistant .msg-copy { position:absolute; top:4px; right:6px; background:none; border:none; color:var(--face-dim); cursor:pointer; font:9px ui-monospace,monospace; opacity:0; transition:opacity .15s; padding:2px 4px; }
