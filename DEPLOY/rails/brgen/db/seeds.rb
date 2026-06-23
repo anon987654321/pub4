@@ -173,8 +173,8 @@ end
 
 tracks = 40.times.map do
   Playlist::Track.create!(
-    title: Faker::Music.song_name,
-    artist: Faker::Music.band,
+    title: "#{Faker::Music.genre} #{Faker::Lorem.words(number: 2).join(' ')}",
+    artist: Faker::Music::RockBand.name,
     duration_seconds: rand(120..300),
     source_type: "upload"
   )
