@@ -14,7 +14,7 @@ require "timeout"
 require "net/http"
 require "uri"
 
-PIPE_TIMEOUT_SECONDS = 30
+PIPE_TIMEOUT_SECONDS = Integer(ENV.fetch("MASTER_SMOKE_PIPE_TIMEOUT", ENV["MASTER_LOW_RESOURCE"] ? "90" : "30"))
 
 def step(name)
   print "smoke: #{name.ljust(28)} "
