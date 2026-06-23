@@ -318,8 +318,7 @@ end
 users.sample(12).each do |u1|
   u2 = users.sample
   next if u1 == u2
-  conv = Conversation.create!
-  [u1, u2].each { |u| conv.conversation_participants.create!(user: u) }
+  conv = Conversation.find_or_create_direct(u1, u2)
   3.times do
     Message.create!(
       conversation: conv,
