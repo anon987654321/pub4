@@ -25,6 +25,7 @@
   <script nonce="<%= content_security_policy_nonce %>">
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
     window.MASTER_PERSONA = <%= raw((persona.respond_to?(:browser_profile) ? persona.browser_profile : {}).to_json) %>;
+    window.MASTER_SOUL_SUMMARY = "persona malay; voice ms-MY-OsmanNeural; constitutional face";
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,6 +58,27 @@
   </main>
   <div class="ui-status" id="ui-status" aria-live="polite" aria-atomic="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+  <div class="face-controls" aria-label="Face controls">
+    <button id="theme-btn" type="button" class="tool" aria-pressed="false" title="Toggle theme">◐</button>
+    <button id="focus-btn" type="button" class="tool" aria-pressed="false" title="Toggle focus mode">◎</button>
+    <label class="face-scale" for="font-scale" title="Adjust font size">
+      <span aria-hidden="true">A</span>
+      <input id="font-scale" type="range" min="0.85" max="1.4" step="0.05" value="1">
+    </label>
+    <label class="voice-picker" for="voice-picker" title="Select voice">
+      <span aria-hidden="true">◉</span>
+      <select id="voice-picker" aria-label="Voice selection">
+        <option value="osman" selected>osman</option>
+        <option value="pernille">pernille</option>
+        <option value="finn">finn</option>
+        <option value="ryan">ryan</option>
+        <option value="davis">davis</option>
+        <option value="wayne">wayne</option>
+        <option value="ezinne">ezinne</option>
+      </select>
+    </label>
+    <button id="voice-preview-btn" type="button" class="tool" aria-label="Preview selected voice" title="Preview selected voice">▶</button>
+  </div>
   <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
     <span class="pp">master</span><span class="sep2">* </span>
     <button type="button" class="tool" data-cmd="/photograph " aria-label="Photo">photo</button>
@@ -72,11 +94,14 @@
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v1").to_json.html_safe %>;
     (function(){
-      var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false,timer=null;
+      var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false,timer=null,fallback=null;
       function boot(){if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){window.MASTER_FACE.startEverything();return true;}return false;}
+      function fallbackUi(){if(p&&p.parentNode)p.parentNode.removeChild(p);if(z)z.classList.add('live');}
       function go(){
         if(fired)return;fired=true;window._primerFired=true;
-        if(!boot()){timer=setInterval(function(){if(boot())clearInterval(timer);},40);setTimeout(function(){clearInterval(timer);},8000);if(p&&p.parentNode)p.parentNode.removeChild(p);if(z)z.classList.add('live');}
+        if(boot())return;
+        timer=setInterval(function(){if(boot()){clearInterval(timer);timer=null;clearTimeout(fallback);}},40);
+        fallback=setTimeout(function(){clearInterval(timer);fallbackUi();},8000);
       }
       if(p){p.addEventListener('pointerdown',go,{passive:true});p.addEventListener('touchstart',go,{passive:true});p.addEventListener('click',go);p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter')go();});}
       addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' '||e.key==='OK'))go();},{once:false});

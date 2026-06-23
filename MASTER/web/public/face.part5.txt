@@ -195,11 +195,8 @@ async function sendMessage(text) {
   if (pitchMatch) { tts.pitchOffset = Math.max(-20, Math.min(20, parseFloat(pitchMatch[1]))); if (uiStatus) uiStatus.textContent = `pitch ${tts.pitchOffset >= 0 ? '+' : ''}${tts.pitchOffset}Hz`; return; }
   const voiceMatch = trimmed.match(/^\/voice\s+(\S+)$/i);
   if (voiceMatch) {
-    const voice = guardVoice(voiceMatch[1]);
-    if (voice) {
-      setVoiceName(voice);
-      if (uiStatus) uiStatus.textContent = `voice ${voice}`;
-    }
+    setVoiceName(voiceMatch[1]);
+    if (uiStatus) uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}`;
     return;
   }
   if (/^\/whoami$/i.test(trimmed)) {
@@ -416,16 +413,20 @@ async function acquireWakeLock() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
 }
 
-function guardVoice(v) {
-  const voice = String(v || '').trim();
-  if (!voice) return undefined;
-  if ((voice === "pernille" || voice === "finn" || voice.startsWith("nb-")) && tts.lang !== "nb") return undefined;
-  if ((voice === "osman" || voice.startsWith("ms-")) && tts.lang !== "ms") return undefined;
+function guardVoice(v, opts = {}) {
+  const raw = String(v || '').trim();
+  if (!raw) return undefined;
+  const voice = VOICE_ALIASES[raw.toLowerCase()] || raw;
+  if (opts.explicit) return voice;
+  const personaVoice = window.MASTER_PERSONA?.voice || TTS_DEFAULT_VOICE;
+  const selected = State.voiceName || personaVoice;
+  if (voice === personaVoice || voice === selected) return voice;
+  if ((raw === "pernille" || raw === "finn" || voice.startsWith("nb-")) && tts.lang !== "nb") return undefined;
   return voice;
 }
 
 function previewVoice(voice) {
-  const chosen = guardVoice(voice) || guardVoice(State.voiceName) || TTS_DEFAULT_VOICE;
+  const chosen = guardVoice(voice || State.voiceName, { explicit: true }) || TTS_DEFAULT_VOICE;
   if (!chosen) return;
   window.MASTER_FACE?.initAudio?.();
   playDuo([[chosen, "Let's work now."]]);

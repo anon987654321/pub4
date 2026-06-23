@@ -403,7 +403,7 @@ function ttsTick() {
   if (tts.serverUnavailable && speakWithBrowserTTS(text, token)) return;
   if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
   const meta = tts.meta.get(text) || {};
-  const voice = tts.lang === 'nb' ? 'finn' : meta.voice;
+  const voice = meta.voice || _activeTtsVoice();
   const style = meta.style;
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice, style);
   tts.prefetch.delete(text);
