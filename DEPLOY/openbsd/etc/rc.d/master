@@ -24,8 +24,13 @@ rc=$?
 if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 	if [ "$rc" = "0" ]; then
 		ruby34 -ryaml -e 'c=YAML.load_file("/home/dev/pub4/MASTER/.master/config.yml") rescue {}; u=c["web_public_url"]||"http://127.0.0.1:#{c["web_port"]||53187}"; t=c["web_token"]; puts t ? "web: #{u}/?token=#{t}" : "web: #{u}"' 2>/dev/null
-		# relayd marks master empty until its 120s health interval; restart picks up backend immediately.
-		sleep 2
+		# Wait for Falcon /up, then restart relayd so HTTPS does not stay empty after rcctl restart master.
+		_i=0
+		while [ "$_i" -lt 30 ]; do
+			curl -fsS "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && break
+			sleep 1
+			_i=$((_i + 1))
+		done
 		rcctl restart relayd 2>/dev/null || true
 	fi
 fi
