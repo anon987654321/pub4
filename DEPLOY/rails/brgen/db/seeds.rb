@@ -252,7 +252,7 @@ end
 5.times do
   Takeaway::DeliveryDriver.create!(
     user: users.sample,
-    vehicle_type: %w[bike car scooter].sample,
+    vehicle_type: Takeaway::DeliveryDriver::VEHICLE_TYPES.sample,
     available: [true, false].sample,
     current_lat: 60.39 + rand(-0.03..0.03),
     current_lng: 5.33 + rand(-0.03..0.03)
