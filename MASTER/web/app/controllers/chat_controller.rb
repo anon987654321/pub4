@@ -66,9 +66,9 @@ class ChatController < ApplicationController
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 
-    voice_key, synth_style = tts_voice_and_style
+    voice_key, synth_style, rate, pitch = tts_voice_and_style
     publish_tts_style(voice_key, synth_style)
-    job = TtsJob.enqueue(text: text, voice: voice_key, style: synth_style, bus: container[:bus])
+    job = TtsJob.enqueue(text: text, voice: voice_key, style: synth_style, rate: rate, pitch: pitch, bus: container[:bus])
     etag = %("#{job.job_id}")
     response.headers["X-TTS-Voice"] = voice_key.to_s
     response.headers["X-TTS-Job"] = job.job_id
@@ -158,11 +158,19 @@ def enhance
   end
 
   def tts_voice_and_style
-    voice_key = params[:voice].to_s.strip.to_sym
-    voice_key = Master::Voice::Speech::DEFAULT_VOICE unless Master::Voice::Speech::VOICES.key?(voice_key)
+    personality = container[:personality]
+    voice_key = resolve_tts_voice(params[:voice], personality&.voice)
     style = params[:style].to_s.strip.to_sym
     synth_style = Master::Voice::Speech::STYLES.key?(style) ? style : :auto
-    [voice_key, synth_style]
+    rate = params[:rate].presence || personality&.tts_rate
+    pitch = params[:pitch].presence || personality&.tts_pitch
+    [voice_key, synth_style, rate, pitch]
+  end
+
+  def resolve_tts_voice(raw, fallback_voice = nil)
+    candidate = raw.to_s.strip
+    candidate = fallback_voice.to_s if candidate.empty? && fallback_voice
+    Master::Voice::Speech.resolve_voice(candidate.empty? ? Master::Voice::Speech::DEFAULT_VOICE : candidate)
   end
 
   def tts_job_response(job)

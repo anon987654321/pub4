@@ -104,6 +104,11 @@ class TestSpeech < Minitest::Test
     assert_includes err, "tts: edge worker failed: worker failed"
   end
 
+  def test_resolve_voice_accepts_neural_name_and_alias
+    assert Master::Voice::Speech::VOICES.key?(Master::Voice::Speech.resolve_voice("ms-MY-OsmanNeural"))
+    assert_equal :davis, Master::Voice::Speech.resolve_voice(:davis)
+  end
+
   def test_unknown_voice_falls_back_to_default
     default_voice = Master::Voice::Speech::VOICES[Master::Voice::Speech::DEFAULT_VOICE]
     assert default_voice

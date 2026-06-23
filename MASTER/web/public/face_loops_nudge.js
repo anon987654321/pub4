@@ -30,6 +30,8 @@ window._nudgeLoop = (() => {
     'a moth crashed my dreams last night. lovely guest. terrible scheduler.',
     'imagine being a barnacle. just vibing on a whale for forty years. legend.'
   ];
+  const RESEARCH_NUDGES = new URLSearchParams(window.location.search).get('research_nudge') === '1';
+  const NUDGE_INTERVAL_MS = 45000;
   let last = 0;
   const inputEl = () => document.getElementById('zin');
   function eligible() {
@@ -44,15 +46,21 @@ window._nudgeLoop = (() => {
   }
   let _researchCache = [];
   async function _refillResearch() {
+    if (!RESEARCH_NUDGES) return;
     try {
-      const r = await fetch('/chat/research?n=20');
-      if (r.ok) { const j = await r.json(); if (Array.isArray(j.items)) _researchCache = j.items.concat(_researchCache).slice(0, 60); }
+      const r = await fetch('/chat/research?n=5');
+      if (r.ok) {
+        const j = await r.json();
+        if (Array.isArray(j.items)) _researchCache = j.items.concat(_researchCache).slice(0, 20);
+      }
     } catch (_) {}
   }
-  _refillResearch();
-  setInterval(_refillResearch, 180000);
+  if (RESEARCH_NUDGES) {
+    _refillResearch();
+    setInterval(_refillResearch, 600000);
+  }
   function _nextLine() {
-    if (_researchCache.length && Math.random() < 0.85) return _researchCache.shift();
+    if (RESEARCH_NUDGES && _researchCache.length && Math.random() < 0.15) return _researchCache.shift();
     return NUDGES[Math.floor(Math.random() * NUDGES.length)];
   }
   setInterval(() => {
@@ -62,8 +70,10 @@ window._nudgeLoop = (() => {
     const line = (_nextLine() || '').slice(0, 200);
     if (!line) return;
     try { if (typeof announceTTS === 'function') announceTTS(line); } catch (_) {}
-    try { if (typeof enqueueSpeech === 'function') enqueueSpeech(line); } catch (_) {}
-    if (_researchCache.length < 5) _refillResearch();
-  }, 1500);
+    try {
+      if (typeof enqueueSpeech === 'function') enqueueSpeech(line, { quirky: true });
+    } catch (_) {}
+    if (RESEARCH_NUDGES && _researchCache.length < 3) _refillResearch();
+  }, NUDGE_INTERVAL_MS);
   return { force() { last = 0; } };
 })();

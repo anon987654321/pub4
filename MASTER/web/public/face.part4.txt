@@ -43,14 +43,19 @@ const VISEME_STEP_MS = 90;
 const tts = { queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
-const TTS_DEFAULT_VOICE = 'davis';
-const TTS_VOICE_ROTATION = ['davis', 'wayne', 'ezinne'];
-const TTS_MALE_STYLES = ['dramatic', 'intense', 'energetic', 'storyteller', 'intimate', 'calm'];
-const TTS_FEMALE_STYLES = ['dramatic', 'robotic', 'storyteller', 'dramatic', 'intimate', 'whispered'];
-let _ttsVoiceRot = 0;
-function _nextTtsVoice() { return TTS_VOICE_ROTATION[_ttsVoiceRot++ % TTS_VOICE_ROTATION.length]; }
-function _nextTtsStyle(voice) { const pool = voice === 'ezinne' ? TTS_FEMALE_STYLES : TTS_MALE_STYLES; return pool[(Math.random() * pool.length) | 0]; }
-function _quirkifyTts(text, voice) {
+const TTS_DEFAULT_VOICE = 'ms-MY-OsmanNeural';
+function _activeTtsVoice() {
+  const persona = window.MASTER_PERSONA || {};
+  return State.voiceName || persona.voice || TTS_DEFAULT_VOICE;
+}
+function _nextTtsVoice() { return _activeTtsVoice(); }
+function _nextTtsStyle(_voice) {
+  const persona = window.MASTER_PERSONA || {};
+  const style = String(persona.style || 'auto').trim();
+  return style && style !== 'auto' ? style : 'calm';
+}
+function _quirkifyTts(text, voice, opts = {}) {
+  if (!opts.quirky) return text;
   if (text.length < 12) return text;
   const r = Math.random;
   if (voice === 'ezinne' && r() < 0.55) {
@@ -143,15 +148,18 @@ function announceTTS(text) {
 
 function ttsURL(text, voice, style) {
   const qs = new URLSearchParams({ text });
+  const persona = window.MASTER_PERSONA || {};
   if (voice) qs.set('voice', voice);
   if (style) qs.set('style', style);
-  if (tts.pitchOffset) qs.set('pitch', String(tts.pitchOffset));
+  if (persona.tts_rate) qs.set('rate', String(persona.tts_rate));
+  if (persona.tts_pitch) qs.set('pitch', String(persona.tts_pitch));
   return `/chat/tts?${qs.toString()}`;
 }
 
 async function ttsCacheKey(text, voice) {
   if (!window.crypto || !crypto.subtle || !window.TextEncoder) return null;
-  const material = `${voice || TTS_DEFAULT_VOICE}|${arguments[2] || 'auto'}|${text}`;
+  const persona = window.MASTER_PERSONA || {};
+  const material = `${voice || TTS_DEFAULT_VOICE}|${arguments[2] || 'auto'}|${persona.tts_rate || ''}|${persona.tts_pitch || ''}|${text}`;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(material));
   return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
@@ -314,7 +322,7 @@ function fetchTTS(text) {
   tts.prefetch.set(text, p);
 }
 
-function enqueueSpeech(text) {
+function enqueueSpeech(text, opts = {}) {
   if (tts.muted) return;
   const clean = text
     .replace(/```[\s\S]*?```/g, '')
@@ -329,7 +337,7 @@ function enqueueSpeech(text) {
     .trim();
   if (!clean) return;
   const _v = _nextTtsVoice();
-  const decorated = _quirkifyTts(clean, _v);
+  const decorated = _quirkifyTts(clean, _v, opts);
   if (tts.meta.size > 32) tts.meta.clear();
   tts.meta.set(decorated, { voice: _v, style: _nextTtsStyle(_v) });
   announceTTS(decorated);

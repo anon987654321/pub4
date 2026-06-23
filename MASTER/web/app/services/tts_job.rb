@@ -7,8 +7,8 @@ require "json"
 class TtsJob
   CACHE_DIR = Rails.root.join("tmp", "tts_cache")
 
-  def self.enqueue(text:, voice:, style:, bus: nil)
-    job = new(text: text, voice: voice, style: style, bus: bus)
+  def self.enqueue(text:, voice:, style:, rate: nil, pitch: nil, bus: nil)
+    job = new(text: text, voice: voice, style: style, rate: rate, pitch: pitch, bus: bus)
     return job if job.ready?
     return job if job.failed?
 
@@ -26,19 +26,27 @@ class TtsJob
     return nil unless File.file?(token_path)
 
     data = JSON.parse(File.read(token_path))
-    new(text: data.fetch("text"), voice: data.fetch("voice").to_sym, style: data.fetch("style").to_sym)
+    new(
+      text: data.fetch("text"),
+      voice: data.fetch("voice").to_sym,
+      style: data.fetch("style").to_sym,
+      rate: data["rate"],
+      pitch: data["pitch"]
+    )
   rescue StandardError
     nil
   end
 
   attr_reader :job_id
 
-  def initialize(text:, voice:, style:, bus: nil)
+  def initialize(text:, voice:, style:, rate: nil, pitch: nil, bus: nil)
     @text = text.to_s
     @voice = voice.to_sym
     @style = style.to_sym
+    @rate = rate
+    @pitch = pitch
     @bus = bus
-    @fingerprint = Digest::SHA256.hexdigest("#{@voice}|#{@style}|#{@text}")
+    @fingerprint = Digest::SHA256.hexdigest("#{@voice}|#{@style}|#{@rate}|#{@pitch}|#{@text}")
     @job_id = @fingerprint[0, 32]
   end
 
@@ -77,8 +85,11 @@ class TtsJob
 
     FileUtils.mkdir_p(CACHE_DIR)
     File.delete(error_path) if File.exist?(error_path)
-    File.write(CACHE_DIR.join("#{@job_id}.job"), JSON.generate(text: @text, voice: @voice, style: @style))
-    data = Master::Voice::Speech.synthesize_bytes(@text, voice: @voice, style: @style)
+    File.write(
+      CACHE_DIR.join("#{@job_id}.job"),
+      JSON.generate(text: @text, voice: @voice, style: @style, rate: @rate, pitch: @pitch)
+    )
+    data = Master::Voice::Speech.synthesize_bytes(@text, voice: @voice, style: @style, rate: @rate, pitch: @pitch)
     if data.nil? || data.empty?
       message = Master::Voice::Speech.last_error || "synthesis produced empty audio"
       record_failure(message)

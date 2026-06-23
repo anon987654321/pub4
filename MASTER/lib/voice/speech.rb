@@ -175,7 +175,7 @@ module Master
         out.empty? ? [clean] : out
       end
 
-      def synthesize(text, voice: default_voice, style: default_style)
+      def synthesize(text, voice: default_voice, style: default_style, rate: nil, pitch: nil)
         text_str = clean_text(text)
         return if text_str.empty?
         return unless available?
@@ -184,10 +184,11 @@ module Master
         expr = Master::Voice::Expression.for_text(text_str)
         if expr[:register] == :creative && %i[neutral normal clear].include?(style) then style = expr[:style] end
         style = default_style unless STYLES.key?(style)
-        voice = default_voice unless VOICES.key?(voice)
+        voice = resolve_voice(voice)
 
-        # Use the resolved config (applies Osman character when needed)
         style_config = style_config_for(voice, style)
+        style_config[:rate] = rate.to_s if rate && !rate.to_s.strip.empty?
+        style_config[:pitch] = pitch.to_s if pitch && !pitch.to_s.strip.empty?
 
         if edge_tts_available?
           path = synthesize_edge(text_str, voice: voice, style_config: style_config)
@@ -204,6 +205,13 @@ module Master
         Audio.new(bytes: File.binread(path), mime_type: mime_type_for(path))
       ensure
         File.unlink(path) rescue nil if path
+      end
+
+      def resolve_voice(voice)
+        key = voice.to_s.strip.to_sym
+        return key if VOICES.key?(key)
+
+        VOICES.find { |_sym, name| name == voice.to_s }&.first || default_voice
       end
 
       def synthesize_bytes(text, **opts)

@@ -196,7 +196,8 @@ function setVoiceName(voice, opts = {}) {
   if (opts.speakBlurb !== false && next && prev !== next) {
     setTimeout(() => {
       if (window.MASTER_FACE?.tts?.muted) return;
-      if (typeof playDuo === 'function') playDuo([[next, "I'm Christopher. Let's work."]]);
+      const blurb = (window.MASTER_PERSONA?.description || 'Ready.').split('.')[0].trim() || 'Ready.';
+      if (typeof playDuo === 'function') playDuo([[next, blurb]]);
     }, 0);
   }
 }
