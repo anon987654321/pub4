@@ -8,8 +8,9 @@ class ApplicationController < ActionController::Base
 
   VISITOR_ALLOWED_TOOLS = %w[AskLlm WebSearch].freeze
   AUTHENTICATED_ACTIONS = %i[
-    command dmesg enhance history live metrics photo post_event state stream tts
+    command dmesg enhance history live metrics photo post_event state stream
   ].freeze
+  TTS_ACTIONS = %i[show status].freeze
   CHAT_RATE_LIMIT = 30  # requests per 60s per IP
   CHAT_WINDOW_S   = 60
   TTS_RATE_LIMIT  = 30
@@ -22,7 +23,7 @@ class ApplicationController < ActionController::Base
   before_action :require_container!
   before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }
   before_action :enforce_chat_rate_limit, if: -> { action_in?(:message) }
-  before_action :enforce_tts_rate_limit, if: -> { action_in?(:tts) }
+  before_action :enforce_tts_rate_limit, if: -> { controller_name == "tts" && action_in?(TTS_ACTIONS) }
   before_action :enforce_web_read_rate_limit, if: -> { action_in?(%i[dmesg history live metrics]) }
   before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }
 
@@ -68,7 +69,7 @@ class ApplicationController < ActionController::Base
     count = cache.read(key).to_i
     if count >= limit
       response.headers["Retry-After"] = window.to_s
-      render json: { error: "rate limit exceeded - retry after #{window}s" }, status: :too_many_requests
+      render json: { error: "rate limit exceeded - wait #{window}s" }, status: :too_many_requests
     else
       cache.write(key, count + 1, expires_in: window)
     end

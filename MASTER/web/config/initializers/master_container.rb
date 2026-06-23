@@ -35,11 +35,15 @@ module MasterContainerLoader
         due = container[:standing].due
         if due.any?
           results = container[:standing].run_due!
-          results.each { |r| container[:bus].publish("scheduler:ran", name: r[:name]) rescue nil }
+          results.each do |r|
+            Master::Ground::Swallow.safe_call(context: "MasterContainerLoader.scheduler_publish", event_bus: container[:bus]) do
+              container[:bus].publish("scheduler:ran", name: r[:name])
+            end
+          end
         end
         sleep 900
-      rescue StandardError
-        nil
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "MasterContainerLoader.scheduler", event_bus: container[:bus])
       end
     end
   end

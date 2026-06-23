@@ -95,8 +95,8 @@ class ChatService
 
     mood, mode, idle_s, palette = @params[:state].to_s.split("|")
     @container[:bus].publish(:canvas_state, mood: mood, mode: mode, idle_s: idle_s.to_i, palette: palette.to_i)
-  rescue StandardError
-    nil
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "ChatService.publish_canvas_state", event_bus: @container[:bus])
   end
 
   def write_fallback(result)
@@ -129,16 +129,16 @@ class ChatService
 
   def write_event(event, data)
     @stream.write("event: #{event}\ndata: #{data}\n\n")
-  rescue StandardError
-    nil
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "ChatService.write_event", event_bus: @container[:bus])
   end
 
   def write_json_event(event, data)
     return if data.nil?
 
     @stream.write("event: #{event}\ndata: #{data.to_json}\n\n")
-  rescue StandardError
-    nil
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "ChatService.write_json_event", event_bus: @container[:bus])
   end
 
   def write_council_speech(event)
@@ -156,8 +156,8 @@ class ChatService
 
   def unsubscribe_all
     @subscriptions.each(&:call)
-  rescue StandardError
-    nil
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "ChatService.unsubscribe_all", event_bus: @container[:bus])
   end
 
   def clear_fiber_flags

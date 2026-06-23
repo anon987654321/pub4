@@ -13,7 +13,7 @@ class WebEventLogger
 
   def publish(level, message)
     @bus&.publish("web:log", level: level.to_s, message: message.to_s)
-  rescue StandardError
-    nil
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "WebEventLogger.publish", event_bus: @bus)
   end
 end

@@ -33,7 +33,8 @@ class TtsJob
       rate: data["rate"],
       pitch: data["pitch"]
     )
-  rescue StandardError
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "TtsJob.find", job_id: job_id.to_s)
     nil
   end
 
@@ -48,14 +49,6 @@ class TtsJob
     @bus = bus
     @fingerprint = Digest::SHA256.hexdigest("#{@voice}|#{@style}|#{@rate}|#{@pitch}|#{@text}")
     @job_id = @fingerprint[0, 32]
-  end
-
-  def cache_path
-    CACHE_DIR.join("#{@job_id}.mp3")
-  end
-
-  def error_path
-    CACHE_DIR.join("#{@job_id}.err")
   end
 
   def ready?
@@ -103,6 +96,14 @@ class TtsJob
   end
 
   private
+
+  def cache_path
+    CACHE_DIR.join("#{@job_id}.mp3")
+  end
+
+  def error_path
+    CACHE_DIR.join("#{@job_id}.err")
+  end
 
   def record_failure(message)
     FileUtils.mkdir_p(CACHE_DIR)

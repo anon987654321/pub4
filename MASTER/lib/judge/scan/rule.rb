@@ -49,6 +49,7 @@ module Master
         end
 
         def language(path)
+          return "javascript" if File.basename(path).match?(/\Aface\.part\d+\.txt\z/)
           EXT_LANG[File.extname(path).downcase]
         end
 
