@@ -1,13 +1,15 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# encoding: utf-8
+
 require "open3"
 
 failures = []
 
 def run(*cmd)
   out, status = Open3.capture2e(*cmd)
-  [status.success?, out.strip]
+  [status.success?, out.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?").strip]
 end
 
 def privileged(*cmd)

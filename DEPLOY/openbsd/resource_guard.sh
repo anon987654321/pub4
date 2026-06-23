@@ -5,6 +5,7 @@
 
 set -e
 
+ALL_APPS_FLAG=/var/db/pub4_all_apps
 CORE="master brgen_rails"
 OPTIONAL="amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream"
 LOAD_WARN=0.85
@@ -27,6 +28,10 @@ fi
 shed=0
 if awk -v l="$load" -v w="$LOAD_WARN" 'BEGIN{exit !(l>=w)}'; then shed=1; fi
 if [[ $mem_free_pct -lt $MEM_WARN ]]; then shed=1; fi
+
+if [[ -f $ALL_APPS_FLAG ]]; then
+  exit 0
+fi
 
 if [[ $shed -eq 1 ]]; then
   for svc in $OPTIONAL; do

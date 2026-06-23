@@ -97,16 +97,18 @@ doas zsh openbsd.sh --sync-configs    # mirror repo etc/ → /etc, restart servi
 doas zsh openbsd.sh --resume          # continue interrupted stage run
 doas ksh emergency_cpu.sh             # stop optional Rails services (CPU relief)
 doas ksh resource_guard.sh            # shed optional apps when load/mem high
+doas ksh start_all_apps.sh            # start full stack; disable shedding via /var/db/pub4_all_apps
 ```
 
 ## vm23 resource budget (1 vCPU, ~1 GiB)
 
-vm23 runs **core only** at boot: `master` + `brgen_rails`. Optional apps (`amber_rails`, `bsdports_rails`, `blognet_rails`, `hjerterom_rails`, `baibl`, `litestream`) stay stopped until started manually — see `vm_resource.yml`.
+vm23 runs **core only** at boot: `master` + `brgen_rails`. Optional apps stay stopped until started — see `vm_resource.yml`.
 
 - `master` Falcon workers: **1** (not 2); `MASTER_SAFE_MODE=1` in rc.d
 - relayd health checks: **120s** interval (not 30s)
-- `resource_guard.sh` cron every 5 min sheds optional services when load ≥ 0.85 or mem free &lt; 12%
-- Start an optional app when needed: `doas rcctl start amber_rails` (stop with `doas rcctl stop amber_rails`)
+- `resource_guard.sh` cron every 5 min sheds optional services when load ≥ 0.85 or mem free &lt; 12% (skipped when `/var/db/pub4_all_apps` exists)
+- Full stack: `doas ksh DEPLOY/openbsd/start_all_apps.sh` (creates `/var/db/pub4_all_apps`, starts all Rails + relayd, runs `health_check.rb`)
+- Single optional app: `doas rcctl start amber_rails` (shed again unless all-apps flag is set)
 
 ```zsh
 doas rcctl check master brgen_rails   # core health

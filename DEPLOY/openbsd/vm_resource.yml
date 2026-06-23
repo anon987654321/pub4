@@ -10,7 +10,8 @@ core_services:
   - master
   - brgen_rails
 
-# Start manually or via resource_guard when load is low (see README).
+# Start manually: doas ksh DEPLOY/openbsd/start_all_apps.sh
+# Pins all apps (creates /var/db/pub4_all_apps; resource_guard skips shedding).
 optional_services:
   - amber_rails
   - bsdports_rails
