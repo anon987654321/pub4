@@ -323,7 +323,8 @@ users.sample(12).each do |u1|
     Message.create!(
       conversation: conv,
       sender: [u1, u2].sample,
-      content: Faker::Lorem.sentence(word_count: 7)
+      content: Faker::Lorem.sentence(word_count: 7),
+      message_type: "text"
     )
   end
 end
