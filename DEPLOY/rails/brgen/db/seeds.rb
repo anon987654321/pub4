@@ -151,10 +151,8 @@ dating_profiles = users.sample(35).map do |user|
   )
 end
 
-dating_profiles.sample(25).each do |profile|
-  liker_profile = dating_profiles.sample
-  next if liker_profile == profile
-  Dating::Like.find_or_create_by!(liker: liker_profile.user, likee: profile.user)
+dating_profiles.each_cons(2) do |a, b|
+  Dating::Like.find_or_create_by!(liker: a.user, likee: b.user)
 end
 
 puts "Dating: #{dating_profiles.size} profiles, #{Dating::Like.count} likes, #{Dating::Match.count} matches"
