@@ -29,6 +29,8 @@ const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
 let FACE_PIXEL_SIZE = 0.017;
 let FACE_GLOW_SCALE = 1.18;
+let FACE_PHOSPHOR_DECAY = 0.80;
+let FACE_RENDER_SCALE = 0.72;
 const soulDrift = Math.max(0, Math.min(1, Number(window.MASTER_SOUL_DRIFT || 0)));
 rootBody.dataset.soulDrift = soulDrift.toFixed(3);
 const modelBadge = (() => {
@@ -305,11 +307,13 @@ window.addEventListener('unhandledrejection', event => {
     if (ps > 0.001) FACE_PIXEL_SIZE = ps;
     const gs = parseFloat(cs.getPropertyValue('--face-glow-scale'));
     if (gs > 0.5) FACE_GLOW_SCALE = gs;
+    const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
+    if (pd > 0.1 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
   } catch (_) {}
 })();
 
 const STAR_FRAMES = ['\u2736', '\u2738', '\u2737', '\u273B', '\u2722', '\u2724', '\u2733', '\u2735'];
-const STAR_COLORS = ['#ff5e3a', '#ffcc00', '#48ff7a', '#3aeaff', '#7e5cff', '#ff3aa3', '#ffffff'];
+const STAR_COLORS = ['#ffffff', '#f5f0e8', '#e8dcc8', '#d4c4a8', '#c9b896', '#bdb0a0', '#a89888'];
 let _starTimer = null;
 let _starIdx = 0;
 let _starColorIdx = 0;
@@ -395,15 +399,27 @@ function markFaceReady() {
   rootBody.classList.remove('face-loading');
 }
 
-let renderer, scene, camera;
+let renderer, scene, camera, phosphorFadeMesh, phosphorFadeScene, phosphorFadeCam;
 if (_hasWebGL && THREE) {
   try {
-    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false });
+    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 1);
+    renderer.autoClear = true;
   } catch (_) {}
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
   camera.position.set(0, 0, 4.6);
+  phosphorFadeScene = new THREE.Scene();
+  phosphorFadeCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const fadeGeom = new THREE.PlaneGeometry(2, 2);
+  const fadeMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(FACE_PHOSPHOR_DECAY, FACE_PHOSPHOR_DECAY, FACE_PHOSPHOR_DECAY),
+    blending: THREE.MultiplyBlending,
+    depthTest: false,
+    depthWrite: false
+  });
+  phosphorFadeMesh = new THREE.Mesh(fadeGeom, fadeMat);
+  phosphorFadeScene.add(phosphorFadeMesh);
 }
 if (_dbgEl) _dbgEl.textContent = renderer ? 'webgl ok' : (_hasWebGL ? 'webgl FAIL' : '2d mode');
 
@@ -413,12 +429,12 @@ function resize() {
   W = window.innerWidth; H = window.innerHeight;
   DPR = Math.min(window.devicePixelRatio || 1, State.coarsePointer ? 1.25 : 2);
 
-  // Low internal render resolution + CSS upscale (topologies.yml + visual_clusters spec).
-  // The Three canvas will render at modest internal size; browser + pixelated CSS does the integer scale.
-  const internalW = W;
-  const internalH = H;
+  const profile = rootBody.dataset.runtimeProfile || 'full';
+  FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : 0.72);
+  const internalW = Math.max(280, Math.floor(W * FACE_RENDER_SCALE));
+  const internalH = Math.max(200, Math.floor(H * FACE_RENDER_SCALE));
 
-  renderer.setPixelRatio(1); // we control internal size manually
+  renderer.setPixelRatio(1);
   renderer.setSize(internalW, internalH, false);
   camera.aspect = internalW / internalH;
   camera.updateProjectionMatrix();

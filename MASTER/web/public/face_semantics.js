@@ -21,6 +21,32 @@ const _dbgEl = F_FACE_SEM.dbgEl || document.getElementById('_dbg');
 window.addEventListener('master:visual', (ev) => {
   const d = ev.detail || {};
   State.entropy = d.entropy ?? State.entropy ?? 0.2;
+  State.confidence = d.confidence ?? State.confidence ?? 1.0;
+  const name = String(d.name || d.mode || '');
+  if (/error|failure|veto|rollback/.test(name)) {
+    State.fracture = Math.max(State.fracture || 0, 0.55);
+    State.shake = Math.max(State.shake || 0, 0.45);
+    State.mood = 'veto';
+  }
+  if (/complete|success|done|pass/.test(name)) {
+    State.bloom = Math.max(State.bloom || 0, 0.65);
+    State.mood = /pass/.test(name) ? 'pass' : State.mood;
+  }
+  if (/council:deliberation|council:start/.test(name)) {
+    State.pulse = Math.max(State.pulse || 0, 0.48);
+    State.mode = State.mode === 'speaking' ? State.mode : 'thinking';
+  }
+  if (/llm:request|pipeline:start|thinking/.test(name) && State.mode !== 'speaking') {
+    State.mode = 'thinking';
+    State.pulse = Math.max(State.pulse || 0, 0.32);
+  }
+  if (/escalat|fallback|retry/.test(name)) {
+    State.tremor = Math.max(State.tremor || 0, 0.4);
+    State.mood = 'tense';
+  }
+  if (/memory|retriev|context/.test(name)) {
+    State.ripplePhase = State.ripplePhase < 0 ? 0 : State.ripplePhase;
+  }
   if (!mouthPool || !eyePool) return;
 
   const ex = d.expression || {};

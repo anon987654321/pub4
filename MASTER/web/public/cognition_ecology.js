@@ -21,13 +21,13 @@
   };
 
   const agents = [
-    { name: "planner", angle: 0.0, radius: 0.26, charge: 0.8, hue: "230,180,110" },
-    { name: "coder", angle: 0.9, radius: 0.33, charge: 0.5, hue: "120,210,170" },
-    { name: "retriever", angle: 1.8, radius: 0.41, charge: 0.7, hue: "120,180,230" },
-    { name: "critic", angle: 2.7, radius: 0.36, charge: 0.4, hue: "230,110,90" },
-    { name: "memory", angle: 3.6, radius: 0.48, charge: 0.9, hue: "180,230,180" },
-    { name: "judge", angle: 4.5, radius: 0.31, charge: 0.55, hue: "220,180,240" },
-    { name: "safety", angle: 5.4, radius: 0.44, charge: 0.65, hue: "245,220,160" }
+    { name: "planner", angle: 0.0, radius: 0.26, charge: 0.8, hue: "235,210,175" },
+    { name: "coder", angle: 0.9, radius: 0.33, charge: 0.5, hue: "220,200,168" },
+    { name: "retriever", angle: 1.8, radius: 0.41, charge: 0.7, hue: "210,192,162" },
+    { name: "critic", angle: 2.7, radius: 0.36, charge: 0.4, hue: "195,175,148" },
+    { name: "memory", angle: 3.6, radius: 0.48, charge: 0.9, hue: "240,220,188" },
+    { name: "judge", angle: 4.5, radius: 0.31, charge: 0.55, hue: "205,185,155" },
+    { name: "safety", angle: 5.4, radius: 0.44, charge: 0.65, hue: "225,205,172" }
   ];
 
   // Start of ecology habitats port to ParticleKernel (visual_clusters.yml + topologies.yml).

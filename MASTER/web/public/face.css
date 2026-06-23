@@ -65,9 +65,9 @@ body[data-high-contrast="1"] .msg-body { color: white; }
 body[data-high-contrast="1"] .enhance-text { color: white; }
 
 body[data-runtime-visible="false"] canvas { filter: brightness(0.45) contrast(0.85); }
-body[data-runtime-profile="battery"] canvas { filter: grayscale(0.25) brightness(0.72); }
+body[data-runtime-profile="battery"] canvas { filter: grayscale(0.35) brightness(0.72) contrast(0.95); }
 body[data-runtime-profile="full"] canvas { filter: saturate(var(--mood-sat, 0.7)) brightness(1); }
-body[data-long-silence="1"] canvas { filter: brightness(0.76) contrast(0.9); }
+body[data-long-silence="1"] canvas { filter: brightness(0.76) contrast(0.9) saturate(0.55); }
 body[data-laughter="1"] canvas { filter: contrast(1.08) saturate(1.06); }
 body[data-face-flash="1"] canvas {
   filter:
@@ -127,6 +127,37 @@ body::after {
   );
   opacity: 1;
   mix-blend-mode: soft-light;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(ellipse 78% 72% at 50% 46%, transparent 42%, rgba(0, 0, 0, 0.52) 100%);
+  opacity: 0.88;
+}
+
+body[data-theme="light"]::before {
+  background: radial-gradient(ellipse 78% 72% at 50% 46%, transparent 48%, rgba(16, 16, 16, 0.12) 100%);
+  opacity: 0.65;
+}
+
+body[data-focus-mode="1"] #cognition-ecology {
+  opacity: 0.12;
+  transition: opacity 280ms var(--ease-out);
+}
+
+body[data-mode="thinking"]::after {
+  opacity: 1.18;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.055) 0,
+    rgba(255, 255, 255, 0.055) 1px,
+    transparent 1px,
+    transparent 2px
+  );
 }
 
 body[data-face-pip="1"] canvas {

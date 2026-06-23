@@ -194,7 +194,7 @@ function frame(t) {
     if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.02 + 0.08 * _breath;
     const hcVal = State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0);
     faceMat.uniforms.uHc.value = hcVal;
-    const curlTarget = State.mode === 'thinking' ? 1.0 : 0.0;
+    const curlTarget = State.mode === 'thinking' ? 1.0 : Math.min(0.65, (State.entropy || 0) * 0.9);
     faceMat.uniforms.uCurl.value += (curlTarget - faceMat.uniforms.uCurl.value) * 0.025;
     faceMat.uniforms.uJaw.value = voiceRMS * 2.5;
     faceMat.uniforms.uMouse.value = { x: State.mouseX * 1.4, y: -State.mouseY * 1.2 };
@@ -244,9 +244,25 @@ function frame(t) {
     const eyeCloseTarget = 0;
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
     morphGhost += (morphCurrent - morphGhost) * 0.035;
-    faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524;
+    faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524 + (State.entropy || 0) * 0.002;
     const soulDensity = 0.82 + soulDrift * 0.35;
-    faceMat.uniforms.uExposure.value = (window.matchMedia('(prefers-color-scheme: light)').matches ? 0.6 : 1.0) * soulDensity;
+    const confExposure = 0.68 + (State.confidence || 1) * 0.42;
+    const baseExposure = (window.matchMedia('(prefers-color-scheme: light)').matches ? 0.6 : 1.0) * soulDensity * confExposure;
+    faceMat.uniforms.uExposure.value = baseExposure;
+    const focusDim = rootBody.dataset.focusMode === '1' ? 0.88 : 1.0;
+    faceMat.uniforms.uFocusDim.value += (focusDim - faceMat.uniforms.uFocusDim.value) * 0.06;
+    const phosphorSoft = State.reducedMotion ? 0.35 : 0.55;
+    faceMat.uniforms.uPhosphorSoft.value += (phosphorSoft - faceMat.uniforms.uPhosphorSoft.value) * 0.04;
+    if (idleS2 > 45) rootBody.dataset.longSilence = '1';
+    else delete rootBody.dataset.longSilence;
+    if (faceEdgeLinesStrong) {
+      const edgeStrong = 0.05 + morphCurrent * 0.09 + (State._heartbeat || 0) * 0.05 + (State.pulse || 0) * 0.04;
+      faceEdgeLinesStrong.material.opacity += (edgeStrong - faceEdgeLinesStrong.material.opacity) * 0.08;
+    }
+    if (faceEdgeLinesWeak) {
+      const edgeWeak = 0.02 + morphCurrent * 0.035 + (State.mode === 'thinking' ? 0.02 : 0);
+      faceEdgeLinesWeak.material.opacity += (edgeWeak - faceEdgeLinesWeak.material.opacity) * 0.06;
+    }
     const driftEl = document.getElementById('soul-drift');
     if (driftEl && (_dbgFrames % 30 === 0 || !driftEl.textContent)) {
       driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;
@@ -270,7 +286,10 @@ function frame(t) {
         uRipple: faceMat.uniforms.uRipple, uVowel: faceMat.uniforms.uVowel,
         uSurpriseY: faceMat.uniforms.uSurpriseY,
         uFracture: faceMat.uniforms.uFracture, uBloom: faceMat.uniforms.uBloom,
-        uIdleDrift: faceMat.uniforms.uIdleDrift, uEyeClose: faceMat.uniforms.uEyeClose
+        uIdleDrift: faceMat.uniforms.uIdleDrift, uEyeClose: faceMat.uniforms.uEyeClose,
+        uGridAngle: faceMat.uniforms.uGridAngle, uHeartbeat: faceMat.uniforms.uHeartbeat,
+        uPulseRing: faceMat.uniforms.uPulseRing, uExposure: faceMat.uniforms.uExposure,
+        uFocusDim: faceMat.uniforms.uFocusDim, uPhosphorSoft: faceMat.uniforms.uPhosphorSoft
       });
       gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
     }
@@ -279,6 +298,17 @@ function frame(t) {
   State.flash *= 0.9;
   if (State.flash > 0.15) rootBody.dataset.faceFlash = '1';
   else delete rootBody.dataset.faceFlash;
+  const phosphorOn = !State.reducedMotion && FACE_PHOSPHOR_DECAY > 0.12 && FACE_PHOSPHOR_DECAY < 0.98;
+  if (phosphorOn && phosphorFadeMesh && phosphorFadeScene && phosphorFadeCam && faceMat?._phosphorPrimed) {
+    const decay = State.coarsePointer ? Math.max(0.55, FACE_PHOSPHOR_DECAY - 0.12) : FACE_PHOSPHOR_DECAY;
+    phosphorFadeMesh.material.color.setRGB(decay, decay, decay);
+    renderer.autoClear = false;
+    renderer.render(phosphorFadeScene, phosphorFadeCam);
+  } else {
+    renderer.autoClear = true;
+    renderer.setClearColor(0x000000, 1);
+    if (faceMat && phosphorOn) faceMat._phosphorPrimed = true;
+  }
   renderer.render(scene, camera);
   markFaceReady();
 

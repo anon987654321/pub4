@@ -2,14 +2,15 @@
   "use strict";
 
   function colorFor(name, detail) {
-    const provider = String(detail.provider || state.provider || "").toLowerCase();
-    if (provider.includes("claude")) return "230,120,80";
-    if (provider.includes("deepseek")) return "100,170,230";
-    if (provider.includes("gemini")) return "180,130,240";
-    if (provider.includes("gpt") || provider.includes("openai")) return "120,220,170";
-    if (/error|rollback/.test(name)) return "235,70,45";
-    if (/memory|retriev/.test(name)) return "135,230,190";
-    return "230,180,110";
+    const conf = detail.confidence ?? state.confidence ?? 0.88;
+    const base = Math.round(210 + conf * 35);
+    const warm = Math.round(base * 0.90);
+    const cool = Math.round(base * 0.78);
+    if (/error|rollback|failed|failure/.test(name)) return `${Math.round(base * 0.62)},${warm},${cool}`;
+    if (/memory|retriev|context/.test(name)) return `${base},${warm},${Math.round(cool * 1.04)}`;
+    if (/tool|scan|sweep|audit/.test(name)) return `${Math.round(base * 0.88)},${warm},${cool}`;
+    if (/complete|success|done/.test(name)) return `${base},${base},${Math.round(base * 0.94)}`;
+    return `${base},${warm},${cool}`;
   }
 
   function terrainHeight(x, y, t) {
@@ -54,7 +55,8 @@
         if (c === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
-      const color = state.weather === "storm" || state.weather === "serpent" ? "235,80,45" : "120,220,185";
+      const storm = state.weather === "storm" || state.weather === "serpent";
+      const color = storm ? "180,140,120" : "220,198,168";
       ctx.strokeStyle = `rgba(${color},${alphaBase * (0.55 + v) * (0.7 + state.confidence * 0.4)})`;
       ctx.lineWidth = 0.75 + state.entropy * 1.2;
       ctx.stroke();
@@ -73,7 +75,7 @@
         if (r === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
-      ctx.strokeStyle = `rgba(230,180,110,${alphaBase * 0.45})`;
+      ctx.strokeStyle = `rgba(210,188,158,${alphaBase * 0.45})`;
       ctx.lineWidth = 0.55;
       ctx.stroke();
     }
@@ -158,7 +160,7 @@
       }
       const alpha = memory.life * (0.16 + Math.sin(memory.pulse) * 0.05);
       ctx.beginPath();
-      ctx.fillStyle = `rgba(150,235,195,${alpha})`;
+      ctx.fillStyle = `rgba(220,205,175,${alpha})`;
       ctx.arc(memory.x, memory.y, 2 + memory.z * 3, 0, Math.PI * 2);
       ctx.fill();
 
@@ -170,7 +172,7 @@
         const max = Math.min(internalW, internalH) * 0.22;
         if (d2 < max * max) {
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(120,220,185,${0.035 * memory.life})`;
+          ctx.strokeStyle = `rgba(200,185,155,${0.035 * memory.life})`;
           ctx.lineWidth = 1;
           ctx.moveTo(memory.x, memory.y);
           ctx.lineTo(other.x, other.y);
@@ -193,7 +195,7 @@
         weather.splice(i, 1);
         continue;
       }
-      const color = storm ? "235,80,45" : "230,180,110";
+      const color = storm ? "170,130,115" : "215,192,162";
       ctx.beginPath();
       ctx.fillStyle = `rgba(${color},${bit.life * (storm ? 0.20 : 0.09)})`;
       ctx.arc(bit.x, bit.y, bit.radius, 0, Math.PI * 2);
@@ -208,6 +210,9 @@
     state.time = now;
     state.activity += (((now - state.lastEventAt) < 3200 ? 0.72 : 0.16) - state.activity) * 0.012;
 
+    const focusMode = document.body?.dataset.focusMode === "1";
+    const ecologyAlpha = focusMode ? 0.14 : (document.body?.dataset.longSilence === "1" ? 0.55 : 1.0);
+    canvas.style.opacity = String(ecologyAlpha);
     ctx.clearRect(0, 0, state.width, state.height);
     ctx.globalCompositeOperation = "lighter";
     drawSemanticTerrain(dt);
