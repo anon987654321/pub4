@@ -52,6 +52,6 @@ class Playlist::Track < ApplicationRecord
 
   def default_audio_hosting_fields
     self.source_type = "upload" if source_type.blank?
-    self.privacy = "private" if privacy.blank?
+    self.privacy = "private" if has_attribute?(:privacy) && privacy.blank?
   end
 end
