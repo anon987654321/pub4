@@ -8,12 +8,13 @@ require "uri"
 HOST = ENV.fetch("MASTER_TTS_HOST", "http://127.0.0.1:53187")
 TEXT = ENV.fetch("MASTER_TTS_TEXT", "MASTER TTS end to end check.")
 VOICE = ENV.fetch("MASTER_TTS_VOICE", "")
-MAX_POLLS = Integer(ENV.fetch("MASTER_TTS_MAX_POLLS", "24"))
+MAX_POLLS = Integer(ENV.fetch("MASTER_TTS_MAX_POLLS", "30"))
 SLEEP_S = Float(ENV.fetch("MASTER_TTS_POLL_SLEEP", "0.5"))
+BOOT_WAIT_S = Integer(ENV.fetch("MASTER_TTS_BOOT_WAIT", "90"))
 
-def http_get(path)
+def http_get(path, read_timeout: 30)
   uri = URI("#{HOST}#{path}")
-  Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 5, read_timeout: 30) do |http|
+  Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 8, read_timeout:) do |http|
     http.get(uri.request_uri)
   end
 end
@@ -23,9 +24,34 @@ def fail!(message)
   exit 1
 end
 
+def wait_for_up
+  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + BOOT_WAIT_S
+  while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
+    res = http_get("/up", read_timeout: 5)
+    return true if res.code.to_i.between?(200, 399)
+  rescue StandardError
+    nil
+  ensure
+    sleep 2
+  end
+  false
+end
+
+fail!("master /up not ready within #{BOOT_WAIT_S}s") unless wait_for_up
+
 query = "/chat/tts?text=#{URI.encode_www_form_component(TEXT)}"
 query += "&voice=#{URI.encode_www_form_component(VOICE)}" unless VOICE.empty?
-res = http_get(query)
+
+res = nil
+3.times do |attempt|
+  res = http_get(query, read_timeout: 120)
+  break
+rescue Net::ReadTimeout, Errno::ECONNREFUSED, Errno::ETIMEDOUT => e
+  warn("tts_e2e: request retry #{attempt + 1} (#{e.class})")
+  sleep 4
+end
+fail!("initial TTS request failed") unless res
+
 job = res["X-TTS-Job"].to_s
 
 if res.code.to_i == 200 && res.content_type.to_s.include?("audio")
@@ -38,7 +64,7 @@ fail!("missing X-TTS-Job header") if job.empty?
 
 MAX_POLLS.times do |attempt|
   sleep SLEEP_S
-  poll = http_get("/chat/tts/status?job=#{URI.encode_www_form_component(job)}")
+  poll = http_get("/chat/tts/status?job=#{URI.encode_www_form_component(job)}", read_timeout: 30)
   case poll.code.to_i
   when 202
     print "."
@@ -46,9 +72,7 @@ MAX_POLLS.times do |attempt|
     next
   when 200
     fail!("empty audio body") if poll.body.to_s.empty?
-    unless poll.content_type.to_s.include?("audio")
-      fail!("unexpected content-type #{poll.content_type}")
-    end
+    fail!("unexpected content-type #{poll.content_type}") unless poll.content_type.to_s.include?("audio")
     puts "\ntts_e2e: ok polled mp3 (#{poll.body.bytesize} bytes, attempt #{attempt + 1})"
     exit 0
   when 503
