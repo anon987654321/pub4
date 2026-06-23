@@ -1,7 +1,9 @@
 #!/bin/ksh
+[ -r /etc/blognet.env ] && . /etc/blognet.env
 [ -f /etc/rails/blognet.env ] && . /etc/rails/blognet.env
+: "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/blognet.env}"
 daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE:-} HOME=/home/blognet falcon serve --bind http://127.0.0.1:10002"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/blognet falcon serve --bind http://127.0.0.1:10002"
 daemon_user="blognet"
 daemon_execdir="/home/blognet/app"
 daemon_logger="daemon.notice"

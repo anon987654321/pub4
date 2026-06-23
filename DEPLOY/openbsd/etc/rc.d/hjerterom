@@ -1,7 +1,9 @@
 #!/bin/ksh
+[ -r /etc/hjerterom.env ] && . /etc/hjerterom.env
 [ -f /etc/rails/hjerterom.env ] && . /etc/rails/hjerterom.env
+: "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/hjerterom.env}"
 daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE:-} HOME=/home/hjerterom falcon serve --bind http://127.0.0.1:38891"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/hjerterom falcon serve --bind http://127.0.0.1:38891"
 daemon_user="hjerterom"
 daemon_execdir="/home/hjerterom/app"
 daemon_logger="daemon.notice"

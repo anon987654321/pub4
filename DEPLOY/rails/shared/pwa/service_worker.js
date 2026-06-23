@@ -19,7 +19,7 @@ self.skipWaiting()
 
 const pages = new NetworkFirst({
   cacheName: `${APP_NAME}-pages-${CACHE_VERSION}`,
-  networkTimeoutSeconds: 4,
+  networkTimeoutSeconds: 20,
   plugins: [
     new CacheableResponsePlugin({ statuses: [0, 200] }),
     new ExpirationPlugin({ maxEntries: 40, maxAgeSeconds: 24 * 60 * 60 }),
@@ -48,11 +48,15 @@ registerRoute(
   "POST"
 )
 
-setCatchHandler(async ({ request }) => {
-  if (request.mode === "navigate") {
+setCatchHandler(async ({ event, request }) => {
+  if (request.mode !== "navigate") return Response.error()
+  try {
+    return await pages.handle({ event, request })
+  } catch (_error) {
+    const cached = await caches.match(request) || await caches.match("/")
+    if (cached) return cached
     return (await caches.match(OFFLINE_URL)) || Response.error()
   }
-  return Response.error()
 })
 
 self.addEventListener("install", event => {

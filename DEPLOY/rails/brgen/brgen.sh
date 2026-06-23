@@ -31,6 +31,7 @@ sync_tree /home/dev/pub4/DEPLOY/rails/shared "/home/${APP_NAME}/shared"
 doas chown -R "${APP_NAME}:${APP_NAME}" "/home/${APP_NAME}/shared"
 doas chown -R "${APP_NAME}:${APP_NAME}" "$APP_DIR"
 overlay_shared_initializers "$APP_DIR"
+overlay_shared_public "$APP_DIR"
 doas chown -R "${APP_NAME}:${APP_NAME}" "$APP_DIR"
 
 # Strict rules.yml gate: MASTER scan DEPLOY before bundle (per success_criteria, self_test, evidence_scoring)

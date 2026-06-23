@@ -74,6 +74,15 @@ overlay_shared_initializers() {
   log_ok "shared initializers overlaid"
 }
 
+# overlay_shared_public APP_DIR — merge shared/public (tokens.css, minimal-ui.css, icons)
+overlay_shared_public() {
+  local app_dir=$1
+  local shared_public=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/public
+  [[ -d $shared_public ]] || return 0
+  sync_tree "$shared_public" "${app_dir}/public" 0
+  log_ok "shared public assets overlaid"
+}
+
 already_done() {
   local sentinel=$1
   [[ -f $sentinel ]] && { log_warn "Already set up ($sentinel exists). Skipping."; return 0; }
