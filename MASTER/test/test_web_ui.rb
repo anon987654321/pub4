@@ -138,6 +138,26 @@ class TestWebUI < Minitest::Test
     assert_includes chat_controller, "params.permit(:message, :state, :pre_enhanced, :voice, :image_token, image: %i[data mime name])"
   end
 
+  def test_chat_service_smoke_messages_bypass_pipeline
+    chat_service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
+
+    assert_includes chat_service, "SMOKE_MESSAGES"
+    assert_includes chat_service, "stream_open!"
+    assert_includes chat_service, "smoke_reply?"
+    assert_includes chat_service, 'when "ping" then "pong"'
+  end
+
+  def test_chat_index_loads_particle_kernel_before_face
+    index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
+    kernel_idx = index.index("particle_kernel.js")
+    face_idx = index.index('type="module"')
+    refute_nil kernel_idx
+    refute_nil face_idx
+    assert_operator kernel_idx, :<, face_idx
+    assert_includes index, "chat_actions.js"
+    assert_includes index, "visual_bridge.js"
+  end
+
   def test_models_enable_strict_loading_by_default
     application_record = File.read(File.expand_path("../web/app/models/application_record.rb", __dir__))
 
@@ -195,8 +215,8 @@ class TestWebUI < Minitest::Test
   def test_face_particles_are_crisp_depth_sized_pixels
     source = face_runtime_source
 
-    assert_includes source, "let FACE_PIXEL_SIZE = 0.017"
-    assert_includes source, "let FACE_GLOW_SCALE = 1.18"
+    assert_includes source, "let FACE_PIXEL_SIZE = 0.019"
+    assert_includes source, "let FACE_GLOW_SCALE = 1.22"
     assert_includes source, "gl_PointSize=clamp"
     assert_includes source, "depth"
   end

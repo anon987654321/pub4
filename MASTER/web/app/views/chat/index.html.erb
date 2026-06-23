@@ -105,7 +105,11 @@
       addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' '||e.key==='OK'))go();},{once:false});
     })();
   </script>
+  <script src="<%= asset_path("topology_registry.js") %>" defer></script>
+  <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
+  <script src="<%= asset_path("chat_actions.js") %>" defer></script>
   <script type="module" src="<%= asset_path("face.js") %>"></script>
+  <script src="<%= asset_path("visual_bridge.js") %>" defer></script>
   <script src="<%= asset_path("chat.js") %>" defer></script>
 </body>
 </html>

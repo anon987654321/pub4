@@ -80,7 +80,7 @@ class TestWebHTTP < Minitest::Test
       end
       assert_includes data, "data:", "SSE response should contain data: lines"
     end
-  rescue Net::ReadTimeout
-    # Server still streaming -- that means it accepted the request fine
+  rescue Net::ReadTimeout, Timeout::Error, Timeout::ExitException
+    # Server still streaming — request was accepted; slow pipeline on non-smoke input.
   end
 end

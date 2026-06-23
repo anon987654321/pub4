@@ -234,8 +234,14 @@ module Master
         audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
         voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
 
-        sock_path = synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
-        return sock_path if sock_path
+        2.times do |attempt|
+          sock_path = synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
+          return sock_path if sock_path
+          break unless attempt.zero? && edge_tts_available?
+
+          TtsSupervisor.ensure_daemon!
+          sleep 0.15
+        end
 
         timeout = worker_timeout
         _out, err, status = Timeout.timeout(timeout) do

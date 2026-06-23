@@ -82,7 +82,7 @@ class TtsJob
       CACHE_DIR.join("#{@job_id}.job"),
       JSON.generate(text: @text, voice: @voice, style: @style, rate: @rate, pitch: @pitch)
     )
-    data = Master::Voice::Speech.synthesize_bytes(@text, voice: @voice, style: @style, rate: @rate, pitch: @pitch)
+    data = synthesize_with_retry
     if data.nil? || data.empty?
       message = Master::Voice::Speech.last_error || "synthesis produced empty audio"
       record_failure(message)
@@ -96,6 +96,19 @@ class TtsJob
   end
 
   private
+
+  def synthesize_with_retry
+    2.times do |attempt|
+      data = Master::Voice::Speech.synthesize_bytes(@text, voice: @voice, style: @style, rate: @rate, pitch: @pitch)
+      return data if data && !data.empty?
+
+      break if attempt.positive?
+
+      Master::Voice::TtsSupervisor.ensure_daemon!
+      sleep 0.2
+    end
+    nil
+  end
 
   def cache_path
     CACHE_DIR.join("#{@job_id}.mp3")

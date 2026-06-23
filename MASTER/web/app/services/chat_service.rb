@@ -4,6 +4,8 @@ require "json"
 require "open3"
 
 class ChatService
+  SMOKE_MESSAGES = %w[ping pong health up].freeze
+
   COUNCIL_PERSONA_VOICE = {
     "Architect" => :osman,
     "Skeptic" => :wayne,
@@ -29,6 +31,13 @@ class ChatService
   end
 
   def call
+    stream_open!
+    if smoke_reply?
+      write_chunk(smoke_response)
+      @stream.write("data: [DONE]\n\n")
+      return
+    end
+
     prepare_turn
     subscribe_to_events
     publish_canvas_state
@@ -46,6 +55,23 @@ class ChatService
   end
 
   private
+
+  def stream_open!
+    @stream.write(": connected\n\n")
+  end
+
+  def smoke_reply?
+    SMOKE_MESSAGES.include?(@params[:message].to_s.strip.downcase)
+  end
+
+  def smoke_response
+    case @params[:message].to_s.strip.downcase
+    when "ping" then "pong"
+    when "pong" then "ping"
+    when "health", "up" then "ok"
+    else "ok"
+    end
+  end
 
   def prepare_turn
     input = @params[:message].to_s.strip

@@ -20,8 +20,8 @@
   --shadow-pip: color-mix(in srgb, var(--face-bg) 45%, transparent);
   --shadow-banner: color-mix(in srgb, var(--face-bg) 28%, transparent);
   --face-bar-height: 36px;
-  --face-particle-size: 0.017;
-  --face-glow-scale: 1.18;
+  --face-particle-size: 0.019;
+  --face-glow-scale: 1.22;
   --face-phosphor-decay: 0.80;
   --transition-fast: 180ms;
   --transition-normal: 300ms;
