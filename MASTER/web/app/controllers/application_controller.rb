@@ -88,7 +88,7 @@ class ApplicationController < ActionController::Base
     return if container
 
     respond_to do |fmt|
-      fmt.html { render inline: WARMING_HTML, layout: false, status: :service_unavailable }
+      fmt.html { render inline: WARMING_HTML, layout: false, status: :ok }
       fmt.json { render json: { error: "warming up" }, status: :service_unavailable }
       fmt.any  { head :service_unavailable }
     end
