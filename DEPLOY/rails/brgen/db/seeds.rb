@@ -151,24 +151,13 @@ dating_profiles = users.sample(35).map do |user|
   )
 end
 
-# Likes and matches
 dating_profiles.sample(25).each do |profile|
   liker_profile = dating_profiles.sample
   next if liker_profile == profile
-  like = Dating::Like.create!(liker: liker_profile.user, likee: profile.user)
-  like.record_activity!("DatingLike") if like.respond_to?(:record_activity!)
-  # 30% chance of match
-  if rand < 0.3
-    match = Dating::Match.create!(
-      initiator: liker_profile.user,
-      receiver: profile.user,
-      status: "matched"
-    )
-    match.record_activity!("DatingMatch") if match.respond_to?(:record_activity!)
-  end
+  Dating::Like.find_or_create_by!(liker: liker_profile.user, likee: profile.user)
 end
 
-puts "Dating: #{dating_profiles.size} profiles, likes/matches seeded"
+puts "Dating: #{dating_profiles.size} profiles, #{Dating::Like.count} likes, #{Dating::Match.count} matches"
 
 # --- Playlist subapp ---
 playlists = users.sample(15).map do |user|
