@@ -19,6 +19,7 @@ module Master
       MS_PER_SECOND = 1000
       CLAUDE_RE = /\Aclaude-|anthropic\/claude/i.freeze
       VISION_RE = /gemini-[12]|claude|gpt-4o|gpt-4\.1|llama-4|qwen.*vl|pixtral|gemma-[34]|vision/i.freeze
+      NON_VISION_RE = /glm|nemotron|deepseek(?!.*vl)|qwen3-next|gpt-oss|phi-4/i.freeze
       NEMOTRON3_RE = /nemotron-3/i.freeze
       LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
       TOOL_CALL_RE = /<tool_call>(.*?)<\/tool_call>/m.freeze
@@ -108,7 +109,11 @@ module Master
       def web_chat_model?(model_id)   = model_id.to_s.start_with?("web-chat:")
       def tool_capable?(model_id)     = TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
       def claude_model?(model_id)     = CLAUDE_RE.match?(model_id.to_s)
-      def vision_capable?(model_id)   = VISION_RE.match?(model_id.to_s)
+      def vision_capable?(model_id)
+        id = model_id.to_s
+        return false if NON_VISION_RE.match?(id)
+        VISION_RE.match?(id)
+      end
 
       private
 

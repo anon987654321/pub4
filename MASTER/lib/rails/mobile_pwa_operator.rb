@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "fileutils"
+
 module Master
   module Rails
     class MobilePwaOperator
@@ -45,6 +47,42 @@ module Master
         result
       end
 
+      def fix_app(app_name)
+        path = resolve_app_path(app_name)
+        return Result.err("unknown app: #{app_name}", category: :validation) if path == @root
+
+        changes = []
+        offline_view = File.join(path, "app", "views", "pages", "offline.html.erb")
+        unless File.exist?(offline_view)
+          FileUtils.mkdir_p(File.dirname(offline_view))
+          File.write(offline_view, <<~ERB)
+            <% content_for :title, "Offline" %>
+            <main role="main" aria-label="Offline">
+              <h1>Offline</h1>
+              <p>You are offline. Reconnect to sync pending actions.</p>
+            </main>
+          ERB
+          changes << "offline page"
+        end
+
+        sw_path = @pwa.audit(path).fetch(:service_worker)
+        if sw_path && !File.read(File.join(path, sw_path)).match?(/setCatchHandler|NetworkFirst/)
+          shared = File.join(DEPLOY_RAILS, "shared", "pwa", "service_worker.js")
+          if File.file?(shared)
+            target = File.join(path, sw_path)
+            content = File.read(shared).gsub("__APP_NAME__", app_name.to_s).gsub("__CACHE_VERSION__", "v1")
+            File.write(target, content)
+            changes << "service worker"
+          end
+        end
+
+        return Result.err("no changes needed for #{app_name}", category: :validation) if changes.empty?
+
+        Result.ok({ app: app_name, path:, changes: })
+      rescue StandardError => e
+        Result.err("fix_app #{app_name}: #{e.message}", category: :unknown)
+      end
+
       def audit_all_deploy
         results = Rails8AppAudit.new.scan_all_deploy.map do |app_state|
           next app_state if app_state[:error]
@@ -65,6 +103,8 @@ module Master
 
       def resolve_app_path(app)
         return @root unless app
+
+        candidate = File.join(DEPLOY_RAILS, app.to_s)
         Dir.exist?(candidate) ? candidate : @root
       end
 

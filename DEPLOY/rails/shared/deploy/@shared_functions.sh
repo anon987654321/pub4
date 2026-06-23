@@ -234,7 +234,7 @@ app_secret_for() {
   done
 
   secret=$(ruby34 -e "require 'securerandom'; puts SecureRandom.hex(64)")
-  ${_PRIV} sh -c "print -r 'SECRET_KEY_BASE=${secret}' > /etc/${app_name}.env && chmod 640 /etc/${app_name}.env"
+  ${_PRIV} sh -c "print -r 'SECRET_KEY_BASE=${secret}' > /etc/${app_name}.env && chmod 640 /etc/${app_name}.env && chown root:${app_name} /etc/${app_name}.env 2>/dev/null || chown root:wheel /etc/${app_name}.env"
   log_ok "created /etc/${app_name}.env" >&2
   print -r -- "$secret"
 }

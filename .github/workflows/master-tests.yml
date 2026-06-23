@@ -1,0 +1,28 @@
+name: MASTER Tests
+
+on:
+  push:
+    paths:
+      - "MASTER/**"
+      - ".github/workflows/master-tests.yml"
+  pull_request:
+    paths:
+      - "MASTER/**"
+      - ".github/workflows/master-tests.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: MASTER
+
+      - name: Run MASTER CI
+        working-directory: MASTER
+        run: bundle exec bin/ci

@@ -248,7 +248,7 @@ models:
     - *ollama_qwen
 
 routes:
-  detect_lexical: fast
+  detect_lexical: free
   code_generation: default
   code: default
   refactoring: default
@@ -256,6 +256,8 @@ routes:
   review: default
   explanation: free
   exploration: free
+  chitchat: free
+  help: free
   fallback_default: free
   vision: vision
 

@@ -62,6 +62,12 @@ CHECKS = {
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "playbook")],
     cwd: MASTER_ROOT,
   },
+  "ci" => {
+    desc: "MASTER unit tests + constitution scan",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "ci")],
+    cwd: MASTER_ROOT,
+    needs_ruby3: true,
+  },
   "health" => {
     desc: "OpenBSD VPS stack health",
     cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "openbsd", "health_check.rb")],
@@ -86,7 +92,7 @@ CHECKS = {
 }.freeze
 
 ALIASES = {
-  "quick" => %w[smoke nsaudit rails],
+  "quick" => %w[smoke nsaudit rails ci],
   "all" => %w[smoke nsaudit kernel preflight audit rails phantom_fk],
   "deploy" => %w[rails phantom_fk health playbook],
   "security" => %w[audit nsaudit rails],

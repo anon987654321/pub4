@@ -44,9 +44,9 @@ lessons:
 
   - id: rails_up_vs_root
     area: rails
-    signal: "bin/ci passes /up but production landing 500"
-    action: "Treat /up as liveness only. Curl / separately; read production.log for tenant/view errors."
-    proof: "curl -fsSI https://brgen.no/up vs https://brgen.no/"
+    signal: "bin/ci passes /up but production landing 500; Could not find table cities"
+    action: "Treat /up as liveness only. Run db:migrate on production; ensure locality tables exist (EnsureLocalityTables); DomainRegistry must guard table_exists?(:cities); seed CitySeed.sync! after migrate."
+    proof: "curl -fsSI https://brgen.no/ returns 200; sqlite3 db/production.sqlite3 '.tables' lists cities"
 
   - id: vps_ci_app_user
     area: deploy

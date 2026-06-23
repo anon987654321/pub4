@@ -102,7 +102,12 @@ module Brgen
     def self.resolve_city_record(entry)
       return unless defined?(City)
 
+      connection = ActiveRecord::Base.connection
+      return unless connection.table_exists?(:cities)
+
       City.find_by(domain: entry.domain)
+    rescue ActiveRecord::StatementInvalid
+      nil
     end
 
     def self.subdomain_for(host, domain)

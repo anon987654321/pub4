@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+require "rbconfig"
+
+ROOT = File.expand_path("..", __dir__)
+REPO = File.expand_path("..", ROOT)
+RUBY = RbConfig.ruby
+
+def run_step(name, *cmd, chdir: ROOT)
+  print "ci: #{name.ljust(24)} "
+  $stdout.flush
+  out, status = Open3.capture2e(*cmd, chdir: chdir)
+  if status.success?
+    puts "ok"
+    true
+  else
+    puts "fail"
+    warn out unless out.empty?
+    false
+  end
+end
+
+failures = []
+
+failures << "test" unless run_step("rake test", RUBY, "-S", "rake", "test")
+
+if ENV["MASTER_CI_FULL"] == "1"
+  failures << "smoke" unless run_step("smoke", File.join(ROOT, "bin", "smoke"))
+  failures << "constitution" unless run_step("constitution", RUBY, "-S", "rake", "constitution")
+end
+
+if failures.empty?
+  puts "ci: clean"
+  exit 0
+end
+
+puts "ci: #{failures.size} failure(s): #{failures.join(', ')}"
+exit 1

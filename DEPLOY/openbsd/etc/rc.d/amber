@@ -1,6 +1,7 @@
 #!/bin/ksh
 [ -r /etc/amber.env ] && . /etc/amber.env
 [ -f /etc/rails/amber.env ] && . /etc/rails/amber.env
+: "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/amber.env}"
 daemon="/usr/local/bin/bundle"
 daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/amber falcon serve --bind http://127.0.0.1:61352"
 daemon_user="amber"
