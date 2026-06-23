@@ -233,8 +233,8 @@ restaurants.sample(10).each do |rest|
   )
   order.record_activity!("TakeawayOrder") if order.respond_to?(:record_activity!)
 
-  # Order items
-  rest.menu_items.sample(2).each do |item|
+  items = Takeaway::MenuItem.where(restaurant: rest).order(Arel.sql("RANDOM()")).limit(2)
+  items.each do |item|
     order.order_items.create!(menu_item: item, quantity: rand(1..2), unit_price_cents: item.price_cents)
   end
 
