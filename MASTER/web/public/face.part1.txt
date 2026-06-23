@@ -107,10 +107,10 @@ const THEME_KEY = 'master:theme';
 const FOCUS_KEY = 'master:focus';
 const SCALE_KEY = 'master:ui-scale';
 (function initTheme() {
-  const theme = localStorage.getItem(THEME_KEY) || 'dark';
-  rootBody.dataset.theme = theme;
+  if (localStorage.getItem(THEME_KEY) === 'light') localStorage.removeItem(THEME_KEY);
+  rootBody.dataset.theme = 'dark';
   const themeBtn = document.getElementById('theme-btn');
-  if (themeBtn) themeBtn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
+  if (themeBtn) themeBtn.setAttribute('aria-pressed', 'false');
 })();
 (function initFont() {
   const root = rootBody || document.documentElement;
@@ -127,17 +127,16 @@ function initUiScale() {
   const stored = parseFloat(localStorage.getItem(SCALE_KEY));
   applyUiScale(Number.isFinite(stored) ? stored : 1, false);
 }
-function applyTheme(theme, persist = true) {
-  const next = theme === 'light' ? 'light' : 'dark';
-  rootBody.dataset.theme = next;
-  if (persist) localStorage.setItem(THEME_KEY, next);
+function applyTheme(_theme, persist = true) {
+  rootBody.dataset.theme = 'dark';
+  if (persist) localStorage.setItem(THEME_KEY, 'dark');
   const themeBtn = document.getElementById('theme-btn');
-  if (themeBtn) themeBtn.setAttribute('aria-pressed', next === 'light' ? 'true' : 'false');
+  if (themeBtn) themeBtn.setAttribute('aria-pressed', 'false');
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', next === 'light' ? '#f7f2e8' : '#000000');
+  if (meta) meta.setAttribute('content', '#000000');
 }
 function toggleTheme() {
-  applyTheme(rootBody.dataset.theme === 'light' ? 'dark' : 'light');
+  applyTheme('dark');
 }
 function applyFocusMode(enabled, persist = true) {
   const value = !!enabled;
@@ -292,11 +291,20 @@ function enterDegradedTextUI(reason) {
   banner.textContent = reason || 'Degraded text mode';
 }
 
+function isFaceRuntimeError(source) {
+  const text = String(source || '');
+  return /face|three\.face|particle_kernel|cognition_ecology|visual_bridge/i.test(text);
+}
+
 window.addEventListener('error', event => {
+  if (!isFaceRuntimeError(event?.filename)) return;
   enterDegradedTextUI(event?.message ? `Degraded text mode: ${event.message}` : 'Degraded text mode');
 });
 window.addEventListener('unhandledrejection', event => {
-  enterDegradedTextUI(event?.reason?.message ? `Degraded text mode: ${event.reason.message}` : 'Degraded text mode');
+  const reason = event?.reason;
+  const source = reason?.stack || reason?.message || '';
+  if (!isFaceRuntimeError(source)) return;
+  enterDegradedTextUI(reason?.message ? `Degraded text mode: ${reason.message}` : 'Degraded text mode');
 });
 
 // Read particle sizing from CSS vars (web-ui-improvements.md:97) for theming/CRT profiles.

@@ -40,7 +40,7 @@
 
 html, body {
   height: 100%;
-  background: var(--face-bg);
+  background: #000;
   color: var(--face-fg);
   font: 16px/1.42 "Inter",-apple-system,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   font-feature-settings: "ss01","cv05","kern" 1;
@@ -59,7 +59,7 @@ body.font-mono {
 }
 
 body[data-theme="light"] {
-  --face-bg: var(--face-bg-light);
+  --face-bg: #000;
   --face-fg: var(--face-fg-light);
   --face-muted: color-mix(in srgb, var(--face-fg-light) 44%, transparent);
   --face-dim: color-mix(in srgb, var(--face-fg-light) 18%, transparent);
@@ -111,6 +111,10 @@ body[data-focus-mode="1"] #spin-btn {
 body[data-focus-mode="1"] #zsh {
   background: transparent;
   backdrop-filter: none;
+}
+
+canvas#face {
+  background: #000;
 }
 
 canvas {
@@ -799,7 +803,7 @@ body[data-mode="speaking"] .msg-body { line-height:1.62; transition:line-height 
 body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; }
 
 /* #80 Safe-area gradient behind prompt bar */
-#zsh::after { content:''; position:absolute; inset-block-end:100%; inset-inline:0; height:32px; background:linear-gradient(to bottom,transparent,var(--face-bg)); pointer-events:none; }
+#zsh::after { content:''; position:absolute; inset-block-end:100%; inset-inline:0; height:32px; background:linear-gradient(to bottom,transparent,#000); pointer-events:none; }
 
 body[data-tts-loading="true"] canvas { filter:saturate(var(--mood-sat, 0.7)) brightness(1.04); }
 

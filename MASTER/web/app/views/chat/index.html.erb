@@ -33,8 +33,14 @@
   <link rel="modulepreload" href="<%= asset_path("three.face.module.js") %>">
   <link rel="modulepreload" href="<%= asset_path("face.js") %>">
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
+  <style nonce="<%= content_security_policy_nonce %>">
+    html, body { background: #000; color: #f5f0e8; }
+    canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; }
+    #primer { background: #000; }
+    #zsh { background: #000; }
+  </style>
 </head>
-<body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
+<body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark">
   <div class="top-left-logo" aria-hidden="true">brgen</div>
   <canvas id="face" aria-hidden="true"></canvas>
   <div id="mic-dot" aria-hidden="true"></div>
@@ -66,8 +72,12 @@
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v1").to_json.html_safe %>;
     (function(){
-      var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false;
-      function go(){if(fired)return;fired=true;window._primerFired=true;if(p&&p.parentNode)p.parentNode.removeChild(p);if(z)z.classList.add('live');}
+      var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false,timer=null;
+      function boot(){if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){window.MASTER_FACE.startEverything();return true;}return false;}
+      function go(){
+        if(fired)return;fired=true;window._primerFired=true;
+        if(!boot()){timer=setInterval(function(){if(boot())clearInterval(timer);},40);setTimeout(function(){clearInterval(timer);},8000);if(p&&p.parentNode)p.parentNode.removeChild(p);if(z)z.classList.add('live');}
+      }
       if(p){p.addEventListener('pointerdown',go,{passive:true});p.addEventListener('touchstart',go,{passive:true});p.addEventListener('click',go);p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter')go();});}
       addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' '||e.key==='OK'))go();},{once:false});
     })();
