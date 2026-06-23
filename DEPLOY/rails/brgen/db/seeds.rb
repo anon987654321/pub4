@@ -65,9 +65,9 @@ posts = users.sample(30).flat_map do |user|
 end
 
 posts.each do |post|
-  # Simulate reactions/votes via shared concerns
-  post.reactions.create!(user: users.sample, kind: %w[like love].sample) if post.respond_to?(:reactions)
-  post.votes.create!(user: users.sample, value: [1, -1].sample) if post.respond_to?(:votes)
+  voter = users.sample
+  post.reactions.find_or_create_by!(user: voter, kind: %w[like love].sample)
+  post.votes.find_or_create_by!(user: users.sample) { |v| v.value = [1, -1].sample }
 end
 
 puts "Created #{posts.size} posts + reactions"

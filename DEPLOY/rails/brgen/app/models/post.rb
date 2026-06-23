@@ -7,6 +7,7 @@ class Post < ApplicationRecord
   include Shared.concern(:Votable) rescue include Shared::Votable
   include Shared.concern(:Commentable) rescue include Shared::Commentable
   include Shared.concern(:Taggable) rescue include Shared::Taggable
+  include Shared.concern(:Reactable) rescue include Shared::Reactable
   include Shared::ActivityTrackable
   tracks_activity created: "PostCreated", source_vertical: "social", actor: :user
 
@@ -16,9 +17,6 @@ class Post < ApplicationRecord
   belongs_to :user
   belongs_to :community, optional: true
 
-
-  has_many :taggings, dependent: :destroy
-  has_many :hashtags, through: :taggings
   has_many :mentions, dependent: :destroy
 
   validates :title,   presence: true, length: { maximum: 300 }
