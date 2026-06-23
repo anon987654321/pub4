@@ -138,6 +138,7 @@ master_web_assets_precompile() {
   log "MASTER web assets:precompile"
   (
     cd "$web_root"
+    rm -rf public/assets
     RAILS_ENV=production SECRET_KEY_BASE="${SECRET_KEY_BASE:-dummy}" bundle_exec exec rails assets:precompile
     bundle_exec exec ruby "${PUB4:-/home/dev/pub4}/DEPLOY/rails/master_web_assets_gate.rb"
   ) || { log_err "MASTER web assets precompile failed"; return 1; }
