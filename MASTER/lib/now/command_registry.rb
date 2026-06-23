@@ -44,7 +44,7 @@ module Master
           "rollback" => command(:dispatch_rollback, undo),
           "redo" => command(:dispatch_redo, undo),
           "dmesg" => command(:dispatch_dmesg, logging),
-          "config" => command(:dispatch_config, config)
+          "config" => command(:dispatch_config, config),
         }
       end
 
@@ -55,13 +55,13 @@ module Master
       def reasoning_commands(config)
         {
           "mode" => command(:dispatch_mode, config),
-          "task" => command(:dispatch_task, config)
+          "task" => command(:dispatch_task, config),
         }
       end
 
       def persona_commands(config)
         {
-          "persona" => command(:dispatch_persona, config)
+          "persona" => command(:dispatch_persona, config),
         }
       end
 
@@ -181,7 +181,7 @@ module Master
       def control_commands(standing, soul)
         {
           "orders" => command(:dispatch_orders, standing),
-          "soul" => command(:dispatch_soul, soul)
+          "soul" => command(:dispatch_soul, soul),
         }
       end
 

@@ -20,7 +20,7 @@ module Master
           "master: loop=#{status[:selected] || "none"} owner=#{status[:owner] || "none"}",
           "master: budget valid=#{budget[:valid]} slot=#{budget[:slot] || "unknown"}",
           "master: motd #{motd_spotlight}",
-          "master: ready dmesg=preserved"
+          "master: ready dmesg=preserved",
         ]
       end
 

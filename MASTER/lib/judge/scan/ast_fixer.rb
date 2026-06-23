@@ -184,10 +184,16 @@ module Master
               next
             end
             keep << line
-            skip_next = unconditional_terminal?(line) && skippable_dead_line?(lines[index + 1].to_s)
+            next_line = lines[index + 1].to_s
+            skip_next = unconditional_terminal?(line) && skippable_dead_line?(next_line) && !open_collection?(line)
           end
           @transforms << :dead_code if changed
           keep.join
+        end
+
+        def open_collection?(line)
+          counts = line.each_char.with_object(Hash.new(0)) { |ch, tally| tally[ch] += 1 if "(){}[]".include?(ch) }
+          counts["("] > counts[")"] || counts["{"] > counts["}"] || counts["["] > counts["]"]
         end
 
         def unconditional_terminal?(line)
@@ -216,6 +222,8 @@ module Master
             current = lines[i].strip
             previous = lines[i - 1]
             next unless current.match?(/^[\]}]/)
+            next if block_close?(lines, i)
+            next if percent_word_array_close?(lines, i)
             next if previous.rstrip.end_with?(",", "[", "{", "(")
             next unless previous.match?(/^\s*[^#\n]+/)
 
@@ -224,6 +232,29 @@ module Master
           end
           @transforms << :trailing_commas if changed
           lines.join
+        end
+
+        def block_close?(lines, close_index)
+          depth = 0
+          close_index.downto(0) do |index|
+            line = lines[index]
+            depth += line.count("}") - line.count("{")
+            next unless depth.zero? && line.match?(/\{\s*\|/)
+
+            return true
+          end
+          false
+        end
+
+        def percent_word_array_close?(lines, close_index)
+          close_line = lines[close_index].strip
+          return false unless close_line.start_with?("]")
+
+          close_index.downto(0) do |index|
+            return true if lines[index].match?(%r/%[iw]\[/)
+            return false if lines[index].strip.start_with?("[", "{")
+          end
+          false
         end
 
         def ruby? = File.extname(@path).downcase == ".rb"

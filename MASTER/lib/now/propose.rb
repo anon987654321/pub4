@@ -26,7 +26,7 @@ module Master
         [/(error|fail|exception|crash)/i, "what went wrong?", "error/failure in last reply", 0.7],
         [/\b(routed|tier|escalat|chose|picked)\b/i, "/why", "decision/score worth inspecting", 0.6],
         [/\bshould we\b|\btradeoff\b|\beither\b/i, "/council", "constitutional question raised", 0.55],
-        [/\b(applied|wrote|patched|edited)\b/i, "/commit", "patch landed, ready to commit", 0.8]
+        [/\b(applied|wrote|patched|edited)\b/i, "/commit", "patch landed, ready to commit", 0.8],
       ].freeze
 
       class Proposal
@@ -185,7 +185,7 @@ module Master
         {
           acted: entries.count { |entry| entry["event"] == "acted" },
           rejected: entries.count { |entry| entry["event"] == "rejected" },
-          ignored: entries.count { |entry| entry["event"] == "expired" }
+          ignored: entries.count { |entry| entry["event"] == "expired" },
         }
       end
 

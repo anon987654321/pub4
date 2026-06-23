@@ -220,7 +220,7 @@ module Master
             bodies << {
               name: node.name.to_s,
               line: node.location.start_line,
-              tokens: normalized_tokens(lines.join)
+              tokens: normalized_tokens(lines.join),
             }
           end
           bodies

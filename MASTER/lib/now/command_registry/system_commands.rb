@@ -21,7 +21,7 @@ module Master
           "commit" => command(:dispatch_commit, agent, root),
           "snapshot" => command(:dispatch_snapshot, root),
           "diag" => command(:dispatch_diag, diag),
-          "reload" => command(:dispatch_reload)
+          "reload" => command(:dispatch_reload),
         }
       end
 
@@ -32,7 +32,7 @@ module Master
         "workflow" => ["data/workflow.yml", "agent loops, pipeline, council, gates"],
         "orders" => ["data/standing_orders.yml", "event triggers and standing operating procedures"],
         "patterns" => ["data/patterns.yml", "gh/openbsd/zsh tool idioms"],
-        "openbsd" => ["data/openbsd.yml", "pf/nsd/httpd/relayd config validators"]
+        "openbsd" => ["data/openbsd.yml", "pf/nsd/httpd/relayd config validators"],
       }.freeze
 
       def dispatch_orient(root, ctx: nil)
@@ -44,7 +44,7 @@ module Master
           "pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render",
           "",
           "constitution:",
-          *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{path.ljust(28)} #{desc}" }
+          *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{path.ljust(28)} #{desc}" },
         ].join("\n")
       end
 
@@ -88,7 +88,7 @@ module Master
         purge_snapshot_gists
         [
           publish_snapshot(root, "MASTER"),
-          publish_snapshot(File.expand_path("../DEPLOY", root), "DEPLOY")
+          publish_snapshot(File.expand_path("../DEPLOY", root), "DEPLOY"),
         ].join("\n")
       end
 

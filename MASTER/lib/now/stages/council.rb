@@ -107,7 +107,7 @@ module Master
         entry = {
           "timestamp" => Time.now.iso8601,
           "message" => message.to_s[0, EXEMPLAR_MSG_CHARS],
-          "feedback" => feedback.to_s[0, EXEMPLAR_FEEDBACK_CHARS]
+          "feedback" => feedback.to_s[0, EXEMPLAR_FEEDBACK_CHARS],
         }
         @exemplar_mutex.synchronize do
           loaded   = File.exist?(EXEMPLARS_PATH) ? Master.load_yaml(EXEMPLARS_PATH, default: []) : []

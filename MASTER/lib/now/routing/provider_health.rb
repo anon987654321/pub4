@@ -27,7 +27,7 @@ module Master
             model: model.to_s,
             status: status.to_s,
             latency_ms: latency_ms,
-            error: error&.to_s
+            error: error&.to_s,
           }.compact
           FileUtils.mkdir_p(File.dirname(path))
           File.open(path, "a") { |f| f.puts(JSON.generate(event)) }

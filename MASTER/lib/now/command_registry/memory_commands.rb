@@ -11,7 +11,7 @@ module Master
         {
           "memory" => command(:dispatch_memory, memory),
           "dreams" => command(:dispatch_dreams, memory, agent),
-          "capture" => command(:dispatch_capture, root)
+          "capture" => command(:dispatch_capture, root),
         }
       end
 

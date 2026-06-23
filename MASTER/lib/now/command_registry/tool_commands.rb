@@ -15,7 +15,7 @@ module Master
           "postpro" => command(:dispatch_postpro, root),
           "repligen" => command(:dispatch_repligen, root),
           "photograph" => command(:dispatch_photograph, root, agent),
-          "sing" => command(:dispatch_sing, root)
+          "sing" => command(:dispatch_sing, root),
         }
       end
 
@@ -88,7 +88,7 @@ module Master
           "refined: #{refined_prompt[0, 120]}...",
           "generated: #{output_dir}",
           "postpro (#{results.size} files): #{processed_dir}",
-          results.join("\n")
+          results.join("\n"),
         ].join("\n")
       end
 

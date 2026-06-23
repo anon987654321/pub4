@@ -95,6 +95,33 @@ class TestAstFixerTransforms < Minitest::Test
     refute_includes result[:transforms], :freeze_constants
   end
 
+  def test_trailing_commas_skip_block_closers
+    source = <<~RUBY
+      records.map { |rec|
+        "value"
+      }.compact
+    RUBY
+    result = fix("blocks.rb", source)
+
+    refute_includes result[:content], %("value",)
+    refute_includes result[:transforms], :trailing_commas
+  end
+
+  def test_dead_code_keeps_multiline_return_arguments
+    source = <<~RUBY
+      def blocked
+        return Result.err("deploy blocked",
+                          category: :policy)
+        log(:never)
+      end
+    RUBY
+    result = fix("pipeline.rb", source)
+
+    assert_includes result[:content], "category: :policy)"
+    assert_includes result[:content], "log(:never)"
+    refute_includes result[:transforms], :dead_code
+  end
+
   def test_dead_code_keeps_end_after_return_and_conditional_return
     source = <<~RUBY
       def tier_for_model(model_id)

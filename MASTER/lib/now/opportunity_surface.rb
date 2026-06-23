@@ -188,7 +188,7 @@ module Master
           impact: 0.5 + [weight.to_f / 2.0, 0.5].min,
           kind: :opportunity,
           estimated_tokens: 450,
-          estimated_cost: 0.0014
+          estimated_cost: 0.0014,
         }
       end
     end

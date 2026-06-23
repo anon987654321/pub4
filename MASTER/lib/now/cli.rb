@@ -29,7 +29,7 @@ module Master
         error: "!!",
         warning: "!",
         style: ".",
-        critical: "!!"
+        critical: "!!",
       }.freeze
       SLASH_COMMANDS = %w[
         /help /exit /quit /undo /redo /rollback /history /grep /audit /cost /watch /why /focus /last /cmd /dmesg /chips /propose /principles /restart

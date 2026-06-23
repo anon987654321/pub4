@@ -19,7 +19,7 @@ module Master
         rendered voice
         image
         channel metadata turn_id
-        _timings _parallel_errors _parallel_timeout _stage_error
+        _timings _parallel_errors _parallel_timeout _stage_error,
       ].freeze
 
       REQUIRED = %i[user_message].freeze
@@ -31,7 +31,7 @@ module Master
         output: [String, NilClass],
         pressure: [TrueClass, FalseClass, NilClass],
         lint_report: [Array, NilClass],
-        voice: [String, NilClass]
+        voice: [String, NilClass],
       }.freeze
 
       MAX_OUTPUT_BYTES = 8_192
@@ -44,7 +44,7 @@ module Master
         execute: %i[user_message handler],
         council: %i[output],
         lint: %i[output],
-        render: %i[output]
+        render: %i[output],
       }.freeze
 
       def self.build(user_message:, **opts)

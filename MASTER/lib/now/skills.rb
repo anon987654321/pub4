@@ -65,7 +65,7 @@ module Master
       def skill_roots
         roots = [
           File.join(@root, "data", SKILLS_DIR),
-          File.join(@root, SKILLS_DIR)
+          File.join(@root, SKILLS_DIR),
         ]
         roots.select { |path| Dir.exist?(path) }.uniq
       end

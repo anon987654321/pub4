@@ -97,7 +97,7 @@ module Master
             ts: @now.call.iso8601,
             type: type.to_s,
             workflow_id: workflow_id.to_s,
-            payload:
+            payload:,
           }
           FileUtils.mkdir_p(File.dirname(@path))
           File.open(@path, "a") { |f| f.puts(JSON.generate(event)) }

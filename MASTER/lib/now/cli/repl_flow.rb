@@ -46,7 +46,7 @@ module Master
           (status if status),
           (@refs.renderer.render("  ↳ #{sugg}", mode: :dim) if sugg),
           prompt_lines.first,
-          prompt_lines.last
+          prompt_lines.last,
         ].compact.join("\n")
       end
 
@@ -55,7 +55,7 @@ module Master
           turns: @refs.session.messages.size,
           violations: violations_count,
           model: @refs.agent.model,
-          cost: @refs.session.cost.to_f.round(4)
+          cost: @refs.session.cost.to_f.round(4),
         }
         return nil if @last_status_state == state
 

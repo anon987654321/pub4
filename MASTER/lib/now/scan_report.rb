@@ -139,7 +139,7 @@ module Master
         {
           files_affected: Array(cluster.map { |v| v[:file] }.compact.uniq).size,
           occurrences: cluster.size,
-          severity_multiplier: severity_multiplier(cluster.first[:severity])
+          severity_multiplier: severity_multiplier(cluster.first[:severity]),
         }
       end
 
@@ -183,7 +183,7 @@ module Master
             message: message,
             fix: fix,
             count: cluster.size,
-            files: files.size
+            files: files.size,
           }
         end.sort_by { |cluster| [-cluster[:count], -cluster[:files], cluster[:rule]] }
       end

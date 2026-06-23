@@ -65,7 +65,7 @@ module Master
           "topic" => command(:dispatch_topic, session),
           "process" => command(:dispatch_process),
           "propose-tree" => command(:dispatch_propose_tree, propose_tree),
-          "ecology" => command(:dispatch_ecology, ecology)
+          "ecology" => command(:dispatch_ecology, ecology),
         }
       end
 

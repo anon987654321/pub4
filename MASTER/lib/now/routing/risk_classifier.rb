@@ -15,7 +15,7 @@ module Master
           critical: %i[destructive_command secret_handling permission_change public_deployment],
           high: %i[file_mutation auth_mutation security_audit production_runtime tool_execution],
           medium: %i[docs_change config_change preview_module api_design],
-          low: %i[classification summarization cluster_label ui_copy explanation]
+          low: %i[classification summarization cluster_label ui_copy explanation],
         }.freeze
 
         PATH_OVERRIDES = {
@@ -27,7 +27,7 @@ module Master
           /\bbin\/cli\b|\blib\/ground\/axioms\b|\bdata\/standing_orders\b/i => :critical,
           /\blib\/loop\b|\blib\/judge\/security\b/i => :high,
           /\bapp\/controllers\b|\bapp\/models\b/i => :medium,
-          /\btest\/\b|\bspec\/\b/i => :low
+          /\btest\/\b|\bspec\/\b/i => :low,
         }.freeze
 
         # Files referenced by this many clusters get tier elevation.
