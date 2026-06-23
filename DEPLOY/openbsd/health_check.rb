@@ -48,7 +48,7 @@ end
 
 core_up = { "master" => 53187, "brgen" => 38182 }
 optional_up = { "amber" => 61352, "bsdports" => 47312, "baibl" => 10007, "blognet" => 10002, "hjerterom" => 38891 }
-(core_up + optional_up).each do |name, port|
+core_up.merge(optional_up).each do |name, port|
   svc = name == "master" ? "master" : "#{name}_rails"
   svc = "baibl" if name == "baibl"
   check_ok, check_out = run(*privileged("/usr/sbin/rcctl", "check", svc))
@@ -88,7 +88,7 @@ optional_https = {
   "hjerterom.brgen.no" => "https://hjerterom.brgen.no/up",
   "bsdports.org" => "https://bsdports.org/up"
 }
-(core_https + optional_https).each do |name, url|
+core_https.merge(optional_https).each do |name, url|
   if optional_https.key?(name)
     backend = name.split(".").first
     backend = "bsdports" if name == "bsdports.org"
