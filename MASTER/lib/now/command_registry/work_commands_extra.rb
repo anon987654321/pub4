@@ -76,8 +76,8 @@ module Master
       def dispatch_critique(deliberation:, root:, ctx: nil)
         arg = arg_for(ctx)
         return "usage: /critique <file|text>" if arg.empty?
-        path = File.expand_path(arg, root)
-        payload = File.exist?(path) ? File.read(path, encoding: "UTF-8") : arg
+        path = expand_or_root(arg, root)
+        payload = File.exist?(path) ? snapshot_artifact(path) : arg
         run_deliberation(deliberation:, payload:, context: "explicit /critique session") { |feedback|
           TribunalFeedback.new(feedback).render_full
         }

@@ -48,6 +48,7 @@ coverage/
 
 # Node modules (if any JS tooling)
 node_modules/
+MASTER/web/script/three_build/
 
 # Repo-relative temp dir
 tmp/

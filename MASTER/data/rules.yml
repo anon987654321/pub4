@@ -361,7 +361,7 @@ schema_metadata:
       rationale: string
       last_revised: iso8601
 paths:
-  skip_dirs: [.git, vendor, tmp, var, node_modules, .bundle, coverage, log, dist, knowledge]
+  skip_dirs: [.git, vendor, tmp, var, node_modules, .bundle, coverage, log, dist, knowledge, three_build]
   tree:
     max_depth: 2
     max_lines: 200
