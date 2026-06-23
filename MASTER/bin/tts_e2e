@@ -27,11 +27,12 @@ end
 def wait_for_up
   deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + BOOT_WAIT_S
   while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
-    res = http_get("/up", read_timeout: 5)
-    return true if res.code.to_i.between?(200, 399)
-  rescue StandardError
-    nil
-  ensure
+    begin
+      res = http_get("/up", read_timeout: 5)
+      return true if res.code.to_i.between?(200, 399)
+    rescue StandardError
+      nil
+    end
     sleep 2
   end
   false
@@ -44,11 +45,13 @@ query += "&voice=#{URI.encode_www_form_component(VOICE)}" unless VOICE.empty?
 
 res = nil
 3.times do |attempt|
-  res = http_get(query, read_timeout: 120)
-  break
-rescue Net::ReadTimeout, Errno::ECONNREFUSED, Errno::ETIMEDOUT => e
-  warn("tts_e2e: request retry #{attempt + 1} (#{e.class})")
-  sleep 4
+  begin
+    res = http_get(query, read_timeout: 120)
+    break
+  rescue Net::ReadTimeout, Errno::ECONNREFUSED, Errno::ETIMEDOUT => e
+    warn("tts_e2e: request retry #{attempt + 1} (#{e.class})")
+    sleep 4
+  end
 end
 fail!("initial TTS request failed") unless res
 
