@@ -16,11 +16,16 @@ def privileged(*cmd)
   cmd
 end
 
-services = %w[nsd httpd relayd smtpd master brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl]
-services.each do |service|
+core_services = %w[nsd httpd relayd smtpd master brgen_rails]
+optional_services = %w[amber_rails bsdports_rails blognet_rails hjerterom_rails baibl]
+(core_services + optional_services).each do |service|
   ok, out = run(*privileged("/usr/sbin/rcctl", "check", service))
   next unless ok
-  failures << "#{service}: #{out.empty? ? "check failed" : out}" unless out.include?("(ok)")
+  running = out.include?("(ok)")
+  if optional_services.include?(service)
+    next unless running
+  end
+  failures << "#{service}: #{out.empty? ? "check failed" : out}" unless running
 end
 
 pfctl = File.executable?("/sbin/pfctl") ? "/sbin/pfctl" : "/usr/sbin/pfctl"
@@ -41,16 +46,14 @@ unless dns_ok
   failures << "dns: no local SOA (nsd #{nsd_out.strip})" unless nsd_ok && nsd_out.include?("(ok)")
 end
 
-app_up_checks = {
-  "master" => 53187,
-  "brgen" => 38182,
-  "amber" => 61352,
-  "bsdports" => 47312,
-  "baibl" => 10007,
-  "blognet" => 10002,
-  "hjerterom" => 38891
-}
-app_up_checks.each do |name, port|
+core_up = { "master" => 53187, "brgen" => 38182 }
+optional_up = { "amber" => 61352, "bsdports" => 47312, "baibl" => 10007, "blognet" => 10002, "hjerterom" => 38891 }
+(core_up + optional_up).each do |name, port|
+  svc = name == "master" ? "master" : "#{name}_rails"
+  svc = "baibl" if name == "baibl"
+  check_ok, check_out = run(*privileged("/usr/sbin/rcctl", "check", svc))
+  next if optional_up.key?(name) && !(check_ok && check_out.include?("(ok)"))
+
   ok, out = run("/usr/local/bin/curl", "-fsS", "--max-time", "20", "http://127.0.0.1:#{port}/up")
   failures << "#{name} up: #{out.empty? ? "no response on :#{port}" : out}" unless ok
 end
@@ -74,16 +77,25 @@ certs.each do |cert|
   failures << "cert missing: #{cert}" unless File.exist?(cert)
 end
 
-https_checks = {
+core_https = {
   "ai.brgen.no" => "https://ai.brgen.no/up",
-  "brgen.no" => "https://brgen.no/up",
+  "brgen.no" => "https://brgen.no/up"
+}
+optional_https = {
   "amber.brgen.no" => "https://amber.brgen.no/up",
   "baibl.brgen.no" => "https://baibl.brgen.no/up",
   "blognet.brgen.no" => "https://blognet.brgen.no/up",
   "hjerterom.brgen.no" => "https://hjerterom.brgen.no/up",
   "bsdports.org" => "https://bsdports.org/up"
 }
-https_checks.each do |name, url|
+(core_https + optional_https).each do |name, url|
+  if optional_https.key?(name)
+    backend = name.split(".").first
+    backend = "bsdports" if name == "bsdports.org"
+    svc = backend == "baibl" ? "baibl" : "#{backend}_rails"
+    check_ok, check_out = run(*privileged("/usr/sbin/rcctl", "check", svc))
+    next unless check_ok && check_out.include?("(ok)")
+  end
   ok, out = run("/usr/local/bin/curl", "-fsS", "--max-time", "25", url)
   failures << "#{name} https: #{out.empty? ? "no response" : out}" unless ok
 end

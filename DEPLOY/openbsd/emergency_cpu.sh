@@ -10,15 +10,13 @@ echo "=== before ==="
 uptime
 top -b -n1 | head -18
 
-echo "=== stop crash-looping app services ==="
-for svc in brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream; do
-  if rcctl check "$svc" 2>/dev/null | grep -qv failed; then
-    rcctl stop "$svc" 2>/dev/null && echo "stopped $svc"
-  else
-    rcctl stop "$svc" 2>/dev/null || true
-    echo "stopped (or already down) $svc"
-  fi
+echo "=== stop optional app services (keep master + brgen) ==="
+for svc in amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream; do
+  rcctl stop "$svc" 2>/dev/null && echo "stopped $svc" || echo "already down $svc"
 done
+
+echo "=== kill stale tts-worker daemons ==="
+pkill -f 'tts-worker --daemon' 2>/dev/null || true
 
 echo "=== kill orphan compile/boot processes ==="
 pkill -f 'bundle install' 2>/dev/null || true

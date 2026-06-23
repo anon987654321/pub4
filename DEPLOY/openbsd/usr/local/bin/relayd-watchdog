@@ -1,6 +1,6 @@
 #!/bin/sh
 # relayd-watchdog — restart relayd if rcctl check fails (CY11).
-# Cron: * * * * * /usr/local/bin/relayd-watchdog
+# Cron: */5 * * * * /usr/local/bin/relayd-watchdog
 
 if /usr/sbin/rcctl check relayd 2>&1 | grep -q 'relayd(ok)'; then
   exit 0

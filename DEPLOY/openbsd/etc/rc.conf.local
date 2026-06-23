@@ -2,5 +2,6 @@ pf=YES
 httpd_flags=
 nsd_flags=
 relayd_flags=
-pkg_scripts=master brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream
+# vm23_small: boot core only; optional apps via rcctl start or resource_guard when idle.
+pkg_scripts=master brgen_rails
 sndiod_flags=NO

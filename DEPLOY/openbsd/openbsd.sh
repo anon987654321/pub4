@@ -160,8 +160,8 @@ sync_openbsd_configs() {
     typeset root_cron=/tmp/root_crontab.$$
     crontab -l 2>/dev/null > $root_cron || :
     if [[ -x /usr/local/bin/relayd-watchdog ]] && ! grep -q relayd-watchdog $root_cron 2>/dev/null; then
-      print -r -- "* * * * * /usr/local/bin/relayd-watchdog" >> $root_cron
-      log INFO "installed root cron: relayd-watchdog"
+      print -r -- "*/5 * * * * /usr/local/bin/relayd-watchdog" >> $root_cron
+      log INFO "installed root cron: relayd-watchdog (every 5 min)"
     fi
     if [[ -x /usr/local/bin/config-drift-check ]] && ! grep -q config-drift-check $root_cron 2>/dev/null; then
       print -r -- "*/15 * * * * /usr/local/bin/config-drift-check >> /var/log/config_drift.log 2>&1" >> $root_cron
@@ -220,6 +220,18 @@ sync_openbsd_apply() {
   done
   # (In per-app: before bundle, check Gemfile etc.)
 
+  install -m 755 "${SCRIPT_DIR}/resource_guard.sh" /usr/local/bin/resource_guard.sh 2>/dev/null || true
+  if [[ -x /usr/local/bin/resource_guard.sh ]]; then
+    typeset guard_cron=/tmp/root_crontab.$$
+    crontab -l 2>/dev/null > $guard_cron || :
+    if ! grep -q resource_guard $guard_cron 2>/dev/null; then
+      print -r -- "*/5 * * * * /usr/local/bin/resource_guard.sh" >> $guard_cron
+      crontab $guard_cron
+      log INFO "installed root cron: resource_guard (every 5 min)"
+    fi
+    rm -f $guard_cron
+  fi
+
   typeset -a svcs=(nsd httpd relayd smtpd master)
   for svc in $svcs; do
     [[ -x /etc/rc.d/$svc ]] || continue
@@ -229,9 +241,13 @@ sync_openbsd_apply() {
   done
   # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
   typeset -A app_ports=(brgen_rails 38182 amber_rails 61352 bsdports_rails 47312 blognet_rails 10002 hjerterom_rails 38891 baibl 10007)
-  for svc in brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream; do
+  typeset -a core_apps=(brgen_rails)
+  typeset -a optional_apps=(amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream)
+  for svc in $core_apps $optional_apps; do
     [[ -x /etc/rc.d/$svc ]] || continue
     /usr/sbin/rcctl enable $svc 2>/dev/null || true
+  done
+  for svc in $core_apps; do
     typeset port=${app_ports[$svc]:-0}
     if (( port > 0 )); then
       typeset code; code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://127.0.0.1:${port}/up 2>/dev/null)
@@ -240,6 +256,7 @@ sync_openbsd_apply() {
     /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
       || log WARN "$svc restart/start failed"
   done
+  log INFO "optional Rails apps left stopped (vm23_small); start with: doas rcctl start <app>"
 
   ruby34 "${SCRIPT_DIR}/health_check.rb" && log INFO "health_check ok" \
     || log WARN "health_check reported issues (see above)"
@@ -626,7 +643,7 @@ configure_relayd() {
 
   {
     print -r -- "log connection errors"
-    print -r -- "interval 30"
+    print -r -- "interval 120"
     print -r -- "timeout 2000"
     print -r -- ""
     for backend in ${(k)BACKEND_PORT}; do

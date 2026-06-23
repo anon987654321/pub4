@@ -1,0 +1,28 @@
+# vm23 resource budget — 1 vCPU, ~1 GiB RAM (OpenBSD Amsterdam).
+# Keep aggregate steady-state under ~60% CPU and ~85% RAM to avoid host complaints.
+
+profile: vm23_small
+cpus: 1
+ram_mb: 1024
+
+# Always on: public face + flagship app.
+core_services:
+  - master
+  - brgen_rails
+
+# Start manually or via resource_guard when load is low (see README).
+optional_services:
+  - amber_rails
+  - bsdports_rails
+  - blognet_rails
+  - hjerterom_rails
+  - baibl
+  - litestream
+
+limits:
+  load_avg_1m_warn: 0.85
+  load_avg_1m_crit: 1.20
+  mem_free_pct_warn: 12
+  mem_free_pct_crit: 6
+  relayd_check_interval: 120
+  master_falcon_workers: 1
