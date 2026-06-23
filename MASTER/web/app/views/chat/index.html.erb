@@ -43,6 +43,7 @@
 </head>
 <body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark">
   <div class="top-left-logo" aria-hidden="true">brgen</div>
+  <canvas id="cognition-ecology" aria-hidden="true"></canvas>
   <canvas id="face" aria-hidden="true"></canvas>
   <div id="mic-dot" aria-hidden="true"></div>
   <div id="yt-player-a" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
@@ -105,11 +106,14 @@
       addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' '||e.key==='OK'))go();},{once:false});
     })();
   </script>
+  <script src="<%= asset_path("visual_governor.js") %>" defer></script>
   <script src="<%= asset_path("topology_registry.js") %>" defer></script>
   <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
   <script src="<%= asset_path("chat_actions.js") %>" defer></script>
   <script type="module" src="<%= asset_path("face.js") %>"></script>
   <script src="<%= asset_path("visual_bridge.js") %>" defer></script>
+  <script src="<%= asset_path("cognition_ecology.js") %>" defer></script>
+  <script src="<%= asset_path("cognition_ecology_render.js") %>" defer></script>
   <script src="<%= asset_path("chat.js") %>" defer></script>
 </body>
 </html>

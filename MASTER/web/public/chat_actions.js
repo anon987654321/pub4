@@ -92,7 +92,11 @@ async function sendMessage(text) {
     }
   };
   window._chatEvtSrc.addEventListener('dmesg', (ev) => {
-    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
+    try {
+      const line = JSON.parse(ev.data);
+      window._chatOnDmesg?.(line);
+      window.MASTERVisual?.runtime?.({ event: "dmesg", data: line });
+    } catch (_) {}
   });
   window._chatEvtSrc.addEventListener('thought', (ev) => {
     try { window._chatOnThought?.(JSON.parse(ev.data)); } catch (_) {}
@@ -126,3 +130,5 @@ function startMic(btn) {
   btn._rec = rec;
   btn.classList.add('active');
 }
+
+if (!window.sendMessage) window.sendMessage = sendMessage;

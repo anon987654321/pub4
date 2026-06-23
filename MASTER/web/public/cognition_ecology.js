@@ -95,7 +95,7 @@
       "inset:0",
       "width:100vw",
       "height:100vh",
-      "z-index:1",
+      "z-index:0",
       "pointer-events:none",
       "mix-blend-mode:screen",
       "image-rendering:pixelated"
@@ -290,13 +290,6 @@
     }
   }
   window.addEventListener("master:visual", onMasterVisual);
-
-  // Also expose direct callable for bridge/registry (idempotent path).
-  window.addEventListener("master:visual", (event) => {
-    if (window.MASTEREcology && typeof window.MASTEREcology.event === "function") {
-      // no-op here; the MASTEREcology.event already routes to ingest
-    }
-  });
 
   window.MASTEREcology = {
     state,

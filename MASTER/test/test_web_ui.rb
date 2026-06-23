@@ -156,6 +156,20 @@ class TestWebUI < Minitest::Test
     assert_operator kernel_idx, :<, face_idx
     assert_includes index, "chat_actions.js"
     assert_includes index, "visual_bridge.js"
+    assert_includes index, 'id="cognition-ecology"'
+    assert_includes index, "cognition_ecology.js"
+    assert_includes index, "cognition_ecology_render.js"
+    assert_includes index, "visual_governor.js"
+    ecology_idx = index.index("cognition-ecology")
+    face_canvas_idx = index.index('id="face"')
+    assert_operator ecology_idx, :<, face_canvas_idx
+  end
+
+  def test_visual_bridge_does_not_blur_face_canvas
+    source = File.read(File.expand_path("../web/public/visual_bridge.js", __dir__))
+
+    refute_includes source, "blur("
+    assert_includes source, 'face.style.filter = ""'
   end
 
   def test_models_enable_strict_loading_by_default
