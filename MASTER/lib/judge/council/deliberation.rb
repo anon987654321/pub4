@@ -97,6 +97,23 @@ module Master
 
         private
 
+        def classify_engineering_fit(code)
+          text = code.to_s
+          bytes = text.bytesize
+          lines = text.lines.size
+          load = "artifact ~#{bytes} bytes across ~#{lines} lines"
+          verdict = if bytes < 256
+                      :under
+                    elsif bytes > 500_000
+                      :over
+                    else
+                      :fit
+                    end
+          cfg = Master.load_yaml(File.join(Master::ROOT, "data", "rules.yml"))&.fetch("engineering_fit", {}) || {}
+          why = cfg["why_required"] || "load drives the verdict"
+          { verdict: verdict, load: load, why: why }
+        end
+
         # Parallel fan-out — all personas in flight at once, bounded by MAX_CONCURRENT.
         def collect_parallel(code:, context:, personas: @personas)
           return [] if circuit_open?
