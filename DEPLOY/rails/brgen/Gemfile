@@ -47,6 +47,7 @@ gem 'faker', require: false
 
 group :development, :test do
   gem 'ferrum'
+  gem 'minitest', '~> 5.25'
 
   gem 'brakeman'
   gem 'bundler-audit'
