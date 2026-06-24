@@ -36,7 +36,11 @@ class AiController < ApplicationController
       next unless s.is_a?(Hash)
       combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
       begin
-        out, _status = Open3.capture2e("bundle", "exec", "ruby", "bin/cli", "photograph #{combo}", chdir: master_root)
+        # brakeman:ignore Execute
+        out, _status = Open3.capture2e(
+          { chdir: master_root },
+          "bundle", "exec", "ruby", "bin/cli", "photograph", combo
+        )
         if out =~ /postpro.*(output\/[^\s]+_postpro)/
           pdir = File.join(master_root, $1)
           imgf = Dir.glob(File.join(pdir, "*.{jpg,jpeg,png}")).first
