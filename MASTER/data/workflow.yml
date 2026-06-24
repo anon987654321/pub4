@@ -482,7 +482,7 @@ adversarial_questioning:
     non_trivial: "propose 3 concrete options (OPTION 1/2/3 + RECOMMEND), await cherry-pick"
     threshold: "non-trivial if the fix spans more than one file, touches architecture, or has security implications"
 
-# Known issues — active bugs and watch-outs from TODO.md / operator backlog.
+# Known issues — active bugs and watch-outs from operator_playbook.yml.
 known_issues:
   relayd_master_empty: "After rcctl restart master, relayd may mark master empty until /up health passes — tracked rc.d waits for local /up then restarts relayd; relayd.conf must use check http \"/up\" not \"/\" for master."
   resource_guard_shedding: "DEPLOY/openbsd/resource_guard.sh stops optional Rails apps when load/mem thresholds hit unless /var/db/pub4_all_apps exists — use start_all_apps.sh to pin."

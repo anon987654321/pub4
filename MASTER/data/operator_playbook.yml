@@ -66,8 +66,14 @@ lessons:
     action: "Defaults live in speech.rb (:osman), face.part4 TTS_DEFAULT_VOICE, chat voice-picker HTML, guardVoice (no ms-lang block on osman). Assets are fingerprinted under /assets/face-*.js."
     proof: "curl page includes voice-picker osman; GET /chat/tts?voice=osman returns audio; bin/smoke --web clean"
 
-  - id: todo_checkbox_honesty
+  - id: ship_proof_not_checkboxes
     area: process
-    signal: "TODO.md shows all [x] but production gaps remain"
-    action: "Treat closed TODO as aspirational until bin/gate, bin/ci, health_check.rb, and db:seed prove green. Re-open items with executable failures only."
+    signal: "Backlog marked done but production gaps remain"
+    action: "Ship readiness requires bin/probe repo, per-app bin/ci, health_check.rb, and db:seed — not checkbox files. Fix executable failures only."
     proof: "bin/probe deploy; ruby DEPLOY/openbsd/health_check.rb on VPS"
+
+  - id: post_sync_vps_proof
+    area: deploy
+    signal: "Code pushed but services stale or untested on vm23"
+    action: "After git pull: SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_on_vm_install.sh; doas rcctl restart master; bundle34 exec bin/ci per app; bundle34 exec bin/smoke in MASTER; ruby34 DEPLOY/openbsd/health_check.rb; curl https://ai.brgen.no/up"
+    proof: "doas rcctl check master brgen amber blognet bsdports baibl hjerterom; browser smoke on ai.brgen.no face"
