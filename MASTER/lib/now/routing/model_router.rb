@@ -225,6 +225,7 @@ module Master
         end
 
         def unhealthy?(model_id)
+          return true if Ground::ModelQuota.over_quota?(model_id)
           @provider_health&.unhealthy?(model_id)
         rescue StandardError
           false

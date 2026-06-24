@@ -10,6 +10,8 @@ class DashboardController < ApplicationController
 
   def live
     c = container
+    return render(json: { error: "warming up" }, status: :service_unavailable) unless c
+
     root = Rails.root.join("..", "..").to_s
     render json: mission_payload(c, root)
   rescue StandardError => e
@@ -38,6 +40,8 @@ class DashboardController < ApplicationController
       skills: Array(c[:skills]&.loaded).map { |s| s[:name] },
       context_pressure: pressure,
       provider_health: provider_health(c),
+      cache_efficiency: Master::Trace::CacheEfficiency.snapshot,
+      model_quota: Master::Ground::ModelQuota.snapshot,
       repair_queue: repair_queue(root)
     }
   end

@@ -9,7 +9,8 @@ class ChatController < ApplicationController
   skip_before_action :verify_authenticity_token, only: :command
 
   def index
-    @model = container[:agent].model.to_s.split("/").last
+    c = container
+    @model = c&.[](:agent)&.model.to_s.split("/").last.presence || "booting"
     @tier  = request.env["master.tier"].to_s
     render layout: false
   end
@@ -22,10 +23,14 @@ class ChatController < ApplicationController
 
   def metrics
     c = container
+    return render(json: { error: "warming up" }, status: :service_unavailable) unless c
+
     repo_root = Rails.root.join("..").to_s
     out, = Open3.capture2e("git", "-C", repo_root, "status", "--porcelain")
     dirty = out.lines.count
     open_models = c[:breaker].respond_to?(:open_models) ? c[:breaker].open_models : []
+    cache = Master::Trace::CacheEfficiency.snapshot
+    quota = Master::Ground::ModelQuota.snapshot[:exhausted]
     render json: {
       model:            c[:agent].model.to_s.split("/").last,
       tokens:           c[:session].respond_to?(:token_est) ? c[:session].token_est : 0,
@@ -33,7 +38,9 @@ class ChatController < ApplicationController
       uptime:           ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - start_ms),
       repo_dirty_count: dirty,
       open_breakers:    open_models,
-      tier:             request.env["master.tier"].to_s
+      tier:             request.env["master.tier"].to_s,
+      cache_efficiency: cache[:efficiency_pct],
+      model_quota:      quota
     }
   end
 

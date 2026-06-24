@@ -3,6 +3,7 @@
 Rails.application.config.x.master_start_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i
 Rails.application.config.x.master_container = nil
 Rails.application.config.x.master_container_mutex = Mutex.new
+Rails.application.config.x.master_bootstrap_started = false
 
 module MasterContainerLoader
   module_function

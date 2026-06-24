@@ -127,6 +127,8 @@ module Master
       end
     end
     Ground::KeyRotator.configure_current!
+    [Ground::ModelQuota, Trace::CacheEfficiency].each(&:name)
+    Trace::CacheEfficiency.load!
   end
 
   def self.apply_process_defaults!

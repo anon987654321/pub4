@@ -83,7 +83,7 @@ class ApplicationController < ActionController::Base
     return if container
     return if warming_exempt_path?
 
-    MasterContainerLoader.ensure!
+    start_container_bootstrap!
 
     return if container
 
@@ -92,6 +92,14 @@ class ApplicationController < ActionController::Base
       fmt.json { render json: { error: "warming up" }, status: :service_unavailable }
       fmt.any  { head :service_unavailable }
     end
+  end
+
+  def start_container_bootstrap!
+    config = Rails.application.config
+    return if config.x.master_bootstrap_started
+
+    config.x.master_bootstrap_started = true
+    Thread.new { MasterContainerLoader.ensure! }
   end
 
   def warming_exempt_path?

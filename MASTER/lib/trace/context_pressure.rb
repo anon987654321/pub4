@@ -20,7 +20,7 @@ module Master
 
       def self.band_for(pct)
         return "critical" if pct >= 90
-        return "elevated" if pct >= 70
+        return "compacting" if pct >= 65
         return "warm" if pct >= 45
 
         "ok"

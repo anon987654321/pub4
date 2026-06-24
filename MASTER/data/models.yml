@@ -316,6 +316,8 @@ openrouter:
   # When true, the router merges live :free slugs from the SQLite provider catalog
   # (populated by Providers::CatalogIndex#refresh). Read-only; no-ops until refreshed.
   use_live_catalog: true
+  # Per-model daily cap before router skips the slug (OpenRouter free tier ~200/day/key).
+  daily_quota_per_model: 200
   # Multiple keys rotate LRU to spread free-tier rate limits (20 req/min, 200/day each).
   keys_env:
     - OPENROUTER_API_KEY

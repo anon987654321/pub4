@@ -26,6 +26,7 @@ module Master
           "propose" => command(:dispatch_propose_suggest, container),
           "context" => command(:dispatch_context_window, session, root),
           "verify" => command(:dispatch_verify_wired, scanner, root),
+          "doctor" => command(:dispatch_doctor, root),
         }
       end
 
@@ -133,6 +134,15 @@ module Master
         out.ok? ? "verify: scan clean (#{out.value!.line})" : "verify: #{out.message}"
       rescue StandardError => e
         "verify: #{e.message}"
+      end
+
+      def dispatch_doctor(root, ctx: nil)
+        script = File.join(root, "bin", "doctor")
+        return "doctor: missing #{script}" unless File.file?(script)
+
+        out, err, status = Open3.capture3(Gem.ruby, script, chdir: root)
+        body = [out, err].map(&:strip).reject(&:empty?).join("\n")
+        status.success? ? body : "#{body}\ndoctor: exit #{status.exitstatus}"
       end
 
       def purge_snapshot_gists

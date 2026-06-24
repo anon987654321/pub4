@@ -202,6 +202,7 @@ module Master
       end
 
       def record_provider_outcome(model, status, latency_ms: nil, error: nil)
+        Ground::ModelQuota.record(model) if status == :success
         @model_router&.record_provider_outcome(model:, status:, latency_ms:, error:)
         @bus&.publish("llm:provider_outcome", model:, status:, latency_ms:, error:)
         Ground::KeyRotator.rotate_for(model) if %i[rate_limit quota_exceeded].include?(status)

@@ -98,7 +98,7 @@ module Master
         "session" => %w[clear save history grep audit tokens cost undo rollback redo],
         "work" => %w[scan fix workflow review critique self kernel status resync tail edge-cases],
         "agent" => %w[run mode task persona btw shell gateway],
-        "system" => %w[orient tree diff commit snapshot diag reload propose context verify help],
+        "system" => %w[orient tree diff commit snapshot diag reload propose context verify doctor help],
         "infer" => []
       }.freeze
 

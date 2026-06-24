@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require "socket"
 require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
@@ -43,6 +44,53 @@ def check_yaml
   Check.new(name: "yaml", ok: errors.empty?, detail: errors.empty? ? "ok" : errors.join("; "))
 end
 
+def check_api_keys
+  keys = %w[OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY DEEPSEEK_API_KEY GEMINI_API_KEY]
+  present = keys.select { |var| ENV[var].to_s.length >= 16 }
+  Check.new(name: "api-keys", ok: present.any?, detail: present.empty? ? "none configured" : present.join(", "))
+end
+
+def check_tts_socket
+  path = File.join(ROOT, ".master", "tts.sock")
+  alive = File.socket?(path) && (UNIXSocket.open(path, &:close); true)
+  Check.new(name: "tts-socket", ok: alive, detail: alive ? path : "not running")
+rescue StandardError => e
+  Check.new(name: "tts-socket", ok: false, detail: e.message)
+end
+
+def check_web_token
+  cfg_path = File.join(ROOT, ".master", "config.yml")
+  cfg = YAML.safe_load_file(cfg_path, aliases: true) rescue {}
+  tok = cfg["web_token"].to_s
+  Check.new(name: "web-token", ok: tok.length >= 8, detail: tok.empty? ? "unset in .master/config.yml" : "configured")
+end
+
+def check_key_rotator
+  count = Master::Ground::KeyRotator.keys.size
+  Check.new(name: "key-rotator", ok: count.positive?, detail: "#{count} OpenRouter key(s)")
+rescue NameError
+  keys = %w[OPENROUTER_API_KEY OPENROUTER_API_KEY_2 OPENROUTER_API_KEY_3]
+  count = keys.count { |var| ENV[var].to_s.length >= 16 }
+  Check.new(name: "key-rotator", ok: count.positive?, detail: "#{count} OpenRouter key(s)")
+end
+
+def check_model_quota
+  snap = Master::Ground::ModelQuota.snapshot
+  exhausted = snap[:exhausted]
+  detail = exhausted.empty? ? "ok (#{snap[:models].size} tracked)" : "exhausted: #{exhausted.join(', ')}"
+  Check.new(name: "model-quota", ok: exhausted.empty?, detail: detail)
+rescue NameError
+  Check.new(name: "model-quota", ok: true, detail: "module not loaded")
+end
+
+def check_cache_efficiency
+  snap = Master::Trace::CacheEfficiency.snapshot
+  Check.new(name: "cache-efficiency", ok: true,
+            detail: "#{snap[:efficiency_pct]}% (#{snap[:cached_tokens]}/#{snap[:input_tokens]} tokens)")
+rescue NameError
+  Check.new(name: "cache-efficiency", ok: true, detail: "module not loaded")
+end
+
 def check_provider_catalog
   path = File.join(ROOT, "bin", "provider-catalog")
   Check.new(name: "provider-catalog", ok: File.exist?(path), detail: File.exist?(path) ? path : "missing")
@@ -53,12 +101,21 @@ def check_safety_tests
   Check.new(name: "test-safety", ok: File.exist?(path), detail: File.exist?(path) ? path : "missing")
 end
 
+$LOAD_PATH.unshift File.join(ROOT, "lib")
+require "master" rescue nil
+
 checks = [
   check_ruby,
   check_command("git", "git", "--version"),
   check_command("sqlite3", "ruby", "-e", "require 'sqlite3'; puts SQLite3::SQLITE_VERSION"),
   check_bundle,
   check_yaml,
+  check_api_keys,
+  check_tts_socket,
+  check_web_token,
+  check_key_rotator,
+  check_model_quota,
+  check_cache_efficiency,
   check_provider_catalog,
   check_safety_tests
 ]
