@@ -41,10 +41,10 @@ items = users.flat_map do |user|
       color: colors.sample,
       brand: brands.sample,
       size: %w[XS S M L XL].sample,
-      price_cents: rand(1500..15000),
-      description: Faker::Lorem.sentence(word_count: 12),
-      worn_count: rand(0..25),
-      last_worn_at: rand(1..90).days.ago
+      price_cents: rand(1500..15_000),
+      times_worn: rand(0..25),
+      last_worn_on: rand(1..90).days.ago.to_date,
+      metadata: { notes: Faker::Lorem.sentence(word_count: 12) }
     )
   end
 end
@@ -55,16 +55,14 @@ puts "Created #{items.size} wardrobe items"
 outfits = users.flat_map do |user|
   3.times.map do
     outfit_items = user.items.sample(rand(3..6))
-    Outfit.create!(
+    outfit = Outfit.create!(
       user: user,
-      name: Faker::Commerce.product_name + " Look",
+      name: "#{Faker::Commerce.product_name} Look",
       description: Faker::Lorem.paragraph(sentence_count: 2),
-      context_label: %w[casual work date travel party].sample,
-      items: outfit_items,
-      estimated_value: outfit_items.sum(&:price_cents),
-      total_wears: rand(0..15),
-      last_worn_at: rand(1..60).days.ago
+      occasion: %w[casual work date travel party].sample
     )
+    outfit_items.each { |item| outfit.outfit_items.create!(item: item) }
+    outfit
   end
 end
 
