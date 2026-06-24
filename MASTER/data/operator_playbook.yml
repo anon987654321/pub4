@@ -95,3 +95,9 @@ lessons:
     signal: "rcctl stop brgen_rails kills brgen on same port; duplicate rc.d scripts"
     action: "Canonical rc.d names are bare app names (brgen, amber, …). Never rcctl stop *_rails. retire_legacy_rails_rcd in deploy scripts removes stale /etc/rc.d/*_rails."
     proof: "ls DEPLOY/openbsd/etc/rc.d/ shows brgen not brgen_rails; grep -r '_rails' DEPLOY/openbsd returns empty"
+
+  - id: master_scan_bundle_exec
+    area: deploy
+    signal: "openbsd.sh --sync-configs aborts: cannot load such file -- zeitwerk"
+    action: "MASTER bin/cli must run via bundle34 exec from MASTER/ (openbsd.sh, deploy gates). Bare ruby34 skips vendor/bundle gems."
+    proof: "cd MASTER && bundle34 exec ruby bin/cli /scan DEPLOY --depth deep exits 0"
