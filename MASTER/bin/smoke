@@ -10,9 +10,12 @@ Encoding.default_external = Encoding::UTF_8
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "open3"
+require "rbconfig"
 require "timeout"
 require "net/http"
 require "uri"
+
+RUBY = RbConfig.ruby
 
 PIPE_TIMEOUT_SECONDS = Integer(ENV.fetch("MASTER_SMOKE_PIPE_TIMEOUT", ENV["MASTER_LOW_RESOURCE"] ? "90" : "30"))
 
@@ -75,25 +78,21 @@ if ARGV.include?("--tts")
 end
 
 if ARGV.include?("--web")
-  failures << "web_up" unless step("web GET /up") do
-    uri = URI("http://127.0.0.1:#{port}/up")
-    res = Net::HTTP.start(uri.host, uri.port, open_timeout: 2, read_timeout: 5) { |h| h.get(uri.path) }
-    [res.code.to_i.between?(200, 399), "HTTP #{res.code}"]
+  failures << "web" unless step("web smoke-web") do
+    exe = File.expand_path("smoke-web", __dir__)
+    env = { "MASTER_WEB_URL" => "http://127.0.0.1:#{port}" }
+    out, st = Open3.capture2e(env, RUBY, exe)
+    puts out unless out.empty?
+    [st.success?, st.success? ? nil : out.lines.grep(/fail/).last&.strip]
   end
 
-  failures << "web_root" unless step("web GET /") do
-    uri = URI("http://127.0.0.1:#{port}/")
-    res = Net::HTTP.start(uri.host, uri.port, open_timeout: 2, read_timeout: 15) { |h| h.get(uri.path) }
-    body = res.body.to_s
-    ok = res.code.to_i == 200 && body.include?("face") && body.include?("three.face.module")
-    [ok, ok ? nil : "HTTP #{res.code} missing face assets"]
-  end
-
-  failures << "log" unless step("daemon log errors") do
-    out, = Open3.capture2e("doas", "tail", "-200", "/var/log/daemon")
-    recent = out.lines.last(200).join
-    bad = recent.scan(/NameError|uninitialized constant|undefined method|NoMethodError/i).size
-    [bad.zero?, "#{bad} suspicious entries"]
+  if File.readable?("/var/log/daemon")
+    failures << "log" unless step("daemon log errors") do
+      out, = Open3.capture2e("doas", "tail", "-200", "/var/log/daemon")
+      recent = out.lines.last(200).join
+      bad = recent.scan(/NameError|uninitialized constant|undefined method|NoMethodError/i).size
+      [bad.zero?, "#{bad} suspicious entries"]
+    end
   end
 end
 

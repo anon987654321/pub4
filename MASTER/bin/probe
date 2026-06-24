@@ -25,6 +25,11 @@ CHECKS = {
     cwd: MASTER_ROOT,
     needs_ruby3: true,
   },
+  "smoke-web" => {
+    desc: "MASTER web face HTTP smoke (bootstrap-aware)",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "smoke-web")],
+    cwd: MASTER_ROOT,
+  },
   "nsaudit" => {
     desc: "MASTER namespace reference audit",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "nsaudit")],
@@ -94,7 +99,7 @@ CHECKS = {
 ALIASES = {
   "quick" => %w[smoke nsaudit rails ci],
   "all" => %w[smoke nsaudit kernel preflight audit rails phantom_fk],
-  "deploy" => %w[rails phantom_fk health playbook],
+  "deploy" => %w[rails phantom_fk health smoke-web playbook],
   "security" => %w[audit nsaudit rails],
 }.freeze
 

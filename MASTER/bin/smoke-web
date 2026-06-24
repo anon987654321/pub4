@@ -1,0 +1,141 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# smoke-web — HTTP smoke for the MASTER web face with bootstrap-aware retries.
+# Use after deploy/restart; waits for the async container boot (~90–130s on VPS).
+#
+#   bin/smoke-web
+#   MASTER_WEB_URL=https://ai.brgen.no bin/smoke-web
+#   bin/smoke-web --no-wait          # fail fast if still warming
+#
+# Exit 0 clean, 1 on any failure.
+
+require "json"
+require "net/http"
+require "uri"
+
+BASE = ENV.fetch("MASTER_WEB_URL", "http://127.0.0.1:53187").chomp("/")
+WARM_TIMEOUT_S = Integer(ENV.fetch("MASTER_SMOKE_WEB_WARM_S", "130"))
+POLL_INTERVAL_S = Integer(ENV.fetch("MASTER_SMOKE_WEB_POLL_S", "5"))
+READ_TIMEOUT_S = Integer(ENV.fetch("MASTER_SMOKE_WEB_READ_S", "20"))
+SKIP_WAIT = ARGV.include?("--no-wait")
+
+JSON_ACCEPT = { "Accept" => "application/json" }.freeze
+WARMING_RE = /Starting up|warming up/i
+
+Check = Struct.new(:name, :ok, :detail, :ms, keyword_init: true)
+
+def step(name)
+  print "smoke-web: #{name.ljust(22)} "
+  $stdout.flush
+  t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  ok, detail = yield
+  ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
+  puts ok ? "ok (#{ms}ms)" : "fail (#{ms}ms) — #{detail}"
+  Check.new(name:, ok:, detail:, ms:)
+end
+
+def fetch(path, headers: {}, read_timeout: READ_TIMEOUT_S, open_timeout: 8)
+  uri = URI("#{BASE}#{path}")
+  Net::HTTP.start(uri.host, uri.port,
+                  use_ssl: uri.scheme == "https",
+                  open_timeout: open_timeout,
+                  read_timeout: read_timeout) do |http|
+    http.request(Net::HTTP::Get.new(uri.request_uri, headers))
+  end
+end
+
+def warm_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + WARM_TIMEOUT_S
+
+def metrics_ready?
+  res = fetch("/chat/metrics", headers: JSON_ACCEPT, read_timeout: 12)
+  return false unless res.code.to_i == 200
+
+  data = JSON.parse(res.body.to_s)
+  data.is_a?(Hash) && data.key?("model") && !data["error"]
+rescue StandardError
+  false
+end
+
+def face_ready?(body)
+  body.to_s.include?('id="face"') && !WARMING_RE.match?(body.to_s)
+end
+
+checks = []
+
+checks << step("GET /up") do
+  res = fetch("/up", read_timeout: 8)
+  code = res.code.to_i
+  [code.between?(200, 399), "HTTP #{code}"]
+end
+
+unless SKIP_WAIT
+  checks << step("wait for bootstrap") do
+    deadline = warm_deadline
+    polls = 0
+    until metrics_ready? || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+      polls += 1
+      sleep POLL_INTERVAL_S
+    end
+    waited = polls * POLL_INTERVAL_S
+    ready = metrics_ready?
+    detail = ready ? "ready after ~#{waited}s" : "still warming after #{WARM_TIMEOUT_S}s"
+    [ready, detail]
+  end
+end
+
+checks << step("GET / (face)") do
+  res = fetch("/", read_timeout: READ_TIMEOUT_S)
+  body = res.body.to_s
+  code = res.code.to_i
+  ok = code == 200 && face_ready?(body)
+  detail = if code != 200
+             "HTTP #{code}"
+           elsif WARMING_RE.match?(body)
+             "warming page — rerun after boot or increase MASTER_SMOKE_WEB_WARM_S"
+           elsif !body.include?('id="face"')
+             "missing face canvas"
+           end
+  [ok, detail]
+end
+
+%w[/master_events.js /shortcut_sheet.js].each do |path|
+  checks << step("GET #{path}") do
+    res = fetch(path, read_timeout: 12)
+    code = res.code.to_i
+    [code == 200, "HTTP #{code}"]
+  end
+end
+
+checks << step("GET /chat/metrics") do
+  res = fetch("/chat/metrics", headers: JSON_ACCEPT, read_timeout: 12)
+  code = res.code.to_i
+  return [false, "HTTP #{code}"] unless code == 200
+
+  data = JSON.parse(res.body.to_s)
+  required = %w[model tokens uptime open_breakers cache_efficiency model_quota]
+  missing = required.reject { |key| data.key?(key) }
+  [missing.empty?, missing.empty? ? nil : "missing keys: #{missing.join(", ")}"]
+rescue JSON::ParserError => e
+  [false, "invalid JSON: #{e.message}"]
+end
+
+checks << step("GET /events/stream") do
+  res = fetch("/events/stream", read_timeout: 4, open_timeout: 4)
+  code = res.code.to_i
+  ctype = res["Content-Type"].to_s
+  ok = code == 200 && (ctype.include?("text/event-stream") || res.body.to_s.include?("data:"))
+  [ok, ok ? nil : "HTTP #{code} type=#{ctype.empty? ? "?" : ctype}"]
+rescue Net::ReadTimeout, Net::OpenTimeout
+  [true, nil]
+end
+
+failed = checks.reject(&:ok)
+puts "smoke-web: #{BASE}"
+if failed.empty?
+  puts "smoke-web: clean (#{checks.size} checks)"
+  exit 0
+end
+
+puts "smoke-web: #{failed.size} failure(s): #{failed.map(&:name).join(", ")}"
+exit 1

@@ -17,6 +17,14 @@ class LifecycleToolsSpec < Minitest::Test
     assert_includes source, "check_yaml"
   end
 
+  def test_smoke_web_waits_for_bootstrap
+    source = read_tool("smoke-web")
+    assert_includes source, "smoke-web"
+    assert_includes source, "wait for bootstrap"
+    assert_includes source, "MASTER_SMOKE_WEB_WARM_S"
+    assert_includes source, "cache_efficiency"
+  end
+
   def test_onboard_writes_master_config_yml
     source = read_tool("onboard")
     assert_includes source, "config.yml"
