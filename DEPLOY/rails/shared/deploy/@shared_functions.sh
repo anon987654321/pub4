@@ -181,7 +181,7 @@ master_web_assets_precompile() {
 run_rails_as_app() {
   local app_name=$1 app_dir=$2
   shift 2
-  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && $*'"
+  ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; cd ${app_dir} && $*'"
 }
 
 # rails_runtime_gate APP_NAME APP_DIR — bundle check + db:prepare + bin/ci + master scan before rcctl restart.
