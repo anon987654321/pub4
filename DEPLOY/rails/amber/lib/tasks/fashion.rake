@@ -1,6 +1,6 @@
 namespace :scrape do
   desc "Fashion/wardrobe inspiration via Ferrum + vision LLM (subs: comma-separated, default: malefashion,femalefashionadvice,streetwear)"
-  task :fashion, [:subs] => :environment do |_, args|
+  task :fashion, [ :subs ] => :environment do |_, args|
     subs   = (args[:subs] || "malefashion,femalefashionadvice,streetwear").split(",").map(&:strip)
     schema = %w[title description url upvotes comments image_hints]
     subs.each do |sub|
@@ -13,7 +13,7 @@ namespace :scrape do
   end
 
   desc "Seed fictive wardrobe/outfit data from fashion scrape into amber. Requires OPENROUTER_API_KEY. Supplements Faker seeds."
-  task :fashion_seed, [:subs] => :environment do |_, args|
+  task :fashion_seed, [ :subs ] => :environment do |_, args|
     subs   = (args[:subs] || "malefashion,femalefashionadvice,streetwear").split(",").map(&:strip)
     schema = %w[title description url upvotes comments image_hints]
 
@@ -36,7 +36,7 @@ namespace :scrape do
           category: %w[shirt jacket pants shoes dress coat sweater accessory hat].sample,
           color: %w[black navy white gray beige olive burgundy teal mustard].sample,
           brand: %w[Acne Arket COS Uniqlo Zara H&M Everlane Patagonia].sample,
-          description: [item['description'] || item['title'], "Sourced/fictivized from r/#{sub} via Ferrum vision scrape (upvotes: #{item['upvotes']})."].compact.join(" "),
+          description: [ item['description'] || item['title'], "Sourced/fictivized from r/#{sub} via Ferrum vision scrape (upvotes: #{item['upvotes']})." ].compact.join(" "),
           price_cents: rand(1500..15000),
           worn_count: rand(0..25),
           last_worn_at: rand(1..90).days.ago
@@ -44,7 +44,7 @@ namespace :scrape do
 
         # Create Outfit incorporating this + some random existing items for richer capsules
         if rand < 0.5 && seed_user.items.count > 2
-          outfit_items = (seed_user.items.last(3) + [item_rec]).uniq.sample(4)
+          outfit_items = (seed_user.items.last(3) + [ item_rec ]).uniq.sample(4)
           Outfit.create!(
             user: seed_user,
             name: "#{sub.titleize} Look #{rand(100)}",

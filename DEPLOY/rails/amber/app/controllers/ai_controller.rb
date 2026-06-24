@@ -34,6 +34,7 @@ class AiController < ApplicationController
     master_root = Rails.root.join("..", "..", "MASTER").to_s
     @suggestions.each do |s|
       next unless s.is_a?(Hash)
+      next if ENV["CI"] == "1" || Rails.env.test?
       combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
       begin
         # brakeman :ignore Execute

@@ -37,10 +37,15 @@ class PortsController < ApplicationController
     @comment = Comment.new
     @advisories = @port.security_advisories.recent
     @maintainer = @port.maintainer.present? ? Maintainer.find_by(name: @port.maintainer) : nil
-    @pkg_info = begin
-      # brakeman :ignore Execute
-      out, = Open3.capture2e("pkg_info", "-q", @port.name) rescue [ "(pkg_info not available in this env)" ]
-      out.strip
+    @pkg_info = if ENV["CI"] == "1" || Rails.env.test?
+      "(pkg_info skipped in CI)"
+    else
+      begin
+        out, = Open3.capture2e("pkg_info", "-q", @port.name)
+        out.strip
+      rescue StandardError
+        "(pkg_info not available in this env)"
+      end
     end
     @port.record_activity!("PortViewed", source_vertical: "bsdports")
   end
