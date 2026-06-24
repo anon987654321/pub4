@@ -90,10 +90,11 @@
     <button type="button" class="tool" data-cmd="/sing " aria-label="Sing">sing</button>
     <button type="button" class="tool" data-act="mic" aria-label="Microphone">mic</button>
     <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message"></textarea>
+    <span id="zsh-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
     <span id="tts-rate" aria-label="TTS speed" title="Ctrl+[ / Ctrl+]"></span>
     <span id="char-count" aria-hidden="true"></span>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
-    <button id="spin-btn" type="button" aria-label="Cancel"></button>
+    <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
   </form>
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;

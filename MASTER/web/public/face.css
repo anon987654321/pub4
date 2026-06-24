@@ -501,6 +501,7 @@ body[data-mode="listening"] #mic-dot {
   scroll-behavior: smooth;
   color: var(--face-fg);
   pointer-events: none;
+  touch-action: pan-y;
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -671,11 +672,12 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation: none;
+    animation: none !important;
     scroll-behavior: auto;
-    transition: none;
+    transition: none !important;
   }
-
+  canvas#face, canvas#cognition-ecology { filter: none; }
+  .message { animation: none; }
 }
 
 @media (min-width: 48rem) {

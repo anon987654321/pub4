@@ -488,41 +488,9 @@ function playDuo(lines, onDone) {
     .catch(() => playDuo(rest, onDone));
 }
 
-let visualEventSource = null;
-function handleGlobalBusEvent(payload) {
-  const data = payload && (payload.data || payload);
-  const type = payload && (payload.type || (data && (data.event || data.name)));
-  if (!type) return;
-  if (type === 'self_violation') {
-    window.dispatchEvent(new CustomEvent('master:self_violation', { detail: data }));
-  }
-  if (type === 'tts:anticipate') {
-    window.dispatchEvent(new CustomEvent('tts:anticipate', { detail: data }));
-  }
-  if (type === 'tts:style:active') {
-    window.dispatchEvent(new CustomEvent('master:visual', { detail: { ...data, name: type, raw: data } }));
-  }
-}
-
-function bindGlobalEventStream() {
-  if (!window.EventSource || visualEventSource) return;
-  try {
-    visualEventSource = new EventSource('/events/stream');
-    visualEventSource.onmessage = (ev) => {
-      try { handleGlobalBusEvent(JSON.parse(ev.data || '{}')); } catch (_) {}
-    };
-    visualEventSource.onerror = () => {
-      if (visualEventSource && visualEventSource.readyState === EventSource.CLOSED) visualEventSource = null;
-    };
-  } catch (_) {
-    visualEventSource = null;
-  }
-}
-
 function startEverything() {
   morphCurrent = 0.72; morphTarget = 1.08;
   initAudio();
-  bindGlobalEventStream();
   if (window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume();
   if (primer) { primer.style.transition = 'opacity 160ms ease, transform 160ms ease'; primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)'; setTimeout(() => primer?.remove(), 200); }
   zshBar.classList.add('live');

@@ -47,10 +47,11 @@ module Master
 
       def wire_constitution(constitution) = @constitution = constitution
 
-      def chat(message, image: nil, stream: true, escalation_depth: 0, &blk)
+      def chat(message, image: nil, stream: true, escalation_depth: 0, task_type: nil, &blk)
         prepare_chat_turn(message)
-        candidate_models = routed_models(message)
+        candidate_models = routed_models(message, task_type: task_type)
         selected_model = candidate_models.first
+        @bus&.publish("llm:routed", model: selected_model, task_type: task_type || @config.task_type, reason: "routing")
         prompt   = topic_anchored(message)
         context  = conversation_context
         tokens_approx = Trace::Session.estimate_tokens(message)
@@ -122,28 +123,18 @@ module Master
         on_chunk = ctx[:on_chunk]
         task_type = ctx[:task_type]&.to_s
         image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
-        message = felt_aware_message(ctx[:message].to_s, ctx[:felt_sense])
+        @felt_sense = ctx[:felt_sense]
+        message = ctx[:message].to_s
         with_task_type(task_type) do
           if on_chunk
-            chat(message, image: image, stream: true) { |chunk| on_chunk.call(chunk) }
+            chat(message, image: image, stream: true, task_type: task_type) { |chunk| on_chunk.call(chunk) }
           else
-            chat(message, image: image)
+            chat(message, image: image, task_type: task_type)
           end
         end
+      ensure
+        @felt_sense = nil
       end
-
-      def felt_aware_message(message, sense)
-        return message unless sense.is_a?(Hash)
-
-        mood = sense[:mood] || sense["mood"]
-        entropy = sense[:entropy] || sense["entropy"]
-        confidence = sense[:confidence] || sense["confidence"]
-        return message if mood.to_s.empty? && !entropy.is_a?(Numeric)
-
-        hint = "[felt mood=#{mood} entropy=#{entropy} confidence=#{confidence}]"
-        message.include?(hint) ? message : "#{hint}\n#{message}"
-      end
-      private :felt_aware_message
 
       def model = routed_models.first
       def model=(val)

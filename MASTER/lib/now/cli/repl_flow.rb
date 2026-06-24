@@ -86,7 +86,7 @@ module Master
 
       NL_DISPATCH = [
         [/\b(?:show|print|list)\s+(?:undo\s+)?histor/i, :run_history],
-        [/\b(?:why|how)\s+(?:this|that|did|was)\b/i, :run_why],
+        [/\b(?:why|how)\s+(?:this|that)\s+(?:fail(?:ed)?|break|broke|error|wrong|happen(?:ed)?)\b/i, :run_why],
         [/\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i, :toggle_focus],
         [/\b(?:last|prev(?:ious)?)\s+(?:input|message|prompt)\b/i, :run_last],
         [/\b(?:suggest|what(?:'s|\s+is)\s+next|next\s+steps?)\b/i, :run_propose],

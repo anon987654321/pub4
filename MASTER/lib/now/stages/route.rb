@@ -8,9 +8,10 @@ module Master
       class Route
         EXIT_ALIASES = %w[exit quit q bye].freeze
 
-        def initialize(commands:, agent:)
+        def initialize(commands:, agent:, bus: nil)
           @commands = commands
           @agent = agent
+          @bus = bus
         end
 
         def add_command(name, handler) = @commands[name.to_s] = handler
@@ -35,6 +36,7 @@ module Master
             error_message += " -- did you mean /#{suggestion}?" if suggestion
             return Result.err(error_message, category: :validation)
           end
+          @bus&.publish("route:resolved", command: ctx.command, handler: cmd.class.name)
           Result.ok(ctx.merge(handler: cmd))
         end
 

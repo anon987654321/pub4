@@ -192,7 +192,10 @@ function setVoiceName(voice, opts = {}) {
   State.voiceName = next;
   if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = next;
   const picker = document.getElementById('voice-picker');
-  if (picker && picker.value !== next) picker.value = next;
+  if (picker) {
+    const alias = Object.entries(VOICE_ALIASES).find(([, v]) => v === next)?.[0] || raw.toLowerCase();
+    if (picker.value !== alias) picker.value = alias;
+  }
   syncShareStateUrl();
   if (opts.speakBlurb !== false && next && prev !== next) {
     setTimeout(() => {

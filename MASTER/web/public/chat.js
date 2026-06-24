@@ -207,6 +207,7 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
 });
 
 let _chunkCount = 0;
+let _streamLiveTimer = null;
 window._chatOnChunk = (raw) => {
   if (!_streamEl) return;
   if (_typingEl && (document.body.dataset.instantStream === '1' || raw.length > 0)) { _typingEl.remove(); _typingEl = null; }
@@ -224,7 +225,9 @@ window._chatOnChunk = (raw) => {
   const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 48;
   if (nearBottom) requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
   if (streamLive) {
-    streamLive.textContent = raw.replace(/[\n\r]/g, ' ').trim() || raw;
+    const snippet = raw.replace(/[\n\r]/g, ' ').trim() || raw;
+    clearTimeout(_streamLiveTimer);
+    _streamLiveTimer = setTimeout(() => { streamLive.textContent = snippet; }, 120);
   }
   if (/(?:\(|\b)(?:ha(?:ha)?|heh|lol|lmao|rofl)\b|[🤣😂😆]/i.test(raw)) triggerLaughterBurst();
   updateSessionStats();
@@ -406,7 +409,10 @@ window._chatOnToolStack = (payload) => {
 
 window._chatOnStage = (payload) => {
   if (!payload?.stage) return;
-  document.body.dataset.pipelineStage = payload.stage.toLowerCase();
+  const label = payload.stage.toLowerCase();
+  document.body.dataset.pipelineStage = label;
+  const phase = payload.phase === 'done' ? ` ${payload.ms || 0}ms` : '…';
+  const text = `${payload.stage}${phase}`;
   let bar = document.getElementById('pipeline-stage');
   if (!bar) {
     bar = document.createElement('div');
@@ -415,8 +421,9 @@ window._chatOnStage = (payload) => {
     bar.setAttribute('aria-live', 'polite');
     document.body.appendChild(bar);
   }
-  const phase = payload.phase === 'done' ? ` ${payload.ms || 0}ms` : '…';
-  bar.textContent = `${payload.stage}${phase}`;
+  bar.textContent = text;
+  const ui = document.getElementById('ui-status');
+  if (ui) ui.textContent = text;
 };
 
 window._chatOnBtw = (payload) => {

@@ -12,7 +12,8 @@ module Master
       TEXT_NAMES = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
       SKIP_SEGS = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
 
-      def system_commands(agent:, diag:, root:)
+      def system_commands(agent:, diag:, root:, session: nil, bus: nil, scanner: nil)
+        container = { session: session, config: {}, root: root, bus: bus }
         {
           "orient" => command(:dispatch_orient, root),
           "explain" => command(:dispatch_orient, root),
@@ -22,6 +23,9 @@ module Master
           "snapshot" => command(:dispatch_snapshot, root),
           "diag" => command(:dispatch_diag, diag),
           "reload" => command(:dispatch_reload),
+          "propose" => command(:dispatch_propose_suggest, container),
+          "context" => command(:dispatch_context_window, session, root),
+          "verify" => command(:dispatch_verify_wired, scanner, root),
         }
       end
 
@@ -99,6 +103,36 @@ module Master
 
       def dispatch_reload(ctx: nil)
         "reload: not supported in this context"
+      end
+
+      def dispatch_propose_suggest(container, ctx: nil)
+        rows = Master::Now::Propose.new(container: container).call
+        return "propose: nothing pressing — try /history or scan a dir" if rows.empty?
+
+        rows.first(5).map.with_index do |row, index|
+          format("%d. %s — %s", index + 1, row.action, row.reason)
+        end.join("\n")
+      end
+
+      def dispatch_context_window(session, root, ctx: nil)
+        est = session.respond_to?(:token_est) ? session.token_est : 0
+        limit = Master::CTX_WINDOW_SIZE
+        plan = Master::Ground::ActivePlan.read(root)
+        lines = [
+          "context: #{est}/#{limit} tokens (#{((est.to_f / limit) * 100).round(1)}%)",
+          "topic: #{session.respond_to?(:topic) ? session.topic : 'none'}",
+          "plan: #{plan.to_s.strip.empty? ? '(none)' : plan.lines.first.to_s.strip}"
+        ]
+        lines.join("\n")
+      end
+
+      def dispatch_verify_wired(scanner, root, ctx: nil)
+        return "verify: scanner not configured" unless scanner
+
+        out = Master::Judge::Scan::SelfScan.new(scanner: scanner, root: root, event_bus: nil).call(stream: false, autofix: false)
+        out.ok? ? "verify: scan clean (#{out.value!.line})" : "verify: #{out.message}"
+      rescue StandardError => e
+        "verify: #{e.message}"
       end
 
       def purge_snapshot_gists

@@ -23,7 +23,7 @@
     [/pipeline:stage|skills:triggered/i, { topology: "papua-mask", entropy: 0.30, confidence: 0.80, mode: "stage" }],
     [/ctx:footer/i, { topology: "neural", entropy: 0.22, confidence: 0.84, mode: "ctx" }],
     [/llm:escalation|fallback|retry/i, { topology: "serpent", entropy: 0.62, confidence: 0.46, mode: "escalation" }],
-    [/llm:request|agent:start|pipeline:start/i, { topology: "papua-mask", entropy: 0.32, confidence: 0.72, mode: "thinking" }],
+    [/llm:request|agent:start|pipeline:start|infer:resolved|route:resolved|llm:routed/i, { topology: "papua-mask", entropy: 0.32, confidence: 0.72, mode: "thinking" }],
     [/memory|retriev|context/i, { topology: "neural", entropy: 0.28, confidence: 0.76, mode: "memory" }],
     [/tool|scan|sweep|audit|rtk/i, { topology: "torus", entropy: 0.38, confidence: 0.70, mode: "tool" }],
     [/error|rollback|failed|failure/i, { topology: "serpent", entropy: 0.78, confidence: 0.24, mode: "error" }],
@@ -135,6 +135,15 @@
     if (/rule_loop:(cycle|clean|converged)/i.test(type)) {
       window.dispatchEvent(new CustomEvent("master:rule_event", { detail: event }));
     }
+    if (type === "self_violation") {
+      window.dispatchEvent(new CustomEvent("master:self_violation", { detail: event }));
+    }
+    if (type === "tts:anticipate") {
+      window.dispatchEvent(new CustomEvent("tts:anticipate", { detail: event }));
+    }
+    if (type === "tts:style:active") {
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, raw: event } }));
+    }
   }
 
   let eventSource = null;
@@ -152,6 +161,7 @@
     eventSource = new EventSource("/events/stream");
     eventSource.onopen = () => {
       state.connected = true;
+      delete document.body.dataset.linkQuiet;
       emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.90, mode: "connected" });
     };
     eventSource.onmessage = (message) => {
@@ -165,6 +175,7 @@
       state.connected = false;
       state.confidence = Math.max(0.2, state.confidence - 0.1);
       emitVisual("events:disconnected", { topology: "serpent", entropy: 0.52, confidence: state.confidence, mode: "disconnected" });
+      document.body.dataset.linkQuiet = "1";
       window._chatOnDmesg?.("link quiet");
     };
   }

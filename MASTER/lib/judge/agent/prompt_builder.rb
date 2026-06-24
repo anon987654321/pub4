@@ -29,6 +29,7 @@ module Master
 
         def dynamic_prompt
           parts = []
+          parts << felt_sense_section if @felt_sense.is_a?(Hash)
           parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic
           parts << Ground::ActivePlan.prompt_section(@config["root"] || Master::ROOT)
           parts << @code_index.summary if @code_index&.built?
@@ -38,6 +39,15 @@ module Master
 
         def system_prompt
           [static_prompt, dynamic_prompt].compact.join("\n\n").then { |s| s.empty? ? nil : filter_prompt(s) }
+        end
+
+        def felt_sense_section
+          mood = @felt_sense[:mood] || @felt_sense["mood"]
+          entropy = @felt_sense[:entropy] || @felt_sense["entropy"]
+          confidence = @felt_sense[:confidence] || @felt_sense["confidence"]
+          return nil if mood.to_s.empty? && !entropy.is_a?(Numeric)
+
+          "User interface state: mood=#{mood} entropy=#{entropy} confidence=#{confidence}"
         end
 
         def conversation_context(max_messages: Agent::DEFAULT_MESSAGE_WINDOW_SIZE)

@@ -8,7 +8,7 @@ module Master
       # Keys every stage may read or write. Unknown keys raise on construction.
       KNOWN_KEYS = %i[
         user_message on_chunk
-        intent command args message original_message
+        intent command args message original_message inferred_command
         task_type pressure
         handler model last_tool_tier
         output tool_calls written_files source

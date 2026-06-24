@@ -26,7 +26,10 @@ module Master
       end
 
       def format_error_message(err)
-        error_text = err.message.to_s
+        parts = []
+        parts << "[#{err.category}]" if err.respond_to?(:category) && err.category
+        parts << err.message.to_s
+        error_text = parts.join(" ")
         return error_text if error_text.bytesize <= 200
 
         error_text[0, 197] + "…"
@@ -48,8 +51,22 @@ module Master
           puts
         end
         print_cost_tooltip
+        print_pipeline_timings
         print_changed_files_summary
         print_chips if @show_chips
+      end
+
+      def print_pipeline_timings
+        timings = @refs.pipeline&.last_timings
+        return if timings.nil? || timings.empty?
+
+        total = timings.values.sum
+        slow = timings.max_by { |_, ms| ms }
+        return unless total.positive?
+
+        line = "pipeline: #{total}ms"
+        line += " (slow: #{slow[0]} #{slow[1]}ms)" if slow
+        puts @refs.renderer.render(line, mode: :dim)
       end
 
       def success_text(ok)

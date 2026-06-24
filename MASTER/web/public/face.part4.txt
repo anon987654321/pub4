@@ -324,6 +324,8 @@ function fetchTTS(text) {
 
 function enqueueSpeech(text, opts = {}) {
   if (tts.muted) return;
+  window.dispatchEvent(new CustomEvent('tts:anticipate', { detail: { expression: { arousal: 0.25 } } }));
+  window.MASTERVisual?.event?.('tts:prefetch', { topology: 'papua-mask', entropy: 0.22, confidence: 0.8, mode: 'anticipate' });
   const clean = text
     .replace(/```[\s\S]*?```/g, '')
     .replace(/`[^`]*`/g, '')
@@ -450,7 +452,17 @@ function ttsTick() {
       tts.audio = null; tts.playing = false; setTTSLoading(false);
       requeueChunk(text);
       const s = document.getElementById('zsh-status');
-      if (s && (tts.attempts.get(text) || 0) >= 3) { s.textContent = 'tts fail'; rootBody.dataset.ttsError = 'true'; setTimeout(() => { rootBody.dataset.ttsError = ''; if (s.textContent === 'tts fail') s.textContent = ''; }, 2500); }
+      if (s && (tts.attempts.get(text) || 0) >= 3) {
+        s.textContent = 'tts fail';
+        rootBody.dataset.ttsError = 'true';
+        const errLive = document.getElementById('error-live');
+        if (errLive) errLive.textContent = 'speech unavailable';
+        setTimeout(() => {
+          rootBody.dataset.ttsError = '';
+          if (s.textContent === 'tts fail') s.textContent = '';
+          if (errLive?.textContent === 'speech unavailable') errLive.textContent = '';
+        }, 2500);
+      }
       if (token === tts.cancelToken) scheduleTtsTick(800);
     });
 }

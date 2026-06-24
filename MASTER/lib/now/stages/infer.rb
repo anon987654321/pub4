@@ -30,9 +30,16 @@ module Master
 
         PATTERNS_PATH = Master.data_path("patterns.yml").freeze
 
-        def initialize
+        def initialize(bus: nil)
+          @bus = bus
           @patterns = load_patterns
         end
+
+        INFER_ALIASES = {
+          "restart" => "rebuild",
+          "principles" => "axioms",
+          "explain" => "orient"
+        }.freeze
 
         def call(ctx)
           return Result.ok(ctx) unless ctx.intent == :llm
@@ -41,13 +48,20 @@ module Master
           @patterns.each do |cmd, entry|
             entry[:regexes].each do |pattern|
               next unless (m = msg.match(pattern))
-              return Result.ok(ctx.merge(intent: :command, command: cmd,
-                args: extract_args(cmd:, capture: entry[:capture], match: m, msg:)))
+              resolved = INFER_ALIASES.fetch(cmd, cmd)
+              args = extract_args(cmd:, capture: entry[:capture], match: m, msg:)
+              publish_infer(resolved, args, msg)
+              return Result.ok(ctx.merge(intent: :command, command: resolved, args: args, inferred_command: resolved))
             end
           end
 
           pressure = msg.match?(PRESSURE_PATTERN)
-          Result.ok(ctx.merge(task_type: infer_task_type(msg), pressure: pressure || ctx.pressure))
+          task_type = infer_task_type(msg)
+          Result.ok(ctx.merge(task_type: task_type, pressure: pressure || ctx.pressure))
+        end
+
+        def publish_infer(command, args, msg)
+          @bus&.publish("infer:resolved", command: command, args: args, preview: msg[0, 80])
         end
 
         private

@@ -228,7 +228,8 @@ class TestWebUI < Minitest::Test
     assert_includes part5, "addEventListener('btw'"
     assert_includes service, "felt_sense:"
     assert_includes service, '"felt:sense"'
-    assert_includes agent, "felt_aware_message"
+    assert_includes agent, "felt_sense"
+    assert_includes File.read(File.expand_path("../lib/judge/agent/prompt_builder.rb", __dir__)), "felt_sense_section"
     assert_includes index, 'id="mood-sparkline"'
   end
 
@@ -313,12 +314,14 @@ class TestWebUI < Minitest::Test
   end
 
   def test_face_tts_bridges_global_style_events
-    source = face_runtime_source
+    bridge = File.read(File.expand_path("../web/public/visual_bridge.js", __dir__))
+    part4 = File.read(File.expand_path("../web/public/face.part4.txt", __dir__))
 
-    assert_includes source, "new EventSource('/events/stream')"
-    assert_includes source, "type === 'tts:anticipate'"
-    assert_includes source, "type === 'tts:style:active'"
-    assert_includes source, "new CustomEvent('master:visual'"
+    assert_includes bridge, "new EventSource(\"/events/stream\")"
+    assert_includes bridge, "type === \"tts:anticipate\""
+    assert_includes bridge, "type === \"tts:style:active\""
+    assert_includes bridge, "new CustomEvent(\"master:visual\""
+    assert_includes part4, "tts:anticipate"
   end
 
   def test_face_tts_audio_graph_uses_compressor_before_analyser

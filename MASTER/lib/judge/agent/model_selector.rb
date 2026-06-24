@@ -4,11 +4,20 @@ module Master
   module Judge
     class Agent
       module ModelSelector
+        TASK_TYPE_ALIASES = {
+          coding: :code_generation,
+          research: :explanation,
+          qa: :explanation,
+          architecture: :code_generation,
+          general: :general
+        }.freeze
+
         private
 
-        def routed_models(message = nil)
+        def routed_models(message = nil, task_type: nil)
           return [@config.model] unless @model_router
-          task = message ? @model_router.classify_intent(message) : @config.task_type.to_sym
+          task = normalize_task_type(task_type || @config.task_type)
+          task = @model_router.classify_intent(message) if task == :general && message
           chain = @model_router.fallback_chain(task_type: task)
           bias = @homeostat&.model_tier_bias
           return cheap_first(chain) if bias == :cheap
@@ -29,6 +38,11 @@ module Master
           strong = chain.select { |m| @model_router.tier_for_model(m) == "strong" }
           rest   = chain.reject { |m| @model_router.tier_for_model(m) == "strong" }
           strong.empty? ? chain : (strong + rest)
+        end
+
+        def normalize_task_type(type)
+          sym = type.to_s.delete_prefix(":").to_sym
+          TASK_TYPE_ALIASES.fetch(sym, sym)
         end
       end
     end

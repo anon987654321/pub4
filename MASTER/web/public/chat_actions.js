@@ -8,12 +8,18 @@ function csrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.content || '';
 }
 
+function feltCssNumber(name, fallback) {
+  const raw = document.documentElement.style.getPropertyValue(name);
+  const parsed = parseFloat(raw);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 function collectFeltState() {
   const st = window.MASTER_FACE?.State || {};
   const mood = (st.mood || document.body.dataset.masterState || 'idle').toString();
   const mode = (st.mode || document.body.dataset.pipelineStage || 'idle').toString();
-  const entropy = Number(st.entropy ?? document.documentElement.style.getPropertyValue('--master-entropy') ?? 0.2);
-  const confidence = Number(st.confidence ?? document.documentElement.style.getPropertyValue('--master-confidence') ?? 0.86);
+  const entropy = Number.isFinite(st.entropy) ? st.entropy : feltCssNumber('--master-entropy', 0.2);
+  const confidence = Number.isFinite(st.confidence) ? st.confidence : feltCssNumber('--master-confidence', 0.86);
   return `${mood}|${mode}|${entropy.toFixed(2)}|${confidence.toFixed(2)}`;
 }
 
@@ -139,6 +145,11 @@ async function sendMessage(text) {
 }
 
 function startMic(btn) {
+  if (window.MASTER_FACE?.startSTT) {
+    window.MASTER_FACE.startSTT();
+    btn?.classList?.add('active');
+    return;
+  }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const input = chatInput();
   if (!SR) { if (input) input.placeholder = 'mic unavailable in this browser'; return; }

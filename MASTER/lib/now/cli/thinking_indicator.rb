@@ -8,6 +8,11 @@ module Master
       SPIN_FRAMES = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
       SPIN_INTERVAL = 0.25
       DMESG_IGNORE = %w[bus:subscribe bus:unsubscribe ring:write].freeze
+      STAGE_EVENTS = {
+        "infer:resolved" => "infer",
+        "route:resolved" => "route",
+        "llm:routed" => "model"
+      }.freeze
       VERDICT_GLYPH = { ok: "\u2713", fail: "\u00D7", warn: "!", info: "\u00B7" }.freeze
       MUTATING_TOOLS = %w[WriteFile Edit StrReplace BatchReplace AstEdit FilePatch].freeze
 
@@ -51,8 +56,17 @@ module Master
 
       def update_think_stage(payload)
         ev = payload[:event].to_s
-        return unless ev.start_with?("stage:")
-        @think_stage = ev.delete_prefix("stage:")
+        if ev.start_with?("stage:")
+          @think_stage = ev.delete_prefix("stage:")
+          return
+        end
+        if ev == "pipeline:stage_start" && payload[:stage]
+          @think_stage = payload[:stage].to_s.downcase
+          return
+        end
+        if STAGE_EVENTS.key?(ev)
+          @think_stage = STAGE_EVENTS[ev]
+        end
       end
 
       def glyph_for_event(ev)
