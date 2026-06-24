@@ -156,6 +156,13 @@ master_web_assets_precompile() {
   log_ok "MASTER web assets ready"
 }
 
+# run_rails_as_app APP_NAME APP_DIR CMD — app-owned bundle/rails (avoids Gemfile.lock permission errors).
+run_rails_as_app() {
+  local app_name=$1 app_dir=$2
+  shift 2
+  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && $*'"
+}
+
 # rails_runtime_gate APP_NAME APP_DIR — bundle check + db:prepare + bin/ci + master scan before rcctl restart.
 rails_runtime_gate() {
   local app_name=${1:-}
@@ -166,11 +173,22 @@ rails_runtime_gate() {
     master_scan_dep "$app_name" || { log_err "MASTER scan failed"; return 1; }
   fi
   log "runtime gate: bundle check + db:prepare + bin/ci"
-  (cd "$app_dir" && bundle_exec check) || { log_err "bundle check failed"; return 1; }
-  (cd "$app_dir" && RAILS_ENV=production bundle_exec exec rails db:prepare) \
-    || { log_err "db:prepare failed"; return 1; }
-  if [[ -x ${app_dir}/bin/ci ]]; then
-    (cd "$app_dir" && bundle_exec exec bin/ci) || { log_err "bin/ci failed"; return 1; }
+  if [[ -n $app_name ]]; then
+    run_rails_as_app "$app_name" "$app_dir" bundle34 check \
+      || { log_err "bundle check failed"; return 1; }
+    run_rails_as_app "$app_name" "$app_dir" "RAILS_ENV=production bundle34 exec rails db:prepare" \
+      || { log_err "db:prepare failed"; return 1; }
+    if [[ -x ${app_dir}/bin/ci ]]; then
+      run_rails_as_app "$app_name" "$app_dir" "bundle34 exec bin/ci" \
+        || { log_err "bin/ci failed"; return 1; }
+    fi
+  else
+    (cd "$app_dir" && bundle_exec check) || { log_err "bundle check failed"; return 1; }
+    (cd "$app_dir" && RAILS_ENV=production bundle_exec exec rails db:prepare) \
+      || { log_err "db:prepare failed"; return 1; }
+    if [[ -x ${app_dir}/bin/ci ]]; then
+      (cd "$app_dir" && bundle_exec exec bin/ci) || { log_err "bin/ci failed"; return 1; }
+    fi
   fi
   log_ok "runtime gate passed"
 }
