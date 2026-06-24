@@ -231,7 +231,8 @@ async function sendMessage(text) {
   scheduleThinkingAloud("scanning");
   syncShareStateUrl();
   if (input.length > 180) State.lean = 0.14;
-  const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|0`);
+  const feltFallback = `${State.mood}|${State.mode}|${(State.entropy ?? 0.2).toFixed(2)}|${(State.confidence ?? 0.86).toFixed(2)}`;
+  const stateBlob = encodeURIComponent(window.collectFeltState?.() || feltFallback);
   const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
   const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
   if (window._imageToken) window._imageToken = null;
@@ -376,6 +377,32 @@ async function sendMessage(text) {
   });
   evtSrc.addEventListener('dmesg', (ev) => {
     try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  evtSrc.addEventListener('compaction', (ev) => {
+    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  evtSrc.addEventListener('ctx_footer', (ev) => {
+    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  evtSrc.addEventListener('phantom', (ev) => {
+    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  evtSrc.addEventListener('tool_stack', (ev) => {
+    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  evtSrc.addEventListener('stage', (ev) => {
+    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  evtSrc.addEventListener('btw', (ev) => {
+    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  evtSrc.addEventListener('felt', (ev) => {
+    try {
+      const payload = JSON.parse(ev.data || '{}');
+      if (payload.mood) State.mood = payload.mood;
+      if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
+      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
+    } catch (_) {}
   });
   evtSrc.onerror = () => {
     clearTimeout(_stallTimer);

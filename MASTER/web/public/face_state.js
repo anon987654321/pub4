@@ -1,48 +1,37 @@
-// MASTER face state bridge: text status drives face state, not decoration.
+// MASTER face state bridge: status text drives body masterState.
 (() => {
   function classify(text, attr) {
     const raw = `${attr || ""} ${text || ""}`.toLowerCase();
-    if (/fail|error|blocked|unsafe|abort|crit/.test(raw)) return "fail";
+    if (/fail|error|blocked|unsafe|abort|crit|phantom/.test(raw)) return "fail";
     if (/warn|risk|careful|retry|fallback/.test(raw)) return "warn";
-    if (/busy|thinking|running|loading|stream|agent|model|working/.test(raw)) return "busy";
+    if (/busy|thinking|running|loading|stream|agent|model|working|stage/.test(raw)) return "busy";
     return "idle";
   }
 
-  function apply() {
-    const status = document.getElementById("status");
-    if (!status) return;
-
-    const state = classify(status.textContent, status.dataset.runtimeStatus);
-    status.dataset.runtimeStatus = state;
+  function applyFrom(el) {
+    if (!el) return;
+    const state = classify(el.textContent, el.dataset.runtimeStatus);
+    el.dataset.runtimeStatus = state;
     document.body.dataset.masterState = state;
     document.body.dataset.visualRuntime = state === "fail" ? "frozen" : "rails";
   }
 
-  function installProcessShortcut() {
-    const face = document.querySelector(".face-plate");
-    const input = document.getElementById("input");
-    if (!face || !input) return;
+  function apply() {
+    applyFrom(document.getElementById("status"));
+    applyFrom(document.getElementById("ui-status"));
+    const stage = document.getElementById("pipeline-stage");
+    if (stage?.textContent) applyFrom(stage);
+  }
 
-    face.setAttribute("role", "button");
-    face.setAttribute("tabindex", "0");
-    face.setAttribute("aria-label", "Show process status");
-    face.addEventListener("click", () => {
-      input.value = "/process";
-      input.focus();
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    face.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        face.click();
-      }
-    });
+  function observe(el) {
+    if (!el) return;
+    new MutationObserver(apply).observe(el, { childList: true, subtree: true, characterData: true, attributes: true });
   }
 
   window.addEventListener("DOMContentLoaded", () => {
-    const status = document.getElementById("status");
-    if (status) new MutationObserver(apply).observe(status, { childList: true, subtree: true, attributes: true });
-    installProcessShortcut();
+    observe(document.getElementById("status"));
+    observe(document.getElementById("ui-status"));
+    observe(document.getElementById("pipeline-stage"));
     apply();
   });
 })();

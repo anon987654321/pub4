@@ -58,6 +58,7 @@
     <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
   </main>
   <div class="ui-status" id="ui-status" aria-live="polite" aria-atomic="true"></div>
+  <div id="mood-sparkline" class="mood-sparkline" aria-hidden="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
   <div class="face-controls" aria-label="Face controls">
     <button id="focus-btn" type="button" class="tool" aria-pressed="false" title="Toggle focus mode">◎</button>
@@ -106,6 +107,7 @@
       addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' '||e.key==='OK'))go();},{once:false});
     })();
   </script>
+  <script src="<%= asset_path("face_state.js") %>" defer></script>
   <script src="<%= asset_path("visual_governor.js") %>" defer></script>
   <script src="<%= asset_path("topology_registry.js") %>" defer></script>
   <script src="<%= asset_path("particle_kernel.js") %>" defer></script>

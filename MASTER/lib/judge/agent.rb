@@ -122,14 +122,28 @@ module Master
         on_chunk = ctx[:on_chunk]
         task_type = ctx[:task_type]&.to_s
         image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
+        message = felt_aware_message(ctx[:message].to_s, ctx[:felt_sense])
         with_task_type(task_type) do
           if on_chunk
-            chat(ctx[:message].to_s, image: image, stream: true) { |chunk| on_chunk.call(chunk) }
+            chat(message, image: image, stream: true) { |chunk| on_chunk.call(chunk) }
           else
-            chat(ctx[:message].to_s, image: image)
+            chat(message, image: image)
           end
         end
       end
+
+      def felt_aware_message(message, sense)
+        return message unless sense.is_a?(Hash)
+
+        mood = sense[:mood] || sense["mood"]
+        entropy = sense[:entropy] || sense["entropy"]
+        confidence = sense[:confidence] || sense["confidence"]
+        return message if mood.to_s.empty? && !entropy.is_a?(Numeric)
+
+        hint = "[felt mood=#{mood} entropy=#{entropy} confidence=#{confidence}]"
+        message.include?(hint) ? message : "#{hint}\n#{message}"
+      end
+      private :felt_aware_message
 
       def model = routed_models.first
       def model=(val)

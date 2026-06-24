@@ -93,6 +93,8 @@ class ChatService
     subscribe("pipeline:stage_start") { |ev| write_json_event("stage", { stage: ev[:stage], phase: "start" }) }
     subscribe("pipeline:stage_complete") { |ev| write_json_event("stage", { stage: ev[:stage], phase: "done", ms: ev[:ms] }) }
     subscribe("btw:done") { |ev| write_json_event("btw", { type: ev[:type], summary: ev[:summary].to_s[0, 500] }) }
+    subscribe("skills:triggered") { |ev| write_json_event("thought", "skill #{ev[:skill]}") }
+    subscribe("felt:sense") { |ev| write_json_event("felt", { mood: ev[:mood], entropy: ev[:entropy], confidence: ev[:confidence] }) }
     subscribe("**") { |ev| write_json_event("dmesg", dmesg_format(ev[:event].to_s, ev)) }
     subscribe("**") { |ev| write_json_event("thought", thought_format(ev[:event].to_s, ev)) }
     subscribe("tribunal:rendered") { |ev| write_event("verdict", verdict_for(ev)) }
@@ -105,7 +107,8 @@ class ChatService
   def pipeline_context
     {
       user_message: @params[:message].to_s.strip,
-      on_chunk: method(:write_chunk)
+      on_chunk: method(:write_chunk),
+      felt_sense: felt_sense_payload
     }.tap do |ctx|
       ctx[:pre_enhanced] = true if @params[:pre_enhanced].present?
       ctx[:voice] = true if @params[:voice].present?
@@ -127,8 +130,13 @@ class ChatService
   def publish_canvas_state
     return unless @params[:state].present?
 
-    mood, mode, idle_s, palette = @params[:state].to_s.split("|")
-    @container[:bus].publish(:canvas_state, mood: mood, mode: mode, idle_s: idle_s.to_i, palette: palette.to_i)
+    parts = @params[:state].to_s.split("|")
+    mood, mode = parts.values_at(0, 1)
+    entropy = parts[2].to_f
+    confidence = parts[3].to_f
+    felt = { mood:, mode:, entropy:, confidence: }
+    @container[:bus].publish(:canvas_state, **felt)
+    @container[:bus].publish("felt:sense", **felt)
   rescue StandardError => e
     Master::Ground::Swallow.log(e, context: "ChatService.publish_canvas_state", event_bus: @container[:bus])
   end
@@ -218,6 +226,20 @@ class ChatService
 
   def phantom_payload(event)
     { patterns: Array(event[:patterns]), recovery: Array(event[:recovery]) }
+  end
+
+  def felt_sense_payload
+    return nil unless @params[:state].present?
+
+    parts = @params[:state].to_s.split("|")
+    {
+      mood: parts[0],
+      mode: parts[1],
+      entropy: parts[2].to_f,
+      confidence: parts[3].to_f
+    }
+  rescue StandardError
+    nil
   end
 
   def write_turn_ctx_footer

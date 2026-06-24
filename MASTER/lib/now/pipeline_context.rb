@@ -17,7 +17,7 @@ module Master
         review_error
         pre_enhanced
         rendered voice
-        image
+        image felt_sense explicit_run
         channel metadata turn_id
         _timings _parallel_errors _parallel_timeout _stage_error,
       ].freeze
@@ -32,6 +32,7 @@ module Master
         pressure: [TrueClass, FalseClass, NilClass],
         lint_report: [Array, NilClass],
         voice: [String, NilClass],
+        felt_sense: [Hash, NilClass],
       }.freeze
 
       MAX_OUTPUT_BYTES = 8_192

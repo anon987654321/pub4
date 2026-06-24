@@ -571,6 +571,8 @@ document.querySelectorAll('.tool').forEach(btn => {
     { cmd: 'ping', hint: 'smoke test connection' },
     { cmd: '/voice last osman', hint: 'replay last reply' },
     { action: 'dashboard', label: 'mission control', hint: 'open /dashboard' },
+    { action: 'history', label: 'toggle history', hint: 'sidebar · Ctrl+Shift+H' },
+    { action: 'export', label: 'export session', hint: 'markdown download · Ctrl+Shift+E' },
     { action: 'focus', label: 'toggle focus mode', hint: 'hide chrome, face only' },
     { action: 'mute', label: 'toggle TTS mute', hint: 'keyboard: t' },
     { action: 'preview', label: 'preview voice', hint: 'play voice blurb' }
@@ -602,6 +604,8 @@ document.querySelectorAll('.tool').forEach(btn => {
   function runEntry(entry) {
     closePalette();
     if (entry.action === 'dashboard') { window.location.href = '/dashboard'; return; }
+    if (entry.action === 'history') { window.MASTERHistory?.toggle?.(); return; }
+    if (entry.action === 'export') { window.MASTERExport?.download?.(); return; }
     if (entry.action === 'focus') { window.MASTER_FACE?.toggleFocusMode?.(); return; }
     if (entry.action === 'mute') { window.MASTERVoice?.toggleMute?.(); return; }
     if (entry.action === 'preview') { window.MASTERVoice?.previewVoice?.(); return; }
@@ -687,4 +691,190 @@ document.querySelectorAll('.tool').forEach(btn => {
   });
 
   window.MASTERCommandPalette = { open: openPalette, close: closePalette };
+})();
+
+(function wireHistorySidebar() {
+  let panel = document.getElementById('chat-history-panel');
+  if (!panel) {
+    panel = document.createElement('aside');
+    panel.id = 'chat-history-panel';
+    panel.setAttribute('aria-label', 'Session history');
+    panel.innerHTML =
+      '<header class="history-head">' +
+      '<span class="history-title">history</span>' +
+      '<button type="button" id="history-close" aria-label="Close history">×</button>' +
+      '</header>' +
+      '<input id="history-search" type="search" autocomplete="off" spellcheck="false" placeholder="search turns" aria-label="Search history">' +
+      '<ul id="history-list" role="list"></ul>';
+    document.body.appendChild(panel);
+  }
+
+  const list = document.getElementById('history-list');
+  const search = document.getElementById('history-search');
+  const closeBtn = document.getElementById('history-close');
+  let cached = [];
+  let open = false;
+
+  function faceAck(label) {
+    const status = document.getElementById('ui-status');
+    if (status) {
+      const prev = status.textContent;
+      status.textContent = label;
+      setTimeout(() => { if (status.textContent === label) status.textContent = prev; }, 900);
+    }
+    window.MASTERVisual?.event?.('ui:ack', { topology: 'neural', entropy: 0.14, confidence: 0.9, mode: label });
+  }
+
+  function renderItems(items) {
+    if (!list) return;
+    list.innerHTML = '';
+    items.forEach((entry, index) => {
+      const li = document.createElement('li');
+      li.dataset.role = entry.role || 'user';
+      li.dataset.index = String(index);
+      const role = document.createElement('span');
+      role.className = 'history-role';
+      role.textContent = entry.role === 'assistant' ? 'master' : 'you';
+      const body = document.createElement('span');
+      body.className = 'history-body';
+      body.textContent = (entry.content || '').slice(0, 240);
+      li.appendChild(role);
+      li.appendChild(body);
+      li.addEventListener('click', () => {
+        const quote = (entry.content || '').trim();
+        if (!quote || !input) return;
+        input.value = `> ${quote}\n`;
+        input.focus();
+        faceAck('quoted');
+      });
+      list.appendChild(li);
+    });
+  }
+
+  function filterItems(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return renderItems(cached);
+    renderItems(cached.filter((entry) => `${entry.role} ${entry.content}`.toLowerCase().includes(q)));
+  }
+
+  async function loadHistory() {
+    try {
+      const r = await fetch('/chat/history');
+      const data = await r.json();
+      cached = Array.isArray(data) ? data.slice(-20) : [];
+      filterItems(search?.value || '');
+    } catch (_) {
+      cached = [];
+      renderItems([]);
+    }
+  }
+
+  function setOpen(next) {
+    open = next;
+    panel.dataset.open = open ? '1' : '0';
+    document.body.dataset.historyOpen = open ? '1' : undefined;
+    if (!open) delete document.body.dataset.historyOpen;
+    if (open) {
+      loadHistory();
+      search?.focus();
+      faceAck('history');
+    }
+  }
+
+  function toggle() { setOpen(!open); }
+
+  search?.addEventListener('input', () => filterItems(search.value));
+  closeBtn?.addEventListener('click', () => setOpen(false));
+  panel.addEventListener('click', (ev) => { if (ev.target === panel) setOpen(false); });
+
+  document.addEventListener('keydown', (ev) => {
+    const mod = ev.metaKey || ev.ctrlKey;
+    if (mod && ev.shiftKey && ev.key.toLowerCase() === 'h') {
+      ev.preventDefault();
+      toggle();
+    }
+    if (ev.key === 'Escape' && open) {
+      ev.preventDefault();
+      setOpen(false);
+    }
+  });
+
+  window.MASTERHistory = { toggle, open: () => setOpen(true), close: () => setOpen(false), reload: loadHistory };
+})();
+
+(function wireEmotionSparkline() {
+  let bar = document.getElementById('mood-sparkline');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'mood-sparkline';
+    bar.className = 'mood-sparkline';
+    bar.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(bar);
+  }
+  const ring = [];
+  const cap = 20;
+
+  function render() {
+    bar.innerHTML = ring.map((entry) => {
+      const h = Math.max(3, Math.round(entry.entropy * 18));
+      return `<i data-mood="${entry.mode || 'idle'}" style="height:${h}px"></i>`;
+    }).join('');
+  }
+
+  function push(detail = {}) {
+    const entropy = Number(detail.entropy ?? 0.2);
+    const mode = (detail.mode || detail.topology || 'idle').toString().slice(0, 12);
+    ring.push({ entropy: Math.min(1, Math.max(0, entropy)), mode });
+    while (ring.length > cap) ring.shift();
+    render();
+  }
+
+  window.addEventListener('master:visual', (ev) => push(ev.detail || {}));
+  push({ entropy: 0.2, mode: 'idle' });
+  window.MASTEREmotionSparkline = { push, snapshot: () => ring.slice() };
+})();
+
+(function wireSessionExport() {
+  function collectMarkdown() {
+    const started = new Date(sessionStartedAt).toISOString();
+    const lines = [`# MASTER session`, ``, `exported: ${new Date().toISOString()}`, `started: ${started}`, ``];
+    if (!log) return lines.join('\n');
+    log.querySelectorAll('.message').forEach((msgEl) => {
+      const role = msgEl.classList.contains('user') ? 'you' : 'master';
+      const body = msgEl.querySelector('.msg-body') || msgEl;
+      const text = (body.textContent || '').replace(/^(you\$|master\$)\s*/i, '').trim();
+      if (!text) return;
+      lines.push(`## ${role}`, '', text, '');
+    });
+    return lines.join('\n');
+  }
+
+  function download() {
+    const md = collectMarkdown();
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    anchor.href = url;
+    anchor.download = `master-session-${stamp}.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    const status = document.getElementById('ui-status');
+    if (status) {
+      const prev = status.textContent;
+      status.textContent = 'exported';
+      setTimeout(() => { if (status.textContent === 'exported') status.textContent = prev; }, 900);
+    }
+    window.MASTERVisual?.event?.('session:export', { topology: 'terrain', entropy: 0.1, confidence: 0.95, mode: 'export' });
+  }
+
+  document.addEventListener('keydown', (ev) => {
+    const mod = ev.metaKey || ev.ctrlKey;
+    if (mod && ev.shiftKey && ev.key.toLowerCase() === 'e') {
+      ev.preventDefault();
+      download();
+    }
+  });
+
+  window.MASTERExport = { download, markdown: collectMarkdown };
 })();

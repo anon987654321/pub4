@@ -7,6 +7,10 @@ const STATIC_ASSETS = [
   '/face.css',
   '/face.js',
   '/chat.js',
+  '/chat_actions.js',
+  '/face_state.js',
+  '/visual_bridge.js',
+  '/particle_kernel.js',
   '/three.face.module.js',
   '/manifest.json',
   '/icon.png'
@@ -32,10 +36,16 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  if (e.request.mode === 'navigate') return;
-
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;
+
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request)
+        .catch(() => caches.match('/') || caches.match(OFFLINE_URL))
+    );
+    return;
+  }
 
   e.respondWith(
     fetch(e.request)

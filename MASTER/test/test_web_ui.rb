@@ -210,6 +210,45 @@ class TestWebUI < Minitest::Test
     refute_includes dashboard, 'location.replace("/")'
   end
 
+  def test_wave3_felt_sense_and_face_part5_wiring
+    actions = File.read(File.expand_path("../web/public/chat_actions.js", __dir__))
+    part5 = File.read(File.expand_path("../web/public/face.part5.txt", __dir__))
+    service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
+    agent = File.read(File.expand_path("../lib/judge/agent.rb", __dir__))
+    index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
+
+    assert_includes actions, "window.collectFeltState = collectFeltState"
+    assert_includes actions, "function collectFeltState()"
+    assert_includes part5, "window.collectFeltState?.()"
+    assert_includes part5, "addEventListener('compaction'"
+    assert_includes part5, "addEventListener('ctx_footer'"
+    assert_includes part5, "addEventListener('phantom'"
+    assert_includes part5, "addEventListener('tool_stack'"
+    assert_includes part5, "addEventListener('stage'"
+    assert_includes part5, "addEventListener('btw'"
+    assert_includes service, "felt_sense:"
+    assert_includes service, '"felt:sense"'
+    assert_includes agent, "felt_aware_message"
+    assert_includes index, 'id="mood-sparkline"'
+  end
+
+  def test_wave3_history_export_sparkline_wired
+    chat = File.read(File.expand_path("../web/public/chat.js", __dir__))
+    css = File.read(File.expand_path("../web/public/face.css", __dir__))
+
+    assert_includes chat, "wireHistorySidebar"
+    assert_includes chat, "MASTERHistory"
+    assert_includes chat, "/chat/history"
+    assert_includes chat, "wireSessionExport"
+    assert_includes chat, "MASTERExport"
+    assert_includes chat, "wireEmotionSparkline"
+    assert_includes chat, "master:visual"
+    assert_includes chat, "action: 'history'"
+    assert_includes chat, "action: 'export'"
+    assert_includes css, "#chat-history-panel"
+    assert_includes css, "#history-list"
+  end
+
   def test_ecology_render_pauses_when_tab_hidden
     source = File.read(File.expand_path("../web/public/cognition_ecology_render.js", __dir__))
 

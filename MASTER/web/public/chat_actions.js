@@ -8,6 +8,15 @@ function csrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.content || '';
 }
 
+function collectFeltState() {
+  const st = window.MASTER_FACE?.State || {};
+  const mood = (st.mood || document.body.dataset.masterState || 'idle').toString();
+  const mode = (st.mode || document.body.dataset.pipelineStage || 'idle').toString();
+  const entropy = Number(st.entropy ?? document.documentElement.style.getPropertyValue('--master-entropy') ?? 0.2);
+  const confidence = Number(st.confidence ?? document.documentElement.style.getPropertyValue('--master-confidence') ?? 0.86);
+  return `${mood}|${mode}|${entropy.toFixed(2)}|${confidence.toFixed(2)}`;
+}
+
 async function enhanceMessage(text) {
   try {
     const r = await fetch(`/chat/enhance?message=${encodeURIComponent(text)}`);
@@ -45,7 +54,7 @@ async function sendMessage(text) {
   window._chatOnUser?.(text);
 
   const enhanced = await enhanceMessage(text);
-  const params = new URLSearchParams({ message: enhanced.text, state: 'idle|thinking|0|0' });
+  const params = new URLSearchParams({ message: enhanced.text, state: collectFeltState() });
   if (enhanced.preEnhanced) params.set('pre_enhanced', '1');
 
   const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
@@ -150,4 +159,5 @@ function startMic(btn) {
   btn.classList.add('active');
 }
 
+window.collectFeltState = collectFeltState;
 if (!window.sendMessage) window.sendMessage = sendMessage;
