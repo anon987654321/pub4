@@ -10,7 +10,7 @@ module Master
         stages   = [
           Master::Now::Stages::Intake.new,
           Master::Now::Stages::Enhance.new(agent: ai[:agent], event_bus: bus, skills: ai[:skills]),
-          Master::Now::Stages::Infer.new(bus: infra[:bus]),
+          Master::Now::Stages::Infer.new(bus: infra[:bus], session: infra[:session]),
           Master::Now::Stages::Route.new(commands:, agent: ai[:agent], bus: infra[:bus]),
           Master::Now::Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
           Master::Now::Stages::Deliberate.new(agent: ai[:agent], config:),

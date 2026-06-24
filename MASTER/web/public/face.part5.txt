@@ -160,7 +160,7 @@ function scheduleThinkingAloud(stage = "thinking") {
 
 function speakFailure(reason = "Sorry, I hit a snag.") {
   announceTTS(reason);
-  if (!tts.muted) enqueueSpeech(reason);
+  if (!tts.muted) enqueueSpeech(reason, { priority: 'error' });
 }
 
 let _firstChatSent = false;

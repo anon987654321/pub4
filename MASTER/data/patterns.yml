@@ -377,6 +377,12 @@ infer:
       patterns:
       - "\\b(?:restart|hot[\\s-]?reload|respawn)\\s+(?:master|the\\s+agent|process)?\\b"
       capture: none
+  negative:
+  - pattern: "\\bexplain\\s+(?:the\\s+)?(?:bug|error|issue|failure|stack\\s*trace)\\b"
+    blocks: [explain]
+  - pattern: "\\bscan\\s+(?:my\\s+)?(?:inbox|email|calendar)\\b"
+    blocks: [scan]
+  destructive: [clear, rebuild, resync, shell, rollback]
 prompt_archaeology:
   policy:
     id: safe_prompt_archaeology

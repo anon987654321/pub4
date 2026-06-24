@@ -95,6 +95,9 @@ class ChatService
     subscribe("btw:done") { |ev| write_json_event("btw", { type: ev[:type], summary: ev[:summary].to_s[0, 500] }) }
     subscribe("skills:triggered") { |ev| write_json_event("thought", "skill #{ev[:skill]}") }
     subscribe("felt:sense") { |ev| write_json_event("felt", { mood: ev[:mood], entropy: ev[:entropy], confidence: ev[:confidence] }) }
+    subscribe("infer:resolved") { |ev| write_json_event("dmesg", dmesg_format("infer:resolved", ev)) }
+    subscribe("infer:confidence") { |ev| write_json_event("dmesg", dmesg_format("infer:confidence", ev)) }
+    subscribe("pressure:updated") { |ev| write_json_event("pressure", ev.slice(:value, :tokens, :limit, :pct)) }
     subscribe("**") { |ev| write_json_event("dmesg", dmesg_format(ev[:event].to_s, ev)) }
     subscribe("**") { |ev| write_json_event("thought", thought_format(ev[:event].to_s, ev)) }
     subscribe("tribunal:rendered") { |ev| write_event("verdict", verdict_for(ev)) }
@@ -212,7 +215,11 @@ class ChatService
   end
 
   def stack_payload(event)
-    { count: event[:count], step: event[:step], model: event[:model].to_s }
+    {
+      count: event[:count], step: event[:step], model: event[:model].to_s,
+      tool: event[:tool].to_s, path: event[:path].to_s,
+      diff: event[:diff].to_s[0, 4000]
+    }
   end
 
   def ctx_footer_payload(event)

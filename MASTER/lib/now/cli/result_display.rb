@@ -25,14 +25,38 @@ module Master
         end
       end
 
+      CATEGORY_PLAYBOOK = {
+        budget: :process,
+        provider_error: :master,
+        llm_failure: :master,
+        validation: :process,
+        policy: :process,
+        axiom_violation: :master
+      }.freeze
+
       def format_error_message(err)
         parts = []
         parts << "[#{err.category}]" if err.respond_to?(:category) && err.category
         parts << err.message.to_s
+        hint = playbook_hint_for(err)
+        parts << hint if hint
         error_text = parts.join(" ")
         return error_text if error_text.bytesize <= 200
 
         error_text[0, 197] + "…"
+      end
+
+      def playbook_hint_for(err)
+        cat = err.category&.to_sym
+        return nil unless cat
+        return nil if @seen_error_categories[cat]
+
+        @seen_error_categories[cat] = true
+        area = CATEGORY_PLAYBOOK[cat]
+        lesson = Master::Ground::OperatorPlaybook.for_area(area || :process).first
+        return nil unless lesson
+
+        Master::Ground::OperatorPlaybook.format_lesson(lesson)
       end
 
       def display_ok(ok:, accumulated:, streamed:)
@@ -52,8 +76,24 @@ module Master
         end
         print_cost_tooltip
         print_pipeline_timings
+        print_parallel_errors_footer(ok)
         print_changed_files_summary
         print_chips if @show_chips
+      end
+
+      def print_parallel_errors_footer(ok)
+        value = ok.value
+        return unless value.respond_to?(:[])
+
+        errors = Array(value[:_parallel_errors]).map(&:to_s).reject(&:empty?)
+        timeout = value[:_parallel_timeout]
+        stage_err = value[:_stage_error].to_s
+        lines = errors
+        lines << "parallel timeout" if timeout
+        lines << stage_err unless stage_err.empty?
+        return if lines.empty?
+
+        puts @refs.renderer.render("parallel: #{lines.first(3).join(' · ')}", mode: :warning)
       end
 
       def print_pipeline_timings

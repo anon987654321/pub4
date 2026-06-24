@@ -94,8 +94,63 @@ module Master
         (["/#{key} - #{topic[:summary]}"] + topic[:detail]).join("\n")
       end
 
+      COMMAND_CATEGORIES = {
+        "session" => %w[clear save history grep audit tokens cost undo rollback redo],
+        "work" => %w[scan fix workflow review critique self kernel status resync tail edge-cases],
+        "agent" => %w[run mode task persona btw shell gateway],
+        "system" => %w[orient tree diff commit snapshot diag reload propose context verify help],
+        "infer" => []
+      }.freeze
+
+      CLI_ONLY_SLASH = %w[
+        /exit /quit /grep /audit /cost /focus /last /cmd /dmesg /chips /phase
+        /ui-critique /sound-critique /rebuild /context /checkpoint /verify
+        /rails-pwa-audit /rails-pwa-fix /swallow-report /restart /principles /self
+        /watch /why /config /rules /analyze-self
+      ].freeze
+
+      def slash_commands
+        registry = HELP_TOPICS.keys.map { |k| "/#{k}" }
+        infer_cmds = infer_command_names.map { |k| "/#{k}" }
+        (registry + infer_cmds + CLI_ONLY_SLASH).uniq.sort
+      end
+
+      def infer_command_names
+        path = Master.data_path("patterns.yml")
+        return [] unless File.exist?(path)
+        data = Master.load_yaml(path) || {}
+        (data.dig("infer", "commands") || {}).keys.map(&:to_s)
+      rescue StandardError
+        []
+      end
+
+      def infer_help_lines
+        path = Master.data_path("patterns.yml")
+        return [] unless File.exist?(path)
+        data = Master.load_yaml(path) || {}
+        (data.dig("infer", "commands") || {}).map do |name, spec|
+          sample = Array(spec["patterns"]).first.to_s.gsub(/\\b/, "").tr("^$", "")[0, 48]
+          "  say: #{sample}… → /#{name}"
+        end
+      rescue StandardError
+        []
+      end
+
       def help_summary
-        lines = HELP_TOPICS.map { |cmd, topic| "/#{cmd} - #{topic[:summary]}" }
+        lines = []
+        COMMAND_CATEGORIES.each do |category, cmds|
+          rows = cmds.filter_map do |cmd|
+            topic = HELP_TOPICS[cmd]
+            next unless topic
+            "[#{category}] /#{cmd} - #{topic[:summary]}"
+          end
+          lines.concat(rows)
+        end
+        uncategorized = HELP_TOPICS.keys - COMMAND_CATEGORIES.values.flatten
+        uncategorized.each { |cmd| lines << "/#{cmd} - #{HELP_TOPICS[cmd][:summary]}" }
+        infer_lines = infer_help_lines
+        lines << "" << "natural language (infer):" if infer_lines.any?
+        lines.concat(infer_lines.first(12))
         (lines + ["/help <command> - show details"]).join("\n")
       end
     end

@@ -13,8 +13,8 @@ module Master
       FULL_MESSAGE_WINDOW = 40
       SUMMARY_MAX_CHARS = 240
 
-      attr_reader :name, :messages, :cost, :phase, :snapshots
-      attr_accessor :topic
+      attr_reader :name, :messages, :cost, :phase, :snapshots, :budget_max
+      attr_accessor :topic, :last_inferred_command, :last_inferred_args
 
       def initialize(root: Dir.pwd, budget_max: 10.0, req_max: 1.0)
         @root = root
@@ -28,6 +28,8 @@ module Master
         @phase = :discover
         @name = nil
         @topic = nil
+        @last_inferred_command = nil
+        @last_inferred_args = nil
         @path = File.join(root, ".master", "session.json")
         @costs_path = File.join(root, ".master", "costs.jsonl")
         Dir.mkdir(File.join(root, ".master")) unless Dir.exist?(File.join(root, ".master"))
@@ -71,6 +73,8 @@ module Master
           name: @name,
           phase: @phase,
           topic: @topic,
+          last_inferred_command: @last_inferred_command,
+          last_inferred_args: @last_inferred_args,
           messages: pruned_messages,
           cost: @cost,
           ts: Time.now.to_i
@@ -88,6 +92,8 @@ module Master
         @name = data[:name]
         @phase = data.fetch(:phase, nil)&.to_sym || :discover
         @topic = data[:topic]
+        @last_inferred_command = data[:last_inferred_command]
+        @last_inferred_args = data[:last_inferred_args]
         @messages = data.fetch(:messages, [])
         @token_est = @messages.sum { |m| Session.estimate_tokens(m[:content]) }
         @cost = data[:cost].to_f

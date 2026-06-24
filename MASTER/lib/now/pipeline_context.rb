@@ -9,7 +9,7 @@ module Master
       KNOWN_KEYS = %i[
         user_message on_chunk
         intent command args message original_message inferred_command
-        task_type pressure
+        task_type pressure locale infer_confidence
         handler model last_tool_tier
         output tool_calls written_files source
         council_feedback

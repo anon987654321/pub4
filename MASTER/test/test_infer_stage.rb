@@ -48,6 +48,17 @@ class InferStageTest < Minitest::Test
     event, payload = @bus.events.find { |ev, _| ev == "infer:resolved" }
     assert_equal "infer:resolved", event
     assert_equal "cost", payload[:command]
+    assert payload[:confidence].to_f.positive?
+    conf_event = @bus.events.find { |ev, _| ev == "infer:confidence" }
+    refute_nil conf_event
+  end
+
+  def test_negative_pattern_blocks_risky_scan
+    result = @infer.call(ctx("scan my email inbox"))
+    assert result.ok?
+    assert_equal :llm, result.value!.intent
+    rejected = @bus.events.find { |ev, _| ev == "infer:rejected" }
+    refute_nil rejected
   end
 
   def test_detects_coding_task_type

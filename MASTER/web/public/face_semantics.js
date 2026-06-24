@@ -28,6 +28,30 @@ function boostEyePool(delta, field = 'attention') {
   }
 }
 
+function payloadConfidence(d) {
+  const raw = d.raw || d.payload || {};
+  const v = raw.confidence ?? d.confidence;
+  return typeof v === 'number' ? v : null;
+}
+
+window.addEventListener('master:pressure', (ev) => {
+  const pct = Number(ev.detail?.pct ?? ev.detail?.value ?? 0);
+  if (!Number.isFinite(pct)) return;
+  State.breath = Math.max(0.55, 1 - pct / 120);
+  const K = window.ParticleKernel;
+  if (!mouthPool || !K) return;
+  const push = Math.min(0.85, pct / 100);
+  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, push);
+  }
+});
+
+window.addEventListener('master:palette', (ev) => {
+  const accent = ev.detail?.accent;
+  if (accent) document.documentElement.style.setProperty('--master-accent', accent);
+});
+
 function dropMouthConfidence(drop) {
   const K = window.ParticleKernel;
   if (!mouthPool || !K) return;
@@ -82,6 +106,20 @@ window.addEventListener('master:visual', (ev) => {
     State.mode = 'thinking';
     State.pulse = Math.max(State.pulse || 0, 0.32);
   }
+  const K = window.ParticleKernel;
+  if (/infer:resolved|infer:confidence|route:resolved|llm:routed/.test(name) && mouthPool && K) {
+    const bump = 0.12 + (d.confidence ?? payloadConfidence(d) ?? 0.7) * 0.18;
+    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * K.FIELDS_PER_CELL;
+      mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.3) + bump);
+      mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + K.FIELD.pressure] || 0) + bump * 0.45);
+    }
+    State.pulse = Math.max(State.pulse || 0, 0.28);
+  }
+  if (/infer:rejected/.test(name)) {
+    State.tremor = Math.max(State.tremor || 0, 0.25);
+    dropMouthConfidence(0.12);
+  }
   if (/escalat|fallback|retry/.test(name)) {
     State.tremor = Math.max(State.tremor || 0, 0.4);
     State.mood = 'tense';
@@ -89,7 +127,6 @@ window.addEventListener('master:visual', (ev) => {
   if (/memory|retriev|context/.test(name)) {
     State.ripplePhase = State.ripplePhase < 0 ? 0 : State.ripplePhase;
   }
-  const K = window.ParticleKernel;
   if (mouthPool && K) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;

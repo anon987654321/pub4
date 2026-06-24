@@ -31,10 +31,7 @@ module Master
         style: ".",
         critical: "!!",
       }.freeze
-      SLASH_COMMANDS = %w[
-        /help /exit /quit /undo /redo /rollback /history /grep /audit /cost /watch /why /focus /last /cmd /dmesg /chips /propose /principles /restart
-        /self /phase /ui-critique /sound-critique /rebuild /context /checkpoint /verify /rails-pwa-audit /rails-pwa-fix /swallow-report
-      ].freeze
+      SLASH_COMMANDS = CommandRegistry.slash_commands.freeze
 
       attr_reader :container
       attr_reader :exit_code
@@ -59,6 +56,7 @@ module Master
         @show_chips = false
         @last_input = nil
         @last_cost = 0.0
+        @seen_error_categories = {}
         @dmesg_sub = nil
         @exit_code = 0
         set_visitor_mode_if_unauthenticated
@@ -92,6 +90,8 @@ module Master
 
       def run_input(input)
         return empty_input(:run_input) if input.strip.empty?
+        budget_err = budget_block_if_exceeded
+        return display_result(result: budget_err, accumulated: "", streamed: false) if budget_err
 
         @user_active = true
         @last_input = input
@@ -105,7 +105,7 @@ module Master
         print_thinking_indicator unless paste
         @pipeline_thread = Thread.new do
           Thread.current.report_on_exception = false
-          @refs.pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk))
+          @refs.pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk, felt_sense: cli_felt_sense))
         end
         result = begin
           @pipeline_thread.value
@@ -236,6 +236,25 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.booted_before?", event_bus: @refs.bus)
         false
+      end
+
+      def cli_felt_sense
+        mood = @last_ok ? "focused" : "tense"
+        mood = "curious" if @refs.session.phase == :discover
+        entropy = [violations_count / 20.0, 1.0].min
+        confidence = @last_ok ? 0.86 : 0.42
+        { mood: mood, entropy: entropy.round(2), confidence: confidence }
+      end
+
+      def budget_block_if_exceeded
+        max = @refs.session.budget_max.to_f
+        return nil if max <= 0
+        return nil if @refs.session.cost.to_f < max
+
+        Master::Result.err(
+          "budget exceeded: ¢#{( @refs.session.cost * 100).round(2)} / ¢#{(max * 100).round(2)} — use /cost or raise budget",
+          category: :budget
+        )
       end
 
       def first_boot_bar

@@ -144,6 +144,18 @@
     if (type === "tts:style:active") {
       window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, raw: event } }));
     }
+    if (/pressure:updated|ctx:footer/i.test(type)) {
+      const pct = event.pct ?? event.value ?? 0;
+      window.dispatchEvent(new CustomEvent("master:pressure", { detail: { pct, ...event } }));
+    }
+    if (/infer:resolved|infer:confidence|route:resolved|llm:routed/i.test(type)) {
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: mapped }));
+    }
+    if (state.provider && window.MASTEREvents?.paletteForProvider) {
+      const pal = window.MASTEREvents.paletteForProvider(state.provider);
+      document.documentElement.style.setProperty("--master-accent", pal.accent || "#f5f0e8");
+      window.dispatchEvent(new CustomEvent("master:palette", { detail: { provider: state.provider, ...pal } }));
+    }
   }
 
   let eventSource = null;

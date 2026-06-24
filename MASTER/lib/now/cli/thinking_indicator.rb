@@ -10,6 +10,8 @@ module Master
       DMESG_IGNORE = %w[bus:subscribe bus:unsubscribe ring:write].freeze
       STAGE_EVENTS = {
         "infer:resolved" => "infer",
+        "infer:confidence" => "infer",
+        "infer:rejected" => "infer-skip",
         "route:resolved" => "route",
         "llm:routed" => "model"
       }.freeze

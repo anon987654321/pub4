@@ -403,8 +403,16 @@ window._chatOnToolStack = (payload) => {
   summary.textContent = `${_toolStackCount} tool call(s)`;
   const line = document.createElement('div');
   line.className = 'tool-stack-line';
-  line.textContent = `step ${payload?.step ?? '?'}: ${payload?.count ?? 1} call(s)`;
+  const tool = payload?.tool ? ` ${payload.tool}` : '';
+  const path = payload?.path ? ` ${payload.path}` : '';
+  line.textContent = `step ${payload?.step ?? '?'}:${tool}${path} (${payload?.count ?? 1})`;
   body.appendChild(line);
+  if (payload?.diff) {
+    const diff = document.createElement('details');
+    diff.className = 'tool-diff';
+    diff.innerHTML = `<summary>diff</summary><pre class="diff-body">${payload.diff}</pre>`;
+    body.appendChild(diff);
+  }
 };
 
 window._chatOnStage = (payload) => {
@@ -592,7 +600,9 @@ document.querySelectorAll('.tool').forEach(btn => {
     { action: 'instant', label: 'toggle instant stream', hint: 'skip typing indicator' },
     { action: 'focus', label: 'toggle focus mode', hint: 'hide chrome, face only' },
     { action: 'mute', label: 'toggle TTS mute', hint: 'keyboard: t' },
-    { action: 'preview', label: 'preview voice', hint: 'play voice blurb' }
+    { action: 'preview', label: 'preview voice', hint: 'play voice blurb' },
+    { action: 'shortcuts', label: 'keyboard shortcuts', hint: 'press ?' },
+    { action: 'continuous_stt', label: 'continuous listening', hint: 'STT mode toggle' }
   ];
 
   fetch('/chat/skills').then(r => r.json()).then((skills) => {
@@ -630,6 +640,14 @@ document.querySelectorAll('.tool').forEach(btn => {
     if (entry.action === 'focus') { window.MASTER_FACE?.toggleFocusMode?.(); return; }
     if (entry.action === 'mute') { window.MASTERVoice?.toggleMute?.(); return; }
     if (entry.action === 'preview') { window.MASTERVoice?.previewVoice?.(); return; }
+    if (entry.action === 'shortcuts') { window.MASTERShortcuts?.open?.(); return; }
+    if (entry.action === 'continuous_stt') {
+      window.MASTER_STT = window.MASTER_STT || { mode: 'ptt' };
+      window.MASTER_STT.mode = window.MASTER_STT.mode === 'continuous' ? 'ptt' : 'continuous';
+      const ui = document.getElementById('ui-status');
+      if (ui) ui.textContent = `stt: ${window.MASTER_STT.mode}`;
+      return;
+    }
     const text = entry.cmd || '';
     if (!text) return;
     if (input) { input.value = text; input.focus(); }
@@ -660,17 +678,37 @@ document.querySelectorAll('.tool').forEach(btn => {
     renderList();
   }
 
+  const _inerted = [];
+
+  function trapFocus(ev) {
+    if (root.dataset.open !== '1' || ev.key !== 'Tab') return;
+    const focusable = root.querySelectorAll('input, button, [role="option"]');
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  }
+
   function openPalette(seed = '') {
     root.dataset.open = '1';
     filterItems(seed);
     panelInput.value = seed;
+    document.querySelectorAll('body > *').forEach((el) => {
+      if (el === root || el.id === 'cmd-palette-panel') return;
+      if (!el.inert) { el.inert = true; _inerted.push(el); }
+    });
     panelInput.focus();
     panelInput.select();
+    document.addEventListener('keydown', trapFocus);
     window.MASTERVisual?.event?.('palette:open', { topology: 'neural', entropy: 0.12, confidence: 0.9, mode: 'palette' });
   }
 
   function closePalette() {
     delete root.dataset.open;
+    _inerted.forEach((el) => { el.inert = false; });
+    _inerted.length = 0;
+    document.removeEventListener('keydown', trapFocus);
     if (panelInput) panelInput.value = '';
     input?.focus();
   }
@@ -989,12 +1027,18 @@ document.querySelectorAll('.tool').forEach(btn => {
   window.MASTERStreamMode = {
     toggle() {
       const on = document.body.dataset.instantStream === '1';
-      if (on) delete document.body.dataset.instantStream;
-      else document.body.dataset.instantStream = '1';
+      if (on) {
+        delete document.body.dataset.instantStream;
+        localStorage.removeItem('master:instant-stream');
+      } else {
+        document.body.dataset.instantStream = '1';
+        localStorage.setItem('master:instant-stream', '1');
+      }
       const status = document.getElementById('ui-status');
       if (status) status.textContent = on ? 'stream: paced' : 'stream: instant';
     }
   };
+  if (localStorage.getItem('master:instant-stream') === '1') document.body.dataset.instantStream = '1';
 
   window.MASTERLogSearch = (() => {
     let inputEl = null;

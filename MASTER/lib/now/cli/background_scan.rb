@@ -86,9 +86,14 @@ module Master
         result  = @refs.scanner.scan_dir(lib_dir, depth: :deep)
         return unless result.respond_to?(:ok?) && result.ok?
         n = count_violations(result.value!)
-        return if n == violations_count
+        prev = violations_count
+        return if n == prev
+        delta = n - prev
         set_violations(n)
-        $stdout.puts "\nbg: #{n} violation(s)" if n.positive?
+        sign = delta.positive? ? "+#{delta}" : delta.to_s
+        msg = n.positive? ? "bg: #{n}v (#{sign})" : "bg: clean (#{sign})"
+        $stdout.puts "\n#{msg}"
+        @refs.bus&.publish("cli:violation_delta", count: n, delta: delta, previous: prev)
         $stdout.flush
       rescue StandardError => e
         @refs.bus&.publish("cli:bg_error", error: e.message)

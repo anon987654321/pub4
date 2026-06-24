@@ -53,7 +53,60 @@ async function runSlashCommand(text) {
   }
 }
 
+const OUTBOX_STORE = 'pending-sends';
+
+async function queueOfflineSend(text) {
+  if (!window.indexedDB) return false;
+  const db = await new Promise((resolve, reject) => {
+    const req = indexedDB.open('master-session', 2);
+    req.onupgradeneeded = () => {
+      const database = req.result;
+      if (!database.objectStoreNames.contains(OUTBOX_STORE)) database.createObjectStore(OUTBOX_STORE, { keyPath: 'id', autoIncrement: true });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(OUTBOX_STORE, 'readwrite');
+    tx.objectStore(OUTBOX_STORE).add({ text, ts: Date.now() });
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+  window._chatOnDmesg?.('queued offline');
+  return true;
+}
+
+async function drainOfflineQueue() {
+  if (!navigator.onLine || !window.indexedDB) return;
+  const db = await new Promise((resolve) => {
+    const req = indexedDB.open('master-session', 2);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+  });
+  if (!db?.objectStoreNames?.contains(OUTBOX_STORE)) return;
+  const rows = await new Promise((resolve) => {
+    const tx = db.transaction(OUTBOX_STORE, 'readonly');
+    const getAll = tx.objectStore(OUTBOX_STORE).getAll();
+    getAll.onsuccess = () => resolve(getAll.result || []);
+    getAll.onerror = () => resolve([]);
+  });
+  for (const row of rows) {
+    await sendMessage(row.text);
+    await new Promise((resolve) => {
+      const tx = db.transaction(OUTBOX_STORE, 'readwrite');
+      tx.objectStore(OUTBOX_STORE).delete(row.id);
+      tx.oncomplete = resolve;
+    });
+  }
+}
+
+window.addEventListener('online', () => { drainOfflineQueue().catch(() => {}); });
+
 async function sendMessage(text) {
+  if (!navigator.onLine) {
+    const queued = await queueOfflineSend(text);
+    if (queued) return;
+  }
   if (text.startsWith('!') && text.length > 1) return runSlashCommand('/shell ' + text.slice(1).trim());
   if (text.startsWith('/')) return runSlashCommand(text);
   if (window._chatEvtSrc) { try { window._chatEvtSrc.close(); } catch (_) {} }

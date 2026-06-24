@@ -24,7 +24,20 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     if (!body.classList.contains('zen')) return;
     if (innerHeight - e.clientY < 56) body.dataset.edgeHover = '1';
     else delete body.dataset.edgeHover;
+    resetZenHide();
   }, { passive: true });
+
+  let zenIdleTimer = null;
+  function resetZenHide() {
+    clearTimeout(zenIdleTimer);
+    body.classList.remove('zen-hidden');
+    zenIdleTimer = setTimeout(() => {
+      if (!body.classList.contains('zen') || body.dataset.edgeHover === '1') return;
+      body.classList.add('zen-hidden');
+    }, 4500);
+  }
+  ['pointerdown', 'keydown', 'touchstart'].forEach((ev) => document.addEventListener(ev, resetZenHide, { passive: true }));
+  resetZenHide();
 
   const cvEl = document.getElementById('face');
   if (cvEl) {

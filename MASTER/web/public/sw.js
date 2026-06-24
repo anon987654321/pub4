@@ -10,6 +10,8 @@ const STATIC_ASSETS = [
   '/chat_actions.js',
   '/face_state.js',
   '/visual_bridge.js',
+  '/master_events.js',
+  '/shortcut_sheet.js',
   '/particle_kernel.js',
   '/three.face.module.js',
   '/manifest.json',
