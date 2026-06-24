@@ -57,6 +57,10 @@ sync_tree() {
     ${_PRIV} openrsync -a "${src%/}/." "${dst%/}/" && return 0
   fi
   log_warn "openrsync failed; falling back to tar copy"
+  if [[ $delete == 1 ]]; then
+    ${_PRIV} find "${dst%/}" -mindepth 1 -maxdepth 1 \
+      ! -name db ! -name storage ! -name log ! -name tmp -exec rm -rf {} +
+  fi
   ${_PRIV} sh -c "cd '${src%/}' && tar cf - ." | ${_PRIV} sh -c "cd '${dst%/}' && tar xf -"
 }
 
