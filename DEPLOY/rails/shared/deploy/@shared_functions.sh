@@ -359,9 +359,8 @@ random_port() {
 retire_legacy_rails_rcd() {
   local app_name=$1 legacy="${app_name}_rails"
   [[ -f /etc/rc.d/$legacy ]] || return 0
-  ${_PRIV} rcctl stop "$legacy" 2>/dev/null || true
   ${_PRIV} rcctl disable "$legacy" 2>/dev/null || true
-  log_ok "disabled legacy rc.d ${legacy}"
+  log_ok "disabled legacy rc.d ${legacy} (no stop — shared port with ${app_name})"
 }
 
 # install_rcd APP_NAME APP_DIR PORT SERVICE_NAME
