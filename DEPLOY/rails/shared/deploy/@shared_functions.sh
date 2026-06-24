@@ -172,17 +172,21 @@ rails_runtime_gate() {
   if [[ -n $app_name ]]; then
     master_scan_dep "$app_name" || { log_err "MASTER scan failed"; return 1; }
   fi
-  log "runtime gate: bundle check + db:prepare + bin/ci"
+  log "runtime gate: ci bundle + db:prepare + bin/ci"
   if [[ -n $app_name ]]; then
     local secret
     secret=$(app_secret_for "$app_name")
+    run_rails_as_app "$app_name" "$app_dir" \
+      "bundle34 config unset without && bundle34 install --jobs=2" \
+      || { log_err "ci bundle install failed"; return 1; }
     run_rails_as_app "$app_name" "$app_dir" bundle34 check \
       || { log_err "bundle check failed"; return 1; }
     run_rails_as_app "$app_name" "$app_dir" \
       "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:prepare" \
       || { log_err "db:prepare failed"; return 1; }
     if [[ -x ${app_dir}/bin/ci ]]; then
-      run_rails_as_app "$app_name" "$app_dir" "SECRET_KEY_BASE=${secret} bundle34 exec bin/ci" \
+      run_rails_as_app "$app_name" "$app_dir" \
+        "SECRET_KEY_BASE=${secret} RAILS_ENV=test CI=1 bundle34 exec bin/ci" \
         || { log_err "bin/ci failed"; return 1; }
     fi
   else

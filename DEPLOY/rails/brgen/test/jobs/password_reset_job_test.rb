@@ -11,7 +11,7 @@ class PasswordResetJobTest < ActiveSupport::TestCase
 
     User.stub(:find_by, user) do
       PasswordsMailer.stub(:reset, mail) do
-        PasswordResetJob.perform_now(user.id)
+        Shared::PasswordResetJob.perform_now(user.id)
       end
     end
 
