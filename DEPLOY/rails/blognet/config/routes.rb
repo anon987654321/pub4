@@ -25,7 +25,7 @@ Rails.application.routes.draw do
   constraints(jobs_constraint) do
     mount SolidQueue::Engine, at: "/admin/jobs"
   end
-  get 'manifest' => 'rails/pwa#manifest', as: :pwa_manifest
-  get 'service-worker' => 'rails/pwa#service_worker', as: :pwa_service_worker
+  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
+  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   get "up", to: "rails/health#show", as: :rails_health_check
 end

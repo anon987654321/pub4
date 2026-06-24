@@ -38,7 +38,7 @@ class PortsController < ApplicationController
     @advisories = @port.security_advisories.recent
     @maintainer = @port.maintainer.present? ? Maintainer.find_by(name: @port.maintainer) : nil
     @pkg_info = begin
-      # brakeman:ignore Execute
+      # brakeman :ignore Execute
       out, = Open3.capture2e("pkg_info", "-q", @port.name) rescue [ "(pkg_info not available in this env)" ]
       out.strip
     end
