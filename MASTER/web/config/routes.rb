@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   get  "chat/history", to: "chat#history"
   post "chat/command", to: "chat#command"
   get  "chat/metrics", to: "chat#metrics"
+  get  "chat/skills",  to: "chat#skills"
   get  "chat/dmesg",    to: "chat#dmesg"
   get  "events/stream", to: "events#stream"
   post "canvas/event",  to: "canvas#post_event"

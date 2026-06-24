@@ -1,2 +1,56 @@
-<% content_for :title, "MASTER" %>
-<script>location.replace("/")</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MASTER — mission control</title>
+  <link rel="stylesheet" href="/face.css">
+  <style>
+    body { overflow: auto; padding: 1.25rem; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; }
+    h1 { font-size: 14px; font-weight: 600; margin-bottom: 1rem; letter-spacing: 0.04em; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+    .panel { border: 1px solid color-mix(in srgb, var(--c-text) 18%, transparent); padding: 10px 12px; background: #000; }
+    .panel h2 { font-size: 11px; text-transform: uppercase; opacity: 0.55; margin-bottom: 8px; }
+    pre { white-space: pre-wrap; word-break: break-word; opacity: 0.9; }
+    .meta { opacity: 0.65; margin-bottom: 6px; }
+    a { color: var(--c-text); }
+  </style>
+</head>
+<body>
+  <h1><a href="/">← chat</a> · mission control</h1>
+  <div class="grid" id="mission-grid">
+    <div class="panel"><h2>status</h2><pre id="status">loading…</pre></div>
+    <div class="panel"><h2>rtk savings</h2><pre id="rtk">loading…</pre></div>
+    <div class="panel"><h2>active plan</h2><pre id="plan">loading…</pre></div>
+    <div class="panel"><h2>rsi inbox</h2><pre id="rsi">loading…</pre></div>
+    <div class="panel"><h2>skills</h2><pre id="skills">loading…</pre></div>
+    <div class="panel"><h2>recent bus</h2><pre id="bus">loading…</pre></div>
+  </div>
+  <script>
+    async function refresh() {
+      const r = await fetch('/dashboard/live');
+      const d = await r.json();
+      if (d.error) { document.getElementById('status').textContent = d.error; return; }
+      document.getElementById('status').textContent = [
+        `model: ${d.model}`,
+        `ctx: ${d.tokens} tokens`,
+        `cost: $${Number(d.cost || 0).toFixed(4)}`,
+        `agent pool: ${d.agent_pool} active`,
+        `breakers: ${(d.open_breakers || []).join(', ') || 'none'}`
+      ].join('\n');
+      const rtk = d.rtk || {};
+      document.getElementById('rtk').textContent = [
+        `commands: ${rtk.commands || 0}`,
+        `saved: ${rtk.saved_pct || 0}%`,
+        `bytes: ${rtk.bytes_out || 0} / ${rtk.bytes_in || 0}`
+      ].join('\n');
+      document.getElementById('plan').textContent = d.active_plan || '(none)';
+      document.getElementById('rsi').textContent = (d.rsi_inbox || []).map(i => `${i.path}\n${i.excerpt}`).join('\n\n') || '(empty)';
+      document.getElementById('skills').textContent = (d.skills || []).join('\n') || '(none)';
+      document.getElementById('bus').textContent = (d.bus_events || []).slice(-12).map(e => JSON.stringify(e)).join('\n') || '(quiet)';
+    }
+    refresh();
+    setInterval(refresh, 8000);
+  </script>
+</body>
+</html>

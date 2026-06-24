@@ -66,6 +66,11 @@ module Master
         def execute_react_tool(name, args)
           tool = @tools.find { |t| t.class.name.split("::").last == name }
           return "<tool_result name=\"#{name}\">error: tool not found</tool_result>" unless tool
+          runtime = tool.class.const_defined?(:NAME) ? tool.class::NAME : name
+          unless Ground::SubagentContext.permits?(name) && Ground::SubagentContext.permits?(runtime)
+            return "<tool_result name=\"#{name}\">error: tool denied for subagent #{Ground::SubagentContext.active_type}</tool_result>"
+          end
+
           sym_args = args.transform_keys(&:to_sym)
           raw = tool.respond_to?(:call) ? tool.call(**sym_args) : "unsupported"
           out = Result.wrap(raw).value_or(raw.to_s)

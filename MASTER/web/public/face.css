@@ -838,3 +838,63 @@ body[data-tts-loading="true"] canvas { filter: none; }
 .tool.active { color:var(--c-accent); opacity:1; }
 
 #ascii-star { position: fixed; top: 14px; left: 14px; font: 600 22px/1 ui-monospace, monospace; color: var(--face-fg); mix-blend-mode: difference; pointer-events: none; z-index: 9; transition: color 220ms var(--ease-linear); }
+
+.ctx-footer {
+  display: block;
+  margin-top: 6px;
+  font: 10px/1.3 ui-monospace, monospace;
+  color: var(--face-dim);
+  opacity: 0.75;
+}
+
+.compaction-note,
+.btw-note,
+.message.system {
+  font: 11px/1.4 ui-monospace, monospace;
+  color: var(--face-muted);
+  padding: 6px 0 2px 2px;
+  border-left: 2px solid color-mix(in srgb, var(--face-fg) 20%, transparent);
+  margin: 4px 0;
+}
+
+.compaction-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.6; margin-bottom: 4px; }
+.compaction-body { white-space: pre-wrap; font-size: 11px; max-height: 160px; overflow: auto; }
+
+.phantom-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font: 10px ui-monospace, monospace;
+  color: var(--c-danger);
+  opacity: 0.85;
+}
+
+.message.msg-phantom .msg-body {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--c-danger) 40%, transparent);
+}
+
+body[data-phantom-glitch="1"] canvas {
+  filter: contrast(1.2) hue-rotate(8deg);
+  transition: filter 120ms steps(3, end);
+}
+
+.tool-stack {
+  font: 10px/1.35 ui-monospace, monospace;
+  color: var(--face-dim);
+  margin-bottom: 4px;
+}
+
+.tool-stack summary { cursor: pointer; list-style: none; }
+.tool-stack summary::before { content: "▸ "; }
+.tool-stack[open] summary::before { content: "▾ "; }
+
+.pipeline-stage {
+  position: fixed;
+  right: calc(12px + var(--safe-right));
+  bottom: calc(52px + var(--safe-bottom));
+  z-index: var(--z-ui);
+  font: 10px ui-monospace, monospace;
+  color: var(--face-dim);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}

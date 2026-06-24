@@ -22,8 +22,8 @@ module Master
         @cache.clear
       end
 
-      def call(path:, offset: 0, limit: MAX_LINES)
-        key = [path, offset, limit]
+      def call(path:, offset: 0, limit: MAX_LINES, hashline: false)
+        key = [path, offset, limit, hashline]
         return @cache[key] if @cache.key?(key)
         resolved = resolve(path)
         return resolved if resolved.err?
@@ -35,7 +35,12 @@ module Master
         total = lines.size
         slice = lines[offset, limit] || []
 
-        numbered = slice.each_with_index.map { |l, i| "#{offset + i + 1}\t#{l}" }.join
+        numbered =
+          if hashline
+            Hashline.format_lines(slice, offset:)
+          else
+            slice.each_with_index.map { |l, i| "#{offset + i + 1}\t#{l}" }.join
+          end
         suffix = total > offset + limit ? "\n[...truncated, #{total} total lines]" : ""
 
         result = Result.ok(numbered + suffix)

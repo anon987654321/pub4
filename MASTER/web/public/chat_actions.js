@@ -39,6 +39,7 @@ async function runSlashCommand(text) {
 }
 
 async function sendMessage(text) {
+  if (text.startsWith('!') && text.length > 1) return runSlashCommand('/shell ' + text.slice(1).trim());
   if (text.startsWith('/')) return runSlashCommand(text);
   if (window._chatEvtSrc) { try { window._chatEvtSrc.close(); } catch (_) {} }
   window._chatOnUser?.(text);
@@ -100,6 +101,24 @@ async function sendMessage(text) {
   });
   window._chatEvtSrc.addEventListener('thought', (ev) => {
     try { window._chatOnThought?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  window._chatEvtSrc.addEventListener('compaction', (ev) => {
+    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  window._chatEvtSrc.addEventListener('ctx_footer', (ev) => {
+    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  window._chatEvtSrc.addEventListener('phantom', (ev) => {
+    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  window._chatEvtSrc.addEventListener('tool_stack', (ev) => {
+    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  window._chatEvtSrc.addEventListener('stage', (ev) => {
+    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  window._chatEvtSrc.addEventListener('btw', (ev) => {
+    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (_) {}
   });
   window._chatEvtSrc.onerror = () => {
     const voice = window.MASTERVoice;

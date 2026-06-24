@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "thread"
 
 module Master
@@ -8,10 +9,11 @@ module Master
     class AgentPool
       MAX_CONCURRENT = 4
 
-      Worker = Struct.new(:type, :thread, :started_at, :tag, keyword_init: true)
+      Worker = Struct.new(:type, :thread, :started_at, :tag, :tools, keyword_init: true)
 
-      def initialize(governor:, event_bus: nil, taxonomy_path: File.join(Master::ROOT, "data", "agent_taxonomy.yml"))
+      def initialize(governor:, tools: nil, event_bus: nil, taxonomy_path: File.join(Master::ROOT, "data", "agent_taxonomy.yml"))
         @governor = governor
+        @parent_tools = Array(tools)
         @bus = event_bus
         @taxonomy = Master.load_yaml(taxonomy_path) || {}
         @max = @taxonomy.dig("spawn_policy", "max_concurrent_children") || MAX_CONCURRENT
@@ -20,25 +22,34 @@ module Master
       end
 
       def spawn(type:, tag: nil, &block)
+        parsed = Ground::SubagentPolicy.parse(type)
+        allowed = Ground::SubagentPolicy.allowed_tool_names(parsed, @parent_tools)
         @mutex.synchronize do
           reap_dead
           return Result.err("agent_pool: at capacity (#{@max})", category: :validation) if @workers.size >= @max
         end
 
-        thread = Thread.new do
-          @bus&.publish("agent:start", type:, tag:)
-          block.call
-        rescue StandardError => err
-          @bus&.publish("agent:error", type:, tag:, error: err.message)
-        ensure
-          @bus&.publish("agent:end", type:, tag:)
+        if @governor && !spawn_permitted?(parsed, tag)
+          return Result.err("agent_pool: governor denied spawn", category: :policy)
         end
 
-        @mutex.synchronize { @workers << Worker.new(type:, thread:, started_at: Time.now, tag:) }
+        thread = Thread.new do
+          Thread.current.report_on_exception = false
+          Ground::SubagentContext.run(type: parsed, allowed:) do
+            @bus&.publish("agent:start", type: parsed, tag:, tools: allowed)
+            block.call
+          rescue StandardError => err
+            @bus&.publish("agent:error", type: parsed, tag:, error: err.message)
+            raise
+          ensure
+            @bus&.publish("agent:end", type: parsed, tag:)
+          end
+        end
+
+        @mutex.synchronize { @workers << Worker.new(type: parsed, thread:, started_at: Time.now, tag:, tools: allowed) }
         Result.ok(thread)
       end
 
-      # intentional — each thread is an independent worker, not a DB query
       def join_all(timeout: nil)
         @workers.map { |w| w.thread.join(timeout) }
       end
@@ -48,6 +59,13 @@ module Master
       end
 
       private
+
+      def spawn_permitted?(type, tag)
+        ctx = "spawn #{type}#{tag ? " #{tag}" : ""}"
+        @governor.permit?("spawn_agent", :guarded, ctx).ok?
+      rescue StandardError
+        true
+      end
 
       def reap_dead
         @workers.reject! { |w| !w.thread.alive? }

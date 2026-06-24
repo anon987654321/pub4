@@ -75,7 +75,10 @@ module Master
         @bus&.publish("tool:after", tool: NAME, exit_code: out.exit_status)
 
         track_result(:success)
-        Result.ok(out.to_s.strip)
+        raw = out.to_s.strip
+        filtered = OutputFilter.filter(command: executable_command, output: raw)
+        @bus&.publish("rtk:filtered", saved_bytes: raw.bytesize - filtered.bytesize) if filtered != raw
+        Result.ok(filtered)
       rescue Timeout::Error => _e
         track_result(:failure)
         Result.err("zsh: timed out after #{TIMEOUT}s", category: :unknown)

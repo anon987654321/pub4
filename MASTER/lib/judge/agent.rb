@@ -69,7 +69,10 @@ module Master
         response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
 
         text = response.to_s
+        PhantomRecovery.detect(text, bus: @bus)
+
         @session.add_message(role: :assistant, content: text)
+        publish_ctx_footer(selected_model)
         Result.ok(text)
       rescue StandardError => chat_error
         Result.err("agent: #{chat_error.message}", category: :handler_exception)
@@ -87,7 +90,14 @@ module Master
       rescue Reach::CircuitBreaker::CircuitError => err
         Result.err(err.message, category: err.category)
       end
-      private :prepare_chat_turn, :check_rate_limit
+
+      def publish_ctx_footer(model_id)
+        est = @session.respond_to?(:token_est) ? @session.token_est : 0
+        limit = Master::CTX_WINDOW_SIZE
+        pct = limit.positive? ? ((est.to_f / limit) * 100).round(1) : 0
+        @bus&.publish("ctx:footer", model: model_id, token_est: est, limit:, pct:)
+      end
+      private :prepare_chat_turn, :check_rate_limit, :publish_ctx_footer
 
       def ask(prompt, context: nil, operation: nil, image: nil)
         messages = Array(context) + [{ role: "user", content: filter_prompt(apply_reasoning_mode(prompt)) }]

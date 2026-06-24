@@ -42,6 +42,13 @@ class ChatController < ApplicationController
     render json: messages
   end
 
+  def skills
+    loaded = container[:skills]&.loaded || []
+    render json: loaded.map { |s| { name: s[:name], description: s[:description], triggers: s[:triggers] } }
+  rescue StandardError => e
+    render json: { error: e.message }, status: :service_unavailable
+  end
+
   def command
     cmd = (params[:command] || JSON.parse(request.body.read)["command"]).to_s.strip
     if cmd.start_with?("/unlock ")

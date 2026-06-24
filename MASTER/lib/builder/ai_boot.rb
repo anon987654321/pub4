@@ -19,9 +19,12 @@ module Master
       soul_doc = Voice::Soul.new(root:, agent:)
       tools << Reach::AskLlm.new(agent:, governor: infra[:governor],
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
-      ctx = Now::ContextWindow.new(session: infra[:session], agent:, model_context: Master::CTX_WINDOW_SIZE)
+      ctx = Now::ContextWindow.new(session: infra[:session], agent:, model_context: Master::CTX_WINDOW_SIZE,
+        event_bus: bus, root:)
       ctx.check_and_compact!
       agent.wire_context_window(ctx)
+      agent_pool = Judge::AgentPool.new(governor: infra[:governor], tools:, event_bus: bus)
+      Ground::ActivePlan.attach(bus, root)
       agent.wire_constitution(Ground::Constitution.new)
       ecology = infra[:ecology]
       scanner = build_scanner(root:, agent:, bus:, ecology:)
@@ -50,7 +53,8 @@ module Master
       # Strict in build: always run self_test + require evidence (rules.yml ground_truth, self_apply)
       self_test = Judge::Scan::SelfTest.new(root: root, event_bus: bus).call
       bus&.publish("builder:self_test", ok: self_test.ok?) unless self_test.ok?
-      { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard:, reference_graph: infra[:reference_graph] }.merge(autonomous)
+      { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard:,
+        reference_graph: infra[:reference_graph], agent_pool:, context_window: ctx, tools: }.merge(autonomous)
     end
 
     def build_scanner(root:, agent: nil, bus: nil, ecology: nil)

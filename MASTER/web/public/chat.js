@@ -230,6 +230,10 @@ window._chatOnChunk = (raw) => {
   updateSessionStats();
 };
 window._chatOnDone  = () => {
+  _toolStackCount = 0;
+  delete document.body.dataset.pipelineStage;
+  const stageBar = document.getElementById('pipeline-stage');
+  if (stageBar) stageBar.textContent = '';
   const finished = (_streamEl?.textContent || '').trim();
   if (finished) window._chatRememberReply?.(finished);
   const lastAsst = log?.querySelector('.message.assistant:last-of-type');
@@ -321,6 +325,104 @@ function openActionMenu(msgEl) {
     document.addEventListener('keydown', close);
   }, 0);
 }
+
+window._chatOnCtxFooter = (payload) => {
+  const asst = log?.querySelector('.message.assistant:last-of-type');
+  if (!asst || !payload) return;
+  let foot = asst.querySelector('.ctx-footer');
+  if (!foot) {
+    foot = document.createElement('div');
+    foot.className = 'ctx-footer';
+    asst.appendChild(foot);
+  }
+  const model = payload.model || 'model';
+  const est = payload.token_est ?? 0;
+  const limit = payload.limit ?? 0;
+  const pct = payload.pct ?? 0;
+  foot.textContent = `ctx: ${est}/${limit} ${pct}% · ${model}`;
+};
+
+window._chatOnCompaction = (payload) => {
+  if (!payload?.summary) return;
+  const note = document.createElement('div');
+  note.className = 'message system compaction-note';
+  note.setAttribute('role', 'note');
+  const title = document.createElement('div');
+  title.className = 'compaction-title';
+  title.textContent = 'context compacted';
+  const body = document.createElement('pre');
+  body.className = 'compaction-body';
+  body.textContent = payload.summary;
+  note.appendChild(title);
+  note.appendChild(body);
+  log?.appendChild(note);
+  log.scrollTop = log.scrollHeight;
+  window._chatOnDmesg?.('compact0 at master0: compaction summary logged');
+  window.MASTERVisual?.event?.('compaction:done', { topology: 'terrain', entropy: 0.35, confidence: 0.7, mode: 'compact' });
+};
+
+window._chatOnPhantom = (payload) => {
+  const asst = log?.querySelector('.message.assistant:last-of-type');
+  if (asst) {
+    asst.classList.add('msg-phantom');
+    asst.dataset.phantom = (payload?.patterns || []).join(',');
+    let badge = asst.querySelector('.phantom-badge');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'phantom-badge';
+      asst.appendChild(badge);
+    }
+    badge.textContent = `phantom: ${(payload?.patterns || []).join(', ')}`;
+  }
+  document.body.dataset.phantomGlitch = '1';
+  setTimeout(() => delete document.body.dataset.phantomGlitch, 900);
+  window.MASTERVisual?.event?.('phantom:detected', { topology: 'glitch', entropy: 0.9, confidence: 0.2, mode: 'phantom' });
+};
+
+let _toolStackCount = 0;
+window._chatOnToolStack = (payload) => {
+  _toolStackCount += payload?.count || 1;
+  const asst = log?.querySelector('.message.assistant:last-of-type');
+  if (!asst) return;
+  let stack = asst.querySelector('.tool-stack');
+  if (!stack) {
+    stack = document.createElement('details');
+    stack.className = 'tool-stack';
+    stack.innerHTML = '<summary></summary><div class="tool-stack-body"></div>';
+    asst.insertBefore(stack, asst.firstChild);
+  }
+  const summary = stack.querySelector('summary');
+  const body = stack.querySelector('.tool-stack-body');
+  summary.textContent = `${_toolStackCount} tool call(s)`;
+  const line = document.createElement('div');
+  line.className = 'tool-stack-line';
+  line.textContent = `step ${payload?.step ?? '?'}: ${payload?.count ?? 1} call(s)`;
+  body.appendChild(line);
+};
+
+window._chatOnStage = (payload) => {
+  if (!payload?.stage) return;
+  document.body.dataset.pipelineStage = payload.stage.toLowerCase();
+  let bar = document.getElementById('pipeline-stage');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'pipeline-stage';
+    bar.className = 'pipeline-stage';
+    bar.setAttribute('aria-live', 'polite');
+    document.body.appendChild(bar);
+  }
+  const phase = payload.phase === 'done' ? ` ${payload.ms || 0}ms` : '…';
+  bar.textContent = `${payload.stage}${phase}`;
+};
+
+window._chatOnBtw = (payload) => {
+  if (!payload?.summary) return;
+  const note = document.createElement('div');
+  note.className = 'message system btw-note';
+  note.textContent = `btw/${payload.type}: ${payload.summary}`;
+  log?.appendChild(note);
+  log.scrollTop = log.scrollHeight;
+};
 
 window._chatOnThought = (line) => {
   if (!line) return;
@@ -459,15 +561,26 @@ document.querySelectorAll('.tool').forEach(btn => {
     { cmd: '/fix ', hint: 'autofix target' },
     { cmd: '/review ', hint: 'review changes' },
     { cmd: '/why ', hint: 'explain rule or law' },
+    { cmd: '/btw research ', hint: 'parallel side agent' },
+    { cmd: '/rtk', hint: 'shell output filter stats' },
+    { cmd: '/plan', hint: 'show pinned plan' },
     { cmd: '/help', hint: 'list commands' },
     { cmd: '/status', hint: 'service and repo health' },
     { cmd: '/self', hint: 'scan MASTER itself' },
     { cmd: 'ping', hint: 'smoke test connection' },
     { cmd: '/voice last osman', hint: 'replay last reply' },
+    { action: 'dashboard', label: 'mission control', hint: 'open /dashboard' },
     { action: 'focus', label: 'toggle focus mode', hint: 'hide chrome, face only' },
     { action: 'mute', label: 'toggle TTS mute', hint: 'keyboard: t' },
     { action: 'preview', label: 'preview voice', hint: 'play voice blurb' }
   ];
+
+  fetch('/chat/skills').then(r => r.json()).then((skills) => {
+    if (!Array.isArray(skills)) return;
+    skills.forEach((skill) => {
+      COMMANDS.push({ cmd: `/run ${skill.name}`, label: skill.name, hint: skill.description || 'skill' });
+    });
+  }).catch(() => {});
 
   let root = document.getElementById('cmd-palette');
   if (!root) {
@@ -487,6 +600,7 @@ document.querySelectorAll('.tool').forEach(btn => {
 
   function runEntry(entry) {
     closePalette();
+    if (entry.action === 'dashboard') { window.location.href = '/dashboard'; return; }
     if (entry.action === 'focus') { window.MASTER_FACE?.toggleFocusMode?.(); return; }
     if (entry.action === 'mute') { window.MASTERVoice?.toggleMute?.(); return; }
     if (entry.action === 'preview') { window.MASTERVoice?.previewVoice?.(); return; }

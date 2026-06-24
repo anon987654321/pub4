@@ -190,6 +190,24 @@ class TestWebUI < Minitest::Test
     assert_includes source, "cmd-palette"
   end
 
+  def test_opencrabs_web_handlers_present
+    chat = File.read(File.expand_path("../web/public/chat.js", __dir__))
+    actions = File.read(File.expand_path("../web/public/chat_actions.js", __dir__))
+    service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
+    dashboard = File.read(File.expand_path("../web/app/views/dashboard/index.html.erb", __dir__))
+
+    assert_includes chat, "_chatOnCompaction"
+    assert_includes chat, "_chatOnCtxFooter"
+    assert_includes chat, "_chatOnPhantom"
+    assert_includes chat, "/btw research"
+    assert_includes actions, "addEventListener('compaction'"
+    assert_includes actions, "startsWith('!')"
+    assert_includes service, "compaction:done"
+    assert_includes service, "ctx:footer"
+    assert_includes dashboard, "mission control"
+    refute_includes dashboard, 'location.replace("/")'
+  end
+
   def test_ecology_render_pauses_when_tab_hidden
     source = File.read(File.expand_path("../web/public/cognition_ecology_render.js", __dir__))
 

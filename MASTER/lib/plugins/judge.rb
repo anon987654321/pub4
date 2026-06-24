@@ -37,9 +37,11 @@ module Master
                                             circuit_breaker: infra[:breaker],
                                             cache: infra[:cache], event_bus: bus)
         ctx = Master::Now::ContextWindow.new(session: infra[:session], agent:,
-                                             model_context: Master::CTX_WINDOW_SIZE)
+          model_context: Master::CTX_WINDOW_SIZE, event_bus: bus, root:)
         ctx.check_and_compact!
         agent.wire_context_window(ctx)
+        agent_pool = Master::Judge::AgentPool.new(governor: infra[:governor], tools:, event_bus: bus)
+        Master::Ground::ActivePlan.attach(bus, root)
         agent.wire_constitution(Master::Ground::Constitution.new)
         scanner               = configure(nil, root:, agent:, bus:)
         swarm                 = Master::Judge::Swarm::Coordinator.new(agent:, event_bus: bus)
@@ -52,7 +54,8 @@ module Master
         guard                 = Master::Judge::Security::InjectionGuard.new(mode: :permissive)
         autonomous = Plugins::Loop.boot_autonomous(root:, infra:, agent:, scanner:, soul: soul_doc)
                                  .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
-        { agent:, soul: soul_doc, scanner:, swarm:, deliberation:, council_stage:, ideation:, guard: }.merge(autonomous)
+        { agent:, soul: soul_doc, scanner:, swarm:, deliberation:, council_stage:, ideation:, guard:,
+          agent_pool:, context_window: ctx, tools: }.merge(autonomous)
       end
 
       def self.boot_skills(root, bus)

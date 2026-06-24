@@ -83,8 +83,15 @@ class ChatService
 
   def subscribe_to_events
     subscribe("tool:before") { |ev| write_json_event("tool", tool_payload(ev)) }
+    subscribe("react:tool_calls") { |ev| write_json_event("tool_stack", stack_payload(ev)) }
     subscribe("agent:mood") { |ev| write_event("mood", ev[:mood] || ev[:value]) }
     subscribe("llm:request") { |ev| write_event("model", ev[:model]) }
+    subscribe("ctx:footer") { |ev| write_json_event("ctx_footer", ctx_footer_payload(ev)) }
+    subscribe("compaction:done") { |ev| write_compaction_event(ev) }
+    subscribe("phantom:detected") { |ev| write_json_event("phantom", phantom_payload(ev)) }
+    subscribe("pipeline:stage_start") { |ev| write_json_event("stage", { stage: ev[:stage], phase: "start" }) }
+    subscribe("pipeline:stage_complete") { |ev| write_json_event("stage", { stage: ev[:stage], phase: "done", ms: ev[:ms] }) }
+    subscribe("btw:done") { |ev| write_json_event("btw", { type: ev[:type], summary: ev[:summary].to_s[0, 500] }) }
     subscribe("**") { |ev| write_json_event("dmesg", dmesg_format(ev[:event].to_s, ev)) }
     subscribe("**") { |ev| write_json_event("thought", thought_format(ev[:event].to_s, ev)) }
     subscribe("tribunal:rendered") { |ev| write_event("verdict", verdict_for(ev)) }
@@ -192,7 +199,31 @@ class ChatService
   end
 
   def tool_payload(event)
-    { tool: event[:tool].to_s, path: event[:path].to_s }
+    { tool: event[:tool].to_s, path: event[:path].to_s, command: event[:command].to_s }
+  end
+
+  def stack_payload(event)
+    { count: event[:count], step: event[:step], model: event[:model].to_s }
+  end
+
+  def ctx_footer_payload(event)
+    {
+      model: event[:model].to_s.split("/").last,
+      token_est: event[:token_est],
+      limit: event[:limit],
+      pct: event[:pct]
+    }
+  end
+
+  def phantom_payload(event)
+    { patterns: Array(event[:patterns]), recovery: Array(event[:recovery]) }
+  end
+
+  def write_compaction_event(event)
+    summary = event[:summary].to_s.strip
+    write_json_event("compaction", { summary: summary[0, 2_000], token_est: event[:token_est] })
+    bullets = summary.lines.map(&:strip).reject(&:empty?).first(8).join("; ")
+    write_json_event("dmesg", "compact0 at master0: context compacted — #{bullets}")
   end
 
   def verdict_for(event)
@@ -245,6 +276,10 @@ class ChatService
     when "council_feedback", :council_feedback then thought_council(payload)
     when "tribunal:rendered" then "tribunal #{payload[:vetoes].to_i.positive? ? "vetoed" : "approved"}"
     when "pipeline:stage" then thought_stage(payload)
+    when "pipeline:stage_start" then thought_stage(payload.merge(stage: payload[:stage]))
+    when "pipeline:stage_complete" then "#{payload[:stage]} #{payload[:ms]}ms"
+    when "phantom:detected" then "phantom guard: #{Array(payload[:patterns]).join(', ')}"
+    when "compaction:done" then "compacted context (#{payload[:token_est]} tokens remain)"
     end
   end
 
@@ -298,6 +333,12 @@ class ChatService
     when "pressure:updated" then "pressure #{payload[:value]}"
     when "cache:hit" then "cache hit #{payload[:key]}"
     when "cache:miss" then "cache miss #{payload[:key]}"
+    when "compaction:done" then "compacted ctx to #{payload[:token_est]} tokens"
+    when "compaction:start" then "compaction at #{payload[:token_est]} tokens"
+    when "phantom:detected" then "phantom #{Array(payload[:patterns]).join(',')}"
+    when "btw:done" then "btw #{payload[:type]} done"
+    when "agent:start" then "agent #{payload[:type]} start"
+    when "agent:end" then "agent #{payload[:type]} end"
     else rest&.tr("_", " ") || sub
     end
   end

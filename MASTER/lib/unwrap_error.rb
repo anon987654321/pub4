@@ -5,9 +5,10 @@ module Master
   class UnwrapError < RuntimeError; end
 
   # Pure Ruby reader + detector for phantom_recovery (data/rules.yml).
-  # Converts the aspirational detectors + "publish phantom:detected" into runtime.
-  # Used by autoloop/pipeline for gaslighting/repetition/bad-XML recovery.
   module PhantomRecovery
+    REPETITION_SPAN = 60
+    REPETITION_MIN = 3
+
     module_function
 
     def detectors
@@ -21,12 +22,30 @@ module Master
 
     def detect(text, bus: nil)
       t = text.to_s
-      hits = detectors.filter_map { |name, pattern| name if pattern.is_a?(Regexp) && t.match?(pattern) }
+      hits = []
+      detectors.each do |name, pattern|
+        hits << name if pattern.is_a?(Regexp) && t.match?(pattern)
+      end
+      hits << "text_repetition_loop" if repetition_loop?(t)
+
       return nil if hits.empty?
 
       recovery = Master.load_yaml(Master::RULES_PATH).dig("phantom_recovery", "recovery") || []
       bus&.publish("phantom:detected", patterns: hits, recovery: recovery)
       { patterns: hits, recovery: recovery }
+    end
+
+    def repetition_loop?(text)
+      normalized = text.gsub(/\s+/, " ")
+      return false if normalized.length < REPETITION_SPAN * REPETITION_MIN
+
+      counts = Hash.new(0)
+      (0..(normalized.length - REPETITION_SPAN)).each do |index|
+        span = normalized[index, REPETITION_SPAN]
+        counts[span] += 1
+        return true if counts[span] >= REPETITION_MIN
+      end
+      false
     end
 
     def compile_detector(value)
