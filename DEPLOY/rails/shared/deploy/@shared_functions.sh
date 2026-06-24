@@ -52,10 +52,12 @@ sync_tree() {
   local delete=${3:-1}
   ${_PRIV} mkdir -p "$dst"
   if [[ $delete == 1 ]]; then
-    ${_PRIV} openrsync -a --delete "${src%/}/." "${dst%/}/"
+    ${_PRIV} openrsync -a --delete "${src%/}/." "${dst%/}/" && return 0
   else
-    ${_PRIV} openrsync -a "${src%/}/." "${dst%/}/"
+    ${_PRIV} openrsync -a "${src%/}/." "${dst%/}/" && return 0
   fi
+  log_warn "openrsync failed; falling back to tar copy"
+  ${_PRIV} sh -c "cd '${src%/}' && tar cf - ." | ${_PRIV} sh -c "cd '${dst%/}' && tar xf -"
 }
 
 need_cmd() {
