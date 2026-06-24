@@ -2,11 +2,11 @@
 
 class FixDatingForeignKeys < ActiveRecord::Migration[8.1]
   def up
-    execute "PRAGMA foreign_keys = OFF"
+    execute 'PRAGMA foreign_keys = OFF'
     rebuild_likes
     rebuild_dislikes
     rebuild_matches
-    execute "PRAGMA foreign_keys = ON"
+    execute 'PRAGMA foreign_keys = ON'
   end
 
   def down

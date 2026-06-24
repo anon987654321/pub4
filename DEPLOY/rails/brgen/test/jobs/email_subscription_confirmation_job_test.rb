@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "ostruct"
-require "test_helper"
+require 'ostruct'
+require 'test_helper'
 
 class EmailSubscriptionConfirmationJobTest < ActiveSupport::TestCase
-  test "performs subscription confirmation mailer synchronously" do
-    subscription = OpenStruct.new(id: 42, email: "news@example.com", token: "abc123")
+  test 'performs subscription confirmation mailer synchronously' do
+    subscription = OpenStruct.new(id: 42, email: 'news@example.com', token: 'abc123')
     mail = Minitest::Mock.new
     mail.expect(:deliver_now, true)
 

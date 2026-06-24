@@ -10,7 +10,7 @@
     <%= tag.section class: "featured-deals" do %>
       <%= tag.h2 t("marketplace.deals.featured", default: "Featured deals") %>
       <% @featured_deals.each do |deal| %>
-        <%= tag.article class: "deal-card featured" role="listitem" do %>
+        <%= tag.article class: "deal-card featured", role: "listitem" do %>
           <%= tag.h3 link_to(deal.headline, marketplace_deal_path(deal)) %>
           <%= tag.p deal.badge if deal.badge.present? %>
         <% end %>

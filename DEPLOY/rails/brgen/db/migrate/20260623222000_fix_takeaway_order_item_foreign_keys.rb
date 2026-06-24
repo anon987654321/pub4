@@ -4,7 +4,7 @@ class FixTakeawayOrderItemForeignKeys < ActiveRecord::Migration[8.1]
   def up
     return unless table_exists?(:takeaway_order_items)
 
-    execute "PRAGMA foreign_keys = OFF"
+    execute 'PRAGMA foreign_keys = OFF'
     rename_table :takeaway_order_items, :takeaway_order_items_legacy
     create_table :takeaway_order_items do |t|
       t.references :order, null: false, foreign_key: { to_table: :takeaway_orders }
@@ -19,7 +19,7 @@ class FixTakeawayOrderItemForeignKeys < ActiveRecord::Migration[8.1]
       FROM takeaway_order_items_legacy
     SQL
     drop_table :takeaway_order_items_legacy
-    execute "PRAGMA foreign_keys = ON"
+    execute 'PRAGMA foreign_keys = ON'
   end
 
   def down

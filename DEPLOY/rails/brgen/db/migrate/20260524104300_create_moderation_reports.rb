@@ -8,7 +8,7 @@ class CreateModerationReports < ActiveRecord::Migration[8.1]
       t.integer :reportable_id, null: false
       t.string :reason, null: false
       t.text :details
-      t.string :status, null: false, default: "open"
+      t.string :status, null: false, default: 'open'
       t.timestamps
     end
 

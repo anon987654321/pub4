@@ -32,13 +32,13 @@ class Scrape
     TXT
     payload = {
       model: MODEL,
-      messages: [{
+      messages: [ {
         role: "user",
         content: [
           { type: "text",      text: prompt },
           { type: "image_url", image_url: { url: "data:image/png;base64,#{png}" } }
         ]
-      }],
+      } ],
       response_format: { type: "json_object" }
     }
     req = Net::HTTP::Post.new(ENDPOINT,

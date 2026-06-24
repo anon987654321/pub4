@@ -101,6 +101,8 @@ overlay_shared_bin() {
     ${_PRIV} cp "${shared_bin}/${tool}" "${app_dir}/bin/${tool}"
     ${_PRIV} chmod 755 "${app_dir}/bin/${tool}"
   done
+  [[ -f ${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/.rubocop.yml ]] \
+    && ${_PRIV} cp "${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/.rubocop.yml" "${app_dir}/.rubocop.yml"
   log_ok "shared bin stubs overlaid"
 }
 

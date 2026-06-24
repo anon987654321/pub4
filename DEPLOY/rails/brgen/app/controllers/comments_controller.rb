@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CommentsController < ApplicationController
-  before_action :require_real_user, only: [:destroy, :generate_summary]
+  before_action :require_real_user, only: [ :destroy, :generate_summary ]
   before_action :set_commentable
 
   def create

@@ -8,7 +8,7 @@ class VoteReflex < ApplicationReflex
   def cast
     votable = find_votable
     value = element.dataset["value"].to_i
-    raise ArgumentError, "invalid value" unless value.in?([-1, 1])
+    raise ArgumentError, "invalid value" unless value.in?([ -1, 1 ])
 
     votable.public_send(value == 1 ? :upvote_by : :downvote_by, current_user)
     morph "#vote-#{element.dataset['votable-type'].downcase}-#{element.dataset['votable-id']}",

@@ -24,7 +24,7 @@ class Dating::Match < ApplicationRecord
     return unless status == "matched"
 
     conversation = Conversation.find_or_create_direct(initiator, receiver)
-    [initiator, receiver].each do |user|
+    [ initiator, receiver ].each do |user|
       Notification.create!(
         user: user,
         actor: other_user(user),

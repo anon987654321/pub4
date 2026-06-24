@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :vapid do
   desc "Generate VAPID keys — add output to .env or credentials"
   task generate: :environment do

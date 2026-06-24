@@ -1,54 +1,56 @@
-source "https://rubygems.org"
-ruby "~> 3.4"
+# frozen_string_literal: true
 
-gem "rails", "~> 8.1"
-gem "sqlite3", "~> 2.1"
-gem "falcon"
-gem "async"
-gem "async-http"
+source 'https://rubygems.org'
+ruby '~> 3.4'
+
+gem 'async'
+gem 'async-http'
+gem 'falcon'
+gem 'rails', '~> 8.1'
+gem 'sqlite3', '~> 2.1'
 
 # Real-time
-gem "turbo-rails"
-gem "stimulus-rails"
-gem "importmap-rails"
+gem 'importmap-rails'
+gem 'stimulus-rails'
+gem 'turbo-rails'
 
 # Solid Stack (Rails 8)
-gem "solid_queue"
-gem "solid_cache"
-gem "solid_cable"
+gem 'solid_cable'
+gem 'solid_cache'
+gem 'solid_queue'
 
 # Authentication
-gem "bcrypt", "~> 3.1"
-gem "pundit"
-gem "rotp"
-gem "rqrcode"
-gem "omniauth"
-gem "omniauth-google-oauth2"
-gem "omniauth-github"
-gem "omniauth-rails_csrf_protection"
+gem 'bcrypt', '~> 3.1'
+gem 'omniauth'
+gem 'omniauth-github'
+gem 'omniauth-google-oauth2'
+gem 'omniauth-rails_csrf_protection'
+gem 'pundit'
+gem 'rotp'
+gem 'rqrcode'
 
 # Social
-gem "acts_as_tenant"
+gem 'acts_as_tenant'
 
 # Features
-gem "pagy"
-gem "image_processing"
-gem "geocoder"
-gem "webpush"
-gem "ruby-vips"
+gem 'geocoder'
+gem 'image_processing'
+gem 'pagy'
+gem 'ruby-vips'
+gem 'webpush'
 
 # Real-time + LLM + structured data (per ruby_style.yml stimulus_reflex_stack + SEO requirements)
-gem "futurism"
-gem "ruby_llm"
+gem 'futurism'
+gem 'ruby_llm'
 
-gem "faker", require: false
+gem 'faker', require: false
 
 group :development, :test do
-  gem "ferrum"
+  gem 'ferrum'
 
-  gem "brakeman"
-  gem "bundler-audit"
-  gem "rubocop-rails-omakase"
+  gem 'brakeman'
+  gem 'bundler-audit'
+  gem 'rubocop-rails-omakase'
 end
 # Engine-ize spike: shared as local path gem (relative from rails/brgen)
 gem 'pub4-shared', path: '../shared'

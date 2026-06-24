@@ -28,9 +28,9 @@ class CreatePostsFts < ActiveRecord::Migration[8.1]
   end
 
   def down
-    execute "DROP TABLE IF EXISTS posts_fts"
-    execute "DROP TRIGGER IF EXISTS posts_ai"
-    execute "DROP TRIGGER IF EXISTS posts_au"
-    execute "DROP TRIGGER IF EXISTS posts_ad"
+    execute 'DROP TABLE IF EXISTS posts_fts'
+    execute 'DROP TRIGGER IF EXISTS posts_ai'
+    execute 'DROP TRIGGER IF EXISTS posts_au'
+    execute 'DROP TRIGGER IF EXISTS posts_ad'
   end
 end

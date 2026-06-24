@@ -11,6 +11,6 @@ class CreateMarketplaceListingFavorites < ActiveRecord::Migration[8.1]
     add_index :marketplace_listing_favorites,
               %i[user_id listing_id],
               unique: true,
-              name: "idx_marketplace_favorites_user_listing"
+              name: 'idx_marketplace_favorites_user_listing'
   end
 end

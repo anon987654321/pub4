@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "ostruct"
-require "test_helper"
+require 'ostruct'
+require 'test_helper'
 
 class DailyDigestJobTest < ActiveSupport::TestCase
-  test "performs daily digest mailer for marketing subscribers" do
-    subscription = OpenStruct.new(email: "news@example.com", city: "bergen", token: "abc123")
+  test 'performs daily digest mailer for marketing subscribers' do
+    subscription = OpenStruct.new(email: 'news@example.com', city: 'bergen', token: 'abc123')
     relation = Object.new
     relation.define_singleton_method(:find_each) { |&block| block.call(subscription) }
 

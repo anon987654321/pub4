@@ -28,7 +28,7 @@ module Brgen
       "mercato" => :marketplace
     }.freeze
 
-    LOCAL_HOSTS = ["127.0.0.1", "localhost"].freeze
+    LOCAL_HOSTS = [ "127.0.0.1", "localhost" ].freeze
 
     ENTRIES = [
       Entry.new("brgen.no", "Bergen", "NO", :nb, "NOK", "markedsplass"),
@@ -77,7 +77,7 @@ module Brgen
       Entry.new("wshingtondc.com", "Washington DC", "US", :"en-US", "USD", "marketplace")
     ].freeze
 
-    ENTRIES_BY_DOMAIN = ENTRIES.to_h { |entry| [entry.domain, entry] }.freeze
+    ENTRIES_BY_DOMAIN = ENTRIES.index_by(&:domain).freeze
 
     def self.resolve(host)
       normalized_host = normalize_host(host)

@@ -5,8 +5,8 @@ class CreateActivityEvents < ActiveRecord::Migration[8.1]
     create_table :activity_events do |t|
       t.references :actor, null: true, foreign_key: { to_table: :users }
       t.string :locality
-      t.string :visibility, null: false, default: "public"
-      t.string :moderation_state, null: false, default: "clean"
+      t.string :visibility, null: false, default: 'public'
+      t.string :moderation_state, null: false, default: 'clean'
       t.string :source_vertical, null: false
       t.string :event_name, null: false
       t.string :object_type, null: false

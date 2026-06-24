@@ -5,10 +5,10 @@ require File.expand_path("../../../shared/config/environments/production_baselin
 
 Rails.application.configure do
   apply_production_baseline(config,
-    hosts: ["brgen.no", /.*\.brgen\.no\z/],
-    mailer_host: "brgen.no",
-    secret_key_base: true,
-    vapid_note: "AN106: VAPID keys in /etc/master.env when enabling push")
+                            hosts: [ "brgen.no", /.*\.brgen\.no\z/ ],
+                            mailer_host: "brgen.no",
+                            secret_key_base: true,
+                            vapid_note: "AN106: VAPID keys in /etc/master.env when enabling push")
 
-  config.logger = Logger.new(STDOUT)
+  config.logger = Logger.new($stdout)
 end

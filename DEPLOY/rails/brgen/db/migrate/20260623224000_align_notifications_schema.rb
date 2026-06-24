@@ -3,8 +3,9 @@
 class AlignNotificationsSchema < ActiveRecord::Migration[8.1]
   def up
     change_table :notifications, bulk: true do |t|
-      t.references :actor, foreign_key: { to_table: :users }, null: true unless column_exists?(:notifications, :actor_id)
-      t.string :kind, null: false, default: "custom" unless column_exists?(:notifications, :kind)
+      t.references :actor, foreign_key: { to_table: :users }, null: true unless column_exists?(:notifications,
+                                                                                               :actor_id)
+      t.string :kind, null: false, default: 'custom' unless column_exists?(:notifications, :kind)
       t.string :notifiable_type unless column_exists?(:notifications, :notifiable_type)
       t.integer :notifiable_id unless column_exists?(:notifications, :notifiable_id)
     end

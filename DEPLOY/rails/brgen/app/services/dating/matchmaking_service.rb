@@ -46,7 +46,7 @@ module Dating
     def potential_matches
       return Dating::Profile.none unless profile
 
-      excluded_ids = [user.id]
+      excluded_ids = [ user.id ]
       excluded_ids += Dating::Like.where(liker: user).pluck(:likee_id)
       excluded_ids += Dating::Dislike.where(disliker: user).pluck(:dislikee_id)
 

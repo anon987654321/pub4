@@ -4,7 +4,7 @@ class FixMarketplaceOrderForeignKeys < ActiveRecord::Migration[8.1]
   def up
     return unless table_exists?(:marketplace_orders)
 
-    execute "PRAGMA foreign_keys = OFF"
+    execute 'PRAGMA foreign_keys = OFF'
     rename_table :marketplace_orders, :marketplace_orders_legacy
     create_table :marketplace_orders do |t|
       t.references :buyer, null: false, foreign_key: { to_table: :users }
@@ -20,7 +20,7 @@ class FixMarketplaceOrderForeignKeys < ActiveRecord::Migration[8.1]
       FROM marketplace_orders_legacy
     SQL
     drop_table :marketplace_orders_legacy
-    execute "PRAGMA foreign_keys = ON"
+    execute 'PRAGMA foreign_keys = ON'
   end
 
   def down

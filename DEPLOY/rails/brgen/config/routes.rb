@@ -12,7 +12,8 @@ Rails.application.routes.draw do
   DATING_SUBDOMAINS      = %w[dating].freeze
   PLAYLIST_SUBDOMAINS    = %w[playlist].freeze
   TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
-  MARKETPLACE_SUBDOMAINS = %w[markedsplass markadur marknadsplats marktplaats marktplatz marche mercato mercado markkinapaikka marketplace].freeze
+  MARKETPLACE_SUBDOMAINS = %w[markedsplass markadur marknadsplats marktplaats marktplatz marche mercato mercado
+                              markkinapaikka marketplace].freeze
   MAPS_SUBDOMAINS        = %w[maps].freeze
 
   resource  :session
@@ -20,7 +21,10 @@ Rails.application.routes.draw do
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
   resources :activity_events, only: :index
   resources :notifications, only: %i[index update] do
-    collection { patch :read_all; get :badge }
+    collection do
+      patch :read_all
+      get :badge
+    end
   end
   resources :reactions, only: :create
   resources :reports, only: :create
@@ -34,42 +38,45 @@ Rails.application.routes.draw do
       resources :comments, shallow: true do
         resources :comments, shallow: true, as: :replies
       end
-      resource :vote, only: [:create], controller: "votes"
+      resource :vote, only: [ :create ], controller: "votes"
     end
   end
 
   resources :posts do
     resources :comments, shallow: true
-    resource :vote, only: [:create], controller: "votes"
+    resource :vote, only: [ :create ], controller: "votes"
   end
   patch "drafts/:id", to: "drafts#update", as: :draft
 
   resources :comments do
-    resource :vote, only: [:create], controller: "votes"
-    resources :comments, only: [:create], as: :replies
+    resource :vote, only: [ :create ], controller: "votes"
+    resources :comments, only: [ :create ], as: :replies
     member do
       post :generate_summary
     end
   end
 
-  resources :users, only: [:show] do
+  resources :users, only: [ :show ] do
     member do
       post :follow, to: "follows#create"
       delete :unfollow, to: "follows#destroy"
     end
-    resources :conversations, only: [:create]
+    resources :conversations, only: [ :create ]
   end
 
-  resources :conversations, only: [:index, :show] do
-    resources :messages, only: [:create]
-    resources :typing_indicators, only: [:create]
+  resources :conversations, only: %i[index show] do
+    resources :messages, only: [ :create ]
+    resources :typing_indicators, only: [ :create ]
   end
 
   constraints(subdomain: TV_SUBDOMAINS) do
     scope module: "tv", as: "tv" do
       root "home#index", as: :tv_root
       resources :channels, param: :slug do
-        member { post :subscribe; delete :unsubscribe }
+        member do
+          post :subscribe
+          delete :unsubscribe
+        end
         resources :videos, only: %i[new create]
         resources :live_streams, only: %i[new create]
       end
@@ -155,14 +162,14 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :email_subscriptions, only: [:create, :destroy], param: :token
+  resources :email_subscriptions, only: %i[create destroy], param: :token
   get "confirm_email/:token" => "email_subscriptions#confirm", as: :confirm_email_subscription
 
   constraints(jobs_constraint) do
     mount SolidQueue::Engine, at: "/admin/jobs"
   end
   patch "location" => "locations#update", as: :location
-  resources :push_subscriptions, only: [:create, :destroy]
+  resources :push_subscriptions, only: %i[create destroy]
   get "nearby" => "nearby#index", as: :nearby
   post "nearby" => "nearby#create"
   get "search" => "search#index", as: :global_search

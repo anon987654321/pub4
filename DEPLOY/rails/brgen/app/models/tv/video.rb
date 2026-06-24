@@ -26,6 +26,6 @@ class Tv::Video < ApplicationRecord
     return "—" unless duration_seconds
     h, rem = duration_seconds.divmod(3600)
     m, s   = rem.divmod(60)
-    h > 0 ? "%d:%02d:%02d" % [h, m, s] : "%d:%02d" % [m, s]
+    h > 0 ? "%d:%02d:%02d" % [ h, m, s ] : "%d:%02d" % [ m, s ]
   end
 end

@@ -19,8 +19,8 @@ module Playlist
     validates :name, presence: true
     validates :privacy, inclusion: { in: PRIVACY_LEVELS }, allow_blank: true
 
-    scope :visible, -> { where(privacy: [nil, "public", "unlisted"]) }
-    scope :publicly_listed, -> { where(privacy: [nil, "public"]) }
+    scope :visible, -> { where(privacy: [ nil, "public", "unlisted" ]) }
+    scope :publicly_listed, -> { where(privacy: [ nil, "public" ]) }
 
     def total_duration
       tracks.sum(:duration).to_i

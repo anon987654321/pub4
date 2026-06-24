@@ -1,17 +1,16 @@
 # frozen_string_literal: true
+
 # Comprehensive fictive seed data for Brgen + all subapps using ruby-faker.
 # Seeds core + marketplace, dating, playlist, takeaway, tv, maps, messages.
 # Idempotent with find_or_create_by! where possible. Run: bin/rails db:seed
 
-require "faker"
+require 'faker'
 
 # Ensure Cities exist for automatic TLD/domain-based resolution (no city switcher).
 # Each city domain is an isolated experience.
-if defined?(Brgen::CitySeed) && ActiveRecord::Base.connection.table_exists?(:cities)
-  Brgen::CitySeed.sync!
-end
+Brgen::CitySeed.sync! if defined?(Brgen::CitySeed) && ActiveRecord::Base.connection.table_exists?(:cities)
 
-puts "Seeding Brgen (core + subapps) with rich fictive data..."
+puts 'Seeding Brgen (core + subapps) with rich fictive data...'
 
 if Rails.env.development? || Rails.env.test?
   # Cleanup for dev replant only — never wipe production data.
@@ -21,22 +20,23 @@ if Rails.env.development? || Rails.env.test?
   conn.disable_referential_integrity do
     conn.tables.each do |table|
       next if keep.include?(table)
+
       conn.execute("DELETE FROM #{conn.quote_table_name(table)}")
     end
   end
 end
 
 # --- Core: Users, Communities, Posts ---
-admin = User.find_or_create_by!(email_address: "admin@brgen.no") do |u|
-  u.username = "admin"
-  u.password = u.password_confirmation = "password123"
+admin = User.find_or_create_by!(email_address: 'admin@brgen.no') do |u|
+  u.username = 'admin'
+  u.password = u.password_confirmation = 'password123'
 end
 
 users = 50.times.map do |i|
   User.create!(
     email_address: "seed#{i}@#{Faker::Internet.domain_name}",
-    password: "password123",
-    password_confirmation: "password123",
+    password: 'password123',
+    password_confirmation: 'password123',
     username: "seed#{i}_#{Faker::Internet.username(specifier: 3..8)}",
     latitude: 60.39 + rand(-0.1..0.1),
     longitude: 5.33 + rand(-0.1..0.1)
@@ -76,11 +76,11 @@ puts "Created #{posts.size} posts + reactions"
 
 # --- Marketplace subapp ---
 categories = {
-  "electronics" => %w[phones computers audio gaming],
-  "clothing" => %w[shirts trousers shoes outerwear],
-  "furniture" => %w[sofas tables chairs storage],
-  "vehicles" => %w[cars bikes motorcycles parts],
-  "services" => %w[repair moving cleaning tutoring]
+  'electronics' => %w[phones computers audio gaming],
+  'clothing' => %w[shirts trousers shoes outerwear],
+  'furniture' => %w[sofas tables chairs storage],
+  'vehicles' => %w[cars bikes motorcycles parts],
+  'services' => %w[repair moving cleaning tutoring]
 }
 
 categories.each do |root_name, children|
@@ -115,7 +115,7 @@ listings = stores.flat_map do |store|
       price_cents: rand(1000..50_000),
       category: Marketplace::Category.all.sample,
       location: Faker::Address.city,
-      status: "active",
+      status: 'active',
       created_at: rand(1..60).days.ago
     )
   end
@@ -131,7 +131,7 @@ listings.sample(20).each do |listing|
     message: Faker::Lorem.sentence,
     created_at: rand(1..30).days.ago
   )
-  order.record_activity!("MarketplaceOrder") if order.respond_to?(:record_activity!)
+  order.record_activity!('MarketplaceOrder') if order.respond_to?(:record_activity!)
 end
 
 puts "Marketplace: #{stores.size} stores, #{listings.size} listings, some orders"
@@ -174,7 +174,7 @@ tracks = 40.times.map do
     title: "#{Faker::Music.genre} #{Faker::Lorem.words(number: 2).join(' ')}",
     artist: Faker::Music::RockBand.name,
     duration_seconds: rand(120..300),
-    source_type: "upload"
+    source_type: 'upload'
   )
 end
 
@@ -184,7 +184,7 @@ playlists.each do |pl|
   end
 end
 
-sets = users.sample(8).map do |user|
+users.sample(8).map do |user|
   Playlist::Set.create!(
     user: user,
     name: "Set #{Faker::Number.number(digits: 2)}",
@@ -202,9 +202,9 @@ restaurants = 15.times.map do
     name: Faker::Restaurant.name,
     cuisine_type: cuisines.sample,
     address: Faker::Address.street_address,
-    city: "Bergen",
+    city: 'Bergen',
     delivery_fee_cents: rand(2000..6000),
-    min_order_cents: rand(8000..15000),
+    min_order_cents: rand(8000..15_000),
     latitude: 60.39 + rand(-0.04..0.04),
     longitude: 5.33 + rand(-0.04..0.04)
   )
@@ -216,7 +216,7 @@ restaurants.each do |rest|
       restaurant: rest,
       name: Faker::Food.dish,
       description: Faker::Food.description,
-      price_cents: rand(6000..18000)
+      price_cents: rand(6000..18_000)
     )
   end
 end
@@ -231,21 +231,23 @@ restaurants.sample(10).each do |rest|
     delivery_address: Faker::Address.street_address,
     special_instructions: [nil, Faker::Lorem.sentence].sample
   )
-  order.record_activity!("TakeawayOrder") if order.respond_to?(:record_activity!)
+  order.record_activity!('TakeawayOrder') if order.respond_to?(:record_activity!)
 
-  items = Takeaway::MenuItem.where(restaurant: rest).order(Arel.sql("RANDOM()")).limit(2)
+  items = Takeaway::MenuItem.where(restaurant: rest).order(Arel.sql('RANDOM()')).limit(2)
   items.each do |item|
     order.order_items.create!(menu_item: item, quantity: rand(1..2), unit_price_cents: item.price_cents)
   end
 
   # Review
+  next unless order.status == 'delivered'
+
   Takeaway::Review.create!(
     user: buyer,
     restaurant: rest,
     order: order,
     rating: rand(3..5),
     body: Faker::Restaurant.review
-  ) if order.status == "delivered"
+  )
 end
 
 # Delivery drivers
@@ -278,7 +280,7 @@ videos = channels.flat_map do |ch|
       channel: ch,
       title: Faker::Movie.title,
       description: Faker::Lorem.sentence,
-      status: "published",
+      status: 'published',
       duration_seconds: rand(60..300),
       published_at: rand(1..30).days.ago
     )
@@ -290,7 +292,7 @@ channels.each do |ch|
     channel: ch,
     user: ch.user,
     title: "Live: #{Faker::Music.genre}",
-    status: "scheduled"
+    status: 'scheduled'
   )
 end
 
@@ -303,7 +305,7 @@ if ActiveRecord::Base.connection.table_exists?(:places)
   places = 25.times.map do
     Place.create!(
       city: city,
-      name: "#{Faker::Company.name} #{ %w[Cafe Bar Shop Park].sample }",
+      name: "#{Faker::Company.name} #{%w[Cafe Bar Shop Park].sample}",
       kind: %w[cafe bar shop park restaurant].sample,
       latitude: 60.39 + rand(-0.06..0.06),
       longitude: 5.33 + rand(-0.06..0.06)
@@ -311,33 +313,35 @@ if ActiveRecord::Base.connection.table_exists?(:places)
   end
   puts "Maps: #{places.size} places"
 else
-  puts "Maps: skipped (places table not migrated)"
+  puts 'Maps: skipped (places table not migrated)'
 end
 
 # --- Messages subapp ---
 users.sample(12).each do |u1|
   u2 = users.sample
   next if u1 == u2
+
   conv = Conversation.find_or_create_direct(u1, u2)
   3.times do
     Message.create!(
       conversation: conv,
       sender: [u1, u2].sample,
       content: Faker::Lorem.sentence(word_count: 7),
-      message_type: "text"
+      message_type: 'text'
     )
   end
 end
 
-puts "Messages: conversations and messages seeded"
+puts 'Messages: conversations and messages seeded'
 
 # --- Final activity/notifications for feed ---
 if places.any?
   users.sample(20).each do |u|
     next unless u.respond_to?(:activity_events)
+
     u.activity_events.create!(
-      action: "visited",
-      subject_type: "Place",
+      action: 'visited',
+      subject_type: 'Place',
       subject_id: places.sample.id,
       created_at: rand(1..10).hours.ago
     )
@@ -349,7 +353,7 @@ puts "Users: #{User.count}, Posts: #{Post.count}, Marketplace listings: #{Market
 puts "Dating profiles: #{Dating::Profile.count}, Takeaway restaurants: #{Takeaway::Restaurant.count}"
 place_count = ActiveRecord::Base.connection.table_exists?(:places) ? Place.count : 0
 puts "TV channels: #{Tv::Channel.count}, Places: #{place_count}"
-puts "Ready for demo / development."
+puts 'Ready for demo / development.'
 
 # Optional web-augmented fictive seeds using Ferrum + vision LLM (see lib/tasks/{reddit,x}.rake)
 # Requires OPENROUTER_API_KEY. These pull live public content (e.g. r/bergen, X searches for "bergen")
@@ -360,15 +364,15 @@ if ENV['SEED_FROM_WEB'] && ENV['OPENROUTER_API_KEY']
   puts "\nAugmenting with web-scraped fictive data via Ferrum (reddit + x)..."
   begin
     Rake::Task['scrape:reddit_seed'].invoke
-  rescue => e
+  rescue StandardError => e
     puts "  reddit_seed skipped: #{e.message}"
   end
   begin
     Rake::Task['scrape:x_seed'].invoke
-  rescue => e
+  rescue StandardError => e
     puts "  x_seed skipped: #{e.message}"
   end
   # Optional additional for maps/messages if not covered in rakes
-  puts "  (Maps and messages can be augmented via local posts or additional rakes.)"
-  puts "Web-augmented seeding complete."
+  puts '  (Maps and messages can be augmented via local posts or additional rakes.)'
+  puts 'Web-augmented seeding complete.'
 end

@@ -23,7 +23,7 @@ class GenerateBlurhashJob < ApplicationJob
   end
 
   def scale_factor(width, height)
-    [MAX_DIMENSION.to_f / width.to_f, MAX_DIMENSION.to_f / height.to_f, 1.0].min
+    [ MAX_DIMENSION.to_f / width.to_f, MAX_DIMENSION.to_f / height.to_f, 1.0 ].min
   end
 
   module BlurhashEncoder
@@ -54,7 +54,7 @@ class GenerateBlurhashJob < ApplicationJob
           r = pixel[0] || 0.0
           g = pixel[1] || r
           b = pixel[2] || r
-          pixels << [srgb_to_linear(r), srgb_to_linear(g), srgb_to_linear(b)]
+          pixels << [ srgb_to_linear(r), srgb_to_linear(g), srgb_to_linear(b) ]
         end
       end
       pixels
@@ -76,7 +76,7 @@ class GenerateBlurhashJob < ApplicationJob
             end
           end
           scale = normalization / (width * height)
-          factors << [r * scale, g * scale, b * scale]
+          factors << [ r * scale, g * scale, b * scale ]
         end
       end
       factors
@@ -139,9 +139,9 @@ class GenerateBlurhashJob < ApplicationJob
       v = value.clamp(0.0, 1.0)
       s = if v <= 0.0031308
             v * 12.92
-          else
+      else
             1.055 * (v ** (1 / 2.4)) - 0.055
-          end
+      end
       (s * 255.0 + 0.5).floor.clamp(0, 255)
     end
   end

@@ -45,7 +45,7 @@ module Tradedoubler
   end
 
   def self.cache_key(category)
-    ["td_deals", category.to_s].join("_")
+    [ "td_deals", category.to_s ].join("_")
   end
 
   def self.cache_ttl_for(key_type)

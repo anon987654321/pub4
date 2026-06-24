@@ -31,7 +31,7 @@ class Post < ApplicationRecord
   scope :fresh,  -> { order(created_at: :desc) }
   scope :top,    -> { left_joins(:votes).group(:id).order(TOP_SQL) }
   scope :search, ->(q) {
-    ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?", q]))
+    ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?", q ]))
     ids.any? ? where(id: ids) : none
   }
 

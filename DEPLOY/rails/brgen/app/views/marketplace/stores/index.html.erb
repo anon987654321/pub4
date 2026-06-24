@@ -8,14 +8,14 @@
     </nav>
   <% end %>
 
-  <%= tag.nav role="navigation" aria-label="Store categories" do %>
+  <%= tag.nav role: "navigation", "aria-label": "Store categories" do %>
     <% Marketplace::Store::VERTICALS.each do |vertical| %>
       <%= link_to vertical.humanize, marketplace_shops_path(vertical: vertical) %>
     <% end %>
   <% end %>
 
   <turbo-frame id="marketplace-stores" data-turbo-action="replace">
-  <%= tag.div class: "store-grid" role="list" aria-label="Stores list" do %>
+  <%= tag.div class: "store-grid", role: "list", "aria-label": "Stores list" do %>
     <% @stores.each do |store| %>
       <%= tag.article class: "store-card" do %>
         <%= tag.h2 link_to(store.name, marketplace_shop_path(store.slug)) %>

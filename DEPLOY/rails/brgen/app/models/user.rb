@@ -73,7 +73,7 @@ class User < ApplicationRecord
   def following?(other) = follows_as_follower.exists?(followed: other)
 
   def timeline_posts
-    Post.where(user: [self] + following).order(created_at: :desc)
+    Post.where(user: [ self ] + following).order(created_at: :desc)
   end
 
   def unfollow!(other)

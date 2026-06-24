@@ -3,7 +3,7 @@
 class CreateEmailSubscriptions < ActiveRecord::Migration[8.1]
   def change
     create_table :email_subscriptions do |t|
-      t.string  :email,      null: false
+      t.string  :email, null: false
       t.string  :city
       t.string  :locale
       t.string  :token,      null: false

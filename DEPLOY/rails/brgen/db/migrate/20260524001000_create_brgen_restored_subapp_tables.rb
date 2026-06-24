@@ -6,7 +6,7 @@ class CreateBrgenRestoredSubappTables < ActiveRecord::Migration[8.0]
       t.references :user, null: false, foreign_key: true
       t.string :name, null: false
       t.text :description
-      t.string :privacy, default: "public"
+      t.string :privacy, default: 'public'
       t.boolean :collaborative, null: false, default: false
       t.timestamps
     end
@@ -15,10 +15,11 @@ class CreateBrgenRestoredSubappTables < ActiveRecord::Migration[8.0]
       t.references :user, null: false, foreign_key: true
       t.references :set, foreign_key: { to_table: :playlist_sets }
       t.references :playlist
-      t.string :role, null: false, default: "editor"
+      t.string :role, null: false, default: 'editor'
       t.timestamps
     end
-    add_index :playlist_collaborations, %i[user_id set_id playlist_id], unique: true, name: "idx_playlist_collab_unique", if_not_exists: true
+    add_index :playlist_collaborations, %i[user_id set_id playlist_id], unique: true,
+                                                                        name: 'idx_playlist_collab_unique', if_not_exists: true
 
     create_table :playlist_likes, if_not_exists: true do |t|
       t.references :user, null: false, foreign_key: true
@@ -26,7 +27,8 @@ class CreateBrgenRestoredSubappTables < ActiveRecord::Migration[8.0]
       t.references :playlist
       t.timestamps
     end
-    add_index :playlist_likes, %i[user_id set_id playlist_id], unique: true, name: "idx_playlist_likes_unique", if_not_exists: true
+    add_index :playlist_likes, %i[user_id set_id playlist_id], unique: true, name: 'idx_playlist_likes_unique',
+                                                               if_not_exists: true
 
     create_table :takeaway_delivery_drivers, if_not_exists: true do |t|
       t.references :user, null: false, foreign_key: true
@@ -37,14 +39,15 @@ class CreateBrgenRestoredSubappTables < ActiveRecord::Migration[8.0]
       t.decimal :current_lng, precision: 10, scale: 6
       t.timestamps
     end
-    add_index :takeaway_delivery_drivers, %i[available current_lat current_lng], name: "idx_takeaway_drivers_available_location", if_not_exists: true
+    add_index :takeaway_delivery_drivers, %i[available current_lat current_lng],
+              name: 'idx_takeaway_drivers_available_location', if_not_exists: true
 
     create_table :tv_live_streams, if_not_exists: true do |t|
       t.references :user, null: false, foreign_key: true
       t.references :channel, foreign_key: { to_table: :tv_channels }
       t.string :title, null: false
       t.text :description
-      t.string :status, null: false, default: "scheduled"
+      t.string :status, null: false, default: 'scheduled'
       t.integer :viewer_count, null: false, default: 0
       t.string :stream_key
       t.datetime :started_at

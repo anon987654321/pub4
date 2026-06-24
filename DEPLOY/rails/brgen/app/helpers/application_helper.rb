@@ -15,7 +15,7 @@ module ApplicationHelper
     image_tag("data:image/gif;base64,R0lGODlhAQABAAAAACw=", alt: alt, **image_options)
   end
 
-  def responsive_image_tag(attachment, alt:, widths: [400, 800, 1_200], sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
+  def responsive_image_tag(attachment, alt:, widths: [ 400, 800, 1_200 ], sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
     image_options = options.dup
     image_options[:loading] ||= loading
 
@@ -24,10 +24,10 @@ module ApplicationHelper
     widths = Array(widths).map(&:to_i).uniq.sort
     largest = widths.last
     webp_srcset = widths.map do |width|
-      "#{url_for(attachment.variant(resize_to_limit: [width, width], format: :webp))} #{width}w"
+      "#{url_for(attachment.variant(resize_to_limit: [ width, width ], format: :webp))} #{width}w"
     end.join(", ")
     fallback_srcset = widths.map do |width|
-      "#{url_for(attachment.variant(resize_to_limit: [width, width]))} #{width}w"
+      "#{url_for(attachment.variant(resize_to_limit: [ width, width ]))} #{width}w"
     end.join(", ")
 
     content_tag(:picture) do
@@ -35,7 +35,7 @@ module ApplicationHelper
         [
           tag.source(type: "image/webp", srcset: webp_srcset, sizes: sizes),
           image_tag(
-            attachment.variant(resize_to_limit: [largest, largest]),
+            attachment.variant(resize_to_limit: [ largest, largest ]),
             alt: alt,
             srcset: fallback_srcset,
             sizes: sizes,

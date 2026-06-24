@@ -9,19 +9,20 @@ module Brgen
     # No city switcher UI exists — resolution is purely from the incoming host/TLD.
     def self.rows_from_registry
       return [] unless defined?(Brgen::DomainRegistry)
+
       Brgen::DomainRegistry::ENTRIES.map do |e|
         lat, lng = case e.domain
-                   when /brgen.no/ then [60.3913, 5.3221]
-                   when /oshlo.no/ then [59.9139, 10.7522]
-                   when /lsangeles.com/ then [34.0522, -118.2437]
-                   when /lndon.uk/ then [51.5074, -0.1278]
-                   else [0, 0]
-                   end
+        when /brgen.no/ then [ 60.3913, 5.3221 ]
+        when /oshlo.no/ then [ 59.9139, 10.7522 ]
+        when /lsangeles.com/ then [ 34.0522, -118.2437 ]
+        when /lndon.uk/ then [ 51.5074, -0.1278 ]
+        else [ 0, 0 ]
+        end
         tz = case e.domain
-             when /\.no$|\.is$|\.dk$|\.se$|\.fi$/ then "Europe/Oslo"
-             when /lsangeles|newyrk|austn|chcago|denvr|dllas|dtroit|houstn|mnnesota|prtland|wshingtondc/ then "America/Los_Angeles"
-             else "UTC"
-             end
+        when /\.no$|\.is$|\.dk$|\.se$|\.fi$/ then "Europe/Oslo"
+        when /lsangeles|newyrk|austn|chcago|denvr|dllas|dtroit|houstn|mnnesota|prtland|wshingtondc/ then "America/Los_Angeles"
+        else "UTC"
+        end
         CityRow.new(e.domain, e.city, e.country, e.locale.to_s, e.currency, tz, lat, lng)
       end
     end
@@ -44,7 +45,7 @@ module Brgen
         city.locale = row.locale
         city.longitude = row.longitude
         city.name = row.name
-        city.slug = row.name.parameterize
+        city.slug = row.domain.parameterize.presence || row.name.parameterize
         city.time_zone = row.time_zone
         city.save!
       end
