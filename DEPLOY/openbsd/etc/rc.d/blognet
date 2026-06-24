@@ -1,15 +1,24 @@
 #!/bin/ksh
+PORT=10002
+APP_DIR=/home/blognet/app
 [ -r /etc/blognet.env ] && . /etc/blognet.env
 [ -f /etc/rails/blognet.env ] && . /etc/rails/blognet.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/blognet.env}"
-daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/blognet falcon serve --bind http://127.0.0.1:10002"
+daemon="/usr/local/bin/bundle34"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/blognet falcon serve --bind http://127.0.0.1:${PORT}"
 daemon_user="blognet"
-daemon_execdir="/home/blognet/app"
+daemon_execdir="${APP_DIR}"
 daemon_logger="daemon.notice"
-daemon_timeout="60"
+daemon_timeout="120"
 . /etc/rc.d/rc.subr
-pexp="ruby.*10002"
+pexp="ruby34.*${PORT}"
 rc_bg=YES
 rc_reload=NO
+
+rc_pre() {
+  pkill -f "falcon.*${PORT}" 2>/dev/null || true
+  pkill -f "ruby34.*${PORT}" 2>/dev/null || true
+  sleep 1
+}
+
 rc_cmd $1

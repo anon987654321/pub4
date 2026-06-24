@@ -51,12 +51,14 @@ sync_tree() {
   local src=$1 dst=$2
   local delete=${3:-1}
   ${_PRIV} mkdir -p "$dst"
-  if [[ $delete == 1 ]]; then
-    ${_PRIV} openrsync -a --delete "${src%/}/." "${dst%/}/" && return 0
-  else
-    ${_PRIV} openrsync -a "${src%/}/." "${dst%/}/" && return 0
+  if [[ -n ${SYNC_USE_OPENRSYNC:-} ]]; then
+    if [[ $delete == 1 ]]; then
+      ${_PRIV} openrsync -a --delete "${src%/}/." "${dst%/}/" && return 0
+    else
+      ${_PRIV} openrsync -a "${src%/}/." "${dst%/}/" && return 0
+    fi
+    log_warn "openrsync failed; falling back to tar copy"
   fi
-  log_warn "openrsync failed; falling back to tar copy"
   if [[ $delete == 1 ]]; then
     ${_PRIV} find "${dst%/}" -mindepth 1 -maxdepth 1 \
       ! -name db ! -name storage ! -name log ! -name tmp -exec rm -rf {} +
@@ -307,7 +309,8 @@ app_secret_for() {
 db_create_migrate_as_app() {
   local app_name=$1 app_dir=$2 secret
   secret=$(app_secret_for "$app_name")
-  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bin/rails db:create db:migrate'"
+  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:prepare'" \
+    || { log_err "db:prepare failed for ${app_name}"; return 1; }
   log_ok "Database ready"
 }
 
@@ -315,7 +318,7 @@ db_create_migrate_as_app() {
 db_seed_as_app() {
   local app_name=$1 app_dir=$2 secret
   secret=$(app_secret_for "$app_name")
-  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bin/rails db:seed'" \
+  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:seed'" \
     || log_warn "db:seed skipped for ${app_name}"
 }
 
@@ -352,6 +355,15 @@ random_port() {
   done
 }
 
+# retire_legacy_rails_rcd APP_NAME — stop duplicate *_rails services from older bootstrap.
+retire_legacy_rails_rcd() {
+  local app_name=$1 legacy="${app_name}_rails"
+  [[ -f /etc/rc.d/$legacy ]] || return 0
+  ${_PRIV} rcctl stop "$legacy" 2>/dev/null || true
+  ${_PRIV} rcctl disable "$legacy" 2>/dev/null || true
+  log_ok "disabled legacy rc.d ${legacy}"
+}
+
 # install_rcd APP_NAME APP_DIR PORT SERVICE_NAME
 # Installs or updates the rc.d service file for a Rails app on OpenBSD.
 install_rcd() {
@@ -365,6 +377,7 @@ install_rcd() {
   fi
   ${_PRIV} install -o root -g wheel -m 0555 "$rcd_src" "$rcd_dst"
   assert_rcd_identity "$svc" "$app_name" "$app_dir"
+  retire_legacy_rails_rcd "$app_name"
   ${_PRIV} rcctl enable "$svc"
   log_ok "rc.d ${svc} installed and enabled"
 }
@@ -395,6 +408,12 @@ relayd_add_relay() {
   local conf=/etc/relayd.conf
 
   [[ -f $conf ]] || { log_warn "relayd: ${conf} missing — skipping"; return 0; }
+
+  if grep -qF "match request header \"Host\" value \"${domain}\"" "$conf" 2>/dev/null \
+    && grep -qF "forward to <${app}> port ${port}" "$conf" 2>/dev/null; then
+    log_ok "relayd: ${domain} already configured"
+    return 0
+  fi
 
   if ! grep -q "table <${app}>" "$conf" 2>/dev/null; then
     ${_PRIV} sed -i "1a\\

@@ -6,6 +6,9 @@ require "faker"
 
 puts "Seeding Amber with fictive data..."
 
+seed_job_adapter = ActiveJob::Base.queue_adapter
+ActiveJob::Base.queue_adapter = :inline
+
 was_strict = ApplicationRecord.strict_loading_by_default
 ApplicationRecord.strict_loading_by_default = false
 
@@ -94,6 +97,7 @@ puts "Seeded Amber fictive data successfully."
 puts "Users: #{User.count}, Items: #{Item.count}, Outfits: #{Outfit.count}, Posts: #{Post.count}"
 
 ApplicationRecord.strict_loading_by_default = was_strict
+ActiveJob::Base.queue_adapter = seed_job_adapter
 
 # Optional web-augmented fictive seeds using Ferrum (see lib/tasks/fashion.rake)
 # Requires OPENROUTER_API_KEY. Supplements with real fashion inspiration from Reddit.

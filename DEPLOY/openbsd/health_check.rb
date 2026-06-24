@@ -18,8 +18,8 @@ def privileged(*cmd)
   cmd
 end
 
-core_services = %w[nsd httpd relayd smtpd master brgen_rails]
-optional_services = %w[amber_rails bsdports_rails blognet_rails hjerterom_rails baibl]
+core_services = %w[nsd httpd relayd smtpd master brgen]
+optional_services = %w[amber bsdports blognet hjerterom baibl]
 (core_services + optional_services).each do |service|
   ok, out = run(*privileged("/usr/sbin/rcctl", "check", service))
   next unless ok
@@ -51,8 +51,7 @@ end
 core_up = { "master" => 53187, "brgen" => 38182 }
 optional_up = { "amber" => 61352, "bsdports" => 47312, "baibl" => 10007, "blognet" => 10002, "hjerterom" => 38891 }
 core_up.merge(optional_up).each do |name, port|
-  svc = name == "master" ? "master" : "#{name}_rails"
-  svc = "baibl" if name == "baibl"
+  svc = name
   check_ok, check_out = run(*privileged("/usr/sbin/rcctl", "check", svc))
   next if optional_up.key?(name) && !(check_ok && check_out.include?("(ok)"))
 
@@ -94,7 +93,7 @@ core_https.merge(optional_https).each do |name, url|
   if optional_https.key?(name)
     backend = name.split(".").first
     backend = "bsdports" if name == "bsdports.org"
-    svc = backend == "baibl" ? "baibl" : "#{backend}_rails"
+    svc = backend
     check_ok, check_out = run(*privileged("/usr/sbin/rcctl", "check", svc))
     next unless check_ok && check_out.include?("(ok)")
   end

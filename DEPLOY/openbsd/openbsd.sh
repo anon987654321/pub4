@@ -240,9 +240,9 @@ sync_openbsd_apply() {
       || log WARN "$svc restart/start failed"
   done
   # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
-  typeset -A app_ports=(brgen_rails 38182 amber_rails 61352 bsdports_rails 47312 blognet_rails 10002 hjerterom_rails 38891 baibl 10007)
-  typeset -a core_apps=(brgen_rails)
-  typeset -a optional_apps=(amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream)
+  typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312 blognet 10002 hjerterom 38891 baibl 10007)
+  typeset -a core_apps=(brgen)
+  typeset -a optional_apps=(amber bsdports blognet hjerterom baibl litestream)
   for svc in $core_apps $optional_apps; do
     [[ -x /etc/rc.d/$svc ]] || continue
     /usr/sbin/rcctl enable $svc 2>/dev/null || true
@@ -581,7 +581,7 @@ bootstrap_rails_app() {
   [[ -f /etc/${app}.env ]] || print -r -- "SECRET_KEY_BASE=${secret}" > /etc/${app}.env
   chmod 640 /etc/${app}.env 2>/dev/null || true
 
-  typeset svc=${app}_rails
+  typeset svc=$app
   [[ -f ${SCRIPT_DIR}/etc/rc.d/${svc} ]] || install_template etc/rc.d/rails-app.tmpl /etc/rc.d/${svc}
   chmod 755 /etc/rc.d/${svc}
   /usr/sbin/rcctl enable ${svc}
