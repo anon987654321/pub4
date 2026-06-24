@@ -6,8 +6,9 @@ require 'test_helper'
 class PasswordResetJobTest < ActiveSupport::TestCase
   test 'performs password reset mailer synchronously' do
     user = OpenStruct.new(id: 7, email_address: 'user@example.com')
-    mail = Minitest::Mock.new
-    mail.expect(:deliver_now, true)
+    delivered = false
+    mail = Object.new
+    mail.define_singleton_method(:deliver_now) { delivered = true }
 
     User.stub(:find_by, user) do
       PasswordsMailer.stub(:reset, mail) do
@@ -15,6 +16,6 @@ class PasswordResetJobTest < ActiveSupport::TestCase
       end
     end
 
-    assert mail.verify
+    assert delivered
   end
 end

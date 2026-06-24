@@ -4,14 +4,18 @@ require 'test_helper'
 
 class NightlySearchIndexRebuildJobTest < ActiveSupport::TestCase
   test 'rebuilds the posts fts index' do
-    connection = Minitest::Mock.new
-    connection.expect(:data_source_exists?, true, ['posts_fts'])
-    connection.expect(:execute, true, ["INSERT INTO posts_fts(posts_fts) VALUES('rebuild')"])
+    executed = false
+    connection = Object.new
+    connection.define_singleton_method(:data_source_exists?) { |name| name == 'posts_fts' }
+    connection.define_singleton_method(:execute) do |sql|
+      executed = sql == "INSERT INTO posts_fts(posts_fts) VALUES('rebuild')"
+      true
+    end
 
     ActiveRecord::Base.stub(:connection, connection) do
       NightlySearchIndexRebuildJob.perform_now
     end
 
-    assert connection.verify
+    assert executed
   end
 end

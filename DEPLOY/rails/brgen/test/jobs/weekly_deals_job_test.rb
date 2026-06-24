@@ -9,8 +9,9 @@ class WeeklyDealsJobTest < ActiveSupport::TestCase
     relation = Object.new
     relation.define_singleton_method(:find_each) { |&block| block.call(subscription) }
 
-    mail = Minitest::Mock.new
-    mail.expect(:deliver_now, true)
+    delivered = false
+    mail = Object.new
+    mail.define_singleton_method(:deliver_now) { delivered = true }
 
     NewsletterMailer.stub(:weekly_deals, mail) do
       EmailSubscription.stub(:marketing_opted_in, relation) do
@@ -18,6 +19,6 @@ class WeeklyDealsJobTest < ActiveSupport::TestCase
       end
     end
 
-    assert mail.verify
+    assert delivered
   end
 end
