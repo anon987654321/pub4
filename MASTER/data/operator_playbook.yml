@@ -99,5 +99,5 @@ lessons:
   - id: master_scan_bundle_exec
     area: deploy
     signal: "openbsd.sh --sync-configs aborts: cannot load such file -- zeitwerk"
-    action: "MASTER bin/cli must run as dev via bundle34 exec (openbsd.sh uses su -m dev). doas/root bundle34 lacks dev gem path."
-    proof: "su -m dev -c 'cd MASTER && bundle34 exec ruby bin/cli /scan DEPLOY --depth deep' exits 0"
+    action: "MASTER bin/cli must run as dev via bundle34 exec (openbsd.sh uses su dev, not su -m — -m keeps HOME=/root). Set MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1."
+    proof: "su dev -c 'cd MASTER && MASTER_SCAN_ONLY=1 bundle34 exec ruby bin/cli /scan DEPLOY --depth deep' exits 0"
