@@ -42,7 +42,7 @@ class User < ApplicationRecord
   private
 
   def ensure_identity_records
-    create_profile! unless profile
-    create_privacy_setting! unless privacy_setting
+    create_profile!
+    create_privacy_setting!
   end
 end

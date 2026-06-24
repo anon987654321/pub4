@@ -6,6 +6,9 @@ require "faker"
 
 puts "Seeding Amber with fictive data..."
 
+was_strict = ApplicationRecord.strict_loading_by_default
+ApplicationRecord.strict_loading_by_default = false
+
 if Rails.env.development? || Rails.env.test?
   User.destroy_all
   Item.destroy_all
@@ -91,6 +94,8 @@ end
 
 puts "Seeded Amber fictive data successfully."
 puts "Users: #{User.count}, Items: #{Item.count}, Outfits: #{Outfit.count}, Posts: #{Post.count}"
+
+ApplicationRecord.strict_loading_by_default = was_strict
 
 # Optional web-augmented fictive seeds using Ferrum (see lib/tasks/fashion.rake)
 # Requires OPENROUTER_API_KEY. Supplements with real fashion inspiration from Reddit.

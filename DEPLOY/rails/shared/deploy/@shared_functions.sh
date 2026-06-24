@@ -87,6 +87,21 @@ overlay_shared_public() {
   [[ -d $shared_public ]] || return 0
   sync_tree "$shared_public" "${app_dir}/public" 0
   log_ok "shared public assets overlaid"
+  overlay_shared_bin "$app_dir"
+}
+
+# overlay_shared_bin APP_DIR — ci.rb expects bin/rubocop, brakeman, bundler-audit stubs
+overlay_shared_bin() {
+  local app_dir=$1
+  local shared_bin=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/bin
+  [[ -d $shared_bin ]] || return 0
+  ${_PRIV} mkdir -p "${app_dir}/bin"
+  for tool in rubocop brakeman bundler-audit; do
+    [[ -f ${shared_bin}/${tool} ]] || continue
+    ${_PRIV} cp "${shared_bin}/${tool}" "${app_dir}/bin/${tool}"
+    ${_PRIV} chmod 755 "${app_dir}/bin/${tool}"
+  done
+  log_ok "shared bin stubs overlaid"
 }
 
 already_done() {
