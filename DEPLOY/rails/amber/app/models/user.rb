@@ -33,7 +33,7 @@ class User < ApplicationRecord
   broadcasts_refreshes
 
   def following?(other) = follows_as_follower.exists?(followee: other)
-  def feed_posts        = Post.where(user: [self] + following.to_a).recent
+  def feed_posts        = Post.where(user: [ self ] + following.to_a).recent
 
   def public_creator? = creator_profile&.public? || false
   def wardrobe_public? = privacy_setting&.public_wardrobe? || false

@@ -24,14 +24,14 @@ class DeclutterOutcome < ApplicationRecord
 
   def sync_item_lifecycle
     state = case action
-            when "sold" then "sold"
-            when "donated" then "donated"
-            when "gifted", "released" then "released"
-            when "recycled" then "recycled"
-            when "repaired" then "active"
-            when "archived" then "sentimental_archive"
-            else item.lifecycle_state
-            end
+    when "sold" then "sold"
+    when "donated" then "donated"
+    when "gifted", "released" then "released"
+    when "recycled" then "recycled"
+    when "repaired" then "active"
+    when "archived" then "sentimental_archive"
+    else item.lifecycle_state
+    end
     item.update!(lifecycle_state: state)
   end
 end

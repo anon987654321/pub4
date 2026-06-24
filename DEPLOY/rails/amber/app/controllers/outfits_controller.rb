@@ -24,7 +24,7 @@ class OutfitsController < ApplicationController
       head:   base.where(category: "Accessories"),
       top:    base.where(category: %w[Tops Outerwear]),
       bottom: base.where(category: %w[Bottoms Dresses]),
-      shoes:  base.where(category: "Shoes"),
+      shoes:  base.where(category: "Shoes")
     }
   end
 

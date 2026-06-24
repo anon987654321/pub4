@@ -134,8 +134,8 @@ class WardrobeAiService
     response = @client.chat(
       parameters: {
         model: MODEL,
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
+        messages: [ { role: "user", content: prompt } ],
+        response_format: { type: "json_object" }
       },
     )
     content = response.dig("choices", 0, "message", "content")
@@ -190,7 +190,7 @@ class WardrobeAiService
   def chat_with_vision(prompt, image_data_urls)
     return fallback_response(prompt) unless @client && image_data_urls.any?
 
-    content = [{ type: "text", text: prompt }]
+    content = [ { type: "text", text: prompt } ]
     image_data_urls.each do |url|
       content << { type: "image_url", image_url: { url: url } }
     end
@@ -198,7 +198,7 @@ class WardrobeAiService
     response = @client.chat(
       parameters: {
         model: MODEL,
-        messages: [{ role: "user", content: content }],
+        messages: [ { role: "user", content: content } ]
       },
     )
     content = response.dig("choices", 0, "message", "content")

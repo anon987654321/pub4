@@ -10,7 +10,7 @@ class CapsuleBuilderService
   def build(limit: DEFAULT_LIMIT, occasion: nil, season: nil)
     candidates = @user.items.joy
     candidates = candidates.by_occasion(occasion) if occasion.present?
-    candidates = candidates.where(season: [season, "All-Season", nil, ""]) if season.present?
+    candidates = candidates.where(season: [ season, "All-Season", nil, "" ]) if season.present?
 
     selected = []
     Item::CATEGORIES.each do |category|
@@ -19,7 +19,7 @@ class CapsuleBuilderService
     end
 
     remaining = candidates.where.not(id: selected.compact.map(&:id)).sort_by do |item|
-      [-(item.times_worn.to_i), item.cost_per_wear || 999_999, item.created_at || Time.current]
+      [ -(item.times_worn.to_i), item.cost_per_wear || 999_999, item.created_at || Time.current ]
     end
 
     (selected.compact + remaining).uniq.first(limit)

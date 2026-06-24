@@ -20,7 +20,7 @@ class CalculateSustainabilityJob < ApplicationJob
     return nil unless item.price_cents.present?
 
     price = item.price_cents / 100.0
-    wear_discount = [item.times_worn.to_i * 0.015, 0.75].min
+    wear_discount = [ item.times_worn.to_i * 0.015, 0.75 ].min
     (price * (0.65 - wear_discount)).clamp(0, price).round(2)
   end
 
@@ -32,7 +32,7 @@ class CalculateSustainabilityJob < ApplicationJob
 
   def environmental_score(item)
     worn = item.times_worn.to_i
-    base = worn.positive? ? [worn * 4, 100].min : 5
-    item.spark_joy? ? [base + 10, 100].min : base
+    base = worn.positive? ? [ worn * 4, 100 ].min : 5
+    item.spark_joy? ? [ base + 10, 100 ].min : base
   end
 end

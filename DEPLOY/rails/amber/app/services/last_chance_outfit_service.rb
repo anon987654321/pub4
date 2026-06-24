@@ -21,10 +21,10 @@ class LastChanceOutfitService
   private
 
   def build_candidate(items, offset: 0)
-    selected = [@item]
+    selected = [ @item ]
     needed_categories.each_with_index do |category, idx|
       candidate = items.select { |item| item.category == category }.sort_by do |item|
-        [-(item.times_worn.to_i), item.color.to_s == @item.color.to_s ? 0 : 1, item.title.to_s]
+        [ -(item.times_worn.to_i), item.color.to_s == @item.color.to_s ? 0 : 1, item.title.to_s ]
       end.rotate(offset + idx).first
       selected << candidate if candidate
     end

@@ -24,12 +24,12 @@ class DuplicateDetectorService
   private
 
   def best_keeper(items)
-    items.max_by { |item| [item.times_worn.to_i, item.spark_joy? ? 1 : 0, -(item.cost_per_wear || 0)] }
+    items.max_by { |item| [ item.times_worn.to_i, item.spark_joy? ? 1 : 0, -(item.cost_per_wear || 0) ] }
   end
 
   def release_candidates(items)
     keeper = best_keeper(items)
-    items.reject { |item| item == keeper }.sort_by { |item| [-item.declutter_score[:total_release_score], item.times_worn.to_i] }
+    items.reject { |item| item == keeper }.sort_by { |item| [ -item.declutter_score[:total_release_score], item.times_worn.to_i ] }
   end
 
   def reason_for(items)

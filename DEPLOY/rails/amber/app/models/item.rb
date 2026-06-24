@@ -36,7 +36,7 @@ class Item < ApplicationRecord
   scope :worn_most,    -> { order(times_worn: :desc) }
   scope :never_worn,   -> { where("times_worn = 0 OR times_worn IS NULL") }
   scope :aging_unworn, -> { never_worn.where("purchase_date < ?", 6.months.ago) }
-  scope :embeddable,   -> { where.not(title: [nil, ""]).where.not(category: [nil, ""]) }
+  scope :embeddable,   -> { where.not(title: [ nil, "" ]).where.not(category: [ nil, "" ]) }
   scope :active_wardrobe, -> { where.not(lifecycle_state: %w[released donated sold recycled]) }
   scope :declutter_box, -> { where(lifecycle_state: "declutter_box") }
   scope :sentimental, -> { where(lifecycle_state: "sentimental_archive") }
@@ -81,7 +81,7 @@ class Item < ApplicationRecord
   end
 
   def embedding_text
-    [title, category, color, brand, material, season, mood_effect, life_phase, occasion_tags].compact.join(" ")
+    [ title, category, color, brand, material, season, mood_effect, life_phase, occasion_tags ].compact.join(" ")
   end
 
   def declutter_score
@@ -93,7 +93,7 @@ class Item < ApplicationRecord
   end
 
   def duplicate_key
-    [category, color, material, brand].map { |value| value.to_s.strip.downcase.presence || "unknown" }.join(":")
+    [ category, color, material, brand ].map { |value| value.to_s.strip.downcase.presence || "unknown" }.join(":")
   end
 
   def in_declutter_box? = lifecycle_state == "declutter_box"
@@ -127,18 +127,18 @@ class Item < ApplicationRecord
     tempfile = nil
     begin
       require "vips"
-      tempfile = Tempfile.new(["item", File.extname(photo.filename.to_s.presence || ".jpg")])
+      tempfile = Tempfile.new([ "item", File.extname(photo.filename.to_s.presence || ".jpg") ])
       tempfile.binmode
       tempfile.write(photo.download)
       tempfile.rewind
       image = Vips::Image.new_from_file(tempfile.path)
       # resize to 1px for approx dominant/average color
-      thumb = image.resize(1.0 / [image.width, image.height].max.to_f)
+      thumb = image.resize(1.0 / [ image.width, image.height ].max.to_f)
       px = thumb.getpoint(0, 0)
       r = px[0].to_i.clamp(0, 255)
       g = px[1].to_i.clamp(0, 255)
       b = px[2].to_i.clamp(0, 255)
-      hex = "#%02x%02x%02x" % [r, g, b]
+      hex = "#%02x%02x%02x" % [ r, g, b ]
       update!(color: hex)
     rescue StandardError => e
       Rails.logger.warn("vips dominant color extract failed for item #{id}: #{e.message}")

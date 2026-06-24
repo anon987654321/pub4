@@ -50,7 +50,7 @@ class GarmentTaxonomy
 
   def self.formality_score(item)
     base = FORMALITY_BY_CATEGORY.fetch(item.category, 0.4)
-    modifiers = [item.brand, item.material, item.occasion_tags].join(" ")
+    modifiers = [ item.brand, item.material, item.occasion_tags ].join(" ")
     base += 0.2 if modifiers.match?(/silk|wool|tailored|formal|wedding|office/i)
     base -= 0.15 if modifiers.match?(/gym|sweat|jersey|beach/i)
     base.clamp(0.0, 1.0).round(2)

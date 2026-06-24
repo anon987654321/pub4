@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
+require "open3"
+
 class AiController < ApplicationController
   before_action :require_authentication
 
   def analyze_item
     item = Current.user.items.find(params[:id])
     result = WardrobeAiService.new(Current.user).analyze_joy(item)
-    item.update!(spark_joy: result["sparks_joy"]) if result["sparks_joy"].in?([true, false])
+    item.update!(spark_joy: result["sparks_joy"]) if result["sparks_joy"].in?([ true, false ])
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("item_#{item.id}_analysis", partial: "ai/analysis", locals: { result: result, item: item }) }
       format.json { render json: result }
@@ -34,7 +36,7 @@ class AiController < ApplicationController
       next unless s.is_a?(Hash)
       combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
       begin
-        out = `cd #{master_root} && bundle exec ruby bin/cli "photograph #{combo.gsub('"', '\"')}" 2>&1`
+        out, _status = Open3.capture2e("bundle", "exec", "ruby", "bin/cli", "photograph #{combo}", chdir: master_root)
         if out =~ /postpro.*(output\/[^\s]+_postpro)/
           pdir = File.join(master_root, $1)
           imgf = Dir.glob(File.join(pdir, "*.{jpg,jpeg,png}")).first

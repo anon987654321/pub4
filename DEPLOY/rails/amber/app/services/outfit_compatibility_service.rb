@@ -18,7 +18,7 @@ class OutfitCompatibilityService
     items = outfit.items.to_a
     return 0.0 if items.empty?
 
-    scores = [category_balance(items), color_balance(items), occasion_fit(items, occasion), weather_fit(items, weather), preference_fit(items)]
+    scores = [ category_balance(items), color_balance(items), occasion_fit(items, occasion), weather_fit(items, weather), preference_fit(items) ]
     (scores.sum / scores.size).round(3)
   end
 
@@ -40,7 +40,7 @@ class OutfitCompatibilityService
     categories = items.map(&:category).compact
     required = %w[Tops Bottoms Shoes]
     coverage = required.count { |category| categories.include?(category) } / required.size.to_f
-    [coverage, 1.0].min
+    [ coverage, 1.0 ].min
   end
 
   def color_balance(items)
@@ -63,8 +63,8 @@ class OutfitCompatibilityService
   def weather_fit(items, weather)
     return 0.75 if weather.blank?
     weather = weather.to_s.downcase
-    matches = items.count { |item| [GarmentTaxonomy.weather_fit(item), "all_weather"].include?(weather) || GarmentTaxonomy.weather_fit(item) == "all_weather" }
-    [matches / items.size.to_f, 1.0].min
+    matches = items.count { |item| [ GarmentTaxonomy.weather_fit(item), "all_weather" ].include?(weather) || GarmentTaxonomy.weather_fit(item) == "all_weather" }
+    [ matches / items.size.to_f, 1.0 ].min
   end
 
   def preference_fit(items)

@@ -48,7 +48,7 @@ class DeclutterScoreService
   def utility_score
     wears = @item.times_worn.to_i
     recent_bonus = @item.respond_to?(:last_worn_on) && @item.last_worn_on.present? && @item.last_worn_on > 90.days.ago.to_date ? 0.25 : 0
-    ([wears / 20.0, 0.75].min + recent_bonus).clamp(0.0, 1.0)
+    ([ wears / 20.0, 0.75 ].min + recent_bonus).clamp(0.0, 1.0)
   end
 
   def fit_score
@@ -61,7 +61,7 @@ class DeclutterScoreService
 
   def duplicate_pressure
     similar = @item.user.items.active_wardrobe.where.not(id: @item.id).select { |candidate| candidate.duplicate_key == @item.duplicate_key }
-    [similar.size / 4.0, 1.0].min
+    [ similar.size / 4.0, 1.0 ].min
   end
 
   def cost_pressure
@@ -78,7 +78,7 @@ class DeclutterScoreService
     price = @item.price_cents.to_i / 100.0
     return 0.5 if price.zero?
 
-    [estimate / price, 1.0].min
+    [ estimate / price, 1.0 ].min
   end
 
   def total_release_score

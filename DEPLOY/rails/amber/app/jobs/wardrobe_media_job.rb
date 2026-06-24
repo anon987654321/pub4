@@ -7,8 +7,8 @@ class WardrobeMediaJob < ApplicationJob
   queue_as :bulk
 
   VARIANTS = {
-    thumb: { resize_to_limit: [240, 240] },
-    card: { resize_to_limit: [720, 960] },
+    thumb: { resize_to_limit: [ 240, 240 ] },
+    card: { resize_to_limit: [ 720, 960 ] }
   }.freeze
 
   def perform(item_id)
@@ -25,11 +25,11 @@ class WardrobeMediaJob < ApplicationJob
       begin
         script = Rails.root.join("../../postpro/postpro.rb").to_s
         if File.exist?(script)
-          tmp_in = Tempfile.new(["in", File.extname(photo.filename.to_s.presence || ".jpg")])
+          tmp_in = Tempfile.new([ "in", File.extname(photo.filename.to_s.presence || ".jpg") ])
           tmp_in.binmode
           tmp_in.write(photo.download)
           tmp_in.rewind
-          tmp_out = Tempfile.new(["out", ".jpg"])
+          tmp_out = Tempfile.new([ "out", ".jpg" ])
           system(RbConfig.ruby, script, "--input", tmp_in.path, "--output", tmp_out.path, "--stock", "kodak_portra", "--preset", "social")
           if File.exist?(tmp_out.path)
             Rails.logger.info("postpro film stock applied automatically to item #{item.id}")

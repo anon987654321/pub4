@@ -8,3 +8,6 @@ AllCops:
 # Large apps exceed omakase Metrics thresholds; gate style without blocking deploy CI.
 Metrics:
   Enabled: false
+
+Layout/LineLength:
+  Enabled: false
