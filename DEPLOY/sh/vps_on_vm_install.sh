@@ -22,6 +22,6 @@ for app in $APPS; do
 done
 
 log "=== rcctl ==="
-for app in $APPS; do doas rcctl check "${app}_rails" 2>/dev/null || true; done
+for app in $APPS; do doas rcctl check "$app" 2>/dev/null || true; done
 doas rcctl check master 2>/dev/null || true
 log "done $LOG"

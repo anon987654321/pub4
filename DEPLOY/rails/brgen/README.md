@@ -16,7 +16,7 @@ Rails 8.1 · SQLite · Falcon · Hotwire · Solid Queue/Cache/Cable · Active St
 
 ```zsh
 doas zsh DEPLOY/rails/brgen/brgen.sh
-doas rcctl check brgen_rails
+doas rcctl check brgen
 curl -fsS http://127.0.0.1:38182/up
 ```
 

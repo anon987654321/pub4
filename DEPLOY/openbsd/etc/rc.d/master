@@ -32,6 +32,10 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 			_i=$((_i + 1))
 		done
 		rcctl restart relayd 2>/dev/null || true
+		# Warm Edge TTS daemon so first chat speak does not fall back to espeak.
+		(cd /home/dev/pub4/MASTER/web && bundle34 exec ruby -e \
+			'require "bundler/setup"; require "master/voice/tts_supervisor"; Master::Voice::TtsSupervisor.ensure_daemon!') \
+			2>/dev/null || true
 	fi
 fi
 exit $rc

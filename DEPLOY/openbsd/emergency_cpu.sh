@@ -11,7 +11,7 @@ uptime
 top -b -n1 | head -18
 
 echo "=== stop optional app services (keep master + brgen) ==="
-for svc in amber_rails bsdports_rails blognet_rails hjerterom_rails baibl litestream; do
+for svc in amber bsdports blognet hjerterom baibl litestream; do
   rcctl stop "$svc" 2>/dev/null && echo "stopped $svc" || echo "already down $svc"
 done
 

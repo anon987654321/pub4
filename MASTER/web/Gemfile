@@ -43,3 +43,15 @@ gem "diffy", "~> 3.4"
 gem "zeitwerk", "~> 2.7"
 
 gem "rb-edge-tts", git: "https://github.com/ZPVIP/rb-edge-tts"
+
+# Must mirror MASTER/Gemfile — web controllers load lib/ code at runtime.
+gem "fiddle"
+gem "tsort", require: false
+gem "reline", "~> 0.6"
+gem "ruby_llm-mcp"
+gem "wisper", "~> 2.0"
+if RUBY_PLATFORM =~ /bsd|dragonfly/i
+  gem "rb-kqueue", "~> 0.2", require: false
+elsif RUBY_PLATFORM =~ /linux/ && !RUBY_PLATFORM.include?("android")
+  gem "rb-inotify", "~> 0.10", require: false
+end

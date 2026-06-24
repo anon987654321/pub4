@@ -18,7 +18,7 @@ The single HTML entrypoint is `app/views/chat/index.html.erb`, served by
 `ChatController#index` at `/`. Runtime assets live under `public/`:
 
 - `face.js` — wireframe mesh (THREE.js)
-- `cognition_ecology.js` — ecology particle layer (`z-index: 1` over face canvas)
+- `cognition_ecology.js` — ecology particle layer (`z-index: 2` over face canvas, screen blend)
 - `particle_kernel.js` — typed cell pool
 - `topology_registry.js` — topology dispatch
 

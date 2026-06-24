@@ -39,6 +39,6 @@ for f in "${FILES[@]}"; do
 done
 
 echo "rcctl check (remote):"
-ssh "${SSH_OPTS[@]}" "$SSH_HOST" 'for s in nsd httpd relayd smtpd master brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl; do
+ssh "${SSH_OPTS[@]}" "$SSH_HOST" 'for s in nsd httpd relayd smtpd master brgen amber bsdports blognet hjerterom baibl; do
   /usr/sbin/rcctl check "$s" 2>/dev/null || echo "$s: missing"
 done' || echo "SSH failed — install key and flush bruteforce if needed."

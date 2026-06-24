@@ -8,11 +8,11 @@ require "fileutils"
 MIRROR = File.expand_path("..", __FILE__)
 
 FIXED_SOURCES = [
-  "/etc/rc.d/master", "/etc/rc.d/brgen", "/etc/rc.d/brgen_tv", "/etc/rc.d/brgen_rails",
-  "/etc/rc.d/amber", "/etc/rc.d/amber_rails", "/etc/rc.d/baibl",
-  "/etc/rc.d/blognet", "/etc/rc.d/blognet_rails",
-  "/etc/rc.d/bsdports", "/etc/rc.d/bsdports_rails",
-  "/etc/rc.d/hjerterom", "/etc/rc.d/hjerterom_rails",
+  "/etc/rc.d/master", "/etc/rc.d/brgen", "/etc/rc.d/brgen_tv",
+  "/etc/rc.d/amber", "/etc/rc.d/baibl",
+  "/etc/rc.d/blognet",
+  "/etc/rc.d/bsdports",
+  "/etc/rc.d/hjerterom",
   "/etc/relayd.conf", "/etc/httpd.conf", "/etc/pf.conf",
   "/etc/acme-client.conf", "/var/nsd/etc/nsd.conf",
   "/etc/login.conf", "/etc/rc.conf.local",

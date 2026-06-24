@@ -252,6 +252,7 @@
   }
 
   ensureEcologyFrame();
+  window.addEventListener("master:visual", () => ensureEcologyFrame(), { passive: true });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) ensureEcologyFrame();
   }, { passive: true });

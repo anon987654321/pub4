@@ -7,7 +7,7 @@ send "\r"
 expect -re {brgen\$ }
 send "tail -15 /tmp/pub4_install_latest.log 2>/dev/null; ps aux | grep bundle | grep -v grep | head -3\r"
 expect -re {brgen\$ }
-send "doas rcctl check master brgen_rails amber_rails 2>/dev/null\r"
+send "doas rcctl check master brgen amber 2>/dev/null\r"
 expect -re {brgen\$ }
 send "~.\r"
 expect eof

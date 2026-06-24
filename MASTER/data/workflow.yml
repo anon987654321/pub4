@@ -490,6 +490,6 @@ known_issues:
   rails_phantom_fk: "references with foreign_key: true alone creates phantom buyers/listings/likers/orders tables on SQLite — always set to_table. Run ruby DEPLOY/rails/check_phantom_foreign_keys.rb."
   todo_checkbox_drift: "Retired 2026-06-24 — verify ship readiness with bin/probe repo, health_check.rb, and per-app bin/ci instead of checkbox backlogs."
   tts_broken: "Master::Voice::Speech.synthesize_bytes shells to bin/tts-worker; if edge-tts is missing or tts-worker crashes, speech silently falls back to espeak. Verify bin/tts-worker exists and edge-tts is installed (pkg_add py3-edge-tts or pip)."
-  particle_swarm: "cognition_ecology.js trail/weather/memory-node system suspected broken — visual_bridge.js dispatches master:visual CustomEvents but cognition_ecology.js event listener may not be registering. Check addEventListener target and event name match."
+  particle_swarm: "Fixed 2026-06-24 — ecology canvas was z-index 0 under face (z-index 1); now z-index 2 with screen blend. verify trails/weather visible over face after SSE events."
   gemfile_separation: "MASTER/Gemfile and MASTER/web/Gemfile are independent. Any gem used by lib/ code that is also called from web/ controllers must appear in both. Adding to one only causes LoadError in the other context."
   tts_worker_process: "Process.fork inside a Falcon fiber raises 'Closing scheduler' — EM-based gems and subprocess-heavy tools must use Open3.popen or shell out via exe/<name>-worker, never fork."

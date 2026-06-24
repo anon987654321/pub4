@@ -6,7 +6,7 @@ set -e
 
 ROOT=/home/dev/pub4
 ALL_APPS_FLAG=/var/db/pub4_all_apps
-SERVICES="master brgen_rails amber_rails bsdports_rails blognet_rails hjerterom_rails baibl"
+SERVICES="master brgen amber bsdports blognet hjerterom baibl"
 
 install -d -m 755 /var/db
 : > "$ALL_APPS_FLAG"

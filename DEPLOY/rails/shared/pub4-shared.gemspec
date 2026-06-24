@@ -5,9 +5,6 @@ Gem::Specification.new do |spec|
   spec.version = "0.1.0"
   spec.authors = ["pub4"]
   spec.summary = "Shared Rails engine for pub4 family apps"
-  spec.files = Dir.chdir(__dir__) do
-    `git ls-files -z`.split("\x0").reject { |f| f.start_with?("vendor/") }
-  end
   spec.files = Dir["{app,config,db,frontend,lib,public}/**/*", "README.md", "WIRING_NOTES.md", "test/**/*"].select { |f| File.file?(f) }
   spec.require_paths = ["lib"]
   spec.add_dependency "rails", ">= 8.0"

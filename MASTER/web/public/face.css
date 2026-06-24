@@ -95,8 +95,9 @@ canvas#face {
 }
 
 #cognition-ecology {
-  z-index: 0;
+  z-index: 2;
   pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 canvas {
@@ -608,6 +609,16 @@ body[data-mode="listening"] #mic-dot {
 body.zen #zsh,
 body.zen .face-plate,
 body.zen #chat-log { opacity: .08; }
+body.zen.zen-hidden .face-controls,
+body.zen.zen-hidden #ui-status,
+body.zen.zen-hidden #mood-sparkline { opacity: 0; pointer-events: none; transition: opacity 220ms ease; }
+body.zen[data-edge-hover="1"] .face-controls,
+body.zen[data-edge-hover="1"] #zsh { opacity: 1; pointer-events: auto; }
+
+#shortcut-sheet { border: 1px solid var(--face-dim); background: #0a0a0a; color: var(--face-fg); padding: 12px 16px; max-width: 28rem; }
+#shortcut-sheet table { width: 100%; font-size: 12px; }
+#shortcut-sheet kbd { font-family: inherit; opacity: 0.85; }
+.tool-diff pre.diff-body { font-size: 10px; max-height: 12rem; overflow: auto; white-space: pre-wrap; }
 
 body.zen #zsh.revealed { opacity: .96; pointer-events: auto; transform: none; }
 

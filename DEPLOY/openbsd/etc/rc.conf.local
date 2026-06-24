@@ -3,5 +3,5 @@ httpd_flags=
 nsd_flags=
 relayd_flags=
 # vm23_small: boot core only; optional apps via rcctl start or resource_guard when idle.
-pkg_scripts=master brgen_rails
+pkg_scripts=master brgen
 sndiod_flags=NO

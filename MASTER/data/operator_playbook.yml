@@ -69,8 +69,14 @@ lessons:
   - id: master_web_osman_defaults
     area: master_web
     signal: "White page, silent TTS, or Osman blocked after voice/lang regressions"
-    action: "Defaults live in speech.rb (:osman), face.part4 TTS_DEFAULT_VOICE, chat voice-picker HTML, guardVoice (no ms-lang block on osman). Assets are fingerprinted under /assets/face-*.js."
-    proof: "curl page includes voice-picker osman; GET /chat/tts?voice=osman returns audio; bin/smoke --web clean"
+    action: "Defaults live in speech.rb (:osman), face.part4 TTS_DEFAULT_VOICE, chat voice-picker HTML, guardVoice (no ms-lang block on osman). rc.d/master warms TtsSupervisor after /up. Assets are fingerprinted under /assets/face-*.js."
+    proof: "curl page includes voice-picker osman; GET /chat/tts?voice=osman returns audio; test -S /home/dev/pub4/MASTER/.master/tts.sock; bin/smoke --web clean"
+
+  - id: ecology_layer_visibility
+    area: master_web
+    signal: "SSE events fire but ecology trails/weather invisible"
+    action: "Ecology canvas must sit above #face (z-index 2, mix-blend-mode screen). cognition_ecology.js listens on master:visual; render loop restarts on visibility + visual events."
+    proof: "grep 'z-index: 2' MASTER/web/public/face.css; browser devtools shows #cognition-ecology above canvas#face"
 
   - id: ship_proof_not_checkboxes
     area: process
@@ -83,3 +89,9 @@ lessons:
     signal: "Code pushed but services stale or untested on vm23"
     action: "After git pull: SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_on_vm_install.sh; doas rcctl restart master; bundle34 exec bin/ci per app; bundle34 exec bin/smoke in MASTER; ruby34 DEPLOY/openbsd/health_check.rb; curl https://ai.brgen.no/up"
     proof: "doas rcctl check master brgen amber blognet bsdports baibl hjerterom; browser smoke on ai.brgen.no face"
+
+  - id: rails_rcd_canonical_names
+    area: openbsd
+    signal: "rcctl stop brgen_rails kills brgen on same port; duplicate rc.d scripts"
+    action: "Canonical rc.d names are bare app names (brgen, amber, …). Never rcctl stop *_rails. retire_legacy_rails_rcd in deploy scripts removes stale /etc/rc.d/*_rails."
+    proof: "ls DEPLOY/openbsd/etc/rc.d/ shows brgen not brgen_rails; grep -r '_rails' DEPLOY/openbsd returns empty"

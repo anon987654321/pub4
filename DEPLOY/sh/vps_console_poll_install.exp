@@ -14,7 +14,7 @@ at_prompt
 send "tail -25 /tmp/pub4_on_vm_install.log 2>/dev/null; echo ---; ps aux | egrep 'bundle|vps_on_vm|brgen.sh|amber.sh' | grep -v grep | head -6\r"
 at_prompt
 
-send "doas rcctl check master brgen_rails amber_rails blognet_rails bsdports_rails baibl_rails hjerterom_rails 2>&1\r"
+send "doas rcctl check master brgen amber blognet bsdports baibl hjerterom 2>&1\r"
 at_prompt
 
 send "~.\r"

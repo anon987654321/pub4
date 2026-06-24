@@ -75,7 +75,7 @@ doas zsh DEPLOY/rails/brgen/brgen.sh   # or amber/amber.sh, etc.
 # Inside .sh: MASTER /scan DEPLOY gate, bundle (cached), db:seed (optional web), rcctl restart (only if /up != 200)
 
 # Ultra-light: just restart (with sleeps)
-for s in brgen_rails amber_rails ...; do doas rcctl restart $s || true; sleep 5; done
+for s in brgen amber bsdports blognet hjerterom baibl; do doas rcctl restart $s || true; sleep 5; done
 ```
 
 Always run from tmux. Use openrsync where possible. Health: curl /up endpoints + `ruby DEPLOY/openbsd/health_check.rb`.

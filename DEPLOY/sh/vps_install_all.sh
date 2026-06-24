@@ -49,16 +49,14 @@ for app in $APPS; do
   if ! zsh "$script"; then
     log "WARN: ${app} deploy script failed"
   else
-    typeset svc="${app}_rails"
-    doas rcctl check "$svc" 2>/dev/null && log "ok: ${svc}" || log "WARN: ${svc} check failed"
+    doas rcctl check "$app" 2>/dev/null && log "ok: ${app}" || log "WARN: ${app} check failed"
   fi
 done
 
 log "=== summary ==="
 for app in $APPS; do
-  typeset svc="${app}_rails"
-  printf '  %s: ' "$svc"
-  doas rcctl check "$svc" 2>/dev/null || print "not running"
+  printf '  %s: ' "$app"
+  doas rcctl check "$app" 2>/dev/null || print "not running"
 done
 doas rcctl check master 2>/dev/null || true
 log "finished — $LOG"

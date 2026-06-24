@@ -95,7 +95,7 @@
       "inset:0",
       "width:100vw",
       "height:100vh",
-      "z-index:0",
+      "z-index:2",
       "pointer-events:none",
       "mix-blend-mode:screen",
       "image-rendering:pixelated"

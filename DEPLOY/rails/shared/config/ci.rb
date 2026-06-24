@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # Run using bin/ci — Rails 8.1 local CI (pub4 family apps)
+ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
 
 CI.run do
   step "Setup", "bin/setup --skip-server"

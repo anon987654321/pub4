@@ -8,15 +8,15 @@ ram_mb: 1024
 # Always on: public face + flagship app.
 core_services:
   - master
-  - brgen_rails
+  - brgen
 
 # Start manually: doas ksh DEPLOY/openbsd/start_all_apps.sh
 # Pins all apps (creates /var/db/pub4_all_apps; resource_guard skips shedding).
 optional_services:
-  - amber_rails
-  - bsdports_rails
-  - blognet_rails
-  - hjerterom_rails
+  - amber
+  - bsdports
+  - blognet
+  - hjerterom
   - baibl
   - litestream
 

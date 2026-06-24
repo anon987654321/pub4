@@ -68,7 +68,7 @@ vmctl console vm23          # inside: login, pfctl -t bruteforce -T flush ; exit
 - Source of truth: /home/dev/pub4 (git repo).
 - `cd /home/dev/pub4 && git pull --ff-only`
 - Light sync: `doas zsh DEPLOY/openbsd/openbsd.sh --sync-configs` (runs MASTER scan gate + health).
-- Per-app (brgen subapps, amber, ...): `doas zsh DEPLOY/rails/brgen/brgen.sh` (or just `doas rcctl restart brgen_rails` after pull if no bundle changes). All .sh now have pre-apply MASTER /scan DEPLOY (blocks on rules violations) + /up guards + sleeps.
+- Per-app (brgen subapps, amber, ...): `doas zsh DEPLOY/rails/brgen/brgen.sh` (or just `doas rcctl restart brgen` after pull if no bundle changes). All .sh now have pre-apply MASTER /scan DEPLOY (blocks on rules violations) + /up guards + sleeps.
 - Recovery (if direct ssh blocked by pf): `ssh -p 31415 ... dev@server4.openbsd.amsterdam` → `vmctl console vm23` → `doas pfctl -t bruteforce -T flush`.
 - Always tmux. Use host console for anything wedged. Health: `ruby34 health_check.rb` (rcctl + per-app `/up`).
 - Ruby 3.4 on VPS: `ruby34`, `bundle34` (not system ruby). Per-app gate: `cd DEPLOY/rails/<app> && bundle34 exec bin/ci`.
@@ -102,16 +102,16 @@ doas ksh start_all_apps.sh            # start full stack; disable shedding via /
 
 ## vm23 resource budget (1 vCPU, ~1 GiB)
 
-vm23 runs **core only** at boot: `master` + `brgen_rails`. Optional apps stay stopped until started — see `vm_resource.yml`.
+vm23 runs **core only** at boot: `master` + `brgen`. Optional apps stay stopped until started — see `vm_resource.yml`.
 
 - `master` Falcon workers: **1** (not 2); `MASTER_SAFE_MODE=1` in rc.d
 - relayd health checks: **120s** interval (not 30s)
 - `resource_guard.sh` cron every 5 min sheds optional services when load ≥ 0.85 or mem free &lt; 12% (skipped when `/var/db/pub4_all_apps` exists)
 - Full stack: `doas ksh DEPLOY/openbsd/start_all_apps.sh` (creates `/var/db/pub4_all_apps`, starts all Rails + relayd, runs `health_check.rb`)
-- Single optional app: `doas rcctl start amber_rails` (shed again unless all-apps flag is set)
+- Single optional app: `doas rcctl start amber` (shed again unless all-apps flag is set)
 
 ```zsh
-doas rcctl check master brgen_rails   # core health
+doas rcctl check master brgen   # core health
 ruby34 DEPLOY/openbsd/health_check.rb # skips stopped optional apps
 ```
 
