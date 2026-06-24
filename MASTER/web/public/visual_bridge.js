@@ -17,10 +17,15 @@
   };
 
   const EVENT_MAP = [
+    [/phantom:detected|phantom:retry/i, { topology: "glitch", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
+    [/compaction:(start|done)|compact/i, { topology: "terrain", entropy: 0.42, confidence: 0.62, mode: "compact" }],
+    [/btw:done|agent:(start|end)/i, { topology: "neural", entropy: 0.36, confidence: 0.74, mode: "side-agent" }],
+    [/pipeline:stage|skills:triggered/i, { topology: "papua-mask", entropy: 0.30, confidence: 0.80, mode: "stage" }],
+    [/ctx:footer/i, { topology: "neural", entropy: 0.22, confidence: 0.84, mode: "ctx" }],
     [/llm:escalation|fallback|retry/i, { topology: "serpent", entropy: 0.62, confidence: 0.46, mode: "escalation" }],
     [/llm:request|agent:start|pipeline:start/i, { topology: "papua-mask", entropy: 0.32, confidence: 0.72, mode: "thinking" }],
-    [/memory|retriev|context|compact/i, { topology: "neural", entropy: 0.28, confidence: 0.76, mode: "memory" }],
-    [/tool|scan|sweep|audit/i, { topology: "torus", entropy: 0.38, confidence: 0.70, mode: "tool" }],
+    [/memory|retriev|context/i, { topology: "neural", entropy: 0.28, confidence: 0.76, mode: "memory" }],
+    [/tool|scan|sweep|audit|rtk/i, { topology: "torus", entropy: 0.38, confidence: 0.70, mode: "tool" }],
     [/error|rollback|failed|failure/i, { topology: "serpent", entropy: 0.78, confidence: 0.24, mode: "error" }],
     [/done|complete|success|response/i, { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "complete" }],
     [/codebase:topology|fix_loop:pass/i, { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],

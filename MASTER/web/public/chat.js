@@ -564,6 +564,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     { cmd: '/btw research ', hint: 'parallel side agent' },
     { cmd: '/rtk', hint: 'shell output filter stats' },
     { cmd: '/plan', hint: 'show pinned plan' },
+    { cmd: '/rebuild', hint: 'hot-restart web face' },
     { cmd: '/help', hint: 'list commands' },
     { cmd: '/status', hint: 'service and repo health' },
     { cmd: '/self', hint: 'scan MASTER itself' },

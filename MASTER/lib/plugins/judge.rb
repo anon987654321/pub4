@@ -44,7 +44,7 @@ module Master
         Master::Ground::ActivePlan.attach(bus, root)
         agent.wire_constitution(Master::Ground::Constitution.new)
         scanner               = configure(nil, root:, agent:, bus:)
-        swarm                 = Master::Judge::Swarm::Coordinator.new(agent:, event_bus: bus)
+        swarm                 = Master::Judge::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
         personas              = Master::Judge::Council::Personas.load(File.join(Master::ROOT, "data", "council.yml"))
         axioms                = Master::Ground::Rules.new(root:)
         deliberation          = Master::Judge::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)

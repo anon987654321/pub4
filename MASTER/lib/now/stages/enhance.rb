@@ -45,16 +45,17 @@ module Master
           new(agent:, event_bus:).call_raw(msg)
         end
 
-        def initialize(agent:, event_bus: nil)
+        def initialize(agent:, event_bus: nil, skills: nil)
           @agent = agent
           @bus   = event_bus
+          @skills = skills
         end
 
         # Pipeline stage — skip if web already confirmed an enhanced version.
         def call(ctx)
           return Result.ok(ctx) if ctx.pre_enhanced
 
-          msg    = ctx.message.to_s.strip
+          msg    = apply_skills(ctx.message.to_s.strip)
           result = call_raw(msg)
           return Result.ok(ctx) unless result[:changed]
 
@@ -76,6 +77,18 @@ module Master
         end
 
         private
+
+        def apply_skills(msg)
+          return msg unless @skills
+
+          matches = @skills.trigger_for(msg)
+          return msg if matches.empty?
+
+          skill = matches.first
+          body = @skills.body_for(skill[:name])
+          @bus&.publish("skills:triggered", skill: skill[:name], triggers: skill[:triggers])
+          [msg, "", "[skill: #{skill[:name]}]", body.to_s.strip].join("\n")
+        end
 
         def skip?(msg)
           msg.match?(SKIP_RE) || msg.split.size < MIN_WORDS

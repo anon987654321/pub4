@@ -141,7 +141,7 @@ module Master
       commands = Now::CommandRegistry.build(infra:, ai:, root:)
       stages = [
         Now::Stages::Intake.new,
-        Now::Stages::Enhance.new(agent: ai[:agent], event_bus: bus),
+        Now::Stages::Enhance.new(agent: ai[:agent], event_bus: bus, skills: ai[:skills]),
         Now::Stages::Infer.new,
         Now::Stages::Route.new(commands:, agent: ai[:agent]),
         Now::Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),

@@ -66,6 +66,32 @@ class TestOpenCrabsFeatures < Minitest::Test
     FileUtils.rm_rf(dir)
   end
 
+  def test_swarm_role_maps_to_taxonomy
+    assert_equal :explore, Master::Ground::SubagentPolicy.type_for_swarm_role(:analyst)
+    assert_equal :research, Master::Ground::SubagentPolicy.type_for_swarm_role(:researcher)
+    ctx = Master::Ground::SubagentPolicy.context_for_swarm_role(:reviewer, [])
+    assert_equal :verify, ctx[:type]
+    assert ctx[:allowed].is_a?(Array)
+  end
+
+  def test_skills_body_for_returns_description_fallback
+    dir = Dir.mktmpdir("master-skill-")
+    skill_dir = File.join(dir, "data", "skills", "demo")
+    FileUtils.mkdir_p(skill_dir)
+    File.write(File.join(skill_dir, "SKILL.md"), "---\nname: demo\ndescription: demo skill\ntriggers:\n  - fix loop\n---\n\nDo the thing.\n")
+    skills = Master::Now::Skills.new(root: dir)
+    skills.discover!
+    body = skills.body_for("demo")
+    assert_includes body, "Do the thing"
+  ensure
+    FileUtils.rm_rf(dir)
+  end
+
+  def test_dispatch_rtk_command
+    out = Master::Now::CommandRegistry.dispatch_rtk(Master::ROOT)
+    assert_includes out, "RTK output filter stats"
+  end
+
   def test_agent_pool_capacity
     bus = Master::Trace::EventBus.new
     pool = Master::Judge::AgentPool.new(governor: nil, event_bus: bus,

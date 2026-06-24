@@ -43,6 +43,7 @@ class ChatService
     publish_canvas_state
     result = @container[:pipeline].call(Master::Result.ok(**pipeline_context))
     write_fallback(result)
+    write_turn_ctx_footer
     @stream.write("data: [DONE]\n\n")
     trigger_post_mutation_work
   rescue StandardError => e
@@ -217,6 +218,19 @@ class ChatService
 
   def phantom_payload(event)
     { patterns: Array(event[:patterns]), recovery: Array(event[:recovery]) }
+  end
+
+  def write_turn_ctx_footer
+    session = @container[:session]
+    return unless session.respond_to?(:token_est)
+
+    est = session.token_est
+    limit = Master::CTX_WINDOW_SIZE
+    pct = limit.positive? ? ((est.to_f / limit) * 100).round(1) : 0
+    model = @container[:agent].model.to_s.split("/").last
+    write_json_event("ctx_footer", { model:, token_est: est, limit:, pct: })
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "ChatService.write_turn_ctx_footer", event_bus: @container[:bus])
   end
 
   def write_compaction_event(event)

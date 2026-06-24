@@ -27,6 +27,13 @@ module Master
         "deepwiki" => %w[deepwiki],
       }.freeze
 
+      SWARM_ROLE_MAP = {
+        analyst: :explore,
+        researcher: :research,
+        coder: :code,
+        reviewer: :verify,
+      }.freeze
+
       TYPES = {
         general: {
           label: "general",
@@ -133,6 +140,15 @@ module Master
       def filter(type, tool_names)
         allowed = allowed_tool_names(type)
         tool_names.map(&:to_s).select { |name| !excluded?(name) && (allowed.empty? || allowed.include?(name)) }
+      end
+
+      def type_for_swarm_role(role)
+        SWARM_ROLE_MAP.fetch(role.to_sym, :general)
+      end
+
+      def context_for_swarm_role(role, parent_tools = nil)
+        type = type_for_swarm_role(role)
+        { type:, allowed: allowed_tool_names(type, parent_tools) }
       end
 
       def brief(type = :general)

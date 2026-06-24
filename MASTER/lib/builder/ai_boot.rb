@@ -28,7 +28,7 @@ module Master
       agent.wire_constitution(Ground::Constitution.new)
       ecology = infra[:ecology]
       scanner = build_scanner(root:, agent:, bus:, ecology:)
-      swarm = Judge::Swarm::Coordinator.new(agent:, event_bus: bus)
+      swarm = Judge::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
       personas = Judge::Council::Personas.load(File.join(Master::ROOT, "data", "council.yml"))
       axioms = Ground::Rules.new(root:)
       deliberation = Judge::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)

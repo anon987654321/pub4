@@ -1,20 +1,30 @@
 ---
 name: OpenCrabs (Rust MASTER cousin)
-description: github.com/adolfousier/opencrabs — Rust/Ratatui TUI agent, philosophical cousin of MASTER. Solo author, 5 stars, MIT. Worth-stealing patterns listed.
+description: github.com/adolfousier/opencrabs — Rust/Ratatui TUI agent, philosophical cousin of MASTER. ~803 stars, MIT. Worth-stealing patterns listed with MASTER wiring status.
 type: reference
 originSessionId: 038b16d9-fc5e-4144-9a47-5bd746b2d3ac
 ---
-**Repo:** github.com/adolfousier/opencrabs · docs.opencrabs.com · 34 MB binary, 57 MB RSS, latest v0.2.15 (Feb 2026), Cargo nightly required (2024 edition + `portable_simd`).
+**Repo:** [github.com/adolfousier/opencrabs](https://github.com/adolfousier/opencrabs) · [docs.opencrabs.com](https://docs.opencrabs.com) · v0.3.47 (Jun 2026) · 4k+ tests · Linux/macOS/Windows; no OpenBSD/`pledge`.
 
-**Architecture:** TUI/CLI → Brain → Services → SQLx/SQLite → LLM providers. Layered Rust + Tokio + Ratatui. Linux/macOS/Windows; no OpenBSD support, no `pledge`/`unveil`.
+**Architecture:** TUI/CLI → Brain → Services → SQLx/SQLite → LLM providers. Layered Rust + Tokio + Ratatui.
 
-**Patterns worth stealing for MASTER:**
-1. **Brain-files re-read every turn.** System prompt assembled per turn from workspace MD files (SOUL/IDENTITY/USER/AGENTS/TOOLS/MEMORY/SECURITY/BOOT/HEARTBEAT). Edit between turns → effect immediate, no rebuild. Same shape as MASTER's `data/*.yml`.
-2. **FTS5 BM25 memory search via existing SQLite.** Zero new deps, ~0.4ms/query. Ruby equivalent: `sqlite3` gem + FTS5 — free.
-3. **Inline compaction summary.** When auto-compaction fires at 70% ctx, summary written to chat AND daily log so user sees what was kept. Transparency over magic.
-4. **`/rebuild` + Unix `exec()` hot-restart.** Self-edit → `cargo build --release` async → `ProgressEvent::RestartReady` → `exec()` swap → resume session via SQLite. No context loss.
-5. **Sub-agent tool exclusion list.** `spawn_agent`/`rebuild`/`evolve` ALWAYS_EXCLUDED from sub-agents — prevents recursive self-mod.
+**Patterns worth stealing — MASTER wiring (2026-06-24):**
 
-**Risks visible in their changelog (don't blindly copy):** RSI runs without human approval (writes to `~/.opencrabs/rsi/improvements.md`); README admits agent hallucinates tool calls in corrupted sessions ("fix coming"). Bus factor 1, pre-traction.
+| # | Pattern | MASTER status |
+|---|---------|---------------|
+| 1 | Brain-files re-read every turn | `data/*.yml` + `Ground::BrainOverlay` — wired |
+| 2 | FTS5 BM25 memory | `ground/memory.rb`, `memory_search.rb` — wired |
+| 3 | Inline compaction summary | `ContextWindow` + web SSE `compaction:` + daily log — wired |
+| 4 | `/rebuild` hot-restart | CLI `run_rebuild`; web `/rebuild` → `tmp/restart.txt` — wired |
+| 5 | Sub-agent tool exclusion | `SubagentPolicy` + `SubagentContext` + `AgentPool` + swarm — wired |
+| 6 | Typed sub-agents (`explore/plan/code/research`) | `data/agent_taxonomy.yml` + `/btw` — wired |
+| 7 | Hashline-anchored edits | `Reach::Hashline` + `read_file(hashline:)` — wired |
+| 8 | RTK token savings on shell output | `Reach::OutputFilter` + `/rtk` — wired |
+| 9 | Plan pinning each turn | `Ground::ActivePlan` + `propose_tree:done` — wired |
+| 10 | Mission control dashboard | `/dashboard` RSI/RTK/plan/bus — wired |
+| 11 | Phantom/gaslighting recovery | `PhantomRecovery` + web glitch badge — wired |
+| 12 | Skills as slash triggers | `Now::Skills#trigger_for` in Enhance stage — wired |
 
-**Don't conflate:** `mo-vic/OpenCrab` (singular, fine-tuning distillation, unrelated) and the empty `opencrab` org are different projects.
+**Risks (don't blindly copy):** unapproved RSI brain writes; hallucinated tool calls in corrupted sessions; bus factor 1.
+
+**Don't conflate:** `mo-vic/OpenCrab` (distillation) and empty `opencrab` org are unrelated.

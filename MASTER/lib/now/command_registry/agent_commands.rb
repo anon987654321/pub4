@@ -1,16 +1,19 @@
 # frozen_string_literal: true
 
+require "fileutils"
+
 module Master
   module Now
     module CommandRegistry
       module_function
 
-      def agent_commands(agent:, agent_pool:, shell:, root:, bus:)
+      def agent_commands(agent:, agent_pool:, shell:, root:, bus:, session: nil)
         {
           "btw" => command(:dispatch_btw, agent_pool, agent, bus),
           "rtk" => command(:dispatch_rtk, root),
           "shell" => command(:dispatch_shell, shell),
           "plan" => command(:dispatch_plan, root, bus),
+          "rebuild" => command(:dispatch_rebuild, session, root),
         }
       end
 
@@ -58,6 +61,27 @@ module Master
 
         result = shell.call(command: cmd)
         result.ok? ? result.value!.to_s : result.message
+      end
+
+      def dispatch_rebuild(session, root, ctx: nil)
+        session&.save! if session.respond_to?(:save!)
+        web_restart = File.join(root, "web", "tmp", "restart.txt")
+        if File.directory?(File.dirname(web_restart))
+          FileUtils.mkdir_p(File.dirname(web_restart))
+          FileUtils.touch(web_restart)
+          return "rebuild: web face restart triggered (tmp/restart.txt)"
+        end
+
+        lib_dir = File.join(root, "lib")
+        errors = Dir.glob(File.join(lib_dir, "**", "*.rb")).select do |path|
+          !system(RbConfig.ruby, "-c", path, out: File::NULL, err: File::NULL)
+        end
+        return "rebuild: aborted — syntax errors in #{errors.size} file(s)" if errors.any?
+
+        session&.save! if session.respond_to?(:save!)
+        Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
+      rescue StandardError => e
+        "rebuild: #{e.message}"
       end
 
       def dispatch_plan(root, bus, ctx: nil)

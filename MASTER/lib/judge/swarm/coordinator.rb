@@ -33,9 +33,10 @@ module Master
 
         include VoteEngine
 
-        def initialize(agent:, event_bus: nil)
+        def initialize(agent:, event_bus: nil, parent_tools: nil)
           @agent = agent
           @bus = event_bus
+          @parent_tools = Array(parent_tools)
           @workers = {}
         end
 
@@ -59,7 +60,9 @@ module Master
         def fan_out(tasks, timeout: WORKER_TIMEOUT)
           threads = tasks.map do |t|
             Thread.new do
-              [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+              run_with_subagent_policy(t[:role]) do
+                [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+              end
             rescue StandardError => e
               @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
               [t[:role], Result.err("worker error: #{e.message}", category: :infrastructure)]
@@ -80,9 +83,11 @@ module Master
 
           threads = role_tasks.map do |t|
             Thread.new do
-              remaining = [finish_by - Process.clock_gettime(Process::CLOCK_MONOTONIC), 1].max
-              Timeout.timeout(remaining) do
-                [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+              run_with_subagent_policy(t[:role]) do
+                remaining = [finish_by - Process.clock_gettime(Process::CLOCK_MONOTONIC), 1].max
+                Timeout.timeout(remaining) do
+                  [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+                end
               end
             rescue Timeout::Error => _e
               [t[:role], Result.err("worker exceeded shared deadline", category: :timeout)]
@@ -113,8 +118,9 @@ module Master
           threads = tasks.map do |task_spec|
             Thread.new do
               role = task_spec[:role]
-              result = dispatch(role, task: task_spec[:task],
-                                context_slice: task_spec.fetch(:context_slice, {}))
+              result = run_with_subagent_policy(role) do
+                dispatch(role, task: task_spec[:task], context_slice: task_spec.fetch(:context_slice, {}))
+              end
               confidence = extract_confidence(result)
               entry = { role:, output: result, confidence: }
               mutex.synchronize { workers_out << entry }
@@ -193,6 +199,11 @@ module Master
 
             @workers[sym] = klass.new(agent: @agent, event_bus: @bus)
           end
+        end
+
+        def run_with_subagent_policy(role)
+          ctx = Ground::SubagentPolicy.context_for_swarm_role(role, @parent_tools)
+          Ground::SubagentContext.run(type: ctx[:type], allowed: ctx[:allowed]) { yield }
         end
       end
     end

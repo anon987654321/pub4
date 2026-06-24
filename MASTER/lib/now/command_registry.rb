@@ -28,7 +28,8 @@ module Master
           agent_pool: ai[:agent_pool],
           shell: shell_tool,
           root:,
-          bus: infra[:bus]
+          bus: infra[:bus],
+          session: infra[:session]
         ))
         commands.merge!(control_commands(ai[:standing], ai[:soul]))
         commands.merge!(system_commands(agent: ai[:agent], diag: infra[:diag], root:))

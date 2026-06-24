@@ -55,6 +55,19 @@ module Master
         matches
       end
 
+      def body_for(name)
+        skill = find(name)
+        return nil unless skill
+
+        md_path = File.join(skill[:dir], "SKILL.md")
+        return skill[:description].to_s unless File.file?(md_path)
+
+        File.read(md_path, encoding: "UTF-8")[0, 4_000]
+      rescue StandardError => e
+        Ground::Swallow.log(e, context: "skills.body_for", event_bus: @bus)
+        skill[:description].to_s
+      end
+
       def record_used(name)
         @usage[name.to_s] = Time.now.to_i
         persist_usage

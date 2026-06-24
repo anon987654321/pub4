@@ -200,6 +200,8 @@ class TestWebUI < Minitest::Test
     assert_includes chat, "_chatOnCtxFooter"
     assert_includes chat, "_chatOnPhantom"
     assert_includes chat, "/btw research"
+    assert_includes chat, "/rebuild"
+    assert_includes File.read(File.expand_path("../web/public/visual_bridge.js", __dir__)), "phantom:detected"
     assert_includes actions, "addEventListener('compaction'"
     assert_includes actions, "startsWith('!')"
     assert_includes service, "compaction:done"
