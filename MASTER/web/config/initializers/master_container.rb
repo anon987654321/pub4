@@ -5,6 +5,13 @@ Rails.application.config.x.master_container = nil
 Rails.application.config.x.master_container_mutex = Mutex.new
 Rails.application.config.x.master_bootstrap_started = false
 
+Rails.application.config.after_initialize do
+  next if Rails.application.config.x.master_bootstrap_started
+
+  Rails.application.config.x.master_bootstrap_started = true
+  Thread.new { MasterContainerLoader.ensure! }
+end
+
 module MasterContainerLoader
   module_function
 
