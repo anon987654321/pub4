@@ -339,10 +339,14 @@ if places.any?
   users.sample(20).each do |u|
     next unless u.respond_to?(:activity_events)
 
-    u.activity_events.create!(
-      action: 'visited',
-      subject_type: 'Place',
-      subject_id: places.sample.id,
+    place = places.sample
+    ActivityEvent.create!(
+      actor: u,
+      event_name: 'visited',
+      object_type: place.class.name,
+      object_id: place.id,
+      source_vertical: 'maps',
+      locality: place.try(:locality),
       created_at: rand(1..10).hours.ago
     )
   end

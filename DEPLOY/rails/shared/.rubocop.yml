@@ -1,6 +1,10 @@
 # Omakase Ruby styling for Rails (pub4 family)
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
+AllCops:
+  Exclude:
+    - "db/migrate/._*"
+
 # Large apps exceed omakase Metrics thresholds; gate style without blocking deploy CI.
 Metrics:
   Enabled: false

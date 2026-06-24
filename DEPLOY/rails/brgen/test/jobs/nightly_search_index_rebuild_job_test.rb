@@ -12,6 +12,6 @@ class NightlySearchIndexRebuildJobTest < ActiveSupport::TestCase
       NightlySearchIndexRebuildJob.perform_now
     end
 
-    connection.verify
+    assert connection.verify
   end
 end

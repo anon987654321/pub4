@@ -62,6 +62,7 @@ sync_tree() {
       ! -name db ! -name storage ! -name log ! -name tmp -exec rm -rf {} +
   fi
   ${_PRIV} sh -c "cd '${src%/}' && tar cf - ." | ${_PRIV} sh -c "cd '${dst%/}' && tar xf -"
+  ${_PRIV} find "${dst%/}" -name '._*' -delete 2>/dev/null || true
 }
 
 need_cmd() {
@@ -206,8 +207,10 @@ rails_runtime_gate() {
       "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:prepare" \
       || { log_err "db:prepare failed"; return 1; }
     if [[ -x ${app_dir}/bin/ci ]]; then
+      local rails_src=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails
+      [[ -d $rails_src ]] && doas chmod -R a+rX "$rails_src" 2>/dev/null || true
       run_rails_as_app "$app_name" "$app_dir" \
-        "SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=/home/dev/pub4/DEPLOY/rails RAILS_ENV=test CI=1 bundle34 exec bin/ci" \
+        "SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_src} RAILS_ENV=test CI=1 bundle34 exec bin/ci" \
         || { log_err "bin/ci failed"; return 1; }
     fi
   else

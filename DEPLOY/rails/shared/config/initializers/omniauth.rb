@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # AN204: OAuth via OmniAuth (google + github)
 
 Rails.application.config.middleware.use OmniAuth::Builder do

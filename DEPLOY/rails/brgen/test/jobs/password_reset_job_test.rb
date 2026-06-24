@@ -15,6 +15,6 @@ class PasswordResetJobTest < ActiveSupport::TestCase
       end
     end
 
-    mail.verify
+    assert mail.verify
   end
 end
