@@ -36,7 +36,7 @@ namespace :scrape do
           category: %w[shirt jacket pants shoes dress coat sweater accessory hat].sample,
           color: %w[black navy white gray beige olive burgundy teal mustard].sample,
           brand: %w[Acne Arket COS Uniqlo Zara H&M Everlane Patagonia].sample,
-          description: [ item['description'] || item['title'], "Sourced/fictivized from r/#{sub} via Ferrum vision scrape (upvotes: #{item['upvotes']})." ].compact.join(" "),
+          description: [ item["description"] || item["title"], "Sourced/fictivized from r/#{sub} via Ferrum vision scrape (upvotes: #{item["upvotes"]})." ].compact.join(" "),
           price_cents: rand(1500..15000),
           worn_count: rand(0..25),
           last_worn_at: rand(1..90).days.ago
