@@ -232,6 +232,25 @@ class TestWebUI < Minitest::Test
     assert_includes index, 'id="mood-sparkline"'
   end
 
+  def test_ui_backlog_wired
+    chat = File.read(File.expand_path("../web/public/chat.js", __dir__))
+    part5 = File.read(File.expand_path("../web/public/face.part5.txt", __dir__))
+    index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
+    dashboard = File.read(File.expand_path("../web/app/views/dashboard/index.html.erb", __dir__))
+
+    assert_includes chat, "wireUiBacklog"
+    assert_includes chat, "MASTERLogSearch"
+    assert_includes chat, "MASTERStreamMode"
+    assert_includes chat, "collectJsonl"
+    assert_includes part5, "dataset.inputDense"
+    assert_includes part5, "sw:updated"
+    assert_includes index, "skip-link"
+    assert_includes index, "error-live"
+    assert_includes index, "<textarea id=\"zin\""
+    assert_includes dashboard, "context pressure"
+    assert_includes dashboard, "repair queue"
+  end
+
   def test_wave3_history_export_sparkline_wired
     chat = File.read(File.expand_path("../web/public/chat.js", __dir__))
     css = File.read(File.expand_path("../web/public/face.css", __dir__))

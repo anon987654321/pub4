@@ -6,11 +6,20 @@ function ensureFrameLoop() {
 }
 
 let _dbgFrames = 0;
-const showFps = new URLSearchParams(window.location.search).get('fps') === '1';
-const fpsBadge = showFps ? (() => {
+const urlParams = new URLSearchParams(window.location.search);
+const showFps = urlParams.get('fps') === '1';
+const showDebug = urlParams.get('debug') === '1' || showFps;
+const fpsBadge = showDebug ? (() => {
   const el = document.createElement('div');
   el.id = 'fps-badge';
   el.className = 'fps-badge';
+  document.body.appendChild(el);
+  return el;
+})() : null;
+const debugPanel = showDebug ? (() => {
+  const el = document.createElement('div');
+  el.id = 'debug-panel';
+  el.className = 'debug-panel';
   document.body.appendChild(el);
   return el;
 })() : null;
@@ -63,6 +72,17 @@ function frame(t) {
     const fps = (fpsSampleFrames * 1000) / (t - fpsLastSample);
     fpsEma = fpsEma * 0.65 + fps * 0.35;
     if (fpsBadge) fpsBadge.textContent = `${fpsEma.toFixed(0)} fps`;
+    if (debugPanel) {
+      const mp = mouthPool;
+      const count = mp ? mp.count : 0;
+      debugPanel.textContent = [
+        `${fpsEma.toFixed(0)} fps`,
+        `mode ${State.mode}`,
+        `mood ${State.mood}`,
+        `particles ${count}`,
+        `conf ${(State.confidence ?? 0).toFixed(2)}`
+      ].join(' · ');
+    }
     if (!State.reducedMotion && fpsEma < 18 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
       FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.04);
       resize();

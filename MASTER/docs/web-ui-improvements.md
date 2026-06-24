@@ -1,5 +1,7 @@
 # MASTER Web UI Improvement Proposals
 
+**Status (2026-06-24):** High-impact backlog items shipped in web face — history sidebar, command palette, session export (md/jsonl/png), stream retry, log filter, collapsible long replies, IndexedDB turns, debug panel (`?debug=1`), PWA shortcuts, SW update toast, print stylesheet, context-pressure dashboard panels. Remaining ideas below are aspirational unless re-opened in `TODO.md`.
+
 **Scope**: MASTER/web/ (face rendering, chat interface, dashboard, PWA, SSE/streaming, canvas interactions, CSS, controllers, public/*.js assets).
 
 **Basis**: Code analysis of current implementation (minimalist zen "terminal" aesthetic, face as central visual, chat-log + zsh prompt bar, heavy JS in public/ for particles/3D/dither/phosphor, Rails backend for chat/tts/photo/events, existing TODOs in Q4/Q5/L/O sections).

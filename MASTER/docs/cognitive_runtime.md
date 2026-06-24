@@ -60,7 +60,7 @@ workflow
 5. Add failure digest and provider health jobs to heartbeat.
 6. Add checkpoint/replay reconstruction for full workflows.
 7. Feed visual bridge from canonical runtime events.
-8. Add UI panels for event stream, provider health, context pressure, and repair queue.
+8. UI panels for event stream, provider health, context pressure, and repair queue — wired in `/dashboard` (2026-06-24) via `Trace::ContextPressure` + `dashboard/live` JSON.
 
 ## Deletion pressure
 

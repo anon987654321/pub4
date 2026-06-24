@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="dark">
   <meta name="master-runtime" content="face">
+  <meta name="master-tier" content="<%= @tier.to_s %>">
   <meta name="master-visual-profile" content="auto">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -42,6 +43,8 @@
   </style>
 </head>
 <body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark">
+  <a href="#zin" class="skip-link">skip to prompt</a>
+  <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
   <div class="top-left-logo" aria-hidden="true">brgen</div>
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
   <canvas id="face" aria-hidden="true"></canvas>
@@ -62,6 +65,7 @@
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
   <div class="face-controls" aria-label="Face controls">
     <button id="focus-btn" type="button" class="tool" aria-pressed="false" title="Toggle focus mode">◎</button>
+    <button id="describe-face-btn" type="button" class="tool" title="Describe face state">◎?</button>
     <label class="face-scale" for="font-scale" title="Adjust font size">
       <span aria-hidden="true">A</span>
       <input id="font-scale" type="range" min="0.85" max="1.4" step="0.05" value="1">
@@ -85,7 +89,7 @@
     <button type="button" class="tool" data-cmd="/repligen generate " aria-label="Video">video</button>
     <button type="button" class="tool" data-cmd="/sing " aria-label="Sing">sing</button>
     <button type="button" class="tool" data-act="mic" aria-label="Microphone">mic</button>
-    <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message">
+    <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message"></textarea>
     <span id="tts-rate" aria-label="TTS speed" title="Ctrl+[ / Ctrl+]"></span>
     <span id="char-count" aria-hidden="true"></span>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>

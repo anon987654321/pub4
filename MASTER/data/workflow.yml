@@ -487,7 +487,7 @@ known_issues:
   relayd_master_empty: "After rcctl restart master, relayd may mark master empty until /up health passes — tracked rc.d waits for local /up then restarts relayd; relayd.conf must use check http \"/up\" not \"/\" for master."
   resource_guard_shedding: "DEPLOY/openbsd/resource_guard.sh stops optional Rails apps when load/mem thresholds hit unless /var/db/pub4_all_apps exists — use start_all_apps.sh to pin."
   rails_phantom_fk: "references with foreign_key: true alone creates phantom buyers/listings/likers/orders tables on SQLite — always set to_table. Run ruby DEPLOY/rails/check_phantom_foreign_keys.rb."
-  todo_checkbox_drift: "MASTER/TODO.md and DEPLOY/TODO.md [x] items include stub-pass closures — verify with bin/probe deploy, health_check.rb, and app bin/ci before treating backlog as done."
+  todo_checkbox_drift: "Retired 2026-06-24 — verify ship readiness with bin/probe repo, health_check.rb, and per-app bin/ci instead of checkbox backlogs."
   tts_broken: "Master::Voice::Speech.synthesize_bytes shells to bin/tts-worker; if edge-tts is missing or tts-worker crashes, speech silently falls back to espeak. Verify bin/tts-worker exists and edge-tts is installed (pkg_add py3-edge-tts or pip)."
   particle_swarm: "cognition_ecology.js trail/weather/memory-node system suspected broken — visual_bridge.js dispatches master:visual CustomEvents but cognition_ecology.js event listener may not be registering. Check addEventListener target and event name match."
   gemfile_separation: "MASTER/Gemfile and MASTER/web/Gemfile are independent. Any gem used by lib/ code that is also called from web/ controllers must appear in both. Adding to one only causes LoadError in the other context."

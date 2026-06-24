@@ -507,7 +507,8 @@ body[data-mode="listening"] #mic-dot {
   scrollbar-width: none;
 }
 
-#chat-log::-webkit-scrollbar { display: none; }
+#chat-log::-webkit-scrollbar { width: 6px; height: 6px; }
+#chat-log::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--face-fg) 28%, transparent); border-radius: 3px; }
 
 #chat-log:not(:empty) { pointer-events: auto; }
 .message { position:relative; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; animation: msgIn 220ms cubic-bezier(0.32,0.72,0,1) both; }
@@ -612,8 +613,8 @@ body.zen #zsh.revealed { opacity: .96; pointer-events: auto; transform: none; }
 body #zsh.live { opacity: 1; pointer-events: auto; transform: none; }
 #zsh .pp { color: color-mix(in srgb, var(--c-danger) 82%, transparent); font-weight: 700; }
 #zsh .sep, #zsh .sep2 { color: var(--face-muted); margin-right: 0.4ch; }
-#zsh input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; }
-#zsh input::placeholder { color: color-mix(in srgb, var(--face-fg) 22%, transparent); }
+#zsh input, #zsh textarea { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; resize: none; line-height: 1.35; max-height: 120px; }
+#zsh input::placeholder, #zsh textarea::placeholder { color: color-mix(in srgb, var(--face-fg) 22%, transparent); }
 html[data-input-dense="1"] #zsh { border-top: 1.5px solid color-mix(in srgb, var(--face-fg) 28%, transparent); transition: border-top-width .2s var(--ease-out); }
 
 /* Closed-caption strip (FA141) */
@@ -833,7 +834,7 @@ body[data-tts-loading="true"] canvas { filter: none; }
 
 ::selection { background: color-mix(in srgb, var(--c-danger) 22%, transparent); color: inherit; }
 
-.tool { background:none; border:0; color:var(--face-muted); font:inherit; padding:0; margin-right:10px; cursor:pointer; letter-spacing:.02em; opacity:.6; transition:opacity .15s,color .15s; }
+.tool { background:none; border:0; color:var(--face-muted); font:inherit; padding:10px 8px; margin-right:6px; cursor:pointer; letter-spacing:.02em; opacity:.6; transition:opacity .15s,color .15s; min-width:44px; min-height:44px; }
 .tool:hover, .tool:focus { opacity:1; color:var(--face-fg); }
 .tool.active { color:var(--c-accent); opacity:1; }
 
@@ -1005,4 +1006,87 @@ body[data-phantom-glitch="1"] canvas {
 body[data-history-open="1"] #chat-log {
   margin-left: min(332px, calc(100vw - 24px));
   transition: margin-left 220ms var(--ease-out);
+}
+
+.skip-link {
+  position: fixed;
+  top: -40px;
+  left: 12px;
+  z-index: 2000;
+  padding: 6px 10px;
+  background: #000;
+  color: var(--face-fg);
+  border: 1px solid color-mix(in srgb, var(--face-fg) 20%, transparent);
+  font: 10px ui-monospace, monospace;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: calc(8px + var(--safe-top));
+}
+
+.debug-panel {
+  position: fixed;
+  left: calc(12px + var(--safe-left));
+  bottom: calc(56px + var(--safe-bottom));
+  z-index: var(--z-ui);
+  padding: 6px 8px;
+  background: color-mix(in srgb, #000 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--face-fg) 14%, transparent);
+  font: 9px/1.35 ui-monospace, monospace;
+  color: var(--face-muted);
+  pointer-events: none;
+}
+
+.stream-retry {
+  margin-left: 8px;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--face-fg) 24%, transparent);
+  color: var(--face-fg);
+  font: inherit;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.log-search {
+  width: 100%;
+  margin-bottom: 6px;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--face-fg) 12%, transparent);
+  color: var(--face-fg);
+  font: 11px ui-monospace, monospace;
+  padding: 6px 8px;
+}
+
+.msg-collapse summary {
+  cursor: pointer;
+  font: 10px ui-monospace, monospace;
+  color: var(--face-dim);
+  margin-bottom: 4px;
+}
+
+#chat-log {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--face-fg) 28%, transparent) transparent;
+}
+
+body.face-loading::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, #000 0 3px, #050505 3px 6px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 2;
+}
+
+body[data-runtime-profile="crt"] canvas {
+  filter: contrast(1.08) brightness(1.04);
+}
+
+@media print {
+  canvas, #cognition-ecology, #primer, #zsh, .face-controls, .ui-status, #chat-history-panel, .skip-link { display: none !important; }
+  body { background: #fff; color: #000; }
+  #chat-log { position: static; max-height: none; overflow: visible; opacity: 1; }
+  .message { break-inside: avoid; color: #000; }
 }

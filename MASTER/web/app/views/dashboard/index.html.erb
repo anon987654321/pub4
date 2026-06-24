@@ -24,6 +24,9 @@
     <div class="panel"><h2>active plan</h2><pre id="plan">loading…</pre></div>
     <div class="panel"><h2>rsi inbox</h2><pre id="rsi">loading…</pre></div>
     <div class="panel"><h2>skills</h2><pre id="skills">loading…</pre></div>
+    <div class="panel"><h2>context pressure</h2><pre id="pressure">loading…</pre></div>
+    <div class="panel"><h2>provider health</h2><pre id="providers">loading…</pre></div>
+    <div class="panel"><h2>repair queue</h2><pre id="repair">loading…</pre></div>
     <div class="panel"><h2>recent bus</h2><pre id="bus">loading…</pre></div>
   </div>
   <script>
@@ -47,6 +50,23 @@
       document.getElementById('plan').textContent = d.active_plan || '(none)';
       document.getElementById('rsi').textContent = (d.rsi_inbox || []).map(i => `${i.path}\n${i.excerpt}`).join('\n\n') || '(empty)';
       document.getElementById('skills').textContent = (d.skills || []).join('\n') || '(none)';
+      const p = d.context_pressure || {};
+      document.getElementById('pressure').textContent = [
+        `band: ${p.band || 'ok'}`,
+        `tokens: ${p.tokens || 0} / ${p.limit || 0}`,
+        `pct: ${p.pct || 0}%`,
+        `headroom: ${p.headroom || 0}`
+      ].join('\n');
+      const ph = d.provider_health || {};
+      document.getElementById('providers').textContent = [
+        `status: ${ph.status || 'unknown'}`,
+        `open breakers: ${(ph.open_breakers || []).join(', ') || 'none'}`,
+        `agent pool: ${ph.agent_pool || 0}`
+      ].join('\n');
+      document.getElementById('repair').textContent = (d.repair_queue || []).map((item) => {
+        const recent = (item.recent || []).join('\n  ');
+        return `${item.path} (${item.count || 0} bytes)\n  ${recent}`;
+      }).join('\n\n') || '(empty)';
       document.getElementById('bus').textContent = (d.bus_events || []).slice(-12).map(e => JSON.stringify(e)).join('\n') || '(quiet)';
     }
     refresh();

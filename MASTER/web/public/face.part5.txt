@@ -332,6 +332,9 @@ async function sendMessage(text) {
     showModelBadge(State.modelName || m);
     State.modelSwitch = 1.0;
     syncShareStateUrl();
+    const tier = document.querySelector('meta[name="master-tier"]')?.content || '';
+    const live = document.getElementById('mood-live');
+    if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
   });
   evtSrc.addEventListener('verdict', (ev) => {
     const v = (ev.data || '').trim();
@@ -410,6 +413,7 @@ async function sendMessage(text) {
     window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
     clearThinkingAloud();
     window._chatOnDmesg?.('link quiet');
+    window._chatOnError?.('stream interrupted');
     speakFailure("Sorry, I hit a snag.");
     try { evtSrc.close(); } catch (_) {}
   };
@@ -537,7 +541,18 @@ function startEverything() {
   document.addEventListener('pointerdown', () => { if (logo) logo.classList.remove('dim'); _schedLogoDim(); }, { passive: true });
   requestMotionPermission(); acquireWakeLock();
   setTimeout(() => { morphTarget = 1.0; }, 600);
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v1')).catch(() => {});
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v1')).catch(() => {});
+    navigator.serviceWorker.addEventListener('message', (ev) => {
+      if (ev.data?.type !== 'sw:updated') return;
+      if (uiStatus) uiStatus.textContent = 'new version — reload';
+      window._chatOnDmesg?.('sw updated');
+    });
+  }
+  window.addEventListener('beforeinstallprompt', (ev) => {
+    ev.preventDefault();
+    if (uiStatus) uiStatus.textContent = 'install available';
+  });
 }
 window.addEventListener('master:self_violation', () => flashViolation());
 let primerFired = false;
@@ -577,9 +592,43 @@ setInterval(() => {
 }, 8000);
 
 const _charCount = document.getElementById('char-count');
+const _cmdHistKey = 'master:cmd_hist';
+let _cmdHist = [];
+let _cmdHistIdx = -1;
+try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch (_) {}
+function _resizeZin() {
+  if (!zshIn || zshIn.tagName !== 'TEXTAREA') return;
+  zshIn.style.height = 'auto';
+  zshIn.style.height = Math.min(120, zshIn.scrollHeight) + 'px';
+}
 zshIn.addEventListener('input', () => {
   const len = zshIn.value.length;
   if (_charCount) { _charCount.textContent = len > 120 ? len : ''; _charCount.style.opacity = len > 120 ? '0.5' : '0'; }
+  if (len > 180) document.documentElement.dataset.inputDense = '1';
+  else delete document.documentElement.dataset.inputDense;
+  _resizeZin();
+});
+zshIn.addEventListener('paste', () => {
+  setTimeout(() => {
+    if ((zshIn.value || '').length > 180) document.documentElement.dataset.inputDense = '1';
+    _resizeZin();
+  }, 0);
+});
+zshIn.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); const s = zshIn.selectionStart; const v = zshIn.value; zshIn.value = v.slice(0, s) + '\n' + v.slice(zshIn.selectionEnd); zshIn.selectionStart = zshIn.selectionEnd = s + 1; _resizeZin(); return; }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); zshBar.requestSubmit(); return; }
+  if (e.key === 'ArrowUp' && !e.shiftKey && _cmdHist.length) {
+    e.preventDefault();
+    _cmdHistIdx = Math.max(0, (_cmdHistIdx < 0 ? _cmdHist.length : _cmdHistIdx) - 1);
+    zshIn.value = _cmdHist[_cmdHistIdx] || '';
+    _resizeZin();
+  }
+  if (e.key === 'ArrowDown' && !e.shiftKey && _cmdHist.length && _cmdHistIdx >= 0) {
+    e.preventDefault();
+    _cmdHistIdx = Math.min(_cmdHist.length, _cmdHistIdx + 1);
+    zshIn.value = _cmdHistIdx >= _cmdHist.length ? '' : (_cmdHist[_cmdHistIdx] || '');
+    _resizeZin();
+  }
 });
 
 let _swipeStartX = 0, _swipeStartY = 0;

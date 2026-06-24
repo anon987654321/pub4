@@ -134,7 +134,7 @@ async function sendMessage(text) {
     if (voice?.enqueue && ttsBuffer.trim()) voice.enqueue(ttsBuffer.trim());
     ttsBuffer = '';
     try { window._chatEvtSrc.close(); } catch (_) {}
-    window._chatOnError?.();
+    window._chatOnError?.('stream interrupted');
   };
 }
 

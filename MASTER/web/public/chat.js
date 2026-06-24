@@ -209,7 +209,7 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
 let _chunkCount = 0;
 window._chatOnChunk = (raw) => {
   if (!_streamEl) return;
-  if (_typingEl) { _typingEl.remove(); _typingEl = null; }
+  if (_typingEl && (document.body.dataset.instantStream === '1' || raw.length > 0)) { _typingEl.remove(); _typingEl = null; }
   _chunkCount++;
   if (raw.startsWith('ERROR:')) {
     _streamEl.closest('.message')?.classList.add('msg-error-flash');
@@ -236,6 +236,7 @@ window._chatOnDone  = () => {
   if (stageBar) stageBar.textContent = '';
   const finished = (_streamEl?.textContent || '').trim();
   if (finished) window._chatRememberReply?.(finished);
+  window._chatCollapseLongBlock?.(_streamEl);
   const lastAsst = log?.querySelector('.message.assistant:last-of-type');
   if (lastAsst && parseFloat(document.body.dataset.confidence || '1') > 0.75) {
     lastAsst.classList.add('msg-settled');
@@ -252,11 +253,14 @@ window._chatOnDone  = () => {
   if (streamLive) streamLive.textContent = '';
   updateSessionStats();
 };
-window._chatOnError = () => {
+window._chatOnError = (reason = '') => {
   _streamEl = null;
   if (_typingEl) { _typingEl.remove(); _typingEl = null; }
   document.querySelectorAll('.cursor').forEach(c => c.remove());
   if (streamLive) streamLive.textContent = '';
+  const errLive = document.getElementById('error-live');
+  if (errLive && reason) errLive.textContent = reason;
+  window._chatShowStreamRetry?.(reason);
   updateSessionStats();
 };
 
@@ -565,6 +569,8 @@ document.querySelectorAll('.tool').forEach(btn => {
     { cmd: '/rtk', hint: 'shell output filter stats' },
     { cmd: '/plan', hint: 'show pinned plan' },
     { cmd: '/rebuild', hint: 'hot-restart web face' },
+    { cmd: '/grep ', hint: 'search session history' },
+    { cmd: '/propose ', hint: 'suggest improvement' },
     { cmd: '/help', hint: 'list commands' },
     { cmd: '/status', hint: 'service and repo health' },
     { cmd: '/self', hint: 'scan MASTER itself' },
@@ -573,6 +579,10 @@ document.querySelectorAll('.tool').forEach(btn => {
     { action: 'dashboard', label: 'mission control', hint: 'open /dashboard' },
     { action: 'history', label: 'toggle history', hint: 'sidebar · Ctrl+Shift+H' },
     { action: 'export', label: 'export session', hint: 'markdown download · Ctrl+Shift+E' },
+    { action: 'export_jsonl', label: 'export jsonl', hint: 'machine-readable session' },
+    { action: 'export_png', label: 'export face png', hint: 'snapshot canvas' },
+    { action: 'log_search', label: 'filter chat log', hint: 'search visible messages' },
+    { action: 'instant', label: 'toggle instant stream', hint: 'skip typing indicator' },
     { action: 'focus', label: 'toggle focus mode', hint: 'hide chrome, face only' },
     { action: 'mute', label: 'toggle TTS mute', hint: 'keyboard: t' },
     { action: 'preview', label: 'preview voice', hint: 'play voice blurb' }
@@ -606,6 +616,10 @@ document.querySelectorAll('.tool').forEach(btn => {
     if (entry.action === 'dashboard') { window.location.href = '/dashboard'; return; }
     if (entry.action === 'history') { window.MASTERHistory?.toggle?.(); return; }
     if (entry.action === 'export') { window.MASTERExport?.download?.(); return; }
+    if (entry.action === 'export_jsonl') { window.MASTERExport?.jsonl?.(); return; }
+    if (entry.action === 'export_png') { window.MASTERExport?.png?.(); return; }
+    if (entry.action === 'log_search') { window.MASTERLogSearch?.open?.(); return; }
+    if (entry.action === 'instant') { window.MASTERStreamMode?.toggle?.(); return; }
     if (entry.action === 'focus') { window.MASTER_FACE?.toggleFocusMode?.(); return; }
     if (entry.action === 'mute') { window.MASTERVoice?.toggleMute?.(); return; }
     if (entry.action === 'preview') { window.MASTERVoice?.previewVoice?.(); return; }
@@ -876,5 +890,178 @@ document.querySelectorAll('.tool').forEach(btn => {
     }
   });
 
-  window.MASTERExport = { download, markdown: collectMarkdown };
+  function collectJsonl() {
+    const rows = [];
+    if (!log) return '';
+    log.querySelectorAll('.message').forEach((msgEl) => {
+      const role = msgEl.classList.contains('user') ? 'user' : 'assistant';
+      const body = msgEl.querySelector('.msg-body') || msgEl;
+      const text = (body.textContent || '').replace(/^(you\$|master\$)\s*/i, '').trim();
+      if (!text) return;
+      rows.push({ ts: msgEl.dataset.ts || '', role, content: text });
+    });
+    return rows.map((row) => JSON.stringify(row)).join('\n');
+  }
+
+  function jsonl() {
+    const blob = new Blob([collectJsonl()], { type: 'application/x-ndjson;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `master-session-${Date.now()}.jsonl`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function png() {
+    const canvas = document.getElementById('face');
+    if (!canvas || typeof canvas.toBlob !== 'function') return;
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `master-face-${Date.now()}.png`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  }
+
+  window.MASTERExport = { download, markdown: collectMarkdown, jsonl, png, collectJsonl };
+})();
+
+(function wireUiBacklog() {
+  const RETRY_ID = 'stream-retry';
+  const CMD_KEY = 'master:cmd_hist';
+  const IDB_NAME = 'master-session';
+  const IDB_STORE = 'turns';
+
+  function announceError(text) {
+    const el = document.getElementById('error-live');
+    if (el) el.textContent = text;
+    const status = document.getElementById('zsh-status') || document.getElementById('ui-status');
+    if (status) status.textContent = text;
+  }
+
+  window._chatShowStreamRetry = (reason = 'link quiet') => {
+    let chip = document.getElementById(RETRY_ID);
+    if (!chip) {
+      chip = document.createElement('button');
+      chip.id = RETRY_ID;
+      chip.type = 'button';
+      chip.className = 'stream-retry';
+      chip.textContent = 'retry';
+      chip.addEventListener('click', () => {
+        const last = window._lastUserMessageText || '';
+        if (last && window.sendMessage) window.sendMessage(last);
+        chip.remove();
+      });
+      document.getElementById('zsh')?.appendChild(chip);
+    }
+    announceError(reason.includes('rate') ? 'slow down — rate limit' : 'stream failed — retry?');
+    window.MASTERVisual?.event?.('chat:retry', { topology: 'serpent', entropy: 0.5, confidence: 0.4, mode: 'retry' });
+  };
+
+  window._chatCollapseLongBlock = (bodyEl) => {
+    if (!bodyEl) return;
+    const text = (bodyEl.textContent || '').trim();
+    if (text.length < 800 || bodyEl.closest('details')) return;
+    const details = document.createElement('details');
+    details.className = 'msg-collapse';
+    details.open = true;
+    const summary = document.createElement('summary');
+    summary.textContent = `response (${text.length} chars)`;
+    const inner = document.createElement('div');
+    inner.className = 'msg-body';
+    inner.innerHTML = bodyEl.innerHTML;
+    details.appendChild(summary);
+    details.appendChild(inner);
+    bodyEl.replaceWith(details);
+  };
+
+  window.MASTERStreamMode = {
+    toggle() {
+      const on = document.body.dataset.instantStream === '1';
+      if (on) delete document.body.dataset.instantStream;
+      else document.body.dataset.instantStream = '1';
+      const status = document.getElementById('ui-status');
+      if (status) status.textContent = on ? 'stream: paced' : 'stream: instant';
+    }
+  };
+
+  window.MASTERLogSearch = (() => {
+    let inputEl = null;
+    function open() {
+      if (!inputEl) {
+        inputEl = document.createElement('input');
+        inputEl.id = 'log-search';
+        inputEl.type = 'search';
+        inputEl.placeholder = 'filter visible log';
+        inputEl.className = 'log-search';
+        inputEl.setAttribute('aria-label', 'Filter chat log');
+        inputEl.addEventListener('input', () => {
+          const q = inputEl.value.trim().toLowerCase();
+          log?.querySelectorAll('.message').forEach((msg) => {
+            const text = (msg.textContent || '').toLowerCase();
+            msg.hidden = q.length > 0 && !text.includes(q);
+          });
+        });
+        document.getElementById('chat-shell')?.prepend(inputEl);
+      }
+      inputEl.focus();
+    }
+    return { open };
+  })();
+
+  function pushCmdHistory(text) {
+    const trimmed = String(text || '').trim();
+    if (!trimmed) return;
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(CMD_KEY) || '[]'); } catch (_) {}
+    if (hist[hist.length - 1] !== trimmed) hist.push(trimmed);
+    while (hist.length > 40) hist.shift();
+    localStorage.setItem(CMD_KEY, JSON.stringify(hist));
+  }
+
+  const origOnUser = window._chatOnUser;
+  window._chatOnUser = (text) => {
+    pushCmdHistory(text);
+    origOnUser?.(text);
+    persistTurn('user', text);
+  };
+
+  const origOnDone = window._chatOnDone;
+  window._chatOnDone = () => {
+    origOnDone?.();
+    const body = log?.querySelector('.message.assistant:last-of-type .msg-body, .message.assistant:last-of-type details .msg-body');
+    if (body) persistTurn('assistant', body.textContent || '');
+    document.getElementById(RETRY_ID)?.remove();
+  };
+
+  function persistTurn(role, content) {
+    if (!content || !window.indexedDB) return;
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE, { keyPath: 'id', autoIncrement: true });
+    };
+    req.onsuccess = () => {
+      const db = req.result;
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).add({ role, content, ts: Date.now() });
+    };
+  }
+
+  document.getElementById('describe-face-btn')?.addEventListener('click', () => {
+    const st = window.MASTER_FACE?.State || {};
+    const line = `mode ${st.mode || 'idle'}, mood ${st.mood || 'idle'}, confidence ${(st.confidence ?? 0.86).toFixed(2)}, entropy ${(st.entropy ?? 0.2).toFixed(2)}`;
+    navigator.clipboard?.writeText(line).catch(() => {});
+    const live = document.getElementById('mood-live');
+    if (live) live.textContent = line;
+    window.MASTERVisual?.event?.('face:describe', { topology: 'papua-mask', entropy: 0.12, confidence: st.confidence || 0.86, mode: 'describe' });
+  });
+
+  if (new URLSearchParams(location.search).get('focus') === '1') {
+    window.addEventListener('load', () => window.MASTER_FACE?.toggleFocusMode?.(), { once: true });
+  }
 })();

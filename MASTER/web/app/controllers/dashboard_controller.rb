@@ -23,19 +23,46 @@ class DashboardController < ApplicationController
     agent = c[:agent]
     logging = c[:logging]
     bus_events = logging.respond_to?(:dmesg) ? logging.dmesg(20).to_s.lines.map(&:chomp) : []
+    pressure = Master::Trace::ContextPressure.snapshot(session: session)
     {
       events: session.respond_to?(:messages) ? session.messages.last(10) : [],
       bus_events: bus_events,
       model: agent.model.to_s,
-      tokens: session.respond_to?(:token_est) ? session.token_est : 0,
+      tokens: pressure[:tokens],
       cost: session.respond_to?(:cost) ? session.cost : 0.0,
       open_breakers: c[:breaker].respond_to?(:open_models) ? c[:breaker].open_models : [],
       agent_pool: c[:agent_pool]&.active_count || 0,
       rtk: Master::Reach::OutputFilter.stats(root),
       rsi_inbox: rsi_inbox(root),
       active_plan: Master::Ground::ActivePlan.read(root),
-      skills: Array(c[:skills]&.loaded).map { |s| s[:name] }
+      skills: Array(c[:skills]&.loaded).map { |s| s[:name] },
+      context_pressure: pressure,
+      provider_health: provider_health(c),
+      repair_queue: repair_queue(root)
     }
+  end
+
+  def provider_health(c)
+    breaker = c[:breaker]
+    open = breaker.respond_to?(:open_models) ? Array(breaker.open_models) : []
+    {
+      open_breakers: open,
+      status: open.empty? ? "healthy" : "degraded",
+      agent_pool: c[:agent_pool]&.active_count || 0
+    }
+  end
+
+  def repair_queue(root)
+    paths = %w[runtime/failures.jsonl runtime/repair_queue.json runtime/telemetry/failures.jsonl]
+    paths.filter_map do |rel|
+      path = File.join(root, rel)
+      next unless File.file?(path)
+
+      lines = File.readlines(path).map(&:chomp).last(8)
+      { path: rel, count: File.size(path), recent: lines }
+    end
+  rescue StandardError
+    []
   end
 
   def rsi_inbox(root)
