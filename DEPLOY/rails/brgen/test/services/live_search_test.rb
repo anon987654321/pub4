@@ -12,8 +12,10 @@ class LiveSearchTest < ActiveSupport::TestCase
 
   test 'like fallback filters listings by title' do
     user = User.create!(email_address: "seller-#{SecureRandom.hex(4)}@example.com", password: 'secret123!')
+    category = Marketplace::Category.create!(name: 'Bikes', slug: "bikes-#{SecureRandom.hex(4)}")
     listing = Marketplace::Listing.create!(
       user: user,
+      category: category,
       title: 'Vintage Bicycle Oslo',
       description: 'Well maintained',
       price_cents: 12_000,

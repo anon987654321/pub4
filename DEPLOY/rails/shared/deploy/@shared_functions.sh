@@ -207,7 +207,7 @@ rails_runtime_gate() {
       || { log_err "db:prepare failed"; return 1; }
     if [[ -x ${app_dir}/bin/ci ]]; then
       run_rails_as_app "$app_name" "$app_dir" \
-        "SECRET_KEY_BASE=${secret} RAILS_ENV=test CI=1 bundle34 exec bin/ci" \
+        "SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=/home/dev/pub4/DEPLOY/rails RAILS_ENV=test CI=1 bundle34 exec bin/ci" \
         || { log_err "bin/ci failed"; return 1; }
     fi
   else

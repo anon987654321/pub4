@@ -45,7 +45,7 @@
   <script type="module" src="/minimal-gesture.js"></script>
 </head>
 <body class="zen-minimal" data-pwa-key="hjerterom" data-controller="pwa-standalone">
-<nav data-pwa-primary-nav aria-label="Primary navigation">
+<nav data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to "Hjerterom", root_path, class: "brand", aria: { current: current_page?(root_path) ? 'page' : nil } %>
   <%= link_to "Mat",        food_listings_path, aria: { current: current_page?(food_listings_path) ? 'page' : nil } %>
   <%= link_to "Ressurser",  resources_path, aria: { current: current_page?(resources_path) ? 'page' : nil } %>

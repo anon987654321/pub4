@@ -47,7 +47,7 @@
   <%= render "shared/minimal_ui" %>
 </head>
 <body class="zen-minimal" data-pwa-key="amber" data-controller="pwa-standalone">
-<nav data-pwa-primary-nav aria-label="Primary navigation">
+<nav data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to root_path, class: "brand", aria: { label: "Amber home" } do %>
     <%= render "shared/logo" %>
   <% end %>

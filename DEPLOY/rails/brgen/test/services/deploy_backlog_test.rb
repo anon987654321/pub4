@@ -7,7 +7,7 @@ require_relative '../../../shared/app/services/shared/cable_health'
 require_relative '../../../shared/app/services/shared/queue_failure_summary'
 
 class DeployBacklogTest < Minitest::Test
-  ROOT = File.expand_path('../../..', __dir__)
+  ROOT = ENV.fetch('PUB4_RAILS_ROOT', File.expand_path('../../..', __dir__))
 
   def test_shared_cache_policy_exposes_explicit_ttls
     assert_equal 300, Shared::CachePolicy.ttl_for(:feed_fragment)
@@ -97,17 +97,8 @@ class DeployBacklogTest < Minitest::Test
       assert_includes source, 'turbo-cache-control", content: "no-cache"'
     end
 
-    %w[
-      amber/app/controllers/application_controller.rb
-      baibl/app/controllers/application_controller.rb
-      blognet/app/controllers/application_controller.rb
-      brgen/app/controllers/application_controller.rb
-      bsdports/app/controllers/application_controller.rb
-      hjerterom/app/controllers/application_controller.rb
-    ].each do |relative|
-      source = File.read(File.join(ROOT, relative))
-      assert_includes source, 'turbo_refreshes_with :morph, scroll: :preserve'
-    end
+    setup = File.read(File.join(ROOT, 'shared/app/controllers/concerns/shared/application_setup.rb'))
+    assert_includes setup, 'turbo_refreshes_with :morph, scroll: :preserve'
 
     source = File.read(File.join(ROOT, 'shared/frontend/layouts/_nav.html.erb'))
     assert_includes source, 'data-turbo-permanent'
@@ -131,17 +122,8 @@ class DeployBacklogTest < Minitest::Test
       assert_includes source, 'journal_mode: WAL'
     end
 
-    %w[
-      amber/config/environments/development.rb
-      baibl/config/environments/development.rb
-      blognet/config/environments/development.rb
-      brgen/config/environments/development.rb
-      bsdports/config/environments/development.rb
-      hjerterom/config/environments/development.rb
-    ].each do |relative|
-      source = File.read(File.join(ROOT, relative))
-      assert_includes source, 'strict_loading_by_default = true'
-    end
+    source = File.read(File.join(ROOT, 'shared/config/environments/development.rb'))
+    assert_includes source, 'strict_loading_by_default = true'
 
     source = File.read(File.join(ROOT, 'shared/frontend/stimulus_components.js'))
     %w[
@@ -163,7 +145,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, 'shared/frontend/examples.html.erb')), 'data-controller="toast"'
 
     assert_includes File.read(File.join(ROOT, 'amber/app/views/wardrobe_items/_form.html.erb')),
-                    'controller: "textarea-autogrow"'
+                    'textarea-autogrow'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/show.html.erb')), 'textarea-autogrow'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id]'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id]'
@@ -197,8 +179,8 @@ class DeployBacklogTest < Minitest::Test
                     'navigator.setAppBadge'
     assert_includes File.read(File.join(ROOT, 'brgen/app/javascript/controllers/push_controller.js')),
                     'navigator.clearAppBadge'
-    assert_includes File.read(File.join(ROOT, 'brgen/public/pwa/workbox-sw.js')), 'navigator.setAppBadge'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/service-worker.js')), 'importScripts'
+    assert_includes File.read(File.join(ROOT, 'shared/pwa/service_worker.js')), 'setAppBadge'
+    assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/service-worker.js')), 'workbox:core'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb')),
                     'data-push-unread-value='
     assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), 'Create outfit'

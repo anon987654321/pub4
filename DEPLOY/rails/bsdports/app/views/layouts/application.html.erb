@@ -44,7 +44,7 @@
   <script type="module" src="/minimal-gesture.js"></script>
 </head>
 <body class="zen-minimal" data-pwa-key="bsdports" data-controller="pwa-standalone">
-<nav data-pwa-primary-nav aria-label="Primary navigation">
+<nav data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to "BSDports", root_path, class: "brand", aria: { current: current_page?(root_path) ? 'page' : nil } %>
   <%= link_to "Ports", ports_path, aria: { current: current_page?(ports_path) ? 'page' : nil } %>
   <%= link_to "Categories", categories_path, aria: { current: current_page?(categories_path) ? 'page' : nil } %>
