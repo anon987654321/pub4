@@ -28,4 +28,4 @@ This file was repeatedly clobbered with a circuit-breaker error string
 (`969bca18f`, `66235075e`, `5ea120668`). Some sweep/fetch step writes a caught
 exception message to disk instead of discarding it on failure. Restored here
 from the last known-good content (commit `8d11c6789`); root cause in the
-sweep/fetch path is still open — see `MASTER/TODO.md` section CG.
+sweep/fetch path is still open — track via `MASTER/data/operator_playbook.yml` and executable gates, not checkbox backlogs.

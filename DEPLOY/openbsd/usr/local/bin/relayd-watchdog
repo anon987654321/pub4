@@ -1,10 +1,79 @@
-#!/bin/sh
-# relayd-watchdog — restart relayd if rcctl check fails (CY11).
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# relayd-watchdog — restart relayd when unhealthy or backends are stale (CY11).
 # Cron: */5 * * * * /usr/local/bin/relayd-watchdog
 
-if /usr/sbin/rcctl check relayd 2>&1 | grep -q 'relayd(ok)'; then
-  exit 0
-fi
+require "open3"
 
-logger -t relayd-watchdog "relayd unhealthy — restarting"
-/usr/sbin/rcctl restart relayd 2>&1 | logger -t relayd-watchdog
+BACKENDS = {
+  "brgen" => 38182,
+  "amber" => 61352,
+  "master" => 53187,
+  "bsdports" => 47312,
+  "baibl" => 10007,
+  "blognet" => 10002,
+  "hjerterom" => 38891
+}.freeze
+
+def run(*cmd)
+  out, status = Open3.capture2e(*cmd)
+  [status.success?, out.strip]
+end
+
+def log(message)
+  system("logger", "-t", "relayd-watchdog", message)
+  warn message
+end
+
+def relayd_running?
+  ok, out = run("/usr/sbin/rcctl", "check", "relayd")
+  ok && out.include?("(ok)")
+end
+
+def restart_relayd(reason)
+  log("#{reason} — restarting relayd")
+  run("/usr/sbin/rcctl", "restart", "relayd")
+end
+
+def backend_live?(port)
+  ok, = run("/usr/local/bin/curl", "-fsS", "--max-time", "5", "http://127.0.0.1:#{port}/up")
+  ok
+end
+
+def stale_backends
+  ok, out = run("/usr/sbin/relayctl", "show", "hosts")
+  return [] unless ok
+
+  stale = []
+  current = nil
+  out.each_line do |line|
+    if (match = line.match(/table\s+(\w+):(\d+)\s+(active|empty)/))
+      name, port, state = match.captures
+      current = { name: name, port: port.to_i, state: state }
+      next
+    end
+    next unless current
+    if line.include?("down") || current[:state] == "empty"
+      stale << current if backend_live?(current[:port])
+    end
+    current = nil if line.include?("total:")
+  end
+  stale.uniq { |entry| entry[:name] }
+end
+
+unless relayd_running?
+  restart_relayd("relayd check failed")
+  exit 0
+end
+
+stale = stale_backends
+if stale.any?
+  names = stale.map { |entry| entry[:name] }.join(", ")
+  restart_relayd("stale relayd tables (#{names}) with live /up backends")
+  sleep 3
+  _, hosts = run("/usr/sbin/relayctl", "show", "hosts")
+  log(hosts) unless hosts.empty?
+end
+
+exit 0

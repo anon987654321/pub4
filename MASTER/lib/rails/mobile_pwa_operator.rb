@@ -70,7 +70,7 @@ module Master
           shared = File.join(DEPLOY_RAILS, "shared", "pwa", "service_worker.js")
           if File.file?(shared)
             target = File.join(path, sw_path)
-            content = File.read(shared).gsub("__APP_NAME__", app_name.to_s).gsub("__CACHE_VERSION__", "v1")
+            content = File.read(shared).gsub("__APP_NAME__", app_name.to_s).gsub("__CACHE_VERSION__", "v2")
             File.write(target, content)
             changes << "service worker"
           end

@@ -1,5 +1,5 @@
 const CACHE_VERSION_MATCH = self.location.search.match(/[?&]v=([^&]+)/);
-const CACHE_VERSION = CACHE_VERSION_MATCH ? CACHE_VERSION_MATCH[1] : 'v1';
+const CACHE_VERSION = CACHE_VERSION_MATCH ? CACHE_VERSION_MATCH[1] : 'v2';
 const CACHE_NAME = `brgen-${CACHE_VERSION}-assets`;
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [

@@ -542,7 +542,7 @@ function startEverything() {
   requestMotionPermission(); acquireWakeLock();
   setTimeout(() => { morphTarget = 1.0; }, 600);
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v1')).catch(() => {});
+    navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v2')).catch(() => {});
     navigator.serviceWorker.addEventListener('message', (ev) => {
       if (ev.data?.type !== 'sw:updated') return;
       if (uiStatus) uiStatus.textContent = 'new version — reload';

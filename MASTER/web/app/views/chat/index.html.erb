@@ -96,7 +96,7 @@
     <button id="spin-btn" type="button" aria-label="Cancel"></button>
   </form>
   <script nonce="<%= content_security_policy_nonce %>">
-    window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v1").to_json.html_safe %>;
+    window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
       var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false,timer=null,fallback=null;
       function boot(){if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){window.MASTER_FACE.startEverything();return true;}return false;}

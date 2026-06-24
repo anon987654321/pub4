@@ -3,7 +3,7 @@
 # Each lesson: signal → action → proof. Prefer executable proof over TODO checkboxes.
 
 version: 1
-updated: "2026-06-23"
+updated: "2026-06-24"
 
 lessons:
   - id: relayd_master_health_up
@@ -18,11 +18,17 @@ lessons:
     action: "Use tracked DEPLOY/openbsd/etc/rc.d/master (wait-for-/up + relayd restart). Post-reboot run doas rcctl restart master once."
     proof: "rc.d/master contains wait loop on PORT/up and rcctl restart relayd"
 
+  - id: relayd_stale_backend_tables
+    area: openbsd
+    signal: "relayctl show hosts marks backend empty/down while curl http://127.0.0.1:PORT/up returns 200; HTTPS empty reply"
+    action: "doas rcctl restart relayd after mass app restarts. Cron runs /usr/local/bin/relayd-watchdog every 5 min to auto-heal stale tables."
+    proof: "relayctl show hosts → all tables active; ruby34 DEPLOY/openbsd/health_check.rb"
+
   - id: resource_guard_shedding
     area: openbsd
     signal: "Rails apps stopped after cron; only master/brgen remain"
     action: "Create /var/db/pub4_all_apps or run DEPLOY/openbsd/start_all_apps.sh to pin all services against resource_guard.sh shedding."
-    proof: "test -f /var/db/pub4_all_apps; doas rcctl check brgen_rails amber_rails"
+    proof: "test -f /var/db/pub4_all_apps; doas rcctl check brgen amber blognet bsdports baibl hjerterom"
 
   - id: rails_phantom_foreign_keys
     area: rails
