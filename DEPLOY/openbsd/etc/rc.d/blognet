@@ -7,7 +7,7 @@ APP_DIR=/home/blognet/app
 daemon="/usr/local/bin/bundle34"
 daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/blognet falcon serve --bind http://127.0.0.1:${PORT}"
 daemon_user="blognet"
-daemon_execdir="${APP_DIR}"
+daemon_execdir="/home/blognet/app"
 daemon_logger="daemon.notice"
 daemon_timeout="120"
 . /etc/rc.d/rc.subr
