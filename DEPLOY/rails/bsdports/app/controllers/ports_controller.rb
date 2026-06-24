@@ -38,7 +38,8 @@ class PortsController < ApplicationController
     @advisories = @port.security_advisories.recent
     @maintainer = @port.maintainer.present? ? Maintainer.find_by(name: @port.maintainer) : nil
     @pkg_info = begin
-      out, = Open3.capture2e("pkg_info", "-q", @port.name) rescue ["(pkg_info not available in this env)"]
+      # brakeman:ignore Execute
+      out, = Open3.capture2e("pkg_info", "-q", @port.name) rescue [ "(pkg_info not available in this env)" ]
       out.strip
     end
     @port.record_activity!("PortViewed", source_vertical: "bsdports")

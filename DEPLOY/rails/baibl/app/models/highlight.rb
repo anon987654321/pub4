@@ -9,5 +9,5 @@ class Highlight < ApplicationRecord
   validates :color, inclusion: { in: COLORS }
   validates :verse_id, uniqueness: { scope: :user_id }
 
-  after_create_commit -> { broadcast_replace_to [user, "highlights"] }
+  after_create_commit -> { broadcast_replace_to [ user, "highlights" ] }
 end

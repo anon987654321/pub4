@@ -15,7 +15,7 @@ class Beneficiary < ApplicationRecord
 
   def household_label
     people = household_size.to_i.positive? ? "#{household_size} people" : "household size unknown"
-    [name, people, area.presence].compact.join(" · ")
+    [ name, people, area.presence ].compact.join(" · ")
   end
 
   def dietary_restriction_list

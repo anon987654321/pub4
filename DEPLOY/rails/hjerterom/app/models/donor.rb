@@ -9,6 +9,6 @@ class Donor < ApplicationRecord
   scope :active, -> { where(active: true) }
 
   def contact_label
-    [name, email.presence, phone.presence].compact.join(" · ")
+    [ name, email.presence, phone.presence ].compact.join(" · ")
   end
 end

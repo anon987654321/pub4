@@ -4,7 +4,7 @@ class BookmarksController < ApplicationController
   before_action :require_authentication
 
   def index
-    @pagy, @bookmarks = pagy(Current.user.bookmarks.includes(verse: [:book, :chapter]))
+    @pagy, @bookmarks = pagy(Current.user.bookmarks.includes(verse: [ :book, :chapter ]))
   end
 
   def create

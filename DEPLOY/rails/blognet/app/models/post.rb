@@ -24,7 +24,7 @@ class Post < ApplicationRecord
   scope :drafts,    -> { where(published: false) }
   scope :recent,    -> { order(created_at: :desc) }
   scope :search, ->(q) {
-    ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?", q]))
+    ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?", q ]))
     ids.any? ? where(id: ids) : none
   }
 
@@ -32,7 +32,7 @@ class Post < ApplicationRecord
 
   def reading_time
     words = body.to_plain_text.split.size
-    [(words / 200.0).ceil, 1].max
+    [ (words / 200.0).ceil, 1 ].max
   end
 
   private

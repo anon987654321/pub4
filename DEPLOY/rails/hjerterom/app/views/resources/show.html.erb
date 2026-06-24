@@ -7,7 +7,9 @@
     <% if @resource.address.present? %><dt>Address</dt><dd><%= @resource.address %>, <%= @resource.city %></dd><% end %>
     <% if @resource.phone.present? %><dt>Phone</dt><dd><%= @resource.phone %></dd><% end %>
     <% if @resource.email.present? %><dt>Email</dt><dd><%= mail_to @resource.email %></dd><% end %>
-    <% if @resource.url.present? %><dt>Website</dt><dd><%= link_to @resource.url, @resource.url %></dd><% end %>
+    <% if (href = @resource.url.to_s.strip).match?(/\Ahttps?:\/\//) %>
+      <dt>Website</dt><dd><%= link_to href, href, rel: "noopener noreferrer" %></dd>
+    <% end %>
     <% if @resource.opening_hours.present? %><dt>Hours</dt><dd><%= @resource.opening_hours %></dd><% end %>
   </dl>
   <% if @resource.user == Current.user %>

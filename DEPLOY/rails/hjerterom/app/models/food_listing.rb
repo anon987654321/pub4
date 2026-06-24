@@ -20,7 +20,7 @@ class FoodListing < ApplicationRecord
   scope :available, -> { where(status: "available").where("available_until > ?", Time.current) }
   include Shared::GeoLocatable
   scope :search, ->(q) {
-    ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM food_listings_fts WHERE food_listings_fts MATCH ?", q]))
+    ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM food_listings_fts WHERE food_listings_fts MATCH ?", q ]))
     ids.any? ? where(id: ids) : none
   }
 

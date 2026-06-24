@@ -19,7 +19,7 @@ class Comment < ApplicationRecord
   private
 
   def broadcast_comment
-    broadcast_append_to [post, "comments"], partial: "comments/comment", locals: { comment: self }
+    broadcast_append_to [ post, "comments" ], partial: "comments/comment", locals: { comment: self }
     post.increment!(:comments_count)
   end
 end

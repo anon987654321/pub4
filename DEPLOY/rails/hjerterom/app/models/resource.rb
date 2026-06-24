@@ -16,7 +16,7 @@ class Resource < ApplicationRecord
   include Shared::GeoLocatable
   scope :by_type, ->(t) { where(resource_type: t) }
   scope :search, ->(q) {
-    ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM resources_fts WHERE resources_fts MATCH ?", q]))
+    ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM resources_fts WHERE resources_fts MATCH ?", q ]))
     ids.any? ? where(id: ids) : none
   }
 end

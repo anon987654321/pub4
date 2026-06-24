@@ -6,5 +6,5 @@ class Bookmark < ApplicationRecord
 
   validates :verse_id, uniqueness: { scope: :user_id }
 
-  after_create_commit -> { broadcast_append_to [user, "bookmarks"] }
+  after_create_commit -> { broadcast_append_to [ user, "bookmarks" ] }
 end

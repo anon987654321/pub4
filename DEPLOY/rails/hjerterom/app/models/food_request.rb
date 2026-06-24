@@ -14,7 +14,7 @@ class FoodRequest < ApplicationRecord
 
   attribute :status, :string, default: "pending"
 
-  after_create_commit -> { broadcast_prepend_to [food_listing, "requests"] }
+  after_create_commit -> { broadcast_prepend_to [ food_listing, "requests" ] }
 
   scope :pending,  -> { where(status: "pending") }
   scope :accepted, -> { where(status: "accepted") }

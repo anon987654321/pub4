@@ -7,7 +7,7 @@ class PostsController < ApplicationController
   before_action :set_blog, except: %i[share]
   before_action :set_post, only: %i[show edit update destroy]
   before_action :authorize!, only: %i[edit update destroy]
-  skip_before_action :verify_authenticity_token, only: [:share]
+  skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
     scope = @blog.posts.published.includes(:user, :tags)
@@ -31,7 +31,7 @@ class PostsController < ApplicationController
     @post = @blog.posts.build(post_params.merge(user: Current.user))
     if @post.save
       @post.record_activity!("BlogPostCreated", source_vertical: "blognet")
-      redirect_to([@blog, @post], notice: "Post created")
+      redirect_to([ @blog, @post ], notice: "Post created")
     else
       render(:new, status: :unprocessable_entity)
     end
@@ -42,7 +42,7 @@ class PostsController < ApplicationController
   def update
     if @post.update(post_params)
       @post.record_activity!("BlogPostUpdated", source_vertical: "blognet")
-      redirect_to([@blog, @post], notice: "Updated")
+      redirect_to([ @blog, @post ], notice: "Updated")
     else
       render(:edit, status: :unprocessable_entity)
     end
@@ -88,6 +88,6 @@ class PostsController < ApplicationController
   end
 
   def share_body
-    [params[:text].presence, params[:url].presence].compact.join("\n\n")
+    [ params[:text].presence, params[:url].presence ].compact.join("\n\n")
   end
 end

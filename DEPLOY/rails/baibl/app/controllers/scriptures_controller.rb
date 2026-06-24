@@ -60,8 +60,8 @@ class ScripturesController < ApplicationController
     end
 
     # Curated cross-tradition links for visualization (thematic/parallel)
-    @cross_links = CrossReference.includes(verse: [:book, :chapter], target_verse: [:book, :chapter])
-                                 .where(kind: ["thematic", "parallel"]).limit(12)
+    @cross_links = CrossReference.includes(verse: [ :book, :chapter ], target_verse: [ :book, :chapter ])
+                                 .where(kind: [ "thematic", "parallel" ]).limit(12)
 
     if turbo_frame_request?
       render partial: "scriptures/compare_results", locals: { results: @results, cross_links: @cross_links, theme: @theme }

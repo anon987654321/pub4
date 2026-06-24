@@ -10,7 +10,7 @@ class Comment < ApplicationRecord
 
   scope :roots, -> { where(parent_id: nil).order(created_at: :asc) }
 
-  after_create_commit -> { broadcast_append_to [post, "comments"] }
+  after_create_commit -> { broadcast_append_to [ post, "comments" ] }
 
   def display_author
     anonymous? ? "Anonym" : user.email_address.split("@").first

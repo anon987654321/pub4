@@ -31,7 +31,7 @@ class HomeController < ApplicationController
       {
         type: "food",
         title: listing.title,
-        subtitle: [listing.city, listing.available_until&.strftime("%b %-d")].compact.join(" · "),
+        subtitle: [ listing.city, listing.available_until&.strftime("%b %-d") ].compact.join(" · "),
         url: food_listing_path(listing),
         lat: lat,
         lng: lng
@@ -46,7 +46,7 @@ class HomeController < ApplicationController
       {
         type: "resource",
         title: resource.title,
-        subtitle: [resource.resource_type&.humanize, resource.city].compact.join(" · "),
+        subtitle: [ resource.resource_type&.humanize, resource.city ].compact.join(" · "),
         url: resource_path(resource),
         lat: lat,
         lng: lng

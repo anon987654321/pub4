@@ -7,10 +7,10 @@ xml.rss version: "2.0" do
     xml.language "en-us"
     @ports.each do |port|
       xml.item do
-        xml.title [port.name, port.version].join("-")
+        xml.title [ port.name, port.version ].join("-")
         xml.link port_url(port)
         xml.description do
-          xml.cdata! [port.comment, port.description].compact.join("\n\n")[0, 500]
+          xml.cdata! [ port.comment, port.description ].compact.join("\n\n")[0, 500]
         end
         if port.last_updated
           xml.pubDate port.last_updated.to_time.rfc2822

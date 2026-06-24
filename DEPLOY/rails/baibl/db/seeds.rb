@@ -54,13 +54,16 @@ seed_verse!(gita_ch2, number: 48, content: "Perform your duty equipoised, O Arju
 gita_ch18 = seed_chapter!(gita, number: 18)
 seed_verse!(gita_ch18, number: 66, content: "Abandon all varieties of dharma and just surrender unto Me. I shall deliver you from all sinful reactions. Do not fear.")
 
-[
-  [Verse.find_by(content: /In the beginning God created/), Verse.find_by(content: /In the name of Allah/), "thematic"],
-  [Verse.find_by(content: /In the beginning God created/), Verse.find_by(content: /You have a right to perform/), "thematic"],
-  [Verse.find_by(content: /For God so loved the world/), Verse.find_by(content: /All praise is for Allah/), "thematic"],
-  [Verse.find_by(content: /For God so loved the world/), Verse.find_by(content: /Abandon all varieties of dharma/), "parallel"],
-  [Verse.find_by(content: /You have a right to perform/), Verse.find_by(content: /Let there be no compulsion/), "thematic"]
-].each do |source, target, kind|
+cross_refs = [
+  ["In the beginning God created", "In the name of Allah", "thematic"],
+  ["In the beginning God created", "You have a right to perform", "thematic"],
+  ["For God so loved the world", "All praise is for Allah", "thematic"],
+  ["For God so loved the world", "Abandon all varieties of dharma", "parallel"],
+  ["You have a right to perform", "Let there be no compulsion", "thematic"]
+]
+cross_refs.each do |source_snip, target_snip, kind|
+  source = Verse.where("content LIKE ?", "%#{source_snip}%").first
+  target = Verse.where("content LIKE ?", "%#{target_snip}%").first
   next unless source && target
   CrossReference.find_or_create_by!(verse: source, target_verse: target, kind: kind)
 end

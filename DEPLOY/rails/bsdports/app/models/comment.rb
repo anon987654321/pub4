@@ -13,5 +13,5 @@ class Comment < ApplicationRecord
 
   scope :roots, -> { where(parent_id: nil).order(created_at: :asc) }
 
-  after_create_commit -> { broadcast_append_to [port, "comments"] }
+  after_create_commit -> { broadcast_append_to [ port, "comments" ] }
 end

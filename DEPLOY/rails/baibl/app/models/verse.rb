@@ -18,7 +18,7 @@ class Verse < ApplicationRecord
 
   scope :in_chapter, ->(chapter) { where(chapter: chapter).order(:number) }
   scope :full_text_search, ->(q) {
-    ids = connection.select_values(sanitize_sql_array(["SELECT rowid FROM verses_fts WHERE verses_fts MATCH ?", q]))
+    ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM verses_fts WHERE verses_fts MATCH ?", q ]))
     ids.any? ? where(id: ids) : none
   }
   scope :search, ->(q) { full_text_search(q) }

@@ -16,7 +16,7 @@ class Dependency < ApplicationRecord
   scope :buildtime, -> { where(dep_type: "build") }
 
   def label
-    [dep_type.presence || "run", depends_on&.name].compact.join(": ")
+    [ dep_type.presence || "run", depends_on&.name ].compact.join(": ")
   end
 
   # For dep tree viz (AN802)

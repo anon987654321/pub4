@@ -5,7 +5,7 @@ require File.expand_path("../../../shared/config/environments/production_baselin
 
 Rails.application.configure do
   apply_production_baseline(config,
-    hosts: ["bsdports.org", "www.bsdports.org"],
+    hosts: [ "bsdports.org", "www.bsdports.org" ],
     mailer_host: "bsdports.org",
     vapid_note: "AN106: VAPID keys in /etc/master.env when enabling push")
 end

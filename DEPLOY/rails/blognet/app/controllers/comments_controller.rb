@@ -10,7 +10,7 @@ class CommentsController < ApplicationController
       @comment.record_activity!("BlogCommentCreated", source_vertical: "blognet")
       respond_to do |format|
         format.turbo_stream
-        format.html { redirect_to [@post.blog, @post] }
+        format.html { redirect_to [ @post.blog, @post ] }
       end
     else
       render :new, status: :unprocessable_entity
@@ -23,7 +23,7 @@ class CommentsController < ApplicationController
     @comment.record_activity!("BlogCommentRemoved", source_vertical: "blognet")
     respond_to do |format|
       format.turbo_stream
-      format.html { redirect_to [@post.blog, @post] }
+      format.html { redirect_to [ @post.blog, @post ] }
     end
   end
 
