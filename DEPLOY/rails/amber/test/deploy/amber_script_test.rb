@@ -24,7 +24,7 @@ class AmberScriptTest < ActiveSupport::TestCase
     content = SCRIPT.read
 
     assert_includes content, "bundle config set --local deployment true"
-    assert_includes content, "bundle config set --local without 'development test'"
+    assert_match(/bundle config set --local without ["']development test["']/, content)
     refute_includes content, "bundle install --deployment --without"
   end
 end
