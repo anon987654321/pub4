@@ -207,8 +207,13 @@ rails_runtime_gate() {
       "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:prepare" \
       || { log_err "db:prepare failed"; return 1; }
     if [[ -x ${app_dir}/bin/ci ]]; then
-      local rails_src=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails
-      [[ -d $rails_src ]] && doas chmod -R a+rX "$rails_src" 2>/dev/null || true
+      local rails_tree=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails
+      local rails_src=/tmp/pub4_rails_ci_src
+      if [[ -d $rails_tree ]]; then
+        rm -rf "$rails_src"
+        cp -R "$rails_tree" "$rails_src"
+        chmod -R a+rX "$rails_src"
+      fi
       run_rails_as_app "$app_name" "$app_dir" \
         "SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_src} RAILS_ENV=test CI=1 bundle34 exec bin/ci" \
         || { log_err "bin/ci failed"; return 1; }
