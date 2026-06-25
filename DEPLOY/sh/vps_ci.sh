@@ -27,8 +27,14 @@ sync_from_repo() {
   local shared_src=$repo/DEPLOY/rails/shared
   if [[ -d $src ]]; then
     local -a paths=(test app lib config bin db/seeds.rb db/migrate)
-    paths+=(${src}/*.sh(N:t))
-    doas tar cf - -C "$src" "${paths[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
+    local -a existing=()
+    local rel
+    for rel in "${paths[@]}"; do
+      [[ -e $src/$rel ]] && existing+=($rel)
+    done
+    for rel in ${src}/*.sh(N:t); do existing+=($rel); done
+    [[ ${#existing[@]} -eq 0 ]] && return 0
+    doas tar cf - -C "$src" "${existing[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
     doas chown -R "${app}:${app}" "${app_dir}/test" "${app_dir}/app" "${app_dir}/lib" \
       "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}"/*.sh(N) 2>/dev/null || true
   fi
