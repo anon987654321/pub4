@@ -36,6 +36,19 @@ task :constitution do
   end
 end
 
+namespace :test do
+  desc "Rails web integration tests (MASTER/web)"
+  task :web do
+    sh "cd web && bundle exec rails test"
+  end
+
+  desc "Subprocess CLI boot tests (MASTER_CLI_E2E=1)"
+  task :cli_e2e do
+    ENV["MASTER_CLI_E2E"] = "1"
+    ruby "-Itest", "test/test_cli_boot_e2e.rb"
+  end
+end
+
 task default: :test
 
 namespace :test do

@@ -30,7 +30,8 @@ require "net/http"
 require "socket"
 
 CHROME_PATH = %w[/usr/local/bin/chrome /usr/local/bin/chromium].find { |p| File.executable?(p) }
-WEB_URL     = (ENV["WEB_URL"] || "http://localhost:10002").freeze
+WEB_PORT    = Integer(ENV.fetch("MASTER_WEB_PORT", "53187"))
+WEB_URL     = (ENV["WEB_URL"] || "http://localhost:#{WEB_PORT}").freeze
 
 FREE_MEM_MB = begin
   # Use free + inactive pages — inactive pages are reclaimable by new processes.
@@ -44,8 +45,8 @@ end
 
 SKIP_REASON = if CHROME_PATH.nil?
   "Chromium not found"
-elsif begin; TCPSocket.new("127.0.0.1", 10_002).close; false; rescue StandardError; true; end
-  "Web server not running on port 10002"
+elsif begin; TCPSocket.new("127.0.0.1", WEB_PORT).close; false; rescue StandardError; true; end
+  "Web server not running on port #{WEB_PORT}"
 elsif FREE_MEM_MB < 300
   "Insufficient free memory (#{FREE_MEM_MB}MB < 300MB required for Chrome)"
 end
