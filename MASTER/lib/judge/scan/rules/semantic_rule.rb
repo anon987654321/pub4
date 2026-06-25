@@ -75,7 +75,7 @@ module Master
 
           def load_semantic_rules
             data = Master.load_rules
-            flatten_rules(data["rules"])
+            Master.flatten_rules(data["rules"])
               .select { |r| r["detect_semantic"] }
               .reject { |r| r["severity"] == "info" && r["mode"] != "opportunity" && r["tier"] != "kernel" }
               .each_with_object({}) do |r, h|
@@ -137,25 +137,18 @@ module Master
 
               axiom = @rules[match[1]]
               Finding.build(
-	                rule: match[1],
+                rule: match[1],
                 message: match[3].strip,
                 line: match[2].to_i,
                 severity: axiom[:severity],
                 fix: nil,
-	                tags: [match[1].to_sym, axiom[:mode]],
-	                reversibility: axiom[:reversibility],
-	                blast_radius: axiom[:blast_radius]
+                tags: [match[1].to_sym, axiom[:mode]],
+                reversibility: axiom[:reversibility],
+                blast_radius: axiom[:blast_radius]
               )
             end
           end
 
-          def flatten_rules(body)
-            case body
-            when Hash then body.values.flatten
-            when Array then body
-            else []
-            end
-          end
         end
       end
     end

@@ -1,0 +1,218 @@
+---
+file:
+- id: GUARD_EXPENSIVE
+  source: MASTER-native (guard expensive operations)
+  name: Check preconditions before costly work
+  tier: kernel
+  severity: error
+  autofix: false
+  detect_semantic: Does this file perform expensive operations (API calls, disk IO)
+    without checking preconditions?
+  fix: Guard clause before costly work. Estimate cost. Confirm if destructive.
+- id: SMALL_FILES
+  source: Clean Code — small classes/files (Robert C. Martin)
+  name: Files under 300 lines
+  tier: clean_code
+  severity: warning
+  autofix: false
+  detect_lexical:
+  detect_structural: file_silhouette
+  fix: Split at module boundaries.
+- id: CONSISTENT_FILE_STRUCTURE
+  source: MASTER-native / project convention
+  name: Consistent file structure order
+  tier: clarity
+  severity: info
+  autofix: false
+  detect_structural: file_layout
+  fix: Reorder to match convention.
+  languages:
+  - ruby
+- id: FROZEN_STRING_LITERAL
+  source: Ruby Style Guide / RuboCop Style/FrozenStringLiteralComment
+  name: frozen_string_literal magic comment required
+  tier: core
+  severity: warning
+  autofix: true
+  detect_lexical: "\\A(?!# frozen_string_literal)"
+  fix: 'Add ''# frozen_string_literal: true'' as first line.'
+  languages:
+  - ruby
+- id: SINGLE_PRIVATE_SECTION
+  source: Ruby Style Guide / RuboCop Style/AccessModifierDeclarations
+  name: One private keyword at bottom
+  tier: design
+  severity: info
+  autofix: false
+  detect_lexical: private\s+:\w+
+  fix: Use a single 'private' keyword with methods below it.
+  languages:
+  - ruby
+- id: STRICT_MODE_ZSH
+  source: Shell strict mode set -euo pipefail (Google Shell Style Guide)
+  name: set -euo pipefail at script top
+  tier: core
+  severity: error
+  autofix: true
+  detect_lexical: "^#!/.*(?:ba|z)sh\\n(?!set -)"
+  fix: Add 'set -euo pipefail' after shebang.
+  languages:
+  - zsh
+- id: HTML_LANG
+  source: WCAG 3.1.1 Language of Page (W3C/WAI)
+  name: lang attribute on <html>
+  tier: accessibility
+  severity: error
+  autofix: true
+  detect_lexical: "<html(?!\\s+[^>]*lang=)"
+  fix: Add lang="en" or appropriate locale.
+  languages:
+  - html
+- id: SEMANTIC_ELEMENTS
+  source: HTML5 semantics / WCAG 1.3.1 (W3C)
+  name: Use semantic HTML5 elements
+  tier: accessibility
+  severity: warning
+  autofix: true
+  detect_lexical: <div\s+class="(header|footer|nav|main|sidebar|article|section)"
+  fix: Use <header>, <footer>, <nav>, <main>, <aside>, <article>, <section>.
+  languages:
+  - html
+- id: MOBILE_FIRST
+  source: Mobile First (Luke Wroblewski, 2011)
+  name: Mobile-first media queries
+  tier: design
+  severity: warning
+  autofix: false
+  detect_lexical: "@media\\s*\\(\\s*max-width"
+  fix: Use min-width (mobile-first, progressive enhancement).
+  languages:
+  - css
+- id: NO_IMPORT_SCSS
+  source: Sass best practice — @use over @import (Sass team)
+  name: Replace @import with @use/@forward
+  tier: design
+  severity: warning
+  autofix: false
+  detect_lexical: '@import\s+["'']'
+  fix: "@import is deprecated. Use @use/@forward."
+  languages:
+  - scss
+- id: NO_IMPORTANT
+  source: CSS best practice — avoid !important (MDN)
+  name: No !important
+  tier: design
+  severity: warning
+  autofix: false
+  detect_lexical: "!\\s*important"
+  fix: Restructure selectors to avoid specificity bankruptcy.
+  languages:
+  - css
+- id: SQUINT_TEST
+  source: Squint Test readability heuristic (Sandi Metz)
+  name: Structure evident at a glance
+  tier: aesthetic
+  severity: info
+  autofix: true
+  detect_lexical: "\\n{4,}"
+  detect_semantic: Does this file have dense blocks with no visual breaks, or ragged
+    indentation?
+  fix: One blank line between sections, never more than two consecutive.
+- id: WHITESPACE_PUNCTUATION
+  source: Typography / code style — whitespace as punctuation
+  name: Whitespace as layout tool
+  tier: aesthetic
+  severity: info
+  autofix: true
+  detect_lexical: "\\n{4,}"
+  fix: One blank line between sections, never more than two.
+- id: NO_MULTIPLE_LANGUAGES
+  source: MASTER-native (one language per file)
+  name: One medium per artifact
+  tier: clean_code
+  severity: warning
+  autofix: false
+  detect_lexical: "<%|<script|<style|SQL|HEREDOC"
+  detect_semantic: Does this file embed multiple languages or notations? Does this
+    document mix incompatible frameworks?
+  fix: One language per layer. Separate into distinct files or clearly demarcated
+    sections.
+- id: ARTIFICIAL_COUPLING
+  source: The Pragmatic Programmer — avoid artificial coupling
+  name: Things that do not depend on each other must not be grouped together
+  tier: clean_code
+  severity: warning
+  autofix: false
+  detect_semantic: Are unrelated concepts coupled by proximity or shared container?
+    In a filing, are unrelated claims bundled into one count?
+  fix: Separate into independent units. Each removable without affecting others.
+- id: I18N_COVERAGE
+  source: Rails i18n best practice (no hardcoded strings)
+  name: Wrap user-facing literals in I18n helpers
+  tier: design
+  severity: warning
+  autofix: false
+  detect_lexical: ">\\s*[A-Za-z][^<]{3,}<"
+  fix: Replace literal with t('.key').
+  languages:
+  - html
+  path_match: "/app/views/"
+- id: STRICT_LOADING_MISSING
+  source: Rails strict_loading — N+1 prevention (Rails Guides)
+  name: AR model lacks strict_loading_by_default
+  tier: design
+  severity: info
+  autofix: false
+  detect_lexical: class\s+\w+\s+<\s+(?:ApplicationRecord|ActiveRecord::Base)\b
+  requires_absent: "\\bstrict_loading_by_default\\b"
+  whole_file: true
+  fix: Add `self.strict_loading_by_default = true` to surface missing eager-loads.
+  languages:
+  - ruby
+  path_match: "/app/models/"
+- id: RATE_LIMITING_MISSING
+  source: OWASP API Security — rate limiting
+  name: Sensitive controller missing rate_limit/throttle
+  tier: security
+  severity: error
+  autofix: false
+  detect_lexical: "(login|signup|sign_up|password|reset)"
+  requires_absent: rate_limit|throttle
+  whole_file: true
+  fix: Add rate_limit/throttle to sensitive actions.
+  languages:
+  - ruby
+  path_match: "/app/controllers/"
+- id: MIGRATION_ADD_REFERENCE_NO_FK
+  source: 'Rails migrations — foreign_key: true (Strong Migrations)'
+  name: 'add_reference without foreign_key:'
+  tier: robustness
+  severity: error
+  autofix: false
+  detect_lexical: add_reference(?!.*foreign_key:)
+  fix: 'Add `foreign_key: true` to enforce referential integrity.'
+  languages:
+  - ruby
+  path_match: "/db/migrate/"
+- id: MIGRATION_REMOVE_COLUMN
+  source: Strong Migrations — safe column removal (Andrew Kane)
+  name: remove_column is destructive
+  tier: robustness
+  severity: error
+  autofix: false
+  detect_lexical: remove_column
+  fix: Document safety/backfill path before removing a column.
+  languages:
+  - ruby
+  path_match: "/db/migrate/"
+- id: MIGRATION_FIND_OR_CREATE_BY
+  source: Rails best practice — find_or_create_by races
+  name: find_or_create_by needs unique index
+  tier: robustness
+  severity: warning
+  autofix: false
+  detect_lexical: find_or_create_by
+  fix: Back find_or_create_by with a unique index to prevent duplicates.
+  languages:
+  - ruby
+  path_match: "/db/migrate/"

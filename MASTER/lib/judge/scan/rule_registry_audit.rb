@@ -36,8 +36,8 @@ module Master
           Judge::Scan::RuleDSL
           yaml_entries = load_yaml_rules
           registry = Judge::Scan::Rule.registry
-            .reject { |klass| klass.name&.include?("YamlDeclarativeRule") }
-            .map { |klass| instantiate_rule(klass).id.to_s.downcase }
+            .reject { |klass| RuleFactory.bridge_class?(klass) }
+            .map { |klass| RuleFactory.build(klass, root: @root).id.to_s.downcase }
             .to_set
           yaml_ids = yaml_entries.map { |r| r["id"].to_s.downcase }
           kernel = yaml_entries.select { |r| r["tier"] == "kernel" }.map { |r| r["id"].to_s.downcase }
@@ -64,7 +64,7 @@ module Master
         def ungraphed_rule_ids(registry = nil)
           Judge::Scan::RuleDSL
           registry ||= Judge::Scan::Rule.registry
-            .map { |klass| instantiate_rule(klass).id.to_s }
+            .map { |klass| RuleFactory.build(klass, root: @root).id.to_s }
             .to_set
           deps = Master.load_yaml(File.join(@root, "data", "rule_deps.yml")).dig("deps") || {}
           graphed = deps.keys.to_set
@@ -74,25 +74,7 @@ module Master
         private
 
         def load_yaml_rules
-          data = Master.load_yaml(File.join(@root, "data", "rules.yml")) || {}
-          rules = data["rules"]
-          case rules
-          when Hash then rules.values.flatten
-          when Array then rules
-          else []
-          end
-        end
-
-        def instantiate_rule(klass)
-          return klass.new if klass.auto_build?
-
-          case klass.name
-          when /CoChangeCouplingRule/ then klass.new(root: @root, ecology: nil)
-          when /SemanticRule|AdversarialRule|CommentDriftRule/ then klass.new(agent: nil)
-          else klass.new(root: @root)
-          end
-        rescue ArgumentError
-          klass.new
+          Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
         end
       end
     end

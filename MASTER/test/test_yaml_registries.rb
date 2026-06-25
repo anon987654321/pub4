@@ -148,11 +148,15 @@ class TestRulesYamlRegistry < Minitest::Test
   private
 
   def rules
-    data.fetch("rules").values.flat_map { |entries| Array(entries) }
+    Master.flatten_rules(merged_rules.fetch("rules", {}))
   end
 
   def data
     @data ||= Master.load_yaml(File.join(DATA, "rules.yml"))
+  end
+
+  def merged_rules
+    @merged_rules ||= Master.load_rules(root: File.expand_path("..", __dir__))
   end
 
   def patterns

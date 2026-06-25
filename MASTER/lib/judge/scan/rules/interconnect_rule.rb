@@ -99,7 +99,7 @@ module Master
               names = Set.new(%w[all])
               require_relative "../rule_dsl"
               Master::Judge::Scan::Rule.registry.each do |klass|
-                instance = klass.new
+                instance = RuleFactory.build(klass, root: @root)
                 names << instance.id.to_s.downcase
                 short = klass.name&.split("::")&.last
                 names << short.downcase if short&.match?(/\A[A-Z]/)

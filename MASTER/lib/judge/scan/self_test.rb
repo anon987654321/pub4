@@ -38,7 +38,10 @@ module Master
 
         def build_checks(laws: nil)
           checks = [
-            check("ROBUSTNESS") { bare_rescue_findings + deploy_bare_rescue_findings + timeout_findings + js_silent_catch_findings },
+            check("ROBUSTNESS") {
+              bare_rescue_findings + deploy_bare_rescue_findings + timeout_findings +
+                js_silent_catch_findings + library_verify_findings
+            },
             check("SINGULARITY") { duplicate_rule_id_findings + cross_yaml_duplicate_key_findings + deploy_duplicate_id_findings },
             check("LINEARITY") { structural_findings(Rules::NestingDepthRule.new) + deploy_nesting_findings },
             check("PROXIMITY") { rule_test_proximity_findings },
@@ -167,7 +170,7 @@ module Master
 
         def duplicate_rule_id_findings
           path = File.join(@root, "data", "rules.yml")
-          ids = rule_ids(Master.load_yaml(path))
+          ids = rule_ids(Master.load_rules(root: @root))
           ids.group_by(&:itself).filter_map do |id, values|
             finding(path:, line: 1, message: "duplicate rule id #{id}") if values.size > 1
           end
@@ -224,6 +227,19 @@ module Master
           body = File.read(semantics)
           return [] unless body.match?(/mouthPool\.cells|eyePool\.cells/)
           [finding(path: semantics, line: 1, message: "face_semantics still mutates mouthPool/eyePool — use MASTER_FACE_BLEND")]
+        end
+
+        def library_verify_findings
+          verify = Ground::LibraryVerify.new(root: @root)
+          lock = File.join(@root, "Gemfile.lock")
+          return [] unless File.file?(lock)
+
+          %w[zeitwerk psych yaml].filter_map do |gem|
+            result = verify.verify_gem!(gem)
+            next if result.ok?
+
+            finding(path: lock, line: 1, message: result.error.to_s)
+          end
         end
 
         def kernel_wiring_findings

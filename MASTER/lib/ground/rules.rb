@@ -43,7 +43,7 @@ module Master
 
       def kernel
         @kernel ||= begin
-          all_rules = flatten_rules(@data["rules"])
+          all_rules = Master.flatten_rules(@data["rules"])
           all_rules
             .select { |r| r["tier"] == "kernel" }
             .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
@@ -55,7 +55,7 @@ module Master
 
       def philosophy(limit: nil)
         @philosophy ||= begin
-          all_rules = flatten_rules(@data["rules"])
+          all_rules = Master.flatten_rules(@data["rules"])
           all_rules
             .reject { |r| r["tier"] == "kernel" }
             .map { |h| h.transform_keys(&:to_s) }
@@ -64,7 +64,7 @@ module Master
         limit ? @philosophy.first(limit) : @philosophy
       end
 
-      def all_rules = @all_rules ||= flatten_rules(@data["rules"]).freeze
+      def all_rules = @all_rules ||= Master.flatten_rules(@data["rules"]).freeze
       def rules_for_scope(scope) = (@data.dig("rules", scope.to_s) || []).freeze
 
       def kernel_block
@@ -138,13 +138,6 @@ module Master
         nil
       end
 
-      def flatten_rules(body)
-        case body
-        when Hash then body.values.flatten
-        when Array then body
-        else []
-        end
-      end
     end
   end
 end

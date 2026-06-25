@@ -3,7 +3,7 @@
 # Each lesson: signal → action → proof. Prefer executable proof over TODO checkboxes.
 
 version: 1
-updated: "2026-06-24"
+updated: "2026-06-25"
 
 lessons:
   - id: relayd_master_health_up
@@ -125,3 +125,21 @@ lessons:
     signal: "live_search_test fails on empty query .none scope count"
     action: "Shared::LiveSearch#safe_count returns 0 when query.blank? before calling null_relation? or count on arbitrary scopes."
     proof: "bundle exec rails test test/services/live_search_test.rb in brgen"
+
+  - id: github_actions_billing_lock
+    area: ci
+    signal: "MASTER Tests workflow fails in ~5s with no job logs; email on every push"
+    action: "GitHub account billing lock blocks runners. Pause push/pull_request triggers (workflow_dispatch only) until billing fixed at github.com/settings/billing. Re-enable .github/workflows/master-tests.yml and master-through-master.yml triggers after."
+    proof: "gh workflow list shows paused; push does not enqueue Actions email"
+
+  - id: gh_auth_vps_and_workstation
+    area: deploy
+    signal: "gh api returns HTTP 401 on VPS or Mac; cannot inspect PRs/workflows remotely"
+    action: "Run gh auth login on each host that needs GitHub API. VPS: su dev -c 'gh auth login'. Never commit tokens."
+    proof: "gh auth status shows logged in; gh api user returns 200"
+
+  - id: pf_ssh_not_bruteforce
+    area: openbsd
+    signal: "Operator assumes SSH lockout is pf bruteforce after rapid reconnects"
+    action: "Tracked pf.conf exempts SSH (pass in quick … port 22) before bruteforce table. Bruteforce is fed by HTTP/HTTPS rate limits only. Lockouts are usually RAM/CPU saturation from parallel SSH or bin/ci — use tmux, one app CI at a time, flush bruteforce only when HTTP wedge suspected."
+    proof: "grep 'port 22' DEPLOY/openbsd/etc/pf.conf shows quick pass before block quick from <bruteforce>"

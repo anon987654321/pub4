@@ -10,21 +10,21 @@ module Master
     class ConflictResolver
       LOG_PATH = "runtime/conflict_log.jsonl"
       DRY_RULES = %w[DRY duplicate_code].freeze
-      CLARITY_RULES = %w[EXPLICIT SELF_EXPLAINING MEANINGFUL_NAMES].freeze
-      SIMPLICITY_RULES = %w[KISS SIMPLEST_WORKS BE_CONCISE].freeze
       WET_AHA = "WET/AHA".freeze
       DUPLICATION_THRESHOLD = 3
 
-      def initialize(root:, bus: nil, config: nil)
+      def initialize(root:, bus: nil, config: nil, law_resolver: nil)
         @root = root
         @bus = bus
         @config = config || load_config
+        @law_resolver = law_resolver || Ground::LawResolver.new
+        @rules_index = build_rules_index
       end
 
       def filter_findings(findings)
         rows = findings.map { |finding| normalize(finding) }
         rows = suppress_dry_below_rule_of_three(rows)
-        suppress_simplicity_when_clarity_wins(rows)
+        suppress_lower_priority_laws(rows)
       end
 
       def reject_higher_priority?(original_violation:, before:, after:, path:)
@@ -64,23 +64,43 @@ module Master
         rows - dry_rows
       end
 
-      def suppress_simplicity_when_clarity_wins(rows)
+      def suppress_lower_priority_laws(rows)
         rows.group_by { |finding| [finding["file"], finding["line"]] }.values.reduce(rows) do |remaining, group|
-          clarity = group.find { |finding| CLARITY_RULES.include?(finding["rule"]) }
-          simplicity = group.select { |finding| SIMPLICITY_RULES.include?(finding["rule"]) }
-          next remaining unless clarity && simplicity.any?
+          next remaining if group.size < 2
 
-          simplicity.each do |finding|
-            log_conflict(
-              rule_a: clarity["rule"],
-              rule_b: finding["rule"],
-              resolution: "favor clarity over simplicity",
-              file: finding["file"],
-              line: finding["line"]
-            )
+          winner = group.reduce(group.first) do |best, finding|
+            favored = @law_resolver.winner(best["rule"], finding["rule"], rules_index: @rules_index)
+            if favored == best["rule"]
+              log_conflict(
+                rule_a: best["rule"],
+                rule_b: finding["rule"],
+                resolution: "law priority favors #{best["rule"]}",
+                file: finding["file"],
+                line: finding["line"]
+              )
+              best
+            else
+              log_conflict(
+                rule_a: finding["rule"],
+                rule_b: best["rule"],
+                resolution: "law priority favors #{finding["rule"]}",
+                file: best["file"],
+                line: best["line"]
+              )
+              finding
+            end
           end
-          remaining - simplicity
+          remaining - (group - [winner])
         end
+      end
+
+      def build_rules_index
+        Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
+          .each_with_object({}) do |entry, index|
+            next unless entry.is_a?(Hash) && entry["id"]
+
+            index[entry["id"].to_s] = entry
+          end
       end
 
       def log_conflict(rule_a:, rule_b:, resolution:, file:, line:)

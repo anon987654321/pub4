@@ -61,14 +61,17 @@ module Master
   def self.state_path = data_file("state.yml", "standing_orders.yml")
   def self.style_path = data_file("style.yml", "ruby_style.yml")
 
+  def self.flatten_rules(body)
+    case body
+    when Hash then body.values.flatten
+    when Array then body
+    else []
+    end
+  end
+
   def self.rule_count(root: ROOT)
-    body = load_rules(root:).fetch("rules", {})
-    entries = case body
-              when Hash then body.values.flatten
-              when Array then body
-              else []
-              end
-    entries.count { |rule| rule.is_a?(Hash) && rule["id"].to_s.strip != "" }
+    flatten_rules(load_rules(root:).fetch("rules", {}))
+      .count { |rule| rule.is_a?(Hash) && rule["id"].to_s.strip != "" }
   rescue StandardError
     0
   end

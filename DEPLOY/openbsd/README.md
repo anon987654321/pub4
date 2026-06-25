@@ -79,7 +79,7 @@ Direct IP still works: `ssh dev@46.23.89.226`.
 - Production matrix: `DEPLOY/rails/PRODUCTION_READINESS.md`.
 - Web seeds on VPS: only when needed (resource-heavy due to Ferrum+LLM); prefer locally then git push/pull. Final wave: full integration (rake *_seed + optional in seeds.rb) for brgen subapps + amber.
 
-- Rapid reconnects trip pf — use tmux; flush `<bruteforce>` via host console when locked out.
+- SSH is exempt from pf `<bruteforce>` (quick pass on port 22). Lockouts are usually RAM/CPU saturation — use tmux, one app `bin/ci` at a time. Flush `<bruteforce>` via host console only when HTTP wedge is suspected.
 - FDE only if OK with no cold-start help from provider.
 - Billing: include "server4 vm23" in description.
 - Same key for VM + host + backup (wingman1 via openrsync).

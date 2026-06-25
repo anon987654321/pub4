@@ -1,0 +1,585 @@
+---
+unit:
+- id: SIMPLEST_WORKS
+  source: XP — do the simplest thing that could possibly work (Ward Cunningham)
+  name: Fewest moving parts that solve the problem
+  tier: kernel
+  severity: error
+  autofix: false
+  detect_semantic: Does this unit introduce unnecessary complexity?
+  fix: Delete abstractions until it hurts. KISS.
+- id: FAIL_VISIBLY
+  source: Fail Fast (Jim Shore, IEEE Software 2004)
+  name: Surface errors immediately
+  tier: kernel
+  severity: error
+  autofix: false
+  detect_lexical: rescue\s*$|rescue\s+Exception
+  detect_semantic: Does this code swallow exceptions or fail silently?
+  fix: Catch specific errors, log context, re-raise or return Result.
+- id: BE_CONCISE
+  source: Strunk & White / Clean Code — brevity
+  name: Avoid unnecessary words, tokens, or lines
+  tier: kernel
+  severity: warning
+  autofix: true
+  detect_semantic: Does this unit contain unnecessary verbosity?
+  fix: Omit needless words. Omit needless code.
+- id: DRY
+  source: DRY — The Pragmatic Programmer (Hunt & Thomas, 1999)
+  name: Don't Repeat Yourself
+  tier: principle
+  severity: warning
+  autofix: false
+  aliases:
+  - duplicate_code
+  detect_semantic: Are two units expressing the same idea twice?
+  fix: MERGE or DEFRAG. Pass the difference as an argument; never copy a block to
+    vary one literal.
+  tension: DRY conflicts with WET/AHA — singularity wins for data, DRY wins for code.
+- id: KISS
+  source: KISS — Keep It Simple (Kelly Johnson, U.S. Navy 1960)
+  name: Keep It Simple
+  tier: principle
+  severity: warning
+  autofix: false
+  aliases:
+  - long_method
+  - god_class
+  - nesting_depth
+  - arity
+  detect_semantic: Does this unit introduce complexity the problem doesn't require?
+  fix: FLATTEN nesting; SPLIT god classes; INLINE single-call helpers; delete abstractions
+    until it hurts.
+- id: POLA_PRINCIPLE
+  source: Principle of Least Astonishment (POLA)
+  name: Principle of Least Astonishment
+  tier: principle
+  severity: warning
+  autofix: false
+  aliases:
+  - pola
+  detect_semantic: Does the name promise behavior the implementation contradicts?
+  fix: NAME truthfully; rename when the implementation drifts.
+- id: SRP
+  source: SOLID — Single Responsibility Principle (Robert C. Martin)
+  name: Single Responsibility
+  tier: solid
+  severity: warning
+  autofix: false
+  detect_semantic: Does this class have more than one reason to change?
+  fix: Extract concerns into focused classes.
+- id: OPEN_CLOSED
+  source: Open-Closed Principle (Bertrand Meyer; SOLID, R.C. Martin)
+  name: Open for extension, closed for modification
+  tier: solid
+  severity: warning
+  autofix: false
+  detect_semantic: Must you modify core code to extend this?
+  fix: Strategy pattern, dependency injection, hooks.
+- id: LISKOV
+  source: Liskov Substitution Principle (Barbara Liskov, 1987)
+  name: Subtypes must substitute for base types
+  tier: solid
+  severity: warning
+  autofix: false
+  detect_semantic: Does a subclass break the parent's contract?
+  fix: Use composition if substitutability fails.
+- id: INTERFACE_SEGREGATION
+  source: SOLID — Interface Segregation (Robert C. Martin)
+  name: No fat interfaces
+  tier: solid
+  severity: warning
+  autofix: false
+  detect_semantic: Does this interface force implementors to stub unused methods?
+  fix: Split into smaller role-based interfaces.
+- id: DEPENDENCY_INVERSION
+  source: SOLID — Dependency Inversion (Robert C. Martin)
+  name: Depend on abstractions, not concretions
+  tier: solid
+  severity: warning
+  autofix: false
+  detect_semantic: Does this class directly instantiate its dependencies?
+  fix: Inject dependencies through constructor.
+- id: ONE_JOB
+  source: SRP / Unix philosophy — do one thing
+  name: Each module has one clear reason to change
+  tier: philosophy
+  severity: warning
+  autofix: false
+  detect_semantic: Does this module handle unrelated responsibilities?
+  fix: Split into focused modules.
+- id: NO_SURPRISES
+  source: Principle of Least Astonishment
+  name: Predictable over clever
+  tier: philosophy
+  severity: warning
+  autofix: false
+  detect_semantic: Would a reader be surprised by this behavior?
+  fix: Rename or split to match expectations.
+- id: COMPOSABLE
+  source: Unix philosophy / functional composition
+  name: Small pieces that combine cleanly
+  tier: philosophy
+  severity: info
+  autofix: false
+  detect_semantic: Is this monolithic where it could be composed from smaller parts?
+  fix: Build small pieces that combine cleanly.
+- id: CQS
+  source: Command-Query Separation (Bertrand Meyer, Eiffel/OOSC)
+  name: Separate queries from state mutations
+  tier: design
+  severity: warning
+  autofix: true
+  detect_structural: cqs
+  fix: 'Split: query() + command(). Never mix.'
+  languages:
+  - ruby
+- id: LAW_OF_DEMETER
+  source: Law of Demeter (Ian Holland, Northeastern, 1987)
+  name: Only talk to immediate friends
+  tier: design
+  severity: warning
+  autofix: true
+  detect_lexical: "\\w+\\.\\w+\\.\\w+\\.\\w+"
+  detect_semantic: Does this code reach through multiple objects?
+  fix: Add delegate method. Talk only to direct collaborators.
+- id: COMPOSITION_OVER_INHERITANCE
+  source: Design Patterns (Gang of Four, 1994)
+  name: Favor has_a over is_a
+  tier: design
+  severity: info
+  autofix: false
+  detect_semantic: Is inheritance used for code reuse rather than substitutability?
+  fix: Use composition. Mixins for shared behavior.
+- id: SMALL_FUNCTIONS
+  source: Clean Code — functions should be small (R.C. Martin)
+  name: Methods under 10 lines ideal, max 20
+  tier: clean_code
+  severity: warning
+  autofix: true
+  detect_structural: long_method
+  fix: 'Extract: validate(), calculate(), persist().'
+- id: FEW_ARGUMENTS
+  source: Clean Code — minimize arguments (R.C. Martin)
+  name: Ideal is zero to two arguments
+  tier: clean_code
+  severity: warning
+  autofix: true
+  detect_lexical: def \w+\([^)]*,[^:)]+,[^:)]+,[^:)]+\)
+  fix: Group into keyword arguments or parameter object.
+  languages:
+  - ruby
+- id: ONE_ABSTRACTION_LEVEL
+  source: Clean Code — one level of abstraction per function
+  name: Each function at one abstraction level
+  tier: clean_code
+  severity: info
+  autofix: false
+  detect_semantic: Does this function mix high-level policy with low-level detail?
+  fix: Extract low-level detail into helper methods.
+- id: STEPDOWN
+  source: Clean Code — the Stepdown Rule (Robert C. Martin)
+  name: Functions call only one level below
+  tier: clean_code
+  severity: info
+  autofix: false
+  detect_semantic: Does this code read top-down like a newspaper?
+  fix: Public methods at top, private helpers below.
+- id: BOUNDARY_ISOLATION
+  source: Boundaries (Gary Bernhardt) / Clean Architecture
+  name: Wrap third-party code at the edge
+  tier: clean_code
+  severity: warning
+  autofix: false
+  detect_semantic: Does third-party API surface leak into core logic?
+  fix: Wrap in adapter. Keep it from leaking.
+- id: NO_MAGIC
+  source: Clean Code — no magic numbers (Robert C. Martin)
+  name: No unexplained constants or flags
+  tier: clean_code
+  severity: warning
+  autofix: true
+  detect_semantic: Are there unexplained numeric literals or boolean flags?
+  fix: Extract to named constants.
+- id: FAIL_FAST
+  source: Fail Fast (Jim Shore, IEEE Software 2004)
+  name: Report errors at detection point
+  tier: reliability
+  severity: warning
+  autofix: true
+  detect_semantic: Does this code defer error reporting instead of failing immediately?
+  fix: Raise or return Result.err at point of detection.
+- id: IDEMPOTENT
+  source: Idempotency — REST / distributed systems design
+  name: Same operation, same result
+  tier: reliability
+  severity: info
+  autofix: false
+  detect_semantic: Would repeating this operation produce different results?
+  fix: Use set_value() instead of increment(). Add idempotency keys.
+- id: DEFENSIVE_INPUT
+  source: Defensive programming / Postel's Law
+  name: Never trust input at system boundaries
+  tier: reliability
+  severity: warning
+  autofix: true
+  detect_semantic: Is external input used without validation?
+  fix: Validate at boundaries. Whitelist, sanitize.
+- id: GRACEFUL_DEGRADATION
+  source: Release It! graceful degradation (Michael Nygard)
+  name: Partial functionality beats total failure
+  tier: reliability
+  severity: warning
+  autofix: false
+  detect_semantic: Does one failure crash everything?
+  fix: Circuit breakers, timeouts, fallback to stale data.
+- id: NO_SIDE_EFFECTS
+  source: Functional programming / Clean Code
+  name: Functions should not change state they do not own
+  tier: functional
+  severity: info
+  autofix: false
+  detect_semantic: Does this function modify external state silently?
+  fix: Make side effects explicit. Return values instead of mutating.
+- id: IMMUTABLE
+  source: Effective Java — minimize mutability (Joshua Bloch); FP
+  name: Default to immutable data
+  tier: functional
+  severity: info
+  autofix: true
+  detect_lexical: "^\\s*[A-Z][A-Z_]*\\s*=\\s*[\\[{](?!.*\\.freeze)"
+  detect_semantic: Are mutable objects shared across threads or scopes?
+  fix: Freeze collections. Use frozen/const by default.
+  languages:
+  - ruby
+- id: PURE_FUNCTIONS
+  source: Functional programming — referential transparency
+  name: Same input, same output
+  tier: functional
+  severity: info
+  autofix: true
+  detect_semantic: Does this function depend on hidden state?
+  fix: Pass all dependencies as parameters.
+- id: PRIMITIVE_OBSESSION
+  source: 'Refactoring code smell: Primitive Obsession (Fowler)'
+  name: Replace repeated primitives with value objects
+  tier: refactoring
+  severity: info
+  autofix: false
+  detect_semantic: Are primitives used where a value object would be clearer?
+  fix: Create a value object.
+- id: MESSAGE_CHAIN
+  source: 'Refactoring code smell: Message Chains (Fowler)'
+  name: Avoid a.b.c.d chains
+  tier: refactoring
+  severity: warning
+  autofix: true
+  detect_lexical: "\\w+\\.\\w+\\.\\w+\\.\\w+"
+  fix: Talk only to immediate collaborators.
+- id: MIDDLE_MAN
+  source: 'Refactoring code smell: Middle Man (Fowler)'
+  name: Eliminate pure-delegation classes
+  tier: refactoring
+  severity: info
+  autofix: false
+  detect_semantic: Does this class delegate most methods to another?
+  fix: Remove middle man. Talk directly.
+- id: LAZY_CLASS
+  source: 'Refactoring code smell: Lazy Class (Fowler)'
+  name: Remove classes too small to justify existence
+  tier: refactoring
+  severity: info
+  autofix: false
+  detect_semantic: Is this class doing too little to earn its existence?
+  fix: Inline into caller.
+- id: DIVERGENT_CHANGE
+  source: 'Refactoring code smell: Divergent Change (Fowler)'
+  name: Split classes changed for unrelated reasons
+  tier: refactoring
+  severity: warning
+  autofix: false
+  detect_semantic: Is this class modified for multiple unrelated reasons?
+  fix: Split by axis of change.
+- id: SPECULATIVE_GENERALITY
+  source: 'Refactoring code smell: Speculative Generality (Fowler); YAGNI'
+  name: Remove code for hypothetical needs
+  tier: refactoring
+  severity: info
+  autofix: true
+  detect_semantic: Is this code written for a future requirement that does not exist
+    yet?
+  fix: Delete it. YAGNI.
+- id: INAPPROPRIATE_INTIMACY
+  source: 'Refactoring code smell: Inappropriate Intimacy (Fowler)'
+  name: Do not access another class's private data
+  tier: refactoring
+  severity: warning
+  autofix: false
+  detect_semantic: Does this code access internals of another class?
+  fix: Use public interface. Enforce boundaries.
+- id: SYSTEM_STATUS
+  source: 'Nielsen Heuristic #1 — Visibility of system status (NN/g)'
+  name: Keep users informed of progress
+  tier: ux
+  severity: info
+  autofix: true
+  detect_semantic: Does this long operation provide feedback to the user?
+  fix: Spinner, progress bar, status message.
+- id: USER_CONTROL
+  source: 'Nielsen Heuristic #3 — User control and freedom (NN/g)'
+  name: Support undo and emergency exits
+  tier: ux
+  severity: info
+  autofix: false
+  detect_semantic: Can the user undo or cancel this operation?
+  fix: Add undo support. Confirm destructive actions.
+- id: ERROR_RECOVERY
+  source: 'Nielsen Heuristic #9 — Help users recover from errors (NN/g)'
+  name: Error messages must name the problem and suggest a fix
+  tier: ux
+  severity: warning
+  autofix: false
+  detect_semantic: Do error messages explain what went wrong and what to do?
+  fix: Name the problem. Suggest a fix. Show context.
+- id: AESTHETIC_MINIMALISM
+  source: 'Nielsen Heuristic #8 — Aesthetic and minimalist design (NN/g)'
+  name: Show only relevant information
+  tier: ux
+  severity: info
+  autofix: false
+  detect_semantic: Does this output contain information that does not earn its place?
+  fix: Every element must earn its place.
+- id: CONSISTENCY
+  source: 'Nielsen Heuristic #4 — Consistency and standards (NN/g)'
+  name: Same term means same thing everywhere
+  tier: ux
+  severity: warning
+  autofix: false
+  detect_semantic: Are the same concepts named differently in different places?
+  fix: Follow conventions. One name per concept.
+- id: COST_TRANSPARENCY
+  source: MASTER-native (surface LLM token cost)
+  name: Show LLM costs in real-time
+  tier: llm
+  severity: warning
+  autofix: true
+  detect_semantic: Are API calls made without showing token count or cost?
+  fix: Display [$0.0023, 847 tokens] after each call.
+- id: CACHE_LLM
+  source: MASTER-native (cache LLM responses)
+  name: Cache deterministic LLM responses
+  tier: llm
+  severity: info
+  autofix: true
+  detect_semantic: Is the same prompt sent multiple times without caching?
+  fix: Hash prompt, cache response with bounded TTL.
+- id: GUARD_EXPENSIVE_OPS
+  source: MASTER-native (guard expensive operations)
+  name: Confirm before costly or destructive operations
+  tier: safety
+  severity: error
+  autofix: true
+  detect_semantic: Does this execute an expensive or destructive operation without
+    confirmation?
+  fix: Cost estimate before execution. Require opt-in for danger.
+- id: NO_FLAG_ARGUMENTS
+  source: Clean Code — no flag arguments (Robert C. Martin)
+  name: A flag that selects behavior means two things hiding as one
+  tier: clean_code
+  severity: warning
+  autofix: false
+  detect_lexical: def \w+\([^)]*\btrue\b|def \w+\([^)]*\bfalse\b
+  detect_semantic: Does a boolean cause this unit to do two different things? In a
+    contract, does one condition branch into contradictory obligations?
+  fix: Split into two distinct units. Each does one thing.
+- id: NO_OUTPUT_ARGUMENTS
+  source: Clean Code — no output arguments (Robert C. Martin)
+  name: Return results, never secretly modify what was passed in
+  tier: clean_code
+  severity: warning
+  autofix: false
+  detect_semantic: Does this modify its arguments instead of returning a result? Does
+    this clause silently alter a definition from a prior section?
+  fix: Return the result. Leave inputs untouched.
+- id: NO_SELECTOR_ARGUMENTS
+  source: FlagArgument (Martin Fowler) / Clean Code
+  name: Arguments that switch behavior indicate hidden multiplicity
+  tier: clean_code
+  severity: warning
+  autofix: false
+  detect_semantic: Is an argument used as a switch to select between behaviors? Does
+    a field mean different things in different contexts?
+  fix: Separate functions, separate types, separate document sections.
+- id: DESIGN_BY_CONTRACT
+  source: Design by Contract (Bertrand Meyer, Eiffel/OOSC)
+  name: State what you expect, what you promise, what must remain true
+  tier: reliability
+  severity: info
+  autofix: false
+  detect_semantic: Are preconditions, postconditions, and invariants left implicit?
+    Does this API lack documentation of valid inputs and guaranteed outputs?
+  fix: Make contracts explicit. Preconditions, postconditions, invariants.
+- id: CRASH_EARLY
+  source: The Pragmatic Programmer — Crash Early (Hunt & Thomas)
+  name: A dead process does less damage than a corrupted one
+  tier: reliability
+  severity: warning
+  autofix: false
+  detect_semantic: Does this limp along in a broken state instead of stopping cleanly?
+    Does this continue after contraindication signals?
+  fix: Stop when invariants break. A clean crash is recoverable. Corruption is not.
+- id: DEFINE_ERRORS_OUT
+  source: A Philosophy of Software Design — Define Errors Out of Existence (Ousterhout)
+  name: Design so error conditions cannot arise
+  tier: design
+  severity: info
+  autofix: false
+  detect_semantic: Is this handling errors that could be eliminated by redesigning
+    the interface? Does this validation reject input that better design would prevent?
+  fix: Redesign so the error cannot occur.
+- id: SURFACE_AREA
+  source: API design — minimize public surface area
+  name: Minimize the boundary between inside and outside
+  tier: design
+  severity: warning
+  autofix: false
+  detect_semantic: Is the public interface larger than necessary? Does this contract
+    have more exceptions than rules?
+  fix: Fewer public methods. Fewer clauses. Fewer points of contact mean fewer points
+    of failure.
+- id: PROGRESSIVE_DISCLOSURE
+  source: Progressive disclosure (Jakob Nielsen, NN/g)
+  name: Reveal complexity only as needed
+  tier: ux
+  severity: info
+  autofix: false
+  detect_semantic: Does this present all complexity at once? Does this front-load
+    definitions before stating obligations?
+  fix: Lead with the simple case. Reveal depth on demand.
+- id: FEEDBACK_LOOPS
+  source: 'Nielsen Heuristic #1 — feedback (NN/g)'
+  name: Every action must produce observable feedback
+  tier: ux
+  severity: warning
+  autofix: false
+  detect_semantic: Does this perform work without reporting progress? Does this protocol
+    lack checkpoints?
+  fix: Close the loop. Every action produces feedback. Every milestone gets measured.
+- id: DATA_CLASS
+  source: 'Refactoring code smell: Data Class (Fowler)'
+  name: Data without behavior is a missed abstraction
+  tier: refactoring
+  severity: info
+  autofix: false
+  detect_semantic: Does this hold data but contain no behavior? Is logic scattered
+    across other modules? Is this a spreadsheet of raw numbers with formulas elsewhere?
+  fix: Push behavior into the data. Methods belong with the data they operate on.
+- id: PARALLEL_INHERITANCE
+  source: 'Refactoring code smell: Parallel Inheritance Hierarchies (Fowler)'
+  name: Two hierarchies that must change in lockstep
+  tier: refactoring
+  severity: warning
+  autofix: false
+  detect_semantic: Does adding a type in one hierarchy require adding one in another?
+    Does a new product line require changes in both catalog and billing?
+  fix: Merge the hierarchies or use composition.
+- id: REFUSED_BEQUEST
+  source: 'Refactoring code smell: Refused Bequest (Fowler)'
+  name: Inheriting what you do not use
+  tier: refactoring
+  severity: info
+  autofix: false
+  detect_semantic: Does this variant ignore most of what it inherits? Does this addendum
+    negate most of the base agreement?
+  fix: Use composition instead of inheritance.
+- id: PROSE_ACTIVE_VOICE
+  source: Strunk, Elements of Style (1918) Rule 10 — use the active voice
+  name: Prefer the active voice in all written output
+  tier: density
+  severity: info
+  autofix: false
+  detect_lexical: "\\b(was|were|is|are|been|be)\\s+\\w+ed\\b"
+  detect_semantic: Does this sentence use passive voice where active would be shorter
+    and clearer?
+  fix: 'Recast active: ''the bug was fixed by X'' -> ''X fixed the bug''.'
+  languages:
+  - prose
+  - markdown
+  - ruby
+- id: PROSE_POSITIVE_FORM
+  source: Strunk, Elements of Style (1918) Rule 11 — put statements in positive form
+  name: State assertions in positive form
+  tier: density
+  severity: info
+  autofix: false
+  detect_semantic: Is this phrased as a negation where a direct positive verb exists
+    (did not remember -> forgot, not honest -> dishonest)?
+  fix: 'Replace ''not + word'' with the affirmative: ''did not pass'' -> ''failed''.'
+  languages:
+  - prose
+  - markdown
+  - ruby
+- id: PROSE_OMIT_QUALIFIERS
+  source: Strunk, Elements of Style (1918) — the leech words
+  name: Cut hollow intensifiers and hedges
+  tier: density
+  severity: warning
+  autofix: true
+  detect_lexical: "\\b(very|rather|really|quite|pretty|somewhat|just|actually|basically|literally|simply)\\b"
+  fix: Delete the qualifier; let the verb or noun carry the weight.
+  languages:
+  - prose
+  - markdown
+  - ruby
+- id: PROSE_PARALLEL_FORM
+  source: Strunk, Elements of Style (1918) Rule 15 — co-ordinate ideas in similar
+    form
+  name: Express parallel ideas in parallel grammatical form
+  tier: clarity
+  severity: info
+  autofix: false
+  detect_semantic: Do items in this list or series mix grammatical forms (noun, verb
+    phrase, clause) where one form should hold throughout?
+  fix: 'Make series elements match: all imperatives, or all nouns, never a blend.'
+  languages:
+  - prose
+  - markdown
+- id: PROSE_RELATED_WORDS
+  source: Strunk, Elements of Style (1918) Rule 16 — keep related words together
+  name: Keep subject, verb, and modifiers adjacent to what they govern
+  tier: clarity
+  severity: info
+  autofix: false
+  detect_semantic: Is a modifier or subject separated from its referent so the sentence
+    misreads on first pass?
+  fix: Move the modifier next to the word it modifies; close the subject-verb gap.
+  languages:
+  - prose
+  - markdown
+- id: PROSE_ONE_TOPIC_PARAGRAPH
+  source: Strunk, Elements of Style (1918) Rules 8–9 — paragraph as the unit
+  name: One topic per paragraph, opened by a topic sentence
+  tier: clarity
+  severity: info
+  autofix: false
+  detect_semantic: Does this paragraph cover more than one topic, or bury its point
+    below the first sentence?
+  fix: Split per topic; lead each paragraph with its claim.
+  languages:
+  - prose
+  - markdown
+- id: GRICE_COOPERATIVE
+  source: Grice — cooperative principle (quantity, quality, relation, manner)
+  name: Every message obeys the four conversational maxims
+  tier: clarity
+  severity: info
+  autofix: false
+  detect_semantic: Does this comment/commit/message violate a maxim — say more or
+    less than needed (quantity), assert the unverified (quality), drift off-point
+    (relation), or read unclearly/out of order (manner)?
+  fix: Trim to what is needed, assert only the verified, stay on point, order it plainly.
+  languages:
+  - prose
+  - markdown
+  - ruby

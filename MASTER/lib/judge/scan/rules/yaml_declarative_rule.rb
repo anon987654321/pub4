@@ -6,8 +6,6 @@ module Master
       module Rules
         # Wires rules.yml detect_lexical entries not already covered by RuleDSL classes.
         class YamlDeclarativeRule < Rule
-          BRIDGE_CLASSES = %w[YamlDeclarativeRule VetoPatternRule].freeze
-
           def self.auto_build? = false
 
           def self.reloading?
@@ -57,11 +55,10 @@ module Master
 
             self.class.reloading = true
             registry_ids = Judge::Scan::Rule.registry
-              .reject { |klass| bridge_class?(klass) }
-              .filter_map { |klass| registry_rule_id(klass) }
+              .reject { |klass| RuleFactory.bridge_class?(klass) }
+              .filter_map { |klass| RuleFactory.registry_id(klass, root: @root) }
               .to_set
-            data = Master.load_yaml(File.join(@root, "data", "rules.yml")) || {}
-            yaml_rules = flatten_rules_body(data["rules"])
+            yaml_rules = Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
             @entries = yaml_rules
               .select { |r| r["detect_lexical"] && !registry_ids.include?(r["id"].to_s.downcase) }
               .filter_map do |r|
@@ -88,41 +85,6 @@ module Master
 
           def rules_mtime
             File.mtime(File.join(@root, "data", "rules.yml")).to_i
-          rescue StandardError
-            nil
-          end
-
-          def bridge_class?(klass)
-            name = klass.name.to_s
-            BRIDGE_CLASSES.any? { |token| name.include?(token) }
-          end
-
-          def flatten_rules_body(body)
-            case body
-            when Hash then body.values.flatten
-            when Array then body
-            else []
-            end
-          end
-
-          def registry_rule_id(klass)
-            return klass.new.id.to_s.downcase if klass.auto_build?
-
-            case klass.name
-            when /CoChangeCouplingRule/ then "co_change_coupling"
-            when /RuleCoverageRule/ then "rule_coverage"
-            when /RubocopRule/ then "rubocop"
-            when /ReekRule/ then "reek"
-            when /InterconnectRule/ then "interconnect"
-            when /SemanticRule/ then "semantic"
-            when /AdversarialRule/ then "adversarial"
-            when /CommentDriftRule/ then "comment_drift"
-            when /AstOmissionRule/ then "ast_omission"
-            when /LearnedSmellsRule/ then "learned_smells"
-            else
-              short = klass.name.to_s.split("::").last.to_s.delete_suffix("Rule")
-              short.gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase
-            end
           rescue StandardError
             nil
           end

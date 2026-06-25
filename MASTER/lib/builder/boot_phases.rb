@@ -75,10 +75,7 @@ module Master
                                              root: @root, homeostat: @homeostat)
         learnings = Ground::KnowledgeStore.new(root: @root)
         ground_truth = Ground::GroundTruth.new(event_bus: nil)
-        library_verify = Ground::LibraryVerify.new(root: @root)
-        law_resolver = Ground::LawResolver.new
-        { memory: memory, personality: personality, learnings: learnings,
-          ground_truth: ground_truth, library_verify: library_verify, law_resolver: law_resolver }
+        { memory: memory, personality: personality, learnings: learnings, ground_truth: ground_truth }
       end
     end
   end
