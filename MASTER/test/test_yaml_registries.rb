@@ -128,8 +128,15 @@ class TestRulesYamlRegistry < Minitest::Test
     assert unknown.empty?, "patterns.yml references unknown rules.yml ids: #{unknown.join(', ')}"
   end
 
+  def test_voice_yml_loads_strunk
+    voice = Master.load_yaml(File.join(DATA, "voice.yml"))
+    strunk = voice.dig("voice", "strunk")
+    assert strunk, "voice.yml must define voice.strunk"
+  end
+
   def test_standing_order_voice_directives_match_rules_voice_strunk
-    strunk = data.dig("voice", "strunk")
+    voice = Master.load_yaml(File.join(DATA, "voice.yml"))
+    strunk = voice.dig("voice", "strunk") || data.dig("voice", "strunk")
     orders = Master.load_yaml(Master.state_path)
     autocommit = orders.find { |order| order["name"] == "autocommit_post_chat" }
 

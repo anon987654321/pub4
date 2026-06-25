@@ -34,6 +34,10 @@ module Master
   Observation = Data.define(:ok, :detail) do
     def self.ok(detail = nil) = new(ok: true, detail:)
     def self.no(detail) = new(ok: false, detail:)
+    def ok? = ok
+    def err? = !ok
+    def value! = detail
+    def message = detail.to_s
     def to_s = "#{ok ? 'ok' : 'ERR'}#{detail ? ": #{detail}" : ''}"
   end
 

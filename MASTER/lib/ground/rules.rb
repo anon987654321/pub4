@@ -17,7 +17,9 @@ module Master
         @rules_path = File.join(@data_dir, "rules.yml")
         @soul_path = File.join(@data_dir, "soul.yml")
         @workflow_path = Master.limits_path
+        @voice_path = Master.data_file("voice.yml")
         @data = load_yaml(@rules_path) || {}
+        @voice_data = load_yaml(@voice_path) || {}
         @data["rules"] = load_split_rules
         @soul_data = load_yaml(@soul_path) || {}
         @workflow = load_yaml(@workflow_path) || {}
@@ -80,7 +82,7 @@ module Master
         "## Rules (top #{items.size})\n#{top}"
       end
 
-      def voice = @voice ||= (@data["voice"] || {}).freeze
+      def voice = @voice ||= (@voice_data["voice"] || @data["voice"] || {}).freeze
       def strunk = @strunk ||= (voice["strunk"] || {}).freeze
       def preserve = @preserve ||= (voice["preserve"] || {}).freeze
 

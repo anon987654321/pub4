@@ -21,6 +21,10 @@ module Master
 
     def self.ok(value) = Ok.new(value)
 
+    def self.from_observation(observation)
+      observation.ok? ? ok(observation.detail) : err(observation.message, category: :unknown)
+    end
+
     def self.err(msg, category: :unknown, context: nil)
       raise ArgumentError, "unknown category: #{category}" unless category == :unknown || CATEGORIES.key?(category)
 

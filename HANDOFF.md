@@ -89,8 +89,19 @@ vmctl console vm23
 
 ## Open proof items
 
-- [ ] All six Rails apps: `bundle34 exec bin/ci` green on vm23 (bundler-audit network + copy-tree bundle hygiene)
+- [ ] All six Rails apps: `bundle34 exec bin/ci` green on vm23 (run as app user with `BUNDLER_AUDIT_UPDATE=0`)
 - [ ] Browser smoke on `https://ai.brgen.no/` (WebGL, palette, history sidebar)
+
+### 2026-06-25 (commit `defrag-final`)
+
+| Check | Result |
+|-------|--------|
+| `voice.yml` split from `rules.yml` | done — prune/personality load via `Ground::Rules` |
+| Shared `Master.prepare_runtime!` | `bin/cli`, web initializer, `bootstrap_container` |
+| `Observation`/`Result` bridge | `ok?`/`err?`/`value!` on Observation; `Result.from_observation` |
+| Guard + governor | shell-hint tier check on dangerous patterns |
+| Root shrink | `index.html` → `web/radio_bergen.html`, `.mp3/` → `audio/` |
+| `ci.rb` defaults | `BUNDLER_AUDIT_UPDATE=0`, `NPM_CONFIG_CACHE=~/.npm` |
 
 ### 2026-06-25 (commit `ef45e45c5`)
 

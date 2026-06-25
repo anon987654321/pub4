@@ -2,11 +2,11 @@
 
 Bootstrap for autonomous coding agents (Claude Code, Cursor, Aider, Codex, Continue).
 
-**Primary entry point:** Read `MASTER/QUICKSTART.md` first. It provides a practical mental model and LLM ergonomics guidance (see `data/workflow.yml` → `llm_ergonomics` for constitutional details) without forcing you to swallow the entire constitution upfront.
+**Primary entry point:** Read `MASTER/QUICKSTART.md` first. It provides a practical mental model and LLM ergonomics guidance (see `MASTER/data/limits.yml` → `llm_ergonomics` for constitutional details) without forcing you to swallow the entire constitution upfront.
 
 Only after you have a working model should you dive into the deep sources:
 - `MASTER/data/soul.yml`
-- `data/rules.yml`, `ruby_style.yml`, `workflow.yml`, `standing_orders.yml`
+- `MASTER/data/rules.yml`, `style.yml`, `voice.yml`, `limits.yml`, `state.yml`
 - `CLAUDE.md` (operator environment, SSH, deploy details)
 
 Current MASTER module layout under `MASTER/lib/`:

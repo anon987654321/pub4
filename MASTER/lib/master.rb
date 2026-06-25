@@ -35,6 +35,7 @@ module Master
     ["soul", "data/soul.yml"],
     ["rules", "data/rules.yml"],
     ["style", "data/style.yml"],
+    ["voice", "data/voice.yml"],
     ["limits", "data/limits.yml"],
     ["orders", "data/state.yml"],
     ["playbook", "data/operator_playbook.yml"],
@@ -196,6 +197,12 @@ module Master
     ENV["MASTER_DRIFT"] ||= "0"
   end
 
+  def self.prepare_runtime!(unsafe: false)
+    ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] = "1" if unsafe
+    apply_process_defaults!
+    install_process_guards!
+  end
+
   def self.install_process_guards!
     require_relative "ops/loop_slot"
     require_relative "ops/process_budget"
@@ -313,6 +320,7 @@ module Master
   end
 
   def self.bootstrap_container(root: Dir.pwd)
+    prepare_runtime!
     init_ground(root:)
     container = init_judge(root:)
     init_loop(root:, container:)
@@ -320,7 +328,6 @@ module Master
   end
 
   def self.init_ground(root:)
-    install_process_guards!
     Trace::Telemetry.bootstrap!(root: root)
     Ground::GitHooks.ensure_pre_commit!(root: root)
   end
@@ -345,12 +352,10 @@ module Master
   end
 
   def self.boot(root: Dir.pwd)
-    apply_process_defaults!
-    install_process_guards!
+    prepare_runtime!
     Ground::Pledge.stage1_boot!(root)
     ensure_services!(root: root)
     container = bootstrap_container(root: root)
-    install_process_guards!
     Ground::Pledge.stage2_lock!
     Now::CLI.new(container:)
   end

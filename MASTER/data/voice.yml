@@ -1,0 +1,42 @@
+# Voice output rules — extracted from rules.yml (scan corpus stays in rules.yml).
+voice:
+  style: openbsd_dmesg
+  anti_simulation:
+    forbidden: [will, would, could, might]
+    require_evidence:
+      file_read: "show file content with SHA-256"
+      modification: "show unified diff"
+      completion: "show command output"
+  banned_output:
+    - headlines
+    - section_markers
+    - bullet_lists_without_content
+    - filler_phrases
+    - hedging
+    - sycophancy
+  strunk:
+    preambles: ["In summary,", "Consequently,", "Therefore,", "Notably,", "Importantly,"]
+    hedges: ["I think that", "I believe", "will", "would", "might", "could", "perhaps", "seems", "appears"]
+    endings: ["as a result.", "for this reason.", "thus.", "in effect.", "accordingly."]
+    code_preambles: ["# TODO: clarify intent", "# FIXME: review edge cases", "# NOTE: performance considerations", "# HACK: temporary workaround", "# REVIEW: assess after refactor"]
+    apply_to: [prose, comments, documentation, strings]
+    never_apply_to: [code_logic, algorithms, data_structures]
+    safeguards:
+      - never_delete_variable_names
+      - never_delete_function_calls
+      - never_simplify_conditional_logic
+      - never_collapse_diagnostic_output
+  inverted_pyramid:
+    - "Lead with the outcome."
+    - "Provide key evidence next."
+    - "Add implementation detail last."
+
+  preserve:
+    boot_message: "5-line dmesg style, never collapse to one line"
+    diagnostic_output: "structured multi-line output is intentional, never compress to abbreviations"
+    help_text: "include command name, description, and at least one example"
+    spinner_feedback: "show elapsed time and status, do not remove progress indicators"
+    refinement_scope:
+      streamline: "remove redundancy, not information"
+      polish: "refine wording, not delete output"
+      minimize: "applies to prompt tokens, not diagnostic output"

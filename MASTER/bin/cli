@@ -11,29 +11,12 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "ground/env_loader"
 Master::Ground::EnvLoader.load!
 
-# CPU incident containment: CLI boots safe-idle unless explicitly overridden.
-# Active background loops require MASTER_UNSAFE_PROCESS_DEFAULTS=1 plus explicit env.
-unless ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
-  ENV["MASTER_SAFE_MODE"] ||= "1"
-  ENV["MASTER_BACKGROUND"] ||= "0"
-  ENV["MASTER_AUTOFIX"] ||= "0"
-  ENV["MASTER_WATCH"] ||= "0"
-  ENV["MASTER_WATCHER"] ||= "0"
-  ENV["MASTER_HEARTBEAT"] ||= "0"
-  ENV["MASTER_DRIFT"] ||= "0"
-end
-
 require "set"
 require "optparse"
 require "master"
 require "now/boot_banner"
 require "now/web_server"
-require "ops/loop_slot"
-require "ops/process_budget"
-require "ops/runtime_loop_guards"
-Master::Ops::LoopSlot.validate!
-Master::Ops::ProcessBudget.validate_loop_slot!
-Master::Ops::RuntimeLoopGuards.install!
+Master.prepare_runtime!(unsafe: ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1")
 
 def initial_message_from_argv(argv)
   options = parse_initial_message_options(argv)

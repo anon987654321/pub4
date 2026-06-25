@@ -22,6 +22,7 @@ module MasterContainerLoader
       return config.x.master_container if config.x.master_container
 
       root = Rails.root.join("..").to_s
+      Master.prepare_runtime!
       Master::Voice::TtsSupervisor.ensure_daemon!(root: root)
       container = Master.bootstrap_container(root: root)
       config.x.master_container = container
