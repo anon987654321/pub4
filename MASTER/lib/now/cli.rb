@@ -177,7 +177,7 @@ module Master
 
       def next_action_chips
         base = ["[/undo]", "[/why]", "[/last]"]
-        base.unshift("[/fix #{violations}v]") if violations.positive?
+        base.unshift("[/fix #{violations_count}v]") if violations_count.positive?
         base
       end
 
@@ -202,7 +202,7 @@ module Master
 
       def proposer
         @proposer ||= Propose.new(container: @container)
-        @proposer.violations = violations
+        @proposer.violations = violations_count
         @proposer
       end
 

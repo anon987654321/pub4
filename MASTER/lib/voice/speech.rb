@@ -127,7 +127,6 @@ module Master
         STYLES.fetch(style.to_sym, STYLES[default_style]).dup
       end
 
-
       def infer_style(text, fallback: default_style)
         t = text.to_s.strip
         return fallback if t.empty?

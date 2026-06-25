@@ -15,18 +15,18 @@ module Providers
       "openrouter" => {
         url: "https://openrouter.ai/api/v1/models",
         kind: "llm_router",
-        normalizer: "openrouter"
+        normalizer: "openrouter",
       },
       "replicate" => {
         url: "https://api.replicate.com/v1/models",
         kind: "model_marketplace",
-        normalizer: "replicate"
+        normalizer: "replicate",
       },
       "replicate_github" => {
         url: ENV["REPLICATE_MODELS_INDEX_URL"],
         kind: "github_model_index",
-        normalizer: "replicate"
-      }
+        normalizer: "replicate",
+      },
     }.freeze
 
     def initialize(db_path: DEFAULT_DB)

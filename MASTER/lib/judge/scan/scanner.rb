@@ -15,7 +15,10 @@ module Master
         SCAN_SINCE_EXT = /\.(rb|rake|gemspec|erb|yml|yaml|js|css|sh|zsh)\z/.freeze
         SKIP_PATH_SEGMENTS = %w[
           .git vendor node_modules tmp log coverage .bundle storage cache dist build
-          knowledge fixtures public var
+          knowledge fixtures var
+        ].freeze
+        SKIP_RELATIVE_PATHS = %w[
+          .master runtime web/public/assets web/script/three_build web/node_modules web/tmp web/log
         ].freeze
         REQUIRED_DEPTH = :deep
         GIT_TIMEOUT_SECONDS = 5
@@ -26,17 +29,24 @@ module Master
 
         def self.skip_path?(path, root: nil)
           segments = relative_segments(path, root)
-          SKIP_PATH_SEGMENTS.any? { |segment| segments.include?(segment) }
+          return true if SKIP_PATH_SEGMENTS.any? { |segment| segments.include?(segment) }
+
+          rel = relative_path(path, root)
+          SKIP_RELATIVE_PATHS.any? { |prefix| rel == prefix || rel.start_with?("#{prefix}/") }
         end
 
         def self.relative_segments(path, root)
-          return path.to_s.split(File::SEPARATOR) unless root
+          relative_path(path, root).split(File::SEPARATOR)
+        end
+
+        def self.relative_path(path, root)
+          return path.to_s unless root
 
           expanded = File.expand_path(path)
           base = File.expand_path(root)
-          return [] unless expanded == base || expanded.start_with?("#{base}#{File::SEPARATOR}")
+          return path.to_s unless expanded == base || expanded.start_with?("#{base}#{File::SEPARATOR}")
 
-          expanded.delete_prefix(base).delete_prefix(File::SEPARATOR).split(File::SEPARATOR)
+          expanded.delete_prefix(base).delete_prefix(File::SEPARATOR)
         end
 
         def initialize(rules: nil, event_bus: nil, file_sleep_s: 0)

@@ -12,7 +12,7 @@ module Master
         },
         "scan" => {
           summary: "deep-scan files or directories",
-          detail: ["/scan [--dry-run] [profile] [path]", "Profiles: quick, full, axioms_only, solid_focus, critical. Use --profile NAME for explicit selection. Dry-run reports findings without changes."]
+          detail: ["/scan [--dry-run] [report-filter] [path]", "Always runs at deep depth. Report filters after the scan: full, core, axioms, solid, critical. Use --profile NAME for explicit selection. Dry-run reports findings without changes."]
         },
         "self" => {
           summary: "scan MASTER itself",

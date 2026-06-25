@@ -14,12 +14,11 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
 require "open3"
 require "set"
-require "yaml"
 
 CRITICAL_SEVERITIES = %i[critical error veto].freeze
 
 KERNEL_RULES = begin
-  data = YAML.safe_load_file(File.join(Master::ROOT, "data", "rules.yml"), aliases: true)
+  data = Master.load_rules(root: Master::ROOT)
   rules = (data["rules"] || {}).values.flatten
   rules.select { |r| r["tier"] == "kernel" }.map { |r| r["id"].to_s.downcase }.to_set
 rescue StandardError => e

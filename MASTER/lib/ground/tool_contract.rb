@@ -69,7 +69,7 @@ module Master
           name: :repligen, inputs: { args: :optional },
           output_shape: %i[stdout stderr exit_code], permission: :network, timeout_s: 900,
           max_retries: 0, side_effects: %i[network process filesystem], category: :reach
-        )
+        ),
       }.freeze
 
       module_function

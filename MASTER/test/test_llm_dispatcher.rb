@@ -82,6 +82,26 @@ class TestLLMDispatcher < Minitest::Test
     refute dispatcher.send(:tool_available_for_context?, { "file_types" => [".rb"] })
   end
 
+  def test_send_claude_cli_returns_timeout_error
+    dispatcher, _session, _bus = build_dispatcher
+    def dispatcher.capture3_with_timeout(_timeout_s, *_args, **)
+      raise Timeout::Error
+    end
+    result = dispatcher.send(:send_claude_cli, "claude-sonnet-4-6", [{ role: "user", content: "hi" }], sys: nil)
+    assert_instance_of Master::Result::Err, result
+    assert_equal :timeout, result.category
+    assert_match(/timed out after 60s/, result.message)
+  end
+
+  def test_claude_cli_timeout_reads_env_override
+    dispatcher, _session, _bus = build_dispatcher
+    old = ENV["MASTER_CLAUDE_CLI_TIMEOUT"]
+    ENV["MASTER_CLAUDE_CLI_TIMEOUT"] = "12"
+    assert_equal 12, dispatcher.send(:claude_cli_timeout_s)
+  ensure
+    old.nil? ? ENV.delete("MASTER_CLAUDE_CLI_TIMEOUT") : ENV["MASTER_CLAUDE_CLI_TIMEOUT"] = old
+  end
+
   private
 
   def build_dispatcher

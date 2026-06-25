@@ -4,6 +4,7 @@ require "ruby_llm"
 require "digest"
 require "json"
 require "open3"
+require "timeout"
 require_relative "llm_dispatcher/react_loop"
 require_relative "llm_dispatcher/ruby_llm_sender"
 require_relative "llm_dispatcher/tool_registry"
@@ -17,6 +18,7 @@ module Master
       CACHE_WINDOW = 4
       REACT_MAX_STEPS = 8
       MS_PER_SECOND = 1000
+      CLAUDE_CLI_TIMEOUT_S = 60
       CLAUDE_RE = /\Aclaude-|anthropic\/claude/i.freeze
       VISION_RE = /gemini-[12]|claude|gpt-4o|gpt-4\.1|llama-4|qwen.*vl|pixtral|gemma-[34]|vision/i.freeze
       NON_VISION_RE = /glm|nemotron|deepseek(?!.*vl)|qwen3-next|gpt-oss|phi-4/i.freeze
@@ -28,7 +30,7 @@ module Master
         /sk-[A-Za-z0-9_\-]{16,}/,
         /sk-ant-[A-Za-z0-9_\-]{16,}/,
         /Bearer\s+[A-Za-z0-9_\-\.]{16,}/i,
-        /\b[A-Za-z0-9]{32,}\b/
+        /\b[A-Za-z0-9]{32,}\b/,
       ].freeze
 
       LLM_TOOL_MAP = {
@@ -46,7 +48,7 @@ module Master
         Reach::FeedbackRecord => Reach::LLM::FeedbackRecord,
         Reach::MemoryRecord => Reach::LLM::MemoryRecord,
         Reach::Repligen => Reach::LLM::Repligen,
-        Reach::Postpro => Reach::LLM::Postpro
+        Reach::Postpro => Reach::LLM::Postpro,
       }.freeze
 
       def self.build_tool_capable_re
@@ -147,11 +149,52 @@ module Master
       def send_claude_cli(model_alias, messages, sys:)
         args = ["claude", "--print", "--model", model_alias]
         args += ["--system-prompt", sys] if sys && !sys.empty?
-        out, err, status = Open3.capture3(*args, stdin_data: text_prompt_for(messages))
+        timeout_s = claude_cli_timeout_s
+        out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: text_prompt_for(messages))
         return Result.err("claude-cli: #{err.strip}", category: :provider_error) unless status.success?
         Result.ok(out.strip)
+      rescue Timeout::Error
+        Result.err("claude-cli: timed out after #{timeout_s}s", category: :timeout)
       rescue StandardError => e
         Result.err("claude-cli: #{e.message}", category: :provider_error)
+      end
+
+      def capture3_with_timeout(timeout_s, *cmd, stdin_data: nil)
+        Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thr|
+          stdin.write(stdin_data) if stdin_data
+          stdin.close
+          out_reader = Thread.new { stdout.read }
+          err_reader = Thread.new { stderr.read }
+          if wait_thr.join(timeout_s)
+            [out_reader.value, err_reader.value, wait_thr.value]
+          else
+            terminate_subprocess(wait_thr)
+            [stdout, stderr].each(&:close)
+            out_reader.kill
+            err_reader.kill
+            raise Timeout::Error
+          end
+        end
+      end
+
+      def terminate_subprocess(wait_thr)
+        begin
+          Process.kill("TERM", wait_thr.pid)
+        rescue Errno::ESRCH
+          return
+        end
+        return if wait_thr.join(0.5)
+        begin
+          Process.kill("KILL", wait_thr.pid)
+        rescue Errno::ESRCH
+          nil
+        end
+      end
+
+      def claude_cli_timeout_s
+        Integer(ENV.fetch("MASTER_CLAUDE_CLI_TIMEOUT", CLAUDE_CLI_TIMEOUT_S.to_s))
+      rescue ArgumentError
+        CLAUDE_CLI_TIMEOUT_S
       end
 
       def send_web_chat(provider, messages, sys:)

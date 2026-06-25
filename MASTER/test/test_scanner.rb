@@ -118,19 +118,30 @@ class TestScanner < Minitest::Test
     end
   end
 
-  def test_scan_dir_skips_vendor_and_tmp_segments
+  def test_scan_dir_skips_runtime_generated_and_vendor_segments
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "vendor", "bundle", "gems"))
       FileUtils.mkdir_p(File.join(dir, "app"))
       FileUtils.mkdir_p(File.join(dir, "tmp"))
+      FileUtils.mkdir_p(File.join(dir, ".master"))
+      FileUtils.mkdir_p(File.join(dir, "runtime"))
+      FileUtils.mkdir_p(File.join(dir, "web", "public", "assets"))
+      FileUtils.mkdir_p(File.join(dir, "web", "public"))
+      FileUtils.mkdir_p(File.join(dir, "web", "script", "three_build"))
       File.write(File.join(dir, "vendor", "bundle", "gems", "bad.rb"), "puts 'vendor'\n")
       File.write(File.join(dir, "app", "good.rb"), "puts 'app'\n")
       File.write(File.join(dir, "tmp", "scratch.rb"), "puts 'tmp'\n")
+      File.write(File.join(dir, ".master", "cache.rb"), "puts 'cache'\n")
+      File.write(File.join(dir, "runtime", "event.rb"), "puts 'runtime'\n")
+      File.write(File.join(dir, "web", "public", "assets", "face-123.js"), "console.log('asset')\n")
+      File.write(File.join(dir, "web", "public", "face.js"), "console.log('source')\n")
+      File.write(File.join(dir, "web", "script", "three_build", "vendor.js"), "console.log('vendor')\n")
       scanner = PathScanner.new(rules: [])
 
       scanner.scan_dir(dir)
 
-      assert_equal [File.join(dir, "app", "good.rb")], scanner.seen
+      assert_equal [File.join(dir, "app", "good.rb"), File.join(dir, "web", "public", "face.js")].sort,
+        scanner.seen.sort
     end
   end
 

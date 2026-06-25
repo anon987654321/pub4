@@ -28,12 +28,37 @@ module Master
   DATA = File.join(ROOT, "data").freeze
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
   RULES_PATH = File.join(DATA, "rules.yml").freeze
+  BOOTSTRAP_AUTHORITY_FILES = [
+    ["quickstart", "QUICKSTART.md"],
+    ["agents", "AGENTS.md"],
+    ["soul", "data/soul.yml"],
+    ["rules", "data/rules.yml"],
+    ["style", "data/ruby_style.yml"],
+    ["workflow", "data/workflow.yml"],
+    ["orders", "data/standing_orders.yml"],
+    ["playbook", "data/operator_playbook.yml"],
+    ["operator", "../CLAUDE.md"],
+  ].freeze
 
   # Single source for all constitution / config data files.
   # Improves SINGULARITY and DENSITY by eliminating repeated
   # File.join(Master::ROOT, "data", ...) constructions across the codebase.
   def self.data_path(*parts)
     File.join(DATA, *parts)
+  end
+
+  def self.rule_count(root: ROOT)
+    rules = load_rules(root:).fetch("rules", {})
+    rules.values.flatten.count { |rule| rule.is_a?(Hash) && rule["id"].to_s.strip != "" }
+  rescue StandardError
+    0
+  end
+
+  def self.authority_paths(root: ROOT)
+    BOOTSTRAP_AUTHORITY_FILES.filter_map do |label, rel|
+      path = File.expand_path(rel, root)
+      [label, path] if File.exist?(path)
+    end
   end
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"

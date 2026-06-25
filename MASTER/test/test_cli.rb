@@ -107,9 +107,10 @@ class TestCLI < Minitest::Test
     detail = Master::Now::CommandRegistry.help_text("scan")
 
     assert_includes summary, "/scan - deep-scan files or directories"
-    refute_includes summary, "Profiles:"
-    assert_includes detail, "/scan [--dry-run] [profile] [path]"
-    assert_includes detail, "Profiles:"
+    refute_includes summary, "Report filters"
+    assert_includes detail, "/scan [--dry-run] [report-filter] [path]"
+    assert_includes detail, "Always runs at deep depth"
+    assert_includes detail, "Report filters"
   end
 
   def test_prompt_refreshes_skills_before_rendering
@@ -184,6 +185,20 @@ class TestCLI < Minitest::Test
 
     assert_equal "critical", profile
     assert_nil plain
+  end
+
+  def test_legacy_quick_scan_profile_resolves_to_core_report_filter
+    profile, = Master::Now::CommandRegistry.resolve_scan_profile("quick lib", Master::ROOT)
+
+    assert_equal "core", profile
+  end
+
+  def test_orient_reports_generated_rule_count_and_authority_paths
+    output = Master::Now::CommandRegistry.dispatch_orient(Master::ROOT, ctx: { args: "" })
+
+    assert_includes output, "rules: #{Master.rule_count(root: Master::ROOT)} registered"
+    assert_includes output, "authority:"
+    assert_includes output, "data/rules.yml"
   end
 
   def test_routine_success_emits_one_line

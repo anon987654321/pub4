@@ -24,7 +24,7 @@ module Master
           SecurityAgent.new,
           PerformanceAgent.new,
           StyleAgent.new,
-          ArchitectureAgent.new(root: @root, code_index: @code_index, reference_graph: @reference_graph)
+          ArchitectureAgent.new(root: @root, code_index: @code_index, reference_graph: @reference_graph),
         ]
 
         queue = Queue.new

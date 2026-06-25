@@ -17,9 +17,9 @@ class TestSessionCapture < Minitest::Test
       assert_match(/capture: recorded/, result)
       assert_includes File.read(File.join(dir, "runtime", "session_learnings.md")), "What new techniques were discovered?"
 
-      patterns = YAML.safe_load_file(File.join(dir, "data", "patterns.yml"))
-      openbsd = YAML.safe_load_file(File.join(dir, "data", "openbsd.yml"))
-      soul = YAML.safe_load_file(File.join(dir, "data", "soul.yml"))
+      patterns = Master.load_yaml(File.join(dir, "data", "patterns.yml"))
+      openbsd = Master.load_yaml(File.join(dir, "data", "openbsd.yml"))
+      soul = Master.load_yaml(File.join(dir, "data", "soul.yml"))
 
       assert_includes patterns.dig("session_capture", "high_yield_prompts"), "show evidence"
       assert_includes openbsd["providers"], "OpenBSD rcctl"

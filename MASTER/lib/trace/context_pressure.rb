@@ -14,7 +14,7 @@ module Master
           limit: cap,
           pct: pct,
           band: band_for(pct),
-          headroom: [cap - est, 0].max
+          headroom: [cap - est, 0].max,
         }
       end
 

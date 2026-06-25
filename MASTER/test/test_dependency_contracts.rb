@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "yaml"
 
 class TestDependencyContracts < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -18,7 +17,7 @@ class TestDependencyContracts < Minitest::Test
   def test_prism_dependency_matches_ruby_language_support
     require "prism"
 
-    rules = YAML.load_file(File.join(ROOT, "data", "rules.yml"), aliases: true)
+    rules = Master.load_yaml(File.join(ROOT, "data", "rules.yml"))
     ruby_version = rules.dig("languages", "ruby", "version")
 
     assert_equal "3.3+", ruby_version

@@ -5,7 +5,7 @@ class TtsController < ApplicationController
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 
-    voice_key, synth_style, rate, pitch = tts_voice_and_style
+    voice_key, synth_style, rate, pitch = tts_voice_and_style(text)
     publish_tts_style(voice_key, synth_style)
     job = TtsJob.enqueue(text: text, voice: voice_key, style: synth_style, rate: rate, pitch: pitch, bus: container[:bus])
     etag = %("#{job.job_id}")
@@ -34,11 +34,10 @@ class TtsController < ApplicationController
     @web_logger ||= WebEventLogger.new(container[:bus])
   end
 
-  def tts_voice_and_style
+  def tts_voice_and_style(text)
     personality = container[:personality]
     voice_key = resolve_tts_voice(params[:voice], personality&.voice)
-    style = params[:style].to_s.strip.to_sym
-    synth_style = Master::Voice::Speech::STYLES.key?(style) ? style : :auto
+    synth_style = resolve_tts_style(params[:style], text)
     rate = params[:rate].presence || personality&.tts_rate
     pitch = params[:pitch].presence || personality&.tts_pitch
     [voice_key, synth_style, rate, pitch]
@@ -48,6 +47,13 @@ class TtsController < ApplicationController
     candidate = raw.to_s.strip
     candidate = fallback_voice.to_s if candidate.empty? && fallback_voice
     Master::Voice::Speech.resolve_voice(candidate.empty? ? Master::Voice::Speech::DEFAULT_VOICE : candidate)
+  end
+
+  def resolve_tts_style(raw_style, text)
+    style = raw_style.to_s.strip.to_sym
+    return style if Master::Voice::Speech::STYLES.key?(style)
+
+    Master::Voice::Speech.infer_style(text, fallback: Master::Voice::Speech.default_style)
   end
 
   def tts_job_response(job)

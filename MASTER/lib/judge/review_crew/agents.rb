@@ -12,7 +12,7 @@ module Master
             message: message,
             line: line,
             suggestion: suggestion,
-            file: file
+            file: file,
           }.compact
         end
       end
@@ -52,7 +52,7 @@ module Master
           [/\b[A-Z][A-Za-z0-9_:]*\.constantize\b/, ".constantize", "replace string constant lookup with a whitelist"],
           [/\bdynamic\s+send\s*\(|\bsend\s*\(/, "dynamic send()", "prefer explicit method calls or a whitelist"],
           [/\b(sql|execute)\b.*[#"]\{/, "SQL interpolation", "use parameterized queries"],
-          [/\bhtml_safe\b/, "html_safe", "escape content or use a safe partial"]
+          [/\bhtml_safe\b/, "html_safe", "escape content or use a safe partial"],
         ].freeze
 
         def initialize

@@ -35,7 +35,7 @@ module Master
           threshold: TOUCH_TARGET_MIN_PX,
           message: "min-height %dpx below #{TOUCH_TARGET_MIN_PX}px WCAG touch target (2.5.8)",
           severity: :high
-        )
+        ),
       ].freeze
 
       PATTERN_RULES = [
@@ -62,7 +62,7 @@ module Master
           threshold: nil,
           message: "linear timing function — prefer ease-out or cubic-bezier for perceived smoothness",
           severity: :low
-        )
+        ),
       ].freeze
 
       HTML_CHECKS = {
@@ -71,7 +71,7 @@ module Master
         focus_ring: { pattern: /focus-visible|:focus\b/,
           message: "no focus-visible styles found", severity: :high },
         form_labels: { pattern: /<label\b/,
-          message: "form found but no <label> elements", severity: :medium }
+          message: "form found but no <label> elements", severity: :medium },
       }.freeze
 
       def audit(app_path)

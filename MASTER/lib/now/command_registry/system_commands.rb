@@ -46,11 +46,23 @@ module Master
         [
           "MASTER — constitutional AI runtime for any text artifact",
           "modules: now · loop · judge · voice · ground · reach · trace",
+          "rules: #{Master.rule_count(root: root)} registered",
           "pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render",
+          "",
+          "authority:",
+          *Master.authority_paths(root: root).map { |label, path| "  #{label.ljust(10)} #{relative_or_absolute(root, path)}" },
           "",
           "constitution:",
           *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{path.ljust(28)} #{desc}" },
         ].join("\n")
+      end
+
+      def relative_or_absolute(root, path)
+        expanded_root = File.expand_path(root)
+        expanded_path = File.expand_path(path)
+        return expanded_path.delete_prefix("#{expanded_root}/") if expanded_path.start_with?("#{expanded_root}/")
+
+        expanded_path
       end
 
       def cat_orient(root, arg)

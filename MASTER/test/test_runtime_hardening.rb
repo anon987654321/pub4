@@ -73,6 +73,25 @@ class RuntimeHardeningTest < Minitest::Test
     end
   end
 
+  def test_semantic_cache_does_not_cache_transient_timeout_errors
+    Dir.mktmpdir do |dir|
+      cache = Master::Reach::SemanticCache.new(root: dir, ttl: 60)
+      calls = 0
+      first = cache.fetch("prompt", "model") do
+        calls += 1
+        Master::Result.err("claude-cli: timed out after 60s", category: :timeout)
+      end
+      second = cache.fetch("prompt", "model") do
+        calls += 1
+        Master::Result.ok("recovered")
+      end
+
+      assert_equal :timeout, first.category
+      assert_equal "recovered", second.value!
+      assert_equal 2, calls
+    end
+  end
+
   def test_semantic_cache_uses_five_minute_default_and_expires_stale_entries
     assert_equal 300, Master::Reach::SemanticCache::DEFAULT_TTL
     Dir.mktmpdir do |dir|

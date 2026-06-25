@@ -15,7 +15,7 @@ module Master
         /\$ .+/,
         /exit code:?\s*\d/i,
         /scan:/i,
-        /violation/i
+        /violation/i,
       ].freeze
 
       def initialize(rules: nil)

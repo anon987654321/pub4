@@ -30,7 +30,7 @@ module Master
           votes: {},
           status: "open",
           enacted_at: nil,
-          hash: Digest::SHA256.hexdigest("#{principle_id}:#{new_text}:#{proposer}")
+          hash: Digest::SHA256.hexdigest("#{principle_id}:#{new_text}:#{proposer}"),
         }
         @amendments[amendment[:id]] = amendment
         save_amendments

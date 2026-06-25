@@ -58,7 +58,7 @@ module Master
           "MASTER_AUTOFIX" => "0",
           "MASTER_WATCH" => "0",
           "MASTER_HEARTBEAT" => "0",
-          "MASTER_SELF_EVOLUTION" => "0"
+          "MASTER_SELF_EVOLUTION" => "0",
         }
         out, status = Open3.capture2e(env, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", "--message", message, chdir: root)
         { status: status.success? ? :ok : :failed, output: out.to_s.lines.last(80).join }

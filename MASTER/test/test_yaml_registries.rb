@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "yaml"
 require "set"
 require "unwrap_error"
 
@@ -27,19 +26,19 @@ class TestYamlRegistries < Minitest::Test
     define_method(:"test_#{filename.tr('.', '_')}_parses") do
       path = File.join(DATA, filename)
       assert File.exist?(path), "#{filename} missing"
-      data = YAML.load_file(path, aliases: true)
+      data = Master.load_yaml(path)
       assert_kind_of Hash, data, "#{filename} root must be a Hash"
     end
 
     define_method(:"test_#{filename.tr('.', '_')}_required_keys") do
-      data = YAML.load_file(File.join(DATA, filename), aliases: true)
+      data = Master.load_yaml(File.join(DATA, filename))
       spec[:required_keys].each do |key|
         assert data.key?(key), "#{filename} missing top-level key: #{key}"
       end
     end
 
     define_method(:"test_#{filename.tr('.', '_')}_arrays_non_empty") do
-      data = YAML.load_file(File.join(DATA, filename), aliases: true)
+      data = Master.load_yaml(File.join(DATA, filename))
       spec[:arrays].each do |key|
         next unless data.key?(key)
         val = data[key]
@@ -52,7 +51,7 @@ end
 class TestPatternsNamespaces < Minitest::Test
   PATTERNS_NAMESPACES.each do |namespace, inner_keys|
     define_method(:"test_patterns_#{namespace}_namespace_populated") do
-      data = YAML.load_file(File.join(DATA, "patterns.yml"), aliases: true)
+      data = Master.load_yaml(File.join(DATA, "patterns.yml"))
       ns = data[namespace]
       assert_kind_of Hash, ns, "patterns.yml[#{namespace}] must be a Hash"
       inner_keys.each do |key|
@@ -108,7 +107,7 @@ class TestRulesYamlRegistry < Minitest::Test
   end
 
   def test_soul_golden_rule_maps_to_kernel_preserve_rule
-    soul = YAML.load_file(File.join(DATA, "soul.yml"), aliases: true)
+    soul = Master.load_yaml(File.join(DATA, "soul.yml"))
     preserve_rule = rules.find { |rule| rule["id"] == "PRESERVE_FIRST" }
 
     assert_equal "PRESERVE_THEN_IMPROVE_NEVER_BREAK", soul.dig("absolute", "golden_rule")
@@ -127,7 +126,7 @@ class TestRulesYamlRegistry < Minitest::Test
 
   def test_standing_order_voice_directives_match_rules_voice_strunk
     strunk = data.dig("voice", "strunk")
-    orders = YAML.load_file(File.join(DATA, "standing_orders.yml"), aliases: true)
+    orders = Master.load_yaml(File.join(DATA, "standing_orders.yml"))
     autocommit = orders.find { |order| order["name"] == "autocommit_post_chat" }
 
     assert_includes strunk.fetch("apply_to"), "prose"
@@ -142,11 +141,11 @@ class TestRulesYamlRegistry < Minitest::Test
   end
 
   def data
-    @data ||= YAML.load_file(File.join(DATA, "rules.yml"), aliases: true)
+    @data ||= Master.load_yaml(File.join(DATA, "rules.yml"))
   end
 
   def patterns
-    @patterns ||= YAML.load_file(File.join(DATA, "patterns.yml"), aliases: true)
+    @patterns ||= Master.load_yaml(File.join(DATA, "patterns.yml"))
   end
 
   def rule_reference_values(object)
@@ -189,7 +188,7 @@ class TestClusterConsistency < Minitest::Test
 
   CLUSTER_FILES.each do |filename|
     define_method(:"test_#{filename.tr('.', '_')}_no_duplicate_ids") do
-      data  = YAML.load_file(File.join(DATA, filename), aliases: true)
+      data  = Master.load_yaml(File.join(DATA, filename))
       items = Array(data["clusters"])
       ids   = items.map { |c| c["id"] || c["name"] }.compact
       dups  = ids.tally.select { |_, n| n > 1 }.keys
@@ -198,7 +197,7 @@ class TestClusterConsistency < Minitest::Test
   end
 
   def test_patterns_repo_topics_no_duplicate_ids
-    data  = YAML.load_file(File.join(DATA, "patterns.yml"), aliases: true)
+    data  = Master.load_yaml(File.join(DATA, "patterns.yml"))
     items = Array(data.dig("repo_topics", "clusters"))
     ids   = items.map { |c| c["id"] || c["name"] }.compact
     dups  = ids.tally.select { |_, n| n > 1 }.keys
@@ -206,10 +205,34 @@ class TestClusterConsistency < Minitest::Test
   end
 
   def test_patterns_prompt_archaeology_no_duplicate_ids
-    data  = YAML.load_file(File.join(DATA, "patterns.yml"), aliases: true)
+    data  = Master.load_yaml(File.join(DATA, "patterns.yml"))
     items = Array(data.dig("prompt_archaeology", "clusters"))
     ids   = items.map { |c| c["id"] || c["name"] }.compact
     dups  = ids.tally.select { |_, n| n > 1 }.keys
     assert dups.empty?, "patterns.yml[prompt_archaeology][clusters] has duplicate ids: #{dups.join(', ')}"
+  end
+end
+
+class TestConstitutionYamlLoading < Minitest::Test
+  ALLOWED_DIRECT_LOADS = %w[
+    lib/master.rb
+    spec/smoke/static_syntax_spec.rb
+  ].freeze
+
+  def test_data_yml_runtime_readers_use_master_loader
+    files = Dir.glob(File.join(Master::ROOT, "{bin,lib,test,spec}/**/*.{rb,rake}"))
+    offenders = files.flat_map do |path|
+      rel = path.delete_prefix("#{Master::ROOT}/")
+      next [] if ALLOWED_DIRECT_LOADS.include?(rel)
+
+      File.readlines(path, chomp: true).filter_map.with_index(1) do |line, line_no|
+        next unless line.match?(/YAML\.(?:safe_)?load_file/)
+        next unless line.match?(/Master\.data_path|Master::DATA|File\.join\([^)]*\bDATA\b|File\.join\([^)]*"data"/)
+
+        "#{rel}:#{line_no}"
+      end
+    end
+
+    assert_empty offenders, "constitutional YAML must load through Master.load_yaml: #{offenders.join(', ')}"
   end
 end

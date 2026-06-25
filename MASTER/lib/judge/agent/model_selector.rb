@@ -9,7 +9,7 @@ module Master
           research: :explanation,
           qa: :explanation,
           architecture: :code_generation,
-          general: :general
+          general: :general,
         }.freeze
 
         private

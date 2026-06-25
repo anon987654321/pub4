@@ -44,6 +44,21 @@ const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'ms-MY-OsmanNeural';
+function emitTtsEvent(type, detail = {}) {
+  const payload = { ...detail, type };
+  window.dispatchEvent(new CustomEvent(type, { detail: payload }));
+  if (window.MASTEREvents?.normalize && window.MASTEREvents?.dispatch) {
+    window.MASTEREvents.dispatch(window.MASTEREvents.normalize(payload));
+    return;
+  }
+  window.MASTERVisual?.event?.(type, {
+    topology: 'papua-mask',
+    entropy: detail.entropy ?? 0.18,
+    confidence: detail.confidence ?? 0.86,
+    mode: detail.mode || type,
+    raw: payload
+  });
+}
 function _activeTtsVoice() {
   const persona = window.MASTER_PERSONA || {};
   return State.voiceName || persona.voice || TTS_DEFAULT_VOICE;
@@ -156,10 +171,10 @@ function ttsURL(text, voice, style) {
   return `/chat/tts?${qs.toString()}`;
 }
 
-async function ttsCacheKey(text, voice) {
+async function ttsCacheKey(text, voice, style) {
   if (!window.crypto || !crypto.subtle || !window.TextEncoder) return null;
   const persona = window.MASTER_PERSONA || {};
-  const material = `${voice || TTS_DEFAULT_VOICE}|${arguments[2] || 'auto'}|${persona.tts_rate || ''}|${persona.tts_pitch || ''}|${text}`;
+  const material = `${voice || TTS_DEFAULT_VOICE}|${style || 'auto'}|${persona.tts_rate || ''}|${persona.tts_pitch || ''}|${text}`;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(material));
   return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
@@ -286,6 +301,10 @@ function hasAnalyserBuffers() {
 }
 
 function finishTTSPlayback(src, continueQueue = true) {
+  const finishedText = tts.current || tts.lastText || '';
+  if (tts.playing || finishedText) {
+    emitTtsEvent('tts:playback:end', { text: finishedText, interrupted: !continueQueue, backend: 'edge' });
+  }
   setTTSLoading(false);
   stopVisemeAnim();
   rootBody.dataset.ttsWave = '';
@@ -299,6 +318,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
   if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
+  tts.current = null;
   if (continueQueue) ttsTick();
 }
 
@@ -306,13 +326,17 @@ const VOWEL_VISEME = { a:'A', e:'E', i:'I', o:'O', u:'U' };
 
 function setViseme(ch) {
   const c = (ch || '').toLowerCase();
+  const previous = State.viseme;
   State.viseme = VOWEL_VISEME[c] || (('mbpfwv'.indexOf(c) >= 0) ? 'M' : 'E');
   State.visemeAmp = 1.0;
+  if (previous !== State.viseme) emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
 }
 
 function clearViseme() {
+  const previous = State.viseme;
   State.viseme = 'neutral';
   State.visemeAmp = 0;
+  if (previous !== 'neutral') emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
 }
 
 function fetchTTS(text) {
@@ -322,13 +346,27 @@ function fetchTTS(text) {
   tts.prefetch.set(text, p);
 }
 
+function dropQueuedSpeech(text) {
+  const index = tts.queue.indexOf(text);
+  if (index >= 0) tts.queue.splice(index, 1);
+}
+
+function nextQueuedSpeech() {
+  return tts.lanes.error[0] || tts.lanes.nudge[0] || tts.lanes.response[0] || tts.queue[0];
+}
+
 function dequeueTtsLane() {
-  return tts.lanes.error.shift() || tts.lanes.nudge.shift() || tts.lanes.response.shift() || tts.queue.shift();
+  const text = tts.lanes.error.shift() || tts.lanes.nudge.shift() || tts.lanes.response.shift();
+  if (text) {
+    dropQueuedSpeech(text);
+    return text;
+  }
+  return tts.queue.shift();
 }
 
 function enqueueSpeech(text, opts = {}) {
   if (tts.muted) return;
-  window.dispatchEvent(new CustomEvent('tts:anticipate', { detail: { expression: { arousal: 0.25 } } }));
+  emitTtsEvent('tts:anticipate', { expression: { arousal: 0.25 }, style: _nextTtsStyle(_nextTtsVoice()) });
   window.MASTERVisual?.event?.('tts:prefetch', { topology: 'papua-mask', entropy: 0.22, confidence: 0.8, mode: 'anticipate' });
   const clean = text
     .replace(/```[\s\S]*?```/g, '')
@@ -376,13 +414,19 @@ function speakWithBrowserTTS(text, token) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
   utterance.rate = getTtsRate();
-  utterance.onstart = () => { startVisemeAnim(text); setTTSLoading(false); };
+  utterance.onstart = () => {
+    emitTtsEvent('tts:playback:start', { text, backend: 'browser', duration: null });
+    startVisemeAnim(text);
+    setTTSLoading(false);
+  };
   utterance.onend = utterance.onerror = () => {
     if (token !== tts.cancelToken) return;
+    emitTtsEvent('tts:playback:end', { text, interrupted: false, backend: 'browser' });
     stopVisemeAnim();
     clearViseme();
     tts.playing = false;
     tts.audio = null;
+    tts.current = null;
     if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
     if (State.mode === 'speaking') State.mode = 'idle';
     ttsTick();
@@ -400,6 +444,7 @@ function ttsTick() {
   if (tts.muted || tts.playing || tts.paused) return;
   const text = dequeueTtsLane();
   if (!text) return;
+  tts.current = text;
   tts.playing = true;
   const token = ++tts.cancelToken;
   setTTSLoading(true);
@@ -409,14 +454,15 @@ function ttsTick() {
   tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: requeue'); requeueChunk(text); finishTTSPlayback(null, true); } }, wdMs);
   State.mode = 'speaking'; setAmbientHum(false);
   if (tts.serverUnavailable && speakWithBrowserTTS(text, token)) return;
-  if (tts.serverUnavailable) { tts.playing = false; setTTSLoading(false); ttsTick(); return; }
+  if (tts.serverUnavailable) { tts.playing = false; tts.current = null; setTTSLoading(false); ttsTick(); return; }
   const meta = tts.meta.get(text) || {};
   const voice = meta.voice || _activeTtsVoice();
   const style = meta.style;
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice, style);
   tts.prefetch.delete(text);
   tts.meta.delete(text);
-  if (tts.queue[0]) fetchTTS(tts.queue[0]);
+  const nextSpeech = nextQueuedSpeech();
+  if (nextSpeech) fetchTTS(nextSpeech);
 
   let settled = false;
 
@@ -442,6 +488,7 @@ function ttsTick() {
     if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
     connectTTSAudio(audio).catch(() => {});
     audio.onplay = () => {
+      emitTtsEvent('tts:playback:start', { text, voice, style, duration: dur || audio.duration || null, backend: 'edge' });
       startVisemeAnim(text);
       if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
       rootBody.dataset.ttsWave = 'true';
@@ -455,7 +502,7 @@ function ttsTick() {
     .catch(() => {
       tts.serverUnavailable = true;
       if (speakWithBrowserTTS(text, token)) return;
-      tts.audio = null; tts.playing = false; setTTSLoading(false);
+      tts.audio = null; tts.playing = false; tts.current = null; setTTSLoading(false);
       requeueChunk(text);
       const s = document.getElementById('zsh-status');
       if (s && (tts.attempts.get(text) || 0) >= 3) {

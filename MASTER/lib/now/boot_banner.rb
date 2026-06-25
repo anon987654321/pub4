@@ -32,9 +32,13 @@ module Master
         return "scan+face+council" if spots.empty?
 
         index = Time.now.to_i / 86_400 % spots.size
-        spots[index]
+        format_motd_spot(spots[index])
       rescue StandardError
         "scan+face+council"
+      end
+
+      def format_motd_spot(spot)
+        spot.to_s.gsub("%{rule_count}", Master.rule_count(root: Master::ROOT).to_s)
       end
     end
   end

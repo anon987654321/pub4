@@ -46,8 +46,8 @@ module Master
 
         @bus&.publish("cache:miss", key:)
         result = blk.call
-        fuzzy_index.remember(prompt, result)
-        @lock.synchronize { write_entry(path:, value: result, key:) }
+        fuzzy_index.remember(prompt, result) if cacheable_result?(result)
+        @lock.synchronize { write_entry(path:, value: result, key:) } if cacheable_result?(result)
         result
       end
 
@@ -81,7 +81,15 @@ module Master
         end
       end
 
+      TRANSIENT_ERROR_CATEGORIES = %i[timeout no_api_key rate_limit].freeze
+
       private
+
+      def cacheable_result?(result)
+        return true unless defined?(Master::Result::Err) && result.is_a?(Master::Result::Err)
+
+        !TRANSIENT_ERROR_CATEGORIES.include?(result.category)
+      end
 
       def cache_key(prompt, model) = Digest::SHA256.hexdigest("#{prompt}::#{model}")
       def cache_path(key) = File.join(@root, "#{key}.json")

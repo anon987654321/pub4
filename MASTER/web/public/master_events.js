@@ -9,7 +9,14 @@
     "llm:routed": { targets: ["face", "ecology"], fields: ["model", "task_type"] },
     "pressure:updated": { targets: ["ecology", "face"], fields: ["pct", "tokens", "limit"] },
     "ctx:footer": { targets: ["face"], fields: ["pct", "token_est", "model"] },
-    "tts:anticipate": { targets: ["face"], fields: ["expression"] },
+    "tts:anticipate": { targets: ["face"], fields: ["style", "expression"] },
+    "tts:style:active": { targets: ["face"], fields: ["style", "rate", "pitch", "expression"] },
+    "tts:playback:start": { targets: ["face"], fields: ["text", "voice", "style", "duration", "backend"] },
+    "tts:playback:end": { targets: ["face"], fields: ["text", "interrupted", "backend"] },
+    "tts:viseme": { targets: ["face"], fields: ["shape", "amp"] },
+    "face3d:ready": { targets: ["face"], fields: ["topology", "mode"] },
+    "face3d:nonblank": { targets: ["face"], fields: ["lit_pixels"] },
+    "face3d:error": { targets: ["face"], fields: ["raw"] },
     "self_violation": { targets: ["face"], fields: [] }
   };
 

@@ -215,6 +215,25 @@ window.addEventListener('tts:anticipate', (ev) => {
   State.pulse = Math.max(State.pulse || 0, 0.35);
 });
 
+window.addEventListener('tts:playback:start', (ev) => {
+  const d = ev.detail || {};
+  State.mode = 'speaking';
+  State.pulse = Math.max(State.pulse || 0, 0.28);
+  State.currentSpeechStyle = d.style || State.currentSpeechStyle || 'calm';
+});
+
+window.addEventListener('tts:playback:end', () => {
+  if (State.mode === 'speaking') State.mode = 'idle';
+  State.currentSpeechStyle = null;
+  clearViseme?.();
+});
+
+window.addEventListener('tts:viseme', (ev) => {
+  const d = ev.detail || {};
+  State.viseme = d.shape || State.viseme || 'neutral';
+  State.visemeAmp = Number.isFinite(Number(d.amp)) ? Number(d.amp) : State.visemeAmp;
+});
+
 resize();
 
 if (renderer) {

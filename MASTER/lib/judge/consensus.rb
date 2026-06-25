@@ -8,7 +8,7 @@ module Master
       DEFAULT_MODELS = [
         "anthropic/claude-sonnet-4-6",
         "z-ai/glm-4.5-air:free",
-        "moonshotai/kimi-k2"
+        "moonshotai/kimi-k2",
       ].freeze
       QUORUM = 2
 

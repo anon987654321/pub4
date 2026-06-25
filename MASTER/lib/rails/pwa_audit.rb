@@ -49,7 +49,7 @@ module Master
           installable: manifest_rel && sw_rel && all.none? { |f| f.severity == :critical },
           findings: all,
           violations: all.map(&:message),
-          recommendations: recommendations(all)
+          recommendations: recommendations(all),
         }
       end
 

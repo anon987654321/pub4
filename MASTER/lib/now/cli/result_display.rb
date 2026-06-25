@@ -31,7 +31,7 @@ module Master
         llm_failure: :master,
         validation: :process,
         policy: :process,
-        axiom_violation: :master
+        axiom_violation: :master,
       }.freeze
 
       def format_error_message(err)

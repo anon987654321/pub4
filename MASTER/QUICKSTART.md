@@ -68,7 +68,7 @@ Legacy explicit commands still work for power users (`/scan`, `/fix`, `/why`, et
 For shell-side readiness checks, use `bin/probe` from `MASTER/`:
 
 ```sh
-bin/probe          # quick: smoke + namespace audit + Rails production gate
+bin/probe          # fast readiness: smoke + namespace audit + Rails production gate
 bin/probe all      # smoke + namespace audit + preflight + staged audit + Rails gate
 bin/probe security # staged audit + namespace audit + Rails gate
 ```

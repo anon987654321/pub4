@@ -13,7 +13,7 @@ module Master
         "infer:confidence" => "infer",
         "infer:rejected" => "infer-skip",
         "route:resolved" => "route",
-        "llm:routed" => "model"
+        "llm:routed" => "model",
       }.freeze
       VERDICT_GLYPH = { ok: "\u2713", fail: "\u00D7", warn: "!", info: "\u00B7" }.freeze
       MUTATING_TOOLS = %w[WriteFile Edit StrReplace BatchReplace AstEdit FilePatch].freeze

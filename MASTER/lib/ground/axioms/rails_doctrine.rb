@@ -14,7 +14,7 @@ module Master
           sharp_knives: "Provide sharp knives",
           integrated: "Value integrated systems",
           progress: "Progress over stability",
-          big_tent: "Push up a big tent"
+          big_tent: "Push up a big tent",
         }.freeze
 
         # Database-backed adapters; eliminates Redis/PaaS dependency. Doctrine: :integrated.

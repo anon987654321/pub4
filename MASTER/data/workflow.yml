@@ -92,15 +92,15 @@ principle_groups:
   interface:   [nielsen, prune]
   llm_rules:   [semantic, adversarial]
   heavy:       [rubocop, reek]
-  quick:       [frozen_string, bare_rescue, explicit, long_method, god_class]
+  core:        [frozen_string, bare_rescue, explicit, long_method, god_class]
   critical:    [frozen_string, bare_rescue, explicit, immutable, srp, cqs]
 
 scan_profiles:
   default: full
-  quick:
-    rules: quick
-    aliases: [core]
-    description: "Fast feedback over core axioms and small-function signals"
+  core:
+    rules: core
+    aliases: [quick]
+    description: "Core axiom and small-function findings after a deep scan"
   full:
     rules: "*"
     aliases: [all]

@@ -20,7 +20,7 @@ module Master
         { name: "nightly_dreams", description: "Consolidate memories during low-activity periods",
           trigger: "scheduled", interval_s: 86_400, command: "dreams consolidate", enabled: true },
         { name: "weekly_scan", description: "Weekly codebase axiom scan for regressions",
-          trigger: "scheduled", interval_s: 604_800, command: "scan", enabled: false }
+          trigger: "scheduled", interval_s: 604_800, command: "scan", enabled: false },
       ].freeze
 
       def initialize(pipeline: nil, event_bus: nil, container: {})

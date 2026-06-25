@@ -73,7 +73,7 @@ module Master
           style: @style,
           description: @description,
           knowledge_sources: @knowledge_sources,
-          disclaimer: @disclaimer
+          disclaimer: @disclaimer,
         }
       end
 
@@ -89,7 +89,7 @@ module Master
           "MASTER. #{@desc} OpenBSD-first. Constitutional AI.",
           persona_knowledge_sources,
           identity,
-          "</master_identity>"
+          "</master_identity>",
         ].compact.join("\n")
         sections["master_meta_instruction"] = <<~XML.strip
         <master_meta_instruction>

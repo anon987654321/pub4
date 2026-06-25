@@ -154,7 +154,6 @@ module Master
 
         def platform_profile_brief
           return "Platform design profiles unavailable; default to content-first measurable critique." \
-          %i[brutal_minimal medium new_yorker].map { |k| Master::Design::PlatformProfiles.brief(k) }.join("\n")
         rescue StandardError => e
           "Platform profile policy failed to load: #{e.message}."
         end

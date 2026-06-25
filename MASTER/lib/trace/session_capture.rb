@@ -13,7 +13,7 @@ module Master
         automations: "What manual steps could be automated?",
         prompts: "What questions yielded good results?",
         providers: "What external tools/APIs were useful?",
-        learned_behavior: "What made this work?"
+        learned_behavior: "What made this work?",
       }.freeze
 
       def initialize(root:)
@@ -102,7 +102,7 @@ module Master
       def read_yaml(path)
         return {} unless File.exist?(path)
 
-        YAML.safe_load_file(path, aliases: true) || {}
+        Master.load_yaml(path) || {}
       rescue StandardError
         {}
       end

@@ -48,14 +48,14 @@ module Master
             turbo: gems.include?("turbo-rails"),
             stimulus: gems.include?("stimulus-rails"),
             importmap: gems.include?("importmap-rails"),
-            jsbundling: gems.include?("jsbundling-rails")
+            jsbundling: gems.include?("jsbundling-rails"),
           },
           assets: {
             propshaft: gems.include?("propshaft"),
-            sprockets: gems.any? { |g| g.start_with?("sprockets") }
+            sprockets: gems.any? { |g| g.start_with?("sprockets") },
           },
           app_server: {
-            falcon: gems.include?("falcon")
+            falcon: gems.include?("falcon"),
           },
           solid_adapters: subset(gems, SOLID_TRIFECTA),
           trifecta_complete: SOLID_TRIFECTA.all? { |g| gems.include?(g) },

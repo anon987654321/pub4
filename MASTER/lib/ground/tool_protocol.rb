@@ -12,7 +12,7 @@ module Master
         "Prefer action over narration when a tool can do the work.",
         "Do not output shell/code blocks as pretend execution.",
         "After tool use, provide a final text response that separates landed work from failures.",
-        "For repo work, name the changed file, exposed symbol, caller, and verification result."
+        "For repo work, name the changed file, exposed symbol, caller, and verification result.",
       ].freeze
 
       module_function

@@ -36,7 +36,7 @@ module Master
           input_tokens: input,
           cached_tokens: cached,
           cache_write_tokens: data[:cache_write].to_i,
-          calls: data[:calls].to_i
+          calls: data[:calls].to_i,
         }
       end
 

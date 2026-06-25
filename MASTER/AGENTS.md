@@ -34,11 +34,11 @@ Eleven stages: Intake → Enhance → Infer → Route → Guard → Execute → 
 
 ## Authority order
 
-`data/soul.yml` > `data/rules.yml` > `CLAUDE.md` > this file.
+`data/soul.yml` > `data/rules.yml` > `../CLAUDE.md` > this file.
 
 ## Key entry points
 
 - CLI: `bin/cli`
 - Web face: `web/` (Falcon on port 53187)
 - Constitution: `data/soul.yml`
-- Rules: `data/rules.yml` (173 rules, single source of truth)
+- Rules: `data/rules.yml` (single source of truth)

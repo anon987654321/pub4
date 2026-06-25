@@ -39,6 +39,7 @@ class Face3DCanvasRenderer {
     this.palette = DEFAULT_PALETTE;
     this.dither = 'atkinson';
     this.phosphor = true;
+    this.lastLitPixels = 0;
     this.resize();
   }
 
@@ -137,6 +138,7 @@ class Face3DCanvasRenderer {
     const accent = parseRGB(this.palette.accent);
     const highlight = parseRGB(this.palette.highlight);
     const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    let lit = 0;
 
     for (let y = 0; y < lh; y++) {
       for (let x = 0; x < lw; x++) {
@@ -151,6 +153,7 @@ class Face3DCanvasRenderer {
 
         const out = idx * 4;
         if (on) {
+          lit++;
           // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
           // Shading via Atkinson or Bayer dither only; no zone tints or color.
           data[out] = 255;
@@ -179,6 +182,7 @@ class Face3DCanvasRenderer {
     }
 
     this.lctx.putImageData(img, 0, 0);
+    this.lastLitPixels = lit;
   }
 }
 

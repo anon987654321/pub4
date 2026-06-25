@@ -142,6 +142,7 @@
       window.dispatchEvent(new CustomEvent("tts:anticipate", { detail: event }));
     }
     if (type === "tts:style:active") {
+      window.dispatchEvent(new CustomEvent("tts:style:active", { detail: event }));
       window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, raw: event } }));
     }
     if (/pressure:updated|ctx:footer/i.test(type)) {
