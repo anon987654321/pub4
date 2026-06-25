@@ -23,6 +23,6 @@ class TestWebTtsContract < Minitest::Test
     bridge = File.join(WEB_ROOT, "public", "face_tts_bridge.js")
     assert File.file?(bridge)
     source = File.read(bridge)
-    assert_includes source, "tts:"
+    assert_includes source, "MASTER_FACE_TTS"
   end
 end
