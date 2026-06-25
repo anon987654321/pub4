@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "open3"
 require_relative "../../trace/self_evolution_trigger"
 
@@ -102,7 +103,6 @@ module Master
       end
 
       def dispatch_snapshot(root, ctx: nil)
-        purge_snapshot_gists
         [
           publish_snapshot(root, "MASTER"),
           publish_snapshot(File.expand_path("../DEPLOY", root), "DEPLOY"),
@@ -157,35 +157,39 @@ module Master
         status.success? ? body : "#{body}\ndoctor: exit #{status.exitstatus}"
       end
 
-      def purge_snapshot_gists
-        list, status = Open3.capture2e("gh", "gist", "list", "--limit", "100", "--public")
-        return unless status.success?
-        list.lines.each do |line|
-          id = line.split.first
-          next unless line.include?("snapshot")
-          Open3.capture2e("gh", "gist", "delete", "--yes", id) if id
-        end
-      rescue StandardError
-        nil
+      def snapshot_output_dir
+        File.expand_path(ENV.fetch("MASTER_SNAPSHOT_DIR", "~/Downloads"))
       end
 
       def publish_snapshot(target, label)
         return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
-        all   = Dir.glob(File.join(target, "**", "*"))
-                   .reject { |f| File.basename(f).start_with?(".") }
-                   .reject { |f| skipped_snapshot_path?(f.delete_prefix("#{target}/")) }.sort
-        dirs  = all.select { |f| File.directory?(f) }
+
+        body, files, n_lines = build_snapshot_markdown(target, label)
+        day = Time.now.strftime("%Y-%m-%d")
+        out_path = File.join(snapshot_output_dir, "#{label}_snapshot_#{day}.md")
+        FileUtils.mkdir_p(File.dirname(out_path))
+        File.write(out_path, body)
+        "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{out_path}"
+      rescue StandardError => e
+        "snapshot:#{label.downcase}: write failed: #{e.message}"
+      end
+
+      def build_snapshot_markdown(target, label)
+        all = Dir.glob(File.join(target, "**", "*"))
+               .reject { |f| File.basename(f).start_with?(".") }
+               .reject { |f| skipped_snapshot_path?(f.delete_prefix("#{target}/")) }.sort
+        dirs = all.select { |f| File.directory?(f) }
         files = all.select { |f| File.file?(f) && snapshot_text_file?(f) && File.size(f) < Master::CTX_WINDOW_SIZE }
         stamp = Time.now.utc.iso8601
-        md    = ["# #{label} Snapshot — #{stamp}", "", "## Tree", "```"]
+        md = ["# #{label} Snapshot — #{stamp}", "", "## Tree", "```"]
         entries = (dirs.map { |d| [d, :dir] } + files.map { |f| [f, :file] })
-                    .sort_by { |p, _| p.split("/") }
-                    .map { |p, k| "#{"  " * p.delete_prefix("#{target}/").count("/")}#{File.basename(p)}#{k == :dir ? "/" : ""}" }
+                  .sort_by { |p, _| p.split("/") }
+                  .map { |p, k| "#{"  " * p.delete_prefix("#{target}/").count("/")}#{File.basename(p)}#{k == :dir ? "/" : ""}" }
         md.concat(entries) << "```" << ""
         md.concat(snapshot_artifacts(target)) if label == "MASTER"
         n_lines = 0
         files.each do |f|
-          rel  = f.delete_prefix("#{target}/")
+          rel = f.delete_prefix("#{target}/")
           lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
           body = File.read(f, encoding: "UTF-8", invalid: :replace).lines
           n_lines += body.size
@@ -196,13 +200,7 @@ module Master
           md << "## `#{rel}`" << "[skipped: #{e.message}]" << ""
         end
         md << "files: #{files.size} / lines: #{n_lines}"
-        day = Time.now.strftime("%Y-%m-%d")
-        out, status = Open3.capture2e("gh", "gist", "create", "-",
-          "--public", "--desc", "#{label} snapshot #{day}",
-          "--filename", "#{label}.md",
-          stdin_data: md.join("\n"))
-        status.success? ? "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{out.strip}" :
-                          "snapshot:#{label.downcase}: gist failed: #{out.strip}"
+        [md.join("\n"), files, n_lines]
       end
 
       def snapshot_artifacts(root)
