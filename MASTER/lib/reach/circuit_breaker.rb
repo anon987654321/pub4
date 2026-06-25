@@ -76,7 +76,8 @@ module Master
       rescue StandardError => e
         error_message = e.message.to_s
         # Config errors aren't backend failures — don't penalize the breaker.
-        if error_message.match?(/missing configuration/i) || !Master.any_api_key_present?
+        if !Master.keyless_llm_enabled? &&
+           (error_message.match?(/missing configuration/i) || !Master.any_api_key_present?)
           return Result.err(Master.no_api_key_message, category: :no_api_key)
         end
         on_failure

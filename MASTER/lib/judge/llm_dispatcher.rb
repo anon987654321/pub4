@@ -99,6 +99,7 @@ module Master
       end
 
       def missing_key_error?(err)
+        return false if Master.keyless_llm_enabled?
         error_message = err.message.to_s
         error_message.match?(/missing configuration/i) ||
           error_message.match?(/api[_\- ]?key/i) ||

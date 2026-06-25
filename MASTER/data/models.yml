@@ -1,11 +1,11 @@
-# Model routing profile — DeepSeek primary, OpenRouter free-tier fallback.
+# Model routing profile — Grok primary (API or keyless browser), OpenRouter free fallback.
 
 routing:
   enabled: true
   strategy: weighted
   escalation_enabled: true
   escalation_tier: strong
-  provider: deepseek
+  provider: grok
 
 weights: &weights
   quality: 0.50
@@ -142,7 +142,27 @@ model_defs:
   grok_4_fast: &grok_4_fast
     id: x-ai/grok-4-fast
     <<: *model_defaults
-    score: { quality: 0.88, speed: 0.92, cost: 0.78 }
+    score: { quality: 0.92, speed: 0.92, cost: 0.78 }
+  grok_4: &grok_4
+    id: x-ai/grok-4
+    <<: *model_defaults
+    score: { quality: 0.94, speed: 0.85, cost: 0.70 }
+  web_chat_grok: &web_chat_grok
+    id: web-chat:grok
+    <<: *model_defaults
+    score: { quality: 0.85, speed: 0.35, cost: 1.0 }
+  web_chat_chatgpt: &web_chat_chatgpt
+    id: web-chat:chatgpt
+    <<: *model_defaults
+    score: { quality: 0.82, speed: 0.35, cost: 1.0 }
+  web_chat_kimi: &web_chat_kimi
+    id: web-chat:kimi
+    <<: *model_defaults
+    score: { quality: 0.80, speed: 0.35, cost: 1.0 }
+  web_chat_gemini: &web_chat_gemini
+    id: web-chat:gemini
+    <<: *model_defaults
+    score: { quality: 0.83, speed: 0.35, cost: 1.0 }
   reka_flash: &reka_flash
     id: rekaai/reka-flash-3:free
     <<: *model_defaults
@@ -181,7 +201,16 @@ ollama_phi: &ollama_phi
   score: { quality: 0.58, speed: 0.95, cost: 1.0 }
 
 models:
+  grok_primary:
+    - *grok_4_fast
+    - *grok_4
+  keyless:
+    - *web_chat_grok
+    - *web_chat_chatgpt
+    - *web_chat_kimi
+    - *web_chat_gemini
   default:
+    - *grok_4_fast
     - *gemini_2_flash_exp_free
     - *gemini_flash_openrouter
     - *gpt_oss_120b
@@ -189,6 +218,7 @@ models:
     - *llama_70b
     - *qwen_coder
   primary:
+    - *grok_4_fast
     - *claude_cli_opus
     - *claude_opus_api
   strong:
@@ -334,25 +364,39 @@ openrouter:
     - meta-llama/llama-4-scout:free
     - google/gemma-2-9b-it:free
 
-# Opt-in, ToS-sensitive last-resort free fallback via headless Chrome (ferrum gem).
-# Activates only when MASTER_WEB_CHAT is set; otherwise these models stay out of the chain.
-# Selectors are best-effort and will need maintenance as sites change; login cookies must
-# already exist in the browser profile. Models use the web-chat: prefix.
+# Keyless free fallback via headless Chrome (ferrum gem). Auto-activates when no API keys
+# are configured; opt-in anytime with MASTER_WEB_CHAT=1 or MASTER_KEYLESS=1.
+# Selectors are best-effort — sites change often. Login cookies persist in the profile dir.
+# Models use the web-chat: prefix. ToS-sensitive: never default when paid keys exist.
 ferrum_web_chat:
   enabled_when_env: MASTER_WEB_CHAT
+  auto_when_keyless: true
+  profile_dir: "~/.config/master/web-chat-profile"
   free_latest:
-    - web-chat:gemini
+    - web-chat:grok
     - web-chat:chatgpt
+    - web-chat:kimi
+    - web-chat:gemini
   providers:
-    gemini:
-      url: https://gemini.google.com/app
-      input_selector: "div.ql-editor[contenteditable='true']"
-      reply_selector: "message-content"
+    grok:
+      url: https://grok.com/
+      input_selector: "textarea, div[contenteditable='true'], div[role='textbox']"
+      reply_selector: "div[class*='message'], article, div.markdown"
       timeout: 120
     chatgpt:
       url: https://chatgpt.com/
-      input_selector: "div#prompt-textarea"
+      input_selector: "div#prompt-textarea, textarea#prompt-textarea, div[contenteditable='true']"
       reply_selector: "div[data-message-author-role='assistant']"
+      timeout: 120
+    kimi:
+      url: https://kimi.com/
+      input_selector: "textarea, div[contenteditable='true'], div[role='textbox']"
+      reply_selector: "div.markdown-body, div[class*='assistant'], div[class*='message']"
+      timeout: 120
+    gemini:
+      url: https://gemini.google.com/app
+      input_selector: "div.ql-editor[contenteditable='true'], div[contenteditable='true']"
+      reply_selector: "message-content, div[class*='response']"
       timeout: 120
 
 # Provider trust tracked over time; weights routing beyond raw cost.

@@ -39,16 +39,43 @@ module Master
 
           pref = preferred(task_type:)
           all = @rules.fetch("models", {}).values.flat_map { |tier| tier.filter_map { |m| m["id"] } }
+          all = all.reject { |id| web_chat_model?(id) } unless web_chat_enabled?
           chain = (primary_models + [pref] + all + continuity_models + [@config.model]).uniq
           @provider_health ? @provider_health.rank(chain) : chain
         end
 
-        # Opus via the local claude subscription costs no tokens, so it leads whenever the
-        # binary is present. The paid Opus API stays in the flattened tiers (escalation only).
+        # Grok API when XAI key is present; subscription Opus when claude binary exists;
+        # browser web-chat when keyless. Paid APIs stay in flattened tiers for escalation.
         def primary_models
-          return [] unless claude_cli_available?
-          Array(@rules.dig("models", "primary")).filter_map { |m| m["id"] }
-                                                .select { |id| id.to_s.start_with?("claude-cli:") }
+          models = []
+          models.concat(grok_api_models) if grok_api_available?
+          models.concat(keyless_web_chat_models) if keyless_mode?
+          if claude_cli_available?
+            models.concat(
+              Array(@rules.dig("models", "primary")).filter_map { |m| m["id"] }
+                .select { |id| id.to_s.start_with?("claude-cli:") }
+            )
+          end
+          models.uniq
+        end
+
+        def grok_api_models
+          Array(@rules.dig("models", "grok_primary")).filter_map { |m| m["id"] }
+        end
+
+        def grok_api_available?
+          Master.api_key_present?("XAI_API_KEY") || Master.api_key_present?("OPENROUTER_API_KEY")
+        end
+
+        def keyless_web_chat_models
+          return [] unless web_chat_enabled?
+          Array(@rules.dig("ferrum_web_chat", "free_latest"))
+        end
+
+        def keyless_mode?
+          return true if ENV["MASTER_KEYLESS"].to_s != ""
+          return true if auto_keyless? && !Master.any_api_key_present?
+          false
         end
 
         def claude_cli_available?
@@ -68,9 +95,16 @@ module Master
         end
 
         def web_chat_enabled?
+          return true if keyless_mode?
           gate = @rules.dig("ferrum_web_chat", "enabled_when_env").to_s
           gate.empty? ? false : ENV[gate].to_s != ""
         end
+
+        def auto_keyless?
+          @rules.dig("ferrum_web_chat", "auto_when_keyless") != false
+        end
+
+        def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
 
         # Live free slugs refreshed into the SQLite catalog; read-only, never creates the DB.
         def live_free_models

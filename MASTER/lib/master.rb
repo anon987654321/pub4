@@ -84,6 +84,7 @@ module Master
     openrouter_api_key: "OPENROUTER_API_KEY",
     mistral_api_key: "MISTRAL_API_KEY",
     deepseek_api_key: "DEEPSEEK_API_KEY",
+    xai_api_key: "XAI_API_KEY",
   }.freeze
 
   loader = Zeitwerk::Loader.new
@@ -184,9 +185,11 @@ module Master
   end
 
   def self.default_model
-    return OPENROUTER_DEFAULT if api_key_present?("OPENROUTER_API_KEY")
+    return "x-ai/grok-4-fast" if api_key_present?("XAI_API_KEY")
+    return "x-ai/grok-4-fast" if api_key_present?("OPENROUTER_API_KEY")
     return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
     return "gemini-2.5-flash" if api_key_present?("GEMINI_API_KEY")
+    return "web-chat:grok" if keyless_llm_enabled?
     OPENROUTER_DEFAULT
   end
 
@@ -194,10 +197,21 @@ module Master
     API_KEY_PROVIDERS.any? { |_, env_var| api_key_present?(env_var) }
   end
 
+  def self.keyless_llm_enabled?
+    return true if ENV["MASTER_KEYLESS"].to_s != ""
+    return true if ENV["MASTER_WEB_CHAT"].to_s != ""
+    !any_api_key_present?
+  end
+
   def self.no_api_key_message
-    "I'm not wired to any LLM yet. Set OPENROUTER_API_KEY in /etc/master.env and restart " \
-    "with `doas rcctl restart master`. Other accepted keys: ANTHROPIC_API_KEY, " \
-    "DEEPSEEK_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, MISTRAL_API_KEY."
+    if keyless_llm_enabled?
+      return "No API keys configured — routing via free browser chat (web-chat:grok). " \
+        "Log into grok.com, chatgpt.com, or kimi.com once in the headless profile, " \
+        "or set OPENROUTER_API_KEY / XAI_API_KEY in ~/.config/master/env."
+    end
+    "I'm not wired to any LLM yet. Set OPENROUTER_API_KEY or XAI_API_KEY in " \
+    "~/.config/master/env (or /etc/master.env on OpenBSD) and restart. " \
+    "Or enable keyless mode: MASTER_KEYLESS=1 (browser chat at zero cost)."
   end
 
   def self.load_yaml(path, symbolize_names: false, default: {})

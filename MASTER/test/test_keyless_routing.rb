@@ -1,0 +1,76 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+
+class TestKeylessRouting < Minitest::Test
+  class FakeConfig
+    def initialize(model) = @model = model
+    def model = @model
+  end
+
+  def setup
+    @saved_env = %w[
+      XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY
+      DEEPSEEK_API_KEY GEMINI_API_KEY MISTRAL_API_KEY
+      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI
+    ].to_h { |key| [key, ENV[key]] }
+    @saved_env.each_key { |key| ENV.delete(key) }
+  end
+
+  def teardown
+    @saved_env.each { |key, val| val.nil? ? ENV.delete(key) : ENV[key] = val }
+  end
+
+  def test_default_model_is_web_chat_grok_without_keys
+    assert_equal "web-chat:grok", Master.default_model
+    assert Master.keyless_llm_enabled?
+  end
+
+  def test_default_model_prefers_grok_api_with_xai_key
+    ENV["XAI_API_KEY"] = "xai-" + ("a" * 32)
+    assert_equal "x-ai/grok-4-fast", Master.default_model
+    refute Master.keyless_llm_enabled?
+  end
+
+  def test_router_injects_web_chat_models_when_keyless
+    ENV["MASTER_NO_CLAUDE_CLI"] = "1"
+    router = Master::Now::Routing::ModelRouter.new(
+      config: FakeConfig.new("web-chat:grok"), root: Master::ROOT
+    )
+    assert router.web_chat_enabled?
+    assert router.keyless_mode?
+    chain = router.fallback_chain(task_type: :exploration)
+    assert_equal "web-chat:grok", chain.first
+    assert_includes chain, "web-chat:chatgpt"
+    assert_includes chain, "web-chat:kimi"
+  end
+
+  def test_router_prefers_grok_api_when_openrouter_key_present
+    ENV["OPENROUTER_API_KEY"] = "sk-or-" + ("a" * 32)
+    router = Master::Now::Routing::ModelRouter.new(
+      config: FakeConfig.new("x-ai/grok-4-fast"), root: Master::ROOT
+    )
+    refute router.keyless_mode?
+    chain = router.fallback_chain(task_type: :exploration)
+    assert_equal "x-ai/grok-4-fast", chain.first
+  end
+
+  def test_web_chat_disabled_when_keys_present_without_opt_in
+    ENV["OPENROUTER_API_KEY"] = "sk-or-" + ("a" * 32)
+    router = Master::Now::Routing::ModelRouter.new(
+      config: FakeConfig.new("x-ai/grok-4-fast"), root: Master::ROOT
+    )
+    refute router.web_chat_enabled?
+    refute_includes router.fallback_chain(task_type: :exploration), "web-chat:grok"
+  end
+
+  def test_web_chat_enabled_with_master_web_chat_even_when_keys_present
+    ENV["OPENROUTER_API_KEY"] = "sk-or-" + ("a" * 32)
+    ENV["MASTER_WEB_CHAT"] = "1"
+    router = Master::Now::Routing::ModelRouter.new(
+      config: FakeConfig.new("x-ai/grok-4-fast"), root: Master::ROOT
+    )
+    assert router.web_chat_enabled?
+    assert_includes router.fallback_chain(task_type: :exploration), "web-chat:grok"
+  end
+end

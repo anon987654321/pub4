@@ -48,9 +48,14 @@ def check_yaml
 end
 
 def check_api_keys
-  keys = %w[OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY DEEPSEEK_API_KEY GEMINI_API_KEY]
+  keys = %w[XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY DEEPSEEK_API_KEY GEMINI_API_KEY]
   present = keys.select { |var| ENV[var].to_s.length >= 16 }
-  Check.new(name: "api-keys", ok: present.any?, detail: present.empty? ? "none configured" : present.join(", "))
+  if present.any?
+    return Check.new(name: "api-keys", ok: true, detail: present.join(", "))
+  end
+  keyless = ENV["MASTER_KEYLESS"].to_s != "" || ENV["MASTER_WEB_CHAT"].to_s != "" || present.empty?
+  detail = keyless ? "keyless browser mode (web-chat:grok → chatgpt → kimi)" : "none configured"
+  Check.new(name: "api-keys", ok: keyless, detail: detail)
 end
 
 def check_tts_socket

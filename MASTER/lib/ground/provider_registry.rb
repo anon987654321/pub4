@@ -29,6 +29,11 @@ module Master
           strengths: %i[coding cheap],
           default_model: "deepseek-chat",
         },
+        xai: {
+          env: %w[XAI_API_KEY],
+          strengths: %i[reasoning coding fast],
+          default_model: "grok-4-fast",
+        },
         local: {
           env: [],
           strengths: %i[privacy offline cheap],

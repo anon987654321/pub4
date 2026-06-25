@@ -11,7 +11,7 @@ module Master
       DEFAULT_WEB_PORT = 53_187
 
       DEFAULTS = {
-        "model" => "z-ai/glm-4.5-air:free",
+        "model" => "x-ai/grok-4-fast",
         "web_host" => "127.0.0.1",
         "web_public_url" => "https://ai.brgen.no",
         "web_port" => DEFAULT_WEB_PORT,
