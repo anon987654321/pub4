@@ -1,0 +1,12 @@
+<tr>
+  <td class="mail-footer">
+    <%= edition.edition_date.strftime("%-d %B %Y") %> · <%= edition.app_name %>
+    <br>
+    <a href="<%= unsubscribe_url %>">Unsubscribe</a>
+    <% if defined?(affiliate_disclosure_text) %>
+      <div class="mail-affiliate"><%= affiliate_disclosure_text %></div>
+    <% else %>
+      <div class="mail-affiliate">Some links are affiliate links. We may earn a commission.</div>
+    <% end %>
+  </td>
+</tr>

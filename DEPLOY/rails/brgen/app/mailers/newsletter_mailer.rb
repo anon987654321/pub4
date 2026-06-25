@@ -1,19 +1,26 @@
 # frozen_string_literal: true
 
 class NewsletterMailer < ApplicationMailer
-  def daily_digest(subscription)
+  include Shared::SeoKit
+  helper Shared::SeoKit
+
+  default from: "Brgen <letters@brgen.no>"
+
+  def edition(subscription, newsletter_edition)
     @subscription = subscription
-    @city = subscription.city&.capitalize || "Brgen"
-    @posts = Post.hot.includes(:user, :community).limit(6)
-    @unsubscribe_url = email_subscription_url(subscription.token)
-    mail(to: subscription.email, subject: "#{@city} — daily digest")
+    @edition = newsletter_edition.to_edition
+    @unsubscribe_url = email_subscription_url(subscription.token, host: mail_host)
+    mail(
+      to: subscription.email,
+      subject: @edition.subject,
+      template_path: "newsletter_mailer",
+      template_name: "edition"
+    )
   end
 
-  def weekly_deals(subscription)
-    @subscription = subscription
-    @city = subscription.city&.capitalize || "Brgen"
-    @deals = Tradedoubler.deals(limit: 6)
-    @unsubscribe_url = email_subscription_url(subscription.token)
-    mail(to: subscription.email, subject: "#{@city} — deals this week")
+  private
+
+  def mail_host
+    ENV.fetch("APP_HOST", "brgen.no")
   end
 end

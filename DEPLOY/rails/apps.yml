@@ -47,6 +47,7 @@ apps:
         - { name: shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted), status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + WIRING_NOTES" }
         - { name: Reddit scrape seed (rephrase + Strunk & White),          status: done, notes: "RedditSeedService + ContentRewriter + StrunkWhitePass" }
         - { name: SEO / affiliate / newsletter kit (shared),                 status: done, notes: "Shared::SeoKit, json_ld, affiliate_disclosure, newsletter_cta" }
+        - { name: permission-marketing newsletters (Seth Godin editions),    status: done, notes: "NewsletterComposer + NewsletterVisuals + NewsletterEdition + postpro/repligen hero" }
         - { name: AI feed ranking,                                         status: planned }
         - { name: creator monetization,                                    status: planned }
         - { name: maps surface,                                            status: planned }

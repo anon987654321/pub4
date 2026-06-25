@@ -1,19 +1,36 @@
 <style>
-  body { margin: 0; padding: 24px; font-family: system-ui, -apple-system, sans-serif; font-size: 16px; color: #dcdcdc; background: #000; }
-  h2 { margin: 0 0 4px; }
-  p { margin: 0 0 16px; }
-  .mail-lead { margin: 0 0 24px; color: #888; font-size: 14px; }
-  .mail-muted { color: #888; font-size: 14px; }
-  .mail-fine { font-size: 12px; color: #666; margin: 0; }
-  .mail-card { width: 100%; margin-bottom: 16px; border: 1px solid #222; border-radius: 8px; overflow: hidden; border-collapse: separate; }
-  .mail-card__cell { padding: 12px; vertical-align: top; }
-  .mail-card__media { padding: 0; vertical-align: top; }
-  .mail-card__title { margin: 0 0 4px; font-weight: 600; font-size: 16px; }
-  .mail-card__meta { margin: 0 0 8px; font-size: 14px; color: #888; }
-  .mail-card__body { margin: 0; font-size: 14px; }
-  .mail-card__price { margin: 0 0 8px; font-size: 14px; }
-  .mail-card__img { display: block; object-fit: cover; }
-  .mail-cta { display: inline-block; padding: 6px 14px; background: #fff; color: #000; border-radius: 4px; font-size: 14px; text-decoration: none; font-weight: 600; }
-  .mail-hr { border: none; border-top: 1px solid #222; margin: 24px 0; }
-  a { color: #888; }
+  .mail-body { margin: 0; padding: 0; background: #050505; color: #f2f2f2; }
+  .mail-canvas { background: #050505; padding: 32px 16px; }
+  .mail-shell { width: 100%; max-width: 620px; margin: 0 auto; background: #0a0a0a; border: 1px solid #1d1d1d; border-radius: 18px; overflow: hidden; }
+  .mail-brand { padding: 28px 32px 8px; font-family: Helvetica, Arial, sans-serif; font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; color: #8a8a8a; }
+  .mail-hero { width: 100%; display: block; border: 0; }
+  .mail-hero-caption { padding: 10px 32px 0; font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #6f6f6f; }
+  .mail-lede-wrap { padding: 28px 32px 8px; }
+  .mail-lede { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 24px; line-height: 1.45; color: #f7f7f7; font-weight: 400; }
+  .mail-divider { border: 0; border-top: 1px solid #1f1f1f; margin: 24px 32px; }
+  .mail-section-title { padding: 0 32px 12px; margin: 0; font-family: Helvetica, Arial, sans-serif; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #7a7a7a; }
+  .mail-story { width: 100%; border-collapse: separate; margin: 0 0 12px; }
+  .mail-story td { padding: 18px 32px; border-top: 1px solid #171717; font-family: Helvetica, Arial, sans-serif; }
+  .mail-story-title { margin: 0 0 6px; font-size: 17px; line-height: 1.35; font-weight: 600; }
+  .mail-story-title a { color: #ffffff; text-decoration: none; }
+  .mail-story-meta { margin: 0 0 8px; font-size: 12px; color: #7a7a7a; }
+  .mail-story-teaser { margin: 0; font-size: 14px; line-height: 1.55; color: #c8c8c8; }
+  .mail-deal { width: 100%; border-collapse: separate; margin: 0 0 14px; }
+  .mail-deal td { padding: 16px 32px; border-top: 1px solid #171717; font-family: Helvetica, Arial, sans-serif; vertical-align: top; }
+  .mail-deal-img { width: 96px; padding-right: 16px; }
+  .mail-deal-img img { display: block; width: 96px; height: 96px; object-fit: cover; border-radius: 10px; }
+  .mail-deal-title { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+  .mail-deal-title a { color: #ffffff; text-decoration: none; }
+  .mail-deal-copy { margin: 0 0 8px; font-size: 13px; line-height: 1.5; color: #b5b5b5; }
+  .mail-deal-price { margin: 0 0 10px; font-size: 14px; color: #f0f0f0; }
+  .mail-cta-wrap { padding: 8px 32px 28px; text-align: center; }
+  .mail-cta { display: inline-block; padding: 14px 28px; background: #ffffff; color: #050505 !important; border-radius: 999px; font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.04em; text-decoration: none; }
+  .mail-signoff { padding: 0 32px 20px; font-family: Georgia, "Times New Roman", serif; font-size: 15px; color: #9a9a9a; font-style: italic; }
+  .mail-permission { padding: 0 32px 16px; font-family: Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.6; color: #6d6d6d; }
+  .mail-footer { padding: 18px 32px 28px; border-top: 1px solid #171717; font-family: Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.6; color: #5f5f5f; }
+  .mail-footer a { color: #8d8d8d; text-decoration: underline; }
+  .mail-affiliate { margin-top: 8px; font-size: 10px; color: #4f4f4f; }
+  .mail-typo-hero { padding: 56px 32px; text-align: center; background: linear-gradient(180deg, #121212 0%, #050505 100%); }
+  .mail-typo-hero h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 34px; line-height: 1.2; color: #fafafa; font-weight: 400; }
+  .mail-typo-hero p { margin: 12px 0 0; font-family: Helvetica, Arial, sans-serif; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #7a7a7a; }
 </style>

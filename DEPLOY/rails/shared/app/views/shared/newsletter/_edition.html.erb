@@ -1,0 +1,41 @@
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mail-shell">
+  <tr>
+    <td class="mail-brand"><%= edition.app_name %></td>
+  </tr>
+
+  <%= render "shared/newsletter/hero", edition: edition %>
+
+  <tr>
+    <td class="mail-lede-wrap">
+      <p class="mail-lede"><%= edition.lede %></p>
+    </td>
+  </tr>
+
+  <% if edition.stories.any? %>
+    <tr><td><hr class="mail-divider"></td></tr>
+    <tr><td><p class="mail-section-title">Today in <%= edition.city_name %></p></td></tr>
+    <% edition.stories.each do |story| %>
+      <%= render "shared/newsletter/story", story: story %>
+    <% end %>
+  <% end %>
+
+  <% if edition.deals.any? %>
+    <tr><td><hr class="mail-divider"></td></tr>
+    <tr><td><p class="mail-section-title">Curated offers</p></td></tr>
+    <% edition.deals.each do |deal| %>
+      <%= render "shared/newsletter/deal", deal: deal %>
+    <% end %>
+  <% end %>
+
+  <% if edition.cta_url.present? %>
+    <tr>
+      <td class="mail-cta-wrap">
+        <a href="<%= edition.cta_url %>" class="mail-cta"><%= edition.cta_label %></a>
+      </td>
+    </tr>
+  <% end %>
+
+  <tr><td class="mail-signoff"><%= edition.sign_off %></td></tr>
+  <tr><td class="mail-permission"><%= edition.permission_line %></td></tr>
+  <%= render "shared/newsletter/footer", edition: edition, unsubscribe_url: unsubscribe_url %>
+</table>

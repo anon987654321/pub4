@@ -1,0 +1,21 @@
+<%= @edition.app_name %> — <%= @edition.city_name %>
+<%= @edition.edition_date %>
+
+<%= @edition.lede %>
+
+<% @edition.stories.each do |story| %>
+* <%= story.title %>
+  <%= story.teaser %>
+  <%= story.url %>
+<% end %>
+
+<% @edition.deals.each do |deal| %>
+* <%= deal.title %> — <%= deal.merchant %>
+  <%= deal.description %>
+  <%= deal.url %>
+<% end %>
+
+<%= @edition.sign_off %>
+<%= @edition.permission_line %>
+
+Unsubscribe: <%= @unsubscribe_url %>

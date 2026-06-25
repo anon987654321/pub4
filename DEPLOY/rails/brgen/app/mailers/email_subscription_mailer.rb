@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class EmailSubscriptionMailer < ApplicationMailer
-  default from: "Brgen <noreply@brgen.no>"
+  default from: "Brgen <letters@brgen.no>"
 
   def confirm(sub)
     @sub = sub

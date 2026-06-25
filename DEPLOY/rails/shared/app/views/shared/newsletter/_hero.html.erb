@@ -1,0 +1,17 @@
+<% if edition.hero_url.present? %>
+  <tr>
+    <td>
+      <img src="<%= edition.hero_url %>" alt="<%= edition.hero_alt %>" width="620" class="mail-hero">
+    </td>
+  </tr>
+  <% if edition.hero_caption.present? %>
+    <tr><td class="mail-hero-caption"><%= edition.hero_caption %></td></tr>
+  <% end %>
+<% else %>
+  <tr>
+    <td class="mail-typo-hero">
+      <h1><%= edition.city_name %></h1>
+      <p><%= edition.kind == :weekly_deals ? "Curated offers" : "City letter" %></p>
+    </td>
+  </tr>
+<% end %>

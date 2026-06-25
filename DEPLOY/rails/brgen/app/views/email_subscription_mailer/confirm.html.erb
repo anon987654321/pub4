@@ -1,4 +1,28 @@
-<p>Thanks for signing up to Brgen city updates.</p>
-<p><a href="<%= @confirm_url %>">Confirm subscription</a></p>
-<p style="color:#666;font-size:13px">If you didn't sign up, ignore this email.<br>
-<a href="<%= @unsubscribe_url %>">Unsubscribe</a></p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mail-shell">
+  <tr><td class="mail-brand">Brgen</td></tr>
+  <tr>
+    <td class="mail-typo-hero">
+      <h1>Confirm your subscription</h1>
+      <p>Permission marketing</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="mail-lede-wrap">
+      <p class="mail-lede">
+        Thanks for trusting us with your inbox. We send one curated city letter — not noise.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td class="mail-cta-wrap">
+      <a href="<%= @confirm_url %>" class="mail-cta">Confirm subscription</a>
+    </td>
+  </tr>
+  <tr><td class="mail-signoff">— The Brgen editors</td></tr>
+  <tr><td class="mail-permission">If you did not sign up, ignore this email.</td></tr>
+  <tr>
+    <td class="mail-footer">
+      <a href="<%= @unsubscribe_url %>">Unsubscribe</a>
+    </td>
+  </tr>
+</table>
