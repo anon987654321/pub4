@@ -99,17 +99,43 @@
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
-      var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false,timer=null,fallback=null;
-      function boot(){if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){window.MASTER_FACE.startEverything();return true;}return false;}
-      function fallbackUi(){if(p&&p.parentNode)p.parentNode.removeChild(p);if(z)z.classList.add('live');}
+      var p=document.getElementById('primer'),z=document.getElementById('zsh'),ui=document.getElementById('ui-status');
+      var fired=false,timer=null,fallback=null;
+      function dismissPrimer(){
+        document.body.classList.remove('face-loading');
+        if(!p)return;
+        p.classList.add('gone');
+        window.setTimeout(function(){p.remove();},220);
+      }
+      function revealPrompt(){
+        if(z)z.classList.add('live');
+        if(ui&&!ui.textContent)ui.textContent='starting';
+      }
+      function boot(){
+        if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){
+          window.MASTER_FACE.startEverything();
+          return true;
+        }
+        return false;
+      }
+      function fallbackUi(){dismissPrimer();revealPrompt();if(ui)ui.textContent='face loading…';}
       function go(){
-        if(fired)return;fired=true;window._primerFired=true;
+        if(fired)return;
+        fired=true;
+        window._primerFired=true;
+        dismissPrimer();
+        revealPrompt();
         if(boot())return;
         timer=setInterval(function(){if(boot()){clearInterval(timer);timer=null;clearTimeout(fallback);}},40);
         fallback=setTimeout(function(){clearInterval(timer);fallbackUi();},8000);
       }
-      if(p){p.addEventListener('pointerdown',go,{passive:true});p.addEventListener('touchstart',go,{passive:true});p.addEventListener('click',go);p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter')go();});}
-      addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' '||e.key==='OK'))go();},{once:false});
+      if(p){
+        p.addEventListener('pointerdown',go);
+        p.addEventListener('touchstart',go,{passive:true});
+        p.addEventListener('click',go);
+        p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
+      }
+      addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}});
     })();
   </script>
   <script src="/master_events.js" defer></script>

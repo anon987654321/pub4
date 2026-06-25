@@ -182,6 +182,20 @@ class TestWebUI < Minitest::Test
     assert_includes source, 'dataset.hiddenTab'
   end
 
+  def test_primer_tap_unlocks_prompt_before_face_ready
+    index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
+    css = File.read(File.expand_path("../web/public/face.css", __dir__))
+    part5 = File.read(File.expand_path("../web/public/face.part5.txt", __dir__))
+
+    assert_includes index, "dismissPrimer"
+    assert_includes index, "revealPrompt"
+    assert_includes index, "z.classList.add('live')"
+    assert_includes css, "#primer"
+    assert_includes css, "z-index: var(--z-modal)"
+    assert_includes css, "body:not(.face-ready) #zsh:not(.live)"
+    assert_includes part5, "primerFired = true"
+  end
+
   def test_command_palette_wired_in_chat_js
     source = File.read(File.expand_path("../web/public/chat.js", __dir__))
 
@@ -300,6 +314,9 @@ class TestWebUI < Minitest::Test
     assert_includes tts_controller, "head(:not_modified)"
     assert_includes tts_controller, 'status: "failed"'
     assert_includes tts_controller, 'response.headers["X-TTS-Job"] = job.job_id'
+    assert_includes tts_controller, "voice_key, synth_style, rate, pitch = tts_voice_and_style(text)"
+    assert_includes tts_controller, "def resolve_tts_style"
+    assert_includes tts_controller, "Master::Voice::Speech.infer_style(text"
   end
 
   def test_face_tts_polls_job_status_header
@@ -317,17 +334,79 @@ class TestWebUI < Minitest::Test
     assert_includes source, "crypto.subtle.digest('SHA-256'"
     assert_includes source, "readCachedTTS(key)"
     assert_includes source, "writeCachedTTS(key, blob)"
+    assert_includes source, "async function ttsCacheKey(text, voice, style)"
+    assert_includes source, "${style || 'auto'}"
+  end
+
+  def test_face_tts_priority_lanes_do_not_replay_from_generic_queue
+    source = face_runtime_source
+
+    assert_includes source, "function dropQueuedSpeech(text)"
+    assert_includes source, "function nextQueuedSpeech()"
+    assert_includes source, "dropQueuedSpeech(text)"
+    assert_includes source, "const nextSpeech = nextQueuedSpeech()"
   end
 
   def test_face_tts_bridges_global_style_events
     bridge = File.read(File.expand_path("../web/public/visual_bridge.js", __dir__))
     part4 = File.read(File.expand_path("../web/public/face.part4.txt", __dir__))
+    events = File.read(File.expand_path("../web/public/master_events.js", __dir__))
 
     assert_includes bridge, "new EventSource(\"/events/stream\")"
     assert_includes bridge, "type === \"tts:anticipate\""
     assert_includes bridge, "type === \"tts:style:active\""
+    assert_includes bridge, "new CustomEvent(\"tts:style:active\""
     assert_includes bridge, "new CustomEvent(\"master:visual\""
     assert_includes part4, "tts:anticipate"
+    assert_includes events, '"tts:style:active"'
+    assert_includes events, '"tts:playback:start"'
+    assert_includes events, '"tts:playback:end"'
+    assert_includes events, '"tts:viseme"'
+  end
+
+  def test_face_tts_emits_lifecycle_and_viseme_events
+    source = face_runtime_source
+
+    assert_includes source, "function emitTtsEvent(type, detail = {})"
+    assert_includes source, "emitTtsEvent('tts:playback:start'"
+    assert_includes source, "emitTtsEvent('tts:playback:end'"
+    assert_includes source, "emitTtsEvent('tts:viseme'"
+    assert_includes source, "tts.current = text"
+  end
+
+  def test_face3d_consumes_tts_events_and_reports_nonblank_frames
+    preview = File.read(File.expand_path("../web/public/face3d_preview.js", __dir__))
+    renderer = File.read(File.expand_path("../web/public/face3d_renderer.js", __dir__))
+    events = File.read(File.expand_path("../web/public/master_events.js", __dir__))
+
+    assert_includes preview, "addEventListener('tts:playback:start'"
+    assert_includes preview, "addEventListener('tts:viseme'"
+    assert_includes preview, "engine.speakFrame"
+    assert_includes preview, "face3d:nonblank"
+    assert_includes renderer, "lastLitPixels"
+    assert_includes events, '"face3d:nonblank"'
+  end
+
+  def test_public_asset_manifest_matches_source_files
+    public_dir = File.expand_path("../web/public", __dir__)
+    manifest_path = File.join(public_dir, "assets", ".manifest.json")
+    manifest = JSON.parse(File.read(manifest_path))
+    critical_sources = %w[
+      face.part4.txt
+      visual_bridge.js
+      face_semantics.js
+      face3d_preview.js
+      face3d_renderer.js
+    ]
+
+    critical_sources.each do |source|
+      entry = manifest.fetch(source)
+      source_path = File.join(public_dir, source)
+      asset_path = File.join(public_dir, "assets", entry.fetch("digested_path"))
+
+      assert File.file?(asset_path), "missing generated asset for #{source}"
+      assert_equal File.read(source_path), File.read(asset_path), "generated asset drifted for #{source}"
+    end
   end
 
   def test_face_tts_audio_graph_uses_compressor_before_analyser
