@@ -9,9 +9,13 @@
 
   if (window.ParticleKernel && typeof window.ParticleKernel.step === "function") {
     const origStep = window.ParticleKernel.step;
-    window.ParticleKernel.step = function stepGuarded(pool, dt, ctx) {
+    window.ParticleKernel.step = function stepGuarded(pool, dt, ctx = {}) {
       const clamped = Math.max(MIN_KERNEL_DT, Math.min(0.05, Number(dt) || MIN_KERNEL_DT));
-      return origStep.call(this, pool, clamped, ctx);
+      const next = { ...ctx };
+      if (window.MASTER_RUNTIME?.enhancements?.includes?.("spatial_repulsion_2d")) {
+        next.spatialRepulsion = true;
+      }
+      return origStep.call(this, pool, clamped, next);
     };
   }
 

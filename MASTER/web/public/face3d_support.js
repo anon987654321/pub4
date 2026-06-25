@@ -1,4 +1,4 @@
-import { clamp, damp, DEFAULT_BLEND, DEFAULT_EMOTION } from '/face3d_geometry.js';
+import { clamp, damp, DEFAULT_BLEND, DEFAULT_EMOTION, ZONE_NAMES, applyBlendshape } from '/face3d_geometry.js';
 
 function deriveBlendFromEmotion(emotion, previous = DEFAULT_BLEND) {
   const e = { ...DEFAULT_EMOTION, ...emotion };
@@ -16,6 +16,7 @@ function deriveBlendFromEmotion(emotion, previous = DEFAULT_BLEND) {
 
 class ParticleField3D {
   constructor(count = 2200) {
+    this.spatial = new SpatialHash2D(0.04);
     this.count = count;
     this.x = new Float32Array(count);
     this.y = new Float32Array(count);
@@ -114,6 +115,26 @@ class ParticleField3D {
       this.y[i] += this.vy[i] * dtMs * 0.06;
       this.depth[i] = z;
       this.brightness[i] = clamp(0.25 + z * 0.35 + ps * 0.25, 0.05, 1);
+    }
+    if (quality?.effects?.spatialRepulsion) this.repelNeighbors();
+  }
+
+  repelNeighbors(strength = 0.012) {
+    this.spatial.clear();
+    for (let i = 0; i < this.count; i++) this.spatial.add(i, this.x[i], this.y[i]);
+    for (let i = 0; i < this.count; i++) {
+      const neighbors = this.spatial.nearby(this.x[i], this.y[i]);
+      for (let n = 0; n < neighbors.length; n++) {
+        const j = neighbors[n];
+        if (j === i) continue;
+        const dx = this.x[i] - this.x[j];
+        const dy = this.y[i] - this.y[j];
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0.07 || dist < 0.0005) continue;
+        const push = strength / dist;
+        this.vx[i] += (dx / dist) * push;
+        this.vy[i] += (dy / dist) * push;
+      }
     }
   }
 }

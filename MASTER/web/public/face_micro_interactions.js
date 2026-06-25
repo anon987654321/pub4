@@ -152,13 +152,14 @@
     if (/stt:start|listening/.test(String(ev.detail?.name || ev.detail?.mode || ""))) boostEye(0.18);
   });
 
-  // web_024 — mouthDrive scales jaw uniform (vertex scale from mouthDrive)
+  // web_024 / f3d_006 — mouthDrive via blendshape bridge (replaces direct mouth mutation)
   setInterval(() => {
     const state = st();
-    const mat = face()?.faceMat;
-    if (!state || !mat?.uniforms?.uJaw) return;
+    if (!state) return;
     const drive = Math.min(1, (state.mouthDrive || 0) + (state.visemeAmp || 0) * 0.35);
-    mat.uniforms.uJaw.value = Math.max(mat.uniforms.uJaw.value, drive * 0.42);
+    window.MASTER_FACE_BLEND?.applyMouthDrive?.(drive, state.visemeAmp || 0);
+    const mat = face()?.faceMat;
+    if (mat?.uniforms?.uJaw) mat.uniforms.uJaw.value = Math.max(mat.uniforms.uJaw.value, drive * 0.42);
   }, 48);
 
   // mi_073 — dynamic canvas aria-label from state

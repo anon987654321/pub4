@@ -6,6 +6,7 @@ require "yaml"
 ROOT = File.expand_path("..", __dir__)
 FE_PATH = File.join(ROOT, "data/runtime/face_enhancements.yml")
 MI_PATH = File.join(ROOT, "data/runtime/micro_interactions.yml")
+F3D_PATH = File.join(ROOT, "data/runtime/face3d_migration.yml")
 
 WEB_IMPLEMENTED = {
   "web_031" => "Message enter stagger delay up to 8 steps",
@@ -57,33 +58,35 @@ WEB_IMPLEMENTED = {
   "web_080" => "Keyboard shortcut sheet cmd palette"
 }.freeze
 
-MI_IMPLEMENTED = %w[
-  mi_001 mi_002 mi_007 mi_013 mi_016 mi_018 mi_020 mi_027 mi_037 mi_038 mi_040
-  mi_041 mi_044 mi_045 mi_049 mi_054 mi_059 mi_060 mi_068 mi_074 mi_077 mi_079
-  mi_010 mi_032 mi_033 mi_034 mi_036 mi_065 mi_069 mi_053 mi_046 mi_043 mi_067
-  mi_080 mi_075 mi_078 mi_076 mi_051 mi_057 mi_011
-].freeze
+F3D_IMPLEMENTED = %w[f3d_006 f3d_007 f3d_008 f3d_009].freeze
 
-def patch_file(path, key, implemented_map: {}, implemented_ids: [])
+def patch_list(path, list_key, implemented_map: {}, implemented_ids: [])
   data = YAML.safe_load_file(path, permitted_classes: [Symbol], aliases: true)
-  list_key = data.key?("enhancements") ? "enhancements" : "interactions"
   changed = 0
   data[list_key].each do |item|
     id = item["id"].to_s
-    if implemented_map.key?(id)
-      item["status"] = "implemented"
-      item["summary"] = implemented_map[id]
-      changed += 1
-    elsif implemented_ids.include?(id)
-      item["status"] = "implemented"
-      changed += 1
-    end
+    next unless implemented_map.key?(id) || implemented_ids.include?(id)
+    next if item["status"].to_s == "implemented"
+
+    item["status"] = "implemented"
+    item["summary"] = implemented_map[id] if implemented_map.key?(id)
+    changed += 1
   end
   File.write(path, data.to_yaml(line_width: -1))
   [path, changed]
 end
 
-fe = patch_file(FE_PATH, "enhancements", implemented_map: WEB_IMPLEMENTED)
-mi = patch_file(MI_PATH, "interactions", implemented_ids: MI_IMPLEMENTED)
-puts "face_enhancements: #{fe[1]} updated"
-puts "micro_interactions: #{mi[1]} updated"
+def sync_mi_from_canonical
+  mi = YAML.safe_load_file(MI_PATH, permitted_classes: [Symbol], aliases: true)
+  implemented_ids = Array(mi["interactions"]).select { |row| row["status"].to_s == "implemented" }.map { |row| row["id"].to_s }
+  patch_list(FE_PATH, "enhancements", implemented_ids: implemented_ids.select { |id| id.start_with?("mi_") })
+end
+
+fe = patch_list(FE_PATH, "enhancements", implemented_map: WEB_IMPLEMENTED, implemented_ids: F3D_IMPLEMENTED)
+f3d = patch_list(F3D_PATH, "migration_steps", implemented_ids: %w[step_6 step_7 step_8 step_9])
+
+fe_pending = YAML.safe_load_file(FE_PATH, permitted_classes: [Symbol], aliases: true)["enhancements"].count { |r| r["status"].to_s == "pending" }
+fe_impl = YAML.safe_load_file(FE_PATH, permitted_classes: [Symbol], aliases: true)["enhancements"].count { |r| r["status"].to_s == "implemented" }
+
+puts "face_enhancements: #{fe[1]} updated → #{fe_impl} implemented / #{fe_pending} pending"
+puts "face3d_migration: #{f3d[1]} steps updated"

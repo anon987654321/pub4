@@ -220,6 +220,18 @@ function spiralEye(cx, cy, cz, zone) {
   return out;
 }
 
+function maskAnchors2D(kind = "sepik", zone = "mouth") {
+  const topo = buildCanonicalMask(kind);
+  const list = topo.zones[zone] || topo.anchors || [];
+  return list.map((anchor) => ({
+    x: (anchor.x + 1) * 0.5,
+    y: 0.5 - anchor.y * 0.5,
+    z: anchor.z,
+    zoneId: anchor.zoneId,
+    u: anchor.u
+  }));
+}
+
 function mouthAnchors(shape = "neutral", n = 34) {
   const out = [];
   for (let i = 0; i < n; i++) {
@@ -288,4 +300,4 @@ function applyBlendshape(anchor, blend) {
   return { ...anchor, x, y, z };
 }
 
-export { ZONES, ZONE_NAMES, DEFAULT_BLEND, DEFAULT_EMOTION, clamp, lerp, damp, zoneId, makeAnchor, line3, ring3, disc3, normalize3, buildCanonicalMask, zoneMap, buildNeutralMask, buildSepikMask, buildAsmatMask, buildBainingMask, buildTolaiMask, diamondEye, spiralEye, mouthAnchors, applyBlendshape };
+export { ZONES, ZONE_NAMES, DEFAULT_BLEND, DEFAULT_EMOTION, clamp, lerp, damp, zoneId, makeAnchor, line3, ring3, disc3, normalize3, buildCanonicalMask, zoneMap, buildNeutralMask, buildSepikMask, buildAsmatMask, buildBainingMask, buildTolaiMask, diamondEye, spiralEye, maskAnchors2D, mouthAnchors, applyBlendshape };

@@ -40,6 +40,9 @@ enhancements:
   - primer_kernel_spawn
   - perf_resize_debounce
   - chat_append_queue
+  - face_blendshape_bridge
+  - mask_anchors_2d
+  - spatial_repulsion_2d
 
 vertical_timbre:
   marketplace:
