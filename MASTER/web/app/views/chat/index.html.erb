@@ -20,6 +20,7 @@
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_ASSET_PATHS = {
       threeModule: "<%= asset_path("three.face.module.js") %>",
+      face3dPreview: "<%= asset_path("face3d_preview.js") %>",
       face3dEngine: "<%= asset_path("face3d_engine.js") %>",
       face3dRenderer: "<%= asset_path("face3d_renderer.js") %>",
       faceParts: <%= raw((1..5).map { |part| asset_path("face.part#{part}.txt") }.to_json) %>,

@@ -659,9 +659,9 @@ configure_relayd() {
     print -r -- "  match response header set \"Strict-Transport-Security\" value \"max-age=31536000; includeSubDomains; preload\""
     print -r -- "  match response header set \"Referrer-Policy\" value \"strict-origin\""
     print -r -- "  match response header set \"X-Content-Type-Options\" value \"nosniff\""
-    print -r -- "  match response header set \"X-Frame-Options\" value \"SAMEORIGIN\""
     print -r -- "  match response header set \"X-XSS-Protection\" value \"0\""
-    print -r -- "  match response header set \"Permissions-Policy\" value \"accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()\""
+    print -r -- "  # No global X-Frame-Options — MASTER uses CSP frame-ancestors for brgen/amber embeds."
+    print -r -- "  match response header set \"Permissions-Policy\" value \"accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(self), payment=(), usb=()\""
     print -r -- "  match response header remove \"Server\""
     print -r -- "  http websockets"
     for dom in ${(k)DOMAIN_BACKEND}; do
