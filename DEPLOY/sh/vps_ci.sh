@@ -27,7 +27,14 @@ sync_from_repo() {
   local shared_src=$repo/DEPLOY/rails/shared
   doas sh -c "
     if [[ -d ${src} ]]; then
-      cp ${src}/db/seeds.rb ${app_dir}/db/seeds.rb 2>/dev/null && chown ${app}:${app} ${app_dir}/db/seeds.rb
+      cd ${src} && tar cf - \
+        --exclude='./db/*.sqlite3' \
+        --exclude='./db/*.sqlite3-*' \
+        --exclude='./storage' \
+        --exclude='./log' \
+        --exclude='./tmp' \
+        . | (cd ${app_dir} && tar xf -)
+      chown -R ${app}:${app} ${app_dir}
     fi
     mkdir -p ${shared_dir}
     cd ${shared_src} && tar cf - . | (cd ${shared_dir} && tar xf -)
