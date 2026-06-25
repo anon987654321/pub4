@@ -17,7 +17,6 @@ module Master
           "photograph" => command(:dispatch_photograph, root, agent),
           "video" => command(:dispatch_video, root, agent),
           "prompt" => command(:dispatch_prompt, root, agent),
-          "sing" => command(:dispatch_sing, root),
         }
       end
 
@@ -139,13 +138,6 @@ module Master
           agent: agent,
           image: image
         )
-      end
-
-      def dispatch_sing(root, ctx: nil)
-        prompt = arg_for(ctx).to_s.strip
-        return "usage: /sing <lyrics or singing prompt>   (Replicate suno-ai/bark)" if prompt.empty?
-
-        dispatch_master_tool(root: root, tool: "repligen", arg: "generate suno-ai/bark #{prompt}")
       end
 
       def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip
