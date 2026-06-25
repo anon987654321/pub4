@@ -120,6 +120,34 @@ principle_groups:
   heavy:       [rubocop, reek]
   core:        [frozen_string, bare_rescue, explicit, long_method, god_class]
   critical:    [frozen_string, bare_rescue, explicit, immutable, srp, cqs]
+  cosmetic:
+    - TRAILING_WHITESPACE
+    - CONSECUTIVE_BLANK_LINES
+    - NO_COLUMN_ALIGN
+    - TRAILING_COMMENT
+    - TAB_CHARACTER
+    - FINAL_NEWLINE
+    - TYPOGRAPHIC_EXCELLENCE
+    - TYPOGRAPHY_DISCIPLINE
+    - NO_ASCII_LINE_ART
+    - RUBY_SNAKE_METHODS
+    - RUBY_CAMEL_CLASS
+    - RUBY_NUMERIC_UNDERSCORE
+    - RUBY_SYMBOL_TO_PROC
+    - RUBY_BLOCK_DELIMITER
+    - RUBY_TERNARY_NOT_NESTED
+    - NO_ABBREVIATED_IDENTIFIERS
+    - DOUBLE_QUOTES_RUBY
+    - EN_DASH_RANGE
+    - MEASURE_OPTIMUM
+    - ALL_CAPS_NO_TRACKING
+    - TRAILING_COMMAS
+    - MEANINGFUL_NAMES
+    - USE_THEN
+    - RESCUE_ON_DEF
+    - MAGIC_COLOR
+    - NO_LONG_TRANSITION
+    - LONG_LINE
 
 scan_profiles:
   default: full
@@ -149,6 +177,10 @@ scan_profiles:
   axioms:
     rules: axioms
     description: "Constitutional axioms only"
+  cosmetic:
+    rules: cosmetic
+    aliases: [style, hygiene, perfection]
+    description: "Hygiene, micro-typography, naming, and style-perfection lint"
 
 conflicts:
   strategy: highest_priority_wins

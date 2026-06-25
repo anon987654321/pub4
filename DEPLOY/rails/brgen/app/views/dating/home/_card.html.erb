@@ -3,13 +3,13 @@
   data-user-id="<%= profile.user_id %>"
 >
   <% if profile.photos.attached? %>
-    <%= lazy_image_tag profile.photos.first, alt: profile.user.display_name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash"), class: "swipe-card__photo" %>
+    <%= lazy_image_tag profile.photos.first, alt: profile.user.display_name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash") %>
   <% else %>
-    <div class="swipe-card__placeholder">
-      <span class="swipe-card__initial"><%= profile.user.email_address.first.upcase %></span>
+    <div class="swipe-placeholder">
+      <span><%= profile.user.email_address.first.upcase %></span>
     </div>
   <% end %>
-  <div class="swipe-card__meta">
+  <div class="swipe-meta">
     <div>
       <h2><%= profile.user.email_address.split("@").first %><% if profile.age %>, <%= profile.age %><% end %></h2>
       <% if profile.location.present? %><p class="dim"><%= profile.location %></p><% end %>
@@ -23,11 +23,11 @@
     <% if profile.looking_for.present? %><span class="chip">Looking for <%= profile.looking_for %></span><% end %>
   </div>
   <% if authenticated? %>
-    <div class="swipe-card__actions">
+    <div class="swipe-actions">
       <%= button_tag "Pass", type: "button", class: "btn btn-ghost", data: { action: "click->swipe#pass" } %>
       <%= button_tag "Like", type: "button", class: "btn", data: { action: "click->swipe#like" } %>
     </div>
   <% else %>
-    <p class="dim"><%= link_to "Sign in", new_session_path %> to like or pass.</p>
+    <%= link_to "Sign in to swipe", new_session_path, class: "btn" %>
   <% end %>
 </article>

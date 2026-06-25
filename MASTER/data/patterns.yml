@@ -319,7 +319,7 @@ infer:
       capture: none
     scan:
       patterns:
-      - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(deep))?\\b"
+      - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(?:deep|cosmetic|style|hygiene|perfection))?\\b"
       capture: scan_depth
     workflow:
       patterns:

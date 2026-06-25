@@ -1,6 +1,6 @@
 # Production readiness — Rails family (pub4)
 
-Last updated: **2026-06-24** (waves 1–7 closed locally; vm23 operator proof green)
+Last updated: **2026-06-25** (waves 1–7 closed locally; frontend gates green; vm23 operator proof green)
 
 ## Gate commands
 
@@ -12,6 +12,7 @@ ruby DEPLOY/rails/rails_runtime_gate.rb          # static
 ruby DEPLOY/rails/rails_runtime_gate.rb --runtime # VPS only (bundle34 + db:prepare + bin/ci)
 ruby DEPLOY/security_sweep.rb
 ruby DEPLOY/rails/frontend_production_gate.rb
+ruby DEPLOY/rails/frontend_auditor_gate.rb
 ruby DEPLOY/openbsd/deploy_smoke_gate.rb         # repo relayd template + production configs
 cd MASTER && bin/smoke                            # Ruby 3.4+ required
 
@@ -35,7 +36,7 @@ Ports: see `DEPLOY/rails/apps.yml`.
 | 1 Rails runtime gate | `rails_runtime_gate.rb` + deploy `.sh` `rails_runtime_gate` hook | pass | pass |
 | 2 DEPLOY de-duplication | `production_baseline`, `ApplicationSetup`, shared env/ci | pass | pass |
 | 3 MASTER scanner accuracy | `test_web_scan_fixtures.rb` for HTML/CSS/JS rules | pass | n/a |
-| 4 Frontend production pass | `frontend_production_gate.rb` layouts + MASTER/web | pass | n/a |
+| 4 Frontend production pass | `frontend_production_gate.rb` + `frontend_auditor_gate.rb` (0 warnings) | pass | n/a |
 | 5 Security sweep | `security_sweep.rb` + `bin/probe` quarantine checks | pass | n/a |
 | 6 OpenBSD deploy smoke | `deploy_smoke_gate.rb` (repo) + `health_check.rb` (VPS) | pass | pass |
 | 7 Production readiness | this document + dated pass/fail matrix | pass | pass |

@@ -71,7 +71,7 @@
   gap: 16px;
 }
 
-.mobile-sheet__handle {
+.mobile-sheet-handle {
   width: 42px;
   height: 4px;
   border-radius: 9999px;
@@ -79,12 +79,12 @@
   justify-self: center;
 }
 
-.mobile-sheet__links {
+.mobile-sheet-links {
   display: grid;
   gap: 0.75rem;
 }
 
-.mobile-sheet__links a {
+.mobile-sheet-links a {
   display: block;
   padding: 0.875rem 0.75rem;
   border-radius: 0.75rem;
@@ -93,5 +93,5 @@
   text-decoration: none;
 }
 
-.mobile-sheet__links a:hover { background: rgba(220,220,220,.08); }
+.mobile-sheet-links a:hover { background: rgba(220,220,220,.08); }
 

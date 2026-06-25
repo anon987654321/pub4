@@ -8,6 +8,7 @@ class User < ApplicationRecord
   has_one :privacy_setting, dependent: :destroy
 
   has_many :posts,           dependent: :destroy
+  has_many :comments,        dependent: :destroy
   has_many :items,           dependent: :destroy
   has_many :outfits,         dependent: :destroy
   has_many :planned_outfits, dependent: :destroy

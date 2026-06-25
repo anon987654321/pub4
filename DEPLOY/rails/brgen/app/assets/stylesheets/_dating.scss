@@ -22,7 +22,7 @@
   }
 }
 
-.swipe-card__photo {
+.swipe-card img {
   width: 100%;
   max-height: 420px;
   object-fit: cover;
@@ -30,7 +30,7 @@
   margin-bottom: 0.75rem;
 }
 
-.swipe-card__placeholder {
+.swipe-placeholder {
   display: grid;
   place-items: center;
   height: 220px;
@@ -40,19 +40,19 @@
   margin-bottom: 0.75rem;
 }
 
-.swipe-card__initial {
+.swipe-placeholder span {
   font-size: 64px;
   font-weight: 900;
 }
 
-.swipe-card__meta {
+.swipe-meta {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
 }
 
-.swipe-card__actions {
+.swipe-actions {
   display: flex;
   gap: 8px;
   margin-top: 0.75rem;

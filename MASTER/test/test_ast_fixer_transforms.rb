@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require_relative "test_helper"
+require "judge/scan/rule_dsl"
 
 class TestAstFixerTransforms < Minitest::Test
   class FakeBus
@@ -138,6 +140,50 @@ class TestAstFixerTransforms < Minitest::Test
     refute_includes result[:transforms], :dead_code
   end
 
+  def test_expand_tabs_transform
+    result = fix("tabs.rb", "def call\n\t:ok\nend\n")
+
+    refute_includes result[:content], "\t"
+    assert_includes result[:content], "  :ok"
+    assert_includes result[:transforms], :expand_tabs
+  end
+
+  def test_ensure_final_newline_transform
+    result = fix("eof.rb", "def call\n  :ok\nend")
+
+    assert result[:content].end_with?("\n")
+    assert_includes result[:transforms], :final_newline
+  end
+
+  def test_viewport_fit_injection
+    result = fix("layout.html.erb", <<~HTML)
+      <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      </html>
+    HTML
+
+    assert_includes result[:content], "viewport-fit=cover"
+    assert_includes result[:transforms], :viewport_fit
+  end
+
+  def test_skip_to_main_injection
+    result = fix("app/views/layouts/application.html.erb", <<~HTML)
+      <html lang="en">
+      <body>
+        <main>
+          <p>content</p>
+        </main>
+      </body>
+      </html>
+    HTML
+
+    assert_includes result[:content], 'class="skip-link"'
+    assert_includes result[:content], 'id="main-content"'
+    assert_includes result[:transforms], :skip_to_main
+  end
+
   def test_logical_properties
     result = fix("styles.css", <<~CSS)
       .panel {
@@ -191,6 +237,7 @@ class TestAstFixerTransforms < Minitest::Test
   def fix(filename, content)
     Dir.mktmpdir do |dir|
       path = File.join(dir, filename)
+      FileUtils.mkdir_p(File.dirname(path))
       File.write(path, content)
       result = Master::Judge::Scan::AstFixer.fix(path, content)
       { content: File.read(path), transforms: result.transforms }

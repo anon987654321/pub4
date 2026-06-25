@@ -55,7 +55,11 @@ Five apps eval `shared/config/routes/social.rb` (notifications, reactions, repor
 
 ## Shared concerns
 
-Models: `Shared::Reactable`, `Followable`, `Votable`, `Notifiable`, `ActivityTrackable`, `GeoLocatable`.
+Models: `Shared::Reactable`, `Followable`, `Votable`, `Commentable`, `Notifiable`, `ActivityTrackable`, `GeoLocatable`.
+
+**Commentable:** brgen and amber use polymorphic `comments` + `Shared::Commentable` on `Post`. blognet uses post-scoped comments.
+
+**Deferred DRY:** brgen still has local `NotificationsController` and `VotesController` vs shared stubs; Follow schema differs across apps. Promote when city inbox grouping and vote karma side-effects are unified.
 
 Controllers: `Shared::LiveSearchable`, `StructuredEvents`, `MediaGuard`, `ActorIdentity`.
 

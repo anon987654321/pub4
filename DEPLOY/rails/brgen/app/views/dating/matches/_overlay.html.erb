@@ -1,6 +1,6 @@
 <div class="match-overlay">
-  <div class="match-overlay__card">
-    <p class="match-overlay__eyebrow">Dating</p>
+  <div class="match-overlay-card">
+    <p class="match-overlay-eyebrow">Dating</p>
     <h2>It's a match!</h2>
     <p><%= current_user == match.initiator ? match.receiver.email_address.split("@").first : match.initiator.email_address.split("@").first %> is ready to chat.</p>
     <%= link_to "Open messages", conversations_path, class: "btn btn-primary btn-sm" %>

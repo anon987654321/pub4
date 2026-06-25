@@ -45,6 +45,7 @@ apps:
         - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see WIRING_NOTES.md" }
         - { name: unified Activity graph emission,                         status: port, notes: "core to recommendations & discovery across verticals; see brgen_CORE.md + WIRING_NOTES.md. ActivityTrackable concern + EventEmitter in shared; wired to TV." }
         - { name: shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted), status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + WIRING_NOTES" }
+        - { name: MASTER frontend/cosmetic scan rules (web_rules, cosmetic_rules, FrontendAuditor), status: done, notes: "scan_profiles.cosmetic + frontend_production_gate + frontend_auditor_gate" }
         - { name: Reddit scrape seed (rephrase + Strunk & White),          status: done, notes: "RedditSeedService + ContentRewriter + StrunkWhitePass" }
         - { name: SEO / affiliate / newsletter kit (shared),                 status: done, notes: "Shared::SeoKit, json_ld, affiliate_disclosure, newsletter_cta" }
         - { name: permission-marketing newsletters (Seth Godin editions),    status: done, notes: "NewsletterComposer + NewsletterVisuals + NewsletterEdition + postpro/repligen hero" }
@@ -123,6 +124,7 @@ apps:
         - { name: Hotwire broadcasts_refreshes on Item/Outfit,             status: done }
         - { name: items + outfits index/show views,                        status: done }
         - { name: Post model for amber social feed,                        status: done }
+        - { name: Comment (polymorphic via Shared::Commentable),           status: done, notes: "comments table + CommentsController on posts#show" }
         - { name: Wardrobe model (collection container),                   status: port }
         - { name: Connection model (follow / friend),                      status: port }
         - { name: LiveStream model,                                        status: port }
@@ -134,7 +136,7 @@ apps:
         - { name: underused item surfacing,                                status: missing }
         - { name: wardrobe analytics dashboard,                            status: port }
         - { name: closet organisation tips (AI),                           status: missing }
-        - { name: social feed,                                             status: missing }
+        - { name: social feed,                                             status: done, notes: "posts#index, posts#feed, posts#show with comments" }
         - { name: affiliate commerce links,                                status: done, notes: "SeoKit amazon_affiliate_url + affiliate_links model" }
       planned:
         - { name: fashion embeddings (pgvector),                           status: planned }

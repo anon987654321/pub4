@@ -61,13 +61,13 @@ nav .brand svg {
     linear-gradient(135deg, #172554 0%, #0f172a 50%, #020617 100%);
 }
 
-.map-home__canvas {
+.map-home-canvas {
   position: absolute;
   inset: 0;
   min-height: 100vh;
 }
 
-.map-home__canvas::after {
+.map-home-canvas::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -76,7 +76,7 @@ nav .brand svg {
   z-index: 1;
 }
 
-.map-home__logo {
+.map-home-logo {
   position: absolute;
   top: clamp(0.75rem, 2vw, 1.5rem);
   inset-inline-start: clamp(0.75rem, 2vw, 1.5rem);
@@ -87,15 +87,15 @@ nav .brand svg {
   filter: drop-shadow(0 18px 42px rgb(15 23 42 / 0.34));
 }
 
-.map-home__logo svg,
+.map-home-logo svg,
 .hjerterom-heart-marker__logo svg {
   display: block;
   width: 100%;
   height: auto;
 }
 
-.map-home__panel,
-.map-home__sheet {
+.map-home-panel,
+.map-home-sheet {
   position: relative;
   z-index: 2;
   width: min(27rem, calc(100vw - 2rem));
@@ -105,14 +105,14 @@ nav .brand svg {
   backdrop-filter: blur(20px);
 }
 
-.map-home__panel {
+.map-home-panel {
   top: clamp(5rem, 12vh, 8rem);
   inset-inline-start: clamp(1rem, 4vw, 4rem);
   padding: clamp(1.25rem, 4vw, 2rem);
   border-radius: 2rem;
 }
 
-.map-home__panel h1 {
+.map-home-panel h1 {
   margin: 0;
   font-size: clamp(2.4rem, 7vw, 5rem);
   line-height: 0.9;
@@ -134,14 +134,14 @@ nav .brand svg {
   line-height: 1.5;
 }
 
-.map-home__actions {
+.map-home-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 1.25rem;
 }
 
-.map-home__crisis {
+.map-home-crisis {
   display: grid;
   gap: 0.35rem;
   margin-top: 1.4rem;
@@ -149,7 +149,7 @@ nav .brand svg {
   font-size: 0.9rem;
 }
 
-.map-home__sheet {
+.map-home-sheet {
   position: absolute;
   inset-inline-end: clamp(1rem, 3vw, 3rem);
   bottom: clamp(1rem, 3vw, 3rem);
@@ -159,31 +159,31 @@ nav .brand svg {
   border-radius: 1.5rem;
 }
 
-.map-home__sheet h2 { margin: 0 0 0.75rem; }
+.map-home-sheet h2 { margin: 0 0 0.75rem; }
 
-.map-home__sheet article {
+.map-home-sheet article {
   padding: 0.8rem 0;
   border-top: 1px solid rgb(148 163 184 / 0.35);
 }
 
-.map-home__sheet a {
+.map-home-sheet a {
   color: var(--primary-dark);
   font-weight: 900;
   text-decoration: none;
 }
 
-.map-home__sheet p {
+.map-home-sheet p {
   margin: 0.2rem 0 0;
   color: var(--text-dim);
 }
 
-.map-home__fallback {
+.map-home-fallback {
   display: grid;
   place-items: center;
   padding: 8rem 1rem 3rem;
 }
 
-.map-home__fallback-list {
+.map-home-fallback-list {
   position: absolute;
   inset-inline-end: clamp(1rem, 3vw, 3rem);
   top: clamp(5rem, 12vh, 8rem);
@@ -193,7 +193,7 @@ nav .brand svg {
   width: min(22rem, calc(100vw - 2rem));
 }
 
-.map-home__pin-card {
+.map-home-pin-card {
   display: grid;
   gap: 0.2rem;
   padding: 0.9rem 1rem;
@@ -204,14 +204,14 @@ nav .brand svg {
   text-decoration: none;
 }
 
-.map-home__pin-card span {
+.map-home-pin-card span {
   color: var(--primary);
   font-size: 0.75rem;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.map-home__pin-card small { color: var(--text-dim); }
+.map-home-pin-card small { color: var(--text-dim); }
 
 .hjerterom-heart-logo {
   position: relative;
@@ -355,24 +355,24 @@ h2 {
 }
 
 @media (max-width: 800px) {
-  .map-home__panel {
+  .map-home-panel {
     top: 4.25rem;
     inset-inline: 1rem;
     width: auto;
   }
 
-  .map-home__sheet {
+  .map-home-sheet {
     inset-inline: 1rem;
     bottom: 1rem;
     width: auto;
     max-height: 28vh;
   }
 
-  .map-home__canvas::after {
+  .map-home-canvas::after {
     background: linear-gradient(180deg, rgb(2 6 23 / 0.7), rgb(2 6 23 / 0.12) 55%, rgb(2 6 23 / 0.64));
   }
 
-  .map-home__fallback-list { display: none; }
+  .map-home-fallback-list { display: none; }
 }
 
 [dir="rtl"] .form .field--check {

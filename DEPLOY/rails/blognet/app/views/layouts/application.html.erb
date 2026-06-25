@@ -33,6 +33,7 @@
   <%= javascript_importmap_tags %>
 </head>
 <body class="zen-minimal" data-controller="hotkey scroll-progress">
+<a class="skip-link" href="#main-content">Skip to main content</a>
 <nav data-turbo-permanent role="navigation" aria-label="Primary navigation">
   <%= link_to "Blognet", root_path, class: "brand" %>
   <%= link_to "Blogs", blogs_path %>
@@ -45,7 +46,7 @@
 </nav>
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
-<main role="main" aria-label="Main content"><%= yield %></main>
+<main id="main-content" role="main" aria-label="Main content"><%= yield %></main>
 <%= render "shared/install_prompt" %>
 </body>
 </html>

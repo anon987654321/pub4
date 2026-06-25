@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Post < ApplicationRecord
+  include Shared::Commentable
+
   belongs_to :user
   belongs_to :outfit, optional: true, touch: true
   belongs_to :item,   optional: true, touch: true

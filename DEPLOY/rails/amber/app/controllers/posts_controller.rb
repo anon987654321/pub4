@@ -12,6 +12,8 @@ class PostsController < ApplicationController
   end
 
   def show
+    @comments = @post.root_comments
+    @comment = Comment.new
     @post.record_activity!("AmberPostViewed", source_vertical: "amber")
   end
 

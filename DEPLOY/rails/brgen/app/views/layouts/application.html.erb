@@ -38,6 +38,7 @@
 <body class="zen-minimal"
       data-controller="hotkey browser-fingerprint"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme"
     data-controller="theme-toggle" data-theme-toggle-storage-key-value="brgen-theme" data-action="change->theme-toggle#persist">
   <label for="dark-toggle" class="theme-toggle" title="Toggle light theme" aria-hidden="true">
@@ -64,7 +65,7 @@
     <button id="push-enable-btn" class="push-enable-btn" hidden>Enable notifications</button>
   <% end %>
 
-  <h1 id="cityCarousel" class="city-carousel" data-turbo-permanent aria-hidden="true">
+  <div id="cityCarousel" class="city-carousel" data-turbo-permanent aria-hidden="true">
     <div class="carousel-container">
       <span class="carousel-slide active">brgen.no</span>
       <span class="carousel-slide">longyearbyn.no</span><span class="carousel-slide">oshlo.no</span>
@@ -82,7 +83,7 @@
       <span class="carousel-slide">newyrk.us</span><span class="carousel-slide">lsangeles.com</span>
       <span class="carousel-slide">chcago.us</span><span class="carousel-slide">houstn.us</span>
     </div>
-  </h1>
+  </div>
 
   <% if content_for?(:splash) %>
     <dialog id="splash" class="splash" data-controller="dialog" data-dialog-target="dialog" data-dialog-open-value="true" data-action="click->dialog#backdropClose">
@@ -140,7 +141,7 @@
         <% if authenticated? %>
           <div class="sidebar-dropdown" data-controller="dropdown" data-action="click@window->dropdown#hide">
             <button type="button" class="btn btn-ghost btn-sm" data-dropdown-button aria-expanded="false" data-action="click->dropdown#toggle">More</button>
-            <div class="sidebar-dropdown__menu hidden" data-dropdown-target="menu">
+            <div class="sidebar-dropdown-menu hidden" data-dropdown-target="menu">
               <%= link_to "Profile", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
               <%= link_to "New post", new_post_path %>
               <%= link_to "New community", new_community_path %>
@@ -153,7 +154,7 @@
         </a>
       </aside>
 
-      <main role="main" data-controller="pull-to-refresh">
+      <main id="main-content" role="main" data-controller="pull-to-refresh">
         <div class="feed-header">
           <h1><%= content_for?(:title) ? yield(:title) : "Home" %></h1>
           <div class="feed-tabs">
@@ -224,8 +225,8 @@
     <% end %>
     <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>
     <section class="mobile-sheet" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">
-      <div class="mobile-sheet__handle"></div>
-      <div class="mobile-sheet__links">
+      <div class="mobile-sheet-handle"></div>
+      <div class="mobile-sheet-links">
         <%= link_to "New post", new_post_path %>
         <%= link_to "New community", new_community_path %>
         <%= link_to "Profile", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>

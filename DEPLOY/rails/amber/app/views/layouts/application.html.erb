@@ -33,6 +33,7 @@
   <%= javascript_importmap_tags %>
 </head>
 <body class="zen-minimal" data-pwa-key="amber" data-controller="pwa-standalone">
+<a class="skip-link" href="#main-content">Skip to main content</a>
 <nav role="navigation" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to root_path, class: "brand", aria: { label: "Amber home" } do %>
     <%= render "shared/logo" %>
@@ -53,7 +54,7 @@
   <% end %>
 </nav>
 <%= render "shared/flash" %>
-<main role="main" aria-label="Main content"><%= yield %></main>
+<main id="main-content" role="main" aria-label="Main content"><%= yield %></main>
 <%= render "shared/install_prompt" %>
 </body>
 </html>

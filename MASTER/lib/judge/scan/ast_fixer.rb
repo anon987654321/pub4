@@ -21,11 +21,11 @@ module Master
           Strategy.new(predicate: :ruby?, transforms: %i[add_frozen_header fix_bare_rescue freeze_mutable_constants]),
           Strategy.new(predicate: :sql_context?, transforms: %i[normalise_null_comparison]),
           Strategy.new(predicate: :shell?, transforms: %i[add_strict_mode]),
-          Strategy.new(predicate: :html?, transforms: %i[add_html_lang add_meta_charset add_lazy_loading]),
+          Strategy.new(predicate: :html?, transforms: %i[add_html_lang add_meta_charset add_viewport_fit add_skip_to_main add_lazy_loading]),
           Strategy.new(predicate: :javascript?, transforms: %i[replace_unreassigned_var convert_for_in_arrays convert_string_concat convert_optional_chaining]),
           Strategy.new(predicate: :style?, transforms: %i[logical_properties])
         ].freeze
-        UNIVERSAL_TRANSFORMS = %i[collapse_blank_lines strip_trailing_whitespace remove_immediate_dead_code add_trailing_commas].freeze
+        UNIVERSAL_TRANSFORMS = %i[expand_tabs collapse_blank_lines strip_trailing_whitespace remove_immediate_dead_code add_trailing_commas ensure_final_newline].freeze
 
         include WebTransforms
 
@@ -122,6 +122,21 @@ module Master
           end
           node.child_nodes.compact.each { |child| bare_rescue_lines(child, lines) }
           lines
+        end
+
+        def expand_tabs(src)
+          return src unless src.include?("\t")
+
+          out = src.gsub("\t", "  ")
+          @transforms << :expand_tabs if out != src
+          out
+        end
+
+        def ensure_final_newline(src)
+          return src if src.empty? || src.end_with?("\n")
+
+          @transforms << :final_newline
+          src + "\n"
         end
 
         def collapse_blank_lines(src)

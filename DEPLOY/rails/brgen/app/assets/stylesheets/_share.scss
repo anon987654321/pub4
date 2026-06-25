@@ -1,4 +1,4 @@
-.sidebar-dropdown__menu {
+.sidebar-dropdown-menu {
   position: absolute;
   inset-inline-start: 0;
   bottom: calc(100% + .5rem);
@@ -12,14 +12,14 @@
   box-shadow: 0 0.875rem 40px rgba(0,0,0,.18);
   z-index: 20;
 }
-.sidebar-dropdown__menu a {
+.sidebar-dropdown-menu a {
   display: block;
   padding: .45rem .6rem;
   border-radius: .35rem;
   color: inherit;
   text-decoration: none;
 }
-.sidebar-dropdown__menu a:hover { background: rgba(29, 78, 216, .08); }
+.sidebar-dropdown-menu a:hover { background: rgba(29, 78, 216, .08); }
 
 .media-actions { display: flex; gap: 8px; margin-bottom: 8px; }
 

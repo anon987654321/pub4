@@ -106,13 +106,13 @@ export default class extends Controller {
     const canvas = this._rootCanvas()
     if (!canvas) return
     canvas.innerHTML = this.points.map(point => `
-      <a class="map-home__pin-card" href="${this._escape(point.url || "#")}">
+      <a class="map-home-pin-card" href="${this._escape(point.url || "#")}">
         <span>${this._escape(point.type || "point")}</span>
         <strong>${this._escape(point.title || "Hjerterom punkt")}</strong>
         <small>${this._escape(point.subtitle || "")}</small>
       </a>
     `).join("") || "<p>Ingen kartpunkter ennå.</p>"
-    canvas.classList.add("map-home__fallback")
+    canvas.classList.add("map-home-fallback")
   }
 
   _escape(value) {

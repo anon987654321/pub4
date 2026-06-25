@@ -51,14 +51,14 @@ function fallbackMap(root, points) {
   const canvas = root.querySelector("#hjerterom-map");
   if (!canvas) return;
   canvas.innerHTML = "";
-  canvas.classList.add("map-home__fallback");
+  canvas.classList.add("map-home-fallback");
 
   const logo = logoClone("hjerterom-heart-logo");
 
   const list = document.createElement("div");
-  list.className = "map-home__fallback-list";
+  list.className = "map-home-fallback-list";
   list.innerHTML = points.map(point => `
-    <a class="map-home__pin-card" href="${escapeHtml(point.url)}">
+    <a class="map-home-pin-card" href="${escapeHtml(point.url)}">
       <span>${point.type === "food" ? "Mat" : "Ressurs"}</span>
       <strong>${escapeHtml(point.title)}</strong>
       <small>${escapeHtml(point.subtitle || "Åsane")}</small>

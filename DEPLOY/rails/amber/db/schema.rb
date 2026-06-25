@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -48,6 +48,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_000100) do
     t.datetime "updated_at", null: false
     t.string "url", null: false
     t.index ["item_id"], name: "index_affiliate_links_on_item_id"
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.integer "commentable_id", null: false
+    t.string "commentable_type", null: false
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.integer "parent_id"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
+    t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
   create_table "consent_events", force: :cascade do |t|
@@ -357,6 +369,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_000100) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "affiliate_links", "items"
+  add_foreign_key "comments", "users"
   add_foreign_key "consent_events", "users"
   add_foreign_key "creator_profiles", "users"
   add_foreign_key "creator_wardrobe_items", "creator_profiles"

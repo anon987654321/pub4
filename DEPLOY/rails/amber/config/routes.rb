@@ -37,6 +37,7 @@ Rails.application.routes.draw do
   resources :wardrobe_items
 
   resources :posts, only: %i[index show new create destroy] do
+    resources :comments, only: %i[create destroy]
     member { post :like }
     collection { get :feed }
   end

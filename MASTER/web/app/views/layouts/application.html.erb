@@ -34,6 +34,7 @@
     <link rel="stylesheet" href="<%= asset_path("photo_upload.css") %>">
   </head>
   <body class="zen" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
+    <a class="skip-link" href="#main-content">skip to main content</a>
     <div class="top-left-logo" aria-hidden="true">brgen</div>
     <canvas id="cognition-ecology" aria-hidden="true"></canvas>
     <canvas id="face" aria-hidden="true"></canvas>
@@ -58,7 +59,7 @@
       <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
       <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message">
     </form>
-    <main id="app-shell" aria-label="MASTER content">
+    <main id="main-content" aria-label="MASTER content">
       <%= yield %>
     </main>
     <script>

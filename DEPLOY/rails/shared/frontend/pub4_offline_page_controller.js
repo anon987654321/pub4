@@ -57,15 +57,15 @@ export default class extends Controller {
     }
 
     this.listTarget.innerHTML = items.map(item => `
-      <li class="offline-page__item">
+      <li class="offline-page-item">
         <a href="${this.escape(item.url)}">${this.escape(item.title)}</a>
-        <div class="offline-page__meta">${this.escape(item.meta || "")}</div>
+        <div class="offline-page-meta">${this.escape(item.meta || "")}</div>
       </li>
     `).join("")
   }
 
   renderEmpty() {
-    this.listTarget.innerHTML = '<li class="offline-page__item">No cached items yet.</li>'
+    this.listTarget.innerHTML = '<li class="offline-page-item">No cached items yet.</li>'
   }
 
   escape(value) {
