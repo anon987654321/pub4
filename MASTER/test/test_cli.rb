@@ -201,24 +201,27 @@ class TestCLI < Minitest::Test
     assert_includes output, "data/rules.yml"
   end
 
-  def test_publish_snapshot_digest_writes_repo_root_summary
+  def test_publish_snapshot_digest_writes_downloads_summary
     repo_root = File.dirname(Master::ROOT)
-    master_digest = File.join(repo_root, "MASTER_snapshot.md")
-    prior = File.file?(master_digest) ? File.read(master_digest) : nil
+    Dir.mktmpdir do |downloads|
+      prior = ENV["MASTER_SNAPSHOT_DIR"]
+      ENV["MASTER_SNAPSHOT_DIR"] = downloads
+      master_digest = File.join(downloads, "MASTER_snapshot.md")
+      output = Master::Now::CommandRegistry.publish_snapshot_digest(Master::ROOT, "MASTER", repo_root:)
 
-    output = Master::Now::CommandRegistry.publish_snapshot_digest(Master::ROOT, "MASTER", repo_root:)
-
-    assert_includes output, "snapshot:master: digest"
-    assert File.file?(master_digest), "expected MASTER digest at repo root"
-    body = File.read(master_digest)
-    assert_includes body, "# MASTER Snapshot"
-    assert_includes body, "runtime enhancements:"
-    assert_includes body, "## Recent changes"
-  ensure
-    if prior
-      File.write(master_digest, prior)
-    elsif File.file?(master_digest)
-      File.delete(master_digest)
+      assert_includes output, "snapshot:master: digest"
+      assert_includes output, downloads
+      assert File.file?(master_digest), "expected MASTER digest in downloads"
+      body = File.read(master_digest)
+      assert_includes body, "# MASTER Snapshot"
+      assert_includes body, "runtime enhancements:"
+      assert_includes body, "## Recent changes"
+    ensure
+      if prior
+        ENV["MASTER_SNAPSHOT_DIR"] = prior
+      else
+        ENV.delete("MASTER_SNAPSHOT_DIR")
+      end
     end
   end
 

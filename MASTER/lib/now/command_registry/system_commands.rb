@@ -137,7 +137,8 @@ module Master
           snapshot_recent_commits(repo_root),
           ""
         ].join("\n")
-        out = File.join(repo_root, "#{label}_snapshot.md")
+        out = File.join(snapshot_output_dir, "#{label}_snapshot.md")
+        FileUtils.mkdir_p(File.dirname(out))
         File.write(out, digest)
         "snapshot:#{label.downcase}: digest → #{out}"
       rescue StandardError => e
@@ -285,16 +286,16 @@ module Master
         [md.join("\n"), files, n_lines]
       end
 
-      def snapshot_artifacts(target)
-        repo_root = File.expand_path("..", target)
+      def snapshot_artifacts(_target)
+        dir = snapshot_output_dir
         paths = %w[MASTER_snapshot.md DEPLOY_snapshot.md].filter_map do |name|
-          path = File.join(repo_root, name)
+          path = File.join(dir, name)
           next unless File.file?(path)
-          "- `#{name}` (#{File.size(path)} bytes, updated #{File.mtime(path).utc.iso8601})"
+          "- `#{path}` (#{File.size(path)} bytes, updated #{File.mtime(path).utc.iso8601})"
         end
         return [] if paths.empty?
 
-        ["## Root snapshot artifacts", *paths, ""]
+        ["## Download snapshot artifacts", *paths, ""]
       end
 
       def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip
