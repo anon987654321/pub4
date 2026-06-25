@@ -108,8 +108,7 @@ main() {
   mkdir -p "$RESTORE_TMP"
 
   restore_repo_tree "$ROOT_DIR/MASTER" "$ROOT_DIR/pub"
-  restore_repo_tree "$ROOT_DIR/__predecessors/MASTER2" "$ROOT_DIR/pub2"
-  restore_repo_tree "$ROOT_DIR/__predecessors/aight" "$ROOT_DIR/pub3"
+  restore_repo_tree "$ROOT_DIR/archive/recovery" "$ROOT_DIR/tmp/recovery_snapshot"
   restore_repo_tree "$ROOT_DIR/MASTER/DEPLOY/rails" "$ROOT_DIR/railsy"
 
   extract_archives

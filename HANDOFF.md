@@ -19,6 +19,7 @@ Strict `rules.yml` adherence across MASTER and DEPLOY. Rails production on OpenB
 
 ```sh
 ruby bin/probe all
+ruby DEPLOY/rails/domain_alignment_gate.rb
 ruby DEPLOY/rails/release_gate.rb
 ruby DEPLOY/rails/check_phantom_foreign_keys.rb
 cd MASTER && bundle exec rake test

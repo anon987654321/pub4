@@ -278,43 +278,43 @@ apps:
         - { name: reporting jobs (Solid Queue),                            status: planned }
         - { name: operational forecasting,                                 status: planned }
 
-# ── Archived / not in DEPLOY/rails (recovery sources in __predecessors/) ──────
+# ── Archived / not in DEPLOY/rails (recovery in DEPLOY/archive/recovery/) ───────
 
 archived_apps:
 
   privcam:
     title: Privcam
     status: missing
-    recovery_source: DEPLOY/__predecessors/pub3-installers/privcam.sh
+    recovery_source: DEPLOY/archive/recovery/installers/privcam.sh
     notes: Video upload, VideosInfiniteScrollReflex, comments. Referenced by old deploy_all.sh — removed from master.json.
 
   pub_attorney:
     title: Pub Attorney
     domain: pub.attorney
     status: missing
-    recovery_source: DEPLOY/__predecessors/pub3-installers/pub_attorney.sh
+    recovery_source: DEPLOY/archive/recovery/installers/pub_attorney.sh
     notes: Lawyer/Case/Document models, CaseMatchReflex, wicked_pdf/prawn.
 
   mytoonz:
     title: MyToonz
     status: missing
-    recovery_source: DEPLOY/__predecessors/pub3-installers/mytoonz.sh
+    recovery_source: DEPLOY/archive/recovery/installers/mytoonz.sh
     notes: ReplicateService comic-strip generation, GenerateComicStripJob.
 
 archived_subsystems:
 
   aight_production_ai:
-    recovery_source: DEPLOY/__predecessors/pub2-aight/lib
-    notes: pub2 RAG/weaviate/scraper — not wired into DEPLOY; MASTER is dev harness only.
+    recovery_source: MASTER/lib/reach/
+    notes: Absorbed — semantic cache + scrape in MASTER reach; shared Scrape service in pub4-shared.
 
   ai3_assistants:
-    recovery_source: DEPLOY/__predecessors/pub-ai3
-    notes: pub ai3 orchestration + 57 assistants.
+    recovery_source: MASTER/
+    notes: Absorbed — constitutional pipeline replaces pub ai3 orchestration.
 
   multimedia_tts:
-    recovery_source: DEPLOY/__predecessors/pub3-multimedia/tts
-    notes: TTS pipeline absent from DEPLOY; blognet AI narration still missing.
+    recovery_source: MASTER/lib/voice/
+    notes: Absorbed — MASTER voice/TTS is canonical; legacy operator scripts retired.
 
   blognet_ai_content:
-    recovery_source: DEPLOY/__predecessors/pub2-rails/build_blognet.rb
-    notes: AiContentService + ai_generated column from pub2.
+    recovery_source: DEPLOY/rails/blognet/app/services/ai_content_service.rb
+    notes: Restored — AiContentService + posts.ai_generated from pub2 build_blognet.rb.

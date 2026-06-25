@@ -31,7 +31,8 @@ def verify_openbsd_alignment(root)
 end
 
 commands = [
-  ["ruby", File.join(root, "DEPLOY", "verify_deploy_identity.rb")]
+  ["ruby", File.join(root, "DEPLOY", "verify_deploy_identity.rb")],
+  ["ruby", File.join(root, "DEPLOY", "rails", "domain_alignment_gate.rb")]
 ]
 
 commands.each do |command|

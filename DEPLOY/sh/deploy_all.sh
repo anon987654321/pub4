@@ -3,7 +3,7 @@
 #
 # Canonical app list: DEPLOY/master.json (6 Rails apps).
 # NOT deployed (archived installers only): privcam, pub_attorney, mytoonz
-#   → see DEPLOY/__predecessors/ and gap_manifest.json
+#   → see DEPLOY/archive/recovery/manifest.json
 #
 # Usage:
 #   zsh DEPLOY/sh/deploy_all.sh

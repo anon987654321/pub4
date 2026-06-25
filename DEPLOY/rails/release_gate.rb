@@ -30,6 +30,8 @@ end
   run(test, "RBENV_VERSION=3.4.9 ruby #{test}", chdir: ROOT)
 end
 
+run("domain_alignment_gate", "ruby domain_alignment_gate.rb", chdir: ROOT)
+
 run("frontend_production_gate", "ruby frontend_production_gate.rb", chdir: ROOT)
 
 run("frontend_auditor", "RBENV_VERSION=3.4.9 ruby frontend_auditor_gate.rb", chdir: ROOT)

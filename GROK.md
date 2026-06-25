@@ -114,7 +114,7 @@ Per-app scripts live in `DEPLOY/rails/<app>/<app>.sh`. Shared helpers:
 Production faces: `https://ai.brgen.no` (MASTER), `https://brgen.no` and subdomains
 (markedsplass, dating, takeaway, tv, messenger, etc.) via brgen Rails + relayd SNI.
 
-Recovered predecessor trees: `DEPLOY/__predecessors/` (gap manifest in `gap_manifest.json`).
+Recovery archive: `DEPLOY/archive/recovery/` (manifest in `manifest.json`; logic absorbed into MASTER, blognet, repligen).
 Pure Ruby for deploy automation — never Python on operator paths.
 
 ---

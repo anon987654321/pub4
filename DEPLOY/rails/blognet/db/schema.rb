@@ -93,6 +93,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_000100) do
   end
 
   create_table "posts", force: :cascade do |t|
+    t.boolean "ai_generated", default: false, null: false
     t.integer "blog_id"
     t.integer "comments_count", default: 0
     t.datetime "created_at", null: false

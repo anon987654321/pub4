@@ -111,7 +111,7 @@ All apps share: Rails 8.1, SQLite3 (WAL mode), Falcon, Hotwire (Turbo + Stimulus
 
 ## Rails apps — architecture
 
-**brgen** (`DEPLOY/rails/brgen/`) is the flagship — hyperlocal social network competing with X and Facebook. Subdomain routing per vertical: `tv.`, `dating.`, `playlist.`, `takeaway.`, `markedsplass.`, `maps.`. `acts_as_tenant` scopes all queries to city. Cities: `brgen.no` flagship; others follow `<city>.citynet.no` — wildcard DNS, single wildcard TLS cert, per-city SQLite database at `db/cities/<slug>.sqlite3`.
+**brgen** (`DEPLOY/rails/brgen/`) is the flagship — hyperlocal social network competing with X and Facebook. Subdomain routing per vertical: `tv.`, `dating.`, `playlist`/`spilleliste`, `takeaway.`, localized marketplace aliases, `maps.`, `messenger.`. `acts_as_tenant` scopes all queries to city. Cities use vanity apex domains (`brgen.no`, `oshlo.no`, `lsangeles.com`, …) from `Brgen::DomainRegistry`; DNS/TLS via `DEPLOY/openbsd/openbsd.sh`. Single `production.sqlite3` with `city_id` tenant isolation — not per-city database files.
 
 brgen landing: `#000` OLED-black background, "brgen" in bold Helvetica top-left, hidden nav revealed by swipe-down/tilt/scroll (spring physics: `cubic-bezier(0.32,0.72,0,1)`), horizontal scroll nav "Regular | AI | Marketplace..." with right-edge `mask-image` fade-out. Post composer is Tiptap.js (headless ProseMirror). Anonymous posting: 2 posts per SHA-256 browser fingerprint before signup; MASTER + Groq llama3-8b moderates sync (2s timeout, optimistic approve on timeout). Feed is chronological + distance-weighted — no engagement-bait algorithm.
 
@@ -172,7 +172,7 @@ TLS terminates at relayd; Rails uses `config.assume_ssl = true` only.
 
 **Deploy scripts (`DEPLOY/sh/`):** `vps_install_all.sh` and `vps_on_vm_install.sh` install MASTER + six Rails apps. Per-app `DEPLOY/rails/<app>/<app>.sh` copies the tracked tree to `/home/<app>/app`, copies `pub4-shared` to `/home/<app>/shared`, runs `bundle install` as the app user, ensures `/etc/<app>.env` with `SECRET_KEY_BASE`, overlays shared initializers, migrates DB, installs rc.d. Do not wrap deploy scripts in outer `doas` (nested doas fails). Use `SKIP_MASTER_SCAN=1` until MASTER `/scan DEPLOY` is non-interactive on VPS.
 
-**Predecessor archive:** `DEPLOY/__predecessors/` holds recovered logic from pub/pub2/pub3 (privcam, ai3, multimedia/tts, etc.). Regenerate manifest: `DEPLOY/sh/sync_predecessors.sh`. Archived apps listed in `DEPLOY/rails/apps.yml`.
+**Recovery archive:** absorbed predecessor logic lives in product paths (MASTER voice/reach, `DEPLOY/repligen.rb`, blognet services). Installer-only archived apps reference `DEPLOY/archive/recovery/`; see `DEPLOY/rails/apps.yml`.
 
 One tmux session per operation — rapid reconnects trigger pf bruteforce protection. Edit files on VPS, sync back to `DEPLOY/openbsd/` and commit. Pure Ruby for automation — no Python on deploy paths.
 

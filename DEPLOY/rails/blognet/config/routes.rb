@@ -17,6 +17,7 @@ Rails.application.routes.draw do
 
   resources :blogs, path: "b" do
     resources :posts, path: "p" do
+      member { post :generate_ai }
       resources :comments, only: %i[create destroy]
     end
   end

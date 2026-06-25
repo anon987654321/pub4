@@ -5,8 +5,8 @@ class PostsController < ApplicationController
 
   before_action :require_authentication, except: %i[index show]
   before_action :set_blog, except: %i[share]
-  before_action :set_post, only: %i[show edit update destroy]
-  before_action :authorize!, only: %i[edit update destroy]
+  before_action :set_post, only: %i[show edit update destroy generate_ai]
+  before_action :authorize!, only: %i[edit update destroy generate_ai]
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
@@ -52,6 +52,15 @@ class PostsController < ApplicationController
     @post.record_activity!("BlogPostRemoved", source_vertical: "blognet")
     @post.destroy
     redirect_to @blog, notice: "Post deleted"
+  end
+
+  def generate_ai
+    content = AiContentService.new(@post).generate
+    if @post.update(body: content, ai_generated: true)
+      redirect_to edit_blog_post_path(@blog, @post), notice: "AI draft generated"
+    else
+      redirect_to edit_blog_post_path(@blog, @post), alert: "Could not save AI draft"
+    end
   end
 
   def share

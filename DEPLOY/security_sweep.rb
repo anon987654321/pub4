@@ -17,7 +17,7 @@ SECRET_PATTERNS = [
 
 SKIP_PATH_RE = %r{
   \A(?:DEPLOY/quarantine/|
-  DEPLOY/__predecessors/|
+  DEPLOY/archive/recovery/references/|
   .*/test/|
   .*/tests/|
   MASTER/data/eval_cases\.yml|

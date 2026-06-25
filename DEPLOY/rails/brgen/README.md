@@ -4,9 +4,9 @@ Hyperlocal city network — one Rails app, many verticals scoped by host/subdoma
 
 ## Surfaces
 
-Posts, communities, marketplace, dating, playlist, TV, takeaway, maps, messaging, notifications. City tenant via `acts_as_tenant`; per-city SQLite at `db/cities/<slug>.sqlite3`.
+Posts, communities, marketplace, dating, playlist, TV, takeaway, maps, messaging, notifications. City tenant via `acts_as_tenant` on `city_id` in a single `production.sqlite3`.
 
-Subdomains: `tv`, `dating`, `playlist`, `takeaway`, `markedsplass` (+ localized marketplace aliases), `maps`, `ai`.
+Subdomains: `tv`, `dating`, `playlist`/`spilleliste` (`.no` cities), `takeaway`, localized marketplace aliases, `maps`, `messenger`, `ai` (MASTER on `ai.brgen.no` only).
 
 ## Stack
 

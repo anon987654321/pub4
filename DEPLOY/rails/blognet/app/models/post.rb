@@ -22,6 +22,7 @@ class Post < ApplicationRecord
 
   scope :published, -> { where(published: true).order(published_at: :desc) }
   scope :drafts,    -> { where(published: false) }
+  scope :ai_generated, -> { where(ai_generated: true) }
   scope :recent,    -> { order(created_at: :desc) }
   scope :search, ->(q) {
     ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?", q ]))
