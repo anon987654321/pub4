@@ -92,7 +92,7 @@ module Brgen
     end
 
     def self.normalize_host(host)
-      host.to_s.downcase.split(":", 2).first.to_s.delete_suffix(".")
+      host.to_s.downcase.split(":", 2).first.to_s.delete_suffix(".").sub(/\Awww\./, "")
     end
 
     def self.entry_for(host)
