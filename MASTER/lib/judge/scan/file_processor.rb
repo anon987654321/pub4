@@ -99,9 +99,23 @@ module Master
           return unless RUBY_EXT.include?(File.extname(path))
 
           result = Prism.parse(code)
-          result.success? ? result.value : nil
+          return result.value if result.success?
+
+          attempt_syntax_repair(path, code, result.errors)
         rescue StandardError => e
           @bus&.publish("scan:parse_error", path: path, error: e.message)
+          nil
+        end
+
+        def attempt_syntax_repair(path, code, errors)
+          @bus&.publish("scan:syntax_fault", path: path, error_count: errors.size)
+          repair = AutonomousRepairer.heal(path: path, source: code, event_bus: @bus)
+          return nil if repair.err?
+
+          re_parse = Prism.parse(repair.value!)
+          return re_parse.value if re_parse.success?
+
+          @bus&.publish("scan:syntax_repair_failed", path: path)
           nil
         end
 

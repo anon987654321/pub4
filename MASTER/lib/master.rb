@@ -4,6 +4,7 @@ require "json"
 require "timeout"
 require "zeitwerk"
 require "yaml"
+require_relative "security_error"
 
 # Faraday-net_http requires openssl lazily on first HTTPS call, which fails after unveil restricts dlopen paths.
 begin
@@ -295,6 +296,7 @@ module Master
   def self.init_ground(root:)
     install_process_guards!
     Trace::Telemetry.bootstrap!(root: root)
+    Ground::GitHooks.ensure_pre_commit!(root: root)
   end
 
   def self.init_judge(root:)

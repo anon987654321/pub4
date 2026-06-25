@@ -205,7 +205,13 @@ module Master
 
         def join_or_kill(thread, deadline)
           remaining = [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0.1].max
-          thread.join(remaining) ? thread.value : (thread.kill; nil)
+          if thread.join(remaining)
+            Thread.current[:vector_clock] = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
+            thread.value
+          else
+            thread.kill
+            nil
+          end
         end
 
         def converged?(prev, curr)

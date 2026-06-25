@@ -12,6 +12,14 @@ module Master
         true
       end
 
+      def guard_subprocess_context!
+        if defined?(Falcon) && Fiber.scheduler
+          raise Master::SecurityError,
+                "Process.fork inside Falcon fibers induces closing scheduler panics. Shell out via Open3 or exe workers."
+        end
+        true
+      end
+
       def guard_heartbeat
         return unless defined?(Master::Loop::Heartbeat)
 

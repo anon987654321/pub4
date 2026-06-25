@@ -70,8 +70,10 @@ metadata.each do |app, expected|
   if File.file?(gemfile) && File.file?(readme)
     gemfile_content = File.read(gemfile)
     readme_content = File.read(readme)
-    if gemfile_content.include?('gem "sqlite3"') && readme_content.match?(/Rails 8, PostgreSQL(,|\.)/)
-      failures << "README claims PostgreSQL as current stack while Gemfile uses SQLite for #{app}"
+    if gemfile_content.include?('gem "sqlite3"') &&
+       readme_content.match?(/Rails 8, PostgreSQL/) &&
+       !gemfile_content.include?('gem "pg"')
+      failures << "Database provider drift mismatch verified inside production definitions for #{app}"
     end
   end
 

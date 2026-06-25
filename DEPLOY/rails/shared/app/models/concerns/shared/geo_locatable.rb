@@ -22,8 +22,10 @@ module Shared
       # For high precision on small result sets, post-filter with haversine or call .select.
       # Signature compatible with prior dupe scopes (positional km default).
       def nearby(lat, lng, km = 5)
-        lat = lat.to_f
-        lng = lng.to_f
+        isolated = GeoIsolation.compute_isolated_bounds(latitude: lat, longitude: lng)
+        return none if isolated[:status] == :error
+
+        lat, lng = isolated[:bounds]
         radius_km = km.to_f
         return none if lat == 0 && lng == 0
 

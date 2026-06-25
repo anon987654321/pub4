@@ -6,11 +6,12 @@ module Master
   module Judge
     class CodeIndex
       class SymbolVisitor < Prism::Visitor
-        attr_reader :symbols, :references
+        attr_reader :symbols, :references, :metrics
 
         def initialize(file:, root:)
           @file = file; @root = root
           @symbols = []; @references = []; @scope = []
+          @metrics = { classes: 0, modules: 0, defs: 0 }
         end
 
         def visit_class_node(node)
@@ -24,6 +25,7 @@ module Master
             parent: node.superclass ? const_name(node.superclass) : "Object",
             includes: []
           )
+          @metrics[:classes] += 1
           @scope.push(name); super; @scope.pop
         end
 
@@ -38,6 +40,7 @@ module Master
             parent: nil,
             includes: []
           )
+          @metrics[:modules] += 1
           @scope.push(name); super; @scope.pop
         end
 
@@ -52,6 +55,7 @@ module Master
             parent: owner,
             includes: []
           )
+          @metrics[:defs] += 1
           super
         end
 

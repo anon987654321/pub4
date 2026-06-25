@@ -88,11 +88,12 @@ module Master
           deadline = Time.now + PARALLEL_TIMEOUT_S
           workers.each do |worker|
             remaining = [deadline - Time.now, 0].max
-            worker.join(remaining)
-            next unless worker.alive?
-
-            worker.kill
-            @bus&.publish("pipeline:stage_timeout", stage: "parallel")
+            if worker.join(remaining)
+              Thread.current[:vector_clock] = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
+            elsif worker.alive?
+              worker.kill
+              @bus&.publish("pipeline:stage_timeout", stage: "parallel")
+            end
           end
           results.each_with_index.map do |result, index|
             result || Result.ok(frozen.merge(_parallel_timeout: @stages[index].class.name))
