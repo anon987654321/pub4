@@ -22,10 +22,12 @@ class AmberScriptTest < ActiveSupport::TestCase
 
   test "deploy script uses modern bundler deployment configuration" do
     content = SCRIPT.read
+    shared = Rails.root.join("../shared/deploy/@shared_functions.sh").read
 
-    assert_includes content, "bundle config set --local deployment true"
-    assert_includes content, "bundle config set --local without"
-    assert_includes content, "development test"
+    assert_includes content, 'bundle_install_as_app "$APP_NAME" "$APP_DIR"'
+    assert_includes shared, "bundle config set --local deployment true"
+    assert_includes shared, "bundle config set --local without"
+    assert_includes shared, "development test"
     refute_includes content, "bundle install --deployment --without"
   end
 end

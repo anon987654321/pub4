@@ -50,6 +50,9 @@ users = 50.times.map do |i|
   )
 end
 
+seed_city = City.find_by(domain: 'brgen.no') || City.first
+ActsAsTenant.current_tenant = seed_city if seed_city
+
 puts "Created #{users.size + 1} users (incl admin)"
 
 communities = %w[news tech bergen norge kultur food music film].map do |slug|
@@ -209,12 +212,11 @@ restaurants = 15.times.map do
     name: Faker::Restaurant.name,
     cuisine_type: cuisines.sample,
     address: Faker::Address.street_address,
-    city: 'Bergen',
     delivery_fee_cents: rand(2000..6000),
     min_order_cents: rand(8000..15_000),
     latitude: 60.39 + rand(-0.04..0.04),
     longitude: 5.33 + rand(-0.04..0.04)
-  )
+  ).tap { |restaurant| restaurant.update_column(:city, 'Bergen') }
 end
 
 restaurants.each do |rest|

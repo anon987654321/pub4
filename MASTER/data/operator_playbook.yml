@@ -113,3 +113,15 @@ lessons:
     signal: "bundle34 install fails on sass-embedded; npm EACCES on /root/.npm when installing as app user via doas"
     action: "pkg_add node if missing. When running bundle install via doas su -m <app>, export HOME=/home/<app> and NPM_CONFIG_CACHE=/home/<app>/.npm so npm does not touch root-owned cache."
     proof: "su -m brgen -c 'cd /home/brgen/app && bundle34 check' exits 0; bin/rails dartsass:build succeeds"
+
+  - id: takeaway_seed_city_association
+    area: rails
+    signal: "db:seed:replant fails after Playlist with City expected, got String"
+    action: "CityTenantable adds belongs_to :city on takeaway_restaurants, colliding with the legacy string city column. Set ActsAsTenant.current_tenant in seeds.rb; omit city: from create! and use update_column(:city, label) for the display string."
+    proof: "RAILS_ENV=test bundle exec rails db:seed:replant exits 0 in brgen"
+
+  - id: live_search_empty_query_count
+    area: rails
+    signal: "live_search_test fails on empty query .none scope count"
+    action: "Shared::LiveSearch#safe_count returns 0 when query.blank? before calling null_relation? or count on arbitrary scopes."
+    proof: "bundle exec rails test test/services/live_search_test.rb in brgen"
