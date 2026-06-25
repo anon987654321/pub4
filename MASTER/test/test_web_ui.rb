@@ -201,6 +201,7 @@ class TestWebUI < Minitest::Test
 
     assert_includes index, "dismissPrimer"
     assert_includes index, "revealPrompt"
+    assert_includes index, "dismissPrimer();\n        revealPrompt();"
     assert_includes index, "z.classList.add('live')"
     assert_includes css, "#primer"
     assert_includes css, "z-index: var(--z-modal)"

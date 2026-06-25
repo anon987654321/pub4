@@ -20,6 +20,8 @@
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_ASSET_PATHS = {
       threeModule: "<%= asset_path("three.face.module.js") %>",
+      face3dEngine: "<%= asset_path("face3d_engine.js") %>",
+      face3dRenderer: "<%= asset_path("face3d_renderer.js") %>",
       faceParts: <%= raw((1..5).map { |part| asset_path("face.part#{part}.txt") }.to_json) %>,
       faceModulesList: <%= raw(%w[
         face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js face_blendshape_bridge.js
@@ -162,6 +164,8 @@
         fired=true;
         window._primerFired=true;
         primeAudio();
+        dismissPrimer();
+        revealPrompt();
         if(boot())return;
         showLoadState();
         timer=setInterval(function(){if(boot()){clearInterval(timer);timer=null;clearTimeout(fallback);}},40);
@@ -169,6 +173,7 @@
       }
       if(p){
         p.addEventListener('pointerdown',go);
+        p.addEventListener('touchstart',go,{passive:true});
         p.addEventListener('touchend',go,{passive:true});
         p.addEventListener('click',go);
         p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});

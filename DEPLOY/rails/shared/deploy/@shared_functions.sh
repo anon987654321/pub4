@@ -197,6 +197,19 @@ bundle_install_as_app() {
   ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; cd ${app_dir} && bundle config set --local frozen false && bundle config set --local deployment true && bundle config set --local without \"development test\" && RAILS_ENV=production bundle install'"
 }
 
+# rails_assets_precompile_as_app APP_NAME APP_DIR — Propshaft digest manifest for production JS/CSS.
+rails_assets_precompile_as_app() {
+  local app_name=$1
+  local app_dir=$2
+  local secret
+  secret=$(app_secret_for "$app_name")
+  log "assets:precompile for ${app_name}"
+  run_rails_as_app "$app_name" "$app_dir" \
+    "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails assets:precompile" \
+    || { log_err "assets:precompile failed for ${app_name}"; return 1; }
+  log_ok "assets ready for ${app_name}"
+}
+
 # run_rails_as_app APP_NAME APP_DIR CMD — app-owned bundle/rails (avoids Gemfile.lock permission errors).
 run_rails_as_app() {
   local app_name=$1 app_dir=$2
@@ -227,6 +240,8 @@ rails_runtime_gate() {
     run_rails_as_app "$app_name" "$app_dir" \
       "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:prepare" \
       || { log_err "db:prepare failed"; return 1; }
+    rails_assets_precompile_as_app "$app_name" "$app_dir" \
+      || return 1
     if [[ -x ${app_dir}/bin/ci ]]; then
       local rails_tree=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails
       if [[ -d $rails_tree ]]; then

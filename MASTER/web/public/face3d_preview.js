@@ -1,7 +1,10 @@
 "use strict";
 
-import { Face3DEngine } from "/face3d_engine.js";
-import { Face3DCanvasRenderer } from "/face3d_renderer.js";
+const face3dPaths = window.MASTER_ASSET_PATHS || {};
+const engineUrl = face3dPaths.face3dEngine || "/face3d_engine.js";
+const rendererUrl = face3dPaths.face3dRenderer || "/face3d_renderer.js";
+const { Face3DEngine } = await import(engineUrl);
+const { Face3DCanvasRenderer } = await import(rendererUrl);
 
 function face3dDisabled() {
   const params = new URLSearchParams(window.location.search);

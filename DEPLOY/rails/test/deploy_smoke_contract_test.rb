@@ -31,6 +31,18 @@ class DeploySmokeContractTest < Minitest::Test
     assert_includes master, "assets:precompile"
   end
 
+  def test_rails_runtime_gate_precompiles_assets
+    shared = read(File.join(ROOT, "shared/deploy/@shared_functions.sh"))
+    assert_includes shared, "rails_assets_precompile_as_app"
+    assert_includes shared, "assets:precompile"
+  end
+
+  def test_brgen_solid_cache_schema_present
+    cache = read(File.join(ROOT, "brgen/db/cache_schema.rb"))
+    assert_includes cache, "solid_cache_entries"
+    refute_includes cache, "define(version: 0)"
+  end
+
   private
 
   def read(path)

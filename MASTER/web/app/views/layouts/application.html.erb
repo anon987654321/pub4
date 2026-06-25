@@ -20,7 +20,9 @@
     <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
     <script>
       window.MASTER_ASSET_PATHS = {
-        threeModule: "<%= asset_path("three.face.module.js") %>"
+        threeModule: "<%= asset_path("three.face.module.js") %>",
+        face3dEngine: "<%= asset_path("face3d_engine.js") %>",
+        face3dRenderer: "<%= asset_path("face3d_renderer.js") %>"
       };
     </script>
     <script>
@@ -64,6 +66,40 @@
     </main>
     <script>
       window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
+      (function(){
+        var p=document.getElementById('primer'),z=document.getElementById('zsh'),fired=false,timer=null,fallback=null;
+        function dismissPrimer(){
+          document.body.classList.remove('face-loading');
+          if(!p)return;
+          p.classList.add('gone');
+          window.setTimeout(function(){p.remove();},220);
+        }
+        function revealPrompt(){if(z)z.classList.add('live');}
+        function boot(){
+          if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){
+            window.MASTER_FACE.startEverything();
+            return true;
+          }
+          return false;
+        }
+        function go(){
+          if(fired)return;
+          fired=true;
+          window._primerFired=true;
+          dismissPrimer();
+          revealPrompt();
+          if(boot())return;
+          timer=setInterval(function(){if(boot()){clearInterval(timer);timer=null;clearTimeout(fallback);}},40);
+          fallback=setTimeout(function(){clearInterval(timer);if(!(window.MASTER_FACE&&window.MASTER_FACE.primerFired))dismissPrimer();},15000);
+        }
+        if(p){
+          p.addEventListener('pointerdown',go);
+          p.addEventListener('touchstart',go,{passive:true});
+          p.addEventListener('touchend',go,{passive:true});
+          p.addEventListener('click',go);
+          p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
+        }
+      })();
     </script>
     <script src="<%= asset_path("topology_registry.js") %>" defer></script>
     <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
