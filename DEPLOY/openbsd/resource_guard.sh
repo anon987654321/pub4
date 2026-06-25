@@ -25,6 +25,12 @@ if vmstat -s >/dev/null 2>&1; then
   fi
 fi
 
+GUARD_REPO=${GUARD_REPO:-/home/dev/pub4}
+if [[ -f ${GUARD_REPO}/DEPLOY/openbsd/stale_ci_cleanup.ksh ]]; then
+  . ${GUARD_REPO}/DEPLOY/openbsd/stale_ci_cleanup.ksh
+  stale_ci_cleanup "$load" "$mem_free_pct"
+fi
+
 shed=0
 if awk -v l="$load" -v w="$LOAD_WARN" 'BEGIN{exit !(l>=w)}'; then shed=1; fi
 if [[ $mem_free_pct -lt $MEM_WARN ]]; then shed=1; fi

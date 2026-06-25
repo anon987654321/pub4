@@ -45,7 +45,8 @@ On OpenBSD, use the package-qualified Ruby 3.4 commands:
 ```zsh
 cd /home/dev/pub4/DEPLOY/rails/<app>
 bundle34 check
-bundle34 exec bin/ci
+zsh DEPLOY/sh/vps_ci.sh brgen   # vm23: mutex + load gate
+bundle34 exec bin/ci            # direct (auto-guarded on VPS via Pub4::CiGuard)
 ```
 
 ## PWA Workbox Build

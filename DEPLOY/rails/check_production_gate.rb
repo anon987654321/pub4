@@ -89,6 +89,9 @@ apps.each do |name, metadata|
     fail!(app_failures, "bin/ci must run Rails tests") unless ci_text.include?("rails") && ci_text.include?("test")
     fail!(app_failures, "bin/ci must pin BUNDLER_AUDIT_UPDATE (offline VPS)") unless ci_text.include?("BUNDLER_AUDIT_UPDATE")
     fail!(app_failures, "bin/ci must set NPM_CONFIG_CACHE (copy-tree npm)") unless ci_text.include?("NPM_CONFIG_CACHE")
+    guard = File.join(RAILS_ROOT, "shared", "lib", "pub4", "ci_guard.rb")
+    fail!(app_failures, "missing shared/lib/pub4/ci_guard.rb") unless File.file?(guard)
+    fail!(app_failures, "shared CI must use Pub4::CiGuard") unless ci_text.include?("Pub4::CiGuard")
   else
     fail!(app_failures, "missing bin/ci")
   end

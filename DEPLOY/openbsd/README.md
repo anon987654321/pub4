@@ -73,7 +73,7 @@ Direct IP still works: `ssh dev@46.23.89.226`.
 - Per-app (brgen subapps, amber, ...): `doas zsh DEPLOY/rails/brgen/brgen.sh` (or just `doas rcctl restart brgen` after pull if no bundle changes). All .sh now have pre-apply MASTER /scan DEPLOY (blocks on rules violations) + /up guards + sleeps.
 - Recovery (if direct ssh blocked by pf): `ssh -p 31415 ... dev@server4.openbsd.amsterdam` → `vmctl console vm23` → `doas pfctl -t bruteforce -T flush`.
 - Always tmux. Use host console for anything wedged. Health: `ruby34 health_check.rb` (rcctl + per-app `/up`).
-- Ruby 3.4 on VPS: `ruby34`, `bundle34` (not system ruby). Per-app gate: `cd DEPLOY/rails/<app> && bundle34 exec bin/ci`.
+- Ruby 3.4 on VPS: `ruby34`, `bundle34` (not system ruby). Per-app gate (mutex + load check): `zsh DEPLOY/sh/vps_ci.sh brgen` or serial all apps: `zsh DEPLOY/sh/vps_ci_all.sh`. Never parallel `bin/ci` across SSH sessions.
 - MASTER gate on VPS: `cd /home/dev/pub4/MASTER && bundle34 check && bin/probe all`.
 - Pre-deploy diff (workstation): `zsh DEPLOY/openbsd/scripts/deploy-diff.sh` — compares live `/etc/pf.conf` + `/etc/relayd.conf` to repo.
 - Production matrix: `DEPLOY/rails/PRODUCTION_READINESS.md`.

@@ -234,7 +234,7 @@ rails_runtime_gate() {
         chmod -R a+rX "$rails_tree" 2>/dev/null || true
       fi
       run_rails_as_app "$app_name" "$app_dir" \
-        "SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_tree} RAILS_ENV=test CI=1 bundle34 exec bin/ci" \
+        "SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_tree} RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 bundle34 exec bin/ci" \
         || { log_err "bin/ci failed"; return 1; }
     fi
   else

@@ -60,7 +60,7 @@ def runtime_gate!(apps)
     ci = File.join(app_dir, "bin", "ci")
     next unless File.executable?(ci)
 
-    ok, out = run!([ci], chdir: app_dir)
+    ok, out = run!([ci], chdir: app_dir, env: { "PUB4_CI_GUARD" => "1" })
     failures << "#{name}: bin/ci failed — #{out.lines.first(8).join}" unless ok
   end
 

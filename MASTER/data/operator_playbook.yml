@@ -147,5 +147,5 @@ lessons:
   - id: vps_one_ssh_no_parallel_ci
     area: deploy
     signal: "load averages >10 on vm23; dozens of ruby in D state; rcctl master/amber failed; SSH hangs"
-    action: "Never open parallel SSH sessions to vm23. Kill stale local ssh clients first. On VM: pkill -U dev -f bin/cli; pkill per-app bin/ci/rails test/db:seed orphans. One tmux session; one su -m <app> bin/ci at a time. doas rcctl restart master amber after cleanup. If D-state ruby won't die: host console vmctl stop/start vm23."
-    proof: "uptime load <4; ps aux | grep -c ruby sane; doas rcctl check master brgen amber; curl -fsS --max-time 30 http://127.0.0.1:53187/up"
+    action: "Never open parallel SSH sessions to vm23. Use zsh DEPLOY/sh/vps_ci.sh APP (mutex via /var/run/pub4-ci.lock) or vps_ci_all.sh for serial six-app proof. MASTER scan: zsh DEPLOY/sh/vps_master_scan.sh. resource_guard cron runs stale_ci_cleanup.ksh when load>=4. Kill stale local ssh clients first; doas rcctl restart master amber after cleanup. If D-state ruby won't die: host console vmctl stop/start vm23."
+    proof: "uptime load <4; test -f /var/run/pub4-ci.lock; zsh DEPLOY/sh/vps_ci.sh brgen; doas rcctl check master brgen amber"
