@@ -13,5 +13,7 @@ app_dir=/home/${app}/app
 export PUB4_CI_GUARD=1
 export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/DEPLOY/rails}
 
+npm_cache=/home/${app}/.npm
+cache_home=/home/${app}/.cache
 print "vps_ci: $app (mutex + load gate)"
-doas sh -c "su -m ${app} -c 'cd ${app_dir} && bundle34 exec bin/ci'"
+doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; cd ${app_dir} && bundle34 exec bin/ci'"
