@@ -107,8 +107,8 @@ module Shared
       add(:info, path, :font_face, "Font-face detected; keep font declarations in dedicated/protected file") if body.match?(FONT_FACE_PATTERN)
       add(:warning, path, :important, "Use of !important detected; prefer cascade and specificity") if important_violations?(body)
       add(:warning, path, :logical_properties, "Physical left/right properties detected; prefer logical properties") if body.match?(LOGICAL_PROPERTY_PATTERN)
-      if protected_stylesheet?(path) && body.lines.size > Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines] && !thin_stylesheet_entry?(body)
-        add(:warning, path, :css_file_size, "application.scss exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines]} lines; keep it a thin @use entry and move rules to partials")
+      if css_file_size_violation?(path, body)
+        add(:warning, path, :css_file_size, "CSS file exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines]} lines; split into smaller files")
       end
       add(:warning, path, :selector_specificity, "Selector exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes]} class selectors; flatten the selector chain") if selector_depths(body).any? { |depth| depth > Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes] }
       add(:warning, path, :will_change, "will-change detected; restrict it to active animations or component connect/disconnect hooks") if body.match?(WILL_CHANGE_PATTERN)
@@ -168,9 +168,13 @@ module Shared
       Shared::FrontendRuleSet::PRESERVATION[:protected_stylesheet_files].any? { |name| path.end_with?(name) }
     end
 
-    def thin_stylesheet_entry?(body)
-      body.lines.all? { |line| line.strip.empty? || line.strip.start_with?("@use", "@forward", "@import") } ||
-        body.lines.size <= Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines]
+    PUB4_STACK_PARTIAL_RE = %r{/_(?:minimal|tokens|animations|zen_shell|pub4_stack)(?:_brgen)?\.scss\z}
+
+    def css_file_size_violation?(path, body)
+      return false if protected_stylesheet?(path)
+      return false if path.match?(PUB4_STACK_PARTIAL_RE)
+
+      body.lines.size > Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines]
     end
 
     def layout_missing_skip?(path, body)
