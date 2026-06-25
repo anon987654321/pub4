@@ -6,6 +6,7 @@ require_relative "builder/ai_boot"
 require_relative "loop/rollback"
 require_relative "trace/feedback_ledger"
 require_relative "trace/reflexion_ledger"
+require_relative "trace/snapshot_agent_guide"
 
 module Master
   module Builder
@@ -184,7 +185,14 @@ module Master
         Ground::Swallow.log(e, context: "builder.snapshot_file", path: f)
         []
       end
-      header = ["# MASTER Snapshot", "Generated: #{Time.now.utc.iso8601}", "Files: #{files.size}", ""]
+      header = [
+        "# MASTER Snapshot",
+        "Generated: #{Time.now.utc.iso8601}",
+        "",
+        Master::Trace::SnapshotAgentGuide.render(label: "MASTER"),
+        "Files: #{files.size}",
+        ""
+      ]
       root_snapshots = snapshot_artifacts(root)
       content = (header + root_snapshots + body).join("\n")
       FileUtils.mkdir_p(File.dirname(out))

@@ -5,6 +5,7 @@ require "fileutils"
 require "open3"
 require "yaml"
 require_relative "../../trace/self_evolution_trigger"
+require_relative "../../trace/snapshot_agent_guide"
 
 module Master
   module Now
@@ -157,6 +158,7 @@ module Master
           "# #{label} Snapshot",
           "Generated: #{stamp}",
           "",
+          Master::Trace::SnapshotAgentGuide.render(label:),
           "## Summary",
           "- files: #{files.size}",
           "- lines: #{n_lines}",

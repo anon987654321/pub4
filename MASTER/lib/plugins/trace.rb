@@ -2,6 +2,7 @@
 
 require "fileutils"
 require_relative "../trace/hooks"
+require_relative "../trace/snapshot_agent_guide"
 
 module Master
   module Plugins
@@ -42,7 +43,14 @@ module Master
           Master::Ground::Swallow.log(e, context: "plugins.trace.snapshot_file", path: f)
           []
         end
-        header  = ["# MASTER Snapshot", "Generated: #{Time.now.utc.iso8601}", "Files: #{files.size}", ""]
+        header  = [
+          "# MASTER Snapshot",
+          "Generated: #{Time.now.utc.iso8601}",
+          "",
+          Master::Trace::SnapshotAgentGuide.render(label: "MASTER"),
+          "Files: #{files.size}",
+          ""
+        ]
         root_snapshots = snapshot_artifacts(root)
         content = (header + root_snapshots + body).join("\n")
         out     = File.join(root, ".master", "snapshot.md")
