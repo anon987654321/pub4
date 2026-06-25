@@ -36,6 +36,10 @@ enhancements:
   - chat_scroll_snap
   - provider_tint_chip
   - face3d_desktop_default
+  - brutalist_profile
+  - primer_kernel_spawn
+  - perf_resize_debounce
+  - chat_append_queue
 
 vertical_timbre:
   marketplace:
@@ -70,3 +74,10 @@ ui_philosophy:
       density: 0.9
       scanline: 0.38
       phosphor: 0.72
+    - id: brutalist
+      label: Brutalist terminal
+      motion: 0.35
+      density: 0.75
+      steps: 2
+      monospace: 1.0
+      phosphor: 0.4

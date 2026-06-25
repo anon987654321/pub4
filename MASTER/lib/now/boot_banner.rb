@@ -14,7 +14,8 @@ module Master
       def banner_lines
         status = Master::Ops::LoopSlot.status
         budget = Master::Ops::ProcessBudget.status
-        [
+        brutalist = ENV["MASTER_BRUTALIST"] == "1"
+        lines = [
           "master: boot safe=#{ENV.fetch("MASTER_SAFE_MODE", "1")} web=#{ENV.fetch("MASTER_WEB", "0")}",
           "master: background=#{ENV.fetch("MASTER_BACKGROUND", "0")} watch=#{ENV.fetch("MASTER_WATCH", "0")}",
           "master: loop=#{status[:selected] || "none"} owner=#{status[:owner] || "none"}",
@@ -22,6 +23,11 @@ module Master
           "master: motd #{motd_spotlight}",
           "master: ready dmesg=preserved",
         ]
+        if brutalist
+          lines << "master: profile=brutalist motion=steps typography=mono"
+          lines << "master: H=entropy C=confidence mode=inspectable"
+        end
+        lines
       end
 
       def motd_spotlight

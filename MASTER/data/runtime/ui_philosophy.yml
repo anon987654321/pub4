@@ -124,3 +124,33 @@ implementation_batches:
   - id: batch_5
     status: implemented
     items: [expression_module, council_reversibility, style_bleed, devicemotion, relayd_hardening]
+  - id: batch_6
+    status: implemented
+    items: [brutalist_profile, perf_guards, backlog_audit, placeholder_consolidation]
+
+engineering_balance:
+  overengineered:
+    - item: generic_web_placeholder_slots
+      action: audit against CSS/JS evidence; mark implemented or delete duplicate enh_mi_* rows
+    - item: visual_bridge_EVENT_MAP_dupe
+      action: transitional; registry classifyEvent is canonical path
+    - item: face_part_monolith_blobs
+      action: modules absorb incrementally; do not split further until hot paths stable
+  underengineered:
+    - item: face3d_blendshape_migration
+      action: step_6 pending in face3d_migration.yml; keep 2D default
+    - item: tts_true_streaming
+      action: partial bytes shipped; full MSE playback deferred
+    - item: release_gate_local_ruby
+      action: run via bundle exec ruby34 on VPS; Mac system Ruby 2.6 is not authoritative
+  brutalist_opportunities:
+    cli:
+      - MASTER_BRUTALIST=1 boot banner exposes H/C/mode dmesg lines
+      - step transitions zero easing in brutalist profile
+    web:
+      - brutalist-strip pre exposes entropy confidence mode
+      - square borders zero radius monospace labels
+      - dmesg as primary error surface not modals
+    face3d:
+      - lower phosphor decay harsher dither steps
+      - expose lit_pixels and blend targets in dev panel

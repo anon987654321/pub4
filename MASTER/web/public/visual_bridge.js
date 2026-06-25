@@ -354,9 +354,18 @@
     }
 
     if (log) {
+      let appendQueue = 0;
       const observer = new MutationObserver((mutations) => {
         const added = mutations.reduce((sum, mutation) => sum + mutation.addedNodes.length, 0);
-        if (added > 0) emitVisual("chat:append", { topology: "papua-mask", entropy: 0.18, confidence: 0.88, mode: "response" });
+        if (added <= 0) return;
+        appendQueue += added;
+        if (appendQueue === added) {
+          queueMicrotask(() => {
+            const n = appendQueue;
+            appendQueue = 0;
+            if (n > 0) emitVisual("chat:append", { topology: "papua-mask", entropy: 0.18, confidence: 0.88, mode: "response", count: n });
+          });
+        }
       });
       observer.observe(log, { childList: true, subtree: true });
     }

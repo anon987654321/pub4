@@ -490,6 +490,7 @@ let W = 0, H = 0, DPR = 1;
 function resize() {
   if (!renderer) return;
   W = window.innerWidth; H = window.innerHeight;
+  if (window.MASTER_FACE_PERF?.shouldResize && !window.MASTER_FACE_PERF.shouldResize(W, H)) return;
   DPR = Math.min(window.devicePixelRatio || 1, State.coarsePointer ? 1.25 : 2);
 
   const profile = rootBody.dataset.runtimeProfile || 'full';

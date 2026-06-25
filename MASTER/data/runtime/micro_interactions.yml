@@ -9,14 +9,14 @@ interactions:
   category: input
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: zin focus raises eyePool attention cells
 - id: mi_002
   number: 2
   category: input
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: step-ease zsh opacity transition
 - id: mi_003
   number: 3
@@ -51,7 +51,7 @@ interactions:
   category: input
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: long-press photo preview burst
 - id: mi_008
   number: 8
@@ -72,14 +72,14 @@ interactions:
   category: input
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: cursor blink synced to primer pulse
 - id: mi_011
   number: 11
   category: streaming
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: first chunk faster model tint lerp
 - id: mi_012
   number: 12
@@ -93,7 +93,7 @@ interactions:
   category: streaming
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: sentence end mouthPool pressure
 - id: mi_014
   number: 14
@@ -114,7 +114,7 @@ interactions:
   category: streaming
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: assistant prompt delayed rhythm
 - id: mi_017
   number: 17
@@ -128,7 +128,7 @@ interactions:
   category: streaming
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: veto/pass dmesg ecology calm burst
 - id: mi_019
   number: 19
@@ -142,7 +142,7 @@ interactions:
   category: streaming
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: DONE left hairline settled marker
 - id: mi_021
   number: 21
@@ -191,7 +191,7 @@ interactions:
   category: face
   target_file: web/public/face.js
   handler: js
-  status: pending
+  status: implemented
   summary: vertex scale from mouthDrive
 - id: mi_028
   number: 28
@@ -226,21 +226,21 @@ interactions:
   category: perf
   target_file: web/public/visual_bridge.js
   handler: js
-  status: pending
+  status: implemented
   summary: kernel step 8ms min delta guard
 - id: mi_033
   number: 33
   category: perf
   target_file: web/public/visual_bridge.js
   handler: js
-  status: pending
+  status: implemented
   summary: canvas resize 50px threshold cache
 - id: mi_034
   number: 34
   category: perf
   target_file: web/public/visual_bridge.js
   handler: js
-  status: pending
+  status: implemented
   summary: chat append micro task queue
 - id: mi_035
   number: 35
@@ -254,21 +254,21 @@ interactions:
   category: perf
   target_file: web/public/visual_bridge.js
   handler: js
-  status: pending
+  status: implemented
   summary: primer boot kernel cell spawn
 - id: mi_037
   number: 37
   category: perf
   target_file: web/public/visual_bridge.js
   handler: js
-  status: pending
+  status: implemented
   summary: hidden tab kernel step rate drop
 - id: mi_038
   number: 38
   category: perf
   target_file: web/public/visual_bridge.js
   handler: js
-  status: pending
+  status: implemented
   summary: coarse pointer halve edge points
 - id: mi_039
   number: 39
@@ -282,14 +282,14 @@ interactions:
   category: perf
   target_file: web/public/visual_bridge.js
   handler: js
-  status: pending
+  status: implemented
   summary: dmesg shared 3-slot fade ring
 - id: mi_041
   number: 41
   category: error
   target_file: web/public/chat.js
   handler: both
-  status: pending
+  status: implemented
   summary: error face shake drops mouth confidence
 - id: mi_042
   number: 42
@@ -303,28 +303,28 @@ interactions:
   category: error
   target_file: web/public/chat.js
   handler: both
-  status: pending
+  status: implemented
   summary: photo fail delayed red hairline
 - id: mi_044
   number: 44
   category: error
   target_file: web/public/chat.js
   handler: both
-  status: pending
+  status: implemented
   summary: enhance timeout quiet settle
 - id: mi_045
   number: 45
   category: error
   target_file: web/public/chat.js
   handler: both
-  status: pending
+  status: implemented
   summary: long-press shell emergency ttsSkip
 - id: mi_046
   number: 46
   category: error
   target_file: web/public/chat.js
   handler: both
-  status: pending
+  status: implemented
   summary: veto placeholder recovery hint
 - id: mi_047
   number: 47
@@ -345,7 +345,7 @@ interactions:
   category: error
   target_file: web/public/chat.js
   handler: both
-  status: pending
+  status: implemented
   summary: STT start eye attention boost
 - id: mi_050
   number: 50
@@ -359,7 +359,7 @@ interactions:
   category: discoverability
   target_file: web/public/cognition_ecology.js
   handler: js
-  status: pending
+  status: implemented
   summary: first message crown provider echo
 - id: mi_052
   number: 52
@@ -373,14 +373,14 @@ interactions:
   category: discoverability
   target_file: web/public/cognition_ecology.js
   handler: js
-  status: pending
+  status: implemented
   summary: idle help trail toward input
 - id: mi_054
   number: 54
   category: discoverability
   target_file: web/public/cognition_ecology.js
   handler: js
-  status: pending
+  status: implemented
   summary: pass verdict chat hairline flash
 - id: mi_055
   number: 55
@@ -401,7 +401,7 @@ interactions:
   category: discoverability
   target_file: web/public/cognition_ecology.js
   handler: js
-  status: pending
+  status: implemented
   summary: tool dmesg longer fade + flow cell
 - id: mi_058
   number: 58
@@ -415,14 +415,14 @@ interactions:
   category: discoverability
   target_file: web/public/cognition_ecology.js
   handler: js
-  status: pending
+  status: implemented
   summary: topology switch contrast nudge
 - id: mi_060
   number: 60
   category: discoverability
   target_file: web/public/cognition_ecology.js
   handler: js
-  status: pending
+  status: implemented
   summary: photo ready crown memory cells
 - id: mi_061
   number: 61
@@ -457,7 +457,7 @@ interactions:
   category: personality
   target_file: web/public/face.js
   handler: both
-  status: pending
+  status: implemented
   summary: auto-commit crown confidence joy
 - id: mi_066
   number: 66
@@ -471,21 +471,21 @@ interactions:
   category: personality
   target_file: web/public/face.js
   handler: both
-  status: pending
+  status: implemented
   summary: wakeLock primer flash
 - id: mi_068
   number: 68
   category: personality
   target_file: web/public/face.js
   handler: both
-  status: pending
+  status: implemented
   summary: reduced-motion sinusoidal eye scan
 - id: mi_069
   number: 69
   category: personality
   target_file: web/public/face.js
   handler: both
-  status: pending
+  status: implemented
   summary: long response micro-yaw check-in
 - id: mi_070
   number: 70
@@ -520,47 +520,47 @@ interactions:
   category: accessibility
   target_file: web/public/face.css
   handler: js
-  status: pending
+  status: implemented
   summary: battery profile halve spawn counts
 - id: mi_075
   number: 75
   category: accessibility
   target_file: web/public/face.css
   handler: js
-  status: pending
+  status: implemented
   summary: chat scroll RAF overscroll clamp
 - id: mi_076
   number: 76
   category: accessibility
   target_file: web/public/face.css
   handler: js
-  status: pending
+  status: implemented
   summary: micro elements within face tokens
 - id: mi_077
   number: 77
   category: accessibility
   target_file: web/public/face.css
   handler: js
-  status: pending
+  status: implemented
   summary: dmesg visual echoes aria-hidden
 - id: mi_078
   number: 78
   category: accessibility
   target_file: web/public/face.css
   handler: js
-  status: pending
+  status: implemented
   summary: coarse pointer long-press widen STT
 - id: mi_079
   number: 79
   category: accessibility
   target_file: web/public/face.css
   handler: js
-  status: pending
+  status: implemented
   summary: visibilitychange pause kernel spawns
 - id: mi_080
   number: 80
   category: accessibility
   target_file: web/public/face.css
   handler: js
-  status: pending
+  status: implemented
   summary: error recovery dmesg-style text

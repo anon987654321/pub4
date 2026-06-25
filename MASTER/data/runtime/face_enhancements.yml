@@ -595,63 +595,63 @@ enhancements:
 - id: web_031
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 31
+  summary: Message enter stagger delay up to 8 steps
 - id: web_032
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 32
+  summary: Typing indicator until first stream chunk
 - id: web_033
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 33
+  summary: Stream-live SR batched 120ms debounce
 - id: web_034
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 34
+  summary: Reaction chips persist via dataset.reaction
 - id: web_035
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 35
+  summary: User messages right-aligned reversed prompt
 - id: web_036
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 36
+  summary: Streaming cursor blink step fade on done
 - id: web_037
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 37
+  summary: Fenced code blocks during stream
 - id: web_038
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 38
+  summary: Dmesg accent lines 3-slot fade ring
 - id: web_039
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 39
+  summary: Message timestamp on hover data-ts
 - id: web_040
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 40
+  summary: Assistant confidence left-border band
 - id: web_041
   area: web
   tier: p1
@@ -661,15 +661,15 @@ enhancements:
 - id: web_042
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 42
+  summary: Edge-hover swipe reveals prompt bar
 - id: web_043
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 43
+  summary: Empty chat no-history ghost state
 - id: web_044
   area: web
   tier: p1
@@ -685,213 +685,213 @@ enhancements:
 - id: web_046
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 46
+  summary: Char count after 120 chars
 - id: web_047
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 47
+  summary: Listening mode saturates face canvas
 - id: web_048
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 48
+  summary: Cancel button pulses during thinking
 - id: web_049
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 49
+  summary: Idle help trail toward input after silence
 - id: web_050
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 50
+  summary: Speaking mode tints prompt prefix
 - id: web_051
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 51
+  summary: Prompt disabled until primer unlocks
 - id: web_052
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 52
+  summary: Self-violation canvas contrast flash
 - id: web_053
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 53
+  summary: Mid-stream tool-stack progress chip
 - id: web_054
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 54
+  summary: Uncertain verdict status blink
 - id: web_055
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 55
+  summary: Primer dismiss scale opacity fade
 - id: web_056
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 56
+  summary: Sleeping mode dims canvas and prompt
 - id: web_057
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 57
+  summary: Error mood-cold white-only indication
 - id: web_058
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 58
+  summary: TTS-loading status shimmer
 - id: web_059
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 59
+  summary: Pipeline-stage bar syncs to SSE stages
 - id: web_060
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 60
+  summary: Network stall tints status calms canvas
 - id: web_061
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 61
+  summary: Council persona badge via status rotator
 - id: web_062
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 62
+  summary: Particle worker warm-start on primer
 - id: web_063
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 63
+  summary: Visual governor caps FPS particle pressure
 - id: web_064
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 64
+  summary: Virtual scroll trims chat to 56 messages
 - id: web_065
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 65
+  summary: OffscreenCanvas ecology buffer
 - id: web_066
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 66
+  summary: Bridge RAF-batches rapid visual events
 - id: web_067
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 67
+  summary: Battery profile halves ecology agents
 - id: web_068
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 68
+  summary: Kernel frame dt clamp fixed timestep
 - id: web_069
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 69
+  summary: Canvas resize 50px threshold debounce
 - id: web_070
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 70
+  summary: Chat-append microtask queue
 - id: web_071
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 71
+  summary: Primer boot spawns attention kernel cells
 - id: web_072
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 72
+  summary: Hidden tab pauses face loop disconnects SSE
 - id: web_073
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 73
+  summary: Coarse pointer halves particle grid
 - id: web_074
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 74
+  summary: Activity-adaptive mood color lerp
 - id: web_075
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 75
+  summary: Dmesg shared 3-slot fade ring
 - id: web_076
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 76
+  summary: Per-message action bar assistant bubbles
 - id: web_077
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 77
+  summary: Session stats footer words elapsed
 - id: web_078
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 78
+  summary: Typing dots until stream chunks
 - id: web_079
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 79
+  summary: Collapsible thought-trace assistant
 - id: web_080
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 80
+  summary: Keyboard shortcut sheet cmd palette
 - id: web_081
   area: web
   tier: p1
