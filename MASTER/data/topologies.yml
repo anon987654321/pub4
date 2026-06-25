@@ -3,10 +3,15 @@
 # this file at boot; particle_kernel.js renders cells per topology rules.
 
 event_classifier:
+  - { pattern: "phantom:detected|phantom:retry",         topology: ecology, entropy: 0.88, confidence: 0.18, mode: phantom }
+  - { pattern: "compaction:(start|done)",                 topology: ecology, entropy: 0.42, confidence: 0.62, mode: compact }
+  - { pattern: "pipeline:stage|skills:triggered",         topology: face,    entropy: 0.30, confidence: 0.80, mode: stage }
+  - { pattern: "ctx:footer",                             topology: ecology, entropy: 0.22, confidence: 0.84, mode: ctx }
+  - { pattern: "btw:done|agent:end",                     topology: face,    entropy: 0.36, confidence: 0.74, mode: side-agent }
   - { pattern: "llm:escalation|fallback|retry",         topology: ecology,  entropy: 0.62, confidence: 0.46, mode: escalation }
-  - { pattern: "llm:request|agent:start|pipeline:start", topology: face,    entropy: 0.32, confidence: 0.72, mode: thinking }
+  - { pattern: "llm:request|agent:start|pipeline:start|infer:resolved|route:resolved|llm:routed", topology: face, entropy: 0.32, confidence: 0.72, mode: thinking }
   - { pattern: "memory|retriev|context|compact",         topology: ecology, entropy: 0.28, confidence: 0.76, mode: memory }
-  - { pattern: "tool|scan|sweep|audit",                  topology: ecology, entropy: 0.38, confidence: 0.70, mode: tool }
+  - { pattern: "tool|scan|sweep|audit|rtk",              topology: ecology, entropy: 0.38, confidence: 0.70, mode: tool }
   - { pattern: "error|rollback|failed|failure",          topology: ecology, entropy: 0.78, confidence: 0.24, mode: error }
   - { pattern: "done|complete|success|response",         topology: face,    entropy: 0.14, confidence: 0.92, mode: complete }
   - { pattern: "codebase:topology|fix_loop:pass",        topology: codebase, entropy: 0.28, confidence: 0.78, mode: codebase }

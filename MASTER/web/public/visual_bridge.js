@@ -16,39 +16,12 @@
     active: false
   };
 
-  const EVENT_MAP = [
-    [/phantom:detected|phantom:retry/i, { topology: "glitch", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
-    [/compaction:(start|done)|compact/i, { topology: "terrain", entropy: 0.42, confidence: 0.62, mode: "compact" }],
-    [/btw:done|agent:(start|end)/i, { topology: "neural", entropy: 0.36, confidence: 0.74, mode: "side-agent" }],
-    [/pipeline:stage|skills:triggered/i, { topology: "papua-mask", entropy: 0.30, confidence: 0.80, mode: "stage" }],
-    [/ctx:footer/i, { topology: "neural", entropy: 0.22, confidence: 0.84, mode: "ctx" }],
-    [/llm:escalation|fallback|retry/i, { topology: "serpent", entropy: 0.62, confidence: 0.46, mode: "escalation" }],
-    [/llm:request|agent:start|pipeline:start|infer:resolved|route:resolved|llm:routed/i, { topology: "papua-mask", entropy: 0.32, confidence: 0.72, mode: "thinking" }],
-    [/memory|retriev|context/i, { topology: "neural", entropy: 0.28, confidence: 0.76, mode: "memory" }],
-    [/tool|scan|sweep|audit|rtk/i, { topology: "torus", entropy: 0.38, confidence: 0.70, mode: "tool" }],
-    [/error|rollback|failed|failure/i, { topology: "serpent", entropy: 0.78, confidence: 0.24, mode: "error" }],
-    [/done|complete|success|response/i, { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "complete" }],
-    [/codebase:topology|fix_loop:pass/i, { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
-    [/rule_loop:cycle|rule_loop:clean/i, { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
-    [/fix_loop:idle/i, { topology: "codebase", entropy: 0.10, confidence: 0.95, mode: "settled" }],
-    [/rule_loop:converged/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
-  ];
-
   function classify(type, payload = {}) {
-    const text = `${type} ${JSON.stringify(payload)}`;
-    const matched = EVENT_MAP.find(([pattern]) => pattern.test(text));
-    const mapped = matched ? { ...matched[1] } : { topology: "sphere", entropy: 0.24, confidence: 0.68, mode: "event" };
-
-    const provider = text.match(/claude|deepseek|gemini|gpt|openai|openrouter|mistral/i)?.[0]?.toLowerCase();
-    if (provider) mapped.provider = provider;
-
-    return mapped;
+    if (window.MASTERTopology?.classifyEvent) {
+      return window.MASTERTopology.classifyEvent(type, payload);
+    }
+    return { topology: "face", entropy: 0.24, confidence: 0.68, mode: "event" };
   }
-  // Note: EVENT_MAP local is transitional dupe of data/topologies.yml + registry.
-  // handleRuntimeEvent (live SSE path to watched face/ecology) now prefers registry
-  // classifyEvent for ONE_SOURCE alignment (canonical ecology/face/codebase names + values).
-  // This reduces signal fragmentation so particle reactions (kernel arousal/pressure,
-  // tints, terrain, agents) are more coherent and calm to watch from afar.
 
   let _visualBatch = null;
   let _visualBatchTimer = null;
@@ -156,9 +129,7 @@
 
   function handleRuntimeEvent(event) {
     const type = event?.type || event?.event || event?.data?.event || "runtime:event";
-    const mapped = (window.MASTERTopology && typeof window.MASTERTopology.classifyEvent === "function")
-      ? window.MASTERTopology.classifyEvent(type, event)
-      : classify(type, event);
+    const mapped = classify(type, event);
     mapped.raw = event;
     emitVisual(type, mapped);
     // Architecture #15: forward codebase topology to particle system.

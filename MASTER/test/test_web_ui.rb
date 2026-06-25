@@ -174,6 +174,18 @@ class TestWebUI < Minitest::Test
     assert_includes source, 'document.addEventListener("visibilitychange"'
   end
 
+  def test_visual_bridge_delegates_event_classification_to_registry
+    bridge = File.read(File.expand_path("../web/public/visual_bridge.js", __dir__))
+    registry = File.read(File.expand_path("../web/public/topology_registry.js", __dir__))
+    topologies = File.read(File.expand_path("../data/topologies.yml", __dir__))
+
+    refute_includes bridge, "EVENT_MAP"
+    assert_includes bridge, "MASTERTopology.classifyEvent"
+    assert_includes registry, "phantom:detected"
+    assert_includes topologies, "phantom:detected"
+    assert_includes topologies, "infer:resolved|route:resolved|llm:routed"
+  end
+
   def test_face_pauses_animation_loop_when_tab_hidden
     source = face_runtime_source
 

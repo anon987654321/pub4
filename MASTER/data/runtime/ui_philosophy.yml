@@ -136,7 +136,7 @@ engineering_balance:
     - item: generic_web_placeholder_slots
       action: consolidated — 146 placeholder rows removed; micro_interactions.yml is canonical
     - item: visual_bridge_EVENT_MAP_dupe
-      action: transitional; registry classifyEvent is canonical path
+      action: resolved — patterns live in topologies.yml; visual_bridge delegates to registry
     - item: face_part_monolith_blobs
       action: modules absorb incrementally; do not split further until hot paths stable
   underengineered:
