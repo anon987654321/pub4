@@ -1,6 +1,6 @@
 # Production readiness — Rails family (pub4)
 
-Last updated: **2026-06-25** (waves 1–7 closed locally; frontend gates green; vm23 operator proof green)
+Last updated: **2026-06-26**. Repo gates are strong, but public production readiness is conditional until DNS, seed policy, and remote health pass with strict flags.
 
 ## Gate commands
 
@@ -24,7 +24,7 @@ bundle34 exec bin/ci
 curl -fsS http://127.0.0.1:<port>/up
 
 # VPS health sweep
-ruby34 /home/dev/pub4/DEPLOY/openbsd/health_check.rb
+ruby34 /home/dev/pub4/DEPLOY/openbsd/health_check.rb --public --all-ready-apps
 ```
 
 Ports: see `DEPLOY/rails/apps.yml`.
@@ -43,26 +43,27 @@ Ports: see `DEPLOY/rails/apps.yml`.
 
 ## Summary
 
-| App | Local gate | Repo smoke | VPS bin/ci | HTTPS /up | Ready? |
-|-----|------------|------------|------------|-----------|--------|
-| brgen | pass | pass | pass | 200 | **yes** |
-| amber | pass | pass | pass | 200 | **yes** |
-| baibl | pass | pass | pass | 200 | **yes** |
-| blognet | pass | pass | pass | 200 | **yes** |
-| bsdports | pass | pass | pass | 200 | **yes** |
-| hjerterom | pass | pass | pass | 200 | **yes** |
-| master (AI face) | n/a | pass | smoke | 200 | **yes** |
+| App | Local gate | Repo smoke | VPS bin/ci | Strict public health | Ready? |
+|-----|------------|------------|------------|----------------------|--------|
+| brgen | pass | pass | pass | required | **core-ready** |
+| amber | pass | pass | pass | required by `--all-ready-apps` | **conditional** |
+| baibl | pass | pass | pass | blocked if apex DNS NXDOMAIN | **conditional** |
+| blognet | pass | pass | pass | blocked if apex DNS NXDOMAIN | **conditional** |
+| bsdports | pass | pass | pass | required by `--all-ready-apps` | **conditional** |
+| hjerterom | pass | pass | pass | blocked until canonical domain agrees across DEPLOY | **conditional** |
+| master (AI face) | n/a | pass | smoke | required | **conditional on auth smoke** |
 
-**Operator proof** = `bundle34 exec bin/ci` per app on vm23 + `ruby34 DEPLOY/openbsd/health_check.rb` + `doas rcctl check` on canonical service names (`brgen`, `amber`, …).
+**Operator proof** = `bundle34 exec bin/ci` per app on vm23 + `ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps` + `doas rcctl check` on canonical service names (`brgen`, `amber`, …).
 
 Ship readiness is defined in `MASTER/data/operator_playbook.yml` — not checkbox backlogs (retired 2026-06-24).
 
 ## Open blockers (operator)
 
-1. **Apex DNS**: `baibl.no`, `blognet.no`, `hjerterom.no` may return NXDOMAIN off-VM — `*.brgen.no` subdomains are the live routes.
-2. **relayd stale tables**: after mass `rcctl restart`, run `doas rcctl restart relayd` or wait for cron `relayd-watchdog` (every 5 min).
-3. **db:seed**: brgen/amber seeds use fictive `password123` users — not production data.
-4. **openrsync**: broken on vm23 — deploy uses tar sync (set `SYNC_USE_OPENRSYNC=1` only when openrsync works).
+1. **Apex DNS**: `baibl.no`, `blognet.no`, `hjerterom.no` must resolve publicly before they can be marked public-ready.
+2. **Domain inventory drift**: `DEPLOY/master.json`, `DEPLOY/rails/apps.yml`, `openbsd.sh`, relayd, and this document must agree on each canonical hostname.
+3. **relayd stale tables**: strict health requires a relayd restart after route/table changes.
+4. **db:seed**: production deploy skips seeds unless `RUN_PRODUCTION_SEEDS=1`; seeded demo users are not production accounts.
+5. **openrsync**: broken on vm23 — deploy uses git/tar sync. Set `SYNC_USE_OPENRSYNC=1` only after openrsync is verified.
 
 ## Deploy path
 
@@ -72,5 +73,5 @@ cd /home/dev/pub4 && git pull origin main
 chmod o+x /home/dev && chmod -R a+rX DEPLOY/rails
 SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_on_vm_install.sh
 doas rcctl restart relayd
-ruby34 DEPLOY/openbsd/health_check.rb
+ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps
 ```

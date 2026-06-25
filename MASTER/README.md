@@ -112,7 +112,7 @@ Config lives at `.master/config.yml`. Override any key at runtime with `/config 
 | Visitor | no credential | LLM chat only (`AskLlm`, `WebSearch`) |
 | Public | `/up`, `/health` | Always |
 
-First-hit `?token=…` is accepted once; the middleware sets an `HttpOnly; Secure; SameSite=Strict` cookie and 302s to the same path stripped of the token. After the handshake, the URL never carries the secret — query strings leak through proxy logs, browser history, and `Referer` headers; cookies do not.
+First-hit `?token=…` is accepted only as a bootstrap handshake; the middleware sets an `HttpOnly; Secure; SameSite=Strict` cookie and 302s to the same path stripped of the token. After the handshake, the URL never carries the secret. No author name, vanity parameter, or other public query string grants authenticated access.
 
 ## Modules
 

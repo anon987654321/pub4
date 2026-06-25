@@ -20,6 +20,9 @@ PUB4_ROOT=${PUB4_ROOT:-${DEPLOY_ROOT:h}}
 : "${SSH_KEY:=${HOME}/.ssh/id_rsa}"
 : "${REMOTE_PUB4:=/home/dev/pub4}"
 : "${USE_GIT_PULL:=1}"
+: "${REMOTE_RUBY:=ruby34}"
+: "${RUN_REMOTE_HEALTH:=1}"
+: "${ALLOW_PARTIAL_DEPLOY:=0}"
 
 typeset -a ssh_opts=(-o StrictHostKeyChecking=no -o ConnectTimeout=15)
 [[ -f $SSH_KEY ]] && ssh_opts+=(-i "$SSH_KEY")
@@ -58,9 +61,14 @@ else
     || error "rsync failed"
 fi
 
-log "Running openbsd.sh (infra + Rails bootstrap from DEPLOY/rails trees)..."
-vssh "cd ${REMOTE_PUB4}/DEPLOY/openbsd && doas zsh openbsd.sh" \
-  || log "WARN: openbsd.sh reported issues — check /var/log/openbsd_setup.log on VPS"
+log "Running OpenBSD deploy stage 2 (services + Rails bootstrap from DEPLOY/rails trees)..."
+if ! vssh "cd ${REMOTE_PUB4}/DEPLOY/openbsd && doas zsh openbsd.sh --stage-2"; then
+  if [[ $ALLOW_PARTIAL_DEPLOY == 1 ]]; then
+    log "WARN: openbsd.sh reported issues — ALLOW_PARTIAL_DEPLOY=1 set"
+  else
+    error "openbsd.sh failed — refusing false-green deploy"
+  fi
+fi
 
 if (( run_per_app )); then
   log "Optional per-app deploy scripts (/home/<app>/app layout)..."
@@ -82,6 +90,15 @@ if command -v jq >/dev/null 2>&1; then
   done < <(jq -r '.apps[] | [.name, .port] | @tsv' "${DEPLOY_ROOT}/master.json")
 fi
 
+if [[ $RUN_REMOTE_HEALTH == 1 ]]; then
+  log "Authoritative remote health gate..."
+  if ! vssh "cd ${REMOTE_PUB4} && ${REMOTE_RUBY} DEPLOY/openbsd/health_check.rb --public --all-ready-apps"; then
+    [[ $ALLOW_PARTIAL_DEPLOY == 1 ]] \
+      && log "WARN: remote health failed — ALLOW_PARTIAL_DEPLOY=1 set" \
+      || error "remote health failed"
+  fi
+fi
+
 log "Deploy finished."
 log "VPS: ssh ${ssh_opts[*]} ${VPS_USER}@${VPS_HOST}"
-log "Health: ruby ${REMOTE_PUB4}/DEPLOY/openbsd/health_check.rb (on VPS)"
+log "Health: ${REMOTE_RUBY} ${REMOTE_PUB4}/DEPLOY/openbsd/health_check.rb --public --all-ready-apps (on VPS)"

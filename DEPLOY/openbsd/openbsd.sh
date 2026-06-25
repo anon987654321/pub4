@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
 # Configure OpenBSD 7.8: NSD/DNSSEC, acme-client, Rails, pf, relayd, smtpd.
-# Usage: doas zsh openbsd.sh [--help]
+# Usage:
+#   doas zsh openbsd.sh --first-install
+#   doas zsh openbsd.sh --stage-2
+#   doas zsh openbsd.sh --sync-configs
 # VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-01-06)
 #
 # IDEMPOTENCY NOTES (CC14):
@@ -251,15 +254,23 @@ sync_openbsd_apply() {
     typeset port=${app_ports[$svc]:-0}
     if (( port > 0 )); then
       typeset code; code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://127.0.0.1:${port}/up 2>/dev/null)
-      [[ $code == 200 ]] || { log WARN "skip $svc restart (/up=$code)"; continue }
+      if [[ $code != 200 ]]; then
+        log WARN "$svc /up=$code before restart; attempting one controlled restart"
+        /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
+          || { log ERROR "$svc restart/start failed"; return 1; }
+        sleep 10
+        code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://127.0.0.1:${port}/up 2>/dev/null)
+        [[ $code == 200 ]] || { log ERROR "$svc /up still $code after restart"; return 1; }
+        continue
+      fi
     fi
     /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
-      || log WARN "$svc restart/start failed"
+      || { log ERROR "$svc restart/start failed"; return 1; }
   done
   log INFO "optional Rails apps left stopped (vm23_small); start with: doas rcctl start <app>"
 
-  ruby34 "${SCRIPT_DIR}/health_check.rb" && log INFO "health_check ok" \
-    || log WARN "health_check reported issues (see above)"
+  ruby34 "${SCRIPT_DIR}/health_check.rb" --core && log INFO "health_check ok" \
+    || { log ERROR "health_check failed"; return 1; }
 }
 
 source "${SCRIPT_DIR}/_net.sh"
@@ -571,8 +582,14 @@ bootstrap_rails_app() {
     || { log ERROR "bundle install failed for $app"; return 1 }
   su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:create db:migrate" \
     || log WARN "db:create/migrate non-zero for $app (idempotent skip likely)"
-  [[ -f $app_dir/db/seeds.rb ]] && \
-    su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:seed" || true
+  if [[ -f $app_dir/db/seeds.rb ]]; then
+    if [[ ${RUN_PRODUCTION_SEEDS:-0} == 1 ]]; then
+      log WARN "$app: RUN_PRODUCTION_SEEDS=1 set; running production db:seed"
+      su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:seed"
+    else
+      log INFO "$app: production db:seed skipped (set RUN_PRODUCTION_SEEDS=1 for explicit one-off seed)"
+    fi
+  fi
 
   typeset -a _secret_lines
   _secret_lines=("${(@f)$(su -l dev -c "cd $app_dir && RAILS_ENV=production bundle exec rails secret 2>/dev/null")}")
@@ -806,17 +823,48 @@ stage_2() {
 main() {
   if [[ ${1:-} = --help ]]; then
     print -r -- "Configure OpenBSD 7.8 for Rails with DNSSEC and relayd TLS+SNI.
-Usage: doas zsh openbsd.sh [--help|--sync-configs]"
+Usage:
+  doas zsh openbsd.sh --first-install
+  doas zsh openbsd.sh --stage-1        # requires I_UNDERSTAND_DNS_WIPE=1
+  doas zsh openbsd.sh --stage-2
+  doas zsh openbsd.sh --sync-configs
+
+The no-argument form is intentionally disabled because stage_1 rewrites
+authoritative DNS material."
     exit 0
   fi
+
   if [[ ${1:-} = --sync-configs ]]; then
     sync_openbsd_apply "${SCRIPT_DIR}"
     exit $?
   fi
-  ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
-  ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
-  stage_1
-  stage_2
+
+  case ${1:-} in
+    --first-install)
+      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
+      stage_1
+      stage_2
+      ;;
+    --stage-1|--stage1)
+      [[ ${I_UNDERSTAND_DNS_WIPE:-0} == 1 ]] || {
+        log ERROR "stage_1 rewrites DNS material; rerun with I_UNDERSTAND_DNS_WIPE=1 if this is intentional"
+        exit 1
+      }
+      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
+      stage_1
+      ;;
+    --stage-2|--stage2)
+      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
+      stage_2
+      ;;
+    *)
+      log ERROR "refusing no-argument deploy because stage_1 is destructive; use --first-install, --stage-2, or --sync-configs"
+      exit 1
+      ;;
+  esac
 }
 
 main "$@"

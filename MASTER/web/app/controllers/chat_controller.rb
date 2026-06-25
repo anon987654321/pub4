@@ -135,7 +135,7 @@ class ChatController < ApplicationController
       logger: web_logger,
       tier: request.env["master.tier"].to_s,
       unlocked: cookies[:master_unlocked].to_s == "1",
-      author: cookies[:master_author].to_s.present?
+      author: false
     ).call
   end
 

@@ -4,6 +4,26 @@
 # encoding: utf-8
 
 require "open3"
+require "optparse"
+require "yaml"
+
+ROOT = File.expand_path("../..", __dir__)
+APPS_YML = File.join(ROOT, "DEPLOY", "rails", "apps.yml")
+
+options = {
+  all_ready_apps: false,
+  public: false,
+  core: false
+}
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: ruby34 DEPLOY/openbsd/health_check.rb [--core|--all-ready-apps] [--public]"
+  parser.on("--core", "Check only core infrastructure plus brgen/master") { options[:core] = true }
+  parser.on("--all-ready-apps", "Require every app listed in DEPLOY/rails/apps.yml") { options[:all_ready_apps] = true }
+  parser.on("--public", "Check public HTTPS endpoints, cert files, and externally-routed names") { options[:public] = true }
+end.parse!
+
+options[:all_ready_apps] = false if options[:core]
 
 failures = []
 
@@ -18,15 +38,44 @@ def privileged(*cmd)
   cmd
 end
 
-core_services = %w[nsd httpd relayd smtpd master brgen]
-optional_services = %w[amber bsdports blognet hjerterom baibl]
-(core_services + optional_services).each do |service|
-  ok, out = run(*privileged("/usr/sbin/rcctl", "check", service))
-  next unless ok
-  running = out.include?("(ok)")
-  if optional_services.include?(service)
-    next unless running
+def load_apps
+  body = YAML.safe_load(File.read(APPS_YML)) || {}
+  apps = body.fetch("apps")
+  apps.to_h do |name, metadata|
+    [
+      name.to_s,
+      {
+        "domain" => metadata.fetch("domain").to_s,
+        "port" => Integer(metadata.fetch("port"))
+      }
+    ]
   end
+rescue StandardError => e
+  warn "apps.yml unreadable: #{e.class}: #{e.message}"
+  {}
+end
+
+def service_running?(service)
+  ok, out = run(*privileged("/usr/sbin/rcctl", "check", service))
+  [ok && out.include?("(ok)"), out]
+end
+
+def curl_ok?(url, timeout: 25)
+  run("/usr/local/bin/curl", "-fsS", "--max-time", timeout.to_s, url)
+end
+
+apps = load_apps
+app_ports = apps.transform_values { |metadata| metadata.fetch("port") }
+app_domains = apps.transform_values { |metadata| metadata.fetch("domain") }
+
+core_apps = %w[brgen]
+ready_apps = options[:all_ready_apps] ? app_ports.keys.sort : core_apps
+
+core_services = %w[nsd httpd relayd smtpd master] + core_apps
+required_services = (core_services + ready_apps).uniq
+
+required_services.each do |service|
+  running, out = service_running?(service)
   failures << "#{service}: #{out.empty? ? "check failed" : out}" unless running
 end
 
@@ -48,14 +97,15 @@ unless dns_ok
   failures << "dns: no local SOA (nsd #{nsd_out.strip})" unless nsd_ok && nsd_out.include?("(ok)")
 end
 
-core_up = { "master" => 53187, "brgen" => 38182 }
-optional_up = { "amber" => 61352, "bsdports" => 47312, "baibl" => 10007, "blognet" => 10002, "hjerterom" => 38891 }
-core_up.merge(optional_up).each do |name, port|
-  svc = name
-  check_ok, check_out = run(*privileged("/usr/sbin/rcctl", "check", svc))
-  next if optional_up.key?(name) && !(check_ok && check_out.include?("(ok)"))
+up_checks = { "master" => 53_187 }
+ready_apps.each do |name|
+  port = app_ports[name]
+  failures << "#{name}: missing port in apps.yml" unless port
+  up_checks[name] = port if port
+end
 
-  ok, out = run("/usr/local/bin/curl", "-fsS", "--max-time", "20", "http://127.0.0.1:#{port}/up")
+up_checks.each do |name, port|
+  ok, out = curl_ok?("http://127.0.0.1:#{port}/up", timeout: 20)
   failures << "#{name} up: #{out.empty? ? "no response on :#{port}" : out}" unless ok
 end
 
@@ -64,41 +114,39 @@ if File.file?("/etc/relayd.conf")
   unless relayd_conf.include?("forward to <master>") && relayd_conf.include?('check http "/up"')
     failures << "relayd: master backend missing http /up check"
   end
-end
-
-certs = %w[
-  /etc/ssl/brgen.no.fullchain.pem
-  /etc/ssl/amber.brgen.no.fullchain.pem
-  /etc/ssl/bsdports.org.fullchain.pem
-  /etc/ssl/baibl.brgen.no.crt
-  /etc/ssl/blognet.brgen.no.crt
-  /etc/ssl/hjerterom.brgen.no.crt
-]
-certs.each do |cert|
-  failures << "cert missing: #{cert}" unless File.exist?(cert)
-end
-
-core_https = {
-  "ai.brgen.no" => "https://ai.brgen.no/",
-  "brgen.no" => "https://brgen.no/up"
-}
-optional_https = {
-  "amber.brgen.no" => "https://amber.brgen.no/up",
-  "baibl.brgen.no" => "https://baibl.brgen.no/up",
-  "blognet.brgen.no" => "https://blognet.brgen.no/up",
-  "hjerterom.brgen.no" => "https://hjerterom.brgen.no/up",
-  "bsdports.org" => "https://bsdports.org/up"
-}
-core_https.merge(optional_https).each do |name, url|
-  if optional_https.key?(name)
-    backend = name.split(".").first
-    backend = "bsdports" if name == "bsdports.org"
-    svc = backend
-    check_ok, check_out = run(*privileged("/usr/sbin/rcctl", "check", svc))
-    next unless check_ok && check_out.include?("(ok)")
+  ready_apps.each do |name|
+    domain = app_domains[name]
+    port = app_ports[name]
+    failures << "relayd: missing domain route for #{domain}" if domain && !relayd_conf.include?(domain)
+    failures << "relayd: missing backend port for #{name}:#{port}" if port && !relayd_conf.include?("port #{port}")
   end
-  ok, out = run("/usr/local/bin/curl", "-fsS", "--max-time", "25", url)
-  failures << "#{name} https: #{out.empty? ? "no response" : out}" unless ok
+else
+  failures << "relayd: /etc/relayd.conf missing"
+end
+
+if options[:public]
+  domains = ["brgen.no"] + ready_apps.filter_map { |name| app_domains[name] }
+  domains.uniq.each do |domain|
+    fullchain = "/etc/ssl/#{domain}.fullchain.pem"
+    crt = "/etc/ssl/#{domain}.crt"
+    failures << "cert missing: #{fullchain} or #{crt}" unless File.exist?(fullchain) || File.exist?(crt)
+  end
+end
+
+if options[:public]
+  https_checks = {
+    "ai.brgen.no" => "https://ai.brgen.no/",
+    "brgen.no" => "https://brgen.no/up"
+  }
+  ready_apps.each do |name|
+    domain = app_domains[name]
+    https_checks[domain] = "https://#{domain}/up" if domain && domain != "brgen.no"
+  end
+
+  https_checks.each do |name, url|
+    ok, out = curl_ok?(url, timeout: 25)
+    failures << "#{name} https: #{out.empty? ? "no response" : out}" unless ok
+  end
 end
 
 if failures.any?
@@ -106,4 +154,6 @@ if failures.any?
   exit 1
 end
 
-puts "health check ok"
+mode = options[:all_ready_apps] ? "all-ready-apps" : "core"
+scope = options[:public] ? "#{mode}+public" : mode
+puts "health check ok (#{scope})"

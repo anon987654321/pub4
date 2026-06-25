@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "rack/utils"
+require "securerandom"
+require "yaml"
 
 # AuthTier — sets master.tier for every request and runs the cookie handshake.
 # Tiers:
@@ -16,11 +19,9 @@ require "rack/utils"
 class AuthTier
   PUBLIC_PATHS = %w[/up /health /manifest.json /icon.png /icon.svg /sw.js /face.css /face.js].freeze
   PUBLIC_PREFIX = %w[/assets/].freeze
-  TOKEN_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ".chars.freeze
-  TOKEN_LENGTH = 16
+  TOKEN_BYTES = 48
+  MIN_TOKEN_LENGTH = 43 # 32 random bytes encoded as urlsafe base64.
   COOKIE_NAME = "master_session"
-  AUTHOR_COOKIE = "master_author"
-  AUTHOR_NAME = "johann_manaf_tepstad"
   COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
   def initialize(app, config_path:)
@@ -37,16 +38,14 @@ class AuthTier
 
     tok = web_token
     candidate, source = extract_candidate(env)
-    author = %i[author_cookie author_url].include?(source)
-    authed = author || (!tok.to_s.empty? && !candidate.empty? &&
-             Rack::Utils.secure_compare(candidate, tok))
+    authed = !tok.to_s.empty? && !candidate.empty? &&
+             Rack::Utils.secure_compare(candidate, tok)
     env["master.tier"] = authed ? "authenticated" : "visitor"
 
-    return handshake_redirect(env, tok, author: source == :author_url) if authed && (source == :url || source == :author_url)
+    return handshake_redirect(env, tok) if authed && source == :url
 
     status, headers, body = @app.call(env)
     headers = with_cookie(headers, env, tok) if authed && source == :url
-    headers = with_author_cookie(headers, env) if source == :author_url
     [status, headers, body]
   end
 
@@ -57,12 +56,7 @@ class AuthTier
   end
 
   def extract_candidate(env)
-    author_cookie = Rack::Utils.parse_cookies(env)[AUTHOR_COOKIE].to_s
-    return [AUTHOR_NAME, :author_cookie] if author_cookie == AUTHOR_NAME
-
     qs = Rack::Utils.parse_nested_query(env["QUERY_STRING"].to_s)
-    return [AUTHOR_NAME, :author_url] if qs["author"].to_s == AUTHOR_NAME
-
     bearer = env["HTTP_AUTHORIZATION"].to_s.sub(/\ABearer\s+/i, "")
     return [bearer, :bearer] unless bearer.empty?
 
@@ -82,29 +76,14 @@ class AuthTier
     Rack::Utils.parse_cookies(env)[COOKIE_NAME].to_s
   end
 
-  def handshake_redirect(env, tok, author: false)
-    cookie = author ? build_author_cookie(env) : build_cookie(env, tok)
+  def handshake_redirect(env, tok)
+    cookie = build_cookie(env, tok)
     [302,
      { "Location" => clean_url(env),
        "Set-Cookie" => cookie,
        "Cache-Control" => "no-store",
        "Content-Length" => "0" },
      []]
-  end
-
-  def with_author_cookie(headers, env)
-    headers = headers.dup
-    cookie = build_author_cookie(env)
-    existing = headers["Set-Cookie"] || headers["set-cookie"]
-    headers["Set-Cookie"] = existing ? "#{existing}\n#{cookie}" : cookie
-    headers
-  end
-
-  def build_author_cookie(env)
-    parts = ["#{AUTHOR_COOKIE}=#{AUTHOR_NAME}", "HttpOnly", "SameSite=Strict",
-             "Path=/", "Max-Age=#{COOKIE_MAX_AGE * 12}"]
-    parts << "Secure" if https?(env)
-    parts.join("; ")
   end
 
   def with_cookie(headers, env, tok)
@@ -131,7 +110,7 @@ class AuthTier
     path = env["PATH_INFO"].to_s
     remaining = env["QUERY_STRING"].to_s
                   .split("&")
-                  .reject { |p| p.start_with?("token=", "author=") || p == "token" || p == "author" }
+                  .reject { |p| p.start_with?("token=") || p == "token" }
                   .join("&")
     remaining.empty? ? path : "#{path}?#{remaining}"
   end
@@ -149,8 +128,12 @@ class AuthTier
 
   def load_or_seed_token
     cfg, readable = read_config
-    return cfg["web_token"] if cfg["web_token"].to_s.length.positive?
+    candidate = cfg["web_token"].to_s
+    return candidate if candidate.length >= MIN_TOKEN_LENGTH
+
+    warn "auth_tier: rotating weak web_token (#{candidate.length} chars)" if candidate.length.positive?
     return nil unless readable
+
     seed_token(cfg)
   end
 
@@ -164,16 +147,15 @@ class AuthTier
   end
 
   def seed_token(cfg)
-    require "securerandom"
     FileUtils.mkdir_p(File.dirname(@config_path))
     lock_path = "#{@config_path}.lock"
     File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
       lock.flock(File::LOCK_EX)
       existing = YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true) rescue nil
-      if existing.is_a?(Hash) && existing["web_token"].to_s.length.positive?
+      if existing.is_a?(Hash) && existing["web_token"].to_s.length >= MIN_TOKEN_LENGTH
         return existing["web_token"]
       end
-      tok = Array.new(TOKEN_LENGTH) { TOKEN_ALPHABET.sample(random: SecureRandom) }.join
+      tok = SecureRandom.urlsafe_base64(TOKEN_BYTES)
       cfg["web_token"] = tok
       tmp = "#{@config_path}.tmp.#{Process.pid}"
       File.open(tmp, File::WRONLY | File::CREAT | File::TRUNC, 0o600) { |f| f.write(cfg.to_yaml) }

@@ -15,6 +15,8 @@ require "rbconfig"
 require "timeout"
 require "net/http"
 require "uri"
+require "tmpdir"
+require "yaml"
 
 RUBY = RbConfig.ruby
 
@@ -54,6 +56,43 @@ end
 
 config = container.dig(:config)
 port = (config&.respond_to?(:web_port) ? config.web_port : nil) || 53_187
+
+failures << "auth_tier" unless step("auth tier") do
+  require_relative "../web/app/middleware/auth_tier"
+
+  token = "x" * 64
+  ok = Dir.mktmpdir("master-auth-tier") do |dir|
+    config_path = File.join(dir, "config.yml")
+    File.write(config_path, { "web_token" => token }.to_yaml)
+
+    app = lambda do |env|
+      [200, { "Content-Type" => "text/plain" }, [env["master.tier"].to_s]]
+    end
+
+    middleware = AuthTier.new(app, config_path:)
+    base_env = {
+      "PATH_INFO" => "/",
+      "QUERY_STRING" => "",
+      "rack.url_scheme" => "https"
+    }
+
+    visitor_status, _visitor_headers, visitor_body = middleware.call(base_env.dup)
+    author_status, _author_headers, author_body =
+      middleware.call(base_env.merge("QUERY_STRING" => "author=johann_manaf_tepstad"))
+    token_status, token_headers, _token_body =
+      middleware.call(base_env.merge("QUERY_STRING" => "token=#{token}"))
+
+    visitor_status == 200 &&
+      visitor_body.join == "visitor" &&
+      author_status == 200 &&
+      author_body.join == "visitor" &&
+      token_status == 302 &&
+      token_headers["Set-Cookie"].to_s.include?("HttpOnly") &&
+      token_headers["Set-Cookie"].to_s.include?("Secure")
+  end
+
+  [ok, "visitor/auth/token separation failed"]
+end
 
 failures << "pipe" unless step("pipe command") do
   exe = File.expand_path("cli", __dir__)

@@ -49,6 +49,23 @@ if File.file?(master_web)
   failures << "MASTER/web: missing assume_ssl" unless text.match?(/\bconfig\.assume_ssl\s*=\s*true\b/)
 end
 
+auth_tier = File.join(ROOT, "MASTER", "web", "app", "middleware", "auth_tier.rb")
+if File.file?(auth_tier)
+  text = File.read(auth_tier)
+  failures << "MASTER/web: forbidden author URL auth bypass" if text.match?(/\bauthor_url\b|\bAUTHOR_NAME\b|\bmaster_author\b/)
+  failures << "MASTER/web: weak fixed token length" if text.match?(/\bTOKEN_LENGTH\s*=\s*1[0-9]\b/)
+  failures << "MASTER/web: missing high-entropy token generation" unless text.include?("SecureRandom.urlsafe_base64")
+else
+  failures << "MASTER/web: missing AuthTier middleware"
+end
+
+openbsd = File.join(ROOT, "DEPLOY", "openbsd", "openbsd.sh")
+if File.file?(openbsd)
+  text = File.read(openbsd)
+  failures << "openbsd.sh: production db:seed is not explicitly gated" unless text.include?("RUN_PRODUCTION_SEEDS")
+  failures << "openbsd.sh: no-argument deploy not blocked" unless text.include?("refusing no-argument deploy")
+end
+
 if failures.any?
   warn "Deploy smoke gate failures:"
   failures.each { |failure| warn "  - #{failure}" }
