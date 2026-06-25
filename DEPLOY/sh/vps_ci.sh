@@ -25,21 +25,16 @@ ensure_ci_lock() {
 sync_from_repo() {
   local src=$repo/DEPLOY/rails/$app
   local shared_src=$repo/DEPLOY/rails/shared
-  doas sh -c "
-    if [[ -d ${src} ]]; then
-      cd ${src} && tar cf - \
-        --exclude='./db/*.sqlite3' \
-        --exclude='./db/*.sqlite3-*' \
-        --exclude='./storage' \
-        --exclude='./log' \
-        --exclude='./tmp' \
-        . | (cd ${app_dir} && tar xf -)
-      chown -R ${app}:${app} ${app_dir}
-    fi
-    mkdir -p ${shared_dir}
-    cd ${shared_src} && tar cf - . | (cd ${shared_dir} && tar xf -)
-    chown -R ${app}:${app} ${shared_dir}
-  "
+  if [[ -d $src ]]; then
+    local -a paths=(test app lib config bin db/seeds.rb db/migrate)
+    paths+=(${src}/*.sh(N:t))
+    doas tar cf - -C "$src" "${paths[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
+    doas chown -R "${app}:${app}" "${app_dir}/test" "${app_dir}/app" "${app_dir}/lib" \
+      "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}"/*.sh(N) 2>/dev/null || true
+  fi
+  doas mkdir -p "$shared_dir"
+  doas tar cf - -C "$shared_src" . | doas sh -c "cd ${shared_dir} && tar xf -"
+  doas chown -R "${app}:${app}" "$shared_dir"
 }
 
 npm_cache=/home/${app}/.npm
