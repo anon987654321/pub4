@@ -210,7 +210,7 @@ rails_prepare_secondary_dbs_as_app() {
     grep -q 'define(version: 0)' "$schema" 2>/dev/null && continue
     log "db:schema:load:${db} for ${app_name}"
     run_rails_as_app "$app_name" "$app_dir" \
-      "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:schema:load:${db}" \
+      "SECRET_KEY_BASE=${secret} DISABLE_DATABASE_ENVIRONMENT_CHECK=1 RAILS_ENV=production bundle34 exec rails db:schema:load:${db}" \
       || { log_err "db:schema:load:${db} failed for ${app_name}"; return 1; }
   done
 }
