@@ -82,9 +82,9 @@ module Master
           summary: "publish MASTER + DEPLOY codebase snapshots",
           detail: [
             "/snapshot",
-            "Writes digest + full archives to ~/Downloads.",
-            "Digest: MASTER_snapshot.md / DEPLOY_snapshot.md.",
-            "Archive: MASTER_snapshot_YYYY-MM-DD.md (dated full tree)."
+            "Writes full MASTER + DEPLOY snapshots to ~/Downloads.",
+            "Tree listing then every file verbatim (no truncation).",
+            "Outputs: MASTER_snapshot.md and MASTER_snapshot_YYYY-MM-DD.md."
           ]
         },
         "grep" => {

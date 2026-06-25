@@ -201,40 +201,53 @@ class TestCLI < Minitest::Test
     assert_includes output, "data/rules.yml"
   end
 
-  def test_publish_snapshot_digest_writes_downloads_summary
-    repo_root = File.dirname(Master::ROOT)
-    Dir.mktmpdir do |downloads|
-      prior = ENV["MASTER_SNAPSHOT_DIR"]
-      ENV["MASTER_SNAPSHOT_DIR"] = downloads
-      master_digest = File.join(downloads, "MASTER_snapshot.md")
-      output = Master::Now::CommandRegistry.publish_snapshot_digest(Master::ROOT, "MASTER", repo_root:)
-
-      assert_includes output, "snapshot:master: digest"
-      assert_includes output, downloads
-      assert File.file?(master_digest), "expected MASTER digest in downloads"
-      body = File.read(master_digest)
-      assert_includes body, "# MASTER Snapshot"
-      assert_includes body, "runtime enhancements:"
-      assert_includes body, "## Recent changes"
-    ensure
-      if prior
-        ENV["MASTER_SNAPSHOT_DIR"] = prior
-      else
-        ENV.delete("MASTER_SNAPSHOT_DIR")
-      end
-    end
-  end
-
-  def test_publish_snapshot_writes_download_archive
+  def test_publish_snapshot_includes_tree_and_full_file_contents
     Dir.mktmpdir do |target|
-      File.write(File.join(target, "sample.rb"), "puts 1\n")
+      FileUtils.mkdir_p(File.join(target, "lib"))
+      marker = "X" * (Master::CTX_WINDOW_SIZE + 64)
+      File.write(File.join(target, "lib", "big.rb"), marker)
+      File.write(File.join(target, "note.txt"), "hello\n")
       Dir.mktmpdir do |downloads|
         prior = ENV["MASTER_SNAPSHOT_DIR"]
         ENV["MASTER_SNAPSHOT_DIR"] = downloads
         output = Master::Now::CommandRegistry.publish_snapshot(target, "TEST")
+        archive = Dir.glob(File.join(downloads, "TEST_snapshot_*.md")).first
+        body = File.read(archive)
+
         assert_includes output, "snapshot:test:"
-        assert_includes output, "1 files"
-        assert_operator Dir.glob(File.join(downloads, "TEST_snapshot_*.md")).size, :>=, 1
+        assert_includes body, "## Tree"
+        assert_includes body, "lib/"
+        assert_includes body, "big.rb"
+        assert_includes body, "## Codebase"
+        assert_includes body, "## `lib/big.rb`"
+        assert_includes body, marker
+        assert_includes body, "## `note.txt`"
+        assert_includes body, "hello"
+      ensure
+        if prior
+          ENV["MASTER_SNAPSHOT_DIR"] = prior
+        else
+          ENV.delete("MASTER_SNAPSHOT_DIR")
+        end
+      end
+    end
+  end
+
+  def test_publish_snapshot_digest_writes_full_document
+    Dir.mktmpdir do |target|
+      File.write(File.join(target, "sample.rb"), "puts 42\n")
+      Dir.mktmpdir do |downloads|
+        prior = ENV["MASTER_SNAPSHOT_DIR"]
+        ENV["MASTER_SNAPSHOT_DIR"] = downloads
+        digest = File.join(downloads, "TEST_snapshot.md")
+        output = Master::Now::CommandRegistry.publish_snapshot_digest(target, "TEST")
+
+        assert_includes output, "snapshot:test:"
+        body = File.read(digest)
+        assert_includes body, "## Tree"
+        assert_includes body, "## Codebase"
+        assert_includes body, "puts 42"
+        assert_includes body, "no truncation"
       ensure
         if prior
           ENV["MASTER_SNAPSHOT_DIR"] = prior

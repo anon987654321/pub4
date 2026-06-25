@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "base64"
 require "fileutils"
 require "open3"
 require "yaml"
@@ -106,23 +107,53 @@ module Master
 
       def dispatch_snapshot(root, ctx: nil)
         repo_root = File.expand_path("..", root)
-        lines = [
-          publish_snapshot_digest(root, "MASTER", repo_root:),
-          publish_snapshot_digest(File.expand_path("../DEPLOY", root), "DEPLOY", repo_root:),
-          publish_snapshot(root, "MASTER"),
-          publish_snapshot(File.expand_path("../DEPLOY", root), "DEPLOY"),
-        ]
-        lines.join("\n")
+        [
+          emit_snapshot_pair(root, "MASTER", repo_root:),
+          emit_snapshot_pair(File.expand_path("../DEPLOY", root), "DEPLOY", repo_root:),
+        ].join("\n")
       end
 
-      def publish_snapshot_digest(target, label, repo_root:)
+      def emit_snapshot_pair(target, label, repo_root:)
+        return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
+
+        content, files, n_lines = build_snapshot_document(target, label, repo_root:)
+        dir = snapshot_output_dir
+        FileUtils.mkdir_p(dir)
+        digest = File.join(dir, "#{label}_snapshot.md")
+        archive = File.join(dir, "#{label}_snapshot_#{Time.now.strftime('%Y-%m-%d')}.md")
+        File.write(digest, content)
+        File.write(archive, content)
+        [
+          "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{digest}",
+          "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{archive}"
+        ].join("\n")
+      rescue StandardError => e
+        "snapshot:#{label.downcase}: write failed: #{e.message}"
+      end
+
+      def publish_snapshot_digest(target, label, repo_root: File.expand_path("..", target))
         return "snapshot:#{label.downcase}: digest skipped (missing dir)" unless File.directory?(target)
 
+        content, files, n_lines = build_snapshot_document(target, label, repo_root:)
+        out = File.join(snapshot_output_dir, "#{label}_snapshot.md")
+        FileUtils.mkdir_p(File.dirname(out))
+        File.write(out, content)
+        "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{out}"
+      rescue StandardError => e
+        "snapshot:#{label.downcase}: digest failed: #{e.message}"
+      end
+
+      def build_snapshot_document(target, label, repo_root:)
+        body, files, n_lines = build_snapshot_markdown(target, label)
+        header = snapshot_summary_header(target, label, repo_root:, files:, n_lines:)
+        [header + body, files, n_lines]
+      end
+
+      def snapshot_summary_header(target, label, repo_root:, files:, n_lines:)
+        stamp = Time.now.utc.iso8601
         stats = snapshot_runtime_stats(target) if label == "MASTER"
         git = snapshot_git_summary(repo_root)
-        body, files, n_lines = build_snapshot_markdown(target, label)
-        stamp = Time.now.utc.iso8601
-        digest = [
+        [
           "# #{label} Snapshot",
           "Generated: #{stamp}",
           "",
@@ -130,6 +161,7 @@ module Master
           "- files: #{files.size}",
           "- lines: #{n_lines}",
           "- target: `#{target}`",
+          "- policy: full tree + every file verbatim (no truncation)",
           *(stats || []),
           *(git || []),
           "",
@@ -137,12 +169,6 @@ module Master
           snapshot_recent_commits(repo_root),
           ""
         ].join("\n")
-        out = File.join(snapshot_output_dir, "#{label}_snapshot.md")
-        FileUtils.mkdir_p(File.dirname(out))
-        File.write(out, digest)
-        "snapshot:#{label.downcase}: digest → #{out}"
-      rescue StandardError => e
-        "snapshot:#{label.downcase}: digest failed: #{e.message}"
       end
 
       def snapshot_runtime_stats(root)
@@ -244,46 +270,71 @@ module Master
         File.expand_path(ENV.fetch("MASTER_SNAPSHOT_DIR", "~/Downloads"))
       end
 
-      def publish_snapshot(target, label)
+      def publish_snapshot(target, label, repo_root: File.expand_path("..", target))
         return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
 
-        body, files, n_lines = build_snapshot_markdown(target, label)
+        content, files, n_lines = build_snapshot_document(target, label, repo_root:)
         day = Time.now.strftime("%Y-%m-%d")
         out_path = File.join(snapshot_output_dir, "#{label}_snapshot_#{day}.md")
         FileUtils.mkdir_p(File.dirname(out_path))
-        File.write(out_path, body)
+        File.write(out_path, content)
         "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{out_path}"
       rescue StandardError => e
         "snapshot:#{label.downcase}: write failed: #{e.message}"
       end
 
       def build_snapshot_markdown(target, label)
-        all = Dir.glob(File.join(target, "**", "*"))
-               .reject { |f| File.basename(f).start_with?(".") }
-               .reject { |f| skipped_snapshot_path?(f.delete_prefix("#{target}/")) }.sort
+        all = snapshot_paths(target)
         dirs = all.select { |f| File.directory?(f) }
-        files = all.select { |f| File.file?(f) && snapshot_text_file?(f) && File.size(f) < Master::CTX_WINDOW_SIZE }
-        stamp = Time.now.utc.iso8601
-        md = ["# #{label} Snapshot — #{stamp}", "", "## Tree", "```"]
+        files = all.select { |f| File.file?(f) }
+        md = ["## Tree", "```"]
         entries = (dirs.map { |d| [d, :dir] } + files.map { |f| [f, :file] })
                   .sort_by { |p, _| p.split("/") }
                   .map { |p, k| "#{"  " * p.delete_prefix("#{target}/").count("/")}#{File.basename(p)}#{k == :dir ? "/" : ""}" }
         md.concat(entries) << "```" << ""
         md.concat(snapshot_artifacts(target)) if label == "MASTER"
+        md << "## Codebase" << ""
         n_lines = 0
         files.each do |f|
           rel = f.delete_prefix("#{target}/")
-          lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
-          body = File.read(f, encoding: "UTF-8", invalid: :replace).lines
-          n_lines += body.size
-          md << "## `#{rel}`" << "```#{lang}"
-          md.concat(body.map(&:rstrip))
-          md << "```" << ""
-        rescue StandardError => e
-          md << "## `#{rel}`" << "[skipped: #{e.message}]" << ""
+          section, line_count = snapshot_file_section(f)
+          n_lines += line_count
+          md << "## `#{rel}`"
+          md.concat(section)
+          md << ""
         end
         md << "files: #{files.size} / lines: #{n_lines}"
         [md.join("\n"), files, n_lines]
+      end
+
+      def snapshot_paths(target)
+        Dir.glob(File.join(target, "**", "*"), File::FNM_DOTMATCH)
+           .reject { |f| snapshot_skip_entry?(f.delete_prefix("#{target}/").delete_prefix("/")) }
+           .sort
+      end
+
+      def snapshot_skip_entry?(rel)
+        return true if rel.empty? || rel == "."
+
+        rel.split("/").any? { |segment| segment == "." || segment == ".." || SKIP_SEGS.include?(segment) }
+      end
+
+      def snapshot_file_section(path)
+        if snapshot_text_file?(path)
+          begin
+            text = File.read(path, encoding: "UTF-8", invalid: :replace)
+            lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(path).downcase, "text")
+            lines = text.each_line.map(&:rstrip)
+            return [["```#{lang}", *lines, "```"], lines.size]
+          rescue StandardError
+            # fall through to full binary capture
+          end
+        end
+        data = File.binread(path)
+        encoded = Base64.strict_encode64(data)
+        [["binary: #{data.bytesize} bytes", "```base64", encoded, "```"], encoded.lines.size]
+      rescue StandardError => e
+        [["```text", "[unreadable: #{e.message}]", "```"], 1]
       end
 
       def snapshot_artifacts(_target)
@@ -313,10 +364,6 @@ module Master
         end
       rescue Errno::EACCES, Errno::ENOENT
         nil
-      end
-
-      def skipped_snapshot_path?(rel)
-        rel.split("/").any? { |segment| SKIP_SEGS.include?(segment) }
       end
 
       def snapshot_text_file?(file)
