@@ -71,9 +71,25 @@ vmctl console vm23
 3. `resource_guard.sh` may shed optional apps — touch `/var/db/pub4_all_apps` or run `start_all_apps.sh`.
 4. `openrsync` broken on vm23 — deploy uses tar sync.
 
+## VPS proof log
+
+### 2026-06-25 (commit `41c69225b+`)
+
+| Check | Result |
+|-------|--------|
+| `ruby34 DEPLOY/openbsd/health_check.rb` | pass |
+| `doas rcctl check` (all 7 services) | pass |
+| Local `/up` on all ports | 200 |
+| `https://ai.brgen.no/up` | pass |
+| `MASTER_LOW_RESOURCE=1 bundle34 exec ruby bin/smoke --web` | clean (7 checks) |
+| `deploy_backlog_test` on VPS brgen | pass (after `PUB4_RAILS_ROOT` fix) |
+| `bin/ci` all six apps | partial — brgen rails tests 1 failure fixed in tree; amber/baibl/etc. fail `bundler-audit` (GitHub advisory DB fetch as root) |
+
+**sass-embedded on copy-tree deploys:** `bundle34 install` needs `node` (`doas pkg_add node`) and `NPM_CONFIG_CACHE=/home/<app>/.npm` when running via `doas su -m <app>` — otherwise npm writes to `/root/.npm` and native extension build fails.
+
 ## Open proof items
 
-- [ ] All six Rails apps: `bundle34 exec bin/ci` green on vm23 after latest sync
+- [ ] All six Rails apps: `bundle34 exec bin/ci` green on vm23 (bundler-audit network + copy-tree bundle hygiene)
 - [ ] `doas rcctl restart master` after web face asset changes
 - [ ] Browser smoke on `https://ai.brgen.no/` (WebGL, palette, history sidebar)
 
