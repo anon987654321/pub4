@@ -17,6 +17,7 @@ require_relative "../tribunal_feedback"
 require_relative "work_commands_extra"
 require_relative "work_commands_status"
 require_relative "work_commands_replay"
+require_relative "work_commands_graph"
 
 module Master
   module Now
@@ -52,7 +53,8 @@ module Master
           "fix" => command(:dispatch_fix, fix_loop, root, scanner),
           "status" => command(:dispatch_status, root, fix_loop, bus, git, infra[:trace]),
           "replay" => command(:dispatch_replay, root, infra[:trace]),
-          "resync" => command(:dispatch_resync, root, fix_loop, git),
+          "graph" => command(:dispatch_graph, root, ai[:code_index], ai[:reference_graph]),
+          "resync" => command(:dispatch_resync, root, fix_loop, git, bus),
           "tail" => command(:dispatch_tail, root),
           "review" => command(:dispatch_review, council_stage, deliberation, root, bus, review_crew),
           "critique" => command(:dispatch_critique, deliberation, root),

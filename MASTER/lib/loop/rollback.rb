@@ -18,7 +18,8 @@ module Master
 
         category = result.category
         tag = "master:rollback:#{category}:#{Process.pid}"
-        @bus&.publish("pipeline:rollback", { category: category, message: result.message[0, ROLLBACK_MSG_TRUNCATE], tag: tag })
+        @bus&.publish("pipeline:rollback", category: category, message: result.message[0, ROLLBACK_MSG_TRUNCATE], tag: tag)
+        @bus&.publish("ops:rollback", category: category, tag: tag)
         Open3.capture2e("git", "-C", @root, "stash", "push", "-u", "-m", tag)
         Open3.capture2e("git", "-C", @root, "reset", "--hard", "HEAD")
         true

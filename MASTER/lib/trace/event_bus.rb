@@ -10,11 +10,12 @@ module Master
       BOOT_TIME = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
       PATTERN_CACHE_MAX = 512
 
-      def initialize(event_log: nil)
+      def initialize(event_log: nil, evidence_log: nil)
         super()
         @subscribers = Hash.new { |h, k| h[k] = [] }
         @pattern_cache = {}
         @event_log = event_log || Master::Trace::EventLog.new
+        @evidence_log = evidence_log
       end
 
       def subscribe(pattern, &handler)
@@ -44,6 +45,7 @@ module Master
 
       def persist_event(event, payload)
         @event_log.append(event, payload)
+        @evidence_log&.append(event, payload) if @evidence_log&.operational?(event)
       rescue StandardError => e
         # warn-only: routing through the bus here would recurse
         Master::Ground::Swallow.log(e, context: "event_bus.persist_event", event:)

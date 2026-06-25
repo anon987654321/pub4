@@ -40,7 +40,7 @@ class OutfitsController < ApplicationController
   def create
     @outfit = Current.user.outfits.build(outfit_params)
     if @outfit.save
-      @outfit.record_activity!("AmberOutfitCreated", source_vertical: "amber")
+      Shared::DomainEvent.record!(actor: Current.user, action: "outfit.created", subject: @outfit, source_vertical: "amber")
       redirect_to(@outfit, notice: "Outfit created")
     else
       render(:new, status: :unprocessable_entity)
@@ -53,7 +53,7 @@ class OutfitsController < ApplicationController
 
   def update
     if @outfit.update(outfit_params)
-      @outfit.record_activity!("AmberOutfitUpdated", source_vertical: "amber")
+      Shared::DomainEvent.record!(actor: Current.user, action: "outfit.updated", subject: @outfit, source_vertical: "amber")
       redirect_to(@outfit, notice: "Updated")
     else
       render(:edit, status: :unprocessable_entity)

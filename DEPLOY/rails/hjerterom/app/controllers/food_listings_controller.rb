@@ -29,7 +29,7 @@ class FoodListingsController < ApplicationController
   def create
     @listing = Current.user.food_listings.build(listing_params)
     if @listing.save
-      @listing.record_activity!("FoodListingCreated", source_vertical: "hjerterom")
+      Shared::DomainEvent.record!(actor: Current.user, action: "food_listing.created", subject: @listing, source_vertical: "hjerterom")
       redirect_to(@listing, notice: "Food listing created")
     else
       render(:new, status: :unprocessable_entity)
@@ -40,7 +40,7 @@ class FoodListingsController < ApplicationController
 
   def update
     if @listing.update(listing_params)
-      @listing.record_activity!("FoodListingUpdated", source_vertical: "hjerterom")
+      Shared::DomainEvent.record!(actor: Current.user, action: "food_listing.updated", subject: @listing, source_vertical: "hjerterom")
       redirect_to(@listing, notice: "Updated")
     else
       render(:edit, status: :unprocessable_entity)

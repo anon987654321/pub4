@@ -5,11 +5,12 @@ require "open3"
 module Master
   module Now
     class ResyncService
-      def initialize(root:, fix_loop: nil, git: nil)
+      def initialize(root:, fix_loop: nil, git: nil, bus: nil)
         @root = root
         @repo = File.expand_path("..", root)
         @fix_loop = fix_loop
         @git = git || Reach::GitOperations.new(@repo)
+        @bus = bus
       end
 
       def call(dry_run: false)
@@ -24,7 +25,7 @@ module Master
 
       private
 
-      attr_reader :root, :repo, :fix_loop, :git
+      attr_reader :root, :repo, :fix_loop, :git, :bus
 
       def start_line
         stop_msg = fix_loop&.background_alive? ? (fix_loop.stop_background!; "stopped fix_loop bg; ") : ""
@@ -37,11 +38,13 @@ module Master
         lines << "  fetched origin"
         git.reset_hard("origin/main")
         lines << "  reset --hard origin/main → #{git.head}"
+        bus&.publish("resync:reset", tag: tag_name, head: git.head, was: old_head)
         lines << bundle_install_line(File.join(repo, "MASTER"), "MASTER")
         lines << bundle_install_line(File.join(repo, "MASTER/web"), "MASTER/web")
         Open3.capture2e("doas", "rcctl", "restart", "master")
         sleep 2
         lines << "  rcctl restart master — #{CommandRegistry.service_status[:state]}"
+        bus&.publish("deploy:restart", service: "master", state: CommandRegistry.service_status[:state])
         lines.join("\n")
       end
 

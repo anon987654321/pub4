@@ -10,7 +10,8 @@ module Master
 
       def self.boot(root:, config:)
         event_log = Master::Trace::EventLog.new(root:)
-        bus       = Master::Trace::EventBus.new(event_log:)
+        evidence_log = Master::Trace::EvidenceLog.new(root:)
+        bus       = Master::Trace::EventBus.new(event_log:, evidence_log:)
         ring      = Master::Trace::RingBuffer.new(RING_SIZE)
         logging   = Master::Trace::Logging.new(ring_buffer: ring, event_bus: bus)
         session   = Master::Trace::Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)

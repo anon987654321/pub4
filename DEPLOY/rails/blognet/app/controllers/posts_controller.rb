@@ -30,7 +30,7 @@ class PostsController < ApplicationController
   def create
     @post = @blog.posts.build(post_params.merge(user: Current.user))
     if @post.save
-      @post.record_activity!("BlogPostCreated", source_vertical: "blognet")
+      Shared::DomainEvent.record!(actor: Current.user, action: "post.created", subject: @post, source_vertical: "blognet")
       redirect_to([ @blog, @post ], notice: "Post created")
     else
       render(:new, status: :unprocessable_entity)
@@ -41,7 +41,7 @@ class PostsController < ApplicationController
 
   def update
     if @post.update(post_params)
-      @post.record_activity!("BlogPostUpdated", source_vertical: "blognet")
+      Shared::DomainEvent.record!(actor: Current.user, action: "post.updated", subject: @post, source_vertical: "blognet")
       redirect_to([ @blog, @post ], notice: "Updated")
     else
       render(:edit, status: :unprocessable_entity)

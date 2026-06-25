@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "open3"
 require "time"
 
 module Master
@@ -23,6 +24,10 @@ module Master
           render_events(limit: rest.to_i.positive? ? rest.to_i : 15, failures_only: true)
         when :date
           render_trace_date(rest)
+        when :commit
+          render_commit(rest)
+        when :evidence
+          render_evidence(limit: rest.to_i.positive? ? rest.to_i : 20)
         else
           render_events(limit: mode.is_a?(Integer) ? mode : 20)
         end
@@ -38,6 +43,8 @@ module Master
         when "", "activity" then [:activity, tail]
         when "turn" then [:turn, tail]
         when "failures" then [:failures, tail]
+        when "commit" then [:commit, tail]
+        when "evidence" then [:evidence, tail]
         when /\A\d+\z/ then [head.to_i, tail]
         when /\A\d{4}-\d{2}-\d{2}\z/ then [:date, head]
         else [:activity, arg.to_s]
@@ -91,6 +98,56 @@ module Master
         pay = rec["payload"]
         summary = pay.is_a?(Hash) ? pay.first(4).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
         "#{ts} #{event} #{summary[0, 100]}"
+      end
+
+      def render_commit(sha)
+        sha = sha.to_s.strip
+        return "replay: usage: /replay commit <sha>" if sha.empty?
+
+        info = commit_info(sha)
+        return info if info.is_a?(String)
+
+        window = 300
+        events = nearby_events(info[:time], window: window)
+        lines = [
+          "replay commit #{info[:short]} #{info[:subject]}",
+          "  author=#{info[:author]} at=#{info[:time].utc.iso8601}",
+          "  events ±#{window}s (#{events.size})"
+        ]
+        events.each { |rec| lines << "  #{format_record(rec)}" }
+        lines.join("\n")
+      end
+
+      def render_evidence(limit:)
+        log = EvidenceLog.new(root: @root)
+        records = log.recent(limit)
+        return "replay: no evidence events" if records.empty?
+
+        lines = ["replay evidence (#{records.size})"]
+        records.each { |rec| lines << format_record(rec) }
+        lines.join("\n")
+      end
+
+      def commit_info(sha)
+        repo = File.expand_path("..", @root)
+        out, _, status = Open3.capture3(
+          "git", "-C", repo, "show", "-s", "--format=%H|%h|%an|%aI|%s", sha
+        )
+        return "replay: commit not found: #{sha}" unless status.success? && !out.strip.empty?
+
+        full, short, author, at, subject = out.strip.split("|", 5)
+        { full: full, short: short, author: author, time: Time.parse(at), subject: subject.to_s }
+      rescue StandardError => e
+        "replay: commit lookup failed (#{e.message})"
+      end
+
+      def nearby_events(center, window:)
+        start_at = center - window
+        end_at = center + window
+        @event_log.recent(500).select do |rec|
+          ts = (Time.parse(rec["timestamp"]) rescue nil)
+          ts && ts >= start_at && ts <= end_at
+        end
       end
 
       def load_last_turn_from_disk

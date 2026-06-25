@@ -32,7 +32,11 @@ module Master
         },
         "replay" => {
           summary: "replay operational event history",
-          detail: ["/replay [N]", "/replay turn", "/replay failures [N]", "/replay YYYY-MM-DD", "Reads runtime activity JSONL and turn traces."]
+          detail: ["/replay [N]", "/replay turn", "/replay failures [N]", "/replay commit <sha>", "/replay evidence [N]", "/replay YYYY-MM-DD", "Reads runtime activity JSONL and turn traces."]
+        },
+        "graph" => {
+          summary: "show file importance via dependency graph",
+          detail: ["/graph <file>", "Blast radius, ranked neighbours, and indexed symbols for a path."]
         },
         "resync" => {
           summary: "repair local divergence from origin/main",
@@ -100,7 +104,7 @@ module Master
 
       COMMAND_CATEGORIES = {
         "session" => %w[clear save history grep audit tokens cost undo rollback redo],
-        "work" => %w[scan fix workflow review critique self kernel status resync tail edge-cases],
+        "work" => %w[scan fix workflow review critique self kernel status replay graph resync tail edge-cases],
         "agent" => %w[run mode task persona btw shell gateway],
         "system" => %w[orient tree diff commit snapshot diag reload propose context verify doctor help],
         "infer" => []

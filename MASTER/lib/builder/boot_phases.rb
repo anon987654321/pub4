@@ -10,7 +10,8 @@ module Master
 
       def call
         event_log = Trace::EventLog.new(root: @root)
-        bus = Trace::EventBus.new(event_log: event_log)
+        evidence_log = Trace::EvidenceLog.new(root: root)
+        bus = Trace::EventBus.new(event_log: event_log, evidence_log: evidence_log)
         ring = Trace::RingBuffer.new(RING_SIZE)
         logging = Trace::Logging.new(ring_buffer: ring, event_bus: bus)
         session = Trace::Session.new(root: @root, budget_max: @config.budget_max, req_max: @config.req_max)

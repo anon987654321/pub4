@@ -50,7 +50,10 @@ class Marketplace::ListingsController < Marketplace::BaseController
     if @listing.save
       preset = params[:marketplace_listing][:preset].presence
       PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos") if preset && @listing.photos.attached?
-
+      Shared::DomainEvent.record!(
+        actor: Current.user, action: "listing.created", subject: @listing,
+        source_vertical: "marketplace", locality: @listing.location
+      )
       redirect_to marketplace_listing_path(@listing), notice: "Listed"
     else
       render :new, status: :unprocessable_entity
@@ -64,9 +67,15 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def update
     authorize @listing
-    @listing.update(listing_params) ?
-      redirect_to(marketplace_listing_path(@listing)) :
+    if @listing.update(listing_params)
+      Shared::DomainEvent.record!(
+        actor: Current.user, action: "listing.updated", subject: @listing,
+        source_vertical: "marketplace", locality: @listing.location
+      )
+      redirect_to marketplace_listing_path(@listing)
+    else
       render(:edit, status: :unprocessable_entity)
+    end
   end
 
   def destroy

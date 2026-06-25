@@ -24,6 +24,7 @@ module Master
 
           @git.add_all
           @git.commit(message)
+          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head)
         rescue StandardError => e
           @bus&.publish("fix_loop:commit_error", error: e.message)
         end
