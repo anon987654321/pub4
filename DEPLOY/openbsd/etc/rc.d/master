@@ -18,6 +18,10 @@ rc_pre() {
 	pkill -f "pub4/MASTER/web" 2>/dev/null
 	# Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
 	rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
+	_manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
+	if [ ! -f "$_manifest" ]; then
+		(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
+	fi
 	sleep 1
 }
 

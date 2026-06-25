@@ -14,5 +14,6 @@ class TestPropshaftPaths < Minitest::Test
   def test_deploy_rc_cleans_nested_assets
     rc = File.read(File.join(Master::ROOT, "..", "DEPLOY", "openbsd", "etc", "rc.d", "master"))
     assert_includes rc, "public/assets/assets"
+    assert_includes rc, "assets:precompile"
   end
 end

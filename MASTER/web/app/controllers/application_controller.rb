@@ -105,10 +105,18 @@ class ApplicationController < ActionController::Base
   def warming_exempt_path?
     path = request.path
     return true if path == "/up" || path == "/health"
+    return true if smoke_chat_probe?
     return true if path.start_with?("/assets/")
     return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|topology_|cluster_|mask|sw\.js|manifest\.json|icon\.|offline\.html)})
 
     false
+  end
+
+  SMOKE_CHAT_MESSAGES = %w[ping pong health up].freeze
+
+  def smoke_chat_probe?
+    request.path == "/chat/message" &&
+      SMOKE_CHAT_MESSAGES.include?(params[:message].to_s.strip.downcase)
   end
 
   WARMING_HTML = <<~HTML.freeze
