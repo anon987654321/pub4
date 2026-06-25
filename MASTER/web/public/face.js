@@ -1,5 +1,8 @@
 "use strict";
 
+await import(window.MASTER_ASSET_PATHS?.faceModules?.["face_blendshape_bridge.js"] || "/face_blendshape_bridge.js");
+await import("/face3d_preview.js");
+
 const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList || [
   "face_particles.js",
   "face_audio_bridge.js",

@@ -6,6 +6,20 @@ status: active
 source:
 - docs/face3d_engine.md
 - docs/face3d_runtime_hardening.md
+rendering_model:
+  summary: >
+    One face, one canvas. An invisible normalized 3D topology (mask anchors + blendshapes)
+    drives where particles live in space; the renderer projects each particle to white
+    2D phosphor pixels on canvas. Depth, pose, and zone wrapping create the illusion of
+    a volumetric face — not a flat 2D sprite sheet and not a parallel WebGL point cloud.
+  retired:
+    - Three.js WebGL point-sprite face (face.part WebGL path)
+    - optional desktop-only face3d overlay
+  canonical:
+    - face3d_engine typed-array particles on 3D manifold
+    - face3d_renderer Atkinson/Bayer dither to #face canvas
+    - face.js runtime for audio/TTS/primer/state only (no face draw)
+
 goals:
 - keep retro Atkinson/Bayer/ZX/phosphor white dithered pixel look
 - normalized 3D face coordinates
@@ -20,7 +34,7 @@ modules:
 - path: web/public/face3d_renderer.js
   role: Face3DCanvasRenderer retro phosphor/dither adapter
 - path: web/public/face3d_preview.js
-  role: optional boot when ?face3d=1 or auto via visual_bridge
+  role: canonical #face canvas boot — 2D pixels from 3D topology (disable with ?face3d=0)
 - path: web/public/cluster_miner.js
   role: groups master:visual/codebase/rule_event into master:clusters
 - path: data/visual_clusters.yml
@@ -144,6 +158,8 @@ hardening:
   - Add worker physics after main-thread CPU path stable
   - Add WebGPU only as optional acceleration after CPU fallback proven
   runtime_rules:
+  - No parallel face renderers on #face (face3d canvas only)
+  - No Three.js WebGL face sprites
   - No parallel Face3D runtime
   - No WebGPU until CPU fallback complete
   - No per-frame object particles

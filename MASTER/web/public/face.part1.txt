@@ -1,24 +1,20 @@
 "use strict";
 
-// Check WebGL before paying THREE's 1.3MB parse cost
-const _wglCv = document.createElement('canvas');
-const _hasCanvas = typeof _wglCv.getContext === 'function';
-const _hasWebGL = _hasCanvas && !!(_wglCv.getContext('webgl2') || _wglCv.getContext('webgl') || _wglCv.getContext('experimental-webgl'));
+// Face *rendering* is face3d only: white 2D phosphor pixels projected from an invisible 3D
+// topology (face3d_engine). This runtime keeps audio/TTS/primer/state — not WebGL sprites.
+const _hasWebGL = false;
+const THREE = null;
 
 const _dbgEl = document.getElementById('_dbg');
-if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
+if (_dbgEl) _dbgEl.textContent = 'face3d';
 
-// Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import(window.MASTER_ASSET_PATHS?.threeModule || '/three.face.module.js?v=1') : null;
-
-// Minimal Color stub for no-WebGL path
 class _Color {
   constructor(r=0,g=0,b=0){this.r=r;this.g=g;this.b=b;}
   clone(){return new _Color(this.r,this.g,this.b);}
   copy(c){this.r=c.r;this.g=c.g;this.b=c.b;return this;}
   lerp(c,t){this.r+=(c.r-this.r)*t;this.g+=(c.g-this.g)*t;this.b+=(c.b-this.b)*t;return this;}
 }
-const Color = _hasWebGL ? THREE.Color : _Color;
+const Color = _Color;
 
 let cv = document.getElementById('face');
 const primer = document.getElementById('primer');

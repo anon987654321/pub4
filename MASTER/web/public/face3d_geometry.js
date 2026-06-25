@@ -1,10 +1,8 @@
 "use strict";
 
-// MASTER Face3D Engine
-// A small, standalone engine for semantic 3D faces rendered as particles.
-// It does not replace the retro face.js renderer yet; it exposes the normalized
-// topology, blendshape rig, typed-array particle core, spatial hash, and quality
-// controller needed to migrate face.js in small safe steps.
+// MASTER Face3D Engine — invisible 3D topology that 2D phosphor pixels wrap around.
+// Particles live on normalized mask anchors in 3D; face3d_renderer projects them
+// to white dithered canvas pixels. Expression/state rides blendshapes + emotion vector.
 
 const ZONES = Object.freeze({
   outlineL: 1, outlineR: 2,

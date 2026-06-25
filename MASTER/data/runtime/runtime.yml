@@ -35,7 +35,7 @@ enhancements:
   - tts_audio_stream
   - chat_scroll_snap
   - provider_tint_chip
-  - face3d_desktop_default
+  - face3d_canonical
   - brutalist_profile
   - primer_kernel_spawn
   - perf_resize_debounce

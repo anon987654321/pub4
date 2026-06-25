@@ -141,7 +141,7 @@ engineering_balance:
       action: modules absorb incrementally; do not split further until hot paths stable
   underengineered:
     - item: face3d_blendshape_migration
-      action: steps 6–9 implemented; 2D default preserved via blendshape bridge
+      action: canonical render — 2D phosphor pixels on invisible 3D topology; WebGL face retired
     - item: tts_true_streaming
       action: partial bytes shipped; full MSE playback deferred
     - item: release_gate_local_ruby

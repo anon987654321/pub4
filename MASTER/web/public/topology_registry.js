@@ -37,7 +37,7 @@
     face: {
       id: "face",
       label: "Cognition Mask",
-      renderer: "face.js",
+      renderer: "face3d_renderer.js",
       palette: "operator",
       zones: ["eyes", "mouth", "brows", "jaw", "crown", "attention_vector"],
       events: ["llm:request", "agent:start", "pipeline:start", "chat:append", "speech:start"]

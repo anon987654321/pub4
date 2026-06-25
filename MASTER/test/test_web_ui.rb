@@ -379,12 +379,17 @@ class TestWebUI < Minitest::Test
     renderer = File.read(File.expand_path("../web/public/face3d_renderer.js", __dir__))
     events = File.read(File.expand_path("../web/public/master_events.js", __dir__))
 
-    assert_includes preview, "addEventListener('tts:playback:start'"
-    assert_includes preview, "addEventListener('tts:viseme'"
+    assert_includes preview, 'addEventListener("tts:playback:start"'
+    assert_includes preview, 'addEventListener("tts:viseme"'
     assert_includes preview, "engine.speakFrame"
     assert_includes preview, "face3d:nonblank"
+    assert_includes preview, "FACE3D_ACTIVE"
+    assert_includes preview, "bootFace3d"
     assert_includes renderer, "lastLitPixels"
     assert_includes events, '"face3d:nonblank"'
+    part1 = File.read(File.expand_path("../web/public/face.part1.txt", __dir__))
+    assert_includes part1, "face3d only"
+    assert_includes part1, "_hasWebGL = false"
   end
 
   def test_public_asset_manifest_matches_source_files

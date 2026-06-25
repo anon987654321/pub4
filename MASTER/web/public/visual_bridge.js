@@ -396,11 +396,7 @@
 
   function bootExperimentalVisuals() {
     const params = new URLSearchParams(window.location.search);
-    const face3dOff = params.get("face3d") === "0" || localStorage.getItem("master_face3d") === "0";
-    const desktop = matchMedia("(min-width: 1024px)").matches;
-    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const face3d = !face3dOff && (params.get("face3d") === "1" || (desktop && !reducedMotion));
-    const clusters = face3d || params.get("clusters") === "1";
+    const clusters = params.get("clusters") === "1" || window.FACE3D_ACTIVE;
 
     if (clusters && !window.MASTERClusterMiner) {
       const script = document.createElement("script");
@@ -409,12 +405,6 @@
       script.onload = () => emitVisual("clusters:ready", { topology: "neural", entropy: 0.18, confidence: 0.86, mode: "clusters" });
       script.onerror = () => emitVisual("clusters:error", { topology: "serpent", entropy: 0.62, confidence: 0.36, mode: "error" });
       document.head.appendChild(script);
-    }
-
-    if (face3d) {
-      import("/face3d_preview.js")
-        .then(() => emitVisual("face3d:ready", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "face3d" }))
-        .catch(error => emitVisual("face3d:error", { topology: "serpent", entropy: 0.70, confidence: 0.30, mode: "error", raw: String(error?.message || error) }));
     }
   }
 

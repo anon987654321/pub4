@@ -40,7 +40,7 @@ class TestWebHTTP < Minitest::Test
     res = get("/")
     body = res.body
     assert_includes body, 'id="face"', "homepage should contain face canvas"
-    assert_includes body, "three.face.module", "homepage should load face runtime assets"
+    assert_includes body, "face3d_preview", "homepage should load canonical face3d boot"
     refute_includes body, "davis", "davis voice should not be in picker"
   end
 
