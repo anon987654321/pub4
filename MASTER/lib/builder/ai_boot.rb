@@ -52,7 +52,14 @@ module Master
           bus.publish("graph:neighbours", path: path, neighbours: neighbours) unless neighbours.empty?
         end
       end
-      self_test = Judge::Scan::SelfTest.new(root: root, event_bus: bus).call
+      unless ENV["MASTER_SKIP_SELF_TEST"] == "1"
+        publish_self_test(bus, Judge::Scan::SelfTest.new(root: root, event_bus: bus).call)
+      end
+      { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard:,
+        reference_graph: infra[:reference_graph], agent_pool:, context_window: ctx, tools: }.merge(autonomous)
+    end
+
+    def publish_self_test(bus, self_test)
       if self_test.err?
         warn("builder: #{self_test.message}")
         bus&.publish("builder:self_test", ok: false, error: self_test.message)
@@ -63,8 +70,6 @@ module Master
           raise "builder: self_test failed with #{summary.violation_count} violation(s)"
         end
       end
-      { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard:,
-        reference_graph: infra[:reference_graph], agent_pool:, context_window: ctx, tools: }.merge(autonomous)
     end
 
     def build_scanner(root:, agent: nil, bus: nil, ecology: nil)

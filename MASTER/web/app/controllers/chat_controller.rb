@@ -7,6 +7,8 @@ require "open3"
 class ChatController < ApplicationController
   # CSRF guarded by SameSite=Strict session cookie set in AuthTier.
   skip_before_action :verify_authenticity_token, only: :command
+  # Face shell renders immediately; container finishes booting in the background (~90s on VPS).
+  skip_before_action :require_container!, only: :index
 
   def index
     c = container
