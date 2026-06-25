@@ -16,6 +16,7 @@ require_relative "../../judge/scan/edge_case_stub_generator"
 require_relative "../tribunal_feedback"
 require_relative "work_commands_extra"
 require_relative "work_commands_status"
+require_relative "work_commands_replay"
 
 module Master
   module Now
@@ -49,7 +50,8 @@ module Master
           "self" => command(:dispatch_self, scanner, root, bus),
           "kernel" => command(:dispatch_kernel, root),
           "fix" => command(:dispatch_fix, fix_loop, root, scanner),
-          "status" => command(:dispatch_status, root, fix_loop, bus, git),
+          "status" => command(:dispatch_status, root, fix_loop, bus, git, infra[:trace]),
+          "replay" => command(:dispatch_replay, root, infra[:trace]),
           "resync" => command(:dispatch_resync, root, fix_loop, git),
           "tail" => command(:dispatch_tail, root),
           "review" => command(:dispatch_review, council_stage, deliberation, root, bus, review_crew),

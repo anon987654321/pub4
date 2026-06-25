@@ -23,14 +23,15 @@ module Shared
     end
 
     def record_activity!(event_name, **opts)
-      Shared::ActivityEventRecorder.call(
+      action = opts[:action] || event_name.to_s.tr(":", ".").underscore.tr("_", ".")
+      Shared::DomainEvent.record!(
         actor: opts[:actor] || activity_actor,
-        event_name: event_name,
-        object: opts[:object] || self,
+        action: action,
+        subject: opts[:object] || self,
         source_vertical: opts[:source_vertical] || "general",
         locality: opts[:locality],
         visibility: opts[:visibility] || "public",
-        metadata: opts[:metadata] || {}
+        metadata: (opts[:metadata] || {}).merge(legacy_event_name: event_name.to_s)
       )
     rescue StandardError => e
       Rails.logger.warn("activity skipped: #{e.class}: #{e.message}") if defined?(Rails)

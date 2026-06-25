@@ -12,7 +12,7 @@ module Master
       module_function
 
       # /status — one-frame health panel. Replaces seven probing tool calls.
-      def dispatch_status(root:, fix_loop:, bus:, git: Reach::GitOperations.new(File.expand_path("..", root)), ctx: nil)
+      def dispatch_status(root:, fix_loop:, bus:, git: Reach::GitOperations.new(File.expand_path("..", root)), trace: nil, ctx: nil)
         ahead, behind = git.ahead_behind
         head = git.head || "?"
         dirty = git.dirty?(".")
@@ -21,16 +21,20 @@ module Master
         af = ENV["MASTER_AUTOFIX"] == "1" ? "on" : "off"
         bndl = bundle_status(File.expand_path("..", root))
         evts = recent_events(root, 5)
+        failures = failure_events(root, 3)
         branch = git.branch || "?"
+        turn_hint = trace&.last_turn ? "turn=#{trace.last_turn[:id]}" : "turn=none"
         lines = [
           "status",
           "service master/#{svc[:state]} #{svc[:detail]}",
           "git     #{branch}@#{head} ahead=#{ahead} behind=#{behind} #{dirty ? "dirty" : "clean"}",
           "fix     bg=#{bg} autofix=#{af}",
           "bundle  #{bndl}",
-          "events  (last #{evts.size})"
+          "trace   #{turn_hint}  (/replay turn)",
+          "events  (last #{evts.size})  (/replay failures)"
         ]
         evts.each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
+        failures.each { |e| lines << "  !#{e[:ago]} #{e[:event]} #{e[:summary]}" }
         lines.join("\n")
       rescue StandardError => e
         "status: #{e.message}"
@@ -56,6 +60,22 @@ module Master
         mas_ok && web_ok ? "ok (MASTER+web satisfied)" : "drift — run bundle install"
       rescue StandardError => e
         "unknown (#{e.class})"
+      end
+
+      def failure_events(root, n)
+        records = Trace::EventLog.new(root: root).recent(40)
+        records = records.select { |rec| rec["event"].to_s.match?(Trace::ReplayReader::FAILURE_PATTERN) }
+        now = Time.now.utc
+        records.last(n).map do |rec|
+          ts = (Time.parse(rec["timestamp"]) rescue now)
+          secs = (now - ts).to_i.abs
+          ago = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
+          pay = rec["payload"]
+          sum = pay.is_a?(Hash) ? pay.first(2).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
+          { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
+        end
+      rescue StandardError
+        []
       end
 
       def recent_events(root, n)

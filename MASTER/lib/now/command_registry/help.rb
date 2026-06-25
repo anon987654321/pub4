@@ -28,7 +28,11 @@ module Master
         },
         "status" => {
           summary: "show one-frame service and repo health",
-          detail: ["/status", "Shows service state, git divergence, fix loop state, bundle status, and recent events."]
+          detail: ["/status", "Shows service state, git divergence, fix loop state, bundle status, recent events, and last failures."]
+        },
+        "replay" => {
+          summary: "replay operational event history",
+          detail: ["/replay [N]", "/replay turn", "/replay failures [N]", "/replay YYYY-MM-DD", "Reads runtime activity JSONL and turn traces."]
         },
         "resync" => {
           summary: "repair local divergence from origin/main",
