@@ -169,8 +169,8 @@ Rails.application.routes.draw do
   constraints(subdomain: MESSENGER_SUBDOMAINS) do
     root "conversations#index", as: :messenger_root
     resources :conversations, only: %i[index show] do
-      resources :messages, only: [:create]
-      resources :typing_indicators, only: [:create]
+      resources :messages, only: [ :create ]
+      resources :typing_indicators, only: [ :create ]
     end
   end
 
