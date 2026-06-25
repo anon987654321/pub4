@@ -12,6 +12,8 @@
 # Video, Event, Recipe (food), Product (marketplace).
 
 module SchemaHelper
+  include Shared::SeoKit
+
   def json_ld_for(resource, type: nil)
     data = build_schema(resource, type)
     return "" if data.blank?
@@ -57,15 +59,18 @@ module SchemaHelper
   end
 
   def article_schema(post)
+    body = post.try(:content) || post.try(:body)
     {
       "@context" => "https://schema.org",
       "@type" => "Article",
-      "headline" => post.try(:title) || post.try(:body)&.truncate(80),
+      "headline" => post.try(:title) || body&.truncate(80),
       "author" => person_snippet(post.try(:user) || Current.user),
       "datePublished" => post.created_at&.iso8601,
       "dateModified" => post.updated_at&.iso8601,
-      "description" => post.try(:body)&.truncate(200),
-      "url" => schema_url_for(post)
+      "description" => meta_description_for(post),
+      "url" => schema_url_for(post),
+      "wordCount" => body.to_s.split.size,
+      "inLanguage" => I18n.locale.to_s
     }.compact
   end
 

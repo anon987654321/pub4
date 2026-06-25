@@ -2,4 +2,5 @@
 
 module ApplicationHelper
   include SchemaHelper
+  include Shared::SeoKit
 end

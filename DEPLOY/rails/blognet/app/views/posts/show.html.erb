@@ -1,4 +1,6 @@
 <% content_for :title, @post.title %>
+<% content_for :description, meta_description_for(@post) %>
+<% content_for :json_ld, json_ld_for(@post, type: :article) %>
 <article class="post prose" role="article" aria-label="Blog post">
   <header role="banner" aria-label="Post header">
     <h1 class="post-title"><%= @post.title %></h1>

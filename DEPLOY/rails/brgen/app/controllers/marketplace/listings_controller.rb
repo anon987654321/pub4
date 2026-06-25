@@ -33,9 +33,6 @@ class Marketplace::ListingsController < Marketplace::BaseController
     authorize @listing
     @listing.increment!(:views_count)
     @order = Marketplace::Order.new if authenticated?
-
-    # Schema.org Product markup for SEO (uses shared SchemaHelper)
-    content_for :json_ld, json_ld_for(@listing, type: :product)
   end
 
   def new

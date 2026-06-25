@@ -22,6 +22,13 @@ module Shared
       end
     end
 
+    initializer "shared.seo_kit" do
+      ActiveSupport.on_load(:action_controller_base) do
+        require_dependency Shared::Engine.root.join("app/helpers/shared/seo_kit").to_s
+        helper Shared::SeoKit
+      end
+    end
+
     initializer "shared.stylesheets" do |app|
       path = root.join("app/assets/stylesheets").to_s
       app.config.assets.paths << path unless app.config.assets.paths.include?(path)

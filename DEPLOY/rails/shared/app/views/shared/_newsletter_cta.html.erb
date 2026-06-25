@@ -1,0 +1,20 @@
+<div class="sidebar-card" data-controller="reveal" data-minimal-reveal>
+  <h3><%= local_assigns.fetch(:heading, "City updates") %></h3>
+  <p class="dim"><%= local_assigns.fetch(:blurb, "Weekly news, deals, and local picks. Unsubscribe any time.") %></p>
+  <% if defined?(email_subscriptions_path) %>
+    <%= form_with url: email_subscriptions_path, method: :post do |form| %>
+      <div class="field mb-8">
+        <%= form.email_field :email, name: "email_subscription[email]",
+              placeholder: "your@email.com", required: true,
+              class: "map-search-input", autocomplete: "email" %>
+      </div>
+      <label class="field--check-label">
+        <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1">
+        <span class="dim">Send me partner offers and sponsored picks (optional)</span>
+      </label>
+      <%= form.submit local_assigns.fetch(:button_label, "Subscribe"), class: "btn btn-primary btn-sm btn-block" %>
+    <% end %>
+  <% else %>
+    <p class="dim">Newsletter signup opens after email routes are configured for this app.</p>
+  <% end %>
+</div>

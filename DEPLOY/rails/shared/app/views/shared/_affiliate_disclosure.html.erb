@@ -1,0 +1,10 @@
+<p class="dim affiliate-fine" role="note">
+  <%= affiliate_disclosure_text %>
+  <% if ENV["AMAZON_ASSOCIATE_TAG"].present? || ENV["TRADEDOUBLER_TOKEN"].present? %>
+    Partner programs include
+    <% partners = [] %>
+    <% partners << "Amazon Associates" if ENV["AMAZON_ASSOCIATE_TAG"].present? %>
+    <% partners << "TradeDoubler" if ENV["TRADEDOUBLER_TOKEN"].present? %>
+    <%= partners.to_sentence %>.
+  <% end %>
+</p>

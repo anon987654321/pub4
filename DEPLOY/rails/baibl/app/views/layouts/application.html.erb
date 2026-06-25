@@ -25,6 +25,7 @@
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
   <%= yield :json_ld %>
+  <%= json_ld_script(organization_json_ld(site_name: "Baibl", url: root_url)) %>
   <%= javascript_importmap_tags %>
 </head>
 <body class="zen-minimal">

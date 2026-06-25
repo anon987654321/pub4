@@ -45,6 +45,8 @@ apps:
         - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see WIRING_NOTES.md" }
         - { name: unified Activity graph emission,                         status: port, notes: "core to recommendations & discovery across verticals; see brgen_CORE.md + WIRING_NOTES.md. ActivityTrackable concern + EventEmitter in shared; wired to TV." }
         - { name: shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted), status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + WIRING_NOTES" }
+        - { name: Reddit scrape seed (rephrase + Strunk & White),          status: done, notes: "RedditSeedService + ContentRewriter + StrunkWhitePass" }
+        - { name: SEO / affiliate / newsletter kit (shared),                 status: done, notes: "Shared::SeoKit, json_ld, affiliate_disclosure, newsletter_cta" }
         - { name: AI feed ranking,                                         status: planned }
         - { name: creator monetization,                                    status: planned }
         - { name: maps surface,                                            status: planned }
@@ -132,7 +134,7 @@ apps:
         - { name: wardrobe analytics dashboard,                            status: port }
         - { name: closet organisation tips (AI),                           status: missing }
         - { name: social feed,                                             status: missing }
-        - { name: affiliate commerce links,                                status: port }
+        - { name: affiliate commerce links,                                status: done, notes: "SeoKit amazon_affiliate_url + affiliate_links model" }
       planned:
         - { name: fashion embeddings (pgvector),                           status: planned }
         - { name: visual similarity search,                                status: planned }
@@ -197,7 +199,7 @@ apps:
         - { name: public/megablog/private privacy tiers,                   status: port }
         - { name: Author profile,                                          status: missing }
         - { name: RSS / Atom feed,                                         status: missing }
-        - { name: structured article metadata (schema.org),                status: missing }
+        - { name: structured article metadata (schema.org),                status: done, notes: "json_ld_for Article on post show + WebSite org schema in layout" }
         - { name: semantic search,                                         status: missing }
         - { name: Membership / Subscription / paywall,                     status: missing }
         - { name: AI narration (TTS article),                              status: missing }

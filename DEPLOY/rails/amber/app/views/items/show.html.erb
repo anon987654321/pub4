@@ -1,4 +1,6 @@
 <% content_for :title, @item.title %>
+<% content_for :description, meta_description_for(@item) %>
+<% content_for :json_ld, json_ld_for(@item, type: :product) %>
 
 <article class="item-detail">
   <% if @item.photos.attached? %>

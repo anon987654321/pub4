@@ -25,6 +25,7 @@
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
   <%= yield :json_ld %>
+  <%= json_ld_script(website_json_ld(site_name: "BSDports", url: root_url, description: "Semantic search for OpenBSD ports.")) %>
   <%= javascript_importmap_tags %>
 </head>
 <body class="zen-minimal" data-pwa-key="bsdports" data-controller="pwa-standalone">
