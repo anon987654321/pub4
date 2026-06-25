@@ -8,6 +8,7 @@
 
 Encoding.default_external = Encoding::UTF_8
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+require "ground/env_loader"
 
 require "open3"
 require "rbconfig"
@@ -56,10 +57,8 @@ port = (config&.respond_to?(:web_port) ? config.web_port : nil) || 53187
 
 failures << "pipe" unless step("pipe command") do
   exe = File.expand_path("cli", __dir__)
-  env = { "MASTER_QUIET" => "1" }
-  if File.readable?("/etc/master.env")
-    File.foreach("/etc/master.env") { |l| k, v = l.chomp.split("=", 2); env[k] = v if k && v }
-  end
+  Master::Ground::EnvLoader.load!
+  env = ENV.to_h.merge("MASTER_QUIET" => "1")
   out, _st = Timeout.timeout(PIPE_TIMEOUT_SECONDS) { Open3.capture2e(env, exe, stdin_data: "/help\n") }
   bug = out =~ /\b(unknown category|NameError|NoMethodError|uninitialized constant)/i
   message = out.lines.find { |line| line =~ /\b(unknown category|NameError|NoMethodError|uninitialized constant)/i }

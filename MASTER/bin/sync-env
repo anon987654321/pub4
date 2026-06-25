@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Writes ~/.config/master/env from shell profiles or a remote VPS .zshrc.
+# Usage:
+#   bin/sync-env                    # local ~/.zprofile, ~/.zshrc, ~/.profile
+#   bin/sync-env --from dev@host    # SSH grep export lines from remote .zshrc
+
+require "fileutils"
+
+KEYS = %w[
+  OPENROUTER_API_KEY OPENROUTER_API_KEY_2 OPENROUTER_API_KEY_3
+  ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY DEEPSEEK_API_KEY MISTRAL_API_KEY
+  REPLICATE_API_KEY WEAVIATE_API_KEY
+].freeze
+
+def parse_exports(text)
+  text.lines.filter_map do |line|
+    stripped = line.strip
+    next unless stripped.start_with?("export ")
+
+    key, val = stripped.delete_prefix("export ").split("=", 2)
+    next unless key && val && KEYS.include?(key)
+
+    val = val.delete_prefix('"').delete_suffix('"').delete_prefix("'").delete_suffix("'")
+    next if val.length < 8
+
+    [key, val]
+  end.to_h
+end
+
+def local_sources
+  %w[~/.zprofile ~/.zshrc ~/.profile].map { |p| File.expand_path(p) }.select { |p| File.readable?(p) }
+end
+
+def remote_source(host)
+  require "open3"
+  out, status = Open3.capture2("ssh", host, "grep -E '^export (#{KEYS.join('|')})=' ~/.zshrc ~/.profile 2>/dev/null")
+  status.success? ? out : ""
+end
+
+host = ARGV.include?("--from") ? ARGV[ARGV.index("--from") + 1] : nil
+text = host ? remote_source(host) : local_sources.map { |p| File.read(p) }.join("\n")
+vars = parse_exports(text)
+
+if vars.empty?
+  warn "sync-env: no API keys found#{host ? " on #{host}" : " in local profiles"}"
+  exit 1
+end
+
+dest = File.expand_path("~/.config/master/env")
+FileUtils.mkdir_p(File.dirname(dest))
+body = vars.sort.map { |k, v| "#{k}=#{v}" }.join("\n") + "\n"
+File.write(dest, body)
+File.chmod(0o600, dest)
+puts "sync-env: wrote #{vars.size} key(s) → #{dest}"
+puts "sync-env: #{vars.keys.join(', ')}"

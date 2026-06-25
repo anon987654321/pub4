@@ -7,6 +7,9 @@ require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
+$LOAD_PATH.unshift File.join(ROOT, "lib")
+require "ground/env_loader"
+Master::Ground::EnvLoader.load!
 
 Check = Struct.new(:name, :ok, :detail, keyword_init: true)
 
