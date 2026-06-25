@@ -6,7 +6,7 @@ require "timeout"
 module Pub4
   # VPS-only mutex + load gate for Rails bin/ci (prevents parallel CI pile-ups on vm23).
   module CiGuard
-    LOCK_PATH = ENV.fetch("PUB4_CI_LOCK", "/var/run/pub4-ci.lock")
+    LOCK_PATH = ENV.fetch("PUB4_CI_LOCK", "/var/tmp/pub4-ci.lock")
     HOLDER_PATH = "#{LOCK_PATH}.holder".freeze
     MAX_LOAD = ENV.fetch("PUB4_CI_MAX_LOAD", "4").to_f
     TIMEOUT_S = Integer(ENV.fetch("PUB4_CI_TIMEOUT", "3600"))

@@ -4,7 +4,7 @@
 set -euo pipefail
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
-lock=${PUB4_CI_LOCK:-/var/run/pub4-ci.lock}
+lock=${PUB4_CI_LOCK:-/var/tmp/pub4-ci.lock}
 max_load=${PUB4_CI_MAX_LOAD:-4}
 
 load=$(sysctl -n vm.loadavg 2>/dev/null | awk '{print $2}')
