@@ -181,6 +181,7 @@ function startSTT() {
     }
   }
   window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
+  window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
   try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
 }
 function stopSTT() {

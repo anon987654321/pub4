@@ -55,7 +55,7 @@ enhancements:
 - id: fe_009
   area: face
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Cluster personalities cohere per dominant vertical
 - id: fe_010
@@ -103,7 +103,7 @@ enhancements:
 - id: fe_017
   area: tts
   tier: p2
-  status: pending
+  status: implemented
   handler: both
   summary: Voice-specific idle signatures per persona
 - id: fe_018
@@ -145,19 +145,19 @@ enhancements:
 - id: fe_024
   area: web
   tier: p3
-  status: pending
+  status: implemented
   handler: both
   summary: Face drag sends user:expression to influence response
 - id: fe_025
   area: web
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: User mic creates listening terrain ripples
 - id: fe_026
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Error recovery visuals as instrument not popups
 - id: fe_027
@@ -187,7 +187,7 @@ enhancements:
 - id: fe_031
   area: bus
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: Multi-signal superposition for overlapping states
 - id: fe_032
@@ -211,19 +211,19 @@ enhancements:
 - id: fe_035
   area: bus
   tier: p2
-  status: pending
+  status: implemented
   handler: both
   summary: System-chosen TTS style visible on face
 - id: fe_036
   area: bus
   tier: p2
-  status: pending
+  status: implemented
   handler: both
   summary: Phantom events trigger flinch before text
 - id: fe_037
   area: bus
   tier: p2
-  status: pending
+  status: implemented
   handler: both
   summary: Long council creates thinking breath cycle
 - id: fe_038
@@ -235,7 +235,7 @@ enhancements:
 - id: fe_039
   area: bus
   tier: p2
-  status: pending
+  status: implemented
   handler: both
   summary: Emotional arc drifts toward session baseline
 - id: fe_040
@@ -247,13 +247,13 @@ enhancements:
 - id: fe_041
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Background-tab slow breathing still readable
 - id: fe_042
   area: perf
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Stronger reduced-motion respect everywhere
 - id: fe_043
@@ -265,13 +265,13 @@ enhancements:
 - id: fe_044
   area: perf
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Fixed-timestep Bayer for consistent pixel look
 - id: fe_045
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Mood persists across reload via localStorage
 - id: fe_046
@@ -301,7 +301,7 @@ enhancements:
 - id: fe_050
   area: council
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: Council deliberation drives ecology spirit radius
 - id: enh_style_chips
@@ -409,7 +409,7 @@ enhancements:
 - id: web_001
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Split face.js into particles/audio/expressions/tts modules
 - id: web_002
@@ -427,13 +427,13 @@ enhancements:
 - id: web_004
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Face modes switch 3D/raster/hybrid/wireframe
 - id: web_005
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: 2D fallback uses ParticleKernel dither
 - id: web_006
@@ -451,19 +451,19 @@ enhancements:
 - id: web_008
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Deep visual_bridge entropy/confidence drive
 - id: web_009
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Glitch damage effects for veto/error
 - id: web_010
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Dynamic particle LOD by viewport and FPS
 - id: web_011

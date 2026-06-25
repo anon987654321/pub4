@@ -58,6 +58,18 @@ class TestExpression < Minitest::Test
     assert_equal "expression_phoneme_heuristic", stream[:source]
   end
 
+  def test_idle_signature_for_voice
+    sig = Master::Voice::Expression.idle_signature_for(:osman)
+    assert sig[:breath] > Master::Voice::Expression.idle_signature_for(:wayne)[:breath]
+    assert sig[:blink_ms].positive?
+  end
+
+  def test_council_spirit_radius_scales_with_risk
+    low = Master::Voice::Expression.council_spirit_radius(risk: :low, reversibility: :high)
+    high = Master::Voice::Expression.council_spirit_radius(risk: :critical, reversibility: :low, persona_count: 6)
+    assert high > low
+  end
+
   def test_chain_styles_layers_whispered_and_ethereal
     chained = Master::Voice::Expression.chain_styles(:dramatic, :whispered)
     assert_equal %i[dramatic whispered], chained[:chained]

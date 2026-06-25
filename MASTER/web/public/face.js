@@ -1,5 +1,17 @@
 "use strict";
 
+const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList || [
+  "face_particles.js",
+  "face_audio_bridge.js",
+  "face_tts_bridge.js",
+  "face_expression_bridge.js"
+];
+
+await Promise.all(FACE_MODULES.map(async (modulePath) => {
+  const url = window.MASTER_ASSET_PATHS?.[modulePath] || modulePath;
+  await import(url);
+}));
+
 const FACE_PARTS = window.MASTER_ASSET_PATHS?.faceParts || [
   "face.part1.txt",
   "face.part2.txt",

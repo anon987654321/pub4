@@ -93,23 +93,9 @@ function dropMouthConfidence(drop) {
 }
 
 function pushMoodArcSample(detail) {
-  State.moodArcSamples = State.moodArcSamples || [];
-  State.moodArcSamples.push({
-    entropy: detail.entropy ?? State.entropy ?? 0.2,
-    valence: detail.valence ?? detail.expression?.valence ?? 0,
-    arousal: detail.arousal ?? detail.expression?.arousal ?? State.pulse ?? 0.4
-  });
-  if (State.moodArcSamples.length > 16) State.moodArcSamples.shift();
-  const samples = State.moodArcSamples;
-  const mean = (key) => samples.reduce((sum, row) => sum + (row[key] || 0), 0) / samples.length;
-  const meanEntropy = mean('entropy');
-  State.moodArc = {
-    entropy: meanEntropy,
-    valence: mean('valence'),
-    arousal: mean('arousal'),
-    decay_rate: meanEntropy > 0.55 ? 0.32 : 0.68
-  };
+  window.MASTER_FACE_EXPRESSION?.pushMoodArcSample?.(State, detail);
 }
+window.MASTER_FACE_EXPRESSION?.restoreMood?.(State);
 
 window.addEventListener('master:visual', (ev) => {
   const d = ev.detail || {};
@@ -130,8 +116,16 @@ window.addEventListener('master:visual', (ev) => {
     State.shake = Math.max(State.shake || 0, 0.45);
     State.mood = 'veto';
     State.chromaVeto = 0.28;
+    State.mode = State.mode === 'speaking' ? State.mode : 'error';
     dropMouthConfidence(0.35);
     if (F_FACE_SEM.faceMat?.uniforms?.uChroma) F_FACE_SEM.faceMat.uniforms.uChroma.value = 0.28;
+    rootBody.dataset.errorInstrument = '1';
+    setTimeout(() => { delete rootBody.dataset.errorInstrument; }, 2200);
+  }
+  if (/phantom:detected|phantom:retry|flinch/.test(name) || d.flinch) {
+    State.shake = Math.max(State.shake || 0, 0.65);
+    State.surpriseY = Math.max(State.surpriseY || 0, 0.42);
+    State.pulse = Math.max(State.pulse || 0, 0.38);
   }
   if (/complete|success|done|pass/.test(name)) {
     State.bloom = Math.max(State.bloom || 0, 0.65);
@@ -143,6 +137,7 @@ window.addEventListener('master:visual', (ev) => {
     State.mood = d.mood;
     window.MASTER_FACE?.updateMoodHistory?.(d.mood);
     window.MASTER_FACE?.spawnEmotionalGhost?.(d.mood);
+    window.MASTER_FACE_EXPRESSION?.persistMood?.(State);
   }
   if (/chat:first/.test(name) && mouthPool && window.ParticleKernel) {
     const K = window.ParticleKernel;
@@ -298,7 +293,8 @@ window.addEventListener('tts:playback:start', (ev) => {
   State.pulse = Math.max(State.pulse || 0, 0.28);
   State.currentSpeechStyle = d.style || State.currentSpeechStyle || 'calm';
   const K = window.ParticleKernel;
-  const effort = /energetic|dramatic|intense|storyteller/i.test(String(State.currentSpeechStyle)) ? 3 : 1;
+  const effort = window.MASTER_FACE_TTS?.effortSpawnCount?.(State.currentSpeechStyle) ?? 1;
+  window.MASTER_FACE_TTS?.syncStyleIndicator?.(State.currentSpeechStyle);
   if (mouthPool && K && effort > 1) {
     for (let n = 0; n < effort; n++) {
       K.spawn(mouthPool, (Math.random() - 0.5) * 0.2, 0.48, {
@@ -413,8 +409,14 @@ if (renderer) {
         const _r2 = (0.60 + _dz2 * 0.40) * 255 | 0;
         const _g2 = (0.64 + _dz2 * 0.30) * 255 | 0;
         const _b2 = (0.88 - _dz2 * 0.08) * 255 | 0;
-        ctx2.fillStyle = `rgb(${_r2},${_g2},${_b2})`;
-        ctx2.fillRect((px - sz * 0.5) | 0, (py - sz * 0.5) | 0, Math.ceil(sz), Math.ceil(sz));
+        const K2 = window.ParticleKernel;
+        const pxI = (px - sz * 0.5) | 0;
+        const pyI = (py - sz * 0.5) | 0;
+        const lum = (_r2 + _g2 + _b2) / (255 * 3);
+        if (K2 && K2.ditherThreshold(pxI, pyI, lum)) {
+          ctx2.fillStyle = `rgb(${_r2},${_g2},${_b2})`;
+          ctx2.fillRect(pxI, pyI, Math.ceil(sz), Math.ceil(sz));
+        }
       }
       ctx2.globalAlpha = 1.0;
 

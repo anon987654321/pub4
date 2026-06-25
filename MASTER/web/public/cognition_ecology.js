@@ -142,7 +142,7 @@
     state.provider = detail.provider || state.provider;
     state.weather = chooseWeather(name);
 
-    pulseAgents(name);
+    pulseAgents(name, detail);
     spawnTrail(name, detail);
     spawnTerrainImpact(name, detail);
     if (/memory|retriev|context|compact|chat:append|complete|success/.test(name)) spawnMemory(detail);
@@ -150,18 +150,19 @@
     else spawnWeatherBurst(6, 0.35);
   }
 
-  function pulseAgents(name) {
+  function pulseAgents(name, detail = {}) {
     for (const agent of agents) {
       if (name.includes(agent.name)) agent.charge = 1;
       else if (/memory|retriev|context/.test(name) && agent.name === "memory") agent.charge = 1;
       else if (/tool|scan|sweep|audit/.test(name) && agent.name === "coder") agent.charge = 0.95;
       else if (/error|rollback|escalat/.test(name) && agent.name === "judge") agent.charge = 1;
       else if (/council:deliberation|council:start|reversibility:low/.test(name)) {
-        agent.charge = Math.min(1, agent.charge + 0.25);
+        agent.charge = Math.min(1, agent.charge + 0.32);
         const base = agent._radiusBase ?? agent.radius;
         agent._radiusBase = base;
-        agent.radius = base * 1.08;
-        setTimeout(() => { agent.radius = base; }, 600);
+        const spiritScale = Number(detail?.spirit_radius) || 1.14;
+        agent.radius = base * spiritScale;
+        setTimeout(() => { agent.radius = base; }, spiritScale > 1.2 ? 1200 : 800);
       }
       else agent.charge = Math.max(agent.charge, 0.55);
     }

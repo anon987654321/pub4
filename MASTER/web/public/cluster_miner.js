@@ -5,6 +5,23 @@
 // groups them into reusable cluster signals that other renderers can consume.
 
 (() => {
+  const VERTICAL_CLUSTER_BIAS = Object.freeze({
+    marketplace: { face_particle_body: 1.18, cognition_ecology: 0.92, repo_ecology: 1.08 },
+    dating: { face_particle_body: 1.05, speech_audio_body: 1.12, cognition_ecology: 0.88 },
+    tv: { speech_audio_body: 1.15, cognition_ecology: 1.06, codebase_topology: 0.95 },
+    default: { face_particle_body: 1.0, cognition_ecology: 1.0, speech_audio_body: 1.0 }
+  });
+
+  function verticalHint() {
+    return (document.documentElement.dataset.appHint || window.MASTER_RUNTIME?.app_hint || "default").toString().toLowerCase();
+  }
+
+  function verticalBiasFor(clusterId) {
+    const hint = verticalHint();
+    const table = VERTICAL_CLUSTER_BIAS[hint] || VERTICAL_CLUSTER_BIAS.default;
+    return table[clusterId] || 1.0;
+  }
+
   const CLUSTERS = Object.freeze({
     face_particle_body: {
       match: /mood|model|verdict|confidence|tool|tts|speech|stt|gesture|face/i,
@@ -88,9 +105,11 @@
       confidence
     };
 
+    const vBias = verticalBiasFor;
     for (const { id, spec } of matches) {
       const cluster = ensureCluster(id, spec);
-      cluster.heat = clamp(cluster.heat + 0.18 + entropy * 0.28);
+      const bias = vBias(id);
+      cluster.heat = clamp(cluster.heat + (0.18 + entropy * 0.28) * bias);
       cluster.confidence = clamp((cluster.confidence * 0.75) + (confidence * 0.25));
       cluster.lastSeenAt = t;
       cluster.count += 1;

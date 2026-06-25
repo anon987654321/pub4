@@ -14,6 +14,12 @@ enhancements:
   - kernel_entropy_damping
   - mood_arc_decay
   - emotional_ghost_trail
+  - face_module_split
+  - cluster_vertical_bias
+  - council_spirit_radius
+  - signal_superposition
+  - mood_persist_reload
+  - face_render_modes
   - paralinguistic_tags
   - pressure_sparkline
   - actioncable_fallback

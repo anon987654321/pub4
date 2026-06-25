@@ -70,13 +70,11 @@ function serializePoolForWorker(pool) {
   };
 }
 function kernelStepContext() {
-  const pr = State.pressureFields || {};
-  const moodArc = State.moodArc || {};
-  return {
-    entropy: Number.isFinite(pr.entropy) ? pr.entropy : (State.entropy || 0),
-    pressure: Math.min(1, (Number(pr.pct) || 0) / 100),
+  return window.MASTER_FACE_PARTICLES?.kernelStepContext?.(State) || {
+    entropy: State.entropy || 0,
+    pressure: 0,
     confidence: State.confidence ?? 0.75,
-    decayScale: Number.isFinite(moodArc.decay_rate) ? moodArc.decay_rate : 1
+    decayScale: 1
   };
 }
 function stepPoolAsync(pool, dtSec) {
@@ -92,14 +90,7 @@ function stepPoolAsync(pool, dtSec) {
   worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });
 }
 function spawnEmotionalGhost(mood) {
-  const K = window.ParticleKernel;
-  if (!mouthPool || !K || State.reducedMotion) return;
-  const lane = (State.emotionalGhosts || []).length % 3;
-  const x = (lane - 1) * 0.22;
-  K.spawn(mouthPool, x, 0.42 + lane * 0.04, {
-    kind: 3, zone: 2, valence: 0.15, arousal: 0.22, confidence: 0.35, decay: 0.0028, attention: 0.4
-  });
-  State.emotionalGhosts = (State.emotionalGhosts || []).concat(mood || State.mood || 'idle').slice(-12);
+  window.MASTER_FACE_PARTICLES?.spawnEmotionalGhost?.(State, mouthPool, mood);
 }
 function applyWorkerPoolResult(pool, payload) {
   if (!pool || !payload) return;
@@ -278,16 +269,8 @@ function frame(t) {
     }
   }
 
-  if (State.sttActive && State.sttDuck > 0.02) {
-    State.sttDuck = Math.max(0, State.sttDuck - 0.06);
-    const duckTarget = 0.12 + State.sttDuck * 0.18;
-    if (tts.outputGain && actx) {
-      tts.outputGain.gain.setTargetAtTime(duckTarget, actx.currentTime, 0.04);
-    } else if (tts.audio) {
-      tts.audio.volume = Math.min(tts.audio.volume, duckTarget);
-    }
-  } else if (!State.sttActive && tts.playing && tts.outputGain && actx) {
-    tts.outputGain.gain.setTargetAtTime(1.9, actx.currentTime, 0.08);
+  if (!window.MASTER_FACE_AUDIO?.applySttDuck?.(State, tts, actx)) {
+    window.MASTER_FACE_AUDIO?.restorePlaybackGain?.(tts, actx, tts.playing && !State.sttActive);
   }
 
   if (head) {
@@ -330,7 +313,12 @@ function frame(t) {
     const microOrbit = Math.sin(sec * 0.157) * 0.014;
     head.rotation.z = -0.021 + microOrbit * 0.3;
     const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
-    const breath = silenceScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005) + State.pulse * 0.08);
+    const idleSig = State.idleSignature || { breath: 1, saccade: 0.2, pulse_floor: 0.1 };
+    const hiddenTab = State.hidden || document.hidden;
+    const breathHz = hiddenTab ? 0.55 : 1.1;
+    const breathAmp = hiddenTab ? 0.022 : (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005);
+    const councilBreath = document.documentElement.dataset.councilBreath === '1' ? Math.sin(sec * 0.85) * 0.018 : 0;
+    const breath = silenceScale * idleSig.breath * (State.reducedMotion ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath);
     head.scale.setScalar(breath);
     State.lean = (State.lean || 0) * 0.97;
     if (State.shake > 0.01 && !State.reducedMotion) {
@@ -484,7 +472,14 @@ function frame(t) {
   State.flash *= 0.9;
   if (State.flash > 0.15) rootBody.dataset.faceFlash = '1';
   else delete rootBody.dataset.faceFlash;
-  const phosphorOn = !State.reducedMotion && FACE_PHOSPHOR_DECAY > 0.12 && FACE_PHOSPHOR_DECAY < 0.98;
+  const renderMode = rootBody.dataset.faceRenderMode || 'auto';
+  const wireframeOn = renderMode === 'wireframe';
+  const rasterOnly = renderMode === 'raster' || (!renderer && renderMode !== '3d');
+  if (wireframeOn && faceMat) faceMat.wireframe = true;
+  else if (faceMat) faceMat.wireframe = false;
+  if (rasterOnly && renderer) renderer.domElement.style.opacity = '0';
+  else if (renderer) renderer.domElement.style.opacity = '';
+  const phosphorOn = !State.reducedMotion && FACE_PHOSPHOR_DECAY > 0.12 && FACE_PHOSPHOR_DECAY < 0.98 && renderMode !== 'wireframe';
   if (phosphorOn && phosphorFadeMesh && phosphorFadeScene && phosphorFadeCam && faceMat?._phosphorPrimed) {
     let decay = State.coarsePointer ? Math.max(0.55, FACE_PHOSPHOR_DECAY - 0.12) : FACE_PHOSPHOR_DECAY;
     if (tts.playing) decay = Math.max(0.52, decay - 0.05);
@@ -586,6 +581,14 @@ cv.addEventListener('pointerup', (e) => {
     if (elapsed < 1400 && Math.hypot(dx, dy) > 180) {
       const corner = `${e.clientY < innerHeight / 2 ? 'top' : 'bottom'}-${e.clientX < innerWidth / 2 ? 'left' : 'right'}`;
       setFacePip(true, corner);
+    }
+    if (gesture.moved && Math.hypot(dx, dy) > 48 && elapsed < 900) {
+      const expression = {
+        valence: Math.max(-1, Math.min(1, dx / innerWidth)),
+        arousal: Math.max(0, Math.min(1, 0.35 + Math.abs(dy) / innerHeight)),
+        attention: Math.max(0.4, Math.min(1, 0.55 + Math.hypot(dx, dy) / 400))
+      };
+      window.MASTER_FACE_EXPRESSION?.postUserExpression?.(expression, 'face_drag');
     }
   }
   if (State.sttActive) { window.MASTER_FACE?.stopSTT?.(); return; }

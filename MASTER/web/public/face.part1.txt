@@ -183,6 +183,18 @@ const VOICE_ALIASES = {
   ezinne: 'en-NG-EzinneNeural',
   jenny: 'en-US-JennyNeural'
 };
+const VOICE_IDLE_SIGNATURES = {
+  'ms-MY-OsmanNeural': { breath: 1.08, saccade: 0.24, pulse_floor: 0.14, blink_ms: 3200 },
+  'en-GB-RyanNeural': { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },
+  'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.20, pulse_floor: 0.10, blink_ms: 3000 },
+  'en-US-AndrewNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
+  'nb-NO-PernilleNeural': { breath: 1.05, saccade: 0.22, pulse_floor: 0.11, blink_ms: 3100 },
+  'en-NG-EzinneNeural': { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
+  'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
+};
+function applyIdleSignature(voice) {
+  State.idleSignature = VOICE_IDLE_SIGNATURES[voice] || { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
+}
 function setVoiceName(voice, opts = {}) {
   let raw = String(voice || '').trim();
   if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'osman';
@@ -190,6 +202,7 @@ function setVoiceName(voice, opts = {}) {
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
   State.voiceName = next;
+  applyIdleSignature(next);
   if (opts.lockVoice !== false) State.voiceLocked = true;
   if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = next;
   const picker = document.getElementById('voice-picker');
@@ -263,9 +276,17 @@ State.expressionTarget = {};
 const _shareParams = new URLSearchParams(window.location.search);
 State.mood = _shareParams.get('mood') || State.mood;
 State.mode = _shareParams.get('mode') || State.mode;
+try {
+  if (!_shareParams.get('mood')) State.mood = localStorage.getItem('master:mood') || State.mood;
+  if (!_shareParams.get('mode')) State.mode = localStorage.getItem('master:mode') || State.mode;
+} catch (_) {}
+const _faceMode = (_shareParams.get('face_mode') || 'auto').toLowerCase();
+rootBody.dataset.faceRenderMode = _faceMode;
+State.idleSignature = { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
 State.model = _shareParams.get('model') || State.model;
 State.modelName = State.model ? State.model.split('/').pop() : State.modelName;
 State.voiceName = _shareParams.get('voice') || State.voiceName;
+if (State.voiceName) applyIdleSignature(State.voiceName);
 
 function syncShareStateUrl() {
   try {

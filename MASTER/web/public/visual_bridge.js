@@ -71,6 +71,11 @@
 
   function emitVisualNow(name, detail = {}) {
     state.lastEventAt = performance.now();
+    window.MASTER_FACE_EXPRESSION?.pushSignal?.({ ...detail, name });
+    const blended = window.MASTER_FACE_EXPRESSION?.blendSignals?.();
+    if (blended) {
+      detail = { ...detail, entropy: blended.entropy, confidence: blended.confidence, arousal: blended.arousal, valence: blended.valence };
+    }
     state.entropy = clamp(detail.entropy ?? state.entropy, 0, 1);
     state.confidence = clamp(detail.confidence ?? state.confidence, 0, 1);
     state.topology = detail.topology || state.topology;
@@ -195,10 +200,18 @@
     }
     if (/council:deliberation|council:start/i.test(type)) {
       startCouncilRotator();
-      window.dispatchEvent(new CustomEvent("master:visual", { detail: { name: type, mode: "council", entropy: 0.42, confidence: 0.62, raw: event } }));
+      const spiritRadius = event.spirit_radius ?? event.spiritRadius ?? 1.14;
+      window.dispatchEvent(new CustomEvent("master:visual", {
+        detail: { name: type, mode: "council", entropy: 0.42, confidence: 0.62, spirit_radius: spiritRadius, raw: event }
+      }));
+      document.documentElement.dataset.councilBreath = "1";
+    }
+    if (/phantom:detected|phantom:retry/i.test(type)) {
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: { name: type, mode: "phantom", entropy: 0.9, confidence: 0.18, flinch: 1, raw: event } }));
     }
     if (/council:(?:vote|speech|end)|tribunal:rendered/i.test(type)) {
       stopCouncilRotator();
+      delete document.documentElement.dataset.councilBreath;
     }
     if (/infer:resolved|infer:confidence|route:resolved|llm:routed/i.test(type)) {
       window.dispatchEvent(new CustomEvent("master:visual", { detail: mapped }));

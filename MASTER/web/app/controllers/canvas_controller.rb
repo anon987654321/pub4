@@ -7,12 +7,20 @@ class CanvasController < ApplicationController
   ALLOWED_TOPICS = %w[
     canvas:mood canvas:mode canvas:gesture canvas:idle canvas:tilt
     canvas:palette canvas:energy canvas:breath
+    user:expression
   ].freeze
 
   def post_event
     topic = params.require(:topic).to_s
     return head(:unprocessable_entity) unless ALLOWED_TOPICS.include?(topic)
-    payload = params.fetch(:payload, {}).to_unsafe_h.slice(
+    raw = params.fetch(:payload, {}).to_unsafe_h
+    if topic == "user:expression"
+      expression = raw.slice("source", "valence", "arousal", "attention", "pressure").transform_keys(&:to_sym)
+      container[:bus].publish("user:expression", expression: expression, source: expression[:source]) rescue nil
+      return head :accepted
+    end
+
+    payload = raw.slice(
       "mood", "mode", "idle", "energy", "palette", "tilt_x", "tilt_y"
     ).transform_keys(&:to_sym)
     container[:bus].publish(topic, **payload) rescue nil

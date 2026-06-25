@@ -11,14 +11,20 @@ module Master
         "mi_048" => { event: "master:visual", mode: "cmd:long", entropy: 0.35, confidence: 0.72 },
         "mi_050" => { event: "master:visual", mode: "link:thinking", entropy: 0.42, confidence: 0.55 },
         "mi_035" => { event: "master:visual", mode: "link:quiet", entropy: 0.38, confidence: 0.65 },
-        "mi_064" => { event: "council:deliberation", mode: "start", entropy: 0.45, confidence: 0.58 },
+        "mi_064" => {
+          event: "council:deliberation", mode: "start", entropy: 0.45, confidence: 0.58,
+          spirit_radius: Expression.council_spirit_radius(risk: :medium, reversibility: :low)
+        },
         "mi_062" => { event: "tts:style:active", mode: "style", entropy: 0.22, confidence: 0.80 },
         "user_interrupt" => { event: "master:visual", mode: "user:interrupt", entropy: 0.4 },
         "input_paste" => { event: "master:visual", mode: "input:paste", entropy: 0.25 },
         "input_long" => { event: "master:visual", mode: "input:long", entropy: 0.30, confidence: 0.70 },
         "link_quiet" => { event: "master:visual", mode: "link:quiet", entropy: 0.38, confidence: 0.65 },
         "link_thinking" => { event: "master:visual", mode: "link:thinking", entropy: 0.42, confidence: 0.55 },
-        "council_deliberation" => { event: "council:deliberation", mode: "start", entropy: 0.45, confidence: 0.58 },
+        "council_deliberation" => {
+          event: "council:deliberation", mode: "start", entropy: 0.45, confidence: 0.58,
+          spirit_radius: Expression.council_spirit_radius(risk: :medium, reversibility: :low)
+        },
         "tts_style_active" => { event: "tts:style:active", mode: "style", entropy: 0.22, confidence: 0.80 },
       }.freeze
 

@@ -216,6 +216,28 @@ module Master
 
       STYLES_CHAINABLE = %i[whispered ethereal intimate calm robotic].freeze
 
+      VOICE_IDLE_SIGNATURES = {
+        osman: { breath: 1.08, saccade: 0.24, pulse_floor: 0.14, blink_ms: 3200 },
+        ryan: { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },
+        finn: { breath: 1.02, saccade: 0.20, pulse_floor: 0.10, blink_ms: 3000 },
+        andrew: { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
+        pernille: { breath: 1.05, saccade: 0.22, pulse_floor: 0.11, blink_ms: 3100 },
+        ezinne: { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
+        wayne: { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
+      }.freeze
+
+      def idle_signature_for(voice)
+        key = Speech.resolve_voice(voice)
+        VOICE_IDLE_SIGNATURES[key] || { breath: 1.0, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 }
+      end
+
+      def council_spirit_radius(risk: nil, reversibility: nil, persona_count: 5)
+        base = 1.0
+        base += 0.12 if reversibility == :low
+        base += 0.08 if %i[high critical].include?(risk)
+        base + [persona_count - 3, 0].max * 0.04
+      end
+
       VERTICAL_BIASES = {
         marketplace: { arousal: 0.08, pressure: 0.14, valence: -0.05 },
         dating: { arousal: -0.06, valence: 0.18, attention: 0.12 },
