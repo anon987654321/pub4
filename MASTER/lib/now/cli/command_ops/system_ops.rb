@@ -39,6 +39,15 @@ module Master
         @refs.bus&.publish("attention:context", query: query, rows: rows.size)
       end
 
+      def run_snapshot
+        puts @refs.renderer.render("snapshot: publishing MASTER + DEPLOY", mode: :dim)
+        output = Master::Now::CommandRegistry.dispatch_snapshot(@refs.root)
+        output.to_s.lines.each { |line| puts @refs.renderer.render(line, mode: :dim) }
+        @refs.bus&.publish("snapshot:published", root: @refs.root)
+      rescue StandardError => e
+        puts @refs.renderer.render("snapshot: #{e.message}", mode: :warning)
+      end
+
       def run_checkpoint
         puts @refs.renderer.render("checkpoint: snapshotting changed files", mode: :dim)
         lib_dir = File.join(Master::ROOT, "lib")

@@ -136,6 +136,7 @@ module Master
         when "/sound-critique" then run_sound_critique
         when "/rebuild" then run_rebuild
         when "/context" then run_context
+        when "/snapshot" then run_snapshot
         when "/verify" then run_verify
         when "/rails-pwa-audit" then run_rails_pwa_audit
         when "/rails-pwa-fix" then run_rails_pwa_fix

@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "open3"
+require "yaml"
 require_relative "../../trace/self_evolution_trigger"
 
 module Master
@@ -104,10 +105,90 @@ module Master
       end
 
       def dispatch_snapshot(root, ctx: nil)
-        [
+        repo_root = File.expand_path("..", root)
+        lines = [
+          publish_snapshot_digest(root, "MASTER", repo_root:),
+          publish_snapshot_digest(File.expand_path("../DEPLOY", root), "DEPLOY", repo_root:),
           publish_snapshot(root, "MASTER"),
           publish_snapshot(File.expand_path("../DEPLOY", root), "DEPLOY"),
+        ]
+        lines.join("\n")
+      end
+
+      def publish_snapshot_digest(target, label, repo_root:)
+        return "snapshot:#{label.downcase}: digest skipped (missing dir)" unless File.directory?(target)
+
+        stats = snapshot_runtime_stats(target) if label == "MASTER"
+        git = snapshot_git_summary(repo_root)
+        body, files, n_lines = build_snapshot_markdown(target, label)
+        stamp = Time.now.utc.iso8601
+        digest = [
+          "# #{label} Snapshot",
+          "Generated: #{stamp}",
+          "",
+          "## Summary",
+          "- files: #{files.size}",
+          "- lines: #{n_lines}",
+          "- target: `#{target}`",
+          *(stats || []),
+          *(git || []),
+          "",
+          "## Recent changes",
+          snapshot_recent_commits(repo_root),
+          ""
         ].join("\n")
+        out = File.join(repo_root, "#{label}_snapshot.md")
+        File.write(out, digest)
+        "snapshot:#{label.downcase}: digest → #{out}"
+      rescue StandardError => e
+        "snapshot:#{label.downcase}: digest failed: #{e.message}"
+      end
+
+      def snapshot_runtime_stats(root)
+        return [] unless File.directory?(File.join(root, "data/runtime"))
+
+        pending = implemented = 0
+        path = File.join(root, "data/runtime/face_enhancements.yml")
+        if File.file?(path)
+          data = YAML.safe_load_file(path, permitted_classes: [Symbol], aliases: true) || {}
+          Array(data["enhancements"]).each do |row|
+            case row["status"].to_s
+            when "implemented" then implemented += 1
+            when "pending" then pending += 1
+            end
+          end
+        end
+        cfg = File.join(root, "data/runtime/runtime.yml")
+        enhancements = []
+        if File.file?(cfg)
+          raw = YAML.safe_load_file(cfg, permitted_classes: [Symbol], aliases: true) || {}
+          enhancements = Array(raw["enhancements"])
+        end
+        [
+          "- runtime enhancements: #{implemented} implemented / #{pending} pending",
+          "- active flags: #{enhancements.size} (#{enhancements.last(5).join(", ")})"
+        ]
+      end
+
+      def snapshot_git_summary(repo_root)
+        return [] unless File.directory?(File.join(repo_root, ".git"))
+
+        branch, = Open3.capture2e("git", "-C", repo_root, "rev-parse", "--abbrev-ref", "HEAD")
+        sha, = Open3.capture2e("git", "-C", repo_root, "rev-parse", "--short", "HEAD")
+        [
+          "- git: #{branch.strip} @ #{sha.strip}"
+        ]
+      rescue StandardError
+        []
+      end
+
+      def snapshot_recent_commits(repo_root, n = 5)
+        out, status = Open3.capture2e("git", "-C", repo_root, "log", "-n", n.to_s, "--oneline")
+        return "(no git log)" unless status.success?
+
+        out.lines.map(&:strip).reject(&:empty?).map { |line| "- #{line}" }.join("\n")
+      rescue StandardError
+        "(git unavailable)"
       end
 
       def dispatch_diag(diag, ctx: nil)
@@ -204,9 +285,10 @@ module Master
         [md.join("\n"), files, n_lines]
       end
 
-      def snapshot_artifacts(root)
+      def snapshot_artifacts(target)
+        repo_root = File.expand_path("..", target)
         paths = %w[MASTER_snapshot.md DEPLOY_snapshot.md].filter_map do |name|
-          path = File.join(root, name)
+          path = File.join(repo_root, name)
           next unless File.file?(path)
           "- `#{name}` (#{File.size(path)} bytes, updated #{File.mtime(path).utc.iso8601})"
         end

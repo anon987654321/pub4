@@ -78,6 +78,14 @@ module Master
           summary: "show changed files this session",
           detail: ["/audit", "Lists git diff line counts for changed files."]
         },
+        "snapshot" => {
+          summary: "publish MASTER + DEPLOY codebase snapshots",
+          detail: [
+            "/snapshot",
+            "Writes digest to repo-root MASTER_snapshot.md and DEPLOY_snapshot.md.",
+            "Mirrors full text archives to ~/Downloads (MASTER_snapshot_YYYY-MM-DD.md)."
+          ]
+        },
         "grep" => {
           summary: "search session history",
           detail: ["/grep <pattern>", "Returns matching user/master turns from the current session."]

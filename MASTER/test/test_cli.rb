@@ -201,6 +201,47 @@ class TestCLI < Minitest::Test
     assert_includes output, "data/rules.yml"
   end
 
+  def test_publish_snapshot_digest_writes_repo_root_summary
+    repo_root = File.dirname(Master::ROOT)
+    master_digest = File.join(repo_root, "MASTER_snapshot.md")
+    prior = File.file?(master_digest) ? File.read(master_digest) : nil
+
+    output = Master::Now::CommandRegistry.publish_snapshot_digest(Master::ROOT, "MASTER", repo_root:)
+
+    assert_includes output, "snapshot:master: digest"
+    assert File.file?(master_digest), "expected MASTER digest at repo root"
+    body = File.read(master_digest)
+    assert_includes body, "# MASTER Snapshot"
+    assert_includes body, "runtime enhancements:"
+    assert_includes body, "## Recent changes"
+  ensure
+    if prior
+      File.write(master_digest, prior)
+    elsif File.file?(master_digest)
+      File.delete(master_digest)
+    end
+  end
+
+  def test_publish_snapshot_writes_download_archive
+    Dir.mktmpdir do |target|
+      File.write(File.join(target, "sample.rb"), "puts 1\n")
+      Dir.mktmpdir do |downloads|
+        prior = ENV["MASTER_SNAPSHOT_DIR"]
+        ENV["MASTER_SNAPSHOT_DIR"] = downloads
+        output = Master::Now::CommandRegistry.publish_snapshot(target, "TEST")
+        assert_includes output, "snapshot:test:"
+        assert_includes output, "1 files"
+        assert_operator Dir.glob(File.join(downloads, "TEST_snapshot_*.md")).size, :>=, 1
+      ensure
+        if prior
+          ENV["MASTER_SNAPSHOT_DIR"] = prior
+        else
+          ENV.delete("MASTER_SNAPSHOT_DIR")
+        end
+      end
+    end
+  end
+
   def test_routine_success_emits_one_line
     result = Master::Result.ok(output: "saved")
 
