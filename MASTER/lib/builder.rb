@@ -6,14 +6,13 @@ require_relative "builder/ai_boot"
 require_relative "loop/rollback"
 require_relative "trace/feedback_ledger"
 require_relative "trace/reflexion_ledger"
-require_relative "trace/snapshot_agent_guide"
+require_relative "trace/snapshot_publisher"
 
 module Master
   module Builder
     MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
     RING_SIZE          = 1000
-    SNAPSHOT_MAX_BYTES = 50_000
-    SNAPSHOT_DIRS      = %w[bin lib data].freeze
+
 
     TOOL_MAP = {
       "ReadFile" => ->(r, i) {
@@ -166,63 +165,20 @@ module Master
 
     def boot_snapshot(container)
       root = container[:root]
-      files = Dir[*SNAPSHOT_DIRS.map { |d| File.join(root, d, "**", "*") }]
-        .select { |f| File.file?(f) && File.size(f) < SNAPSHOT_MAX_BYTES }
-        .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
-        .sort
+      pub = Trace::SnapshotPublisher
       out = File.join(root, ".master", "snapshot.md")
       public_out = File.join(root, "snapshot.md")
-      if snapshot_current?(files, out, public_out)
-        container[:bus]&.publish("boot:snapshot_skipped", files: files.size)
+      if pub.boot_current?(root, out, public_out)
+        container[:bus]&.publish("boot:snapshot_skipped")
         return
       end
-      body = files.flat_map do |f|
-        rel = f.delete_prefix("#{root}/")
-        lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
-        src = File.read(f, encoding: "UTF-8", invalid: :replace)
-        ["## #{rel}", "```#{lang}", src.rstrip, "```", ""]
-      rescue StandardError => e
-        Ground::Swallow.log(e, context: "builder.snapshot_file", path: f)
-        []
-      end
-      header = [
-        "# MASTER Snapshot",
-        "Generated: #{Time.now.utc.iso8601}",
-        "",
-        Master::Trace::SnapshotAgentGuide.render(label: "MASTER"),
-        "Files: #{files.size}",
-        ""
-      ]
-      root_snapshots = snapshot_artifacts(root)
-      content = (header + root_snapshots + body).join("\n")
+      content = pub.boot_light(root)
       FileUtils.mkdir_p(File.dirname(out))
       File.write(out, content)
       File.write(public_out, content)
-      container[:bus]&.publish("boot:snapshot", files: files.size)
+      container[:bus]&.publish("boot:snapshot")
     rescue StandardError => e
       container[:bus]&.publish("boot:snapshot_error", error: e.message)
-    end
-
-    def snapshot_artifacts(root)
-      paths = %w[MASTER_snapshot.md DEPLOY_snapshot.md].filter_map do |name|
-        path = File.join(root, name)
-        next unless File.file?(path)
-        "- `#{name}` (#{File.size(path)} bytes, updated #{File.mtime(path).utc.iso8601})"
-      end
-      return [] if paths.empty?
-
-      ["## Root snapshot artifacts", *paths, ""]
-    end
-
-    def snapshot_current?(files, *outputs)
-      return false if files.empty?
-      return false unless outputs.all? { |path| File.exist?(path) }
-
-      newest_source = files.map { |path| File.mtime(path) }.max
-      oldest_output = outputs.map { |path| File.mtime(path) }.min
-      oldest_output >= newest_source
-    rescue StandardError
-      false
     end
   end
 end

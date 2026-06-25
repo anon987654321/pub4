@@ -1,20 +1,16 @@
 # frozen_string_literal: true
 
-require "base64"
 require "fileutils"
 require "open3"
-require "yaml"
 require_relative "../../trace/self_evolution_trigger"
-require_relative "../../trace/snapshot_agent_guide"
+require_relative "../../trace/snapshot_publisher"
 
 module Master
   module Now
     module CommandRegistry
       module_function
 
-      TEXT_EXTS = %w[.rb .py .js .ts .zsh .sh .bash .md .yml .yaml .json .toml .gemspec .txt .erb .conf .ini .env].to_set.freeze
-      TEXT_NAMES = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
-      SKIP_SEGS = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
+      SKIP_SEGS = Master::Trace::SnapshotPublisher::SKIP_SEGS
 
       def system_commands(agent:, diag:, root:, session: nil, bus: nil, scanner: nil)
         container = { session: session, config: {}, root: root, bus: bus }
@@ -108,116 +104,15 @@ module Master
 
       def dispatch_snapshot(root, ctx: nil)
         repo_root = File.expand_path("..", root)
+        pub = Master::Trace::SnapshotPublisher
         [
-          emit_snapshot_pair(root, "MASTER", repo_root:),
-          emit_snapshot_pair(File.expand_path("../DEPLOY", root), "DEPLOY", repo_root:),
-        ].join("\n")
-      end
-
-      def emit_snapshot_pair(target, label, repo_root:)
-        return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
-
-        content, files, n_lines = build_snapshot_document(target, label, repo_root:)
-        dir = snapshot_output_dir
-        FileUtils.mkdir_p(dir)
-        digest = File.join(dir, "#{label}_snapshot.md")
-        archive = File.join(dir, "#{label}_snapshot_#{Time.now.strftime('%Y-%m-%d')}.md")
-        File.write(digest, content)
-        File.write(archive, content)
-        [
-          "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{digest}",
-          "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{archive}"
-        ].join("\n")
-      rescue StandardError => e
-        "snapshot:#{label.downcase}: write failed: #{e.message}"
+          pub.write(target: root, label: "MASTER", repo_root:, mode: :both),
+          pub.write(target: File.expand_path("../DEPLOY", root), label: "DEPLOY", repo_root:, mode: :both),
+        ].flatten.join("\n")
       end
 
       def publish_snapshot_digest(target, label, repo_root: File.expand_path("..", target))
-        return "snapshot:#{label.downcase}: digest skipped (missing dir)" unless File.directory?(target)
-
-        content, files, n_lines = build_snapshot_document(target, label, repo_root:)
-        out = File.join(snapshot_output_dir, "#{label}_snapshot.md")
-        FileUtils.mkdir_p(File.dirname(out))
-        File.write(out, content)
-        "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{out}"
-      rescue StandardError => e
-        "snapshot:#{label.downcase}: digest failed: #{e.message}"
-      end
-
-      def build_snapshot_document(target, label, repo_root:)
-        body, files, n_lines = build_snapshot_markdown(target, label)
-        header = snapshot_summary_header(target, label, repo_root:, files:, n_lines:)
-        [header + body, files, n_lines]
-      end
-
-      def snapshot_summary_header(target, label, repo_root:, files:, n_lines:)
-        stamp = Time.now.utc.iso8601
-        stats = snapshot_runtime_stats(target) if label == "MASTER"
-        git = snapshot_git_summary(repo_root)
-        [
-          "# #{label} Snapshot",
-          "Generated: #{stamp}",
-          "",
-          Master::Trace::SnapshotAgentGuide.render(label:),
-          "## Summary",
-          "- files: #{files.size}",
-          "- lines: #{n_lines}",
-          "- target: `#{target}`",
-          "- policy: full tree + every file verbatim (no truncation)",
-          *(stats || []),
-          *(git || []),
-          "",
-          "## Recent changes",
-          snapshot_recent_commits(repo_root),
-          ""
-        ].join("\n")
-      end
-
-      def snapshot_runtime_stats(root)
-        return [] unless File.directory?(File.join(root, "data/runtime"))
-
-        pending = implemented = 0
-        path = File.join(root, "data/runtime/face_enhancements.yml")
-        if File.file?(path)
-          data = YAML.safe_load_file(path, permitted_classes: [Symbol], aliases: true) || {}
-          Array(data["enhancements"]).each do |row|
-            case row["status"].to_s
-            when "implemented" then implemented += 1
-            when "pending" then pending += 1
-            end
-          end
-        end
-        cfg = File.join(root, "data/runtime/runtime.yml")
-        enhancements = []
-        if File.file?(cfg)
-          raw = YAML.safe_load_file(cfg, permitted_classes: [Symbol], aliases: true) || {}
-          enhancements = Array(raw["enhancements"])
-        end
-        [
-          "- runtime enhancements: #{implemented} implemented / #{pending} pending",
-          "- active flags: #{enhancements.size} (#{enhancements.last(5).join(", ")})"
-        ]
-      end
-
-      def snapshot_git_summary(repo_root)
-        return [] unless File.directory?(File.join(repo_root, ".git"))
-
-        branch, = Open3.capture2e("git", "-C", repo_root, "rev-parse", "--abbrev-ref", "HEAD")
-        sha, = Open3.capture2e("git", "-C", repo_root, "rev-parse", "--short", "HEAD")
-        [
-          "- git: #{branch.strip} @ #{sha.strip}"
-        ]
-      rescue StandardError
-        []
-      end
-
-      def snapshot_recent_commits(repo_root, n = 5)
-        out, status = Open3.capture2e("git", "-C", repo_root, "log", "-n", n.to_s, "--oneline")
-        return "(no git log)" unless status.success?
-
-        out.lines.map(&:strip).reject(&:empty?).map { |line| "- #{line}" }.join("\n")
-      rescue StandardError
-        "(git unavailable)"
+        Master::Trace::SnapshotPublisher.write(target:, label:, repo_root:, mode: :digest).first
       end
 
       def dispatch_diag(diag, ctx: nil)
@@ -268,87 +163,10 @@ module Master
         status.success? ? body : "#{body}\ndoctor: exit #{status.exitstatus}"
       end
 
-      def snapshot_output_dir
-        File.expand_path(ENV.fetch("MASTER_SNAPSHOT_DIR", "~/Downloads"))
-      end
+      def snapshot_output_dir = Master::Trace::SnapshotPublisher.output_dir
 
       def publish_snapshot(target, label, repo_root: File.expand_path("..", target))
-        return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
-
-        content, files, n_lines = build_snapshot_document(target, label, repo_root:)
-        day = Time.now.strftime("%Y-%m-%d")
-        out_path = File.join(snapshot_output_dir, "#{label}_snapshot_#{day}.md")
-        FileUtils.mkdir_p(File.dirname(out_path))
-        File.write(out_path, content)
-        "snapshot:#{label.downcase}: #{files.size} files #{n_lines} lines → #{out_path}"
-      rescue StandardError => e
-        "snapshot:#{label.downcase}: write failed: #{e.message}"
-      end
-
-      def build_snapshot_markdown(target, label)
-        all = snapshot_paths(target)
-        dirs = all.select { |f| File.directory?(f) }
-        files = all.select { |f| File.file?(f) }
-        md = ["## Tree", "```"]
-        entries = (dirs.map { |d| [d, :dir] } + files.map { |f| [f, :file] })
-                  .sort_by { |p, _| p.split("/") }
-                  .map { |p, k| "#{"  " * p.delete_prefix("#{target}/").count("/")}#{File.basename(p)}#{k == :dir ? "/" : ""}" }
-        md.concat(entries) << "```" << ""
-        md.concat(snapshot_artifacts(target)) if label == "MASTER"
-        md << "## Codebase" << ""
-        n_lines = 0
-        files.each do |f|
-          rel = f.delete_prefix("#{target}/")
-          section, line_count = snapshot_file_section(f)
-          n_lines += line_count
-          md << "## `#{rel}`"
-          md.concat(section)
-          md << ""
-        end
-        md << "files: #{files.size} / lines: #{n_lines}"
-        [md.join("\n"), files, n_lines]
-      end
-
-      def snapshot_paths(target)
-        Dir.glob(File.join(target, "**", "*"), File::FNM_DOTMATCH)
-           .reject { |f| snapshot_skip_entry?(f.delete_prefix("#{target}/").delete_prefix("/")) }
-           .sort
-      end
-
-      def snapshot_skip_entry?(rel)
-        return true if rel.empty? || rel == "."
-
-        rel.split("/").any? { |segment| segment == "." || segment == ".." || SKIP_SEGS.include?(segment) }
-      end
-
-      def snapshot_file_section(path)
-        if snapshot_text_file?(path)
-          begin
-            text = File.read(path, encoding: "UTF-8", invalid: :replace)
-            lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(path).downcase, "text")
-            lines = text.each_line.map(&:rstrip)
-            return [["```#{lang}", *lines, "```"], lines.size]
-          rescue StandardError
-            # fall through to full binary capture
-          end
-        end
-        data = File.binread(path)
-        encoded = Base64.strict_encode64(data)
-        [["binary: #{data.bytesize} bytes", "```base64", encoded, "```"], encoded.lines.size]
-      rescue StandardError => e
-        [["```text", "[unreadable: #{e.message}]", "```"], 1]
-      end
-
-      def snapshot_artifacts(_target)
-        dir = snapshot_output_dir
-        paths = %w[MASTER_snapshot.md DEPLOY_snapshot.md].filter_map do |name|
-          path = File.join(dir, name)
-          next unless File.file?(path)
-          "- `#{path}` (#{File.size(path)} bytes, updated #{File.mtime(path).utc.iso8601})"
-        end
-        return [] if paths.empty?
-
-        ["## Download snapshot artifacts", *paths, ""]
+        Master::Trace::SnapshotPublisher.write(target:, label:, repo_root:, mode: :archive).first
       end
 
       def walk_tree(dir, level, depth:, cap:, tree_lines:)
@@ -366,9 +184,6 @@ module Master
         nil
       end
 
-      def snapshot_text_file?(file)
-        TEXT_EXTS.include?(File.extname(file).downcase) || TEXT_NAMES.include?(File.basename(file))
-      end
     end
   end
 end

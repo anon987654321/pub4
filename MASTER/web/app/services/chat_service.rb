@@ -16,6 +16,11 @@ class ChatService
   }.freeze
 
   WRITE_TOOLS = %w[Write Edit Create FilePatch].freeze
+  BUS_DMESG_SKIP = %w[
+    infer:resolved infer:confidence tool:before tool:after client_action
+    pipeline:stage_start pipeline:stage_complete felt:sense pressure:updated
+  ].freeze
+  BUS_THOUGHT_RE = /:(?:done|error|warn|crit|resolved|confidence|detected)\b/.freeze
 
   def initialize(container:, params:, stream:, logger:, tier:, unlocked:, author:)
     @container = container
@@ -98,8 +103,17 @@ class ChatService
     subscribe("infer:resolved") { |ev| write_json_event("dmesg", dmesg_format("infer:resolved", ev)) }
     subscribe("infer:confidence") { |ev| write_json_event("dmesg", dmesg_format("infer:confidence", ev)) }
     subscribe("pressure:updated") { |ev| write_json_event("pressure", ev.slice(:value, :tokens, :limit, :pct)) }
-    subscribe("**") { |ev| write_json_event("dmesg", dmesg_format(ev[:event].to_s, ev)) }
-    subscribe("**") { |ev| write_json_event("thought", thought_format(ev[:event].to_s, ev)) }
+    subscribe("**") do |ev|
+      name = ev[:event].to_s
+      next if BUS_DMESG_SKIP.include?(name)
+      write_json_event("dmesg", dmesg_format(name, ev))
+    end
+    subscribe("**") do |ev|
+      name = ev[:event].to_s
+      next if BUS_DMESG_SKIP.include?(name)
+      next unless name.match?(BUS_THOUGHT_RE)
+      write_json_event("thought", thought_format(name, ev))
+    end
     subscribe("tribunal:rendered") { |ev| write_event("verdict", verdict_for(ev)) }
     subscribe("llm:escalation") { |_ev| write_event("confidence", "0.4") }
     subscribe("enhance:rewrite") { |ev| write_json_event("enhance", ev[:enhanced].to_s.gsub("\n", "\\n")) }
