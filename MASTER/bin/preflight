@@ -29,10 +29,12 @@ print "ok: gems installed"
 print "check: ruby syntax"
 ruby -c lib/master.rb >/dev/null
 print "ok: lib/master.rb syntax"
+for f in kernel/*.rb; do ruby -c "$f" >/dev/null; done
+print "ok: kernel syntax"
 
 # Tests
 print "check: test suite"
-bundle exec ruby -Itest test/test_result.rb test/test_ring_buffer.rb test/test_axioms.rb test/test_prune.rb 2>&1 | tail -1
+bin/ci
 print "ok: tests passed"
 
 print "\nMASTER preflight complete."

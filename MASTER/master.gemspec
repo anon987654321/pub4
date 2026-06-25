@@ -6,10 +6,10 @@ Gem::Specification.new do |spec|
   spec.authors = ["dev"]
   spec.summary = "Constitutional AI agent"
 
-  spec.files         = Dir["lib/**/*.rb", "bin/*", "data/**/*"]
+  spec.files         = Dir["lib/**/*.rb", "kernel/**/*.rb", "bin/*", "data/**/*", "LETTER_TO_AUTHOR.md"]
   spec.require_paths = ["lib"]
   spec.bindir        = "bin"
-  spec.executables   = ["cli"]
+  spec.executables   = ["cli", "master-kernel", "status"]
 
   spec.required_ruby_version = ">= 3.3"
 

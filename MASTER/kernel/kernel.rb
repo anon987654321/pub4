@@ -26,16 +26,23 @@ module Master
 
       @max_turns.times do |turn|
         effect = @model.propose(@memory.context, verbs: @world.verbs)
-        return Done.new(reason: :complete, turns: turn, summary: effect.args[:summary]) if effect.done?
 
-        observation =
-          case @law.admit(effect, @memory)
-          in Verdict::Allow(effect: admitted) then @world.perform(admitted)
-          in Verdict::Block(reason:, by:) then Observation.no("refused by #{by}: #{reason}")
+        case @law.admit(effect, @memory)
+        in Verdict::Block(reason:, by:)
+          observation = Observation.no("refused by #{by}: #{reason}")
+          @memory.record(effect, observation)
+          next
+        in Verdict::Allow(effect: admitted)
+          if admitted.done?
+            @memory.record(admitted, Observation.ok("done"))
+            return Done.new(reason: :complete, turns: turn, summary: admitted.args[:summary])
           end
 
-        @memory.record(effect, observation)
-        @world.commit(effect.to_s) if observation.ok
+          checkpoint = @world.checkpoint
+          observation = @world.perform(admitted)
+          @memory.record(admitted, observation)
+          @world.rollback(checkpoint) if observation.err?
+        end
       end
 
       Done.new(reason: :max_turns, turns: @max_turns, summary: nil)

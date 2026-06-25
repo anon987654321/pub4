@@ -14,7 +14,7 @@ module Master
       @entries = []
       @budget = budget
       @summarize = summarize
-      @proved = false
+      @evidence = []
     end
 
     def note(kind, text)
@@ -22,16 +22,29 @@ module Master
       self
     end
 
-    # Record an effect and what the world reported. A passing test/scan flips the
-    # evidence flag the :evidence_for_done rule depends on.
     def record(effect, observation)
       @entries << Entry.new(role: :act, text: effect.to_s)
       @entries << Entry.new(role: :obs, text: observation.to_s)
-      @proved = true if observation.ok && effect.verb == :exec
+      record_evidence(effect, observation)
       self
     end
 
-    def proved? = @proved
+    def evidence_score = @evidence.select(&:ok).sum(&:score)
+    def proved? = evidence_score >= 80
+
+    def record_evidence(effect, observation)
+      return unless effect.verb == :exec && observation.ok?
+
+      kind = effect.args[:evidence]&.to_sym
+      score = {
+        test_pass: 35,
+        scan_clean: 25,
+        code_review: 20,
+        log_analysis: 10,
+        profiling_data: 10
+      }.fetch(kind, 0)
+      @evidence << Evidence.new(kind:, ok: true, score:, detail: observation.message, at: Time.now.utc) if score.positive?
+    end
 
     # The context the model proposes against — compacted to the budget.
     def context

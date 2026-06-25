@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+
+$LOAD_PATH.unshift File.expand_path("../kernel", __dir__)
+require "master"
+
+class NullModel
+  def initialize(goal) = @goal = goal
+
+  def propose(_context, verbs:)
+    raise "kernel verbs unavailable" unless verbs.include?(:done)
+
+    Master::Effect.done("noop complete: #{@goal}")
+  end
+end
+
+options = { root: Dir.pwd, max_turns: 40 }
+
+parser = OptionParser.new do |opts|
+  opts.banner = "usage: master-kernel [--root PATH] [--max-turns N] GOAL"
+  opts.on("--root PATH") { |path| options[:root] = path }
+  opts.on("--max-turns N", Integer) { |n| options[:max_turns] = n }
+end
+
+parser.parse!(ARGV)
+goal = ARGV.join(" ").strip
+
+if goal.empty?
+  warn parser.to_s
+  exit 64
+end
+
+root = File.expand_path(options.fetch(:root))
+data_dir = File.join(File.expand_path("..", __dir__), "data")
+constitution = Master::Constitution.load(data_dir:)
+world = Master::World.new(root:)
+memory = Master::Memory.new
+model = NullModel.new(goal)
+
+result = Master::Kernel.new(
+  model:,
+  constitution:,
+  world:,
+  memory:,
+  max_turns: options.fetch(:max_turns)
+).run(goal)
+
+puts "master-kernel: #{result.reason} turns=#{result.turns} summary=#{result.summary}"

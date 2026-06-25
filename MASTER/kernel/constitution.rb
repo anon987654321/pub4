@@ -45,7 +45,14 @@ module Master
     def self.default_rules(data)
       veto = (data["veto_patterns"] || {}).filter_map { |n, s| [n, safe_rx(s["detect"])] }.to_h
 
-      [no_secret_rule(veto), ruby_parses_rule, safe_exec_rule(veto), evidence_for_done_rule]
+      [
+        no_secret_rule(veto),
+        ruby_parses_rule,
+        structured_exec_rule,
+        safe_exec_rule(veto),
+        evidence_for_done_rule,
+        git_commit_evidence_rule
+      ]
     end
 
     # No credential ever reaches disk or the transcript.
@@ -72,10 +79,19 @@ module Master
     # Unsafe shell never executes.
     def self.safe_exec_rule(veto)
       Rule.new(id: :safe_exec, verbs: %i[exec], judge: lambda { |effect, _memory|
-        command = effect.args[:command].to_s
+        command = Array(effect.args[:argv]).join(" ")
         next nil unless veto["unsafe_calls"] && command.match?(veto["unsafe_calls"])
 
         Verdict::Block.new(reason: "unsafe command", by: :safe_exec)
+      })
+    end
+
+    def self.structured_exec_rule
+      Rule.new(id: :structured_exec, verbs: %i[exec], judge: lambda { |effect, _memory|
+        argv = effect.args[:argv]
+        next nil if argv.is_a?(Array) && argv.all? { |arg| arg.is_a?(String) } && !argv.empty?
+
+        Verdict::Block.new(reason: "exec requires argv: [String, ...]", by: :structured_exec)
       })
     end
 
@@ -85,6 +101,15 @@ module Master
         next nil if memory.proved?
 
         Verdict::Block.new(reason: "no passing evidence on record", by: :evidence_for_done)
+      })
+    end
+
+    def self.git_commit_evidence_rule
+      Rule.new(id: :git_commit_evidence, verbs: %i[git], judge: lambda { |effect, memory|
+        next nil unless effect.args[:operation].to_sym == :commit
+        next nil if memory.proved?
+
+        Verdict::Block.new(reason: "cannot commit before evidence threshold", by: :git_commit_evidence)
       })
     end
 

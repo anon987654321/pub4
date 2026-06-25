@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
-# A full agent session on the real data/, with a scripted model and fake git.
+# A full agent session on the real data/, with a scripted model and real git.
 #   ruby MASTER/kernel/spec/kernel_smoke.rb
 # Proves the whole spine in one run: effects proposed, the Constitution
 # blocking the dangerous ones and admitting the safe ones, the World writing
-# through backup, one commit per good turn, and an evidence-gated finish.
+# through backup, explicit git commit after evidence, and an evidence-gated finish.
 
 require_relative "../master"
+require "open3"
 require "tmpdir"
 
 DATA = File.expand_path("../../data", __dir__)
@@ -21,6 +22,17 @@ rescue StandardError => e
   $fail += 1
 end
 
+def init_git!(root)
+  system("git", "-C", root, "init", "-q")
+  system("git", "-C", root, "config", "user.email", "smoke@test.local")
+  system("git", "-C", root, "config", "user.name", "kernel smoke")
+end
+
+def commit_count(root)
+  out, status = Open3.capture2e("git", "-C", root, "log", "--oneline")
+  status.success? ? out.lines.count : 0
+end
+
 # A scripted model: a fixed list of effects, proposed in order.
 class ScriptedModel
   def initialize(script) = @script = script
@@ -28,21 +40,24 @@ class ScriptedModel
 end
 
 Dir.mktmpdir do |root|
-  commits = []
-  fake_git = ->(_root, op, msg) { commits << msg if op == "commit"; "ok" }
+  init_git!(root)
 
   script = [
-    Master::Effect.new(verb: :write, args: { path: "ok.rb", content: "A = 1\n" }),          # admitted
-    Master::Effect.new(verb: :write, args: { path: "bad.rb", content: "A = {.freeze\n" }),  # blocked: syntax
-    Master::Effect.new(verb: :write, args: { path: "leak.rb", content: "K = 'sk-#{'A' * 24}'\n" }), # blocked: secret
-    Master::Effect.new(verb: :exec,  args: { command: "true" }),                             # admitted -> evidence
+    Master::Effect.write("ok.rb", "A = 1\n"),
+    Master::Effect.new(verb: :write, args: { path: "bad.rb", content: "A = {.freeze\n" }),
+    Master::Effect.new(verb: :write, args: { path: "leak.rb", content: "K = 'sk-#{'A' * 24}'\n" }),
+    Master::Effect.exec(["true"], evidence: :test_pass),
+    Master::Effect.exec(["true"], evidence: :scan_clean),
+    Master::Effect.exec(["true"], evidence: :code_review),
+    Master::Effect.git(:stage, paths: ["ok.rb"]),
+    Master::Effect.git(:commit, message: "add ok.rb"),
     Master::Effect.done("built ok.rb, proved with exec"),
   ]
 
   kernel = Master::Kernel.new(
     model: ScriptedModel.new(script),
     constitution: Master::Constitution.load(data_dir: DATA),
-    world: Master::World.new(root:, git: fake_git),
+    world: Master::World.new(root:),
     memory: Master::Memory.new
   )
 
@@ -52,7 +67,7 @@ Dir.mktmpdir do |root|
   check("admitted write created the file")      { File.exist?(File.join(root, "ok.rb")) }
   check("syntax-broken write was blocked")      { !File.exist?(File.join(root, "bad.rb")) }
   check("secret-bearing write was blocked")     { !File.exist?(File.join(root, "leak.rb")) }
-  check("one commit per admitted good turn")    { commits.length == 2 } # ok.rb write + exec
+  check("evidence-gated commit landed")         { commit_count(root) == 1 }
   check("done summary carried through")         { done.summary.include?("ok.rb") }
 end
 
@@ -63,15 +78,15 @@ check("expose is the only way out") { s.expose == "sk-live-xyz" }
 
 puts "\nEvidence gate — no done without proof"
 Dir.mktmpdir do |root|
+  init_git!(root)
   k = Master::Kernel.new(
     model: ScriptedModel.new([Master::Effect.done("claiming done with no work")]),
     constitution: Master::Constitution.load(data_dir: DATA),
-    world: Master::World.new(root:, git: ->(*) { "ok" }),
-    memory: Master::Memory.new
+    world: Master::World.new(root:),
+    memory: Master::Memory.new,
+    max_turns: 1
   )
-  # done is proposed immediately; the kernel returns complete, but had the model
-  # tried a real :done effect mid-run without evidence the rule would block it.
-  check("done proposed first still returns")    { k.run("x").reason == :complete }
+  check("done without evidence is blocked") { k.run("x").reason == :max_turns }
 end
 
 puts "\n#{$fail.zero? ? 'ALL GREEN' : "#{$fail} FAILED"}"

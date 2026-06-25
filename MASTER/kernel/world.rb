@@ -2,6 +2,8 @@
 
 require "fileutils"
 require "open3"
+require "securerandom"
+require "timeout"
 require "time"
 
 module Master
@@ -13,10 +15,9 @@ module Master
   #
   # This is where the old reach/ (git, web, fs), ops/, and tools/ collapse to.
   class World
-    def initialize(root:, ask: nil, git: method(:shell_git))
+    def initialize(root:, ask: nil)
       @root = File.expand_path(root)
       @ask = ask
-      @git = git
     end
 
     def verbs = Master::VERBS
@@ -27,8 +28,22 @@ module Master
       Observation.no("#{e.class}: #{e.message}")
     end
 
-    # One commit per admitted, successful turn: the working tree is the audit log.
-    def commit(message) = @git.call(@root, "commit", message)
+    def checkpoint
+      {
+        id: SecureRandom.hex(8),
+        patch: git_capture("diff", "--binary"),
+        staged: git_capture("diff", "--cached", "--binary")
+      }
+    end
+
+    def rollback(checkpoint)
+      git_capture("reset", "--hard")
+      git_capture("clean", "-fd")
+      apply_patch(checkpoint[:patch]) unless checkpoint[:patch].to_s.empty?
+      Observation.ok("rolled back #{checkpoint[:id]}")
+    rescue StandardError => e
+      Observation.no("rollback failed: #{e.class}: #{e.message}")
+    end
 
     private
 
@@ -44,13 +59,26 @@ module Master
       Observation.ok("wrote #{path} (#{content.bytesize}b)")
     end
 
-    def do_exec(command:, **)
-      out, status = Open3.capture2e(command, chdir: @root)
+    def do_exec(argv:, timeout: 60, env: {}, **)
+      raise ArgumentError, "argv must be an array" unless argv.is_a?(Array)
+      raise ArgumentError, "argv cannot be empty" if argv.empty?
+      raise ArgumentError, "argv entries must be strings" unless argv.all? { |arg| arg.is_a?(String) }
+
+      out = nil
+      status = nil
+      Timeout.timeout(Integer(timeout)) do
+        out, status = Open3.capture2e(env.transform_keys(&:to_s), *argv, chdir: @root)
+      end
       status.success? ? Observation.ok(out.strip) : Observation.no(out.strip)
     end
 
-    def do_git(operation:, message: nil, **)
-      Observation.ok(@git.call(@root, operation, message))
+    def do_git(operation:, paths: [], message: nil, **)
+      case operation.to_sym
+      when :diff then Observation.ok(git_capture("diff"))
+      when :stage then Observation.ok(git_capture("add", "--", *Array(paths)))
+      when :commit then Observation.ok(git_capture("commit", "-m", message.to_s))
+      else Observation.no("unknown git operation: #{operation}")
+      end
     end
 
     def do_ask(prompt:, options: nil, **)
@@ -75,8 +103,20 @@ module Master
       FileUtils.cp(abs, "#{abs}.#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}.bak")
     end
 
+    def git_capture(*args)
+      out, status = Open3.capture2e("git", "-C", @root, *args)
+      raise out.strip unless status.success?
+
+      out.strip
+    end
+
+    def apply_patch(patch)
+      out, status = Open3.capture2e("git", "-C", @root, "apply", "--binary", "-", stdin_data: patch)
+      raise out.strip unless status.success?
+    end
+
     def self.shell_git(root, operation, message = nil)
-      args = operation == "commit" ? ["commit", "-am", message.to_s] : operation.split
+      args = operation == "commit" ? ["commit", "-m", message.to_s] : operation.split
       out, _ = Open3.capture2e("git", "-C", root, *args)
       out.strip
     end
