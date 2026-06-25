@@ -16,6 +16,7 @@ module Master
           "repligen" => command(:dispatch_repligen, root),
           "photograph" => command(:dispatch_photograph, root, agent),
           "video" => command(:dispatch_video, root, agent),
+          "prompt" => command(:dispatch_prompt, root, agent),
           "sing" => command(:dispatch_sing, root),
         }
       end
@@ -43,24 +44,11 @@ module Master
 
       def dispatch_photograph(root, agent, ctx: nil)
         prompt = arg_for(ctx).to_s.strip
-        return "usage: /photograph <prompt>   (attach photo token for ref vision analysis)" if prompt.empty?
+        return "usage: /photograph <seed>   (LLM expands + Strunk-polishes; attach photo for ref)" if prompt.empty?
 
         image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
         model = "black-forest-labs/flux-1.1-pro"
-
-        refined_prompt = prompt
-        if image && agent
-          # Use free vision model (gemini-2.0-flash-exp:free via routing) for ref analysis + prompt refine.
-          # Leverages the image attachment wiring (path or data).
-          vision_prompt = "You are an expert photography prompt engineer. Given the user request and attached reference image (if present), output ONE highly detailed photorealistic prompt optimized for Flux. Include subject details, lighting, composition, camera, film stock emulation intent (e.g. kodak portra), mood, depth of field. Output ONLY the prompt text, no quotes or explanation."
-          begin
-            refined = agent.ask(vision_prompt, image: image)
-            refined_prompt = refined.to_s.strip.lines.first(3).join(" ").strip if refined
-            refined_prompt = prompt if refined_prompt.empty? || refined_prompt.length < 20
-          rescue StandardError
-            refined_prompt = prompt
-          end
-        end
+        refined_prompt = refine_generation_prompt(prompt, medium: :photo, agent: agent, image: image)
 
         gen_arg = "#{model} #{refined_prompt}"
         gen_out = dispatch_master_tool(root: root, tool: "repligen", arg: "generate #{gen_arg}")
@@ -97,12 +85,15 @@ module Master
 
       def dispatch_video(root, agent, ctx: nil)
         prompt = arg_for(ctx).to_s.strip
-        return "usage: /video <prompt>   (text-to-video via Replicate #{DEFAULT_VIDEO_MODEL})" if prompt.empty?
+        return "usage: /video <seed>   (LLM expands + Strunk-polishes → #{DEFAULT_VIDEO_MODEL})" if prompt.empty?
+
+        image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
+        refined_prompt = refine_generation_prompt(prompt, medium: :video, agent: agent, image: image)
 
         gen_out = dispatch_master_tool(
           root: root,
           tool: "repligen",
-          arg: "generate #{DEFAULT_VIDEO_MODEL} #{prompt}"
+          arg: "generate #{DEFAULT_VIDEO_MODEL} #{refined_prompt}"
         )
 
         output_dir = gen_out[/Output: (output\/[^\s]+)/, 1]
@@ -110,9 +101,44 @@ module Master
 
         [
           "video: model=#{DEFAULT_VIDEO_MODEL}",
-          "prompt: #{prompt[0, 120]}#{"..." if prompt.length > 120}",
+          "seed: #{prompt[0, 80]}#{"..." if prompt.length > 80}",
+          "refined: #{refined_prompt[0, 160]}#{"..." if refined_prompt.length > 160}",
           (videos.any? ? "files: #{videos.join(", ")}" : gen_out),
         ].join("\n")
+      end
+
+      def dispatch_prompt(root, agent, ctx: nil)
+        args = arg_for(ctx).to_s.strip
+        return prompt_usage if args.empty?
+
+        medium = :photo
+        seed = args
+        if args =~ /\A(photo|video)\s+(.+)/i
+          medium = $1.downcase == "video" ? :video : :photo
+          seed = $2.strip
+        end
+        return prompt_usage if seed.empty?
+
+        image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
+        refined = refine_generation_prompt(seed, medium: medium, agent: agent, image: image)
+        [
+          "prompt: medium=#{medium}",
+          "seed: #{seed}",
+          "refined: #{refined}",
+        ].join("\n")
+      end
+
+      def prompt_usage
+        "usage: /prompt <seed>   or   /prompt photo <seed>   /prompt video <seed>"
+      end
+
+      def refine_generation_prompt(prompt, medium:, agent:, image: nil)
+        Master::Reach::GenerationPromptRefiner.refine(
+          prompt: prompt,
+          medium: medium,
+          agent: agent,
+          image: image
+        )
       end
 
       def dispatch_sing(root, ctx: nil)

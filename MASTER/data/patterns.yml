@@ -341,6 +341,11 @@ infer:
       - "\\b(?:play|open|start)\\s+(?:radio\\s+bergen|warp\\s+tunnel)\\b"
       - "\\b(?:radio\\s+bergen|flying\\s+lotus|madlib)\\b"
       capture: none
+    prompt:
+      patterns:
+      - "\\b(?:write|expand|embellish|polish)\\s+(?:me\\s+)?(?:a\\s+)?(?:(?:photo|video|image)\\s+)?prompt\\s+(?:for\\s+)?(.+)"
+      - "\\b(?:strunk|elements of style)\\s+(?:pass\\s+)?(?:on\\s+)?(?:(?:photo|video)\\s+)?(?:prompt\\s+)?(.+)"
+      capture: first_group
     dreams:
       patterns:
       - "\\b(?:dreams?|consolidate?\\s+memor(?:y|ies)|memory\\s+consolidat|dream\\s+mode|promote\\s+memor(?:y|ies))\\b"
