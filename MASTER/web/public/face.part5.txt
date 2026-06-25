@@ -1,6 +1,22 @@
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
 function startVisemeAnim(text) {
   stopVisemeAnim();
+  const plan = Array.isArray(tts.visemePlan) ? tts.visemePlan : null;
+  if (plan?.length) {
+    plan.forEach((frame, i) => {
+      const at = Number(frame.t ?? frame.at ?? (i * VISEME_STEP_MS));
+      if (!Number.isFinite(at)) return;
+      setTimeout(() => {
+        if (!tts.playing && !tts.audio) return;
+        const shape = frame.shape || frame.v || 'E';
+        const amp = Number.isFinite(Number(frame.amp)) ? Number(frame.amp) : 1;
+        State.viseme = shape;
+        State.visemeAmp = amp;
+        emitTtsEvent('tts:viseme', { shape, amp });
+      }, at);
+    });
+    return;
+  }
   const words = text.split(/\s+/);
   let lastWordIdx = -1;
   let i = 0;
@@ -27,17 +43,48 @@ function stopVisemeAnim() {
   if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; }
 }
 
-function ttsSkip() {
+function fadeTtsAudio(ms = 80) {
+  return new Promise((resolve) => {
+    const audio = tts.audio;
+    if (!audio || audio.paused) { resolve(); return; }
+    const gain = tts.outputGain;
+    const start = gain?.gain?.value ?? audio.volume ?? 1;
+    const steps = 4;
+    const stepMs = Math.max(12, ms / steps);
+    let step = 0;
+    const tick = () => {
+      step += 1;
+      const v = start * (1 - step / steps);
+      if (gain && actx) gain.gain.setValueAtTime(Math.max(0, v), actx.currentTime);
+      else audio.volume = Math.max(0, v);
+      if (step >= steps) resolve();
+      else setTimeout(tick, stepMs);
+    };
+    tick();
+  });
+}
+function ttsSkipHard() {
   tts.cancelToken++;
   setTTSLoading(false);
   if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
+  tts.outputGain = null;
   stopVisemeAnim();
+  tts.visemePlan = null;
   tts.queue.length = 0; tts.prefetch.clear(); tts.attempts.clear(); tts.playing = false; tts.current = null;
   tts.resumeTime = null; tts.resumeWordIndex = null;
   if (tts.retryTimer) { clearTimeout(tts.retryTimer); tts.retryTimer = null; }
   if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
+  if (State.mode === 'speaking') State.mode = 'idle';
+  emitTtsEvent('tts:playback:end', { interrupted: true, backend: 'edge', decay_rate: 0.55 });
+}
+function ttsSkip() {
+  if (tts.audio && !tts.audio.paused) {
+    fadeTtsAudio(80).then(() => ttsSkipHard());
+    return;
+  }
+  ttsSkipHard();
 }
 function ttsToggleMute() {
   tts.muted = !tts.muted;
@@ -193,10 +240,14 @@ async function sendMessage(text) {
   if (rateMatch) { setTtsRate(parseFloat(rateMatch[1])); return; }
   const pitchMatch = trimmed.match(/^\/pitch\s+([+-]?[\d.]+)$/i);
   if (pitchMatch) { tts.pitchOffset = Math.max(-20, Math.min(20, parseFloat(pitchMatch[1]))); if (uiStatus) uiStatus.textContent = `pitch ${tts.pitchOffset >= 0 ? '+' : ''}${tts.pitchOffset}Hz`; return; }
-  const voiceMatch = trimmed.match(/^\/voice\s+(\S+)$/i);
+  const voiceMatch = trimmed.match(/^\/voice(?:\s+last)?\s+(\S+)(?:\s+(\S+))?$/i);
   if (voiceMatch) {
     setVoiceName(voiceMatch[1]);
-    if (uiStatus) uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}`;
+    if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
+    if (uiStatus) {
+      const style = _nextTtsStyle();
+      uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}${style ? ` · ${style}` : ''}`;
+    }
     return;
   }
   if (/^\/whoami$/i.test(trimmed)) {
@@ -459,15 +510,45 @@ function guardVoice(v, opts = {}) {
 function previewVoice(voice) {
   const chosen = guardVoice(voice || State.voiceName, { explicit: true }) || TTS_DEFAULT_VOICE;
   if (!chosen) return;
+  const style = _nextTtsStyle(chosen);
   window.MASTER_FACE?.initAudio?.();
-  playDuo([[chosen, "Let's work now."]]);
+  if (tts.playing) ttsSkip();
+  loadTTSBlob("Let's work now.", chosen, style)
+    .then(async (blob) => {
+      const src = URL.createObjectURL(blob);
+      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
+      const audio = new Audio(src);
+      tts.audio = audio;
+      audio.playbackRate = getTtsRate();
+      preSpeechInhale(style);
+      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
+      startVisemeAnim("Let's work now.");
+      audio.onended = audio.onerror = () => {
+        stopVisemeAnim();
+        tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
+        tts.outputGain = null;
+        URL.revokeObjectURL(src);
+        clearViseme();
+      };
+      audio.play().catch(() => { URL.revokeObjectURL(src); clearViseme(); });
+    })
+    .catch(() => playDuo([[chosen, "Let's work now."]], null, style));
 }
 
-function playDuo(lines, onDone) {
+function wireTtsStyleChips() {
+  document.querySelectorAll('.style-chip').forEach((chip) => {
+    if (chip.dataset.wired === '1') return;
+    chip.dataset.wired = '1';
+    chip.addEventListener('click', () => setTtsStyle(chip.dataset.style));
+  });
+  syncTtsStyleUi();
+}
+function playDuo(lines, onDone, style) {
   if (!lines.length) { onDone?.(); return; }
   const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw);
   const rest = lines.slice(1);
-  loadTTSBlob(text, voice)
+  const useStyle = style || _nextTtsStyle(voice);
+  loadTTSBlob(text, voice, useStyle)
     .then(async blob => {
       const src = URL.createObjectURL(blob);
       if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
@@ -476,16 +557,18 @@ function playDuo(lines, onDone) {
       audio.playbackRate = getTtsRate();
       try { await connectTTSAudio(audio, 1.15); } catch (_) {}
       startVisemeAnim(text);
+      preSpeechInhale(useStyle);
       audio.onended = audio.onerror = () => {
         stopVisemeAnim();
         tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
+        tts.outputGain = null;
         URL.revokeObjectURL(src);
         clearViseme();
-        playDuo(rest, onDone);
+        playDuo(rest, onDone, useStyle);
       };
-      audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone); });
+      audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone, useStyle); });
     })
-    .catch(() => playDuo(rest, onDone));
+    .catch(() => playDuo(rest, onDone, useStyle));
 }
 
 function startEverything() {
@@ -510,6 +593,7 @@ function startEverything() {
   _schedLogoDim();
   document.addEventListener('pointerdown', () => { if (logo) logo.classList.remove('dim'); _schedLogoDim(); }, { passive: true });
   requestMotionPermission(); acquireWakeLock();
+  wireTtsStyleChips();
   setTimeout(() => { morphTarget = 1.0; }, 600);
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v2')).catch(() => {});
@@ -739,6 +823,8 @@ window.MASTER_FACE = {
   toggleTheme,
   toggleFocusMode,
   previewVoice,
+  setTtsStyle,
+  syncTtsStyleUi,
   setUiScale: applyUiScale,
   wakeFromSleep,
   enterSleep,

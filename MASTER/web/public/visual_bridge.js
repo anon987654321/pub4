@@ -121,6 +121,34 @@
     return Math.max(min, Math.min(max, Number(value)));
   }
 
+  let _visemePlanTimers = [];
+
+  function clearVisemePlanTimers() {
+    _visemePlanTimers.forEach((id) => clearTimeout(id));
+    _visemePlanTimers = [];
+  }
+
+  function forwardVisemePlan(plan) {
+    clearVisemePlanTimers();
+    const frames = Array.isArray(plan)
+      ? plan
+      : (plan?.frames || plan?.visemes || null);
+    if (!Array.isArray(frames) || !frames.length) return;
+    frames.forEach((frame, i) => {
+      const at = Number(frame.t ?? frame.at ?? (i * 90));
+      if (!Number.isFinite(at)) return;
+      const id = setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("tts:viseme", {
+          detail: {
+            shape: frame.shape || frame.v || "neutral",
+            amp: Number.isFinite(Number(frame.amp)) ? Number(frame.amp) : 1
+          }
+        }));
+      }, at);
+      _visemePlanTimers.push(id);
+    });
+  }
+
   function handleRuntimeEvent(event) {
     const type = event?.type || event?.event || event?.data?.event || "runtime:event";
     const mapped = (window.MASTERTopology && typeof window.MASTERTopology.classifyEvent === "function")
@@ -144,6 +172,22 @@
     if (type === "tts:style:active") {
       window.dispatchEvent(new CustomEvent("tts:style:active", { detail: event }));
       window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, raw: event } }));
+    }
+    if (/^tts:playback:/.test(type)) {
+      window.dispatchEvent(new CustomEvent(type, { detail: event }));
+    }
+    if (type === "tts:viseme:plan") {
+      forwardVisemePlan(event);
+      window.dispatchEvent(new CustomEvent("tts:viseme:plan", { detail: event }));
+    }
+    if (type === "tts:job_cancelled") {
+      clearVisemePlanTimers();
+      window.dispatchEvent(new CustomEvent("tts:job_cancelled", { detail: event }));
+      window.MASTER_FACE?.ttsSkip?.();
+    }
+    if (type === "user:expression") {
+      window.dispatchEvent(new CustomEvent("user:expression", { detail: event }));
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, expression: event.expression, raw: event } }));
     }
     if (/pressure:updated|ctx:footer/i.test(type)) {
       const pct = event.pct ?? event.value ?? 0;
@@ -246,7 +290,10 @@
 
   function bootExperimentalVisuals() {
     const params = new URLSearchParams(window.location.search);
-    const face3d = params.get("face3d") === "1";
+    const face3dOff = params.get("face3d") === "0" || localStorage.getItem("master_face3d") === "0";
+    const desktop = matchMedia("(min-width: 1024px)").matches;
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const face3d = !face3dOff && (params.get("face3d") === "1" || (desktop && !reducedMotion));
     const clusters = face3d || params.get("clusters") === "1";
 
     if (clusters && !window.MASTERClusterMiner) {

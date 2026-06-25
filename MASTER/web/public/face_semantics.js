@@ -35,15 +35,22 @@ function payloadConfidence(d) {
 }
 
 window.addEventListener('master:pressure', (ev) => {
-  const pct = Number(ev.detail?.pct ?? ev.detail?.value ?? 0);
+  const d = ev.detail || {};
+  const pct = Number(d.pct ?? d.value ?? 0);
   if (!Number.isFinite(pct)) return;
+  if (typeof d.entropy === 'number') State.entropy = d.entropy;
+  if (typeof d.turbulence === 'number') State.turbulence = d.turbulence;
+  if (typeof d.gravity === 'number') State.gravity = d.gravity;
   State.breath = Math.max(0.55, 1 - pct / 120);
   const K = window.ParticleKernel;
   if (!mouthPool || !K) return;
   const push = Math.min(0.85, pct / 100);
+  const turb = typeof d.turbulence === 'number' ? Math.min(0.35, d.turbulence) : 0;
+  const grav = typeof d.gravity === 'number' ? Math.min(0.4, d.gravity) : 0;
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, push);
+    mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, push + turb);
+    if (grav > 0) mouthPool.cells[b + K.FIELD.valence] = Math.max(-0.2, (mouthPool.cells[b + K.FIELD.valence] || 0) - grav * 0.12);
   }
 });
 
@@ -208,11 +215,33 @@ setInterval(() => {
 window.addEventListener('tts:anticipate', (ev) => {
   const ex = (ev.detail && ev.detail.expression) || {};
   if (!mouthPool || !eyePool) return;
+  boostEyePool(0.15);
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * window.ParticleKernel.FIELDS_PER_CELL;
     mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = Math.min(1.0, (mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] || 0.6) + (ex.arousal || 0.25));
   }
   State.pulse = Math.max(State.pulse || 0, 0.35);
+});
+
+window.addEventListener('tts:style:active', (ev) => {
+  const d = ev.detail || {};
+  const ex = d.expression || {};
+  State.currentSpeechStyle = d.style || State.currentSpeechStyle;
+  if (ex.emotion) window.Face3DPreview?.engine?.setEmotion?.(ex.emotion);
+  if (d.blendshapes && window.Face3DPreview?.engine?.setBlend) {
+    window.Face3DPreview.engine.setBlend(d.blendshapes);
+  }
+  if (mouthPool && window.ParticleKernel) {
+    const K = window.ParticleKernel;
+    const hi = /dramatic|intense|energetic|storyteller/i.test(String(d.style || ''));
+    const lo = /whisper|ethereal|robotic|intimate/i.test(String(d.style || ''));
+    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * K.FIELDS_PER_CELL;
+      mouthPool.cells[b + K.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
+      if (ex.pressure != null) mouthPool.cells[b + K.FIELD.pressure] = ex.pressure;
+    }
+    if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
+  }
 });
 
 window.addEventListener('tts:playback:start', (ev) => {
@@ -222,7 +251,18 @@ window.addEventListener('tts:playback:start', (ev) => {
   State.currentSpeechStyle = d.style || State.currentSpeechStyle || 'calm';
 });
 
-window.addEventListener('tts:playback:end', () => {
+window.addEventListener('tts:playback:end', (ev) => {
+  const d = ev.detail || {};
+  const decay = Number.isFinite(Number(d.decay_rate)) ? Number(d.decay_rate) : 0.82;
+  const K = window.ParticleKernel;
+  if (mouthPool && K) {
+    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * K.FIELDS_PER_CELL;
+      mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.12, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * decay);
+      mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.08, (mouthPool.cells[b + K.FIELD.pressure] || 0) * decay);
+    }
+  }
+  State.pulse = Math.max(0, (State.pulse || 0) * decay);
   if (State.mode === 'speaking') State.mode = 'idle';
   State.currentSpeechStyle = null;
   clearViseme?.();

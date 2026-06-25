@@ -42,15 +42,12 @@ module Master
       def pick(text)
         style = pick_style(text)
         voice, style = pick_voice(style, text)
-        cfg = STYLES.fetch(style, STYLES[:clear])
-        result = {
-          voice: voice,
-          style: style,
-          rate: jitter_rate(cfg[:rate]),
-          pitch: jitter_pitch(cfg[:pitch])
-        }
-        remember_voice(voice)
-        result
+        prosody_for(voice, style).tap { |r| remember_voice(r[:voice]) }
+      end
+
+      def pick_for_voice(voice, text, style: nil)
+        resolved_style = style || pick_style(text)
+        prosody_for(voice, resolved_style)
       end
 
       def bad_news?(text)
@@ -147,7 +144,17 @@ module Master
         val = [0, val.abs + rand(-2..8)].max
         format("%+dHz", sign * val)
       end
-      private_class_method :bad_news?, :pick_style, :pick_voice, :surprise_guest, :weighted_choice, :jitter_rate, :jitter_pitch
+
+      def prosody_for(voice, style)
+        cfg = STYLES.fetch(style, STYLES[:clear])
+        {
+          voice: voice.to_sym,
+          style: style,
+          rate: jitter_rate(cfg[:rate]),
+          pitch: jitter_pitch(cfg[:pitch])
+        }
+      end
+      private_class_method :bad_news?, :pick_style, :pick_voice, :surprise_guest, :weighted_choice, :jitter_rate, :jitter_pitch, :prosody_for
     end
   end
 end

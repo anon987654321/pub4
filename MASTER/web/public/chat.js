@@ -1115,4 +1115,11 @@ document.querySelectorAll('.tool').forEach(btn => {
   if (new URLSearchParams(location.search).get('focus') === '1') {
     window.addEventListener('load', () => window.MASTER_FACE?.toggleFocusMode?.(), { once: true });
   }
+
+  document.addEventListener('click', (ev) => {
+    const chip = ev.target?.closest?.('.style-chip');
+    if (!chip || chip.dataset.wired === '1') return;
+    ev.preventDefault();
+    window.MASTER_FACE?.setTtsStyle?.(chip.dataset.style);
+  });
 })();

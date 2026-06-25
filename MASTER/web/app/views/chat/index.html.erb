@@ -83,6 +83,15 @@
       </select>
     </label>
     <button id="voice-preview-btn" type="button" class="tool" aria-label="Preview selected voice" title="Preview selected voice">▶</button>
+    <div class="tts-style-chips" role="group" aria-label="TTS style">
+      <button type="button" class="style-chip" data-style="clear">clear</button>
+      <button type="button" class="style-chip" data-style="dramatic">dramatic</button>
+      <button type="button" class="style-chip" data-style="whispered">whispered</button>
+      <button type="button" class="style-chip" data-style="energetic">energetic</button>
+      <button type="button" class="style-chip" data-style="intimate">intimate</button>
+      <button type="button" class="style-chip" data-style="storyteller">storyteller</button>
+    </div>
+    <span id="tts-style-indicator" aria-live="polite"></span>
   </div>
   <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
     <span class="pp">master</span><span class="sep2">* </span>

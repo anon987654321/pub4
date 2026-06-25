@@ -44,7 +44,7 @@ module Master
         hash.each_with_object({}) { |(k, v), acc| acc[k.to_s] = v }
       end
 
-      def synthesize(text, voice: nil, style: :auto, rate: nil, pitch: nil)
+      def synthesize(text, voice: nil, style: :auto, rate: nil, pitch: nil, voice_locked: false, style_locked: false)
         cfg = load_config
         clean = Speech.clean_text(text)
         return nil if clean.empty? || clean.length < 20
@@ -58,8 +58,13 @@ module Master
         personality = cfg["personality"].to_s
 
         if personality == "warm_erratic" && style != :fixed
-          pick = WarmErratic.pick(clean)
-          resolved_voice = pick[:voice]
+          locked_style = style_locked ? style : nil
+          if voice_locked && voice
+            pick = WarmErratic.pick_for_voice(voice, clean, style: locked_style)
+          else
+            pick = WarmErratic.pick(clean)
+            resolved_voice = pick[:voice]
+          end
           resolved_rate ||= pick[:rate]
           resolved_pitch ||= pick[:pitch]
         elsif style != :auto && Speech::STYLES.key?(style.to_sym)

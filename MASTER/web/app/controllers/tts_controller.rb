@@ -1,15 +1,34 @@
 # frozen_string_literal: true
 
+require "base64"
+require "json"
+
 class TtsController < ApplicationController
   def show
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 
+    voice_locked = params[:voice].present?
+    style_locked = params[:style].present?
     voice_key, synth_style, rate, pitch = tts_voice_and_style(text)
-    publish_tts_style(voice_key, synth_style)
-    job = TtsJob.enqueue(text: text, voice: voice_key, style: synth_style, rate: rate, pitch: pitch, bus: container[:bus])
+    pre = Master::Voice::Expression.for_pre_speech(style: synth_style, text: text)
+    container[:bus]&.publish("tts:anticipate", style: synth_style.to_s, expression: pre)
+    publish_tts_style(voice_key, synth_style, text: text)
+    job = TtsJob.enqueue(
+      text: text,
+      voice: voice_key,
+      style: synth_style,
+      rate: rate,
+      pitch: pitch,
+      voice_locked: voice_locked,
+      style_locked: style_locked,
+      bus: container[:bus]
+    )
+    visemes = Master::Voice::Expression.viseme_hints(text)
     etag = %("#{job.job_id}")
     response.headers["X-TTS-Voice"] = voice_key.to_s
+    response.headers["X-TTS-Style"] = synth_style.to_s
+    response.headers["X-TTS-Visemes"] = viseme_header(visemes)
     response.headers["X-TTS-Job"] = job.job_id
     response.headers["ETag"] = etag
     response.headers["Cache-Control"] = "public, max-age=3600"
@@ -26,6 +45,17 @@ class TtsController < ApplicationController
     return head(:not_found) unless job
 
     tts_job_response(job)
+  end
+
+  def destroy
+    job_id = params[:job].to_s
+    return head(:bad_request) if job_id.empty?
+
+    cancelled = TtsJob.cancel(job_id)
+    return head(:not_found) unless cancelled
+
+    container[:bus]&.publish("tts:job_cancelled", job_id: job_id)
+    head(:no_content)
   end
 
   private
@@ -56,6 +86,11 @@ class TtsController < ApplicationController
     Master::Voice::Speech.infer_style(text, fallback: Master::Voice::Speech.default_style)
   end
 
+  def viseme_header(visemes)
+    json = JSON.generate(visemes)
+    json.length <= 240 ? json : Base64.strict_encode64(json)
+  end
+
   def tts_job_response(job)
     if job.failed?
       return render(json: { job: job.job_id, status: "failed", error: job.error }, status: :service_unavailable)
@@ -68,16 +103,15 @@ class TtsController < ApplicationController
     send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
   end
 
-  def publish_tts_style(voice_key, synth_style)
+  def publish_tts_style(voice_key, synth_style, text: nil)
     return if [:neutral, :normal].include?(synth_style)
     return unless Master::Voice::Speech::STYLES.key?(synth_style)
 
     cfg = Master::Voice::Speech.style_config_for(voice_key, synth_style)
     expr = Master::Voice::Expression.for_tts_style(synth_style)
     container[:bus]&.publish("tts:style:active", style: synth_style.to_s, rate: cfg[:rate], pitch: cfg[:pitch], expression: expr)
-    anticipate = expr.dup
-    anticipate[:arousal] = (anticipate[:arousal] || 0.7) + 0.25
-    anticipate[:attention] = (anticipate[:attention] || 0.6) + 0.3
-    container[:bus]&.publish("tts:anticipate", style: synth_style.to_s, expression: anticipate)
+    visemes = text ? Master::Voice::Expression.viseme_hints(text) : []
+    blendshapes = Master::Voice::Expression.blendshapes_for(synth_style)
+    container[:bus]&.publish("tts:viseme:plan", style: synth_style.to_s, visemes: visemes, blendshapes: blendshapes)
   end
 end

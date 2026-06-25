@@ -16,6 +16,9 @@ module Master
       CREATIVE_STYLES = %i[dramatic intense energetic storyteller ethereal].freeze
       LOW_STYLES      = %i[whispered intimate robotic calm].freeze
 
+      CONFIDENCE_WEIGHTS = { verdict: 0.45, retrieval: 0.30, council: 0.25 }.freeze
+      VOWEL_SHAPES = { "a" => "A", "e" => "E", "i" => "I", "o" => "O", "u" => "U" }.freeze
+
       module_function
 
       # Main entry for text → expression profile.
@@ -99,7 +102,95 @@ module Master
           pressure: hi ? 0.85 : lo ? 0.25 : 0.6,
           breath_boost: hi ? 0.35 : lo ? -0.15 : 0.0,
           valence: lo ? 0.2 : 0.0,
+          blendshapes: blendshapes_for(s),
+          decay_rate: decay_rate_for(s),
         }
+      end
+
+      def blendshapes_for(style_name)
+        s = style_name.to_s.downcase.to_sym
+        hi = CREATIVE_STYLES.include?(s) || %i[intense energetic].include?(s)
+        lo = LOW_STYLES.include?(s)
+
+        {
+          jaw: hi ? 0.78 : lo ? 0.22 : 0.55,
+          smile: hi ? 0.38 : lo ? 0.12 : 0.28,
+          brow: hi ? 0.68 : lo ? 0.18 : 0.42,
+          lid_open: hi ? 0.88 : lo ? 0.52 : 0.72,
+        }
+      end
+
+      def for_pre_speech(style:, text: nil)
+        base = for_tts_style(style)
+        spike = text.to_s.length > 120 ? 0.30 : 0.22
+        {
+          arousal: [(base[:arousal] || 0.7) + spike, 1.0].min,
+          eye_attention: 0.38,
+          breath_boost: (base[:breath_boost] || 0.0) + 0.18,
+          style: style.to_s,
+        }
+      end
+
+      def for_post_speech(style:)
+        rate = decay_rate_for(style)
+        lo = LOW_STYLES.include?(style.to_s.downcase.to_sym)
+        {
+          decay_rate: rate,
+          linger_ms: ((1.0 - rate) * 1400).to_i,
+          arousal_floor: lo ? 0.22 : 0.40,
+          pressure_floor: lo ? 0.15 : 0.30,
+        }
+      end
+
+      def viseme_hints(text)
+        clean = text.to_s.downcase.gsub(/[^a-zæøåéáà]/i, "")
+        return [] if clean.empty?
+
+        hints = []
+        clean.each_char do |c|
+          shape = VOWEL_SHAPES[c] || (c.match?(/[mbpfvw]/i) ? "M" : "E")
+          ms = shape == "M" ? 55 : 85
+          if hints.last && hints.last[:shape] == shape
+            hints.last[:ms] += ms
+          else
+            hints << { shape: shape, amp: 0.85, ms: ms }
+          end
+        end
+        hints
+      end
+
+      def fuse_confidence(sources)
+        src = sources.is_a?(Hash) ? sources : {}
+        total_w = 0.0
+        fused = 0.0
+
+        CONFIDENCE_WEIGHTS.each do |key, weight|
+          raw = src[key] || src[key.to_s]
+          next if raw.nil?
+
+          score =
+            case raw
+            when Hash then raw[:score] || raw["score"] || raw[:confidence] || raw["confidence"]
+            when Symbol then raw == :pass ? 0.95 : raw == :block ? 0.30 : 0.60
+            else raw
+            end
+          next if score.nil?
+
+          fused += score.to_f * weight
+          total_w += weight
+        end
+
+        total_w.positive? ? (fused / total_w).clamp(0.0, 1.0) : 0.75
+      end
+
+      private_class_method def decay_rate_for(style_name)
+        s = style_name.to_s.downcase.to_sym
+        return 0.12 if s == :dramatic
+        return 0.88 if s == :whispered
+        return 0.72 if LOW_STYLES.include?(s)
+        return 0.28 if CREATIVE_STYLES.include?(s)
+
+        0.50
       end
 
       private_class_method def face_params_for(register:, style:, risk:, reversibility:)

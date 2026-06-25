@@ -71,10 +71,82 @@ function _activeTtsVoice() {
   return State.voiceName || persona.voice || TTS_DEFAULT_VOICE;
 }
 function _nextTtsVoice() { return _activeTtsVoice(); }
+const TTS_STYLE_KEY = 'master:tts_style';
+const TTS_STYLE_DEFAULT = 'clear';
+function _readStoredTtsStyle() {
+  try { return localStorage.getItem(TTS_STYLE_KEY) || TTS_STYLE_DEFAULT; } catch (_) { return TTS_STYLE_DEFAULT; }
+}
+window.MASTER_TTS_STYLE = _readStoredTtsStyle();
+function _ttsStyleDecayRate(style) {
+  const s = String(style || '').toLowerCase();
+  if (/dramatic|storyteller|intense/.test(s)) return 0.92;
+  if (/whispered|intimate|calm|ethereal/.test(s)) return 0.58;
+  if (/energetic/.test(s)) return 0.75;
+  return 0.82;
+}
 function _nextTtsStyle(_voice) {
+  const locked = String(window.MASTER_TTS_STYLE || '').trim();
+  if (locked && locked !== 'auto') return locked;
   const persona = window.MASTER_PERSONA || {};
   const style = String(persona.style || 'auto').trim();
-  return style && style !== 'auto' ? style : 'calm';
+  return style && style !== 'auto' ? style : TTS_STYLE_DEFAULT;
+}
+function syncTtsStyleUi() {
+  const style = _nextTtsStyle();
+  document.querySelectorAll('.style-chip').forEach((chip) => {
+    chip.classList.toggle('active', chip.dataset.style === style);
+  });
+  const indicator = document.getElementById('tts-style-indicator');
+  if (indicator) indicator.textContent = style;
+}
+function setTtsStyle(style, opts = {}) {
+  const next = String(style || '').trim().toLowerCase() || TTS_STYLE_DEFAULT;
+  window.MASTER_TTS_STYLE = next;
+  try { localStorage.setItem(TTS_STYLE_KEY, next); } catch (_) {}
+  syncTtsStyleUi();
+  if (!opts.silent) {
+    emitTtsEvent('tts:style:active', { style: next });
+    window.MASTERVisual?.event?.('tts:style:active', { topology: 'papua-mask', entropy: 0.22, confidence: 0.86, mode: next, style: next });
+  }
+}
+syncTtsStyleUi();
+function preSpeechInhale(style) {
+  const s = style || _nextTtsStyle();
+  emitTtsEvent('tts:anticipate', { style: s, expression: { arousal: 0.35, attention: 0.2 } });
+  const K = window.ParticleKernel;
+  if (mouthPool && K) {
+    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * K.FIELDS_PER_CELL;
+      mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) + 0.28);
+    }
+  }
+  if (eyePool && K) {
+    for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
+      const b = i * K.FIELDS_PER_CELL;
+      eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + 0.15);
+    }
+  }
+}
+function _applyLocalPostSpeechDecay(decayRate) {
+  const rate = Number.isFinite(Number(decayRate)) ? Number(decayRate) : 0.82;
+  const K = window.ParticleKernel;
+  if (!mouthPool || !K) return;
+  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.12, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * rate);
+    mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.08, (mouthPool.cells[b + K.FIELD.pressure] || 0) * rate);
+  }
+  State.pulse = Math.max(0, (State.pulse || 0) * rate);
+}
+function _parseTtsVisemeHeader(res) {
+  const raw = res?.headers?.get?.('X-TTS-Visemes');
+  if (!raw) return null;
+  try {
+    const plan = JSON.parse(raw);
+    return Array.isArray(plan) ? plan : (plan.frames || plan.visemes || null);
+  } catch (_) {
+    return null;
+  }
 }
 function _quirkifyTts(text, voice, opts = {}) {
   if (!opts.quirky) return text;
@@ -171,8 +243,10 @@ function announceTTS(text) {
 function ttsURL(text, voice, style) {
   const qs = new URLSearchParams({ text });
   const persona = window.MASTER_PERSONA || {};
+  const resolvedStyle = style || _nextTtsStyle(voice);
   if (voice) qs.set('voice', voice);
-  if (style) qs.set('style', style);
+  if (resolvedStyle) qs.set('style', resolvedStyle);
+  if (State.voiceLocked) qs.set('voice_locked', '1');
   if (persona.tts_rate) qs.set('rate', String(persona.tts_rate));
   if (persona.tts_pitch) qs.set('pitch', String(persona.tts_pitch));
   return `/chat/tts?${qs.toString()}`;
@@ -237,6 +311,8 @@ async function loadTTSBlob(text, voice, style) {
       return pollTTSJob(job, controller.signal);
     }
     if (!res.ok) throw new Error(res.status);
+    const visemes = _parseTtsVisemeHeader(res);
+    if (visemes) tts.visemePlan = visemes;
     const blob = await res.blob();
     writeCachedTTS(key, blob);
     return blob;
@@ -252,6 +328,8 @@ async function pollTTSJob(job, signal) {
     const res = await fetch(`/chat/tts/status?job=${encodeURIComponent(job)}`, { signal });
     if (res.status === 202) continue;
     if (!res.ok) throw new Error(res.status);
+    const visemes = _parseTtsVisemeHeader(res);
+    if (visemes) tts.visemePlan = visemes;
     return res.blob();
   }
   throw new Error('tts timeout');
@@ -299,6 +377,7 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   dryGain.connect(masterGain); wetGain.connect(masterGain);
   masterGain.connect(compressor); compressor.connect(analyser); analyser.connect(actx.destination);
   tts.analyser = analyser;
+  tts.outputGain = masterGain;
   tts.analyserBuf = new Uint8Array(analyser.fftSize);
   tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
 }
@@ -309,9 +388,14 @@ function hasAnalyserBuffers() {
 
 function finishTTSPlayback(src, continueQueue = true) {
   const finishedText = tts.current || tts.lastText || '';
+  const style = State.currentSpeechStyle || _nextTtsStyle();
+  const decay_rate = _ttsStyleDecayRate(style);
   if (tts.playing || finishedText) {
-    emitTtsEvent('tts:playback:end', { text: finishedText, interrupted: !continueQueue, backend: 'edge' });
+    emitTtsEvent('tts:playback:end', { text: finishedText, interrupted: !continueQueue, backend: 'edge', style, decay_rate });
   }
+  _applyLocalPostSpeechDecay(decay_rate);
+  tts.visemePlan = null;
+  if (tts.outputGain && actx) tts.outputGain.gain.setValueAtTime(1.9, actx.currentTime);
   setTTSLoading(false);
   stopVisemeAnim();
   rootBody.dataset.ttsWave = '';
@@ -501,6 +585,7 @@ function ttsTick() {
       rootBody.dataset.ttsWave = 'true';
     };
     audio.onended = audio.onerror = () => finishTTSPlayback(src);
+    preSpeechInhale(style);
     audio.play().catch(() => { requeueChunk(text); finishTTSPlayback(src); });
   }
 

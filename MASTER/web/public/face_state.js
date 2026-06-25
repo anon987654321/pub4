@@ -40,6 +40,15 @@
   window.addEventListener("master:visual", (ev) => apply(ev.detail || {}));
   document.addEventListener("visibilitychange", () => apply());
 
+  window.addEventListener("tts:playback:start", () => {
+    document.body.dataset.masterState = "speaking";
+  });
+
+  window.addEventListener("tts:playback:end", () => {
+    document.body.dataset.masterState = "idle";
+    apply();
+  });
+
   window.addEventListener("DOMContentLoaded", () => {
     observe(document.getElementById("status"));
     observe(document.getElementById("ui-status"));

@@ -7,8 +7,17 @@ require "json"
 class TtsJob
   CACHE_DIR = Rails.root.join("tmp", "tts_cache")
 
-  def self.enqueue(text:, voice:, style:, rate: nil, pitch: nil, bus: nil)
-    job = new(text: text, voice: voice, style: style, rate: rate, pitch: pitch, bus: bus)
+  def self.enqueue(text:, voice:, style:, rate: nil, pitch: nil, voice_locked: false, style_locked: false, bus: nil)
+    job = new(
+      text: text,
+      voice: voice,
+      style: style,
+      rate: rate,
+      pitch: pitch,
+      voice_locked: voice_locked,
+      style_locked: style_locked,
+      bus: bus
+    )
     return job if job.ready?
     return job if job.failed?
 
@@ -31,21 +40,42 @@ class TtsJob
       voice: data.fetch("voice").to_sym,
       style: data.fetch("style").to_sym,
       rate: data["rate"],
-      pitch: data["pitch"]
+      pitch: data["pitch"],
+      voice_locked: data.fetch("voice_locked", false),
+      style_locked: data.fetch("style_locked", false)
     )
   rescue StandardError => e
     Master::Ground::Swallow.log(e, context: "TtsJob.find", job_id: job_id.to_s)
     nil
   end
 
+  def self.cancel(job_id)
+    return false unless job_id.to_s.match?(/\A[0-9a-f]{32}\z/)
+
+    token_path = CACHE_DIR.join("#{job_id}.job")
+    return false unless File.file?(token_path)
+
+    FileUtils.mkdir_p(CACHE_DIR)
+    %w[.mp3 .job .err].each do |ext|
+      path = CACHE_DIR.join("#{job_id}#{ext}")
+      File.delete(path) if File.exist?(path)
+    end
+    true
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "TtsJob.cancel", job_id: job_id.to_s)
+    false
+  end
+
   attr_reader :job_id
 
-  def initialize(text:, voice:, style:, rate: nil, pitch: nil, bus: nil)
+  def initialize(text:, voice:, style:, rate: nil, pitch: nil, voice_locked: false, style_locked: false, bus: nil)
     @text = text.to_s
     @voice = voice.to_sym
     @style = style.to_sym
     @rate = rate
     @pitch = pitch
+    @voice_locked = voice_locked
+    @style_locked = style_locked
     @bus = bus
     @fingerprint = Digest::SHA256.hexdigest("#{@voice}|#{@style}|#{@rate}|#{@pitch}|#{@text}")
     @job_id = @fingerprint[0, 32]
@@ -80,7 +110,15 @@ class TtsJob
     File.delete(error_path) if File.exist?(error_path)
     File.write(
       CACHE_DIR.join("#{@job_id}.job"),
-      JSON.generate(text: @text, voice: @voice, style: @style, rate: @rate, pitch: @pitch)
+      JSON.generate(
+        text: @text,
+        voice: @voice,
+        style: @style,
+        rate: @rate,
+        pitch: @pitch,
+        voice_locked: @voice_locked,
+        style_locked: @style_locked
+      )
     )
     data = synthesize_with_retry
     if data.nil? || data.empty?
@@ -99,7 +137,15 @@ class TtsJob
 
   def synthesize_with_retry
     2.times do |attempt|
-      data = Master::Voice::Speech.synthesize_bytes(@text, voice: @voice, style: @style, rate: @rate, pitch: @pitch)
+      data = Master::Voice::Speech.synthesize_bytes(
+        @text,
+        voice: @voice,
+        style: @style,
+        rate: @rate,
+        pitch: @pitch,
+        voice_locked: @voice_locked,
+        style_locked: @style_locked
+      )
       return data if data && !data.empty?
 
       break if attempt.positive?

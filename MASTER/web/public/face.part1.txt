@@ -190,6 +190,7 @@ function setVoiceName(voice, opts = {}) {
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
   State.voiceName = next;
+  if (opts.lockVoice !== false) State.voiceLocked = true;
   if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = next;
   const picker = document.getElementById('voice-picker');
   if (picker) {
@@ -238,6 +239,7 @@ function detectLang(text) {
 const State = {
   mode: 'idle', mood: 'idle', model: '', modelName: '',
   voiceName: '',
+  voiceLocked: false,
   lastTouch: performance.now(), confidence: 1.0,
   tiltX: 0, tiltY: 0, mouseX: 0, mouseY: 0,
   parX: 0, parY: 0,
@@ -359,7 +361,10 @@ function stopStar() {
 
 voicePicker?.addEventListener('change', () => {
   const voice = voicePicker.value.trim();
-  if (voice) setVoiceName(voice);
+  if (voice) {
+    State.voiceLocked = true;
+    setVoiceName(voice);
+  }
 });
 voicePreviewBtn?.addEventListener('click', () => window.MASTER_FACE?.previewVoice?.());
 
