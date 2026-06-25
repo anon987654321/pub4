@@ -1,11 +1,12 @@
 name: MASTER through MASTER
 
+# Auto-runs paused while GitHub Actions billing is locked (same as master-tests.yml).
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [main]
 
 jobs:
   master-gate:
