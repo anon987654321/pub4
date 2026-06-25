@@ -6,6 +6,8 @@
 
 Each app compiles a **single** `app/assets/builds/application.css` via Dart Sass. No separate `tokens.css`, `animations.css`, or `minimal-ui*.css` links in layouts.
 
+**Protected file:** only `application.scss` per `limits.yml` → `frontend_protection`. Keep it a thin `@use` stack; edit `_minimal`, `_zen_shell`, and product partials freely.
+
 **Stack entry** (top of every `application.scss`):
 
 ```scss

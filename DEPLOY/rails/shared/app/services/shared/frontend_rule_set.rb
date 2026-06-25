@@ -33,7 +33,7 @@ module Shared
       preserve_svg_assets: true,
       prefer_unified_diff_for_large_files: true,
       shell_scripts_must_not_embed_app_files: true,
-      protected_stylesheet_paths: %w[app/assets/stylesheets app/assets/builds].freeze
+      protected_stylesheet_files: %w[application.scss].freeze
     }.freeze
 
     MOTION = {

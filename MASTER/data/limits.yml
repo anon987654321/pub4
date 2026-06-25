@@ -193,15 +193,8 @@ conflicts:
       resolution: "reject fix, report to autoloop"
 
 frontend_protection:
-  statement: "Stylesheets are protected high-churn surfaces — edit with intent; never embed app CSS in shell scripts."
-  protected_paths:
-    - app/assets/stylesheets
-    - app/assets/builds
+  statement: "Only application.scss is protected — keep it a thin @use/@forward entry; product rules live in partials."
   protected_files:
-    - _minimal.scss
-    - _tokens.scss
-    - _animations.scss
-    - _pub4_stack.scss
     - application.scss
   on_view_or_css_edit:
     - flatten divitis and use semantic landmarks
