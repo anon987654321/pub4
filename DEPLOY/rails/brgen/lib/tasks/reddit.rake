@@ -14,17 +14,21 @@ namespace :scrape do
     end
   end
 
-  desc "Seed fictive data from Reddit scrape into brgen models (Posts, Marketplace listings, Takeaway, etc.). Requires OPENROUTER_API_KEY. Run after or instead of pure faker seeds."
-  task :reddit_seed, [ :subs ] => :environment do |_, args|
-    subs   = (args[:subs] || "norge,bergen,oslo").split(",").map(&:strip)
+  desc "Seed fictive data from Reddit scrape for a city domain (domain: brgen.no, lsangeles.com, ...). Requires OPENROUTER_API_KEY."
+  task :reddit_seed, [ :domain ] => :environment do |_, args|
+    domain = args[:domain].presence || "brgen.no"
+    city = City.find_by!(domain: domain)
+    subs = Brgen::DomainRegistry.subreddits_for(domain)
     schema = %w[title url body score author comments]
 
-    seed_user = User.find_or_create_by!(email_address: "reddit-seed@brgen.no") do |u|
-      u.username = "redditseed"
-      u.password = u.password_confirmation = "password123"
-    end
+    ActsAsTenant.with_tenant(city) do
+      seed_user = User.strict_loading(false).find_or_create_by!(email_address: "reddit-seed@#{domain}") do |user|
+        user.username = "redditseed_#{city.slug}"
+        user.password = user.password_confirmation = "password123"
+        user.city = city
+      end
 
-    subs.each do |sub|
+      subs.each do |sub|
       items = Scrape.call(
         "https://www.reddit.com/r/#{sub}/hot/",
         schema: schema,
@@ -38,11 +42,15 @@ namespace :scrape do
                  "— scraped & fictivized from Reddit (score: #{item['score']}, comments: #{item['comments']})" ].compact.join("\n\n")
 
         # Core social feed (always)
+        community = Community.find_by(slug: sub) ||
+                    Community.find_by(slug: Brgen::CityContent.community_slugs_for(city.country_code).first) ||
+                    Community.first
         post = Post.create!(
           user: seed_user,
+          city: city,
           title: title,
           content: body,
-          community: Community.find_by(slug: sub) || Community.find_by(slug: "bergen") || Community.first
+          community: community
         )
         post.record_activity!("RedditScrapeSeed") if post.respond_to?(:record_activity!)
 
@@ -63,7 +71,8 @@ namespace :scrape do
           rest = Takeaway::Restaurant.find_or_create_by!(name: item["title"][0..60]) do |r|
             r.user = seed_user
             r.cuisine_type = %w[Norwegian Italian Chinese Japanese Indian Thai Mexican Pizza].sample
-            r.address = "#{Faker::Address.street_address}, Bergen"
+            r.address = "#{Faker::Address.street_address}, #{city.name}"
+            r.city = city.name
             r.description = body[0..300]
             r.delivery_fee_cents = rand(2000..5000)
             r.min_order_cents = rand(5000..15_000)
@@ -117,7 +126,8 @@ namespace :scrape do
           description: Faker::Lorem.sentence
         )
       end
-      puts "Seeded #{items.size} Reddit items from r/#{sub} (fictive, routed to subapps)."
+        puts "Seeded #{items.size} Reddit items from r/#{sub} for #{domain} (fictive, routed to subapps)."
+      end
     end
   end
 end

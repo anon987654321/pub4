@@ -10,6 +10,13 @@ require 'faker'
 # Each city domain is an isolated experience.
 Brgen::CitySeed.sync! if defined?(Brgen::CitySeed) && ActiveRecord::Base.connection.table_exists?(:cities)
 
+if City.table_exists?
+  puts 'Seeding flagship per-city content (brgen.no, lsangeles.com, amstrdam.nl, oshlo.no)...'
+  City.where(domain: %w[brgen.no lsangeles.com amstrdam.nl oshlo.no]).find_each do |city|
+    Brgen::PerCitySeeder.new(city, posts_per_city: 4).seed!
+  end
+end
+
 puts 'Seeding Brgen (core + subapps) with rich fictive data...'
 
 if Rails.env.development? || Rails.env.test?
@@ -360,7 +367,7 @@ puts "TV channels: #{Tv::Channel.count}, Places: #{place_count}"
 puts 'Ready for demo / development.'
 
 # Optional web-augmented fictive seeds using Ferrum + vision LLM (see lib/tasks/{reddit,x}.rake)
-# Requires OPENROUTER_API_KEY. These pull live public content (e.g. r/bergen, X searches for "bergen")
+# Requires OPENROUTER_API_KEY. Per-city: rake scrape:reddit_seed[brgen.no] or scrape:reddit_seed[lsangeles.com]
 # then fictivize/anonymize into Posts, Takeaway, Marketplace etc. for more "real" seed data.
 # Usage: SEED_FROM_WEB=1 OPENROUTER_API_KEY=... bin/rails db:seed
 # Or run standalone: rake scrape:reddit_seed scrape:x_seed

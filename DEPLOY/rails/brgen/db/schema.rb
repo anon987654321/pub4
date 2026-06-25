@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", null: false
@@ -89,6 +89,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
   end
 
   create_table "communities", force: :cascade do |t|
+    t.integer "city_id"
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"
@@ -96,7 +97,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.string "subdomain"
     t.datetime "updated_at", null: false
     t.integer "user_id"
-    t.index ["slug"], name: "index_communities_on_slug", unique: true
+    t.index ["city_id", "slug"], name: "index_communities_on_city_id_and_slug", unique: true
+    t.index ["city_id"], name: "index_communities_on_city_id"
     t.index ["subdomain"], name: "index_communities_on_subdomain", unique: true
   end
 
@@ -149,6 +151,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.integer "age"
     t.text "bio"
     t.string "bydel"
+    t.integer "city_id"
     t.datetime "created_at", null: false
     t.string "gender"
     t.decimal "latitude"
@@ -159,6 +162,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.boolean "visible"
+    t.index ["city_id"], name: "index_dating_profiles_on_city_id"
     t.index ["neighborhood_id"], name: "index_dating_profiles_on_neighborhood_id"
     t.index ["user_id"], name: "index_dating_profiles_on_user_id"
   end
@@ -231,6 +235,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
 
   create_table "marketplace_listings", force: :cascade do |t|
     t.integer "category_id", null: false
+    t.integer "city_id"
     t.string "condition"
     t.datetime "created_at", null: false
     t.string "currency"
@@ -244,6 +249,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.integer "user_id", null: false
     t.integer "views_count"
     t.index ["category_id"], name: "index_marketplace_listings_on_category_id"
+    t.index ["city_id"], name: "index_marketplace_listings_on_city_id"
     t.index ["store_id"], name: "index_marketplace_listings_on_store_id"
     t.index ["user_id"], name: "index_marketplace_listings_on_user_id"
   end
@@ -274,6 +280,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
 
   create_table "marketplace_stores", force: :cascade do |t|
     t.boolean "active", default: true, null: false
+    t.integer "city_id"
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name", null: false
@@ -282,6 +289,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.datetime "updated_at", null: false
     t.boolean "verified", default: false, null: false
     t.string "vertical"
+    t.index ["city_id"], name: "index_marketplace_stores_on_city_id"
     t.index ["owner_id"], name: "index_marketplace_stores_on_owner_id"
     t.index ["slug"], name: "index_marketplace_stores_on_slug", unique: true
     t.index ["vertical", "active"], name: "index_marketplace_stores_on_vertical_and_active"
@@ -443,6 +451,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
   end
 
   create_table "playlist_playlists", force: :cascade do |t|
+    t.integer "city_id"
     t.boolean "collaborative", default: false, null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -453,6 +462,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.integer "tracks_count"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["city_id"], name: "index_playlist_playlists_on_city_id"
     t.index ["user_id"], name: "index_playlist_playlists_on_user_id"
   end
 
@@ -631,6 +641,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.boolean "active"
     t.string "address"
     t.string "city"
+    t.integer "city_id"
     t.datetime "created_at", null: false
     t.string "cuisine_type"
     t.integer "delivery_fee_cents"
@@ -644,6 +655,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.integer "reviews_count"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["city_id"], name: "index_takeaway_restaurants_on_city_id"
     t.index ["user_id"], name: "index_takeaway_restaurants_on_user_id"
   end
 
@@ -680,6 +692,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
   end
 
   create_table "tv_channels", force: :cascade do |t|
+    t.integer "city_id"
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"
@@ -688,6 +701,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.integer "total_views"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["city_id"], name: "index_tv_channels_on_city_id"
     t.index ["user_id"], name: "index_tv_channels_on_user_id"
   end
 
@@ -699,6 +713,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.integer "video_id", null: false
     t.index ["user_id"], name: "index_tv_comments_on_user_id"
     t.index ["video_id"], name: "index_tv_comments_on_video_id"
+  end
+
+  create_table "tv_episodes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "number", null: false
+    t.integer "show_id", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "video_id"
+    t.index ["show_id", "number"], name: "index_tv_episodes_on_show_id_and_number", unique: true
+    t.index ["show_id"], name: "index_tv_episodes_on_show_id"
+    t.index ["video_id"], name: "index_tv_episodes_on_video_id"
   end
 
   create_table "tv_live_streams", force: :cascade do |t|
@@ -717,6 +743,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
     t.index ["status", "updated_at"], name: "index_tv_live_streams_on_status_and_updated_at"
     t.index ["stream_key"], name: "index_tv_live_streams_on_stream_key", unique: true
     t.index ["user_id"], name: "index_tv_live_streams_on_user_id"
+  end
+
+  create_table "tv_shows", force: :cascade do |t|
+    t.integer "channel_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.boolean "published", default: false, null: false
+    t.string "slug", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["channel_id", "slug"], name: "index_tv_shows_on_channel_id_and_slug", unique: true
+    t.index ["channel_id"], name: "index_tv_shows_on_channel_id"
   end
 
   create_table "tv_stream_chats", force: :cascade do |t|
@@ -823,6 +861,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "activity_events", "users", column: "actor_id"
   add_foreign_key "comments", "users"
+  add_foreign_key "communities", "cities"
   add_foreign_key "conversation_participants", "conversations"
   add_foreign_key "conversation_participants", "users"
   add_foreign_key "dating_dislikes", "users", column: "dislikee_id"
@@ -831,16 +870,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
   add_foreign_key "dating_likes", "users", column: "liker_id"
   add_foreign_key "dating_matches", "users", column: "initiator_id"
   add_foreign_key "dating_matches", "users", column: "receiver_id"
+  add_foreign_key "dating_profiles", "cities"
   add_foreign_key "dating_profiles", "users"
   add_foreign_key "marketplace_deals", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_listing_favorites", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_listing_favorites", "users"
+  add_foreign_key "marketplace_listings", "cities"
   add_foreign_key "marketplace_listings", "marketplace_categories", column: "category_id"
   add_foreign_key "marketplace_listings", "marketplace_stores", column: "store_id"
   add_foreign_key "marketplace_listings", "users"
   add_foreign_key "marketplace_orders", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_orders", "users", column: "buyer_id"
   add_foreign_key "marketplace_saved_searches", "users"
+  add_foreign_key "marketplace_stores", "cities"
   add_foreign_key "marketplace_stores", "users", column: "owner_id"
   add_foreign_key "mentions", "users", column: "mentioned_user_id"
   add_foreign_key "message_receipts", "messages"
@@ -864,6 +906,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
   add_foreign_key "playlist_playlist_tracks", "playlist_playlists"
   add_foreign_key "playlist_playlist_tracks", "playlist_tracks"
   add_foreign_key "playlist_playlist_tracks", "users"
+  add_foreign_key "playlist_playlists", "cities"
   add_foreign_key "playlist_playlists", "users"
   add_foreign_key "playlist_set_tracks", "playlist_sets"
   add_foreign_key "playlist_set_tracks", "playlist_tracks"
@@ -887,17 +930,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_225000) do
   add_foreign_key "takeaway_orders", "takeaway_delivery_drivers", column: "delivery_driver_id"
   add_foreign_key "takeaway_orders", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_orders", "users"
+  add_foreign_key "takeaway_restaurants", "cities"
   add_foreign_key "takeaway_restaurants", "users"
   add_foreign_key "takeaway_reviews", "takeaway_orders", column: "order_id"
   add_foreign_key "takeaway_reviews", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_reviews", "users"
   add_foreign_key "tv_broadcasts", "tv_channels"
   add_foreign_key "tv_broadcasts", "users"
+  add_foreign_key "tv_channels", "cities"
   add_foreign_key "tv_channels", "users"
   add_foreign_key "tv_comments", "tv_videos", column: "video_id"
   add_foreign_key "tv_comments", "users"
+  add_foreign_key "tv_episodes", "tv_shows", column: "show_id"
+  add_foreign_key "tv_episodes", "tv_videos", column: "video_id"
   add_foreign_key "tv_live_streams", "tv_channels", column: "channel_id"
   add_foreign_key "tv_live_streams", "users"
+  add_foreign_key "tv_shows", "tv_channels", column: "channel_id"
   add_foreign_key "tv_stream_chats", "tv_live_streams", column: "live_stream_id"
   add_foreign_key "tv_stream_chats", "users"
   add_foreign_key "tv_subscriptions", "tv_channels"

@@ -2,6 +2,8 @@
 
 module Marketplace
   class Store < ApplicationRecord
+    include CityTenantable
+
     # Engine-ized Shared
     include Shared.concern(:Notifiable) rescue nil
     include Shared.concern(:ActivityTrackable) rescue nil

@@ -2,3 +2,8 @@ en:
   hello: "Hello"
   app:
     name: "Brgen"
+  feed:
+    title: "Local news"
+  nav:
+    sign_in: "Sign in"
+    new_post: "New post"

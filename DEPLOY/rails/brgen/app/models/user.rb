@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  acts_as_tenant :city, optional: true  # Automatic city scoping based on request TLD/domain
+  include CityTenantable
 
   has_secure_password
-
-  belongs_to :city, optional: true
 
   has_many :account_merges, dependent: :destroy
   has_many :activity_events, foreign_key: :actor_id, dependent: :nullify

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Dating::Profile < ApplicationRecord
+  include CityTenantable
+
   # Engine-ize Shared
   include Shared.concern(:GeoLocatable) rescue nil
   include Shared.concern(:Reactable) rescue nil

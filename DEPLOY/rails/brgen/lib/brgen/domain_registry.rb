@@ -128,5 +128,9 @@ module Brgen
 
       SUBAPP_ALIASES.fetch(subdomain) { raise UnknownSubdomain, subdomain }
     end
+
+    def self.subreddits_for(domain)
+      Brgen::CityContent.subreddits_for(domain)
+    end
   end
 end

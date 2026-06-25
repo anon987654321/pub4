@@ -93,6 +93,16 @@ vmctl console vm23
 - [ ] All six Rails apps: `bundle34 exec bin/ci` green on vm23 (as app user; one app at a time on 1 GiB VM)
 - [ ] Browser smoke on `https://ai.brgen.no/` (WebGL, palette, tap-to-start, history sidebar)
 
+### 2026-06-25 (multi-city wiring)
+
+| Check | Result |
+|-------|--------|
+| `CityTenantable` on posts, communities, marketplace, dating, TV, playlist, takeaway | landed |
+| `city_id` migration + per-city community slug scope | landed |
+| `LocaleBridge` + nl/de/fr locale files | landed |
+| `CityContent` subreddit map + `PerCitySeeder` + city-aware `reddit_seed` | landed |
+| `DomainRegistry` + tenant isolation tests | 7 runs, 0 failures locally |
+
 ### 2026-06-25 (land-all backlog)
 
 | Check | Result |

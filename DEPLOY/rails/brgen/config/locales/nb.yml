@@ -2,3 +2,8 @@ nb:
   hello: "Hei"
   app:
     name: "Brgen"
+  feed:
+    title: "Lokale nyheter"
+  nav:
+    sign_in: "Logg inn"
+    new_post: "Nytt innlegg"

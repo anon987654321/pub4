@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Marketplace::Listing < ApplicationRecord
+  include CityTenantable
   include Shared::ActivityTrackable
   tracks_activity created: "ListingCreated", source_vertical: "marketplace", actor: :user
 
@@ -26,7 +27,10 @@ class Marketplace::Listing < ApplicationRecord
   validates :condition, inclusion: { in: CONDITIONS }, allow_nil: true
   validates :status, inclusion: { in: STATUSES }
 
-  before_validation { self.status ||= "active"; self.currency ||= "NOK" }
+  before_validation do
+    self.status ||= "active"
+    self.currency ||= Current.currency.presence || "NOK"
+  end
 
   after_create_commit { broadcast_append_later_to "marketplace:listings", partial: "marketplace/listings/listing", locals: { listing: self } }
 

@@ -16,6 +16,7 @@ require "action_cable/engine"
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
+require_relative "../lib/brgen/locale_bridge"
 
 module App
   class Application < Rails::Application
@@ -34,8 +35,8 @@ module App
     #
     config.time_zone = "Europe/Oslo"
     config.i18n.default_locale = :nb
-    config.i18n.available_locales = %i[nb en]
-    config.i18n.fallbacks = { nb: :en }
+    config.i18n.available_locales = %i[nb en nl de fr]
+    config.i18n.fallbacks = Brgen::LocaleBridge.fallbacks_map
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Don't generate system test files.

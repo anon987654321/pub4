@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Takeaway::Restaurant < ApplicationRecord
+  include CityTenantable
+
   # Engine-ized Shared concerns (via pub4-shared)
   include Shared.concern(:Notifiable) rescue nil
   include Shared.concern(:Reactable) rescue nil

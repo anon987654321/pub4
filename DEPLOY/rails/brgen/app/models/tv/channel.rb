@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Tv::Channel < ApplicationRecord
+  include CityTenantable
+
   # Engine-ized Shared via pub4-shared
   include Shared.concern(:Notifiable) rescue nil
   include Shared.concern(:ActivityTrackable) rescue nil

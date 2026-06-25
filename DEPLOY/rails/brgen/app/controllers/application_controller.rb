@@ -27,7 +27,7 @@ class ApplicationController < ActionController::Base
     Current.subapp = result.subapp
     Current.city_record = result.city_record
 
-    I18n.locale = result.entry.locale
+    I18n.locale = Brgen::LocaleBridge.resolve(result.entry.locale)
 
     # Wire ActsAsTenant if the gem is in use (for row-level city scoping on models)
     if defined?(ActsAsTenant)

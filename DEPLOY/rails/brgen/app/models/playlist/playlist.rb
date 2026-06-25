@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Playlist::Playlist < ApplicationRecord
+  include CityTenantable
+
   # Engine-ize Shared via pub4-shared
   include Shared.concern(:ActivityTrackable) rescue nil
   include Shared.concern(:Reactable) rescue nil
