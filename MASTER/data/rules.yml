@@ -415,6 +415,34 @@ scan_depths:
     - js_module_size
     - no_column_align
   sh: [strict_mode_zsh, no_magic, openrsync_prefer, library_verify]
+  cosmetic: &cosmetic
+    - trailing_whitespace
+    - consecutive_blank_lines
+    - no_column_align
+    - trailing_comment
+    - tab_character
+    - final_newline
+    - typographic_excellence
+    - typography_discipline
+    - no_ascii_line_art
+    - ruby_snake_methods
+    - ruby_camel_class
+    - ruby_numeric_underscore
+    - ruby_symbol_to_proc
+    - ruby_block_delimiter
+    - ruby_ternary_not_nested
+    - no_abbreviated_identifiers
+    - double_quotes_ruby
+    - en_dash_range
+    - measure_optimum
+    - all_caps_no_tracking
+    - trailing_commas
+    - meaningful_names
+    - use_then
+    - rescue_on_def
+    - magic_color
+    - no_long_transition
+    - line_length
   erb:
     - aria_labels
     - no_todo_in_views

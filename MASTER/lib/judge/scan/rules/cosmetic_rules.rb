@@ -1,0 +1,156 @@
+# frozen_string_literal: true
+
+module Master
+  module Judge
+    module Scan
+      module Rules
+        ABBREV_IDENT_RE = /\b(?:def|class|module|\|)\s+.*\b(tmp|idx|cfg|ctx|num|val|obj|str|arr|buf|temp|ret)\b/.freeze
+        EN_DASH_RANGE_RE = /\b\d+\s?-\s?\d+\b/.freeze
+        NUMERIC_UNDERSCORE_RE = /[^\d_.]\d{5,}(?![\d_])/.freeze
+
+        RuleDSL.rule :RUBY_SNAKE_METHODS,
+          severity: :warning, tags: %i[STYLE], applies_to: %i[ruby],
+          description: "methods use snake_case, never camelCase" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          scan_lines(src, /\bdef\s+[a-z][a-z0-9_]*[A-Z]/,
+            message: "camelCase method name — use snake_case: def fetch_album")
+        end
+
+        RuleDSL.rule :RUBY_CAMEL_CLASS,
+          severity: :warning, tags: %i[STYLE], applies_to: %i[ruby],
+          description: "classes and modules use CamelCase without underscores" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          scan_lines(src, /^\s*(class|module)\s+([a-z]|[A-Z]\w*_)/,
+            message: "class/module name — use CamelCase without underscores")
+        end
+
+        RuleDSL.rule :RUBY_NUMERIC_UNDERSCORE,
+          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          description: "large numeric literals use underscore grouping" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          src.each_line.with_index(1).filter_map do |line, number|
+            next if line.strip.start_with?("#")
+            next unless line.match?(NUMERIC_UNDERSCORE_RE)
+            finding(line: number, message: "large literal — group digits: 1_000_000 not 1000000")
+          end
+        end
+
+        RuleDSL.rule :RUBY_SYMBOL_TO_PROC,
+          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          description: "use &:method for single-method blocks" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          scan_lines(src, /\{\s*\|(\w+)\|\s*\1\.[a-z_]+\s*\}/,
+            message: "single-method block — collapse to &:method")
+        end
+
+        RuleDSL.rule :RUBY_BLOCK_DELIMITER,
+          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          description: "braces for single-line blocks, do/end for multi-line" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          scan_lines(src, /\bdo\b\s*(\|[^|]*\|)?[^\n]*\bend\s*$/,
+            message: "single-line do/end — use { } delimiters")
+        end
+
+        RuleDSL.rule :RUBY_TERNARY_NOT_NESTED,
+          severity: :warning, tags: %i[STYLE], applies_to: %i[ruby],
+          description: "no nested ternaries" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          scan_lines(src, /\?[^?:\n]*\?[^?:\n]*:[^?:\n]*:/,
+            message: "nested ternary — expand to if/elsif/else or case")
+        end
+
+        RuleDSL.rule :NO_ABBREVIATED_IDENTIFIERS,
+          severity: :info, tags: %i[STYLE], applies_to: %i[ruby javascript],
+          description: "spell identifiers in full — no tmp/idx/cfg/ctx" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          src.each_line.with_index(1).filter_map do |line, number|
+            next if line.strip.start_with?("#", "//")
+            next unless line.match?(ABBREV_IDENT_RE)
+            finding(line: number, message: "abbreviated identifier — spell it out (temporary_path not tmp)")
+          end
+        end
+
+        RuleDSL.rule :DOUBLE_QUOTES_RUBY,
+          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          description: "double-quoted strings per style.yml" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          src.each_line.with_index(1).filter_map do |line, number|
+            next if line.match?(/#[^"']*'[^']*'/) && !line.match?(/"[^"]*"/)
+            next unless line.match?(/'[^'\\]*(\\.[^'\\]*)*'/)
+            next if line.match?(/%w\[|%i\[|<<[-~]?'|require\s+'|gem\s+'/)
+            finding(line: number, message: "single-quoted string — use double quotes per style.yml")
+          end
+        end
+
+        RuleDSL.rule :EN_DASH_RANGE,
+          severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[markdown yaml html],
+          description: "numeric ranges use en dash not hyphen" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.end_with?(".rb", ".js", ".css", ".scss")
+          src.each_line.with_index(1).filter_map do |line, number|
+            stripped = line.strip
+            next if stripped.start_with?("#", "//", "detect_lexical:", "- id:")
+            next unless stripped.match?(EN_DASH_RANGE_RE)
+            next if stripped.match?(/^\s*-\s+\w/) # YAML list item
+            finding(line: number, message: "numeric range — use en dash: 45–75 not 45-75")
+          end
+        end
+
+        RuleDSL.rule :MEASURE_OPTIMUM,
+          severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[css scss],
+          description: "prose measure in ch/rem, not wide px columns" do |src, path:|
+          scan_lines(src, /max-width:\s*([89]\d{2}|\d{4,})px/i,
+            message: "wide px max-width — bound prose to ~66ch or 33rem")
+        end
+
+        RuleDSL.rule :ALL_CAPS_NO_TRACKING,
+          severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[css scss],
+          description: "all-caps labels need letter-spacing" do |src, path:|
+          next [] unless src.match?(/text-transform:\s*uppercase/i)
+          next [] if src.match?(/letter-spacing\s*:/i)
+          [finding(line: 1, message: "uppercase without letter-spacing — add tracking per design_rules.yml")]
+        end
+
+        RuleDSL.rule :TAB_CHARACTER,
+          severity: :warning, tags: %i[HYGIENE],
+          description: "tabs forbidden — use two spaces" do |src, path:|
+          scan_lines(src, /\t/, message: "tab character — indent with two spaces")
+        end
+
+        RuleDSL.rule :FINAL_NEWLINE,
+          severity: :info, tags: %i[HYGIENE],
+          description: "files end with a single newline" do |src, path:|
+          next [] if src.empty? || src.end_with?("\n")
+          [finding(line: src.lines.size, message: "missing final newline at EOF")]
+        end
+
+        RuleDSL.rule :USE_THEN,
+          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          description: "chain pipeline transforms with .then" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          lines = src.lines
+          lines.each_with_index.filter_map do |line, index|
+            match = line.match(/(\w+)\s*=\s*(\w+)\(.*\)/)
+            next unless match
+            next if index + 1 >= lines.size
+
+            var, callee = match[1], match[2]
+            following = lines[index + 1]
+            next unless following&.match?(/^\s*#{Regexp.escape(callee)}\(#{Regexp.escape(var)}\)/)
+            finding(line: index + 2, message: "sequential transform — chain with .then { |r| ... }")
+          end
+        end
+
+        RuleDSL.rule :RESCUE_ON_DEF,
+          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          description: "rescue belongs on the def line, not wrapped in begin" do |src, path:|
+          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] unless src.match?(/^\s*def\s+\w+[^\n]*\n\s*begin\b/m)
+          line = src.each_line.with_index(1).find { |l, _| l.match?(/^\s*begin\b/) }&.last || 1
+          [finding(line: line, message: "begin/rescue inside def — put rescue on the def line")]
+        end
+
+      end
+    end
+  end
+end

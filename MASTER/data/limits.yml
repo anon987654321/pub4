@@ -95,6 +95,9 @@ scan_rules:
   hunt_only:
     - rubocop
     - reek
+  cosmetic_depth:
+    profile: cosmetic
+    description: "Hygiene, micro-typography, naming, and style-perfection rules from rules.yml scan_depths.cosmetic"
   notes:
     nielsen: "puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are."
     prune: "Loads patterns from data/voice.yml (voice.strunk); legacy fallback in rules.yml."
