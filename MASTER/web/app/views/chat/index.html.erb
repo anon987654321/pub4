@@ -54,7 +54,7 @@
   <iframe id="yt-fallback-a" src="about:blank" title="Radio A" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
   <iframe id="yt-fallback-b" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
   <div id="tts-live" aria-live="polite" aria-atomic="true"></div>
-  <div id="primer" role="dialog" aria-modal="true" aria-labelledby="primer-title" tabindex="0">
+  <div id="primer" role="button" aria-labelledby="primer-title" tabindex="0">
     <h1 id="primer-title">tap to start</h1>
   </div>
   <main id="chat-shell" aria-label="MASTER chat">
@@ -99,8 +99,17 @@
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
-      var p=document.getElementById('primer'),z=document.getElementById('zsh'),ui=document.getElementById('ui-status');
+      var p=document.getElementById('primer'),z=document.getElementById('zsh'),ui=document.getElementById('ui-status'),title=document.getElementById('primer-title');
       var fired=false,timer=null,fallback=null;
+      function primeAudio(){
+        try{
+          var Ctx=window.AudioContext||window.webkitAudioContext;
+          if(!Ctx||window.__MASTER_AUDIO_PRIME__)return;
+          var ctx=new Ctx();
+          window.__MASTER_AUDIO_PRIME__=ctx;
+          ctx.resume().catch(function(){});
+        }catch(_e){}
+      }
       function dismissPrimer(){
         document.body.classList.remove('face-loading');
         if(!p)return;
@@ -118,20 +127,28 @@
         }
         return false;
       }
-      function fallbackUi(){dismissPrimer();revealPrompt();if(ui)ui.textContent='face loading…';}
+      function showLoadState(){
+        if(title)title.textContent='loading…';
+        if(ui)ui.textContent='loading face';
+      }
+      function fallbackUi(){
+        dismissPrimer();
+        revealPrompt();
+        if(ui)ui.textContent='face failed to load — reload';
+      }
       function go(){
         if(fired)return;
         fired=true;
         window._primerFired=true;
-        dismissPrimer();
-        revealPrompt();
+        primeAudio();
         if(boot())return;
+        showLoadState();
         timer=setInterval(function(){if(boot()){clearInterval(timer);timer=null;clearTimeout(fallback);}},40);
-        fallback=setTimeout(function(){clearInterval(timer);fallbackUi();},8000);
+        fallback=setTimeout(function(){clearInterval(timer);if(!(window.MASTER_FACE&&window.MASTER_FACE.primerFired))fallbackUi();},15000);
       }
       if(p){
         p.addEventListener('pointerdown',go);
-        p.addEventListener('touchstart',go,{passive:true});
+        p.addEventListener('touchend',go,{passive:true});
         p.addEventListener('click',go);
         p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
       }

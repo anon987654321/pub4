@@ -528,7 +528,7 @@ window.addEventListener('master:self_violation', () => flashViolation());
 let primerFired = false;
 function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
 primer?.addEventListener('pointerdown', firePrimer);
-primer?.addEventListener('touchstart', firePrimer, { passive: true });
+primer?.addEventListener('touchend', firePrimer, { passive: true });
 primer?.addEventListener('click', firePrimer);
 primer?.addEventListener('keydown', event => {
   if (event.key !== 'Enter' && event.key !== ' ') return;

@@ -1,9 +1,16 @@
 let actx = null;
 let ambientHumGain = null;
 function initAudio() {
-  if (actx) return;
+  if (actx) {
+    if (actx.state === 'suspended') actx.resume().catch(() => {});
+    return;
+  }
   try {
-    actx = new (window.AudioContext || window.webkitAudioContext)();
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    actx = window.__MASTER_AUDIO_PRIME__ || (Ctx ? new Ctx() : null);
+    window.__MASTER_AUDIO_PRIME__ = null;
+    if (!actx) return;
+    if (actx.state === 'suspended') actx.resume().catch(() => {});
     const silentGain = actx.createGain();
     silentGain.gain.value = 0;
     const silentOsc = actx.createOscillator();
