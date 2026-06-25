@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require "pub4/deploy_paths"
+
 class PostproJob < ApplicationJob
   queue_as :bulk
 
-  POSTPRO = Rails.root.join("../../postpro/postpro.rb").expand_path.freeze
+  POSTPRO = Pub4::DeployPaths.postpro_script.freeze
   VALID_PRESETS = %w[portrait landscape street blockbuster].freeze
 
   def perform(record_gid, preset, attachment_name = "image")
