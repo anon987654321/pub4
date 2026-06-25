@@ -238,7 +238,7 @@ module Master
             result = verify.verify_gem!(gem)
             next if result.ok?
 
-            finding(path: lock, line: 1, message: result.error.to_s)
+            finding(path: lock, line: 1, message: result.message.to_s)
           end
         end
 
