@@ -53,10 +53,14 @@ module Master
         end
       end
       self_test = Judge::Scan::SelfTest.new(root: root, event_bus: bus).call
-      unless self_test.ok?
-        bus&.publish("builder:self_test", ok: false, violations: self_test.value!.violation_count)
+      if self_test.err?
+        warn("builder: #{self_test.message}")
+        bus&.publish("builder:self_test", ok: false, error: self_test.message)
+      elsif !self_test.value!.ok?
+        summary = self_test.value!
+        bus&.publish("builder:self_test", ok: false, violations: summary.violation_count)
         if ENV["MASTER_STRICT_BOOT"] == "1"
-          raise "builder: self_test failed with #{self_test.value!.violation_count} violation(s)"
+          raise "builder: self_test failed with #{summary.violation_count} violation(s)"
         end
       end
       { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard:,

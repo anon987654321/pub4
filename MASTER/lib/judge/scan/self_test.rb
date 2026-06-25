@@ -36,6 +36,14 @@ module Master
 
         private
 
+        def read_lines(path)
+          File.readlines(path, chomp: true, encoding: "UTF-8", invalid: :replace, undef: :replace)
+        end
+
+        def read_text(path)
+          File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+        end
+
         def build_checks(laws: nil)
           checks = [
             check("ROBUSTNESS") {
@@ -55,7 +63,7 @@ module Master
         def deploy_bare_rescue_findings
           deploy_paths.flat_map do |path|
             next [] unless path.end_with?(".rb", ".sh")
-            File.readlines(path, chomp: true).each_with_index.filter_map do |line, index|
+            read_lines(path).each_with_index.filter_map do |line, index|
               next unless line.match?(/^\s*rescue\s*(?:$|=>)/) || line.match?(/^\s*trap\s+.*\s+do/)
               finding(path:, line: index + 1, message: "bare rescue/trap in DEPLOY — use explicit error handling")
             end
@@ -77,7 +85,7 @@ module Master
         def deploy_nesting_findings
           deploy_paths.flat_map do |path|
             next [] unless path.end_with?(".sh", ".erb")
-            lines = File.readlines(path, chomp: true)
+            lines = read_lines(path)
             depth = 0
             findings = []
             lines.each_with_index do |line, i|
@@ -91,7 +99,7 @@ module Master
 
         def deploy_god_class_findings
           deploy_paths.select { |p| p.end_with?(".rb") }.flat_map do |path|
-            code = File.read(path, encoding: "UTF-8") rescue ""
+            code = read_text(path) rescue ""
             code.scan(/^\s*def\s+\w+/).size > 10 ? [finding(path:, line: 1, message: "potential god class in DEPLOY rails (>10 defs)")] : []
           end
         end
@@ -138,7 +146,7 @@ module Master
 
         def bare_rescue_findings
           ruby_lib_paths.flat_map do |path|
-            File.readlines(path, chomp: true).each_with_index.filter_map do |line, index|
+            read_lines(path).each_with_index.filter_map do |line, index|
               next unless line.match?(/^\s*rescue\s*(?:$|=>)/)
               finding(path:, line: index + 1, message: "bare rescue — use rescue StandardError")
             end
@@ -148,7 +156,7 @@ module Master
         def timeout_findings
           targets = ruby_lib_paths.select { |p| p.include?("/reach/") || p.include?("/judge/llm") }
           targets.flat_map do |path|
-            content = File.read(path, encoding: "UTF-8")
+            content = read_text(path)
             next [] unless content.match?(/\b(?:Open3\.|Net::HTTP)\b/)
             next [] if content.match?(/Timeout\.|read_timeout|open_timeout|block_until_ms/)
             [finding(path:, line: 1, message: "HTTP/Open3 without bounded timeout (ROBUSTNESS)")]
@@ -161,7 +169,7 @@ module Master
           web = File.join(@root, "web", "public")
           return [] unless File.directory?(web)
           Dir.glob(File.join(web, "**", "*.js")).flat_map do |path|
-            File.readlines(path, chomp: true).each_with_index.filter_map do |line, index|
+            read_lines(path).each_with_index.filter_map do |line, index|
               next unless line.match?(/catch\s*\([^)]*\)\s*\{\s*\}/)
               finding(path:, line: index + 1, message: "silent catch {} in web JS — fail visibly")
             end
@@ -207,7 +215,7 @@ module Master
 
         def structural_findings(rule)
           ruby_lib_paths.flat_map do |path|
-            code = File.read(path, encoding: "UTF-8")
+            code = read_text(path)
             rule.check(code, path:).map { |result| finding(path:, line: result.line, message: result.message) }
           end
         end
@@ -224,7 +232,7 @@ module Master
         def face_pool_findings
           semantics = File.join(@root, "web", "public", "face_semantics.js")
           return [] unless File.file?(semantics)
-          body = File.read(semantics)
+          body = read_text(semantics)
           return [] unless body.match?(/mouthPool\.cells|eyePool\.cells/)
           [finding(path: semantics, line: 1, message: "face_semantics still mutates mouthPool/eyePool — use MASTER_FACE_BLEND")]
         end
