@@ -8,10 +8,15 @@ puts "MASTER transcendent TTS bootstrap"
 puts
 
 steps = []
-unless system("python3", "-c", "import mlx_audio", out: File::NULL, err: File::NULL)
-  steps << %w[pip3 install -U pip]
-  steps << %w[pip3 install mlx-audio]
-  puts "→ mlx-audio (Apple Silicon: Chatterbox, Qwen3-TTS, Kokoro, Higgs…)"
+py311 = %w[python3.12 python3.11].find { |b| system("which", b, out: File::NULL, err: File::NULL) }
+unless py311
+  puts "→ mlx-audio needs Python 3.10+: brew install python@3.11"
+else
+  unless system(py311, "-c", "import mlx_audio", out: File::NULL, err: File::NULL)
+    steps << [py311, "-m", "pip", "install", "-U", "pip"]
+    steps << [py311, "-m", "pip", "install", "mlx-audio", "soundfile", "loguru"]
+    puts "→ mlx-audio via #{py311} (Kokoro, Chatterbox, Qwen3-TTS…)"
+  end
 end
 
 unless system("python3", "-c", "import chatterbox", out: File::NULL, err: File::NULL)

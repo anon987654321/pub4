@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "json"
 require "securerandom"
 require "yaml"
 
@@ -77,6 +79,7 @@ module Master
         chain = chain.reject { |e| %w[mlx chatterbox].include?(e) } unless cfg["emotion_enabled"]
 
         played = false
+        used_engine = nil
         chain.each do |engine|
           next unless Engines.available?(engine, cfg)
 
@@ -91,8 +94,13 @@ module Master
             rate: resolved_rate.to_s,
             pitch: resolved_pitch.to_s
           )
-          break if played
+          if played
+            used_engine = engine
+            break
+          end
         end
+
+        log_pick(used_engine, resolved_voice, resolved_rate, resolved_pitch, emotion)
 
         unless played
           played = Engines.synth_say(clean, out_path)
@@ -101,6 +109,24 @@ module Master
         return nil unless played && File.size?(out_path)
 
         out_path
+      end
+
+      def log_pick(engine, voice, rate, pitch, emotion)
+        path = File.join(Master::ROOT, ".master", "tts_last.json")
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(
+          path,
+          JSON.generate(
+            engine: engine,
+            voice: voice,
+            rate: rate,
+            pitch: pitch,
+            primary: emotion[:primary],
+            at: Time.now.to_i
+          )
+        )
+      rescue StandardError
+        nil
       end
 
       def synthesize_bytes(text, **opts)

@@ -1,17 +1,17 @@
 # Transcendent TTS — emotion-aware multi-engine orchestration.
-# Research lineage: Chatterbox (paralinguistics), mlx-audio (Apple SOTA),
-# CosyVoice/IndexTTS2 (emotion), DiffSinger/CoMelSinger (melodic contours).
 transcendent:
   enabled: true
   default_mode: transcendent
   personality: warm_erratic
-  engine_chain: mlx,chatterbox,edge_melodic,edge,say
+  # mlx needs Python 3.10+ (brew install python@3.11). Until then: fast Edge voices.
+  engine_chain: edge_melodic,edge,say
   emotion_enabled: true
   melodic_enabled: true
-  melodic_threshold: 0.45
+  melodic_threshold: 0.28
   max_chars: 900
-  mlx_model: mlx-community/chatterbox-fp16
-  mlx_voice: default
+  mlx_model: mlx-community/Kokoro-82M-bf16
+  mlx_voice: af_bella
+  mlx_speed: 1.18
   exaggeration: 0.62
   cfg_weight: 0.42
   chatterbox_device: mps

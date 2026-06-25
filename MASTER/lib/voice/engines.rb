@@ -30,13 +30,29 @@ module Master
         end
       end
 
+      def mlx_python
+        cfg_bin = ENV["MASTER_MLX_PYTHON"].to_s.strip
+        return cfg_bin if cfg_bin != "" && File.executable?(cfg_bin)
+
+        %w[python3.12 python3.11 python3].each do |bin|
+          next unless system("which", bin, out: File::NULL, err: File::NULL)
+
+          ver = `#{bin} -c 'import sys; print(sys.version_info[:major]*10+sys.version_info[:minor])' 2>/dev/null`.strip.to_i
+          return bin if ver >= 310
+        end
+        nil
+      end
+
       def mlx_cli?(cfg)
+        py = mlx_python
+        return false unless py
+
         bin = cfg["mlx_bin"].to_s.strip
         return File.executable?(bin) if bin != ""
 
         return true if system("which", "mlx_audio.tts.generate", out: File::NULL, err: File::NULL)
 
-        _out, status = Open3.capture2("python3", "-c", "import mlx_audio.tts", err: File::NULL)
+        _out, status = Open3.capture2(py, "-c", "import mlx_audio.tts", err: File::NULL)
         status.success?
       end
 
@@ -46,7 +62,12 @@ module Master
       end
 
       def synth_mlx(text, out_path, cfg, emotion)
-        model = cfg["mlx_model"] || "mlx-community/chatterbox-fp16"
+        py = mlx_python
+        return false unless py
+
+        model = cfg["mlx_model"] || "mlx-community/Kokoro-82M-bf16"
+        voice = cfg["mlx_voice"] || "af_bella"
+        speed = (cfg["mlx_speed"] || 1.15).to_f
         enriched = Enrich.apply(text, emotion)
         out_dir = File.dirname(out_path)
         FileUtils.mkdir_p(out_dir)
@@ -54,21 +75,29 @@ module Master
         bin = "mlx_audio.tts.generate" if bin.empty?
 
         if system("which", bin, out: File::NULL, err: File::NULL)
-          ok = system(bin, "--model", model, "--text", enriched, "--output_path", out_dir, "--file_prefix", "master",
-                      out: File::NULL, err: File::NULL)
+          ok = system(
+            bin, "--model", model, "--text", enriched, "--voice", voice, "--speed", speed.to_s,
+            "--output_path", out_dir, "--file_prefix", "master",
+            out: File::NULL, err: File::NULL
+          )
           candidate = Dir.glob(File.join(out_dir, "master*.wav")).max_by { |f| File.mtime(f) }
           return convert_to_mp3(candidate, out_path) if ok && candidate
         end
 
         wav = out_path.sub(/\.mp3\z/, ".wav")
-        py = <<~PY
-          from mlx_audio.tts.utils import load_model
+        py_script = <<~PY
+          import numpy as np
           import soundfile as sf
+          from mlx_audio.tts.utils import load_model
           model = load_model(#{model.inspect})
-          results = list(model.generate(#{enriched.inspect}))
-          sf.write(#{wav.inspect}, results[-1].audio, #{cfg["mlx_sample_rate"] || 24_000})
+          audio = None
+          for result in model.generate(#{enriched.inspect}, voice=#{voice.inspect}, speed=#{speed}):
+              audio = np.array(result.audio)
+          if audio is None:
+              raise RuntimeError("mlx generated no audio")
+          sf.write(#{wav.inspect}, audio, #{cfg["mlx_sample_rate"] || 24_000})
         PY
-        _out, _err, status = Open3.capture3("python3", "-c", py)
+        _out, _err, status = Open3.capture3(py, "-c", py_script)
         return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
 
         false

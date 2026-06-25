@@ -1,29 +1,36 @@
 # frozen_string_literal: true
 
+require "json"
+require "fileutils"
+
 module Master
   module Voice
-    # Cozy, funny, slightly unpredictable voice picker — never uncanny.
+    # Fast, varied, warm — Osman is a guest, not the default drone.
     module WarmErratic
+      STATE = File.join(Master::ROOT, ".master", "tts_voice_state.json")
+
       VOICES = [
-        [:osman, 42],
-        [:ryan, 17],
-        [:william, 15],
-        [:wayne, 14],
-        [:finn, 12]
+        [:ryan, 26],
+        [:william, 26],
+        [:wayne, 24],
+        [:finn, 14],
+        [:osman, 10]
       ].freeze
 
       STYLES = {
-        calm: { rate: "-5%", pitch: "-18Hz" },
-        intimate: { rate: "-4%", pitch: "-22Hz" },
-        storyteller: { rate: "-7%", pitch: "-12Hz" },
-        brief: { rate: "+9%", pitch: "+4Hz" },
-        energetic: { rate: "+11%", pitch: "+18Hz" },
-        question: { rate: "+3%", pitch: "+14Hz" },
-        clear: { rate: "+5%", pitch: "+2Hz" },
-        amused: { rate: "+7%", pitch: "+12Hz" },
-        deadpan: { rate: "-2%", pitch: "-8Hz" },
-        chipper: { rate: "+13%", pitch: "+22Hz" }
+        calm: { rate: "-3%", pitch: "-10Hz" },
+        intimate: { rate: "+2%", pitch: "-6Hz" },
+        storyteller: { rate: "+4%", pitch: "+2Hz" },
+        brief: { rate: "+14%", pitch: "+10Hz" },
+        energetic: { rate: "+18%", pitch: "+24Hz" },
+        question: { rate: "+10%", pitch: "+18Hz" },
+        clear: { rate: "+12%", pitch: "+8Hz" },
+        amused: { rate: "+15%", pitch: "+16Hz" },
+        deadpan: { rate: "+6%", pitch: "+4Hz" },
+        chipper: { rate: "+20%", pitch: "+28Hz" }
       }.freeze
+
+      FAST_STYLES = %i[chipper energetic brief amused clear question].freeze
 
       HUMOR_RE = /\b(lol|haha|heh|anyway|plot twist|whoops|oops|wild|chaos|absolutely|literally|honestly|fair enough|not gonna lie|for what it'?s worth)\b/i
       GOOD_NEWS_RE = /\b(done|complete|success|great|perfect|nice|queued|ready|finished|works|fixed|all set|sorted|boom)\b/i
@@ -35,13 +42,21 @@ module Master
       def pick(text)
         style = pick_style(text)
         voice, style = pick_voice(style, text)
-        cfg = STYLES.fetch(style, STYLES[:calm])
-        {
+        cfg = STYLES.fetch(style, STYLES[:clear])
+        result = {
           voice: voice,
           style: style,
           rate: jitter_rate(cfg[:rate]),
           pitch: jitter_pitch(cfg[:pitch])
         }
+        remember_voice(voice)
+        result
+      end
+
+      def bad_news?(text)
+        return false if text.match?(/\b(fixed|fix|works|working|faster|improved|updated|live|ready)\b/i)
+
+        text.match?(BAD_NEWS_RE)
       end
 
       def pick_style(text)
@@ -49,42 +64,46 @@ module Master
         return :calm if t.empty?
 
         words = t.split.length
-        return %i[calm intimate storyteller deadpan].sample if t.match?(BAD_NEWS_RE)
-        return %i[chipper energetic brief amused].sample if t.match?(GOOD_NEWS_RE)
-        return %i[question clear amused question brief].sample if t.end_with?("?")
-        return %i[brief energetic chipper amused question].sample if words <= 8
+        return %i[calm intimate].sample if bad_news?(t)
+        return %i[chipper energetic amused brief].sample if t.match?(GOOD_NEWS_RE)
+        return FAST_STYLES.sample if t.end_with?("?")
+        return FAST_STYLES.sample if words <= 12
 
-        if words <= 18
-          return %i[amused deadpan brief energetic].sample if t.match?(HUMOR_RE)
-          return %i[clear brief amused calm].sample if t.match?(CASUAL_RE)
-          return %i[clear brief intimate energetic amused].sample
+        if words <= 24
+          return %i[amused deadpan energetic brief].sample if t.match?(HUMOR_RE)
+          return FAST_STYLES.sample if t.match?(CASUAL_RE)
+          return FAST_STYLES.sample
         end
 
-        return %i[amused energetic brief deadpan chipper].sample if t.match?(HUMOR_RE) || t.match?(/[!]{1,2}/)
-        return %i[storyteller calm clear intimate].sample if t.match?(/^\s*[-*•]/m) || words > 45
+        return FAST_STYLES.sample if t.match?(HUMOR_RE) || t.match?(/[!]{1,2}/)
+        return %i[clear storyteller amused energetic].sample if words > 40
 
-        %i[calm intimate storyteller storyteller clear amused intimate].sample
+        FAST_STYLES.sample
       end
 
       def pick_voice(style, text)
-        return [:osman, style] if text.split.length > 35 && rand < 0.62
-        return [:ryan, style] if style == :deadpan && rand < 0.7
-        return [%i[william osman].sample, style] if style == :chipper && rand < 0.55
+        return [:ryan, style] if style == :calm && bad_news?(text)
+        return [:ryan, style] if style == :deadpan
+        return [:william, style] if style == :chipper && rand < 0.6
 
-        if rand < 0.10
+        pool = VOICES.reject { |name, _| name == last_voice }
+        pool = VOICES if pool.empty?
+
+        if rand < 0.12
           guest_voice, guest_style = surprise_guest
           return [guest_voice, guest_style]
         end
 
-        [weighted_choice(VOICES), style]
+        [weighted_choice(pool), style]
       end
 
       def surprise_guest
         [
-          [:finn, :storyteller],
+          [:finn, :energetic],
           [:ryan, :deadpan],
           [:william, :chipper],
-          [:wayne, :amused]
+          [:wayne, :amused],
+          [:ezinne, :clear]
         ].sample
       end
 
@@ -98,20 +117,37 @@ module Master
         items[0][0]
       end
 
+      def last_voice
+        return nil unless File.file?(STATE)
+
+        JSON.parse(File.read(STATE)).fetch("voice", nil)&.to_sym
+      rescue StandardError
+        nil
+      end
+
+      def remember_voice(voice)
+        FileUtils.mkdir_p(File.dirname(STATE))
+        File.write(STATE, JSON.generate(voice: voice, at: Time.now.to_i))
+      rescue StandardError
+        nil
+      end
+
       def jitter_rate(rate)
         sign = rate.start_with?("+") ? 1 : -1
         val = rate.delete("%+").to_i
-        val = [0, val.abs + rand(-2..3)].max
-        format("%+d%%", sign * val)
+        val = [0, val.abs + rand(0..4)].max
+        boosted = sign * val
+        boosted = [boosted, 6].max unless sign.negative?
+        format("%+d%%", boosted)
       end
 
       def jitter_pitch(pitch)
         sign = pitch.start_with?("+") ? 1 : -1
         val = pitch.delete("Hz+").to_i
-        val = [0, val.abs + rand(-5..6)].max
+        val = [0, val.abs + rand(-2..8)].max
         format("%+dHz", sign * val)
       end
-      private_class_method :pick_style, :pick_voice, :surprise_guest, :weighted_choice, :jitter_rate, :jitter_pitch
+      private_class_method :bad_news?, :pick_style, :pick_voice, :surprise_guest, :weighted_choice, :jitter_rate, :jitter_pitch
     end
   end
 end
