@@ -1,6 +1,8 @@
 <% if flash[:alert] %><p><%= flash[:alert] %></p><% end %>
 <% if flash[:notice] %><p><%= flash[:notice] %></p><% end %>
 
+<%= render "shared/oauth_links" %>
+
 <%= form_with url: session_path do |form| %>
   <p><%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address] %></p>
   <p><%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72 %></p>

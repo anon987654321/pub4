@@ -44,6 +44,11 @@ class PostsController < ApplicationController
     @post.user      = Current.user
     @post.anonymous = true if Current.user.guest?
     @post.community = @community if @community
+    unless PostModerationService.new(@post).approve?
+      redirect_to new_post_path, alert: "Post blocked by moderation."
+      return
+    end
+
     if @post.save
       anon.record_post!
 

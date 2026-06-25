@@ -16,6 +16,7 @@ class OmniauthCallbacksController < ::ApplicationController
     end
 
     user = find_or_create_user(auth)
+    merge_guest_into(user) if session[:guest_user_id].present?
     unless complete_login_for(user, remember: true)
       redirect_to new_session_path, alert: "Sign in failed"
       return
@@ -43,5 +44,14 @@ class OmniauthCallbacksController < ::ApplicationController
       info: auth.info.to_h
     )
     user
+  end
+
+  def merge_guest_into(user)
+    guest = User.find_by(id: session[:guest_user_id], guest: true)
+    return unless guest
+
+    AccountMergeService.new(guest_user: guest, user: user).call if defined?(AccountMergeService)
+  rescue StandardError => error
+    Rails.logger.warn("OAuth guest merge failed: #{error.message}")
   end
 end

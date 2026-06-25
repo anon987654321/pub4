@@ -3,19 +3,19 @@
   "archived_apps": [
     {
       "name": "privcam",
-      "status": "installer_only",
+      "status": "port",
       "recovery_source": "pub3-installers/privcam.sh",
       "notes": "Video upload, infinite scroll reflexes, comments"
     },
     {
       "name": "pub_attorney",
-      "status": "installer_only",
+      "status": "port",
       "recovery_source": "pub3-installers/pub_attorney.sh",
       "notes": "Lawyer/Case/Document, CaseMatchReflex, wicked_pdf"
     },
     {
       "name": "mytoonz",
-      "status": "installer_only",
+      "status": "port",
       "recovery_source": "pub3-installers/mytoonz.sh",
       "notes": "ReplicateService, comic strip jobs"
     }
@@ -43,8 +43,13 @@
     },
     {
       "name": "shared_installer_patterns",
-      "recovery_source": "pub3-installers/__shared",
-      "notes": "InfiniteScrollReflex, AnonymousPostService, messenger disappearing messages"
+      "recovery_source": "DEPLOY/rails/shared",
+      "notes": "InfiniteScrollReflex, AnonymousPostService ported; messenger disappearing in brgen"
+    },
+    {
+      "name": "weaviate_client",
+      "recovery_source": "MASTER/lib/reach/weaviate.rb",
+      "notes": "Optional vector store client from pub2 aight/lib/weaviate.rb"
     }
   ],
   "deployed_apps": ["brgen", "amber", "baibl", "blognet", "bsdports", "hjerterom"]

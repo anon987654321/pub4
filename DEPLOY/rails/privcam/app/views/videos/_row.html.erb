@@ -1,0 +1,7 @@
+<li role="listitem">
+  <article>
+    <h2><%= link_to video.title, video_path(video) %></h2>
+    <p><%= video.description&.truncate(160) %></p>
+    <small>by <%= video.user.email_address %> · <%= time_ago_in_words(video.created_at) %> ago</small>
+  </article>
+</li>

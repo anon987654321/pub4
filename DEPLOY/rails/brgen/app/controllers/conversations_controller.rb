@@ -12,8 +12,18 @@ class ConversationsController < ApplicationController
   def show
     @conversation = Conversation.for_user(Current.user).find(params[:id])
     @conversation.mark_read_for!(Current.user)
-    @messages = @conversation.messages.recent.limit(50).reverse
+    @messages = @conversation.messages.unexpired.recent.limit(50).reverse
     @message  = Message.new
+  end
+
+  def update
+    @conversation = Conversation.for_user(Current.user).find(params[:id])
+    duration = Conversation::DISAPPEARING_OPTIONS[params[:disappearing]]
+    if @conversation.update(disappearing_duration: duration)
+      redirect_to @conversation, notice: "Disappearing messages updated"
+    else
+      redirect_to @conversation, alert: "Could not update settings"
+    end
   end
 
   def create

@@ -1,0 +1,17 @@
+<% content_for :title, "Videos" %>
+
+<header role="banner" aria-label="Videos header">
+  <h1>Privcam</h1>
+  <p>Private video sharing</p>
+</header>
+
+<ul id="videos-list" role="list" aria-label="Video list">
+  <% @videos.each do |video| %>
+    <%= render "videos/row", video: %>
+  <% end %>
+</ul>
+
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "VideosInfiniteScroll#load_more",
+           sentinel_id: "videos-infinite-scroll-sentinel" %>

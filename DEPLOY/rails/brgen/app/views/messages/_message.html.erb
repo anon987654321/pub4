@@ -1,8 +1,13 @@
 <div id="<%= dom_id(message) %>" role="listitem">
 <article data-from="<%= message.sender == Current.user ? "self" : "peer" %>" aria-label="Message from <%= message.sender.username %>">
   <header>
-    <span><%= message.sender.username %></span>
+    <span><%= message.sender.display_name %></span>
     <time datetime="<%= message.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(message.created_at) %> ago</time>
+    <% if message.expires_at %>
+      <span class="dim">· disappears <%= time_ago_in_words(message.expires_at) %></span>
+    <% end %>
+    <% receipt = message.message_receipts.find_by(user: Current.user) %>
+    <% if receipt&.read? %><span class="dim">· read</span><% end %>
   </header>
   <p><%= message.content %></p>
   <% if message.attachment.attached? %>

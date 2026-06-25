@@ -284,20 +284,31 @@ archived_apps:
 
   privcam:
     title: Privcam
-    status: missing
+    domain: privcam.brgen.no
+    port: 47200
+    status: port
+    deploy_script: DEPLOY/rails/privcam/privcam.sh
+    deploy_root: DEPLOY/rails/privcam
     recovery_source: DEPLOY/archive/recovery/installers/privcam.sh
     notes: Video upload, VideosInfiniteScrollReflex, comments. Referenced by old deploy_all.sh — removed from master.json.
 
   pub_attorney:
     title: Pub Attorney
     domain: pub.attorney
-    status: missing
+    port: 10012
+    status: port
+    deploy_script: DEPLOY/rails/pub_attorney/pub_attorney.sh
+    deploy_root: DEPLOY/rails/pub_attorney
     recovery_source: DEPLOY/archive/recovery/installers/pub_attorney.sh
     notes: Lawyer/Case/Document models, CaseMatchReflex, wicked_pdf/prawn.
 
   mytoonz:
     title: MyToonz
-    status: missing
+    domain: mytoonz.brgen.no
+    port: 10008
+    status: port
+    deploy_script: DEPLOY/rails/mytoonz/mytoonz.sh
+    deploy_root: DEPLOY/rails/mytoonz
     recovery_source: DEPLOY/archive/recovery/installers/mytoonz.sh
     notes: ReplicateService comic-strip generation, GenerateComicStripJob.
 

@@ -14,9 +14,10 @@
       <%= f.label :title %>
       <%= f.text_field :title, placeholder: "Title", autofocus: true, required: true %>
     </div>
-    <div class="field">
+    <div class="field" data-controller="tiptap-composer">
       <%= f.label :content, "Body (optional)" %>
-      <%= f.text_area :content, placeholder: "Text (optional)", rows: 5, data: { controller: "char-counter", "char-counter-max-value": 10000 } %>
+      <div class="tiptap-editor" data-tiptap-composer-target="editor"></div>
+      <%= f.text_area :content, placeholder: "Text (optional)", rows: 5, class: "tiptap-input", data: { tiptap_composer_target: "input", controller: "char-counter", "char-counter-max-value": 10000 } %>
       <span class="char-counter" data-char-counter-target="counter"></span>
     </div>
     <div class="field" data-controller="media-picker">

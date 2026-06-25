@@ -1,0 +1,20 @@
+<% content_for :title, "My Cases" %>
+
+<header role="banner" aria-label="Cases header">
+  <h1>My Cases</h1>
+</header>
+
+<ul role="list" aria-label="Case list">
+  <% @cases.each do |legal_case| %>
+    <li>
+      <article>
+        <h2><%= link_to legal_case.title, case_path(legal_case) %></h2>
+        <p><%= legal_case.description&.truncate(100) %></p>
+        <span class="status"><%= legal_case.status %></span>
+        <% if legal_case.lawyer %>
+          <p>Lawyer: <%= legal_case.lawyer.name %></p>
+        <% end %>
+      </article>
+    </li>
+  <% end %>
+</ul>

@@ -1,0 +1,8 @@
+<% if local_assigns[:suggestions].present? %>
+  <p class="dim" role="status">
+    No exact matches. Try:
+    <% suggestions.each do |term| %>
+      <%= link_to term, url_for(request.query_parameters.merge(q: term)), class: "chip" %>
+    <% end %>
+  </p>
+<% end %>

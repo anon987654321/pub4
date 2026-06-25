@@ -1,0 +1,19 @@
+<% content_for :title, "Lawyers" %>
+
+<header role="banner" aria-label="Lawyers header">
+  <h1>Pub Attorney</h1>
+  <p>Find qualified lawyers for free legal help</p>
+</header>
+
+<ul role="list" aria-label="Lawyer list">
+  <% @lawyers.each do |lawyer| %>
+    <li>
+      <article>
+        <h2><%= link_to lawyer.name, lawyer_path(lawyer) %></h2>
+        <p><%= lawyer.specialty %></p>
+        <p>Rating: <%= lawyer.rating %>/5</p>
+        <p><%= lawyer.bio&.truncate(150) %></p>
+      </article>
+    </li>
+  <% end %>
+</ul>

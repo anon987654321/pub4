@@ -71,3 +71,21 @@ body.zen-minimal .revealed ~ .layout > main {
 .btn-danger { background: rgba(220,220,220,.12); color: var(--text); border: 1px solid var(--border); }
 .btn-sm { padding: 6px 0.875rem; font-size: .875rem; }
 
+.tiptap-editor {
+  min-height: 120px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-input { margin-top: 0.5rem; }
+
+.disappearing-settings {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.5rem 0 1rem;
+  font-size: 0.875rem;
+}
+

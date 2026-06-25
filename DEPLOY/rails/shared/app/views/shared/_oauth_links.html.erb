@@ -1,0 +1,11 @@
+<nav class="oauth-links" aria-label="Sign in options">
+  <% if ENV["VIPPS_CLIENT_ID"].present? %>
+    <%= button_to "Sign in with Vipps", "/auth/vipps", method: :post, class: "btn btn-primary oauth-vipps", data: { turbo: false } %>
+  <% end %>
+  <% if ENV["GOOGLE_CLIENT_ID"].present? %>
+    <%= button_to "Sign in with Google", "/auth/google_oauth2", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
+  <% end %>
+  <% if ENV["GITHUB_CLIENT_ID"].present? %>
+    <%= button_to "Sign in with GitHub", "/auth/github", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
+  <% end %>
+</nav>

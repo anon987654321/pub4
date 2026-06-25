@@ -53,3 +53,8 @@ production:
     class: MonthlyAnalyticsRollupJob
     queue: bulk
     schedule: every month on the first at 3am
+
+  expired_messages_sweep:
+    class: ExpiredMessagesSweepJob
+    queue: bulk
+    schedule: every 15 minutes

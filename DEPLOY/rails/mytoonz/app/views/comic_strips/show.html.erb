@@ -1,0 +1,21 @@
+<% content_for :title, @comic_strip.prompt.truncate(60) %>
+
+<article role="article" aria-label="Comic strip details">
+  <header>
+    <h1><%= @comic_strip.prompt %></h1>
+    <p>Style: <%= @comic_strip.style %> · Status: <%= @comic_strip.status %></p>
+    <small>by <%= @comic_strip.user.email_address %></small>
+  </header>
+
+  <% if @comic_strip.status == "completed" && @comic_strip.image_urls.present? %>
+    <section aria-label="Generated images" class="comic-grid">
+      <% Array(@comic_strip.image_urls).each do |url| %>
+        <%= image_tag url, alt: "Generated comic panel", loading: "lazy", style: "max-width: 100%; margin-bottom: 1rem;" %>
+      <% end %>
+    </section>
+  <% elsif @comic_strip.status.in?(%w[pending processing]) %>
+    <p>Generation in progress… <%= link_to "Refresh", comic_strip_path(@comic_strip) %></p>
+  <% elsif @comic_strip.status == "failed" %>
+    <p>Generation failed. Please try again.</p>
+  <% end %>
+</article>

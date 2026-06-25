@@ -30,5 +30,29 @@ class Conversation < ApplicationRecord
 
   def mark_read_for!(user)
     conversation_participants.find_by(user:)&.update!(last_read_at: Time.now)
+    messages.unexpired.find_each do |message|
+      receipt = message.message_receipts.find_or_initialize_by(user: user)
+      receipt.update!(read_at: Time.current) unless receipt.read_at
+    end
+  end
+
+  DISAPPEARING_OPTIONS = {
+    "off" => nil,
+    "1m" => 60,
+    "5m" => 300,
+    "1h" => 3600,
+    "24h" => 86_400
+  }.freeze
+
+  def disappearing_messages? = disappearing_duration.present? && disappearing_duration.positive?
+
+  def display_name_for(user)
+    return name if conversation_type == "group" && name.present?
+
+    other_participants(user).first&.display_name || "Unknown"
+  end
+
+  def other_participants(user)
+    participants.where.not(id: user.id)
   end
 end

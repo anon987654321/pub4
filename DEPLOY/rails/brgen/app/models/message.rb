@@ -18,10 +18,23 @@ class Message < ApplicationRecord
 
   after_create :deliver_receipts
   after_create :clear_typing_indicators
+  after_create :schedule_expiration, if: :should_expire?
 
   scope :recent, -> { order(created_at: :desc) }
+  scope :unexpired, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
 
   def expired? = expires_at&.past?
+
+  def should_expire? = expires_at.present? || conversation.disappearing_messages?
+
+  def mark_as_read!(user)
+    receipt = message_receipts.find_or_initialize_by(user: user)
+    receipt.update!(read_at: Time.current) unless receipt.read_at
+  end
+
+  def read_by?(user)
+    message_receipts.where(user: user).where.not(read_at: nil).exists?
+  end
 
   private
 
@@ -33,5 +46,11 @@ class Message < ApplicationRecord
 
   def clear_typing_indicators
     TypingIndicator.where(conversation:, user: sender).delete_all
+  end
+
+  def schedule_expiration
+    expiry = expires_at || (Time.current + conversation.disappearing_duration.seconds)
+    update_column(:expires_at, expiry) if expires_at.nil?
+    MessageExpirationJob.set(wait_until: expiry).perform_later(id)
   end
 end

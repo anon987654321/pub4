@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2c3e50">
+  <meta name="turbo-cache-control" content="no-preview">
+  <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
+  <title><%= content_for?(:title) ? "#{yield :title} — Pub Attorney" : "Pub Attorney" %></title>
+  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Pub Attorney — free legal help and case management." %>">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <link rel="icon" href="/icon.png" type="image/png">
+  <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+  <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<body class="zen-minimal" data-pwa-key="pub_attorney" data-controller="pwa-standalone">
+<nav role="navigation" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
+  <%= link_to "Pub Attorney", root_path, class: "brand", aria: { current: current_page?(root_path) ? "page" : nil } %>
+  <%= link_to "Lawyers", lawyers_path, aria: { current: current_page?(lawyers_path) ? "page" : nil } %>
+  <% if authenticated? %>
+    <%= link_to "My Cases", cases_path, aria: { current: current_page?(cases_path) ? "page" : nil } %>
+    <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
+  <% else %>
+    <%= link_to "Sign in", new_session_path %>
+  <% end %>
+</nav>
+<%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
+<%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
+<main role="main"><%= yield %></main>
+<%= render "shared/install_prompt" %>
+</body>
+</html>

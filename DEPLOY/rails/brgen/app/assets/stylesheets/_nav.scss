@@ -13,8 +13,17 @@
 
 .feed-header h1 { font-size: 20px; font-weight: 800; padding: 0.75rem 0 4px; }
 
-/* For you / Latest tabs */
-.feed-tabs { display: flex; }
+/* Horizontal subnav with right-edge fade (BRGEN_OLD spec) */
+.feed-tabs {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent 100%);
+}
+
+.feed-tabs::-webkit-scrollbar { display: none; }
 
 .feed-tab {
   flex: 1;

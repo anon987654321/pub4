@@ -1,0 +1,31 @@
+<% content_for :title, @video.title %>
+
+<article role="article" aria-label="Video details">
+  <header>
+    <h1><%= @video.title %></h1>
+    <p><%= @video.description %></p>
+    <small>by <%= @video.user.email_address %></small>
+  </header>
+
+  <% if @video.file.attached? %>
+    <%= video_tag url_for(@video.file), controls: true, style: "max-width: 100%;" %>
+  <% end %>
+
+  <section aria-label="Comments">
+    <h2>Comments</h2>
+    <% if authenticated? %>
+      <%= form_with model: [@video, Comment.new], local: true do |f| %>
+        <%= f.text_area :content, placeholder: "Add a comment…", required: true %>
+        <%= f.submit "Post comment" %>
+      <% end %>
+    <% end %>
+    <ul role="list">
+      <% @comments.each do |comment| %>
+        <li>
+          <p><%= comment.content %></p>
+          <small><%= comment.user.email_address %> · <%= time_ago_in_words(comment.created_at) %> ago</small>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+</article>
