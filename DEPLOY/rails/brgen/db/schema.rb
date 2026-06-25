@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_140000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", null: false
@@ -56,6 +56,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
     t.index ["locality", "created_at"], name: "index_activity_events_on_locality_and_created_at"
     t.index ["object_type", "object_id"], name: "index_activity_events_on_object_type_and_object_id"
     t.index ["source_vertical", "created_at"], name: "index_activity_events_on_source_vertical_and_created_at"
+  end
+
+  create_table "anonymous_post_quotas", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "fingerprint", null: false
+    t.integer "post_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["fingerprint"], name: "index_anonymous_post_quotas_on_fingerprint", unique: true
   end
 
   create_table "cities", force: :cascade do |t|

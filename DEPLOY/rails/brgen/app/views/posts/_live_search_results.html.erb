@@ -3,13 +3,23 @@
 <% end %>
 
 <% if @posts.any? %>
- <div class="post-grid">
- <% @posts.each do |post| %>
- <div data-controller="offline-feed" data-offline-feed-key-value="brgen-posts" data-offline-feed-title-value="<%= post.title %>" data-offline-feed-url-value="<%= post_url(post) %>" data-offline-feed-meta-value="<%= [post.author_name, l(post.created_at, format: :short)].join(" · ") %>">
- <%= render "posts/post", post: post %>
- </div>
- <% end %>
- </div>
+  <div class="post-grid" id="posts-feed">
+    <% @posts.each do |post| %>
+      <div data-controller="offline-feed"
+           data-offline-feed-key-value="brgen-posts"
+           data-offline-feed-title-value="<%= post.title %>"
+           data-offline-feed-url-value="<%= post_url(post) %>"
+           data-offline-feed-meta-value="<%= [post.author_name, l(post.created_at, format: :short)].join(" · ") %>">
+        <%= render "posts/post", post: post %>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "PostsInfiniteScrollReflex#load_more",
+             sentinel_id: "posts-sentinel",
+             sort: params[:sort] %>
 <% else %>
- <p class="empty">No posts match this search.</p>
+  <p class="empty">No posts match this search.</p>
 <% end %>

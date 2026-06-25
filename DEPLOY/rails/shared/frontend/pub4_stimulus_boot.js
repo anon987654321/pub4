@@ -24,6 +24,8 @@ import LiveSearch from "pub4/live_search"
 import OfflinePage from "pub4/offline_page"
 import InstallPrompt from "pub4/install_prompt"
 import ThemeToggle from "pub4/theme_toggle"
+import InfiniteScroll from "pub4/infinite_scroll"
+import BrowserFingerprint from "pub4/browser_fingerprint"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
@@ -53,6 +55,8 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("offline-page", OfflinePage)
   application.register("install-prompt", InstallPrompt)
   application.register("theme-toggle", ThemeToggle)
+  application.register("infinite-scroll", InfiniteScroll)
+  application.register("browser-fingerprint", BrowserFingerprint)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     application.register(name, component)

@@ -34,7 +34,9 @@
   <%= javascript_include_tag "particle_kernel", defer: true, "data-turbo-track": "reload" %>
   <%= javascript_include_tag "face", defer: true, "data-turbo-track": "reload" %>
 </head>
-<body class="zen-minimal" data-controller="hotkey">
+<body class="zen-minimal"
+      data-controller="hotkey browser-fingerprint"
+      data-browser-fingerprint-url-value="<%= fingerprint_path %>">
   <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme"
     data-controller="theme-toggle" data-theme-toggle-storage-key-value="brgen-theme" data-action="change->theme-toggle#persist">
   <label for="dark-toggle" class="theme-toggle" title="Toggle light theme" aria-hidden="true">

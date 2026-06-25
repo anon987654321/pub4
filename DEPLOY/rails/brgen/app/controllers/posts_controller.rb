@@ -20,7 +20,7 @@ class PostsController < ApplicationController
             end
     scope = scope.includes(:user, :community, :votes)
     scope = apply_live_search(scope, columns: %w[title content], vertical: "feed") if live_search_query.present?
-    @posts = scope.limit(100)
+    @pagy, @posts = pagy(scope)
     finish_live_search(partial: "posts/live_search_results")
   end
 
@@ -34,11 +34,18 @@ class PostsController < ApplicationController
   end
 
   def create
+    anon = Shared::AnonymousPostService.new(request: request, user: Current.user)
+    unless anon.allowed?
+      redirect_to new_session_path, alert: "Sign up to post more (#{Shared::AnonymousPostService::LIMIT} anonymous posts per browser)."
+      return
+    end
+
     @post           = Post.new(post_params)
     @post.user      = Current.user
     @post.anonymous = true if Current.user.guest?
     @post.community = @community if @community
     if @post.save
+      anon.record_post!
 
       preset = post_params[:preset].presence
       PostproJob.perform_later(@post.to_gid.to_s, preset) if preset && @post.image.attached?

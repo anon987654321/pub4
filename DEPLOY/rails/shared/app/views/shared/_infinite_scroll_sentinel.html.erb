@@ -1,0 +1,13 @@
+<% if pagy&.next %>
+  <div id="<%= local_assigns.fetch(:sentinel_id, "infinite-scroll-sentinel") %>"
+       class="infinite-scroll-sentinel"
+       data-controller="infinite-scroll"
+       data-infinite-scroll-reflex-value="<%= reflex %>"
+       data-reflex="<%= reflex %>"
+       data-next-page="<%= pagy.next %>"
+       <% if local_assigns[:sort].present? %>data-sort="<%= sort %>"<% end %>
+       <% if local_assigns[:blog_id].present? %>data-blog-id="<%= blog_id %>"<% end %>
+       aria-live="polite">
+    <span class="dim">Loading more…</span>
+  </div>
+<% end %>

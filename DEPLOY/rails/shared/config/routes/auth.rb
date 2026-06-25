@@ -11,3 +11,4 @@ post "two_factor/verify" => "two_factor_setups#verify", as: :two_factor_verify
 
 get "/auth/:provider/callback" => "omniauth_callbacks#create"
 post "/auth/:provider" => "omniauth_callbacks#passthru"
+post "fingerprint" => "fingerprints#create"
