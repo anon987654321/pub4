@@ -259,13 +259,7 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
     note.remove();
     document.removeEventListener('keydown', onKey);
     if (chosen === enhanced) {
-      const face = window.MASTER_FACE;
-      const mp = face?.mouthPool || window.mouthPool;
-      const K = window.ParticleKernel;
-      if (mp && K) for (let i = 0; i < mp.count; i++) if (mp.alive[i]) {
-        const b = i * K.FIELDS_PER_CELL;
-        mp.cells[b + K.FIELD.arousal] = Math.min(1, (mp.cells[b + K.FIELD.arousal] || 0.3) + 0.4);
-      }
+      window.MASTER_FACE_BLEND?.applyExpression?.({ arousal: 0.7 });
     }
     resolve(chosen);
   }

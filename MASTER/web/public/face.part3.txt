@@ -99,6 +99,7 @@ function applyWorkerPoolResult(pool, payload) {
   pool.alive.set(new Uint8Array(payload.alive));
 }
 function syncSemanticPools(dtSec) {
+  if (window.FACE3D_ACTIVE) return;
   const K = window.ParticleKernel;
   if (!K || !faceMat) return;
   if (mouthPool) {
@@ -143,8 +144,9 @@ function frame(t) {
     fpsEma = fpsEma * 0.65 + fps * 0.35;
     if (fpsBadge) fpsBadge.textContent = `${fpsEma.toFixed(0)} fps`;
     if (debugPanel) {
-      const mp = mouthPool;
-      const count = mp ? mp.count : 0;
+      const count = window.FACE3D_ACTIVE
+        ? (window.Face3DPreview?.renderer?.lastLitPixels ?? 0)
+        : (mouthPool ? mouthPool.count : 0);
       const pr = State.pressureFields || {};
       const pressureLine = showDebug ? `p ${(pr.pct ?? 0).toFixed(0)}% tok ${pr.tokens ?? 0}/${pr.limit ?? 0} ent ${(pr.entropy ?? State.entropy ?? 0).toFixed(2)} turb ${(pr.turbulence ?? 0).toFixed(2)} grav ${(pr.gravity ?? 0).toFixed(2)} val ${(pr.valence ?? 0).toFixed(2)}` : '';
       debugPanel.textContent = [
@@ -675,7 +677,10 @@ cv.addEventListener('pointerup', () => {
     const next = RUNTIME_PROFILES[(idx + 1 + RUNTIME_PROFILES.length) % RUNTIME_PROFILES.length] || 'full';
     rootBody.dataset.runtimeProfile = next;
     State.profileOverride = next;
-    if (window.ParticleKernel && eyePool) {
+    if (window.FACE3D_ACTIVE) {
+      window.MASTER_FACE_BLEND?.boostEye?.(0.1);
+      window.MASTEREcology?.burst?.(2, 0.16);
+    } else if (window.ParticleKernel && eyePool) {
       window.ParticleKernel.spawn(eyePool, 0, 0.2, { kind: 2, zone: 2, valence: 0.7, confidence: 0.9, decay: 0.08 });
     }
     window.MASTERVisual?.event?.('profile:cycle', { topology: 'papua-mask', entropy: 0.12, confidence: 0.9, mode: next });

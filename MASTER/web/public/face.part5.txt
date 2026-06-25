@@ -156,12 +156,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   recognition.onerror = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
 }
 function boostEyeAttention(delta = 0.25) {
-  const K = window.ParticleKernel;
-  if (!eyePool || !K) return;
-  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
-    const b = i * K.FIELDS_PER_CELL;
-    eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + delta);
-  }
+  window.MASTER_FACE_BLEND?.boostEye?.(delta);
 }
 
 function startSTT() {
@@ -172,14 +167,7 @@ function startSTT() {
   State.sttDuck = 1.0;
   State.viseme = 'M';
   State.visemeAmp = 0.35;
-  const K = window.ParticleKernel;
-  if (mouthPool && K) {
-    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i * K.FIELDS_PER_CELL;
-      mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.1, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * 0.35);
-      mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.05, (mouthPool.cells[b + K.FIELD.pressure] || 0) * 0.4);
-    }
-  }
+  window.MASTER_FACE_BLEND?.resetMouth?.(0.35);
   window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
   window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
   try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
@@ -378,20 +366,8 @@ async function sendMessage(text) {
     State.model = m; State.modelName = m.split('/').pop();
     const key = Object.keys(TINT).find(k => m.toLowerCase().includes(k));
     if (key) fadeColorTo(TINT[key]);
-    if (mouthPool && window.ParticleKernel) {
-      const K = window.ParticleKernel;
-      for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-        const b = i * K.FIELDS_PER_CELL;
-        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);
-      }
-      setTimeout(() => {
-        if (!mouthPool) return;
-        for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-          const b = i * K.FIELDS_PER_CELL;
-          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);
-        }
-      }, 1000);
-    }
+    window.MASTER_FACE_BLEND?.pushEmotion?.({ valence: 0.75 });
+    setTimeout(() => window.MASTER_FACE_BLEND?.pushEmotion?.({ valence: 0.35 }), 1000);
     showModelBadge(State.modelName || m);
     State.modelSwitch = 1.0;
     syncShareStateUrl();
@@ -632,8 +608,9 @@ function collectFeltState() {
   const histEntropy = history.length
     ? history.reduce((s, e) => s + Number(e.entropy ?? 0.2), 0) / history.length
     : (State.entropy ?? 0.2);
-  const arousal = meanPoolField(mouthPool, window.ParticleKernel?.FIELD?.arousal ?? 9);
-  const valence = meanPoolField(mouthPool, window.ParticleKernel?.FIELD?.valence ?? 8);
+  const felt = window.MASTER_FACE_BLEND?.currentEmotion?.() || {};
+  const arousal = felt.arousal ?? (State.pulse ?? 0.4);
+  const valence = felt.valence ?? 0;
   const mood = (State.mood || 'idle').toString();
   const mode = (State.mode || 'idle').toString();
   const entropy = Number.isFinite(State.entropy) ? State.entropy : histEntropy;

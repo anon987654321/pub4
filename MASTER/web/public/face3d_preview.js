@@ -90,6 +90,8 @@ function bootFace3d() {
     const t = (now - t0) * 0.001;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    const bridgeEmotion = window.MASTER_FACE_BLEND?.currentEmotion?.();
+    if (bridgeEmotion) emotion = { ...emotion, ...bridgeEmotion };
     engine.setEmotion(emotion);
     engine.setPose({
       yaw: reduced ? 0 : Math.sin(t * 0.37) * 0.22,
@@ -97,10 +99,18 @@ function bootFace3d() {
       roll: reduced ? 0 : Math.sin(t * 0.19) * 0.03
     });
 
+    const mouth = window.MASTER_FACE_BLEND?.current?.() || {};
     const idleJaw = 0.06 + Math.max(0, Math.sin(t * 2.8)) * 0.10;
+    const jawOpen = speech.active
+      ? Math.max(engine.blend.jawOpen, mouth.jawOpen ?? 0)
+      : Math.max(idleJaw, mouth.jawOpen ?? 0);
     engine.setBlend({
       blink: blinkEnvelope(t),
-      jawOpen: speech.active ? engine.blend.jawOpen : idleJaw,
+      jawOpen,
+      mouthWide: mouth.mouthWide ?? engine.blend.mouthWide,
+      mouthRound: mouth.mouthRound ?? engine.blend.mouthRound,
+      smile: mouth.smile ?? engine.blend.smile,
+      frown: mouth.frown ?? engine.blend.frown,
       cheekRaise: Math.max(0, emotion.valence) * 0.18
     });
 

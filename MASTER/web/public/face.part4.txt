@@ -113,29 +113,12 @@ syncTtsStyleUi();
 function preSpeechInhale(style) {
   const s = style || _nextTtsStyle();
   emitTtsEvent('tts:anticipate', { style: s, expression: { arousal: 0.35, attention: 0.2 } });
-  const K = window.ParticleKernel;
-  if (mouthPool && K) {
-    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i * K.FIELDS_PER_CELL;
-      mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) + 0.28);
-    }
-  }
-  if (eyePool && K) {
-    for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
-      const b = i * K.FIELDS_PER_CELL;
-      eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + 0.15);
-    }
-  }
+  window.MASTER_FACE_BLEND?.applyExpression?.({ arousal: 0.63, focus: 0.65 });
+  window.MASTER_FACE_BLEND?.boostEye?.(0.15);
 }
 function _applyLocalPostSpeechDecay(decayRate) {
   const rate = Number.isFinite(Number(decayRate)) ? Number(decayRate) : 0.82;
-  const K = window.ParticleKernel;
-  if (!mouthPool || !K) return;
-  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-    const b = i * K.FIELDS_PER_CELL;
-    mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.12, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * rate);
-    mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.08, (mouthPool.cells[b + K.FIELD.pressure] || 0) * rate);
-  }
+  window.MASTER_FACE_BLEND?.resetMouth?.(rate);
   State.pulse = Math.max(0, (State.pulse || 0) * rate);
 }
 function _parseTtsVisemeHeader(res) {

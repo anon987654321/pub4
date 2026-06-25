@@ -3,57 +3,18 @@ const VERTICAL_HINT = (document.documentElement.dataset.appHint || window.MASTER
 const VERTICAL_BIAS = window.MASTER_RUNTIME?.vertical_timbre?.[VERTICAL_HINT]
   || window.MASTER_RUNTIME?.vertical_timbre?.default
   || {};
+const BLEND = () => window.MASTER_FACE_BLEND;
+
 function applyVerticalTimbre() {
-  if (!VERTICAL_BIAS || !window.ParticleKernel) return;
-  const K = window.ParticleKernel;
-  if (mouthPool) {
-    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i * K.FIELDS_PER_CELL;
-      if (VERTICAL_BIAS.arousal != null) mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + VERTICAL_BIAS.arousal * 0.08);
-      if (VERTICAL_BIAS.pressure != null) mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + K.FIELD.pressure] || 0) + VERTICAL_BIAS.pressure * 0.06);
-      if (VERTICAL_BIAS.valence != null) mouthPool.cells[b + K.FIELD.valence] = (mouthPool.cells[b + K.FIELD.valence] || 0) + VERTICAL_BIAS.valence * 0.05;
-    }
-  }
+  if (!VERTICAL_BIAS) return;
+  BLEND()?.applyVerticalTimbre?.(VERTICAL_BIAS);
   if (VERTICAL_BIAS.scanline != null && F_FACE_SEM.faceMat?.uniforms?.uScanline) {
     F_FACE_SEM.faceMat.uniforms.uScanline.value = Math.min(0.5, VERTICAL_BIAS.scanline);
   }
 }
 applyVerticalTimbre();
 
-function crossPoolInfluence() {
-  const K = window.ParticleKernel;
-  if (!K || !mouthPool || !eyePool) return;
-  const density = (window.MASTER_FACE_EXPRESSION?.blendSignals?.() ? 1.2 : 1) +
-    Math.min(1.5, (State.moodArcSamples?.length || 0) * 0.08);
-  if (density < 1.15) return;
-  let mouthArousal = 0, eyeAttn = 0, mn = 0, en = 0;
-  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-    const b = i * K.FIELDS_PER_CELL;
-    mouthArousal += mouthPool.cells[b + K.FIELD.arousal];
-    mn++;
-  }
-  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
-    const b = i * K.FIELDS_PER_CELL;
-    eyeAttn += eyePool.cells[b + K.FIELD.attention];
-    en++;
-  }
-  if (!mn || !en) return;
-  const share = 0.04 * density;
-  const targetA = mouthArousal / mn;
-  const targetE = eyeAttn / en;
-  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
-    const b = i * K.FIELDS_PER_CELL;
-    eyePool.cells[b + K.FIELD.arousal] = Math.min(1, (eyePool.cells[b + K.FIELD.arousal] || 0) * (1 - share) + targetA * share);
-  }
-  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-    const b = i * K.FIELDS_PER_CELL;
-    mouthPool.cells[b + K.FIELD.attention] = Math.min(1, (mouthPool.cells[b + K.FIELD.attention] || 0) * (1 - share) + targetE * share);
-  }
-}
-setInterval(crossPoolInfluence, 480);
 const State = F_FACE_SEM.State || window.State;
-const mouthPool = F_FACE_SEM.mouthPool || window.mouthPool;
-const eyePool = F_FACE_SEM.eyePool || window.eyePool;
 const renderer = F_FACE_SEM.renderer || window.renderer;
 const cv = F_FACE_SEM.cv || document.getElementById('face');
 const faceHome = F_FACE_SEM.faceHome || window.faceHome;
@@ -64,27 +25,18 @@ const markFaceReady = F_FACE_SEM.markFaceReady || window.markFaceReady;
 const resize = F_FACE_SEM.resize || window.resize;
 const frame = F_FACE_SEM.frame || window.frame;
 const _dbgEl = F_FACE_SEM.dbgEl || document.getElementById('_dbg');
-
-// Semantic reaction — now primarily driven by server Expression payloads
-// (from lib/voice/expression.rb) with lightweight event-specific overrides.
-// This structure makes the remaining 50+ ideas from runtime_ui_direction.md
-// (pre-speech anticipation, style bleed, mood arc, vertical timbre, etc.)
-// implementable with small deltas on the Ruby side instead of JS sprawl.
-function boostEyePool(delta, field = 'attention') {
-  const K = window.ParticleKernel;
-  if (!eyePool || !K) return;
-  const key = K.FIELD[field] ?? K.FIELD.attention;
-  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
-    const b = i * K.FIELDS_PER_CELL;
-    eyePool.cells[b + key] = Math.min(1, (eyePool.cells[b + key] || 0.5) + delta);
-  }
-}
+const rootBody = document.body;
 
 function payloadConfidence(d) {
   const raw = d.raw || d.payload || {};
   const v = raw.confidence ?? d.confidence;
   return typeof v === 'number' ? v : null;
 }
+
+function pushMoodArcSample(detail) {
+  window.MASTER_FACE_EXPRESSION?.pushMoodArcSample?.(State, detail);
+}
+window.MASTER_FACE_EXPRESSION?.restoreMood?.(State);
 
 window.addEventListener('master:pressure', (ev) => {
   const d = ev.detail || {};
@@ -94,16 +46,11 @@ window.addEventListener('master:pressure', (ev) => {
   if (typeof d.turbulence === 'number') State.turbulence = d.turbulence;
   if (typeof d.gravity === 'number') State.gravity = d.gravity;
   State.breath = Math.max(0.55, 1 - pct / 120);
-  const K = window.ParticleKernel;
-  if (!mouthPool || !K) return;
-  const push = Math.min(0.85, pct / 100);
-  const turb = typeof d.turbulence === 'number' ? Math.min(0.35, d.turbulence) : 0;
-  const grav = typeof d.gravity === 'number' ? Math.min(0.4, d.gravity) : 0;
-  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-    const b = i * K.FIELDS_PER_CELL;
-    mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, push + turb);
-    if (grav > 0) mouthPool.cells[b + K.FIELD.valence] = Math.max(-0.2, (mouthPool.cells[b + K.FIELD.valence] || 0) - grav * 0.12);
-  }
+  BLEND()?.applyPressure?.({
+    pct,
+    turbulence: d.turbulence,
+    gravity: d.gravity
+  });
 });
 
 window.addEventListener('master:palette', (ev) => {
@@ -111,32 +58,14 @@ window.addEventListener('master:palette', (ev) => {
   if (accent) document.documentElement.style.setProperty('--master-accent', accent);
 });
 
-function dropMouthConfidence(drop) {
-  const K = window.ParticleKernel;
-  if (!mouthPool || !K) return;
-  const n = Math.min(6, mouthPool.count);
-  let dropped = 0;
-  for (let i = 0; i < mouthPool.count && dropped < n; i++) {
-    if (!mouthPool.alive[i]) continue;
-    const b = i * K.FIELDS_PER_CELL;
-    mouthPool.cells[b + K.FIELD.confidence] = Math.max(0.15, (mouthPool.cells[b + K.FIELD.confidence] || 0.8) - drop);
-    dropped++;
-  }
-}
-
-function pushMoodArcSample(detail) {
-  window.MASTER_FACE_EXPRESSION?.pushMoodArcSample?.(State, detail);
-}
-window.MASTER_FACE_EXPRESSION?.restoreMood?.(State);
-
 window.addEventListener('master:visual', (ev) => {
   const d = ev.detail || {};
   State.entropy = d.entropy ?? State.entropy ?? 0.2;
   State.confidence = d.confidence ?? State.confidence ?? 1.0;
   pushMoodArcSample(d);
   const name = String(d.name || d.mode || '');
-  if (/input:focus|input:focus-visible/.test(name)) boostEyePool(0.07);
-  if (/input:paste/.test(name)) boostEyePool(0.04, 'attention');
+  if (/input:focus|input:focus-visible/.test(name)) BLEND()?.boostEye?.(0.07);
+  if (/input:paste/.test(name)) BLEND()?.boostEye?.(0.04);
   if (/user:interrupt/.test(name)) {
     State.shake = Math.max(State.shake || 0, 0.35);
     State.pulse = Math.max(State.pulse || 0, 0.2);
@@ -149,7 +78,7 @@ window.addEventListener('master:visual', (ev) => {
     State.mood = 'veto';
     State.chromaVeto = 0.28;
     State.mode = State.mode === 'speaking' ? State.mode : 'error';
-    dropMouthConfidence(0.35);
+    BLEND()?.dropConfidence?.(0.35);
     if (F_FACE_SEM.faceMat?.uniforms?.uChroma) F_FACE_SEM.faceMat.uniforms.uChroma.value = 0.28;
     rootBody.dataset.errorInstrument = '1';
     setTimeout(() => { delete rootBody.dataset.errorInstrument; }, 2200);
@@ -171,36 +100,31 @@ window.addEventListener('master:visual', (ev) => {
     window.MASTER_FACE?.spawnEmotionalGhost?.(d.mood);
     window.MASTER_FACE_EXPRESSION?.persistMood?.(State);
   }
-  if (/chat:first/.test(name) && mouthPool && window.ParticleKernel) {
-    const K = window.ParticleKernel;
-    for (let i = 0; i < 5; i++) K.spawn(mouthPool, 0, 0.55, { kind: 4, zone: 1, valence: 0.7, confidence: 0.85, decay: 0.004, label: d.provider || 'seed' });
+  if (/chat:first/.test(name)) {
+    BLEND()?.applyExpression?.({ arousal: 0.55, valence: 0.7, confidence: 0.85 });
   }
-  if (/photo:preview/.test(name)) boostEyePool(0.12);
-  if (/photo:ready/.test(name) && mouthPool && window.ParticleKernel) {
-    const K = window.ParticleKernel;
-    K.spawn(mouthPool, 0, 0.5, { kind: 4, zone: 1, valence: 0.6, attention: 0.8, decay: 0.006 });
+  if (/photo:preview/.test(name)) BLEND()?.boostEye?.(0.12);
+  if (/photo:ready/.test(name)) {
+    BLEND()?.boostEye?.(0.1);
+    BLEND()?.applyExpression?.({ valence: 0.6, arousal: 0.5 });
   }
   if (/council:deliberation|council:start/.test(name)) {
     State.pulse = Math.max(State.pulse || 0, 0.48);
     State.mode = State.mode === 'speaking' ? State.mode : 'thinking';
+    BLEND()?.dropConfidence?.(0.18);
   }
   if (/llm:request|pipeline:start|thinking/.test(name) && State.mode !== 'speaking') {
     State.mode = 'thinking';
     State.pulse = Math.max(State.pulse || 0, 0.32);
   }
-  const K = window.ParticleKernel;
-  if (/infer:resolved|infer:confidence|route:resolved|llm:routed/.test(name) && mouthPool && K) {
+  if (/infer:resolved|infer:confidence|route:resolved|llm:routed/.test(name)) {
     const bump = 0.12 + (d.confidence ?? payloadConfidence(d) ?? 0.7) * 0.18;
-    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i * K.FIELDS_PER_CELL;
-      mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.3) + bump);
-      mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + K.FIELD.pressure] || 0) + bump * 0.45);
-    }
+    BLEND()?.applyInferBump?.(d.confidence ?? payloadConfidence(d) ?? 0.7);
     State.pulse = Math.max(State.pulse || 0, 0.28);
   }
   if (/infer:rejected/.test(name)) {
     State.tremor = Math.max(State.tremor || 0, 0.25);
-    dropMouthConfidence(0.12);
+    BLEND()?.dropConfidence?.(0.12);
   }
   if (/escalat|fallback|retry/.test(name)) {
     State.tremor = Math.max(State.tremor || 0, 0.4);
@@ -209,57 +133,30 @@ window.addEventListener('master:visual', (ev) => {
   if (/memory|retriev|context/.test(name)) {
     State.ripplePhase = State.ripplePhase < 0 ? 0 : State.ripplePhase;
   }
-  if (mouthPool && K) {
-    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i * K.FIELDS_PER_CELL;
-      if (/speaking|tts/.test(name)) mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.3) + 0.2);
-      if (d.expression?.arousal != null) mouthPool.cells[b + K.FIELD.arousal] = d.expression.arousal;
-    }
-  }
-  if (eyePool && K && /council:deliberation|council:start|error|veto/.test(name)) {
-    for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
-      const b = i * K.FIELDS_PER_CELL;
-      eyePool.cells[b + K.FIELD.confidence] = Math.max(0.25, (eyePool.cells[b + K.FIELD.confidence] || 0.9) - 0.18);
-    }
-  }
-  if (!mouthPool || !eyePool) return;
+  if (/speaking|tts/.test(name)) BLEND()?.applyExpression?.({ arousal: 0.5 });
+  if (d.expression?.arousal != null) BLEND()?.applyExpression?.(d.expression);
 
   const ex = d.expression || {};
-
-  // Genuine readout: a rendered emotion patch (server Expression.emotion_for,
-  // built from council risk/reversibility and the evidence verdict) drives the
-  // face directly. This is real state — not the event-name heuristics.
   const emo = d.emotion || ex.emotion;
-  if (emo) window.Face3DPreview?.engine?.setEmotion?.(emo);
+  if (emo) window.Face3DPreview?.engine?.setEmotion?.(typeof emo === 'object' ? emo : { arousal: 0.4, valence: 0 });
 
   if ((d.entropy || 0) > 0.6 || d.mode === 'veto' || /veto|error|failure/.test(d.name || '')) {
-    for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
-      const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] || 0.9) - (ex.eye_confidence_drop || 0.3));
-    }
+    BLEND()?.dropConfidence?.(ex.eye_confidence_drop || 0.3);
   }
 
   if (/tts:style|style:active/i.test(d.name || '')) {
     const s = d.name || '';
     const hi = /dramatic|intense|energetic|storyteller/i.test(s);
     const lo = /whisper|ethereal|robotic|intimate/i.test(s);
-
-    if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
-      if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
-
-      const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
-      if (Math.abs(pitch) > 20) eyePool && eyePool.alive && (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = 0.6);
-    }
-
+    BLEND()?.applyStyleArousal?.(ex, s);
+    if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
+    const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
+    if (Math.abs(pitch) > 20) BLEND()?.dropConfidence?.(0.3);
     if (hi) State.creativeBleed = (State.creativeBleed || 0) + 0.9;
   }
 
   if (/council:deliberation|council:start/i.test(d.name || '')) {
-    const cDrop  = ex.eye_confidence_drop || 0.25;
-    if (eyePool) for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i])
-      eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9) - cDrop);
+    BLEND()?.dropConfidence?.(ex.eye_confidence_drop || 0.25);
   }
 
   if (/input:long|cmd:long/i.test(d.name || '')) {
@@ -267,11 +164,12 @@ window.addEventListener('master:visual', (ev) => {
   }
 
   if (ex && (ex.arousal != null || ex.valence != null || ex.attention != null)) {
-    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      if (ex.arousal != null) mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = smoothExpressionValue('arousal', ex.arousal);
-      if (ex.valence != null) mouthPool.cells[b + window.ParticleKernel.FIELD.valence] = smoothExpressionValue('valence', ex.valence);
-    }
+    const patch = {};
+    if (ex.arousal != null) patch.arousal = smoothExpressionValue('arousal', ex.arousal);
+    if (ex.valence != null) patch.valence = smoothExpressionValue('valence', ex.valence);
+    if (ex.attention != null) patch.focus = smoothExpressionValue('attention', ex.attention);
+    BLEND()?.pushEmotion?.(patch);
+    BLEND()?.pushBlend?.(BLEND()?.expressionToBlend?.(patch) || {});
   }
 });
 
@@ -289,12 +187,8 @@ setInterval(() => {
 
 window.addEventListener('tts:anticipate', (ev) => {
   const ex = (ev.detail && ev.detail.expression) || {};
-  if (!mouthPool || !eyePool) return;
-  boostEyePool(0.15);
-  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-    const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-    mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = Math.min(1.0, (mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] || 0.6) + (ex.arousal || 0.25));
-  }
+  BLEND()?.boostEye?.(0.15);
+  BLEND()?.applyExpression?.({ arousal: Math.min(1, (ex.arousal || 0.25) + 0.35) });
   State.pulse = Math.max(State.pulse || 0, 0.35);
 });
 
@@ -306,16 +200,9 @@ window.addEventListener('tts:style:active', (ev) => {
   if (d.blendshapes && window.Face3DPreview?.engine?.setBlend) {
     window.Face3DPreview.engine.setBlend(d.blendshapes);
   }
-  if (mouthPool && window.ParticleKernel) {
-    const K = window.ParticleKernel;
-    const hi = /dramatic|intense|energetic|storyteller/i.test(String(d.style || ''));
-    const lo = /whisper|ethereal|robotic|intimate/i.test(String(d.style || ''));
-    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i * K.FIELDS_PER_CELL;
-      mouthPool.cells[b + K.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
-      if (ex.pressure != null) mouthPool.cells[b + K.FIELD.pressure] = ex.pressure;
-    }
-    if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
+  BLEND()?.applyStyleArousal?.(ex, d.style);
+  if (/dramatic|intense|energetic|storyteller/i.test(String(d.style || '')) || ex.breath_boost) {
+    State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
   }
 });
 
@@ -324,29 +211,15 @@ window.addEventListener('tts:playback:start', (ev) => {
   State.mode = 'speaking';
   State.pulse = Math.max(State.pulse || 0, 0.28);
   State.currentSpeechStyle = d.style || State.currentSpeechStyle || 'calm';
-  const K = window.ParticleKernel;
-  const effort = window.MASTER_FACE_TTS?.effortSpawnCount?.(State.currentSpeechStyle) ?? 1;
   window.MASTER_FACE_TTS?.syncStyleIndicator?.(State.currentSpeechStyle);
-  if (mouthPool && K && effort > 1) {
-    for (let n = 0; n < effort; n++) {
-      K.spawn(mouthPool, (Math.random() - 0.5) * 0.2, 0.48, {
-        kind: 4, zone: 1, arousal: 0.75, pressure: 0.42, confidence: 0.55, decay: 0.005
-      });
-    }
-  }
+  const effort = window.MASTER_FACE_TTS?.effortSpawnCount?.(State.currentSpeechStyle) ?? 1;
+  if (effort > 1) BLEND()?.applyExpression?.({ arousal: 0.75, pressure: 0.42, confidence: 0.55 });
 });
 
 window.addEventListener('tts:playback:end', (ev) => {
   const d = ev.detail || {};
   const decay = Number.isFinite(Number(d.decay_rate)) ? Number(d.decay_rate) : 0.82;
-  const K = window.ParticleKernel;
-  if (mouthPool && K) {
-    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-      const b = i * K.FIELDS_PER_CELL;
-      mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.12, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * decay);
-      mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.08, (mouthPool.cells[b + K.FIELD.pressure] || 0) * decay);
-    }
-  }
+  BLEND()?.resetMouth?.(decay);
   State.pulse = Math.max(0, (State.pulse || 0) * decay);
   if (State.mode === 'speaking') State.mode = 'idle';
   State.currentSpeechStyle = null;
@@ -371,6 +244,9 @@ if (renderer) {
   }
   (window.MASTER_FACE?.ensureFrameLoop || (() => requestAnimationFrame(frame)))();
   if (window._primerFired && !F_FACE_SEM.primerFired) { window._primerFired = true; F_FACE_SEM.startEverything?.(); }
+} else if (window.FACE3D_ACTIVE) {
+  if (window._primerFired && !F_FACE_SEM.primerFired) { window._primerFired = true; F_FACE_SEM.startEverything?.(); }
+  markFaceReady?.();
 } else {
   (function start2D() {
     const cv2 = document.createElement('canvas');

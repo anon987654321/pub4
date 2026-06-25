@@ -1,4 +1,4 @@
-// Perf guards — resize debounce, kernel min-delta, primer boot spawn (web_069–web_071, mi_032–mi_036).
+// Perf guards — resize debounce, kernel min-delta, primer boot burst (web_069–web_071, mi_032–mi_036).
 (() => {
   "use strict";
 
@@ -30,27 +30,15 @@
 
   window.addEventListener("visual:ready", () => {
     if (!window.MASTER_RUNTIME?.enhancements?.includes?.("primer_kernel_spawn")) return;
-    const K = window.ParticleKernel;
-    const pool = window.MASTER_FACE?.eyePool || window.eyePool;
-    if (!K || !pool) return;
-    for (let i = 0; i < 4; i++) {
-      K.spawn(pool, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.2, {
-        kind: 2, zone: 2, attention: 0.85, confidence: 0.9, decay: 0.01
-      });
-    }
+    window.MASTER_FACE_BLEND?.boostEye?.(0.12);
+    window.MASTEREcology?.burst?.(3, 0.18);
   });
 
   window.addEventListener("master:visual", (ev) => {
     const name = String(ev.detail?.name || "");
     if (/autocommit|auto.commit|auto_commit/i.test(name)) {
-      const K = window.ParticleKernel;
-      const pool = window.MASTER_FACE?.eyePool || window.eyePool;
-      if (!K || !pool) return;
-      for (let i = 0; i < 5; i++) {
-        K.spawn(pool, (Math.random() - 0.5) * 0.25, -0.5 + Math.random() * 0.1, {
-          kind: 3, zone: 13, valence: 0.75, confidence: 0.95, decay: 0.006
-        });
-      }
+      window.MASTER_FACE_BLEND?.boostEye?.(0.15);
+      window.MASTEREcology?.burst?.(5, 0.22);
       window.MASTERVisual?.event?.("autocommit:joy", { topology: "papua-mask", entropy: 0.1, confidence: 0.96, mode: "commit" });
     }
   });
