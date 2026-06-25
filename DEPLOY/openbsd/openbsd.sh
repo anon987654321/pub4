@@ -657,7 +657,6 @@ configure_relayd() {
     print -r -- "  match request header set \"X-Forwarded-Proto\" value \"https\""
     print -r -- "  match request header set \"X-Forwarded-For\" value \"\$REMOTE_ADDR\""
     print -r -- "  match response header set \"Strict-Transport-Security\" value \"max-age=31536000; includeSubDomains; preload\""
-    print -r -- "  match response header set \"Content-Security-Policy\" value \"upgrade-insecure-requests; default-src https: 'self' 'unsafe-inline' blob:; media-src 'self' blob:; connect-src 'self'\""
     print -r -- "  match response header set \"Referrer-Policy\" value \"strict-origin\""
     print -r -- "  match response header set \"X-Content-Type-Options\" value \"nosniff\""
     print -r -- "  match response header set \"X-Frame-Options\" value \"SAMEORIGIN\""

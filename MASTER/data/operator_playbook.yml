@@ -102,6 +102,12 @@ lessons:
     action: "MASTER bin/cli must run as dev via bundle34 exec (openbsd.sh uses su dev, not su -m — -m keeps HOME=/root). Set MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1."
     proof: "su dev -c 'cd MASTER && MASTER_SCAN_ONLY=1 bundle34 exec ruby bin/cli /scan DEPLOY --depth deep' exits 0"
 
+  - id: relayd_csp_overwrites_rails
+    area: master_web
+    signal: "https://ai.brgen.no shows black screen; curl :53187 has script-src nonce but HTTPS CSP lacks nonce"
+    action: "Do not set Content-Security-Policy in relayd.conf — it replaces Rails headers and breaks nonce-gated inline boot scripts. Keep HSTS and other hardening headers in relayd; let each app own CSP."
+    proof: "curl -sI https://ai.brgen.no/ | grep -i content-security shows Rails policy with script-src nonce"
+
   - id: sass_embedded_npm_cache
     area: rails
     signal: "bundle34 install fails on sass-embedded; npm EACCES on /root/.npm when installing as app user via doas"
