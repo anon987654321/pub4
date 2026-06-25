@@ -1,0 +1,17 @@
+<% if live_search_query.present? %>
+ <p class="dim"><%= @maintainers.size %> results for "<%= live_search_query %>"</p>
+<% end %>
+
+<ul id="maintainers" role="list" aria-label="Maintainers">
+ <% @maintainers.each do |maintainer| %>
+ <li>
+ <%= link_to maintainer.name, maintainer_path(maintainer) %>
+ <% if maintainer.email.present? %><small><%= maintainer.email %></small><% end %>
+ <small>(<%= maintainer.ports.size %> ports)</small>
+ </li>
+ <% end %>
+</ul>
+
+<% if @maintainers.empty? %>
+ <p class="empty">No maintainers match this search.</p>
+<% end %>

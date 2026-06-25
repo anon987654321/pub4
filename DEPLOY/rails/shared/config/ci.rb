@@ -5,6 +5,8 @@ ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
 
 CI.run do
   step "Setup", "bin/setup --skip-server"
+  step "Styles: Dart Sass", "bin/rails dartsass:build"
+  step "Security: Importmap audit", "bin/importmap audit"
   step "Style: Ruby", 'bin/rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
   audit = ENV["BUNDLER_AUDIT_UPDATE"] == "1" ? "bin/bundler-audit check --update" : "bin/bundler-audit check"
   step "Security: Gem audit", audit

@@ -1,16 +1,15 @@
 <article
-  class="swipe-card"
+  class="swipe-card swipe-card--stack-<%= index %>"
   data-user-id="<%= profile.user_id %>"
-  style="position:absolute;inset:0;transform:translateY(<%= index * 6 %>px) scale(<%= 1 - index * 0.02 %>);z-index:<%= 100 - index %>"
 >
   <% if profile.photos.attached? %>
-    <%= lazy_image_tag profile.photos.first, alt: profile.user.display_name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash"), style: "width:100%;max-height:420px;object-fit:cover;border-radius:2px;margin-bottom:12px" %>
+    <%= lazy_image_tag profile.photos.first, alt: profile.user.display_name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash"), class: "swipe-card__photo" %>
   <% else %>
-    <div style="height:220px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--border);border-radius:2px;margin-bottom:12px">
-      <span style="font-size:64px;font-weight:900"><%= profile.user.email_address.first.upcase %></span>
+    <div class="swipe-card__placeholder">
+      <span class="swipe-card__initial"><%= profile.user.email_address.first.upcase %></span>
     </div>
   <% end %>
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+  <div class="swipe-card__meta">
     <div>
       <h2><%= profile.user.email_address.split("@").first %><% if profile.age %>, <%= profile.age %><% end %></h2>
       <% if profile.location.present? %><p class="dim"><%= profile.location %></p><% end %>
@@ -24,7 +23,7 @@
     <% if profile.looking_for.present? %><span class="chip">Looking for <%= profile.looking_for %></span><% end %>
   </div>
   <% if authenticated? %>
-    <div style="display:flex;gap:8px;margin-top:12px;justify-content:space-between">
+    <div class="swipe-card__actions">
       <%= button_tag "Pass", type: "button", class: "btn btn-ghost", data: { action: "click->swipe#pass" } %>
       <%= button_tag "Like", type: "button", class: "btn", data: { action: "click->swipe#like" } %>
     </div>

@@ -10,6 +10,7 @@ module Shared
       include Shared::PagyPagination
       allow_browser versions: :modern
       turbo_refreshes_with :morph, scroll: :preserve
+      stale_when_importmap_changes
     end
   end
 end

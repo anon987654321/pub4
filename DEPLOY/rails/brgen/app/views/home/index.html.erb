@@ -3,7 +3,7 @@
     <div>
       <h2 id="splash-title">Brgen</h2>
       <p class="tagline">City-native social. Post, vote, discover local communities across Europe and beyond.</p>
-      <nav class="chips" aria-label="Quick links">
+      <nav role="navigation" class="chips" aria-label="Quick links">
         <span class="chip"><%= link_to "sign in", new_session_path %></span>
         <span class="chip">markedsplass</span>
         <span class="chip">tv</span>
@@ -18,7 +18,7 @@
 
 <% content_for :widgets do %>
   <aside class="sidebar-card" data-controller="toggle" data-toggle-class="hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <div class="row-between">
       <h3>Communities</h3>
       <button type="button" class="btn btn-ghost btn-sm" data-action="click->toggle#toggle" aria-label="Toggle communities">Hide</button>
     </div>

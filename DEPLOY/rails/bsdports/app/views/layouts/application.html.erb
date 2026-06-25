@@ -4,21 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0ea5e9" data-light-color="#e0f2fe" data-dark-color="#0ea5e9">
-  <script>
-    (() => {
-      const meta = document.querySelector('meta[name="theme-color"]');
-      if (!meta) return;
-      const light = meta.dataset.lightColor || meta.content;
-      const dark = meta.dataset.darkColor || meta.content;
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      const apply = () => { meta.content = mq.matches ? dark : light; };
-      apply();
-      mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
-    })();
-  </script>
   <meta name="turbo-cache-control" content="no-preview">
   <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
-  <style>:root { --turbo-progress-bar-color: #0ea5e9; }</style>
   <title><%= content_for?(:title) ? "#{yield :title} — BSDports" : "BSDports" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "BSDports — browse and search the BSD ports collection. Find packages, track versions, and explore the BSD ecosystem." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
@@ -36,15 +23,12 @@
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-  <link rel="stylesheet" href="/styles/tokens.css">
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-  <link rel="stylesheet" href="/styles/minimal-ui.css">
   <%= yield :json_ld %>
   <%= javascript_importmap_tags %>
-  <script type="module" src="/minimal-gesture.js"></script>
 </head>
 <body class="zen-minimal" data-pwa-key="bsdports" data-controller="pwa-standalone">
-<nav data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
+<nav role="navigation" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to "BSDports", root_path, class: "brand", aria: { current: current_page?(root_path) ? 'page' : nil } %>
   <%= link_to "Ports", ports_path, aria: { current: current_page?(ports_path) ? 'page' : nil } %>
   <%= link_to "Categories", categories_path, aria: { current: current_page?(categories_path) ? 'page' : nil } %>
@@ -57,7 +41,7 @@
 </nav>
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
-<main><%= yield %></main>
+<main role="main"><%= yield %></main>
 <%= render "shared/install_prompt" %>
 </body>
 </html>

@@ -8,6 +8,12 @@ class ScripturesController < ApplicationController
   def index
     @books = Book.ordered
     @daily_verse = Verse.order("RANDOM()").limit(1).first
+    if live_search_query.present?
+      scope = Verse.all.includes(:book, :chapter)
+      scope = apply_live_search(scope, columns: %w[content], vertical: "scripture")
+      @pagy, @verses = pagy(scope, items: 20)
+    end
+    finish_live_search(partial: "scriptures/live_search_results")
   end
 
   def book

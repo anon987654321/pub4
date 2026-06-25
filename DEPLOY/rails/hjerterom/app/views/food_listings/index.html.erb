@@ -6,10 +6,4 @@
   </nav>
 </header>
 
-<%= live_search_form url: food_listings_path, placeholder: "Search food listings…", label: "Food listing search" %>
-
-<turbo-frame id="hjerterom-food-listings" data-turbo-action="replace">
-<div id="live_search_results" role="region" aria-label="Food listings results">
-  <%= render "food_listings/live_search_results" %>
-</div>
-</turbo-frame>
+<%= live_search_index url: food_listings_path, results_partial: "food_listings/live_search_results", placeholder: "Search food listings…", label: "Food listing search", frame_id: "hjerterom-food-listings" %>

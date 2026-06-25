@@ -47,7 +47,7 @@
         <%= f.label :anonymous, "Post anonymously" %>
       </div>
     <% else %>
-      <p class="dim" style="margin-bottom:12px">Posting as <strong>anon</strong> · <%= link_to "sign in", new_session_path %> to use your name</p>
+      <p class="dim mb-12">Posting as <strong>anon</strong> · <%= link_to "sign in", new_session_path %> to use your name</p>
     <% end %>
     <div class="field">
       <%= f.submit "Post", class: "btn btn-primary" %>

@@ -20,9 +20,5 @@
     </nav>
   </header>
 
-  <%= live_search_form url: items_path, placeholder: "Search wardrobe by title, brand, category…", label: "Wardrobe search" %>
-
-  <div id="live_search_results">
-    <%= render "items/live_search_results" %>
-  </div>
+  <%= live_search_index url: items_path, results_partial: "items/live_search_results", placeholder: "Search wardrobe by title, brand, category…", label: "Wardrobe search" %>
 </section>

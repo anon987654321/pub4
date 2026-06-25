@@ -2,11 +2,22 @@
 
 module Marketplace
   class DealsController < Marketplace::BaseController
+    include Shared::LiveSearchable
+
     allow_unauthenticated_access only: %i[index show]
 
     def index
-      @deals = Marketplace::Deal.active.includes(:listing).limit(100)
+      scope = Marketplace::Deal.active.includes(:listing)
+      if live_search_query.present?
+        like = "%#{ActiveRecord::Base.sanitize_sql_like(live_search_query)}%"
+        scope = scope.joins(:listing).where(
+          "marketplace_deals.headline LIKE :q OR marketplace_deals.badge LIKE :q OR marketplace_listings.title LIKE :q",
+          q: like
+        )
+      end
+      @deals = scope.limit(100)
       @featured_deals = @deals.select(&:featured?).first(12)
+      finish_live_search(partial: "marketplace/deals/live_search_results")
     end
 
     def show

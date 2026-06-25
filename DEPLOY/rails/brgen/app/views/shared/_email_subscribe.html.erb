@@ -2,15 +2,15 @@
   <h3>City updates</h3>
   <p class="dim">News and deals from your city, once a week.</p>
   <%= form_with url: email_subscriptions_path, method: :post do |f| %>
-    <div class="field" style="margin-bottom:8px">
+    <div class="field mb-8">
       <%= f.email_field :email, name: "email_subscription[email]",
             placeholder: "your@email.com", required: true,
-            style: "width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:inherit;font-size:14px" %>
+            class: "map-search-input" %>
     </div>
-    <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;margin-bottom:8px;cursor:pointer">
-      <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1" style="margin-top:2px;flex-shrink:0">
+    <label class="field--check-label">
+      <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1">
       <span class="dim">I agree to receive deals and partner offers (optional, unsubscribe any time)</span>
     </label>
-    <%= f.submit "Subscribe", class: "btn btn-primary btn-sm", style: "width:100%" %>
+    <%= f.submit "Subscribe", class: "btn btn-primary btn-sm btn-block" %>
   <% end %>
 </div>

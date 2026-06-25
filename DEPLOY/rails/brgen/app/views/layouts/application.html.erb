@@ -6,18 +6,6 @@
   <%= tag.meta name: "mobile-web-app-capable", content: "yes" %>
   <%= tag.meta name: "color-scheme", content: "dark" %>
   <%= tag.meta name: "theme-color", content: "#111111", data: { light_color: "#f3f4f6", dark_color: "#111111" } %>
-  <script>
-    (() => {
-      const meta = document.querySelector('meta[name="theme-color"]');
-      if (!meta) return;
-      const light = meta.dataset.lightColor || meta.content;
-      const dark = meta.dataset.darkColor || meta.content;
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      const apply = () => { meta.content = mq.matches ? dark : light; };
-      apply();
-      mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
-    })();
-  </script>
   <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Brgen — city communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
@@ -30,7 +18,6 @@
   <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Brgen" %>">
   <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "City communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
   <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
-  <style>:root { --turbo-progress-bar-color: #1d4ed8; }</style>
   <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
@@ -38,7 +25,6 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= yield :head %>
-  <link rel="stylesheet" href="/styles/tokens.css">
   <link rel="preload" href="/face.css" as="style">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <link rel="stylesheet" href="/lightgallery.css">
@@ -47,10 +33,10 @@
   <%= javascript_importmap_tags %>
   <%= javascript_include_tag "particle_kernel", defer: true, "data-turbo-track": "reload" %>
   <%= javascript_include_tag "face", defer: true, "data-turbo-track": "reload" %>
-  <%= render "shared/minimal_ui" %>
 </head>
 <body class="zen-minimal" data-controller="hotkey">
-  <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme">
+  <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme"
+    data-controller="theme-toggle" data-theme-toggle-storage-key-value="brgen-theme" data-action="change->theme-toggle#persist">
   <label for="dark-toggle" class="theme-toggle" title="Toggle light theme" aria-hidden="true">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
       <path d="M12 3a1 1 0 0 1 1 1v1.06a7 7 0 0 1 5.94 5.94H20a1 1 0 1 1 0 2h-1.06A7 7 0 0 1 13 18.94V20a1 1 0 1 1-2 0v-1.06A7 7 0 0 1 5.06 13H4a1 1 0 1 1 0-2h1.06A7 7 0 0 1 11 5.06V4a1 1 0 0 1 1-1zm0 4a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
@@ -98,7 +84,7 @@
   <% if content_for?(:splash) %>
     <dialog id="splash" class="splash" data-controller="dialog" data-dialog-target="dialog" data-dialog-open-value="true" data-action="click->dialog#backdropClose">
       <%= yield :splash %>
-      <form method="dialog" style="margin-top:16px" role="dialog" aria-label="Dialog">
+      <form method="dialog" class="dialog-form" role="dialog" aria-label="Dialog">
         <button type="submit" class="btn btn-primary">Continue</button>
       </form>
     </dialog>
@@ -110,7 +96,7 @@
         <%= link_to root_path, class: "brand", aria: { label: "Brgen" } do %>
           <svg viewBox="0 0 36 36" width="34" height="34" fill="currentColor"><text x="3" y="27" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="800">B</text></svg>
         <% end %>
-        <nav data-turbo-permanent aria-label="Primary navigation">
+        <nav role="navigation" data-turbo-permanent aria-label="Primary navigation">
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to root_path, class: nav_cls.(root_path) do %>
             <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696zM19 19.5a.5.5 0 01-.5.5H15v-6a1 1 0 00-1-1h-4a1 1 0 00-1 1v6H5.5a.5.5 0 01-.5-.5V8.429l7-4.375 7 4.375V19.5z"/></svg>
@@ -164,7 +150,7 @@
         </a>
       </aside>
 
-      <main data-controller="pull-to-refresh">
+      <main role="main" data-controller="pull-to-refresh">
         <div class="feed-header">
           <h1><%= content_for?(:title) ? yield(:title) : "Home" %></h1>
           <div class="feed-tabs">
@@ -210,7 +196,7 @@
       </aside>
     </div>
 
-    <nav class="tab-bar" aria-label="Mobile navigation" data-turbo-permanent>
+    <nav role="navigation" class="tab-bar" aria-label="Mobile navigation" data-turbo-permanent>
       <%= link_to root_path, class: "tab-item" do %>
         <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696z"/></svg>
       <% end %>
@@ -245,19 +231,5 @@
   </div>
   </div>
   <%= render "shared/install_prompt" %>
-  <script>
-    (() => {
-      const toggle = document.getElementById("dark-toggle");
-      if (!toggle) return;
-      try {
-        toggle.checked = localStorage.getItem("brgen-theme") === "light";
-      } catch (e) {}
-      toggle.addEventListener("change", () => {
-        try {
-          localStorage.setItem("brgen-theme", toggle.checked ? "light" : "dark");
-        } catch (e) {}
-      });
-    })();
-  </script>
 </body>
 </html>

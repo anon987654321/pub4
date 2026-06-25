@@ -5,7 +5,7 @@
     <p class="dim">Brgen TV channel</p>
     <h1><%= @channel.name %></h1>
   </div>
-  <nav>
+  <nav role="navigation">
     <% if authenticated? && Current.user == @channel.user %>
       <%= link_to "Upload video", new_tv_channel_video_path(@channel), class: "btn btn-primary btn-sm" %>
       <%= link_to "Edit", edit_tv_channel_path(@channel), class: "btn btn-ghost btn-sm" %>

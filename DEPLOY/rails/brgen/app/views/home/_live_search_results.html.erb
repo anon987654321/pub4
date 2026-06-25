@@ -1,0 +1,19 @@
+<% if live_search_query.present? %>
+ <p class="dim"><%= @posts.size %> results for "<%= live_search_query %>"</p>
+<% end %>
+
+<% if @posts.any? %>
+ <div class="post-grid">
+ <% @posts.each do |post| %>
+ <%= render "posts/post", post: post %>
+ <% end %>
+ </div>
+<% else %>
+ <section class="empty">
+ <% if live_search_query.present? %>
+ <p>No posts match this search.</p>
+ <% else %>
+ <p>No posts yet. <%= authenticated? ? link_to("Create one", new_post_path) : link_to("Sign in to post", new_session_path) %>.</p>
+ <% end %>
+ </section>
+<% end %>

@@ -24,6 +24,7 @@ module Shared
 
     PRESERVATION = {
       externalize_inline_css: true,
+      externalize_inline_style_attributes: true,
       externalize_inline_javascript: true,
       preserve_existing_scss: true,
       preserve_keyframes: true,

@@ -24,7 +24,7 @@
     <h2>Menu</h2>
     <% if @menu_items.any? %>
       <% @menu_items.each do |item| %>
-        <article style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+        <article class="grid-menu-row">
           <div>
             <h3><%= item.name %></h3>
             <% if item.description.present? %>

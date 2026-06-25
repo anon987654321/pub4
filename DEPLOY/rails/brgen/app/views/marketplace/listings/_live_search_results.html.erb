@@ -1,5 +1,5 @@
 <% if authenticated? && (params[:q].present? || params[:category_id].present?) %>
-  <div class="form-wrap" style="padding:12px 16px">
+  <div class="form-wrap form-wrap--compact">
     <%= form_with model: Marketplace::SavedSearch.new, url: marketplace_saved_searches_path do |form| %>
       <%= form.hidden_field :query, value: params[:q] %>
       <%= form.hidden_field :category_id, value: params[:category_id] %>

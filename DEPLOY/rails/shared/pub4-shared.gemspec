@@ -6,6 +6,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["pub4"]
   spec.summary = "Shared Rails engine for pub4 family apps"
   spec.files = Dir["{app,config,db,frontend,lib,public}/**/*", "README.md", "WIRING_NOTES.md", "test/**/*"].select { |f| File.file?(f) }
+  spec.metadata = { "sass_load_path" => "app/assets/stylesheets" }
   spec.require_paths = ["lib"]
   spec.add_dependency "rails", ">= 8.0"
   spec.add_dependency "pundit", ">= 2.3"

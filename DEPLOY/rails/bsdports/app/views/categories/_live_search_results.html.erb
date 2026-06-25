@@ -1,0 +1,17 @@
+<% if live_search_query.present? %>
+ <p class="dim"><%= @categories.size %> results for "<%= live_search_query %>"</p>
+<% end %>
+
+<ul id="categories" role="list" aria-label="Categories">
+ <% @categories.each do |cat| %>
+ <li>
+ <%= link_to cat.name, category_path(cat) %>
+ <small><%= cat.description %></small>
+ <small>(<%= cat.ports.size %> ports)</small>
+ </li>
+ <% end %>
+</ul>
+
+<% if @categories.empty? %>
+ <p class="empty">No categories match this search.</p>
+<% end %>

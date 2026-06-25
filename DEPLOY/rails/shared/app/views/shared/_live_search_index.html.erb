@@ -1,0 +1,24 @@
+<% if local_assigns[:filter_fields_proc] %>
+  <%= live_search_form(
+        url: url,
+        placeholder: placeholder,
+        label: label,
+        query: local_assigns[:query],
+        show_submit: local_assigns.fetch(:show_submit, true),
+        &filter_fields_proc
+      ) %>
+<% else %>
+  <%= live_search_form(
+        url: url,
+        placeholder: placeholder,
+        label: label,
+        query: local_assigns[:query],
+        show_submit: local_assigns.fetch(:show_submit, true)
+      ) %>
+<% end %>
+
+<%= turbo_frame_tag frame_id, data: { turbo_action: "replace" } do %>
+  <div id="live_search_results" role="region" aria-label="<%= label %> results">
+    <%= render results_partial %>
+  </div>
+<% end %>

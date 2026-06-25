@@ -1,8 +1,6 @@
-import { application } from "./application"
+import { application } from "controllers/application"
 import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
-import StimulusReflex from "stimulus_reflex"
-import ApplicationController from "controllers/application_controller"
+import { bootPub4Stimulus } from "pub4/stimulus_boot"
 
+bootPub4Stimulus(application)
 eagerLoadControllersFrom("controllers", application)
-
-StimulusReflex.initialize(application, { applicationController: ApplicationController, isolate: true })

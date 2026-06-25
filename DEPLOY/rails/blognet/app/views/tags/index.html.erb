@@ -4,8 +4,4 @@
   <h1>Tags</h1>
 </header>
 
-<%= live_search_form url: tags_path, placeholder: "Search tags…", label: "Tag search", show_submit: false %>
-
-<div id="live_search_results">
-  <%= render "tags/live_search_results" %>
-</div>
+<%= live_search_index url: tags_path, results_partial: "tags/live_search_results", placeholder: "Search tags…", label: "Tag search", show_submit: false %>

@@ -1,7 +1,5 @@
-import "@hotwired/turbo-rails"
+import "pub4/hotwire"
 import "controllers"
-
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-worker")
 
 if ("periodicSync" in navigator && "serviceWorker" in navigator) {
   navigator.serviceWorker.ready.then(reg => {

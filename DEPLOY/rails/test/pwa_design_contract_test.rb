@@ -5,6 +5,7 @@ require "minitest/autorun"
 
 class PwaDesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
+  SHARED_ROOT = File.join(ROOT, "shared")
   APPS = %w[amber baibl blognet brgen bsdports hjerterom].freeze
 
   def test_all_apps_ship_generated_workbox_workers
@@ -18,14 +19,16 @@ class PwaDesignContractTest < Minitest::Test
     end
   end
 
-  def test_all_apps_expose_complete_pwa_routes
+  def test_all_apps_register_service_worker_via_pub4_hotwire
+    hotwire = read(SHARED_ROOT, "frontend/pub4_hotwire.js")
+    assert_includes hotwire, 'serviceWorker.register("/service-worker")'
+
     each_app do |_app, root|
       routes = read(root, "config/routes.rb")
-      javascript = read(root, "app/javascript/application.js", optional: true) +
-        read(root, "app/assets/face.js", optional: true)
+      javascript = read(root, "app/javascript/application.js", optional: true)
       assert_match(/get ["']offline["']/, routes)
       assert_match(/get ["']service-worker["']/, routes)
-      assert_includes javascript, 'serviceWorker.register("/service-worker")'
+      assert_includes javascript, "pub4/hotwire"
     end
   end
 
@@ -46,8 +49,7 @@ class PwaDesignContractTest < Minitest::Test
       layout = read(root, "app/views/layouts/application.html.erb")
       assert_includes layout, "viewport-fit=cover"
       assert_includes layout, 'rel: "manifest"'
-      assert_includes layout, "/styles/tokens.css"
-      assert_match(/minimal-ui\.css|render "shared\/minimal_ui"/, layout)
+      assert_match(/stylesheet_link_tag (?:["'](?:application|app)["']|:app)/, layout)
       assert_match(/<main(?:\s|>)/, layout)
       assert_includes layout, "aria-label=\"Primary navigation\""
     end

@@ -4,8 +4,4 @@
   <h1>Search Brgen</h1>
 </header>
 
-<%= live_search_form url: global_search_path, placeholder: "Search posts, listings, TV, playlists…", label: "Search all verticals", query: @query %>
-
-<div id="live_search_results">
-  <%= render "search/live_search_results" %>
-</div>
+<%= live_search_index url: global_search_path, results_partial: "search/live_search_results", placeholder: "Search posts, listings, TV, playlists…", label: "Search all verticals", query: @query %>

@@ -10,10 +10,4 @@
   </nav>
 </header>
 
-<%= live_search_form url: blog_posts_path(@blog), placeholder: "Search posts…", label: "Post search" %>
-
-<turbo-frame id="blognet-posts" data-turbo-action="replace">
-<div id="live_search_results" role="region" aria-label="Posts search results">
-  <%= render "posts/live_search_results" %>
-</div>
-</turbo-frame>
+<%= live_search_index url: blog_posts_path(@blog), results_partial: "posts/live_search_results", placeholder: "Search posts…", label: "Post search", frame_id: "blognet-posts" %>

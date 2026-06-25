@@ -11,7 +11,7 @@
         <span class="chip">mutual match</span>
         <span class="chip">direct messages</span>
       </div>
-      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, style: "color:inherit" %> to match</p>
+      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, class: "link-inherit" %> to match</p>
     </div>
   <% end %>
 <% end %>
@@ -33,9 +33,9 @@
   data-swipe-like-url-value="<%= dating_likes_path %>"
   data-swipe-dislike-url-value="<%= dating_dislikes_path %>"
   data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp keydown.left@window->swipe#pass keydown.right@window->swipe#like"
-  style="margin-top:20px"
+  class="dating-discover"
 >
-  <div id="swipe-stack" style="position:relative;min-height:640px">
+  <div id="swipe-stack">
     <% @profiles.each_with_index do |profile, index| %>
       <%= render "card", profile: profile, index: index %>
     <% end %>
@@ -43,5 +43,5 @@
   <% if @profiles.empty? %>
     <div class="empty"><p>No profiles nearby. <%= authenticated? ? link_to("Edit your profile", edit_dating_profile_path) : link_to("Sign in", new_session_path) %>.</p></div>
   <% end %>
-  <turbo-frame id="dating-next" src="<%= dating_next_path %>" loading="lazy" style="display:none"></turbo-frame>
+  <turbo-frame id="dating-next" src="<%= dating_next_path %>" loading="lazy" hidden></turbo-frame>
 </section>

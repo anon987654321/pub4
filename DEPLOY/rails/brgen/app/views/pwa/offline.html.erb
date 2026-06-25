@@ -1,10 +1,10 @@
 <% content_for :title, "Offline — Brgen" %>
 
-<div class="empty" style="padding:4rem 1rem;text-align:center">
-  <h1 style="font-size:2.2rem;margin-bottom:0.25rem">You're offline</h1>
+<div class="empty offline-empty">
+  <h1>You're offline</h1>
   <p class="dim">Some content is cached. Your drafts and recent feed are available.</p>
 
-  <div style="margin:2rem 0">
+  <div class="offline-empty__actions">
     <%= link_to "Back to home", root_path, class: "btn" %>
     <button onclick="window.location.reload()" class="btn btn-ghost">Retry</button>
   </div>

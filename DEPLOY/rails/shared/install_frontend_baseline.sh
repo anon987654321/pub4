@@ -1,35 +1,9 @@
 #!/bin/sh
+# DEPRECATED — pub4-shared engine owns all frontend baselines.
+# Use: gem "pub4-shared", path: "../../shared" + bundle install
+# See DEPLOY/rails/shared/WIRING_NOTES.md
 set -eu
-
-BASE="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-SHARED="$BASE/shared"
-APPS="amber brgen baibl blognet bsdports hjerterom"
-
-# DEPRECATED (engine-ize complete): use Gemfile 'gem "pub4-shared", path: "../../shared"' + bundle.
-# This script kept only for one-off bootstrap. Update all deploys/openbsd to pure bundle. See WIRING_NOTES.md.
-
-copy_one() {
-  app="$1"
-  src="$2"
-  dst="$3"
-  [ -f "$SHARED/$src" ] || return 0
-  mkdir -p "$(dirname "$BASE/$app/$dst")"
-  cp "$SHARED/$src" "$BASE/$app/$dst"
-  printf '%s: %s\n' "$app" "$dst"
-}
-
-for app in ${1:-$APPS}; do
-  copy_one "$app" frontend/stimulus_components.js app/javascript/stimulus_components.js
-  copy_one "$app" app/controllers/concerns/shared/live_searchable.rb app/controllers/concerns/shared/live_searchable.rb
-  copy_one "$app" app/controllers/concerns/shared/structured_events.rb app/controllers/concerns/shared/structured_events.rb
-  copy_one "$app" app/controllers/concerns/shared/media_guard.rb app/controllers/concerns/shared/media_guard.rb
-  copy_one "$app" app/jobs/shared/media_processing_job.rb app/jobs/shared/media_processing_job.rb
-  copy_one "$app" app/services/shared/live_search.rb app/services/shared/live_search.rb
-  copy_one "$app" app/services/shared/event_emitter.rb app/services/shared/event_emitter.rb
-  copy_one "$app" app/views/shared/_copyable.html.erb app/views/shared/_copyable.html.erb
-  copy_one "$app" app/javascript/controllers/live_search_controller.js app/javascript/controllers/live_search_controller.js
-  copy_one "$app" app/views/shared/_search_loading.html.erb app/views/shared/_search_loading.html.erb
-  copy_one "$app" app/views/shared/_search_suggestions.html.erb app/views/shared/_search_suggestions.html.erb
-  copy_one "$app" app/views/shared/_live_search_form.html.erb app/views/shared/_live_search_form.html.erb
-  copy_one "$app" app/helpers/shared/search_helper.rb app/helpers/shared/search_helper.rb
-done
+printf '%s\n' "install_frontend_baseline.sh is deprecated." \
+  "Shared views, helpers, concerns, and JS load via the pub4-shared engine." \
+  "Run bundle install in each app instead."
+exit 0

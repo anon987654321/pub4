@@ -34,14 +34,14 @@
   <div class="concept-threads" data-controller="comparison-viz" data-comparison-viz-theme-value="<%= theme %>">
     <% %w[creation love duty light compassion].each do |concept| %>
       <div class="thread" data-concept="<%= concept %>">
-        <div class="thread-bar" style="width: <%= 40 + rand(50) %>%"></div>
+        <div class="thread-bar" style="--bar-width: <%= 40 + rand(50) %>%"></div>
         <div class="thread-label"><%= concept %> (overlap across texts)</div>
       </div>
     <% end %>
   </div>
 
   <% if cross_links.any? %>
-    <div class="cross-viz" style="margin-top:1rem;">
+    <div class="cross-viz">
       <h4>Curated Cross-Tradition Links</h4>
       <ul>
         <% cross_links.each do |xr| %>
@@ -58,7 +58,7 @@
     </div>
   <% end %>
 
-  <p class="dim" style="margin-top:.5rem; font-size:.75rem;">Visualization is interactive (hover/click threads to highlight parallels in future). Data seeded with thematic cross-references.</p>
+  <p class="dim viz-footnote">Visualization is interactive (hover/click threads to highlight parallels in future). Data seeded with thematic cross-references.</p>
 </div>
 
 <% if results.blank? %>

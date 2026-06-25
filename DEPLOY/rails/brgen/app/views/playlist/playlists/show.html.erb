@@ -4,7 +4,7 @@
   <h1><%= @playlist.name %></h1>
   <nav role="navigation" aria-label="Playlist actions">
     <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-      <div style="display:flex;gap:8px">
+      <div class="cluster">
         <%= link_to "Edit", edit_playlist_playlist_path(@playlist), class: "btn btn-ghost btn-sm" %>
         <%= button_to "Delete", playlist_playlist_path(@playlist), method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger btn-sm" %>
       </div>
@@ -37,8 +37,8 @@
   <% if Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor]) %>
     <div class="form-wrap">
       <%= form_with url: playlist_playlist_collaborations_path(@playlist), method: :post do |f| %>
-        <div class="field" style="display:flex;gap:8px">
-          <%= f.text_field :username, placeholder: "username", style: "flex:1" %>
+        <div class="field field--row">
+          <%= f.text_field :username, placeholder: "username", class: "field--grow" %>
           <%= f.select :role, %w[editor viewer] %>
           <%= f.submit "Add collaborator", class: "btn btn-primary btn-sm" %>
         </div>
@@ -88,7 +88,7 @@
     data-controller="swipe"
     data-swipe-listen-url-value="<%= playlist_listens_path(track_id: pt.track.id) %>"
     data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp"
-    style="display:flex;align-items:center;justify-content:space-between"
+    class="track-row"
   >
     <div>
       <strong><%= pt.track.title %></strong> — <%= pt.track.artist %>
@@ -101,9 +101,9 @@
 <% end %>
 
 <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-  <div style="padding:16px;border-bottom:1px solid var(--border)">
-    <p style="font-size:20px;font-weight:800;margin-bottom:12px">Add a track</p>
-    <div class="form-wrap" style="padding:0">
+  <div class="section-divider">
+    <p class="section-heading">Add a track</p>
+    <div class="form-wrap form-wrap--flush">
       <%= form_with url: playlist_playlist_tracks_path(@playlist) do |f| %>
         <div class="field"><%= f.text_field :title, placeholder: "Title" %></div>
         <div class="field"><%= f.text_field :artist, placeholder: "Artist" %></div>

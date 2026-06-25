@@ -11,7 +11,7 @@
         <span class="chip">buyer–seller chat</span>
         <span class="chip">geo listings</span>
       </div>
-      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, style: "color:inherit" %> to sell</p>
+      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, class: "link-inherit" %> to sell</p>
     </div>
   <% end %>
 <% end %>
@@ -25,17 +25,11 @@
   </nav>
 </div>
 
-<%= live_search_form url: marketplace_listings_path, placeholder: "Search deals…", label: "Search marketplace deals" do |f| %>
+<%= live_search_index url: marketplace_listings_path, results_partial: "marketplace/listings/live_search_results", placeholder: "Search deals…", label: "Search marketplace deals", frame_id: "marketplace-listings" do |f| %>
   <%= f.select :category_id,
         options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
         { include_blank: "All categories" }, aria: { label: "Filter by category" } %>
 <% end %>
-
-<turbo-frame id="marketplace-listings" data-turbo-action="replace">
-<div id="live_search_results" role="region" aria-label="Marketplace listings results">
-  <%= render "marketplace/listings/live_search_results" %>
-</div>
-</turbo-frame>
 
 <% content_for :widgets do %>
   <%= render "shared/affiliate_deals", category: params[:category_id] %>

@@ -1,0 +1,108 @@
+@use "pub4_stack" as *;
+
+:root {
+  --turbo-progress-bar-color: #0ea5e9;
+}
+
+.dep-graph {
+  border: 1px solid #ccc;
+  background: #fafafa;
+}
+
+.logo {
+  text-indent: -9999px;
+  overflow: hidden;
+  margin: 0.75rem 0 22px;
+  width: 182px;
+  height: 44px;
+  background-image: url("bsdports_182x44.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+header {
+  width: 100%;
+  max-width: 660px;
+  display: flex;
+  justify-content: flex-end;
+
+  .tabs {
+    display: flex;
+    margin-top: 18px;
+    color: var(--light-grey);
+    border-bottom: 1px solid var(--extra-light-grey);
+
+    p {
+      padding: 0 3px 8px;
+      margin-inline-end: 28px;
+
+      &.active {
+        color: var(--black);
+        border-bottom: 1px solid var(--black);
+      }
+    }
+  }
+}
+
+#search {
+  width: 90%;
+  max-width: 584px;
+  border: 1px solid var(--extra-light-grey);
+  border-radius: 30px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+
+  &:focus-within {
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+  }
+
+  input {
+    background: transparent;
+    outline: none;
+    border: none;
+    width: 100%;
+    padding: 16px 0;
+    font-size: 16px;
+    color: var(--black);
+
+    &::placeholder {
+      color: var(--dark-grey);
+    }
+  }
+}
+
+.browse-link {
+  margin: 44px 0 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.port-list {
+  width: 90%;
+  max-width: 660px;
+  margin-top: 2rem;
+}
+
+.port-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--extra-light-grey);
+}
+
+.port-name {
+  font-weight: 600;
+  color: var(--light-blue);
+  text-decoration: none;
+}
+
+.port-name:hover {
+  text-decoration: underline;
+}
+
+.port-comment {
+  color: var(--dark-grey);
+  font-size: 0.9rem;
+}

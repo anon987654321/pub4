@@ -1,3 +1,5 @@
+@use "pub4_stack" as *;
+@import "actiontext";
 @font-face {
   font-family: "InterVariable";
   src: local("Inter Variable"), local("Inter");
@@ -7,12 +9,13 @@
 }
 
 :root {
+  --turbo-progress-bar-color: #1d4ed8;
   --font-body: "InterVariable", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: "Source Serif 4", Georgia, Cambria, "Times New Roman", serif;
   --font-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Monaco, Consolas, monospace;
-  --text-xs: clamp(11px, 1.5vw, 13px);
-  --text-sm: clamp(13px, 1.8vw, 15px);
-  --text-base: clamp(15px, 2.2vw, 17px);
+  --text-xs: clamp(0.6875rem, 1.5vw, 0.8125rem);
+  --text-sm: clamp(0.8125rem, 1.8vw, 0.9375rem);
+  --text-base: clamp(0.9375rem, 2.2vw, 17px);
   --text-lg: clamp(17px, 2.5vw, 20px);
   --text-xl: clamp(20px, 3vw, 24px);
   --text-2xl: clamp(24px, 4vw, 32px);
@@ -40,6 +43,8 @@ body {
 }
 
 main {
+  align-items: stretch;
+  justify-content: flex-start;
   container-type: inline-size;
 }
 
@@ -48,11 +53,8 @@ main {
   color: var(--color-shadow);
 }
 
-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; gap: 1rem; align-items: center; padding: .5rem 1rem; background: #fff; border-bottom: 1px solid var(--color-extra-light-grey, #f0f0f0); transform: translateY(-100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-nav.nav-visible { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
 nav a { color: inherit; text-decoration: none; }
 nav a:hover { text-decoration: underline; }
-nav .brand { font-weight: 700; margin-right: auto; }
 
 .post { max-width: 720px; }
 .post header { margin-bottom: var(--space-lg); }
@@ -89,7 +91,7 @@ h1, h2 { margin-bottom: var(--space-sm); }
 .post header small,
 .comment small {
   color: rgba(117,117,117,1);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .prose h2 {
@@ -150,7 +152,7 @@ blockquote {
 
 .trix-content figcaption,
 .caption {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: rgba(41,41,41,0.6);
   font-style: italic;
 }
@@ -230,8 +232,8 @@ p, h1, h2, h3 {
 }
 
 [dir="rtl"] nav .brand {
-  margin-right: 0;
-  margin-left: auto;
+  margin-inline-end: 0;
+  margin-inline-start: auto;
 }
 
 [dir="rtl"] .form .field--check {

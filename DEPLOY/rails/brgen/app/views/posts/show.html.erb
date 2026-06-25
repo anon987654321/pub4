@@ -37,7 +37,7 @@
   <% if @post.content.present? %>
     <p><%= @post.content %></p>
   <% end %>
-  <div style="display:flex;gap:8px;margin-top:12px">
+  <div class="cluster mt-12">
     <button class="btn-share" data-controller="share"
             data-share-title-value="<%= @post.title %>"
             data-share-url-value="<%= request.original_url %>"

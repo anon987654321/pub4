@@ -21,8 +21,8 @@
     <% @group_order.each do |kind| %>
       <% items = @grouped_notifications[kind] || [] %>
       <% next if items.empty? %>
-      <section style="margin-bottom: 18px">
-        <h2 style="font-size: 18px; margin: 0 0 8px"><%= kind.humanize %></h2>
+      <section class="mb-12">
+        <h2 class="section-heading--md"><%= kind.humanize %></h2>
         <% items.each do |notification| %>
           <article role="article" aria-label="Notification">
             <h3><%= notification.title %></h3>

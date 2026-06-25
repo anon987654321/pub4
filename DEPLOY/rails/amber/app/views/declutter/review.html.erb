@@ -46,7 +46,7 @@
 
   <section>
     <h2>Move item</h2>
-    <nav>
+    <nav role="navigation">
       <% %w[keep wear_this_week repair sell donate release].each do |target| %>
         <%= button_to target.humanize, move_declutter_path(@item, target: target), method: :patch, class: "btn-sm" %>
       <% end %>

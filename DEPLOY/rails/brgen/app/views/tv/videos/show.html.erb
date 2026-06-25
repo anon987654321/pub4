@@ -13,12 +13,12 @@
 
 <div data-controller="tv-player" data-tv-player-auto-wake-lock-value="true" data-tv-player-auto-orientation-value="true" data-tv-player-orientation-value="landscape">
 <% if @video.video_file.attached? %>
-  <div style="border-bottom:1px solid var(--border)">
-    <%= video_tag url_for(@video.video_file), controls: true, class: "video-player", style: "width:100%;max-height:420px;background:#000;display:block" %>
+  <div class="tv-media">
+    <%= video_tag url_for(@video.video_file), controls: true, class: "video-player tv-media__image" %>
   </div>
 <% elsif @video.thumbnail.attached? %>
-  <div style="border-bottom:1px solid var(--border)">
-    <%= image_tag @video.thumbnail, style: "width:100%;max-height:420px;object-fit:cover;display:block" %>
+  <div class="tv-media">
+    <%= image_tag @video.thumbnail, class: "tv-media__image" %>
   </div>
 <% end %>
 </div>
@@ -34,7 +34,7 @@
     <% if @video.published_at.present? %><span class="chip"><span data-controller="timeago"><%= time_ago_in_words(@video.published_at) %> ago</span></span><% end %>
   </div>
   <% if @video.description.present? %>
-    <p style="margin-top:12px"><%= simple_format(@video.description) %></p>
+    <p class="mt-12"><%= simple_format(@video.description) %></p>
   <% else %>
     <p class="dim">No description yet.</p>
   <% end %>

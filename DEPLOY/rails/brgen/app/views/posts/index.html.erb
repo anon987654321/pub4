@@ -5,7 +5,7 @@
   <% if authenticated? %><%= link_to "+ New post", new_post_path %><% end %>
 </header>
 
-<nav>
+<nav role="navigation">
   <%= link_to "hot",   posts_path,                class: ("active" unless params[:sort]) %>
   <%= link_to "fresh", posts_path(sort: "fresh"), class: ("active" if params[:sort] == "fresh") %>
   <%= link_to "top",   posts_path(sort: "top"),   class: ("active" if params[:sort] == "top") %>

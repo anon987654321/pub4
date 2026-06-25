@@ -1,3 +1,4 @@
+// Deprecated: use pub4_stimulus_boot.js via import "pub4/stimulus_boot".
 import { Application } from "@hotwired/stimulus"
 
 import AutoSubmit from "@stimulus-components/auto-submit"

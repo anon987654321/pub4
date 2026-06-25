@@ -1,11 +1,16 @@
 # frozen_string_literal: true
 
 class CommunitiesController < ApplicationController
+  include Shared::LiveSearchable
+
   before_action :require_real_user, only: [ :new, :create ]
   before_action :set_community,     only: [ :show ]
 
   def index
-    @communities = Community.popular.includes(:user)
+    scope = Community.popular.includes(:user)
+    scope = apply_live_search(scope, columns: %w[name description], vertical: "communities") if live_search_query.present?
+    @communities = scope.limit(100)
+    finish_live_search(partial: "communities/live_search_results")
   end
 
   def show

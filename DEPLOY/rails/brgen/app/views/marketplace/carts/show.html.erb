@@ -13,7 +13,7 @@
           <strong><%= link_to item.listing.title, marketplace_listing_path(item.listing) %></strong>
           <div class="dim"><%= item.listing.price_display %> × <%= item.quantity || 1 %></div>
         </div>
-        <div style="text-align: right;">
+        <div class="text-end">
           <strong><%= item.total_display %></strong>
           <div>
             <%= button_to "Remove", marketplace_listing_order_path(item.listing, item),
@@ -24,12 +24,12 @@
     <% end %>
   </div>
 
-  <div class="cart-summary" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+  <div class="cart-summary">
     <p><strong>Total: <%= @cart_total / 100.0 %> NOK</strong></p>
     <p class="dim">This will send offers to the sellers. They can accept or decline individually.</p>
 
     <%= button_to "Send all offers", "#", class: "btn btn-primary", disabled: true %>
-    <p class="hint" style="margin-top: 8px;">(One-click checkout coming soon)</p>
+    <p class="hint mt-8">(One-click checkout coming soon)</p>
   </div>
 <% else %>
   <p>Your cart is empty. <%= link_to "Browse the marketplace", marketplace_root_path %>.</p>

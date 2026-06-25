@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class PostsController < ApplicationController
+  include Shared::LiveSearchable
+
   rate_limit to: 30, within: 3.minutes, only: %i[create share],
     with: -> { redirect_to posts_path, alert: "Try again later." }
 
@@ -11,7 +13,15 @@ class PostsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
-    @posts = Post.hot.includes(:user, :community, :votes)
+    scope = case params[:sort]
+            when "fresh" then Post.fresh
+            when "top" then Post.top
+            else Post.hot
+            end
+    scope = scope.includes(:user, :community, :votes)
+    scope = apply_live_search(scope, columns: %w[title content], vertical: "feed") if live_search_query.present?
+    @posts = scope.limit(100)
+    finish_live_search(partial: "posts/live_search_results")
   end
 
   def show

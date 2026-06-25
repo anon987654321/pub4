@@ -4,10 +4,5 @@
   <nav role="navigation" aria-label="Ports actions">
     <%= link_to "RSS (new last 7 days)", ports_path(format: :rss) %>
   </nav>
-  <%= live_search_form url: ports_path, placeholder: "Search ports…", label: "Search ports" %>
+  <%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: "Search ports…", label: "Search ports", frame_id: "bsdports-ports" %>
 </header>
-<turbo-frame id="bsdports-ports" data-turbo-action="replace">
-<div id="live_search_results" role="region" aria-label="Ports search results">
-  <%= render "ports/live_search_results" %>
-</div>
-</turbo-frame>

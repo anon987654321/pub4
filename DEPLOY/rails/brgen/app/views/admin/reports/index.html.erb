@@ -21,7 +21,7 @@
         · <span data-controller="timeago"><%= time_ago_in_words(report.created_at) %> ago</span>
       </p>
       <% if report.details.present? %><p><%= report.details %></p><% end %>
-      <nav style="display:flex;gap:8px;flex-wrap:wrap">
+      <nav role="navigation" class="cluster">
         <% %w[open reviewing resolved dismissed].each do |status| %>
           <%= button_to status.humanize, admin_report_path(report, status: status), method: :patch, class: "btn btn-ghost btn-sm" %>
         <% end %>

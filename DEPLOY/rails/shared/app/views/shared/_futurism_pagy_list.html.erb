@@ -17,7 +17,7 @@
   <div id="futurism-list">
     <% records.each do |record| %>
       <%= futurize partial: partial, locals: { local_assigns.keys.first.to_sym => record } do %>
-        <div class="futurism-placeholder" style="min-height: 120px; background: #222; border-radius: 8px; margin-bottom: 1rem;"></div>
+        <div class="futurism-placeholder skeleton" aria-hidden="true"></div>
       <% end %>
     <% end %>
 

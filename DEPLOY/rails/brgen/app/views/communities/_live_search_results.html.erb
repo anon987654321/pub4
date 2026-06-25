@@ -1,0 +1,16 @@
+<% if live_search_query.present? %>
+ <p class="dim"><%= @communities.size %> results for "<%= live_search_query %>"</p>
+<% end %>
+
+<% if @communities.any? %>
+ <ul class="community-list">
+ <% @communities.each do |community| %>
+ <li>
+ <%= link_to community.name, community_path(community) %>
+ <% if community.description.present? %><p class="dim"><%= community.description %></p><% end %>
+ </li>
+ <% end %>
+ </ul>
+<% else %>
+ <p class="empty">No communities match this search.</p>
+<% end %>

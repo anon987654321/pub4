@@ -1,195 +1,76 @@
 # Shared Rails wiring notes
 
-**Current model (engine-ize 2026):** `shared/` is a real Rails engine gem (pub4-shared) loaded via local path in each app Gemfile.
-`bundle install` + `gem 'pub4-shared', path: '../../shared'` (relative from rails/<app>) wires everything.
-Engine (shared/lib/shared/engine.rb, 10 terse lines): isolate_namespace, autoloads concerns/services, provides `Shared.concern(n)` helper for lazy require+const.
-No more per-app copies for core concerns; install_*.sh deprecated (kept only for legacy bootstrap).
+**Current model (engine-ize 2026):** `shared/` is a real Rails engine gem (`pub4-shared`) loaded via local path in each app Gemfile.
 
-See engine.rb for autoload + concern(n). All 6 apps (brgen+5) wired. Root snapshots capture state for eval.
+## Visual system — one `application.css` per app
 
-## Engine wiring (preferred)
+Each app compiles a **single** `app/assets/builds/application.css` via Dart Sass. No separate `tokens.css`, `animations.css`, or `minimal-ui*.css` links in layouts.
 
-All apps declare in Gemfile (bottom):
-```ruby
-gem 'pub4-shared', path: '../../shared'
-```
-Then `bundle install` (from app dir). Engine boots concerns/services automatically.
+**Stack entry** (top of every `application.scss`):
 
-Usage in models/controllers:
-```ruby
-include Shared.concern(:Reactable)
-# or
-include Shared::Followable
+```scss
+@use "pub4_stack" as *;
 ```
 
-Legacy copy scripts deprecated; openbsd.sh / deploy sh updated to favor bundle. Prune stray nested dirs done.
+`pub4_stack` forwards: `_minimal`, `_tokens`, `_animations`, `_zen_shell` (offline page, install prompt, zen-minimal shell).
 
-## Social endpoints to mount in each app
+**Brgen** adds product partials after the stack (`_root`, `_canvas`, `_shell`, …). **Standalone apps** add a thin product block below `@use "pub4_stack"`.
 
-Add app-local routes that point to the copied shared controllers:
+**Static exceptions:**
+- `shared/public/styles/errors.css` — Rails default error pages only
+- brgen: `face.css`, `lightgallery.css` — product vendor assets
+- External font CDNs where apps use them (amber, blognet)
 
-- one endpoint that calls `Shared::ReactionsController#create`
-- one notifications index endpoint
-- one notification update/read endpoint
-- one notifications read-all endpoint
-- one review-case create endpoint
-- one review-case update endpoint
+**Tooling:** `dartsass-rails`, `Shared::FrontendAuditor` (0-warning target on app-owned paths), `bin/rails dartsass:build` in CI.
 
-Keep the path names product-specific where needed:
+## Hotwire / Stimulus baseline
 
-- Brgen: reaction, notifications, review cases
-- Amber: item/outfit reactions, notifications, review cases
-- Blognet: article reactions, notifications, review cases
-- Baibl: annotation reactions, notifications, review cases
+**JS entrypoints** (`shared/frontend/`):
+- `pub4_hotwire.js` — Turbo, theme-meta, PWA SW, nav-reveal (idempotent), minimal-gesture boot
+- `pub4_stimulus_boot.js` — @stimulus-components, StimulusReflex, Futurism, live-search, offline-page, install-prompt, theme-toggle
+- `pub4_theme_meta.js`, `pub4_nav_reveal.js`, `pub4_live_search_controller.js`, …
 
-## Model inclusion
+**Per-app wiring:**
 
-Include shared concerns in app models deliberately:
-
-```ruby
-class Post < ApplicationRecord
-  include Shared::Reactable
-end
-
-class Outfit < ApplicationRecord
-  include Shared::Reactable
-end
+```js
+// app/javascript/application.js
+import "pub4/hotwire"
+import "controllers"
 ```
 
-Only include `Shared::Followable` on models that users should be able to subscribe to.
-
-## Signed target IDs
-
-Shared controllers expect signed global IDs for targets. Views should use:
-
 ```ruby
-record.to_sgid.to_s
+# config/importmap.rb
+eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), binding)
 ```
 
-This keeps polymorphic user-facing action targets tamper-resistant.
+**Live search:** `live_search_index` helper + `Shared::LiveSearchable` — rolled out on all index views.
 
-## Next hardening
+**Mailers:** `render "layouts/mailer_styles"` (shared partial; inline `<style>` required for email clients).
 
-- Add app-local authorization before review updates.
-- Add tests for every mounted route.
-- Replace copy/install with a Rails engine once app structure stabilizes. (Tranche10: 6/6 apps wired; more models promoted (Video, Listen, LiveStream, Match, Reaction); sh/deploy_all + openbsd annotated DEPRECATED for legacy copies. Wave 1: legacy cp comments cleaned from sh.)
-- AN201/AN106: Wave 1 unified auth baselines (all 6 apps now close to brgen Rails 8 + guest scaffold); VAPID stubs progressing in production.rb + pwa (full keys/credentials next).
+## Social endpoints
 
+Five apps eval `shared/config/routes/social.rb` (notifications, reactions, reports). Controllers subclass `Shared::ReactionsController`, `Shared::NotificationsController`, `Shared::ReviewCasesController`.
 
-## Visual System & Component Inheritance (Brgen as Base)
+**Brgen** mounts equivalent routes inline; uses city-specific `NotificationsController` (grouped inbox) and `ModerationReport` for reports. Reactions use `Shared::ReactionToggle`.
 
-Brgen's `app/assets/stylesheets/application.css` is the canonical visual source of truth for the entire city app family:
-- X.com 3-column layout (275px sidebar / 600px feed / 350px widgets)
-- Dark cinema palette (--bg #000, --surface2 #16181c, --accent #1d9bf0, etc.)
-- NNG-compliant spacing, typography, and interaction tokens
+## Shared concerns
 
-All other apps should:
-1. Import or copy the `:root` custom properties from Brgen.
-2. Gradually align their components (cards, nav, forms, modals) to Brgen patterns.
-3. Prefer components from `shared/frontend/` + Brgen's Stimulus controllers where possible.
+Models: `Shared::Reactable`, `Followable`, `Votable`, `Notifiable`, `ActivityTrackable`, `GeoLocatable`.
 
-This ensures a single coherent "watch from afar" aesthetic across Brgen, Amber, Blognet, etc. while allowing product-specific branding on top.
+Controllers: `Shared::LiveSearchable`, `StructuredEvents`, `MediaGuard`, `ActorIdentity`.
 
-**Quick rollout checklist for new apps**:
-1. Copy `:root` custom properties from Brgen's `application.css`.
-2. Import `shared/frontend/stimulus_components.js` baseline.
-3. Align major components (cards, nav, forms) to Brgen tokens.
-4. Test reduced-motion + coarse pointer profiles.
-(Tranche10: engine + Shared concerns standard for all vertical models + ARIA NN in subapp views.)
+Emit activity via `Shared::EventEmitter` / `include Shared::StructuredEvents` for unified graph + Turbo Stream consumers.
 
-## Stimulus Components Baseline
+## CI gate (per app)
 
-`shared/frontend/stimulus_components.js` + Brgen's controller set (clipboard, lightbox, media_picker, geolocation, notification, timeago, typing, etc.) is the shared component library. New apps and verticals should start from these rather than duplicating. (STIMULUS_COMPONENTS_BASELINE.md pruned ee3a56e33 for .md reduction; guidance inlined in this "Stimulus Components Baseline" section + the JS + Brgen controllers.)
-
-## LLM / AI Readiness
-
-apps.yml is the canonical structured surface for MASTER scans (`/scan`, `/sweep`, council). Future LLM features (recommendations, ranking, moderation assistance, content generation) should be added as new rows there first, then wired via small shared concerns or services. Brgen's "ai" vertical is the primary experimentation surface. All apps should emit consistent activity events so AI ranking can work across the unified graph (see brgen_CORE.md).
-
-## Unified Activity Graph + Modern Hotwire Reactivity (2025-2026 Patterns)
-
-Brgen (and by extension the whole family) should treat every vertical action as an event in one city activity graph (actor, vertical, event_type, locality, target, visibility, timestamp, metadata). This single source powers feeds, discovery, notifications, moderation, and recommendations.
-
-Inspiration from current best practice (Hotwire + StimulusReflex production apps + LBSN/graph recsys research):
-- Use Turbo Streams + Action Cable (or StimulusReflex/CableReady) for live "something just happened near you" updates across marketplace, dating, tv, playlist, takeaway, etc.
-- All subapps must emit to the shared Activity stream instead of building private feeds.
-- Graph-powered recs (collab filtering + location + social signals) become possible once the unified event stream exists.
-- See popular patterns in current Hotwire social/community apps and location-based recommendation papers.
-
-Implementation rule: New features in any app must add an Activity emission + a Turbo Stream consumer before building custom real-time UI.
-
-**Practical starter**: 
-- From services: `Shared::EventEmitter.call("Vertical::ActionHappened", actor_id: ..., vertical: "marketplace", ...)`
-- From controllers: `include Shared::StructuredEvents` then `emit_event("Vertical::ActionHappened", ...)`
-
-See `shared/app/services/shared/event_emitter.rb` and `shared/app/controllers/concerns/shared/structured_events.rb`. This feeds the unified graph + Hotwire.
-
-## Shared Concerns & Mixins
-
-The `shared/app/models/concerns/shared/` and `shared/app/controllers/concerns/shared/` provide reusable behavior (expanded 2026-06):
-
-**Models:**
-- **Reactable**, **Followable**, **Votable** — social primitives (reactions, follows, votes).
-- **Notifiable** — `deliver_notification(recipient, title:..., source:...)` or structured kind/notifiable path. Eliminates `defined?(Notification)` + create boilerplate.
-- **ActivityTrackable** — `record_activity!("EventName", actor:, source_vertical:...)`. Centralizes ActivityEventRecorder usage.
-- **GeoLocatable** — `nearby(lat, lng, km)`, `haversine`, `geo?`, `distance_to`, `geocode!` stub. One portable implementation (replaced 6+ ad-hoc versions).
-
-**Controllers:**
-- **LiveSearchable**, **ActorIdentity**, **MediaGuard**, **StructuredEvents**.
-
-Usage: `include Shared::Votable` (or Notifiable/ActivityTrackable/GeoLocatable) in your models. See recent brgen Post/Comment/User/Orders + hjerterom Resource for examples.
-
-**Next:** Turn the whole shared/ tree into a real Rails engine (see long-term goal note at top of this file) so concerns/services auto-load and routes mount cleanly.
-
-**Usage pattern** (in your app models/controllers):
-
-```ruby
-class Post < ApplicationRecord
-  include Shared::Reactable
-  include Shared::Followable   # if posts can be followed
-end
-
-class PostsController < ApplicationController
-  include Shared::LiveSearchable
-
-  def index
-    @posts = live_search_scope(Post.all, columns: %w[title content])
-    render_live_search(collection: @posts, partial: "posts/post")
-  end
-end
+```bash
+bin/rails dartsass:build
+bin/importmap audit
+bin/rails test
 ```
 
-See the files in `shared/app/{models,controllers}/concerns/shared/` for full implementations and `shared/WIRING_NOTES.md` for family-wide guidance. Wire these early when adding social or search features.
+Family-level: `ruby DEPLOY/rails/test/pwa_design_contract_test.rb`, `ruby DEPLOY/rails/test/shared_social_routes_test.rb`, `ruby DEPLOY/rails/frontend_production_gate.rb`.
 
-## Photo / Multimodal Upload Inheritance
+## Engine extraction (done)
 
-Photo creation (upload + processing) is intentionally allowed for unauthenticated visitors on the public surface (`https://ai.brgen.no` without token). This enables multimodal chat experiences for everyone while keeping deeper agent filesystem tools (`ReadFile`, `WriteFile`, `ListDir`, arbitrary `Shell`, etc.) restricted to token-authenticated users.
-
-- The `/photo` endpoint and `image_token` resolution in chat are open to visitors.
-- Uploaded images are stored in a scoped tmp directory per app and referenced via short-lived image tokens.
-- When wiring a new app (amber, hjerterom, etc.), mount the photo upload route and ensure the `ActiveStorage` + postpro pipeline is present if you want vision features.
-- Agent-side tools that touch the real filesystem remain gated by the tool registry (`data/tools.yml` + `LLMDispatcher` visitor filtering). Never grant `Reach::ReadFile` / `WriteFile` etc. to visitors.
-
-See `chat_controller.rb` (photo + uploaded_image_payload) and recent security carve-outs for the exact boundaries.
-
-**Standardization tip**: When adding photo support to a new app, mount the upload route and ensure `ActiveStorage` + post-processing is wired (use Brgen as reference). Keep the visitor-allowed carve-out for public multimodal chat.
-
-## OpenBSD Provisioning & Service Wiring (reference patterns)
-rc.d services (falcon/puma per-app on distinct ports), relayd tables/healthchecks, and per-vertical feature scripts (auth, voting, styles, social, models) provide a repeatable template. All family apps should converge on the same rc.d + relayd + Solid stack baseline for doas rcctl consistency. Shared functions for gem groups, db setup, and layout/CSS baselines reduce drift across brgen, amber, blognet, hjerterom.
-
-**Pure Zsh preference**: New provisioning logic should favor zsh parameter expansion and builtins over external tools (grep, sed, awk, etc.) where practical, per the broader pub4 conventions. See current thin deploy scripts (e.g. `brgen/brgen.sh`) as the model rather than the heavier legacy @*.sh helpers.
-
-## Frontend Baselines (condensed from shared/frontend/*.md, pruned to reduce .md sprawl)
-Stimulus Components: Use @stimulus-components/* (auto-submit, clipboard, content-loader, etc.). App-neutral, progressive enhancement. (Condensed from pruned STIMULUS_COMPONENTS_BASELINE.md; see section header + shared/frontend/stimulus_components.js.)
-
-LLM-safe rules (from LLM_SAFE_FRONTEND_RULES.md): Split large mixed HTML/CSS/JS/ERB into external files before LLM edits. Prefer minimal unified diffs.
-
-PWA/Workbox rule: Rails 8's service worker remains the shared baseline. Introduce Workbox only per app, with a documented build output path, feature-detected background sync/push code, and no route churn for the manifest or service worker endpoint. Treat Workbox as an enhancement after `/up`, Rails production gate, and offline fallback pass.
-
-## Engine Extraction Prep (to reduce current sprawl + duplication)
-To move from "copy via install_frontend_baseline.sh" (fragile, per top of this file) to a real engine:
-- All shared code must live only under shared/ (concerns, services, models/shared, views/shared, etc.). No app-specific logic.
-- Consistent `include Shared::XXX` (no bare includes).
-- Remove/deprecate all local copies of concerns in apps (e.g. brgen/app/models/concerns/* now point to or are replaced by shared versions; locals can be git-rm'd after migration).
-- Ensure Shared::EventEmitter, LiveSearch, health services etc. are the single source.
-- Then introduce shared/lib/shared/engine.rb with `isolate_namespace Shared`, update consuming Gemfiles to path gem, replace copy script with bundle step.
-This directly supports the major restructure wins (shared layer as foundation for activity graph, concerns, etc.) while actively reducing file sprawl/duplication today. Prep steps (promotions + cleanups) are being done in small PRs without new .md files.
+`install_frontend_baseline.sh` is deprecated. Prune per-app duplicates of shared controllers/partials when found.

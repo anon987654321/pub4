@@ -5,7 +5,7 @@
     <p class="dim">Marketplace / <%= @listing.category&.name || "Listing" %></p>
     <h1><%= @listing.title %></h1>
   </div>
-  <nav>
+  <nav role="navigation">
     <% if authenticated? && Current.user == @listing.user %>
       <%= link_to "Edit", edit_marketplace_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
     <% elsif authenticated? %>
@@ -21,16 +21,16 @@
 <%= render "shared/media_gallery", attachments: @listing.photos, title: @listing.title %>
 
 <article>
-  <p style="font-size:28px;font-weight:800;color:#e63230;margin-bottom:6px"><%= @listing.price_display %></p>
+  <p class="listing-price"><%= @listing.price_display %></p>
   <p class="dim"><%= @listing.condition %> · <%= @listing.location %> · <%= @listing.user.email_address.split("@").first %></p>
   <p class="dim"><%= pluralize(@listing.views_count.to_i, "view") %> · <%= pluralize(@listing.favorites.size, "save") %> · status: <%= @listing.status %></p>
-  <p style="margin-top:12px"><%= simple_format(@listing.description) %></p>
-  <button class="btn-share" style="margin-top:12px" data-controller="share"
+  <p class="mt-12"><%= simple_format(@listing.description) %></p>
+  <button class="btn-share mt-12" data-controller="share"
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"
           data-action="click->share#share">Share</button>
   <% if !@listing.sold? && authenticated? && Current.user != @listing.user %>
-    <div style="margin: 16px 0; display: flex; gap: 12px; align-items: center;">
+    <div class="listing-actions">
       <%= button_to "Add to cart", marketplace_listing_orders_path(@listing),
             params: { quantity: 1 },
             class: "btn btn-primary" %>
@@ -42,10 +42,10 @@
 </article>
 
 <% if authenticated? && Current.user != @listing.user && !@listing.sold? %>
-  <div id="make-offer" style="padding:16px;border-bottom:1px solid var(--border)">
-    <p style="font-size:18px;font-weight:800;margin-bottom:12px">Make an offer</p>
+  <div id="make-offer" class="section-divider">
+    <p class="section-heading--md">Make an offer</p>
     <p class="dim">Send a short message to the seller. They can accept or decline from this listing page.</p>
-    <div class="form-wrap" style="padding:0">
+    <div class="form-wrap form-wrap--flush">
       <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>
       <%= form_with(model: @order, url: marketplace_listing_orders_path(@listing), data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
         <div class="field"><%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3, data: { controller: "char-counter", "char-counter-max-value": 280 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
@@ -56,8 +56,8 @@
 <% end %>
 
 <% if authenticated? && Current.user == @listing.user %>
-  <div style="padding:16px;border-bottom:1px solid var(--border)">
-    <p style="font-size:18px;font-weight:800;margin-bottom:12px">Seller dashboard</p>
+  <div class="section-divider">
+    <p class="section-heading--md">Seller dashboard</p>
     <div class="chips">
       <span class="chip"><%= pluralize(@listing.views_count.to_i, "view") %></span>
       <span class="chip"><%= pluralize(@listing.orders.size, "offer") %></span>
@@ -66,8 +66,8 @@
     </div>
   </div>
 
-  <div style="padding:16px;border-bottom:1px solid var(--border)">
-    <p style="font-size:18px;font-weight:800;margin-bottom:12px">Offers</p>
+  <div class="section-divider">
+    <p class="section-heading--md">Offers</p>
     <% if @listing.orders.any? %>
       <% @listing.orders.includes(:buyer).each do |order| %>
         <article>
@@ -75,7 +75,7 @@
           <span class="dim"> — <%= order.status %></span>
           <% if order.message.present? %><p><%= order.message %></p><% end %>
           <% if order.status == "pending" %>
-            <div style="display:flex;gap:8px;margin-top:8px">
+            <div class="cluster mt-8">
               <%= button_to "Accept", marketplace_listing_order_path(@listing, order), params: { accept: true }, method: :patch, class: "btn btn-primary btn-sm" %>
               <%= button_to "Decline", marketplace_listing_order_path(@listing, order), params: { decline: true }, method: :patch, class: "btn btn-ghost btn-sm" %>
             </div>
@@ -85,6 +85,6 @@
     <% else %>
       <p class="dim">No offers yet.</p>
     <% end %>
-    <%= button_to "Remove listing", marketplace_listing_path(@listing), method: :delete, class: "btn btn-danger btn-sm", style: "margin:16px" %>
+    <%= button_to "Remove listing", marketplace_listing_path(@listing), method: :delete, class: "btn btn-danger btn-sm m-16" %>
   </div>
 <% end %>

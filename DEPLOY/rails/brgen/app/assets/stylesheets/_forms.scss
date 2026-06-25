@@ -1,0 +1,73 @@
+/* Zen-minimal mode */
+body.zen-minimal .sidebar,
+body.zen-minimal #cityCarousel,
+body.zen-minimal .tab-bar {
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+body.zen-minimal .brand {
+  position: fixed;
+  inset-block-start: 10px;
+  inset-inline-end: 0.75rem;
+  z-index: 999;
+  opacity: 0.65;
+}
+
+body.zen-minimal .brand svg { width: 28px; height: 28px; }
+
+body.zen-minimal .sidebar {
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.32,0.72,0,1), opacity 0.2s ease;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+body.zen-minimal .sidebar.revealed {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.zen-minimal .city-carousel:not(.revealed),
+body.zen-minimal .tab-bar:not(.revealed) {
+  opacity: 0.02;
+  pointer-events: none;
+}
+
+body.zen-minimal .layout > main,
+body.zen-minimal .deal-grid,
+body.zen-minimal .post-card {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+body.zen-minimal .sidebar.revealed ~ .layout > main,
+body.zen-minimal .revealed ~ .layout > main {
+  opacity: 1;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: 9999px;
+  font-size: .9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn:hover { opacity: .88; text-decoration: none; }
+.btn-primary { background: var(--text); color: #000; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-ghost:hover { background: rgba(220,220,220,.06); }
+.btn-danger { background: rgba(220,220,220,.12); color: var(--text); border: 1px solid var(--border); }
+.btn-sm { padding: 6px 0.875rem; font-size: .875rem; }
+

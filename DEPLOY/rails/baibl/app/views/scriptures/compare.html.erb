@@ -10,7 +10,7 @@
     <%= f.label :theme, "Theme or keyword (e.g. creation, love, duty, light)" %>
     <%= f.text_field :theme, value: @theme || "creation", class: "search", placeholder: "creation, compassion, justice..." %>
 
-    <div class="tradition-pills" style="margin-top: .5rem;">
+    <div class="tradition-pills">
       <% @traditions.each do |t| %>
         <span class="pill"><%= t.upcase %></span>
       <% end %>
@@ -23,23 +23,6 @@
 <turbo-frame id="compare-results">
   <%= render partial: "scriptures/compare_results", locals: { results: @results || {}, cross_links: @cross_links || [], theme: @theme || "creation" } %>
 </turbo-frame>
-
-<style>
-  .compare-form { max-width: 720px; margin-bottom: 1.5rem; }
-  .compare-controls .pill { display: inline-block; background: var(--surface); border: 1px solid var(--border); padding: .1rem .4rem; border-radius: 3px; font-size: .75rem; margin-right: .3rem; }
-  .parallel { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin: 1rem 0; }
-  .trad-card { border: 1px solid var(--border); background: var(--surface); padding: .75rem; border-radius: 6px; }
-  .trad-card h4 { margin: 0 0 .35rem; color: var(--primary); font-size: .95rem; }
-  .trad-card .ref { font-size: .7rem; color: #888; }
-  .viz { margin-top: 1.5rem; padding: 1rem; background: #fafafa; border: 1px dashed var(--border); border-radius: 4px; }
-  .viz-header { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: #666; margin-bottom: .5rem; }
-  .concept-threads { display: flex; gap: 1rem; flex-wrap: wrap; }
-  .thread { flex: 1; min-width: 120px; }
-  .thread-bar { height: 18px; background: linear-gradient(90deg, #1d9bf0, #0a66c2); border-radius: 3px; position: relative; margin-bottom: .25rem; }
-  .thread-label { font-size: .7rem; color: #555; }
-  .cross-viz ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: .4rem; }
-  .cross-viz li { font-size: .85rem; }
-</style>
 
 <nav role="navigation" aria-label="Back to scriptures">
   <%= link_to "← Back to Scripture Index", scripture_index_path %>
