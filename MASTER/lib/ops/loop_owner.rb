@@ -29,7 +29,7 @@ module Master
 
       def active
         cleanup_stale!
-        return nil unless File.exist?(INFO)
+        return unless File.exist?(INFO)
 
         JSON.parse(File.read(INFO))
       rescue StandardError

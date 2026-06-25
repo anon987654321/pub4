@@ -168,7 +168,7 @@ module Master
         end
 
         def visit(node, graph:, visiting:, visited:, stack:)
-          return nil if visited.include?(node)
+          return if visited.include?(node)
           if visiting.include?(node)
             return stack.drop_while { |entry| entry != node } + [node]
           end

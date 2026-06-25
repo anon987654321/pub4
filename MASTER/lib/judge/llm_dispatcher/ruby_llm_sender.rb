@@ -31,7 +31,11 @@ module Master
             if !image[:path].to_s.empty? && File.file?(image[:path])
               attachment = RubyLLM::Attachment.new(image[:path], filename: (image[:name].to_s.empty? ? File.basename(image[:path]) : image[:name].to_s))
             else
-              ext = (image[:mime].to_s =~ /png/i ? ".png" : (image[:mime].to_s =~ /webp/i ? ".webp" : ".jpg"))
+              ext = (if image[:mime].to_s =~ /png/i
+".png"
+else
+(image[:mime].to_s =~ /webp/i ? ".webp" : ".jpg")
+end)
               temp_file = Tempfile.new(["master_vision_#{SecureRandom.hex(4)}", ext])
               temp_file.binmode
               temp_file.write(Base64.strict_decode64(image[:data]))

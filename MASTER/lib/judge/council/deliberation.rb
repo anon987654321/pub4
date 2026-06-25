@@ -24,7 +24,7 @@ module Master
 
         def self.sample_question(persona)
           lens = persona.respond_to?(:cognitive_lens) ? persona.cognitive_lens : nil
-          return nil unless lens
+          return unless lens
           questions[lens.to_s]&.sample
         end
 
@@ -155,7 +155,7 @@ module Master
         # Returns a Result::Err if any veto-eligible persona issued a VETO, else nil.
         def enforce_veto(feedback)
           vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
-          return nil if vetoes.empty?
+          return if vetoes.empty?
           veto = vetoes.first
           @bus&.publish(:council_veto, veto)
           Master::Result.err("council: veto from #{veto[:persona]}\n#{veto[:feedback]}", category: :validation)

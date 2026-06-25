@@ -44,7 +44,7 @@ end
 
 SKIP_REASON = if CHROME_PATH.nil?
   "Chromium not found"
-elsif begin; TCPSocket.new("127.0.0.1", 10002).close; false; rescue StandardError; true; end
+elsif begin; TCPSocket.new("127.0.0.1", 10_002).close; false; rescue StandardError; true; end
   "Web server not running on port 10002"
 elsif FREE_MEM_MB < 300
   "Insufficient free memory (#{FREE_MEM_MB}MB < 300MB required for Chrome)"
@@ -142,7 +142,7 @@ class TestBrowserUI < Minitest::Test
   # Uses plain HTTP — no browser page needed for a JSON endpoint.
   def test_05_metrics_endpoint_json
     skip "Web server not running" unless begin
-      TCPSocket.new("127.0.0.1", 10002).close
+      TCPSocket.new("127.0.0.1", 10_002).close
       true
     rescue StandardError
       false

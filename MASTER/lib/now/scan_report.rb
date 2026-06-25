@@ -105,7 +105,7 @@ module Master
 
       def cross_file_drifts_line
         clusters = cross_file_duplicate_clusters
-        return nil if clusters.empty?
+        return if clusters.empty?
 
         summary = clusters.first(3).map do |cluster|
           "#{cluster[:rule]}×#{cluster[:count]}#{cluster[:files] > 1 ? " in #{cluster[:files]} files" : ""}"
@@ -115,7 +115,7 @@ module Master
 
       def confidence_histogram_line
         buckets = confidence_histogram
-        return nil if buckets.empty?
+        return if buckets.empty?
 
         "confidence: #{buckets.map { |label, count| "#{label}=#{count}" }.join(", ")}"
       end

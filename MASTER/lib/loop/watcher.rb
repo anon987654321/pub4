@@ -67,7 +67,7 @@ module Master
 
       def load_avg_1m
         out, _, st = Open3.capture3("/sbin/sysctl", "-n", "vm.loadavg")
-        return nil unless st.success?
+        return unless st.success?
 
         load_average_1m(out)
       rescue StandardError
@@ -77,13 +77,13 @@ module Master
       # OpenBSD does not expose vm.uvmexp.free via sysctl — parse vmstat instead.
       def mem_free_pct
         out, _, st = Open3.capture3("/usr/bin/vmstat")
-        return nil unless st.success?
+        return unless st.success?
 
         free = vmstat_free_bytes(out)
-        return nil unless free
+        return unless free
 
         total, _, st2 = Open3.capture3("/sbin/sysctl", "-n", "hw.physmem")
-        return nil unless st2.success?
+        return unless st2.success?
 
         memory_free_percent(free, physmem_bytes(total))
       rescue StandardError
@@ -101,7 +101,7 @@ module Master
         free_index = columns.index("fre") || 4
         data = lines.drop((header_index || -1) + 1).find { |line| line.match?(/\A\s*\d/) } ||
                lines.reverse.find { |line| line.match?(/\A\s*\d/) }
-        return nil unless data
+        return unless data
 
         value = data.split[free_index]
         value ? parse_size(value) : nil
@@ -113,7 +113,7 @@ module Master
       end
 
       def memory_free_percent(free_bytes, total_bytes)
-        return nil unless free_bytes && total_bytes&.positive?
+        return unless free_bytes && total_bytes&.positive?
 
         pct = (free_bytes.to_f / total_bytes.to_f * 100.0).round(1)
         [[pct, 0.0].max, 100.0].min
@@ -130,7 +130,7 @@ module Master
 
       def disk_root_pct
         out, _, st = Open3.capture3("/bin/df", "-k", "/")
-        return nil unless st.success?
+        return unless st.success?
 
         disk_percent(out)
       rescue StandardError
@@ -145,7 +145,7 @@ module Master
       # The master daemon runs as `falcon serve` on port 53187.
       def master_rss_mb
         out, _, st = Open3.capture3("/bin/ps", "-Ao", "rss,command")
-        return nil unless st.success?
+        return unless st.success?
 
         master_rss_mb_from_ps(out)
       rescue StandardError
@@ -156,7 +156,7 @@ module Master
         rss_kb = output.to_s.lines
                        .select { |line| line.include?("falcon serve") || line.include?(":53187") }
                        .sum { |line| line.strip.split.first.to_i }
-        return nil if rss_kb.zero?
+        return if rss_kb.zero?
 
         (rss_kb / 1024.0).round(1)
       end

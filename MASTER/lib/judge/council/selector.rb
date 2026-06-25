@@ -54,7 +54,7 @@ module Master
         end
 
         def normalize_available(available)
-          return nil unless available
+          return unless available
         end
       end
     end

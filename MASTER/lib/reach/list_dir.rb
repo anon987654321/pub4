@@ -28,7 +28,7 @@ module Master
       def list_tree(base:, dir:, depth:, pattern:, indent: 0)
         return [] if depth < 0
         entries = Dir.entries(dir).reject { |e| e.start_with?(".") }.sort
-        entries.flat_map { |entry|
+        entries.flat_map do |entry|
           full = File.join(dir, entry)
           next [] if pattern && !File.fnmatch?(pattern, entry)
           prefix = "  " * indent
@@ -37,7 +37,7 @@ module Master
           else
             ["#{prefix}#{entry}"]
           end
-        }
+        end
       end
 
       def resolve(path)

@@ -21,7 +21,7 @@ module Master
 
       def parse_anchor(value)
         match = value.to_s.strip.match(/\A(\d+)#([0-9a-f]{#{ID_LENGTH}})\z/i)
-        return nil unless match
+        return unless match
 
         { line: match[1].to_i, id: match[2].downcase }
       end

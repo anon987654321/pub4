@@ -81,7 +81,7 @@ module Master
 
       def load_last_from_disk
         files = Dir.glob(File.join(@dir, "*.jsonl")).sort
-        return nil if files.empty?
+        return if files.empty?
         File.foreach(files.last) { |l| last_line = l }
         last_line ? JSON.parse(last_line, symbolize_names: true) : nil
       rescue StandardError => e

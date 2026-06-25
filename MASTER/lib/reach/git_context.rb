@@ -32,7 +32,7 @@ module Master
       def git_log(path, limit)
         args = ["git", "-C", @root, "log", "--oneline", "--no-color", "-#{limit}"]
         args << "--" << safe_path(path) if path
-        out = IO.popen(args, err: File::NULL) { |io| io.read }
+        out = IO.popen(args, err: File::NULL, &:read)
         Result.ok(out.strip.empty? ? "(no commits)" : out.strip)
       end
 
@@ -41,25 +41,25 @@ module Master
         safe = safe_path(path)
         return Result.err("git_context blame: file not found: #{path}",
           category: :validation) unless File.exist?(File.join(@root, safe))
-        out = IO.popen(["git", "-C", @root, "blame", "--no-color", "-l", safe], err: File::NULL) { |io| io.read }
+        out = IO.popen(["git", "-C", @root, "blame", "--no-color", "-l", safe], err: File::NULL, &:read)
         Result.ok(out.strip.empty? ? "(no blame data)" : out.strip)
       end
 
       def git_diff(path)
         args = ["git", "-C", @root, "diff", "--no-color"]
         args << "--" << safe_path(path) if path
-        out = IO.popen(args, err: File::NULL) { |io| io.read }
+        out = IO.popen(args, err: File::NULL, &:read)
         Result.ok(out.strip.empty? ? "(no unstaged changes)" : out.strip)
       end
 
       def git_status
-        out = IO.popen(["git", "-C", @root, "status", "--short", "--no-color"], err: File::NULL) { |io| io.read }
+        out = IO.popen(["git", "-C", @root, "status", "--short", "--no-color"], err: File::NULL, &:read)
         Result.ok(out.strip.empty? ? "(clean)" : out.strip)
       end
 
       def git_show(ref)
         ref_s = (ref.to_s.empty? ? "HEAD" : ref.to_s).gsub(/[^a-zA-Z0-9._~^:\-\/]/, "")
-        out = IO.popen(["git", "-C", @root, "show", "--stat", "--no-color", ref_s], err: File::NULL) { |io| io.read }
+        out = IO.popen(["git", "-C", @root, "show", "--stat", "--no-color", ref_s], err: File::NULL, &:read)
         Result.ok(out.strip.empty? ? "(not found)" : out.strip[0..MAX_OUTPUT_CHARS])
       end
 

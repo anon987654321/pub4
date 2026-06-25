@@ -198,7 +198,7 @@ module Master
         end
 
         def find_rule(rule_id)
-          return nil unless @scanner.respond_to?(:rules)
+          return unless @scanner.respond_to?(:rules)
 
           @scanner.rules.find { |rule| rule.id.to_s.casecmp?(rule_id.to_s) }
         end

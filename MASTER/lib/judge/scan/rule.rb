@@ -78,9 +78,9 @@ module Master
         end
 
         def scan_lines(code, pattern, message:, fix: nil)
-          code.each_line.with_index(1).filter_map { |line, num|
+          code.each_line.with_index(1).filter_map do |line, num|
             finding(line: num, message: message, fix: fix) if line.match?(pattern)
-          }
+          end
         end
 
         def default_confidence

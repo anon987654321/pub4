@@ -61,7 +61,7 @@ class TestFeedbackLedger < Minitest::Test
     assert File.exist?(log)
     assert_match(/T205/, File.read(log))
   ensure
-    db.close if db
+    db&.close
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
 

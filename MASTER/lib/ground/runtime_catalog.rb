@@ -10,7 +10,7 @@ module Master
         invariants ui_philosophy event_registry provider_economy
         cognitive_spine face_enhancements micro_interactions
         platform_topology collaboration repo_ecology
-        routing_architecture face3d_migration
+        routing_architecture face3d_migration style_guides
       ].freeze
 
       @cache = {}

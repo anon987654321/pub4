@@ -50,14 +50,14 @@ module Master
         private
 
         def intent_tier_for(intent)
-          return nil if intent.nil?
+          return if intent.nil?
           sym = intent.to_sym
           INTENT_TIERS.each { |tier, intents| return tier if intents.include?(sym) }
           nil
         end
 
         def path_tier_for(paths)
-          return nil if paths.empty?
+          return if paths.empty?
           paths.filter_map do |path|
             PATH_OVERRIDES.each { |re, tier| return tier if re.match?(path.to_s) }
             nil
@@ -65,7 +65,7 @@ module Master
         end
 
         def blast_tier_for(paths)
-          return nil if @graph.nil? || paths.empty?
+          return if @graph.nil? || paths.empty?
           paths.filter_map do |path|
             count = @graph.clusters_for_file(path.to_s).size
             BLAST_THRESHOLDS.find { |threshold, _| count >= threshold }&.last

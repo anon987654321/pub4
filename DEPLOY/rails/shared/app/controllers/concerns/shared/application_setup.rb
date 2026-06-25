@@ -5,6 +5,7 @@ module Shared
     extend ActiveSupport::Concern
 
     included do
+      include Shared::RescueHandlers
       include Authentication
       include Shared::PunditAuthorization
       include Shared::PagyPagination

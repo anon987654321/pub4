@@ -3,8 +3,14 @@ AllCops:
   NewCops: disable
   SuggestExtensions: false
   DisabledByDefault: true
+  Exclude:
+    - "web/**"
+    - "knowledge/**"
+    - "vendor/**"
+    - "tmp/**"
+    - "node_modules/**"
 
-# Only enable cops that map to our axioms — layout/style handled by our own rules
+# Cops aligned with rubocop/ruby-style-guide and data/style.yml
 Metrics/MethodLength:
   Enabled: true
   Max: 15
@@ -92,3 +98,51 @@ Naming/ClassAndModuleCamelCase:
 Style/NumericLiterals:
   Enabled: true
   MinDigits: 5
+
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: double_quotes
+
+Style/HashSyntax:
+  Enabled: true
+  EnforcedStyle: ruby19
+  EnforcedShorthandSyntax: always
+
+Style/RedundantReturn:
+  Enabled: true
+
+Style/EmptyLiteral:
+  Enabled: true
+
+Style/WordArray:
+  Enabled: true
+  MinSize: 2
+
+Style/TrailingCommaInArguments:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInArrayLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
+Layout/TrailingWhitespace:
+  Enabled: true
+
+Layout/TrailingEmptyLines:
+  Enabled: true
+
+Layout/EmptyLines:
+  Enabled: true
+  Max: 1
+
+Lint/UnusedMethodArgument:
+  Enabled: true
+  AllowUnusedKeywordArgs: true
+
+Lint/RedundantCopDisableDirective:
+  Enabled: true

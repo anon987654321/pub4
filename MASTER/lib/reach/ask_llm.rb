@@ -22,11 +22,11 @@ module Master
 
         @bus&.publish("tool:before", tool: NAME, prompt: prompt[0, 80])
 
-        result = @circuit_breaker.call(estimate_cost(prompt)) {
-          @cache.fetch(prompt, @agent.model) {
+        result = @circuit_breaker.call(estimate_cost(prompt)) do
+          @cache.fetch(prompt, @agent.model) do
             @agent.ask(prompt, context: context)
-          }
-        }
+          end
+        end
 
         @bus&.publish("tool:after", tool: NAME)
         Result.ok(result.to_s)

@@ -143,7 +143,7 @@ module Master
 
       def suggested_next_prompt
         top = proposer.top
-        return nil unless top
+        return unless top
         @last_suggestion = top[:action]
         "#{top[:action]}  (#{top[:reason]})"
       end
@@ -248,8 +248,8 @@ module Master
 
       def budget_block_if_exceeded
         max = @refs.session.budget_max.to_f
-        return nil if max <= 0
-        return nil if @refs.session.cost.to_f < max
+        return if max <= 0
+        return if @refs.session.cost.to_f < max
 
         Master::Result.err(
           "budget exceeded: ¢#{( @refs.session.cost * 100).round(2)} / ¢#{(max * 100).round(2)} — use /cost or raise budget",

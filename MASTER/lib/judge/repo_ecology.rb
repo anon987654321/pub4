@@ -95,21 +95,21 @@ module Master
         lines << "score: #{report[:score][:grade]} (#{report[:score][:value]}/100)"
         lines << "files: #{report[:files]}"
         lines << ""
-        lines.concat(render_section("Dead-file candidates", report[:dead_file_candidates]) { |item|
+        lines.concat(render_section("Dead-file candidates", report[:dead_file_candidates]) do |item|
           "#{item[:path]} — #{item[:reason]}"
-        })
-        lines.concat(render_section("Duplicate basenames", report[:duplicate_basenames]) { |item|
+        end)
+        lines.concat(render_section("Duplicate basenames", report[:duplicate_basenames]) do |item|
           "#{item[:basename]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
-        })
-        lines.concat(render_section("Similar clusters", report[:similar_clusters]) { |item|
+        end)
+        lines.concat(render_section("Similar clusters", report[:similar_clusters]) do |item|
           "#{item[:signature]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
-        })
-        lines.concat(render_section("Large files", report[:large_files]) { |item|
+        end)
+        lines.concat(render_section("Large files", report[:large_files]) do |item|
           "#{item[:path]} — #{item[:lines]} lines (#{item[:symbol_count]} symbols)"
-        })
-        lines.concat(render_section("Co-change pairs (hidden coupling)", report[:co_change_pairs]) { |item|
+        end)
+        lines.concat(render_section("Co-change pairs (hidden coupling)", report[:co_change_pairs]) do |item|
           "#{item[:a]} ↔ #{item[:b]} (#{item[:count]} commits)"
-        })
+        end)
         lines << ""
         sprawl = report[:sprawl]
         lines << "sprawl: max_depth=#{sprawl[:max_depth]}, avg_depth=#{sprawl[:avg_depth]}, " \
@@ -184,11 +184,11 @@ module Master
       end
 
       def dead_candidate(record, corpus)
-        return nil if protected_path?(record.path)
+        return if protected_path?(record.path)
         stem = File.basename(record.basename, record.ext).downcase
         inbound = corpus.count { |path, text| path != record.path && text.include?(stem) }
-        return nil unless inbound.zero?
-        return nil if record.lines < 3
+        return unless inbound.zero?
+        return if record.lines < 3
         { path: record.path, reason: "no stem references found", lines: record.lines }
       end
 

@@ -48,13 +48,13 @@ module Master
 
       def playbook_hint_for(err)
         cat = err.category&.to_sym
-        return nil unless cat
-        return nil if @seen_error_categories[cat]
+        return unless cat
+        return if @seen_error_categories[cat]
 
         @seen_error_categories[cat] = true
         area = CATEGORY_PLAYBOOK[cat]
         lesson = Master::Ground::OperatorPlaybook.for_area(area || :process).first
-        return nil unless lesson
+        return unless lesson
 
         Master::Ground::OperatorPlaybook.format_lesson(lesson)
       end

@@ -34,13 +34,13 @@ module Master
         end
 
         def build_react_system(base_sys)
-          schema = @tools.filter_map { |t|
+          schema = @tools.filter_map do |t|
             name = t.class.name.split("::").last
             meta = @tool_registry.fetch(name, {})
             next unless tool_available_for_context?(meta)
             desc = meta["description"] || name.gsub(/([A-Z])/, ' \1').strip
             "- #{name}: #{desc}"
-          }.join("\n")
+          end.join("\n")
 
           react_instructions = <<~INST.strip
             You have access to these tools. Call a tool with:

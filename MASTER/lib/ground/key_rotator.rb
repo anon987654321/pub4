@@ -26,7 +26,7 @@ module Master
 
       def active_key
         all = keys
-        return nil if all.empty?
+        return if all.empty?
         @mutex.synchronize { all[@index % all.size] }
       end
 

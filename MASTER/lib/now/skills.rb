@@ -57,7 +57,7 @@ module Master
 
       def body_for(name)
         skill = find(name)
-        return nil unless skill
+        return unless skill
 
         md_path = File.join(skill[:dir], "SKILL.md")
         return skill[:description].to_s unless File.file?(md_path)

@@ -236,7 +236,7 @@ module Master
         bytes = audio&.bytes
         if bytes.nil? || bytes.empty?
           @last_error ||= "synthesis produced empty audio"
-          return nil
+          return
         end
         bytes
       end
@@ -323,7 +323,7 @@ module Master
 
       def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil)
         sock_path = TtsSupervisor.next_socket
-        return nil unless File.socket?(sock_path)
+        return unless File.socket?(sock_path)
 
         req = JSON.generate(
           voice: voice_name,

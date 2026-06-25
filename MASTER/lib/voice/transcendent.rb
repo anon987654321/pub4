@@ -47,7 +47,7 @@ module Master
       def synthesize(text, voice: nil, style: :auto, rate: nil, pitch: nil, voice_locked: false, style_locked: false)
         cfg = load_config
         clean = Speech.clean_text(text)
-        return nil if clean.empty? || clean.length < 20
+        return if clean.empty? || clean.length < 20
 
         emotion = Emotion.analyze(clean)
         melody = Melody.plan(clean, emotion)
@@ -111,7 +111,7 @@ module Master
           played = Engines.synth_say(clean, out_path)
         end
 
-        return nil unless played && File.size?(out_path)
+        return unless played && File.size?(out_path)
 
         out_path
       end
@@ -136,7 +136,7 @@ module Master
 
       def synthesize_bytes(text, **opts)
         path = synthesize(text, **opts)
-        return nil unless path
+        return unless path
 
         File.binread(path)
       ensure

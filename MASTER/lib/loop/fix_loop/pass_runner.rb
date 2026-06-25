@@ -291,7 +291,7 @@ module Master
 
         def system_load_avg
           out, _, st = Open3.capture3("/sbin/sysctl", "-n", "vm.loadavg")
-          return nil unless st.success?
+          return unless st.success?
           out.to_s[/\d+(?:\.\d+)?/]&.to_f
         rescue StandardError
           nil

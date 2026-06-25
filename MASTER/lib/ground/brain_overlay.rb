@@ -49,10 +49,10 @@ module Master
 
       def load_context(name_or_pattern)
         pattern = name_or_pattern.to_s
-        match = markdown_files.find { |path|
+        match = markdown_files.find do |path|
           relative(path).include?(pattern) || File.basename(path).include?(pattern)
-        }
-        return nil unless match
+        end
+        return unless match
 
         File.read(match, encoding: "utf-8")
       end

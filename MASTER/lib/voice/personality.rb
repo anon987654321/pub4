@@ -270,7 +270,7 @@ module Master
       end
 
       def persona_knowledge_sources
-        return nil if @knowledge_sources.empty?
+        return if @knowledge_sources.empty?
 
         ["<master_knowledge_sources>", *@knowledge_sources.map { |source| "- #{source}" }, "</master_knowledge_sources>"].join("\n")
       end

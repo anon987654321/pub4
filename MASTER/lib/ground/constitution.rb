@@ -132,7 +132,7 @@ module Master
 
         def parse(path)
           fm = Master::Ground::Frontmatter.parse_file(path)
-          return nil if fm[:meta].empty?
+          return if fm[:meta].empty?
 
           meta = fm[:meta]
           {
@@ -155,7 +155,7 @@ module Master
       def empty? = @principles.empty?
 
       def system_prompt
-        return nil if @principles.empty?
+        return if @principles.empty?
         "Constitutional principles (operator-declared, override defaults):\n#{list.join("\n")}"
       end
 

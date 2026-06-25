@@ -143,27 +143,27 @@ module Master
         tool_stats = recent
           .select { |r| %w[tool_success tool_failure].include?(r["event_type"]) }
           .group_by { |r| r["dimension"] }
-          .filter_map { |tool, evs|
+          .filter_map do |tool, evs|
             success = evs.count { |e| e["event_type"] == "tool_success" }
             failure = evs.count { |e| e["event_type"] == "tool_failure" }
             total = success + failure
             rate = total.zero? ? 0.0 : failure.to_f / total
             { category: :high_failure, dimension: tool, fail_rate: rate.round(3), total: total } if rate >= RSI_FAIL_THRESHOLD && total >= 3
-          }
+          end
 
         corrections = recent
           .select { |r| r["event_type"] == "user_correction" }
           .group_by { |r| r["dimension"] }
-          .filter_map { |dim, evs|
+          .filter_map do |dim, evs|
             { category: :repeated_correction, dimension: dim, count: evs.size } if evs.size >= RSI_CORRECTION_MIN
-          }
+          end
 
         provider_errs = recent
           .select { |r| r["event_type"] == "provider_error" }
           .group_by { |r| r["dimension"] }
-          .filter_map { |dim, evs|
+          .filter_map do |dim, evs|
             { category: :provider_errors, dimension: dim, count: evs.size } if evs.size >= RSI_PROVIDER_MIN
-          }
+          end
 
         tool_stats + corrections + provider_errs
       end
@@ -179,7 +179,7 @@ module Master
       end
 
       def encoded_metadata(metadata)
-        return nil if metadata.nil?
+        return if metadata.nil?
         return metadata if metadata.is_a?(String)
 
         metadata.to_json

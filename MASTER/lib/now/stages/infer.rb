@@ -93,9 +93,9 @@ module Master
         end
 
         def bias_repeat_command(msg)
-          return nil unless @session && msg.match?(REPEAT_BIAS)
+          return unless @session && msg.match?(REPEAT_BIAS)
           cmd = @session.last_inferred_command.to_s
-          return nil if cmd.empty?
+          return if cmd.empty?
 
           { command: cmd, args: @session.last_inferred_args.to_s, msg: msg, confidence: 0.92, match: nil, capture: "" }
         end
@@ -132,8 +132,8 @@ module Master
         end
 
         def constitutional_guard(command, args, msg)
-          return nil unless @destructive.include?(command)
-          return nil if explicit_destructive_consent?(msg)
+          return unless @destructive.include?(command)
+          return if explicit_destructive_consent?(msg)
 
           publish_rejected(command, msg, "destructive_guard")
           Master::Result.err(

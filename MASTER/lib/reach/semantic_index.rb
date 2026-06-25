@@ -47,7 +47,7 @@ module Master
       private
 
       def embed(text)
-        return nil unless @embedder.enabled?
+        return unless @embedder.enabled?
 
         @embedder.embed(text)
       rescue StandardError

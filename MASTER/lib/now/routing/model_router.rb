@@ -189,13 +189,13 @@ module Master
           qw = [weights.fetch("quality", 1.0).to_f, 0.01].max
           sw = [weights.fetch("speed", 1.0).to_f, 0.01].max
           cw = [weights.fetch("cost", 1.0).to_f, 0.01].max
-          candidates.map { |m|
+          candidates.map do |m|
             s = m["score"] || {}
             q = s.fetch("quality", 0.5).to_f * qw
             sp = [s.fetch("speed", 1.0).to_f * sw, 0.01].max
             co = [s.fetch("cost", 0.5).to_f * cw, 0.001].max
             { id: m["id"], q:, s: sp, c: co, total: q * sp * co }
-          }.sort_by { |x| -x[:total] }
+          end.sort_by { |x| -x[:total] }
         end
 
         def record_provider_outcome(model:, status:, latency_ms: nil, error: nil)

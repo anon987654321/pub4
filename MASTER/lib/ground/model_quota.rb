@@ -54,7 +54,7 @@ module Master
       end
 
       def remaining(model, day: today_key)
-        return nil unless trackable?(model)
+        return unless trackable?(model)
 
         [daily_limit - count(model, day:), 0].max
       end

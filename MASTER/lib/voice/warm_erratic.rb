@@ -115,7 +115,7 @@ module Master
       end
 
       def last_voice
-        return nil unless File.file?(STATE)
+        return unless File.file?(STATE)
 
         JSON.parse(File.read(STATE)).fetch("voice", nil)&.to_sym
       rescue StandardError

@@ -57,7 +57,7 @@ module Master
           model: @refs.agent.model,
           cost: @refs.session.cost.to_f.round(4),
         }
-        return nil if @last_status_state == state
+        return if @last_status_state == state
 
         @last_status_state = state
         @refs.renderer.status_row(uptime: @refs.renderer.uptime, turns: state[:turns], violations: state[:violations])
@@ -65,7 +65,7 @@ module Master
 
       def suggested_next_prompt
         rows = proposer.call.first(3)
-        return nil if rows.empty?
+        return if rows.empty?
 
         @last_suggestion = rows.first[:action]
         rows.each_with_index.map { |row, i| "#{i + 1}. #{row[:action]} (#{row[:reason]})" }.join("  ")

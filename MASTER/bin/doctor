@@ -34,7 +34,11 @@ end
 
 def check_bundle
   ok, out, err = run("bundle", "check", chdir: ROOT)
-  Check.new(name: "bundle", ok: ok, detail: ok ? "dependencies satisfied" : (err.empty? ? out : err))
+  Check.new(name: "bundle", ok: ok, detail: if ok
+"dependencies satisfied"
+else
+(err.empty? ? out : err)
+end)
 end
 
 def check_yaml

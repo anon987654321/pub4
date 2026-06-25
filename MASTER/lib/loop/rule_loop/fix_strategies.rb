@@ -29,7 +29,7 @@ module Master
           response = @agent.ask_once(prompt).to_s.strip
           if response.start_with?("UNSAFE")
             @bus&.publish("rule_loop:reflexion_rejected", rule: @rule.id, file: path, reason: response[0, 160])
-            return nil
+            return
           end
           @bus&.publish("rule_loop:reflexion_approved", rule: @rule.id, file: path)
           proposed_src
@@ -136,7 +136,7 @@ module Master
         end
 
         def best_candidate(candidates, path)
-          return nil if candidates.empty?
+          return if candidates.empty?
           return candidates.first if candidates.size == 1
           orig = File.read(path, encoding: "utf-8") rescue nil
           baseline = orig ? (rescan_candidate(orig, path) rescue nil) : nil

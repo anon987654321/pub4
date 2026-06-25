@@ -73,9 +73,9 @@ module Master
         return File.read(abs_path).b[0, SNAPSHOT_FILE_BYTES] if File.file?(abs_path)
 
         files = snapshot_files(abs_path)
-        files.map { |f|
+        files.map do |f|
           "--- #{f.sub(abs_path + "/", "")} ---\n#{File.read(f).b[0, SNAPSHOT_DIR_FILE_BYTES]}"
-        }.join("\n\n")[0, SNAPSHOT_DIR_TOTAL_BYTES]
+        end.join("\n\n")[0, SNAPSHOT_DIR_TOTAL_BYTES]
       end
 
       def snapshot_files(abs_path)
@@ -116,9 +116,9 @@ module Master
         return "usage: /critique <file|text>" if arg.empty?
         path = expand_or_root(arg, root)
         payload = File.exist?(path) ? snapshot_artifact(path) : arg
-        run_deliberation(deliberation:, payload:, context: "explicit /critique session") { |feedback|
+        run_deliberation(deliberation:, payload:, context: "explicit /critique session") do |feedback|
           TribunalFeedback.new(feedback).render_full
-        }
+        end
       end
 
       def dispatch_model(agent:, config:, metrics:, root:, ctx: nil, arg: nil)
@@ -140,9 +140,9 @@ module Master
             "#{marker} [#{tier}] #{mod["id"]}"
           end
         end
-        quality_lines = metrics&.model_quality&.map { |mod, stat|
+        quality_lines = metrics&.model_quality&.map do |mod, stat|
           "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}"
-        } || []
+        end || []
         sections = ["available models:"] + model_lines
         sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
         sections.join("\n")

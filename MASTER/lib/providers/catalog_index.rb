@@ -204,7 +204,7 @@ module Providers
       owner = model["owner"] || model.dig("user", "username") || model["namespace"]
       name = model["name"] || model["model_name"] || model["slug"]
       id = model["id"] || model["full_name"] || [owner, name].compact.join("/")
-      return nil if id.nil? || id.empty?
+      return if id.nil? || id.empty?
 
       {
         id: id,

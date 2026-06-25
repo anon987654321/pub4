@@ -204,7 +204,7 @@ module Master
       def closing
         path = File.join(Master::ROOT, "data", "closings.yml")
         lines = (Master.load_yaml(path) || {})["closings"]
-        return nil unless lines.is_a?(Array) && lines.any?
+        return unless lines.is_a?(Array) && lines.any?
         @p.dim(lines.sample)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "renderer.closing")

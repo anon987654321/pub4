@@ -1,5 +1,7 @@
 # Ruby, shell, and git style rules enforced by MASTER.
 # Scan rules reference these; Personality injects them into every LLM system prompt.
+# Authoritative upstream clones: script/clone_style_guides.sh → knowledge/style_guides/
+# Codified index: data/runtime/style_guides.yml (ruby/rails/js/css/seo gates)
 
 ruby:
   quotes: double  # always double-quoted strings; single only inside regex or '\1' backrefs

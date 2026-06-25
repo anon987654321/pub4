@@ -15,7 +15,7 @@ module Master
 
       def read(root)
         file = path(root)
-        return nil unless File.file?(file)
+        return unless File.file?(file)
 
         body = File.read(file, encoding: "UTF-8").strip
         body.empty? ? nil : body
@@ -56,7 +56,7 @@ module Master
 
       def prompt_section(root)
         body = read(root)
-        return nil unless body
+        return unless body
 
         "## Active plan (pinned)\n#{body}"
       end

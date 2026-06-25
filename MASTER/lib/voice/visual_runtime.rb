@@ -82,7 +82,7 @@ module Master
         return MICRO_BUS_MAP[id.to_s] unless entry
 
         handler = entry["handler"].to_s
-        return nil unless handler == "ruby" || handler == "both"
+        return unless handler == "ruby" || handler == "both"
 
         map = MICRO_BUS_MAP[entry["id"].to_s] || MICRO_BUS_MAP[id.to_s]
         map || {

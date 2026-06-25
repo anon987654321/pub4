@@ -125,7 +125,11 @@ checks << step("GET /events/stream") do
   code = res.code.to_i
   ctype = res["Content-Type"].to_s
   ok = code == 200 && (ctype.include?("text/event-stream") || res.body.to_s.include?("data:"))
-  [ok, ok ? nil : "HTTP #{code} type=#{ctype.empty? ? "?" : ctype}"]
+  [ok, if ok
+nil
+else
+"HTTP #{code} type=#{ctype.empty? ? "?" : ctype}"
+end]
 rescue Net::ReadTimeout, Net::OpenTimeout
   [true, nil]
 end

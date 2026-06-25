@@ -36,9 +36,9 @@ module Master
 
         def prune_mixed(text)
           segments = text.split(FENCE_RE)
-          segments.map { |seg|
+          segments.map do |seg|
             seg.start_with?("```") ? seg : strip_all(seg)
-          }.join
+          end.join
         end
 
         def strip_all(text)

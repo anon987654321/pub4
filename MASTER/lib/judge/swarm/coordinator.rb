@@ -172,7 +172,7 @@ module Master
         def build_swarm_result(results)
           eligible = results.reject { |role, _| role == :timeout }
           successes = eligible.select { |_, r| r.is_a?(Master::Result) && r.ok? }
-          artifacts = successes.transform_values { |r| r.value! }
+          artifacts = successes.transform_values(&:value!)
 
           total_weight = eligible.sum { |role, _| WORKER_WEIGHTS.fetch(role, 1) }
           success_weight = successes.sum { |role, _| WORKER_WEIGHTS.fetch(role, 1) }

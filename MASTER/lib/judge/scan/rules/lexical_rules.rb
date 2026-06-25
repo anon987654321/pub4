@@ -33,17 +33,17 @@ module Master
     severity: :info, tags: %i[READABILITY], autofix: false,
     description: "lines exceeding 120 characters" do |src, path:|
     next [] if path.to_s.match?(%r{/voice/personality\.rb|/reach/llm\.rb})
-    src.each_line.with_index(1).filter_map { |line, n|
+    src.each_line.with_index(1).filter_map do |line, n|
       finding(line: n, message: "line #{line.chomp.length} chars (max 120)") if line.chomp.length > 120
-    }
+    end
   end
 
   RuleDSL.rule :TRAILING_WHITESPACE,
     severity: :info, tags: %i[HYGIENE],
     description: "trailing whitespace" do |src, path:|
-    src.each_line.with_index(1).filter_map { |line, n|
+    src.each_line.with_index(1).filter_map do |line, n|
       finding(line: n, message: "trailing whitespace") if line.match?(/[ \t]+\n?\z/)
-    }
+    end
   end
 
   RuleDSL.rule :TODO_FIXME,
@@ -76,11 +76,11 @@ module Master
   RuleDSL.rule :EMPTY_RESCUE,
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     description: "empty rescue swallows errors silently" do |src, path:|
-    src.each_line.with_index(1).filter_map { |line, n|
+    src.each_line.with_index(1).filter_map do |line, n|
       bare_rescue   = line.match?(/^\s*rescue\s*$/)
       naked_class   = line.match?(/^\s*rescue\s+\S+\s*$/) && !line.match?(/=>/)
       finding(line: n, message: "empty rescue — use Ground::Swallow.log or re-raise") if bare_rescue || naked_class
-    }
+    end
   end
 
   RuleDSL.rule :CONSECUTIVE_BLANK_LINES,
@@ -88,11 +88,11 @@ module Master
     description: "no consecutive blank lines" do |src, path:|
     findings = []
     prev_blank = false
-    src.each_line.with_index(1) { |line, n|
+    src.each_line.with_index(1) do |line, n|
       blank = line.strip.empty?
       findings << finding(line: n, message: "consecutive blank line") if blank && prev_blank
       prev_blank = blank
-    }
+    end
     findings
   end
 
@@ -109,10 +109,10 @@ module Master
   RuleDSL.rule :TRAILING_COMMENT,
     severity: :info, tags: %i[BE_CONCISE],
     description: "trailing comment after code" do |src, path:|
-    src.each_line.with_index(1).filter_map { |line, n|
+    src.each_line.with_index(1).filter_map do |line, n|
       next if line.strip.start_with?("#")
       finding(line: n, message: "trailing comment — promote above the line or delete") if line.match?(/\S\s+#\s+\S/)
-    }
+    end
   end
 
   RuleDSL.rule :TIME_ZONE_UNSAFE,

@@ -208,7 +208,7 @@ module Master
         private
 
         def detect_cycle
-          return nil unless @reference_graph
+          return unless @reference_graph
 
           graph = @reference_graph.build
           edges = Array(graph[:edges]).select { |edge| edge[:type].to_s == "require" }
@@ -237,7 +237,7 @@ module Master
         end
 
         def visit_node(node, adjacency:, visited:, stack:)
-          return nil if visited[node]
+          return if visited[node]
           visited[node] = true
           stack << node
 

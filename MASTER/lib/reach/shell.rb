@@ -110,7 +110,7 @@ module Master
 
       def unwritable_target(command)
         match = command.match(REDIRECT_RE)
-        return nil unless match
+        return unless match
 
         path = File.expand_path(match[1].delete_prefix("./"), @root)
         dir = File.directory?(path) ? path : File.dirname(path)

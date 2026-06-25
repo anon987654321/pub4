@@ -11,7 +11,7 @@ module Master
       def start(config, io: $stderr)
         return unless ENV["MASTER_WEB"] == "1"
 
-        port = config["web_port"] || 53187
+        port = config["web_port"] || 53_187
         host = config["web_host"] || "127.0.0.1"
         RUBY_PLATFORM.include?("openbsd") ? openbsd_status(config:, host:, port:, io:) : spawn_local(config:, host:, port:, io:)
       rescue StandardError => e

@@ -45,7 +45,7 @@ module Master
           mood = @felt_sense[:mood] || @felt_sense["mood"]
           entropy = @felt_sense[:entropy] || @felt_sense["entropy"]
           confidence = @felt_sense[:confidence] || @felt_sense["confidence"]
-          return nil if mood.to_s.empty? && !entropy.is_a?(Numeric)
+          return if mood.to_s.empty? && !entropy.is_a?(Numeric)
 
           "User interface state: mood=#{mood} entropy=#{entropy} confidence=#{confidence}"
         end

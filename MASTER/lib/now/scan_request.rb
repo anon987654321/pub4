@@ -77,7 +77,7 @@ module Master
 
       def canonical_profile(name, profiles)
         normalized = name.to_s.strip
-        return nil if normalized.empty?
+        return if normalized.empty?
         profile_alias_index(profiles)[normalized]
       end
 

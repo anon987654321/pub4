@@ -77,10 +77,10 @@ module Master
       def render(node, indent: 0)
         pad = " " * indent
         case node
-        when Hash then node.map { |k, v|
-   "#{pad}#{k}: #{v.is_a?(Hash) || v.is_a?(Array) ? "\n" + render(v, indent: indent + 2) : v}" }.join("\n") + "\n"
-        when Array then node.map { |v|
-   "#{pad}- #{v.is_a?(Hash) ? "\n" + render(v, indent: indent + 2) : v}" }.join("\n") + "\n"
+        when Hash then node.map do |k, v|
+   "#{pad}#{k}: #{v.is_a?(Hash) || v.is_a?(Array) ? "\n" + render(v, indent: indent + 2) : v}" end.join("\n") + "\n"
+        when Array then node.map do |v|
+   "#{pad}- #{v.is_a?(Hash) ? "\n" + render(v, indent: indent + 2) : v}" end.join("\n") + "\n"
         else node.to_s + "\n"
         end
       end

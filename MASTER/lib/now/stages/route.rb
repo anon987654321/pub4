@@ -50,7 +50,11 @@ module Master
         def levenshtein(a, b)
           m = a.length
           n = b.length
-          dp = Array.new(m + 1) { |i| Array.new(n + 1) { |j| i.zero? ? j : (j.zero? ? i : 0) } }
+          dp = Array.new(m + 1) do |i| Array.new(n + 1) do |j| if i.zero?
+j
+else
+(j.zero? ? i : 0)
+end end end
           (1..m).each do |i|
             (1..n).each do |j|
               dp[i][j] = a[i - 1] == b[j - 1] ? dp[i - 1][j - 1] : 1 + [dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]].min

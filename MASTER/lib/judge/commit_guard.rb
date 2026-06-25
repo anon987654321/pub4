@@ -33,12 +33,12 @@ module Master
         full = File.join(@root, rel)
         return [] unless File.exist?(full)
         current = AstSignature.from_source(File.read(full))
-        @depth.downto(1).flat_map { |n|
+        @depth.downto(1).flat_map do |n|
           hist = AstSignature.from_git(rel, ref: "HEAD~#{n}", root: @root)
-          AstSignature.diff(hist, current).map { |s|
+          AstSignature.diff(hist, current).map do |s|
             Omission.new(path: rel, name: s.name, type: s.type, last_seen_at: "HEAD~#{n}")
-          }
-        }.uniq { |o| [o.path, o.name] }
+          end
+        end.uniq { |o| [o.path, o.name] }
       end
 
       def changed_rb_files

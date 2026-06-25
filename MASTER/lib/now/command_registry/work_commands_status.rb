@@ -69,7 +69,11 @@ module Master
         records.last(n).map do |rec|
           ts = (Time.parse(rec["timestamp"]) rescue now)
           secs = (now - ts).to_i.abs
-          ago = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
+          ago = if secs < 60
+"#{secs}s"
+else
+(secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
+end
           pay = rec["payload"]
           sum = pay.is_a?(Hash) ? pay.first(2).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
           { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
@@ -80,14 +84,18 @@ module Master
 
       def recent_events(root, n)
         now = Time.now.utc
-        Trace::EventLog.new(root: root).recent(n).map { |rec|
+        Trace::EventLog.new(root: root).recent(n).map do |rec|
           ts = (Time.parse(rec["timestamp"]) rescue now)
           secs = (now - ts).to_i.abs
-          ago = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
+          ago = if secs < 60
+"#{secs}s"
+else
+(secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
+end
           pay = rec["payload"]
           sum = pay.is_a?(Hash) ? pay.first(3).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
           { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
-        }.compact
+        end.compact
       rescue StandardError
         []
       end
@@ -105,10 +113,10 @@ module Master
         records = Trace::EventLog.new(root: root).tail(n, pattern: pattern)
         return "tail: no events" if records.empty?
 
-        records.map { |rec|
+        records.map do |rec|
           ts = rec["timestamp"].to_s.sub(/\..+/, "").sub("T", " ")
           "#{ts} #{rec["event"].ljust(28)} #{format_payload(rec["payload"])}"
-        }.compact.join("\n")
+        end.compact.join("\n")
       rescue StandardError => e
         "tail: #{e.message}"
       end

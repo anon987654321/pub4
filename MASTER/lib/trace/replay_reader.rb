@@ -153,7 +153,7 @@ module Master
       def load_last_turn_from_disk
         dir = File.join(@root, "data", "traces")
         files = Dir.glob(File.join(dir, "*.jsonl")).sort
-        return nil if files.empty?
+        return if files.empty?
 
         last_line = nil
         File.foreach(files.last) { |line| last_line = line }

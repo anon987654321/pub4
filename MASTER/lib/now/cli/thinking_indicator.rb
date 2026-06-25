@@ -66,9 +66,9 @@ module Master
           @think_stage = payload[:stage].to_s.downcase
           return
         end
-        if STAGE_EVENTS.key?(ev)
+        return unless STAGE_EVENTS.key?(ev)
           @think_stage = STAGE_EVENTS[ev]
-        end
+        
       end
 
       def glyph_for_event(ev)
@@ -98,7 +98,7 @@ module Master
       end
 
       def diff_stat(path)
-        return nil unless path && !path.empty?
+        return unless path && !path.empty?
         out, = Open3.capture2e("git", "-C", @refs.root, "diff", "--numstat", "--", path)
         m = out.lines.first&.match(/^(\d+)\s+(\d+)/)
         m ? "+#{m[1]}/-#{m[2]}" : nil

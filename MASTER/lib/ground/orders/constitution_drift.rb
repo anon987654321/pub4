@@ -45,7 +45,11 @@ module Master
         # improved | regressed | steady — caught the moment a defect lands.
         def publish_drift(report)
           delta = report[:delta]
-          kind = delta.negative? ? "improved" : (delta.positive? ? "regressed" : "steady")
+          kind = if delta.negative?
+"improved"
+else
+(delta.positive? ? "regressed" : "steady")
+end
           bus&.publish("constitution_drift:#{kind}", **report)
         end
 

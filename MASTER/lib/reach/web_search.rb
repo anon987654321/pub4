@@ -33,11 +33,11 @@ module Master
         uri = URI(ENDPOINT)
         uri.query = URI.encode_www_form(q: query, format: "json", no_redirect: 1)
 
-        response = Timeout.timeout(TIMEOUT * 2) {
-          Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: TIMEOUT) { |h|
+        response = Timeout.timeout(TIMEOUT * 2) do
+          Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: TIMEOUT) do |h|
             h.get(uri.request_uri)
-          }
-        }
+          end
+        end
 
         return Result.err("web_search: HTTP #{response.code}", category: :infrastructure) unless response.code == HTTP_OK
 

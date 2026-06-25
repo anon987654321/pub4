@@ -113,7 +113,7 @@ module Master
 
         def read_truncated(rel)
           path = File.join(Master::ROOT, rel)
-          return nil unless File.exist?(path)
+          return unless File.exist?(path)
           raw = raw.byteslice(0, @mode[:max_bytes]) + "\n... [truncated]" if raw.bytesize > @mode[:max_bytes]
           "file: #{rel}\n#{raw}"
         end
@@ -166,7 +166,11 @@ module Master
         end
 
         def ideation_value(ir)
-          ir.respond_to?(:err?) && ir.err? ? "" : (ir.respond_to?(:value) ? ir.value : ir)
+          if ir.respond_to?(:err?) && ir.err?
+""
+else
+(ir.respond_to?(:value) ? ir.value : ir)
+end
         end
 
         def cherry_pick_from(feedback, ideation_result)

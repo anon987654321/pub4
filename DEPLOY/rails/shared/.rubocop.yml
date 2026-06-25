@@ -1,13 +1,61 @@
-# Omakase Ruby styling for Rails (pub4 family)
+# Omakase Ruby styling for Rails (pub4 family) — aligned with rubocop/rails-style-guide.
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
 AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: disable
   Exclude:
     - "db/migrate/._*"
+    - "node_modules/**"
+    - "tmp/**"
+    - "vendor/**"
 
-# Large apps exceed omakase Metrics thresholds; gate style without blocking deploy CI.
+# Omakase disables metrics; keep off for large apps but enforce layout and literals.
 Metrics:
   Enabled: false
 
 Layout/LineLength:
-  Enabled: false
+  Enabled: true
+  Max: 120
+  AllowedPatterns:
+    - '\A#'
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: double_quotes
+
+Style/HashSyntax:
+  Enabled: true
+  EnforcedStyle: ruby19
+  EnforcedShorthandSyntax: always
+
+Layout/TrailingWhitespace:
+  Enabled: true
+
+Layout/TrailingEmptyLines:
+  Enabled: true
+
+Style/TrailingCommaInArguments:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInArrayLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
+Rails/HttpStatus:
+  Enabled: true
+
+Rails/Pluck:
+  Enabled: true
+
+Rails/WhereExists:
+  Enabled: true

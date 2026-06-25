@@ -21,7 +21,11 @@ module Master
             rate: RHYTHM[i % RHYTHM.length],
             pitch: format("%+dHz", semitone * 7),
             semitone: semitone,
-            pause_ms: i.zero? ? 0 : (arousal > 0.55 ? 90 : 140)
+            pause_ms: if i.zero?
+0
+else
+(arousal > 0.55 ? 90 : 140)
+end
           }
         end
 

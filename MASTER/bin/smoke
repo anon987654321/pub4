@@ -53,7 +53,7 @@ end
 end
 
 config = container.dig(:config)
-port = (config&.respond_to?(:web_port) ? config.web_port : nil) || 53187
+port = (config&.respond_to?(:web_port) ? config.web_port : nil) || 53_187
 
 failures << "pipe" unless step("pipe command") do
   exe = File.expand_path("cli", __dir__)

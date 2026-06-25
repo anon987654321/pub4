@@ -10,7 +10,7 @@ module Master
       # Extract code from LLM response. Handles multi-language fenced blocks.
       # ext: file extension (.rb, .js, ...) or nil for generic extraction.
       def extract_code(text, ext = nil)
-        return nil if text.nil? || text.strip.empty? || text.strip == "UNCHANGED"
+        return if text.nil? || text.strip.empty? || text.strip == "UNCHANGED"
         lang = ext ? (Master::Judge::Scan::Rule::EXT_LANG.fetch(ext.downcase, "text") rescue "text") : "text"
         langs_re = Regexp.union(lang, "text", "")
         return m[1].strip if (m = text.match(/```(?:#{langs_re})?\n(.*?)```/m))

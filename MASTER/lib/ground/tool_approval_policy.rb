@@ -36,7 +36,11 @@ module Master
           safe && read_only ? :allow : :deny
         when :confirm_risky
           decision = SandboxPolicy.decide(command)
-          decision.allow? ? :allow : (decision.deny? ? :deny : :ask)
+          if decision.allow?
+:allow
+else
+(decision.deny? ? :deny : :ask)
+end
         else
           decision = SandboxPolicy.decide(command)
           decision.mode

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  include Shared::RescueHandlers
   include Authentication
   include Shared::PunditAuthorization
   include Shared::PagyPagination
