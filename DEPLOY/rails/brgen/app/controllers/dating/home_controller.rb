@@ -35,7 +35,7 @@ class Dating::HomeController < Dating::BaseController
     profile = current_dating_profile
     liked_ids = Dating::Like.where(liker_id: Current.user.id).pluck(:likee_id)
     disliked_ids = Dating::Dislike.where(disliker_id: Current.user.id).pluck(:dislikee_id)
-    excluded = (liked_ids + disliked_ids + [Current.user.id]).uniq
+    excluded = (liked_ids + disliked_ids + [ Current.user.id ]).uniq
     scope = scope.where.not(user_id: excluded)
     if (neigh = profile&.neighborhood)
       scope = scope.in_neighborhood(neigh)
