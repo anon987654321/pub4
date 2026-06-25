@@ -97,8 +97,8 @@ Rails.application.routes.draw do
 
   constraints(subdomain: DATING_SUBDOMAINS) do
     scope module: "dating", as: "dating" do
-      root "home#index", as: :dating_root
-      get "next" => "home#next", as: :dating_next
+      root "home#index"
+      get "next" => "home#next", as: :next
       resource :profile, only: %i[new create edit update show]
       resources :likes, only: :create
       resources :dislikes, only: :create
