@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "set"
 require "yaml"
 
 module Master
@@ -70,12 +71,15 @@ module Master
             return [] unless data.is_a?(Hash)
 
             depths = data["scan_depths"] || {}
-            rules_dir = File.join(@root, "lib", "master", "judge", "scan", "rules")
+            rules_dir = File.join(@root, "lib", "judge", "scan", "rules")
             findings = []
             depths.each_value do |class_names|
               next unless class_names.is_a?(Array)
               class_names.each do |name|
                 next if name == "all"
+                next if registered_scan_names.include?(name.to_s.downcase)
+
+                next unless name.to_s.match?(/\A[A-Z]/)
                 snake = name.gsub(/([A-Z])(?=[A-Z][a-z])|([a-z\d])([A-Z])/) { "#{$1 || $2}_#{$3}" }
                            .downcase
                 file = File.join(rules_dir, "#{snake}.rb")
@@ -88,6 +92,22 @@ module Master
               end
             end
             findings
+          end
+
+          def registered_scan_names
+            @registered_scan_names ||= begin
+              names = Set.new(%w[all])
+              require_relative "../rule_dsl"
+              Master::Judge::Scan::Rule.registry.each do |klass|
+                instance = klass.new
+                names << instance.id.to_s.downcase
+                short = klass.name&.split("::")&.last
+                names << short.downcase if short&.match?(/\A[A-Z]/)
+              rescue StandardError
+                nil
+              end
+              names.freeze
+            end
           end
 
           def extract_loaded_yamls(code)

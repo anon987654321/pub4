@@ -45,8 +45,8 @@ typography:
     max_font_sizes: 8
     action: Ensure hierarchy is visible by size, weight, placement, or contrast.
   accessibility:
-    normal_text_contrast: 4.5
-    large_text_contrast: 3.0
+    normal_text_contrast: 7.0
+    large_text_contrast: 4.5
     body_min_px: 16
     recommended_body_px: 18
     mobile_input_min_px: 16
@@ -245,7 +245,7 @@ automated_css_analysis:
     - line height below typography.line_height.body_min for prose
     - all caps without letter spacing
     - body text below 16px
-    - contrast below WCAG AA thresholds
+    - contrast below WCAG AAA thresholds (7:1 body, 4.5:1 large)
     - more than two font families
     - more than three font weights
     - spacing off the 4px or 8px grid

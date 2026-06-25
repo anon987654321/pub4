@@ -97,6 +97,15 @@ module Master
           [finding(line: 1, message: "JS file #{line_count} lines — split at 300; extract cohesive modules")]
         end
 
+        RuleDSL.rule :STIMULUS_CONTROLLER_SIZE,
+          severity: :warning, tags: %i[SMALL_PARTS], applies_to: %i[javascript],
+          description: "Stimulus controllers over 200 lines — split responsibilities" do |src, path:|
+          next [] unless path.to_s.match?(/_controller\.js\z/)
+          line_count = src.lines.size
+          next [] if line_count <= 200
+          [finding(line: 1, message: "Stimulus controller #{line_count} lines — split at 200 per style.yml")]
+        end
+
       # A02 MAGIC_COLOR — raw color values must reference design tokens (MAGIC_COLOR).
         RuleDSL.rule :MAGIC_COLOR,
           severity: :warning, tags: %i[DESIGN], applies_to: %i[css scss javascript html],

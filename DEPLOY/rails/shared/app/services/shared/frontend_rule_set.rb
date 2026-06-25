@@ -32,7 +32,20 @@ module Shared
       preserve_font_faces: true,
       preserve_svg_assets: true,
       prefer_unified_diff_for_large_files: true,
-      shell_scripts_must_not_embed_app_files: true
+      shell_scripts_must_not_embed_app_files: true,
+      protected_stylesheet_paths: %w[app/assets/stylesheets app/assets/builds].freeze
+    }.freeze
+
+    MOTION = {
+      max_transition_ms: 300,
+      require_reduced_motion_override: true
+    }.freeze
+
+    ACCESSIBILITY = {
+      wcag_target: "aaa",
+      normal_text_contrast: 7.0,
+      touch_target_px: { min: 44, recommended: 48 },
+      skip_to_main_required: true
     }.freeze
 
     CODE = {
@@ -48,6 +61,8 @@ module Shared
         typography: TYPOGRAPHY,
         spacing: SPACING,
         preservation: PRESERVATION,
+        motion: MOTION,
+        accessibility: ACCESSIBILITY,
         code: CODE
       }
     end

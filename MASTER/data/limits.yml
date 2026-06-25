@@ -157,6 +157,24 @@ conflicts:
     - condition: "fix introduces higher priority violation"
       resolution: "reject fix, report to autoloop"
 
+frontend_protection:
+  statement: "Stylesheets are protected high-churn surfaces — edit with intent; never embed app CSS in shell scripts."
+  protected_paths:
+    - app/assets/stylesheets
+    - app/assets/builds
+  protected_files:
+    - _minimal.scss
+    - _tokens.scss
+    - _animations.scss
+    - _pub4_stack.scss
+    - application.scss
+  on_view_or_css_edit:
+    - flatten divitis and use semantic landmarks
+    - bare tag targeting per style.yml — no BEM or utility soup in ERB
+    - run Shared::FrontendAuditor on touched paths
+  mailer_exempt:
+    - inline styles in mailer views (email clients require them)
+
 universal_scope:
   policy: ALL_PRINCIPLES_ALL_FILES
   statement: >

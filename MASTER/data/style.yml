@@ -282,6 +282,16 @@ operator_directives:
   - "Architecture data shapes are not sacred — re-examine them periodically for misfit."
   - "After landing a batch, surface what's next or structurally off — don't itemize the diff."
   - "Best-of-N for non-trivial autofixes: generate candidates, score by violation delta, pick winner."
+  - "Stylesheets are high-churn surfaces: prefer _tokens.scss and pub4_stack tokens; edit app/assets/stylesheets with intent."
+  - "On every view/CSS touch: flatten divitis, enforce bare tag targeting, run FrontendAuditor."
+
+erb:
+  html_safe: explicit_only_after_sanitize
+  partials: locals_over_instance_variables
+  content_for: [title, description, head, json_ld, widgets, scripts]
+  helpers: [tag, class_names, dom_id, sanitize]
+  forbidden: [raw_user_html_safe, heredoc_views, inline_script_blocks, bem_classes, utility_class_soup]
+  on_edit: [flatten_if_divitis, extract_repeated_to_partial, wire_i18n_for_literals]
 
 # Conversation directives — how MASTER addresses the user. Operator_directives
 # above shape MASTER's coding work; these shape its dialogue, voice, and

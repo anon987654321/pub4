@@ -23,8 +23,14 @@ def check_layout(path)
   issues << "missing lang on <html>" if body.match?(/<html\b/i) && !body.match?(/<html[^>]*\blang=/i)
   viewport = body.match?(/name=["']viewport["']/i) || body.match?(/name:\s*["']viewport["']/i)
   issues << "missing viewport meta" unless viewport
+  viewport_fit = body.match?(/viewport-fit=cover/i)
+  issues << "missing viewport-fit=cover" if viewport && !viewport_fit
   charset = body.match?(/<meta\s+charset=/i) || body.match?(/tag\.meta\s+charset/i)
   issues << "missing charset meta" if body.match?(/<head\b/i) && !charset
+  csp = body.match?(/csp_meta_tag|content-security-policy/i)
+  issues << "missing CSP meta" if body.match?(/<head\b/i) && !csp
+  skip = body.match?(/skip|#main-content/i)
+  issues << "missing skip link or #main-content" unless skip
   unsafe = body.match?(/<%=\s*[^%]+\.html_safe\s*%>/) && !body.match?(/sanitize|strip_tags|\.to_json\.html_safe/)
   issues << "unsafe raw <%= without sanitize" if unsafe
   issues

@@ -415,21 +415,53 @@ scan_depths:
     - js_module_size
     - no_column_align
   sh: [strict_mode_zsh, no_magic, openrsync_prefer, library_verify]
-  erb: [aria_labels, no_todo_in_views, density]
+  erb:
+    - aria_labels
+    - no_todo_in_views
+    - anti_divitis
+    - bem_in_views
+    - utility_class_soup
+    - erb_html_safe
+    - single_h1
+    - form_label
+    - h1_visibility
+    - tabindex_above_zero
+    - no_js_erb
+    - data_remote
+    - input_type_specific
   frontend: &frontend
     - html_lang
     - semantic_elements
     - img_alt
     - button_over_anchor
     - aria_interactive
+    - aria_labels
     - lazy_images
     - no_inline_styles
+    - no_todo_in_views
+    - anti_divitis
+    - bem_in_views
+    - utility_class_soup
+    - erb_html_safe
+    - single_h1
+    - form_label
+    - skip_to_main
+    - h1_visibility
+    - tabindex_above_zero
+    - no_js_erb
+    - data_remote
+    - input_type_specific
+    - focus_visible
     - mobile_first
     - no_import_scss
     - no_important
+    - no_long_transition
+    - reduced_motion
     - logical_properties
     - clamp_typography
     - meta_charset
+    - magic_color
+    - stimulus_controller_size
     - const_by_default
     - nullish_coalescing
     - template_literals
@@ -441,7 +473,6 @@ scan_depths:
     - no_column_align
     - typographic_excellence
     - typography_discipline
-    - h1_visibility
   standard: &standard
     - CoChangeCouplingRule
     - InterconnectRule
@@ -2430,6 +2461,86 @@ rules:
       detect_lexical: "\\A(?!.*<meta\\s+charset=)"
       fix: "Add <meta charset=UTF-8> as first element in <head>."
       languages: [html]
+
+    - id: ARIA_LABELS
+      source: "WCAG 4.1.2 Name, Role, Value (W3C/WAI)"
+      name: "Interactive controls need accessible names"
+      tier: accessibility
+      severity: warning
+      autofix: false
+      detect_lexical: '<(button|input|select|textarea)\\s+(?![^>]*(?:aria-label|aria-labelledby|id=))'
+      fix: "Add aria-label, aria-labelledby, or id paired with <label for>."
+      languages: [html]
+
+    - id: ANTI_DIVITIS
+      source: "style.yml html.forbidden.divitis / semantic landmarks"
+      name: "Avoid styling-only wrappers and semantic div substitutes"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_lexical: '<div\\s+class="(header|footer|nav|main|sidebar|article|section)"'
+      fix: "Use semantic landmarks; flatten nesting beyond three divs."
+      languages: [html]
+
+    - id: BEM_IN_VIEWS
+      source: "style.yml bare_tag_targeting — no BEM in ERB"
+      name: "No BEM class soup in views"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_lexical: "class=[\"'][^\"']*__[^\"']*[\"']"
+      fix: "Target bare tags in SCSS; remove __block__element classes from ERB."
+      languages: [html]
+
+    - id: UTILITY_CLASS_SOUP
+      source: "style.yml html.forbidden.framework_class_explosion"
+      name: "No framework utility class explosion"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_lexical: "class=[\"'][^\"']*(?:\\b(?:mt|mb|col|row|d-flex)\\b[^\"']*){3,}"
+      fix: "Move layout to SCSS with bare tag targeting."
+      languages: [html]
+
+    - id: SKIP_TO_MAIN
+      source: "WCAG 2.4.1 Bypass Blocks / style.yml accessibility"
+      name: "Layouts expose skip link to main content"
+      tier: accessibility
+      severity: warning
+      autofix: false
+      detect_lexical: "\\A(?!.*(?:skip|#main-content))"
+      fix: "Add skip link to #main-content in layout."
+      languages: [html]
+
+    - id: NO_LONG_TRANSITION
+      source: "style.yml motion budget / FrontendRuleSet MOTION"
+      name: "UI transitions stay under 300ms"
+      tier: performance
+      severity: warning
+      autofix: false
+      detect_lexical: "transition(?:-duration)?\\s*:\\s*([4-9]\\d\\d|\\d{4,})\\s*ms"
+      fix: "Keep transitions ≤300ms."
+      languages: [css]
+
+    - id: REDUCED_MOTION
+      source: "WCAG 2.3.3 Animation from Interactions"
+      name: "Animations respect prefers-reduced-motion"
+      tier: accessibility
+      severity: info
+      autofix: false
+      detect_lexical: "@keyframes|animation\\s*:"
+      fix: "Add @media (prefers-reduced-motion: reduce) override."
+      languages: [css]
+
+    - id: STIMULUS_CONTROLLER_SIZE
+      source: "style.yml interaction.minimal_js_default"
+      name: "Stimulus controllers over 200 lines — split"
+      tier: density
+      severity: warning
+      autofix: false
+      detect_structural: { max_lines: 200, path_pattern: "_controller\\.js$" }
+      fix: "Split controller at 200 lines."
+      languages: [javascript]
 
     - id: NO_COLUMN_ALIGN
       source: "Ruby Style Guide / RuboCop Layout — no token alignment"

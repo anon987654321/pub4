@@ -77,7 +77,7 @@ module Master
         functional: { tests: true, coverage: LIMITS[:coverage] },
         secure: { vulnerabilities: 0, input_validation: true },
         maintainable: { complexity: LIMITS[:complexity], duplication: LIMITS[:duplication] },
-        access: { wcag: :aa, lcp: 2.5, inp: 200, cls: 0.1, mobile: true },
+        access: { wcag: :aaa, lcp: 2.0, inp: 200, cls: 0.1, mobile: true },
         perf: { lcp: 2.5, cls: 0.1, js_kb: 170, total_kb: 2048 },
         deploy: { health: true, rollback: true },
         privacy: { gdpr: true, pii: true },

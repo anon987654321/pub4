@@ -31,6 +31,24 @@ patterns:
     - "Prefer Turbo Streams over custom JavaScript for reactivity"
     - "Use #dom_id and #dom_class for stable DOM identifiers"
     - "Localize all user-facing strings with I18n.t"
+    - "Bare HTML/CSS targeting per style.yml — nav a not .nav__link"
+    - "No inline style= or <style> in ERB — extract to application.scss"
+    - "Mailer views may use shared/layouts/_mailer_styles; all else externalizes CSS"
+  layouts:
+    required:
+      - "lang on <html>"
+      - "meta charset as first head element"
+      - "viewport with viewport-fit=cover"
+      - "csrf_meta_tags and csp_meta_tag"
+      - "skip link to #main-content"
+      - "main id=main-content role=main"
+      - "content_for :title and :description on show pages"
+      - "yield :json_ld for schema.org"
+    partials:
+      - "shared/skip_links"
+      - "shared/meta or inline OG/Twitter tags"
+      - "shared/flash"
+      - "layouts/mailer_styles for email only"
   models:
     - "Use #has_secure_password for authentication"
     - "Use #enum with #validate: true"

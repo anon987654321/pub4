@@ -20,6 +20,12 @@ module Shared
     WILL_CHANGE_PATTERN = /will-change\s*:/
     BOX_SHADOW_HOVER_PATTERN = /:hover[^{]*\{[^}]*box-shadow\s*:|box-shadow\s*:[^;]+;[^}]*:hover/i
     COLOR_INHERIT_PATTERN = /color:\s*inherit\b/
+    BEM_IN_VIEW_PATTERN = /class=["'][^"']*__[^"']*["']/
+    UTILITY_SOUP_PATTERN = /class=["'][^"']*(?:\b(?:mt|mb|ml|mr|px|py|col|row|d-flex)\b[^"']*){3,}/i
+    DIV_NESTING_PATTERN = /<div[^>]*>\s*<div[^>]*>\s*<div[^>]*>\s*<div/i
+    LONG_TRANSITION_PATTERN = /transition(?:-duration)?\s*:\s*([4-9]\d\d|\d{4,})\s*ms/i
+    CENTERED_PROSE_PATTERN = /text-align:\s*center/i
+    MAX_CONTENT_WIDTH_PATTERN = /max-width:\s*(\d+(?:\.\d+)?)(ch|rem)/
     EXCLUDED_PATH_PATTERN = %r{
       (?:^|/)(?:vendor|node_modules|tmp|log|storage|coverage)(?:/|$)
       |(?:^|/)app/assets/builds/
@@ -89,6 +95,11 @@ module Shared
       end
       add(:warning, path, :inline_javascript, "Inline <script> block found; extract to tracked JavaScript") if body.match?(INLINE_SCRIPT_PATTERN)
       add(:info, path, :chartjs, "Chart.js detected; protect config/data separation") if body.match?(CHART_PATTERN)
+      add(:warning, path, :bem_in_views, "BEM class in view — use bare tag targeting") if body.match?(BEM_IN_VIEW_PATTERN)
+      add(:warning, path, :utility_class_soup, "Utility class soup in view — move to SCSS") if body.match?(UTILITY_SOUP_PATTERN)
+      add(:warning, path, :anti_divitis, "Deep div nesting — flatten or use semantic landmarks") if body.match?(DIV_NESTING_PATTERN)
+      add(:warning, path, :skip_to_main, "Layout missing skip link to #main-content") if layout_missing_skip?(path, body)
+      add(:warning, path, :single_h1, "Multiple h1 tags in one view") if body.scan(/<h1\b/i).size > 1
     end
 
     def scan_style(path, body)
@@ -106,6 +117,20 @@ module Shared
       body.scan(/font-size:\s*(\d+(?:\.\d+)?)px/i).flatten.each do |size|
         add(:warning, path, :small_font, "Font size #{size}px is below 16px") if size.to_f < Shared::FrontendRuleSet::TYPOGRAPHY[:body_font_px][:min]
       end
+      body.scan(LONG_TRANSITION_PATTERN).flatten.compact.each do |duration|
+        add(:warning, path, :no_long_transition, "Transition #{duration}ms exceeds 300ms budget") if duration.to_i > Shared::FrontendRuleSet::MOTION[:max_transition_ms]
+      end
+      if body.match?(/@keyframes|animation\s*:/i) && !body.match?(/prefers-reduced-motion:\s*reduce/i)
+        add(:info, path, :reduced_motion, "Animation without prefers-reduced-motion override")
+      end
+      body.scan(MAX_CONTENT_WIDTH_PATTERN).each do |value, unit|
+        width = value.to_f
+        next unless unit == "ch"
+
+        range = Shared::FrontendRuleSet::TYPOGRAPHY[:line_length]
+        add(:warning, path, :line_length, "max-width #{width}ch outside #{range[:min]}-#{range[:max]}ch prose range") if width < range[:min] || width > range[:max]
+      end
+      add(:info, path, :centered_prose, "Centered text block — left-align body copy per style.yml") if body.match?(CENTERED_PROSE_PATTERN)
     end
 
     def scan_javascript(path, body)
@@ -146,6 +171,10 @@ module Shared
       return true if path.match?(/(?:minimal-ui(?:-\d+)?|_zen_shell|_tokens|_animations|_pub4_stack)\.(?:css|scss)\z/)
 
       false
+    end
+
+    def layout_missing_skip?(path, body)
+      path.include?("/app/views/layouts/") && !body.match?(/skip|#main-content/i)
     end
 
     def selector_depths(body)

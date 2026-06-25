@@ -97,6 +97,27 @@ nav .brand {
   text-decoration: none;
 }
 
+.skip-link,
+.skip-nav {
+  position: fixed;
+  inset-block-start: -3rem;
+  inset-inline-start: 0.75rem;
+  z-index: 1000;
+  padding: 0.5rem 0.75rem;
+  background: var(--black);
+  color: var(--white);
+  text-decoration: none;
+  font-size: 0.875rem;
+  border-radius: var(--radius);
+}
+
+.skip-link:focus,
+.skip-nav:focus {
+  inset-block-start: 0.75rem;
+  outline: 2px solid var(--light-blue);
+  outline-offset: 2px;
+}
+
 main {
   flex: 1;
   display: flex;

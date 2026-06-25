@@ -98,6 +98,155 @@ module Master
           [finding(line: 1, message: "missing <meta charset=UTF-8> — declare encoding as first element in <head>")]
         end
 
+        RuleDSL.rule :ARIA_LABELS,
+          severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          description: "interactive controls need accessible names" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          scan_lines(src, /<(button|input|select|textarea)\s+(?![^>]*(?:aria-label|aria-labelledby|id=))/i,
+            message: "control missing aria-label, aria-labelledby, or id for label association")
+        end
+
+        RuleDSL.rule :NO_TODO_IN_VIEWS,
+          severity: :warning, tags: %i[MAINTAINABILITY], applies_to: %i[html],
+          description: "no TODO/FIXME in shipped views" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          scan_lines(src, /\b(TODO|FIXME|HACK)\b/, message: "unfinished marker in view — resolve before ship")
+        end
+
+        BEM_CLASS_RE = /class=["'][^"']*__[^"']*["']/.freeze
+        UTILITY_SOUP_RE = /class=["'][^"']*(?:\b(?:mt|mb|ml|mr|px|py|col|row|d-flex|flex|grid|w-|h-)\b[^"']*){3,}[^"']*["']/i.freeze
+
+        RuleDSL.rule :ANTI_DIVITIS,
+          severity: :warning, tags: %i[DESIGN], applies_to: %i[html],
+          description: "avoid styling-only wrappers and semantic div substitutes" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          findings = scan_lines(src, /<div\s+class="(header|footer|nav|main|sidebar|article|section)"/i,
+            message: "semantic landmark belongs on <header>/<nav>/<main>/<article>, not div.class")
+          findings += scan_lines(src, /<div[^>]*>\s*<div[^>]*>\s*<div[^>]*>\s*<div/i,
+            message: "div nesting depth > 3 — flatten or use semantic elements")
+          findings
+        end
+
+        RuleDSL.rule :BEM_IN_VIEWS,
+          severity: :warning, tags: %i[DESIGN], applies_to: %i[html],
+          description: "bare tag targeting — no BEM class soup in views" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          scan_lines(src, BEM_CLASS_RE, message: "BEM class in view — use bare tag/structural selectors per style.yml")
+        end
+
+        RuleDSL.rule :UTILITY_CLASS_SOUP,
+          severity: :warning, tags: %i[DESIGN], applies_to: %i[html],
+          description: "no framework utility class explosion" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          scan_lines(src, UTILITY_SOUP_RE, message: "utility class soup — move layout to SCSS with bare targeting")
+        end
+
+        RuleDSL.rule :ERB_HTML_SAFE,
+          severity: :error, tags: %i[SECURITY], applies_to: %i[html],
+          description: "html_safe only after sanitize" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          next [] unless src.match?(/<%=\s*[^%]+\.html_safe\s*%>/)
+          next [] if src.match?(/sanitize|strip_tags|\.to_json\.html_safe/)
+          [finding(line: 1, message: "raw html_safe in view — sanitize first or use auto-escaped <%= %>")]
+        end
+
+        RuleDSL.rule :SINGLE_H1,
+          severity: :warning, tags: %i[SEO ACCESSIBILITY], applies_to: %i[html],
+          description: "one h1 per view surface" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          count = src.scan(/<h1\b/i).size
+          next [] if count <= 1
+          [finding(line: 1, message: "#{count} <h1> tags — keep one primary heading per view")]
+        end
+
+        RuleDSL.rule :FORM_LABEL,
+          severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          description: "inputs require labels or aria-label" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          scan_lines(src, /<input\s+(?![^>]*(?:type=["']hidden|aria-label|aria-labelledby|id=))/i,
+            message: "input missing label association — add <label for> or aria-label")
+        end
+
+        RuleDSL.rule :SKIP_TO_MAIN,
+          severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          description: "layouts expose skip link to main content" do |src, path:|
+          next [] unless path.include?("/app/views/layouts/")
+          next [] if src.match?(/skip|#main-content/i)
+          [finding(line: 1, message: "layout missing skip link to #main-content")]
+        end
+
+        RuleDSL.rule :H1_VISIBILITY,
+          severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          description: "async regions expose status for screen readers" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          next [] unless src.match?(/data-turbo-frame|turbo-frame|data-controller/i)
+          next [] if src.match?(/aria-live|role=["']status|loading|spinner|progress/i)
+          [finding(line: 1, message: "async UI without aria-live/status — expose progress within 100ms")]
+        end
+
+        RuleDSL.rule :NO_LONG_TRANSITION,
+          severity: :warning, tags: %i[PERFORMANCE], applies_to: %i[css scss],
+          description: "UI transitions stay under 300ms" do |src, path:|
+          scan_lines(src, /transition(?:-duration)?\s*:\s*([4-9]\d\d|\d{4,})\s*ms/i,
+            message: "transition >300ms — keep motion snappy (≤300ms) per style.yml")
+        end
+
+        RuleDSL.rule :REDUCED_MOTION,
+          severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[css scss],
+          description: "animations respect prefers-reduced-motion" do |src, path:|
+          next [] unless src.match?(/@keyframes|animation\s*:/i)
+          next [] if src.match?(/prefers-reduced-motion:\s*reduce/i)
+          [finding(line: 1, message: "animation without prefers-reduced-motion override")]
+        end
+
+        RuleDSL.rule :TABINDEX_ABOVE_ZERO,
+          severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          description: "tabindex above zero disrupts natural tab order" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          scan_lines(src, /\btabindex\s*=\s*["']?[1-9]/i,
+            message: "tabindex > 0 — remove or use 0/-1 with roving focus pattern")
+        end
+
+        RuleDSL.rule :NO_JS_ERB,
+          severity: :warning, tags: %i[HOTWIRE], applies_to: %i[html],
+          description: "RJS and format.js — migrate to Turbo Streams" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          findings = scan_lines(src, /format\.js\s*\{/, message: "format.js — use format.turbo_stream")
+          findings += scan_lines(src, /\.js\.erb\b/, message: ".js.erb — replace with turbo_stream templates")
+          findings
+        end
+
+        RuleDSL.rule :DATA_REMOTE,
+          severity: :warning, tags: %i[HOTWIRE], applies_to: %i[html],
+          description: "rails-ujs data-remote — use Turbo native forms" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          scan_lines(src, /data-remote\s*=|remote:\s*true/,
+            message: "data-remote/remote:true is rails-ujs — use Turbo Frame or standard form")
+        end
+
+        INPUT_GENERIC_TYPE_RE = /
+          <input\s+[^>]*(?:name|id)\s*=\s*["'][^"']*(?:email|phone|tel|url|date|password)[^"']*["'][^>]*type\s*=\s*["']text["']
+          |
+          <input\s+[^>]*type\s*=\s*["']text["'][^>]*(?:name|id)\s*=\s*["'][^"']*(?:email|phone|tel|url|date|password)
+        /ix.freeze
+
+        RuleDSL.rule :INPUT_TYPE_SPECIFIC,
+          severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          description: "semantic input types for email/url/tel/date" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          scan_lines(src, INPUT_GENERIC_TYPE_RE,
+            message: "type=text for specialized field — use email/url/tel/date/password input type")
+        end
+
+        RuleDSL.rule :FOCUS_VISIBLE,
+          severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[css scss],
+          description: "interactive surfaces expose visible focus" do |src, path:|
+          next [] unless path.match?(/application|_minimal|_tokens|layout/i)
+          next [] unless src.match?(/:hover|button|a\s*\{|\.btn/)
+          next [] if src.match?(/:focus-visible|:focus\b/)
+          [finding(line: 1, message: "interactive styles without :focus-visible — keyboard users need visible focus")]
+        end
+
       end
     end
   end

@@ -236,9 +236,15 @@ module Master
         def active_rules(depth)
           allowed = depth_rules[depth.to_s]
           return @rules if allowed.nil? || allowed == ["all"] || allowed == :all
-          @rules.select { |r|
-            allowed.include?(r.class.name&.split("::")&.last) || allowed.include?(r.id)
-          }
+
+          allowed_keys = allowed.map(&:to_s)
+          allowed_downcase = allowed_keys.map(&:downcase)
+          @rules.select do |rule|
+            name = rule.class.name&.split("::")&.last
+            id = rule.id.to_s
+            allowed_keys.include?(name) || allowed_keys.include?(id) ||
+              allowed_downcase.include?(id.downcase) || allowed_downcase.include?(name.to_s.downcase)
+          end
         end
 
         # Pure Ruby reader for data/rules.yml prediction_engine.
