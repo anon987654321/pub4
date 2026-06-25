@@ -2,8 +2,11 @@
 
 class HomeController < ApplicationController
   include Shared::LiveSearchable
+  include Shared::MasterGuestHome
 
   def index
+    return render_master_guest_home!(title: "Brgen") if master_guest_home?
+
     scope = if authenticated?
               Current.user.timeline_posts.hot
             else

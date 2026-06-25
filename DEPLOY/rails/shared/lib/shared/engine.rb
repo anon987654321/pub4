@@ -29,6 +29,13 @@ module Shared
       end
     end
 
+    initializer "shared.master_embed_helper" do
+      ActiveSupport.on_load(:action_controller_base) do
+        require_dependency Shared::Engine.root.join("app/helpers/shared/master_embed_helper").to_s
+        helper Shared::MasterEmbedHelper
+      end
+    end
+
     initializer "shared.stylesheets" do |app|
       path = root.join("app/assets/stylesheets").to_s
       app.config.assets.paths << path unless app.config.assets.paths.include?(path)

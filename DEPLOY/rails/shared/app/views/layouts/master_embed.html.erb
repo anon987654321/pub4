@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+<head>
+  <meta charset="utf-8">
+  <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <title><%= master_embed_title %></title>
+  <meta name="robots" content="noindex">
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+    .master-embed-frame {
+      border: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+  <iframe
+    class="master-embed-frame"
+    src="<%= master_web_url %>"
+    title="MASTER"
+    allow="microphone; autoplay; encrypted-media; fullscreen"
+    referrerpolicy="strict-origin-when-cross-origin"
+    loading="eager"></iframe>
+  <%= yield %>
+</body>
+</html>

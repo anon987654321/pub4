@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 class HomeController < ApplicationController
+  include Shared::MasterGuestHome
+
   def index
-    return unless authenticated?
+    return render_master_guest_home!(title: "Amber") unless authenticated?
     items = Current.user.items
     @items_count      = items.count
     @joy_count        = items.joy.count

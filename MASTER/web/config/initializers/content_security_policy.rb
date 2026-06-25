@@ -5,6 +5,11 @@ Rails.application.configure do
   config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
   config.content_security_policy_nonce_directives = %w[script-src]
 
+  embed_hosts = ENV.fetch(
+    "MASTER_FRAME_ANCESTORS",
+    "https://brgen.no https://www.brgen.no https://amber.brgen.no"
+  ).split
+
   config.content_security_policy do |policy|
     policy.default_src :self
     policy.font_src :self, :data, "https://fonts.gstatic.com"
@@ -15,5 +20,6 @@ Rails.application.configure do
     policy.connect_src :self, "https://www.youtube.com", "https://youtu.be"
     policy.media_src :self, :blob
     policy.frame_src "https://www.youtube.com", "https://www.youtube-nocookie.com"
+    policy.frame_ancestors :self, *embed_hosts
   end
 end
