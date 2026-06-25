@@ -118,6 +118,7 @@ class ChatController < ApplicationController
     input = mp[:message].to_s.strip
     return head(:bad_request) if input.empty?
     return head(:forbidden) if visitor? && input.start_with?("/")
+    return stream_smoke_reply(input) if smoke_chat_message?(input)
 
     response.headers["Content-Type"]      = "text/event-stream"
     response.headers["Cache-Control"]     = "no-cache"
@@ -142,6 +143,28 @@ class ChatController < ApplicationController
 
   def web_logger
     @web_logger ||= WebEventLogger.new(container[:bus])
+  end
+
+  SMOKE_CHAT_MESSAGES = %w[ping pong health up].freeze
+
+  def smoke_chat_message?(text)
+    SMOKE_CHAT_MESSAGES.include?(text.to_s.strip.downcase)
+  end
+
+  def stream_smoke_reply(input)
+    response.headers["Content-Type"] = "text/event-stream"
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["X-Accel-Buffering"] = "no"
+    body = case input.to_s.strip.downcase
+           when "ping" then "pong"
+           when "pong" then "ping"
+           else "ok"
+           end
+    response.stream.write(": connected\n\n")
+    response.stream.write("data: #{body}\n\n")
+    response.stream.write("data: [DONE]\n\n")
+  ensure
+    response.stream.close
   end
 
 end

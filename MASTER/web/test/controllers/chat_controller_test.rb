@@ -10,7 +10,9 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "tap to start"
   end
 
-  test "message smoke ping streams sse" do
+  test "message smoke ping streams sse without container" do
+    Rails.application.config.x.master_container = nil
+
     get "/chat/message", params: { message: "ping" }
 
     assert_response :success
