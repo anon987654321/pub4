@@ -24,13 +24,14 @@ ensure_ci_lock() {
 
 sync_from_repo() {
   local src=$repo/DEPLOY/rails/$app
-  [[ -d $src ]] || return 0
+  local shared_src=$repo/DEPLOY/rails/shared
   doas sh -c "
-    cp ${src}/db/seeds.rb ${app_dir}/db/seeds.rb 2>/dev/null && chown ${app}:${app} ${app_dir}/db/seeds.rb
-    mkdir -p ${shared_dir}/lib/pub4 ${shared_dir}/config
-    cp ${repo}/DEPLOY/rails/shared/config/ci.rb ${shared_dir}/config/ci.rb
-    cp ${repo}/DEPLOY/rails/shared/lib/pub4/ci_guard.rb ${shared_dir}/lib/pub4/ci_guard.rb
-    chown -R ${app}:${app} ${shared_dir}/lib ${shared_dir}/config/ci.rb
+    if [[ -d ${src} ]]; then
+      cp ${src}/db/seeds.rb ${app_dir}/db/seeds.rb 2>/dev/null && chown ${app}:${app} ${app_dir}/db/seeds.rb
+    fi
+    mkdir -p ${shared_dir}
+    cd ${shared_src} && tar cf - . | (cd ${shared_dir} && tar xf -)
+    chown -R ${app}:${app} ${shared_dir}
   "
 }
 
