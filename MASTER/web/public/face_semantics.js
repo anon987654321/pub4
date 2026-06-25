@@ -92,10 +92,30 @@ function dropMouthConfidence(drop) {
   }
 }
 
+function pushMoodArcSample(detail) {
+  State.moodArcSamples = State.moodArcSamples || [];
+  State.moodArcSamples.push({
+    entropy: detail.entropy ?? State.entropy ?? 0.2,
+    valence: detail.valence ?? detail.expression?.valence ?? 0,
+    arousal: detail.arousal ?? detail.expression?.arousal ?? State.pulse ?? 0.4
+  });
+  if (State.moodArcSamples.length > 16) State.moodArcSamples.shift();
+  const samples = State.moodArcSamples;
+  const mean = (key) => samples.reduce((sum, row) => sum + (row[key] || 0), 0) / samples.length;
+  const meanEntropy = mean('entropy');
+  State.moodArc = {
+    entropy: meanEntropy,
+    valence: mean('valence'),
+    arousal: mean('arousal'),
+    decay_rate: meanEntropy > 0.55 ? 0.32 : 0.68
+  };
+}
+
 window.addEventListener('master:visual', (ev) => {
   const d = ev.detail || {};
   State.entropy = d.entropy ?? State.entropy ?? 0.2;
   State.confidence = d.confidence ?? State.confidence ?? 1.0;
+  pushMoodArcSample(d);
   const name = String(d.name || d.mode || '');
   if (/input:focus|input:focus-visible/.test(name)) boostEyePool(0.07);
   if (/input:paste/.test(name)) boostEyePool(0.04, 'attention');
@@ -117,6 +137,12 @@ window.addEventListener('master:visual', (ev) => {
     State.bloom = Math.max(State.bloom || 0, 0.65);
     State.mood = /pass/.test(name) ? 'pass' : State.mood;
     if (/pass/.test(name)) window._chatPassHairline?.();
+  }
+  const prevMood = State.mood;
+  if (d.mood && d.mood !== prevMood) {
+    State.mood = d.mood;
+    window.MASTER_FACE?.updateMoodHistory?.(d.mood);
+    window.MASTER_FACE?.spawnEmotionalGhost?.(d.mood);
   }
   if (/chat:first/.test(name) && mouthPool && window.ParticleKernel) {
     const K = window.ParticleKernel;
@@ -271,6 +297,15 @@ window.addEventListener('tts:playback:start', (ev) => {
   State.mode = 'speaking';
   State.pulse = Math.max(State.pulse || 0, 0.28);
   State.currentSpeechStyle = d.style || State.currentSpeechStyle || 'calm';
+  const K = window.ParticleKernel;
+  const effort = /energetic|dramatic|intense|storyteller/i.test(String(State.currentSpeechStyle)) ? 3 : 1;
+  if (mouthPool && K && effort > 1) {
+    for (let n = 0; n < effort; n++) {
+      K.spawn(mouthPool, (Math.random() - 0.5) * 0.2, 0.48, {
+        kind: 4, zone: 1, arousal: 0.75, pressure: 0.42, confidence: 0.55, decay: 0.005
+      });
+    }
+  }
 });
 
 window.addEventListener('tts:playback:end', (ev) => {

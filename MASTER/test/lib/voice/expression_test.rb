@@ -43,6 +43,28 @@ class TestExpression < Minitest::Test
     assert hints.any? { |h| h[:shape] == "M" }
   end
 
+  def test_viseme_plan_accumulates_timing
+    plan = Master::Voice::Expression.viseme_plan("hi", style: :energetic)
+    assert plan.length >= 1
+    assert_equal 0, plan[0][:t]
+    assert plan[0][:ms] >= 28
+    assert plan.last[:t] >= 0
+  end
+
+  def test_viseme_stream_includes_duration
+    stream = Master::Voice::Expression.viseme_stream("open", style: :calm)
+    assert stream[:viseme_plan].is_a?(Array)
+    assert stream[:duration_ms].positive?
+    assert_equal "expression_phoneme_heuristic", stream[:source]
+  end
+
+  def test_chain_styles_layers_whispered_and_ethereal
+    chained = Master::Voice::Expression.chain_styles(:dramatic, :whispered)
+    assert_equal %i[dramatic whispered], chained[:chained]
+    assert chained[:breath_boost].is_a?(Numeric)
+    assert chained[:blendshapes].is_a?(Hash)
+  end
+
   def test_fuse_confidence_merges_weighted_sources
     fused = Master::Voice::Expression.fuse_confidence(
       verdict: 0.9,

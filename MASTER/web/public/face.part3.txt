@@ -69,16 +69,37 @@ function serializePoolForWorker(pool) {
     count: pool.count
   };
 }
+function kernelStepContext() {
+  const pr = State.pressureFields || {};
+  const moodArc = State.moodArc || {};
+  return {
+    entropy: Number.isFinite(pr.entropy) ? pr.entropy : (State.entropy || 0),
+    pressure: Math.min(1, (Number(pr.pct) || 0) / 100),
+    confidence: State.confidence ?? 0.75,
+    decayScale: Number.isFinite(moodArc.decay_rate) ? moodArc.decay_rate : 1
+  };
+}
 function stepPoolAsync(pool, dtSec) {
   const worker = ensureParticleWorker();
   const K = window.ParticleKernel;
+  const ctx = kernelStepContext();
   if (!worker || !pool) {
-    if (K) K.step(pool, dtSec);
+    if (K) K.step(pool, dtSec, ctx);
     return;
   }
   const id = ++particleWorkerSeq;
   particleWorkerPending.set(id, { pool });
-  worker.postMessage({ op: 'step', id, dt: dtSec, pool: serializePoolForWorker(pool) });
+  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });
+}
+function spawnEmotionalGhost(mood) {
+  const K = window.ParticleKernel;
+  if (!mouthPool || !K || State.reducedMotion) return;
+  const lane = (State.emotionalGhosts || []).length % 3;
+  const x = (lane - 1) * 0.22;
+  K.spawn(mouthPool, x, 0.42 + lane * 0.04, {
+    kind: 3, zone: 2, valence: 0.15, arousal: 0.22, confidence: 0.35, decay: 0.0028, attention: 0.4
+  });
+  State.emotionalGhosts = (State.emotionalGhosts || []).concat(mood || State.mood || 'idle').slice(-12);
 }
 function applyWorkerPoolResult(pool, payload) {
   if (!pool || !payload) return;
@@ -257,10 +278,24 @@ function frame(t) {
     }
   }
 
+  if (State.sttActive && State.sttDuck > 0.02) {
+    State.sttDuck = Math.max(0, State.sttDuck - 0.06);
+    const duckTarget = 0.12 + State.sttDuck * 0.18;
+    if (tts.outputGain && actx) {
+      tts.outputGain.gain.setTargetAtTime(duckTarget, actx.currentTime, 0.04);
+    } else if (tts.audio) {
+      tts.audio.volume = Math.min(tts.audio.volume, duckTarget);
+    }
+  } else if (!State.sttActive && tts.playing && tts.outputGain && actx) {
+    tts.outputGain.gain.setTargetAtTime(1.9, actx.currentTime, 0.08);
+  }
+
   if (head) {
+    const focusBoost = State.mode === 'listening' ? 1.35 : (State.mode === 'thinking' ? 0.55 : 1.0);
+    const openness = 0.55 + (State.confidence || 0.75) * 0.45;
     if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
-      saccadeX = (Math.random() - 0.5) * 0.28;
-      nextSaccade = t + Math.random() * 6000 + 3000;
+      saccadeX = (Math.random() - 0.5) * 0.28 * focusBoost;
+      nextSaccade = t + (Math.random() * 6000 + 3000) / focusBoost;
     }
     const calmStare = State.calmStareUntil && t < State.calmStareUntil;
     const nervous = State.nervousUntil && t < State.nervousUntil;
@@ -276,8 +311,8 @@ function frame(t) {
     }
     saccadeX *= 0.93;
     microJitter *= 0.78;
-    const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX + microJitter;
-    const pitch = State.mouseY * 0.4 + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
+    const yaw   = State.mouseX * 0.7 * openness + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX + microJitter;
+    const pitch = State.mouseY * 0.4 * openness + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
     if (camera) {
       const pInput = State.coarsePointer
         ? { x: State.tiltX, y: -State.tiltY }
@@ -332,7 +367,9 @@ function frame(t) {
     const _breath = 0.5 + 0.5 * Math.sin(performance.now() * 0.000698);
     const _breathSize = 0.92 + 0.18 * _breath;
     faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost * phonemeBoost * _breathSize;
-    if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.02 + 0.08 * _breath;
+    const energeticGlow = /energetic|dramatic|intense|storyteller/i.test(String(State.currentSpeechStyle || ''))
+      && (State.pulse || 0) > 0.35 ? Math.min(0.42, (State.pulse || 0) * 0.35) : 0;
+    if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.02 + 0.08 * _breath + energeticGlow;
     const hcVal = State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0);
     faceMat.uniforms.uHc.value = hcVal;
     const curlTarget = State.mode === 'thinking' ? 1.0 : Math.min(0.65, (State.entropy || 0) * 0.9);

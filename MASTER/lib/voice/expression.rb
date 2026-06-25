@@ -142,22 +142,79 @@ module Master
         }
       end
 
+      STYLE_RATE_SCALE = {
+        whispered: 1.35, ethereal: 1.22, dramatic: 1.18, calm: 1.08,
+        energetic: 0.82, brief: 0.88, intense: 0.90, storyteller: 1.05
+      }.freeze
+
+      CONSONANT_SHAPES = {
+        "m" => "M", "b" => "M", "p" => "M",
+        "f" => "M", "v" => "M", "w" => "O"
+      }.freeze
+
       def viseme_hints(text)
         clean = text.to_s.downcase.gsub(/[^a-zæøåéáà]/i, "")
         return [] if clean.empty?
 
         hints = []
         clean.each_char do |c|
-          shape = VOWEL_SHAPES[c] || (c.match?(/[mbpfvw]/i) ? "M" : "E")
-          ms = shape == "M" ? 55 : 85
+          shape = VOWEL_SHAPES[c] || CONSONANT_SHAPES[c] || "E"
+          ms = shape == "M" ? 55 : (VOWEL_SHAPES[c] ? 85 : 62)
+          amp = shape == "M" ? 0.72 : 0.85
           if hints.last && hints.last[:shape] == shape
             hints.last[:ms] += ms
           else
-            hints << { shape: shape, amp: 0.85, ms: ms }
+            hints << { shape: shape, amp: amp, ms: ms }
           end
         end
         hints
       end
+
+      # Duration-aware viseme frames for bus + X-TTS-Visemes headers.
+      def viseme_plan(text, style: nil, rate: nil)
+        hints = viseme_hints(text)
+        return [] if hints.empty?
+
+        scale = viseme_timing_scale(style, rate)
+        t = 0
+        hints.map do |hint|
+          ms = [(hint[:ms] * scale).round, 28].max
+          frame = { shape: hint[:shape], amp: hint[:amp], t: t, ms: ms }
+          t += ms
+          frame
+        end
+      end
+
+      def viseme_stream(text, style: nil, rate: nil)
+        plan = viseme_plan(text, style: style, rate: rate)
+        {
+          visemes: viseme_hints(text),
+          viseme_plan: plan,
+          duration_ms: plan.last ? plan.last[:t] + plan.last[:ms] : 0,
+          source: "expression_phoneme_heuristic",
+        }
+      end
+
+      # Layer whispered breath under ethereal lift for chained creative styles.
+      def chain_styles(primary, secondary = nil)
+        p = primary.to_s.downcase.to_sym
+        s = secondary.to_s.downcase.to_sym if secondary
+        base = for_tts_style(p)
+        return base unless s && STYLES_CHAINABLE.include?(s)
+
+        under = for_tts_style(s)
+        {
+          **base,
+          arousal: [(base[:arousal] || 0.5) * 0.82 + (under[:arousal] || 0.3) * 0.18, 1.0].min,
+          pressure: [(base[:pressure] || 0.4) * 0.75 + (under[:pressure] || 0.2) * 0.25, 1.0].min,
+          breath_boost: (base[:breath_boost] || 0.0) + (under[:breath_boost] || 0.0) * 0.45,
+          blendshapes: blendshapes_for(p).merge(blendshapes_for(s)) { |_k, a, b| ((a + b) * 0.5).clamp(0.0, 1.0) },
+          decay_rate: [base[:decay_rate] || 0.5, under[:decay_rate] || 0.5].max,
+          chained: [p, s],
+        }
+      end
+
+      STYLES_CHAINABLE = %i[whispered ethereal intimate calm robotic].freeze
 
       VERTICAL_BIASES = {
         marketplace: { arousal: 0.08, pressure: 0.14, valence: -0.05 },
@@ -231,6 +288,18 @@ module Master
         end
 
         total_w.positive? ? (fused / total_w).clamp(0.0, 1.0) : 0.75
+      end
+
+      private_class_method def viseme_timing_scale(style, rate)
+        style_key = style.to_s.downcase.to_sym if style
+        base = STYLE_RATE_SCALE[style_key] || 1.0
+        return base unless rate
+
+        pct = rate.to_s.delete("%").to_i
+        return base if pct.zero?
+
+        rate_factor = 1.0 - (pct / 100.0) * 0.35
+        (base * rate_factor).clamp(0.55, 1.65)
       end
 
       private_class_method def decay_rate_for(style_name)

@@ -152,8 +152,8 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (_) {} sendMessage(t2); } }, 1200);
     }
   };
-  recognition.onend = () => { State.sttActive = false; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
-  recognition.onerror = () => { State.sttActive = false; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+  recognition.onend = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+  recognition.onerror = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
 }
 function boostEyeAttention(delta = 0.25) {
   const K = window.ParticleKernel;
@@ -557,6 +557,16 @@ function wireTtsStyleChips() {
     if (chip.dataset.wired === '1') return;
     chip.dataset.wired = '1';
     chip.addEventListener('click', () => setTtsStyle(chip.dataset.style));
+    chip.addEventListener('mouseenter', () => {
+      if (State.mode === 'speaking' || tts.playing) return;
+      const style = chip.dataset.style;
+      emitTtsEvent('tts:style:active', { style, preview: true });
+      window.MASTERVisual?.event?.('tts:style:active', { topology: 'papua-mask', entropy: 0.18, confidence: 0.82, mode: style, style });
+    });
+    chip.addEventListener('mouseleave', () => {
+      if (State.mode === 'speaking' || tts.playing) return;
+      State.pulse = Math.max(0, (State.pulse || 0) * 0.6);
+    });
   });
   syncTtsStyleUi();
 }
@@ -894,7 +904,9 @@ window.MASTER_FACE = {
   initAudio,
   setAmbientHum,
   collectFeltState,
-  offsetCouncilMouthPool
+  offsetCouncilMouthPool,
+  updateMoodHistory,
+  spawnEmotionalGhost
 };
 window.announceTTS = announceTTS;
 window.enqueueSpeech = enqueueSpeech;

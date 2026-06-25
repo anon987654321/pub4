@@ -283,7 +283,8 @@ module Master
       end
 
       def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
-        return nil unless File.socket?(TTS_SOCKET)
+        sock_path = TtsSupervisor.next_socket
+        return nil unless File.socket?(sock_path)
 
         req = JSON.generate(
           voice: voice_name,
@@ -292,7 +293,7 @@ module Master
           text: text.to_s
         )
         Timeout.timeout(worker_timeout) do
-          UNIXSocket.open(TTS_SOCKET) do |s|
+          UNIXSocket.open(sock_path) do |s|
             s.write("#{req}\n")
             File.open(audio_path, "wb") { |f| IO.copy_stream(s, f) }
           end

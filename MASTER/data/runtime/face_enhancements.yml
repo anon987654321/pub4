@@ -7,49 +7,49 @@ enhancements:
 - id: fe_001
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: Map entropy/pressure to kernel velocity damping and attention decay
 - id: fe_002
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Global breathing offset driven by system confidence
 - id: fe_003
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Eye pupil size and saccade modulated by focus state
 - id: fe_004
   area: face
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Terrain reacts to vertical timbre (marketplace/dating/tv)
 - id: fe_005
   area: face
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Age decay rate follows mood arc from recent entropy
 - id: fe_006
   area: face
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Additive glow on high-arousal cells during energetic TTS
 - id: fe_007
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Bayer dither low-res upscaling for pixel instrument look
 - id: fe_008
   area: face
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Mouse tilt strength scales with system openness
 - id: fe_009
@@ -61,43 +61,43 @@ enhancements:
 - id: fe_010
   area: face
   tier: p3
-  status: pending
+  status: implemented
   handler: js
   summary: Slow memory trail ghost particles for emotional history
 - id: fe_011
   area: tts
   tier: p0
-  status: pending
+  status: implemented
   handler: ruby
   summary: Server-driven viseme stream from edge-tts phonemes
 - id: fe_012
   area: tts
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: Prosody rate/pitch affects kernel lerp time scale
 - id: fe_013
   area: tts
   tier: p2
-  status: pending
+  status: implemented
   handler: ruby
   summary: Style chaining whispered+ethereal layering
 - id: fe_014
   area: tts
   tier: p0
-  status: pending
+  status: implemented
   handler: both
   summary: Pre-speech inhale anticipation before audio starts
 - id: fe_015
   area: tts
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: Post-speech decay tuned per style
 - id: fe_016
   area: tts
   tier: p2
-  status: pending
+  status: implemented
   handler: ruby
   summary: TTS effort signal increases particle density
 - id: fe_017
@@ -109,37 +109,37 @@ enhancements:
 - id: fe_018
   area: tts
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: Real-time ducking when user STT starts
 - id: fe_019
   area: tts
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Creative style bleed ring on eye pool after speech
 - id: fe_020
   area: tts
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Style preview modulates idle face on hover
 - id: fe_021
   area: web
   tier: p0
-  status: pending
+  status: implemented
   handler: both
   summary: TTS style picker chips with live face preview
 - id: fe_022
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: Mode/style indicator tied to canvas topology
 - id: fe_023
   area: web
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Emotional history sparkline from master:visual events
 - id: fe_024
@@ -181,7 +181,7 @@ enhancements:
 - id: fe_030
   area: bus
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: Bidirectional felt sense sent with next message
 - id: fe_031
@@ -193,7 +193,7 @@ enhancements:
 - id: fe_032
   area: bus
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: Vertical timbre persistent kernel bias per subapp
 - id: fe_033
@@ -205,7 +205,7 @@ enhancements:
 - id: fe_034
   area: bus
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: Fused certainty from verdict/retrieval/council
 - id: fe_035
@@ -229,7 +229,7 @@ enhancements:
 - id: fe_038
   area: bus
   tier: p1
-  status: pending
+  status: implemented
   handler: both
   summary: User interrupt reset ripple across pools
 - id: fe_039
@@ -283,7 +283,7 @@ enhancements:
 - id: fe_047
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: SSE batching reduces visual thrash
 - id: fe_048
@@ -415,7 +415,7 @@ enhancements:
 - id: web_002
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Web Worker for particle physics offload
 - id: web_003

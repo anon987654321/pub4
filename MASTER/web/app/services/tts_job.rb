@@ -178,18 +178,14 @@ class TtsJob
   end
 
   def write_meta_json
-    visemes = Master::Voice::Expression.viseme_hints(@text)
-    frames = visemes.each_with_index.map do |hint, i|
-      { shape: hint[:shape], amp: hint[:amp], t: hint[:ms] * i, ms: hint[:ms] }
-    end
+    stream = Master::Voice::Expression.viseme_stream(@text, style: @style, rate: @rate)
     File.write(
       meta_path,
       JSON.generate(
         job_id: @job_id,
         voice: @voice.to_s,
         style: @style.to_s,
-        viseme_hints: visemes,
-        viseme_plan: frames
+        **stream.transform_keys(&:to_s)
       )
     )
   rescue StandardError => e

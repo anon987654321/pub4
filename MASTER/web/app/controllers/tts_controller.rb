@@ -24,11 +24,11 @@ class TtsController < ApplicationController
       style_locked: style_locked,
       bus: container[:bus]
     )
-    visemes = Master::Voice::Expression.viseme_hints(text)
+    stream = Master::Voice::Expression.viseme_stream(text, style: synth_style, rate: rate)
     etag = %("#{job.job_id}")
     response.headers["X-TTS-Voice"] = voice_key.to_s
     response.headers["X-TTS-Style"] = synth_style.to_s
-    response.headers["X-TTS-Visemes"] = viseme_header(visemes)
+    response.headers["X-TTS-Visemes"] = viseme_header(stream[:viseme_plan] || stream[:visemes])
     response.headers["X-TTS-Job"] = job.job_id
     response.headers["ETag"] = etag
     response.headers["Cache-Control"] = "public, max-age=3600"
@@ -129,8 +129,15 @@ class TtsController < ApplicationController
     cfg = Master::Voice::Speech.style_config_for(voice_key, synth_style)
     expr = Master::Voice::Expression.for_tts_style(synth_style)
     container[:bus]&.publish("tts:style:active", style: synth_style.to_s, rate: cfg[:rate], pitch: cfg[:pitch], expression: expr)
-    visemes = text ? Master::Voice::Expression.viseme_hints(text) : []
+    stream = text ? Master::Voice::Expression.viseme_stream(text, style: synth_style) : {}
     blendshapes = Master::Voice::Expression.blendshapes_for(synth_style)
-    container[:bus]&.publish("tts:viseme:plan", style: synth_style.to_s, visemes: visemes, blendshapes: blendshapes)
+    container[:bus]&.publish(
+      "tts:viseme:plan",
+      style: synth_style.to_s,
+      visemes: stream[:visemes] || [],
+      viseme_plan: stream[:viseme_plan] || [],
+      duration_ms: stream[:duration_ms],
+      blendshapes: blendshapes
+    )
   end
 end

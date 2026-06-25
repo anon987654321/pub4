@@ -42,14 +42,25 @@
     return i;
   }
 
-  function step(pool, dt) {
+  function step(pool, dt, ctx = {}) {
+    const entropy = Number.isFinite(ctx.entropy) ? ctx.entropy : 0;
+    const pressure = Number.isFinite(ctx.pressure) ? ctx.pressure : 0;
+    const confidence = Number.isFinite(ctx.confidence) ? ctx.confidence : 0.75;
+    const decayScale = Number.isFinite(ctx.decayScale) ? ctx.decayScale : 1;
+    const velDamp = Math.max(0.72, 0.94 - entropy * 0.18 - pressure * 0.12);
+    const attnDecay = 0.004 + entropy * 0.008;
+
     for (let i = 0; i < pool.count; i++) {
       if (!pool.alive[i]) continue;
       const base = i * FIELDS_PER_CELL;
+      pool.cells[base + FIELD.vx] *= velDamp;
+      pool.cells[base + FIELD.vy] *= velDamp;
       pool.cells[base + FIELD.x] += pool.cells[base + FIELD.vx] * dt;
       pool.cells[base + FIELD.y] += pool.cells[base + FIELD.vy] * dt;
       pool.cells[base + FIELD.age] += dt;
-      pool.cells[base + FIELD.confidence] -= pool.decay[i] * dt;
+      pool.cells[base + FIELD.attention] = Math.max(0, (pool.cells[base + FIELD.attention] || 0) - attnDecay * dt);
+      const cellDecay = pool.decay[i] * decayScale * (1.0 + (1 - confidence) * 0.12);
+      pool.cells[base + FIELD.confidence] -= cellDecay * dt;
       if (pool.cells[base + FIELD.confidence] <= 0) pool.alive[i] = 0;
     }
   }
@@ -127,6 +138,7 @@
     createPool,
     spawn,
     step,
+    stepWithContext: step,
     compact,
     configureContext,
     fitInternalResolution,

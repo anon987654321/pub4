@@ -9,7 +9,11 @@ enhancements:
   - crt_profile
   - tts_phrase_bank
   - tts_stream_chunk
+  - tts_worker_pool
   - ducking_user_stt
+  - kernel_entropy_damping
+  - mood_arc_decay
+  - emotional_ghost_trail
   - paralinguistic_tags
   - pressure_sparkline
   - actioncable_fallback
