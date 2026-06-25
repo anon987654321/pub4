@@ -661,7 +661,7 @@ configure_relayd() {
   {
     print -r -- "log connection errors"
     print -r -- "interval 120"
-    print -r -- "timeout 2000"
+    print -r -- "timeout 5000"
     print -r -- ""
     for backend in ${(k)BACKEND_PORT}; do
       print -r -- "table <${backend}> { 127.0.0.1 }"
