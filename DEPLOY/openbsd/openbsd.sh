@@ -774,12 +774,22 @@ stage_2() {
   cd "$m3dir/web"
   bundle config set --local path vendor/bundle
   bundle install --quiet
+  # Propshaft must not re-digest public/assets/ (nested assets/assets wedges Falcon boot).
+  rm -rf public/assets/assets 2>/dev/null || true
+  if [[ ! -f public/assets/.manifest.json ]]; then
+    log INFO "MASTER: precompiling production assets"
+    RAILS_ENV=production bundle exec rails assets:precompile || log WARN "MASTER assets:precompile failed"
+  fi
   typeset master_secret
   typeset -a _master_secret_lines
   _master_secret_lines=("${(@f)$(RAILS_ENV=production bundle exec rails secret 2>/dev/null)}")
   master_secret=${_master_secret_lines[-1]}
   [[ ${#master_secret} -ge 64 ]] || { log ERROR "master: secret capture failed (got ${#master_secret} chars)"; exit 1 }
-  install_template etc/rc.d/master.tmpl /etc/rc.d/master
+  if [[ -f ${SCRIPT_DIR}/etc/rc.d/master ]]; then
+    cp "${SCRIPT_DIR}/etc/rc.d/master" /etc/rc.d/master
+  else
+    install_template etc/rc.d/master.tmpl /etc/rc.d/master
+  fi
   chmod 555 /etc/rc.d/master
   rcctl enable master
   rcctl start master
