@@ -13,6 +13,12 @@ if awk -v l="${load:-99}" -v m="$max_load" 'BEGIN{exit !(l>m)}'; then
   exit 1
 fi
 
+doas sh -c "
+  rm -f ${lock}.holder 2>/dev/null || true
+  touch $lock 2>/dev/null || true
+  chmod 666 $lock 2>/dev/null || true
+" 2>/dev/null || true
+
 cd "$repo/MASTER"
 print "vps_master_scan: lock $lock $*"
 lockf -k "$lock" env MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli "$@"

@@ -2,6 +2,7 @@
 
 require "tempfile"
 require "rbconfig"
+require "pub4/deploy_paths"
 
 class WardrobeMediaJob < ApplicationJob
   queue_as :bulk
@@ -23,8 +24,8 @@ class WardrobeMediaJob < ApplicationJob
     if item.photos.attached?
       photo = item.photos.first
       begin
-        script = Rails.root.join("../../postpro/postpro.rb").to_s
-        if File.exist?(script)
+        script = Pub4::DeployPaths.postpro_script&.to_s
+        if script.present? && File.exist?(script)
           tmp_in = Tempfile.new([ "in", File.extname(photo.filename.to_s.presence || ".jpg") ])
           tmp_in.binmode
           tmp_in.write(photo.download)

@@ -10,8 +10,8 @@
 require "rbconfig"
 
 master_root = File.expand_path("..", __dir__)
+legacy = File.expand_path("../DEPLOY/postpro/postpro.rb", master_root)
 repo_root = File.expand_path("..", master_root)
-legacy = File.join(repo_root, "DEPLOY", "postpro", "postpro.rb")
 
 unless File.file?(legacy)
   warn "postpro: legacy implementation missing: #{legacy}"

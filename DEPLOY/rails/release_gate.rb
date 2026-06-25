@@ -34,6 +34,8 @@ end
   test/pwa_design_contract_test.rb
   test/shared_social_routes_test.rb
   shared/test/services/frontend_auditor_test.rb
+  shared/test/lib/pub4/deploy_paths_test.rb
+  shared/test/lib/pub4/ci_guard_test.rb
 ].each do |test|
   run(test, "#{RUBY_PREFIX}ruby #{test}", chdir: ROOT)
 end

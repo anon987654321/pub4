@@ -90,8 +90,12 @@ apps.each do |name, metadata|
     fail!(app_failures, "bin/ci must pin BUNDLER_AUDIT_UPDATE (offline VPS)") unless ci_text.include?("BUNDLER_AUDIT_UPDATE")
     fail!(app_failures, "bin/ci must set NPM_CONFIG_CACHE (copy-tree npm)") unless ci_text.include?("NPM_CONFIG_CACHE")
     guard = File.join(RAILS_ROOT, "shared", "lib", "pub4", "ci_guard.rb")
+    paths = File.join(RAILS_ROOT, "shared", "lib", "pub4", "deploy_paths.rb")
     fail!(app_failures, "missing shared/lib/pub4/ci_guard.rb") unless File.file?(guard)
+    fail!(app_failures, "missing shared/lib/pub4/deploy_paths.rb") unless File.file?(paths)
     fail!(app_failures, "shared CI must use Pub4::CiGuard") unless ci_text.include?("Pub4::CiGuard")
+    fail!(app_failures, "shared CI must skip importmap on VPS") unless ci_text.include?("unless vps_host")
+    fail!(app_failures, "shared CI must skip RuboCop on VPS") unless ci_text.match?(/rubocop.*unless vps_host|unless vps_host.*rubocop/m)
   else
     fail!(app_failures, "missing bin/ci")
   end

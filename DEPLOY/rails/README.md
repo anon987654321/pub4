@@ -28,6 +28,8 @@ Deploy: `doas zsh DEPLOY/rails/<app>/<app>.sh`
 
 `DEPLOY/rails/shared/` — engine gem, concerns, Stimulus baseline, `WIRING_NOTES.md`
 
+Copy-tree deploy mirrors shared at `/home/<app>/shared` (sibling of `app/`, not inside it). CI and jobs resolve DEPLOY tools via `Pub4::DeployPaths` (`shared/lib/pub4/deploy_paths.rb`) using `PUB4_RAILS_ROOT` or `/home/dev/pub4/DEPLOY/…` on vm23.
+
 ```ruby
 include Shared.concern(:Votable)   # Notifiable, ActivityTrackable, GeoLocatable, …
 ```

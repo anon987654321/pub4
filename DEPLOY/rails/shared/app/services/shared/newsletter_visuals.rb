@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "pub4/deploy_paths"
+
 require "json"
 require "net/http"
 require "tempfile"
@@ -122,14 +124,7 @@ module Shared
       "file://#{path}"
     end
 
-    def postpro_script
-      candidates = [
-        Rails.root.join("../../postpro/postpro.rb"),
-        Rails.root.join("../../../DEPLOY/postpro/postpro.rb")
-      ].map { |path| path.expand_path } if defined?(Rails)
-
-      Array(candidates).find { |path| File.exist?(path) }
-    end
+    def postpro_script = Pub4::DeployPaths.postpro_script&.to_s
 
     def log(message)
       Rails.logger.warn("NewsletterVisuals: #{message}") if defined?(Rails)
