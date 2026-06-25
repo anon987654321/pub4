@@ -180,11 +180,30 @@ master_web_assets_precompile() {
   log_ok "MASTER web assets ready"
 }
 
+# ensure_npm_cache APP_NAME — sass-embedded native build must not write /root/.npm via doas.
+ensure_npm_cache() {
+  local app_name=$1
+  local npm_cache="/home/${app_name}/.npm"
+  ${_PRIV} mkdir -p "$npm_cache"
+  ${_PRIV} chown "${app_name}:${app_name}" "$npm_cache"
+}
+
+# bundle_install_as_app APP_NAME APP_DIR — production bundle as app user with app-owned npm cache.
+bundle_install_as_app() {
+  local app_name=$1
+  local app_dir=$2
+  ensure_npm_cache "$app_name"
+  local npm_cache="/home/${app_name}/.npm"
+  ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; cd ${app_dir} && bundle config set --local frozen false && bundle config set --local deployment true && bundle config set --local without \"development test\" && RAILS_ENV=production bundle install'"
+}
+
 # run_rails_as_app APP_NAME APP_DIR CMD — app-owned bundle/rails (avoids Gemfile.lock permission errors).
 run_rails_as_app() {
   local app_name=$1 app_dir=$2
   shift 2
-  ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; cd ${app_dir} && $*'"
+  ensure_npm_cache "$app_name"
+  local npm_cache="/home/${app_name}/.npm"
+  ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; cd ${app_dir} && $*'"
 }
 
 # rails_runtime_gate APP_NAME APP_DIR — bundle check + db:prepare + bin/ci + master scan before rcctl restart.

@@ -7,7 +7,7 @@ exec > >(tee -a "$LOG") 2>&1
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 
 export SKIP_MASTER_SCAN=1
-APPS=(amber blognet bsdports baibl hjerterom)
+APPS=(brgen amber blognet bsdports baibl hjerterom)
 
 for app in $APPS; do
   log "=== retry ${app} ==="

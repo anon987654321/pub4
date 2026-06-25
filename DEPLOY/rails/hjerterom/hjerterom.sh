@@ -60,7 +60,7 @@ doas mkdir -p "${APP_DIR}/.bundle"
 print -- "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" | doas tee "${APP_DIR}/.bundle/config" >/dev/null
 doas chown -R "${APP_NAME}:${APP_NAME}" "${APP_DIR}/.bundle"
 
-doas sh -c "su -m ${APP_NAME} -c 'cd ${APP_DIR} && bundle config set --local frozen false && bundle config set --local deployment true && bundle config set --local without \"development test\" && RAILS_ENV=production bundle install'"
+bundle_install_as_app "$APP_NAME" "$APP_DIR"
 db_create_migrate_as_app "$APP_NAME" "$APP_DIR"
 [[ -f ${APP_DIR}/db/seeds.rb ]] && db_seed_as_app "$APP_NAME" "$APP_DIR" || true
 
