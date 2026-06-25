@@ -193,6 +193,13 @@
       const pct = event.pct ?? event.value ?? 0;
       window.dispatchEvent(new CustomEvent("master:pressure", { detail: { pct, ...event } }));
     }
+    if (/council:deliberation|council:start/i.test(type)) {
+      startCouncilRotator();
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: { name: type, mode: "council", entropy: 0.42, confidence: 0.62, raw: event } }));
+    }
+    if (/council:(?:vote|speech|end)|tribunal:rendered/i.test(type)) {
+      stopCouncilRotator();
+    }
     if (/infer:resolved|infer:confidence|route:resolved|llm:routed/i.test(type)) {
       window.dispatchEvent(new CustomEvent("master:visual", { detail: mapped }));
     }
@@ -204,6 +211,52 @@
   }
 
   let eventSource = null;
+  let sseErrorCount = 0;
+  let cableSocket = null;
+  let cableIdent = null;
+  const COUNCIL_ROTATOR = ["Architect", "Skeptic", "Pragmatist", "Security", "Mentor"];
+  let councilRotatorIdx = 0;
+  let councilRotatorTimer = null;
+
+  function startCouncilRotator() {
+    if (councilRotatorTimer) return;
+    const ui = document.getElementById("ui-status");
+    councilRotatorTimer = setInterval(() => {
+      if (!ui) return;
+      const name = COUNCIL_ROTATOR[councilRotatorIdx % COUNCIL_ROTATOR.length];
+      councilRotatorIdx += 1;
+      ui.textContent = `council · ${name}`;
+    }, 1800);
+  }
+
+  function stopCouncilRotator() {
+    if (!councilRotatorTimer) return;
+    clearInterval(councilRotatorTimer);
+    councilRotatorTimer = null;
+  }
+
+  function connectCableFallback() {
+    if (cableSocket || !window.WebSocket) return;
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    cableSocket = new WebSocket(`${proto}//${location.host}/cable`);
+    cableIdent = JSON.stringify({ channel: "MasterChannel" });
+    cableSocket.onopen = () => {
+      cableSocket.send(JSON.stringify({ command: "subscribe", identifier: cableIdent }));
+      emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "cable" });
+    };
+    cableSocket.onmessage = (message) => {
+      try {
+        const frame = JSON.parse(message.data);
+        if (frame.type === "ping") return;
+        if (frame.type === "confirm_subscription") return;
+        const payload = frame.message;
+        if (!payload) return;
+        handleRuntimeEvent(payload.event ? { ...payload, type: payload.event } : payload);
+      } catch (_error) {}
+    };
+    cableSocket.onclose = () => { cableSocket = null; };
+    cableSocket.onerror = () => { try { cableSocket.close(); } catch (_e) {} cableSocket = null; };
+  }
 
   function disconnectSse() {
     if (!eventSource) return;
@@ -218,6 +271,7 @@
     eventSource = new EventSource("/events/stream");
     eventSource.onopen = () => {
       state.connected = true;
+      sseErrorCount = 0;
       delete document.body.dataset.linkQuiet;
       emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.90, mode: "connected" });
     };
@@ -230,10 +284,17 @@
     };
     eventSource.onerror = () => {
       state.connected = false;
+      sseErrorCount += 1;
       state.confidence = Math.max(0.2, state.confidence - 0.1);
       emitVisual("events:disconnected", { topology: "serpent", entropy: 0.52, confidence: state.confidence, mode: "disconnected" });
       document.body.dataset.linkQuiet = "1";
       window._chatOnDmesg?.("link quiet");
+      disconnectSse();
+      if (sseErrorCount >= 3 && window.MASTER_RUNTIME?.enhancements?.includes?.("actioncable_fallback")) {
+        connectCableFallback();
+      } else {
+        setTimeout(connectSse, Math.min(8000, 500 * sseErrorCount));
+      }
     };
   }
 
@@ -288,6 +349,29 @@
     }
   }
 
+  function bootEmotionalTimeline() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("timeline") !== "1") return;
+    let strip = document.getElementById("emotional-timeline");
+    if (!strip) {
+      strip = document.createElement("div");
+      strip.id = "emotional-timeline";
+      strip.className = "emotional-timeline";
+      strip.setAttribute("aria-hidden", "true");
+      document.body.appendChild(strip);
+    }
+    const ring = [];
+    window.addEventListener("master:visual", (ev) => {
+      const d = ev.detail || {};
+      ring.push({ mode: (d.mode || "idle").toString().slice(0, 10), entropy: Number(d.entropy ?? 0.2) });
+      while (ring.length > 24) ring.shift();
+      strip.innerHTML = ring.map((e) => {
+        const h = 3 + e.entropy * 10;
+        return `<span style="height:${h}px" title="${e.mode}"></span>`;
+      }).join("");
+    });
+  }
+
   function bootExperimentalVisuals() {
     const params = new URLSearchParams(window.location.search);
     const face3dOff = params.get("face3d") === "0" || localStorage.getItem("master_face3d") === "0";
@@ -326,6 +410,7 @@
 
   observeDomSignals();
   connectSse();
+  bootEmotionalTimeline();
   bootExperimentalVisuals();
   emitVisual("visual:ready", { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "ready" });
 })();

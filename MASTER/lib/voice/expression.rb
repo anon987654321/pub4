@@ -159,6 +159,56 @@ module Master
         hints
       end
 
+      VERTICAL_BIASES = {
+        marketplace: { arousal: 0.08, pressure: 0.14, valence: -0.05 },
+        dating: { arousal: -0.06, valence: 0.18, attention: 0.12 },
+        tv: { arousal: 0.04, scanline: 0.22 }
+      }.freeze
+
+      COUNCIL_PERSONA_EXPRESSION = {
+        "Architect" => { arousal: 0.62, valence: 0.12, attention: 0.78, pressure: 0.55 },
+        "Skeptic" => { arousal: 0.74, valence: -0.18, attention: 0.82, pressure: 0.68 },
+        "Pragmatist" => { arousal: 0.48, valence: 0.05, attention: 0.6, pressure: 0.42 },
+        "Security" => { arousal: 0.7, valence: -0.22, attention: 0.85, pressure: 0.72 },
+        "User" => { arousal: 0.4, valence: 0.2, attention: 0.55, pressure: 0.35 },
+        "Mentor" => { arousal: 0.36, valence: 0.28, attention: 0.5, pressure: 0.3 }
+      }.freeze
+
+      def for_vertical(app)
+        VERTICAL_BIASES[app.to_s.downcase.to_sym] || {}
+      end
+
+      def mood_arc(history:)
+        entries = Array(history)
+        return { arousal: 0.45, valence: 0.0, entropy: 0.2, decay_rate: 0.65 } if entries.empty?
+
+        entropies = entries.map { |h| (h[:entropy] || h["entropy"] || 0.2).to_f }
+        valences = entries.map { |h| (h[:valence] || h["valence"] || 0.0).to_f }
+        arousals = entries.map { |h| (h[:arousal] || h["arousal"] || 0.4).to_f }
+        mean_entropy = entropies.sum / entropies.length
+        mean_valence = valences.sum / valences.length
+        mean_arousal = arousals.sum / arousals.length
+
+        {
+          arousal: mean_arousal.clamp(0.0, 1.0),
+          valence: mean_valence.clamp(-1.0, 1.0),
+          entropy: mean_entropy.clamp(0.0, 1.0),
+          decay_rate: mean_entropy > 0.55 ? 0.32 : 0.68
+        }
+      end
+
+      def for_council_persona(persona_id)
+        base = COUNCIL_PERSONA_EXPRESSION[persona_id.to_s] || COUNCIL_PERSONA_EXPRESSION["Pragmatist"]
+        lane = CouncilFace::PERSONAS.dig(persona_id.to_s, :viseme_lane) || :center
+        {
+          **base,
+          emotion: emotion_for(mode: :council),
+          viseme_lane: lane,
+          viseme_plan: [],
+          eye_confidence_drop: persona_id.to_s == "Skeptic" ? 0.22 : 0.12
+        }
+      end
+
       def fuse_confidence(sources)
         src = sources.is_a?(Hash) ? sources : {}
         total_w = 0.0

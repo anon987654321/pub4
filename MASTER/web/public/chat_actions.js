@@ -15,6 +15,9 @@ function feltCssNumber(name, fallback) {
 }
 
 function collectFeltState() {
+  if (typeof window.MASTER_FACE?.collectFeltState === 'function') {
+    return window.MASTER_FACE.collectFeltState();
+  }
   const st = window.MASTER_FACE?.State || {};
   const mood = (st.mood || document.body.dataset.masterState || 'idle').toString();
   const mode = (st.mode || document.body.dataset.pipelineStage || 'idle').toString();

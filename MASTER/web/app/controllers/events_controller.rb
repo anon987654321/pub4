@@ -27,9 +27,10 @@ class EventsController < ApplicationController
   POLL_INTERVAL_S    = 0.1
   KEEPALIVE_EVERY_S  = 15.0  # SSE comment cadence — long enough to be silent, short enough to keep proxies happy
   MAX_STREAM_S       = 600   # hard cap — 10 minute stream ceiling
+  VISITOR_SAFE_PREFIX = %r{\A(?:tts:|pipeline:stage|pressure:updated|council:deliberation|link)}i.freeze
 
   def stream
-    return head(:forbidden) if visitor?
+    visitor_tier = request.env["master.tier"].to_s == "visitor"
 
     response.headers["Content-Type"]      = "text/event-stream"
     response.headers["Cache-Control"]     = "no-cache"
@@ -55,6 +56,8 @@ class EventsController < ApplicationController
       else
         event = received.pop(true) rescue nil
         next unless event
+        next if visitor_tier && !visitor_safe_event?(event)
+
         response.stream.write("data: #{event.to_json}\n\n")
       end
     end
@@ -63,5 +66,12 @@ class EventsController < ApplicationController
   ensure
     sub.call if sub
     response.stream.close rescue nil
+  end
+
+  private
+
+  def visitor_safe_event?(event)
+    type = event[:type].to_s
+    type.match?(VISITOR_SAFE_PREFIX)
   end
 end

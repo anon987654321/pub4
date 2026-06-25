@@ -1,0 +1,96 @@
+id: repo_ecology
+tier: core
+area: repository
+status: active
+source: docs/repo_ecology.md
+
+core_principle: A repository is semantic topology, dependency ecology, cognitive geography, architectural history, and organizational memory — not a bag of files
+
+optimize_for:
+  - comprehensibility
+  - semantic_coherence
+  - navigability
+  - architectural_elegance
+  - entropy_reduction
+
+pipeline:
+  - scan
+  - classify
+  - cluster
+  - score
+  - simulate
+  - critique
+  - apply
+  - test
+  - rollback_if_needed
+
+transformation_requirements:
+  - observable
+  - reversible
+  - scoped
+  - audited
+  - epistemically_justified
+
+planned_subsystems:
+  - id: dead_file_scanner
+    detects: [unreferenced_files, orphaned_modules, stale_migrations, unused_tests, abandoned_experiments, duplicate_assets]
+    safety: [never_delete_without_graph_proof, zero_inbound_references, git_history_confidence_threshold]
+  - id: similarity_clusterer
+    clusters: [duplicated_modules, overlapping_utilities, convergent_abstractions, namespace_fragmentation]
+    outputs: [merge_proposals, bounded_context_candidates, architectural_convergence_maps]
+  - id: reference_graph
+    tracks: [imports, runtime_references, constants, events, pipelines, cli_commands, file_mutations]
+    enables: [safe_rename, scoped_rollback, dependency_visualization, blast_radius_estimation]
+  - id: rename_planner
+    goals: [semantic_consistency, grammar_normalization, namespace_coherence, ambiguity_reduction]
+    supports: [import_rewriting, test_rewriting, rollback_journal, migration_plans]
+  - id: merge_planner
+    combines: [semantic_similarity, dependency_overlap, runtime_coupling, shared_terminology]
+    produces: [merge_simulations, api_compatibility_warnings, cohesion_scoring]
+  - id: tree_aesthetic_scorer
+    metrics: [folder_cohesion, duplicate_naming, depth_pressure, orphan_density, utility_sprawl, entropy_gradients, semantic_consistency]
+    goal: repository should feel calm and intentional
+  - id: repo_weather
+    visualizes: [architectural_turbulence, dependency_storms, duplication_hotspots, entropy_fog, stable_regions, dead_zones]
+    integrates: cognition_ecology
+  - id: semantic_terrain
+    generated_from: [dependency_gravity, module_centrality, instability, change_frequency, memory_access]
+    terrain:
+      mountains: stable architecture
+      rivers: data flow
+      fractures: contradictory abstractions
+      swamps: utility sprawl
+
+safety:
+  never:
+    - blind_deletes
+    - global_rewrites_without_simulation
+    - unsafe_renames
+    - non_scoped_rollback
+    - silent_merges
+  always:
+    - touched_path_tracking
+    - rollback_journal
+    - diff_simulation
+    - syntax_validation
+    - test_execution
+    - governance_approval
+
+epistemic_requirements:
+  expose:
+    - confidence
+    - assumptions
+    - unresolved_ambiguity
+    - dependency_risk
+    - blast_radius
+    - evidence
+    - critique_history
+  prefer:
+    - explicit_uncertainty
+    - reversible_changes
+    - conservative_execution
+  over:
+    - aggressive_automation
+    - speculative_restructuring
+
+long_term: autonomous repository gardener for ecosystem stabilization, architectural healing, entropy reduction, semantic harmonization, cognition-aware restructuring

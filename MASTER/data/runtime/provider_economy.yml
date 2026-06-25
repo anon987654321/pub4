@@ -1,0 +1,54 @@
+id: provider_economy
+tier: core
+area: routing
+status: active
+source: docs/provider_economy.md
+
+principle: The orchestrator owns provider selection; models do not select themselves.
+
+selection_criteria:
+  - capability
+  - latency
+  - hallucination_rate
+  - timeout_rate
+  - repair_burden
+  - token_cost
+  - context_capacity
+  - historical_reliability
+
+routing_tiers:
+  cheap_cognition:
+    use_for:
+      - classification
+      - compression
+      - retrieval_ranking
+      - summarization
+      - critique
+      - voting
+      - lint_reasoning
+  expensive_cognition:
+    use_for:
+      - high_risk_synthesis
+      - architecture_decisions
+      - irreversible_mutations
+      - council_arbitration
+      - long_horizon_planning
+
+quarantine:
+  triggers:
+    - hallucination_rate_spikes
+    - retries_exceed_threshold
+    - invalid_structured_outputs_repeat
+    - timeout_rate_climbs
+    - corruption_incidents_increase
+
+long_term_direction:
+  flow:
+    - workflow
+    - capability_routing
+    - health_scoring
+    - quorum
+    - replay_analysis
+    - repair_feedback
+    - adaptive_optimization
+  goal: Provider layer becomes a runtime economy, not a static config file

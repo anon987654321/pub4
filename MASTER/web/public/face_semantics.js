@@ -1,4 +1,24 @@
 const F_FACE_SEM = window.MASTER_FACE || {};
+const VERTICAL_HINT = (document.documentElement.dataset.appHint || window.MASTER_RUNTIME?.app_hint || 'default').toString().toLowerCase();
+const VERTICAL_BIAS = window.MASTER_RUNTIME?.vertical_timbre?.[VERTICAL_HINT]
+  || window.MASTER_RUNTIME?.vertical_timbre?.default
+  || {};
+function applyVerticalTimbre() {
+  if (!VERTICAL_BIAS || !window.ParticleKernel) return;
+  const K = window.ParticleKernel;
+  if (mouthPool) {
+    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * K.FIELDS_PER_CELL;
+      if (VERTICAL_BIAS.arousal != null) mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + VERTICAL_BIAS.arousal * 0.08);
+      if (VERTICAL_BIAS.pressure != null) mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + K.FIELD.pressure] || 0) + VERTICAL_BIAS.pressure * 0.06);
+      if (VERTICAL_BIAS.valence != null) mouthPool.cells[b + K.FIELD.valence] = (mouthPool.cells[b + K.FIELD.valence] || 0) + VERTICAL_BIAS.valence * 0.05;
+    }
+  }
+  if (VERTICAL_BIAS.scanline != null && F_FACE_SEM.faceMat?.uniforms?.uScanline) {
+    F_FACE_SEM.faceMat.uniforms.uScanline.value = Math.min(0.5, VERTICAL_BIAS.scanline);
+  }
+}
+applyVerticalTimbre();
 const State = F_FACE_SEM.State || window.State;
 const mouthPool = F_FACE_SEM.mouthPool || window.mouthPool;
 const eyePool = F_FACE_SEM.eyePool || window.eyePool;
@@ -89,7 +109,9 @@ window.addEventListener('master:visual', (ev) => {
     State.fracture = Math.max(State.fracture || 0, 0.55);
     State.shake = Math.max(State.shake || 0, 0.45);
     State.mood = 'veto';
+    State.chromaVeto = 0.28;
     dropMouthConfidence(0.35);
+    if (F_FACE_SEM.faceMat?.uniforms?.uChroma) F_FACE_SEM.faceMat.uniforms.uChroma.value = 0.28;
   }
   if (/complete|success|done|pass/.test(name)) {
     State.bloom = Math.max(State.bloom || 0, 0.65);

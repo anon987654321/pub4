@@ -26,13 +26,71 @@ const debugPanel = showDebug ? (() => {
 let fpsLastSample = performance.now();
 let fpsSampleFrames = 0;
 let fpsEma = 24;
+window.addEventListener('master:pressure', (ev) => {
+  const d = ev.detail || {};
+  State.pressureFields = {
+    pct: Number(d.pct ?? d.value ?? 0),
+    tokens: d.tokens ?? d.token_est ?? 0,
+    limit: d.limit ?? 0,
+    entropy: d.entropy ?? State.entropy ?? 0,
+    turbulence: d.turbulence ?? 0,
+    gravity: d.gravity ?? 0,
+    valence: d.valence ?? 0
+  };
+});
 const FACE_RENDER_SCALE_MIN = 0.48;
 const FACE_RENDER_SCALE_MAX = 0.72;
+let particleWorker = null;
+let particleWorkerSeq = 0;
+const particleWorkerPending = new Map();
+function ensureParticleWorker() {
+  if (particleWorker || !window.Worker) return particleWorker;
+  if (!window.MASTER_RUNTIME?.enhancements?.includes?.('particle_worker')) return null;
+  try {
+    particleWorker = new Worker('/particle_worker.js');
+    particleWorker.onmessage = (ev) => {
+      const msg = ev.data || {};
+      const pending = particleWorkerPending.get(msg.id);
+      if (!pending) return;
+      particleWorkerPending.delete(msg.id);
+      applyWorkerPoolResult(pending.pool, msg.pool);
+    };
+  } catch (_) {
+    particleWorker = null;
+  }
+  return particleWorker;
+}
+function serializePoolForWorker(pool) {
+  return {
+    cells: new Float32Array(pool.cells).buffer,
+    decay: new Float32Array(pool.decay).buffer,
+    alive: new Uint8Array(pool.alive).buffer,
+    capacity: pool.capacity,
+    count: pool.count
+  };
+}
+function stepPoolAsync(pool, dtSec) {
+  const worker = ensureParticleWorker();
+  const K = window.ParticleKernel;
+  if (!worker || !pool) {
+    if (K) K.step(pool, dtSec);
+    return;
+  }
+  const id = ++particleWorkerSeq;
+  particleWorkerPending.set(id, { pool });
+  worker.postMessage({ op: 'step', id, dt: dtSec, pool: serializePoolForWorker(pool) });
+}
+function applyWorkerPoolResult(pool, payload) {
+  if (!pool || !payload) return;
+  pool.cells.set(new Float32Array(payload.cells));
+  pool.decay.set(new Float32Array(payload.decay));
+  pool.alive.set(new Uint8Array(payload.alive));
+}
 function syncSemanticPools(dtSec) {
   const K = window.ParticleKernel;
   if (!K || !faceMat) return;
   if (mouthPool) {
-    K.step(mouthPool, dtSec);
+    stepPoolAsync(mouthPool, dtSec);
     let arousal = 0, n = 0;
     for (let i = 0; i < mouthPool.count; i++) {
       if (!mouthPool.alive[i]) continue;
@@ -46,7 +104,7 @@ function syncSemanticPools(dtSec) {
     }
   }
   if (eyePool) {
-    K.step(eyePool, dtSec);
+    stepPoolAsync(eyePool, dtSec);
     let conf = 0, n = 0;
     for (let i = 0; i < eyePool.count; i++) {
       if (!eyePool.alive[i]) continue;
@@ -75,13 +133,16 @@ function frame(t) {
     if (debugPanel) {
       const mp = mouthPool;
       const count = mp ? mp.count : 0;
+      const pr = State.pressureFields || {};
+      const pressureLine = showDebug ? `p ${(pr.pct ?? 0).toFixed(0)}% tok ${pr.tokens ?? 0}/${pr.limit ?? 0} ent ${(pr.entropy ?? State.entropy ?? 0).toFixed(2)} turb ${(pr.turbulence ?? 0).toFixed(2)} grav ${(pr.gravity ?? 0).toFixed(2)} val ${(pr.valence ?? 0).toFixed(2)}` : '';
       debugPanel.textContent = [
         `${fpsEma.toFixed(0)} fps`,
         `mode ${State.mode}`,
         `mood ${State.mood}`,
         `particles ${count}`,
-        `conf ${(State.confidence ?? 0).toFixed(2)}`
-      ].join(' · ');
+        `conf ${(State.confidence ?? 0).toFixed(2)}`,
+        pressureLine
+      ].filter(Boolean).join(' · ');
     }
     if (!State.reducedMotion && fpsEma < 18 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
       FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.04);
@@ -333,8 +394,11 @@ function frame(t) {
     faceMat.uniforms.uFocusDim.value += (focusDim - faceMat.uniforms.uFocusDim.value) * 0.06;
     const phosphorSoft = State.reducedMotion ? 0.35 : 0.55;
     faceMat.uniforms.uPhosphorSoft.value += (phosphorSoft - faceMat.uniforms.uPhosphorSoft.value) * 0.04;
-    const scanTarget = State.mode === 'thinking' ? 0.38 : (State.mode === 'speaking' ? 0.18 : 0.12);
+    const crtProfile = rootBody.dataset.runtimeProfile === 'crt';
+    const scanTarget = crtProfile ? 0.42 : (State.mode === 'thinking' ? 0.38 : (State.mode === 'speaking' ? 0.18 : 0.12));
     faceMat.uniforms.uScanline.value += (scanTarget - faceMat.uniforms.uScanline.value) * 0.05;
+    const chromaTarget = (State.mood === 'veto' || State.fracture > 0.35) ? 0.22 : 0.0;
+    if (faceMat.uniforms.uChroma) faceMat.uniforms.uChroma.value += (chromaTarget - faceMat.uniforms.uChroma.value) * 0.12;
     faceMat.uniforms.uTime.value = sec;
     if (idleS2 > 45) rootBody.dataset.longSilence = '1';
     else delete rootBody.dataset.longSilence;
@@ -547,13 +611,21 @@ cv.addEventListener('touchmove', (e) => {
 }, { passive: true });
 cv.addEventListener('touchend', () => { pinchDist0 = null; }, { passive: true });
 
-// FA26 double-tap profile cycle (full <-> battery)
+// FA26 double-tap profile cycle (full <-> battery <-> crt)
+const RUNTIME_PROFILES = (() => {
+  const fromRuntime = window.MASTER_RUNTIME?.ui_philosophy?.profiles;
+  if (Array.isArray(fromRuntime) && fromRuntime.length) {
+    return fromRuntime.map((p) => (typeof p === 'string' ? p : p.id)).filter(Boolean);
+  }
+  return ['full', 'battery', 'crt'];
+})();
 let lastTapT = 0;
 cv.addEventListener('pointerup', () => {
   const now = performance.now();
   if (now - lastTapT < 320) {
     const cur = rootBody.dataset.runtimeProfile || 'full';
-    const next = cur === 'battery' ? 'full' : 'battery';
+    const idx = RUNTIME_PROFILES.indexOf(cur);
+    const next = RUNTIME_PROFILES[(idx + 1 + RUNTIME_PROFILES.length) % RUNTIME_PROFILES.length] || 'full';
     rootBody.dataset.runtimeProfile = next;
     State.profileOverride = next;
     if (window.ParticleKernel && eyePool) {

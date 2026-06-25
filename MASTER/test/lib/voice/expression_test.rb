@@ -53,6 +53,27 @@ class TestExpression < Minitest::Test
     assert_in_delta 0.75, Master::Voice::Expression.fuse_confidence({}), 0.001
   end
 
+  def test_for_vertical_returns_bias_hash
+    bias = Master::Voice::Expression.for_vertical(:dating)
+    assert bias[:valence].positive?
+    assert Master::Voice::Expression.for_vertical(:unknown).empty?
+  end
+
+  def test_mood_arc_from_history
+    arc = Master::Voice::Expression.mood_arc(history: [
+      { entropy: 0.8, valence: -0.2, arousal: 0.7 },
+      { entropy: 0.6, valence: 0.1, arousal: 0.5 }
+    ])
+    assert arc[:entropy] > 0.5
+    assert arc[:decay_rate] < 0.68
+  end
+
+  def test_for_council_persona_includes_lane
+    expr = Master::Voice::Expression.for_council_persona("Skeptic")
+    assert_equal :right, expr[:viseme_lane]
+    assert expr[:arousal] > Master::Voice::Expression.for_council_persona("Mentor")[:arousal]
+  end
+
   def test_warm_erratic_pick_for_voice_keeps_voice
     pick = Master::Voice::Speech::VOICES.keys.sample
     result = Master::Voice::WarmErratic.pick_for_voice(pick, "Great, all done!")

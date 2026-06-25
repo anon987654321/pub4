@@ -1,0 +1,1848 @@
+---
+id: face_enhancements
+tier: ui
+area: face
+status: active
+enhancements:
+- id: fe_001
+  area: face
+  tier: p1
+  status: pending
+  handler: both
+  summary: Map entropy/pressure to kernel velocity damping and attention decay
+- id: fe_002
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Global breathing offset driven by system confidence
+- id: fe_003
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Eye pupil size and saccade modulated by focus state
+- id: fe_004
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: Terrain reacts to vertical timbre (marketplace/dating/tv)
+- id: fe_005
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: Age decay rate follows mood arc from recent entropy
+- id: fe_006
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: Additive glow on high-arousal cells during energetic TTS
+- id: fe_007
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Bayer dither low-res upscaling for pixel instrument look
+- id: fe_008
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: Mouse tilt strength scales with system openness
+- id: fe_009
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: Cluster personalities cohere per dominant vertical
+- id: fe_010
+  area: face
+  tier: p3
+  status: pending
+  handler: js
+  summary: Slow memory trail ghost particles for emotional history
+- id: fe_011
+  area: tts
+  tier: p0
+  status: pending
+  handler: ruby
+  summary: Server-driven viseme stream from edge-tts phonemes
+- id: fe_012
+  area: tts
+  tier: p1
+  status: pending
+  handler: both
+  summary: Prosody rate/pitch affects kernel lerp time scale
+- id: fe_013
+  area: tts
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Style chaining whispered+ethereal layering
+- id: fe_014
+  area: tts
+  tier: p0
+  status: pending
+  handler: both
+  summary: Pre-speech inhale anticipation before audio starts
+- id: fe_015
+  area: tts
+  tier: p1
+  status: pending
+  handler: both
+  summary: Post-speech decay tuned per style
+- id: fe_016
+  area: tts
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: TTS effort signal increases particle density
+- id: fe_017
+  area: tts
+  tier: p2
+  status: pending
+  handler: both
+  summary: Voice-specific idle signatures per persona
+- id: fe_018
+  area: tts
+  tier: p1
+  status: pending
+  handler: both
+  summary: Real-time ducking when user STT starts
+- id: fe_019
+  area: tts
+  tier: p2
+  status: pending
+  handler: js
+  summary: Creative style bleed ring on eye pool after speech
+- id: fe_020
+  area: tts
+  tier: p2
+  status: pending
+  handler: js
+  summary: Style preview modulates idle face on hover
+- id: fe_021
+  area: web
+  tier: p0
+  status: pending
+  handler: both
+  summary: TTS style picker chips with live face preview
+- id: fe_022
+  area: web
+  tier: p1
+  status: pending
+  handler: both
+  summary: Mode/style indicator tied to canvas topology
+- id: fe_023
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Emotional history sparkline from master:visual events
+- id: fe_024
+  area: web
+  tier: p3
+  status: pending
+  handler: both
+  summary: Face drag sends user:expression to influence response
+- id: fe_025
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: User mic creates listening terrain ripples
+- id: fe_026
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Error recovery visuals as instrument not popups
+- id: fe_027
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Keyboard shortcuts with face acknowledgment animations
+- id: fe_028
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Mobile pressure-sensitive long-press tension
+- id: fe_029
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Theme switcher remaps particle palette
+- id: fe_030
+  area: bus
+  tier: p1
+  status: pending
+  handler: both
+  summary: Bidirectional felt sense sent with next message
+- id: fe_031
+  area: bus
+  tier: p1
+  status: pending
+  handler: both
+  summary: Multi-signal superposition for overlapping states
+- id: fe_032
+  area: bus
+  tier: p1
+  status: pending
+  handler: both
+  summary: Vertical timbre persistent kernel bias per subapp
+- id: fe_033
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Graph density increases cross-pool particle influence
+- id: fe_034
+  area: bus
+  tier: p1
+  status: pending
+  handler: both
+  summary: Fused certainty from verdict/retrieval/council
+- id: fe_035
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: System-chosen TTS style visible on face
+- id: fe_036
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Phantom events trigger flinch before text
+- id: fe_037
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Long council creates thinking breath cycle
+- id: fe_038
+  area: bus
+  tier: p1
+  status: pending
+  handler: both
+  summary: User interrupt reset ripple across pools
+- id: fe_039
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Emotional arc drifts toward session baseline
+- id: fe_040
+  area: bus
+  tier: p3
+  status: pending
+  handler: both
+  summary: Cross-app resonance echoes on face
+- id: fe_041
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Background-tab slow breathing still readable
+- id: fe_042
+  area: perf
+  tier: p1
+  status: pending
+  handler: js
+  summary: Stronger reduced-motion respect everywhere
+- id: fe_043
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Mobile touch targets tied to face affordances
+- id: fe_044
+  area: perf
+  tier: p1
+  status: pending
+  handler: js
+  summary: Fixed-timestep Bayer for consistent pixel look
+- id: fe_045
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Mood persists across reload via localStorage
+- id: fe_046
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Battery profile consistent ecology agent halving
+- id: fe_047
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: SSE batching reduces visual thrash
+- id: fe_048
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Virtual scroll for long chat logs
+- id: fe_049
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: OffscreenCanvas face rendering where supported
+- id: fe_050
+  area: council
+  tier: p1
+  status: pending
+  handler: both
+  summary: Council deliberation drives ecology spirit radius
+- id: enh_style_chips
+  area: web
+  tier: p0
+  status: implemented
+  handler: both
+  summary: TTS style chips in prompt bar with live preview
+- id: enh_viseme_hints
+  area: tts
+  tier: p0
+  status: implemented
+  handler: ruby
+  summary: Server viseme_hints from Expression module
+- id: enh_voice_locked
+  area: tts
+  tier: p0
+  status: implemented
+  handler: ruby
+  summary: voice_locked param preserves user voice choice
+- id: enh_face3d_auto
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Auto-enable face3d preview on desktop via visual_bridge
+- id: enh_pre_speech_inhale
+  area: tts
+  tier: p0
+  status: implemented
+  handler: both
+  summary: Pre-speech inhale arousal spike before TTS
+- id: enh_expression_module
+  area: bus
+  tier: p0
+  status: implemented
+  handler: ruby
+  summary: Central Expression module for TTS+face mapping
+- id: enh_council_reversibility
+  area: council
+  tier: p1
+  status: implemented
+  handler: ruby
+  summary: Council reversibility emitted on bus
+- id: enh_bridge_registry
+  area: bus
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Bridge classify prefers event registry
+- id: enh_idle_breath_entropy
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Idle breath confidence modulation + entropy wobble
+- id: enh_speech_valence
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Speech boundary mouthPool valence boost
+- id: enh_high_conf_jitter
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: High confidence slows eyeJitter decay
+- id: enh_cursor_fade
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Streaming cursor step fade on done
+- id: enh_dmesg_fade
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Dmesg lines quick step fade-in
+- id: enh_ecology_confidence
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Ecology orbit tightens with confidence
+- id: enh_terrain_entropy
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: High entropy jagged terrain lines
+- id: enh_felt_sense
+  area: bus
+  tier: p1
+  status: implemented
+  handler: both
+  summary: Felt sense round-trip in chat pipeline
+- id: enh_mood_sparkline
+  area: web
+  tier: p2
+  status: implemented
+  handler: js
+  summary: Mood sparkline UI element
+- id: web_001
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Split face.js into particles/audio/expressions/tts modules
+- id: web_002
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web Worker for particle physics offload
+- id: web_003
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Dev face panel with sliders via debug mode
+- id: web_004
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Face modes switch 3D/raster/hybrid/wireframe
+- id: web_005
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: 2D fallback uses ParticleKernel dither
+- id: web_006
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Phosphor afterimage trail effects
+- id: web_007
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Multiple simultaneous faces for council
+- id: web_008
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Deep visual_bridge entropy/confidence drive
+- id: web_009
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Glitch damage effects for veto/error
+- id: web_010
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Dynamic particle LOD by viewport and FPS
+- id: web_011
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 11
+- id: web_012
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 12
+- id: web_013
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 13
+- id: web_014
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 14
+- id: web_015
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 15
+- id: web_016
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 16
+- id: web_017
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Web UI improvement 17
+- id: web_018
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 18
+- id: web_019
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Web UI improvement 19
+- id: web_020
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 20
+- id: web_021
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 21
+- id: web_022
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 22
+- id: web_023
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 23
+- id: web_024
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Web UI improvement 24
+- id: web_025
+  area: face
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 25
+- id: web_026
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Chat history sidebar collapsible searchable
+- id: web_027
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 27
+- id: web_028
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Command palette cmd+k fuzzy commands
+- id: web_029
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 29
+- id: web_030
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 30
+- id: web_031
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 31
+- id: web_032
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 32
+- id: web_033
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 33
+- id: web_034
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 34
+- id: web_035
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 35
+- id: web_036
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 36
+- id: web_037
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 37
+- id: web_038
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 38
+- id: web_039
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 39
+- id: web_040
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 40
+- id: web_041
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Session save/load/export md jsonl png
+- id: web_042
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 42
+- id: web_043
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 43
+- id: web_044
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Stream retry button on failure
+- id: web_045
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Collapsible long assistant blocks
+- id: web_046
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 46
+- id: web_047
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 47
+- id: web_048
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 48
+- id: web_049
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 49
+- id: web_050
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 50
+- id: web_051
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 51
+- id: web_052
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 52
+- id: web_053
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 53
+- id: web_054
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 54
+- id: web_055
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 55
+- id: web_056
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 56
+- id: web_057
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 57
+- id: web_058
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 58
+- id: web_059
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 59
+- id: web_060
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 60
+- id: web_061
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 61
+- id: web_062
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 62
+- id: web_063
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 63
+- id: web_064
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 64
+- id: web_065
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 65
+- id: web_066
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 66
+- id: web_067
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 67
+- id: web_068
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 68
+- id: web_069
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 69
+- id: web_070
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 70
+- id: web_071
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 71
+- id: web_072
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 72
+- id: web_073
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 73
+- id: web_074
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 74
+- id: web_075
+  area: perf
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 75
+- id: web_076
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 76
+- id: web_077
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 77
+- id: web_078
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 78
+- id: web_079
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 79
+- id: web_080
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 80
+- id: web_081
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 81
+- id: web_082
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 82
+- id: web_083
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 83
+- id: web_084
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 84
+- id: web_085
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 85
+- id: web_086
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 86
+- id: web_087
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 87
+- id: web_088
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 88
+- id: web_089
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 89
+- id: web_090
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 90
+- id: web_091
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 91
+- id: web_092
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 92
+- id: web_093
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 93
+- id: web_094
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 94
+- id: web_095
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: Web UI improvement 95
+- id: web_096
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 96
+- id: web_097
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 97
+- id: web_098
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 98
+- id: web_099
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 99
+- id: web_100
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 100
+- id: web_101
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 101
+- id: web_102
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 102
+- id: web_103
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 103
+- id: web_104
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 104
+- id: web_105
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 105
+- id: web_106
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 106
+- id: web_107
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 107
+- id: web_108
+  area: web
+  tier: p2
+  status: implemented
+  handler: js
+  summary: Print/export clean chat transcript
+- id: web_109
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 109
+- id: web_110
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 110
+- id: web_111
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 111
+- id: web_112
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 112
+- id: web_113
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 113
+- id: web_114
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 114
+- id: web_115
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 115
+- id: web_116
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 116
+- id: web_117
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 117
+- id: web_118
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 118
+- id: web_119
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 119
+- id: web_120
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 120
+- id: web_121
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 121
+- id: web_122
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 122
+- id: web_123
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 123
+- id: web_124
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 124
+- id: web_125
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 125
+- id: web_126
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 126
+- id: web_127
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 127
+- id: web_128
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 128
+- id: web_129
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 129
+- id: web_130
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 130
+- id: web_131
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 131
+- id: web_132
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 132
+- id: web_133
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 133
+- id: web_134
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 134
+- id: web_135
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 135
+- id: web_136
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 136
+- id: web_137
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 137
+- id: web_138
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 138
+- id: web_139
+  area: web
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 139
+- id: web_140
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 140
+- id: web_141
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 141
+- id: web_142
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 142
+- id: web_143
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 143
+- id: web_144
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 144
+- id: web_145
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 145
+- id: web_146
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 146
+- id: web_147
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 147
+- id: web_148
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 148
+- id: web_149
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 149
+- id: web_150
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 150
+- id: web_151
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 151
+- id: web_152
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 152
+- id: web_153
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 153
+- id: web_154
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 154
+- id: web_155
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 155
+- id: web_156
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 156
+- id: web_157
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 157
+- id: web_158
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 158
+- id: web_159
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 159
+- id: web_160
+  area: web
+  tier: p2
+  status: pending
+  handler: ruby
+  summary: Web UI improvement 160
+- id: web_161
+  area: web
+  tier: p2
+  status: implemented
+  handler: js
+  summary: PWA install prompt icons shortcuts
+- id: web_162
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 162
+- id: web_163
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 163
+- id: web_164
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 164
+- id: web_165
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 165
+- id: web_166
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 166
+- id: web_167
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 167
+- id: web_168
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 168
+- id: web_169
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 169
+- id: web_170
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 170
+- id: web_171
+  area: web
+  tier: p2
+  status: implemented
+  handler: js
+  summary: Service worker update toast
+- id: web_172
+  area: web
+  tier: p2
+  status: pending
+  handler: js
+  summary: Web UI improvement 172
+- id: web_173
+  area: perf
+  tier: p3
+  status: implemented
+  handler: js
+  summary: Debug overlay FPS particles state events
+- id: web_174
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 174
+- id: web_175
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 175
+- id: web_176
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 176
+- id: web_177
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 177
+- id: web_178
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 178
+- id: web_179
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 179
+- id: web_180
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 180
+- id: web_181
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 181
+- id: web_182
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 182
+- id: web_183
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 183
+- id: web_184
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 184
+- id: web_185
+  area: perf
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 185
+- id: web_186
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 186
+- id: web_187
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 187
+- id: web_188
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 188
+- id: web_189
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 189
+- id: web_190
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 190
+- id: web_191
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 191
+- id: web_192
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 192
+- id: web_193
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 193
+- id: web_194
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 194
+- id: web_195
+  area: bus
+  tier: p2
+  status: pending
+  handler: both
+  summary: Web UI improvement 195
+- id: web_196
+  area: web
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 196
+- id: web_197
+  area: web
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 197
+- id: web_198
+  area: web
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 198
+- id: web_199
+  area: web
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 199
+- id: web_200
+  area: web
+  tier: p3
+  status: pending
+  handler: js
+  summary: Web UI improvement 200
+- id: f3d_001
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Load face3d_engine/renderer/preview/cluster_miner alongside face.js
+- id: f3d_002
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Verify preview with ?face3d=1 query param
+- id: f3d_003
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Inspect mined clusters via MASTERClusterMiner.snapshot
+- id: f3d_004
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Route master:clusters into Face3D emotion state
+- id: f3d_005
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Use VisemeDriver for duration-based lipsync
+- id: f3d_006
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: Replace mouth zone mutation with blendshape targets
+- id: f3d_007
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: Convert mask builders to normalized anchors
+- id: f3d_008
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: Move particle storage to typed arrays
+- id: f3d_009
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: Add spatial hash repulsion in CPU tick
+- id: f3d_010
+  area: face
+  tier: p2
+  status: implemented
+  handler: js
+  summary: Optional WebGL renderer preserving retro canvas default
+- id: enh_mi_001
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: zin focus raises eyePool attention cells
+- id: enh_mi_002
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: step-ease zsh opacity transition
+- id: enh_mi_003
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: photo pointerdown mouth-zone capture flash
+- id: enh_mi_004
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: photo ready button accent fade
+- id: enh_mi_005
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: enhance y/n mouth arousal pulse
+- id: enh_mi_006
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: placeholder cycles on idle
+- id: enh_mi_007
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: long-press photo preview burst
+- id: enh_mi_008
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: long input scales zsh border density
+- id: enh_mi_009
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: paste emits input:paste visual event
+- id: enh_mi_010
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: cursor blink synced to primer pulse
+- id: enh_mi_011
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: first chunk faster model tint lerp
+- id: enh_mi_012
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: dmesg lines step fade-in
+- id: enh_mi_013
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: sentence end mouthPool pressure
+- id: enh_mi_014
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: cursor removal step fade
+- id: enh_mi_015
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: scroll-snap near-bottom RAF
+- id: enh_mi_016
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: assistant prompt delayed rhythm
+- id: enh_mi_017
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: ERROR chunk red flash on msg-body
+- id: enh_mi_018
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: veto/pass dmesg ecology calm burst
+- id: enh_mi_019
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: streaming nudges eye attention
+- id: enh_mi_020
+  area: web
+  tier: p1
+  status: pending
+  handler: js
+  summary: DONE left hairline settled marker
+- id: enh_mi_021
+  area: face
+  tier: p2
+  status: implemented
+  handler: js
+  summary: idle breath entropy wobble
+- id: enh_mi_022
+  area: face
+  tier: p2
+  status: implemented
+  handler: js
+  summary: high confidence slows eyeJitter decay
+- id: enh_mi_023
+  area: face
+  tier: p2
+  status: implemented
+  handler: js
+  summary: speech boundary mouth valence boost
+- id: enh_mi_024
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: ecology orbit from kernel attention
+- id: enh_mi_025
+  area: face
+  tier: p2
+  status: implemented
+  handler: js
+  summary: terrain alpha scales with confidence
+- id: enh_mi_026
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: memory events spawn crown cells
+- id: enh_mi_027
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: vertex scale from mouthDrive
+- id: enh_mi_028
+  area: face
+  tier: p2
+  status: implemented
+  handler: js
+  summary: codebase topology edge opacity cue
+- id: enh_mi_029
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: reduced-motion low-amplitude breaths
+- id: enh_mi_030
+  area: face
+  tier: p2
+  status: pending
+  handler: js
+  summary: tilt/mouse eyeMask position bias

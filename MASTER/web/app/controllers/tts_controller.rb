@@ -8,8 +8,8 @@ class TtsController < ApplicationController
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 
-    voice_locked = params[:voice].present?
-    style_locked = params[:style].present?
+    voice_locked = ActiveModel::Type::Boolean.new.cast(params[:voice_locked]) || params[:voice].present?
+    style_locked = ActiveModel::Type::Boolean.new.cast(params[:style_locked]) || params[:style].present?
     voice_key, synth_style, rate, pitch = tts_voice_and_style(text)
     pre = Master::Voice::Expression.for_pre_speech(style: synth_style, text: text)
     container[:bus]&.publish("tts:anticipate", style: synth_style.to_s, expression: pre)
@@ -38,6 +38,19 @@ class TtsController < ApplicationController
   rescue StandardError => e
     web_logger.warn("tts failed: #{e.class}: #{e.message}")
     render(json: { error: e.message, status: "failed" }, status: :service_unavailable)
+  end
+
+  def phrases
+    path = Master.data_path("runtime/tts_phrases.yml")
+    raw = File.exist?(path) ? YAML.safe_load_file(path, permitted_classes: [Symbol], aliases: true) : {}
+    list = Array(raw["phrases"]).map do |row|
+      {
+        text: row["text"].to_s,
+        voice: row["voice"].to_s,
+        style: row["style"].to_s
+      }
+    end
+    render json: { phrases: list }
   end
 
   def status
@@ -100,6 +113,12 @@ class TtsController < ApplicationController
     bytes = job.bytes
     return render(json: { job: job.job_id, status: "failed", error: "empty audio" }, status: :service_unavailable) if bytes.nil? || bytes.empty?
 
+    meta = job.meta
+    if meta
+      response.headers["X-TTS-Meta"] = viseme_header(meta)
+      visemes = meta["viseme_plan"] || meta["viseme_hints"]
+      response.headers["X-TTS-Visemes"] = viseme_header(visemes) if visemes
+    end
     send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
   end
 

@@ -142,11 +142,67 @@ function _parseTtsVisemeHeader(res) {
   const raw = res?.headers?.get?.('X-TTS-Visemes');
   if (!raw) return null;
   try {
-    const plan = JSON.parse(raw);
-    return Array.isArray(plan) ? plan : (plan.frames || plan.visemes || null);
+    let plan;
+    if (/^[A-Za-z0-9+/=]+$/.test(raw) && raw.length > 80) {
+      plan = JSON.parse(atob(raw));
+    } else {
+      plan = JSON.parse(raw);
+    }
+    return Array.isArray(plan) ? plan : (plan.frames || plan.visemes || plan.viseme_plan || plan.viseme_hints || null);
   } catch (_) {
     return null;
   }
+}
+function _parseTtsMetaHeader(res) {
+  const raw = res?.headers?.get?.('X-TTS-Meta');
+  if (!raw) return null;
+  try {
+    const text = (/^[A-Za-z0-9+/=]+$/.test(raw) && raw.length > 80) ? atob(raw) : raw;
+    return JSON.parse(text);
+  } catch (_) {
+    return null;
+  }
+}
+const EMOTION_HISTORY_KEY = 'master:emotion_history';
+const EMOTION_HISTORY_CAP = 50;
+function pushEmotionHistory(entry) {
+  let ring = [];
+  try { ring = JSON.parse(localStorage.getItem(EMOTION_HISTORY_KEY) || '[]'); } catch (_) {}
+  if (!Array.isArray(ring)) ring = [];
+  ring.push({ ts: Date.now(), ...entry });
+  while (ring.length > EMOTION_HISTORY_CAP) ring.shift();
+  try { localStorage.setItem(EMOTION_HISTORY_KEY, JSON.stringify(ring)); } catch (_) {}
+  const bar = document.getElementById('mood-sparkline');
+  if (!bar) return;
+  bar.innerHTML = ring.slice(-20).map((e) => {
+    const h = Math.max(3, Math.round((e.entropy ?? 0.2) * 18));
+    return `<i data-mood="${e.mood || e.mode || 'idle'}" style="height:${h}px"></i>`;
+  }).join('');
+  window.MASTEREmotionHistory = ring;
+}
+window.addEventListener('master:visual', (ev) => {
+  const d = ev.detail || {};
+  pushEmotionHistory({
+    mood: State.mood,
+    mode: d.mode || d.name || State.mode,
+    entropy: d.entropy ?? State.entropy ?? 0.2,
+    valence: d.expression?.valence ?? 0,
+    arousal: d.expression?.arousal ?? 0
+  });
+});
+async function prefetchTtsPhraseBank() {
+  if (!window.MASTER_RUNTIME?.enhancements?.includes?.('tts_phrase_bank')) return;
+  try {
+    const res = await fetch('/chat/tts/phrases');
+    if (!res.ok) return;
+    const data = await res.json();
+    const phrases = Array.isArray(data.phrases) ? data.phrases : [];
+    phrases.slice(0, 6).forEach((row) => {
+      const voice = guardVoice(row.voice) || _nextTtsVoice();
+      const style = row.style || _nextTtsStyle(voice);
+      fetchTTS(row.text, voice, style);
+    });
+  } catch (_) {}
 }
 function _quirkifyTts(text, voice, opts = {}) {
   if (!opts.quirky) return text;
@@ -311,7 +367,8 @@ async function loadTTSBlob(text, voice, style) {
       return pollTTSJob(job, controller.signal);
     }
     if (!res.ok) throw new Error(res.status);
-    const visemes = _parseTtsVisemeHeader(res);
+    const meta = _parseTtsMetaHeader(res);
+    const visemes = _parseTtsVisemeHeader(res) || meta?.viseme_plan || meta?.viseme_hints;
     if (visemes) tts.visemePlan = visemes;
     const blob = await res.blob();
     writeCachedTTS(key, blob);
@@ -328,7 +385,8 @@ async function pollTTSJob(job, signal) {
     const res = await fetch(`/chat/tts/status?job=${encodeURIComponent(job)}`, { signal });
     if (res.status === 202) continue;
     if (!res.ok) throw new Error(res.status);
-    const visemes = _parseTtsVisemeHeader(res);
+    const meta = _parseTtsMetaHeader(res);
+    const visemes = _parseTtsVisemeHeader(res) || meta?.viseme_plan || meta?.viseme_hints;
     if (visemes) tts.visemePlan = visemes;
     return res.blob();
   }
@@ -430,11 +488,26 @@ function clearViseme() {
   if (previous !== 'neutral') emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
 }
 
-function fetchTTS(text) {
+function fetchTTS(text, voice, style) {
   if (tts.serverUnavailable || tts.prefetch.has(text)) return;
   const meta = tts.meta.get(text) || {};
-  const p = loadTTSBlob(text, meta.voice, meta.style).catch(() => null);
+  const p = loadTTSBlob(text, voice || meta.voice, style || meta.style).catch(() => null);
   tts.prefetch.set(text, p);
+}
+const PARALINGUISTIC_RE = /\[(chuckle|sigh|laugh|cough)\]/i;
+function applyParalinguisticState(text) {
+  const m = String(text || '').match(PARALINGUISTIC_RE);
+  if (!m) return;
+  const tag = m[1].toLowerCase();
+  if (tag === 'chuckle' || tag === 'laugh') {
+    State.laughter = Math.min(1, (State.laughter || 0) + 0.65);
+    rootBody.dataset.laughter = '1';
+    setTimeout(() => { delete rootBody.dataset.laughter; State.laughter = 0; }, 2400);
+  }
+  if (tag === 'sigh') {
+    State.breath = Math.max(0.45, (State.breath || 1) * 0.72);
+    State.mood = 'weary';
+  }
 }
 
 function dropQueuedSpeech(text) {
@@ -473,6 +546,7 @@ function enqueueSpeech(text, opts = {}) {
   if (!clean) return;
   const _v = _nextTtsVoice();
   const decorated = _quirkifyTts(clean, _v, opts);
+  applyParalinguisticState(decorated);
   if (tts.meta.size > 32) tts.meta.clear();
   tts.meta.set(decorated, { voice: _v, style: _nextTtsStyle(_v) });
   announceTTS(decorated);

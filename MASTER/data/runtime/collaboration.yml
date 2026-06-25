@@ -1,0 +1,78 @@
+id: collaboration_protocol
+tier: ops
+area: workflow
+status: active
+source: docs/collaboration_protocol.md
+
+hard_rule: Do not push directly to main when more than one session may be active
+
+branch_pattern: session/<agent>-<focus>-<yyyymmdd>
+branch_examples:
+  - session/master-visualizer-20260514
+  - session/master-epistemics-20260514
+  - session/master-repo-ecology-20260514
+
+branch_discipline:
+  rule: Each session branch contains one coherent focus
+  valid_focuses:
+    - visualizer
+    - pressure_engine
+    - repo_ecology
+    - reference_graph
+    - epistemics
+    - runtime_hardening
+    - refactor_pass
+  avoid: mixing unrelated architectural work
+
+merge_protocol:
+  steps:
+    - Rebase onto current main
+    - Run syntax checks
+    - Run /scan or equivalent static scan
+    - Run /ecology if tree structure changed
+    - Review touched paths
+    - Confirm no overlapping session changed the same files
+    - Merge with a clear summary
+
+conflict_policy:
+  same_file_touched:
+    - stop both branches
+    - compare intent
+    - preserve smaller coherent change
+    - manually merge
+    - rerun checks
+  force_push: never over another session's work unless explicitly approved
+
+commit_shape:
+  good:
+    - small
+    - reversible
+    - focused
+    - testable
+    - named by behavior
+  bad:
+    - giant mixed patches
+    - vague cleanup
+    - unrelated visual + runtime + docs changes
+    - speculative architecture without executable code
+
+safety_requirements:
+  report:
+    - files changed
+    - commands added
+    - runtime risks
+    - rollback behavior
+    - test status
+    - known uncertainty
+
+preferred_flow:
+  - branch
+  - implement
+  - scan
+  - ecology
+  - syntax/test
+  - rebase
+  - review
+  - merge
+
+convergence_rule: MASTER optimizes for convergence over accumulation; multiple sessions useful only when they reduce entropy

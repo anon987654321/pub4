@@ -1,0 +1,149 @@
+id: face3d_migration
+tier: ui
+area: face
+status: active
+source:
+  - docs/face3d_engine.md
+  - docs/face3d_runtime_hardening.md
+
+goals:
+  - keep retro Atkinson/Bayer/ZX/phosphor white dithered pixel look
+  - normalized 3D face coordinates
+  - blendshape-driven expression logic
+  - semantic anatomical zone particles
+  - typed arrays in hot loops
+  - speech, mood, confidence, tool events, verdicts drive one face state
+  - mine visual clusters into shared emotion/topology system
+
+modules:
+  - path: web/public/face3d_engine.js
+    role: standalone MasterFace3D namespace with typed-array particle core
+  - path: web/public/face3d_renderer.js
+    role: Face3DCanvasRenderer retro phosphor/dither adapter
+  - path: web/public/face3d_preview.js
+    role: optional boot when ?face3d=1 or auto via visual_bridge
+  - path: web/public/cluster_miner.js
+    role: groups master:visual/codebase/rule_event into master:clusters
+  - path: data/visual_clusters.yml
+    role: canonical cluster registry
+  - path: lib/rails/face3d_runtime_policy.rb
+    role: quality degradation and audit policy
+
+clusters:
+  - id: face_particle_body
+    files: [web/public/face.js, face3d_engine.js, face3d_renderer.js, face3d_preview.js]
+    purpose: semantic particle face with normalized topology and blendshapes
+  - id: cognition_ecology
+    files: [web/public/cognition_ecology.js]
+    purpose: terrain, weather, trails, memories, agent spirits
+  - id: codebase_topology
+    files: [web/public/codebase.js, data/architectures.yml]
+    purpose: modules as particle clusters; violations agitate, fixes settle
+  - id: runtime_visual_bridge
+    files: [web/public/visual_bridge.js]
+    purpose: normalize runtime events to master:visual state
+  - id: speech_audio_body
+    files: [lib/voice/speech.rb, bin/tts-worker, web/public/face.js]
+    purpose: TTS stream, audio analysis, mouth shaping during playback
+  - id: repo_ecology
+    files: [data/runtime/repo_ecology.yml, data/visual_clusters.yml]
+    purpose: repository as semantic topology and cognitive geography
+
+proposed_clusters:
+  - id: cluster_miner
+    role: runtime browser cluster miner with heat, confidence, evidence
+  - id: evidence_graph
+    role: tracks why files/events belong to clusters
+  - id: emotion_bus
+    role: entropy/confidence/mode/provider/cluster heat → emotion vector
+  - id: topology_registry
+    role: papua-mask, serpent, neural, torus, sphere, codebase forms
+  - id: migration_radar
+    role: ranks safe migration steps by blast radius and rollback plan
+
+blendshape_mapping:
+  - blink
+  - squint
+  - browInnerUp
+  - browDown
+  - smile
+  - frown
+  - jawOpen
+  - mouthWide
+  - mouthRound
+  - pupilDilate
+  - nostrilFlare
+  - cheekRaise
+  - shock
+  - chibi
+
+emotion_vector:
+  fields: [arousal, valence, focus, confidence, fatigue]
+  rule: blendshapes derived from emotion vector for continuity
+
+migration_steps:
+  - id: step_1
+    order: 1
+    action: Load face3d_engine, renderer, preview, cluster_miner alongside face.js
+    status: implemented
+  - id: step_2
+    order: 2
+    action: Verify preview with ?face3d=1
+    status: implemented
+  - id: step_3
+    order: 3
+    action: Inspect clusters via MASTERClusterMiner.snapshot
+    status: implemented
+  - id: step_4
+    order: 4
+    action: Route master:clusters into Face3D emotion state
+    status: implemented
+  - id: step_5
+    order: 5
+    action: Use VisemeDriver for duration-based lipsync
+    status: implemented
+  - id: step_6
+    order: 6
+    action: Replace direct mouth mutation with blendshape targets
+    status: pending
+  - id: step_7
+    order: 7
+    action: Convert mask builders to normalized anchors one mask at a time
+    status: pending
+  - id: step_8
+    order: 8
+    action: Move particle storage from objects to typed arrays
+    status: pending
+  - id: step_9
+    order: 9
+    action: Add spatial hash repulsion in CPU tick
+    status: pending
+  - id: step_10
+    order: 10
+    action: Optional WebGL renderer preserving retro canvas default
+    status: partial
+
+hardening:
+  implementation_order:
+    - Keep typed-array particle core
+    - Replace allocation-heavy spatial lookup with fixed typed-array buckets
+    - Add spatial repulsion inside CPU tick
+    - Gate expensive effects through quality controller
+    - Add visibility throttling before worker or GPU experiments
+    - Add worker physics after main-thread CPU path stable
+    - Add WebGPU only as optional acceleration after CPU fallback proven
+  runtime_rules:
+    - No parallel Face3D runtime
+    - No WebGPU until CPU fallback complete
+    - No per-frame object particles
+    - No synchronous GPU readback
+    - No canvas resize inside animation loop
+    - No layout-changing DOM writes in render path
+  quality_degradation_order:
+    - bloom
+    - spatial_repulsion
+    - oscilloscope_effects
+    - frame_cap
+    - particle_count_on_rebuild
+  preserve_in_degraded: core face motion and expression blendshapes
+  next_safe_patch: SpatialHash2D fixed typed arrays + ParticleField3D#repelNeighbors after projected positions

@@ -128,6 +128,7 @@ class TtsJob
     end
 
     File.binwrite(cache_path, data)
+    write_meta_json
     @bus&.publish("tts:job_complete", job_id: @job_id, ready: true)
   rescue StandardError => e
     record_failure(e.message)
@@ -160,8 +161,39 @@ class TtsJob
     CACHE_DIR.join("#{@job_id}.mp3")
   end
 
+  def meta_path
+    CACHE_DIR.join("#{@job_id}.meta.json")
+  end
+
+  def meta
+    return nil unless File.file?(meta_path)
+
+    JSON.parse(File.read(meta_path))
+  rescue StandardError
+    nil
+  end
+
   def error_path
     CACHE_DIR.join("#{@job_id}.err")
+  end
+
+  def write_meta_json
+    visemes = Master::Voice::Expression.viseme_hints(@text)
+    frames = visemes.each_with_index.map do |hint, i|
+      { shape: hint[:shape], amp: hint[:amp], t: hint[:ms] * i, ms: hint[:ms] }
+    end
+    File.write(
+      meta_path,
+      JSON.generate(
+        job_id: @job_id,
+        voice: @voice.to_s,
+        style: @style.to_s,
+        viseme_hints: visemes,
+        viseme_plan: frames
+      )
+    )
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "TtsJob.write_meta_json", job_id: @job_id)
   end
 
   def record_failure(message)

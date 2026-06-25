@@ -181,6 +181,7 @@ uniform float uGridAngle;
 uniform float uFocusDim;
 uniform float uPhosphorSoft;
 uniform float uScanline;
+uniform float uChroma;
 uniform float uTime;
 float bayer4(vec2 p){
   vec2 ip=floor(mod(p,4.0));
@@ -212,6 +213,8 @@ void main(){
   col.r*=1.0+uShake*0.14;
   col.b*=1.0+uShake*0.10;
   col=clamp(col*w,0.0,1.0);
+  col.r+=uChroma*0.14;
+  col.b-=uChroma*0.12;
   float scan=0.86+0.14*abs(sin(gl_FragCoord.y*0.5+uTime*38.0));
   alpha*=mix(1.0,scan,uScanline);
   float dither=bayer4(gl_FragCoord.xy);
@@ -330,6 +333,17 @@ function applyPersonaVisual(persona) {
   if (!tint) return;
   fadeColorTo(tint);
   State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);
+}
+const COUNCIL_LANE_OFFSET = { left: -0.22, center: 0, right: 0.22 };
+function offsetCouncilMouthPool(lane, delta = 0.18) {
+  const K = window.ParticleKernel;
+  if (!mouthPool || !K || !lane) return;
+  const shift = COUNCIL_LANE_OFFSET[lane] ?? 0;
+  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    mouthPool.cells[b + K.FIELD.x] += shift * delta;
+    mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + delta * 0.35);
+  }
 }
 const seasonalTintEnabled = new URLSearchParams(window.location.search).get('seasonal') === '1';
 function refreshIdleTint() {

@@ -137,7 +137,10 @@ class ChatService
     mood, mode = parts.values_at(0, 1)
     entropy = parts[2].to_f
     confidence = parts[3].to_f
-    felt = { mood:, mode:, entropy:, confidence: }
+    arousal = parts[4].to_f
+    valence = parts[5].to_f
+    hist_entropy = parts[6].to_f
+    felt = { mood:, mode:, entropy:, confidence:, arousal:, valence:, hist_entropy: }
     @container[:bus].publish(:canvas_state, **felt)
     @container[:bus].publish("felt:sense", **felt)
   rescue StandardError => e
@@ -188,11 +191,26 @@ class ChatService
 
   def write_council_speech(event)
     persona = event[:persona].to_s
-    voice = COUNCIL_PERSONA_VOICE[persona] || Master::Voice::Speech::DEFAULT_VOICE
+    face = Master::Voice::CouncilFace.for_persona(persona)
+    voice = face[:voice] || COUNCIL_PERSONA_VOICE[persona] || Master::Voice::Speech::DEFAULT_VOICE
     sentence = event[:feedback].to_s.strip.split(/(?<=[.!?])\s+/).first(2).join(" ").strip[0, 200]
     return if sentence.empty?
 
-    write_json_event("council:speech", { voice: voice.to_s, text: sentence, persona: persona })
+    viseme_plan = Master::Voice::Expression.viseme_hints(sentence).each_with_index.map do |hint, i|
+      { shape: hint[:shape], amp: hint[:amp], t: hint[:ms] * i }
+    end
+    expression = face[:expression] || Master::Voice::Expression.for_council_persona(persona)
+    write_json_event("council:speech", {
+      voice: voice.to_s,
+      text: sentence,
+      persona: persona,
+      label: face[:label],
+      position: face[:position].to_s,
+      viseme_lane: face[:viseme_lane].to_s,
+      blendshapes: face[:blendshapes],
+      expression: expression,
+      viseme_plan: viseme_plan
+    })
   end
 
   def subscribe(event, &block)
@@ -243,7 +261,10 @@ class ChatService
       mood: parts[0],
       mode: parts[1],
       entropy: parts[2].to_f,
-      confidence: parts[3].to_f
+      confidence: parts[3].to_f,
+      arousal: parts[4].to_f,
+      valence: parts[5].to_f,
+      hist_entropy: parts[6].to_f
     }
   rescue StandardError
     nil

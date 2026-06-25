@@ -120,7 +120,7 @@ clusters:
     status: planned
     layer: repository_mining
     files:
-      - docs/repo_ecology.md
+      - data/runtime/repo_ecology.yml
       - data/visual_clusters.yml
     signals:
       - scan

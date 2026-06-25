@@ -1,0 +1,126 @@
+id: runtime_ui_direction
+tier: ui
+area: web
+status: active
+source: docs/runtime_ui_direction.md
+
+feel_like:
+  - control room
+  - courtroom
+  - terminal
+  - scientific instrument
+
+not_like:
+  - startup dashboard
+  - gamified AI toy
+  - casino UI
+  - neon control panel
+
+visual_philosophy:
+  principles:
+    - restraint creates authority
+    - whitespace is structure
+    - typography is architecture
+    - motion communicates state
+    - observability beats decoration
+  runtime_derived:
+    - entropy
+    - confidence
+    - provider health
+    - workflow pressure
+    - repair activity
+    - replay state
+    - orchestration topology
+  rule: UI must not invent operational truth
+
+typography:
+  use:
+    - readable line lengths
+    - visible hierarchy
+    - restrained contrast
+    - stable rhythm
+    - monospace only where semantic
+  avoid:
+    - tiny gray text
+    - decorative font systems
+    - excessive uppercase
+    - compressed spacing
+    - visual noise
+
+motion:
+  should:
+    - communicate transitions
+    - expose workflow state
+    - show repair/retry activity
+    - reveal orchestration flow
+    - remain interruptible
+  avoid:
+    - infinite animation
+    - ornamental transitions
+    - motion without semantic meaning
+
+rails_hotwire:
+  favor:
+    - server rendering
+    - HTML-first workflows
+    - Turbo streams
+    - progressive enhancement
+    - minimal JS runtime
+    - DOM-derived interaction
+  avoid:
+    - SPA complexity unless necessary
+    - duplicated client/server state
+    - hydration-heavy architectures
+
+operational_aesthetic:
+  express:
+    - determinism
+    - inspectability
+    - replayability
+    - governance
+    - confidence under pressure
+  note: The interface is part of the runtime philosophy
+
+vertical_timbre:
+  marketplace:
+    arousal: 0.55
+    valence: 0.10
+    focus: 0.75
+    terrain: angular
+  dating:
+    arousal: 0.45
+    valence: 0.25
+    focus: 0.60
+    terrain: soft_curves
+  tv:
+    arousal: 0.50
+    valence: 0.05
+    focus: 0.55
+    terrain: scanlines
+  brgen:
+    arousal: 0.48
+    valence: 0.12
+    focus: 0.65
+    terrain: civic_grid
+  amber:
+    arousal: 0.62
+    valence: 0.08
+    focus: 0.50
+    terrain: experimental
+
+implementation_batches:
+  - id: batch_1
+    status: implemented
+    items: [bridge_registry, idle_breath_entropy, speech_valence, high_conf_jitter, cursor_fade, dmesg_fade]
+  - id: batch_2
+    status: implemented
+    items: [ecology_confidence_orbit, terrain_confidence_alpha, terrain_entropy_jagged]
+  - id: batch_3
+    status: implemented
+    items: [eye_jitter_entropy]
+  - id: batch_4
+    status: implemented
+    items: [ruby_runtime_events, verdict_confidence_handler, council_deliberation_face]
+  - id: batch_5
+    status: implemented
+    items: [expression_module, council_reversibility, style_bleed, devicemotion, relayd_hardening]

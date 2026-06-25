@@ -37,7 +37,7 @@ clusters:
       - powersync-ja/powersync-js
       - duckdb/duckdb-wasm
     master_hooks:
-      - MASTER/docs/provider_economy.md
+      - MASTER/data/runtime/provider_economy.yml
       - MASTER/data/budget.yml
       - MASTER/data/patterns.yml#repo_topics
       - MASTER/lib/trace/session.rb
@@ -59,7 +59,7 @@ clusters:
       - ggml-org/llama.cpp
     master_hooks:
       - MASTER/data/models.yml
-      - MASTER/docs/provider_economy.md
+      - MASTER/data/runtime/provider_economy.yml
       - MASTER/web/public/visual_bridge.js
       - MASTER/web/public/cluster_miner.js
     next_actions:

@@ -169,6 +169,17 @@ function startSTT() {
   wakeFromSleep();
   if (tts.playing) ttsSkip();
   boostEyeAttention(0.25);
+  State.sttDuck = 1.0;
+  State.viseme = 'M';
+  State.visemeAmp = 0.35;
+  const K = window.ParticleKernel;
+  if (mouthPool && K) {
+    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * K.FIELDS_PER_CELL;
+      mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.1, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * 0.35);
+      mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.05, (mouthPool.cells[b + K.FIELD.pressure] || 0) * 0.4);
+    }
+  }
   window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
   try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
 }
@@ -412,13 +423,19 @@ async function sendMessage(text) {
   });
   evtSrc.addEventListener('council:speech', (ev) => {
     try {
-      const { voice, text, persona } = JSON.parse(ev.data || '{}');
+      const payload = JSON.parse(ev.data || '{}');
+      const { voice, text, persona, label, viseme_lane: lane, viseme_plan: plan, expression: ex, blendshapes } = payload;
       if (persona) {
         rootBody.dataset.councilPersona = persona;
         applyPersonaVisual(persona);
-        if (uiStatus) uiStatus.textContent = `council: ${persona}${voice ? ` / ${voice}` : ''}`;
+        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
       }
-      if (voice && text && !tts.playing) playDuo([[guardVoice(voice), text]]);
+      if (lane) offsetCouncilMouthPool?.(lane, 0.22);
+      if (plan?.length) tts.visemePlan = plan;
+      if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
+      if (voice && text && !tts.playing) {
+        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
+      }
       setTimeout(() => {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
         if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
@@ -543,11 +560,26 @@ function wireTtsStyleChips() {
   });
   syncTtsStyleUi();
 }
-function playDuo(lines, onDone, style) {
+function playDuo(lines, onDone, style, councilOpts = {}) {
   if (!lines.length) { onDone?.(); return; }
   const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw);
   const rest = lines.slice(1);
   const useStyle = style || _nextTtsStyle(voice);
+  if (councilOpts.persona && uiStatus) uiStatus.textContent = `council: ${councilOpts.persona}`;
+  if (councilOpts.lane) offsetCouncilMouthPool?.(councilOpts.lane, 0.18);
+  let personaBadge = document.getElementById('council-persona-badge');
+  if (councilOpts.persona) {
+    if (!personaBadge) {
+      personaBadge = document.createElement('div');
+      personaBadge.id = 'council-persona-badge';
+      personaBadge.className = 'council-persona-badge';
+      document.body.appendChild(personaBadge);
+    }
+    personaBadge.textContent = councilOpts.persona;
+    personaBadge.dataset.lane = councilOpts.lane || 'center';
+    personaBadge.dataset.visible = '1';
+    setTimeout(() => { if (personaBadge) personaBadge.dataset.visible = '0'; }, 4200);
+  }
   loadTTSBlob(text, voice, useStyle)
     .then(async blob => {
       const src = URL.createObjectURL(blob);
@@ -571,11 +603,39 @@ function playDuo(lines, onDone, style) {
     .catch(() => playDuo(rest, onDone, useStyle));
 }
 
+function meanPoolField(pool, field) {
+  const K = window.ParticleKernel;
+  if (!pool || !K) return 0;
+  let sum = 0, n = 0;
+  for (let i = 0; i < pool.count; i++) {
+    if (!pool.alive[i]) continue;
+    sum += pool.cells[i * K.FIELDS_PER_CELL + field];
+    n++;
+  }
+  return n ? sum / n : 0;
+}
+function collectFeltState() {
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem('master:emotion_history') || '[]'); } catch (_) {}
+  const histEntropy = history.length
+    ? history.reduce((s, e) => s + Number(e.entropy ?? 0.2), 0) / history.length
+    : (State.entropy ?? 0.2);
+  const arousal = meanPoolField(mouthPool, window.ParticleKernel?.FIELD?.arousal ?? 9);
+  const valence = meanPoolField(mouthPool, window.ParticleKernel?.FIELD?.valence ?? 8);
+  const mood = (State.mood || 'idle').toString();
+  const mode = (State.mode || 'idle').toString();
+  const entropy = Number.isFinite(State.entropy) ? State.entropy : histEntropy;
+  const confidence = Number.isFinite(State.confidence) ? State.confidence : 0.86;
+  return `${mood}|${mode}|${entropy.toFixed(2)}|${confidence.toFixed(2)}|${arousal.toFixed(2)}|${valence.toFixed(2)}|${histEntropy.toFixed(2)}`;
+}
+window.collectFeltState = collectFeltState;
+
 function startEverything() {
   primerFired = true;
   document.body?.classList.remove('face-loading');
   morphCurrent = 0.72; morphTarget = 1.08;
   initAudio();
+  prefetchTtsPhraseBank?.();
   if (window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume();
   if (primer) { primer.style.transition = 'opacity 160ms ease, transform 160ms ease'; primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)'; setTimeout(() => primer?.remove(), 200); }
   zshBar.classList.add('live');
@@ -832,7 +892,9 @@ window.MASTER_FACE = {
   stopSTT,
   sendMessage,
   initAudio,
-  setAmbientHum
+  setAmbientHum,
+  collectFeltState,
+  offsetCouncilMouthPool
 };
 window.announceTTS = announceTTS;
 window.enqueueSpeech = enqueueSpeech;

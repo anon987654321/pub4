@@ -203,6 +203,10 @@ module Master
     install_process_guards!
   end
 
+  def self.runtime_catalog
+    Ground::RuntimeCatalog
+  end
+
   def self.install_process_guards!
     require_relative "ops/loop_slot"
     require_relative "ops/process_budget"

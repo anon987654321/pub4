@@ -1148,7 +1148,51 @@ body.face-loading::before {
 }
 
 body[data-runtime-profile="crt"] canvas {
-  filter: contrast(1.08) brightness(1.04);
+  filter: contrast(1.08) brightness(1.04) saturate(0.96);
+  image-rendering: pixelated;
+}
+body[data-runtime-profile="crt"] #cognition-ecology {
+  opacity: 0.88;
+}
+
+.council-persona-badge {
+  position: fixed;
+  top: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  font: 11px/1.2 ui-monospace, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.82);
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.18);
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.council-persona-badge[data-visible="1"] { opacity: 1; }
+.council-persona-badge[data-lane="left"] { left: 28%; transform: none; }
+.council-persona-badge[data-lane="right"] { left: auto; right: 28%; transform: none; }
+
+.emotional-timeline {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: 92px;
+  height: 6px;
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.55;
+}
+.emotional-timeline span {
+  flex: 1;
+  min-width: 3px;
+  background: rgba(255,255,255,0.35);
 }
 
 @media print {

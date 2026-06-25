@@ -1,0 +1,51 @@
+# MASTER runtime config — served to the browser as window.MASTER_RUNTIME.
+enhancements:
+  - particle_worker
+  - council_multi_face
+  - emotional_history
+  - felt_sense_roundtrip
+  - vertical_timbre
+  - chroma_veto
+  - crt_profile
+  - tts_phrase_bank
+  - tts_stream_chunk
+  - ducking_user_stt
+  - paralinguistic_tags
+  - pressure_sparkline
+  - actioncable_fallback
+  - emotional_timeline
+  - council_room_ui
+
+vertical_timbre:
+  marketplace:
+    arousal: 0.08
+    pressure: 0.14
+    valence: -0.05
+  dating:
+    arousal: -0.06
+    valence: 0.18
+    attention: 0.12
+  tv:
+    arousal: 0.04
+    scanline: 0.22
+  default:
+    arousal: 0.0
+    pressure: 0.0
+    valence: 0.0
+
+ui_philosophy:
+  profiles:
+    - id: full
+      label: Full fidelity
+      motion: 1.0
+      density: 1.0
+    - id: battery
+      label: Battery saver
+      motion: 0.45
+      density: 0.55
+    - id: crt
+      label: CRT phosphor
+      motion: 0.85
+      density: 0.9
+      scanline: 0.38
+      phosphor: 0.72

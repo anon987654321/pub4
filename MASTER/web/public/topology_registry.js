@@ -115,6 +115,57 @@
     return RESOLUTIONS[name] || RESOLUTIONS.medium;
   }
 
+  function mergeRemoteClassifier(rows) {
+    if (!Array.isArray(rows) || !rows.length) return;
+    rows.forEach((row) => {
+      const pattern = row.pattern || row[0];
+      const meta = row.meta || row[1] || row;
+      if (!pattern) return;
+      try {
+        const re = pattern instanceof RegExp ? pattern : new RegExp(pattern, "i");
+        const idx = EVENT_CLASSIFIER.findIndex(([existing]) => existing.source === re.source);
+        const entry = [re, { ...meta }];
+        if (idx >= 0) EVENT_CLASSIFIER[idx] = entry;
+        else EVENT_CLASSIFIER.push(entry);
+      } catch (_) {}
+    });
+  }
+
+  function mergeRemoteTopologies(remote) {
+    if (!remote || typeof remote !== "object") return;
+    Object.entries(remote).forEach(([id, spec]) => {
+      TOPOLOGIES[id] = { ...(TOPOLOGIES[id] || {}), ...spec, id };
+    });
+  }
+
+  function mergeBootTopologies() {
+    const boot = window.MASTER_RUNTIME?.topologies;
+    if (!boot || typeof boot !== "object") return;
+    if (boot.event_classifier) {
+      boot.event_classifier.forEach((row) => mergeRemoteClassifier([{ pattern: row.pattern, meta: row }]));
+    }
+    if (boot.topologies) mergeRemoteTopologies(boot.topologies);
+  }
+
+  async function bootRemoteTopologies() {
+    if (!window.MASTER_RUNTIME) return;
+    mergeBootTopologies();
+    try {
+      const res = await fetch("/runtime/topologies");
+      if (!res.ok) return;
+      const remote = await res.json();
+      if (Array.isArray(remote.EVENT_CLASSIFIER)) {
+        remote.EVENT_CLASSIFIER.forEach(([pattern, meta]) => mergeRemoteClassifier([{ pattern, meta }]));
+      }
+      mergeRemoteTopologies(remote.TOPOLOGIES);
+      if (remote.CANONICAL_EVENTS) CANONICAL_EVENTS.splice(0, CANONICAL_EVENTS.length, ...remote.CANONICAL_EVENTS);
+      Object.assign(PALETTES, remote.PALETTES || {});
+      Object.assign(RUNTIME_MODES, remote.RUNTIME_MODES || {});
+      Object.assign(RESOLUTIONS, remote.RESOLUTIONS || {});
+      window.dispatchEvent(new CustomEvent("master:topology", { detail: { id: "registry:merged", source: "runtime" } }));
+    } catch (_) {}
+  }
+
   window.MASTERTopology = {
     CANONICAL_EVENTS,
     EVENT_CLASSIFIER,
@@ -127,6 +178,10 @@
     topology,
     palette,
     runtimeMode,
-    resolution
+    resolution,
+    mergeRemoteClassifier,
+    mergeRemoteTopologies
   };
+
+  bootRemoteTopologies();
 })();
