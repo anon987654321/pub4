@@ -11,9 +11,9 @@ module Shared
           label: label,
           query: query || params[:q],
           turbo_frame: turbo_frame,
+          filter_fields_proc: (block if block_given?),
           **locals
-        },
-        &block
+        }
       )
     end
   end

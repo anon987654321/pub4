@@ -7,8 +7,8 @@
             placeholder: placeholder,
             data: { live_search_target: "input", action: "input->live-search#input" },
             aria: { label: "Search query" } %>
-      <% if block_given? %>
-        <%= yield f %>
+      <% if local_assigns[:filter_fields_proc] %>
+        <%= filter_fields_proc.call(f) %>
       <% elsif local_assigns[:extra_fields].present? %>
         <%= extra_fields %>
       <% end %>

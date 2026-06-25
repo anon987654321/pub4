@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   MARKETPLACE_SUBDOMAINS = %w[markedsplass markadur marknadsplats marktplaats marktplatz marche mercato mercado
                               markkinapaikka marketplace].freeze
   MAPS_SUBDOMAINS        = %w[maps].freeze
+  MESSENGER_SUBDOMAINS   = %w[messenger].freeze
 
   resource  :session
   resources :passwords, param: :token
@@ -159,6 +160,14 @@ Rails.application.routes.draw do
     scope module: "maps", as: "maps" do
       root "home#index", as: :maps_root
       resources :places, only: %i[index show]
+    end
+  end
+
+  constraints(subdomain: MESSENGER_SUBDOMAINS) do
+    root "conversations#index", as: :messenger_root
+    resources :conversations, only: %i[index show] do
+      resources :messages, only: [:create]
+      resources :typing_indicators, only: [:create]
     end
   end
 

@@ -36,7 +36,7 @@ class Dating::ProfilesController < Dating::BaseController
   private
 
   def set_profile
-    @profile = Current.user.dating_profile || redirect_to(new_dating_profile_path)
+    @profile = Dating::Profile.find_by(user_id: Current.user.id) || redirect_to(new_dating_profile_path)
   end
 
   def profile_params

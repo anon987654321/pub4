@@ -12,6 +12,7 @@ module Brgen
       "ai" => :ai,
       "dating" => :dating,
       "maps" => :maps,
+      "messenger" => :messenger,
       "playlist" => :playlist,
       "takeaway" => :takeaway,
       "tv" => :tv,
