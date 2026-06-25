@@ -39,7 +39,7 @@ module Shared
 
       if fts_scope?
         begin
-          return scope.merge(scope.klass.search(query))
+          return scope.merge(scope_model.search(query))
         rescue StandardError => e
           Rails.logger.warn("live_search fts fallback: #{e.message}")
         end
@@ -47,20 +47,21 @@ module Shared
 
       like = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
       operator = sqlite? ? "LIKE" : "ILIKE"
-      table = scope.klass.table_name
+      table = scope_model.table_name
       predicate = columns.map { |column| "#{table}.#{column} #{operator} :query" }.join(" OR ")
       scope.where(predicate, query: like)
     end
 
     def fts_scope?
-      scope.klass.respond_to?(:search) &&
-        scope.connection.data_source_exists?("#{scope.klass.table_name}_fts")
+      scope_model.respond_to?(:search) &&
+        scope_connection.data_source_exists?("#{scope_model.table_name}_fts")
     rescue StandardError
       false
     end
 
     def safe_count(filtered)
-      return 0 if filtered.null_relation?
+      return 0 if query.blank?
+      return 0 if filtered.respond_to?(:null_relation?) && filtered.null_relation?
 
       filtered.limit(500).count
     end
@@ -87,8 +88,18 @@ module Shared
       app.presence || Rails.application.class.module_parent_name.to_s.downcase
     end
 
+    def scope_model
+      scope.respond_to?(:klass) ? scope.klass : scope
+    end
+
+    def scope_connection
+      scope.respond_to?(:connection) ? scope.connection : scope_model.connection
+    end
+
     def sqlite?
-      ActiveRecord::Base.connection.adapter_name.downcase.include?("sqlite")
+      scope_connection.adapter_name.downcase.include?("sqlite")
+    rescue StandardError
+      true
     end
   end
 end

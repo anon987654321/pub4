@@ -25,12 +25,12 @@ class InferStageTest < Minitest::Test
   end
 
   def test_promotes_scan_natural_language
-    result = @infer.call(ctx("please scan deep lib/"))
+    result = @infer.call(ctx("please scan cosmetic lib/"))
     assert result.ok?
     out = result.value!
     assert_equal :command, out.intent
     assert_equal "scan", out.command
-    assert_equal "deep", out.args
+    assert_equal "cosmetic", out.args
     assert_equal "scan", out.inferred_command
   end
 

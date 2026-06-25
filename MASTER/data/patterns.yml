@@ -319,7 +319,7 @@ infer:
       capture: none
     scan:
       patterns:
-      - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(?:cosmetic|style|hygiene|perfection|core|axioms|solid|critical|full))?\\b"
+      - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(cosmetic|style|hygiene|perfection|core|axioms|solid|critical|full))?\\b"
       capture: scan_profile
     workflow:
       patterns:
