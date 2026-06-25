@@ -15,6 +15,7 @@ module Master
           "postpro" => command(:dispatch_postpro, root),
           "repligen" => command(:dispatch_repligen, root),
           "photograph" => command(:dispatch_photograph, root, agent),
+          "video" => command(:dispatch_video, root, agent),
           "sing" => command(:dispatch_sing, root),
         }
       end
@@ -89,6 +90,28 @@ module Master
           "generated: #{output_dir}",
           "postpro (#{results.size} files): #{processed_dir}",
           results.join("\n"),
+        ].join("\n")
+      end
+
+      DEFAULT_VIDEO_MODEL = "minimax/video-01-live"
+
+      def dispatch_video(root, agent, ctx: nil)
+        prompt = arg_for(ctx).to_s.strip
+        return "usage: /video <prompt>   (text-to-video via Replicate #{DEFAULT_VIDEO_MODEL})" if prompt.empty?
+
+        gen_out = dispatch_master_tool(
+          root: root,
+          tool: "repligen",
+          arg: "generate #{DEFAULT_VIDEO_MODEL} #{prompt}"
+        )
+
+        output_dir = gen_out[/Output: (output\/[^\s]+)/, 1]
+        videos = output_dir ? Dir.glob(File.join(output_dir, "*.{mp4,webm,mov,gif}")).sort : []
+
+        [
+          "video: model=#{DEFAULT_VIDEO_MODEL}",
+          "prompt: #{prompt[0, 120]}#{"..." if prompt.length > 120}",
+          (videos.any? ? "files: #{videos.join(", ")}" : gen_out),
         ].join("\n")
       end
 

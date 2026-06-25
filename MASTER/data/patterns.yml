@@ -331,6 +331,16 @@ infer:
       patterns:
       - "\\b(?:show\\s+(?:logs?|events?)|system\\s+log|dmesg|what\\s+(?:happened|has\\s+happened)|recent\\s+activity)\\b"
       capture: none
+    dilla:
+      patterns:
+      - "\\b(?:play|start|put on|spin|queue)\\s+(?:some\\s+)?(?:j\\s*)?dilla(?:\\s+beats?)?\\b"
+      - "\\b(?:j\\s*dilla|dilla\\s+beats?|donuts|mpc\\s*3000)\\b"
+      capture: none
+    radio:
+      patterns:
+      - "\\b(?:play|open|start)\\s+(?:radio\\s+bergen|warp\\s+tunnel)\\b"
+      - "\\b(?:radio\\s+bergen|flying\\s+lotus|madlib)\\b"
+      capture: none
     dreams:
       patterns:
       - "\\b(?:dreams?|consolidate?\\s+memor(?:y|ies)|memory\\s+consolidat|dream\\s+mode|promote\\s+memor(?:y|ies))\\b"

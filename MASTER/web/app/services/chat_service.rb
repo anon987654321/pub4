@@ -105,6 +105,7 @@ class ChatService
     subscribe("enhance:rewrite") { |ev| write_json_event("enhance", ev[:enhanced].to_s.gsub("\n", "\\n")) }
     subscribe(:council_feedback) { |ev| write_council_speech(ev) }
     subscribe("tool:after") { |ev| track_mutation(ev) }
+    subscribe("client_action") { |ev| write_json_event("client_action", client_action_payload(ev)) }
   end
 
   def pipeline_context
@@ -251,6 +252,10 @@ class ChatService
 
   def phantom_payload(event)
     { patterns: Array(event[:patterns]), recovery: Array(event[:recovery]) }
+  end
+
+  def client_action_payload(event)
+    event.slice(:action, :url, :label).compact
   end
 
   def felt_sense_payload

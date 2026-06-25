@@ -38,8 +38,26 @@ async function enhanceMessage(text) {
   return { text, preEnhanced: false };
 }
 
+function triggerClientAction(data) {
+  if (!data?.action) return;
+  if (data.action === "dilla_bg") {
+    import("/face_loops_music.js")
+      .then(() => { window._dillaBg?.(); })
+      .catch(() => {});
+    window.MASTERVisual?.event?.("music:dilla", { topology: "papua-mask", entropy: 0.22, confidence: 0.9, mode: "dilla" });
+    return;
+  }
+  if (data.action === "radio_open") {
+    const url = data.url || "/radio_bergen";
+    window.open(url, "_blank", "noopener,noreferrer");
+    window.MASTERVisual?.event?.("music:radio", { topology: "warp-tunnel", entropy: 0.35, confidence: 0.88, mode: "radio" });
+  }
+}
+
 async function runSlashCommand(text) {
   window._chatOnUser?.(text);
+  if (/^\/dilla\b/i.test(text)) { triggerClientAction({ action: "dilla_bg" }); }
+  if (/^\/radio\b/i.test(text)) { triggerClientAction({ action: "radio_open", url: "/radio_bergen" }); }
   try {
     const r = await fetch('/chat/command', {
       method: 'POST',
@@ -190,6 +208,9 @@ async function sendMessage(text) {
   });
   window._chatEvtSrc.addEventListener('btw', (ev) => {
     try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  window._chatEvtSrc.addEventListener('client_action', (ev) => {
+    try { triggerClientAction(JSON.parse(ev.data)); } catch (_) {}
   });
   window._chatEvtSrc.onerror = () => {
     const voice = window.MASTERVoice;
