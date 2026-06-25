@@ -167,15 +167,13 @@ module Master
       root = container[:root]
       pub = Trace::SnapshotPublisher
       out = File.join(root, ".master", "snapshot.md")
-      public_out = File.join(root, "snapshot.md")
-      if pub.boot_current?(root, out, public_out)
+      if pub.boot_current?(root, out)
         container[:bus]&.publish("boot:snapshot_skipped")
         return
       end
       content = pub.boot_light(root)
       FileUtils.mkdir_p(File.dirname(out))
       File.write(out, content)
-      File.write(public_out, content)
       container[:bus]&.publish("boot:snapshot")
     rescue StandardError => e
       container[:bus]&.publish("boot:snapshot_error", error: e.message)

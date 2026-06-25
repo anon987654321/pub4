@@ -59,4 +59,5 @@ DEPLOY/rails/*/vendor/
 
 # Generated MASTER snapshots / runtime
 /snapshot.md
+MASTER/snapshot.md
 .master/
