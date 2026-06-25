@@ -37,7 +37,7 @@ module Master
         return true if active.size <= 1
 
         raise ArgumentError,
-              "Set exactly one of MASTER_AUTOFIX=1, MASTER_WATCH=1, MASTER_WATCHER=1."
+              "Set exactly one loop: MASTER_LOOP=fix|watch|watcher or MASTER_AUTOFIX=1, MASTER_WATCH=1, MASTER_WATCHER=1."
       end
     end
   end

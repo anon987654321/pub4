@@ -36,6 +36,8 @@ Eleven stages: Intake → Enhance → Infer → Route → Guard → Execute → 
 
 `data/soul.yml` > `data/rules.yml` > `../CLAUDE.md` > this file.
 
+Governance engine and command registry: `data/GOVERNANCE.md`.
+
 ## Key entry points
 
 - CLI: `bin/cli`

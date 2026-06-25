@@ -84,7 +84,10 @@ module Master
       rollback = Loop::Rollback.new(root:, bus:)
 
       # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
-      fix_loop = Loop::FixLoop.new(rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:, rollback:)
+      fix_loop = Loop::FixLoop.new(
+        rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:, rollback:,
+        incremental: ENV["MASTER_INCREMENTAL"] == "1"
+      )
       fix_loop.start_background!(root) if ENV["MASTER_AUTOFIX"] == "1"
 
       # MASTER_WATCH=1 enables reactive file-watching (requires rb-kqueue or rb-inotify).

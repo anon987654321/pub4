@@ -3,21 +3,21 @@
 - [MASTER project context](project_master.md) — pub4/MASTER constitutional AI agent on dev@brgen.no, OpenRouter API, Ruby/OpenBSD
 - [master.yml + master.json are authoritative](project_master_yml_json_authority.md) — current Ruby MASTER must implement what predecessors describe; 18 priority gaps tracked
 - [User is an architect](user_architect_aesthetics.md) — aesthetic/typography/design-philosophy proposals usually approved; don't self-censor them
-- [Always autofix violations](feedback_autofix.md) — run /sweep immediately after any scan finds violations, no confirmation needed
-- [Frequent git commits](feedback_git_commits.md) — commit after every meaningful change, don't batch
+- [Always autofix violations](../principles/feedback_autofix.md) — run /sweep immediately after any scan finds violations, no confirmation needed
+- [Frequent git commits](../principles/feedback_git_commits.md) — commit after every meaningful change, don't batch
 - [No new files without approval](feedback_no_new_files.md) — always edit originals in place, never create staging/copy files
 - [Ultra-minimalistic coding style](feedback_style.md) — cut all filler across Ruby, Zsh, HTML, JS; preserve intentional logic
 - [No Python](feedback_no_python.md) — only Ruby for all scripting tasks, never python3
-- [Mandatory lint/beautify on touch](feedback_lint_beautify.md) — every edited file gets a full lint/beautify pass, not just changed lines
+- [Mandatory lint/beautify on touch](../principles/feedback_lint_beautify.md) — every edited file gets a full lint/beautify pass, not just changed lines
 - [Strunk & White style](feedback_strunk_white.md) — commits, comments, log lines: active voice, omit needless words, concrete verbs, dmesg format
 - [Voice — terse, unix, perfectionist](feedback_voice_terse_unix.md) — my outputs and MASTER's voice config: cut filler, diagnostic style, loop till zero violations
 - [Auto-update README.md when needed](feedback_readme_autoupdate.md) — refresh README prose after any behavior/capability/surface change, no prompting
-- [No heavy work on device](feedback_device_limits.md) — Termux/Android is low-power; defer Ruby runs, large clones, mass ops to VPS
-- [Bare HTML/CSS targeting, no divitis](feedback_html_css_style.md) — nav a not .nav__link; tag helper; no class attrs on elements targetable by tag
+- [No heavy work on device](../principles/feedback_device_limits.md) — Termux/Android is low-power; defer Ruby runs, large clones, mass ops to VPS
+- [Bare HTML/CSS targeting, no divitis](../principles/feedback_html_css_style.md) — nav a not .nav__link; tag helper; no class attrs on elements targetable by tag
 - [MASTER zsh discipline applies to my shell](feedback_master_zsh_discipline.md) — banned cmds (sed/awk/grep/wc/head/tail/find/sudo/...) apply to my Bash calls too, not just to scripts I write
-- [Autoproceed without confirmation](feedback_autoproceed.md) — execute full backlog after one approval; no per-step go/no-go
-- [No permission questions for predictable yes](feedback_no_permission_questions.md) — never ask "want me to?" / "shall I?" when prior approval makes the answer obvious
-- [Decisive short directives = full authorization](feedback_decisive_signals.md) — "ship all", "kill X keep Y", "yes" = binding; for >10 items, ship pass-by-pass with one-sentence checkpoints
+- [Autoproceed without confirmation](../principles/feedback_autoproceed.md) — execute full backlog after one approval; no per-step go/no-go
+- [No permission questions for predictable yes](../principles/feedback_no_permission_questions.md) — never ask "want me to?" / "shall I?" when prior approval makes the answer obvious
+- [Decisive short directives = full authorization](../principles/feedback_decisive_signals.md) — "ship all", "kill X keep Y", "yes" = binding; for >10 items, ship pass-by-pass with one-sentence checkpoints
 - [No consecutive whitespace](feedback_no_consecutive_whitespace.md) — single space, single blank line max, no trailing/aligned-column padding; all file types
 - [Proper casing, no ASCII decorations](feedback_proper_casing.md) — sentence case in prose/comments/CLI; no === ---- [ok] • | as ASCII art. Boot dmesg banner is sacred.
 - [Restart MASTER after every web edit](feedback_restart_rails.md) — `doas rcctl restart master` after each scp under MASTER/web/, never batch and restart once at end
@@ -25,12 +25,12 @@
 - [MASTER 7-module refactor approved 2026-05-08](project_master_seven_module_refactor.md) — now/loop/judge/voice/ground/reach/trace; pass-by-pass on VPS, supersedes the 6 dedup proposals
 - [OpenCrabs (Rust MASTER cousin)](reference_opencrabs.md) — github.com/adolfousier/opencrabs; brain-files-per-turn, FTS5 memory, /rebuild + exec() hot-restart
 - [Grok UI/CLI patterns](reference_grok_ui_cli_patterns.md) — StyleCoach prompt, htmx+SSE, tty-prompt/spinner, char-stream Claude CLI for MASTER polish
-- [Importance-ordered file layout](feedback_importance_order.md) — every file's lines flow by importance; newspaper inverted pyramid; public API > primary > helpers > edge cases
-- [Reassess comments on every touch](feedback_comments_reassess.md) — touch a file = re-read all its comments; delete obvious, rewrite kept ones S&W-style
+- [Importance-ordered file layout](../principles/feedback_importance_order.md) — every file's lines flow by importance; newspaper inverted pyramid; public API > primary > helpers > edge cases
+- [Reassess comments on every touch](../principles/feedback_comments_reassess.md) — touch a file = re-read all its comments; delete obvious, rewrite kept ones S&W-style
 - [Meta-architecture framing over diff reports](feedback_meta_framing.md) — after a batch, surface what's next/structurally off; user prefers 2x wins to 5% tweaks
 - [MASTER has two Gemfiles](project_master_dual_gemfile.md) — MASTER/Gemfile and MASTER/web/Gemfile are independent; gems used by lib/ from web must be in both
 - [Falcon + EM = subprocess](project_falcon_em_subprocess.md) — Process.fork in a Falcon fiber raises "Closing scheduler"; EM-based gems must shell out to exe/<name>-worker
-- [Diverged branch sync via cherry-pick](feedback_diverged_branch_sync.md) — when local + remote both moved, backup-tag + reset to origin + cherry-pick targeted commits, never force-push or rebase mixed history
+- [Diverged branch sync via cherry-pick](../principles/feedback_diverged_branch_sync.md) — when local + remote both moved, backup-tag + reset to origin + cherry-pick targeted commits, never force-push or rebase mixed history
 - ["Run X through MASTER" = scan+sweep+council](feedback_run_through_master_triad.md) — manual chain `/scan → /sweep → /council`; user vocabulary is "tribunal", code is "council"
 - [No unnecessary piping/concat in shell calls](feedback_no_shell_piping.md) — pure Ruby/zsh patterns; banned shell cmds rule applies to my Bash calls too
 

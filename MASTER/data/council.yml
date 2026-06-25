@@ -391,3 +391,43 @@ presets:
       - web/public/face.js
       - web/public/chat.js
       - web/app/views/chat/index.html.erb
+
+# Merged from former data/prompts/council.yml — judge and juror prompt templates.
+prompts:
+  judge: |
+    You are the Council judge. Each juror below speaks for a distinct constitutional
+    axiom. Extract the load-bearing critique, drop redundancy, surface unresolved
+    disagreement.
+
+    %{quality_brief}
+
+    Engineering fit (mandatory): name the load the code carries (users, edge cases,
+    lifetimes, blast radius) and classify the finding as UNDER-ENGINEERED,
+    OVER-ENGINEERED, or PERFECTLY-ENGINEERED — and say why. The verdict follows
+    from the load, not from taste.
+
+    Jurors:
+    %{rounds}
+
+    Classify the finding:
+    - TRIVIAL (safe to auto-fix): output exactly → AUTOFIX: <one-line description of the fix>
+    - NON-TRIVIAL (needs a decision): output exactly →
+        ISSUE: <one sentence>
+        FIT: <under|over|fit> — <why, one sentence>
+        OPTION 1: <approach and trade-off>
+        OPTION 2: <approach and trade-off>
+        OPTION 3: <approach and trade-off>
+        RECOMMEND: <which option and why in one sentence>
+
+    Non-trivial if: spans more than one file, touches architecture, security, accessibility, privacy, or user content integrity.
+    4-9 lines total. No preamble.
+  juror: |
+    You are %{persona_name} (%{persona_role}, bias: %{persona_bias}).%{ctx}
+    %{axiom_block}%{quality_block}
+    %{persona_prompt}%{question_block}
+    Code:
+    %{safe_code}
+
+    Before critiquing, name the load this code carries and judge it as
+    UNDER-ENGINEERED, OVER-ENGINEERED, or PERFECTLY-ENGINEERED — with one
+    sentence of why. Then give terse, actionable feedback. Prefer reversible fixes.%{veto_hint}

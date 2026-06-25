@@ -29,13 +29,13 @@ architectures:
 
   - id: file_first
     name: "File-first convergence (alternative to rule-first)"
-    status: concept
+    status: removed
     description: >
       Converge all rules on one file before moving to the next.
       Better cache locality, fewer re-reads, faster for large repos.
-      Was a strategy option on the pre-collapse loop; the FixLoop
-      consolidation dropped it in favour of a fixed two-tier design.
-    wired_to: none (removed in FixLoop collapse, a1562a6)
+      Removed in FixLoop collapse (a1562a6) in favour of a fixed two-tier design.
+    wired_to: none
+    note: "Removed in FixLoop collapse (a1562a6). File-first strategy dropped in favor of two-tier design."
     ref: "#3"
 
   - id: ast_autofixes

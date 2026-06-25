@@ -158,7 +158,21 @@ module Master
     Trace::CacheEfficiency.load!
   end
 
+  def self.apply_master_loop!
+    mode = ENV["MASTER_LOOP"].to_s.strip.downcase
+    return if mode.empty?
+
+    %w[MASTER_AUTOFIX MASTER_WATCH MASTER_WATCHER MASTER_HEARTBEAT MASTER_BACKGROUND].each { |flag| ENV[flag] = "0" }
+    case mode
+    when "fix" then ENV["MASTER_AUTOFIX"] = "1"
+    when "watch" then ENV["MASTER_WATCH"] = "1"
+    when "watcher" then ENV["MASTER_WATCHER"] = "1"
+    when "heartbeat" then ENV["MASTER_HEARTBEAT"] = "1"
+    end
+  end
+
   def self.apply_process_defaults!
+    apply_master_loop!
     return if ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
 
     ENV["MASTER_SAFE_MODE"] ||= "1"

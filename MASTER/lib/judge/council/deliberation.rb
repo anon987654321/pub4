@@ -246,10 +246,15 @@ module Master
           nil
         end
 
-        PROMPTS_PATH = File.join(Master::ROOT, "data", "prompts", "council.yml").freeze
+        COUNCIL_DATA_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
+        LEGACY_PROMPTS_PATH = File.join(Master::ROOT, "data", "prompts", "council.yml").freeze
 
         def self.prompts
-          @prompts ||= Master.load_yaml(PROMPTS_PATH) || {}
+          @prompts ||= begin
+            council = Master.load_yaml(COUNCIL_DATA_PATH) || {}
+            merged = council["prompts"]
+            merged.is_a?(Hash) && !merged.empty? ? merged : (Master.load_yaml(LEGACY_PROMPTS_PATH) || {})
+          end
         end
 
         def build_judge_prompt(feedback:, code:, context: nil)

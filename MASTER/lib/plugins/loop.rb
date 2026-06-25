@@ -19,7 +19,10 @@ module Master
         learnings = infra[:learnings]
         rollback = Master::Loop::Rollback.new(root:, bus:)
 
-        fix_loop = Master::Loop::FixLoop.new(rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:, rollback:)
+        fix_loop = Master::Loop::FixLoop.new(
+          rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:, rollback:,
+          incremental: ENV["MASTER_INCREMENTAL"] == "1"
+        )
         fix_loop.start_background!(root) if ENV["MASTER_AUTOFIX"] == "1"
 
         watch_loop = if ENV["MASTER_WATCH"] == "1"

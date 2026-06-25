@@ -1,6 +1,6 @@
-# AGENTS
+# GOVERNANCE
 
-How MASTER governs.
+How MASTER governs. Runtime agent bootstrap: `AGENTS.md` at repo root.
 
 ## The Engine
 
