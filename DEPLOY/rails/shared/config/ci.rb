@@ -2,6 +2,8 @@
 
 # Run using bin/ci — Rails 8.1 local CI (pub4 family apps)
 ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
+monorepo_rails = "/home/dev/pub4/DEPLOY/rails"
+ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_rails, "shared"))
 
 CI.run do
   step "Setup", "bin/setup --skip-server"

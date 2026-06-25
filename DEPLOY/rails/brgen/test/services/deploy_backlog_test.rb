@@ -7,7 +7,13 @@ require_relative '../../../shared/app/services/shared/cable_health'
 require_relative '../../../shared/app/services/shared/queue_failure_summary'
 
 class DeployBacklogTest < Minitest::Test
-  ROOT = ENV.fetch('PUB4_RAILS_ROOT', File.expand_path('../../..', __dir__))
+  ROOT = ENV.fetch('PUB4_RAILS_ROOT') do
+    candidates = [
+      '/home/dev/pub4/DEPLOY/rails',
+      File.expand_path('../../..', __dir__)
+    ]
+    candidates.find { |path| File.directory?(File.join(path, 'shared')) } || candidates.last
+  end.freeze
 
   def test_shared_cache_policy_exposes_explicit_ttls
     assert_equal 300, Shared::CachePolicy.ttl_for(:feed_fragment)
@@ -71,17 +77,22 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_turbo_navigation_and_cache_controls_are_explicit
+    hotwire = File.read(File.join(ROOT, 'shared/frontend/pub4_hotwire.js'))
+    assert_includes hotwire, 'Turbo.config.drive.progressBarDelay = 100'
+
     %w[
       amber/app/javascript/application.js
       baibl/app/javascript/application.js
       blognet/app/javascript/application.js
       bsdports/app/javascript/application.js
       hjerterom/app/javascript/application.js
-      brgen/app/assets/face.js
     ].each do |relative|
       source = File.read(File.join(ROOT, relative))
-      assert_includes source, 'Turbo.config.drive.progressBarDelay = 100'
+      assert_includes source, 'import "pub4/hotwire"'
     end
+
+    assert_includes File.read(File.join(ROOT, 'brgen/app/assets/face.js')),
+                    'Turbo.config.drive.progressBarDelay = 100'
 
     %w[
       amber/app/views/layouts/application.html.erb
