@@ -163,19 +163,19 @@ enhancements:
 - id: fe_027
   area: web
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Keyboard shortcuts with face acknowledgment animations
 - id: fe_028
   area: web
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Mobile pressure-sensitive long-press tension
 - id: fe_029
   area: web
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Theme switcher remaps particle palette
 - id: fe_030
@@ -199,7 +199,7 @@ enhancements:
 - id: fe_033
   area: bus
   tier: p2
-  status: pending
+  status: implemented
   handler: both
   summary: Graph density increases cross-pool particle influence
 - id: fe_034
@@ -241,7 +241,7 @@ enhancements:
 - id: fe_040
   area: bus
   tier: p3
-  status: pending
+  status: implemented
   handler: both
   summary: Cross-app resonance echoes on face
 - id: fe_041
@@ -259,7 +259,7 @@ enhancements:
 - id: fe_043
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Mobile touch targets tied to face affordances
 - id: fe_044
@@ -277,7 +277,7 @@ enhancements:
 - id: fe_046
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Battery profile consistent ecology agent halving
 - id: fe_047
@@ -289,13 +289,13 @@ enhancements:
 - id: fe_048
   area: perf
   tier: p2
-  status: pending
+  status: implemented
   handler: js
   summary: Virtual scroll for long chat logs
 - id: fe_049
   area: perf
   tier: p3
-  status: pending
+  status: implemented
   handler: js
   summary: OffscreenCanvas face rendering where supported
 - id: fe_050
@@ -439,13 +439,13 @@ enhancements:
 - id: web_006
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Phosphor afterimage trail effects
 - id: web_007
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
   summary: Multiple simultaneous faces for council
 - id: web_008

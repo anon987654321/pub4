@@ -45,11 +45,30 @@
     else dialog.removeAttribute("open");
   }
 
+  function faceAck(kind) {
+    const face = window.MASTER_FACE;
+    const st = face?.State;
+    if (!st) return;
+    st.pulse = Math.max(st.pulse || 0, 0.32);
+    st.questionPulse = Math.max(st.questionPulse || 0, 0.4);
+    window.MASTERVisual?.event?.(`shortcut:${kind}`, { topology: "papua-mask", entropy: 0.14, confidence: 0.9, mode: "ack" });
+  }
+
   document.addEventListener("keydown", (ev) => {
-    if (ev.key === "?" && document.activeElement?.id !== "zin") {
+    const tag = document.activeElement?.tagName;
+    const inInput = tag === "INPUT" || tag === "TEXTAREA" || document.activeElement?.id === "zin";
+    if (ev.key === "?" && !inInput) {
       ev.preventDefault();
       openSheet();
+      faceAck("help");
+      return;
     }
+    if (inInput) return;
+    if (ev.key === "t" || ev.key === "T") { faceAck("mute"); return; }
+    if (ev.key === "m" || ev.key === "M") { faceAck("mic"); return; }
+    if (ev.key === "Escape") { faceAck("escape"); return; }
+    if ((ev.metaKey || ev.ctrlKey) && ev.key === "[") { faceAck("rate_down"); return; }
+    if ((ev.metaKey || ev.ctrlKey) && ev.key === "]") { faceAck("rate_up"); return; }
   });
 
   window.MASTERShortcuts = { open: openSheet, close: closeSheet, list: SHORTCUTS };

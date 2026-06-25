@@ -19,6 +19,38 @@ function applyVerticalTimbre() {
   }
 }
 applyVerticalTimbre();
+
+function crossPoolInfluence() {
+  const K = window.ParticleKernel;
+  if (!K || !mouthPool || !eyePool) return;
+  const density = (window.MASTER_FACE_EXPRESSION?.blendSignals?.() ? 1.2 : 1) +
+    Math.min(1.5, (State.moodArcSamples?.length || 0) * 0.08);
+  if (density < 1.15) return;
+  let mouthArousal = 0, eyeAttn = 0, mn = 0, en = 0;
+  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    mouthArousal += mouthPool.cells[b + K.FIELD.arousal];
+    mn++;
+  }
+  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    eyeAttn += eyePool.cells[b + K.FIELD.attention];
+    en++;
+  }
+  if (!mn || !en) return;
+  const share = 0.04 * density;
+  const targetA = mouthArousal / mn;
+  const targetE = eyeAttn / en;
+  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    eyePool.cells[b + K.FIELD.arousal] = Math.min(1, (eyePool.cells[b + K.FIELD.arousal] || 0) * (1 - share) + targetA * share);
+  }
+  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    mouthPool.cells[b + K.FIELD.attention] = Math.min(1, (mouthPool.cells[b + K.FIELD.attention] || 0) * (1 - share) + targetE * share);
+  }
+}
+setInterval(crossPoolInfluence, 480);
 const State = F_FACE_SEM.State || window.State;
 const mouthPool = F_FACE_SEM.mouthPool || window.mouthPool;
 const eyePool = F_FACE_SEM.eyePool || window.eyePool;

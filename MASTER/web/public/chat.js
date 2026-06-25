@@ -1,6 +1,32 @@
 "use strict";
 
 const log   = document.getElementById('chat-log');
+const CHAT_VIRTUAL_MAX = 56;
+let chatArchived = 0;
+let chatSpacer = null;
+
+function ensureChatSpacer() {
+  if (!log) return null;
+  if (!chatSpacer) {
+    chatSpacer = document.createElement('div');
+    chatSpacer.className = 'virtual-spacer';
+    chatSpacer.setAttribute('aria-hidden', 'true');
+    log.prepend(chatSpacer);
+  }
+  return chatSpacer;
+}
+
+function trimChatLogVirtual() {
+  if (!log || !window.MASTER_RUNTIME?.enhancements?.includes?.('chat_virtual_scroll')) return;
+  while (log.querySelectorAll('.message').length > CHAT_VIRTUAL_MAX) {
+    const first = log.querySelector('.message');
+    if (!first || first.classList.contains('virtual-spacer')) break;
+    first.remove();
+    chatArchived += 1;
+  }
+  const spacer = ensureChatSpacer();
+  if (spacer) spacer.style.height = `${chatArchived * 68}px`;
+}
 const zsh   = document.getElementById('zsh');
 const input = document.getElementById('zin');
 const sessionStartedAt = Date.now();
@@ -151,6 +177,7 @@ function appendMsg(role, text = '') {
     _typingEl = typing;
   }
   log.appendChild(d);
+  trimChatLogVirtual();
   log.scrollTop = log.scrollHeight;
   updateSessionStats();
   d.addEventListener('keydown', (e) => {

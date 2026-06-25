@@ -578,6 +578,7 @@ function playDuo(lines, onDone, style, councilOpts = {}) {
   const useStyle = style || _nextTtsStyle(voice);
   if (councilOpts.persona && uiStatus) uiStatus.textContent = `council: ${councilOpts.persona}`;
   if (councilOpts.lane) offsetCouncilMouthPool?.(councilOpts.lane, 0.18);
+  if (councilOpts.persona) window.MASTERCouncilMulti?.setLaneActive?.(councilOpts.lane || 'center', councilOpts.persona);
   let personaBadge = document.getElementById('council-persona-badge');
   if (councilOpts.persona) {
     if (!personaBadge) {

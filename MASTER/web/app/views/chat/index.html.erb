@@ -21,9 +21,13 @@
     window.MASTER_ASSET_PATHS = {
       threeModule: "<%= asset_path("three.face.module.js") %>",
       faceParts: <%= raw((1..5).map { |part| asset_path("face.part#{part}.txt") }.to_json) %>,
-      faceModulesList: <%= raw(%w[face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js].to_json) %>,
+      faceModulesList: <%= raw(%w[
+        face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js
+        face_council_multi.js face_phosphor_trail.js face_offscreen_ecology.js
+      ].to_json) %>,
       faceModules: <%= raw(%w[
         face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js
+        face_council_multi.js face_phosphor_trail.js face_offscreen_ecology.js
         face_semantics.js face_minimal_ui.js face_loops_music.js face_loops_nudge.js
       ].to_h { |name| [name, asset_path(name)] }.to_json) %>
     };

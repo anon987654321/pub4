@@ -364,6 +364,10 @@ async function loadTTSBlob(text, voice, style) {
     if (res.status === 202) {
       const job = res.headers.get('X-TTS-Job') || (await res.json().catch(() => ({}))).job;
       if (!job) throw new Error('tts pending without job');
+      if (window.MASTER_RUNTIME?.enhancements?.includes?.('tts_stream_chunk')) {
+        const early = _parseTtsVisemeHeader(res);
+        if (early) forwardEarlyVisemePlan(early);
+      }
       return pollTTSJob(job, controller.signal);
     }
     if (!res.ok) throw new Error(res.status);
@@ -379,11 +383,26 @@ async function loadTTSBlob(text, voice, style) {
   }
 }
 
+function forwardEarlyVisemePlan(visemes) {
+  if (!visemes?.length) return;
+  tts.visemePlan = visemes;
+  window.dispatchEvent(new CustomEvent('tts:viseme:plan', { detail: { viseme_plan: visemes, frames: visemes } }));
+  if (typeof startVisemeAnim === 'function' && tts.current) startVisemeAnim(tts.current);
+}
+
 async function pollTTSJob(job, signal) {
+  const streamChunk = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_stream_chunk');
   for (let attempt = 0; attempt < 20; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, Math.min(250 + attempt * 150, 1500)));
     const res = await fetch(`/chat/tts/status?job=${encodeURIComponent(job)}`, { signal });
-    if (res.status === 202) continue;
+    if (res.status === 202) {
+      if (streamChunk) {
+        const visemes = _parseTtsVisemeHeader(res) || _parseTtsMetaHeader(res)?.viseme_plan;
+        if (visemes) forwardEarlyVisemePlan(visemes);
+        emitTtsEvent('tts:chunk:wait', { job, attempt });
+      }
+      continue;
+    }
     if (!res.ok) throw new Error(res.status);
     const meta = _parseTtsMetaHeader(res);
     const visemes = _parseTtsVisemeHeader(res) || meta?.viseme_plan || meta?.viseme_hints;

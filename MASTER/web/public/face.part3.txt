@@ -318,7 +318,10 @@ function frame(t) {
     const breathHz = hiddenTab ? 0.55 : 1.1;
     const breathAmp = hiddenTab ? 0.022 : (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005);
     const councilBreath = document.documentElement.dataset.councilBreath === '1' ? Math.sin(sec * 0.85) * 0.018 : 0;
-    const breath = silenceScale * idleSig.breath * (State.reducedMotion ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath);
+    if (gestureStart) State.pressureTension = Math.min(1, (t - pressStart) / 1200);
+    else State.pressureTension = Math.max(0, (State.pressureTension || 0) * 0.92);
+    const tensionScale = 1 - (State.pressureTension || 0) * 0.05;
+    const breath = silenceScale * idleSig.breath * tensionScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath);
     head.scale.setScalar(breath);
     State.lean = (State.lean || 0) * 0.97;
     if (State.shake > 0.01 && !State.reducedMotion) {
@@ -493,6 +496,9 @@ function frame(t) {
     renderer.setClearColor(0x000000, 1);
     if (faceMat && phosphorOn) faceMat._phosphorPrimed = true;
   }
+  if (window.MASTER_PHOSPHOR_TRAIL?.capture && renderer?.domElement && phosphorOn) {
+    window.MASTER_PHOSPHOR_TRAIL.capture(renderer.domElement);
+  }
   renderer.render(scene, camera);
   markFaceReady();
 
@@ -545,6 +551,7 @@ document.addEventListener('pointercancel', () => {
 cv.addEventListener('pointerdown', (e) => {
   pressStart = performance.now();
   State.lastTouch = pressStart;
+  State.pressureTension = 0;
   gestureStart = { x: e.clientX, y: e.clientY, t: pressStart };
   const sttDelay = State.coarsePointer ? 520 : 420;
   pressTimer = setTimeout(() => window.MASTER_FACE?.startSTT?.(), sttDelay);

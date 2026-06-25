@@ -20,6 +20,12 @@ enhancements:
   - signal_superposition
   - mood_persist_reload
   - face_render_modes
+  - chat_virtual_scroll
+  - phosphor_trail
+  - offscreen_ecology
+  - keyboard_face_ack
+  - theme_profile_cycle
+  - cross_pool_influence
   - paralinguistic_tags
   - pressure_sparkline
   - actioncable_fallback

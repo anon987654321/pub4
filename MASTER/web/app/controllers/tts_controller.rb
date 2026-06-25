@@ -108,7 +108,10 @@ class TtsController < ApplicationController
     if job.failed?
       return render(json: { job: job.job_id, status: "failed", error: job.error }, status: :service_unavailable)
     end
-    return render(json: { job: job.job_id, status: "pending" }, status: :accepted) if job.pending?
+    if job.pending?
+      attach_pending_viseme_headers(job)
+      return render(json: { job: job.job_id, status: "pending" }, status: :accepted)
+    end
 
     bytes = job.bytes
     return render(json: { job: job.job_id, status: "failed", error: "empty audio" }, status: :service_unavailable) if bytes.nil? || bytes.empty?
@@ -120,6 +123,21 @@ class TtsController < ApplicationController
       response.headers["X-TTS-Visemes"] = viseme_header(visemes) if visemes
     end
     send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
+  end
+
+  def attach_pending_viseme_headers(job)
+    token_path = Rails.root.join("tmp", "tts_cache", "#{job.job_id}.job")
+    return unless File.file?(token_path)
+
+    data = JSON.parse(File.read(token_path))
+    stream = Master::Voice::Expression.viseme_stream(
+      data["text"],
+      style: data["style"],
+      rate: data["rate"]
+    )
+    response.headers["X-TTS-Visemes"] = viseme_header(stream[:viseme_plan] || stream[:visemes])
+  rescue StandardError
+    nil
   end
 
   def publish_tts_style(voice_key, synth_style, text: nil)

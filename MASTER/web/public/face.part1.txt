@@ -135,9 +135,30 @@ function applyTheme(_theme, persist = true) {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', '#000000');
 }
+const RUNTIME_PROFILES = ['full', 'crt', 'battery'];
+function cycleRuntimeProfile() {
+  const current = rootBody.dataset.runtimeProfile || 'full';
+  const idx = RUNTIME_PROFILES.indexOf(current);
+  const next = RUNTIME_PROFILES[(idx + 1) % RUNTIME_PROFILES.length];
+  State.profileOverride = next;
+  rootBody.dataset.runtimeProfile = next;
+  localStorage.setItem('master:runtime_profile', next);
+  const tintMap = { full: TINT.idle, crt: new Color(0.92, 0.88, 0.78), battery: new Color(0.72, 0.74, 0.78) };
+  if (typeof fadeColorTo === 'function' && tintMap[next]) fadeColorTo(tintMap[next]);
+  window.MASTERVisual?.event?.('theme:profile', { topology: 'papua-mask', entropy: next === 'battery' ? 0.12 : 0.2, confidence: 0.88, mode: next });
+  resize?.();
+}
 function toggleTheme() {
   applyTheme('dark');
+  cycleRuntimeProfile();
 }
+try {
+  const savedProfile = localStorage.getItem('master:runtime_profile');
+  if (savedProfile && RUNTIME_PROFILES.includes(savedProfile)) {
+    State.profileOverride = savedProfile;
+    rootBody.dataset.runtimeProfile = savedProfile;
+  }
+} catch (_) {}
 function applyFocusMode(enabled, persist = true) {
   const value = !!enabled;
   rootBody.dataset.focusMode = value ? '1' : '0';

@@ -25,8 +25,10 @@
     const { state, ctx, internalW, internalH, reducedMotion } = E;
     state.terrainPhase += dt * 0.00016 * (0.4 + state.activity);
     const [cx, cy] = E.center();
-    const rows = reducedMotion ? 7 : 13;
-    const cols = reducedMotion ? 12 : 24;
+    const battery = document.body?.dataset?.runtimeProfile === "battery";
+    const agentHalve = battery || reducedMotion;
+    const rows = agentHalve ? 7 : 13;
+    const cols = agentHalve ? 12 : 24;
     const spanX = internalW * 0.86;
     const spanY = internalH * 0.56;
     const t = state.terrainPhase;
