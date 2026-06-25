@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class PlannedOutfitsController < ApplicationController
-  before_action :require_authentication
+  before_action :require_real_user
 
   def index
     @planned = Current.user.planned_outfits.upcoming.includes(:outfit)

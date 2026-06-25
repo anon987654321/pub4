@@ -24,9 +24,11 @@ class User < ApplicationRecord
   has_many :follows_as_followee, class_name: "Follow", foreign_key: :followee_id, dependent: :destroy
   has_many :following,       through: :follows_as_follower, source: :followee
   has_many :followers,       through: :follows_as_followee, source: :follower
-  has_many :sessions,        dependent: :destroy
+  has_many :sessions,        dependent: :destroy, inverse_of: :user
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
+
+  validates :email_address, presence: true, uniqueness: true
 
   after_create :ensure_identity_records
 
@@ -42,7 +44,9 @@ class User < ApplicationRecord
   private
 
   def ensure_identity_records
-    create_profile!
-    create_privacy_setting!
+    strict_loading!(false) do
+      create_profile!
+      create_privacy_setting!
+    end
   end
 end

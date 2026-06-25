@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class VotesController < ApplicationController
-  before_action :require_authentication
+  before_action :require_real_user
 
   def create
     @votable = find_votable

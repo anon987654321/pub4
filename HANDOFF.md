@@ -90,9 +90,20 @@ vmctl console vm23
 
 ## Open proof items
 
-- [ ] Redeploy six apps so copy-tree picks up `config/ci.rb` → `shared/config/ci.rb` (gate now checks `BUNDLER_AUDIT_UPDATE` + `NPM_CONFIG_CACHE`)
-- [ ] All six Rails apps: `bundle34 exec bin/ci` green on vm23 (as app user; env vars baked into shared ci.rb after redeploy)
-- [ ] Browser smoke on `https://ai.brgen.no/` (WebGL, palette, history sidebar)
+- [ ] All six Rails apps: `bundle34 exec bin/ci` green on vm23 (as app user; one app at a time on 1 GiB VM)
+- [ ] Browser smoke on `https://ai.brgen.no/` (WebGL, palette, tap-to-start, history sidebar)
+
+### 2026-06-25 (land-all backlog)
+
+| Check | Result |
+|-------|--------|
+| Shared auth: `require_authentication` → `require_real_user`; session-only `authenticated?` | landed |
+| Amber mutating controllers → `require_real_user` | landed (6 controllers) |
+| Amber `User`/`Session` validations + inverse associations | landed |
+| MASTER `web/test/` (health, chat, canvas) | 6 runs, 0 failures locally |
+| Amber auth + user tests | 4 runs, 0 failures locally |
+| VPS six-app redeploy (`vps_retry_failed.sh`) | green (prior session) |
+| Tap-to-start web fix (`31cef8e67`) | deployed to vm23 |
 
 ### 2026-06-25 (commit `defrag-final`)
 

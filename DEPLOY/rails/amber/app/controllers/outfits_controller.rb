@@ -3,7 +3,7 @@
 class OutfitsController < ApplicationController
   include Shared::LiveSearchable
 
-  before_action :require_authentication
+  before_action :require_real_user
   before_action :set_outfit, only: %i[show edit update destroy like reorder share wear]
   before_action :authorize!, only: %i[edit update destroy share wear]
 

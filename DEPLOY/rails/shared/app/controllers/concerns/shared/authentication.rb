@@ -20,7 +20,9 @@ module Shared
     private
 
     def authenticated?
-      Current.user.present? && !guest?
+      return Current.user.present? && !guest? if supports_guests?
+
+      Current.session.present?
     end
 
     def guest?
@@ -73,10 +75,12 @@ module Shared
       redirect_to new_session_path, alert: "Sign in to continue"
     end
 
-    alias_method :require_authentication, :resume_session
+    def require_authentication
+      require_real_user
+    end
 
     def find_session_by_cookie
-      ::Session.find_by(id: cookies.signed[:session_id])
+      ::Session.includes(:user).find_by(id: cookies.signed[:session_id])
     end
 
     def supports_guests?

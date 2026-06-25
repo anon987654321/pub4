@@ -3,7 +3,7 @@
 require "open3"
 
 class AiController < ApplicationController
-  before_action :require_authentication
+  before_action :require_real_user
 
   def analyze_item
     item = Current.user.items.find(params[:id])

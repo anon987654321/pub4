@@ -3,7 +3,7 @@
 class ItemsController < ApplicationController
   include Shared::LiveSearchable
 
-  before_action :require_authentication
+  before_action :require_real_user
   before_action :set_item, only: %i[show edit update destroy spark_joy declutter wear]
   before_action :authorize!, only: %i[edit update destroy spark_joy declutter wear]
   skip_before_action :verify_authenticity_token, only: [ :share ]

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class FollowsController < ApplicationController
-  before_action :require_authentication
+  before_action :require_real_user
 
   def create
     user = User.find(params[:user_id])

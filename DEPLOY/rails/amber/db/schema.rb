@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_15_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_000100) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -104,7 +104,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_000200) do
 
   create_table "declutter_outcomes", force: :cascade do |t|
     t.string "action", null: false
-    t.decimal "amount_recovered", precision: 10, scale: 2
+    t.integer "amount_recovered_cents"
     t.datetime "created_at", null: false
     t.integer "item_id", null: false
     t.json "metadata"
@@ -176,7 +176,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_000200) do
     t.json "metadata"
     t.string "mood_effect"
     t.string "occasion_tags"
-    t.decimal "price"
+    t.integer "price_cents"
     t.date "purchase_date"
     t.string "season"
     t.string "size"
@@ -325,8 +325,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_000200) do
     t.decimal "environmental_score", precision: 8, scale: 2
     t.integer "item_id", null: false
     t.json "metadata"
-    t.decimal "repair_cost_estimate", precision: 10, scale: 2
-    t.decimal "resale_value", precision: 10, scale: 2
+    t.integer "repair_cost_estimate_cents"
+    t.integer "resale_value_cents"
     t.datetime "updated_at", null: false
     t.index ["item_id"], name: "index_sustainability_metrics_on_item_id", unique: true
   end
@@ -368,8 +368,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_000200) do
   add_foreign_key "declutter_outcomes", "users"
   add_foreign_key "declutter_reviews", "items"
   add_foreign_key "declutter_reviews", "users"
-  add_foreign_key "follows", "users", column: "follower_id"
   add_foreign_key "follows", "users", column: "followee_id"
+  add_foreign_key "follows", "users", column: "follower_id"
   add_foreign_key "garment_embeddings", "items"
   add_foreign_key "identity_verifications", "users"
   add_foreign_key "items", "users"
