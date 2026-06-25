@@ -94,7 +94,7 @@ This system was built with extremely high standards. Some resulting pain points 
 - Scanner parallelism is capped at `min(Etc.nprocessors, 8)`, so a 1-vCPU OpenBSD VM scans serially; prefer event-driven watch mode or targeted incremental scans for large trees.
 - Significant historical documentation sprawl (especially feedback files).
 
-See `data/workflow.yml` → `llm_ergonomics` for the constitutional guidance on how to work with these realities.
+See `data/limits.yml` → `llm_ergonomics` for the constitutional guidance on how to work with these realities.
 
 These are acknowledged areas for improvement. When working here, prioritize clarity and evidence over perfect adherence to every ceremony.
 

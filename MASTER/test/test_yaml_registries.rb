@@ -19,7 +19,11 @@ PATTERNS_NAMESPACES = {
   "repo_topics"        => %w[clusters]
 }.freeze
 
-DELETED_FILES = %w[infer_patterns.yml prompt_archaeology_patterns.yml repo_topic_clusters.yml].freeze
+DELETED_FILES = %w[
+  infer_patterns.yml prompt_archaeology_patterns.yml repo_topic_clusters.yml
+  workflow.yml standing_orders.yml ruby_style.yml injection_patterns.yml zsh.yml
+  sweep_prompts.yml zsh_patterns.yml council_patterns.yml
+].freeze
 
 class TestYamlRegistries < Minitest::Test
   YAML_SPECS.each do |filename, spec|
@@ -126,7 +130,7 @@ class TestRulesYamlRegistry < Minitest::Test
 
   def test_standing_order_voice_directives_match_rules_voice_strunk
     strunk = data.dig("voice", "strunk")
-    orders = Master.load_yaml(File.join(DATA, "standing_orders.yml"))
+    orders = Master.load_yaml(Master.state_path)
     autocommit = orders.find { |order| order["name"] == "autocommit_post_chat" }
 
     assert_includes strunk.fetch("apply_to"), "prose"

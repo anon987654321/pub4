@@ -21,7 +21,7 @@ module Master
       CLEAN_RUNS          = 2
       PLATEAU_WINDOW      = 3
       RUN_BUDGET_SECONDS  = 30 * 60
-      WORKFLOW_PATH       = File.join(Master::ROOT, "data", "workflow.yml").freeze
+      WORKFLOW_PATH       = Master.limits_path.freeze
 
       def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil, rollback: nil, incremental: false)
         @rules       = rules

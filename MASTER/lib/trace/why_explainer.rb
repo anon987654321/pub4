@@ -22,7 +22,7 @@ module Master
       end
 
       def style
-        @style ||= Master.load_yaml(File.join(@root, "data", "ruby_style.yml")) || {}
+        @style ||= Master.load_yaml(Master.style_path) || {}
       end
 
       def law(key)

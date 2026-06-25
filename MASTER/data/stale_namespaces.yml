@@ -1,3 +1,15 @@
+stale_data_files:
+  - old: data/workflow.yml
+    new: data/limits.yml
+  - old: data/standing_orders.yml
+    new: data/state.yml
+  - old: data/ruby_style.yml
+    new: data/style.yml
+  - old: data/injection_patterns.yml
+    new: data/patterns.yml#injection
+  - old: data/zsh.yml
+    new: data/patterns.yml#zsh
+
 stale_constants:
   - old: Master::CLI
     new: Master::Now::CLI

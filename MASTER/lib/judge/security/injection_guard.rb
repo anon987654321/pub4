@@ -4,7 +4,8 @@ module Master
   module Judge
     module Security
       class InjectionGuard
-        DATA_PATH = File.join(Master::ROOT, "data", "injection_patterns.yml")
+        LEGACY_PATH = File.join(Master::ROOT, "data", "injection_patterns.yml")
+        PATTERNS_PATH = Master.data_path("patterns.yml")
 
         DEFAULTS = {
           prompt_injection: [
@@ -58,8 +59,9 @@ module Master
         private
 
         def load_or_default
-          return DEFAULTS unless File.exist?(DATA_PATH)
-          data = Master.load_yaml(DATA_PATH) || {}
+          data = injection_data
+          return DEFAULTS unless data
+
           prompt = (data["prompt_injection"] || []).map { |s| Regexp.new(s, Regexp::IGNORECASE) }
           shell = data.dig("shell_injection", "multiline_pattern")
           {
@@ -68,6 +70,15 @@ module Master
           }
         rescue StandardError
           DEFAULTS
+        end
+
+        def injection_data
+          patterns = Master.load_yaml(PATTERNS_PATH) || {}
+          merged = patterns["injection"]
+          return merged if merged.is_a?(Hash) && !merged.empty?
+          return Master.load_yaml(LEGACY_PATH) if File.exist?(LEGACY_PATH)
+
+          nil
         end
       end
     end

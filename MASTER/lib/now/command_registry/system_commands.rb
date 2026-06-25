@@ -34,9 +34,10 @@ module Master
       ORIENT_FILES = {
         "soul" => ["data/soul.yml", "constitution: axioms, voice, persona, prompt order"],
         "rules" => ["data/rules.yml", "universal cross-disciplinary rules"],
-        "style" => ["data/ruby_style.yml", "ruby/shell/git/css/html/typography idioms"],
-        "workflow" => ["data/workflow.yml", "agent loops, pipeline, council, gates"],
-        "orders" => ["data/standing_orders.yml", "event triggers and standing operating procedures"],
+        "style" => ["data/style.yml", "ruby/shell/git/css/html/typography idioms"],
+        "limits" => ["data/limits.yml", "agent loops, pipeline, council, gates"],
+        "workflow" => ["data/limits.yml", "legacy alias for limits"],
+        "orders" => ["data/state.yml", "event triggers and standing operating procedures"],
         "patterns" => ["data/patterns.yml", "gh/openbsd/zsh tool idioms"],
         "openbsd" => ["data/openbsd.yml", "pf/nsd/httpd/relayd config validators"],
       }.freeze

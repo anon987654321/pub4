@@ -34,9 +34,9 @@ module Master
     ["agents", "AGENTS.md"],
     ["soul", "data/soul.yml"],
     ["rules", "data/rules.yml"],
-    ["style", "data/ruby_style.yml"],
-    ["workflow", "data/workflow.yml"],
-    ["orders", "data/standing_orders.yml"],
+    ["style", "data/style.yml"],
+    ["limits", "data/limits.yml"],
+    ["orders", "data/state.yml"],
     ["playbook", "data/operator_playbook.yml"],
     ["operator", "../CLAUDE.md"],
   ].freeze
@@ -47,6 +47,18 @@ module Master
   def self.data_path(*parts)
     File.join(DATA, *parts)
   end
+
+  def self.data_file(*names)
+    names.each do |name|
+      path = data_path(name)
+      return path if File.exist?(path)
+    end
+    data_path(names.first)
+  end
+
+  def self.limits_path = data_file("limits.yml", "workflow.yml")
+  def self.state_path = data_file("state.yml", "standing_orders.yml")
+  def self.style_path = data_file("style.yml", "ruby_style.yml")
 
   def self.rule_count(root: ROOT)
     rules = load_rules(root:).fetch("rules", {})

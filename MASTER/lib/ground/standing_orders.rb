@@ -10,7 +10,7 @@ module Master
       WEEKLY_INTERVAL = 604_800
       ERROR_TRUNCATE = 200
       DEBOUNCE_S = 10
-      DEFS_PATH = File.join(Master::ROOT, "data", "standing_orders.yml")
+      DEFS_PATH = Master.state_path
       STATE_PATH = File.join(Master::ROOT, ".master", "standing_orders_state.yml")
       STATE_KEYS = %w[state last_run_at last_error].freeze
       VALID_STATES = %w[pending running done error].freeze

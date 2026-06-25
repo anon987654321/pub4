@@ -46,7 +46,7 @@ module Master
           Proposed actions:
           - Tighten the autofix for `#{rule_id}` in `lib/judge/scan/rules/`
           - Raise severity to block the loop until manually resolved
-          - Add to `workflow.yml` autoloop `skip_rules` if it is a false positive
+          - Add to `limits.yml` autoloop `skip_rules` if it is a false positive
 
         MD
       end

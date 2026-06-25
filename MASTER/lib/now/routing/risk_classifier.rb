@@ -24,7 +24,7 @@ module Master
           /\bpf\.conf\b|\bdoas\.conf\b|\bsshd\b|\bsmtpd\b/i => :critical,
           /\brelayd\.conf\b|\brc\.d\/|\/etc\/rc\.d\b/i => :critical,
           /\bdata\/(rules|soul|patterns|topologies)\.yml\b/i => :critical,
-          /\bbin\/cli\b|\blib\/ground\/axioms\b|\bdata\/standing_orders\b/i => :critical,
+          /\bbin\/cli\b|\blib\/ground\/axioms\b|\bdata\/(?:state|standing_orders)\b/i => :critical,
           /\blib\/loop\b|\blib\/judge\/security\b/i => :high,
           /\bapp\/controllers\b|\bapp\/models\b/i => :medium,
           /\btest\/\b|\bspec\/\b/i => :low,

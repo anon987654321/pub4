@@ -1,4 +1,4 @@
-# MASTER workflow rules — operational principles codified from CLAUDE.md.
+# MASTER limits — operational principles, pipeline budgets, and workflow rules.
 # Governs how MASTER and its LLM agents read, edit, scan, and fix code.
 
 file_reading:
@@ -298,9 +298,9 @@ session_startup:
   mandatory_reads:
     - data/soul.yml
     - data/rules.yml
-    - data/ruby_style.yml
-    - data/workflow.yml
-    - data/standing_orders.yml
+    - data/style.yml
+    - data/limits.yml
+    - data/state.yml
     - data/operator_playbook.yml
   playbook_command: "bin/playbook — print codified operator lessons when signals match production friction"
   check_standing_orders: "Verify FSM state before any mutation -- UNCHANGE blocks refactoring"
@@ -461,7 +461,7 @@ self_rewrite_throttle:
     - lib/ground/
     - lib/judge/security/
     - bin/cli
-    - data/standing_orders.yml
+    - data/state.yml
   autoloop_action: "skip with publish autoloop:throttled event; surface to user"
 
 # Adversarial questioning — every scan, sweep, and council turn asks these.

@@ -1,5 +1,5 @@
 # Operator playbook — durable lessons from production sessions.
-# Loaded at startup (workflow.yml) and via Ground::OperatorPlaybook.
+# Loaded at startup (limits.yml) and via Ground::OperatorPlaybook.
 # Each lesson: signal → action → proof. Prefer executable proof over TODO checkboxes.
 
 version: 1

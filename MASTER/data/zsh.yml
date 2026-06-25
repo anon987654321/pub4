@@ -1,3 +1,0 @@
-# Merged into data/patterns.yml under the zsh: namespace.
-# This file is superseded. Do not add entries here.
-# See: data/patterns.yml → zsh.banned_commands, zsh.native_patterns, zsh.ssh_reading

@@ -99,7 +99,7 @@ Council deliberation samples a focus question per persona per turn from `data/co
 
 Observability: `Master::Telemetry` is a soft-optional OpenTelemetry tracer that emits JSONL spans to `.master/traces.log`. Wraps `EventBus#publish`, `Metrics#append`, `AuditLog#append`, and `Heartbeat#execute_job`. Bootstrap fires in `Master.boot` between Pledge stage1 and stage2.
 
-Key files — `data/soul.yml` (golden rule, tiers, persona), `data/rules.yml` (structural rules, thresholds, depths), `data/ruby_style.yml` (style and bugs), `data/workflow.yml` (READ_BEFORE_WRITE, scan principles), `data/standing_orders.yml` (current FSM state).
+Key files — `data/soul.yml` (golden rule, tiers, persona), `data/rules.yml` (structural rules, thresholds, depths), `data/style.yml` (style and bugs), `data/limits.yml` (READ_BEFORE_WRITE, scan principles), `data/state.yml` (standing orders and FSM triggers).
 
 ## Running scans
 

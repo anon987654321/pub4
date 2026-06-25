@@ -4,7 +4,7 @@ Reviewed against:
 
 - `MASTER/data/soul.yml`
 - `MASTER/data/rules.yml`
-- `MASTER/data/workflow.yml`
+- `MASTER/data/limits.yml`
 - `MASTER/CONVENTIONS.md`
 - `MASTER/data/claude/project_master.md`
 - `MASTER/bin/cli`

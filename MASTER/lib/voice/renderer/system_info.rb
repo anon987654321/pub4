@@ -6,7 +6,7 @@ module Master
   module Voice
     class Renderer
       module SystemInfo
-        IMPORT_YMLS = %w[soul rules ruby_style workflow standing_orders patterns openbsd vocabulary].freeze
+        IMPORT_YMLS = %w[soul rules style limits state patterns openbsd vocabulary].freeze
 
         private
 
@@ -32,7 +32,7 @@ module Master
         end
 
         def active_orders_count
-          orders = Master.load_yaml(File.join(Master::DATA, "standing_orders.yml"))
+          orders = Master.load_yaml(Master.state_path)
           Array(orders).count { |o| o["enabled"] != false }
         rescue StandardError => _e
           "?"

@@ -26,7 +26,7 @@ governs. When a rule's text is needed, open the file named here.
 - data/rules.yml — 76 scan rules with per-rule detection axes and
   thresholds; the thresholds: block holds only values with a live reader.
 - data/rule_deps.yml — topological ordering for the scan rules.
-- data/ruby_style.yml — Ruby-specific style: quoting, frozen_string,
+- data/style.yml — Ruby-specific style: quoting, frozen_string,
   comment limits, whitespace.
 - data/epistemics.yml — confidence and evidence rules.
 - data/workflow.yml — pipeline stage rules.

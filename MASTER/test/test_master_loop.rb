@@ -23,6 +23,13 @@ class TestMasterLoop < Minitest::Test
     end
   end
 
+  def test_data_file_resolves_renamed_limits
+    assert File.exist?(Master.limits_path)
+    assert Master.limits_path.end_with?("limits.yml")
+    assert File.exist?(Master.state_path)
+    assert Master.style_path.end_with?("style.yml")
+  end
+
   def test_council_prompts_load_from_council_yml
     prompts = Master::Judge::Council::Deliberation.prompts
     assert prompts["judge"].to_s.include?("Council judge")

@@ -1,5 +1,5 @@
 ---
-# Standing orders — event and manual triggers wired through StandingOrders.
+# State — standing orders (event and manual triggers) wired through StandingOrders.
 # trigger: event  — fires when bus publishes event: key (currently tool:after)
 # trigger: manual — only runs when explicitly called via /orders or its callable
 # Every entry needs a callable: key registered in Master::Ground::Orders::Registry.

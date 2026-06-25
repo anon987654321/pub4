@@ -5,13 +5,18 @@ module Master
   # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
     class Rules
       RULES_SUBDIR = "rules"
+      DATA_ALIASES = {
+        workflow: %w[limits workflow],
+        ruby_style: %w[style ruby_style],
+        standing_orders: %w[state standing_orders],
+      }.freeze
 
       def initialize(root: nil)
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
         @rules_path = File.join(@data_dir, "rules.yml")
         @soul_path = File.join(@data_dir, "soul.yml")
-        @workflow_path = File.join(@data_dir, "workflow.yml")
+        @workflow_path = Master.limits_path
         @data = load_yaml(@rules_path) || {}
         @data["rules"] = load_split_rules
         @soul_data = load_yaml(@soul_path) || {}
@@ -22,8 +27,8 @@ module Master
       # mtime-aware cache. Reloads automatically when data/<name>.yml changes on disk.
       def data(name)
         key = name.to_sym
-        path = File.join(@data_dir, "#{name}.yml")
-        return @cache[key]&.first || {} unless File.exist?(path)
+        path = resolve_data_path(key)
+        return @cache[key]&.first || {} unless path && File.exist?(path)
 
         mtime = File.mtime(path)
         cached = @cache[key]
@@ -108,6 +113,11 @@ module Master
       def empty? = @data.empty?
 
       private
+
+      def resolve_data_path(key)
+        stems = DATA_ALIASES.fetch(key, [key.to_s])
+        stems.map { |stem| File.join(@data_dir, "#{stem}.yml") }.find { |candidate| File.exist?(candidate) }
+      end
 
       def load_split_rules
         dir = File.join(@data_dir, RULES_SUBDIR)

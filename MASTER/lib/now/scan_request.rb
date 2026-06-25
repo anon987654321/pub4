@@ -86,7 +86,7 @@ module Master
       end
 
       def load_workflow_profiles
-        path = File.join(root, "data", "workflow.yml")
+        path = Master.limits_path
         self.class.workflow_profiles(path)
       end
 
