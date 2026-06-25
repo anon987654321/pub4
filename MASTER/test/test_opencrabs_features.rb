@@ -96,12 +96,15 @@ class TestOpenCrabsFeatures < Minitest::Test
     bus = Master::Trace::EventBus.new
     pool = Master::Judge::AgentPool.new(governor: nil, event_bus: bus,
       taxonomy_path: File.join(Master::ROOT, "data", "agent_taxonomy.yml"))
+    hold = Queue.new
     4.times do |i|
-      r = pool.spawn(type: :explore, tag: "t#{i}") { sleep 0.05 }
+      r = pool.spawn(type: :explore, tag: "t#{i}") { hold.pop }
       assert r.ok?, r.message if r.err?
     end
     r = pool.spawn(type: :explore, tag: "overflow") { true }
     assert r.err?
-    pool.join_all(timeout: 1)
+  ensure
+    4.times { hold << true }
+    pool&.join_all(timeout: 1)
   end
 end
