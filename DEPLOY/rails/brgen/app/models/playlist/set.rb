@@ -6,11 +6,11 @@ module Playlist
 
     PRIVACY_LEVELS = %w[public private unlisted].freeze
 
-    # Engine-ize Shared
     include Shared.concern(:Reactable) rescue nil
     include Shared.concern(:Notifiable) rescue nil
     belongs_to :user
-    has_many :tracks, -> { order(:position) }, class_name: "Playlist::Track", dependent: :destroy
+    has_many :set_tracks, class_name: "Playlist::SetTrack", foreign_key: :playlist_set_id, dependent: :destroy
+    has_many :tracks, through: :set_tracks, source: :track, class_name: "Playlist::Track"
     has_many :collaborations, class_name: "Playlist::Collaboration", dependent: :destroy
     has_many :collaborators, through: :collaborations, source: :user
     has_many :dilla_sketches, class_name: "Playlist::DillaSketch", dependent: :destroy
@@ -22,8 +22,18 @@ module Playlist
     scope :visible, -> { where(privacy: [ nil, "public", "unlisted" ]) }
     scope :publicly_listed, -> { where(privacy: [ nil, "public" ]) }
 
+    def add_track!(track, user:)
+      set_track = set_tracks.find_or_initialize_by(track: track)
+      return set_track if set_track.persisted?
+
+      set_track.position = set_tracks.maximum(:position).to_i + 1
+      set_track.user = user
+      set_track.save!
+      set_track
+    end
+
     def total_duration
-      tracks.sum(:duration).to_i
+      tracks.sum(:duration_seconds).to_i
     end
 
     def formatted_duration

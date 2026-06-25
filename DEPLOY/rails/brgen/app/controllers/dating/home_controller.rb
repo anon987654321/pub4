@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Dating::HomeController < Dating::BaseController
+  before_action :require_real_user, only: :next
+
   def index
     if authenticated?
       profile = current_dating_profile

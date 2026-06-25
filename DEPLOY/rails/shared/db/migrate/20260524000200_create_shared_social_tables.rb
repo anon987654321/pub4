@@ -2,7 +2,7 @@
 
 class CreateSharedSocialTables < ActiveRecord::Migration[8.0]
   def change
-    create_table :reactions do |t|
+    create_table :reactions, if_not_exists: true do |t|
       t.references :user, null: false, foreign_key: true
       t.references :reactable, null: false, polymorphic: true
       t.string :kind, null: false, default: "like"
@@ -10,14 +10,14 @@ class CreateSharedSocialTables < ActiveRecord::Migration[8.0]
     end
     add_index :reactions, %i[user_id reactable_type reactable_id kind], unique: true, name: "idx_reactions_unique_user_target_kind"
 
-    create_table :follows do |t|
+    create_table :follows, if_not_exists: true do |t|
       t.references :follower, null: false, foreign_key: { to_table: :users }
       t.references :followable, null: false, polymorphic: true
       t.timestamps
     end
     add_index :follows, %i[follower_id followable_type followable_id], unique: true, name: "idx_follows_unique_follower_target"
 
-    create_table :notifications do |t|
+    create_table :notifications, if_not_exists: true do |t|
       t.references :user, null: false, foreign_key: true
       t.references :actor, foreign_key: { to_table: :users }
       t.references :notifiable, polymorphic: true
@@ -29,7 +29,7 @@ class CreateSharedSocialTables < ActiveRecord::Migration[8.0]
     add_index :notifications, %i[user_id read_at]
     add_index :notifications, %i[user_id created_at]
 
-    create_table :review_cases do |t|
+    create_table :review_cases, if_not_exists: true do |t|
       t.references :reporter, foreign_key: { to_table: :users }
       t.references :reviewer, foreign_key: { to_table: :users }
       t.references :reviewable, null: false, polymorphic: true

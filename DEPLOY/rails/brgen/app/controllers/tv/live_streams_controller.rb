@@ -13,12 +13,12 @@ module Tv
     end
 
     def new
-      @channel = Tv::Channel.find(params[:channel_id]) if params[:channel_id].present?
+      @channel = resolve_channel(params[:channel_id]) if params[:channel_id].present?
       @live_stream = Tv::LiveStream.new(channel: @channel)
     end
 
     def create
-      @channel = Tv::Channel.find(params[:channel_id]) if params[:channel_id].present?
+      @channel = resolve_channel(params[:channel_id]) if params[:channel_id].present?
       @live_stream = Tv::LiveStream.new(live_stream_params)
       @live_stream.channel ||= @channel
       @live_stream.user = current_user if respond_to?(:current_user, true)
@@ -57,6 +57,10 @@ module Tv
 
     def set_live_stream
       @live_stream = Tv::LiveStream.find(params[:id])
+    end
+
+    def resolve_channel(id_or_slug)
+      Tv::Channel.find_by(slug: id_or_slug) || Tv::Channel.find(id_or_slug)
     end
 
     def live_stream_params

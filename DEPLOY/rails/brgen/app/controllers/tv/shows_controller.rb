@@ -4,7 +4,8 @@ module Tv
   class ShowsController < BaseController
     def index
       @channel = Tv::Channel.find_by!(slug: params[:channel_slug]) if params[:channel_slug]
-      @shows = (@channel ? @channel.shows : Tv::Show.all).published.page(params[:page])
+      scope = (@channel ? @channel.shows : Tv::Show.all).published
+      @pagy, @shows = pagy(scope)
     end
 
     def show

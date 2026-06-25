@@ -26,6 +26,10 @@ module Shared
       end
     end
 
+    def badge
+      render json: { unread_count: notification_scope.unread.count }
+    end
+
     private
 
     def notification_scope

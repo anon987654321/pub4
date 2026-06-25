@@ -21,6 +21,8 @@ class Dating::Profile < ApplicationRecord
   # nearby (bbox) + haversine provided by concern; old approx replaced for consistency
   scope :in_neighborhood, ->(neigh) { neigh ? where(neighborhood_id: neigh.id) : all }
 
+  def name = user.display_name
+
   def liked_by?(user)    = Dating::Like.exists?(liker: user, likee: self.user)
   def disliked_by?(user) = Dating::Dislike.exists?(disliker: user, dislikee: self.user)
   def matched_with?(user)

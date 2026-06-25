@@ -7,6 +7,7 @@ Rails.application.routes.draw do
 
   resource :session
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb", __dir__)))
   resources :passwords, param: :token
 
   root "home#index"
@@ -21,9 +22,9 @@ Rails.application.routes.draw do
 
   scope :community do
     get  "/",       to: "community#index", as: :community
-    get  "/:id",    to: "community#show",  as: :community_show
     get  "/new",    to: "community#new",   as: :new_community_post
     post "/",       to: "community#create"
+    get  "/:id",    to: "community#show",  as: :community_show
     resources :comments, only: %i[create destroy]
   end
 

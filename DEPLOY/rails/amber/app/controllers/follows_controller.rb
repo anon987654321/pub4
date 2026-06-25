@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class FollowsController < ApplicationController
+  before_action :require_authentication
+
   def create
     user = User.find(params[:user_id])
     Current.user.follows_as_follower.find_or_create_by!(followee: user) unless Current.user == user

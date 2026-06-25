@@ -10,7 +10,7 @@ Rails.application.routes.draw do
 
   TV_SUBDOMAINS          = %w[tv].freeze
   DATING_SUBDOMAINS      = %w[dating].freeze
-  PLAYLIST_SUBDOMAINS    = %w[playlist].freeze
+  PLAYLIST_SUBDOMAINS    = %w[playlist spilleliste].freeze
   TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
   MARKETPLACE_SUBDOMAINS = %w[markedsplass markadur marknadsplats marktplaats marktplatz marche mercato mercado
                               markkinapaikka marketplace].freeze
@@ -80,6 +80,9 @@ Rails.application.routes.draw do
         end
         resources :videos, only: %i[new create]
         resources :live_streams, only: %i[new create]
+        resources :shows, param: :slug, only: %i[index show] do
+          get "episodes/:number", to: "episodes#show", as: :episode, on: :member
+        end
       end
       resources :videos, only: %i[show destroy] do
         resources :video_notes, only: :create

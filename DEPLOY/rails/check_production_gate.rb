@@ -70,7 +70,7 @@ apps.each do |name, metadata|
   if File.file?(gemfile)
     gemfile_text = File.read(gemfile)
     warnings << "#{name}: Gemfile has no explicit ruby version" unless gemfile_text.match?(/^ruby\s+/)
-    fail!(app_failures, "Gemfile must target Rails 8.1") unless gemfile_text.match?(/^gem "rails", "~> 8\.1/)
+    fail!(app_failures, "Gemfile must target Rails 8.1") unless gemfile_text.match?(/^gem ['"]rails['"], ['"]~> 8\.1/)
   else
     fail!(app_failures, "missing Gemfile")
   end

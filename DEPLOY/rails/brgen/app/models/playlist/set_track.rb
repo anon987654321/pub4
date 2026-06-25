@@ -9,5 +9,7 @@ module Playlist
     belongs_to :user
 
     validates :playlist_set_id, uniqueness: { scope: :playlist_track_id }
+
+    default_scope { order(:position) }
   end
 end

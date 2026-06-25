@@ -5,6 +5,7 @@
 ROOT = File.expand_path("../..", __dir__)
 PHANTOM_TABLES = %w[
   buyers listings likers likees dislikers dislikees initiators receivers orders menu_items
+  followees followers followed
 ].freeze
 
 def schema_files

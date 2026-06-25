@@ -14,6 +14,7 @@ module Brgen
       "maps" => :maps,
       "messenger" => :messenger,
       "playlist" => :playlist,
+      "spilleliste" => :playlist,
       "takeaway" => :takeaway,
       "tv" => :tv,
       "marche" => :marketplace,
@@ -79,6 +80,10 @@ module Brgen
     ].freeze
 
     ENTRIES_BY_DOMAIN = ENTRIES.index_by(&:domain).freeze
+
+    def self.production_hosts
+      ENTRIES.flat_map { |entry| [ entry.domain, /.*\.#{Regexp.escape(entry.domain)}\z/ ] }.uniq
+    end
 
     def self.resolve(host)
       normalized_host = normalize_host(host)

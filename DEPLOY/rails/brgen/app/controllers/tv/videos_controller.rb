@@ -13,7 +13,7 @@ class Tv::VideosController < Tv::BaseController
 
   def create
     channel = Current.user.tv_channels.find(params[:tv_channel_id])
-    @video  = channel.videos.build(video_params.merge(user: Current.user, status: "ready"))
+    @video  = channel.videos.build(video_params.merge(user: Current.user, status: "published", published_at: Time.current))
     @video.save ? redirect_to(tv_video_path(@video), notice: "Video uploaded") : render(:new, status: :unprocessable_entity)
   end
 
