@@ -29,4 +29,4 @@ npm_cache=/home/${app}/.npm
 cache_home=/home/${app}/.cache
 print "vps_ci: $app (sync + mutex + load gate)"
 sync_from_repo
-doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 exec bin/ci'"
+doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_CI_GUARD=1; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 exec bin/ci'"

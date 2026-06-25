@@ -9,19 +9,15 @@ ENV["NPM_CONFIG_CACHE"] ||= File.expand_path("~/.npm")
 monorepo_rails = "/home/dev/pub4/DEPLOY/rails"
 ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_rails, "shared"))
 
-vps_host = File.exist?("/etc/relayd.conf")
+vps_host = ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps") || File.exist?("/etc/relayd.conf")
 
 Pub4::CiGuard.run! do
   CI.run do
     step "Setup", "bin/setup --skip-server"
     step "Styles: Dart Sass", "bin/rails dartsass:build"
     step("Security: Importmap audit", "bin/importmap audit") unless vps_host
-    rubocop = if vps_host
-                'bin/rubocop -A --fail-level=E $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
-              else
-                'bin/rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
-              end
-    step "Style: Ruby", rubocop
+    rubocop = 'bin/rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
+    step("Style: Ruby", rubocop) unless vps_host
     audit = ENV["BUNDLER_AUDIT_UPDATE"] == "1" ? "bin/bundler-audit check --update" : "bin/bundler-audit check"
     step "Security: Gem audit", audit
     step "Security: Brakeman", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
