@@ -11,6 +11,7 @@
     ["Space (hold)", "Push-to-talk"],
     ["t", "Toggle TTS mute"],
     ["m", "Toggle microphone"],
+    ["f", "Focus face canvas"],
     ["Ctrl+[ / ]", "TTS playback rate"]
   ];
 
@@ -66,6 +67,13 @@
     if (inInput) return;
     if (ev.key === "t" || ev.key === "T") { faceAck("mute"); return; }
     if (ev.key === "m" || ev.key === "M") { faceAck("mic"); return; }
+    if (ev.key === "f" || ev.key === "F") {
+      const canvas = document.getElementById("face");
+      canvas?.focus?.();
+      faceAck("focus");
+      window.MASTERVisual?.event?.("shortcut:focus", { topology: "papua-mask", entropy: 0.1, confidence: 0.92, mode: "focus" });
+      return;
+    }
     if (ev.key === "Escape") { faceAck("escape"); return; }
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "[") { faceAck("rate_down"); return; }
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "]") { faceAck("rate_up"); return; }

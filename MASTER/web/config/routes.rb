@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   get  "chat/tts",        to: "tts#show"
   get  "chat/tts/phrases", to: "tts#phrases"
   get  "chat/tts/status", to: "tts#status"
+  get  "chat/tts/stream", to: "tts#stream"
   delete "chat/tts/status", to: "tts#destroy"
   get  "chat/research", to: "chat#research"
   get  "chat/enhance",  to: "chat#enhance"

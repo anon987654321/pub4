@@ -103,6 +103,19 @@ class TtsJob
     File.binread(cache_path) if ready?
   end
 
+  def bytes_available
+    return 0 unless File.file?(cache_path)
+
+    File.size(cache_path)
+  end
+
+  def partial_bytes
+    avail = bytes_available
+    return nil if avail.zero?
+
+    File.binread(cache_path, avail)
+  end
+
   def perform
     return if ready?
 
@@ -120,14 +133,13 @@ class TtsJob
         style_locked: @style_locked
       )
     )
-    data = synthesize_with_retry
-    if data.nil? || data.empty?
+    ok = synthesize_streaming_to_cache
+    unless ok && bytes_available > 0
       message = Master::Voice::Speech.last_error || "synthesis produced empty audio"
       record_failure(message)
       return
     end
 
-    File.binwrite(cache_path, data)
     write_meta_json
     @bus&.publish("tts:job_complete", job_id: @job_id, ready: true)
   rescue StandardError => e
@@ -136,25 +148,24 @@ class TtsJob
 
   private
 
-  def synthesize_with_retry
-    2.times do |attempt|
-      data = Master::Voice::Speech.synthesize_bytes(
-        @text,
-        voice: @voice,
-        style: @style,
-        rate: @rate,
-        pitch: @pitch,
-        voice_locked: @voice_locked,
-        style_locked: @style_locked
-      )
-      return data if data && !data.empty?
+  def synthesize_streaming_to_cache
+    Master::Voice::Speech.synthesize_streaming_to_file(
+      @text,
+      output_path: cache_path.to_s,
+      voice: @voice,
+      style: @style,
+      rate: @rate,
+      pitch: @pitch,
+      voice_locked: @voice_locked,
+      style_locked: @style_locked,
+      on_chunk: method(:publish_chunk_progress)
+    )
+  end
 
-      break if attempt.positive?
+  def publish_chunk_progress(bytes)
+    return unless bytes >= 8192
 
-      Master::Voice::TtsSupervisor.ensure_daemon!
-      sleep 0.2
-    end
-    nil
+    @bus&.publish("tts:chunk:bytes", job_id: @job_id, bytes: bytes)
   end
 
   def cache_path

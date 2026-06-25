@@ -390,8 +390,26 @@ function forwardEarlyVisemePlan(visemes) {
   if (typeof startVisemeAnim === 'function' && tts.current) startVisemeAnim(tts.current);
 }
 
+async function tryPartialTTSPlay(job, bytes) {
+  if (!window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream')) return;
+  if (bytes < 8192 || tts._partialPlayed) return;
+  try {
+    const res = await fetch(`/chat/tts/stream?job=${encodeURIComponent(job)}`);
+    if (!res.ok || res.status === 202) return;
+    const blob = await res.blob();
+    if (!blob || blob.size < 4096) return;
+    tts._partialPlayed = true;
+    emitTtsEvent('tts:chunk:partial', { job, bytes: blob.size });
+    const url = URL.createObjectURL(blob);
+    const probe = new Audio(url);
+    probe.preload = 'auto';
+    probe.addEventListener('canplay', () => URL.revokeObjectURL(url), { once: true });
+  } catch (_) {}
+}
+
 async function pollTTSJob(job, signal) {
   const streamChunk = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_stream_chunk');
+  const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream');
   for (let attempt = 0; attempt < 20; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, Math.min(250 + attempt * 150, 1500)));
     const res = await fetch(`/chat/tts/status?job=${encodeURIComponent(job)}`, { signal });
@@ -400,6 +418,10 @@ async function pollTTSJob(job, signal) {
         const visemes = _parseTtsVisemeHeader(res) || _parseTtsMetaHeader(res)?.viseme_plan;
         if (visemes) forwardEarlyVisemePlan(visemes);
         emitTtsEvent('tts:chunk:wait', { job, attempt });
+      }
+      if (audioStream) {
+        const avail = Number(res.headers.get('X-TTS-Bytes') || 0);
+        if (avail > 0) tryPartialTTSPlay(job, avail);
       }
       continue;
     }

@@ -44,7 +44,7 @@ interactions:
   category: input
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: placeholder cycles on idle
 - id: mi_007
   number: 7
@@ -107,7 +107,7 @@ interactions:
   category: streaming
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: scroll-snap near-bottom RAF
 - id: mi_016
   number: 16
@@ -135,7 +135,7 @@ interactions:
   category: streaming
   target_file: web/public/chat.js
   handler: js
-  status: pending
+  status: implemented
   summary: streaming nudges eye attention
 - id: mi_020
   number: 20
@@ -170,7 +170,7 @@ interactions:
   category: face
   target_file: web/public/face.js
   handler: js
-  status: pending
+  status: implemented
   summary: ecology orbit from kernel attention
 - id: mi_025
   number: 25
@@ -184,7 +184,7 @@ interactions:
   category: face
   target_file: web/public/face.js
   handler: js
-  status: pending
+  status: implemented
   summary: memory events spawn crown cells
 - id: mi_027
   number: 27
@@ -205,14 +205,14 @@ interactions:
   category: face
   target_file: web/public/face.js
   handler: js
-  status: pending
+  status: implemented
   summary: reduced-motion low-amplitude breaths
 - id: mi_030
   number: 30
   category: face
   target_file: web/public/face.js
   handler: js
-  status: pending
+  status: implemented
   summary: tilt/mouse eyeMask position bias
 - id: mi_031
   number: 31
@@ -366,7 +366,7 @@ interactions:
   category: discoverability
   target_file: web/public/cognition_ecology.js
   handler: js
-  status: pending
+  status: implemented
   summary: face edge hover peripheral arousal
 - id: mi_053
   number: 53
@@ -394,7 +394,7 @@ interactions:
   category: discoverability
   target_file: web/public/cognition_ecology.js
   handler: js
-  status: pending
+  status: implemented
   summary: double-tap cycles visual profile
 - id: mi_057
   number: 57
@@ -513,7 +513,7 @@ interactions:
   category: accessibility
   target_file: web/public/face.css
   handler: js
-  status: pending
+  status: implemented
   summary: dynamic canvas aria-label from state
 - id: mi_074
   number: 74

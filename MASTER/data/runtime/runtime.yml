@@ -31,6 +31,11 @@ enhancements:
   - actioncable_fallback
   - emotional_timeline
   - council_room_ui
+  - face_micro_interactions
+  - tts_audio_stream
+  - chat_scroll_snap
+  - provider_tint_chip
+  - face3d_desktop_default
 
 vertical_timbre:
   marketplace:

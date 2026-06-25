@@ -7,7 +7,8 @@ const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList || [
   "face_expression_bridge.js",
   "face_council_multi.js",
   "face_phosphor_trail.js",
-  "face_offscreen_ecology.js"
+  "face_offscreen_ecology.js",
+  "face_micro_interactions.js"
 ];
 
 await Promise.all(FACE_MODULES.map(async (modulePath) => {

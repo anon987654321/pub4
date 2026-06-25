@@ -106,7 +106,7 @@ class ApplicationController < ActionController::Base
     path = request.path
     return true if path == "/up" || path == "/health"
     return true if path.start_with?("/assets/")
-    return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|topology_|cluster_|mask|sw\.js|manifest\.json|icon\.|offline\.html)})
+    return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|topology_|cluster_|mask|sw\.js|manifest\.json|icon\.|offline\.html)})
 
     false
   end

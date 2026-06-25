@@ -328,6 +328,12 @@ enhancements:
   status: implemented
   handler: js
   summary: Auto-enable face3d preview on desktop via visual_bridge
+- id: enh_tts_audio_stream
+  area: tts
+  tier: p0
+  status: implemented
+  handler: both
+  summary: Partial MP3 stream endpoint during TTS synthesis
 - id: enh_pre_speech_inhale
   area: tts
   tier: p0
@@ -469,93 +475,93 @@ enhancements:
 - id: web_011
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 11
+  summary: Ecology orbit tightens with kernel attention
 - id: web_012
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 12
+  summary: Memory events spawn crown zone cells
 - id: web_013
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 13
+  summary: Reduced-motion low-amplitude breath scaling
 - id: web_014
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 14
+  summary: Mouse tilt biases eyeMask position
 - id: web_015
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 15
+  summary: Face edge hover peripheral arousal pulse
 - id: web_016
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 16
+  summary: Double-tap cycles runtime visual profile
 - id: web_017
   area: face
   tier: p1
   status: implemented
   handler: js
-  summary: Web UI improvement 17
+  summary: Pinch-to-zoom face scale on touch
 - id: web_018
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 18
+  summary: Reduced-motion sinusoidal eye scan path
 - id: web_019
   area: face
   tier: p1
   status: implemented
   handler: js
-  summary: Web UI improvement 19
+  summary: Long-press mood demo sequence on canvas
 - id: web_020
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 20
+  summary: Streaming chunks nudge eye attention
 - id: web_021
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 21
+  summary: Sentence-end mouthPool pressure bump
 - id: web_022
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 22
+  summary: Veto/pass dmesg ecology calm burst
 - id: web_023
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 23
+  summary: STT start eye attention boost
 - id: web_024
   area: face
   tier: p1
   status: implemented
   handler: js
-  summary: Web UI improvement 24
+  summary: MouthDrive scales jaw uniform each frame
 - id: web_025
   area: face
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 25
+  summary: Photo ready spawns crown memory cells
 - id: web_026
   area: web
   tier: p1
@@ -565,9 +571,9 @@ enhancements:
 - id: web_027
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 27
+  summary: Provider/model tint chip in prompt bar
 - id: web_028
   area: web
   tier: p1
@@ -577,15 +583,15 @@ enhancements:
 - id: web_029
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 29
+  summary: Placeholder cycles on idle input
 - id: web_030
   area: web
   tier: p1
-  status: pending
+  status: implemented
   handler: js
-  summary: Web UI improvement 30
+  summary: Chat scroll-snap near-bottom RAF clamp
 - id: web_031
   area: web
   tier: p1

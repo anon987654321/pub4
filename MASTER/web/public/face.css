@@ -622,6 +622,23 @@ body[data-mode="listening"] #mic-dot {
   user-select: none;
 }
 
+.provider-chip {
+  position: fixed;
+  right: calc(12px + var(--safe-right));
+  bottom: calc(12px + var(--safe-bottom));
+  z-index: var(--z-ui);
+  font: 9px/1.2 "JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color: color-mix(in srgb, var(--master-accent, var(--c-accent)) 72%, var(--face-fg));
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  opacity: .72;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity var(--transition-fast) var(--ease-out);
+}
+.provider-chip:empty { display: none; }
+html[data-model-provider] .provider-chip { opacity: .92; }
+
 .fps-badge {
   position: fixed;
   top: calc(12px + var(--safe-top));

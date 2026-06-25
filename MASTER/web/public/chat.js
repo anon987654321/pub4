@@ -99,6 +99,47 @@ function updateSessionStats() {
 }
 setInterval(updateSessionStats, 1000);
 
+const providerChip = (() => {
+  let el = document.getElementById('provider-chip');
+  if (!el) {
+    el = document.createElement('span');
+    el.id = 'provider-chip';
+    el.className = 'provider-chip';
+    el.setAttribute('aria-hidden', 'true');
+    const anchor = document.getElementById('zsh-status') || document.getElementById('ui-status');
+    if (anchor?.parentElement) anchor.parentElement.appendChild(el);
+    else document.body.appendChild(el);
+  }
+  return el;
+})();
+
+function syncProviderChip(provider) {
+  if (!providerChip || !provider) return;
+  const label = String(provider).slice(0, 12);
+  providerChip.textContent = label;
+  providerChip.dataset.provider = label;
+  document.documentElement.dataset.modelProvider = label;
+  window.MASTERVisual?.event?.('model:tint', { topology: 'neural', entropy: 0.2, confidence: 0.84, provider: label, mode: 'provider' });
+}
+
+window.addEventListener('master:palette', (ev) => syncProviderChip(ev.detail?.provider));
+window.addEventListener('master:visual', (ev) => {
+  const p = ev.detail?.provider;
+  if (p && p !== 'unknown') syncProviderChip(p);
+});
+
+if (log && window.MASTER_RUNTIME?.enhancements?.includes?.('chat_scroll_snap')) {
+  let scrollRaf = null;
+  log.addEventListener('scroll', () => {
+    if (scrollRaf) return;
+    scrollRaf = requestAnimationFrame(() => {
+      scrollRaf = null;
+      const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 64;
+      if (nearBottom) log.scrollTop = log.scrollHeight;
+    });
+  }, { passive: true });
+}
+
 function appendMsg(role, text = '') {
   const d = document.createElement('div');
   d.className = 'message ' + role;
@@ -515,6 +556,7 @@ window._chatOnDmesg = (line) => {
   const asst = log.querySelector('.message.assistant:last-of-type');
   asst ? log.insertBefore(d, asst) : log.appendChild(d);
   log.scrollTop = log.scrollHeight;
+  window.dispatchEvent(new CustomEvent('chat:dmesg', { detail: { line: String(line) } }));
   if (/veto|pass/i.test(String(line))) window.MASTEREcology?.burst?.(4, 0.25);
   if (/tool|scan|sweep/i.test(String(line))) d.dataset.tool = '1';
   requestAnimationFrame(() => d.classList.add('dmesg-live'));

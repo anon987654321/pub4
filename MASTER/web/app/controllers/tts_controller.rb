@@ -60,6 +60,26 @@ class TtsController < ApplicationController
     tts_job_response(job)
   end
 
+  def stream
+    job = TtsJob.find(params[:job].to_s)
+    return head(:not_found) unless job
+
+    if job.ready?
+      bytes = job.bytes
+      return head(:not_found) if bytes.nil? || bytes.empty?
+
+      return send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
+    end
+
+    partial = job.partial_bytes
+    return head(:accepted) if partial.nil? || partial.empty?
+
+    attach_pending_viseme_headers(job)
+    response.headers["X-TTS-Bytes"] = partial.bytesize.to_s
+    response.headers["X-TTS-Partial"] = "1"
+    send_data partial, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline", status: :partial_content
+  end
+
   def destroy
     job_id = params[:job].to_s
     return head(:bad_request) if job_id.empty?
@@ -110,7 +130,9 @@ class TtsController < ApplicationController
     end
     if job.pending?
       attach_pending_viseme_headers(job)
-      return render(json: { job: job.job_id, status: "pending" }, status: :accepted)
+      avail = job.bytes_available
+      response.headers["X-TTS-Bytes"] = avail.to_s if avail.positive?
+      return render(json: { job: job.job_id, status: "pending", bytes: avail }, status: :accepted)
     end
 
     bytes = job.bytes

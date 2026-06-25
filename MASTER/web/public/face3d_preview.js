@@ -3,9 +3,16 @@
 import { Face3DEngine } from '/face3d_engine.js';
 import { Face3DCanvasRenderer } from '/face3d_renderer.js';
 
-const enabled = new URLSearchParams(window.location.search).get('face3d') === '1';
+function shouldEnableFace3d() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('face3d') === '0' || localStorage.getItem('master_face3d') === '0') return false;
+  if (params.get('face3d') === '1') return true;
+  const desktop = matchMedia('(min-width: 1024px)').matches;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return desktop && !reducedMotion;
+}
 
-if (enabled) {
+if (shouldEnableFace3d()) {
   const canvas = document.getElementById('face');
   const engine = new Face3DEngine();
   const renderer = new Face3DCanvasRenderer(canvas);

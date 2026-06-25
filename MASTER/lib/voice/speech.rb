@@ -241,6 +241,45 @@ module Master
         bytes
       end
 
+      def synthesize_streaming_to_file(text, output_path:, on_chunk: nil, **opts)
+        clear_last_error!
+        TtsSupervisor.ensure_daemon!
+        text_str = clean_text(text)
+        return false if text_str.empty?
+
+        voice = resolve_voice(opts[:voice] || default_voice)
+        style = opts[:style] || default_style
+        style = infer_style(text_str, fallback: default_style) if style == :auto && !opts[:style_locked]
+        style = default_style unless STYLES.key?(style)
+        style_config = style_config_for(voice, style)
+        style_config[:rate] = opts[:rate].to_s if opts[:rate] && !opts[:rate].to_s.strip.empty?
+        style_config[:pitch] = opts[:pitch].to_s if opts[:pitch] && !opts[:pitch].to_s.strip.empty?
+
+        return false unless edge_tts_available?
+
+        voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
+        2.times do |attempt|
+          path = synthesize_edge_socket(
+            text: text_str,
+            voice_name: voice_name,
+            style_config: style_config,
+            audio_path: output_path,
+            on_chunk: on_chunk
+          )
+          return true if path && File.exist?(output_path) && File.size(output_path) > 0
+
+          break unless attempt.zero?
+
+          TtsSupervisor.ensure_daemon!
+          sleep 0.15
+        end
+        @last_error ||= "streaming synthesis produced empty audio"
+        false
+      rescue StandardError => e
+        @last_error = "#{e.class}: #{e.message}"
+        false
+      end
+
       def mime_type_for(path)
         File.extname(path.to_s).downcase == ".wav" ? "audio/wav" : "audio/mpeg"
       end
@@ -282,7 +321,7 @@ module Master
         cleanup_failed_audio(audio_path)
       end
 
-      def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
+      def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil)
         sock_path = TtsSupervisor.next_socket
         return nil unless File.socket?(sock_path)
 
@@ -295,7 +334,12 @@ module Master
         Timeout.timeout(worker_timeout) do
           UNIXSocket.open(sock_path) do |s|
             s.write("#{req}\n")
-            File.open(audio_path, "wb") { |f| IO.copy_stream(s, f) }
+            File.open(audio_path, "wb") do |f|
+              while (chunk = s.readpartial(8192))
+                f.write(chunk)
+                on_chunk&.call(f.pos)
+              end
+            end
           end
         end
         return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
