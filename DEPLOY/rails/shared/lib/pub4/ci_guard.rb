@@ -52,7 +52,7 @@ module Pub4
 
     def with_lock
       FileUtils.mkdir_p(File.dirname(LOCK_PATH))
-      File.open(LOCK_PATH, File::CREAT | File::RDWR, 0o644) do |file|
+      File.open(LOCK_PATH, File::CREAT | File::RDWR, 0o666) do |file|
         unless file.flock(File::LOCK_EX | File::LOCK_NB)
           holder = File.exist?(HOLDER_PATH) ? File.read(HOLDER_PATH).strip : "unknown"
           warn "pub4-ci-guard: #{LOCK_PATH} busy (#{holder})"
