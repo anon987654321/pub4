@@ -41,7 +41,9 @@ module Web
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks master])
+    # Face sources live in public/; never treat digest output (public/assets/) as input.
     config.assets.paths << Rails.root.join("public")
+    config.assets.excluded_paths << Rails.root.join("public", "assets")
 
     # Configuration for the application, engines, and railties goes here.
     #

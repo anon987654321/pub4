@@ -23,3 +23,9 @@ Read every file in full before editing. Match surrounding style. Run `/scan deep
 After editing `web/` files: `doas rcctl restart master` — Falcon does not hot-reload.
 
 Key commands: `/scan`, `/fix`, `/review`, `/critique`, `/why`, `/snapshot`. Type `/help` inside MASTER for the full list.
+
+**VPS (vm23) — hard limits for agents:**
+- **One SSH session at a time.** Never open parallel SSH to `brgen.no` / `46.23.89.226`.
+- **Rails CI:** `zsh DEPLOY/sh/vps_ci.sh <app>` or `vps_ci_all.sh` (serial mutex). Never loop `bin/ci` across apps in one shell or multiple SSH sessions.
+- **MASTER scan on VPS:** `zsh DEPLOY/sh/vps_master_scan.sh /scan DEPLOY --depth deep` (shares `/var/tmp/pub4-ci.lock`).
+- Direct `bundle34 exec bin/ci` on VPS is mutex-gated when `PUB4_CI_GUARD=1` or host has `/etc/relayd.conf`.

@@ -4,9 +4,11 @@ require_relative "test_helper"
 
 class TestPropshaftPaths < Minitest::Test
   def test_excludes_digest_output_directory
-    source = File.read(File.join(Master::ROOT, "web", "config", "initializers", "assets.rb"))
-    assert_includes source, "excluded_paths"
-    assert_includes source, "public", "assets"
+    app_rb = File.read(File.join(Master::ROOT, "web", "config", "application.rb"))
+    safety = File.read(File.join(Master::ROOT, "web", "config", "initializers", "propshaft_safety.rb"))
+    assert_includes app_rb, "excluded_paths"
+    assert_includes app_rb, "public", "assets"
+    assert_includes safety, '"assets", "assets"'
   end
 
   def test_deploy_rc_cleans_nested_assets

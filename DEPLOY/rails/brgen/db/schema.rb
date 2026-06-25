@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", null: false
@@ -358,6 +358,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_150000) do
     t.datetime "updated_at", null: false
     t.index ["city_id", "slug"], name: "index_neighborhoods_on_city_id_and_slug", unique: true
     t.index ["city_id"], name: "index_neighborhoods_on_city_id"
+  end
+
+  create_table "newsletter_editions", force: :cascade do |t|
+    t.string "app_name", default: "Brgen", null: false
+    t.string "city"
+    t.datetime "created_at", null: false
+    t.string "cta_label"
+    t.string "cta_url"
+    t.json "deals", default: []
+    t.date "edition_date", null: false
+    t.string "hero_alt"
+    t.string "hero_caption"
+    t.string "hero_url"
+    t.string "kind", null: false
+    t.text "lede", null: false
+    t.string "permission_line"
+    t.string "preheader"
+    t.datetime "sent_at"
+    t.string "sign_off"
+    t.json "stories", default: []
+    t.string "subject", null: false
+    t.datetime "updated_at", null: false
+    t.index ["kind", "city", "edition_date"], name: "index_newsletter_editions_on_kind_and_city_and_edition_date", unique: true
   end
 
   create_table "notifications", force: :cascade do |t|
