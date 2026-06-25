@@ -211,12 +211,26 @@ module Master
           review: /\b(review|critique|audit|check|council|tribunal|inspect|evaluate|judge)\b/i,
           explanation: /\b(explain|what is|how does|why does|describe|clarify|walk me through)\b/i
         }.freeze
+        CHITCHAT_GREETING_RE = /\A(?:hi|hello|hey|yo|sup|howdy|good (?:morning|afternoon|evening))[!?.…\s]*\z/i.freeze
+        CHITCHAT_CASUAL_RE = /\b(?:how are you|what'?s up|thanks|thank you|nice to meet|good night)\b/i.freeze
 
         def classify_intent(text)
           s = text.to_s
           return :exploration if s.strip.empty?
+          return :chitchat if chitchat_intent?(s)
           INTENT_PATTERNS.each { |intent, re| return intent if re.match?(s) }
           :exploration
+        end
+
+        def chitchat_intent?(text)
+          trimmed = text.to_s.strip
+          return true if CHITCHAT_GREETING_RE.match?(trimmed)
+          return true if CHITCHAT_CASUAL_RE.match?(trimmed) && trimmed.length <= 120
+          return false if trimmed.length > 80
+          return false if trimmed.match?(%r{/|\b(?:implement|refactor|fix|deploy|scan|code|build)\b}i)
+          return false if INTENT_PATTERNS.values.any? { |re| re.match?(trimmed) }
+
+          trimmed.split.size <= 8
         end
 
         def preferred_for(text)

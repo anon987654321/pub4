@@ -9,4 +9,19 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "tap to start"
   end
+
+  test "message smoke ping streams sse" do
+    get "/chat/message", params: { message: "ping" }
+
+    assert_response :success
+    assert_match %r{text/event-stream}, response.media_type.to_s
+    assert_includes response.body, "pong"
+    assert_includes response.body, "[DONE]"
+  end
+
+  test "message rejects empty input" do
+    get "/chat/message", params: { message: "" }
+
+    assert_response :bad_request
+  end
 end
