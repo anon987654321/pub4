@@ -1,6 +1,6 @@
 <% content_for :title, "Scripture" %>
 
-<%= live_search_form url: scripture_search_path, placeholder: "Search scripture…", label: "Scripture search" %>
+<%= live_search_index url: scripture_index_path, results_partial: "scriptures/live_search_results", placeholder: "Search scripture…", label: "Scripture search", frame_id: "baibl-scriptures" %>
 
 <nav role="navigation" aria-label="Bible books navigation">
   <% @books.each do |book| %>

@@ -39,15 +39,5 @@
 </nav>
 
 <section id="feed-panel" role="tabpanel" aria-labelledby="hot-tab" data-tabs-target="panel">
-<% if @posts.any? %>
-  <div class="post-grid">
-    <% @posts.each do |post| %>
-      <%= render "posts/post", post: post %>
-    <% end %>
-  </div>
-<% else %>
-  <section class="empty">
-    <p>No posts yet. <%= authenticated? ? link_to("Create one", new_post_path) : link_to("Sign in to post", new_session_path) %>.</p>
-  </section>
-<% end %>
+  <%= live_search_index url: root_path, results_partial: "home/live_search_results", placeholder: "Search feed…", label: "Feed search", frame_id: "brgen-home" %>
 </section>

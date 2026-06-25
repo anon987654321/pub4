@@ -14,14 +14,5 @@
     <% end %>
   <% end %>
 
-  <turbo-frame id="marketplace-stores" data-turbo-action="replace">
-  <%= tag.div class: "store-grid", role: "list", "aria-label": "Stores list" do %>
-    <% @stores.each do |store| %>
-      <%= tag.article class: "store-card" do %>
-        <%= tag.h2 link_to(store.name, marketplace_shop_path(store.slug)) %>
-        <%= tag.p store.vertical&.humanize if store.vertical.present? %>
-        <%= tag.p store.description if store.description.present? %>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%= live_search_index url: marketplace_shops_path(vertical: params[:vertical]), results_partial: "marketplace/stores/live_search_results", placeholder: "Search stores…", label: "Store search", frame_id: "marketplace-stores" %>
 <% end %>

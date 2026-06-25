@@ -11,17 +11,7 @@
   <%= link_to "top",   posts_path(sort: "top"),   class: ("active" if params[:sort] == "top") %>
 </nav>
 
-<% if @posts.any? %>
-    <div class="post-grid">
-      <% @posts.each do |post| %>
-      <div data-controller="offline-feed" data-offline-feed-key-value="brgen-posts" data-offline-feed-title-value="<%= post.title %>" data-offline-feed-url-value="<%= post_url(post) %>" data-offline-feed-meta-value="<%= [post.author_name, l(post.created_at, format: :short)].join(" · ") %>">
-        <%= render "posts/post", post: post %>
-      </div>
-      <% end %>
-    </div>
-<% else %>
-  <p>No posts yet.</p>
-<% end %>
+<%= live_search_index url: posts_path(sort: params[:sort]), results_partial: "posts/live_search_results", placeholder: "Search posts…", label: "Post search", frame_id: "brgen-posts" %>
 
 <aside>
   <h3>Communities</h3>

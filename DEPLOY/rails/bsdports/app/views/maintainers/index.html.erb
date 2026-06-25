@@ -1,11 +1,4 @@
 <% content_for :title, "Maintainers" %>
 <h1>Maintainers</h1>
-<ul id="maintainers">
-  <% @maintainers.each do |m| %>
-    <li>
-      <%= link_to m.name, maintainer_path(m) %>
-      <small><%= m.label %></small>
-      <small>(<%= m.ports.size %> ports)</small>
-    </li>
-  <% end %>
-</ul>
+
+<%= live_search_index url: maintainers_path, results_partial: "maintainers/live_search_results", placeholder: "Search maintainers…", label: "Maintainer search", frame_id: "bsdports-maintainers" %>

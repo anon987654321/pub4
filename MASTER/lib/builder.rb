@@ -16,28 +16,28 @@ module Master
 
     TOOL_MAP = {
       "ReadFile" => ->(r, i) {
-        Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus]),
+        Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus])
       },
       "WriteFile" => ->(r, i) {
         Reach::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
-          event_bus: i[:bus], diff_stager: i[:diff_stager]),
+          event_bus: i[:bus], diff_stager: i[:diff_stager])
       },
       "StrReplace" => ->(r, i) {
         Reach::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
-          event_bus: i[:bus], diff_stager: i[:diff_stager]),
+          event_bus: i[:bus], diff_stager: i[:diff_stager])
       },
       "BatchReplace" => ->(r, i) {
-        Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]),
+        Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus])
       },
       "AstEdit" => ->(r, i) {
-        Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus]),
+        Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
       },
       "Tree" => ->(r, i) { Reach::Tree.new(root: r, event_bus: i[:bus]) },
       "ListDir" => ->(r, i) { Reach::ListDir.new(root: r, event_bus: i[:bus]) },
       "SearchFiles" => ->(r, i) { Reach::SearchFiles.new(root: r, event_bus: i[:bus]) },
       "SearchKnowledge" => ->(r, i) { Reach::SearchKnowledge.new(root: r, event_bus: i[:bus]) },
       "SymbolLookup" => ->(r, i) {
-        Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus]),
+        Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus])
       },
       "Shell" => ->(r, i) { Reach::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "GitContext" => ->(r, i) { Reach::GitContext.new(root: r, event_bus: i[:bus]) },
@@ -46,7 +46,7 @@ module Master
       "Clean" => ->(r, i) { Reach::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "FeedbackRecord" => ->(r, i) { Reach::FeedbackRecord.new(learnings: i[:learnings]) },
       "MemoryRecord" => ->(r, i) {
-        Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus]),
+        Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus])
       },
     }.freeze
 

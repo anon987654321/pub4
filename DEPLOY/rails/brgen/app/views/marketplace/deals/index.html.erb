@@ -5,26 +5,5 @@
     <%= tag.h1 t("marketplace.deals.title", default: "Deals") %>
   <% end %>
 
-  <turbo-frame id="marketplace-deals" data-turbo-action="replace">
-  <% if @featured_deals.any? %>
-    <%= tag.section class: "featured-deals" do %>
-      <%= tag.h2 t("marketplace.deals.featured", default: "Featured deals") %>
-      <% @featured_deals.each do |deal| %>
-        <%= tag.article class: "deal-card featured", role: "listitem" do %>
-          <%= tag.h3 link_to(deal.headline, marketplace_deal_path(deal)) %>
-          <%= tag.p deal.badge if deal.badge.present? %>
-        <% end %>
-      <% end %>
-    <% end %>
-  <% end %>
-
-  <%= tag.div class: "deal-grid" do %>
-    <% @deals.each do |deal| %>
-      <%= tag.article class: "deal-card" do %>
-        <%= tag.h2 link_to(deal.headline, marketplace_deal_path(deal)) %>
-        <%= tag.p deal.listing.title %>
-        <%= tag.p deal.listing.price_display %>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%= live_search_index url: marketplace_deals_path, results_partial: "marketplace/deals/live_search_results", placeholder: "Search deals…", label: "Deals search", frame_id: "marketplace-deals" %>
 <% end %>

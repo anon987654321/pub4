@@ -1,16 +1,4 @@
 <h1>Communities</h1>
 <% if authenticated? %><%= link_to "+ New", new_community_path %><% end %>
 
-<% if @communities.any? %>
-  <ul>
-    <% @communities.each do |c| %>
-      <li>
-        <%= link_to c.name, community_path(c) %>
-        <% if c.description.present? %><p><%= c.description %></p><% end %>
-        <small><%= c.posts.count %> posts</small>
-      </li>
-    <% end %>
-  </ul>
-<% else %>
-  <p>No communities yet. <%= link_to "Create one", new_community_path if authenticated? %></p>
-<% end %>
+<%= live_search_index url: communities_path, results_partial: "communities/live_search_results", placeholder: "Search communities…", label: "Community search", frame_id: "brgen-communities" %>
