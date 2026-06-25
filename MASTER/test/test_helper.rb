@@ -12,6 +12,7 @@ if ENV["COVERAGE"] == "1"
 end
 
 ENV["MT_NO_PLUGINS"] = "1"
+ENV["MASTER_TTS_MODE"] = "classic"
 gem "minitest", "~> 5.25"
 require "minitest/autorun"
 require "minitest/mock"

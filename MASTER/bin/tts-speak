@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Speak text via transcendent TTS — stdout path or writes last.mp3 target.
+require "fileutils"
+
+ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
+require "bundler/setup"
+
+root = File.expand_path("..", __dir__)
+$LOAD_PATH.unshift(File.join(root, "lib"))
+require "master"
+
+text_file = ARGV[0]
+out_target = ARGV[1]
+abort "usage: tts-speak TEXT_FILE [OUT_MP3]" unless text_file && File.file?(text_file)
+
+text = File.read(text_file, encoding: "UTF-8").strip
+exit 0 if text.empty? || text.length < 20
+
+ENV["MASTER_TTS_MODE"] = "transcendent"
+path = Master::Voice::Transcendent.synthesize(text)
+exit 1 unless path && File.size?(path)
+
+if out_target && !out_target.empty?
+  FileUtils.cp(path, out_target)
+  puts out_target
+else
+  puts path
+end

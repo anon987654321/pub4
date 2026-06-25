@@ -174,9 +174,22 @@ module Master
         out.empty? ? [clean] : out
       end
 
-      def synthesize(text, voice: default_voice, style: default_style, rate: nil, pitch: nil)
+      def synthesis_mode
+        return ENV["MASTER_TTS_MODE"] if ENV.key?("MASTER_TTS_MODE")
+
+        cfg = Transcendent.load_config
+        cfg["default_mode"].to_s == "transcendent" && Transcendent.enabled? ? "transcendent" : "classic"
+      end
+
+      def synthesize(text, voice: default_voice, style: default_style, rate: nil, pitch: nil, mode: nil)
         text_str = clean_text(text)
         return if text_str.empty?
+
+        use_mode = (mode || synthesis_mode).to_s
+        if use_mode == "transcendent" && Transcendent.enabled?
+          return Transcendent.synthesize(text_str, voice: voice, style: style, rate: rate, pitch: pitch)
+        end
+
         return unless available?
 
         style = infer_style(text_str, fallback: default_style) if style == :auto

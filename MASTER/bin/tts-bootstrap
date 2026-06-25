@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Bootstrap SOTA TTS engines for transcendent mode (mlx-audio, chatterbox-tts).
+require "open3"
+
+puts "MASTER transcendent TTS bootstrap"
+puts
+
+steps = []
+unless system("python3", "-c", "import mlx_audio", out: File::NULL, err: File::NULL)
+  steps << %w[pip3 install -U pip]
+  steps << %w[pip3 install mlx-audio]
+  puts "→ mlx-audio (Apple Silicon: Chatterbox, Qwen3-TTS, Kokoro, Higgs…)"
+end
+
+unless system("python3", "-c", "import chatterbox", out: File::NULL, err: File::NULL)
+  steps << %w[pip3 install numpy]
+  steps << %w[pip3 install chatterbox-tts]
+  puts "→ chatterbox-tts (paralinguistic tags, Multilingual V3; needs Python 3.11+ ideally)"
+end
+
+unless system("which", "ffmpeg", out: File::NULL, err: File::NULL)
+  puts "→ ffmpeg recommended: brew install ffmpeg"
+end
+
+if steps.empty?
+  puts "✓ mlx-audio and chatterbox-tts present"
+  puts "Set MASTER_TTS_MODE=transcendent or default_mode in data/tts.yml"
+  exit 0
+end
+
+print "Run installs now? [y/N] "
+ans = $stdin.gets.to_s.strip.downcase
+unless %w[y yes].include?(ans)
+  puts "Skipped."
+  exit 0
+end
+
+steps.each do |cmd|
+  puts "$ #{cmd.join(" ")}"
+  system(*cmd) || warn("warning: #{cmd.join(" ")} failed")
+end
+
+puts "Done. export MASTER_TTS_MODE=transcendent"
