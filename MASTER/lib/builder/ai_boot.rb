@@ -33,7 +33,8 @@ module Master
       axioms = Ground::Rules.new(root:)
       deliberation = Judge::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
       ideation = Judge::Council::Ideation.new(agent:, event_bus: bus)
-      council_stage = Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus)
+      council_stage = Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus,
+                                               ground_truth: infra[:ground_truth])
       # Permissive for user chat (CLI + web); strict guard remains in ToolContract for shell/git.
       guard = Judge::Security::InjectionGuard.new(mode: :permissive)
       autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms:)
@@ -76,7 +77,9 @@ module Master
       # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
       fix_loop = Loop::FixLoop.new(
         rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:, rollback:,
-        incremental: ENV["MASTER_INCREMENTAL"] == "1"
+        incremental: ENV["MASTER_INCREMENTAL"] == "1",
+        ground_truth: infra[:ground_truth], preserve_user_intent: infra[:preserve_user_intent],
+        law_resolver: infra[:law_resolver]
       )
       fix_loop.start_background!(root) if ENV["MASTER_AUTOFIX"] == "1"
 

@@ -12,18 +12,16 @@ module Master
           wf = Master.load_yaml(Master.limits_path) rescue {}
           sleep_s = wf.dig("autoloop", "scan_file_sleep_s").to_f
           scanner = Judge::Scan::Scanner.new(event_bus: bus, file_sleep_s: sleep_s)
-          Judge::Scan::Rule.registry.select(&:auto_build?).each { |klass| scanner.add_rule(klass.new) }
-          scanner.add_rule(Judge::Scan::Rules::CoChangeCouplingRule.new(root:, ecology:))
-          scanner.add_rule(Judge::Scan::Rules::RuleCoverageRule.new(root:))
-          scanner.add_rule(Judge::Scan::Rules::RubocopRule.new(root:))
-          scanner.add_rule(Judge::Scan::Rules::ReekRule.new(root:))
-          scanner.add_rule(Judge::Scan::Rules::InterconnectRule.new(root:))
-          scanner.add_rule(Judge::Scan::Rules::YamlDeclarativeRule.new(root:))
-          scanner.add_rule(Judge::Scan::Rules::VetoPatternRule.new(root:))
-          scanner.add_rule(Judge::Scan::Rules::SemanticRule.new(agent:))
-          scanner.add_rule(Judge::Scan::Rules::AdversarialRule.new(agent:))
-          scanner.add_rule(Judge::Scan::Rules::CommentDriftRule.new(agent:))
-          scanner.add_rule(Judge::Scan::Rules::AstOmissionRule.new(root:))
+          Judge::Scan::Rule.registry.select(&:auto_build?).each do |klass|
+            scanner.add_rule(Judge::Scan::RuleFactory.build(klass, root:, agent:, ecology:))
+          end
+          %w[
+            CoChangeCouplingRule RuleCoverageRule RubocopRule ReekRule InterconnectRule
+            YamlDeclarativeRule VetoPatternRule SemanticRule AdversarialRule CommentDriftRule AstOmissionRule
+          ].each do |name|
+            klass = Judge::Scan::Rules.const_get(name)
+            scanner.add_rule(Judge::Scan::RuleFactory.build(klass, root:, agent:, ecology:))
+          end
           scanner
         end
       end

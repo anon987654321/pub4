@@ -23,7 +23,9 @@ module Master
       RUN_BUDGET_SECONDS  = 30 * 60
       WORKFLOW_PATH       = Master.limits_path.freeze
 
-      def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil, rollback: nil, incremental: false)
+      def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
+                     rollback: nil, incremental: false, ground_truth: nil, preserve_user_intent: nil,
+                     law_resolver: nil)
         @rules       = rules
         @axioms      = axioms
         @root        = root
@@ -33,8 +35,10 @@ module Master
         @halt_reason = nil
         @git         = git || Reach::GitOperations.new(root)
 
-        committer    = Committer.new(git: @git, bus: bus, root: root)
-        loop_scanner = Scanner.new(scanner: scanner, root: root, bus: bus)
+        committer    = Committer.new(git: @git, bus: bus, root: root,
+                                     ground_truth: ground_truth, preserve_user_intent: preserve_user_intent)
+        conflict_resolver = ConflictResolver.new(root:, bus:, law_resolver:)
+        loop_scanner = Scanner.new(scanner: scanner, root: root, bus: bus, conflict_resolver:)
         llm_router   = LlmRouter.new(agent)
         preamble     = self.class.preamble_from_soul
 
@@ -44,7 +48,8 @@ module Master
           bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
           rules:, agent:, scanner:, learnings:, preamble:,
           clean_runs_required: clean_runs_required,
-          plateau_window:      plateau_window
+          plateau_window:      plateau_window,
+          ground_truth: ground_truth
         )
         # Wire ReflexionLedger for strict self-correction per rules.yml (AK102, self-application)
         @reflexions = Trace::ReflexionLedger.new(event_bus: bus, root: root) if bus

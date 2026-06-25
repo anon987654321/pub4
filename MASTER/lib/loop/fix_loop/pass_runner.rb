@@ -16,7 +16,7 @@ module Master
 
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
-                       clean_runs_required:, plateau_window:)
+                       clean_runs_required:, plateau_window:, ground_truth: nil)
           @bus = bus
           @committer = committer
           @loop_scanner = loop_scanner
@@ -32,6 +32,7 @@ module Master
           @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
           @violation_counts = Hash.new(0)
           @rule_recurrence = Hash.new(0)
+          @ground_truth = ground_truth
         end
 
         def violations(files) = @loop_scanner.violations(files)
@@ -96,7 +97,18 @@ module Master
           PassResult.new(status: status, message: "clean after #{pass} pass(es)", consecutive_clean: clean_count)
         end
 
-        def ground_truth_violations(files) = violations(files)
+        def ground_truth_violations(files)
+          return [] unless @ground_truth
+
+          files.filter_map do |path|
+            next unless File.exist?(path)
+
+            result = @ground_truth.assert_fresh!(path, reason: "claim_task_complete")
+            next if result.ok?
+
+            { rule: "GROUND_TRUTH", file: path.delete_prefix("#{@root}/"), line: 0, message: result.message }
+          end
+        end
 
         def mtimes(files) = files.to_h { |p| [p, File.exist?(p) ? File.mtime(p).to_f : nil] }
 

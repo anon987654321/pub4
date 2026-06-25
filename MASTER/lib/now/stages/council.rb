@@ -13,10 +13,11 @@ module Master
       EXEMPLAR_MSG_CHARS = 120
       EXEMPLAR_FEEDBACK_CHARS = 240
 
-      def initialize(deliberation:, config: nil, enabled: false, event_bus: nil)
+      def initialize(deliberation:, config: nil, enabled: false, event_bus: nil, ground_truth: nil)
         @deliberation = deliberation
         @config = config
         @bus = event_bus
+        @ground_truth = ground_truth
         @enabled = @config&.[]("council") == true || enabled
         @dangerous_patterns = load_patterns
         @exemplar_mutex = Mutex.new
@@ -24,6 +25,12 @@ module Master
 
       def call(ctx)
         return Result.ok(ctx) unless should_run?(ctx)
+
+        stale = ground_truth_stale_paths(ctx)
+        unless stale.empty?
+          @bus&.publish("council:ground_truth_blocked", paths: stale)
+          return Result.err("council blocked: stale read required for #{stale.join(", ")}", category: :policy)
+        end
 
         payload = extract_payload(ctx)
         result  = @deliberation.review(payload, context: ctx.message)
@@ -78,6 +85,19 @@ module Master
 
       def dangerous_tool?(ctx)  = ctx.last_tool_tier == :dangerous
       def multi_file_diff?(ctx) = extract_payload(ctx).scan(/^(?:---|\+\+\+)\s+[ab]\/(.+)$/).uniq.size >= 2
+
+      def ground_truth_stale_paths(ctx)
+        return [] unless @ground_truth
+
+        extract_payload(ctx).scan(/^(?:---|\+\+\+)\s+[ab]\/(.+)$/).flatten.uniq.filter_map do |rel|
+          path = File.expand_path(rel, Master::ROOT)
+          next unless File.file?(path)
+          next if @ground_truth.fresh?(path)
+
+          @ground_truth.assert_fresh!(path, reason: "council_vote_on_change")
+          rel
+        end
+      end
 
       def extract_payload(ctx)
         out = ctx.output

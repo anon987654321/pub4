@@ -21,7 +21,9 @@ module Master
 
         fix_loop = Master::Loop::FixLoop.new(
           rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:, rollback:,
-          incremental: ENV["MASTER_INCREMENTAL"] == "1"
+          incremental: ENV["MASTER_INCREMENTAL"] == "1",
+          ground_truth: infra[:ground_truth], preserve_user_intent: infra[:preserve_user_intent],
+          law_resolver: infra[:law_resolver]
         )
         fix_loop.start_background!(root) if ENV["MASTER_AUTOFIX"] == "1"
 

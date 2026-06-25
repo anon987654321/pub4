@@ -26,7 +26,9 @@ module Master
         "SymbolLookup"    => ->(r, i) {
           Master::Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus])
         },
-        "Shell"           => ->(r, i) { Master::Reach::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+        "Shell"           => ->(r, i) {
+          Master::Reach::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus], library_verify: i[:library_verify])
+        },
         "GitContext"      => ->(r, i) { Master::Reach::GitContext.new(root: r, event_bus: i[:bus]) },
         "WebFetch"        => ->(r, i) { Master::Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
         "WebSearch"       => ->(r, i) { Master::Reach::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },

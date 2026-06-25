@@ -9,10 +9,12 @@ module Master
       class Committer
         LINT_TIMEOUT_SECONDS = 20
 
-        def initialize(git:, bus: nil, root: nil)
+        def initialize(git:, bus: nil, root: nil, ground_truth: nil, preserve_user_intent: nil)
           @git = git
           @bus = bus
           @root = root
+          @ground_truth = ground_truth
+          @preserve_user_intent = preserve_user_intent
         end
 
         def commit_if_dirty(message)
@@ -20,6 +22,8 @@ module Master
 
           broken = unparseable_changed_ruby
           return block_commit(broken) unless broken.empty?
+          return block_commit_intent(message) unless intent_preserved?(message)
+          return block_commit_ground_truth unless ground_truth_fresh?
           return unless lint_changed_ruby
 
           @git.add_all
@@ -41,6 +45,41 @@ module Master
         def block_commit(files)
           @bus&.publish("fix_loop:commit_blocked", reason: "syntax", files: files)
           nil
+        end
+
+        def block_commit_intent(message)
+          @bus&.publish("fix_loop:commit_blocked", reason: "preserve_user_intent", message: message.to_s[0, 120])
+          nil
+        end
+
+        def block_commit_ground_truth
+          @bus&.publish("fix_loop:commit_blocked", reason: "ground_truth")
+          nil
+        end
+
+        def intent_preserved?(message)
+          return true unless @preserve_user_intent && @root
+
+          diff = git_diff
+          result = @preserve_user_intent.assert_preserved!(diff, message:)
+          result.ok?
+        end
+
+        def ground_truth_fresh?
+          return true unless @ground_truth && @root
+
+          stale = changed_ruby_files.reject { |path| @ground_truth.fresh?(path) }
+          return true if stale.empty?
+
+          stale.each { |path| @ground_truth.assert_fresh!(path, reason: "commit_creation") }
+          false
+        end
+
+        def git_diff
+          out, = Open3.capture2e("git", "-C", @root, "diff", "HEAD")
+          out.to_s
+        rescue StandardError
+          ""
         end
 
         def lint_changed_ruby

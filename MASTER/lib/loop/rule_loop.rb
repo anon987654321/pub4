@@ -222,11 +222,14 @@ module Master
 
       def handle_fix_exception(error, violation, event:)
         message = error.message.to_s
-        if Master::Loop::Constants::TRANSIENT_RE.match?(message)
+        taxonomy = @failure_taxonomy || Ground::FailureTaxonomy.new
+        info = taxonomy.handle(error)
+        case info[:category]
+        when :transient
           return :retry
-        elsif Master::Loop::Constants::PERMANENT_RE.match?(message)
+        when :permanent
           @bus&.publish("rule_loop:fail_fast", rule: violation[:rule], file: violation[:file], error: message[0, 120])
-        elsif Master::Loop::Constants::AMBIGUOUS_RE.match?(message)
+        when :ambiguous
           @bus&.publish("rule_loop:human_intervention", rule: violation[:rule], file: violation[:file], error: message[0, 120])
         else
           @bus&.publish(event, rule: violation[:rule], file: violation[:file], error: message[0, 120])

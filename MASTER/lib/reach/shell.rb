@@ -38,16 +38,22 @@ module Master
         irb|pry|rails\s+c|bundle\s+exec\s+rails\s+c|fzf|top|htop|tmux|screen
       )\b/ix.freeze
 
-      def initialize(root:, governor:, event_bus: nil)
+      BINARY_RE = /\b(?:bundle|ruby|rake|git|node|npm|yarn|python\d*|perl)\b/.freeze
+
+      def initialize(root:, governor:, event_bus: nil, library_verify: nil)
         @root     = root
         @governor = governor
         @bus      = event_bus
+        @library_verify = library_verify || Ground::LibraryVerify.new(root: root)
         @cmd      = TTY::Command.new(printer: :null)
         @recent   = []
         @mutex    = Mutex.new
       end
 
       def call(command:)
+        binary_err = verify_binaries(command)
+        return binary_err if binary_err&.err?
+
         return Result.err("blocked command: #{command}", category: :validation) if blocked?(command)
         return Result.err("blocked destructive command without --force: #{command}", category: :validation) if force_required_without_flag?(command)
         return Result.err("write target not writable: #{unwritable_target(command)}", category: :validation) if unwritable_target(command)
@@ -91,6 +97,14 @@ module Master
       end
 
       private
+
+      def verify_binaries(command)
+        command.to_s.scan(BINARY_RE).uniq.each do |binary|
+          result = @library_verify.verify_binary!(binary)
+          return result if result.err?
+        end
+        nil
+      end
 
       def blocked?(command)
         BLOCKLIST.any? { |b| command.include?(b) }

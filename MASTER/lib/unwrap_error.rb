@@ -8,6 +8,10 @@ module Master
   module PhantomRecovery
     REPETITION_SPAN = 60
     REPETITION_MIN = 3
+    HALT_ON = 3
+
+    @occurrences = Hash.new(0)
+    @occurrence_mutex = Mutex.new
 
     module_function
 
@@ -33,6 +37,34 @@ module Master
       recovery = Master.load_yaml(Master::RULES_PATH).dig("phantom_recovery", "recovery") || []
       bus&.publish("phantom:detected", patterns: hits, recovery: recovery)
       { patterns: hits, recovery: recovery }
+    end
+
+    def handle(text, bus: nil, session: nil, scope: :default)
+      finding = detect(text, bus:)
+      return { action: :continue } unless finding
+
+      count = @occurrence_mutex.synchronize do
+        @occurrences[scope] += 1
+        @occurrences[scope]
+      end
+      bus&.publish("phantom:occurrence", count:, scope:)
+
+      case count
+      when 1
+        session&.rollback_last_assistant_message if session.respond_to?(:rollback_last_assistant_message)
+        bus&.publish("phantom:recovery", step: 1, action: "discard_last_response")
+        { action: :discard, **finding }
+      when 2
+        bus&.publish("phantom:recovery", step: 2, action: "escalate_model_tier")
+        { action: :escalate, **finding }
+      else
+        bus&.publish("phantom:halt", count:, scope:)
+        { action: :halt, **finding }
+      end
+    end
+
+    def reset!(scope: :default)
+      @occurrence_mutex.synchronize { @occurrences.delete(scope) }
     end
 
     def repetition_loop?(text)

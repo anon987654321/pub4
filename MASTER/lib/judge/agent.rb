@@ -70,7 +70,15 @@ module Master
         response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
 
         text = response.to_s
-        PhantomRecovery.detect(text, bus: @bus)
+        recovery = PhantomRecovery.handle(text, bus: @bus, session: @session)
+        case recovery[:action]
+        when :discard
+          return Result.err("phantom recovery: discarded repetitive response", category: :policy)
+        when :escalate
+          return chat(message, image:, stream:, escalation_depth: escalation_depth + 1, task_type:, &blk) if escalation_depth < 2
+        when :halt
+          return Result.err("phantom recovery: halted after repeated phantom patterns", category: :policy)
+        end
 
         @session.add_message(role: :assistant, content: text)
         publish_ctx_footer(selected_model)

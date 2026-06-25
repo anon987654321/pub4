@@ -75,7 +75,13 @@ module Master
                                              root: @root, homeostat: @homeostat)
         learnings = Ground::KnowledgeStore.new(root: @root)
         ground_truth = Ground::GroundTruth.new(event_bus: nil)
-        { memory: memory, personality: personality, learnings: learnings, ground_truth: ground_truth }
+        library_verify = Ground::LibraryVerify.new(root: @root)
+        law_resolver = Ground::LawResolver.new
+        preserve_user_intent = Ground::PreserveUserIntent.new(root: @root)
+        failure_taxonomy = Ground::FailureTaxonomy.new
+        { memory: memory, personality: personality, learnings: learnings,
+          ground_truth: ground_truth, library_verify: library_verify, law_resolver: law_resolver,
+          preserve_user_intent: preserve_user_intent, failure_taxonomy: failure_taxonomy }
       end
     end
   end
