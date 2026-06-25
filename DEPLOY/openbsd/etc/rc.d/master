@@ -16,6 +16,8 @@ rc_pre() {
 	pkill -f "falcon.*${PORT}" 2>/dev/null
 	pkill -f "ruby34.*${PORT}" 2>/dev/null
 	pkill -f "pub4/MASTER/web" 2>/dev/null
+	# Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
+	rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
 	sleep 1
 }
 
