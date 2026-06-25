@@ -177,7 +177,7 @@ module Master
         end
       end
 
-      def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip
+
     end
   end
 end

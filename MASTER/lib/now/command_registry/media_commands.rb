@@ -13,7 +13,7 @@ module Master
 
       def dispatch_music(bus, ctx: nil)
         args = arg_for(ctx).to_s.strip.downcase
-        if args == "radio" || args.start_with?("radio ")
+        if args.start_with?("radio")
           publish_radio(bus)
         else
           publish_dilla(bus)

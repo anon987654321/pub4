@@ -159,10 +159,7 @@ module Master
         end
 
         def dilla_brief
-          return Master::Voice::Dilla.brief if defined?(Master::Voice::Dilla)
-          "Production DNA unavailable; keep timing human, restrained, and non-quantized when musical."
-        rescue StandardError => e
-          "Dilla production profile failed to load: #{e.message}."
+          Master::Voice::Dilla.council_brief
         end
 
         def ideation_value(ir)

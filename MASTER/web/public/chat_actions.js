@@ -56,10 +56,6 @@ function triggerClientAction(data) {
 
 async function runSlashCommand(text) {
   window._chatOnUser?.(text);
-  if (/^\/music\b/i.test(text)) {
-    const radio = /^\/music\s+radio\b/i.test(text);
-    triggerClientAction(radio ? { action: "radio_open", url: "/radio_bergen" } : { action: "dilla_bg" });
-  }
   try {
     const r = await fetch('/chat/command', {
       method: 'POST',
@@ -68,6 +64,9 @@ async function runSlashCommand(text) {
     });
     const data = await r.json().catch(() => ({ output: '' }));
     const out = (data.output || '(no output)').toString();
+    if (Array.isArray(data.client_actions)) {
+      data.client_actions.forEach((action) => triggerClientAction(action));
+    }
     window._chatOnChunk?.(out);
     window._chatOnDone?.();
   } catch (e) {

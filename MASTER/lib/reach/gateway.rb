@@ -34,7 +34,13 @@ module Master
         @bus&.publish("gateway:receive", channel: channel, size: message_text.bytesize)
 
         ctx = { user_message: message_text, channel: channel, metadata: metadata, turn_id: }
+        client_actions = []
+        unsub = @bus&.subscribe("client_action") do |ev|
+          client_actions << ev.slice(:action, :url, :label).compact
+        end
         result = @pipeline.call(Result.ok(ctx))
+        unsub&.call
+        result = attach_client_actions(result, client_actions) if client_actions.any?
 
         if (adapter = @adapters[channel])
           text = result.ok? ? extract_text(result) : result.to_s
@@ -61,6 +67,16 @@ module Master
       rescue StandardError => e
         @bus&.publish("gateway:extract_error", error: e.message)
         result.to_s
+      end
+
+      def attach_client_actions(result, client_actions)
+        return result unless result.ok?
+
+        value = result.value!
+        merged = value.is_a?(Hash) ? value.merge(client_actions:) : { rendered: value.to_s, client_actions: }
+        Result.ok(merged)
+      rescue StandardError
+        result
       end
     end
   end

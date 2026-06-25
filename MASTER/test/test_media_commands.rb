@@ -96,7 +96,7 @@ class TestMediaCommands < Minitest::Test
   def test_refine_repligen_video_generate_arg
     agent = FakeAgent.new
     arg = "generate minimax/video-01-live harbor at dawn"
-    refined = Master::Now::CommandRegistry.refine_repligen_generate_arg(arg, agent: agent)
+    refined = Master::Reach::RepligenArg.refine_generate(arg, agent: agent)
     assert refined.start_with?("generate minimax/video-01-live ")
     refute_equal arg, refined
     assert_match(/harbor/i, refined)
@@ -106,6 +106,6 @@ class TestMediaCommands < Minitest::Test
   def test_refine_repligen_skips_unknown_models
     agent = FakeAgent.new
     arg = "generate some-model test prompt"
-    assert_equal arg, Master::Now::CommandRegistry.refine_repligen_generate_arg(arg, agent: agent)
+    assert_equal arg, Master::Reach::RepligenArg.refine_generate(arg, agent: agent)
   end
 end

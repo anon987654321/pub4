@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "open3"
-require "shellwords"
 require "fileutils"
 
 module Master
@@ -23,34 +21,21 @@ module Master
         dispatch_master_tool(root:, tool: "postpro", arg: arg_for(ctx))
       end
 
-      DEFAULT_VIDEO_MODEL = "minimax/video-01-live"
-      VIDEO_MODEL_RE = /video|veo|kling|luma|ray|seedance|wan-/i.freeze
-      IMAGE_MODEL_RE = /flux|sdxl|stable.?diffusion|imagen|dalle/i.freeze
-
       def dispatch_repligen(root, agent, ctx: nil)
         arg = arg_for(ctx).to_s.strip
-        arg = refine_repligen_generate_arg(arg, agent: agent, ctx: ctx) if agent
+        arg = Reach::RepligenArg.refine_generate(arg, agent: agent, ctx: ctx) if agent
         dispatch_master_tool(root:, tool: "repligen", arg: arg)
       end
 
       def dispatch_master_tool(root:, tool:, arg:)
-        script = File.join(root, "tools", "#{tool}.rb")
-        return "#{tool}: missing tool entrypoint #{script}" unless File.file?(script)
-
-        argv = Shellwords.split(arg.to_s)
-        out, status = Open3.capture2e(RbConfig.ruby, script, *argv, chdir: File.expand_path("..", root))
-        status.success? ? out.strip : "#{tool}: exit=#{status.exitstatus}\n#{out.strip}"
-      rescue ArgumentError => e
-        "#{tool}: bad arguments: #{e.message}"
-      rescue StandardError => e
-        "#{tool}: #{e.class}: #{e.message}"
+        Reach::ScriptDispatch.run_string(root:, tool:, arg:)
       end
 
       def dispatch_photograph(root, agent, ctx: nil)
         prompt = arg_for(ctx).to_s.strip
         return "usage: /photograph <seed>   (LLM expands + Strunk-polishes; attach photo for ref)" if prompt.empty?
 
-        image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
+        image = Reach::RepligenArg.ctx_image(ctx)
         model = "black-forest-labs/flux-1.1-pro"
         refined_prompt = refine_generation_prompt(prompt, medium: :photo, agent: agent, image: image)
 
@@ -85,24 +70,6 @@ module Master
         ].join("\n")
       end
 
-      def refine_repligen_generate_arg(arg, agent:, ctx: nil)
-        return arg unless arg.start_with?("generate ")
-
-        rest = arg.delete_prefix("generate ").strip
-        model, prompt = rest.split(/\s+/, 2)
-        return arg if prompt.nil? || prompt.strip.empty?
-
-        medium = video_model?(model) ? :video : :photo
-        return arg unless video_model?(model) || image_model?(model)
-
-        image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
-        refined = refine_generation_prompt(prompt.strip, medium: medium, agent: agent, image: image)
-        "generate #{model} #{refined}"
-      end
-
-      def video_model?(model) = model.to_s.match?(VIDEO_MODEL_RE)
-      def image_model?(model) = model.to_s.match?(IMAGE_MODEL_RE)
-
       def dispatch_prompt(root, agent, ctx: nil)
         args = arg_for(ctx).to_s.strip
         return prompt_usage if args.empty?
@@ -115,7 +82,7 @@ module Master
         end
         return prompt_usage if seed.empty?
 
-        image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
+        image = Reach::RepligenArg.ctx_image(ctx)
         refined = refine_generation_prompt(seed, medium: medium, agent: agent, image: image)
         [
           "prompt: medium=#{medium}",
@@ -136,8 +103,6 @@ module Master
           image: image
         )
       end
-
-      def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip
     end
   end
 end

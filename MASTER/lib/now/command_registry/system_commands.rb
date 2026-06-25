@@ -351,8 +351,6 @@ module Master
         ["## Download snapshot artifacts", *paths, ""]
       end
 
-      def arg_for(ctx) = ctx.to_h.fetch(:args, "").to_s.strip
-
       def walk_tree(dir, level, depth:, cap:, tree_lines:)
         return if level > depth || tree_lines.size >= cap
 

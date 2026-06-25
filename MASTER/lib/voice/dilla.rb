@@ -34,6 +34,14 @@ module Master
         Lo-fi chain: use Sonitex preset #{sonitex_preset}; low-pass samples, keep drums human, add sub support near 40Hz.
       TEXT
       end
+
+      def council_brief
+        brief
+      rescue StandardError
+        ProductionDna.brief
+      rescue StandardError => e
+        "Dilla production profile failed to load: #{e.message}."
+      end
     end
   end
 end

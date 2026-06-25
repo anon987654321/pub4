@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 require "ruby_llm"
-require "open3"
-require "rbconfig"
-require "shellwords"
 require_relative "../result"
 
 module Master
@@ -12,17 +9,17 @@ module Master
     # Delegate to the script dispatch (same as /commands) so LLM can call natively
     # without /command or Shell. Return Master::Result for LLM wrapper compatibility.
     class Repligen
-      def initialize(root:, governor: nil, event_bus: nil)
+      attr_writer :agent
+
+      def initialize(root:, governor: nil, event_bus: nil, agent: nil)
         @root = root
+        @agent = agent
       end
 
-      def call(args: nil)
-        script = File.join(@root, "tools", "repligen.rb")
-        argv = args ? Shellwords.split(args.to_s) : []
-        out, status = Open3.capture2e(RbConfig.ruby, script, *argv, chdir: File.expand_path("..", @root))
-        status.success? ? Master::Result.ok(out.strip) : Master::Result.err(out.strip)
-      rescue StandardError => e
-        Master::Result.err("repligen: #{e.message}")
+      def call(args: nil, ctx: nil)
+        arg = args.to_s
+        arg = RepligenArg.refine_generate(arg, agent: @agent, ctx: ctx) if @agent
+        ScriptDispatch.run(root: @root, tool: "repligen", arg: arg)
       end
     end
 
@@ -32,12 +29,7 @@ module Master
       end
 
       def call(args: nil)
-        script = File.join(@root, "tools", "postpro.rb")
-        argv = args ? Shellwords.split(args.to_s) : []
-        out, status = Open3.capture2e(RbConfig.ruby, script, *argv, chdir: File.expand_path("..", @root))
-        status.success? ? Master::Result.ok(out.strip) : Master::Result.err(out.strip)
-      rescue StandardError => e
-        Master::Result.err("postpro: #{e.message}")
+        ScriptDispatch.run(root: @root, tool: "postpro", arg: args.to_s)
       end
     end
 
@@ -264,16 +256,14 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(action:, query: nil, limit: nil)
-          if action.to_s == "generate" && query.to_s.include?(" ")
-            # Forward to script for non-interactive generate (supports flux etc + download to output/)
-            master_root = File.expand_path("..", __dir__)
-            repo_root = File.expand_path("..", master_root)
-            script = File.join(repo_root, "DEPLOY", "repligen.rb")
-            argv = ["generate"] + Shellwords.split(query.to_s)
-            out, st = Open3.capture2e(RbConfig.ruby, script, *argv, chdir: repo_root)
-            return st.success? ? out.strip : "repligen generate error: #{out.strip}"
+          if action.to_s == "generate" && !query.to_s.strip.empty?
+            result = @tool.call(args: "generate #{query}")
+            return result.ok? ? result.value! : "Error: #{result.message}"
           end
-          result = @tool.call(action: action.to_s, query: query&.to_s, limit: limit&.to_i)
+          argv = [action.to_s]
+          argv << query.to_s if query && !query.to_s.strip.empty?
+          argv << limit.to_s if limit
+          result = @tool.call(args: argv.join(" "))
           result.ok? ? result.value! : "Error: #{result.message}"
         end
       end

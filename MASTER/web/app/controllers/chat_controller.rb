@@ -70,8 +70,10 @@ class ChatController < ApplicationController
     return head(:forbidden) if visitor? && cmd.start_with?("/")
 
     result = container[:gateway].receive(channel: :cli, message: cmd)
-    output = result.ok? ? (result.value[:rendered] || result.value.to_s) : result.message
-    render json: { output: output }
+    value = result.ok? ? result.value! : nil
+    output = value.is_a?(Hash) ? (value[:rendered] || value.to_s) : (value || result.message)
+    client_actions = value.is_a?(Hash) ? Array(value[:client_actions]) : []
+    render json: { output: output, client_actions: client_actions }
   rescue StandardError => e
     render json: { output: "Error: #{e.message}" }, status: 500
   end

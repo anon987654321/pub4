@@ -102,15 +102,7 @@ module Master
         end
 
         def dilla_brief
-          if defined?(Master::Voice::Dilla)
-            Master::Voice::Dilla.brief
-          elsif defined?(Master::Voice::ProductionDna)
-            Master::Voice::ProductionDna.brief
-          else
-            "Production DNA unavailable; keep timing human, restrained, and non-quantized when musical."
-          end
-        rescue StandardError => e
-          "Dilla production profile failed to load: #{e.message}."
+          Master::Voice::Dilla.council_brief
         end
 
         def tts_lofi_brief

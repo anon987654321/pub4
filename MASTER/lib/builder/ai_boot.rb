@@ -16,6 +16,7 @@ module Master
         code_index: infra[:code_index], homeostat: infra[:homeostat]
       )
       agent = Judge::Agent.new(deps:)
+      tools.each { |t| t.agent = agent if t.is_a?(Reach::Repligen) }
       soul_doc = Voice::Soul.new(root:, agent:)
       tools << Reach::AskLlm.new(agent:, governor: infra[:governor],
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
