@@ -90,7 +90,14 @@ vmctl console vm23
 ## Open proof items
 
 - [ ] All six Rails apps: `bundle34 exec bin/ci` green on vm23 (bundler-audit network + copy-tree bundle hygiene)
-- [ ] `doas rcctl restart master` after web face asset changes
 - [ ] Browser smoke on `https://ai.brgen.no/` (WebGL, palette, history sidebar)
+
+### 2026-06-25 (commit `ef45e45c5`)
+
+| Check | Result |
+|-------|--------|
+| Local `bundle exec rake test` (MASTER) | 479 runs, 0 failures |
+| VPS `git pull` + `health_check.rb` | pass (after `f7b04ee0b` pull) |
+| Data defrag | `workflow→limits`, `standing_orders→state`, `ruby_style→style`; `patterns.yml` absorbs injection + sweep techniques; 20 duplicate `data/claude/feedback_*.md` removed; `MEMORY.md` consolidated |
 
 Update this section when VPS proof completes; do not recreate section-checkbox sprawl.
