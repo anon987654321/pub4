@@ -27,7 +27,7 @@ operators:
     context_format: |
       Feed files as inline text with === FILE: path === separators.
       Never use file attachments — Grok reads inline text more reliably.
-      Include soul.yml + rules.yml first so constraints are in top-of-context.
+      Include soul.yml, rules.yml, voice.yml, and limits.yml first so constraints are in top-of-context.
       After pasting files, ask Grok to run: bash("grep -n 'def [function]' [file]")
       to prove it can locate code before it writes anything.
     reading_gate: |
@@ -73,11 +73,11 @@ operators:
     context_format: |
       Claude reads CLAUDE.md automatically. Feed additional context as:
       <file path="MASTER/lib/...">...</file> blocks or plain === FILE === separators.
-      soul.yml + rules.yml are authoritative — reference them by name.
+      soul.yml, rules.yml, voice.yml, and limits.yml are authoritative — reference them by name.
       Memory entries in ~/.claude/projects/.../memory/ persist across sessions —
       add feedback entries there for behaviors you want locked in permanently.
     reading_gate: |
-      Read MASTER/data/soul.yml, rules.yml, and workflow.yml first.
+      Read MASTER/data/soul.yml, rules.yml, voice.yml, limits.yml, and style.yml first.
       Then read [specific files].
       Before writing any code, state:
       - The invariant this change must not break
@@ -306,7 +306,7 @@ operators:
 # Universal rules that apply regardless of model:
 universal:
   always_do:
-    - Include soul.yml + rules.yml constraints in every system prompt
+    - Include soul.yml, rules.yml, voice.yml, and limits.yml constraints in every system prompt
     - Gate: verify reading before acting (model-specific gate above)
     - One fix at a time — never batch multiple concerns in one call
     - Ask for diffs, not full file rewrites (except on < 50-line files)

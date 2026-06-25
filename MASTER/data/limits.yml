@@ -15,12 +15,35 @@ file_reading:
 before_edit:
   rule: READ_BEFORE_WRITE
   statement: "Read every file that could be affected before editing any file."
+  see_also: edit_context
   steps:
     - "Map the codebase: find all .rb files in lib/"
     - "Trace callers before changing any public method signature"
     - "Check Zeitwerk inflectors before renaming classes or files"
     - "Run ruby -c FILE after every write"
     - "Run ruby -e require_relative after every commit"
+
+edit_context:
+  rule: TIERED_BLAST_RADIUS_READ
+  statement: "Read depth scales with change radius — not every edit requires a full-corpus read."
+  always:
+    - "Full read of every file you will edit"
+    - "Re-read from disk immediately before writing"
+    - "One-hop callers/tests for any public method or constant you change"
+  tiers:
+    local_fix:
+      when: "single-file bugfix or comment; no signature change"
+      read: ["target file", "matching test file", "direct callers"]
+    module_change:
+      when: "new class, renamed constant, or cross-file behavior in one lib/ module"
+      read: ["module entrypoint", "/graph one-hop dependents", "affected tests"]
+    structural_change:
+      when: "pipeline stage, scan rule, constitution data, or DEPLOY topology"
+      read: ["data/soul.yml ABSOLUTE sections", "limits.yml scan_profiles", "/scan deep on affected tree"]
+  forbidden:
+    - "Edit from grep snippets, partial reads, or conversation memory"
+    - "Claim a fix without reading the file being changed"
+  note: "Pairs with llm_ergonomics — external grep/rg for reconnaissance is allowed; production edits require full-file reads."
 
 code_principles:
   no_hardcoding:
@@ -49,7 +72,7 @@ code_principles:
     statement: "Never instantiate collaborators inside a method."
   result_monad:
     rule: RESULT_MONAD
-    statement: "Use respond_to?(:ok?) not is_a?(Result) for duck‑typing."
+    statement: "Pipeline stages return Master::Result. Use .ok? and .err?; propagate Err without calling .value!."
 
 scan_rules:
   standard_depth:
@@ -74,8 +97,8 @@ scan_rules:
     - reek
   notes:
     nielsen: "puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are."
-    prune: "Loads patterns from data/rules.yml (voice.strunk) — single source of truth."
-    semantic: "Loads philosophy from data/rules.yml (zen + voice) — single source of truth."
+    prune: "Loads patterns from data/voice.yml (voice.strunk); legacy fallback in rules.yml."
+    semantic: "Loads detect_semantic prompts from data/rules.yml scan corpus."
     deep_caution: "deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes."
 
 principle_groups:
@@ -298,6 +321,7 @@ session_startup:
   mandatory_reads:
     - data/soul.yml
     - data/rules.yml
+    - data/voice.yml
     - data/style.yml
     - data/limits.yml
     - data/state.yml

@@ -60,6 +60,8 @@ module Shared
     end
 
     def safe_count(filtered)
+      return 0 if filtered.null_relation?
+
       filtered.limit(500).count
     end
 

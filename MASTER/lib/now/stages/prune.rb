@@ -24,19 +24,11 @@ module Master
         )[!.,]*\s*/ix
 
         def call(ctx)
-          raw = ctx.respond_to?(:output) ? ctx.output : ctx[:output]
-          output = if raw.respond_to?(:ok?) && raw.ok?
-                     raw.value!.to_s
-                   elsif raw.is_a?(String)
-                     raw
-                   else
-                     return Result.ok(ctx)
-                   end
+          output = (ctx.respond_to?(:output) ? ctx.output : ctx[:output]).to_s
           return Result.ok(ctx) if output.empty?
 
           cleaned = require_evidence(prune_mixed(output).strip)
-          final = raw.respond_to?(:ok?) ? Result.ok(cleaned) : cleaned
-          Result.ok(ctx.merge(output: final))
+          Result.ok(ctx.merge(output: cleaned))
         end
 
         private

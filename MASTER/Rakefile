@@ -24,9 +24,9 @@ task :constitution do
   scanner.add_rule(ns::Rules::InterconnectRule.new(root:))
 
   result = scanner.scan_dir(File.join(root, "lib"), depth: :deep, stream: false)
-  abort "constitution: scan failed: #{result.message}" unless result.respond_to?(:ok?) && result.ok?
+  abort "constitution: scan failed: #{result.message}" unless result.ok?
 
-  violations = result.value!.flat_map { |_f, r| (r.respond_to?(:ok?) && r.ok?) ? r.value! : [] }
+  violations = result.value!.flat_map { |_f, r| r.ok? ? r.value! : [] }
   total      = violations.size
 
   if total.zero?

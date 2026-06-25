@@ -29,7 +29,8 @@ governs. When a rule's text is needed, open the file named here.
 - data/style.yml — Ruby-specific style: quoting, frozen_string,
   comment limits, whitespace.
 - data/epistemics.yml — confidence and evidence rules.
-- data/workflow.yml — pipeline stage rules.
+- data/limits.yml — pipeline budgets, read discipline (edit_context), scan profiles.
+- data/voice.yml — output voice and strunk prune patterns (split from rules.yml).
 
 ## Layer 2 — operator principles (data/principles/*.md, 32 files)
 
@@ -71,7 +72,7 @@ reference. Each line: the source, then where MASTER applies it.
   orthogonality, tracer bullets, broken-windows.
 - Clean Code / Refactoring (Martin, Fowler) — the ZEN_METHOD thresholds in
   rules.yml; method and class size limits.
-- Polished Ruby Programming (Evans) — Ruby idiom; ruby_style.yml.
+- Polished Ruby Programming (Evans) — Ruby idiom; style.yml.
 - The Rails Doctrine — convention over configuration; principles/feedback
   for web/* discipline.
 - Tadao Ando, Snøhetta — restraint, negative space, honest material —

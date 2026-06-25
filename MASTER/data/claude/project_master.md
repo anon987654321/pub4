@@ -15,5 +15,5 @@ Codebase: ~/pub4/MASTER/ — Ruby ~6K LOC, Zeitwerk-autoloaded.
 
 Pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render
 Pipe mode: `echo "cmd" | bundle exec ruby bin/cli`
-Session Startup: read data/state.yml, data/limits.yml, data/rules.yml, data/models.yml
+Session Startup: read data/state.yml, data/limits.yml, data/rules.yml, data/voice.yml, data/style.yml, data/models.yml
 Web UI: Rails 8 + Falcon on port 53187, proxied by relayd to https://ai.brgen.no (443)

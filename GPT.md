@@ -18,8 +18,10 @@ This file adapts MASTER's constitution for GPT's capabilities and known failure 
 ## Authoritative files
 
 - `MASTER/data/soul.yml` — identity, absolute rules, aesthetic constraints
-- `MASTER/data/rules.yml` — 173 scan rules with severity and autofix metadata
-- `MASTER/data/ruby_style.yml` — Ruby code style
+- `MASTER/data/rules.yml` — scan corpus with severity and autofix metadata
+- `MASTER/data/voice.yml` — output voice and strunk prune patterns
+- `MASTER/data/style.yml` — Ruby code style
+- `MASTER/data/limits.yml` — read discipline, pipeline budgets, scan profiles
 - `MASTER/data/patterns.yml` — detection and fix patterns
 - `MASTER/data/openbsd.yml` — OpenBSD deployment rules
 - `MASTER/QUICKSTART.md` — practical workflow entry point

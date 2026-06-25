@@ -83,13 +83,15 @@ vmctl console vm23
 | `https://ai.brgen.no/up` | pass |
 | `MASTER_LOW_RESOURCE=1 bundle34 exec ruby bin/smoke --web` | clean (7 checks) |
 | `deploy_backlog_test` on VPS brgen | pass (after `PUB4_RAILS_ROOT` fix) |
-| `bin/ci` all six apps | partial — brgen rails tests 1 failure fixed in tree; amber/baibl/etc. fail `bundler-audit` (GitHub advisory DB fetch as root) |
+| `bin/ci` brgen (env override) | partial — importmap/rubocop/brakeman/bundler-audit/seeds pass; 1 test fail `live_search_test` empty-query count on `.none` scope |
+| copy-tree `config/ci.rb` on VPS | stale — `/home/brgen/app/config/ci.rb` inlined old CI without `BUNDLER_AUDIT_UPDATE` / `NPM_CONFIG_CACHE`; monorepo `shared/config/ci.rb` is current — redeploy after pull |
 
 **sass-embedded on copy-tree deploys:** `bundle34 install` needs `node` (`doas pkg_add node`) and `NPM_CONFIG_CACHE=/home/<app>/.npm` when running via `doas su -m <app>` — otherwise npm writes to `/root/.npm` and native extension build fails.
 
 ## Open proof items
 
-- [ ] All six Rails apps: `bundle34 exec bin/ci` green on vm23 (run as app user with `BUNDLER_AUDIT_UPDATE=0`)
+- [ ] Redeploy six apps so copy-tree picks up `config/ci.rb` → `shared/config/ci.rb` (gate now checks `BUNDLER_AUDIT_UPDATE` + `NPM_CONFIG_CACHE`)
+- [ ] All six Rails apps: `bundle34 exec bin/ci` green on vm23 (as app user; env vars baked into shared ci.rb after redeploy)
 - [ ] Browser smoke on `https://ai.brgen.no/` (WebGL, palette, history sidebar)
 
 ### 2026-06-25 (commit `defrag-final`)

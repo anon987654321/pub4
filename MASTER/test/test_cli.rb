@@ -293,7 +293,7 @@ class TestCLI < Minitest::Test
     skip "drifted: API moved; port to new dispatcher/CLI shape"
     text = "the answer is 42"
     result = Master::Result.ok(rendered: text)
-    @pipeline.expect(:call, result, [->(r) { r.respond_to?(:ok?) }])
+    @pipeline.expect(:call, result, [Object])
     out, _err = capture_io { @cli.send(:process, "what is 6*7") }
     assert_includes out, text
     assert @cli.instance_variable_get(:@last_ok)
@@ -302,7 +302,7 @@ class TestCLI < Minitest::Test
   def test_process_err_result
     skip "drifted: API moved; port to new dispatcher/CLI shape"
     result = Master::Result.err("model unavailable")
-    @pipeline.expect(:call, result, [->(r) { r.respond_to?(:ok?) }])
+    @pipeline.expect(:call, result, [Object])
     @renderer.expect(:render, "[ERR]", ["model unavailable"], mode: :error)
     capture_io { @cli.send(:process, "fail me") }
     refute @cli.instance_variable_get(:@last_ok)
@@ -312,7 +312,7 @@ class TestCLI < Minitest::Test
   def test_pipe_calls_process
     skip "drifted: API moved; port to new dispatcher/CLI shape"
     result = Master::Result.ok(rendered: "pong")
-    @pipeline.expect(:call, result, [->(r) { r.respond_to?(:ok?) }])
+    @pipeline.expect(:call, result, [Object])
     out, _err = capture_io { @cli.pipe("ping") }
     assert_includes out, "pong"
   end

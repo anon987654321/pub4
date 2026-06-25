@@ -10,9 +10,9 @@ module Master
           return Result.err("execute: no handler", category: :validation) unless handler
 
           raw = handler.call(ctx)
-          return raw if raw.respond_to?(:err?) && raw.err?
+          return raw if raw.is_a?(Result) && raw.err?
 
-          output = raw.respond_to?(:ok?) ? raw.value!.to_s : raw.to_s
+          output = raw.is_a?(Result) ? raw.value!.to_s : raw.to_s
           Result.ok(ctx.merge(output: output))
         rescue StandardError => e
           Result.err("execute: #{e.message}", category: :unknown)

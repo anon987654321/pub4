@@ -43,7 +43,7 @@ module Master
 
       def boot_scan
         result = Master::Judge::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus).call(autofix: true)
-        return unless result.respond_to?(:ok?) && result.ok?
+        return unless result.ok?
 
         summary = result.value!
         set_violations(summary.violation_count)
@@ -77,14 +77,14 @@ module Master
 
       def count_violations(pairs)
         pairs.sum do |_file, file_result|
-          file_result.respond_to?(:ok?) && file_result.ok? ? file_result.value!.size : 0
+          file_result.ok? ? file_result.value!.size : 0
         end
       end
 
       def background_cycle
         lib_dir = File.join(@refs.root, "lib")
         result  = @refs.scanner.scan_dir(lib_dir, depth: :deep)
-        return unless result.respond_to?(:ok?) && result.ok?
+        return unless result.ok?
         n = count_violations(result.value!)
         prev = violations_count
         return if n == prev

@@ -47,7 +47,7 @@ In Markdown documents, plain `---` for an `<hr>` and table separators are fine �
 - **No regex when string methods suffice** — `start_with?`, `include?`, `end_with?`.
 - **Outsource to gems** — if it exists and works, use it.
 - **Endless methods** — single-expression methods use `def foo = expr`.
-- **Result monad** — check with `respond_to?(:ok?)`, not `is_a?(Result)`. Unwrap with `.value!` only after `.ok?` is true; on an `Err` it raises.
+- **Result monad** — stages return `Master::Result`. Use `.ok?` / `.err?`; call `.value!` only after `.ok?` (raises on `Err`).
 - **No flag arguments** — a boolean that selects behavior is two methods in one.
 - **Guard clauses first** — `return Result.ok(ctx) unless condition` before main logic.
 - **Dependency injection** — never instantiate collaborators inside a method.
@@ -99,7 +99,7 @@ Council deliberation samples a focus question per persona per turn from `data/co
 
 Observability: `Master::Telemetry` is a soft-optional OpenTelemetry tracer that emits JSONL spans to `.master/traces.log`. Wraps `EventBus#publish`, `Metrics#append`, `AuditLog#append`, and `Heartbeat#execute_job`. Bootstrap fires in `Master.boot` between Pledge stage1 and stage2.
 
-Key files — `data/soul.yml` (golden rule, tiers, persona), `data/rules.yml` (structural rules, thresholds, depths), `data/style.yml` (style and bugs), `data/limits.yml` (READ_BEFORE_WRITE, scan principles), `data/state.yml` (standing orders and FSM triggers).
+Key files — `data/soul.yml` (golden rule, tiers, persona), `data/rules.yml` (scan corpus, thresholds, depths), `data/voice.yml` (output voice, strunk prune patterns), `data/style.yml` (style and bugs), `data/limits.yml` (READ_BEFORE_WRITE, edit_context tiers, scan principles), `data/state.yml` (standing orders and FSM triggers).
 
 ## Running scans
 

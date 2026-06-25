@@ -35,9 +35,10 @@ module Master
 
         def run_stage(stage, ctx)
           result = stage.call(ctx)
-          return result if result.respond_to?(:ok?) && !result.ok?
+          return result if result.is_a?(Result) && result.err?
 
-          Result.wrap(result).map { |value| value || ctx }
+          wrapped = result.is_a?(Result) ? result : Result.ok(result)
+          wrapped.map { |value| value || ctx }
         rescue StandardError => e
           @bus&.publish("review:stage_error", stage: stage.class.name, message: e.message)
           Result.ok(ctx)

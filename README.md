@@ -27,7 +27,7 @@ cd MASTER && bundle exec ruby bin/cli
 
 Pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render
 
-Operator docs: `MASTER/QUICKSTART.md`, `MASTER/data/rules.yml`
+Operator docs: `MASTER/QUICKSTART.md`, `MASTER/data/rules.yml`, `MASTER/data/voice.yml`, `MASTER/data/limits.yml`
 
 Web face: Falcon on `:53187`, relayd → `https://ai.brgen.no`
 

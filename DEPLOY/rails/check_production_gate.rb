@@ -87,6 +87,8 @@ apps.each do |name, metadata|
     fail!(app_failures, "bin/ci must run bundler-audit") unless ci_text.include?("bundler-audit")
     fail!(app_failures, "bin/ci must run Brakeman") unless ci_text.include?("brakeman")
     fail!(app_failures, "bin/ci must run Rails tests") unless ci_text.include?("rails") && ci_text.include?("test")
+    fail!(app_failures, "bin/ci must pin BUNDLER_AUDIT_UPDATE (offline VPS)") unless ci_text.include?("BUNDLER_AUDIT_UPDATE")
+    fail!(app_failures, "bin/ci must set NPM_CONFIG_CACHE (copy-tree npm)") unless ci_text.include?("NPM_CONFIG_CACHE")
   else
     fail!(app_failures, "missing bin/ci")
   end
