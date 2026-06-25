@@ -61,7 +61,11 @@ module Pub4
         File.write(HOLDER_PATH, holder_info)
         yield
       ensure
-        File.delete(HOLDER_PATH) if File.exist?(HOLDER_PATH)
+        begin
+          File.delete(HOLDER_PATH) if File.exist?(HOLDER_PATH)
+        rescue Errno::EPERM
+          nil
+        end
       end
     end
 

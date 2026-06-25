@@ -16,8 +16,9 @@ export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/DEPLOY/rails}
 
 ensure_ci_lock() {
   doas sh -c "
-    touch /var/tmp/pub4-ci.lock /var/tmp/pub4-ci.lock.holder 2>/dev/null || true
-    chmod 666 /var/tmp/pub4-ci.lock /var/tmp/pub4-ci.lock.holder 2>/dev/null || true
+    rm -f /var/tmp/pub4-ci.lock.holder 2>/dev/null || true
+    touch /var/tmp/pub4-ci.lock 2>/dev/null || true
+    chmod 666 /var/tmp/pub4-ci.lock 2>/dev/null || true
   "
 }
 
