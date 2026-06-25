@@ -4,7 +4,7 @@
   style="position:absolute;inset:0;transform:translateY(<%= index * 6 %>px) scale(<%= 1 - index * 0.02 %>);z-index:<%= 100 - index %>"
 >
   <% if profile.photos.attached? %>
-    <%= lazy_image_tag profile.photos.first, alt: profile.name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash"), style: "width:100%;max-height:420px;object-fit:cover;border-radius:2px;margin-bottom:12px" %>
+    <%= lazy_image_tag profile.photos.first, alt: profile.user.display_name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash"), style: "width:100%;max-height:420px;object-fit:cover;border-radius:2px;margin-bottom:12px" %>
   <% else %>
     <div style="height:220px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--border);border-radius:2px;margin-bottom:12px">
       <span style="font-size:64px;font-weight:900"><%= profile.user.email_address.first.upcase %></span>

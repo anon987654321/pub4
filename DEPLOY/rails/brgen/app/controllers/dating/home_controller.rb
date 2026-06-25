@@ -27,7 +27,7 @@ class Dating::HomeController < Dating::BaseController
   end
 
   def candidate_scope
-    scope = Dating::Profile.visible.includes(:user)
+    scope = Dating::Profile.visible.includes(:user, :neighborhood, photos_attachments: :blob)
     return scope unless authenticated?
 
     profile = current_dating_profile
