@@ -319,8 +319,8 @@ infer:
       capture: none
     scan:
       patterns:
-      - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(?:deep|cosmetic|style|hygiene|perfection))?\\b"
-      capture: scan_depth
+      - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(?:cosmetic|style|hygiene|perfection|core|axioms|solid|critical|full))?\\b"
+      capture: scan_profile
     workflow:
       patterns:
       - "\\b(?:run|put|send|take)\\s+(?:this|it|that)?\\s*through\\s+master\\b"

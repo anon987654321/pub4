@@ -224,27 +224,8 @@ module Master
           $stdout.flush
         end
 
-        def depth_rules
-          @depth_rules ||= begin
-            data = Master.load_yaml(Master::RULES_PATH)
-            data["scan_depths"] || {}
-          end
-        rescue StandardError => _e
-          @depth_rules = {}
-        end
-
-        def active_rules(depth)
-          allowed = depth_rules[depth.to_s]
-          return @rules if allowed.nil? || allowed == ["all"] || allowed == :all
-
-          allowed_keys = allowed.map(&:to_s)
-          allowed_downcase = allowed_keys.map(&:downcase)
-          @rules.select do |rule|
-            name = rule.class.name&.split("::")&.last
-            id = rule.id.to_s
-            allowed_keys.include?(name) || allowed_keys.include?(id) ||
-              allowed_downcase.include?(id.downcase) || allowed_downcase.include?(name.to_s.downcase)
-          end
+        def active_rules(_depth)
+          @rules
         end
 
         # Pure Ruby reader for data/rules.yml prediction_engine.

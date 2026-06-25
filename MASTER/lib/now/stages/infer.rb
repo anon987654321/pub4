@@ -212,7 +212,7 @@ module Master
             msg[/\b(version|changelog|diff|approve|reject|rollback|propose.{0,60})/i].to_s.strip
           when "orders_subcmd"
             msg.match?(/\blist|show\b/i) ? "list" : ""
-          when "scan_depth"
+          when "scan_profile", "scan_depth"
             match&.[](1)&.strip.to_s
           else
             ""

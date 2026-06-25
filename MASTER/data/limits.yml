@@ -75,6 +75,7 @@ code_principles:
     statement: "Pipeline stages return Master::Result. Use .ok? and .err?; propagate Err without calling .value!."
 
 scan_rules:
+  note: "DEEP_SCAN_ONLY — every scan runs at deep depth. scan_profiles (cosmetic, core, …) filter the report after the scan; they are not depth tiers."
   standard_depth:
     - frozen_string
     - bare_rescue
@@ -95,9 +96,6 @@ scan_rules:
   hunt_only:
     - rubocop
     - reek
-  cosmetic_depth:
-    profile: cosmetic
-    description: "Hygiene, micro-typography, naming, and style-perfection rules from rules.yml scan_depths.cosmetic"
   notes:
     nielsen: "puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are."
     prune: "Loads patterns from data/voice.yml (voice.strunk); legacy fallback in rules.yml."

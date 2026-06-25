@@ -12,7 +12,7 @@ module Master
         },
         "scan" => {
           summary: "deep-scan files or directories",
-          detail: ["/scan [--dry-run] [report-filter] [path]", "Always runs at deep depth. Report filters: full, core, axioms, solid, critical, cosmetic (aliases: style, hygiene, perfection). Use --profile NAME for explicit selection. Dry-run reports findings without changes."]
+          detail: ["/scan [--dry-run] [report-filter] [path]", "Always runs at deep depth (DEEP_SCAN_ONLY). Report filters only — not depth tiers: full, core, axioms, solid, critical, cosmetic (aliases: style, hygiene, perfection). Use --profile NAME for explicit selection. Dry-run reports findings without changes."]
         },
         "self" => {
           summary: "scan MASTER itself",
