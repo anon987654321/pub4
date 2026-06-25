@@ -15,8 +15,13 @@ Pub4::CiGuard.run! do
   CI.run do
     step "Setup", "bin/setup --skip-server"
     step "Styles: Dart Sass", "bin/rails dartsass:build"
-    step "Security: Importmap audit", "bin/importmap audit" unless vps_host
-    step "Style: Ruby", 'bin/rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
+    step("Security: Importmap audit", "bin/importmap audit") unless vps_host
+    rubocop = if vps_host
+                'bin/rubocop -A --fail-level=E $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
+              else
+                'bin/rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
+              end
+    step "Style: Ruby", rubocop
     audit = ENV["BUNDLER_AUDIT_UPDATE"] == "1" ? "bin/bundler-audit check --update" : "bin/bundler-audit check"
     step "Security: Gem audit", audit
     step "Security: Brakeman", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
