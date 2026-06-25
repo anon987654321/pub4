@@ -331,16 +331,13 @@ infer:
       patterns:
       - "\\b(?:show\\s+(?:logs?|events?)|system\\s+log|dmesg|what\\s+(?:happened|has\\s+happened)|recent\\s+activity)\\b"
       capture: none
-    dilla:
+    music:
       patterns:
       - "\\b(?:play|start|put on|spin|queue)\\s+(?:some\\s+)?(?:j\\s*)?dilla(?:\\s+beats?)?\\b"
       - "\\b(?:j\\s*dilla|dilla\\s+beats?|donuts|mpc\\s*3000)\\b"
-      capture: none
-    radio:
-      patterns:
       - "\\b(?:play|open|start)\\s+(?:radio\\s+bergen|warp\\s+tunnel)\\b"
       - "\\b(?:radio\\s+bergen|flying\\s+lotus|madlib)\\b"
-      capture: none
+      capture: music_sub
     prompt:
       patterns:
       - "\\b(?:write|expand|embellish|polish)\\s+(?:me\\s+)?(?:a\\s+)?(?:(?:photo|video|image)\\s+)?prompt\\s+(?:for\\s+)?(.+)"

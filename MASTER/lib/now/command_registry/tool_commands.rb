@@ -13,9 +13,8 @@ module Master
         agent = ai && ai[:agent]
         {
           "postpro" => command(:dispatch_postpro, root),
-          "repligen" => command(:dispatch_repligen, root),
+          "repligen" => command(:dispatch_repligen, root, agent),
           "photograph" => command(:dispatch_photograph, root, agent),
-          "video" => command(:dispatch_video, root, agent),
           "prompt" => command(:dispatch_prompt, root, agent),
         }
       end
@@ -24,8 +23,14 @@ module Master
         dispatch_master_tool(root:, tool: "postpro", arg: arg_for(ctx))
       end
 
-      def dispatch_repligen(root, ctx: nil)
-        dispatch_master_tool(root:, tool: "repligen", arg: arg_for(ctx))
+      DEFAULT_VIDEO_MODEL = "minimax/video-01-live"
+      VIDEO_MODEL_RE = /video|veo|kling|luma|ray|seedance|wan-/i.freeze
+      IMAGE_MODEL_RE = /flux|sdxl|stable.?diffusion|imagen|dalle/i.freeze
+
+      def dispatch_repligen(root, agent, ctx: nil)
+        arg = arg_for(ctx).to_s.strip
+        arg = refine_repligen_generate_arg(arg, agent: agent, ctx: ctx) if agent
+        dispatch_master_tool(root:, tool: "repligen", arg: arg)
       end
 
       def dispatch_master_tool(root:, tool:, arg:)
@@ -80,31 +85,23 @@ module Master
         ].join("\n")
       end
 
-      DEFAULT_VIDEO_MODEL = "minimax/video-01-live"
+      def refine_repligen_generate_arg(arg, agent:, ctx: nil)
+        return arg unless arg.start_with?("generate ")
 
-      def dispatch_video(root, agent, ctx: nil)
-        prompt = arg_for(ctx).to_s.strip
-        return "usage: /video <seed>   (LLM expands + Strunk-polishes → #{DEFAULT_VIDEO_MODEL})" if prompt.empty?
+        rest = arg.delete_prefix("generate ").strip
+        model, prompt = rest.split(/\s+/, 2)
+        return arg if prompt.nil? || prompt.strip.empty?
+
+        medium = video_model?(model) ? :video : :photo
+        return arg unless video_model?(model) || image_model?(model)
 
         image = ctx[:image] if ctx.respond_to?(:[]) && ctx.key?(:image)
-        refined_prompt = refine_generation_prompt(prompt, medium: :video, agent: agent, image: image)
-
-        gen_out = dispatch_master_tool(
-          root: root,
-          tool: "repligen",
-          arg: "generate #{DEFAULT_VIDEO_MODEL} #{refined_prompt}"
-        )
-
-        output_dir = gen_out[/Output: (output\/[^\s]+)/, 1]
-        videos = output_dir ? Dir.glob(File.join(output_dir, "*.{mp4,webm,mov,gif}")).sort : []
-
-        [
-          "video: model=#{DEFAULT_VIDEO_MODEL}",
-          "seed: #{prompt[0, 80]}#{"..." if prompt.length > 80}",
-          "refined: #{refined_prompt[0, 160]}#{"..." if refined_prompt.length > 160}",
-          (videos.any? ? "files: #{videos.join(", ")}" : gen_out),
-        ].join("\n")
+        refined = refine_generation_prompt(prompt.strip, medium: medium, agent: agent, image: image)
+        "generate #{model} #{refined}"
       end
+
+      def video_model?(model) = model.to_s.match?(VIDEO_MODEL_RE)
+      def image_model?(model) = model.to_s.match?(IMAGE_MODEL_RE)
 
       def dispatch_prompt(root, agent, ctx: nil)
         args = arg_for(ctx).to_s.strip

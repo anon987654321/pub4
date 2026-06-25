@@ -56,8 +56,10 @@ function triggerClientAction(data) {
 
 async function runSlashCommand(text) {
   window._chatOnUser?.(text);
-  if (/^\/dilla\b/i.test(text)) { triggerClientAction({ action: "dilla_bg" }); }
-  if (/^\/radio\b/i.test(text)) { triggerClientAction({ action: "radio_open", url: "/radio_bergen" }); }
+  if (/^\/music\b/i.test(text)) {
+    const radio = /^\/music\s+radio\b/i.test(text);
+    triggerClientAction(radio ? { action: "radio_open", url: "/radio_bergen" } : { action: "dilla_bg" });
+  }
   try {
     const r = await fetch('/chat/command', {
       method: 'POST',

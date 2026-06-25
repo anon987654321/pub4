@@ -7,19 +7,27 @@ module Master
 
       def media_commands(bus: nil)
         {
-          "dilla" => command(:dispatch_dilla, bus),
-          "radio" => command(:dispatch_radio, bus),
+          "music" => command(:dispatch_music, bus),
         }
       end
 
-      def dispatch_dilla(bus, ctx: nil)
-        bus&.publish("client_action", action: "dilla_bg", label: "J Dilla pocket")
-        "Dilla pocket — lo-fi beat on the face canvas. (Swing 88 BPM, ducked under TTS.)"
+      def dispatch_music(bus, ctx: nil)
+        args = arg_for(ctx).to_s.strip.downcase
+        if args == "radio" || args.start_with?("radio ")
+          publish_radio(bus)
+        else
+          publish_dilla(bus)
+        end
       end
 
-      def dispatch_radio(bus, ctx: nil)
+      def publish_dilla(bus)
+        bus&.publish("client_action", action: "dilla_bg", label: "J Dilla pocket")
+        "Music: Dilla pocket — lo-fi beat on the face canvas. (/music radio for Radio Bergen.)"
+      end
+
+      def publish_radio(bus)
         bus&.publish("client_action", action: "radio_open", url: "/radio_bergen", label: "Radio Bergen")
-        "Opening Radio Bergen — J Dilla · Flying Lotus · Madlib warp tunnel."
+        "Music: Radio Bergen — J Dilla · Flying Lotus · Madlib warp tunnel."
       end
     end
   end

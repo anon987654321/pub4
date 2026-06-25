@@ -206,6 +206,8 @@ module Master
             msg.match?(/\b(?:off|disable|stop|av|skru\s+av)\b/i) ? "off" : "on"
           when "first_group"
             match&.captures&.compact&.first.to_s.strip
+          when "music_sub"
+            msg.match?(/\b(?:radio\s+bergen|warp\s+tunnel|flying\s+lotus|madlib)\b/i) ? "radio" : ""
           when "persona_name"
             (match&.[](1) || match&.[](2) || match&.[](3)).to_s.strip
           when "soul_subcmd"
