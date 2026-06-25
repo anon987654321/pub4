@@ -205,6 +205,9 @@ end
 puts "Playlist: #{playlists.size} playlists, tracks, sets"
 
 # --- Takeaway subapp ---
+# CityTenantable adds belongs_to :city; string column :city is display label only (not the association).
+ActsAsTenant.current_tenant = seed_city if seed_city
+city_label = seed_city&.name.presence || "Bergen"
 cuisines = %w[Norwegian Italian Chinese Japanese Indian Thai Mexican Pizza Burger Kebab]
 restaurants = 15.times.map do
   Takeaway::Restaurant.create!(
@@ -216,7 +219,7 @@ restaurants = 15.times.map do
     min_order_cents: rand(8000..15_000),
     latitude: 60.39 + rand(-0.04..0.04),
     longitude: 5.33 + rand(-0.04..0.04)
-  ).tap { |restaurant| restaurant.update_column(:city, 'Bergen') }
+  ).tap { |restaurant| restaurant.update_column(:city, city_label) }
 end
 
 restaurants.each do |rest|
