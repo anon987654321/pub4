@@ -4,7 +4,9 @@ module Master
   module Plugins
     module Reach
       TOOL_MAP = {
-        "ReadFile"        => ->(r, i) { Master::Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus]) },
+        "ReadFile"        => ->(r, i) {
+          Master::Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus], ground_truth: i[:ground_truth])
+        },
         "WriteFile"       => ->(r, i) {
           Master::Reach::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
             event_bus: i[:bus], diff_stager: i[:diff_stager])

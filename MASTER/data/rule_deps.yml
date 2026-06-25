@@ -56,3 +56,43 @@ deps:
   # counts from all other rules.
   PATTERN_EXTRACTION:
     after: [DEFRAG, MERGE, DECOUPLE, FLATTEN]
+
+  # Scanner rule ordering — structural before style, security before polish.
+  bare_rescue:
+    after: [fail_visibly]
+  silent_rescue:
+    after: [bare_rescue]
+  god_class:
+    after: [small_functions, nesting_depth]
+  long_method:
+    after: [nesting_depth]
+  n_plus_one:
+    after: [find_each]
+  yaml_declarative:
+    after: [semantic]
+  veto_patterns:
+    after: [yaml_declarative]
+  semantic:
+    after: [rubocop, reek]
+  adversarial:
+    after: [semantic, comment_drift]
+  comment_drift:
+    after: [ast_omission]
+  ast_omission:
+    after: [co_change_coupling]
+  co_change_coupling:
+    after: [interconnect]
+  interconnect:
+    after: [rule_coverage]
+  DRY:
+    after: [MERGE, DEFRAG]
+  KISS:
+    after: [FLATTEN, long_method]
+  SRP:
+    after: [FEATURE_ENVY, god_class]
+  CQS:
+    after: [SRP]
+  html_lang:
+    after: [meta_charset]
+  no_inline_styles:
+    after: [magic_color]

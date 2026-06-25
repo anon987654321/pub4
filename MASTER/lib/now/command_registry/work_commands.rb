@@ -127,13 +127,22 @@ module Master
 
       def dispatch_rules(ctx: nil)
         arg = arg_for(ctx)
-        return "usage: /rules list" unless arg.empty? || arg == "list"
-
-        Master::Judge::Scan::Rule.registry.map do |rule_class|
-          rule = rule_class.new
-          severity = rule.respond_to?(:severity) ? rule.severity : "?"
-          "#{rule.id.to_s.ljust(28)} #{severity.to_s.ljust(8)} #{rule_class.name}"
-        end.sort.join("\n")
+        case arg
+        when "", "list"
+          Master::Judge::Scan::Rule.registry.map do |rule_class|
+            rule = rule_class.new
+            severity = rule.respond_to?(:severity) ? rule.severity : "?"
+            "#{rule.id.to_s.ljust(28)} #{severity.to_s.ljust(8)} #{rule_class.name}"
+          end.sort.join("\n")
+        when "status", "audit"
+          audit = Master::Judge::Scan::RuleRegistryAudit.new.call
+          ([audit.lines.join("\n")] + audit.lexical_unwired.first(12).map { |id| "  unwired: #{id}" }).join("\n")
+        when "deps"
+          gaps = Master::Judge::Scan::RuleRegistryAudit.new.ungraphed_rule_ids
+          "rule_deps gaps: #{gaps.size}\n#{gaps.first(20).join("\n")}"
+        else
+          "usage: /rules list|status|deps"
+        end
       rescue StandardError => e
         "rules: #{e.message}"
       end

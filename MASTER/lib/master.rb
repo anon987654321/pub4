@@ -62,8 +62,13 @@ module Master
   def self.style_path = data_file("style.yml", "ruby_style.yml")
 
   def self.rule_count(root: ROOT)
-    rules = load_rules(root:).fetch("rules", {})
-    rules.values.flatten.count { |rule| rule.is_a?(Hash) && rule["id"].to_s.strip != "" }
+    body = load_rules(root:).fetch("rules", {})
+    entries = case body
+              when Hash then body.values.flatten
+              when Array then body
+              else []
+              end
+    entries.count { |rule| rule.is_a?(Hash) && rule["id"].to_s.strip != "" }
   rescue StandardError
     0
   end

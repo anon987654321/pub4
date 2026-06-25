@@ -10,10 +10,11 @@ module Master
       NAME = "read_file".freeze
       DESCRIPTION = "Read a file with line numbers. Guarded to project root.".freeze
 
-      def initialize(root:, undo:, event_bus: nil)
+      def initialize(root:, undo:, event_bus: nil, ground_truth: nil)
         @root = File.realpath(root)
         @undo = undo
         @bus = event_bus
+        @ground_truth = ground_truth
         @cache = {}
       end
 
@@ -32,6 +33,7 @@ module Master
         return Result.err("not found: #{path}", category: :validation) unless File.exist?(full_path)
 
         lines = File.readlines(full_path)
+        @ground_truth&.record_read!(full_path, content: lines.join)
         total = lines.size
         slice = lines[offset, limit] || []
 

@@ -18,6 +18,7 @@ module Master
             @id = "semantic"
             @description = "LLM-based rule review (violations + opportunities)"
             @severity = :warning
+            @cache = {}
             reload_semantic_rules!
           end
 
@@ -32,8 +33,13 @@ module Master
             return [] unless language(path) && @agent
 
             reload_semantic_rules_if_stale
+            cache_key = semantic_cache_key(path, code)
+            return @cache[cache_key] if @cache.key?(cache_key)
+
             response = @agent.ask(build_prompt(code, path), operation: :scan_semantic).to_s
-            parse_findings(response)
+            findings = parse_findings(response)
+            @cache[cache_key] = findings
+            findings
           rescue StandardError => e
             return [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
           end
@@ -60,9 +66,16 @@ module Master
             nil
           end
 
+          def semantic_cache_key(path, code)
+            require "digest"
+            [path, File.mtime(path).to_i, Digest::SHA256.hexdigest(code)[0, 16], @rules_mtime].join(":")
+          rescue StandardError
+            [path, code.bytesize, @rules_mtime].join(":")
+          end
+
           def load_semantic_rules
             data = Master.load_rules
-            (data["rules"] || {}).values.flatten
+            flatten_rules(data["rules"])
               .select { |r| r["detect_semantic"] }
               .reject { |r| r["severity"] == "info" && r["mode"] != "opportunity" && r["tier"] != "kernel" }
               .each_with_object({}) do |r, h|
@@ -133,6 +146,14 @@ module Master
 	                reversibility: axiom[:reversibility],
 	                blast_radius: axiom[:blast_radius]
               )
+            end
+          end
+
+          def flatten_rules(body)
+            case body
+            when Hash then body.values.flatten
+            when Array then body
+            else []
             end
           end
         end

@@ -374,6 +374,17 @@ class TestWebUI < Minitest::Test
     assert_includes source, "tts.current = text"
   end
 
+  def test_face_semantics_routes_expression_through_blend_bridge_not_pools
+    semantics = File.read(File.expand_path("../web/public/face_semantics.js", __dir__))
+    bridge = File.read(File.expand_path("../web/public/face_blendshape_bridge.js", __dir__))
+
+    refute_match(/mouthPool\.cells|eyePool\.cells/, semantics)
+    assert_includes semantics, "MASTER_FACE_BLEND"
+    assert_includes semantics, "FACE3D_ACTIVE"
+    assert_includes bridge, "boostEye"
+    assert_includes bridge, "applyPressure"
+  end
+
   def test_face3d_consumes_tts_events_and_reports_nonblank_frames
     preview = File.read(File.expand_path("../web/public/face3d_preview.js", __dir__))
     renderer = File.read(File.expand_path("../web/public/face3d_renderer.js", __dir__))

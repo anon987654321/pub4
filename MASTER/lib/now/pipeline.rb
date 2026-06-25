@@ -174,6 +174,12 @@ module Master
           return Result.err("deploy blocked: self-scan has #{summary.violation_count} violation(s)", category: :policy)
         end
 
+        block_threshold = evidence_block_threshold
+        if score < block_threshold
+          @bus&.publish("pipeline:rollback_proposed", gate: "evidence_block", score:, threshold: block_threshold)
+          @rollback&.call(Result.err("evidence score #{score} below block threshold #{block_threshold}", category: :policy))
+        end
+
         return Result.ok(ctx) if score >= evidence_threshold
 
         @bus&.publish("pipeline:blocked", gate: "evidence_score", violations: 0, score:)
@@ -210,6 +216,10 @@ module Master
 
       def evidence_threshold
         evidence_config.fetch("pass_threshold", 80).to_i
+      end
+
+      def evidence_block_threshold
+        evidence_config.fetch("block_threshold", 50).to_i
       end
 
       def evidence_config

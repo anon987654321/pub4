@@ -3,19 +3,8 @@
 module Master
   module Plugins
     module Judge
-      def self.configure(base, root: Dir.pwd, agent: nil, bus: nil, **_opts)
-        Master::Judge::Scan::RuleDSL
-        scanner = Master::Judge::Scan::Scanner.new(event_bus: bus)
-        Master::Judge::Scan::Rule.registry.select(&:auto_build?).each { |k| scanner.add_rule(k.new) }
-        scanner.add_rule(Master::Judge::Scan::Rules::RuleCoverageRule.new(root:))
-        scanner.add_rule(Master::Judge::Scan::Rules::RubocopRule.new(root:))
-        scanner.add_rule(Master::Judge::Scan::Rules::ReekRule.new(root:))
-        scanner.add_rule(Master::Judge::Scan::Rules::InterconnectRule.new(root:))
-        scanner.add_rule(Master::Judge::Scan::Rules::SemanticRule.new(agent:))
-        scanner.add_rule(Master::Judge::Scan::Rules::AdversarialRule.new(agent:))
-        scanner.add_rule(Master::Judge::Scan::Rules::CommentDriftRule.new(agent:))
-        scanner.add_rule(Master::Judge::Scan::Rules::AstOmissionRule.new(root:))
-        scanner
+      def self.configure(base, root: Dir.pwd, agent: nil, bus: nil, ecology: nil, **_opts)
+        Master::Judge::Scan::InfraHelpers.build_scanner(root:, agent:, bus:, ecology:)
       end
 
       def self.build_ai(root, infra)
@@ -43,7 +32,7 @@ module Master
         agent_pool = Master::Judge::AgentPool.new(governor: infra[:governor], tools:, event_bus: bus)
         Master::Ground::ActivePlan.attach(bus, root)
         agent.wire_constitution(Master::Ground::Constitution.new)
-        scanner               = configure(nil, root:, agent:, bus:)
+        scanner               = configure(nil, root:, agent:, bus:, ecology: infra[:ecology])
         swarm                 = Master::Judge::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
         personas              = Master::Judge::Council::Personas.load(File.join(Master::ROOT, "data", "council.yml"))
         axioms                = Master::Ground::Rules.new(root:)

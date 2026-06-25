@@ -50,29 +50,19 @@ module Master
           bus.publish("graph:neighbours", path: path, neighbours: neighbours) unless neighbours.empty?
         end
       end
-      # Strict in build: always run self_test + require evidence (rules.yml ground_truth, self_apply)
       self_test = Judge::Scan::SelfTest.new(root: root, event_bus: bus).call
-      bus&.publish("builder:self_test", ok: self_test.ok?) unless self_test.ok?
+      unless self_test.ok?
+        bus&.publish("builder:self_test", ok: false, violations: self_test.value!.violation_count)
+        if ENV["MASTER_STRICT_BOOT"] == "1"
+          raise "builder: self_test failed with #{self_test.value!.violation_count} violation(s)"
+        end
+      end
       { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard:,
         reference_graph: infra[:reference_graph], agent_pool:, context_window: ctx, tools: }.merge(autonomous)
     end
 
     def build_scanner(root:, agent: nil, bus: nil, ecology: nil)
-      Judge::Scan::RuleDSL
-      wf = Master.load_yaml(Master.limits_path) rescue {}
-      sleep_s = wf.dig("autoloop", "scan_file_sleep_s").to_f
-      scanner = Judge::Scan::Scanner.new(event_bus: bus, file_sleep_s: sleep_s)
-      Judge::Scan::Rule.registry.select(&:auto_build?).each { |k| scanner.add_rule(k.new) }
-      scanner.add_rule(Judge::Scan::Rules::CoChangeCouplingRule.new(root:, ecology:))
-      scanner.add_rule(Judge::Scan::Rules::RuleCoverageRule.new(root:))
-      scanner.add_rule(Judge::Scan::Rules::RubocopRule.new(root:))
-      scanner.add_rule(Judge::Scan::Rules::ReekRule.new(root:))
-      scanner.add_rule(Judge::Scan::Rules::InterconnectRule.new(root:))
-      scanner.add_rule(Judge::Scan::Rules::SemanticRule.new(agent:))
-      scanner.add_rule(Judge::Scan::Rules::AdversarialRule.new(agent:))
-      scanner.add_rule(Judge::Scan::Rules::CommentDriftRule.new(agent:))
-      scanner.add_rule(Judge::Scan::Rules::AstOmissionRule.new(root:))
-      scanner
+      Judge::Scan::InfraHelpers.build_scanner(root:, agent:, bus:, ecology:)
     end
 
     def boot_autonomous(root:, infra:, agent:, scanner:, axioms: nil)
