@@ -197,6 +197,24 @@ bundle_install_as_app() {
   ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; cd ${app_dir} && bundle config set --local frozen false && bundle config set --local deployment true && bundle config set --local without \"development test\" && RAILS_ENV=production bundle install'"
 }
 
+# rails_prepare_secondary_dbs_as_app APP_NAME APP_DIR — load cache/queue/cable schemas on copy-tree deploy.
+rails_prepare_secondary_dbs_as_app() {
+  local app_name=$1
+  local app_dir=$2
+  local secret
+  secret=$(app_secret_for "$app_name")
+  local db
+  for db in cache queue cable; do
+    local schema="${app_dir}/db/${db}_schema.rb"
+    [[ -f $schema ]] || continue
+    grep -q 'define(version: 0)' "$schema" 2>/dev/null && continue
+    log "db:schema:load:${db} for ${app_name}"
+    run_rails_as_app "$app_name" "$app_dir" \
+      "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:schema:load:${db}" \
+      || { log_err "db:schema:load:${db} failed for ${app_name}"; return 1; }
+  done
+}
+
 # rails_assets_precompile_as_app APP_NAME APP_DIR — Propshaft digest manifest for production JS/CSS.
 rails_assets_precompile_as_app() {
   local app_name=$1
@@ -240,6 +258,8 @@ rails_runtime_gate() {
     run_rails_as_app "$app_name" "$app_dir" \
       "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:prepare" \
       || { log_err "db:prepare failed"; return 1; }
+    rails_prepare_secondary_dbs_as_app "$app_name" "$app_dir" \
+      || return 1
     rails_assets_precompile_as_app "$app_name" "$app_dir" \
       || return 1
     if [[ -x ${app_dir}/bin/ci ]]; then
@@ -345,6 +365,8 @@ db_create_migrate_as_app() {
   secret=$(app_secret_for "$app_name")
   ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:prepare'" \
     || { log_err "db:prepare failed for ${app_name}"; return 1; }
+  rails_prepare_secondary_dbs_as_app "$app_name" "$app_dir" \
+    || return 1
   log_ok "Database ready"
 }
 

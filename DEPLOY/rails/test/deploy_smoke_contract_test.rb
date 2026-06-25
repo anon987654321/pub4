@@ -43,6 +43,11 @@ class DeploySmokeContractTest < Minitest::Test
     refute_includes cache, "define(version: 0)"
   end
 
+  def test_brgen_face_assets_under_javascripts
+    assert File.file?(File.join(ROOT, "brgen/app/assets/javascripts/particle_kernel.js"))
+    assert File.file?(File.join(ROOT, "brgen/app/assets/javascripts/face.js"))
+  end
+
   private
 
   def read(path)
