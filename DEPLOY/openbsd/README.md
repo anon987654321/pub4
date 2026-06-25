@@ -31,17 +31,19 @@ Provider welcome email from Mischa, 2026-05-17. Operator record — not secrets.
 
 **Access**
 
-```zsh
-# VM (app host) — direct once unbanned
-ssh dev@46.23.89.226
+Workstation aliases (full write-up: [`SSH_ACCESS.md`](SSH_ACCESS.md)):
 
-# Hypervisor (for pf bruteforce ban, wedged networking, or console)
+```zsh
+ssh brgen                    # VM app host (brgen.no → vm23)
+ssh server4                  # VMM host (port 31415) — same as legacy alias `ssh dev`
 ssh -p 31415 -i ~/.ssh/id_ed25519_brgen -o VerifyHostKeyDNS=yes dev@server4.openbsd.amsterdam
 vmctl status vm23
 vmctl console vm23          # inside: login, pfctl -t bruteforce -T flush ; exit with ~.
 ```
 
-**Operator docs** (read 2026-06-15)
+Direct IP still works: `ssh dev@46.23.89.226`.
+
+**Operator docs** (read 2026-06-15; SSH/GitHub findings 2026-06-25 in [`SSH_ACCESS.md`](SSH_ACCESS.md))
 
 - [Onboarding](https://openbsd.amsterdam/onboard.html) — console via vmctl/cu(1), ~. to exit, doas setup, syspatch, initial root password from authorized_keys
 - [Backup](https://openbsd.amsterdam/backup.html) — wingman1 (s4vm23@wingman1.openbsd.amsterdam, same port/key, openrsync recommended; 10G free)

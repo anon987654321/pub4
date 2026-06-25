@@ -2,6 +2,8 @@
 
 Repository: local checkout or VPS `/home/dev/pub4`, remote `anon987654321/pub4`, branch `main`.
 
+SSH / VMM / GitHub workstation setup: `DEPLOY/openbsd/SSH_ACCESS.md` (`ssh brgen`, `ssh server4`, GitHub key split).
+
 Checkbox backlogs (`TODO.md`, `MASTER/TODO.md`, `DEPLOY/TODO.md`) were retired 2026-06-24. Ship readiness is **executable proof**, not markdown checkboxes. See `MASTER/data/operator_playbook.yml` and `DEPLOY/rails/PRODUCTION_READINESS.md`.
 
 ## Intent
