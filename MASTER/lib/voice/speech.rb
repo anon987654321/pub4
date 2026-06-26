@@ -15,7 +15,7 @@ module Master
       TTS_SOCKET = File.expand_path("../../.master/tts.sock", __dir__)
       ESPEAK_PATHS = %w[/usr/bin/espeak /usr/local/bin/espeak].freeze
       ESPEAK = ESPEAK_PATHS.find { |p| File.executable?(p) }
-      WORKER_TIMEOUT = 20
+      WORKER_TIMEOUT = 45
       @last_error = nil
 
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
