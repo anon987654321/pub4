@@ -40,8 +40,20 @@ end
 
 cli = nil
 
-trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved"; exit 0 }
-trap("TERM") { cli&.container&.dig(:session)&.save! rescue nil; exit 0 }
+def save_cli_session_safely(cli)
+  cli&.container&.dig(:session)&.save!
+rescue StandardError => e
+  warn "cli: session save failed: #{e.class}: #{e.message}"
+end
+
+def stop_cli_background_loop_safely(cli)
+  cli&.send(:stop_background_loop)
+rescue StandardError => e
+  warn "cli: background stop failed: #{e.class}: #{e.message}"
+end
+
+trap("INT") { save_cli_session_safely(cli); $stderr.puts "\nsaved"; exit 0 }
+trap("TERM") { save_cli_session_safely(cli); exit 0 }
 
 Master::Now::BootBanner.print
 cli = Master.boot(root: Dir.pwd)
@@ -55,8 +67,8 @@ if $stdin.tty?
 else
   $stdout.sync = true
   $stdin.each_line { |line| cli.pipe(line) }
-  cli.send(:stop_background_loop) rescue nil
-  cli.container&.dig(:session)&.save! rescue nil
+  stop_cli_background_loop_safely(cli)
+  save_cli_session_safely(cli)
   $stdout.flush
   $stderr.flush
   exit!(cli.exit_code || 0)

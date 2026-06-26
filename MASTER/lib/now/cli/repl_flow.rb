@@ -85,6 +85,7 @@ module Master
       end
 
       NL_DISPATCH = [
+        [/\A(?:hi|hello|hey|yo|good (?:morning|afternoon|evening))[\s!.?]*\z/i, :run_chitchat],
         [/\b(?:show|print|list)\s+(?:undo\s+)?histor/i, :run_history],
         [/\b(?:why|how)\s+(?:this|that)\s+(?:fail(?:ed)?|break|broke|error|wrong|happen(?:ed)?)\b/i, :run_why],
         [/\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i, :toggle_focus],
@@ -144,6 +145,10 @@ module Master
         when "<<" then run_input(read_multiline)
         else stripped.start_with?("/") ? run_input(stripped) : handle_plain_language_line(line)
         end
+      end
+
+      def run_chitchat
+        puts @refs.renderer.render("hello. MASTER is awake. use /cmd for commands or ask for a scan.", mode: :dim)
       end
 
       WORKFLOW_INTENTS = %i[

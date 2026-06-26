@@ -2,17 +2,27 @@
 # frozen_string_literal: true
 
 require "optparse"
+require "rbconfig"
 
 $LOAD_PATH.unshift File.expand_path("../kernel", __dir__)
 require "master"
 
 class NullModel
-  def initialize(goal) = @goal = goal
+  def initialize(goal)
+    @goal = goal
+    @script = [
+      Master::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :test_pass),
+      Master::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :scan_clean),
+      Master::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :code_review),
+      Master::Effect.done("noop complete: #{@goal}")
+    ]
+  end
 
   def propose(_context, verbs:)
-    raise "kernel verbs unavailable" unless verbs.include?(:done)
+    unsupported = @script.map(&:verb).uniq - verbs
+    raise "kernel verbs unavailable: #{unsupported.join(", ")}" unless unsupported.empty?
 
-    Master::Effect.done("noop complete: #{@goal}")
+    @script.shift || Master::Effect.done("noop complete: #{@goal}")
   end
 end
 

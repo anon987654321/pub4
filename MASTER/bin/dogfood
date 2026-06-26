@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+# frozen_string_literal: true
+
+require "open3"
+require "rbconfig"
+require "timeout"
+
+MASTER_ROOT = File.expand_path("..", __dir__)
+RUBY = RbConfig.ruby
+BUNDLE = ENV.fetch("MASTER_BUNDLE", RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle")
+TIMEOUT_SECONDS = Integer(ENV.fetch("MASTER_DOGFOOD_TIMEOUT", "90"))
+BAD_OUTPUT = /\b(NameError|NoMethodError|LoadError|SyntaxError|ArgumentError|uninitialized constant|unknown category|aborted)\b/i
+
+def run_step(name, env, *cmd, stdin_data: nil, chdir: MASTER_ROOT)
+  print "dogfood: #{name} "
+  $stdout.flush
+  out, status = Timeout.timeout(TIMEOUT_SECONDS) do
+    Open3.capture2e(env, *cmd, stdin_data:, chdir:)
+  end
+  bad_line = out.lines.find { |line| line.match?(BAD_OUTPUT) }
+  if status.success? && bad_line.nil?
+    puts "ok"
+    true
+  else
+    puts "fail"
+    warn out.lines.last(120).join
+    false
+  end
+rescue Timeout::Error
+  puts "fail"
+  warn "timeout after #{TIMEOUT_SECONDS}s"
+  false
+rescue StandardError => e
+  puts "fail"
+  warn "#{e.class}: #{e.message}"
+  false
+end
+
+env = ENV.to_h.merge(
+  "MASTER_BACKGROUND" => "0",
+  "MASTER_WATCH" => "0",
+  "MASTER_WATCHER" => "0",
+  "MASTER_AUTOFIX" => "0",
+  "MASTER_WEB" => "0",
+  "MASTER_QUIET" => "1",
+  "MASTER_DOGFOOD" => "1"
+)
+
+script = [
+  "/help",
+  "hello",
+  "what is next?",
+  "/cost",
+  "/cmd",
+  "/exit"
+].join("\n") + "\n"
+
+failures = []
+failures << "cli" unless run_step("bundle exec ruby bin/cli", env, BUNDLE, "exec", RUBY, "bin/cli", stdin_data: script)
+failures << "kernel" unless run_step("ruby bin/master-kernel", env, RUBY, "bin/master-kernel", "dogfood noop")
+
+if failures.empty?
+  puts "dogfood: clean"
+  exit 0
+end
+
+warn "dogfood: #{failures.size} failure(s): #{failures.join(", ")}"
+exit 1

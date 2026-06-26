@@ -79,9 +79,8 @@ module Master
       def pipe(input)
         stripped = input.strip
         return empty_input(:pipe) if stripped.empty?
-        return handle_repl_line(stripped) if stripped.start_with?("/")
 
-        run_input(stripped)
+        handle_repl_line(stripped)
       end
 
       def process(input)

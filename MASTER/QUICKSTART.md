@@ -69,7 +69,8 @@ For shell-side readiness checks, use `bin/probe` from `MASTER/`:
 
 ```sh
 bin/probe          # fast readiness: smoke + namespace audit + Rails production gate
-bin/probe all      # smoke + namespace audit + preflight + staged audit + Rails gate
+bin/probe all      # smoke + namespace audit + kernel + dogfood + preflight + Rails gate
+bin/probe dogfood  # bundle-exec CLI/chitchat + kernel self-proof
 bin/probe security # staged audit + namespace audit + Rails gate
 ```
 
@@ -80,6 +81,7 @@ cd /home/dev/pub4/MASTER
 ruby34 -v
 bundle34 check
 bundle34 exec ruby bin/cli
+bin/dogfood
 bin/probe all
 ```
 

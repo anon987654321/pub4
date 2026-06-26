@@ -5,7 +5,7 @@
 # master-probe — one entrypoint for local and VPS readiness checks.
 # Usage:
 #   bin/probe              # quick local signal
-#   bin/probe all          # smoke + namespace + preflight + staged audit + rails gate
+#   bin/probe all          # smoke + namespace + kernel + dogfood + preflight + audit + rails gate
 #   bin/probe smoke rails  # selected checks
 
 Encoding.default_external = Encoding::UTF_8
@@ -86,6 +86,12 @@ CHECKS = {
     cwd: MASTER_ROOT,
     needs_ruby3: true,
   },
+  "dogfood" => {
+    desc: "MASTER CLI dogfood (bundle exec ruby bin/cli + chitchat)",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "dogfood")],
+    cwd: MASTER_ROOT,
+    needs_ruby3: true,
+  },
   "selfscan" => {
     desc: "Deep-scan lib/master.rb (set MASTER_PROBE_SELF=1)",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "probe_selfscan")],
@@ -98,7 +104,7 @@ CHECKS = {
 
 ALIASES = {
   "quick" => %w[smoke nsaudit rails ci],
-  "all" => %w[smoke nsaudit kernel preflight audit rails phantom_fk],
+  "all" => %w[smoke nsaudit kernel dogfood preflight audit rails phantom_fk],
   "deploy" => %w[rails phantom_fk health smoke-web playbook],
   "security" => %w[audit nsaudit rails],
 }.freeze
