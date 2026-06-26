@@ -29,6 +29,13 @@ else
   failures << "relayd: master missing http /up check" unless relayd.include?('forward to <master> port 53187 check http "/up"')
 end
 
+master_rc = File.join(ROOT, "DEPLOY", "openbsd", "etc", "rc.d", "master")
+if File.file?(master_rc)
+  rc_text = File.read(master_rc)
+  failures << "rc.d/master: container warmup must use smoke ping" unless rc_text.include?("chat/message?message=ping")
+  failures << "rc.d/master: container warmup must not require authed metrics" if rc_text.include?('chat/metrics"') && rc_text.include?('"model"')
+end
+
 apps.each do |name, metadata|
   production = File.join(RAILS_ROOT, name, "config", "environments", "production.rb")
   next unless File.file?(production)

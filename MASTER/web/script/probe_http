@@ -6,6 +6,7 @@ require "net/http"
 require "json"
 require "socket"
 require "uri"
+require "yaml"
 
 HOST = ENV.fetch("PROBE_HOST", "127.0.0.1")
 PORT = Integer(ENV.fetch("MASTER_WEB_PORT", ENV.fetch("PROBE_PORT", "53187")))
@@ -27,7 +28,7 @@ begin
   home = get("/")
   failures << "homepage #{home.code}" unless home.code == "200"
   body = home.body.to_s
-  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime].each do |needle|
+  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer MASTERChat].each do |needle|
     failures << "homepage missing #{needle}" unless body.include?(needle)
   end
   failures << "legacy 15s boot timeout still present" if body.include?("15000")
@@ -42,7 +43,19 @@ begin
   metrics = get("/chat/metrics")
   failures << "metrics should reject visitors (got #{metrics.code})" unless metrics.code == "401"
 
+  ping = get("/chat/message?message=ping")
+  failures << "smoke ping should return 200 (got #{ping.code})" unless ping.code == "200"
+  failures << "smoke ping missing pong" unless ping.body.to_s.include?("pong")
+
   token = ENV["PROBE_TOKEN"].to_s
+  if token.empty?
+    cfg_path = File.expand_path("../../.master/config.yml", __dir__)
+    if File.file?(cfg_path)
+      cfg = YAML.safe_load_file(cfg_path) rescue {}
+      candidate = cfg.is_a?(Hash) ? cfg["web_token"].to_s : ""
+      token = candidate if candidate.length >= 43
+    end
+  end
   if !token.empty?
     authed_metrics = get("/chat/metrics", headers: { "X-Token" => token })
     if authed_metrics.code == "200"

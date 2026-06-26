@@ -91,14 +91,19 @@ class ApplicationController < ActionController::Base
   end
 
   def enforce_rate_limit!(key, limit:, window:)
+    count = increment_rate_limit!(key, window: window)
+    return if count <= limit
+
+    response.headers["Retry-After"] = window.to_s
+    render json: { error: "rate limit exceeded - wait #{window}s" }, status: :too_many_requests
+  end
+
+  def increment_rate_limit!(key, window:)
     cache = Rails.cache
-    count = cache.read(key).to_i
-    if count >= limit
-      response.headers["Retry-After"] = window.to_s
-      render json: { error: "rate limit exceeded - wait #{window}s" }, status: :too_many_requests
-    else
-      cache.write(key, count + 1, expires_in: window)
-    end
+    count = cache.increment(key, 1, expires_in: window)
+    return count if count.is_a?(Integer)
+
+    cache.fetch(key, expires_in: window) { 0 } + 1.tap { |next_count| cache.write(key, next_count, expires_in: window) }
   end
 
   def container
@@ -131,7 +136,9 @@ class ApplicationController < ActionController::Base
     response.headers["Content-Type"] = "text/event-stream"
     response.headers["Cache-Control"] = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"
-    render plain: ": warming\n\ndata: booting — retry in 30s\n\ndata: [DONE]\n\n", status: :ok
+    body = ": warming\n\ndata: booting — retry in 30s\n\n"
+    body += "data: [DONE]\n\n" unless request.path == "/events/stream"
+    render plain: body, status: :ok
   end
 
   def start_container_bootstrap!

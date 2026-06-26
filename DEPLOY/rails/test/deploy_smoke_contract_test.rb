@@ -29,6 +29,8 @@ class DeploySmokeContractTest < Minitest::Test
     master = File.read(File.join(OPENBSD_ROOT, "etc/rc.d/master"))
     assert_includes master, "public/assets/assets"
     assert_includes master, "assets:precompile"
+    assert_includes master, "chat/message?message=ping"
+    refute_match(/chat\/metrics.*"model"/, master)
   end
 
   def test_rails_runtime_gate_precompiles_assets

@@ -6,6 +6,7 @@ require "open3"
 WEB = File.expand_path("..", __dir__)
 FACE_BOOT = File.join(WEB, "test/face_boot.test.mjs")
 PROBE_FACE = File.join(WEB, "script/probe_face")
+PROBE_PRIMER = File.join(WEB, "script/probe_primer_external.rb")
 WEB_URL = ENV["WEB_URL"].to_s.strip
 
 checks = []
@@ -44,9 +45,15 @@ else
                "no Chrome executable"
              end
     checks << ["probe_face (skipped)", true, reason]
+    checks << ["probe_primer (skipped)", true, reason]
   else
     out, err, status = Open3.capture3("env", "CHROME_PATH=#{chrome}", "PROBE_WAIT=12", "ruby", PROBE_FACE, WEB_URL, chdir: WEB)
     checks << ["probe_face #{WEB_URL}", status.success?, [out, err].join.strip]
+
+    if File.file?(PROBE_PRIMER)
+      out, err, status = Open3.capture3("env", "CHROME_PATH=#{chrome}", "ruby", PROBE_PRIMER, WEB_URL, chdir: WEB)
+      checks << ["probe_primer #{WEB_URL}", status.success?, [out, err].join.strip]
+    end
   end
 end
 

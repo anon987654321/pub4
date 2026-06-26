@@ -13,12 +13,14 @@
 require "json"
 require "net/http"
 require "uri"
+require "yaml"
 
 BASE = ENV.fetch("MASTER_WEB_URL", "http://127.0.0.1:53187").chomp("/")
 WARM_TIMEOUT_S = Integer(ENV.fetch("MASTER_SMOKE_WEB_WARM_S", "130"))
 POLL_INTERVAL_S = Integer(ENV.fetch("MASTER_SMOKE_WEB_POLL_S", "5"))
 READ_TIMEOUT_S = Integer(ENV.fetch("MASTER_SMOKE_WEB_READ_S", "20"))
 SKIP_WAIT = ARGV.include?("--no-wait")
+CONFIG_PATH = File.expand_path("../.master/config.yml", __dir__)
 
 JSON_ACCEPT = { "Accept" => "application/json" }.freeze
 WARMING_RE = /Starting up|warming up/i
@@ -35,6 +37,20 @@ def step(name)
   Check.new(name:, ok:, detail:, ms:)
 end
 
+def web_token
+  return ENV["PROBE_TOKEN"].to_s if ENV["PROBE_TOKEN"].to_s.length >= 43
+  return "" unless File.file?(CONFIG_PATH)
+
+  cfg = YAML.safe_load_file(CONFIG_PATH) rescue {}
+  candidate = cfg.is_a?(Hash) ? cfg["web_token"].to_s : ""
+  candidate.length >= 43 ? candidate : ""
+end
+
+def auth_headers
+  tok = web_token
+  tok.empty? ? {} : { "X-Token" => tok }
+end
+
 def fetch(path, headers: {}, read_timeout: READ_TIMEOUT_S, open_timeout: 8)
   uri = URI("#{BASE}#{path}")
   Net::HTTP.start(uri.host, uri.port,
@@ -47,12 +63,9 @@ end
 
 def warm_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + WARM_TIMEOUT_S
 
-def metrics_ready?
-  res = fetch("/chat/metrics", headers: JSON_ACCEPT, read_timeout: 12)
-  return false unless res.code.to_i == 200
-
-  data = JSON.parse(res.body.to_s)
-  data.is_a?(Hash) && data.key?("model") && !data["error"]
+def bootstrap_ready?
+  res = fetch("/chat/message?message=ping", read_timeout: 12)
+  res.code.to_i == 200 && res.body.to_s.include?("pong")
 rescue StandardError
   false
 end
@@ -73,12 +86,12 @@ unless SKIP_WAIT
   checks << step("wait for bootstrap") do
     deadline = warm_deadline
     polls = 0
-    until metrics_ready? || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+    until bootstrap_ready? || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
       polls += 1
       sleep POLL_INTERVAL_S
     end
     waited = polls * POLL_INTERVAL_S
-    ready = metrics_ready?
+    ready = bootstrap_ready?
     detail = ready ? "ready after ~#{waited}s" : "still warming after #{WARM_TIMEOUT_S}s"
     [ready, detail]
   end
@@ -95,6 +108,8 @@ checks << step("GET / (face)") do
              "warming page — rerun after boot or increase MASTER_SMOKE_WEB_WARM_S"
            elsif !body.include?('id="face"')
              "missing face canvas"
+           elsif !body.include?("ensurePrimer")
+             "missing boot retry overlay"
            end
   [ok, detail]
 end
@@ -107,8 +122,16 @@ end
   end
 end
 
-checks << step("GET /chat/metrics") do
+checks << step("GET /chat/metrics (visitor)") do
   res = fetch("/chat/metrics", headers: JSON_ACCEPT, read_timeout: 12)
+  [res.code.to_i == 401, "HTTP #{res.code} — expected 401 without token"]
+end
+
+checks << step("GET /chat/metrics (authed)") do
+  tok = web_token
+  return [false, "no web_token in #{CONFIG_PATH} or PROBE_TOKEN"] if tok.empty?
+
+  res = fetch("/chat/metrics", headers: JSON_ACCEPT.merge(auth_headers), read_timeout: 12)
   code = res.code.to_i
   return [false, "HTTP #{code}"] unless code == 200
 
@@ -118,6 +141,13 @@ checks << step("GET /chat/metrics") do
   [missing.empty?, missing.empty? ? nil : "missing keys: #{missing.join(", ")}"]
 rescue JSON::ParserError => e
   [false, "invalid JSON: #{e.message}"]
+end
+
+checks << step("GET /chat/message ping") do
+  res = fetch("/chat/message?message=ping", read_timeout: 12)
+  code = res.code.to_i
+  ok = code == 200 && res.body.to_s.include?("pong")
+  [ok, ok ? nil : "HTTP #{code}"]
 end
 
 checks << step("GET /events/stream") do

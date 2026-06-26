@@ -42,10 +42,10 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 			sleep 1
 			_i=$((_i + 1))
 		done
-		# Wait for MASTER container (chat/TTS need it; /up alone is too early).
+		# Wait for MASTER container (smoke ping — metrics requires auth since tier gate).
 		_j=0
 		while [ "$_j" -lt 120 ]; do
-			curl -fsS "http://127.0.0.1:${PORT}/chat/metrics" 2>/dev/null | grep -q '"model"' && break
+			curl -fsS "http://127.0.0.1:${PORT}/chat/message?message=ping" 2>/dev/null | grep -q 'pong' && break
 			sleep 2
 			_j=$((_j + 1))
 		done
