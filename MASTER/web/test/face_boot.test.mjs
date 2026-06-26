@@ -30,7 +30,8 @@ test("face.js dispatches boot stage events and requires prebuilt runtime", () =>
   assert.match(faceJs, /faceModulesBundle/);
   assert.match(faceJs, /build_face_runtime/);
   assert.match(faceJs, /primer:ready/);
-  assert.match(faceJs, /bootRuntime/);
+  assert.match(faceJs, /bootFaceStack/);
+  assert.match(faceJs, /FACE3D_ACTIVE/);
   assert.doesNotMatch(faceJs, /importFaceBlob/);
   assert.doesNotMatch(faceJs, /face\.part/);
 });
@@ -114,6 +115,7 @@ test("face3d preview announces live badge and boot brightness", () => {
   assert.match(preview, /1800/);
   assert.doesNotMatch(preview, /classList\.remove\("face-loading"\)/);
   assert.match(preview, /primerBlocking/);
+  assert.match(preview, /primerBlocking\(\) && now - last < 80/);
   assert.match(renderer, /bootBoost/);
 });
 
@@ -137,6 +139,12 @@ test("visual_bridge defers SSE until session ready", () => {
   assert.match(bridge, /master:session-ready/);
   assert.match(bridge, /primer:ready/);
   assert.doesNotMatch(bridge, /observeDomSignals\(\);\n  connectSse\(\);/);
+});
+
+test("ecology render defers RAF until primer unlocks", () => {
+  const ecology = readFileSync(join(publicDir, "cognition_ecology_render.js"), "utf8");
+  assert.match(ecology, /primer:ready/);
+  assert.doesNotMatch(ecology, /\n  ensureEcologyFrame\(\);\n  window\.addEventListener\("master:visual"/);
 });
 
 test("topology registry defers remote fetch until primer", () => {

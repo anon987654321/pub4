@@ -27,7 +27,7 @@ async function loadTailModules() {
   await Promise.all(names.map((name) => import(modules[name] || `/${name}`)));
 }
 
-try {
+async function bootFaceStack() {
   dispatchFaceStage("modules");
 
   const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
@@ -45,45 +45,39 @@ try {
   ];
 
   if (ASSET_PATHS.faceModulesBundle) {
-    await Promise.all([
-      import(ASSET_PATHS.faceModulesBundle),
-      import(ASSET_PATHS.face3dPreview || "/face3d_preview.js")
-    ]);
+    await import(ASSET_PATHS.faceModulesBundle);
+    if (!window.FACE3D_ACTIVE) await import(ASSET_PATHS.face3dPreview || "/face3d_preview.js");
   } else {
-    await Promise.all([
-      import(ASSET_PATHS.faceModules?.["face_blendshape_bridge.js"] || "/face_blendshape_bridge.js"),
-      import(ASSET_PATHS.face3dPreview || "/face3d_preview.js"),
-      ...FACE_MODULES.map(async (modulePath) => {
-        const url = ASSET_PATHS.faceModules?.[modulePath] || `/${modulePath}`;
-        await import(url);
-      })
-    ]);
+    const imports = [
+      import(ASSET_PATHS.faceModules?.["face_blendshape_bridge.js"] || "/face_blendshape_bridge.js")
+    ];
+    if (!window.FACE3D_ACTIVE) imports.push(import(ASSET_PATHS.face3dPreview || "/face3d_preview.js"));
+    imports.push(...FACE_MODULES.map(async (modulePath) => {
+      const url = ASSET_PATHS.faceModules?.[modulePath] || `/${modulePath}`;
+      await import(url);
+    }));
+    await Promise.all(imports);
   }
 
   const runtimeUrl = ASSET_PATHS.faceRuntime;
   if (!runtimeUrl) {
-    const err = new Error("face.runtime.js missing — run: rails assets:build_face_runtime");
-    dispatchFaceError(err);
-    throw err;
+    throw new Error("face.runtime.js missing — run: rails assets:build_face_runtime");
   }
+  if (window.MASTER_FACE) return;
 
-  async function bootRuntime() {
-    if (window.MASTER_FACE) return;
-    dispatchFaceStage("runtime");
-    await import(runtimeUrl);
-    await loadTailModules();
-    dispatchFaceStage("ready");
-    window.dispatchEvent(new CustomEvent("master:face-ready"));
-  }
+  dispatchFaceStage("runtime");
+  await import(runtimeUrl);
+  await loadTailModules();
+  dispatchFaceStage("ready");
+  window.dispatchEvent(new CustomEvent("master:face-ready"));
+}
 
-  if (window._primerFired) {
-    await bootRuntime();
-  } else {
-    window.addEventListener("primer:ready", () => {
-      bootRuntime().catch(dispatchFaceError);
-    }, { once: true });
-  }
-} catch (error) {
-  dispatchFaceError(error);
-  throw error;
+function scheduleFaceStack() {
+  bootFaceStack().catch(dispatchFaceError);
+}
+
+if (window._primerFired) {
+  scheduleFaceStack();
+} else {
+  window.addEventListener("primer:ready", scheduleFaceStack, { once: true });
 }

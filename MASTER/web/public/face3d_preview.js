@@ -118,6 +118,10 @@ function bootFace3d() {
   }
 
   function frame(now) {
+    if (primerBlocking() && now - last < 80) {
+      requestAnimationFrame(frame);
+      return;
+    }
     const dt = Math.min(50, now - last);
     last = now;
     const t = (now - t0) * 0.001;
