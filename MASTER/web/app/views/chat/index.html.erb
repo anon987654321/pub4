@@ -36,8 +36,12 @@
   <% FaceAssetsHelper::FACE_PRELOAD_MODULES.each do |mod| %>
   <link rel="modulepreload" href="<%= asset_path(mod) %>">
   <% end %>
+  <% if face_modules_bundle_preload? %>
+  <link rel="modulepreload" href="<%= face_modules_bundle_asset_path %>">
+  <% else %>
   <% FaceAssetsHelper::FACE_MODULE_NAMES.first(11).each do |mod| %>
   <link rel="modulepreload" href="<%= asset_path(mod) %>">
+  <% end %>
   <% end %>
   <% if face_runtime_preload? %>
   <link rel="modulepreload" href="<%= face_runtime_asset_path %>">

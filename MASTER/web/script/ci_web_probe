@@ -16,11 +16,30 @@ checks << ["face_boot node tests", status.success?, [out, err].join.strip]
 runtime = File.join(WEB, "public/face.runtime.js")
 checks << ["face.runtime.js present", File.file?(runtime), runtime]
 
+bundle = File.join(WEB, "public/face.modules.bundle.js")
+checks << ["face.modules.bundle.js present", File.file?(bundle), bundle]
+
+probe_http = File.join(WEB, "script/probe_http")
 if WEB_URL.empty?
+  checks << ["probe_http (skipped)", true, "set WEB_URL to run HTTP probe"]
   checks << ["probe_face (skipped)", true, "set WEB_URL to run browser probe"]
 else
-  out, err, status = Open3.capture3("ruby", PROBE_FACE, WEB_URL, chdir: WEB)
-  checks << ["probe_face #{WEB_URL}", status.success?, [out, err].join.strip]
+  out, err, status = Open3.capture3("env", "WEB_URL=#{WEB_URL}", "ruby", probe_http, chdir: WEB)
+  checks << ["probe_http #{WEB_URL}", status.success?, [out, err].join.strip]
+
+  skip_browser = ENV["PROBE_SKIP_BROWSER"] == "1"
+  chrome = [
+    ENV["CHROME_PATH"],
+    "/usr/local/bin/chrome",
+    "/usr/local/bin/chromium",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+  ].compact.find { |path| File.executable?(path) }
+  if skip_browser || chrome.nil?
+    checks << ["probe_face (skipped)", true, skip_browser ? "PROBE_SKIP_BROWSER=1" : "no Chrome executable"]
+  else
+    out, err, status = Open3.capture3("env", "CHROME_PATH=#{chrome}", "PROBE_WAIT=12", "ruby", PROBE_FACE, WEB_URL, chdir: WEB)
+    checks << ["probe_face #{WEB_URL}", status.success?, [out, err].join.strip]
+  end
 end
 
 failed = checks.reject { |_name, ok, _detail| ok }

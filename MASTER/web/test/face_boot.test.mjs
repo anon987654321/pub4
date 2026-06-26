@@ -38,13 +38,22 @@ test("face.js loader replaces every tail import path", () => {
   assert.doesNotMatch(replaced, /import\('\/face_/);
 });
 
-test("face.js dispatches boot stage events and prefers faceRuntime bundle", () => {
+test("face.js dispatches boot stage events and prefers bundled loaders", () => {
   const faceJs = readFileSync(join(publicDir, "face.js"), "utf8");
   assert.match(faceJs, /master:face-stage/);
   assert.match(faceJs, /dispatchFaceStage\("modules"\)/);
   assert.match(faceJs, /dispatchFaceStage\("ready"\)/);
   assert.match(faceJs, /faceRuntime/);
+  assert.match(faceJs, /faceModulesBundle/);
   assert.match(faceJs, /importFaceBlob/);
+});
+
+test("face.modules.bundle.js is generated from face module entry", () => {
+  const bundlePath = join(publicDir, "face.modules.bundle.js");
+  assert.ok(existsSync(bundlePath), "run rails assets:build_face_modules_bundle");
+  const bundle = readFileSync(bundlePath, "utf8");
+  assert.match(bundle, /MASTER_FACE_PARTICLES|face_particles/);
+  assert.match(bundle, /MASTER_FACE_BLEND|face_blendshape/);
 });
 
 test("face.runtime.js is generated from face parts", () => {

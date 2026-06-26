@@ -20,10 +20,11 @@ rc_pre() {
 	rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
 	# Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
 	rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
-	(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:build_face_runtime) 2>/dev/null || true
+	(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle) 2>/dev/null || true
 	_manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
 	_runtime=/home/dev/pub4/MASTER/web/public/face.runtime.js
-	if [ ! -f "$_manifest" ] || [ "$_runtime" -nt "$_manifest" ]; then
+	_bundle=/home/dev/pub4/MASTER/web/public/face.modules.bundle.js
+	if [ ! -f "$_manifest" ] || [ "$_runtime" -nt "$_manifest" ] || [ "$_bundle" -nt "$_manifest" ]; then
 		(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
 	fi
 	sleep 1
@@ -52,6 +53,7 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 		# Warm Edge TTS daemon as dev (not root) so sockets stay group-writable.
 		doas -u dev sh -c 'cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -Ilib -e "require \"master\"; puts Master::Voice::TtsSupervisor.ensure_daemon!"' \
 			2>/dev/null || true
+		ruby34 /home/dev/pub4/MASTER/web/script/probe_http 2>/dev/null || logger -t master "probe_http failed after restart"
 	fi
 fi
 exit $rc

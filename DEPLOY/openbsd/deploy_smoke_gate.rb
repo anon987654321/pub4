@@ -70,6 +70,9 @@ master_web_root = File.join(ROOT, "MASTER", "web")
 [
   File.join(master_web_root, "public/face.runtime.js"),
   File.join(master_web_root, "lib/tasks/face_runtime.rake"),
+  File.join(master_web_root, "lib/tasks/face_modules_bundle.rake"),
+  File.join(master_web_root, "script/build_face_modules.sh"),
+  File.join(master_web_root, "script/probe_http"),
   File.join(master_web_root, "script/ci_web_probe"),
   File.join(master_web_root, "app/views/shared/_face_boot.html.erb")
 ].each do |path|

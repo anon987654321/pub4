@@ -40,7 +40,8 @@ async function importFaceBlob(FACE_TEXT) {
 try {
   dispatchFaceStage("modules");
 
-  const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList || [
+  const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
+  const FACE_MODULES = ASSET_PATHS.faceModulesList || [
     "face_particles.js",
     "face_audio_bridge.js",
     "face_tts_bridge.js",
@@ -53,14 +54,21 @@ try {
     "face_brutalist.js"
   ];
 
-  await Promise.all([
-    import(window.MASTER_ASSET_PATHS?.faceModules?.["face_blendshape_bridge.js"] || "/face_blendshape_bridge.js"),
-    import(window.MASTER_ASSET_PATHS?.face3dPreview || "/face3d_preview.js"),
-    ...FACE_MODULES.map(async (modulePath) => {
-      const url = window.MASTER_ASSET_PATHS?.faceModules?.[modulePath] || `/${modulePath}`;
-      await import(url);
-    })
-  ]);
+  if (ASSET_PATHS.faceModulesBundle) {
+    await Promise.all([
+      import(ASSET_PATHS.faceModulesBundle),
+      import(ASSET_PATHS.face3dPreview || "/face3d_preview.js")
+    ]);
+  } else {
+    await Promise.all([
+      import(ASSET_PATHS.faceModules?.["face_blendshape_bridge.js"] || "/face_blendshape_bridge.js"),
+      import(ASSET_PATHS.face3dPreview || "/face3d_preview.js"),
+      ...FACE_MODULES.map(async (modulePath) => {
+        const url = ASSET_PATHS.faceModules?.[modulePath] || `/${modulePath}`;
+        await import(url);
+      })
+    ]);
+  }
 
   const runtimeUrl = window.MASTER_ASSET_PATHS?.faceRuntime;
   if (runtimeUrl) {

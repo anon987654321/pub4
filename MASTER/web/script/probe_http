@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# HTTP smoke probe for MASTER web UI (no Chrome). Safe on OpenBSD VPS post-restart.
+require "net/http"
+require "json"
+require "socket"
+require "uri"
+
+HOST = ENV.fetch("PROBE_HOST", "127.0.0.1")
+PORT = Integer(ENV.fetch("MASTER_WEB_PORT", ENV.fetch("PROBE_PORT", "53187")))
+BASE = ENV["WEB_URL"].to_s.strip
+BASE = "http://#{HOST}:#{PORT}" if BASE.empty?
+
+def get(path)
+  uri = URI.join(BASE.end_with?("/") ? BASE : "#{BASE}/", path.sub(%r{\A/}, ""))
+  Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: 15, open_timeout: 8) do |http|
+    http.request(Net::HTTP::Get.new(uri.request_uri))
+  end
+end
+
+failures = []
+
+begin
+  home = get("/")
+  failures << "homepage #{home.code}" unless home.code == "200"
+  body = home.body.to_s
+  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime].each do |needle|
+    failures << "homepage missing #{needle}" unless body.include?(needle)
+  end
+  failures << "legacy 15s boot timeout still present" if body.include?("15000")
+
+  urls = body.scan(%r{/assets/[^"'\s<>]+}).uniq
+  failures << "no digested assets in homepage" if urls.empty?
+  urls.first(42).each do |path|
+    res = get(path)
+    failures << "#{res.code} #{path}" unless res.code == "200"
+  end
+
+  metrics = get("/chat/metrics")
+  if metrics.code == "200"
+    data = JSON.parse(metrics.body)
+    failures << "metrics missing model" unless data.key?("model")
+  else
+    failures << "metrics #{metrics.code}"
+  end
+rescue Errno::ECONNREFUSED, SocketError => e
+  failures << "connection refused: #{e.message}"
+rescue StandardError => e
+  failures << "#{e.class}: #{e.message}"
+end
+
+if failures.empty?
+  puts "probe_http: PASS #{BASE}"
+  exit 0
+else
+  puts "probe_http: FAIL #{BASE}"
+  failures.each { |f| puts "  - #{f}" }
+  exit 1
+end

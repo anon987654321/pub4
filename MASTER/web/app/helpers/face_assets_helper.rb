@@ -26,9 +26,9 @@ module FaceAssetsHelper
       faceModules: FACE_MODULE_NAMES.index_with { |name| asset_path(name) }
     }
     runtime = Rails.root.join("public/face.runtime.js")
-    if File.file?(runtime)
-      paths[:faceRuntime] = face_runtime_asset_path
-    end
+    paths[:faceRuntime] = face_runtime_asset_path if File.file?(runtime)
+    bundle = Rails.root.join("public/face.modules.bundle.js")
+    paths[:faceModulesBundle] = face_modules_bundle_asset_path if File.file?(bundle)
     paths
   end
 
@@ -38,8 +38,18 @@ module FaceAssetsHelper
     "/face.runtime.js"
   end
 
+  def face_modules_bundle_asset_path
+    asset_path("face.modules.bundle.js")
+  rescue Propshaft::MissingAssetError
+    "/face.modules.bundle.js"
+  end
+
   def face_runtime_preload?
     File.file?(Rails.root.join("public/face.runtime.js"))
+  end
+
+  def face_modules_bundle_preload?
+    File.file?(Rails.root.join("public/face.modules.bundle.js"))
   end
 
   def master_face_import_map
