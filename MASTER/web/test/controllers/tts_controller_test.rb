@@ -48,6 +48,25 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     assert_equal style.to_s, response.headers["X-TTS-Style"]
   end
 
+  test "status returns audio when job is ready" do
+    text = "status ready"
+    voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
+    style = Master::Voice::Speech.default_style
+    job = TtsJob.new(text: text, voice: voice, style: style)
+    File.binwrite(@cache_dir.join("#{job.job_id}.mp3"), "ID3\x03\x00fake-mp3")
+    File.write(@cache_dir.join("#{job.job_id}.job"), { text: text, voice: voice, style: style }.to_json)
+    File.write(
+      @cache_dir.join("#{job.job_id}.meta.json"),
+      { job_id: job.job_id, viseme_plan: [{ shape: "E", amp: 0.8, t: 0, ms: 50 }] }.to_json
+    )
+
+    get "/chat/tts/status", params: { job: job.job_id }
+
+    assert_response :success
+    assert_equal "audio/mpeg", response.media_type
+    assert response.headers["X-TTS-Visemes"].present?
+  end
+
   test "destroy cancels cached job" do
     text = "cancel me"
     voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)

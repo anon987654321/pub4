@@ -145,6 +145,14 @@ class TtsJob
     record_failure(e.message)
   end
 
+  def meta
+    return nil unless File.file?(meta_path)
+
+    JSON.parse(File.read(meta_path))
+  rescue StandardError
+    nil
+  end
+
   private
 
   def synthesize_streaming_to_cache
@@ -173,14 +181,6 @@ class TtsJob
 
   def meta_path
     CACHE_DIR.join("#{@job_id}.meta.json")
-  end
-
-  def meta
-    return nil unless File.file?(meta_path)
-
-    JSON.parse(File.read(meta_path))
-  rescue StandardError
-    nil
   end
 
   def error_path
