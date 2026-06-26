@@ -14,6 +14,7 @@
     }
     function dismissPrimer(){
       document.body.classList.remove('face-loading');
+      delete document.body.dataset.faceBooting;
       if(!p)return;
       p.setAttribute('aria-busy','false');
       p.classList.add('gone');
@@ -31,9 +32,10 @@
       return false;
     }
     function showLoadState(){
-      if(title)title.textContent='loading…';
+      document.body.dataset.faceBooting='1';
+      if(p){p.classList.remove('gone');p.style.opacity='';p.style.transform='';p.setAttribute('aria-busy','true');}
+      if(title)title.textContent='loading face…';
       if(ui)ui.textContent='loading face';
-      if(p)p.setAttribute('aria-busy','true');
     }
     function clearBootTimers(){
       if(timer){clearInterval(timer);timer=null;}
@@ -49,6 +51,21 @@
       dismissPrimer();
       revealPrompt();
     }
+    function showBootError(msg){
+      clearBootTimers();
+      delete document.body.dataset.faceBooting;
+      if(p){
+        p.classList.remove('gone');
+        p.style.opacity='1';
+        p.style.transform='';
+        p.style.pointerEvents='auto';
+        p.setAttribute('aria-busy','false');
+      }
+      if(title)title.textContent='face failed — tap to retry';
+      reportError(msg||'reload page');
+      fired=false;
+      window._primerFired=false;
+    }
     function armFaceBoot(){
       if(timer)return;
       showLoadState();
@@ -61,8 +78,7 @@
           finishBoot();
           return;
         }
-        finishBoot();
-        reportError('face failed to load — reload');
+        showBootError('face timed out — reload');
       },60000);
     }
     function go(){
@@ -70,27 +86,29 @@
       fired=true;
       window._primerFired=true;
       primeAudio();
-      dismissPrimer();
-      revealPrompt();
       if(title)title.textContent='starting…';
       if(ui)ui.textContent='booting face';
-      if(boot()){clearBootTimers();return;}
+      revealPrompt();
+      if(boot()){finishBoot();return;}
       armFaceBoot();
     }
     addEventListener('master:face-ready',function(){if(fired&&boot())finishBoot();});
     addEventListener('master:face-stage',function(ev){
       if(!fired)return;
       var label=ev.detail&&ev.detail.stage;
-      if(label&&ui)ui.textContent=label;
+      if(label){
+        if(ui)ui.textContent=label;
+        if(title&&document.body.dataset.faceBooting)title.textContent=label;
+      }
     });
     addEventListener('master:face-error',function(ev){
       if(!fired)return;
-      clearBootTimers();
-      var msg=(ev.detail&&ev.detail.message)?('face error — '+String(ev.detail.message).slice(0,80)):'face failed to load — reload';
-      reportError(msg);
+      var msg=(ev.detail&&ev.detail.message)?String(ev.detail.message).slice(0,120):'';
+      showBootError(msg||'face error — reload');
     });
     if(p){
       p.addEventListener('pointerdown',go);
+      p.addEventListener('touchstart',go,{passive:true});
       p.addEventListener('touchend',go,{passive:true});
       p.addEventListener('click',go);
       p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
