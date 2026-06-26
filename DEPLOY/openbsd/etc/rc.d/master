@@ -41,7 +41,7 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 		done
 		rcctl restart relayd 2>/dev/null || true
 		# Warm Edge TTS daemon as dev (not root) so sockets stay group-writable.
-		su -m dev -c 'cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -Ilib -e "require \"master\"; puts Master::Voice::TtsSupervisor.ensure_daemon!"' \
+		doas -u dev sh -c 'cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -Ilib -e "require \"master\"; puts Master::Voice::TtsSupervisor.ensure_daemon!"' \
 			2>/dev/null || true
 	fi
 fi
