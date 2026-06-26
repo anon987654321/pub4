@@ -14,7 +14,8 @@ module Master
         output tool_calls written_files source
         council_feedback
         lint_report lint_error
-        review_error
+        review_error review_verdict review_preapproved
+        destructive_route
         pre_enhanced
         rendered voice
         image felt_sense explicit_run

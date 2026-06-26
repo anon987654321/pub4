@@ -22,6 +22,7 @@ Bundler.require(*Rails.groups)
 
 require_relative "../app/services/master_web_token"
 require_relative "../app/middleware/auth_tier"
+require_relative "../app/middleware/html_no_store"
 
 class ServiceWorkerNoCache
   def initialize(app) = @app = app
@@ -63,5 +64,6 @@ module Web
       AuthTier,
       config_path: MasterWebToken.config_path
     )
+    config.middleware.insert_before Rack::ETag, HtmlNoStore
   end
 end

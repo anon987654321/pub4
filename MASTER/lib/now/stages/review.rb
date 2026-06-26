@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../destructive_routes"
 require_relative "../../judge/verdict"
 
 module Master
@@ -17,8 +18,10 @@ module Master
         def call(ctx)
           ctx = run_council(ctx)
           ctx = run_stage(@lint, ctx).value_or(ctx)
-          publish_verdict(ctx)
-          run_stage(@prune, ctx)
+          verdict_result = publish_verdict(ctx)
+          return verdict_result if verdict_result.err?
+
+          run_stage(@prune, verdict_result.value!)
         rescue StandardError => e
           @bus&.publish("review:error", message: e.message)
           Result.ok(ctx.merge(review_error: e.message))
@@ -44,16 +47,36 @@ module Master
           Result.ok(ctx)
         end
 
-        # Hybrid-Norm verdict: deterministic lint signal + council rubric, published (non-blocking).
+        # Hybrid-Norm verdict: lint + council rubric; blocks destructive routes when configured.
         def publish_verdict(ctx)
           rubric = council_confidence(ctx)
           errors = lint_errors(ctx)
-          return if rubric.nil? && errors.nil?
+          return Result.ok(ctx) if rubric.nil? && errors.nil?
 
-          verdict = Master::Judge::Verdict.new.call(deterministic: { lint: (errors || 0).zero? }, rubric_score: rubric || 0.5)
-          @bus&.publish("review:verdict", pass: verdict.pass?, score: verdict.score, reasons: verdict.reasons)
+          verdict = Master::Judge::Verdict.new.call(
+            deterministic: { lint: (errors || 0).zero? },
+            rubric_score: rubric || 0.5
+          )
+          @bus&.publish(
+            "review:verdict",
+            pass: verdict.pass?,
+            score: verdict.score,
+            reasons: verdict.reasons,
+            command: ctx.command,
+            phase: "post_execute"
+          )
+          merged = ctx.merge(review_verdict: verdict.pass?)
+          return Result.ok(merged) unless blocking_destructive?(ctx) && !verdict.pass?
+
+          @bus&.publish("review:blocked", command: ctx.command, reasons: verdict.reasons, phase: "post_execute")
+          Result.err("review: blocked — #{verdict.reasons.join(", ")}", category: :policy)
         rescue StandardError => e
           @bus&.publish("review:verdict_error", message: e.message)
+          Result.ok(ctx)
+        end
+
+        def blocking_destructive?(ctx)
+          DestructiveRoutes.blocking_review? && DestructiveRoutes.destructive_route?(ctx)
         end
 
         def council_confidence(ctx)

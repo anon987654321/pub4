@@ -372,11 +372,19 @@ module Master
   end
 
   def self.boot(root: Dir.pwd)
+    return boot_fast(root:) if ENV["MASTER_FAST"] == "1"
+
     prepare_runtime!
     Ground::Pledge.stage1_boot!(root)
     ensure_services!(root: root)
     container = bootstrap_container(root: root)
     Ground::Pledge.stage2_lock!
+    Now::CLI.new(container:)
+  end
+
+  def self.boot_fast(root: Dir.pwd)
+    prepare_runtime!
+    container = Builder.build_fast(root:)
     Now::CLI.new(container:)
   end
 end

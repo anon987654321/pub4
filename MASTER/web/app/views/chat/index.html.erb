@@ -76,6 +76,10 @@
     #primer { position: absolute; inset: 0; display: grid; place-items: center; border: 0; margin: 0; width: 100%; height: 100%; background: transparent; cursor: pointer; touch-action: manipulation; pointer-events: auto; -webkit-appearance: none; appearance: none; color: inherit; font: inherit; }
     #primer .primer-label { pointer-events: none; font: 200 clamp(1rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: -.04em; }
     #primer .primer-tier { pointer-events: none; display: block; margin-top: .55em; font: 200 clamp(.72rem,2.2vw,1rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: .12em; opacity: .42; }
+    .primer-lanes { display: grid; gap: .85em; justify-items: center; pointer-events: none; }
+    #primer-text { pointer-events: auto; border: 0; background: transparent; color: inherit; cursor: pointer; font: 200 clamp(.78rem,2.4vw,1rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: .08em; opacity: .55; text-decoration: underline; text-underline-offset: .22em; touch-action: manipulation; -webkit-appearance: none; appearance: none; }
+    #primer-text:hover, #primer-text:focus-visible { opacity: .92; outline: 1px solid rgba(255,255,255,.35); outline-offset: 4px; }
+    body.text-mode-session canvas#face, body.text-mode-session canvas#cognition-ecology { display: none !important; }
     .boot-wayfinding { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 2147482000; pointer-events: none; }
     .primer-form.gone, #primer.gone { opacity: 0; pointer-events: none; }
   </style>
@@ -85,10 +89,13 @@
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
   <% primer_tier_label = @tier == "authenticated" ? "full access" : "visitor" %>
   <form id="primer-form" class="primer-form" action="#" method="post">
-    <button type="button" id="primer" aria-busy="false">
-      <span id="primer-title" class="primer-label">tap to enter</span>
-      <span id="primer-tier" class="primer-tier"><%= primer_tier_label %></span>
-    </button>
+    <div class="primer-lanes">
+      <button type="button" id="primer" aria-busy="false">
+        <span id="primer-title" class="primer-label">tap to enter</span>
+        <span id="primer-tier" class="primer-tier"><%= primer_tier_label %></span>
+      </button>
+      <button type="button" id="primer-text" aria-label="Continue in text mode without canvas">continue in text mode</button>
+    </div>
   </form>
   <nav id="boot-wayfinding" class="boot-wayfinding" hidden aria-label="Boot progress">
     <ol class="boot-wayfinding-steps">
@@ -110,6 +117,24 @@
         var passive=type==='touchend';
         root.addEventListener(type,tap,{capture:true,passive:passive});
       });
+      var textBtn=document.getElementById('primer-text');
+      if(textBtn){
+        function textLane(e){
+          if(e&&e.cancelable&&e.type==='touchend')e.preventDefault();
+          document.body.classList.add('text-mode-session');
+          document.body.dataset.runtimeProfile='text';
+          document.documentElement.dataset.masterTopology='text';
+          ['face','cognition-ecology'].forEach(function(id){
+            var el=document.getElementById(id);
+            if(el)el.style.display='none';
+          });
+          if(window.__MASTER_PRIMER_TAP__)window.__MASTER_PRIMER_TAP__();
+        }
+        ['pointerup','touchend','click'].forEach(function(type){
+          var passive=type==='touchend';
+          textBtn.addEventListener(type,textLane,{capture:true,passive:passive});
+        });
+      }
     })();
   </script>
   <%= render "shared/face_boot" %>

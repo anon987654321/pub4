@@ -14,6 +14,7 @@ module Master
           Master::Now::Stages::Route.new(commands:, agent: ai[:agent], bus: infra[:bus]),
           Master::Now::Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
           Master::Now::Stages::Deliberate.new(agent: ai[:agent], config:),
+          Master::Now::Stages::DestructiveReview.new(deliberation: ai[:deliberation], event_bus: bus),
           Master::Now::Stages::Execute.new,
           Master::Now::Pipeline::SkipOnPressure.new(Master::Now::Stages::Review.new(
             council: ai[:council_stage], scanner: ai[:scanner], config:, root:, event_bus: bus

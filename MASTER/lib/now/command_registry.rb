@@ -16,6 +16,21 @@ module Master
     module CommandRegistry
       module_function
 
+      def build_fast(infra:, ai:, root:)
+        bus = infra[:bus]
+        git = Reach::GitOperations.new(File.expand_path("..", root))
+        trace = infra[:trace]
+        {
+          "status" => Command.new { |ctx|
+            dispatch_status(root: root, fix_loop: nil, bus: bus, git: git, trace: trace, ctx: ctx)
+          },
+          "orient" => command(:dispatch_orient, root),
+          "explain" => command(:dispatch_orient, root),
+          "tools" => command(:dispatch_tools, root, ai),
+          "help" => command(:help_text, nil),
+        }
+      end
+
       def build(infra:, ai:, root:)
         commands = {}
         commands.merge!(session_commands(infra))

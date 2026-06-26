@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../destructive_routes"
+
 module Master
   module Now
     module Stages
@@ -36,8 +38,9 @@ module Master
             error_message += " -- did you mean /#{suggestion}?" if suggestion
             return Result.err(error_message, category: :validation)
           end
-          @bus&.publish("route:resolved", command: ctx.command, handler: cmd.class.name)
-          Result.ok(ctx.merge(handler: cmd))
+          destructive = DestructiveRoutes.destructive_command?(ctx.command)
+          @bus&.publish("route:resolved", command: ctx.command, handler: cmd.class.name, destructive: destructive)
+          Result.ok(ctx.merge(handler: cmd, destructive_route: destructive))
         end
 
         def closest_command(name)

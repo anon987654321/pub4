@@ -16,7 +16,7 @@
     [/zone|faceZone|mask/i, [9]],
     [/lint/i, [10]], [/scan|depth|sweep/i, [11]],
     [/error|fail|veto|phantom|container-timeout/i, [12]],
-    [/felt|emotion_history/i, [13]], [/topology|canonical_topology|mask:/i, [14]],
+    [/felt|emotion_history/i, [13]],
     [/provider|model|llm:routed/i, [15]], [/token|stream|chunk|chat:append/i, [16]],
     [/tool:/i, [17]], [/memo|compact|freeze/i, [19]], [/prune|cull/i, [20]],
     [/tts:viseme/i, [21]], [/tts:anticipate|tts:prefetch/i, [22]],
@@ -75,10 +75,17 @@
     }
   }
 
+  function topologyFeatureIds(name, detail) {
+    if (!window.MASTERTopology?.classifyEvent) return [];
+    const mapped = window.MASTERTopology.classifyEvent(name, detail);
+    if (!mapped?.topology) return [];
+    return [14];
+  }
+
   function routeEvent(type, detail = {}) {
     const name = String(type || detail.name || detail.mode || "");
     const ctx = { type: name, detail, st: state(), pool: pool() };
-    const routes = [];
+    const routes = topologyFeatureIds(name, detail);
     ROUTES.forEach(([re, ids, cond]) => {
       if (re && !re.test(name)) return;
       if (cond && !cond(detail)) return;

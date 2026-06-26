@@ -32,11 +32,13 @@ begin
   home = get("/")
   failures << "homepage #{home.code}" unless home.code == "200"
   body = home.body.to_s
-  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer chat_actions master-container-ready container_gate sse_contract felt_state face_deferred_loader id="primer-tier" tap\ to\ enter id="boot-wayfinding" face_wayfinding data-step="audio"].each do |needle|
+  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer chat_actions master-container-ready container_gate sse_contract felt_state face_deferred_loader id="primer-tier" tap\ to\ enter id="primer-text" continue\ in\ text\ mode text-mode-session id="boot-wayfinding" face_wayfinding data-step="audio"].each do |needle|
     failures << "homepage missing #{needle}" unless body.include?(needle)
   end
   failures << "legacy 15s boot timeout still present" if body.include?("15000")
   failures << "primer overlay fix missing (form.gone)" unless body.include?("form.classList.add('gone')")
+  cache = home["cache-control"].to_s.downcase
+  failures << "homepage Cache-Control missing no-store (got #{cache})" unless cache.include?("no-store")
   failures << "primer critical CSS missing" unless body.include?("Critical primer layout")
   failures << "primer wire script missing" unless body.include?("getElementById('primer-form')")
   failures << "immediate armPrimer missing" unless body.include?("armed=true")

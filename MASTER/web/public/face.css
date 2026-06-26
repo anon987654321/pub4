@@ -530,9 +530,45 @@ body[data-face-behind-primer="1"] #primer {
   background: color-mix(in srgb, var(--face-bg) 8%, transparent);
 }
 
+.primer-lanes {
+  display: grid;
+  gap: .85em;
+  justify-items: center;
+  pointer-events: none;
+  padding: 16px;
+}
+
+#primer-text {
+  pointer-events: auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: 200 clamp(.78rem, 2.4vw, 1rem)/1 "Inter", Helvetica, Arial, sans-serif;
+  letter-spacing: .08em;
+  opacity: .55;
+  text-decoration: underline;
+  text-underline-offset: .22em;
+  touch-action: manipulation;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#primer-text:hover,
+#primer-text:focus-visible {
+  opacity: .92;
+  outline: 1px solid var(--face-fg);
+  outline-offset: 4px;
+}
+
+body.text-mode-session canvas#face,
+body.text-mode-session canvas#cognition-ecology {
+  display: none !important;
+}
+
 #primer {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  inset: auto;
   display: grid;
   place-items: center;
   isolation: isolate;
@@ -540,8 +576,8 @@ body[data-face-behind-primer="1"] #primer {
   -webkit-appearance: none;
   border: 0;
   margin: 0;
-  width: 100%;
-  height: 100%;
+  width: min(92vw, 520px);
+  min-height: 42vh;
   font: inherit;
   color: inherit;
   background: color-mix(in srgb, var(--face-bg) 72%, transparent);

@@ -72,6 +72,38 @@ module Master
       trace.merge(config:, boot_config:, code_index:, scanner:, root:)
     end
 
+    def build_fast(root: Dir.pwd)
+      config = Ground::Config.new(root)
+      boot_config = config.freeze_boot
+      trace = boot_trace(root:, config:)
+      bus = trace[:bus]
+      renderer = Voice::Renderer.new(config:)
+      scanner = build_scanner(root:, bus:)
+      code_index = Judge::CodeIndex.new(root:, event_bus: bus)
+      ai = { scanner:, code_index: }
+      infra = trace.merge(config:, boot_config:, renderer:, root:)
+      commands = Now::CommandRegistry.build_fast(infra:, ai:, root:)
+      agent = fast_agent_stub
+      ai[:agent] = agent
+      stages = [
+        Now::Stages::Intake.new,
+        Now::Stages::Route.new(commands:, agent:, bus:),
+        Now::Stages::Execute.new,
+        Now::Stages::Render.new(renderer: infra[:renderer]),
+      ]
+      pipeline = Now::Pipeline.new(stages, bus:, root:, scanner:)
+      infra.merge(ai).merge(pipeline:, scanner:, root:)
+    end
+
+    def fast_agent_stub
+      Object.new.tap do |stub|
+        stub.define_singleton_method(:call) do |_ctx|
+          Master::Result.err("fast mode: /status /orient /tools /help only", category: :validation)
+        end
+        stub.define_singleton_method(:model) { "fast" }
+      end
+    end
+
     def build_infrastructure(root)
       config = Ground::Config.new(root)
       config["model"] ||= Master.default_model
@@ -148,6 +180,7 @@ module Master
         Now::Stages::Route.new(commands:, agent: ai[:agent], bus:),
         Now::Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
         Now::Stages::Deliberate.new(agent: ai[:agent], config:),
+        Now::Stages::DestructiveReview.new(deliberation: ai[:deliberation], event_bus: bus),
         Now::Stages::Execute.new,
         Now::Pipeline::SkipOnPressure.new(
           Now::Stages::Review.new(council: ai[:council_stage], scanner: ai[:scanner], config:, root:, event_bus: bus),

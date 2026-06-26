@@ -33,6 +33,12 @@ def parse_initial_message_options(argv)
     opts.on("--web") { ENV["MASTER_WEB"] = "1" }
     opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }
     opts.on("--boot-status") { ENV["MASTER_BOOT_STATUS"] = "1" }
+    opts.on("--fast") do
+      ENV["MASTER_FAST"] = "1"
+      ENV["MASTER_SKIP_BOOT_SCAN"] = "1"
+      ENV["MASTER_SKIP_TTS"] = "1"
+      ENV["MASTER_WEB"] = "0"
+    end
   end
   parser.parse!(argv)
   options
@@ -55,8 +61,11 @@ end
 trap("INT") { save_cli_session_safely(cli); $stderr.puts "\nsaved"; exit 0 }
 trap("TERM") { save_cli_session_safely(cli); exit 0 }
 
-Master::Now::BootBanner.print
-if $stdin.tty?
+fast_boot = ARGV.include?("--fast")
+Master::Now::BootBanner.print unless fast_boot
+if $stdin.tty? && !fast_boot
+  cli = Master.boot(root: Dir.pwd)
+elsif $stdin.tty? && fast_boot
   cli = Master.boot(root: Dir.pwd)
 else
   ENV["MASTER_PIPE"] = "1"
@@ -67,10 +76,18 @@ end
 Master::Ops::RuntimeLoopGuards.install!
 
 if $stdin.tty?
-  Master::Now::WebServer.start(cli.container[:config])
+  Master::Now::WebServer.start(cli.container[:config]) unless fast_boot
 
   message = initial_message_from_argv(ARGV)
-  cli.run(message.empty? ? nil : message)
+  message = "/status" if fast_boot && message.empty?
+  if fast_boot
+    cli.pipe(message) unless message.empty?
+    stop_cli_background_loop_safely(cli)
+    save_cli_session_safely(cli)
+    exit!(cli.exit_code || 0)
+  else
+    cli.run(message.empty? ? nil : message)
+  end
 else
   $stdout.sync = true
   $stdin.each_line { |line| cli.pipe(line) }
