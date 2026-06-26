@@ -193,6 +193,10 @@ sync_openbsd_apply() {
   /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf reload failed"; return 1 }
   /sbin/pfctl -e 2>/dev/null || log WARN "pf already enabled or enable skipped"
 
+  if [[ -x /usr/bin/ruby34 ]] || command -v ruby34 >/dev/null 2>&1; then
+    ruby34 "${SCRIPT_DIR}/relayd_prune_keypairs.rb" /etc/relayd.conf \
+      || log WARN "relayd keypair prune failed"
+  fi
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid after sync"; return 1 }
 
   if [[ -x /usr/local/bin/nsd-resign ]]; then
@@ -304,7 +308,7 @@ ALL_APPS=(
   bsdports:bsdports.org
   baibl:baibl.no
   blognet:blognet.no
-  hjerterom:hjerterom.brgen.no
+  hjerterom:hjerterom.no
 )
 
 SERVICES=()
@@ -627,6 +631,9 @@ configure_relayd() {
   BACKEND_PORT[master]=${APP_PORTS[master]:-53187}
   DOMAIN_BACKEND[blognet.no]=blognet
   DOMAIN_BACKEND[www.blognet.no]=blognet
+  DOMAIN_BACKEND[hjerterom.no]=hjerterom
+  DOMAIN_BACKEND[www.hjerterom.no]=hjerterom
+  DOMAIN_BACKEND[hjerterom.brgen.no]=hjerterom
   DOMAIN_BACKEND[anticasinoblog.com]=blognet
   DOMAIN_BACKEND[antigamblingblog.com]=blognet
   DOMAIN_BACKEND[antibettingblog.com]=blognet
@@ -661,7 +668,7 @@ configure_relayd() {
   {
     print -r -- "log connection errors"
     print -r -- "interval 120"
-    print -r -- "timeout 5000"
+    print -r -- "timeout 30000"
     print -r -- ""
     for backend in ${(k)BACKEND_PORT}; do
       print -r -- "table <${backend}> { 127.0.0.1 }"
