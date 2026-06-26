@@ -1,0 +1,100 @@
+<script nonce="<%= content_security_policy_nonce %>">
+  window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
+  (function(){
+    var p=document.getElementById('primer'),z=document.getElementById('zsh'),ui=document.getElementById('ui-status'),err=document.getElementById('error-live'),title=document.getElementById('primer-title');
+    var fired=false,timer=null,fallback=null;
+    function primeAudio(){
+      try{
+        var Ctx=window.AudioContext||window.webkitAudioContext;
+        if(!Ctx||window.__MASTER_AUDIO_PRIME__)return;
+        var ctx=new Ctx();
+        window.__MASTER_AUDIO_PRIME__=ctx;
+        ctx.resume().catch(function(){});
+      }catch(_e){}
+    }
+    function dismissPrimer(){
+      document.body.classList.remove('face-loading');
+      if(!p)return;
+      p.setAttribute('aria-busy','false');
+      p.classList.add('gone');
+      window.setTimeout(function(){p.remove();},220);
+    }
+    function revealPrompt(){
+      if(z)z.classList.add('live');
+      if(ui&&!ui.textContent)ui.textContent='starting';
+    }
+    function boot(){
+      if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){
+        window.MASTER_FACE.startEverything();
+        return true;
+      }
+      return false;
+    }
+    function showLoadState(){
+      if(title)title.textContent='loading…';
+      if(ui)ui.textContent='loading face';
+      if(p)p.setAttribute('aria-busy','true');
+    }
+    function clearBootTimers(){
+      if(timer){clearInterval(timer);timer=null;}
+      if(fallback){clearTimeout(fallback);fallback=null;}
+    }
+    function reportError(msg){
+      if(ui)ui.textContent=msg;
+      if(err)err.textContent=msg;
+      if(p)p.setAttribute('aria-busy','false');
+    }
+    function finishBoot(){
+      clearBootTimers();
+      dismissPrimer();
+      revealPrompt();
+    }
+    function armFaceBoot(){
+      if(timer)return;
+      showLoadState();
+      timer=setInterval(function(){if(boot())finishBoot();},40);
+      fallback=setTimeout(function(){
+        clearBootTimers();
+        if(boot())return;
+        if(window.MASTER_FACE&&window.MASTER_FACE.startEverything&&!window.MASTER_FACE.primerFired){
+          window.MASTER_FACE.startEverything();
+          finishBoot();
+          return;
+        }
+        finishBoot();
+        reportError('face failed to load — reload');
+      },60000);
+    }
+    function go(){
+      if(fired)return;
+      fired=true;
+      window._primerFired=true;
+      primeAudio();
+      dismissPrimer();
+      revealPrompt();
+      if(title)title.textContent='starting…';
+      if(ui)ui.textContent='booting face';
+      if(boot()){clearBootTimers();return;}
+      armFaceBoot();
+    }
+    addEventListener('master:face-ready',function(){if(fired&&boot())finishBoot();});
+    addEventListener('master:face-stage',function(ev){
+      if(!fired)return;
+      var label=ev.detail&&ev.detail.stage;
+      if(label&&ui)ui.textContent=label;
+    });
+    addEventListener('master:face-error',function(ev){
+      if(!fired)return;
+      clearBootTimers();
+      var msg=(ev.detail&&ev.detail.message)?('face error — '+String(ev.detail.message).slice(0,80)):'face failed to load — reload';
+      reportError(msg);
+    });
+    if(p){
+      p.addEventListener('pointerdown',go);
+      p.addEventListener('touchend',go,{passive:true});
+      p.addEventListener('click',go);
+      p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
+    }
+    addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}});
+  })();
+</script>

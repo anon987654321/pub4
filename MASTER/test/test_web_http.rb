@@ -41,6 +41,10 @@ class TestWebHTTP < Minitest::Test
     body = res.body
     assert_includes body, 'id="face"', "homepage should contain face canvas"
     assert_includes body, "face3d_preview", "homepage should load canonical face3d boot"
+    assert_includes body, "importmap", "homepage should ship import map for face3d deps"
+    assert_includes body, "60000", "boot watchdog should allow full face load window"
+    assert_includes body, "master:face-stage", "boot should listen for face stage events"
+    refute_includes body, "15000", "legacy 15s boot timeout should be gone"
     refute_includes body, "davis", "davis voice should not be in picker"
   end
 
@@ -51,7 +55,20 @@ class TestWebHTTP < Minitest::Test
     assert_empty bad, "stray \");\" found in page JS: #{bad.first(2).inspect}"
   end
 
-  def test_04_metrics_returns_json
+  def test_04_rendered_asset_urls_return_200
+    skip_unless_server
+    res = get("/")
+    urls = res.body.scan(%r{/assets/[^"'\s<>]+}).uniq
+    refute_empty urls, "homepage should reference digested assets"
+    failures = []
+    urls.first(40).each do |path|
+      asset = get(path)
+      failures << "#{asset.code} #{path}" unless asset.code == "200"
+    end
+    assert_empty failures, "asset fetch failures:\n#{failures.join("\n")}"
+  end
+
+  def test_05_metrics_returns_json
     skip_unless_server
     res = get("/chat/metrics")
     assert_equal "200", res.code, "metrics endpoint should return 200"
@@ -64,7 +81,7 @@ class TestWebHTTP < Minitest::Test
     flunk "metrics returned invalid JSON: #{e.message}"
   end
 
-  def test_05_message_endpoint_streams_sse
+  def test_06_message_endpoint_streams_sse
     skip_unless_server
     Net::HTTP.start("127.0.0.1", WEB_PORT, read_timeout: 15) do |http|
       req = Net::HTTP::Get.new("/chat/message?message=ping")

@@ -1,11 +1,25 @@
 "use strict";
 
+const STAGE_LABELS = {
+  modules: "loading face modules…",
+  parts: "loading face runtime…",
+  runtime: "starting face runtime…",
+  ready: "face ready"
+};
+
+function dispatchFaceStage(stage) {
+  const label = STAGE_LABELS[stage] || stage;
+  window.dispatchEvent(new CustomEvent("master:face-stage", { detail: { stage: label } }));
+}
+
 function dispatchFaceError(error) {
   console.error("face boot failed", error);
   window.dispatchEvent(new CustomEvent("master:face-error", { detail: { message: String(error) } }));
 }
 
 try {
+  dispatchFaceStage("modules");
+
   const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList || [
     "face_particles.js",
     "face_audio_bridge.js",
@@ -40,6 +54,8 @@ try {
     }))
   ]);
 
+  dispatchFaceStage("parts");
+
   const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
   const absoluteAsset = (path) => path ? new URL(path, document.baseURI).href : null;
   if (ASSET_PATHS.threeModule) ASSET_PATHS.threeModule = absoluteAsset(ASSET_PATHS.threeModule);
@@ -53,8 +69,11 @@ try {
   );
   const FACE_BLOB = new Blob([FACE_SOURCE], { type: "text/javascript" });
   const FACE_BLOB_URL = URL.createObjectURL(FACE_BLOB);
+
+  dispatchFaceStage("runtime");
   try {
     await import(FACE_BLOB_URL);
+    dispatchFaceStage("ready");
     window.dispatchEvent(new CustomEvent("master:face-ready"));
   } finally {
     URL.revokeObjectURL(FACE_BLOB_URL);

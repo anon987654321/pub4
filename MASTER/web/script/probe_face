@@ -2,7 +2,7 @@
 require "ferrum"
 
 URL = ARGV[0] || "http://localhost:53187/"
-WAIT = 8
+WAIT = Integer(ENV.fetch("PROBE_WAIT", "12"))
 CHROME_PATHS = [
   ENV["CHROME_PATH"],
   "/usr/local/bin/chrome",
@@ -18,7 +18,7 @@ puts "chrome: #{CHROME}"
 browser = Ferrum::Browser.new(
   headless: true,
   browser_path: CHROME,
-  process_timeout: 30,
+  process_timeout: 45,
   browser_options: {
     "no-sandbox" => nil,
     "enable-webgl" => nil,
@@ -27,7 +27,7 @@ browser = Ferrum::Browser.new(
     "disable-dev-shm-usage" => nil,
     "ignore-certificate-errors" => nil
   },
-  timeout: 30
+  timeout: 90
 )
 
 console_msgs = []
@@ -41,6 +41,8 @@ browser.on(:response) do |res|
   network_errors << "#{s} #{res.url.split('?').first.split('/').last}" if s >= 400
 end
 
+failures = []
+
 begin
   browser.evaluate_on_new_document(<<~JS)
     window._errs = [];
@@ -51,34 +53,6 @@ begin
     window.addEventListener('unhandledrejection', function(e) {
       window._errs.push('UNHANDLED: ' + String(e.reason));
     });
-    // Watch for script elements being added so we can attach error listeners early
-    new MutationObserver(function(mutations) {
-      mutations.forEach(function(m) {
-        m.addedNodes.forEach(function(n) {
-          if (n.nodeType === 1 && n.tagName === 'SCRIPT' && n.type === 'module') {
-            n.addEventListener('error', function() {
-              window._clog.push('SCRIPT_ERROR: ' + n.src);
-            });
-          }
-        });
-      });
-    }).observe(document.documentElement || document, {childList: true, subtree: true});
-    (function() {
-      var orig = console.log.bind(console);
-      console.log = function() {
-        var args = Array.prototype.slice.call(arguments);
-        window._clog.push(args.map(String).join(' '));
-        orig.apply(console, arguments);
-      };
-      ['error','warn'].forEach(function(level) {
-        var orig2 = console[level].bind(console);
-        console[level] = function() {
-          var args = Array.prototype.slice.call(arguments);
-          window._clog.push(level.toUpperCase() + ': ' + args.map(String).join(' '));
-          orig2.apply(console, arguments);
-        };
-      });
-    })();
   JS
 
   browser.go_to URL
@@ -88,43 +62,14 @@ begin
   puts "\n=== JS errors ==="
   errs = browser.evaluate("window._errs || []") rescue []
   puts errs.empty? ? "(none)" : errs.join("\n")
+  failures << "js errors present" unless errs.empty?
 
   puts "\n=== network errors ==="
   puts network_errors.empty? ? "(none)" : network_errors.join("\n")
-
-  puts "\n=== chat.js overlay ==="
-  dbg = browser.evaluate("(document.getElementById('_dbg') || {}).textContent || '(no overlay)'")
-  puts dbg
-
-  puts "\n=== page scripts loaded ==="
-  scripts = browser.evaluate("Array.from(document.querySelectorAll('script[src]')).map(s => s.src + ' ' + (s.getAttribute('data-loaded') || ''))")
-  puts scripts.inspect
-
-  puts "\n=== CSP header ==="
-  # Re-fetch headers via CDP
-  csp = browser.evaluate(<<~JS)
-    (function() {
-      var metas = document.querySelectorAll('meta[http-equiv]');
-      for (var m of metas) { if (m.httpEquiv.toLowerCase() === 'content-security-policy') return m.content; }
-      return '(not in meta — set via response header)';
-    })()
-  JS
-  puts csp
-
-  puts "\n=== test dynamic import of three.module.js ==="
-  browser.evaluate(<<~JS)
-    import('/three.module.js?v=51')
-      .then(function(m) { window._clog.push('THREE_OK keys=' + Object.keys(m).length); })
-      .catch(function(e) { window._clog.push('THREE_FAIL: ' + String(e)); });
-  JS
-  sleep 4
+  failures << "network errors present" unless network_errors.empty?
 
   puts "\n=== primer state ==="
   puts browser.evaluate("document.getElementById('primer') ? 'exists' : 'gone'")
-
-  puts "\n=== console log ==="
-  clog = browser.evaluate("window._clog || []") rescue []
-  puts clog.empty? ? "(none)" : clog.join("\n")
 
   puts "\n=== element at tap point ==="
   el = browser.evaluate("(function(){ var e = document.elementFromPoint(300,500); return e ? e.tagName+'#'+e.id+'.'+e.className : 'none'; })()")
@@ -132,20 +77,47 @@ begin
 
   puts "\n=== simulate tap ==="
   browser.mouse.click(x: 300, y: 500)
-  sleep 3
+  sleep 8
 
-  puts "window._primerFired: " + (browser.evaluate("String(window._primerFired)") rescue "?")
-  puts "overlay after tap: " + (browser.evaluate("(document.getElementById('_dbg') || {}).textContent || '(no overlay)'") rescue "(evaluate failed)")
-  puts "primer after tap: " + (browser.evaluate("document.getElementById('primer') ? 'exists' : 'gone'") rescue "?")
-  puts "zsh.live: " + (browser.evaluate("document.getElementById('zsh').classList.contains('live').toString()") rescue "?")
+  state = browser.evaluate(<<~JS) rescue {}
+    ({
+      primerFired: !!window._primerFired,
+      primerGone: !document.getElementById('primer'),
+      zshLive: document.getElementById('zsh').classList.contains('live'),
+      uiStatus: (document.getElementById('ui-status') || {}).textContent || '',
+      faceType: typeof window.MASTER_FACE,
+      errs: window._errs || []
+    })
+  JS
 
-  puts "\n=== console log after tap ==="
-  clog2 = browser.evaluate("window._clog || []") rescue []
-  puts clog2.empty? ? "(none)" : clog2.join("\n")
+  puts "state: #{state.inspect}"
+  failures << "primer not fired" unless state["primerFired"]
+  failures << "primer still visible" unless state["primerGone"]
+  failures << "zsh not live" unless state["zshLive"]
+
+  deadline = Time.now + 60
+  until state["faceType"] == "object" || Time.now > deadline
+    sleep 2
+    state["faceType"] = browser.evaluate("typeof window.MASTER_FACE") rescue "undefined"
+  end
+  failures << "MASTER_FACE missing after 60s" unless state["faceType"] == "object"
+
+  puts "\n=== console log tail ==="
+  puts console_msgs.last(10).join("\n") unless console_msgs.empty?
 
 rescue => e
+  failures << "probe exception: #{e.class}: #{e.message}"
   puts "probe error: #{e.class}: #{e.message}"
   puts e.backtrace.first(3).join("\n")
 ensure
   browser.quit
+end
+
+if failures.empty?
+  puts "\nprobe: PASS"
+  exit 0
+else
+  puts "\nprobe: FAIL"
+  failures.each { |f| puts "  - #{f}" }
+  exit 1
 end

@@ -9,8 +9,9 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "tap to start"
     assert_includes response.body, "master:face-ready"
-    assert_includes response.body, "finishBoot"
+    assert_includes response.body, "master:face-stage"
     assert_includes response.body, "dismissPrimer"
+    assert_includes response.body, "importmap"
     assert_includes response.body, "60000"
     refute_includes response.body, "15000"
     refute_includes response.body, "touchstart\",go"
@@ -25,12 +26,26 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     %w[
       face_semantics.js face_minimal_ui.js face_loops_music.js face_loops_nudge.js
-      face_blendshape_bridge.js face3d_preview.js
+      face_blendshape_bridge.js face3d_preview.js face3d_geometry.js face3d_support.js
+      master_events.js shortcut_sheet.js
     ].each do |name|
       assert_includes response.body, name
     end
-    assert_match(/faceParts:\s*\[/, response.body)
-    assert_match(/faceModules:\s*\{/, response.body)
+    assert_match(/faceParts/, response.body)
+    assert_match(/faceModules/, response.body)
+    assert_match(%r{/assets/face-[0-9a-f]+\.js}, response.body)
+  end
+
+  test "index referenced assets resolve via propshaft" do
+    get root_path
+    assert_response :success
+
+    urls = response.body.scan(%r{/assets/[^"'\s<>]+}).uniq
+    refute_empty urls
+    urls.first(25).each do |path|
+      get path
+      assert_response :success, "expected 200 for #{path}, got #{response.status}"
+    end
   end
 
   test "message smoke ping streams sse without container" do

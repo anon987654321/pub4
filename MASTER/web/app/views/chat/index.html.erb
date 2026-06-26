@@ -17,25 +17,11 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23030303'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
+  <script type="importmap" nonce="<%= content_security_policy_nonce %>">
+    <%= raw({ imports: master_face_import_map }.to_json) %>
+  </script>
   <script nonce="<%= content_security_policy_nonce %>">
-    window.MASTER_ASSET_PATHS = {
-      threeModule: "<%= asset_path("three.face.module.js") %>",
-      face3dPreview: "<%= asset_path("face3d_preview.js") %>",
-      face3dEngine: "<%= asset_path("face3d_engine.js") %>",
-      face3dRenderer: "<%= asset_path("face3d_renderer.js") %>",
-      faceParts: <%= raw((1..5).map { |part| asset_path("face.part#{part}.txt") }.to_json) %>,
-      faceModulesList: <%= raw(%w[
-        face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js face_blendshape_bridge.js
-        face_council_multi.js face_phosphor_trail.js face_offscreen_ecology.js face_micro_interactions.js
-        face_perf_guards.js face_brutalist.js
-      ].to_json) %>,
-      faceModules: <%= raw(%w[
-        face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js face_blendshape_bridge.js
-        face_council_multi.js face_phosphor_trail.js face_offscreen_ecology.js face_micro_interactions.js
-        face_perf_guards.js face_brutalist.js
-        face_semantics.js face_minimal_ui.js face_loops_music.js face_loops_nudge.js
-      ].to_h { |name| [name, asset_path(name)] }.to_json) %>
-    };
+    window.MASTER_ASSET_PATHS = <%= raw(master_face_asset_paths.to_json) %>;
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
@@ -47,7 +33,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
-  <link rel="modulepreload" href="<%= asset_path("face3d_preview.js") %>">
+  <% FaceAssetsHelper::FACE_PRELOAD_MODULES.each do |mod| %>
+  <link rel="modulepreload" href="<%= asset_path(mod) %>">
+  <% end %>
+  <% FaceAssetsHelper::FACE_MODULE_NAMES.first(11).each do |mod| %>
+  <link rel="modulepreload" href="<%= asset_path(mod) %>">
+  <% end %>
   <link rel="modulepreload" href="<%= asset_path("face.js") %>">
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <style nonce="<%= content_security_policy_nonce %>">
@@ -69,7 +60,7 @@
   <iframe id="yt-fallback-a" src="about:blank" title="Radio A" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
   <iframe id="yt-fallback-b" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
   <div id="tts-live" aria-live="polite" aria-atomic="true"></div>
-  <div id="primer" role="button" aria-labelledby="primer-title" tabindex="0">
+  <div id="primer" role="button" aria-labelledby="primer-title" aria-busy="false" tabindex="0">
     <h1 id="primer-title">tap to start</h1>
   </div>
   <main id="chat-shell" aria-label="MASTER chat">
@@ -97,95 +88,9 @@
     <span id="char-count" aria-hidden="true"></span>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
   </form>
-  <script nonce="<%= content_security_policy_nonce %>">
-    window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
-    (function(){
-      var p=document.getElementById('primer'),z=document.getElementById('zsh'),ui=document.getElementById('ui-status'),title=document.getElementById('primer-title');
-      var fired=false,timer=null,fallback=null;
-      function primeAudio(){
-        try{
-          var Ctx=window.AudioContext||window.webkitAudioContext;
-          if(!Ctx||window.__MASTER_AUDIO_PRIME__)return;
-          var ctx=new Ctx();
-          window.__MASTER_AUDIO_PRIME__=ctx;
-          ctx.resume().catch(function(){});
-        }catch(_e){}
-      }
-      function dismissPrimer(){
-        document.body.classList.remove('face-loading');
-        if(!p)return;
-        p.classList.add('gone');
-        window.setTimeout(function(){p.remove();},220);
-      }
-      function revealPrompt(){
-        if(z)z.classList.add('live');
-        if(ui&&!ui.textContent)ui.textContent='starting';
-      }
-      function boot(){
-        if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){
-          window.MASTER_FACE.startEverything();
-          return true;
-        }
-        return false;
-      }
-      function showLoadState(){
-        if(title)title.textContent='loading…';
-        if(ui)ui.textContent='loading face';
-      }
-      function clearBootTimers(){
-        if(timer){clearInterval(timer);timer=null;}
-        if(fallback){clearTimeout(fallback);fallback=null;}
-      }
-      function finishBoot(){
-        clearBootTimers();
-        dismissPrimer();
-        revealPrompt();
-      }
-      function armFaceBoot(){
-        if(timer)return;
-        showLoadState();
-        timer=setInterval(function(){if(boot())finishBoot();},40);
-        fallback=setTimeout(function(){
-          clearBootTimers();
-          if(boot())return;
-          if(window.MASTER_FACE&&window.MASTER_FACE.startEverything&&!window.MASTER_FACE.primerFired){
-            window.MASTER_FACE.startEverything();
-            finishBoot();
-            return;
-          }
-          finishBoot();
-          if(ui)ui.textContent='face failed to load — reload';
-        },60000);
-      }
-      function go(){
-        if(fired)return;
-        fired=true;
-        window._primerFired=true;
-        primeAudio();
-        dismissPrimer();
-        revealPrompt();
-        if(title)title.textContent='starting…';
-        if(ui)ui.textContent='booting face';
-        if(boot()){clearBootTimers();return;}
-        armFaceBoot();
-      }
-      addEventListener('master:face-ready',function(){if(fired&&boot())finishBoot();});
-      addEventListener('master:face-error',function(ev){
-        if(!fired)return;
-        clearBootTimers();
-        if(ui)ui.textContent=(ev.detail&&ev.detail.message)?'face error — reload':'face failed to load — reload';
-      });
-      if(p){
-        p.addEventListener('pointerdown',go);
-        p.addEventListener('touchend',go,{passive:true});
-        p.addEventListener('click',go);
-        p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
-      }
-      addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}});
-    })();
-  </script>
-  <script src="/master_events.js" defer></script>
-  <script src="/shortcut_sheet.js" defer></script>
+  <%= render "shared/face_boot" %>
+  <script src="<%= asset_path("master_events.js") %>" defer></script>
+  <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script src="<%= asset_path("face_state.js") %>" defer></script>
   <script src="<%= asset_path("visual_governor.js") %>" defer></script>
   <script src="<%= asset_path("topology_registry.js") %>" defer></script>

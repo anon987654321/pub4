@@ -2,20 +2,11 @@ const CACHE_VERSION_MATCH = self.location.search.match(/[?&]v=([^&]+)/);
 const CACHE_VERSION = CACHE_VERSION_MATCH ? CACHE_VERSION_MATCH[1] : 'v2';
 const CACHE_NAME = `brgen-${CACHE_VERSION}-assets`;
 const OFFLINE_URL = '/offline.html';
+// Precache only shell assets that are stable across deploys. Digested /assets/*
+// URLs are cached opportunistically on successful fetch (network-first below).
 const STATIC_ASSETS = [
-  '/offline.html',
-  '/face.css',
-  '/face.js',
-  '/chat.js',
-  '/chat_actions.js',
-  '/face_state.js',
-  '/visual_bridge.js',
-  '/master_events.js',
-  '/shortcut_sheet.js',
-  '/particle_kernel.js',
-  '/three.face.module.js',
-  '/manifest.json',
-  '/icon.png'
+  OFFLINE_URL,
+  '/manifest.json'
 ];
 
 self.addEventListener('install', e => {
@@ -61,6 +52,6 @@ self.addEventListener('fetch', e => {
         }
         return resp;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() => caches.match(e.request).then(cached => cached || caches.match(OFFLINE_URL)))
   );
 });

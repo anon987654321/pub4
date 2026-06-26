@@ -446,6 +446,23 @@ body[data-mode="listening"] #mic-dot {
 
 #primer:active h1 { transform: scale(1.03); }
 
+body[data-face-booting="1"] #primer {
+  background: color-mix(in srgb, var(--face-bg) 88%, transparent);
+  cursor: wait;
+}
+body[data-face-booting="1"] #primer h1 {
+  animation: primerPulse 1.2s var(--ease-in-out) infinite;
+}
+body[data-face-booting="1"] .ui-status {
+  opacity: 1;
+  color: var(--face-fg);
+  letter-spacing: .22em;
+}
+@keyframes primerPulse {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
+}
+
 /* Tap ripple */
 @keyframes ripple { to { transform: translate(var(--x),var(--y)) translate(-50%,-50%) scale(22); opacity: 0; } }
 .tap-ripple {

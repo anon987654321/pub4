@@ -4,10 +4,12 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const publicDir = join(root, "public");
+const viewsDir = join(root, "app", "views");
 
 function partSources() {
-  return [1, 2, 3, 4, 5].map((part) => readFileSync(join(root, `face.part${part}.txt`), "utf8"));
+  return [1, 2, 3, 4, 5].map((part) => readFileSync(join(publicDir, `face.part${part}.txt`), "utf8"));
 }
 
 test("face.part tail imports are single-quoted for MODULE_PATHS replacement", () => {
@@ -25,7 +27,7 @@ test("face.part tail imports are single-quoted for MODULE_PATHS replacement", ()
 test("face.js loader replaces every tail import path", () => {
   const source = partSources().join("\n");
   const faceModules = Object.fromEntries(
-    readdirSync(join(root, "assets"))
+    readdirSync(join(publicDir, "assets"))
       .filter((name) => name.endsWith(".js") && name.startsWith("face_"))
       .map((name) => [name.replace(/-[0-9a-f]{8}\.js$/, ".js"), `/assets/${name}`])
   );
@@ -34,4 +36,42 @@ test("face.js loader replaces every tail import path", () => {
     source
   );
   assert.doesNotMatch(replaced, /import\('\/face_/);
+});
+
+test("face.js dispatches boot stage events", () => {
+  const faceJs = readFileSync(join(publicDir, "face.js"), "utf8");
+  assert.match(faceJs, /master:face-stage/);
+  assert.match(faceJs, /dispatchFaceStage\("modules"\)/);
+  assert.match(faceJs, /dispatchFaceStage\("ready"\)/);
+});
+
+test("shared boot partial uses 60s watchdog and error-live", () => {
+  const boot = readFileSync(join(viewsDir, "shared", "_face_boot.html.erb"), "utf8");
+  assert.match(boot, /60000/);
+  assert.match(boot, /error-live/);
+  assert.match(boot, /master:face-stage/);
+  assert.doesNotMatch(boot, /15000/);
+});
+
+test("chat index ships import map and digested master_events", () => {
+  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const helper = readFileSync(join(root, "app", "helpers", "face_assets_helper.rb"), "utf8");
+  assert.match(index, /type="importmap"/);
+  assert.match(index, /master_face_import_map/);
+  assert.match(index, /asset_path\("master_events\.js"\)/);
+  assert.match(index, /modulepreload/);
+  assert.match(helper, /face3d_geometry\.js/);
+});
+
+test("face3d_engine imports use import-map paths", () => {
+  const engine = readFileSync(join(publicDir, "face3d_engine.js"), "utf8");
+  assert.match(engine, /from '\/face3d_geometry\.js'/);
+  assert.match(engine, /from '\/face3d_support\.js'/);
+});
+
+test("service worker avoids stale undigested precache", () => {
+  const sw = readFileSync(join(publicDir, "sw.js"), "utf8");
+  assert.doesNotMatch(sw, /\/face\.js'/);
+  assert.doesNotMatch(sw, /\/chat\.js'/);
+  assert.match(sw, /OFFLINE_URL/);
 });

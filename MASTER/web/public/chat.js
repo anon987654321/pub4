@@ -278,6 +278,14 @@ window._chatOnChunk = (raw) => {
   if (!_streamEl) return;
   if (_typingEl && (document.body.dataset.instantStream === '1' || raw.length > 0)) { _typingEl.remove(); _typingEl = null; }
   _chunkCount++;
+  if (/booting/i.test(raw) && /retry/i.test(raw)) {
+    const ui = document.getElementById('ui-status');
+    if (ui) ui.textContent = 'master warming up — retry shortly';
+    const errLive = document.getElementById('error-live');
+    if (errLive) errLive.textContent = 'master warming up';
+    _streamEl.textContent = 'master is still starting — try again in a moment.';
+    return;
+  }
   if (raw.startsWith('ERROR:')) {
     _streamEl.closest('.message')?.classList.add('msg-error-flash');
     setTimeout(() => _streamEl.closest('.message')?.classList.remove('msg-error-flash'), 120);

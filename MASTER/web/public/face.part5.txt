@@ -620,8 +620,11 @@ function collectFeltState() {
 window.collectFeltState = collectFeltState;
 
 function startEverything() {
+  if (primerFired) return;
   primerFired = true;
   document.body?.classList.remove('face-loading');
+  delete document.body?.dataset?.faceBooting;
+  window.dispatchEvent(new CustomEvent('primer:ready'));
   morphCurrent = 0.72; morphTarget = 1.08;
   initAudio();
   prefetchTtsPhraseBank?.();
