@@ -63,7 +63,7 @@ const streamLive = (() => {
 
 window._chatEvtSrc = null;
 window._chatCancel = () => {
-  if (window._chatEvtSrc) { try { window._chatEvtSrc.close(); } catch (_) {} window._chatEvtSrc = null; }
+  if (window._chatEvtSrc) { try { window._chatEvtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("chat:stream_close", err); } window._chatEvtSrc = null; }
   window._chatOnError?.();
 };
 
@@ -633,7 +633,8 @@ window._chatOnDmesg = (line) => {
       window._imageToken = data.token;
       photoBtn.dataset.state = 'ready';
       window.MASTERVisual?.event?.('photo:ready', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, mode: 'ready' });
-    } catch (_) {
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("chat:photo_upload", err);
       photoBtn.dataset.state = '';
       setTimeout(() => photoBtn.classList.add('photo-fail'), 200);
       setTimeout(() => photoBtn.classList.remove('photo-fail'), 1200);
@@ -908,7 +909,8 @@ document.querySelectorAll('.tool').forEach(btn => {
       const data = await r.json();
       cached = Array.isArray(data) ? data.slice(-20) : [];
       filterItems(search?.value || '');
-    } catch (_) {
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("chat:history_load", err);
       cached = [];
       renderItems([]);
     }

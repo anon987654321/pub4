@@ -22,6 +22,7 @@ Rails.application.routes.draw do
   get  "chat/dmesg",    to: "chat#dmesg"
   get  "runtime/catalog", to: "runtime#catalog"
   get  "runtime/config", to: "runtime#boot_config"
+  get  "runtime/status", to: "runtime#status"
   get  "runtime/topologies", to: "runtime#topologies"
   get  "events/stream", to: "events#stream"
   post "canvas/event",  to: "canvas#post_event"

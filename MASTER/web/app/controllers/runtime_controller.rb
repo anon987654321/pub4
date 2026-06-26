@@ -18,6 +18,17 @@ class RuntimeController < ApplicationController
     render_runtime_json(data)
   end
 
+  def status
+    c = container
+    model = c&.[](:agent)&.model.to_s.split("/").last.presence || "booting"
+    render_runtime_json({
+      ready: !c.nil?,
+      model: model,
+      uptime_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - start_ms),
+      tier: request.env["master.tier"].to_s
+    })
+  end
+
   private
 
   def render_runtime_json(payload)

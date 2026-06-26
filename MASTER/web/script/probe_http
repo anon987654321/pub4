@@ -28,7 +28,7 @@ begin
   home = get("/")
   failures << "homepage #{home.code}" unless home.code == "200"
   body = home.body.to_s
-  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer chat_actions].each do |needle|
+  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer chat_actions master-container-ready container_gate sse_contract felt_state].each do |needle|
     failures << "homepage missing #{needle}" unless body.include?(needle)
   end
   failures << "legacy 15s boot timeout still present" if body.include?("15000")
@@ -46,6 +46,14 @@ begin
   ping = get("/chat/message?message=ping")
   failures << "smoke ping should return 200 (got #{ping.code})" unless ping.code == "200"
   failures << "smoke ping missing pong" unless ping.body.to_s.include?("pong")
+
+  status = get("/runtime/status")
+  failures << "runtime status should return 200 (got #{status.code})" unless status.code == "200"
+  if status.code == "200"
+    payload = JSON.parse(status.body) rescue {}
+    failures << "runtime status missing ready flag" unless payload.key?("ready")
+    failures << "runtime status missing model" unless payload.key?("model")
+  end
 
   token = ENV["PROBE_TOKEN"].to_s
   if token.empty?

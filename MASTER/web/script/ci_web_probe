@@ -5,14 +5,15 @@ require "open3"
 
 WEB = File.expand_path("..", __dir__)
 FACE_BOOT = File.join(WEB, "test/face_boot.test.mjs")
+SSE_CONTRACT = File.join(WEB, "test/sse_contract.test.mjs")
 PROBE_FACE = File.join(WEB, "script/probe_face")
 PROBE_PRIMER = File.join(WEB, "script/probe_primer_external.rb")
 WEB_URL = ENV["WEB_URL"].to_s.strip
 
 checks = []
 
-out, err, status = Open3.capture3("node", "--test", FACE_BOOT, chdir: WEB)
-checks << ["face_boot node tests", status.success?, [out, err].join.strip]
+out, err, status = Open3.capture3("node", "--test", FACE_BOOT, SSE_CONTRACT, chdir: WEB)
+checks << ["face_boot + sse_contract node tests", status.success?, [out, err].join.strip]
 
 runtime = File.join(WEB, "public/face.runtime.js")
 checks << ["face.runtime.js present", File.file?(runtime), runtime]

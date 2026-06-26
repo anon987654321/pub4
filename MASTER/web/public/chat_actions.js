@@ -8,22 +8,15 @@ function csrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.content || "";
 }
 
-function feltCssNumber(name, fallback) {
-  const raw = document.documentElement.style.getPropertyValue(name);
-  const parsed = parseFloat(raw);
-  return Number.isFinite(parsed) ? parsed : fallback;
+function collectFeltState() {
+  return window.MASTERFeltState?.collectFeltState?.() || null;
 }
 
-function collectFeltState() {
-  if (typeof window.MASTER_FACE?.collectFeltState === "function") {
-    return window.MASTER_FACE.collectFeltState();
-  }
-  const st = window.MASTER_FACE?.State || {};
-  const mood = (st.mood || document.body.dataset.masterState || "idle").toString();
-  const mode = (st.mode || document.body.dataset.pipelineStage || "idle").toString();
-  const entropy = Number.isFinite(st.entropy) ? st.entropy : feltCssNumber("--master-entropy", 0.2);
-  const confidence = Number.isFinite(st.confidence) ? st.confidence : feltCssNumber("--master-confidence", 0.86);
-  return `${mood}|${mode}|${entropy.toFixed(2)}|${confidence.toFixed(2)}`;
+function validatedFeltState() {
+  const state = collectFeltState();
+  if (window.MASTERFeltState?.validateFeltState?.(state)) return state;
+  window.MASTER_LOG?.warn?.("chat:felt_state", "invalid felt state payload");
+  return null;
 }
 
 async function enhanceMessage(text) {
@@ -34,7 +27,9 @@ async function enhanceMessage(text) {
       const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
       return { text: chosen, preEnhanced: chosen === data.enhanced };
     }
-  } catch (_) {}
+  } catch (err) {
+    window.MASTER_LOG?.warn?.("chat:enhance", err);
+  }
   return { text, preEnhanced: false };
 }
 
@@ -47,7 +42,7 @@ function triggerClientAction(data) {
   if (data.action === "dilla_bg") {
     import(loopsMusicUrl())
       .then(() => { window._dillaBg?.(); })
-      .catch(() => {});
+      .catch((err) => { window.MASTER_LOG?.warn?.("chat:dilla_bg", err); });
     window.MASTERVisual?.event?.("music:dilla", { topology: "papua-mask", entropy: 0.22, confidence: 0.9, mode: "dilla" });
     return;
   }
@@ -63,7 +58,7 @@ let activeStreamAbort = null;
 
 function closeChatStream() {
   if (!activeStreamAbort) return;
-  try { activeStreamAbort.abort(); } catch (_) {}
+  try { activeStreamAbort.abort(); } catch (err) { window.MASTER_LOG?.warn?.("chat:abort", err); }
   activeStreamAbort = null;
   window._chatEvtSrc = null;
 }
@@ -77,14 +72,23 @@ function dispatchSseBlock(block, handlers) {
     else if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
   });
   const data = dataLines.join("\n");
-  if (event === "message") handlers.onMessage?.(data);
-  else handlers.onNamed?.(event, data);
+  if (event === "message") {
+    if (/booting/i.test(data) && /retry/i.test(data)) {
+      window.MASTER_CONTAINER_READY = false;
+      window.MASTER_CONTAINER?.pollStatus?.();
+    }
+    handlers.onMessage?.(data);
+    return;
+  }
+  if (handlers.onNamed) handlers.onNamed(event, data);
+  else window.MASTER_SSE?.dispatchNamed?.(event, data, handlers.extensions);
 }
 
 async function openChatStream({ message, state, preEnhanced, imageToken, signal, handlers }) {
   const form = new FormData();
   form.append("message", message);
-  if (state) form.append("state", state);
+  const felt = state || validatedFeltState();
+  if (felt) form.append("state", felt);
   if (preEnhanced) form.append("pre_enhanced", "1");
   if (imageToken) form.append("image_token", imageToken);
 
@@ -192,7 +196,7 @@ window.MASTERChat = {
   closeChatStream
 };
 
-window.addEventListener("online", () => { drainOfflineQueue().catch(() => {}); });
+window.addEventListener("online", () => { drainOfflineQueue().catch((err) => { window.MASTER_LOG?.warn?.("chat:offline_drain", err); }); });
 
 function startMic(btn) {
   if (window.MASTER_FACE?.startSTT) {
@@ -203,7 +207,7 @@ function startMic(btn) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const input = chatInput();
   if (!SR) { if (input) input.placeholder = "mic unavailable in this browser"; return; }
-  if (btn._rec) { try { btn._rec.stop(); } catch (_) {} btn._rec = null; btn.classList.remove("active"); return; }
+  if (btn._rec) { try { btn._rec.stop(); } catch (err) { window.MASTER_LOG?.warn?.("chat:mic_stop", err); } btn._rec = null; btn.classList.remove("active"); return; }
   const rec = new SR();
   rec.lang = navigator.language || "en-US";
   rec.continuous = false;

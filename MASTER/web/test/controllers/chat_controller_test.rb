@@ -18,6 +18,10 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "face-session"
     assert_includes response.body, "face3d_preview"
     assert_includes response.body, "importmap"
+    assert_includes response.body, "master-container-ready"
+    assert_match(%r{container_gate-[0-9a-f]+\.js}, response.body)
+    assert_match(%r{sse_contract-[0-9a-f]+\.js}, response.body)
+    assert_match(%r{felt_state-[0-9a-f]+\.js}, response.body)
     assert_includes response.body, "60000"
     refute_includes response.body, "15000"
     assert_match(/function go\(\)\{[\s\S]*?revealPrompt/, response.body)
@@ -80,5 +84,25 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_match %r{text/event-stream}, response.media_type.to_s
     assert_includes response.body, "pong"
     assert_includes response.body, "[DONE]"
+  end
+
+  test "message streams warming sse when container absent" do
+    Rails.application.config.x.master_container = nil
+    Rails.application.config.x.master_bootstrap_started = false
+
+    post "/chat/message", params: { message: "hello" }
+
+    assert_response :success
+    assert_match %r{text/event-stream}, response.media_type.to_s
+    assert_includes response.body, "booting"
+    assert_includes response.body, "[DONE]"
+  end
+
+  test "message accepts seven field felt state" do
+    felt = "curious|thinking|0.42|0.88|0.55|0.12|0.35"
+    post "/chat/message", params: { message: "ping", state: felt }
+
+    assert_response :success
+    assert_includes response.body, "pong"
   end
 end

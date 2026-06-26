@@ -213,6 +213,12 @@ let _firstChatSent = false;
 async function sendMessage(text) {
   let trimmed = text.trim();
   if (trimmed.startsWith('!') && trimmed.length > 1) trimmed = '/shell ' + trimmed.slice(1).trim();
+  if (window.MASTER_CONTAINER?.blockingSend?.(trimmed)) {
+    window._chatOnUser?.(trimmed);
+    window._chatOnChunk?.('master is still starting — try again in a moment.');
+    window._chatOnDone?.();
+    return;
+  }
   if (!navigator.onLine) {
     const queued = await window.MASTERChat?.queueOfflineSend?.(trimmed);
     if (queued) return;
@@ -279,7 +285,9 @@ async function sendMessage(text) {
   scheduleThinkingAloud("scanning");
   syncShareStateUrl();
   if (trimmed.length > 180) State.lean = 0.14;
-  const feltFallback = `${State.mood}|${State.mode}|${(State.entropy ?? 0.2).toFixed(2)}|${(State.confidence ?? 0.86).toFixed(2)}`;
+  const feltFallback = window.MASTERFeltState?.feltStateOrFallback?.(
+    `${State.mood}|${State.mode}|${(State.entropy ?? 0.2).toFixed(2)}|${(State.confidence ?? 0.86).toFixed(2)}|${(State.pulse ?? 0.4).toFixed(2)}|0.00|${(State.entropy ?? 0.2).toFixed(2)}`
+  );
   const imageToken = window._imageToken || null;
   if (window._imageToken) window._imageToken = null;
   if (!_firstChatSent) {
@@ -301,10 +309,89 @@ async function sendMessage(text) {
     window._chatOnError?.('stream interrupted');
     speakFailure("Sorry, I hit a snag.");
   };
+  const sseExtensions = {
+    mood(data) {
+      const m = (data || '').trim();
+      if (!m) return;
+      State.mood = m;
+      updateMoodHistory(m);
+      if (m === 'curious') State.surpriseY = 0.7;
+      if (TINT[m]) fadeColorTo(TINT[m]);
+      const live = document.getElementById('mood-live');
+      if (live) live.textContent = 'mood: ' + m;
+      syncShareStateUrl();
+    },
+    model(data) {
+      const m = (data || '').trim();
+      if (!m) return;
+      State.model = m; State.modelName = m.split('/').pop();
+      const key = Object.keys(TINT).find(k => m.toLowerCase().includes(k));
+      if (key) fadeColorTo(TINT[key]);
+      window.MASTER_FACE_BLEND?.pushEmotion?.({ valence: 0.75 });
+      setTimeout(() => window.MASTER_FACE_BLEND?.pushEmotion?.({ valence: 0.35 }), 1000);
+      showModelBadge(State.modelName || m);
+      State.modelSwitch = 1.0;
+      syncShareStateUrl();
+      const tier = document.querySelector('meta[name="master-tier"]')?.content || '';
+      const live = document.getElementById('mood-live');
+      if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
+    },
+    verdict(data) {
+      const v = (data || '').trim();
+      if (TINT[v]) fadeColorTo(TINT[v]);
+      State.pulse = 0.6;
+      State.jitter = (State.confidence < 0.45 ? 0.75 : 0.15);
+      if (State.confidence > 0.75) State.pulse = 0.9;
+      if (v === 'pass') {
+        beep(880, 0.06);
+        morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
+        State.bloom = 1.0;
+      }
+      if (v === 'veto') {
+        beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
+        morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
+        State.fracture = 1.0;
+        const prevPh = zshIn?.placeholder;
+        if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
+      }
+      const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
+      if (v === 'pass') tally.pass += 1;
+      if (v === 'veto') tally.veto += 1;
+      if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
+    },
+    'council:speech'(data) {
+      const payload = window.MASTER_SSE?.parseSseJson?.(data, {}) || {};
+      const { voice, text, persona, label, viseme_lane: lane, viseme_plan: plan, expression: ex, blendshapes } = payload;
+      if (persona) {
+        rootBody.dataset.councilPersona = persona;
+        applyPersonaVisual(persona);
+        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
+      }
+      if (lane) offsetCouncilMouthPool?.(lane, 0.22);
+      if (plan?.length) tts.visemePlan = plan;
+      if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
+      if (voice && text && !tts.playing) {
+        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
+      }
+      setTimeout(() => {
+        if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
+        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
+      }, 8000);
+    },
+    confidence(data) {
+      const c = parseFloat(data); if (!isNaN(c)) State.confidence = c;
+    },
+    felt(data) {
+      const payload = window.MASTER_SSE?.parseSseJson?.(data, {}) || {};
+      if (payload.mood) State.mood = payload.mood;
+      if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
+      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
+    }
+  };
   try {
     await window.MASTERChat.startChatStream({
       message: finalText,
-      state: window.collectFeltState?.() || feltFallback,
+      state: window.MASTERFeltState?.feltStateOrFallback?.(feltFallback),
       preEnhanced,
       imageToken
     }, {
@@ -357,105 +444,12 @@ async function sendMessage(text) {
         }
       },
       onNamed(event, data) {
-        if (event === 'mood') {
-          const m = (data || '').trim();
-          if (!m) return;
-          State.mood = m;
-          updateMoodHistory(m);
-          if (m === 'curious') State.surpriseY = 0.7;
-          if (TINT[m]) fadeColorTo(TINT[m]);
-          const live = document.getElementById('mood-live');
-          if (live) live.textContent = 'mood: ' + m;
-          syncShareStateUrl();
-          return;
-        }
-        if (event === 'model') {
-          const m = (data || '').trim();
-          if (!m) return;
-          State.model = m; State.modelName = m.split('/').pop();
-          const key = Object.keys(TINT).find(k => m.toLowerCase().includes(k));
-          if (key) fadeColorTo(TINT[key]);
-          window.MASTER_FACE_BLEND?.pushEmotion?.({ valence: 0.75 });
-          setTimeout(() => window.MASTER_FACE_BLEND?.pushEmotion?.({ valence: 0.35 }), 1000);
-          showModelBadge(State.modelName || m);
-          State.modelSwitch = 1.0;
-          syncShareStateUrl();
-          const tier = document.querySelector('meta[name="master-tier"]')?.content || '';
-          const live = document.getElementById('mood-live');
-          if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
-          return;
-        }
-        if (event === 'verdict') {
-          const v = (data || '').trim();
-          if (TINT[v]) fadeColorTo(TINT[v]);
-          State.pulse = 0.6;
-          State.jitter = (State.confidence < 0.45 ? 0.75 : 0.15);
-          if (State.confidence > 0.75) State.pulse = 0.9;
-          if (v === 'pass') {
-            beep(880, 0.06);
-            morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
-            State.bloom = 1.0;
-          }
-          if (v === 'veto') {
-            beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
-            morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
-            State.fracture = 1.0;
-            const prevPh = zshIn?.placeholder;
-            if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
-          }
-          const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
-          if (v === 'pass') tally.pass += 1;
-          if (v === 'veto') tally.veto += 1;
-          if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
-          return;
-        }
-        if (event === 'council:speech') {
-          try {
-            const payload = JSON.parse(data || '{}');
-            const { voice, text, persona, label, viseme_lane: lane, viseme_plan: plan, expression: ex, blendshapes } = payload;
-            if (persona) {
-              rootBody.dataset.councilPersona = persona;
-              applyPersonaVisual(persona);
-              if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
-            }
-            if (lane) offsetCouncilMouthPool?.(lane, 0.22);
-            if (plan?.length) tts.visemePlan = plan;
-            if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
-            if (voice && text && !tts.playing) {
-              playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
-            }
-            setTimeout(() => {
-              if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
-              if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
-            }, 8000);
-          } catch (_) {}
-          return;
-        }
-        if (event === 'confidence') {
-          const c = parseFloat(data); if (!isNaN(c)) State.confidence = c;
-          return;
-        }
-        if (event === 'dmesg') { try { window._chatOnDmesg?.(JSON.parse(data)); } catch (_) {} return; }
-        if (event === 'compaction') { try { window._chatOnCompaction?.(JSON.parse(data)); } catch (_) {} return; }
-        if (event === 'ctx_footer') { try { window._chatOnCtxFooter?.(JSON.parse(data)); } catch (_) {} return; }
-        if (event === 'phantom') { try { window._chatOnPhantom?.(JSON.parse(data)); } catch (_) {} return; }
-        if (event === 'tool_stack') { try { window._chatOnToolStack?.(JSON.parse(data)); } catch (_) {} return; }
-        if (event === 'stage') { try { window._chatOnStage?.(JSON.parse(data)); } catch (_) {} return; }
-        if (event === 'btw') { try { window._chatOnBtw?.(JSON.parse(data)); } catch (_) {} return; }
-        if (event === 'felt') {
-          try {
-            const payload = JSON.parse(data || '{}');
-            if (payload.mood) State.mood = payload.mood;
-            if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
-            if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
-          } catch (_) {}
-          return;
-        }
-        if (event === 'client_action') { try { window.MASTERChat?.triggerClientAction?.(JSON.parse(data)); } catch (_) {} }
+        window.MASTER_SSE?.dispatchNamed?.(event, data, sseExtensions);
       },
       onError() { streamFail(); }
     });
-  } catch (_) {
+  } catch (err) {
+    window.MASTER_LOG?.error?.('chat:stream', err);
     streamFail();
   }
 }
@@ -599,19 +593,7 @@ function meanPoolField(pool, field) {
   return n ? sum / n : 0;
 }
 function collectFeltState() {
-  let history = [];
-  try { history = JSON.parse(localStorage.getItem('master:emotion_history') || '[]'); } catch (_) {}
-  const histEntropy = history.length
-    ? history.reduce((s, e) => s + Number(e.entropy ?? 0.2), 0) / history.length
-    : (State.entropy ?? 0.2);
-  const felt = window.MASTER_FACE_BLEND?.currentEmotion?.() || {};
-  const arousal = felt.arousal ?? (State.pulse ?? 0.4);
-  const valence = felt.valence ?? 0;
-  const mood = (State.mood || 'idle').toString();
-  const mode = (State.mode || 'idle').toString();
-  const entropy = Number.isFinite(State.entropy) ? State.entropy : histEntropy;
-  const confidence = Number.isFinite(State.confidence) ? State.confidence : 0.86;
-  return `${mood}|${mode}|${entropy.toFixed(2)}|${confidence.toFixed(2)}|${arousal.toFixed(2)}|${valence.toFixed(2)}|${histEntropy.toFixed(2)}`;
+  return window.MASTERFeltState?.collectFeltState?.() || null;
 }
 window.collectFeltState = collectFeltState;
 
@@ -888,7 +870,3 @@ window.announceTTS = announceTTS;
 window.enqueueSpeech = enqueueSpeech;
 window.mouthPool = mouthPool;
 window.eyePool = eyePool;
-await import('/face_semantics.js');
-await import('/face_minimal_ui.js');
-await import('/face_loops_music.js');
-await import('/face_loops_nudge.js');

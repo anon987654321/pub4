@@ -16,6 +16,7 @@ class ChatController < ApplicationController
     c = container
     @model = c&.[](:agent)&.model.to_s.split("/").last.presence || "booting"
     @tier  = request.env["master.tier"].to_s
+    @container_ready = !c.nil?
     render layout: false
   end
 

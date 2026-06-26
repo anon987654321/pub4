@@ -9,6 +9,8 @@
   <meta name="color-scheme" content="dark">
   <meta name="master-runtime" content="face">
   <meta name="master-tier" content="<%= @tier.to_s %>">
+  <meta name="master-container-ready" content="<%= @container_ready ? "1" : "0" %>">
+  <meta name="master-model" content="<%= @model.to_s %>">
   <meta name="master-visual-profile" content="auto">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -93,6 +95,10 @@
     <span id="char-count" aria-hidden="true"></span>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
   </form>
+  <script src="<%= asset_path("face_errors.js") %>" defer></script>
+  <script src="<%= asset_path("felt_state.js") %>" defer></script>
+  <script src="<%= asset_path("sse_contract.js") %>" defer></script>
+  <script src="<%= asset_path("container_gate.js") %>" defer></script>
   <script src="<%= asset_path("master_events.js") %>" defer></script>
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script src="<%= asset_path("face_state.js") %>" defer></script>

@@ -3,23 +3,29 @@
 require "test_helper"
 
 class RuntimeControllerTest < ActionDispatch::IntegrationTest
-  test "config returns json without container" do
+  test "status reports warming when container absent" do
     Rails.application.config.x.master_container = nil
 
-    get "/runtime/config"
+    get "/runtime/status"
 
     assert_response :success
     body = JSON.parse(response.body)
-    assert body.key?("topologies")
-    assert body.key?("tts_config")
+    assert_equal false, body["ready"]
+    assert_equal "booting", body["model"]
+    assert body.key?("uptime_ms")
   end
 
-  test "topologies returns json without container" do
-    Rails.application.config.x.master_container = nil
+  test "status reports ready when container present" do
+    fake = { agent: Struct.new(:model).new("anthropic/claude-sonnet") }
+    Rails.application.config.x.master_container = fake
 
-    get "/runtime/topologies"
+    get "/runtime/status"
 
     assert_response :success
-    assert_kind_of Hash, JSON.parse(response.body)
+    body = JSON.parse(response.body)
+    assert_equal true, body["ready"]
+    assert_equal "claude-sonnet", body["model"]
+  ensure
+    Rails.application.config.x.master_container = nil
   end
 end

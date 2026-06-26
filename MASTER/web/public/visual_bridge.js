@@ -253,7 +253,9 @@
         if (!payload) return;
         const type = payload.type || payload.event;
         handleRuntimeEvent(type ? { ...payload, type } : payload);
-      } catch (_error) {}
+      } catch (error) {
+        window.MASTER_LOG?.warn?.("visual_bridge:cable_frame", error);
+      }
     };
     cableSocket.onclose = () => {
       cableSocket = null;
@@ -261,7 +263,7 @@
       if (cableMode) scheduleCableReconnect();
     };
     cableSocket.onerror = () => {
-      try { cableSocket.close(); } catch (_e) {}
+      try { cableSocket.close(); } catch (err) { window.MASTER_LOG?.warn?.("visual_bridge:cable_close", err); }
       cableSocket = null;
       state.connected = false;
     };
@@ -269,7 +271,7 @@
 
   function disconnectSse() {
     if (!eventSource) return;
-    try { eventSource.close(); } catch (_error) {}
+    try { eventSource.close(); } catch (error) { window.MASTER_LOG?.warn?.("visual_bridge:sse_close", error); }
     eventSource = null;
     state.connected = false;
   }
@@ -287,7 +289,8 @@
     eventSource.onmessage = (message) => {
       try {
         handleRuntimeEvent(JSON.parse(message.data));
-      } catch (_error) {
+      } catch (error) {
+        window.MASTER_LOG?.warn?.("visual_bridge:sse_frame", error, message.data);
         emitVisual("events:raw", { topology: "sphere", entropy: 0.24, confidence: 0.62, raw: message.data });
       }
     };
