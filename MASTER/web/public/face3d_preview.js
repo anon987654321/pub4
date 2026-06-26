@@ -36,6 +36,8 @@ function bootFace3d() {
   const t0 = performance.now();
   let last = t0;
   let reportedNonblank = false;
+  let liveAnnounced = false;
+  let bootBoost = 1.0;
   let currentMask = "sepik";
   const speech = { active: false, text: "", startedAt: 0, duration: 2.0, energy: 0.55 };
   let emotion = { arousal: 0.32, valence: 0, focus: 0.45, confidence: 0.82, fatigue: 0.08 };
@@ -81,6 +83,28 @@ function bootFace3d() {
     engine.setBlend(engine.visemes.toBlend({ shape: d.shape || "neutral", jaw: Number(d.amp) || 0 }));
   });
 
+  function announceFaceLive(litPixels) {
+    if (liveAnnounced) return;
+    liveAnnounced = true;
+    document.body.dataset.faceLive = "1";
+    const badge = document.getElementById("face-live-badge");
+    if (badge) {
+      badge.hidden = false;
+      badge.dataset.visible = "1";
+    }
+    const ui = document.getElementById("ui-status");
+    if (ui) ui.textContent = "face live";
+    window.dispatchEvent(new CustomEvent("master:face-live", { detail: { lit_pixels: litPixels } }));
+    window.setTimeout(() => {
+      delete document.body.dataset.faceLive;
+      if (badge) {
+        badge.dataset.visible = "0";
+        window.setTimeout(() => { badge.hidden = true; }, 420);
+      }
+      if (ui && ui.textContent === "face live") ui.textContent = "";
+    }, 3200);
+  }
+
   function blinkEnvelope(t) {
     const phase = t % 4.2;
     if (phase > 0.10) return 0;
@@ -124,12 +148,18 @@ function bootFace3d() {
     }
 
     engine.tick(dt);
-    renderer.draw(engine.snapshot(), { neonBleed: reduced ? 0 : Math.max(0, Math.sin(t * 1.7)) * 0.18 });
+    if (reportedNonblank) bootBoost = Math.max(0, bootBoost - dt * 0.00038);
+    renderer.draw(engine.snapshot(), {
+      neonBleed: reduced ? 0 : Math.max(0, Math.sin(t * 1.7)) * 0.18,
+      bootBoost: reportedNonblank ? bootBoost : 1.0
+    });
 
     if (!reportedNonblank && renderer.lastLitPixels > 0) {
       reportedNonblank = true;
+      document.documentElement.classList.remove("face-loading");
       document.body.classList.add("face-ready");
       document.body.classList.remove("face-loading");
+      announceFaceLive(renderer.lastLitPixels);
       window.MASTERVisual?.event?.("face3d:nonblank", {
         topology: currentMask,
         entropy: 0.12,

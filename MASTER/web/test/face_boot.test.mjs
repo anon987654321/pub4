@@ -104,6 +104,16 @@ test("chat index ships import map and digested master_events", () => {
   const primerIdx = index.indexOf('id="primer"');
   assert.ok(primerIdx > 0 && bootIdx > primerIdx, "primer must precede face_boot at end of body");
   assert.match(index, /<button[^>]*id="primer"/);
+  assert.match(index, /face-live-badge/);
+});
+
+test("face3d preview announces live badge and boot brightness", () => {
+  const preview = readFileSync(join(publicDir, "face3d_preview.js"), "utf8");
+  const renderer = readFileSync(join(publicDir, "face3d_renderer.js"), "utf8");
+  assert.match(preview, /announceFaceLive/);
+  assert.match(preview, /master:face-live/);
+  assert.match(preview, /bootBoost/);
+  assert.match(renderer, /bootBoost/);
 });
 
 test("face3d_engine imports use import-map paths", () => {

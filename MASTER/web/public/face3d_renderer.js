@@ -99,7 +99,8 @@ class Face3DCanvasRenderer {
       const bright = clamp(snapshot.brightness ? snapshot.brightness[i] : 0.6);
       const zone = snapshot.zone ? snapshot.zone[i] : 0;
       const idx = py * lw + px;
-      const val = Math.min(1, bright * (0.50 + depth * 0.18 + 0.45));
+      const boost = clamp(state.bootBoost ?? 0);
+      const val = Math.min(1, bright * (0.50 + depth * 0.18 + 0.45) * (1 + boost * 0.72));
 
       fbuf[idx] = Math.min(1, fbuf[idx] + val);
       zbuf[idx] = zone;
@@ -126,9 +127,11 @@ class Face3DCanvasRenderer {
     this.zbuf = new Uint8Array(size);
   }
 
-  _rasterize(state) {
+  _rasterize(state = {}) {
     const lw = this.lpx.width;
     const lh = this.lpx.height;
+    const boost = clamp(state.bootBoost ?? 0);
+    const threshold = 0.5 - boost * 0.2;
     const img = this.lctx.getImageData(0, 0, lw, lh);
     const data = img.data;
     const fbuf = this.fbuf;
@@ -148,7 +151,7 @@ class Face3DCanvasRenderer {
         if (this.dither === 'bayer') {
           on = v > bayer[(y & 3) * 4 + (x & 3)] / 16;
         } else {
-          on = v >= 0.5;
+          on = v >= threshold;
         }
 
         const out = idx * 4;

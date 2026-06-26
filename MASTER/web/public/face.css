@@ -363,6 +363,39 @@ body[data-mode="listening"] #mic-dot {
   transform: translateY(0);
 }
 
+.face-live-badge {
+  position: fixed;
+  top: calc(14px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  z-index: var(--z-ui);
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--face-fg) 28%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--face-bg) 82%, transparent);
+  color: var(--face-fg);
+  font: 9px/1 "JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms var(--ease-out), transform 320ms var(--ease-out);
+}
+
+.face-live-badge[data-visible="1"] {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+body[data-face-live="1"] canvas#face {
+  filter: contrast(1.14) brightness(1.18);
+  transition: filter 280ms var(--ease-out);
+}
+
+body[data-face-live="1"] #cognition-ecology {
+  opacity: 0.72;
+}
+
 .soul-drift,
 .mood-sparkline {
   position: fixed;
