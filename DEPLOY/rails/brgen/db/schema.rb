@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", null: false
@@ -64,6 +64,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
     t.integer "post_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["fingerprint"], name: "index_anonymous_post_quotas_on_fingerprint", unique: true
+  end
+
+  create_table "account_merges", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "guest_user_id", null: false
+    t.datetime "merged_at"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["guest_user_id", "user_id"], name: "index_account_merges_on_guest_user_id_and_user_id", unique: true
+    t.index ["guest_user_id"], name: "index_account_merges_on_guest_user_id"
+    t.index ["user_id"], name: "index_account_merges_on_user_id"
   end
 
   create_table "cities", force: :cascade do |t|
@@ -191,6 +203,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
     t.index ["token"], name: "index_email_subscriptions_on_token", unique: true
   end
 
+  create_table "external_identities", force: :cascade do |t|
+    t.string "assurance_level", default: "account", null: false
+    t.datetime "created_at", null: false
+    t.string "email_address"
+    t.integer "identity_provider_id", null: false
+    t.datetime "last_used_at"
+    t.string "phone_number"
+    t.string "subject", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["identity_provider_id", "subject"], name: "index_external_identities_on_provider_and_subject", unique: true
+    t.index ["identity_provider_id"], name: "index_external_identities_on_identity_provider_id"
+    t.index ["user_id"], name: "index_external_identities_on_user_id"
+  end
+
   create_table "follows", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "followed_id"
@@ -206,6 +233,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
     t.datetime "updated_at", null: false
     t.integer "usage_count"
     t.index ["name"], name: "index_hashtags_on_name", unique: true
+  end
+
+  create_table "identity_assurances", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.string "level", null: false
+    t.string "source", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.datetime "verified_at"
+    t.index ["user_id", "level"], name: "index_identity_assurances_on_user_id_and_level", unique: true
+    t.index ["user_id"], name: "index_identity_assurances_on_user_id"
+  end
+
+  create_table "identity_providers", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "client_id"
+    t.datetime "created_at", null: false
+    t.string "issuer"
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_identity_providers_on_slug", unique: true
   end
 
   create_table "marketplace_categories", force: :cascade do |t|
@@ -334,6 +384,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
     t.integer "sender_id"
     t.datetime "updated_at", null: false
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+  end
+
+  create_table "moderation_flags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "flaggable_id", null: false
+    t.string "flaggable_type", null: false
+    t.string "kind", null: false
+    t.text "reason"
+    t.string "status", default: "open", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["flaggable_type", "flaggable_id"], name: "index_moderation_flags_on_flaggable_type_and_flaggable_id"
+    t.index ["user_id", "status"], name: "index_moderation_flags_on_user_id_and_status"
+    t.index ["user_id"], name: "index_moderation_flags_on_user_id"
   end
 
   create_table "moderation_reports", force: :cascade do |t|
@@ -537,7 +601,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
   create_table "posts", force: :cascade do |t|
     t.boolean "anonymous"
     t.integer "city_id"
-    t.integer "community_id", null: false
+    t.integer "community_id"
     t.text "content"
     t.datetime "created_at", null: false
     t.integer "karma"
@@ -571,6 +635,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
     t.index ["reactable_type", "reactable_id"], name: "index_reactions_on_reactable"
     t.index ["user_id", "reactable_type", "reactable_id", "post_id", "kind"], name: "idx_reactions_unique_user_target_kind", unique: true
     t.index ["user_id"], name: "index_reactions_on_user_id"
+  end
+
+  create_table "reputation_scores", force: :cascade do |t|
+    t.datetime "calculated_at"
+    t.datetime "created_at", null: false
+    t.string "scope", default: "global", null: false
+    t.integer "score", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "scope"], name: "index_reputation_scores_on_user_id_and_scope", unique: true
+    t.index ["user_id"], name: "index_reputation_scores_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -851,6 +926,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
     t.index ["user_id"], name: "index_tv_view_events_on_user_id"
   end
 
+  create_table "trust_signals", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "kind", null: false
+    t.text "metadata"
+    t.string "source"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "weight", default: 0, null: false
+    t.index ["user_id", "kind"], name: "index_trust_signals_on_user_id_and_kind"
+    t.index ["user_id"], name: "index_trust_signals_on_user_id"
+  end
+
   create_table "typing_indicators", force: :cascade do |t|
     t.integer "conversation_id", null: false
     t.datetime "created_at", null: false
@@ -889,6 +976,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
     t.index ["votable_type", "votable_id"], name: "index_votes_on_votable"
   end
 
+  add_foreign_key "account_merges", "users"
+  add_foreign_key "account_merges", "users", column: "guest_user_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "activity_events", "users", column: "actor_id"
@@ -904,6 +993,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
   add_foreign_key "dating_matches", "users", column: "receiver_id"
   add_foreign_key "dating_profiles", "cities"
   add_foreign_key "dating_profiles", "users"
+  add_foreign_key "external_identities", "identity_providers"
+  add_foreign_key "external_identities", "users"
+  add_foreign_key "identity_assurances", "users"
   add_foreign_key "marketplace_deals", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_listing_favorites", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_listing_favorites", "users"
@@ -920,6 +1012,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
   add_foreign_key "message_receipts", "messages"
   add_foreign_key "message_receipts", "users"
   add_foreign_key "messages", "conversations"
+  add_foreign_key "moderation_flags", "users"
   add_foreign_key "moderation_reports", "users"
   add_foreign_key "neighborhoods", "cities"
   add_foreign_key "notifications", "users"
@@ -949,6 +1042,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
   add_foreign_key "posts", "users"
   add_foreign_key "reactions", "posts"
   add_foreign_key "reactions", "users"
+  add_foreign_key "reputation_scores", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "streams", "posts"
   add_foreign_key "streams", "users"
@@ -988,6 +1082,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_160000) do
   add_foreign_key "tv_videos", "users"
   add_foreign_key "tv_view_events", "tv_videos"
   add_foreign_key "tv_view_events", "users"
+  add_foreign_key "trust_signals", "users"
   add_foreign_key "typing_indicators", "conversations"
   add_foreign_key "typing_indicators", "users"
   add_foreign_key "users", "cities"
