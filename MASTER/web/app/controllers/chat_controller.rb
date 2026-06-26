@@ -5,6 +5,8 @@ require "json"
 require "open3"
 
 class ChatController < ApplicationController
+  include ActionController::Live
+
   # CSRF guarded by SameSite=Strict session cookie set in AuthTier.
   skip_before_action :verify_authenticity_token, only: :command
   # Face shell renders immediately; container finishes booting in the background (~90s on VPS).
@@ -137,6 +139,10 @@ class ChatController < ApplicationController
       unlocked: cookies[:master_unlocked].to_s == "1",
       author: false
     ).call
+  rescue IOError, ActionController::Live::ClientDisconnected
+    nil
+  ensure
+    response.stream.close rescue nil
   end
 
   private
