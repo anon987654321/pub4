@@ -101,6 +101,12 @@ test("visual_bridge defers SSE until session ready", () => {
   assert.doesNotMatch(bridge, /observeDomSignals\(\);\n  connectSse\(\);/);
 });
 
+test("topology registry defers remote fetch until primer", () => {
+  const registry = readFileSync(join(publicDir, "topology_registry.js"), "utf8");
+  assert.match(registry, /primer:ready/);
+  assert.doesNotMatch(registry, /\n  bootRemoteTopologies\(\);\n\}\)\(\);/);
+});
+
 test("service worker avoids stale undigested precache", () => {
   const sw = readFileSync(join(publicDir, "sw.js"), "utf8");
   assert.doesNotMatch(sw, /\/face\.js'/);

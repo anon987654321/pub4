@@ -111,9 +111,12 @@
   <script src="<%= asset_path("cognition_ecology_render.js") %>" defer></script>
   <script src="<%= asset_path("chat.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
-    fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
-      if (cfg && typeof cfg === 'object') window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };
-    }).catch(() => {});
+    function refreshRuntimeConfig() {
+      fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
+        if (cfg && typeof cfg === 'object') window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };
+      }).catch(() => {});
+    }
+    window.addEventListener('primer:ready', refreshRuntimeConfig, { once: true });
   </script>
 </body>
 </html>

@@ -203,5 +203,6 @@
     mergeRemoteTopologies
   };
 
-  bootRemoteTopologies();
+  if (window._primerFired) bootRemoteTopologies();
+  else window.addEventListener("primer:ready", bootRemoteTopologies, { once: true });
 })();
