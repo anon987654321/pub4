@@ -27,9 +27,11 @@ cd MASTER && bundle exec ruby bin/cli
 
 Pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render
 
-Operator docs: `MASTER/QUICKSTART.md`, `MASTER/data/rules.yml`, `MASTER/data/voice.yml`, `MASTER/data/limits.yml`
+Operator docs: `MASTER/QUICKSTART.md`, `MASTER/data/rules.yml`, `MASTER/data/voice.yml`, `MASTER/data/limits.yml`, `MASTER/REPLICATE.md`
 
 Web face: Falcon on `:53187`, relayd → `https://ai.brgen.no`
+
+Replicate integration (Flux.2 Pro, Kokoro-82m, Veo-3.1/Sora-2) for high-fidelity image, TTS, and video generation under constitutional governance. See `MASTER/REPLICATE.md` and `MASTER/data/tts.yml`.
 
 ## Deploy
 
@@ -90,12 +92,12 @@ Deploys run `MASTER /scan DEPLOY --depth deep` before applying (blocks on violat
 
 Other LLMs: the system is designed for recursive self-application — scan the tree yourself before proposing changes.
 
-Operator docs: `MASTER/QUICKSTART.md`, `DEPLOY/openbsd/README.md`, `DEPLOY/rails/apps.yml`.
+Operator docs: `MASTER/QUICKSTART.md`, `DEPLOY/openbsd/README.md`, `DEPLOY/rails/apps.yml`, `MASTER/REPLICATE.md`.
 
 ## Requirements
 
 - OpenBSD 7.8+ on VPS; Ruby **3.4** for Rails apps
-- `OPENROUTER_API_KEY` (and other keys in `/etc/master.env` on VPS)
+- `OPENROUTER_API_KEY` (and other keys in `/etc/master.env` on VPS including `REPLICATE_API_TOKEN`)
 - TLS terminates at **relayd** — Rails uses `assume_ssl`, not `force_ssl`
 
 ## License
