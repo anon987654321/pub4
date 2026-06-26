@@ -1346,7 +1346,10 @@ function ensureParticleWorker() {
   if (particleWorker || !window.Worker) return particleWorker;
   if (!window.MASTER_RUNTIME?.enhancements?.includes?.('particle_worker')) return null;
   try {
-    particleWorker = new Worker('/particle_worker.js');
+    const workerUrl = window.MASTER_ASSET_PATHS?.particleWorker
+      || window.MASTER_ASSET_PATHS?.faceModules?.['particle_worker.js']
+      || '/particle_worker.js';
+    particleWorker = new Worker(workerUrl);
     particleWorker.onmessage = (ev) => {
       const msg = ev.data || {};
       const pending = particleWorkerPending.get(msg.id);
@@ -2886,7 +2889,7 @@ function flashViolation() {
 }
 
 function cancelStream() {
-  if (evtSrc) { try { evtSrc.close(); } catch (_) {} evtSrc = null; }
+  window.MASTERChat?.closeChatStream?.();
   window._chatCancel?.();
   ttsSkip();
   State.mode = 'idle';
@@ -2937,7 +2940,6 @@ function stopSTT() {
   try { recognition.stop(); } catch (_) {}
 }
 
-let evtSrc = null;
 let stageTimer = null;
 let thinkingAloudTimer = null;
 function showStage(label, ms = 1200) {
@@ -2972,7 +2974,12 @@ function speakFailure(reason = "Sorry, I hit a snag.") {
 
 let _firstChatSent = false;
 async function sendMessage(text) {
-  const trimmed = text.trim();
+  let trimmed = text.trim();
+  if (trimmed.startsWith('!') && trimmed.length > 1) trimmed = '/shell ' + trimmed.slice(1).trim();
+  if (!navigator.onLine) {
+    const queued = await window.MASTERChat?.queueOfflineSend?.(trimmed);
+    if (queued) return;
+  }
   wakeFromSleep();
   State.pulse = Math.max(State.pulse || 0, 0.35);
   window.MASTERVisual?.event?.('chat:submit', { topology: 'papua-mask', entropy: 0.2, confidence: State.confidence || 0.86, mode: 'submit' });
@@ -3018,201 +3025,37 @@ async function sendMessage(text) {
     window._chatOnDone?.();
     return;
   }
-  if (evtSrc) { try { evtSrc.close(); } catch (_) {} }
+  window.MASTERChat?.closeChatStream?.();
   window.MASTER_FACE?.ttsSkip?.();
-  window._chatOnUser?.(text);
+  window._chatOnUser?.(trimmed);
   showStage("routing…", 1000);
 
-  let finalText = text, preEnhanced = false;
-  try {
-    const r = await fetch(`/chat/enhance?message=${encodeURIComponent(text)}`);
-    const data = await r.json();
-    if (data.changed && data.enhanced && data.enhanced !== text) {
-      const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
-      preEnhanced = chosen === data.enhanced;
-      finalText = chosen;
-    }
-  } catch (_) {}
+  const enhanced = await (window.MASTERChat?.enhanceMessage?.(trimmed) ?? Promise.resolve({ text: trimmed, preEnhanced: false }));
+  const finalText = enhanced.text;
+  const preEnhanced = enhanced.preEnhanced;
 
-  tts.lang = detectLang(text);
-  const isTimeSensitive = /\b(today|now|current|latest|recent|this (week|month|year)|right now|at the moment|as of)\b/i.test(text);
+  tts.lang = detectLang(trimmed);
+  const isTimeSensitive = /\b(today|now|current|latest|recent|this (week|month|year)|right now|at the moment|as of)\b/i.test(trimmed);
   tts.prependTimestamp = isTimeSensitive;
   State.mode = 'thinking'; State.pulse = 0.4; window.MASTER_FACE?.setAmbientHum?.(true);
   showStage("scanning…", 1200);
   scheduleThinkingAloud("scanning");
   syncShareStateUrl();
-  if (input.length > 180) State.lean = 0.14;
+  if (trimmed.length > 180) State.lean = 0.14;
   const feltFallback = `${State.mood}|${State.mode}|${(State.entropy ?? 0.2).toFixed(2)}|${(State.confidence ?? 0.86).toFixed(2)}`;
-  const stateBlob = encodeURIComponent(window.collectFeltState?.() || feltFallback);
-  const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
-  const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
+  const imageToken = window._imageToken || null;
   if (window._imageToken) window._imageToken = null;
   if (!_firstChatSent) {
     _firstChatSent = true;
     window.MASTERVisual?.event?.('chat:first', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, provider: State.modelName || State.model, mode: 'first' });
   }
-  evtSrc = new EventSource(url);
-  let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
+  let pending = '', ttsFirst = true;
   let _stallTimer = setTimeout(() => {
     rootBody.dataset.networkStall = '1';
     window._chatOnDmesg?.('link thinking');
     State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
   }, 4000);
-  evtSrc.onmessage = (ev) => {
-    const raw = ev.data || '';
-    clearTimeout(_stallTimer);
-    delete rootBody.dataset.networkStall;
-    if (raw === '[DONE]') {
-      if (pending.trim() && !ttsSuppressed) {
-        tts.lastText = pending.trim();
-        enqueueSpeech(pending.trim());
-      }
-      if (/\b(i do not know|i don't know|not sure|unsure|uncertain)\b/i.test(pending)) {
-        rootBody.dataset.uncertain = '1';
-        State.questionPulse = 1.0;
-        State.surpriseY = Math.max(State.surpriseY || 0, 0.4);
-        setTimeout(() => { delete rootBody.dataset.uncertain; }, 900);
-      }
-      pending = '';
-      State.mode = 'idle';
-      clearThinkingAloud();
-      showStage("");
-      if (navigator.vibrate) navigator.vibrate([60]);
-      try { evtSrc.close(); } catch (_) {}
-      window._chatOnDone?.();
-      return;
-    }
-    if (raw.startsWith('ERROR:')) {
-      window._chatOnChunk?.(`\n${raw}\n`);
-      State.mode = 'error'; State.flash = 1; State.shake = 0.8;
-      fadeColorTo(TINT.veto);
-      morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
-      clearThinkingAloud();
-      speakFailure("Sorry, I hit a snag.");
-      window._chatOnError?.();
-      return;
-    }
-    const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
-    if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
-    window._chatOnChunk?.(chunk);
-    pending += chunk;
-    State.pulse = Math.min(0.6, State.pulse + 0.05);
-    let m;
-    while ((m = pending.match(SENT_BREAK)) || (pending.length > TTS_CHUNK_MAX && (m = pending.match(/\s+/)))) {
-      const cut = m ? m.index + m[0].length : TTS_CHUNK_MAX;
-      const sent = pending.slice(0, cut).trim();
-      pending = pending.slice(cut);
-      if (!sent) continue;
-      totalTTSChars += sent.length;
-      const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
-      ttsFirst = false;
-      enqueueSpeech(prefix + sent);
-    }
-  };
-  evtSrc.addEventListener('mood', (ev) => {
-    const m = (ev.data || '').trim();
-    if (!m) return;
-    State.mood = m;
-    updateMoodHistory(m);
-    if (m === 'curious') State.surpriseY = 0.7;
-    if (TINT[m]) fadeColorTo(TINT[m]);
-    const live = document.getElementById('mood-live');
-    if (live) live.textContent = 'mood: ' + m;
-    syncShareStateUrl();
-  });
-  evtSrc.addEventListener('model', (ev) => {
-    const m = (ev.data || '').trim();
-    if (!m) return;
-    State.model = m; State.modelName = m.split('/').pop();
-    const key = Object.keys(TINT).find(k => m.toLowerCase().includes(k));
-    if (key) fadeColorTo(TINT[key]);
-    window.MASTER_FACE_BLEND?.pushEmotion?.({ valence: 0.75 });
-    setTimeout(() => window.MASTER_FACE_BLEND?.pushEmotion?.({ valence: 0.35 }), 1000);
-    showModelBadge(State.modelName || m);
-    State.modelSwitch = 1.0;
-    syncShareStateUrl();
-    const tier = document.querySelector('meta[name="master-tier"]')?.content || '';
-    const live = document.getElementById('mood-live');
-    if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
-  });
-  evtSrc.addEventListener('verdict', (ev) => {
-    const v = (ev.data || '').trim();
-    if (TINT[v]) fadeColorTo(TINT[v]);
-    State.pulse = 0.6;
-    State.jitter = (State.confidence < 0.45 ? 0.75 : 0.15);
-    if (State.confidence > 0.75) State.pulse = 0.9;
-    if (v === 'pass') {
-      beep(880, 0.06);
-      morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
-      State.bloom = 1.0;
-    }
-    if (v === 'veto') {
-      beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
-      morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
-      State.fracture = 1.0;
-      const prevPh = zshIn?.placeholder;
-      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
-    }
-    const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
-    if (v === 'pass') tally.pass += 1;
-    if (v === 'veto') tally.veto += 1;
-    if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
-  });
-  evtSrc.addEventListener('council:speech', (ev) => {
-    try {
-      const payload = JSON.parse(ev.data || '{}');
-      const { voice, text, persona, label, viseme_lane: lane, viseme_plan: plan, expression: ex, blendshapes } = payload;
-      if (persona) {
-        rootBody.dataset.councilPersona = persona;
-        applyPersonaVisual(persona);
-        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
-      }
-      if (lane) offsetCouncilMouthPool?.(lane, 0.22);
-      if (plan?.length) tts.visemePlan = plan;
-      if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
-      if (voice && text && !tts.playing) {
-        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
-      }
-      setTimeout(() => {
-        if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
-        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
-      }, 8000);
-    } catch (_) {}
-  });
-  evtSrc.addEventListener('confidence', (ev) => {
-    const c = parseFloat(ev.data); if (isNaN(c)) return;
-    State.confidence = c;
-  });
-  evtSrc.addEventListener('dmesg', (ev) => {
-    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
-  });
-  evtSrc.addEventListener('compaction', (ev) => {
-    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (_) {}
-  });
-  evtSrc.addEventListener('ctx_footer', (ev) => {
-    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (_) {}
-  });
-  evtSrc.addEventListener('phantom', (ev) => {
-    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (_) {}
-  });
-  evtSrc.addEventListener('tool_stack', (ev) => {
-    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (_) {}
-  });
-  evtSrc.addEventListener('stage', (ev) => {
-    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (_) {}
-  });
-  evtSrc.addEventListener('btw', (ev) => {
-    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (_) {}
-  });
-  evtSrc.addEventListener('felt', (ev) => {
-    try {
-      const payload = JSON.parse(ev.data || '{}');
-      if (payload.mood) State.mood = payload.mood;
-      if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
-      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
-    } catch (_) {}
-  });
-  evtSrc.onerror = () => {
+  const streamFail = () => {
     clearTimeout(_stallTimer);
     State.flash = 1; State.shake = 0.8; State.mode = 'error';
     window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
@@ -3220,8 +3063,164 @@ async function sendMessage(text) {
     window._chatOnDmesg?.('link quiet');
     window._chatOnError?.('stream interrupted');
     speakFailure("Sorry, I hit a snag.");
-    try { evtSrc.close(); } catch (_) {}
   };
+  try {
+    await window.MASTERChat.startChatStream({
+      message: finalText,
+      state: window.collectFeltState?.() || feltFallback,
+      preEnhanced,
+      imageToken
+    }, {
+      onMessage(raw) {
+        clearTimeout(_stallTimer);
+        delete rootBody.dataset.networkStall;
+        if (raw === '[DONE]') {
+          if (pending.trim()) {
+            tts.lastText = pending.trim();
+            enqueueSpeech(pending.trim());
+          }
+          if (/\b(i do not know|i don't know|not sure|unsure|uncertain)\b/i.test(pending)) {
+            rootBody.dataset.uncertain = '1';
+            State.questionPulse = 1.0;
+            State.surpriseY = Math.max(State.surpriseY || 0, 0.4);
+            setTimeout(() => { delete rootBody.dataset.uncertain; }, 900);
+          }
+          pending = '';
+          State.mode = 'idle';
+          clearThinkingAloud();
+          showStage("");
+          if (navigator.vibrate) navigator.vibrate([60]);
+          window._chatOnDone?.();
+          return;
+        }
+        if (raw.startsWith('ERROR:')) {
+          window._chatOnChunk?.(`\n${raw}\n`);
+          State.mode = 'error'; State.flash = 1; State.shake = 0.8;
+          fadeColorTo(TINT.veto);
+          morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
+          clearThinkingAloud();
+          speakFailure("Sorry, I hit a snag.");
+          window._chatOnError?.();
+          return;
+        }
+        const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+        if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
+        window._chatOnChunk?.(chunk);
+        pending += chunk;
+        State.pulse = Math.min(0.6, State.pulse + 0.05);
+        let m;
+        while ((m = pending.match(SENT_BREAK)) || (pending.length > TTS_CHUNK_MAX && (m = pending.match(/\s+/)))) {
+          const cut = m ? m.index + m[0].length : TTS_CHUNK_MAX;
+          const sent = pending.slice(0, cut).trim();
+          pending = pending.slice(cut);
+          if (!sent) continue;
+          const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
+          ttsFirst = false;
+          enqueueSpeech(prefix + sent);
+        }
+      },
+      onNamed(event, data) {
+        if (event === 'mood') {
+          const m = (data || '').trim();
+          if (!m) return;
+          State.mood = m;
+          updateMoodHistory(m);
+          if (m === 'curious') State.surpriseY = 0.7;
+          if (TINT[m]) fadeColorTo(TINT[m]);
+          const live = document.getElementById('mood-live');
+          if (live) live.textContent = 'mood: ' + m;
+          syncShareStateUrl();
+          return;
+        }
+        if (event === 'model') {
+          const m = (data || '').trim();
+          if (!m) return;
+          State.model = m; State.modelName = m.split('/').pop();
+          const key = Object.keys(TINT).find(k => m.toLowerCase().includes(k));
+          if (key) fadeColorTo(TINT[key]);
+          window.MASTER_FACE_BLEND?.pushEmotion?.({ valence: 0.75 });
+          setTimeout(() => window.MASTER_FACE_BLEND?.pushEmotion?.({ valence: 0.35 }), 1000);
+          showModelBadge(State.modelName || m);
+          State.modelSwitch = 1.0;
+          syncShareStateUrl();
+          const tier = document.querySelector('meta[name="master-tier"]')?.content || '';
+          const live = document.getElementById('mood-live');
+          if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
+          return;
+        }
+        if (event === 'verdict') {
+          const v = (data || '').trim();
+          if (TINT[v]) fadeColorTo(TINT[v]);
+          State.pulse = 0.6;
+          State.jitter = (State.confidence < 0.45 ? 0.75 : 0.15);
+          if (State.confidence > 0.75) State.pulse = 0.9;
+          if (v === 'pass') {
+            beep(880, 0.06);
+            morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
+            State.bloom = 1.0;
+          }
+          if (v === 'veto') {
+            beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
+            morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
+            State.fracture = 1.0;
+            const prevPh = zshIn?.placeholder;
+            if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
+          }
+          const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
+          if (v === 'pass') tally.pass += 1;
+          if (v === 'veto') tally.veto += 1;
+          if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
+          return;
+        }
+        if (event === 'council:speech') {
+          try {
+            const payload = JSON.parse(data || '{}');
+            const { voice, text, persona, label, viseme_lane: lane, viseme_plan: plan, expression: ex, blendshapes } = payload;
+            if (persona) {
+              rootBody.dataset.councilPersona = persona;
+              applyPersonaVisual(persona);
+              if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
+            }
+            if (lane) offsetCouncilMouthPool?.(lane, 0.22);
+            if (plan?.length) tts.visemePlan = plan;
+            if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
+            if (voice && text && !tts.playing) {
+              playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
+            }
+            setTimeout(() => {
+              if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
+              if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
+            }, 8000);
+          } catch (_) {}
+          return;
+        }
+        if (event === 'confidence') {
+          const c = parseFloat(data); if (!isNaN(c)) State.confidence = c;
+          return;
+        }
+        if (event === 'dmesg') { try { window._chatOnDmesg?.(JSON.parse(data)); } catch (_) {} return; }
+        if (event === 'compaction') { try { window._chatOnCompaction?.(JSON.parse(data)); } catch (_) {} return; }
+        if (event === 'ctx_footer') { try { window._chatOnCtxFooter?.(JSON.parse(data)); } catch (_) {} return; }
+        if (event === 'phantom') { try { window._chatOnPhantom?.(JSON.parse(data)); } catch (_) {} return; }
+        if (event === 'tool_stack') { try { window._chatOnToolStack?.(JSON.parse(data)); } catch (_) {} return; }
+        if (event === 'stage') { try { window._chatOnStage?.(JSON.parse(data)); } catch (_) {} return; }
+        if (event === 'btw') { try { window._chatOnBtw?.(JSON.parse(data)); } catch (_) {} return; }
+        if (event === 'felt') {
+          try {
+            const payload = JSON.parse(data || '{}');
+            if (payload.mood) State.mood = payload.mood;
+            if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
+            if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
+          } catch (_) {}
+          return;
+        }
+        if (event === 'client_action') { try { window.MASTERChat?.triggerClientAction?.(JSON.parse(data)); } catch (_) {} }
+      },
+      onError() { streamFail(); }
+    });
+  } catch (_) {
+    streamFail();
+  }
 }
 
 setInterval(() => {
@@ -3569,7 +3568,7 @@ document.addEventListener('pointerdown', wakeFromSleep, { passive: true });
 document.addEventListener('touchstart', wakeFromSleep, { passive: true });
 document.addEventListener('mousedown', wakeFromSleep, { passive: true });
 
-window.sendMessage = sendMessage;
+
 window.MASTERVoice = {
   enqueue: enqueueSpeech,
   initAudio: () => window.MASTER_FACE?.initAudio?.(),

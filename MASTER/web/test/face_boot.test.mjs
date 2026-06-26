@@ -73,6 +73,7 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /master:session-ready/);
   assert.match(boot, /sessionReady/);
   assert.match(boot, /dismissPrimer\(\)/);
+  assert.match(boot, /ensurePrimer/);
   assert.doesNotMatch(boot, /showLoadState/);
   assert.match(boot, /pointerdown/);
   assert.match(boot, /click/);
@@ -107,6 +108,23 @@ test("topology registry defers remote fetch until primer", () => {
   const registry = readFileSync(join(publicDir, "topology_registry.js"), "utf8");
   assert.match(registry, /primer:ready/);
   assert.doesNotMatch(registry, /\n  bootRemoteTopologies\(\);\n\}\)\(\);/);
+});
+
+test("chat_actions posts chat stream instead of EventSource GET", () => {
+  const actions = readFileSync(join(publicDir, "chat_actions.js"), "utf8");
+  assert.match(actions, /method:\s*"POST"/);
+  assert.match(actions, /\/chat\/message/);
+  assert.doesNotMatch(actions, /new EventSource\(/);
+  assert.match(actions, /window\.MASTERChat/);
+  assert.match(actions, /MASTER_FACE\?\.sendMessage/);
+});
+
+test("face runtime uses MASTERChat stream and digested particle worker", () => {
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  assert.match(runtime, /MASTERChat\.startChatStream/);
+  assert.doesNotMatch(runtime, /new EventSource\(\s*`\/chat\/message/);
+  assert.match(runtime, /MASTER_ASSET_PATHS\?\.particleWorker/);
+  assert.doesNotMatch(runtime, /window\.sendMessage\s*=\s*sendMessage/);
 });
 
 test("service worker avoids stale undigested precache", () => {

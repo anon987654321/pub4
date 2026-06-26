@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   get "dashboard/live", to: "dashboard#live"
   mount ActionCable.server => "/cable"
   get  "chat/message",  to: "chat#message"
+  post "chat/message",  to: "chat#message"
   post "chat/photo",    to: "chat#photo"
   get  "chat/tts",        to: "tts#show"
   get  "chat/tts/phrases", to: "tts#phrases"

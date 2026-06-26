@@ -13,6 +13,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "master:session-ready"
     assert_includes response.body, "sessionReady"
     assert_includes response.body, "showBootError"
+    assert_includes response.body, "ensurePrimer"
     assert_includes response.body, "faceBooting"
     assert_includes response.body, "face-session"
     assert_includes response.body, "face3d_preview"
@@ -31,11 +32,11 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     %w[
-      face_semantics.js face_minimal_ui.js face_loops_music.js face_loops_nudge.js
-      face_blendshape_bridge.js face3d_preview.js face3d_geometry.js face3d_support.js
-      master_events.js shortcut_sheet.js
+      face_semantics face_minimal_ui face_loops_music face_loops_nudge
+      face_blendshape_bridge face3d_preview face3d_geometry face3d_support
+      master_events shortcut_sheet particleWorker
     ].each do |name|
-      assert_includes response.body, name
+      assert_match(/#{Regexp.escape(name)}/, response.body)
     end
     assert_match(/faceParts/, response.body)
     assert_match(/faceModules/, response.body)
@@ -70,5 +71,14 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     get "/chat/message", params: { message: "" }
 
     assert_response :bad_request
+  end
+
+  test "message post streams sse for chat turn" do
+    post "/chat/message", params: { message: "ping" }
+
+    assert_response :success
+    assert_match %r{text/event-stream}, response.media_type.to_s
+    assert_includes response.body, "pong"
+    assert_includes response.body, "[DONE]"
   end
 end

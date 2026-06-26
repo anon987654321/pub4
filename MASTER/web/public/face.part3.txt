@@ -47,7 +47,10 @@ function ensureParticleWorker() {
   if (particleWorker || !window.Worker) return particleWorker;
   if (!window.MASTER_RUNTIME?.enhancements?.includes?.('particle_worker')) return null;
   try {
-    particleWorker = new Worker('/particle_worker.js');
+    const workerUrl = window.MASTER_ASSET_PATHS?.particleWorker
+      || window.MASTER_ASSET_PATHS?.faceModules?.['particle_worker.js']
+      || '/particle_worker.js';
+    particleWorker = new Worker(workerUrl);
     particleWorker.onmessage = (ev) => {
       const msg = ev.data || {};
       const pending = particleWorkerPending.get(msg.id);

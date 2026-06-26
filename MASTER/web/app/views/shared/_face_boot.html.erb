@@ -50,22 +50,50 @@
       if(ui)ui.textContent='';
       revealPrompt();
     }
+    function wirePrimer(el){
+      if(!el||el.dataset.bootWired==='1')return;
+      el.dataset.bootWired='1';
+      el.addEventListener('pointerdown',primerActivate);
+      el.addEventListener('pointerup',primerActivate);
+      el.addEventListener('click',primerActivate);
+      el.addEventListener('touchend',primerActivate,{passive:true});
+      el.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
+    }
+    function ensurePrimer(){
+      var el=document.getElementById('primer');
+      if(el)return el;
+      el=document.createElement('div');
+      el.id='primer';
+      el.setAttribute('role','button');
+      el.setAttribute('aria-labelledby','primer-title');
+      el.setAttribute('aria-busy','false');
+      el.tabIndex=0;
+      var h=document.createElement('h1');
+      h.id='primer-title';
+      h.textContent='tap to retry';
+      el.appendChild(h);
+      document.body.appendChild(el);
+      p=el;
+      title=h;
+      wirePrimer(el);
+      return el;
+    }
     function showBootError(msg){
       clearBootTimers();
       delete document.body.dataset.faceBooting;
       fired=false;
       window._primerFired=false;
-      if(p&&p.parentNode){
-        p.classList.remove('gone');
-        p.style.opacity='1';
-        p.style.transform='';
-        p.style.pointerEvents='auto';
-        p.setAttribute('aria-busy','false');
-        if(title)title.textContent='tap to retry';
-        document.body.classList.add('face-loading');
-      }else if(ui){
-        ui.textContent='tap to retry — reload page';
-      }
+      document.body.classList.remove('face-session');
+      if(z)z.classList.remove('live');
+      ensurePrimer();
+      p.classList.remove('gone');
+      p.style.opacity='1';
+      p.style.transform='';
+      p.style.pointerEvents='auto';
+      p.setAttribute('aria-busy','false');
+      if(title)title.textContent='tap to retry';
+      document.body.classList.add('face-loading');
+      if(ui)ui.textContent='';
       reportError(msg||'reload page');
     }
     function armFaceBoot(){
@@ -108,13 +136,7 @@
       }
       go();
     }
-    if(p){
-      p.addEventListener('pointerdown',primerActivate);
-      p.addEventListener('pointerup',primerActivate);
-      p.addEventListener('click',primerActivate);
-      p.addEventListener('touchend',primerActivate,{passive:true});
-      p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
-    }
+    if(p)wirePrimer(p);
     addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}});
   })();
 </script>

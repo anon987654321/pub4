@@ -15,6 +15,7 @@ module FaceAssetsHelper
 
   def master_face_asset_paths
     paths = {
+      particleWorker: asset_path("particle_worker.js"),
       threeModule: asset_path("three.face.module.js"),
       face3dPreview: asset_path("face3d_preview.js"),
       face3dEngine: asset_path("face3d_engine.js"),
