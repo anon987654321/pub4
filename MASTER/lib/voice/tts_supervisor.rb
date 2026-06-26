@@ -87,9 +87,15 @@ module Master
       def socket_alive?(path)
         return false unless File.socket?(path)
 
-        UNIXSocket.open(path, &:close)
+        UNIXSocket.open(path) do |socket|
+          socket.write(%({"voice":"ms-MY-OsmanNeural","rate":"+0%","pitch":"+0Hz","text":"."}\n))
+          chunk = socket.read_nonblock(64)
+          return false if chunk.nil? || chunk.empty?
+        end
         true
-      rescue SystemCallError
+      rescue IO::WaitReadable, Errno::EAGAIN
+        true
+      rescue SystemCallError, EOFError, IOError
         false
       end
 

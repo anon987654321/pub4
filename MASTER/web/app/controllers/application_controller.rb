@@ -84,7 +84,6 @@ class ApplicationController < ActionController::Base
     return if warming_exempt_path?
 
     start_container_bootstrap!
-    MasterContainerLoader.ensure! unless container
 
     return if container
 

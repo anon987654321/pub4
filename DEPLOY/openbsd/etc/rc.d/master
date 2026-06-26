@@ -39,6 +39,13 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 			sleep 1
 			_i=$((_i + 1))
 		done
+		# Wait for MASTER container (chat/TTS need it; /up alone is too early).
+		_j=0
+		while [ "$_j" -lt 120 ]; do
+			curl -fsS "http://127.0.0.1:${PORT}/chat/metrics" 2>/dev/null | grep -q '"model"' && break
+			sleep 2
+			_j=$((_j + 1))
+		done
 		rcctl restart relayd 2>/dev/null || true
 		# Warm Edge TTS daemon as dev (not root) so sockets stay group-writable.
 		doas -u dev sh -c 'cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -Ilib -e "require \"master\"; puts Master::Voice::TtsSupervisor.ensure_daemon!"' \
