@@ -72,7 +72,7 @@ function fadeTtsAudio(ms = 80) {
 function ttsSkipHard() {
   tts.cancelToken++;
   setTTSLoading(false);
-  if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
+  if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } tts.audio = null; }
   tts.outputGain = null;
   stopVisemeAnim();
   tts.visemePlan = null;
@@ -155,7 +155,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     if (interim.trim()) {
       sttPartial = interim.trim();
       if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
-      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (_) {} sendMessage(t2); } }, 1200);
+      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } sendMessage(t2); } }, 1200);
     }
   };
   recognition.onend = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
@@ -176,11 +176,11 @@ function startSTT() {
   window.MASTER_FACE_BLEND?.resetMouth?.(0.35);
   window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
   window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
-  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
+  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }
 function stopSTT() {
   if (!recognition || !State.sttActive) return;
-  try { recognition.stop(); } catch (_) {}
+  try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }
 
 let stageTimer = null;
@@ -474,13 +474,13 @@ setInterval(() => {
     tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2)
   });
   syncShareStateUrl();
-  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (_) {}
+  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }, 8000);
 
 let wakeLock = null;
 async function acquireWakeLock() {
   if (!('wakeLock' in navigator)) return;
-  async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (_) {} }
+  async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } }
   await req();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
 }
@@ -506,12 +506,12 @@ function previewVoice(voice) {
   loadTTSBlob("Let's work now.", chosen, style)
     .then(async (blob) => {
       const src = URL.createObjectURL(blob);
-      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
+      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } }
       const audio = new Audio(src);
       tts.audio = audio;
       audio.playbackRate = getTtsRate();
       preSpeechInhale(style);
-      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
+      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
       startVisemeAnim("Let's work now.");
       audio.onended = audio.onerror = () => {
         stopVisemeAnim();
@@ -567,11 +567,11 @@ function playDuo(lines, onDone, style, councilOpts = {}) {
   loadTTSBlob(text, voice, useStyle)
     .then(async blob => {
       const src = URL.createObjectURL(blob);
-      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
+      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } }
       const audio = new Audio(src);
       tts.audio = audio;
       audio.playbackRate = getTtsRate();
-      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
+      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
       startVisemeAnim(text);
       preSpeechInhale(useStyle);
       audio.onended = audio.onerror = () => {
@@ -682,7 +682,7 @@ const _charCount = document.getElementById('char-count');
 const _cmdHistKey = 'master:cmd_hist';
 let _cmdHist = [];
 let _cmdHistIdx = -1;
-try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch (_) {}
+try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 function _resizeZin() {
   if (!zshIn || zshIn.tagName !== 'TEXTAREA') return;
   zshIn.style.height = 'auto';

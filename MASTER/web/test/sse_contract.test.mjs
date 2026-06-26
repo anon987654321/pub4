@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -54,4 +54,15 @@ test("three.module.js is not part of face boot asset contract", () => {
   const helper = readFileSync(join(root, "app", "helpers", "face_assets_helper.rb"), "utf8");
   assert.match(helper, /three\.face\.module\.js/);
   assert.doesNotMatch(helper, /three\.module\.js/);
+});
+
+test("three.module.js source file removed from public", () => {
+  const legacy = join(publicDir, "three.module.js");
+  assert.equal(existsSync(legacy), false, "delete unused public/three.module.js");
+});
+
+test("face runtime has no silent empty catches", () => {
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  assert.doesNotMatch(runtime, /catch \(_\) \{\}/);
+  assert.match(runtime, /MASTER_LOG\?\.warn/);
 });

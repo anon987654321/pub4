@@ -475,7 +475,5 @@ async function swapMask(imageUrl) {
     initSemanticPools();
     State.flash = 0.5; State.pulse = 0.8;
     if (uiStatus) uiStatus.textContent = 'mask loaded';
-  } catch (_) {
-    if (uiStatus) uiStatus.textContent = 'mask load failed';
-  }
+  } catch (err) { window.MASTER_LOG?.warn?.("face:mask_load", err); if (uiStatus) uiStatus.textContent = 'mask load failed'; }
 }

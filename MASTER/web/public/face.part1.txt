@@ -154,7 +154,7 @@ try {
     State.profileOverride = savedProfile;
     rootBody.dataset.runtimeProfile = savedProfile;
   }
-} catch (_) {}
+} catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 function applyFocusMode(enabled, persist = true) {
   const value = !!enabled;
   rootBody.dataset.focusMode = value ? '1' : '0';
@@ -296,7 +296,7 @@ State.mode = _shareParams.get('mode') || State.mode;
 try {
   if (!_shareParams.get('mood')) State.mood = localStorage.getItem('master:mood') || State.mood;
   if (!_shareParams.get('mode')) State.mode = localStorage.getItem('master:mode') || State.mode;
-} catch (_) {}
+} catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 const _faceMode = (_shareParams.get('face_mode') || 'auto').toLowerCase();
 rootBody.dataset.faceRenderMode = _faceMode;
 State.idleSignature = { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
@@ -313,7 +313,7 @@ function syncShareStateUrl() {
     if (State.model) url.searchParams.set('model', State.model); else url.searchParams.delete('model');
     if (State.voiceName) url.searchParams.set('voice', State.voiceName); else url.searchParams.delete('voice');
     history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }
 
 rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
@@ -323,7 +323,7 @@ function enterDegradedTextUI(reason) {
   rootBody.dataset.errorBoundary = '1';
   rootBody.dataset.runtimeProfile = 'text';
   rootBody.dataset.runtimeVisible = 'true';
-  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (_) {}
+  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
   if (cv && cv.style) cv.style.display = 'none';
   let banner = document.getElementById('face-error-banner');
   if (!banner) {
@@ -362,7 +362,7 @@ window.addEventListener('unhandledrejection', event => {
     if (gs > 0.5) FACE_GLOW_SCALE = gs;
     const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
     if (pd > 0.1 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 })();
 
 const STAR_FRAMES = ['\u2736', '\u2738', '\u2737', '\u273B', '\u2722', '\u2724', '\u2733', '\u2735'];
@@ -467,7 +467,7 @@ if (_hasWebGL && THREE) {
     renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 1);
     renderer.autoClear = true;
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
   camera.position.set(0, 0, 4.6);

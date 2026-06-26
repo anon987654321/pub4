@@ -8,6 +8,7 @@ FACE_BOOT = File.join(WEB, "test/face_boot.test.mjs")
 SSE_CONTRACT = File.join(WEB, "test/sse_contract.test.mjs")
 PROBE_FACE = File.join(WEB, "script/probe_face")
 PROBE_PRIMER = File.join(WEB, "script/probe_primer_external.rb")
+PROBE_CHAT_E2E = File.join(WEB, "script/probe_chat_e2e.rb")
 WEB_URL = ENV["WEB_URL"].to_s.strip
 
 checks = []
@@ -54,6 +55,13 @@ else
     if File.file?(PROBE_PRIMER)
       out, err, status = Open3.capture3("env", "CHROME_PATH=#{chrome}", "ruby", PROBE_PRIMER, WEB_URL, chdir: WEB)
       checks << ["probe_primer #{WEB_URL}", status.success?, [out, err].join.strip]
+    end
+
+    if File.file?(PROBE_CHAT_E2E)
+      out, err, status = Open3.capture3(
+        "env", "CHROME_PATH=#{chrome}", "PROBE_FORCE_BROWSER=1", "ruby", PROBE_CHAT_E2E, WEB_URL, chdir: WEB
+      )
+      checks << ["probe_chat_e2e #{WEB_URL}", status.success?, [out, err].join.strip]
     end
   end
 end

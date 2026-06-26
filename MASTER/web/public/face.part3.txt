@@ -58,9 +58,7 @@ function ensureParticleWorker() {
       particleWorkerPending.delete(msg.id);
       applyWorkerPoolResult(pending.pool, msg.pool);
     };
-  } catch (_) {
-    particleWorker = null;
-  }
+  } catch (err) { window.MASTER_LOG?.warn?.("face:particle_worker", err); particleWorker = null; }
   return particleWorker;
 }
 function serializePoolForWorker(pool) {
@@ -622,7 +620,7 @@ function bindOrientation() {
 async function requestMotionPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (_) {}
+    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
   } else if (window.DeviceOrientationEvent) {
     bindOrientation();
   }
