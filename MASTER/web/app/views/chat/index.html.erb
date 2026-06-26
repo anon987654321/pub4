@@ -113,9 +113,9 @@
     }
     window.addEventListener('primer:ready', refreshRuntimeConfig, { once: true });
   </script>
-  <div id="primer" role="button" aria-labelledby="primer-title" aria-busy="false" tabindex="0">
-    <h1 id="primer-title">tap to start</h1>
-  </div>
+  <button type="button" id="primer" aria-busy="false">
+    <span id="primer-title" class="primer-label">tap to start</span>
+  </button>
   <%= render "shared/face_boot" %>
 </body>
 </html>

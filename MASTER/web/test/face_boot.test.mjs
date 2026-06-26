@@ -80,7 +80,9 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /click/);
   assert.match(boot, /touchend/);
   assert.match(boot, /trackpadPrimary/);
+  assert.match(boot, /safariBrowser/);
   assert.doesNotMatch(boot, /e\.button!==0/);
+  assert.match(boot, /createElement\('button'\)/);
   assert.match(boot, /primerVisible/);
   assert.match(boot, /resetFaceSession/);
   assert.match(boot, /capture:true/);
@@ -101,6 +103,7 @@ test("chat index ships import map and digested master_events", () => {
   const bootIdx = index.indexOf('render "shared/face_boot"');
   const primerIdx = index.indexOf('id="primer"');
   assert.ok(primerIdx > 0 && bootIdx > primerIdx, "primer must precede face_boot at end of body");
+  assert.match(index, /<button[^>]*id="primer"/);
 });
 
 test("face3d_engine imports use import-map paths", () => {

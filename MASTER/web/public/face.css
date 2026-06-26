@@ -441,6 +441,14 @@ body[data-mode="listening"] #mic-dot {
   place-items: center;
   z-index: var(--z-primer);
   isolation: isolate;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font: inherit;
+  color: inherit;
   background: color-mix(in srgb, var(--face-bg) 72%, transparent);
   cursor: pointer;
   text-align: center;
@@ -451,25 +459,34 @@ body[data-mode="listening"] #mic-dot {
   -webkit-tap-highlight-color: transparent;
 }
 
+#primer:disabled {
+  cursor: wait;
+  pointer-events: none;
+}
+
 #primer:focus-visible { outline: 1px solid var(--face-fg); outline-offset: -8px; }
 
 [id="face"]:focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
 
+#primer .primer-label,
 #primer h1 {
   margin: 0;
+  display: block;
   font: 200 clamp(1rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif;
   letter-spacing: -.04em;
   color: var(--face-fg);
   transition: transform var(--transition-fast) var(--ease-out);
-  pointer-events: auto;
+  pointer-events: none;
 }
 
+#primer:active .primer-label,
 #primer:active h1 { transform: scale(1.03); }
 
 body[data-face-booting="1"] #primer {
   background: color-mix(in srgb, var(--face-bg) 88%, transparent);
   cursor: wait;
 }
+body[data-face-booting="1"] #primer .primer-label,
 body[data-face-booting="1"] #primer h1 {
   animation: primerPulse 1.2s var(--ease-in-out) infinite;
 }
