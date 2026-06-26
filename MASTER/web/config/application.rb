@@ -20,6 +20,7 @@ require "rails/test_unit/railtie"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+require_relative "../app/services/master_web_token"
 require_relative "../app/middleware/auth_tier"
 
 class ServiceWorkerNoCache
@@ -60,7 +61,7 @@ module Web
 
     config.middleware.use(
       AuthTier,
-      config_path: Rails.root.join("..", ".master", "config.yml").to_s
+      config_path: MasterWebToken.config_path
     )
   end
 end

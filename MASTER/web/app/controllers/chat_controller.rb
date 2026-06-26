@@ -49,12 +49,18 @@ class ChatController < ApplicationController
   end
 
   def history
-    messages = container[:session].messages.last(200).map { |m| { role: m[:role], content: m[:content].to_s[0, 2000] } }
+    c = container
+    return render(json: { error: "warming up" }, status: :service_unavailable) unless c
+
+    messages = c[:session].messages.last(200).map { |m| { role: m[:role], content: m[:content].to_s[0, 2000] } }
     render json: messages
   end
 
   def skills
-    loaded = container[:skills]&.loaded || []
+    c = container
+    return render(json: { error: "warming up" }, status: :service_unavailable) unless c
+
+    loaded = c[:skills]&.loaded || []
     render json: loaded.map { |s| { name: s[:name], description: s[:description], triggers: s[:triggers] } }
   rescue StandardError => e
     render json: { error: e.message }, status: :service_unavailable
@@ -64,20 +70,22 @@ class ChatController < ApplicationController
     cmd = (params[:command] || JSON.parse(request.body.read)["command"]).to_s.strip
     if cmd.start_with?("/unlock ")
       pw = cmd.sub(/^\/unlock\s+/, "").strip
-      token = ENV["MASTER_WEB_TOKEN"].to_s
-      if token.empty? || pw != token
+      token = MasterWebToken.read
+      if token.empty? || pw.bytesize != token.bytesize || !Rack::Utils.secure_compare(pw, token)
         render(json: { output: "unlock denied" }, status: 401) and return
       end
       cookies[:master_unlocked] = { value: "1", expires: 1.year.from_now, secure: true, httponly: true, same_site: :strict }
       render(json: { output: "unlocked — full tool access enabled." }) and return
     end
-    return head(:forbidden) if visitor? && cmd.start_with?("/")
+    return head(:forbidden) if visitor?
 
-    result = container[:gateway].receive(channel: :cli, message: cmd)
-    value = result.ok? ? result.value! : nil
-    output = value.is_a?(Hash) ? (value[:rendered] || value.to_s) : (value || result.message)
-    client_actions = value.is_a?(Hash) ? Array(value[:client_actions]) : []
-    render json: { output: output, client_actions: client_actions }
+    with_master_fiber(unlocked: cookies[:master_unlocked].to_s == "1") do
+      result = container[:gateway].receive(channel: :cli, message: cmd)
+      value = result.ok? ? result.value! : nil
+      output = value.is_a?(Hash) ? (value[:rendered] || value.to_s) : (value || result.message)
+      client_actions = value.is_a?(Hash) ? Array(value[:client_actions]) : []
+      render json: { output: output, client_actions: client_actions }
+    end
   rescue StandardError => e
     render json: { output: "Error: #{e.message}" }, status: 500
   end

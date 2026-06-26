@@ -7,9 +7,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   VISITOR_ALLOWED_TOOLS = %w[AskLlm WebSearch].freeze
-  AUTHENTICATED_ACTIONS = %i[
-    command dmesg enhance history live metrics photo post_event state stream
-  ].freeze
+  AUTHENTICATED_ACTIONS = %i[dmesg history live metrics].freeze
   TTS_ACTIONS = %i[show status].freeze
   CHAT_RATE_LIMIT = 30  # requests per 60s per IP
   CHAT_WINDOW_S   = 60
@@ -33,19 +31,47 @@ class ApplicationController < ActionController::Base
     Array(actions).include?(action_name.to_sym)
   end
 
+  def master_tier
+    request.env["master.tier"].to_s
+  end
+
   def visitor?
-    false
+    master_tier != "authenticated"
   end
   helper_method :visitor? if respond_to?(:helper_method)
 
-  def visitor_tool_permitted?(_tool_name)
-    true
+  def authenticated?
+    master_tier == "authenticated"
+  end
+
+  def visitor_tool_permitted?(tool_name)
+    VISITOR_ALLOWED_TOOLS.include?(tool_name.to_s)
   end
 
   def require_authenticated!
+    return if authenticated?
+
+    respond_to do |fmt|
+      fmt.json { render json: { error: "authentication required" }, status: :unauthorized }
+      fmt.html { head :unauthorized }
+      fmt.any  { head :unauthorized }
+    end
   end
 
-  def enforce_visitor_tool!(_tool_name)
+  def enforce_visitor_tool!(tool_name)
+    return unless visitor?
+    return if visitor_tool_permitted?(tool_name)
+
+    head :forbidden
+  end
+
+  def with_master_fiber(unlocked: false)
+    Fiber[:master_visitor] = visitor?
+    Fiber[:master_elevated] = unlocked
+    yield
+  ensure
+    Fiber[:master_visitor] = nil
+    Fiber[:master_elevated] = nil
   end
 
   def enforce_chat_rate_limit

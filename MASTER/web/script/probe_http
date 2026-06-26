@@ -12,10 +12,12 @@ PORT = Integer(ENV.fetch("MASTER_WEB_PORT", ENV.fetch("PROBE_PORT", "53187")))
 BASE = ENV["WEB_URL"].to_s.strip
 BASE = "http://#{HOST}:#{PORT}" if BASE.empty?
 
-def get(path)
+def get(path, headers: {})
   uri = URI.join(BASE.end_with?("/") ? BASE : "#{BASE}/", path.sub(%r{\A/}, ""))
   Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: 15, open_timeout: 8) do |http|
-    http.request(Net::HTTP::Get.new(uri.request_uri))
+    req = Net::HTTP::Get.new(uri.request_uri)
+    headers.each { |key, value| req[key] = value }
+    http.request(req)
   end
 end
 
@@ -38,11 +40,17 @@ begin
   end
 
   metrics = get("/chat/metrics")
-  if metrics.code == "200"
-    data = JSON.parse(metrics.body)
-    failures << "metrics missing model" unless data.key?("model")
-  else
-    failures << "metrics #{metrics.code}"
+  failures << "metrics should reject visitors (got #{metrics.code})" unless metrics.code == "401"
+
+  token = ENV["PROBE_TOKEN"].to_s
+  if !token.empty?
+    authed_metrics = get("/chat/metrics", headers: { "X-Token" => token })
+    if authed_metrics.code == "200"
+      data = JSON.parse(authed_metrics.body)
+      failures << "metrics missing model" unless data.key?("model")
+    else
+      failures << "authed metrics #{authed_metrics.code}"
+    end
   end
 rescue Errno::ECONNREFUSED, SocketError => e
   failures << "connection refused: #{e.message}"
