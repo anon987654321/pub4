@@ -207,3 +207,15 @@ test("service worker avoids stale undigested precache", () => {
   assert.match(sw, /Never cache digested/);
   assert.match(sw, /pathname\.startsWith\('\/assets\/'\)/);
 });
+
+test("face_deferred_loader schedules vision after primer", () => {
+  const loader = readFileSync(join(publicDir, "face_deferred_loader.js"), "utf8");
+  assert.match(loader, /face_vision\.bundle\.js/);
+  assert.match(loader, /primer:ready/);
+  assert.match(loader, /cognition_ecology/);
+});
+
+test("visual_governor reads runtime visual limits", () => {
+  const governor = readFileSync(join(publicDir, "visual_governor.js"), "utf8");
+  assert.match(governor, /MASTER_RUNTIME\?\.visual_limits/);
+});

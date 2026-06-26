@@ -415,21 +415,28 @@
     classify
   };
 
+  function containerLive() {
+    return window.MASTER_CONTAINER_READY !== false;
+  }
+
   function bootLink() {
-    if (state.connected || eventSource || cableSocket) return;
+    if (!containerLive() || state.connected || eventSource || cableSocket) return;
     connectSse();
   }
 
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) disconnectSse();
-    else if (window._primerFired) bootLink();
+    else if (window._primerFired && containerLive()) bootLink();
   }, { passive: true });
 
   observeDomSignals();
-  if (window._primerFired) bootLink();
+  window.addEventListener("master:container-ready", bootLink);
+  if (window._primerFired && containerLive()) bootLink();
   else {
     window.addEventListener("master:session-ready", bootLink, { once: true });
-    window.addEventListener("primer:ready", bootLink, { once: true });
+    window.addEventListener("primer:ready", () => {
+      if (containerLive()) bootLink();
+    }, { once: true });
   }
   bootEmotionalTimeline();
   bootExperimentalVisuals();

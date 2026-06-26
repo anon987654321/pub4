@@ -2,6 +2,8 @@
 
 const SMOKE_MESSAGES = /^(ping|pong|health|up)$/i;
 const POLL_MS = 3000;
+const POLL_MS_FAST = 1000;
+const FAST_POLLS = 6;
 const MAX_POLLS = 40;
 
 function metaReady() {
@@ -25,7 +27,9 @@ function setReady(isReady, detail) {
   if (isReady && detail?.model) {
     const chip = document.getElementById("provider-chip");
     if (chip && !chip.textContent) chip.textContent = String(detail.model).slice(0, 12);
+    document.documentElement.dataset.modelProvider = String(detail.model).slice(0, 24);
   }
+  if (detail?.build) document.documentElement.dataset.build = String(detail.build).slice(0, 12);
   if (isReady) window.dispatchEvent(new CustomEvent("master:container-ready", { detail: detail || {} }));
 }
 
@@ -39,8 +43,9 @@ function ensureRetryBootButton() {
   btn.textContent = "retry boot";
   btn.addEventListener("click", () => {
     pollCount = 0;
-    if (!pollTimer) pollTimer = setInterval(pollTick, POLL_MS);
-    pollStatus();
+    if (pollTimer) clearTimeout(pollTimer);
+    pollTimer = null;
+    pollTick();
     const ui = document.getElementById("ui-status");
     if (ui) ui.textContent = "retrying boot…";
   });
@@ -86,26 +91,31 @@ function blockingSend(text) {
 let pollCount = 0;
 let pollTimer = null;
 
+function pollIntervalMs() {
+  return pollCount < FAST_POLLS ? POLL_MS_FAST : POLL_MS;
+}
+
+function schedulePollTick() {
+  if (pollTimer) clearTimeout(pollTimer);
+  pollTimer = window.setTimeout(async () => {
+    pollTimer = null;
+    await pollTick();
+  }, pollIntervalMs());
+}
+
 async function pollTick() {
   pollCount += 1;
   const ready = await pollStatus();
-  if (ready) {
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = null;
+  if (ready) return;
+  if (pollCount >= MAX_POLLS) {
+    setWarmupStalled("master did not become ready — reload or retry in a minute");
     return;
   }
-  if (pollCount >= MAX_POLLS) {
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = null;
-    setWarmupStalled("master did not become ready — reload or retry in a minute");
-  }
+  schedulePollTick();
 }
 
 setReady(metaReady(), { model: document.querySelector('meta[name="master-model"]')?.content || "booting" });
-if (!window.MASTER_CONTAINER_READY) {
-  pollTick();
-  pollTimer = window.setInterval(pollTick, POLL_MS);
-}
+if (!window.MASTER_CONTAINER_READY) pollTick();
 
 window.MASTER_CONTAINER = {
   ready: () => window.MASTER_CONTAINER_READY !== false,

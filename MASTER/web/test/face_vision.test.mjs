@@ -16,7 +16,7 @@ const VISION_FILES = [
   "face_vision_d.js"
 ];
 
-test("face vision 2026 modules exist and register 150 features", () => {
+test("face vision sources exist and register 150 features", () => {
   VISION_FILES.forEach((name) => {
     assert.ok(existsSync(join(publicDir, name)), `${name} missing`);
   });
@@ -26,6 +26,14 @@ test("face vision 2026 modules exist and register 150 features", () => {
     return sum + matches.length;
   }, 0);
   assert.equal(registerCount, 150, `expected 150 V.register calls, got ${registerCount}`);
+});
+
+test("face_vision.bundle.js is generated from vision sources", () => {
+  const bundlePath = join(publicDir, "face_vision.bundle.js");
+  assert.ok(existsSync(bundlePath), "run rails assets:build_face_vision_bundle");
+  const bundle = readFileSync(bundlePath, "utf8");
+  assert.match(bundle, /MASTER_FACE_VISION/);
+  assert.match(bundle, /V\.register\(150/);
 });
 
 test("face vision core exposes registry API and routes", () => {
@@ -38,13 +46,13 @@ test("face vision core exposes registry API and routes", () => {
   assert.match(core, /MAX_FEATURES = 150/);
 });
 
-test("chat index loads vision scripts after visual_bridge", () => {
+test("chat index defers vision and ecology via face_deferred_loader", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   const bridgeIdx = index.indexOf("visual_bridge.js");
-  const coreIdx = index.indexOf("face_vision_core.js");
-  const dIdx = index.indexOf("face_vision_d.js");
-  assert.ok(bridgeIdx > 0 && coreIdx > bridgeIdx, "face_vision_core must follow visual_bridge");
-  assert.ok(dIdx > coreIdx, "face_vision_d must follow core");
+  const loaderIdx = index.indexOf("face_deferred_loader.js");
+  assert.ok(bridgeIdx > 0 && loaderIdx > bridgeIdx, "deferred loader must follow visual_bridge");
+  assert.doesNotMatch(index, /face_vision_core\.js/);
+  assert.doesNotMatch(index, /cognition_ecology\.js/);
 });
 
 test("runtime status includes build and face metrics keys", () => {

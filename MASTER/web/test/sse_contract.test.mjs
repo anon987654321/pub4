@@ -43,7 +43,14 @@ test("container gate polls runtime status endpoint", () => {
   assert.match(gate, /MASTER_CONTAINER_READY/);
   assert.match(gate, /blockingSend/);
   assert.match(gate, /MAX_POLLS/);
+  assert.match(gate, /POLL_MS_FAST/);
   assert.match(gate, /master:container-timeout/);
+});
+
+test("visual_bridge waits for container before SSE", () => {
+  const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
+  assert.match(bridge, /MASTER_CONTAINER_READY/);
+  assert.match(bridge, /master:container-ready/);
 });
 
 test("visual_bridge logs parse failures instead of silent catch", () => {
