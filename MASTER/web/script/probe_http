@@ -28,7 +28,7 @@ begin
   home = get("/")
   failures << "homepage #{home.code}" unless home.code == "200"
   body = home.body.to_s
-  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer MASTERChat].each do |needle|
+  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer chat_actions].each do |needle|
     failures << "homepage missing #{needle}" unless body.include?(needle)
   end
   failures << "legacy 15s boot timeout still present" if body.include?("15000")
