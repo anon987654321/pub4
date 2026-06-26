@@ -90,7 +90,7 @@ module Master
           File.rename(tmp_path, path)
         end
       rescue StandardError => e
-        File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
+        delete_tmp_file(tmp_path) if defined?(tmp_path)
         raise
       end
 
@@ -112,8 +112,14 @@ module Master
         File.open(tmp_path, "w") { |f| @stack.each { |entry| f.puts(JSON.generate(entry)) } }
         File.rename(tmp_path, @journal)
       rescue StandardError => e
-        File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
+        delete_tmp_file(tmp_path) if defined?(tmp_path)
         raise
+      end
+
+      def delete_tmp_file(path)
+        File.delete(path) if path && File.exist?(path)
+      rescue StandardError => e
+        @bus&.publish("undo:tmp_delete_error", error: e.message, path: path)
       end
     end
   end

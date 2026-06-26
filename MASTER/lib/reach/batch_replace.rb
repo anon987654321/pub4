@@ -22,7 +22,7 @@ module Master
         return perm if perm.err?
 
         target = dir ? File.expand_path(dir, @root) : @root
-        return Result.err("replace: path escapes root: #{dir}", category: :validation) unless target.start_with?(@root)
+        return Result.err("replace: path escapes root: #{dir}", category: :validation) unless PathGuard.inside_root?(target, @root)
 
         @bus&.publish("tool:before", tool: NAME, old: old_str, new: new_str)
 

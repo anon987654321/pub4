@@ -31,16 +31,20 @@ module Master
     def checkpoint
       {
         id: SecureRandom.hex(8),
-        patch: git_capture("diff", "--binary"),
-        staged: git_capture("diff", "--cached", "--binary")
+        patch: worktree_patch
       }
     end
 
     def rollback(checkpoint)
-      git_capture("reset", "--hard")
-      git_capture("clean", "-fd")
-      apply_patch(checkpoint[:patch]) unless checkpoint[:patch].to_s.empty?
-      Observation.ok("rolled back #{checkpoint[:id]}")
+      return Observation.ok("rollback: clean #{checkpoint[:id]}") if checkpoint[:patch].to_s.empty?
+
+      if git_has_head?
+        git_capture("reset", "--hard", "HEAD")
+        apply_patch(checkpoint[:patch])
+      else
+        apply_patch_reverse(checkpoint[:patch])
+      end
+      Observation.ok("rolled back tracked changes #{checkpoint[:id]}")
     rescue StandardError => e
       Observation.no("rollback failed: #{e.class}: #{e.message}")
     end
@@ -103,15 +107,33 @@ module Master
       FileUtils.cp(abs, "#{abs}.#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}.bak")
     end
 
-    def git_capture(*args)
+    def git_has_head?
+      _, status = Open3.capture2e("git", "-C", @root, "rev-parse", "--verify", "HEAD")
+      status.success?
+    end
+
+    def worktree_patch
+      if git_has_head?
+        git_capture("diff", "HEAD", "--binary", raw: true)
+      else
+        git_capture("diff", "--binary", raw: true)
+      end
+    end
+
+    def git_capture(*args, raw: false)
       out, status = Open3.capture2e("git", "-C", @root, *args)
       raise out.strip unless status.success?
 
-      out.strip
+      raw ? out : out.strip
     end
 
     def apply_patch(patch)
       out, status = Open3.capture2e("git", "-C", @root, "apply", "--binary", "-", stdin_data: patch)
+      raise out.strip unless status.success?
+    end
+
+    def apply_patch_reverse(patch)
+      out, status = Open3.capture2e("git", "-C", @root, "apply", "--reverse", "--binary", "-", stdin_data: patch)
       raise out.strip unless status.success?
     end
 

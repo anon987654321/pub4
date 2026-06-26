@@ -58,7 +58,7 @@ module Master
     # No credential ever reaches disk or the transcript.
     def self.no_secret_rule(veto)
       Rule.new(id: :no_secret, verbs: %i[write note], judge: lambda { |effect, _memory|
-        body = effect.args[:content].to_s
+        body = [effect.args[:content], effect.args[:text]].compact.map(&:to_s).join("\n")
         next nil unless veto["secrets"] && body.match?(veto["secrets"])
 
         Verdict::Block.new(reason: "secret in content", by: :no_secret)

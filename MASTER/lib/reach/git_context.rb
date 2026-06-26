@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "pathname"
+
 module Master
   module Reach
     class GitContext
@@ -65,7 +67,7 @@ module Master
 
       def safe_path(path)
         full = File.expand_path(path.to_s, @root)
-        raise "path escapes root" unless full.start_with?(@root)
+        raise "path escapes root" unless PathGuard.inside_root?(full, @root)
         Pathname.new(full).relative_path_from(@root).to_s
       end
     end

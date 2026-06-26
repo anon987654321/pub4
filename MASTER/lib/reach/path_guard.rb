@@ -9,9 +9,13 @@ module Master
       rescue StandardError; %w[data/ SOUL.md CLAUDE.md CONVENTIONS.md README.md .claude/].freeze
       end
 
+      def self.inside_root?(full, root)
+        full == root || full.start_with?(root + File::SEPARATOR)
+      end
+
       def resolve(path)
         full = File.expand_path(path, @root)
-        return Result.err("path escapes project root: #{path}", category: :validation) unless full.start_with?(@root)
+        return Result.err("path escapes project root: #{path}", category: :validation) unless PathGuard.inside_root?(full, @root)
 
         rel = full.delete_prefix(@root + "/")
         if sacred?(rel)
