@@ -1,7 +1,7 @@
 <script nonce="<%= content_security_policy_nonce %>">
   window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
   (function(){
-    var p=null,z=document.getElementById('zsh'),ui=document.getElementById('ui-status'),err=document.getElementById('error-live'),title=null;
+    var p=null,form=null,z=document.getElementById('zsh'),ui=document.getElementById('ui-status'),err=document.getElementById('error-live'),title=null;
     var fired=false,timer=null,fallback=null,pinTimer=null;
     function safariBrowser(){
       var vendor=navigator.vendor||'';
@@ -13,7 +13,10 @@
     }
     function primerVisible(){
       var el=document.getElementById('primer');
-      return !!(el&&el.parentNode&&!el.classList.contains('gone'));
+      return !!(el&&el.parentNode&&!el.classList.contains('gone')&&!el.disabled);
+    }
+    function primerRoot(){
+      return document.getElementById('primer-form')||document.getElementById('primer');
     }
     function primeAudio(){
       try{
@@ -28,11 +31,16 @@
       document.documentElement.classList.remove('face-loading');
       document.body.classList.remove('face-loading');
       delete document.body.dataset.faceBooting;
+      delete document.body.dataset.faceBehindPrimer;
+      if(form)delete form.dataset.facePrimed;
       if(!p)return;
       p.setAttribute('aria-busy','false');
       p.disabled=true;
       p.classList.add('gone');
-      window.setTimeout(function(){if(p&&p.parentNode)p.remove();},220);
+      window.setTimeout(function(){
+        if(form&&form.parentNode)form.remove();
+        else if(p&&p.parentNode)p.remove();
+      },220);
     }
     function revealPrompt(){
       document.body.classList.add('face-session');
@@ -73,24 +81,49 @@
     function primerActivate(e){
       if(fired||!primerVisible())return;
       if(!trackpadPrimary(e))return;
-      if(e.cancelable&&e.pointerType&&e.pointerType!=='mouse')e.preventDefault();
+      if(!safariBrowser()&&e.cancelable&&e.pointerType&&e.pointerType!=='mouse')e.preventDefault();
       go();
     }
     function wirePrimer(el){
       if(!el||el.dataset.bootWired==='1')return;
       el.dataset.bootWired='1';
       el.addEventListener('click',primerActivate);
-      if(!safariBrowser()){
+      if(safariBrowser()){
+        el.addEventListener('mouseup',primerActivate);
+      }else{
         el.addEventListener('pointerdown',primerActivate);
         el.addEventListener('mousedown',primerActivate);
       }
       el.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
     }
+    function wirePrimerForm(){
+      form=document.getElementById('primer-form');
+      if(!form||form.dataset.bootWired==='1')return;
+      form.dataset.bootWired='1';
+      form.addEventListener('submit',function(e){
+        e.preventDefault();
+        go();
+      });
+      if(safariBrowser()){
+        form.addEventListener('click',function(e){
+          if(fired||!primerVisible())return;
+          if(e.target===form)go();
+        });
+      }
+    }
     function ensurePrimer(){
+      form=document.getElementById('primer-form');
       var el=document.getElementById('primer');
       if(!el){
+        if(!form){
+          form=document.createElement('form');
+          form.id='primer-form';
+          form.className='primer-form';
+          form.action='#';
+          form.method='post';
+        }
         el=document.createElement('button');
-        el.type='button';
+        el.type='submit';
         el.id='primer';
         el.setAttribute('aria-busy','false');
         var label=document.createElement('span');
@@ -98,35 +131,50 @@
         label.className='primer-label';
         label.textContent='tap to retry';
         el.appendChild(label);
+        form.appendChild(el);
+        wirePrimerForm();
         title=label;
         wirePrimer(el);
       }else{
         title=document.getElementById('primer-title');
+        wirePrimerForm();
         wirePrimer(el);
       }
       p=el;
       if(p.disabled)p.disabled=false;
-      return el;
+      return primerRoot();
     }
     function pinPrimer(){
       if(fired||!primerVisible())return;
-      var el=ensurePrimer();
-      document.body.appendChild(el);
+      var root=ensurePrimer();
+      document.body.appendChild(root);
     }
     function schedulePin(){
       pinPrimer();
       if(pinTimer)clearTimeout(pinTimer);
       pinTimer=setTimeout(pinPrimer,0);
     }
+    function showFaceBehindPrimer(){
+      if(fired||!primerVisible())return;
+      document.body.dataset.faceBehindPrimer='1';
+      if(form)form.dataset.facePrimed='1';
+      if(p){
+        p.dataset.facePrimed='1';
+        try{p.focus({preventScroll:true});}catch(_e){}
+      }
+      if(title)title.textContent='face ready — tap or press return';
+    }
     function showBootError(msg){
       clearBootTimers();
       delete document.body.dataset.faceBooting;
+      delete document.body.dataset.faceBehindPrimer;
       fired=false;
       window._primerFired=false;
       resetFaceSession();
       document.body.classList.remove('face-session');
       if(z)z.classList.remove('live');
       ensurePrimer();
+      if(form)delete form.dataset.facePrimed;
       p.classList.remove('gone');
       p.disabled=false;
       p.style.opacity='1';
@@ -165,6 +213,7 @@
     }
     function onSessionReady(){if(fired)finishBoot();}
     addEventListener('master:face-ready',function(){if(fired&&boot())finishBoot();});
+    addEventListener('master:face-live',showFaceBehindPrimer);
     addEventListener('primer:ready',onSessionReady);
     addEventListener('master:session-ready',onSessionReady);
     addEventListener('master:face-error',function(){
@@ -178,6 +227,7 @@
     });
     function armPrimer(){
       schedulePin();
+      wirePrimerForm();
       if(!safariBrowser()){
         ['pointerdown','mousedown','mouseup','touchend'].forEach(function(type){
           var opts=type==='touchend'?{capture:true,passive:true}:{capture:true};
@@ -198,6 +248,16 @@
         schedulePin();
       });
       window.__MASTER_PRIMER_TAP__=go;
+      window.__MASTER_FACE_STATUS__=function(){
+        return {
+          primerVisible:primerVisible(),
+          fired:fired,
+          face3d:!!window.FACE3D_ACTIVE,
+          masterFace:!!window.MASTER_FACE,
+          faceReady:document.body.classList.contains('face-ready'),
+          behindPrimer:document.body.dataset.faceBehindPrimer==='1'
+        };
+      };
     }
     if(document.readyState==='loading'){
       document.addEventListener('DOMContentLoaded',armPrimer);

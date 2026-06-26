@@ -87,6 +87,11 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /resetFaceSession/);
   assert.match(boot, /capture:true/);
   assert.match(boot, /__MASTER_PRIMER_TAP__/);
+  assert.match(boot, /__MASTER_FACE_STATUS__/);
+  assert.match(boot, /showFaceBehindPrimer/);
+  assert.match(boot, /master:face-live/);
+  assert.match(boot, /wirePrimerForm/);
+  assert.match(boot, /primer-form/);
   assert.match(boot, /DOMContentLoaded/);
   assert.match(boot, /pinPrimer/);
   assert.doesNotMatch(boot, /15000/);
@@ -103,6 +108,7 @@ test("chat index ships import map and digested master_events", () => {
   const bootIdx = index.indexOf('render "shared/face_boot"');
   const primerIdx = index.indexOf('id="primer"');
   assert.ok(primerIdx > 0 && bootIdx > primerIdx, "primer must precede face_boot at end of body");
+  assert.match(index, /id="primer-form"/);
   assert.match(index, /<button[^>]*id="primer"/);
   assert.match(index, /face-live-badge/);
 });
@@ -113,7 +119,17 @@ test("face3d preview announces live badge and boot brightness", () => {
   assert.match(preview, /announceFaceLive/);
   assert.match(preview, /master:face-live/);
   assert.match(preview, /bootBoost/);
+  assert.match(preview, /1800/);
+  assert.doesNotMatch(preview, /classList\.remove\("face-loading"\)/);
   assert.match(renderer, /bootBoost/);
+});
+
+test("face.css keeps primer tappable until session and shows face behind overlay", () => {
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  assert.match(css, /body:not\(\.face-session\)/);
+  assert.match(css, /face-behind-primer/);
+  assert.match(css, /primer-form/);
+  assert.match(css, /face-primed/);
 });
 
 test("face3d_engine imports use import-map paths", () => {

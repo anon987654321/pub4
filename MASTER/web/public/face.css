@@ -50,7 +50,8 @@ html, body {
 }
 
 html.face-loading,
-body.face-loading {
+body.face-loading,
+body:not(.face-session) {
   touch-action: manipulation;
 }
 
@@ -396,6 +397,14 @@ body[data-face-live="1"] #cognition-ecology {
   opacity: 0.72;
 }
 
+body[data-face-behind-primer="1"] .face-live-badge {
+  z-index: calc(var(--z-primer) + 2);
+}
+
+body[data-face-behind-primer="1"] #primer .primer-label {
+  animation: primerPulse 1.2s var(--ease-in-out) infinite;
+}
+
 .soul-drift,
 .mood-sparkline {
   position: fixed;
@@ -467,12 +476,35 @@ body[data-face-live="1"] #cognition-ecology {
 }
 
 /* Primer overlay — Radio Bergen dialog style */
-#primer {
+.primer-form {
   position: fixed;
+  inset: 0;
+  z-index: var(--z-primer);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: color-mix(in srgb, var(--face-bg) 72%, transparent);
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  touch-action: manipulation;
+  pointer-events: auto;
+}
+
+.primer-form[data-face-primed="1"] {
+  background: color-mix(in srgb, var(--face-bg) 22%, transparent);
+}
+
+#primer[data-face-primed="1"],
+body[data-face-behind-primer="1"] #primer {
+  background: color-mix(in srgb, var(--face-bg) 8%, transparent);
+}
+
+#primer {
+  position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  z-index: var(--z-primer);
   isolation: isolate;
   appearance: none;
   -webkit-appearance: none;

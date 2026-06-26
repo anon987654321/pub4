@@ -156,9 +156,7 @@ function bootFace3d() {
 
     if (!reportedNonblank && renderer.lastLitPixels > 0) {
       reportedNonblank = true;
-      document.documentElement.classList.remove("face-loading");
       document.body.classList.add("face-ready");
-      document.body.classList.remove("face-loading");
       announceFaceLive(renderer.lastLitPixels);
       window.MASTERVisual?.event?.("face3d:nonblank", {
         topology: currentMask,
@@ -174,6 +172,11 @@ function bootFace3d() {
   engine.setMask(currentMask);
   requestAnimationFrame(frame);
   window.MASTERVisual?.event?.("face3d:ready", { topology: currentMask, entropy: 0.16, confidence: 0.88, mode: "face3d" });
+  window.setTimeout(() => {
+    if (liveAnnounced) return;
+    document.body.classList.add("face-ready");
+    announceFaceLive(renderer.lastLitPixels || 0);
+  }, 1800);
 }
 
 bootFace3d();
