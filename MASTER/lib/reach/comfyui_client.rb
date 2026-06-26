@@ -25,7 +25,16 @@ module Master
         @client_id = client_id || SecureRandom.uuid
       end
 
-      def i2v(keyframe_url:, prompt:, frames: 24, motion_lora: nil, motion_weight: 0.75, timeout: DEFAULT_TIMEOUT)
+      def i2v(
+        keyframe_url:,
+        prompt:,
+        frames: 24,
+        motion_lora: nil,
+        motion_weight: 0.75,
+        motion_lora_2: nil,
+        motion_lora_2_weight: nil,
+        timeout: DEFAULT_TIMEOUT
+      )
         workflow = load_workflow
         image_name = ingest_keyframe(keyframe_url)
         patch_workflow!(
@@ -34,7 +43,9 @@ module Master
           prompt: prompt,
           frame_count: frames,
           motion_lora: motion_lora,
-          motion_lora_strength: motion_weight
+          motion_lora_strength: motion_weight,
+          motion_lora_2: motion_lora_2,
+          motion_lora_2_strength: motion_lora_2_weight
         )
         prompt_id = queue_prompt(workflow)
         history = wait_for_history(prompt_id, timeout: timeout)

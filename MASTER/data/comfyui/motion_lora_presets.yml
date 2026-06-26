@@ -1,0 +1,60 @@
+# Camera Motion LoRA presets — train in ComfyUI-ADMotionDirector, infer via VideoChain :animatediff.
+# Training clips: 8–15 short videos, 16–49 frames, camera move consistent, subject mostly static.
+training_defaults:
+  motion_module: mm_sd_v15_v2
+  rank: 48
+  steps: 280
+  learning_rate: 0.0002
+  batch_size: 1
+  optimizer: 8bit_adam
+  frames_per_clip: 16
+  resolution: "768x512"
+  class_prompt: "a person in a cinematic scene"
+  output_dir: ComfyUI/models/animatediff_motion_lora
+
+presets:
+  slow_dolly_push_in:
+    lora_file: ZIKI_cinematic_slow_dolly_push_in_v1.safetensors
+    inference_strength: 0.78
+    camera_phrase: slow cinematic dolly push-in toward subject
+    caption_template: "{subject}, slow cinematic dolly push-in toward her face, dramatic side lighting, analog film grain, deep depth of field, consistent character"
+    training:
+      rank: 48
+      steps: 280
+      learning_rate: 0.0002
+
+  elegant_orbit_tracking:
+    lora_file: ZIKI_elegant_orbit_tracking_shot_v1.safetensors
+    inference_strength: 0.72
+    camera_phrase: elegant orbiting tracking shot around subject
+    caption_template: "{subject}, elegant orbiting tracking shot around character, cinematic lighting, analog film grain, consistent character identity"
+    training:
+      rank: 48
+      steps: 260
+
+  subtle_handheld_crane_up:
+    lora_file: ZIKI_subtle_handheld_crane_up_v1.safetensors
+    inference_strength: 0.68
+    camera_phrase: subtle handheld with gentle crane up
+    caption_template: "{subject}, subtle handheld camera with gentle crane up, documentary-cinematic hybrid, analog grain, consistent character"
+    training:
+      rank: 32
+      steps: 240
+
+  slow_dolly_zoom:
+    lora_file: ZIKI_slow_dramatic_dolly_zoom_v1.safetensors
+    inference_strength: 0.75
+    camera_phrase: dramatic slow dolly zoom on emotional close-up
+    caption_template: "{subject}, dramatic slow dolly zoom on emotional close-up, shallow depth of field, analog 35mm look, consistent character"
+    training:
+      rank: 48
+      steps: 300
+
+  tracking_left_to_right:
+    lora_file: ZIKI_smooth_tracking_shot_left_to_right_v1.safetensors
+    inference_strength: 0.7
+    camera_phrase: smooth lateral tracking shot left to right
+    caption_template: "{subject}, smooth tracking shot moving left to right, cinematic composition, analog film grain, consistent character"
+    training:
+      rank: 40
+      steps: 250

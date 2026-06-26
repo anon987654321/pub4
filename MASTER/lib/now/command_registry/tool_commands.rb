@@ -109,14 +109,16 @@ module Master
           total_minutes: parsed[:minutes],
           motion_lora: parsed[:motion_lora],
           motion_lora_weight: parsed[:motion_lora_weight],
+          motion_preset: parsed[:motion_preset],
           critique: parsed[:critique],
           agent: agent,
           event_bus: bus,
           root: root
         )
         motion = parsed[:motion_lora] ? " motion_lora=#{parsed[:motion_lora]}" : ""
+        preset = parsed[:motion_preset] ? " preset=#{parsed[:motion_preset]}" : ""
         lines = [
-          "video: backend=#{parsed[:backend]} minutes=#{parsed[:minutes]} critique=#{parsed[:critique]}#{motion}",
+          "video: backend=#{parsed[:backend]} minutes=#{parsed[:minutes]} critique=#{parsed[:critique]}#{preset}#{motion}",
           "refined: #{refined[0, 120]}#{"..." if refined.size > 120}",
           "output: #{result[:path]}",
         ]
@@ -141,6 +143,7 @@ module Master
         lora_id = nil
         motion_lora = nil
         motion_lora_weight = nil
+        motion_preset = nil
         prompt_tokens = []
         idx = 0
         while idx < tokens.size
@@ -163,6 +166,9 @@ module Master
           when "--motion-weight"
             motion_lora_weight = tokens[idx + 1].to_f
             idx += 2
+          when "--motion-preset"
+            motion_preset = tokens[idx + 1]
+            idx += 2
           else
             prompt_tokens << tokens[idx]
             idx += 1
@@ -179,12 +185,15 @@ module Master
           lora_id: lora_id,
           motion_lora: motion_lora,
           motion_lora_weight: motion_lora_weight,
+          motion_preset: motion_preset,
         }
       end
 
       def video_usage
-        "usage: /video [--backend kling|happyhorse|cogvideox|minimax|animatediff] " \
-          "[--minutes N] [--critique] [--lora ID] [--motion-lora NAME] [--motion-weight 0.75] <prompt>"
+        presets = Master::Reach::MotionLoraPresets.names.join("|")
+        "usage: /video [--backend kling|happyhorse|cogvideox|minimax|animatediff|animatediff_camera] " \
+          "[--minutes N] [--critique] [--lora ID] [--motion-preset #{presets}] " \
+          "[--motion-lora NAME[,NAME2]] [--motion-weight 0.75] <prompt>"
       end
 
       def refine_generation_prompt(prompt, medium:, agent:, image: nil)

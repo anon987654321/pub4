@@ -16,6 +16,7 @@ module Master
         cogvideox: { provider: :replicate, version: "thudm/cogvideox-5b-i2v", max_duration: 10 },
         minimax: { provider: :replicate, version: "minimax/video-01-live", max_duration: 12 },
         animatediff: { provider: :comfyui, max_duration: 16, frames: 81 },
+        animatediff_camera: { provider: :comfyui, max_duration: 16, frames: 81 },
         comfyui_local: { provider: :comfyui, max_duration: 16, frames: 81 },
       }.freeze
 
@@ -33,6 +34,7 @@ module Master
         motion_intensity: 0.75,
         motion_lora: nil,
         motion_lora_weight: nil,
+        motion_preset: nil,
         critique: false,
         agent: nil,
         event_bus: nil,
@@ -60,6 +62,7 @@ module Master
           motion_intensity: motion_intensity,
           motion_lora: motion_lora,
           motion_lora_weight: motion_lora_weight,
+          motion_preset: motion_preset,
           critique: critique
         )
       end
@@ -90,13 +93,9 @@ module Master
 
       def normalize_options(kwargs)
         backend = kwargs.fetch(:backend, :kling).to_sym
-        backend = :animatediff if backend == :comfyui_local
+        backend = :animatediff if %i[comfyui_local animatediff_camera].include?(backend)
         config = BACKENDS.fetch(backend) { BACKENDS[:kling] }
-        weight = kwargs[:motion_lora_weight]
-        weight = ENV["COMFYUI_MOTION_LORA_WEIGHT"] if weight.nil?
-        weight = weight.to_f if weight
-        weight ||= 0.75
-        {
+        opts = {
           prompt: kwargs.fetch(:prompt),
           lora_id: kwargs[:lora_id],
           backend: backend,
@@ -110,9 +109,32 @@ module Master
           max_threads: [kwargs.fetch(:max_threads, 4).to_i, 1].max,
           motion_intensity: kwargs.fetch(:motion_intensity, 0.75).to_f,
           motion_lora: kwargs[:motion_lora] || ENV["COMFYUI_MOTION_LORA"],
-          motion_lora_weight: weight,
+          motion_lora_weight: nil,
+          motion_lora_2: nil,
+          motion_lora_2_weight: nil,
+          camera_phrase: nil,
+          motion_preset: kwargs[:motion_preset],
           critique: kwargs.fetch(:critique, false),
         }
+        MotionLoraPresets.apply!(opts, preset_name: kwargs[:motion_preset]) if kwargs[:motion_preset]
+        assign_motion_lora_weights!(opts, kwargs[:motion_lora_weight])
+        split_stacked_motion_loras!(opts)
+        opts
+      end
+
+      def assign_motion_lora_weights!(opts, explicit_weight)
+        weight = explicit_weight
+        weight = ENV["COMFYUI_MOTION_LORA_WEIGHT"] if weight.nil?
+        weight = weight.to_f if weight
+        opts[:motion_lora_weight] ||= weight || 0.75
+      end
+
+      def split_stacked_motion_loras!(opts)
+        names = opts[:motion_lora].to_s.split(",", 2).map(&:strip)
+        return if names.size < 2
+
+        opts[:motion_lora] = names[0]
+        opts[:motion_lora_2] ||= names[1]
       end
 
       def expand(path) = File.expand_path(path, @root)
@@ -136,7 +158,7 @@ module Master
       end
 
       def render_chunk(idx, total_chunks, opts)
-        scene_prompt = build_scene_prompt(opts[:prompt], idx, total_chunks)
+        scene_prompt = build_scene_prompt(opts[:prompt], idx, total_chunks, camera_phrase: opts[:camera_phrase])
         keyframe_url = flux_keyframe(scene_prompt, opts[:lora_id])
         clip_url = i2v_clip(keyframe_url, scene_prompt, opts)
         raw_path = File.join(opts[:temp_dir], format("raw_%03d.mp4", idx))
@@ -144,8 +166,10 @@ module Master
         VideoPost.apply_analog_filter(raw_path, grain: opts[:grain_intensity], vignette: opts[:vignette])
       end
 
-      def build_scene_prompt(base, idx, total)
-        "#{base} — scene #{idx + 1} of #{total}, cinematic composition, dramatic lighting, " \
+      def build_scene_prompt(base, idx, total, camera_phrase: nil)
+        camera = camera_phrase.to_s.strip
+        camera = ", #{camera}" unless camera.empty?
+        "#{base} — scene #{idx + 1} of #{total}#{camera}, cinematic composition, dramatic lighting, " \
           "analog 35mm film look, deep depth of field, consistent character identity"
       end
 
@@ -185,7 +209,9 @@ module Master
           prompt: scene_prompt,
           frames: frames,
           motion_lora: opts[:motion_lora],
-          motion_weight: opts[:motion_lora_weight]
+          motion_weight: opts[:motion_lora_weight],
+          motion_lora_2: opts[:motion_lora_2],
+          motion_lora_2_weight: opts[:motion_lora_2_weight]
         )
       rescue ComfyuiClient::Error => e
         raise Error, e.message

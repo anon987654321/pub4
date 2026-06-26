@@ -27,5 +27,12 @@
       "lora_name": "ZIKI_cinematic_slow_dolly_push_in_v1.safetensors",
       "strength": 0.75
     }
+  },
+  "23": {
+    "class_type": "ADE_AnimateDiffLoRALoader",
+    "inputs": {
+      "lora_name": "",
+      "strength": 0.6
+    }
   }
 }

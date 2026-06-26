@@ -63,6 +63,21 @@ class TestVideoChain < Minitest::Test
     assert_equal "neon rain chase", parsed[:prompt]
   end
 
+  def test_motion_preset_splits_stacked_loras
+    opts = {
+      motion_lora: "primary.safetensors,secondary.safetensors",
+      motion_lora_weight: 0.8,
+      motion_lora_2: nil,
+      motion_lora_2_weight: nil,
+      camera_phrase: nil,
+      motion_preset: nil,
+    }
+    chain = Master::Reach::VideoChain.allocate
+    chain.send(:split_stacked_motion_loras!, opts)
+    assert_equal "primary.safetensors", opts[:motion_lora]
+    assert_equal "secondary.safetensors", opts[:motion_lora_2]
+  end
+
   def test_animatediff_backend_uses_comfyui_client
     ffmpeg_calls = []
     with_video_stubs(ffmpeg_calls: ffmpeg_calls) do
