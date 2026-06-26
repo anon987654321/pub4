@@ -47,13 +47,13 @@ browser.evaluate_on_new_document(<<~JS)
   });
 JS
 
-def probe_evaluate(browser, script, attempts: 6, pause: 2.0)
+def probe_evaluate(browser, script, attempts: 2, pause: 1.0)
   last_error = nil
   attempts.times do |i|
     return browser.evaluate(script)
   rescue Ferrum::TimeoutError, Ferrum::DeadBrowserError => e
     last_error = e
-    sleep(pause * (i + 1))
+    sleep(pause) if i + 1 < attempts
   end
   raise last_error
 end
@@ -67,7 +67,7 @@ begin
     puts "WARN: pending connections on load — #{e.message}"
   end
 
-  sleep 8
+  sleep 4
 
   before = probe_evaluate(browser, <<~JS)
     ({
@@ -116,7 +116,7 @@ begin
     end
   end
 
-  sleep 4
+  sleep 3
 
   after_click = probe_evaluate(browser, <<~JS)
     ({
