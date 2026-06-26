@@ -39,7 +39,7 @@ class AuthTierControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     body = JSON.parse(response.body)
-    assert_equal "test/model", body["model"]
+    assert_equal "model", body["model"]
   end
 
   test "visitor cannot read dashboard live feed" do
