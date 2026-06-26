@@ -87,11 +87,25 @@ class ApplicationController < ActionController::Base
 
     return if container
 
+    return render_sse_warming! if sse_warming_path?
+
     respond_to do |fmt|
       fmt.html { render inline: WARMING_HTML, layout: false, status: :ok }
       fmt.json { render json: { error: "warming up" }, status: :service_unavailable }
       fmt.any  { head :service_unavailable }
     end
+  end
+
+  def sse_warming_path?
+    path = request.path
+    path == "/chat/message" || path == "/events/stream"
+  end
+
+  def render_sse_warming!
+    response.headers["Content-Type"] = "text/event-stream"
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["X-Accel-Buffering"] = "no"
+    render plain: ": warming\n\ndata: booting — retry in 30s\n\ndata: [DONE]\n\n", status: :ok
   end
 
   def start_container_bootstrap!
