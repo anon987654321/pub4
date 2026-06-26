@@ -254,6 +254,14 @@ body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
   transition: height 90ms var(--ease-linear), opacity 90ms var(--ease-linear), transform 90ms var(--ease-linear);
 }
 
+body[data-tts-wave="1"] #zsh-wave {
+  opacity: 0.72;
+}
+
+body[data-tts-wave="1"] #zsh-wave span {
+  box-shadow: 0 0 4px color-mix(in srgb, var(--mood-accent, var(--face-fg)) 40%, transparent);
+}
+
 body[data-tts-loading="true"] .ui-status {
   opacity: .9;
   animation: ttsPulse 620ms steps(4,end) infinite;
@@ -908,6 +916,24 @@ body[data-long-silence="1"] #cognition-ecology { opacity: .38; }
 
 /* #50 Speaking rainbow prompt */
 body[data-mode="speaking"] #zsh .pp { color:var(--mood-accent,var(--face-fg)); transition:color .8s var(--ease-out); }
+
+body[data-mode="speaking"] canvas#face {
+  filter: saturate(1.04) brightness(1.02);
+  transition: filter 420ms var(--ease-out);
+}
+
+body[data-mode="speaking"][data-tts-wave="1"] #tts-live {
+  opacity: 0.92;
+  letter-spacing: 0.04em;
+  transition: opacity 280ms var(--ease-out), letter-spacing 420ms var(--ease-out);
+}
+
+.ui-status[data-tts-queue]::after {
+  content: "+" attr(data-tts-queue);
+  margin-left: 6px;
+  opacity: 0.55;
+  font-size: 8px;
+}
 
 /* #51 Disabled state during boot — .live from primer unlocks prompt before WebGL ready */
 body:not(.face-ready) #zsh:not(.live):not(.revealed) { opacity:.3; pointer-events:none; }

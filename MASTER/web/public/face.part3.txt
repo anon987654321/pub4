@@ -89,8 +89,9 @@ function stepPoolAsync(pool, dtSec) {
     return;
   }
   const id = ++particleWorkerSeq;
+  const compact = (particleWorkerSeq & 127) === 0;
   particleWorkerPending.set(id, { pool });
-  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });
+  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, compact, pool: serializePoolForWorker(pool) });
 }
 function spawnEmotionalGhost(mood) {
   window.MASTER_FACE_PARTICLES?.spawnEmotionalGhost?.(State, mouthPool, mood);
@@ -133,6 +134,7 @@ function syncSemanticPools(dtSec) {
       faceMat.uniforms.uEyeClose.value += (close * 0.35 - faceMat.uniforms.uEyeClose.value) * 0.05;
     }
   }
+  window.MASTER_FACE_PARTICLES?.maybeCompactPools?.(mouthPool, eyePool);
 }
 function frame(t) {
   if (State.hidden || document.hidden) {

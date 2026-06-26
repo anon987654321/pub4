@@ -146,14 +146,20 @@
 // public/face_particles.js
 (() => {
   "use strict";
+  const COMPACT_INTERVAL = 128;
+  let compactFrame = 0;
+  const VISEME_VALENCE = { A: 0.35, E: 0.2, I: 0.45, O: 0.15, M: -0.1, U: 0.1, neutral: 0 };
   function kernelStepContext(State) {
     const pr = State.pressureFields || {};
     const moodArc = State.moodArc || {};
+    const speaking = State.mode === "speaking" || !!window.MASTER_FACE?.tts?.playing;
+    const baseEntropy = Number.isFinite(pr.entropy) ? pr.entropy : State.entropy || 0;
     return {
-      entropy: Number.isFinite(pr.entropy) ? pr.entropy : State.entropy || 0,
-      pressure: Math.min(1, (Number(pr.pct) || 0) / 100),
+      entropy: speaking ? baseEntropy * 0.82 : baseEntropy,
+      pressure: Math.min(1, (Number(pr.pct) || 0) / 100) + (speaking ? 0.08 : 0),
       confidence: State.confidence ?? 0.75,
-      decayScale: Number.isFinite(moodArc.decay_rate) ? moodArc.decay_rate : 1
+      decayScale: speaking ? 0.88 : Number.isFinite(moodArc.decay_rate) ? moodArc.decay_rate : 1,
+      spatialRepulsion: speaking && !State.reducedMotion
     };
   }
   function spawnEmotionalGhost(State, _mouthPool, mood) {
@@ -166,9 +172,62 @@
     });
     State.emotionalGhosts = (State.emotionalGhosts || []).concat(mood || State.mood || "idle").slice(-12);
   }
+  function burstViseme(pool, shape, amp) {
+    const K = window.ParticleKernel;
+    const st = window.MASTER_FACE?.State || window.State || {};
+    if (!K || !pool || st.reducedMotion || st.hidden) return;
+    const valence = VISEME_VALENCE[shape] ?? 0;
+    const arousal = Math.min(1, (Number(amp) || 0.5) * 0.85);
+    const spawnN = arousal > 0.55 ? 2 : 1;
+    for (let n = 0; n < spawnN && pool.count < pool.capacity; n++) {
+      const jitter = (Math.random() - 0.5) * 0.06;
+      K.spawn(pool, jitter, (Math.random() - 0.5) * 0.04, {
+        kind: 1,
+        zone: 1,
+        valence,
+        arousal,
+        attention: arousal * 0.6,
+        confidence: 0.55 + arousal * 0.35,
+        vx: (Math.random() - 0.5) * 0.012,
+        vy: (Math.random() - 0.5) * 8e-3,
+        decay: 0.014 + arousal * 0.01
+      });
+    }
+  }
+  function anticipateSpeech(pool, count = 1) {
+    const K = window.ParticleKernel;
+    const st = window.MASTER_FACE?.State || window.State || {};
+    if (!K || !pool || st.reducedMotion) return;
+    const n = Math.min(4, Math.max(1, count));
+    for (let i = 0; i < n && pool.count < pool.capacity; i++) {
+      K.spawn(pool, (Math.random() - 0.5) * 0.08, 0.02 + Math.random() * 0.04, {
+        kind: 1,
+        zone: 1,
+        valence: 0.25,
+        arousal: 0.45,
+        attention: 0.5,
+        confidence: 0.7,
+        decay: 0.012
+      });
+    }
+    st.pulse = Math.max(st.pulse || 0, 0.28);
+  }
+  function maybeCompactPools(...pools) {
+    compactFrame += 1;
+    if ((compactFrame & COMPACT_INTERVAL - 1) !== 0) return;
+    const K = window.ParticleKernel;
+    if (!K?.compact) return;
+    pools.forEach((pool) => {
+      if (pool) K.compact(pool);
+    });
+  }
   window.MASTER_FACE_PARTICLES = Object.freeze({
     kernelStepContext,
-    spawnEmotionalGhost
+    spawnEmotionalGhost,
+    burstViseme,
+    anticipateSpeech,
+    maybeCompactPools,
+    COMPACT_INTERVAL
   });
 })();
 
@@ -199,6 +258,12 @@
 // public/face_tts_bridge.js
 (() => {
   "use strict";
+  const VISEME_LERP = 0.22;
+  const WAVE_DECAY = 0.88;
+  let visemeTarget = { shape: "neutral", amp: 0 };
+  let visemeSmooth = { shape: "neutral", amp: 0 };
+  let visemeRaf = 0;
+  let queueDepth = 0;
   function syncStyleIndicator(style) {
     const indicator = document.getElementById("tts-style-indicator");
     if (indicator) indicator.textContent = style || "";
@@ -207,9 +272,98 @@
   function effortSpawnCount(style) {
     return /energetic|dramatic|intense|storyteller/i.test(String(style || "")) ? 3 : 1;
   }
+  function faceState() {
+    return window.MASTER_FACE?.State || window.State || {};
+  }
+  function applySmoothViseme() {
+    const st = faceState();
+    const ampDelta = visemeTarget.amp - visemeSmooth.amp;
+    visemeSmooth.amp += ampDelta * VISEME_LERP;
+    if (Math.abs(ampDelta) < 4e-3) visemeSmooth.amp = visemeTarget.amp;
+    if (visemeTarget.shape !== visemeSmooth.shape && visemeSmooth.amp < 0.08) {
+      visemeSmooth.shape = visemeTarget.shape;
+    }
+    st.viseme = visemeSmooth.shape;
+    st.visemeAmp = visemeSmooth.amp;
+    visemeRaf = requestAnimationFrame(applySmoothViseme);
+  }
+  function setVisemeTarget(shape, amp) {
+    visemeTarget = { shape: shape || "neutral", amp: Number.isFinite(amp) ? amp : 0 };
+    if (!visemeRaf) visemeRaf = requestAnimationFrame(applySmoothViseme);
+  }
+  function stopVisemeSmooth() {
+    if (visemeRaf) cancelAnimationFrame(visemeRaf);
+    visemeRaf = 0;
+    visemeTarget = { shape: "neutral", amp: 0 };
+    visemeSmooth = { shape: "neutral", amp: 0 };
+  }
+  function syncQueueBadge() {
+    const ui = document.querySelector(".ui-status");
+    const tts = window.MASTER_FACE?.tts;
+    if (!ui || !tts) return;
+    const depth = (tts.queue?.length || 0) + (tts.lanes?.error?.length || 0) + (tts.lanes?.nudge?.length || 0) + (tts.lanes?.response?.length || 0);
+    if (depth === queueDepth) return;
+    queueDepth = depth;
+    if (depth > 1 && tts.playing) ui.dataset.ttsQueue = String(depth);
+    else delete ui.dataset.ttsQueue;
+  }
+  function decayWaveBars() {
+    const wave = document.getElementById("zsh-wave");
+    if (!wave) return;
+    wave.querySelectorAll("span").forEach((bar) => {
+      const h = parseFloat(bar.style.height || "4") || 4;
+      bar.style.height = `${Math.max(3, h * WAVE_DECAY)}px`;
+      const op = parseFloat(bar.style.opacity || "0.25") || 0.25;
+      bar.style.opacity = String(Math.max(0.12, op * WAVE_DECAY));
+    });
+  }
+  function onViseme(ev) {
+    const { shape, amp } = ev.detail || {};
+    setVisemeTarget(shape, amp);
+    const pool = window.mouthPool || window.MASTER_FACE?.mouthPool;
+    window.MASTER_FACE_PARTICLES?.burstViseme?.(pool, shape, amp);
+  }
+  function onPlaybackStart(ev) {
+    const detail = ev.detail || {};
+    document.body.dataset.ttsWave = "1";
+    syncStyleIndicator(detail.style || document.documentElement.dataset.ttsStyle);
+    const count = effortSpawnCount(detail.style);
+    const pool = window.mouthPool || window.MASTER_FACE?.mouthPool;
+    window.MASTER_FACE_PARTICLES?.anticipateSpeech?.(pool, count);
+    syncQueueBadge();
+  }
+  function onPlaybackEnd() {
+    document.body.dataset.ttsWave = "";
+    stopVisemeSmooth();
+    const st = faceState();
+    st.viseme = "neutral";
+    st.visemeAmp = 0;
+    decayWaveBars();
+    syncQueueBadge();
+  }
+  function onAnticipate(ev) {
+    syncStyleIndicator(ev.detail?.style);
+    syncQueueBadge();
+  }
+  ["tts:viseme", "master:tts:viseme"].forEach((name) => {
+    window.addEventListener(name, onViseme);
+  });
+  ["tts:playback:start", "master:tts:playback:start"].forEach((name) => {
+    window.addEventListener(name, onPlaybackStart);
+  });
+  ["tts:playback:end", "master:tts:playback:end"].forEach((name) => {
+    window.addEventListener(name, onPlaybackEnd);
+  });
+  ["tts:anticipate", "master:tts:anticipate"].forEach((name) => {
+    window.addEventListener(name, onAnticipate);
+  });
+  window.addEventListener("tts:style:active", (ev) => syncStyleIndicator(ev.detail?.style));
   window.MASTER_FACE_TTS = Object.freeze({
     syncStyleIndicator,
-    effortSpawnCount
+    effortSpawnCount,
+    setVisemeTarget,
+    stopVisemeSmooth,
+    syncQueueBadge
   });
 })();
 
@@ -395,9 +549,14 @@
 // public/face_phosphor_trail.js
 (() => {
   "use strict";
-  const TRAIL_DECAY = 0.82;
   let trailCanvas = null;
   let trailCtx = null;
+  let frameSkip = 0;
+  function readDecay() {
+    const css = getComputedStyle(document.documentElement).getPropertyValue("--face-phosphor-decay").trim();
+    const parsed = parseFloat(css);
+    return Number.isFinite(parsed) ? parsed : 0.82;
+  }
   function ensureTrail(w, h) {
     if (!trailCanvas) {
       trailCanvas = document.createElement("canvas");
@@ -413,19 +572,28 @@
     return trailCtx;
   }
   function capturePhosphorTrail(sourceCanvas) {
-    if (!sourceCanvas || window.State?.reducedMotion) return;
+    if (!sourceCanvas || document.hidden) return;
+    const st = window.MASTER_FACE?.State || window.State || {};
+    if (st.reducedMotion || st.hidden) return;
     const profile = document.body?.dataset?.runtimeProfile;
-    if (profile === "battery") return;
+    if (profile === "battery") {
+      frameSkip += 1;
+      if (frameSkip & 1) return;
+    }
+    const speaking = st.mode === "speaking" || !!window.MASTER_FACE?.tts?.playing;
+    let decay = readDecay();
+    if (speaking) decay = Math.max(0.68, decay - 0.06);
     const w = sourceCanvas.width;
     const h = sourceCanvas.height;
     const ctx = ensureTrail(w, h);
     if (!ctx) return;
     ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = TRAIL_DECAY;
+    ctx.globalAlpha = decay;
     ctx.drawImage(sourceCanvas, 0, 0);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = "lighter";
-    ctx.fillStyle = "rgba(0,0,0,0.08)";
+    const fade = speaking ? 0.06 : 0.08;
+    ctx.fillStyle = `rgba(0,0,0,${fade})`;
     ctx.fillRect(0, 0, w, h);
   }
   window.MASTER_PHOSPHOR_TRAIL = Object.freeze({ capture: capturePhosphorTrail });
@@ -596,7 +764,8 @@
     window.ParticleKernel.step = function stepGuarded(pool, dt, ctx = {}) {
       const clamped = Math.max(MIN_KERNEL_DT, Math.min(0.05, Number(dt) || MIN_KERNEL_DT));
       const next = { ...ctx };
-      if (window.MASTER_RUNTIME?.enhancements?.includes?.("spatial_repulsion_2d")) {
+      const speaking = window.MASTER_FACE?.tts?.playing || window.MASTER_FACE?.State?.mode === "speaking";
+      if (window.MASTER_RUNTIME?.enhancements?.includes?.("spatial_repulsion_2d") || speaking) {
         next.spatialRepulsion = true;
       }
       return origStep.call(this, pool, clamped, next);
@@ -608,8 +777,13 @@
       const worker = new Worker(window.MASTER_ASSET_PATHS?.faceModules?.particle_worker || "/particle_worker.js");
       worker.postMessage({ type: "warm", dt: 0.016 });
       setTimeout(() => worker.terminate(), 120);
-    } catch (_) {
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("perf:particle_worker_warm", err);
     }
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) return;
+    window.MASTER_FACE_TTS?.stopVisemeSmooth?.();
   });
   window.addEventListener("visual:ready", () => {
     if (!window.MASTER_RUNTIME?.enhancements?.includes?.("primer_kernel_spawn")) return;

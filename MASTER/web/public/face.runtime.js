@@ -1391,8 +1391,9 @@ function stepPoolAsync(pool, dtSec) {
     return;
   }
   const id = ++particleWorkerSeq;
+  const compact = (particleWorkerSeq & 127) === 0;
   particleWorkerPending.set(id, { pool });
-  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });
+  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, compact, pool: serializePoolForWorker(pool) });
 }
 function spawnEmotionalGhost(mood) {
   window.MASTER_FACE_PARTICLES?.spawnEmotionalGhost?.(State, mouthPool, mood);
@@ -1435,6 +1436,7 @@ function syncSemanticPools(dtSec) {
       faceMat.uniforms.uEyeClose.value += (close * 0.35 - faceMat.uniforms.uEyeClose.value) * 0.05;
     }
   }
+  window.MASTER_FACE_PARTICLES?.maybeCompactPools?.(mouthPool, eyePool);
 }
 function frame(t) {
   if (State.hidden || document.hidden) {
@@ -2765,6 +2767,7 @@ function ttsTogglePause() {
 }
 
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
+let visemePlanTimers = [];
 function startVisemeAnim(text) {
   stopVisemeAnim();
   const plan = Array.isArray(tts.visemePlan) ? tts.visemePlan : null;
@@ -2772,14 +2775,16 @@ function startVisemeAnim(text) {
     plan.forEach((frame, i) => {
       const at = Number(frame.t ?? frame.at ?? (i * VISEME_STEP_MS));
       if (!Number.isFinite(at)) return;
-      setTimeout(() => {
+      const tid = setTimeout(() => {
         if (!tts.playing && !tts.audio) return;
         const shape = frame.shape || frame.v || 'E';
         const amp = Number.isFinite(Number(frame.amp)) ? Number(frame.amp) : 1;
+        window.MASTER_FACE_TTS?.setVisemeTarget?.(shape, amp);
         State.viseme = shape;
         State.visemeAmp = amp;
         emitTtsEvent('tts:viseme', { shape, amp });
       }, at);
+      visemePlanTimers.push(tid);
     });
     return;
   }
@@ -2806,7 +2811,10 @@ function startVisemeAnim(text) {
 }
 
 function stopVisemeAnim() {
+  visemePlanTimers.forEach((tid) => clearTimeout(tid));
+  visemePlanTimers.length = 0;
   if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; }
+  window.MASTER_FACE_TTS?.stopVisemeSmooth?.();
 }
 
 function fadeTtsAudio(ms = 80) {

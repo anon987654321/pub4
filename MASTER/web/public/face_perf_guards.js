@@ -12,7 +12,8 @@
     window.ParticleKernel.step = function stepGuarded(pool, dt, ctx = {}) {
       const clamped = Math.max(MIN_KERNEL_DT, Math.min(0.05, Number(dt) || MIN_KERNEL_DT));
       const next = { ...ctx };
-      if (window.MASTER_RUNTIME?.enhancements?.includes?.("spatial_repulsion_2d")) {
+      const speaking = window.MASTER_FACE?.tts?.playing || window.MASTER_FACE?.State?.mode === "speaking";
+      if (window.MASTER_RUNTIME?.enhancements?.includes?.("spatial_repulsion_2d") || speaking) {
         next.spatialRepulsion = true;
       }
       return origStep.call(this, pool, clamped, next);
@@ -25,7 +26,14 @@
       const worker = new Worker(window.MASTER_ASSET_PATHS?.faceModules?.particle_worker || "/particle_worker.js");
       worker.postMessage({ type: "warm", dt: 0.016 });
       setTimeout(() => worker.terminate(), 120);
-    } catch (_) {}
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("perf:particle_worker_warm", err);
+    }
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) return;
+    window.MASTER_FACE_TTS?.stopVisemeSmooth?.();
   });
 
   window.addEventListener("visual:ready", () => {
