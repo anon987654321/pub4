@@ -5,6 +5,8 @@ require "fileutils"
 require "open3"
 require "yaml"
 
+require_relative "snapshot_agent_guide"
+
 module Master
   module Trace
     # Canonical snapshot builder — tree walk, agent preamble, Downloads output.
