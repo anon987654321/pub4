@@ -98,9 +98,17 @@
       var label=ev.detail&&ev.detail.stage;
       if(label&&ui)ui.textContent=label;
     });
+    function primerActivate(e){
+      if(e.type==='pointerdown'||e.type==='pointerup'){
+        if(e.pointerType==='mouse'&&e.button!==0)return;
+      }
+      go();
+    }
     if(p){
-      p.addEventListener('pointerup',function(e){if(e.pointerType==='mouse'&&e.button!==0)return;go();});
-      if(!window.PointerEvent)p.addEventListener('click',go);
+      p.addEventListener('pointerdown',primerActivate);
+      p.addEventListener('pointerup',primerActivate);
+      p.addEventListener('click',primerActivate);
+      p.addEventListener('touchend',primerActivate,{passive:true});
       p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
     }
     addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}});
