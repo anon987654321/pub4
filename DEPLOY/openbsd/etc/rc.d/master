@@ -41,8 +41,8 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 		done
 		rcctl restart relayd 2>/dev/null || true
 		# Warm Edge TTS daemon so first chat speak does not fall back to espeak.
-		(cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -e \
-			'\$LOAD_PATH.unshift \"lib\"; require \"master/voice/tts_supervisor\"; puts Master::Voice::TtsSupervisor.ensure_daemon!') \
+		(cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -Ilib -e \
+			'require "master"; puts Master::Voice::TtsSupervisor.ensure_daemon!') \
 			2>/dev/null || true
 	fi
 fi

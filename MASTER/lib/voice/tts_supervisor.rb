@@ -8,7 +8,7 @@ module Master
     # Ensures Edge TTS UNIX-socket daemons are running before synthesis.
     # Pool size defaults to 2 for parallel synth; override via MASTER_TTS_POOL_SIZE.
     module TtsSupervisor
-      START_TIMEOUT_S = 5
+      START_TIMEOUT_S = 15
       POLL_INTERVAL_S = 0.1
 
       @pool_rr = 0
