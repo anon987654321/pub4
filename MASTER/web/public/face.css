@@ -30,6 +30,7 @@
   --ease-in-out: cubic-bezier(0.4,0,0.6,1);
   --z-ui: 90;
   --z-modal: 1000;
+  --z-primer: 2147483000;
 }
 
 html, body {
@@ -438,7 +439,7 @@ body[data-mode="listening"] #mic-dot {
   inset: 0;
   display: grid;
   place-items: center;
-  z-index: var(--z-modal);
+  z-index: var(--z-primer);
   isolation: isolate;
   background: color-mix(in srgb, var(--face-bg) 72%, transparent);
   cursor: pointer;

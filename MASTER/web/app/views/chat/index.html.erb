@@ -67,9 +67,6 @@
   <iframe id="yt-fallback-a" src="about:blank" title="Radio A" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
   <iframe id="yt-fallback-b" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
   <div id="tts-live" aria-live="polite" aria-atomic="true"></div>
-  <div id="primer" role="button" aria-labelledby="primer-title" aria-busy="false" tabindex="0">
-    <h1 id="primer-title">tap to start</h1>
-  </div>
   <main id="chat-shell" aria-label="MASTER chat">
     <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
   </main>
@@ -95,7 +92,6 @@
     <span id="char-count" aria-hidden="true"></span>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
   </form>
-  <%= render "shared/face_boot" %>
   <script src="<%= asset_path("master_events.js") %>" defer></script>
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script src="<%= asset_path("face_state.js") %>" defer></script>
@@ -117,5 +113,9 @@
     }
     window.addEventListener('primer:ready', refreshRuntimeConfig, { once: true });
   </script>
+  <div id="primer" role="button" aria-labelledby="primer-title" aria-busy="false" tabindex="0">
+    <h1 id="primer-title">tap to start</h1>
+  </div>
+  <%= render "shared/face_boot" %>
 </body>
 </html>
