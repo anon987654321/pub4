@@ -204,4 +204,6 @@ test("service worker avoids stale undigested precache", () => {
   assert.doesNotMatch(sw, /\/face\.js'/);
   assert.doesNotMatch(sw, /\/chat\.js'/);
   assert.match(sw, /OFFLINE_URL/);
+  assert.match(sw, /Never cache digested/);
+  assert.match(sw, /pathname\.startsWith\('\/assets\/'\)/);
 });

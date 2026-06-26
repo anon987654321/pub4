@@ -42,6 +42,8 @@ test("container gate polls runtime status endpoint", () => {
   assert.match(gate, /\/runtime\/status/);
   assert.match(gate, /MASTER_CONTAINER_READY/);
   assert.match(gate, /blockingSend/);
+  assert.match(gate, /MAX_POLLS/);
+  assert.match(gate, /master:container-timeout/);
 });
 
 test("visual_bridge logs parse failures instead of silent catch", () => {

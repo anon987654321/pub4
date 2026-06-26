@@ -43,6 +43,12 @@ self.addEventListener('fetch', e => {
     return;
   }
 
+  // Never cache digested /assets/* — stale hashes wedge primer/face boot after deploy.
+  if (url.pathname.startsWith('/assets/')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
   e.respondWith(
     fetch(e.request)
       .then(resp => {

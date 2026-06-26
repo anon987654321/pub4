@@ -1,8 +1,10 @@
 #!/bin/ksh
 PORT=53187
 [ -r /etc/master.env ] && . /etc/master.env
+CACHE_VERSION="${CACHE_VERSION:-$(cd /home/dev/pub4 2>/dev/null && git rev-parse --short HEAD 2>/dev/null)}"
+CACHE_VERSION="${CACHE_VERSION:-v2}"
 daemon="/usr/local/bin/bundle34"
-daemon_flags="exec env LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production MASTER_TTS_TIMEOUT=45 MASTER_TTS_POOL_SIZE=1 MASTER_SAFE_MODE=1 MASTER_SKIP_SELF_TEST=1 MASTER_BACKGROUND=0 MASTER_AUTOFIX=0 MASTER_WATCH=0 MASTER_WATCHER=0 MASTER_HEARTBEAT=0 SECRET_KEY_BASE_DUMMY=1 DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY OPENROUTER_API_KEY=$OPENROUTER_API_KEY REPLICATE_API_KEY=$REPLICATE_API_KEY WEAVIATE_API_KEY=$WEAVIATE_API_KEY GEMINI_API_KEY=$GEMINI_API_KEY falcon serve -n 2 --health-check-timeout 300 --bind http://127.0.0.1:${PORT}"
+daemon_flags="exec env LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} MASTER_TTS_TIMEOUT=45 MASTER_TTS_POOL_SIZE=1 MASTER_SAFE_MODE=1 MASTER_SKIP_SELF_TEST=1 MASTER_BACKGROUND=0 MASTER_AUTOFIX=0 MASTER_WATCH=0 MASTER_WATCHER=0 MASTER_HEARTBEAT=0 SECRET_KEY_BASE_DUMMY=1 DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY OPENROUTER_API_KEY=$OPENROUTER_API_KEY REPLICATE_API_KEY=$REPLICATE_API_KEY WEAVIATE_API_KEY=$WEAVIATE_API_KEY GEMINI_API_KEY=$GEMINI_API_KEY falcon serve -n 2 --health-check-timeout 300 --bind http://127.0.0.1:${PORT}"
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_logger="daemon.notice"
@@ -13,6 +15,11 @@ rc_bg=YES
 rc_reload=NO
 
 rc_pre() {
+	# Production bundle must not require dev-only gems (ferrum, debug).
+	(cd /home/dev/pub4/MASTER/web && bundle34 config set --local without 'development test' 2>/dev/null
+		BUNDLE_GEMFILE=Gemfile bundle34 check 2>/dev/null) || \
+		(cd /home/dev/pub4/MASTER/web && bundle34 config set --local without 'development test' \
+			BUNDLE_GEMFILE=Gemfile bundle34 install) 2>/dev/null || true
 	pkill -f "falcon.*${PORT}" 2>/dev/null
 	pkill -f "ruby34.*${PORT}" 2>/dev/null
 	pkill -f "pub4/MASTER/web" 2>/dev/null
@@ -23,7 +30,11 @@ rc_pre() {
 	(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle) 2>/dev/null || true
 	_manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
 	_stamp=/home/dev/pub4/MASTER/web/tmp/.assets_precompile_stamp
-	_digest=$(cksum /home/dev/pub4/MASTER/web/public/face.part*.txt /home/dev/pub4/MASTER/web/public/face.css /home/dev/pub4/MASTER/web/public/face.modules.bundle.js 2>/dev/null | cksum)
+	_digest=$(cksum /home/dev/pub4/MASTER/web/public/face.part*.txt /home/dev/pub4/MASTER/web/public/face.css \
+		/home/dev/pub4/MASTER/web/public/face.js /home/dev/pub4/MASTER/web/public/container_gate.js \
+		/home/dev/pub4/MASTER/web/public/face.modules.bundle.js \
+		/home/dev/pub4/MASTER/web/app/views/shared/_face_boot.html.erb \
+		/home/dev/pub4/MASTER/web/app/views/chat/index.html.erb 2>/dev/null | cksum)
 	_skip=0
 	if [ -f "$_manifest" ] && [ -f "$_stamp" ] && [ "$(cat "$_stamp" 2>/dev/null)" = "$_digest" ]; then
 		_skip=1
@@ -43,19 +54,28 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 		ruby34 -ryaml -e 'c=YAML.load_file("/home/dev/pub4/MASTER/.master/config.yml") rescue {}; u=c["web_public_url"]||"http://127.0.0.1:#{c["web_port"]||53187}"; t=c["web_token"]; puts t ? "web: #{u}/?token=#{t}" : "web: #{u}"' 2>/dev/null
 		# Wait for Falcon /up, then restart relayd so HTTPS does not stay empty after rcctl restart master.
 		_i=0
+		_up_ok=0
 		while [ "$_i" -lt 30 ]; do
-			curl -fsS "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && break
+			curl -fsS "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && { _up_ok=1; break; }
 			sleep 1
 			_i=$((_i + 1))
 		done
 		# Wait for MASTER container (smoke ping — metrics requires auth since tier gate).
+		_ping_ok=0
 		_j=0
 		while [ "$_j" -lt 120 ]; do
-			curl -fsS "http://127.0.0.1:${PORT}/chat/message?message=ping" 2>/dev/null | grep -q 'pong' && break
+			curl -fsS "http://127.0.0.1:${PORT}/chat/message?message=ping" 2>/dev/null | grep -q 'pong' && { _ping_ok=1; break; }
 			sleep 2
 			_j=$((_j + 1))
 		done
-		rcctl restart relayd 2>/dev/null || true
+		if [ "$_up_ok" = "1" ]; then
+			rcctl restart relayd 2>/dev/null || true
+		else
+			logger -t master "relayd skipped: /up not ready after restart"
+		fi
+		if [ "$_ping_ok" = "0" ]; then
+			logger -t master "container warmup: ping not ready after 240s"
+		fi
 		# Container bootstrap already warms TTS; su avoids doas EPERM from rcctl root context.
 		su -m dev -c 'cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -Ilib -e "require \"master\"; Master::Voice::TtsSupervisor.ensure_daemon!"' \
 			2>/dev/null || true

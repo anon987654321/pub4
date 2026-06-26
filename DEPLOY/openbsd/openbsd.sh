@@ -798,13 +798,17 @@ stage_2() {
   [[ -d $m3dir ]] || { log ERROR "MASTER not found at $m3dir"; exit 1 }
   cd "$m3dir/web"
   bundle config set --local path vendor/bundle
-  bundle install --quiet
+  bundle config set --local deployment true
+  bundle config set --local without 'development test'
+  RAILS_ENV=production bundle install --quiet
   # Propshaft must not re-digest public/assets/ (nested assets/assets wedges Falcon boot).
   rm -rf public/assets/assets 2>/dev/null || true
-  if [[ ! -f public/assets/.manifest.json ]]; then
-    log INFO "MASTER: precompiling production assets"
-    RAILS_ENV=production bundle exec rails assets:precompile || log WARN "MASTER assets:precompile failed"
-  fi
+  log INFO "MASTER: building face runtime + precompiling assets"
+  RAILS_ENV=production bundle exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:precompile \
+    || log WARN "MASTER assets:precompile failed"
+  ruby "${SCRIPT_DIR}/../rails/master_web_assets_gate.rb" 2>/dev/null \
+    || ruby "$m3dir/../DEPLOY/rails/master_web_assets_gate.rb" 2>/dev/null \
+    || log WARN "MASTER master_web_assets_gate skipped"
   typeset master_secret
   typeset -a _master_secret_lines
   _master_secret_lines=("${(@f)$(RAILS_ENV=production bundle exec rails secret 2>/dev/null)}")

@@ -2,6 +2,7 @@
 
 const SMOKE_MESSAGES = /^(ping|pong|health|up)$/i;
 const POLL_MS = 3000;
+const MAX_POLLS = 40;
 
 function metaReady() {
   return document.querySelector('meta[name="master-container-ready"]')?.content === "1";
@@ -18,7 +19,9 @@ function setReady(isReady, detail) {
   }
   const ui = document.getElementById("ui-status");
   if (ui && !isReady) ui.textContent = "master warming up";
-  else if (ui && isReady && ui.textContent === "master warming up") ui.textContent = "";
+  else if (ui && isReady && (ui.textContent === "master warming up" || ui.textContent === "master still starting…")) {
+    ui.textContent = "";
+  }
   if (isReady && detail?.model) {
     const chip = document.getElementById("provider-chip");
     if (chip && !chip.textContent) chip.textContent = String(detail.model).slice(0, 12);
@@ -26,10 +29,21 @@ function setReady(isReady, detail) {
   if (isReady) window.dispatchEvent(new CustomEvent("master:container-ready", { detail: detail || {} }));
 }
 
+function setWarmupStalled(reason) {
+  const ui = document.getElementById("ui-status");
+  if (ui) ui.textContent = "master still starting…";
+  const errLive = document.getElementById("error-live");
+  if (errLive) errLive.textContent = reason || "master warming up — retry shortly";
+  window.dispatchEvent(new CustomEvent("master:container-timeout", { detail: { reason } }));
+}
+
 async function pollStatus() {
   try {
     const resp = await fetch("/runtime/status");
-    if (!resp.ok) return false;
+    if (!resp.ok) {
+      if (resp.status === 503) setWarmupStalled("master container booting");
+      return false;
+    }
     const data = await resp.json();
     setReady(!!data.ready, data);
     return !!data.ready;
@@ -48,10 +62,28 @@ function blockingSend(text) {
   return true;
 }
 
+let pollCount = 0;
+let pollTimer = null;
+
+async function pollTick() {
+  pollCount += 1;
+  const ready = await pollStatus();
+  if (ready) {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+    return;
+  }
+  if (pollCount >= MAX_POLLS) {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+    setWarmupStalled("master did not become ready — reload or retry in a minute");
+  }
+}
+
 setReady(metaReady(), { model: document.querySelector('meta[name="master-model"]')?.content || "booting" });
 if (!window.MASTER_CONTAINER_READY) {
-  pollStatus();
-  window.setInterval(pollStatus, POLL_MS);
+  pollTick();
+  pollTimer = window.setInterval(pollTick, POLL_MS);
 }
 
 window.MASTER_CONTAINER = {

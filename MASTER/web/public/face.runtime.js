@@ -3412,7 +3412,6 @@ function startEverything() {
     ev.preventDefault();
     if (uiStatus) uiStatus.textContent = 'install available';
   });
-  window.dispatchEvent(new CustomEvent('primer:ready'));
   window.dispatchEvent(new CustomEvent('master:session-ready'));
 }
 window.addEventListener('master:self_violation', () => flashViolation());
