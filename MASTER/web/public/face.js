@@ -2,7 +2,6 @@
 
 const STAGE_LABELS = {
   modules: "loading face modules…",
-  parts: "loading face runtime…",
   runtime: "starting face runtime…",
   ready: "face ready"
 };
@@ -13,28 +12,19 @@ function dispatchFaceStage(stage) {
 }
 
 function dispatchFaceError(error) {
-  console.error("face boot failed", error);
+  window.MASTER_LOG?.error?.("face boot", error);
   window.dispatchEvent(new CustomEvent("master:face-error", { detail: { message: String(error) } }));
 }
 
-async function importFaceBlob(FACE_TEXT) {
-  const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
-  const absoluteAsset = (path) => path ? new URL(path, document.baseURI).href : null;
-  if (ASSET_PATHS.threeModule) ASSET_PATHS.threeModule = absoluteAsset(ASSET_PATHS.threeModule);
-  const MODULE_PATHS = {
-    "/three.face.module.js?v=1": absoluteAsset(ASSET_PATHS.threeModule),
-    ...Object.fromEntries(Object.entries(ASSET_PATHS.faceModules || {}).map(([name, path]) => [`/${name}`, absoluteAsset(path)]))
-  };
-  const FACE_SOURCE = Object.entries(MODULE_PATHS).reduce(
-    (source, [name, path]) => path ? source.replaceAll(`'${name}'`, JSON.stringify(path)) : source,
-    FACE_TEXT.join("\n")
-  );
-  const FACE_BLOB_URL = URL.createObjectURL(new Blob([FACE_SOURCE], { type: "text/javascript" }));
-  try {
-    await import(FACE_BLOB_URL);
-  } finally {
-    URL.revokeObjectURL(FACE_BLOB_URL);
-  }
+async function loadTailModules() {
+  const modules = window.MASTER_ASSET_PATHS?.faceModules || {};
+  const names = [
+    "face_semantics.js",
+    "face_minimal_ui.js",
+    "face_loops_music.js",
+    "face_loops_nudge.js"
+  ];
+  await Promise.all(names.map((name) => import(modules[name] || `/${name}`)));
 }
 
 try {
@@ -70,30 +60,29 @@ try {
     ]);
   }
 
-  const runtimeUrl = window.MASTER_ASSET_PATHS?.faceRuntime;
-  if (runtimeUrl) {
-    dispatchFaceStage("runtime");
-    await import(runtimeUrl);
-  } else {
-    dispatchFaceStage("parts");
-    const FACE_PARTS = window.MASTER_ASSET_PATHS?.faceParts || [
-      "face.part1.txt",
-      "face.part2.txt",
-      "face.part3.txt",
-      "face.part4.txt",
-      "face.part5.txt"
-    ];
-    const FACE_TEXT = await Promise.all(FACE_PARTS.map(async (part) => {
-      const res = await fetch(part);
-      if (!res.ok) throw new Error(`failed to load ${part}: ${res.status}`);
-      return res.text();
-    }));
-    dispatchFaceStage("runtime");
-    await importFaceBlob(FACE_TEXT);
+  const runtimeUrl = ASSET_PATHS.faceRuntime;
+  if (!runtimeUrl) {
+    const err = new Error("face.runtime.js missing — run: rails assets:build_face_runtime");
+    dispatchFaceError(err);
+    throw err;
   }
 
-  dispatchFaceStage("ready");
-  window.dispatchEvent(new CustomEvent("master:face-ready"));
+  async function bootRuntime() {
+    if (window.MASTER_FACE) return;
+    dispatchFaceStage("runtime");
+    await import(runtimeUrl);
+    await loadTailModules();
+    dispatchFaceStage("ready");
+    window.dispatchEvent(new CustomEvent("master:face-ready"));
+  }
+
+  if (window._primerFired) {
+    await bootRuntime();
+  } else {
+    window.addEventListener("primer:ready", () => {
+      bootRuntime().catch(dispatchFaceError);
+    }, { once: true });
+  }
 } catch (error) {
   dispatchFaceError(error);
   throw error;

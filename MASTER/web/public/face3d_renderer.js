@@ -40,6 +40,7 @@ class Face3DCanvasRenderer {
     this.dither = 'atkinson';
     this.phosphor = true;
     this.lastLitPixels = 0;
+    this.img = null;
     this.resize();
   }
 
@@ -61,6 +62,7 @@ class Face3DCanvasRenderer {
     this.lpx.width = lw;
     this.lpx.height = lh;
     this._ensureBuffers(lw * lh);
+    this.img = null;
   }
 
   setPalette(palette) {
@@ -127,12 +129,18 @@ class Face3DCanvasRenderer {
     this.zbuf = new Uint8Array(size);
   }
 
+  _ensureImageData(lw, lh) {
+    if (this.img && this.img.width === lw && this.img.height === lh) return this.img;
+    this.img = this.lctx.createImageData(lw, lh);
+    return this.img;
+  }
+
   _rasterize(state = {}) {
     const lw = this.lpx.width;
     const lh = this.lpx.height;
     const boost = clamp(state.bootBoost ?? 0);
     const threshold = Math.max(0.12, 0.38 - boost * 0.24);
-    const img = this.lctx.getImageData(0, 0, lw, lh);
+    const img = this._ensureImageData(lw, lh);
     const data = img.data;
     const fbuf = this.fbuf;
     const zbuf = this.zbuf;

@@ -12,40 +12,27 @@ function partSources() {
   return [1, 2, 3, 4, 5].map((part) => readFileSync(join(publicDir, `face.part${part}.txt`), "utf8"));
 }
 
-test("face.part tail imports are single-quoted for MODULE_PATHS replacement", () => {
-  const tail = partSources().join("\n");
-  const imports = [...tail.matchAll(/import\(['"]([^'"]+)['"]\)/g)].map((m) => m[1]);
-  const rootImports = imports.filter((path) => path.startsWith("/"));
-  assert.deepEqual(rootImports, [
-    "/face_semantics.js",
-    "/face_minimal_ui.js",
-    "/face_loops_music.js",
-    "/face_loops_nudge.js"
-  ]);
+test("face.js loads tail modules via MASTER_ASSET_PATHS after runtime", () => {
+  const faceJs = readFileSync(join(publicDir, "face.js"), "utf8");
+  const tail = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  assert.match(faceJs, /loadTailModules/);
+  assert.match(faceJs, /MASTER_ASSET_PATHS\?\.faceModules/);
+  assert.match(faceJs, /face_semantics\.js/);
+  assert.doesNotMatch(tail, /await import\(/);
 });
 
-test("face.js loader replaces every tail import path", () => {
-  const source = partSources().join("\n");
-  const faceModules = Object.fromEntries(
-    readdirSync(join(publicDir, "assets"))
-      .filter((name) => name.endsWith(".js") && name.startsWith("face_"))
-      .map((name) => [name.replace(/-[0-9a-f]{8}\.js$/, ".js"), `/assets/${name}`])
-  );
-  const replaced = Object.entries(faceModules).reduce(
-    (out, [name, path]) => out.replaceAll(`'/${name}'`, JSON.stringify(`https://example.test${path}`)),
-    source
-  );
-  assert.doesNotMatch(replaced, /import\('\/face_/);
-});
-
-test("face.js dispatches boot stage events and prefers bundled loaders", () => {
+test("face.js dispatches boot stage events and requires prebuilt runtime", () => {
   const faceJs = readFileSync(join(publicDir, "face.js"), "utf8");
   assert.match(faceJs, /master:face-stage/);
   assert.match(faceJs, /dispatchFaceStage\("modules"\)/);
   assert.match(faceJs, /dispatchFaceStage\("ready"\)/);
   assert.match(faceJs, /faceRuntime/);
   assert.match(faceJs, /faceModulesBundle/);
-  assert.match(faceJs, /importFaceBlob/);
+  assert.match(faceJs, /build_face_runtime/);
+  assert.match(faceJs, /primer:ready/);
+  assert.match(faceJs, /bootRuntime/);
+  assert.doesNotMatch(faceJs, /importFaceBlob/);
+  assert.doesNotMatch(faceJs, /face\.part/);
 });
 
 test("face.modules.bundle.js is generated from face module entry", () => {

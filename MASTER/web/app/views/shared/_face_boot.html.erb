@@ -186,7 +186,12 @@
       if(faceWatch||fired)return;
       faceWatch=window.setInterval(function(){
         if(fired||!primerVisible()){clearInterval(faceWatch);faceWatch=null;return;}
-        if(window.FACE3D_ACTIVE)return;
+        if(window.FACE3D_ACTIVE){
+          clearInterval(faceWatch);
+          faceWatch=null;
+          return;
+        }
+        syncPrimerRefs();
         if(title&&!document.body.dataset.faceBehindPrimer)title.textContent='loading face…';
       },500);
       window.setTimeout(function(){
@@ -272,7 +277,11 @@
       }
       addEventListener('keydown',function(e){if(!fired&&primerVisible()&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}});
       if(typeof MutationObserver!=='undefined'){
-        new MutationObserver(function(){schedulePin();}).observe(document.body,{childList:true});
+        var pinObserver=null;
+        new MutationObserver(function(){
+          if(pinObserver)clearTimeout(pinObserver);
+          pinObserver=setTimeout(schedulePin,32);
+        }).observe(document.body,{childList:true});
       }
       addEventListener('load',schedulePin);
       addEventListener('pageshow',function(){
