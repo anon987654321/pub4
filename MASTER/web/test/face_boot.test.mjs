@@ -75,10 +75,12 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /dismissPrimer\(\)/);
   assert.match(boot, /ensurePrimer/);
   assert.doesNotMatch(boot, /showLoadState/);
+  assert.match(boot, /pointerup/);
   assert.match(boot, /pointerdown/);
   assert.match(boot, /mousedown/);
   assert.match(boot, /click/);
   assert.match(boot, /touchend/);
+  assert.match(boot, /primerTarget/);
   assert.match(boot, /trackpadPrimary/);
   assert.match(boot, /safariBrowser/);
   assert.doesNotMatch(boot, /e\.button!==0/);
@@ -109,7 +111,7 @@ test("chat index ships import map and digested master_events", () => {
   const primerIdx = index.indexOf('id="primer"');
   assert.ok(primerIdx > 0 && bootIdx > primerIdx, "primer must precede face_boot at end of body");
   assert.match(index, /id="primer-form"/);
-  assert.match(index, /<button[^>]*id="primer"/);
+  assert.match(index, /<button[^>]*type="button"[^>]*id="primer"/);
   assert.match(index, /face-live-badge/);
 });
 
@@ -121,6 +123,7 @@ test("face3d preview announces live badge and boot brightness", () => {
   assert.match(preview, /bootBoost/);
   assert.match(preview, /1800/);
   assert.doesNotMatch(preview, /classList\.remove\("face-loading"\)/);
+  assert.match(preview, /primerBlocking/);
   assert.match(renderer, /bootBoost/);
 });
 

@@ -25,6 +25,11 @@ function topologyMask(topology) {
   return map[String(topology || "").toLowerCase()] || "sepik";
 }
 
+function primerBlocking() {
+  const el = document.getElementById("primer");
+  return !!(el && el.parentNode && !el.classList.contains("gone") && !el.disabled);
+}
+
 function bootFace3d() {
   if (face3dDisabled() || window.FACE3D_ACTIVE) return;
 
@@ -96,6 +101,7 @@ function bootFace3d() {
     if (ui) ui.textContent = "face live";
     window.dispatchEvent(new CustomEvent("master:face-live", { detail: { lit_pixels: litPixels } }));
     window.setTimeout(() => {
+      if (primerBlocking()) return;
       delete document.body.dataset.faceLive;
       if (badge) {
         badge.dataset.visible = "0";
@@ -179,4 +185,9 @@ function bootFace3d() {
   }, 1800);
 }
 
-bootFace3d();
+try {
+  bootFace3d();
+} catch (error) {
+  console.error("face3d boot failed", error);
+  window.dispatchEvent(new CustomEvent("master:face-error", { detail: { message: String(error) } }));
+}

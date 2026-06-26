@@ -457,7 +457,10 @@ function markFaceReady() {
   if (faceReadyMarked) return;
   faceReadyMarked = true;
   rootBody.classList.add('face-ready');
-  rootBody.classList.remove('face-loading');
+  if (window._primerFired || rootBody.classList.contains('face-session')) {
+    document.documentElement?.classList.remove('face-loading');
+    rootBody.classList.remove('face-loading');
+  }
 }
 
 let renderer, scene, camera, phosphorFadeMesh, phosphorFadeScene, phosphorFadeCam;

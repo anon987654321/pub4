@@ -488,7 +488,13 @@ body[data-face-behind-primer="1"] #primer .primer-label {
   place-items: center;
   isolation: isolate;
   touch-action: manipulation;
+  -webkit-touch-callout: none;
   pointer-events: auto;
+}
+
+.primer-form,
+.primer-form * {
+  touch-action: manipulation;
 }
 
 .primer-form[data-face-primed="1"] {

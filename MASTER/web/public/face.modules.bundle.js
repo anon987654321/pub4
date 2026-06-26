@@ -685,10 +685,12 @@
   });
   const primer = document.getElementById("primer");
   if (primer) {
-    primer.addEventListener("pointerdown", () => {
+    const flashPrimer = () => {
       document.body.dataset.primerFlash = "1";
       setTimeout(() => delete document.body.dataset.primerFlash, 180);
-    }, { passive: true });
+    };
+    primer.addEventListener("click", flashPrimer, { passive: true });
+    primer.addEventListener("pointerup", flashPrimer, { passive: true });
   }
   const cursor = document.querySelector("#zin, #input");
   if (cursor) {
