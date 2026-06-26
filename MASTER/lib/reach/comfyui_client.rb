@@ -33,6 +33,7 @@ module Master
         motion_weight: 0.75,
         motion_lora_2: nil,
         motion_lora_2_weight: nil,
+        motion_loras: nil,
         timeout: DEFAULT_TIMEOUT
       )
         workflow = load_workflow
@@ -42,10 +43,13 @@ module Master
           image: image_name,
           prompt: prompt,
           frame_count: frames,
-          motion_lora: motion_lora,
-          motion_lora_strength: motion_weight,
-          motion_lora_2: motion_lora_2,
-          motion_lora_2_strength: motion_lora_2_weight
+          **motion_lora_inputs(
+            motion_lora: motion_lora,
+            motion_weight: motion_weight,
+            motion_lora_2: motion_lora_2,
+            motion_lora_2_weight: motion_lora_2_weight,
+            motion_loras: motion_loras
+          )
         )
         prompt_id = queue_prompt(workflow)
         history = wait_for_history(prompt_id, timeout: timeout)
@@ -54,6 +58,27 @@ module Master
       end
 
       private
+
+      def motion_lora_inputs(motion_lora:, motion_weight:, motion_lora_2:, motion_lora_2_weight:, motion_loras:)
+        slots = Array(motion_loras).map do |entry|
+          {
+            lora: entry[:motion_lora] || entry["motion_lora"],
+            weight: entry[:weight] || entry[:motion_lora_weight],
+          }
+        end
+        slots.unshift({ lora: motion_lora, weight: motion_weight }) if motion_lora
+        slots << { lora: motion_lora_2, weight: motion_lora_2_weight } if motion_lora_2 && !motion_lora_2.to_s.empty?
+
+        inputs = {}
+        slots.each_with_index do |slot, index|
+          next if slot[:lora].to_s.strip.empty?
+
+          key = index.zero? ? :motion_lora : :"motion_lora_#{index + 1}"
+          inputs[key] = slot[:lora]
+          inputs[:"#{key}_strength"] = slot[:weight] if slot[:weight]
+        end
+        inputs
+      end
 
       def default_workflow_path = Master.data_path("comfyui", WORKFLOW_NAME)
       def default_inputs_path = Master.data_path("comfyui", INPUTS_NAME)

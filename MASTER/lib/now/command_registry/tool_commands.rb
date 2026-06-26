@@ -16,6 +16,7 @@ module Master
           "photograph" => command(:dispatch_photograph, root, agent),
           "prompt" => command(:dispatch_prompt, root, agent),
           "video" => command(:dispatch_video, root, agent, bus),
+          "motion-dataset" => command(:dispatch_motion_dataset, root),
         }
       end
 
@@ -110,6 +111,7 @@ module Master
           motion_lora: parsed[:motion_lora],
           motion_lora_weight: parsed[:motion_lora_weight],
           motion_preset: parsed[:motion_preset],
+          motion_stack: parsed[:motion_stack],
           critique: parsed[:critique],
           agent: agent,
           event_bus: bus,
@@ -117,8 +119,9 @@ module Master
         )
         motion = parsed[:motion_lora] ? " motion_lora=#{parsed[:motion_lora]}" : ""
         preset = parsed[:motion_preset] ? " preset=#{parsed[:motion_preset]}" : ""
+        stack = parsed[:motion_stack] ? " stack=#{parsed[:motion_stack]}" : ""
         lines = [
-          "video: backend=#{parsed[:backend]} minutes=#{parsed[:minutes]} critique=#{parsed[:critique]}#{preset}#{motion}",
+          "video: backend=#{parsed[:backend]} minutes=#{parsed[:minutes]} critique=#{parsed[:critique]}#{preset}#{stack}#{motion}",
           "refined: #{refined[0, 120]}#{"..." if refined.size > 120}",
           "output: #{result[:path]}",
         ]
@@ -144,6 +147,7 @@ module Master
         motion_lora = nil
         motion_lora_weight = nil
         motion_preset = nil
+        motion_stack = nil
         prompt_tokens = []
         idx = 0
         while idx < tokens.size
@@ -169,6 +173,9 @@ module Master
           when "--motion-preset"
             motion_preset = tokens[idx + 1]
             idx += 2
+          when "--motion-stack"
+            motion_stack = tokens[idx + 1]
+            idx += 2
           else
             prompt_tokens << tokens[idx]
             idx += 1
@@ -186,14 +193,72 @@ module Master
           motion_lora: motion_lora,
           motion_lora_weight: motion_lora_weight,
           motion_preset: motion_preset,
+          motion_stack: motion_stack,
         }
+      end
+
+      def dispatch_motion_dataset(root, ctx: nil)
+        parsed = parse_motion_dataset_args(arg_for(ctx))
+        return parsed[:usage] if parsed[:usage]
+
+        result = Reach::MotionLoraDataset.bootstrap(
+          preset: parsed[:preset],
+          subject: parsed[:subject],
+          clips: parsed[:clips],
+          backend: parsed[:backend],
+          lora_id: parsed[:lora_id],
+          chunk_seconds: parsed[:chunk_seconds],
+          root: root
+        )
+        [
+          "motion-dataset: preset=#{parsed[:preset]} clips=#{result[:clips]}",
+          "dir: #{result[:dir]}",
+          "caption: #{result[:caption][0, 120]}#{"..." if result[:caption].size > 120}",
+        ].join("\n")
+      rescue Reach::MotionLoraDataset::Error => e
+        "motion-dataset: #{e.message}"
+      rescue StandardError => e
+        "motion-dataset: #{e.class}: #{e.message}"
+      end
+
+      def parse_motion_dataset_args(raw)
+        tokens = raw.to_s.strip.split(/\s+/)
+        return { usage: motion_dataset_usage } if tokens.empty?
+
+        preset = nil
+        subject_tokens = []
+        clips = 12
+        backend = :kling
+        lora_id = nil
+        chunk_seconds = 6
+        idx = 0
+        while idx < tokens.size
+          case tokens[idx]
+          when "--preset" then preset = tokens[idx + 1]; idx += 2
+          when "--clips" then clips = tokens[idx + 1].to_i; idx += 2
+          when "--backend" then backend = tokens[idx + 1].to_sym; idx += 2
+          when "--lora" then lora_id = tokens[idx + 1]; idx += 2
+          when "--chunk-seconds" then chunk_seconds = tokens[idx + 1].to_i; idx += 2
+          else subject_tokens << tokens[idx]; idx += 1
+          end
+        end
+        subject = subject_tokens.join(" ").strip
+        return { usage: motion_dataset_usage } if preset.to_s.empty? || subject.empty?
+
+        { preset: preset, subject: subject, clips: clips, backend: backend, lora_id: lora_id, chunk_seconds: chunk_seconds }
+      end
+
+      def motion_dataset_usage
+        presets = Master::Reach::MotionLoraPresets.names.join("|")
+        "usage: /motion-dataset --preset #{presets} --clips 12 [--backend kling] [--lora ID] [--chunk-seconds 6] <subject>"
       end
 
       def video_usage
         presets = Master::Reach::MotionLoraPresets.names.join("|")
+        stacks = Master::Reach::MotionLoraPresets.stack_names.join("|")
         "usage: /video [--backend kling|happyhorse|cogvideox|minimax|animatediff|animatediff_camera] " \
-          "[--minutes N] [--critique] [--lora ID] [--motion-preset #{presets}] " \
-          "[--motion-lora NAME[,NAME2]] [--motion-weight 0.75] <prompt>"
+          "[--minutes N] [--critique] [--lora ID] [--motion-preset #{presets}] [--motion-stack #{stacks}] " \
+          "[--motion-lora NAME[,NAME2[:WEIGHT]]] [--motion-weight 0.75] <prompt>"
       end
 
       def refine_generation_prompt(prompt, medium:, agent:, image: nil)

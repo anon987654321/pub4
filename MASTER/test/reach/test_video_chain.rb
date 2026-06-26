@@ -71,9 +71,11 @@ class TestVideoChain < Minitest::Test
       motion_lora_2_weight: nil,
       camera_phrase: nil,
       motion_preset: nil,
+      motion_loras: [],
     }
     chain = Master::Reach::VideoChain.allocate
     chain.send(:split_stacked_motion_loras!, opts)
+    chain.send(:flatten_motion_lora_slots!, opts)
     assert_equal "primary.safetensors", opts[:motion_lora]
     assert_equal "secondary.safetensors", opts[:motion_lora_2]
   end

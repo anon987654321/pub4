@@ -1,9 +1,10 @@
-# Camera Motion LoRA presets — train in ComfyUI-ADMotionDirector, infer via VideoChain :animatediff.
-# Training clips: 8–15 short videos, 16–49 frames, camera move consistent, subject mostly static.
+# Camera Motion LoRA library — train in ComfyUI-ADMotionDirector, infer via VideoChain :animatediff_camera.
+# Dataset: 10–15 clips × 16–25 frames, 768×512, subject slow/static, camera move consistent.
+# Caption: "{subject}, [motion phrase], dramatic cinematic lighting, analog 35mm film grain..."
 training_defaults:
   motion_module: mm_sd_v15_v2
   rank: 48
-  steps: 280
+  steps: 300
   learning_rate: 0.0002
   batch_size: 1
   optimizer: 8bit_adam
@@ -11,50 +12,79 @@ training_defaults:
   resolution: "768x512"
   class_prompt: "a person in a cinematic scene"
   output_dir: ComfyUI/models/animatediff_motion_lora
+  dataset_root: training_data
 
 presets:
   slow_dolly_push_in:
-    lora_file: ZIKI_cinematic_slow_dolly_push_in_v1.safetensors
-    inference_strength: 0.78
-    camera_phrase: slow cinematic dolly push-in toward subject
-    caption_template: "{subject}, slow cinematic dolly push-in toward her face, dramatic side lighting, analog film grain, deep depth of field, consistent character"
-    training:
-      rank: 48
-      steps: 280
-      learning_rate: 0.0002
-
-  elegant_orbit_tracking:
-    lora_file: ZIKI_elegant_orbit_tracking_shot_v1.safetensors
-    inference_strength: 0.72
-    camera_phrase: elegant orbiting tracking shot around subject
-    caption_template: "{subject}, elegant orbiting tracking shot around character, cinematic lighting, analog film grain, consistent character identity"
-    training:
-      rank: 48
-      steps: 260
-
-  subtle_handheld_crane_up:
-    lora_file: ZIKI_subtle_handheld_crane_up_v1.safetensors
-    inference_strength: 0.68
-    camera_phrase: subtle handheld with gentle crane up
-    caption_template: "{subject}, subtle handheld camera with gentle crane up, documentary-cinematic hybrid, analog grain, consistent character"
-    training:
-      rank: 32
-      steps: 240
-
-  slow_dolly_zoom:
-    lora_file: ZIKI_slow_dramatic_dolly_zoom_v1.safetensors
+    lora_file: ZIKI_slow_cinematic_dolly_push_in_v1.safetensors
+    training_folder: "01_dolly_push_in"
     inference_strength: 0.75
-    camera_phrase: dramatic slow dolly zoom on emotional close-up
-    caption_template: "{subject}, dramatic slow dolly zoom on emotional close-up, shallow depth of field, analog 35mm look, consistent character"
+    strength_range: "0.65-0.85"
+    camera_phrase: slow cinematic dolly push-in toward subject
+    caption_template: "{subject}, slow cinematic dolly push-in toward her face, dramatic cinematic lighting, analog 35mm film grain, deep depth of field, consistent character identity, high detail"
     training:
       rank: 48
       steps: 300
 
-  tracking_left_to_right:
-    lora_file: ZIKI_smooth_tracking_shot_left_to_right_v1.safetensors
+  elegant_orbit_tracking:
+    lora_file: ZIKI_elegant_orbit_tracking_v1.safetensors
+    training_folder: "02_orbit_tracking"
+    inference_strength: 0.8
+    strength_range: "0.7-0.9"
+    camera_phrase: smooth elegant orbiting camera movement around subject
+    caption_template: "{subject}, smooth elegant orbiting camera movement around her, cinematic lighting, analog film grain, consistent character identity, high detail"
+    training:
+      rank: 48
+      steps: 280
+
+  subtle_handheld_crane_up:
+    lora_file: ZIKI_subtle_handheld_crane_up_v1.safetensors
+    training_folder: "03_handheld_crane_up"
     inference_strength: 0.7
+    strength_range: "0.6-0.8"
+    camera_phrase: subtle handheld with gentle upward crane
+    caption_template: "{subject}, subtle handheld camera with gentle upward crane movement, documentary-cinematic hybrid, analog grain, consistent character"
+    training:
+      rank: 48
+      steps: 260
+
+  slow_dolly_zoom:
+    lora_file: ZIKI_dramatic_slow_dolly_zoom_v1.safetensors
+    training_folder: "04_dolly_zoom"
+    inference_strength: 0.65
+    strength_range: "0.55-0.75"
+    camera_phrase: dramatic slow dolly zoom vertigo-style close-up
+    caption_template: "{subject}, dramatic slow dolly zoom on emotional close-up, shallow depth of field, analog 35mm look, consistent character"
+    training:
+      rank: 48
+      steps: 320
+
+  tracking_left_to_right:
+    lora_file: ZIKI_smooth_tracking_left_to_right_v1.safetensors
+    training_folder: "05_tracking_lr"
+    inference_strength: 0.8
+    strength_range: "0.7-0.9"
     camera_phrase: smooth lateral tracking shot left to right
     caption_template: "{subject}, smooth tracking shot moving left to right, cinematic composition, analog film grain, consistent character"
     training:
       rank: 40
       steps: 250
+
+  gentle_crane_down_reveal:
+    lora_file: ZIKI_gentle_crane_down_reveal_v1.safetensors
+    training_folder: "06_crane_down_reveal"
+    inference_strength: 0.75
+    strength_range: "0.65-0.85"
+    camera_phrase: slow crane down environment reveal
+    caption_template: "{subject}, slow crane down revealing environment around her, dramatic cinematic lighting, analog film grain, deep depth of field, consistent character"
+    training:
+      rank: 48
+      steps: 290
+
+stack_combos:
+  spiraling_push_in:
+    presets: [slow_dolly_push_in, elegant_orbit_tracking]
+    weights: [0.7, 0.5]
+  dolly_with_handheld:
+    presets: [slow_dolly_push_in, subtle_handheld_crane_up]
+    weights: [0.75, 0.55]

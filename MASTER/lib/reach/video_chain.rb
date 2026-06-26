@@ -35,6 +35,7 @@ module Master
         motion_lora: nil,
         motion_lora_weight: nil,
         motion_preset: nil,
+        motion_stack: nil,
         critique: false,
         agent: nil,
         event_bus: nil,
@@ -63,6 +64,7 @@ module Master
           motion_lora: motion_lora,
           motion_lora_weight: motion_lora_weight,
           motion_preset: motion_preset,
+          motion_stack: motion_stack,
           critique: critique
         )
       end
@@ -114,11 +116,15 @@ module Master
           motion_lora_2_weight: nil,
           camera_phrase: nil,
           motion_preset: kwargs[:motion_preset],
+          motion_stack: kwargs[:motion_stack],
+          motion_loras: [],
           critique: kwargs.fetch(:critique, false),
         }
         MotionLoraPresets.apply!(opts, preset_name: kwargs[:motion_preset]) if kwargs[:motion_preset]
+        MotionLoraPresets.apply_stack!(opts, stack: kwargs[:motion_stack]) if kwargs[:motion_stack]
         assign_motion_lora_weights!(opts, kwargs[:motion_lora_weight])
         split_stacked_motion_loras!(opts)
+        flatten_motion_lora_slots!(opts)
         opts
       end
 
@@ -130,11 +136,33 @@ module Master
       end
 
       def split_stacked_motion_loras!(opts)
-        names = opts[:motion_lora].to_s.split(",", 2).map(&:strip)
-        return if names.size < 2
+        raw = opts[:motion_lora].to_s
+        return unless raw.include?(",")
 
-        opts[:motion_lora] = names[0]
-        opts[:motion_lora_2] ||= names[1]
+        entries = raw.split(",").flat_map { |token| MotionLoraPresets.expand_stack_token(token) }
+        return if entries.empty?
+
+        opts[:motion_lora] = nil
+        opts[:motion_loras] = entries
+      end
+
+      def flatten_motion_lora_slots!(opts)
+        slots = []
+        slots << { motion_lora: opts[:motion_lora], weight: opts[:motion_lora_weight] } if opts[:motion_lora]
+        slots.concat(Array(opts[:motion_loras]))
+        slots.each_with_index do |entry, index|
+          weight = entry[:weight] || entry[:motion_lora_weight]
+          if index.zero?
+            opts[:motion_lora] = entry[:motion_lora]
+            opts[:motion_lora_weight] = weight
+          elsif index == 1
+            opts[:motion_lora_2] = entry[:motion_lora]
+            opts[:motion_lora_2_weight] = weight
+          else
+            opts[:"motion_lora_#{index + 1}"] = entry[:motion_lora]
+            opts[:"motion_lora_#{index + 1}_strength"] = weight
+          end
+        end
       end
 
       def expand(path) = File.expand_path(path, @root)
@@ -204,6 +232,12 @@ module Master
 
       def comfyui_i2v(keyframe_url, scene_prompt, opts)
         frames = [opts[:chunk_seconds] * 8, opts[:config][:frames]].min
+        extra_loras = (2..4).filter_map do |index|
+          file = opts[:"motion_lora_#{index}"]
+          next if file.to_s.strip.empty?
+
+          { motion_lora: file, weight: opts[:"motion_lora_#{index}_strength"] }
+        end
         comfyui_client.i2v(
           keyframe_url: keyframe_url,
           prompt: scene_prompt,
@@ -211,7 +245,8 @@ module Master
           motion_lora: opts[:motion_lora],
           motion_weight: opts[:motion_lora_weight],
           motion_lora_2: opts[:motion_lora_2],
-          motion_lora_2_weight: opts[:motion_lora_2_weight]
+          motion_lora_2_weight: opts[:motion_lora_2_weight],
+          motion_loras: extra_loras
         )
       rescue ComfyuiClient::Error => e
         raise Error, e.message
