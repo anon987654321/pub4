@@ -9,7 +9,10 @@ module Master
         def llm_tools(selected_model)
           return [] unless tool_capable?(selected_model)
           return build_llm_tools(visitor: true) if Fiber[:master_visitor]
-          @llm_tools ||= build_llm_tools
+
+          tier = Fiber[:master_elevated] ? :elevated : :standard
+          @llm_tools_by_tier ||= {}
+          @llm_tools_by_tier[tier] ||= build_llm_tools
         end
 
         def build_llm_tools(visitor: false)

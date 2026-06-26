@@ -52,7 +52,8 @@ class ChatService
     @stream.write("data: [DONE]\n\n")
     trigger_post_mutation_work
   rescue StandardError => e
-    @stream.write("data: ERROR: #{e.message}\n\n")
+    Master::Ground::Swallow.log(e, context: "ChatService.call", event_bus: @container&.dig(:bus))
+    @stream.write("data: #{escape_sse(Master::Ground::Redactor.public_error_message)}\n\n")
     @stream.write("data: [DONE]\n\n")
   ensure
     clear_fiber_flags
@@ -178,7 +179,11 @@ class ChatService
       rendered = val.respond_to?(:[]) ? val[:rendered].to_s : ""
       rendered.empty? ? val.to_s : rendered
     when Master::Result::Err
-      result.category == :no_api_key ? result.message : "ERROR: #{result.message}"
+      if result.category == :no_api_key
+        result.message
+      else
+        Master::Ground::Redactor.public_error_message
+      end
     end
   end
 
@@ -233,9 +238,11 @@ class ChatService
   end
 
   def unsubscribe_all
-    @subscriptions.each(&:call)
-  rescue StandardError => e
-    Master::Ground::Swallow.log(e, context: "ChatService.unsubscribe_all", event_bus: @container[:bus])
+    @subscriptions.each do |unsubscribe|
+      unsubscribe.call
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "ChatService.unsubscribe_one", event_bus: @container[:bus])
+    end
   end
 
   def clear_fiber_flags
@@ -244,7 +251,12 @@ class ChatService
   end
 
   def tool_payload(event)
-    { tool: event[:tool].to_s, path: event[:path].to_s, command: event[:command].to_s }
+    path = event[:path].to_s
+    {
+      tool: event[:tool].to_s,
+      path: path.empty? ? "" : File.basename(path),
+      command: Master::Ground::Redactor.text(event[:command].to_s)
+    }
   end
 
   def stack_payload(event)
@@ -325,25 +337,18 @@ class ChatService
     return unless @mutated
 
     @container[:bus].publish("auto:auto_start", reason: "post_chat_mutation")
-    autocommit_mutations if @mutated_paths.any?
+    publish_mutation_review if @mutated_paths.any?
   end
 
-  def autocommit_mutations
+  def publish_mutation_review
     paths = @mutated_paths.select { |path| File.exist?(path) }
     return if paths.empty?
 
-    Thread.new do
-      Thread.current.report_on_exception = false
-      repo_root = Rails.root.join("..", "..").to_s
-      msg = "auto: chat-turn mutation (#{paths.size} file(s))"
-      _, status = Open3.capture2e("git", "-C", repo_root, "add", "--", *paths)
-      if status.success?
-        _, commit_status = Open3.capture2e("git", "-C", repo_root, "commit", "-m", msg)
-        @container[:bus].publish("autocommit:done", ok: commit_status.success?)
-      end
-    rescue StandardError => e
-      @container[:bus].publish("autocommit:error", error: e.message)
-    end
+    @container[:bus].publish(
+      "chat:mutation_pending_review",
+      count: paths.size,
+      paths: paths.map { |path| File.basename(path) }
+    )
   end
 
   def escape_sse(text)
@@ -429,7 +434,7 @@ class ChatService
   def dmesg_tool(payload)
     tool = payload[:tool].to_s.downcase.split("::").last
     path = payload[:path].to_s
-    path.empty? ? tool : "#{tool} #{path}"
+    path.empty? ? tool : "#{tool} #{File.basename(path)}"
   end
 
   def dmesg_model(payload)

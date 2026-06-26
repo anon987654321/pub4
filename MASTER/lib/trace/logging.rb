@@ -24,10 +24,11 @@ module Master
 
       def format_entry(payload)
         event = payload[:event].to_s
-        rest = payload.except(:event, :ts)
+        rest = Master::Ground::Redactor.payload(payload.except(:event, :ts))
         component, action = event.split(":", 2)
         action ||= "ready"
         details = rest.map { |k, v| "#{k}=#{v}" }.join(" ")
+        details = Master::Ground::Redactor.text(details)
         details.empty? ? "#{component}: #{action}" : "#{component}: #{action} #{details}"
       end
     end

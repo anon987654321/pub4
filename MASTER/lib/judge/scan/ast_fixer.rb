@@ -291,8 +291,14 @@ module Master
           File.write(temporary_path, content, encoding: "UTF-8")
           File.rename(temporary_path, @path)
         rescue StandardError => e
-          File.delete(temporary_path) if defined?(temporary_path) && File.exist?(temporary_path) rescue nil
+          delete_temporary_path(temporary_path) if defined?(temporary_path)
           raise e
+        end
+
+        def delete_temporary_path(path)
+          File.delete(path) if path && File.exist?(path)
+        rescue StandardError
+          nil
         end
       end
     end

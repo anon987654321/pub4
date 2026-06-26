@@ -42,7 +42,7 @@ module Master
       end
 
       def boot_scan
-        result = Master::Judge::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus).call(autofix: true)
+        result = Master::Judge::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus).call(autofix: false)
         return unless result.ok?
 
         summary = result.value!

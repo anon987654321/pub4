@@ -47,7 +47,7 @@ class ImagePresenter
 
     meta = JSON.parse(File.read(meta_path))
     disk_path = meta["path"].to_s
-    return nil unless disk_path.start_with?(PHOTO_UPLOAD_DIR.to_s)
+    return nil unless upload_path_allowed?(disk_path)
     return nil unless File.file?(disk_path)
 
     {
@@ -109,6 +109,14 @@ class ImagePresenter
     stem = File.basename(name.to_s, ext).gsub(/[^A-Za-z0-9._-]+/, "_").sub(/\A[._-]+/, "")
     stem = "photo" if stem.empty?
     "#{stem}#{ext}"
+  end
+
+  def upload_path_allowed?(disk_path)
+    upload_root = PHOTO_UPLOAD_DIR.realpath
+    candidate = Pathname.new(disk_path).realpath
+    candidate == upload_root || candidate.to_s.start_with?(upload_root.to_s + File::SEPARATOR)
+  rescue Errno::ENOENT, Errno::EINVAL
+    false
   end
 
   def postpro_photo(input_path, output_path)

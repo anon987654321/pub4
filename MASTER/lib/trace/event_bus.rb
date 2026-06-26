@@ -44,8 +44,9 @@ module Master
       private
 
       def persist_event(event, payload)
-        @event_log.append(event, payload)
-        @evidence_log&.append(event, payload) if @evidence_log&.operational?(event)
+        safe_payload = Master::Ground::Redactor.payload(payload)
+        @event_log.append(event, safe_payload)
+        @evidence_log&.append(event, safe_payload) if @evidence_log&.operational?(event)
       rescue StandardError => e
         # warn-only: routing through the bus here would recurse
         Master::Ground::Swallow.log(e, context: "event_bus.persist_event", event:)

@@ -103,7 +103,9 @@ class ApplicationController < ActionController::Base
     count = cache.increment(key, 1, expires_in: window)
     return count if count.is_a?(Integer)
 
-    cache.fetch(key, expires_in: window) { 0 } + 1.tap { |next_count| cache.write(key, next_count, expires_in: window) }
+    next_count = cache.fetch(key, expires_in: window) { 0 }.to_i + 1
+    cache.write(key, next_count, expires_in: window)
+    next_count
   end
 
   def container
@@ -146,7 +148,13 @@ class ApplicationController < ActionController::Base
     return if app_config.x.master_bootstrap_started
 
     app_config.x.master_bootstrap_started = true
-    Thread.new { MasterContainerLoader.ensure! }
+    Thread.new do
+      Thread.current.report_on_exception = false
+      MasterContainerLoader.ensure!
+    rescue StandardError => e
+      app_config.x.master_bootstrap_started = false
+      Rails.logger.error("master bootstrap failed: #{e.class}: #{e.message}")
+    end
   end
 
   def warming_exempt_path?
