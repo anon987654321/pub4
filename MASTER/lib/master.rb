@@ -166,6 +166,7 @@ module Master
   loader.ignore(File.join(__dir__, "judge/llm_dispatcher"))
   loader.setup
 
+  require_relative "unwrap_error"
   require_relative "converge/converge"
 
   def self.configure_providers!
