@@ -25,4 +25,10 @@ class TestWebTtsContract < Minitest::Test
     source = File.read(bridge)
     assert_includes source, "MASTER_FACE_TTS"
   end
+
+  def test_tts_job_enqueue_retries_after_prior_failure
+    source = File.read(File.join(WEB_ROOT, "app", "services", "tts_job.rb"))
+    refute_includes source, "return job if job.failed?"
+    assert_includes source, "File.delete(error_path)"
+  end
 end

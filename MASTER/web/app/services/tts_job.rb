@@ -19,7 +19,6 @@ class TtsJob
       bus: bus
     )
     return job if job.ready?
-    return job if job.failed?
 
     Thread.new do
       Thread.current.report_on_exception = false
