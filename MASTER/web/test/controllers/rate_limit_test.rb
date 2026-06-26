@@ -4,14 +4,12 @@ require "test_helper"
 
 class RateLimitTest < ActionDispatch::IntegrationTest
   setup do
-    @prev_cache_store = Rails.application.config.cache_store
-    Rails.application.config.cache_store = :memory_store
-    Rails.cache.clear
+    @prev_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
   end
 
   teardown do
-    Rails.application.config.cache_store = @prev_cache_store
-    Rails.cache.clear
+    Rails.cache = @prev_cache
   end
 
   test "chat rate limit blocks after threshold" do
