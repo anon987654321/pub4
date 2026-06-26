@@ -4,6 +4,7 @@ class Port < ApplicationRecord
   # Engine-ize Shared via pub4-shared
   include Shared.concern(:Reactable) rescue nil
   include Shared.concern(:Notifiable) rescue nil
+  belongs_to :platform
   belongs_to :category
   belongs_to :maintainer, optional: true
   has_many :dependencies, dependent: :destroy
@@ -17,7 +18,7 @@ class Port < ApplicationRecord
   has_many :security_advisories, dependent: :destroy
 
   validates :name, :version, :pkgpath, presence: true
-  validates :pkgpath, uniqueness: true
+  validates :pkgpath, uniqueness: { scope: :platform_id }
 
   scope :recent_updates, -> { joins(:port_updates).order("port_updates.committed_at DESC").distinct }
   scope :by_category, ->(cat) { where(category: cat) }

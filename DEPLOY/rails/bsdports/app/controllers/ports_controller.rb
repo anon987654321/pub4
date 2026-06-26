@@ -10,7 +10,7 @@ class PortsController < ApplicationController
     expires_in 10.minutes, public: true if params[:q].blank? && params[:category_id].blank?
 
     scope = Port.includes(:category)
-    scope = apply_live_search(scope, columns: %w[name summary description], vertical: "ports") if live_search_query.present?
+    scope = apply_live_search(scope, columns: %w[name comment description], vertical: "ports") if live_search_query.present?
     scope = scope.by_category(params[:category_id]) if params[:category_id].present?
     scope = scope.order(params[:sort] == "updated" ? "last_updated DESC" : :name)
 
@@ -31,6 +31,7 @@ class PortsController < ApplicationController
     fresh_when(@port, public: true)
 
     @updates = @port.port_updates.order(committed_at: :desc).limit(10)
+    @dependencies = @port.dependencies.includes(:depends_on)
     @deps = @port.depends_on.includes(:category)
     @rdeps = @port.reverse_deps.includes(:category).limit(20)
     @comments = @port.comments.roots.includes(:user, replies: :user)

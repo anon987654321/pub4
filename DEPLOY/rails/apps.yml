@@ -244,16 +244,16 @@ apps:
     public: true
     features:
       core:
-        - { name: Platform (name) — OpenBSD/FreeBSD/NetBSD,                  status: port }
-        - { name: Category (name, platform),                                status: port }
-        - { name: Port (name, summary, url, description, category, platform), status: port, notes: generator calls model Port not Package }
+        - { name: Platform (name) — OpenBSD/FreeBSD/NetBSD,                  status: done, notes: "platforms table seeded openbsd/freebsd/netbsd" }
+        - { name: Category (name, platform),                                status: done, notes: "categories.platform_id scoped slug" }
+        - { name: Port (name, summary, url, description, category, platform), status: done, notes: "ports.platform_id + pkgpath unique per platform; comment field is OpenBSD COMMENT" }
         - { name: Dependency model,                                         status: done }
         - { name: SecurityAdvisory model,                                   status: done }
         - { name: Maintainer model,                                         status: done }
         - { name: live search on name/summary/description (Hotwire),       status: done, notes: "ports_fts + PortsSearch" }
-        - { name: FTP import of real ports tree (OpenBSD/FreeBSD/NetBSD),  status: port }
+        - { name: FTP import of real ports tree (OpenBSD/FreeBSD/NetBSD),  status: port, notes: "OpenBSD Makefile walk + FTP INDEX fallback; freebsd/netbsd parsers pending" }
         - { name: dependency tree visualization,                            status: missing }
-        - { name: ports tree scheduled re-import job,                       status: missing }
+        - { name: ports tree scheduled re-import job,                       status: port, notes: "recurring.yml + PortsImportJob on bulk queue; needs queue worker on VPS" }
         - { name: WCAG AAA compliance pass,                                status: missing }
         - { name: AI exploration assistant,                                status: missing }
       planned:

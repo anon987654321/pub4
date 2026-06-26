@@ -10,14 +10,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_03_123001) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_26_130000) do
   create_table "categories", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"
+    t.integer "platform_id", null: false
     t.string "slug"
     t.datetime "updated_at", null: false
-    t.index ["slug"], name: "index_categories_on_slug", unique: true
+    t.index ["platform_id", "slug"], name: "index_categories_on_platform_id_and_slug", unique: true
+    t.index ["platform_id"], name: "index_categories_on_platform_id"
   end
 
   create_table "comments", force: :cascade do |t|
@@ -29,6 +31,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_03_123001) do
     t.integer "user_id"
     t.index ["port_id"], name: "index_comments_on_port_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
+  end
+
+  create_table "import_runs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.datetime "finished_at"
+    t.integer "platform_id", null: false
+    t.integer "ports_count", default: 0, null: false
+    t.string "source_revision"
+    t.datetime "started_at", null: false
+    t.string "status", default: "running", null: false
+    t.datetime "updated_at", null: false
+    t.index ["platform_id", "started_at"], name: "index_import_runs_on_platform_id_and_started_at"
+    t.index ["platform_id"], name: "index_import_runs_on_platform_id"
   end
 
   create_table "dependencies", force: :cascade do |t|
@@ -62,6 +78,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_03_123001) do
     t.index ["port_id"], name: "index_port_updates_on_port_id"
   end
 
+  create_table "platforms", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "mirror_url"
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.string "tree_path"
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_platforms_on_slug", unique: true
+  end
+
   create_table "ports", force: :cascade do |t|
     t.integer "category_id"
     t.text "comment"
@@ -73,13 +100,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_03_123001) do
     t.integer "maintainer_id"
     t.string "name"
     t.boolean "permit_file_distfiles", default: false
+    t.integer "platform_id", null: false
     t.string "pkgpath"
     t.datetime "updated_at", null: false
     t.string "version"
     t.index ["category_id"], name: "index_ports_on_category_id"
     t.index ["maintainer_id"], name: "index_ports_on_maintainer_id"
-    t.index ["name"], name: "index_ports_on_name", unique: true
-    t.index ["pkgpath"], name: "index_ports_on_pkgpath", unique: true
+    t.index ["name"], name: "index_ports_on_name"
+    t.index ["platform_id", "pkgpath"], name: "index_ports_on_platform_id_and_pkgpath", unique: true
+    t.index ["platform_id"], name: "index_ports_on_platform_id"
   end
 
   create_table "security_advisories", force: :cascade do |t|
@@ -126,12 +155,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_03_123001) do
     t.index ["user_id"], name: "index_watches_on_user_id"
   end
 
+  add_foreign_key "categories", "platforms"
   add_foreign_key "comments", "ports"
   add_foreign_key "comments", "users"
   add_foreign_key "dependencies", "ports"
   add_foreign_key "dependencies", "ports", column: "depends_on_id"
+  add_foreign_key "import_runs", "platforms"
   add_foreign_key "port_updates", "ports"
   add_foreign_key "ports", "categories"
+  add_foreign_key "ports", "platforms"
   add_foreign_key "ports", "maintainers"
   add_foreign_key "security_advisories", "ports"
   add_foreign_key "sessions", "users"

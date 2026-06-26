@@ -6,6 +6,22 @@
 #
 # Example:
 #
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+Platform.find_or_create_by!(slug: "openbsd") do |platform|
+  platform.name = "OpenBSD"
+  platform.tree_path = "/usr/ports"
+  platform.mirror_url = "ftp://ftp.openbsd.org/pub/OpenBSD"
+end
+
+Platform.find_or_create_by!(slug: "freebsd") do |platform|
+  platform.name = "FreeBSD"
+  platform.tree_path = "/usr/ports"
+  platform.mirror_url = "ftp://ftp.freebsd.org/pub/FreeBSD"
+  platform.active = false
+end
+
+Platform.find_or_create_by!(slug: "netbsd") do |platform|
+  platform.name = "NetBSD"
+  platform.tree_path = "/usr/pkgsrc"
+  platform.mirror_url = "ftp://ftp.netbsd.org/pub/pkgsrc"
+  platform.active = false
+end

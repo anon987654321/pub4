@@ -15,4 +15,12 @@ curl -fsS http://127.0.0.1:47312/up
 
 ## Status
 
-Feature matrix: `apps.yml` → `bsdports`. Planned: ports tree import job, dependency visualization, AI exploration assistant.
+Feature matrix: `apps.yml` → `bsdports`.
+
+```zsh
+# Sync import from local tree (OpenBSD VPS: /usr/ports)
+PLATFORM=openbsd BSDPORTS_TREE_PATH=/usr/ports bin/rails ports:import_now
+
+# Queue nightly-style import
+bin/rails ports:import
+```
