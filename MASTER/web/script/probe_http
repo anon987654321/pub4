@@ -36,12 +36,20 @@ begin
     failures << "homepage missing #{needle}" unless body.include?(needle)
   end
   failures << "legacy 15s boot timeout still present" if body.include?("15000")
+  failures << "primer overlay fix missing (form.gone)" unless body.include?("form.classList.add('gone')")
 
   urls = body.scan(%r{/assets/[^"'\s<>]+}).uniq
   failures << "no digested assets in homepage" if urls.empty?
+  face_css = urls.find { |path| path.include?("face-") && path.end_with?(".css") }
   urls.first(42).each do |path|
     res = get(path)
     failures << "#{res.code} #{path}" unless res.code == "200"
+  end
+  if face_css
+    css_body = get(face_css).body.to_s
+    failures << "face.css missing .primer-form.gone" unless css_body.include?(".primer-form.gone")
+  else
+    failures << "face.css digest missing from homepage"
   end
 
   metrics = get("/chat/metrics")
