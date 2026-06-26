@@ -32,16 +32,17 @@ apps:
         - { name: Votable concern,                                         status: done }
         - { name: Hotwire broadcasts_refreshes,                            status: done }
         - { name: OmniAuth (Vipps / Google / Snapchat),                       status: port }
-        - { name: Reaction (polymorphic on posts/messages, ActionCable),    status: port }
+        - { name: Reaction (polymorphic on posts/messages, ActionCable),    status: done }
         - { name: Follow (self-join, no self-follows, notifications),       status: done }
         - { name: Notification (like/follow/custom, mark_as_read),          status: done }
         - { name: DirectMessage (conversation_between, mark_as_read),       status: done }
         - { name: full-text search (SQLite FTS5),                           status: done, notes: "posts_fts + marketplace live search + /search global endpoint" }
         - { name: reading_time_minutes on posts,                            status: port }
         - { name: city-scoped subdomain routing,                           status: done, notes: "DomainRegistry + city switcher UI" }
-        - { name: proximity / geolocation filtering,                       status: missing }
-        - { name: moderation tools,                                        status: missing }
-        - { name: media pipeline (Active Storage variants),                status: missing }
+        - { name: proximity / geolocation filtering,                       status: port, notes: "nearby#index, locations#update, geolocation Stimulus, dating radius filter" }
+        - { name: moderation tools,                                        status: port, notes: "admin/reports, ModerationReport, ModerationFlag, TrustScoreCalculator" }
+        - { name: media pipeline (Active Storage variants),                status: port, notes: "responsive_webp helper + blurhash job; not all upload surfaces wired" }
+        - { name: identity + trust primitives (OAuth subjects, merge, reputation), status: port, notes: "identity_providers, external_identities, account_merges, trust_signals; OmniAuth still port" }
         - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see WIRING_NOTES.md" }
         - { name: unified Activity graph emission,                         status: port, notes: "core to recommendations & discovery across verticals; see brgen_CORE.md + WIRING_NOTES.md. ActivityTrackable concern + EventEmitter in shared; wired to TV." }
         - { name: shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted), status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + WIRING_NOTES" }
@@ -51,16 +52,16 @@ apps:
         - { name: permission-marketing newsletters (Seth Godin editions),    status: done, notes: "NewsletterComposer + NewsletterVisuals + NewsletterEdition + postpro/repligen hero" }
         - { name: AI feed ranking,                                         status: planned }
         - { name: creator monetization,                                    status: planned }
-        - { name: maps surface,                                            status: planned }
+        - { name: maps surface,                                            status: done, notes: "maps. subdomain, Places index/show, Mapbox home" }
       subapp_tv:
         - { name: "Tv::Channel (slug, avatar, banner, subscribers_count)", status: done, notes: "patch_tv_models.sh" }
         - { name: "Tv::Video (status machine, duration_formatted)", status: done }
         - { name: "Tv::Broadcast (stream_key, go_live!/end_live!)", status: done }
         - { name: "Tv::Subscription", status: done }
         - { name: "Tv::ViewEvent", status: done }
-        - { name: "Tv::Show", status: missing }
-        - { name: "Tv::Episode", status: missing }
-        - { name: video upload + Active Storage variants,                  status: missing }
+        - { name: "Tv::Show", status: done, notes: "tv_shows migration + ShowsController" }
+        - { name: "Tv::Episode", status: done, notes: "tv_episodes migration + belongs_to show/video" }
+        - { name: video upload + Active Storage variants,                  status: port, notes: "Tv::Video has_one_attached video_file/thumbnail; variant pass incomplete" }
         - { name: live stream infrastructure,                              status: planned }
         - { name: VideoPublished / BroadcastScheduled events,             status: missing }
       subapp_dating:
@@ -69,8 +70,8 @@ apps:
         - { name: "Dating::Dislike (user, disliked_user)", status: done }
         - { name: "Dating::Match (MatchmakingService — mutual likes)", status: done }
         - { name: swipe UI (Turbo Streams, Stimulus),                       status: done }
-        - { name: city + radius filter,                                     status: missing }
-        - { name: match → messaging handoff,                                status: missing }
+        - { name: city + radius filter,                                     status: done, notes: "MatchmakingService radius_km + neighborhood scope" }
+        - { name: match → messaging handoff,                                status: done, notes: "Dating::Match#announce_match → Conversation.find_or_create_direct" }
         - { name: photos on profile,                                        status: missing }
         - { name: premium memberships / boost purchases,                    status: planned }
       subapp_marketplace:
@@ -84,13 +85,13 @@ apps:
         - { name: buyer–seller Chat,                                        status: done, notes: "Conversation#create from listing show" }
         - { name: geo-localized listings,                                   status: missing }
         - { name: locale subdomain routing (markedsplass/markadur/…),      status: missing }
-        - { name: FTS filtering,                                            status: port }
+        - { name: FTS filtering,                                            status: done, notes: "live_search on listings/stores/deals + saved searches" }
         - { name: AI recommendations,                                       status: planned }
       subapp_playlist:
         - { name: "Playlist::Set (name, description, user)", status: done }
         - { name: "Playlist::Track (name, artist, audio_url, set)", status: done }
         - { name: schema.org microdata in views,                            status: port }
-        - { name: "Playlist::Listen", status: missing }
+        - { name: "Playlist::Listen", status: done, notes: "playlist_listens + ListensController swipe tracking" }
         - { name: embeddable player,                                        status: port }
         - { name: Spotify/YouTube/SoundCloud import,                        status: missing }
         - { name: city-scoped trending feed,                                status: missing }
