@@ -10,11 +10,15 @@ require "yaml"
 
 HOST = ENV.fetch("PROBE_HOST", "127.0.0.1")
 PORT = Integer(ENV.fetch("MASTER_WEB_PORT", ENV.fetch("PROBE_PORT", "53187")))
-BASE = ENV["WEB_URL"].to_s.strip
-BASE = "http://#{HOST}:#{PORT}" if BASE.empty?
+
+def probe_base
+  url = ENV["WEB_URL"].to_s.strip
+  url.empty? ? "http://#{HOST}:#{PORT}" : url
+end
 
 def get(path, headers: {})
-  uri = URI.join(BASE.end_with?("/") ? BASE : "#{BASE}/", path.sub(%r{\A/}, ""))
+  base = probe_base
+  uri = URI.join(base.end_with?("/") ? base : "#{base}/", path.sub(%r{\A/}, ""))
   Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: 15, open_timeout: 8) do |http|
     req = Net::HTTP::Get.new(uri.request_uri)
     headers.each { |key, value| req[key] = value }
@@ -80,10 +84,10 @@ rescue StandardError => e
 end
 
 if failures.empty?
-  puts "probe_http: PASS #{BASE}"
+  puts "probe_http: PASS #{probe_base}"
   exit 0
 else
-  puts "probe_http: FAIL #{BASE}"
+  puts "probe_http: FAIL #{probe_base}"
   failures.each { |f| puts "  - #{f}" }
   exit 1
 end

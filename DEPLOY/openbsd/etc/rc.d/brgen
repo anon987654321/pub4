@@ -5,7 +5,7 @@ APP_DIR=/home/brgen/app
 [ -f /etc/rails/brgen.env ] && . /etc/rails/brgen.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/brgen.env}"
 daemon="/usr/local/bin/bundle34"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/brgen falcon serve --bind http://127.0.0.1:${PORT}"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/brgen falcon serve -n 2 --health-check-timeout 300 --bind http://127.0.0.1:${PORT}"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_logger="daemon.notice"
