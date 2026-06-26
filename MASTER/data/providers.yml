@@ -29,6 +29,11 @@ xai:
   strengths: [reasoning, coding, fast]
   default_model: grok-4-fast
 
+replicate:
+  env: [REPLICATE_API_TOKEN]
+  strengths: [image_generation, video_generation, tts, fast_inference, specialized_models, edge]
+  default_model: black-forest-labs/flux-2-pro
+
 local:
   env: []
   strengths: [privacy, offline, cheap]
