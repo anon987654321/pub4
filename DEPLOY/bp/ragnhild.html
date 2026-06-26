@@ -1,271 +1,236 @@
 <!DOCTYPE html>
 <html lang="no">
-
 <head>
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Ragnhilds Begravelsesbyrå – Moderne begravelsestjenester med fokus på verdighet, personalisering og profesjonalitet.">
-
-  <title>Ragnhilds Begravelsesbyrå – Forretningsplan</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.googleapis.com;">
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-  <link rel="stylesheet" href="ragnhild.css">
+  <title>Begjæring om gjenåpning – Sak 2025/2469</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: white;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
+    }
+    
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 5rem 4rem;
+      position: relative;
+      min-height: 100vh;
+    }
+    
+    .logo {
+      position: absolute;
+      top: 2.5rem;
+      right: 2.5rem;
+      width: 5rem;
+      filter: brightness(0);
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 400;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.01em;
+    }
+    
+    .meta {
+      font-size: 0.9375rem;
+      color: #555;
+      line-height: 1.8;
+    }
+    
+    .content {
+      max-width: 32rem;
+      margin: 0 auto;
+    }
+    
+    h2 {
+      font-size: 1.125rem;
+      font-weight: 500;
+      margin: 2.5rem 0 1rem;
+      font-style: italic;
+    }
+    
+    p {
+      font-size: 1.0625rem;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+      text-align: justify;
+      hyphens: auto;
+    }
+    
+    .timeline {
+      margin: 1.5rem 0;
+      padding: 1.25rem 1.5rem;
+      background: #fafafa;
+    }
+    
+    .timeline dt {
+      font-weight: 500;
+      color: #666;
+      font-size: 0.9375rem;
+      float: left;
+      width: 7rem;
+    }
+    
+    .timeline dd {
+      margin-left: 7.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+    
+    .timeline dd:last-child {
+      margin-bottom: 0;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    td {
+      padding: 0.5rem 0;
+      vertical-align: top;
+    }
+    
+    td:first-child {
+      width: 2rem;
+      color: #999;
+    }
+    
+    footer {
+      margin-top: 3rem;
+      text-align: center;
+    }
+    
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin: 1.5rem 0 2.5rem;
+    }
+    
+    .image-grid figure {
+      margin: 0;
+    }
+    
+    .image-grid img {
+      width: 100%;
+      height: 10rem;
+      object-fit: cover;
+      display: block;
+    }
+    
+    .image-grid figcaption {
+      font-size: 0.8125rem;
+      color: #888;
+      margin-top: 0.5rem;
+      line-height: 1.4;
+      font-style: italic;
+    }
+    
+    @media print {
+      article {
+        padding: 2rem;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      article {
+        padding: 7rem 2rem 3rem;
+      }
+      .logo {
+        top: 1.5rem;
+        right: 1.5rem;
+      }
+    }
+  </style>
 </head>
-
 <body>
-  <header>
-    <h1>Ragnhilds Begravelsesbyrå</h1>
-    <span class="badge" aria-label="Framework badge">Framework: master.json v300.3.0</span>
-  </header>
-  <main>
-    <section>
-      <h2>Formål og Visjon</h2>
-      <p><strong>Ragnhilds Begravelsesbyrå</strong> tilbyr profesjonelle begravelsestjenester i Norge med fokus på personalisering, verdighet og moderne gjennomføring. Vi adresserer et marked der tradisjonelle aktører dominerer, men der etterspørselen etter skreddersydde seremonier øker.</p>
-      <p class="metric"><strong>Visjon:</strong> Bli et anerkjent alternativ i Oslo-regionen innen 2027</p>
-      <p class="metric"><strong>Mål:</strong> 200-250 seremonier årlig innen år 3</p>
 
-    </section>
-    <section>
-      <h2>Problem og Mulighet</h2>
-      <h3>Markedsutfordringer</h3>
-      <p>Det norske begravelsesmarkedet har flere strukturelle utfordringer:</p>
-      <ul>
-        <li><strong>Standardiserte tjenester:</strong> Mange familier opplever manglende fleksibilitet hos etablerte aktører</li>
-
-        <li><strong>Begrenset personalisering:</strong> Økende etterspørsel etter unike seremonier som reflekterer avdødes liv</li>
-        <li><strong>Prisintransparens:</strong> Vanskelig for pårørende å sammenligne tjenester og kostnader</li>
-        <li><strong>Geografisk konsentrasjon:</strong> Færre aktører i vekstområder rundt Oslo</li>
-      </ul>
-      <h3>Markedsstørrelse (Norge)</h3>
-      <div class="chart-container" id="marketSizeChart"></div>
-      <p class="assumption">Basert på SSB data: ~40,000 dødsfall årlig i Norge (2023), estimert markedsverd i begravelsesbransjen på 2,4-2,8 mrd NOK årlig.</p>
-      <ul>
-        <li><strong>TAM (Total Addressable Market):</strong> 2,6 mrd NOK – hele det norske markedet</li>
-        <li><strong>SAM (Serviceable Addressable Market):</strong> 520 MNOK – Oslo-regionen (ca. 20% av nasjonalt marked)</li>
-
-        <li><strong>SOM (Serviceable Obtainable Market):</strong> 15-20 MNOK – realistisk markedsandel år 3 (3-4% av Oslo-markedet)</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>Hvorfor nå? Timing og marked</h2>
-      <h3>Tre konvergerende trender</h3>
-      <ol>
-        <li><strong>Demografisk endring:</strong> Økning i dødsfall framover pga. aldrende befolkning (SSB prognoser: 50,000+ årlig innen 2030)</li>
-        <li><strong>Kulturskifte:</strong> Yngre generasjoner ønsker mer personlige og sekulære seremonier</li>
-
-        <li><strong>Digital transformasjon:</strong> Mulighet for mer transparent prising og online booking</li>
-      </ol>
-      <p>Dette er det ideelle tidspunktet for en ny aktør som kombinerer tradisjonell respekt med moderne forventninger.</p>
-    </section>
-    <section>
-      <h2>Løsning og Tjenester</h2>
-      <h3>Kjerne tjenestepakker</h3>
+  <article>
+    <!-- <span class="layout-label">1 · Klassisk sentrert</span> -->
+    <img src="bergen.svg" alt="" class="logo">
+    
+    <header>
+      <h1>Begjæring om gjenåpning</h1>
+      <p class="meta">
+        Husleietvistutvalget<br>
+        Sak 2025/2469<br>
+        Bergen, 17. januar 2026<br><br>
+        <strong>Ragnhild Laupsa Mæhle</strong><br>
+        Nygårdsgaten 58, 5008 Bergen
+      </p>
+    </header>
+    
+    <div class="content">
+      <h2>1. Innledning</h2>
+      <p>Jeg begjærer gjenåpning av saken etter Husleietvistutvalgets vedtak av 20.&nbsp;november 2025, jf. husleietvistutvalgsforskriften §&nbsp;13 åttende ledd.</p>
+      <p>Jeg fikk ikke kjennskap til vedtaket før 30.&nbsp;desember 2025 kl.&nbsp;09:47. Min BankID-brikke gikk tapt i november, og uten den var jeg fullstendig utestengt fra Altinn. Fristen for å bringe saken inn for tingretten har derfor aldri begynt å løpe.</p>
+      
+      <h2>2. Dokumentert tidslinje</h2>
+      <dl class="timeline">
+        <dt>15. nov. 2025</dt>
+        <dd>BankID-brikke tapt—meldt til Sparebanken Vest (vedlegg 3a)</dd>
+        <dt>16. nov. 2025</dt>
+        <dd>Melding til Digitaliseringsdirektoratet (vedlegg 3b)</dd>
+        <dt>29. des. 2025</dt>
+        <dd>Ny BankID-brikke mottatt og aktivert</dd>
+        <dt>30. des. 2025</dt>
+        <dd>Første åpning av vedtaket i Altinn kl. 09:47 (vedlegg 3c)</dd>
+      </dl>
+      <p>Postforkynningsforskriften §&nbsp;8 slår fast at forkynning først anses gjennomført når mottaker faktisk kan ta del i dokumentet. Forkynningsdato er derfor 30.&nbsp;desember 2025.</p>
+      
+      <h2>3. Rettslig grunnlag</h2>
+      <p>Husleietvistutvalgsforskriften §&nbsp;13 åttende ledd åpner for gjenåpning ved gyldig passivitetsgrunn. Tap av sikkerhetsbrikke med påfølgende total blokkering av digital post er en objektiv, uforutsett og uoverkommelig hindring.</p>
+      <p>Jeg protesterte skriftlig mot oppsigelsen 26.&nbsp;april 2025 (vedlegg&nbsp;1). Som privatperson uten juridisk bistand var jeg ukjent med kravet om særskilt tilsvar til HTU.</p>
+      
+      <h2>4. Dokumentert vilje til å ivareta boligen</h2>
+      <p>Den 12.&nbsp;april 2025 fremla jeg et detaljert oppussingsforslag til utleier (vedlegg&nbsp;2). Forslaget viser konkret vilje og evne til å vedlikeholde boligen. Utleier besvarte aldri henvendelsen.</p>
+      
+      <div class="image-grid">
+        <figure>
+          <img src="1.jpg" alt="Rendering" loading="lazy">
+        </figure>
+        <figure>
+          <img src="2.jpg" alt="Rendering" loading="lazy">
+        </figure>
+        <figure>
+          <img src="3.jpg" alt="Rendering" loading="lazy">
+        </figure>
+        <figure>
+          <img src="4.jpg" alt="Rendering" loading="lazy">
+        </figure>
+      </div>
+      
+      <h2>5. Påstander</h2>
       <table>
-
-        <thead>
-          <tr>
-
-            <th>Pakke</th>
-            <th>Innhold</th>
-            <th>Pris (NOK)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>Basis</strong></td>
-            <td>Standard seremoni, kiste, transport, dokumenthåndtering</td>
-            <td>45,000 - 55,000</td>
-          </tr>
-          <tr>
-            <td><strong>Personlig</strong></td>
-            <td>Basis + tilpasset seremoni, musikkvalg, personlig tale, blomster</td>
-            <td>65,000 - 85,000</td>
-          </tr>
-          <tr>
-            <td><strong>Premium</strong></td>
-            <td>Personlig + eksklusiv lokasjon, catering, minnebok, video-streaming</td>
-            <td>95,000 - 125,000</td>
-          </tr>
-        </tbody>
+        <tr><td>1.</td><td>Forkynningsdato fastsettes til 30.&nbsp;desember 2025.</td></tr>
+        <tr><td>2.</td><td>Saken gjenåpnes jf. husleietvistutvalgsforskriften §&nbsp;13 åttende ledd.</td></tr>
+        <tr><td>3.</td><td>Oppsigelsen kjennes ugyldig, subsidiært urimelig jf. husleieloven §&nbsp;9-8.</td></tr>
       </table>
-      <h3>Differensiering</h3>
-      <ul>
-        <li><strong>Transparent prising:</strong> Alle priser publisert online med detaljert nedbrytning</li>
-        <li><strong>Digital plattform:</strong> Online booking, dokumenthåndtering og kommunikasjon</li>
-        <li><strong>Personalisering:</strong> Dedikerte rådgivere som jobber tett med familier</li>
-        <li><strong>Moderne fasiliteter:</strong> Nytt seremonilokale med fleksibel utforming</li>
+    </div>
+    
+    <footer>
+      <p>Med vennlig hilsen<br><strong>Ragnhild Laupsa Mæhle</strong></p>
+    </footer>
+  </article>
 
-      </ul>
-    </section>
-    <section>
-      <h2>Konkurranse og Posisjonering</h2>
-      <h3>Konkurranselandskap Oslo-regionen</h3>
-      <ul>
-        <li><strong>Tradisjonelle aktører:</strong> Jølstad, Fonus, Norse – stor markedsandel, men mindre innovasjon</li>
-        <li><strong>Kirkelige:</strong> Lavere priser, men begrenset til medlemmer og mindre fleksibilitet</li>
-
-        <li><strong>Små uavhengige:</strong> Nisjeaktører, men begrenset kapasitet og markedsføring</li>
-      </ul>
-      <h3>Konkurransefortrinn</h3>
-      <ol>
-        <li><strong>Kombinasjon av respekt og modernitet</strong> – appellerer til både eldre og yngre</li>
-        <li><strong>Digital-først tilnærming</strong> – reduserer administrasjonskostnader</li>
-        <li><strong>Transparent prising</strong> – bygger tillit i en følelsesladet situasjon</li>
-        <li><strong>Erfaring fra andre bransjer</strong> – Ragnhilds bakgrunn fra event-bransjen</li>
-
-      </ol>
-      <p class="assumption">Risiko: Etablerte aktører kan kopiere våre innovasjoner. Mitigering: Rask skalering og sterkt merkevarebygning.</p>
-    </section>
-    <section>
-      <h2>Team og Utførelse</h2>
-      <h3>Grunnlegger</h3>
-      <p><strong>Ragnhild Larsen</strong> – 15 års erfaring fra event- og konferansebransjen, med spesialisering i logistikk og klienthåndtering. Etablerte og drev "Livsglede Events" (2012-2023) med 40+ årlige arrangementer.</p>
-
-      <p class="assumption">Track record: Bygde Livsglede Events fra 0 til 3,2 MNOK årlig omsetning over 5 år. Solgt i 2023.</p>
-      <h3>Nøkkelansettelser (År 1)</h3>
-
-      <ul>
-        <li><strong>Autorisert begravelsesbyr åd (heltid):</strong> Sertifisert fagperson med 10+ års erfaring</li>
-        <li><strong>Administrativ leder (deltid → heltid):</strong> Dokumenthåndtering, booking, kundeservice</li>
-        <li><strong>Marketing & digital (konsulent):</strong> SEO, Google Ads, lokal synlighet</li>
-      </ul>
-
-      <h3>Hvorfor dette team</h3>
-      <p>Ragnhilds styrke er <strong>gjennomføringsevne</strong> – hun har bevist at hun kan bygge en servicebedrift fra bunnen av. Begravelsebransjen krever emosjonell intelligens, logistikk-kompetanse og evne til å håndtere komplekse situasjoner – alt hun har trent på i 15 år.</p>
-    </section>
-    <section>
-      <h2>Forretningsmodell</h2>
-      <h3>Inntektsstrømmer</h3>
-
-      <table>
-        <thead>
-          <tr>
-
-            <th>Kilde</th>
-            <th>% av omsetning (År 3)</th>
-            <th>Margin</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Seremonipakker</td>
-            <td>75%</td>
-            <td>38-45%</td>
-          </tr>
-          <tr>
-            <td>Tilleggstjenester (blomster, catering, video)</td>
-            <td>18%</td>
-            <td>25-30%</td>
-          </tr>
-          <tr>
-            <td>Dokumenthåndtering og juridisk støtte</td>
-            <td>7%</td>
-            <td>60-70%</td>
-          </tr>
-        </tbody>
-      </table>
-      <h3>Kundeanskaffelse</h3>
-      <ul>
-        <li><strong>Organisk søk (Google):</strong> 40% av leads – SEO-optimalisert nettside, transparent prising</li>
-        <li><strong>Henvisninger fra leger/sykehus:</strong> 30% – partnerskap med helsetjenester</li>
-        <li><strong>Muntlig omtale:</strong> 20% – fokus på eksepsjonell service</li>
-        <li><strong>Betalt annonsering:</strong> 10% – Google Ads for spesifikke søkeord</li>
-
-      </ul>
-      <p class="assumption">CAC (Customer Acquisition Cost): 2,500 NOK per seremoni. LTV (Lifetime Value): 72,000 NOK (gjennomsnittlig seremonipris).</p>
-      <h3>Operasjonell modell</h3>
-      <p>Asset-light tilnærming: Leie av seremonilokale istedenfor kjøp. Samarbeid med eksterne leverandører for kister, transport og blomster. Dette reduserer CapEx betydelig og gir fleksibilitet.</p>
-    </section>
-    <section>
-      <h2>Finansiell Analyse</h2>
-      <h3>Markedsstørrelse (TAM/SAM/SOM)</h3>
-
-      <div class="chart-container" id="marketSizeChart"></div>
-      <p class="assumption">SOM (15-20 MNOK) basert på konservativ 3-4% markedsandel i Oslo-regionen innen år 3.</p>
-      <h3>Tre-års Omsetningsprognose</h3>
-
-      <div class="chart-container" id="revenueChart"></div>
-      <p class="assumption"><strong>Konservativt:</strong> 80 seremonier/år (år 1) → 180 (år 3). <strong>Realistisk:</strong> 120 → 230. <strong>Optimistisk:</strong> 160 → 280.</p>
-
-      <h3>Kostnadsstruktur</h3>
-      <div class="chart-container" id="costChart"></div>
-      <table>
-
-        <thead>
-          <tr>
-            <th>Kategori</th>
-
-            <th>År 1 (MNOK)</th>
-            <th>År 2 (MNOK)</th>
-
-            <th>År 3 (MNOK)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>COGS</strong> (kister, transport, leverandører)</td>
-            <td>3.2</td>
-            <td>5.4</td>
-            <td>7.8</td>
-          </tr>
-          <tr>
-            <td><strong>OPEX</strong> (lønn, markedsføring, lokale)</td>
-            <td>2.8</td>
-            <td>3.6</td>
-            <td>4.4</td>
-          </tr>
-          <tr>
-            <td><strong>CAPEX</strong> (utstyr, IT-systemer)</td>
-            <td>0.6</td>
-            <td>0.3</td>
-            <td>0.2</td>
-          </tr>
-        </tbody>
-      </table>
-      <h3>Enhetsekonomi per seremoni</h3>
-      <div class="chart-container" id="unitEconomicsChart"></div>
-      <p class="assumption">Gjennomsnitts seremonipris: 72,000 NOK. Dekningsbidrag: 30,000 NOK etter variable kostnader.</p>
-      <h3>Kontantstrøm og Runway</h3>
-      <div class="chart-container" id="cashFlowChart"></div>
-      <p><strong>Finansieringsbehov:</strong> 2,5 MNOK initialt kapital</p>
-
-      <ul>
-        <li>Oppstart og første 6 måneder: 1,8 MNOK</li>
-        <li>Marketing og kundeanskaffelse: 0,4 MNOK</li>
-
-        <li>Buffer (6 måneders drift): 0,3 MNOK</li>
-      </ul>
-      <p class="assumption">Break-even forventet Q3 år 2 ved realistisk scenario (180 seremonier/år).</p>
-      <h3>Kritiske Antagelser og Risikoer</h3>
-      <ul>
-        <li><strong>Gjennomsnittlig seremonipris 72,000 NOK:</strong> Basert på markedsundersøkelse og konkurrentanalyse. Risiko: Prispress fra etablerte aktører.</li>
-        <li><strong>Konverteringsrate 18%:</strong> Fra leads til betalende kunder. Risiko: Lavere konvertering hvis merkevare ikke bygges raskt nok.</li>
-        <li><strong>Bruttomargin 40%:</strong> Avhenger av effektive leverandøravtaler. Risiko: Prisøkninger fra underleverandører.</li>
-        <li><strong>Organisk vekst 25% år-til-år:</strong> Forutsetter muntlig omtale og god Google-ranking. Risiko: Tregere enn forventet markedspenetrasjon.</li>
-
-      </ul>
-    </section>
-    <section>
-      <h2>Konklusjon og Ask</h2>
-      <p>Ragnhilds Begravelsesbyrå adresserer et reelt marked med økende etterspørsel etter moderne, personlige begravelsestjenester. Vi søker <strong>2,5 MNOK i startkapital</strong> fra Innovasjon Norge for å:</p>
-      <ol>
-        <li>Etablere fysisk tilstedeværelse i Oslo (leie av seremonilokale)</li>
-        <li>Ansette nøkkelpersonell (autorisert begravelsesbyrå, admin)</li>
-
-        <li>Bygge digital plattform og markedsføring</li>
-        <li>Oppnå break-even innen 18-24 måneder</li>
-      </ol>
-      <p><strong>Realistisk forventning:</strong> 12-15% årlig avkastning over 5 år, med potensial for ekspansjon til Bergen og Trondheim etter bevist konsept i Oslo.</p>
-    </section>
-  </main>
-  <footer>
-    <p><strong>Ragnhilds Begravelsesbyrå AS</strong></p>
-    <p>Kontakt: ragnhild.larsen@ragnhilds.no | +47 950 12 345</p>
-    <p>Forretningsplan generert med master.json v300.3.0 framework</p>
-  </footer>
-  <script src="ragnhild.js"></script>
 </body>
 </html>
