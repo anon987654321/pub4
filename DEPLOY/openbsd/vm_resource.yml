@@ -26,4 +26,4 @@ limits:
   mem_free_pct_warn: 12
   mem_free_pct_crit: 6
   relayd_check_interval: 120
-  master_falcon_workers: 1
+  master_falcon_workers: 2  # SSE must not block /up relayd health checks

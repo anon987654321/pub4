@@ -10,6 +10,8 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "tap to start"
     assert_includes response.body, "master:face-ready"
     assert_includes response.body, "master:face-stage"
+    assert_includes response.body, "master:session-ready"
+    assert_includes response.body, "sessionReady"
     assert_includes response.body, "showBootError"
     assert_includes response.body, "faceBooting"
     assert_includes response.body, "face-session"

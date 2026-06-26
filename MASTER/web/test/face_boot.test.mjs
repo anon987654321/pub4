@@ -70,6 +70,8 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /60000/);
   assert.match(boot, /error-live/);
   assert.match(boot, /master:face-stage/);
+  assert.match(boot, /master:session-ready/);
+  assert.match(boot, /sessionReady/);
   assert.doesNotMatch(boot, /15000/);
 });
 

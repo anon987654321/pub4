@@ -52,6 +52,12 @@ body.face-loading {
   touch-action: manipulation;
 }
 
+body.face-loading #primer {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 body:not(.face-session) .face-controls {
   opacity: 0;
   pointer-events: none;

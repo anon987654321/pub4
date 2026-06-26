@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "ferrum"
 require "shellwords"
 require "timeout"
 
@@ -31,6 +30,7 @@ rescue Timeout::Error, StandardError
 end
 
 def build_browser(path)
+  require "ferrum"
   Ferrum::Browser.new(
     headless: true,
     browser_path: path,
@@ -114,6 +114,7 @@ begin
     ({
       primerFired: !!window._primerFired,
       primerGone: !document.getElementById('primer'),
+      faceSession: document.body.classList.contains('face-session'),
       zshLive: document.getElementById('zsh').classList.contains('live'),
       uiStatus: (document.getElementById('ui-status') || {}).textContent || '',
       faceType: typeof window.MASTER_FACE,
@@ -124,6 +125,7 @@ begin
   puts "state: #{state.inspect}"
   failures << "primer not fired" unless state["primerFired"]
   failures << "primer still visible" unless state["primerGone"]
+  failures << "face-session missing" unless state["faceSession"]
   failures << "zsh not live" unless state["zshLive"]
 
   deadline = Time.now + 60
@@ -135,9 +137,12 @@ begin
 
   puts "\n=== console log tail ==="
   puts console_msgs.last(10).join("\n") unless console_msgs.empty?
-rescue Ferrum::ProcessTimeoutError, Timeout::Error => e
+rescue Timeout::Error => e
   skip_probe("browser launch timeout (#{e.class}) — use probe_http")
 rescue StandardError => e
+  if e.class.name == "Ferrum::ProcessTimeoutError"
+    skip_probe("browser launch timeout (Ferrum) — use probe_http")
+  end
   failures << "probe exception: #{e.class}: #{e.message}"
   puts "probe error: #{e.class}: #{e.message}"
   puts e.backtrace.first(3).join("\n")

@@ -243,9 +243,9 @@ if (renderer) {
     setTimeout(() => { clearInterval(_dbgTimer); _dbgEl.remove(); }, 30000);
   }
   (window.MASTER_FACE?.ensureFrameLoop || (() => requestAnimationFrame(frame)))();
-  if (window._primerFired && !F_FACE_SEM.primerFired) { window._primerFired = true; F_FACE_SEM.startEverything?.(); }
+  if (window._primerFired && !F_FACE_SEM.primerFired) F_FACE_SEM.startEverything?.();
 } else if (window.FACE3D_ACTIVE) {
-  if (window._primerFired && !F_FACE_SEM.primerFired) { window._primerFired = true; F_FACE_SEM.startEverything?.(); }
+  if (window._primerFired && !F_FACE_SEM.primerFired) F_FACE_SEM.startEverything?.();
   markFaceReady?.();
 } else {
   (function start2D() {
@@ -273,7 +273,7 @@ if (renderer) {
     resize2();
     window.addEventListener('resize', resize2, { passive: true });
 
-    if (window._primerFired && !F_FACE_SEM.primerFired) { window._primerFired = true; F_FACE_SEM.startEverything?.(); }
+    if (window._primerFired && !F_FACE_SEM.primerFired) F_FACE_SEM.startEverything?.();
 
     let lastT2 = 0;
     function frame2(t) {

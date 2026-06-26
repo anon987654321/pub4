@@ -623,13 +623,12 @@ function startEverything() {
   if (primerFired) return;
   primerFired = true;
   document.body?.classList.remove('face-loading');
+  document.body?.classList.add('face-session');
   delete document.body?.dataset?.faceBooting;
-  window.dispatchEvent(new CustomEvent('primer:ready'));
   morphCurrent = 0.72; morphTarget = 1.08;
   initAudio();
   prefetchTtsPhraseBank?.();
   if (window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume();
-  if (primer) { primer.style.transition = 'opacity 160ms ease, transform 160ms ease'; primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)'; setTimeout(() => primer?.remove(), 200); }
   zshBar.classList.add('live');
   const logo = document.querySelector('.top-left-logo');
   if (logo) {
@@ -659,6 +658,8 @@ function startEverything() {
     ev.preventDefault();
     if (uiStatus) uiStatus.textContent = 'install available';
   });
+  window.dispatchEvent(new CustomEvent('primer:ready'));
+  window.dispatchEvent(new CustomEvent('master:session-ready'));
 }
 window.addEventListener('master:self_violation', () => flashViolation());
 let primerFired = false;
