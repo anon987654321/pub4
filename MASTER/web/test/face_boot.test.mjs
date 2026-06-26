@@ -89,7 +89,8 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /master:face-live/);
   assert.match(boot, /wirePrimerForm/);
   assert.match(boot, /primer-form/);
-  assert.match(boot, /DOMContentLoaded/);
+  assert.match(boot, /armed=true/);
+  assert.doesNotMatch(boot, /DOMContentLoaded/);
   assert.match(boot, /pinPrimer/);
   assert.doesNotMatch(boot, /15000/);
 });
@@ -121,7 +122,10 @@ test("chat index ships import map and digested master_events", () => {
   assert.ok(primerIdx > 0 && bootIdx > primerIdx, "primer must precede face_boot");
   assert.ok(face3dIdx > bootIdx, "face_boot must precede face3d_preview.js");
   assert.match(index, /__MASTER_PRIMER_TAP__/);
-  assert.match(index, /onclick="window\.__MASTER_PRIMER_TAP__/);
+  assert.doesNotMatch(index, /onclick="window\.__MASTER_PRIMER_TAP__/);
+  assert.match(index, /getElementById\('primer-form'\)/);
+  assert.match(index, /addEventListener\(type,tap/);
+  assert.match(index, /Critical primer layout/);
   assert.match(index, /id="primer-form"/);
   assert.match(index, /<button[^>]*type="button"[^>]*id="primer"/);
   assert.match(index, /face-live-badge/);

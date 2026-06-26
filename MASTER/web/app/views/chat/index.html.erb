@@ -70,16 +70,35 @@
     html, body { background: #000; color: #f5f0e8; }
     canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; }
     #zsh { background: #000; }
+    /* Critical primer layout — fullscreen hit target before face.css loads */
+    .primer-form { position: fixed; inset: 0; z-index: 2147483000; margin: 0; padding: 0; border: 0; display: grid; place-items: center; background: rgba(0,0,0,.72); touch-action: manipulation; pointer-events: auto; }
+    #primer { position: absolute; inset: 0; display: grid; place-items: center; border: 0; margin: 0; width: 100%; height: 100%; background: transparent; cursor: pointer; touch-action: manipulation; pointer-events: auto; -webkit-appearance: none; appearance: none; color: inherit; font: inherit; }
+    #primer .primer-label { pointer-events: none; font: 200 clamp(1rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: -.04em; }
+    .primer-form.gone, #primer.gone { opacity: 0; pointer-events: none; }
   </style>
 </head>
 <body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark">
   <a href="#zin" class="skip-link">skip to prompt</a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
   <form id="primer-form" class="primer-form" action="#" method="post">
-    <button type="button" id="primer" aria-busy="false" onclick="window.__MASTER_PRIMER_TAP__&&window.__MASTER_PRIMER_TAP__()">
+    <button type="button" id="primer" aria-busy="false">
       <span id="primer-title" class="primer-label">tap to start</span>
     </button>
   </form>
+  <script nonce="<%= content_security_policy_nonce %>">
+    (function(){
+      var root=document.getElementById('primer-form');
+      if(!root)return;
+      function tap(e){
+        if(e&&e.cancelable&&e.type==='touchend')e.preventDefault();
+        if(window.__MASTER_PRIMER_TAP__)window.__MASTER_PRIMER_TAP__();
+      }
+      ['pointerup','touchend','click'].forEach(function(type){
+        var passive=type==='touchend';
+        root.addEventListener(type,tap,{capture:true,passive:passive});
+      });
+    })();
+  </script>
   <%= render "shared/face_boot" %>
   <div class="top-left-logo" aria-hidden="true">brgen</div>
   <div id="face-live-badge" class="face-live-badge" hidden aria-live="polite">face live</div>

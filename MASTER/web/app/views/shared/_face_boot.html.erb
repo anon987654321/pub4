@@ -2,7 +2,7 @@
   window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
   (function(){
     var p=null,form=null,z=document.getElementById('zsh'),ui=document.getElementById('ui-status'),err=document.getElementById('error-live'),title=null;
-    var fired=false,timer=null,fallback=null,pinTimer=null,faceWatch=null;
+    var fired=false,armed=false,timer=null,fallback=null,pinTimer=null,faceWatch=null;
     function syncPrimerRefs(){
       form=document.getElementById('primer-form');
       p=document.getElementById('primer');
@@ -217,7 +217,11 @@
       document.body.classList.remove('face-session');
       if(z)z.classList.remove('live');
       ensurePrimer();
-      if(form)delete form.dataset.facePrimed;
+      if(form){
+        delete form.dataset.facePrimed;
+        form.classList.remove('gone');
+        form.style.pointerEvents='auto';
+      }
       p.classList.remove('gone');
       p.disabled=false;
       p.style.opacity='1';
@@ -270,6 +274,8 @@
       if(label)showBootStatus(label);
     });
     function armPrimer(){
+      if(armed)return;
+      armed=true;
       ensurePrimer();
       schedulePin();
       watchFaceBoot();
@@ -323,10 +329,6 @@
         };
       };
     }
-    if(document.readyState==='loading'){
-      document.addEventListener('DOMContentLoaded',armPrimer);
-    }else{
-      armPrimer();
-    }
+    armPrimer();
   })();
 </script>
