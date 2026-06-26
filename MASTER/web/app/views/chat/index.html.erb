@@ -155,9 +155,14 @@
         if(title)title.textContent='loading…';
         if(ui)ui.textContent='loading face';
       }
-      function fallbackUi(){
+      function finishBoot(){
+        if(timer){clearInterval(timer);timer=null;}
+        if(fallback){clearTimeout(fallback);fallback=null;}
         dismissPrimer();
         revealPrompt();
+      }
+      function fallbackUi(){
+        finishBoot();
         if(ui)ui.textContent='face failed to load — reload';
       }
       function go(){
@@ -167,16 +172,18 @@
         primeAudio();
         if(title)title.textContent='starting…';
         if(ui)ui.textContent='booting face';
-        dismissPrimer();
-        revealPrompt();
-        if(boot())return;
+        if(boot()){finishBoot();return;}
         showLoadState();
-        timer=setInterval(function(){if(boot()){clearInterval(timer);timer=null;clearTimeout(fallback);}},40);
-        fallback=setTimeout(function(){clearInterval(timer);if(!(window.MASTER_FACE&&window.MASTER_FACE.primerFired))fallbackUi();},15000);
+        timer=setInterval(function(){if(boot())finishBoot();},40);
+        fallback=setTimeout(function(){
+          if(window.MASTER_FACE&&window.MASTER_FACE.primerFired)finishBoot();
+          else fallbackUi();
+        },15000);
       }
+      addEventListener('master:face-ready',function(){if(fired&&boot())finishBoot();});
+      addEventListener('master:face-error',function(){if(fired)fallbackUi();});
       if(p){
         p.addEventListener('pointerdown',go);
-        p.addEventListener('touchstart',go,{passive:true});
         p.addEventListener('touchend',go,{passive:true});
         p.addEventListener('click',go);
         p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});

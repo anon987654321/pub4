@@ -8,6 +8,9 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "tap to start"
+    assert_includes response.body, "master:face-ready"
+    assert_includes response.body, "finishBoot"
+    refute_includes response.body, "touchstart\",go"
   end
 
   test "message smoke ping streams sse without container" do

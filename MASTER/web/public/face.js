@@ -50,6 +50,11 @@ const FACE_BLOB = new Blob([FACE_SOURCE], { type: "text/javascript" });
 const FACE_BLOB_URL = URL.createObjectURL(FACE_BLOB);
 try {
   await import(FACE_BLOB_URL);
+  window.dispatchEvent(new CustomEvent("master:face-ready"));
+} catch (error) {
+  console.error("face boot failed", error);
+  window.dispatchEvent(new CustomEvent("master:face-error", { detail: { message: String(error) } }));
+  throw error;
 } finally {
   URL.revokeObjectURL(FACE_BLOB_URL);
 }

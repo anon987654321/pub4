@@ -82,19 +82,26 @@
           }
           return false;
         }
+        function finishBoot(){
+          if(timer){clearInterval(timer);timer=null;}
+          if(fallback){clearTimeout(fallback);fallback=null;}
+          dismissPrimer();
+          revealPrompt();
+        }
         function go(){
           if(fired)return;
           fired=true;
           window._primerFired=true;
-          dismissPrimer();
-          revealPrompt();
-          if(boot())return;
-          timer=setInterval(function(){if(boot()){clearInterval(timer);timer=null;clearTimeout(fallback);}},40);
-          fallback=setTimeout(function(){clearInterval(timer);if(!(window.MASTER_FACE&&window.MASTER_FACE.primerFired))dismissPrimer();},15000);
+          if(boot()){finishBoot();return;}
+          timer=setInterval(function(){if(boot())finishBoot();},40);
+          fallback=setTimeout(function(){
+            if(window.MASTER_FACE&&window.MASTER_FACE.primerFired)finishBoot();
+            else finishBoot();
+          },15000);
         }
+        addEventListener('master:face-ready',function(){if(fired&&boot())finishBoot();});
         if(p){
           p.addEventListener('pointerdown',go);
-          p.addEventListener('touchstart',go,{passive:true});
           p.addEventListener('touchend',go,{passive:true});
           p.addEventListener('click',go);
           p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
