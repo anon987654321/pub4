@@ -2,7 +2,7 @@
 PORT=53187
 [ -r /etc/master.env ] && . /etc/master.env
 daemon="/usr/local/bin/bundle34"
-daemon_flags="exec env LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production MASTER_TTS_TIMEOUT=45 MASTER_SAFE_MODE=1 MASTER_SKIP_SELF_TEST=1 MASTER_BACKGROUND=0 MASTER_AUTOFIX=0 MASTER_WATCH=0 MASTER_WATCHER=0 MASTER_HEARTBEAT=0 SECRET_KEY_BASE_DUMMY=1 DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY OPENROUTER_API_KEY=$OPENROUTER_API_KEY REPLICATE_API_KEY=$REPLICATE_API_KEY WEAVIATE_API_KEY=$WEAVIATE_API_KEY GEMINI_API_KEY=$GEMINI_API_KEY falcon serve -n 2 --health-check-timeout 300 --bind http://127.0.0.1:${PORT}"
+daemon_flags="exec env LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production MASTER_TTS_TIMEOUT=45 MASTER_TTS_POOL_SIZE=1 MASTER_SAFE_MODE=1 MASTER_SKIP_SELF_TEST=1 MASTER_BACKGROUND=0 MASTER_AUTOFIX=0 MASTER_WATCH=0 MASTER_WATCHER=0 MASTER_HEARTBEAT=0 SECRET_KEY_BASE_DUMMY=1 DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY OPENROUTER_API_KEY=$OPENROUTER_API_KEY REPLICATE_API_KEY=$REPLICATE_API_KEY WEAVIATE_API_KEY=$WEAVIATE_API_KEY GEMINI_API_KEY=$GEMINI_API_KEY falcon serve -n 2 --health-check-timeout 300 --bind http://127.0.0.1:${PORT}"
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_logger="daemon.notice"
@@ -22,10 +22,16 @@ rc_pre() {
 	rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
 	(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle) 2>/dev/null || true
 	_manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
-	_runtime=/home/dev/pub4/MASTER/web/public/face.runtime.js
-	_bundle=/home/dev/pub4/MASTER/web/public/face.modules.bundle.js
-	if [ ! -f "$_manifest" ] || [ "$_runtime" -nt "$_manifest" ] || [ "$_bundle" -nt "$_manifest" ]; then
+	_stamp=/home/dev/pub4/MASTER/web/tmp/.assets_precompile_stamp
+	_digest=$(cksum /home/dev/pub4/MASTER/web/public/face.part*.txt /home/dev/pub4/MASTER/web/public/face.css /home/dev/pub4/MASTER/web/public/face.modules.bundle.js 2>/dev/null | cksum)
+	_skip=0
+	if [ -f "$_manifest" ] && [ -f "$_stamp" ] && [ "$(cat "$_stamp" 2>/dev/null)" = "$_digest" ]; then
+		_skip=1
+	fi
+	if [ "$_skip" = "0" ]; then
 		(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
+		mkdir -p /home/dev/pub4/MASTER/web/tmp
+		echo "$_digest" > "$_stamp"
 	fi
 	sleep 1
 }
@@ -50,8 +56,8 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 			_j=$((_j + 1))
 		done
 		rcctl restart relayd 2>/dev/null || true
-		# Warm Edge TTS daemon as dev (not root) so sockets stay group-writable.
-		doas -u dev sh -c 'cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -Ilib -e "require \"master\"; puts Master::Voice::TtsSupervisor.ensure_daemon!"' \
+		# Container bootstrap already warms TTS; su avoids doas EPERM from rcctl root context.
+		su -m dev -c 'cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -Ilib -e "require \"master\"; Master::Voice::TtsSupervisor.ensure_daemon!"' \
 			2>/dev/null || true
 		ruby34 /home/dev/pub4/MASTER/web/script/probe_http 2>/dev/null || logger -t master "probe_http failed after restart"
 	fi

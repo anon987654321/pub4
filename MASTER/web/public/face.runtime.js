@@ -156,7 +156,7 @@ try {
     State.profileOverride = savedProfile;
     rootBody.dataset.runtimeProfile = savedProfile;
   }
-} catch (_) {}
+} catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 function applyFocusMode(enabled, persist = true) {
   const value = !!enabled;
   rootBody.dataset.focusMode = value ? '1' : '0';
@@ -298,7 +298,7 @@ State.mode = _shareParams.get('mode') || State.mode;
 try {
   if (!_shareParams.get('mood')) State.mood = localStorage.getItem('master:mood') || State.mood;
   if (!_shareParams.get('mode')) State.mode = localStorage.getItem('master:mode') || State.mode;
-} catch (_) {}
+} catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 const _faceMode = (_shareParams.get('face_mode') || 'auto').toLowerCase();
 rootBody.dataset.faceRenderMode = _faceMode;
 State.idleSignature = { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
@@ -315,7 +315,7 @@ function syncShareStateUrl() {
     if (State.model) url.searchParams.set('model', State.model); else url.searchParams.delete('model');
     if (State.voiceName) url.searchParams.set('voice', State.voiceName); else url.searchParams.delete('voice');
     history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }
 
 rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
@@ -325,7 +325,7 @@ function enterDegradedTextUI(reason) {
   rootBody.dataset.errorBoundary = '1';
   rootBody.dataset.runtimeProfile = 'text';
   rootBody.dataset.runtimeVisible = 'true';
-  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (_) {}
+  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
   if (cv && cv.style) cv.style.display = 'none';
   let banner = document.getElementById('face-error-banner');
   if (!banner) {
@@ -364,7 +364,7 @@ window.addEventListener('unhandledrejection', event => {
     if (gs > 0.5) FACE_GLOW_SCALE = gs;
     const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
     if (pd > 0.1 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 })();
 
 const STAR_FRAMES = ['\u2736', '\u2738', '\u2737', '\u273B', '\u2722', '\u2724', '\u2733', '\u2735'];
@@ -469,7 +469,7 @@ if (_hasWebGL && THREE) {
     renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 1);
     renderer.autoClear = true;
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
   camera.position.set(0, 0, 4.6);
@@ -1295,9 +1295,7 @@ async function swapMask(imageUrl) {
     initSemanticPools();
     State.flash = 0.5; State.pulse = 0.8;
     if (uiStatus) uiStatus.textContent = 'mask loaded';
-  } catch (_) {
-    if (uiStatus) uiStatus.textContent = 'mask load failed';
-  }
+  } catch (err) { window.MASTER_LOG?.warn?.("face:mask_load", err); if (uiStatus) uiStatus.textContent = 'mask load failed'; }
 }
 
 let frameLoopActive = false;
@@ -1360,9 +1358,7 @@ function ensureParticleWorker() {
       particleWorkerPending.delete(msg.id);
       applyWorkerPoolResult(pending.pool, msg.pool);
     };
-  } catch (_) {
-    particleWorker = null;
-  }
+  } catch (err) { window.MASTER_LOG?.warn?.("face:particle_worker", err); particleWorker = null; }
   return particleWorker;
 }
 function serializePoolForWorker(pool) {
@@ -1924,7 +1920,7 @@ function bindOrientation() {
 async function requestMotionPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (_) {}
+    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
   } else if (window.DeviceOrientationEvent) {
     bindOrientation();
   }
@@ -2057,7 +2053,7 @@ function initAudio() {
     humOsc.connect(ambientHumGain);
     ambientHumGain.connect(actx.destination);
     humOsc.start();
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }
 function setAmbientHum(active) {
   if (!ambientHumGain || !actx) return;
@@ -2105,7 +2101,7 @@ function _nextTtsVoice() { return _activeTtsVoice(); }
 const TTS_STYLE_KEY = 'master:tts_style';
 const TTS_STYLE_DEFAULT = 'clear';
 function _readStoredTtsStyle() {
-  try { return localStorage.getItem(TTS_STYLE_KEY) || TTS_STYLE_DEFAULT; } catch (_) { return TTS_STYLE_DEFAULT; }
+  try { return localStorage.getItem(TTS_STYLE_KEY) || TTS_STYLE_DEFAULT; } catch (err) { window.MASTER_LOG?.warn?.("face:tts_style_read", err); return TTS_STYLE_DEFAULT; }
 }
 window.MASTER_TTS_STYLE = _readStoredTtsStyle();
 function _ttsStyleDecayRate(style) {
@@ -2133,7 +2129,7 @@ function syncTtsStyleUi() {
 function setTtsStyle(style, opts = {}) {
   const next = String(style || '').trim().toLowerCase() || TTS_STYLE_DEFAULT;
   window.MASTER_TTS_STYLE = next;
-  try { localStorage.setItem(TTS_STYLE_KEY, next); } catch (_) {}
+  try { localStorage.setItem(TTS_STYLE_KEY, next); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
   syncTtsStyleUi();
   if (!opts.silent) {
     emitTtsEvent('tts:style:active', { style: next });
@@ -2163,9 +2159,7 @@ function _parseTtsVisemeHeader(res) {
       plan = JSON.parse(raw);
     }
     return Array.isArray(plan) ? plan : (plan.frames || plan.visemes || plan.viseme_plan || plan.viseme_hints || null);
-  } catch (_) {
-    return null;
-  }
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); return null; }
 }
 function _parseTtsMetaHeader(res) {
   const raw = res?.headers?.get?.('X-TTS-Meta');
@@ -2173,19 +2167,17 @@ function _parseTtsMetaHeader(res) {
   try {
     const text = (/^[A-Za-z0-9+/=]+$/.test(raw) && raw.length > 80) ? atob(raw) : raw;
     return JSON.parse(text);
-  } catch (_) {
-    return null;
-  }
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); return null; }
 }
 const EMOTION_HISTORY_KEY = 'master:emotion_history';
 const EMOTION_HISTORY_CAP = 50;
 function pushEmotionHistory(entry) {
   let ring = [];
-  try { ring = JSON.parse(localStorage.getItem(EMOTION_HISTORY_KEY) || '[]'); } catch (_) {}
+  try { ring = JSON.parse(localStorage.getItem(EMOTION_HISTORY_KEY) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
   if (!Array.isArray(ring)) ring = [];
   ring.push({ ts: Date.now(), ...entry });
   while (ring.length > EMOTION_HISTORY_CAP) ring.shift();
-  try { localStorage.setItem(EMOTION_HISTORY_KEY, JSON.stringify(ring)); } catch (_) {}
+  try { localStorage.setItem(EMOTION_HISTORY_KEY, JSON.stringify(ring)); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
   const bar = document.getElementById('mood-sparkline');
   if (!bar) return;
   bar.innerHTML = ring.slice(-20).map((e) => {
@@ -2216,7 +2208,7 @@ async function prefetchTtsPhraseBank() {
       const style = row.style || _nextTtsStyle(voice);
       fetchTTS(row.text, voice, style);
     });
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }
 function _quirkifyTts(text, voice, opts = {}) {
   if (!opts.quirky) return text;
@@ -2273,6 +2265,13 @@ let ttsDBPromise = null;
 function setTTSLoading(loading) {
   tts.loading = !!loading;
   rootBody.dataset.ttsLoading = tts.loading ? 'true' : 'false';
+  const s = document.getElementById('zsh-status');
+  if (!s) return;
+  if (tts.loading) {
+    s.textContent = 'synthesizing…';
+  } else if (s.textContent === 'synthesizing…') {
+    s.textContent = '';
+  }
 }
 
 function parsePersonaRate(rate) {
@@ -2363,7 +2362,7 @@ async function writeCachedTTS(key, blob) {
   try {
     const tx = db.transaction(TTS_STORE, 'readwrite');
     tx.objectStore(TTS_STORE).put(blob, key);
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }
 
 async function loadTTSBlob(text, voice, style) {
@@ -2418,7 +2417,7 @@ async function tryPartialTTSPlay(job, bytes) {
     const probe = new Audio(url);
     probe.preload = 'auto';
     probe.addEventListener('canplay', () => URL.revokeObjectURL(url), { once: true });
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }
 
 async function pollTTSJob(job, signal) {
@@ -2655,9 +2654,7 @@ function speakWithBrowserTTS(text, token) {
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
     return true;
-  } catch (_) {
-    return false;
-  }
+  } catch (err) { window.MASTER_LOG?.warn?.("face", err); return false; }
 }
 
 function ttsTick() {
@@ -2702,7 +2699,7 @@ function ttsTick() {
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
     audio.playbackRate = LOW_POWER ? 1.0 : baseRate;
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
-    if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (_) {} }
+    if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } }
     tts.audio = audio;
     setTTSLoading(false);
     if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
@@ -2746,7 +2743,7 @@ function ttsTogglePause() {
   if (tts.audio.paused) {
     if (tts.resumeTime != null && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
       const seek = Math.max(0, Math.min(tts.audio.duration, tts.resumeTime));
-      try { tts.audio.currentTime = seek; } catch (_) {}
+      try { tts.audio.currentTime = seek; } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
     }
     tts.audio.play().catch(() => {});
     tts.paused = false;
@@ -2840,7 +2837,7 @@ function fadeTtsAudio(ms = 80) {
 function ttsSkipHard() {
   tts.cancelToken++;
   setTTSLoading(false);
-  if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
+  if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } tts.audio = null; }
   tts.outputGain = null;
   stopVisemeAnim();
   tts.visemePlan = null;
@@ -2923,7 +2920,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     if (interim.trim()) {
       sttPartial = interim.trim();
       if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
-      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (_) {} sendMessage(t2); } }, 1200);
+      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } sendMessage(t2); } }, 1200);
     }
   };
   recognition.onend = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
@@ -2944,11 +2941,11 @@ function startSTT() {
   window.MASTER_FACE_BLEND?.resetMouth?.(0.35);
   window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
   window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
-  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
+  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }
 function stopSTT() {
   if (!recognition || !State.sttActive) return;
-  try { recognition.stop(); } catch (_) {}
+  try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }
 
 let stageTimer = null;
@@ -3242,13 +3239,13 @@ setInterval(() => {
     tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2)
   });
   syncShareStateUrl();
-  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (_) {}
+  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 }, 8000);
 
 let wakeLock = null;
 async function acquireWakeLock() {
   if (!('wakeLock' in navigator)) return;
-  async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (_) {} }
+  async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } }
   await req();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
 }
@@ -3274,12 +3271,12 @@ function previewVoice(voice) {
   loadTTSBlob("Let's work now.", chosen, style)
     .then(async (blob) => {
       const src = URL.createObjectURL(blob);
-      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
+      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } }
       const audio = new Audio(src);
       tts.audio = audio;
       audio.playbackRate = getTtsRate();
       preSpeechInhale(style);
-      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
+      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
       startVisemeAnim("Let's work now.");
       audio.onended = audio.onerror = () => {
         stopVisemeAnim();
@@ -3335,11 +3332,11 @@ function playDuo(lines, onDone, style, councilOpts = {}) {
   loadTTSBlob(text, voice, useStyle)
     .then(async blob => {
       const src = URL.createObjectURL(blob);
-      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
+      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); } }
       const audio = new Audio(src);
       tts.audio = audio;
       audio.playbackRate = getTtsRate();
-      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
+      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
       startVisemeAnim(text);
       preSpeechInhale(useStyle);
       audio.onended = audio.onerror = () => {
@@ -3450,7 +3447,7 @@ const _charCount = document.getElementById('char-count');
 const _cmdHistKey = 'master:cmd_hist';
 let _cmdHist = [];
 let _cmdHistIdx = -1;
-try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch (_) {}
+try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
 function _resizeZin() {
   if (!zshIn || zshIn.tagName !== 'TEXTAREA') return;
   zshIn.style.height = 'auto';

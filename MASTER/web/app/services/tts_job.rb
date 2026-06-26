@@ -6,6 +6,9 @@ require "json"
 
 class TtsJob
   CACHE_DIR = Rails.root.join("tmp", "tts_cache")
+  @queue_mutex = Mutex.new
+  @queue = []
+  @worker = nil
 
   def self.enqueue(text:, voice:, style:, rate: nil, pitch: nil, voice_locked: false, style_locked: false, bus: nil)
     job = new(
@@ -20,11 +23,25 @@ class TtsJob
     )
     return job if job.ready?
 
-    Thread.new do
-      Thread.current.report_on_exception = false
-      job.perform
+    @queue_mutex.synchronize do
+      @queue << job unless @queue.any? { |queued| queued.job_id == job.job_id }
+      spawn_worker_locked! unless @worker&.alive?
     end
     job
+  end
+
+  def self.spawn_worker_locked!
+    @worker = Thread.new do
+      Thread.current.report_on_exception = false
+      loop do
+        job = @queue_mutex.synchronize { @queue.shift }
+        break unless job
+
+        job.perform
+      end
+    ensure
+      @queue_mutex.synchronize { @worker = nil }
+    end
   end
 
   def self.find(job_id)

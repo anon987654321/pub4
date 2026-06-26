@@ -17,6 +17,7 @@ module Master
       ESPEAK = ESPEAK_PATHS.find { |p| File.executable?(p) }
       WORKER_TIMEOUT = 45
       @last_error = nil
+      @synthesis_mutex = Mutex.new
 
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
 
@@ -242,6 +243,12 @@ module Master
       end
 
       def synthesize_streaming_to_file(text, output_path:, on_chunk: nil, **opts)
+        @synthesis_mutex.synchronize do
+          synthesize_streaming_to_file_unlocked(text, output_path:, on_chunk:, **opts)
+        end
+      end
+
+      def synthesize_streaming_to_file_unlocked(text, output_path:, on_chunk: nil, **opts)
         clear_last_error!
         TtsSupervisor.ensure_daemon!
         text_str = clean_text(text)

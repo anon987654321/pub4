@@ -967,7 +967,7 @@ body[data-sleeping="1"] #zsh { opacity: .18; }
 body[data-mood-cold="1"] canvas { filter: none; }
 
 /* #58 TTS loading shimmer */
-body[data-tts-loading="true"] #zsh-status { animation:ttsShimmer 700ms steps(4,end) infinite; }
+body[data-tts-loading="true"] #zsh-status { opacity: 1; animation:ttsShimmer 700ms steps(4,end) infinite; }
 @keyframes ttsShimmer { 0%,100%{opacity:.4} 50%{opacity:1} }
 
 /* #60 Network stall */
