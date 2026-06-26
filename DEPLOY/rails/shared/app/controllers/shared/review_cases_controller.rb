@@ -5,10 +5,10 @@ module Shared
     before_action :require_current_user
 
     def create
-      target = GlobalID::Locator.locate_signed!(params.require(:target_gid))
-      review_case = Shared::ReviewCase.create!(
+      @target = GlobalID::Locator.locate_signed!(params.require(:target_gid))
+      @review_case = Shared::ReviewCase.create!(
         reporter: current_user,
-        reviewable: target,
+        reviewable: @target,
         reason: params[:reason].presence || "other",
         notes: params[:notes]
       )
@@ -16,19 +16,19 @@ module Shared
       respond_to do |format|
         format.html { redirect_back fallback_location: main_app.root_path, notice: "Sent for review" }
         format.turbo_stream
-        format.json { render json: { id: review_case.id, state: review_case.state }, status: :created }
+        format.json { render json: { id: @review_case.id, state: @review_case.state }, status: :created }
       end
     end
 
     def update
-      review_case = Shared::ReviewCase.find(params[:id])
+      @review_case = Shared::ReviewCase.find(params[:id])
       action = params[:review_action].to_s
-      action == "ignore" ? review_case.ignore!(current_user) : review_case.close!(current_user)
+      action == "ignore" ? @review_case.ignore!(current_user) : @review_case.close!(current_user)
 
       respond_to do |format|
         format.html { redirect_back fallback_location: main_app.root_path }
         format.turbo_stream
-        format.json { render json: { id: review_case.id, state: review_case.state } }
+        format.json { render json: { id: @review_case.id, state: @review_case.state } }
       end
     end
 

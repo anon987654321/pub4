@@ -1,0 +1,21 @@
+<% content_for :title, "Notifications" %>
+
+<%= turbo_frame_tag "notifications" do %>
+  <div class="page-header" role="banner" aria-label="Notifications header">
+    <div>
+      <h1>Notifications</h1>
+    </div>
+    <% unread = @notifications.count { |n| !n.read? } %>
+    <% if unread.positive? %>
+      <%= button_to "Mark all read", read_all_notifications_path, method: :patch, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+
+  <% if @notifications.any? %>
+    <% @notifications.each do |notification| %>
+      <%= render "notifications/notification", notification: notification %>
+    <% end %>
+  <% else %>
+    <div class="empty" role="status" aria-live="polite"><p>No notifications yet.</p></div>
+  <% end %>
+<% end %>

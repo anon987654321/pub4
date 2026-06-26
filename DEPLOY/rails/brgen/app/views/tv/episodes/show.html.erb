@@ -7,7 +7,7 @@
 
 <% if @video %>
   <div class="video-player" data-controller="tv-player">
-    <%= render "tv/videos/_tv_video", video: @video %>
+    <%= render "tv/videos/tv_video", video: @video %>
   </div>
 <% else %>
   <div class="empty"><p>Video coming soon.</p></div>
@@ -15,5 +15,5 @@
 
 <div class="notes">
   <h3>Notes</h3>
-  <%= render "shared/_media_gallery" if @episode.video&.notes&.any? %>
+  <%= render "shared/media_gallery" if @episode.video&.notes&.any? %>
 </div>

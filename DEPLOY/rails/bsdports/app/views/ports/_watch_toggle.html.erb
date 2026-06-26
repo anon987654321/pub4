@@ -1,0 +1,7 @@
+<div id="port_watch_<%= port.id %>">
+  <% if watching %>
+    <%= button_to "Unwatch", unwatch_port_path(port), method: :delete, data: { turbo_stream: true } %>
+  <% else %>
+    <%= button_to "Watch", watch_port_path(port), method: :post, data: { turbo_stream: true } %>
+  <% end %>
+</div>

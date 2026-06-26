@@ -8,12 +8,8 @@
   <%= link_to "All donations", donations_path, class: "btn btn-ghost" %>
 </div>
 
-<article id="<%= dom_id(@donation) %>">
-  <p class="dim">Status: <%= @donation.status.humanize %></p>
-  <p><strong>Pickup:</strong> <%= @donation.pickup_window.presence || "Not set" %></p>
-  <% if @donation.notes.present? %>
-    <p><%= @donation.notes %></p>
-  <% end %>
-</article>
+<%= render "donation", donation: @donation %>
 
+<turbo-frame id="hjerterom-donation-new">
 <%= render "form", donation: @donation %>
+</turbo-frame>

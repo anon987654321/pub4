@@ -1,0 +1,8 @@
+<span id="highlight_<%= verse.id %>">
+  <%= button_to highlight ? "★" : "☆",
+        highlight ? highlight_path(highlight) : highlights_path(verse_id: verse.id),
+        method: highlight ? :delete : :post,
+        params: highlight ? { id: highlight.id } : {},
+        class: ("active" if highlight),
+        data: { turbo_stream: true } %>
+</span>

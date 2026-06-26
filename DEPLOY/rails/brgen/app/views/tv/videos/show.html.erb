@@ -65,6 +65,32 @@
 </section>
 
 <section>
+  <h2>Notes</h2>
+  <div id="video_notes_<%= @video.id %>">
+    <% @video.video_notes.chronological.includes(:user).each do |note| %>
+      <article id="<%= dom_id(note) %>">
+        <p class="dim"><% if note.timestamp.present? %><%= note.timestamp %> · <% end %><%= note.user&.email_address || "viewer" %></p>
+        <p><%= note.body %></p>
+      </article>
+    <% end %>
+  </div>
+  <% if authenticated? %>
+    <%= form_with url: tv_video_video_notes_path(@video), scope: :video_note, data: { turbo: true } do |f| %>
+      <div class="field">
+        <%= f.label :body, "Add a note" %>
+        <%= f.text_area :body, rows: 2, placeholder: "Timestamped note…", data: { controller: "char-counter", "char-counter-max-value": 2000 } %>
+        <span class="char-counter" data-char-counter-target="counter"></span>
+      </div>
+      <div class="field">
+        <%= f.label :timestamp, "Timestamp (seconds)" %>
+        <%= f.number_field :timestamp, min: 0, step: 1 %>
+      </div>
+      <%= f.submit "Save note", class: "btn btn-primary btn-sm" %>
+    <% end %>
+  <% end %>
+</section>
+
+<section>
   <h2>Discussion</h2>
   <% if @video.comments.any? %>
     <% @video.comments.order(created_at: :asc).each do |comment| %>

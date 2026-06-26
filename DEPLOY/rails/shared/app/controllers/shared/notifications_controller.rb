@@ -9,7 +9,8 @@ module Shared
     end
 
     def update
-      notification_scope.find(params[:id]).mark_as_read!
+      @notification = notification_scope.find(params[:id])
+      @notification.mark_as_read!
       respond_to do |format|
         format.html { redirect_back fallback_location: main_app.root_path }
         format.turbo_stream
@@ -19,6 +20,7 @@ module Shared
 
     def read_all
       notification_scope.unread.update_all(read_at: Time.current, updated_at: Time.current)
+      @notifications = notification_scope.recent.limit(50)
       respond_to do |format|
         format.html { redirect_back fallback_location: main_app.root_path }
         format.turbo_stream

@@ -1,0 +1,4 @@
+<%= turbo_stream.append "comments", partial: "comments/comment", locals: { comment: @comment } %>
+<%= turbo_stream.replace "comment_form" do %>
+  <%= render "comments/form", comment: Comment.new, commentable: @commentable %>
+<% end %>

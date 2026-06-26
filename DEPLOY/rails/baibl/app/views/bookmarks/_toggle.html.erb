@@ -1,0 +1,7 @@
+<span id="bookmark_<%= verse.id %>">
+  <%= button_to bookmark ? "🔖" : "📌",
+        bookmark ? bookmark_path(bookmark) : bookmarks_path(verse_id: verse.id),
+        method: bookmark ? :delete : :post,
+        class: ("active" if bookmark),
+        data: { turbo_stream: true } %>
+</span>

@@ -29,7 +29,10 @@ class CommentsController < ApplicationController
 
   private
 
-  def set_post = @post = Post.find_by!(slug: params[:post_id])
+  def set_post
+    @post = Post.find_by!(slug: params[:post_id])
+    @blog = @post.blog
+  end
 
   def comment_params
     params.require(:comment).permit(:content, :parent_id)

@@ -1,0 +1,6 @@
+<%= turbo_stream.replace dom_id(@donation), partial: "donations/donation", locals: { donation: @donation } %>
+<%= turbo_stream.replace "hjerterom-donation-new" do %>
+  <turbo-frame id="hjerterom-donation-new">
+    <%= render "form", donation: @donation %>
+  </turbo-frame>
+<% end %>

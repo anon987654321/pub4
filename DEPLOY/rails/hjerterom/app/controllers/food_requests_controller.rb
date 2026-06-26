@@ -2,11 +2,11 @@
 
 class FoodRequestsController < ApplicationController
   def create
-    listing  = FoodListing.find(params[:food_listing_id])
-    @request = listing.food_requests.build(request_params.merge(user: Current.user, status: "pending"))
+    @listing = FoodListing.find(params[:food_listing_id])
+    @request = @listing.food_requests.build(request_params.merge(user: Current.user, status: "pending"))
     if @request.save
       @request.record_activity!("FoodRequestCreated", source_vertical: "hjerterom")
-      redirect_to(listing, notice: "Request sent")
+      redirect_to(@listing, notice: "Request sent")
     else
       render(:new, status: :unprocessable_entity)
     end

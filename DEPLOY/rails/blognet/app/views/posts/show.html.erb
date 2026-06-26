@@ -16,9 +16,11 @@
 </article>
 <section id="comments" role="region" aria-label="Comments">
   <h2>Comments (<%= @post.comments_count %>)</h2>
-  <%= render @comments %>
+  <div id="post_comments">
+    <%= render @comments %>
+  </div>
   <% if authenticated? %>
-    <%= form_with url: blog_post_comments_path(@blog, @post) do |f| %>
+    <%= form_with url: blog_post_comments_path(@blog, @post), data: { turbo: true } do |f| %>
       <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…", data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
       <p><%= f.submit "Comment" %></p>
     <% end %>

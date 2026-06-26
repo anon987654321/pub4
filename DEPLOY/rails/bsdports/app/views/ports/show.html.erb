@@ -83,20 +83,18 @@
 
   <nav role="navigation" aria-label="Port actions">
     <% if authenticated? %>
-      <% if @watching %>
-        <%= button_to "Unwatch", unwatch_port_path(@port), method: :delete %>
-      <% else %>
-        <%= button_to "Watch", watch_port_path(@port), method: :post %>
-      <% end %>
+      <%= render "ports/watch_toggle", port: @port, watching: @watching %>
     <% end %>
   </nav>
 </article>
 
 <section id="comments" role="region" aria-label="Comments">
   <h2>Comments</h2>
-  <%= render @comments %>
+  <div id="port_comments">
+    <%= render @comments %>
+  </div>
   <% if authenticated? %>
-    <%= form_with url: port_comments_path(@port) do |f| %>
+    <%= form_with url: port_comments_path(@port), data: { turbo: true } do |f| %>
       <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…", data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
       <p><%= f.submit "Comment" %></p>
     <% end %>

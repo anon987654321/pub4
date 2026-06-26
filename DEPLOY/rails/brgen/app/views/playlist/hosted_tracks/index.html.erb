@@ -1,0 +1,24 @@
+<% content_for :title, "Hosted tracks" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Playlist</p>
+    <h1>Hosted tracks</h1>
+  </div>
+  <% if authenticated? %>
+    <%= link_to "Upload track", new_playlist_hosted_track_path, class: "btn btn-primary btn-sm" %>
+  <% end %>
+</div>
+
+<% if @tracks.any? %>
+  <div id="hosted_tracks">
+    <% @tracks.each do |track| %>
+      <article>
+        <h2><%= link_to track.title, playlist_hosted_track_path(track) %></h2>
+        <p class="dim"><%= track.artist.presence || "Unknown artist" %> · <%= track.duration_formatted %></p>
+      </article>
+    <% end %>
+  </div>
+<% else %>
+  <p class="dim">No hosted tracks yet.</p>
+<% end %>

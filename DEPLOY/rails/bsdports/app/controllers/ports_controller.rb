@@ -36,6 +36,7 @@ class PortsController < ApplicationController
     @rdeps = @port.reverse_deps.includes(:category).limit(20)
     @comments = @port.comments.roots.includes(:user, replies: :user)
     @comment = Comment.new
+    @watching = authenticated? && @port.watches.exists?(user: Current.user)
     @advisories = @port.security_advisories.recent
     @maintainer = @port.maintainer.present? ? Maintainer.find_by(name: @port.maintainer) : nil
     @pkg_info = if ENV["CI"] == "1" || Rails.env.test?
@@ -54,6 +55,7 @@ class PortsController < ApplicationController
   def watch
     require_authentication
     @port.watches.find_or_create_by!(user: Current.user)
+    @watching = true
     @port.record_activity!("PortWatched", source_vertical: "bsdports", actor: Current.user)
     respond_to do |format|
       format.turbo_stream
@@ -64,6 +66,7 @@ class PortsController < ApplicationController
   def unwatch
     require_authentication
     @port.watches.find_by(user: Current.user)&.destroy!
+    @watching = false
     @port.record_activity!("PortUnwatched", source_vertical: "bsdports", actor: Current.user)
     respond_to do |format|
       format.turbo_stream

@@ -1,0 +1,11 @@
+<%= form_with model: [commentable, comment], id: "comment_form", data: { turbo: true } do |form| %>
+  <div class="field">
+    <%= form.text_area :content, placeholder: "What do you think?", rows: 4,
+          data: { controller: "textarea-autogrow char-counter", "char-counter-max-value": 10000 } %>
+    <span class="char-counter" data-char-counter-target="counter"></span>
+  </div>
+  <% if comment.errors.any? %>
+    <p class="error"><%= comment.errors.full_messages.to_sentence %></p>
+  <% end %>
+  <div class="field"><%= form.submit "Comment", class: "btn btn-primary btn-sm" %></div>
+<% end %>

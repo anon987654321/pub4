@@ -124,6 +124,7 @@ Rails.application.routes.draw do
         resource :like, only: %i[create destroy]
       end
       resources :listens, only: :create
+      resources :hosted_tracks
     end
   end
 

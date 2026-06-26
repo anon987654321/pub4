@@ -1,0 +1,12 @@
+<% content_for :title, "Request #{@listing.title}" %>
+
+<article>
+  <h1><%= @listing.title %></h1>
+  <%= render "shared/errors", object: @request %>
+  <%= form_with url: food_listing_food_requests_path(@listing), data: { turbo: true } do |f| %>
+    <p><%= f.text_area :message, rows: 2, placeholder: "Message (optional)…", data: { controller: "char-counter", "char-counter-max-value": 500 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
+    <p><%= f.datetime_local_field :pickup_time %></p>
+    <p><%= f.submit "Request pickup" %></p>
+  <% end %>
+  <p><%= link_to "Back to listing", @listing %></p>
+</article>

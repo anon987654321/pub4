@@ -5,14 +5,14 @@ module Shared
     before_action :require_current_user
 
     def create
-      target = GlobalID::Locator.locate_signed!(params.require(:target_gid))
-      kind = params[:kind].presence || "like"
-      active = Shared::ReactionToggle.call(user: current_user, reactable: target, kind: kind)
+      @target = GlobalID::Locator.locate_signed!(params.require(:target_gid))
+      @kind = params[:kind].presence || "like"
+      @active = Shared::ReactionToggle.call(user: current_user, reactable: @target, kind: @kind)
 
       respond_to do |format|
-        format.html { redirect_back fallback_location: main_app.root_path, notice: active ? "Reaction added" : "Reaction removed" }
+        format.html { redirect_back fallback_location: main_app.root_path, notice: @active ? "Reaction added" : "Reaction removed" }
         format.turbo_stream
-        format.json { render json: { active: active, kind: kind } }
+        format.json { render json: { active: @active, kind: @kind } }
       end
     end
 

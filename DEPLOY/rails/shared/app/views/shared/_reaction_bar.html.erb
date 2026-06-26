@@ -1,0 +1,12 @@
+<% kinds = defined?(Shared::Reaction) ? Shared::Reaction::KINDS : %w[like love laugh wow sad angry local] %>
+<span id="reactions_<%= dom_id(target) %>">
+  <% kinds.each do |k| %>
+    <%= button_to reactions_path,
+        params: { target_gid: target.to_signed_global_id.to_s, kind: k },
+        data: { turbo_stream: true },
+        class: (defined?(active) && active && k == kind ? "active" : nil),
+        aria: { label: "#{k.capitalize} #{target.class.name.downcase}" } do %>
+      <%= k %>
+    <% end %>
+  <% end %>
+</span>

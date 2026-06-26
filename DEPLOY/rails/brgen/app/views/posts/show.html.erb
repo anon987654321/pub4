@@ -49,13 +49,8 @@
 
 <section id="comments-section">
   <h3>Comment as <strong><%= Current.user&.guest? ? "anon" : (Current.user&.username || "anon") %></strong><% unless authenticated? %> · <%= link_to "sign in", new_session_path %><% end %></h3>
-  <%= form_with(model: [@post, @new_comment], data: { turbo: true }) do |f| %>
-    <div class="field">
-      <%= f.text_area :content, placeholder: "What do you think?", rows: 4,
-            data: { controller: "textarea-autogrow char-counter", "char-counter-max-value": 10000 } %>
-      <span class="char-counter" data-char-counter-target="counter"></span>
-    </div>
-    <div class="field"><%= f.submit "Comment", class: "btn btn-primary btn-sm" %></div>
+  <% if authenticated? %>
+    <%= render "comments/form", comment: @new_comment, commentable: @post %>
   <% end %>
 
   <ul id="comments">

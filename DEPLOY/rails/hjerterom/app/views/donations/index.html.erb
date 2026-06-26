@@ -10,17 +10,11 @@
   </nav>
 </div>
 
-<% if @donations.any? %>
-  <%= turbo_stream_from "hjerterom:donations" %>
-  <div id="donations" role="region" aria-label="Donations list">
-    <% @donations.each do |donation| %>
-      <article id="<%= dom_id(donation) %>">
-        <h2><%= link_to donation.source_name, donation %></h2>
-        <p class="dim"><%= donation.status.humanize %><% if donation.pickup_window.present? %> · <%= donation.pickup_window %><% end %></p>
-        <% if donation.notes.present? %><p><%= donation.notes %></p><% end %>
-      </article>
-    <% end %>
-  </div>
-<% else %>
-  <div class="empty"><p>No donations yet.</p></div>
-<% end %>
+<%= turbo_stream_from "hjerterom:donations" if @donations.any? %>
+<div id="donations" role="region" aria-label="Donations list">
+  <% if @donations.any? %>
+    <%= render partial: "donations/donation", collection: @donations %>
+  <% else %>
+    <div class="empty"><p>No donations yet.</p></div>
+  <% end %>
+</div>

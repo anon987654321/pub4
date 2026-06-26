@@ -1,0 +1,47 @@
+<%= form_with model: [:playlist, track], url: track.persisted? ? playlist_hosted_track_path(track) : playlist_hosted_tracks_path do |form| %>
+  <% if track.errors.any? %>
+    <div class="error"><%= track.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :title %>
+    <%= form.text_field :title, required: true %>
+  </div>
+
+  <div class="field">
+    <%= form.label :artist %>
+    <%= form.text_field :artist %>
+  </div>
+
+  <div class="field">
+    <%= form.label :album %>
+    <%= form.text_field :album %>
+  </div>
+
+  <div class="field">
+    <%= form.label :source_type %>
+    <%= form.select :source_type, Playlist::Track::SOURCE_TYPES.map { |t| [t.humanize, t] }, include_blank: true %>
+  </div>
+
+  <div class="field">
+    <%= form.label :source_url %>
+    <%= form.url_field :source_url %>
+  </div>
+
+  <div class="field">
+    <%= form.label :privacy %>
+    <%= form.select :privacy, Playlist::Track::PRIVACY_LEVELS.map { |p| [p.humanize, p] } %>
+  </div>
+
+  <div class="field">
+    <%= form.label :audio_file, "Audio file" %>
+    <%= form.file_field :audio_file, direct_upload: true %>
+  </div>
+
+  <div class="field">
+    <%= form.label :artwork %>
+    <%= form.file_field :artwork, direct_upload: true %>
+  </div>
+
+  <%= form.submit class: "btn btn-primary btn-sm" %>
+<% end %>

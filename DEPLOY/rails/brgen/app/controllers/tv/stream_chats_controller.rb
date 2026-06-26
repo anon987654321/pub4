@@ -5,14 +5,14 @@ module Tv
     before_action :set_live_stream
 
     def create
-      entry = @live_stream.stream_chats.build(stream_chat_params)
-      entry.user = current_user if respond_to?(:current_user, true)
-      entry.save!
+      @stream_chat = @live_stream.stream_chats.build(stream_chat_params)
+      @stream_chat.user = current_user if respond_to?(:current_user, true)
+      @stream_chat.save!
 
       respond_to do |format|
         format.html { redirect_to tv_live_stream_path(@live_stream) }
         format.turbo_stream
-        format.json { render json: { id: entry.id }, status: :created }
+        format.json { render json: { id: @stream_chat.id }, status: :created }
       end
     end
 
