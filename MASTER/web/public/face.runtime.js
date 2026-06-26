@@ -3378,9 +3378,14 @@ function collectFeltState() {
 }
 window.collectFeltState = collectFeltState;
 
+function resetPrimer() {
+  primerFired = false;
+}
+
 function startEverything() {
   if (primerFired) return;
   primerFired = true;
+  document.documentElement?.classList.remove('face-loading');
   document.body?.classList.remove('face-loading');
   document.body?.classList.add('face-session');
   delete document.body?.dataset?.faceBooting;
@@ -3618,6 +3623,7 @@ window.MASTER_FACE = {
   frame,
   ensureFrameLoop,
   startEverything,
+  resetPrimer,
   ttsTick,
   ttsSkip,
   ttsTogglePause,

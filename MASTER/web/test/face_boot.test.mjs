@@ -75,9 +75,12 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /dismissPrimer\(\)/);
   assert.match(boot, /ensurePrimer/);
   assert.doesNotMatch(boot, /showLoadState/);
-  assert.match(boot, /pointerdown/);
+  assert.match(boot, /pointerup/);
   assert.match(boot, /click/);
   assert.match(boot, /touchend/);
+  assert.match(boot, /primerTarget/);
+  assert.match(boot, /resetFaceSession/);
+  assert.match(boot, /capture:true/);
   assert.doesNotMatch(boot, /15000/);
 });
 
@@ -125,6 +128,7 @@ test("face runtime uses MASTERChat stream and digested particle worker", () => {
   assert.doesNotMatch(runtime, /new EventSource\(\s*`\/chat\/message/);
   assert.match(runtime, /MASTER_ASSET_PATHS\?\.particleWorker/);
   assert.doesNotMatch(runtime, /window\.sendMessage\s*=\s*sendMessage/);
+  assert.match(runtime, /resetPrimer/);
 });
 
 test("service worker avoids stale undigested precache", () => {
