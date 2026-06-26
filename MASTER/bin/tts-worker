@@ -18,6 +18,7 @@ require "faye/websocket"
 require "json"
 require "socket"
 require "fileutils"
+require "open3"
 require "securerandom"
 
 # Edge endpoint TLS verification fails on OpenBSD; disable peer check.
@@ -29,6 +30,20 @@ end)
 
 def synth(voice, rate, pitch, text, out_path)
   RbEdgeTTS::Communicate.new(text, voice, rate: rate, pitch: pitch).save_sync(out_path)
+  File.exist?(out_path) && File.size(out_path) > 0
+end
+
+def synth_subprocess(voice, rate, pitch, text, out_path)
+  script = File.expand_path(__FILE__)
+  env = { "BUNDLE_GEMFILE" => ENV.fetch("BUNDLE_GEMFILE", File.expand_path("../Gemfile", __dir__)) }
+  _out, err, status = Open3.capture3(
+    env, Gem.ruby, script, voice, rate, pitch, out_path,
+    stdin_data: text.to_s
+  )
+  unless status.success?
+    warn "tts-worker: one-shot failed: #{err.to_s.strip}" unless err.to_s.strip.empty?
+    return false
+  end
   File.exist?(out_path) && File.size(out_path) > 0
 end
 
@@ -62,7 +77,7 @@ if ARGV[0] == "--daemon"
       text  = req["text"].to_s
       next if voice.empty? || text.empty?
       out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
-      ok = synth(voice, rate, pitch, text, out)
+      ok = synth_subprocess(voice, rate, pitch, text, out)
       if ok
         File.open(out, "rb") { |f| IO.copy_stream(f, client) }
       end

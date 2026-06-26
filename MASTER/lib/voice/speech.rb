@@ -273,6 +273,16 @@ module Master
           TtsSupervisor.ensure_daemon!
           sleep 0.15
         end
+        path = synthesize_edge_oneshot(
+          text: text_str,
+          voice_name: voice_name,
+          style_config: style_config,
+          audio_path: output_path
+        )
+        if path && File.exist?(output_path) && File.size(output_path) > 0
+          on_chunk&.call(File.size(output_path))
+          return true
+        end
         @last_error ||= "streaming synthesis produced empty audio"
         false
       rescue StandardError => e
@@ -297,6 +307,10 @@ module Master
           sleep 0.15
         end
 
+        synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
+      end
+
+      def synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
         timeout = worker_timeout
         _out, err, status = Timeout.timeout(timeout) do
           Open3.capture3(

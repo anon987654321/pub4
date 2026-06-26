@@ -87,6 +87,29 @@ class TestSpeech < Minitest::Test
     end
   end
 
+  def test_synthesize_streaming_falls_back_to_oneshot_when_socket_fails
+    path = File.join(Dir.tmpdir, "m3_stream_tts_test.mp3")
+    status = Struct.new(:success?).new(true)
+    Master::Voice::Speech.stub(:edge_tts_available?, true) do
+      Master::Voice::Speech.stub(:synthesize_edge_socket, nil) do
+        ::Open3.stub(:capture3, lambda { |*_args, **_kwargs|
+          File.binwrite(path, "fake-mp3-data")
+          ["", "", status]
+        }) do
+          assert Master::Voice::Speech.synthesize_streaming_to_file(
+            "hello",
+            output_path: path,
+            voice: :ryan,
+            style: :neutral
+          )
+          assert_equal "fake-mp3-data", File.binread(path)
+        end
+      end
+    end
+  ensure
+    File.delete(path) if File.exist?(path)
+  end
+
   def test_synthesize_edge_warns_and_cleans_up_failed_worker_output
     status = Struct.new(:success?).new(false)
     _out, err = capture_io do
