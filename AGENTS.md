@@ -26,6 +26,7 @@ Key commands: `/scan`, `/fix`, `/review`, `/critique`, `/why`, `/snapshot`. Type
 
 **VPS (vm23) — hard limits for agents:**
 - **One SSH session at a time.** Never open parallel SSH to `brgen.no` / `46.23.89.226`.
-- **Rails CI:** `zsh DEPLOY/sh/vps_ci.sh <app>` or `vps_ci_all.sh` (serial mutex). Never loop `bin/ci` across apps in one shell or multiple SSH sessions.
+- **Rails CI:** `zsh DEPLOY/sh/vps_ci.sh <app>` or `vps_ci_all.sh` (serial mutex). Syncs `/home/<app>/shared` + code overlay from git before CI. Never loop `bin/ci` across apps in one shell or multiple SSH sessions.
+- **DEPLOY paths:** Rails apps use `Pub4::DeployPaths` for postpro/repligen; MASTER uses `MASTER/tools/*.rb` shims → `Master.deploy_path(...)`.
 - **MASTER scan on VPS:** `zsh DEPLOY/sh/vps_master_scan.sh /scan DEPLOY --depth deep` (shares `/var/tmp/pub4-ci.lock`).
 - Direct `bundle34 exec bin/ci` on VPS is mutex-gated when `PUB4_CI_GUARD=1` or host has `/etc/relayd.conf`.

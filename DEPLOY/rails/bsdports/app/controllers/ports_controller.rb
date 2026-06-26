@@ -15,16 +15,16 @@ class PortsController < ApplicationController
     scope = scope.order(params[:sort] == "updated" ? "last_updated DESC" : :name)
 
     respond_to do |format|
+      format.html do
+        @pagy, @ports = pagy(scope)
+        @categories = Category.order(:name)
+        finish_live_search(partial: "ports/live_search_results")
+      end
       format.rss do
         @ports = scope.where("last_updated >= ?", 7.days.ago).order(last_updated: :desc).limit(100)
         render layout: false
       end
     end
-    return if performed?
-
-    @pagy, @ports = pagy(scope)
-    @categories = Category.order(:name)
-    finish_live_search(partial: "ports/live_search_results")
   end
 
   def show

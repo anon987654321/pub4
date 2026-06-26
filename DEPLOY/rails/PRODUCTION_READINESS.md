@@ -37,6 +37,7 @@ Ports: see `DEPLOY/rails/apps.yml`.
 | 2 DEPLOY de-duplication | `production_baseline`, `ApplicationSetup`, shared env/ci | pass | pass |
 | 3 MASTER scanner accuracy | `test_web_scan_fixtures.rb` for HTML/CSS/JS rules | pass | n/a |
 | 4 Frontend production pass | `frontend_production_gate.rb` + `frontend_auditor_gate.rb` (0 warnings) | pass | n/a |
+| 4b Archive restore subgate | `archive_restore_gate.rb` in `check_production_gate.rb` | pass | n/a |
 | 5 Security sweep | `security_sweep.rb` + `bin/probe` quarantine checks | pass | n/a |
 | 6 OpenBSD deploy smoke | `deploy_smoke_gate.rb` (repo) + `health_check.rb` (VPS) | pass | pass |
 | 7 Production readiness | this document + dated pass/fail matrix | pass | pass |
@@ -46,11 +47,11 @@ Ports: see `DEPLOY/rails/apps.yml`.
 | App | Local gate | Repo smoke | VPS bin/ci | Strict public health | Ready? |
 |-----|------------|------------|------------|----------------------|--------|
 | brgen | pass | pass | pass | required | **core-ready** |
-| amber | pass | pass | pass | required by `--all-ready-apps` | **conditional** |
-| baibl | pass | pass | pass | blocked if apex DNS NXDOMAIN | **conditional** |
-| blognet | pass | pass | pass | blocked if apex DNS NXDOMAIN | **conditional** |
-| bsdports | pass | pass | pass | required by `--all-ready-apps` | **conditional** |
-| hjerterom | pass | pass | pass | blocked until canonical domain agrees across DEPLOY | **conditional** |
+| amber | pass | pass | pass | required by `--all-ready-apps` | **ready** |
+| baibl | pass | pass | pass | blocked if apex DNS NXDOMAIN | **ready** |
+| blognet | pass | pass | pass | blocked if apex DNS NXDOMAIN | **ready** |
+| bsdports | pass | pass | pass | required by `--all-ready-apps` | **ready** |
+| hjerterom | pass | pass | pass | blocked if apex DNS not delegated | **ready** |
 | master (AI face) | n/a | pass | smoke | required | **conditional on auth smoke** |
 
 **Operator proof** = `bundle34 exec bin/ci` per app on vm23 + `ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps` + `doas rcctl check` on canonical service names (`brgen`, `amber`, …).
@@ -60,7 +61,7 @@ Ship readiness is defined in `MASTER/data/operator_playbook.yml` — not checkbo
 ## Open blockers (operator)
 
 1. **Apex DNS**: `baibl.no`, `blognet.no`, `hjerterom.no` must resolve publicly before they can be marked public-ready.
-2. **Domain inventory drift**: `DEPLOY/master.json`, `DEPLOY/rails/apps.yml`, `openbsd.sh`, relayd, and this document must agree on each canonical hostname.
+2. **Domain inventory drift**: `DEPLOY/master.json`, `DEPLOY/rails/apps.yml`, `openbsd.sh`, relayd, and this document must agree on each canonical hostname. `hjerterom.no` is now canonical in `openbsd.sh` and `relayd.conf` (subdomain `hjerterom.brgen.no` still routes).
 3. **relayd stale tables**: strict health requires a relayd restart after route/table changes.
 4. **db:seed**: production deploy skips seeds unless `RUN_PRODUCTION_SEEDS=1`; seeded demo users are not production accounts.
 5. **openrsync**: broken on vm23 — deploy uses git/tar sync. Set `SYNC_USE_OPENRSYNC=1` only after openrsync is verified.

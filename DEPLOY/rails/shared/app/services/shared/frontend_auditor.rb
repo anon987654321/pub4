@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "active_support/core_ext/object/blank"
 require_relative "frontend_rule_set"
 
 module Shared
@@ -32,6 +31,8 @@ module Shared
       |lightgallery\.css
       |actiontext\.css
       |frontend/layouts/visualizer
+      |public/assets/layouts/visualizer
+      |public/assets/_(?:minimal|zen_shell)-[a-f0-9]+\.scss
       |minimal-ui\.css
     }ix
     MAILER_STYLE_PATH_PATTERN = %r{(?:layouts/(?:mailer|_mailer_styles)|_mailer/)}
@@ -44,7 +45,8 @@ module Shared
 
     def initialize(root:, changed_paths: nil)
       @root = Pathname(root)
-      @changed_paths = Array(changed_paths).presence
+      paths = Array(changed_paths).reject { |path| path.to_s.empty? }
+      @changed_paths = paths.empty? ? nil : paths
       @findings = []
     end
 

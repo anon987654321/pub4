@@ -1,0 +1,60 @@
+meta:
+  name: pub_archive_restore
+  updated: "2026-06-26"
+  purpose: "Lessons recovered from pub2 and pub3 without restoring unsafe defaults."
+
+pub2:
+  classification: "audio product archive"
+  restore:
+    - "AKMD lofi mastering chain as a Ruby FFmpeg wrapper"
+    - "Radio Bergen manifest format"
+    - "audio-reactive visualizer concept"
+    - "Web Audio analyser and reduced-motion patterns"
+  do_not_restore:
+    - "generated MP3 binaries"
+    - "monolithic index.html architecture"
+    - "external media autoplay as a production dependency"
+    - "unreviewed public playback rights"
+  product_lessons:
+    - "Audio features need both signal chain reproducibility and rights metadata."
+    - "Visualizer code must degrade when Web Audio or autoplay is blocked."
+    - "Reduced-motion is part of production readiness, not polish."
+    - "Track manifests should be data, not hardcoded in views."
+
+pub3:
+  classification: "governance and infrastructure archive"
+  restore:
+    - "evidence scoring"
+    - "convergence detection"
+    - "quality dashboard concept"
+    - "AIGHT local CLI ideas"
+    - "platform detection for OpenBSD, Cygwin, Termux, macOS, Linux"
+    - "port single-source-of-truth lesson"
+    - "domain candidates and PTR hints"
+  do_not_restore:
+    - "auto_execute permission defaults"
+    - "bypass_confirmation permission defaults"
+    - "require_approval=false defaults"
+    - "Redis deployment assumptions"
+    - "PF rule exposing 10000:65535"
+    - "random production port allocation"
+    - "bash/sed/grep-only gates"
+  environment_constraints:
+    cygwin:
+      - "Do not assume tool sandbox PATH matches the user's Cygwin terminal."
+      - "After two failed local audio/GUI attempts, give a terminal command instead of fighting the environment."
+      - "Translate paths explicitly between Windows and POSIX forms."
+    openbsd:
+      - "Prefer Ruby gates and rc.d/ksh services over ad hoc shell."
+      - "Keep Rails app ports on loopback behind relayd."
+      - "DNS, TLS, relayd, pf, and rcctl checks must be separately observable."
+    github_archives:
+      - "Archive repos are evidence, not automatic truth."
+      - "Restore concepts into small reviewed modules."
+      - "Record do-not-restore decisions beside restored artifacts."
+
+gates:
+  required:
+    - "ruby MASTER/tools/convergence/evidence_gate.rb"
+    - "ruby DEPLOY/rails/archive_restore_gate.rb"
+    - "ruby DEPLOY/rails/check_production_gate.rb"

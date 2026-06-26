@@ -397,20 +397,6 @@ install_security_tools() {
   log_ok "Security tools added"
 }
 
-# random_port — picks a random unused TCP port in 10000–62000.
-# Usage: port=$(random_port)
-random_port() {
-  local port
-  while true; do
-    port=$(( RANDOM % 52000 + 10000 ))
-    # Confirm nothing is bound to the port
-    if ! nc -z 127.0.0.1 "$port" 2>/dev/null; then
-      print "$port"
-      return 0
-    fi
-  done
-}
-
 # retire_legacy_rails_rcd APP_NAME — stop duplicate *_rails services from older bootstrap.
 retire_legacy_rails_rcd() {
   local app_name=$1 legacy="${app_name}_rails"

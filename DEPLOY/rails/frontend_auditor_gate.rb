@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "pathname"
-require "active_support/core_ext/object/blank"
 
 ROOT = File.expand_path(__dir__)
 APPS = %w[amber baibl blognet brgen bsdports hjerterom].freeze

@@ -12,12 +12,8 @@ validate_ip() {
 }
 
 generate_random_port() {
-  typeset port
-  while :; do
-    port=$((RANDOM % 50000 + 10000))
-    typeset _out; _out=$(/usr/bin/netstat -an)
-    [[ $_out != *".$port "* ]] && echo $port && break
-  done
+  log ERROR "missing APP_PORTS entry; assign a fixed port in openbsd.sh"
+  exit 1
 }
 
 cleanup_nsd() {

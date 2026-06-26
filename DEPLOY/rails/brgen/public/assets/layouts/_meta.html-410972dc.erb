@@ -1,0 +1,16 @@
+<%= tag.meta charset: "utf-8" %>
+<%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
+
+<%# Open Graph tags %>
+<%= tag.meta property: "og:type", content: "website" %>
+<%= tag.meta property: "og:image", content: (content_for?(:og_image) ? h(yield(:og_image)) : asset_path("default_og_image.png")) %>
+<%= tag.meta property: "og:url", content: ERB::Util.u(request.original_url) %>
+<%= tag.meta property: "og:description", content: (content_for?(:description) ? h(yield(:description)) : "Discover more") %>
+<% app_name = Rails.application.class.module_parent_name.titleize rescue "App" %>
+<%= tag.meta property: "og:title", content: (content_for?(:title) ? h(yield(:title)) : app_name) %>
+
+<%# Twitter Card tags – fall back to Open Graph values when not provided %>
+<%= tag.meta name: "twitter:card", content: "summary_large_image" %>
+<%= tag.meta name: "twitter:title", content: (content_for?(:title) ? h(yield(:title)) : app_name) %>
+<%= tag.meta name: "twitter:description", content: (content_for?(:description) ? h(yield(:description)) : "Discover more") %>
+<%= tag.meta name: "twitter:image", content: (content_for?(:og_image) ? h(yield(:og_image)) : asset_path("default_og_image.png")) %>

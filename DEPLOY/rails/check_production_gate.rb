@@ -125,6 +125,15 @@ else
   fail!(failures, "missing DEPLOY/rails/master_web_assets_gate.rb")
 end
 
+archive_restore_gate = File.join(RAILS_ROOT, "archive_restore_gate.rb")
+if File.file?(archive_restore_gate)
+  stdout, status = Open3.capture2(RUBY_BIN, archive_restore_gate, chdir: ROOT)
+  print stdout
+  fail!(failures, "archive restore gate failed") unless status.success?
+else
+  fail!(failures, "missing DEPLOY/rails/archive_restore_gate.rb")
+end
+
 if failures.any?
   warn "Production gate failures:"
   failures.each { |failure| warn "  - #{failure}" }

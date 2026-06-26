@@ -1,0 +1,86 @@
+/* Dating swipe stack */
+#swipe-stack {
+  display: grid;
+  position: relative;
+  min-height: 640px;
+}
+
+.swipe-card {
+  grid-area: 1 / 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  box-shadow: var(--shadow);
+  transition: transform 220ms cubic-bezier(.32, .72, 0, 1), opacity 180ms ease, box-shadow 180ms ease;
+}
+
+@for $i from 0 through 15 {
+  .swipe-card--stack-#{$i} {
+    transform: translateY(#{$i * 6px}) scale(#{1 - $i * 0.02});
+    z-index: #{100 - $i};
+  }
+}
+
+.swipe-card img {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: 2px;
+  margin-bottom: 0.75rem;
+}
+
+.swipe-placeholder {
+  display: grid;
+  place-items: center;
+  height: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  margin-bottom: 0.75rem;
+}
+
+.swipe-placeholder span {
+  font-size: 64px;
+  font-weight: 900;
+}
+
+.swipe-meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.swipe-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 0.75rem;
+  justify-content: space-between;
+}
+
+.swipe-card.dragging {
+  cursor: grabbing;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, .28);
+}
+
+.swipe-card.liked {
+  border-color: var(--success, #29c36a);
+}
+
+.swipe-card.passed {
+  border-color: var(--danger, #f05a5a);
+}
+
+.media-gallery {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(72%, 1fr);
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 2px 2px 0.75rem;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
