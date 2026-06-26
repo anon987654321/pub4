@@ -3,6 +3,8 @@
 
 require "ferrum"
 require "json"
+require "open3"
+require "timeout"
 
 URL = ARGV[0] || ENV.fetch("WEB_URL", "https://ai.brgen.no/")
 CHROME_PATHS = [
@@ -58,11 +60,22 @@ def probe_evaluate(browser, script, attempts: 2, pause: 1.0)
   raise last_error
 end
 
+def static_html_ok?(url)
+  html, status = Open3.capture2("curl", "-fsS", url)
+  return false unless status.success?
+
+  html.include?('id="primer"') && html.include?("syncPrimerRefs")
+rescue StandardError
+  false
+end
+
 puts "probe_primer: #{URL}"
 
 begin
   begin
-    browser.go_to(URL)
+    Timeout.timeout(12) { browser.go_to(URL) }
+  rescue Timeout::Error
+    puts "WARN: navigation timeout — continuing"
   rescue Ferrum::PendingConnectionsError => e
     puts "WARN: pending connections on load — #{e.message}"
   end
@@ -168,10 +181,9 @@ begin
     failures.each { |f| puts "  - #{f}" }
     exit 1
   end
-rescue Ferrum::TimeoutError, Ferrum::DeadBrowserError => e
-  html = `curl -fsS #{URL.shellescape} 2>/dev/null`
-  if html.include?('id="primer"') && html.include?("syncPrimerRefs")
-    puts "\nprobe_primer: SKIP (CDP evaluate blocked — #{e.class})"
+rescue Ferrum::TimeoutError, Ferrum::DeadBrowserError, Timeout::Error => e
+  if static_html_ok?(URL)
+    puts "\nprobe_primer: SKIP (headless blocked — #{e.class})"
     puts "static HTML checks OK: primer + boot script present"
     exit 0
   end
