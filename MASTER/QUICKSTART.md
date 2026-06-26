@@ -16,7 +16,7 @@ It has strong opinions because it was built to survive long-term in the presence
 
 Key layers (in order of importance):
 1. **Constitution** (`data/*.yml`) — The actual law. Everything else is implementation.
-2. **Pipeline** (`now/pipeline.rb` + stages) — The 11-stage turn: Intake → Enhance → Infer → Route → Guard → Execute → [Council | Lint] → Prune → Memo → Render.
+2. **Pipeline** (`now/pipeline.rb` + stages) — Ten stages: Intake → Enhance → Infer → Route → Guard → Deliberate → Execute → Review (Council + Lint + Prune) → Memory → Render.
 3. **Judge** — Deep static + semantic analysis + adversarial council review.
 4. **Loop** — Self-improvement mechanisms (fix loops, rule loops, autoloop).
 5. **Ground / Reach / Trace** — Memory, tools, and event bus.
@@ -86,6 +86,27 @@ bin/probe all
 ```
 
 If local workstation Ruby is older than 3.4, treat it as syntax/probe-only and do the final runtime check on the VPS.
+
+### Media generation (Replicate + VideoChain)
+
+Requires `REPLICATE_API_TOKEN` in `/etc/master.env` (or `~/.config/repligen/config.json`). Full operator detail: `REPLICATE.md`.
+
+| Command | Purpose |
+|---------|---------|
+| `/photograph <seed>` | Flux image + kodak_portra postpro |
+| `/repligen generate <model> <prompt>` | Direct Replicate generation |
+| `/video [flags] <prompt>` | Long-form cinematic video (chunked I2V + stitch) |
+| `/motion-dataset --preset … --subject …` | Bootstrap Motion LoRA training clips |
+| `/prompt photo\|video <seed>` | Strunk-polished prompt only (no generation) |
+
+Standalone video CLI (no interactive session):
+
+```sh
+bundle exec ruby bin/video help
+bundle exec ruby bin/video --minutes 2 --critique --auto-retry "neon alley chase"
+```
+
+Use `--vision-critique` + `MOTION_CRITIQUE_VISION=1` for Replicate vision council; `--per-chunk-critique` reviews each clip before stitch (on by default with `--auto-retry`).
 
 ## Current Known Friction Points (2026)
 

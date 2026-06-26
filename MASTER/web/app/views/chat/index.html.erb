@@ -8,7 +8,8 @@
   <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="dark">
   <meta name="master-runtime" content="face">
-  <meta name="master-tier" content="<%= @tier.to_s %>">
+  <meta name="master-tier" content="<%= @tier == "authenticated" ? "full access" : "visitor" %>">
+  <meta name="master-mode" content="safe=1 web=1 tier=<%= @tier.to_s %>">
   <meta name="master-container-ready" content="<%= @container_ready ? "1" : "0" %>">
   <meta name="master-model" content="<%= @model.to_s %>">
   <meta name="master-visual-profile" content="auto">
@@ -140,7 +141,7 @@
   <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
     <span class="pp">master</span><span class="sep2">* </span>
     <button type="button" class="tool" data-cmd="/photograph " aria-label="Photo">photo</button>
-    <button type="button" class="tool" data-cmd="/repligen generate <%= Master::Reach::RepligenArg::DEFAULT_VIDEO_MODEL %> " aria-label="Video">video</button>
+    <button type="button" class="tool" data-cmd="/video --minutes 2 " aria-label="Video">video</button>
     <button type="button" class="tool" data-cmd="/music " aria-label="Music">music</button>
     <button type="button" class="tool" data-act="mic" aria-label="Microphone">mic</button>
     <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message"></textarea>

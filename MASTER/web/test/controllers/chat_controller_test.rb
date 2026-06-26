@@ -10,6 +10,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "tap to enter"
     assert_includes response.body, 'id="primer-tier"'
     assert_includes response.body, "visitor"
+    assert_includes response.body, 'name="master-mode"'
     assert_includes response.body, 'id="boot-wayfinding"'
     assert_includes response.body, "face_wayfinding"
     assert_includes response.body, "master:face-ready"

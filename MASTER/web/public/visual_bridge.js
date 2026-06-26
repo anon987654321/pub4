@@ -286,9 +286,17 @@
       delete document.body.dataset.linkQuiet;
       emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.90, mode: "connected" });
     };
+    eventSource.addEventListener("trace", (message) => {
+      try {
+        const payload = JSON.parse(message.data);
+        if (payload.trace_id) document.documentElement.dataset.trace = String(payload.trace_id);
+      } catch (_error) {}
+    });
     eventSource.onmessage = (message) => {
       try {
-        handleRuntimeEvent(JSON.parse(message.data));
+        const payload = JSON.parse(message.data);
+        if (payload.trace_id) document.documentElement.dataset.trace = String(payload.trace_id);
+        handleRuntimeEvent(payload);
       } catch (error) {
         window.MASTER_LOG?.warn?.("visual_bridge:sse_frame", error, message.data);
         emitVisual("events:raw", { topology: "sphere", entropy: 0.24, confidence: 0.62, raw: message.data });

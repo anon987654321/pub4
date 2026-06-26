@@ -24,13 +24,20 @@ module Master
         failures = failure_events(root, 3)
         branch = git.branch || "?"
         turn_hint = trace&.last_turn ? "turn=#{trace.last_turn[:id]}" : "turn=none"
+        stage_rec = last_event(root, "pipeline:stage_complete")
+        verdict_rec = last_event(root, "review:verdict")
+        stage_name = stage_rec&.dig("payload", "stage") || "none"
+        verdict_line = format_verdict(verdict_rec)
+        config = Master::Ground::Config.new(root) rescue {}
         lines = [
           "status",
+          "mode    #{Master::Now::RuntimeMode.summary(config: config)}",
           "service master/#{svc[:state]} #{svc[:detail]}",
           "git     #{branch}@#{head} ahead=#{ahead} behind=#{behind} #{dirty ? "dirty" : "clean"}",
           "fix     bg=#{bg} autofix=#{af}",
           "bundle  #{bndl}",
           "trace   #{turn_hint}  (/replay turn)",
+          "pipeline last=#{stage_name} #{verdict_line}",
           "events  (last #{evts.size})  (/replay failures)"
         ]
         evts.each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
@@ -38,6 +45,23 @@ module Master
         lines.join("\n")
       rescue StandardError => e
         "status: #{e.message}"
+      end
+
+      def last_event(root, pattern)
+        Trace::EventLog.new(root: root).recent(40, pattern: pattern).last
+      rescue StandardError
+        nil
+      end
+
+      def format_verdict(rec)
+        return "" unless rec
+
+        pay = rec["payload"]
+        return "" unless pay.is_a?(Hash)
+
+        pass = pay["pass"] ? "pass" : "fail"
+        score = pay["score"]
+        score ? "review=#{pass} score=#{score}" : "review=#{pass}"
       end
 
       def service_status

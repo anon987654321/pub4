@@ -68,6 +68,7 @@ module Master
         start_background_loop
         first_boot_bar
         puts @refs.renderer.splash(@refs.agent.model)
+        print_boot_wayfinding unless skip_boot_scan?
         puts @refs.renderer.session_line(@refs.session.name) if @refs.session.name
         print_repo_tree unless booted_before?
         replay_recent_turns if @refs.session.messages.any?
@@ -153,27 +154,6 @@ module Master
         @repl.handle_line(@last_suggestion)
       end
 
-      def run_help(line = "/help")
-        arg = line.to_s.strip.sub(%r{\A/\??help\s*}i, "").strip
-        text = arg.empty? ? CommandRegistry.help_summary : CommandRegistry.help_text(arg)
-        puts @refs.renderer.render(text, mode: :dim)
-        puts @refs.renderer.render("<< for multiline. anything else is a prompt.", mode: :dim) if arg.empty?
-      end
-
-      def unknown_command(stripped)
-        name = stripped.split(/\s/).first
-        detail = CommandRegistry.help_text(name.delete_prefix("/"))
-        puts @refs.renderer.render("unknown command: #{name}.", mode: :dim)
-        puts @refs.renderer.render(detail, mode: :dim) if detail && !detail.start_with?("help: no detail")
-      end
-
-      def exit_cli
-        @refs.session&.save!
-        line = @refs.renderer&.closing
-        puts line if line
-        @running = false
-      end
-
       def next_action_chips
         base = ["[/undo]", "[/why]", "[/last]"]
         base.unshift("[/fix #{violations_count}v]") if violations_count.positive?
@@ -205,38 +185,6 @@ module Master
         @proposer
       end
 
-      def replay_recent_turns
-        tail = @refs.session.messages.last(REPLAY_TURNS * 2)
-        return if tail.empty?
-        puts @refs.renderer.render("resume0: replaying last #{tail.size} messages", mode: :dim)
-        tail.each do |msg|
-          tag = msg[:role] == :user ? "you" : "master"
-          content = msg[:content].to_s
-          first_line = content.lines.first.to_s
-          snippet = first_line.strip[0, 100]
-          puts @refs.renderer.render("  #{tag}: #{snippet}", mode: :dim)
-        end
-        puts
-      end
-
-      def print_repo_tree
-        lines = Master::CommandRegistry.tree_lines(@refs.root)
-        return if lines.empty?
-        puts @refs.renderer.render("tree0: #{File.basename(@refs.root)} (#{lines.size} entries)", mode: :dim)
-        lines.each { |l| puts @refs.renderer.render(l, mode: :dim) }
-        puts
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.print_repo_tree", event_bus: @refs.bus)
-      end
-
-      def booted_before?
-        flag = File.join(@refs.root, ".master", "booted_once")
-        File.exist?(flag)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.booted_before?", event_bus: @refs.bus)
-        false
-      end
-
       def cli_felt_sense
         mood = @last_ok ? "focused" : "tense"
         mood = "curious" if @refs.session.phase == :discover
@@ -256,23 +204,6 @@ module Master
         )
       end
 
-      def first_boot_bar
-        return unless $stdout.isatty
-        flag = File.join(@refs.root, ".master", "booted_once")
-        return if File.exist?(flag)
-        INIT_FRAMES.times do |i|
-          bar = ("\u25B0" * (i + 1)) + ("\u25B1" * (INIT_FRAMES - i - 1))
-          pct = ((i + 1) * 100 / INIT_FRAMES).to_s.rjust(3)
-          print "\rinit0: #{bar} #{pct}%"
-          $stdout.flush
-          sleep INIT_FRAME_MS
-        end
-        puts
-        FileUtils.mkdir_p(File.dirname(flag))
-        File.write(flag, Time.now.to_s)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.mark_booted", event_bus: @refs.bus)
-      end
     end
   end
 end

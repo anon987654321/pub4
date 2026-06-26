@@ -28,7 +28,15 @@ module Master
         },
         "status" => {
           summary: "show one-frame service and repo health",
-          detail: ["/status", "Shows service state, git divergence, fix loop state, bundle status, recent events, and last failures."]
+          detail: ["/status", "Shows mode line, service state, git divergence, fix loop state, last pipeline stage, review verdict, recent events."]
+        },
+        "orient" => {
+          summary: "authority map and reading tiers",
+          detail: ["/orient", "/orient <soul|rules|limits|…>", "Pipeline map, TRACE.md pointer, constitution file index."]
+        },
+        "tools" => {
+          summary: "list Reach agent tools and CLI media commands",
+          detail: ["/tools", "Shows Builder TOOL_MAP, /postpro /repligen /video, and data/tools.yml."]
         },
         "replay" => {
           summary: "replay operational event history",
@@ -98,7 +106,41 @@ module Master
         "help" => {
           summary: "show command summaries or details",
           detail: ["/help", "/help <command>"]
-        }
+        },
+        "video" => {
+          summary: "long-form cinematic video via VideoChain",
+          detail: [
+            "/video [--backend kling|happyhorse|cogvideox|minimax|animatediff|animatediff_camera]",
+            "[--minutes N] [--critique] [--vision-critique] [--per-chunk-critique]",
+            "[--auto-retry] [--max-retries N] [--lora ID]",
+            "[--motion-stack preset1,preset2] [--motion-preset NAME] <prompt>",
+            "Standalone: bundle exec ruby bin/video (see REPLICATE.md).",
+          ]
+        },
+        "motion-dataset" => {
+          summary: "bootstrap Motion LoRA training clips",
+          detail: [
+            "/motion-dataset --preset slow_dolly_push_in --subject \"character description\"",
+            "[--clips 12] [--backend kling] [--lora ID]",
+            "Presets: data/comfyui/motion_lora_presets.yml",
+          ]
+        },
+        "photograph" => {
+          summary: "Flux photo + kodak_portra postpro",
+          detail: ["/photograph <seed>", "Attach a reference image in web chat for vision-guided refinement."]
+        },
+        "prompt" => {
+          summary: "refine a generation prompt (photo or video)",
+          detail: ["/prompt <seed>", "/prompt photo <seed>", "/prompt video <seed>"]
+        },
+        "repligen" => {
+          summary: "Replicate image/video generation CLI",
+          detail: ["/repligen generate <model> <prompt>", "/repligen sync|search|stats …"]
+        },
+        "postpro" => {
+          summary: "film-stock post-processing on images",
+          detail: ["/postpro --input path --output path --preset portrait --stock kodak_portra"]
+        },
       }.freeze
 
       def help_text(command = nil)
@@ -115,8 +157,9 @@ module Master
         "session" => %w[clear save history grep audit tokens cost undo rollback redo],
         "work" => %w[scan fix workflow review critique self kernel status replay graph resync tail edge-cases],
         "agent" => %w[run mode task persona btw shell gateway],
-        "system" => %w[orient tree diff commit snapshot diag reload propose context verify doctor help],
-        "infer" => []
+        "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help],
+        "infer" => [],
+        "media" => %w[photograph repligen postpro prompt video motion-dataset],
       }.freeze
 
       CLI_ONLY_SLASH = %w[

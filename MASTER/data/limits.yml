@@ -362,14 +362,21 @@ phases:
       - lessons_captured
       - defaults_updated
 session_startup:
+  reading_tiers:
+    explore:
+      required: [MASTER/QUICKSTART.md]
+      optional: [data/soul.yml ABSOLUTE sections]
+      note: "Recon and analysis — pair with llm_ergonomics; external rg allowed."
+    structural_edit:
+      required: [data/soul.yml, data/rules.yml, data/limits.yml]
+      optional: [data/voice.yml, data/style.yml, data/state.yml]
+      note: "Before production edits and deploy-touching changes."
+    production_ops:
+      required: [data/operator_playbook.yml]
+      optional: [MASTER/TRACE.md]
+      note: "VPS friction, relayd, recovery — run bin/playbook when signals match."
   mandatory_reads:
-    - data/soul.yml
-    - data/rules.yml
-    - data/voice.yml
-    - data/style.yml
-    - data/limits.yml
-    - data/state.yml
-    - data/operator_playbook.yml
+    - "See reading_tiers — QUICKSTART first; full constitution only for structural edits."
   playbook_command: "bin/playbook — print codified operator lessons when signals match production friction"
   check_standing_orders: "Verify FSM state before any mutation -- UNCHANGE blocks refactoring"
   scan_before_analysis: "Use /scan deep via MASTER, not external agents, for code analysis"

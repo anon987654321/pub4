@@ -366,6 +366,8 @@ module Master
   end
 
   def self.ensure_services!(root: ROOT)
+    return if ENV["MASTER_SKIP_TTS"] == "1"
+
     Voice::TtsSupervisor.ensure_daemon!(root: root)
   end
 

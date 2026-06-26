@@ -68,6 +68,7 @@ module Master
         lines << d("security0: #{pledge_ok ? "pledge armed" : "pledge unavailable"}")
         lines << d("web0: #{web}")
         lines << d("modules0: ground trace voice now loop judge reach ok")
+        lines << d("mode0: #{Master::Now::RuntimeMode.summary(config: @config)}")
         elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i - @boot_ms)
         lines << d("boot0: #{elapsed}ms")
         lines << ""
@@ -77,6 +78,18 @@ module Master
       end
 
       alias banner splash
+
+      def boot_wayfinding(constitution:, agent:, scan:)
+        parts = []
+        parts << (constitution ? "constitution ✓" : "constitution ·")
+        parts << (agent ? "agent ✓" : "agent ·")
+        case scan
+        when :done then parts << "ready ✓"
+        when :active then parts << "scan…"
+        else parts << "ready ·"
+        end
+        d("boot: #{parts.join(" · ")}")
+      end
 
       def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil, cost: nil)
         branch = git_branch || "detached"

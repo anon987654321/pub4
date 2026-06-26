@@ -19,6 +19,7 @@ class ApplicationController < ActionController::Base
   WEB_WRITE_WINDOW_S   = 60
 
   before_action :set_html_no_store, if: -> { request.format.html? }
+  after_action :set_html_no_store, if: -> { request.format.html? }
   before_action :require_container!
   before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }
   before_action :enforce_chat_rate_limit, if: -> { action_in?(:message) }

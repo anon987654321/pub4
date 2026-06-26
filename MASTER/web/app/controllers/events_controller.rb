@@ -35,7 +35,9 @@ class EventsController < ApplicationController
     response.headers["Content-Type"]      = "text/event-stream"
     response.headers["Cache-Control"]     = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"  # nginx passthrough
+    trace_id = SecureRandom.hex(8)
     response.stream.write(": connected\n\n")
+    response.stream.write("event: trace\ndata: #{JSON.generate(trace_id: trace_id)}\n\n")
 
     bus      = container[:bus]
     received = Queue.new

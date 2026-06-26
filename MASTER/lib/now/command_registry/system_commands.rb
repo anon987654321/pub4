@@ -12,11 +12,12 @@ module Master
 
       SKIP_SEGS = Master::Trace::SnapshotPublisher::SKIP_SEGS
 
-      def system_commands(agent:, diag:, root:, session: nil, bus: nil, scanner: nil)
+      def system_commands(agent:, diag:, root:, session: nil, bus: nil, scanner: nil, ai: nil)
         container = { session: session, config: {}, root: root, bus: bus }
         {
           "orient" => command(:dispatch_orient, root),
           "explain" => command(:dispatch_orient, root),
+          "tools" => command(:dispatch_tools, root, ai),
           "tree" => command(:dispatch_tree, root),
           "diff" => command(:dispatch_diff, root),
           "commit" => command(:dispatch_commit, agent, root),
@@ -48,7 +49,13 @@ module Master
           "MASTER — constitutional AI runtime for any text artifact",
           "modules: now · loop · judge · voice · ground · reach · trace",
           "rules: #{Master.rule_count(root: root)} registered",
-          "pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render",
+          "pipeline: #{Master::Now::RuntimeMode::PIPELINE_STAGES}",
+          "trace:   see TRACE.md — /tail /replay /status",
+          "",
+          "reading tiers:",
+          "  explore     QUICKSTART.md + /orient (recon, analysis)",
+          "  structural  soul.yml + rules.yml + limits.yml before edits",
+          "  production  + operator_playbook.yml + bin/playbook on VPS friction",
           "",
           "authority:",
           *Master.authority_paths(root: root).map { |label, path| "  #{label.ljust(10)} #{relative_or_absolute(root, path)}" },
@@ -152,6 +159,19 @@ module Master
         out.ok? ? "verify: scan clean (#{out.value!.line})" : "verify: #{out.message}"
       rescue StandardError => e
         "verify: #{e.message}"
+      end
+
+      def dispatch_tools(root, ai, ctx: nil)
+        reach = Master::Builder::TOOL_MAP.keys.sort
+        cli = tool_commands(root, ai).keys.sort
+        agent_count = Array(ai&.dig(:tools)).size
+        [
+          "tools",
+          "reach  #{reach.join(' ')}",
+          "cli    #{cli.join(' ')}",
+          "agent  #{agent_count} wired (#{agent_count.positive? ? 'AskLlm Shell ReadFile …' : 'none'})",
+          "docs   data/tools.yml · TRACE.md",
+        ].join("\n")
       end
 
       def dispatch_doctor(root, ctx: nil)

@@ -56,7 +56,14 @@ trap("INT") { save_cli_session_safely(cli); $stderr.puts "\nsaved"; exit 0 }
 trap("TERM") { save_cli_session_safely(cli); exit 0 }
 
 Master::Now::BootBanner.print
-cli = Master.boot(root: Dir.pwd)
+if $stdin.tty?
+  cli = Master.boot(root: Dir.pwd)
+else
+  ENV["MASTER_PIPE"] = "1"
+  ENV["MASTER_SKIP_BOOT_SCAN"] = "1"
+  ENV["MASTER_SKIP_TTS"] = "1"
+  cli = Master.boot(root: Dir.pwd)
+end
 Master::Ops::RuntimeLoopGuards.install!
 
 if $stdin.tty?

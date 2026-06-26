@@ -199,6 +199,7 @@ class TestCLI < Minitest::Test
     assert_includes output, "rules: #{Master.rule_count(root: Master::ROOT)} registered"
     assert_includes output, "authority:"
     assert_includes output, "data/rules.yml"
+    assert_includes output, "reading tiers"
   end
 
   def test_publish_snapshot_includes_tree_and_full_file_contents

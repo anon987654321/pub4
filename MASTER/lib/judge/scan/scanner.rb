@@ -68,6 +68,7 @@ module Master
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
+          reset_scan_progress(paths.size) if stream
           pairs = parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }
           pairs.concat(cross_file_pairs(dir, paths))
           Result.ok(prune_violation_objects(pairs))
@@ -182,7 +183,7 @@ module Master
         def scan_one(dir:, path:, depth:, stream:, index: nil)
           sleep @file_sleep_s if @file_sleep_s > 0
           file_result = scan(path, depth:)
-          stream_progress(dir:, path:, file_result:) if stream
+          emit_scan_progress(dir:, path:, file_result:) if stream
           [path, file_result]
         rescue StandardError => e
           @bus&.publish("scanner:thread_error", path:, index:, error: e.message)
@@ -216,12 +217,27 @@ module Master
           pairs
         end
 
-        def stream_progress(dir:, path:, file_result:)
-          return unless file_result.ok?
-          count = file_result.value!.size
+        def reset_scan_progress(total)
+          @scan_progress = {
+            total: total,
+            done: 0,
+            started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
+          }
+        end
+
+        def emit_scan_progress(dir:, path:, file_result:)
+          return unless @scan_progress
+
+          done = @mutex.synchronize { @scan_progress[:done] += 1 }
+          total = @scan_progress[:total]
+          elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @scan_progress[:started_at]
+          eta_s = done.positive? ? ((elapsed / done) * (total - done)).round : nil
+          count = file_result.ok? ? file_result.value!.size : 0
           rel = path.sub(dir, "").delete_prefix("/")
-          $stdout.puts "scan: #{rel} #{count} violation(s)"
+          eta_str = eta_s && eta_s.positive? ? " ~#{eta_s}s left" : ""
+          $stdout.puts "scan: [#{done}/#{total}] #{rel} #{count} violation(s)#{eta_str}"
           $stdout.flush
+          @bus&.publish("scan:progress", done:, total:, path: rel, violations: count, eta_s:)
         end
 
         def active_rules(_depth)

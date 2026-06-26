@@ -7,7 +7,6 @@ module Master
 
       def start_background_loop
         @bg_thread = Thread.new do
-          boot_scan
           loop do
             break if background_stop_requested?
 

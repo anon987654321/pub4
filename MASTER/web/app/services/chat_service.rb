@@ -2,6 +2,7 @@
 
 require "json"
 require "open3"
+require "securerandom"
 
 class ChatService
   SMOKE_MESSAGES = %w[ping pong health up].freeze
@@ -64,7 +65,10 @@ class ChatService
   private
 
   def stream_open!
+    @trace_id = SecureRandom.hex(8)
     @stream.write(": connected\n\n")
+    @stream.write("event: trace\ndata: #{JSON.generate(trace_id: @trace_id)}\n\n")
+    @stream.write("data: #{JSON.generate(type: "trace", trace_id: @trace_id)}\n\n")
   end
 
   def smoke_reply?

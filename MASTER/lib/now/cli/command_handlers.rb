@@ -8,13 +8,17 @@ module Master
       private
 
       def run_help(command = nil)
-        puts @refs.renderer.render(Master::Now::CommandRegistry.help_text(command), mode: :dim)
-        puts @refs.renderer.render("<< for multiline. anything else is a prompt.", mode: :dim)
+        arg = command.to_s.strip
+        text = arg.empty? ? Master::Now::CommandRegistry.help_summary : Master::Now::CommandRegistry.help_text(arg)
+        puts @refs.renderer.render(text, mode: :dim)
+        puts @refs.renderer.render("<< for multiline. anything else is a prompt.", mode: :dim) if arg.empty?
       end
 
       def unknown_command(stripped)
         name = stripped.split(/\s/).first
-        puts @refs.renderer.render("unknown command: #{name}. /help for commands.", mode: :dim)
+        detail = Master::Now::CommandRegistry.help_text(name.delete_prefix("/"))
+        puts @refs.renderer.render("unknown command: #{name}.", mode: :dim)
+        puts @refs.renderer.render(detail, mode: :dim) if detail && !detail.start_with?("help: no detail")
       end
 
       def run_sound_critique
@@ -146,7 +150,7 @@ module Master
       end
 
       def exit_cli
-        @refs.session.save!
+        @refs.session&.save!
         save_cli_history
         line = @refs.renderer.closing
         puts line if line
@@ -199,6 +203,16 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.booted_before?", event_bus: @refs.bus)
         false
+      end
+
+      def skip_boot_scan?
+        ENV["MASTER_SKIP_BOOT_SCAN"] == "1" || ENV["MASTER_PIPE"] == "1"
+      end
+
+      def print_boot_wayfinding
+        puts @refs.renderer.boot_wayfinding(constitution: true, agent: true, scan: :active)
+        boot_scan
+        puts @refs.renderer.boot_wayfinding(constitution: true, agent: true, scan: :done)
       end
 
       def first_boot_bar

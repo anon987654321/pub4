@@ -36,7 +36,7 @@ module Master
         commands.merge!(control_commands(ai[:standing], ai[:soul]))
         commands.merge!(system_commands(
           agent: ai[:agent], diag: infra[:diag], root:,
-          session: infra[:session], bus: infra[:bus], scanner: ai[:scanner]
+          session: infra[:session], bus: infra[:bus], scanner: ai[:scanner], ai: ai
         ))
         commands["help"] = command(:help_text, nil)
         commands["restart"] = commands["rebuild"] if commands["rebuild"]
