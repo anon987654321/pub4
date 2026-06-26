@@ -84,6 +84,7 @@ class ApplicationController < ActionController::Base
     return if warming_exempt_path?
 
     start_container_bootstrap!
+    MasterContainerLoader.ensure! unless container
 
     return if container
 
@@ -95,10 +96,10 @@ class ApplicationController < ActionController::Base
   end
 
   def start_container_bootstrap!
-    config = Rails.application.config
-    return if config.x.master_bootstrap_started
+    app_config = Rails.application.config
+    return if app_config.x.master_bootstrap_started
 
-    config.x.master_bootstrap_started = true
+    app_config.x.master_bootstrap_started = true
     Thread.new { MasterContainerLoader.ensure! }
   end
 
@@ -106,7 +107,7 @@ class ApplicationController < ActionController::Base
     path = request.path
     return true if path == "/up" || path == "/health"
     return true if smoke_chat_probe?
-    return true if path.start_with?("/assets/")
+    return true if path.start_with?("/assets/", "/runtime/")
     return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|topology_|cluster_|mask|sw\.js|manifest\.json|icon\.|offline\.html)})
 
     false

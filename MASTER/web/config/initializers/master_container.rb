@@ -30,7 +30,8 @@ module MasterContainerLoader
       container
     end
   rescue StandardError => e
-    Rails.logger.error("master_container boot failed: #{e.message}")
+    Rails.logger.error("master_container boot failed: #{e.class}: #{e.message}")
+    config.x.master_bootstrap_started = false
     nil
   end
 
