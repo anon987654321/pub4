@@ -30,7 +30,9 @@ class ApplicationController < ActionController::Base
   private
 
   def set_html_no_store
-    response.headers["Cache-Control"] = "no-store"
+    response.headers.delete("ETag")
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response.headers["Pragma"] = "no-cache"
   end
 
   def action_in?(actions)
