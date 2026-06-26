@@ -11,11 +11,12 @@ module Master
 
       FLUX_MODEL = "black-forest-labs/flux-1.1-pro"
       BACKENDS = {
-        kling: { version: "kwaivgi/kling-v2.1", max_duration: 10 },
-        happyhorse: { version: "minimax/video-01-live", max_duration: 12 },
-        cogvideox: { version: "thudm/cogvideox-5b-i2v", max_duration: 10 },
-        minimax: { version: "minimax/video-01-live", max_duration: 12 },
-        comfyui_local: { version: nil, max_duration: 10 },
+        kling: { provider: :replicate, version: "kwaivgi/kling-v2.1", max_duration: 10 },
+        happyhorse: { provider: :replicate, version: "minimax/video-01-live", max_duration: 12 },
+        cogvideox: { provider: :replicate, version: "thudm/cogvideox-5b-i2v", max_duration: 10 },
+        minimax: { provider: :replicate, version: "minimax/video-01-live", max_duration: 12 },
+        animatediff: { provider: :comfyui, max_duration: 16, frames: 81 },
+        comfyui_local: { provider: :comfyui, max_duration: 16, frames: 81 },
       }.freeze
 
       def self.generate(
@@ -30,17 +31,21 @@ module Master
         vignette: "PI/4",
         max_threads: 4,
         motion_intensity: 0.75,
+        motion_lora: nil,
+        motion_lora_weight: nil,
         critique: false,
         agent: nil,
         event_bus: nil,
         replicate: nil,
+        comfyui: nil,
         root: Master::ROOT
       )
         new(
           root: root,
           agent: agent,
           event_bus: event_bus,
-          replicate: replicate || ReplicateClient.new
+          replicate: replicate || ReplicateClient.new,
+          comfyui: comfyui
         ).generate(
           prompt: prompt,
           lora_id: lora_id,
@@ -53,21 +58,22 @@ module Master
           vignette: vignette,
           max_threads: max_threads,
           motion_intensity: motion_intensity,
+          motion_lora: motion_lora,
+          motion_lora_weight: motion_lora_weight,
           critique: critique
         )
       end
 
-      def initialize(root:, replicate:, agent: nil, event_bus: nil)
+      def initialize(root:, replicate:, comfyui: nil, agent: nil, event_bus: nil)
         @root = root
         @replicate = replicate
+        @comfyui = comfyui
         @agent = agent
         @bus = event_bus
       end
 
       def generate(**kwargs)
         opts = normalize_options(kwargs)
-        raise Error, "comfyui_local not wired — set COMFYUI_URL and extend VideoChain" if opts[:backend] == :comfyui_local
-
         FileUtils.mkdir_p([opts[:temp_dir], opts[:output_dir]])
         total_chunks = (opts[:total_minutes] * 60.0 / opts[:chunk_seconds]).ceil
         @bus&.publish(:video_chain_start, backend: opts[:backend], chunks: total_chunks)
@@ -84,11 +90,17 @@ module Master
 
       def normalize_options(kwargs)
         backend = kwargs.fetch(:backend, :kling).to_sym
+        backend = :animatediff if backend == :comfyui_local
+        config = BACKENDS.fetch(backend) { BACKENDS[:kling] }
+        weight = kwargs[:motion_lora_weight]
+        weight = ENV["COMFYUI_MOTION_LORA_WEIGHT"] if weight.nil?
+        weight = weight.to_f if weight
+        weight ||= 0.75
         {
           prompt: kwargs.fetch(:prompt),
           lora_id: kwargs[:lora_id],
           backend: backend,
-          config: BACKENDS.fetch(backend) { BACKENDS[:kling] },
+          config: config,
           total_minutes: kwargs.fetch(:total_minutes, 2).to_f,
           chunk_seconds: kwargs.fetch(:chunk_seconds, 10).to_i,
           output_dir: expand(kwargs.fetch(:output_dir, "output/cinematic")),
@@ -97,6 +109,8 @@ module Master
           vignette: kwargs.fetch(:vignette, "PI/4").to_s,
           max_threads: [kwargs.fetch(:max_threads, 4).to_i, 1].max,
           motion_intensity: kwargs.fetch(:motion_intensity, 0.75).to_f,
+          motion_lora: kwargs[:motion_lora] || ENV["COMFYUI_MOTION_LORA"],
+          motion_lora_weight: weight,
           critique: kwargs.fetch(:critique, false),
         }
       end
@@ -147,6 +161,12 @@ module Master
       end
 
       def i2v_clip(keyframe_url, scene_prompt, opts)
+        return comfyui_i2v(keyframe_url, scene_prompt, opts) if opts[:config][:provider] == :comfyui
+
+        replicate_i2v(keyframe_url, scene_prompt, opts)
+      end
+
+      def replicate_i2v(keyframe_url, scene_prompt, opts)
         duration = [opts[:chunk_seconds], opts[:config][:max_duration]].min
         input = {
           image: keyframe_url,
@@ -156,6 +176,23 @@ module Master
           fps: 24,
         }
         first_output(@replicate.predict(opts[:config][:version], input))
+      end
+
+      def comfyui_i2v(keyframe_url, scene_prompt, opts)
+        frames = [opts[:chunk_seconds] * 8, opts[:config][:frames]].min
+        comfyui_client.i2v(
+          keyframe_url: keyframe_url,
+          prompt: scene_prompt,
+          frames: frames,
+          motion_lora: opts[:motion_lora],
+          motion_weight: opts[:motion_lora_weight]
+        )
+      rescue ComfyuiClient::Error => e
+        raise Error, e.message
+      end
+
+      def comfyui_client
+        @comfyui ||= ComfyuiClient.new
       end
 
       def first_output(output)

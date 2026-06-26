@@ -107,13 +107,16 @@ module Master
           lora_id: parsed[:lora_id],
           backend: parsed[:backend],
           total_minutes: parsed[:minutes],
+          motion_lora: parsed[:motion_lora],
+          motion_lora_weight: parsed[:motion_lora_weight],
           critique: parsed[:critique],
           agent: agent,
           event_bus: bus,
           root: root
         )
+        motion = parsed[:motion_lora] ? " motion_lora=#{parsed[:motion_lora]}" : ""
         lines = [
-          "video: backend=#{parsed[:backend]} minutes=#{parsed[:minutes]} critique=#{parsed[:critique]}",
+          "video: backend=#{parsed[:backend]} minutes=#{parsed[:minutes]} critique=#{parsed[:critique]}#{motion}",
           "refined: #{refined[0, 120]}#{"..." if refined.size > 120}",
           "output: #{result[:path]}",
         ]
@@ -136,6 +139,8 @@ module Master
         minutes = 2.0
         critique = false
         lora_id = nil
+        motion_lora = nil
+        motion_lora_weight = nil
         prompt_tokens = []
         idx = 0
         while idx < tokens.size
@@ -152,6 +157,12 @@ module Master
           when "--lora"
             lora_id = tokens[idx + 1]
             idx += 2
+          when "--motion-lora"
+            motion_lora = tokens[idx + 1]
+            idx += 2
+          when "--motion-weight"
+            motion_lora_weight = tokens[idx + 1].to_f
+            idx += 2
           else
             prompt_tokens << tokens[idx]
             idx += 1
@@ -160,11 +171,20 @@ module Master
         prompt = prompt_tokens.join(" ").strip
         return { usage: video_usage } if prompt.empty?
 
-        { prompt: prompt, backend: backend, minutes: minutes, critique: critique, lora_id: lora_id }
+        {
+          prompt: prompt,
+          backend: backend,
+          minutes: minutes,
+          critique: critique,
+          lora_id: lora_id,
+          motion_lora: motion_lora,
+          motion_lora_weight: motion_lora_weight,
+        }
       end
 
       def video_usage
-        "usage: /video [--backend kling|happyhorse|cogvideox|minimax] [--minutes N] [--critique] [--lora ID] <prompt>"
+        "usage: /video [--backend kling|happyhorse|cogvideox|minimax|animatediff] " \
+          "[--minutes N] [--critique] [--lora ID] [--motion-lora NAME] [--motion-weight 0.75] <prompt>"
       end
 
       def refine_generation_prompt(prompt, medium:, agent:, image: nil)

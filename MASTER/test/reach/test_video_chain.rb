@@ -14,6 +14,12 @@ class TestVideoChain < Minitest::Test
     end
   end
 
+  class FakeComfyui
+    def i2v(**)
+      "https://example.com/comfy_clip.mp4"
+    end
+  end
+
   def setup
     @root = Dir.mktmpdir("video_chain")
     @video_bytes = "fake-mp4-bytes"
@@ -55,6 +61,23 @@ class TestVideoChain < Minitest::Test
     assert_in_delta 5.0, parsed[:minutes]
     assert parsed[:critique]
     assert_equal "neon rain chase", parsed[:prompt]
+  end
+
+  def test_animatediff_backend_uses_comfyui_client
+    ffmpeg_calls = []
+    with_video_stubs(ffmpeg_calls: ffmpeg_calls) do
+      result = Master::Reach::VideoChain.generate(
+        prompt: "slow dolly reveal",
+        backend: :animatediff,
+        total_minutes: 0.35,
+        chunk_seconds: 10,
+        motion_lora: "ZIKI_dolly_v1.safetensors",
+        root: @root,
+        replicate: FakeReplicate.new,
+        comfyui: FakeComfyui.new
+      )
+      assert_match(/cinematic_animatediff_/, result[:path])
+    end
   end
 
   private
