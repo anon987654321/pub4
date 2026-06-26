@@ -13,6 +13,7 @@ module Master
         case name.to_s
         when "mlx" then mlx_cli?(cfg)
         when "chatterbox" then chatterbox_cli?
+        when "replicate_kokoro" then replicate_token?
         when "edge", "edge_melodic" then Speech.edge_tts_available?
         when "say" then system("which", "say", out: File::NULL, err: File::NULL)
         else false
@@ -23,11 +24,38 @@ module Master
         case name.to_s
         when "mlx" then synth_mlx(text, out_path, cfg, emotion)
         when "chatterbox" then synth_chatterbox(text, out_path, cfg, emotion)
+        when "replicate_kokoro" then synth_replicate_kokoro(text, out_path, cfg, emotion)
         when "edge_melodic" then synth_edge_melodic(text, out_path, melody, voice, rate, pitch)
         when "edge" then synth_edge(text, out_path, voice, rate, pitch)
         when "say" then synth_say(text, out_path)
         else false
         end
+      end
+
+      def replicate_token?
+        !Reach::ReplicateClient.load_token.to_s.strip.empty?
+      end
+
+      def synth_replicate_kokoro(text, out_path, cfg, emotion)
+        enriched = Enrich.apply(text, emotion)
+        model = cfg["replicate_model"] || "jaaari/kokoro-82m"
+        kokoro_voice = cfg["replicate_voice"] || "af_bella"
+        speed = (cfg["replicate_speed"] || 1.18).to_f
+        client = Reach::ReplicateClient.new
+        output = client.predict(model, { text: enriched, voice: kokoro_voice, speed: speed })
+        url = Array(output).flatten.first.to_s
+        return false if url.strip.empty?
+
+        tmp = out_path.sub(/\.mp3\z/, "_replicate#{File.extname(url)}")
+        tmp = "#{tmp}.wav" if File.extname(tmp).empty?
+        Reach::VideoPost.download_url(url, tmp)
+        return FileUtils.cp(tmp, out_path) if tmp.end_with?(".mp3") && File.size?(tmp)
+
+        convert_to_mp3(tmp, out_path)
+      rescue StandardError
+        false
+      ensure
+        File.delete(tmp) if defined?(tmp) && tmp && File.exist?(tmp) && tmp != out_path
       end
 
       def mlx_python

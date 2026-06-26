@@ -3,8 +3,11 @@ transcendent:
   enabled: true
   default_mode: transcendent
   personality: warm_erratic
-  # mlx needs Python 3.10+ (brew install python@3.11). Until then: fast Edge voices.
-  engine_chain: edge_melodic,edge,say
+  # VPS: replicate_kokoro when REPLICATE_API_TOKEN set. Workstation: mlx if Python 3.10+.
+  engine_chain: replicate_kokoro,edge_melodic,edge,mlx,say
+  replicate_model: jaaari/kokoro-82m
+  replicate_voice: af_bella
+  replicate_speed: 1.18
   emotion_enabled: true
   melodic_enabled: true
   melodic_threshold: 0.28

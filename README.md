@@ -27,7 +27,7 @@ cd MASTER && bundle exec ruby bin/cli
 
 Pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render
 
-Operator docs: `MASTER/QUICKSTART.md`, `MASTER/data/rules.yml`, `MASTER/data/voice.yml`, `MASTER/data/limits.yml`
+Operator docs: `MASTER/QUICKSTART.md`, `MASTER/REPLICATE.md`, `MASTER/data/rules.yml`, `MASTER/data/voice.yml`, `MASTER/data/limits.yml`
 
 Web face: Falcon on `:53187`, relayd → `https://ai.brgen.no`
 
@@ -95,7 +95,7 @@ Operator docs: `MASTER/QUICKSTART.md`, `DEPLOY/openbsd/README.md`, `DEPLOY/rails
 ## Requirements
 
 - OpenBSD 7.8+ on VPS; Ruby **3.4** for Rails apps
-- `OPENROUTER_API_KEY` (and other keys in `/etc/master.env` on VPS)
+- `OPENROUTER_API_KEY`, `REPLICATE_API_TOKEN` (and other keys in `/etc/master.env` on VPS)
 - TLS terminates at **relayd** — Rails uses `assume_ssl`, not `force_ssl`
 
 ## License

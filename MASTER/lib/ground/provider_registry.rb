@@ -39,6 +39,11 @@ module Master
           strengths: %i[privacy offline cheap],
           default_model: "local",
         },
+        replicate: {
+          env: %w[REPLICATE_API_TOKEN REPLICATE_API_KEY],
+          strengths: %i[image_generation video_generation tts fast_inference specialized_models],
+          default_model: "black-forest-labs/flux-1.1-pro",
+        },
       }.freeze
 
       module_function
