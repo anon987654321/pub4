@@ -156,16 +156,20 @@
       var label=ev.detail&&ev.detail.stage;
       if(label)showBootStatus(label);
     });
+    function trackpadPrimary(e){
+      if(e.button===1||e.button===2)return false;
+      return true;
+    }
     function primerActivate(e){
       if(fired||!primerVisible())return;
-      if(e.pointerType==='mouse'&&e.button!==0)return;
-      if(e.cancelable)e.preventDefault();
+      if(!trackpadPrimary(e))return;
+      if(e.cancelable&&e.pointerType&&e.pointerType!=='mouse')e.preventDefault();
       go();
     }
     function armPrimer(){
       schedulePin();
-      ['pointerdown','click','touchend'].forEach(function(type){
-        var opts=type==='touchend'?{capture:true,passive:false}:{capture:true};
+      ['pointerdown','mousedown','click','mouseup','touchend'].forEach(function(type){
+        var opts=type==='touchend'?{capture:true,passive:true}:{capture:true};
         document.addEventListener(type,primerActivate,opts);
       });
       addEventListener('keydown',function(e){if(!fired&&primerVisible()&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}});
