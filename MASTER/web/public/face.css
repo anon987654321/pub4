@@ -401,6 +401,10 @@ body[data-face-behind-primer="1"] .face-live-badge {
   z-index: calc(var(--z-primer) + 2);
 }
 
+body[data-face-behind-primer="1"] canvas#face {
+  filter: contrast(1.18) brightness(1.28);
+}
+
 body[data-face-behind-primer="1"] #primer .primer-label {
   animation: primerPulse 1.2s var(--ease-in-out) infinite;
 }

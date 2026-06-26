@@ -131,7 +131,7 @@ class Face3DCanvasRenderer {
     const lw = this.lpx.width;
     const lh = this.lpx.height;
     const boost = clamp(state.bootBoost ?? 0);
-    const threshold = 0.42 - boost * 0.22;
+    const threshold = Math.max(0.12, 0.38 - boost * 0.24);
     const img = this.lctx.getImageData(0, 0, lw, lh);
     const data = img.data;
     const fbuf = this.fbuf;

@@ -81,6 +81,9 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /click/);
   assert.match(boot, /touchend/);
   assert.match(boot, /primerTarget/);
+  assert.match(boot, /syncPrimerRefs/);
+  assert.match(boot, /watchFaceBoot/);
+  assert.match(boot, /safariBrowser\(\)\)\{[\s\S]*click/);
   assert.match(boot, /trackpadPrimary/);
   assert.match(boot, /safariBrowser/);
   assert.doesNotMatch(boot, /e\.button!==0/);
@@ -133,6 +136,7 @@ test("face.css keeps primer tappable until session and shows face behind overlay
   assert.match(css, /face-behind-primer/);
   assert.match(css, /primer-form/);
   assert.match(css, /face-primed/);
+  assert.match(css, /face-behind-primer="1"\] canvas#face/);
 });
 
 test("face3d_engine imports use import-map paths", () => {
