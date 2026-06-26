@@ -11,6 +11,9 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "master:face-ready"
     assert_includes response.body, "finishBoot"
     refute_includes response.body, "touchstart\",go"
+    refute_includes response.body, "voice-picker"
+    refute_includes response.body, "tts-style-chips"
+    refute_includes response.body, "spin-btn"
   end
 
   test "message smoke ping streams sse without container" do

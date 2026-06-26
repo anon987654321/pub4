@@ -1194,10 +1194,4 @@ document.querySelectorAll('.tool').forEach(btn => {
     window.addEventListener('load', () => window.MASTER_FACE?.toggleFocusMode?.(), { once: true });
   }
 
-  document.addEventListener('click', (ev) => {
-    const chip = ev.target?.closest?.('.style-chip');
-    if (!chip || chip.dataset.wired === '1') return;
-    ev.preventDefault();
-    window.MASTER_FACE?.setTtsStyle?.(chip.dataset.style);
-  });
 })();
