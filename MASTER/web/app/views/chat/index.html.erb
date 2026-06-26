@@ -39,6 +39,9 @@
   <% FaceAssetsHelper::FACE_MODULE_NAMES.first(11).each do |mod| %>
   <link rel="modulepreload" href="<%= asset_path(mod) %>">
   <% end %>
+  <% if File.file?(Rails.root.join("public/face.runtime.js")) %>
+  <link rel="modulepreload" href="<%= asset_path("face.runtime.js") %>">
+  <% end %>
   <link rel="modulepreload" href="<%= asset_path("face.js") %>">
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <style nonce="<%= content_security_policy_nonce %>">

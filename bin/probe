@@ -116,25 +116,13 @@ def dilla_checks
   ]
 end
 
-def chrome_available?
-  %w[
-    /usr/local/bin/chrome
-    /usr/local/bin/chromium
-    /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
-    /Applications/Chromium.app/Contents/MacOS/Chromium
-  ].any? { |path| File.executable?(path) } || !ENV["CHROME_PATH"].to_s.empty?
-end
-
-CHROME_AVAILABLE = chrome_available?
-
 def lab_checks
   postpro = %w[postpro.rb DEPLOY/postpro/postpro.rb MASTER/tools/postpro.rb].map { |path| File.join(ROOT, path) }
   repligen = %w[DEPLOY/repligen.rb MASTER/tools/repligen.rb].map { |path| File.join(ROOT, path) }
   face_tts = %w[MASTER/bin/tts-worker MASTER/lib/voice/speech.rb MASTER/lib/rails/face3d_runtime_policy.rb].map { |path| File.join(ROOT, path) }
   repligen_auto_installers = repligen.select { |path| File.file?(path) && File.read(path).match?(/gem install/) }
   face_sources = Dir.glob(File.join(ROOT, "MASTER/web/public/face*.js")).sort
-  face_boot_test = File.join(ROOT, "MASTER/web/test/face_boot.test.mjs")
-  probe_face = File.join(ROOT, "MASTER/web/script/probe_face")
+  ci_web_probe = File.join(ROOT, "MASTER/web/script/ci_web_probe")
   web_url = ENV["WEB_URL"]
   checks = [
     *ruby_syntax_checks("postpro", postpro),
@@ -142,18 +130,12 @@ def lab_checks
     Check.new(name: "repligen has no runtime gem install", ok: repligen_auto_installers.empty?, detail: repligen_auto_installers.join("\n")),
     *ruby_syntax_checks("face/TTS", face_tts),
     Check.new(name: "face runtime JavaScript exists", ok: face_sources.any?, detail: face_sources.join("\n")),
-    Check.new(name: "face boot node tests exist", ok: File.file?(face_boot_test), detail: face_boot_test),
-    run_check("face boot node tests", "node", "--test", face_boot_test),
-    Check.new(name: "probe_face script exists", ok: File.executable?(probe_face), detail: probe_face)
+    Check.new(name: "ci_web_probe exists", ok: File.executable?(ci_web_probe), detail: ci_web_probe)
   ]
-  if web_url && !web_url.empty? && CHROME_AVAILABLE
-    checks << run_check("probe_face #{web_url}", "ruby", probe_face, web_url)
-  elsif web_url && !web_url.empty?
-    checks << Check.new(
-      name: "probe_face #{web_url}",
-      ok: true,
-      detail: "skipped: Chrome not found (set CHROME_PATH to enable)"
-    )
+  if web_url && !web_url.empty?
+    checks << run_check("ci_web_probe WEB_URL=#{web_url}", "env", "WEB_URL=#{web_url}", "ruby", ci_web_probe)
+  else
+    checks << run_check("ci_web_probe (static)", "ruby", ci_web_probe)
   end
   checks
 end

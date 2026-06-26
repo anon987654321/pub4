@@ -34,6 +34,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     end
     assert_match(/faceParts/, response.body)
     assert_match(/faceModules/, response.body)
+    assert_match(/faceRuntime/, response.body)
     assert_match(%r{/assets/face-[0-9a-f]+\.js}, response.body)
   end
 

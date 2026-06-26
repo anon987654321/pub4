@@ -66,10 +66,32 @@ if File.file?(openbsd)
   failures << "openbsd.sh: no-argument deploy not blocked" unless text.include?("refusing no-argument deploy")
 end
 
+master_web_root = File.join(ROOT, "MASTER", "web")
+[
+  File.join(master_web_root, "public/face.runtime.js"),
+  File.join(master_web_root, "lib/tasks/face_runtime.rake"),
+  File.join(master_web_root, "script/ci_web_probe"),
+  File.join(master_web_root, "app/views/shared/_face_boot.html.erb")
+].each do |path|
+  failures << "MASTER/web: missing #{path.delete_prefix(ROOT + '/')}" unless File.file?(path)
+end
+
+relayd_text = File.file?(RELAYD) ? File.read(RELAYD) : ""
+if (relayd_timeout = relayd_text.match(/timeout\s+(\d+)/))
+  failures << "relayd: timeout should allow slow document boot (>= 15000)" if relayd_timeout[1].to_i < 15_000
+end
+
+runtime_cfg = File.join(ROOT, "MASTER", "data/runtime/runtime.yml")
+if File.file?(runtime_cfg)
+  cfg = YAML.safe_load_file(runtime_cfg) || {}
+  enhancements = Array(cfg["enhancements"])
+  failures << "MASTER/runtime: actioncable_fallback enhancement missing" unless enhancements.include?("actioncable_fallback")
+end
+
 if failures.any?
   warn "Deploy smoke gate failures:"
   failures.each { |failure| warn "  - #{failure}" }
   exit 1
 end
 
-puts "Deploy smoke gate passed (relayd template + #{apps.size} production configs)."
+puts "Deploy smoke gate passed (relayd template + #{apps.size} production configs + MASTER/web probes)."

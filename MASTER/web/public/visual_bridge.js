@@ -198,6 +198,8 @@
   let sseErrorCount = 0;
   let cableSocket = null;
   let cableIdent = null;
+  let cableMode = false;
+  let cableReconnectTimer = null;
   const COUNCIL_ROTATOR = ["Architect", "Skeptic", "Pragmatist", "Security", "Mentor"];
   let councilRotatorIdx = 0;
   let councilRotatorTimer = null;
@@ -219,13 +221,27 @@
     councilRotatorTimer = null;
   }
 
+  function scheduleCableReconnect() {
+    if (cableReconnectTimer || !cableMode) return;
+    cableReconnectTimer = setTimeout(() => {
+      cableReconnectTimer = null;
+      connectCableFallback();
+    }, Math.min(12_000, 800 + sseErrorCount * 400));
+  }
+
   function connectCableFallback() {
     if (cableSocket || !window.WebSocket) return;
+    cableMode = true;
     const proto = location.protocol === "https:" ? "wss:" : "ws:";
     cableSocket = new WebSocket(`${proto}//${location.host}/cable`);
     cableIdent = JSON.stringify({ channel: "MasterChannel" });
     cableSocket.onopen = () => {
+      state.connected = true;
+      sseErrorCount = 0;
+      delete document.body.dataset.linkQuiet;
       cableSocket.send(JSON.stringify({ command: "subscribe", identifier: cableIdent }));
+      const ui = document.getElementById("ui-status");
+      if (ui) ui.textContent = "events via cable";
       emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "cable" });
     };
     cableSocket.onmessage = (message) => {
@@ -235,11 +251,20 @@
         if (frame.type === "confirm_subscription") return;
         const payload = frame.message;
         if (!payload) return;
-        handleRuntimeEvent(payload.event ? { ...payload, type: payload.event } : payload);
+        const type = payload.type || payload.event;
+        handleRuntimeEvent(type ? { ...payload, type } : payload);
       } catch (_error) {}
     };
-    cableSocket.onclose = () => { cableSocket = null; };
-    cableSocket.onerror = () => { try { cableSocket.close(); } catch (_e) {} cableSocket = null; };
+    cableSocket.onclose = () => {
+      cableSocket = null;
+      state.connected = false;
+      if (cableMode) scheduleCableReconnect();
+    };
+    cableSocket.onerror = () => {
+      try { cableSocket.close(); } catch (_e) {}
+      cableSocket = null;
+      state.connected = false;
+    };
   }
 
   function disconnectSse() {
@@ -274,9 +299,10 @@
       document.body.dataset.linkQuiet = "1";
       window._chatOnDmesg?.("link quiet");
       disconnectSse();
-      if (sseErrorCount >= 3 && window.MASTER_RUNTIME?.enhancements?.includes?.("actioncable_fallback")) {
+      const cableEnabled = window.MASTER_RUNTIME?.enhancements?.includes?.("actioncable_fallback");
+      if (cableEnabled && sseErrorCount >= 2) {
         connectCableFallback();
-      } else {
+      } else if (!cableMode) {
         setTimeout(connectSse, Math.min(8000, 500 * sseErrorCount));
       }
     };

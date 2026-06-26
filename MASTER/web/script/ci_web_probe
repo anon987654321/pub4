@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+
+WEB = File.expand_path("..", __dir__)
+FACE_BOOT = File.join(WEB, "test/face_boot.test.mjs")
+PROBE_FACE = File.join(WEB, "script/probe_face")
+WEB_URL = ENV["WEB_URL"].to_s.strip
+
+checks = []
+
+out, err, status = Open3.capture3("node", "--test", FACE_BOOT, chdir: WEB)
+checks << ["face_boot node tests", status.success?, [out, err].join.strip]
+
+runtime = File.join(WEB, "public/face.runtime.js")
+checks << ["face.runtime.js present", File.file?(runtime), runtime]
+
+if WEB_URL.empty?
+  checks << ["probe_face (skipped)", true, "set WEB_URL to run browser probe"]
+else
+  out, err, status = Open3.capture3("ruby", PROBE_FACE, WEB_URL, chdir: WEB)
+  checks << ["probe_face #{WEB_URL}", status.success?, [out, err].join.strip]
+end
+
+failed = checks.reject { |_name, ok, _detail| ok }
+checks.each do |name, ok, detail|
+  puts "#{ok ? 'ok' : 'fail'} #{name}"
+  next if ok || detail.empty?
+
+  detail.lines.first(8).each { |line| puts "  #{line.chomp}" }
+end
+
+exit(failed.empty? ? 0 : 1)

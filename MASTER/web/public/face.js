@@ -17,6 +17,26 @@ function dispatchFaceError(error) {
   window.dispatchEvent(new CustomEvent("master:face-error", { detail: { message: String(error) } }));
 }
 
+async function importFaceBlob(FACE_TEXT) {
+  const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
+  const absoluteAsset = (path) => path ? new URL(path, document.baseURI).href : null;
+  if (ASSET_PATHS.threeModule) ASSET_PATHS.threeModule = absoluteAsset(ASSET_PATHS.threeModule);
+  const MODULE_PATHS = {
+    "/three.face.module.js?v=1": absoluteAsset(ASSET_PATHS.threeModule),
+    ...Object.fromEntries(Object.entries(ASSET_PATHS.faceModules || {}).map(([name, path]) => [`/${name}`, absoluteAsset(path)]))
+  };
+  const FACE_SOURCE = Object.entries(MODULE_PATHS).reduce(
+    (source, [name, path]) => path ? source.replaceAll(`'${name}'`, JSON.stringify(path)) : source,
+    FACE_TEXT.join("\n")
+  );
+  const FACE_BLOB_URL = URL.createObjectURL(new Blob([FACE_SOURCE], { type: "text/javascript" }));
+  try {
+    await import(FACE_BLOB_URL);
+  } finally {
+    URL.revokeObjectURL(FACE_BLOB_URL);
+  }
+}
+
 try {
   dispatchFaceStage("modules");
 
@@ -32,52 +52,40 @@ try {
     "face_perf_guards.js",
     "face_brutalist.js"
   ];
-  const FACE_PARTS = window.MASTER_ASSET_PATHS?.faceParts || [
-    "face.part1.txt",
-    "face.part2.txt",
-    "face.part3.txt",
-    "face.part4.txt",
-    "face.part5.txt"
-  ];
 
-  const [, , , FACE_TEXT] = await Promise.all([
+  await Promise.all([
     import(window.MASTER_ASSET_PATHS?.faceModules?.["face_blendshape_bridge.js"] || "/face_blendshape_bridge.js"),
     import(window.MASTER_ASSET_PATHS?.face3dPreview || "/face3d_preview.js"),
-    Promise.all(FACE_MODULES.map(async (modulePath) => {
+    ...FACE_MODULES.map(async (modulePath) => {
       const url = window.MASTER_ASSET_PATHS?.faceModules?.[modulePath] || `/${modulePath}`;
       await import(url);
-    })),
-    Promise.all(FACE_PARTS.map(async (part) => {
+    })
+  ]);
+
+  const runtimeUrl = window.MASTER_ASSET_PATHS?.faceRuntime;
+  if (runtimeUrl) {
+    dispatchFaceStage("runtime");
+    await import(runtimeUrl);
+  } else {
+    dispatchFaceStage("parts");
+    const FACE_PARTS = window.MASTER_ASSET_PATHS?.faceParts || [
+      "face.part1.txt",
+      "face.part2.txt",
+      "face.part3.txt",
+      "face.part4.txt",
+      "face.part5.txt"
+    ];
+    const FACE_TEXT = await Promise.all(FACE_PARTS.map(async (part) => {
       const res = await fetch(part);
       if (!res.ok) throw new Error(`failed to load ${part}: ${res.status}`);
       return res.text();
-    }))
-  ]);
-
-  dispatchFaceStage("parts");
-
-  const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
-  const absoluteAsset = (path) => path ? new URL(path, document.baseURI).href : null;
-  if (ASSET_PATHS.threeModule) ASSET_PATHS.threeModule = absoluteAsset(ASSET_PATHS.threeModule);
-  const MODULE_PATHS = {
-    "/three.face.module.js?v=1": absoluteAsset(ASSET_PATHS.threeModule),
-    ...Object.fromEntries(Object.entries(ASSET_PATHS.faceModules || {}).map(([name, path]) => [`/${name}`, absoluteAsset(path)]))
-  };
-  const FACE_SOURCE = Object.entries(MODULE_PATHS).reduce(
-    (source, [name, path]) => path ? source.replaceAll(`'${name}'`, JSON.stringify(path)) : source,
-    FACE_TEXT.join("\n")
-  );
-  const FACE_BLOB = new Blob([FACE_SOURCE], { type: "text/javascript" });
-  const FACE_BLOB_URL = URL.createObjectURL(FACE_BLOB);
-
-  dispatchFaceStage("runtime");
-  try {
-    await import(FACE_BLOB_URL);
-    dispatchFaceStage("ready");
-    window.dispatchEvent(new CustomEvent("master:face-ready"));
-  } finally {
-    URL.revokeObjectURL(FACE_BLOB_URL);
+    }));
+    dispatchFaceStage("runtime");
+    await importFaceBlob(FACE_TEXT);
   }
+
+  dispatchFaceStage("ready");
+  window.dispatchEvent(new CustomEvent("master:face-ready"));
 } catch (error) {
   dispatchFaceError(error);
   throw error;

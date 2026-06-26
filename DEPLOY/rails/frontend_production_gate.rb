@@ -62,6 +62,32 @@ web_layout_files.each do |path|
   check_layout(path).each { |issue| failures << "MASTER/web #{File.basename(path)}: #{issue}" }
 end
 
+chat_index = File.join(WEB_ROOT, "app/views/chat/index.html.erb")
+face_boot = File.join(WEB_ROOT, "app/views/shared/_face_boot.html.erb")
+if File.file?(chat_index)
+  body = File.read(chat_index)
+  failures << "MASTER/web chat index: missing importmap" unless body.include?("importmap")
+  failures << "MASTER/web chat index: missing face boot partial" unless body.include?('render "shared/face_boot"')
+end
+if File.file?(face_boot)
+  boot_body = File.read(face_boot)
+  failures << "MASTER/web face boot: missing 60s watchdog" unless boot_body.include?("60000")
+  failures << "MASTER/web face boot: missing error-live wiring" unless boot_body.include?("error-live")
+end
+
+face_runtime = File.join(WEB_ROOT, "public/face.runtime.js")
+face_runtime_task = File.join(WEB_ROOT, "lib/tasks/face_runtime.rake")
+failures << "MASTER/web: missing face.runtime.js (run rails assets:build_face_runtime)" unless File.file?(face_runtime)
+failures << "MASTER/web: missing face_runtime.rake" unless File.file?(face_runtime_task)
+
+probe_scripts = [
+  File.join(WEB_ROOT, "script/probe_face"),
+  File.join(WEB_ROOT, "script/ci_web_probe")
+]
+probe_scripts.each do |path|
+  failures << "MASTER/web: missing #{File.basename(path)}" unless File.file?(path)
+end
+
 if failures.any?
   warn "Frontend production gate failures:"
   failures.each { |failure| warn "  - #{failure}" }

@@ -20,6 +20,7 @@ rc_pre() {
 	rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
 	# Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
 	rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
+	(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:build_face_runtime) 2>/dev/null || true
 	_manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
 	if [ ! -f "$_manifest" ]; then
 		(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true

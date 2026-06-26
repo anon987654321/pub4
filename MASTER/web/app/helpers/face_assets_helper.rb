@@ -14,7 +14,7 @@ module FaceAssetsHelper
   ].freeze
 
   def master_face_asset_paths
-    {
+    paths = {
       threeModule: asset_path("three.face.module.js"),
       face3dPreview: asset_path("face3d_preview.js"),
       face3dEngine: asset_path("face3d_engine.js"),
@@ -25,6 +25,9 @@ module FaceAssetsHelper
       faceModulesList: FACE_MODULE_NAMES.first(11),
       faceModules: FACE_MODULE_NAMES.index_with { |name| asset_path(name) }
     }
+    runtime = Rails.root.join("public/face.runtime.js")
+    paths[:faceRuntime] = asset_path("face.runtime.js") if File.file?(runtime)
+    paths
   end
 
   def master_face_import_map
