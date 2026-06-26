@@ -94,6 +94,13 @@ test("face3d_engine imports use import-map paths", () => {
   assert.match(engine, /from '\/face3d_support\.js'/);
 });
 
+test("visual_bridge defers SSE until session ready", () => {
+  const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
+  assert.match(bridge, /master:session-ready/);
+  assert.match(bridge, /primer:ready/);
+  assert.doesNotMatch(bridge, /observeDomSignals\(\);\n  connectSse\(\);/);
+});
+
 test("service worker avoids stale undigested precache", () => {
   const sw = readFileSync(join(publicDir, "sw.js"), "utf8");
   assert.doesNotMatch(sw, /\/face\.js'/);

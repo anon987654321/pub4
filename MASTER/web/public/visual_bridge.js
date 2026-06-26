@@ -412,13 +412,22 @@
     classify
   };
 
+  function bootLink() {
+    if (state.connected || eventSource || cableSocket) return;
+    connectSse();
+  }
+
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) disconnectSse();
-    else connectSse();
+    else if (window._primerFired) bootLink();
   }, { passive: true });
 
   observeDomSignals();
-  connectSse();
+  if (window._primerFired) bootLink();
+  else {
+    window.addEventListener("master:session-ready", bootLink, { once: true });
+    window.addEventListener("primer:ready", bootLink, { once: true });
+  }
   bootEmotionalTimeline();
   bootExperimentalVisuals();
   emitVisual("visual:ready", { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "ready" });

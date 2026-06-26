@@ -35,6 +35,7 @@ class EventsController < ApplicationController
     response.headers["Content-Type"]      = "text/event-stream"
     response.headers["Cache-Control"]     = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"  # nginx passthrough
+    response.stream.write(": connected\n\n")
 
     bus      = container[:bus]
     received = Queue.new

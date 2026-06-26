@@ -90,7 +90,11 @@ begin
     });
   JS
 
-  browser.go_to URL
+  begin
+    browser.go_to URL
+  rescue Ferrum::PendingConnectionsError => e
+    puts "WARN: pending connections on load — #{e.message}"
+  end
   puts "loaded, waiting #{WAIT}s..."
   sleep WAIT
 
