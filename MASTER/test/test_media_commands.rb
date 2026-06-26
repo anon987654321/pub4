@@ -87,10 +87,10 @@ class TestMediaCommands < Minitest::Test
     assert cmds.key?("music")
   end
 
-  def test_repligen_command_registered_not_video
+  def test_video_and_repligen_commands_registered
     cmds = Master::Now::CommandRegistry.tool_commands(Master::ROOT, nil)
     assert cmds.key?("repligen")
-    refute cmds.key?("video")
+    assert cmds.key?("video")
   end
 
   def test_refine_repligen_video_generate_arg

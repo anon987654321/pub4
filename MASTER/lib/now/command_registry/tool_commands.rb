@@ -9,11 +9,13 @@ module Master
 
       def tool_commands(root, ai = nil)
         agent = ai && ai[:agent]
+        bus = ai && ai[:bus]
         {
           "postpro" => command(:dispatch_postpro, root),
           "repligen" => command(:dispatch_repligen, root, agent),
           "photograph" => command(:dispatch_photograph, root, agent),
           "prompt" => command(:dispatch_prompt, root, agent),
+          "video" => command(:dispatch_video, root, agent, bus),
         }
       end
 
@@ -93,6 +95,76 @@ module Master
 
       def prompt_usage
         "usage: /prompt <seed>   or   /prompt photo <seed>   /prompt video <seed>"
+      end
+
+      def dispatch_video(root, agent, bus, ctx: nil)
+        parsed = parse_video_args(arg_for(ctx))
+        return parsed[:usage] if parsed[:usage]
+
+        refined = refine_generation_prompt(parsed[:prompt], medium: :video, agent: agent, image: Reach::RepligenArg.ctx_image(ctx))
+        result = Reach::VideoChain.generate(
+          prompt: refined,
+          lora_id: parsed[:lora_id],
+          backend: parsed[:backend],
+          total_minutes: parsed[:minutes],
+          critique: parsed[:critique],
+          agent: agent,
+          event_bus: bus,
+          root: root
+        )
+        lines = [
+          "video: backend=#{parsed[:backend]} minutes=#{parsed[:minutes]} critique=#{parsed[:critique]}",
+          "refined: #{refined[0, 120]}#{"..." if refined.size > 120}",
+          "output: #{result[:path]}",
+        ]
+        if result[:critique]
+          lines << "motion council: #{result[:critique][:score]}/10 — #{result[:critique][:passed] ? "pass" : "review"}"
+          lines << result[:critique][:summary].to_s.lines.first.to_s.strip
+        end
+        lines.join("\n")
+      rescue Reach::VideoChain::Error => e
+        "video: #{e.message}"
+      rescue StandardError => e
+        "video: #{e.class}: #{e.message}"
+      end
+
+      def parse_video_args(raw)
+        tokens = raw.to_s.strip.split(/\s+/)
+        return { usage: video_usage } if tokens.empty?
+
+        backend = :kling
+        minutes = 2.0
+        critique = false
+        lora_id = nil
+        prompt_tokens = []
+        idx = 0
+        while idx < tokens.size
+          case tokens[idx]
+          when "--backend"
+            backend = tokens[idx + 1].to_s.delete_prefix(":").to_sym
+            idx += 2
+          when "--minutes"
+            minutes = tokens[idx + 1].to_f
+            idx += 2
+          when "--critique"
+            critique = true
+            idx += 1
+          when "--lora"
+            lora_id = tokens[idx + 1]
+            idx += 2
+          else
+            prompt_tokens << tokens[idx]
+            idx += 1
+          end
+        end
+        prompt = prompt_tokens.join(" ").strip
+        return { usage: video_usage } if prompt.empty?
+
+        { prompt: prompt, backend: backend, minutes: minutes, critique: critique, lora_id: lora_id }
+      end
+
+      def video_usage
+        "usage: /video [--backend kling|happyhorse|cogvideox|minimax] [--minutes N] [--critique] [--lora ID] <prompt>"
       end
 
       def refine_generation_prompt(prompt, medium:, agent:, image: nil)

@@ -3,6 +3,7 @@
 require "diffy"
 require "fileutils"
 require "json"
+require "time"
 
 module Master
   module Loop
@@ -29,23 +30,25 @@ module Master
         @mutex = Mutex.new
         @pending = []
         @counter = 0
+        reload_pending!
       end
 
       def stage(path:, new_content:, tool: "unknown")
         old_content = File.exist?(path) ? File.read(path) : ""
         return Result.ok("no change") if old_content == new_content
 
+        entry = nil
         @mutex.synchronize do
           @counter += 1
-        entry = Entry.new(
-          id: @counter,
-          path: path,
-          old_content: old_content,
-          new_content: new_content,
-          tool: tool,
-          created_at: Time.now
-        )
-        @pending << entry
+          entry = Entry.new(
+            id: @counter,
+            path: path,
+            old_content: old_content,
+            new_content: new_content,
+            tool: tool,
+            created_at: Time.now
+          )
+          @pending << entry
         end
         persist_entry(entry)
         @bus&.publish("stage:queued", id: entry.id, path: entry.path, stats: entry.diff_stats)
@@ -115,6 +118,35 @@ module Master
         File.join(@root, ".master", "pending")
       end
 
+      def reload_pending!
+        @mutex.synchronize do
+          @pending = []
+          @counter = 0
+          return unless Dir.exist?(stage_dir)
+
+          Dir.glob(File.join(stage_dir, "*.json")).sort_by { |path| File.basename(path, ".json").to_i }.each do |json_path|
+            meta = JSON.parse(File.read(json_path))
+            id = meta["id"].to_i
+            new_path = sidecar_path(id, :new)
+            next unless File.exist?(new_path)
+
+            old_path = sidecar_path(id, :old)
+            entry = Entry.new(
+              id: id,
+              path: meta["path"],
+              old_content: File.exist?(old_path) ? File.read(old_path) : "",
+              new_content: File.read(new_path),
+              tool: meta["tool"],
+              created_at: Time.iso8601(meta["created_at"])
+            )
+            @pending << entry
+            @counter = id if id > @counter
+          end
+        end
+      rescue StandardError => e
+        @bus&.publish("diff_stager:reload_error", error: e.message)
+      end
+
       def persist_entry(entry)
         FileUtils.mkdir_p(stage_dir)
         File.write(
@@ -125,14 +157,21 @@ module Master
             stats: entry.diff_stats
           })
         )
+        File.write(sidecar_path(entry.id, :old), entry.old_content)
+        File.write(sidecar_path(entry.id, :new), entry.new_content)
       rescue StandardError => e
         @bus&.publish("diff_stager:persist_error", error: e.message)
       end
 
+      def sidecar_path(id, kind)
+        File.join(stage_dir, "#{id}.#{kind}")
+      end
+
       def remove_persisted(entry)
-        persist_file = File.join(stage_dir, "#{entry.id}.json")
-        # Removed after apply (written) or discard (abandoned) — safe to delete.
-        File.delete(persist_file) if File.exist?(persist_file)
+        %w[json old new].each do |ext|
+          path = File.join(stage_dir, "#{entry.id}.#{ext}")
+          File.delete(path) if File.exist?(path)
+        end
       rescue StandardError => e
         @bus&.publish("diff_stager:cleanup_error", error: e.message)
       end

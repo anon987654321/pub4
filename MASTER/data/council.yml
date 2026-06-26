@@ -392,6 +392,17 @@ presets:
       - web/public/chat.js
       - web/app/views/chat/index.html.erb
 
+  motion_critique:
+    description: Adversarial review of generated cinematic video for motion coherence and identity consistency.
+    panel:
+      - Cinematographer
+      - Film Editor
+      - Physicist
+      - QA Engineer
+      - Skeptic
+    mode: deliberation
+    cycles: 1
+
 # Merged from former data/prompts/council.yml — judge and juror prompt templates.
 prompts:
   judge: |

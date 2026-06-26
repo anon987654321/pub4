@@ -5,7 +5,7 @@ module Master
     # Strunk-refined prompt expansion for /repligen generate and LLM repligen calls.
     module RepligenArg
       DEFAULT_VIDEO_MODEL = "minimax/video-01-live"
-      VIDEO_MODEL_RE = /video|veo|kling|luma|ray|seedance|wan-/i.freeze
+      VIDEO_MODEL_RE = /video|veo|kling|luma|ray|seedance|wan-|happyhorse|cogvideox/i.freeze
       IMAGE_MODEL_RE = /flux|sdxl|stable.?diffusion|imagen|dalle/i.freeze
 
       module_function
