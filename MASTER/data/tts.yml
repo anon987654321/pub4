@@ -1,14 +1,16 @@
 # Transcendent TTS — emotion-aware multi-engine orchestration.
+# Replicate (Cloudflare) added as production cloud engine for OpenBSD VPS (supplements local MLX).
 transcendent:
   enabled: true
   default_mode: transcendent
   personality: warm_erratic
   # mlx needs Python 3.10+ (brew install python@3.11). Until then: fast Edge voices.
-  engine_chain: edge_melodic,edge,say
+  engine_chain: replicate_kokoro, edge_melodic, edge, say
   emotion_enabled: true
   melodic_enabled: true
   melodic_threshold: 0.28
   max_chars: 900
+  # Local MLX (Apple Silicon)
   mlx_model: mlx-community/Kokoro-82M-bf16
   mlx_voice: af_bella
   mlx_speed: 1.18
@@ -16,3 +18,10 @@ transcendent:
   cfg_weight: 0.42
   chatterbox_device: mps
   reference_clip: ""
+  # Replicate cloud (VPS / OpenBSD primary)
+  replicate_model: jaaari/kokoro-82m
+  replicate_voice: af_bella
+  replicate_speed: 1.18
+  replicate_exaggeration: 0.62
+  replicate_cfg_weight: 0.42
+  # Cost/speed note: ~$0.008-0.015 per 1K chars; superior consistency on server vs local MLX
