@@ -18,6 +18,7 @@ class ApplicationController < ActionController::Base
   WEB_WRITE_RATE_LIMIT = 60
   WEB_WRITE_WINDOW_S   = 60
 
+  before_action :set_html_no_store, if: -> { request.format.html? }
   before_action :require_container!
   before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }
   before_action :enforce_chat_rate_limit, if: -> { action_in?(:message) }
@@ -26,6 +27,10 @@ class ApplicationController < ActionController::Base
   before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }
 
   private
+
+  def set_html_no_store
+    response.headers["Cache-Control"] = "no-store"
+  end
 
   def action_in?(actions)
     Array(actions).include?(action_name.to_sym)
@@ -162,7 +167,7 @@ class ApplicationController < ActionController::Base
     return true if path == "/up" || path == "/health"
     return true if smoke_chat_probe?
     return true if path.start_with?("/assets/", "/runtime/")
-    return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|face_vision_|topology_|cluster_|mask|sw\.js|manifest\.json|icon\.|offline\.html)})
+    return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|face_vision|face_deferred|topology_|cluster_|mask|sw\.js|manifest\.json|icon\.|offline\.html)})
 
     false
   end

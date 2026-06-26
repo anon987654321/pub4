@@ -15,6 +15,7 @@ module FaceAssetsHelper
 
   def master_face_asset_paths
     paths = {
+      faceVisionBundle: face_vision_bundle_asset_path,
       particleWorker: asset_path("particle_worker.js"),
       threeModule: asset_path("three.face.module.js"),
       face3dPreview: asset_path("face3d_preview.js"),
@@ -45,6 +46,16 @@ module FaceAssetsHelper
     "/face.modules.bundle.js"
   end
 
+  def face_vision_bundle_asset_path
+    asset_path("face_vision.bundle.js")
+  rescue Propshaft::MissingAssetError
+    "/face_vision.bundle.js"
+  end
+
+  def face_vision_bundle_preload?
+    File.file?(Rails.root.join("public/face_vision.bundle.js"))
+  end
+
   def face_runtime_preload?
     File.file?(Rails.root.join("public/face.runtime.js"))
   end
@@ -65,7 +76,7 @@ module FaceAssetsHelper
       offline.html face.css face.js chat.js chat_actions.js face_state.js visual_bridge.js
       face_errors.js felt_state.js sse_contract.js container_gate.js
       master_events.js shortcut_sheet.js particle_kernel.js three.face.module.js
-      face_vision_core.js face_vision_a.js face_vision_b.js face_vision_c.js face_vision_d.js
+      face_deferred_loader.js face_vision.bundle.js
       manifest.json icon.png
     ].map { |name| asset_path(name) }.uniq
   end

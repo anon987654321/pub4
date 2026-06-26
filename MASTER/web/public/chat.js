@@ -97,7 +97,17 @@ function updateSessionStats() {
   sessionStats.textContent = `${wordLabel} · ${minutes}m ${seconds}s`;
   sessionStats.title = `remembers ${messageCount} things from today`;
 }
-setInterval(updateSessionStats, 1000);
+let sessionStatsTimer = null;
+function scheduleSessionStats() {
+  if (sessionStatsTimer) clearTimeout(sessionStatsTimer);
+  const idle = document.hidden || !log?.querySelector(".message");
+  sessionStatsTimer = setTimeout(() => {
+    updateSessionStats();
+    scheduleSessionStats();
+  }, idle ? 5000 : 1000);
+}
+scheduleSessionStats();
+document.addEventListener("visibilitychange", scheduleSessionStats, { passive: true });
 
 const providerChip = (() => {
   let el = document.getElementById('provider-chip');

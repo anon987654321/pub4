@@ -112,6 +112,12 @@ body[data-focus-mode="1"] #zsh {
   backdrop-filter: none;
 }
 
+canvas#face,
+canvas#cognition-ecology {
+  contain: strict;
+  content-visibility: auto;
+}
+
 canvas#face {
   background: #000;
   z-index: 1;
@@ -635,7 +641,16 @@ body[data-face-booting="1"] .ui-status {
 #chat-log::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--face-fg) 28%, transparent); border-radius: 3px; }
 
 #chat-log:not(:empty) { pointer-events: auto; }
-.message { position:relative; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; animation: msgIn 220ms cubic-bezier(0.32,0.72,0,1) both; }
+.message {
+  position: relative;
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  scroll-snap-align: start;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 2.5rem;
+  animation: msgIn 220ms cubic-bezier(0.32,0.72,0,1) both;
+}
 .message:focus-visible { outline: 1px solid var(--face-fg); outline-offset: 1px; }
 .msg-prompt { font-weight: 700; margin-right: 0.35em; }
 .message.user .msg-prompt { color: var(--face-fg); }
@@ -817,7 +832,25 @@ body:not(.face-ready) #zsh.live {
 }
 #zsh .pp { color: color-mix(in srgb, var(--c-danger) 82%, transparent); font-weight: 700; }
 #zsh .sep, #zsh .sep2 { color: var(--face-muted); margin-right: 0.4ch; }
-#zsh input, #zsh textarea { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 2px 0; resize: none; line-height: 1.35; max-height: 120px; }
+#zsh input, #zsh textarea {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--face-fg);
+  font: inherit;
+  caret-color: var(--face-fg);
+  padding: 2px 0;
+  resize: none;
+  line-height: 1.35;
+  max-height: 120px;
+  transition: opacity var(--transition-fast) var(--ease-out);
+}
+#zsh textarea:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--face-fg) 28%, transparent);
+  outline-offset: 2px;
+}
 #zsh input::placeholder, #zsh textarea::placeholder { color: color-mix(in srgb, var(--face-fg) 22%, transparent); }
 html[data-input-dense="1"] #zsh { border-top: 1.5px solid color-mix(in srgb, var(--face-fg) 28%, transparent); transition: border-top-width .2s var(--ease-out); }
 
