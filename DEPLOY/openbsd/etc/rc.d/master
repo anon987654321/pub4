@@ -22,7 +22,8 @@ rc_pre() {
 	rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
 	(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:build_face_runtime) 2>/dev/null || true
 	_manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
-	if [ ! -f "$_manifest" ]; then
+	_runtime=/home/dev/pub4/MASTER/web/public/face.runtime.js
+	if [ ! -f "$_manifest" ] || [ "$_runtime" -nt "$_manifest" ]; then
 		(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
 	fi
 	sleep 1

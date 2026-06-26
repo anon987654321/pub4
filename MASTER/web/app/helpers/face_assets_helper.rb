@@ -26,8 +26,20 @@ module FaceAssetsHelper
       faceModules: FACE_MODULE_NAMES.index_with { |name| asset_path(name) }
     }
     runtime = Rails.root.join("public/face.runtime.js")
-    paths[:faceRuntime] = asset_path("face.runtime.js") if File.file?(runtime)
+    if File.file?(runtime)
+      paths[:faceRuntime] = face_runtime_asset_path
+    end
     paths
+  end
+
+  def face_runtime_asset_path
+    asset_path("face.runtime.js")
+  rescue Propshaft::MissingAssetError
+    "/face.runtime.js"
+  end
+
+  def face_runtime_preload?
+    File.file?(Rails.root.join("public/face.runtime.js"))
   end
 
   def master_face_import_map
