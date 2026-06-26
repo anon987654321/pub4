@@ -7,7 +7,11 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_includes response.body, "tap to start"
+    assert_includes response.body, "tap to enter"
+    assert_includes response.body, 'id="primer-tier"'
+    assert_includes response.body, "visitor"
+    assert_includes response.body, 'id="boot-wayfinding"'
+    assert_includes response.body, "face_wayfinding"
     assert_includes response.body, "master:face-ready"
     assert_includes response.body, "master:face-stage"
     assert_includes response.body, "master:session-ready"

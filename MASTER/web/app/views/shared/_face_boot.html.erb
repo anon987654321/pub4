@@ -153,6 +153,12 @@
         label.className='primer-label';
         label.textContent='tap to retry';
         el.appendChild(label);
+        var tier=document.createElement('span');
+        tier.id='primer-tier';
+        tier.className='primer-tier';
+        var tierMeta=document.querySelector('meta[name="master-tier"]');
+        tier.textContent=(tierMeta&&tierMeta.content==='authenticated')?'full access':'visitor';
+        el.appendChild(tier);
         form.appendChild(el);
         wirePrimerForm();
         title=label;

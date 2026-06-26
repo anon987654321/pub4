@@ -76,7 +76,7 @@ module FaceAssetsHelper
       offline.html face.css face.js chat.js chat_actions.js face_state.js visual_bridge.js
       face_errors.js felt_state.js sse_contract.js container_gate.js
       master_events.js shortcut_sheet.js particle_kernel.js three.face.module.js
-      face_deferred_loader.js face_vision.bundle.js
+      face_deferred_loader.js face_wayfinding.js face_vision.bundle.js
       manifest.json icon.png
     ].map { |name| asset_path(name) }.uniq
   end

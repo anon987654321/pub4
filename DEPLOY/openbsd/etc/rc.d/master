@@ -34,6 +34,7 @@ rc_pre() {
 		/home/dev/pub4/MASTER/web/public/face.js /home/dev/pub4/MASTER/web/public/container_gate.js \
 		/home/dev/pub4/MASTER/web/public/face.modules.bundle.js /home/dev/pub4/MASTER/web/public/face_vision.bundle.js \
 		/home/dev/pub4/MASTER/web/public/face_deferred_loader.js \
+		/home/dev/pub4/MASTER/web/public/face_wayfinding.js \
 		/home/dev/pub4/MASTER/web/app/views/shared/_face_boot.html.erb \
 		/home/dev/pub4/MASTER/web/app/views/chat/index.html.erb 2>/dev/null | cksum)
 	_skip=0

@@ -129,6 +129,22 @@ test("chat index ships import map and digested master_events", () => {
   assert.match(index, /id="primer-form"/);
   assert.match(index, /<button[^>]*type="button"[^>]*id="primer"/);
   assert.match(index, /face-live-badge/);
+  assert.match(index, /id="primer-tier"/);
+  assert.match(index, /tap to enter/);
+  assert.match(index, /id="boot-wayfinding"/);
+  assert.match(index, /data-step="audio"/);
+  assert.match(index, /face_wayfinding\.js/);
+  assert.match(index, /id="civic-status"/);
+});
+
+test("face_wayfinding.js tracks boot steps via master events", () => {
+  const wayfinding = readFileSync(join(publicDir, "face_wayfinding.js"), "utf8");
+  assert.match(wayfinding, /primer:ready/);
+  assert.match(wayfinding, /master:face-ready/);
+  assert.match(wayfinding, /master:container-ready/);
+  assert.match(wayfinding, /master:session-ready/);
+  assert.match(wayfinding, /boot-wayfinding/);
+  assert.match(wayfinding, /civic-status/);
 });
 
 test("face3d preview announces live badge and boot brightness", () => {

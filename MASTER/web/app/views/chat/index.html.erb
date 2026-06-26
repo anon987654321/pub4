@@ -74,17 +74,29 @@
     .primer-form { position: fixed; inset: 0; z-index: 2147483000; margin: 0; padding: 0; border: 0; display: grid; place-items: center; background: rgba(0,0,0,.72); touch-action: manipulation; pointer-events: auto; }
     #primer { position: absolute; inset: 0; display: grid; place-items: center; border: 0; margin: 0; width: 100%; height: 100%; background: transparent; cursor: pointer; touch-action: manipulation; pointer-events: auto; -webkit-appearance: none; appearance: none; color: inherit; font: inherit; }
     #primer .primer-label { pointer-events: none; font: 200 clamp(1rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: -.04em; }
+    #primer .primer-tier { pointer-events: none; display: block; margin-top: .55em; font: 200 clamp(.72rem,2.2vw,1rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: .12em; opacity: .42; }
+    .boot-wayfinding { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 2147482000; pointer-events: none; }
     .primer-form.gone, #primer.gone { opacity: 0; pointer-events: none; }
   </style>
 </head>
 <body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark">
   <a href="#zin" class="skip-link">skip to prompt</a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+  <% primer_tier_label = @tier == "authenticated" ? "full access" : "visitor" %>
   <form id="primer-form" class="primer-form" action="#" method="post">
     <button type="button" id="primer" aria-busy="false">
-      <span id="primer-title" class="primer-label">tap to start</span>
+      <span id="primer-title" class="primer-label">tap to enter</span>
+      <span id="primer-tier" class="primer-tier"><%= primer_tier_label %></span>
     </button>
   </form>
+  <nav id="boot-wayfinding" class="boot-wayfinding" hidden aria-label="Boot progress">
+    <ol class="boot-wayfinding-steps">
+      <li data-step="audio" data-state="pending"><span class="boot-step-label">audio</span><span class="boot-step-mark" aria-hidden="true"></span></li>
+      <li data-step="face" data-state="pending"><span class="boot-step-label">face</span><span class="boot-step-mark" aria-hidden="true"></span></li>
+      <li data-step="agent" data-state="pending"><span class="boot-step-label">agent</span><span class="boot-step-mark" aria-hidden="true"></span></li>
+    </ol>
+  </nav>
+  <div id="civic-status" class="civic-status" hidden aria-live="polite"></div>
   <script nonce="<%= content_security_policy_nonce %>">
     (function(){
       var root=document.getElementById('primer-form');
@@ -144,6 +156,7 @@
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script src="<%= asset_path("face_state.js") %>" defer></script>
   <script src="<%= asset_path("visual_governor.js") %>" defer></script>
+  <script src="<%= asset_path("face_wayfinding.js") %>" defer></script>
   <script src="<%= asset_path("topology_registry.js") %>" defer></script>
   <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
   <script src="<%= asset_path("particle_worker.js") %>" defer></script>
