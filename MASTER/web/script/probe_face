@@ -3,12 +3,22 @@ require "ferrum"
 
 URL = ARGV[0] || "http://localhost:53187/"
 WAIT = 8
+CHROME_PATHS = [
+  ENV["CHROME_PATH"],
+  "/usr/local/bin/chrome",
+  "/usr/local/bin/chromium",
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium"
+].compact.freeze
+CHROME = CHROME_PATHS.find { |path| File.executable?(path) } || CHROME_PATHS.first
 
 puts "probe: #{URL}"
+puts "chrome: #{CHROME}"
 
 browser = Ferrum::Browser.new(
   headless: true,
-  browser_path: "/usr/local/bin/chrome",
+  browser_path: CHROME,
+  process_timeout: 30,
   browser_options: {
     "no-sandbox" => nil,
     "enable-webgl" => nil,

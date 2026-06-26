@@ -132,33 +132,49 @@
         if(title)title.textContent='loading…';
         if(ui)ui.textContent='loading face';
       }
-      function finishBoot(){
+      function clearBootTimers(){
         if(timer){clearInterval(timer);timer=null;}
         if(fallback){clearTimeout(fallback);fallback=null;}
+      }
+      function finishBoot(){
+        clearBootTimers();
         dismissPrimer();
         revealPrompt();
       }
-      function fallbackUi(){
-        finishBoot();
-        if(ui)ui.textContent='face failed to load — reload';
+      function armFaceBoot(){
+        if(timer)return;
+        showLoadState();
+        timer=setInterval(function(){if(boot())finishBoot();},40);
+        fallback=setTimeout(function(){
+          clearBootTimers();
+          if(boot())return;
+          if(window.MASTER_FACE&&window.MASTER_FACE.startEverything&&!window.MASTER_FACE.primerFired){
+            window.MASTER_FACE.startEverything();
+            finishBoot();
+            return;
+          }
+          finishBoot();
+          if(ui)ui.textContent='face failed to load — reload';
+        },60000);
       }
       function go(){
         if(fired)return;
         fired=true;
         window._primerFired=true;
         primeAudio();
+        dismissPrimer();
+        revealPrompt();
         if(title)title.textContent='starting…';
         if(ui)ui.textContent='booting face';
-        if(boot()){finishBoot();return;}
-        showLoadState();
-        timer=setInterval(function(){if(boot())finishBoot();},40);
-        fallback=setTimeout(function(){
-          if(window.MASTER_FACE&&window.MASTER_FACE.primerFired)finishBoot();
-          else fallbackUi();
-        },15000);
+        if(boot()){clearBootTimers();return;}
+        armFaceBoot();
       }
       addEventListener('master:face-ready',function(){if(fired&&boot())finishBoot();});
-      addEventListener('master:face-error',function(){if(fired)fallbackUi();});
+      addEventListener('master:face-error',function(ev){
+        if(!fired)return;
+        clearBootTimers();
+        if(ui)ui.textContent=(ev.detail&&ev.detail.message)?'face error — reload':'face failed to load — reload';
+      });
       if(p){
         p.addEventListener('pointerdown',go);
         p.addEventListener('touchend',go,{passive:true});
