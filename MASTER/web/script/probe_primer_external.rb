@@ -147,6 +147,7 @@ begin
   after = probe_evaluate(browser, <<~JS)
     ({
       primer: !!document.getElementById('primer'),
+      primerForm: !!document.getElementById('primer-form'),
       primerTitle: (document.getElementById('primer-title') || {}).textContent || '',
       primerFired: !!window._primerFired,
       faceSession: document.body.classList.contains('face-session'),
@@ -165,6 +166,7 @@ begin
 
   failures << "primer not fired" unless after["primerFired"]
   failures << "primer still visible" if after["primer"]
+  failures << "primer-form still visible" if after["primerForm"]
   failures << "face-session missing" unless after["faceSession"]
   failures << "zsh not live" unless after["zshLive"]
   failures << "MASTER_FACE missing" unless after["masterFace"] == "object"

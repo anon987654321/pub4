@@ -61,6 +61,7 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /master:session-ready/);
   assert.match(boot, /sessionReady/);
   assert.match(boot, /dismissPrimer\(\)/);
+  assert.match(boot, /form\.classList\.add\('gone'\)/);
   assert.match(boot, /ensurePrimer/);
   assert.doesNotMatch(boot, /showLoadState/);
   assert.match(boot, /pointerup/);
@@ -91,6 +92,19 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /DOMContentLoaded/);
   assert.match(boot, /pinPrimer/);
   assert.doesNotMatch(boot, /15000/);
+});
+
+test("probe_chat_e2e script covers primer chat and felt state", () => {
+  const probe = readFileSync(join(root, "script", "probe_chat_e2e.rb"), "utf8");
+  const gemfile = readFileSync(join(root, "Gemfile"), "utf8");
+  assert.match(probe, /probe_chat_e2e/);
+  assert.match(probe, /sendMessage\('ping'\)/);
+  assert.match(probe, /MASTERFeltState/);
+  assert.match(probe, /hasPong/);
+  assert.match(probe, /MASTER_FACE\?\.State/);
+  assert.match(gemfile, /gem "ferrum"/);
+  assert.match(probe, /MAX_PROBE_SECONDS/);
+  assert.match(probe, /browser\.go_to\(URL\)/);
 });
 
 test("chat index ships import map and digested master_events", () => {
@@ -131,6 +145,7 @@ test("face.css keeps primer tappable until session and shows face behind overlay
   assert.match(css, /body:not\(\.face-session\)/);
   assert.match(css, /face-behind-primer/);
   assert.match(css, /primer-form/);
+  assert.match(css, /\.primer-form\.gone/);
   assert.match(css, /face-primed/);
   assert.match(css, /face-behind-primer="1"\] canvas#face/);
   assert.match(css, /body:not\(\.face-session\) \.top-left-logo/);

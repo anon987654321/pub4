@@ -951,8 +951,14 @@ body[data-violation-flash="1"] canvas { filter: contrast(1.12) saturate(0.55); }
 body[data-uncertain="1"] #zsh-status { opacity: 1; animation: uncertainBlink 900ms steps(3,end) infinite; }
 @keyframes uncertainBlink { 0%,100%{opacity:.55} 50%{opacity:1} }
 
-/* #55 Primer .gone fade */
-#primer.gone { opacity: 0; transform: scale(0.96); pointer-events: none; transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out); }
+/* #55 Primer .gone fade — form wrapper must dismiss too or fullscreen layer blocks input */
+.primer-form.gone,
+#primer.gone {
+  opacity: 0;
+  transform: scale(0.96);
+  pointer-events: none;
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+}
 
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
 .chip { font: 10px/1 "JetBrains Mono",ui-monospace,monospace; letter-spacing: .08em; padding: 5px 10px; border: 1px solid color-mix(in srgb, var(--face-fg) 8%, transparent); border-radius: 2px; color: color-mix(in srgb, var(--c-text) 62%, transparent); transition: background 120ms var(--ease-out); }

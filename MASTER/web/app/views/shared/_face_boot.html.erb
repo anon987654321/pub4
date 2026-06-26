@@ -39,11 +39,16 @@
       delete document.body.dataset.faceBooting;
       delete document.body.dataset.faceBehindPrimer;
       syncPrimerRefs();
-      if(form)delete form.dataset.facePrimed;
+      if(form){
+        delete form.dataset.facePrimed;
+        form.classList.add('gone');
+        form.style.pointerEvents='none';
+      }
       if(p){
         p.setAttribute('aria-busy','false');
         p.disabled=true;
         p.classList.add('gone');
+        p.style.pointerEvents='none';
       }
       window.setTimeout(function(){
         syncPrimerRefs();
