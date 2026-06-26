@@ -16,6 +16,8 @@ rc_pre() {
 	pkill -f "falcon.*${PORT}" 2>/dev/null
 	pkill -f "ruby34.*${PORT}" 2>/dev/null
 	pkill -f "pub4/MASTER/web" 2>/dev/null
+	pkill -f "/home/dev/pub4/MASTER/bin/tts-worker" 2>/dev/null
+	rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
 	# Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
 	rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
 	_manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
@@ -39,8 +41,8 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 		done
 		rcctl restart relayd 2>/dev/null || true
 		# Warm Edge TTS daemon so first chat speak does not fall back to espeak.
-		(cd /home/dev/pub4/MASTER/web && bundle34 exec ruby -e \
-			'require "bundler/setup"; require "master/voice/tts_supervisor"; Master::Voice::TtsSupervisor.ensure_daemon!') \
+		(cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -e \
+			'\$LOAD_PATH.unshift \"lib\"; require \"master/voice/tts_supervisor\"; puts Master::Voice::TtsSupervisor.ensure_daemon!') \
 			2>/dev/null || true
 	fi
 fi

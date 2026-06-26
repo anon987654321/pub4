@@ -62,7 +62,7 @@ module Master
 
       def spawn_daemon(root:, path:, index: 0)
         worker = File.join(root, "bin", "tts-worker")
-        env = { "BUNDLE_GEMFILE" => File.join(root, "Gemfile") }
+        env = daemon_env(root)
         log = log_path(root, index:)
         pid = Process.spawn(
           env, Gem.ruby, worker, "--daemon", path,
@@ -132,6 +132,13 @@ module Master
       def lock_path(root, index: 0)
         suffix = pool_size <= 1 && index.zero? ? "" : "-#{index}"
         File.join(root, ".master", "tts-worker#{suffix}.starting")
+      end
+
+      def daemon_env(root)
+        env = ENV.to_h
+        %w[BUNDLE_PATH BUNDLE_BIN_PATH RUBYOPT GEM_HOME GEM_PATH].each { env.delete(_1) }
+        env["BUNDLE_GEMFILE"] = File.join(root, "Gemfile")
+        env
       end
     end
   end
