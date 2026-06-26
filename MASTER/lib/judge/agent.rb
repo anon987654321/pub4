@@ -70,7 +70,7 @@ module Master
         response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
 
         text = response.to_s
-        recovery = PhantomRecovery.handle(text, bus: @bus, session: @session)
+        recovery = Master::PhantomRecovery.handle(text, bus: @bus, session: @session)
         case recovery[:action]
         when :discard
           return Result.err("phantom recovery: discarded repetitive response", category: :policy)

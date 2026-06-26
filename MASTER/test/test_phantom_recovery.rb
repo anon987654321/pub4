@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "unwrap_error"
 
 class TestPhantomRecovery < Minitest::Test
   class FakeBus
@@ -38,5 +39,11 @@ class TestPhantomRecovery < Minitest::Test
     bus = FakeBus.new
     result = Master::PhantomRecovery.handle("Done. Tests pass.", bus:, scope: :clean)
     assert_equal :continue, result[:action]
+  end
+
+  def test_judge_agent_calls_master_phantom_recovery
+    source = File.read(File.join(Master::ROOT, "lib", "judge", "agent.rb"))
+    assert_includes source, "Master::PhantomRecovery.handle"
+    refute_match(/(?<!Master::)PhantomRecovery\.handle/, source)
   end
 end
