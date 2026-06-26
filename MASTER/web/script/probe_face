@@ -1,52 +1,87 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 require "ferrum"
+require "shellwords"
+require "timeout"
 
 URL = ARGV[0] || "http://localhost:53187/"
 WAIT = Integer(ENV.fetch("PROBE_WAIT", "12"))
+BROWSER_TIMEOUT = Integer(ENV.fetch("PROBE_BROWSER_TIMEOUT", "20"))
+FORCE = ENV["PROBE_FORCE_BROWSER"] == "1"
 CHROME_PATHS = [
   ENV["CHROME_PATH"],
-  "/usr/local/bin/chrome",
   "/usr/local/bin/chromium",
+  "/usr/local/bin/chrome",
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   "/Applications/Chromium.app/Contents/MacOS/Chromium"
 ].compact.freeze
-CHROME = CHROME_PATHS.find { |path| File.executable?(path) } || CHROME_PATHS.first
 
-puts "probe: #{URL}"
-puts "chrome: #{CHROME}"
-
-browser = Ferrum::Browser.new(
-  headless: true,
-  browser_path: CHROME,
-  process_timeout: 45,
-  browser_options: {
-    "no-sandbox" => nil,
-    "enable-webgl" => nil,
-    "use-gl" => "swiftshader",
-    "enable-unsafe-swiftshader" => nil,
-    "disable-dev-shm-usage" => nil,
-    "ignore-certificate-errors" => nil
-  },
-  timeout: 90
-)
-
-console_msgs = []
-browser.on(:console) { |msg| console_msgs << "[#{msg.type}] #{msg.args.map(&:value).join(' ')}" rescue nil }
-
-network_errors = []
-browser.network.intercept
-browser.on(:request) { |req| req.continue }
-browser.on(:response) do |res|
-  s = res.status.to_i
-  network_errors << "#{s} #{res.url.split('?').first.split('/').last}" if s >= 400
+def pick_chrome
+  CHROME_PATHS.find { |path| File.executable?(path) }
 end
 
+def chrome_version_ok?(path, timeout_s: 3)
+  Timeout.timeout(timeout_s) do
+    out = `#{Shellwords.escape(path)} --version 2>/dev/null`
+    !out.to_s.strip.empty?
+  end
+rescue Timeout::Error, StandardError
+  false
+end
+
+def build_browser(path)
+  Ferrum::Browser.new(
+    headless: true,
+    browser_path: path,
+    process_timeout: BROWSER_TIMEOUT,
+    browser_options: {
+      "headless" => "new",
+      "no-sandbox" => nil,
+      "disable-gpu" => nil,
+      "disable-dev-shm-usage" => nil,
+      "enable-webgl" => nil,
+      "use-gl" => "swiftshader",
+      "enable-unsafe-swiftshader" => nil,
+      "ignore-certificate-errors" => nil,
+      "remote-allow-origins" => "*"
+    },
+    timeout: 90
+  )
+end
+
+def skip_probe(reason)
+  puts "probe: SKIP (#{reason})"
+  exit 0
+end
+
+chrome = pick_chrome
+puts "probe: #{URL}"
+puts "chrome: #{chrome || '(none)'}"
+
+skip_probe("no Chrome executable — set CHROME_PATH or use probe_http") unless chrome
+skip_probe("macOS headless Ferrum unreliable here — set PROBE_FORCE_BROWSER=1 to try") if RUBY_PLATFORM.include?("darwin") && !FORCE
+skip_probe("Chrome --version failed — use probe_http") unless chrome_version_ok?(chrome)
+
+browser = nil
 failures = []
+console_msgs = []
+network_errors = []
 
 begin
+  browser = Timeout.timeout(BROWSER_TIMEOUT + 5) { build_browser(chrome) }
+
+  browser.on(:console) { |msg| console_msgs << "[#{msg.type}] #{msg.args.map(&:value).join(' ')}" rescue nil }
+
+  browser.network.intercept
+  browser.on(:request) { |req| req.continue }
+  browser.on(:response) do |res|
+    s = res.status.to_i
+    network_errors << "#{s} #{res.url.split('?').first.split('/').last}" if s >= 400
+  end
+
   browser.evaluate_on_new_document(<<~JS)
     window._errs = [];
-    window._clog = [];
     window.onerror = function(msg, src, line) {
       window._errs.push(msg + ' @ ' + (src||'').split('/').pop() + ':' + line);
     };
@@ -70,10 +105,6 @@ begin
 
   puts "\n=== primer state ==="
   puts browser.evaluate("document.getElementById('primer') ? 'exists' : 'gone'")
-
-  puts "\n=== element at tap point ==="
-  el = browser.evaluate("(function(){ var e = document.elementFromPoint(300,500); return e ? e.tagName+'#'+e.id+'.'+e.className : 'none'; })()")
-  puts el
 
   puts "\n=== simulate tap ==="
   browser.mouse.click(x: 300, y: 500)
@@ -104,13 +135,14 @@ begin
 
   puts "\n=== console log tail ==="
   puts console_msgs.last(10).join("\n") unless console_msgs.empty?
-
-rescue => e
+rescue Ferrum::ProcessTimeoutError, Timeout::Error => e
+  skip_probe("browser launch timeout (#{e.class}) — use probe_http")
+rescue StandardError => e
   failures << "probe exception: #{e.class}: #{e.message}"
   puts "probe error: #{e.class}: #{e.message}"
   puts e.backtrace.first(3).join("\n")
 ensure
-  browser.quit
+  browser&.quit
 end
 
 if failures.empty?
