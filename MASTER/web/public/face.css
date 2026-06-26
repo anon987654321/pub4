@@ -1374,6 +1374,67 @@ body[data-runtime-profile="crt"] #cognition-ecology {
   background: rgba(255,255,255,0.35);
 }
 
+.master-retry-boot {
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  opacity: 0.72;
+}
+.master-retry-boot:hover { opacity: 1; }
+
+html[data-build]::after {
+  content: attr(data-build);
+  position: fixed;
+  right: 8px;
+  bottom: 4px;
+  font: 200 0.62rem/1 "Inter", Helvetica, Arial, sans-serif;
+  letter-spacing: 0.06em;
+  opacity: 0.28;
+  pointer-events: none;
+  z-index: 2;
+}
+
+html[data-face-stage]::before {
+  content: attr(data-face-stage);
+  position: fixed;
+  left: 50%;
+  top: 12%;
+  transform: translateX(-50%);
+  font: 200 clamp(0.55rem, 1.4vw, 0.72rem)/1 "Inter", Helvetica, Arial, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 2;
+}
+
+html[data-public-api]::after { opacity: 0.35; }
+
+#face-particle-legend.sr-only-focusable:focus {
+  position: fixed;
+  left: 8px;
+  top: 8px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.88);
+  border: 1px solid rgba(245, 240, 232, 0.2);
+  font: 200 0.75rem/1.35 "Inter", Helvetica, Arial, sans-serif;
+  z-index: 2147482000;
+  clip: auto;
+  width: auto;
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-reduced-motion="1"] canvas#face,
+  html[data-reduced-motion="1"] canvas#cognition-ecology {
+    animation: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  html[data-high-contrast="1"] { --face-particle-luma: 2; }
+}
+
 @media print {
   canvas, #cognition-ecology, #primer, #zsh, .face-controls, .ui-status, #chat-history-panel, .skip-link { display: none !important; }
   body { background: #fff; color: #000; }

@@ -17,6 +17,7 @@ class ChatController < ApplicationController
     @model = c&.[](:agent)&.model.to_s.split("/").last.presence || "booting"
     @tier  = request.env["master.tier"].to_s
     @container_ready = !c.nil?
+    response.headers["Cache-Control"] = "no-store"
     render layout: false
   end
 

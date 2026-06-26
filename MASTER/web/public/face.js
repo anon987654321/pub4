@@ -11,9 +11,12 @@ function dispatchFaceStage(stage) {
   window.dispatchEvent(new CustomEvent("master:face-stage", { detail: { stage: label } }));
 }
 
-function dispatchFaceError(error) {
+function dispatchFaceError(error, moduleName = "face.boot") {
   window.MASTER_LOG?.error?.("face boot", error);
-  window.dispatchEvent(new CustomEvent("master:face-error", { detail: { message: String(error) } }));
+  window.MASTER_FACE_VISION?.showBootError?.(error, { module: moduleName, stage: "boot" });
+  window.dispatchEvent(new CustomEvent("master:face-error", {
+    detail: { message: String(error), module: moduleName, stage: "boot" }
+  }));
 }
 
 async function loadTailModules() {

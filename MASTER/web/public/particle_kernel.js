@@ -104,6 +104,25 @@
       if (pool.cells[base + FIELD.confidence] <= 0) pool.alive[i] = 0;
     }
     if (ctx.spatialRepulsion) spatialRepel(pool, Number(ctx.repelStrength) || 0.006);
+    if (ctx.pressureRadial > 0) applyPressureRadial(pool, ctx.pressureRadial, ctx.pressureCx ?? 0, ctx.pressureCy ?? 0);
+  }
+
+  function applyPressureRadial(pool, strength, cx, cy) {
+    const pull = Math.min(1, Number(strength) || 0) * 0.012;
+    for (let i = 0; i < pool.count; i++) {
+      if (!pool.alive[i]) continue;
+      const base = i * FIELDS_PER_CELL;
+      const dx = cx - pool.cells[base + FIELD.x];
+      const dy = cy - pool.cells[base + FIELD.y];
+      const dist = Math.hypot(dx, dy) || 0.001;
+      pool.cells[base + FIELD.vx] += (dx / dist) * pull;
+      pool.cells[base + FIELD.vy] += (dy / dist) * pull;
+    }
+  }
+
+  function confidencePixelSize(base, confidence) {
+    const conf = Math.max(0, Math.min(1, Number(confidence) || 0.5));
+    return Math.max(1, Math.round(base * (0.55 + conf * 0.55)));
   }
 
   function compact(pool) {
@@ -181,6 +200,8 @@
     step,
     stepWithContext: step,
     spatialRepel,
+    applyPressureRadial,
+    confidencePixelSize,
     compact,
     configureContext,
     fitInternalResolution,

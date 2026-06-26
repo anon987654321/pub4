@@ -162,7 +162,7 @@ class ApplicationController < ActionController::Base
     return true if path == "/up" || path == "/health"
     return true if smoke_chat_probe?
     return true if path.start_with?("/assets/", "/runtime/")
-    return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|topology_|cluster_|mask|sw\.js|manifest\.json|icon\.|offline\.html)})
+    return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|face_vision_|topology_|cluster_|mask|sw\.js|manifest\.json|icon\.|offline\.html)})
 
     false
   end

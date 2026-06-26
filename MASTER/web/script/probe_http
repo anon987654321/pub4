@@ -32,7 +32,7 @@ begin
   home = get("/")
   failures << "homepage #{home.code}" unless home.code == "200"
   body = home.body.to_s
-  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer chat_actions master-container-ready container_gate sse_contract felt_state].each do |needle|
+  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer chat_actions master-container-ready container_gate sse_contract felt_state face_vision_core.js face_vision_d.js MASTER_FACE_VISION].each do |needle|
     failures << "homepage missing #{needle}" unless body.include?(needle)
   end
   failures << "legacy 15s boot timeout still present" if body.include?("15000")
@@ -68,6 +68,9 @@ begin
     payload = JSON.parse(status.body) rescue {}
     failures << "runtime status missing ready flag" unless payload.key?("ready")
     failures << "runtime status missing model" unless payload.key?("model")
+    failures << "runtime status missing build" unless payload.key?("build")
+    failures << "runtime status missing face_boot_ms key" unless payload.key?("face_boot_ms")
+    failures << "runtime status missing particle_worker_alive key" unless payload.key?("particle_worker_alive")
   end
 
   token = ENV["PROBE_TOKEN"].to_s

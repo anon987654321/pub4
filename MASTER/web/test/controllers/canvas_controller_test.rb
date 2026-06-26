@@ -20,4 +20,13 @@ class CanvasControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :accepted
   end
+
+  test "post_event accepts face metrics topic" do
+    post "/canvas/event", params: {
+      topic: "face:metrics",
+      payload: { face_boot_ms: 420, particle_worker_alive: true, feature_count: 150 }
+    }
+
+    assert_response :accepted
+  end
 end

@@ -7,7 +7,7 @@ class CanvasController < ApplicationController
   ALLOWED_TOPICS = %w[
     canvas:mood canvas:mode canvas:gesture canvas:idle canvas:tilt
     canvas:palette canvas:energy canvas:breath
-    user:expression
+    user:expression face:metrics
   ].freeze
 
   def post_event
@@ -17,6 +17,11 @@ class CanvasController < ApplicationController
     if topic == "user:expression"
       expression = raw.slice("source", "valence", "arousal", "attention", "pressure").transform_keys(&:to_sym)
       container[:bus].publish("user:expression", expression: expression, source: expression[:source]) rescue nil
+      return head :accepted
+    end
+    if topic == "face:metrics"
+      metrics = raw.slice("face_boot_ms", "particle_worker_alive", "feature_count", "bench_fps").transform_keys(&:to_sym)
+      Rails.cache.write("face:metrics:#{request.remote_ip}", metrics, expires_in: 5.minutes)
       return head :accepted
     end
 

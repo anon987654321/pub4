@@ -29,11 +29,32 @@ function setReady(isReady, detail) {
   if (isReady) window.dispatchEvent(new CustomEvent("master:container-ready", { detail: detail || {} }));
 }
 
+function ensureRetryBootButton() {
+  let btn = document.getElementById("master-retry-boot");
+  if (btn) return btn;
+  btn = document.createElement("button");
+  btn.id = "master-retry-boot";
+  btn.type = "button";
+  btn.className = "tool master-retry-boot";
+  btn.textContent = "retry boot";
+  btn.addEventListener("click", () => {
+    pollCount = 0;
+    if (!pollTimer) pollTimer = setInterval(pollTick, POLL_MS);
+    pollStatus();
+    const ui = document.getElementById("ui-status");
+    if (ui) ui.textContent = "retrying boot…";
+  });
+  const shell = document.getElementById("zsh") || document.body;
+  shell.appendChild(btn);
+  return btn;
+}
+
 function setWarmupStalled(reason) {
   const ui = document.getElementById("ui-status");
   if (ui) ui.textContent = "master still starting…";
   const errLive = document.getElementById("error-live");
   if (errLive) errLive.textContent = reason || "master warming up — retry shortly";
+  ensureRetryBootButton();
   window.dispatchEvent(new CustomEvent("master:container-timeout", { detail: { reason } }));
 }
 
