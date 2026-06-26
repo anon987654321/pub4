@@ -165,6 +165,8 @@
         fired=true;
         window._primerFired=true;
         primeAudio();
+        if(title)title.textContent='starting…';
+        if(ui)ui.textContent='booting face';
         dismissPrimer();
         revealPrompt();
         if(boot())return;

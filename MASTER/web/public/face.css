@@ -96,6 +96,7 @@ body[data-focus-mode="1"] #zsh {
 canvas#face {
   background: #000;
   z-index: 1;
+  pointer-events: none;
 }
 
 #cognition-ecology {
