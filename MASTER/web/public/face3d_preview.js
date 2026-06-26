@@ -26,7 +26,7 @@ function topologyMask(topology) {
 }
 
 function bootFace3d() {
-  if (face3dDisabled()) return;
+  if (face3dDisabled() || window.FACE3D_ACTIVE) return;
 
   const canvas = document.getElementById("face");
   if (!canvas) return;

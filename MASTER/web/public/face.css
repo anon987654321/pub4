@@ -52,6 +52,16 @@ body.face-loading {
   touch-action: manipulation;
 }
 
+body:not(.face-session) .face-controls {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body:not(.face-session) #zsh .tool,
+body:not(.face-session) #zsh #photo-button {
+  display: none;
+}
+
 body.font-mono {
   font-family: "JetBrains Mono","Cascadia Code","Fira Code",ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
 }

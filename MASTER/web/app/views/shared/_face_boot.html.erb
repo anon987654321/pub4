@@ -21,8 +21,8 @@
       window.setTimeout(function(){p.remove();},220);
     }
     function revealPrompt(){
+      document.body.classList.add('face-session');
       if(z)z.classList.add('live');
-      if(ui&&!ui.textContent)ui.textContent='starting';
     }
     function boot(){
       if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){
@@ -34,15 +34,13 @@
     function showLoadState(){
       document.body.dataset.faceBooting='1';
       if(p){p.classList.remove('gone');p.style.opacity='';p.style.transform='';p.setAttribute('aria-busy','true');}
-      if(title)title.textContent='loading face…';
-      if(ui)ui.textContent='loading face';
+      if(title)title.textContent='starting…';
     }
     function clearBootTimers(){
       if(timer){clearInterval(timer);timer=null;}
       if(fallback){clearTimeout(fallback);fallback=null;}
     }
     function reportError(msg){
-      if(ui)ui.textContent=msg;
       if(err)err.textContent=msg;
       if(p)p.setAttribute('aria-busy','false');
     }
@@ -61,7 +59,7 @@
         p.style.pointerEvents='auto';
         p.setAttribute('aria-busy','false');
       }
-      if(title)title.textContent='face failed — tap to retry';
+      if(title)title.textContent='tap to retry';
       reportError(msg||'reload page');
       fired=false;
       window._primerFired=false;
@@ -78,7 +76,7 @@
           finishBoot();
           return;
         }
-        showBootError('face timed out — reload');
+        showBootError('timed out');
       },60000);
     }
     function go(){
@@ -87,24 +85,13 @@
       window._primerFired=true;
       primeAudio();
       if(title)title.textContent='starting…';
-      if(ui)ui.textContent='booting face';
-      revealPrompt();
       if(boot()){finishBoot();return;}
       armFaceBoot();
     }
     addEventListener('master:face-ready',function(){if(fired&&boot())finishBoot();});
-    addEventListener('master:face-stage',function(ev){
-      if(!fired)return;
-      var label=ev.detail&&ev.detail.stage;
-      if(label){
-        if(ui)ui.textContent=label;
-        if(title&&document.body.dataset.faceBooting)title.textContent=label;
-      }
-    });
     addEventListener('master:face-error',function(ev){
       if(!fired)return;
-      var msg=(ev.detail&&ev.detail.message)?String(ev.detail.message).slice(0,120):'';
-      showBootError(msg||'face error — reload');
+      showBootError('tap to retry');
     });
     if(p){
       p.addEventListener('pointerdown',go);
