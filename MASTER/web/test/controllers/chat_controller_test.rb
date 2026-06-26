@@ -19,8 +19,8 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "importmap"
     assert_includes response.body, "60000"
     refute_includes response.body, "15000"
-    refute_match(/function go\(\)\{[\s\S]*?revealPrompt/, response.body)
-    refute_match(/function go\(\)\{[\s\S]*?dismissPrimer/, response.body)
+    assert_match(/function go\(\)\{[\s\S]*?revealPrompt/, response.body)
+    assert_match(/function go\(\)\{[\s\S]*?dismissPrimer/, response.body)
     refute_includes response.body, "voice-picker"
     refute_includes response.body, "tts-style-chips"
     refute_includes response.body, "spin-btn"

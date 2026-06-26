@@ -22,7 +22,7 @@ console_msgs = []
 browser = Ferrum::Browser.new(
   browser_path: chrome,
   headless: "new",
-  timeout: 120,
+  timeout: 180,
   process_timeout: 60,
   browser_options: {
     "no-sandbox" => nil,

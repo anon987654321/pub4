@@ -72,6 +72,8 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /master:face-stage/);
   assert.match(boot, /master:session-ready/);
   assert.match(boot, /sessionReady/);
+  assert.match(boot, /dismissPrimer\(\)/);
+  assert.doesNotMatch(boot, /showLoadState/);
   assert.match(boot, /pointerdown/);
   assert.match(boot, /click/);
   assert.match(boot, /touchend/);

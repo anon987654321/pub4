@@ -21,7 +21,7 @@
       if(!p)return;
       p.setAttribute('aria-busy','false');
       p.classList.add('gone');
-      window.setTimeout(function(){p.remove();},220);
+      window.setTimeout(function(){if(p&&p.parentNode)p.remove();},220);
     }
     function revealPrompt(){
       document.body.classList.add('face-session');
@@ -32,10 +32,9 @@
       if(window.MASTER_FACE&&window.MASTER_FACE.startEverything)window.MASTER_FACE.startEverything();
       return sessionReady();
     }
-    function showLoadState(){
+    function showBootStatus(label){
       document.body.dataset.faceBooting='1';
-      if(p){p.classList.remove('gone');p.style.opacity='';p.style.transform='';p.style.pointerEvents='auto';p.setAttribute('aria-busy','true');}
-      if(title)title.textContent='starting…';
+      if(ui)ui.textContent=label;
     }
     function clearBootTimers(){
       if(timer){clearInterval(timer);timer=null;}
@@ -43,32 +42,35 @@
     }
     function reportError(msg){
       if(err)err.textContent=msg;
-      if(p)p.setAttribute('aria-busy','false');
     }
     function finishBoot(){
       if(!sessionReady())return;
       clearBootTimers();
+      delete document.body.dataset.faceBooting;
+      if(ui)ui.textContent='';
       revealPrompt();
-      dismissPrimer();
     }
     function showBootError(msg){
       clearBootTimers();
       delete document.body.dataset.faceBooting;
-      if(p){
+      fired=false;
+      window._primerFired=false;
+      if(p&&p.parentNode){
         p.classList.remove('gone');
         p.style.opacity='1';
         p.style.transform='';
         p.style.pointerEvents='auto';
         p.setAttribute('aria-busy','false');
+        if(title)title.textContent='tap to retry';
+        document.body.classList.add('face-loading');
+      }else if(ui){
+        ui.textContent='tap to retry — reload page';
       }
-      if(title)title.textContent='tap to retry';
       reportError(msg||'reload page');
-      fired=false;
-      window._primerFired=false;
     }
     function armFaceBoot(){
       if(timer)return;
-      showLoadState();
+      showBootStatus('starting…');
       timer=setInterval(function(){if(boot())finishBoot();},40);
       fallback=setTimeout(function(){
         clearBootTimers();
@@ -81,7 +83,9 @@
       fired=true;
       window._primerFired=true;
       primeAudio();
-      showLoadState();
+      revealPrompt();
+      dismissPrimer();
+      window.dispatchEvent(new CustomEvent('primer:ready'));
       if(boot()){finishBoot();return;}
       armFaceBoot();
     }
@@ -96,7 +100,7 @@
     addEventListener('master:face-stage',function(ev){
       if(!fired||sessionReady())return;
       var label=ev.detail&&ev.detail.stage;
-      if(label&&ui)ui.textContent=label;
+      if(label)showBootStatus(label);
     });
     function primerActivate(e){
       if(e.type==='pointerdown'||e.type==='pointerup'){
