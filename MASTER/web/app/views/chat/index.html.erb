@@ -31,6 +31,22 @@
     window.MASTER_SOUL_SUMMARY = "persona malay; voice ms-MY-OsmanNeural; constitutional face";
     window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload.to_json %>;
   </script>
+  <script nonce="<%= content_security_policy_nonce %>">
+    (function(){
+      var pending=false;
+      function queueTap(){pending=true;}
+      ["click","pointerup","touchend","mousedown"].forEach(function(type){
+        var passive=type==="touchend"||type==="mousedown";
+        window.addEventListener(type,queueTap,{capture:true,passive:passive});
+      });
+      window.__MASTER_PRIMER_TAP__=function(){
+        if(typeof window.__MASTER_PRIMER_GO__==="function")window.__MASTER_PRIMER_GO__();
+        else pending=true;
+      };
+      window.__MASTER_PRIMER_PENDING__=function(){return pending;};
+      window.__MASTER_PRIMER_CLEAR__=function(){pending=false;};
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
@@ -59,6 +75,12 @@
 <body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark">
   <a href="#zin" class="skip-link">skip to prompt</a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+  <form id="primer-form" class="primer-form" action="#" method="post">
+    <button type="button" id="primer" aria-busy="false" onclick="window.__MASTER_PRIMER_TAP__&&window.__MASTER_PRIMER_TAP__()">
+      <span id="primer-title" class="primer-label">tap to start</span>
+    </button>
+  </form>
+  <%= render "shared/face_boot" %>
   <div class="top-left-logo" aria-hidden="true">brgen</div>
   <div id="face-live-badge" class="face-live-badge" hidden aria-live="polite">face live</div>
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
@@ -120,11 +142,5 @@
     }
     window.addEventListener('primer:ready', refreshRuntimeConfig, { once: true });
   </script>
-  <form id="primer-form" class="primer-form" action="#" method="post">
-    <button type="button" id="primer" aria-busy="false">
-      <span id="primer-title" class="primer-label">tap to start</span>
-    </button>
-  </form>
-  <%= render "shared/face_boot" %>
 </body>
 </html>

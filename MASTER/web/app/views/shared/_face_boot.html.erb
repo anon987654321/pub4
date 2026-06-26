@@ -97,8 +97,10 @@
       opts=opts||{};
       if(fired||!primerVisible())return;
       if(e&&e.type==='submit'){e.preventDefault();}
-      if(!opts.anywhere&&e&&!primerTarget(e.target))return;
-      if(e&&!trackpadPrimary(e))return;
+      if(!opts.anywhere){
+        if(e&&!primerTarget(e.target))return;
+        if(e&&!trackpadPrimary(e))return;
+      }
       if(!safariBrowser()&&e&&e.cancelable&&e.pointerType&&e.pointerType!=='mouse')e.preventDefault();
       go();
     }
@@ -236,6 +238,7 @@
     }
     function go(){
       if(fired||!primerVisible())return;
+      if(ui)ui.textContent='tap received';
       fired=true;
       window._primerFired=true;
       document.body.dataset.primerFlash='1';
@@ -266,8 +269,9 @@
       schedulePin();
       watchFaceBoot();
       if(safariBrowser()){
-        ['pointerup','click'].forEach(function(type){
-          document.addEventListener(type,function(ev){primerActivate(ev,{anywhere:true});},{capture:true});
+        ['pointerup','click','mousedown','touchend'].forEach(function(type){
+          var passive=type==='touchend';
+          document.addEventListener(type,function(ev){primerActivate(ev,{anywhere:true});},{capture:true,passive:passive});
         });
       }else{
         ['pointerdown','mousedown','mouseup','touchend'].forEach(function(type){
@@ -284,15 +288,20 @@
         }).observe(document.body,{childList:true});
       }
       addEventListener('load',schedulePin);
-      addEventListener('pageshow',function(){
-        if(!primerVisible())return;
+      addEventListener('pageshow',function(ev){
+        if(!ev.persisted||!primerVisible())return;
         fired=false;
         window._primerFired=false;
         resetFaceSession();
         if(p)p.disabled=false;
         schedulePin();
       });
+      window.__MASTER_PRIMER_GO__=go;
       window.__MASTER_PRIMER_TAP__=go;
+      if(window.__MASTER_PRIMER_PENDING__&&window.__MASTER_PRIMER_PENDING__()){
+        window.__MASTER_PRIMER_CLEAR__();
+        go();
+      }
       window.__MASTER_FACE_STATUS__=function(){
         syncPrimerRefs();
         return {
@@ -309,7 +318,6 @@
         };
       };
     }
-    window.__MASTER_PRIMER_TAP__=function(){if(typeof go==='function')go();};
     if(document.readyState==='loading'){
       document.addEventListener('DOMContentLoaded',armPrimer);
     }else{

@@ -50,6 +50,7 @@ html, body {
 }
 
 html.face-loading,
+html:not(.face-session),
 body.face-loading,
 body:not(.face-session) {
   touch-action: manipulation;
@@ -292,6 +293,11 @@ body[data-tts-loading="true"] .ui-status {
   text-rendering: optimizeLegibility;
   transition: opacity 1.2s var(--ease-out);
 }
+
+body:not(.face-session) .top-left-logo {
+  z-index: calc(var(--z-primer) + 3);
+}
+
 /* Mic indicator — top-right, visible only during STT */
 #mic-dot {
   position: fixed;
