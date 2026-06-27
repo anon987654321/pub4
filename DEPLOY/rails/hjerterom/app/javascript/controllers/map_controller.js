@@ -19,13 +19,33 @@ export default class extends Controller {
     this.points = this.hasPointsValue ? this.pointsValue : this._readPoints()
     this.markers = []
     this.map = null
-    this._boot()
+    this._resizeObserver = null
+    this._maplibreTimer = null
+    this._waitForMapLibre()
   }
 
   disconnect() {
+    if (this._maplibreTimer) clearInterval(this._maplibreTimer)
+    if (this._resizeObserver) this._resizeObserver.disconnect()
     this.markers.forEach(marker => marker.remove())
     this.markers = []
     if (this.map) this.map.remove()
+  }
+
+  _waitForMapLibre() {
+    if (window.maplibregl) {
+      this._boot()
+      return
+    }
+
+    let attempts = 0
+    this._maplibreTimer = setInterval(() => {
+      attempts += 1
+      if (!window.maplibregl && attempts < 100) return
+      clearInterval(this._maplibreTimer)
+      this._maplibreTimer = null
+      this._boot()
+    }, 50)
   }
 
   _rootCanvas() {
@@ -72,8 +92,14 @@ export default class extends Controller {
       zoom: this.hasZoomValue ? this.zoomValue : 13.4,
       pitch: this.hasPitchValue ? this.pitchValue : 0,
       bearing: this.hasBearingValue ? this.bearingValue : 0,
-      antialias: true
+      antialias: true,
+      attributionControl: true
     })
+
+    this._resizeObserver = new ResizeObserver(() => {
+      if (this.map) this.map.resize()
+    })
+    this._resizeObserver.observe(canvas)
 
     this.map.addControl(new window.maplibregl.NavigationControl({ visualizePitch: false }), "bottom-right")
     this.map.addControl(new window.maplibregl.GeolocateControl({
@@ -83,6 +109,7 @@ export default class extends Controller {
     }), "bottom-right")
 
     this.map.on("load", () => {
+      this.map.resize()
       this.points.forEach(point => {
         const lat = Number(point.lat)
         const lng = Number(point.lng)
