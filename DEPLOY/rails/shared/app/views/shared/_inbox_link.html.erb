@@ -1,0 +1,3 @@
+<% if authenticated? %>
+  <%= link_to "Inbox", notifications_path, class: local_assigns.fetch(:class_name, "nav-link") %>
+<% end %>

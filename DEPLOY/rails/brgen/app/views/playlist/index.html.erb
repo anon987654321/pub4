@@ -18,7 +18,10 @@
 
 <div class="page-header" role="banner" aria-label="Playlist header">
   <h1>Playlist</h1>
-  <%= link_to "New set", new_playlist_playlist_path, class: "btn" if authenticated? %>
+  <% if authenticated? %>
+    <%= link_to "New set", new_playlist_playlist_path, class: "btn" %>
+    <%= link_to "Hosted tracks", playlist_hosted_tracks_path, class: "btn btn-ghost" %>
+  <% end %>
 </div>
 
 <section role="region" aria-label="Playlists list">

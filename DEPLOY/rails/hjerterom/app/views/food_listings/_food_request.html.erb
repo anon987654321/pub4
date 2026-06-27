@@ -2,4 +2,8 @@
   <p><strong><%= request.user.email_address.split("@").first %></strong></p>
   <% if request.message.present? %><p><%= request.message %></p><% end %>
   <p class="dim"><%= request.status.humanize %><% if request.pickup_time.present? %> · <%= request.pickup_time.strftime("%b %-d, %H:%M") %><% end %></p>
+  <% if local_assigns[:owner] && request.status == "pending" %>
+    <%= button_to "Accept", food_listing_food_request_path(request.food_listing, request), method: :patch, params: { status: "accepted" }, data: { turbo_stream: true }, class: "btn btn-primary btn-sm" %>
+    <%= button_to "Decline", food_listing_food_request_path(request.food_listing, request), method: :patch, params: { status: "declined" }, data: { turbo_stream: true }, class: "btn btn-ghost btn-sm" %>
+  <% end %>
 </article>

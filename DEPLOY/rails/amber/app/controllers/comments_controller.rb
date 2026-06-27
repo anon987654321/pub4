@@ -30,7 +30,7 @@ class CommentsController < ApplicationController
     @comment.record_activity!("AmberCommentRemoved", source_vertical: "amber")
     @comment.destroy!
     respond_to do |format|
-      format.turbo_stream { render turbo_stream: turbo_stream.remove(dom_id(@comment)) }
+      format.turbo_stream
       format.html { redirect_to @post }
     end
   end

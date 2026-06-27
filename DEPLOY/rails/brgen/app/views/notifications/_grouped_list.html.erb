@@ -1,0 +1,14 @@
+<% if @notifications.any? %>
+  <% @group_order.each do |kind| %>
+    <% items = @grouped_notifications[kind] || [] %>
+    <% next if items.empty? %>
+    <section class="mb-12">
+      <h2 class="section-heading--md"><%= kind.humanize %></h2>
+      <% items.each do |notification| %>
+        <%= render "notifications/notification", notification: notification %>
+      <% end %>
+    </section>
+  <% end %>
+<% else %>
+  <div class="empty" role="status" aria-live="polite"><p>No notifications. Offers, orders, and local updates will appear here.</p></div>
+<% end %>

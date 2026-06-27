@@ -10,15 +10,15 @@
   <% end %>
 </div>
 
-<% if @tracks.any? %>
-  <div id="hosted_tracks">
+<div id="hosted_tracks">
+  <% if @tracks.any? %>
     <% @tracks.each do |track| %>
       <article>
         <h2><%= link_to track.title, playlist_hosted_track_path(track) %></h2>
         <p class="dim"><%= track.artist.presence || "Unknown artist" %> · <%= track.duration_formatted %></p>
       </article>
     <% end %>
-  </div>
-<% else %>
-  <p class="dim">No hosted tracks yet.</p>
-<% end %>
+  <% else %>
+    <p class="dim">No hosted tracks yet.</p>
+  <% end %>
+</div>

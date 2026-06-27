@@ -1,1 +1,2 @@
+<%= turbo_stream.remove "boxes-empty" %>
 <%= turbo_stream.append "boxes", partial: "boxes/box", locals: { box: @box } %>

@@ -8,11 +8,11 @@
   <%= link_to "New box", new_box_path, class: "btn btn-primary" %>
 </div>
 
-<% if @boxes.any? %>
-  <%= turbo_stream_from "hjerterom:boxes" %>
-  <div id="boxes">
+<%= turbo_stream_from "hjerterom:boxes" if @boxes.any? %>
+<div id="boxes">
+  <% if @boxes.any? %>
     <%= render @boxes %>
-  </div>
-<% else %>
-  <div class="empty"><p>No boxes planned.</p></div>
-<% end %>
+  <% else %>
+    <div id="boxes-empty" class="empty"><p>No boxes planned.</p></div>
+  <% end %>
+</div>

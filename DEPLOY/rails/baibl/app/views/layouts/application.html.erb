@@ -36,6 +36,7 @@
   <%= link_to "Search", scripture_search_path %>
   <%= link_to "Word study", scripture_word_study_path %>
   <% if authenticated? %>
+    <%= render "shared/inbox_link" %>
     <%= link_to "Bookmarks", bookmarks_path %>
     <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
   <% else %>

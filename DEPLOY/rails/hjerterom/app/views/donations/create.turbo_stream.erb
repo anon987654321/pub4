@@ -1,3 +1,4 @@
+<%= turbo_stream.remove "donations-empty" %>
 <%= turbo_stream.append "donations", partial: "donations/donation", locals: { donation: @donation } %>
 <%= turbo_stream.replace "hjerterom-donation-new" do %>
   <turbo-frame id="hjerterom-donation-new">

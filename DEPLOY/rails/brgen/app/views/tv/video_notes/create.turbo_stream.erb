@@ -4,3 +4,17 @@
     <p><%= @video_note.body %></p>
   </article>
 <% end %>
+<%= turbo_stream.replace "video_note_form" do %>
+  <%= form_with url: tv_video_video_notes_path(@video), scope: :video_note, id: "video_note_form", data: { turbo: true } do |f| %>
+    <div class="field">
+      <%= f.label :body, "Add a note" %>
+      <%= f.text_area :body, rows: 2, placeholder: "Timestamped note…", data: { controller: "char-counter", "char-counter-max-value": 2000 } %>
+      <span class="char-counter" data-char-counter-target="counter"></span>
+    </div>
+    <div class="field">
+      <%= f.label :timestamp, "Timestamp (seconds)" %>
+      <%= f.number_field :timestamp, min: 0, step: 1 %>
+    </div>
+    <%= f.submit "Save note", class: "btn btn-primary btn-sm" %>
+  <% end %>
+<% end %>

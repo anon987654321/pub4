@@ -20,7 +20,7 @@
     <%= render @comments %>
   </div>
   <% if authenticated? %>
-    <%= form_with url: blog_post_comments_path(@blog, @post), data: { turbo: true } do |f| %>
+    <%= form_with url: blog_post_comments_path(@blog, @post), id: "post_comment_form", data: { turbo: true } do |f| %>
       <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…", data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
       <p><%= f.submit "Comment" %></p>
     <% end %>

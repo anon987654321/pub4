@@ -15,6 +15,6 @@
   <% if @donations.any? %>
     <%= render partial: "donations/donation", collection: @donations %>
   <% else %>
-    <div class="empty"><p>No donations yet.</p></div>
+    <div id="donations-empty" class="empty"><p>No donations yet.</p></div>
   <% end %>
 </div>

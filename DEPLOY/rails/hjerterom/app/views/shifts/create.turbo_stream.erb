@@ -1,1 +1,2 @@
+<%= turbo_stream.remove "shifts-empty" %>
 <%= turbo_stream.append "shifts", partial: "shifts/shift", locals: { shift: @shift } %>

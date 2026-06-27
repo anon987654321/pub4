@@ -19,6 +19,7 @@ class FoodListingsController < ApplicationController
 
   def show
     @request = FoodRequest.new
+    @requests = @listing.food_requests.includes(:user).order(created_at: :desc) if authenticated? && @listing.user == Current.user
     @listing.record_activity!("FoodListingViewed", source_vertical: "hjerterom")
   end
 

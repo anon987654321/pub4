@@ -1,0 +1,15 @@
+<div class="page-header" role="banner" aria-label="Notifications header">
+  <div>
+    <p class="dim">Brgen inbox</p>
+    <h1>
+      Notifications
+      <% if @unread_count.to_i.positive? %>
+        <span class="badge"><%= pluralize(@unread_count, "unread") %></span>
+      <% end %>
+    </h1>
+  </div>
+
+  <% if @unread_count.to_i.positive? %>
+    <%= button_to "Mark all read", read_all_notifications_path, method: :patch, class: "btn btn-primary", data: { turbo_stream: true } %>
+  <% end %>
+</div>

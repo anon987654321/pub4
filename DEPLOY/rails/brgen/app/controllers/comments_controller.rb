@@ -26,7 +26,7 @@ class CommentsController < ApplicationController
     @comment = Comment.find(params[:id])
     @comment.destroy if @comment.user == Current.user
     respond_to do |format|
-      format.turbo_stream { render turbo_stream: turbo_stream.remove(dom_id(@comment)) }
+      format.turbo_stream
       format.html         { redirect_back fallback_location: root_path }
     end
   end

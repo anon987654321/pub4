@@ -75,7 +75,7 @@
     <% end %>
   </div>
   <% if authenticated? %>
-    <%= form_with url: tv_video_video_notes_path(@video), scope: :video_note, data: { turbo: true } do |f| %>
+    <%= form_with url: tv_video_video_notes_path(@video), scope: :video_note, id: "video_note_form", data: { turbo: true } do |f| %>
       <div class="field">
         <%= f.label :body, "Add a note" %>
         <%= f.text_area :body, rows: 2, placeholder: "Timestamped note…", data: { controller: "char-counter", "char-counter-max-value": 2000 } %>
@@ -103,7 +103,7 @@
     <p class="dim">No comments yet.</p>
   <% end %>
   <% if authenticated? %>
-    <%= form_with url: tv_video_comments_path(@video) do |f| %>
+    <%= form_with url: tv_video_comments_path(@video), data: { turbo: true } do |f| %>
       <div class="field">
         <%= f.label :body, "Add a comment" %>
         <%= f.text_area :body, rows: 3, placeholder: "Write something…", data: { controller: "char-counter", "char-counter-max-value": 1000 } %>

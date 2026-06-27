@@ -1,18 +1,16 @@
 <% content_for :title, @volunteer.name %>
 <%= render "volunteer_details", volunteer: @volunteer %>
 
-  <section>
-    <h2>Upcoming shifts</h2>
+<section>
+  <h2>Upcoming shifts</h2>
+  <ul id="shifts">
     <% if @shifts.any? %>
-      <ul>
-        <% @shifts.each do |shift| %>
-          <li><%= shift.kind.humanize %> — <%= shift.starts_at.strftime("%b %-d, %H:%M") %>–<%= shift.ends_at.strftime("%H:%M") %> (<%= shift.state.humanize %>)</li>
-        <% end %>
-      </ul>
+      <%= render partial: "shifts/shift", collection: @shifts %>
     <% else %>
-      <p>No upcoming shifts.</p>
+      <li id="shifts-empty" class="dim">No upcoming shifts.</li>
     <% end %>
-    <% if authenticated? %>
-      <%= render "shifts/form", volunteer: @volunteer, shift: Shift.new %>
-    <% end %>
-  </section>
+  </ul>
+  <% if authenticated? %>
+    <%= render "shifts/form", volunteer: @volunteer, shift: Shift.new %>
+  <% end %>
+</section>

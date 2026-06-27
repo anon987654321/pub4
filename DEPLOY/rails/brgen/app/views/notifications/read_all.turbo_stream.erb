@@ -1,5 +1,6 @@
-<%= turbo_stream.update "notifications" do %>
-  <% @notifications.each do |n| %>
-    <%= render n %>
-  <% end %>
+<%= turbo_stream.replace "notification_header" do %>
+  <%= render "notifications/header" %>
+<% end %>
+<%= turbo_stream.replace "notification_list" do %>
+  <%= render "notifications/grouped_list" %>
 <% end %>

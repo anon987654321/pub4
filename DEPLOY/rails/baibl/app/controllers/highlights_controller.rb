@@ -16,6 +16,7 @@ class HighlightsController < ApplicationController
 
   def destroy
     @highlight = Current.user.highlights.find(params[:id])
+    @verse = @highlight.verse
     @highlight.record_activity!("HighlightRemoved", source_vertical: "baibl")
     @highlight.destroy!
     respond_to do |format|

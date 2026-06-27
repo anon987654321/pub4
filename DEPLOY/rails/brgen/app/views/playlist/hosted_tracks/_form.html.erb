@@ -1,7 +1,5 @@
 <%= form_with model: [:playlist, track], url: track.persisted? ? playlist_hosted_track_path(track) : playlist_hosted_tracks_path do |form| %>
-  <% if track.errors.any? %>
-    <div class="error"><%= track.errors.full_messages.to_sentence %></div>
-  <% end %>
+  <%= render "shared/errors", object: track %>
 
   <div class="field">
     <%= form.label :title %>

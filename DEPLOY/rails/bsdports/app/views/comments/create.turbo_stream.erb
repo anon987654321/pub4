@@ -1,1 +1,7 @@
 <%= turbo_stream.append "port_comments", partial: "comments/comment", locals: { comment: @comment } %>
+<%= turbo_stream.replace "port_comment_form" do %>
+  <%= form_with url: port_comments_path(@port), id: "port_comment_form", data: { turbo: true } do |f| %>
+    <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…", data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
+    <p><%= f.submit "Comment" %></p>
+  <% end %>
+<% end %>

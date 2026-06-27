@@ -19,6 +19,7 @@ class BookmarksController < ApplicationController
 
   def destroy
     @bookmark = Current.user.bookmarks.find(params[:id])
+    @verse = @bookmark.verse
     @bookmark.record_activity!("BookmarkRemoved", source_vertical: "baibl")
     @bookmark.destroy!
     respond_to do |format|

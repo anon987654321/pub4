@@ -9,13 +9,23 @@
     <% if @listing.dietary_info.present? %><dt>Dietary</dt><dd><%= @listing.dietary_info %></dd><% end %>
   </dl>
   <% if authenticated? && @listing.user != Current.user && @listing.status == "available" %>
-    <%= form_with url: food_listing_food_requests_path(@listing) do |f| %>
-      <p><%= f.text_area :message, rows: 2, placeholder: "Message (optional)…", data: { controller: "char-counter", "char-counter-max-value": 500 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
-      <p><%= f.datetime_local_field :pickup_time %></p>
-      <p><%= f.submit "Request pickup" %></p>
-    <% end %>
+    <div id="food_request_form">
+      <%= form_with url: food_listing_food_requests_path(@listing), data: { turbo: true } do |f| %>
+        <p><%= f.text_area :message, rows: 2, placeholder: "Message (optional)…", data: { controller: "char-counter", "char-counter-max-value": 500 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
+        <p><%= f.datetime_local_field :pickup_time %></p>
+        <p><%= f.submit "Request pickup" %></p>
+      <% end %>
+    </div>
   <% end %>
   <% if @listing.user == Current.user %>
+    <section id="food_requests">
+      <h2>Pickup requests</h2>
+      <% if @requests&.any? %>
+        <%= render partial: "food_listings/food_request", collection: @requests, as: :request, locals: { owner: true } %>
+      <% else %>
+        <p class="dim">No requests yet.</p>
+      <% end %>
+    </section>
     <%= link_to "Edit", edit_food_listing_path(@listing) %>
     <%= button_to "Delete", @listing, method: :delete, data: { turbo_confirm: "Delete?" } %>
   <% end %>

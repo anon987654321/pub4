@@ -20,6 +20,7 @@
   <%= link_to "Privcam", root_path, class: "brand", aria: { current: current_page?(root_path) ? "page" : nil } %>
   <%= link_to "Videos", videos_path, aria: { current: current_page?(videos_path) ? "page" : nil } %>
   <% if authenticated? %>
+    <%= render "shared/inbox_link" %>
     <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
   <% else %>
     <%= link_to "Sign in", new_session_path %>
