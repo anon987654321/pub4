@@ -26,7 +26,7 @@ sync_from_repo() {
   local src=$repo/DEPLOY/rails/$app
   local shared_src=$repo/DEPLOY/rails/shared
   if [[ -d $src ]]; then
-    local -a paths=(test app lib config bin db/seeds.rb db/migrate)
+    local -a paths=(test app lib config bin db/seeds.rb db/migrate Gemfile Gemfile.lock)
     local -a existing=()
     local rel
     for rel in "${paths[@]}"; do
@@ -36,7 +36,8 @@ sync_from_repo() {
     [[ ${#existing[@]} -eq 0 ]] && return 0
     doas tar cf - -C "$src" "${existing[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
     doas chown -R "${app}:${app}" "${app_dir}/test" "${app_dir}/app" "${app_dir}/lib" \
-      "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}"/*.sh(N) 2>/dev/null || true
+      "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}/Gemfile" "${app_dir}/Gemfile.lock" \
+      "${app_dir}"/*.sh(N) 2>/dev/null || true
   fi
   doas mkdir -p "$shared_dir"
   doas tar cf - -C "$shared_src" . | doas sh -c "cd ${shared_dir} && tar xf -"

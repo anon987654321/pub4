@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "net/ftp"
 require "pathname"
 require "tempfile"
 
@@ -16,6 +15,8 @@ module Ports
       end
 
       def fetch_category_index(category)
+        require "net/ftp"
+
         Tempfile.create([ "bsdports-index-#{category}-", ".txt" ]) do |tmp|
           Net::FTP.open(@host, read_timeout: 30, open_timeout: 15) do |ftp|
             ftp.passive = true
