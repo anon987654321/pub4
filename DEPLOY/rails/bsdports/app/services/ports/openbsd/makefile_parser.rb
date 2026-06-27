@@ -5,7 +5,8 @@ require "pathname"
 module Ports
   module Openbsd
     class MakefileParser
-      ASSIGNMENT = /\A([A-Z][A-Z0-9_]*)\s*(\?\+?=|\+=)\s*(.*)\z/
+      ASSIGNMENT = /\A([A-Z][A-Z0-9_]*)\s*(?:\?\+=|\+=|\?=|=)\s*(.*)\z/
+      PLUS_ASSIGNMENT = /\A([A-Z][A-Z0-9_]*)\s*\+=\s*(.*)\z/
 
       def self.parse(path) = new(path).parse
 
@@ -46,12 +47,17 @@ module Ports
           line = line.strip
           next if line.blank? || line.start_with?("#", ".", "\t")
 
+          if (match = PLUS_ASSIGNMENT.match(line))
+            key, value = match.captures
+            vars[key] = [ vars[key], value.strip ].compact.join(" ")
+            next
+          end
+
           match = ASSIGNMENT.match(line)
           next unless match
 
-          key, op, value = match.captures
-          value = value.strip
-          vars[key] = op == "+=" ? [ vars[key], value ].compact.join(" ") : value
+          key, value = match.captures
+          vars[key] = value.strip
         end
         vars
       end
