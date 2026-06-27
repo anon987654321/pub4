@@ -14,7 +14,7 @@ class FeedsController < ApplicationController
 
   def blog
     @blog = Blog.find(params[:blog_id])
-    @posts = @blog.posts.published.includes(:user, :blog).limit(50)
+    @posts = @blog.posts.published.with_rich_text_body.includes(:user, :blog).limit(50)
     expires_in 15.minutes, public: true
     respond_to do |format|
       format.rss { render :show, layout: false }
@@ -25,6 +25,6 @@ class FeedsController < ApplicationController
   private
 
   def published_posts
-    Post.published.includes(:user, :blog).order(published_at: :desc)
+    Post.published.with_rich_text_body.includes(:user, :blog).order(published_at: :desc)
   end
 end
