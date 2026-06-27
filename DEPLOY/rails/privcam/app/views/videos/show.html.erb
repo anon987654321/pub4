@@ -8,8 +8,10 @@
   </header>
 
   <% if @video.file.attached? %>
-    <%= video_tag url_for(@video.file), controls: true, style: "max-width: 100%;" %>
+    <%= video_tag url_for(@video.file), controls: true, class: "video-player" %>
   <% end %>
+
+  <%= render "shared/reaction_bar", target: @video %>
 
   <section aria-label="Comments">
     <h2>Comments</h2>

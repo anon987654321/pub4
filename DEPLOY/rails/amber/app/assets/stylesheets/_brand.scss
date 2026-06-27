@@ -1,0 +1,26 @@
+@property --gradient-x {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+
+@property --gradient-y {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+
+.amber-logo-gradient {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at var(--gradient-x) var(--gradient-y), #ffb999 0%, #e6cce6 33%, #cce6cc 66%, #99e6e6 100%);
+  animation: amberGradientMove 20s infinite linear;
+}
+
+@keyframes amberGradientMove {
+  0% { --gradient-x: 0%; --gradient-y: 0%; }
+  25% { --gradient-x: 100%; --gradient-y: 0%; }
+  50% { --gradient-x: 100%; --gradient-y: 100%; }
+  75% { --gradient-x: 0%; --gradient-y: 100%; }
+  100% { --gradient-x: 0%; --gradient-y: 0%; }
+}

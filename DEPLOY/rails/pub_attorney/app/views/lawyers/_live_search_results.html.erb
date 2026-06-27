@@ -1,0 +1,10 @@
+<section id="lawyers">
+  <% @lawyers.each do |lawyer| %>
+    <article>
+      <h2><%= link_to lawyer.name, lawyer_path(lawyer) %></h2>
+      <% if lawyer.specialty.present? %><p><%= lawyer.specialty %></p><% end %>
+      <% if lawyer.bio.present? %><p class="dim"><%= lawyer.bio.truncate(160) %></p><% end %>
+    </article>
+  <% end %>
+</section>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

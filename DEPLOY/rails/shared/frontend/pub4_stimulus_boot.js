@@ -18,6 +18,7 @@ import Sound from "@stimulus-components/sound"
 import SpeechRecognition from "@stimulus-components/speech-recognition"
 import TextareaAutogrow from "@stimulus-components/textarea-autogrow"
 import Timeago from "@stimulus-components/timeago"
+import AnimatedNumber from "@stimulus-components/animated-number"
 import StimulusReflex from "stimulus_reflex"
 import ApplicationController from "controllers/application_controller"
 import LiveSearch from "pub4/live_search"
@@ -47,7 +48,8 @@ const COMPONENT_REGISTRATIONS = [
   ["sound", Sound],
   ["speech-recognition", SpeechRecognition],
   ["textarea-autogrow", TextareaAutogrow],
-  ["timeago", Timeago]
+  ["timeago", Timeago],
+  ["animated-number", AnimatedNumber]
 ]
 
 export function bootPub4Stimulus(application, { futurism = true } = {}) {

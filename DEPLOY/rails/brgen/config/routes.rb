@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "brgen/domain_registry"
+
 Rails.application.routes.draw do
   get "offline" => "rails/pwa#offline", as: :pwa_offline
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
@@ -12,8 +14,10 @@ Rails.application.routes.draw do
   DATING_SUBDOMAINS      = %w[dating].freeze
   PLAYLIST_SUBDOMAINS    = %w[playlist spilleliste].freeze
   TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
-  MARKETPLACE_SUBDOMAINS = %w[markedsplass markadur marknadsplats marktplaats marktplatz marche mercato mercado
-                              markkinapaikka marketplace].freeze
+  MARKETPLACE_SUBDOMAINS = Brgen::DomainRegistry::SUBAPP_ALIASES
+    .select { |_subdomain, subapp| subapp == :marketplace }
+    .keys
+    .freeze
   MAPS_SUBDOMAINS        = %w[maps].freeze
   MESSENGER_SUBDOMAINS   = %w[messenger].freeze
 

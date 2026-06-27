@@ -1,94 +1,62 @@
 @use "pub4_stack" as *;
 
 :root {
-  --turbo-progress-bar-color: #0ea5e9;
+  --turbo-progress-bar-color: #1d4ed8;
+  --primary: #1d4ed8;
 }
 
-
-
-header {
-  width: 100%;
-  max-width: 660px;
-  display: flex;
-  justify-content: flex-end;
-
-  .tabs {
-    display: flex;
-    margin-top: 18px;
-    color: var(--light-grey);
-    border-bottom: 1px solid var(--extra-light-grey);
-
-    p {
-      padding: 0 3px 8px;
-      margin-inline-end: 28px;
-
-      &.active {
-        color: var(--black);
-        border-bottom: 1px solid var(--black);
-      }
-    }
-  }
+body {
+  color: var(--black);
+  background: var(--white);
 }
 
-#search {
-  width: 90%;
-  max-width: 584px;
-  border: 1px solid var(--extra-light-grey);
-  border-radius: 30px;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-
-  &:focus-within {
-    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
-  }
-
-  input {
-    background: transparent;
-    outline: none;
-    border: none;
-    width: 100%;
-    padding: 16px 0;
-    font-size: 16px;
-    color: var(--black);
-
-    &::placeholder {
-      color: var(--dark-grey);
-    }
-  }
+main {
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
-.browse-link {
-  margin: 44px 0 0.75rem;
-  font-size: 0.8125rem;
-}
-
-.port-list {
-  width: 90%;
-  max-width: 660px;
-  margin-top: 2rem;
-}
-
-.port-row {
-  display: flex;
-  align-items: baseline;
+.case-list,
+.lawyer-list {
+  display: grid;
   gap: 0.75rem;
-  padding: 0.5rem 0;
+  width: min(720px, 100%);
+}
+
+.case-list article,
+.lawyer-list article {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--extra-light-grey);
+  border-radius: 8px;
+}
+
+.case-detail,
+.lawyer-detail {
+  max-width: 760px;
+}
+
+.case-detail h1,
+.lawyer-detail h1 {
+  margin-bottom: 0.5rem;
+}
+
+.document-list {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.document-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
   border-bottom: 1px solid var(--extra-light-grey);
 }
 
-.port-name {
-  font-weight: 600;
-  color: var(--light-blue);
-  text-decoration: none;
-}
-
-.port-name:hover {
-  text-decoration: underline;
-}
-
-.port-comment {
-  color: var(--dark-grey);
-  font-size: 0.9rem;
+.match-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px dashed var(--extra-light-grey);
+  border-radius: 8px;
+  background: #f8fafc;
 }

@@ -1,0 +1,6 @@
+<ul id="videos-list" class="video-list" role="list" aria-label="Video list">
+  <% @videos.each do |video| %>
+    <%= render "videos/row", video: %>
+  <% end %>
+</ul>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

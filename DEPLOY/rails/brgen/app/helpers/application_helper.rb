@@ -73,4 +73,16 @@ module ApplicationHelper
   rescue URI::InvalidURIError
     nil
   end
+
+  def marketplace_subdomain
+    Brgen::DomainRegistry::ENTRIES.find { |entry| entry.domain == Current.domain }&.marketplace_subdomain || "marketplace"
+  end
+
+  def marketplace_host
+    "#{marketplace_subdomain}.#{Current.domain}"
+  end
+
+  def marketplace_root_url(**options)
+    marketplace_marketplace_root_url(subdomain: marketplace_subdomain, host: Current.domain, **options)
+  end
 end

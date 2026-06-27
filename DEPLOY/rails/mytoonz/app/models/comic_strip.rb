@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ComicStrip < ApplicationRecord
+  include Shared::Reactable
+
   belongs_to :user
 
   validates :prompt, presence: true

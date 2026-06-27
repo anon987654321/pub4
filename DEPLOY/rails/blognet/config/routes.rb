@@ -15,7 +15,10 @@ Rails.application.routes.draw do
     collection { get :autocomplete }
   end
 
+  get "feed" => "feeds#show", as: :feed
+
   resources :blogs, path: "b" do
+    member { get "feed" => "feeds#blog", as: :feed }
     resources :posts, path: "p" do
       member { post :generate_ai }
       resources :comments, only: %i[create destroy]

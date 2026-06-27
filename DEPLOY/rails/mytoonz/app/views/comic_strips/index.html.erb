@@ -7,7 +7,7 @@
 
 <% if authenticated? %>
   <section aria-label="Generate comic strip">
-    <%= form_with model: ComicStrip.new, url: comic_strips_path, local: true do |f| %>
+    <%= form_with model: ComicStrip.new, url: comic_strips_path, local: true, html: { class: "comic-form" } do |f| %>
       <%= f.text_area :prompt, placeholder: "How was your day?", required: true, rows: 3 %>
       <%= f.select :style, [["Comic", "comic"], ["Anime", "anime"], ["Cartoon", "cartoon"]], {}, required: true %>
       <%= f.submit "Generate Comic" %>
@@ -17,14 +17,4 @@
   <p><%= link_to "Sign in", new_session_path %> to generate comic strips.</p>
 <% end %>
 
-<ul role="list" aria-label="Comic strip list">
-  <% @comic_strips.each do |comic_strip| %>
-    <li>
-      <article>
-        <h2><%= link_to comic_strip.prompt.truncate(60), comic_strip_path(comic_strip) %></h2>
-        <p>Style: <%= comic_strip.style %> · Status: <%= comic_strip.status %></p>
-        <small>by <%= comic_strip.user.email_address %></small>
-      </article>
-    </li>
-  <% end %>
-</ul>
+<%= live_search_index url: comic_strips_path, results_partial: "comic_strips/live_search_results", placeholder: "Search comic strips…", label: "Comic strip search", frame_id: "mytoonz-comics" %>

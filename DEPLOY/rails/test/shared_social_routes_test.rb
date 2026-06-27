@@ -4,7 +4,7 @@ require "minitest/autorun"
 
 class SharedSocialRoutesTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  APPS = %w[amber baibl blognet brgen bsdports hjerterom].freeze
+  APPS = %w[amber baibl blognet brgen bsdports hjerterom privcam pub_attorney mytoonz].freeze
 
   def test_all_apps_expose_shared_social_endpoints
     social = File.read(File.join(ROOT, "shared/config/routes/social.rb"))
@@ -17,8 +17,8 @@ class SharedSocialRoutesTest < Minitest::Test
     end
   end
 
-  def test_five_apps_load_shared_social_route_partial
-    %w[amber baibl blognet bsdports hjerterom].each do |app|
+  def test_apps_load_shared_social_route_partial
+    %w[amber baibl blognet bsdports hjerterom privcam pub_attorney mytoonz].each do |app|
       routes = File.read(File.join(ROOT, app, "config/routes.rb"))
       assert_includes routes, "shared/config/routes/social.rb", "#{app} should eval shared social routes"
     end

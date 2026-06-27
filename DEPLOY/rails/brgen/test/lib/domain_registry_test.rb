@@ -21,6 +21,14 @@ class DomainRegistryTest < ActiveSupport::TestCase
     assert_equal :marketplace, result.subapp
   end
 
+  test "resolves kbenhvn.dk markedsplads marketplace subdomain" do
+    result = Brgen::DomainRegistry.resolve("markedsplads.kbenhvn.dk")
+
+    assert_equal "kbenhvn.dk", result.entry.domain
+    assert_equal :marketplace, result.subapp
+    assert_equal "markedsplads", result.entry.marketplace_subdomain
+  end
+
   test "resolves lsangeles.com to los angeles" do
     result = Brgen::DomainRegistry.resolve("www.lsangeles.com")
 

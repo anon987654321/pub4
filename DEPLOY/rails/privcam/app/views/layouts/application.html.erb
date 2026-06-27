@@ -3,19 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1a1a1a">
+  <meta name="theme-color" content="#7c3aed" data-light-color="#ede9fe" data-dark-color="#7c3aed">
   <meta name="turbo-cache-control" content="no-preview">
   <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
   <title><%= content_for?(:title) ? "#{yield :title} — Privcam" : "Privcam" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Privcam — private video sharing." %>">
+  <link rel="canonical" href="<%= request.original_url.split("?").first %>">
+  <meta property="og:site_name" content="Privcam">
+  <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : "Privcam" %>">
+  <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : "Private video sharing." %>">
+  <meta property="og:url" content="<%= request.original_url %>">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  <%= json_ld_script(website_json_ld(site_name: "Privcam", url: root_url, description: "Private video sharing.")) %>
   <%= javascript_importmap_tags %>
 </head>
 <body class="zen-minimal" data-pwa-key="privcam" data-controller="pwa-standalone">
+<a class="skip-link" href="#main-content">Skip to main content</a>
 <nav role="navigation" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to "Privcam", root_path, class: "brand", aria: { current: current_page?(root_path) ? "page" : nil } %>
   <%= link_to "Videos", videos_path, aria: { current: current_page?(videos_path) ? "page" : nil } %>
@@ -28,7 +39,7 @@
 </nav>
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
-<main role="main"><%= yield %></main>
+<main id="main-content" role="main"><%= yield %></main>
 <%= render "shared/install_prompt" %>
 </body>
 </html>

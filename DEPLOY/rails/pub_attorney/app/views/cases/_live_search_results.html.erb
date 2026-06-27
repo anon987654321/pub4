@@ -1,0 +1,9 @@
+<section id="cases">
+  <% @cases.each do |kase| %>
+    <article>
+      <h2><%= link_to kase.title, case_path(kase) %></h2>
+      <p><%= kase.status %> <% if kase.lawyer %>· <%= kase.lawyer.name %><% end %></p>
+    </article>
+  <% end %>
+</section>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

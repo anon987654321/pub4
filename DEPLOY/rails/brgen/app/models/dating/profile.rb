@@ -17,6 +17,7 @@ class Dating::Profile < ApplicationRecord
   validates :age,         numericality: { greater_than: 17, less_than: 100 }, allow_nil: true
   validates :gender,      inclusion: { in: GENDERS },     allow_nil: true
   validates :looking_for, inclusion: { in: LOOKING_FOR }, allow_nil: true
+  validate :photos_present_when_visible, on: :update
 
   scope :visible, -> { where(visible: true) }
   include Shared::GeoLocatable
@@ -31,5 +32,14 @@ class Dating::Profile < ApplicationRecord
     Dating::Match.where(status: "matched")
       .where("(initiator_id = ? AND receiver_id = ?) OR (initiator_id = ? AND receiver_id = ?)",
              self.user_id, user.id, user.id, self.user_id).exists?
+  end
+
+  private
+
+  def photos_present_when_visible
+    return unless visible?
+    return if photos.attached?
+
+    errors.add(:photos, "must include at least one photo when visible")
   end
 end

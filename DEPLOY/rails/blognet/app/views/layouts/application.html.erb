@@ -26,6 +26,8 @@
   <%= csp_meta_tag %>
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
+  <%= tag.link rel: "alternate", type: "application/rss+xml", title: "Blognet RSS", href: feed_url(format: :rss) %>
+  <%= tag.link rel: "alternate", type: "application/atom+xml", title: "Blognet Atom", href: feed_url(format: :atom) %>
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
   <%= yield :json_ld %>

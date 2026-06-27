@@ -18,6 +18,7 @@ class Dating::ProfilesController < Dating::BaseController
   def create
     @profile = Current.user.build_dating_profile(profile_params)
     if @profile.save
+      enqueue_photo_processing
       redirect_to(dating_root_path, notice: "Profile created")
     else
       @neighborhoods = available_neighborhoods
@@ -26,7 +27,9 @@ class Dating::ProfilesController < Dating::BaseController
   end
 
   def update
+    purge_removed_photos
     if @profile.update(profile_params)
+      enqueue_photo_processing
       redirect_to(dating_root_path, notice: "Profile updated")
     else
       @neighborhoods = available_neighborhoods
@@ -42,6 +45,17 @@ class Dating::ProfilesController < Dating::BaseController
 
   def profile_params
     params.require(:dating_profile).permit(:bio, :gender, :looking_for, :age, :location, :latitude, :longitude, :neighborhood_id, :bydel, :visible, photos: [])
+  end
+
+  def purge_removed_photos
+    ids = Array(params.dig(:dating_profile, :remove_photo_ids)).map(&:to_i).uniq
+    return if ids.empty?
+
+    @profile.photos.where(id: ids).find_each(&:purge)
+  end
+
+  def enqueue_photo_processing
+    Dating::ProfileMediaJob.perform_later(@profile.id) if @profile.photos.attached?
   end
 
   def available_neighborhoods

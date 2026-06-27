@@ -1,0 +1,42 @@
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-extra-light-grey);
+  transform: translateY(-100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  &.nav-visible {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+  }
+
+  a {
+    color: inherit;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  .brand {
+    display: block;
+    width: 96px;
+    height: 48px;
+    line-height: 0;
+    margin-inline-end: auto;
+    flex-shrink: 0;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}

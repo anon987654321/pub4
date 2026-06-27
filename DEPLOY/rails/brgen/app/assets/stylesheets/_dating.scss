@@ -84,3 +84,19 @@
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x;
 }
+
+.photo-thumb-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.match-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  float: left;
+  margin-inline-end: 12px;
+}

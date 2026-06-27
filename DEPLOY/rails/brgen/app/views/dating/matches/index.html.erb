@@ -15,7 +15,7 @@
     <% other = m.other_user(Current.user) %>
     <article>
       <% if other.dating_profile&.photos&.attached? %>
-        <%= image_tag other.dating_profile.photos.first, style: "width:40px;height:40px;border-radius:50%;object-fit:cover;float:left;margin-right:12px" %>
+        <%= lazy_image_tag other.dating_profile.photos.first, alt: other.display_name, class: "match-avatar" %>
       <% end %>
       <strong><%= other.email_address.split("@").first %></strong>
       <p class="dim">Matched</p>

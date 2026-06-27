@@ -5,11 +5,7 @@
   <p>Private video sharing</p>
 </header>
 
-<ul id="videos-list" role="list" aria-label="Video list">
-  <% @videos.each do |video| %>
-    <%= render "videos/row", video: %>
-  <% end %>
-</ul>
+<%= live_search_index url: videos_path, results_partial: "videos/live_search_results", placeholder: "Search videos…", label: "Video search", frame_id: "privcam-videos" %>
 
 <%= render "shared/infinite_scroll_sentinel",
            pagy: @pagy,

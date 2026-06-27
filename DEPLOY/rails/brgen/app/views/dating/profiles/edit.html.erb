@@ -15,7 +15,21 @@
       <%= f.label :neighborhood_id, "Bydel / Neighbourhood" %>
       <%= f.select :neighborhood_id, @neighborhoods.map { |n| [n.name, n.id] }, { include_blank: "—" } %>
     </div>
-    <div class="field"><%= f.label :photos, "Photos" %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
+    <% if @profile.photos.attached? %>
+      <div class="field">
+        <span class="label">Current photos</span>
+        <div class="photo-strip">
+          <% @profile.photos.each do |photo| %>
+            <label class="photo-thumb-wrap">
+              <%= lazy_image_tag photo, alt: "Profile photo", class: "photo-thumb" %>
+              <%= check_box_tag "dating_profile[remove_photo_ids][]", photo.id, false %>
+              <span class="dim">Remove</span>
+            </label>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    <div class="field"><%= f.label :photos, "Add photos" %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
     <div class="field field--check"><%= f.check_box :visible %><%= f.label :visible, "Make profile visible" %></div>
     <div class="field"><%= f.submit "Save", class: "btn btn-primary" %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>
   <% end %>

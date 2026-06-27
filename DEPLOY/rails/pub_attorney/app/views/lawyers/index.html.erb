@@ -5,15 +5,4 @@
   <p>Find qualified lawyers for free legal help</p>
 </header>
 
-<ul role="list" aria-label="Lawyer list">
-  <% @lawyers.each do |lawyer| %>
-    <li>
-      <article>
-        <h2><%= link_to lawyer.name, lawyer_path(lawyer) %></h2>
-        <p><%= lawyer.specialty %></p>
-        <p>Rating: <%= lawyer.rating %>/5</p>
-        <p><%= lawyer.bio&.truncate(150) %></p>
-      </article>
-    </li>
-  <% end %>
-</ul>
+<%= live_search_index url: lawyers_path, results_partial: "lawyers/live_search_results", placeholder: "Search lawyers…", label: "Lawyer search", frame_id: "pub-attorney-lawyers" %>
