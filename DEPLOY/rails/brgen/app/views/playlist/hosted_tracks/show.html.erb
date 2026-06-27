@@ -18,7 +18,7 @@
   <% if @track.audio_file.attached? %>
     <%= audio_tag url_for(@track.audio_file), controls: true %>
   <% elsif @track.source_url.present? %>
-    <p><%= link_to "Open source", @track.source_url, rel: "noopener" %></p>
+    <p><%= safe_http_link("Open source", @track.source_url) || @track.source_url %></p>
   <% end %>
   <% if @track.artwork.attached? %>
     <%= image_tag @track.artwork, alt: @track.title, class: "track-artwork" %>

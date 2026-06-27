@@ -57,4 +57,20 @@ module ApplicationHelper
   def api_date(value)
     value.to_date.iso8601
   end
+
+  def safe_http_link(label, url)
+    safe_url = safe_http_url(url)
+    return unless safe_url
+
+    link_to label, safe_url, rel: "noopener noreferrer", target: "_blank"
+  end
+
+  def safe_http_url(url)
+    uri = URI.parse(url.to_s.strip)
+    return uri.to_s if uri.is_a?(URI::HTTP) && uri.host.present?
+
+    nil
+  rescue URI::InvalidURIError
+    nil
+  end
 end
