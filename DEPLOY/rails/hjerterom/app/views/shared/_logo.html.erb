@@ -1,10 +1,11 @@
 <% compact = local_assigns.fetch(:compact, false) %>
+<% svg_uid = local_assigns.fetch(:svg_uid, "hj") %>
 <svg viewBox="<%= compact ? "52 14 96 64" : "0 0 200 150" %>" role="img" aria-label="Hjerterom" class="hjerterom-logo-svg<%= " hjerterom-logo-svg--compact" if compact %>" shape-rendering="geometricPrecision">
   <defs>
-    <clipPath id="heartClip">
+    <clipPath id="heartClip-<%= svg_uid %>">
       <path d="M100,26.79625 c-4.9725,-13.4975,-30,-11.4925,-30,8.92 0,10.17,7.65,23.7025,30,37.4925 22.35,-13.79,30,-27.3225,30,-37.4925 0,-20.295,-25,-22.4975,-30,-8.92 z"/>
     </clipPath>
-    <filter id="hjerterom-edge-smooth" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
+    <filter id="hjerterom-edge-smooth-<%= svg_uid %>" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
       <feGaussianBlur in="SourceGraphic" stdDeviation="0.35" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
@@ -12,8 +13,8 @@
       </feMerge>
     </filter>
   </defs>
-  <path d="M100,26.79625 c-4.9725,-13.4975,-30,-11.4925,-30,8.92 0,10.17,7.65,23.7025,30,37.4925 22.35,-13.79,30,-27.3225,30,-37.4925 0,-20.295,-25,-22.4975,-30,-8.92 z" fill="#DC143C" stroke="white" stroke-width="1" opacity="0.9" filter="url(#hjerterom-edge-smooth)"/>
-  <g clip-path="url(#heartClip)">
+  <path d="M100,26.79625 c-4.9725,-13.4975,-30,-11.4925,-30,8.92 0,10.17,7.65,23.7025,30,37.4925 22.35,-13.79,30,-27.3225,30,-37.4925 0,-20.295,-25,-22.4975,-30,-8.92 z" fill="#DC143C" stroke="white" stroke-width="1" opacity="0.9" filter="url(#hjerterom-edge-smooth-<%= svg_uid %>)"/>
+  <g clip-path="url(#heartClip-<%= svg_uid %>)">
     <path d="M100,20 L90,25 L100,30 L110,25 Z" fill="#ae001a" opacity="0.9">
       <animate attributeName="fill" values="#ae001a;#FF4040;#C71585;#A52A2A;#FF0000;#200000;#ae001a" dur="3.15s" repeatCount="indefinite" begin="0s"/>
       <animate attributeName="d" values="M100,20 L90,25 L100,30 L110,25 Z;M100,15 L80,20 L100,74 L120,20 Z;M100,25 L85,30 L100,15 L115,30 Z;M100,20 L90,25 L100,30 L110,25 Z" dur="1.8s" calcMode="spline" keySplines="0.6 0 0.4 1;0.2 0 0.8 1;0.4 0 0.2 1" repeatCount="indefinite" begin="0s"/>

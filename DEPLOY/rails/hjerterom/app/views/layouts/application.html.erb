@@ -33,7 +33,11 @@
 <a class="skip-link" href="#main-content">Skip to main content</a>
 <nav role="navigation" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to root_path, class: "brand", aria: { label: "Hjerterom", current: current_page?(root_path) ? 'page' : nil } do %>
-    <%= render "shared/logo", compact: true %>
+    <% if content_for?(:body_class) && yield(:body_class).include?("map-home-page") %>
+      <span class="brand__spacer" aria-hidden="true"></span>
+    <% else %>
+      <%= render "shared/logo", compact: true, svg_uid: "nav" %>
+    <% end %>
   <% end %>
   <%= link_to "Mat",        food_listings_path, aria: { current: current_page?(food_listings_path) ? 'page' : nil } %>
   <%= link_to "Ressurser",  resources_path, aria: { current: current_page?(resources_path) ? 'page' : nil } %>

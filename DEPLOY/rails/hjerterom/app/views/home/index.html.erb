@@ -18,12 +18,12 @@
   data-map-style-url-value="<%= @mapbox_token.present? ? "mapbox://styles/mapbox/streets-v12" : "https://tiles.openfreemap.org/styles/positron" %>"
   data-map-mapbox-token-value="<%= @mapbox_token %>"
 >
-  <template id="hjerterom-logo-template"><%= render "shared/logo", compact: true %></template>
+  <template id="hjerterom-logo-template"><%= render "shared/logo", compact: true, svg_uid: "tpl" %></template>
 
   <div id="hjerterom-map" class="map-home-canvas" data-map-target="canvas" aria-label="Kart over Hjerterom Åsane"></div>
 
   <%= link_to root_path, class: "map-home-logo", aria: { label: "Hjerterom Åsane" } do %>
-    <%= render "shared/logo", compact: true %>
+    <%= render "shared/logo", compact: true, svg_uid: "corner" %>
   <% end %>
 
   <nav class="map-home-nav" aria-label="Hurtigvalg">
