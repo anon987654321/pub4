@@ -69,10 +69,7 @@ nav .brand svg {
   width: 100%;
   height: auto;
   color: var(--text);
-}
-
-.hjerterom-logo-svg--compact .hjerterom-logo__pulse {
-  transform-origin: 32px 26px;
+  shape-rendering: geometricPrecision;
 }
 
 .map-home {
