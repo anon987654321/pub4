@@ -21,7 +21,7 @@ test("face.js loads tail modules via MASTER_ASSET_PATHS after runtime", () => {
   assert.doesNotMatch(tail, /await import\(/);
 });
 
-test("face.js dispatches boot stage events and requires prebuilt runtime", () => {
+test("face.js warms stack on load and starts session on primer", () => {
   const faceJs = readFileSync(join(publicDir, "face.js"), "utf8");
   assert.match(faceJs, /master:face-stage/);
   assert.match(faceJs, /dispatchFaceStage\("modules"\)/);
@@ -29,9 +29,10 @@ test("face.js dispatches boot stage events and requires prebuilt runtime", () =>
   assert.match(faceJs, /faceRuntime/);
   assert.match(faceJs, /faceModulesBundle/);
   assert.match(faceJs, /build_face_runtime/);
-  assert.match(faceJs, /primer:ready/);
-  assert.match(faceJs, /bootFaceStack/);
+  assert.match(faceJs, /onPrimerSession/);
+  assert.match(faceJs, /bootFaceStack\(\);/);
   assert.match(faceJs, /FACE3D_ACTIVE/);
+  assert.doesNotMatch(faceJs, /addEventListener\("primer:ready", scheduleFaceStack/);
   assert.doesNotMatch(faceJs, /importFaceBlob/);
   assert.doesNotMatch(faceJs, /face\.part/);
 });
@@ -65,21 +66,21 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /ensurePrimer/);
   assert.doesNotMatch(boot, /showLoadState/);
   assert.match(boot, /pointerup/);
-  assert.match(boot, /pointerdown/);
   assert.match(boot, /mousedown/);
   assert.match(boot, /click/);
   assert.match(boot, /touchend/);
   assert.match(boot, /primerTarget/);
   assert.match(boot, /syncPrimerRefs/);
+  assert.match(boot, /syncShellRefs/);
   assert.match(boot, /watchFaceBoot/);
-  assert.match(boot, /safariBrowser\(\)\)\{[\s\S]*click/);
+  assert.match(boot, /addEventListener\('click'/);
   assert.match(boot, /trackpadPrimary/);
-  assert.match(boot, /safariBrowser/);
-  assert.doesNotMatch(boot, /e\.button!==0/);
+  assert.match(boot, /primerTap/);
+  assert.match(boot, /e\.button!==0/);
   assert.match(boot, /createElement\('button'\)/);
   assert.match(boot, /primerVisible/);
   assert.match(boot, /resetFaceSession/);
-  assert.match(boot, /capture:true/);
+  assert.match(boot, /capture:false/);
   assert.match(boot, /__MASTER_PRIMER_TAP__/);
   assert.match(boot, /__MASTER_PRIMER_GO__/);
   assert.match(boot, /__MASTER_PRIMER_PENDING__/);
@@ -89,6 +90,8 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /master:face-live/);
   assert.match(boot, /wirePrimerForm/);
   assert.match(boot, /primer-form/);
+  assert.match(boot, /face-session/);
+  assert.doesNotMatch(boot, /showBootError\('tap to retry'\)/);
   assert.match(boot, /armed=true/);
   assert.doesNotMatch(boot, /DOMContentLoaded/);
   assert.match(boot, /pinPrimer/);
@@ -118,13 +121,15 @@ test("chat index ships import map and digested master_events", () => {
   assert.match(helper, /face3d_geometry\.js/);
   const bootIdx = index.indexOf('render "shared/face_boot"');
   const primerIdx = index.indexOf('id="primer"');
+  const zshIdx = index.indexOf('id="zsh"');
   const face3dIdx = index.indexOf("face3d_preview.js");
   assert.ok(primerIdx > 0 && bootIdx > primerIdx, "primer must precede face_boot");
-  assert.ok(face3dIdx > bootIdx, "face_boot must precede face3d_preview.js");
+  assert.ok(zshIdx > 0 && bootIdx > zshIdx, "face_boot must run after #zsh exists in DOM");
+  assert.ok(face3dIdx > 0 && face3dIdx < bootIdx, "face3d_preview.js may load before face_boot");
   assert.match(index, /__MASTER_PRIMER_TAP__/);
   assert.doesNotMatch(index, /onclick="window\.__MASTER_PRIMER_TAP__/);
   assert.match(index, /getElementById\('primer-form'\)/);
-  assert.match(index, /addEventListener\(type,tap/);
+  assert.match(index, /addEventListener\('click',tap/);
   assert.match(index, /Critical primer layout/);
   assert.match(index, /id="primer-form"/);
   assert.match(index, /<button[^>]*type="button"[^>]*id="primer"/);

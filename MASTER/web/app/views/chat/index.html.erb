@@ -76,7 +76,7 @@
     #primer { position: absolute; inset: 0; display: grid; place-items: center; border: 0; margin: 0; width: 100%; height: 100%; background: transparent; cursor: pointer; touch-action: manipulation; pointer-events: auto; -webkit-appearance: none; appearance: none; color: inherit; font: inherit; }
     #primer .primer-label { pointer-events: none; font: 200 clamp(1rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: -.04em; }
     #primer .primer-tier { pointer-events: none; display: block; margin-top: .55em; font: 200 clamp(.72rem,2.2vw,1rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: .12em; opacity: .42; }
-    .primer-lanes { display: grid; gap: .85em; justify-items: center; pointer-events: none; }
+    .primer-lanes { position: absolute; inset: 0; display: grid; gap: .85em; justify-items: center; align-content: center; pointer-events: auto; width: 100%; height: 100%; cursor: pointer; }
     #primer-text { pointer-events: auto; border: 0; background: transparent; color: inherit; cursor: pointer; font: 200 clamp(.78rem,2.4vw,1rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: .08em; opacity: .55; text-decoration: underline; text-underline-offset: .22em; touch-action: manipulation; -webkit-appearance: none; appearance: none; }
     #primer-text:hover, #primer-text:focus-visible { opacity: .92; outline: 1px solid rgba(255,255,255,.35); outline-offset: 4px; }
     body.text-mode-session canvas#face, body.text-mode-session canvas#cognition-ecology { display: none !important; }
@@ -88,7 +88,7 @@
   <a href="#zin" class="skip-link">skip to prompt</a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
   <% primer_tier_label = @tier == "authenticated" ? "full access" : "visitor" %>
-  <form id="primer-form" class="primer-form" action="#" method="post">
+  <div id="primer-form" class="primer-form" role="button" tabindex="0" aria-label="Tap to enter MASTER">
     <div class="primer-lanes">
       <button type="button" id="primer" aria-busy="false">
         <span id="primer-title" class="primer-label">tap to enter</span>
@@ -96,7 +96,7 @@
       </button>
       <button type="button" id="primer-text" aria-label="Continue in text mode without canvas">continue in text mode</button>
     </div>
-  </form>
+  </div>
   <nav id="boot-wayfinding" class="boot-wayfinding" hidden aria-label="Boot progress">
     <ol class="boot-wayfinding-steps">
       <li data-step="audio" data-state="pending"><span class="boot-step-label">audio</span><span class="boot-step-mark" aria-hidden="true"></span></li>
@@ -110,12 +110,18 @@
       var root=document.getElementById('primer-form');
       if(!root)return;
       function tap(e){
-        if(e&&e.cancelable&&e.type==='touchend')e.preventDefault();
+        if(!e)return;
+        if(e.type==='click'&&e.button!==0)return;
+        if(e.cancelable&&e.type==='touchend')e.preventDefault();
         if(window.__MASTER_PRIMER_TAP__)window.__MASTER_PRIMER_TAP__();
       }
-      ['pointerup','touchend','click'].forEach(function(type){
-        var passive=type==='touchend';
-        root.addEventListener(type,tap,{capture:true,passive:passive});
+      root.addEventListener('click',tap,true);
+      root.addEventListener('pointerdown',tap,true);
+      ['touchend','pointerup'].forEach(function(type){
+        root.addEventListener(type,tap,{capture:true,passive:type==='touchend'});
+      });
+      root.addEventListener('keydown',function(e){
+        if(e.key==='Enter'||e.key===' '){e.preventDefault();tap(e);}
       });
       var textBtn=document.getElementById('primer-text');
       if(textBtn){
@@ -137,7 +143,6 @@
       }
     })();
   </script>
-  <%= render "shared/face_boot" %>
   <div class="top-left-logo" aria-hidden="true">brgen</div>
   <div id="face-live-badge" class="face-live-badge" hidden aria-live="polite">face live</div>
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
@@ -163,6 +168,7 @@
       <input id="font-scale" type="range" min="0.85" max="1.4" step="0.05" value="1">
     </label>
   </div>
+  <div id="domain-cluster-bar" aria-label="Active subdomain cluster"></div>
   <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
     <span class="pp">master</span><span class="sep2">* </span>
     <button type="button" class="tool" data-cmd="/photograph " aria-label="Photo">photo</button>
@@ -174,6 +180,7 @@
     <span id="char-count" aria-hidden="true"></span>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
   </form>
+  <%= render "shared/face_boot" %>
   <script src="<%= asset_path("face_errors.js") %>" defer></script>
   <script src="<%= asset_path("felt_state.js") %>" defer></script>
   <script src="<%= asset_path("sse_contract.js") %>" defer></script>
@@ -186,6 +193,7 @@
   <script src="<%= asset_path("topology_registry.js") %>" defer></script>
   <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
   <script src="<%= asset_path("particle_worker.js") %>" defer></script>
+  <script src="<%= asset_path("domain_cluster.js") %>" defer></script>
   <script src="<%= asset_path("chat_actions.js") %>" defer></script>
   <script type="module" src="<%= asset_path("face.js") %>"></script>
   <script src="<%= asset_path("visual_bridge.js") %>" defer></script>
