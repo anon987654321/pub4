@@ -10,8 +10,8 @@ class Ports::ImporterTest < ActiveSupport::TestCase
     result = Ports::Importer.call(platform:, tree_path:, use_ftp_fallback: false)
 
     assert_equal 2, result.ports_count
-    git = Port.find_by!(platform:, pkgpath: "devel/git")
-    gettext = Port.find_by!(platform:, pkgpath: "devel/gettext")
+    git = Port.includes(:category).find_by!(platform:, pkgpath: "devel/git")
+    gettext = Port.includes(:category).find_by!(platform:, pkgpath: "devel/gettext")
 
     assert_equal "distributed version control", git.comment
     assert_equal "devel", git.category.slug
