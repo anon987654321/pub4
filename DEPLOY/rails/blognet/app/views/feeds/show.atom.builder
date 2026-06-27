@@ -3,7 +3,7 @@ xml.feed xmlns: "http://www.w3.org/2005/Atom" do
   xml.title @blog ? "#{@blog.name} — Blognet" : "Blognet"
   xml.link rel: "self", href: (@blog ? blog_feed_url(@blog, format: :atom) : feed_url(format: :atom))
   xml.link href: (@blog ? blog_url(@blog) : root_url)
-  xml.updated(@posts.first&.published_at || Time.current).iso8601
+  xml.updated((@posts.first&.published_at || Time.current).iso8601)
   xml.id @blog ? blog_url(@blog) : root_url
   @posts.each do |post|
     xml.entry do
