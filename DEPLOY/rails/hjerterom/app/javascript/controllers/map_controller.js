@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-const DEFAULT_STYLE = "https://tiles.openfreemap.org/styles/liberty"
+const DEFAULT_STYLE = "https://tiles.openfreemap.org/styles/positron"
 
 export default class extends Controller {
   static targets = ["canvas"]
@@ -8,7 +8,10 @@ export default class extends Controller {
     centerLat: Number,
     centerLng: Number,
     zoom: Number,
+    pitch: Number,
+    bearing: Number,
     styleUrl: String,
+    mapboxToken: String,
     points: Array
   }
 
@@ -54,18 +57,25 @@ export default class extends Controller {
     const canvas = this._rootCanvas()
     if (!canvas || !window.maplibregl) return this._fallback()
 
-    window.maplibregl.accessToken = ""
+    const style = this._styleUrl()
+    const mapboxToken = this.hasMapboxTokenValue ? this.mapboxTokenValue : ""
+    if (style.startsWith("mapbox://") && mapboxToken) {
+      window.maplibregl.accessToken = mapboxToken
+    } else {
+      window.maplibregl.accessToken = ""
+    }
+
     this.map = new window.maplibregl.Map({
       container: canvas,
-      style: this._styleUrl(),
+      style: style,
       center: this._center(),
-      zoom: this.hasZoomValue ? this.zoomValue : 11.7,
-      pitch: 56,
-      bearing: -18,
+      zoom: this.hasZoomValue ? this.zoomValue : 13.4,
+      pitch: this.hasPitchValue ? this.pitchValue : 0,
+      bearing: this.hasBearingValue ? this.bearingValue : 0,
       antialias: true
     })
 
-    this.map.addControl(new window.maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
+    this.map.addControl(new window.maplibregl.NavigationControl({ visualizePitch: false }), "bottom-right")
     this.map.addControl(new window.maplibregl.GeolocateControl({
       positionOptions: { enableHighAccuracy: true },
       trackUserLocation: true,
@@ -84,11 +94,11 @@ export default class extends Controller {
         marker.setAttribute("aria-label", point.title || "Hjerterom punkt")
         marker.innerHTML = `<span class="hjerterom-heart-marker__heart"></span><span class="hjerterom-heart-marker__pulse"></span>`
 
-        const popup = new window.maplibregl.Popup({ offset: 28 }).setHTML(`
+        const popup = new window.maplibregl.Popup({ offset: 20, closeButton: false }).setHTML(`
           <div class="map-popup">
             <strong>${this._escape(point.title || "Hjerterom punkt")}</strong>
             <p>${this._escape(point.subtitle || "Åsane")}</p>
-            <a href="${this._escape(point.url || "#")}">Open</a>
+            <a href="${this._escape(point.url || "#")}">Åpne</a>
           </div>
         `)
 
@@ -111,7 +121,7 @@ export default class extends Controller {
         <strong>${this._escape(point.title || "Hjerterom punkt")}</strong>
         <small>${this._escape(point.subtitle || "")}</small>
       </a>
-    `).join("") || "<p>Ingen kartpunkter ennå.</p>"
+    `).join("") || "<p class=\"map-home-empty\">Ingen kartpunkter ennå.</p>"
     canvas.classList.add("map-home-fallback")
   }
 

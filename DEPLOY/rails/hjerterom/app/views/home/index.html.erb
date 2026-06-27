@@ -1,48 +1,52 @@
-<% content_for :title, "Hjerterom kart" %>
-<% content_for :description, "Fullskjerm kart over mat, ressurser og hjelp i Åsane." %>
+<% content_for :title, "Hjerterom Åsane" %>
+<% content_for :description, "Kart over mat, ressurser og hjelp i nærområdet." %>
+<% content_for :body_class, "map-home-page" %>
 <% content_for :head do %>
   <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
 <% end %>
 
-<section class="map-home" data-controller="tv-player map" data-tv-player-auto-wake-lock-value="true" data-map-points-value="<%= json_escape(@map_points.to_json) %>" data-map-center-lat-value="60.4669" data-map-center-lng-value="5.3256" data-map-zoom-value="11.7" data-map-style-url-value="https://tiles.openfreemap.org/styles/liberty">
-  <template id="hjerterom-logo-template"><%= render "shared/logo" %></template>
+<section
+  class="map-home"
+  data-controller="map"
+  data-map-points-value="<%= json_escape(@map_points.to_json) %>"
+  data-map-center-lat-value="60.4669"
+  data-map-center-lng-value="5.3256"
+  data-map-zoom-value="13.4"
+  data-map-pitch-value="0"
+  data-map-bearing-value="0"
+  data-map-style-url-value="<%= @mapbox_token.present? ? "mapbox://styles/mapbox/streets-v12" : "https://tiles.openfreemap.org/styles/positron" %>"
+  data-map-mapbox-token-value="<%= @mapbox_token %>"
+>
+  <template id="hjerterom-logo-template"><%= render "shared/logo", compact: true %></template>
+
   <div id="hjerterom-map" class="map-home-canvas" data-map-target="canvas" aria-label="Kart over Hjerterom Åsane"></div>
 
-  <%= link_to root_path, class: "map-home-logo", aria: { label: "Hjerterom home" } do %>
-    <%= render "shared/logo" %>
+  <%= link_to root_path, class: "map-home-logo", aria: { label: "Hjerterom Åsane" } do %>
+    <%= render "shared/logo", compact: true %>
   <% end %>
 
-  <div class="map-home-panel">
-    <p class="eyebrow">Hjerterom Åsane</p>
-    <h1>Finn mat, hjelp og fellesskap rundt deg.</h1>
-    <p class="lead">Et levende kart for overskuddsmat, trygge ressurser og lokale møtepunkt.</p>
+  <nav class="map-home-nav" aria-label="Hurtigvalg">
+    <%= link_to "Mat", food_listings_path %>
+    <%= link_to "Ressurser", resources_path %>
+    <%= link_to "Fellesskap", community_path %>
+    <% if authenticated? %>
+      <%= render "shared/inbox_link" %>
+    <% else %>
+      <%= link_to "Logg inn", new_session_path %>
+    <% end %>
+  </nav>
 
+  <div class="map-home-dock">
+    <p class="map-home-tagline">Overskuddsmat og trygge ressurser i Åsane.</p>
     <div class="map-home-actions">
-      <%= link_to "Legg ut mat", new_food_listing_path, class: "btn btn-primary" %>
-      <%= link_to "Se ressurser", resources_path, class: "btn btn-ghost" %>
+      <%= link_to "Legg ut mat", new_food_listing_path, class: "btn btn-primary btn-sm" %>
+      <%= link_to "Se tilgjengelig", food_listings_path, class: "btn btn-ghost btn-sm" %>
     </div>
-
     <% if @crisis_lines.any? %>
-      <aside class="map-home-crisis">
-        <strong>Akutt støtte</strong>
-        <% @crisis_lines.each do |c| %>
-          <span><%= c.title %> <b><%= c.phone %></b></span>
-        <% end %>
-      </aside>
-    <% end %>
-  </div>
-
-  <div class="map-home-sheet">
-    <h2>Tilgjengelig nå</h2>
-    <% @food_listings.first(5).each do |listing| %>
-      <article role="article" aria-label="Home section">
-        <%= link_to listing.title, food_listing_path(listing) %>
-        <p><%= listing.city.presence || "Åsane" %> · til <%= listing.available_until&.strftime("%b %-d") || "snart" %></p>
-      </article>
-    <% end %>
-    <% if @food_listings.empty? %>
-      <p class="dim">Ingen aktive matannonser akkurat nå.</p>
+      <p class="map-home-crisis">
+        Akutt: <% @crisis_lines.first(2).each do |c| %><span><%= c.title %> <b><%= c.phone %></b></span><% end %>
+      </p>
     <% end %>
   </div>
 </section>

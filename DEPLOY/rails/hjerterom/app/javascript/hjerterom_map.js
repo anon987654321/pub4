@@ -33,7 +33,7 @@ function heartMarker(point) {
   wrap.className = `hjerterom-heart-marker hjerterom-heart-marker--${point.type || "resource"}`;
   wrap.setAttribute("aria-label", `${point.type || "Resource"}: ${point.title || "Hjerterom punkt"}`);
   wrap.setAttribute("role", "button");
-  wrap.appendChild(logoClone("hjerterom-heart-marker__logo"));
+  wrap.innerHTML = `<span class="hjerterom-heart-marker__heart"></span><span class="hjerterom-heart-marker__pulse"></span>`;
   return wrap;
 }
 
@@ -53,8 +53,6 @@ function fallbackMap(root, points) {
   canvas.innerHTML = "";
   canvas.classList.add("map-home-fallback");
 
-  const logo = logoClone("hjerterom-heart-logo");
-
   const list = document.createElement("div");
   list.className = "map-home-fallback-list";
   list.innerHTML = points.map(point => `
@@ -65,7 +63,7 @@ function fallbackMap(root, points) {
     </a>
   `).join("") || "<p>Ingen kartpunkter ennå.</p>";
 
-  canvas.append(logo, list);
+  canvas.append(list);
 }
 
 function initMapbox(root, points, token) {
@@ -77,9 +75,9 @@ function initMapbox(root, points, token) {
     container: canvas,
     style: "mapbox://styles/mapbox/standard",
     center: [5.3256, 60.4669],
-    zoom: 11.7,
-    pitch: 56,
-    bearing: -18,
+    zoom: 13.4,
+    pitch: 0,
+    bearing: 0,
     antialias: true
   });
 
