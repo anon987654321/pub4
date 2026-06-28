@@ -41,7 +41,7 @@ module Master
     ["limits", "data/limits.yml"],
     ["orders", "data/state.yml"],
     ["playbook", "data/operator_playbook.yml"],
-    ["operator", "../CLAUDE.md"],
+    ["operator", "../DEPLOY/OPERATOR.md"],
   ].freeze
 
   # Single source for all constitution / config data files.

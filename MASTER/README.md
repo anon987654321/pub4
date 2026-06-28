@@ -1,12 +1,10 @@
 # MASTER
 
-Constitutional AI runtime for any text artifact — code, prose, design, structure. Ruby. OpenBSD-first. Self-hosting.
+Constitutional AI runtime. Ruby. OpenBSD-first. Models propose; the constitution validates.
 
-Models propose. The constitution validates. Convergence loops digest violations. Memory learns what fixes stick. Pressure fields track epistemic health. Providers compete by capability, cost, and evidence.
+The web face (`web/`) mirrors internal state — council, pipeline stage, pressure. See `data/topologies.yml` and `web/public/particle_kernel.js`.
 
-The visual face (web UI particle system) is a live mirror of internal state (council, pipeline stages, pressure, topology). See `data/topologies.yml`, `data/visual_clusters.yml`, and `web/public/particle_kernel.js`.
-
-## Quickstart
+## Start
 
 ```sh
 cd MASTER
@@ -14,208 +12,42 @@ bundle install
 bundle exec ruby bin/cli
 ```
 
-Pipe input for one-shot mode. The web face starts on port 53187 behind relayd at `https://ai.brgen.no`.
+Web: port 53187, public at `https://ai.brgen.no`. Deploy: `DEPLOY/OPERATOR.md`.
 
-Media: `/photograph`, `/repligen`, `/video`, `/motion-dataset` — see `REPLICATE.md` and `bundle exec ruby bin/video help`.
+Media: `/photograph`, `/video`, `/repligen` — `REPLICATE.md`, `bin/video help`.
 
-Deploy: `doas zsh DEPLOY/openbsd/openbsd.sh`
+## Pipeline
 
-## Converge kernel
-
-```ruby
-require_relative "lib/converge"
-
-engine = Converge::Engine.new("data/converge_rules.yml")
-engine.subscribe { |event| warn(event.inspect) }
-engine.run(code: "", reply_text: "plain reply")
-```
-
-The kernel canon lives at `data/converge_rules.yml`. The existing scanner corpus remains in `data/rules.yml`.
-
-Core guarantees:
-
-- rules run in dependency order
-- convergence stops at a fixpoint or 16 cycles
-- repeated state signatures are recorded as feedback loops
-- every applied rule emits a runtime event
-- runtime deltas are stored in `~/.master/state.db`
-
-## Architecture
-
-Four layers:
-
-1. **Brain** — declarative constitution, standing orders, roles, memory policy, provider routing, governance.
-2. **Runtime** — append-only events, telemetry, checkpoints, replay state, queues, locks, provider health, hot cache.
-3. **Orchestration** — routing, voting, fallback, quorum, workflow execution, tool contracts, convergence loops.
-4. **Interface** — CLI, web face, canvas, dashboard, traces, graph, timelines.
-
-Eleven-stage turn pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render. Enhance rewrites user input for clarity and intent density with y/n approval in the web UI. Council and Lint run concurrently with a 30 s timeout.
-
-### Convergence loop architectures
-
-15 architectures across `loop/` — 14 implemented, 1 concept:
-
-| # | Name | Status |
-|---|------|--------|
-| 1 | Priority queue over round-robin | implemented |
-| 2 | Rule dependency graph (topological sort) | implemented |
-| 3 | File-first convergence strategy | concept |
-| 4 | Deterministic AST autofixes (Prism) | implemented |
-| 5 | Unified diff output for large files | implemented |
-| 6 | Council deliberation for severity:error | implemented |
-| 7 | Reactive file watcher (kqueue/inotify) | implemented |
-| 8 | Staged dataflow pipeline Detect→Apply | implemented |
-| 9 | Genetic fix candidate selection | implemented |
-| 10 | Reinforcement learning fix quality | implemented |
-| 11 | Constitution as type system on AST IR | implemented |
-| 12 | Datalog/Prolog rule engine | implemented |
-| 13 | CRDT-based distributed convergence | implemented |
-| 14 | Hierarchical Bayesian violation priors | implemented |
-| 15 | Codebase as embodied particle topology | implemented |
-
-## Operating law
-
-- Agents do not directly mutate durable state.
-- Tools declare contracts before execution.
-- Every action emits before/after events.
-- Provider calls pass through routing policy.
-- Telemetry is append-only JSONL.
-- Memory has explicit lifecycle tiers.
-- Rollback beats explanation.
-- Replay beats trust.
-
-## Repair
-
-```
-observe → classify → propose → sandbox → validate → merge
-```
-
-Failures become data. Data becomes playbooks. Playbooks become safer defaults.
-
-## Configuration
-
-| Key | Default | Description |
-|---|---|---|
-| `model` | `openrouter/auto` | Default provider model |
-| `budget_max` | `10.0` | Max spend per session (USD) |
-| `req_max` | `1.0` | Max spend per request (USD) |
-| `reasoning_mode` | `direct` | `direct` or `chain` |
-| `auto` | `false` | Autoloop enabled |
-| `trace` | `0` | Trace verbosity (0–3) |
-| `cache_ttl` | `3600` | Cache TTL in seconds |
-
-Config lives at `.master/config.yml`. Override any key at runtime with `/config key value`.
-
-## Web auth
-
-| Tier | Trigger | Access |
-|---|---|---|
-| Authenticated | `Authorization: Bearer`, `X-Token`, `master_session` cookie | Full — filesystem, git, all tools |
-| Visitor | no credential | LLM chat only (`AskLlm`, `WebSearch`) |
-| Public | `/up`, `/health` | Always |
-
-First-hit `?token=…` is accepted only as a bootstrap handshake; the middleware sets an `HttpOnly; Secure; SameSite=Strict` cookie and 302s to the same path stripped of the token. After the handshake, the URL never carries the secret. No author name, vanity parameter, or other public query string grants authenticated access.
+Eleven stages: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render. Council and Lint run in parallel (30 s cap). Each stage returns `Result.ok(ctx)` or `Result.err(...)` and short-circuits on error.
 
 ## Modules
 
 `now` · `loop` · `judge` · `voice` · `ground` · `reach` · `trace` · `converge`
 
-Constitution lives in `data/`. Runtime state in `.master/`. Knowledge store at `.master/knowledge.sqlite3`.
+Law in `data/`. Runtime state in `.master/`.
 
-## Troubleshooting
+## Operating law
 
-**Bundler 403 on install**: proxy is blocking rubygems.org. Check `gem sources --list` and `env | grep -i proxy`. Install a single gem to isolate: `gem install zeitwerk -v 2.7.5`.
+Agents do not mutate durable state directly. Tools declare contracts. Every action emits events. Rollback beats explanation.
 
-## Constitutional engineering
+Repair loop: observe → classify → propose → sandbox → validate → merge.
 
-MASTER is not an autocomplete framework. It is a living constitutional runtime for adversarial engineering, operational clarity, reviewer sovereignty, and long-term system survivability.
+## Config
 
-The system assumes humans are tired, future maintainers lack context, abstractions leak, dependencies decay, LLMs hallucinate, cleverness becomes operational debt, and autonomous systems partially fail continuously.
+`.master/config.yml` — override at runtime with `/config key value`. Keys: `model`, `budget_max`, `req_max`, `reasoning_mode`, `auto`, `trace`, `cache_ttl`.
 
-### Priority order
+## Web auth
 
-Correctness before speed. Clarity before abstraction. Deletion before expansion.
+| Tier | Access |
+|------|--------|
+| Authenticated | Bearer / `X-Token` / `master_session` cookie — full tools |
+| Visitor | LLM chat only |
+| Public | `/up`, `/health` |
 
-```yaml
-priority_order:
-  - correctness
-  - auditability
-  - recoverability
-  - simplicity
-  - security
-  - maintainability
-  - performance
-  - convenience
-```
+First `?token=…` sets an HttpOnly cookie and redirects without the query string.
 
-### Constitutional rules
+## Philosophy
 
-Any external LLM interacting with MASTER must behave as a skeptical senior engineer under adversarial review.
-
-Every substantial proposal must include: minimal git diff patch, architectural rationale, regression analysis, rollback strategy, rejected alternatives, operational impact analysis, reviewer letter, and explicit uncertainty. The patch is not the product — reasoning quality is the product.
-
-### OpenBSD-inspired principles
-
-Readability under fatigue. Deletion bias. Reviewer sovereignty. Distrust of hidden behavior. Boring technology preference. Explicit capability boundaries. Small auditable patches. Operational simplicity.
-
-If understanding behavior requires framework archaeology, callback mazes, runtime metaprogramming, invisible control flow, or deep inheritance, the design has already degraded.
-
-### Reviewer sovereignty
-
-```yaml
-authority:
-  reviewer_gt_author: true
-```
-
-Generators propose. Reviewers protect the future. MASTER optimizes for exhausted maintainers, emergency debugging, operational continuity, and long-term archaeology — not short-term generation throughput.
-
-### Epistemic honesty
-
-```yaml
-epistemics:
-  uncertainty_required: true
-```
-
-Distinguish fact vs inference, observation vs speculation, guarantees vs assumptions. False certainty is a defect.
-
-### Negative space review
-
-Every proposal must explain what was intentionally not changed, which tempting rewrites were rejected, and why restraint was chosen. Deletion and restraint are first-class engineering actions.
-
-### Invariant extraction
-
-The primary hard problem is invariant preservation — lock ordering, ownership lifetime, privilege boundaries, async-signal safety, allocator assumptions, concurrency contracts. Syntax translation without invariant preservation is unsafe.
-
-### Rust porting doctrine
-
-Rust migration support is initially restricted to parsers, isolated CLI tools, standalone daemons, and leaf protocol handlers. Schedulers, VMs, trap handlers, allocators, drivers, and privilege transitions require human review.
-
-### Dependency doctrine
-
-```yaml
-dependencies:
-  default_policy: reject
-```
-
-Every dependency is permanent operational liability. Prefer stdlib, local modules, simple code, and explicit behavior.
-
-### Safety model
-
-```yaml
-agent_defaults:
-  autonomous_actions: false
-  self_modification_sandboxed: true
-  destructive_operations_require_confirmation: true
-```
-
-Assume continuous partial failure.
-
-### Patch philosophy
-
-Preferred patches are small, local, mechanically obvious, rollbackable, and reviewable in one sitting. Large rewrites require extraordinary proof.
-
-### Final principle
-
-MASTER does not exist to maximize code generation. It exists to maximize system integrity, reviewer confidence, operational clarity, human understanding, and survivability under maintenance. Correct systems survive. Clever systems decay.
+Not an autocomplete framework — a reviewer-sovereign runtime. Correctness before speed. Clarity before abstraction. Deletion before expansion. Full doctrine: `data/soul.yml`, `data/CANON.md`.
 
 MIT.

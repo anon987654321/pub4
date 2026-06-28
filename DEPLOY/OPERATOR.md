@@ -1,0 +1,88 @@
+# Operator
+
+Production runbook for pub4. Read `MASTER/QUICKSTART.md` for the agent runtime; this file covers the VPS and deploy surface.
+
+## Repo layout
+
+Only `MASTER/` and `DEPLOY/` at the repo root, plus dotfolders. Canonical inventories: `DEPLOY/rails/apps.yml`, `DEPLOY/master.json`.
+
+## SSH
+
+One session at a time. Rapid reconnects trip pf bruteforce.
+
+| Target | Command |
+|--------|---------|
+| VM (apps) | `ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226` or `ssh brgen` |
+| VMM host | `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam` |
+| Console | `vmctl console vm23` then `doas pfctl -t bruteforce -T flush` |
+
+Full aliases and GitHub keys: `DEPLOY/openbsd/SSH_ACCESS.md`. Network table: `DEPLOY/openbsd/README.md`.
+
+## Domains
+
+| Service | URL |
+|---------|-----|
+| brgen | `https://brgen.no` |
+| MASTER | `https://ai.brgen.no` |
+| amber | `https://amber.brgen.no` |
+| baibl | `https://baibl.brgen.no` |
+| blognet | `https://blognet.brgen.no` |
+| hjerterom | `https://hjerterom.brgen.no` |
+| bsdports | `https://bsdports.org` |
+
+Baibl, blognet, and hjerterom use `*.brgen.no` only. City vanity apex domains (`oshlo.no`, `lsangeles.com`, …) need stage-1 certs from `openbsd.sh`.
+
+TLS terminates at relayd. Rails sets `config.assume_ssl = true`; do not enable `force_ssl`.
+
+## OpenBSD deploy
+
+Always use tmux.
+
+```zsh
+cd ~/pub4/DEPLOY/openbsd
+tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"
+tmux attach -t deploy
+```
+
+| Flag | Use |
+|------|-----|
+| `--sync-configs` | Mirror `etc/` to `/etc`, restart services |
+| `--resume` | Continue interrupted stage run |
+
+Stage 1: NSD, DNSSEC, acme certs, httpd ACME, pf. Stage 2: Rails trees, relayd SNI, smtpd, rc.d, health check.
+
+After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-reload.
+
+## Rails deploy
+
+```zsh
+cd /home/dev/pub4 && git pull --ff-only
+zsh DEPLOY/sh/vps_ci.sh <app>          # one app, mutex-gated
+SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_on_vm_install.sh   # full stack
+doas rcctl restart relayd              # after route/table changes
+ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps
+```
+
+Per-app script: `doas zsh DEPLOY/rails/<app>/<app>.sh`. New Propshaft assets need `rails assets:precompile` before restart.
+
+Ruby on VPS: `ruby34`, `bundle34`. Never parallel `bin/ci` across SSH sessions.
+
+## Gates
+
+```zsh
+ruby DEPLOY/rails/check_production_gate.rb
+ruby DEPLOY/openbsd/deploy_smoke_gate.rb
+cd MASTER && bundle exec ruby bin/probe all
+```
+
+Matrix and blockers: `DEPLOY/rails/PRODUCTION_READINESS.md`.
+
+## Secrets
+
+`/etc/master.env`, `/etc/<app>.env`. Never commit. Operator keys stay in the workstation environment.
+
+## Recovery
+
+Load shedding: `doas ksh DEPLOY/openbsd/resource_guard.sh`. Full stack: `doas ksh DEPLOY/openbsd/start_all_apps.sh`. Core health: `doas rcctl check master brgen`.
+
+Any file changed on the VPS under `DEPLOY/openbsd/` must be copied back to git and committed.

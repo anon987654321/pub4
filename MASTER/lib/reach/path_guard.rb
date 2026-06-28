@@ -6,7 +6,7 @@ module Master
       SACRED_PATHS = begin
         data = Master.load_yaml(Master.data_path("soul.yml"))
         Array(data.dig("absolute", "sacred_paths")).freeze
-      rescue StandardError; %w[data/ SOUL.md CLAUDE.md CONVENTIONS.md README.md .claude/].freeze
+      rescue StandardError; %w[data/ SOUL.md CONVENTIONS.md AGENTS.md QUICKSTART.md .claude/].freeze
       end
 
       def self.inside_root?(full, root)

@@ -1,137 +1,49 @@
-# MASTER — Conventions for External LLMs
+# Conventions
 
-Context injection for any LLM reviewing or editing MASTER. Read before touching code.
-
-The complete rule corpus — every axiom, scan rule, operator principle, and
-external lineage — is indexed in `data/CANON.md`. Read it first, every session.
-This file is the orientation; CANON.md is the directory.
+Orientation for external LLMs. Full index: `data/CANON.md`. Law: `data/soul.yml`, `data/rules.yml`.
 
 ## Identity
 
-MASTER is a constitutional AI coding agent written in Ruby 3.3+ on OpenBSD 7.8. It replaces Claude Code CLI for its operator. It is general-purpose and language-agnostic. Every change leaves the system in a working, deployable state.
+Constitutional AI agent in Ruby 3.4+ on OpenBSD. General-purpose. Every change leaves the system deployable.
 
 ## Golden rule
 
-`PRESERVE_THEN_IMPROVE_NEVER_BREAK`. Read before write. Patch minimally. Understand before touching — Chesterton's Fence.
+`PRESERVE_THEN_IMPROVE_NEVER_BREAK`. Read before write. Patch minimally.
 
-## Anti-simulation
+## Evidence
 
-Never state intent without evidence. Forbidden hedges — `will`, `would`, `could`, `might`. Require:
-- File read → content with SHA-256
-- Modification → unified diff
-- Completion → command output
+No intent without proof. Ban hedges (`will`, `would`, `could`, `might`) unless backed by command output, diff, or file hash.
 
-## Communication — two registers, do not mix
+## Voice
 
-- **MASTER's own log/event lines** (boot banner, scheduler ticks, tool events, dmesg-style status): structured, terse, lowercase, kernel-ish — `master@host ready`, `boot0: 26ms`, `model0 at openrouter`. The OpenBSD-dmesg boot banner is sacred — never strip it.
-- **Conversational replies to the operator**: plain English, proper casing, full sentences. No dmesg style here. No headlines, no empty bullets, no filler, no sycophancy, no hedging. Outcome first, evidence next, implementation last.
-- **Commits and log lines** stay active, concrete, terse — Strunk & White, omit needless words.
+- Log and boot lines: terse, lowercase, kernel-ish.
+- Operator replies: plain English, proper casing, outcome first.
+- Commits: active, concrete, Strunk-tight.
 
-## No ASCII line art
+No banner art (`===`, `---` dividers in prose, `[ok]` brackets). Use `ok:`, `err:`, `warn:`.
 
-Never use these as decorations in any output (comments, log lines, CLI text, chat replies, commit messages):
+## Ruby
 
-- `===`, `----` (banner lines, section dividers)
-- `•`, `|`, `›`, `‹` (bullet/separator characters)
-- `[ok]`, `[err]`, `[skip]` brackets — use bare prefixes `ok:`, `err:`, `skip:`, `warn:` instead
+- `# frozen_string_literal: true`, double quotes, no bare `rescue`
+- Guard clauses, CQS, `Result` monad between pipeline stages
+- Named constants; thresholds in `data/rules.yml`
+- No abbreviations (`index` not `idx`)
+- File ≤300 lines; method ≤10; nesting ≤2
 
-In Markdown documents, plain `---` for an `<hr>` and table separators are fine — they carry meaning. Banner art does not.
+## Rails views
 
-## Code rules (enforced by scan)
+Prefer `tag.*` and `t()` for dynamic markup. Semantic HTML and tag selectors over class soup. Helpers for CSRF, Turbo, and escaping — not hand-rolled forms.
 
-- **Read before write** — every affected file before any edit.
-- **No bare rescue** — always `rescue SpecificError => e`. Inline `expr rescue nil` is fine when nil is intentional.
-- **Named constants** — extract literals with `.freeze`.
-- **No magic numbers** — thresholds belong in `data/rules.yml` under `thresholds:`.
-- **No abbreviations** — `index` not `idx`, `signature` not `sig`, `temporary_path` not `tmp`.
-- **No regex when string methods suffice** — `start_with?`, `include?`, `end_with?`.
-- **Outsource to gems** — if it exists and works, use it.
-- **Endless methods** — single-expression methods use `def foo = expr`.
-- **Result monad** — stages return `Master::Result`. Use `.ok?` / `.err?`; call `.value!` only after `.ok?` (raises on `Err`).
-- **No flag arguments** — a boolean that selects behavior is two methods in one.
-- **Guard clauses first** — `return Result.ok(ctx) unless condition` before main logic.
-- **Dependency injection** — never instantiate collaborators inside a method.
-- **CQS** — queries return, commands mutate. Not both.
+## Shell
 
-## Thresholds
-
-- File — 300 lines max, warn at 200
-- Method — 10 lines ideal, 7 warn
-- Class — 6 public methods, 3 ivars, 200 lines
-- Params — 3 positional max; keyword args for 3+
-- Nesting — 2 levels max inside a method
-
-## Ruby style
-
-- `# frozen_string_literal: true` on every `.rb`
-- Double-quoted strings always; single only inside regex or `'\1'` backrefs
-- One-line comments. No YARD blocks, no section separators
-- Comments explain WHY, never WHAT
-- `snake_case` throughout
-- Zeitwerk autoloading — file name matches class name
-
-## Rails view style
-
-- Prefer Rails tag helpers for dynamic or localized markup: `tag.p t("key")`, `tag.section class: state_class`, `tag.meta name: "viewport", content: "width=device-width,initial-scale=1"`.
-- Prefer `tag.*` blocks for semantic containers with dynamic attributes, Turbo data, ARIA, or localized content.
-- Keep plain HTML when markup is static and clearer as HTML. Do not turn views into helper soup.
-- Never hardcode user-facing text in reusable views when `t("key", default: "text")` is practical.
-- Prefer semantic tags and bare CSS targeting: `nav a`, `main section`, `article header`. Do not add class attributes where a tag selector works.
-- Use Rails form, link, button, Turbo, and tag helpers instead of hand-rolled HTML when the helper carries routing, CSRF, method, data, or escaping semantics.
-
-Bugs to avoid:
-- `Dir.chdir` — process-wide, thread-unsafe. Use `File.expand_path`.
-- `Prism.parse(src, freeze: true)` — `freeze:` dropped in 3.4. Use `Prism.parse(src)`.
-- `next if` inside `flat_map` — returns `nil`. Use `next [] if`.
-- Backtick shell with interpolation — use `Open3.capture2e(*%w[cmd], arg)`.
-
-## Zsh / shell
-
-Banned in zsh and SSH: `sed`, `awk`, `tr`, `grep`, `cut`, `head`, `tail`, `find`, `wc`, `sudo`, `perl`, `ruby`, `dd`, `xargs`. Use zsh builtins, parameter expansion, `doas` for privilege, Ruby scripts for complex logic.
-
-Read files over SSH with `cat path` — read the whole file once. Do not stitch `grep` + `head` fragments; reasoning from full context beats reasoning from snippets. For local zsh array work use `lines=("${(@f)$(<file)}")`.
+Banned in zsh/SSH: `sed`, `awk`, `grep`, `find`, `head`, `tail`, `wc`, `sudo`, Python. Use Ruby, `doas`, zsh builtins. Read whole files with `cat`.
 
 ## Architecture
 
-Pipeline: `Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render`. Council and Lint run concurrently under a 30s deadline via `ParallelGroup`. Rollback on `axiom_violation` or `validation`: `git reset --hard HEAD`. Scan rules auto-register via the `Rule.inherited` callback — every file under `scan/rules/` must subclass `Rule` or it goes silently unrun. Rules with no constructor args set `def auto_build? = true` to opt into the registry's zero-arg construction path. `axiom_coverage_rule` walks `scan/rules/*.rb` with a Prism `SuperclassFinder` and flags any file whose top-level class does not inherit from `Rule`, so silent registry drift is caught at scan time. All rules ship with `@auto_fix = true` and participate in sweep. Sweep runs rubocop autocorrect first, then escalates to LLM rewrite under the corruption guards.
-
-Council deliberation samples a focus question per persona per turn from `data/council_questions.yml` (8 categories — assumptions, failure_modes, attacker, edge_cases, degradation, ops_maint, economics, clarity). Architect → assumptions, Skeptic → failure_modes, Security → attacker, User → edge_cases, Pragmatist → economics, Mentor → clarity. Unmapped personas pass through with no question.
-
-Observability: `Master::Telemetry` is a soft-optional OpenTelemetry tracer that emits JSONL spans to `.master/traces.log`. Wraps `EventBus#publish`, `Metrics#append`, `AuditLog#append`, and `Heartbeat#execute_job`. Bootstrap fires in `Master.boot` between Pledge stage1 and stage2.
-
-Key files — `data/soul.yml` (golden rule, tiers, persona), `data/rules.yml` (scan corpus, thresholds, depths), `data/voice.yml` (output voice, strunk prune patterns), `data/style.yml` (style and bugs), `data/limits.yml` (READ_BEFORE_WRITE, edit_context tiers, scan principles), `data/state.yml` (standing orders and FSM triggers).
-
-## Running scans
-
-Standard: `eval "$(grep '^export' ~/.zshrc)" && cd ~/pub4/MASTER && echo "/scan lib/" | bundle exec ruby bin/cli`. Autofix sweep: `/autoloop 20`. Do not use external agents when MASTER can scan itself. Depth knobs are gone — every scan is full by default.
-
-Pre-commit constitution check: `bin/audit` runs the scanner over staged files and fails the commit on any kernel-tier rule or critical/error violation. Wire as a git pre-commit hook by writing `exec bin/audit` into `.git/hooks/pre-commit`.
-
-## Protection tiers
-
-ABSOLUTE aborts the pipeline. PROTECTED emits a warning and continues. NEGOTIABLE allows if explicitly permitted. FLEXIBLE negotiates at runtime. ABSOLUTE sections in `data/soul.yml` require `/override` to amend.
+Pipeline: Intake → … → Render. Council ‖ Lint under 30 s. Rules auto-register from `judge/scan/rules/`. Scan before structural edits.
 
 ## Environment
 
-VPS: `dev@brgen.no` · OpenBSD 7.8 · passwordless `doas`. SSH credentials live in the operator's environment, never in versioned docs. Non-interactive SSH must not source `.zshrc` — load env only: `eval "$(grep '^export' ~/.zshrc)"`.
+VPS: `dev@46.23.89.226`, `ruby34`, `bundle34`. After `MASTER/web/` deploy: `doas rcctl restart master`.
 
-Local dev terminal (operator side): Zsh + Starship + Neovim + Nerd Fonts + `brgen` alias (one-command persistent tmux session: `ssh -t dev@brgen.no tmux new -A -s main`). The rich local stack and the `brgen` helper live in the operator's shell config; they are not yet surfaced by the CLI. DEPLOY/openbsd/ only provisions the web service (rc.d + env).
-
-Edit VPS files by direct edit + `scp` — write the new file content locally, scp it up. Reserve `~/pub4/tmp/patch.rb` for genuinely script-shaped edits where a patch script is the right tool. Never use `ruby -i` with heredoc — empties the file on script error.
-
-After every scp under `MASTER/web/`, immediately `doas rcctl restart master` so Falcon picks up the change. Falcon does not hot-reload in production; without the restart the deployed app keeps serving the prior bytecode.
-
-## Web auth tiers
-
-Token in `~/pub4/.master/config.yml` is accepted via `Authorization: Bearer`, `X-Token` header, or `master_session` cookie. First-hit `?token=...` triggers the handshake: AuthTier sets an `HttpOnly; Secure; SameSite=Strict` cookie and 302s to the same path with the token stripped, keeping the secret out of logs and history. No credential = visitor — chat works, but `Thread.current[:master_visitor]` is set so `Master::Agent::LlmDispatch#build_llm_tools` filters tools to the visitor allow-list (currently `AskLlm`, `WebSearch`). The CLI REPL bypasses this entirely and always has full access.
-
-## Slash commands
-
-`/scan [profile] [path]`, `/fix [path]`, `/ecology [path]`, `/review [on|off|path]`, `/critique <file|text>`, `/swarm <role> <task>`, `/ideate <prompt>`, `/topic`, `/rsi [stats]`, `/model [list|<id>]`, `/why <rule>`, `/diag [section]`, `/snapshot`, `/tts`, `/brief`, `/heartbeat`, `/orders`, `/soul`, `/dmesg`. `/scan` reports violations (read-only). `/fix` iterates scan→LLM-rewrite→scan until violations plateau, stall, or reach zero — stops on diminishing returns automatically. `/review` runs council deliberation. `/snapshot` publishes two GitHub gists — MASTER + DEPLOY. `/why` resolves locally first; LLM fires only on a miss.
-
-## Exit codes
-
-- `0` for successful completion or shutdown
-- `1` for validation, policy, or constitutional violations
-- `2` for infrastructure and other internal failures
-- `3` for provider or LLM dispatch failures
+Operator detail: `DEPLOY/OPERATOR.md`.

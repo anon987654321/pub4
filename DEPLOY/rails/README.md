@@ -51,20 +51,6 @@ zsh DEPLOY/sh/vps_ci.sh brgen   # vm23: mutex + load gate
 bundle34 exec bin/ci            # direct (auto-guarded on VPS via Pub4::CiGuard)
 ```
 
-## PWA Workbox Build
+## PWA
 
-All six apps serve generated Workbox workers through their stable
-`/service-worker` Rails route. Rebuild and verify them from this directory:
-
-```zsh
-npm ci
-npm run build:pwa
-npm run test:pwa
-```
-
-The shared source is `shared/pwa/service_worker.js`; generated app workers are
-committed so production deploys do not require Node. They provide precaching,
-offline navigation, bounded runtime caches, POST replay, periodic refresh, and
-push notification handling.
-
-Legacy `@*.sh` generators and `study/` trees are removed. Do not reintroduce one-shot scaffold deploys.
+Workbox workers via `/service-worker`. Rebuild: `npm ci && npm run build:pwa` from this directory. Source: `shared/pwa/service_worker.js`.

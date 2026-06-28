@@ -60,18 +60,18 @@ operators:
       - Multi-file refactoring with rule consistency
       - Enforces custom constraints (zsh discipline, style rules) reliably
       - Best time-to-correct-answer for architectural changes
-      - Reads CLAUDE.md and MASTER/data/ as actual authority
+      - Reads DEPLOY/OPERATOR.md and MASTER/data/ as actual authority
       - Memory system (user/feedback/project/reference types) persists across sessions
       - Agent tool spawns parallel sub-agents; foreground vs background aware
       - Conversation history is stateful for safety checks — context carries forward
     traps:
       - Can over-explain; tell it to be terse upfront
       - May add unsolicited comments or docstrings — forbid explicitly
-      - Asks confirmation questions; CLAUDE.md auto-approve removes this
+      - Asks confirmation questions; operator playbook auto-approve removes this
       - Uses ≤25 words between tool calls — keep prompts action-dense, not prose
       - Minimalist prose style by default; bullets only when structure genuinely aids
     context_format: |
-      Claude reads CLAUDE.md automatically. Feed additional context as:
+      Claude reads QUICKSTART.md and OPERATOR.md. Feed additional context as:
       <file path="MASTER/lib/...">...</file> blocks or plain === FILE === separators.
       soul.yml, rules.yml, voice.yml, and limits.yml are authoritative — reference them by name.
       Memory entries in ~/.claude/projects/.../memory/ persist across sessions —

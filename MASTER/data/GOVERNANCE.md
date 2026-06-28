@@ -1,56 +1,17 @@
-# GOVERNANCE
+# Governance
 
-How MASTER governs. Runtime agent bootstrap: `AGENTS.md` at repo root.
+How MASTER governs. Agent bootstrap: `AGENTS.md`, `QUICKSTART.md`. Operator: `DEPLOY/OPERATOR.md`.
 
-## The Engine
+## Engine
 
-Single convergence loop over a dependency-ordered rule graph.
+Convergence loop over a dependency-ordered rule graph. Each rule: id, type (scan | fix | render | audit), `depends_on`, `apply` block. Runs until fixpoint or 16 cycles.
 
-Every rule has:
-
-- id
-- type: scan | fix | render | audit
-- depends_on: list of rule ids
-- apply: Ruby code block that mutates context
-
-The engine evaluates rules in topological order until no rule produces a change. Maximum cycle count: 16.
-
-## The Canon
-
-The compatibility canon for the 2.0.1 kernel lives in `data/converge_rules.yml`. The existing scanner corpus remains in `data/rules.yml`.
+Canon: `data/converge_rules.yml`. Scanner corpus: `data/rules.yml`.
 
 ## Registry
 
-### Commands
+Commands include `scan`, `fix`, `review`, `critique`, `why`, `model`, `workflow`, `ecology`, and others — discovered at boot.
 
-The runtime command registry currently exposes:
+Skills: `data/skills/*/SKILL.md` plus optional `skill.rb`.
 
-- `scan`
-- `self`
-- `fix`
-- `status`
-- `resync`
-- `tail`
-- `review`
-- `critique`
-- `workflow` (inferred — scan, fix preview, deliberation)
-- `model`
-- `why`
-- `axioms`
-- `rules`
-- `topic`
-- `process`
-- `propose-tree`
-- `ecology`
-
-### Skills
-
-Skill definitions are discovered from `MASTER/data/skills/*/SKILL.md` and optional `skill.rb` files at boot and before each prompt refresh.
-
-### Hooks
-
-The event bus publishes registry-adjacent signals such as `skills:loaded`, `skills:ruby_loaded`, `skills:load_error`, `config:reloaded`, and `hot_reload:error`.
-
-### MCP
-
-Connected MCP endpoints are bootstrapped through the reach layer and surfaced through the runtime container.
+Hooks via event bus: `skills:loaded`, `config:reloaded`, etc. MCP endpoints through `reach/`.

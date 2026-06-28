@@ -26,9 +26,9 @@ absolute:
   sacred_paths:
     - data/
     - SOUL.md
-    - CLAUDE.md
     - CONVENTIONS.md
-    - README.md
+    - AGENTS.md
+    - QUICKSTART.md
     - .claude/
     - lib/judge/scan/
     - bin/cli

@@ -9,8 +9,8 @@ module Repo
   end
 
   class Inventory
-    ALLOWED_ROOT_FILES = %w[.gitignore CLAUDE.md Gemfile LICENSE MASTER.md README.md index.html].freeze
-    ALLOWED_ROOT_DIRS = %w[.github DEPLOY MASTER dilla multimedia sh].freeze
+    ALLOWED_ROOT_FILES = %w[.gitignore .nojekyll .ruby-version].freeze
+    ALLOWED_ROOT_DIRS = %w[.claude .githooks .github .master DEPLOY MASTER].freeze
     SKIP_DIRS = %w[.git .bundle node_modules vendor tmp log coverage].freeze
     TEMP_NAME = /\A(bp|tmp|misc|old|new|copy|final|final2|test2)(\.|\z|_)/i
     TEMP_PATH = %r{/(bp|tmp|misc|old|new|copy|final|final2|test2)(/|\.)}i

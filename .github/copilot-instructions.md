@@ -1,8 +1,3 @@
-Read and follow `MASTER/CLAUDE.md` — the authoritative briefing for this repository.
-It points to all MASTER data files (soul.yml, rules.yml, ruby_style.yml, workflow.yml).
-Every code change must satisfy the axioms and rules defined there.
+Read `MASTER/QUICKSTART.md`, `MASTER/AGENTS.md`, and `DEPLOY/OPERATOR.md` before editing.
 
-Run MASTER to validate changes:
-```zsh
-cd ~/pub4/MASTER && echo "/scan deep lib/" | bundle exec ruby exe/master
-```
+Law: `MASTER/data/soul.yml`, `MASTER/data/rules.yml`. Validate with `/scan` inside MASTER when changing production paths.

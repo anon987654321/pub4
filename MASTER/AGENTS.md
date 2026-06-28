@@ -1,46 +1,37 @@
-# AGENTS.md
+# Agents
 
-Guidance for AI coding agents working in this repository.
+Bootstrap for coding agents (Cursor, Claude Code, Codex, Aider).
 
-## Module layout
+## Read first
 
-Seven modules under `lib/`:
+1. `QUICKSTART.md` — mental model and ergonomics
+2. `DEPLOY/OPERATOR.md` — VPS, SSH, deploy, domains
+3. `data/soul.yml` and `data/rules.yml` — when editing production paths
 
-| Module | Path | Responsibility |
-|--------|------|----------------|
-| now | lib/now/ | Pipeline (11 stages), CLI, command registry, routing |
-| loop | lib/loop/ | Fix loop, rule loop, watch loop, convergence |
-| judge | lib/judge/ | Scanner, AST fixer (Prism), council, swarm, security, embeddings |
-| voice | lib/voice/ | Personality, renderer, TTS (Edge TTS), soul drift, expression |
-| ground | lib/ground/ | Constitution, rules, memory, config, tool contracts, provider registry, axioms |
-| reach | lib/reach/ | File I/O, git, shell, LLM, web, search, semantic cache |
-| trace | lib/trace/ | Event bus, telemetry, audit log, session, undo, why-explainer |
+Authority: `data/soul.yml` > `data/rules.yml` > `CONVENTIONS.md` > this file.
 
-## Pipeline
+## Modules
 
-Eleven stages: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render. Council and Lint run as `ParallelGroup` with a 30s timeout. The pipeline is a `Result` monad — each stage returns `Result.ok(ctx)` or `Result.err(...)` and short-circuits on error.
+| Module | Role |
+|--------|------|
+| `now/` | Pipeline, CLI, routing |
+| `loop/` | Fix, rule, watch loops |
+| `judge/` | Scanner, council, AST fixer |
+| `voice/` | Renderer, TTS, expression |
+| `ground/` | Constitution, memory, providers |
+| `reach/` | Tools: file, git, shell, LLM, web |
+| `trace/` | Events, telemetry, session |
+
+Pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render.
 
 ## Conventions
 
-- `# frozen_string_literal: true` on every `.rb`
-- Double-quoted strings
-- No bare `rescue` — always `rescue StandardError => e`
-- No god classes (>300 lines / >10 public methods)
-- Guard clauses before main logic
-- CQS — queries return, commands mutate, never both
-- Endless methods for single expressions: `def foo = expr`
-- Max 3 positional params; keyword args beyond that
-- Max 2 nesting levels inside a method
+`# frozen_string_literal: true`. Double-quoted strings. No bare `rescue`. Guard clauses. CQS. Files ≤300 lines; methods ≤10. Read every file before editing.
 
-## Authority order
+## Commands
 
-`data/soul.yml` > `data/rules.yml` > `../CLAUDE.md` > this file.
+`/scan`, `/fix`, `/review`, `/video`, `/photograph` — full list via `/help`. Structural changes: `/scan deep <path>` inside MASTER first.
 
-Governance engine and command registry: `data/GOVERNANCE.md`.
+## VPS limits
 
-## Key entry points
-
-- CLI: `bin/cli`
-- Web face: `web/` (Falcon on port 53187)
-- Constitution: `data/soul.yml`
-- Rules: `data/rules.yml` (single source of truth)
+One SSH session. `zsh DEPLOY/sh/vps_ci.sh <app>` for Rails CI. After `web/` edits: `doas rcctl restart master`.

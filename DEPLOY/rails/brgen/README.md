@@ -1,40 +1,24 @@
 # brgen
 
-Hyperlocal city network — one Rails app, many verticals scoped by host/subdomain.
+Hyperlocal city network — one app, many verticals per host.
 
 ## Surfaces
 
-Posts, communities, marketplace, dating, playlist, TV, takeaway, maps, messaging, notifications. City tenant via `acts_as_tenant` on `city_id` in a single `production.sqlite3`.
+Posts, marketplace, dating, playlist, TV, takeaway, maps, messaging. Tenant: `acts_as_tenant` on `city_id`.
 
-Subdomains: `tv`, `dating`, `playlist`/`spilleliste` (`.no` cities), `takeaway`, localized marketplace aliases, `maps`, `messenger`, `ai` (MASTER on `ai.brgen.no` only).
+Subdomains: `tv`, `dating`, `playlist`, `takeaway`, marketplace aliases, `maps`, `messenger`. MASTER: `ai.brgen.no`.
 
 ## Stack
 
-Rails 8.1 · SQLite · Falcon · Hotwire · Solid Queue/Cache/Cable · Active Storage · OpenBSD relayd
-
-## Deploy
+Rails 8.1 · SQLite · Falcon · Hotwire · Solid Queue/Cache · relayd
 
 ```zsh
 doas zsh DEPLOY/rails/brgen/brgen.sh
-doas rcctl check brgen
 curl -fsS http://127.0.0.1:38182/up
 ```
 
-## Shared
+## Cities
 
-Uses `pub4-shared` concerns (`Votable`, `Commentable`, `Taggable`, `ActivityTrackable`, `GeoLocatable`, `Notifiable`). Activity graph via `Shared::EventEmitter` — wire more actions over time.
+`Brgen::DomainRegistry` resolves city from hostname (`oshlo.no`, `lsangeles.com`, `brgen.no`, …). Each apex is an isolated experience — no cross-city switcher. Dev defaults to Bergen.
 
-## City resolution (automatic, TLD-based)
-
-City context (including locale, currency, neighborhoods, data isolation) is resolved **automatically and exclusively** from the incoming request's domain/TLD via `Brgen::DomainRegistry`.
-
-- A visitor on `lsangeles.com` only ever experiences the Los Angeles city data and verticals (tv.lsangeles.com, etc.).
-- They have no awareness of, or links to, `brgen.no`, `oshlo.no`, or any other city domains.
-- There is no city switcher UI or cross-city navigation exposed to end users.
-- Each city domain is a completely isolated experience.
-
-Local development falls back to the Bergen (brgen.no) configuration.
-
-## Open items
-
-See `apps.yml` → `brgen.features` for port/missing/planned matrix. Priority: marketplace order chat reuse, playlist set routes, dating match → DM handoff.
+Shared concerns via `pub4-shared`. Backlog: `apps.yml` → `brgen.features`.
