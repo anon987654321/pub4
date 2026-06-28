@@ -3,8 +3,21 @@
 const face3dPaths = window.MASTER_ASSET_PATHS || {};
 const engineUrl = face3dPaths.face3dEngine || "/face3d_engine.js";
 const rendererUrl = face3dPaths.face3dRenderer || "/face3d_renderer.js";
-const { Face3DEngine } = await import(engineUrl);
-const { Face3DCanvasRenderer } = await import(rendererUrl);
+// These imports run at module top level; a rejection here aborts evaluation
+// before bootFace3d() can run and — without this guard — dispatches no event,
+// leaving the boot state machine stuck on "face slow" with no error signal.
+let Face3DEngine, Face3DCanvasRenderer;
+try {
+  ({ Face3DEngine } = await import(engineUrl));
+  ({ Face3DCanvasRenderer } = await import(rendererUrl));
+} catch (error) {
+  console.error("face3d module load failed", error);
+  window.__MASTER_FACE_STACK_FAILED__ = true;
+  window.dispatchEvent(new CustomEvent("master:face-error", {
+    detail: { message: String(error), module: "face3d_preview", stage: "import" }
+  }));
+  throw error;
+}
 
 function face3dDisabled() {
   const params = new URLSearchParams(window.location.search);

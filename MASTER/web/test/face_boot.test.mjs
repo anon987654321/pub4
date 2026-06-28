@@ -104,11 +104,14 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
 
 test("probe_chat_e2e script covers primer chat and felt state", () => {
   const probe = readFileSync(join(root, "script", "probe_chat_e2e.rb"), "utf8");
+  const support = readFileSync(join(root, "script", "browser_probe_support.rb"), "utf8");
   const gemfile = readFileSync(join(root, "Gemfile"), "utf8");
   assert.match(probe, /probe_chat_e2e/);
-  assert.match(probe, /sendMessage\('ping'\)/);
+  assert.match(probe, /browser_probe_support/);
+  // ping/pong chat assertions live in the shared support module after the refactor.
+  assert.match(support, /sendMessage\('ping'\)/);
+  assert.match(support, /hasPong/);
   assert.match(probe, /MASTERFeltState/);
-  assert.match(probe, /hasPong/);
   assert.match(probe, /MASTER_FACE\?\.State/);
   assert.match(gemfile, /gem "ferrum"/);
   assert.match(probe, /MAX_PROBE_SECONDS/);
