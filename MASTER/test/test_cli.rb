@@ -117,6 +117,7 @@ class TestCLI < Minitest::Test
     skills = Minitest::Mock.new
     skills.expect(:discover!, [])
     renderer = Minitest::Mock.new
+    renderer.expect(:prompt_token, "master$")
     renderer.expect(:render, "master$ ", ["master$ "], mode: :dim)
 
     cli = Master::Now::CLI.new(

@@ -957,5 +957,6 @@ injection:
 
 # Merged from former sweep_prompts.yml — structural sweep techniques.
 sweep_techniques:
-  RECOMMENT: "Reassess every comment on touch; delete obvious fluff; rewrite kept comments Strunk-style."
-  IMPORTANCE_ORDER: "Reorder file lines by importance — public API first, helpers last, edge cases at bottom."
+  RECOMMENT: "Boy Scout Rule — reassess every comment on touch; delete fluff; rewrite kept comments Strunk-style."
+  IMPORTANCE_ORDER: "Inverted Pyramid — public API first, helpers last, edge cases at bottom (style.yml line_order)."
+  MERGE_RENAME: "Flat Hierarchy — merge thin siblings, fold *_support/*_helper/*_util, rename to dense parameterized slugs before creating files."

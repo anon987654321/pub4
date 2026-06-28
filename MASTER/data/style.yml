@@ -21,8 +21,8 @@ ruby:
       - multi_line_prose   # cut verbosity; one line survives, paragraph does not
 
   line_order:
-    rule: "Reorder lines/blocks so the most important content comes first. Newspaper inverted pyramid."
-    rationale: "A reader who stops halfway must still have the gist. Public API > primary behavior > helpers > privates > edge cases."
+    rule: "Inverted Pyramid — reorder lines/blocks so the most important content comes first."
+    rationale: "Reader who stops at the top third still has the gist. Public API > primary behavior > helpers > privates > edge cases."
     sequence:
       - "frozen_string_literal + requires"
       - "module/class declaration + headline docstring (≤1 line)"
@@ -73,6 +73,14 @@ ruby:
 
   naming:
     spell_out: true        # no abbreviations: index not idx, signature not sig, temporary_path not tmp
+    paths:
+      rule: "Rails-parameterized slug density — snake_case paths; each token a concrete noun or verb; Strunk omit needless words."
+      inspired_by: "ActiveSupport::Inflector#parameterize (meaning and density, not hyphen separator)"
+      format: snake_case
+      max_tokens: 4
+      forbidden_tokens: [main, misc, base, util, helper, handlers, handler, manager, service, object, thing, stuff, tmp, old, new, copy, final, v2, data, info]
+      examples_good: [crawl_browser, domain_alignment_gate, browser_probe_support, operator_principles]
+      examples_bad: [misc_util, cbp, foo_helper, main_base, util_service]
     forbidden_abbreviations:
       - idx
       - sig
@@ -264,8 +272,9 @@ git:
 # Personality injects these verbatim into every system prompt so MASTER and its
 # LLM agents apply the same rules the operator applies to their own work.
 operator_directives:
+  - "Flat Hierarchy always on: merge/rename before new files; paths are dense Rails-parameterize slugs (snake_case, Strunk-clean tokens) — OpenBSD-flat, Zeitwerk-true, Roda-tight."
   - "Autoproceed once approved: execute the full backlog without per-step go/no-go."
-  - "No new files without approval: edit originals in place; never _v2/_new/staging copies."
+  - "No new files without approval: edit originals in place; never _v2/_new/staging copies; merge/rename first."
   - "Frequent small commits: one commit per meaningful change, never batched."
   - "Mandatory lint/beautify on touch: full pass, not just changed lines."
   - "Always autofix violations: run /sweep immediately after any /scan finds violations."

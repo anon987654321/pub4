@@ -1,19 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# HTTP crawl + inventory sync — optional Ferrum via --browser.
+
 require "open3"
 require "optparse"
 require_relative "crawl_support"
 
 MASTER_ROOT = File.join(CrawlSupport::ROOT, "MASTER")
-
-options = { skip_closed: true, public: false, browser: false }
-OptionParser.new do |parser|
-  parser.banner = "Usage: ruby DEPLOY/rails/crawl_probe.rb [--strict] [--public] [--browser]"
-  parser.on("--strict", "Fail when ports are closed (default: skip offline apps)") { options[:skip_closed] = false }
-  parser.on("--public", "Crawl public HTTPS URLs from apps.yml domains") { options[:public] = true }
-  parser.on("--browser", "Also run Ferrum crawl (MASTER bundle + Chrome)") { options[:browser] = true }
-end.parse!
 
 def run_browser_crawl(public:, skip_closed:)
   browser_script = File.join(__dir__, "crawl_browser.rb")
@@ -27,6 +21,14 @@ def run_browser_crawl(public:, skip_closed:)
 rescue StandardError => e
   ["browser crawl: #{e.class}: #{e.message}"]
 end
+
+options = { skip_closed: true, public: false, browser: false }
+OptionParser.new do |parser|
+  parser.banner = "Usage: ruby DEPLOY/rails/crawl_probe.rb [--strict] [--public] [--browser]"
+  parser.on("--strict", "Fail when ports are closed (default: skip offline apps)") { options[:skip_closed] = false }
+  parser.on("--public", "Crawl public HTTPS URLs from apps.yml domains") { options[:public] = true }
+  parser.on("--browser", "Also run Ferrum crawl (MASTER bundle + Chrome)") { options[:browser] = true }
+end.parse!
 
 manifest = CrawlSupport.load_manifest
 failures = CrawlSupport.sync_inventory_failures

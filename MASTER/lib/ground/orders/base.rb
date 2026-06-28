@@ -12,6 +12,7 @@ module Master
 
         def bus = @container[:bus]
         def root = @container[:root]
+        def event = @container[:event]
 
         def call
           raise NotImplementedError, "#{self.class}#call not implemented"

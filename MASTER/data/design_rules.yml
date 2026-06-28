@@ -205,6 +205,7 @@ data_visualization:
 
 code_craft:
   naming:
+    paths: "Rails-parameterized slug density — snake_case; each token a concrete noun or verb (style.yml naming.paths)"
     classes: CamelCase nouns
     methods: snake_case verbs
     predicates: question_mark

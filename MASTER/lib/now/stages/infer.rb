@@ -71,7 +71,7 @@ module Master
           remember_inference(resolved, args)
           Result.ok(ctx.merge(
             intent: :command, command: resolved, args: args, inferred_command: resolved,
-            locale: locale, infer_confidence: best[:confidence]
+            locale: locale, infer_confidence: best[:confidence], task_type: infer_task_type(msg)
           ))
         end
 
@@ -88,7 +88,7 @@ module Master
           remember_inference(hit[:command], hit[:args])
           Result.ok(ctx.merge(
             intent: :command, command: hit[:command], args: hit[:args], inferred_command: hit[:command],
-            locale: locale, infer_confidence: hit[:confidence]
+            locale: locale, infer_confidence: hit[:confidence], task_type: infer_task_type(hit[:msg])
           ))
         end
 

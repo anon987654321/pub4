@@ -5,7 +5,10 @@ require "rake/testtask"
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.libs << "lib"
-  t.test_files = FileList["test/test_*.rb"]
+  t.test_files = FileList["test/test_*.rb"].exclude(
+    "test/test_browser.rb",
+    "test/test_web_http.rb"
+  )
   t.warning = false
 end
 
@@ -37,6 +40,16 @@ task :constitution do
 end
 
 namespace :test do
+  desc "Kernel spine tests (isolated from lib/master Zeitwerk load)"
+  task :kernel do
+    sh "ruby -Itest test/kernel/test_kernel_spine.rb test/kernel/test_no_secret_note.rb test/kernel/test_world_rollback.rb"
+  end
+
+  desc "Live web HTTP/browser tests (requires Falcon on MASTER_WEB_PORT)"
+  task :integration_web do
+    sh "ruby -Itest test/test_web_http.rb test/test_browser.rb"
+  end
+
   desc "Rails web integration tests (MASTER/web)"
   task :web do
     sh "cd web && bundle exec rails test"

@@ -7,6 +7,20 @@ module Master
     module BootstrapDocs
       PATH = File.join(Master::DATA, "bootstrap.yml").freeze
 
+      module_function
+
+      def section(name)
+        key = name.to_s.strip.downcase
+        file = load_file_sections[key]
+        return file if file
+
+        SECTIONS[key] || nil
+      end
+
+      def keys
+        (SECTIONS.keys + load_file_sections.keys).uniq.sort
+      end
+
       SECTIONS = {
         "quickstart" => <<~TEXT.strip,
           MASTER mental model: propose, validate against the constitution, execute with evidence, learn.
@@ -18,6 +32,7 @@ module Master
         "agents" => <<~TEXT.strip,
           Bootstrap for coding agents (Cursor, Claude Code, Codex, Aider). Authority: data/soul.yml → data/rules.yml → CONVENTIONS (via /orient conventions) → this runtime.
           Modules: now (pipeline/CLI), loop (fix/rule/watch), judge (scanner/council), voice (render/TTS), ground (constitution/memory), reach (tools), trace (events/session).
+          Flat Hierarchy: standing order aggressive_merge on every write — merge thin siblings, rename to dense Rails-parameterize slugs (snake_case, Strunk-clean tokens), OpenBSD-flat, Zeitwerk-true, Roda-tight.
           Pipeline: #{Master::Now::RuntimeMode::PIPELINE_STAGES}. Review runs Council when enabled, then Lint on written paths, then Prune.
           VPS/deploy: DEPLOY/OPERATOR.md (human runbook). Do not memorize /scan /fix — standing orders and Review handle most choreography.
         TEXT
@@ -34,27 +49,12 @@ module Master
           Motion critique: lib/judge/council/motion_critique.rb. Env: MOTION_CRITIQUE_VISION, COMFYUI_URL, COMFYUI_WRAPPER_URL.
         TEXT
         "conventions" => <<~TEXT.strip,
-          External LLM orientation. Full rule index: data/CANON.md (generated). Inviolable law: data/soul.yml, data/rules.yml.
-          Ruby 3.3+ on OpenBSD. Evidence mandatory — no hedges without command output or diffs.
-          Style: frozen_string_literal, double quotes, no bare rescue, guard clauses, Result monad, files ≤300 lines, methods ≤10 lines.
+          Inviolable law: data/soul.yml, data/rules.yml. Evidence mandatory — no hedges without command output or diffs.
+          Ruby 3.3+ on OpenBSD. Style: frozen_string_literal, double quotes, no bare rescue, guard clauses, Result monad, files ≤300 lines, methods ≤10 lines.
           Shell on zsh/SSH: no sed/awk/grep/find — Ruby and zsh builtins. Scan before structural edits.
-          VPS: dev@46.23.89.226, ruby34, bundle34. Operator: DEPLOY/OPERATOR.md.
+          VPS: dev@46.23.89.226, ruby34, bundle34. Operator: DEPLOY/OPERATOR.md. Full rule index: data/CANON.md (generated).
         TEXT
       }.freeze
-
-      module_function
-
-      def section(name)
-        key = name.to_s.strip.downcase
-        file = load_file_sections[key]
-        return file if file
-
-        SECTIONS[key] || nil
-      end
-
-      def keys
-        (SECTIONS.keys + load_file_sections.keys).uniq.sort
-      end
 
       def load_file_sections
         return {} unless File.file?(PATH)

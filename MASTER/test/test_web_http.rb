@@ -7,6 +7,7 @@
 require "net/http"
 require "json"
 require "socket"
+require "yaml"
 require "minitest/autorun"
 
 WEB_PORT = Integer(ENV.fetch("MASTER_WEB_PORT", "53187"))
@@ -68,10 +69,30 @@ class TestWebHTTP < Minitest::Test
     assert_empty failures, "asset fetch failures:\n#{failures.join("\n")}"
   end
 
-  def test_05_metrics_returns_json
+  def test_05_metrics_requires_auth
     skip_unless_server
-    res = get("/chat/metrics")
-    assert_equal "200", res.code, "metrics endpoint should return 200"
+    res = get("/chat/metrics", "Accept" => "application/json")
+    assert_equal "401", res.code, "metrics endpoint should reject visitors"
+    data = JSON.parse(res.body)
+    assert_equal "authentication required", data["error"]
+  rescue StandardError => e
+    flunk "metrics returned invalid JSON: #{e.message}"
+  end
+
+  def test_05b_metrics_returns_json_when_authed
+    skip_unless_server
+    token = ENV["PROBE_TOKEN"].to_s
+    if token.length < 43
+      cfg_path = File.expand_path("../.master/config.yml", __dir__)
+      if File.file?(cfg_path)
+        cfg = YAML.safe_load_file(cfg_path) rescue {}
+        token = cfg.is_a?(Hash) ? cfg["web_token"].to_s : ""
+      end
+    end
+    skip "no web_token in .master/config.yml or PROBE_TOKEN" if token.length < 43
+
+    res = get("/chat/metrics", "Accept" => "application/json", "X-Token" => token)
+    assert_equal "200", res.code, "metrics endpoint should return 200 when authed"
     data = JSON.parse(res.body)
     assert data.key?("model"),         "metrics should include 'model'"
     assert data.key?("tokens"),        "metrics should include 'tokens'"

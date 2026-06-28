@@ -15,6 +15,7 @@ module Master
             "autocommit" => Autocommit,
             "restart_master" => RestartMaster,
             "architecture_audit" => ArchitectureAudit,
+            "aggressive_merge" => AggressiveMerge,
             "constitution_drift" => ConstitutionDrift,
           }
         end

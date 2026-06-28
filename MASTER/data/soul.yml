@@ -54,15 +54,16 @@ absolute:
     PREEMPT_FOLLOWUP: answer the one obvious follow-up question in the same response; no second round-trip.
     RTFM_FIRST: read the man page or upstream reference docs before using any command, config file, framework, operating system, or programming language. Training-data assumptions about flags, syntax, and behavior are unreliable — verify against the source.
   aesthetic_rules:
-    NO_ASCII_DECORATION: no box-drawing, no --- / === / ### as visual separators in code, comments, docs, or CLI output. Content is the separator.
-    NO_COLUMN_ALIGN: never pad with multiple spaces to align columns — applies to code and comments alike. Hashes, case branches, arg lists, YAML values, inline comments — one space, never aligned. Column alignment decays the moment one entry grows, then every neighbour gets re-padded; the diff churns and the meaning hides.
-    NO_CONSECUTIVE_BLANK_LINES: one blank line between logical sections; zero between closely related lines.
-    IMPORTANCE_ORDER: every file's lines flow high-to-low importance. Public API first, primary logic next, helpers last. Readers should get the full picture from the top third.
-    FLAT_UI: uniform particle/element size at rest; depth only when the collective resembles a 3D model. No fake-3D borders, no drop-shadows on flat surfaces.
-    CINEMA_PALETTE: shadow/midtone/highlight triplets; complementary anchors. Never raw primaries, never linear easing — cubic-bezier curves on every transition.
-    STRUNK_ACTIVE: 'active voice throughout — code, comments, commit messages, CLI output, TTS. Omit needless words. Concrete verbs: emit, prune, route; not perform, handle, deal with.'
-    INVERTED_PYRAMID: commits, comments, and log lines lead with the fact. Context and explanation trail. dmesg format — no preamble.
-    DEEP_SCAN_ONLY: all scans run at deep depth. quick and standard depths are forbidden — they produce false confidence by skipping semantic, adversarial, Rubocop, and Reek rules. Shallow scans pass code that deep scans reject.
+    NO_ASCII_DECORATION: "Strunk & White — no box-drawing or === / ### banners in code, comments, docs, or CLI; content is the separator."
+    NO_COLUMN_ALIGN: "KISS — one space between tokens; never pad columns (alignment decays on every edit)."
+    NO_CONSECUTIVE_BLANK_LINES: "Boy Scout Rule — one blank line between sections; zero between related lines."
+    IMPORTANCE_ORDER: "Inverted Pyramid (files) — public API first, primary logic next, helpers and constants last; see style.yml line_order."
+    FLAT_UI: "Flat Design — uniform size at rest; depth only when pixels collectively resemble a 3D model."
+    CINEMA_PALETTE: "Motion Design — shadow/midtone/highlight triplets; cubic-bezier easing on every transition."
+    STRUNK_ACTIVE: "Strunk & White — active voice in code, comments, commits, CLI, TTS; omit needless words."
+    INVERTED_PYRAMID: "Inverted Pyramid (prose) — commits, comments, and log lines lead with the fact; context trails."
+    DEEP_SCAN_ONLY: "Fixed Point — deep scan only; quick and standard depths forbidden."
+    FLAT_HIERARCHY: "Flat Hierarchy — aggressive merge/rename on every write; paths are dense Rails-parameterize slugs (snake_case, Strunk-clean tokens); standing order aggressive_merge."
 
 negotiable:
   style: sentence_case

@@ -3,8 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 
-$LOAD_PATH.unshift File.expand_path("../kernel", __dir__)
-require "master"
+load File.expand_path("../../kernel/master.rb", __dir__)
 
 class TestKernelSpine < Minitest::Test
   Model = Struct.new(:effects) do
@@ -16,7 +15,7 @@ class TestKernelSpine < Minitest::Test
   end
 
   def constitution
-    Master::Constitution.load(data_dir: File.expand_path("../data", __dir__))
+    Master::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
   end
 
   def test_done_without_evidence_is_blocked

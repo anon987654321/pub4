@@ -12,6 +12,15 @@
   callable: architecture_audit
   enabled: true
 
+- name: aggressive_merge
+  description: After source writes, scan for merge/rename targets — thin siblings, *_support sprawl, low-density slugs. Rename to Rails-parameterize snake_case (Strunk-clean tokens); default merge before multiply.
+  trigger: event
+  event: "tool:after"
+  filter: "write_file|str_replace|ast_edit|replace"
+  exclude: "test/|knowledge/|node_modules/"
+  callable: aggressive_merge
+  enabled: true
+
 - name: constitution_drift
   description: Scan lib/ against the axioms after any source mutation; emit improved/regressed/steady so regressions are caught the moment they land.
   trigger: event

@@ -114,11 +114,11 @@ class TestWebUI < Minitest::Test
   def test_sensitive_web_actions_route_through_auth_pipeline
     app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
 
-    assert_includes app_controller, "AUTHENTICATED_ACTIONS = %i["
-    assert_includes app_controller, "command dmesg enhance history live metrics photo post_event state stream"
+    assert_includes app_controller, "AUTHENTICATED_ACTIONS = %i[dmesg history live metrics]"
     assert_includes app_controller, "before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }"
-    assert_match(/def\s+visitor\?\s*\n\s*false\s*\n\s*end/, app_controller)
-    assert_match(/def\s+require_authenticated!\s*\n\s*end/, app_controller)
+    assert_includes app_controller, "before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }"
+    assert_includes app_controller, "def visitor?"
+    assert_includes app_controller, "def require_authenticated!"
   end
 
   def test_authenticated_web_actions_are_rate_limited
@@ -150,16 +150,18 @@ class TestWebUI < Minitest::Test
   def test_chat_index_loads_particle_kernel_before_face
     index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
     kernel_idx = index.index("particle_kernel.js")
-    face_idx = index.index('type="module"')
+    face_idx = index.index('type="module" src="<%= asset_path("face.js") %>')
     refute_nil kernel_idx
     refute_nil face_idx
     assert_operator kernel_idx, :<, face_idx
     assert_includes index, "chat_actions.js"
     assert_includes index, "visual_bridge.js"
+    assert_includes index, "face_deferred_loader.js"
     assert_includes index, 'id="cognition-ecology"'
-    assert_includes index, "cognition_ecology.js"
-    assert_includes index, "cognition_ecology_render.js"
     assert_includes index, "visual_governor.js"
+    deferred = File.read(File.expand_path("../web/public/face_deferred_loader.js", __dir__))
+    assert_includes deferred, "cognition_ecology.js"
+    assert_includes deferred, "cognition_ecology_render.js"
     ecology_idx = index.index("cognition-ecology")
     face_canvas_idx = index.index('id="face"')
     assert_operator ecology_idx, :<, face_canvas_idx
@@ -196,13 +198,15 @@ class TestWebUI < Minitest::Test
 
   def test_primer_tap_unlocks_prompt_before_face_ready
     index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
+    boot = File.read(File.expand_path("../web/app/views/shared/_face_boot.html.erb", __dir__))
     css = File.read(File.expand_path("../web/public/face.css", __dir__))
     part5 = File.read(File.expand_path("../web/public/face.part5.txt", __dir__))
 
-    assert_includes index, "dismissPrimer"
-    assert_includes index, "revealPrompt"
-    assert_includes index, "dismissPrimer();\n        revealPrompt();"
-    assert_includes index, "z.classList.add('live')"
+    assert_includes index, 'render "shared/face_boot"'
+    assert_includes boot, "dismissPrimer"
+    assert_includes boot, "revealPrompt"
+    assert_includes boot, "dismissPrimer();\n      revealPrompt();"
+    assert_includes boot, "z.classList.add('live')"
     assert_includes css, "#primer"
     assert_includes css, "z-index: var(--z-modal)"
     assert_includes css, "body:not(.face-ready) #zsh:not(.live)"
@@ -220,6 +224,7 @@ class TestWebUI < Minitest::Test
   def test_opencrabs_web_handlers_present
     chat = File.read(File.expand_path("../web/public/chat.js", __dir__))
     actions = File.read(File.expand_path("../web/public/chat_actions.js", __dir__))
+    sse = File.read(File.expand_path("../web/public/sse_contract.js", __dir__))
     service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
     dashboard = File.read(File.expand_path("../web/app/views/dashboard/index.html.erb", __dir__))
 
@@ -229,8 +234,10 @@ class TestWebUI < Minitest::Test
     assert_includes chat, "/btw research"
     assert_includes chat, "/rebuild"
     assert_includes File.read(File.expand_path("../web/public/visual_bridge.js", __dir__)), "phantom:detected"
-    assert_includes actions, "addEventListener('compaction'"
-    assert_includes actions, "startsWith('!')"
+    assert_includes sse, "compaction"
+    assert_includes sse, "ctx_footer"
+    assert_includes sse, "_chatOnCompaction"
+    assert_includes File.read(File.expand_path("../web/public/face.part5.txt", __dir__)), "startsWith('!')"
     assert_includes service, "compaction:done"
     assert_includes service, "ctx:footer"
     assert_includes dashboard, "mission control"
@@ -239,6 +246,7 @@ class TestWebUI < Minitest::Test
 
   def test_wave3_felt_sense_and_face_part5_wiring
     actions = File.read(File.expand_path("../web/public/chat_actions.js", __dir__))
+    sse = File.read(File.expand_path("../web/public/sse_contract.js", __dir__))
     part5 = File.read(File.expand_path("../web/public/face.part5.txt", __dir__))
     service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
     agent = File.read(File.expand_path("../lib/judge/agent.rb", __dir__))
@@ -246,13 +254,13 @@ class TestWebUI < Minitest::Test
 
     assert_includes actions, "window.collectFeltState = collectFeltState"
     assert_includes actions, "function collectFeltState()"
-    assert_includes part5, "window.collectFeltState?.()"
-    assert_includes part5, "addEventListener('compaction'"
-    assert_includes part5, "addEventListener('ctx_footer'"
-    assert_includes part5, "addEventListener('phantom'"
-    assert_includes part5, "addEventListener('tool_stack'"
-    assert_includes part5, "addEventListener('stage'"
-    assert_includes part5, "addEventListener('btw'"
+    assert_includes part5, "window.MASTERFeltState?.collectFeltState?.()"
+    assert_includes sse, "compaction:"
+    assert_includes sse, "ctx_footer:"
+    assert_includes sse, "phantom:"
+    assert_includes sse, "tool_stack:"
+    assert_includes sse, "stage:"
+    assert_includes sse, "btw:"
     assert_includes service, "felt_sense:"
     assert_includes service, '"felt:sense"'
     assert_includes agent, "felt_sense"

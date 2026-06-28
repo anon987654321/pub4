@@ -114,7 +114,7 @@ class TestScanner < Minitest::Test
 
       out, = capture_io { scanner.scan_dir(dir, stream: true) }
 
-      assert_includes out, "scan: sample.rb 1 violation(s)"
+      assert_includes out, "scan: [1/1] sample.rb 1 violation(s)"
     end
   end
 

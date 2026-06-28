@@ -6,34 +6,6 @@ require_relative "../result"
 
 module Master
   module Reach
-    # Base Reach tools for Repligen and Postpro.
-    # Delegate to the script dispatch (same as /commands) so LLM can call natively
-    # without /command or Shell. Return Master::Result for LLM wrapper compatibility.
-    class Repligen
-      attr_writer :agent
-
-      def initialize(root:, governor: nil, event_bus: nil, agent: nil)
-        @root = root
-        @agent = agent
-      end
-
-      def call(args: nil, ctx: nil)
-        arg = args.to_s
-        arg = RepligenArg.refine_generate(arg, agent: @agent, ctx: ctx) if @agent
-        ScriptDispatch.run(root: @root, tool: "repligen", arg: arg)
-      end
-    end
-
-    class Postpro
-      def initialize(root:, governor: nil, event_bus: nil)
-        @root = root
-      end
-
-      def call(args: nil)
-        ScriptDispatch.run(root: @root, tool: "postpro", arg: args.to_s)
-      end
-    end
-
     # LLM-callable wrappers around the existing Master tool instances.
     # Each class holds a reference to the underlying tool via initialize,
     # so governor, undo, and event_bus plumbing is preserved.

@@ -10,6 +10,10 @@ module Master
   module Ground
     # Persistent cross-session memory store with typed entries, recall, and consolidation.
     class Memory
+      include Store
+      include Search
+      include Consolidate
+
       TTL_DAYS = 90
       CONSOLIDATE_THRESHOLD = 40
       SECONDS_PER_DAY = 86_400
@@ -23,10 +27,6 @@ module Master
         "feedback" => /\b(?:don'?t|stop|never|always|prefer|from now on)\s+([^.,;\n]{3,120})/i,
         "project" => /\b(?:we'?re|deadline|launching|deploying|migrating)\s+([^.,;\n]{3,120})/i,
       }.freeze
-
-      include Store
-      include Search
-      include Consolidate
     end
   end
 end

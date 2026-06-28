@@ -273,6 +273,10 @@ zeitwerk:
     llm: LLM
 
 anti_sprawl:
+  mode: aggressive
+  hierarchy: openbsd_ruby_roda
+  max_lib_depth: 4
+  fold_suffixes: [_support, _helper, _util, _helpers, _utils]
   forbidden_files:
     - summary.md
     - analysis.md
@@ -280,7 +284,8 @@ anti_sprawl:
     - todo.md
     - notes.md
     - changelog.md
-  rule: "Edit existing files. Single source of truth."
+  slug_naming: "Rails-parameterized density — snake_case, concrete tokens only, Strunk-clean; see style.yml naming.paths"
+  rule: "Flat Hierarchy — merge thin siblings and rename misfit paths before creating files. OpenBSD-flat paths, Zeitwerk-true dense slugs, Roda-tight trees."
 
 validation:
   after_write: "ruby -c lib/FILE.rb"

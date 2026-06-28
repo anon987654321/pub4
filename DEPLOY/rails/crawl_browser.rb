@@ -2,9 +2,7 @@
 # frozen_string_literal: true
 
 # Ferrum browser crawl — element presence and light interaction checks.
-# Run from MASTER so Ferrum (test group) resolves:
-#   cd MASTER && BUNDLE_WITH=test bundle exec ruby ../DEPLOY/rails/crawl_browser.rb
-#   cd MASTER && BUNDLE_WITH=test bundle exec ruby ../DEPLOY/rails/crawl_browser.rb --public
+# Run from MASTER: BUNDLE_WITH=test bundle exec ruby ../DEPLOY/rails/crawl_browser.rb
 
 require "optparse"
 require "timeout"
@@ -12,14 +10,6 @@ require_relative "crawl_support"
 
 SUPPORT = File.expand_path("../../MASTER/web/script/browser_probe_support.rb", __dir__)
 require SUPPORT
-
-options = { public: false, skip_closed: true, force: ENV["PROBE_FORCE_BROWSER"] == "1" }
-OptionParser.new do |parser|
-  parser.banner = "Usage: crawl_browser.rb [--public] [--strict] [--force]"
-  parser.on("--public", "Use HTTPS domains from apps.yml") { options[:public] = true }
-  parser.on("--strict", "Fail when target ports are closed") { options[:skip_closed] = false }
-  parser.on("--force", "Run even without Chrome (will fail)") { options[:force] = true }
-end.parse!
 
 def run_checks(browser, checks, label, failures)
   Array(checks).each do |check|
@@ -74,6 +64,14 @@ def crawl_target(browser, name, url, browser_spec, failures)
   fatal = BrowserProbeSupport.fatal_js_errors(browser)
   failures << "#{label}: js errors — #{fatal.join('; ')}" unless fatal.empty?
 end
+
+options = { public: false, skip_closed: true, force: ENV["PROBE_FORCE_BROWSER"] == "1" }
+OptionParser.new do |parser|
+  parser.banner = "Usage: crawl_browser.rb [--public] [--strict] [--force]"
+  parser.on("--public", "Use HTTPS domains from apps.yml") { options[:public] = true }
+  parser.on("--strict", "Fail when target ports are closed") { options[:skip_closed] = false }
+  parser.on("--force", "Run even without Chrome (will fail)") { options[:force] = true }
+end.parse!
 
 chrome = BrowserProbeSupport.chrome_path
 unless chrome || options[:force]

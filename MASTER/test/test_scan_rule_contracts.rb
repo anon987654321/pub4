@@ -123,6 +123,14 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding Rules::LazyClassRule.new, code, "lazy.rb", "lazy class"
   end
 
+  def test_parameterized_slug_rule_flags_fold_suffix
+    assert_finding rule("PARAMETERIZED_SLUG"), "# frozen_string_literal: true\n", "lib/foo_support.rb", "merge"
+  end
+
+  def test_parameterized_slug_rule_flags_filler_only_slug
+    assert_finding rule("PARAMETERIZED_SLUG"), "# frozen_string_literal: true\n", "lib/misc_util_helper.rb", "filler-only"
+  end
+
   def test_runtime_docs_yaml_forbids_stray_data_markdown
     bad = File.join(Master::ROOT, "data", "principles", "feedback_new.md")
     good = File.join(Master::ROOT, "data", "SOUL.md")

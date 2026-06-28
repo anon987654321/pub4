@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Block restored pub3 anti-patterns and verify archive artifacts exist.
+
 require "open3"
 require "yaml"
 

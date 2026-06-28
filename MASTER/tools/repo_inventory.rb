@@ -67,6 +67,20 @@ def duplicate_basename_entries
   end
 end
 
+def low_density_slug_entries
+  require File.expand_path("../lib/ground/parameterized_slug.rb", __dir__)
+  slug = Master::Ground::ParameterizedSlug
+
+  repo_paths.filter_map do |path|
+    next unless path.end_with?(".rb")
+
+    stem = File.basename(path, ".rb")
+    next unless slug.filler_only?(stem) || slug.fold_suffix?(stem) || slug.meaningful_tokens(stem).size < stem.split("_").size
+
+    Entry.new(path: path, kind: "low_density_slug", reason: "not a dense Rails-parameterize slug — merge or rename (Flat Hierarchy)")
+  end
+end
+
 def suspicious_abbreviation_entries
   repo_paths.filter_map do |path|
     basename = File.basename(path)
@@ -75,7 +89,7 @@ def suspicious_abbreviation_entries
   end
 end
 
-entries = (loose_root_entries + duplicate_basename_entries + suspicious_abbreviation_entries)
+entries = (loose_root_entries + duplicate_basename_entries + suspicious_abbreviation_entries + low_density_slug_entries)
   .uniq { |entry| [entry.path, entry.kind] }
   .sort_by { |entry| [entry.kind, entry.path] }
 

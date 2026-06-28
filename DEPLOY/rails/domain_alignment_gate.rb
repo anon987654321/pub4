@@ -1,13 +1,14 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Verify openbsd.sh DNS, domain_registry.rb, and routes.rb agree on city subdomains.
+
 require "pathname"
 
 ROOT = Pathname.new(__dir__).join("..", "..").expand_path
 OPENBSD = ROOT.join("DEPLOY", "openbsd", "openbsd.sh")
 REGISTRY = ROOT.join("DEPLOY", "rails", "brgen", "lib", "brgen", "domain_registry.rb")
 ROUTES = ROOT.join("DEPLOY", "rails", "brgen", "config", "routes.rb")
-
 COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
 MASTER_ONLY_SUBAPPS = %w[ai].freeze
 NORWEGIAN_PLAYLIST_ALIAS = "spilleliste"

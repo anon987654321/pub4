@@ -6,9 +6,6 @@ require "yaml"
 module Master
   module Now
     class Skills
-      SKILLS_DIR = "skills".freeze
-      REGISTRY_PATH = "skills_registry.yml".freeze
-
       attr_reader :loaded
 
       def initialize(root:, event_bus: nil)
@@ -195,6 +192,9 @@ module Master
         Master::Ground::Swallow.log(e, context: "skills.parse_frontmatter", event_bus: @bus)
         {}
       end
+
+      SKILLS_DIR = "skills".freeze
+      REGISTRY_PATH = "skills_registry.yml".freeze
     end
   end
 end

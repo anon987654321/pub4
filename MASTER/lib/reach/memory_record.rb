@@ -7,14 +7,11 @@ module Master
     # MemoryRecord — writes durable context into data/project_context.yml and
     # seeds Master::Ground::Memory so semantic recall sees it immediately.
     class MemoryRecord
-      TIER = :open
       NAME = "memory_record".freeze
       DESCRIPTION = "Write a durable project-context entry. " \
                     "Use for user facts, feedback, project context, or external references.".freeze
       CONTEXT_PATH = "project_context.yml".freeze
-
-      VALID_TYPES = %w[user feedback project reference general].freeze
-      KEY_RE      = /\A[a-z0-9][a-z0-9_]{1,60}\z/.freeze
+      TIER = :open
 
       def initialize(memory:, root: Dir.pwd, event_bus: nil)
         @memory = memory
@@ -55,6 +52,9 @@ module Master
       end
 
       def relative(path) = path.sub("#{@root}/", "")
+
+      VALID_TYPES = %w[user feedback project reference general].freeze
+      KEY_RE      = /\A[a-z0-9][a-z0-9_]{1,60}\z/.freeze
     end
   end
 end

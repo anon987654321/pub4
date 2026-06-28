@@ -1,17 +1,6 @@
 # frozen_string_literal: true
 
 module BrowserProbeSupport
-  CHROME_PATHS = [
-    ENV["CHROME_PATH"],
-    "/usr/local/bin/chromium",
-    "/usr/local/bin/chrome",
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/Applications/Chromium.app/Contents/MacOS/Chromium"
-  ].compact.freeze
-
-  BROWSER_TIMEOUT = Integer(ENV.fetch("PROBE_BROWSER_TIMEOUT", "15"))
-  MAX_PROBE_SECONDS = Integer(ENV.fetch("PROBE_MAX_SECONDS", "75"))
-
   module_function
 
   def chrome_path
@@ -34,18 +23,6 @@ module BrowserProbeSupport
         "remote-allow-origins" => "*"
       }.merge(extra_options)
     )
-  end
-
-  def install_error_hooks(browser, key: "_crawlErrs")
-    browser.evaluate_on_new_document(<<~JS)
-      window.#{key} = [];
-      window.onerror = function(msg, src, line) {
-        window.#{key}.push(String(msg) + ' @ ' + (src || '').split('/').pop() + ':' + line);
-      };
-      window.addEventListener('unhandledrejection', function(e) {
-        window.#{key}.push('UNHANDLED: ' + String(e.reason));
-      });
-    JS
   end
 
   def evaluate(browser, script, attempts: 3, pause: 1.0)
@@ -109,8 +86,31 @@ module BrowserProbeSupport
     JS
   end
 
+  def install_error_hooks(browser, key: "_crawlErrs")
+    browser.evaluate_on_new_document(<<~JS)
+      window.#{key} = [];
+      window.onerror = function(msg, src, line) {
+        window.#{key}.push(String(msg) + ' @ ' + (src || '').split('/').pop() + ':' + line);
+      };
+      window.addEventListener('unhandledrejection', function(e) {
+        window.#{key}.push('UNHANDLED: ' + String(e.reason));
+      });
+    JS
+  end
+
   def fatal_js_errors(browser, key: "_crawlErrs")
     errs = evaluate(browser, "window.#{key} || []")
     Array(errs).reject { |e| e.to_s.include?("face render slow") }
   end
+
+  CHROME_PATHS = [
+    ENV["CHROME_PATH"],
+    "/usr/local/bin/chromium",
+    "/usr/local/bin/chrome",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium"
+  ].compact.freeze
+
+  BROWSER_TIMEOUT = Integer(ENV.fetch("PROBE_BROWSER_TIMEOUT", "15"))
+  MAX_PROBE_SECONDS = Integer(ENV.fetch("PROBE_MAX_SECONDS", "75"))
 end

@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 # One-shot: fold runtime-read MD into YAML authority files.
-# Safe to re-run; overwrites data/operator_principles.yml, skills_registry.yml, project_context.yml.
 
 require "yaml"
 require "fileutils"

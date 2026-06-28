@@ -184,7 +184,7 @@ end
         findings = pairs.flat_map { |_path, result| Master::Result.wrap(result).value_or([]) }
         return "Checking for side effects...\nprescan: clean. Moving on." if findings.empty?
 
-        lines = ["Checking for side effects...", "prescan: #{findings.size} cross-file risk(s) before fix"]
+        lines = ["Checking for side effects...", "prescan: #{findings.size} cross-file risk(s) — Flat Hierarchy: merge/rename before local patch"]
         findings.first(8).each { |finding| lines << "  #{finding[:rule]}: #{finding[:message]}" }
         lines.join("\n")
       rescue StandardError => e

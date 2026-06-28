@@ -25,6 +25,7 @@ end
 failures = []
 
 failures << "test" unless run_step("rake test", RUBY, "-S", "rake", "test")
+failures << "test:kernel" unless run_step("rake test:kernel", RUBY, "-S", "rake", "test:kernel")
 
 if ENV["MASTER_CI_FULL"] == "1"
   failures << "smoke" unless run_step("smoke", File.join(ROOT, "bin", "smoke"))

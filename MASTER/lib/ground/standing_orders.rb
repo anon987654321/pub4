@@ -133,7 +133,7 @@ module Master
           next unless event_match?(order, event_name, payload)
           next if debounced?(order)
           next unless @mutex.synchronize { @running.add?(order["name"]) }
-          Thread.new { run_event_order(order) }.tap { |t| t.abort_on_exception = false }
+          Thread.new { run_event_order(order, payload) }.tap { |t| t.abort_on_exception = false }
         end
       end
 
@@ -165,9 +165,9 @@ module Master
         last.positive? && (Time.now.to_i - last) < DEBOUNCE_S
       end
 
-      def run_event_order(order)
+      def run_event_order(order, payload = nil)
         name = order["name"]
-        result = execute_order(order)
+        result = execute_order(order, event: payload)
         @mutex.synchronize do
           order["last_run_at"] = Time.now.to_i
           if result.ok?
@@ -188,11 +188,11 @@ module Master
 
       def state_of(order) = VALID_STATES.include?(order["state"]) ? order["state"] : "done"
 
-      def execute_order(order)
+      def execute_order(order, event: nil)
         if (callable_key = order["callable"])
           klass = Master::Ground::Orders::Registry.lookup(callable_key)
           return Result.err("unknown callable: #{callable_key}") unless klass
-          return klass.new(container: @container.merge(bus: @bus, root: Master::ROOT)).call
+          return klass.new(container: @container.merge(bus: @bus, root: Master::ROOT, event: event)).call
         end
         return Result.err("no pipeline") unless @pipeline
         @pipeline.call(Result.ok(user_message: order["command"].to_s))
