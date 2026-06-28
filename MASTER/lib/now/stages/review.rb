@@ -16,6 +16,7 @@ module Master
         end
 
         def call(ctx)
+          ctx = merge_written_files(ctx)
           ctx = run_council(ctx)
           ctx = run_stage(@lint, ctx).value_or(ctx)
           verdict_result = publish_verdict(ctx)
@@ -28,6 +29,16 @@ module Master
         end
 
         private
+
+        def merge_written_files(ctx)
+          tracker = Master::Trace::WriteTracker.current
+          return ctx unless tracker
+
+          merged = (Array(ctx.written_files) + tracker.paths).uniq
+          return ctx if merged.empty? || merged == Array(ctx.written_files)
+
+          ctx.merge(written_files: merged)
+        end
 
         def run_council(ctx)
           return ctx unless @council

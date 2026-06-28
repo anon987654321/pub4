@@ -22,7 +22,9 @@ module Master
         @undo.snapshot(full)
         FileUtils.mkdir_p(File.dirname(full))
         write_atomic(full, content)
-        @bus&.publish("tool:after", tool: self.class::NAME, path: path || full)
+        written = path || full
+        Master::Trace::WriteTracker.current&.record(written)
+        @bus&.publish("tool:after", tool: self.class::NAME, path: written)
         Result.ok(full)
       end
 

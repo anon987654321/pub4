@@ -4,14 +4,4 @@ description: User is an architect/designer; tiny details matter intensely. Defau
 type: feedback
 originSessionId: 0c593fb2-cd49-4fd7-9e89-d77dd7e909ae
 ---
-By default, scan every artifact (code, prose, layout, naming, spacing, alignment, glyph choice) for micro-refinement opportunities — not just the structural-level work the user explicitly asked for. Surface or fix them as part of the task, don't wait to be asked.
-
-**Why:** the user identifies as an architect/designer. They told me explicitly that tiny details are *extremely* important to them. A 2x architectural win is satisfying, but a 5% improvement in a heading's casing, a glyph's choice, a comma's placement, a variable name's precision — those compound into the texture they care about. Treating those as "low priority polish" misreads what matters to them.
-
-**How to apply:**
-- After making any edit, re-read what I wrote and ask: is there a tighter word? a better glyph? a name more honest to its intent? a spacing that breathes correctly?
-- In rename/refactor passes, watch for adjacent things that became inconsistent.
-- In prose: cut filler, prefer concrete verbs, attend to commas, hyphens vs. em-dashes, casing.
-- In code: variable naming, magic-number extraction, comment quality, line-break placement.
-- This is *additive* to the existing Strunk & White, lint/beautify, no-consecutive-whitespace rules — those are about avoiding mistakes; this is about actively hunting refinements.
-- Do not surface every micro-fix as a question — just apply them, and only mention if non-obvious.
+By default, scan every artifact for micro-refinements — tighter words, better glyphs, honest names, correct spacing — not just the structural work asked for. Apply fixes without asking; mention only if non-obvious. After edits, re-read for adjacent inconsistency. Additive to Strunk & White and lint rules: those prevent mistakes; this actively hunts refinements in code, prose, layout, naming.

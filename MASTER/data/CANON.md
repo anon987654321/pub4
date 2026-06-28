@@ -1,4 +1,4 @@
-# MASTER Rule Canon (generated)
+# MASTER Rule Canon
 
 Generated: 2026-06-25T17:14:50Z
 

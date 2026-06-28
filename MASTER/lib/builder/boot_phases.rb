@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../trace/write_tracker"
+
 module Master
   module Builder
     class TraceBoot
@@ -20,7 +22,10 @@ module Master
         Trace::AuditLog.new(root: @root, event_bus: bus)
         Trace::SwallowLedger.new(event_bus: bus, root: @root).attach
         recorder = Trace::Recorder.new(root: @root, event_bus: bus)
-        { event_log: event_log, bus: bus, ring: ring, logging: logging, session: session, undo: undo, metrics: metrics, trace: recorder }
+        write_tracker = Trace::WriteTracker.new(event_bus: bus)
+        Trace::WriteTracker.current = write_tracker
+        { event_log: event_log, bus: bus, ring: ring, logging: logging, session: session, undo: undo, metrics: metrics, trace: recorder,
+          write_tracker: write_tracker }
       end
     end
 

@@ -14,7 +14,9 @@ Layers: constitution (`data/*.yml`) → pipeline (`now/`) → judge → loop →
 
 1. Reconnaissance with any tool.
 2. Before editing: read full target files and callers.
-3. Production changes: minimal patch, evidence, `/scan` when available.
+3. Production changes: minimal patch, evidence — scan/fix often run without you naming them.
+
+After writes, MASTER records paths, lints them in Review, and standing orders audit `lib/` (constitution drift) plus autocommit. Say "check my edits", "fix this file", or "run through master" instead of chaining `/scan` `/fix` by hand.
 
 Golden rule: `PRESERVE_THEN_IMPROVE_NEVER_BREAK`. No hedging without proof.
 

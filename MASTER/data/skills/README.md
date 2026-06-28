@@ -1,7 +1,5 @@
 # Skills
 
-Drop reusable skills here as `MASTER/data/skills/<skill_name>/SKILL.md`.
-Optional Ruby behavior can live beside the markdown as `skill.rb`.
+Flat `MASTER/data/skills/*.md` — frontmatter: `name`, `description`, `triggers` (or `patterns`). Optional `skill.rb` beside markdown.
 
-The runtime reloads this directory before each prompt, so newly added skills
-become visible without restarting MASTER.
+Reloaded before each prompt; new skills appear without restart.

@@ -320,7 +320,13 @@ infer:
     scan:
       patterns:
       - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(cosmetic|style|hygiene|perfection|core|axioms|solid|critical|full))?\\b"
+      - "\\b(?:review\\s+my\\s+changes?|check\\s+what\\s+I\\s+edited|what\\s+did\\s+I\\s+change|scan\\s+my\\s+edits?)\\b"
       capture: scan_profile
+    fix:
+      patterns:
+      - "\\b(?:fix|repair|correct)\\s+(?:the\\s+)?([\\w./-]+(?:\\.[\\w]+)?)?"
+      - "\\b(?:fiks|reparer)\\s+(?:([\\w./-]+(?:\\.[\\w]+)?)|(?:den|det))?\\b"
+      capture: path
     workflow:
       patterns:
       - "\\b(?:run|put|send|take)\\s+(?:this|it|that)?\\s*through\\s+master\\b"

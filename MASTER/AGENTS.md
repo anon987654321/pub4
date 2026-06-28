@@ -32,6 +32,8 @@ Pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Coun
 
 `/scan`, `/fix`, `/review`, `/video`, `/photograph` — full list via `/help`. Structural changes: `/scan deep <path>` inside MASTER first.
 
+You do not need to memorize scan/fix choreography. After any mutating tool lands, standing orders run constitution drift and autocommit; the Review stage lints paths recorded in that turn. Plain language works: "check my edits", "fix `path`", "clean this up", "run through master".
+
 ## VPS limits
 
 One SSH session. `zsh DEPLOY/sh/vps_ci.sh <app>` for Rails CI. After `web/` edits: `doas rcctl restart master`.

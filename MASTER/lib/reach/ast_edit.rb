@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../trace/write_tracker"
+
 module Master
   module Reach
     # AST-aware editing tool using Ruby's Ripper (stdlib) for parsing.
@@ -65,6 +67,8 @@ module Master
           .gsub(/\b#{Regexp.escape(from)}\b(?!\s*[:=])/) { |m| to }
 
         atomic_write(fp, updated)
+        Master::Trace::WriteTracker.current&.record(fp)
+        @bus&.publish("tool:after", tool: NAME, path: fp)
         @bus&.publish("tool:ast_edit", op: "rename", from: from, to: to, path: fp)
         Result.ok("renamed #{from} → #{to} in #{File.basename(fp)}")
       end
@@ -85,6 +89,8 @@ module Master
 
         @undo.snapshot(fp)
         atomic_write(fp, lines.join)
+        Master::Trace::WriteTracker.current&.record(fp)
+        @bus&.publish("tool:after", tool: NAME, path: fp)
         @bus&.publish("tool:ast_edit", op: "add_after", after: after_name, path: fp)
         Result.ok("inserted method after #{after_name} in #{File.basename(fp)}")
       end

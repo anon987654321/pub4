@@ -171,6 +171,8 @@ module Master
           run_work_command("fix", target)
         when :scan_target
           run_work_command("scan", inferred_target_path(line))
+        when :scan_git_changes
+          run_scan_git_changes
         when :scan_fix_lint
           target = inferred_target_path(line)
           run_workflow(target)
@@ -213,8 +215,9 @@ module Master
         return { intent: :scan_then_fix_then_commit, risk: :high } if text.match?(/\A.*\bscan\b.*\bfix\b.*\bcommit\b/i)
         return { intent: :scan_fix_lint, risk: :medium } if text.match?(/\A(?:clean|tidy|polish)\b/i)
         return { intent: :scan_target, risk: :low } if text.match?(/\A(?:check|audit)\b/i)
+        return { intent: :scan_git_changes, risk: :low } if text.match?(/\b(?:review\s+my\s+changes?|check\s+what\s+I\s+edited|what\s+did\s+I\s+change)\b/i)
         return { intent: :why_axioms, risk: :low } if text.match?(/\A(?:explain|why|what)\b/i)
-        return { intent: :refactor_to_ruby, risk: :medium } if text.match?(/\Afix\b/i)
+        return { intent: :scan_then_fix, risk: :medium } if text.match?(/\Afix\b/i)
         return { intent: :run_ui_review, risk: :low } if text.match?(/\A(?:ui[\s-]?)?critique\b/i)
         return { intent: :verify_patch_landed, risk: :low } if text.match?(/\A(?:verify|confirm)\b/i)
         return { intent: :write_repo_changes, risk: :high, push: text.match?(/\bpush\b/i) } if text.match?(/\b(?:commit|save|ship|push)\b/i)
@@ -249,6 +252,20 @@ module Master
         puts @refs.renderer.render(Master::Now::CommandRegistry.dispatch_axioms(scanner: @refs.scanner, root: @refs.root), mode: :dim)
       rescue StandardError => e
         puts @refs.renderer.render("axioms: #{e.message}", mode: :warning)
+      end
+
+      def run_scan_git_changes
+        out, status = Open3.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
+        unless status.success?
+          puts @refs.renderer.render("scan: git diff failed — #{out.strip}", mode: :warning)
+          return
+        end
+        paths = out.lines.map(&:strip).reject(&:empty?).first(20)
+        if paths.empty?
+          puts @refs.renderer.render("scan: no uncommitted changes", mode: :dim)
+          return
+        end
+        paths.each { |path| run_work_command("scan", path) }
       end
 
       def run_lint(target)
