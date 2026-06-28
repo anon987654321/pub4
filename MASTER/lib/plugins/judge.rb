@@ -3,7 +3,7 @@
 module Master
   module Plugins
     module Judge
-      def self.configure(base, root: Dir.pwd, agent: nil, bus: nil, ecology: nil, **_opts)
+      def self.configure(_base, root: Dir.pwd, agent: nil, bus: nil, ecology: nil, **_opts)
         Master::Judge::Scan::InfraHelpers.build_scanner(root:, agent:, bus:, ecology:)
       end
 
@@ -14,7 +14,7 @@ module Master
           config: infra[:config], session: infra[:session], tools:,
           circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus,
           model_router: Master::Now::Routing::ModelRouter.new(
-            config: infra[:config], provider_health: infra[:provider_health]
+            config: infra[:config], provider_health: infra[:provider_health],
           ),
           reasoning_modes: Master::Judge::Modes.new,
           memory: infra[:memory], personality: infra[:personality],
@@ -26,7 +26,7 @@ module Master
                                             circuit_breaker: infra[:breaker],
                                             cache: infra[:cache], event_bus: bus)
         ctx = Master::Now::ContextWindow.new(session: infra[:session], agent:,
-          model_context: Master::CTX_WINDOW_SIZE, event_bus: bus, root:)
+          model_context: Master.context_window(agent.model), event_bus: bus, root:)
         ctx.check_and_compact!
         agent.wire_context_window(ctx)
         agent_pool = Master::Judge::AgentPool.new(governor: infra[:governor], tools:, event_bus: bus)

@@ -67,7 +67,7 @@ module Master
         else
           rows.each { |r| puts @refs.renderer.render("  #{r}", mode: :dim) }
         end
-        @refs.bus&.publish("attention:context", query: query, rows: rows.size)
+        @refs.bus&.publish("attention:context", query:, rows: rows.size)
       end
 
       def run_checkpoint
@@ -75,13 +75,13 @@ module Master
         lib_dir = File.join(Master::ROOT, "lib")
         files = changed_lib_files(lib_dir)
         cp = Master::Ground::Checkpoint.new
-        result = cp.create(label: "manual", files: files)
+        result = cp.create(label: "manual", files:)
         id = result.respond_to?(:fetch) ? result[:id] : result.to_s
         puts @refs.renderer.render("checkpoint: #{id} (#{files.size} file(s))", mode: :dim)
       end
 
       def run_dmesg(lines)
-        puts @refs.logging.dmesg(lines.positive? ? lines : DMESG_BUFFER)
+        puts @refs.logging.dmesg(lines.positive? ? lines : DMESG_BUFFER_LINES)
       end
 
       def run_verify

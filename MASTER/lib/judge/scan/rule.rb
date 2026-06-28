@@ -6,16 +6,7 @@ module Master
       require_relative "finding"
 
       class Rule
-        EXT_LANG = {
-          ".rb" => "ruby", ".rake" => "ruby", ".gemspec" => "ruby",
-          ".erb" => "html", ".html" => "html", ".htm" => "html",
-          ".css" => "css", ".scss" => "scss", ".sass" => "scss",
-          ".js" => "javascript", ".ts" => "javascript",
-          ".jsx" => "javascript", ".tsx" => "javascript",
-          ".zsh" => "zsh", ".sh" => "zsh", ".bash" => "zsh",
-          ".yml" => "yaml", ".yaml" => "yaml",
-          ".md" => "markdown", ".json" => "json",
-        }.freeze
+        EXT_LANG = Master::FILE_LANGUAGE_MAP
 
         attr_reader :id, :description, :severity, :rule_tags, :auto_fix
 
@@ -64,22 +55,22 @@ module Master
         def finding(line:, message:, fix: nil, confidence: nil, why: nil, genealogy: nil, impact_radius: nil, dedupe_key: nil)
           Finding.build(
             rule: @id,
-            message: message,
-            line: line,
+            message:,
+            line:,
             severity: @severity,
-            fix: fix,
+            fix:,
             tags: @rule_tags,
             confidence: confidence || default_confidence,
             why: why || default_why(message),
             genealogy: genealogy || default_genealogy(message),
             dedupe_key: dedupe_key || default_dedupe_key(message),
-            impact_radius: impact_radius
+            impact_radius:,
           )
         end
 
         def scan_lines(code, pattern, message:, fix: nil)
           code.each_line.with_index(1).filter_map do |line, num|
-            finding(line: num, message: message, fix: fix) if line.match?(pattern)
+            finding(line: num, message:, fix:) if line.match?(pattern)
           end
         end
 

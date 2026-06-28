@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Harmony — chords + melody</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #0a0a0c; color: #e8e4dc; font: 14px/1.45 ui-monospace, monospace;
+  }
+  main { padding: 28px; max-width: 440px; width: 100%; text-align: center; }
+  h1 { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.45; margin: 0 0 20px; }
+  #chord { font-size: 28px; color: #d4b896; margin: 0 0 8px; min-height: 1.2em; }
+  #prog { font-size: 10px; opacity: 0.4; line-height: 1.6; margin-bottom: 20px; }
+  button {
+    width: 100%; padding: 14px; border: 1px solid #3a3428; border-radius: 8px;
+    background: #141310; color: #f0ebe3; font: inherit; cursor: pointer;
+  }
+  button.playing { border-color: #8a7048; color: #e8c89a; }
+  #status { margin-top: 14px; font-size: 10px; opacity: 0.35; }
+</style>
+</head>
+<body>
+<main>
+  <h1>timeless_authentic</h1>
+  <div id="chord">—</div>
+  <div id="prog"></div>
+  <button id="play" type="button">▶ Chords + melody</button>
+  <div id="status">86 BPM · 2-bar changes</div>
+</main>
+<script>
+(() => {
+  // Ab/Fm Donuts family — IV iii vi ii V (Hooktheory), not chroma bass artifacts
+  const NAMES = ["Fm9", "Dbmaj9", "Cm9", "Fm9", "Bbm9", "Ebmaj9", "Abmaj9low", "Dbmaj9"];
+  const CHORDS = [
+    [174.61, 207.65, 261.63, 311.13, 392.00],
+    [138.59, 174.61, 207.65, 261.63, 311.13],
+    [130.81, 155.56, 196.00, 233.08, 293.66],
+    [174.61, 207.65, 261.63, 311.13, 392.00],
+    [116.54, 138.59, 174.61, 207.65, 261.63],
+    [155.56, 196.00, 233.08, 293.66, 349.23],
+    [103.83, 130.81, 155.56, 196.00, 233.08],
+    [138.59, 174.61, 207.65, 261.63, 311.13]
+  ];
+  const MELODY = [392.00, 349.23, 311.13, 277.18, 261.63, 233.08, 207.65];
+  const BPM = 86, SWING = 0.14;
+  const BEAT = 60 / BPM, BAR = BEAT * 4;
+
+  document.getElementById("prog").textContent = NAMES.join(" → ");
+
+  let ctx, master, padBus, melBus, chopBus, subBus, playing = false, iv = null;
+
+  function padVoices(freqs, when, len, gain) {
+    freqs.forEach((f, vi) => {
+      ["sawtooth", "triangle"].forEach((type, ti) => {
+        const o = ctx.createOscillator();
+        o.type = type;
+        o.frequency.value = f;
+        o.detune.value = (ti ? 9 : -6) + vi * 2;
+        const g = ctx.createGain();
+        const peak = gain * (ti ? 0.55 : 0.85);
+        g.gain.setValueAtTime(0, when);
+        g.gain.linearRampToValueAtTime(peak, when + 0.35);
+        g.gain.setValueAtTime(peak * 0.88, when + len * 0.5);
+        g.gain.linearRampToValueAtTime(0, when + len);
+        const lp = ctx.createBiquadFilter();
+        lp.type = "lowpass"; lp.frequency.value = 2800; lp.Q.value = 0.6;
+        o.connect(g).connect(lp).connect(padBus);
+        o.start(when); o.stop(when + len + 0.05);
+      });
+    });
+  }
+
+  function pluck(freq, when, len, bus, vol) {
+    const o = ctx.createOscillator();
+    o.type = "sine"; o.frequency.value = freq;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + len);
+    o.connect(g).connect(bus);
+    o.start(when); o.stop(when + len + 0.05);
+  }
+
+  function chopChord(chord, when) {
+    const top = [chord[2], chord[3], chord[4]].filter(Boolean);
+    [0, 2, 4].forEach((si, i) => {
+      const t = when + si * BEAT * 0.5 + BEAT * SWING * 0.25;
+      pluck(top[i % top.length] * 2, t, 0.22, chopBus, 0.11);
+    });
+  }
+
+  function melodyBar(bar, when) {
+    const steps = [1, 1.75, 2.5, 3.25];
+    steps.forEach((s, i) => {
+      const f = MELODY[(bar + i) % MELODY.length];
+      pluck(f, when + s * BEAT + BEAT * SWING * 0.2, 0.2, melBus, 0.14);
+    });
+  }
+
+  function subRoot(chord, when, len) {
+    const root = chord[0] * 0.5;
+    const o = ctx.createOscillator();
+    o.type = "sine"; o.frequency.value = root;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(0.35, when + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.001, when + len);
+    o.connect(g).connect(subBus);
+    o.start(when); o.stop(when + len + 0.1);
+  }
+
+  function setup() {
+    master = ctx.createGain();
+    master.gain.value = 0.72;
+    master.connect(ctx.destination);
+
+    padBus = ctx.createGain(); padBus.gain.value = 1.0;
+    const padLp = ctx.createBiquadFilter();
+    padLp.type = "lowpass"; padLp.frequency.value = 3200;
+    padBus.connect(padLp).connect(master);
+
+    melBus = ctx.createGain(); melBus.gain.value = 1.15;
+    const melHp = ctx.createBiquadFilter();
+    melHp.type = "highpass"; melHp.frequency.value = 280;
+    melBus.connect(melHp).connect(master);
+
+    chopBus = ctx.createGain(); chopBus.gain.value = 0.9;
+    chopBus.connect(master);
+
+    subBus = ctx.createGain(); subBus.gain.value = 0.42;
+    subBus.connect(master);
+
+    const conv = ctx.createConvolver();
+    const sr = ctx.sampleRate, n = (sr * 2.2) | 0;
+    const b = ctx.createBuffer(2, n, sr);
+    for (let c = 0; c < 2; c++) {
+      const x = b.getChannelData(c);
+      for (let i = 0; i < n; i++) x[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.2);
+    }
+    conv.buffer = b;
+    const cG = ctx.createGain(); cG.gain.value = 0.28;
+    padBus.connect(conv); conv.connect(cG).connect(master);
+  }
+
+  function scheduleBar(bar, when) {
+    const ci = (bar >> 1) % CHORDS.length;
+    const chord = CHORDS[ci];
+    document.getElementById("chord").textContent = NAMES[ci];
+    padVoices(chord, when, BAR + 0.15, 0.12);
+    subRoot(chord, when, BAR * 0.92);
+    chopChord(chord, when);
+    melodyBar(bar, when);
+  }
+
+  function start() {
+    if (playing) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    setup();
+    playing = true;
+    let bar = 0;
+    const t0 = ctx.currentTime + 0.05;
+    scheduleBar(bar++, t0);
+    iv = setInterval(() => {
+      if (playing) scheduleBar(bar++, ctx.currentTime + 0.04);
+    }, BAR * 1000);
+    document.getElementById("play").textContent = "Playing…";
+    document.getElementById("play").classList.add("playing");
+    document.getElementById("status").textContent = "chords + melody up front";
+  }
+
+  document.getElementById("play").addEventListener("click", start);
+  start();
+})();
+</script>
+</body>
+</html>

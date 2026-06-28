@@ -1,6 +1,7 @@
 # MASTER Epistemics Policy
 # Goal: brutal honesty as an optimization target, not a personality veneer.
 
+schema: 1
 default_mode: max_scrutiny
 
 modes:

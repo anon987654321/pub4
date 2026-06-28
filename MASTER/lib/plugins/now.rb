@@ -12,15 +12,20 @@ module Master
           Master::Now::Stages::Enhance.new(agent: ai[:agent], event_bus: bus, skills: ai[:skills]),
           Master::Now::Stages::Infer.new(bus: infra[:bus], session: infra[:session]),
           Master::Now::Stages::Route.new(commands:, agent: ai[:agent], bus: infra[:bus]),
-          Master::Now::Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
+          Master::Now::Stages::Guard.new(
+            governor: infra[:governor], injection_guard: ai[:guard],
+            evidence: infra[:evidence], event_bus: bus
+          ),
           Master::Now::Stages::Deliberate.new(agent: ai[:agent], config:),
           Master::Now::Stages::DestructiveReview.new(deliberation: ai[:deliberation], event_bus: bus),
           Master::Now::Stages::Execute.new,
           Master::Now::Pipeline::SkipOnPressure.new(Master::Now::Stages::Review.new(
-            council: ai[:council_stage], scanner: ai[:scanner], config:, root:, event_bus: bus
+            council: ai[:council_stage], scanner: ai[:scanner], config:, root:, event_bus: bus,
           ), bus:),
           Master::Now::Stages::Memory.new(memory: infra[:memory], event_bus: bus),
-          Master::Now::Stages::Render.new(renderer: infra[:renderer]),
+          Master::Now::Stages::Render.new(
+            renderer: infra[:renderer], output_check: infra[:output_check], event_bus: bus,
+          ),
         ]
         pipeline = Master::Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:, scanner: ai[:scanner])
         ai[:standing].wire_pipeline(pipeline)

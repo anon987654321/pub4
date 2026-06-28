@@ -3,7 +3,7 @@
 module Master
   module Reach
     # TextHygiene — deterministic pre-write normalization.
-    # Ported from MASTER2. Strips BOM, zero-width chars, CRLF, trailing spaces.
+    # Strips BOM, zero-width characters, CRLF, and trailing spaces.
     # Called by WriteFile and StrReplace tools before writing.
     module TextHygiene
       BINARY_EXTS = %w[.png .jpg .jpeg .gif .webp .pdf .zip .gz .tgz .mp3 .mp4 .mov .woff .woff2].freeze
@@ -25,11 +25,7 @@ module Master
         out.gsub!(/^\t+$/, "")
         out.gsub!(/\n{3,}/, "\n\n")
 
-        if ensure_final_newline && text_like?(filename) && !out.empty? && !out.end_with?("\n")
-          out << "\n"
-        end
-
-        out
+        append_final_newline(out, filename) if ensure_final_newline
       end
 
       def text_like?(filename)
@@ -37,6 +33,11 @@ module Master
 
         ext = File.extname(filename.to_s).downcase
         !BINARY_EXTS.include?(ext)
+      end
+
+      def append_final_newline(content, filename)
+        content << "\n" if text_like?(filename) && !content.empty? && !content.end_with?("\n")
+        content
       end
     end
   end

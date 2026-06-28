@@ -16,7 +16,7 @@ CHROME_PATHS = [
   "/usr/local/bin/chrome",
   "/usr/local/bin/chromium",
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  "/Applications/Chromium.app/Contents/MacOS/Chromium"
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
 ].compact.freeze
 CHROME_PATH = CHROME_PATHS.find { |path| File.executable?(path) }
 
@@ -56,8 +56,8 @@ FERRUM_BROWSER = if SKIP_REASON.nil?
       browser_options: {
         "no-sandbox"            => nil,
         "disable-dev-shm-usage" => nil,
-        "ignore-certificate-errors" => nil
-      }
+        "ignore-certificate-errors" => nil,
+      },
     )
   rescue StandardError => e
     warn "Chrome failed to start: #{e.message}"
@@ -77,7 +77,9 @@ class TestBrowserUI < Minitest::Test
   def fresh_page
     pg = FERRUM_BROWSER.create_page
     pg.go_to(WEB_URL)
-    sleep LOCAL_PROBE ? 2 : 12
+    wait_until(timeout: LOCAL_PROBE ? 10 : 30) do
+      pg.evaluate("document.readyState === 'complete' && !!document.getElementById('primer')")
+    end
     pg
   rescue Ferrum::DeadBrowserError => e
     skip "Chrome died (OOM): #{e.message}"
@@ -87,6 +89,16 @@ class TestBrowserUI < Minitest::Test
 
   def teardown
     FERRUM_BROWSER&.pages&.each(&:close) rescue nil
+  end
+
+  def wait_until(timeout:, interval: 0.1)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+    loop do
+      return true if yield
+      return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+      sleep interval
+    end
   end
 
   def test_01_page_loads_with_primer
@@ -101,8 +113,9 @@ class TestBrowserUI < Minitest::Test
     skip_if_unavailable
     pg = fresh_page
     pg.mouse.click(x: 300, y: 400)
-    sleep LOCAL_PROBE ? 2 : 6
-    primer_gone = pg.evaluate("!document.getElementById('primer')")
+    primer_gone = wait_until(timeout: LOCAL_PROBE ? 10 : 20) do
+      pg.evaluate("!document.getElementById('primer')")
+    end
     assert primer_gone, "primer should be removed after tap"
     assert pg.evaluate("document.getElementById('zsh').classList.contains('live')"),
            "zsh should have live class after tap"
@@ -113,13 +126,8 @@ class TestBrowserUI < Minitest::Test
     skip_if_unavailable
     pg = fresh_page
     pg.mouse.click(x: 300, y: 400)
-    deadline = Time.now + (LOCAL_PROBE ? 45 : 75)
-    ready = false
-    loop do
-      ready = pg.evaluate("typeof window.MASTER_FACE === 'object' && !!window.MASTER_FACE.startEverything")
-      break if ready
-      break if Time.now > deadline
-      sleep 2
+    ready = wait_until(timeout: LOCAL_PROBE ? 45 : 75, interval: 0.5) do
+      pg.evaluate("typeof window.MASTER_FACE === 'object' && !!window.MASTER_FACE.startEverything")
     end
     assert ready, "MASTER_FACE should become available after tap"
   end
@@ -128,17 +136,14 @@ class TestBrowserUI < Minitest::Test
     skip_if_unavailable
     pg = fresh_page
     pg.mouse.click(x: 300, y: 400)
-    sleep LOCAL_PROBE ? 3 : 10
+    assert wait_until(timeout: LOCAL_PROBE ? 10 : 25) { pg.at_css("#zin") }, "chat input did not become ready"
     pg.at_css("#zin").focus
     pg.keyboard.type("ping")
     pg.keyboard.type(:Return)
-    deadline = Time.now + 35
     response = ""
-    loop do
+    wait_until(timeout: 35, interval: 0.25) do
       response = pg.evaluate("document.getElementById('chat-log').textContent").strip
-      break unless response.empty?
-      break if Time.now > deadline
-      sleep 1
+      !response.empty?
     end
     refute_empty response, "chat-log should contain a response to 'ping'"
   end

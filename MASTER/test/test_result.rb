@@ -29,7 +29,7 @@ class TestResult < Minitest::Test
     r = Master::Result.err(
       "boom",
       category: :unknown,
-      context: { file: "custom.rb", method: "call", attempted: "open socket", detail: "timeout" }
+      context: { file: "custom.rb", method: "call", attempted: "open socket", detail: "timeout" },
     )
 
     assert_equal "custom.rb", r.context[:file]
@@ -54,6 +54,20 @@ class TestResult < Minitest::Test
     r = Master::Result.ok(5).and_then { |v| v * 2 }
     assert r.ok?
     assert_equal 10, r.value!
+  end
+
+  def test_from_converts_nil_to_typed_error
+    result = Master::Result.from(nil, err_msg: "missing", category: :validation)
+
+    assert result.err?
+    assert_equal :validation, result.category
+  end
+
+  def test_from_wraps_non_nil_value
+    result = Master::Result.from(false, err_msg: "missing")
+
+    assert result.ok?
+    assert_equal false, result.value!
   end
 end
 

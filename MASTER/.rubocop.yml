@@ -138,11 +138,10 @@ Layout/TrailingEmptyLines:
 
 Layout/EmptyLines:
   Enabled: true
-  Max: 1
 
 Lint/UnusedMethodArgument:
   Enabled: true
-  AllowUnusedKeywordArgs: true
+  AllowUnusedKeywordArguments: true
 
 Lint/RedundantCopDisableDirective:
   Enabled: true

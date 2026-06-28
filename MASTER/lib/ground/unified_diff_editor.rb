@@ -10,34 +10,27 @@ module Master
       end
 
       def parse(diff)
-        current = nil
         files = []
-        diff.to_s.each_line do |line|
-          case line
-          when /^---\s+(.+)/
-            current = { old: clean_path(Regexp.last_match(1)), new: nil, hunks: [] }
-            files << current
-          when /^\+\+\+\s+(.+)/
-            current[:new] = clean_path(Regexp.last_match(1)) if current
-          when HUNK_RE
-            raise ArgumentError, "hunk without file" unless current
-          else
-            current[:hunks].last[:lines] << line if current && current[:hunks].any?
-          end
-        end
+        current = nil
+        diff.to_s.each_line { |line| current = consume_line(line, current, files) }
         files
       end
 
       def applyable?(diff)
-        parse(diff).all? { |file| File.file?(abs(file[:new] || file[:old])) }
-      rescue StandardError
+        files = parse(diff)
+        files.any? && files.all? do |file|
+          path = file[:new] || file[:old]
+          !Master::Ground::Immutability.blocked?(path, root: @root) && File.file?(abs(path))
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "unified_diff_editor.applyable")
         false
       end
 
       def summary(diff)
         parse(diff).map do |file|
-          adds = file[:hunks].sum { |h| h[:lines].count { |line| line.start_with?("+") && !line.start_with?("+++") } }
-          dels = file[:hunks].sum { |h| h[:lines].count { |line| line.start_with?("-") && !line.start_with?("---") } }
+          adds = count_changes(file, "+", "+++")
+          dels = count_changes(file, "-", "---")
           "#{file[:new] || file[:old]} +#{adds} -#{dels} hunks=#{file[:hunks].size}"
         end
       end
@@ -51,13 +44,63 @@ module Master
           "--- #{path}\n",
           "+++ #{path}\n",
           "@@ -1,#{before_lines.size} +1,#{after_lines.size} @@\n",
-          *diff_lines(before_lines, after_lines),
+        *diff_lines(before_lines, after_lines, _context: context),
         ].join
       end
 
       private
 
-      def diff_lines(before, after)
+      def consume_line(line, current, files)
+        handler, match = line_handler(line)
+        send(handler, line, match, current, files)
+      end
+
+      def line_handler(line)
+        return [:consume_old_header, Regexp.last_match] if line.match(/^---\s+(.+)/)
+        return [:consume_new_header, Regexp.last_match] if line.match(/^\+\+\+\s+(.+)/)
+        return [:consume_hunk_header, Regexp.last_match] if line.match(HUNK_RE)
+
+        [:consume_hunk_line, nil]
+      end
+
+      def consume_old_header(_line, match, _current, files)
+        current = { old: clean_path(match[1]), new: nil, hunks: [] }
+        files << current
+        current
+      end
+
+      def consume_new_header(_line, match, current, _files)
+        current[:new] = clean_path(match[1]) if current
+        current
+      end
+
+      def consume_hunk_header(_line, match, current, _files)
+        raise ArgumentError, "hunk without file" unless current
+
+        current[:hunks] << hunk(match)
+        current
+      end
+
+      def consume_hunk_line(line, _match, current, _files)
+        current[:hunks].last[:lines] << line if current && current[:hunks].any?
+        current
+      end
+
+      def hunk(match)
+        {
+          old_start: match[1].to_i,
+          old_count: (match[2] || "1").to_i,
+          new_start: match[3].to_i,
+          new_count: (match[4] || "1").to_i,
+          lines: [],
+        }
+      end
+
+      def count_changes(file, prefix, header)
+        file[:hunks].sum { |item| item[:lines].count { |line| line.start_with?(prefix) && !line.start_with?(header) } }
+      end
+
+      def diff_lines(before, after, _context: 3)
         prefix = 0
         max = [before.size, after.size].max
         lines = []
@@ -80,7 +123,10 @@ module Master
       end
 
       def abs(path)
-        File.join(@root, path.to_s)
+        full = File.expand_path(path.to_s, @root)
+        raise ArgumentError, "diff path escapes root: #{path}" unless full.start_with?(@root + File::SEPARATOR)
+
+        full
       end
     end
   end

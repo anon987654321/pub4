@@ -13,19 +13,20 @@ module Master
       def call
         event_log = Trace::EventLog.new(root: @root)
         evidence_log = Trace::EvidenceLog.new(root: @root)
-        bus = Trace::EventBus.new(event_log: event_log, evidence_log: evidence_log)
+        bus = Trace::EventBus.new(event_log:, evidence_log:)
+        Ground::Swallow.event_bus = bus
         ring = Trace::RingBuffer.new(RING_SIZE)
         logging = Trace::Logging.new(ring_buffer: ring, event_bus: bus)
         session = Trace::Session.new(root: @root, budget_max: @config.budget_max, req_max: @config.req_max)
-        undo = Trace::Undo.new(session: session, event_bus: bus, root: @root)
+        undo = Trace::Undo.new(session:, event_bus: bus, root: @root)
         metrics = Trace::Metrics.new(root: @root, event_bus: bus)
         Trace::AuditLog.new(root: @root, event_bus: bus)
         Trace::SwallowLedger.new(event_bus: bus, root: @root).attach
         recorder = Trace::Recorder.new(root: @root, event_bus: bus)
         write_tracker = Trace::WriteTracker.new(event_bus: bus)
         Trace::WriteTracker.current = write_tracker
-        { event_log: event_log, bus: bus, ring: ring, logging: logging, session: session, undo: undo, metrics: metrics, trace: recorder,
-          write_tracker: write_tracker }
+        { event_log:, bus:, ring:, logging:, session:, undo:, metrics:, trace: recorder,
+          write_tracker: }
       end
     end
 
@@ -41,7 +42,7 @@ module Master
         governor = Loop::Governor.new(config: @config, event_bus: @bus)
         diff_stager = @config["staging_enabled"] ? Loop::DiffStager.new(root: @root, event_bus: @bus) : nil
         phase_gates = Ground::PhaseGates.new(root: @root, event_bus: @bus)
-        { homeostat: homeostat, governor: governor, diff_stager: diff_stager, phase_gates: phase_gates }
+        { homeostat:, governor:, diff_stager:, phase_gates: }
       end
     end
 
@@ -58,12 +59,12 @@ module Master
           req_max: @config.req_max,
           warn_at: @config.warn_at,
           max_per_file: @config.max_per_file,
-          event_bus: @bus
+          event_bus: @bus,
         )
         cache = Reach::SemanticCache.new(root: @root, ttl: @config["cache_ttl"], event_bus: @bus)
         mcp = Reach::McpCoordinator.new(root: @root, event_bus: @bus)
         mcp.connect_all
-        { breaker: breaker, cache: cache, mcp: mcp }
+        { breaker:, cache:, mcp: }
       end
     end
 
@@ -76,6 +77,7 @@ module Master
 
       def call
         memory = Ground::Memory.new(root: @root)
+        evidence = Ground::Evidence.load(root: @root)
         personality = Voice::Personality.new(@config["persona"]&.to_sym || Voice::Personality::DEFAULT,
                                              root: @root, homeostat: @homeostat)
         learnings = Ground::KnowledgeStore.new(root: @root)
@@ -84,9 +86,9 @@ module Master
         law_resolver = Ground::LawResolver.new
         preserve_user_intent = Ground::PreserveUserIntent.new(root: @root)
         failure_taxonomy = Ground::FailureTaxonomy.new
-        { memory: memory, personality: personality, learnings: learnings,
-          ground_truth: ground_truth, library_verify: library_verify, law_resolver: law_resolver,
-          preserve_user_intent: preserve_user_intent, failure_taxonomy: failure_taxonomy }
+        { memory:, evidence:, personality:, learnings:,
+          ground_truth:, library_verify:, law_resolver:,
+          preserve_user_intent:, failure_taxonomy: }
       end
     end
   end

@@ -14,27 +14,28 @@ module Master
     MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
     RING_SIZE          = 1000
 
-
     TOOL_MAP = Plugins::Reach::TOOL_MAP.merge(
       "AstEdit" => ->(r, i) {
         Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
       },
       "MemoryRecord" => ->(r, i) {
         Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus])
-      }
+      },
     ).freeze
 
     module_function
 
     def build(root: Dir.pwd)
+      Ground::BootChecks.run(root:)
       Master.configure_providers!
       infra = build_infrastructure(root)
       ai    = build_ai(root, infra)
-      pipeline, gateway = build_pipeline(root: root, infra: infra, ai: ai)
+      pipeline, gateway = build_pipeline(root:, infra:, ai:)
       infra.merge(ai).merge(pipeline:, gateway:, root:)
     end
 
     def build_scan_only(root: Dir.pwd)
+      Ground::BootChecks.run(root:)
       config = Ground::Config.new(root)
       boot_config = config.freeze_boot
       trace = boot_trace(root:, config:)
@@ -45,15 +46,17 @@ module Master
     end
 
     def build_fast(root: Dir.pwd)
+      Ground::BootChecks.run(root:)
       config = Ground::Config.new(root)
       boot_config = config.freeze_boot
       trace = boot_trace(root:, config:)
       bus = trace[:bus]
       renderer = Voice::Renderer.new(config:)
+      output_check = Judge::OutputCheck.load(root:)
       scanner = build_scanner(root:, bus:)
       code_index = Judge::CodeIndex.new(root:, event_bus: bus)
       ai = { scanner:, code_index: }
-      infra = trace.merge(config:, boot_config:, renderer:, root:)
+      infra = trace.merge(config:, boot_config:, renderer:, output_check:, root:)
       commands = Now::CommandRegistry.build_fast(infra:, ai:, root:)
       agent = fast_agent_stub
       ai[:agent] = agent
@@ -61,7 +64,7 @@ module Master
         Now::Stages::Intake.new,
         Now::Stages::Route.new(commands:, agent:, bus:),
         Now::Stages::Execute.new,
-        Now::Stages::Render.new(renderer: infra[:renderer]),
+        Now::Stages::Render.new(renderer: infra[:renderer], output_check:, event_bus: bus),
       ]
       pipeline = Now::Pipeline.new(stages, bus:, root:, scanner:)
       infra.merge(ai).merge(pipeline:, scanner:, root:)
@@ -87,6 +90,7 @@ module Master
 
       bus = trace[:bus]
       renderer = Voice::Renderer.new(config:)
+      output_check = Judge::OutputCheck.load(root:)
       code_index = Judge::CodeIndex.new(root:, event_bus: bus)
       code_index.build_async
       reference_graph = Judge::ReferenceGraph.new(root:, event_bus: bus)
@@ -105,24 +109,24 @@ module Master
         Ground::Swallow.log(e, context: "builder.pressure_engine", event_bus: bus)
       end
 
-      { config:, boot_config:, renderer:, code_index:, reference_graph:, ecology:, diag:, pressure: }
+      { config:, boot_config:, renderer:, output_check:, code_index:, reference_graph:, ecology:, diag:, pressure: }
         .merge(trace).merge(loop_c).merge(reach).merge(ground)
     end
 
     def boot_trace(root:, config:)
-      TraceBoot.new(root: root, config: config).call
+      TraceBoot.new(root:, config:).call
     end
 
     def boot_loop(root:, config:, bus:)
-      LoopBoot.new(root: root, config: config, bus: bus).call
+      LoopBoot.new(root:, config:, bus:).call
     end
 
     def boot_reach(root:, config:, bus:)
-      ReachBoot.new(root: root, config: config, bus: bus).call
+      ReachBoot.new(root:, config:, bus:).call
     end
 
     def boot_ground(root:, config:, homeostat:)
-      GroundBoot.new(root: root, config: config, homeostat: homeostat).call
+      GroundBoot.new(root:, config:, homeostat:).call
     end
 
     def build_tools(root:, infra:)
@@ -150,16 +154,19 @@ module Master
         Now::Stages::Enhance.new(agent: ai[:agent], event_bus: bus, skills: ai[:skills]),
         Now::Stages::Infer.new(bus:, session: infra[:session]),
         Now::Stages::Route.new(commands:, agent: ai[:agent], bus:),
-        Now::Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
+        Now::Stages::Guard.new(
+          governor: infra[:governor], injection_guard: ai[:guard],
+          evidence: infra[:evidence], event_bus: bus
+        ),
         Now::Stages::Deliberate.new(agent: ai[:agent], config:),
         Now::Stages::DestructiveReview.new(deliberation: ai[:deliberation], event_bus: bus),
         Now::Stages::Execute.new,
         Now::Pipeline::SkipOnPressure.new(
           Now::Stages::Review.new(council: ai[:council_stage], scanner: ai[:scanner], config:, root:, event_bus: bus),
-          bus:
+          bus:,
         ),
         Now::Stages::Memory.new(memory: infra[:memory], event_bus: bus),
-        Now::Stages::Render.new(renderer: infra[:renderer]),
+        Now::Stages::Render.new(renderer: infra[:renderer], output_check: infra[:output_check], event_bus: bus),
       ]
       pipeline = Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:, scanner: ai[:scanner])
       ai[:standing].wire_pipeline(pipeline)

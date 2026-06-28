@@ -1,25 +1,3 @@
-<% content_for :title, "Playlists" %>
+<% content_for :title, "radio.brgen.no" %>
 
-<div class="playlist-index">
-  <header class="playlist-index__header" role="banner" aria-label="Playlists header">
-    <div>
-      <p class="dim">whyp · soundcloud</p>
-      <h1>Playlists</h1>
-    </div>
-    <%= link_to "New playlist", new_playlist_playlist_path, class: "btn btn-primary btn-sm" if authenticated? %>
-  </header>
-
-  <section class="playlist-index__list" role="region" aria-label="Playlists list">
-    <% @playlists.each do |pl| %>
-      <article role="article" aria-label="Playlist <%= pl.name %>">
-        <div>
-          <h2><%= link_to pl.name, playlist_playlist_path(pl) %></h2>
-          <p><%= pl.tracks_count %> tracks · <%= pl.plays_count %> plays · <%= pl.user.email_address.split("@").first %></p>
-        </div>
-        <%= link_to "Open", playlist_playlist_path(pl), class: "btn btn-ghost btn-sm" %>
-      </article>
-    <% end %>
-  </section>
-
-  <%= @pagy.series_nav if @pagy.pages > 1 %>
-</div>
+<%= render "playlist/playlists/radio_tunnel", show_library: true, playlists: @playlists %>

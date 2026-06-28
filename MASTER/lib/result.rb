@@ -21,6 +21,10 @@ module Master
 
     def self.ok(value) = Ok.new(value)
 
+    def self.from(value, err_msg:, category: :validation, context: nil)
+      value.nil? ? err(err_msg, category:, context:) : ok(value)
+    end
+
     def self.from_observation(observation)
       observation.ok? ? ok(observation.detail) : err(observation.message, category: :unknown)
     end

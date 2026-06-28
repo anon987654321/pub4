@@ -11,69 +11,73 @@ module Master
 
       def initialize(root:, event_bus: nil)
         @root = File.realpath(root)
-        @bus  = event_bus
+        @bus = event_bus
         @cache = {}
       end
 
-      def reset!
-        @cache.clear
-      end
+      def reset! = @cache.clear
 
       def call(pattern:, glob: "**/*", context_lines: 2)
         key = [pattern, glob, context_lines]
         return @cache[key] if @cache.key?(key)
-        begin
-          re = Regexp.new(pattern)
-        rescue RegexpError
-          return Result.err("invalid pattern: #{pattern}", category: :validation)
-        end
 
-        paths   = cached_paths(glob)
-        results = []
-
-        paths.each do |path|
-          next if binary_file?(path)
-
-          lines = File.readlines(path)
-          lines.each_with_index do |line, line_index|
-            next unless line.match?(re)
-            start  = [line_index - context_lines, 0].max
-            finish = [line_index + context_lines, lines.size - 1].min
-            context_snippet = lines[start..finish].each_with_index.map { |l, i| "#{start + i + 1}:#{l}" }.join
-            rel    = path.delete_prefix(@root + "/")
-            results << "#{rel}:#{line_index + 1}\n#{context_snippet}"
-            if results.size >= MAX_RESULTS
-              out = Result.ok(results.join("\n---\n") + "\n[...truncated]")
-              @cache[key] = out
-              return out
-            end
-          end
-        end
-
-        out = Result.ok(results.empty? ? "(no matches)" : results.join("\n---\n"))
-        @cache[key] = out
-        out
+        regexp = Regexp.new(pattern)
+        results = collect_results(cached_paths(glob), regexp, context_lines)
+        @cache[key] = Result.ok(format_results(results))
+      rescue RegexpError
+        Result.err("invalid pattern: #{pattern}", category: :validation)
       rescue StandardError => e
         Result.err("search_files: #{e.message}", category: :unknown)
       end
 
       private
 
+      def collect_results(paths, regexp, context_lines)
+        results = []
+        paths.each do |path|
+          next if binary_file?(path)
+
+          results.concat(file_results(path, regexp, context_lines, MAX_RESULTS - results.size))
+          break if results.size >= MAX_RESULTS
+        end
+        results
+      end
+
+      def file_results(path, regexp, context_lines, limit)
+        lines = File.readlines(path)
+        matches = lines.each_index.filter_map do |index|
+          next unless lines[index].match?(regexp)
+
+          format_match(path, lines, index, context_lines)
+        end
+        matches.first(limit)
+      end
+
+      def format_match(path, lines, index, context_lines)
+        first = [index - context_lines, 0].max
+        last = [index + context_lines, lines.size - 1].min
+        snippet = lines[first..last].each_with_index.map { |line, offset| "#{first + offset + 1}:#{line}" }.join
+        relative = path.delete_prefix(@root + "/")
+        "#{relative}:#{index + 1}\n#{snippet}"
+      end
+
+      def format_results(results)
+        return "(no matches)" if results.empty?
+
+        suffix = results.size >= MAX_RESULTS ? "\n[...truncated]" : ""
+        results.join("\n---\n") + suffix
+      end
+
       def cached_paths(glob)
-        list_key = [:glob, glob]
-        return @cache[list_key] if @cache.key?(list_key)
-        paths = Dir.glob(File.join(@root, glob)).select { |p| File.file?(p) }
-        @cache[list_key] = paths
+        key = [:glob, glob]
+        @cache[key] ||= Dir.glob(File.join(@root, glob)).select { |path| File.file?(path) }
       end
 
       def binary_file?(path)
-        sample = begin
-          File.read(path, BINARY_SAMPLE_BYTES)
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "SearchFiles.binary_file?")
-          ""
-        end
-        sample.include?("\x00")
+        File.read(path, BINARY_SAMPLE_BYTES).include?("\x00")
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "search_files.binary_file", event_bus: @bus, path:)
+        true
       end
     end
   end

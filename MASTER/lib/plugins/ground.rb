@@ -5,11 +5,12 @@ module Master
     module Ground
       def self.boot(root:, config:, homeostat:)
         memory      = Master::Ground::Memory.new(root:)
+        evidence    = Master::Ground::Evidence.load(root:)
         personality = Master::Voice::Personality.new(
           config["persona"]&.to_sym || Master::Voice::Personality::DEFAULT, root:, homeostat:
         )
         learnings   = Master::Ground::KnowledgeStore.new(root:)
-        { memory:, personality:, learnings: }
+        { memory:, evidence:, personality:, learnings: }
       end
 
       Master::Plugin.register(:ground, self)

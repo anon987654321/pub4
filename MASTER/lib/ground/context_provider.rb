@@ -12,7 +12,7 @@ module Master
       end
 
       def gather(query:, providers: PROVIDERS, limit: 20)
-        providers.flat_map { |p| dispatch_provider(provider: p, query: query, limit: limit) }.compact
+        providers.flat_map { |p| dispatch_provider(provider: p, query:, limit:) }.compact
       end
 
       def dispatch_provider(provider:, query:, limit:)
@@ -28,7 +28,7 @@ module Master
       end
 
       def brief(query, limit: 10)
-        gather(query: query, limit: limit).map { |row| "#{row[:source]}: #{row[:text]}" }
+        gather(query:, limit:).map { |row| "#{row[:source]}: #{row[:text]}" }
       end
 
       private
@@ -36,7 +36,7 @@ module Master
       def repo_map(query, limit)
         return [] unless defined?(Master::Ground::RepoMap)
 
-        Master::Ground::RepoMap.new(root: @root).relevant(query, limit: limit).map do |entry|
+        Master::Ground::RepoMap.new(root: @root).relevant(query, limit:).map do |entry|
           { source: :repo_map, path: entry.path, text: "#{entry.path} #{entry.language} #{entry.bytes}B" }
         end
       end
@@ -47,7 +47,7 @@ module Master
         roots = cross_repo_roots
         return [] if roots.empty?
 
-        Master::Ground::RepoMap.new(root: @root, roots: roots).relevant(query, limit: limit).map do |entry|
+        Master::Ground::RepoMap.new(root: @root, roots:).relevant(query, limit:).map do |entry|
           { source: :cross_repo_map, path: entry.path, text: "#{entry.path} #{entry.language} #{entry.bytes}B" }
         end
       end
@@ -55,11 +55,12 @@ module Master
       def memory_search(query, limit)
         return [] unless defined?(Master::Ground::MemorySearch)
 
-        Master::Ground::MemorySearch.new.search(query, limit: limit).map do |doc|
+        Master::Ground::MemorySearch.new.search(query, limit:).map do |doc|
           score = format("%.2f", doc["score"])
           { source: :memory, path: doc["path"], text: "#{doc["path"]} #{doc["title"]} score=#{score}" }
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "context_provider.memory_search")
         []
       end
 
@@ -68,7 +69,8 @@ module Master
 
         overlay = Master::Ground::BrainOverlay.new(root: @root)
         [{ source: :brain_overlay, path: nil, text: overlay.core_brief[0, 800] }]
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "context_provider.brain_overlay")
         []
       end
 
@@ -88,7 +90,7 @@ module Master
         ]
 
         apps = Dir.entries(deploy_rails).reject { |e| e.start_with?(".", "_") }
-        rows = apps.flat_map { |app| pwa_rows_for_app(app: app, deploy_rails: deploy_rails, patterns: patterns) }
+        rows = apps.flat_map { |app| pwa_rows_for_app(app:, deploy_rails:, patterns:) }
         rows.first(limit)
       end
 
@@ -127,7 +129,8 @@ module Master
            .reject { |entry| entry.start_with?(".") || entry.start_with?("_") }
            .map { |entry| File.join(deploy_rails, entry) }
            .select { |path| File.directory?(path) }
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "context_provider.rails_app_dirs")
         []
       end
     end

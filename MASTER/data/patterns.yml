@@ -2,6 +2,7 @@
 # merged from former *_patterns.yml + repo_topic_clusters + prompt_archaeology.
 # Each top-level key is a namespace.
 ---
+schema: 1
 gh:
   operations:
   - action: create_pr

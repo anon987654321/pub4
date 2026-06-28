@@ -814,6 +814,8 @@ stage_2() {
     install_template etc/rc.d/master.tmpl /etc/rc.d/master
   fi
   chmod 555 /etc/rc.d/master
+  [[ -f $m3dir/data/soul.yml ]] && chmod 0444 "$m3dir/data/soul.yml"
+  [[ -f $m3dir/data/checksums.yml ]] && chmod 0444 "$m3dir/data/checksums.yml"
   rcctl enable master
   rcctl start master
   log INFO "MASTER web UI running on :53187"

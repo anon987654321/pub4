@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dilla — live loop</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #0a0a0c; color: #e8e4dc; font: 14px/1.4 ui-monospace, monospace;
+  }
+  main { padding: 24px; max-width: 420px; width: 100%; text-align: center; }
+  h1 { font-size: 13px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55; margin: 0 0 8px; }
+  p { font-size: 11px; opacity: 0.45; margin: 0 0 16px; line-height: 1.5; }
+  button {
+    width: 100%; padding: 14px; border: 1px solid #2a2824; border-radius: 8px;
+    background: #141310; color: #f0ebe3; font: inherit; cursor: pointer;
+  }
+  button:hover { border-color: #4a4438; }
+  button.playing { border-color: #6b5a3a; color: #d4b896; }
+  #status { margin-top: 12px; font-size: 10px; opacity: 0.4; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Timeless pocket</h1>
+  <p>Loops <code>.live_tmp.wav</code> — 86 BPM · Sonitex donuts_warm</p>
+  <p id="chords" style="opacity:0.65;font-size:10px;line-height:1.6"></p>
+  <button id="play" type="button">▶ Play loop</button>
+  <div id="status">ready</div>
+  <audio id="loop" src=".live_tmp.wav" loop preload="auto"></audio>
+</main>
+<script>
+(() => {
+  const PROG = ["Fm9", "Dbmaj9", "Cm9", "Fm9", "Bbm9", "Ebmaj9", "Abmaj9low", "Dbmaj9"];
+  const chordEl = document.getElementById("chords");
+  chordEl.textContent = "harmonic: " + PROG.join(" → ");
+
+  const audio = document.getElementById("loop");
+  const btn = document.getElementById("play");
+  const status = document.getElementById("status");
+  let on = false;
+
+  audio.addEventListener("error", () => {
+    status.textContent = "missing .live_tmp.wav — run: TRACK=timeless ruby dilla.rb dilla .live_tmp.wav 32";
+    btn.disabled = true;
+  });
+  audio.addEventListener("playing", () => {
+    on = true;
+    btn.textContent = "⏸ Pause";
+    btn.classList.add("playing");
+    status.textContent = "looping · " + (audio.duration ? Math.round(audio.duration) + "s" : "…");
+  });
+  audio.addEventListener("pause", () => {
+    if (!audio.ended) {
+      on = false;
+      btn.textContent = "▶ Play loop";
+      btn.classList.remove("playing");
+      status.textContent = "paused";
+    }
+  });
+
+  btn.addEventListener("click", async () => {
+    try {
+      if (on) {
+        audio.pause();
+        return;
+      }
+      if (audio.readyState < 2) status.textContent = "loading…";
+      await audio.play();
+    } catch (e) {
+      status.textContent = "tap Play again (browser blocked autoplay)";
+    }
+  });
+
+  // try autoplay once — works in Safari file:// after open
+  audio.play().catch(() => {
+    status.textContent = "click Play to start";
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<% content_for :head do %>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js" defer></script>
+<% end %>
+
+<div
+  class="radio-tunnel"
+  data-controller="radio-tunnel"
+  data-radio-tunnel-tracks-value="<%= radio_tunnel_tracks_json %>"
+  data-radio-tunnel-heading-value="radio.brgen.no"
+>
+  <a href="#radio-canvas" class="radio-skip-link">Skip to main content</a>
+
+  <canvas
+    id="radio-canvas"
+    data-radio-tunnel-target="canvas"
+    role="img"
+    aria-label="J Dilla audio visualization warp tunnel experience"
+  ></canvas>
+
+  <header class="radio-header">
+    <h1 data-radio-tunnel-target="heading">radio.brgen.no</h1>
+  </header>
+
+  <nav class="radio-nav" aria-label="Playlist navigation">
+    <% if authenticated? %>
+      <%= link_to "New", new_playlist_playlist_path %>
+      <%= link_to "Upload", new_playlist_hosted_track_path %>
+    <% end %>
+    <% if local_assigns.fetch(:show_library, false) %>
+      <button type="button" class="radio-nav__btn" data-action="click->radio-tunnel#openLibrary">Library</button>
+    <% end %>
+  </nav>
+
+  <div class="radio-now-playing" aria-live="polite">
+    <span class="radio-note-icon" aria-hidden="true">♪</span>
+    <span class="radio-track-display" data-radio-tunnel-target="trackDisplay">J Dilla - Microphone Master</span>
+  </div>
+
+  <div
+    class="radio-overlay"
+    data-radio-tunnel-target="overlay"
+    role="dialog"
+    aria-labelledby="radio-overlay-title"
+    tabindex="0"
+  >
+    <h2 id="radio-overlay-title" class="visually-hidden">Start audio visualization</h2>
+    <p class="radio-start-message">Touch or click to start</p>
+  </div>
+
+  <div class="radio-cursor" data-radio-tunnel-target="cursor" aria-hidden="true"></div>
+
+  <div class="radio-youtube-container" aria-hidden="true">
+    <iframe
+      data-radio-tunnel-target="youtubePlayer"
+      width="1"
+      height="1"
+      frameborder="0"
+      allow="autoplay; encrypted-media"
+      title="YouTube player"
+    ></iframe>
+  </div>
+
+  <% if local_assigns.fetch(:show_library, false) %>
+    <%= render "playlist/playlists/library", playlists: playlists %>
+  <% end %>
+</div>

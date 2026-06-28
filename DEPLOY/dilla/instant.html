@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Radio Bergen — instant pocket</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #0a0a0c; color: #e8e4dc; font: 14px/1.4 ui-monospace, monospace;
+  }
+  main { padding: 24px; max-width: 400px; width: 100%; }
+  h1 { font-size: 13px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55; margin: 0 0 16px; text-align: center; }
+  label { display: block; font-size: 11px; opacity: 0.5; margin-bottom: 6px; }
+  select, button {
+    width: 100%; padding: 12px 14px; border: 1px solid #2a2824; border-radius: 8px;
+    background: #141310; color: #f0ebe3; font: inherit;
+  }
+  select { margin-bottom: 12px; }
+  button { cursor: pointer; margin-top: 4px; }
+  button:hover { border-color: #4a4438; }
+  button.playing { border-color: #6b5a3a; color: #d4b896; }
+  p { margin: 14px 0 0; font-size: 11px; opacity: 0.45; text-align: center; line-height: 1.5; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Radio Bergen pocket</h1>
+  <label for="style">Sonic profile (from YT analysis)</label>
+  <select id="style">
+    <option value="dilla_timeless">J Dilla — Timeless (warm sub, 86)</option>
+    <option value="flylo_camel">Flying Lotus — Camel (haze, 84)</option>
+    <option value="madlib_eye">Madlib — Eye (grit, 96)</option>
+    <option value="slum_players">Slum Village — Players (pocket, 93)</option>
+    <option value="samiyam_rounded">Samiyam — Rounded (punch, 96)</option>
+  </select>
+  <button id="play" type="button">Play — no render wait</button>
+  <p id="blurb">Web Audio · bar-by-bar · profiles from measured Radio Bergen references</p>
+</main>
+<script>
+(() => {
+  const PROFILES = {
+    dilla_timeless: { bpm: 86, swing: 0.16, padLp: 1700, masterLp: 2200, bassHold: 0.94, shelfDb: 9, vinyl: 0.14, hatProb: 0.58 },
+    flylo_camel:    { bpm: 84, swing: 0.12, padLp: 2800, masterLp: 3400, bassHold: 0.88, shelfDb: 6, vinyl: 0.22, hatProb: 0.50, pump: true },
+    madlib_eye:     { bpm: 96, swing: 0.20, padLp: 2400, masterLp: 3000, bassHold: 0.80, shelfDb: 7, vinyl: 0.28, hatProb: 0.62, crush: 0.35 },
+    slum_players:   { bpm: 93, swing: 0.18, padLp: 2200, masterLp: 2800, bassHold: 0.92, shelfDb: 8, vinyl: 0.18, hatProb: 0.55 },
+    samiyam_rounded:{ bpm: 96, swing: 0.14, padLp: 2000, masterLp: 2600, bassHold: 0.85, shelfDb: 10, vinyl: 0.12, hatProb: 0.65 }
+  };
+  // timeless_authentic — Ab/Fm Donuts IV–iii–vi–ii–V
+  const CHORDS = [
+    [174.61, 207.65, 261.63, 311.13, 392.00], // Fm9
+    [138.59, 174.61, 207.65, 261.63, 311.13], // Dbmaj9
+    [130.81, 155.56, 196.00, 233.08, 293.66], // Cm9
+    [174.61, 207.65, 261.63, 311.13, 392.00], // Fm9
+    [116.54, 138.59, 174.61, 207.65, 261.63], // Bbm9
+    [155.56, 196.00, 233.08, 293.66, 349.23], // Ebmaj9
+    [103.83, 130.81, 155.56, 196.00, 233.08], // Abmaj9low
+    [138.59, 174.61, 207.65, 261.63, 311.13]  // Dbmaj9
+  ];
+  const MELODY = [392.00, 349.23, 311.13, 277.18, 261.63, 233.08];
+  let ctx, master, padFilt, padGain, bassBus, shelf, hatGain, conv, convGain, vinylGain;
+  let playing = false, barIv = null, pumpIv = null, P = PROFILES.dilla_timeless;
+  let BPM = 86, BEAT, BAR, SWING = 0.16;
+
+  function retime() {
+    BEAT = 60 / BPM; BAR = BEAT * 4;
+  }
+
+  function impulse(d, k) {
+    const sr = ctx.sampleRate, n = (sr * d) | 0, b = ctx.createBuffer(2, n, sr);
+    for (let c = 0; c < 2; c++) {
+      const x = b.getChannelData(c);
+      for (let i = 0; i < n; i++) x[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, k);
+    }
+    return b;
+  }
+  function noiseBuf(d) {
+    const sr = ctx.sampleRate, n = (sr * d) | 0, b = ctx.createBuffer(1, n, sr);
+    const x = b.getChannelData(0);
+    for (let i = 0; i < n; i++) x[i] = Math.random() * 2 - 1;
+    return b;
+  }
+  function pad(freqs, when, len) {
+    freqs.forEach(f => {
+      [-7, 7].forEach(det => {
+        const o = ctx.createOscillator();
+        o.type = "sawtooth"; o.frequency.value = f; o.detune.value = det;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, when);
+        g.gain.linearRampToValueAtTime(0.05, when + 0.6);
+        g.gain.linearRampToValueAtTime(0.04, when + len - 0.4);
+        g.gain.linearRampToValueAtTime(0, when + len);
+        o.connect(g).connect(padFilt);
+        o.start(when); o.stop(when + len + 0.1);
+      });
+    });
+  }
+  function sub(when, hold) {
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(70, when);
+    o.frequency.exponentialRampToValueAtTime(52, when + 0.18);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(0.95, when + 0.03);
+    g.gain.setValueAtTime(0.78, when + 0.12);
+    g.gain.exponentialRampToValueAtTime(0.001, when + hold);
+    o.connect(g).connect(bassBus);
+    o.start(when); o.stop(when + hold + 0.15);
+  }
+  function hat(when) {
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf(0.06);
+    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 7800;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.04, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 0.05);
+    src.connect(hp).connect(g).connect(hatGain);
+    src.start(when); src.stop(when + 0.08);
+  }
+  function rim(when) {
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf(0.04);
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2000; bp.Q.value = 6;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.05, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 0.09);
+    src.connect(bp).connect(g).connect(hatGain);
+    src.start(when); src.stop(when + 0.1);
+  }
+  function setupBus() {
+    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    const lofi = ctx.createBiquadFilter(); lofi.type = "lowpass"; lofi.frequency.value = P.masterLp;
+    lofi.connect(master);
+    padFilt = ctx.createBiquadFilter(); padFilt.type = "lowpass"; padFilt.frequency.value = P.padLp;
+    padGain = ctx.createGain(); padGain.gain.value = 0.55;
+    padFilt.connect(padGain).connect(lofi);
+    hatGain = ctx.createGain(); hatGain.gain.value = 0.45;
+    hatGain.connect(master);
+    shelf = ctx.createBiquadFilter(); shelf.type = "lowshelf"; shelf.frequency.value = 80; shelf.gain.value = P.shelfDb;
+    bassBus = ctx.createGain(); bassBus.gain.value = 0.92;
+    bassBus.connect(shelf).connect(master);
+    conv = ctx.createConvolver(); conv.buffer = impulse(2.4, 2.6);
+    convGain = ctx.createGain(); convGain.gain.value = 0.20;
+    padGain.connect(conv); conv.connect(convGain).connect(master);
+    if (P.vinyl) {
+      const vinyl = ctx.createBufferSource(); vinyl.buffer = noiseBuf(8); vinyl.loop = true;
+      const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 400;
+      vinylGain = ctx.createGain(); vinylGain.gain.value = P.vinyl;
+      vinyl.connect(hp).connect(vinylGain).connect(master);
+      vinyl.start();
+    }
+  }
+  function pluck(freq, when, len) {
+    const o = ctx.createOscillator();
+    o.type = "triangle"; o.frequency.value = freq;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.07, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + len);
+    o.connect(g).connect(padFilt);
+    o.start(when); o.stop(when + len + 0.05);
+  }
+  function scheduleBar(bar, when) {
+    const chord = CHORDS[(bar >> 1) % CHORDS.length];
+    pad(chord, when, BAR + 0.2);
+    sub(when, BAR * P.bassHold);
+    if (bar % 4 === 2) {
+      rim(when + BEAT * 2.5 + BEAT * SWING * 0.4);
+      pluck(MELODY[bar % MELODY.length], when + BEAT * 1.5 + BEAT * SWING * 0.3, 0.16);
+    }
+    for (let i = 0; i < 8; i++) {
+      const isOff = (i & 1) === 1;
+      const t = when + (i * BEAT / 2) + (isOff ? BEAT * SWING * 0.5 : 0);
+      if (Math.random() > (isOff ? 0.30 : P.hatProb)) hat(t);
+    }
+    if (P.pump) {
+      try {
+        master.gain.cancelScheduledValues(when);
+        master.gain.setValueAtTime(0.06, when);
+        master.gain.linearRampToValueAtTime(0.16, when + 0.08);
+        master.gain.linearRampToValueAtTime(0.12, when + BEAT);
+      } catch (_) {}
+    }
+  }
+  function stop() {
+    playing = false;
+    clearInterval(barIv); clearInterval(pumpIv);
+    try { ctx?.close(); } catch (_) {}
+    ctx = null;
+  }
+  function start() {
+    stop();
+    P = PROFILES[document.getElementById("style").value] || PROFILES.dilla_timeless;
+    BPM = P.bpm; SWING = P.swing; retime();
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    setupBus();
+    playing = true;
+    let bar = 0;
+    const t0 = ctx.currentTime + 0.08;
+    scheduleBar(bar++, t0);
+    barIv = setInterval(() => { if (playing) scheduleBar(bar++, ctx.currentTime + 0.05); }, BAR * 1000);
+    if (!P.pump) {
+      master.gain.setValueAtTime(0, ctx.currentTime);
+      master.gain.linearRampToValueAtTime(0.14, ctx.currentTime + 4);
+    }
+  }
+  document.getElementById("play").addEventListener("click", (e) => {
+    start();
+    e.target.textContent = "Playing…";
+    e.target.classList.add("playing");
+  });
+})();
+</script>
+</body>
+</html>

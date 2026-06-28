@@ -2,64 +2,94 @@
 
 module Master
   module Reach
-    # BatchReplace — apply multiple search-and-replace operations in one pass.
+    # Applies a governed replacement across text files and optional filenames.
     class BatchReplace
       include Master::Ground::AtomicWrite
+      include PathGuard
+
       TIER = :guarded
       NAME = "replace".freeze
       DESCRIPTION = "Find and replace text across all files in a directory.".freeze
-
       SAFE_EXTENSIONS = %w[.rb .erb .yml .yaml .md .sh .js .css .html .json .txt].freeze
 
       def initialize(root:, governor:, event_bus: nil)
-        @root = root
+        @root = File.realpath(root)
         @governor = governor
         @bus = event_bus
       end
 
       def call(old_str:, new_str:, dir: nil, rename_files: false)
-        perm = @governor.permit?(NAME, TIER, "#{old_str} → #{new_str}")
-        return perm if perm.err?
+        permission = @governor.permit?(NAME, TIER, "#{old_str} → #{new_str}")
+        return permission if permission.err?
 
-        target = dir ? File.expand_path(dir, @root) : @root
-        return Result.err("replace: path escapes root: #{dir}", category: :validation) unless PathGuard.inside_root?(target, @root)
+        target = resolve_target(dir)
+        return target if target.err?
 
         @bus&.publish("tool:before", tool: NAME, old: old_str, new: new_str)
-
-        changed = 0
-        Dir.glob("#{target}/**/*").each do |path|
-          next unless File.file?(path)
-          next unless SAFE_EXTENSIONS.include?(File.extname(path))
-          rel = path.delete_prefix("#{@root}/")
-          next if PathGuard::SACRED_PATHS.any? { |s| rel == s || rel.start_with?(s) }
-          content = begin
-            File.read(path, encoding: "UTF-8")
-          rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "batch_replace.read", event_bus: @bus, path: path)
-            next
-          end
-          next unless content.include?(old_str)
-          write_atomic(path, content.gsub(old_str, new_str))
-          changed += 1
-        end
-
-        if rename_files
-          Dir.glob("#{target}/**/*")
-             .select { |p| File.file?(p) && File.basename(p).include?(old_str) }
-             .each do |path|
-               rel = path.delete_prefix("#{@root}/")
-               next if PathGuard::SACRED_PATHS.any? { |s| rel == s || rel.start_with?(s) }
-               new_path = File.join(File.dirname(path), File.basename(path).gsub(old_str, new_str))
-               File.rename(path, new_path)
-               changed += 1
-             end
-        end
-
-        @bus&.publish("tool:after", tool: NAME)
+        changed = replace_contents(target.value!, old_str, new_str)
+        changed += rename_paths(target.value!, old_str, new_str) if rename_files
         Result.ok("replaced in #{changed} file(s)")
       rescue StandardError => e
         Result.err("replace: #{e.message}", category: :unknown)
       end
+
+      private
+
+      def resolve_target(directory)
+        target = directory ? File.expand_path(directory, @root) : @root
+        return Result.ok(target) if PathGuard.inside_root?(target, @root)
+
+        Result.err("replace: path escapes root: #{directory}", category: :validation)
+      end
+
+      def replace_contents(target, old_string, new_string)
+        candidate_paths(target).count do |path|
+          content = read_text(path)
+          next false unless content&.include?(old_string)
+
+          write_atomic(path, content.gsub(old_string, new_string))
+          record_change(path)
+          true
+        end
+      end
+
+      def rename_paths(target, old_string, new_string)
+        candidate_paths(target).count do |path|
+          next false unless File.basename(path).include?(old_string)
+
+          destination = File.join(File.dirname(path), File.basename(path).gsub(old_string, new_string))
+          next rename_conflict(path, destination) if File.exist?(destination)
+
+          File.rename(path, destination)
+          record_change(destination)
+          true
+        end
+      end
+
+      def candidate_paths(target)
+        Dir.glob(File.join(target, "**", "*")).select do |path|
+          File.file?(path) && SAFE_EXTENSIONS.include?(File.extname(path)) && !sacred?(relative(path))
+        end
+      end
+
+      def read_text(path)
+        File.read(path, encoding: "UTF-8")
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "batch_replace.read", event_bus: @bus, path:)
+        nil
+      end
+
+      def record_change(path)
+        Master::Trace::WriteTracker.current&.record(path)
+        @bus&.publish("tool:after", tool: NAME, path:)
+      end
+
+      def rename_conflict(source, destination)
+        @bus&.publish("tool:rename_conflict", tool: NAME, source:, destination:)
+        false
+      end
+
+      def relative(path) = path.delete_prefix(@root + File::SEPARATOR)
     end
   end
 end

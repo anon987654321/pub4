@@ -2,6 +2,7 @@
 # Each persona carries a weight (sum = 1.00), a sharp question, and the laws it
 # emphasizes from rules.yml. can_veto: true blocks merge unconditionally.
 
+schema: 1
 personas:
   - name: Architect
     aliases: [architect]

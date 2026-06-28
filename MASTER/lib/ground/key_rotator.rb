@@ -21,7 +21,9 @@ module Master
       end
 
       def keys
-        env_vars.map { |var| ENV[var].to_s }.reject { |key| key.length < Master::MIN_API_KEY_LENGTH }.uniq
+        env_vars.map { |var| ENV[var].to_s }
+                .reject { |key| key.length < Master::MIN_API_KEY_LENGTH_HEURISTIC }
+                .uniq
       end
 
       def active_key

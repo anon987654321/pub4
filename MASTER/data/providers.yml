@@ -1,33 +1,53 @@
 ---
+schema: 1
 openai:
   env: [OPENAI_API_KEY]
+  ruby_llm_key: openai_api_key
+  min_key_length: 40
   strengths: [reasoning, coding, multimodal]
   default_model: gpt-5.5-thinking
 
 anthropic:
   env: [ANTHROPIC_API_KEY]
+  ruby_llm_key: anthropic_api_key
+  min_key_length: 80
   strengths: [coding, long_context, instruction_following]
   default_model: claude-sonnet-4-6
 
 gemini:
   env: [GOOGLE_API_KEY, GEMINI_API_KEY]
+  ruby_llm_key: gemini_api_key
+  min_key_length: 20
   strengths: [long_context, multimodal]
   default_model: gemini-2.5-flash
 
 openrouter:
   env: [OPENROUTER_API_KEY]
+  ruby_llm_key: openrouter_api_key
+  min_key_length: 40
   strengths: [cheap, routing, free_tier]
   default_model: z-ai/glm-4.5-air:free
 
 deepseek:
   env: [DEEPSEEK_API_KEY]
+  ruby_llm_key: deepseek_api_key
+  min_key_length: 20
   strengths: [coding, cheap]
   default_model: deepseek-chat
 
 xai:
   env: [XAI_API_KEY]
+  ruby_llm_key: xai_api_key
+  min_key_length: 20
   strengths: [reasoning, coding, fast]
   default_model: grok-4-fast
+
+mistral:
+  env: [MISTRAL_API_KEY]
+  ruby_llm_key: mistral_api_key
+  min_key_length: 20
+  strengths: [reasoning, coding]
+  default_model: mistralai/mistral-large
 
 replicate:
   env: [REPLICATE_API_TOKEN]

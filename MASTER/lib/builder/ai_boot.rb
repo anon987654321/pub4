@@ -20,7 +20,7 @@ module Master
       soul_doc = Voice::Soul.new(root:, agent:)
       tools << Reach::AskLlm.new(agent:, governor: infra[:governor],
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
-      ctx = Now::ContextWindow.new(session: infra[:session], agent:, model_context: Master::CTX_WINDOW_SIZE,
+      ctx = Now::ContextWindow.new(session: infra[:session], agent:, model_context: Master.context_window(agent.model),
         event_bus: bus, root:)
       ctx.check_and_compact!
       agent.wire_context_window(ctx)
@@ -42,18 +42,18 @@ module Master
         .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
       autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
       Trace::FeedbackLedger.new(event_bus: bus, learnings: autonomous[:learnings]).attach
-      Trace::ReflexionLedger.new(event_bus: bus, root: root).attach
-      Judge::GraphRetriever.new(reference_graph: infra[:reference_graph], root: root).tap do |graph_retriever|
+      Trace::ReflexionLedger.new(event_bus: bus, root:).attach
+      Judge::GraphRetriever.new(reference_graph: infra[:reference_graph], root:).tap do |graph_retriever|
         bus.subscribe("tool:after") do |event|
           path = event[:path] || event["path"]
           next unless path
 
           neighbours = graph_retriever.neighbors([path])
-          bus.publish("graph:neighbours", path: path, neighbours: neighbours) unless neighbours.empty?
+          bus.publish("graph:neighbours", path:, neighbours:) unless neighbours.empty?
         end
       end
       unless ENV["MASTER_SKIP_SELF_TEST"] == "1"
-        publish_self_test(bus, Judge::Scan::SelfTest.new(root: root, event_bus: bus).call)
+        publish_self_test(bus, Judge::Scan::SelfTest.new(root:, event_bus: bus).call)
       end
       { agent:, soul: soul_doc, scanner:, ecology:, swarm:, deliberation:, council_stage:, ideation:, guard:,
         reference_graph: infra[:reference_graph], agent_pool:, context_window: ctx, tools: }.merge(autonomous)

@@ -1,0 +1,8 @@
+# Operator-tunable CLI pacing, replay, and diagnostic limits.
+schema: 1
+
+idle_sleep_seconds: 60
+replay_turns: 5
+dmesg_buffer_lines: 80
+multiline_max_lines: 500
+history_limit: 2000

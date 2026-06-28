@@ -1,6 +1,7 @@
 # MASTER limits — operational principles, pipeline budgets, and workflow rules.
 # Governs how MASTER and its LLM agents read, edit, scan, and fix code.
 
+schema: 1
 file_reading:
   rule: READ_FULL_FILES
   statement: "Read complete files. Never grep, head, tail, or partial‑read to understand code."

@@ -49,7 +49,7 @@ module Master
 
       def chat(message, image: nil, stream: true, escalation_depth: 0, task_type: nil, &blk)
         prepare_chat_turn(message)
-        candidate_models = routed_models(message, task_type: task_type)
+        candidate_models = routed_models(message, task_type:)
         selected_model = candidate_models.first
         @bus&.publish("llm:routed", model: selected_model, task_type: task_type || @config.task_type, reason: "routing")
         prompt   = topic_anchored(message)
@@ -61,7 +61,7 @@ module Master
         rate_err = check_rate_limit(selected_model)
         return rate_err if rate_err
 
-        response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image: image, &blk)
+        response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image:, &blk)
         if response.is_a?(Master::Result::Err)
           @deps.homeostat&.observe(:llm_failure)
           return response
@@ -102,7 +102,7 @@ module Master
 
       def publish_ctx_footer(model_id)
         est = @session.respond_to?(:token_est) ? @session.token_est : 0
-        limit = Master::CTX_WINDOW_SIZE
+        limit = Master.context_window(model_id)
         pct = limit.positive? ? ((est.to_f / limit) * 100).round(1) : 0
         @bus&.publish("ctx:footer", model: model_id, token_est: est, limit:, pct:)
       end
@@ -111,14 +111,14 @@ module Master
       def ask(prompt, context: nil, operation: nil, image: nil)
         messages = Array(context) + [{ role: "user", content: filter_prompt(apply_reasoning_mode(prompt)) }]
         selected_model = operation ? model_for(operation:) : routed_models.first
-        result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image: image)
+        result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
 
       def ask_once(prompt, system: nil, model: nil, image: nil)
         messages = [{ role: "user", content: filter_prompt(prompt) }]
-        result   = @dispatcher.send_with_cache(model || self.model, messages, system: filter_prompt(system), stream: false, image: image)
+        result   = @dispatcher.send_with_cache(model || self.model, messages, system: filter_prompt(system), stream: false, image:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
@@ -135,9 +135,9 @@ module Master
         message = ctx[:message].to_s
         with_task_type(task_type) do
           if on_chunk
-            chat(message, image: image, stream: true, task_type: task_type) { |chunk| on_chunk.call(chunk) }
+            chat(message, image:, stream: true, task_type:) { |chunk| on_chunk.call(chunk) }
           else
-            chat(message, image: image, task_type: task_type)
+            chat(message, image:, task_type:)
           end
         end
       ensure

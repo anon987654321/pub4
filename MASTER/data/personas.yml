@@ -2,6 +2,7 @@
 # Add a new persona here, restart MASTER (or wait for hot-reload).
 # style: deep | heavy | slow | normal | natural — see lib/master/speech.rb STYLES.
 
+schema: 1
 malay:
   voice: ms-MY-OsmanNeural
   tts_rate: "-32%"

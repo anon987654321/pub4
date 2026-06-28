@@ -35,10 +35,10 @@ module Master
         sw_rel = find_sw(app_path)
 
         manifest_findings = manifest_rel ? audit_manifest(app_path, manifest_rel) : [
-          Finding.new(field: :manifest, message: "no manifest found (expected app/views/pwa/manifest.json.erb)", severity: :critical)
+          Finding.new(field: :manifest, message: "no manifest found (expected app/views/pwa/manifest.json.erb)", severity: :critical),
         ]
         sw_findings = sw_rel ? audit_sw(app_path, sw_rel) : [
-          Finding.new(field: :service_worker, message: "no service worker found (expected app/views/pwa/service-worker.js)", severity: :high)
+          Finding.new(field: :service_worker, message: "no service worker found (expected app/views/pwa/service-worker.js)", severity: :high),
         ]
 
         csrf_findings = audit_csrf(app_path)
@@ -76,67 +76,16 @@ module Master
 
       def audit_manifest(root, rel)
         source = File.read(File.join(root, rel))
-        findings = []
-
-        MANIFEST_REQUIRED.each do |field|
-          unless source.match?(/["']#{Regexp.escape(field)}["']/)
-            findings << Finding.new(field: field.to_sym, message: "manifest missing required field: #{field}", severity: :critical)
-          end
-        end
-
-        MANIFEST_RECOMMENDED.each do |field|
-          unless source.match?(/["']#{Regexp.escape(field)}["']/)
-            findings << Finding.new(field: field.to_sym, message: "manifest missing recommended field: #{field}", severity: :low)
-          end
-        end
-
-        ICON_SIZES_REQUIRED.each do |size|
-          unless source.include?(size)
-            findings << Finding.new(field: :icons, message: "manifest missing #{size} icon (Lighthouse installability requires both 192x192 and 512x512)", severity: :high)
-          end
-        end
-
-        unless source.match?(/#{INSTALLABLE_DISPLAY_MODES.map { |m| Regexp.escape(m) }.join("|")}/)
-          findings << Finding.new(field: :display, message: "display mode must be standalone, minimal-ui, or fullscreen", severity: :high)
-        end
-
-        if source.match?(/prefer_related_applications.*true/)
-          findings << Finding.new(field: :prefer_related_applications, message: "prefer_related_applications: true blocks installability", severity: :critical)
-        end
-
-        findings
+        missing_fields(source, MANIFEST_REQUIRED, :critical, "required") +
+          missing_fields(source, MANIFEST_RECOMMENDED, :low, "recommended") +
+          missing_icons(source) + display_findings(source) + related_application_findings(source)
       rescue StandardError => e
         [Finding.new(field: :manifest, message: "could not read manifest: #{e.message}", severity: :critical)]
       end
 
       def audit_sw(root, rel)
         source = File.read(File.join(root, rel))
-        findings = []
-
-        PRIVATE_PATTERNS.each do |pattern|
-          if source.match?(/["']#{Regexp.escape(pattern)}/)
-            findings << Finding.new(field: :cache_policy, message: "service worker caches private path #{pattern} — never cache auth/session routes", severity: :critical)
-          end
-        end
-
-        # Cache-first for all requests is wrong for dynamic content; network-first required.
-        if source.match?(CACHE_FIRST_ONLY_SIGNAL) && !source.match?(/network.?first|NetworkFirst|networkFirst/i)
-          findings << Finding.new(
-            field: :strategy,
-            message: "cache-first applied to all GET requests — dynamic content (feeds, profiles) should use network-first or stale-while-revalidate",
-            severity: :medium
-          )
-        end
-
-        unless source.match?(/offline|fallback/i)
-          findings << Finding.new(field: :offline, message: "no offline fallback page — add a /offline route and cache it at SW install time", severity: :low)
-        end
-
-        unless source.match?(/sync|background.?sync/i)
-          findings << Finding.new(field: :background_sync, message: "no background sync — consider queuing form submissions for offline resilience", severity: :low)
-        end
-
-        findings
+        private_cache_findings(source) + strategy_findings(source) + resilience_findings(source)
       rescue StandardError => e
         [Finding.new(field: :service_worker, message: "could not read service worker: #{e.message}", severity: :high)]
       end
@@ -149,10 +98,67 @@ module Master
         [Finding.new(
           field: :csrf,
           message: "protect_from_forgery with: :null_session is deprecated in Rails 8.1 — migrate to Sec-Fetch-Site header strategy",
-          severity: :medium
+          severity: :medium,
         )]
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "pwa_audit.audit_csrf", path:)
         []
+      end
+
+      def missing_fields(source, fields, severity, kind)
+        fields.filter_map do |field|
+          next if source.match?(/["']#{Regexp.escape(field)}["']/)
+
+          Finding.new(field: field.to_sym, message: "manifest missing #{kind} field: #{field}", severity:)
+        end
+      end
+
+      def missing_icons(source)
+        ICON_SIZES_REQUIRED.filter_map do |size|
+          next if source.include?(size)
+
+          Finding.new(field: :icons, message: "manifest missing #{size} icon", severity: :high)
+        end
+      end
+
+      def display_findings(source)
+        modes = Regexp.union(INSTALLABLE_DISPLAY_MODES)
+        return [] if source.match?(modes)
+
+        [Finding.new(field: :display, message: "display mode must be installable", severity: :high)]
+      end
+
+      def related_application_findings(source)
+        return [] unless source.match?(/prefer_related_applications.*true/)
+
+        [Finding.new(field: :prefer_related_applications,
+                     message: "prefer_related_applications: true blocks installability", severity: :critical)]
+      end
+
+      def private_cache_findings(source)
+        PRIVATE_PATTERNS.filter_map do |pattern|
+          next unless source.match?(/["']#{Regexp.escape(pattern)}/)
+
+          Finding.new(field: :cache_policy, message: "service worker caches private path #{pattern}", severity: :critical)
+        end
+      end
+
+      def strategy_findings(source)
+        cache_only = source.match?(CACHE_FIRST_ONLY_SIGNAL) && !source.match?(/network.?first|NetworkFirst/i)
+        return [] unless cache_only
+
+        [Finding.new(field: :strategy, message: "cache-first applied to all GET requests", severity: :medium)]
+      end
+
+      def resilience_findings(source)
+        findings = []
+        unless source.match?(/offline|fallback/i)
+          findings << Finding.new(field: :offline, message: "no offline fallback page", severity: :low)
+        end
+        unless source.match?(/sync|background.?sync/i)
+          findings << Finding.new(field: :background_sync, message: "no background sync", severity: :low)
+        end
+        findings
       end
 
       def recommendations(findings)

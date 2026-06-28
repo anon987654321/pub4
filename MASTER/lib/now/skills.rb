@@ -17,6 +17,7 @@ module Master
 
       def discover!
         @loaded = []
+        load_directory_skills
         load_registry_skills({})
         @loaded = sort_by_recency(@loaded)
         @bus&.publish("skills:loaded", count: @loaded.size)
@@ -70,22 +71,59 @@ module Master
 
         data = Master.load_yaml(path)
         Array(data["skills"]).each do |row|
-          next unless row.is_a?(Hash)
-
-          name = row["name"].to_s
-          next if name.empty?
-
-          @loaded << {
-            name: name,
-            description: row["description"].to_s,
-            triggers: Array(row["triggers"]),
-            body: row["body"].to_s,
-            dir: File.join(@root, "data", SKILLS_DIR),
-            has_ruby: false,
-          }
+          skill = registry_skill(row)
+          @loaded << skill if skill
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "skills.load_registry", event_bus: @bus)
+      end
+
+      def load_directory_skills
+        pattern = File.join(@root, "data", SKILLS_DIR, "*", "SKILL.md")
+        Dir.glob(pattern).sort.each { |path| load_skill_file(path) }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "skills.load_directory", event_bus: @bus)
+      end
+
+      def load_skill_file(path)
+        metadata, body = parse_skill_file(path)
+        name = metadata["name"].to_s
+        return if name.empty? || find(name)
+
+        @loaded << {
+          name:,
+          description: metadata["description"].to_s,
+          triggers: Array(metadata["triggers"]),
+          body:,
+          dir: File.dirname(path),
+          has_ruby: Dir.glob(File.join(File.dirname(path), "*.rb")).any?,
+        }
+      rescue Psych::Exception, Errno::EACCES => e
+        Master::Ground::Swallow.log(e, context: "skills.load_file", event_bus: @bus, path:)
+      end
+
+      def registry_skill(row)
+        return unless row.is_a?(Hash)
+
+        name = row["name"].to_s
+        return if name.empty? || find(name)
+
+        {
+          name:,
+          description: row["description"].to_s,
+          triggers: Array(row["triggers"]),
+          body: row["body"].to_s,
+          dir: File.join(@root, "data", SKILLS_DIR),
+          has_ruby: false,
+        }
+      end
+
+      def parse_skill_file(path)
+        source = File.read(path, encoding: "UTF-8")
+        match = source.match(/\A---\s*\n(.*?)\n---\s*\n?(.*)\z/m)
+        return [{}, ""] unless match
+
+        [YAML.safe_load(match[1], aliases: false) || {}, match[2].to_s.strip]
       end
 
       def sort_by_recency(skills)

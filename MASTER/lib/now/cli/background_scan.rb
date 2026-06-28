@@ -91,8 +91,8 @@ module Master
         set_violations(n)
         sign = delta.positive? ? "+#{delta}" : delta.to_s
         msg = n.positive? ? "bg: #{n}v (#{sign})" : "bg: clean (#{sign})"
-        $stdout.puts "\n#{msg}"
-        @refs.bus&.publish("cli:violation_delta", count: n, delta: delta, previous: prev)
+        $stdout.puts "\n#{@refs.renderer.render(msg, mode: :dim)}"
+        @refs.bus&.publish("cli:violation_delta", count: n, delta:, previous: prev)
         $stdout.flush
       rescue StandardError => e
         @refs.bus&.publish("cli:bg_error", error: e.message)

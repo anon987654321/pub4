@@ -6,7 +6,9 @@ module Master
       SACRED_PATHS = begin
         data = Master.load_yaml(Master.data_path("soul.yml"))
         Array(data.dig("absolute", "sacred_paths")).freeze
-      rescue StandardError; %w[data/ data/SOUL.md lib/judge/scan/ bin/cli].freeze
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "path_guard.sacred_paths")
+        %w[data/ data/SOUL.md lib/judge/scan/ bin/cli].freeze
       end
 
       def self.inside_root?(full, root)
@@ -15,7 +17,9 @@ module Master
 
       def resolve(path)
         full = File.expand_path(path, @root)
-        return Result.err("path escapes project root: #{path}", category: :validation) unless PathGuard.inside_root?(full, @root)
+        unless PathGuard.inside_root?(full, @root)
+          return Result.err("path escapes project root: #{path}", category: :validation)
+        end
 
         rel = full.delete_prefix(@root + "/")
         if sacred?(rel)
@@ -28,7 +32,8 @@ module Master
       private
 
       def sacred?(rel_path)
-        SACRED_PATHS.any? { |s| rel_path.start_with?(s) || rel_path == s.chomp("/") }
+        Master::Ground::Immutability.blocked?(rel_path, root: @root) ||
+          SACRED_PATHS.any? { |path| rel_path.start_with?(path) || rel_path == path.chomp("/") }
       end
     end
   end

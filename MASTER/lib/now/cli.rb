@@ -17,13 +17,12 @@ require "fileutils"
 module Master
   module Now
     class CLI
-      IDLE_SLEEP_DEFAULT = 60
-      # Replay only the last few turns so startup context stays readable.
-      REPLAY_TURNS = 5
-      # Keep enough diagnostic lines for recent failures without flooding the UI.
-      DMESG_BUFFER = 80
-      MULTILINE_MAX_LINES = 500
-      HISTORY_LIMIT = 2_000
+      CONFIG = Master.load_yaml(Master.data_path("cli.yml")).freeze
+      IDLE_SLEEP_DEFAULT = CONFIG.fetch("idle_sleep_seconds", 60)
+      REPLAY_TURNS = CONFIG.fetch("replay_turns", 5)
+      DMESG_BUFFER_LINES = CONFIG.fetch("dmesg_buffer_lines", 80)
+      MULTILINE_MAX_LINES = CONFIG.fetch("multiline_max_lines", 500)
+      HISTORY_LIMIT = CONFIG.fetch("history_limit", 2_000)
 
       SEVERITY_ICON = {
         error: "!!",
@@ -108,7 +107,7 @@ module Master
         print_thinking_indicator unless paste
         @pipeline_thread = Thread.new do
           Thread.current.report_on_exception = false
-          @refs.pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk, felt_sense: cli_felt_sense))
+          @refs.pipeline.call(Result.ok(user_message: input, on_chunk:, felt_sense: cli_felt_sense))
         end
         result = begin
           @pipeline_thread.value
@@ -195,7 +194,7 @@ module Master
         mood = "curious" if @refs.session.phase == :discover
         entropy = [violations_count / 20.0, 1.0].min
         confidence = @last_ok ? 0.86 : 0.42
-        { mood: mood, entropy: entropy.round(2), confidence: confidence }
+        { mood:, entropy: entropy.round(2), confidence: }
       end
 
       def host_budget_block(input)
@@ -221,7 +220,7 @@ module Master
 
         Master::Result.err(
           "budget exceeded: ¢#{( @refs.session.cost * 100).round(2)} / ¢#{(max * 100).round(2)} — use /cost or raise budget",
-          category: :budget
+          category: :budget,
         )
       end
 

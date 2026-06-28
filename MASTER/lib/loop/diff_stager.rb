@@ -32,6 +32,10 @@ module Master
       end
 
       def stage(path:, new_content:, tool: "unknown")
+        if Master::Ground::Immutability.blocked?(path, root: @root)
+          return Result.err("immutable: #{relative(path)} is constitutionally protected", category: :validation)
+        end
+
         old_content = File.exist?(path) ? File.read(path) : ""
         return Result.ok("no change") if old_content == new_content
 
@@ -39,11 +43,11 @@ module Master
           @counter += 1
         entry = Entry.new(
           id: @counter,
-          path: path,
-          old_content: old_content,
-          new_content: new_content,
-          tool: tool,
-          created_at: Time.now
+          path:,
+          old_content:,
+          new_content:,
+          tool:,
+          created_at: Time.now,
         )
         @pending << entry
         end
@@ -60,6 +64,8 @@ module Master
         targets = @mutex.synchronize { id == :all ? @pending.dup : @pending.select { |e| e.id == id } }
         applied = []
         targets.each do |entry|
+          next if Master::Ground::Immutability.blocked?(entry.path, root: @root)
+
           FileUtils.mkdir_p(File.dirname(entry.path))
           tmp_path = "#{entry.path}.tmp.#{Process.pid}"
           File.write(tmp_path, entry.new_content)
@@ -111,6 +117,10 @@ module Master
 
       private
 
+      def relative(path)
+        File.expand_path(path, @root).delete_prefix(@root + File::SEPARATOR)
+      end
+
       def stage_dir
         File.join(@root, ".master", "pending")
       end
@@ -123,7 +133,7 @@ module Master
             id: entry.id, path: entry.path, tool: entry.tool,
             created_at: entry.created_at.iso8601,
             stats: entry.diff_stats
-          })
+          }),
         )
       rescue StandardError => e
         @bus&.publish("diff_stager:persist_error", error: e.message)

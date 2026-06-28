@@ -25,8 +25,10 @@ profiles:
       dominant_pitch_classes: [C#, F#, B, D#]
       melody_pitch_percentiles: [E2, A2, "C#3"]
       melody_note: sub/bass register — no clean lead line on full mix
-      engine_progression: timeless_measured
-      engine_chords: [Dbmaj9, C#m7, G#m7, D#m7, Fm9, Bbm9, Abmaj9low]
+      engine_progression: timeless_authentic
+      engine_chords: [Fm9, Dbmaj9, Cm9, Fm9, Bbm9, Ebmaj9, Abmaj9low, Dbmaj9]
+      engine_note: Ab/Fm Donuts family (Hooktheory IV-iii-vi-ii-V) — default for TRACK=timeless
+      chroma_measured_alt: timeless_measured
       melody_chop_hz: [659.25, 587.33, 523.25, 440.0, 392.00, 349.23]
     synth:
       bpm: 86

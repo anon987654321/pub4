@@ -126,10 +126,10 @@ module Master
         }
         @amendments[amendment[:id]] = amendment
         save_amendments
-        @bus&.publish("parliament:proposed", principle: principle_id, proposer: proposer)
+        @bus&.publish("parliament:proposed", principle: principle_id, proposer:)
         Result.ok(amendment)
       rescue StandardError => e
-        Result.err(e.message, category: :io)
+        Result.err(e.message, category: :infrastructure)
       end
 
       def vote(amendment_id, voter:, stance:)
@@ -143,7 +143,7 @@ module Master
         enact(amendment) if should_enact?(amendment)
         Result.ok(amendment)
       rescue StandardError => e
-        Result.err(e.message, category: :io)
+        Result.err(e.message, category: :infrastructure)
       end
 
       def active = @amendments.values.select { |a| a[:status] == "open" }
@@ -176,7 +176,8 @@ module Master
 
         JSON.parse(File.read(STORE_PATH), symbolize_names: true)
             .index_by { |a| a[:id] }
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "parliament.load_amendments", path: STORE_PATH)
         {}
       end
 

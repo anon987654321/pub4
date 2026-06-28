@@ -1,3 +1,4 @@
+# Gem-specific conventions used by Rails audits and generation guidance.
 gems:
   devise:
     purpose: "Authentication framework"

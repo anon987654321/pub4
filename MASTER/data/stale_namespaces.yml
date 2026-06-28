@@ -1,3 +1,4 @@
+# Retired data paths and constants enforced by the stale namespace audit.
 stale_data_files:
   - old: data/workflow.yml
     new: data/limits.yml

@@ -13,7 +13,7 @@ module Master
       SKIP_SEGS = Master::Trace::SnapshotPublisher::SKIP_SEGS
 
       def system_commands(agent:, diag:, root:, session: nil, bus: nil, scanner: nil, ai: nil)
-        container = { session: session, config: {}, root: root, bus: bus }
+        container = { session:, config: {}, root:, bus: }
         {
           "orient" => command(:dispatch_orient, root),
           "explain" => command(:dispatch_orient, root),
@@ -57,7 +57,7 @@ module Master
         [
           "MASTER — constitutional AI runtime for any text artifact",
           "modules: now · loop · judge · voice · ground · reach · trace",
-          "rules: #{Master.rule_count(root: root)} registered",
+          "rules: #{Master.rule_count(root:)} registered",
           "pipeline: #{Master::Now::RuntimeMode::PIPELINE_STAGES}",
           "trace:   /orient trace — /tail /replay /status",
           "",
@@ -67,7 +67,7 @@ module Master
           "  production  + operator_playbook.yml + bin/playbook on VPS friction",
           "",
           "authority:",
-          *Master.authority_paths(root: root).map { |label, path| "  #{label.ljust(10)} #{relative_or_absolute(root, path)}" },
+          *Master.authority_paths(root:).map { |label, path| "  #{label.ljust(10)} #{relative_or_absolute(root, path)}" },
           "",
           "constitution:",
           *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{(path || "runtime").ljust(28)} #{desc}" },
@@ -146,7 +146,7 @@ module Master
       end
 
       def dispatch_propose_suggest(container, ctx: nil)
-        rows = Master::Now::Propose.new(container: container).call
+        rows = Master::Now::Propose.new(container:).call
         return "propose: nothing pressing — try /history or scan a dir" if rows.empty?
 
         rows.first(5).map.with_index do |row, index|
@@ -156,12 +156,12 @@ module Master
 
       def dispatch_context_window(session, root, ctx: nil)
         est = session.respond_to?(:token_est) ? session.token_est : 0
-        limit = Master::CTX_WINDOW_SIZE
+        limit = Master.context_window
         plan = Master::Ground::ActivePlan.read(root)
         lines = [
           "context: #{est}/#{limit} tokens (#{((est.to_f / limit) * 100).round(1)}%)",
           "topic: #{session.respond_to?(:topic) ? session.topic : 'none'}",
-          "plan: #{plan.to_s.strip.empty? ? '(none)' : plan.lines.first.to_s.strip}"
+          "plan: #{plan.to_s.strip.empty? ? '(none)' : plan.lines.first.to_s.strip}",
         ]
         lines.join("\n")
       end
@@ -169,7 +169,7 @@ module Master
       def dispatch_verify_wired(scanner, root, ctx: nil)
         return "verify: scanner not configured" unless scanner
 
-        out = Master::Judge::Scan::SelfScan.new(scanner: scanner, root: root, event_bus: nil).call(stream: false, autofix: false)
+        out = Master::Judge::Scan::SelfScan.new(scanner:, root:, event_bus: nil).call(stream: false, autofix: false)
         out.ok? ? "verify: scan clean (#{out.value!.line})" : "verify: #{out.message}"
       rescue StandardError => e
         "verify: #{e.message}"

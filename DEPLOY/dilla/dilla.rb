@@ -92,7 +92,7 @@ SLUM_VILLAGE_CHORDS = [
 ].freeze
 COMMANDS = %w[
   help scan sweep council debug sample source livestream separate render verify
-  chords clean stems study rhythm melody harmony semantics ears play live live_now bass
+  chords clean stems study rhythm melody harmony semantics ears play live live_now harmony_now regenerate bass
   grade grade_list sonitex_list analog_list prepare madlib dilla hiphop slum industrial techno analog analog_liveset
   electronium midi mix v7 v8 v9 v10 v11 demux liveset
 ].freeze
@@ -277,7 +277,7 @@ DILLA_GHOST_PATTERNS = [
   [3, 5, 9, 12],
   [2, 6, 10, 13]
 ].freeze
-MELODY_CHOP_HZ = [659.25, 587.33, 523.25, 440.0, 392.00, 349.23].freeze
+MELODY_CHOP_HZ = [392.00, 349.23, 311.13, 277.18, 261.63, 233.08].freeze
 # Madlib / Jaylib — loose MPC pockets, heavy ghosts, Dilla-time snare-early feel.
 MADLIB_KICK_PATTERNS = [
   [0, 6, 10, 14],
@@ -320,7 +320,9 @@ DONUT_CHORDS = [
   { name: "Gm7",       hz: [196.00, 233.08, 293.66, 349.23, 440.00] },
   { name: "Am7",       hz: [110.00, 130.81, 164.81, 196.00, 246.94] },
   { name: "D7",        hz: [146.83, 185.00, 220.00, 261.63, 349.23] },
-  { name: "Eb7",       hz: [155.56, 196.00, 233.08, 277.18, 311.13] }
+  { name: "Eb7",       hz: [155.56, 196.00, 233.08, 277.18, 311.13] },
+  { name: "Ebmaj9",    hz: [155.56, 196.00, 233.08, 293.66, 349.23] },
+  { name: "Gm9",       hz: [196.00, 233.08, 293.66, 349.23, 440.00] }
 ].freeze
 PAD_CHORD_LOOKUP = (
   PAD_CHORDS + SLUM_VILLAGE_CHORDS + DONUT_CHORDS
@@ -330,6 +332,15 @@ DILLA_PROGRESSIONS = {
   soul: %w[Fm9 Dbmaj9 Ebmaj9 Abmaj9],
   donuts: %w[Fm9 Dbmaj9 Bbm9 Eb7 Abmaj9low C7b9 Fm/C Bb7sus],
   donuts_time: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9],
+  # Fm soul arc — i→iv→bVII→bIII→bVI→v→IVsus→i (voice-led, resolves home).
+  timeless_authentic: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 Bb7sus Fm9],
+  # Hooktheory Donuts "Time" — Ab major IV–iii–vi–ii–V with turnaround.
+  timeless_published: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Bbm9 Ebmaj9],
+  # Full Donuts minor cycle — borrowed dominants + slash colors.
+  donuts_arc: %w[Fm9 Bbm9 Eb7 Abmaj9low Dbmaj9 Fm/C C7b9 Bb7sus],
+  # Prior engine map (kept for A/B).
+  timeless_legacy: %w[Fm9 Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9],
+  # Librosa chroma on sub-heavy full mix — bass harmonic field, not stem truth.
   timeless_measured: %w[Dbmaj9 C#m7 G#m7 D#m7 Fm9 Bbm9 Abmaj9low],
   players_measured: %w[Dm7 Eb7 Gm7 D7 Eb7 Gm7 Am7],
   jazz: %w[Dm9 Gm9 C7#9\ Hendrix Fmaj13],
@@ -376,12 +387,12 @@ DILLA_TRACK_PRESETS = {
   untitled_fantastic: { bpm: 91, progression: :untitled_fantastic, chord_bars: 2, swing: 56 },
   donuts_time: { bpm: 95, progression: :donuts_time, chord_bars: 2, swing: 52 },
   timeless: {
-    bpm: 86, progression: :timeless_measured, chord_bars: 2, phrase_bars: 8, swing: 56,
+    bpm: 86, progression: :timeless_authentic, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless,
     timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4, pad: 2..14 }
   },
   donuts: {
-    bpm: 86, progression: :timeless_measured, chord_bars: 2, phrase_bars: 8, swing: 56,
+    bpm: 86, progression: :timeless_authentic, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless,
     timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 }
   },
@@ -1163,22 +1174,92 @@ ensure
   FileUtils.rm_f(tmp)
 end
 
-# Zero-wait pocket — Web Audio in the browser; no ffmpeg render queue.
-def live_now
-  path = File.join(ROOT, "instant.html")
+# Loop a WAV via ffplay (rb-only playback).
+def play_loop(path)
+  abort "ffplay required" unless tool_available?("ffplay")
   abort "missing #{path}" unless File.exist?(path)
-  if RUBY_PLATFORM.include?("darwin")
-    system("open", path)
-    puts "instant pocket opened — click Play (starts in <1s, no render wait)"
-  else
-    puts "open in a browser: file://#{path}"
-  end
+  cfg = dilla_resolve_config
+  prog = DILLA_PROGRESSIONS[cfg[:progression]]
+  prog_names = prog.is_a?(Array) ? prog.join(" → ") : cfg[:progression].to_s
+  puts "looping #{path} (#{File.size(path)} bytes, #{cfg[:bpm].to_i} BPM)"
+  puts "progression: #{prog_names}"
+  puts "Ctrl-C to stop"
+  exec "ffplay", "-nodisp", "-loop", "0", "-volume", "100", path
 end
 
-# Loop playback. Opens live.html (audible in your browser) or ffplay in this terminal.
+# Instant playback — cached WAV, no render wait.
+def live_now
+  harm = File.join(ROOT, ".harmony_loud.wav")
+  full = File.join(ROOT, ".live_tmp.wav")
+  path = File.exist?(harm) ? harm : full
+  abort "no cache — run: ruby dilla.rb regenerate" unless File.exist?(path)
+  play_loop(path)
+end
+
+# Harmony-forward stem mix from cached drum + harmonic renders.
+def build_harmony_loud(
+  drums: File.join(ROOT, ".dilla_drums.wav"),
+  harmonic: File.join(ROOT, ".dilla_harmonic.wav"),
+  out: File.join(ROOT, ".harmony_loud.wav")
+)
+  abort "missing #{drums}" unless File.exist?(drums)
+  abort "missing #{harmonic}" unless File.exist?(harmonic)
+  dur = capture("ffprobe", "-v", "error", "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1", harmonic).first.to_f
+  dur = [dur, 8.0].max
+  drum_vol = (ENV["DRUM_VOL"] || "0.38").to_f
+  harm_gain = (ENV["HARM_VOL"] || "2.45").to_f
+  harm_chain = "aformat=channel_layouts=stereo,lowpass=f=3200,aecho=0.35:0.4:120:0.32," \
+               "volume=#{harm_gain},alimiter=limit=0.96:level_out=0.99"
+  if drum_vol <= 0.001
+    filt = "[0:a]#{harm_chain}[out]"
+    sh! "ffmpeg", "-y", "-i", harmonic, "-filter_complex", filt,
+        "-map", "[out]", "-t", dur.round(3).to_s, "-c:a", "pcm_s16le", out
+    puts "wrote #{out} (#{dur.round(1)}s harmony-only, drums muted)"
+  else
+    filt = [
+      "[1:a]#{harm_chain}[harm]",
+      "[0:a]aformat=channel_layouts=stereo,volume=#{drum_vol}[drm]",
+      "[drm][harm]amix=inputs=2:weights=1.0 1.0:duration=first:normalize=0[out]"
+    ].join(";")
+    sh! "ffmpeg", "-y", "-i", drums, "-i", harmonic, "-filter_complex", filt,
+        "-map", "[out]", "-t", dur.round(3).to_s, "-c:a", "pcm_s16le", out
+    puts "wrote #{out} (#{dur.round(1)}s harmony-forward, drums=#{drum_vol})"
+  end
+  out
+end
+
+# Fresh render + harmony-forward mix + ffplay loop.
+def regenerate(bars_count = 16)
+  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  bars_count = (ENV["BARS"] || bars_count).to_i
+  tmp = File.join(ROOT, ".live_tmp.wav")
+  harm = File.join(ROOT, ".harmony_loud.wav")
+  puts "regenerating #{bars_count} bars (TRACK=#{ENV['TRACK'] || 'timeless'})…"
+  render_dilla(tmp, bars_count, keep_stems: true)
+  build_harmony_loud
+  puts "wrote #{tmp}"
+  play_loop(harm)
+end
+
+# Chords + melody up front — loops .harmony_loud.wav.
+def harmony_now
+  harm = File.join(ROOT, ".harmony_loud.wav")
+  drums = File.join(ROOT, ".dilla_drums.wav")
+  harmonic = File.join(ROOT, ".dilla_harmonic.wav")
+  if ENV["REBUILD"] == "1" || !File.exist?(harm)
+    if File.exist?(drums) && File.exist?(harmonic)
+      build_harmony_loud
+    else
+      abort "no harmony mix — run: ruby dilla.rb regenerate"
+    end
+  end
+  play_loop(harm)
+end
+
+# Loop full master — .live_tmp.wav via ffplay.
 def live(bars_count = 32)
   tmp = File.join(ROOT, ".live_tmp.wav")
-  html = File.join(ROOT, "live.html")
   unless File.exist?(tmp)
     quick = [4, bars_count].min
     puts "no cache — warming #{quick} bars first (~15s)"
@@ -1188,15 +1269,7 @@ def live(bars_count = 32)
       render_dilla(tmp, bars_count)
     end
   end
-  if RUBY_PLATFORM.include?("darwin") && File.exist?(html)
-    system("open", html)
-    puts "live loop opened in browser → #{html}"
-    puts "file: #{tmp} (#{File.size(tmp)} bytes) — click Play if needed"
-    return
-  end
-  abort "ffplay required" unless tool_available?("ffplay")
-  puts "looping #{tmp} — Ctrl-C to stop"
-  exec "ffplay", "-nodisp", "-loop", "0", "-volume", "100", tmp
+  play_loop(tmp)
 rescue SystemCallError => e
   abort "playback failed: #{e.message}"
 end
@@ -1227,12 +1300,13 @@ def dilla_timing_ms(role, bar_index, step_index, timing = nil)
 end
 
 def dilla_resolve_config
-  track = (ENV["TRACK"] || ENV["PROGRESSION"] || "donuts").to_s.downcase.tr("-", "_").to_sym
+  track = (ENV["TRACK"] || "donuts").to_s.downcase.tr("-", "_").to_sym
   preset = DILLA_TRACK_PRESETS.fetch(track, DILLA_TRACK_PRESETS[:donuts])
+  prog = (ENV["PROGRESSION"] || preset.fetch(:progression, track)).to_s.downcase.tr("-", "_").to_sym
   {
     track: track,
     bpm: (ENV["BPM"] || preset[:bpm] || DEFAULT_BPM).to_f,
-    progression: preset.fetch(:progression, track),
+    progression: prog,
     chord_bars: preset.fetch(:chord_bars, 4),
     phrase_bars: preset[:phrase_bars],
     swing: (ENV["SWING"] || preset.fetch(:swing, 58)).to_f,
@@ -1243,10 +1317,12 @@ def dilla_resolve_config
 end
 
 def dilla_chord_index(bar, pad_chords, chord_bars:, phrase_bars: nil)
+  slot = bar / [chord_bars, 1].max
   if phrase_bars
-    (bar % phrase_bars) % pad_chords.length
+    slots_per_phrase = phrase_bars / [chord_bars, 1].max
+    slot % [slots_per_phrase, pad_chords.length].min
   else
-    (bar / chord_bars) % pad_chords.length
+    slot % pad_chords.length
   end
 end
 
@@ -1272,16 +1348,27 @@ def dilla_chord_bass_hz(chord)
   chord[:hz].min
 end
 
+def hz_to_midi(hz)
+  69.0 + 12.0 * Math.log2(hz / 440.0)
+end
+
+def midi_to_hz(midi)
+  (440.0 * (2.0 ** ((midi - 69.0) / 12.0))).round(2)
+end
+
 def voice_lead_chords(chords)
   return chords if chords.length <= 1
   led = [chords.first]
-  chords.each_cons(2) do |prev, nxt|
-    prev_hz = prev[:hz]
-    next_hz = nxt[:hz].map do |target|
-      candidates = prev_hz.flat_map { |p| [p, p + 12, p - 12, target, target + 12, target - 12] }.uniq
-      candidates.min_by { |c| (c - target).abs }
-    end
-    led << { name: nxt[:name], hz: next_hz.sort.uniq.first(5) }
+  prev_midis = chords.first[:hz].map { |h| hz_to_midi(h) }.sort
+  chords.drop(1).each do |nxt|
+    targets = nxt[:hz].map { |h| hz_to_midi(h) }.sort
+    voiced = targets.each_with_index.map do |target, i|
+      anchor = prev_midis[i % prev_midis.length]
+      shift = ((anchor - target) / 12.0).round
+      target + shift * 12.0
+    end.sort
+    prev_midis = voiced
+    led << { name: nxt[:name], hz: voiced.map { |m| midi_to_hz(m) }.uniq.first(5) }
   end
   led
 end
@@ -1459,8 +1546,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     next if drums_only
     next if section == :intro && bar < 2
 
-    chord_change = phrase_bars ? (bar % chord_bars).zero? : (bar >= 1 && (bar % chord_bars).zero?)
-    next unless chord_change
+    next unless (bar % chord_bars).zero?
 
     chord = pad_chords[dilla_chord_index(bar, pad_chords, chord_bars: chord_bars, phrase_bars: phrase_bars)]
     pad_offset = case feel
@@ -1469,8 +1555,12 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                  else 0.0
                  end
     pad_t = base + pad_offset + dilla_timing_ms(:pad, bar, 0, timing) / 1000.0
-    sustain = ((phrase_bars || chord_bars) * bar_p * 0.92).round(4)
-    events[:pad] << [[pad_t, 0.0].max.round(6), dilla_velocity(0.85, bar, 0, spread: 0.03) * sec_gain, chord, sustain]
+    sustain = (chord_bars * bar_p * 0.97).round(4)
+    events[:pad] << [[pad_t, 0.0].max.round(6), dilla_velocity(0.88, bar, 0, spread: 0.03) * sec_gain, chord, sustain]
+    if feel == :timeless && section == :main && bar % 4 == 1
+      events[:pad] << [[pad_t + step_p * 0.5, 0.0].max.round(6),
+                       dilla_velocity(0.22, bar, 1, spread: 0.05) * sec_gain, chord, sustain * 0.72]
+    end
     unless section == :breakdown
       chop_steps = [[1, 5, 9], [2, 6, 10], [1, 9, 13], [3, 7, 11]][bar % 4]
       chop_steps.each do |chop_step|
@@ -1525,15 +1615,18 @@ def dilla_hat_env(events, key, decay: 78)
 end
 
 def dilla_pad_layers(f, t, sustain, bar_i, gain: 0.035)
-  drift = 1.0 + (Math.sin((bar_i + 1) * 1.7) * 0.0009)
+  drift = 1.0 + (Math.sin((bar_i + 1) * 1.7) * 0.0012)
   ff = (f * drift).round(4)
+  atk = 0.072
   layers = [
     "sin(2*PI*#{ff}*(t-#{t}))",
-    "0.55*sin(2*PI*#{(ff * 1.004).round(4)}*(t-#{t}))",
-    "0.32*sin(2*PI*#{(ff * 2.005).round(4)}*(t-#{t}))",
-    "0.20*sin(2*PI*#{(ff * 0.5).round(4)}*(t-#{t}))"
+    "0.58*sin(2*PI*#{(ff * 1.006).round(4)}*(t-#{t}))",
+    "0.34*sin(2*PI*#{(ff * 2.008).round(4)}*(t-#{t}))",
+    "0.18*sin(2*PI*#{(ff * 3.01).round(4)}*(t-#{t}))",
+    "0.14*sin(2*PI*#{(ff * 0.5).round(4)}*(t-#{t}))"
   ].join("+")
-  "between(t,#{t},#{(t + sustain).round(4)})*#{gain}*exp(-(t-#{t})*0.26)*(0.78+0.22*sin(2*PI*0.23*(t-#{t})))*(#{layers})"
+  env = "min(1,pow((t-#{t})/#{atk},1.35))*exp(-(t-#{t})*0.07)*(0.80+0.20*sin(2*PI*0.18*(t-#{t})))"
+  "between(t,#{t},#{(t + sustain).round(4)})*#{gain}*#{env}*(#{layers})"
 end
 
 def dilla_pad_wave(t, v, chord, sustain, bar_i = 0)
@@ -1676,6 +1769,66 @@ def mix_sine!(left, right, frame, frames_n, hz, amp, decay: 2.6, mod_hz: 0.23, c
   end
 end
 
+# Rhodes/Juno-style pad voice — slow attack, detuned stack, harmonic bloom, stereo spread.
+def mix_dilla_pad_voice!(left, right, frame, frames_n, hz, amp, voice_i: 0, bar_i: 0, sub: false)
+  attack_n  = (0.072 * SAMPLE_RATE).round
+  release_n = (0.48 * SAMPLE_RATE).round
+  wow_hz    = 0.16 + voice_i * 0.025
+  flutter   = 4.1 + voice_i * 0.35
+  pan_base  = [-0.38, -0.12, 0.14, 0.36, 0.22][voice_i % 5]
+  oscs = [
+    { cents: 0.0,  gain: sub ? 0.52 : 0.38, pan: pan_base,        harm: 0.16 },
+    { cents: 7.5,  gain: 0.20,              pan: pan_base + 0.18, harm: 0.08 },
+    { cents: -6.0, gain: 0.16,              pan: pan_base - 0.16, harm: 0.05 },
+    { cents: 13.0, gain: 0.07,              pan: pan_base + 0.28, harm: 0.03 }
+  ]
+  frames_n.times do |i|
+    idx = frame + i
+    break if idx >= left.length
+    t = i.to_f / SAMPLE_RATE
+    t_abs = (frame + i).to_f / SAMPLE_RATE
+    attack = i < attack_n ? (i.to_f / attack_n) ** 1.35 : 1.0
+    rel_i = frames_n - i
+    release = rel_i < release_n ? (rel_i.to_f / release_n) ** 0.75 : 1.0
+    sustain = Math.exp(-t * (sub ? 0.05 : 0.07))
+    breathe = 0.80 + 0.20 * Math.sin(2 * Math::PI * wow_hz * t_abs + bar_i * 0.55)
+    drift = 1.0 + 0.0014 * Math.sin(2 * Math::PI * 0.065 * t_abs + voice_i * 0.9)
+    flutter_mod = 1.0 + 0.005 * Math.sin(2 * Math::PI * flutter * t_abs)
+    env = amp * attack * release * sustain * breathe * flutter_mod
+    oscs.each do |o|
+      fh = hz * drift * (2 ** (o[:cents] / 1200.0))
+      phase = 2 * Math::PI * fh * t
+      body = Math.sin(phase)
+      warm = 0.72 * body + 0.28 * Math.sin(phase * 3) / 3.0
+      s = env * o[:gain] * (warm + o[:harm] * Math.sin(phase * 2))
+      pan = o[:pan].clamp(-0.48, 0.48)
+      left[idx]  += s * (0.5 - pan * 0.5)
+      right[idx] += s * (0.5 + pan * 0.5)
+    end
+  end
+end
+
+def warm_dilla_pad_post(path)
+  return path unless tool_available?("ffmpeg")
+  tmp = "#{path}.pad_tmp.wav"
+  filt = [
+    "aformat=channel_layouts=stereo",
+    "lowpass=f=2900:width_type=q:width=0.82",
+    "equalizer=f=280:t=o:w=1.1:g=3.2",
+    "equalizer=f=1100:t=o:w=0.9:g=-1.6",
+    "equalizer=f=4200:t=o:w=1.2:g=-2.4",
+    "aphaser=speed=0.11:decay=0.44",
+    "aecho=0.44:0.5:130|210:0.30|0.16",
+    "vibrato=f=0.28:d=0.016",
+    "acompressor=threshold=-26dB:ratio=2.1:attack=42:release=200:makeup=2.2",
+    "volume=1.28",
+    "alimiter=limit=0.97:level_out=0.99"
+  ].join(",")
+  sh! "ffmpeg", "-y", "-i", path, "-af", filt, "-c:a", "pcm_s16le", tmp
+  FileUtils.mv(tmp, path)
+  path
+end
+
 def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [])
   frames = (duration * SAMPLE_RATE).ceil + SAMPLE_RATE
   left   = Array.new(frames, 0.0)
@@ -1683,12 +1836,17 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
 
   pad_events.each_with_index do |(t, v, chord, sustain), pi|
     next unless chord
-    start = (t * SAMPLE_RATE).round
-    dur   = [(sustain * SAMPLE_RATE).round, 1].max
-    drift = 1.0 + Math.sin((pi + 1) * 1.3) * 0.0008
-    chord[:hz].each_with_index do |hz, vi|
-      mix_sine!(left, right, start, dur, hz * drift, v * (0.032 + vi * 0.004),
-                decay: 0.24, mod_hz: 0.17 + vi * 0.02, chorus: true)
+    dur = [(sustain * SAMPLE_RATE).round, 1].max
+    drift = 1.0 + Math.sin((pi + 1) * 1.3) * 0.0010
+    sorted = chord[:hz].sort
+    sorted.each_with_index do |hz, vi|
+      strum = vi * 0.013
+      start = (t * SAMPLE_RATE).round + (strum * SAMPLE_RATE).round
+      voice_amp = v * (0.050 + vi * 0.0042)
+      mix_dilla_pad_voice!(left, right, start, dur, hz * drift, voice_amp, voice_i: vi, bar_i: pi)
+      next unless vi.zero?
+      mix_dilla_pad_voice!(left, right, start, dur, (hz * drift * 0.5).round(4), voice_amp * 0.42,
+                           voice_i: vi + 5, bar_i: pi, sub: true)
     end
   end
 
@@ -1739,6 +1897,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
     right.map! { |s| s * g }
   end
   write_stereo_wav(path, left, right)
+  warm_dilla_pad_post(path)
 end
 
 def write_stereo_wav(path, left, right)
@@ -1811,7 +1970,7 @@ def dilla_stem_paths
 end
 
 # Full Jay Dee render: sample drums + stem chops, Dilla Time scheduling.
-def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = nil)
+def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = nil, keep_stems: false)
   abort "ffmpeg required" unless tool_available?("ffmpeg")
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
@@ -1873,10 +2032,13 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
   mix_labels = ["[drums]"]
   mix_weights = ["1.0"]
   unless use_stem_harmony
-    filt << "[1:a]aformat=channel_layouts=stereo,lowpass=f=1700,aphaser=speed=0.11:decay=0.32,adelay=11|15," \
+    timeless = %i[timeless donuts].include?(cfg[:track])
+    harm_lp = timeless ? 2400 : 1700
+    harm_w  = timeless ? "1.12" : "0.84"
+    filt << "[1:a]aformat=channel_layouts=stereo,lowpass=f=#{harm_lp},aphaser=speed=0.11:decay=0.32,adelay=11|15," \
              "aecho=0.22:0.28:110:0.18[harm]"
     mix_labels << "[harm]"
-    mix_weights << "0.84"
+    mix_weights << harm_w
   end
 
   if stem_map[:mids]
@@ -1914,8 +2076,10 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
 
   command += ["-filter_complex", filt.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
   sh!(*command)
-  FileUtils.rm_f(drum_tmp)
-  FileUtils.rm_f(harmonic_tmp) unless use_stem_harmony
+  unless keep_stems
+    FileUtils.rm_f(drum_tmp)
+    FileUtils.rm_f(harmonic_tmp) unless use_stem_harmony
+  end
   stem_note = use_stem_harmony ? stems.keys.join("+") : "synth-harmony+melody"
   mix_note  = sonitex_label
   puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{mix_note}, #{stem_note})"
@@ -3129,7 +3293,9 @@ when "semantics" then semantics(ARGV.shift)
 when "ears"       then ears(ARGV.shift || File.join(ROOT, "full_track.mp3"))
 when "play"       then play(ARGV.shift, (ARGV.shift || 8).to_i)
 when "live"       then live((ARGV.shift || 32).to_i)
-when "live_now"   then live_now
+when "live_now"    then live_now
+when "harmony_now" then harmony_now
+when "regenerate"  then regenerate((ARGV.shift || 16).to_i)
 when "bass"       then bass((ARGV.shift || 55.0).to_f)
 when "grade"      then grade(ARGV.shift, ARGV.shift, ARGV.shift)
 when "grade_list" then grade_list

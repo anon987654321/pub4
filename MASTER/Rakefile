@@ -39,6 +39,24 @@ task :constitution do
   end
 end
 
+desc "Run MASTER's canonical scan rules against its own lib/"
+task :selftest do
+  $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+  require "master"
+  report = Master::Loop::SelfCheck.new(root: __dir__).full
+  puts report.summary
+  report.by_rule.sort_by { |_rule, count| -count }.each { |rule, count| puts "  [#{rule}] #{count}" }
+  exit(report.clean? ? 0 : 1)
+end
+
+desc "Eager-load all Zeitwerk-managed constants"
+task :autoload do
+  $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+  require "master"
+  Master.eager_load!
+  puts "autoload: clean"
+end
+
 namespace :test do
   desc "Kernel spine tests (isolated from lib/master Zeitwerk load)"
   task :kernel do

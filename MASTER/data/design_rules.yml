@@ -1,3 +1,6 @@
+# Design audit thresholds loaded by Master::Design rules.
+schema: 1
+
 typography:
   line_length:
     min_ch: 45

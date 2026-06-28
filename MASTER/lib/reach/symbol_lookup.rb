@@ -4,6 +4,7 @@ module Master
   module Reach
     # Query the live symbol graph; returns definition, callers, and impact.
     class SymbolLookup
+      TIER = :safe
       NAME = "symbol_lookup".freeze
       DESCRIPTION = "Look up a Ruby class, module, or method in the codebase. " \
                     "Returns file, line, and all cross-file references (callers/usages). " \

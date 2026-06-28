@@ -17,7 +17,7 @@ module Master
         review_error review_verdict review_preapproved
         destructive_route
         pre_enhanced
-        rendered voice
+        rendered output_findings voice
         image felt_sense explicit_run
         channel metadata turn_id
         _timings _parallel_errors _parallel_timeout _stage_error,
@@ -30,6 +30,7 @@ module Master
         task_type: [String, Symbol, NilClass],
         model: [String, NilClass],
         output: [String, NilClass],
+        output_findings: [Array, NilClass],
         pressure: [TrueClass, FalseClass, NilClass],
         lint_report: [Array, NilClass],
         voice: [String, NilClass],

@@ -1,5 +1,6 @@
 # Model routing profile — Grok primary (API or keyless browser), OpenRouter free fallback.
 
+schema: 1
 routing:
   enabled: true
   strategy: weighted
@@ -29,6 +30,7 @@ failover:
 
 defaults: &model_defaults
   score: { quality: 0.0, speed: 0.0, cost: 0.0 }
+  context_window: 128000
 
 model_defs:
   gemini_flash: &gemini_flash
@@ -50,18 +52,22 @@ model_defs:
   deepseek_chat: &deepseek_chat
     id: deepseek-chat
     <<: *model_defaults
+    context_window: 64000
     score: { quality: 0.96, speed: 0.85, cost: 0.95 }
   deepseek_reasoner: &deepseek_reasoner
     id: deepseek-reasoner
     <<: *model_defaults
+    context_window: 64000
     score: { quality: 0.97, speed: 0.55, cost: 0.85 }
   deepseek_coder: &deepseek_coder
     id: deepseek-coder
     <<: *model_defaults
+    context_window: 64000
     score: { quality: 0.85, speed: 0.70, cost: 0.95 }
   claude_sonnet: &claude_sonnet
     id: anthropic/claude-sonnet-4-6
     <<: *model_defaults
+    context_window: 200000
     score: { quality: 0.95, speed: 0.75, cost: 0.60 }
   gemini_flash_openrouter: &gemini_flash_openrouter
     id: google/gemini-2.5-flash
@@ -98,14 +104,17 @@ model_defs:
   claude_cli_sonnet: &claude_cli_sonnet
     id: claude-cli:claude-sonnet-4-6
     <<: *model_defaults
+    context_window: 200000
     score: { quality: 0.95, speed: 0.70, cost: 0.60 }
   claude_cli_opus: &claude_cli_opus
     id: claude-cli:claude-opus-4-8
     <<: *model_defaults
+    context_window: 200000
     score: { quality: 0.99, speed: 0.55, cost: 1.0 }
   claude_opus_api: &claude_opus_api
     id: anthropic/claude-opus-4-8
     <<: *model_defaults
+    context_window: 200000
     score: { quality: 0.99, speed: 0.50, cost: 0.20 }
   gemma_2_9b_free: &gemma_2_9b_free
     id: google/gemma-2-9b-it:free

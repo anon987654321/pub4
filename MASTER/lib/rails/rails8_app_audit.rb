@@ -64,11 +64,11 @@ module Master
           doctrine_gaps: doctrine_gaps(gems),
           pwa: {
             manifest: find_file(app_path, PWA_MANIFEST_CANDIDATES),
-            service_worker: find_file(app_path, SW_CANDIDATES)
+            service_worker: find_file(app_path, SW_CANDIDATES),
           },
           js_signals: js_signals(js_src, app_path),
           partial_count: count_partials(app_path),
-          shared_layout: shared_layout?(app_path)
+          shared_layout: shared_layout?(app_path),
         }
       end
 
@@ -96,7 +96,8 @@ module Master
         File.readlines(File.join(path, "Gemfile"), chomp: true)
             .find { |l| l.match?(/gem\s+['"]rails['"]/) }
             &.scan(/\d+\.\d+/)&.first
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "rails8_app_audit.detect_rails_version", path:)
         nil
       end
 
@@ -126,13 +127,15 @@ module Master
         return false unless sw_rel
         src = File.read(File.join(path, sw_rel))
         src.match?(/caches\.match.*\|\|.*fetch/m)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "rails8_app_audit.cache_first_sw", path:)
         false
       end
 
       def count_partials(path)
         Dir.glob(File.join(path, "app", "views", "**", "_*.html.erb")).size
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "rails8_app_audit.count_partials", path:)
         0
       end
 

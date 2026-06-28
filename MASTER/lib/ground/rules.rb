@@ -36,7 +36,7 @@ module Master
         cached = @cache[key]
         return cached.first if cached && cached.last >= mtime
 
-        payload = Master.load_yaml(path) || {}
+        payload = without_schema(Master.load_yaml(path) || {})
         @cache[key] = [payload, mtime]
         payload
       end
@@ -75,7 +75,7 @@ module Master
       end
 
       def philosophy_block(limit: 5)
-        items = philosophy(limit: limit)
+        items = philosophy(limit:)
         return if items.empty?
 
         top = items.map { |a| "  #{a["id"]}: #{a["name"]}" }.join("\n")
@@ -94,7 +94,7 @@ module Master
             "protection" => absolute["protection_tiers"] || @data["protection"],
             "banned_output" => voice["banned_output"],
             "anti_simulation" => absolute["anti_simulation"] || voice["anti_simulation"],
-            "communication_style" => voice["style"]
+            "communication_style" => voice["style"],
           }.freeze
         end
       end
@@ -136,6 +136,12 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rules.load_yaml", path:)
         nil
+      end
+
+      def without_schema(payload)
+        return payload unless payload.is_a?(Hash) && payload.key?("schema")
+
+        payload.reject { |key, _value| key == "schema" }
       end
 
     end

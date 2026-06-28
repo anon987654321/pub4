@@ -1,5 +1,6 @@
 <% content_for :title, @playlist.name %>
 
+<p class="radio-back-link"><%= link_to "← radio", playlist_root_path %></p>
 <%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks %>
 
 <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>

@@ -42,6 +42,6 @@ class TestRenderer < Minitest::Test
     line = FakeRenderer.new(config: {}).prompt_line("model", "idle", tokens: 45_000).first
 
     assert_includes line, "ctx:"
-    assert_includes line, "/200.0k"
+    assert_includes line, "/128.0k"
   end
 end

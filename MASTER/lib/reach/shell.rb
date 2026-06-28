@@ -44,59 +44,90 @@ module Master
         @root     = root
         @governor = governor
         @bus      = event_bus
-        @library_verify = library_verify || Ground::LibraryVerify.new(root: root)
+        @library_verify = library_verify || Ground::LibraryVerify.new(root:)
         @cmd      = TTY::Command.new(printer: :null)
         @recent   = []
         @mutex    = Mutex.new
       end
 
       def call(command:)
-        binary_err = verify_binaries(command)
-        return binary_err if binary_err&.err?
-
-        return Result.err("blocked command: #{command}", category: :validation) if blocked?(command)
-        return Result.err("blocked destructive command without --force: #{command}", category: :validation) if force_required_without_flag?(command)
-        return Result.err("write target not writable: #{unwritable_target(command)}", category: :validation) if unwritable_target(command)
         warn_privilege_escalation(command)
-        return Result.err("interactive command blocked — no TTY available: #{command}",
-                          category: :validation) if interactive?(command)
+        error = preflight_error(command)
+        return error if error
 
         warn_if_failing_often
-
         perm = @governor.permit?(NAME, TIER, command)
         return perm if perm.err?
 
-        @bus&.publish("tool:before", tool: NAME, command: command)
-
-        banned = ZSH_BANNED.select { |b| command.match?(/\b#{Regexp.escape(b)}\b/) }
-        @bus&.publish("zsh:banned_tool_warning", tools: banned, command: command) if banned.any?
-
-        zdotdir = File.writable?("/tmp") ? "/tmp" : Dir.home
-        executable_command = strip_force_sentinel(command)
-        wrapped = "#!/usr/bin/env zsh\nset -euo pipefail\nsetopt nullglob extendedglob\n" \
-                  "export ZDOTDIR=#{Shellwords.escape(zdotdir)}\nexport LC_ALL=C.UTF-8\n" \
-                  "cd #{Shellwords.escape(@root)}\n#{executable_command}\n"
-
-        out, err = Timeout.timeout(TIMEOUT) { @cmd.run!("zsh", input: wrapped) }
-        @bus&.publish("tool:after", tool: NAME, exit_code: out.exit_status)
-
-        track_result(:success)
-        raw = out.to_s.strip
-        filtered = OutputFilter.filter(command: executable_command, output: raw)
-        @bus&.publish("rtk:filtered", saved_bytes: raw.bytesize - filtered.bytesize) if filtered != raw
-        Result.ok(filtered)
-      rescue Timeout::Error => _e
-        track_result(:failure)
-        Result.err("zsh: timed out after #{TIMEOUT}s", category: :unknown)
+        capture_output(command)
+      rescue Timeout::Error
+        failed_result("timed out after #{TIMEOUT}s")
       rescue TTY::Command::ExitError => e
-        track_result(:failure)
-        Result.err("zsh: #{e.message}", category: :unknown)
+        failed_result(e.message)
       rescue StandardError => e
-        track_result(:failure)
-        Result.err("zsh: #{e.message}", category: :unknown)
+        failed_result(e.message)
       end
 
       private
+
+      def preflight_error(command)
+        verify_binaries(command) || blocked_error(command) || force_error(command) ||
+          writable_error(command) || interactive_error(command)
+      end
+
+      def blocked_error(command)
+        Result.err("blocked command: #{command}", category: :validation) if blocked?(command)
+      end
+
+      def force_error(command)
+        return unless force_required_without_flag?(command)
+
+        Result.err("blocked destructive command without --force: #{command}", category: :validation)
+      end
+
+      def writable_error(command)
+        target = unwritable_target(command)
+        Result.err("write target not writable: #{target}", category: :validation) if target
+      end
+
+      def interactive_error(command)
+        return unless interactive?(command)
+
+        Result.err("interactive command blocked — no TTY available: #{command}", category: :validation)
+      end
+
+      def capture_output(command)
+        executable = strip_force_sentinel(command)
+        publish_before(command)
+        output, = Timeout.timeout(TIMEOUT) { @cmd.run!("zsh", input: wrapped_command(executable)) }
+        @bus&.publish("tool:after", tool: NAME, exit_code: output.exit_status)
+        successful_result(executable, output.to_s.strip)
+      end
+
+      def wrapped_command(command)
+        dot_directory = File.writable?("/tmp") ? "/tmp" : Dir.home
+        "#!/usr/bin/env zsh\nset -euo pipefail\nsetopt nullglob extendedglob\n" \
+          "export ZDOTDIR=#{Shellwords.escape(dot_directory)}\nexport LC_ALL=C.UTF-8\n" \
+          "cd #{Shellwords.escape(@root)}\n#{command}\n"
+      end
+
+      def publish_before(command)
+        @bus&.publish("tool:before", tool: NAME, command:)
+        banned = ZSH_BANNED.select { |binary| command.match?(/\b#{Regexp.escape(binary)}\b/) }
+        @bus&.publish("zsh:banned_tool_warning", tools: banned, command:) if banned.any?
+      end
+
+      def successful_result(command, raw)
+        track_result(:success)
+        filtered = OutputFilter.filter(command:, output: raw)
+        @bus&.publish("rtk:filtered", saved_bytes: raw.bytesize - filtered.bytesize) if filtered != raw
+        Result.ok(filtered)
+      end
+
+      def failed_result(message)
+        track_result(:failure)
+        Result.err("zsh: #{message}", category: :unknown)
+      end
 
       def verify_binaries(command)
         command.to_s.scan(BINARY_RE).uniq.each do |binary|
@@ -134,8 +165,8 @@ module Master
       def warn_privilege_escalation(command)
         return unless command.match?(PRIVILEGE_RE)
 
-        @bus&.publish("voice:catchphrase", phrase: "That looks risky. Confirm?", command: command)
-        @bus&.publish("zsh:privilege_escalation_warning", command: command)
+        @bus&.publish("voice:catchphrase", phrase: "That looks risky. Confirm?", command:)
+        @bus&.publish("zsh:privilege_escalation_warning", command:)
       end
 
       def track_result(outcome)
@@ -147,7 +178,7 @@ module Master
 
       def warn_if_failing_often
         failures = @mutex.synchronize { @recent.count(:failure) }
-        @bus&.publish("zsh:high_failure_rate", failures: failures, window: FAILURE_WINDOW) if failures >= FAILURE_WARN_AT
+        @bus&.publish("zsh:high_failure_rate", failures:, window: FAILURE_WINDOW) if failures >= FAILURE_WARN_AT
       end
     end
   end

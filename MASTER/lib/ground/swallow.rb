@@ -7,6 +7,10 @@ module Master
     module Swallow
       module_function
 
+      def event_bus=(bus)
+        @event_bus = bus
+      end
+
       def log(error, context:, event_bus: nil, **metadata)
         payload = {
           context: context.to_s,
@@ -15,8 +19,9 @@ module Master
           backtrace: Array(error.backtrace).first(5),
         }.merge(metadata)
 
-        if event_bus
-          event_bus.publish("swallow:error", payload)
+        bus = event_bus || @event_bus
+        if bus
+          bus.publish("swallow:error", payload)
         else
           warn("swallow:error #{payload.inspect}")
         end
@@ -31,7 +36,7 @@ module Master
       def safe_call(context:, event_bus: nil, **meta)
         yield
       rescue StandardError => e
-        log(e, context: context, event_bus: event_bus, **meta)
+        log(e, context:, event_bus:, **meta)
         nil
       end
     end

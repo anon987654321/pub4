@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "optparse"
+require "time"
+
+module ResetCosts
+  COST_FILES = %w[costs.jsonl budget.yml carbon.jsonl provider_usage.yml].freeze
+  module_function
+
+  def run(argv)
+    options = parse(argv)
+    root = File.expand_path(options[:root] || ENV["MASTER_ROOT"] || File.join(__dir__, ".."))
+    state_dir = File.join(root, ".master")
+    paths = COST_FILES.map { |name| File.join(state_dir, name) }.select { |path| File.file?(path) }
+    return puts("reset-costs: no cost-state files in #{state_dir} — nothing to do") if paths.empty?
+
+    describe(paths)
+    return puts("reset-costs: --dry-run; no changes made") if options[:dry_run]
+    return abort("reset-costs: aborted by user") unless options[:yes] || confirmed?
+
+    archive(paths, state_dir) unless options[:no_archive]
+    paths.each { |path| File.write(path, File.extname(path) == ".yml" ? "--- {}\n" : "") }
+    puts "reset-costs: reset #{paths.size} file(s)"
+  end
+
+  def parse(argv)
+    options = { dry_run: false, yes: false, no_archive: false }
+    OptionParser.new do |parser|
+      parser.banner = "Usage: reset-costs [options]"
+      parser.on("--root PATH", "MASTER root") { |value| options[:root] = value }
+      parser.on("--dry-run", "List files without changing them") { options[:dry_run] = true }
+      parser.on("--yes", "Skip confirmation") { options[:yes] = true }
+      parser.on("--no-archive", "Reset without an archive") { options[:no_archive] = true }
+    end.parse!(argv)
+    options
+  end
+
+  def describe(paths)
+    puts "reset-costs: files to reset:"
+    paths.each { |path| puts "  #{path} (#{File.size(path)} bytes)" }
+  end
+
+  def confirmed?
+    print "reset-costs: archive then reset the above? [y/N] "
+    %w[y yes].include?(($stdin.gets || "").strip.downcase)
+  end
+
+  def archive(paths, state_dir)
+    stamp = Time.now.utc.strftime("%Y%m%dT%H%M%S.%6NZ")
+    destination = File.join(state_dir, "archives", "costs-#{stamp}")
+    FileUtils.mkdir_p(destination)
+    paths.each do |path|
+      copy = File.join(destination, File.basename(path))
+      FileUtils.cp(path, copy)
+      raise "archive verification failed: #{path}" unless FileUtils.compare_file(path, copy)
+    end
+    puts "reset-costs: archived to #{destination}"
+  end
+end
+
+ResetCosts.run(ARGV)
