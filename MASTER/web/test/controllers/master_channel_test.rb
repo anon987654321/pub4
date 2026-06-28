@@ -2,16 +2,15 @@
 
 require "test_helper"
 
-class MasterChannelTest < ActiveSupport::TestCase
+class MasterChannelTest < ActionCable::Channel::TestCase
+  tests MasterChannel
+
   test "subscribes to master event streams" do
-    channel = MasterChannel.new(nil, {})
-    streams = []
-    channel.define_singleton_method(:stream_from) { |name| streams << name }
+    subscribe
 
-    channel.subscribed
-
-    assert_includes streams, "master:events"
-    assert_includes streams, "master:council"
-    assert_includes streams, "master:status"
+    assert subscription.confirmed?
+    assert_has_stream "master:events"
+    assert_has_stream "master:council"
+    assert_has_stream "master:status"
   end
 end
