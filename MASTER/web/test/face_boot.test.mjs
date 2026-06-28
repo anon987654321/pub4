@@ -30,6 +30,7 @@ test("face.js warms stack on load and starts session on primer", () => {
   assert.match(faceJs, /faceModulesBundle/);
   assert.match(faceJs, /build_face_runtime/);
   assert.match(faceJs, /onPrimerSession/);
+  assert.match(faceJs, /__MASTER_FACE_STACK_FAILED__/);
   assert.match(faceJs, /bootFaceStack\(\);/);
   assert.match(faceJs, /FACE3D_ACTIVE/);
   assert.doesNotMatch(faceJs, /addEventListener\("primer:ready", scheduleFaceStack/);
@@ -61,6 +62,9 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /master:face-stage/);
   assert.match(boot, /master:session-ready/);
   assert.match(boot, /sessionReady/);
+  assert.match(boot, /__MASTER_FACE_STACK_FAILED__/);
+  assert.match(boot, /scheduleTextFallback/);
+  assert.match(boot, /text-mode-session/);
   assert.match(boot, /dismissPrimer\(\)/);
   assert.match(boot, /form\.classList\.add\('gone'\)/);
   assert.match(boot, /ensurePrimer/);

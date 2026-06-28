@@ -20,7 +20,11 @@
       return vendor.indexOf('Apple')>-1&&ua.indexOf('CriOS')<0&&ua.indexOf('FxiOS')<0&&ua.indexOf('Chrome')<0&&ua.indexOf('Chromium')<0&&ua.indexOf('Edg')<0;
     }
     function sessionReady(){
-      return !!(window.MASTER_FACE&&window.MASTER_FACE.primerFired);
+      if(!window._primerFired)return false;
+      if(window.MASTER_FACE&&window.MASTER_FACE.primerFired)return true;
+      if(document.body.classList.contains('text-mode-session'))return true;
+      if(window.__MASTER_FACE_STACK_FAILED__)return true;
+      return false;
     }
     function primerVisible(){
       var el=document.getElementById('primer');
@@ -286,8 +290,21 @@
         showBootError('timed out');
       },60000);
     }
+    function scheduleTextFallback(){
+      window.setTimeout(function(){
+        if(!fired||!primerVisible()||sessionReady())return;
+        if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){
+          try{window.MASTER_FACE.startEverything();}catch(_e){}
+        }
+        if(sessionReady()){finishBoot();return;}
+        document.body.classList.add('text-mode-session');
+        finishBoot();
+      },2200);
+    }
     function go(){
       if(fired||!primerVisible())return;
+      syncPrimerRefs();
+      if(title)title.textContent='starting…';
       if(ui)ui.textContent='tap received';
       document.body.dataset.primerTap='1';
       window.setTimeout(function(){delete document.body.dataset.primerTap;},240);
@@ -305,6 +322,7 @@
       }
       if(boot()){finishBoot();return;}
       armFaceBoot();
+      scheduleTextFallback();
     }
     function onSessionReady(){if(fired)finishBoot();}
     addEventListener('master:face-ready',function(){if(fired&&boot())finishBoot();});
@@ -312,6 +330,7 @@
     addEventListener('primer:ready',onSessionReady);
     addEventListener('master:session-ready',onSessionReady);
     addEventListener('master:face-error',function(ev){
+      window.__MASTER_FACE_STACK_FAILED__=true;
       if(!fired)return;
       var detail=ev&&ev.detail||{};
       var msg=detail.message||detail.module||'face boot failed';
@@ -320,7 +339,9 @@
         if(ui)ui.textContent='face loading…';
         return;
       }
-      showBootError(msg);
+      document.body.classList.add('text-mode-session');
+      reportError(msg);
+      finishBoot();
     });
     addEventListener('master:face-stage',function(ev){
       if(!fired||sessionReady())return;

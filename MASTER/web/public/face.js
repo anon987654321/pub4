@@ -89,7 +89,11 @@ async function bootFaceStack() {
   })().catch((error) => {
     delete window.__MASTER_FACE_STACK_PROMISE__;
     delete window.__MASTER_FACE_STACK_READY__;
+    window.__MASTER_FACE_STACK_FAILED__ = true;
     dispatchFaceError(error);
+    if (window._primerFired) {
+      window.dispatchEvent(new CustomEvent("master:session-ready"));
+    }
     throw error;
   });
   return window.__MASTER_FACE_STACK_PROMISE__;

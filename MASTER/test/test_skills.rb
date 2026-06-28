@@ -18,35 +18,32 @@ class TestSkills < Minitest::Test
     assert_equal "body", parsed[:body]
   end
 
-  def test_discover_refreshes_loaded_skills_without_duplicates
+  def test_discover_loads_registry_skills
     Dir.mktmpdir do |root|
-      skills_dir = File.join(root, "skills")
-      FileUtils.mkdir_p(File.join(skills_dir, "alpha"))
-      File.write(File.join(skills_dir, "alpha", "SKILL.md"), <<~MD)
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "skills_registry.yml"), <<~YAML)
         ---
-        name: alpha
-        description: first skill
-        ---
-      MD
+        skills:
+          - name: alpha
+            description: first skill
+            triggers: ["alpha"]
+            body: alpha body
+          - name: beta
+            description: second skill
+            triggers: ["beta"]
+            body: beta body
+      YAML
 
       skills = Master::Now::Skills.new(root: root)
-      first = skills.discover!
-      assert_equal ["alpha"], first.map { |skill| skill[:name] }
+      loaded = skills.discover!
 
-      FileUtils.mkdir_p(File.join(skills_dir, "beta"))
-      File.write(File.join(skills_dir, "beta", "SKILL.md"), <<~MD)
-        ---
-        name: beta
-        description: second skill
-        ---
-      MD
-
-      second = skills.discover!
-      assert_equal ["alpha", "beta"], second.map { |skill| skill[:name] }
+      assert_equal %w[alpha beta], loaded.map { |skill| skill[:name] }
+      assert_equal "alpha body", skills.body_for("alpha")
     end
   end
 
-  def test_discover_loads_flat_skill_docs
+  def test_discover_ignores_legacy_skill_markdown
     Dir.mktmpdir do |root|
       skills_dir = File.join(root, "data", "skills")
       FileUtils.mkdir_p(skills_dir)
@@ -56,29 +53,36 @@ class TestSkills < Minitest::Test
         description: scan files and directories
         ---
       MD
+      File.write(File.join(root, "data", "skills_registry.yml"), <<~YAML)
+        ---
+        skills:
+          - name: registry_only
+            description: registry authority
+            triggers: ["registry"]
+            body: from registry
+      YAML
 
       skills = Master::Now::Skills.new(root: root)
       loaded = skills.discover!
 
-      assert_equal ["scan"], loaded.map { |skill| skill[:name] }
-      assert_equal "scan files and directories", loaded.first[:description]
+      assert_equal ["registry_only"], loaded.map { |skill| skill[:name] }
     end
   end
 
   def test_recently_used_skills_sort_first
     Dir.mktmpdir do |root|
-      skills_dir = File.join(root, "data", "skills")
-      FileUtils.mkdir_p(skills_dir)
-      %w[alpha beta].each do |name|
-        File.write(File.join(skills_dir, "#{name}.md"), <<~MD)
-          ---
-          name: #{name}
-          description: #{name}
-          triggers:
-            - #{name}
-          ---
-        MD
-      end
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "skills_registry.yml"), <<~YAML)
+        ---
+        skills:
+          - name: alpha
+            description: alpha
+            triggers: ["alpha"]
+          - name: beta
+            description: beta
+            triggers: ["beta"]
+      YAML
 
       skills = Master::Now::Skills.new(root: root)
       skills.discover!
