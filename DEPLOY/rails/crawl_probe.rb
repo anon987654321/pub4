@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "net/http"
+require "open3"
 require "optparse"
 require "socket"
 require "yaml"
@@ -11,12 +12,14 @@ MANIFEST = File.join(__dir__, "crawl_manifest.yml")
 APPS_YML = File.join(__dir__, "apps.yml")
 MASTER_JSON = File.join(ROOT, "DEPLOY", "master.json")
 
+MASTER_ROOT = File.join(ROOT, "MASTER")
+
 options = { skip_closed: true, public: false, browser: false }
 OptionParser.new do |parser|
   parser.banner = "Usage: ruby DEPLOY/rails/crawl_probe.rb [--strict] [--public] [--browser]"
   parser.on("--strict", "Fail when ports are closed (default: skip offline apps)") { options[:skip_closed] = false }
   parser.on("--public", "Crawl public HTTPS URLs from apps.yml domains") { options[:public] = true }
-  parser.on("--browser", "Run Ferrum element checks for MASTER (requires Chrome)") { options[:browser] = true }
+  parser.on("--browser", "Also run Ferrum crawl (MASTER bundle + Chrome)") { options[:browser] = true }
 end.parse!
 
 def load_manifest
@@ -109,32 +112,17 @@ def sync_inventory_failures
   out
 end
 
-def run_ferrum_master(url)
-  return [] unless defined?(Ferrum)
-
-  failures = []
-  browser = Ferrum::Browser.new(headless: true, timeout: 12, browser_options: { "no-sandbox" => nil })
-  browser.go_to(url)
-  sleep 2
-  boot = browser.evaluate(<<~JS)
-    ({
-      primer: !!document.getElementById('primer'),
-      face: !!document.getElementById('face'),
-      felt: typeof window.MASTERFeltState,
-      sse: typeof window.MASTER_SSE
-    })
-  JS
-  failures << "master browser: primer missing" unless boot["primer"]
-  failures << "master browser: face canvas missing" unless boot["face"]
-  failures << "master browser: MASTERFeltState missing" unless boot["felt"] == "object"
-  failures << "master browser: MASTER_SSE missing" unless boot["sse"] == "object"
-  failures
-rescue LoadError
-  ["master browser: gem install ferrum for --browser"]
+def run_browser_crawl(public:)
+  browser_script = File.join(__dir__, "crawl_browser.rb")
+  args = ["exec", "ruby", browser_script]
+  args << "--public" if public
+  args << "--strict" unless options[:skip_closed]
+  env = { "BUNDLE_WITH" => "test", "BUNDLE_GEMFILE" => File.join(MASTER_ROOT, "Gemfile") }
+  out, status = Open3.capture2e(env, "bundle", *args, chdir: MASTER_ROOT)
+  puts out unless out.strip.empty?
+  status.success? ? [] : ["browser crawl failed"]
 rescue StandardError => e
-  ["master browser: #{e.class}: #{e.message}"]
-ensure
-  browser&.quit
+  ["browser crawl: #{e.class}: #{e.message}"]
 end
 
 manifest = load_manifest
@@ -164,8 +152,8 @@ targets.each do |name, port, paths|
   crawl_target(name, base, paths, failures, skips)
 end
 
-if options[:browser] && port_open?("127.0.0.1", 53_187)
-  failures.concat(run_ferrum_master("http://127.0.0.1:53187/"))
+if options[:browser]
+  failures.concat(run_browser_crawl(public: options[:public]))
 end
 
 skips.each { |line| puts "crawl: skip — #{line}" }

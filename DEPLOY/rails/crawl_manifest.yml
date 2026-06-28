@@ -1,7 +1,6 @@
-# HTTP crawl contract — loopback checks for live apps.
-# Used by DEPLOY/rails/crawl_probe.rb and bin/probe crawl.
-# expect_body: substring required in response body (case-sensitive unless regex: prefix).
-# skip_unless_port_open: true — skip app when nothing listens (dev laptop).
+# HTTP + Ferrum browser crawl contract.
+# HTTP: paths + expect_status / expect_body
+# browser: checks (selector, js, text_absent) + optional session (MASTER only)
 
 master:
   port: 53187
@@ -13,6 +12,25 @@ master:
       expect_body: 'id="face"'
     - path: /master_events.js
       expect_status: 200
+  browser:
+    warmup_s: 3
+    checks:
+      - type: selector
+        id: primer
+      - type: selector
+        id: face
+      - type: js
+        expr: "typeof window.MASTERFeltState === 'object'"
+      - type: js
+        expr: "typeof window.MASTER_SSE === 'object'"
+      - type: js
+        expr: "typeof window.MASTER_CONTAINER === 'object'"
+    session:
+      tap_primer: true
+      wait_s: 2
+      session_timeout_s: 22
+      ping_chat: true
+      chat_wait_s: 4
 
 apps:
   brgen:
@@ -22,28 +40,62 @@ apps:
         expect_status: 200
       - path: /
         expect_status: [200, 302, 301]
+    browser:
+      warmup_s: 2
+      checks:
+        - type: selector
+          id: main-content
+        - type: text_absent
+          value: "Exception"
+        - type: text_absent
+          value: "Routing Error"
   amber:
     port: 61352
     paths:
       - path: /up
         expect_status: 200
+    browser:
+      warmup_s: 2
+      checks:
+        - type: selector
+          id: main-content
   baibl:
     port: 10007
     paths:
       - path: /up
         expect_status: 200
+    browser:
+      warmup_s: 2
+      checks:
+        - type: selector
+          css: "body"
   blognet:
     port: 10002
     paths:
       - path: /up
         expect_status: 200
+    browser:
+      warmup_s: 2
+      checks:
+        - type: selector
+          css: "body"
   bsdports:
     port: 47312
     paths:
       - path: /up
         expect_status: 200
+    browser:
+      warmup_s: 2
+      checks:
+        - type: selector
+          css: "body"
   hjerterom:
     port: 38891
     paths:
       - path: /up
         expect_status: 200
+    browser:
+      warmup_s: 2
+      checks:
+        - type: selector
+          css: "body"

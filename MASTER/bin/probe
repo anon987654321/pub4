@@ -97,6 +97,18 @@ CHECKS = {
     cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "rails", "crawl_probe.rb")],
     cwd: REPO_ROOT,
   },
+  "crawl-browser" => {
+    desc: "Ferrum element crawl (MASTER face session + Rails landmarks)",
+    cmd: ["sh", "-c",
+          "BUNDLE_WITH=test bundle exec ruby #{File.join(REPO_ROOT, 'DEPLOY', 'rails', 'crawl_browser.rb')}"],
+    cwd: MASTER_ROOT,
+    skip: lambda {
+      return true if ENV["MASTER_CRAWL_BROWSER"] == "0"
+      return false if ENV["MASTER_CRAWL_BROWSER"] == "1" || ENV["PROBE_FORCE_BROWSER"] == "1"
+      RUBY_PLATFORM.include?("darwin")
+    },
+    skip_reason: "set MASTER_CRAWL_BROWSER=1 or PROBE_FORCE_BROWSER=1 (skipped on macOS by default)",
+  },
   "integrity" => {
     desc: "Full DEPLOY + Rails + OpenBSD gate chain",
     cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "integrity_gate.rb")],
@@ -115,8 +127,8 @@ CHECKS = {
 ALIASES = {
   "quick" => %w[smoke nsaudit rails ci],
   "all" => %w[smoke nsaudit kernel dogfood preflight audit rails phantom_fk],
-  "deploy" => %w[rails phantom_fk crawl integrity health smoke-web playbook],
-  "integrity" => %w[integrity crawl rails phantom_fk smoke-web],
+  "deploy" => %w[rails phantom_fk crawl crawl-browser integrity health smoke-web playbook],
+  "integrity" => %w[integrity crawl crawl-browser rails phantom_fk smoke-web],
   "security" => %w[audit nsaudit rails],
 }.freeze
 
