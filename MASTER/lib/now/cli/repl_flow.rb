@@ -140,6 +140,7 @@ module Master
         when "/rebuild" then run_rebuild
         when "/context" then run_context
         when "/snapshot" then run_snapshot
+        when "/reap" then run_reap
         when "/verify" then run_verify
         when "/rails-pwa-audit" then run_rails_pwa_audit
         when "/rails-pwa-fix" then run_rails_pwa_fix
@@ -205,6 +206,12 @@ module Master
         else
           run_input(line)
         end
+      end
+
+      def run_reap
+        n = Master::Ground::HostBudget.reap_suspended_ruby!
+        msg = n.positive? ? "reap: #{n} suspended ruby process(es) killed" : "reap: no suspended ruby processes"
+        puts @refs.renderer.render(msg, mode: :dim)
       end
 
       def run_bounded_repo_scan(autofix: false)

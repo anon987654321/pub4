@@ -78,6 +78,40 @@ module Master
         "shell tip: if CLI dies mid-line, ksh runs the leftover text — use /scan or quote paths"
       end
 
+      def suspended_ruby_pids(user: ENV["USER"])
+        return [] unless user && !user.empty?
+
+        `ps x -o pid=,stat=,command= -U #{user} 2>/dev/null`.each_line.filter_map do |line|
+          pid, stat, *cmd = line.split
+          next unless stat&.include?("T")
+          next unless cmd.join(" ").match?(/bin\/cli|tts-worker/)
+
+          pid.to_i if pid&.match?(/\A\d+\z/)
+        end
+      rescue StandardError
+        []
+      end
+
+      def reap_suspended_ruby!(user: ENV["USER"], io: $stderr)
+        pids = suspended_ruby_pids(user:)
+        return 0 if pids.empty?
+
+        pids.each { |pid| Process.kill("KILL", pid) rescue Errno::ESRCH }
+        io.puts "host0: reaped #{pids.size} suspended ruby (#{pids.join(", ")})"
+        pids.size
+      end
+
+      def warn_or_reap_suspended!(io: $stderr)
+        pids = suspended_ruby_pids
+        return if pids.empty?
+
+        if constrained?
+          reap_suspended_ruby!(io:)
+        else
+          io.puts "cli: suspended ruby PIDs #{pids.join(", ")} — Ctrl-Z leaks memory; kill or /reap"
+        end
+      end
+
       def cli_tty?
         $stdin.tty?
       rescue StandardError

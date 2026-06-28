@@ -32,7 +32,7 @@ module Master
         },
         "orient" => {
           summary: "authority map and reading tiers",
-          detail: ["/orient", "/orient <soul|rules|limits|…>", "Pipeline map, TRACE.md pointer, constitution file index."]
+          detail: ["/orient", "/orient <soul|rules|limits|bootstrap|trace|…>", "Pipeline map, runtime bootstrap, constitution file index."]
         },
         "tools" => {
           summary: "list Reach agent tools and CLI media commands",
@@ -114,7 +114,7 @@ module Master
             "[--minutes N] [--critique] [--vision-critique] [--per-chunk-critique]",
             "[--auto-retry] [--max-retries N] [--lora ID]",
             "[--motion-stack preset1,preset2] [--motion-preset NAME] <prompt>",
-            "Standalone: bundle exec ruby bin/video (see REPLICATE.md).",
+            "Standalone: bundle exec ruby bin/video (see /orient replicate).",
           ]
         },
         "motion-dataset" => {
@@ -187,6 +187,10 @@ module Master
         "doctor" => {
           summary: "run bin/doctor health checks",
           detail: ["/doctor", "Provider keys, disk, git, web smoke hints."]
+        },
+        "reap" => {
+          summary: "kill suspended bin/cli and tts-worker processes",
+          detail: ["/reap", "Ctrl-Z leaves stopped ruby on 1GB hosts. Auto-reaps on boot when constrained."]
         },
         "rebuild" => {
           summary: "syntax-check lib/, save session, hot-restart CLI",

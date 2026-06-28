@@ -26,4 +26,18 @@ class TestHostBudget < Minitest::Test
       assert_nil Master::Ground::HostBudget.refuse_heavy_prompt?("/status")
     end
   end
+
+  def test_suspended_ruby_pids_parses_stopped_cli
+    fake = <<~PS
+      60670 Tpu /usr/local/bin/ruby bin/cli
+      22489 S ruby34: http://127.0.0.1:53187
+      63744 T /usr/local/bin/ruby34 tts-worker
+    PS
+    Master::Ground::HostBudget.stub(:`, fake) do
+      pids = Master::Ground::HostBudget.suspended_ruby_pids(user: "dev")
+      assert_includes pids, 60_670
+      assert_includes pids, 63_744
+      refute_includes pids, 22_489
+    end
+  end
 end
