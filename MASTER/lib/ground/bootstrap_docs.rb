@@ -53,7 +53,7 @@ module Master
           Ruby 3.3+ on OpenBSD. Style: frozen_string_literal, double quotes, no bare rescue, guard clauses, Result monad, files ≤300 lines, methods ≤10 lines.
           Shell on zsh/SSH: no sed/awk/grep/find — Ruby and zsh builtins. Scan before structural edits.
           VPS: dev@46.23.89.226, ruby34, bundle34. Operator: DEPLOY/OPERATOR.md. Full rule index: data/CANON.md (generated).
-        TEXT
+        TEXT,
       }.freeze
 
       def load_file_sections

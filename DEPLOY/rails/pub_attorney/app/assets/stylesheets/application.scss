@@ -1,8 +1,7 @@
 @use "pub4_stack" as *;
 
 :root {
-  --turbo-progress-bar-color: #1d4ed8;
-  --primary: #1d4ed8;
+  --turbo-progress-bar-color: var(--x-accent, #1d9bf0);
 }
 
 body {
@@ -26,7 +25,7 @@ main {
 .lawyer-list article {
   padding: 0.9rem 1rem;
   border: 1px solid var(--extra-light-grey);
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 
 .case-detail,
@@ -57,6 +56,6 @@ main {
   margin-top: 1rem;
   padding: 1rem;
   border: 1px dashed var(--extra-light-grey);
-  border-radius: 8px;
-  background: #f8fafc;
+  border-radius: var(--radius);
+  background: var(--x-surface-elevated, #16181c);
 }

@@ -1,0 +1,52 @@
+<%# Replace inner css-doodle block with the exact snippet from css-doodle.com when ready %>
+<div class="dating-heart-stage" aria-hidden="true">
+  <css-doodle class="dating-heart-doodle">
+    :doodle {
+      @grid: 18x1 / 100% 100%;
+      @size: 100% 100%;
+      background: transparent;
+      overflow: visible;
+      filter: blur(0.4px) contrast(1.35) saturate(1.2);
+    }
+
+    @place-cell: center;
+    @size: calc(92% - @i() * 2.1%);
+
+    clip-path: @shape(
+      points: 220;
+      x: 16 * sin(t) * sin(t) * sin(t);
+      y: -(13 * cos(t) - 5 * cos(2t) - 2 * cos(3t) - cos(4t));
+    );
+
+    background: linear-gradient(
+      105deg,
+      #00f0c8 0%,
+      #b8fff5 28%,
+      #ffffff 42%,
+      #ffb347 62%,
+      #ff5500 78%,
+      #ff2d2d 100%
+    );
+
+    opacity: calc(0.18 + (18 - @i()) * 0.045);
+    mix-blend-mode: screen;
+
+    transform:
+      rotate(calc((@i() - 9) * 1.4deg))
+      translateX(calc((@i() - 9) * 1.8px))
+      scale(calc(1 - @i() * 0.012));
+
+    animation: dating-heart-drift calc(2.1s + @i() * 0.11s) ease-in-out infinite alternate;
+    animation-delay: calc(@i() * -0.09s);
+
+    @keyframes dating-heart-drift {
+      to {
+        opacity: calc(0.28 + (18 - @i()) * 0.05);
+        transform:
+          rotate(calc((@i() - 9) * -2deg))
+          translateX(calc((@i() - 9) * -3px))
+          scale(calc(1.03 - @i() * 0.01));
+      }
+    }
+  </css-doodle>
+</div>

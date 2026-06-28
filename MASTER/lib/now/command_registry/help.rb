@@ -8,83 +8,83 @@ module Master
       HELP_TOPICS = {
         "run" => {
           summary: "natural-language task entry point",
-          detail: ["/run <task>", "Routes intent through the pipeline and chooses the handler."]
+          detail: ["/run <task>", "Routes intent through the pipeline and chooses the handler."],
         },
         "scan" => {
           summary: "deep-scan files or directories",
-          detail: ["/scan [--dry-run] [report-filter] [path]", "Always runs at deep depth (DEEP_SCAN_ONLY). Report filters only — not depth tiers: full, core, axioms, solid, critical, cosmetic (aliases: style, hygiene, perfection). Use --profile NAME for explicit selection. Dry-run reports findings without changes."]
+          detail: ["/scan [--dry-run] [report-filter] [path]", "Always runs at deep depth (DEEP_SCAN_ONLY). Report filters only — not depth tiers: full, core, axioms, solid, critical, cosmetic (aliases: style, hygiene, perfection). Use --profile NAME for explicit selection. Dry-run reports findings without changes."],
         },
         "self" => {
           summary: "scan MASTER itself",
-          detail: ["/self", "Runs the MASTER self-scan with stream output."]
+          detail: ["/self", "Runs the MASTER self-scan with stream output."],
         },
         "kernel" => {
           summary: "run kernel fold smoke test",
-          detail: ["/kernel", "Runs kernel/spec/kernel_smoke.rb — Effect → Constitution → World loop."]
+          detail: ["/kernel", "Runs kernel/spec/kernel_smoke.rb — Effect → Constitution → World loop."],
         },
         "fix" => {
           summary: "run or preview fixes for a target",
-          detail: ["/fix [path]", "/fix --dry-run [path]", "/fix preview [path]", "Background control lives under /watch on|off|status."]
+          detail: ["/fix [path]", "/fix --dry-run [path]", "/fix preview [path]", "Background control lives under /watch on|off|status."],
         },
         "status" => {
           summary: "show one-frame service and repo health",
-          detail: ["/status", "Shows mode line, service state, git divergence, fix loop state, last pipeline stage, review verdict, recent events."]
+          detail: ["/status", "Shows mode line, service state, git divergence, fix loop state, last pipeline stage, review verdict, recent events."],
         },
         "orient" => {
           summary: "authority map and reading tiers",
-          detail: ["/orient", "/orient <soul|rules|limits|bootstrap|trace|…>", "Pipeline map, runtime bootstrap, constitution file index."]
+          detail: ["/orient", "/orient <soul|rules|limits|bootstrap|trace|…>", "Pipeline map, runtime bootstrap, constitution file index."],
         },
         "tools" => {
           summary: "list Reach agent tools and CLI media commands",
-          detail: ["/tools", "Shows Builder TOOL_MAP, /postpro /repligen /video, and data/tools.yml."]
+          detail: ["/tools", "Shows Builder TOOL_MAP, /postpro /repligen /video, and data/tools.yml."],
         },
         "replay" => {
           summary: "replay operational event history",
-          detail: ["/replay [N]", "/replay turn", "/replay failures [N]", "/replay commit <sha>", "/replay evidence [N]", "/replay YYYY-MM-DD", "Reads runtime activity JSONL and turn traces."]
+          detail: ["/replay [N]", "/replay turn", "/replay failures [N]", "/replay commit <sha>", "/replay evidence [N]", "/replay YYYY-MM-DD", "Reads runtime activity JSONL and turn traces."],
         },
         "graph" => {
           summary: "show file importance via dependency graph",
-          detail: ["/graph <file>", "Blast radius, ranked neighbours, and indexed symbols for a path."]
+          detail: ["/graph <file>", "Blast radius, ranked neighbours, and indexed symbols for a path."],
         },
         "resync" => {
           summary: "repair local divergence from origin/main",
-          detail: ["/resync [--dry-run]", "Tags current HEAD, fetches, then resets and restarts unless dry-run is set."]
+          detail: ["/resync [--dry-run]", "Tags current HEAD, fetches, then resets and restarts unless dry-run is set."],
         },
         "tail" => {
           summary: "show recent event log lines",
-          detail: ["/tail [N] [pattern]", "Filters runtime event JSONL by count and optional pattern."]
+          detail: ["/tail [N] [pattern]", "Filters runtime event JSONL by count and optional pattern."],
         },
         "why" => {
           summary: "explain a law, rule, anti-pattern, or style key",
-          detail: ["/why <law|scan_rule|anti_pattern|style.key>"]
+          detail: ["/why <law|scan_rule|anti_pattern|style.key>"],
         },
         "propose" => {
           summary: "show next-action proposals",
-          detail: ["/propose", "Ranks likely next actions from session, git, phase, and violation signals."]
+          detail: ["/propose", "Ranks likely next actions from session, git, phase, and violation signals."],
         },
         "rules" => {
           summary: "list registered scan rules",
-          detail: ["/rules list", "Shows rule IDs, severity, and implementation class."]
+          detail: ["/rules list", "Shows rule IDs, severity, and implementation class."],
         },
         "edge-cases" => {
           summary: "generate edge-case test stubs",
-          detail: ["/edge-cases <ruby-file>", "Creates skipped tests for nil, empty, max, unicode, invalid JSON, truncation, and injection inputs."]
+          detail: ["/edge-cases <ruby-file>", "Creates skipped tests for nil, empty, max, unicode, invalid JSON, truncation, and injection inputs."],
         },
         "analyze-self" => {
           summary: "summarize recurring self-improvement signals",
-          detail: ["/analyze-self", "Reads the feedback ledger and reports repeated corrections, provider errors, and failing tools."]
+          detail: ["/analyze-self", "Reads the feedback ledger and reports repeated corrections, provider errors, and failing tools."],
         },
         "workflow" => {
           summary: "scan, preview fix, and deliberation (usually inferred)",
-          detail: ["Say: run this through MASTER, or: full pass on lib/foo.rb", "/workflow <path> — explicit escape hatch only."]
+          detail: ["Say: run this through MASTER, or: full pass on lib/foo.rb", "/workflow <path> — explicit escape hatch only."],
         },
         "rollback" => {
           summary: "revert the last recorded change",
-          detail: ["/rollback", "Uses the undo stack; pipeline failure rollback remains automatic."]
+          detail: ["/rollback", "Uses the undo stack; pipeline failure rollback remains automatic."],
         },
         "audit" => {
           summary: "show changed files this session",
-          detail: ["/audit", "Lists git diff line counts for changed files."]
+          detail: ["/audit", "Lists git diff line counts for changed files."],
         },
         "snapshot" => {
           summary: "publish MASTER + DEPLOY codebase snapshots",
@@ -92,20 +92,20 @@ module Master
             "/snapshot",
             "Writes full MASTER + DEPLOY snapshots to ~/Downloads.",
             "Tree listing then every file verbatim (no truncation).",
-            "Outputs: MASTER_snapshot.md and MASTER_snapshot_YYYY-MM-DD.md."
-          ]
+            "Outputs: MASTER_snapshot.md and MASTER_snapshot_YYYY-MM-DD.md.",
+          ],
         },
         "grep" => {
           summary: "search session history",
-          detail: ["/grep <pattern>", "Returns matching user/master turns from the current session."]
+          detail: ["/grep <pattern>", "Returns matching user/master turns from the current session."],
         },
         "watch" => {
           summary: "control background watching",
-          detail: ["/watch on", "/watch off", "/watch status"]
+          detail: ["/watch on", "/watch off", "/watch status"],
         },
         "help" => {
           summary: "show command summaries or details",
-          detail: ["/help", "/help <command>"]
+          detail: ["/help", "/help <command>"],
         },
         "video" => {
           summary: "long-form cinematic video via VideoChain",
@@ -115,7 +115,7 @@ module Master
             "[--auto-retry] [--max-retries N] [--lora ID]",
             "[--motion-stack preset1,preset2] [--motion-preset NAME] <prompt>",
             "Standalone: bundle exec ruby bin/video (see /orient replicate).",
-          ]
+          ],
         },
         "motion-dataset" => {
           summary: "bootstrap Motion LoRA training clips",
@@ -123,7 +123,7 @@ module Master
             "/motion-dataset --preset slow_dolly_push_in --subject \"character description\"",
             "[--clips 12] [--backend kling] [--lora ID]",
             "Presets: data/comfyui/motion_lora_presets.yml",
-          ]
+          ],
         },
         "lora-train" => {
           summary: "train a character Flux LoRA from photos and videos",
@@ -133,7 +133,7 @@ module Master
             "[--local] writes ostris/ai-toolkit config + run_train.sh (no Replicate).",
             "[--ai-toolkit PATH] [--steps 1000] [--rank 16] [--use-all-frames] [--prepare-only]",
             "Standalone: bundle exec ruby bin/video lora-train …",
-          ]
+          ],
         },
         "social-sim" => {
           summary: "closed synthetic inbox sim (NPC personas, metrics, no real messengers)",
@@ -142,83 +142,83 @@ module Master
             "/social-sim tick --hours 24 [--auto ghost|busy|not_interested]",
             "/social-sim tui | stats | dashboard | visuals [--lora basicfeatures/ragnhild]",
             "Standalone: bundle exec ruby bin/social_sim help",
-          ]
+          ],
         },
         "photograph" => {
           summary: "Flux photo + kodak_portra postpro",
-          detail: ["/photograph <seed>", "Attach a reference image in web chat for vision-guided refinement."]
+          detail: ["/photograph <seed>", "Attach a reference image in web chat for vision-guided refinement."],
         },
         "prompt" => {
           summary: "refine a generation prompt (photo or video)",
-          detail: ["/prompt <seed>", "/prompt photo <seed>", "/prompt video <seed>"]
+          detail: ["/prompt <seed>", "/prompt photo <seed>", "/prompt video <seed>"],
         },
         "repligen" => {
           summary: "Replicate image/video generation CLI",
-          detail: ["/repligen generate <model> <prompt>", "/repligen sync|search|stats …"]
+          detail: ["/repligen generate <model> <prompt>", "/repligen sync|search|stats …"],
         },
         "postpro" => {
           summary: "film-stock post-processing on images",
-          detail: ["/postpro --input path --output path --preset portrait --stock kodak_portra"]
+          detail: ["/postpro --input path --output path --preset portrait --stock kodak_portra"],
         },
         "domain" => {
           summary: "inspect or sync a pub4 subdomain cluster",
-          detail: ["/domain <name>", "Names: marketplace playlist takeaway tv maps amber hjerterom bsdports brgen …"]
+          detail: ["/domain <name>", "Names: marketplace playlist takeaway tv maps amber hjerterom bsdports brgen …"],
         },
         "music" => {
           summary: "open Radio Bergen or Dilla pocket on the face",
-          detail: ["/music radio", "/music dilla", "Infer: say 'play radio' or 'dilla pocket'."]
+          detail: ["/music radio", "/music dilla", "Infer: say 'play radio' or 'dilla pocket'."],
         },
         "review" => {
           summary: "multi-reviewer code review on a path or diff",
-          detail: ["/review <path>", "/review --staged", "Runs reviewer personas against the target."]
+          detail: ["/review <path>", "/review --staged", "Runs reviewer personas against the target."],
         },
         "critique" => {
           summary: "single-pass critique of code or a change set",
-          detail: ["/critique <path>", "Lighter than /review — one structured pass."]
+          detail: ["/critique <path>", "Lighter than /review — one structured pass."],
         },
         "model" => {
           summary: "show or switch the active LLM model",
-          detail: ["/model", "/model <name>", "Uses routing from data/models.yml."]
+          detail: ["/model", "/model <name>", "Uses routing from data/models.yml."],
         },
         "memory" => {
           summary: "read or write durable operator memory records",
-          detail: ["/memory list", "/memory show <key>", "/memory write <key> …"]
+          detail: ["/memory list", "/memory show <key>", "/memory write <key> …"],
         },
         "doctor" => {
           summary: "run bin/doctor health checks",
-          detail: ["/doctor", "Provider keys, disk, git, web smoke hints."]
+          detail: ["/doctor", "Provider keys, disk, git, web smoke hints."],
         },
         "reap" => {
           summary: "kill suspended bin/cli and tts-worker processes",
-          detail: ["/reap", "Ctrl-Z leaves stopped ruby on 1GB hosts. Auto-reaps on boot when constrained."]
+          detail: ["/reap", "Ctrl-Z leaves stopped ruby on 1GB hosts. Auto-reaps on boot when constrained."],
         },
         "rebuild" => {
           summary: "syntax-check lib/, save session, hot-restart CLI",
-          detail: ["/rebuild", "Web: touches web/tmp/restart.txt when run from MASTER/web tree."]
+          detail: ["/rebuild", "Web: touches web/tmp/restart.txt when run from MASTER/web tree."],
         },
         "gateway" => {
           summary: "show multi-channel gateway status",
-          detail: ["/gateway", "cli web irc matrix api adapter states."]
+          detail: ["/gateway", "cli web irc matrix api adapter states."],
         },
         "shell" => {
           summary: "run one guarded shell command",
-          detail: ["/shell <command>", "Uses Reach::Shell with governor tier checks."]
+          detail: ["/shell <command>", "Uses Reach::Shell with governor tier checks."],
         },
         "plan" => {
           summary: "read or publish the active implementation plan",
-          detail: ["/plan", "/plan show", "Ground::ActivePlan markdown in repo."]
+          detail: ["/plan", "/plan show", "Ground::ActivePlan markdown in repo."],
         },
         "clear" => {
           summary: "clear the current session transcript",
-          detail: ["/clear", "Does not undo file changes."]
+          detail: ["/clear", "Does not undo file changes."],
         },
         "save" => {
           summary: "persist session to disk",
-          detail: ["/save", "Writes session JSON under runtime/."]
+          detail: ["/save", "Writes session JSON under runtime/."],
         },
         "diag" => {
           summary: "compact diagnostics snapshot",
-          detail: ["/diag", "Breaker, homeostat, last errors."]
+          detail: ["/diag", "Breaker, homeostat, last errors."],
         },
       }.freeze
 

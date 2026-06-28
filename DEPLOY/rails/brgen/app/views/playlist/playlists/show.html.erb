@@ -1,124 +1,71 @@
 <% content_for :title, @playlist.name %>
 
-<div class="page-header" role="banner" aria-label="Playlist header">
-  <h1><%= @playlist.name %></h1>
-  <nav role="navigation" aria-label="Playlist actions">
-    <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-      <div class="cluster">
-        <%= link_to "Edit", edit_playlist_playlist_path(@playlist), class: "btn btn-ghost btn-sm" %>
-        <%= button_to "Delete", playlist_playlist_path(@playlist), method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger btn-sm" %>
-      </div>
-    <% end %>
-  </nav>
-</div>
-
-<article role="article" aria-label="Playlist details">
-  <p><%= @playlist.description %></p>
-  <p class="dim"><%= @playlist.tracks_count %> tracks · <%= @playlist.plays_count %> plays</p>
-  <% if @playlist.collaborative? || @playlist.collaborations.any? %>
-    <p class="dim">Collaborative</p>
-  <% end %>
-</article>
-
-<% if authenticated? %>
-<section role="region" aria-label="Collaborators">
-  <h2>Collaborators</h2>
-  <% if @playlist.collaborations.any? %>
-    <% @playlist.collaborations.includes(:user).each do |c| %>
-      <span class="dim"><%= c.user&.username || c.user&.email %> (<%= c.role %>)</span>
-      <% if Current.user == @playlist.user || c.user == Current.user %>
-        <%= button_to "Remove", playlist_playlist_collaboration_path(@playlist, c), method: :delete, class: "btn btn-ghost btn-sm" %>
-      <% end %>
-    <% end %>
-  <% else %>
-    <p class="dim">No collaborators yet.</p>
-  <% end %>
-
-  <% if Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor]) %>
-    <div class="form-wrap">
-      <%= form_with url: playlist_playlist_collaborations_path(@playlist), method: :post do |f| %>
-        <div class="field field--row">
-          <%= f.text_field :username, placeholder: "username", class: "field--grow" %>
-          <%= f.select :role, %w[editor viewer] %>
-          <%= f.submit "Add collaborator", class: "btn btn-primary btn-sm" %>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
-</section>
-<% end %>
-
-<% if authenticated? %>
-<section role="region" aria-label="Dilla sketches">
-  <h2>Dilla sketches / beats</h2>
-  <p class="dim">Collaborative beat patterns (pat/seq/aud/mix state). Edit in the dilla lab, paste JSON here to persist for the group.</p>
-  <% if @dilla_sketches.any? %>
-    <% @dilla_sketches.each do |sk| %>
-      <div>
-        <strong><%= sk.name %></strong> by <%= sk.user&.display_name || "anon" %>
-        <% if sk.lab_url.present? %>
-          <a href="<%= sk.lab_url %>" target="_blank" class="btn btn-ghost btn-sm">open in lab</a>
-        <% end %>
-        <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-          <%= button_to "Remove", playlist_playlist_dilla_sketch_path(@playlist, sk), method: :delete, class: "btn btn-ghost btn-sm" %>
-        <% end %>
-      </div>
-      <% if sk.notes.present? %><p class="dim"><%= sk.notes %></p><% end %>
-    <% end %>
-  <% else %>
-    <p class="dim">No sketches yet. Create one by pasting state from dilla.html lab.</p>
-  <% end %>
-
-  <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-    <div class="form-wrap">
-      <%= form_with url: playlist_playlist_dilla_sketches_path(@playlist), scope: :playlist_dilla_sketch do |f| %>
-        <div class="field"><%= f.text_field :name, placeholder: "Beat name (e.g. dusty flip)", required: true %></div>
-        <div class="field"><%= f.text_area :state, placeholder: 'Paste JSON state from lab (e.g. {"pat_":{...},"aud_":{...},"mix_":{...}} or full from clipboard)', rows: 3, data: { controller: "char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
-        <div class="field"><%= f.text_area :notes, placeholder: "notes / instructions (optional)", rows: 2, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
-        <div class="field"><%= f.submit "Save sketch for collab", class: "btn btn-primary btn-sm" %></div>
-      <% end %>
-    </div>
-  <% end %>
-</section>
-<% end %>
-
-<% @tracks.each do |pt| %>
-  <article
-    data-track-id="<%= pt.track.id %>"
-    data-controller="swipe"
-    data-swipe-listen-url-value="<%= playlist_listens_path(track_id: pt.track.id) %>"
-    data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp"
-    class="track-row"
-  >
-    <div>
-      <strong><%= pt.track.title %></strong> — <%= pt.track.artist %>
-      <span class="dim"> · <%= pt.track.duration_formatted %></span>
-    </div>
-    <% if authenticated? && (Current.user == pt.user || Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-      <%= button_to "Remove", playlist_playlist_track_path(@playlist, pt), method: :delete, class: "btn btn-ghost btn-sm" %>
-    <% end %>
-  </article>
-<% end %>
+<%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks %>
 
 <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-  <div class="section-divider">
-    <p class="section-heading">Add a track</p>
-    <div class="form-wrap form-wrap--flush">
-      <%= form_with url: playlist_playlist_tracks_path(@playlist) do |f| %>
-        <div class="field"><%= f.text_field :title, placeholder: "Title" %></div>
-        <div class="field"><%= f.text_field :artist, placeholder: "Artist" %></div>
-        <div class="field"><%= f.url_field :source_url, placeholder: "URL (optional)" %></div>
-        <div class="field"><%= f.submit "Add", class: "btn btn-primary btn-sm" %></div>
-      <% end %>
+  <section class="playlist-admin" aria-label="Playlist management">
+    <nav class="cluster" role="navigation" aria-label="Playlist actions">
+      <%= link_to "Edit", edit_playlist_playlist_path(@playlist), class: "btn btn-ghost btn-sm" %>
+      <%= button_to "Delete", playlist_playlist_path(@playlist), method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger btn-sm" %>
+    </nav>
+
+    <div class="section-divider">
+      <p class="section-heading">Add a track</p>
+      <div class="form-wrap form-wrap--flush">
+        <%= form_with url: playlist_playlist_tracks_path(@playlist) do |f| %>
+          <div class="field"><%= f.text_field :title, placeholder: "Title" %></div>
+          <div class="field"><%= f.text_field :artist, placeholder: "Artist" %></div>
+          <div class="field"><%= f.url_field :source_url, placeholder: "URL (optional)" %></div>
+          <div class="field"><%= f.submit "Add", class: "btn btn-primary btn-sm" %></div>
+        <% end %>
+      </div>
     </div>
-  </div>
+  </section>
 <% end %>
 
 <% if authenticated? %>
-<section role="region" aria-label="Listening party">
-  <h2>Listening party</h2>
-  <p class="dim">Start or join a real-time synced listening session with embedded player and chat.</p>
-  <%= button_to "Start party", "#", class: "btn btn-primary btn-sm", disabled: true %>
-  <span class="dim"> (full cable sync + party model planned for a follow-up)</span>
-</section>
+  <details class="playlist-details">
+    <summary>Collaborators &amp; dilla sketches</summary>
+    <section role="region" aria-label="Collaborators">
+      <h2>Collaborators</h2>
+      <% if @playlist.collaborations.any? %>
+        <% @playlist.collaborations.includes(:user).each do |c| %>
+          <span class="dim"><%= c.user&.username || c.user&.email %> (<%= c.role %>)</span>
+          <% if Current.user == @playlist.user || c.user == Current.user %>
+            <%= button_to "Remove", playlist_playlist_collaboration_path(@playlist, c), method: :delete, class: "btn btn-ghost btn-sm" %>
+          <% end %>
+        <% end %>
+      <% else %>
+        <p class="dim">No collaborators yet.</p>
+      <% end %>
+
+      <% if Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor]) %>
+        <div class="form-wrap">
+          <%= form_with url: playlist_playlist_collaborations_path(@playlist), method: :post do |f| %>
+            <div class="field field--row">
+              <%= f.text_field :username, placeholder: "username", class: "field--grow" %>
+              <%= f.select :role, %w[editor viewer] %>
+              <%= f.submit "Add collaborator", class: "btn btn-primary btn-sm" %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </section>
+
+    <section role="region" aria-label="Dilla sketches">
+      <h2>Dilla sketches / beats</h2>
+      <% if @dilla_sketches.any? %>
+        <% @dilla_sketches.each do |sk| %>
+          <div>
+            <strong><%= sk.name %></strong> by <%= sk.user&.display_name || "anon" %>
+            <% if sk.lab_url.present? %>
+              <a href="<%= sk.lab_url %>" target="_blank" class="btn btn-ghost btn-sm">open in lab</a>
+            <% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="dim">No sketches yet.</p>
+      <% end %>
+    </section>
+  </details>
 <% end %>

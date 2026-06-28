@@ -206,7 +206,7 @@ module Master
             tiers = models.fetch("models", {})
             {
               strong: first_model_id(tiers["strong"]),
-              fast: first_model_id(tiers["fast"] || tiers["cheap"] || tiers["default"])
+              fast: first_model_id(tiers["fast"] || tiers["cheap"] || tiers["default"]),
             }
           rescue StandardError
             { strong: nil, fast: nil }

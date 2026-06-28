@@ -12,7 +12,7 @@ module Master
           ENV["MASTER_ENV_FILE"],
           File.expand_path("~/.config/master/env"),
           File.expand_path("~/.master.env"),
-          File.expand_path(".master/env", root)
+          File.expand_path(".master/env", root),
         ].compact.uniq
       end
 

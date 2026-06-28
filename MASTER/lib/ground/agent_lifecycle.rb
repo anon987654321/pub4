@@ -12,7 +12,7 @@ module Master
         verifying: %i[running complete failed cancelled],
         complete: [],
         failed: %i[planned cancelled],
-        cancelled: []
+        cancelled: [],
       }.freeze
 
       Event = Struct.new(:from, :to, :reason, :at, keyword_init: true)

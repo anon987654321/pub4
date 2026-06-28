@@ -14,7 +14,7 @@ module Master
         [:william, 26],
         [:wayne, 24],
         [:finn, 14],
-        [:osman, 10]
+        [:osman, 10],
       ].freeze
 
       STYLES = {
@@ -27,7 +27,7 @@ module Master
         clear: { rate: "+12%", pitch: "+8Hz" },
         amused: { rate: "+15%", pitch: "+16Hz" },
         deadpan: { rate: "+6%", pitch: "+4Hz" },
-        chipper: { rate: "+20%", pitch: "+28Hz" }
+        chipper: { rate: "+20%", pitch: "+28Hz" },
       }.freeze
 
       FAST_STYLES = %i[chipper energetic brief amused clear question].freeze

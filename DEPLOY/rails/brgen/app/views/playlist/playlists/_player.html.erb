@@ -1,0 +1,123 @@
+<%# locals: (playlist:, tracks:, active_track: nil, playlist_name: nil, tracks_count: nil, plays_count: nil) %>
+<% rows = tracks.map { |entry| entry.is_a?(Playlist::Track) ? entry : entry.track } %>
+<% active = active_track || rows.first %>
+<% heading = playlist_name || playlist.name %>
+<% total_tracks = tracks_count || playlist.tracks_count %>
+<% total_plays = plays_count || playlist.plays_count %>
+<% active_src = active&.audio_file&.attached? ? url_for(active.audio_file) : nil %>
+<% active_art = active&.artwork&.attached? ? url_for(active.artwork) : nil %>
+
+<div
+  class="playlist-app"
+  data-controller="playlist-player"
+  data-playlist-player-src-value="<%= active_src %>"
+  data-playlist-player-title-value="<%= active&.title %>"
+  data-playlist-player-artist-value="<%= active&.artist %>"
+  data-playlist-player-artwork-value="<%= active_art %>"
+  data-playlist-player-track-id-value="<%= active&.id %>"
+>
+  <header class="playlist-top">
+    <div>
+      <p class="playlist-top__eyebrow">brgen</p>
+      <h1 class="playlist-top__title"><%= heading %></h1>
+    </div>
+    <% if authenticated? %>
+      <%= link_to "New", new_playlist_playlist_path, class: "playlist-top__action" %>
+    <% end %>
+  </header>
+
+  <section class="playlist-stage" aria-label="Now playing">
+    <div class="playlist-artwork-wrap">
+      <% if active_art %>
+        <%= image_tag active_art, alt: active.title, class: "playlist-artwork", data: { playlist_player_target: "artwork" } %>
+      <% else %>
+        <div class="playlist-artwork playlist-artwork--fallback" aria-hidden="true" data-playlist-player-target="artwork"></div>
+      <% end %>
+    </div>
+
+    <canvas
+      class="playlist-waveform-canvas"
+      data-playlist-player-target="waveform"
+      data-action="click->playlist-player#waveformScrub"
+      role="img"
+      aria-label="Waveform"
+    ></canvas>
+
+    <div class="playlist-now-playing">
+      <h2 class="playlist-now-playing__title" data-playlist-player-target="title"><%= active&.title || "Select a track" %></h2>
+      <p class="playlist-now-playing__artist" data-playlist-player-target="artist"><%= active&.artist.presence || "Unknown artist" %></p>
+      <p class="playlist-now-playing__meta dim">
+        <%= total_tracks %> tracks · <%= total_plays %> plays
+        <% if active&.duration_formatted.present? %> · <%= active.duration_formatted %><% end %>
+      </p>
+    </div>
+  </section>
+
+  <footer class="playlist-transport" aria-label="Playback controls">
+    <button
+      type="button"
+      class="playlist-transport__play"
+      data-playlist-player-target="playBtn"
+      data-action="playlist-player#toggle"
+      aria-pressed="false"
+      <%= "disabled" unless active_src %>
+    >Play</button>
+
+    <span class="playlist-transport__time" data-playlist-player-target="currentTime">0:00</span>
+
+    <div
+      class="playlist-scrub"
+      data-playlist-player-target="scrub"
+      data-action="click->playlist-player#scrub"
+      role="slider"
+      aria-label="Seek"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+    >
+      <div class="playlist-scrub__fill" data-playlist-player-target="scrubFill"></div>
+    </div>
+
+    <span class="playlist-transport__time" data-playlist-player-target="duration">0:00</span>
+  </footer>
+
+  <% if active_src %>
+    <%= audio_tag active_src, data: { playlist_player_target: "audio" }, preload: "metadata" %>
+  <% else %>
+    <audio data-playlist-player-target="audio" preload="metadata"></audio>
+  <% end %>
+
+  <section class="playlist-queue" aria-label="Track queue">
+    <h2 class="playlist-queue__heading">Queue</h2>
+    <% rows.each_with_index do |track, index| %>
+      <% track_src = track.audio_file.attached? ? url_for(track.audio_file) : nil %>
+      <% track_art = track.artwork.attached? ? url_for(track.artwork) : nil %>
+      <button
+        type="button"
+        class="playlist-queue__item<%= " is-active" if track == active %>"
+        data-playlist-player-target="queueItem"
+        data-action="playlist-player#load"
+        data-playlist-player-src-param="<%= track_src %>"
+        data-playlist-player-title-param="<%= track.title %>"
+        data-playlist-player-artist-param="<%= track.artist %>"
+        data-playlist-player-artwork-param="<%= track_art %>"
+        data-playlist-player-track-id-param="<%= track.id %>"
+        <%= "disabled" unless track_src %>
+      >
+        <span class="playlist-queue__index"><%= index + 1 %></span>
+        <span class="playlist-queue__art" aria-hidden="true">
+          <% if track_art %>
+            <%= image_tag track_art, alt: "" %>
+          <% end %>
+        </span>
+        <span class="playlist-queue__meta">
+          <strong><%= track.title %></strong>
+          <span><%= track.artist.presence || "Unknown artist" %> · <%= track.duration_formatted %></span>
+        </span>
+      </button>
+    <% end %>
+    <% if tracks.empty? %>
+      <p class="dim">No tracks in this playlist yet.</p>
+    <% end %>
+  </section>
+</div>

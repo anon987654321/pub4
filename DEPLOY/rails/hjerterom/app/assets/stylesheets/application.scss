@@ -1,17 +1,17 @@
 @use "pub4_stack" as *;
 
 :root {
-  --turbo-progress-bar-color: #e11d48;
-  --primary: #e11d48;
-  --primary-dark: #9f1239;
-  --text: #111827;
-  --text-dim: #64748b;
-  --panel: rgb(255 255 255 / 0.82);
+  --turbo-progress-bar-color: var(--x-accent, #1d9bf0);
+  --app-accent: #e11d48;
+  --app-accent-dark: #9f1239;
+  --text: var(--black);
+  --text-dim: var(--dark-grey);
+  --panel: rgba(0, 0, 0, 0.85);
 }
 
 body {
   color: var(--text);
-  background: #f8fafc;
+  background: var(--white);
 }
 
 main {
@@ -21,16 +21,15 @@ main {
 }
 
 nav {
-  background: rgb(255 255 255 / 0.92);
-  border-bottom: 1px solid #e2e8f0;
-  backdrop-filter: blur(18px);
+  background: rgba(0, 0, 0, 0.85);
+  border-bottom: 1px solid var(--extra-light-grey);
+  backdrop-filter: blur(12px);
 }
 
 nav.nav-visible,
 nav:focus-within,
 nav:hover {
   transform: translateY(0);
-  border-bottom-color: #cbd5e1;
 }
 
 nav a {
@@ -61,7 +60,7 @@ nav .brand svg {
 
 body.map-home-page {
   overflow: hidden;
-  background: #e2e8f0;
+  background: var(--white);
 }
 
 .map-home-page nav {
@@ -96,7 +95,7 @@ body.map-home-page {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: #e2e8f0;
+  background: var(--white);
   z-index: 0;
 }
 
@@ -147,8 +146,8 @@ body.map-home-page {
 .map-home-nav a {
   padding: 0.28rem 0.55rem;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.78);
-  border: 1px solid rgb(148 163 184 / 0.35);
+  background: var(--x-surface-elevated, #16181c);
+  border: 1px solid var(--extra-light-grey);
   color: var(--text);
   font-size: 0.72rem;
   font-weight: 600;
@@ -157,7 +156,7 @@ body.map-home-page {
 }
 
 .map-home-nav a:hover {
-  background: rgb(255 255 255 / 0.95);
+  background: var(--hover);
 }
 
 .map-home-dock {
@@ -170,8 +169,8 @@ body.map-home-page {
   padding: 0.75rem 0.9rem;
   border-radius: 1rem;
   background: var(--panel);
-  border: 1px solid rgb(255 255 255 / 0.7);
-  box-shadow: 0 10px 40px rgb(15 23 42 / 0.1);
+  border: 1px solid var(--extra-light-grey);
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.35);
   backdrop-filter: blur(14px);
 }
 
@@ -219,13 +218,13 @@ body.map-home-page {
   padding: 0.7rem 0.85rem;
   border-radius: 0.75rem;
   color: var(--text);
-  background: rgb(255 255 255 / 0.92);
-  box-shadow: 0 8px 24px rgb(15 23 42 / 0.08);
+  background: var(--x-surface-elevated, #16181c);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
   text-decoration: none;
 }
 
 .map-home-pin-card span {
-  color: var(--primary);
+  color: var(--app-accent);
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -311,7 +310,7 @@ body.map-home-page {
 }
 
 .map-popup a {
-  color: var(--primary);
+  color: var(--app-accent);
   font-weight: 700;
   text-decoration: none;
 }
@@ -347,9 +346,9 @@ body.map-home-page {
 }
 
 .btn-primary {
-  background: var(--primary);
-  color: #fff;
-  border-radius: 999px;
+  background: var(--black);
+  color: var(--white);
+  border-radius: var(--x-radius-pill, 9999px);
 }
 
 .btn-danger {
@@ -358,9 +357,9 @@ body.map-home-page {
 }
 
 .btn-ghost {
-  color: var(--primary-dark);
-  background: rgb(255 255 255 / 0.72);
-  border: 1px solid rgb(225 29 72 / 0.18);
+  color: var(--black);
+  background: transparent;
+  border: 1px solid var(--extra-light-grey);
 }
 
 .btn-sm {

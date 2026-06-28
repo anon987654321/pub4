@@ -7,7 +7,7 @@ module Master
         /sk-[A-Za-z0-9_\-]{16,}/,
         /sk-ant-[A-Za-z0-9_\-]{16,}/,
         /Bearer\s+[A-Za-z0-9_\-\.]{16,}/i,
-        /\b[A-Za-z0-9]{32,}\b/
+        /\b[A-Za-z0-9]{32,}\b/,
       ].freeze
 
       SENSITIVE_KEYS = /

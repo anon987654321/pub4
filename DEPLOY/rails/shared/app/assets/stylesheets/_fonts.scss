@@ -1,0 +1,24 @@
+// JetBrainsMono Nerd Font — nvim stack; local install, self-hosted /fonts/, CDN fallback
+$nerd-cdn: "https://cdn.jsdelivr.net/gh/Nick2bad4u/nerd-fonts-woff2@v1.0.5/fonts/woff2/JetBrainsMono/Ligatures";
+
+@font-face {
+  font-family: "JetBrainsMono Nerd Font";
+  src: local("JetBrainsMono Nerd Font"),
+       local("JetBrainsMonoNerdFont-Regular"),
+       url("/fonts/JetBrainsMonoNerdFont-Regular.woff2") format("woff2"),
+       url("#{$nerd-cdn}/Regular/JetBrainsMonoNerdFont-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrainsMono Nerd Font";
+  src: local("JetBrainsMono Nerd Font Bold"),
+       local("JetBrainsMonoNerdFont-Bold"),
+       url("/fonts/JetBrainsMonoNerdFont-Bold.woff2") format("woff2"),
+       url("#{$nerd-cdn}/Bold/JetBrainsMonoNerdFont-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

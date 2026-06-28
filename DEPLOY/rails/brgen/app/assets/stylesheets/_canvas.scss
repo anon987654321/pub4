@@ -75,6 +75,6 @@
 .splash .tagline { color: var(--text-dim); font-size: clamp(.8rem, 2.5vw, .95rem); margin: 0 0 1.8rem; max-width: 30em; line-height: 1.5; }
 .splash .chips { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; margin-bottom: 1.5rem; }
 .splash .chip { padding: .25rem .7rem; border: 1px solid var(--border); font: 9px/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); }
-.splash .hint { color: rgba(220,220,220,.20); font-size: .7rem; letter-spacing: .04em; }
+.splash .hint { color: var(--text-dim); font-size: .7rem; letter-spacing: .04em; }
 .splash a { color: inherit; }
 

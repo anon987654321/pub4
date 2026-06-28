@@ -261,7 +261,6 @@ module Master
   def self.no_api_key_message
     if keyless_llm_enabled?
       return "No API keys configured — routing via free browser chat (web-chat:grok). " \
-        "Log into grok.com, chatgpt.com, or kimi.com once in the headless profile, " \
         "or set OPENROUTER_API_KEY / XAI_API_KEY in ~/.config/master/env."
     end
     "I'm not wired to any LLM yet. Set OPENROUTER_API_KEY or XAI_API_KEY in " \

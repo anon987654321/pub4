@@ -26,7 +26,7 @@ module Master
 
       def search(class_name:, near_text:, limit: 5)
         body = {
-          query: "{ Get { #{class_name}(limit: #{limit}, nearText: { concepts: [#{near_text.to_json}] }) { _additional { distance } } } } }"
+          query: "{ Get { #{class_name}(limit: #{limit}, nearText: { concepts: [#{near_text.to_json}] }) { _additional { distance } } } } }",
         }
         post("/v1/graphql", body)
       end

@@ -1,0 +1,87 @@
+/* Takeaway — DoorDash urgency + Foodora/Wolt restaurant discovery */
+body.vertical-takeaway {
+  --food-dash: #ff3008;
+  --foodora: #df1061;
+  --food-eta-bg: #fff4f0;
+  --food-card-radius: 12px;
+}
+
+body.vertical-takeaway .page-header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+body.vertical-takeaway .deal-search,
+body.vertical-takeaway form[role="search"] {
+  background: var(--x-search-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+}
+
+body.vertical-takeaway .deal-search input,
+body.vertical-takeaway input[type="search"] {
+  border-radius: var(--radius-pill);
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+body.vertical-takeaway select {
+  border-radius: var(--radius-pill);
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+body.vertical-takeaway article,
+body.vertical-takeaway .restaurant-card {
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+body.vertical-takeaway article:hover,
+body.vertical-takeaway .restaurant-card:hover {
+  background: var(--hover-subtle);
+}
+
+body.vertical-takeaway .btn,
+body.vertical-takeaway .btn-primary {
+  background: linear-gradient(90deg, var(--food-dash), var(--foodora));
+  color: #fff;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+}
+
+body.vertical-takeaway .live-badge,
+body.vertical-takeaway .eta-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--food-eta-bg);
+  color: var(--food-dash);
+}
+
+body.vertical-takeaway .chip {
+  border-color: var(--foodora);
+  color: var(--foodora);
+}
+
+body.vertical-takeaway .order-status {
+  position: sticky;
+  bottom: calc(70px + var(--safe-bottom));
+  margin: 16px;
+  padding: 14px 16px;
+  border-radius: var(--food-card-radius);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}

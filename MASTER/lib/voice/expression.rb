@@ -172,12 +172,12 @@ end,
 
       STYLE_RATE_SCALE = {
         whispered: 1.35, ethereal: 1.22, dramatic: 1.18, calm: 1.08,
-        energetic: 0.82, brief: 0.88, intense: 0.90, storyteller: 1.05
+        energetic: 0.82, brief: 0.88, intense: 0.90, storyteller: 1.05,
       }.freeze
 
       CONSONANT_SHAPES = {
         "m" => "M", "b" => "M", "p" => "M",
-        "f" => "M", "v" => "M", "w" => "O"
+        "f" => "M", "v" => "M", "w" => "O",
       }.freeze
 
       def viseme_hints(text)
@@ -255,7 +255,7 @@ end
         andrew: { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
         pernille: { breath: 1.05, saccade: 0.22, pulse_floor: 0.11, blink_ms: 3100 },
         ezinne: { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
-        wayne: { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
+        wayne: { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 },
       }.freeze
 
       def idle_signature_for(voice)
@@ -273,7 +273,7 @@ end
       VERTICAL_BIASES = {
         marketplace: { arousal: 0.08, pressure: 0.14, valence: -0.05 },
         dating: { arousal: -0.06, valence: 0.18, attention: 0.12 },
-        tv: { arousal: 0.04, scanline: 0.22 }
+        tv: { arousal: 0.04, scanline: 0.22 },
       }.freeze
 
       COUNCIL_PERSONA_EXPRESSION = {
@@ -282,7 +282,7 @@ end
         "Pragmatist" => { arousal: 0.48, valence: 0.05, attention: 0.6, pressure: 0.42 },
         "Security" => { arousal: 0.7, valence: -0.22, attention: 0.85, pressure: 0.72 },
         "User" => { arousal: 0.4, valence: 0.2, attention: 0.55, pressure: 0.35 },
-        "Mentor" => { arousal: 0.36, valence: 0.28, attention: 0.5, pressure: 0.3 }
+        "Mentor" => { arousal: 0.36, valence: 0.28, attention: 0.5, pressure: 0.3 },
       }.freeze
 
       def for_vertical(app)

@@ -1,12 +1,27 @@
+@use "x_base" as x;
+
 :root {
-  --color-black: #000;
-  --color-white: #fff;
-  --color-extra-light-grey: #f0f0f0;
+  @include x.x-dark-tokens;
+  color-scheme: dark;
+  --color-black: var(--x-bg);
+  --color-white: var(--x-text);
+  --color-extra-light-grey: var(--x-border);
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
   --space-lg: 1.5rem;
   --space-xl: 2rem;
-  --font-size-base: 0.875rem;
-  --line-height-base: 1.5;
+  --font-size-base: var(--x-font-size);
+  --line-height-base: calc(20 / 15);
+  --app-accent: #d97706;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    @include x.x-light-tokens;
+    color-scheme: light;
+    --color-black: var(--x-bg);
+    --color-white: var(--x-text);
+    --color-extra-light-grey: var(--x-border);
+  }
 }

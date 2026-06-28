@@ -7,7 +7,7 @@ module Master
       DEFAULTS = {
         "transient" => { "strategy" => "exponential_backoff", "max_retries" => 3 },
         "permanent" => { "strategy" => "fail_fast", "max_retries" => 0 },
-        "ambiguous" => { "strategy" => "human_intervention", "max_retries" => 0, "checkpoint_before" => true }
+        "ambiguous" => { "strategy" => "human_intervention", "max_retries" => 0, "checkpoint_before" => true },
       }.freeze
 
       def initialize(rules_data: nil)
@@ -55,7 +55,7 @@ module Master
         {
           "transient" => build_category_re("transient", Master::Loop::Constants::TRANSIENT_RE),
           "permanent" => build_category_re("permanent", Master::Loop::Constants::PERMANENT_RE),
-          "ambiguous" => build_category_re("ambiguous", Master::Loop::Constants::AMBIGUOUS_RE)
+          "ambiguous" => build_category_re("ambiguous", Master::Loop::Constants::AMBIGUOUS_RE),
         }
       end
 

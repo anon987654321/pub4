@@ -64,7 +64,7 @@ module Master
           active_loops: active_loops,
           max_active_loops: max_active_loops,
           owner: LoopOwner.active,
-          loops: loop_names.to_h { |name| [name, loop_status(name)] }
+          loops: loop_names.to_h { |name| [name, loop_status(name)] },
         }
       end
 
@@ -91,7 +91,7 @@ module Master
           env_value: env ? ENV.fetch(env, "0") : nil,
           cooldown_elapsed: cooldown_elapsed?(name),
           max_run_seconds: spec["max_run_seconds"].to_i,
-          min_sleep_seconds: spec["min_sleep_seconds"].to_i
+          min_sleep_seconds: spec["min_sleep_seconds"].to_i,
         }
       end
 

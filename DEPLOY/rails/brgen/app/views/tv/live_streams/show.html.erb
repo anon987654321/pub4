@@ -1,10 +1,21 @@
 <% content_for :title, @live_stream.title %>
 
 <%= tag.article class: "tv-live-stream" do %>
-  <%= tag.header do %>
+  <%= tag.header class: "page-header" do %>
     <%= tag.h1 @live_stream.title %>
-    <%= tag.p @live_stream.status %>
+    <%= tag.span @live_stream.status, class: "live-badge" %>
   <% end %>
+
+  <div data-controller="tv-player" data-tv-player-auto-wake-lock-value="true">
+    <div class="tv-media">
+      <% thumb = @live_stream.channel&.banner %>
+      <% if thumb&.attached? %>
+        <%= image_tag thumb, class: tv_media_image_classes(thumb), alt: @live_stream.title %>
+      <% else %>
+        <div class="tv-media__image repligen-hero" role="img" aria-label="<%= @live_stream.title %>"></div>
+      <% end %>
+    </div>
+  </div>
 
   <%= tag.section class: "live-stream-details" do %>
     <%= tag.p @live_stream.description if @live_stream.description.present? %>

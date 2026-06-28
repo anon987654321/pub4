@@ -8,13 +8,17 @@
   <span class="chip"><%= @order.status.humanize %></span>
 </div>
 
-<article role="article" aria-label="Order item">
+<div class="order-status" role="status" aria-live="polite">
   <h2>Status timeline</h2>
   <div class="chips">
     <% Takeaway::Order::STATUSES.each do |status| %>
       <span class="chip"><%= status.humanize %><%= " ✓" if @order.status == status %></span>
     <% end %>
   </div>
+  <p class="eta-badge">Est. delivery 25–35 min</p>
+</div>
+
+<article role="article" aria-label="Order item">
   <p class="dim">Delivery to: <%= @order.delivery_address %></p>
   <% if @order.special_instructions.present? %>
     <p><strong>Instructions:</strong> <%= @order.special_instructions %></p>

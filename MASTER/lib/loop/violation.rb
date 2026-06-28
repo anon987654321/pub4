@@ -32,7 +32,7 @@ module Master
           fix: fix,
           confidence: confidence,
           ext: ext,
-          fingerprint: fingerprint
+          fingerprint: fingerprint,
         }.compact
       end
     end

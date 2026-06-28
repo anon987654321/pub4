@@ -9,7 +9,19 @@
     <div class="field"><%= f.label :title %><%= f.text_field :title, required: true %></div>
     <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4, data: { controller: "char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
     <div class="field"><%= f.label :video_file %><%= f.file_field :video_file, accept: "video/*", required: true %></div>
-    <div class="field"><%= f.label :thumbnail %><%= f.file_field :thumbnail, accept: "image/*" %></div>
+    <div class="field">
+      <%= f.label :thumbnail %>
+      <%= f.file_field :thumbnail, accept: "image/*" %>
+      <div class="preset-strip">
+        <% %w[none portrait landscape street blockbuster].each do |p| %>
+          <label class="preset-opt">
+            <%= f.radio_button :preset, p, checked: p == "blockbuster" %>
+            <span><%= p.capitalize %></span>
+          </label>
+        <% end %>
+      </div>
+      <p class="dim">postpro.rb grades thumbnails — blockbuster for Odyssey-style cinematic.</p>
+    </div>
     <div class="field"><%= f.submit "Upload", class: "btn btn-primary" %></div>
   <% end %>
 </div>

@@ -1,0 +1,110 @@
+/* Amber editorial — New Yorker serif + Medium reading + Substack creator */
+body.editorial-surface {
+  --ny-red: #e7131a;
+  --ny-serif: "Libre Baskerville", "Georgia", "Times New Roman", serif;
+  --medium-prose: 21px;
+  --medium-leading: 1.58;
+  --substack-ink: #1a1a1a;
+  --substack-muted: #6b6b6b;
+  background: var(--color-black);
+  color: var(--color-white);
+}
+
+body.editorial-surface main {
+  max-width: 740px;
+  margin-inline: auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+body.editorial-surface h1,
+body.editorial-surface .feed-post h2,
+body.editorial-surface .post-title {
+  font-family: var(--ny-serif);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+body.editorial-surface .feed-post,
+body.editorial-surface article.post {
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--color-extra-light-grey);
+}
+
+body.editorial-surface .post-body,
+body.editorial-surface .prose {
+  font-family: var(--ny-serif);
+  font-size: var(--medium-prose);
+  line-height: var(--medium-leading);
+  color: var(--color-white);
+}
+
+body.editorial-surface .post-meta,
+body.editorial-surface .byline {
+  font-size: 0.875rem;
+  color: var(--substack-muted);
+  margin-bottom: 1rem;
+}
+
+body.editorial-surface .post-meta .author {
+  color: var(--color-white);
+  font-weight: 700;
+}
+
+body.editorial-surface a {
+  color: var(--ny-red);
+}
+
+body.editorial-surface .btn,
+body.editorial-surface .btn-primary {
+  background: var(--color-white);
+  color: var(--substack-ink);
+  border-radius: var(--radius-pill, 9999px);
+  font-weight: 700;
+}
+
+body.editorial-surface .newsletter-cta,
+body.editorial-surface .subscribe-box {
+  margin: 2.5rem 0;
+  padding: 1.5rem;
+  border: 1px solid var(--color-extra-light-grey);
+  border-radius: 8px;
+  background: var(--x-surface-elevated, #16181c);
+}
+
+body.editorial-surface .newsletter-cta h3,
+body.editorial-surface .subscribe-box h3 {
+  font-family: var(--ny-serif);
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+body.editorial-surface .newsletter-cta p {
+  color: var(--substack-muted);
+  font-size: 0.9375rem;
+  margin-bottom: 1rem;
+}
+
+body.editorial-surface nav .brand {
+  font-family: var(--ny-serif);
+  letter-spacing: 0.04em;
+}
+
+body.editorial-surface .flash--notice {
+  border-inline-start: 3px solid var(--ny-red);
+}
+
+body.editorial-surface .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-extra-light-grey);
+}
+
+body.editorial-surface .page-header h1 {
+  font-family: var(--ny-serif);
+  font-size: 2rem;
+  margin: 0;
+}

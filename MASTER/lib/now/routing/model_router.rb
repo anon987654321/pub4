@@ -9,7 +9,7 @@ module Master
           "unclear", "uncertain", "might be", "possibly",
           "probably not", "limited information", "i cannot",
           "i am unable", "i lack the", "not enough information",
-          "i would need more"
+          "i would need more",
         ].freeze
 
         ESCALATION_CHAIN = %w[cheap default strong].freeze

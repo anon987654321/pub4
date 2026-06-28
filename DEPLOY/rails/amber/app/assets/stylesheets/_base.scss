@@ -7,13 +7,23 @@
 html,
 body {
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+  font-family: var(--x-font);
   font-size: var(--font-size-base);
   line-height: var(--line-height-base);
-  color: var(--color-black);
-  background-color: var(--color-white);
+  color: var(--color-white);
+  background-color: var(--color-black);
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 1280px) {
+  html,
+  body {
+    font-size: 21px;
+    line-height: calc(28 / 21);
+  }
 }
 
 img {
@@ -22,7 +32,7 @@ img {
 }
 
 a {
-  color: #4285f4;
+  color: var(--x-accent);
   text-decoration: none;
   cursor: pointer;
 
@@ -30,8 +40,8 @@ a {
     text-decoration: underline;
   }
 
-  &:focus {
-    outline: 2px solid #4285f4;
+  &:focus-visible {
+    outline: 2px solid var(--x-accent);
     outline-offset: 2px;
   }
 }

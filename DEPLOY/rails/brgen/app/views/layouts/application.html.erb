@@ -5,7 +5,7 @@
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
   <%= tag.meta name: "mobile-web-app-capable", content: "yes" %>
   <%= tag.meta name: "color-scheme", content: "dark" %>
-  <%= tag.meta name: "theme-color", content: "#111111", data: { light_color: "#f3f4f6", dark_color: "#111111" } %>
+  <%= tag.meta name: "theme-color", content: "#000000", data: { light_color: "#ffffff", dark_color: "#000000" } %>
   <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Brgen — city communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
@@ -25,6 +25,9 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= yield :head %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=optional" rel="stylesheet">
   <link rel="preload" href="/face.css" as="style">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <link rel="stylesheet" href="/lightgallery.css">
@@ -35,7 +38,7 @@
   <%= javascript_include_tag "particle_kernel", defer: true, "data-turbo-track": "reload" %>
   <%= javascript_include_tag "face", defer: true, "data-turbo-track": "reload" %>
 </head>
-<body class="zen-minimal"
+<body class="<%= body_surface_classes %>"
       data-controller="hotkey browser-fingerprint"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
   <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -155,13 +158,15 @@
       </aside>
 
       <main id="main-content" role="main" data-controller="pull-to-refresh">
-        <div class="feed-header">
-          <h1><%= content_for?(:title) ? yield(:title) : "Home" %></h1>
-          <div class="feed-tabs">
-            <button type="button" class="feed-tab active">For you</button>
-            <button type="button" class="feed-tab">Following</button>
+        <% unless vertical_surface? %>
+          <div class="feed-header">
+            <h1><%= content_for?(:title) ? yield(:title) : "Home" %></h1>
+            <div class="feed-tabs">
+              <button type="button" class="feed-tab active">For you</button>
+              <button type="button" class="feed-tab">Following</button>
+            </div>
           </div>
-        </div>
+        <% end %>
         <% if current_page?(root_path) && Current.user.present? %>
           <div class="compose-box">
             <div class="compose-avatar"></div>

@@ -1,29 +1,40 @@
-// Ultra-minimal layout primitives — bsdports pattern (flex/grid, no floats).
-// Apps: @use "minimal" as *; then add product rules in application.scss.
+// Ultra-minimal layout primitives — x.com dark base, light via prefers-color-scheme.
+// Apps: @use "pub4_stack" as *; then add product rules in application.scss.
+
+@use "x_base" as x;
 
 :root {
-  --white: #ffffff;
-  --black: #000000;
-  --blue: #000084;
-  --light-blue: #5623ee;
-  --extra-light-grey: #f0f0f0;
-  --light-grey: #ababab;
-  --grey: #999999;
-  --dark-grey: #666666;
-  --warning-red: #b04243;
-  --radius: 4px;
+  @include x.x-dark-tokens;
+  color-scheme: dark;
+  --white: var(--x-bg);
+  --black: var(--x-text);
+  --blue: var(--x-accent);
+  --light-blue: var(--x-accent);
+  --extra-light-grey: var(--x-border);
+  --light-grey: var(--x-text-secondary);
+  --grey: var(--x-text-secondary);
+  --dark-grey: var(--x-text-secondary);
+  --warning-red: var(--x-danger);
+  --radius: var(--x-radius-card);
+  --hover: var(--x-hover);
+  --hover-subtle: var(--x-hover-subtle);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --white: #000000;
-    --black: #ffffff;
-    --blue: #5623ee;
-    --light-blue: #000084;
-    --extra-light-grey: #666666;
-    --light-grey: #999999;
-    --grey: #ababab;
-    --dark-grey: #f0f0f0;
+    @include x.x-light-tokens;
+    color-scheme: light;
+    --white: var(--x-bg);
+    --black: var(--x-text);
+    --blue: var(--x-accent);
+    --light-blue: var(--x-accent);
+    --extra-light-grey: var(--x-border);
+    --light-grey: var(--x-text-secondary);
+    --grey: var(--x-text-secondary);
+    --dark-grey: var(--x-text-secondary);
+    --warning-red: var(--x-danger);
+    --hover: var(--x-hover);
+    --hover-subtle: var(--x-hover-subtle);
   }
 }
 
@@ -36,21 +47,32 @@
 html,
 body {
   height: 100%;
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 0.875rem;
+  font-family: var(--x-font);
+  font-size: var(--x-font-size);
+  line-height: var(--x-line-height);
   color: var(--black);
   background-color: var(--white);
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 1280px) {
+  html,
+  body {
+    font-size: 21px;
+    line-height: 28px;
+  }
 }
 
 a {
   color: var(--light-blue);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 a:hover {
-  color: var(--blue);
+  text-decoration: underline;
 }
 
 img,
@@ -69,7 +91,8 @@ nav {
   gap: 1rem;
   align-items: center;
   padding: 0.5rem 1rem;
-  background: var(--white);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--extra-light-grey);
   transform: translateY(-100%);
   transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -77,12 +100,11 @@ nav {
 
 nav.nav-visible {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
 }
 
 nav a {
   color: var(--dark-grey);
-  font-size: 0.85rem;
+  font-size: 0.9375rem;
   text-decoration: none;
 }
 
@@ -108,7 +130,7 @@ nav .brand {
   color: var(--white);
   text-decoration: none;
   font-size: 0.875rem;
-  border-radius: var(--radius);
+  border-radius: var(--x-radius-pill);
 }
 
 .skip-link:focus,
@@ -167,23 +189,23 @@ footer {
 
 .dim {
   color: var(--dark-grey);
-  font-size: 0.85rem;
+  font-size: 0.9375rem;
 }
 
 .badge {
   display: inline-block;
   padding: 0.1rem 0.5rem;
-  border-radius: 2em;
+  border-radius: var(--x-radius-pill);
   font-size: 0.75rem;
 }
 
 .badge-category {
-  background: var(--extra-light-grey);
+  background: var(--hover);
   color: var(--dark-grey);
 }
 
 .badge-version {
-  background: #ede9fe;
+  background: var(--hover);
   color: var(--light-blue);
 }
 
@@ -196,7 +218,7 @@ footer {
 .chip {
   padding: 0.25rem 0.7rem;
   border: 1px solid var(--extra-light-grey);
-  border-radius: var(--radius);
+  border-radius: var(--x-radius-pill);
   font-size: 0.8rem;
   color: var(--dark-grey);
 }
@@ -227,7 +249,7 @@ footer {
   padding: 0.4rem 0.6rem;
   font: inherit;
   color: var(--black);
-  background: transparent;
+  background: var(--x-search-bg);
 }
 
 .form .actions {
@@ -242,42 +264,56 @@ footer {
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  padding: 0.45rem 0.9rem;
-  border: 1px solid var(--extra-light-grey);
-  border-radius: var(--radius);
+  padding: 0.45rem 1.25rem;
+  border: none;
+  border-radius: var(--x-radius-pill);
   background: var(--black);
   color: var(--white);
   font: inherit;
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
+  transition: opacity 180ms ease;
+}
+
+.btn:hover {
+  opacity: 0.88;
+  text-decoration: none;
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--black);
+  border: 1px solid var(--extra-light-grey);
+}
+
+.btn-ghost:hover {
+  background: var(--hover);
 }
 
 .flash-notice {
-  background: #f0fdf4;
-  color: #166534;
+  background: var(--hover);
+  color: var(--black);
   padding: 0.75rem 1rem;
   border-radius: var(--radius);
   margin-bottom: 1rem;
+  border: 1px solid var(--extra-light-grey);
 }
 
 .flash-alert {
-  background: #fef2f2;
+  background: var(--hover-subtle);
   color: var(--warning-red);
   padding: 0.75rem 1rem;
   border-radius: var(--radius);
   margin-bottom: 1rem;
+  border: 1px solid var(--extra-light-grey);
 }
 
 .avatar,
 .avatar-initials {
   display: inline-grid;
   place-items: center;
-  border-radius: 9999px;
+  border-radius: var(--x-radius-pill);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -289,7 +325,7 @@ footer {
 .avatar--64 { width: 64px; height: 64px; }
 
 .avatar-initials {
-  background: var(--extra-light-grey);
+  background: var(--x-surface-elevated);
   color: var(--black);
   font-weight: 700;
   font-size: 0.75rem;
@@ -320,7 +356,7 @@ footer {
   width: 100%;
   max-height: 420px;
   object-fit: cover;
-  border-radius: 2px;
+  border-radius: var(--radius);
   margin-bottom: 0.75rem;
 }
 
@@ -328,9 +364,9 @@ footer {
   display: grid;
   place-items: center;
   height: 220px;
-  background: var(--extra-light-grey);
+  background: var(--x-surface-elevated);
   border: 1px solid var(--extra-light-grey);
-  border-radius: 2px;
+  border-radius: var(--radius);
   margin-bottom: 0.75rem;
 }
 
@@ -355,7 +391,7 @@ footer {
 
 .dep-graph {
   border: 1px solid var(--extra-light-grey);
-  background: #fafafa;
+  background: var(--x-surface-elevated);
 }
 
 .notification-group {
@@ -376,12 +412,12 @@ footer {
 
 .futurism-placeholder {
   min-height: 120px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   margin-bottom: 1rem;
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--extra-light-grey) 25%, var(--light-grey) 50%, var(--extra-light-grey) 75%);
+  background: linear-gradient(90deg, var(--x-surface-elevated) 25%, var(--extra-light-grey) 50%, var(--x-surface-elevated) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
 }

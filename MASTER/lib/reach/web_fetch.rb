@@ -28,7 +28,7 @@ module Master
         [%r{\Ahttps://gist\.github\.com/([^/]+)/([0-9a-f]+)/?\z},
          'https://gist.githubusercontent.com/\1/\2/raw'],
         [%r{\Ahttps://arxiv\.org/(?:abs|pdf)/([\w./-]+?)(?:v\d+)?(?:\.pdf)?/?\z},
-         'https://ar5iv.labs.arxiv.org/html/\1']
+         'https://ar5iv.labs.arxiv.org/html/\1'],
       ].freeze
 
       CODEPEN_RE = %r{\Ahttps://codepen\.io/([^/]+)/pen/([^/?#]+)/?\z}.freeze

@@ -49,8 +49,6 @@ module Master
         source = command.to_s.strip
         return Decision.new(mode: :deny, reason: "empty command") if source.empty?
         return Decision.new(mode: :deny, reason: "matched deny pattern") if
-        return Decision.new(mode: :ask, reason: "matched ask pattern") if
-        return Decision.new(mode: :allow, reason: "matched safe allow pattern") if
 
         Decision.new(mode: :ask, reason: "unknown command risk")
       end

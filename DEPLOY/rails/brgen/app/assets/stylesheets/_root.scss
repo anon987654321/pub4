@@ -1,25 +1,32 @@
+@use "fonts";
+@use "x_base" as x;
+
 :root {
+  @include x.x-dark-tokens;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
-  --bg: #000;
-  --surface: #000;
-  --surface2: rgba(220,220,220,0.04);
-  --search-bg: rgba(220,220,220,0.05);
-  --text: #dcdcdc;
-  --text-dim: rgba(220,220,220,0.38);
-  --accent: rgba(220,220,220,0.88);
-  --accent-hover: #dcdcdc;
-  --upvote: rgba(220,220,220,0.72);
-  --downvote: rgba(220,220,220,0.28);
-  --border: rgba(220,220,220,0.08);
-  --radius: 2px;
+  --bg: var(--x-bg);
+  --surface: var(--x-surface);
+  --surface2: var(--x-surface-elevated);
+  --search-bg: var(--x-search-bg);
+  --text: var(--x-text);
+  --text-dim: var(--x-text-secondary);
+  --accent: var(--x-accent);
+  --accent-hover: var(--x-accent-hover);
+  --upvote: var(--x-accent);
+  --downvote: #f91880;
+  --border: var(--x-border);
+  --hover: var(--x-hover);
+  --hover-subtle: var(--x-hover-subtle);
+  --radius: var(--x-radius-card);
+  --radius-pill: var(--x-radius-pill);
   --sp: 8px;
-  --sidebar-width: 275px;
-  --widgets-width: 350px;
-  --feed-max: 600px;
+  --sidebar-width: var(--x-sidebar);
+  --widgets-width: var(--x-widgets);
+  --feed-max: var(--x-feed-max);
   --transition-fast: 180ms;
   --transition-normal: 300ms;
   --z-canvas: 0;
@@ -27,7 +34,8 @@
   --z-app: 10;
   --z-nav: 80;
   --z-splash: 1000;
-  --turbo-progress-bar-color: #1d4ed8;
+  --turbo-progress-bar-color: var(--x-accent);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 #dark-toggle {
@@ -46,7 +54,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   background: var(--surface2);
   color: var(--text);
   border: 1px solid var(--border);
@@ -55,7 +63,7 @@
 }
 
 .theme-toggle:hover {
-  background: var(--color-midtone-tint);
+  background: var(--hover);
   text-decoration: none;
 }
 
@@ -64,18 +72,21 @@
 }
 
 #dark-toggle:checked ~ .theme-root {
+  @include x.x-light-tokens;
   color-scheme: light;
-  --bg: #f5f7fb;
-  --surface: #ffffff;
-  --surface2: rgba(15, 23, 42, 0.04);
-  --search-bg: rgba(15, 23, 42, 0.05);
-  --text: #0f172a;
-  --text-dim: rgba(15, 23, 42, 0.56);
-  --accent: #0f172a;
-  --accent-hover: #111827;
-  --upvote: #0f172a;
-  --downvote: #64748b;
-  --border: rgba(15, 23, 42, 0.12);
+  --bg: var(--x-bg);
+  --surface: var(--x-surface);
+  --surface2: var(--x-surface-elevated);
+  --search-bg: var(--x-search-bg);
+  --text: var(--x-text);
+  --text-dim: var(--x-text-secondary);
+  --accent: var(--x-accent);
+  --accent-hover: var(--x-accent-hover);
+  --upvote: var(--x-accent);
+  --downvote: #f91880;
+  --border: var(--x-border);
+  --hover: var(--x-hover);
+  --hover-subtle: var(--x-hover-subtle);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -84,26 +95,22 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font: 0.9375rem/1.5 "Helvetica Neue Fallback", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font: var(--x-font-size)/var(--x-line-height) var(--x-font);
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  font-family: "Chirp", "Helvetica Neue Fallback", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
 @media (min-width: 1280px) {
-  body {
+  html, body {
     font-size: 21px;
+    line-height: 28px;
   }
 }
 
 a { color: var(--text); text-decoration: none; }
 a:hover { text-decoration: underline; }
-:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
-

@@ -54,7 +54,7 @@ module Master
           "",
           "Do not edit the mirrored tree until you have a written assessment and a trace for the path",
           "you intend to change.",
-          ""
+          "",
         ]
       end
 

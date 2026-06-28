@@ -61,3 +61,11 @@ DEPLOY/rails/*/vendor/
 /snapshot.md
 MASTER/snapshot.md
 .master/
+MASTER/output/
+
+# DEPLOY build artifacts and local audio scratch
+DEPLOY/dilla/analysis/
+DEPLOY/dilla/.dilla_*.wav
+DEPLOY/dilla/.live_tmp.wav
+DEPLOY/dilla/dilla_beat_live*.mp3
+DEPLOY/rails/*/app/assets/builds/*.css.map

@@ -8,7 +8,7 @@
   <turbo-frame id="tv-live-streams" data-turbo-action="replace">
   <%= tag.div class: "live-stream-grid", role: "list", "aria-label": "Live streams list" do %>
     <% @live_streams.each do |live_stream| %>
-      <%= tag.article class: "live-stream-card", role: "listitem" do %>
+      <%= tag.article class: "live-stream-card tv-channel-card", role: "listitem" do %>
         <%= tag.h2 link_to(live_stream.title, tv_live_stream_path(live_stream)) %>
         <%= tag.p live_stream.status %>
         <%= tag.p live_stream.description if live_stream.description.present? %>

@@ -67,8 +67,8 @@ body.zen-minimal .revealed ~ .layout > main {
 .btn:hover { opacity: .88; text-decoration: none; }
 .btn-primary { background: var(--text); color: #000; }
 .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
-.btn-ghost:hover { background: rgba(220,220,220,.06); }
-.btn-danger { background: rgba(220,220,220,.12); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--hover); }
+.btn-danger { background: var(--hover); color: var(--text); border: 1px solid var(--border); }
 .btn-sm { padding: 6px 0.875rem; font-size: .875rem; }
 
 .tiptap-editor {

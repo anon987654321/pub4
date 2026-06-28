@@ -22,11 +22,11 @@ module Master
             /forget (?:everything|all|your)/i,
             /override (?:axiom|principle|rule)/i,
             /disregard (?:axiom|principle|rule|safety)/i,
-            /new system prompt/i
+            /new system prompt/i,
           ].freeze,
           shell_injection: /```(?:bash|sh|zsh|shell)\n.*?
             (?:rm\s+-rf|curl\b.*?\|\s*(?:bash|sh)\b|wget\b.*?\|\s*(?:bash|sh)\b)
-          /imx.freeze
+          /imx.freeze,
         }.freeze
 
         ALLOWLIST_TOKEN = /\AMASTER_TRUSTED:[A-Za-z0-9]{16,}/.freeze

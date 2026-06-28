@@ -85,4 +85,46 @@ module ApplicationHelper
   def marketplace_root_url(**options)
     marketplace_marketplace_root_url(subdomain: marketplace_subdomain, host: Current.domain, **options)
   end
+
+  def active_vertical
+    Current.subapp || inferred_vertical_from_controller
+  end
+
+  def vertical_surface?
+    active_vertical.present?
+  end
+
+  def body_surface_classes
+    parts = %w[zen-minimal]
+    parts << "vertical-#{active_vertical}" if active_vertical
+    parts.join(" ")
+  end
+
+  def inferred_vertical_from_controller
+    case controller_path
+    when /\Amarketplace/ then :marketplace
+    when /\Aplaylist/ then :playlist
+    when /\Atakeaway/ then :takeaway
+    when /\Atv/ then :tv
+    when /\Adating/ then :dating
+    when /\Amaps/ then :maps
+    else nil
+    end
+  end
+
+  POSTPRO_PRESETS = PostproJob::VALID_PRESETS.freeze
+
+  def media_polish_classes(attachment)
+    return "" unless attachment&.attached?
+
+    name = attachment.filename.to_s.downcase
+    classes = []
+    classes << "postpro-grade" if POSTPRO_PRESETS.any? { |preset| name.include?("_#{preset}") }
+    classes << "repligen-hero" if name.match?(/masterpiece|repligen|flux|lora/)
+    classes.join(" ")
+  end
+
+  def tv_media_image_classes(attachment)
+    [ "tv-media__image", media_polish_classes(attachment) ].compact_blank.join(" ")
+  end
 end

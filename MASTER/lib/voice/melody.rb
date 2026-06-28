@@ -25,14 +25,14 @@ module Master
 0
 else
 (arousal > 0.55 ? 90 : 140)
-end
+end,
           }
         end
 
         {
           mode: emotion[:mode] || :melodic,
           base_pitch: arousal > 0.6 ? "+8Hz" : "+0Hz",
-          phrases: plan
+          phrases: plan,
         }
       end
     end

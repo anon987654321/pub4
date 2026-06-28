@@ -37,8 +37,8 @@
   transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 
-.feed-tab:hover { background: rgba(220,220,220,.05); color: var(--text); text-decoration: none; }
-.feed-tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 700; }
+.feed-tab:hover { background: var(--hover); color: var(--text); text-decoration: none; }
+.feed-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 700; }
 
 /* Compose box */
 .compose-box {
@@ -85,7 +85,7 @@
   padding: 0.75rem 16px;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(220,220,220,.12) transparent;
+  scrollbar-color: var(--hover) transparent;
 }
 
 .widget-search {

@@ -100,15 +100,16 @@ input, button, textarea, select {
   padding: 0 var(--space-4);
   border-radius: 9999px;
   border: 1px solid transparent;
-  background: var(--color-primary);
-  color: var(--color-highlight);
+  background: var(--x-text, var(--color-primary));
+  color: var(--x-bg, var(--color-highlight));
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+  transition: opacity 180ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 .btn:hover {
-  transform: translateY(-1px);
+  opacity: 0.88;
   text-decoration: none;
 }
 
@@ -120,19 +121,24 @@ input, button, textarea, select {
 }
 
 .btn--primary {
-  background: var(--color-midtone);
-  color: var(--color-highlight);
+  background: var(--x-text, var(--color-primary));
+  color: var(--x-bg, var(--color-highlight));
 }
 
 .btn--secondary {
   background: transparent;
-  color: var(--color-primary);
-  border-color: var(--color-border);
+  color: var(--x-text, var(--color-primary));
+  border-color: var(--x-border, var(--color-border));
 }
 
 .btn--ghost {
   background: transparent;
-  color: var(--color-primary);
+  color: var(--x-text, var(--color-primary));
+  border-color: var(--x-border, var(--color-border));
+}
+
+.btn--ghost:hover {
+  background: var(--x-hover, var(--color-midtone-tint));
 }
 
 .btn--danger {

@@ -1,0 +1,137 @@
+# Radio Bergen YouTube reference sonic profiles (measured 45s clips, 2026-06-28).
+# Source manifest: DEPLOY/audio/radio_bergen_tracks.yml
+# Spectral: yt-dlp wav + librosa band ratios
+# Harmonic: analysis/harmonic_findings.json (chroma_cqt + pyin on full mix)
+
+meta:
+  analyzed: 5
+  method: yt-dlp wav extract + librosa spectral + chroma/pyin
+  harmonic_source: analysis/harmonic_findings.json
+  note: BPM from beat_track; half-time feel on Dilla Timeless → use 86 not 172
+  caveat: chroma on full mixes reflects sub/bass harmonic field — not clean stem harmony
+
+profiles:
+  dilla_timeless:
+    ref: { artist: J Dilla, title: Timeless, id: dbbfo9_7D8g }
+    measured: { bpm_raw: 172.3, bpm_use: 86, centroid_hz: 1061, rolloff85_hz: 1919, sub_pct: 58.7, low_pct: 35.4, mid_pct: 4.4, rms: 0.0845 }
+    harmonic:
+      bpm_est: 87.6
+      chroma_top:
+        - { chord: G#m7, score: 0.8704 }
+        - { chord: C#m7, score: 0.8643 }
+        - { chord: D#m7, score: 0.8676 }
+        - { chord: Bmaj, score: 0.9012 }
+        - { chord: F#maj, score: 0.8699 }
+      dominant_pitch_classes: [C#, F#, B, D#]
+      melody_pitch_percentiles: [E2, A2, "C#3"]
+      melody_note: sub/bass register — no clean lead line on full mix
+      engine_progression: timeless_measured
+      engine_chords: [Dbmaj9, C#m7, G#m7, D#m7, Fm9, Bbm9, Abmaj9low]
+      melody_chop_hz: [659.25, 587.33, 523.25, 440.0, 392.00, 349.23]
+    synth:
+      bpm: 86
+      swing: 0.16
+      pad_lowpass_hz: 1700
+      master_lowpass_hz: 2200
+      bass_sustain_bar: 0.94
+      bass_shelf_db: 9
+      vinyl_noise: 0.14
+      texture: donuts_lowpass_warmth
+
+  flylo_camel:
+    ref: { artist: Flying Lotus, title: Camel, id: fU9YRGLPDQ8 }
+    measured: { bpm_est: 112.3, bpm_use: 84, centroid_hz: 2602, rolloff85_hz: 5893, sub_pct: 70.1, air_pct: 0.9, rms: 0.248 }
+    harmonic:
+      bpm_est: 110.0
+      chroma_top:
+        - { chord: Gmaj, score: 0.9300 }
+        - { chord: G7, score: 0.8910 }
+        - { chord: Bmin, score: 0.9168 }
+        - { chord: Cmaj9, score: 0.8939 }
+      dominant_pitch_classes: [D, B, D#, C]
+      melody_pitch_percentiles: [C2, D#2, B3]
+      melody_note: low-mid register haze
+    synth:
+      bpm: 84
+      swing: 0.12
+      pad_lowpass_hz: 2800
+      master_lowpass_hz: 3400
+      bass_sustain_bar: 0.88
+      bass_shelf_db: 6
+      vinyl_noise: 0.22
+      sidechain_pump: true
+      texture: jazz_haze_sidechain
+
+  madlib_eye:
+    ref: { artist: Madlib, title: Eye, id: ScVz2mntmCE }
+    measured: { bpm_est: 95.7, centroid_hz: 1696, rolloff85_hz: 3367, sub_pct: 77.1, rms: 0.172 }
+    harmonic:
+      bpm_est: 94.0
+      chroma_top:
+        - { chord: Ebmaj, score: 0.9392 }
+        - { chord: Ebm, score: 0.9191 }
+        - { chord: Ebmaj7, score: 0.8949 }
+        - { chord: Cm7, score: 0.8879 }
+        - { chord: Eb7, score: 0.8856 }
+      dominant_pitch_classes: [Bb, Eb, A, G#]
+      melody_pitch_percentiles: [E5, E5, F5]
+      melody_note: only clip with clear E5-range sample fragment energy
+      melody_chop_hz: [659.25, 587.33, 523.25, 440.0, 392.00, 349.23]
+    synth:
+      bpm: 96
+      swing: 0.20
+      pad_lowpass_hz: 2400
+      master_lowpass_hz: 3000
+      bass_sustain_bar: 0.80
+      bass_shelf_db: 7
+      vinyl_noise: 0.28
+      crush_mix: 0.35
+      texture: sp303_vinyl_grit
+
+  slum_players:
+    ref: { artist: Slum Village, title: Players, id: KsULjOCYdnY }
+    measured: { bpm_est: 92.3, centroid_hz: 2371, rolloff85_hz: 5333, sub_pct: 68.8, rms: 0.2129 }
+    harmonic:
+      bpm_est: 94.0
+      chroma_top:
+        - { chord: Dm, score: 0.6550 }
+        - { chord: Ebmaj7, score: 0.6806 }
+        - { chord: Bbmaj, score: 0.6779 }
+        - { chord: Dmaj7, score: 0.6740 }
+      dominant_pitch_classes: [D, Eb, C#, F]
+      melody_pitch_percentiles: [C2, C2, E2]
+      melody_note: bass/sub pocket
+      engine_progression: players_measured
+      engine_chords: [Dm7, Eb7, Gm7, D7, Eb7, Gm7, Am7]
+    synth:
+      bpm: 93
+      swing: 0.18
+      pad_lowpass_hz: 2200
+      master_lowpass_hz: 2800
+      bass_sustain_bar: 0.92
+      bass_shelf_db: 8
+      vinyl_noise: 0.18
+      texture: neo_soul_pocket
+
+  samiyam_rounded:
+    ref: { artist: Samiyam, title: Rounded, id: oeaY2h_cKsg }
+    measured: { bpm_est: 95.7, centroid_hz: 1767, rms: 0.2856 }
+    harmonic:
+      bpm_est: 95.7
+      chroma_top:
+        - { chord: Dm, score: 0.8409 }
+        - { chord: Dm9, score: 0.8071 }
+        - { chord: Em7, score: 0.7969 }
+        - { chord: Ebmaj7, score: 0.8161 }
+      dominant_pitch_classes: [D, Eb, E, A]
+      melody_pitch_percentiles: [C2, D2, F2]
+      melody_note: dry punch — bass-led harmony
+    synth:
+      bpm: 96
+      swing: 0.14
+      pad_lowpass_hz: 2000
+      master_lowpass_hz: 2600
+      bass_sustain_bar: 0.85
+      bass_shelf_db: 10
+      vinyl_noise: 0.12
+      texture: modern_dry_punch

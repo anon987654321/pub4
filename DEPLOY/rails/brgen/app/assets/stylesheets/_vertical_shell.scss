@@ -1,0 +1,33 @@
+/* Vertical surfaces — x shell underneath, product chrome on top */
+body[class*="vertical-"] .feed-header,
+body[class*="vertical-"] .compose-box {
+  display: none;
+}
+
+body[class*="vertical-"] main {
+  padding-top: 0;
+}
+
+body.vertical-marketplace [data-controller="live-search"],
+body.vertical-takeaway [data-controller="live-search"] {
+  background: var(--x-search-bg, #202327);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+}
+
+body.vertical-marketplace .search-form input[type="search"],
+body.vertical-takeaway .search-form input[type="search"] {
+  border-radius: var(--radius-pill);
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  width: 100%;
+}
+
+body.vertical-marketplace .search-form,
+body.vertical-takeaway .search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}

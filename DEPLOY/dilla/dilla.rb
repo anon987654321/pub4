@@ -27,6 +27,8 @@ DEMUX_MODEL = "htdemucs_6s"
 DEFAULT_BPM = 86.0
 DEFAULT_BARS = 88
 SAMPLE_RATE = 44_100
+BASS_SUSTAIN_SEC = (ENV["BASS_SUSTAIN"] || 1.45).to_f
+BASS_DECAY_RATE = (ENV["BASS_DECAY"] || 1.15).to_f
 # Voicemails mix pipeline (make.rb heritage)
 VOICEMAILS_BEAT = ENV.fetch("BEAT", File.join(ROOT, "Voicemails.mp3"))
 MIX_DUR = 146
@@ -90,7 +92,7 @@ SLUM_VILLAGE_CHORDS = [
 ].freeze
 COMMANDS = %w[
   help scan sweep council debug sample source livestream separate render verify
-  chords clean stems study rhythm melody harmony semantics ears play live bass
+  chords clean stems study rhythm melody harmony semantics ears play live live_now bass
   grade grade_list sonitex_list analog_list prepare madlib dilla hiphop slum industrial techno analog analog_liveset
   electronium midi mix v7 v8 v9 v10 v11 demux liveset
 ].freeze
@@ -181,6 +183,14 @@ SONITEX_PRESETS = {
     flutter_depth: 0.009, hiss_amp: 0.008, warmth_db: 3.6, crush_mix: 0.22
   ),
   extreme:  SONITEX_STX1269,
+  donuts_warm: SONITEX_STX1260.merge(
+    crush_bits: 12, crush_sr: 1.85, crush_mix: 0.42, crush_post_lp: 2100,
+    dist_drive: 1.48, dist_mix: 0.62, hf_rolloff: 2200, groove_wear_lp: 2600,
+    head_bump_hz: 58, head_bump_db: 5.2, warmth_db: 5.5, lf_rolloff: 38,
+    wow_depth: 0.009, flutter_depth: 0.005, stereo_width: 1.12, hiss_amp: 0.0048,
+    out_comp_threshold: -17, out_comp_ratio: 3.2, out_comp_makeup: 2.4,
+    limit: 0.86, level_out: 0.88
+  ),
   heavy:    SONITEX_STX1269.merge(
     crush_bits: 8, crush_sr: 2.05, crush_mix: 0.58, crush_post_lp: 2400,
     dist_drive: 3.6, dist_mix: 0.88, dist_pre_emph_db: 6.2, dist_dc: 0.09,
@@ -240,21 +250,34 @@ INDUSTRIAL_TECHNO_BARS = 128
 #   Hooktheory — Donuts "Time" Ab major IV–iii–vi–ii–V
 DILLA_TIMING_MS = {
   kick_anchor: 0..5,
-  kick_sync: 4..14,
-  snare: -18..-6,
-  ghost: -10..10,
-  hat_down: -3..4,
-  hat_up: 12..24,
-  bass: 18..32,
-  pad: 6..18
+  kick_sync: 4..16,
+  snare: -24..-8,
+  ghost: -14..12,
+  hat_down: -4..6,
+  hat_up: 10..28,
+  bass: 20..36,
+  pad: 4..16
 }.freeze
 DILLA_KICK_PATTERNS = [
   [0, 7, 10, 14],
   [0, 5, 7, 10, 14],
   [0, 3, 7, 10, 12, 14],
   [0, 1, 7, 10, 14],
-  [0, 6, 9, 14]
+  [0, 6, 9, 14],
+  [0, 4, 8, 11, 14],
+  [0, 2, 7, 9, 13, 15],
+  [0, 5, 8, 10, 14],
+  [0, 3, 6, 10, 12, 14, 15]
 ].freeze
+DILLA_GHOST_PATTERNS = [
+  [3, 6, 11],
+  [2, 5, 10, 14],
+  [1, 7, 9, 13],
+  [4, 8, 11, 15],
+  [3, 5, 9, 12],
+  [2, 6, 10, 13]
+].freeze
+MELODY_CHOP_HZ = [659.25, 587.33, 523.25, 440.0, 392.00, 349.23].freeze
 # Madlib / Jaylib — loose MPC pockets, heavy ghosts, Dilla-time snare-early feel.
 MADLIB_KICK_PATTERNS = [
   [0, 6, 10, 14],
@@ -289,7 +312,15 @@ DONUT_CHORDS = [
   { name: "Abmaj9low", hz: [103.83, 130.81, 155.56, 196.00, 233.08] },
   { name: "C7b9",      hz: [130.81, 138.59, 164.81, 196.00, 233.08] },
   { name: "Fm/C",      hz: [130.81, 174.61, 207.65, 261.63, 311.13] },
-  { name: "Bb7sus",    hz: [116.54, 174.61, 196.00, 233.08, 311.13] }
+  { name: "Bb7sus",    hz: [116.54, 174.61, 196.00, 233.08, 311.13] },
+  { name: "G#m7",      hz: [103.83, 123.47, 155.56, 185.00, 233.08] },
+  { name: "C#m7",      hz: [130.81, 155.56, 196.00, 233.08, 277.18] },
+  { name: "D#m7",      hz: [155.56, 185.00, 233.08, 277.18, 311.13] },
+  { name: "Dm7",       hz: [146.83, 174.61, 220.00, 261.63, 329.63] },
+  { name: "Gm7",       hz: [196.00, 233.08, 293.66, 349.23, 440.00] },
+  { name: "Am7",       hz: [110.00, 130.81, 164.81, 196.00, 246.94] },
+  { name: "D7",        hz: [146.83, 185.00, 220.00, 261.63, 349.23] },
+  { name: "Eb7",       hz: [155.56, 196.00, 233.08, 277.18, 311.13] }
 ].freeze
 PAD_CHORD_LOOKUP = (
   PAD_CHORDS + SLUM_VILLAGE_CHORDS + DONUT_CHORDS
@@ -299,6 +330,8 @@ DILLA_PROGRESSIONS = {
   soul: %w[Fm9 Dbmaj9 Ebmaj9 Abmaj9],
   donuts: %w[Fm9 Dbmaj9 Bbm9 Eb7 Abmaj9low C7b9 Fm/C Bb7sus],
   donuts_time: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9],
+  timeless_measured: %w[Dbmaj9 C#m7 G#m7 D#m7 Fm9 Bbm9 Abmaj9low],
+  players_measured: %w[Dm7 Eb7 Gm7 D7 Eb7 Gm7 Am7],
   jazz: %w[Dm9 Gm9 C7#9\ Hendrix Fmaj13],
   tritone: %w[Cm9 Gbmaj9 Bbm9 E\ altered],
   get_dis_money: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
@@ -342,7 +375,16 @@ DILLA_TRACK_PRESETS = {
   eyes_up: { bpm: 93, progression: :eyes_up, chord_bars: 4, swing: 55 },
   untitled_fantastic: { bpm: 91, progression: :untitled_fantastic, chord_bars: 2, swing: 56 },
   donuts_time: { bpm: 95, progression: :donuts_time, chord_bars: 2, swing: 52 },
-  donuts: { bpm: 86, progression: :donuts, chord_bars: 4, swing: 58 },
+  timeless: {
+    bpm: 86, progression: :timeless_measured, chord_bars: 2, phrase_bars: 8, swing: 56,
+    feel: :timeless,
+    timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4, pad: 2..14 }
+  },
+  donuts: {
+    bpm: 86, progression: :timeless_measured, chord_bars: 2, phrase_bars: 8, swing: 56,
+    feel: :timeless,
+    timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 }
+  },
   soul: { bpm: 86, progression: :soul, chord_bars: 4, swing: 58 },
   jazz: { bpm: 88, progression: :jazz, chord_bars: 4, swing: 60 }
 }.freeze
@@ -940,8 +982,13 @@ def grade_filter(fx, stock)
   end
 end
 
-def sonitex_resolve_preset
-  raw = (ENV["SONITEX_PRESET"] || ENV["SONITEX"] || "heavy").to_s.strip.downcase
+def sonitex_resolve_preset(track: nil)
+  track ||= (ENV["TRACK"] || ENV["PROGRESSION"] || "donuts").to_s.downcase.tr("-", "_")
+  raw = (ENV["SONITEX_PRESET"] || ENV["SONITEX"]).to_s.strip.downcase
+  if raw.empty?
+    return :donuts_warm if %w[donuts timeless soul donuts_time timeless_measured].include?(track)
+    return :heavy
+  end
   return nil if raw =~ /\A(?:0|false|off)\z/
   return :heavy if %w[1 true on heavy].include?(raw)
   return :classic if %w[classic st1260 1260].include?(raw)
@@ -992,8 +1039,8 @@ def sonitex_enabled?
   !sonitex_resolve_preset.nil?
 end
 
-def sonitex_config
-  SONITEX_PRESETS.fetch(sonitex_resolve_preset || :classic)
+def sonitex_config(track: nil)
+  SONITEX_PRESETS.fetch(sonitex_resolve_preset(track:) || :classic)
 end
 
 def sonitex_label
@@ -1049,13 +1096,25 @@ def sonitex_tape_filters(input_tag = "mix", out_tag: "snx_out")
   ]
 end
 
+# Dilla drum bus — NY parallel compression, sub bump, mix low-pass from measured centroid (~1061 Hz).
+def dilla_mix_preprocess_filters(input_tag = "mix", out_tag: "dpre")
+  [
+    "[#{input_tag}]asplit=2[dm_dry][dm_par]",
+    "[dm_par]acompressor=threshold=-30dB:ratio=4.5:attack=2:release=48:makeup=3.0[dm_pc]",
+    "[dm_dry][dm_pc]amix=inputs=2:weights=0.80 0.20:duration=first[dm_ny]",
+    "[dm_ny]extrastereo=m=1.14[dm_wide]",
+    "[dm_wide]equalizer=f=58:t=o:w=0.7:g=5.2,equalizer=f=92:t=o:w=1.2:g=3.6," \
+    "equalizer=f=2200:t=o:w=1.4:g=-3.2,lowpass=f=2400[#{out_tag}]"
+  ]
+end
+
 # Sonitex + creative analog grade stack + final limiter.
-def master_bus_filters(input_tag = "mix")
+def master_bus_filters(input_tag = "mix", track: nil)
   unless sonitex_enabled?
     return ["[#{input_tag}]alimiter=limit=0.90:level_out=0.92[out]"]
   end
-  s = sonitex_config
-  variant = analog_resolve_variant
+  s = sonitex_config(track:)
+  variant = analog_resolve_variant(track:)
   filt = []
   filt.concat(sonitex_tape_filters(input_tag, out_tag: "snx_out"))
   filt.concat(analog_emulation_filters("snx_out", variant, out_tag: "ana_out"))
@@ -1104,15 +1163,42 @@ ensure
   FileUtils.rm_f(tmp)
 end
 
-# Stream audio live from ffplay without writing a file — generative beat.
+# Zero-wait pocket — Web Audio in the browser; no ffmpeg render queue.
+def live_now
+  path = File.join(ROOT, "instant.html")
+  abort "missing #{path}" unless File.exist?(path)
+  if RUBY_PLATFORM.include?("darwin")
+    system("open", path)
+    puts "instant pocket opened — click Play (starts in <1s, no render wait)"
+  else
+    puts "open in a browser: file://#{path}"
+  end
+end
+
+# Loop playback. Opens live.html (audible in your browser) or ffplay in this terminal.
 def live(bars_count = 32)
-  abort "ffplay required" unless tool_available?("ffplay")
   tmp = File.join(ROOT, ".live_tmp.wav")
-  render_dilla(tmp, bars_count)
-  puts "streaming #{bars_count} bars... Ctrl-C to stop"
-  exec "ffplay", "-nodisp", "-loop", "0", tmp
+  html = File.join(ROOT, "live.html")
+  unless File.exist?(tmp)
+    quick = [4, bars_count].min
+    puts "no cache — warming #{quick} bars first (~15s)"
+    render_dilla(tmp, quick)
+    if bars_count > quick
+      puts "rendering full #{bars_count} bars…"
+      render_dilla(tmp, bars_count)
+    end
+  end
+  if RUBY_PLATFORM.include?("darwin") && File.exist?(html)
+    system("open", html)
+    puts "live loop opened in browser → #{html}"
+    puts "file: #{tmp} (#{File.size(tmp)} bytes) — click Play if needed"
+    return
+  end
+  abort "ffplay required" unless tool_available?("ffplay")
+  puts "looping #{tmp} — Ctrl-C to stop"
+  exec "ffplay", "-nodisp", "-loop", "0", "-volume", "100", tmp
 rescue SystemCallError => e
-  abort "ffplay failed: #{e.message}"
+  abort "playback failed: #{e.message}"
 end
 
 # Instantly play a modulating bass tone — good for local audio system check.
@@ -1208,11 +1294,19 @@ def dilla_kick_pattern(bar, n_bars, feel)
     [[14, 3, 7, 10], [14, 3, 8, 11], [13, 2, 6, 10], [15, 3, 7, 11]][bar % 4]
   when :madlib
     MADLIB_KICK_PATTERNS[(bar * 3 + bar / 4) % MADLIB_KICK_PATTERNS.length]
+  when :timeless
+    group = (bar / 4) % 2
+    pat = [[0, 7, 10, 14], [0, 5, 7, 10, 14], [0, 3, 7, 10, 12, 14], [0, 6, 9, 14]][(bar + group) % 4]
+    pat = [0, 10] if bar.zero?
+    pat += [2, 14] if bar % 8 == 5
+    pat.uniq.sort
   else
-    pat = DILLA_KICK_PATTERNS[(bar / 4 + bar % 3) % DILLA_KICK_PATTERNS.length]
+    group = (bar / 2) % 3
+    pat = DILLA_KICK_PATTERNS[(bar + group * 2) % DILLA_KICK_PATTERNS.length]
     pat = [0, 10] if bar.zero?
     pat = [0, 3, 6, 7, 10, 12, 14, 15] if bar == n_bars - 1
-    pat
+    pat += [15] if bar % 8 == 7 && !pat.include?(15)
+    pat.uniq.sort
   end
 end
 
@@ -1247,8 +1341,24 @@ def dilla_hat_steps(bar, feel)
     steps += [7, 15] if (bar % 4) == 3
     steps -= [8] if (bar % 8) == 5
     steps.uniq.sort
+  when :timeless
+    if bar % 8 == 7
+      [0, 4, 8, 12]
+    elsif bar % 4 == 2
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11]
+    elsif bar.odd?
+      [0, 1, 3, 4, 6, 8, 10, 11, 13, 14]
+    else
+      (0..15).step(2).to_a + [3, 7, 11]
+    end
   else
-    bar % 8 == 7 ? [0, 4, 8, 12] : (0..15).step(2).to_a
+    if bar % 8 == 7
+      [0, 4, 8, 12]
+    elsif bar.odd?
+      [0, 1, 3, 4, 6, 8, 10, 11, 13, 14]
+    else
+      (0..15).step(2).to_a + [3, 11]
+    end
   end.uniq.sort
 end
 
@@ -1268,6 +1378,9 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
 
     cur_chord = drums_only || pad_chords.empty? ? nil : pad_chords[dilla_chord_index(bar, pad_chords, chord_bars: chord_bars, phrase_bars: phrase_bars)]
     bass_root = dilla_chord_bass_hz(cur_chord)
+    unless drums_only || section == :breakdown || bass_root.nil?
+      events[:bass] << [base + 0.012, dilla_velocity(0.52, bar, 99, spread: 0.04) * sec_gain, bass_root, bar_p * 0.92]
+    end
     if feel == :thelonious
       pickup = base - step_p * 2
       events[:kick] << [[pickup + dilla_timing_ms(:kick_sync, bar, 0, timing) / 1000.0, 0.0].max.round(6), dilla_velocity(0.88, bar, 0)]
@@ -1287,21 +1400,30 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       unless bass_skip
         bass_lag = feel == :get_dis_money ? step_p * 0.12 : 0.0
         events[:bass] << [[t + dilla_timing_ms(:bass, bar, step, timing) / 1000.0 + bass_lag, 0.0].max.round(6),
-                          dilla_velocity(0.42, bar, step, spread: 0.06) * sec_gain, bass_root]
+                          dilla_velocity(0.28, bar, step, spread: 0.06) * sec_gain, bass_root, step_p * 0.55]
       end
     end
 
     unless section == :breakdown || (section == :intro && bar < 4)
-      [4, 12].each do |step|
+      [4, 12].each_with_index do |step, si|
         t = [base + step * step_p + dilla_swing_offset(step, step_p, swing) +
              dilla_timing_ms(:snare, bar, step, timing) / 1000.0, 0.0].max
-        events[:snare] << [t.round(6), dilla_velocity(0.60, bar, step) * sec_gain]
+        events[:snare] << [t.round(6), dilla_velocity(si.zero? ? 0.64 : 0.56, bar, step) * sec_gain]
+      end
+      if section == :main && bar % 4 == 2
+        step = 10
+        t = [base + step * step_p + dilla_swing_offset(step, step_p, swing) +
+             dilla_timing_ms(:ghost, bar, step, timing) / 1000.0, 0.0].max
+        events[:ghost] << [t.round(6), dilla_velocity(0.18, bar, step, spread: 0.05) * sec_gain]
       end
     end
 
-    ghost_steps = bar.even? ? [3, 6, 11] : [6, 11, 15]
-    ghost_steps += [1, 9, 13] if feel == :madlib && bar % 2 == 1
-    ghost_steps += [5, 14] if feel == :madlib && bar % 4 == 2
+    ghost_steps = if feel == :madlib
+                    base = DILLA_GHOST_PATTERNS[(bar * 2) % DILLA_GHOST_PATTERNS.length]
+                    base + (bar.odd? ? [1, 9] : [5])
+                  else
+                    DILLA_GHOST_PATTERNS[(bar + bar / 4) % DILLA_GHOST_PATTERNS.length]
+                  end
     ghost_steps.uniq.each do |step|
       t = [base + step * step_p + dilla_swing_offset(step, step_p, swing) +
            dilla_timing_ms(:ghost, bar, step, timing) / 1000.0, 0.0].max
@@ -1350,9 +1472,17 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     sustain = ((phrase_bars || chord_bars) * bar_p * 0.92).round(4)
     events[:pad] << [[pad_t, 0.0].max.round(6), dilla_velocity(0.85, bar, 0, spread: 0.03) * sec_gain, chord, sustain]
     unless section == :breakdown
-      chop_step = [1, 2, 5, 9, 13][bar % 5]
-      chop_t = [base + chop_step * step_p + dilla_swing_offset(chop_step, step_p, swing), 0.0].max
-      events[:chop] << [chop_t.round(6), dilla_velocity(0.55, bar, chop_step, spread: 0.04) * sec_gain, chord]
+      chop_steps = [[1, 5, 9], [2, 6, 10], [1, 9, 13], [3, 7, 11]][bar % 4]
+      chop_steps.each do |chop_step|
+        chop_t = [base + chop_step * step_p + dilla_swing_offset(chop_step, step_p, swing), 0.0].max
+        events[:chop] << [chop_t.round(6), dilla_velocity(0.52, bar, chop_step, spread: 0.04) * sec_gain, chord]
+      end
+    end
+    if section == :main && bar % 4 == 2 && !drums_only
+      mel_step = [2, 6, 10][bar % 3]
+      mel_hz = MELODY_CHOP_HZ[(bar + mel_step) % MELODY_CHOP_HZ.length]
+      mel_t = [base + mel_step * step_p + dilla_swing_offset(mel_step, step_p, swing) + 0.006, 0.0].max
+      events[:melody] << [mel_t.round(6), dilla_velocity(0.38, bar, mel_step, spread: 0.06) * sec_gain, mel_hz]
     end
   end
   events
@@ -1368,7 +1498,9 @@ def dilla_bass_wave(t, v, root_hz = 43.0)
   c = @dilla_cycle
   tm = (t % c).round(6)
   lfo = "0.03*sin(2*PI*0.12*(mod(t,#{c})-#{tm}))"
-  "between(mod(t,#{c}),#{tm},#{(tm + 0.46).round(6)})*#{v}*exp(-(mod(t,#{c})-#{tm})*3.2)*sin(2*PI*(#{root_hz}+#{root_hz}*#{lfo})*(mod(t,#{c})-#{tm}))"
+  sustain = BASS_SUSTAIN_SEC.round(3)
+  decay = BASS_DECAY_RATE.round(3)
+  "between(mod(t,#{c}),#{tm},#{(tm + sustain).round(6)})*#{v}*exp(-(mod(t,#{c})-#{tm})*#{decay})*sin(2*PI*(#{root_hz}+#{root_hz}*#{lfo})*(mod(t,#{c})-#{tm}))"
 end
 
 def dilla_snare_env(events)
@@ -1478,8 +1610,8 @@ def generate_drum_kit!
      ["-f", "lavfi", "-i", "anoisesrc=d=0.42:color=white:amplitude=0.85"],
      "highpass=f=6000,bandpass=f=9000:w=5000,aeval=exprs='val(0)*exp(-t*9)'"],
     ["bass_43.wav",
-     ["-f", "lavfi", "-i", "aevalsrc='0.75*exp(-t*2.8)*sin(2*PI*(43+8*sin(2*PI*0.4*t))*t)':d=0.5:s=#{sr}"],
-     "lowpass=f=120,equalizer=f=50:t=o:w=1:g=5"],
+     ["-f", "lavfi", "-i", "aevalsrc='0.75*exp(-t*1.1)*sin(2*PI*(43+5*sin(2*PI*0.28*t))*t)':d=1.35:s=#{sr}"],
+     "lowpass=f=120,equalizer=f=50:t=o:w=1:g=6"],
     ["ind_kick.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.95*exp(-t*5.5)*sin(2*PI*(50+520*exp(-t*45))*t)':d=0.65:s=#{sr}"],
      "aeval=exprs='tanh(5.5*val(0))/tanh(5.5)',lowpass=f=140,equalizer=f=52:t=o:w=0.6:g=9,acompressor=threshold=-16dB:ratio=10:attack=1:release=35"],
@@ -1544,7 +1676,7 @@ def mix_sine!(left, right, frame, frames_n, hz, amp, decay: 2.6, mod_hz: 0.23, c
   end
 end
 
-def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration)
+def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [])
   frames = (duration * SAMPLE_RATE).ceil + SAMPLE_RATE
   left   = Array.new(frames, 0.0)
   right  = Array.new(frames, 0.0)
@@ -1556,7 +1688,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration)
     drift = 1.0 + Math.sin((pi + 1) * 1.3) * 0.0008
     chord[:hz].each_with_index do |hz, vi|
       mix_sine!(left, right, start, dur, hz * drift, v * (0.032 + vi * 0.004),
-                decay: 0.28, mod_hz: 0.19 + vi * 0.02, chorus: true)
+                decay: 0.24, mod_hz: 0.17 + vi * 0.02, chorus: true)
     end
   end
 
@@ -1564,21 +1696,37 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration)
     hz_list = chop_hz(chord)
     next if hz_list.empty?
     f = hz_list[((t * 10).to_i) % hz_list.length]
-    mix_sine!(left, right, (t * SAMPLE_RATE).round, (0.34 * SAMPLE_RATE).round, f, v * 0.14, decay: 1.8, mod_hz: 0.5)
+    mix_sine!(left, right, (t * SAMPLE_RATE).round, (0.28 * SAMPLE_RATE).round, f, v * 0.13, decay: 2.0, mod_hz: 0.45)
+  end
+
+  melody_events.each do |(t, v, hz)|
+    f = hz.is_a?(Numeric) ? hz : MELODY_CHOP_HZ.first
+    start = (t * SAMPLE_RATE).round
+    dur = (0.18 * SAMPLE_RATE).round
+    dur.times do |i|
+      idx = start + i
+      break if idx >= left.length
+      tt = i.to_f / SAMPLE_RATE
+      env = Math.exp(-tt * 8.5)
+      s = v * 0.11 * env * Math.sin(2 * Math::PI * f * tt)
+      left[idx]  += s * 0.55
+      right[idx] += s * 0.45
+    end
   end
 
   bass_events.each do |hit|
     t, v = hit[0], hit[1]
     root = hit[2].is_a?(Numeric) ? hit[2] : 43.65
+    sustain = hit[3] || BASS_SUSTAIN_SEC
     start = (t * SAMPLE_RATE).round
-    dur   = (0.44 * SAMPLE_RATE).round
+    dur   = [(sustain * SAMPLE_RATE).round, 1].max
     dur.times do |i|
       idx = start + i
       break if idx >= left.length
       tt = i.to_f / SAMPLE_RATE
       lfo = 0.03 * Math.sin(2 * Math::PI * 0.12 * tt)
-      env = Math.exp(-tt * 3.2)
-      s = v * 0.38 * env * Math.sin(2 * Math::PI * root * (1.0 + lfo) * tt)
+      env = Math.exp(-tt * BASS_DECAY_RATE)
+      s = v * 0.42 * env * Math.sin(2 * Math::PI * root * (1.0 + lfo) * tt)
       left[idx]  += s
       right[idx] += s
     end
@@ -1692,7 +1840,7 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
     events,
     duration,
     kit,
-    kick: :kick, snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat
+    kick: :kick, snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat, bass: :bass_43
   )
   write_stereo_wav(drum_tmp, left, right)
 
@@ -1703,7 +1851,8 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
   pan_hz = (cfg[:bpm] / 15.0).round(3)
   use_stem_harmony = !stems.empty?
   unless use_stem_harmony
-    render_harmonic_wav(harmonic_tmp, events[:pad], events[:chop], events[:bass], duration)
+    render_harmonic_wav(harmonic_tmp, events[:pad], events[:chop], events[:bass], duration,
+                        melody_events: events[:melody])
   end
 
   command = ["ffmpeg", "-y", "-i", drum_tmp]
@@ -1724,9 +1873,10 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
   mix_labels = ["[drums]"]
   mix_weights = ["1.0"]
   unless use_stem_harmony
-    filt << "[1:a]aformat=channel_layouts=stereo,lowpass=f=3200,aphaser=speed=0.11:decay=0.35,adelay=9|13[harm]"
+    filt << "[1:a]aformat=channel_layouts=stereo,lowpass=f=1700,aphaser=speed=0.11:decay=0.32,adelay=11|15," \
+             "aecho=0.22:0.28:110:0.18[harm]"
     mix_labels << "[harm]"
-    mix_weights << "0.88"
+    mix_weights << "0.84"
   end
 
   if stem_map[:mids]
@@ -1744,7 +1894,7 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
   end
   if stem_map[:sub]
     filt << "[#{stem_map[:sub]}:a]aformat=channel_layouts=stereo,atempo=#{stem_tempo},atrim=0:#{duration},asetpts=PTS-STARTPTS," \
-             "lowpass=f=160,volume=0.55[subbed]"
+             "lowpass=f=180,equalizer=f=72:t=o:w=1:g=4,volume=0.68[subbed]"
     mix_labels << "[subbed]"
     mix_weights << "0.72"
   end
@@ -1759,13 +1909,14 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
   mix_labels << "[vinyl]"
   mix_weights << "1.0"
   filt << "#{mix_labels.join}amix=inputs=#{mix_labels.length}:weights=#{mix_weights.join(' ')}:duration=first:normalize=0[mix]"
-  filt.concat(master_bus_filters("mix"))
+  filt.concat(dilla_mix_preprocess_filters("mix", out_tag: "dpre"))
+  filt.concat(master_bus_filters("dpre", track: cfg[:track].to_s))
 
   command += ["-filter_complex", filt.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
   sh!(*command)
   FileUtils.rm_f(drum_tmp)
   FileUtils.rm_f(harmonic_tmp) unless use_stem_harmony
-  stem_note = use_stem_harmony ? stems.keys.join("+") : "synth-harmony"
+  stem_note = use_stem_harmony ? stems.keys.join("+") : "synth-harmony+melody"
   mix_note  = sonitex_label
   puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{mix_note}, #{stem_note})"
 end
@@ -2978,6 +3129,7 @@ when "semantics" then semantics(ARGV.shift)
 when "ears"       then ears(ARGV.shift || File.join(ROOT, "full_track.mp3"))
 when "play"       then play(ARGV.shift, (ARGV.shift || 8).to_i)
 when "live"       then live((ARGV.shift || 32).to_i)
+when "live_now"   then live_now
 when "bass"       then bass((ARGV.shift || 55.0).to_f)
 when "grade"      then grade(ARGV.shift, ARGV.shift, ARGV.shift)
 when "grade_list" then grade_list
@@ -2991,7 +3143,10 @@ when "madlib"
   else
     render_madlib_drums(out)
   end
-when "dilla"           then render_dilla(ARGV.shift || File.join(ROOT, "dilla_beat.mp3"))
+when "dilla"
+  dest = ARGV.shift || File.join(ROOT, "dilla_beat.mp3")
+  n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
+  render_dilla(dest, n_bars)
 when "hiphop"          then render_hiphop(ARGV.shift || File.join(ROOT, "dilla_hiphop.mp3"))
 when "slum"            then render_slum_album(ARGV.shift || File.join(ROOT, "renders"))
 when "industrial"      then render_industrial(ARGV.shift || File.join(ROOT, "renders", "foundry_pulse.mp3"))

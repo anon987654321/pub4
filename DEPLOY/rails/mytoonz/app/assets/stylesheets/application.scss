@@ -1,8 +1,8 @@
 @use "pub4_stack" as *;
 
 :root {
-  --turbo-progress-bar-color: #f59e0b;
-  --primary: #f59e0b;
+  --turbo-progress-bar-color: var(--x-accent, #1d9bf0);
+  --app-accent: #f59e0b;
 }
 
 body {
@@ -39,7 +39,7 @@ main {
 .comic-grid article {
   padding: 0.9rem 1rem;
   border: 1px solid var(--extra-light-grey);
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 
 .status-badge {

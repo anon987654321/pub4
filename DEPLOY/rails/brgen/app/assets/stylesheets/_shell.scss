@@ -6,7 +6,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgba(220,220,220,.12) transparent;
+  scrollbar-color: var(--hover) transparent;
 }
 
 .layout {
@@ -46,7 +46,7 @@
   transition: background var(--transition-fast);
 }
 
-.brand:hover { background: var(--color-midtone-tint); text-decoration: none; }
+.brand:hover { background: var(--hover); text-decoration: none; }
 
 .brand-wordmark {
   width: auto;
@@ -78,7 +78,7 @@ nav { display: flex; flex-direction: column; gap: 2px; width: 100%; }
   white-space: nowrap;
 }
 
-.nav-item:hover { background: var(--color-midtone-tint); text-decoration: none; }
+.nav-item:hover { background: var(--hover); text-decoration: none; }
 .nav-item.active { font-weight: 700; }
 .nav-item svg { flex-shrink: 0; }
 

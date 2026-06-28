@@ -1,32 +1,24 @@
 <% content_for :title, @track.title %>
 
-<div class="page-header">
-  <div>
-    <p class="dim">Hosted track</p>
-    <h1><%= @track.title %></h1>
-    <p class="dim"><%= @track.artist.presence || "Unknown artist" %> · <%= track.duration_formatted %></p>
-  </div>
-  <% if authenticated? %>
+<%= render "playlist/playlists/player",
+      playlist: @track,
+      playlist_name: @track.title,
+      tracks_count: 1,
+      plays_count: @track.listens.count,
+      tracks: [@track],
+      active_track: @track %>
+
+<% if authenticated? %>
+  <section class="playlist-admin" aria-label="Track management">
     <div class="cluster">
       <%= link_to "Edit", edit_playlist_hosted_track_path(@track), class: "btn btn-ghost btn-sm" %>
       <%= button_to "Delete", playlist_hosted_track_path(@track), method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger btn-sm" %>
     </div>
-  <% end %>
-</div>
-
-<article>
-  <% if @track.audio_file.attached? %>
-    <%= audio_tag url_for(@track.audio_file), controls: true %>
-  <% elsif @track.source_url.present? %>
-    <p><%= safe_http_link("Open source", @track.source_url) || @track.source_url %></p>
-  <% end %>
-  <% if @track.artwork.attached? %>
-    <%= image_tag @track.artwork, alt: @track.title, class: "track-artwork" %>
-  <% end %>
-</article>
+  </section>
+<% end %>
 
 <% if @comments.any? %>
-  <section>
+  <section class="playlist-details">
     <h2>Timestamped comments</h2>
     <% @comments.each do |comment| %>
       <article>

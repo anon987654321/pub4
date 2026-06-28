@@ -1,47 +1,67 @@
-<% content_for :title, "Dating" %>
+<% content_for :title, "dating" %>
 
-<% unless authenticated? %>
-  <% content_for :splash do %>
-    <div>
-      <h2>Brgen Dating</h2>
-      <p class="tagline">Meet people in your city. Swipe, match, message — city by city across Europe and beyond.</p>
-      <div class="chips">
-        <span class="chip">swipe to like</span>
-        <span class="chip">city + radius filter</span>
-        <span class="chip">mutual match</span>
-        <span class="chip">direct messages</span>
-      </div>
-      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, class: "link-inherit" %> to match</p>
-    </div>
-  <% end %>
+<% content_for :head do %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/css-doodle@0.38.2/css-doodle.min.js" defer></script>
 <% end %>
 
-<div class="page-header" role="banner" aria-label="Dating discover header">
-  <div>
-    <p class="dim">Local discovery</p>
-    <h1>Discover</h1>
-  </div>
-  <nav role="navigation" aria-label="Dating navigation">
-    <%= link_to "Matches", dating_matches_path, class: "btn btn-ghost" %>
-    <% if authenticated? %><%= link_to "Edit profile", edit_dating_profile_path, class: "btn btn-ghost" %><% end %>
-  </nav>
-</div>
+<div class="dating-app" data-controller="dating-intro">
+  <section
+    class="dating-intro"
+    data-dating-intro-target="intro"
+    data-action="pointerdown->dating-intro#pointerdown pointermove->dating-intro#pointermove pointerup->dating-intro#pointerup pointercancel->dating-intro#pointercancel"
+    role="dialog"
+    aria-label="Brgen dating"
+    aria-modal="true"
+  >
+    <p class="dating-intro__hint">sveip for å begynne</p>
 
-<turbo-frame id="dating-discover" data-turbo-action="replace">
-<section
-  data-controller="swipe"
-  data-swipe-like-url-value="<%= dating_likes_path %>"
-  data-swipe-dislike-url-value="<%= dating_dislikes_path %>"
-  data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp keydown.left@window->swipe#pass keydown.right@window->swipe#like"
-  class="dating-discover"
->
-  <div id="swipe-stack">
-    <% @profiles.each_with_index do |profile, index| %>
-      <%= render "card", profile: profile, index: index %>
-    <% end %>
-  </div>
-  <% if @profiles.empty? %>
-    <div class="empty"><p>No profiles nearby. <%= authenticated? ? link_to("Edit your profile", edit_dating_profile_path) : link_to("Sign in", new_session_path) %>.</p></div>
-  <% end %>
-  <turbo-frame id="dating-next" src="<%= dating_next_path %>" loading="lazy" hidden></turbo-frame>
-</section>
+    <div class="dating-intro__center">
+      <%= render "dating/home/heart" %>
+      <h1 class="dating-intro__title">dating</h1>
+    </div>
+
+    <footer class="dating-intro__trust">
+      <span>Beskyttet med</span>
+      <span class="dating-intro__bankid" aria-label="bankID">
+        <span class="dating-intro__bankid-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        bankID
+      </span>
+    </footer>
+  </section>
+
+  <section class="dating-discover-panel" data-dating-intro-target="discover" hidden aria-hidden="true">
+    <div class="page-header" role="banner" aria-label="Dating discover header">
+      <div>
+        <p class="dim">Local discovery</p>
+        <h1>Discover</h1>
+      </div>
+      <nav role="navigation" aria-label="Dating navigation">
+        <%= link_to "Matches", dating_matches_path, class: "btn btn-ghost" %>
+        <% if authenticated? %><%= link_to "Edit profile", edit_dating_profile_path, class: "btn btn-ghost" %><% end %>
+      </nav>
+    </div>
+
+    <turbo-frame id="dating-discover" data-turbo-action="replace">
+      <section
+        data-controller="swipe"
+        data-swipe-like-url-value="<%= dating_likes_path %>"
+        data-swipe-dislike-url-value="<%= dating_dislikes_path %>"
+        data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp keydown.left@window->swipe#pass keydown.right@window->swipe#like"
+        class="dating-discover"
+      >
+        <div id="swipe-stack">
+          <% @profiles.each_with_index do |profile, index| %>
+            <%= render "card", profile: profile, index: index %>
+          <% end %>
+        </div>
+        <% if @profiles.empty? %>
+          <div class="empty"><p>No profiles nearby. <%= authenticated? ? link_to("Edit your profile", edit_dating_profile_path) : link_to("Sign in", new_session_path) %>.</p></div>
+        <% end %>
+        <turbo-frame id="dating-next" src="<%= dating_next_path %>" loading="lazy" hidden></turbo-frame>
+      </section>
+    </turbo-frame>
+  </section>
+</div>

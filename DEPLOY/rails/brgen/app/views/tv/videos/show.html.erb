@@ -14,11 +14,11 @@
 <div data-controller="tv-player" data-tv-player-auto-wake-lock-value="true" data-tv-player-auto-orientation-value="true" data-tv-player-orientation-value="landscape">
 <% if @video.video_file.attached? %>
   <div class="tv-media">
-    <%= video_tag url_for(@video.video_file), controls: true, class: "video-player tv-media__image" %>
+    <%= video_tag url_for(@video.video_file), controls: true, class: "video-player #{tv_media_image_classes(@video.video_file)}" %>
   </div>
 <% elsif @video.thumbnail.attached? %>
   <div class="tv-media">
-    <%= image_tag @video.thumbnail, class: "tv-media__image" %>
+    <%= image_tag @video.thumbnail, class: tv_media_image_classes(@video.thumbnail) %>
   </div>
 <% end %>
 </div>

@@ -1,9 +1,12 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "open3"
+require "rbconfig"
 require "yaml"
 
 ROOT = File.expand_path("../..", __dir__)
+
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
 WEB_ROOT = File.join(ROOT, "MASTER", "web")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
@@ -43,6 +46,15 @@ def check_views(app_dir)
     issues << "#{path}: <a href='#'> action link" if body.match?(/<a\s+href=["']#["']/i)
   end
   issues
+end
+
+build_script = File.join(RAILS_ROOT, "build_all_css.rb")
+if File.file?(build_script)
+  out, status = Open3.capture2e(RbConfig.ruby, build_script, chdir: ROOT)
+  unless status.success?
+    warn out unless out.strip.empty?
+    exit 1
+  end
 end
 
 failures = []

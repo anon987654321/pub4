@@ -7,7 +7,7 @@
   transition: background var(--transition-fast);
 }
 
-.post-card:hover { background: rgba(220,220,220,.025); }
+.post-card:hover { background: var(--hover-subtle); }
 
 .vote-col {
   width: 36px;
@@ -35,8 +35,8 @@
   justify-content: center;
 }
 
-.vote-btn:hover { color: var(--upvote); background: var(--color-midtone-tint); }
-.vote-btn.down:hover { color: var(--downvote); background: rgba(220,220,220,.04); }
+.vote-btn:hover { color: var(--upvote); background: var(--hover); }
+.vote-btn.down:hover { color: var(--downvote); background: var(--hover-subtle); }
 .vote-btn.active-up { color: var(--upvote); }
 .vote-btn.active-down { color: var(--downvote); }
 .vote-score { font-size: .75rem; font-weight: 700; color: var(--text-dim); }
@@ -62,7 +62,7 @@
   transition: color var(--transition-fast), background var(--transition-fast);
 }
 
-.post-actions a:hover { color: var(--text); background: rgba(220,220,220,.06); text-decoration: none; }
+.post-actions a:hover { color: var(--accent); background: var(--hover); text-decoration: none; }
 
 /* Post show */
 .post-show { padding: 16px; border-bottom: 1px solid var(--border); }

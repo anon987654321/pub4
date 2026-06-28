@@ -1,4 +1,10 @@
-<h1>Your Feed</h1>
-<%= link_to "New post", new_post_path, class: "btn" %>
+<div class="page-header">
+  <h1>Your Feed</h1>
+  <%= link_to "New post", new_post_path, class: "btn" %>
+</div>
 <%= render @posts %>
+<%= render "shared/newsletter_cta",
+      heading: "Style notes",
+      blurb: "Weekly wardrobe essays, outfit ideas, and capsule tips. No spam.",
+      button_label: "Get the letter" %>
 <%= pagy_nav(@pagy) if @pagy.pages > 1 %>

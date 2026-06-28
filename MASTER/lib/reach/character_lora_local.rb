@@ -183,7 +183,6 @@ module Master
             echo "ai-toolkit not found at $ROOT" >&2
             echo "clone: git clone https://github.com/ostris/ai-toolkit.git $ROOT" >&2
             exit 1
-          fi
           cd "$ROOT"
           if [ -f .venv/bin/activate ]; then
             . .venv/bin/activate
@@ -202,7 +201,6 @@ module Master
             echo "2. Create token: https://huggingface.co/settings/tokens (Read access)" >&2
             echo "3. export HF_TOKEN=hf_... && sh $0" >&2
             exit 1
-          fi
           mkdir -p "$(dirname "$LOG")"
           exec python run.py "$CONFIG" 2>&1 | tee "$LOG"
         SCRIPT

@@ -95,7 +95,6 @@ module Master
               audio = np.array(result.audio)
           if audio is None:
               raise RuntimeError("mlx generated no audio")
-          sf.write(#{wav.inspect}, audio, #{cfg["mlx_sample_rate"] || 24_000})
         PY
         _out, _err, status = Open3.capture3(py, "-c", py_script)
         return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)

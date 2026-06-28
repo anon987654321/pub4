@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # Run using bin/ci — Rails 8.1 local CI (pub4 family apps)
+require "rbconfig"
 require_relative "../lib/pub4/ci_guard"
 
 ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
@@ -14,7 +15,9 @@ vps_host = ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps") || Fil
 Pub4::CiGuard.run! do
   CI.run do
     step "Setup", "bin/setup --skip-server"
-    step "Styles: Dart Sass", "bin/rails dartsass:build"
+    rails_root = ENV["PUB4_RAILS_ROOT"] || File.expand_path("../..", __dir__)
+    app = File.basename(Dir.getwd)
+    step "Styles: pub4 CSS", "#{RbConfig.ruby} #{File.join(rails_root, "build_all_css.rb")} --app #{app}"
     step("Security: Importmap audit", "bundle exec importmap audit") unless vps_host
     rubocop = 'bundle exec rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
     step("Style: Ruby", rubocop) unless vps_host

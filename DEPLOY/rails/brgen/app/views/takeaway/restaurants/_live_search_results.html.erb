@@ -1,9 +1,9 @@
 <section role="region" aria-label="Restaurant results">
   <% @restaurants.each do |r| %>
-    <article role="article" aria-label="Restaurant">
+    <article class="restaurant-card" role="article" aria-label="Restaurant">
       <h2><%= link_to r.name, takeaway_restaurant_path(r) %></h2>
       <p><%= r.cuisine_type %> · <%= r.city %> · ★ <%= r.rating || "—" %></p>
-      <p>Min order: <%= r.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= r.delivery_fee_cents.to_i / 100.0 %> NOK</p>
+      <p><span class="eta-badge">25–35 min</span> · Min order: <%= r.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= r.delivery_fee_cents.to_i / 100.0 %> NOK</p>
     </article>
   <% end %>
   <% if @restaurants.empty? %>

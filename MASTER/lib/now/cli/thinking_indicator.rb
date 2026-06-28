@@ -68,7 +68,7 @@ module Master
         end
         return unless STAGE_EVENTS.key?(ev)
           @think_stage = STAGE_EVENTS[ev]
-        
+
       end
 
       def glyph_for_event(ev)

@@ -21,7 +21,7 @@ module Master
         "exaggeration" => 0.62,
         "cfg_weight" => 0.42,
         "chatterbox_device" => "mps",
-        "reference_clip" => ""
+        "reference_clip" => "",
       }.freeze
 
       module_function

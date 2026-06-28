@@ -11,7 +11,7 @@ module Master
         wonder: /\b(wow|amazing|incredible|beautiful|magic|transcend|transform|world|research|breakthrough)\b/i,
         intimacy: /\b(you|your|we|together|cozy|warm|friend|home|care|gentle|soft)\b/i,
         urgency: /\b(now|quick|hurry|asap|immediately|watch|listen|important|critical)\b/i,
-        lyric: /\b(sing|song|melody|chorus|verse|rhyme|la la|hum|tune|ballad)\b/i
+        lyric: /\b(sing|song|melody|chorus|verse|rhyme|la la|hum|tune|ballad)\b/i,
       }.freeze
 
       module_function

@@ -38,7 +38,7 @@ module Master
           "bundle  #{bndl}",
           "trace   #{turn_hint}  (/replay turn)",
           "pipeline last=#{stage_name} #{verdict_line}",
-          "events  (last #{evts.size})  (/replay failures)"
+          "events  (last #{evts.size})  (/replay failures)",
         ]
         evts.each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
         failures.each { |e| lines << "  !#{e[:ago]} #{e[:event]} #{e[:summary]}" }

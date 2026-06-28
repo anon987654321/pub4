@@ -1,0 +1,39 @@
+// x.com reference tokens — shared base for brgen + MASTER face.css
+@mixin x-dark-tokens {
+  --x-bg: #000000;
+  --x-surface: #000000;
+  --x-surface-elevated: #16181c;
+  --x-search-bg: #202327;
+  --x-text: #e7e9ea;
+  --x-text-secondary: #71767b;
+  --x-border: #2f3336;
+  --x-hover: rgba(231, 233, 234, 0.1);
+  --x-hover-subtle: rgba(231, 233, 234, 0.03);
+  --x-accent: #1d9bf0;
+  --x-accent-hover: #1a8cd8;
+  --x-danger: #f4212e;
+  --x-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  --x-font-size: 15px;
+  --x-line-height: 20px;
+  --x-radius-pill: 9999px;
+  --x-radius-card: 16px;
+  --x-sidebar: 275px;
+  --x-feed-max: 600px;
+  --x-widgets: 350px;
+  --x-layout-max: 1265px;
+}
+
+@mixin x-light-tokens {
+  --x-bg: #ffffff;
+  --x-surface: #ffffff;
+  --x-surface-elevated: #f7f9f9;
+  --x-search-bg: #eff3f4;
+  --x-text: #0f1419;
+  --x-text-secondary: #536471;
+  --x-border: #eff3f4;
+  --x-hover: rgba(15, 20, 25, 0.1);
+  --x-hover-subtle: rgba(15, 20, 25, 0.03);
+  --x-accent: #1d9bf0;
+  --x-accent-hover: #1a8cd8;
+  --x-danger: #f4212e;
+}

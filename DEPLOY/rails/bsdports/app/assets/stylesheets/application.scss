@@ -1,12 +1,12 @@
 @use "pub4_stack" as *;
 
 :root {
-  --turbo-progress-bar-color: #0ea5e9;
+  --turbo-progress-bar-color: var(--x-accent, #1d9bf0);
 }
 
 .dep-graph {
-  border: 1px solid #ccc;
-  background: #fafafa;
+  border: 1px solid var(--extra-light-grey);
+  background: var(--x-surface-elevated, #16181c);
 }
 
 .logo {
@@ -38,7 +38,8 @@ header {
 
       &.active {
         color: var(--black);
-        border-bottom: 1px solid var(--black);
+        border-bottom: 2px solid var(--light-blue);
+        font-weight: 700;
       }
     }
   }
@@ -48,7 +49,8 @@ header {
   width: 90%;
   max-width: 584px;
   border: 1px solid var(--extra-light-grey);
-  border-radius: 30px;
+  border-radius: var(--x-radius-pill, 9999px);
+  background: var(--x-search-bg, #202327);
   font-size: 18px;
   display: flex;
   align-items: center;

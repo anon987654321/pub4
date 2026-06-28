@@ -45,7 +45,7 @@ module Master
           dispatch_fix(fix_loop:, root:, ctx: { args: "--dry-run #{target}" }),
           "",
           "workflow: deliberation",
-          run_tribunal(deliberation:, artifact:, target:, bus:)
+          run_tribunal(deliberation:, artifact:, target:, bus:),
         ].join("\n")
       end
 
@@ -176,7 +176,6 @@ module Master
           "topic: #{arg}"
         end
       end
-
 
     end
   end

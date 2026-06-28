@@ -29,11 +29,11 @@
   cursor: pointer;
 }
 
-.tab-item:hover { background: rgba(220,220,220,.06); text-decoration: none; }
+.tab-item:hover { background: var(--hover); text-decoration: none; }
 .tab-item:active,
 .compose-btn:active,
 .compose-fab:active {
-  background: rgba(220,220,220,.12);
+  background: var(--hover);
 }
 
 .mobile-sheet-backdrop {
@@ -93,5 +93,5 @@
   text-decoration: none;
 }
 
-.mobile-sheet-links a:hover { background: rgba(220,220,220,.08); }
+.mobile-sheet-links a:hover { background: var(--hover); }
 

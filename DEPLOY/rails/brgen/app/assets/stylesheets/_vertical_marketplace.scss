@@ -1,0 +1,100 @@
+/* Marketplace — Net-a-Porter editorial luxury + Amazon commerce density */
+body.vertical-marketplace {
+  --shop-luxury-serif: "Libre Baskerville", "Georgia", "Times New Roman", serif;
+  --shop-cta: #ff9900;
+  --shop-cta-text: #111;
+  --shop-luxury-bg: #fafafa;
+  --shop-editorial-tracking: 0.12em;
+}
+
+body.vertical-marketplace main {
+  max-width: 1280px;
+}
+
+body.vertical-marketplace .page-header h1,
+body.vertical-marketplace .marketplace-deals h1 {
+  font-family: var(--shop-luxury-serif);
+  font-weight: 400;
+  letter-spacing: var(--shop-editorial-tracking);
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+}
+
+body.vertical-marketplace .deal-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+  padding: 1.25rem 16px 2rem;
+}
+
+body.vertical-marketplace .deal-card {
+  background: var(--shop-luxury-bg);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+body.vertical-marketplace .deal-card:hover {
+  background: var(--shop-luxury-bg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  transform: translateY(-2px);
+}
+
+body.vertical-marketplace .deal-card-img {
+  aspect-ratio: 3 / 4;
+}
+
+body.vertical-marketplace .deal-card-title {
+  font-family: var(--shop-luxury-serif);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+body.vertical-marketplace .deal-price {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+body.vertical-marketplace .deal-cta,
+body.vertical-marketplace .deal-cat.active {
+  background: var(--shop-cta);
+  color: var(--shop-cta-text);
+  border-radius: var(--radius-pill);
+}
+
+body.vertical-marketplace .deal-search {
+  background: var(--x-search-bg, #202327);
+  padding: 1rem 16px;
+}
+
+body.vertical-marketplace .deal-search input {
+  border-radius: var(--radius-pill);
+  padding: 12px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+body.vertical-marketplace .deal-cats {
+  gap: 10px;
+  padding: 12px 16px 16px;
+}
+
+body.vertical-marketplace .deal-cat {
+  border-radius: var(--radius-pill);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+body.vertical-marketplace .deal-meta::before {
+  content: "★ ";
+  color: var(--shop-cta);
+}
+
+body.vertical-marketplace .sidebar-card h3 {
+  font-family: var(--shop-luxury-serif);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}

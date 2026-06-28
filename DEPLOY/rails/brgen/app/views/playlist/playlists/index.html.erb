@@ -1,17 +1,25 @@
 <% content_for :title, "Playlists" %>
 
-<div class="page-header" role="banner" aria-label="Playlists header">
-  <div>
-    <p class="dim">Local music discovery</p>
-    <h1>Playlists</h1>
-  </div>
-  <%= link_to "New playlist", new_playlist_playlist_path, class: "btn btn-primary btn-sm" if authenticated? %>
-</div>
+<div class="playlist-index">
+  <header class="playlist-index__header" role="banner" aria-label="Playlists header">
+    <div>
+      <p class="dim">whyp · soundcloud</p>
+      <h1>Playlists</h1>
+    </div>
+    <%= link_to "New playlist", new_playlist_playlist_path, class: "btn btn-primary btn-sm" if authenticated? %>
+  </header>
 
-<% @playlists.each do |pl| %>
-  <article role="article" aria-label="Playlist <%= pl.name %>">
-    <h2><%= link_to pl.name, playlist_playlist_path(pl) %></h2>
-    <p class="dim"><%= pl.tracks_count %> tracks · <%= pl.plays_count %> plays · <%= pl.user.email_address.split("@").first %></p>
-  </article>
-<% end %>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+  <section class="playlist-index__list" role="region" aria-label="Playlists list">
+    <% @playlists.each do |pl| %>
+      <article role="article" aria-label="Playlist <%= pl.name %>">
+        <div>
+          <h2><%= link_to pl.name, playlist_playlist_path(pl) %></h2>
+          <p><%= pl.tracks_count %> tracks · <%= pl.plays_count %> plays · <%= pl.user.email_address.split("@").first %></p>
+        </div>
+        <%= link_to "Open", playlist_playlist_path(pl), class: "btn btn-ghost btn-sm" %>
+      </article>
+    <% end %>
+  </section>
+
+  <%= @pagy.series_nav if @pagy.pages > 1 %>
+</div>

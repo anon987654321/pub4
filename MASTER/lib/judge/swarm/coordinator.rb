@@ -20,7 +20,7 @@ module Master
           analyst: Workers::Analyst,
           coder: Workers::Coder,
           reviewer: Workers::Reviewer,
-          researcher: Workers::Researcher
+          researcher: Workers::Researcher,
         }.freeze
 
         WORKER_WEIGHTS = { reviewer: 3, analyst: 2, researcher: 2, coder: 1 }.freeze
@@ -49,7 +49,7 @@ module Master
         def analyse_and_review(file_path:, code:)
           fan_out([
             { role: :analyst, task: "identify all issues", context_slice: { file: file_path, code: code } },
-            { role: :reviewer, task: "security and correctness review", context_slice: { code: code } }
+            { role: :reviewer, task: "security and correctness review", context_slice: { code: code } },
           ]).and_then do |sr|
             analysis = sr.artifacts[:analyst]
             review = sr.artifacts[:reviewer]

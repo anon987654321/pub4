@@ -1,19 +1,22 @@
+@use "x_base" as x;
+
 :root {
-  color-scheme: light dark;
-  --color-shadow: #111827;
-  --color-midtone: #64748b;
-  --color-highlight: #f8fafc;
-  --color-accent: #2563eb;
-  --color-danger: #dc2626;
-  --color-warning: #d97706;
-  --color-success: #059669;
-  --color-overlay: rgb(0 0 0 / 0.5);
-  --color-border: rgb(from var(--color-shadow) r g b / 0.15);
-  --color-midtone-tint: color-mix(in srgb, var(--color-midtone) 20%, white);
-  --gradient-hero: linear-gradient(135deg, var(--color-shadow) 0%, var(--color-midtone) 100%);
+  @include x.x-dark-tokens;
+  color-scheme: dark;
+  --color-shadow: var(--x-bg);
+  --color-midtone: var(--x-text-secondary);
+  --color-highlight: var(--x-surface);
+  --color-accent: var(--x-accent);
+  --color-danger: var(--x-danger);
+  --color-warning: #ffd400;
+  --color-success: #00ba7c;
+  --color-overlay: rgb(0 0 0 / 0.4);
+  --color-border: var(--x-border);
+  --color-midtone-tint: var(--x-hover);
+  --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
   --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
-  --text-primary: var(--color-shadow);
-  --text-secondary: color-mix(in srgb, var(--color-shadow) 72%, white);
+  --text-primary: var(--x-text);
+  --text-secondary: var(--x-text-secondary);
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 0.75rem;
@@ -35,47 +38,45 @@
   --bp-lg: 1024px;
   --bp-xl: 1280px;
   --bp-2xl: 1536px;
-  --color-primary: var(--color-shadow);
-  --color-surface: var(--color-highlight);
+  --color-primary: var(--x-text);
+  --color-surface: var(--x-surface);
 }
 
-[data-theme="dark"] {
-  --color-shadow: #111827;
-  --color-midtone: #94a3b8;
-  --color-highlight: #0f172a;
-  --color-accent: #60a5fa;
-  --color-border: rgb(from var(--color-shadow) r g b / 0.14);
-  --color-midtone-tint: color-mix(in srgb, var(--color-midtone) 20%, black);
-  --gradient-hero: linear-gradient(135deg, var(--color-shadow) 0%, var(--color-midtone) 100%);
-  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
-  --text-primary: #f8fafc;
-  --text-secondary: color-mix(in srgb, #f8fafc 72%, black);
+[data-theme="light"] {
+  @include x.x-light-tokens;
+  color-scheme: light;
+  --color-shadow: var(--x-bg);
+  --color-midtone: var(--x-text-secondary);
+  --color-highlight: var(--x-surface);
+  --color-accent: var(--x-accent);
+  --color-border: var(--x-border);
+  --color-midtone-tint: var(--x-hover);
+  --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
+  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.65) 0%, transparent 60%);
+  --text-primary: var(--x-text);
+  --text-secondary: var(--x-text-secondary);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-shadow: #111827;
-    --color-midtone: #94a3b8;
-    --color-highlight: #0f172a;
-    --color-accent: #60a5fa;
-    --color-border: rgb(255 255 255 / 0.14);
-    --color-midtone-tint: color-mix(in srgb, var(--color-midtone) 20%, black);
-    --gradient-hero: linear-gradient(135deg, var(--color-shadow) 0%, var(--color-midtone) 100%);
-    --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
-    --text-primary: #f8fafc;
-    --text-secondary: color-mix(in srgb, #f8fafc 72%, black);
-  }
-}
-
-@media (color-gamut: p3) {
-  :root {
-    --color-midtone: color(display-p3 0.1 0.45 0.9);
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    @include x.x-light-tokens;
+    color-scheme: light;
+    --color-shadow: var(--x-bg);
+    --color-midtone: var(--x-text-secondary);
+    --color-highlight: var(--x-surface);
+    --color-accent: var(--x-accent);
+    --color-border: var(--x-border);
+    --color-midtone-tint: var(--x-hover);
+    --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
+    --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.65) 0%, transparent 60%);
+    --text-primary: var(--x-text);
+    --text-secondary: var(--x-text-secondary);
   }
 }
 
 @media (prefers-contrast: high) {
   :root {
-    --color-border: var(--color-shadow);
+    --color-border: var(--x-text);
     --text-secondary: var(--text-primary);
   }
 }
