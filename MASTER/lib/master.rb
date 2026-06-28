@@ -214,6 +214,8 @@ module Master
   def self.prepare_runtime!(unsafe: false)
     ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] = "1" if unsafe
     apply_process_defaults!
+    require_relative "ground/host_budget"
+    Ground::HostBudget.apply_defaults!
     install_process_guards!
   end
 

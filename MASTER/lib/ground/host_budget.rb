@@ -1,0 +1,92 @@
+# frozen_string_literal: true
+
+module Master
+  module Ground
+    # OpenBSD VPS (~1GB RAM) cannot survive full-repo LLM prompts or recursive autofix.
+    # Apply conservative defaults and refuse work that historically OOM-killed the host.
+    module HostBudget
+      CONSTRAINED_TOTAL_MB = 1_100
+      HEAVY_PROMPT_BYTES = 4_000
+
+      module_function
+
+      def apply_defaults!
+        return unless constrained?
+
+        ENV["MASTER_SKIP_TTS"] ||= "1"
+        ENV["MASTER_SKIP_BOOT_SCAN"] ||= "1"
+        ENV["MASTER_BACKGROUND"] ||= "0"
+        ENV["MASTER_WEB"] ||= "0" if cli_tty? && !web_explicitly_enabled?
+      end
+
+      def constrained?
+        total = total_mem_mb
+        total && total <= CONSTRAINED_TOTAL_MB
+      end
+
+      def total_mem_mb
+        @total_mem_mb ||= detect_total_mem_mb
+      end
+
+      def detect_total_mem_mb
+        if RUBY_PLATFORM.include?("openbsd")
+          raw = `sysctl -n hw.physmem 2>/dev/null`.strip
+          bytes = raw.to_i
+          return (bytes / 1_048_576) if bytes.positive?
+        end
+        if File.readable?("/proc/meminfo")
+          line = File.readlines("/proc/meminfo", chomp: true).find { |l| l.start_with?("MemTotal:") }
+          kb = line&.split&.fetch(1, nil).to_i
+          return kb / 1024 if kb.positive?
+        end
+        nil
+      end
+
+      def status_line
+        return unless constrained?
+
+        mb = total_mem_mb
+        "host0: #{mb}MB ram — /scan lib · bin/cli --fast · avoid full-repo prompts"
+      end
+
+      def refuse_heavy_prompt?(text)
+        return nil unless constrained?
+
+        body = text.to_s
+        return heavy_repo_message if repo_wide_request?(body)
+        return "host budget: prompt too large (#{body.bytesize}B) — use /scan lib or <<" if body.bytesize > HEAVY_PROMPT_BYTES
+
+        nil
+      end
+
+      def repo_wide_request?(text)
+        t = text.to_s
+        return true if t.match?(/\b(?:every|all|each)\b.*\bfiles?\b/i)
+        return true if t.match?(/\b(?:analyze|analyse|audit|scan)\b.*\b(?:recursively|recursive)\b/i)
+        return true if t.match?(/\b(?:autofix|autoalign|autoimplement)\b.*\b(?:MASTER|DEPLOY|repo)\b/i)
+        return true if t.match?(/\b(?:MASTER|DEPLOY)\b.*\b(?:autofix|autoalign|autoimplement)\b/i)
+
+        false
+      end
+
+      def heavy_repo_message
+        mb = total_mem_mb || "low"
+        "host budget: full-repo analyze/autofix would OOM on #{mb}MB — use /scan lib, /fix lib, or bin/cli --fast"
+      end
+
+      def shell_fragment_tip
+        "shell tip: if CLI dies mid-line, ksh runs the leftover text — use /scan or quote paths"
+      end
+
+      def cli_tty?
+        $stdin.tty?
+      rescue StandardError
+        false
+      end
+
+      def web_explicitly_enabled?
+        ENV["MASTER_WEB"] == "1"
+      end
+    end
+  end
+end

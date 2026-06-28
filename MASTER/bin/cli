@@ -35,6 +35,7 @@ def parse_initial_message_options(argv)
       puts ""
       puts "Pipe mode:  echo '/status' | bin/cli"
       puts "Fast mode:  bin/cli --fast   (status/orient/tools/help only)"
+      puts "VPS 1GB:    auto-skips TTS/boot-scan/web — use /scan lib not full-repo prompts"
       exit 0
     end
     opts.on("-m", "--message TEXT") { |text| options[:message] = text }
@@ -68,6 +69,11 @@ end
 
 trap("INT") { save_cli_session_safely(cli); $stderr.puts "\nsaved"; exit 0 }
 trap("TERM") { save_cli_session_safely(cli); exit 0 }
+trap("TSTP") do
+  $stderr.puts "\ncli: suspended — fg then /exit; Ctrl-Z leaves ~200MB ruby on 1GB hosts"
+  trap("TSTP", "DEFAULT")
+  Process.kill("STOP", Process.pid)
+end
 
 fast_boot = ARGV.include?("--fast")
 Master::Now::BootBanner.print unless fast_boot

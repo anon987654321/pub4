@@ -31,7 +31,7 @@ module Master
       end
 
       def focus_prompt
-        @refs.renderer.render("master$ ", mode: :dim)
+        @refs.renderer.render("#{@refs.renderer.prompt_token} ", mode: :dim)
       end
 
       def normal_prompt
@@ -85,6 +85,8 @@ module Master
       end
 
       NL_DISPATCH = [
+        [/\b(?:analyze|analyse|audit|scan)\b.*\b(?:every|all|each)\b.*\bfiles?\b/i, :run_bounded_repo_scan],
+        [/\b(?:autofix|autoalign|autoimplement)\b.*\b(?:recursively|recursive|every|all)\b/i, :run_bounded_repo_scan],
         [/\A(?:hi|hello|hey|yo|good (?:morning|afternoon|evening))[\s!.?]*\z/i, :run_chitchat],
         [/\b(?:show|print|list)\s+(?:undo\s+)?histor/i, :run_history],
         [/\b(?:why|how)\s+(?:this|that)\s+(?:fail(?:ed)?|break|broke|error|wrong|happen(?:ed)?)\b/i, :run_why],
@@ -157,6 +159,11 @@ module Master
       ].freeze
 
       def handle_plain_language_line(line)
+        if (refusal = host_refusal_for(line))
+          puts @refs.renderer.render(refusal, mode: :warning)
+          return
+        end
+
         route = inferred_intent_route(line)
         return run_input(line) unless route
 
@@ -189,6 +196,8 @@ module Master
         when :write_repo_changes
           run_commit
           run_push if route[:push]
+        when :bounded_repo_scan
+          run_bounded_repo_scan(autofix: route[:autofix])
         when *WORKFLOW_INTENTS
           target = inferred_target_path(line)
           run_workflow(target)
@@ -196,6 +205,24 @@ module Master
         else
           run_input(line)
         end
+      end
+
+      def run_bounded_repo_scan(autofix: false)
+        puts @refs.renderer.render("scan0: lib/ only (DEPLOY via /scan ../DEPLOY/rails — host budget)", mode: :dim)
+        run_work_command("scan", "lib")
+        run_work_command("fix", "lib") if autofix
+      end
+
+      def host_refusal_for(line)
+        Master::Ground::HostBudget.refuse_heavy_prompt?(line)
+      rescue StandardError
+        nil
+      end
+
+      def host_repo_wide_request?(text)
+        Master::Ground::HostBudget.repo_wide_request?(text)
+      rescue StandardError
+        false
       end
 
       def run_workflow(target)
@@ -208,6 +235,9 @@ module Master
 
       def inferred_intent_route(line)
         text = line.to_s.strip
+        if host_repo_wide_request?(text)
+          return { intent: :bounded_repo_scan, autofix: text.match?(/\b(?:autofix|autoalign|autoimplement)\b/i), risk: :high }
+        end
         if text.match?(/\b(?:run|put|send|take)\s+(?:this|it|that)?\s*through\s+master\b/i) ||
            text.match?(/\b(?:full\s+)?(?:pass|tribunal)\b/i)
           return { intent: :run_full_workflow, risk: :medium }

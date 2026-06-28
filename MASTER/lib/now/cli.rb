@@ -90,6 +90,9 @@ module Master
 
       def run_input(input)
         return empty_input(:run_input) if input.strip.empty?
+        if (host_err = host_budget_block(input))
+          return display_result(result: host_err, accumulated: "", streamed: false)
+        end
         budget_err = budget_block_if_exceeded
         return display_result(result: budget_err, accumulated: "", streamed: false) if budget_err
 
@@ -109,6 +112,8 @@ module Master
         end
         result = begin
           @pipeline_thread.value
+        rescue NoMemoryError
+          Result.err(host_oom_message, category: :infrastructure)
         rescue StandardError => _e
           Result.err("aborted", category: :abort)
         end
@@ -191,6 +196,22 @@ module Master
         entropy = [violations_count / 20.0, 1.0].min
         confidence = @last_ok ? 0.86 : 0.42
         { mood: mood, entropy: entropy.round(2), confidence: confidence }
+      end
+
+      def host_budget_block(input)
+        msg = Master::Ground::HostBudget.refuse_heavy_prompt?(input)
+        return unless msg
+
+        Master::Result.err(msg, category: :validation)
+      rescue StandardError
+        nil
+      end
+
+      def host_oom_message
+        tip = Master::Ground::HostBudget.heavy_repo_message
+        "failed to allocate memory — #{tip}"
+      rescue StandardError
+        "failed to allocate memory — use /scan lib or bin/cli --fast"
       end
 
       def budget_block_if_exceeded

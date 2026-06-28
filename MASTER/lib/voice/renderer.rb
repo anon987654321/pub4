@@ -3,6 +3,7 @@
 
 require "pastel"
 require "socket"
+require_relative "../ground/host_budget"
 require_relative "renderer/git_status"
 require_relative "renderer/system_info"
 
@@ -71,6 +72,8 @@ module Master
         lines << d("mode0: #{Master::Now::RuntimeMode.summary(config: @config)}")
         elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i - @boot_ms)
         lines << d("boot0: #{elapsed}ms")
+        host_line = Master::Ground::HostBudget.status_line
+        lines << d(host_line) if host_line
         lines << ""
         lines << @p.bold.red("master") + @p.dim("@#{host} ready")
         lines << ""
@@ -130,8 +133,13 @@ module Master
         @p.bold.red(" [#{count}v]")
       end
 
+      def prompt_token
+        short = (Socket.gethostname rescue "host").split(".").first
+        "#{short}$"
+      end
+
       def phase_prompt(last_ok, phase)
-        base = "master$"
+        base = prompt_token
         return @p.red(base) unless last_ok
         case phase.to_s
         when "discover" then @p.bold.yellow(base)
