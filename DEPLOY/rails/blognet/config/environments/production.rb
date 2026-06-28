@@ -5,6 +5,6 @@ require File.expand_path("../../../shared/config/environments/production_baselin
 
 Rails.application.configure do
   apply_production_baseline(config,
-    hosts: [ "blognet.no", "www.blognet.no", "blognet.brgen.no" ],
-    mailer_host: "blognet.no")
+    hosts: [ "blognet.brgen.no" ],
+    mailer_host: "blognet.brgen.no")
 end

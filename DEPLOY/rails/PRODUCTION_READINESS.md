@@ -60,8 +60,8 @@ Ship readiness is defined in `MASTER/data/operator_playbook.yml` — not checkbo
 
 ## Open blockers (operator)
 
-1. **Apex DNS**: `baibl.no`, `blognet.no`, `hjerterom.no` must resolve publicly before they can be marked public-ready.
-2. **Domain inventory drift**: `DEPLOY/master.json`, `DEPLOY/rails/apps.yml`, `openbsd.sh`, relayd, and this document must agree on each canonical hostname. `hjerterom.no` is now canonical in `openbsd.sh` and `relayd.conf` (subdomain `hjerterom.brgen.no` still routes).
+1. **City vanity TLS**: `openbsd.sh` stage 1 must issue certs for every apex in `ALL_DOMAINS` (e.g. `oshlo.no`, `lsangeles.com`) — relayd only advertises keypairs for certs present on disk.
+2. **Domain inventory drift**: `DEPLOY/master.json`, `DEPLOY/rails/apps.yml`, `openbsd.sh`, relayd, and this document must agree on each canonical hostname. Baibl, blognet, and hjerterom use `*.brgen.no` subdomains only (no apex domains we do not own).
 3. **relayd stale tables**: strict health requires a relayd restart after route/table changes.
 4. **db:seed**: production deploy skips seeds unless `RUN_PRODUCTION_SEEDS=1`; seeded demo users are not production accounts.
 5. **openrsync**: broken on vm23 — deploy uses git/tar sync. Set `SYNC_USE_OPENRSYNC=1` only after openrsync is verified.

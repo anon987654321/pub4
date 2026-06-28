@@ -9,7 +9,7 @@ class AiContentService
 
   def generate
     prompt = <<~PROMPT
-      You are a professional blog writer for blognet.no.
+      You are a professional blog writer for blognet.brgen.no.
       Write a clear, engaging article body for the title below.
       Use short paragraphs, concrete detail, and an approachable tone.
       Do not repeat the title. No markdown headings.

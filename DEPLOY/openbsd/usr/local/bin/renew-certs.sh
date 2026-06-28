@@ -36,7 +36,7 @@ ALL_DOMAINS=(
   wshingtondc.com pub.healthcare pub.attorney freehelp.legal
   bsdports.org bsddocs.org discordb.org foodielicio.us
   stacyspassion.com antibettingblog.com anticasinoblog.com
-  antigamblingblog.com foball.no amber.brgen.no baibl.no
+  antigamblingblog.com foball.no amber.brgen.no
 )
 
 for domain in $ALL_DOMAINS; do

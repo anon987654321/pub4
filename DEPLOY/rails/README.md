@@ -9,9 +9,9 @@ Six production Rails 8.1 apps under one shared engine. **Source of truth: `apps.
 | brgen | brgen.no | 38182 | City social + marketplace, dating, TV, takeaway, playlist |
 | amber | amber.brgen.no | 61352 | Wardrobe / outfit intelligence |
 | bsdports | bsdports.org | 47312 | Ports search and advisories |
-| baibl | baibl.no | 10007 | Scripture study graph |
-| blognet | blognet.no | 10002 | Editorial / recipe publishing |
-| hjerterom | hjerterom.no | 38891 | Food rescue and volunteer ops |
+| baibl | baibl.brgen.no | 10007 | Scripture study graph |
+| blognet | blognet.brgen.no | 10002 | Editorial / recipe publishing |
+| hjerterom | hjerterom.brgen.no | 38891 | Food rescue and volunteer ops |
 
 Deploy: `doas zsh DEPLOY/rails/<app>/<app>.sh`
 

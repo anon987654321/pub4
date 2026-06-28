@@ -42,9 +42,9 @@ Canonical inventory: **`DEPLOY/rails/apps.yml`** (domains, ports, feature status
 | brgen | `rails/brgen/brgen.sh` | brgen.no |
 | amber | `rails/amber/amber.sh` | amber.brgen.no |
 | bsdports | `rails/bsdports/bsdports.sh` | bsdports.org |
-| baibl | `rails/baibl/baibl.sh` | baibl.no |
-| blognet | `rails/blognet/blognet.sh` | blognet |
-| hjerterom | `rails/hjerterom/hjerterom.sh` | hjerterom.no |
+| baibl | `rails/baibl/baibl.sh` | baibl.brgen.no |
+| blognet | `rails/blognet/blognet.sh` | blognet.brgen.no |
+| hjerterom | `rails/hjerterom/hjerterom.sh` | hjerterom.brgen.no |
 
 Each script: copy tracked tree → `bundle install` → migrate → rc.d → relayd backend → `/up` smoke.
 

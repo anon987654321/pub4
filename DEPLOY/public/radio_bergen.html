@@ -240,6 +240,14 @@
         this._fadeIv=null;this._prefadeTimer=null;this._loadWatch=null;
         // Beat detection state
         this.beatPhase=0;this.energyLevel=.5;this._beatEnv=0;
+        // Audio analysis state
+        this._smoothBass=0;this._smoothMid=0;this._smoothHigh=0;
+        this._smoothAvg=0;this._smoothBeat=0;this._smoothCentroid=0;
+        this._prevSpectrum=new Uint8Array(128);
+        this._fluxHistory=[];
+        this._SMOOTH=0.17;
+        this.masterGain=null;this.eqLow=null;this.eqHigh=null;
+        window.EXPERIMENTAL_MODE=false;
         this.audioContext=null;this.analyser=null;this.compressor=null;this.dataArray=null;
         // Initialize Web Audio API with error handling (MASTER2: FAIL_VISIBLY)
         try{
@@ -247,18 +255,27 @@
           
           // Add compressor/limiter for volume normalization
           this.compressor=this.audioContext.createDynamicsCompressor();
-          this.compressor.threshold.setValueAtTime(-24,this.audioContext.currentTime);
-          this.compressor.knee.setValueAtTime(30,this.audioContext.currentTime);
-          this.compressor.ratio.setValueAtTime(12,this.audioContext.currentTime);
-          this.compressor.attack.setValueAtTime(0.003,this.audioContext.currentTime);
-          this.compressor.release.setValueAtTime(0.25,this.audioContext.currentTime);
+          this.compressor.threshold.setValueAtTime(-20,this.audioContext.currentTime);
+          this.compressor.knee.setValueAtTime(18,this.audioContext.currentTime);
+          this.compressor.ratio.setValueAtTime(7,this.audioContext.currentTime);
+          this.compressor.attack.setValueAtTime(0.004,this.audioContext.currentTime);
+          this.compressor.release.setValueAtTime(0.42,this.audioContext.currentTime);
+
+          this.masterGain=this.audioContext.createGain();
+          this.eqLow=this.audioContext.createBiquadFilter();
+          this.eqHigh=this.audioContext.createBiquadFilter();
+          this.eqLow.type='lowshelf';this.eqLow.frequency.value=280;this.eqLow.gain.value=2.2;
+          this.eqHigh.type='highshelf';this.eqHigh.frequency.value=3800;this.eqHigh.gain.value=1.8;
+          this.compressor.connect(this.eqLow);
+          this.eqLow.connect(this.eqHigh);
+          this.eqHigh.connect(this.masterGain);
+          this.masterGain.connect(this.audioContext.destination);
           
           this.analyser=this.audioContext.createAnalyser();
           this.analyser.fftSize=256;
           this.dataArray=new Uint8Array(this.analyser.frequencyBinCount);
           
-          // Chain: source → analyser → compressor → destination
-          this.compressor.connect(this.audioContext.destination);
+          // Chain: source → analyser → compressor → EQ → masterGain → destination
         }catch{}
       }
       initYTAPI(){if(IN_SANDBOX)return;try{this._ytReadyCount=0;this.ytPlayers.a=new YT.Player('yt-player-a',{width:'1',height:'1',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('a'),onStateChange:e=>this.onYTState('a',e),onError:()=>this.onYTError('a')}});this.ytPlayers.b=new YT.Player('yt-player-b',{width:'1',height:'1',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('b'),onStateChange:e=>this.onYTState('b',e),onError:()=>this.onYTError('b')}})}catch{}}
@@ -336,7 +353,7 @@
       prev(){const p=(this.trackIndex-1+this.tracks.length)%this.tracks.length,t=this.tracks[p];this.trackIndex=p;this.updateUI();t.src?this._loadMP3(this.activeKey,t,{fadeIn:true}):this._loadYT(this.activeKey,t,{fadeIn:true})}
       toggleMute(){this.muted=!this.muted;const t=this.tracks[this.trackIndex];if(t.src){try{this.mp3Players[this.activeKey].muted=this.muted}catch{}}else if(t.id&&this.ytReady){try{this.muted?this.ytPlayers[this.activeKey].mute():this.ytPlayers[this.activeKey].unMute()}catch{}}try{navigator.vibrate?.(6)}catch{}}
       updateUI(){const u=document.getElementById('uiLabel');if(!u)return;const t=this.tracks[this.trackIndex];u.textContent=(t.artist?`${t.artist} - `:'')+t.title}
-      data(){if(this.analyser&&this.dataArray){try{this.analyser.getByteFrequencyData(this.dataArray);const n=this.dataArray.length,n2=n*.2|0,n6=n*.6|0;let bass=0,mid=0,high=0;for(let i=0;i<n2;i++)bass+=this.dataArray[i];for(let i=n2;i<n6;i++)mid+=this.dataArray[i];for(let i=n6;i<n;i++)high+=this.dataArray[i];bass/=n2*255;mid/=(n6-n2)*255;high/=(n-n6)*255;const avg=(bass+mid+high)/3;this.beatPhase+=.08*motionScale();const beat=Math.sin(this.beatPhase)>.8?1:0;this._beatEnv=this._beatEnv*.94+(beat?.4:0)*.06;return{bass,mid,high,average:avg,beat:this._beatEnv,energy:this.energyLevel}}catch{}}const m=motionScale();this.beatPhase+=.08*m;const b=.5+.4*Math.sin(this.beatPhase*.8),i=.45+.35*Math.sin(this.beatPhase*1.2+.7),h=.35+.35*Math.sin(this.beatPhase*1.8+1.2),a=(b+i+h)/3,r=Math.sin(this.beatPhase)>.8?1:0;this._beatEnv=this._beatEnv*.94+(r?.4:0)*.06;return{bass:b,mid:i,high:h,average:a,beat:this._beatEnv,energy:this.energyLevel}}
+      data(){if(this.analyser&&this.dataArray){try{this.analyser.getByteFrequencyData(this.dataArray);const n=this.dataArray.length,n2=(n*0.2)|0,n6=(n*0.6)|0;let bass=0,mid=0,high=0;for(let i=0;i<n2;i++)bass+=this.dataArray[i];for(let i=n2;i<n6;i++)mid+=this.dataArray[i];for(let i=n6;i<n;i++)high+=this.dataArray[i];bass/=(n2*255);mid/=((n6-n2)*255);high/=((n-n6)*255);const avg=(bass+mid+high)/3;let flux=0;for(let i=0;i<this.dataArray.length;i++){const diff=this.dataArray[i]-this._prevSpectrum[i];if(diff>0)flux+=diff}this._prevSpectrum.set(this.dataArray);flux/=(this.dataArray.length*255);const avgFlux=this._fluxHistory.length?this._fluxHistory.reduce((a,b)=>a+b,0)/this._fluxHistory.length:0.02;const isOnset=flux>0.032&&flux>avgFlux*1.45;this._fluxHistory.push(flux);if(this._fluxHistory.length>10)this._fluxHistory.shift();let weightedSum=0,totalEnergy=0;for(let i=0;i<this.dataArray.length;i++){weightedSum+=i*this.dataArray[i];totalEnergy+=this.dataArray[i]}const centroid=totalEnergy>0?(weightedSum/totalEnergy)/this.dataArray.length:0;const rawBeat=isOnset?Math.min(1,flux*2.7):0;this._smoothBass=this._smoothBass*(1-this._SMOOTH)+bass*this._SMOOTH;this._smoothMid=this._smoothMid*(1-this._SMOOTH)+mid*this._SMOOTH;this._smoothHigh=this._smoothHigh*(1-this._SMOOTH)+high*this._SMOOTH;this._smoothAvg=this._smoothAvg*(1-this._SMOOTH)+avg*this._SMOOTH;this._smoothBeat=this._smoothBeat*(1-this._SMOOTH)+rawBeat*this._SMOOTH;this._smoothCentroid=this._smoothCentroid*(1-this._SMOOTH)+centroid*this._SMOOTH;this.beatPhase+=0.08*motionScale();this._beatEnv=this._beatEnv*.94+(this._smoothBeat>0.25?.5:0)*.06;if(this.masterGain&&isOnset){const duck=window.EXPERIMENTAL_MODE?0.52:0.67;this.masterGain.gain.linearRampToValueAtTime(duck,this.audioContext.currentTime+0.03);this.masterGain.gain.linearRampToValueAtTime(1.0,this.audioContext.currentTime+0.44)}return{bass:this._smoothBass,mid:this._smoothMid,high:this._smoothHigh,average:this._smoothAvg,beat:this._smoothBeat,energy:this.energyLevel,flux,centroid:this._smoothCentroid}}catch{}}const m=motionScale();this.beatPhase+=.08*m;const b=.5+.4*Math.sin(this.beatPhase*.8),i=.45+.35*Math.sin(this.beatPhase*1.2+.7),h=.35+.35*Math.sin(this.beatPhase*1.8+1.2),a=(b+i+h)/3,r=Math.sin(this.beatPhase)>.8?1:0;this._beatEnv=this._beatEnv*.94+(r?.4:0)*.06;return{bass:b,mid:i,high:h,average:a,beat:this._beatEnv,energy:this.energyLevel,flux:0,centroid:0.5}}
     }
 
     const initAudioEngine=async()=>{
@@ -405,8 +422,13 @@
         init(){this.particles=[];this.centers=[];const w1=Math.random()*this.w,h1=Math.random()*this.h;let c=0;for(let z=-this.fov;z<this.fov;z+=this.zStep){const coords=[];for(let i=0;i<this.segments;i++){const p=this.getCirclePos(0,0,this.baseRadius,i,this.segments);coords.push({x:p.x,y:p.y,index:i,radius:this.baseRadius,segments:this.segments,centerX:0,centerY:0})}const center={x:((this.w/2)-w1)*(c/15)+this.w/2,y:((this.h/2)-h1)*(c/15)+this.h/2};c++;this.centers.push(center);const row=[];let aIdx=8+Math.floor(Math.random()*1024);for(let i=0;i<coords.length;i++){const co=coords[i],p=this.addParticle(co.x,co.y,z,aIdx);p.index=co.index;p.radius=co.radius;p.radiusAudio=p.radius;p.segments=co.segments;p.centerX=co.centerX;p.centerY=co.centerY;row.push(p);aIdx+=i<coords.length/2?1:-1;if(aIdx>1024)aIdx=8;if(aIdx<8)aIdx=1024}this.particles.push(row)}}
         frame(a){
           const m=motionScale();
-          // Bass wobble accumulator
-          this.bassWobble=(this.bassWobble||0)*0.92+(a?.bass||0)*(a?.beat||0)*0.08;
+          const exp=window.EXPERIMENTAL_MODE?1.65:1.0;
+          const flux=a?.flux||0,beat=a?.beat||0,energy=a?.average||0.4,centroid=a?.centroid||0.5;
+          this.speed=0.72+(energy*1.2*exp)+(flux*0.95*exp);
+          this.fov=250+(flux*65*exp)+(beat*22*exp);
+          this.baseRadius=75+(beat*26*exp)+(flux*18*exp)+(centroid*12*exp);
+          if(beat>0.5)this.bassWobble=(this.bassWobble||0)+beat*0.75*exp;
+          else this.bassWobble=(this.bassWobble||0)*0.92;
           this.clearImageData();
           // Draw star field
           for(const star of this.stars){
@@ -631,7 +653,7 @@
     canvas.addEventListener("touchend",e=>{e.preventDefault();if(e.touches.length<2)resetPinch();if(e.touches.length===0){mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput();rippleAtEvent(e)}if(audio?.started&&!IN_SANDBOX){const t=e.changedTouches[0],endX=t.clientX-canvasRect.left,endY=t.clientY-canvasRect.top,dx=endX-touchStartX,dy=endY-touchStartY;if(Math.abs(dx)>swipeThreshold||Math.abs(dy)>swipeThreshold){if(Math.abs(dx)>Math.abs(dy)){dx>0?audio.next():audio.prev()}else{const s=document.getElementById("swipeHint");s.textContent="Warp Tunnel";s.classList.add("show");setTimeout(()=>s.classList.remove("show"),1400)}try{navigator.vibrate?.(10)}catch{}}else{const n=performance.now();if(n-lastTapTime<doubleTapMs)toggleFullscreen();lastTapTime=n}}},{passive:false});
     canvas.addEventListener("touchcancel",()=>{resetPinch();mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput()},{passive:true});
     window.vizSpeed=1.0;window.vizIntensity=1.0;window.psychedelicMode=0;
-    addEventListener("keydown",e=>{if(e.key?.toLowerCase()==="m"){e.preventDefault();if(audio?.started)audio.toggleMute();return}if(e.code==="ArrowRight"||e.code==="KeyN"){e.preventDefault();if(audio?.started)audio.next();return}if(e.code==="ArrowLeft"||e.code==="KeyP"){e.preventDefault();if(audio?.started)audio.prev();return}if(e.code==="KeyF"||e.code==="F11"){e.preventDefault();toggleFullscreen();return}if(e.code==="Space"||e.code==="KeyK"){e.preventDefault();if(!audio?.started){startApp()}else{audio.toggleMute()}return}if(e.code==="ArrowUp"){e.preventDefault();window.vizSpeed=Math.min(3,window.vizSpeed+0.1);if(DEBUG)console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="ArrowDown"){e.preventDefault();window.vizSpeed=Math.max(0.1,window.vizSpeed-0.1);if(DEBUG)console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="BracketRight"){e.preventDefault();window.vizIntensity=Math.min(2,window.vizIntensity+0.1);if(DEBUG)console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="BracketLeft"){e.preventDefault();window.vizIntensity=Math.max(0.2,window.vizIntensity-0.1);if(DEBUG)console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="KeyX"){e.preventDefault();window.psychedelicMode=(window.psychedelicMode+1)%4;const modes=['Off','Trails','Color Shift','Kaleidoscope'];if(DEBUG)console.log('Psychedelic:',modes[window.psychedelicMode]);return}if(e.code==="Escape"){e.preventDefault();if(document.fullscreenElement)toggleFullscreen();return}if(e.code==="Digit0"||e.code==="Numpad0"){e.preventDefault();audio.trackIndex=0;audio.beginCrossfade({fast:true});return}if(e.code==="KeyI"){e.preventDefault();canvas.classList.toggle("canvas-inverted");return}});
+    addEventListener("keydown",e=>{if(e.key?.toLowerCase()==="e"){window.EXPERIMENTAL_MODE=!window.EXPERIMENTAL_MODE;if(DEBUG)console.log("Experimental Mode:",window.EXPERIMENTAL_MODE);return}if(e.key?.toLowerCase()==="m"){e.preventDefault();if(audio?.started)audio.toggleMute();return}if(e.code==="ArrowRight"||e.code==="KeyN"){e.preventDefault();if(audio?.started)audio.next();return}if(e.code==="ArrowLeft"||e.code==="KeyP"){e.preventDefault();if(audio?.started)audio.prev();return}if(e.code==="KeyF"||e.code==="F11"){e.preventDefault();toggleFullscreen();return}if(e.code==="Space"||e.code==="KeyK"){e.preventDefault();if(!audio?.started){startApp()}else{audio.toggleMute()}return}if(e.code==="ArrowUp"){e.preventDefault();window.vizSpeed=Math.min(3,window.vizSpeed+0.1);if(DEBUG)console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="ArrowDown"){e.preventDefault();window.vizSpeed=Math.max(0.1,window.vizSpeed-0.1);if(DEBUG)console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="BracketRight"){e.preventDefault();window.vizIntensity=Math.min(2,window.vizIntensity+0.1);if(DEBUG)console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="BracketLeft"){e.preventDefault();window.vizIntensity=Math.max(0.2,window.vizIntensity-0.1);if(DEBUG)console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="KeyX"){e.preventDefault();window.psychedelicMode=(window.psychedelicMode+1)%4;const modes=['Off','Trails','Color Shift','Kaleidoscope'];if(DEBUG)console.log('Psychedelic:',modes[window.psychedelicMode]);return}if(e.code==="Escape"){e.preventDefault();if(document.fullscreenElement)toggleFullscreen();return}if(e.code==="Digit0"||e.code==="Numpad0"){e.preventDefault();audio.trackIndex=0;audio.beginCrossfade({fast:true});return}if(e.code==="KeyI"){e.preventDefault();canvas.classList.toggle("canvas-inverted");return}});
     let pageHidden=document.hidden;
     document.addEventListener("visibilitychange",()=>{
       pageHidden=document.hidden;
@@ -699,7 +721,7 @@
         setScaleAndResize(SCALE_MIN);
         lastScaleAdjust=n;
       }
-      let a=audio?.started?audio.data():{average:0,beat:0,bass:.5,mid:.45,high:.35};
+      let a=audio?.started?audio.data():{average:0,beat:0,bass:.5,mid:.45,high:.35,flux:0,centroid:.5};
       const i=window.vizIntensity||1;
       if(i!==1){
         a={...a,bass:(a?.bass||0)*i,mid:(a?.mid||0)*i,high:(a?.high||0)*i,average:(a?.average||0)*i};
@@ -749,7 +771,7 @@
     // Helper: Initialize pixel buffer for visualizers
     const initBuffer=(ctx,w,h)=>{const imageData=ctx.getImageData(0,0,w,h);const u32=new Uint32Array(imageData.data.buffer);const t=new Uint8ClampedArray(4);t[3]=255;const BLACK32=new Uint32Array(t.buffer)[0];return{imageData,u32,BLACK32}};
     // VIZ 1: INFINITY GRID - Dense square tunnel grid with beat pops & rotation
-    function init(){const canvas=document.getElementById('canvas');if(!canvas)return console.error('Canvas not found');const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true})||canvas.getContext('2d');sizeCanvas();if(DEBUG){console.log('✓ 8-bit lofi warp tunnel loaded');console.log('Keys: X=psychedelic, ↑↓=speed, []=intensity');}}
+    function init(){const canvas=document.getElementById('canvas');if(!canvas)return console.error('Canvas not found');const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true})||canvas.getContext('2d');sizeCanvas();if(DEBUG){console.log('✓ 8-bit lofi warp tunnel loaded');console.log('Keys: E=experimental, X=psychedelic, ↑↓=speed, []=intensity');}}
     if(window.tunnelRenderer){init();}else{const check=setInterval(()=>{if(window.tunnelRenderer){clearInterval(check);setTimeout(init,100);}},100);}
     })();
   </script>

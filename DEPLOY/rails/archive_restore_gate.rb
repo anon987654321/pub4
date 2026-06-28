@@ -27,7 +27,7 @@ failures = []
 warnings = []
 
 required = [
-  "ARCHIVE/RESTORE_FROM_PUB2_PUB3.md",
+  "DEPLOY/archive/RESTORE_FROM_PUB2_PUB3.md",
   "DEPLOY/audio/akmd_mastering_chain.rb",
   "DEPLOY/audio/radio_bergen_tracks.yml",
   "DEPLOY/audio/radio_bergen_visualizer_controller.js",

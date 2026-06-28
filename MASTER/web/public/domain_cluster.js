@@ -9,7 +9,9 @@ const DOMAIN_NODES = [
   { id: "messenger.brgen.no", label: "messages" },
   { id: "maps.brgen.no", label: "maps" },
   { id: "amber.brgen.no", label: "amber" },
-  { id: "hjerterom.no", label: "hjerterom" },
+  { id: "hjerterom.brgen.no", label: "hjerterom" },
+  { id: "baibl.brgen.no", label: "baibl" },
+  { id: "blognet.brgen.no", label: "blognet" },
   { id: "bsdports.org", label: "bsdports" }
 ];
 

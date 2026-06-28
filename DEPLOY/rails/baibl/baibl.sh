@@ -5,7 +5,7 @@ set -euo pipefail
 APP_NAME=baibl
 APP_DIR=/home/${APP_NAME}/app
 APP_PORT=10007
-APP_DOMAIN=baibl.no
+APP_DOMAIN=baibl.brgen.no
 SCRIPT_DIR=${0:a:h}
 SRC_DIR=${SCRIPT_DIR}
 SHARED_BUNDLE_CACHE=${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby34}

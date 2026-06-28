@@ -1,6 +1,0 @@
-{"id":"a4a13cf2-633e-4bac-be88-1b676a2cb300","timestamp":"2026-06-14T18:44:25.159408Z","event":"mcp:connected","payload":{"count":0,"event":"mcp:connected","ts":47}}
-{"id":"877c3f2e-6f80-4732-95c6-1e0bc1e5ceb4","timestamp":"2026-06-14T18:44:25.334795Z","event":"skills:loaded","payload":{"count":0,"event":"skills:loaded","ts":222}}
-{"id":"33767bd7-6034-46b8-9894-c860c89bd87a","timestamp":"2026-06-14T18:44:25.350698Z","event":"boot:snapshot","payload":{"files":1,"event":"boot:snapshot","ts":238}}
-{"id":"a7be6039-ba9b-4463-b18a-a66c5ea68022","timestamp":"2026-06-14T18:44:29.246561Z","event":"mcp:connected","payload":{"count":0,"event":"mcp:connected","ts":27}}
-{"id":"2666f367-9486-4120-a4d2-b0911e22e2c0","timestamp":"2026-06-14T18:44:29.349365Z","event":"skills:loaded","payload":{"count":0,"event":"skills:loaded","ts":130}}
-{"id":"9ef5fe5b-2a80-43df-ab25-5ac7f4894a93","timestamp":"2026-06-14T18:44:29.360554Z","event":"boot:snapshot_skipped","payload":{"files":1,"event":"boot:snapshot_skipped","ts":141}}

@@ -152,7 +152,7 @@ apps:
 
   baibl:
     title: Baibl
-    domain: baibl.no
+    domain: baibl.brgen.no
     port: 10007
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, GraphRAG, semantic scripture retrieval
@@ -185,7 +185,7 @@ apps:
 
   blognet:
     title: Blognet
-    domain: blognet.no
+    domain: blognet.brgen.no
     port: 10002
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, editorial knowledge graph, Foodielicious vertical routing
@@ -263,7 +263,7 @@ apps:
 
   hjerterom:
     title: Hjerterom
-    domain: hjerterom.no
+    domain: hjerterom.brgen.no
     port: 38891
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, route optimization, reporting jobs, operational forecasting

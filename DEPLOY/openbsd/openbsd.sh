@@ -306,9 +306,9 @@ ALL_APPS=(
   brgen:brgen.no
   amber:amber.brgen.no
   bsdports:bsdports.org
-  baibl:baibl.no
-  blognet:blognet.no
-  hjerterom:hjerterom.no
+  baibl:baibl.brgen.no
+  blognet:blognet.brgen.no
+  hjerterom:hjerterom.brgen.no
 )
 
 SERVICES=()
@@ -372,8 +372,6 @@ ALL_DOMAINS=(
   foball.no
   amber.brgen.no
   hjerterom.brgen.no
-  baibl.no
-  blognet.no
 )
 
 # ── Stage 1: DNS, DNSSEC, TLS certificates ────────────────────────────────────
@@ -629,10 +627,6 @@ configure_relayd() {
   done
   DOMAIN_BACKEND[ai.brgen.no]=master
   BACKEND_PORT[master]=${APP_PORTS[master]:-53187}
-  DOMAIN_BACKEND[blognet.no]=blognet
-  DOMAIN_BACKEND[www.blognet.no]=blognet
-  DOMAIN_BACKEND[hjerterom.no]=hjerterom
-  DOMAIN_BACKEND[www.hjerterom.no]=hjerterom
   DOMAIN_BACKEND[hjerterom.brgen.no]=hjerterom
   DOMAIN_BACKEND[anticasinoblog.com]=blognet
   DOMAIN_BACKEND[antigamblingblog.com]=blognet
