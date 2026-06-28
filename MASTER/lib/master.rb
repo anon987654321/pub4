@@ -32,8 +32,6 @@ module Master
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
   RULES_PATH = File.join(DATA, "rules.yml").freeze
   BOOTSTRAP_AUTHORITY_FILES = [
-    ["quickstart", "QUICKSTART.md"],
-    ["agents", "AGENTS.md"],
     ["soul", "data/soul.yml"],
     ["rules", "data/rules.yml"],
     ["style", "data/style.yml"],
@@ -41,6 +39,9 @@ module Master
     ["limits", "data/limits.yml"],
     ["orders", "data/state.yml"],
     ["playbook", "data/operator_playbook.yml"],
+    ["principles", "data/operator_principles.yml"],
+    ["skills", "data/skills_registry.yml"],
+    ["context", "data/project_context.yml"],
     ["operator", "../DEPLOY/OPERATOR.md"],
   ].freeze
 

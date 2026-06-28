@@ -1,0 +1,123 @@
+---
+meta:
+  source: runtime authority — edit this file or use MemoryRecord; do not add data/claude/*.md
+  count: 10
+entries:
+- key: personality_rb_comment_audit
+  name: personality rb comment audit
+  description: Comment audit results for personality.rb
+  type: feedback
+  body: Audit of the `personality.rb` comment at line 55 found the comment accurately
+    describes the code. No violations were found.
+- key: project_defrag_plan_2026_05
+  name: pub4 defrag/dedup/rename plan (2026-05-07)
+  description: Multi-commit refactor plan from a sister chat — collapse duplication
+    across docs, shrink data/, flatten repo root, rename for clarity. Priority-1 (Master::Orient)
+    shipped then reverted on 2026-05-20 as a useless wrapper.
+  type: project
+  body: |-
+    On 2026-05-20, `Master::Orient` and `/orient` were removed—the five constitutional YAMLs already appear in every system prompt via Constitution and Personality. The rest of the plan stands.
+
+    The 2026-05-07 proposal aimed for a single source of truth with one yml per fact and prose references only; shrinking `data/` from eleven to eight files by merging council, infer, sweep, and zsh into `patterns.yml`; flattening the repo root from twenty-six to ten entries including `__predecessors/`, `audio/`, `scripts/`, `web/`, and `memory/`; renames such as `deploy/openbsd.sh`, `state.yml`, `limits.yml`, `voice.yml`, and `style.yml`, with CONVENTIONS.md generated or deleted; and smoothing work—stash before `git reset --hard`, explicit `scope:` on `Master.build`, unified `Result`, per-stage budget in `limits.yml`, reconciled Guard and auto-approve, unified `exe/master` boot, and generalized WhyExplainer lookup-then-LLM.
+
+    Priority-1 Orient work—`orient.rb`, slim AGENTS and CLAUDE, `/orient` plus subcommand, zshrc `[[ -t 0 ]]` guard—shipped then reverted as a useless wrapper. One fact equals one place; commits stay small and reversible; smoothing items remain follow-up tickets.
+- key: project_falcon_em_subprocess
+  name: Falcon Async + EventMachine = subprocess pattern
+  description: EM-based gems (rb-edge-tts, em-http) inside Falcon request handlers
+    must shell out to a subprocess; Process.fork and direct EM.run both fail
+  type: project
+  body: |-
+    Falcon uses Async and io-event fibers. `Process.fork` from a request fiber raises `RuntimeError: Closing scheduler with blocked operations!`. `EventMachine.run` conflicts with Falcon's reactor and hangs or closes prematurely. This surfaced in `Master::Speech.synthesize_edge` via rb-edge-tts and applies to any `em-*` gem inside a request handler.
+
+    The pattern is an `exe/<name>-worker` script that runs EventMachine work and writes a tempfile; the controller calls `Open3.capture3`. Reference implementation: `MASTER/exe/tts-worker` and `MASTER/lib/voice/speech.rb#synthesize_edge`.
+- key: project_master
+  name: MASTER project context
+  description: pub4/MASTER — constitutional AI coding agent on OpenBSD VPS dev@brgen.no
+  type: project
+  body: |-
+    The MASTER project runs on VPS dev@brgen.no (46.23.89.226), OpenBSD 7.8, 1GB RAM, with passwordless doas. SSH uses `sshpass -p '<pass>' ssh -o StrictHostKeyChecking=no dev@46.23.89.226 'cmd'`—password per session; see `DEPLOY/OPERATOR.md`. The codebase lives at `~/pub4/MASTER/`—roughly six thousand lines of Ruby, Zeitwerk-autoloaded.
+
+    MASTER is a constitutional AI agent replacing the Claude Code CLI. OpenRouter runs through `ruby_llm` with default model `nvidia/nemotron-3-super-120b-a12b:free`. Fallback order is qwen3-coder:free, then minimax-m2.5:free, then gpt-oss-120b:free, then gemini-2.0-flash.
+
+    All coding happens on the VPS via sshpass SSH—never local edits. Patches go through `~/pub4/tmp/patch.rb`. Shell work uses zsh builtins only; no sed, awk, grep, find, head, or tail.
+
+    The pipeline is Intake → Enhance → Infer → Route → Guard → Deliberate → DestructiveReview → Execute → Review (Council, then Lint, then Prune) → Memory → Render. Pipe commands with `echo "cmd" | bundle exec ruby bin/cli`. Startup YAML includes `state.yml`, `limits.yml`, `rules.yml`, `voice.yml`, `style.yml`, and `models.yml`. The web tier is Falcon on port 53187; relayd terminates TLS at `https://ai.brgen.no` on 443. Deploy checks: `ruby DEPLOY/integrity_gate.rb` and `bin/probe integrity`.
+- key: project_master_dual_gemfile
+  name: MASTER has two Gemfiles
+  description: MASTER/Gemfile (CLI) and MASTER/web/Gemfile (Falcon web) are independent
+    — adding a gem to one does NOT make it available in the other
+  type: project
+  body: |-
+    `MASTER/Gemfile` serves the CLI and `MASTER/web/Gemfile` serves the Falcon web tier. They are independent—adding a gem to one does not make it available in the other.
+
+    `MASTER/web/Gemfile` declares `gem "master", path: ".."`, which loads via the gemspec, not the parent Gemfile. Gems used in `MASTER/lib/` from web handlers must appear in both `MASTER/Gemfile` and `MASTER/web/Gemfile`, or in `master.gemspec` as a runtime dependency. Bundling only once leaves Falcon unable to `require` the gem—a LoadError that surfaces as a controller rescue and 503. `rb-edge-tts` exhibited this: CLI worked while `/chat/tts` failed.
+
+    When adding a dependency, edit both Gemfiles, run `bundle install` in `MASTER/` and `MASTER/web/`, and verify the gem appears in `MASTER/web/Gemfile.lock`.
+- key: project_master_seven_module_refactor
+  name: MASTER 7-module refactor (approved 2026-05-08)
+  description: User approved collapse of lib/master/ into 7 time-oriented modules
+    — now/loop/judge/voice/ground/reach/trace. Multi-commit, pass-by-pass; ship on
+    VPS dev@brgen.no.
+  type: project
+  body: |-
+    Approved 2026-05-08 after scan, sweep, and council on `lib/` and `DEPLOY`.
+
+    Target layout under `lib/`: `now/` for cli, repl, and pipeline; `loop/` for autoloop, sweep, heartbeat, and convergence; `judge/` for scan/rules, council, swarm, and security with a unified Verdict; `voice/` for personality, soul, renderer, and speech; `ground/` for config, axioms, and `data/*.yml` as the Constitution aggregator; `reach/` for tools/base plus twenty-four tools; `trace/` for session, telemetry, bus, and undo. The old `lib/master/` tree is gone; this subsumes the Constitution aggregator, Reach::Base, deliberation unification, refactor cycle, Security::Policy, and the Voice namespace.
+
+    Passes run one commit each with tests green and Zeitwerk ok: skeleton, then voice, trace, ground, reach, judge, loop, and finally now with stages folded into pipeline-as-data in `now/pipeline.rb`. Work happens on VPS dev@brgen.no on branch `refactor/seven-modules`. Time-orientation—now versus loop versus trace—replaces file-type splits; `judge/` unifies four "is this OK?" trees.
+- key: project_master_yml_json_authority
+  name: master.yml + master.json are the constitutional source of truth
+  description: Current Ruby MASTER must implement what the predecessor master.json
+    (v43.0.1) and master.yml (v31, v49.75, etc.) describe — close the drift
+  type: project
+  body: |-
+    The directive is that MASTER should do what `master.yml` and `master.json` describe. YAML and JSON predecessors are the authoritative spec; Ruby is the executor. This was stated 2026-05-05 after mining deleted `master.json` (November–December 2025, 130 commits) and `master.yml` (December 2025–February 2026, 668 commits).
+
+    Priority gaps to close include the six Universal Laws ladder from ROBUSTNESS through SINGULARITY, LINEARITY, PROXIMITY, ABSTRACTION, and DENSITY; Strunk & White safeguards with `apply_to` and `never_apply_to` that never delete vars, calls, or conditionals; a biases section covering hallucination, simulation, completion_theater, sycophancy, false_confidence, and cognitive traps; structural_ops taxonomy; an eight-phase workflow plus learn and introspect; patterns.veto and high regex; five adversarial questions and five to fifteen solutions; fixed-point convergence with two silent runs; incremental scanning; prediction engine and autofix thresholds; twelve weighted council personas with veto rights; SHA256 evidence logging; a beauty section; preserve boot, dmesg, and help; OpenBSD per-config validators; tech stack constants for LCP, INP, CLS, WCAG, touch, and 66ch; cost guards; and per-language templates.
+
+    Execute in order; each item should be commit-able. Aesthetic items are first-class for this architect user.
+- key: reference_grok_ui_cli_patterns
+  name: Grok-inspired UI/CLI patterns (chatlog dump 2026-05-07)
+  description: Reference dump from a sister chat — StyleCoach UI prompt, htmx+SSE
+    streaming, tty-prompt/tty-spinner advanced features, multi-line editor, character-stream
+    LLM CLI. For MASTER's web UI and CLI polish.
+  type: reference
+  body: |-
+    This is a Grok-style design dump from 2026-05-07. Cherry-pick ideas; do not bulk-import.
+
+    StyleCoach critiques MASTER output across CLI, web, and screenshots. Rules: the interface disappears; zero visual debt; personality lives in words, spacing, and timing; speed beats everything; mobile-first dark; every element must earn its place. Format is `ELEMENT/Current/Suggested/Reason` plus `distilled_ui_lesson`. Examples include at most two accent colors, spinners of at most three dots, and a prompt bar fixed at the bottom.
+
+    Web streaming uses htmx+SSE with `sse-connect="/stream/:id"` and `event: chunk`, plus `X-Accel-Buffering: no` and sleep `rand(0.02..0.08)`. Alternatively use chunked HTTP with `hx-swap="innerHTML"`.
+
+    CLI traits favor char-stream via ANSI `\r` over `Thinking…`, a terse happy path, subtle personality on success and failure, stateful context in SQLite or `~/.master/context.json`, a braille spinner `⠋⠙⠹…` after 1.5s, and one-command install.
+
+    tty-prompt offers `select(filter:)`, `multi_select`, `expand`, `editor(syntax:, word_wrap:)`, `mask`, `slider`, and validators (`in`, `validate`, `convert`, `modify`). Theme uses bright_cyan with `❯` and `◉`. tty-spinner defaults to `:dots_9`, supports `Multi` for parallel work, and uses `hide_cursor: true`. Multi-line input uses `PROMPT.editor` with Anthropic stream char-by-char at `sleep(rand(0.008..0.035))`.
+
+    MASTER already streams SSE on `POST /chat/message` and CLI via `chunk_accumulator`. Borrow Thinking cleanup, ambiguity menus, and tty `editor` for `<<` mode. StyleCoach fits as `/crit` plus a vision tool.
+- key: reference_opencrabs
+  name: OpenCrabs (Rust MASTER cousin)
+  description: github.com/adolfousier/opencrabs — Rust/Ratatui TUI agent, philosophical
+    cousin of MASTER. ~803 stars, MIT. Worth-stealing patterns listed with MASTER
+    wiring status.
+  type: reference
+  body: |-
+    OpenCrabs is the Rust cousin of MASTER—[opencrabs](https://github.com/adolfousier/opencrabs) with [docs](https://docs.opencrabs.com), v0.3.47 as of June 2026, four thousand plus tests, MIT license, roughly eight hundred stars. It targets Linux, macOS, and Windows; it does not support OpenBSD or `pledge`. Architecture is TUI/CLI → Brain → Services → SQLx/SQLite → LLM providers, built with Rust, Tokio, and Ratatui.
+
+    As of 2026-06-24, MASTER wired brain-files re-read (`data/*.yml`, `Ground::BrainOverlay`); FTS5 BM25 memory; inline compaction via `ContextWindow`, web SSE, and daily log; `/rebuild` hot-restart; sub-agent tool exclusion (`SubagentPolicy`, `AgentPool`, swarm); typed sub-agents (`agent_taxonomy.yml`, `/btw`); hashline edits (`Reach::Hashline`); RTK output filter (`/rtk`); plan pinning (`Ground::ActivePlan`); mission dashboard (`/dashboard`); phantom recovery; skills slash triggers (`Now::Skills#trigger_for`); soft and hard compaction at 65% and 90%; per-model quota (`Ground::ModelQuota`); prompt-cache card (`Trace::CacheEfficiency`, `/chat/metrics`); OpenRouter key rotation (`Ground::KeyRotator`); and unified health (`bin/doctor`, `/doctor`).
+
+    OpenCrabs gaps remain: high priority for OAuth-before-key auth rotation, `self_improve` brain writes, and NL `config_manager`; medium for offline STT/TTS, multi-channel inbox, cron DSL, dynamic `tools.toml`, video and PDF multimodal, and usage categorization; low for A2A RPC, `zeroize` key hygiene, and upstream brain sync.
+
+    OpenClaw ([openclaw/openclaw](https://github.com/openclaw/openclaw), 355k+ stars, [docs](https://docs.openclaw.ai)) overlaps partially: MASTER has model failover via `KeyRotator` and `ModelRouter` but lacks OAuth and cooldown tiers; `/doctor` exists but lacks DM and sandbox audit; session tools via `/btw` are partial; DM pairing, Docker sandbox, ClawHub registry, Live Canvas/A2UI, Voice Wake, chat commands subset, and webhook/cron ingress are incomplete; fallback skip TTL cache is missing.
+
+    Similar repos include [OpenHands](https://github.com/All-Hands-AI/OpenHands) for sandbox GUI; [Aider](https://github.com/Aider-AI/aider) for repo map (`GitContext`, `CodeIndex` partial); [SWE-agent](https://github.com/SWE-agent/SWE-agent) for issue-to-patch (`/fix` partial); [crewAI](https://github.com/crewAIInc/crewAI) for roles (council and swarm partial); [nekro-agent](https://github.com/KroMiose/nekro-agent) for chat sandbox; and [OpenClaw-RL](https://github.com/Gen-Verse/OpenClaw-RL) for online RL (`FeedbackLedger` only). Clusters live in `patterns.yml` as `openclaw_like_personal_agents`, `bleeding_edge_experimental_repos`, and `agi_agent_ecosystem`.
+
+    Risks include unapproved RSI brain writes, hallucinated tools in corrupted sessions, bus factor one, and headless web-chat ToS per `ROUTING_REARCHITECTURE.md` §6. Do not conflate `mo-vic/OpenCrab` (distillation) or the empty `opencrab` org with this project.
+- key: user_architect_aesthetics
+  name: User is an architect; aesthetic proposals usually pass
+  description: User's primary discipline is architecture; treat typography, layout,
+    design-philosophy proposals as in-scope and likely approved
+  type: user
+  body: |-
+    The operator is an architect by training. Aesthetic, typographic, and design-philosophy proposals—even ones LLMs dismiss as fluff—are usually approved.
+
+    Surface aesthetic content from Bringhurst, Ando, Rams, wabi-sabi, ma, and kanso, plus beauty sections in YAML, without self-censoring. Treat these as engineering anchors, not disclaimers. Propose UI, prose, and config refinements actively. Do not argue that beauty or zen YAML is "not actionable."

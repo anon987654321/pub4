@@ -364,7 +364,7 @@ phases:
 session_startup:
   reading_tiers:
     explore:
-      required: [MASTER/QUICKSTART.md]
+      required: [/orient bootstrap]
       optional: [data/soul.yml ABSOLUTE sections]
       note: "Recon and analysis — pair with llm_ergonomics; external rg allowed."
     structural_edit:
@@ -373,10 +373,10 @@ session_startup:
       note: "Before production edits and deploy-touching changes."
     production_ops:
       required: [data/operator_playbook.yml]
-      optional: [MASTER/TRACE.md]
+      optional: [/orient trace]
       note: "VPS friction, relayd, recovery — run bin/playbook when signals match."
   mandatory_reads:
-    - "See reading_tiers — QUICKSTART first; full constitution only for structural edits."
+    - "See reading_tiers — /orient bootstrap first; full constitution only for structural edits."
   playbook_command: "bin/playbook — print codified operator lessons when signals match production friction"
   check_standing_orders: "Verify FSM state before any mutation -- UNCHANGE blocks refactoring"
   scan_before_analysis: "Use /scan deep via MASTER, not external agents, for code analysis"
@@ -493,7 +493,7 @@ checkpoint_summarization:
 llm_ergonomics:
   core_principle: "Optimize for actual LLM behavior and context limits, not idealized super-agents."
   guidance:
-    - "Provide high-density mental models (e.g. QUICKSTART.md) before requiring deep constitution reads."
+    - "Provide high-density mental models (/orient bootstrap) before requiring deep constitution reads."
     - "Allow external tools (grep, rg, find) for reconnaissance and understanding. Require constitutional tools only for production changes."
     - "When full strict adherence would cause context exhaustion or paralysis, prefer 'good enough + evidence' over perfect ceremony."
     - "Document known friction points openly so future agents can work around them intelligently."

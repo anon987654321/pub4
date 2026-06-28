@@ -25,11 +25,10 @@ absolute:
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   sacred_paths:
     - data/
-    - SOUL.md
-    - CONVENTIONS.md
-    - AGENTS.md
-    - QUICKSTART.md
-    - .claude/
+    - data/SOUL.md
+    - data/operator_principles.yml
+    - data/skills_registry.yml
+    - data/project_context.yml
     - lib/judge/scan/
     - bin/cli
   anti_simulation:

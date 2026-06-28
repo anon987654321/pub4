@@ -1,22 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "ferrum"
 require "json"
 require "open3"
 require "timeout"
+require_relative "browser_probe_support"
 
 URL = ARGV[0] || ENV.fetch("WEB_URL", "http://127.0.0.1:53187/")
-BROWSER_TIMEOUT = Integer(ENV.fetch("PROBE_BROWSER_TIMEOUT", "12"))
-MAX_PROBE_SECONDS = Integer(ENV.fetch("PROBE_MAX_SECONDS", "55"))
 FORCE = ENV["PROBE_FORCE_BROWSER"] == "1"
-CHROME_PATHS = [
-  ENV["CHROME_PATH"],
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  "/Applications/Chromium.app/Contents/MacOS/Chromium",
-  "/usr/local/bin/chromium",
-  "/usr/local/bin/chrome"
-].compact.freeze
 
 def static_html_ok?(url)
   html, status = Open3.capture2("curl", "-fsS", "--max-time", "8", url)
@@ -41,37 +32,24 @@ if RUBY_PLATFORM.include?("darwin") && !FORCE
   skip_probe!("macOS — set PROBE_FORCE_BROWSER=1 for Ferrum")
 end
 
-chrome = CHROME_PATHS.find { |path| File.executable?(path) }
+chrome = BrowserProbeSupport.chrome_path
 abort("probe_chat_e2e: no Chrome executable") unless chrome
 
 failures = []
 console_msgs = []
 browser = nil
 
-def probe_evaluate(browser, script)
-  browser.evaluate(script)
-rescue Ferrum::TimeoutError, Ferrum::DeadBrowserError => e
-  raise e
-end
-
 puts "probe_chat_e2e: #{URL}"
 puts "probe_chat_e2e: launching Chrome (#{chrome})"
 
-Timeout.timeout(MAX_PROBE_SECONDS) do
-  browser = Ferrum::Browser.new(
-    browser_path: chrome,
-    headless: "new",
-    timeout: BROWSER_TIMEOUT,
-    process_timeout: BROWSER_TIMEOUT + 8,
-    browser_options: {
-      "no-sandbox" => nil,
-      "disable-dev-shm-usage" => nil,
-      "disable-gpu" => nil,
+Timeout.timeout(BrowserProbeSupport::MAX_PROBE_SECONDS) do
+  browser = BrowserProbeSupport.build_browser(
+    chrome: chrome,
+    timeout: Integer(ENV.fetch("PROBE_BROWSER_TIMEOUT", "12")),
+    extra_options: {
       "enable-webgl" => nil,
       "use-gl" => "swiftshader",
       "enable-unsafe-swiftshader" => nil,
-      "ignore-certificate-errors" => nil,
-      "remote-allow-origins" => "*",
       "disable-extensions" => nil,
       "disable-background-networking" => nil
     }
@@ -83,15 +61,7 @@ Timeout.timeout(MAX_PROBE_SECONDS) do
     nil
   end
 
-  browser.evaluate_on_new_document(<<~JS)
-    window._errs = [];
-    window.onerror = function(msg, src, line) {
-      window._errs.push(msg + ' @ ' + (src || '').split('/').pop() + ':' + line);
-    };
-    window.addEventListener('unhandledrejection', function(e) {
-      window._errs.push('UNHANDLED: ' + String(e.reason));
-    });
-  JS
+  BrowserProbeSupport.install_error_hooks(browser, key: "_errs")
 
   begin
     browser.go_to(URL)
@@ -101,7 +71,7 @@ Timeout.timeout(MAX_PROBE_SECONDS) do
 
   sleep 2
 
-  boot = probe_evaluate(browser, <<~JS)
+  boot = BrowserProbeSupport.evaluate(browser, <<~JS)
     ({
       primer: !!document.getElementById('primer'),
       face3d: !!window.FACE3D_ACTIVE,
@@ -119,30 +89,9 @@ Timeout.timeout(MAX_PROBE_SECONDS) do
   failures << "MASTER_SSE missing" unless boot["sse"] == "object"
   failures << "MASTER_CONTAINER missing" unless boot["container"] == "object"
 
-  probe_evaluate(browser, <<~JS)
-    (function() {
-      if (window.__MASTER_PRIMER_TAP__) { window.__MASTER_PRIMER_TAP__(); return 'tap'; }
-      var p = document.getElementById('primer');
-      if (p) { p.click(); return 'click'; }
-      return 'none';
-    })()
-  JS
+  BrowserProbeSupport.tap_primer(browser)
   sleep 2
-
-  snap = {}
-  deadline = Time.now + 20
-  until Time.now > deadline
-    snap = probe_evaluate(browser, <<~JS)
-      ({
-        primerFired: !!window._primerFired,
-        faceSession: document.body.classList.contains('face-session'),
-        masterFace: typeof window.MASTER_FACE,
-        sendMessage: typeof window.sendMessage
-      })
-    JS
-    break if snap["primerFired"] && snap["faceSession"] && snap["masterFace"] == "object" && snap["sendMessage"] == "function"
-    sleep 1
-  end
+  snap = BrowserProbeSupport.wait_master_session(browser, timeout_s: 20)
 
   puts "\n=== session ==="
   puts JSON.pretty_generate(snap)
@@ -151,7 +100,7 @@ Timeout.timeout(MAX_PROBE_SECONDS) do
   failures << "MASTER_FACE missing" unless snap["masterFace"] == "object"
   failures << "sendMessage missing" unless snap["sendMessage"] == "function"
 
-  felt = probe_evaluate(browser, <<~JS)
+  felt = BrowserProbeSupport.evaluate(browser, <<~JS)
     (function() {
       const state = window.MASTERFeltState?.collectFeltState?.();
       return {
@@ -167,29 +116,9 @@ Timeout.timeout(MAX_PROBE_SECONDS) do
   failures << "felt state invalid" unless felt["valid"]
   failures << "felt state not 7 fields" unless felt["parts"].to_i == 7
 
-  probe_evaluate(browser, <<~JS)
-    (function() {
-      if (window.MASTER_CONTAINER?.ready?.() === false) {
-        window.MASTER_CONTAINER_READY = true;
-        var input = document.getElementById('zin');
-        if (input) input.disabled = false;
-      }
-      window.sendMessage && window.sendMessage('ping');
-      return true;
-    })()
-  JS
-  sleep 4
-
-  chat = probe_evaluate(browser, <<~JS)
-    (function() {
-      const body = document.querySelector('.message.assistant:last-of-type .msg-body');
-      const text = (body?.textContent || '').trim();
-      return {
-        reply: text,
-        hasPong: /pong/i.test(text),
-        logCount: document.querySelectorAll('#chat-log .message').length
-      };
-    })()
+  chat = BrowserProbeSupport.run_ping_chat(browser, chat_wait_s: 4)
+  chat = chat.merge("reply" => BrowserProbeSupport.evaluate(browser, <<~JS))
+    (document.querySelector('.message.assistant:last-of-type .msg-body')?.textContent || '').trim()
   JS
 
   puts "\n=== chat ==="
@@ -197,7 +126,7 @@ Timeout.timeout(MAX_PROBE_SECONDS) do
   failures << "chat log empty" unless chat["logCount"].to_i.positive?
   failures << "ping/pong missing" unless chat["hasPong"]
 
-  face_state = probe_evaluate(browser, <<~JS)
+  face_state = BrowserProbeSupport.evaluate(browser, <<~JS)
     ({
       mood: window.MASTER_FACE?.State?.mood || null,
       mode: window.MASTER_FACE?.State?.mode || null,
@@ -223,7 +152,7 @@ Timeout.timeout(MAX_PROBE_SECONDS) do
     exit 1
   end
 rescue Timeout::Error
-  skip_probe!("probe exceeded #{MAX_PROBE_SECONDS}s")
+  skip_probe!("probe exceeded #{BrowserProbeSupport::MAX_PROBE_SECONDS}s")
 rescue Ferrum::ProcessTimeoutError => e
   skip_probe!("browser launch timeout — #{e.class}")
 rescue Ferrum::TimeoutError, Ferrum::DeadBrowserError => e

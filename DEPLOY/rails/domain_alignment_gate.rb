@@ -43,7 +43,6 @@ def parse_routes_subdomains
     dating: extract_constant(text, "DATING_SUBDOMAINS"),
     playlist: extract_constant(text, "PLAYLIST_SUBDOMAINS"),
     takeaway: extract_constant(text, "TAKEAWAY_SUBDOMAINS"),
-    marketplace: extract_constant(text, "MARKETPLACE_SUBDOMAINS"),
     maps: extract_constant(text, "MAPS_SUBDOMAINS"),
     messenger: extract_constant(text, "MESSENGER_SUBDOMAINS")
   }

@@ -7,6 +7,7 @@ module Master
   module Now
     class Skills
       SKILLS_DIR = "skills".freeze
+      REGISTRY_PATH = "skills_registry.yml".freeze
 
       attr_reader :loaded
 
@@ -19,6 +20,8 @@ module Master
 
       def discover!
         @loaded = []
+        seen = {}
+        load_registry_skills(seen)
         skill_roots.each do |skills_path|
           Dir.children(skills_path).sort.each do |name|
             entry = File.join(skills_path, name)
@@ -28,7 +31,11 @@ module Master
               elsif name.end_with?(".md") && name != "README.md"
                 load_skill_md_file(entry, File.basename(name, ".md"))
               end
-            @loaded << skill if skill
+            next unless skill
+            next if seen[skill[:name].to_s]
+
+            seen[skill[:name].to_s] = true
+            @loaded << skill
           end
         end
 
@@ -59,6 +66,9 @@ module Master
         skill = find(name)
         return unless skill
 
+        body = skill[:body].to_s.strip
+        return body[0, 4_000] unless body.empty?
+
         md_path = File.join(skill[:dir], "SKILL.md")
         return skill[:description].to_s unless File.file?(md_path)
 
@@ -74,6 +84,31 @@ module Master
       end
 
       private
+
+      def load_registry_skills(seen)
+        path = File.join(@root, "data", REGISTRY_PATH)
+        return unless File.file?(path)
+
+        data = Master.load_yaml(path)
+        Array(data["skills"]).each do |row|
+          next unless row.is_a?(Hash)
+
+          name = row["name"].to_s
+          next if name.empty? || seen[name]
+
+          seen[name] = true
+          @loaded << {
+            name: name,
+            description: row["description"].to_s,
+            triggers: Array(row["triggers"]),
+            body: row["body"].to_s,
+            dir: File.join(@root, "data", SKILLS_DIR),
+            has_ruby: false,
+          }
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "skills.load_registry", event_bus: @bus)
+      end
 
       def skill_roots
         roots = [

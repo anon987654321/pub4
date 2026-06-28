@@ -4,15 +4,14 @@ require "fileutils"
 
 module Master
   module Reach
-    # MemoryRecord — LLM-callable tool that writes a markdown memory record
-    # to data/claude/<key>.md, updates the MEMORY.md index, and seeds the
-    # in-process Master::Ground::Memory store so semantic recall sees it now.
-    # Types: user, feedback, project, reference, general.
+    # MemoryRecord — writes durable context into data/project_context.yml and
+    # seeds Master::Ground::Memory so semantic recall sees it immediately.
     class MemoryRecord
       TIER = :open
       NAME = "memory_record".freeze
-      DESCRIPTION = "Write a durable markdown memory record. " \
+      DESCRIPTION = "Write a durable project-context entry. " \
                     "Use for user facts, feedback, project context, or external references.".freeze
+      CONTEXT_PATH = "project_context.yml".freeze
 
       VALID_TYPES = %w[user feedback project reference general].freeze
       KEY_RE      = /\A[a-z0-9][a-z0-9_]{1,60}\z/.freeze
@@ -28,10 +27,7 @@ module Master
         type = VALID_TYPES.include?(type.to_s) ? type.to_s : "general"
         return Result.err("memory_record: key must match #{KEY_RE.source}", category: :validation) unless KEY_RE.match?(key)
 
-        path = File.join(@root, "data", "claude", "#{key}.md")
-        FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, render(key:, description:, type:, body:))
-        update_index(key:, description:)
+        path = persist_context(key:, description:, type:, body:)
         @memory&.remember("claude/#{key}", body.to_s.strip, type: type)
         @bus&.publish("memory:record", key: key, type: type, path: relative(path))
         Result.ok("memory_record: #{relative(path)}")
@@ -41,26 +37,21 @@ module Master
 
       private
 
-      def render(key:, description:, type:, body:)
-        <<~MD
-          ---
-          name: #{key.tr("_", " ")}
-          description: #{description.to_s.strip}
-          type: #{type}
-          ---
-
-          #{body.to_s.strip}
-        MD
-      end
-
-      def update_index(key:, description:)
-        index = File.join(@root, "data", "claude", "MEMORY.md")
-        FileUtils.mkdir_p(File.dirname(index))
-        File.write(index, "# Memory Index\n\n") unless File.exist?(index)
-        line  = "- [#{key.tr("_", " ")}](#{key}.md) — #{description.to_s.strip}"
-        lines = File.read(index).split("\n", -1)
-        return if lines.any? { |l| l.include?("](#{key}.md)") }
-        File.write(index, lines.join("\n"))
+      def persist_context(key:, description:, type:, body:)
+        path = File.join(@root, "data", CONTEXT_PATH)
+        data = File.file?(path) ? Master.load_yaml(path) : { "meta" => { "source" => "memory_record" }, "entries" => [] }
+        entries = Array(data["entries"]).reject { |row| row.is_a?(Hash) && row["key"].to_s == key }
+        entries << {
+          "key" => key,
+          "name" => key.tr("_", " "),
+          "description" => description.to_s.strip,
+          "type" => type,
+          "body" => body.to_s.strip,
+        }
+        data["entries"] = entries
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, data.to_yaml)
+        path
       end
 
       def relative(path) = path.sub("#{@root}/", "")

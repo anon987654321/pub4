@@ -27,7 +27,6 @@ tmux attach -t deploy
 | Command | Purpose |
 |---------|---------|
 | `doas zsh openbsd.sh --sync-configs` | Repo `etc/` → `/etc`, restart |
-| `doas zsh openbsd.sh --resume` | Continue interrupted run |
 | `doas ksh resource_guard.sh` | Shed optional apps under load |
 | `doas ksh start_all_apps.sh` | Full stack |
 

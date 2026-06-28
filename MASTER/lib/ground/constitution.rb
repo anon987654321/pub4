@@ -97,6 +97,7 @@ module Master
     end
 
     class Constitution
+      YAML_PATH = File.join(Master::ROOT, "data", "operator_principles.yml").freeze
       DIR = File.join(Master::ROOT, "data", "principles").freeze
       MAX_PRINCIPLES = 40
       MAX_BODY_CHARS = 320
@@ -119,6 +120,8 @@ module Master
         private
 
         def load_dir(dir)
+          return load_yaml.freeze if dir == DIR && File.file?(YAML_PATH)
+
           return [].freeze unless File.directory?(dir)
 
           Dir.glob(File.join(dir, "*.md")).sort.filter_map { |path| parse(path) }
@@ -128,6 +131,23 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "constitution.load", dir:)
           [].freeze
+        end
+
+        def load_yaml
+          data = Master.load_yaml(YAML_PATH)
+          Array(data["principles"]).first(MAX_PRINCIPLES).filter_map do |row|
+            next unless row.is_a?(Hash)
+
+            {
+              name: row["name"].to_s,
+              description: row["description"].to_s,
+              type: row["type"].to_s,
+              body: row["body"].to_s[0, MAX_BODY_CHARS],
+            }
+          end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "constitution.load_yaml")
+          []
         end
 
         def parse(path)

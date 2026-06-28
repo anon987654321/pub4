@@ -14,7 +14,6 @@ GATES = [
   { name: "frontend", path: "DEPLOY/rails/frontend_production_gate.rb" },
   { name: "relayd_smoke", path: "DEPLOY/openbsd/deploy_smoke_gate.rb" },
   { name: "domain_align", path: "DEPLOY/rails/domain_alignment_gate.rb" },
-  { name: "master_web_assets", path: "DEPLOY/rails/master_web_assets_gate.rb" },
   { name: "crawl_inventory", path: "DEPLOY/rails/crawl_probe.rb", args: [] },
 ].freeze
 

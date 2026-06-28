@@ -53,12 +53,8 @@ class TestMemory < Minitest::Test
   end
 
   def test_brain_files_are_plaintext_and_imported
-    %w[MEMORY.md IDENTITY.md TOOLS.md].each do |name|
-      assert File.exist?(File.join(@root, "data", name)), "#{name} should exist"
-    end
-
-    assert @mem.recall("brain/memory").include?("Durable")
-    assert @mem.recall("brain/tools").include?("tool")
+    assert File.exist?(File.join(@root, "data", "IDENTITY.md")), "IDENTITY.md should exist"
+    assert @mem.recall("brain/identity").include?("persona")
   end
 
   def test_auto_save_user_pattern

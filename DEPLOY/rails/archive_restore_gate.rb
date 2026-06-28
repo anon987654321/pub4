@@ -41,6 +41,12 @@ required.each do |rel|
   failures << "missing restored archive artifact: #{rel}" unless File.file?(File.join(ROOT, rel))
 end
 
+pattern_doc_allowlist = [
+  "DEPLOY/rails/archive_restore_gate.rb",
+  "MASTER/data/lessons/pub_archive_restore.yml",
+  "MASTER/tools/convergence/evidence_gate.rb"
+].freeze
+
 forbidden_patterns = {
   /\bauto_execute\b/ => "do not restore pub3 auto_execute permissions",
   /\bbypass_confirmation\b/ => "do not restore pub3 bypass_confirmation permissions",
@@ -54,6 +60,7 @@ tracked_files.each do |rel|
   path = File.join(ROOT, rel)
   next unless text_file?(path)
   next if rel.start_with?("ARCHIVE/", "DEPLOY/archive/")
+  next if pattern_doc_allowlist.include?(rel)
 
   body = File.read(path)
   forbidden_patterns.each do |pattern, message|

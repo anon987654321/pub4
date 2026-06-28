@@ -95,12 +95,33 @@ module Master
 
         def import_external!
           import_brain_files!
+          import_project_context!
+          import_claude_md_legacy!
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "memory.preload_context")
+        end
+
+        def import_project_context!
+          path = File.join(@root, "data", "project_context.yml")
+          return unless File.file?(path)
+
+          data = Master.load_yaml(path)
+          Array(data["entries"]).each do |entry|
+            next unless entry.is_a?(Hash)
+
+            key = "claude/#{entry["key"]}"
+            next if @store.key?(key)
+
+            body = entry["body"].to_s.strip
+            remember(key, body, type: entry["type"].to_s) unless body.empty?
+          end
+        end
+
+        def import_claude_md_legacy!
           dir = File.join(@root, "data", "claude")
           return unless Dir.exist?(dir)
 
           Dir.glob(File.join(dir, "*.md")).each { |path| import_external_file(path) }
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "memory.preload_claude_md")
         end
 
         def ensure_brain_files!
@@ -116,14 +137,12 @@ module Master
 
         def brain_templates
           {
-            "MEMORY.md" => "# MEMORY\n\nDurable user-curated facts for MASTER.\n",
-            "IDENTITY.md" => "# IDENTITY\n\nActive persona, voice, and operator preferences.\n",
-            "TOOLS.md" => "# TOOLS\n\nHuman-editable registry notes for local tools, skills, and MCP endpoints.\n"
+            "IDENTITY.md" => "# IDENTITY\n\nActive persona, voice, and operator preferences.\n"
           }
         end
 
         def import_brain_files!
-          %w[MEMORY.md IDENTITY.md TOOLS.md SOUL.md AGENTS.md].each do |name|
+          %w[IDENTITY.md SOUL.md].each do |name|
             path = File.join(@root, "data", name)
             next unless File.exist?(path)
 

@@ -40,6 +40,15 @@ module Master
         "orders" => ["data/state.yml", "event triggers and standing operating procedures"],
         "patterns" => ["data/patterns.yml", "gh/openbsd/zsh tool idioms"],
         "openbsd" => ["data/openbsd.yml", "pf/nsd/httpd/relayd config validators"],
+        "principles" => ["data/operator_principles.yml", "operator feedback injected into prompts"],
+        "skills" => ["data/skills_registry.yml", "slash-command skill triggers and bodies"],
+        "context" => ["data/project_context.yml", "durable project context for memory"],
+        "bootstrap" => [nil, "agent bootstrap — quickstart/agents/trace/replicate/conventions"],
+        "agents" => [nil, "alias for bootstrap agents section"],
+        "quickstart" => [nil, "alias for bootstrap quickstart section"],
+        "trace" => [nil, "event paths and triage"],
+        "replicate" => [nil, "media generation authority pointers"],
+        "conventions" => [nil, "external LLM coding conventions"],
       }.freeze
 
       def dispatch_orient(root, ctx: nil)
@@ -50,10 +59,10 @@ module Master
           "modules: now · loop · judge · voice · ground · reach · trace",
           "rules: #{Master.rule_count(root: root)} registered",
           "pipeline: #{Master::Now::RuntimeMode::PIPELINE_STAGES}",
-          "trace:   see TRACE.md — /tail /replay /status",
+          "trace:   /orient trace — /tail /replay /status",
           "",
           "reading tiers:",
-          "  explore     QUICKSTART.md + /orient (recon, analysis)",
+          "  explore     /orient bootstrap + /orient soul|rules|limits",
           "  structural  soul.yml + rules.yml + limits.yml before edits",
           "  production  + operator_playbook.yml + bin/playbook on VPS friction",
           "",
@@ -61,7 +70,7 @@ module Master
           *Master.authority_paths(root: root).map { |label, path| "  #{label.ljust(10)} #{relative_or_absolute(root, path)}" },
           "",
           "constitution:",
-          *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{path.ljust(28)} #{desc}" },
+          *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{(path || "runtime").ljust(28)} #{desc}" },
         ].join("\n")
       end
 
@@ -74,8 +83,13 @@ module Master
       end
 
       def cat_orient(root, arg)
+        runtime = Master::Ground::BootstrapDocs.section(arg)
+        return runtime if runtime
+
         entry = ORIENT_FILES[arg]
         return "unknown: #{arg} (try: #{ORIENT_FILES.keys.join(", ")})" unless entry
+        return "orient: #{arg} has no file path — use /orient #{arg}" if entry[0].nil?
+
         full = File.join(root, entry[0])
         File.exist?(full) ? File.read(full) : "missing: #{full}"
       end
@@ -170,7 +184,7 @@ module Master
           "reach  #{reach.join(' ')}",
           "cli    #{cli.join(' ')}",
           "agent  #{wired.size} wired #{wired.empty? ? '' : wired.join(' ')}",
-          "docs   data/tools.yml · TRACE.md",
+          "docs   data/tools.yml · /orient trace",
         ].join("\n")
       end
 

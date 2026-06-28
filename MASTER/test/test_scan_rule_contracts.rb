@@ -123,6 +123,15 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding Rules::LazyClassRule.new, code, "lazy.rb", "lazy class"
   end
 
+  def test_runtime_docs_yaml_forbids_stray_data_markdown
+    bad = File.join(Master::ROOT, "data", "principles", "feedback_new.md")
+    good = File.join(Master::ROOT, "data", "SOUL.md")
+
+    assert_finding rule("RUNTIME_DOCS_YAML"), "# stray\n", bad, "operator_principles.yml"
+    assert_empty rule("RUNTIME_DOCS_YAML").check("# ok\n", path: good)
+    assert_empty rule("RUNTIME_DOCS_YAML").check("# ok\n", path: File.join(Master::ROOT, "data", "skills", "README.md"))
+  end
+
   private
 
   def rule(id, path: nil)

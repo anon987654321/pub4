@@ -60,7 +60,7 @@ operators:
       - Multi-file refactoring with rule consistency
       - Enforces custom constraints (zsh discipline, style rules) reliably
       - Best time-to-correct-answer for architectural changes
-      - Reads DEPLOY/OPERATOR.md and MASTER/data/ as actual authority
+      - Reads DEPLOY/OPERATOR.md and MASTER/data/*.yml as actual authority (/orient bootstrap for mental model)
       - Memory system (user/feedback/project/reference types) persists across sessions
       - Agent tool spawns parallel sub-agents; foreground vs background aware
       - Conversation history is stateful for safety checks — context carries forward
@@ -71,11 +71,12 @@ operators:
       - Uses ≤25 words between tool calls — keep prompts action-dense, not prose
       - Minimalist prose style by default; bullets only when structure genuinely aids
     context_format: |
-      Claude reads QUICKSTART.md and OPERATOR.md. Feed additional context as:
+      Claude bootstraps via /orient bootstrap and DEPLOY/OPERATOR.md. Feed additional context as:
       <file path="MASTER/lib/...">...</file> blocks or plain === FILE === separators.
-      soul.yml, rules.yml, voice.yml, and limits.yml are authoritative — reference them by name.
-      Memory entries in ~/.claude/projects/.../memory/ persist across sessions —
-      add feedback entries there for behaviors you want locked in permanently.
+      soul.yml, rules.yml, voice.yml, limits.yml, operator_principles.yml, skills_registry.yml,
+      and project_context.yml are authoritative — reference them by name.
+      Durable project context appends to data/project_context.yml via MemoryRecord.
+      External agent memory (~/.claude/projects/.../memory/) persists across sessions when using Claude Code.
     reading_gate: |
       Read MASTER/data/soul.yml, rules.yml, voice.yml, limits.yml, and style.yml first.
       Then read [specific files].
@@ -306,7 +307,8 @@ operators:
 # Universal rules that apply regardless of model:
 universal:
   always_do:
-    - Include soul.yml, rules.yml, voice.yml, and limits.yml constraints in every system prompt
+    - Include soul.yml, rules.yml, voice.yml, limits.yml, and operator_principles.yml in every system prompt
+    - Use /orient bootstrap for agent mental model — not deleted top-level .md stubs
     - Gate: verify reading before acting (model-specific gate above)
     - One fix at a time — never batch multiple concerns in one call
     - Ask for diffs, not full file rewrites (except on < 50-line files)

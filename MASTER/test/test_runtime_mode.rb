@@ -22,7 +22,7 @@ class TestRuntimeMode < Minitest::Test
   def test_orient_includes_reading_tiers_and_trace_pointer
     output = Master::Now::CommandRegistry.dispatch_orient(Master::ROOT, ctx: { args: "" })
     assert_includes output, "reading tiers"
-    assert_includes output, "TRACE.md"
+    assert_includes output, "/orient trace"
     assert_includes output, "Deliberate"
   end
 

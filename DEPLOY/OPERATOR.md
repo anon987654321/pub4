@@ -47,7 +47,6 @@ tmux attach -t deploy
 | Flag | Use |
 |------|-----|
 | `--sync-configs` | Mirror `etc/` to `/etc`, restart services |
-| `--resume` | Continue interrupted stage run |
 
 Stage 1: NSD, DNSSEC, acme certs, httpd ACME, pf. Stage 2: Rails trees, relayd SNI, smtpd, rc.d, health check.
 
@@ -70,12 +69,13 @@ Ruby on VPS: `ruby34`, `bundle34`. Never parallel `bin/ci` across SSH sessions.
 ## Gates
 
 ```zsh
-ruby DEPLOY/rails/check_production_gate.rb
-ruby DEPLOY/openbsd/deploy_smoke_gate.rb
-cd MASTER && bundle exec ruby bin/probe all
+ruby DEPLOY/integrity_gate.rb              # full chain: production, phantom_fk, frontend, relayd, domain_align, crawl
+ruby DEPLOY/rails/crawl_probe.rb           # HTTP manifest + apps.yml ↔ master.json sync
+MASTER_CRAWL_BROWSER=1 ruby DEPLOY/rails/crawl_browser.rb   # Ferrum element crawl (VPS)
+cd MASTER && bundle exec ruby bin/probe integrity deploy crawl crawl-browser
 ```
 
-Matrix and blockers: `DEPLOY/rails/PRODUCTION_READINESS.md`.
+`bin/probe deploy` and `bin/probe integrity` alias the integrity gate. On macOS, `crawl-browser` skips unless `MASTER_CRAWL_BROWSER=1` or `PROBE_FORCE_BROWSER=1`. Matrix and blockers: `DEPLOY/rails/PRODUCTION_READINESS.md`.
 
 ## Secrets
 

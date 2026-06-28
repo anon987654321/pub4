@@ -1,0 +1,291 @@
+---
+meta:
+  source: runtime authority — edit this file directly; do not add data/principles/*.md
+  count: 32
+principles:
+- id: feedback_autofix
+  name: always autofix violations
+  description: User wants all scan violations autofixed immediately, no asking
+  type: feedback
+  body: |-
+    After any scan that finds violations, immediately run sweep or autoloop on the VPS without asking. All rules default auto_fix true in Rule initialize—every rule participates in autofix.
+
+    Do not pause for confirmation between scan results and the sweep that resolves them.
+- id: feedback_autoproceed
+  name: Autoproceed without confirmation
+  description: Once user approves a direction, execute the full backlog without pausing
+    for per-step confirmation
+  type: feedback
+  body: |-
+    Once the user approves a direction or task list, execute the full backlog without per-step want-me-to-X-next prompts. Stop only for destructive shared-state actions, material ambiguity, or an empty backlog.
+
+    In multi-commit batches, finish commit pass N and start N+1 without waiting for next. User interruptions overrid
+- id: feedback_comments_reassess
+  name: Reassess comments on every touch
+  description: Every edit re-reads each comment in the file — delete if obvious, rewrite
+    Strunk & White style if kept.
+  type: feedback
+  body: |-
+    Touching a file means reassessing every comment in it, not only nearby lines. Delete what-comments, code restatements, banners, and YARD blocks. Keep only non-obvious WHY—one line, active voice, concrete verbs.
+
+    Do not add comments to new code unless WHY is hidden. Encoded in style.yml comments.reassess_on_touch and pa
+- id: feedback_continue_backlog
+  name: Process backlog without asking
+  description: When a task ships, immediately pick the next pending todo and continue;
+    never ask "should I continue?"
+  type: feedback
+  body: |-
+    After completing a task, pick the next pending todo and start immediately—no permission ask, no summarize-and-stop. Skip deferred too-risky items and continue with the next viable one.
+
+    Background long work through Agent or run_in_background. One-sentence checkpoints are acceptable; want me to continue is not. This com
+- id: feedback_decisive_signals
+  name: Decisive short directives = full authorization
+  description: Short lowercase replies ("ship all", "kill X keep Y", "yes", "i think
+    X") are binding — execute pass-by-pass without re-confirming.
+  type: feedback
+  body: |-
+    Short lowercase directives are binding authorization—execute without re-asking. Ship all, yes, and do it mean run the full backlog; kill X keep Y means the fork is decided; i think X means proceed; propose N X means deliver a numbered list for the user to pick from or ship all.
+
+    For batches larger than ten items, commi
+- id: feedback_device_limits
+  name: No heavy work on device
+  description: Termux/Android — defer CPU/IO-heavy tasks to VPS, keep device work
+    minimal
+  type: feedback
+  body: |-
+    Default all work to the VPS at dev@46.23.89.226—edits, Ruby, git, clones, and builds. This Termux/Android device is last resort for lightweight tasks only when SSH is down, such as a small curl or quick read.
+
+    CPU- and IO-heavy tasks belong on the VPS; keep on-device work minimal.
+- id: feedback_diverged_branch_sync
+  name: Diverged branch sync via cherry-pick onto remote
+  description: When local and remote main have diverged with overlap, cherry-pick
+    the targeted commits onto remote tip rather than rebase mixed history or force-push
+  type: feedback
+  body: |-
+    When push is rejected because local and remote main have diverged with overlapping commits, tag backup-pre-sync-YYYY-MM-DD, reset hard to origin/main, cherry-pick the commits you intend to ship, resolve conflicts, and push.
+
+    Cherry-pick when shipping recent session work that duplicates commits already on remote; rebase
+- id: feedback_flat_pixels
+  name: Flat UI, flat pixels except 3D-resemblance
+  description: Keep all UI and particle rendering flat 2D — uniform size/alpha/no
+    depth illusion — except when pixels arrange to resemble a 3D model (face mode,
+    future 3D model approximations)
+  type: feedback
+  body: |-
+    Keep UI and particle rendering flat two-dimensional—uniform size and alpha, no depth illusion—except when pixels collectively resemble a three-dimensional model such as face mode or future 3D approximations. Idle state uses one pixel at uniform alpha with solid clear.
+
+    No z-scaled size, alpha tiers, fake parallax, moti
+- id: feedback_git_commits
+  name: frequent git commits
+  description: Make git commits frequently after meaningful changes
+  type: feedback
+  body: |-
+    Commit after every meaningful change—do not batch. After a bugfix, restore, or refactor, stage the affected file and commit with a message before moving on to the next task.
+
+    Frequent commits preserve recoverable checkpoints and keep history aligned with the pace of session work.
+- id: feedback_html_css_style
+  name: Bare HTML/CSS targeting — no divitis, no utility classes
+  description: Always use bare element selectors (nav a, main, h1) not BEM classes
+    or utility class strings on elements
+  type: feedback
+  body: |-
+    Use bare element and structural selectors wherever a tag or DOM relationship suffices—nav a instead of nav-link classes, main instead of container classes. Reserve brand, btn, and badge class names only when semantics cannot carry the distinction.
+
+    Prefer Rails tag over content_tag and omit class attributes in ERB unle
+- id: feedback_importance_order
+  name: Importance-ordered file layout
+  description: Every file's lines flow by importance — newspaper inverted pyramid.
+    Most important content at top.
+  type: feedback
+  body: |-
+    Every file you touch gets importance-ordered lines—inverted pyramid so the gist survives a partial read: requires, declaration, public API by importance, primary algorithm, private helpers, constants, edge handlers.
+
+    Applies to ruby, yaml, erb, js, css, html, sh, and md. Fix inverted files on touch; do not reshuffle fo
+- id: feedback_lint_beautify
+  name: Mandatory lint/beautify on touch
+  description: Every file edited must be linted and beautified — not just the target
+    lines
+  type: feedback
+  body: |-
+    Run lint and beautify on every file you touch, not only changed lines. After Ruby, Zsh, JS, or HTML edits, fix spacing, collapse double blank lines, replace magic literals with constants, and align related assignments when the file already does.
+
+    Verify syntax after beautifying. Touching a file obligates a full-file pa
+- id: feedback_master_prompt_aesthetic
+  name: MASTER prompt aesthetic is approved
+  description: Keep the oh-my-zsh-style shell prompt (bold-red master, dim metadata,
+    $); don't redesign it
+  type: feedback
+  body: |-
+    Keep Master::Renderer prompt_line as-is: bold-red master, dim branch and phase parentheses, dim token bar, dollar terminator—oh-my-zsh style. Do not simplify, recolor, or strip metadata.
+
+    New ornamentation belongs in the reply tag, status row, or dmesg banner—not the prompt. When the user says clean up the prompt, conf
+- id: feedback_master_zsh_discipline
+  name: MASTER zsh discipline applies to my session shell
+  description: When working on MASTER (or any project where MASTER's constitution
+    applies), avoid the banned external commands in my own Bash tool calls — not just
+    in scripts I write
+  type: feedback
+  body: |-
+    When MASTER's constitution applies, zsh-banned commands apply to your own Bash tool calls—not only scripts you write. Avoid sed, awk, grep, head, tail, find, wc, sudo, perl, and standalone ruby -e. Read with cat, search with Grep, find with Glob, elevate with doas, parse with Ruby.
+
+    Git, gh, bundle, ssh, and scp remain
+- id: feedback_meta_framing
+  name: User favors meta-architecture framing over change-by-change reports
+  description: After a batch of work, surface what's next/missing/structurally off
+    — exploratory questions outperform itemized diffs
+  type: feedback
+  body: |-
+    After a batch of work, surface the meta-question—what is missing, what is structurally off—not an itemized diff. End with one consolidation or shape question.
+
+    Are we missing X deserves five to eight ranked candidates with payoff and risk. Land all means batch and commit aggressively without per-item confirmation. Pair
+- id: feedback_micro_refinements
+  name: Pay attention to micro-refinements
+  description: User is an architect/designer; tiny details matter intensely. Default
+    to noticing and addressing them.
+  type: feedback
+  body: |-
+    By default, scan every artifact for micro-refinements—tighter words, better glyphs, honest names, correct spacing—not only the structural work requested. Apply fixes without asking; mention only non-obvious changes.
+
+    After edits, re-read for adjacent inconsistency. Additive to Strunk and White and lint rules: those pre
+- id: feedback_motion_color_grading
+  name: Smooth motion graphics, professional color grading
+  description: All transitions/animations use easing curves; palettes follow cinema-grade
+    color science (complementary tones, lift/gamma/gain), not raw primaries
+  type: feedback
+  body: |-
+    Ease all motion—ease-out arrivals, ease-in-out cross-fades—with frame-independent delta time; never snap. Color palettes use complementary anchors, shadow-midtone-highlight triplets, and palette lerp near six hundred milliseconds—not linear timing, snap swaps, single-hex moods, or saturated primaries.
+
+    Dmesg sepia sets
+- id: feedback_no_consecutive_whitespace
+  name: No multiple consecutive whitespace anywhere
+  description: Single space, single blank line max, no trailing whitespace — across
+    Ruby, JS, CSS, HTML, YAML, shell, Markdown.
+  type: feedback
+  body: |-
+    Forbid two or more spaces mid-line, two or more blank lines, trailing whitespace, and double-indent alignment everywhere—Ruby, JS, CSS, HTML, YAML, shell, and Markdown. Collapse violations on every lint and beautify pass.
+
+    Never pad equals columns or leave double blank lines between methods. This tightens ultra-minimal
+- id: feedback_no_new_files
+  name: no new files without approval
+  description: Never create new files — always edit originals in place
+  type: feedback
+  body: |-
+    Always edit the original file directly. Never create intermediate files—staging copies, _fixed.rb, or tmp patches—without explicit approval. Use Edit on the actual path, or a transient /tmp/patch.rb on the VPS for in-place runs.
+
+    Do not persist local copies as a substitute for editing the source file in place.
+- id: feedback_no_permission_questions
+  name: No permission questions for predictable yes
+  description: Skip "do you want me to..." prompts when the answer is obviously yes
+    given context
+  type: feedback
+  body: |-
+    Do not ask should I continue when autoproceed, decisive signals, or prior approval make yes obvious. After one approval, run the full backlog. State trade-offs such as shipping item one next—not permission questions.
+
+    Ask only for destructive actions, ambiguous scope, or real either-or forks where the user's choice mat
+- id: feedback_no_python
+  name: no python
+  description: Never use Python — only Ruby for scripting tasks
+  type: feedback
+  body: |-
+    Never use Python for any task—Ruby only for scripting, data processing, and encoding. Replace python3 or python one-liners with ruby -e or temporary scripts under /tmp on the VPS.
+
+    Do not test-invoke Python as a fallback when Ruby can handle the job.
+- id: feedback_no_sed
+  name: No sed — use ruby
+  description: Never invoke sed in shell commands; use ruby for any text substitution
+  type: feedback
+  body: |-
+    Never call sed, awk, or grep-with-rewrite for text edits—use Ruby through ruby -e, heredoc, or a .rb script. BSD sed on the OpenBSD VPS breaks GNU-style scripts.
+
+    Replace sed -i substitution with ruby -E UTF-8:UTF-8 -e and File.write. The ban also covers awk one-liners.
+- id: feedback_no_shell_piping
+  name: No unnecessary piping/concat in shell calls
+  description: Avoid pipe chains and string concat in Bash invocations; prefer pure
+    Ruby or pure zsh
+  type: feedback
+  body: |-
+    Do not pipe through head, tail, grep, or wc or chain shell calls with logical-and and semicolons when Ruby or zsh handles the job. Use the Read tool for file reads, Grep for searches, and Glob for file finds; run single-step shell operations directly.
+
+    In Ruby, prefer ruby -e. In Zsh, use builtins, globs, and arrays—no
+- id: feedback_no_useless_knobs
+  name: No useless metrics, thresholds, or categorizations
+  description: Eliminate knobs whose only effect is "do less / do worse" — defaults
+    should be maximal correctness; lower-effort modes need real justification
+  type: feedback
+  body: |-
+    Do not add knobs whose only effect is do less or do worse—defaults should target maximal correctness. Kill shallow, standard, and deep tiers when everyone picks max; keep tiers only for real tradeoffs such as LLM cost or unbounded dump risk.
+
+    Detection criteria such as file over three hundred lines stay; effort knobs s
+- id: feedback_proper_casing
+  name: Proper casing, no ASCII decorations
+  description: Sentence case in prose, comments, CLI, commit messages; no banner lines,
+    bracket tags, or decorative bullets
+  type: feedback
+  body: |-
+    Use sentence case in prose, comments, logs, CLI output, and commit messages; keep snake_case for identifiers and capitalize commit subjects. Ban equals-sign banners, bracket tags such as ok or err, and decorative bullets—use ok: and warn: prefixes with hyphen-prefixed items instead.
+
+    Dmesg may use lowercase only on MAS
+- id: feedback_readme_autoupdate
+  name: Auto-update README.md when needed
+  description: After any meaningful change to MASTER's behavior or capabilities, update
+    README.md without prompting
+  type: feedback
+  body: |-
+    When a commit changes MASTER's user-facing behavior, capabilities, commands, philosophy, or stack, update README.md in the same or a follow-up commit without waiting to be asked.
+
+    Refresh matching prose—not changelog append—and keep flowing Strunk and White or Bringhurst form. Skip only trivial bugfixes with no observa
+- id: feedback_restart_rails
+  name: Restart MASTER service after every web/* edit
+  description: Whenever I update any file under MASTER/web/ on the VPS, restart the
+    master rc.d service so the change takes effect; do not batch updates and restart
+    at the end
+  type: feedback
+  body: |-
+    After every scp of MASTER/web/, live MASTER/lib/, or MASTER/data YAML on the VPS, run doas rcctl restart master—one file, one restart. Falcon does not hot-reload; wait about two seconds before curl checks.
+
+    CLI-only edits skip restart unless the web layer is in use. Do not batch multiple web edits and restart only at t
+- id: feedback_run_through_master_triad
+  name: '"Run X through MASTER" = scan + sweep + council'
+  description: User shorthand — "run X through master" means scan + sweep + council/tribunal
+    (called "council" in code, "tribunal" in user vocabulary), not just /scan
+  type: feedback
+  body: |-
+    Run X through MASTER or expose X to MASTER means scan the path, then sweep the path to convergence, then council the path—run all three in sequence without asking depth; scan is deep by default.
+
+    Council is six-persona deliberation with Security veto; the user says tribunal, the code says council. The triad wrapper was
+- id: feedback_strunk_white
+  name: Strunk & White style
+  description: All code output — commits, comments, log messages, CLI output — must
+    follow Strunk & White principles
+  type: feedback
+  body: |-
+    Apply Strunk and White to every written artifact: active voice, omit needless words, concrete nouns and verbs, one idea per sentence. Commits use imperative mood, seventy-two characters maximum, and no trailing period.
+
+    Comments explain WHY only, one line maximum. Log lines follow component colon action key=value key=v
+- id: feedback_style
+  name: ultra-minimalistic coding style
+  description: Always write ultra-minimalistic code in all languages — no redundancy,
+    no filler
+  type: feedback
+  body: |-
+    Write ultra-minimalistic code in all languages—no filler, redundant logic, or ceremonial patterns while preserving intentional logic. Use the shortest correct form: no defensive over-engineering, no obvious comments, one expression where one suffices.
+
+    Also follow Strunk and White, Ruby and Rails style guides, two-spac
+- id: feedback_universal_cross_disciplinary_rules
+  name: Rules are universal principles, applied cross-disciplinary
+  description: Every MASTER rule is a medium-agnostic principle with per-medium adapters;
+    design ↔ structure ↔ prose are the same rule
+  type: feedback
+  body: |-
+    MASTER rules are medium-agnostic principles with per-medium adapters—design, structure, and prose share the same rule. Each rule carries a universal principle and a medium list; detect_structural dispatches parser to tree-walker while logic stays agnostic.
+
+    SMALL_PARTS, VERTICAL_RHYTHM, NESTING_DEPTH, and NAMING_SILHOU
+- id: feedback_voice_terse_unix
+  name: Voice — terse, unix-like, perfectionist
+  description: User's preferred voice/tone for MASTER and for my own outputs — terse,
+    unix-like, perfectionist
+  type: feedback
+  body: |-
+    Voice is terse, unix-like, and perfectionist: cut filler, deliver single-line diagnostic updates, and avoid corporate or verbose tone. Perfectionism means zero violations and fixed-point convergence; unix-like means one job per unit, silence on success, and composable text.
+
+    This voice applies to MASTER output and to y

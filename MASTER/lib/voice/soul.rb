@@ -8,7 +8,7 @@ module Master
   module Voice
   # Manages SOUL.md identity document; Evolution Protocol: propose→test→approve→tag.
     class Soul
-      SOUL_PATH = File.join(Master::ROOT, "SOUL.md").freeze
+      SOUL_PATH = File.join(Master::ROOT, "data", "SOUL.md").freeze
       PROPOSAL_PATH = File.join(Master::ROOT, ".master", "soul_proposal.md").freeze
 
       # Drift boundaries — changes to ABSOLUTE sections are blocked without override.

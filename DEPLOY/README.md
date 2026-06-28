@@ -40,6 +40,10 @@ Seeds: Faker base in each `db/seeds.rb`. Optional web augmentation: `SEED_FROM_W
 ## Checks
 
 ```zsh
-ruby DEPLOY/rails/check_production_gate.rb
-ruby DEPLOY/openbsd/deploy_smoke_gate.rb
+ruby DEPLOY/integrity_gate.rb
+ruby DEPLOY/rails/crawl_probe.rb
+MASTER_CRAWL_BROWSER=1 ruby DEPLOY/rails/crawl_browser.rb   # VPS Ferrum crawl
+cd MASTER && bundle exec ruby bin/probe integrity
 ```
+
+The integrity gate chains production, phantom foreign keys, frontend, relayd smoke, domain alignment, and HTTP crawl inventory sync. `check_production_gate.rb` already includes `master_web_assets_gate` and `archive_restore_gate`.
