@@ -154,12 +154,18 @@
     const moodArc = State.moodArc || {};
     const speaking = State.mode === "speaking" || !!window.MASTER_FACE?.tts?.playing;
     const baseEntropy = Number.isFinite(pr.entropy) ? pr.entropy : State.entropy || 0;
+    const arousal = Number(State.pulse ?? State.expressionCurrent?.arousal ?? 0.35);
+    const radial = Number(pr.radial ?? (Number(pr.pct) || 0) / 100);
     return {
       entropy: speaking ? baseEntropy * 0.82 : baseEntropy,
-      pressure: Math.min(1, (Number(pr.pct) || 0) / 100) + (speaking ? 0.08 : 0),
+      pressure: Math.min(1, radial) + (speaking ? 0.08 : 0),
+      pressureRadial: radial,
+      pressureCx: Number(State.pressureCx ?? 0),
+      pressureCy: Number(State.pressureCy ?? 0.02),
       confidence: State.confidence ?? 0.75,
       decayScale: speaking ? 0.88 : Number.isFinite(moodArc.decay_rate) ? moodArc.decay_rate : 1,
-      spatialRepulsion: speaking && !State.reducedMotion
+      spatialRepulsion: (speaking || arousal > 0.42) && !State.reducedMotion,
+      repelStrength: 4e-3 + arousal * 8e-3
     };
   }
   function spawnEmotionalGhost(State, _mouthPool, mood) {
@@ -192,6 +198,17 @@
         vy: (Math.random() - 0.5) * 8e-3,
         decay: 0.014 + arousal * 0.01
       });
+      if (arousal > 0.35) {
+        K.spawn(pool, jitter * 1.4, (Math.random() - 0.5) * 0.05, {
+          kind: 1,
+          zone: 1,
+          valence: valence * 0.7,
+          arousal: arousal * 0.8,
+          vx: jitter * 0.2,
+          vy: -6e-3,
+          decay: 0.016
+        });
+      }
     }
   }
   function anticipateSpeech(pool, count = 1) {

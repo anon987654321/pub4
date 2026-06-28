@@ -9,10 +9,18 @@ class ApplicationController < ActionController::Base
   stale_when_importmap_changes
 
   before_action :set_domain_context
+  before_action :log_tenant_access
 
   allow_browser versions: :modern
 
   private
+
+  def log_tenant_access
+    tenant = request.subdomain.presence || "brgen"
+    Rails.logger.info(
+      "[tenant_access] tenant=#{tenant} ip=#{request.remote_ip} path=#{request.fullpath} at=#{Time.now.to_i}"
+    )
+  end
 
   def set_domain_context
     # City (and full branding/locale) is resolved automatically from the request's TLD/domain.

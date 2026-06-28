@@ -36,6 +36,10 @@ module Master
         "FeedbackRecord"  => ->(r, i) { Master::Reach::FeedbackRecord.new(learnings: i[:learnings]) },
         "Repligen"        => ->(r, i) { Master::Reach::Repligen.new(root: r, event_bus: i[:bus]) },
         "Postpro"         => ->(r, i) { Master::Reach::Postpro.new(root: r, event_bus: i[:bus]) },
+        "SubdomainOrchestrator" => ->(r, i) {
+          fetch = Master::Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus])
+          Master::Reach::SubdomainOrchestrator.new(root: r, event_bus: i[:bus], web_fetch: fetch)
+        },
       }.freeze
 
       def self.boot(root:, config:, bus:)

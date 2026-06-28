@@ -86,6 +86,11 @@ class ChatService
 
   def prepare_turn
     input = @params[:message].to_s.strip
+    domain = @params[:active_domain].to_s.strip
+    if domain.present? && !input.start_with?("[domain:")
+      input = "[domain:#{domain}] #{input}"
+      @params[:message] = input
+    end
     @container[:bus].publish("user:interrupt", reason: "new_turn", source: "chat")
     @container[:bus]&.publish("input:long", length: input.length) if input.length > 180
     Fiber[:master_visitor] = @tier != "authenticated"

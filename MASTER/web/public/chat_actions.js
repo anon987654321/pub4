@@ -87,6 +87,7 @@ function dispatchSseBlock(block, handlers) {
 async function openChatStream({ message, state, preEnhanced, imageToken, signal, handlers }) {
   const form = new FormData();
   form.append("message", message);
+  if (window.MASTER_ACTIVE_DOMAIN) form.append("active_domain", window.MASTER_ACTIVE_DOMAIN);
   const felt = state || validatedFeltState();
   if (felt) form.append("state", felt);
   if (preEnhanced) form.append("pre_enhanced", "1");

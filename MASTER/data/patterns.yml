@@ -343,6 +343,32 @@ infer:
       - "\\b(?:write|expand|embellish|polish)\\s+(?:me\\s+)?(?:a\\s+)?(?:(?:photo|video|image)\\s+)?prompt\\s+(?:for\\s+)?(.+)"
       - "\\b(?:strunk|elements of style)\\s+(?:pass\\s+)?(?:on\\s+)?(?:(?:photo|video)\\s+)?(?:prompt\\s+)?(.+)"
       capture: first_group
+    photograph:
+      patterns:
+      - "\\b(?:take|shoot|snap|generate)\\s+(?:a\\s+)?(?:photo|photograph|portrait|headshot)(?:\\s+(?:of\\s+)?(.+))?"
+      - "\\b(?:cinematic\\s+)?photo(?:graph)?\\s+(?:of\\s+)?(.+)"
+      capture: first_group
+    video:
+      patterns:
+      - "\\b(?:generate|make|create|render)\\s+(?:a\\s+)?(?:cinematic\\s+|long[\\s-]?form\\s+)?video(?:\\s+(?:of|about|for)\\s+(.+))?"
+      - "\\b(?:video\\s+chain|stitch\\s+(?:a\\s+)?video)(?:\\s+(.+))?"
+      - "\\b(?:minutes?|min)\\s+(?:of\\s+)?video(?:\\s+(?:of|about)\\s+(.+))?"
+      capture: first_group
+    motion-dataset:
+      patterns:
+      - "\\b(?:bootstrap|build|prepare)\\s+(?:a\\s+)?motion[\\s-]?lora\\s+dataset(?:\\s+(?:for\\s+)?(.+))?"
+      - "\\b(?:train(?:ing)?\\s+clips?\\s+for)\\s+(?:motion\\s+)?lora(?:\\s+(.+))?"
+      capture: first_group
+    lora-train:
+      patterns:
+      - "\\b(?:train|create|build)\\s+(?:a\\s+)?(?:character\\s+)?(?:flux\\s+)?lora(?:\\s+(?:of|for)\\s+(.+))?"
+      - "\\b(?:lora[\\s-]?train(?:ing)?)\\s+(?:on\\s+)?(.+)"
+      capture: first_group
+    social-sim:
+      patterns:
+      - "\\b(?:social[\\s-]?sim|inbox[\\s-]?sim|synthetic[\\s-]?inbox)\\b(?:\\s+(.+))?"
+      - "\\b(?:run|start)\\s+(?:a\\s+)?social[\\s-]?sim(?:ulation)?(?:\\s+(.+))?"
+      capture: first_group
     dreams:
       patterns:
       - "\\b(?:dreams?|consolidate?\\s+memor(?:y|ies)|memory\\s+consolidat|dream\\s+mode|promote\\s+memor(?:y|ies))\\b"

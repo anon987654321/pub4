@@ -1,0 +1,158 @@
+# Synthetic NPC personas — sandbox only. Handles are _sim suffix; never real messengers.
+---
+personas:
+  - id: npc_marcus
+    handle: "@marcus_beats_sim"
+    archetype: hiphop_fan
+    respect_boundaries: 0.35
+    patience_hours: 48
+    message_rate: 0.55
+    opener_pool:
+      - "yo saw your story, you into underground rap?"
+      - "random but your vibe is crazy fr"
+    followup_pool:
+      - "you ghosting or just busy lol"
+      - "still down to link when you free"
+
+  - id: npc_dre
+    handle: "@dre_vinyl_sim"
+    archetype: producer
+    respect_boundaries: 0.45
+    patience_hours: 72
+    message_rate: 0.4
+    opener_pool:
+      - "i got beats if you ever wanna collab"
+      - "your aesthetic would eat on a cover"
+    followup_pool:
+      - "lmk if you want the pack"
+      - "no pressure just thought youd dig it"
+
+  - id: npc_kai
+    handle: "@kai_night_sim"
+    archetype: nightlife
+    respect_boundaries: 0.25
+    patience_hours: 36
+    message_rate: 0.65
+    opener_pool:
+      - "we throwing something saturday you in?"
+      - "you look like you know the good spots"
+    followup_pool:
+      - "come thru tonight?"
+      - "???"
+
+  - id: npc_jules
+    handle: "@jules_lens_sim"
+    archetype: photographer
+    respect_boundaries: 0.6
+    patience_hours: 96
+    message_rate: 0.3
+    opener_pool:
+      - "im shooting a zine, your look is exactly it"
+      - "portrait series — interested?"
+    followup_pool:
+      - "still booking this week"
+      - "all good if not your thing"
+
+  - id: npc_rio
+    handle: "@rio_fits_sim"
+    archetype: streetwear
+    respect_boundaries: 0.4
+    patience_hours: 60
+    message_rate: 0.5
+    opener_pool:
+      - "sent you a fit check"
+      - "that jacket in your pic — where from?"
+    followup_pool:
+      - "tryna swap pieces?"
+      - "bump"
+
+  - id: npc_sage
+    handle: "@sage_poetry_sim"
+    archetype: soft_spoken
+    respect_boundaries: 0.7
+    patience_hours: 120
+    message_rate: 0.25
+    opener_pool:
+      - "your caption hit different"
+      - "wrote something reminded me of your mood"
+    followup_pool:
+      - "no rush to reply"
+      - "hope your weeks gentle"
+
+  - id: npc_tank
+    handle: "@tank_gym_sim"
+    archetype: fitness
+    respect_boundaries: 0.3
+    patience_hours: 40
+    message_rate: 0.6
+    opener_pool:
+      - "you train? you look athletic"
+      - "spot me at the gym sometime"
+    followup_pool:
+      - "early morning session?"
+      - "dont leave me on read lol"
+
+  - id: npc_nova
+    handle: "@nova_dj_sim"
+    archetype: dj
+    respect_boundaries: 0.5
+    patience_hours: 80
+    message_rate: 0.35
+    opener_pool:
+      - "playing your city next month"
+      - "guest list if you want"
+    followup_pool:
+      - "still got a plus one"
+      - "either way enjoy the weekend"
+
+  - id: npc_lex
+    handle: "@lex_memes_sim"
+    archetype: chronically_online
+    respect_boundaries: 0.2
+    patience_hours: 24
+    message_rate: 0.75
+    opener_pool:
+      - "ok but why are you so iconic"
+      - "sent you a reel check it"
+    followup_pool:
+      - "HELLO"
+      - "ok rude"
+
+  - id: npc_milo
+    handle: "@milo_coffee_sim"
+    archetype: daytime_flirt
+    respect_boundaries: 0.55
+    patience_hours: 64
+    message_rate: 0.42
+    opener_pool:
+      - "coffee tomorrow?"
+      - "you give main character energy"
+    followup_pool:
+      - "or just virtual hi is fine"
+      - "still around?"
+
+  - id: npc_zed
+    handle: "@zed_afterhours_sim"
+    archetype: pushy
+    respect_boundaries: 0.15
+    patience_hours: 18
+    message_rate: 0.8
+    opener_pool:
+      - "dont be shy"
+      - "i know you saw this"
+    followup_pool:
+      - "answer me"
+      - "wow ok"
+
+  - id: npc_ivy
+    handle: "@ivy_art_sim"
+    archetype: creative_peer
+    respect_boundaries: 0.65
+    patience_hours: 100
+    message_rate: 0.28
+    opener_pool:
+      - "love your palette in that post"
+      - "doing a gallery night — come?"
+    followup_pool:
+      - "doors at eight"
+      - "no worries if busy"

@@ -87,10 +87,24 @@ class TestMediaCommands < Minitest::Test
     assert cmds.key?("music")
   end
 
-  def test_repligen_command_registered_not_video
+  def test_media_tool_commands_registered
     cmds = Master::Now::CommandRegistry.tool_commands(Master::ROOT, nil)
-    assert cmds.key?("repligen")
-    refute cmds.key?("video")
+    %w[repligen photograph prompt video motion-dataset lora-train social-sim].each do |name|
+      assert cmds.key?(name), "expected /#{name} in tool_commands"
+    end
+  end
+
+  def test_infer_promotes_video_generate
+    bus = FakeBus.new
+    infer = Master::Now::Stages::Infer.new(bus: bus)
+    result = infer.call(Master::Now::PipelineContext.build(
+      user_message: "generate a cinematic video of neon rain chase",
+      intent: :llm,
+      message: "generate a cinematic video of neon rain chase"
+    ))
+    assert result.ok?
+    assert_equal :command, result.value!.intent
+    assert_equal "video", result.value!.command
   end
 
   def test_refine_repligen_video_generate_arg

@@ -9,11 +9,16 @@ module Master
 
       def tool_commands(root, ai = nil)
         agent = ai && ai[:agent]
+        bus = ai && ai[:bus]
         {
           "postpro" => command(:dispatch_postpro, root),
           "repligen" => command(:dispatch_repligen, root, agent),
           "photograph" => command(:dispatch_photograph, root, agent),
           "prompt" => command(:dispatch_prompt, root, agent),
+          "video" => command(:dispatch_video, root, agent, bus),
+          "motion-dataset" => command(:dispatch_motion_dataset, root),
+          "lora-train" => command(:dispatch_lora_train, root),
+          "social-sim" => command(:dispatch_social_sim, root),
         }
       end
 
@@ -94,6 +99,54 @@ module Master
       def prompt_usage
         "usage: /prompt <seed>   or   /prompt photo <seed>   /prompt video <seed>"
       end
+
+      def dispatch_video(root, agent, bus, ctx: nil)
+        parsed = Reach::VideoCli.parse_video_args(arg_for(ctx))
+        return parsed[:usage] if parsed[:usage]
+
+        parsed = parsed.merge(
+          prompt: refine_generation_prompt(parsed[:prompt], medium: :video, agent: agent, image: Reach::RepligenArg.ctx_image(ctx))
+        )
+        Reach::VideoCli.run_generate(parsed, root: root, agent: agent, event_bus: bus)
+      end
+
+      def dispatch_motion_dataset(root, ctx: nil)
+        parsed = Reach::VideoCli.parse_motion_dataset_args(arg_for(ctx))
+        return parsed[:usage] if parsed[:usage]
+
+        result = Reach::MotionLoraDataset.bootstrap(
+          preset: parsed[:preset],
+          subject: parsed[:subject],
+          clips: parsed[:clips],
+          backend: parsed[:backend],
+          lora_id: parsed[:lora_id],
+          root: root
+        )
+        [
+          "motion-dataset: preset=#{parsed[:preset]} clips=#{result[:clips]}",
+          "dir: #{result[:dir]}",
+          "caption: #{result[:caption][0, 120]}...",
+        ].join("\n")
+      rescue Reach::MotionLoraDataset::Error => e
+        "motion-dataset: #{e.message}"
+      end
+
+      def dispatch_lora_train(root, ctx: nil)
+        parsed = Reach::VideoCli.parse_lora_train_args(arg_for(ctx))
+        return parsed[:usage] if parsed[:usage]
+
+        Reach::VideoCli.run_lora_train(parsed, root: root)
+      end
+
+      def dispatch_social_sim(root, ctx: nil)
+        raw = arg_for(ctx).to_s.strip
+        tokens = raw.split(/\s+/)
+        command = tokens.shift || "help"
+        parsed = Reach::SocialSim::CLI.parse_args([command, *tokens])
+        Reach::SocialSim::CLI.run(parsed, root: root)
+      end
+
+      def parse_video_args(raw) = Reach::VideoCli.parse_video_args(raw)
 
       def refine_generation_prompt(prompt, medium:, agent:, image: nil)
         Master::Reach::GenerationPromptRefiner.refine(

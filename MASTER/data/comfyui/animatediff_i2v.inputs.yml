@@ -1,0 +1,8 @@
+# Patch map for ComfyUI API workflow exported from AnimateDiff-Evolved.
+image: "10.inputs.image"
+prompt: "6.inputs.text"
+frame_count: "15.inputs.frame_count"
+motion_lora: "22.inputs.lora_name"
+motion_lora_strength: "22.inputs.strength"
+motion_lora_2: "23.inputs.lora_name"
+motion_lora_2_strength: "23.inputs.strength"

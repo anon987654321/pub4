@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require "ruby_llm"
 require_relative "../result"
 
@@ -244,10 +245,24 @@ module Master
         end
       end
 
+      class SubdomainOrchestrator < RubyLLM::Tool
+        description "Inspect or synchronize a pub4 subdomain cluster. Domains: marketplace, playlist, takeaway, tv, messages, maps, amber, hjerterom, bsdports, brgen, ai."
+        param :domain, desc: "Subdomain cluster key (e.g. marketplace, maps, amber, bsdports)", required: true
+        param :context, desc: "Optional operator context or directive", required: false
+
+        def initialize(tool) = @tool = tool
+
+        def execute(domain:, context: nil)
+          result = @tool.call(domain: domain.to_s, context: context)
+          result.ok? ? JSON.pretty_generate(result.value!) : "Error: #{result.message}"
+        end
+      end
+
       class Repligen < RubyLLM::Tool
         description "Discover, search, stats, and generate images via Replicate (Flux etc for photography). " \
           "Actions: sync, search, stats, generate. For generate pass query as 'model_id the prompt'. " \
           "Pair results with postpro tool (film stocks like kodak_portra) for genuinely cinematic photography. " \
+          "For long-form video use CLI /video or bin/video (VideoChain) — not single-shot repligen generate. " \
           "Requires REPLICATE_API_TOKEN for generate/sync."
         param :action, desc: "One of: sync, search, stats, generate", required: true
         param :query, desc: "For search: query; for generate: 'owner/model prompt text here'", required: false

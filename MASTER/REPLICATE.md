@@ -26,17 +26,69 @@ Recommended models (current as of explore, Nov 2025):
 - Image editing: google/nano-banana-pro or black-forest-labs/flux-2-kontext
 - Fast balanced: prunaai/flux-fast or reve/edit-fast
 - TTS production: jaaari/kokoro-82m (62M+ runs, superior to slow Osman; matches MLX params)
-- Video: google/veo-3.1 (fidelity + camera) or openai/sora-2 (story + native audio)
+- Video (short clips): kwaivgi/kling-v2.1, thudm/cogvideox-5b-i2v, minimax/video-01-live via VideoChain
+- Video (long-form): VideoChain stitches parallel chunks; optional ComfyUI AnimateDiff + Motion LoRAs locally
+
+## VideoChain (cinematic pipeline)
+
+Implementation: `MASTER/lib/reach/video_chain.rb` (not `lib/services/`). HTTP via `Reach::ReplicateClient`; ffmpeg via `Reach::VideoPost` (Open3 only).
+
+Flow per chunk: **Flux keyframe** → **I2V backend** → **analog grain/vignette** → **concat**. Optional **Motion Council** critique and **auto-retry** of weak scenes.
+
+| Backend | Provider | Notes |
+|---------|----------|-------|
+| `kling` | Replicate | Default I2V |
+| `happyhorse` | Replicate | Alias to minimax/video-01-live in tree |
+| `cogvideox` | Replicate | Open-weights style I2V |
+| `minimax` | Replicate | Character consistency |
+| `animatediff` / `animatediff_camera` | ComfyUI | Motion LoRA stacking; see `data/comfyui/` |
+
+CLI (interactive or standalone):
+
+```sh
+# Inside MASTER CLI
+/video --backend kling --minutes 5 --critique --auto-retry neon alley chase
+
+# Standalone (no interactive CLI)
+bundle exec ruby bin/video --backend animatediff_camera \
+  --motion-stack slow_dolly_push_in,elegant_orbit_tracking \
+  --minutes 10 --critique --vision-critique --per-chunk-critique --auto-retry \
+  "epic cyberpunk chase"
+
+# Motion LoRA training clip bootstrap
+/motion-dataset --preset slow_dolly_push_in --subject "character in neon rain" --clips 12
+bundle exec ruby bin/video motion-dataset --preset slow_dolly_push_in --subject "ZIKI girl" --clips 12
+```
+
+Motion Council (`lib/judge/council/motion_critique.rb`):
+- **Whole-video** — keyframes from stitched output; 6 vision personas or text Deliberation with agent.
+- **Per-chunk** — each clip reviewed before stitch (enabled by `--auto-retry` or `--per-chunk-critique`). Precise scene flags for retry.
+- **Vision** — `MOTION_CRITIQUE_VISION=1` or `--vision-critique`; uses `google/gemini-2.5-flash` on Replicate (config: `data/council/motion_personas.yml`).
+
+Auto-retry: `--auto-retry` re-renders flagged scenes with boosted `motion_intensity`, re-stitches as `cinematic_*_retryN_*.mp4`, up to `--max-retries` (default 2).
+
+ComfyUI (self-hosted AnimateDiff):
+- Direct: `COMFYUI_URL=http://127.0.0.1:8188` — client patches `data/comfyui/animatediff_i2v.workflow.json`.
+- Wrapper (optional): `python3 tools/comfyui/animatediff_api.py --port 8189` then `COMFYUI_WRAPPER_URL=http://127.0.0.1:8189`. See `tools/comfyui/README.md`.
+
+Motion LoRA presets: `data/comfyui/motion_lora_presets.yml` (`slow_dolly_push_in`, `elegant_orbit_tracking`, …).
 
 Tool use protocol:
 - Image task → route to replicate/flux-2-pro with reference_image(s) + prompt. Output URL or base64 → postpro.rb for further processing or particle UI.
+- Photo shortcut → `/photograph <seed>` (Flux generate + kodak_portra postpro).
 - TTS task → route to replicate/jaaari/kokoro-82m with text, voice preset (af_bella or match MLX), speed 1.18. Stream or file output → voice/ module.
-- Video task (if enabled in patterns.yml) → veo-3.1 or sora-2; poll until done; attach audio if available.
-- Long-running: implement 5-30s poll loop with exponential backoff. Timeout per limits.yml.
+- Long-form video → `/video` or `bin/video` via VideoChain; poll Replicate per chunk; ComfyUI polls `/history`.
+- Long-running: 3s poll loop in ReplicateClient; ComfyUI timeout 900s default.
 
 Workflow defaults:
 - Config: model=replicate/auto or explicit slug in .master/config.yml
-- Env: REPLICATE_API_TOKEN in /etc/master.env (same pattern as OPENROUTER_API_KEY)
+- Env (see `DEPLOY/openbsd/etc/master.env.sample`):
+  - `REPLICATE_API_TOKEN` — predictions (also reads `REPLICATE_API_KEY` or `~/.config/repligen/config.json`)
+  - `COMFYUI_URL` — ComfyUI host for `animatediff_camera` (default `http://127.0.0.1:8188`)
+  - `COMFYUI_WRAPPER_URL` — optional Python wrapper (`tools/comfyui/animatediff_api.py`)
+  - `COMFYUI_MOTION_LORA` / `COMFYUI_MOTION_LORA_WEIGHT` — default Motion LoRA file + strength
+  - `MOTION_CRITIQUE_VISION=1` — vision council on `--critique`
+  - `MOTION_CRITIQUE_PER_CHUNK=1` — per-chunk review (also default when `--auto-retry`)
 - Budget: track per-prediction cost against budget_max. Warn at 80%.
 - Cache: prediction outputs by input hash + model (cache_ttl 3600s)
 - Fallback: on rate_limit or timeout → local MLX (TTS) or prunaai/flux-fast

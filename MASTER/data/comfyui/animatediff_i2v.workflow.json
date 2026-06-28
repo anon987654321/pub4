@@ -1,0 +1,38 @@
+{
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "cinematic scene, analog 35mm film look",
+      "clip": ["4", 1]
+    }
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "keyframe.png"
+    }
+  },
+  "15": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1280,
+      "height": 720,
+      "batch_size": 1,
+      "frame_count": 24
+    }
+  },
+  "22": {
+    "class_type": "ADE_AnimateDiffLoRALoader",
+    "inputs": {
+      "lora_name": "ZIKI_cinematic_slow_dolly_push_in_v1.safetensors",
+      "strength": 0.75
+    }
+  },
+  "23": {
+    "class_type": "ADE_AnimateDiffLoRALoader",
+    "inputs": {
+      "lora_name": "",
+      "strength": 0.65
+    }
+  }
+}

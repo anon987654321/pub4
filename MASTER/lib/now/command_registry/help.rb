@@ -125,6 +125,25 @@ module Master
             "Presets: data/comfyui/motion_lora_presets.yml",
           ]
         },
+        "lora-train" => {
+          summary: "train a character Flux LoRA from photos and videos",
+          detail: [
+            "/lora-train --name ragnhild [--destination owner/model] [--trigger ragnhild]",
+            "[--split-all] splits every video frame; curates to 12-18 for training.",
+            "[--local] writes ostris/ai-toolkit config + run_train.sh (no Replicate).",
+            "[--ai-toolkit PATH] [--steps 1000] [--rank 16] [--use-all-frames] [--prepare-only]",
+            "Standalone: bundle exec ruby bin/video lora-train …",
+          ]
+        },
+        "social-sim" => {
+          summary: "closed synthetic inbox sim (NPC personas, metrics, no real messengers)",
+          detail: [
+            "/social-sim init --subject ragnhild [--personas 12]",
+            "/social-sim tick --hours 24 [--auto ghost|busy|not_interested]",
+            "/social-sim tui | stats | dashboard | visuals [--lora basicfeatures/ragnhild]",
+            "Standalone: bundle exec ruby bin/social_sim help",
+          ]
+        },
         "photograph" => {
           summary: "Flux photo + kodak_portra postpro",
           detail: ["/photograph <seed>", "Attach a reference image in web chat for vision-guided refinement."]
@@ -159,7 +178,7 @@ module Master
         "agent" => %w[run mode task persona btw shell gateway],
         "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help],
         "infer" => [],
-        "media" => %w[photograph repligen postpro prompt video motion-dataset],
+        "media" => %w[photograph repligen postpro prompt video motion-dataset lora-train social-sim],
       }.freeze
 
       CLI_ONLY_SLASH = %w[

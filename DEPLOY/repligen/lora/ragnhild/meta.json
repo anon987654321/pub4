@@ -1,0 +1,37 @@
+{
+  "name": "ragnhild",
+  "type": "character",
+  "trigger_word": "ragnhild",
+  "subject": "woman",
+  "train_dir": "train",
+  "sources": [
+    {
+      "rel": "sources/selfie.jpg",
+      "type": "image"
+    },
+    {
+      "rel": "sources/grok-video-65b87ee9-af88-40ae-92f7-6f6c5a713f34.mp4",
+      "type": "video",
+      "extracted_frames": 145,
+      "mode": "all_frames"
+    },
+    {
+      "rel": "sources/grok-video-fcc56478-53fb-467a-8c39-4fed2ca57ae4.mp4",
+      "type": "video",
+      "extracted_frames": 145,
+      "mode": "all_frames"
+    }
+  ],
+  "extracted_images": 291,
+  "curated_images": 18,
+  "curation": "even_sample",
+  "created_at": "2026-06-26T20:11:08Z",
+  "replicate": {
+    "destination": "basicfeatures/ragnhild",
+    "version": "6197a9e142d14f8d8f8e824ea243a2496710240d461bcbc9593a76cbe8c7d5c0",
+    "trained_at": "2026-06-26T20:23:01Z",
+    "test_image": "weights/ragnhild_v1/test_portrait.webp",
+    "url": "https://replicate.com/basicfeatures/ragnhild"
+  },
+  "supersedes": "basicfeatures/zikigirl (wrong trigger; deprecated)"
+}

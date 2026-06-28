@@ -31,3 +31,5 @@
 - { name: MemoryRecord,   tier: safe,      visitor: false, default: true,  description: Write a durable markdown memory record to data/claude/ }
 - { name: Repligen,       tier: dangerous, visitor: false, default: true,  description: Replicate image gen (Flux etc), actions: generate/sync/search/stats }
 - { name: Postpro,        tier: dangerous, visitor: false, default: true,  description: Cinematic film post-processing on images (kodak etc) }
+- { name: SubdomainOrchestrator, tier: safe, visitor: true, default: true, description: Inspect or synchronize a pub4 subdomain cluster (marketplace, maps, amber, bsdports, etc.) }
+# CLI slash commands (not Master::Tools adapters): /video, /motion-dataset — see lib/reach/video_chain.rb, REPLICATE.md

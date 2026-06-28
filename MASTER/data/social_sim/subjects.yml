@@ -1,0 +1,9 @@
+# Fictional subject profiles for sandbox sim — not linked to real accounts.
+---
+subjects:
+  ragnhild:
+    display_name: Ragnhild
+    bio: "silver hair, heart stickers, mirror selfies — fictional sim character"
+    ghost_after_messages: 2
+    auto_mode: manual
+    avatar_prompt: "ragnhild, woman, portrait, silver hair, natural light, social feed avatar"

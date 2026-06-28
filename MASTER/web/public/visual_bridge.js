@@ -290,7 +290,9 @@
       try {
         const payload = JSON.parse(message.data);
         if (payload.trace_id) document.documentElement.dataset.trace = String(payload.trace_id);
-      } catch (_error) {}
+      } catch (error) {
+        window.MASTER_LOG?.warn?.("visual_bridge:trace", error, message.data);
+      }
     });
     eventSource.onmessage = (message) => {
       try {

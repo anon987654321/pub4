@@ -49,6 +49,7 @@ module Master
         Reach::MemoryRecord => Reach::LLM::MemoryRecord,
         Reach::Repligen => Reach::LLM::Repligen,
         Reach::Postpro => Reach::LLM::Postpro,
+        Reach::SubdomainOrchestrator => Reach::LLM::SubdomainOrchestrator,
       }.freeze
 
       def self.build_tool_capable_re
