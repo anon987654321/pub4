@@ -1,0 +1,49 @@
+# HTTP crawl contract — loopback checks for live apps.
+# Used by DEPLOY/rails/crawl_probe.rb and bin/probe crawl.
+# expect_body: substring required in response body (case-sensitive unless regex: prefix).
+# skip_unless_port_open: true — skip app when nothing listens (dev laptop).
+
+master:
+  port: 53187
+  paths:
+    - path: /up
+      expect_status: 200
+    - path: /
+      expect_status: 200
+      expect_body: 'id="face"'
+    - path: /master_events.js
+      expect_status: 200
+
+apps:
+  brgen:
+    port: 38182
+    paths:
+      - path: /up
+        expect_status: 200
+      - path: /
+        expect_status: [200, 302, 301]
+  amber:
+    port: 61352
+    paths:
+      - path: /up
+        expect_status: 200
+  baibl:
+    port: 10007
+    paths:
+      - path: /up
+        expect_status: 200
+  blognet:
+    port: 10002
+    paths:
+      - path: /up
+        expect_status: 200
+  bsdports:
+    port: 47312
+    paths:
+      - path: /up
+        expect_status: 200
+  hjerterom:
+    port: 38891
+    paths:
+      - path: /up
+        expect_status: 200

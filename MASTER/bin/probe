@@ -92,6 +92,16 @@ CHECKS = {
     cwd: MASTER_ROOT,
     needs_ruby3: true,
   },
+  "crawl" => {
+    desc: "HTTP crawl manifest + inventory sync (apps.yml ↔ master.json)",
+    cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "rails", "crawl_probe.rb")],
+    cwd: REPO_ROOT,
+  },
+  "integrity" => {
+    desc: "Full DEPLOY + Rails + OpenBSD gate chain",
+    cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "integrity_gate.rb")],
+    cwd: REPO_ROOT,
+  },
   "selfscan" => {
     desc: "Deep-scan lib/master.rb (set MASTER_PROBE_SELF=1)",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "probe_selfscan")],
@@ -105,7 +115,8 @@ CHECKS = {
 ALIASES = {
   "quick" => %w[smoke nsaudit rails ci],
   "all" => %w[smoke nsaudit kernel dogfood preflight audit rails phantom_fk],
-  "deploy" => %w[rails phantom_fk health smoke-web playbook],
+  "deploy" => %w[rails phantom_fk crawl integrity health smoke-web playbook],
+  "integrity" => %w[integrity crawl rails phantom_fk smoke-web],
   "security" => %w[audit nsaudit rails],
 }.freeze
 
