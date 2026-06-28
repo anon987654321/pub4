@@ -4,4 +4,6 @@ description: Sentence case in prose, comments, CLI, commit messages; no banner l
 type: feedback
 applies_to: "prose, comments, CLI output, commit messages, log lines, section headers"
 ---
-Sentence case in prose, comments, logs, CLI, commits; snake_case stays. Capitalize commit subjects. Ban `===`, banners, `[ok]`/`[err]`, `•`|`›` — use `ok:`/`warn:` and `- item`. Dmesg lowercase only on MASTER kernel output, not operator chat.
+Use sentence case in prose, comments, logs, CLI output, and commit messages; keep snake_case for identifiers and capitalize commit subjects. Ban equals-sign banners, bracket tags such as ok or err, and decorative bullets—use ok: and warn: prefixes with hyphen-prefixed items instead.
+
+Dmesg may use lowercase only on MASTER kernel output, not in operator chat. This rule applies to prose, comments, CLI output, commit messages, log lines, and section headers.

@@ -4,4 +4,6 @@ description: Every file's lines flow by importance — newspaper inverted pyrami
 type: feedback
 originSessionId: 038b16d9-fc5e-4144-9a47-5bd746b2d3ac
 ---
-Every file you touch gets importance-ordered lines: inverted pyramid, gist survives a partial read. Order: requires → declaration/headline → public API (by importance) → primary algorithm → private helpers → constants → edge handlers. Applies to ruby, yaml, erb, js, css, html, sh, md. Fix inverted files on touch; don't reshuffle for sport. Encoded in `style.yml` (`line_order`) and `patterns.yml` (`IMPORTANCE_ORDER`). Maintainer and Layperson evaluate; sweep enforces.
+Every file you touch gets importance-ordered lines—inverted pyramid so the gist survives a partial read: requires, declaration, public API by importance, primary algorithm, private helpers, constants, edge handlers.
+
+Applies to ruby, yaml, erb, js, css, html, sh, and md. Fix inverted files on touch; do not reshuffle for sport. Encoded in style.yml line_order and patterns.yml IMPORTANCE_ORDER. Maintainer and Layperson evaluate; sweep enforces.

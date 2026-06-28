@@ -1,45 +1,13 @@
 # Quickstart
 
-Primary entry for LLMs and agents. Read this first; consult `data/soul.yml` and `data/rules.yml` when you need precision.
+This is the primary entry for LLMs and agents. Read it first; consult `data/soul.yml` and `data/rules.yml` when you need precision. Operator friction around relayd, the VPS, and Rails is covered in `bin/playbook` and `data/operator_playbook.yml`.
 
-Operator friction (relayd, VPS, Rails): `bin/playbook` or `data/operator_playbook.yml`.
+The mental model is propose, validate against the constitution, execute with evidence, then learn. Layers stack from constitution in `data/*.yml` through the pipeline in `now/`, then judge, loop, and ground/reach/trace. The particle web face reflects live state.
 
-## Model
+Work in a reconnaissance-then-edit pattern. Use any tool to understand context. Before editing, read full target files and their callers. Production changes should be minimal patches backed by evidence—scan and fix often run without you naming them. After writes, MASTER records paths, lints them in Review, and standing orders audit `lib/` for constitution drift plus autocommit. Say "check my edits", "fix this file", or "run through master" instead of chaining `/scan` and `/fix` by hand. The golden rule is `PRESERVE_THEN_IMPROVE_NEVER_BREAK`. Do not hedge without proof.
 
-Propose → validate against constitution → execute with evidence → learn.
+Prefer `/run <task>` for natural-language work. Explicit commands include `/scan`, `/fix`, `/review`, `/why`, `/snapshot`, and `/video`. Smoke and namespace checks use `bin/probe`; full readiness is `bin/probe all`; CLI self-proof is `bin/probe dogfood`. On OpenBSD use `ruby34` and `bundle34` under `/home/dev/pub4/MASTER`.
 
-Layers: constitution (`data/*.yml`) → pipeline (`now/`) → judge → loop → ground/reach/trace. The particle web face reflects live state.
+Media generation needs `REPLICATE_API_TOKEN` in `/etc/master.env`. Use `/photograph`, `/video`, `/motion-dataset`, and `/prompt`, or `bundle exec ruby bin/video help` for CLI detail.
 
-## Work pattern
-
-1. Reconnaissance with any tool.
-2. Before editing: read full target files and callers.
-3. Production changes: minimal patch, evidence — scan/fix often run without you naming them.
-
-After writes, MASTER records paths, lints them in Review, and standing orders audit `lib/` (constitution drift) plus autocommit. Say "check my edits", "fix this file", or "run through master" instead of chaining `/scan` `/fix` by hand.
-
-Golden rule: `PRESERVE_THEN_IMPROVE_NEVER_BREAK`. No hedging without proof.
-
-## Commands
-
-Prefer `/run <task>` for natural-language work. Explicit: `/scan`, `/fix`, `/review`, `/why`, `/snapshot`, `/video`.
-
-```sh
-bin/probe          # smoke + namespace + Rails gate
-bin/probe all      # full readiness
-bin/probe dogfood  # CLI self-proof
-```
-
-OpenBSD: `ruby34`, `bundle34` under `/home/dev/pub4/MASTER`.
-
-## Media
-
-`REPLICATE_API_TOKEN` in `/etc/master.env`. `/photograph`, `/video`, `/motion-dataset`, `/prompt`. CLI: `bundle exec ruby bin/video help`.
-
-## Friction
-
-- Strict read-before-write on production paths.
-- 1-vCPU VPS scans serially — prefer targeted `/scan` over whole-tree passes.
-- Web face needs `rcctl restart master` after `web/` edits.
-
-See `data/limits.yml` → `llm_ergonomics`. Next: `/orient` or `data/CANON.md` for full doctrine.
+Expect strict read-before-write on production paths, serial scans on a one-vCPU VPS—prefer targeted `/scan` over whole-tree passes—and `rcctl restart master` after `web/` edits. See `data/limits.yml` → `llm_ergonomics`. For full doctrine, use `/orient` or `data/CANON.md`.

@@ -1,7 +1,7 @@
 # Governance
 
-MASTER governance. Bootstrap: `AGENTS.md`, `QUICKSTART.md`. Operator: `DEPLOY/OPERATOR.md`.
+Governance describes how MASTER discovers commands, applies rules, and converges toward a fixpoint without ad-hoc orchestration.
 
-**Engine:** convergence loop over dependency-ordered rule graph. Rules: id, type (scan|fix|render|audit), `depends_on`, `apply`. Until fixpoint or 16 cycles. Canon: `data/converge_rules.yml`. Scanner: `data/rules.yml`.
+Bootstrap docs are `AGENTS.md` and `QUICKSTART.md`. Operator procedures are in `DEPLOY/OPERATOR.md`. The engine is a convergence loop over a dependency-ordered rule graph. Each rule has an id, a type (`scan`, `fix`, `render`, or `audit`), `depends_on`, and `apply`. The loop runs until fixpoint or sixteen cycles. Canon lives in `data/converge_rules.yml`; the scanner registry is in `data/rules.yml`.
 
-**Registry:** commands (`scan`, `fix`, `review`, `critique`, `why`, `model`, `workflow`, `ecology`, …) discovered at boot. Skills: `data/skills/*.md` + optional `skill.rb`. Hooks: `skills:loaded`, `config:reloaded`, etc. MCP via `reach/`.
+Commands such as `scan`, `fix`, `review`, `critique`, `why`, `model`, `workflow`, and `ecology` are discovered at boot. Skills are `data/skills/*.md` plus optional `skill.rb`. Hooks include `skills:loaded`, `config:reloaded`, and similar lifecycle events. MCP integration goes through `reach/`.

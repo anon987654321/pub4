@@ -4,4 +4,6 @@ description: All transitions/animations use easing curves; palettes follow cinem
 type: feedback
 originSessionId: 285acce4-505e-4b41-82ff-f88e72ee1535
 ---
-Motion: ease all state changes (ease-out arrivals, ease-in-out cross-fades), frame-independent dt, never snap. Color: complementary anchors, shadow/midtone/highlight triplets, palette lerp ~600ms. No linear timing, snap swaps, single-hex moods, saturated primaries. Dmesg sepia is the floor.
+Ease all motion—ease-out arrivals, ease-in-out cross-fades—with frame-independent delta time; never snap. Color palettes use complementary anchors, shadow-midtone-highlight triplets, and palette lerp near six hundred milliseconds—not linear timing, snap swaps, single-hex moods, or saturated primaries.
+
+Dmesg sepia sets the floor for professional color grading across the interface.

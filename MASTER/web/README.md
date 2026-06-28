@@ -1,36 +1,7 @@
 # MASTER web
 
-Rails 8 + Falcon. Loopback `:53187`; relayd → `https://ai.brgen.no`.
+The web tier is Rails 8 on Falcon, bound to loopback port 53187 and published at https://ai.brgen.no through relayd. The chat surface at GET / combines the assistant stream and the face runtime. Health is at GET /up. SSE endpoints include GET /chat/message for the assistant stream, GET /chat/metrics for session metrics, and GET /events/stream for the event bus.
 
-## Routes
+The single HTML entrypoint is app/views/chat/index.html.erb via ChatController#index. Runtime assets live under public/: face.js for the THREE.js wireframe mesh, cognition_ecology.js for the ecology particle layer above the face canvas, particle_kernel.js for the typed cell pool, and topology_registry.js for topology dispatch. Topology configuration is in MASTER/data/topologies.yml, not a path relative to the web app root. Tap #primer to start audio and WebGL; ecology particles should render over the face in a fresh private window when the origin is healthy.
 
-| Route | Purpose |
-|-------|---------|
-| `GET /` | Chat + face runtime |
-| `GET /up` | Health |
-| `GET /chat/message` | SSE assistant stream |
-| `GET /chat/metrics` | Session metrics |
-| `GET /events/stream` | SSE event bus |
-
-## Face runtime
-
-The single HTML entrypoint is `app/views/chat/index.html.erb`, served by
-`ChatController#index` at `/`. Runtime assets live under `public/`:
-
-- `face.js` — wireframe mesh (THREE.js)
-- `cognition_ecology.js` — ecology particle layer (`z-index: 2` over face canvas, screen blend)
-- `particle_kernel.js` — typed cell pool
-- `topology_registry.js` — topology dispatch
-
-Topology config: `MASTER/data/topologies.yml` (not `data/topologies.yml` relative to web/).
-
-Tap `#primer` to start audio/WebGL. Ecology particles should render over the face in a fresh private window when origin is healthy.
-
-## Deploy
-
-```zsh
-doas rcctl restart master
-curl -fsS http://127.0.0.1:53187/up
-```
-
-Auth: Bearer / `X-Token` / `master_session` cookie. Visitor tier: chat only.
+After deploying web changes on the VPS, restart with doas rcctl restart master and confirm with curl against http://127.0.0.1:53187/up. Authentication accepts Bearer tokens, X-Token, or a master_session cookie; visitors receive chat only without full tool access.

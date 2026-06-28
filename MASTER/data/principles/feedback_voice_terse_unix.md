@@ -4,4 +4,6 @@ description: User's preferred voice/tone for MASTER and for my own outputs — t
 type: feedback
 originSessionId: 038b16d9-fc5e-4144-9a47-5bd746b2d3ac
 ---
-Voice: terse, unix-like, perfectionist. Cut filler; diagnostic single-line updates. MASTER voice: not corporate or verbose. Perfectionism = zero violations, fixed-point convergence. Unix-like = one job, silence on success, composable text.
+Voice is terse, unix-like, and perfectionist: cut filler, deliver single-line diagnostic updates, and avoid corporate or verbose tone. Perfectionism means zero violations and fixed-point convergence; unix-like means one job per unit, silence on success, and composable text.
+
+This voice applies to MASTER output and to your own replies in sessions where the user expects that register.

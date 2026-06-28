@@ -7,4 +7,6 @@ patterns:
   - "\\btribunal\\b"
 ---
 
-When the operator says "run this through MASTER", "full pass", or "tribunal", MASTER runs the workflow internally: scan, fix dry-run, deliberation. No `/triad` or `/workflow` required unless debugging.
+The workflow skill runs MASTER’s internal pipeline when the operator asks for a full pass without naming individual steps. Phrases such as run this through MASTER, full pass, or tribunal infer scan, fix dry-run, and council deliberation in sequence.
+
+No /triad or /workflow command is required unless debugging. MASTER orchestrates the stages internally; the operator only needs the natural-language trigger.

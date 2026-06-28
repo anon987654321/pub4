@@ -4,16 +4,15 @@ description: Reference dump from a sister chat — StyleCoach UI prompt, htmx+SS
 type: reference
 originSessionId: 038b16d9-fc5e-4144-9a47-5bd746b2d3ac
 ---
-Grok-style design dump 2026-05-07. Cherry-pick; don't bulk-import.
 
-**StyleCoach persona:** critique MASTER output (CLI, web, screenshots). Rules: interface disappears; zero visual debt; personality in words/spacing/timing; speed > all; mobile-first dark; every element earns existence. Format: `ELEMENT/Current/Suggested/Reason` + `distilled_ui_lesson`. Examples: ≤2 accent colors; spinners ≤3 dots; prompt bar bottom always.
+This is a Grok-style design dump from 2026-05-07. Cherry-pick ideas; do not bulk-import.
 
-**Web streaming:** htmx+SSE `sse-connect="/stream/:id"` + `event: chunk`; `X-Accel-Buffering: no`; sleep `rand(0.02..0.08)`. Or chunked HTTP + `hx-swap="innerHTML"`.
+StyleCoach critiques MASTER output across CLI, web, and screenshots. Rules: the interface disappears; zero visual debt; personality lives in words, spacing, and timing; speed beats everything; mobile-first dark; every element must earn its place. Format is `ELEMENT/Current/Suggested/Reason` plus `distilled_ui_lesson`. Examples include at most two accent colors, spinners of at most three dots, and a prompt bar fixed at the bottom.
 
-**CLI traits:** char-stream via ANSI `\r` over `Thinking…`; terse happy path; subtle personality on success/fail; stateful context (SQLite/`~/.master/context.json`); braille spinner `⠋⠙⠹…` after 1.5s; one-command install.
+Web streaming uses htmx+SSE with `sse-connect="/stream/:id"` and `event: chunk`, plus `X-Accel-Buffering: no` and sleep `rand(0.02..0.08)`. Alternatively use chunked HTTP with `hx-swap="innerHTML"`.
 
-**tty-prompt:** `select(filter:)`, `multi_select`, `expand`, `editor(syntax:, word_wrap:)`, `mask`, `slider`, validators (`in`, `validate`, `convert`, `modify`). Theme: bright_cyan + `❯`/`◉`.
+CLI traits favor char-stream via ANSI `\r` over `Thinking…`, a terse happy path, subtle personality on success and failure, stateful context in SQLite or `~/.master/context.json`, a braille spinner `⠋⠙⠹…` after 1.5s, and one-command install.
 
-**tty-spinner:** `:dots_9` default; `Multi` for parallel; `hide_cursor: true`. Multi-line: `PROMPT.editor` → Anthropic stream char-by-char `sleep(rand(0.008..0.035))`.
+tty-prompt offers `select(filter:)`, `multi_select`, `expand`, `editor(syntax:, word_wrap:)`, `mask`, `slider`, and validators (`in`, `validate`, `convert`, `modify`). Theme uses bright_cyan with `❯` and `◉`. tty-spinner defaults to `:dots_9`, supports `Multi` for parallel work, and uses `hide_cursor: true`. Multi-line input uses `PROMPT.editor` with Anthropic stream char-by-char at `sleep(rand(0.008..0.035))`.
 
-**MASTER fit:** web already SSE on `POST /chat/message`; CLI streams via `chunk_accumulator`. Borrow Thinking cleanup, ambiguity menus, tty `editor` for `<<` mode. StyleCoach `/crit` + vision tool.
+MASTER already streams SSE on `POST /chat/message` and CLI via `chunk_accumulator`. Borrow Thinking cleanup, ambiguity menus, and tty `editor` for `<<` mode. StyleCoach fits as `/crit` plus a vision tool.

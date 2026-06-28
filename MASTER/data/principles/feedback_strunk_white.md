@@ -4,4 +4,6 @@ description: All code output — commits, comments, log messages, CLI output —
 type: feedback
 originSessionId: 84fcf91d-46ea-43a5-8efa-3d33b065e6a5
 ---
-Apply Strunk & White to every written artifact: active voice, omit needless words, concrete nouns/verbs, one idea per sentence. Commits: imperative, ≤72 chars, no trailing period. Comments: WHY only, one line max. Log lines: `component: action key=val key=val` — no commas, no padding.
+Apply Strunk and White to every written artifact: active voice, omit needless words, concrete nouns and verbs, one idea per sentence. Commits use imperative mood, seventy-two characters maximum, and no trailing period.
+
+Comments explain WHY only, one line maximum. Log lines follow component colon action key=value key=value—no commas, no padding.

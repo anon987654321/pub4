@@ -4,12 +4,9 @@ description: User approved collapse of lib/master/ into 7 time-oriented modules 
 type: project
 originSessionId: 0c593fb2-cd49-4fd7-9e89-d77dd7e909ae
 ---
-Approved 2026-05-08 after scan+sweep+council on lib/ and DEPLOY.
 
-**Target `lib/master/`:** now/ (cli, repl, pipeline); loop/ (autoloop, sweep, heartbeat, convergence); judge/ (scan/rules, council, swarm, security — unified Verdict); voice/ (personality, soul, renderer, speech); ground/ (config, axioms, data/*.yml — Constitution aggregator); reach/ (tools/base + 24 tools); trace/ (session, telemetry, bus, undo).
+Approved 2026-05-08 after scan, sweep, and council on `lib/` and `DEPLOY`.
 
-Subsumes: Constitution aggregator, Tools::Base, deliberation unification, refactor cycle, Security::Policy, Voice namespace.
+Target layout under `lib/master/`: `now/` for cli, repl, and pipeline; `loop/` for autoloop, sweep, heartbeat, and convergence; `judge/` for scan/rules, council, swarm, and security with a unified Verdict; `voice/` for personality, soul, renderer, and speech; `ground/` for config, axioms, and `data/*.yml` as the Constitution aggregator; `reach/` for tools/base plus twenty-four tools; `trace/` for session, telemetry, bus, and undo. This subsumes the Constitution aggregator, Tools::Base, deliberation unification, refactor cycle, Security::Policy, and the Voice namespace.
 
-**Passes** (one commit each, tests green, Zeitwerk ok): skeleton → voice → trace → ground → reach → judge → loop → now (stages/ → pipeline-as-data in now/pipeline.rb).
-
-Work on VPS dev@brgen.no. Branch `refactor/seven-modules`. Time-orientation (now vs loop vs trace) over file-type splits; judge/ unifies four "is this OK?" trees.
+Passes run one commit each with tests green and Zeitwerk ok: skeleton, then voice, trace, ground, reach, judge, loop, and finally now with stages folded into pipeline-as-data in `now/pipeline.rb`. Work happens on VPS dev@brgen.no on branch `refactor/seven-modules`. Time-orientation—now versus loop versus trace—replaces file-type splits; `judge/` unifies four "is this OK?" trees.

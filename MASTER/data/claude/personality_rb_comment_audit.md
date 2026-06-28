@@ -4,4 +4,4 @@ description: Comment audit results for personality.rb
 type: feedback
 ---
 
-Audit of personality.rb comment at line 55: comment accurately describes code. No violations found.
+Audit of the `personality.rb` comment at line 55 found the comment accurately describes the code. No violations were found.

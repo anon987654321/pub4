@@ -4,4 +4,6 @@ description: User shorthand — "run X through master" means scan + sweep + coun
 type: feedback
 originSessionId: 0c593fb2-cd49-4fd7-9e89-d77dd7e909ae
 ---
-"Run X through MASTER" (or "expose X to MASTER") means `/scan <path>` → `/sweep <path>` to convergence → `/council <path>`. Council = 6-persona deliberation with Security veto; user says "tribunal," code says "council." Run all three in sequence without asking depth — scan is deep by default. `/triad` wrapper removed; user should never need a command name.
+Run X through MASTER or expose X to MASTER means scan the path, then sweep the path to convergence, then council the path—run all three in sequence without asking depth; scan is deep by default.
+
+Council is six-persona deliberation with Security veto; the user says tribunal, the code says council. The triad wrapper was removed; the user should never need a command name.

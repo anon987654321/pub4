@@ -4,4 +4,6 @@ description: When local and remote main have diverged with overlap, cherry-pick 
 type: feedback
 originSessionId: b02ce9b9-a7c7-4c65-b8d0-3b8469dc2028
 ---
-Push rejected with diverged overlap: tag `backup-pre-sync-YYYY-MM-DD`, `reset --hard origin/main`, cherry-pick commits to ship, resolve, push. Cherry-pick when shipping recent session work with dupes on remote; rebase/merge to keep all local work. Never force-push; backup-tag first.
+When push is rejected because local and remote main have diverged with overlapping commits, tag backup-pre-sync-YYYY-MM-DD, reset hard to origin/main, cherry-pick the commits you intend to ship, resolve conflicts, and push.
+
+Cherry-pick when shipping recent session work that duplicates commits already on remote; rebase or merge when you need all local work preserved. Never force-push; create the backup tag first.

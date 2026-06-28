@@ -4,4 +4,6 @@ description: Whenever I update any file under MASTER/web/ on the VPS, restart th
 type: feedback
 originSessionId: 038b16d9-fc5e-4144-9a47-5bd746b2d3ac
 ---
-After every scp under `MASTER/web/`, live `MASTER/lib/`, or `MASTER/data/*.yml`, run `doas rcctl restart master` on VPS — one file, one restart. Falcon won't hot-reload. Wait ~2s before curl checks. CLI-only edits skip restart unless web is in use.
+After every scp of MASTER/web/, live MASTER/lib/, or MASTER/data YAML on the VPS, run doas rcctl restart master—one file, one restart. Falcon does not hot-reload; wait about two seconds before curl checks.
+
+CLI-only edits skip restart unless the web layer is in use. Do not batch multiple web edits and restart only at the end.

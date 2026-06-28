@@ -1,39 +1,13 @@
 # Agents
 
-Bootstrap for coding agents (Cursor, Claude Code, Codex, Aider).
+This file bootstraps coding agents—Cursor, Claude Code, Codex, Aider, and similar tools—into the MASTER workspace.
 
-## Read first
+Read `QUICKSTART.md` first for the mental model and ergonomics. For VPS, SSH, deploy, and domains, use `DEPLOY/OPERATOR.md`. When editing production paths, consult `data/soul.yml` and `data/rules.yml`. Authority order is `data/soul.yml`, then `data/rules.yml`, then `CONVENTIONS.md`, then this file.
 
-1. `QUICKSTART.md` — mental model and ergonomics
-2. `DEPLOY/OPERATOR.md` — VPS, SSH, deploy, domains
-3. `data/soul.yml` and `data/rules.yml` — when editing production paths
+The `now/` module owns the pipeline and CLI routing. `loop/` runs fix, rule, and watch loops. `judge/` provides the scanner, council, and AST fixer. `voice/` handles rendering, TTS, and expression. `ground/` aggregates the constitution, memory, and providers. `reach/` exposes tools for file, git, shell, LLM, and web work. `trace/` records events, telemetry, and session state. The pipeline flows Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render.
 
-Authority: `data/soul.yml` > `data/rules.yml` > `CONVENTIONS.md` > this file.
+Conventions mirror the constitution: `# frozen_string_literal: true`, double-quoted strings, no bare `rescue`, guard clauses, command-query separation. Files stay at or below three hundred lines; methods at or below ten. Read every file before editing.
 
-## Modules
+Slash commands include `/scan`, `/fix`, `/review`, `/video`, and `/photograph`; the full list is via `/help`. For structural changes, run `/scan deep <path>` inside MASTER first. You do not need to memorize scan and fix choreography. After any mutating tool lands, standing orders run constitution drift and autocommit; the Review stage lints paths recorded in that turn. Plain language works: say "check my edits", "fix `path`", "clean this up", or "run through master".
 
-| Module | Role |
-|--------|------|
-| `now/` | Pipeline, CLI, routing |
-| `loop/` | Fix, rule, watch loops |
-| `judge/` | Scanner, council, AST fixer |
-| `voice/` | Renderer, TTS, expression |
-| `ground/` | Constitution, memory, providers |
-| `reach/` | Tools: file, git, shell, LLM, web |
-| `trace/` | Events, telemetry, session |
-
-Pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render.
-
-## Conventions
-
-`# frozen_string_literal: true`. Double-quoted strings. No bare `rescue`. Guard clauses. CQS. Files ≤300 lines; methods ≤10. Read every file before editing.
-
-## Commands
-
-`/scan`, `/fix`, `/review`, `/video`, `/photograph` — full list via `/help`. Structural changes: `/scan deep <path>` inside MASTER first.
-
-You do not need to memorize scan/fix choreography. After any mutating tool lands, standing orders run constitution drift and autocommit; the Review stage lints paths recorded in that turn. Plain language works: "check my edits", "fix `path`", "clean this up", "run through master".
-
-## VPS limits
-
-One SSH session. `zsh DEPLOY/sh/vps_ci.sh <app>` for Rails CI. After `web/` edits: `doas rcctl restart master`.
+The VPS allows one SSH session. Run Rails CI with `zsh DEPLOY/sh/vps_ci.sh <app>`. After `web/` edits, run `doas rcctl restart master`.
