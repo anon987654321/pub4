@@ -43,7 +43,7 @@ module Master
         lib_dir = File.join(Master::ROOT, "lib")
         errors = []
         changed_lib_files(lib_dir).each do |path|
-          ok = system("ruby34", "-c", path, out: File::NULL, err: File::NULL)
+          ok = system(RbConfig.ruby, "-c", path, out: File::NULL, err: File::NULL)
           errors << path unless ok
         end
         if errors.any?

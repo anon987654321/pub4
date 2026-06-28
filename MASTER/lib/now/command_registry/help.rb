@@ -160,6 +160,62 @@ module Master
           summary: "film-stock post-processing on images",
           detail: ["/postpro --input path --output path --preset portrait --stock kodak_portra"]
         },
+        "domain" => {
+          summary: "inspect or sync a pub4 subdomain cluster",
+          detail: ["/domain <name>", "Names: marketplace playlist takeaway tv maps amber hjerterom bsdports brgen …"]
+        },
+        "music" => {
+          summary: "open Radio Bergen or Dilla pocket on the face",
+          detail: ["/music radio", "/music dilla", "Infer: say 'play radio' or 'dilla pocket'."]
+        },
+        "review" => {
+          summary: "multi-reviewer code review on a path or diff",
+          detail: ["/review <path>", "/review --staged", "Runs reviewer personas against the target."]
+        },
+        "critique" => {
+          summary: "single-pass critique of code or a change set",
+          detail: ["/critique <path>", "Lighter than /review — one structured pass."]
+        },
+        "model" => {
+          summary: "show or switch the active LLM model",
+          detail: ["/model", "/model <name>", "Uses routing from data/models.yml."]
+        },
+        "memory" => {
+          summary: "read or write durable operator memory records",
+          detail: ["/memory list", "/memory show <key>", "/memory write <key> …"]
+        },
+        "doctor" => {
+          summary: "run bin/doctor health checks",
+          detail: ["/doctor", "Provider keys, disk, git, web smoke hints."]
+        },
+        "rebuild" => {
+          summary: "syntax-check lib/, save session, hot-restart CLI",
+          detail: ["/rebuild", "Web: touches web/tmp/restart.txt when run from MASTER/web tree."]
+        },
+        "gateway" => {
+          summary: "show multi-channel gateway status",
+          detail: ["/gateway", "cli web irc matrix api adapter states."]
+        },
+        "shell" => {
+          summary: "run one guarded shell command",
+          detail: ["/shell <command>", "Uses Reach::Shell with governor tier checks."]
+        },
+        "plan" => {
+          summary: "read or publish the active implementation plan",
+          detail: ["/plan", "/plan show", "Ground::ActivePlan markdown in repo."]
+        },
+        "clear" => {
+          summary: "clear the current session transcript",
+          detail: ["/clear", "Does not undo file changes."]
+        },
+        "save" => {
+          summary: "persist session to disk",
+          detail: ["/save", "Writes session JSON under runtime/."]
+        },
+        "diag" => {
+          summary: "compact diagnostics snapshot",
+          detail: ["/diag", "Breaker, homeostat, last errors."]
+        },
       }.freeze
 
       def help_text(command = nil)
@@ -175,10 +231,10 @@ module Master
       COMMAND_CATEGORIES = {
         "session" => %w[clear save history grep audit tokens cost undo rollback redo],
         "work" => %w[scan fix workflow review critique self kernel status replay graph resync tail edge-cases],
-        "agent" => %w[run mode task persona btw shell gateway],
-        "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help],
+        "agent" => %w[run mode task persona btw shell gateway plan rebuild],
+        "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help domain],
         "infer" => [],
-        "media" => %w[photograph repligen postpro prompt video motion-dataset lora-train social-sim],
+        "media" => %w[photograph repligen postpro prompt video motion-dataset lora-train social-sim music],
       }.freeze
 
       CLI_ONLY_SLASH = %w[

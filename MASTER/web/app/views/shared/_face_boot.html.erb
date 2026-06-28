@@ -103,6 +103,7 @@
       delete document.body.dataset.faceBooting;
       syncShellRefs();
       if(ui)ui.textContent='';
+      dismissPrimer();
       revealPrompt();
     }
     function resetFaceSession(){
@@ -295,8 +296,7 @@
       document.body.dataset.primerFlash='1';
       window.setTimeout(function(){delete document.body.dataset.primerFlash;},180);
       primeAudio();
-      revealPrompt();
-      dismissPrimer();
+      showBootStatus('starting face…');
       window.dispatchEvent(new CustomEvent('primer:ready'));
       try{
         if(window.MASTER_FACE&&window.MASTER_FACE.startEverything)window.MASTER_FACE.startEverything();

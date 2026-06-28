@@ -164,12 +164,12 @@ module Master
       def dispatch_tools(root, ai, ctx: nil)
         reach = Master::Builder::TOOL_MAP.keys.sort
         cli = tool_commands(root, ai).keys.sort
-        agent_count = Array(ai&.dig(:tools)).size
+        wired = Array(ai&.dig(:tools)).map { |t| t.class.name.split("::").last }.sort
         [
           "tools",
           "reach  #{reach.join(' ')}",
           "cli    #{cli.join(' ')}",
-          "agent  #{agent_count} wired (#{agent_count.positive? ? 'AskLlm Shell ReadFile …' : 'none'})",
+          "agent  #{wired.size} wired #{wired.empty? ? '' : wired.join(' ')}",
           "docs   data/tools.yml · TRACE.md",
         ].join("\n")
       end

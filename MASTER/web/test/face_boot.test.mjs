@@ -181,6 +181,7 @@ test("face3d_engine imports use import-map paths", () => {
   const engine = readFileSync(join(publicDir, "face3d_engine.js"), "utf8");
   assert.match(engine, /from '\/face3d_geometry\.js'/);
   assert.match(engine, /from '\/face3d_support\.js'/);
+  assert.match(engine, /applyBlendshape/);
 });
 
 test("visual_bridge defers SSE until session ready", () => {

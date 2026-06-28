@@ -29,6 +29,14 @@ end
 def parse_initial_message_options(argv)
   options = {}
   parser = OptionParser.new do |opts|
+    opts.banner = "Usage: bin/cli [-m MSG] [--fast] [--web|--no-web] [--boot-status]"
+    opts.on("-h", "--help") do
+      puts opts
+      puts ""
+      puts "Pipe mode:  echo '/status' | bin/cli"
+      puts "Fast mode:  bin/cli --fast   (status/orient/tools/help only)"
+      exit 0
+    end
     opts.on("-m", "--message TEXT") { |text| options[:message] = text }
     opts.on("--web") { ENV["MASTER_WEB"] = "1" }
     opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }

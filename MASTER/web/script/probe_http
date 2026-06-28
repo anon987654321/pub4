@@ -32,7 +32,7 @@ begin
   home = get("/")
   failures << "homepage #{home.code}" unless home.code == "200"
   body = home.body.to_s
-  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer chat_actions master-container-ready container_gate sse_contract felt_state face_deferred_loader id="primer-tier" tap\ to\ enter id="primer-text" continue\ in\ text\ mode text-mode-session id="boot-wayfinding" face_wayfinding data-step="audio"].each do |needle|
+  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer chat_actions master-container-ready container_gate sse_contract felt_state face_deferred_loader domain-cluster-bar domain_cluster id="primer-tier" tap\ to\ enter id="primer-text" continue\ in\ text\ mode text-mode-session id="boot-wayfinding" face_wayfinding data-step="audio"].each do |needle|
     failures << "homepage missing #{needle}" unless body.include?(needle)
   end
   failures << "legacy 15s boot timeout still present" if body.include?("15000")
@@ -63,6 +63,13 @@ begin
     failures << "face_deferred_loader missing MASTER_DEFERRED_FACE" unless deferred_body.include?("MASTER_DEFERRED_FACE")
   else
     failures << "face_deferred_loader digest missing from homepage"
+  end
+  domain_js = urls.find { |path| path.include?("domain_cluster") }
+  if domain_js
+    domain_body = get(domain_js).body.to_s
+    failures << "domain_cluster missing syncDomainBackend" unless domain_body.include?("syncDomainBackend")
+  else
+    failures << "domain_cluster digest missing from homepage"
   end
   wayfinding_js = urls.find { |path| path.include?("face_wayfinding") }
   if wayfinding_js

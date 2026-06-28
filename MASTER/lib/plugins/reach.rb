@@ -18,7 +18,12 @@ module Master
         "BatchReplace"    => ->(r, i) {
           Master::Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus])
         },
-        "AstEdit"         => ->(r, i) { Master::Reach::AstEdit.new(root: r, undo: i[:undo], event_bus: i[:bus]) },
+        "AstEdit"         => ->(r, i) {
+          Master::Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
+        },
+        "MemoryRecord"    => ->(r, i) {
+          Master::Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus])
+        },
         "Tree"            => ->(r, i) { Master::Reach::Tree.new(root: r, event_bus: i[:bus]) },
         "ListDir"         => ->(r, i) { Master::Reach::ListDir.new(root: r, event_bus: i[:bus]) },
         "SearchFiles"     => ->(r, i) { Master::Reach::SearchFiles.new(root: r, event_bus: i[:bus]) },
