@@ -69,3 +69,10 @@ DEPLOY/dilla/.dilla_*.wav
 DEPLOY/dilla/.live_tmp.wav
 DEPLOY/dilla/dilla_beat_live*.mp3
 DEPLOY/rails/*/app/assets/builds/*.css.map
+
+# DEPLOY/dilla generated + scratch audio — large, regenerable. Never track.
+# KEPT on purpose (inputs the generator reads, do NOT ignore):
+#   - DEPLOY/dilla/vocals_*.wav  (source vocal takes — VOCALS{} in dilla.rb)
+#   - DEPLOY/dilla/samples/      (drum kits read at runtime)
+DEPLOY/dilla/renders/
+DEPLOY/dilla/.harmony_*.wav
