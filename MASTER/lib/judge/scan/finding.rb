@@ -50,7 +50,7 @@ module Master
             why: why,
             genealogy: genealogy,
             dedupe_key: dedupe_key,
-            impact_radius: impact_radius
+            impact_radius: impact_radius,
           }.compact
         end
 
