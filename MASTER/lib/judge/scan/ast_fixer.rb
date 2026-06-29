@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "prism"
+require "set"
 require_relative "ast_fixer/web_transforms"
 
 module Master
@@ -63,8 +64,19 @@ module Master
         end
 
         def apply_transforms(src, transforms)
-          transforms.reduce(src) { |current, transform| send(transform, current) }
+          transforms.reduce(src) do |current, transform|
+            transform_labels = @transforms.dup
+            candidate = send(transform, current)
+            next candidate unless ruby? && candidate != current && parses?(current) && !parses?(candidate)
+
+            # Transform turned valid Ruby into unparseable Ruby — a line-heuristic misfire on a
+            # multi-line construct. Discard it (and any label it recorded); keep the prior source.
+            @transforms.replace(transform_labels)
+            current
+          end
         end
+
+        def parses?(src) = !Prism.parse(src).failure?
 
         def publish_and_write(out)
           write_back(out)
@@ -188,22 +200,62 @@ module Master
         end
 
         def remove_immediate_dead_code(src)
+          protected_lines = literal_lines(src)
           lines = src.lines
           keep = []
           changed = false
           skip_next = false
           lines.each_with_index do |line, index|
-            if skip_next && executable_line?(line)
+            lineno = index + 1
+            if skip_next && executable_line?(line) && !protected_lines.include?(lineno)
               changed = true
               skip_next = false
               next
             end
             keep << line
             next_line = lines[index + 1].to_s
-            skip_next = unconditional_terminal?(line) && skippable_dead_line?(next_line) && !open_collection?(line)
+            skip_next = !protected_lines.include?(lineno) && !protected_lines.include?(lineno + 1) &&
+              unconditional_terminal?(line) && skippable_dead_line?(next_line) && !open_collection?(line)
           end
           @transforms << :dead_code if changed
           keep.join
+        end
+
+        # Line numbers (1-based) that sit inside a *multi-line* string, heredoc, command,
+        # or regexp literal. Line-heuristic transforms must skip these — shell `exit`, a
+        # Python `raise`, or a `}` inside a heredoc are data, not Ruby code. Single-line
+        # literals don't span lines, so they never confuse the heuristics and stay eligible.
+        LITERAL_NODES = [
+          Prism::StringNode, Prism::InterpolatedStringNode,
+          Prism::XStringNode, Prism::InterpolatedXStringNode,
+          Prism::RegularExpressionNode, Prism::InterpolatedRegularExpressionNode,
+        ].freeze
+
+        # Memoized by source content: remove_immediate_dead_code and add_trailing_commas
+        # both ask for the literal lines, and the source is usually unchanged between them,
+        # so this saves a redundant full Prism parse per file on every autoloop cycle.
+        def literal_lines(src)
+          (@literal_lines ||= {})[src] ||= compute_literal_lines(src)
+        end
+
+        def compute_literal_lines(src)
+          result = Prism.parse(src)
+          return Set.new if result.failure?
+
+          lines = Set.new
+          stack = [result.value]
+          until stack.empty?
+            node = stack.pop
+            next unless node
+            loc = node.location
+            if loc.start_line != loc.end_line && LITERAL_NODES.any? { |klass| node.is_a?(klass) }
+              (loc.start_line..loc.end_line).each { |line| lines << line }
+            end
+            stack.concat(node.compact_child_nodes) if node.respond_to?(:compact_child_nodes)
+          end
+          lines
+        rescue StandardError
+          Set.new
         end
 
         def open_collection?(line)
@@ -231,9 +283,12 @@ module Master
         def executable_line?(line) = skippable_dead_line?(line)
 
         def add_trailing_commas(src)
+          protected_lines = literal_lines(src)
           lines = src.lines
           changed = false
           (1...lines.length).each do |i|
+            next if protected_lines.include?(i) || protected_lines.include?(i + 1)
+
             current = lines[i].strip
             previous = lines[i - 1]
             next unless current.match?(/^[\]}]/)

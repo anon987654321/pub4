@@ -15,7 +15,7 @@ module Master
           ["unicode", "\"Bergen ålesund 東京\""],
           ["invalid JSON", "\"{\""],
           ["truncated file", "\"partial: [\""],
-          ["injection attempt", "\"'; rm -rf / #\""]
+          ["injection attempt", "\"'; rm -rf / #\""],
         ].freeze
 
         def initialize(root:)

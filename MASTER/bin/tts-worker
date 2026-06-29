@@ -60,7 +60,11 @@ if ARGV[0] == "--daemon"
   FileUtils.mkdir_p(File.dirname(sock_path))
   File.unlink(sock_path) rescue nil
   server = UNIXServer.new(sock_path)
-  File.chmod(0o660, sock_path)
+  begin
+    File.chmod(0o660, sock_path)
+  rescue Errno::ENOSYS, Errno::EOPNOTSUPP
+    warn "tts-worker: chmod unsupported for #{sock_path}; continuing with filesystem permissions"
+  end
   warn "tts-worker: daemon ready on #{sock_path}"
   trap("INT") { File.unlink(sock_path) rescue nil; exit 0 }
   trap("TERM") { File.unlink(sock_path) rescue nil; exit 0 }
@@ -71,6 +75,10 @@ if ARGV[0] == "--daemon"
       line = client.gets&.chomp
       next unless line && !line.empty?
       req = JSON.parse(line)
+      if req["health"]
+        client.write("ok\n")
+        next
+      end
       voice = req["voice"].to_s
       rate  = req["rate"].to_s
       pitch = req["pitch"].to_s
@@ -79,7 +87,11 @@ if ARGV[0] == "--daemon"
       out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
       ok = synth_subprocess(voice, rate, pitch, text, out)
       if ok
-        File.open(out, "rb") { |f| IO.copy_stream(f, client) }
+        begin
+          File.open(out, "rb") { |f| IO.copy_stream(f, client) }
+        rescue Errno::ENOTCONN, Errno::EPIPE, Errno::ECONNRESET
+          # client hung up before the stream finished — routine with the async job model, not a fault
+        end
       end
       File.unlink(out) rescue nil
     rescue StandardError => e

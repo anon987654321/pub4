@@ -18,7 +18,7 @@ module Master
           warn_at: warn_at,
           max_per_file: max_per_file,
           event_bus: event_bus,
-          state_path: state_path
+          state_path: state_path,
         }.freeze
         @breakers = {}
         @global = CircuitBreaker.new(**@defaults.merge(state_key: "global"))

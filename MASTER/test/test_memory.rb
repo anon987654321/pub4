@@ -5,7 +5,7 @@ require "master"
 
 class TestMemory < Minitest::Test
   def setup
-    @root = Dir.mktmpdir("master_memory_test", Dir.home)
+    @root = Dir.mktmpdir("master_memory_test")
     @mem  = Master::Ground::Memory.new(root: @root)
   end
 
@@ -137,7 +137,7 @@ class TestMemory < Minitest::Test
   end
 
   def test_context_summary_nil_when_empty
-    mem = Master::Ground::Memory.new(root: Dir.mktmpdir("empty_mem_test", Dir.home))
+    mem = Master::Ground::Memory.new(root: Dir.mktmpdir("empty_mem_test"))
     without_brain_keys(mem)
     assert_nil mem.context_summary
   end
