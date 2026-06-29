@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="face-loading">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
@@ -8,10 +8,7 @@
   <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="dark">
   <meta name="master-runtime" content="face">
-  <meta name="master-tier" content="<%= @tier == "authenticated" ? "full access" : "visitor" %>">
-  <meta name="master-mode" content="safe=1 web=1 tier=<%= @tier.to_s %>">
-  <meta name="master-container-ready" content="<%= @container_ready ? "1" : "0" %>">
-  <meta name="master-model" content="<%= @model.to_s %>">
+  <meta name="master-tier" content="<%= @tier.to_s %>">
   <meta name="master-visual-profile" content="auto">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -20,11 +17,22 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23030303'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
-  <script type="importmap" nonce="<%= content_security_policy_nonce %>">
-    <%= raw({ imports: master_face_import_map }.to_json) %>
-  </script>
   <script nonce="<%= content_security_policy_nonce %>">
-    window.MASTER_ASSET_PATHS = <%= raw(master_face_asset_paths.to_json) %>;
+    window.MASTER_ASSET_PATHS = {
+      threeModule: "<%= asset_path("three.face.module.js") %>",
+      faceParts: <%= raw((1..5).map { |part| asset_path("face.part#{part}.txt") }.to_json) %>,
+      faceModulesList: <%= raw(%w[
+        face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js face_blendshape_bridge.js
+        face_council_multi.js face_phosphor_trail.js face_offscreen_ecology.js face_micro_interactions.js
+        face_perf_guards.js face_brutalist.js
+      ].to_json) %>,
+      faceModules: <%= raw(%w[
+        face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js face_blendshape_bridge.js
+        face_council_multi.js face_phosphor_trail.js face_offscreen_ecology.js face_micro_interactions.js
+        face_perf_guards.js face_brutalist.js
+        face_semantics.js face_minimal_ui.js face_loops_music.js face_loops_nudge.js
+      ].to_h { |name| [name, asset_path(name)] }.to_json) %>
+    };
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
@@ -32,128 +40,35 @@
     window.MASTER_SOUL_SUMMARY = "persona malay; voice ms-MY-OsmanNeural; constitutional face";
     window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload.to_json %>;
   </script>
-  <script nonce="<%= content_security_policy_nonce %>">
-    (function(){
-      var pending=false;
-      function queueTap(){pending=true;}
-      ["click","pointerup","touchend","mousedown"].forEach(function(type){
-        var passive=type==="touchend"||type==="mousedown";
-        window.addEventListener(type,queueTap,{capture:true,passive:passive});
-      });
-      window.__MASTER_PRIMER_TAP__=function(){
-        if(typeof window.__MASTER_PRIMER_GO__==="function")window.__MASTER_PRIMER_GO__();
-        else pending=true;
-      };
-      window.__MASTER_PRIMER_PENDING__=function(){return pending;};
-      window.__MASTER_PRIMER_CLEAR__=function(){pending=false;};
-    })();
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
-  <% FaceAssetsHelper::FACE_PRELOAD_MODULES.each do |mod| %>
-  <link rel="modulepreload" href="<%= asset_path(mod) %>">
-  <% end %>
-  <% if face_modules_bundle_preload? %>
-  <link rel="modulepreload" href="<%= face_modules_bundle_asset_path %>">
-  <% else %>
-  <% FaceAssetsHelper::FACE_MODULE_NAMES.first(11).each do |mod| %>
-  <link rel="modulepreload" href="<%= asset_path(mod) %>">
-  <% end %>
-  <% end %>
-  <% if face_runtime_preload? %>
-  <link rel="modulepreload" href="<%= face_runtime_asset_path %>">
-  <% end %>
+  <link rel="modulepreload" href="<%= asset_path("three.face.module.js") %>">
   <link rel="modulepreload" href="<%= asset_path("face.js") %>">
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <style nonce="<%= content_security_policy_nonce %>">
     html, body { background: #000; color: #f5f0e8; }
     canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; }
+    #primer { background: transparent; }
     #zsh { background: #000; }
-    /* Critical primer layout — fullscreen hit target before face.css loads */
-    .primer-form { position: fixed; inset: 0; z-index: 2147483000; margin: 0; padding: 0; border: 0; display: grid; place-items: center; background: rgba(0,0,0,.72); touch-action: manipulation; pointer-events: auto; }
-    #primer { position: absolute; inset: 0; display: grid; place-items: center; border: 0; margin: 0; width: 100%; height: 100%; background: transparent; cursor: pointer; touch-action: manipulation; pointer-events: auto; -webkit-appearance: none; appearance: none; color: inherit; font: inherit; }
-    #primer .primer-label { pointer-events: none; font: 200 clamp(1rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: -.04em; }
-    #primer .primer-tier { pointer-events: none; display: block; margin-top: .55em; font: 200 clamp(.72rem,2.2vw,1rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: .12em; opacity: .42; }
-    .primer-lanes { position: absolute; inset: 0; display: grid; gap: .85em; justify-items: center; align-content: center; pointer-events: auto; width: 100%; height: 100%; cursor: pointer; }
-    #primer-text { pointer-events: auto; border: 0; background: transparent; color: inherit; cursor: pointer; font: 200 clamp(.78rem,2.4vw,1rem)/1 "Inter",Helvetica,Arial,sans-serif; letter-spacing: .08em; opacity: .55; text-decoration: underline; text-underline-offset: .22em; touch-action: manipulation; -webkit-appearance: none; appearance: none; }
-    #primer-text:hover, #primer-text:focus-visible { opacity: .92; outline: 1px solid rgba(255,255,255,.35); outline-offset: 4px; }
-    body.text-mode-session canvas#face, body.text-mode-session canvas#cognition-ecology { display: none !important; }
-    .boot-wayfinding { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 2147482000; pointer-events: none; }
-    .primer-form.gone, #primer.gone { opacity: 0; pointer-events: none; }
   </style>
 </head>
 <body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark">
   <a href="#zin" class="skip-link">skip to prompt</a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
-  <% primer_tier_label = @tier == "authenticated" ? "full access" : "visitor" %>
-  <div id="primer-form" class="primer-form" role="button" tabindex="0" aria-label="Tap to enter MASTER">
-    <div class="primer-lanes">
-      <button type="button" id="primer" aria-busy="false">
-        <span id="primer-title" class="primer-label">tap to enter</span>
-        <span id="primer-tier" class="primer-tier"><%= primer_tier_label %></span>
-      </button>
-      <button type="button" id="primer-text" aria-label="Continue in text mode without canvas">continue in text mode</button>
-    </div>
-  </div>
-  <nav id="boot-wayfinding" class="boot-wayfinding" hidden aria-label="Boot progress">
-    <ol class="boot-wayfinding-steps">
-      <li data-step="audio" data-state="pending"><span class="boot-step-label">audio</span><span class="boot-step-mark" aria-hidden="true"></span></li>
-      <li data-step="face" data-state="pending"><span class="boot-step-label">face</span><span class="boot-step-mark" aria-hidden="true"></span></li>
-      <li data-step="agent" data-state="pending"><span class="boot-step-label">agent</span><span class="boot-step-mark" aria-hidden="true"></span></li>
-    </ol>
-  </nav>
-  <div id="civic-status" class="civic-status" hidden aria-live="polite"></div>
-  <script nonce="<%= content_security_policy_nonce %>">
-    (function(){
-      var root=document.getElementById('primer-form');
-      if(!root)return;
-      function tap(e){
-        if(!e)return;
-        if(e.type==='click'&&e.button!==0)return;
-        if(e.cancelable&&e.type==='touchend')e.preventDefault();
-        if(window.__MASTER_PRIMER_TAP__)window.__MASTER_PRIMER_TAP__();
-      }
-      root.addEventListener('click',tap,true);
-      root.addEventListener('pointerdown',tap,true);
-      ['touchend','pointerup'].forEach(function(type){
-        root.addEventListener(type,tap,{capture:true,passive:type==='touchend'});
-      });
-      root.addEventListener('keydown',function(e){
-        if(e.key==='Enter'||e.key===' '){e.preventDefault();tap(e);}
-      });
-      var textBtn=document.getElementById('primer-text');
-      if(textBtn){
-        function textLane(e){
-          if(e&&e.cancelable&&e.type==='touchend')e.preventDefault();
-          document.body.classList.add('text-mode-session');
-          document.body.dataset.runtimeProfile='text';
-          document.documentElement.dataset.masterTopology='text';
-          ['face','cognition-ecology'].forEach(function(id){
-            var el=document.getElementById(id);
-            if(el)el.style.display='none';
-          });
-          if(window.__MASTER_PRIMER_TAP__)window.__MASTER_PRIMER_TAP__();
-        }
-        ['pointerup','touchend','click'].forEach(function(type){
-          var passive=type==='touchend';
-          textBtn.addEventListener(type,textLane,{capture:true,passive:passive});
-        });
-      }
-    })();
-  </script>
   <div class="top-left-logo" aria-hidden="true">brgen</div>
-  <div id="face-live-badge" class="face-live-badge" hidden aria-live="polite">face live</div>
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
   <canvas id="face" aria-hidden="true"></canvas>
-  <script type="module" src="<%= asset_path("face3d_preview.js") %>" nonce="<%= content_security_policy_nonce %>"></script>
   <div id="mic-dot" aria-hidden="true"></div>
   <div id="yt-player-a" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
   <div id="yt-player-b" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
   <iframe id="yt-fallback-a" src="about:blank" title="Radio A" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
   <iframe id="yt-fallback-b" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
   <div id="tts-live" aria-live="polite" aria-atomic="true"></div>
+  <div id="primer" role="button" aria-labelledby="primer-title" tabindex="0">
+    <h1 id="primer-title">tap to start</h1>
+  </div>
   <main id="chat-shell" aria-label="MASTER chat">
     <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
   </main>
@@ -167,45 +82,117 @@
       <span aria-hidden="true">A</span>
       <input id="font-scale" type="range" min="0.85" max="1.4" step="0.05" value="1">
     </label>
+    <label class="voice-picker" for="voice-picker" title="Select voice">
+      <span aria-hidden="true">◉</span>
+      <select id="voice-picker" aria-label="Voice selection">
+        <option value="osman" selected>osman</option>
+        <option value="pernille">pernille</option>
+        <option value="finn">finn</option>
+        <option value="ryan">ryan</option>
+        <option value="wayne">wayne</option>
+        <option value="ezinne">ezinne</option>
+      </select>
+    </label>
+    <button id="voice-preview-btn" type="button" class="tool" aria-label="Preview selected voice" title="Preview selected voice">▶</button>
+    <div class="tts-style-chips" role="group" aria-label="TTS style">
+      <button type="button" class="style-chip" data-style="clear">clear</button>
+      <button type="button" class="style-chip" data-style="dramatic">dramatic</button>
+      <button type="button" class="style-chip" data-style="whispered">whispered</button>
+      <button type="button" class="style-chip" data-style="energetic">energetic</button>
+      <button type="button" class="style-chip" data-style="intimate">intimate</button>
+      <button type="button" class="style-chip" data-style="storyteller">storyteller</button>
+    </div>
+    <span id="tts-style-indicator" aria-live="polite"></span>
   </div>
-  <div id="domain-cluster-bar" aria-label="Active subdomain cluster"></div>
   <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
     <span class="pp">master</span><span class="sep2">* </span>
     <button type="button" class="tool" data-cmd="/photograph " aria-label="Photo">photo</button>
-    <button type="button" class="tool" data-cmd="/video --minutes 2 " aria-label="Video">video</button>
-    <button type="button" class="tool" data-cmd="/music " aria-label="Music">music</button>
+    <button type="button" class="tool" data-cmd="/repligen generate " aria-label="Video">video</button>
+    <button type="button" class="tool" data-cmd="/sing " aria-label="Sing">sing</button>
     <button type="button" class="tool" data-act="mic" aria-label="Microphone">mic</button>
     <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message"></textarea>
     <span id="zsh-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+    <span id="tts-rate" aria-label="TTS speed" title="Ctrl+[ / Ctrl+]"></span>
     <span id="char-count" aria-hidden="true"></span>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
+    <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
   </form>
-  <%= render "shared/face_boot" %>
-  <script src="<%= asset_path("face_errors.js") %>" defer></script>
-  <script src="<%= asset_path("felt_state.js") %>" defer></script>
-  <script src="<%= asset_path("sse_contract.js") %>" defer></script>
-  <script src="<%= asset_path("container_gate.js") %>" defer></script>
-  <script src="<%= asset_path("master_events.js") %>" defer></script>
-  <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
+  <script nonce="<%= content_security_policy_nonce %>">
+    window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
+    (function(){
+      var p=document.getElementById('primer'),z=document.getElementById('zsh'),ui=document.getElementById('ui-status'),title=document.getElementById('primer-title');
+      var fired=false,timer=null,fallback=null;
+      function primeAudio(){
+        try{
+          var Ctx=window.AudioContext||window.webkitAudioContext;
+          if(!Ctx||window.__MASTER_AUDIO_PRIME__)return;
+          var ctx=new Ctx();
+          window.__MASTER_AUDIO_PRIME__=ctx;
+          ctx.resume().catch(function(){});
+        }catch(_e){}
+      }
+      function dismissPrimer(){
+        document.body.classList.remove('face-loading');
+        if(!p)return;
+        p.classList.add('gone');
+        window.setTimeout(function(){p.remove();},220);
+      }
+      function revealPrompt(){
+        if(z)z.classList.add('live');
+        if(ui&&!ui.textContent)ui.textContent='starting';
+      }
+      function boot(){
+        if(window.MASTER_FACE&&window.MASTER_FACE.startEverything){
+          window.MASTER_FACE.startEverything();
+          return true;
+        }
+        return false;
+      }
+      function showLoadState(){
+        if(title)title.textContent='loading…';
+        if(ui)ui.textContent='loading face';
+      }
+      function fallbackUi(){
+        dismissPrimer();
+        revealPrompt();
+        if(ui)ui.textContent='face failed to load — reload';
+      }
+      function go(){
+        if(fired)return;
+        fired=true;
+        window._primerFired=true;
+        primeAudio();
+        if(boot())return;
+        showLoadState();
+        timer=setInterval(function(){if(boot()){clearInterval(timer);timer=null;clearTimeout(fallback);}},40);
+        fallback=setTimeout(function(){clearInterval(timer);if(!(window.MASTER_FACE&&window.MASTER_FACE.primerFired))fallbackUi();},15000);
+      }
+      if(p){
+        p.addEventListener('pointerdown',go);
+        p.addEventListener('touchend',go,{passive:true});
+        p.addEventListener('click',go);
+        p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
+      }
+      addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}});
+    })();
+  </script>
+  <script src="/master_events.js" defer></script>
+  <script src="/shortcut_sheet.js" defer></script>
   <script src="<%= asset_path("face_state.js") %>" defer></script>
   <script src="<%= asset_path("visual_governor.js") %>" defer></script>
-  <script src="<%= asset_path("face_wayfinding.js") %>" defer></script>
   <script src="<%= asset_path("topology_registry.js") %>" defer></script>
   <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
   <script src="<%= asset_path("particle_worker.js") %>" defer></script>
-  <script src="<%= asset_path("domain_cluster.js") %>" defer></script>
   <script src="<%= asset_path("chat_actions.js") %>" defer></script>
   <script type="module" src="<%= asset_path("face.js") %>"></script>
   <script src="<%= asset_path("visual_bridge.js") %>" defer></script>
-  <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>
+  <script src="<%= asset_path("cognition_ecology.js") %>" defer></script>
+  <script src="<%= asset_path("cognition_ecology_render.js") %>" defer></script>
   <script src="<%= asset_path("chat.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
-    function refreshRuntimeConfig() {
-      fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
-        if (cfg && typeof cfg === 'object') window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };
-      }).catch(() => {});
-    }
-    window.addEventListener('primer:ready', refreshRuntimeConfig, { once: true });
+    fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
+      if (cfg && typeof cfg === 'object') window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };
+    }).catch(() => {});
   </script>
 </body>
 </html>

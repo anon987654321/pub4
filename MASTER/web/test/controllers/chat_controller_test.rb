@@ -7,12 +7,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_includes response.body, "tap to enter"
-    assert_includes response.body, 'id="primer-tier"'
-    assert_includes response.body, "visitor"
-    assert_includes response.body, 'name="master-mode"'
-    assert_includes response.body, 'id="boot-wayfinding"'
-    assert_includes response.body, "face_wayfinding"
+    assert_includes response.body, "tap to start"
     assert_includes response.body, "master:face-ready"
     assert_includes response.body, "master:face-stage"
     assert_includes response.body, "master:session-ready"
@@ -29,9 +24,8 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_match(%r{felt_state-[0-9a-f]+\.js}, response.body)
     assert_includes response.body, "60000"
     refute_includes response.body, "15000"
-    assert_match(/function finishBoot\(\)\{[\s\S]*?dismissPrimer/, response.body)
-    assert_match(/function finishBoot\(\)\{[\s\S]*?revealPrompt/, response.body)
-    refute_match(/function go\(\)\{[\s\S]*?revealPrompt/, response.body)
+    assert_match(/function go\(\)\{[\s\S]*?revealPrompt/, response.body)
+    assert_match(/function go\(\)\{[\s\S]*?dismissPrimer/, response.body)
     refute_includes response.body, "voice-picker"
     refute_includes response.body, "tts-style-chips"
     refute_includes response.body, "spin-btn"

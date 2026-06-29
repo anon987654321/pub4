@@ -1,20 +1,24 @@
 "use strict";
 
-// Face *rendering* is face3d only: white 2D phosphor pixels projected from an invisible 3D
-// topology (face3d_engine). This runtime keeps audio/TTS/primer/state — not WebGL sprites.
-const _hasWebGL = false;
-const THREE = null;
+// Check WebGL before paying THREE's 1.3MB parse cost
+const _wglCv = document.createElement('canvas');
+const _hasCanvas = typeof _wglCv.getContext === 'function';
+const _hasWebGL = _hasCanvas && !!(_wglCv.getContext('webgl2') || _wglCv.getContext('webgl') || _wglCv.getContext('experimental-webgl'));
 
 const _dbgEl = document.getElementById('_dbg');
-if (_dbgEl) _dbgEl.textContent = 'face3d';
+if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
+// Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
+const THREE = _hasWebGL ? await import(window.MASTER_ASSET_PATHS?.threeModule || '/three.face.module.js?v=1') : null;
+
+// Minimal Color stub for no-WebGL path
 class _Color {
   constructor(r=0,g=0,b=0){this.r=r;this.g=g;this.b=b;}
   clone(){return new _Color(this.r,this.g,this.b);}
   copy(c){this.r=c.r;this.g=c.g;this.b=c.b;return this;}
   lerp(c,t){this.r+=(c.r-this.r)*t;this.g+=(c.g-this.g)*t;this.b+=(c.b-this.b)*t;return this;}
 }
-const Color = _Color;
+const Color = _hasWebGL ? THREE.Color : _Color;
 
 let cv = document.getElementById('face');
 const primer = document.getElementById('primer');
@@ -154,7 +158,7 @@ try {
     State.profileOverride = savedProfile;
     rootBody.dataset.runtimeProfile = savedProfile;
   }
-} catch (err) { window.MASTER_LOG?.warn?.("face", err); }
+} catch (_) {}
 function applyFocusMode(enabled, persist = true) {
   const value = !!enabled;
   rootBody.dataset.focusMode = value ? '1' : '0';
@@ -296,7 +300,7 @@ State.mode = _shareParams.get('mode') || State.mode;
 try {
   if (!_shareParams.get('mood')) State.mood = localStorage.getItem('master:mood') || State.mood;
   if (!_shareParams.get('mode')) State.mode = localStorage.getItem('master:mode') || State.mode;
-} catch (err) { window.MASTER_LOG?.warn?.("face", err); }
+} catch (_) {}
 const _faceMode = (_shareParams.get('face_mode') || 'auto').toLowerCase();
 rootBody.dataset.faceRenderMode = _faceMode;
 State.idleSignature = { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
@@ -313,7 +317,7 @@ function syncShareStateUrl() {
     if (State.model) url.searchParams.set('model', State.model); else url.searchParams.delete('model');
     if (State.voiceName) url.searchParams.set('voice', State.voiceName); else url.searchParams.delete('voice');
     history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
-  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
+  } catch (_) {}
 }
 
 rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
@@ -323,7 +327,7 @@ function enterDegradedTextUI(reason) {
   rootBody.dataset.errorBoundary = '1';
   rootBody.dataset.runtimeProfile = 'text';
   rootBody.dataset.runtimeVisible = 'true';
-  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
+  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (_) {}
   if (cv && cv.style) cv.style.display = 'none';
   let banner = document.getElementById('face-error-banner');
   if (!banner) {
@@ -362,7 +366,7 @@ window.addEventListener('unhandledrejection', event => {
     if (gs > 0.5) FACE_GLOW_SCALE = gs;
     const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
     if (pd > 0.1 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
-  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
+  } catch (_) {}
 })();
 
 const STAR_FRAMES = ['\u2736', '\u2738', '\u2737', '\u273B', '\u2722', '\u2724', '\u2733', '\u2735'];
@@ -455,10 +459,7 @@ function markFaceReady() {
   if (faceReadyMarked) return;
   faceReadyMarked = true;
   rootBody.classList.add('face-ready');
-  if (window._primerFired || rootBody.classList.contains('face-session')) {
-    document.documentElement?.classList.remove('face-loading');
-    rootBody.classList.remove('face-loading');
-  }
+  rootBody.classList.remove('face-loading');
 }
 
 let renderer, scene, camera, phosphorFadeMesh, phosphorFadeScene, phosphorFadeCam;
@@ -467,7 +468,7 @@ if (_hasWebGL && THREE) {
     renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 1);
     renderer.autoClear = true;
-  } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
+  } catch (_) {}
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
   camera.position.set(0, 0, 4.6);

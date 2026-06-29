@@ -253,15 +253,7 @@
     else ecologyFrameActive = false;
   }
 
-  function bootEcologyFrame() {
-    ensureEcologyFrame();
-  }
-
-  if (window._primerFired) {
-    bootEcologyFrame();
-  } else {
-    window.addEventListener("primer:ready", bootEcologyFrame, { once: true });
-  }
+  ensureEcologyFrame();
   window.addEventListener("master:visual", () => ensureEcologyFrame(), { passive: true });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) ensureEcologyFrame();

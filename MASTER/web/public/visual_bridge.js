@@ -16,12 +16,39 @@
     active: false
   };
 
+  const EVENT_MAP = [
+    [/phantom:detected|phantom:retry/i, { topology: "glitch", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
+    [/compaction:(start|done)|compact/i, { topology: "terrain", entropy: 0.42, confidence: 0.62, mode: "compact" }],
+    [/btw:done|agent:(start|end)/i, { topology: "neural", entropy: 0.36, confidence: 0.74, mode: "side-agent" }],
+    [/pipeline:stage|skills:triggered/i, { topology: "papua-mask", entropy: 0.30, confidence: 0.80, mode: "stage" }],
+    [/ctx:footer/i, { topology: "neural", entropy: 0.22, confidence: 0.84, mode: "ctx" }],
+    [/llm:escalation|fallback|retry/i, { topology: "serpent", entropy: 0.62, confidence: 0.46, mode: "escalation" }],
+    [/llm:request|agent:start|pipeline:start|infer:resolved|route:resolved|llm:routed/i, { topology: "papua-mask", entropy: 0.32, confidence: 0.72, mode: "thinking" }],
+    [/memory|retriev|context/i, { topology: "neural", entropy: 0.28, confidence: 0.76, mode: "memory" }],
+    [/tool|scan|sweep|audit|rtk/i, { topology: "torus", entropy: 0.38, confidence: 0.70, mode: "tool" }],
+    [/error|rollback|failed|failure/i, { topology: "serpent", entropy: 0.78, confidence: 0.24, mode: "error" }],
+    [/done|complete|success|response/i, { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "complete" }],
+    [/codebase:topology|fix_loop:pass/i, { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
+    [/rule_loop:cycle|rule_loop:clean/i, { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
+    [/fix_loop:idle/i, { topology: "codebase", entropy: 0.10, confidence: 0.95, mode: "settled" }],
+    [/rule_loop:converged/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
+  ];
+
   function classify(type, payload = {}) {
-    if (window.MASTERTopology?.classifyEvent) {
-      return window.MASTERTopology.classifyEvent(type, payload);
-    }
-    return { topology: "face", entropy: 0.24, confidence: 0.68, mode: "event" };
+    const text = `${type} ${JSON.stringify(payload)}`;
+    const matched = EVENT_MAP.find(([pattern]) => pattern.test(text));
+    const mapped = matched ? { ...matched[1] } : { topology: "sphere", entropy: 0.24, confidence: 0.68, mode: "event" };
+
+    const provider = text.match(/claude|deepseek|gemini|gpt|openai|openrouter|mistral/i)?.[0]?.toLowerCase();
+    if (provider) mapped.provider = provider;
+
+    return mapped;
   }
+  // Note: EVENT_MAP local is transitional dupe of data/topologies.yml + registry.
+  // handleRuntimeEvent (live SSE path to watched face/ecology) now prefers registry
+  // classifyEvent for ONE_SOURCE alignment (canonical ecology/face/codebase names + values).
+  // This reduces signal fragmentation so particle reactions (kernel arousal/pressure,
+  // tints, terrain, agents) are more coherent and calm to watch from afar.
 
   let _visualBatch = null;
   let _visualBatchTimer = null;
@@ -129,7 +156,9 @@
 
   function handleRuntimeEvent(event) {
     const type = event?.type || event?.event || event?.data?.event || "runtime:event";
-    const mapped = classify(type, event);
+    const mapped = (window.MASTERTopology && typeof window.MASTERTopology.classifyEvent === "function")
+      ? window.MASTERTopology.classifyEvent(type, event)
+      : classify(type, event);
     mapped.raw = event;
     emitVisual(type, mapped);
     // Architecture #15: forward codebase topology to particle system.
@@ -198,8 +227,6 @@
   let sseErrorCount = 0;
   let cableSocket = null;
   let cableIdent = null;
-  let cableMode = false;
-  let cableReconnectTimer = null;
   const COUNCIL_ROTATOR = ["Architect", "Skeptic", "Pragmatist", "Security", "Mentor"];
   let councilRotatorIdx = 0;
   let councilRotatorTimer = null;
@@ -221,27 +248,13 @@
     councilRotatorTimer = null;
   }
 
-  function scheduleCableReconnect() {
-    if (cableReconnectTimer || !cableMode) return;
-    cableReconnectTimer = setTimeout(() => {
-      cableReconnectTimer = null;
-      connectCableFallback();
-    }, Math.min(12_000, 800 + sseErrorCount * 400));
-  }
-
   function connectCableFallback() {
     if (cableSocket || !window.WebSocket) return;
-    cableMode = true;
     const proto = location.protocol === "https:" ? "wss:" : "ws:";
     cableSocket = new WebSocket(`${proto}//${location.host}/cable`);
     cableIdent = JSON.stringify({ channel: "MasterChannel" });
     cableSocket.onopen = () => {
-      state.connected = true;
-      sseErrorCount = 0;
-      delete document.body.dataset.linkQuiet;
       cableSocket.send(JSON.stringify({ command: "subscribe", identifier: cableIdent }));
-      const ui = document.getElementById("ui-status");
-      if (ui) ui.textContent = "events via cable";
       emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "cable" });
     };
     cableSocket.onmessage = (message) => {
@@ -251,27 +264,16 @@
         if (frame.type === "confirm_subscription") return;
         const payload = frame.message;
         if (!payload) return;
-        const type = payload.type || payload.event;
-        handleRuntimeEvent(type ? { ...payload, type } : payload);
-      } catch (error) {
-        window.MASTER_LOG?.warn?.("visual_bridge:cable_frame", error);
-      }
+        handleRuntimeEvent(payload.event ? { ...payload, type: payload.event } : payload);
+      } catch (_error) {}
     };
-    cableSocket.onclose = () => {
-      cableSocket = null;
-      state.connected = false;
-      if (cableMode) scheduleCableReconnect();
-    };
-    cableSocket.onerror = () => {
-      try { cableSocket.close(); } catch (err) { window.MASTER_LOG?.warn?.("visual_bridge:cable_close", err); }
-      cableSocket = null;
-      state.connected = false;
-    };
+    cableSocket.onclose = () => { cableSocket = null; };
+    cableSocket.onerror = () => { try { cableSocket.close(); } catch (_e) {} cableSocket = null; };
   }
 
   function disconnectSse() {
     if (!eventSource) return;
-    try { eventSource.close(); } catch (error) { window.MASTER_LOG?.warn?.("visual_bridge:sse_close", error); }
+    try { eventSource.close(); } catch (_error) {}
     eventSource = null;
     state.connected = false;
   }
@@ -286,21 +288,10 @@
       delete document.body.dataset.linkQuiet;
       emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.90, mode: "connected" });
     };
-    eventSource.addEventListener("trace", (message) => {
-      try {
-        const payload = JSON.parse(message.data);
-        if (payload.trace_id) document.documentElement.dataset.trace = String(payload.trace_id);
-      } catch (error) {
-        window.MASTER_LOG?.warn?.("visual_bridge:trace", error, message.data);
-      }
-    });
     eventSource.onmessage = (message) => {
       try {
-        const payload = JSON.parse(message.data);
-        if (payload.trace_id) document.documentElement.dataset.trace = String(payload.trace_id);
-        handleRuntimeEvent(payload);
-      } catch (error) {
-        window.MASTER_LOG?.warn?.("visual_bridge:sse_frame", error, message.data);
+        handleRuntimeEvent(JSON.parse(message.data));
+      } catch (_error) {
         emitVisual("events:raw", { topology: "sphere", entropy: 0.24, confidence: 0.62, raw: message.data });
       }
     };
@@ -312,10 +303,9 @@
       document.body.dataset.linkQuiet = "1";
       window._chatOnDmesg?.("link quiet");
       disconnectSse();
-      const cableEnabled = window.MASTER_RUNTIME?.enhancements?.includes?.("actioncable_fallback");
-      if (cableEnabled && sseErrorCount >= 2) {
+      if (sseErrorCount >= 3 && window.MASTER_RUNTIME?.enhancements?.includes?.("actioncable_fallback")) {
         connectCableFallback();
-      } else if (!cableMode) {
+      } else {
         setTimeout(connectSse, Math.min(8000, 500 * sseErrorCount));
       }
     };
@@ -406,7 +396,11 @@
 
   function bootExperimentalVisuals() {
     const params = new URLSearchParams(window.location.search);
-    const clusters = params.get("clusters") === "1" || window.FACE3D_ACTIVE;
+    const face3dOff = params.get("face3d") === "0" || localStorage.getItem("master_face3d") === "0";
+    const desktop = matchMedia("(min-width: 1024px)").matches;
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const face3d = !face3dOff && (params.get("face3d") === "1" || (desktop && !reducedMotion));
+    const clusters = face3d || params.get("clusters") === "1";
 
     if (clusters && !window.MASTERClusterMiner) {
       const script = document.createElement("script");
@@ -415,6 +409,12 @@
       script.onload = () => emitVisual("clusters:ready", { topology: "neural", entropy: 0.18, confidence: 0.86, mode: "clusters" });
       script.onerror = () => emitVisual("clusters:error", { topology: "serpent", entropy: 0.62, confidence: 0.36, mode: "error" });
       document.head.appendChild(script);
+    }
+
+    if (face3d) {
+      import("/face3d_preview.js")
+        .then(() => emitVisual("face3d:ready", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "face3d" }))
+        .catch(error => emitVisual("face3d:error", { topology: "serpent", entropy: 0.70, confidence: 0.30, mode: "error", raw: String(error?.message || error) }));
     }
   }
 
@@ -425,29 +425,13 @@
     classify
   };
 
-  function containerLive() {
-    return window.MASTER_CONTAINER_READY !== false;
-  }
-
-  function bootLink() {
-    if (!containerLive() || state.connected || eventSource || cableSocket) return;
-    connectSse();
-  }
-
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) disconnectSse();
-    else if (window._primerFired && containerLive()) bootLink();
+    else connectSse();
   }, { passive: true });
 
   observeDomSignals();
-  window.addEventListener("master:container-ready", bootLink);
-  if (window._primerFired && containerLive()) bootLink();
-  else {
-    window.addEventListener("master:session-ready", bootLink, { once: true });
-    window.addEventListener("primer:ready", () => {
-      if (containerLive()) bootLink();
-    }, { once: true });
-  }
+  connectSse();
   bootEmotionalTimeline();
   bootExperimentalVisuals();
   emitVisual("visual:ready", { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "ready" });

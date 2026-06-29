@@ -42,12 +42,10 @@
 
   const primer = document.getElementById("primer");
   if (primer) {
-    const flashPrimer = () => {
+    primer.addEventListener("pointerdown", () => {
       document.body.dataset.primerFlash = "1";
       setTimeout(() => delete document.body.dataset.primerFlash, 180);
-    };
-    primer.addEventListener("click", flashPrimer, { passive: true });
-    primer.addEventListener("pointerup", flashPrimer, { passive: true });
+    }, { passive: true });
   }
 
   const cursor = document.querySelector("#zin, #input");

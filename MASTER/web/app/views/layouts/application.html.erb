@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="face-loading">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <title><%= content_for(:title) || "brgen" %></title>
@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="brgen">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#030303">
     <meta name="master-runtime" content="face">
     <meta name="master-visual-profile" content="auto">
     <%= csrf_meta_tags %>
@@ -18,30 +18,27 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
     <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
     <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
-    <script type="importmap" nonce="<%= content_security_policy_nonce %>">
-      <%= raw({ imports: master_face_import_map }.to_json) %>
+    <script>
+      window.MASTER_ASSET_PATHS = {
+        threeModule: "<%= asset_path("three.face.module.js") %>"
+      };
     </script>
-    <script nonce="<%= content_security_policy_nonce %>">
-      window.MASTER_ASSET_PATHS = <%= raw(master_face_asset_paths.to_json) %>;
-    </script>
-    <script nonce="<%= content_security_policy_nonce %>">
+    <script>
       <% persona = Rails.application.config.x.master_container&.[](:personality) %>
       window.MASTER_PERSONA = <%= raw((persona.respond_to?(:browser_profile) ? persona.browser_profile : {}).to_json) %>;
     </script>
     <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
-    <link rel="modulepreload" href="<%= asset_path("face3d_preview.js") %>">
+    <link rel="modulepreload" href="<%= asset_path("three.face.module.js") %>">
     <link rel="modulepreload" href="<%= asset_path("face.js") %>">
     <link rel="stylesheet" href="<%= asset_path("face.css") %>">
     <link rel="stylesheet" href="<%= asset_path("photo_upload.css") %>">
   </head>
-  <body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
+  <body class="zen" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
     <a class="skip-link" href="#main-content">skip to main content</a>
-    <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
     <div class="top-left-logo" aria-hidden="true">brgen</div>
     <canvas id="cognition-ecology" aria-hidden="true"></canvas>
     <canvas id="face" aria-hidden="true"></canvas>
-    <script type="module" src="<%= asset_path("face3d_preview.js") %>" nonce="<%= content_security_policy_nonce %>"></script>
-    <div id="primer" role="button" aria-labelledby="primer-title" aria-busy="false" tabindex="0">
+    <div id="primer" role="dialog" aria-modal="true" aria-labelledby="primer-title" tabindex="0">
       <div>
         <h1 id="primer-title">master</h1>
         <p class="tagline">Constitutional AI. Ask anything.</p>
@@ -56,7 +53,6 @@
     <main id="chat-shell" aria-label="MASTER chat">
       <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
     </main>
-    <div class="ui-status" id="ui-status" aria-live="polite" aria-atomic="true"></div>
     <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
       <button id="photo-button" type="button" aria-label="Attach photo">+</button>
       <input id="photo" type="file" accept="image/*" capture="environment" hidden>
@@ -66,7 +62,9 @@
     <main id="main-content" aria-label="MASTER content">
       <%= yield %>
     </main>
-    <%= render "shared/face_boot" %>
+    <script>
+      window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
+    </script>
     <script src="<%= asset_path("topology_registry.js") %>" defer></script>
     <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
     <script src="<%= asset_path("chat_actions.js") %>" defer></script>

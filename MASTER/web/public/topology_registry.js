@@ -19,15 +19,10 @@
   ];
 
   const EVENT_CLASSIFIER = [
-    [/phantom:detected|phantom:retry/i,         { topology: "ecology", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
-    [/compaction:(start|done)/i,                { topology: "ecology", entropy: 0.42, confidence: 0.62, mode: "compact" }],
-    [/pipeline:stage|skills:triggered/i,        { topology: "face",    entropy: 0.30, confidence: 0.80, mode: "stage" }],
-    [/ctx:footer/i,                             { topology: "ecology", entropy: 0.22, confidence: 0.84, mode: "ctx" }],
-    [/btw:done|agent:end/i,                     { topology: "face",    entropy: 0.36, confidence: 0.74, mode: "side-agent" }],
     [/llm:escalation|fallback|retry/i,         { topology: "ecology",  entropy: 0.62, confidence: 0.46, mode: "escalation" }],
-    [/llm:request|agent:start|pipeline:start|infer:resolved|route:resolved|llm:routed/i, { topology: "face", entropy: 0.32, confidence: 0.72, mode: "thinking" }],
+    [/llm:request|agent:start|pipeline:start/i, { topology: "face",    entropy: 0.32, confidence: 0.72, mode: "thinking" }],
     [/memory|retriev|context|compact/i,         { topology: "ecology", entropy: 0.28, confidence: 0.76, mode: "memory" }],
-    [/tool|scan|sweep|audit|rtk/i,              { topology: "ecology", entropy: 0.38, confidence: 0.70, mode: "tool" }],
+    [/tool|scan|sweep|audit/i,                  { topology: "ecology", entropy: 0.38, confidence: 0.70, mode: "tool" }],
     [/error|rollback|failed|failure/i,          { topology: "ecology", entropy: 0.78, confidence: 0.24, mode: "error" }],
     [/done|complete|success|response/i,         { topology: "face",    entropy: 0.14, confidence: 0.92, mode: "complete" }],
     [/codebase:topology|fix_loop:pass/i,        { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
@@ -42,7 +37,7 @@
     face: {
       id: "face",
       label: "Cognition Mask",
-      renderer: "face3d_renderer.js",
+      renderer: "face.js",
       palette: "operator",
       zones: ["eyes", "mouth", "brows", "jaw", "crown", "attention_vector"],
       events: ["llm:request", "agent:start", "pipeline:start", "chat:append", "speech:start"]
@@ -136,52 +131,37 @@
     });
   }
 
-  function topologiesRecord(rows) {
-    if (!rows) return null;
-    if (!Array.isArray(rows)) return rows;
-    return rows.reduce((acc, spec) => {
-      if (spec?.id) acc[spec.id] = spec;
-      return acc;
-    }, {});
-  }
-
   function mergeRemoteTopologies(remote) {
-    const record = topologiesRecord(remote);
-    if (!record || typeof record !== "object") return;
-    Object.entries(record).forEach(([id, spec]) => {
+    if (!remote || typeof remote !== "object") return;
+    Object.entries(remote).forEach(([id, spec]) => {
       TOPOLOGIES[id] = { ...(TOPOLOGIES[id] || {}), ...spec, id };
     });
-  }
-
-  function mergeRemoteClassifierRows(rows) {
-    if (!Array.isArray(rows) || !rows.length) return;
-    if (rows[0] instanceof RegExp || Array.isArray(rows[0])) {
-      rows.forEach(([pattern, meta]) => mergeRemoteClassifier([{ pattern, meta }]));
-      return;
-    }
-    rows.forEach((row) => mergeRemoteClassifier([{ pattern: row.pattern, meta: row }]));
   }
 
   function mergeBootTopologies() {
     const boot = window.MASTER_RUNTIME?.topologies;
     if (!boot || typeof boot !== "object") return;
-    mergeRemoteClassifierRows(boot.event_classifier);
-    mergeRemoteTopologies(boot.topologies);
+    if (boot.event_classifier) {
+      boot.event_classifier.forEach((row) => mergeRemoteClassifier([{ pattern: row.pattern, meta: row }]));
+    }
+    if (boot.topologies) mergeRemoteTopologies(boot.topologies);
   }
 
   async function bootRemoteTopologies() {
+    if (!window.MASTER_RUNTIME) return;
     mergeBootTopologies();
     try {
       const res = await fetch("/runtime/topologies");
       if (!res.ok) return;
       const remote = await res.json();
-      mergeRemoteClassifierRows(remote.event_classifier || remote.EVENT_CLASSIFIER);
-      mergeRemoteTopologies(remote.topologies || remote.TOPOLOGIES);
-      const events = remote.canonical_events || remote.CANONICAL_EVENTS;
-      if (events) CANONICAL_EVENTS.splice(0, CANONICAL_EVENTS.length, ...events);
-      Object.assign(PALETTES, remote.palettes || remote.PALETTES || {});
-      Object.assign(RUNTIME_MODES, remote.runtime_modes || remote.RUNTIME_MODES || {});
-      Object.assign(RESOLUTIONS, remote.resolutions || remote.RESOLUTIONS || {});
+      if (Array.isArray(remote.EVENT_CLASSIFIER)) {
+        remote.EVENT_CLASSIFIER.forEach(([pattern, meta]) => mergeRemoteClassifier([{ pattern, meta }]));
+      }
+      mergeRemoteTopologies(remote.TOPOLOGIES);
+      if (remote.CANONICAL_EVENTS) CANONICAL_EVENTS.splice(0, CANONICAL_EVENTS.length, ...remote.CANONICAL_EVENTS);
+      Object.assign(PALETTES, remote.PALETTES || {});
+      Object.assign(RUNTIME_MODES, remote.RUNTIME_MODES || {});
+      Object.assign(RESOLUTIONS, remote.RESOLUTIONS || {});
       window.dispatchEvent(new CustomEvent("master:topology", { detail: { id: "registry:merged", source: "runtime" } }));
     } catch (_) {}
   }
@@ -203,6 +183,5 @@
     mergeRemoteTopologies
   };
 
-  if (window._primerFired) bootRemoteTopologies();
-  else window.addEventListener("primer:ready", bootRemoteTopologies, { once: true });
+  bootRemoteTopologies();
 })();

@@ -47,10 +47,7 @@ function ensureParticleWorker() {
   if (particleWorker || !window.Worker) return particleWorker;
   if (!window.MASTER_RUNTIME?.enhancements?.includes?.('particle_worker')) return null;
   try {
-    const workerUrl = window.MASTER_ASSET_PATHS?.particleWorker
-      || window.MASTER_ASSET_PATHS?.faceModules?.['particle_worker.js']
-      || '/particle_worker.js';
-    particleWorker = new Worker(workerUrl);
+    particleWorker = new Worker('/particle_worker.js');
     particleWorker.onmessage = (ev) => {
       const msg = ev.data || {};
       const pending = particleWorkerPending.get(msg.id);
@@ -58,7 +55,9 @@ function ensureParticleWorker() {
       particleWorkerPending.delete(msg.id);
       applyWorkerPoolResult(pending.pool, msg.pool);
     };
-  } catch (err) { window.MASTER_LOG?.warn?.("face:particle_worker", err); particleWorker = null; }
+  } catch (_) {
+    particleWorker = null;
+  }
   return particleWorker;
 }
 function serializePoolForWorker(pool) {
@@ -87,9 +86,8 @@ function stepPoolAsync(pool, dtSec) {
     return;
   }
   const id = ++particleWorkerSeq;
-  const compact = (particleWorkerSeq & 127) === 0;
   particleWorkerPending.set(id, { pool });
-  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, compact, pool: serializePoolForWorker(pool) });
+  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });
 }
 function spawnEmotionalGhost(mood) {
   window.MASTER_FACE_PARTICLES?.spawnEmotionalGhost?.(State, mouthPool, mood);
@@ -101,7 +99,6 @@ function applyWorkerPoolResult(pool, payload) {
   pool.alive.set(new Uint8Array(payload.alive));
 }
 function syncSemanticPools(dtSec) {
-  if (window.FACE3D_ACTIVE) return;
   const K = window.ParticleKernel;
   if (!K || !faceMat) return;
   if (mouthPool) {
@@ -132,7 +129,6 @@ function syncSemanticPools(dtSec) {
       faceMat.uniforms.uEyeClose.value += (close * 0.35 - faceMat.uniforms.uEyeClose.value) * 0.05;
     }
   }
-  window.MASTER_FACE_PARTICLES?.maybeCompactPools?.(mouthPool, eyePool);
 }
 function frame(t) {
   if (State.hidden || document.hidden) {
@@ -147,9 +143,8 @@ function frame(t) {
     fpsEma = fpsEma * 0.65 + fps * 0.35;
     if (fpsBadge) fpsBadge.textContent = `${fpsEma.toFixed(0)} fps`;
     if (debugPanel) {
-      const count = window.FACE3D_ACTIVE
-        ? (window.Face3DPreview?.renderer?.lastLitPixels ?? 0)
-        : (mouthPool ? mouthPool.count : 0);
+      const mp = mouthPool;
+      const count = mp ? mp.count : 0;
       const pr = State.pressureFields || {};
       const pressureLine = showDebug ? `p ${(pr.pct ?? 0).toFixed(0)}% tok ${pr.tokens ?? 0}/${pr.limit ?? 0} ent ${(pr.entropy ?? State.entropy ?? 0).toFixed(2)} turb ${(pr.turbulence ?? 0).toFixed(2)} grav ${(pr.gravity ?? 0).toFixed(2)} val ${(pr.valence ?? 0).toFixed(2)}` : '';
       debugPanel.textContent = [
@@ -620,7 +615,7 @@ function bindOrientation() {
 async function requestMotionPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (err) { window.MASTER_LOG?.warn?.("face", err); }
+    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (_) {}
   } else if (window.DeviceOrientationEvent) {
     bindOrientation();
   }
@@ -680,10 +675,7 @@ cv.addEventListener('pointerup', () => {
     const next = RUNTIME_PROFILES[(idx + 1 + RUNTIME_PROFILES.length) % RUNTIME_PROFILES.length] || 'full';
     rootBody.dataset.runtimeProfile = next;
     State.profileOverride = next;
-    if (window.FACE3D_ACTIVE) {
-      window.MASTER_FACE_BLEND?.boostEye?.(0.1);
-      window.MASTEREcology?.burst?.(2, 0.16);
-    } else if (window.ParticleKernel && eyePool) {
+    if (window.ParticleKernel && eyePool) {
       window.ParticleKernel.spawn(eyePool, 0, 0.2, { kind: 2, zone: 2, valence: 0.7, confidence: 0.9, decay: 0.08 });
     }
     window.MASTERVisual?.event?.('profile:cycle', { topology: 'papua-mask', entropy: 0.12, confidence: 0.9, mode: next });

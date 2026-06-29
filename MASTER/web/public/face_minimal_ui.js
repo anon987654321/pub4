@@ -11,7 +11,7 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     if (e.changedTouches[0].clientY - startY < -90) {
       const zsh = document.getElementById('zsh');
       if (zsh) zsh.classList.add('revealed');
-      if (window.FACE3D_ACTIVE || window.MASTER_FACE_BLEND) F_FACE_STATE.pulse = 0.7;
+      if (window.ParticleKernel && window.mouthPool) F_FACE_STATE.pulse = 0.7;
     }
   }, { passive: true });
 

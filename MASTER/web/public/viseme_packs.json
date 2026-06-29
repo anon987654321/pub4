@@ -1,9 +1,0 @@
-{
-  "version": "2026.1",
-  "packs": {
-    "default": { "shapes": ["A", "E", "I", "O", "M", "U", "neutral"], "burst": 1.0 },
-    "osman": { "locale": "ms-MY", "shapes": ["A", "E", "I", "O", "M", "U"], "burst": 0.92 },
-    "davis": { "locale": "en-US", "shapes": ["A", "E", "I", "O", "M", "U"], "burst": 1.05 },
-    "community:plosive-heavy": { "burst": 1.2, "vy_bias": -0.01 }
-  }
-}

@@ -1,109 +1,52 @@
 "use strict";
 
-const STAGE_LABELS = {
-  modules: "loading face modules…",
-  runtime: "starting face runtime…",
-  ready: "face ready"
+const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList || [
+  "face_particles.js",
+  "face_audio_bridge.js",
+  "face_tts_bridge.js",
+  "face_expression_bridge.js",
+  "face_council_multi.js",
+  "face_phosphor_trail.js",
+  "face_offscreen_ecology.js",
+  "face_micro_interactions.js",
+  "face_perf_guards.js",
+  "face_brutalist.js"
+];
+
+await Promise.all(FACE_MODULES.map(async (modulePath) => {
+  const url = window.MASTER_ASSET_PATHS?.[modulePath] || modulePath;
+  await import(url);
+}));
+
+const FACE_PARTS = window.MASTER_ASSET_PATHS?.faceParts || [
+  "face.part1.txt",
+  "face.part2.txt",
+  "face.part3.txt",
+  "face.part4.txt",
+  "face.part5.txt"
+];
+
+const FACE_TEXT = await Promise.all(FACE_PARTS.map(async (part) => {
+  const res = await fetch(part);
+  if (!res.ok) throw new Error(`failed to load ${part}: ${res.status}`);
+  return res.text();
+}));
+
+const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
+const absoluteAsset = (path) => path ? new URL(path, document.baseURI).href : null;
+if (ASSET_PATHS.threeModule) ASSET_PATHS.threeModule = absoluteAsset(ASSET_PATHS.threeModule);
+const MODULE_PATHS = {
+  "/three.face.module.js?v=1": absoluteAsset(ASSET_PATHS.threeModule),
+  ...Object.fromEntries(Object.entries(ASSET_PATHS.faceModules || {}).map(([name, path]) => [`/${name}`, absoluteAsset(path)]))
 };
-
-function dispatchFaceStage(stage) {
-  const label = STAGE_LABELS[stage] || stage;
-  window.dispatchEvent(new CustomEvent("master:face-stage", { detail: { stage: label } }));
+const FACE_SOURCE = Object.entries(MODULE_PATHS).reduce(
+  (source, [name, path]) => path ? source.replaceAll(`'${name}'`, JSON.stringify(path)) : source,
+  FACE_TEXT.join("\n")
+);
+const FACE_BLOB = new Blob([FACE_SOURCE], { type: "text/javascript" });
+const FACE_BLOB_URL = URL.createObjectURL(FACE_BLOB);
+try {
+  await import(FACE_BLOB_URL);
+} finally {
+  URL.revokeObjectURL(FACE_BLOB_URL);
 }
-
-function dispatchFaceError(error, moduleName = "face.boot") {
-  window.MASTER_LOG?.error?.("face boot", error);
-  window.MASTER_FACE_VISION?.showBootError?.(error, { module: moduleName, stage: "boot" });
-  window.dispatchEvent(new CustomEvent("master:face-error", {
-    detail: { message: String(error), module: moduleName, stage: "boot" }
-  }));
-}
-
-function onPrimerSession() {
-  if (window.MASTER_FACE?.startEverything && !window.MASTER_FACE.primerFired) {
-    window.MASTER_FACE.startEverything();
-  }
-}
-
-async function loadTailModules() {
-  const modules = window.MASTER_ASSET_PATHS?.faceModules || {};
-  const names = [
-    "face_semantics.js",
-    "face_minimal_ui.js",
-    "face_loops_music.js",
-    "face_loops_nudge.js"
-  ];
-  await Promise.all(names.map((name) => import(modules[name] || `/${name}`)));
-}
-
-async function bootFaceStack() {
-  if (window.__MASTER_FACE_STACK_READY__) return window.__MASTER_FACE_STACK_PROMISE__;
-  window.__MASTER_FACE_STACK_PROMISE__ = (async () => {
-    dispatchFaceStage("modules");
-
-    const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
-    const FACE_MODULES = ASSET_PATHS.faceModulesList || [
-      "face_particles.js",
-      "face_audio_bridge.js",
-      "face_tts_bridge.js",
-      "face_expression_bridge.js",
-      "face_council_multi.js",
-      "face_phosphor_trail.js",
-      "face_offscreen_ecology.js",
-      "face_micro_interactions.js",
-      "face_perf_guards.js",
-      "face_brutalist.js"
-    ];
-
-    if (ASSET_PATHS.faceModulesBundle) {
-      await import(ASSET_PATHS.faceModulesBundle);
-      if (!window.FACE3D_ACTIVE) await import(ASSET_PATHS.face3dPreview || "/face3d_preview.js");
-    } else {
-      const imports = [
-        import(ASSET_PATHS.faceModules?.["face_blendshape_bridge.js"] || "/face_blendshape_bridge.js")
-      ];
-      if (!window.FACE3D_ACTIVE) imports.push(import(ASSET_PATHS.face3dPreview || "/face3d_preview.js"));
-      imports.push(...FACE_MODULES.map(async (modulePath) => {
-        const url = ASSET_PATHS.faceModules?.[modulePath] || `/${modulePath}`;
-        await import(url);
-      }));
-      await Promise.all(imports);
-    }
-
-    const runtimeUrl = ASSET_PATHS.faceRuntime;
-    if (!runtimeUrl) {
-      throw new Error("face.runtime.js missing — run: rails assets:build_face_runtime");
-    }
-    if (window.MASTER_FACE) {
-      window.__MASTER_FACE_STACK_READY__ = true;
-      return;
-    }
-
-    dispatchFaceStage("runtime");
-    await import(runtimeUrl);
-    await loadTailModules();
-    dispatchFaceStage("ready");
-    window.__MASTER_FACE_STACK_READY__ = true;
-    window.dispatchEvent(new CustomEvent("master:face-ready"));
-    if (window._primerFired) onPrimerSession();
-  })().catch((error) => {
-    delete window.__MASTER_FACE_STACK_PROMISE__;
-    delete window.__MASTER_FACE_STACK_READY__;
-    window.__MASTER_FACE_STACK_FAILED__ = true;
-    dispatchFaceError(error);
-    if (window._primerFired) {
-      window.dispatchEvent(new CustomEvent("master:session-ready"));
-    }
-    throw error;
-  });
-  return window.__MASTER_FACE_STACK_PROMISE__;
-}
-
-// Warm face runtime + particles behind the primer overlay (do not wait for tap).
-bootFaceStack();
-
-if (window._primerFired) onPrimerSession();
-window.addEventListener("primer:ready", onPrimerSession, { once: true });
-window.addEventListener("master:face-ready", () => {
-  if (window._primerFired) onPrimerSession();
-});

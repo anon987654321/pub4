@@ -21,7 +21,7 @@ test("face.js loads tail modules via MASTER_ASSET_PATHS after runtime", () => {
   assert.doesNotMatch(tail, /await import\(/);
 });
 
-test("face.js warms stack on load and starts session on primer", () => {
+test("face.js dispatches boot stage events and requires prebuilt runtime", () => {
   const faceJs = readFileSync(join(publicDir, "face.js"), "utf8");
   assert.match(faceJs, /master:face-stage/);
   assert.match(faceJs, /dispatchFaceStage\("modules"\)/);
@@ -29,11 +29,9 @@ test("face.js warms stack on load and starts session on primer", () => {
   assert.match(faceJs, /faceRuntime/);
   assert.match(faceJs, /faceModulesBundle/);
   assert.match(faceJs, /build_face_runtime/);
-  assert.match(faceJs, /onPrimerSession/);
-  assert.match(faceJs, /__MASTER_FACE_STACK_FAILED__/);
-  assert.match(faceJs, /bootFaceStack\(\);/);
+  assert.match(faceJs, /primer:ready/);
+  assert.match(faceJs, /bootFaceStack/);
   assert.match(faceJs, /FACE3D_ACTIVE/);
-  assert.doesNotMatch(faceJs, /addEventListener\("primer:ready", scheduleFaceStack/);
   assert.doesNotMatch(faceJs, /importFaceBlob/);
   assert.doesNotMatch(faceJs, /face\.part/);
 });
@@ -62,29 +60,26 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /master:face-stage/);
   assert.match(boot, /master:session-ready/);
   assert.match(boot, /sessionReady/);
-  assert.match(boot, /__MASTER_FACE_STACK_FAILED__/);
-  assert.match(boot, /scheduleTextFallback/);
-  assert.match(boot, /text-mode-session/);
   assert.match(boot, /dismissPrimer\(\)/);
   assert.match(boot, /form\.classList\.add\('gone'\)/);
   assert.match(boot, /ensurePrimer/);
   assert.doesNotMatch(boot, /showLoadState/);
   assert.match(boot, /pointerup/);
+  assert.match(boot, /pointerdown/);
   assert.match(boot, /mousedown/);
   assert.match(boot, /click/);
   assert.match(boot, /touchend/);
   assert.match(boot, /primerTarget/);
   assert.match(boot, /syncPrimerRefs/);
-  assert.match(boot, /syncShellRefs/);
   assert.match(boot, /watchFaceBoot/);
-  assert.match(boot, /addEventListener\('click'/);
+  assert.match(boot, /safariBrowser\(\)\)\{[\s\S]*click/);
   assert.match(boot, /trackpadPrimary/);
-  assert.match(boot, /primerTap/);
-  assert.match(boot, /e\.button!==0/);
+  assert.match(boot, /safariBrowser/);
+  assert.doesNotMatch(boot, /e\.button!==0/);
   assert.match(boot, /createElement\('button'\)/);
   assert.match(boot, /primerVisible/);
   assert.match(boot, /resetFaceSession/);
-  assert.match(boot, /capture:false/);
+  assert.match(boot, /capture:true/);
   assert.match(boot, /__MASTER_PRIMER_TAP__/);
   assert.match(boot, /__MASTER_PRIMER_GO__/);
   assert.match(boot, /__MASTER_PRIMER_PENDING__/);
@@ -94,8 +89,6 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
   assert.match(boot, /master:face-live/);
   assert.match(boot, /wirePrimerForm/);
   assert.match(boot, /primer-form/);
-  assert.match(boot, /face-session/);
-  assert.doesNotMatch(boot, /showBootError\('tap to retry'\)/);
   assert.match(boot, /armed=true/);
   assert.doesNotMatch(boot, /DOMContentLoaded/);
   assert.match(boot, /pinPrimer/);
@@ -104,14 +97,11 @@ test("shared boot partial uses 60s watchdog and error-live", () => {
 
 test("probe_chat_e2e script covers primer chat and felt state", () => {
   const probe = readFileSync(join(root, "script", "probe_chat_e2e.rb"), "utf8");
-  const support = readFileSync(join(root, "script", "browser_probe_support.rb"), "utf8");
   const gemfile = readFileSync(join(root, "Gemfile"), "utf8");
   assert.match(probe, /probe_chat_e2e/);
-  assert.match(probe, /browser_probe_support/);
-  // ping/pong chat assertions live in the shared support module after the refactor.
-  assert.match(support, /sendMessage\('ping'\)/);
-  assert.match(support, /hasPong/);
+  assert.match(probe, /sendMessage\('ping'\)/);
   assert.match(probe, /MASTERFeltState/);
+  assert.match(probe, /hasPong/);
   assert.match(probe, /MASTER_FACE\?\.State/);
   assert.match(gemfile, /gem "ferrum"/);
   assert.match(probe, /MAX_PROBE_SECONDS/);
@@ -128,35 +118,17 @@ test("chat index ships import map and digested master_events", () => {
   assert.match(helper, /face3d_geometry\.js/);
   const bootIdx = index.indexOf('render "shared/face_boot"');
   const primerIdx = index.indexOf('id="primer"');
-  const zshIdx = index.indexOf('id="zsh"');
   const face3dIdx = index.indexOf("face3d_preview.js");
   assert.ok(primerIdx > 0 && bootIdx > primerIdx, "primer must precede face_boot");
-  assert.ok(zshIdx > 0 && bootIdx > zshIdx, "face_boot must run after #zsh exists in DOM");
-  assert.ok(face3dIdx > 0 && face3dIdx < bootIdx, "face3d_preview.js may load before face_boot");
+  assert.ok(face3dIdx > bootIdx, "face_boot must precede face3d_preview.js");
   assert.match(index, /__MASTER_PRIMER_TAP__/);
   assert.doesNotMatch(index, /onclick="window\.__MASTER_PRIMER_TAP__/);
   assert.match(index, /getElementById\('primer-form'\)/);
-  assert.match(index, /addEventListener\('click',tap/);
+  assert.match(index, /addEventListener\(type,tap/);
   assert.match(index, /Critical primer layout/);
   assert.match(index, /id="primer-form"/);
   assert.match(index, /<button[^>]*type="button"[^>]*id="primer"/);
   assert.match(index, /face-live-badge/);
-  assert.match(index, /id="primer-tier"/);
-  assert.match(index, /tap to enter/);
-  assert.match(index, /id="boot-wayfinding"/);
-  assert.match(index, /data-step="audio"/);
-  assert.match(index, /face_wayfinding\.js/);
-  assert.match(index, /id="civic-status"/);
-});
-
-test("face_wayfinding.js tracks boot steps via master events", () => {
-  const wayfinding = readFileSync(join(publicDir, "face_wayfinding.js"), "utf8");
-  assert.match(wayfinding, /primer:ready/);
-  assert.match(wayfinding, /master:face-ready/);
-  assert.match(wayfinding, /master:container-ready/);
-  assert.match(wayfinding, /master:session-ready/);
-  assert.match(wayfinding, /boot-wayfinding/);
-  assert.match(wayfinding, /civic-status/);
 });
 
 test("face3d preview announces live badge and boot brightness", () => {
@@ -188,7 +160,6 @@ test("face3d_engine imports use import-map paths", () => {
   const engine = readFileSync(join(publicDir, "face3d_engine.js"), "utf8");
   assert.match(engine, /from '\/face3d_geometry\.js'/);
   assert.match(engine, /from '\/face3d_support\.js'/);
-  assert.match(engine, /applyBlendshape/);
 });
 
 test("visual_bridge defers SSE until session ready", () => {
@@ -235,16 +206,4 @@ test("service worker avoids stale undigested precache", () => {
   assert.match(sw, /OFFLINE_URL/);
   assert.match(sw, /Never cache digested/);
   assert.match(sw, /pathname\.startsWith\('\/assets\/'\)/);
-});
-
-test("face_deferred_loader schedules vision after primer", () => {
-  const loader = readFileSync(join(publicDir, "face_deferred_loader.js"), "utf8");
-  assert.match(loader, /face_vision\.bundle\.js/);
-  assert.match(loader, /primer:ready/);
-  assert.match(loader, /cognition_ecology/);
-});
-
-test("visual_governor reads runtime visual limits", () => {
-  const governor = readFileSync(join(publicDir, "visual_governor.js"), "utf8");
-  assert.match(governor, /MASTER_RUNTIME\?\.visual_limits/);
 });

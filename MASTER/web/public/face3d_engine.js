@@ -1,4 +1,4 @@
-import { ZONES, ZONE_NAMES, buildCanonicalMask, maskAnchors2D, DEFAULT_BLEND, DEFAULT_EMOTION, applyBlendshape } from '/face3d_geometry.js';
+import { ZONES, ZONE_NAMES, buildCanonicalMask, maskAnchors2D, DEFAULT_BLEND, DEFAULT_EMOTION } from '/face3d_geometry.js';
 import { deriveBlendFromEmotion, ParticleField3D, SpatialHash2D, QualityController, VisemeDriver } from '/face3d_support.js';
 
 class Face3DEngine {

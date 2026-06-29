@@ -113,18 +113,17 @@ window._dillaBg = (() => {
       });
     });
   }
-  function sub(when, hold = BAR * 0.94) {
+  function sub(when) {
     const o = ctx.createOscillator();
     o.type = 'sine';
     o.frequency.setValueAtTime(70, when);
-    o.frequency.exponentialRampToValueAtTime(52, when + 0.18);
+    o.frequency.exponentialRampToValueAtTime(35, when + 0.06);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0, when);
-    g.gain.linearRampToValueAtTime(0.95, when + 0.03);
-    g.gain.setValueAtTime(0.78, when + 0.12);
-    g.gain.exponentialRampToValueAtTime(0.001, when + hold);
+    g.gain.linearRampToValueAtTime(0.95, when + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 1.6);
     o.connect(g).connect(bassBus);
-    o.start(when); o.stop(when + hold + 0.15);
+    o.start(when); o.stop(when + 1.7);
   }
   function hat(when) {
     const src = ctx.createBufferSource(); src.buffer = noiseBuf(0.06);
@@ -163,7 +162,8 @@ window._dillaBg = (() => {
   function scheduleBar(bar, when) {
     const chord = CHORDS[(bar >> 1) % CHORDS.length];
     pad(chord, when, BAR + 0.2);
-    sub(when, BAR * 0.94);
+    sub(when);
+    sub(when + BEAT * 2);
     if (bar % 2 === 1) rim(when + BEAT * 2 + BEAT * SWING);
     for (let i = 0; i < 8; i++) {
       const isOff = (i & 1) === 1;

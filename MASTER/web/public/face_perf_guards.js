@@ -1,4 +1,4 @@
-// Perf guards — resize debounce, kernel min-delta, primer boot burst (web_069–web_071, mi_032–mi_036).
+// Perf guards — resize debounce, kernel min-delta, primer boot spawn (web_069–web_071, mi_032–mi_036).
 (() => {
   "use strict";
 
@@ -12,8 +12,7 @@
     window.ParticleKernel.step = function stepGuarded(pool, dt, ctx = {}) {
       const clamped = Math.max(MIN_KERNEL_DT, Math.min(0.05, Number(dt) || MIN_KERNEL_DT));
       const next = { ...ctx };
-      const speaking = window.MASTER_FACE?.tts?.playing || window.MASTER_FACE?.State?.mode === "speaking";
-      if (window.MASTER_RUNTIME?.enhancements?.includes?.("spatial_repulsion_2d") || speaking) {
+      if (window.MASTER_RUNTIME?.enhancements?.includes?.("spatial_repulsion_2d")) {
         next.spatialRepulsion = true;
       }
       return origStep.call(this, pool, clamped, next);
@@ -26,27 +25,32 @@
       const worker = new Worker(window.MASTER_ASSET_PATHS?.faceModules?.particle_worker || "/particle_worker.js");
       worker.postMessage({ type: "warm", dt: 0.016 });
       setTimeout(() => worker.terminate(), 120);
-    } catch (err) {
-      window.MASTER_LOG?.warn?.("perf:particle_worker_warm", err);
-    }
-  });
-
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) return;
-    window.MASTER_FACE_TTS?.stopVisemeSmooth?.();
+    } catch (_) {}
   });
 
   window.addEventListener("visual:ready", () => {
     if (!window.MASTER_RUNTIME?.enhancements?.includes?.("primer_kernel_spawn")) return;
-    window.MASTER_FACE_BLEND?.boostEye?.(0.12);
-    window.MASTEREcology?.burst?.(3, 0.18);
+    const K = window.ParticleKernel;
+    const pool = window.MASTER_FACE?.eyePool || window.eyePool;
+    if (!K || !pool) return;
+    for (let i = 0; i < 4; i++) {
+      K.spawn(pool, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.2, {
+        kind: 2, zone: 2, attention: 0.85, confidence: 0.9, decay: 0.01
+      });
+    }
   });
 
   window.addEventListener("master:visual", (ev) => {
     const name = String(ev.detail?.name || "");
     if (/autocommit|auto.commit|auto_commit/i.test(name)) {
-      window.MASTER_FACE_BLEND?.boostEye?.(0.15);
-      window.MASTEREcology?.burst?.(5, 0.22);
+      const K = window.ParticleKernel;
+      const pool = window.MASTER_FACE?.eyePool || window.eyePool;
+      if (!K || !pool) return;
+      for (let i = 0; i < 5; i++) {
+        K.spawn(pool, (Math.random() - 0.5) * 0.25, -0.5 + Math.random() * 0.1, {
+          kind: 3, zone: 13, valence: 0.75, confidence: 0.95, decay: 0.006
+        });
+      }
       window.MASTERVisual?.event?.("autocommit:joy", { topology: "papua-mask", entropy: 0.1, confidence: 0.96, mode: "commit" });
     }
   });

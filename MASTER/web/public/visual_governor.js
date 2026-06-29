@@ -1,18 +1,9 @@
 // MASTER visual governor: state-aware animation pressure control before mask.js loads.
 // Limits sourced from data/ops/visual.yml (SINGULARITY / ONE_SOURCE). Do not duplicate.
 (() => {
-  const limits = window.MASTER_RUNTIME?.visual_limits || {};
-  const profile = document.body?.dataset?.runtimeProfile
-    || document.querySelector('meta[name="master-visual-profile"]')?.content
-    || "auto";
-  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-  let maxFps = Number(limits.max_fps) || 24;
-  let maxParticles = Number(limits.max_particles) || 200;
-  const reducedMotionParticles = Number(limits.reduced_motion_particles) || 64;
-  if (reducedMotion) maxFps = Math.min(maxFps, 8);
-  else if (profile === "battery") maxFps = Math.min(maxFps, 12);
-  if (reducedMotion) maxParticles = reducedMotionParticles;
-  else if (profile === "battery") maxParticles = Math.min(maxParticles, 96);
+  const maxFps = 24;
+  const maxParticles = 200;
+  const reducedMotionParticles = 64;
   const minFrameMs = 1000 / maxFps;
   const nativeRaf = window.requestAnimationFrame.bind(window);
   const nativePush = Array.prototype.push;

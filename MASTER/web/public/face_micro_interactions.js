@@ -1,36 +1,66 @@
-// Micro-interaction bridge — ecology orbit, crown bursts, streaming nudges (web_011–web_025).
+// Micro-interaction bridge — ecology orbit, crown spawns, streaming nudges (web_011–web_025).
 (() => {
   "use strict";
 
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const cv = document.getElementById("face");
+  const K = () => window.ParticleKernel;
   const face = () => window.MASTER_FACE;
   const st = () => face()?.State;
-  const BLEND = () => window.MASTER_FACE_BLEND;
+  const eyePool = () => face()?.eyePool || window.eyePool;
+  const mouthPool = () => face()?.mouthPool || window.mouthPool;
 
   function boostEye(delta = 0.12) {
-    BLEND()?.boostEye?.(delta);
+    const pool = eyePool();
+    const kernel = K();
+    if (!pool || !kernel) return;
+    for (let i = 0; i < pool.count; i++) if (pool.alive[i]) {
+      const b = i * kernel.FIELDS_PER_CELL;
+      pool.cells[b + kernel.FIELD.attention] = Math.min(1, (pool.cells[b + kernel.FIELD.attention] || 0.5) + delta);
+    }
   }
 
   function spawnCrown(n = 2, opts = {}) {
-    BLEND()?.boostEye?.(0.06 * n + (opts.attention ?? 0.12));
-    BLEND()?.pushEmotion?.({
-      valence: opts.valence ?? 0.35,
-      confidence: opts.confidence ?? 0.82,
-      focus: opts.attention ?? 0.7
-    });
-    window.MASTEREcology?.burst?.(n, opts.valence ?? 0.22);
+    const pool = eyePool();
+    const kernel = K();
+    if (!pool || !kernel) return;
+    for (let i = 0; i < n; i++) {
+      kernel.spawn(pool, (Math.random() - 0.5) * 0.35, -0.55 + Math.random() * 0.12, {
+        kind: 3,
+        zone: 13,
+        valence: opts.valence ?? 0.35,
+        confidence: opts.confidence ?? 0.82,
+        attention: opts.attention ?? 0.7,
+        decay: opts.decay ?? 0.007
+      });
+    }
   }
 
   function mouthPressure(delta = 0.18) {
-    BLEND()?.mouthPressure?.(delta);
+    const pool = mouthPool();
+    const kernel = K();
+    if (!pool || !kernel) return;
+    for (let i = 0; i < pool.count; i++) if (pool.alive[i]) {
+      const b = i * kernel.FIELDS_PER_CELL;
+      pool.cells[b + kernel.FIELD.pressure] = Math.min(1, (pool.cells[b + kernel.FIELD.pressure] || 0) + delta);
+    }
   }
 
-  // web_011 — ecology orbit tightens with face focus
+  // web_011 — ecology orbit tightens with kernel attention
   setInterval(() => {
     const ecology = window.MASTEREcology;
     if (!ecology?.agents) return;
-    const focus = BLEND()?.focusLevel?.() ?? 0.5;
+    const pool = eyePool();
+    const kernel = K();
+    if (!pool || !kernel) return;
+    let attn = 0, n = 0;
+    for (let i = 0; i < pool.count; i++) if (pool.alive[i]) {
+      const b = i * kernel.FIELDS_PER_CELL;
+      attn += pool.cells[b + kernel.FIELD.attention] || 0;
+      n++;
+    }
+    if (!n) return;
+    const focus = attn / n;
     const tighten = 0.88 + focus * 0.12;
     ecology.agents.forEach((agent) => {
       const base = agent._radiusBase ?? agent.radius;
@@ -106,6 +136,8 @@
     };
   }
 
+  // web_021 — sentence-end mouthPool pressure handled in chunk wrapper above
+
   // web_022 — veto/pass ecology calm burst
   window.addEventListener("chat:dmesg", (ev) => {
     const line = String(ev.detail?.line || "");
@@ -120,12 +152,12 @@
     if (/stt:start|listening/.test(String(ev.detail?.name || ev.detail?.mode || ""))) boostEye(0.18);
   });
 
-  // web_024 / f3d_006 — mouthDrive via blendshape bridge
+  // web_024 / f3d_006 — mouthDrive via blendshape bridge (replaces direct mouth mutation)
   setInterval(() => {
     const state = st();
     if (!state) return;
     const drive = Math.min(1, (state.mouthDrive || 0) + (state.visemeAmp || 0) * 0.35);
-    BLEND()?.applyMouthDrive?.(drive, state.visemeAmp || 0);
+    window.MASTER_FACE_BLEND?.applyMouthDrive?.(drive, state.visemeAmp || 0);
     const mat = face()?.faceMat;
     if (mat?.uniforms?.uJaw) mat.uniforms.uJaw.value = Math.max(mat.uniforms.uJaw.value, drive * 0.42);
   }, 48);
