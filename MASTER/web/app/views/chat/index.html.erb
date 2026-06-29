@@ -42,9 +42,20 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
+  <%# non-blocking font load: preload as style, then promote to stylesheet on load via a
+      nonce'd script (CSP forbids inline onload handlers). Keeps the Inter CSS request off
+      the render-blocking critical path; display=swap already prevents invisible-text FOIT. %>
+  <link rel="preload" as="style" id="inter-font" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap"></noscript>
+  <script nonce="<%= content_security_policy_nonce %>">
+    (function(){var f=document.getElementById('inter-font');if(!f)return;
+      var on=function(){f.rel='stylesheet';};
+      f.addEventListener('load',on);if(f.sheet||f.loaded)on();})();
+  </script>
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
-  <link rel="modulepreload" href="<%= asset_path("three.face.module.js") %>">
+  <%# prefetch (not modulepreload) THREE.js: warms the 514KB into cache WITHOUT compiling it,
+      so the ~10-20s parse happens on primer tap (deferred boot), not on initial page load %>
+  <link rel="prefetch" href="<%= asset_path("three.face.module.js") %>" as="script">
   <link rel="modulepreload" href="<%= asset_path("face.js") %>">
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <style nonce="<%= content_security_policy_nonce %>">
@@ -117,6 +128,7 @@
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
     <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
   </form>
+  <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
@@ -157,15 +169,25 @@
         revealPrompt();
         if(ui)ui.textContent='face failed to load — reload';
       }
+      // Deferred boot: the WebGL face (THREE.js ~514KB parse) is loaded only AFTER the
+      // primer tap, so the initial page stays light and the shell is interactive at once.
+      function loadFace(){
+        if(window.__MASTER_FACE_IMPORT__)return;
+        window.__MASTER_FACE_IMPORT__=true;
+        import("<%= asset_path("face.js") %>").catch(function(){ if(ui)ui.textContent='face failed to load — reload'; });
+      }
       function go(){
         if(fired)return;
         fired=true;
         window._primerFired=true;
         primeAudio();
+        dismissPrimer();
+        revealPrompt();
+        loadFace();
         if(boot())return;
         showLoadState();
         timer=setInterval(function(){if(boot()){clearInterval(timer);timer=null;clearTimeout(fallback);}},40);
-        fallback=setTimeout(function(){clearInterval(timer);if(!(window.MASTER_FACE&&window.MASTER_FACE.primerFired))fallbackUi();},15000);
+        fallback=setTimeout(function(){clearInterval(timer);if(!(window.MASTER_FACE&&window.MASTER_FACE.primerFired))fallbackUi();},60000);
       }
       if(p){
         p.addEventListener('pointerdown',go);
@@ -181,10 +203,9 @@
   <script src="<%= asset_path("face_state.js") %>" defer></script>
   <script src="<%= asset_path("visual_governor.js") %>" defer></script>
   <script src="<%= asset_path("topology_registry.js") %>" defer></script>
-  <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
   <script src="<%= asset_path("particle_worker.js") %>" defer></script>
   <script src="<%= asset_path("chat_actions.js") %>" defer></script>
-  <script type="module" src="<%= asset_path("face.js") %>"></script>
+  <%# face.js (THREE.js WebGL face) is imported lazily by loadFace() on primer tap — see deferred boot above %>
   <script src="<%= asset_path("visual_bridge.js") %>" defer></script>
   <script src="<%= asset_path("cognition_ecology.js") %>" defer></script>
   <script src="<%= asset_path("cognition_ecology_render.js") %>" defer></script>
