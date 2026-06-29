@@ -69,14 +69,19 @@ test("face.runtime.js is generated from face parts", () => {
   assert.ok(runtime.includes(part1.slice(0, 120)), "runtime should include part1 body");
 });
 
-test("chat index inline boot uses lazy face import and 60s watchdog", () => {
+test("chat index inline boot lazy-imports face with status hint, auto-retry, 35s watchdog", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /MASTER_ASSET_PATHS/);
   assert.match(index, /function loadFace/);
   assert.match(index, /import\("<%= asset_path\("face\.js"\) %>"\)/);
   assert.match(index, /dismissPrimer\(\);\n\s+revealPrompt\(\);/);
   assert.match(index, /error-live/);
-  assert.match(index, /60000/);
+  // NN/g recovery + visibility-of-status UX
+  assert.match(index, /still loading the face/);
+  assert.match(index, /retrying/);
+  assert.match(index, /loadFace\(true\)/);
+  assert.match(index, /35000/);
+  assert.doesNotMatch(index, /60000/);
   assert.doesNotMatch(index, /15000/);
   assert.doesNotMatch(index, /render "shared\/face_boot"/);
 });
@@ -99,8 +104,10 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.match(index, /asset_path\("face\.css"\)/);
   assert.match(index, /asset_path\("face\.js"\)/);
   assert.match(index, /asset_path\("particle_kernel\.js"\)/);
-  assert.match(index, /asset_path\("chat_actions\.js"\)/);
-  assert.match(index, /asset_path\("visual_bridge\.js"\)/);
+  // Deferred modules now come from one ordered %w manifest rather than 9 literal tags.
+  assert.match(index, /%w\[[^\]]*chat_actions[^\]]*\]/);
+  assert.match(index, /%w\[[^\]]*visual_bridge[^\]]*\]/);
+  assert.match(index, /asset_path\("#\{mod\}\.js"\)/);
   assert.match(index, /modulepreload/);
   const particleIdx = index.indexOf('asset_path("particle_kernel.js")');
   const primerIdx = index.indexOf('id="primer"');
