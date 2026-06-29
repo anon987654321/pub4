@@ -4,8 +4,6 @@ module Master
   module Judge
     module Council
       # Mode-dispatched council critique. Replaces UiCritique + SoundCritique.
-      # Each mode is a config hash: preset key, default files/panel, context
-      # briefs, constraints, ideation prompt, byte cap, event names.
       class Critique
         MODES = {
           ui: {
@@ -14,7 +12,7 @@ module Master
             panel: nil,
             files: %w[
               web/public/face.css web/public/face.js web/public/chat.js
-              web/app/views/chat/index.html.erb lib/design/platform_profiles.rb,
+              web/app/views/chat/index.html.erb lib/design/platform_profiles.rb
             ],
             quality_kind: :design,
             ideation_prompt: "Generate concrete multi-solution improvements for this web UI. " \
@@ -37,12 +35,12 @@ module Master
             max_bytes: 24_576,
             panel: %w[
               Electronic\ Music\ Producer Hip-Hop\ Producer User\ Advocate
-              Accessibility Layperson Skeptic,
+              Accessibility Layperson Skeptic
             ],
             files: %w[
               web/public/chat.js web/public/face.js web/public/visual_bridge.js
               web/app/views/chat/index.html.erb lib/voice/speech.rb lib/voice/dilla.rb
-              lib/voice/production_dna.rb,
+              lib/voice/production_dna.rb
             ],
             quality_kind: :sound,
             ideation_prompt: "Generate concrete improvements for MASTER sound design, voice " \
@@ -95,6 +93,7 @@ module Master
 
         def load_preset
           return {} unless File.exist?(Master::COUNCIL_PATH)
+          data = Master.load_yaml(Master::COUNCIL_PATH) || {}
           data.dig("presets", @mode[:preset_key]) || {}
         end
 
@@ -102,7 +101,9 @@ module Master
           all = Personas.load
           names = Array(preset["panel"] || @mode[:panel]).map(&:downcase)
           return all if names.empty?
-          picked.empty? ? Personas::DEFAULTS : picked
+
+          panel = all.select { |persona| names.include?(persona.name.downcase) }
+          panel.empty? ? Personas::DEFAULTS : panel
         end
 
         def build_payload(preset)
@@ -114,6 +115,8 @@ module Master
         def read_truncated(rel)
           path = File.join(Master::ROOT, rel)
           return unless File.exist?(path)
+
+          raw = File.read(path, encoding: "utf-8")
           raw = raw.byteslice(0, @mode[:max_bytes]) + "\n... [truncated]" if raw.bytesize > @mode[:max_bytes]
           "file: #{rel}\n#{raw}"
         end
@@ -125,6 +128,7 @@ module Master
 
         def domain_context
           return ui_domain_context if @mode[:preset_key] == "ui_critique"
+          return sound_domain_context if @mode[:preset_key] == "sound_critique"
         end
 
         def ui_domain_context
@@ -150,10 +154,19 @@ module Master
 
         def domain_briefs
           return platform_profile_brief if @mode[:preset_key] == "ui_critique"
+          return dilla_brief if @mode[:preset_key] == "sound_critique"
         end
 
         def platform_profile_brief
-          return "Platform design profiles unavailable; default to content-first measurable critique." \
+          if defined?(Master::Design::PlatformProfiles)
+            [
+              Master::Design::PlatformProfiles.brief(:brutal_minimal),
+              Master::Design::PlatformProfiles.brief(:medium),
+              Master::Design::PlatformProfiles.brief(:new_yorker),
+            ].join("\n")
+          else
+            "Platform design profiles unavailable; default to content-first measurable critique."
+          end
         rescue StandardError => e
           "Platform profile policy failed to load: #{e.message}."
         end
@@ -163,11 +176,9 @@ module Master
         end
 
         def ideation_value(ir)
-          if ir.respond_to?(:err?) && ir.err?
-""
-else
-(ir.respond_to?(:value) ? ir.value : ir)
-end
+          return "" if ir.respond_to?(:err?) && ir.err?
+
+          ir.respond_to?(:value) ? ir.value : ir
         end
 
         def cherry_pick_from(feedback, ideation_result)
@@ -189,6 +200,8 @@ end
           wa = a.downcase.scan(/\w+/).to_set
           wb = b.downcase.scan(/\w+/).to_set
           return 0.0 if wa.empty? || wb.empty?
+
+          (wa & wb).size.to_f / [wa.size, wb.size].max
         end
       end
     end

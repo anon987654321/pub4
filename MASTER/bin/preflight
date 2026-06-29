@@ -21,7 +21,11 @@ bundle check >/dev/null 2>&1 || { print "FAIL: bundle check failed (run: bundle 
 print "ok: gems installed"
 
 # API keys
-[[ -n "${REPLICATE_API_KEY:-}" ]]   && print "ok: REPLICATE_API_KEY" || print "warn: REPLICATE_API_KEY not set"
+if [[ -n "${REPLICATE_API_TOKEN:-}" || -n "${REPLICATE_API_KEY:-}" ]]; then
+  print "ok: REPLICATE_API_TOKEN"
+else
+  print "warn: REPLICATE_API_TOKEN not set"
+fi
 [[ -n "${ANTHROPIC_API_KEY:-}" ]]   && print "ok: ANTHROPIC_API_KEY" || print "warn: ANTHROPIC_API_KEY not set"
 [[ -n "${OPENROUTER_API_KEY:-}" ]]  && print "ok: OPENROUTER_API_KEY" || print "warn: OPENROUTER_API_KEY not set"
 
