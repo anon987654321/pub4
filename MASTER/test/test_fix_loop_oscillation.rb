@@ -119,7 +119,7 @@ class TestFixLoopOscillation < Minitest::Test
   StubRule = Struct.new(:id, :severity)
 
   def setup
-    @root = Dir.mktmpdir("fix_loop_osc_test", Dir.home)
+    @root = Dir.mktmpdir("fix_loop_osc_test")
     File.write(File.join(@root, "dummy.yml"), "---\n")
     @bus = FakeBus.new
   end

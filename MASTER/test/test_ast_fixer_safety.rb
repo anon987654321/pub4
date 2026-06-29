@@ -24,7 +24,7 @@ class TestAstFixerSafety < Minitest::Test
   RUBY
 
   def fix(source)
-    file = File.join(Dir.mktmpdir("astfixer", Dir.home), "demo.rb")
+    file = File.join(Dir.mktmpdir("astfixer"), "demo.rb")
     File.write(file, source)
     Master::Judge::Scan::AstFixer.fix(file, source)
     File.read(file)
