@@ -139,12 +139,13 @@ module Master
           end
         end
 
-      # B07 NESTING_DEPTH — nesting deeper than 4 levels (detect_structural: nesting_depth).
+      # B07 NESTING_DEPTH — control-flow nesting deeper than 4 levels (detect_structural: nesting_depth).
+      # Counts control flow only; module/class/def are namespacing and method scope, not the
+      # LINEARITY concern — otherwise deep namespaces (Master::Judge::Scan::Rules) flag every method.
         class NestingDepthRule < Rule
           MAX_DEPTH = 4
 
           NESTING_TYPES = [
-            Prism::ModuleNode, Prism::ClassNode, Prism::DefNode,
             Prism::IfNode, Prism::UnlessNode, Prism::WhileNode,
             Prism::UntilNode, Prism::ForNode, Prism::CaseNode,
             Prism::BlockNode,
