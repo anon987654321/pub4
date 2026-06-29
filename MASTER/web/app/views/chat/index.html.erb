@@ -50,7 +50,7 @@
   <script nonce="<%= content_security_policy_nonce %>">
     (function(){var f=document.getElementById('inter-font');if(!f)return;
       var on=function(){f.rel='stylesheet';};
-      f.addEventListener('load',on);if(f.sheet||f.loaded)on();})();
+      f.addEventListener('load',on);if(f.sheet)on();})();
   </script>
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
   <%# prefetch (not modulepreload) THREE.js: warms the 514KB into cache WITHOUT compiling it,
@@ -128,6 +128,8 @@
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
     <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
   </form>
+  <%# Loaded ahead of the manifest below: defines window.ParticleKernel, the base global that
+      particle_worker, the cognition-ecology scripts, and the lazily-imported face modules read. %>
   <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
@@ -212,10 +214,8 @@
   <%# Deferred boot modules — single ordered manifest, loaded after the shell paints.
       face.js (the THREE.js WebGL face) is intentionally absent: loadFace() imports it
       lazily on the primer tap (see the boot script above). %>
-  <% %w[face_state visual_governor topology_registry particle_worker chat_actions
-        visual_bridge cognition_ecology cognition_ecology_render chat].each do |mod| %>
-    <script src="<%= asset_path("#{mod}.js") %>" defer></script>
-  <% end %>
+  <%= javascript_include_tag(*%w[face_state visual_governor topology_registry particle_worker
+        chat_actions visual_bridge cognition_ecology cognition_ecology_render chat], defer: true) %>
   <script nonce="<%= content_security_policy_nonce %>">
     fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
       if (cfg && typeof cfg === 'object') window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };

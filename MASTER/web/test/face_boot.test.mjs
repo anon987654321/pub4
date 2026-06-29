@@ -104,10 +104,10 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.match(index, /asset_path\("face\.css"\)/);
   assert.match(index, /asset_path\("face\.js"\)/);
   assert.match(index, /asset_path\("particle_kernel\.js"\)/);
-  // Deferred modules now come from one ordered %w manifest rather than 9 literal tags.
-  assert.match(index, /%w\[[^\]]*chat_actions[^\]]*\]/);
+  // Deferred modules now come from one ordered javascript_include_tag manifest, not 9 literal tags.
+  assert.match(index, /javascript_include_tag\(\*%w\[[^\]]*chat_actions[^\]]*\]/);
   assert.match(index, /%w\[[^\]]*visual_bridge[^\]]*\]/);
-  assert.match(index, /asset_path\("#\{mod\}\.js"\)/);
+  assert.match(index, /defer: true/);
   assert.match(index, /modulepreload/);
   const particleIdx = index.indexOf('asset_path("particle_kernel.js")');
   const primerIdx = index.indexOf('id="primer"');
