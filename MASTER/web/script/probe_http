@@ -32,16 +32,19 @@ begin
   home = get("/")
   failures << "homepage #{home.code}" unless home.code == "200"
   body = home.body.to_s
-  %w[id="face" face3d_preview importmap 60000 master:face-stage faceRuntime ensurePrimer chat_actions master-container-ready container_gate sse_contract felt_state face_deferred_loader domain-cluster-bar domain_cluster id="primer-tier" tap\ to\ enter id="primer-text" continue\ in\ text\ mode text-mode-session id="boot-wayfinding" face_wayfinding data-step="audio"].each do |needle|
+  # Markers for the b357 WebGL face + deferred-boot shell (kept in sync with
+  # test/controllers/chat_controller_test.rb, the authoritative homepage contract).
+  %w[id="face" id="primer" tap\ to\ start MASTER_ASSET_PATHS function\ loadFace
+     window.__MASTER_FACE_IMPORT__ window._primerFired error-live 35000 clearWatch
+     chat_actions faceParts].each do |needle|
     failures << "homepage missing #{needle}" unless body.include?(needle)
   end
   failures << "legacy 15s boot timeout still present" if body.include?("15000")
-  failures << "primer overlay fix missing (form.gone)" unless body.include?("form.classList.add('gone')")
+  failures << "legacy 60s boot timeout still present" if body.include?("60000")
+  failures << "primer dismiss missing (gone class)" unless body.include?("classList.add('gone')")
   cache = home["cache-control"].to_s.downcase
   failures << "homepage Cache-Control missing no-store (got #{cache})" unless cache.include?("no-store")
-  failures << "primer critical CSS missing" unless body.include?("Critical primer layout")
-  failures << "primer wire script missing" unless body.include?("getElementById('primer-form')")
-  failures << "immediate armPrimer missing" unless body.include?("armed=true")
+  failures << "primer wire script missing" unless body.include?("getElementById('primer')")
 
   urls = body.scan(%r{/assets/[^"'\s<>]+}).uniq
   failures << "no digested assets in homepage" if urls.empty?
@@ -52,31 +55,9 @@ begin
   end
   if face_css
     css_body = get(face_css).body.to_s
-    failures << "face.css missing .primer-form.gone" unless css_body.include?(".primer-form.gone")
-    failures << "face.css missing boot-wayfinding" unless css_body.include?(".boot-wayfinding")
+    failures << "face.css missing .gone dismiss rule" unless css_body.include?(".gone")
   else
     failures << "face.css digest missing from homepage"
-  end
-  deferred_js = urls.find { |path| path.include?("face_deferred_loader") }
-  if deferred_js
-    deferred_body = get(deferred_js).body.to_s
-    failures << "face_deferred_loader missing MASTER_DEFERRED_FACE" unless deferred_body.include?("MASTER_DEFERRED_FACE")
-  else
-    failures << "face_deferred_loader digest missing from homepage"
-  end
-  domain_js = urls.find { |path| path.include?("domain_cluster") }
-  if domain_js
-    domain_body = get(domain_js).body.to_s
-    failures << "domain_cluster missing syncDomainBackend" unless domain_body.include?("syncDomainBackend")
-  else
-    failures << "domain_cluster digest missing from homepage"
-  end
-  wayfinding_js = urls.find { |path| path.include?("face_wayfinding") }
-  if wayfinding_js
-    wayfinding_body = get(wayfinding_js).body.to_s
-    failures << "face_wayfinding missing master:container-ready" unless wayfinding_body.include?("master:container-ready")
-  else
-    failures << "face_wayfinding digest missing from homepage"
   end
 
   metrics = get("/chat/metrics")
