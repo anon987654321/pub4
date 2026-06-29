@@ -658,14 +658,7 @@ cv.addEventListener('touchmove', (e) => {
 }, { passive: true });
 cv.addEventListener('touchend', () => { pinchDist0 = null; }, { passive: true });
 
-// FA26 double-tap profile cycle (full <-> battery <-> crt)
-const RUNTIME_PROFILES = (() => {
-  const fromRuntime = window.MASTER_RUNTIME?.ui_philosophy?.profiles;
-  if (Array.isArray(fromRuntime) && fromRuntime.length) {
-    return fromRuntime.map((p) => (typeof p === 'string' ? p : p.id)).filter(Boolean);
-  }
-  return ['full', 'battery', 'crt'];
-})();
+// FA26 double-tap profile cycle — reuses RUNTIME_PROFILES declared in face.part1
 let lastTapT = 0;
 cv.addEventListener('pointerup', () => {
   const now = performance.now();
