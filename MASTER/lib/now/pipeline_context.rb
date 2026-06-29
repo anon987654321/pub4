@@ -75,7 +75,10 @@ module Master
       def freeze = self # already immutable
 
       # Immutable update — returns a new PipelineContext merging overrides.
+      # Accepts a Hash or another PipelineContext (e.g. when combining parallel
+      # stage results), mirroring the Hash-compatible #[]/#to_h/#wrap surface.
       def merge(overrides = {})
+        overrides = overrides.to_h if overrides.is_a?(PipelineContext)
         PipelineContext.new(@data.merge(normalize_overrides(overrides)))
       end
 

@@ -121,9 +121,9 @@ module Master
     loader.ignore(path) unless %w[command.rb formatter.rb].include?(File.basename(path))
   end
   rule_fragments = %w[
-    cosmetic_rules.rb flat_hierarchy_slug_rule.rb js_rules.rb lexical_rules.rb ruby_rules.rb
-    runtime_docs_rule.rb stale_namespace_rule.rb structural_question_rules.rb structural_rules.rb
-    universal_rules.rb web_rules.rb
+    cosmetic_rules.rb external_linter_rules.rb graph_rules.rb js_rules.rb lexical_rules.rb
+    meta_rules.rb naming_rules.rb ruby_rules.rb semantic_rules.rb structural_question_rules.rb
+    structural_rules.rb universal_rules.rb web_rules.rb yaml_bridge_rules.rb
   ]
   rule_fragments.each { |name| loader.ignore(File.join(__dir__, "judge", "scan", "rules", name)) }
   %w[

@@ -1,0 +1,236 @@
+# frozen_string_literal: true
+
+module Master
+  module Judge
+    module Scan
+      module Rules
+      # Detects methods/classes/modules present in recent git history but absent now.
+      # Wraps CommitGuard as a standard scan Rule so it runs in the scanner pipeline.
+        class AstOmissionRule < Rule
+          def self.auto_build? = false
+
+          def initialize(root: Dir.pwd, depth: CommitGuard::DEFAULT_DEPTH)
+            super()
+            @id = "ast_omission"; @description = "symbol dropped vs recent commits"
+            @severity = :warning; @rule_tags = %i[COMPLETENESS]; @auto_fix = false
+            @root = File.expand_path(root)
+            @guard = CommitGuard.new(root: @root, depth:)
+          end
+
+          def check(_code, path:)
+            return [] unless path.to_s.end_with?(".rb")
+
+            rel = relativize(path)
+            return [] unless rel
+
+            omissions = @guard.check(paths: [rel])
+            omissions.map { |o| finding(line: 1, message: "#{o.type} #{o.name} dropped (last seen #{o.last_seen_at})") }
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "ast_omission_rule.check", event_bus: nil)
+            []
+          end
+
+          private
+
+          def relativize(path)
+            full = File.expand_path(path)
+            prefix = @root + File::SEPARATOR
+            full.start_with?(prefix) ? full.delete_prefix(prefix) : File.basename(full)
+          end
+        end
+      end
+    end
+  end
+end
+
+module Master
+  module Judge
+    module Scan
+      module Rules
+        # Every Rule subclass must have a matching test file; gaps mean untested enforcement.
+        class RuleCoverageRule < Rule
+          def self.auto_build? = false
+
+          def initialize(root:)
+            super()
+            @id = "rule_coverage"
+            @description = "Rule subclass has no corresponding test file"
+            @severity = :warning
+            @auto_fix = false
+            @rule_tags = %i[TEST_COVERAGE]
+            @root = root
+            @test_dir = File.join(root, "test")
+          end
+
+          def check(code, path:)
+            return [] unless path.include?("/judge/scan/rules/") && path.end_with?("_rule.rb")
+
+            base = File.basename(path, ".rb")
+            test_glob = File.join(@test_dir, "**", "#{base}_test.rb")
+            return [] if Dir.glob(test_glob).any?
+
+            [finding(line: 1, message: "rule_coverage: no test file found for #{base}")]
+          end
+        end
+      end
+    end
+  end
+end
+
+module Master
+  module Judge
+    module Scan
+      module Rules
+        # Runtime authority lives in YAML + Ground::BootstrapDocs — not markdown under data/.
+        RuleDSL.rule :RUNTIME_DOCS_YAML,
+          severity: :error,
+          tags: %i[CONSTITUTION DOCS],
+          applies_to: %i[markdown],
+          autofix: false,
+          description: "runtime-read docs must be YAML — forbid stray .md under data/" do |_src, path:|
+          rel = RuntimeDocsPaths.data_relative(path)
+          next [] unless rel&.start_with?("data/") && rel.end_with?(".md")
+
+          allowed = %w[
+            data/SOUL.md
+            data/CANON.md
+            data/IDENTITY.md
+            data/skills/README.md
+          ].freeze
+          next [] if allowed.include?(rel)
+
+          target = case rel
+                   when %r{\Adata/principles/} then "data/operator_principles.yml"
+                   when %r{\Adata/claude/} then "data/project_context.yml"
+                   when %r{\Adata/skills/} then "data/skills_registry.yml"
+                   else "YAML runtime (operator_principles.yml, skills_registry.yml, project_context.yml, or /orient bootstrap)"
+                   end
+
+          [finding(
+            line: 1,
+            message: "runtime docs belong in #{target} — delete #{rel} (see Ground::BootstrapDocs, /orient)"
+          )]
+        end
+
+        module RuntimeDocsPaths
+          module_function
+
+          def data_relative(path)
+            expanded = File.expand_path(path.to_s)
+            root = File.expand_path(Master::ROOT)
+            return nil unless expanded.start_with?("#{root}/")
+
+            expanded.delete_prefix("#{root}/")
+          end
+        end
+      end
+    end
+  end
+end
+
+module Master
+  module Judge
+    module Scan
+      module Rules
+        class LearnedSmellsRule < Rule
+          def initialize(root: Master::ROOT)
+            super()
+            @id = "LEARNED_SMELLS"
+            @description = "session-learned smell patterns from rules.yml"
+            @severity = :warning
+            @rule_tags = %i[LEARNED_SMELLS SESSION]
+            @auto_fix = false
+            @root = root
+            reload_learned_smells!
+          end
+
+          def check(code, path:)
+            reload_learned_smells_if_stale
+            return [] if @learned_smells.empty?
+
+            language = self.language(path)&.to_s
+            @learned_smells.flat_map do |smell|
+              next [] unless applies_to_smell?(smell, language)
+
+              pattern = smell_pattern(smell)
+              next [] unless pattern
+
+              code.each_line.with_index(1).filter_map do |line, line_number|
+                next unless line.match?(pattern)
+
+                rule_id = smell["id"].to_s
+                Finding.build(
+                  rule: rule_id.empty? ? @id : rule_id,
+                  message: smell_message(smell),
+                  line: line_number,
+                  severity: smell_severity(smell),
+                  tags: smell_tags(smell),
+                  reversibility: smell["reversibility"],
+                  blast_radius: smell["blast_radius"]
+                )
+              end
+            end
+          rescue StandardError => e
+            [Finding.build(rule: @id, message: "learned smell scan error — #{e.message}", line: 1,
+              severity: :warning, tags: %i[LEARNED_SMELLS])]
+          end
+
+          private
+
+          def reload_learned_smells_if_stale
+            return if @rules_mtime == rules_mtime
+
+            reload_learned_smells!
+          end
+
+          def reload_learned_smells!
+            @learned_smells = Array(Master.load_yaml(rules_path)&.fetch("learned_smells", [])).select { |item| item.is_a?(Hash) }
+            @rules_mtime = rules_mtime
+          rescue StandardError
+            @learned_smells = []
+            @rules_mtime = nil
+          end
+
+          def rules_path
+            File.join(@root, "data", "rules.yml")
+          end
+
+          def rules_mtime
+            File.mtime(rules_path).to_i
+          rescue StandardError
+            nil
+          end
+
+          def smell_pattern(smell)
+            raw = smell["pattern"] || smell["regex"] || smell["detect"]
+            return unless raw
+
+            Regexp.new(raw.to_s)
+          rescue RegexpError
+            nil
+          end
+
+          def smell_message(smell)
+            smell["message"] || smell["description"] || smell["name"] || smell["id"] || "learned smell"
+          end
+
+          def smell_severity(smell)
+            (smell["severity"] || "warning").to_sym
+          end
+
+          def smell_tags(smell)
+            Array(smell["tags"]).map(&:to_sym) + %i[LEARNED_SMELL]
+          end
+
+          def applies_to_smell?(smell, language)
+            mediums = Array(smell["mediums"] || smell["medium"] || smell["applies_to"]).compact.map(&:to_s)
+            return true if mediums.empty?
+            return false if language.nil?
+
+            mediums.include?(language)
+          end
+        end
+      end
+    end
+  end
+end
