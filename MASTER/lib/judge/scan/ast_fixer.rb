@@ -231,7 +231,14 @@ module Master
           Prism::RegularExpressionNode, Prism::InterpolatedRegularExpressionNode,
         ].freeze
 
+        # Memoized by source content: remove_immediate_dead_code and add_trailing_commas
+        # both ask for the literal lines, and the source is usually unchanged between them,
+        # so this saves a redundant full Prism parse per file on every autoloop cycle.
         def literal_lines(src)
+          (@literal_lines ||= {})[src] ||= compute_literal_lines(src)
+        end
+
+        def compute_literal_lines(src)
           result = Prism.parse(src)
           return Set.new if result.failure?
 
