@@ -78,16 +78,15 @@ module Master
               next [] unless applies?(entry, path, rel)
               next [] unless entry[:regex]
 
-              scan_lines(code, entry[:regex], message: "#{entry[:id]}: #{entry[:fix] || entry[:name]}")
-                .map do |hit|
-                  Finding.build(
-                    rule: entry[:id].to_s.downcase,
-                    message: hit.message,
-                    line: hit.line,
-                    severity: entry[:severity],
-                    tags: [entry[:id].to_s.upcase]
-                  )
-                end
+              declarative_hits(code, entry).map do |hit|
+                Finding.build(
+                  rule: entry[:id].to_s.downcase,
+                  message: hit.message,
+                  line: hit.line,
+                  severity: entry[:severity],
+                  tags: [entry[:id].to_s.upcase]
+                )
+              end
             end
           end
 
@@ -130,6 +129,15 @@ module Master
             File.mtime(File.join(@root, "data", "rules.yml")).to_i
           rescue StandardError
             nil
+          end
+
+          def declarative_hits(code, entry)
+            message = "#{entry[:id]}: #{entry[:fix] || entry[:name]}"
+            if entry[:regex].source.include?("\\A")
+              code.match?(entry[:regex]) ? [finding(line: 1, message:)] : []
+            else
+              scan_lines(code, entry[:regex], message:)
+            end
           end
 
           def applies?(entry, path, rel)

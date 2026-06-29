@@ -12,6 +12,10 @@ function collectFeltState() {
   return window.MASTERFeltState?.collectFeltState?.() || null;
 }
 
+function isBangCommand(text) {
+  return String(text || "").trim().startsWith('!');
+}
+
 function validatedFeltState() {
   const state = collectFeltState();
   if (window.MASTERFeltState?.validateFeltState?.(state)) return state;
@@ -188,6 +192,7 @@ async function startChatStream(payload, handlers) {
 
 window.MASTERChat = {
   enhanceMessage,
+  isBangCommand,
   collectFeltState,
   triggerClientAction,
   queueOfflineSend,
@@ -198,6 +203,9 @@ window.MASTERChat = {
 };
 
 window.addEventListener("online", () => { drainOfflineQueue().catch((err) => { window.MASTER_LOG?.warn?.("chat:offline_drain", err); }); });
+window.addEventListener('compaction', (ev) => {
+  window._chatOnCompaction?.(ev.detail || {});
+});
 
 function startMic(btn) {
   if (window.MASTER_FACE?.startSTT) {

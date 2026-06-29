@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module Master
   module Ground
     class AttentionContext
@@ -35,6 +37,7 @@ module Master
 
       def self.from_yaml(path)
         return new unless File.exist?(path)
+        data = YAML.safe_load_file(path, permitted_classes: [Symbol], aliases: true) || {}
         new(
           map: data["map"],
           zoom: data["zoom"] || "wide",

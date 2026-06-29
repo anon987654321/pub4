@@ -12,7 +12,9 @@ function shouldEnableFace3d() {
   return desktop && !reducedMotion;
 }
 
-if (shouldEnableFace3d()) {
+const FACE3D_ACTIVE = shouldEnableFace3d();
+
+function bootFace3d() {
   const canvas = document.getElementById('face');
   const engine = new Face3DEngine();
   const renderer = new Face3DCanvasRenderer(canvas);
@@ -25,7 +27,7 @@ if (shouldEnableFace3d()) {
   const speech = { active: false, text: '', startedAt: 0, duration: 2.0, energy: 0.55 };
 
   window.addEventListener('resize', () => renderer.resize(), { passive: true });
-  window.addEventListener('tts:playback:start', (ev) => {
+  window.addEventListener("tts:playback:start", (ev) => {
     const d = ev.detail || {};
     speech.active = true;
     speech.text = String(d.text || '');
@@ -33,11 +35,11 @@ if (shouldEnableFace3d()) {
     speech.duration = Number(d.duration) > 0 ? Number(d.duration) : Math.max(1.2, speech.text.length * 0.055);
     speech.energy = 0.55;
   });
-  window.addEventListener('tts:playback:end', () => {
+  window.addEventListener("tts:playback:end", () => {
     speech.active = false;
     engine.setBlend({ jawOpen: 0, mouthRound: 0, mouthWide: 0 });
   });
-  window.addEventListener('tts:viseme', (ev) => {
+  window.addEventListener("tts:viseme", (ev) => {
     const d = ev.detail || {};
     engine.setBlend(engine.visemes.toBlend({ shape: d.shape || 'neutral', jaw: Number(d.amp) || 0 }));
   });
@@ -95,6 +97,8 @@ if (shouldEnableFace3d()) {
 
   requestAnimationFrame(frame);
 }
+
+if (FACE3D_ACTIVE) bootFace3d();
 
 function blinkEnvelope(t) {
   const phase = t % 4.2;

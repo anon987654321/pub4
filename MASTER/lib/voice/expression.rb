@@ -229,20 +229,20 @@ end
 
       # Layer whispered breath under ethereal lift for chained creative styles.
       def chain_styles(primary, secondary = nil)
-        p = primary.to_s.downcase.to_sym
-        s = secondary.to_s.downcase.to_sym if secondary
-        base = for_tts_style(p)
-        return base unless s && STYLES_CHAINABLE.include?(s)
+        primary_style = primary.to_s.downcase.to_sym
+        secondary_style = secondary.to_s.downcase.to_sym if secondary
+        base = for_tts_style(primary_style)
+        return base unless secondary_style && STYLES_CHAINABLE.include?(secondary_style)
 
-        under = for_tts_style(s)
+        under = for_tts_style(secondary_style)
         {
           **base,
           arousal: [(base[:arousal] || 0.5) * 0.82 + (under[:arousal] || 0.3) * 0.18, 1.0].min,
           pressure: [(base[:pressure] || 0.4) * 0.75 + (under[:pressure] || 0.2) * 0.25, 1.0].min,
           breath_boost: (base[:breath_boost] || 0.0) + (under[:breath_boost] || 0.0) * 0.45,
-          blendshapes: blendshapes_for(p).merge(blendshapes_for(s)) { |_k, a, b| ((a + b) * 0.5).clamp(0.0, 1.0) },
+          blendshapes: blendshapes_for(primary_style).merge(blendshapes_for(secondary_style)) { |_k, a, b| ((a + b) * 0.5).clamp(0.0, 1.0) },
           decay_rate: [base[:decay_rate] || 0.5, under[:decay_rate] || 0.5].max,
-          chained: [p, s],
+          chained: [primary_style, secondary_style],
         }
       end
 

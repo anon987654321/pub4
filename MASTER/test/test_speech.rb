@@ -1,8 +1,28 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "socket"
 
 class TestSpeech < Minitest::Test
+  def test_tts_supervisor_health_check_uses_ping_without_synthesis
+    Dir.mktmpdir("master_tts_health") do |root|
+      socket_path = File.join(root, "tts.sock")
+      server = UNIXServer.new(socket_path)
+      responder = Thread.new do
+        client = server.accept
+        request = client.gets
+        client.write("ok\n")
+        client.close
+        request
+      end
+
+      assert Master::Voice::TtsSupervisor.socket_alive?(socket_path)
+      assert_equal "{\"health\":true}\n", responder.value
+    ensure
+      server&.close
+    end
+  end
+
   def test_available_returns_boolean
     assert_includes [true, false], Master::Voice::Speech.available?
   end

@@ -29,6 +29,7 @@ class AuthTier
     @config_path = config_path
     @token_mutex = Mutex.new
     @cached_token = nil
+    @cached_config_path = nil
     @config_mtime = nil
   end
 
@@ -117,28 +118,34 @@ class AuthTier
 
   def web_token
     @token_mutex.synchronize do
-      mtime = File.mtime(@config_path) rescue nil
-      if mtime != @config_mtime
+      config_path = resolved_config_path
+      mtime = File.mtime(config_path) rescue nil
+      if config_path != @cached_config_path || mtime != @config_mtime
+        @cached_config_path = config_path
         @config_mtime = mtime
         @cached_token = nil
       end
-      @cached_token ||= load_or_seed_token
+      @cached_token ||= load_or_seed_token(config_path)
     end
   end
 
-  def load_or_seed_token
-    cfg, readable = read_config
+  def resolved_config_path
+    @config_path.respond_to?(:call) ? @config_path.call.to_s : @config_path.to_s
+  end
+
+  def load_or_seed_token(config_path)
+    cfg, readable = read_config(config_path)
     candidate = cfg["web_token"].to_s
     return candidate if candidate.length >= MIN_TOKEN_LENGTH
 
     warn "auth_tier: rotating weak web_token (#{candidate.length} chars)" if candidate.length.positive?
     return nil unless readable
 
-    seed_token(cfg)
+    seed_token(config_path, cfg)
   end
 
-  def read_config
-    [YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true) || {}, true]
+  def read_config(config_path)
+    [YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) || {}, true]
   rescue Errno::ENOENT => _e
     [{}, true]
   rescue StandardError => e
@@ -146,20 +153,20 @@ class AuthTier
     [{}, false]
   end
 
-  def seed_token(cfg)
-    FileUtils.mkdir_p(File.dirname(@config_path))
-    lock_path = "#{@config_path}.lock"
+  def seed_token(config_path, cfg)
+    FileUtils.mkdir_p(File.dirname(config_path))
+    lock_path = "#{config_path}.lock"
     File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
       lock.flock(File::LOCK_EX)
-      existing = YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true) rescue nil
+      existing = YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) rescue nil
       if existing.is_a?(Hash) && existing["web_token"].to_s.length >= MIN_TOKEN_LENGTH
         return existing["web_token"]
       end
       tok = SecureRandom.urlsafe_base64(TOKEN_BYTES)
       cfg["web_token"] = tok
-      tmp = "#{@config_path}.tmp.#{Process.pid}"
+      tmp = "#{config_path}.tmp.#{Process.pid}"
       File.open(tmp, File::WRONLY | File::CREAT | File::TRUNC, 0o600) { |f| f.write(cfg.to_yaml) }
-      File.rename(tmp, @config_path)
+      File.rename(tmp, config_path)
       tok
     end
   end

@@ -11,6 +11,21 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "ground/env_loader"
 Master::Ground::EnvLoader.load!
 
+if !$stdin.tty? && ENV["MASTER_FAST"] == "1"
+  $stdout.sync = true
+  $stdin.each_line do |line|
+    case line.strip
+    when "/status"
+      puts ["status", "mode    fast pipe", "service master/not-booted fast", "pipeline fast"].join("\n")
+    when "/help", "/?"
+      puts "help: /status /help commands available in fast pipe mode"
+    else
+      puts "fast mode: /status /help only"
+    end
+  end
+  exit!(0)
+end
+
 require "set"
 require "optparse"
 require "master"
@@ -67,15 +82,15 @@ rescue StandardError => e
   warn "cli: background stop failed: #{e.class}: #{e.message}"
 end
 
-trap("INT") { save_cli_session_safely(cli); $stderr.puts "\nsaved"; exit 0 }
-trap("TERM") { save_cli_session_safely(cli); exit 0 }
+trap("INT") { $stderr.puts "\nexiting"; exit!(130) }
+trap("TERM") { exit!(143) }
 trap("TSTP") do
   $stderr.puts "\ncli: suspended — fg then /exit; Ctrl-Z leaves ~200MB ruby on 1GB hosts"
   trap("TSTP", "DEFAULT")
   Process.kill("STOP", Process.pid)
 end
 
-fast_boot = ARGV.include?("--fast")
+fast_boot = ARGV.include?("--fast") || ENV["MASTER_FAST"] == "1"
 require "ground/host_budget"
 Master::Ground::HostBudget.warn_or_reap_suspended!
 Master::Now::BootBanner.print unless fast_boot

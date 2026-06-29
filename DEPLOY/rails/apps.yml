@@ -116,10 +116,10 @@ apps:
     features:
       core:
         - { name: Item (title, color, size, material, texture, brand, price, category, sku, release_date, stock_quantity, available, user), status: done, notes: pub4 version adds mood/occasion/life_phase/times_worn on top }
-        - { name: cost_per_wear calculation,                               status: done }
-        - { name: wear! increment,                                         status: done }
+        - { name: cost_per_wear calculation, status: done }
+        - { name: wear! increment, status: done }
         - { name: aging_unworn / never_worn scopes,                        status: done }
-        - { name: Outfit (likes_count),                                    status: done }
+        - { name: Outfit (likes_count), status: done }
         - { name: OutfitItem join (position),                              status: done }
         - { name: Item photos (Active Storage has_many_attached),          status: done }
         - { name: Hotwire broadcasts_refreshes on Item/Outfit,             status: done }

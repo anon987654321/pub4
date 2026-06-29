@@ -1,4 +1,6 @@
-# Language‑specific beautyaxioms for MASTER2's refactoring engine# Detection rules + design philosophy across supported languagesruby:
+# Language-specific beauty axioms for MASTER2's refactoring engine
+# Detection rules and design philosophy across supported languages.
+ruby:
   - id: prefer_each_with_object
     name: "Prefer each_with_object over inject/build for hashes"
     detect: '\.(inject|reduce)\s*\(\s*\{\s*\}\s*\)'
@@ -27,7 +29,8 @@
     severity: warning
     autofix: true
 
-  - id: module_function_over_extend_self    name: "Prefer module_function where appropriate"
+  - id: module_function_over_extend_self
+    name: "Prefer module_function where appropriate"
     detect: 'extend self\n.*class << self'
     suggest: "Consider module_function for cleaner intent"
     severity: info
@@ -93,7 +96,8 @@
     name: "Prefer Hash#fetch over [] with ||"
     detect: '\w+\[:\w+\]\s*\|\|'
     suggest: "Use hash.fetch(:key, default) for nil‑vs‑false safety"
-    severity: info    autofix: false
+    severity: info
+    autofix: false
 
   - id: private_section_placement
     name: "Enforce single private section at bottom"
@@ -136,7 +140,9 @@ rails:
     detect: '\.update_attribute\('
     suggest: "update_attribute skips validations — use update!"
     severity: error
-    autofix: true  - id: callback_extraction
+    autofix: true
+
+  - id: callback_extraction
     name: "Extract long callbacks to service objects"
     detect: '(after_create|before_save|after_save)\s+:\w+(?=.*\n(?:.*\n){5,})'
     suggest: "Extract callback logic >5 lines to a service object"
@@ -162,15 +168,22 @@ rails:
     detect: 'def (\w+)\n\s*\w+\.\1\n\s*end'
     suggest: "Use delegate :method, to: :association"
     severity: info
-    autofix: false  - id: strong_params_exhaustive    name: "Enforce strong parameters exhaustiveness"
+    autofix: false
+
+  - id: strong_params_exhaustive
+    name: "Enforce strong parameters exhaustiveness"
     detect: '\.permit\('
     suggest: "Cross‑reference .permit() list with schema.rb columns"
     severity: info
-    autofix: falsezsh:
-  - id: quote_variables    name: "Quote all $variables"
-    detect: '(?<!["'"'"'])\$\w+(?!["'"'"'])'
+    autofix: false
+
+zsh:
+  - id: quote_variables
+    name: "Quote all $variables"
+    detect: '(?<!["\x27\\])\$\w+(?!["\x27])'
     suggest: 'Use "$VAR" to prevent word splitting and glob expansion'
-    severity: error    autofix: true
+    severity: error
+    autofix: true
 
   - id: double_bracket_test
     name: "Use [[ ]] over [ ] for conditionals"
@@ -191,7 +204,9 @@ rails:
     detect: '^\w+\(\)\s*\{[^}]*\n\s+\w+='
     suggest: "Declare with 'local' to prevent global leaks"
     severity: warning
-    autofix: false  - id: parameter_expansion_default
+    autofix: false
+
+  - id: parameter_expansion_default
     name: "Prefer ${var:-default} over if/then"
     detect: 'if \[ -z "\$\w+" \]; then\s+\w+=\w+'
     suggest: 'Use ${var:-default} for concise defaults'
@@ -209,7 +224,8 @@ rails:
     name: "Replace cat file | command with command < file"
     detect: 'cat\s+\S+\s*\|'
     suggest: "Use command < file (Useless Use of Cat)"
-    severity: info    autofix: true
+    severity: info
+    autofix: true
 
   - id: heredoc_for_multiline
     name: "Use heredoc for multi‑line strings"
@@ -233,15 +249,19 @@ html_erb:
     severity: error
     autofix: false
 
-  - id: button_over_anchor    name: "Prefer <button> over <a href=\"#\">"
-    detect: '<a\s+href=["\']#["\']'
+  - id: button_over_anchor
+    name: "Prefer <button> over <a href=\"#\">"
+    detect: '<a\s+href=["\x27]#["\x27]'
     suggest: "Use <button> for actions — accessible by default"
     severity: warning
-    autofix: false  - id: time_element
+    autofix: false
+
+  - id: time_element
     name: "Wrap dates in <time datetime=\"ISO8601\">"
     detect: '\d{4}-\d{2}-\d{2}(?!.*<time)'
     suggest: "Use <time datetime=\"ISO8601\">date</time>"
-    severity: info    autofix: false
+    severity: info
+    autofix: false
 
   - id: html_lang
     name: "Enforce lang attribute on <html>"
@@ -262,12 +282,16 @@ html_erb:
     detect: null
     suggest: "Use ERB partials for repeated blocks"
     severity: info
-    autofix: false  - id: html_tag_helpers
+    autofix: false
+
+  - id: html_tag_helpers
     name: "Prefer tag/content_tag helpers over raw HTML in helpers"
-    detect: '["\']<\w+[^"\']*>["\']'
+    detect: '["\x27]<\w+[^"\x27]*>["\x27]'
     suggest: "Use Rails tag() or content_tag() helpers"
     severity: info
-    autofix: false  - id: aria_on_interactive
+    autofix: false
+
+  - id: aria_on_interactive
     name: "Enforce ARIA on non‑semantic interactive elements"
     detect: '<(div|span)\s+[^>]*onclick'
     suggest: "Add role= and tabindex= for accessibility"
@@ -317,8 +341,9 @@ css_scss:
     severity: warning
     autofix: false
 
-  - id: use_forward_over_import    name: "Replace @import with @use/@forward in SCSS"
-    detect: '@import\s+["\']'
+  - id: use_forward_over_import
+    name: "Replace @import with @use/@forward in SCSS"
+    detect: '@import\s+["\x27]'
     suggest: "@import is deprecated — use @use/@forward"
     severity: warning
     autofix: false
@@ -363,7 +388,8 @@ javascript:
     name: "Use optional chaining ?. over && chains"
     detect: '(\w+)\s*&&\s*\1\.\w+'
     suggest: "Rewrite to obj?.foo?.bar"
-    severity: warning    autofix: true
+    severity: warning
+    autofix: true
 
   - id: nullish_coalescing
     name: "Use ?? over || for defaults"
@@ -381,7 +407,7 @@ javascript:
 
   - id: template_literals
     name: "Use template literals over concatenation"
-    detect: '["\']\s*\+\s*\w+\s*\+\s*["\']'
+    detect: '["\x27]\s*\+\s*\w+\s*\+\s*["\x27]'
     suggest: "Use `Hello ${name}!` template literals"
     severity: warning
     autofix: true
@@ -391,7 +417,9 @@ javascript:
     detect: 'new\s+XMLHttpRequest'
     suggest: "Use the Fetch API with async/await"
     severity: warning
-    autofix: false  - id: array_from_over_slice
+    autofix: false
+
+  - id: array_from_over_slice
     name: "Use Array.from() or spread over slice.call"
     detect: 'Array\.prototype\.slice\.call'
     suggest: "Use Array.from(arrayLike) or [...arrayLike]"
@@ -434,7 +462,8 @@ universal:
     severity: info
     autofix: false
 
-  - id: fail_loudly    name: "Fail loudly with context"
+  - id: fail_loudly
+    name: "Fail loudly with context"
     detect: 'rescue\s*$|catch\s*\(\s*\)|except\s*:|catch\s*{}'
     suggest: "Catch specific errors, log context, re‑raise or return Result"
     severity: warning
@@ -444,7 +473,8 @@ universal:
     name: "Keep related code adjacent"
     detect: null
     suggest: "Place called functions near their callers within the same file"
-    severity: info    autofix: false
+    severity: info
+    autofix: false
 
   - id: consistent_file_structure
     name: "Enforce consistent file structure order"
@@ -472,9 +502,11 @@ universal:
     detect: null
     suggest: "Adopt project convention (single or double quotes)"
     severity: info
-    autofix: false  - id: typographic_excellence
+    autofix: false
+
+  - id: typographic_excellence
     name: "Use typographic excellence in UI strings"
-    detect: '["\']\.\.\.["\']|["\']--["\']'
+    detect: '["\x27]\.\.\.["\x27]|["\x27]--["\x27]'
     suggest: 'Use … (ellipsis), — (em dash), "" (curly quotes) in UI text'
     severity: info
     autofix: true
@@ -483,14 +515,17 @@ universal:
     name: "Apply progressive disclosure in APIs and UIs"
     detect: null
     suggest: "Group >5 options into sub‑commands or collapsible sections"
-    severity: info    autofix: false
+    severity: info
+    autofix: false
 
   - id: dead_code_elimination
     name: "Eliminate dead/unreachable code"
     detect: '(return|exit|raise|throw)\s+.*\n\s*\w+'
     suggest: "Remove unreachable code after return/exit/raise/throw"
     severity: warning
-    autofix: true  - id: consistent_error_strategy
+    autofix: true
+
+  - id: consistent_error_strategy
     name: "Adopt consistent error handling per module"
     detect: null
     suggest: "Don't mix Result objects, exceptions, and nil‑returns in one module"
@@ -506,7 +541,7 @@ universal:
 
   - id: whitespace_as_punctuation
     name: "Use whitespace as punctuation"
-    detect: '\n{4,}"
+    detect: '\n{4,}'
     suggest: "One blank line between sections; never >2 consecutive blank lines"
     severity: info
     autofix: true
@@ -515,7 +550,8 @@ universal:
     name: "Split files >300 lines at module boundaries"
     detect: null
     suggest: "Files under 300 lines are preferred"
-    severity: warning    autofix: false
+    severity: warning
+    autofix: false
 
 # ============================================================================
 # RUBY BEAUTY — Design philosophy (restored from master.yml v71.3.0)
@@ -619,7 +655,8 @@ large_html_documents:
       formatting: preserve_readability
     production_app:
       characteristics: [minified, compressed, performance_critical]
-      formatting: minimal_whitespace  inline_css:
+      formatting: minimal_whitespace
+  inline_css:
     organization: "CSS variables → Resets → Layout → Components → Utilities"
     css_variables: "Define all colors/spacing/fonts in :root"
     modern_only: "Flexbox, grid, container queries — no floats or positioning hacks"

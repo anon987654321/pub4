@@ -14,7 +14,9 @@ const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList || [
 ];
 
 await Promise.all(FACE_MODULES.map(async (modulePath) => {
-  const url = window.MASTER_ASSET_PATHS?.[modulePath] || modulePath;
+  const url = window.MASTER_ASSET_PATHS?.faceModules?.[modulePath]
+    || window.MASTER_ASSET_PATHS?.[modulePath]
+    || modulePath;
   await import(url);
 }));
 

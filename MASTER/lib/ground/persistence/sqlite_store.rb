@@ -10,34 +10,59 @@ module Master
       # filesystem or locked WAL never crashes the store.
       module SqliteStore
         @sqlite_warned = false
+        @chmod_warned = false
+        JOURNAL_MODES = {
+          "WAL" => "PRAGMA journal_mode = WAL",
+          "DELETE" => "PRAGMA journal_mode = DELETE",
+        }.freeze
+
+        class << self
+          def warn_chmod_unsupported_once(path)
+            return if @chmod_warned
+
+            @chmod_warned = true
+            warn "sqlite_store: chmod unsupported for #{path}; continuing with filesystem permissions"
+          end
+        end
 
         def open_sqlite(root, relative_path)
           path = File.join(root, relative_path)
-          dir = File.dirname(path)
-          FileUtils.mkdir_p(dir, mode: 0o700)
-          FileUtils.chmod(0o700, dir) if File.directory?(dir)
-          FileUtils.touch(path) unless File.exist?(path)
-          db = SQLite3::Database.new(path)
-          journal_ok = set_journal_mode(db, path, "WAL") || set_journal_mode(db, path, "DELETE")
+          prepare_sqlite_path(path)
+          database = SQLite3::Database.new(path)
+          journal_ok = set_journal_mode(database, path, "WAL") || set_journal_mode(database, path, "DELETE")
           unless journal_ok
-            db.close rescue SQLite3::Exception
+            database.close rescue SQLite3::Exception
             sqlite_warn_once("file DB unavailable at #{path} — using :memory:")
-            db = SQLite3::Database.new(":memory:")
+            database = SQLite3::Database.new(":memory:")
           end
-          db
+          database
         rescue SQLite3::Exception => e
           sqlite_warn_once("#{e.message} — using :memory:")
           SQLite3::Database.new(":memory:")
         end
 
-        def set_journal_mode(db, path, mode)
-          db.execute("PRAGMA journal_mode = #{mode}")
+        def prepare_sqlite_path(path)
+          dir = File.dirname(path)
+          FileUtils.mkdir_p(dir, mode: 0o700)
+          harden_sqlite_directory(dir)
+          FileUtils.touch(path) unless File.exist?(path)
+        end
+
+        def harden_sqlite_directory(dir)
+          FileUtils.chmod(0o700, dir)
+        rescue Errno::ENOSYS, Errno::EOPNOTSUPP
+          SqliteStore.warn_chmod_unsupported_once(dir)
+        end
+
+        def set_journal_mode(database, path, mode)
+          statement = JOURNAL_MODES.fetch(mode)
+          database.execute(statement)
           true
         rescue SQLite3::IOException
           clear_wal_sidecars(path)
-          db.execute("PRAGMA journal_mode = #{mode}")
+          database.execute(statement)
           true
-        rescue SQLite3::Exception
+        rescue KeyError, SQLite3::Exception
           false
         end
 

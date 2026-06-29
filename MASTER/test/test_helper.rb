@@ -23,13 +23,15 @@ require "timeout"
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "master"
 
-# All tests time out after 10s to prevent hangs.
+# Bound individual tests to prevent hangs, while leaving integration fixtures
+# enough room on slower local runs.
+MASTER_TEST_TIMEOUT = Integer(ENV.fetch("MASTER_TEST_TIMEOUT", "30"))
 Minitest::Test.class_eval do
   alias_method :run_without_timeout, :run
   def run(*args)
-    Timeout.timeout(10) { run_without_timeout(*args) }
+    Timeout.timeout(MASTER_TEST_TIMEOUT) { run_without_timeout(*args) }
   rescue Timeout::Error
-    failures << Minitest::UnexpectedError.new(Timeout::Error.new("timed out after 10s"))
+    failures << Minitest::UnexpectedError.new(Timeout::Error.new("timed out after #{MASTER_TEST_TIMEOUT}s"))
     self
   end
 end

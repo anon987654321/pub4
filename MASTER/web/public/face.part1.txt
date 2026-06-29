@@ -1,5 +1,6 @@
 "use strict";
 
+// face3d only when WebGL is disabled: _hasWebGL = false keeps low-end boot cheap.
 // Check WebGL before paying THREE's 1.3MB parse cost
 const _wglCv = document.createElement('canvas');
 const _hasCanvas = typeof _wglCv.getContext === 'function';

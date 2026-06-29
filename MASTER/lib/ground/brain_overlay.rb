@@ -6,7 +6,7 @@ module Master
       CORE_FILES = %w[
         standing_orders.rb
         workflow_policy.rb
-        evidence_base.rb
+        research_thresholds.rb
         tool_protocol.rb
         subagent_policy.rb
       ].freeze
@@ -34,7 +34,7 @@ module Master
       def core_brief
         lines = ["Brain overlay: Ruby policy is authoritative; markdown is legacy/contextual."]
         lines << Master::Ground::ToolProtocol.brief if defined?(Master::Ground::ToolProtocol)
-        lines << Master::Ground::EvidenceBase.brief if defined?(Master::Ground::EvidenceBase)
+        lines << Master::Ground::ResearchThresholds.brief if defined?(Master::Ground::ResearchThresholds)
         lines << Master::Ground::WorkflowPolicy.brief if defined?(Master::Ground::WorkflowPolicy)
         lines.compact.join("\n\n")
       end

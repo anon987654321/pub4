@@ -6,15 +6,25 @@
 #   ruby DEPLOY/verify_deploy_identity.rb
 
 require "yaml"
+require_relative "utf8"
 
 ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
 APPS_FILE = File.join(RAILS_ROOT, "apps.yml")
+SHARED_FUNCTIONS = File.join(RAILS_ROOT, "shared", "deploy", "@shared_functions.sh")
 metadata = YAML.load_file(APPS_FILE).fetch("apps")
 
 failures = []
 ports = Hash.new { |h, k| h[k] = [] }
 domains = Hash.new { |h, k| h[k] = [] }
+shared_functions = File.file?(SHARED_FUNCTIONS) ? File.read(SHARED_FUNCTIONS) : ""
+failures << "missing shared deploy functions: #{SHARED_FUNCTIONS}" if shared_functions.empty?
+failures << "shared bundler helper missing deployment config" unless shared_functions.include?(
+  "bundle config set --local deployment true"
+)
+failures << "shared bundler helper missing without config" unless shared_functions.include?(
+  'bundle config set --local without \"development test\"'
+)
 
 metadata.each do |app, expected|
   script = File.join(ROOT, expected.fetch("deploy_script"))
@@ -47,8 +57,7 @@ metadata.each do |app, expected|
     "SRC_DIR=${SCRIPT_DIR}" => "missing source dir for #{app}",
     "SHARED_BUNDLE_CACHE" => "missing shared bundle cache for #{app}",
     'doas mkdir -p "${APP_DIR}/.bundle"' => "missing app .bundle mkdir for #{app}",
-    "bundle config set --local deployment true" => "missing modern bundler deployment config for #{app}",
-    "bundle config set --local without 'development test'" => "missing modern bundler without config for #{app}",
+    'bundle_install_as_app "$APP_NAME" "$APP_DIR"' => "missing shared bundler install for #{app}",
     "install_rcd \"$APP_NAME\" \"$APP_DIR\" \"$APP_PORT\" \"$APP_NAME\"" => "missing standard rc.d install call for #{app}",
     "relayd_add_relay \"$APP_DOMAIN\" \"$APP_PORT\"" => "missing standard relay call for #{app}"
   }

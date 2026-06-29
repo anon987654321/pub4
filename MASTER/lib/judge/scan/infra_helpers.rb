@@ -10,7 +10,7 @@ module Master
         def build_scanner(root:, agent: nil, bus: nil, ecology: nil)
           Judge::Scan::RuleDSL
           wf = Master.load_yaml(Master.limits_path) rescue {}
-          sleep_s = wf.dig("autoloop", "scan_file_sleep_s").to_f
+          sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
           scanner = Judge::Scan::Scanner.new(event_bus: bus, file_sleep_s: sleep_s)
           Judge::Scan::Rule.registry.select(&:auto_build?).each do |klass|
             scanner.add_rule(Judge::Scan::RuleFactory.build(klass, root:, agent:, ecology:))

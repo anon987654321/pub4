@@ -49,7 +49,8 @@ module Master
       }.freeze
 
       def with_master_container(extra_fixtures: {}, env: {})
-        Dir.mktmpdir("master_container_") do |root|
+        root = Dir.mktmpdir("master_container_")
+        begin
           FileUtils.mkdir_p(File.join(root, "data"))
           FileUtils.mkdir_p(File.join(root, ".master"))
           DEFAULT_FIXTURES.merge(extra_fixtures).each do |name, body|
@@ -63,6 +64,8 @@ module Master
           ensure
             original_env.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
           end
+        ensure
+          FileUtils.rm_rf(root) if root && Dir.exist?(root)
         end
       end
     end

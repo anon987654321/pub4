@@ -115,10 +115,10 @@ class TestWebUI < Minitest::Test
     app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes app_controller, "AUTHENTICATED_ACTIONS = %i["
-    assert_includes app_controller, "command dmesg enhance history live metrics photo post_event state stream"
+    assert_includes app_controller, "dmesg history live metrics"
     assert_includes app_controller, "before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }"
-    assert_match(/def\s+visitor\?\s*\n\s*false\s*\n\s*end/, app_controller)
-    assert_match(/def\s+require_authenticated!\s*\n\s*end/, app_controller)
+    assert_includes app_controller, 'master_tier != "authenticated"'
+    assert_includes app_controller, 'render json: { error: "authentication required" }, status: :unauthorized'
   end
 
   def test_authenticated_web_actions_are_rate_limited
@@ -150,7 +150,7 @@ class TestWebUI < Minitest::Test
   def test_chat_index_loads_particle_kernel_before_face
     index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
     kernel_idx = index.index("particle_kernel.js")
-    face_idx = index.index('type="module"')
+    face_idx = index.rindex('asset_path("face.js")')
     refute_nil kernel_idx
     refute_nil face_idx
     assert_operator kernel_idx, :<, face_idx

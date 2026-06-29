@@ -19,6 +19,7 @@
   ];
 
   const EVENT_CLASSIFIER = [
+    [/phantom:detected|phantom:retry/i,          { topology: "ecology", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
     [/llm:escalation|fallback|retry/i,         { topology: "ecology",  entropy: 0.62, confidence: 0.46, mode: "escalation" }],
     [/llm:request|agent:start|pipeline:start/i, { topology: "face",    entropy: 0.32, confidence: 0.72, mode: "thinking" }],
     [/memory|retriev|context|compact/i,         { topology: "ecology", entropy: 0.28, confidence: 0.76, mode: "memory" }],

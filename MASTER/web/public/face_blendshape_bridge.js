@@ -38,6 +38,15 @@
     pushBlend({ jawOpen: d * 0.42, mouthWide: d * 0.18 });
   }
 
+  function boostEye(amount = 0.1) {
+    window.dispatchEvent(new CustomEvent("face:eye-boost", { detail: { amount: clamp(Number(amount || 0)) } }));
+  }
+
+  function applyPressure(pressure = 0) {
+    const p = clamp(Number(pressure || 0));
+    pushBlend({ jawOpen: p * 0.28, mouthRound: p * 0.18 });
+  }
+
   window.addEventListener("master:visual", (ev) => {
     const d = ev.detail || {};
     const name = String(d.name || d.mode || "");
@@ -58,6 +67,8 @@
     pushBlend,
     applyExpression,
     applyMouthDrive,
+    boostEye,
+    applyPressure,
     expressionToBlend,
     current: () => ({ ...mouthBlend })
   });

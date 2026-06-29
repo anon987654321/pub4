@@ -5,12 +5,13 @@
 
 require "open3"
 require "rbconfig"
+require_relative "utf8"
 
 ROOT = File.expand_path("..", __dir__)
 RUBY = RbConfig.ruby
 
 GATES = [
-  { name: "deploy_identity", path: "DEPLOY/verify_deploy_identity.rb", optional: true },
+  { name: "deploy_identity", path: "DEPLOY/verify_deploy_identity.rb" },
   { name: "production", path: "DEPLOY/rails/check_production_gate.rb" },
   { name: "phantom_fk", path: "DEPLOY/rails/check_phantom_foreign_keys.rb" },
   { name: "frontend", path: "DEPLOY/rails/frontend_production_gate.rb" },

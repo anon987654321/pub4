@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require_relative "../utf8"
 
 ROOT = File.expand_path("../..", __dir__)
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
@@ -80,10 +81,17 @@ master_web_root = File.join(ROOT, "MASTER", "web")
   File.join(master_web_root, "lib/tasks/face_modules_bundle.rake"),
   File.join(master_web_root, "script/build_face_modules.sh"),
   File.join(master_web_root, "script/probe_http"),
-  File.join(master_web_root, "script/ci_web_probe"),
-  File.join(master_web_root, "app/views/shared/_face_boot.html.erb")
+  File.join(master_web_root, "script/ci_web_probe")
 ].each do |path|
   failures << "MASTER/web: missing #{path.delete_prefix(ROOT + '/')}" unless File.file?(path)
+end
+
+chat_index = File.join(master_web_root, "app/views/chat/index.html.erb")
+if File.file?(chat_index)
+  chat_body = File.read(chat_index)
+  failures << "MASTER/web: chat index missing inline lazy face boot" unless chat_body.include?("function loadFace") && chat_body.include?('asset_path("face.js")')
+else
+  failures << "MASTER/web: missing MASTER/web/app/views/chat/index.html.erb"
 end
 
 relayd_text = File.file?(RELAYD) ? File.read(RELAYD) : ""

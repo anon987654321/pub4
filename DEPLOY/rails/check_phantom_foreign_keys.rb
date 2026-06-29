@@ -2,6 +2,8 @@
 
 # Flags live schema foreign keys that point at phantom SQLite tables.
 
+require_relative "../utf8"
+
 ROOT = File.expand_path("../..", __dir__)
 PHANTOM_TABLES = %w[
   buyers listings likers likees dislikers dislikees initiators receivers orders menu_items

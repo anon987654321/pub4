@@ -23,7 +23,11 @@ task :constitution do
   result = scanner.scan_dir(File.join(root, "lib"), depth: :deep, stream: false)
   abort "constitution: scan failed: #{result.message}" unless result.ok?
 
-  violations = result.value!.flat_map { |_f, r| r.ok? ? r.value! : [] }
+  violations = result.value!.flat_map do |file, scan_result|
+    next [] unless scan_result.ok?
+
+    scan_result.value!.map { |finding| finding.merge(file: file) }
+  end
   total      = violations.size
 
   if total.zero?

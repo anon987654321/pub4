@@ -62,7 +62,7 @@ module Web
 
     config.middleware.use(
       AuthTier,
-      config_path: MasterWebToken.config_path
+      config_path: -> { MasterWebToken.config_path }
     )
     config.middleware.insert_before Rack::ETag, HtmlNoStore
   end

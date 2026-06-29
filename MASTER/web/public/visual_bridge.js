@@ -16,7 +16,7 @@
     active: false
   };
 
-  const EVENT_MAP = [
+  const FALLBACK_CLASSIFIER = [
     [/phantom:detected|phantom:retry/i, { topology: "glitch", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
     [/compaction:(start|done)|compact/i, { topology: "terrain", entropy: 0.42, confidence: 0.62, mode: "compact" }],
     [/btw:done|agent:(start|end)/i, { topology: "neural", entropy: 0.36, confidence: 0.74, mode: "side-agent" }],
@@ -36,7 +36,7 @@
 
   function classify(type, payload = {}) {
     const text = `${type} ${JSON.stringify(payload)}`;
-    const matched = EVENT_MAP.find(([pattern]) => pattern.test(text));
+    const matched = FALLBACK_CLASSIFIER.find(([pattern]) => pattern.test(text));
     const mapped = matched ? { ...matched[1] } : { topology: "sphere", entropy: 0.24, confidence: 0.68, mode: "event" };
 
     const provider = text.match(/claude|deepseek|gemini|gpt|openai|openrouter|mistral/i)?.[0]?.toLowerCase();
@@ -44,9 +44,8 @@
 
     return mapped;
   }
-  // Note: EVENT_MAP local is transitional dupe of data/topologies.yml + registry.
-  // handleRuntimeEvent (live SSE path to watched face/ecology) now prefers registry
-  // classifyEvent for ONE_SOURCE alignment (canonical ecology/face/codebase names + values).
+  // handleRuntimeEvent (live SSE path to watched face/ecology) prefers registry
+  // classifyEvent for ONE_SOURCE alignment with data/topologies.yml.
   // This reduces signal fragmentation so particle reactions (kernel arousal/pressure,
   // tints, terrain, agents) are more coherent and calm to watch from afar.
 
@@ -265,7 +264,9 @@
         const payload = frame.message;
         if (!payload) return;
         handleRuntimeEvent(payload.event ? { ...payload, type: payload.event } : payload);
-      } catch (_error) {}
+      } catch (_error) {
+        window.MASTER_LOG?.warn?.("visual_bridge:cable_frame", _error);
+      }
     };
     cableSocket.onclose = () => { cableSocket = null; };
     cableSocket.onerror = () => { try { cableSocket.close(); } catch (_e) {} cableSocket = null; };
@@ -292,6 +293,7 @@
       try {
         handleRuntimeEvent(JSON.parse(message.data));
       } catch (_error) {
+        window.MASTER_LOG?.warn?.("visual_bridge:sse_frame", _error);
         emitVisual("events:raw", { topology: "sphere", entropy: 0.24, confidence: 0.62, raw: message.data });
       }
     };

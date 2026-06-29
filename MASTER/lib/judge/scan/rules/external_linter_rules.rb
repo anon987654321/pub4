@@ -11,8 +11,11 @@ module Master
         # binary and run it for a parsed JSON report. Mixed in rather than inherited
         # so the helper itself never lands in the auto-registering Rule registry.
         module ExternalLinter
-          # Usable when the binary is on PATH or vendored under the repo's bin/.
+          # Gated behind MASTER_EXTERNAL_LINT so shelling out to rubocop/reek is opt-in;
+          # then usable only when the binary is on PATH or vendored under the repo's bin/.
           def linter_available?(name)
+            return false unless ENV["MASTER_EXTERNAL_LINT"] == "1"
+
             ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, name)) } ||
               File.exist?(File.join(@root, "bin", name))
           end

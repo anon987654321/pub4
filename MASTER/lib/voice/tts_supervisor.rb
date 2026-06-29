@@ -88,13 +88,12 @@ module Master
         return false unless File.socket?(path)
 
         UNIXSocket.open(path) do |socket|
-          socket.write(%({"voice":"ms-MY-OsmanNeural","rate":"+0%","pitch":"+0Hz","text":"."}\n))
-          chunk = socket.read_nonblock(64)
-          return false if chunk.nil? || chunk.empty?
+          socket.write(%({"health":true}\n))
+          ready = IO.select([socket], nil, nil, 1)
+          return false unless ready
+
+          return socket.gets.to_s.strip == "ok"
         end
-        true
-      rescue IO::WaitReadable, Errno::EAGAIN
-        true
       rescue SystemCallError, EOFError, IOError
         false
       end

@@ -2,6 +2,8 @@
 
 :root {
   --c-text: oklch(86% 0.02 80);
+  --x-text: #e7e9ea;
+  --x-font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --c-accent: oklch(86% 0.08 88);
   --c-danger: oklch(62% 0.18 28);
   --c-code: oklch(74% 0.11 255);
@@ -53,7 +55,7 @@ body.face-loading {
 }
 
 body.font-mono {
-  font-family: "JetBrains Mono","Cascadia Code","Fira Code",ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,monospace;
+  font-family: var(--x-font-mono);
 }
 
 body[data-high-contrast="1"] {

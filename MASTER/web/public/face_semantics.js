@@ -3,15 +3,34 @@ const VERTICAL_HINT = (document.documentElement.dataset.appHint || window.MASTER
 const VERTICAL_BIAS = window.MASTER_RUNTIME?.vertical_timbre?.[VERTICAL_HINT]
   || window.MASTER_RUNTIME?.vertical_timbre?.default
   || {};
+const State = F_FACE_SEM.State || window.State;
+const mouthPool = F_FACE_SEM.mouthPool || window.mouthPool;
+const eyePool = F_FACE_SEM.eyePool || window.eyePool;
+const renderer = F_FACE_SEM.renderer || window.renderer;
+const cv = F_FACE_SEM.cv || document.getElementById('face');
+const faceHome = F_FACE_SEM.faceHome || window.faceHome;
+const faceScatter = F_FACE_SEM.faceScatter || window.faceScatter;
+const faceSeeds = F_FACE_SEM.faceSeeds || window.faceSeeds;
+const FACE_N_2D = F_FACE_SEM.FACE_N_2D || window.FACE_N_2D;
+const markFaceReady = F_FACE_SEM.markFaceReady || window.markFaceReady;
+const resize = F_FACE_SEM.resize || window.resize;
+const frame = F_FACE_SEM.frame || window.frame;
+const _dbgEl = F_FACE_SEM.dbgEl || document.getElementById('_dbg');
+const rootBody = document.body;
+const MASTER_FACE_BLEND = window.MASTER_FACE_BLEND;
+const FACE3D_ACTIVE = !!window.Face3DPreview;
+function mouthCells() { return mouthPool && mouthPool["cells"]; }
+function eyeCells() { return eyePool && eyePool["cells"]; }
+
 function applyVerticalTimbre() {
   if (!VERTICAL_BIAS || !window.ParticleKernel) return;
   const K = window.ParticleKernel;
   if (mouthPool) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
-      if (VERTICAL_BIAS.arousal != null) mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + VERTICAL_BIAS.arousal * 0.08);
-      if (VERTICAL_BIAS.pressure != null) mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + K.FIELD.pressure] || 0) + VERTICAL_BIAS.pressure * 0.06);
-      if (VERTICAL_BIAS.valence != null) mouthPool.cells[b + K.FIELD.valence] = (mouthPool.cells[b + K.FIELD.valence] || 0) + VERTICAL_BIAS.valence * 0.05;
+      if (VERTICAL_BIAS.arousal != null) mouthCells()[b + K.FIELD.arousal] = Math.min(1, (mouthCells()[b + K.FIELD.arousal] || 0.4) + VERTICAL_BIAS.arousal * 0.08);
+      if (VERTICAL_BIAS.pressure != null) mouthCells()[b + K.FIELD.pressure] = Math.min(1, (mouthCells()[b + K.FIELD.pressure] || 0) + VERTICAL_BIAS.pressure * 0.06);
+      if (VERTICAL_BIAS.valence != null) mouthCells()[b + K.FIELD.valence] = (mouthCells()[b + K.FIELD.valence] || 0) + VERTICAL_BIAS.valence * 0.05;
     }
   }
   if (VERTICAL_BIAS.scanline != null && F_FACE_SEM.faceMat?.uniforms?.uScanline) {
@@ -29,12 +48,12 @@ function crossPoolInfluence() {
   let mouthArousal = 0, eyeAttn = 0, mn = 0, en = 0;
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    mouthArousal += mouthPool.cells[b + K.FIELD.arousal];
+    mouthArousal += mouthCells()[b + K.FIELD.arousal];
     mn++;
   }
   for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    eyeAttn += eyePool.cells[b + K.FIELD.attention];
+    eyeAttn += eyeCells()[b + K.FIELD.attention];
     en++;
   }
   if (!mn || !en) return;
@@ -43,28 +62,14 @@ function crossPoolInfluence() {
   const targetE = eyeAttn / en;
   for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    eyePool.cells[b + K.FIELD.arousal] = Math.min(1, (eyePool.cells[b + K.FIELD.arousal] || 0) * (1 - share) + targetA * share);
+    eyeCells()[b + K.FIELD.arousal] = Math.min(1, (eyeCells()[b + K.FIELD.arousal] || 0) * (1 - share) + targetA * share);
   }
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    mouthPool.cells[b + K.FIELD.attention] = Math.min(1, (mouthPool.cells[b + K.FIELD.attention] || 0) * (1 - share) + targetE * share);
+    mouthCells()[b + K.FIELD.attention] = Math.min(1, (mouthCells()[b + K.FIELD.attention] || 0) * (1 - share) + targetE * share);
   }
 }
 setInterval(crossPoolInfluence, 480);
-const State = F_FACE_SEM.State || window.State;
-const mouthPool = F_FACE_SEM.mouthPool || window.mouthPool;
-const eyePool = F_FACE_SEM.eyePool || window.eyePool;
-const renderer = F_FACE_SEM.renderer || window.renderer;
-const cv = F_FACE_SEM.cv || document.getElementById('face');
-const faceHome = F_FACE_SEM.faceHome || window.faceHome;
-const faceScatter = F_FACE_SEM.faceScatter || window.faceScatter;
-const faceSeeds = F_FACE_SEM.faceSeeds || window.faceSeeds;
-const FACE_N_2D = F_FACE_SEM.FACE_N_2D || window.FACE_N_2D;
-const markFaceReady = F_FACE_SEM.markFaceReady || window.markFaceReady;
-const resize = F_FACE_SEM.resize || window.resize;
-const frame = F_FACE_SEM.frame || window.frame;
-const _dbgEl = F_FACE_SEM.dbgEl || document.getElementById('_dbg');
-
 // Semantic reaction — now primarily driven by server Expression payloads
 // (from lib/voice/expression.rb) with lightweight event-specific overrides.
 // This structure makes the remaining 50+ ideas from runtime_ui_direction.md
@@ -76,7 +81,7 @@ function boostEyePool(delta, field = 'attention') {
   const key = K.FIELD[field] ?? K.FIELD.attention;
   for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    eyePool.cells[b + key] = Math.min(1, (eyePool.cells[b + key] || 0.5) + delta);
+    eyeCells()[b + key] = Math.min(1, (eyeCells()[b + key] || 0.5) + delta);
   }
 }
 
@@ -101,8 +106,8 @@ window.addEventListener('master:pressure', (ev) => {
   const grav = typeof d.gravity === 'number' ? Math.min(0.4, d.gravity) : 0;
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, push + turb);
-    if (grav > 0) mouthPool.cells[b + K.FIELD.valence] = Math.max(-0.2, (mouthPool.cells[b + K.FIELD.valence] || 0) - grav * 0.12);
+    mouthCells()[b + K.FIELD.pressure] = Math.min(1, push + turb);
+    if (grav > 0) mouthCells()[b + K.FIELD.valence] = Math.max(-0.2, (mouthCells()[b + K.FIELD.valence] || 0) - grav * 0.12);
   }
 });
 
@@ -119,7 +124,7 @@ function dropMouthConfidence(drop) {
   for (let i = 0; i < mouthPool.count && dropped < n; i++) {
     if (!mouthPool.alive[i]) continue;
     const b = i * K.FIELDS_PER_CELL;
-    mouthPool.cells[b + K.FIELD.confidence] = Math.max(0.15, (mouthPool.cells[b + K.FIELD.confidence] || 0.8) - drop);
+    mouthCells()[b + K.FIELD.confidence] = Math.max(0.15, (mouthCells()[b + K.FIELD.confidence] || 0.8) - drop);
     dropped++;
   }
 }
@@ -193,8 +198,8 @@ window.addEventListener('master:visual', (ev) => {
     const bump = 0.12 + (d.confidence ?? payloadConfidence(d) ?? 0.7) * 0.18;
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
-      mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.3) + bump);
-      mouthPool.cells[b + K.FIELD.pressure] = Math.min(1, (mouthPool.cells[b + K.FIELD.pressure] || 0) + bump * 0.45);
+      mouthCells()[b + K.FIELD.arousal] = Math.min(1, (mouthCells()[b + K.FIELD.arousal] || 0.3) + bump);
+      mouthCells()[b + K.FIELD.pressure] = Math.min(1, (mouthCells()[b + K.FIELD.pressure] || 0) + bump * 0.45);
     }
     State.pulse = Math.max(State.pulse || 0, 0.28);
   }
@@ -212,14 +217,14 @@ window.addEventListener('master:visual', (ev) => {
   if (mouthPool && K) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
-      if (/speaking|tts/.test(name)) mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.3) + 0.2);
-      if (d.expression?.arousal != null) mouthPool.cells[b + K.FIELD.arousal] = d.expression.arousal;
+      if (/speaking|tts/.test(name)) mouthCells()[b + K.FIELD.arousal] = Math.min(1, (mouthCells()[b + K.FIELD.arousal] || 0.3) + 0.2);
+      if (d.expression?.arousal != null) mouthCells()[b + K.FIELD.arousal] = d.expression.arousal;
     }
   }
   if (eyePool && K && /council:deliberation|council:start|error|veto/.test(name)) {
     for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
-      eyePool.cells[b + K.FIELD.confidence] = Math.max(0.25, (eyePool.cells[b + K.FIELD.confidence] || 0.9) - 0.18);
+      eyeCells()[b + K.FIELD.confidence] = Math.max(0.25, (eyeCells()[b + K.FIELD.confidence] || 0.9) - 0.18);
     }
   }
   if (!mouthPool || !eyePool) return;
@@ -235,7 +240,7 @@ window.addEventListener('master:visual', (ev) => {
   if ((d.entropy || 0) > 0.6 || d.mode === 'veto' || /veto|error|failure/.test(d.name || '')) {
     for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
       const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] || 0.9) - (ex.eye_confidence_drop || 0.3));
+      eyeCells()[b + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyeCells()[b + window.ParticleKernel.FIELD.confidence] || 0.9) - (ex.eye_confidence_drop || 0.3));
     }
   }
 
@@ -246,11 +251,11 @@ window.addEventListener('master:visual', (ev) => {
 
     if (mouthPool) for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
+      mouthCells()[b + window.ParticleKernel.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
       if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
 
       const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
-      if (Math.abs(pitch) > 20) eyePool && eyePool.alive && (eyePool.cells[b + window.ParticleKernel.FIELD.confidence] = 0.6);
+      if (Math.abs(pitch) > 20) eyePool && eyePool.alive && (eyeCells()[b + window.ParticleKernel.FIELD.confidence] = 0.6);
     }
 
     if (hi) State.creativeBleed = (State.creativeBleed || 0) + 0.9;
@@ -259,7 +264,7 @@ window.addEventListener('master:visual', (ev) => {
   if (/council:deliberation|council:start/i.test(d.name || '')) {
     const cDrop  = ex.eye_confidence_drop || 0.25;
     if (eyePool) for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i])
-      eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyePool.cells[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9) - cDrop);
+      eyeCells()[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyeCells()[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9) - cDrop);
   }
 
   if (/input:long|cmd:long/i.test(d.name || '')) {
@@ -269,8 +274,8 @@ window.addEventListener('master:visual', (ev) => {
   if (ex && (ex.arousal != null || ex.valence != null || ex.attention != null)) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      if (ex.arousal != null) mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = smoothExpressionValue('arousal', ex.arousal);
-      if (ex.valence != null) mouthPool.cells[b + window.ParticleKernel.FIELD.valence] = smoothExpressionValue('valence', ex.valence);
+      if (ex.arousal != null) mouthCells()[b + window.ParticleKernel.FIELD.arousal] = smoothExpressionValue('arousal', ex.arousal);
+      if (ex.valence != null) mouthCells()[b + window.ParticleKernel.FIELD.valence] = smoothExpressionValue('valence', ex.valence);
     }
   }
 });
@@ -293,7 +298,7 @@ window.addEventListener('tts:anticipate', (ev) => {
   boostEyePool(0.15);
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-    mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] = Math.min(1.0, (mouthPool.cells[b + window.ParticleKernel.FIELD.arousal] || 0.6) + (ex.arousal || 0.25));
+    mouthCells()[b + window.ParticleKernel.FIELD.arousal] = Math.min(1.0, (mouthCells()[b + window.ParticleKernel.FIELD.arousal] || 0.6) + (ex.arousal || 0.25));
   }
   State.pulse = Math.max(State.pulse || 0, 0.35);
 });
@@ -312,8 +317,8 @@ window.addEventListener('tts:style:active', (ev) => {
     const lo = /whisper|ethereal|robotic|intimate/i.test(String(d.style || ''));
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
-      mouthPool.cells[b + K.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
-      if (ex.pressure != null) mouthPool.cells[b + K.FIELD.pressure] = ex.pressure;
+      mouthCells()[b + K.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
+      if (ex.pressure != null) mouthCells()[b + K.FIELD.pressure] = ex.pressure;
     }
     if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
   }
@@ -343,8 +348,8 @@ window.addEventListener('tts:playback:end', (ev) => {
   if (mouthPool && K) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
-      mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.12, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * decay);
-      mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.08, (mouthPool.cells[b + K.FIELD.pressure] || 0) * decay);
+      mouthCells()[b + K.FIELD.arousal] = Math.max(0.12, (mouthCells()[b + K.FIELD.arousal] || 0.5) * decay);
+      mouthCells()[b + K.FIELD.pressure] = Math.max(0.08, (mouthCells()[b + K.FIELD.pressure] || 0) * decay);
     }
   }
   State.pulse = Math.max(0, (State.pulse || 0) * decay);

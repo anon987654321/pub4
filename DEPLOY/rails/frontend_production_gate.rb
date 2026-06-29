@@ -4,6 +4,7 @@
 require "open3"
 require "rbconfig"
 require "yaml"
+require_relative "../utf8"
 
 ROOT = File.expand_path("../..", __dir__)
 
@@ -75,16 +76,16 @@ web_layout_files.each do |path|
 end
 
 chat_index = File.join(WEB_ROOT, "app/views/chat/index.html.erb")
-face_boot = File.join(WEB_ROOT, "app/views/shared/_face_boot.html.erb")
 if File.file?(chat_index)
   body = File.read(chat_index)
-  failures << "MASTER/web chat index: missing importmap" unless body.include?("importmap")
-  failures << "MASTER/web chat index: missing face boot partial" unless body.include?('render "shared/face_boot"')
-end
-if File.file?(face_boot)
-  boot_body = File.read(face_boot)
-  failures << "MASTER/web face boot: missing 60s watchdog" unless boot_body.include?("60000")
-  failures << "MASTER/web face boot: missing error-live wiring" unless boot_body.include?("error-live")
+  failures << "MASTER/web chat index: missing face asset path map" unless body.include?("MASTER_ASSET_PATHS")
+  failures << "MASTER/web chat index: missing lazy face import" unless body.include?('import("<%= asset_path("face.js") %>")')
+  failures << "MASTER/web chat index: missing primer dismissal" unless body.include?("dismissPrimer")
+  failures << "MASTER/web chat index: missing prompt reveal" unless body.include?("revealPrompt")
+  failures << "MASTER/web chat index: missing error-live wiring" unless body.include?("error-live")
+  failures << "MASTER/web chat index: missing face boot watchdog" unless body.include?("fallback=setTimeout")
+else
+  failures << "MASTER/web: missing chat index"
 end
 
 face_runtime = File.join(WEB_ROOT, "public/face.runtime.js")

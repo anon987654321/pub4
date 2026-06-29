@@ -50,9 +50,9 @@ module Master
       end
 
       def brief(name)
-        p = fetch(name)
-        parts = ["#{name}: #{p[:philosophy]}", "layout=#{p[:layout].join(', ')}",
-          "avoid=#{p[:avoid].join(', ')}", "metrics=#{p[:metrics]}"]
+        profile = fetch(name)
+        parts = ["#{name}: #{profile[:philosophy]}", "layout=#{profile[:layout].join(', ')}",
+          "avoid=#{profile[:avoid].join(', ')}", "metrics=#{profile[:metrics]}"]
         parts.join("; ")
       end
 

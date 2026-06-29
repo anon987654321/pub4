@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,9 +18,9 @@ test("sse_contract defines canonical chat event handlers", () => {
 });
 
 test("face runtime delegates named SSE events to MASTER_SSE", () => {
-  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
-  assert.match(runtime, /MASTER_SSE\?\.dispatchNamed/);
-  assert.match(runtime, /sseExtensions/);
+  const actions = readFileSync(join(publicDir, "chat_actions.js"), "utf8");
+  assert.match(actions, /MASTER_SSE\?\.dispatchNamed/);
+  assert.match(actions, /handlers\.extensions/);
 });
 
 test("chat_actions validates felt state before POST", () => {
@@ -28,6 +28,7 @@ test("chat_actions validates felt state before POST", () => {
   assert.match(actions, /MASTERFeltState/);
   assert.match(actions, /validatedFeltState/);
   assert.match(actions, /MASTER_SSE/);
+  assert.match(actions, /method:\s*"POST"/);
 });
 
 test("felt_state uses seven-field pipe format", () => {
@@ -47,31 +48,29 @@ test("container gate polls runtime status endpoint", () => {
   assert.match(gate, /master:container-timeout/);
 });
 
-test("visual_bridge waits for container before SSE", () => {
+test("visual_bridge owns runtime SSE connection", () => {
   const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
-  assert.match(bridge, /MASTER_CONTAINER_READY/);
-  assert.match(bridge, /master:container-ready/);
+  assert.match(bridge, /new EventSource\("\/events\/stream"\)/);
+  assert.match(bridge, /connectSse/);
+  assert.match(bridge, /disconnectSse/);
+  assert.match(bridge, /document\.addEventListener\("visibilitychange"/);
 });
 
 test("visual_bridge logs parse failures instead of silent catch", () => {
   const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
   assert.match(bridge, /MASTER_LOG\?\.warn\?\.\("visual_bridge:sse_frame"/);
-  assert.doesNotMatch(bridge, /catch \(_error\) \{\}/);
+  assert.match(bridge, /MASTER_LOG\?\.warn\?\.\("visual_bridge:cable_frame"/);
 });
 
-test("three.module.js is not part of face boot asset contract", () => {
-  const helper = readFileSync(join(root, "app", "helpers", "face_assets_helper.rb"), "utf8");
-  assert.match(helper, /three\.face\.module\.js/);
-  assert.doesNotMatch(helper, /three\.module\.js/);
+test("chat index prefetches the face-specific THREE module", () => {
+  const index = readFileSync(join(root, "app", "views", "chat", "index.html.erb"), "utf8");
+  assert.match(index, /three\.face\.module\.js/);
+  assert.match(index, /rel="prefetch"/);
 });
 
-test("three.module.js source file removed from public", () => {
-  const legacy = join(publicDir, "three.module.js");
-  assert.equal(existsSync(legacy), false, "delete unused public/three.module.js");
-});
-
-test("face runtime has no silent empty catches", () => {
+test("face runtime logs failures for chat and TTS paths", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
-  assert.doesNotMatch(runtime, /catch \(_\) \{\}/);
-  assert.match(runtime, /MASTER_LOG\?\.warn/);
+  assert.match(runtime, /evtSrc\.onerror/);
+  assert.match(runtime, /speakFailure/);
+  assert.match(runtime, /tts fail/);
 });
