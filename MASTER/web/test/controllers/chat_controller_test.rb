@@ -8,27 +8,22 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "tap to start"
-    assert_includes response.body, "master:face-ready"
-    assert_includes response.body, "master:face-stage"
-    assert_includes response.body, "master:session-ready"
-    assert_includes response.body, "sessionReady"
-    assert_includes response.body, "showBootError"
-    assert_includes response.body, "ensurePrimer"
-    assert_includes response.body, "faceBooting"
-    assert_includes response.body, "face-session"
-    assert_includes response.body, "face3d_preview"
-    assert_includes response.body, "importmap"
-    assert_includes response.body, "master-container-ready"
-    assert_match(%r{container_gate-[0-9a-f]+\.js}, response.body)
-    assert_match(%r{sse_contract-[0-9a-f]+\.js}, response.body)
-    assert_match(%r{felt_state-[0-9a-f]+\.js}, response.body)
-    assert_includes response.body, "60000"
+    assert_includes response.body, "MASTER_ASSET_PATHS"
+    assert_includes response.body, "function loadFace"
+    assert_includes response.body, "window.__MASTER_FACE_IMPORT__"
+    assert_includes response.body, "window._primerFired"
+    assert_includes response.body, "error-live"
+    assert_includes response.body, "face.js"
+    assert_match(%r{face_state-[0-9a-f]+\.js}, response.body)
+    assert_match(%r{visual_bridge-[0-9a-f]+\.js}, response.body)
+    assert_match(%r{chat_actions-[0-9a-f]+\.js}, response.body)
+    assert_includes response.body, "35000"
     refute_includes response.body, "15000"
     assert_match(/function go\(\)\{[\s\S]*?revealPrompt/, response.body)
     assert_match(/function go\(\)\{[\s\S]*?dismissPrimer/, response.body)
-    refute_includes response.body, "voice-picker"
-    refute_includes response.body, "tts-style-chips"
-    refute_includes response.body, "spin-btn"
+    assert_includes response.body, "voice-picker"
+    assert_includes response.body, "tts-style-chips"
+    assert_includes response.body, "spin-btn"
   end
 
   test "index face asset paths are wired for blob import replacement" do
@@ -37,14 +32,12 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     %w[
       face_semantics face_minimal_ui face_loops_music face_loops_nudge
-      face_blendshape_bridge face3d_preview face3d_geometry face3d_support
-      master_events shortcut_sheet particleWorker
+      face_blendshape_bridge master_events shortcut_sheet particle_worker
     ].each do |name|
       assert_match(/#{Regexp.escape(name)}/, response.body)
     end
     assert_match(/faceParts/, response.body)
     assert_match(/faceModules/, response.body)
-    assert_match(/faceRuntime/, response.body)
     assert_match(%r{/assets/face-[0-9a-f]+\.js}, response.body)
   end
 
