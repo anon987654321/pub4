@@ -63,8 +63,19 @@ module Master
         end
 
         def apply_transforms(src, transforms)
-          transforms.reduce(src) { |current, transform| send(transform, current) }
+          transforms.reduce(src) do |current, transform|
+            transform_labels = @transforms.dup
+            candidate = send(transform, current)
+            next candidate unless ruby? && candidate != current && parses?(current) && !parses?(candidate)
+
+            # Transform turned valid Ruby into unparseable Ruby — a line-heuristic misfire on a
+            # multi-line construct. Discard it (and any label it recorded); keep the prior source.
+            @transforms.replace(transform_labels)
+            current
+          end
         end
+
+        def parses?(src) = !Prism.parse(src).failure?
 
         def publish_and_write(out)
           write_back(out)
