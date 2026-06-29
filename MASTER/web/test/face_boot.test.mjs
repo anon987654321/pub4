@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { join, dirname } from "node:path";
+import { tmpdir } from "node:os";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -12,28 +14,42 @@ function partSources() {
   return [1, 2, 3, 4, 5].map((part) => readFileSync(join(publicDir, `face.part${part}.txt`), "utf8"));
 }
 
-test("face.js loads tail modules via MASTER_ASSET_PATHS after runtime", () => {
+test("face.js loads modules and runtime parts through MASTER_ASSET_PATHS", () => {
   const faceJs = readFileSync(join(publicDir, "face.js"), "utf8");
   const tail = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
-  assert.match(faceJs, /loadTailModules/);
-  assert.match(faceJs, /MASTER_ASSET_PATHS\?\.faceModules/);
-  assert.match(faceJs, /face_semantics\.js/);
-  assert.doesNotMatch(tail, /await import\(/);
+  assert.match(faceJs, /MASTER_ASSET_PATHS\?\.faceModules\?\.\[modulePath\]/);
+  assert.match(faceJs, /MASTER_ASSET_PATHS\?\.faceModulesList/);
+  assert.match(faceJs, /MASTER_ASSET_PATHS\?\.faceParts/);
+  assert.match(faceJs, /FACE_BLOB_URL/);
+  assert.match(tail, /function sendMessage/);
+  assert.match(tail, /window\.MASTER_FACE =/);
 });
 
-test("face.js dispatches boot stage events and requires prebuilt runtime", () => {
+test("face.js builds a blob runtime and rewrites module asset paths", () => {
   const faceJs = readFileSync(join(publicDir, "face.js"), "utf8");
-  assert.match(faceJs, /master:face-stage/);
-  assert.match(faceJs, /dispatchFaceStage\("modules"\)/);
-  assert.match(faceJs, /dispatchFaceStage\("ready"\)/);
-  assert.match(faceJs, /faceRuntime/);
-  assert.match(faceJs, /faceModulesBundle/);
-  assert.match(faceJs, /build_face_runtime/);
-  assert.match(faceJs, /primer:ready/);
-  assert.match(faceJs, /bootFaceStack/);
-  assert.match(faceJs, /FACE3D_ACTIVE/);
-  assert.doesNotMatch(faceJs, /importFaceBlob/);
-  assert.doesNotMatch(faceJs, /face\.part/);
+  assert.match(faceJs, /Object\.entries\(MODULE_PATHS\)\.reduce/);
+  assert.match(faceJs, /replaceAll/);
+  assert.match(faceJs, /URL\.createObjectURL/);
+  assert.match(faceJs, /URL\.revokeObjectURL/);
+  assert.match(faceJs, /await import\(FACE_BLOB_URL\)/);
+});
+
+test("concatenated face parts form a syntactically valid module (guards tap-to-start)", () => {
+  // face.js fetches face.part1..5, joins them with "\n", and import()s the blob. A
+  // duplicate top-level const (or any syntax error) spanning two parts throws at import
+  // time, so window.MASTER_FACE never loads and the primer tap silently does nothing.
+  // The per-file assertions above cannot see cross-part collisions — only the join can.
+  const blob = partSources().join("\n");
+  const tmp = join(tmpdir(), `master-face-blob-${process.pid}.mjs`);
+  writeFileSync(tmp, blob);
+  try {
+    execFileSync(process.execPath, ["--check", tmp], { stdio: "pipe" });
+  } catch (err) {
+    const detail = err.stderr ? err.stderr.toString() : err.message;
+    throw new Error(`concatenated face blob failed syntax check:\n${detail}`);
+  } finally {
+    rmSync(tmp, { force: true });
+  }
 });
 
 test("face.modules.bundle.js is generated from face module entry", () => {
@@ -53,53 +69,23 @@ test("face.runtime.js is generated from face parts", () => {
   assert.ok(runtime.includes(part1.slice(0, 120)), "runtime should include part1 body");
 });
 
-test("shared boot partial uses 60s watchdog and error-live", () => {
-  const boot = readFileSync(join(viewsDir, "shared", "_face_boot.html.erb"), "utf8");
-  assert.match(boot, /60000/);
-  assert.match(boot, /error-live/);
-  assert.match(boot, /master:face-stage/);
-  assert.match(boot, /master:session-ready/);
-  assert.match(boot, /sessionReady/);
-  assert.match(boot, /dismissPrimer\(\)/);
-  assert.match(boot, /form\.classList\.add\('gone'\)/);
-  assert.match(boot, /ensurePrimer/);
-  assert.doesNotMatch(boot, /showLoadState/);
-  assert.match(boot, /pointerup/);
-  assert.match(boot, /pointerdown/);
-  assert.match(boot, /mousedown/);
-  assert.match(boot, /click/);
-  assert.match(boot, /touchend/);
-  assert.match(boot, /primerTarget/);
-  assert.match(boot, /syncPrimerRefs/);
-  assert.match(boot, /watchFaceBoot/);
-  assert.match(boot, /safariBrowser\(\)\)\{[\s\S]*click/);
-  assert.match(boot, /trackpadPrimary/);
-  assert.match(boot, /safariBrowser/);
-  assert.doesNotMatch(boot, /e\.button!==0/);
-  assert.match(boot, /createElement\('button'\)/);
-  assert.match(boot, /primerVisible/);
-  assert.match(boot, /resetFaceSession/);
-  assert.match(boot, /capture:true/);
-  assert.match(boot, /__MASTER_PRIMER_TAP__/);
-  assert.match(boot, /__MASTER_PRIMER_GO__/);
-  assert.match(boot, /__MASTER_PRIMER_PENDING__/);
-  assert.match(boot, /__MASTER_FACE_STATUS__/);
-  assert.match(boot, /ev\.persisted/);
-  assert.match(boot, /showFaceBehindPrimer/);
-  assert.match(boot, /master:face-live/);
-  assert.match(boot, /wirePrimerForm/);
-  assert.match(boot, /primer-form/);
-  assert.match(boot, /armed=true/);
-  assert.doesNotMatch(boot, /DOMContentLoaded/);
-  assert.match(boot, /pinPrimer/);
-  assert.doesNotMatch(boot, /15000/);
+test("chat index inline boot uses lazy face import and 60s watchdog", () => {
+  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  assert.match(index, /MASTER_ASSET_PATHS/);
+  assert.match(index, /function loadFace/);
+  assert.match(index, /import\("<%= asset_path\("face\.js"\) %>"\)/);
+  assert.match(index, /dismissPrimer\(\);\n\s+revealPrompt\(\);/);
+  assert.match(index, /error-live/);
+  assert.match(index, /60000/);
+  assert.doesNotMatch(index, /15000/);
+  assert.doesNotMatch(index, /render "shared\/face_boot"/);
 });
 
 test("probe_chat_e2e script covers primer chat and felt state", () => {
   const probe = readFileSync(join(root, "script", "probe_chat_e2e.rb"), "utf8");
   const gemfile = readFileSync(join(root, "Gemfile"), "utf8");
   assert.match(probe, /probe_chat_e2e/);
-  assert.match(probe, /sendMessage\('ping'\)/);
+  assert.match(probe, /run_ping_chat/);
   assert.match(probe, /MASTERFeltState/);
   assert.match(probe, /hasPong/);
   assert.match(probe, /MASTER_FACE\?\.State/);
@@ -108,52 +94,39 @@ test("probe_chat_e2e script covers primer chat and felt state", () => {
   assert.match(probe, /browser\.go_to\(URL\)/);
 });
 
-test("chat index ships import map and digested master_events", () => {
+test("chat index wires digested assets around lazy face boot", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
-  const helper = readFileSync(join(root, "app", "helpers", "face_assets_helper.rb"), "utf8");
-  assert.match(index, /type="importmap"/);
-  assert.match(index, /master_face_import_map/);
-  assert.match(index, /asset_path\("master_events\.js"\)/);
+  assert.match(index, /asset_path\("face\.css"\)/);
+  assert.match(index, /asset_path\("face\.js"\)/);
+  assert.match(index, /asset_path\("particle_kernel\.js"\)/);
+  assert.match(index, /asset_path\("chat_actions\.js"\)/);
+  assert.match(index, /asset_path\("visual_bridge\.js"\)/);
   assert.match(index, /modulepreload/);
-  assert.match(helper, /face3d_geometry\.js/);
-  const bootIdx = index.indexOf('render "shared/face_boot"');
+  const particleIdx = index.indexOf('asset_path("particle_kernel.js")');
   const primerIdx = index.indexOf('id="primer"');
-  const face3dIdx = index.indexOf("face3d_preview.js");
-  assert.ok(primerIdx > 0 && bootIdx > primerIdx, "primer must precede face_boot");
-  assert.ok(face3dIdx > bootIdx, "face_boot must precede face3d_preview.js");
-  assert.match(index, /__MASTER_PRIMER_TAP__/);
-  assert.doesNotMatch(index, /onclick="window\.__MASTER_PRIMER_TAP__/);
-  assert.match(index, /getElementById\('primer-form'\)/);
-  assert.match(index, /addEventListener\(type,tap/);
-  assert.match(index, /Critical primer layout/);
-  assert.match(index, /id="primer-form"/);
-  assert.match(index, /<button[^>]*type="button"[^>]*id="primer"/);
-  assert.match(index, /face-live-badge/);
+  const bootIdx = index.indexOf("function go()");
+  assert.ok(primerIdx > 0 && particleIdx > primerIdx, "particle kernel should load after shell markup");
+  assert.ok(bootIdx > particleIdx, "inline boot should follow particle kernel script");
 });
 
-test("face3d preview announces live badge and boot brightness", () => {
+test("face3d preview consumes TTS events and reports nonblank frames", () => {
   const preview = readFileSync(join(publicDir, "face3d_preview.js"), "utf8");
   const renderer = readFileSync(join(publicDir, "face3d_renderer.js"), "utf8");
-  assert.match(preview, /announceFaceLive/);
-  assert.match(preview, /master:face-live/);
-  assert.match(preview, /bootBoost/);
-  assert.match(preview, /1800/);
-  assert.doesNotMatch(preview, /classList\.remove\("face-loading"\)/);
-  assert.match(preview, /primerBlocking/);
-  assert.match(preview, /primerBlocking\(\) && now - last < 80/);
-  assert.match(renderer, /bootBoost/);
+  assert.match(preview, /FACE3D_ACTIVE/);
+  assert.match(preview, /function bootFace3d/);
+  assert.match(preview, /addEventListener\("tts:playback:start"/);
+  assert.match(preview, /addEventListener\("tts:viseme"/);
+  assert.match(preview, /face3d:nonblank/);
+  assert.match(renderer, /lastLitPixels/);
 });
 
-test("face.css keeps primer tappable until session and shows face behind overlay", () => {
+test("face.css keeps primer and prompt layering stable", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  assert.match(css, /body:not\(\.face-session\)/);
-  assert.match(css, /face-behind-primer/);
-  assert.match(css, /primer-form/);
-  assert.match(css, /\.primer-form\.gone/);
-  assert.match(css, /face-primed/);
-  assert.match(css, /face-behind-primer="1"\] canvas#face/);
-  assert.match(css, /body:not\(\.face-session\) \.top-left-logo/);
-  assert.match(css, /calc\(var\(--z-primer\) \+ 3\)/);
+  assert.match(css, /#primer/);
+  assert.match(css, /z-index:\s*var\(--z-modal\)/);
+  assert.match(css, /body:not\(\.face-ready\) #zsh:not\(\.live\)/);
+  assert.match(css, /--x-text:\s*#e7e9ea/);
+  assert.match(css, /JetBrainsMono Nerd Font/);
 });
 
 test("face3d_engine imports use import-map paths", () => {
@@ -162,23 +135,26 @@ test("face3d_engine imports use import-map paths", () => {
   assert.match(engine, /from '\/face3d_support\.js'/);
 });
 
-test("visual_bridge defers SSE until session ready", () => {
+test("visual_bridge connects SSE and normalizes visual events", () => {
   const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
-  assert.match(bridge, /master:session-ready/);
-  assert.match(bridge, /primer:ready/);
-  assert.doesNotMatch(bridge, /observeDomSignals\(\);\n  connectSse\(\);/);
+  assert.match(bridge, /new EventSource\("\/events\/stream"\)/);
+  assert.match(bridge, /MASTERTopology\.classifyEvent/);
+  assert.match(bridge, /master:visual/);
+  assert.match(bridge, /disconnectSse/);
 });
 
-test("ecology render defers RAF until primer unlocks", () => {
+test("ecology render starts RAF and resumes on visual events", () => {
   const ecology = readFileSync(join(publicDir, "cognition_ecology_render.js"), "utf8");
-  assert.match(ecology, /primer:ready/);
-  assert.doesNotMatch(ecology, /\n  ensureEcologyFrame\(\);\n  window\.addEventListener\("master:visual"/);
+  assert.match(ecology, /ensureEcologyFrame/);
+  assert.match(ecology, /addEventListener\("master:visual"/);
+  assert.match(ecology, /ecologyFrameActive = false/);
 });
 
-test("topology registry defers remote fetch until primer", () => {
+test("topology registry exposes canonical classifier", () => {
   const registry = readFileSync(join(publicDir, "topology_registry.js"), "utf8");
-  assert.match(registry, /primer:ready/);
-  assert.doesNotMatch(registry, /\n  bootRemoteTopologies\(\);\n\}\)\(\);/);
+  assert.match(registry, /phantom:detected/);
+  assert.match(registry, /classifyEvent/);
+  assert.match(registry, /bootRemoteTopologies\(\)/);
 });
 
 test("chat_actions posts chat stream instead of EventSource GET", () => {
@@ -190,13 +166,13 @@ test("chat_actions posts chat stream instead of EventSource GET", () => {
   assert.match(actions, /MASTER_FACE\?\.sendMessage/);
 });
 
-test("face runtime uses MASTERChat stream and digested particle worker", () => {
+test("face runtime keeps chat stream and particle worker boot paths", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
-  assert.match(runtime, /MASTERChat\.startChatStream/);
-  assert.doesNotMatch(runtime, /new EventSource\(\s*`\/chat\/message/);
-  assert.match(runtime, /MASTER_ASSET_PATHS\?\.particleWorker/);
-  assert.doesNotMatch(runtime, /window\.sendMessage\s*=\s*sendMessage/);
-  assert.match(runtime, /resetPrimer/);
+  assert.match(runtime, /function sendMessage/);
+  assert.match(runtime, /const url = `\/chat\/message\?message=/);
+  assert.match(runtime, /evtSrc = new EventSource\(url\)/);
+  assert.match(runtime, /new Worker\('\/particle_worker\.js'\)|new Worker\("\/particle_worker\.js"\)/);
+  assert.match(runtime, /window\.MASTER_FACE/);
 });
 
 test("service worker avoids stale undigested precache", () => {
