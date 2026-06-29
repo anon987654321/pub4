@@ -573,7 +573,7 @@ prediction_engine:
     autofix: extract_method
 learned_smells:
 - id: bare_rescue
-  pattern: "^\\s*rescue\\b"
+  pattern: "^\\s*rescue\\s*(?:=>|;|$)"
   confidence: 0.98
   autofix: rescue_standard_error
 - id: frozen_string
