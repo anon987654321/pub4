@@ -396,6 +396,22 @@
     });
   }
 
+  // Honour the deferred-boot contract: nothing heavy (THREE.js, the face3d WebGL
+  // preview, the cluster miner) may load at page load — only after the primer tap.
+  // Eager boot here wedged the main thread before the tap could register (dead "tap
+  // to start"). _primerFired is the cross-module flag the inline boot sets in go().
+  function whenPrimed(run) {
+    if (window._primerFired) { run(); return; }
+    let done = false;
+    const fire = () => { if (done) return; done = true; clearInterval(poll); run(); };
+    const primer = document.getElementById("primer");
+    if (primer) {
+      ["pointerdown", "touchend", "click"].forEach(ev => primer.addEventListener(ev, fire, { once: true, passive: true }));
+    }
+    addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") fire(); }, { once: true });
+    const poll = setInterval(() => { if (window._primerFired) fire(); }, 200);
+  }
+
   function bootExperimentalVisuals() {
     const params = new URLSearchParams(window.location.search);
     const face3dOff = params.get("face3d") === "0" || localStorage.getItem("master_face3d") === "0";
@@ -435,6 +451,6 @@
   observeDomSignals();
   connectSse();
   bootEmotionalTimeline();
-  bootExperimentalVisuals();
+  whenPrimed(bootExperimentalVisuals);
   emitVisual("visual:ready", { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "ready" });
 })();
