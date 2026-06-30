@@ -178,11 +178,17 @@ module Master
         max_images = CharacterLoraDataset::RECOMMENDED_MAX
         min_images = CharacterLoraDataset::RECOMMENDED_MIN
         use_all_frames = false
+        curation_strategy = :ranked
+        max_per_source = nil
+        min_frame_gap = nil
         prepare_only = false
         local = false
         ai_toolkit_root = nil
         steps = CharacterLoraLocal::DEFAULT_STEPS
         rank = CharacterLoraLocal::DEFAULT_RANK
+        learning_rate = CharacterLoraLocal::DEFAULT_LR
+        caption_dropout_rate = CharacterLoraLocal::DEFAULT_CAPTION_DROPOUT
+        version = CharacterLoraLocal::DEFAULT_VERSION
         subject = "woman"
         exclude = []
         sources = []
@@ -199,11 +205,17 @@ module Master
           when "--max-images" then max_images = (tokens.shift || "18").to_i
           when "--min-images" then min_images = (tokens.shift || "12").to_i
           when "--use-all-frames" then use_all_frames = true
+          when "--curation" then curation_strategy = (tokens.shift || "ranked").to_sym
+          when "--max-per-source" then max_per_source = (tokens.shift || "0").to_i
+          when "--min-frame-gap" then min_frame_gap = (tokens.shift || "0").to_i
           when "--prepare-only" then prepare_only = true
           when "--local" then local = true
           when "--ai-toolkit" then ai_toolkit_root = tokens.shift
           when "--steps" then steps = (tokens.shift || "1000").to_i
           when "--rank" then rank = (tokens.shift || "16").to_i
+          when "--lr" then learning_rate = tokens.shift || CharacterLoraLocal::DEFAULT_LR
+          when "--caption-dropout" then caption_dropout_rate = (tokens.shift || CharacterLoraLocal::DEFAULT_CAPTION_DROPOUT).to_f
+          when "--version" then version = tokens.shift || CharacterLoraLocal::DEFAULT_VERSION
           when "--subject" then subject = tokens.shift
           when "--exclude" then exclude << tokens.shift
           else sources << token
@@ -224,11 +236,17 @@ module Master
           max_images: max_images,
           min_images: min_images,
           use_all_frames: use_all_frames,
+          curation_strategy: curation_strategy,
+          max_per_source: max_per_source,
+          min_frame_gap: min_frame_gap,
           prepare_only: prepare_only,
           local: local,
           ai_toolkit_root: ai_toolkit_root,
           steps: steps,
           rank: rank,
+          learning_rate: learning_rate,
+          caption_dropout_rate: caption_dropout_rate,
+          version: version,
           subject: subject,
           exclude: exclude.compact,
           sources: sources,
@@ -246,12 +264,18 @@ module Master
           max_images: parsed[:max_images],
           min_images: parsed[:min_images],
           use_all_frames: parsed[:use_all_frames],
+          curation_strategy: parsed[:curation_strategy],
+          max_per_source: parsed[:max_per_source],
+          min_frame_gap: parsed[:min_frame_gap],
           exclude: parsed[:exclude],
           prepare_only: parsed[:prepare_only],
           local: parsed[:local],
           ai_toolkit_root: parsed[:ai_toolkit_root],
           steps: parsed[:steps],
           rank: parsed[:rank],
+          learning_rate: parsed[:learning_rate],
+          caption_dropout_rate: parsed[:caption_dropout_rate],
+          version: parsed[:version],
           subject: parsed[:subject],
           root: root
         )
@@ -266,8 +290,9 @@ module Master
 
       def lora_train_usage
         "usage: lora-train --name ragnhild [--destination owner/model] [--trigger ragnhild] " \
-          "[--local] [--ai-toolkit ~/ai-toolkit] [--steps 1000] [--rank 16] [--subject woman] " \
-          "[--split-all] [--max-images 18] [--use-all-frames] [--frames-per-video N] " \
+          "[--local] [--ai-toolkit ~/ai-toolkit] [--steps 1000] [--rank 32] [--lr 1e-4] " \
+          "[--caption-dropout 0.05] [--version v2] [--subject woman] [--split-all] [--curation ranked|even] " \
+          "[--max-images 70] [--max-per-source N] [--min-frame-gap N] [--use-all-frames] [--frames-per-video N] " \
           "[--prepare-only] [--exclude path] <image-or-video> [...]"
       end
     end

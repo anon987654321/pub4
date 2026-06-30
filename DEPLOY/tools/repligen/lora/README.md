@@ -21,12 +21,26 @@ lora/<name>/
 # MASTER — refresh train/ from sources/
 cd MASTER
 bundle exec ruby bin/video lora-train --name ragnhild --local \
-  ../DEPLOY/repligen/lora/ragnhild/sources/*
+  ../DEPLOY/tools/repligen/lora/ragnhild/sources/*
 
 # Replicate
-ruby DEPLOY/repligen.rb lora_chaos \
-  DEPLOY/repligen/lora/ragnhild/train YOUR_USER/ragnhild ragnhild
+ruby DEPLOY/tools/repligen.rb lora_chaos \
+  DEPLOY/tools/repligen/lora/ragnhild/train YOUR_USER/ragnhild ragnhild
 
 # Local ai-toolkit
-sh DEPLOY/repligen/lora/ragnhild/config/run_local.sh
+sh DEPLOY/tools/repligen/lora/ragnhild/config/run_local.sh
+
+# Ragnhild v2 realism workflow
+make -C DEPLOY/tools/repligen/lora/ragnhild v2-prepare
+make -C DEPLOY/tools/repligen/lora/ragnhild v2-local
+make -C DEPLOY/tools/repligen/lora/ragnhild v2-video V2_VERSION=<replicate-version>
 ```
+
+## v2 realism defaults
+
+The current `bin/video lora-train` path defaults to ranked curation, descriptive
+caption sidecars, low-motion video-friendly prompts, and warnings for weak
+captioning, low-resolution frames, and oversized synthetic frame sets. For
+character likeness, start with `--max-images 35..70`, `--rank 32`, `--steps
+1500..2500`, `--max-per-source`, and `--min-frame-gap` rather than feeding every
+video frame into the trainer.

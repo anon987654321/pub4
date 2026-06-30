@@ -18,7 +18,7 @@ module Master
       module_function
 
       def training_dir(name, root: Master::ROOT)
-        Master.deploy_path("repligen", "lora", name.to_s)
+        Master.deploy_path("tools", "repligen", "lora", name.to_s)
       end
 
       def train_dir(name, root: Master::ROOT) = File.join(training_dir(name, root: root), "train")
@@ -38,6 +38,9 @@ module Master
         max_images: RECOMMENDED_MAX,
         min_images: RECOMMENDED_MIN,
         use_all_frames: false,
+        curation_strategy: :ranked,
+        max_per_source: nil,
+        min_frame_gap: nil,
         exclude: [],
         subject: "woman",
         root: Master::ROOT
@@ -68,11 +71,15 @@ module Master
           if video_path?(path)
             frame_dir = File.join(cache_dir(name, root: root), "frames", File.basename(path, ".*"))
             frames = extract_video_frames(path, frame_dir, split_videos: split_videos, frames_per_video: frames_per_video)
+            frames = apply_min_frame_gap(frames, min_frame_gap)
+            frames = cap_source_frames(frames, max_per_source)
             source_entries << {
               rel: rel_to(out_dir, path),
               type: "video",
               extracted_frames: frames.size,
               mode: video_split_mode(split_videos, frames_per_video),
+              max_per_source: max_per_source,
+              min_frame_gap: min_frame_gap,
             }
             pool.concat(frames)
           elsif image_path?(path)
@@ -85,8 +92,8 @@ module Master
 
         raise Error, "no images collected" if pool.empty?
 
-        curated = use_all_frames ? pool : curate_images(pool, min_images: min_images, max_images: max_images)
-        CharacterLoraLocal.prepare_dataset(curated, train, trigger_word: trigger_word)
+        curated = use_all_frames ? pool : curate_images(pool, min_images: min_images, max_images: max_images, strategy: curation_strategy)
+        CharacterLoraLocal.prepare_dataset(curated, train, trigger_word: trigger_word, subject: subject)
 
         meta = {
           name: name.to_s,
@@ -97,7 +104,9 @@ module Master
           sources: source_entries,
           extracted_images: pool.size,
           curated_images: curated.size,
-          curation: use_all_frames ? "all" : "even_sample",
+          curation: use_all_frames ? "all" : curation_strategy.to_s,
+          max_per_source: max_per_source,
+          min_frame_gap: min_frame_gap,
           created_at: Time.now.utc.iso8601,
         }
         File.write(File.join(out_dir, "meta.json"), JSON.pretty_generate(meta))
@@ -138,11 +147,16 @@ module Master
         "sample_8"
       end
 
-      def curate_images(images, min_images:, max_images:)
+      def curate_images(images, min_images:, max_images:, strategy: :ranked)
         unique = images.uniq { |path| File.expand_path(path) }
         return unique if unique.size <= max_images
 
-        evenly_sample(unique, max_images)
+        case strategy.to_s
+        when "ranked", "quality"
+          quality_sample(unique, max_images)
+        else
+          evenly_sample(unique, max_images)
+        end
       end
 
       def evenly_sample(images, count)
@@ -150,6 +164,58 @@ module Master
 
         step = images.size.to_f / count
         (0...count).map { |index| images[(index * step).floor] }.uniq
+      end
+
+      def quality_sample(images, count)
+        images
+          .sort_by { |path| [-quality_score(path), path.to_s] }
+          .first(count)
+          .sort
+      end
+
+      def quality_score(path)
+        score = 0
+        size = File.size?(path).to_i
+        score += [size / 10_000, 30].min
+        if (dims = CharacterLoraZip.image_dimensions(path))
+          width, height = dims
+          short_side = [width, height].min
+          long_side = [width, height].max
+          score += [short_side / 32, 40].min
+          ratio = long_side.to_f / short_side
+          score -= 20 if ratio > 2.2
+          score -= 12 if short_side < 512
+        end
+        base = File.basename(path)
+        score += 10 if base.include?("keyframe")
+        score -= 8 if base.match?(/frame_0*0{0,2}[0-3]\./)
+        score
+      rescue StandardError
+        0
+      end
+
+      def apply_min_frame_gap(frames, min_frame_gap)
+        gap = min_frame_gap.to_i
+        return frames if gap <= 1
+
+        last_index = nil
+        frames.select do |frame|
+          index = frame_index(frame)
+          keep = index.nil? || last_index.nil? || (index - last_index).abs >= gap
+          last_index = index if keep && index
+          keep
+        end
+      end
+
+      def cap_source_frames(frames, max_per_source)
+        cap = max_per_source.to_i
+        return frames if cap <= 0 || frames.size <= cap
+
+        evenly_sample(frames, cap)
+      end
+
+      def frame_index(path)
+        File.basename(path).match(/(?:frame|keyframe)_(\d+)/)&.[](1)&.to_i
       end
 
       def image_path?(path)

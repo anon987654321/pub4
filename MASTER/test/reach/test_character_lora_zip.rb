@@ -30,5 +30,18 @@ class TestCharacterLoraZip < Minitest::Test
     Master::Reach::CharacterLoraZip.zip(@tmpdir, zip_path, trigger_word: "zikigirl")
     assert File.exist?(zip_path)
     assert_operator File.size(zip_path), :>, 100
+    listing = `unzip -l #{zip_path}`
+    assert_includes listing, "a_photo_of_zikigirl_01.txt"
+  end
+
+  def test_validate_warns_for_identical_short_captions
+    2.times do |index|
+      image = File.join(@tmpdir, "img_#{index}.jpg")
+      File.write(image, "x" * 25_000)
+      File.write(File.join(@tmpdir, "img_#{index}.txt"), "a photo of zikigirl")
+    end
+    report = Master::Reach::CharacterLoraZip.validate(@tmpdir, trigger_word: "zikigirl")
+    assert report[:warnings].any? { |warning| warning.include?("all captions are identical") }
+    assert report[:warnings].any? { |warning| warning.include?("very short") }
   end
 end
