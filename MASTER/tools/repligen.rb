@@ -3,14 +3,14 @@
 
 # MASTER tool entrypoint for Replicate.com generation workflows.
 #
-# The heavy implementation currently lives in DEPLOY/repligen.rb. MASTER owns
+# The heavy implementation currently lives in DEPLOY/tools/repligen.rb. MASTER owns
 # this stable entrypoint so command dispatch, contracts, and future refactors
 # do not depend on DEPLOY paths.
 
 require "rbconfig"
 
 master_root = File.expand_path("..", __dir__)
-legacy = File.expand_path("../DEPLOY/repligen.rb", master_root)
+legacy = File.expand_path("../DEPLOY/tools/repligen.rb", master_root)
 repo_root = File.expand_path("..", master_root)
 
 unless File.file?(legacy)

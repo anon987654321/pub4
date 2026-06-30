@@ -56,8 +56,8 @@ After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-relo
 
 ```zsh
 cd /home/dev/pub4 && git pull --ff-only
-zsh DEPLOY/sh/vps_ci.sh <app>          # one app, mutex-gated
-SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_on_vm_install.sh   # full stack
+zsh DEPLOY/openbsd/sh/vps_ci.sh <app>          # one app, mutex-gated
+SKIP_MASTER_SCAN=1 zsh DEPLOY/openbsd/sh/vps_on_vm_install.sh   # full stack
 doas rcctl restart relayd              # after route/table changes
 ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps
 ```

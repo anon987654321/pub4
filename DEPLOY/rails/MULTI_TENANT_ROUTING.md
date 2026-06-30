@@ -28,7 +28,7 @@ Subdomain constraints live in `brgen/config/routes.rb` via `Brgen::DomainRegistr
 ## Operator UI
 
 - MASTER domain bar: `MASTER/web/public/domain_cluster.js`
-- Matrix console: `DEPLOY/public/index.html`
+- Matrix console: `DEPLOY/tools/public/index.html`
 - CLI: `/domain <name>` via `SubdomainOrchestrator`
 
 ## Gate

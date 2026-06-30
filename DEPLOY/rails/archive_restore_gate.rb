@@ -31,9 +31,9 @@ warnings = []
 
 required = [
   "DEPLOY/archive/RESTORE_FROM_PUB2_PUB3.md",
-  "DEPLOY/audio/akmd_mastering_chain.rb",
-  "DEPLOY/audio/radio_bergen_tracks.yml",
-  "DEPLOY/audio/radio_bergen_visualizer_controller.js",
+  "DEPLOY/tools/audio/akmd_mastering_chain.rb",
+  "DEPLOY/tools/audio/radio_bergen_tracks.yml",
+  "DEPLOY/tools/audio/radio_bergen_visualizer_controller.js",
   "DEPLOY/openbsd/domain_candidates_from_pub3.yml",
   "DEPLOY/openbsd/ptr_openbsd_amsterdam.rb",
   "MASTER/tools/convergence/evidence_gate.rb",
@@ -71,7 +71,7 @@ tracked_files.each do |rel|
   end
 end
 
-tracks_path = File.join(ROOT, "DEPLOY/audio/radio_bergen_tracks.yml")
+tracks_path = File.join(ROOT, "DEPLOY/tools/audio/radio_bergen_tracks.yml")
 if File.file?(tracks_path)
   tracks = YAML.safe_load_file(tracks_path)
   local = tracks.fetch("local_mp3", [])
@@ -79,7 +79,7 @@ if File.file?(tracks_path)
   failures << "radio_bergen_tracks.yml must mark external references as review-only" unless tracks.dig("external_reference", "policy") == "reference_only_until_rights_review"
 end
 
-chain_path = File.join(ROOT, "DEPLOY/audio/akmd_mastering_chain.rb")
+chain_path = File.join(ROOT, "DEPLOY/tools/audio/akmd_mastering_chain.rb")
 if File.file?(chain_path)
   chain = File.read(chain_path)
   %w[highpass lowpass equalizer acompressor asoftclip alimiter].each do |token|

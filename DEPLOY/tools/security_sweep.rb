@@ -3,7 +3,7 @@
 
 require "open3"
 
-ROOT = File.expand_path("..", __dir__)
+ROOT = File.expand_path("../..", __dir__)
 QUARANTINE = File.join(ROOT, "DEPLOY", "quarantine", "virus_museum")
 
 SECRET_PATTERNS = [

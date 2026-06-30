@@ -5,12 +5,14 @@ OpenBSD production stack for pub4. Operator runbook: `OPERATOR.md`.
 ## Layout
 
 ```
-openbsd/   pf, relayd, nsd, acme, openbsd.sh
+openbsd/   pf, relayd, nsd, acme, openbsd.sh; sh/ VPS helpers (vps_ci.sh, install scripts)
 rails/     six Rails 8 apps + shared engine (apps.yml)
-postpro/   libvips film pipeline
-repligen/  Replicate CLI
-sh/        VPS helpers (vps_ci.sh, install scripts)
+tools/     creative + utility scripts: postpro (libvips film), repligen (Replicate CLI),
+           dilla, audio, burst, stipple, nmap, security_sweep, bp, bin, public
 ```
+
+Top level also holds the deploy gates (`integrity_gate.rb`, `verify_deploy_identity.rb`,
+`master.json`) and recovery pens (`archive/`, `quarantine/`).
 
 ## OpenBSD
 

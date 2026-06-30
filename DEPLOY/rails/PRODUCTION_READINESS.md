@@ -51,7 +51,7 @@ Ship criteria: `MASTER/data/operator_playbook.yml`.
 ```sh
 ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226
 cd /home/dev/pub4 && git pull origin main
-SKIP_MASTER_SCAN=1 zsh DEPLOY/sh/vps_on_vm_install.sh
+SKIP_MASTER_SCAN=1 zsh DEPLOY/openbsd/sh/vps_on_vm_install.sh
 doas rcctl restart relayd
 ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps
 ```

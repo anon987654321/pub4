@@ -3,14 +3,14 @@
 
 # MASTER tool entrypoint for cinematic image post-processing.
 #
-# The heavy implementation lives in DEPLOY/postpro/postpro.rb. MASTER owns
+# The heavy implementation lives in DEPLOY/tools/postpro/postpro.rb. MASTER owns
 # this stable entrypoint so command dispatch, contracts, and future refactors
 # do not depend on ad-hoc DEPLOY paths.
 
 require "rbconfig"
 
 master_root = File.expand_path("..", __dir__)
-legacy = File.expand_path("../DEPLOY/postpro/postpro.rb", master_root)
+legacy = File.expand_path("../DEPLOY/tools/postpro/postpro.rb", master_root)
 repo_root = File.expand_path("..", master_root)
 
 unless File.file?(legacy)

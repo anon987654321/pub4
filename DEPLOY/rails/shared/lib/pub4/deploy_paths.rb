@@ -15,16 +15,16 @@ module Pub4
 
     def postpro_candidates
       [
-        rails_relative("../../postpro/postpro.rb"),
-        deploy_join("postpro/postpro.rb"),
-        Pathname.new("#{DEFAULT_REPO}/DEPLOY/postpro/postpro.rb")
+        rails_relative("../../tools/postpro/postpro.rb"),
+        deploy_join("tools/postpro/postpro.rb"),
+        Pathname.new("#{DEFAULT_REPO}/DEPLOY/tools/postpro/postpro.rb")
       ]
     end
 
     def repligen_candidates
       [
-        deploy_join("repligen.rb"),
-        Pathname.new("#{DEFAULT_REPO}/DEPLOY/repligen.rb")
+        deploy_join("tools/repligen.rb"),
+        Pathname.new("#{DEFAULT_REPO}/DEPLOY/tools/repligen.rb")
       ]
     end
 

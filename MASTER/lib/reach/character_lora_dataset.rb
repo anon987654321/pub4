@@ -6,7 +6,7 @@ require "time"
 
 module Master
   module Reach
-    # Stage character LoRA under DEPLOY/repligen/lora/<name>/ (see lora/README.md).
+    # Stage character LoRA under DEPLOY/tools/repligen/lora/<name>/ (see lora/README.md).
     module CharacterLoraDataset
       IMAGE_SUFFIXES = %w[.jpg .jpeg .png .webp .gif .bmp].freeze
       VIDEO_SUFFIXES = %w[.mp4 .mov .webm .mkv].freeze
