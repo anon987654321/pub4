@@ -24,8 +24,13 @@ module Master
         motion_loras = []
         motion_preset = nil
         video_format = :cinematic
+        camera_plan = :dolly
+        continuity = :anchored
         grade_preset = nil
         final_grade = true
+        offer = nil
+        cta_label = nil
+        cta_url = nil
         aspect_ratio = "16:9"
         fps = 24
         chunk_seconds = 10
@@ -39,8 +44,13 @@ module Master
           when "--seconds" then seconds = (tokens.shift || "0").to_f
           when "--chunk-seconds" then chunk_seconds = (tokens.shift || "10").to_i
           when "--format" then video_format = (tokens.shift || "cinematic").to_sym
+          when "--camera-plan" then camera_plan = (tokens.shift || "dolly").to_sym
+          when "--continuity" then continuity = (tokens.shift || "anchored").to_sym
           when "--grade" then grade_preset = tokens.shift
           when "--no-final-grade" then final_grade = false
+          when "--offer" then offer = tokens.shift
+          when "--cta" then cta_label = tokens.shift
+          when "--cta-url" then cta_url = tokens.shift
           when "--aspect" then aspect_ratio = tokens.shift || "16:9"
           when "--fps" then fps = (tokens.shift || "24").to_i
           when "--critique" then critique = true
@@ -69,8 +79,13 @@ module Master
           seconds: seconds,
           chunk_seconds: chunk_seconds,
           video_format: video_format,
+          camera_plan: camera_plan,
+          continuity: continuity,
           grade_preset: grade_preset,
           final_grade: final_grade,
+          offer: offer,
+          cta_label: cta_label,
+          cta_url: cta_url,
           aspect_ratio: aspect_ratio,
           fps: fps,
           critique: critique,
@@ -125,8 +140,13 @@ module Master
           total_seconds: parsed[:seconds],
           chunk_seconds: parsed[:chunk_seconds],
           video_format: parsed[:video_format],
+          camera_plan: parsed[:camera_plan],
+          continuity: parsed[:continuity],
           grade_preset: parsed[:grade_preset],
           final_grade: parsed[:final_grade],
+          offer: parsed[:offer],
+          cta_label: parsed[:cta_label],
+          cta_url: parsed[:cta_url],
           aspect_ratio: parsed[:aspect_ratio],
           fps: parsed[:fps],
           motion_lora: parsed[:motion_lora],
@@ -149,9 +169,10 @@ module Master
 
       def format_result(parsed, result)
         lines = [
-          "video: backend=#{parsed[:backend]} seconds=#{parsed[:seconds] || (parsed[:minutes] * 60.0)} format=#{parsed[:video_format]}",
+          "video: backend=#{parsed[:backend]} seconds=#{parsed[:seconds] || (parsed[:minutes] * 60.0)} format=#{parsed[:video_format]} camera=#{parsed[:camera_plan]} continuity=#{parsed[:continuity]}",
           "prompt: #{parsed[:prompt][0, 120]}...",
           "output: #{result[:path]}",
+          "manifest: #{result[:manifest]}",
         ]
         if result[:critique]
           mode = result[:critique][:mode] || :text
@@ -182,8 +203,10 @@ module Master
       def video_usage
         presets = MotionLoraPresets.names.join("|")
         "usage: video [--backend kling|happyhorse|cogvideox|minimax|animatediff|animatediff_camera] " \
-          "[--minutes N|--seconds N] [--chunk-seconds N] [--format commercial|infomercial|editorial|cinematic] " \
-          "[--grade commercial|infomercial|beauty|analog|cinematic] [--no-final-grade] [--aspect 16:9|9:16|4:5|1:1] [--fps 24] " \
+          "[--minutes N|--seconds N] [--chunk-seconds N] [--format commercial|direct_response|ugc|infomercial|editorial|cinematic] " \
+          "[--camera-plan locked|handheld|dolly|orbit|product|social] [--continuity loose|anchored|strict] " \
+          "[--offer TEXT] [--cta TEXT] [--cta-url URL] [--grade commercial|infomercial|beauty|analog|cinematic] " \
+          "[--no-final-grade] [--aspect 16:9|9:16|4:5|1:1] [--fps 24] " \
           "[--critique] [--vision-critique] [--per-chunk-critique] [--auto-retry] " \
           "[--max-retries N] [--lora ID] " \
           "[--motion-lora FILE] [--motion-stack preset1,preset2] [--motion-preset #{presets}] " \

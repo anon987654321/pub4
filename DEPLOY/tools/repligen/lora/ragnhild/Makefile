@@ -8,6 +8,9 @@ VERSION ?= v2
 V2_VERSION ?=
 SECONDS ?= 36
 FORMAT ?= commercial
+OFFER ?= premium-look
+CTA ?= learn-more
+CTA_URL ?=
 
 .PHONY: v2-prepare v2-local v2-replicate v2-video v2-commercial v2-infomercial
 
@@ -71,6 +74,11 @@ v2-commercial:
 		--seconds $(SECONDS) \
 		--chunk-seconds 8 \
 		--format $(FORMAT) \
+		--camera-plan dolly \
+		--continuity anchored \
+		--offer $(OFFER) \
+		--cta $(CTA) \
+		$(if $(CTA_URL),--cta-url $(CTA_URL),) \
 		--grade commercial \
 		--aspect 16:9 \
 		--fps 24 \
@@ -84,6 +92,11 @@ v2-infomercial:
 		--seconds $(SECONDS) \
 		--chunk-seconds 8 \
 		--format infomercial \
+		--camera-plan social \
+		--continuity anchored \
+		--offer $(OFFER) \
+		--cta $(CTA) \
+		$(if $(CTA_URL),--cta-url $(CTA_URL),) \
 		--grade infomercial \
 		--aspect 16:9 \
 		--fps 24 \

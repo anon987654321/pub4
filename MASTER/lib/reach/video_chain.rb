@@ -31,6 +31,26 @@ module Master
             "closing brand image, clear call to action, polished end-frame energy",
           ],
         },
+        direct_response: {
+          grade: "infomercial",
+          beats: [
+            "pattern-interrupt hook, clear problem visual, emotionally legible before-state",
+            "offer reveal, product or subject framed as the simple solution",
+            "demonstration proof, close tactile detail, one claim shown visually",
+            "comparison moment, credible benefit, friendly presenter energy",
+            "offer stack and human-safe call-to-action setup, clean end-frame composition",
+          ],
+        },
+        ugc: {
+          grade: "analog",
+          beats: [
+            "authentic handheld opening, casual social proof energy",
+            "real-person reveal, imperfect natural gesture, believable room tone",
+            "quick demonstration, practical benefit, close phone-camera detail",
+            "reaction beat, warm face-led credibility, natural smile",
+            "soft call-to-action setup, personal recommendation feeling",
+          ],
+        },
         infomercial: {
           grade: "infomercial",
           beats: [
@@ -62,6 +82,14 @@ module Master
           ],
         },
       }.freeze
+      CAMERA_PLANS = {
+        locked: ["locked-off tripod frame", "locked-off medium shot", "locked-off detail shot"],
+        handheld: ["gentle handheld drift", "subtle handheld push-in", "tiny handheld reframing"],
+        dolly: ["slow dolly push-in", "slow lateral dolly", "slow dolly pull-back"],
+        orbit: ["soft 15-degree orbit", "gentle parallax move", "slow three-quarter arc"],
+        product: ["macro slide over tactile details", "hero packshot push-in", "clean tabletop parallax"],
+        social: ["phone-like handheld opening", "casual over-the-shoulder move", "natural selfie-distance drift"],
+      }.freeze
 
       def self.generate(
         prompt:,
@@ -77,6 +105,11 @@ module Master
         final_grade: true,
         grade_preset: nil,
         video_format: :cinematic,
+        camera_plan: :dolly,
+        continuity: :anchored,
+        offer: nil,
+        cta_label: nil,
+        cta_url: nil,
         aspect_ratio: "16:9",
         fps: 24,
         max_threads: 4,
@@ -116,6 +149,11 @@ module Master
           final_grade: final_grade,
           grade_preset: grade_preset,
           video_format: video_format,
+          camera_plan: camera_plan,
+          continuity: continuity,
+          offer: offer,
+          cta_label: cta_label,
+          cta_url: cta_url,
           aspect_ratio: aspect_ratio,
           fps: fps,
           max_threads: max_threads,
@@ -224,6 +262,11 @@ module Master
           final_grade: kwargs.fetch(:final_grade, true),
           grade_preset: kwargs[:grade_preset],
           video_format: normalize_video_format(kwargs[:video_format]),
+          camera_plan: normalize_camera_plan(kwargs[:camera_plan]),
+          continuity: normalize_continuity(kwargs[:continuity]),
+          offer: kwargs[:offer],
+          cta_label: kwargs[:cta_label],
+          cta_url: kwargs[:cta_url],
           aspect_ratio: kwargs.fetch(:aspect_ratio, "16:9").to_s,
           fps: kwargs.fetch(:fps, 24).to_i,
           max_threads: [kwargs.fetch(:max_threads, 4).to_i, 1].max,
@@ -261,6 +304,18 @@ module Master
         value = format.to_s.strip
         value = "cinematic" if value.empty?
         VIDEO_FORMATS.key?(value.to_sym) ? value.to_sym : :cinematic
+      end
+
+      def normalize_camera_plan(plan)
+        value = plan.to_s.strip
+        value = "dolly" if value.empty?
+        CAMERA_PLANS.key?(value.to_sym) ? value.to_sym : :dolly
+      end
+
+      def normalize_continuity(value)
+        mode = value.to_s.strip
+        mode = "anchored" if mode.empty?
+        %w[loose anchored strict].include?(mode) ? mode.to_sym : :anchored
       end
 
       def apply_format_defaults!(opts)
@@ -336,13 +391,44 @@ module Master
 
       def build_scene_prompt(base, idx, total, opts)
         beat = scene_beat(opts[:video_format], idx: idx)
+        camera = camera_beat(opts[:camera_plan], idx: idx)
+        continuity = continuity_phrase(opts[:continuity], idx: idx)
+        commerce = commerce_phrase(opts, idx: idx, total: total)
         "#{base} — scene #{idx + 1} of #{total}: #{beat}, cinematic composition, motivated lighting, " \
-          "analog 35mm film look, realistic texture, consistent character identity, no text overlays"
+          "#{camera}, #{continuity}, #{commerce}analog 35mm film look, realistic texture, consistent character identity, no text overlays"
       end
 
       def scene_beat(format, idx:)
         beats = VIDEO_FORMATS.fetch(format)[:beats]
         beats[idx % beats.size]
+      end
+
+      def camera_beat(plan, idx:)
+        beats = CAMERA_PLANS.fetch(plan)
+        beats[idx % beats.size]
+      end
+
+      def continuity_phrase(mode, idx:)
+        case mode
+        when :strict
+          "preserve same identity, wardrobe, hair, lighting direction, lens, and setting across shots"
+        when :anchored
+          idx.zero? ? "establish the visual anchor for identity, wardrobe, palette, and lens" : "match the established visual anchor, wardrobe, palette, lens, and identity"
+        else
+          "maintain natural identity continuity while allowing scene variation"
+        end
+      end
+
+      def commerce_phrase(opts, idx:, total:)
+        parts = []
+        parts << "offer context: #{opts[:offer]}" if opts[:offer].to_s.strip != ""
+        if idx == total - 1
+          parts << "call-to-action intent: #{opts[:cta_label]}" if opts[:cta_label].to_s.strip != ""
+          parts << "leave clean negative space for CTA graphic in edit" if opts[:cta_url].to_s.strip != ""
+        end
+        return "" if parts.empty?
+
+        "#{parts.join(', ')}, "
       end
 
       def flux_keyframe(scene_prompt, lora_id, aspect_ratio:)
@@ -432,11 +518,16 @@ module Master
           backend: opts[:backend],
           format: opts[:video_format],
           grade_preset: opts[:grade_preset],
+          camera_plan: opts[:camera_plan],
+          continuity: opts[:continuity],
           seconds: opts[:total_seconds],
           chunk_seconds: opts[:chunk_seconds],
           aspect_ratio: opts[:aspect_ratio],
           fps: opts[:fps],
           lora_id: opts[:lora_id],
+          offer: opts[:offer],
+          cta_label: opts[:cta_label],
+          cta_url: opts[:cta_url],
           prompt: opts[:prompt],
           clips: clips,
           scene_prompts: scene_prompts,

@@ -57,7 +57,12 @@ bundle exec ruby bin/video \
   --backend kling \
   --seconds 36 \
   --chunk-seconds 8 \
-  --format commercial \
+  --format direct_response \
+  --camera-plan dolly \
+  --continuity anchored \
+  --offer "launch offer" \
+  --cta "learn more" \
+  --cta-url "https://example.com" \
   --grade commercial \
   --aspect 16:9 \
   --fps 24 \
@@ -65,7 +70,12 @@ bundle exec ruby bin/video \
   "ragnhild, woman, premium analog beauty commercial, natural confidence, soft daylight, realistic skin texture"
 ```
 
-Formats: `commercial`, `infomercial`, `editorial`, `cinematic`.
+Formats: `commercial`, `direct_response`, `ugc`, `infomercial`, `editorial`, `cinematic`.
+Camera plans: `locked`, `handheld`, `dolly`, `orbit`, `product`, `social`.
+Continuity modes: `loose`, `anchored`, `strict`.
 Grades: `commercial`, `infomercial`, `beauty`, `analog`, `cinematic`.
 Each final render writes a matching `.json` manifest with scene prompts, chunk
 paths, duration, aspect ratio, format, and grade settings.
+
+Commerce flags only write intent/CTA metadata and prompt language for later
+editing. They do not place orders, charge cards, or auto-buy anything.
