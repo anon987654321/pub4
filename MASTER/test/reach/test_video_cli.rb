@@ -63,4 +63,18 @@ class TestVideoCli < Minitest::Test
     assert_equal 35, parsed[:max_per_source]
     assert_equal 8, parsed[:min_frame_gap]
   end
+
+  def test_parse_commercial_video_args
+    parsed = Master::Reach::VideoCli.parse_video_args(
+      "--backend kling --seconds 36 --chunk-seconds 8 --format commercial --grade commercial --aspect 4:5 --fps 24 premium launch film"
+    )
+    assert_equal :kling, parsed[:backend]
+    assert_in_delta 36, parsed[:seconds]
+    assert_equal 8, parsed[:chunk_seconds]
+    assert_equal :commercial, parsed[:video_format]
+    assert_equal "commercial", parsed[:grade_preset]
+    assert_equal "4:5", parsed[:aspect_ratio]
+    assert_equal 24, parsed[:fps]
+    assert_equal "premium launch film", parsed[:prompt]
+  end
 end

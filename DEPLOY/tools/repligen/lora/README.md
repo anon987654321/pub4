@@ -34,6 +34,8 @@ sh DEPLOY/tools/repligen/lora/ragnhild/config/run_local.sh
 make -C DEPLOY/tools/repligen/lora/ragnhild v2-prepare
 make -C DEPLOY/tools/repligen/lora/ragnhild v2-local
 make -C DEPLOY/tools/repligen/lora/ragnhild v2-video V2_VERSION=<replicate-version>
+make -C DEPLOY/tools/repligen/lora/ragnhild v2-commercial V2_VERSION=<replicate-version> SECONDS=36
+make -C DEPLOY/tools/repligen/lora/ragnhild v2-infomercial V2_VERSION=<replicate-version> SECONDS=40
 ```
 
 ## v2 realism defaults
@@ -44,3 +46,26 @@ captioning, low-resolution frames, and oversized synthetic frame sets. For
 character likeness, start with `--max-images 35..70`, `--rank 32`, `--steps
 1500..2500`, `--max-per-source`, and `--min-frame-gap` rather than feeding every
 video frame into the trainer.
+
+## 30-40 second generated commercials
+
+`MASTER/bin/video` can now generate exact-duration multi-scene ads:
+
+```sh
+cd MASTER
+bundle exec ruby bin/video \
+  --backend kling \
+  --seconds 36 \
+  --chunk-seconds 8 \
+  --format commercial \
+  --grade commercial \
+  --aspect 16:9 \
+  --fps 24 \
+  --lora basicfeatures/ragnhild:<V2_VERSION> \
+  "ragnhild, woman, premium analog beauty commercial, natural confidence, soft daylight, realistic skin texture"
+```
+
+Formats: `commercial`, `infomercial`, `editorial`, `cinematic`.
+Grades: `commercial`, `infomercial`, `beauty`, `analog`, `cinematic`.
+Each final render writes a matching `.json` manifest with scene prompts, chunk
+paths, duration, aspect ratio, format, and grade settings.

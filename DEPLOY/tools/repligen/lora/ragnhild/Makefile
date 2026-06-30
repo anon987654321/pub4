@@ -6,8 +6,10 @@ DESTINATION ?= basicfeatures/ragnhild
 TRIGGER ?= ragnhild
 VERSION ?= v2
 V2_VERSION ?=
+SECONDS ?= 36
+FORMAT ?= commercial
 
-.PHONY: v2-prepare v2-local v2-replicate v2-video
+.PHONY: v2-prepare v2-local v2-replicate v2-video v2-commercial v2-infomercial
 
 v2-prepare:
 	cd $(MASTER) && bundle exec ruby bin/video lora-train \
@@ -61,3 +63,29 @@ v2-video:
 		--minutes 0.1 \
 		--lora $(DESTINATION):$(V2_VERSION) \
 		"$(TRIGGER), woman, intimate analog portrait, daylight through a window, soft natural smile, realistic skin texture, Kodak Portra 400, gentle handheld micro push-in, shallow depth of field"
+
+v2-commercial:
+	test -n "$(V2_VERSION)"
+	cd $(MASTER) && bundle exec ruby bin/video \
+		--backend kling \
+		--seconds $(SECONDS) \
+		--chunk-seconds 8 \
+		--format $(FORMAT) \
+		--grade commercial \
+		--aspect 16:9 \
+		--fps 24 \
+		--lora $(DESTINATION):$(V2_VERSION) \
+		"$(TRIGGER), woman, premium analog beauty commercial, natural confidence, soft daylight, realistic skin texture, tactile product-world details, elegant Scandinavian editorial mood"
+
+v2-infomercial:
+	test -n "$(V2_VERSION)"
+	cd $(MASTER) && bundle exec ruby bin/video \
+		--backend kling \
+		--seconds $(SECONDS) \
+		--chunk-seconds 8 \
+		--format infomercial \
+		--grade infomercial \
+		--aspect 16:9 \
+		--fps 24 \
+		--lora $(DESTINATION):$(V2_VERSION) \
+		"$(TRIGGER), woman, warm realistic infomercial sequence, practical demonstration, friendly direct-to-camera energy without text overlays, bright natural home-studio lighting"

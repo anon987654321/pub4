@@ -12,6 +12,7 @@ module Master
 
         backend = :kling
         minutes = 2.0
+        seconds = nil
         critique = false
         vision_critique = false
         per_chunk_critique = nil
@@ -22,6 +23,12 @@ module Master
         motion_lora_weight = nil
         motion_loras = []
         motion_preset = nil
+        video_format = :cinematic
+        grade_preset = nil
+        final_grade = true
+        aspect_ratio = "16:9"
+        fps = 24
+        chunk_seconds = 10
         prompt_tokens = []
 
         until tokens.empty?
@@ -29,6 +36,13 @@ module Master
           case token
           when "--backend" then backend = (tokens.shift || "kling").to_sym
           when "--minutes" then minutes = (tokens.shift || "2").to_f
+          when "--seconds" then seconds = (tokens.shift || "0").to_f
+          when "--chunk-seconds" then chunk_seconds = (tokens.shift || "10").to_i
+          when "--format" then video_format = (tokens.shift || "cinematic").to_sym
+          when "--grade" then grade_preset = tokens.shift
+          when "--no-final-grade" then final_grade = false
+          when "--aspect" then aspect_ratio = tokens.shift || "16:9"
+          when "--fps" then fps = (tokens.shift || "24").to_i
           when "--critique" then critique = true
           when "--vision-critique" then vision_critique = true
           when "--per-chunk-critique" then per_chunk_critique = true
@@ -52,6 +66,13 @@ module Master
         {
           backend: backend,
           minutes: minutes,
+          seconds: seconds,
+          chunk_seconds: chunk_seconds,
+          video_format: video_format,
+          grade_preset: grade_preset,
+          final_grade: final_grade,
+          aspect_ratio: aspect_ratio,
+          fps: fps,
           critique: critique,
           vision_critique: vision_critique,
           per_chunk_critique: per_chunk_critique,
@@ -101,6 +122,13 @@ module Master
           lora_id: parsed[:lora_id],
           backend: parsed[:backend],
           total_minutes: parsed[:minutes],
+          total_seconds: parsed[:seconds],
+          chunk_seconds: parsed[:chunk_seconds],
+          video_format: parsed[:video_format],
+          grade_preset: parsed[:grade_preset],
+          final_grade: parsed[:final_grade],
+          aspect_ratio: parsed[:aspect_ratio],
+          fps: parsed[:fps],
           motion_lora: parsed[:motion_lora],
           motion_lora_weight: parsed[:motion_lora_weight],
           motion_loras: parsed[:motion_loras],
@@ -121,7 +149,7 @@ module Master
 
       def format_result(parsed, result)
         lines = [
-          "video: backend=#{parsed[:backend]} minutes=#{parsed[:minutes]}",
+          "video: backend=#{parsed[:backend]} seconds=#{parsed[:seconds] || (parsed[:minutes] * 60.0)} format=#{parsed[:video_format]}",
           "prompt: #{parsed[:prompt][0, 120]}...",
           "output: #{result[:path]}",
         ]
@@ -154,7 +182,9 @@ module Master
       def video_usage
         presets = MotionLoraPresets.names.join("|")
         "usage: video [--backend kling|happyhorse|cogvideox|minimax|animatediff|animatediff_camera] " \
-          "[--minutes N] [--critique] [--vision-critique] [--per-chunk-critique] [--auto-retry] " \
+          "[--minutes N|--seconds N] [--chunk-seconds N] [--format commercial|infomercial|editorial|cinematic] " \
+          "[--grade commercial|infomercial|beauty|analog|cinematic] [--no-final-grade] [--aspect 16:9|9:16|4:5|1:1] [--fps 24] " \
+          "[--critique] [--vision-critique] [--per-chunk-critique] [--auto-retry] " \
           "[--max-retries N] [--lora ID] " \
           "[--motion-lora FILE] [--motion-stack preset1,preset2] [--motion-preset #{presets}] " \
           "[--motion-weight 0.75] <prompt>"
