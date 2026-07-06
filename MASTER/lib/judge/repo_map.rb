@@ -9,7 +9,7 @@ module Master
   # rank higher; focus[] biases the random surfer toward chat-mentioned files.
   #
   # Wiring is left to the operator. Typical use:
-  #   map = Master::RepoMap.new(code_index: ai[:code_index], root: root)
+  #   map = Master::Judge::RepoMap.new(code_index: ai[:code_index], root: root)
   #   prompt_context << map.render(focus: [current_file])
     class RepoMap
       DEFAULT_TOKEN_BUDGET = 4096

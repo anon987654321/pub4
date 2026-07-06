@@ -4,7 +4,7 @@
 # Verify openbsd.sh DNS, domain_registry.rb, and routes.rb agree on city subdomains.
 
 require "pathname"
-require_relative "../utf8"
+require_relative "../tools/utf8"
 
 ROOT = Pathname.new(__dir__).join("..", "..").expand_path
 OPENBSD = ROOT.join("DEPLOY", "openbsd", "openbsd.sh")

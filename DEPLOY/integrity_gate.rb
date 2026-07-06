@@ -5,7 +5,7 @@
 
 require "open3"
 require "rbconfig"
-require_relative "utf8"
+require_relative "tools/utf8"
 
 ROOT = File.expand_path("..", __dir__)
 RUBY = RbConfig.ruby

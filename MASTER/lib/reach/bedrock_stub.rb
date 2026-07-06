@@ -19,6 +19,3 @@ module RubyLLM
     end
   end
 end
-
-# Zeitwerk expects this file to define Master::BedrockStub
-module Master; module BedrockStub; end; end

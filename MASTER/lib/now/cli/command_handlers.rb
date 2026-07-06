@@ -188,7 +188,7 @@ module Master
       end
 
       def print_repo_tree
-        lines = Master::CommandRegistry.tree_lines(@refs.root)
+        lines = Master::Now::CommandRegistry.dispatch_tree(@refs.root).to_s.split("\n")
         return if lines.empty?
         puts @refs.renderer.render("tree0: #{File.basename(@refs.root)} (#{lines.size} entries)", mode: :dim)
         lines.each { |l| puts @refs.renderer.render(l, mode: :dim) }

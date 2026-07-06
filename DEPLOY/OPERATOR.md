@@ -22,15 +22,28 @@ Full aliases and GitHub keys: `DEPLOY/openbsd/SSH_ACCESS.md`. Network table: `DE
 
 | Service | URL |
 |---------|-----|
-| brgen | `https://brgen.no` |
 | MASTER | `https://ai.brgen.no` |
-| amber | `https://amber.brgen.no` |
-| baibl | `https://baibl.brgen.no` |
-| blognet | `https://blognet.brgen.no` |
-| hjerterom | `https://hjerterom.brgen.no` |
+| brgen | `https://brgen.no` |
+| brgen · marketplace | `https://markedsplass.brgen.no` |
+| brgen · dating | `https://dating.brgen.no` |
+| brgen · playlist | `https://playlist.brgen.no` |
+| brgen · takeaway | `https://takeaway.brgen.no` |
+| brgen · tv | `https://tv.brgen.no` |
+| brgen · messenger | `https://messenger.brgen.no` |
+| amber | `https://amberapp.com` |
 | bsdports | `https://bsdports.org` |
 
-Baibl, blognet, and hjerterom use `*.brgen.no` only. City vanity apex domains (`oshlo.no`, `lsangeles.com`, …) need stage-1 certs from `openbsd.sh`.
+The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`) are one Rails
+app served under subdomains via `<brgen>`; relayd already routes them all (`etc/relayd.conf`).
+
+`amberapp.com` is amber's intended public apex, but the committed stack still serves amber at
+`amber.brgen.no` (relayd, `etc/acme-client.conf`, `openbsd.sh` ALL_DOMAINS, `master.json`,
+`rails/apps.yml`). Switching to `amberapp.com` is a one-time operator step — see `RELEASE.md` —
+and requires `amberapp.com` to delegate DNS to the VPS nsd (as `bsdports.org` does) before the
+next `openbsd.sh` run, or acme cert issuance for it will fail.
+
+Baibl, blognet, and hjerterom remain wired at `*.brgen.no` but are outside this release's public
+launch set. City vanity apex domains (`oshlo.no`, `lsangeles.com`, …) need stage-1 certs from `openbsd.sh`.
 
 TLS terminates at relayd. Rails sets `config.assume_ssl = true`; do not enable `force_ssl`.
 

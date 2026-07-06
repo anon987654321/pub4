@@ -6,7 +6,7 @@
 require "open3"
 require "optparse"
 require "yaml"
-require_relative "../utf8"
+require_relative "../tools/utf8"
 
 ROOT = File.expand_path("../..", __dir__)
 APPS_YML = File.join(ROOT, "DEPLOY", "rails", "apps.yml")

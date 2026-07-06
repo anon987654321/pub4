@@ -154,12 +154,14 @@ class TestWebUI < Minitest::Test
     refute_nil kernel_idx
     refute_nil face_idx
     assert_operator kernel_idx, :<, face_idx
-    assert_includes index, "chat_actions.js"
-    assert_includes index, "visual_bridge.js"
+    # Boot modules ship through the compact javascript_include_tag(*%w[...]) manifest,
+    # so they appear as bare (suffix-less) names, not "<name>.js".
+    assert_includes index, "chat_actions"
+    assert_includes index, "visual_bridge"
     assert_includes index, 'id="cognition-ecology"'
-    assert_includes index, "cognition_ecology.js"
-    assert_includes index, "cognition_ecology_render.js"
-    assert_includes index, "visual_governor.js"
+    assert_includes index, "cognition_ecology"
+    assert_includes index, "cognition_ecology_render"
+    assert_includes index, "visual_governor"
     ecology_idx = index.index("cognition-ecology")
     face_canvas_idx = index.index('id="face"')
     assert_operator ecology_idx, :<, face_canvas_idx

@@ -31,7 +31,14 @@ def step(name)
   print "smoke-web: #{name.ljust(22)} "
   $stdout.flush
   t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-  ok, detail = yield
+  # A raised check (e.g. the server dies mid-run) becomes a clean "fail" line rather
+  # than a backtrace that aborts the remaining checks.
+  ok, detail =
+    begin
+      yield
+    rescue StandardError => e
+      [false, "#{e.class}: #{e.message}"]
+    end
   ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
   puts ok ? "ok (#{ms}ms)" : "fail (#{ms}ms) — #{detail}"
   Check.new(name:, ok:, detail:, ms:)
@@ -72,6 +79,27 @@ end
 
 def face_ready?(body)
   body.to_s.include?('id="face"') && !WARMING_RE.match?(body.to_s)
+end
+
+# Bootstrap-aware: with nothing listening at BASE this is a dev/local run without a
+# MASTER web face up. Skip cleanly (like crawl_probe on a closed port) instead of
+# aborting the deploy gate — the smoke only has meaning against a live server.
+def server_listening?
+  fetch("/up", read_timeout: 4, open_timeout: 4)
+  true
+rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH, SocketError
+  false
+rescue StandardError
+  true # reachable but erroring — let the real checks report it
+end
+
+# On the VPS (relayd present) a not-yet-listening server means Falcon is still binding
+# post-restart — fall through to the bootstrap wait/fail below rather than skip. Only a
+# local dev machine with no server up gets the clean skip.
+ON_VPS = File.file?("/etc/relayd.conf")
+if !ON_VPS && !server_listening?
+  puts "smoke-web: skip — #{BASE} not listening (start the MASTER web face or set MASTER_WEB_URL)"
+  exit 0
 end
 
 checks = []
