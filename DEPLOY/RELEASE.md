@@ -1,7 +1,7 @@
 # Release readiness
 
-Status: **ready** — all MASTER and DEPLOY gates green on the release branch. One operator
-step remains for amber's public domain (see below).
+Status: **ready** — MASTER and DEPLOY gates green on the release branch. Four Rails apps
+(brgen, amber, hjerterom, bsdports) + MASTER. `baibl` and `blognet` were removed from the stack.
 
 ## Release surface
 
@@ -15,59 +15,46 @@ step remains for amber's public domain (see below).
 | brgen · takeaway | https://takeaway.brgen.no | yes |
 | brgen · tv | https://tv.brgen.no | yes |
 | brgen · messenger | https://messenger.brgen.no | yes |
-| amber | https://amberapp.com | **operator step** — served today at `amber.brgen.no` |
+| amber | https://amber.brgen.no | yes |
+| hjerterom | https://hjerterom.brgen.no | yes |
 | bsdports | https://bsdports.org | yes |
 
-The brgen verticals are one Rails app under subdomains; relayd already routes all of them
-(`DEPLOY/openbsd/etc/relayd.conf`). Nine of the ten launch URLs are wired and pass the gates
-unchanged.
+The brgen verticals are one Rails app under subdomains; relayd routes them all
+(`openbsd/etc/relayd.conf`). Everything above is wired and passes the gates.
 
 ## Verified green
 
-Run from repo root / `MASTER/`:
-
 ```
-cd MASTER && bin/ci                 # unit + kernel tests → clean
-cd MASTER && bin/probe all          # smoke, nsaudit, kernel, dogfood, preflight, rails, phantom_fk → clean
-cd MASTER && bin/probe deploy       # rails, phantom_fk, crawl, integrity, smoke-web, playbook → clean
-ruby DEPLOY/integrity_gate.rb       # deploy_identity, production, phantom_fk, frontend, relayd, domain_align, crawl → clean
+cd MASTER && bin/ci                 # unit + kernel tests
+cd MASTER && bin/probe all          # smoke, nsaudit, kernel, dogfood, preflight, rails, phantom_fk
+cd MASTER && bin/probe deploy       # rails, phantom_fk, crawl, integrity, smoke-web, playbook
+ruby DEPLOY/integrity_gate.rb       # deploy_identity, production, phantom_fk, frontend, relayd, domain_align, crawl
 ```
 
-macOS-only skips (expected, not failures): `crawl`/`smoke-web` skip with no local server up,
-`crawl-browser`/`health`/`vps_health` skip off the VPS.
+macOS-only skips (expected): `crawl`/`smoke-web` with no local server, `crawl-browser`/`health`/`vps_health` off-VPS.
 
-## Fixes applied this release
+## Changes in this release
 
-- **DEPLOY gate chain restored.** The `tools/` reorg (`59824d74e`) moved `utf8.rb` into
-  `DEPLOY/tools/` but left 10 `require_relative "utf8"` / `"../utf8"` references pointing at the
-  old path — every gate that required it crashed with `LoadError`. Repointed all 10 to
-  `tools/utf8`.
-- **CLI repo-tree bug.** `command_handlers#print_repo_tree` called the non-existent
-  `Master::CommandRegistry.tree_lines`; it silently swallowed the `NoMethodError` and never
-  rendered. Fixed to `Master::Now::CommandRegistry.dispatch_tree(...).split("\n")`.
-- **Web asset drift.** `visual_bridge.js` changed in `f9b6aa57e` without regenerating the
-  Propshaft digest; ran `assets:precompile`. Updated the stale boot-manifest test to match the
-  DRY `javascript_include_tag(*%w[...])` form.
-- **nsaudit robustness.** Now eager-loads before checking (so Zeitwerk-ignored rule fragments
-  resolve) and skips `bin/master-kernel` (kernel spine has its own `Master::` namespace). Removed
-  the phantom `Master::BedrockStub` and a stale `Master::RepoMap` doc reference it flagged.
-- **smoke-web robustness.** A check that raised (e.g. connection refused) crashed the whole run
-  with a backtrace; now it reports a clean `fail`, and off-VPS with no server up the smoke skips
-  cleanly instead of red-failing the deploy gate.
+- **DEPLOY gate chain restored** — repointed 10 `require_relative "utf8"` refs to `tools/utf8`
+  after the `tools/` reorg; every gate had been crashing with `LoadError`.
+- **CLI + probe bugs** — `Master::CommandRegistry.tree_lines` → `Master::Now::CommandRegistry
+  .dispatch_tree`; nsaudit eager-loads + skips the kernel spine; smoke-web no longer crashes on a
+  refused connection and skips cleanly off-VPS; asset drift regenerated.
+- **baibl + blognet removed** — apps, relayd, acme, nsd (zones + DNSSEC keys), litestream,
+  rc.d, inventories (`master.json`, `apps.yml`), gates, tests, and their vanity/megablog domains
+  (`baibl.no`, `blognet.no`, `foodielicio.us`, `anti{casino,gambling,betting}blog.com`).
+- **Web "tap to start" hardening** — added a platform-level guard in `chat/index.html.erb` that
+  blocks WebGL context creation until the primer tap, enforcing the deferred-boot contract so a
+  stale/eager asset can't wedge the main thread (the recurring dead-tap bug). Redeploy note below.
 
-## Remaining operator step — amber → amberapp.com
+## Deploy checklist
 
-The committed stack serves amber at `amber.brgen.no`. To publish it at `amberapp.com`, in one
-change (mirrors how `bsdports.org` is wired):
+1. `cd /home/dev/pub4 && git pull --ff-only`
+2. Full stack: `cd DEPLOY/openbsd && tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"`
+3. **MASTER web must precompile + restart** (Falcon has no hot-reload; skipping this is the usual
+   cause of stale-UI / dead-tap reports): `cd MASTER/web && RAILS_ENV=production rails assets:precompile`
+   then `doas rcctl restart master`. The full `openbsd.sh` run already does this.
+4. Verify: `ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps` and open `https://ai.brgen.no`,
+   tap to start, confirm the particle face renders.
 
-1. **DNS**: delegate `amberapp.com` to the VPS nsd (NS + A → `46.23.89.226`), as `bsdports.org` does.
-2. `DEPLOY/openbsd/openbsd.sh`: map `amber:amber.brgen.no` → `amber:amberapp.com`, add
-   `amberapp.com` to `ALL_DOMAINS`.
-3. `DEPLOY/openbsd/etc/acme-client.conf`: add an `amberapp.com` cert block.
-4. `DEPLOY/openbsd/etc/relayd.conf`: add TLS keypair + `Host "amberapp.com"` → `<amber>`.
-5. `DEPLOY/master.json` and `DEPLOY/rails/apps.yml`: set amber `domain: amberapp.com`.
-6. amber Rails production allowed-hosts config.
-7. Redeploy: `openbsd.sh` (stage-1 acme + nsd zone sign) then `doas rcctl restart relayd`.
-
-Keep `amber.brgen.no` as an alias if a clean cutover isn't wanted. This step is gated on the
-external DNS delegation, which is why it's left to the operator rather than pre-committed.
+Remaining feature work: `MASTER/TODO.md` and `DEPLOY/TODO.md`.

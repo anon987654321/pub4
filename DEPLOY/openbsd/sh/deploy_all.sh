@@ -39,7 +39,7 @@ typeset -a APPS
 if command -v jq >/dev/null 2>&1 && [[ -f ${DEPLOY_ROOT}/master.json ]]; then
   APPS=("${(@f)$(jq -r '.apps[].name' "${DEPLOY_ROOT}/master.json")}")
 else
-  APPS=(brgen amber blognet bsdports baibl hjerterom)
+  APPS=(brgen amber bsdports hjerterom)
 fi
 
 log "pub4 deploy — ${#APPS[@]} apps from master.json"

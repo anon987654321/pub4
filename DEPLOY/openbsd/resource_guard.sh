@@ -7,7 +7,7 @@ set -e
 
 ALL_APPS_FLAG=/var/db/pub4_all_apps
 CORE="master brgen"
-OPTIONAL="amber bsdports blognet hjerterom baibl litestream"
+OPTIONAL="amber bsdports hjerterom litestream"
 LOAD_WARN=0.85
 LOAD_CRIT=1.20
 MEM_WARN=12

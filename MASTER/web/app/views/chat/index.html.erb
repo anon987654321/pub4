@@ -18,6 +18,22 @@
   <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
   <script nonce="<%= content_security_policy_nonce %>">
+    // Deferred-boot contract, enforced at the platform level: no WebGL context may be
+    // created before the primer tap. THREE.js/face3d parse + WebGL init is heavy enough
+    // to wedge the main thread; if a stale or regressed asset boots it at page load, the
+    // "tap to start" handler never runs and the tap looks dead (recurring bug: 930a35ca5,
+    // a9aa0a6f6, f9b6aa57e). 2D canvases (cognition ecology) are untouched. After the tap
+    // (_primerFired), getContext behaves normally, so the real face still boots on tap.
+    (function () {
+      var proto = window.HTMLCanvasElement && HTMLCanvasElement.prototype;
+      if (!proto || proto.__masterWebglGuard) return;
+      proto.__masterWebglGuard = true;
+      var original = proto.getContext;
+      proto.getContext = function (type) {
+        if (!window._primerFired && /webgl/i.test(String(type))) return null;
+        return original.apply(this, arguments);
+      };
+    })();
     window.MASTER_ASSET_PATHS = {
       threeModule: "<%= asset_path("three.face.module.js") %>",
       faceParts: <%= raw((1..5).map { |part| asset_path("face.part#{part}.txt") }.to_json) %>,

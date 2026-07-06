@@ -21,7 +21,7 @@ Each app compiles a **single** `app/assets/builds/application.css` via Dart Sass
 **Static exceptions:**
 - `shared/public/styles/errors.css` — Rails default error pages only
 - brgen: `face.css`, `lightgallery.css` — product vendor assets
-- External font CDNs where apps use them (amber, blognet)
+- External font CDNs where apps use them (amber)
 
 **Tooling:** `dartsass-rails`, `Shared::FrontendAuditor` (0-warning target on app-owned paths), `bin/rails dartsass:build` in CI.
 
@@ -59,7 +59,7 @@ Five apps eval `shared/config/routes/social.rb` (notifications, reactions, repor
 
 Models: `Shared::Reactable`, `Followable`, `Votable`, `Commentable`, `Notifiable`, `ActivityTrackable`, `GeoLocatable`.
 
-**Commentable:** brgen and amber use polymorphic `comments` + `Shared::Commentable` on `Post`. blognet uses post-scoped comments.
+**Commentable:** brgen and amber use polymorphic `comments` + `Shared::Commentable` on `Post`.
 
 **Deferred DRY:** brgen still has local `NotificationsController` and `VotesController` vs shared stubs; Follow schema differs across apps. Promote when city inbox grouping and vote karma side-effects are unified.
 

@@ -32,7 +32,7 @@ module CrawlSupport
 
     yml.each_key do |name|
       next if json_by_name.key?(name)
-      next if %w[privcam pub_attorney mytoonz aight_production_ai multimedia_tts blognet_ai_content].include?(name)
+      next if %w[privcam pub_attorney mytoonz aight_production_ai multimedia_tts].include?(name)
       out << "inventory: #{name} in apps.yml but missing from master.json"
     end
     out

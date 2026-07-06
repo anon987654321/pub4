@@ -165,7 +165,7 @@ module SchemaHelper
     }
   end
 
-  # Simple ItemList for category / search result pages (good for marketplace, blognet, etc.)
+  # Simple ItemList for category / search result pages (good for marketplace, etc.)
   def item_list_schema(items, title: nil)
     {
       "@context" => "https://schema.org",

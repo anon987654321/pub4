@@ -1,7 +1,0 @@
-<%= form_with model: blog do |f| %>
-  <%= render "shared/errors", object: blog %>
-  <p><%= f.label :name %><%= f.text_field :name, autofocus: true %></p>
-  <p><%= f.label :description %><%= f.text_area :description, rows: 2, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
-  <p><%= f.label :published %><%= f.check_box :published %></p>
-  <p><%= f.submit %> <%= link_to "Cancel", blogs_path %></p>
-<% end %>

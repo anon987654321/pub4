@@ -30,20 +30,18 @@ Full aliases and GitHub keys: `DEPLOY/openbsd/SSH_ACCESS.md`. Network table: `DE
 | brgen · takeaway | `https://takeaway.brgen.no` |
 | brgen · tv | `https://tv.brgen.no` |
 | brgen · messenger | `https://messenger.brgen.no` |
-| amber | `https://amberapp.com` |
+| amber | `https://amber.brgen.no` |
+| hjerterom | `https://hjerterom.brgen.no` |
 | bsdports | `https://bsdports.org` |
 
 The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`) are one Rails
 app served under subdomains via `<brgen>`; relayd already routes them all (`etc/relayd.conf`).
 
-`amberapp.com` is amber's intended public apex, but the committed stack still serves amber at
-`amber.brgen.no` (relayd, `etc/acme-client.conf`, `openbsd.sh` ALL_DOMAINS, `master.json`,
-`rails/apps.yml`). Switching to `amberapp.com` is a one-time operator step — see `RELEASE.md` —
-and requires `amberapp.com` to delegate DNS to the VPS nsd (as `bsdports.org` does) before the
-next `openbsd.sh` run, or acme cert issuance for it will fail.
-
-Baibl, blognet, and hjerterom remain wired at `*.brgen.no` but are outside this release's public
-launch set. City vanity apex domains (`oshlo.no`, `lsangeles.com`, …) need stage-1 certs from `openbsd.sh`.
+The stack serves four Rails apps (brgen, amber, hjerterom, bsdports) plus MASTER. `baibl` and
+`blognet` were removed from the stack (apps, relayd, acme, nsd, litestream, inventories); their
+vanity/megablog domains (`baibl.no`, `blognet.no`, `foodielicio.us`, `anti{casino,gambling,betting}blog.com`)
+went with them. City vanity apex domains (`oshlo.no`, `lsangeles.com`, …) still need stage-1 certs
+from `openbsd.sh`.
 
 TLS terminates at relayd. Rails sets `config.assume_ssl = true`; do not enable `force_ssl`.
 

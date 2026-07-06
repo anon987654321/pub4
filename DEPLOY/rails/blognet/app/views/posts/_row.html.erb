@@ -1,8 +1,0 @@
-<article data-controller="offline-feed"
-         data-offline-feed-key-value="blognet-posts"
-         data-offline-feed-title-value="<%= post.title %>"
-         data-offline-feed-url-value="<%= blog_post_path(blog, post) %>"
-         data-offline-feed-meta-value="<%= [post.published_at&.strftime("%b %-d, %Y"), pluralize(post.views_count, "view"), pluralize(post.comments_count, "comment")].compact.join(" · ") %>">
-  <h2><%= link_to post.title, blog_post_path(blog, post) %></h2>
-  <small><%= post.published_at&.strftime("%b %-d, %Y") %> · <%= post.views_count %> views · <%= post.comments_count %> comments</small>
-</article>
