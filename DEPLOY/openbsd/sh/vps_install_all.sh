@@ -35,7 +35,7 @@ typeset -a APPS
 if command -v jq >/dev/null 2>&1 && [[ -f ${PUB4}/DEPLOY/master.json ]]; then
   APPS=("${(@f)$(jq -r '.apps[].name' "${PUB4}/DEPLOY/master.json")}")
 else
-  APPS=(brgen amber blognet bsdports baibl hjerterom)
+  APPS=(brgen amber bsdports hjerterom)
 fi
 
 for app in $APPS; do

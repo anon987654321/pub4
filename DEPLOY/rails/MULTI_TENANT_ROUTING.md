@@ -22,8 +22,6 @@ Subdomain constraints live in `brgen/config/routes.rb` via `Brgen::DomainRegistr
 | amber | amber.brgen.no | 61352 |
 | hjerterom | hjerterom.brgen.no | 38891 |
 | bsdports | bsdports.org | 47312 |
-| blognet | blognet.brgen.no | 10002 |
-| baibl | baibl.brgen.no | 10007 |
 
 ## Operator UI
 

@@ -10,7 +10,7 @@ class RepoPathsTest < Minitest::Test
   end
 
   def test_deploy_path_joins_under_deploy
-    path = Master.deploy_path("postpro", "postpro.rb")
+    path = Master.deploy_path("tools", "postpro", "postpro.rb")
     assert_includes path, "/DEPLOY/tools/postpro/postpro.rb"
     assert File.file?(path)
   end

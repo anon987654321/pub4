@@ -4,7 +4,7 @@
 # Block restored pub3 anti-patterns and verify archive artifacts exist.
 
 require "open3"
-require_relative "../utf8"
+require_relative "../tools/utf8"
 require "yaml"
 
 ROOT = File.expand_path("../..", __dir__)

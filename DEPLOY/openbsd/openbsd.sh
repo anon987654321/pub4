@@ -247,9 +247,9 @@ sync_openbsd_apply() {
       || log WARN "$svc restart/start failed"
   done
   # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
-  typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312 blognet 10002 hjerterom 38891 baibl 10007)
+  typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312 hjerterom 38891)
   typeset -a core_apps=(brgen)
-  typeset -a optional_apps=(amber bsdports blognet hjerterom baibl litestream)
+  typeset -a optional_apps=(amber bsdports hjerterom litestream)
   for svc in $core_apps $optional_apps; do
     [[ -x /etc/rc.d/$svc ]] || continue
     /usr/sbin/rcctl enable $svc 2>/dev/null || true
@@ -292,8 +292,6 @@ typeset -A APP_PORTS=(
   brgen 38182
   amber 61352
   bsdports 47312
-  baibl 10007
-  blognet 10002
   hjerterom 38891
   master 53187
 )
@@ -306,8 +304,6 @@ ALL_APPS=(
   brgen:brgen.no
   amber:amber.brgen.no
   bsdports:bsdports.org
-  baibl:baibl.brgen.no
-  blognet:blognet.brgen.no
   hjerterom:hjerterom.brgen.no
 )
 
@@ -364,11 +360,7 @@ ALL_DOMAINS=(
   bsdports.org
   bsddocs.org
   discordb.org
-  foodielicio.us
   stacyspassion.com
-  antibettingblog.com
-  anticasinoblog.com
-  antigamblingblog.com
   foball.no
   amber.brgen.no
   hjerterom.brgen.no
@@ -628,9 +620,6 @@ configure_relayd() {
   DOMAIN_BACKEND[ai.brgen.no]=master
   BACKEND_PORT[master]=${APP_PORTS[master]:-53187}
   DOMAIN_BACKEND[hjerterom.brgen.no]=hjerterom
-  DOMAIN_BACKEND[anticasinoblog.com]=blognet
-  DOMAIN_BACKEND[antigamblingblog.com]=blognet
-  DOMAIN_BACKEND[antibettingblog.com]=blognet
   for entry in $ALL_DOMAINS; do
     dom=${entry%%:*}
     [[ -n ${DOMAIN_BACKEND[$dom]:-} ]] && continue

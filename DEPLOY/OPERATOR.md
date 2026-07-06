@@ -22,15 +22,26 @@ Full aliases and GitHub keys: `DEPLOY/openbsd/SSH_ACCESS.md`. Network table: `DE
 
 | Service | URL |
 |---------|-----|
-| brgen | `https://brgen.no` |
 | MASTER | `https://ai.brgen.no` |
+| brgen | `https://brgen.no` |
+| brgen · marketplace | `https://markedsplass.brgen.no` |
+| brgen · dating | `https://dating.brgen.no` |
+| brgen · playlist | `https://playlist.brgen.no` |
+| brgen · takeaway | `https://takeaway.brgen.no` |
+| brgen · tv | `https://tv.brgen.no` |
+| brgen · messenger | `https://messenger.brgen.no` |
 | amber | `https://amber.brgen.no` |
-| baibl | `https://baibl.brgen.no` |
-| blognet | `https://blognet.brgen.no` |
 | hjerterom | `https://hjerterom.brgen.no` |
 | bsdports | `https://bsdports.org` |
 
-Baibl, blognet, and hjerterom use `*.brgen.no` only. City vanity apex domains (`oshlo.no`, `lsangeles.com`, …) need stage-1 certs from `openbsd.sh`.
+The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`) are one Rails
+app served under subdomains via `<brgen>`; relayd already routes them all (`etc/relayd.conf`).
+
+The stack serves four Rails apps (brgen, amber, hjerterom, bsdports) plus MASTER. `baibl` and
+`blognet` were removed from the stack (apps, relayd, acme, nsd, litestream, inventories); their
+vanity/megablog domains (`baibl.no`, `blognet.no`, `foodielicio.us`, `anti{casino,gambling,betting}blog.com`)
+went with them. City vanity apex domains (`oshlo.no`, `lsangeles.com`, …) still need stage-1 certs
+from `openbsd.sh`.
 
 TLS terminates at relayd. Rails sets `config.assume_ssl = true`; do not enable `force_ssl`.
 

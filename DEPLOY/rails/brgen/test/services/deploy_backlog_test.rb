@@ -25,8 +25,6 @@ class DeployBacklogTest < Minitest::Test
   def test_admin_jobs_route_is_mounted_in_app_routes
     %w[
       amber/config/routes.rb
-      baibl/config/routes.rb
-      blognet/config/routes.rb
       brgen/config/routes.rb
       bsdports/config/routes.rb
       hjerterom/config/routes.rb
@@ -82,8 +80,6 @@ class DeployBacklogTest < Minitest::Test
 
     %w[
       amber/app/javascript/application.js
-      baibl/app/javascript/application.js
-      blognet/app/javascript/application.js
       bsdports/app/javascript/application.js
       hjerterom/app/javascript/application.js
     ].each do |relative|
@@ -96,8 +92,6 @@ class DeployBacklogTest < Minitest::Test
 
     %w[
       amber/app/views/layouts/application.html.erb
-      baibl/app/views/layouts/application.html.erb
-      blognet/app/views/layouts/application.html.erb
       bsdports/app/views/layouts/application.html.erb
       hjerterom/app/views/layouts/application.html.erb
       brgen/app/views/layouts/application.html.erb
@@ -123,8 +117,6 @@ class DeployBacklogTest < Minitest::Test
   def test_sqlite_wal_and_shared_stimulus_components_are_present
     %w[
       amber/config/database.yml
-      baibl/config/database.yml
-      blognet/config/database.yml
       brgen/config/database.yml
       bsdports/config/database.yml
       hjerterom/config/database.yml
@@ -176,7 +168,6 @@ class DeployBacklogTest < Minitest::Test
     %w[
       brgen/app/views/pwa/manifest.json.erb
       amber/app/views/pwa/manifest.json.erb
-      blognet/app/views/pwa/manifest.json.erb
       bsdports/app/views/pwa/manifest.json.erb
     ].each do |relative|
       source = File.read(File.join(ROOT, relative))
@@ -195,12 +186,9 @@ class DeployBacklogTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb')),
                     'data-push-unread-value='
     assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), 'Create outfit'
-    assert_includes File.read(File.join(ROOT, 'blognet/app/views/pwa/manifest.json.erb')), 'New post'
     assert_includes File.read(File.join(ROOT, 'bsdports/app/views/pwa/manifest.json.erb')), 'Search ports'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), '"file_handlers"'
-    assert_includes File.read(File.join(ROOT, 'blognet/app/views/pwa/manifest.json.erb')), '"file_handlers"'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), 'image/*'
-    assert_includes File.read(File.join(ROOT, 'blognet/app/views/pwa/manifest.json.erb')), 'text/markdown'
 
     ports_controller = File.read(File.join(ROOT, 'bsdports/app/controllers/ports_controller.rb'))
     assert_includes ports_controller, 'expires_in 10.minutes, public: true'

@@ -4,7 +4,7 @@
 require "open3"
 
 ROOT = File.expand_path(__dir__)
-APPS = %w[amber baibl blognet brgen bsdports hjerterom].freeze
+APPS = %w[amber brgen bsdports hjerterom].freeze
 FAILURES = []
 
 RUBY_PREFIX = if ENV["RBENV_VERSION"]

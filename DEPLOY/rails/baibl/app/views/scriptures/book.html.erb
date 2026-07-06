@@ -1,7 +1,0 @@
-<% content_for :title, @book.name %>
-<h1><%= @book.name %></h1>
-<nav role="navigation" aria-label="Book chapters">
-  <% @chapters.each do |chapter| %>
-    <%= link_to chapter.number, scripture_chapter_path(@book.abbreviation, chapter.number) %>
-  <% end %>
-</nav>

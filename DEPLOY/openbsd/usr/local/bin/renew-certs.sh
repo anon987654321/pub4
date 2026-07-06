@@ -34,9 +34,9 @@ ALL_DOMAINS=(
   wrsawa.pl gdnsk.pl austn.us chcago.us denvr.us dllas.us dnver.us
   dtroit.us houstn.us lsangeles.com mnnesota.com newyrk.us prtland.com
   wshingtondc.com pub.healthcare pub.attorney freehelp.legal
-  bsdports.org bsddocs.org discordb.org foodielicio.us
-  stacyspassion.com antibettingblog.com anticasinoblog.com
-  antigamblingblog.com foball.no amber.brgen.no
+  bsdports.org bsddocs.org discordb.org
+  stacyspassion.com
+ foball.no amber.brgen.no
 )
 
 for domain in $ALL_DOMAINS; do

@@ -15,9 +15,7 @@ core_services:
 optional_services:
   - amber
   - bsdports
-  - blognet
   - hjerterom
-  - baibl
   - litestream
 
 limits:

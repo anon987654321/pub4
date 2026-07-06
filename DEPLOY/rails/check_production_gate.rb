@@ -4,7 +4,7 @@
 require "open3"
 require "rbconfig"
 require "yaml"
-require_relative "../utf8"
+require_relative "../tools/utf8"
 
 RUBY_BIN = RbConfig.ruby
 

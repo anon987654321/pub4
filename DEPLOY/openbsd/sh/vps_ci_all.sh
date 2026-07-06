@@ -5,7 +5,7 @@ set -euo pipefail
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
 script=${repo}/DEPLOY/sh/vps_ci.sh
-apps=(brgen amber blognet bsdports baibl hjerterom)
+apps=(brgen amber bsdports hjerterom)
 max_load=${PUB4_CI_MAX_LOAD:-4}
 
 wait_for_load() {

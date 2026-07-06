@@ -20,12 +20,18 @@ module Master
         max_images: CharacterLoraDataset::RECOMMENDED_MAX,
         min_images: CharacterLoraDataset::RECOMMENDED_MIN,
         use_all_frames: false,
+        curation_strategy: :ranked,
+        max_per_source: nil,
+        min_frame_gap: nil,
         exclude: [],
         prepare_only: false,
         local: false,
         ai_toolkit_root: nil,
         steps: CharacterLoraLocal::DEFAULT_STEPS,
         rank: CharacterLoraLocal::DEFAULT_RANK,
+        learning_rate: CharacterLoraLocal::DEFAULT_LR,
+        caption_dropout_rate: CharacterLoraLocal::DEFAULT_CAPTION_DROPOUT,
+        version: CharacterLoraLocal::DEFAULT_VERSION,
         subject: "woman",
         root: Master::ROOT,
         replicate: nil
@@ -42,6 +48,9 @@ module Master
           max_images: max_images,
           min_images: min_images,
           use_all_frames: use_all_frames,
+          curation_strategy: curation_strategy,
+          max_per_source: max_per_source,
+          min_frame_gap: min_frame_gap,
           exclude: exclude,
           subject: subject,
           root: root
@@ -62,6 +71,7 @@ module Master
           zip_path: zip_path,
           images: dataset[:count],
           extracted_images: dataset[:extracted_count],
+          curation: dataset[:meta][:curation],
           warnings: report[:warnings],
           destination: destination,
         }
@@ -74,6 +84,9 @@ module Master
             trigger_word: trigger,
             steps: steps,
             rank: rank,
+            learning_rate: learning_rate,
+            caption_dropout_rate: caption_dropout_rate,
+            version: version,
             ai_toolkit_root: ai_toolkit_root,
             subject: subject
           )
@@ -106,6 +119,7 @@ module Master
       def format_result(result)
         lines = [
           "lora-train: name=#{result[:name]} curated=#{result[:images]} extracted=#{result[:extracted_images]} trigger=#{result[:trigger_word]}",
+          "curation: #{result[:curation]}",
           "root: #{result[:out_dir]}",
           "train: #{result[:dataset_dir]}",
           "cache: #{File.join(result[:out_dir], '.cache/frames')}",

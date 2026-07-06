@@ -31,8 +31,6 @@ Config sync: `doas zsh openbsd.sh --sync-configs`. Details: `openbsd/README.md`.
 | brgen | `rails/brgen/brgen.sh` | brgen.no |
 | amber | `rails/amber/amber.sh` | amber.brgen.no |
 | bsdports | `rails/bsdports/bsdports.sh` | bsdports.org |
-| baibl | `rails/baibl/baibl.sh` | baibl.brgen.no |
-| blognet | `rails/blognet/blognet.sh` | blognet.brgen.no |
 | hjerterom | `rails/hjerterom/hjerterom.sh` | hjerterom.brgen.no |
 
 Inventory and feature matrix: `rails/apps.yml`. Shared engine: `rails/shared`.

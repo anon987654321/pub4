@@ -2,7 +2,7 @@ name: MASTER
 paths:
   - MASTER/
 setup: bundle install
-test: bundle exec ruby -Itest -Ispec spec/converge/engine_spec.rb
+test: bin/ci
 lint: bundle exec rubocop
 smoke: ruby bin/gate
 rollback: git checkout -- MASTER

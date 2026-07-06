@@ -30,8 +30,6 @@ Ports: `apps.yml`.
 |-----|--------|------------|
 | brgen | brgen.no | VPS `bin/ci` + public `/up` |
 | amber | amber.brgen.no | same |
-| baibl | baibl.brgen.no | same |
-| blognet | blognet.brgen.no | same |
 | hjerterom | hjerterom.brgen.no | same |
 | bsdports | bsdports.org | same |
 | master | ai.brgen.no | auth smoke + `/up` |

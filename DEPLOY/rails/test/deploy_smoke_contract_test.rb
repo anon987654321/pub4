@@ -5,7 +5,7 @@ require "minitest/autorun"
 class DeploySmokeContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   OPENBSD_ROOT = File.expand_path("../../openbsd", __dir__)
-  APPS = %w[amber baibl blognet brgen bsdports hjerterom].freeze
+  APPS = %w[amber brgen bsdports hjerterom].freeze
 
   def test_all_deployed_apps_expose_rails_health_up_route
     APPS.each do |app|

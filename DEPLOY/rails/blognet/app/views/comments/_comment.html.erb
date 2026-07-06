@@ -1,7 +1,0 @@
-<article id="<%= dom_id(comment) %>" class="comment">
-  <small><%= comment.user.email_address.split("@").first %></small>
-  <p><%= comment.content %></p>
-  <% if authenticated? && (comment.user == Current.user || @blog.user == Current.user) %>
-    <%= button_to "Delete", blog_post_comment_path(@blog, @post, comment), method: :delete, data: { turbo_stream: true } %>
-  <% end %>
-</article>

@@ -19,6 +19,42 @@ module Master
         output_path
       end
 
+      def apply_cinematic_grade(input_path, output_path:, preset:, duration: nil, fps: 24, width: 1920, height: 1080)
+        filter = cinematic_filter(preset: preset, fps: fps, width: width, height: height)
+        argv = %W[-y -i #{input_path}]
+        argv += %W[-t #{duration.round(2)}] if duration.to_f.positive?
+        argv += %W[-vf #{filter} -r #{fps} -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p -movflags +faststart #{output_path}]
+        run_ffmpeg(argv)
+        output_path
+      end
+
+      def cinematic_filter(preset:, fps: 24, width: 1920, height: 1080)
+        look = grade_look(preset)
+        [
+          "scale=#{width}:#{height}:force_original_aspect_ratio=decrease",
+          "pad=#{width}:#{height}:(ow-iw)/2:(oh-ih)/2",
+          "fps=#{fps}",
+          "eq=contrast=#{look[:contrast]}:saturation=#{look[:saturation]}:brightness=#{look[:brightness]}:gamma=#{look[:gamma]}",
+          "curves=#{look[:curves]}",
+          "unsharp=5:5:0.35:3:3:0.12",
+          "noise=alls=#{look[:grain]}:allf=t+u",
+          "vignette=#{look[:vignette]}",
+          "format=yuv420p",
+        ].join(",")
+      end
+
+      def grade_look(preset)
+        {
+          "commercial" => { contrast: 1.08, saturation: 1.10, brightness: 0.01, gamma: 0.98, curves: "medium_contrast", grain: 6, vignette: "PI/7" },
+          "infomercial" => { contrast: 1.04, saturation: 1.14, brightness: 0.015, gamma: 0.98, curves: "lighter", grain: 4, vignette: "PI/9" },
+          "beauty" => { contrast: 1.03, saturation: 1.04, brightness: 0.01, gamma: 1.02, curves: "lighter", grain: 8, vignette: "PI/8" },
+          "analog" => { contrast: 1.10, saturation: 0.98, brightness: 0.0, gamma: 1.0, curves: "medium_contrast", grain: 14, vignette: "PI/5" },
+          "cinematic" => { contrast: 1.12, saturation: 1.02, brightness: -0.005, gamma: 0.97, curves: "strong_contrast", grain: 10, vignette: "PI/6" },
+        }.fetch(preset.to_s) do
+          { contrast: 1.08, saturation: 1.05, brightness: 0.0, gamma: 1.0, curves: "medium_contrast", grain: 8, vignette: "PI/7" }
+        end
+      end
+
       def concat_clips(clip_list, output_path)
         list_file = File.join(Dir.tmpdir, "video_chain_concat_#{SecureRandom.hex(6)}.txt")
         File.write(list_file, clip_list.map { |path| "file '#{File.expand_path(path)}'" }.join("\n"))

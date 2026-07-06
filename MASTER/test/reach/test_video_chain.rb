@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require_relative "../test_helper"
 
 class TestVideoChain < Minitest::Test
@@ -49,7 +50,65 @@ class TestVideoChain < Minitest::Test
       )
       assert File.exist?(result[:path])
       assert_match(/cinematic_kling_/, result[:path])
+      assert File.exist?(result[:manifest])
       assert_operator @ffmpeg_calls.size, :>=, 3
+    end
+  end
+
+  def test_generate_commercial_exact_seconds_with_grade_manifest
+    with_video_stubs do
+      result = Master::Reach::VideoChain.generate(
+        prompt: "premium skincare launch",
+        backend: :kling,
+        total_seconds: 36,
+        chunk_seconds: 8,
+        video_format: :commercial,
+        grade_preset: "commercial",
+        aspect_ratio: "16:9",
+        max_threads: 1,
+        root: @root,
+        replicate: FakeReplicate.new
+      )
+      assert File.exist?(result[:path])
+      assert_match(/commercial_grade\.mp4\z/, result[:path])
+      manifest = JSON.parse(File.read(result[:manifest]))
+      assert_equal 36, manifest["seconds"]
+      assert_equal "commercial", manifest["format"]
+      assert_equal 5, manifest["scene_prompts"].size
+      assert manifest["scene_prompts"].first.include?("opening hook")
+      grade_call = @ffmpeg_calls.find { |argv| argv.include?("-t") && argv.include?("36.0") }
+      assert grade_call, "expected final grade to trim to exact duration"
+    end
+  end
+
+  def test_direct_response_prompt_uses_camera_continuity_and_cta_metadata
+    with_video_stubs do
+      result = Master::Reach::VideoChain.generate(
+        prompt: "premium launch film",
+        backend: :kling,
+        total_seconds: 32,
+        chunk_seconds: 8,
+        video_format: :direct_response,
+        camera_plan: :product,
+        continuity: :strict,
+        offer: "early access bundle",
+        cta_label: "reserve now",
+        cta_url: "https://example.com/offer",
+        max_threads: 1,
+        root: @root,
+        replicate: FakeReplicate.new
+      )
+      manifest = JSON.parse(File.read(result[:manifest]))
+      assert_equal "direct_response", manifest["format"]
+      assert_equal "product", manifest["camera_plan"]
+      assert_equal "strict", manifest["continuity"]
+      assert_equal "early access bundle", manifest["offer"]
+      assert_equal "reserve now", manifest["cta_label"]
+      assert_equal "https://example.com/offer", manifest["cta_url"]
+      first_prompt = manifest["scene_prompts"].first
+      assert first_prompt.include?("macro slide") || first_prompt.include?("hero packshot")
+      assert manifest["scene_prompts"].last.include?("call-to-action intent")
+      assert manifest["scene_prompts"].last.include?("leave clean negative space")
     end
   end
 

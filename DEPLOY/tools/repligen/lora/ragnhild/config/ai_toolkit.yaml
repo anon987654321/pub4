@@ -1,23 +1,23 @@
 ---
 job: extension
 config:
-  name: "ragnhild_v1"
+  name: "ragnhild_v2"
   process:
   - type: sd_trainer
-    training_folder: "/Users/mac/Documents/GitHub/pub4/DEPLOY/repligen/lora/ragnhild/weights"
+    training_folder: "/Users/mac/Documents/GitHub/pub4/DEPLOY/tools/repligen/lora/ragnhild/weights"
     device: mps
     trigger_word: "ragnhild"
     network:
       type: lora
-      linear: 16
-      linear_alpha: 16
+      linear: 32
+      linear_alpha: 32
     save:
       dtype: float16
       save_every: 250
       max_step_saves_to_keep: 4
       push_to_hub: false
     datasets:
-    - folder_path: "/Users/mac/Documents/GitHub/pub4/DEPLOY/repligen/lora/ragnhild/train"
+    - folder_path: "/Users/mac/Documents/GitHub/pub4/DEPLOY/tools/repligen/lora/ragnhild/train"
       caption_ext: txt
       caption_dropout_rate: 0.05
       shuffle_tokens: false
@@ -25,7 +25,7 @@ config:
       resolution: [512, 768, 1024]
     train:
       batch_size: 1
-      steps: 1000
+      steps: 2000
       gradient_accumulation_steps: 1
       train_unet: true
       train_text_encoder: false

@@ -9,8 +9,7 @@ MIRROR = File.expand_path("..", __FILE__)
 
 FIXED_SOURCES = [
   "/etc/rc.d/master", "/etc/rc.d/brgen", "/etc/rc.d/brgen_tv",
-  "/etc/rc.d/amber", "/etc/rc.d/baibl",
-  "/etc/rc.d/blognet",
+  "/etc/rc.d/amber",
   "/etc/rc.d/bsdports",
   "/etc/rc.d/hjerterom",
   "/etc/relayd.conf", "/etc/httpd.conf", "/etc/pf.conf",

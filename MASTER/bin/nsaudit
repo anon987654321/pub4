@@ -9,8 +9,18 @@ Encoding.default_external = Encoding::UTF_8
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
 
+# Eager-load so Zeitwerk-ignored fragments (loaded via explicit require, e.g.
+# judge/scan/rules/*.rb) are defined and resolve like any other constant. Without
+# this, lazy const_get can't autoload a plural-filename fragment and false-alarms.
+Master.eager_load!
+
 ROOT = File.expand_path("..", __dir__)
 SKIP = %r{/(vendor|tmp|log|public/assets|public/packs|node_modules|\.git)/}
+# bin/master-kernel boots the *kernel spine* (kernel/master.rb) on its own $LOAD_PATH,
+# which defines a distinct Master:: namespace (Effect, Constitution, World, Kernel,
+# Memory). Those constants don't live in lib/master, so scanning it here only yields
+# false positives — the kernel has its own smoke (kernel/spec/kernel_smoke.rb).
+SKIP_FILES = %w[bin/master-kernel].freeze
 
 def resolve(name)
   name.split("::").inject(Object) { |k, p| k.const_get(p, false) }
@@ -23,6 +33,7 @@ refs = Hash.new { |h, k| h[k] = [] }
 Dir.glob(["lib/**/*.rb", "web/app/**/*.rb", "web/config/**/*.rb", "bin/*"], base: ROOT).each do |rel|
   path = File.join(ROOT, rel)
   next if path =~ SKIP
+  next if SKIP_FILES.include?(rel)
   next unless File.file?(path)
   File.foreach(path, encoding: "UTF-8").with_index(1) do |line, lineno|
     next unless line.valid_encoding?

@@ -127,7 +127,7 @@ module Master
   ]
   rule_fragments.each { |name| loader.ignore(File.join(__dir__, "judge", "scan", "rules", name)) }
   %w[
-    converge.rb converge master_paths.rb harness/registry.rb history/fossils.rb
+    master_paths.rb harness/registry.rb history/fossils.rb
     providers/catalog_index.rb providers/fallback_chain.rb quality/slop_budget.rb repo/inventory.rb
     scope/ledger.rb builder/boot_phases.rb builder/ai_boot.rb judge/llm_dispatcher
   ].each { |relative| loader.ignore(File.join(__dir__, relative)) }
@@ -140,7 +140,6 @@ module Master
   extend MasterBoot
 
   require_relative "unwrap_error"
-  require_relative "converge/converge"
 
   def self.eager_load! = LOADER.eager_load
 

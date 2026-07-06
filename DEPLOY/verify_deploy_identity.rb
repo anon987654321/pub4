@@ -6,7 +6,7 @@
 #   ruby DEPLOY/verify_deploy_identity.rb
 
 require "yaml"
-require_relative "utf8"
+require_relative "tools/utf8"
 
 ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")

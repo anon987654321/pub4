@@ -59,26 +59,8 @@ apps:
       checks:
         - type: selector
           id: main-content
-  baibl:
-    port: 10007
-    paths:
-      - path: /up
-        expect_status: 200
-    browser:
-      warmup_s: 2
-      checks:
-        - type: selector
-          css: "body"
-  blognet:
-    port: 10002
-    paths:
-      - path: /up
-        expect_status: 200
-    browser:
-      warmup_s: 2
-      checks:
-        - type: selector
-          css: "body"
+
+
   bsdports:
     port: 47312
     paths:

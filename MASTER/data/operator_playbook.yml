@@ -28,7 +28,7 @@ lessons:
     area: openbsd
     signal: "Rails apps stopped after cron; only master/brgen remain"
     action: "Create /var/db/pub4_all_apps or run DEPLOY/openbsd/start_all_apps.sh to pin all services against resource_guard.sh shedding."
-    proof: "test -f /var/db/pub4_all_apps; doas rcctl check brgen amber blognet bsdports baibl hjerterom"
+    proof: "test -f /var/db/pub4_all_apps; doas rcctl check brgen amber bsdports hjerterom"
 
   - id: rails_phantom_foreign_keys
     area: rails
@@ -88,7 +88,7 @@ lessons:
     area: deploy
     signal: "Code pushed but services stale or untested on vm23"
     action: "After git pull: SKIP_MASTER_SCAN=1 zsh DEPLOY/openbsd/sh/vps_on_vm_install.sh; doas rcctl restart master; bundle34 exec bin/ci per app; bundle34 exec bin/smoke in MASTER; ruby34 DEPLOY/openbsd/health_check.rb; curl https://ai.brgen.no/up"
-    proof: "doas rcctl check master brgen amber blognet bsdports baibl hjerterom; browser smoke on ai.brgen.no face"
+    proof: "doas rcctl check master brgen amber bsdports hjerterom; browser smoke on ai.brgen.no face"
 
   - id: rails_rcd_canonical_names
     area: openbsd
