@@ -125,7 +125,12 @@ module Providers
       request["Authorization"] = "Bearer #{token}" if token && !token.empty?
       request["Accept"] = "application/json"
       request["User-Agent"] = "MASTER provider catalog index"
-      response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+      # Bounded so a slow or unreachable catalog endpoint can't hang the caller
+      # (ROBUSTNESS: no unbounded HTTP). Tunable via env for slow networks.
+      response = Net::HTTP.start(uri.host, uri.port,
+                                 use_ssl: uri.scheme == "https",
+                                 open_timeout: Integer(ENV.fetch("MASTER_HTTP_OPEN_TIMEOUT", "10")),
+                                 read_timeout: Integer(ENV.fetch("MASTER_HTTP_READ_TIMEOUT", "30"))) do |http|
         http.request(request)
       end
       raise "#{url} returned #{response.code}: #{response.body[0, 200]}" unless response.is_a?(Net::HTTPSuccess)
