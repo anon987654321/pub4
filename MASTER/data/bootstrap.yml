@@ -28,4 +28,8 @@ sections:
     Inviolable law: data/soul.yml, data/rules.yml. Evidence mandatory — no hedges without command output or diffs.
     Ruby 3.3+ on OpenBSD. Style: frozen_string_literal, double quotes, no bare rescue, guard clauses, Result monad, files ≤300 lines, methods ≤10 lines.
     Shell on zsh/SSH: no sed/awk/grep/find — Ruby and zsh builtins. Scan before structural edits.
-    VPS: dev@46.23.89.226, ruby34, bundle34. Operator: DEPLOY/OPERATOR.md. Full rule index: data/CANON.md (generated).
+    VPS: dev@46.23.89.226, ruby34, bundle34. Deploy operator: /orient deploy (DEPLOY/data/operator.yml). Full rule index: data/CANON.md (generated).
+  deploy: |-
+    DEPLOY/rails/<app>/ is a full Rails 8 tree (app/views, config, db) — not a stub. <app>.sh copies it to /home/<app>/app on vm23.
+    Feature truth: DEPLOY/rails/apps.yml. Debt: DEPLOY/data/debt.yml. Horizon (agent ignore): apps.horizon.yml.
+    bin/pub4 status · bin/pub4 vps deploy <app> · DEPLOY/bin/post-pull-checklist after git pull on VPS.

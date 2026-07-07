@@ -11,6 +11,11 @@ module Master
 
       def section(name)
         key = name.to_s.strip.downcase
+        if key == "deploy"
+          require_relative "../deploy/operator_docs"
+          return Master::Deploy::OperatorDocs.render_deploy
+        end
+
         file = load_file_sections[key]
         return file if file
 

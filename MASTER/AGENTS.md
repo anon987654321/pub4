@@ -11,7 +11,7 @@
 7. Secrets live in `/etc/*.env` on VPS — never commit keys, master keys, or generated assets.
 8. After `git pull` on vm23, **deployed trees do not move** — run `vps-deploy` before expecting live health.
 9. Constitution self-scan debt is visible by design — do not chase zero during unrelated UI fixes.
-10. `BACKLOG.yml` is the open-work source — do not recreate `TODO.md` checkbox ledgers.
+10. Feature truth is `apps.yml`; open debt is `DEPLOY/data/debt.yml`; horizon is `apps.horizon.yml` (ignore).
 
 ## Boot sequence
 

@@ -130,13 +130,13 @@
   border-inline-start: 2px solid var(--x-border, #2f3336);
 }
 
-.style-timeline__event {
+.style-timeline li {
   position: relative;
   margin: 0 0 var(--space-md) var(--space-md);
   padding-inline-start: var(--space-sm);
 }
 
-.style-timeline__event::before {
+.style-timeline li::before {
   content: "";
   position: absolute;
   inset-inline-start: calc(-1 * var(--space-md) - 5px);

@@ -52,7 +52,8 @@ class DeployGatesContractTest < Minitest::Test
     end
     repo_root = File.expand_path("..", DEPLOY_ROOT)
     assert File.exist?(File.join(repo_root, "RECIPES.md"))
-    assert File.exist?(File.join(repo_root, "BACKLOG.yml"))
+    assert File.exist?(File.join(repo_root, "DEPLOY", "data", "debt.yml"))
+    assert File.exist?(File.join(repo_root, "DEPLOY", "data", "operator.yml"))
     assert File.exist?(File.join(repo_root, "bin", "pub4"))
   end
 

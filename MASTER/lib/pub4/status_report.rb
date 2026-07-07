@@ -29,7 +29,7 @@ module Pub4
       lines << "mode: #{payload[:mode]} (#{payload[:tree]})"
       lines << "branch: #{payload[:branch]} @ #{payload[:commit]} (#{payload[:dirty]} dirty, #{payload[:behind]} behind upstream)"
       lines << "ruby: #{payload[:ruby]}#{payload[:ruby_ok] ? '' : ' — MISMATCH'}"
-      lines << "backlog: #{payload[:backlog_open]} open (#{payload[:backlog_source]})"
+      lines << "debt: #{payload[:backlog_open]} open (#{payload[:backlog_source]})"
       lines << "horizon: #{payload[:horizon_count]} planned items (agent: ignore)"
       lines << ""
       lines << "services:"
@@ -70,20 +70,14 @@ module Pub4
     end
 
     def backlog_source
-      if File.file?(File.join(@root, "BACKLOG.yml"))
-        "BACKLOG.yml"
-      elsif File.file?(File.join(@root, "MASTER", "TODO.md")) || File.file?(File.join(@root, "DEPLOY", "TODO.md"))
-        "TODO.md (legacy — run cd MASTER && TODO_RETIRE_CONFIRM=1 bin/todo-retire)"
-      else
-        "none"
-      end
+      "DEPLOY/data/debt.yml"
     end
 
     def backlog_open_count
-      backlog = File.join(@root, "BACKLOG.yml")
-      return 0 unless File.file?(backlog)
+      path = File.join(@root, "DEPLOY", "data", "debt.yml")
+      return 0 unless File.file?(path)
 
-      data = YAML.safe_load(File.read(backlog)) || {}
+      data = YAML.safe_load(File.read(path)) || {}
       Array(data["open"]).size
     end
 

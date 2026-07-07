@@ -1,0 +1,23 @@
+# Actionable deploy debt — open items agents should work unless blocked.
+# Feature inventory: DEPLOY/rails/apps.yml. Deferred features: apps.horizon.yml (agent: ignore).
+
+open:
+  - id: solid_queue_worker_proof
+    area: vps
+    signal: scheduled jobs may not run after deploy
+    action: confirm Solid Queue worker under Falcon on vm23 for bsdports/brgen recurring jobs
+    proof: ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps
+
+  - id: tts_host_binary
+    area: vps
+    signal: MASTER /chat/tts silent
+    action: install edge-tts or pkg_add espeak on vm23; verify PATH for master service
+    proof: cd MASTER && bin/handoff shows TTS binary on PATH
+
+closed:
+  - id: macos_ruby_mismatch
+    resolution: contributor check profiles + bin/ruby shim skip runtime gates cleanly
+  - id: frontend_auditor
+    resolution: amber items.scss split + timeline BEM removed
+  - id: web_asset_discipline
+    resolution: vps-deploy master path runs precompile + master_web_assets_gate

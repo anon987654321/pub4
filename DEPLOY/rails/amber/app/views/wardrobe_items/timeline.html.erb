@@ -53,7 +53,7 @@
   <% if @timeline[:wear_events].any? %>
     <ol class="style-timeline" role="list">
       <% @timeline[:wear_events].each do |event| %>
-        <li role="listitem" class="style-timeline__event">
+        <li role="listitem">
           <time datetime="<%= event[:worn_on] %>"><%= event[:worn_on] %></time>
           <p>
             <%= link_to event[:item_title], item_path(event[:item_id]) %>

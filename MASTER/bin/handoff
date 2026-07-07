@@ -7,17 +7,17 @@ require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
-BACKLOG = File.join(REPO, "BACKLOG.yml")
+DEBT = File.join(REPO, "DEPLOY", "data", "debt.yml")
 
 def capture(*cmd, chdir: REPO)
   out, status = Open3.capture2e(*cmd, chdir:)
   status.success? ? out.strip : nil
 end
 
-def backlog_open
-  return [] unless File.file?(BACKLOG)
+def debt_open
+  return [] unless File.file?(DEBT)
 
-  data = YAML.safe_load(File.read(BACKLOG)) || {}
+  data = YAML.safe_load(File.read(DEBT)) || {}
   Array(data["open"])
 end
 
@@ -49,13 +49,14 @@ puts "repo: #{REPO}"
 puts "branch: #{branch} @ #{commit} (#{dirty} dirty, #{behind} behind upstream)"
 puts
 
-open_items = backlog_open
-puts "BACKLOG.yml open: #{open_items.size}"
-open_items.first(8).each { |item| puts "  - #{item}" }
+open_items = debt_open
+puts "DEPLOY/data/debt.yml open: #{open_items.size}"
+open_items.first(8).each { |item| puts "  - [#{item['id']}] #{item['signal']}" }
 puts "  …" if open_items.size > 8
 puts
 
-puts "quick status: bin/pub4 status"
+puts "feature inventory: DEPLOY/rails/apps.yml (horizon: apps.horizon.yml)"
+puts "quick status: bin/pub4 status · /orient deploy"
 puts
 puts "golden checks (contributor profile):"
 puts "  cd MASTER && bin/check --profile=contributor"

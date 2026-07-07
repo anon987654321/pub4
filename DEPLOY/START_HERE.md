@@ -29,7 +29,7 @@ DEPLOY is the production surface for pub4: OpenBSD vm23, relayd, NSD/acme, Rails
 - Public/deploy identity: `DEPLOY/master.json`.
 - OpenBSD configs: `DEPLOY/openbsd/etc/`.
 - Operator runbook: `DEPLOY/OPERATOR.md`.
-- Feature backlog: `BACKLOG.yml` (open work) + `DEPLOY/rails/apps.yml` (inventory) + `apps.horizon.yml` (agent: ignore).
+- Feature inventory: `DEPLOY/rails/apps.yml`. Open debt: `DEPLOY/data/debt.yml`. Horizon: `apps.horizon.yml` (agent: ignore). Runtime: `/orient deploy`.
 
 ## Safety Defaults
 

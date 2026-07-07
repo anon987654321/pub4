@@ -1,5 +1,7 @@
 # brgen — agent notes
 
+Full Rails 8 app in this directory (`app/views`, `config`, `db`, `test`). **Not** a greenfield scaffold step — `brgen.sh` copy-tree deploys this tree to `/home/brgen/app` on vm23.
+
 - **Domain:** brgen.no (+ vertical subdomains). **Port:** 38182. **Deploy root:** `DEPLOY/rails/brgen`.
 - **Shared engine:** `DEPLOY/rails/shared` — prefer concerns there over duplicating in brgen.
 - **Inventory:** `DEPLOY/rails/apps.yml` (active); horizon work in `apps.horizon.yml` (ignore).
