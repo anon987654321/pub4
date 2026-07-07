@@ -278,7 +278,7 @@ module Master
       end
 
       def run_push
-        out, status = Open3.capture2e("git", "-C", @refs.root, "push")
+        out, status = Master::Reach::Exec.capture2e("git", "-C", @refs.root, "push")
         message = status.success? ? out.strip : "push: #{out.strip}"
         puts @refs.renderer.render(message.empty? ? "push: ok" : message, mode: status.success? ? :dim : :warning)
       rescue StandardError => e
@@ -292,7 +292,7 @@ module Master
       end
 
       def run_scan_git_changes
-        out, status = Open3.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
+        out, status = Master::Reach::Exec.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
         unless status.success?
           puts @refs.renderer.render("scan: git diff failed — #{out.strip}", mode: :warning)
           return

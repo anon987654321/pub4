@@ -6,7 +6,9 @@
 # that admits each one before it touches the world. Four concepts carry it —
 # Kernel (the fold), Constitution (the gate), World (the effects), Memory (the
 # record) — and this file holds the vocabulary they share.
-module Master
+module Master; end
+
+module Master::Kernel
   # An Effect is something the agent wants to do. Nothing reaches the world
   # except by proposing an Effect and having the Constitution admit it. The verb
   # set is closed and small; that closure is what makes the agent auditable.

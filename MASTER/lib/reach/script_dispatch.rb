@@ -15,7 +15,7 @@ module Master
         return Result.err("#{tool}: missing tool entrypoint #{script}", category: :validation) unless File.file?(script)
 
         argv = Shellwords.split(arg.to_s)
-        out, status = Open3.capture2e(RbConfig.ruby, script, *argv, chdir: File.expand_path("..", root))
+        out, status = Master::Reach::Exec.capture2e(RbConfig.ruby, script, *argv, chdir: File.expand_path("..", root))
         status.success? ? Result.ok(out.strip) : Result.err("#{tool}: exit=#{status.exitstatus}\n#{out.strip}")
       rescue ArgumentError => e
         Result.err("#{tool}: bad arguments: #{e.message}", category: :validation)

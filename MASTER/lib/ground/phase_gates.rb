@@ -191,7 +191,7 @@ module Master
       end
 
       def master_service_running?
-        _, _, status = Open3.capture3("/usr/sbin/rcctl", "check", "master")
+        _, _, status = Master::Reach::Exec.capture3("/usr/sbin/rcctl", "check", "master")
         status.success?
       rescue Errno::ENOENT
         false

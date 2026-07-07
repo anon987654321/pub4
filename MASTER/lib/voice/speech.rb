@@ -320,7 +320,7 @@ module Master
       def synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
         timeout = worker_timeout
         _out, err, status = Timeout.timeout(timeout) do
-          Open3.capture3(
+          Master::Reach::Exec.capture3(
             WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
             stdin_data: text.to_s
           )

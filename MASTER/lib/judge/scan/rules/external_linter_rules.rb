@@ -22,7 +22,7 @@ module Master
 
           # Returns parsed JSON, or nil on empty output or a parse error.
           def linter_json(*argv)
-            stdout, = Open3.capture3(Master::BUNDLE_BIN, "exec", *argv, chdir: @root)
+            stdout, = Master::Reach::Exec.capture3(Master::BUNDLE_BIN, "exec", *argv, chdir: @root)
             return if stdout.empty?
             JSON.parse(stdout)
           rescue JSON::ParserError

@@ -99,7 +99,7 @@ module Master
 
       def diff_stat(path)
         return unless path && !path.empty?
-        out, = Open3.capture2e("git", "-C", @refs.root, "diff", "--numstat", "--", path)
+        out, = Master::Reach::Exec.capture2e("git", "-C", @refs.root, "diff", "--numstat", "--", path)
         m = out.lines.first&.match(/^(\d+)\s+(\d+)/)
         m ? "+#{m[1]}/-#{m[2]}" : nil
       rescue StandardError => e

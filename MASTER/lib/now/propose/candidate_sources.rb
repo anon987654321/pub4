@@ -96,7 +96,7 @@ module Master
         end
 
         def commit_line_deltas(path)
-          out, status = Open3.capture3("git", "-C", @root, "log", "-3", "--numstat", "--format=", "--", path)
+          out, status = Master::Reach::Exec.capture3("git", "-C", @root, "log", "-3", "--numstat", "--format=", "--", path)
           return [] unless status.success?
 
           out.lines.filter_map do |line|

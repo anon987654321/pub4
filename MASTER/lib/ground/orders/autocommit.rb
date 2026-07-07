@@ -8,10 +8,10 @@ module Master
       class Autocommit < Base
         def call
           repo = File.expand_path(File.join(root, ".."))
-          out, _, status = Open3.capture3("git", "-C", repo, "status", "--porcelain")
+          out, _, status = Master::Reach::Exec.capture3("git", "-C", repo, "status", "--porcelain")
           return Result.ok(skipped: true) unless status.success? && !out.strip.empty?
           commit_message = "auto: standing-order commit (#{out.lines.size} file(s))"
-          _, st = Open3.capture2e("git", "-C", repo, "commit", "-m", commit_message)
+          _, st = Master::Reach::Exec.capture2e("git", "-C", repo, "commit", "-m", commit_message)
           return Result.err("commit failed") unless st.success?
           if push_st.success?
             bus&.publish("autocommit:pushed", files: out.lines.size)

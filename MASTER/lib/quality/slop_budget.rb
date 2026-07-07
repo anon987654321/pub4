@@ -37,7 +37,7 @@ module Quality
     private
 
     def git(*args)
-      stdout, status = Open3.capture2e("git", *args, chdir: @root)
+      stdout, status = Master::Reach::Exec.capture2e("git", *args, chdir: @root)
       raise "git #{args.join(" ")} failed: #{stdout}" unless status.success?
       stdout
     end

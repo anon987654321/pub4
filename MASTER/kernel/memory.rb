@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Master
+module Master::Kernel
   # Memory — the record. Holds the conversation the model sees and the evidence
   # the Constitution checks. Compaction is turn-aware: it summarises the oldest
   # turns and keeps the recent ones whole, never orphaning an observation from

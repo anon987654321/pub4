@@ -147,7 +147,7 @@ module Master
       end
 
       def print_changed_files_summary
-        out, status = Open3.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
+        out, status = Master::Reach::Exec.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
         return unless status.success?
 
         count = out.lines.map(&:strip).reject(&:empty?).size

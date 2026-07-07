@@ -17,7 +17,7 @@ module Master
       def status_lines(path = nil)
         args = ["git", "-C", @root_path, "status", "--porcelain"]
         args << path if path
-        out, = Open3.capture2e(*args)
+        out, = Master::Reach::Exec.capture2e(*args)
         out.lines.map(&:chomp)
       end
 
@@ -26,19 +26,19 @@ module Master
       end
 
       def add_all
-        Open3.capture2e("git", "-C", @root_path, "add", "-A")
+        Master::Reach::Exec.capture2e("git", "-C", @root_path, "add", "-A")
       end
 
       def commit(message)
-        Open3.capture2e("git", "-C", @root_path, "commit", "-m", message.to_s)
+        Master::Reach::Exec.capture2e("git", "-C", @root_path, "commit", "-m", message.to_s)
       end
 
       def push
-        Open3.capture2e("git", "-C", @root_path, "push")
+        Master::Reach::Exec.capture2e("git", "-C", @root_path, "push")
       end
 
       def ahead_behind
-        out, _, st = Open3.capture3(
+        out, _, st = Master::Reach::Exec.capture3(
           "git", "-C", @root_path, "rev-list", "--left-right", "--count", "HEAD...@{u}"
         )
         return [0, 0] unless st.success?
@@ -47,29 +47,29 @@ module Master
       end
 
       def diff_stat(base = "HEAD")
-        out, = Open3.capture2e("git", "-C", @root_path, "diff", base, "--stat")
+        out, = Master::Reach::Exec.capture2e("git", "-C", @root_path, "diff", base, "--stat")
         out.strip
       end
 
       def reset_hard(ref = "origin/main")
-        Open3.capture2e("git", "-C", @root_path, "reset", "--hard", ref)
+        Master::Reach::Exec.capture2e("git", "-C", @root_path, "reset", "--hard", ref)
       end
 
       def tag(name)
-        Open3.capture2e("git", "-C", @root_path, "tag", name)
+        Master::Reach::Exec.capture2e("git", "-C", @root_path, "tag", name)
       end
 
       def fetch
-        Open3.capture2e("git", "-C", @root_path, "fetch")
+        Master::Reach::Exec.capture2e("git", "-C", @root_path, "fetch")
       end
 
       def head
-        out, _, st = Open3.capture3("git", "-C", @root_path, "rev-parse", "--short", "HEAD")
+        out, _, st = Master::Reach::Exec.capture3("git", "-C", @root_path, "rev-parse", "--short", "HEAD")
         st.success? ? out.strip : nil
       end
 
       def branch
-        out, _, st = Open3.capture3("git", "-C", @root_path, "rev-parse", "--abbrev-ref", "HEAD")
+        out, _, st = Master::Reach::Exec.capture3("git", "-C", @root_path, "rev-parse", "--abbrev-ref", "HEAD")
         st.success? ? out.strip : nil
       end
     end

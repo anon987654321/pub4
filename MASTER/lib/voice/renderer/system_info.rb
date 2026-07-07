@@ -49,7 +49,7 @@ module Master
           raw = if File.readable?(boot_log)
                   File.readlines(boot_log, chomp: true)
                 else
-                  stdout, = Open3.capture3("dmesg")
+                  stdout, = Master::Reach::Exec.capture3("dmesg")
                   stdout.lines(chomp: true)
                 end
           filtered = raw.reject { |l| l.match?(/\A(?:OpenBSD\s+\d|Copyright\s|The Regents)/) }

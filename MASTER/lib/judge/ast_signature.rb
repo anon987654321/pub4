@@ -24,7 +24,7 @@ module Master
       end
 
       def from_git(rel_path, ref:, root: Dir.pwd)
-        out, st = Open3.capture2e("git", "show", "#{ref}:#{rel_path}", chdir: root)
+        out, st = Master::Reach::Exec.capture2e("git", "show", "#{ref}:#{rel_path}", chdir: root)
         return [] unless st.success?
         from_source(out)
       rescue StandardError => e

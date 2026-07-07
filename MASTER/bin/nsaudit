@@ -14,13 +14,13 @@ require "master"
 # this, lazy const_get can't autoload a plural-filename fragment and false-alarms.
 Master.eager_load!
 
+# Also load the kernel spine so bin/master-kernel's Master::Kernel::* references
+# resolve. Since the kernel now lives under Master::Kernel (not the Master:: top
+# level), it coexists with lib in one process — no collision, no special-casing.
+require_relative "../kernel/master"
+
 ROOT = File.expand_path("..", __dir__)
 SKIP = %r{/(vendor|tmp|log|public/assets|public/packs|node_modules|\.git)/}
-# bin/master-kernel boots the *kernel spine* (kernel/master.rb) on its own $LOAD_PATH,
-# which defines a distinct Master:: namespace (Effect, Constitution, World, Kernel,
-# Memory). Those constants don't live in lib/master, so scanning it here only yields
-# false positives — the kernel has its own smoke (kernel/spec/kernel_smoke.rb).
-SKIP_FILES = %w[bin/master-kernel].freeze
 
 def resolve(name)
   name.split("::").inject(Object) { |k, p| k.const_get(p, false) }
@@ -33,7 +33,6 @@ refs = Hash.new { |h, k| h[k] = [] }
 Dir.glob(["lib/**/*.rb", "web/app/**/*.rb", "web/config/**/*.rb", "bin/*"], base: ROOT).each do |rel|
   path = File.join(ROOT, rel)
   next if path =~ SKIP
-  next if SKIP_FILES.include?(rel)
   next unless File.file?(path)
   File.foreach(path, encoding: "UTF-8").with_index(1) do |line, lineno|
     next unless line.valid_encoding?

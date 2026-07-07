@@ -220,15 +220,15 @@ module Master
       def git_summary(repo_root)
         return [] unless File.directory?(File.join(repo_root, ".git"))
 
-        branch, = Open3.capture2e("git", "-C", repo_root, "rev-parse", "--abbrev-ref", "HEAD")
-        sha, = Open3.capture2e("git", "-C", repo_root, "rev-parse", "--short", "HEAD")
+        branch, = Master::Reach::Exec.capture2e("git", "-C", repo_root, "rev-parse", "--abbrev-ref", "HEAD")
+        sha, = Master::Reach::Exec.capture2e("git", "-C", repo_root, "rev-parse", "--short", "HEAD")
         ["- git: #{branch.strip} @ #{sha.strip}"]
       rescue StandardError
         []
       end
 
       def recent_commits(repo_root, n = 5)
-        out, status = Open3.capture2e("git", "-C", repo_root, "log", "-n", n.to_s, "--oneline")
+        out, status = Master::Reach::Exec.capture2e("git", "-C", repo_root, "log", "-n", n.to_s, "--oneline")
         return "(no git log)" unless status.success?
 
         out.lines.map(&:strip).reject(&:empty?).map { |line| "- #{line}" }.join("\n")

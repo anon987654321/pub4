@@ -39,7 +39,7 @@ module History
     attr_reader :root, :window
 
     def git_log(*paths)
-      stdout, status = Open3.capture2e(
+      stdout, status = Master::Reach::Exec.capture2e(
         "git", "log", window, "--find-renames", "--find-copies", "--diff-filter=DMR", "--patch", "--", *paths,
         chdir: root
       )

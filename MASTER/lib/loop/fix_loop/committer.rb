@@ -76,7 +76,7 @@ module Master
         end
 
         def git_diff
-          out, = Open3.capture2e("git", "-C", @root, "diff", "HEAD")
+          out, = Master::Reach::Exec.capture2e("git", "-C", @root, "diff", "HEAD")
           out.to_s
         rescue StandardError
           ""
@@ -88,7 +88,7 @@ module Master
           return skip_lint("missing Gemfile") unless bundle_context?
 
           cmd = [Master::BUNDLE_BIN, "exec", "rubocop", "--fail-level", "E", "--force-exclusion", *files]
-          _out, _err, status = Timeout.timeout(LINT_TIMEOUT_SECONDS) { Open3.capture3(*cmd, chdir: @root) }
+          _out, _err, status = Timeout.timeout(LINT_TIMEOUT_SECONDS) { Master::Reach::Exec.capture3(*cmd, chdir: @root) }
           if status.success?
             true
           else

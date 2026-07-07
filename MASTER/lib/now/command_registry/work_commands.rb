@@ -84,7 +84,7 @@ module Master
         smoke = File.join(root, "kernel", "spec", "kernel_smoke.rb")
         return "kernel: smoke script missing at #{smoke}" unless File.file?(smoke)
 
-        out, status = Open3.capture2e(Gem.ruby, smoke, chdir: root)
+        out, status = Master::Reach::Exec.capture2e(Gem.ruby, smoke, chdir: root)
         status.success? ? out.lines.last(5).join : "kernel smoke failed:\n#{out}"
       end
 
