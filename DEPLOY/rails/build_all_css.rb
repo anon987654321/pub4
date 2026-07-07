@@ -82,9 +82,8 @@ end
 def sync_static_tokens!
   tokens = File.join(shared_public_dir, "styles", "tokens.css")
   FileUtils.mkdir_p(File.dirname(tokens))
-  unless File.writable?(File.dirname(tokens)) || !File.exist?(File.dirname(tokens))
-    warn "css: skip token sync — not writable (#{File.dirname(tokens)})" unless File.file?(tokens)
-    return if File.file?(tokens)
+  unless File.writable?(File.dirname(tokens))
+    return warn "css: skip token sync — using existing #{tokens}" if File.file?(tokens)
 
     abort "css: cannot write tokens to #{File.dirname(tokens)}"
   end
