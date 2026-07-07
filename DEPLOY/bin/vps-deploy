@@ -40,13 +40,21 @@ fi
 print "vps-deploy: $app (ci + sync)"
 zsh "$repo/DEPLOY/openbsd/sh/vps_ci.sh" "$app"
 
+print "vps-deploy: $app (secondary db schemas)"
+. "$repo/DEPLOY/rails/shared/deploy/@shared_functions.sh"
+rails_prepare_secondary_dbs_as_app "$app" "/home/${app}/app"
+
 print "vps-deploy: $app (restart)"
 doas rcctl restart "$app"
-sleep 3
 doas rcctl check "$app"
 
 port=$(ruby34 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/DEPLOY/rails/apps.yml")).dig("apps","'"$app"'","port")')
-curl -fsS "http://127.0.0.1:${port}/up" >/dev/null
+up_ok=0
+for i in {1..30}; do
+  curl -fsS "http://127.0.0.1:${port}/up" >/dev/null 2>&1 && { up_ok=1; break; }
+  sleep 2
+done
+[[ $up_ok -eq 1 ]] || { print -u2 "vps-deploy: $app /up not ready on :${port}"; exit 1; }
 
 print "vps-deploy: $app ok"
 write_stamp "$app" ok

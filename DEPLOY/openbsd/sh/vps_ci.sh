@@ -26,7 +26,7 @@ sync_from_repo() {
   local src=$repo/DEPLOY/rails/$app
   local shared_src=$repo/DEPLOY/rails/shared
   if [[ -d $src ]]; then
-    local -a paths=(test app lib config bin db/seeds.rb db/migrate Gemfile Gemfile.lock)
+    local -a paths=(test app lib config bin db Gemfile Gemfile.lock)
     local -a existing=()
     local rel
     for rel in "${paths[@]}"; do
