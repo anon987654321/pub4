@@ -16,8 +16,18 @@ require "fileutils"
 RAILS_ROOT = File.expand_path(__dir__)
 ROOT = File.expand_path("../..", __dir__)
 SHARED_STYLES = File.join(RAILS_ROOT, "shared", "app", "assets", "stylesheets")
-SHARED_PUBLIC = File.join(RAILS_ROOT, "shared", "public")
-FONTS_DIR = File.join(SHARED_PUBLIC, "fonts")
+def shared_public_dir
+  home = ENV["HOME"].to_s
+  if home != "" && File.directory?(File.join(home, "shared"))
+    File.join(home, "shared", "public")
+  else
+    File.join(RAILS_ROOT, "shared", "public")
+  end
+end
+
+def fonts_dir
+  File.join(shared_public_dir, "fonts")
+end
 X_TOKEN_MARKERS = ["--x-text: #e7e9ea", "--x-accent: #1d9bf0", "JetBrainsMono Nerd Font"].freeze
 
 FONT_CDN = "https://cdn.jsdelivr.net/gh/Nick2bad4u/nerd-fonts-woff2@v1.0.5/fonts/woff2/JetBrainsMono/Ligatures".freeze
@@ -58,7 +68,7 @@ end
 def ensure_fonts!
   FileUtils.mkdir_p(FONTS_DIR)
   FONT_SOURCES.each do |filename, url|
-    path = File.join(FONTS_DIR, filename)
+    path = File.join(fonts_dir, filename)
     next if File.file?(path) && File.size(path).positive?
 
     warn "css: fetching #{filename}"
@@ -70,8 +80,14 @@ def ensure_fonts!
 end
 
 def sync_static_tokens!
-  tokens = File.join(SHARED_PUBLIC, "styles", "tokens.css")
+  tokens = File.join(shared_public_dir, "styles", "tokens.css")
   FileUtils.mkdir_p(File.dirname(tokens))
+  unless File.writable?(File.dirname(tokens)) || !File.exist?(File.dirname(tokens))
+    warn "css: skip token sync — not writable (#{File.dirname(tokens)})" unless File.file?(tokens)
+    return if File.file?(tokens)
+
+    abort "css: cannot write tokens to #{File.dirname(tokens)}"
+  end
   File.write(tokens, <<~CSS)
     /* Auto-synced by build_all_css.rb — x.com base tokens */
     :root {
