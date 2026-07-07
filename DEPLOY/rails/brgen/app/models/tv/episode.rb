@@ -4,6 +4,7 @@ module Tv
   class Episode < ApplicationRecord
     # Engine-ize Shared via pub4-shared
     include Shared.concern(:ActivityTrackable) rescue include Shared::ActivityTrackable
+    tracks_activity created: "TvEpisodeCreated", updated: "TvEpisodeUpdated", source_vertical: "tv", actor: :channel_owner
     include Shared.concern(:Reactable) rescue nil
     include Shared.concern(:Notifiable) rescue nil
 
@@ -18,5 +19,7 @@ module Tv
     def to_param
       number.to_s
     end
+
+    def channel_owner = show&.channel&.user
   end
 end

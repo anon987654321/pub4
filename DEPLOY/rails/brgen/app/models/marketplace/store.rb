@@ -7,6 +7,7 @@ module Marketplace
     # Engine-ized Shared
     include Shared.concern(:Notifiable) rescue nil
     include Shared.concern(:ActivityTrackable) rescue nil
+    tracks_activity created: "MarketplaceStoreCreated", updated: "MarketplaceStoreUpdated", source_vertical: "marketplace", actor: :owner
     include Shared.concern(:GeoLocatable) rescue nil
     include Shared.concern(:Reactable) rescue nil
 

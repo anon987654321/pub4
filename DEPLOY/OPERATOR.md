@@ -1,6 +1,8 @@
 # Operator
 
-Production runbook for pub4. Read `MASTER/QUICKSTART.md` for the agent runtime; this file covers the VPS and deploy surface.
+Production runbook for pub4. Read `START_HERE.md`, `OPERATOR_CONTRACT.md`, and `VPS_SAFETY.md`
+before live work. Read `MASTER/QUICKSTART.md` for the agent runtime; this file covers the VPS and
+deploy surface.
 
 ## Repo layout
 
@@ -80,6 +82,8 @@ Ruby on VPS: `ruby34`, `bundle34`. Never parallel `bin/ci` across SSH sessions.
 ## Gates
 
 ```zsh
+DEPLOY/bin/check                         # local static deploy gates
+DEPLOY/bin/check-vps                     # vm23/live health gates; skips off-VPS
 ruby DEPLOY/integrity_gate.rb              # full chain: production, phantom_fk, frontend, relayd, domain_align, crawl
 ruby DEPLOY/rails/crawl_probe.rb           # HTTP manifest + apps.yml ↔ master.json sync
 MASTER_CRAWL_BROWSER=1 ruby DEPLOY/rails/crawl_browser.rb   # Ferrum element crawl (VPS)

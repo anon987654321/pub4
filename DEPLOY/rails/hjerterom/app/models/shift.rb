@@ -17,6 +17,21 @@ class Shift < ApplicationRecord
 
   after_create_commit { broadcast_append_later_to "hjerterom:shifts" }
   after_update_commit { broadcast_replace_later_to "hjerterom:shifts" }
+  after_create_commit :notify_volunteer_assignment
+  after_update_commit :notify_volunteer_assignment, if: :saved_change_to_state?
+
+  def notify_volunteer_assignment
+    recipient = volunteer&.user
+    return unless recipient
+
+    deliver_notification(
+      recipient,
+      title: "Shift #{state}",
+      body: "#{kind} shift #{starts_at.strftime('%Y-%m-%d %H:%M')} — #{state}.",
+      source: self,
+      kind: "shift_update"
+    )
+  end
 
   private
 

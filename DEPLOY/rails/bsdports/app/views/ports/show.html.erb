@@ -26,16 +26,33 @@
     </ul>
   <% end %>
 
+  <%= render "ports/dependency_tree", tree: @dependency_tree, heading: "Dependency tree" %>
+
+  <% if @rdeps.any? %>
+    <h2>Reverse dependencies</h2>
+    <ul role="list" aria-label="Ports that depend on this package">
+      <% @rdeps.each do |reverse| %>
+        <li role="listitem"><%= link_to reverse.name, port_path(reverse) %></li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <section aria-label="Package exploration assistant">
+    <h2>Exploration assistant</h2>
+    <p id="port-explore-summary"><%= @explore_summary %></p>
+    <p><%= link_to "JSON summary", explore_port_path(@port), data: { turbo: false } %></p>
+  </section>
+
   <% if @deps.any? %>
-    <h2>Dependency graph (plain SVG)</h2>
-    <svg class="dep-graph" width="400" height="<%= [200, 30 + @deps.size * 25].max %>">
+    <svg class="dep-graph" width="400" height="<%= [200, 30 + @deps.size * 25].max %>" role="img" aria-labelledby="dep-graph-title" aria-hidden="true">
+      <title id="dep-graph-title">Decorative dependency graph for <%= @port.name %></title>
       <circle cx="300" cy="100" r="18" fill="#fff" stroke="#000" />
       <text x="300" y="104" text-anchor="middle" font-size="7"><%= @port.name[0,10] %></text>
       <% @deps.each_with_index do |dep, i| %>
         <% y = 20 + i * 25 %>
         <line x1="282" y1="100" x2="120" y2="<%= y %>" stroke="#666" stroke-width="1" />
         <circle cx="100" cy="<%= y %>" r="12" fill="#eee" stroke="#000" />
-        <text x="100" y="<%= y + 3 %>" text-anchor="middle" font-size="6"><%= dep.depends_on.name[0,8] %></text>
+        <text x="100" y="<%= y + 3 %>" text-anchor="middle" font-size="6"><%= dep.name[0,8] %></text>
       <% end %>
     </svg>
   <% end %>

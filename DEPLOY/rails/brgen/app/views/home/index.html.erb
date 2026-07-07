@@ -1,15 +1,15 @@
 <% unless authenticated? %>
   <% content_for :splash do %>
-    <div>
+    <div data-visitor-orientation>
       <h2 id="splash-title">Brgen</h2>
       <p class="tagline">City-native social. Post, vote, discover local communities across Europe and beyond.</p>
       <nav role="navigation" class="chips" aria-label="Quick links">
         <span class="chip"><%= link_to "sign in", new_session_path %></span>
         <span class="chip"><%= link_to marketplace_subdomain, marketplace_root_url %></span>
-        <span class="chip">tv</span>
-        <span class="chip">dating</span>
-        <span class="chip">playlist</span>
-        <span class="chip">takeaway</span>
+        <span class="chip"><%= link_to "tv", tv_root_url(subdomain: "tv") %></span>
+        <span class="chip"><%= link_to "dating", dating_root_url(subdomain: "dating") %></span>
+        <span class="chip"><%= link_to "playlist", playlist_root_url(subdomain: "playlist") %></span>
+        <span class="chip"><%= link_to "takeaway", takeaway_root_url(subdomain: "takeaway") %></span>
       </nav>
       <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path %> to post</p>
     </div>

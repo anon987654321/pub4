@@ -25,7 +25,10 @@
 <article>
   <p class="listing-price"><%= @listing.price_display %></p>
   <p class="dim"><%= @listing.condition %> · <%= @listing.location %> · <%= @listing.user.email_address.split("@").first %></p>
-  <p class="dim"><%= pluralize(@listing.views_count.to_i, "view") %> · <%= pluralize(@listing.favorites.size, "save") %> · status: <%= @listing.status %></p>
+  <p class="dim"><%= pluralize(@listing.views_count.to_i, "view") %> · <%= pluralize(@listing.favorites.size, "save") %> · <%= pluralize(@listing.reviews_count.to_i, "review") %> · status: <%= @listing.status %></p>
+  <% if @listing.reviews_count.to_i.positive? %>
+    <p class="dim"><%= number_with_precision(@listing.rating, precision: 1) %> ★ seller interaction rating</p>
+  <% end %>
   <p class="mt-12"><%= simple_format(@listing.description) %></p>
   <button class="btn-share mt-12" data-controller="share"
           data-share-title-value="<%= @listing.title %>"
@@ -43,6 +46,30 @@
   <% end %>
   <%= render "shared/affiliate_disclosure" %>
 </article>
+
+<div class="section-divider">
+  <p class="section-heading--md">Reviews</p>
+  <% if @review %>
+    <div class="form-wrap form-wrap--flush">
+      <%= form_with(model: @review, url: marketplace_listing_reviews_path(@listing)) do |f| %>
+        <div class="field"><%= f.label :rating %><%= f.select :rating, options_for_select((1..5).map { |n| [ "#{n} ★", n ] }) %></div>
+        <div class="field"><%= f.label :body %><%= f.text_area :body, rows: 3, data: { controller: "char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+        <div class="field"><%= f.submit "Post review", class: "btn btn-primary" %></div>
+      <% end %>
+    </div>
+  <% end %>
+  <% if @reviews.any? %>
+    <% @reviews.each do |review| %>
+      <article>
+        <strong><%= number_with_precision(review.rating, precision: 0) %> ★</strong>
+        <span class="dim"> — <%= review.user.email_address.split("@").first %></span>
+        <%= simple_format(review.body) if review.body.present? %>
+      </article>
+    <% end %>
+  <% else %>
+    <p class="dim">No reviews yet.</p>
+  <% end %>
+</div>
 
 <% if authenticated? && Current.user != @listing.user && !@listing.sold? %>
   <div id="make-offer" class="section-divider">

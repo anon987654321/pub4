@@ -1,0 +1,12 @@
+<% content_for :title, @live_stream.title %>
+
+<header role="banner" aria-label="Live stream header">
+  <div>
+    <p class="dim"><%= @live_stream.status %></p>
+    <h1><%= @live_stream.title %></h1>
+  </div>
+</header>
+
+<p><%= @live_stream.description %></p>
+<p class="dim"><%= pluralize(@live_stream.viewer_count, "viewer") %></p>
+<%= link_to "All live sessions", live_streams_path, class: "btn" %>

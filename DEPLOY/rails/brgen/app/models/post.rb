@@ -9,9 +9,14 @@ class Post < ApplicationRecord
   include Shared.concern(:Taggable) rescue include Shared::Taggable
   include Shared.concern(:Reactable) rescue include Shared::Reactable
   include Shared::ActivityTrackable
+  include Shared::MediaProcessable
   tracks_activity created: "PostCreated", source_vertical: "social", actor: :user
 
   has_one_attached :image
+  process_media_variants :image, variants: {
+    card: { resize_to_limit: [ 800, 800 ], format: :webp },
+    hero: { resize_to_limit: [ 1_200, 1_200 ], format: :webp }
+  }
 
   belongs_to :user
   belongs_to :community, optional: true
@@ -25,6 +30,7 @@ class Post < ApplicationRecord
 
   VOTE_SQL = Arel.sql("SUM(COALESCE(votes.value,0)) DESC, posts.created_at DESC")
   TOP_SQL  = Arel.sql("SUM(COALESCE(votes.value,0)) DESC")
+  READING_WORDS_PER_MINUTE = 200
 
   scope :hot,    -> { left_joins(:votes).group(:id).order(VOTE_SQL) }
   scope :fresh,  -> { order(created_at: :desc) }
@@ -36,4 +42,12 @@ class Post < ApplicationRecord
 
   def comment_count = comments.count
   def author_name   = (anonymous? || user&.guest?) ? "anon" : (user&.username.presence || "anon")
+
+  def reading_time_minutes
+    text = ActionView::Base.full_sanitizer.sanitize(content.to_s)
+    words = text.scan(/[[:alnum:]]+(?:['-][[:alnum:]]+)*/).size
+    return 0 if words.zero?
+
+    (words / READING_WORDS_PER_MINUTE.to_f).ceil
+  end
 end

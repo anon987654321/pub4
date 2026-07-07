@@ -99,6 +99,17 @@ test("probe_chat_e2e script covers primer chat and felt state", () => {
   assert.match(probe, /browser\.go_to\(URL\)/);
 });
 
+test("probe_webgl_guard covers before-tap canvas lock and after-tap unlock", () => {
+  const probe = readFileSync(join(root, "script", "probe_webgl_guard.mjs"), "utf8");
+  const ciProbe = readFileSync(join(root, "script", "ci_web_probe"), "utf8");
+  assert.match(probe, /HTMLCanvasElement/);
+  assert.match(probe, /getContext/);
+  assert.match(probe, /WebGL escaped guard before tap/);
+  assert.match(probe, /WebGL unavailable after tap/);
+  assert.match(probe, /PROBE_REQUIRE_BROWSER/);
+  assert.match(ciProbe, /probe_webgl_guard\.mjs/);
+});
+
 test("chat index wires digested assets around lazy face boot", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /asset_path\("face\.css"\)/);
@@ -108,7 +119,8 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.match(index, /javascript_include_tag\(\*%w\[[^\]]*chat_actions[^\]]*\]/);
   assert.match(index, /%w\[[^\]]*visual_bridge[^\]]*\]/);
   assert.match(index, /defer: true/);
-  assert.match(index, /modulepreload/);
+  assert.doesNotMatch(index, /rel="modulepreload"[^>]+asset_path\("face\.js"\)/);
+  assert.match(index, /<link rel="prefetch" href="<%= asset_path\("face\.js"\) %>" as="script">/);
   const particleIdx = index.indexOf('asset_path("particle_kernel.js")');
   const primerIdx = index.indexOf('id="primer"');
   const bootIdx = index.indexOf("function go()");

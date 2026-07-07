@@ -8,10 +8,11 @@ ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
 RUBY = RbConfig.ruby
 
-def run_step(name, *cmd, chdir: ROOT)
+def run_step(name, *cmd, chdir: ROOT, env: nil)
   print "ci: #{name.ljust(24)} "
   $stdout.flush
-  out, status = Open3.capture2e(*cmd, chdir: chdir)
+  env_vars = env ? ENV.to_h.merge(env) : ENV.to_h
+  out, status = Open3.capture2e(env_vars, *cmd, chdir: chdir)
   if status.success?
     puts "ok"
     true
@@ -26,10 +27,27 @@ failures = []
 
 failures << "test" unless run_step("rake test", RUBY, "-S", "rake", "test")
 failures << "test:kernel" unless run_step("rake test:kernel", RUBY, "-S", "rake", "test:kernel")
+failures << "selftest" unless run_step("rake selftest", RUBY, "-S", "rake", "selftest")
+failures << "data_singularity" unless run_step("rake lint:data_singularity", RUBY, "-S", "rake", "lint:data_singularity")
 
 if ENV["MASTER_CI_FULL"] == "1"
   failures << "smoke" unless run_step("smoke", File.join(ROOT, "bin", "smoke"))
   failures << "constitution" unless run_step("constitution", RUBY, "-S", "rake", "constitution")
+end
+
+if ENV["MASTER_CI_WEB"] == "1"
+  failures << "test:web" unless run_step("rake test:web", RUBY, "-S", "rake", "test:web")
+  failures << "test:integration_web" unless run_step("rake test:integration_web", RUBY, "-S", "rake", "test:integration_web")
+end
+
+if ENV["MASTER_CI_BROWSER"] == "1"
+  probe = File.join(ROOT, "web", "script", "probe_webgl_guard.mjs")
+  if File.file?(probe)
+    env = { "PROBE_REQUIRE_BROWSER" => "1" }
+    failures << "webgl_probe" unless run_step("webgl probe", "node", probe, env: env)
+  else
+    warn "ci: webgl probe skipped — missing #{probe}"
+  end
 end
 
 if failures.empty?

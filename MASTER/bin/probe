@@ -5,7 +5,7 @@
 # master-probe — one entrypoint for local and VPS readiness checks.
 # Usage:
 #   bin/probe              # quick local signal
-#   bin/probe all          # smoke + namespace + kernel + dogfood + preflight + audit + rails gate
+#   bin/probe all          # smoke + namespace + selftest + kernel + dogfood + preflight + audit + rails gate
 #   bin/probe smoke rails  # selected checks
 
 Encoding.default_external = Encoding::UTF_8
@@ -33,6 +33,18 @@ CHECKS = {
   "nsaudit" => {
     desc: "MASTER namespace reference audit",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "nsaudit")],
+    cwd: MASTER_ROOT,
+    needs_ruby3: true,
+  },
+  "selftest" => {
+    desc: "rules.yml self_test laws against MASTER itself",
+    cmd: [RUBY, "-S", "rake", "selftest"],
+    cwd: MASTER_ROOT,
+    needs_ruby3: true,
+  },
+  "data_singularity" => {
+    desc: "top-level data YAML key singularity lint",
+    cmd: [RUBY, "-S", "rake", "lint:data_singularity"],
     cwd: MASTER_ROOT,
     needs_ruby3: true,
   },
@@ -125,11 +137,11 @@ CHECKS = {
 }.freeze
 
 ALIASES = {
-  "quick" => %w[smoke nsaudit rails ci],
-  "all" => %w[smoke nsaudit kernel dogfood preflight audit rails phantom_fk],
+  "quick" => %w[smoke nsaudit selftest data_singularity rails ci],
+  "all" => %w[smoke nsaudit selftest data_singularity kernel dogfood preflight audit rails phantom_fk],
   "deploy" => %w[rails phantom_fk crawl crawl-browser integrity health smoke-web playbook],
   "integrity" => %w[integrity crawl crawl-browser rails phantom_fk smoke-web],
-  "security" => %w[audit nsaudit rails],
+  "security" => %w[audit nsaudit selftest data_singularity rails],
 }.freeze
 
 def expand_args(args)

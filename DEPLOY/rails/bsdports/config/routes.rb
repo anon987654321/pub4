@@ -20,6 +20,7 @@ Rails.application.routes.draw do
 
   resources :ports, only: %i[index show] do
     member do
+      get :explore
       post :watch
       delete :unwatch
       post :crossref_cves

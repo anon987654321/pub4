@@ -11,9 +11,7 @@ class Admin::ReportsController < ApplicationController
   end
 
   def update
-    if params[:status].present? && ModerationReport::STATUSES.include?(params[:status])
-      @report.update!(status: params[:status])
-    end
+    ModerationWorkflow.transition!(report: @report, status: params[:status]) if params[:status].present?
     redirect_back fallback_location: admin_reports_path
   end
 

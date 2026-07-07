@@ -10,6 +10,7 @@
     <nav role="navigation" aria-label="Wardrobe actions">
       <%= link_to "Add item", new_item_path, class: "btn" %>
       <%= link_to "Plan outfit", new_outfit_path, class: "btn" %>
+      <%= link_to "Analytics", analytics_wardrobe_items_path, class: "btn" %>
       <%= link_to "Shopping list (gaps)", shopping_list_items_path, class: "btn" %>
       <%= link_to "Style profile quiz", ai_style_profile_path, class: "btn" %>
       <%= link_to "Packing list generator", ai_packing_list_path, class: "btn" %>
@@ -19,6 +20,13 @@
       <%= button_to "Resurface seasonal", resurface_seasonal_items_path, method: :post, class: "btn" %>
     </nav>
   </header>
+
+  <div class="chips" aria-label="Wardrobe analytics summary">
+    <span class="chip"><%= @analytics[:active_items] %> active</span>
+    <span class="chip"><%= @analytics[:never_worn] %> never worn</span>
+    <span class="chip"><%= @analytics[:underused] %> underused</span>
+    <% if @analytics[:cost_per_wear] %><span class="chip"><%= number_to_currency(@analytics[:cost_per_wear]) %> avg/wear</span><% end %>
+  </div>
 
   <%= live_search_index url: items_path, results_partial: "items/live_search_results", placeholder: "Search wardrobe by title, brand, category…", label: "Wardrobe search" %>
 </section>

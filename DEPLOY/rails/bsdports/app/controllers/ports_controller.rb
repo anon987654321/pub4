@@ -3,8 +3,8 @@
 class PortsController < ApplicationController
   include Shared::LiveSearchable
 
-  allow_unauthenticated_access only: %i[index show crossref_cves review]
-  before_action :set_port, only: %i[show watch unwatch crossref_cves review]
+  allow_unauthenticated_access only: %i[index show explore crossref_cves review]
+  before_action :set_port, only: %i[show explore watch unwatch crossref_cves review]
 
   def index
     expires_in 10.minutes, public: true if params[:q].blank? && params[:category_id].blank?
@@ -39,6 +39,8 @@ class PortsController < ApplicationController
     @watching = authenticated? && @port.watches.exists?(user: Current.user)
     @advisories = @port.security_advisories.recent
     @maintainer = @port.maintainer.present? ? Maintainer.find_by(name: @port.maintainer) : nil
+    @dependency_tree = Dependency.tree_for(@port)
+    @explore_summary = Ports::ExploreAssistant.summarize(@port)
     @pkg_info = if ENV["CI"] == "1" || Rails.env.test?
       "(pkg_info skipped in CI)"
     else
@@ -72,6 +74,14 @@ class PortsController < ApplicationController
       format.turbo_stream
       format.html { redirect_to @port }
     end
+  end
+
+  def explore
+    render json: {
+      summary: Ports::ExploreAssistant.summarize(@port),
+      pkgpath: @port.pkgpath,
+      tree: Dependency.tree_for(@port)
+    }
   end
 
   def crossref_cves

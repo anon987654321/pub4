@@ -28,8 +28,8 @@ class OmniauthCallbacksController < ::ApplicationController
   private
 
   def find_or_create_user(auth)
-    record = Shared::Authentication.find_by(provider: auth.provider, uid: auth.uid)
-    return record.user if record
+    record = external_identity_for(auth) || legacy_authentication_for(auth)
+    return record.user if record&.user
 
     email = auth.info.email.to_s.downcase.strip
     user = User.find_by(email_address: email) if email.present?
@@ -37,13 +37,57 @@ class OmniauthCallbacksController < ::ApplicationController
       email_address: email.presence || "#{auth.uid}@#{auth.provider}.oauth",
       password: SecureRandom.hex(24)
     )
-    Shared::Authentication.create!(
-      user: user,
-      provider: auth.provider,
-      uid: auth.uid,
-      info: auth.info.to_h
-    )
+    persist_external_identity(user, auth)
+    persist_legacy_authentication(user, auth)
     user
+  end
+
+  def external_identity_for(auth)
+    return unless defined?(::ExternalIdentity) && defined?(::IdentityProvider)
+    return unless ::ExternalIdentity.table_exists? && ::IdentityProvider.table_exists?
+
+    provider = ::IdentityProvider.find_by(slug: auth.provider.to_s)
+    provider&.external_identities&.find_by(subject: auth.uid.to_s)
+  end
+
+  def legacy_authentication_for(auth)
+    return unless defined?(Shared::Authentication) && Shared::Authentication.table_exists?
+
+    Shared::Authentication.find_by(provider: auth.provider, uid: auth.uid)
+  end
+
+  def persist_external_identity(user, auth)
+    return unless defined?(::ExternalIdentity) && defined?(::IdentityProvider)
+    return unless ::ExternalIdentity.table_exists? && ::IdentityProvider.table_exists?
+
+    provider = ::IdentityProvider.find_or_create_by!(slug: auth.provider.to_s) do |record|
+      record.name = auth.provider.to_s.tr("_", " ").titleize
+      record.issuer = auth.extra&.dig(:id_info, :iss) if auth.extra.respond_to?(:dig)
+      record.client_id = ENV["#{auth.provider.to_s.upcase}_CLIENT_ID"]
+    end
+    identity = provider.external_identities.find_or_initialize_by(subject: auth.uid.to_s)
+    identity.user = user
+    identity.email_address = auth.info&.email.to_s.downcase.presence
+    identity.phone_number = auth.info&.phone.to_s.presence
+    identity.assurance_level = assurance_level_for(auth.provider)
+    identity.last_used_at = Time.current
+    identity.save!
+  end
+
+  def persist_legacy_authentication(user, auth)
+    return unless defined?(Shared::Authentication) && Shared::Authentication.table_exists?
+
+    Shared::Authentication.find_or_create_by!(provider: auth.provider, uid: auth.uid) do |record|
+      record.user = user
+      record.info = auth.info.to_h if record.respond_to?(:info=)
+    end
+  end
+
+  def assurance_level_for(provider)
+    case provider.to_s
+    when "vipps" then "verified"
+    else "account"
+    end
   end
 
   def merge_guest_into(user)

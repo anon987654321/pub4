@@ -1,0 +1,114 @@
+---
+ownership:
+  README.md:
+    purpose: project front door
+    risk: low
+    check: bin/check
+  START_HERE.md:
+    purpose: first-contact orientation
+    risk: low
+    check: bin/check
+  AGENT_CONTRACT.md:
+    purpose: collaboration contract for agents and humans
+    risk: medium
+    check: bin/check-agent
+  DECISIONS.md:
+    purpose: intentional architecture decisions
+    risk: medium
+    check: bin/check
+  DEBT.md:
+    purpose: known debt separated from actionable TODO
+    risk: medium
+    check: bin/check-agent
+  TODO.md:
+    purpose: actionable backlog
+    risk: medium
+    check: bin/check
+  bin/:
+    purpose: executable entry points and validation wrappers
+    risk: high
+    check: bin/check
+  lib/master.rb:
+    purpose: runtime loader and namespace setup
+    risk: high
+    check: bin/check-full
+  lib/now/:
+    purpose: CLI, commands, pipeline, web adapters
+    risk: high
+    check: bin/check-agent
+  lib/judge/:
+    purpose: scanners, verdicts, routing, review and output checks
+    risk: high
+    check: bin/check-agent
+  lib/loop/:
+    purpose: fix loop, watcher, rollback, self-check
+    risk: high
+    check: bin/check-agent
+  lib/reach/:
+    purpose: tools and external actions
+    risk: high
+    check: bin/check-agent
+  lib/ground/:
+    purpose: constitution, config, policy, memory, schema
+    risk: high
+    check: bin/check-agent
+  lib/trace/:
+    purpose: evidence, events, telemetry, replay, snapshots
+    risk: high
+    check: bin/check-agent
+  lib/voice/:
+    purpose: personality, speech, TTS, rendering
+    risk: medium
+    check: bin/check
+  kernel/:
+    purpose: isolated constitutional fold spine
+    risk: high
+    check: rake test:kernel
+  data/soul.yml:
+    purpose: constitutional identity
+    risk: critical
+    check: bin/check-agent
+  data/rules.yml:
+    purpose: constitutional rule registry
+    risk: critical
+    check: bin/check-agent
+  data/rules/:
+    purpose: scanner rule shards by scope
+    risk: high
+    check: rake lint:data_singularity
+  data/providers.yml:
+    purpose: provider registry
+    risk: high
+    check: ruby -Ilib:test test/test_provider_config.rb
+  data/models.yml:
+    purpose: model and routing registry
+    risk: high
+    check: ruby -Ilib:test test/test_provider_config.rb
+  web/app/views/chat/index.html.erb:
+    purpose: face boot shell and primer contract
+    risk: critical
+    check: bin/check-web
+  web/public/face.js:
+    purpose: deferred face loader
+    risk: critical
+    check: bin/check-web
+  web/public/face.part*.txt:
+    purpose: split face runtime payload
+    risk: critical
+    check: bin/check-web
+  web/public/three.face.module.js:
+    purpose: heavy WebGL dependency, deferred until tap
+    risk: critical
+    check: bin/check-web
+  knowledge/:
+    purpose: local-only search corpus for SearchKnowledge
+    risk: local
+    check: none
+  output/:
+    purpose: generated media and training artifacts
+    risk: local
+    check: none
+  .master/:
+    purpose: local runtime state, cache, memory, traces
+    risk: local
+    check: none

@@ -9,6 +9,8 @@
     <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
     <div class="field"><%= f.label :address %><%= f.text_field :address %></div>
     <div class="field"><%= f.label :city %><%= f.text_field :city %></div>
+    <div class="field"><%= f.label :latitude %><%= f.number_field :latitude, step: "0.000001" %></div>
+    <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001" %></div>
     <div class="field"><%= f.label :phone %><%= f.text_field :phone %></div>
     <div class="field"><%= f.label :cuisine_type %><%= f.select :cuisine_type, Takeaway::Restaurant::CUISINE_TYPES, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :delivery_fee_cents, "Delivery fee (øre)" %><%= f.number_field :delivery_fee_cents %></div>

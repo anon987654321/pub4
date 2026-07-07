@@ -1,0 +1,41 @@
+# frozen_string_literal: true
+
+class LiveStreamsController < ApplicationController
+  before_action :require_real_user
+  before_action :set_live_stream, only: %i[show update destroy]
+
+  def index
+    @live_streams = LiveStream.where(status: %w[scheduled live]).includes(:user).order(:scheduled_at, :created_at)
+    @live_stream = Current.user.live_streams.build
+  end
+
+  def show; end
+
+  def create
+    @live_stream = Current.user.live_streams.build(live_stream_params)
+    if @live_stream.save
+      redirect_to live_streams_path, notice: "Live stream scheduled"
+    else
+      @live_streams = LiveStream.where(status: %w[scheduled live]).includes(:user).order(:scheduled_at, :created_at)
+      render :index, status: :unprocessable_entity
+    end
+  end
+
+  def update
+    @live_stream.start! if params[:start] && owns_stream?
+    @live_stream.end! if params[:end] && owns_stream?
+    @live_stream.cancel! if params[:cancel] && owns_stream?
+    redirect_to live_streams_path
+  end
+
+  def destroy
+    @live_stream.destroy if owns_stream?
+    redirect_to live_streams_path
+  end
+
+  private
+
+  def set_live_stream = @live_stream = LiveStream.find(params[:id])
+  def owns_stream? = @live_stream.user == Current.user
+  def live_stream_params = params.require(:live_stream).permit(:title, :description, :scheduled_at)
+end

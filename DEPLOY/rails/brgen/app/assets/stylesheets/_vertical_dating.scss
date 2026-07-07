@@ -17,7 +17,7 @@ body.vertical-dating .city-carousel,
 body.vertical-dating .widget-search,
 body.vertical-dating .mobile-sheet,
 body.vertical-dating .mobile-sheet-backdrop {
-  display: none !important;
+  display: none;
 }
 
 body.vertical-dating .layout {
@@ -76,7 +76,7 @@ body.vertical-dating .app-shell {
   display: none;
 }
 
-.dating-intro__hint {
+.dating-intro-hint {
   margin: 0;
   padding-top: clamp(48px, 12vh, 96px);
   font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
@@ -86,7 +86,7 @@ body.vertical-dating .app-shell {
   color: var(--dating-ink);
 }
 
-.dating-intro__center {
+.dating-intro-center {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -121,7 +121,7 @@ body.vertical-dating .app-shell {
   filter: saturate(1.25) contrast(1.08);
 }
 
-.dating-intro__title {
+.dating-intro-title {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
   font-size: clamp(2.75rem, 12vw, 4.5rem);
@@ -132,7 +132,7 @@ body.vertical-dating .app-shell {
   color: var(--dating-ink);
 }
 
-.dating-intro__trust {
+.dating-intro-trust {
   margin: 0;
   display: flex;
   align-items: center;
@@ -143,7 +143,7 @@ body.vertical-dating .app-shell {
   color: var(--dating-muted);
 }
 
-.dating-intro__bankid {
+.dating-intro-bankid {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -152,13 +152,13 @@ body.vertical-dating .app-shell {
   letter-spacing: -0.02em;
 }
 
-.dating-intro__bankid-mark {
+.dating-intro-bankid-mark {
   display: inline-grid;
   grid-template-columns: repeat(3, 5px);
   gap: 2px;
 }
 
-.dating-intro__bankid-mark span {
+.dating-intro-bankid-mark span {
   width: 5px;
   height: 5px;
   border-radius: 1px;

@@ -27,6 +27,9 @@
     <% end %>
     posted by <%= @post.author_name %> ·
     <time datetime="<%= @post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(@post.created_at) %> ago</time>
+    <% if @post.reading_time_minutes.positive? %>
+      · <%= @post.reading_time_minutes %> min read
+    <% end %>
   </header>
   <h1><%= @post.title %></h1>
   <% if @post.image.attached? %>

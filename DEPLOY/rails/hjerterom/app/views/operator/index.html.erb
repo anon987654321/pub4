@@ -1,0 +1,58 @@
+<% content_for :title, "Operator dashboard" %>
+
+<section data-visitor-orientation="operator-dashboard" aria-label="Operator dashboard">
+  <header>
+    <h1>Operator dashboard</h1>
+    <p>Next recommended action: <strong><%= @next_action %></strong></p>
+  </header>
+
+  <section aria-label="Today's shifts">
+    <h2>Today's shifts</h2>
+    <% if @today_shifts.any? %>
+      <ul>
+        <% @today_shifts.each do |shift| %>
+          <li><%= shift.kind %> — <%= shift.starts_at.strftime("%H:%M") %> (<%= shift.state %>)</li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>No shifts scheduled today.</p>
+    <% end %>
+  </section>
+
+  <section aria-label="Open requests">
+    <h2>Open food requests</h2>
+    <p><%= @open_requests.size %> pending</p>
+  </section>
+
+  <section aria-label="Reuse inventory">
+    <h2>Reuse counters</h2>
+    <ul>
+      <% @reuse_counts.each do |category, count| %>
+        <li><%= category %>: <%= count %></li>
+      <% end %>
+    </ul>
+  </section>
+
+  <section aria-label="Route status">
+    <h2>Route status</h2>
+    <p><%= @route.status %> — <%= @route.delivery_stops.size %> stops on <%= @route.route_date %></p>
+    <% if @route.delivery_stops.any? %>
+      <ol>
+        <% @route.delivery_stops.each do |stop| %>
+          <li><%= stop.stop_kind %>: <%= stop.label %></li>
+        <% end %>
+      </ol>
+    <% end %>
+  </section>
+
+  <% if @notification_failures&.any? %>
+    <section aria-label="Notification failures">
+      <h2>Recent queue failures</h2>
+      <ul>
+        <% @notification_failures.each do |failure| %>
+          <li><%= failure.error.to_s.truncate(120) %></li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</section>

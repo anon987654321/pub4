@@ -1,5 +1,22 @@
 {
-  "updated": "2026-06-15",
+  "updated": "2026-07-07",
+  "sources": {
+    "pub": {
+      "repo": "https://github.com/anon987654321/pub",
+      "head": "a3185f4ec6e6",
+      "date": "2026-05-07"
+    },
+    "pub2": {
+      "repo": "https://github.com/anon987654321/pub2",
+      "head": "ad05242c97ff",
+      "date": "2026-05-07"
+    },
+    "pub3": {
+      "repo": "https://github.com/anon987654321/pub3",
+      "head": "835f9199d605",
+      "date": "2026-05-07"
+    }
+  },
   "archived_apps": [
     {
       "name": "privcam",
@@ -21,6 +38,16 @@
     }
   ],
   "archived_subsystems": [
+    {
+      "name": "baibl",
+      "recovery_source": "pub3-rails/baibl.sh",
+      "notes": "AI biblical analysis Rails installer and prototype; retired from active deploy stack"
+    },
+    {
+      "name": "blognet",
+      "recovery_source": "pub3-rails/blognet.sh",
+      "notes": "Megablog network Rails installer; retired from active deploy stack"
+    },
     {
       "name": "aight_production_ai",
       "recovery_source": "pub2-aight/lib",
@@ -52,5 +79,5 @@
       "notes": "Optional vector store client from pub2 aight/lib/weaviate.rb"
     }
   ],
-  "deployed_apps": ["brgen", "amber", "baibl", "blognet", "bsdports", "hjerterom"]
+  "deployed_apps": ["brgen", "amber", "bsdports", "hjerterom"]
 }

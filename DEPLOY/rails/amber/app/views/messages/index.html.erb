@@ -1,0 +1,24 @@
+<% content_for :title, "Messages" %>
+
+<header role="banner" aria-label="Messages header">
+  <h1>Messages</h1>
+</header>
+
+<section class="form-wrap" aria-label="New message">
+  <%= form_with model: @message do |f| %>
+    <%= render "shared/errors", object: @message %>
+    <div class="field"><%= f.label :recipient_id %><%= f.collection_select :recipient_id, User.where.not(id: Current.user.id).order(:email_address), :id, :email_address, include_blank: "Choose recipient" %></div>
+    <div class="field"><%= f.label :body %><%= f.text_area :body, rows: 3, data: { controller: "textarea-autogrow char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+    <div class="field"><%= f.submit "Send", class: "btn" %></div>
+  <% end %>
+</section>
+
+<section>
+  <% @messages.each do |message| %>
+    <article>
+      <strong><%= message.sender == Current.user ? "To #{message.recipient.email_address}" : "From #{message.sender.email_address}" %></strong>
+      <p><%= message.body %></p>
+      <p class="dim"><%= time_ago_in_words(message.created_at) %> ago</p>
+    </article>
+  <% end %>
+</section>

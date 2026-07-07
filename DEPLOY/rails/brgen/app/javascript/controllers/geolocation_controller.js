@@ -1,13 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static values = { url: String }
+  static values = { radiusKm: { type: Number, default: 2 }, url: String }
 
   #seen = new Set()
   #watch = null
 
   connect() {
-    if (!navigator.geolocation) return
+    if (!navigator.geolocation || !this.hasUrlValue) return
     this.#watch = navigator.geolocation.watchPosition(
       pos => this.#send(pos.coords.latitude, pos.coords.longitude),
       () => {},
@@ -29,11 +29,13 @@ export default class extends Controller {
   #send(lat, lng) {
     fetch(this.urlValue, {
       method: "PATCH",
+      credentials: "same-origin",
       headers: {
+        "Accept": "application/json",
         "Content-Type": "application/json",
         "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content
       },
-      body: JSON.stringify({ latitude: lat, longitude: lng })
-    })
+      body: JSON.stringify({ latitude: lat, longitude: lng, radius_km: this.radiusKmValue })
+    }).catch(() => {})
   }
 }

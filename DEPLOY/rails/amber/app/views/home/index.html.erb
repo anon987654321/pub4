@@ -65,5 +65,12 @@
     <p><%= link_to "Add your first item", new_item_path %></p>
   <% end %>
 <% else %>
-  <p>Welcome to Amber. <%= link_to "Sign in", new_session_path %> to manage your wardrobe.</p>
+  <section class="empty-state" data-visitor-orientation>
+    <h1>Amber turns your wardrobe into a working system.</h1>
+    <p class="empty-state-body">Catalog what you own, plan outfits, spot what you never wear, and get capsule suggestions before you buy more.</p>
+    <p>
+      <%= link_to "Sign in", new_session_path, class: "btn btn--primary" %>
+      <%= link_to "Create account", new_registration_path, class: "btn btn--ghost" %>
+    </p>
+  </section>
 <% end %>

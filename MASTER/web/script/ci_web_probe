@@ -9,6 +9,7 @@ SSE_CONTRACT = File.join(WEB, "test/sse_contract.test.mjs")
 PROBE_FACE = File.join(WEB, "script/probe_face")
 PROBE_PRIMER = File.join(WEB, "script/probe_primer_external.rb")
 PROBE_CHAT_E2E = File.join(WEB, "script/probe_chat_e2e.rb")
+PROBE_WEBGL_GUARD = File.join(WEB, "script/probe_webgl_guard.mjs")
 WEB_URL = ENV["WEB_URL"].to_s.strip
 
 checks = []
@@ -22,6 +23,28 @@ checks << ["face.runtime.js present", File.file?(runtime), runtime]
 bundle = File.join(WEB, "public/face.modules.bundle.js")
 checks << ["face.modules.bundle.js present", File.file?(bundle), bundle]
 
+skip_browser = ENV["PROBE_SKIP_BROWSER"] == "1" ||
+  (RUBY_PLATFORM.include?("darwin") && ENV["PROBE_FORCE_BROWSER"] != "1")
+chrome = [
+  ENV["CHROME_PATH"],
+  "/usr/local/bin/chromium",
+  "/usr/local/bin/chrome",
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+].compact.find { |path| File.executable?(path) }
+if skip_browser || chrome.nil?
+  reason = if ENV["PROBE_SKIP_BROWSER"] == "1"
+             "PROBE_SKIP_BROWSER=1"
+           elsif RUBY_PLATFORM.include?("darwin") && ENV["PROBE_FORCE_BROWSER"] != "1"
+             "macOS — set PROBE_FORCE_BROWSER=1 for Ferrum"
+           else
+             "no Chrome executable"
+           end
+  checks << ["probe_webgl_guard (skipped)", true, reason]
+else
+  out, err, status = Open3.capture3("env", "CHROME_PATH=#{chrome}", "node", PROBE_WEBGL_GUARD, chdir: WEB)
+  checks << ["probe_webgl_guard", status.success?, [out, err].join.strip]
+end
+
 probe_http = File.join(WEB, "script/probe_http")
 if WEB_URL.empty?
   checks << ["probe_http (skipped)", true, "set WEB_URL to run HTTP probe"]
@@ -30,14 +53,6 @@ else
   out, err, status = Open3.capture3("env", "WEB_URL=#{WEB_URL}", "ruby", probe_http, chdir: WEB)
   checks << ["probe_http #{WEB_URL}", status.success?, [out, err].join.strip]
 
-  skip_browser = ENV["PROBE_SKIP_BROWSER"] == "1" ||
-    (RUBY_PLATFORM.include?("darwin") && ENV["PROBE_FORCE_BROWSER"] != "1")
-  chrome = [
-    ENV["CHROME_PATH"],
-    "/usr/local/bin/chromium",
-    "/usr/local/bin/chrome",
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-  ].compact.find { |path| File.executable?(path) }
   if skip_browser || chrome.nil?
     reason = if ENV["PROBE_SKIP_BROWSER"] == "1"
                "PROBE_SKIP_BROWSER=1"

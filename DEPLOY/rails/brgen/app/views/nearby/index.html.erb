@@ -5,17 +5,17 @@
 <% unless @located %>
   <div class="section-divider--24">
     <p class="section-heading--md">Share your location</p>
-    <p class="dim">Find strangers within 2 km and chat anonymously. Your exact position is never shown.</p>
+    <p class="dim">Find strangers within <%= @radius_km.to_i %> km and chat anonymously. Your exact position is never shown.</p>
   </div>
 <% end %>
 
 <% if @located %>
   <% if @nearby.any? %>
-    <% @nearby.each do |u| %>
+    <% @nearby.each do |u, distance| %>
       <article class="row-between">
         <div>
           <strong><%= u.anon_handle %></strong>
-          <p class="dim">nearby · anonymous</p>
+          <p class="dim"><%= number_with_precision(distance, precision: 1) %> km away · anonymous</p>
         </div>
         <%= button_to "Chat", nearby_path, params: { user_id: u.id }, method: :post, class: "btn btn-primary btn-sm" %>
       </article>

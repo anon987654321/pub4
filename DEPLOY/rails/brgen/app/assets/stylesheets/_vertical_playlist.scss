@@ -31,7 +31,7 @@ body.vertical-playlist .widget-search,
 body.vertical-playlist .mobile-sheet,
 body.vertical-playlist .mobile-sheet-backdrop,
 body.vertical-playlist .feed-header {
-  display: none !important;
+  display: none;
 }
 
 body.vertical-playlist .layout {
@@ -69,8 +69,8 @@ body.vertical-playlist .app-shell {
 
 .radio-skip-link {
   position: absolute;
-  top: -40px;
-  left: var(--space-sm);
+  inset-block-start: -40px;
+  inset-inline-start: var(--space-sm);
   background: var(--color-accent);
   color: var(--color-bg);
   padding: var(--space-xs) var(--space-sm);
@@ -80,7 +80,7 @@ body.vertical-playlist .app-shell {
 }
 
 .radio-skip-link:focus {
-  top: var(--space-sm);
+  inset-block-start: var(--space-sm);
 }
 
 .radio-tunnel canvas {
@@ -93,8 +93,8 @@ body.vertical-playlist .app-shell {
 
 .radio-header {
   position: fixed;
-  top: var(--space-lg);
-  left: var(--space-lg);
+  inset-block-start: var(--space-lg);
+  inset-inline-start: var(--space-lg);
   z-index: 10;
   pointer-events: none;
 }
@@ -108,8 +108,8 @@ body.vertical-playlist .app-shell {
 
 .radio-nav {
   position: fixed;
-  top: var(--space-lg);
-  right: var(--space-lg);
+  inset-block-start: var(--space-lg);
+  inset-inline-end: var(--space-lg);
   z-index: 11;
   display: flex;
   gap: 10px;
@@ -118,7 +118,7 @@ body.vertical-playlist .app-shell {
 }
 
 .radio-nav a,
-.radio-nav__btn {
+.radio-nav-btn {
   padding: 6px 12px;
   border-radius: var(--border-radius);
   background: rgba(0, 0, 0, 0.65);
@@ -132,8 +132,8 @@ body.vertical-playlist .app-shell {
 
 .radio-now-playing {
   position: fixed;
-  bottom: var(--space-lg);
-  right: var(--space-lg);
+  inset-block-end: var(--space-lg);
+  inset-inline-end: var(--space-lg);
   z-index: 10;
   pointer-events: none;
   display: flex;
@@ -206,8 +206,8 @@ body.vertical-playlist .app-shell {
 
 .radio-youtube-container {
   position: fixed;
-  top: -1000px;
-  left: -1000px;
+  inset-block-start: -1000px;
+  inset-inline-start: -1000px;
   width: 1px;
   height: 1px;
   opacity: 0;
@@ -217,13 +217,13 @@ body.vertical-playlist .app-shell {
 
 .radio-library {
   position: fixed;
-  top: 0;
-  right: 0;
+  inset-block-start: 0;
+  inset-inline-end: 0;
   width: min(360px, 92vw);
   height: 100dvh;
   z-index: 120;
   background: rgba(8, 8, 8, 0.94);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
@@ -235,7 +235,7 @@ body.vertical-playlist .app-shell {
   display: none;
 }
 
-.radio-library__header {
+.radio-library-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -243,7 +243,7 @@ body.vertical-playlist .app-shell {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.radio-library__header h2 {
+.radio-library-header h2 {
   margin: 0;
   font-size: 1rem;
   letter-spacing: 0.08em;
@@ -251,7 +251,7 @@ body.vertical-playlist .app-shell {
   color: var(--color-muted);
 }
 
-.radio-library__close {
+.radio-library-close {
   border: 0;
   background: transparent;
   color: var(--color-text);
@@ -260,12 +260,12 @@ body.vertical-playlist .app-shell {
   cursor: pointer;
 }
 
-.radio-library__list {
+.radio-library-list {
   overflow: auto;
   padding: var(--space-sm);
 }
 
-.radio-library__item {
+.radio-library-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -275,11 +275,11 @@ body.vertical-playlist .app-shell {
   text-decoration: none;
 }
 
-.radio-library__item:hover {
+.radio-library-item:hover {
   background: rgba(78, 205, 196, 0.08);
 }
 
-.radio-library__item span {
+.radio-library-item span {
   font-size: 0.75rem;
   color: var(--color-muted);
 }
@@ -348,10 +348,10 @@ body.vertical-playlist .playlist-index {
   font-family: var(--font-primary);
 }
 
-.playlist-top__title,
-.playlist-now-playing__title {
+.playlist-top-title,
+.playlist-now-playing-title {
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .playlist-waveform-canvas {
@@ -373,7 +373,7 @@ body.vertical-playlist .playlist-index {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.playlist-transport__play {
+.playlist-transport-play {
   background: #ff5500;
   color: #fff;
   border: 0;
@@ -389,12 +389,20 @@ body.vertical-playlist .playlist-index {
   overflow: hidden;
 }
 
-.playlist-scrub__fill {
+.playlist-scrub-fill {
   height: 100%;
   background: linear-gradient(90deg, #ff5500, #ff7733);
 }
 
-.playlist-queue__item {
+.playlist-embed-frame {
+  width: 100%;
+  min-height: 180px;
+  border: 0;
+  border-radius: 8px;
+  background: #101010;
+}
+
+.playlist-queue-item {
   width: 100%;
   display: grid;
   grid-template-columns: 28px 48px 1fr;
@@ -408,6 +416,6 @@ body.vertical-playlist .playlist-index {
   text-align: left;
 }
 
-.playlist-queue__item.is-active {
+.playlist-queue-item.is-active {
   background: rgba(255, 85, 0, 0.08);
 }

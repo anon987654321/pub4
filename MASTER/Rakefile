@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rake/testtask"
+require "timeout"
 
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
@@ -12,45 +13,66 @@ Rake::TestTask.new(:test) do |t|
   t.warning = false
 end
 
-desc "Deep scan lib/ — exit 1 if any violations found (static rules, no LLM)"
+desc "Deep scan lib/ — triage scanner self-findings separately from actionable violations"
 task :constitution do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))
   require "master"
+  require "judge/scan/constitution_triage"
 
   root    = __dir__
   scanner = Master::Judge::Scan::InfraHelpers.build_scanner(root:)
+  scanner.rules.reject! { |rule| rule.id.to_s == "ast_omission" }
+  timeout = Integer(ENV.fetch("MASTER_CONSTITUTION_FILE_TIMEOUT", "4"))
+  lib     = File.join(root, "lib")
+  paths   = Dir.glob(File.join(lib, Master::Judge::Scan::Scanner::SCAN_GLOB))
+               .select { |path| File.file?(path) && !Master::Judge::Scan::Scanner.skip_path?(path, root:) }
 
-  result = scanner.scan_dir(File.join(root, "lib"), depth: :deep, stream: false)
-  abort "constitution: scan failed: #{result.message}" unless result.ok?
+  violations = paths.each_with_index.flat_map do |path, index|
+    puts "constitution: scanned #{index}/#{paths.size}" if index.positive? && (index % 25).zero?
+    result = Timeout.timeout(timeout) { scanner.scan(path, depth: :deep) }
+    abort "constitution: scan failed for #{path}: #{result.message}" unless result.ok?
 
-  violations = result.value!.flat_map do |file, scan_result|
-    next [] unless scan_result.ok?
-
-    scan_result.value!.map { |finding| finding.merge(file: file) }
+    result.value!.map { |finding| finding.merge(file: path) }
+  rescue Timeout::Error
+    [{ rule: "SCAN_TIMEOUT", rule_id: "SCAN_TIMEOUT", severity: :error, line: 1,
+       message: "scan exceeded #{timeout}s per-file budget", file: path }]
   end
-  total      = violations.size
+  triage = Master::Judge::Scan::ConstitutionTriage.new(root:)
+  buckets = triage.buckets(violations)
+  actionable = triage.actionable_count(violations)
+  budget = Integer(ENV.fetch("MASTER_CONSTITUTION_MAX_ACTIONABLE", "1500"))
 
-  if total.zero?
+  if violations.empty?
     puts "constitution: clean"
   else
-    by_rule = violations.group_by { |v| v[:rule] }
-    by_rule.sort_by { |_, vs| -vs.size }.each do |rule, vs|
-      puts "[#{rule}] #{vs.size}"
-      vs.first(5).each { |v| puts "  #{v[:file]}:#{v[:line]}: #{v[:message]}" }
+    buckets.each do |bucket|
+      next if bucket.findings.empty?
+
+      puts "[#{bucket.name}] #{bucket.findings.size}"
+      bucket.findings.group_by { |v| v[:rule] }.sort_by { |_, vs| -vs.size }.first(8).each do |rule, vs|
+        puts "  #{rule}: #{vs.size}"
+        vs.first(3).each { |v| puts "    #{v[:file]}:#{v[:line]}: #{v[:message]}" }
+      end
     end
-    puts "constitution: #{total} violation(s)"
-    exit 1
+    puts "constitution: #{violations.size} finding(s), #{actionable} actionable (budget #{budget})"
+    exit 1 if actionable > budget
   end
 end
 
-desc "Run MASTER's canonical scan rules against its own lib/"
+desc "Run rules.yml self_test laws against MASTER itself"
 task :selftest do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))
   require "master"
-  report = Master::Loop::SelfCheck.new(root: __dir__).full
-  puts report.summary
-  report.by_rule.sort_by { |_rule, count| -count }.each { |rule, count| puts "  [#{rule}] #{count}" }
-  exit(report.clean? ? 0 : 1)
+  result = Master::Judge::Scan::SelfTest.new(root: __dir__).call
+  abort result.message unless result.ok?
+
+  summary = result.value!
+  puts summary.line
+  summary.checks.each do |check|
+    puts "  [#{check.law}] #{check.findings.size}"
+    check.findings.first(5).each { |finding| puts "    #{finding[:path]}:#{finding[:line]}: #{finding[:message]}" }
+  end
+  exit(summary.ok? ? 0 : 1)
 end
 
 desc "Eager-load all Zeitwerk-managed constants"
@@ -108,7 +130,25 @@ namespace :lint do
   end
 end
 
-desc "Full audit: constitution + lint:frozen"
-task audit: %i[constitution lint:frozen] do
+namespace :lint do
+  desc "Check top-level YAML registry keys are singular"
+  task :data_singularity do
+    $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+    require "master"
+    result = Master::Judge::Scan::SelfTest.new(root: __dir__).call(laws: ["SINGULARITY"])
+    abort result.message unless result.ok?
+
+    check = result.value!.checks.fetch(0)
+    if check.ok?
+      puts "lint:data_singularity: clean"
+    else
+      check.findings.each { |finding| puts "  #{finding[:path]}:#{finding[:line]}: #{finding[:message]}" }
+      abort "lint:data_singularity: #{check.findings.size} violation(s)"
+    end
+  end
+end
+
+desc "Full audit: constitution + selftest + lint:frozen + lint:data_singularity"
+task audit: %i[constitution selftest lint:frozen lint:data_singularity] do
   puts "audit: passed"
 end

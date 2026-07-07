@@ -6,32 +6,23 @@ CHECK_PORTS="$SCRIPT_DIR/check_ports.sh"
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-write_master_json() {
-    cat > "$TMP_DIR/master.json"
-}
-
 run_check() {
     MASTER_JSON="$TMP_DIR/master.json" "$CHECK_PORTS" >/tmp/check_ports.out 2>/tmp/check_ports.err
 }
 
 assert_passes_valid_config() {
-    write_master_json <<'JSON'
-{
-  "apps": [
-    { "name": "amber", "port": 4010 },
-    { "name": "baibl", "port": 4011 }
-  ]
-}
-JSON
+    cp "$SCRIPT_DIR/../master.json" "$TMP_DIR/master.json"
     run_check
 }
 
 assert_rejects_duplicate_ports() {
-    write_master_json <<'JSON'
+    cat > "$TMP_DIR/master.json" <<'JSON'
 {
   "apps": [
-    { "name": "amber", "port": 4010 },
-    { "name": "baibl", "port": 4010 }
+    { "name": "amber", "domain": "amber.brgen.no", "port": 61352 },
+    { "name": "brgen", "domain": "brgen.no", "port": 61352 },
+    { "name": "bsdports", "domain": "bsdports.org", "port": 47312 },
+    { "name": "hjerterom", "domain": "hjerterom.brgen.no", "port": 38891 }
   ]
 }
 JSON
@@ -42,10 +33,13 @@ JSON
 }
 
 assert_rejects_invalid_port() {
-    write_master_json <<'JSON'
+    cat > "$TMP_DIR/master.json" <<'JSON'
 {
   "apps": [
-    { "name": "amber", "port": 70000 }
+    { "name": "amber", "domain": "amber.brgen.no", "port": 70000 },
+    { "name": "brgen", "domain": "brgen.no", "port": 38182 },
+    { "name": "bsdports", "domain": "bsdports.org", "port": 47312 },
+    { "name": "hjerterom", "domain": "hjerterom.brgen.no", "port": 38891 }
   ]
 }
 JSON

@@ -1,0 +1,78 @@
+---
+ownership:
+  README.md:
+    purpose: deploy front door
+    risk: low
+    check: DEPLOY/bin/check
+  START_HERE.md:
+    purpose: first-contact deploy orientation
+    risk: low
+    check: DEPLOY/bin/check
+  OPERATOR.md:
+    purpose: production runbook
+    risk: high
+    check: DEPLOY/bin/check
+  TODO.md:
+    purpose: actionable deploy backlog
+    risk: medium
+    check: DEPLOY/bin/check
+  master.json:
+    purpose: deploy identity and public service inventory
+    risk: high
+    check: ruby DEPLOY/verify_deploy_identity.rb
+  integrity_gate.rb:
+    purpose: full local deploy gate chain
+    risk: high
+    check: ruby DEPLOY/integrity_gate.rb
+  rails/apps.yml:
+    purpose: canonical app/domain/port/deploy inventory
+    risk: critical
+    check: DEPLOY/bin/check-rails
+  rails/check_production_gate.rb:
+    purpose: production Rails contract
+    risk: high
+    check: DEPLOY/bin/check-rails
+  rails/domain_alignment_gate.rb:
+    purpose: domain and inventory consistency
+    risk: high
+    check: DEPLOY/bin/check-rails
+  rails/frontend*_gate.rb:
+    purpose: frontend production/auditor contracts
+    risk: medium
+    check: DEPLOY/bin/check-rails
+  rails/shared/:
+    purpose: shared Rails engine and deploy helpers
+    risk: high
+    check: DEPLOY/bin/check-rails
+  rails/*/*.sh:
+    purpose: per-app deploy scripts
+    risk: critical
+    check: ruby DEPLOY/verify_deploy_identity.rb
+  openbsd/openbsd.sh:
+    purpose: full OpenBSD installer/deployer
+    risk: critical
+    check: DEPLOY/bin/check-openbsd
+  openbsd/etc/:
+    purpose: repo mirror of live /etc configs
+    risk: critical
+    check: DEPLOY/bin/check-openbsd
+  openbsd/sh/vps_ci.sh:
+    purpose: serial app CI entrypoint on vm23
+    risk: high
+    check: zsh -n DEPLOY/openbsd/sh/vps_ci.sh
+  openbsd/resource_guard.sh:
+    purpose: load shedding on vm23
+    risk: high
+    check: ksh -n DEPLOY/openbsd/resource_guard.sh
+  tools/:
+    purpose: creative and utility scripts outside core deploy
+    risk: medium
+    check: MASTER/tools/bin/verify
+  archive/:
+    purpose: historical restore notes
+    risk: low
+    check: none
+  quarantine/:
+    purpose: intentionally isolated historical material
+    risk: low
+    check: none

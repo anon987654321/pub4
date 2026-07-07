@@ -11,8 +11,6 @@ BACKENDS = {
   "amber" => 61352,
   "master" => 53187,
   "bsdports" => 47312,
-  "baibl" => 10007,
-  "blognet" => 10002,
   "hjerterom" => 38891
 }.freeze
 

@@ -8,8 +8,12 @@
   </a>
   <div class="deal-card-body">
     <p class="deal-card-title"><%= listing.title %></p>
-    <p class="deal-meta"><%= listing.location %> · <%= listing.condition %></p>
+    <% distance_km = local_assigns[:distance_km] %>
+    <p class="deal-meta"><%= listing.location %> · <%= listing.condition %><%= " · #{number_with_precision(distance_km, precision: 1)} km away" if distance_km %></p>
     <p class="deal-meta"><%= listing.category&.name %> · <%= pluralize(listing.views_count.to_i, "view") %></p>
+    <% if listing.reviews_count.to_i.positive? %>
+      <p class="deal-meta"><%= number_with_precision(listing.rating, precision: 1) %> ★ · <%= pluralize(listing.reviews_count, "review") %></p>
+    <% end %>
     <p class="deal-price"><%= listing.price_display %></p>
   </div>
 

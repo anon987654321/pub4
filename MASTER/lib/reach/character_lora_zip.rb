@@ -6,7 +6,7 @@ require "set"
 
 module Master
   module Reach
-    # Caption-named image zips for ostris/flux-dev-lora-trainer (mirrors DEPLOY/tools/repligen Zipper).
+    # Caption-named image zips for ostris/flux-dev-lora-trainer (mirrors MASTER/tools/repligen Zipper).
     module CharacterLoraZip
       IMAGE_GLOB = "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}".freeze
       RECOMMENDED_MIN = 12

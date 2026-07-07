@@ -224,6 +224,36 @@ personas:
       (logical properties, env(), gap over margin, color-scheme). Flag anything that hacks
       around a browser behaviour instead of working with it.
 
+  - name: Typographer
+    aliases: [typographer, type]
+    role: Reading System
+    bias: Rhythm
+    weight: 0.04
+    question: "Can the text be read before it is admired?"
+    cognitive_lens: visual
+    emphasizes: [LINEARITY, DENSITY]
+    can_veto: false
+    prompt: >
+      Audit reading comfort, hierarchy, measure, line height, type scale, casing,
+      numeral alignment, microcopy density, and whether emphasis carries meaning.
+      Flag text that is too clever, too small, too wide, too decorative, or too
+      visually loud for the job it performs.
+
+  - name: Cognitive Psychologist
+    aliases: [cognitive_psychologist, cognition]
+    role: Cognitive Load
+    bias: Comprehension
+    weight: 0.05
+    question: "What must the user hold in working memory to continue?"
+    cognitive_lens: clarity
+    emphasizes: [LINEARITY, ABSTRACTION]
+    can_veto: false
+    prompt: >
+      Review attention, memory load, choice overload, recognition versus recall,
+      progressive disclosure, interruption cost, and mismatch between labels and
+      mental models. Prefer fewer simultaneous decisions, clearer next actions,
+      and visible state over clever hidden behavior.
+
   - name: NNGroup UX Researcher
     aliases: [nngroup, ux_researcher, nielsen_norman]
     role: Empirical UX

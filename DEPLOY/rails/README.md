@@ -1,6 +1,6 @@
 # Rails apps
 
-Six production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.**
+4 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.**
 
 ## Apps
 

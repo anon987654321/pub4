@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Tv::Comment < ApplicationRecord
+  include Shared::ActivityTrackable
+  tracks_activity created: "TvCommentCreated", source_vertical: "tv", actor: :user
+
   belongs_to :user
   belongs_to :video, class_name: "Tv::Video"
 

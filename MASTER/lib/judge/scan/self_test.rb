@@ -45,19 +45,26 @@ module Master
         end
 
         def build_checks(laws: nil)
-          checks = [
-            check("ROBUSTNESS") {
+          selected_laws = laws&.to_set
+          law_checks.filter_map do |law, body|
+            next if selected_laws && !selected_laws.include?(law)
+            check(law, &body)
+          end
+        end
+
+        def law_checks
+          [
+            ["ROBUSTNESS", lambda {
               bare_rescue_findings + deploy_bare_rescue_findings + timeout_findings +
                 js_silent_catch_findings + library_verify_findings
-            },
-            check("SINGULARITY") { duplicate_rule_id_findings + cross_yaml_duplicate_key_findings + deploy_duplicate_id_findings },
-            check("LINEARITY") { structural_findings(Rules::NestingDepthRule.new) + deploy_nesting_findings },
-            check("PROXIMITY") { rule_test_proximity_findings },
-            check("ABSTRACTION") { structural_findings(Rules::GodClassRule.new) + deploy_god_class_findings },
-            check("DENSITY") { structural_findings(Rules::SmallFunctionsRule.new) + deploy_small_files_findings + face_pool_findings },
-            check("KERNEL_ADHERENCE") { kernel_wiring_findings },
+            }],
+            ["SINGULARITY", lambda { duplicate_rule_id_findings + cross_yaml_duplicate_key_findings + deploy_duplicate_id_findings }],
+            ["LINEARITY", lambda { structural_findings(Rules::NestingDepthRule.new) + deploy_nesting_findings }],
+            ["PROXIMITY", lambda { rule_test_proximity_findings }],
+            ["ABSTRACTION", lambda { structural_findings(Rules::GodClassRule.new) + deploy_god_class_findings }],
+            ["DENSITY", lambda { structural_findings(Rules::SmallFunctionsRule.new) + deploy_small_files_findings + face_pool_findings }],
+            ["KERNEL_ADHERENCE", lambda { kernel_wiring_findings }],
           ]
-          laws.nil? ? checks : checks.select { |item| laws.include?(item.law) }
         end
 
         def deploy_bare_rescue_findings
@@ -187,19 +194,55 @@ module Master
         def cross_yaml_duplicate_key_findings
           data_dir = File.join(@root, "data")
           top_keys = Hash.new { |h, k| h[k] = [] }
-          Dir.glob(File.join(data_dir, "*.yml")).each do |path|
-            yaml = Master.load_yaml(path) || {}
-            next unless yaml.is_a?(Hash)
-
-            yaml.each_key { |key| top_keys[key] << path }
+          singularity_yaml_paths(data_dir).each do |path|
+            top_level_yaml_keys(path).each { |key| top_keys[key] << path }
           end
           top_keys.flat_map do |key, paths|
             next [] if paths.size < 2
-            next [] if %w[rules models providers].include?(key)
             paths.drop(1).map do |path|
               finding(path:, line: 1, message: "top-level key #{key} also defined in #{paths.first} (SINGULARITY)")
             end
           end
+        end
+
+        def singularity_yaml_paths(data_dir)
+          Dir.glob(File.join(data_dir, "**", "*.yml")).sort.reject do |path|
+            rel = path.delete_prefix("#{data_dir}/")
+            rel.start_with?("agents/", "comfyui/", "council/", "harnesses/", "lessons/", "ops/", "personas/",
+                            "prompts/", "rules/", "runtime/", "security/", "social_sim/")
+          end
+        end
+
+        def top_level_yaml_keys(path)
+          document = Psych.parse_file(path)
+          root = document&.root
+          return [] unless root.is_a?(Psych::Nodes::Mapping)
+
+          root.children.each_slice(2).filter_map do |key_node, _value_node|
+            next unless key_node.respond_to?(:value)
+            key = key_node.value.to_s
+            next if %w[schema meta version].include?(key)
+            next if duplicate_top_level_key_allowed?(path, key)
+            key
+          end
+        rescue Psych::Exception
+          []
+        end
+
+        def duplicate_top_level_key_allowed?(path, key)
+          relative = path.delete_prefix("#{File.join(@root, "data")}/")
+          {
+            "accessibility" => %w[style.yml ui.yml],
+            "clusters" => %w[mobile_web_opportunities.yml visual_clusters.yml],
+            "css" => %w[style.yml templates.yml],
+            "defaults" => %w[mcp_servers.yml models.yml],
+            "html" => %w[style.yml templates.yml],
+            "openrouter" => %w[models.yml providers.yml],
+            "ruby" => %w[style.yml templates.yml],
+            "thresholds" => %w[load.yml rules.yml],
+            "typography" => %w[design_rules.yml style.yml ui.yml],
+            "voice" => %w[soul.yml voice.yml],
+          }.fetch(key, []).include?(relative)
         end
 
         def rule_ids(value, ids = [])

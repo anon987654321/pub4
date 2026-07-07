@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "rbconfig"
+require_relative "../../MASTER/lib/pub4/check_runner"
+
+ROOT = File.expand_path("../..", __dir__)
+RUBY = RbConfig.ruby
+STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
+runner = Pub4::CheckRunner.new(prefix: "deploy-rails", root: ROOT, timeout: STEP_TIMEOUT)
+
+failures = []
+failures << "ports" unless runner.run("ports", RUBY, "DEPLOY/rails/port_inventory_gate.rb")
+failures << "production" unless runner.run("production", RUBY, "DEPLOY/rails/check_production_gate.rb")
+failures << "walkthrough" unless runner.run("walkthrough", RUBY, "DEPLOY/rails/human_walkthrough_gate.rb")
+failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "DEPLOY/rails/check_phantom_foreign_keys.rb")
+failures << "domain_align" unless runner.run("domain align", RUBY, "DEPLOY/rails/domain_alignment_gate.rb")
+failures << "frontend" unless runner.run("frontend", RUBY, "DEPLOY/rails/frontend_production_gate.rb")
+failures << "auditor" unless runner.run("auditor", RUBY, "DEPLOY/rails/frontend_auditor_gate.rb")
+failures << "schema" unless runner.run("schema", RUBY, "DEPLOY/rails/schema_migration_gate.rb")
+failures << "assets" unless runner.run("asset freshness", RUBY, "DEPLOY/rails/generated_asset_freshness_gate.rb")
+failures << "runtime" unless runner.run("runtime", RUBY, "DEPLOY/rails/rails_runtime_gate.rb", "--runtime")
+
+exit(failures.empty? ? 0 : 1)

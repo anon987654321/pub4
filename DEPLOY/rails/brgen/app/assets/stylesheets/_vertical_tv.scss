@@ -26,12 +26,12 @@ body.vertical-tv .video-player {
 
 /* postpro.rb cinematic grade hook — applied when thumbnail/video processed */
 body.vertical-tv .postpro-grade,
-body.vertical-tv .tv-media__image.postpro-grade {
+body.vertical-tv .tv-media-image.postpro-grade {
   filter: contrast(1.06) saturate(1.08);
 }
 
 body.vertical-tv .repligen-hero,
-body.vertical-tv .tv-media__image.repligen-hero {
+body.vertical-tv .tv-media-image.repligen-hero {
   object-fit: cover;
   background: radial-gradient(ellipse at 50% 20%, var(--tv-glow), var(--tv-stage));
 }

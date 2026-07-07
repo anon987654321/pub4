@@ -4,6 +4,9 @@ module Playlist
   class Collaboration < ApplicationRecord
     self.table_name = "playlist_collaborations"
 
+    include Shared::ActivityTrackable
+    tracks_activity created: "PlaylistCollaborationCreated", source_vertical: "playlist", visibility: "private", actor: :user
+
     ROLES = %w[owner editor viewer].freeze
 
     belongs_to :user

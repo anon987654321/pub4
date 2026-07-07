@@ -1,0 +1,62 @@
+# frozen_string_literal: true
+
+require "minitest/autorun"
+
+class AmberBacklogTest < Minitest::Test
+  ROOT = File.expand_path("../..", __dir__)
+
+  def read(relative)
+    File.read(File.join(ROOT, relative))
+  end
+
+  def test_social_live_message_models_are_persisted_and_routed
+    migration = read("db/migrate/20260707130000_wire_social_live_messages_and_wardrobe_intelligence.rb")
+    user = read("app/models/user.rb")
+    routes = read("config/routes.rb")
+
+    assert_includes migration, "create_table :connections"
+    assert_includes migration, "create_table :live_streams"
+    assert_includes migration, "create_table :messages"
+    assert_includes read("app/models/connection.rb"), "STATUSES = %w[pending accepted blocked]"
+    assert_includes read("app/models/live_stream.rb"), "def start!"
+    assert_includes read("app/models/message.rb"), "scope :unread"
+    assert_includes user, "connections_requested"
+    assert_includes user, "live_streams"
+    assert_includes user, "sent_messages"
+    assert_includes routes, "resources :connections"
+    assert_includes routes, "resources :live_streams"
+    assert_includes routes, "resources :messages"
+    assert_includes read("app/views/connections/index.html.erb"), "Connection"
+    assert_includes read("app/views/live_streams/index.html.erb"), "Live wardrobe sessions"
+    assert_includes read("app/controllers/messages_controller.rb"), "Message sent"
+    assert_includes read("app/views/messages/index.html.erb"), "New message"
+  end
+
+  def test_wardrobe_analytics_upload_pipeline_and_outfit_generation_are_wired
+    migration = read("db/migrate/20260707130000_wire_social_live_messages_and_wardrobe_intelligence.rb")
+    analytics = read("app/services/wardrobe_analytics_service.rb")
+    generator = read("app/services/outfit_generation_service.rb")
+    routes = read("config/routes.rb")
+    item_form = read("app/views/items/_form.html.erb")
+    media_picker = read("app/javascript/controllers/media_picker_controller.js")
+
+    assert_includes migration, "analysis_status"
+    assert_includes analytics, "never_worn"
+    assert_includes analytics, "underused"
+    assert_includes analytics, "tips"
+    assert_includes generator, "generate!"
+    assert_includes generator, "weather"
+    assert_includes generator, "underused?"
+    assert_includes routes, "get :analytics"
+    assert_includes routes, "post :generate"
+    assert_includes read("app/controllers/wardrobe_items_controller.rb"), "WardrobeAnalyticsService"
+    assert_includes read("app/controllers/outfits_controller.rb"), "OutfitGenerationService"
+    assert_includes read("app/jobs/wardrobe_media_job.rb"), "SegmentGarmentImageJob.perform_later"
+    assert_includes read("app/jobs/wardrobe_media_job.rb"), "RemoveBackgroundJob.perform_later"
+    assert_includes item_form, "data-controller=\"media-picker\""
+    assert_includes item_form, "direct_upload: true"
+    assert_includes media_picker, "drop(event)"
+    assert_includes read("app/views/wardrobe_items/analytics.html.erb"), "Wardrobe analytics"
+    assert_includes read("app/views/outfits/index.html.erb"), "Generate outfit"
+  end
+end

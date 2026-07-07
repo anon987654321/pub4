@@ -4,6 +4,9 @@ module Tv
   class StreamChat < ApplicationRecord
     self.table_name = "tv_stream_chats"
 
+    include Shared::ActivityTrackable
+    tracks_activity created: "TvStreamChatCreated", source_vertical: "tv", visibility: "private", actor: :user
+
     belongs_to :live_stream, class_name: "Tv::LiveStream"
     belongs_to :user
 

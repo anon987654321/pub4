@@ -1,0 +1,46 @@
+<% content_for :title, "Wardrobe analytics" %>
+
+<header role="banner" aria-label="Wardrobe analytics header">
+  <div>
+    <p class="dim">Closet signals</p>
+    <h1>Wardrobe analytics</h1>
+  </div>
+  <nav role="navigation" aria-label="Wardrobe analytics actions">
+    <%= link_to "Wardrobe", items_path, class: "btn" %>
+    <%= link_to "Outfits", outfits_path, class: "btn" %>
+  </nav>
+</header>
+
+<section class="chips" aria-label="Wardrobe metrics">
+  <span class="chip"><%= @analytics[:total_items] %> total</span>
+  <span class="chip"><%= @analytics[:active_items] %> active</span>
+  <span class="chip"><%= @analytics[:never_worn] %> never worn</span>
+  <span class="chip"><%= @analytics[:underused] %> underused</span>
+  <span class="chip"><%= @analytics[:repair] %> repair</span>
+</section>
+
+<section>
+  <h2>Category mix</h2>
+  <% @analytics[:by_category].each do |category, count| %>
+    <p><strong><%= category.presence || "Unsorted" %></strong> <span class="dim"><%= count %></span></p>
+  <% end %>
+</section>
+
+<section>
+  <h2>AI closet tips</h2>
+  <% if @analytics[:tips].any? %>
+    <% @analytics[:tips].each do |tip| %><p><%= tip %></p><% end %>
+  <% else %>
+    <p class="dim">No urgent wardrobe tips right now.</p>
+  <% end %>
+</section>
+
+<section>
+  <h2>Recommendations</h2>
+  <% @recommendations.each do |recommendation| %>
+    <article>
+      <strong><%= recommendation.kind.humanize %></strong>
+      <p class="dim"><%= recommendation.reason %></p>
+    </article>
+  <% end %>
+</section>

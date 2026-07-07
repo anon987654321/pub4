@@ -5,6 +5,7 @@ class Volunteer < ApplicationRecord
   include Shared.concern(:Notifiable) rescue nil
   include Shared.concern(:Reactable) rescue nil
   include Shared.concern(:GeoLocatable) rescue nil
+  belongs_to :user, optional: true
   has_many :shifts, dependent: :destroy
 
   validates :name, presence: true

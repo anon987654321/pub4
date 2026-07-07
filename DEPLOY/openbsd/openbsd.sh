@@ -376,7 +376,7 @@ stage_1() {
   typeset -a _df_var; _df_var=("${(@f)$(df -k /var)}"); typeset _var_avail=${${(z)_df_var[2]}[4]}
   (( _var_avail < 512000 )) && { log ERROR "Insufficient disk space on /var"; exit 1 }
 
-  pkg_add -U ldns-utils ruby%3.4 litestream zap zsh fish neovim tmux fontconfig fzf ripgrep fd 2>/tmp/pkg_add.log \
+  pkg_add -U ldns-utils ruby%3.4 litestream zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak 2>/tmp/pkg_add.log \
     || { log ERROR "pkg_add failed. See /tmp/pkg_add.log"; exit 1 }
 
   [[ -f /etc/rc.conf.local && $(<"/etc/rc.conf.local") == *"pf=NO"* ]] && log WARN "pf disabled in rc.conf.local"
@@ -757,8 +757,8 @@ stage_2() {
     [[ $app != amber ]] && deploy_order+=($app)
   done
   for app in $deploy_order; do
-    typeset port=${APP_PORTS[$app]:=$(generate_random_port)}
-    APP_PORTS[$app]=$port
+    typeset port=${APP_PORTS[$app]:-}
+    [[ -n $port ]] || { log ERROR "missing fixed APP_PORTS entry for $app"; exit 1; }
     bootstrap_rails_app "$app" "$port" || { log ERROR "bootstrap failed: $app"; exit 1 }
   done
 

@@ -1,5 +1,5 @@
 # postpro
 
-postpro provides cinematic image post-processing through MASTER’s tool surface while the implementation remains in DEPLOY/tools/postpro/postpro.rb. Run ruby MASTER/tools/postpro.rb --help to see options; all arguments forward to DEPLOY/tools/postpro/postpro.rb.
+postpro provides cinematic image post-processing through MASTER’s tool surface while the implementation remains in MASTER/tools/postpro.rb. Run ruby MASTER/tools/postpro.rb --help to see options; all arguments forward to MASTER/tools/postpro.rb.
 
-The tool needs Ruby, libvips via ruby-vips, and optionally tty-prompt. It may shell out for image operations, so treat invocations as side-effecting. MASTER wires postpro as the CLI /postpro with contract postpro and permission exec. New callers should use this entrypoint rather than ad-hoc DEPLOY/tools/postpro.rb paths.
+The tool needs Ruby, libvips via ruby-vips, and optionally tty-prompt. It may shell out for image operations, so treat invocations as side-effecting. MASTER wires postpro as the CLI /postpro with contract postpro and permission exec. New callers should use this entrypoint rather than ad-hoc MASTER/tools/postpro.rb paths.

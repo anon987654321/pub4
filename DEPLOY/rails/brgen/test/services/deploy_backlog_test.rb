@@ -49,6 +49,268 @@ class DeployBacklogTest < Minitest::Test
     assert_includes source, 'schedule: every day at 4am'
   end
 
+  def test_omniauth_wires_installed_providers_to_identity_primitives
+    initializer = File.read(File.join(ROOT, 'brgen/config/initializers/omniauth.rb'))
+    callback = File.read(File.join(ROOT, 'shared/app/controllers/omniauth_callbacks_controller.rb'))
+    links = File.read(File.join(ROOT, 'shared/app/views/shared/_oauth_links.html.erb'))
+
+    assert_includes initializer, ':google_oauth2'
+    assert_includes initializer, ':github'
+    assert_includes initializer, ':vipps'
+    assert_includes initializer, ':snapchat'
+    assert_includes initializer, 'oauth_provider_slugs'
+    assert_includes callback, 'persist_external_identity'
+    assert_includes callback, 'IdentityProvider.find_or_create_by!'
+    assert_includes callback, 'ExternalIdentity.table_exists?'
+    assert_includes callback, 'Shared::Authentication.table_exists?'
+    assert_includes links, 'oauth_provider_slugs'
+    assert_includes links, '/auth/google_oauth2'
+    assert_includes links, '/auth/snapchat'
+  end
+
+  def test_nearby_geolocation_uses_explicit_radius_and_exact_distance
+    nearby = File.read(File.join(ROOT, 'brgen/app/controllers/nearby_controller.rb'))
+    locations = File.read(File.join(ROOT, 'brgen/app/controllers/locations_controller.rb'))
+    geolocation = File.read(File.join(ROOT, 'brgen/app/javascript/controllers/geolocation_controller.js'))
+    layout = File.read(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb'))
+    nearby_view = File.read(File.join(ROOT, 'brgen/app/views/nearby/index.html.erb'))
+    dating_matchmaking = File.read(File.join(ROOT, 'brgen/app/services/dating/matchmaking_service.rb'))
+
+    assert_includes nearby, 'DEFAULT_RADIUS_KM = 2.0'
+    assert_includes nearby, 'MAX_RADIUS_KM = 25.0'
+    assert_includes nearby, 'value.to_f.clamp(0.5, MAX_RADIUS_KM)'
+    assert_includes nearby, 'distance > radius'
+    assert_includes locations, 'ALERT_RADIUS_KM = NearbyController::DEFAULT_RADIUS_KM'
+    assert_includes locations, 'other.distance_to(lat, lng).to_f > ALERT_RADIUS_KM'
+    assert_includes geolocation, 'radiusKm'
+    assert_includes geolocation, 'credentials: "same-origin"'
+    assert_includes layout, 'data-geolocation-radius-km-value="2"'
+    assert_includes nearby_view, 'number_with_precision(distance, precision: 1)'
+    assert_includes dating_matchmaking, 'radius_km: DEFAULT_RADIUS_KM'
+  end
+
+  def test_moderation_reports_create_flags_and_reputation_effects
+    workflow = File.read(File.join(ROOT, 'brgen/app/services/moderation_workflow.rb'))
+    reports = File.read(File.join(ROOT, 'brgen/app/controllers/reports_controller.rb'))
+    admin = File.read(File.join(ROOT, 'brgen/app/controllers/admin/reports_controller.rb'))
+
+    assert_includes reports, 'ModerationWorkflow.report!'
+    assert_includes admin, 'ModerationWorkflow.transition!'
+    assert_includes workflow, 'ModerationReport.create!'
+    assert_includes workflow, 'ModerationFlag.where'
+    assert_includes workflow, 'flag.save!'
+    assert_includes workflow, 'update_all(status: status'
+    assert_includes workflow, 'kind: "spam_report"'
+    assert_includes workflow, 'TrustScoreCalculator.new(user: user).call'
+    assert_includes workflow, 'accountable_user'
+  end
+
+  def test_media_pipeline_processes_image_variants_across_upload_surfaces
+    concern = File.read(File.join(ROOT, 'shared/app/models/concerns/shared/media_processable.rb'))
+    job = File.read(File.join(ROOT, 'shared/app/jobs/shared/media_processing_job.rb'))
+
+    assert_includes concern, 'process_media_variants'
+    assert_includes concern, 'after_commit :enqueue_media_variant_processing'
+    assert_includes concern, 'Shared::MediaProcessingJob.perform_later'
+    assert_includes job, 'file.content_type.to_s.start_with?("image/")'
+
+    %w[
+      brgen/app/models/post.rb
+      brgen/app/models/marketplace/listing.rb
+      brgen/app/models/dating/profile.rb
+      brgen/app/models/message.rb
+      brgen/app/models/playlist/track.rb
+      brgen/app/models/takeaway/menu_item.rb
+      brgen/app/models/tv/broadcast.rb
+      brgen/app/models/tv/channel.rb
+      brgen/app/models/tv/video.rb
+    ].each do |relative|
+      source = File.read(File.join(ROOT, relative))
+      assert_includes source, 'include Shared::MediaProcessable'
+      assert_includes source, 'process_media_variants'
+      assert_includes source, 'format: :webp'
+    end
+
+    helper_source = File.read(File.join(ROOT, 'brgen/app/helpers/application_helper.rb'))
+    assert_includes helper_source, 'responsive_image_tag'
+    assert_includes helper_source, 'lazy_image_blurhash_value'
+  end
+
+  def test_activity_graph_emits_across_vertical_models
+    concern = File.read(File.join(ROOT, 'shared/app/models/concerns/shared/activity_trackable.rb'))
+    assert_includes concern, 'Shared::DomainEvent.record!'
+    assert_includes concern, 'legacy_event_name'
+
+    expected_events = {
+      'brgen/app/models/playlist/playlist.rb' => %w[PlaylistCreated playlist],
+      'brgen/app/models/playlist/set.rb' => %w[PlaylistSetCreated playlist],
+      'brgen/app/models/playlist/track.rb' => %w[PlaylistTrackCreated playlist],
+      'brgen/app/models/playlist/listen.rb' => %w[PlaylistListen playlist],
+      'brgen/app/models/playlist/like.rb' => %w[PlaylistLiked playlist],
+      'brgen/app/models/playlist/collaboration.rb' => %w[PlaylistCollaborationCreated playlist],
+      'brgen/app/models/playlist/dilla_sketch.rb' => %w[DillaSketchCreated playlist],
+      'brgen/app/models/marketplace/store.rb' => %w[MarketplaceStoreCreated marketplace],
+      'brgen/app/models/marketplace/listing.rb' => %w[ListingCreated marketplace],
+      'brgen/app/models/marketplace/deal.rb' => %w[MarketplaceDealCreated marketplace],
+      'brgen/app/models/marketplace/listing_favorite.rb' => %w[MarketplaceListingFavorited marketplace],
+      'brgen/app/models/takeaway/restaurant.rb' => %w[TakeawayRestaurantCreated takeaway],
+      'brgen/app/models/takeaway/review.rb' => %w[TakeawayReviewCreated takeaway],
+      'brgen/app/models/takeaway/favorite_restaurant.rb' => %w[TakeawayRestaurantFavorited takeaway],
+      'brgen/app/models/takeaway/menu_item.rb' => %w[TakeawayMenuItemCreated takeaway],
+      'brgen/app/models/tv/channel.rb' => %w[TvChannelCreated tv],
+      'brgen/app/models/tv/video.rb' => %w[VideoUploaded tv],
+      'brgen/app/models/tv/live_stream.rb' => %w[LiveStreamScheduled tv],
+      'brgen/app/models/tv/show.rb' => %w[TvShowCreated tv],
+      'brgen/app/models/tv/episode.rb' => %w[TvEpisodeCreated tv],
+      'brgen/app/models/tv/broadcast.rb' => %w[BroadcastScheduled tv],
+      'brgen/app/models/tv/comment.rb' => %w[TvCommentCreated tv],
+      'brgen/app/models/tv/stream_chat.rb' => %w[TvStreamChatCreated tv],
+      'brgen/app/models/tv/subscription.rb' => %w[TvChannelSubscribed tv],
+      'brgen/app/models/tv/video_note.rb' => %w[TvVideoNoteCreated tv],
+      'brgen/app/models/tv/view_event.rb' => %w[TvVideoViewed tv],
+      'brgen/app/models/dating/profile.rb' => %w[DatingProfileCreated dating],
+      'brgen/app/models/dating/dislike.rb' => %w[DatingDislike dating]
+    }
+
+    expected_events.each do |relative, (event_name, vertical)|
+      source = File.read(File.join(ROOT, relative))
+      assert_includes source, 'ActivityTrackable'
+      assert_includes source, 'tracks_activity'
+      assert_includes source, event_name
+      assert_includes source, "source_vertical: \"#{vertical}\""
+    end
+
+    video_source = File.read(File.join(ROOT, 'brgen/app/models/tv/video.rb'))
+    assert_includes video_source, 'VideoPublished'
+    assert_includes video_source, 'saved_change_to_status?'
+
+    broadcast_source = File.read(File.join(ROOT, 'brgen/app/models/tv/broadcast.rb'))
+    assert_includes broadcast_source, 'BroadcastScheduled'
+    assert_includes broadcast_source, 'BroadcastStarted'
+    assert_includes broadcast_source, 'BroadcastEnded'
+  end
+
+  def test_marketplace_reviews_and_geo_localized_listings_are_wired
+    migration = File.read(File.join(ROOT, 'brgen/db/migrate/20260707120000_create_marketplace_reviews_and_geo_listings.rb'))
+    listing = File.read(File.join(ROOT, 'brgen/app/models/marketplace/listing.rb'))
+    review = File.read(File.join(ROOT, 'brgen/app/models/marketplace/review.rb'))
+    listings_controller = File.read(File.join(ROOT, 'brgen/app/controllers/marketplace/listings_controller.rb'))
+    reviews_controller = File.read(File.join(ROOT, 'brgen/app/controllers/marketplace/reviews_controller.rb'))
+    routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
+    index = File.read(File.join(ROOT, 'brgen/app/views/marketplace/listings/index.html.erb'))
+    card = File.read(File.join(ROOT, 'brgen/app/views/marketplace/listings/_card.html.erb'))
+    show = File.read(File.join(ROOT, 'brgen/app/views/marketplace/listings/show.html.erb'))
+
+    assert_includes migration, 'create_table :marketplace_reviews'
+    assert_includes migration, 'add_column :marketplace_listings, :latitude'
+    assert_includes migration, 'add_column :marketplace_listings, :longitude'
+    assert_includes migration, 'add_column :marketplace_listings, :reviews_count'
+    assert_includes listing, 'has_many :reviews'
+    assert_includes listing, 'include Shared::GeoLocatable'
+    assert_includes listing, 'scope :near'
+    assert_includes listing, 'reviewable_by?'
+    assert_includes listing, 'update_rating!'
+    assert_includes review, 'class Marketplace::Review'
+    assert_includes review, 'MarketplaceReviewCreated'
+    assert_includes review, 'buyer_has_completed_interaction'
+    assert_includes review, 'seller_cannot_review_own_listing'
+    assert_includes listings_controller, '@listing_distances'
+    assert_includes listings_controller, 'Marketplace::Listing.radius_from'
+    assert_includes reviews_controller, 'Marketplace::ReviewsController'
+    assert_includes reviews_controller, 'reviewer_lat'
+    assert_includes routes, 'resources :reviews, only: %i[create]'
+    assert_includes index, ':radius_km'
+    assert_includes card, 'km away'
+    assert_includes card, 'reviews_count'
+    assert_includes show, 'marketplace_listing_reviews_path'
+    assert_includes show, '@reviews'
+  end
+
+  def test_playlist_import_embed_schema_trending_and_expiry_are_wired
+    migration = File.read(File.join(ROOT, 'brgen/db/migrate/20260707121000_add_playlist_import_embed_and_expiry_fields.rb'))
+    playlist = File.read(File.join(ROOT, 'brgen/app/models/playlist/playlist.rb'))
+    track = File.read(File.join(ROOT, 'brgen/app/models/playlist/track.rb'))
+    importer = File.read(File.join(ROOT, 'brgen/app/services/playlist/track_import_service.rb'))
+    imports_controller = File.read(File.join(ROOT, 'brgen/app/controllers/playlist/imports_controller.rb'))
+    playlists_controller = File.read(File.join(ROOT, 'brgen/app/controllers/playlist/playlists_controller.rb'))
+    tracks_controller = File.read(File.join(ROOT, 'brgen/app/controllers/playlist/tracks_controller.rb'))
+    routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
+    schema_helper = File.read(File.join(ROOT, 'shared/app/helpers/schema_helper.rb'))
+    player = File.read(File.join(ROOT, 'brgen/app/views/playlist/playlists/_player.html.erb'))
+    show = File.read(File.join(ROOT, 'brgen/app/views/playlist/playlists/show.html.erb'))
+    index = File.read(File.join(ROOT, 'brgen/app/views/playlist/playlists/index.html.erb'))
+    hosted_form = File.read(File.join(ROOT, 'brgen/app/views/playlist/hosted_tracks/_form.html.erb'))
+    stimulus = File.read(File.join(ROOT, 'brgen/app/javascript/controllers/playlist_player_controller.js'))
+
+    assert_includes migration, 'add_column :playlist_tracks, :expires_at'
+    assert_includes migration, 'add_column :playlist_tracks, :privacy'
+    assert_includes playlist, 'city_trending'
+    assert_includes playlist, 'duration_seconds'
+    assert_includes track, 'external_embed_url'
+    assert_includes track, 'youtube_embed_url'
+    assert_includes track, 'spotify_embed_url'
+    assert_includes track, 'w.soundcloud.com/player'
+    assert_includes importer, 'TrackImportService'
+    assert_includes importer, 'youtube.com'
+    assert_includes importer, 'spotify.com'
+    assert_includes importer, 'soundcloud.com'
+    assert_includes imports_controller, 'require_user_session'
+    assert_includes imports_controller, 'return if performed?'
+    assert_includes playlists_controller, 'def embed'
+    assert_includes playlists_controller, 'Playlist::Track.unexpired'
+    assert_includes playlists_controller, '@trending_playlists'
+    assert_includes tracks_controller, ':expires_at'
+    assert_includes routes, 'member { get :embed }'
+    assert_includes routes, 'resources :imports, only: :create'
+    assert_includes schema_helper, 'MusicPlaylist'
+    assert_includes schema_helper, 'MusicRecording'
+    assert_includes schema_helper, 'iso8601_duration'
+    assert_includes player, 'itemtype="https://schema.org/MusicPlaylist"'
+    assert_includes player, 'data-playlist-player-embed-param'
+    assert_includes player, 'playlist-embed-frame'
+    assert_includes stimulus, 'embedTarget'
+    assert_includes show, 'json_ld_for(@playlist, type: :music_playlist)'
+    assert_includes show, 'playlist_playlist_imports_path'
+    assert_includes show, 'embed_playlist_playlist_url'
+    assert_includes index, '@trending_playlists'
+    assert_includes hosted_form, 'form.datetime_field :expires_at'
+  end
+
+  def test_takeaway_geocoding_menu_availability_and_order_state_machine_are_wired
+    migration = File.read(File.join(ROOT, 'brgen/db/migrate/20260707122000_harden_takeaway_geo_availability_and_orders.rb'))
+    restaurant = File.read(File.join(ROOT, 'brgen/app/models/takeaway/restaurant.rb'))
+    menu_item = File.read(File.join(ROOT, 'brgen/app/models/takeaway/menu_item.rb'))
+    order = File.read(File.join(ROOT, 'brgen/app/models/takeaway/order.rb'))
+    order_item = File.read(File.join(ROOT, 'brgen/app/models/takeaway/order_item.rb'))
+    restaurants_controller = File.read(File.join(ROOT, 'brgen/app/controllers/takeaway/restaurants_controller.rb'))
+    orders_controller = File.read(File.join(ROOT, 'brgen/app/controllers/takeaway/orders_controller.rb'))
+    new_view = File.read(File.join(ROOT, 'brgen/app/views/takeaway/restaurants/new.html.erb'))
+    restaurant_show = File.read(File.join(ROOT, 'brgen/app/views/takeaway/restaurants/show.html.erb'))
+    order_show = File.read(File.join(ROOT, 'brgen/app/views/takeaway/orders/show.html.erb'))
+
+    assert_includes migration, 'change_column_default :takeaway_menu_items, :available'
+    assert_includes migration, 'add_index :takeaway_restaurants, %i[latitude longitude]'
+    assert_includes restaurant, 'require "zlib"'
+    assert_includes restaurant, 'before_validation :geocode_if_needed'
+    assert_includes restaurant, 'stable_coordinate_offsets'
+    assert_includes restaurant, 'City.find_by(id: self[:city_id])'
+    assert_includes menu_item, 'available_for_order?'
+    assert_includes menu_item, 'self.available = true if available.nil?'
+    assert_includes order_item, 'menu_item_must_be_available'
+    assert_includes order, 'TRANSITIONS ='
+    assert_includes order, 'transition_to!'
+    assert_includes order, 'status_transition_allowed'
+    assert_includes order, 'status_in_database'
+    assert_includes restaurants_controller, ':latitude'
+    assert_includes restaurants_controller, ':longitude'
+    assert_includes orders_controller, 'menu_items.available.find_by'
+    assert_includes orders_controller, 'params[:status].presence'
+    assert_includes new_view, 'f.number_field :latitude'
+    assert_includes restaurant_show, 'f.check_box :available'
+    assert_includes restaurant_show, 'item.vegan?'
+    assert_includes order_show, 'Takeaway::Order::TRANSITIONS.fetch'
+  end
+
   def test_queue_failure_summary_and_digest_schedule
     rows = [
       { class_name: 'ExampleJob', queue_name: 'bulk', failures: 3, last_failed_at: '2026-01-01 04:00:00' }

@@ -29,6 +29,7 @@ module Master
   ROOT = File.expand_path("..", __dir__).freeze
   REPO_ROOT = File.expand_path("..", ROOT).freeze
   DEPLOY_ROOT = File.join(REPO_ROOT, "DEPLOY").freeze
+  TOOLS_ROOT = File.join(ROOT, "tools").freeze
   DATA = File.join(ROOT, "data").freeze
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
   RULES_PATH = File.join(DATA, "rules.yml").freeze
@@ -61,6 +62,7 @@ module Master
 
   def self.repo_root = REPO_ROOT
   def self.deploy_path(*parts) = File.join(DEPLOY_ROOT, *parts)
+  def self.tool_path(*parts) = File.join(TOOLS_ROOT, *parts)
   def self.data_path(*parts) = File.join(DATA, *parts)
   def self.limits_path = data_file("limits.yml", "workflow.yml")
   def self.state_path = data_file("state.yml", "standing_orders.yml")

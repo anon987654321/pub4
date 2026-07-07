@@ -174,7 +174,7 @@ input, button, textarea, select {
   padding: var(--space-12) var(--space-4);
 }
 
-.empty-state__icon {
+.empty-state-icon {
   width: 64px;
   height: 64px;
   margin-inline: auto;
@@ -182,13 +182,13 @@ input, button, textarea, select {
   opacity: 0.4;
 }
 
-.empty-state__title {
+.empty-state-title {
   font-size: var(--text-lg);
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.empty-state__body {
+.empty-state-body {
   font-size: var(--text-base);
   color: var(--text-secondary);
   max-width: 66ch;

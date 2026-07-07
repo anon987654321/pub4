@@ -17,7 +17,7 @@ module Ports
     end
 
     def call
-      import_run = platform.import_runs.create!(status: "running", started_at: Time.current)
+      @import_run = platform.import_runs.create!(status: "running", started_at: Time.current)
       root = TreeLocator.resolve(platform:, override: tree_path)
       raise "ports tree not found for #{platform.slug}" unless root
 
@@ -25,10 +25,10 @@ module Ports
       import_from_ftp if ports_count.zero? && use_ftp_fallback
       resolve_dependencies
       rebuild_fts
-      import_run.mark_succeeded!(ports_count:, source_revision: root.to_s)
-      Result.new(platform:, import_run:, ports_count:, tree_path: root.to_s)
+      @import_run.mark_succeeded!(ports_count:, source_revision: root.to_s)
+      Result.new(platform:, import_run: @import_run, ports_count:, tree_path: root.to_s)
     rescue StandardError => e
-      import_run&.mark_failed!(e.message)
+      @import_run&.mark_failed!(e.message)
       raise
     end
 
@@ -119,12 +119,22 @@ module Ports
     end
 
     def resolve_dependencies
+      unresolved = []
       pending_deps.each do |entry|
         depends_on = Port.find_by(platform:, pkgpath: entry[:pkgpath])
-        next unless depends_on
+        unless depends_on
+          unresolved << entry[:pkgpath]
+          next
+        end
 
         entry[:port].dependencies.find_or_create_by!(depends_on:, dep_type: entry[:dep_type])
       end
+      return if unresolved.empty?
+
+      message = "unresolved dependencies: #{unresolved.uniq.sort.first(12).join(', ')}"
+      message += " (+#{unresolved.uniq.size - 12} more)" if unresolved.uniq.size > 12
+      Rails.logger.warn("bsdports import: #{message}")
+      @import_run&.update!(error_message: [@import_run.error_message, message].compact.join(" | "))
     end
 
     def rebuild_fts

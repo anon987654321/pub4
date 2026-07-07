@@ -14,14 +14,14 @@ at_prompt
 send "cd /home/dev/pub4/MASTER && bundle install\r"
 at_prompt
 
-send "cd /home/dev/pub4/MASTER/web && bundle install && doas rcctl restart master\r"
+send "cd /home/dev/pub4/MASTER/web && bundle install && RAILS_ENV=production SECRET_KEY_BASE=\${SECRET_KEY_BASE:-dummy} bundle exec rails assets:precompile && bundle exec ruby /home/dev/pub4/DEPLOY/rails/master_web_assets_gate.rb && doas rcctl restart master\r"
 at_prompt
 
 # Fix MASTER scan to use bundle exec (zeitwerk lives in MASTER/Gemfile)
-send "for a in brgen amber blognet bsdports baibl hjerterom; do sed -i '' 's|ruby34 /home/dev/pub4/MASTER/bin/cli|(cd /home/dev/pub4/MASTER \\&\\& bundle exec ruby bin/cli|g' /home/dev/pub4/DEPLOY/rails/\$a/\$a.sh; done\r"
+send "for a in brgen amber bsdports hjerterom; do sed -i '' 's|ruby34 /home/dev/pub4/MASTER/bin/cli|(cd /home/dev/pub4/MASTER \\&\\& bundle exec ruby bin/cli|g' /home/dev/pub4/DEPLOY/rails/\$a/\$a.sh; done\r"
 at_prompt
 
-send "for a in brgen amber blognet bsdports baibl hjerterom; do echo ====\$a====; zsh /home/dev/pub4/DEPLOY/rails/\$a/\$a.sh || echo FAIL_\$a; done 2>&1 | tee /tmp/console_install.log\r"
+send "for a in brgen amber bsdports hjerterom; do echo ====\$a====; zsh /home/dev/pub4/DEPLOY/rails/\$a/\$a.sh || echo FAIL_\$a; done 2>&1 | tee /tmp/console_install.log\r"
 
 set timeout 3600
 expect {
@@ -31,7 +31,7 @@ expect {
 }
 
 at_prompt
-send "doas rcctl check master brgen amber blognet bsdports baibl hjerterom 2>&1\r"
+send "doas rcctl check master brgen amber bsdports hjerterom 2>&1\r"
 at_prompt
 send "tail -20 /tmp/console_install.log\r"
 at_prompt

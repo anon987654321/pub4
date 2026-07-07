@@ -4,11 +4,18 @@ class Dating::Profile < ApplicationRecord
   include CityTenantable
 
   # Engine-ize Shared
+  include Shared::ActivityTrackable
+  tracks_activity created: "DatingProfileCreated", updated: "DatingProfileUpdated", source_vertical: "dating", visibility: "private", actor: :user
   include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::MediaProcessable
   include Shared.concern(:Reactable) rescue nil
   belongs_to :user
   belongs_to :neighborhood, optional: true
   has_many_attached :photos
+  process_media_variants :photos, variants: {
+    thumb: { resize_to_limit: [ 400, 600 ], format: :webp },
+    card: { resize_to_limit: [ 800, 1_200 ], format: :webp }
+  }
 
   GENDERS     = %w[man woman nonbinary other].freeze
   LOOKING_FOR = %w[man woman everyone].freeze

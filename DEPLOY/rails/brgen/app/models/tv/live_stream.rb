@@ -4,6 +4,7 @@ module Tv
   class LiveStream < ApplicationRecord
     # Engine-ized Shared (tranche10)
     include Shared.concern(:ActivityTrackable) rescue nil
+    tracks_activity created: "LiveStreamScheduled", updated: "LiveStreamUpdated", source_vertical: "tv", actor: :user
     include Shared.concern(:Notifiable) rescue nil
 
     self.table_name = "tv_live_streams"
@@ -26,10 +27,12 @@ module Tv
 
     def go_live!
       update!(status: "live", started_at: Time.current)
+      record_activity!("LiveStreamStarted", actor: user, source_vertical: "tv")
     end
 
     def end_live!
       update!(status: "ended", ended_at: Time.current)
+      record_activity!("LiveStreamEnded", actor: user, source_vertical: "tv")
     end
 
     private

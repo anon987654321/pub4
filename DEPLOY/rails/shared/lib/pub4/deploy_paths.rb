@@ -3,7 +3,7 @@
 require "pathname"
 
 module Pub4
-  # Monorepo vs copy-tree deploy path resolution (Rails app/ vs DEPLOY/ siblings).
+  # Monorepo vs copy-tree deploy path resolution (Rails app/ vs repo siblings).
   module DeployPaths
     DEFAULT_REPO = "/home/dev/pub4"
     DEFAULT_RAILS = "#{DEFAULT_REPO}/DEPLOY/rails".freeze
@@ -15,16 +15,15 @@ module Pub4
 
     def postpro_candidates
       [
-        rails_relative("../../tools/postpro/postpro.rb"),
-        deploy_join("tools/postpro/postpro.rb"),
-        Pathname.new("#{DEFAULT_REPO}/DEPLOY/tools/postpro/postpro.rb")
+        repo_join("MASTER/tools/postpro.rb"),
+        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/postpro.rb")
       ]
     end
 
     def repligen_candidates
       [
-        deploy_join("tools/repligen.rb"),
-        Pathname.new("#{DEFAULT_REPO}/DEPLOY/tools/repligen.rb")
+        repo_join("MASTER/tools/repligen.rb"),
+        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/repligen.rb")
       ]
     end
 
@@ -65,6 +64,10 @@ module Pub4
 
     def deploy_join(rel)
       deploy_root.join(rel)
+    end
+
+    def repo_join(rel)
+      repo_root.join(rel)
     end
 
     def first_file(candidates)

@@ -1,6 +1,10 @@
 # DEPLOY
 
-OpenBSD production stack for pub4. Operator runbook: `OPERATOR.md`.
+OpenBSD production stack for pub4. Start with `START_HERE.md`; operator runbook: `OPERATOR.md`.
+
+Use `DEPLOY/bin/check` for local deploy validation, `DEPLOY/bin/check-rails` for Rails deploy gates,
+`DEPLOY/bin/check-openbsd` for OpenBSD config/deploy identity, and `DEPLOY/bin/check-vps` only for
+live vm23 checks.
 
 ## Layout
 
@@ -40,6 +44,7 @@ Seeds: Faker base in each `db/seeds.rb`. Optional web augmentation: `SEED_FROM_W
 ## Checks
 
 ```zsh
+DEPLOY/bin/check
 ruby DEPLOY/integrity_gate.rb
 ruby DEPLOY/rails/crawl_probe.rb
 MASTER_CRAWL_BROWSER=1 ruby DEPLOY/rails/crawl_browser.rb   # VPS Ferrum crawl

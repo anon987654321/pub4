@@ -1,4 +1,9 @@
 production:
+  shift_reminder:
+    class: ShiftReminderJob
+    queue: critical
+    schedule: every day at 7am
+
   expiry_alert:
     class: ExpiryAlertJob
     queue: critical

@@ -2,6 +2,10 @@ production:
   nightly_ports_import:
     class: PortsImportJob
     queue: bulk
+    args:
+      - platform_slug: openbsd
+      - tree_path: null
+      - use_ftp_fallback: true
     schedule: every day at 3am
 
   advisory_refresh:

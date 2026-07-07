@@ -61,6 +61,8 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
     :cuisine_type,
     :delivery_fee_cents,
     :min_order_cents,
+    :latitude,
+    :longitude,
     :active,
   )
 

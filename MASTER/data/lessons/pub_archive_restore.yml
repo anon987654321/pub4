@@ -1,7 +1,33 @@
 meta:
   name: pub_archive_restore
-  updated: "2026-06-26"
-  purpose: "Lessons recovered from pub2 and pub3 without restoring unsafe defaults."
+  updated: "2026-07-07"
+  purpose: "Lessons recovered from pub, pub2, and pub3 without restoring unsafe defaults."
+
+sources:
+  pub:
+    head: "a3185f4ec6e6"
+    date: "2026-05-07"
+  pub2:
+    head: "ad05242c97ff"
+    date: "2026-05-07"
+  pub3:
+    head: "835f9199d605"
+    date: "2026-05-07"
+
+pub:
+  classification: "legacy Rails app and installer archive"
+  restore:
+    - "brgen social model lessons: posts, comments, follows, likes, notifications, direct messages"
+    - "README/installer app names for brgen subapps and retired apps"
+    - "Devise/OAuth and live-search ideas now represented by shared Rails concerns and app-level auth/search"
+  do_not_restore:
+    - "PostgreSQL-only pg_search assumptions into SQLite production apps"
+    - "placeholder comment AJAX handlers"
+    - "unscoped direct-message APIs that bypass current app auth conventions"
+  product_lessons:
+    - "Old working apps should be compared by model/controller behavior, not by README ambition alone."
+    - "Subapps belong under brgen when their domain and tenant behavior is shared."
+    - "Legacy APIs need explicit auth and tenant checks before restoration."
 
 pub2:
   classification: "audio product archive"
@@ -31,6 +57,8 @@ pub3:
     - "platform detection for OpenBSD, Cygwin, Termux, macOS, Linux"
     - "port single-source-of-truth lesson"
     - "domain candidates and PTR hints"
+    - "privcam, pub_attorney, and mytoonz app implementations under archived Rails apps"
+    - "baibl and blognet as retired recovery-only contexts"
   do_not_restore:
     - "auto_execute permission defaults"
     - "bypass_confirmation permission defaults"
@@ -52,6 +80,7 @@ pub3:
       - "Archive repos are evidence, not automatic truth."
       - "Restore concepts into small reviewed modules."
       - "Record do-not-restore decisions beside restored artifacts."
+      - "Retired app names must not reappear in active deploy scripts."
 
 gates:
   required:

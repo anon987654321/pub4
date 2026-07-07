@@ -20,7 +20,7 @@ class Takeaway::OrdersController < Takeaway::BaseController
     @order = @restaurant.orders.build(order_params.merge(user: Current.user))
     item_params.each do |item_id, qty|
       next unless qty.to_i > 0
-      item = @restaurant.menu_items.find_by(id: item_id)
+      item = @restaurant.menu_items.available.find_by(id: item_id)
       next unless item
       @order.order_items.build(menu_item: item, quantity: qty.to_i, unit_price_cents: item.price_cents)
     end
@@ -38,7 +38,10 @@ class Takeaway::OrdersController < Takeaway::BaseController
 
   def update
     @order = Takeaway::Order.includes(:restaurant).find(params[:id])
-    @order.advance_status! if @order.restaurant.owner?(Current.user)
+    if @order.restaurant.owner?(Current.user)
+      target_status = params[:status].presence || @order.next_status
+      @order.transition_to!(target_status)
+    end
     redirect_to takeaway_order_path(@order)
   end
 

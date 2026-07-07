@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "rbconfig"
+require_relative "../../MASTER/lib/pub4/check_runner"
+
+ROOT = File.expand_path("../..", __dir__)
+STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
+ON_VPS = File.file?("/etc/relayd.conf") || ENV["DEPLOY_ASSUME_VPS"] == "1"
+
+unless ON_VPS
+  warn "deploy-vps: skip — not on vm23/OpenBSD VPS (set DEPLOY_ASSUME_VPS=1 only when intentionally testing)"
+  exit 0
+end
+
+def ruby34
+  system("command -v ruby34 >/dev/null 2>&1") ? "ruby34" : RbConfig.ruby
+end
+runner = Pub4::CheckRunner.new(prefix: "deploy-vps", root: ROOT, timeout: STEP_TIMEOUT)
+
+failures = []
+failures << "health core" unless runner.run("health core", ruby34, "DEPLOY/openbsd/health_check.rb", "--core")
+failures << "public health" unless runner.run("public health", ruby34, "DEPLOY/openbsd/health_check.rb", "--public", "--all-ready-apps")
+
+exit(failures.empty? ? 0 : 1)

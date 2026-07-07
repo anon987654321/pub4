@@ -154,6 +154,8 @@ class TestWebUI < Minitest::Test
     refute_nil kernel_idx
     refute_nil face_idx
     assert_operator kernel_idx, :<, face_idx
+    assert_includes index, '<link rel="prefetch" href="<%= asset_path("face.js") %>" as="script">'
+    refute_match(/rel="modulepreload"[^>]+asset_path\("face\.js"\)/, index)
     # Boot modules ship through the compact javascript_include_tag(*%w[...]) manifest,
     # so they appear as bare (suffix-less) names, not "<name>.js".
     assert_includes index, "chat_actions"
@@ -421,16 +423,13 @@ class TestWebUI < Minitest::Test
   def test_public_asset_manifest_matches_source_files
     public_dir = File.expand_path("../web/public", __dir__)
     manifest_path = File.join(public_dir, "assets", ".manifest.json")
-    manifest = JSON.parse(File.read(manifest_path))
-    critical_sources = %w[
-      face.part4.txt
-      visual_bridge.js
-      face_semantics.js
-      face3d_preview.js
-      face3d_renderer.js
-    ]
+    skip "public asset manifest is absent; run Rails asset precompile to check drift" unless File.file?(manifest_path)
 
-    critical_sources.each do |source|
+    index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
+    manifest = JSON.parse(File.read(manifest_path))
+    boot_sources = boot_manifest_sources(index)
+
+    boot_sources.each do |source|
       entry = manifest.fetch(source)
       source_path = File.join(public_dir, source)
       asset_path = File.join(public_dir, "assets", entry.fetch("digested_path"))
@@ -438,6 +437,15 @@ class TestWebUI < Minitest::Test
       assert File.file?(asset_path), "missing generated asset for #{source}"
       assert_equal File.read(source_path), File.read(asset_path), "generated asset drifted for #{source}"
     end
+  end
+
+  def boot_manifest_sources(index)
+    include_block = index.match(/javascript_include_tag\(\*%w\[(.*?)\]/m)
+    assert include_block, "chat index boot manifest not found"
+
+    manifest_js = include_block[1].split.map { |name| "#{name}.js" }
+    face_parts = index.scan(/face\.part\d+\.txt/).uniq.sort
+    (manifest_js + %w[particle_kernel.js] + face_parts).uniq
   end
 
   def test_face_tts_audio_graph_uses_compressor_before_analyser

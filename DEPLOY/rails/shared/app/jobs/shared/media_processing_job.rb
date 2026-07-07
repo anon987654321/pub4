@@ -11,6 +11,7 @@ module Shared
 
       files.each do |file|
         next unless file.respond_to?(:variable?) && file.variable?
+        next unless file.content_type.to_s.start_with?("image/")
 
         variants.each do |name, options|
           file.variant(options.symbolize_keys).processed

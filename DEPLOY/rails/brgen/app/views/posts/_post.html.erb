@@ -9,6 +9,9 @@
             <span class="x-handle">@<%= post.community.slug %></span>
           <% end %>
           <span class="x-time">· <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %></time></span>
+          <% if post.reading_time_minutes.positive? %>
+            <span class="x-time">· <%= post.reading_time_minutes %> min read</span>
+          <% end %>
         </div>
         <h2 class="x-text"><%= link_to post.title, post %></h2>
         <% if post.image.attached? %>

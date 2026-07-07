@@ -5,7 +5,8 @@ class Playlist::TracksController < Playlist::BaseController
 
   def create
     track = Playlist::Track.find_or_create_by!(title: params.dig(:playlist_track, :title),
-                                               artist: params.dig(:playlist_track, :artist)) do |record|
+                                               artist: params.dig(:playlist_track, :artist),
+                                               source_url: params.dig(:playlist_track, :source_url)) do |record|
       record.assign_attributes(track_params.except(:title, :artist))
     end
 
@@ -41,6 +42,6 @@ class Playlist::TracksController < Playlist::BaseController
   end
 
   def track_params
-    params.require(:playlist_track).permit(:title, :artist, :album, :duration_seconds, :source_type, :source_url, :genre)
+    params.require(:playlist_track).permit(:title, :artist, :album, :duration_seconds, :source_type, :source_url, :genre, :privacy, :expires_at)
   end
 end

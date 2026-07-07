@@ -19,10 +19,10 @@ class TestRepligenDispatch < Minitest::Test
     assert_includes result.message, "missing tool entrypoint"
   end
 
-  def test_repligen_call_uses_tools_wrapper_not_deploy_direct
+  def test_repligen_call_uses_master_tools_entrypoint
     tool = Master::Reach::Repligen.new(root: Master::ROOT, agent: FakeAgent.new)
     script = File.join(Master::ROOT, "tools", "repligen.rb")
-    assert File.file?(script), "expected tools/repligen.rb wrapper"
+    assert File.file?(script), "expected tools/repligen.rb"
 
     arg = "generate #{Master::Reach::RepligenArg::DEFAULT_VIDEO_MODEL} mist over pier"
     refined = Master::Reach::RepligenArg.refine_generate(arg, agent: tool.instance_variable_get(:@agent))

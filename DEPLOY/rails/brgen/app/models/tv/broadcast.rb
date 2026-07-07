@@ -1,9 +1,17 @@
 # frozen_string_literal: true
 
 class Tv::Broadcast < ApplicationRecord
+  include Shared::ActivityTrackable
+  include Shared::MediaProcessable
+  tracks_activity created: "BroadcastScheduled", updated: "BroadcastUpdated", source_vertical: "tv", actor: :user
+
   belongs_to :channel, class_name: "Tv::Channel", foreign_key: :tv_channel_id
   belongs_to :user
   has_one_attached :thumbnail
+  process_media_variants :thumbnail, variants: {
+    poster: { resize_to_limit: [ 1_280, 720 ], format: :webp },
+    thumb: { resize_to_limit: [ 480, 270 ], format: :webp }
+  }
 
   validates :title, presence: true
   before_create { self.stream_key = SecureRandom.hex(16) }
@@ -11,6 +19,13 @@ class Tv::Broadcast < ApplicationRecord
   scope :live,      -> { where(status: "live") }
   scope :scheduled, -> { where(status: "scheduled") }
 
-  def go_live!  = update!(status: "live",  started_at: Time.current)
-  def end_live! = update!(status: "ended", ended_at: Time.current)
+  def go_live!
+    update!(status: "live", started_at: Time.current)
+    record_activity!("BroadcastStarted", actor: user, source_vertical: "tv")
+  end
+
+  def end_live!
+    update!(status: "ended", ended_at: Time.current)
+    record_activity!("BroadcastEnded", actor: user, source_vertical: "tv")
+  end
 end

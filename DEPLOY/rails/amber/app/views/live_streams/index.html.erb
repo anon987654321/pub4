@@ -1,0 +1,28 @@
+<% content_for :title, "Live wardrobe sessions" %>
+
+<header role="banner" aria-label="Live streams header">
+  <h1>Live wardrobe sessions</h1>
+</header>
+
+<section class="form-wrap" aria-label="Schedule live stream">
+  <%= form_with model: @live_stream do |f| %>
+    <%= render "shared/errors", object: @live_stream %>
+    <div class="field"><%= f.label :title %><%= f.text_field :title, required: true %></div>
+    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
+    <div class="field"><%= f.label :scheduled_at %><%= f.datetime_field :scheduled_at %></div>
+    <div class="field"><%= f.submit "Schedule", class: "btn" %></div>
+  <% end %>
+</section>
+
+<section>
+  <% @live_streams.each do |stream| %>
+    <article>
+      <h2><%= link_to stream.title, live_stream_path(stream) %></h2>
+      <p class="dim"><%= stream.status %> · <%= stream.scheduled_at || stream.created_at %></p>
+      <% if stream.user == Current.user %>
+        <%= button_to "Start", live_stream_path(stream), method: :patch, params: { start: true }, class: "btn" if stream.status == "scheduled" %>
+        <%= button_to "End", live_stream_path(stream), method: :patch, params: { end: true }, class: "btn" if stream.status == "live" %>
+      <% end %>
+    </article>
+  <% end %>
+</section>

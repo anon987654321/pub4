@@ -9,7 +9,7 @@
 #   <%= json_ld_for(@restaurant, type: :local_business) %>
 #
 # Supports common Brgen vertical entities: Post, Profile/User, Listing, Restaurant,
-# Video, Event, Recipe (food), Product (marketplace).
+# Video, Event, Recipe (food), Product (marketplace), MusicPlaylist (playlist).
 
 module SchemaHelper
   include Shared::SeoKit
@@ -39,6 +39,8 @@ module SchemaHelper
       product_schema(resource)
     when "video", "video_object"
       video_schema(resource)
+    when "music_playlist", "playlist"
+      music_playlist_schema(resource)
     when "recipe"
       recipe_schema(resource)
     else
@@ -52,6 +54,7 @@ module SchemaHelper
     when /User/, /Profile/ then :person
     when /Restaurant/, /Takeaway/ then :local_business
     when /Listing/, /Marketplace/ then :product
+    when /Playlist/ then :music_playlist
     when /Video/, /Tv::/ then :video_object
     when /Recipe/, /Food/ then :recipe
     else :thing
@@ -133,6 +136,28 @@ module SchemaHelper
     }.compact
   end
 
+  def music_playlist_schema(playlist)
+    tracks = playlist.respond_to?(:tracks) ? playlist.tracks.unexpired.limit(50) : []
+    {
+      "@context" => "https://schema.org",
+      "@type" => "MusicPlaylist",
+      "name" => playlist.try(:name),
+      "description" => playlist.try(:description)&.truncate(300),
+      "numTracks" => playlist.try(:tracks_count),
+      "duration" => iso8601_duration(playlist.try(:duration_seconds).to_i),
+      "creator" => person_snippet(playlist.try(:user)),
+      "url" => schema_url_for(playlist),
+      "track" => tracks.map do |track|
+        {
+          "@type" => "MusicRecording",
+          "name" => track.title,
+          "byArtist" => { "@type" => "MusicGroup", "name" => track.artist.presence || "Unknown artist" },
+          "duration" => iso8601_duration(track.duration_seconds.to_i)
+        }.compact
+      end
+    }.compact
+  end
+
   def recipe_schema(recipe)
     {
       "@context" => "https://schema.org",
@@ -196,5 +221,13 @@ module SchemaHelper
     photo.url
   rescue StandardError
     nil
+  end
+
+  def iso8601_duration(seconds)
+    return nil if seconds.to_i <= 0
+
+    minutes, secs = seconds.to_i.divmod(60)
+    hours, minutes = minutes.divmod(60)
+    "PT#{hours}H#{minutes}M#{secs}S"
   end
 end

@@ -2,16 +2,22 @@
 
 class Playlist::PlaylistsController < Playlist::BaseController
   allow_unauthenticated_access only: %i[index show]
-  before_action :set_playlist, only: %i[show edit update destroy]
+  before_action :set_playlist, only: %i[show embed edit update destroy]
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
   def index
     @pagy, @playlists = pagy(Playlist::Playlist.public_playlists.popular.includes(:user))
+    @trending_playlists = Playlist::Playlist.city_trending.includes(:user).limit(12)
   end
 
   def show
-    @tracks = @playlist.playlist_tracks.includes(:track)
+    @tracks = playlist_tracks
     @dilla_sketches = @playlist.dilla_sketches.recent.includes(:user)
+  end
+
+  def embed
+    @tracks = playlist_tracks
+    render layout: false
   end
 
   def new
@@ -46,6 +52,10 @@ class Playlist::PlaylistsController < Playlist::BaseController
 
   def playlist_params
     params.require(:playlist_playlist).permit(:name, :description, :public_access, :collaborative)
+  end
+
+  def playlist_tracks
+    @playlist.playlist_tracks.joins(:track).merge(Playlist::Track.unexpired).includes(:track)
   end
 
   def authorize_owner_or_editor

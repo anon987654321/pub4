@@ -29,3 +29,21 @@ jobs:
       - name: Run MASTER CI
         working-directory: MASTER
         run: bundle exec bin/ci
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: MASTER
+
+      - name: Run MASTER browser CI
+        working-directory: MASTER
+        env:
+          MASTER_CI_BROWSER: "1"
+          PROBE_REQUIRE_BROWSER: "1"
+        run: bundle exec bin/ci

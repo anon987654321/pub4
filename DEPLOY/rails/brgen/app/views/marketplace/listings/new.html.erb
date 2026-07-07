@@ -15,6 +15,8 @@
     <div class="field"><%= f.label :condition %><%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :category_id, "Category" %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
+    <div class="field"><%= f.label :latitude %><%= f.number_field :latitude, step: "0.000001" %></div>
+    <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001" %></div>
     <div class="field" data-controller="media-picker" data-media-picker-multiple-value="true">
       <%= f.file_field :photos,
             multiple: true,

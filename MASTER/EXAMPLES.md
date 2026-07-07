@@ -1,0 +1,71 @@
+# Examples
+
+Examples are part of the contract. Prefer matching these shapes over inventing a new ritual.
+
+## Good Patch Shape
+
+- Reads the target and nearby tests first.
+- Changes one concern.
+- Keeps existing naming and error style.
+- Adds or updates the smallest relevant test.
+- Reports exact checks run.
+
+Closeout:
+
+```text
+Changed the YAML singularity lint to parse top-level keys with Psych nodes, so aliases do not materialize during the check. Added a regression test.
+
+Checks: ruby -Ilib:test test/test_self_test.rb; rake lint:data_singularity.
+Known debt: rake selftest still fails on existing ROBUSTNESS/LINEARITY/ABSTRACTION/DENSITY findings.
+```
+
+## Bad Patch Shape
+
+- Renames several registries because they look similar.
+- Moves `knowledge/` without updating `SearchKnowledge`.
+- Runs no checks because the edit was "docs only" while changing executable guidance.
+- Marks TODO items complete without evidence.
+
+Closeout to avoid:
+
+```text
+Cleaned things up. Should be good.
+```
+
+## Good Scan Triage
+
+```text
+SINGULARITY: true duplicate in data/providers.yml; merged keys.
+ROBUSTNESS: timeout findings remain known debt; no unrelated edits.
+Scanner false positive: SQL detector flagged as SQL injection; needs scanner exemption, not code removal.
+```
+
+## Good TODO Update
+
+```markdown
+- [x] Add `data/rules/README.md` mapping rule shards to consumers.
+      Verified by reading live consumers in `lib/judge/output_check.rb`,
+      `lib/loop/fix_loop/rule_order.rb`, and scanner rule loading.
+```
+
+## Bad TODO Update
+
+```markdown
+- [x] Fix constitution scan.
+```
+
+This hides the count, the command, and whether findings were fixed or merely reclassified.
+
+## Good Refusal To Refactor
+
+```text
+I am leaving `data/design_rules.yml` separate from `data/rules.yml`. It has a distinct consumer and merging it would move data away from its owner.
+```
+
+## Bad Refactor
+
+```text
+Merged all rule-like YAML into one file for simplicity.
+```
+
+This violates PROXIMITY unless each live consumer was changed deliberately and tested.

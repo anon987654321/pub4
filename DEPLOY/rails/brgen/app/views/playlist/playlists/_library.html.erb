@@ -1,11 +1,11 @@
 <aside class="radio-library" id="radio-library" hidden aria-label="Playlist library">
-  <header class="radio-library__header">
+  <header class="radio-library-header">
     <h2>Library</h2>
-    <button type="button" class="radio-library__close" data-action="click->radio-tunnel#closeLibrary" aria-label="Close library">×</button>
+    <button type="button" class="radio-library-close" data-action="click->radio-tunnel#closeLibrary" aria-label="Close library">×</button>
   </header>
-  <div class="radio-library__list">
+  <div class="radio-library-list">
     <% playlists.each do |pl| %>
-      <%= link_to playlist_playlist_path(pl), class: "radio-library__item" do %>
+      <%= link_to playlist_playlist_path(pl), class: "radio-library-item" do %>
         <strong><%= pl.name %></strong>
         <span><%= pl.tracks_count %> tracks · <%= pl.plays_count %> plays</span>
       <% end %>

@@ -3,6 +3,7 @@
 module Tv
   class Show < ApplicationRecord
     include Shared::ActivityTrackable
+    tracks_activity created: "TvShowCreated", updated: "TvShowUpdated", source_vertical: "tv", actor: :channel_owner
 
     self.table_name = "tv_shows"
 
@@ -17,5 +18,7 @@ module Tv
     def to_param
       slug
     end
+
+    def channel_owner = channel&.user
   end
 end

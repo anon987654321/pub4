@@ -6,6 +6,8 @@ module Playlist
 
     PRIVACY_LEVELS = %w[public private unlisted].freeze
 
+    include Shared::ActivityTrackable
+    tracks_activity created: "PlaylistSetCreated", source_vertical: "playlist", actor: :user
     include Shared.concern(:Reactable) rescue nil
     include Shared.concern(:Notifiable) rescue nil
     belongs_to :user

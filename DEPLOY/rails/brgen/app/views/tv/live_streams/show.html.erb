@@ -12,7 +12,7 @@
       <% if thumb&.attached? %>
         <%= image_tag thumb, class: tv_media_image_classes(thumb), alt: @live_stream.title %>
       <% else %>
-        <div class="tv-media__image repligen-hero" role="img" aria-label="<%= @live_stream.title %>"></div>
+        <div class="tv-media-image repligen-hero" role="img" aria-label="<%= @live_stream.title %>"></div>
       <% end %>
     </div>
   </div>

@@ -3,11 +3,12 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "audio", "waveform", "scrub", "scrubFill", "playBtn",
-    "currentTime", "duration", "title", "artist", "artwork", "queueItem"
+    "currentTime", "duration", "title", "artist", "artwork", "queueItem", "embed"
   ]
 
   static values = {
     src: String,
+    embed: String,
     title: String,
     artist: String,
     artwork: String,
@@ -69,23 +70,35 @@ export default class extends Controller {
   load(event) {
     const item = event.currentTarget
     const src = item.dataset.playlistPlayerSrcParam
+    const embed = item.dataset.playlistPlayerEmbedParam
     const title = item.dataset.playlistPlayerTitleParam
     const artist = item.dataset.playlistPlayerArtistParam
     const artwork = item.dataset.playlistPlayerArtworkParam
     const trackId = item.dataset.playlistPlayerTrackIdParam
-    if (!src) return
+    if (!src && !embed) return
 
     this.srcValue = src
+    this.embedValue = embed || ""
     this.titleValue = title || ""
     this.artistValue = artist || ""
     this.artworkValue = artwork || ""
     this.trackIdValue = trackId || ""
     this.peaks = this.#peaksForTrack(trackId || src)
 
-    if (this.hasAudioTarget) {
+    if (src && this.hasAudioTarget) {
       this.audioTarget.src = src
       this.audioTarget.play()
       this.playing = true
+    } else if (this.hasAudioTarget) {
+      this.audioTarget.pause()
+      this.audioTarget.removeAttribute("src")
+      this.audioTarget.load()
+      this.playing = false
+    }
+
+    if (this.hasEmbedTarget) {
+      this.embedTarget.src = embed || ""
+      this.embedTarget.hidden = !embed
     }
 
     if (this.hasTitleTarget) this.titleTarget.textContent = title || "Untitled"
@@ -129,6 +142,11 @@ export default class extends Controller {
 
   #syncPlayButton() {
     if (!this.hasPlayBtnTarget) return
+    if (this.hasEmbedTarget && !this.embedTarget.hidden) {
+      this.playBtnTarget.setAttribute("aria-pressed", "false")
+      this.playBtnTarget.textContent = "Open"
+      return
+    }
     const paused = !this.hasAudioTarget || this.audioTarget.paused
     this.playBtnTarget.setAttribute("aria-pressed", paused ? "false" : "true")
     this.playBtnTarget.textContent = paused ? "Play" : "Pause"

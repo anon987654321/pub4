@@ -117,6 +117,8 @@ Rails.application.routes.draw do
     scope module: "playlist", as: "playlist" do
       root "playlists#index", as: :playlist_root
       resources :playlists do
+        member { get :embed }
+        resources :imports, only: :create
         resources :tracks, only: %i[create destroy]
         resources :collaborations, only: %i[create destroy]
         resources :dilla_sketches, only: %i[create update destroy]
@@ -154,6 +156,7 @@ Rails.application.routes.draw do
       resources :listings do
         resource :favorite, only: %i[create destroy]
         resources :orders, only: %i[create update]
+        resources :reviews, only: %i[create]
       end
       resources :orders, only: %i[show update]
 

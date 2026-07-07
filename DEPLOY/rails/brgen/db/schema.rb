@@ -292,6 +292,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
     t.index ["user_id"], name: "index_marketplace_listing_favorites_on_user_id"
   end
 
+  create_table "marketplace_reviews", force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.integer "listing_id", null: false
+    t.integer "rating", null: false
+    t.decimal "reviewer_lat", precision: 10, scale: 7
+    t.decimal "reviewer_lng", precision: 10, scale: 7
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["listing_id", "created_at"], name: "index_marketplace_reviews_on_listing_id_and_created_at"
+    t.index ["listing_id"], name: "index_marketplace_reviews_on_listing_id"
+    t.index ["user_id", "listing_id"], name: "index_marketplace_reviews_on_user_id_and_listing_id", unique: true
+    t.index ["user_id"], name: "index_marketplace_reviews_on_user_id"
+  end
+
   create_table "marketplace_listings", force: :cascade do |t|
     t.integer "category_id", null: false
     t.integer "city_id"
@@ -299,8 +314,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
     t.datetime "created_at", null: false
     t.string "currency"
     t.text "description"
+    t.decimal "latitude", precision: 10, scale: 7
     t.string "location"
+    t.decimal "longitude", precision: 10, scale: 7
     t.integer "price_cents"
+    t.decimal "rating", precision: 3, scale: 2, default: "0.0", null: false
+    t.integer "reviews_count", default: 0, null: false
     t.string "status"
     t.integer "store_id"
     t.string "title"
@@ -309,6 +328,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
     t.integer "views_count"
     t.index ["category_id"], name: "index_marketplace_listings_on_category_id"
     t.index ["city_id"], name: "index_marketplace_listings_on_city_id"
+    t.index ["latitude", "longitude"], name: "index_marketplace_listings_on_latitude_and_longitude"
     t.index ["store_id"], name: "index_marketplace_listings_on_store_id"
     t.index ["user_id"], name: "index_marketplace_listings_on_user_id"
   end
@@ -589,13 +609,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
   create_table "playlist_tracks", force: :cascade do |t|
     t.string "album"
     t.string "artist"
+    t.datetime "audio_replaced_at"
     t.datetime "created_at", null: false
     t.integer "duration_seconds"
+    t.datetime "expires_at"
     t.string "genre"
+    t.string "privacy", default: "private", null: false
     t.string "source_type"
     t.string "source_url"
     t.string "title"
     t.datetime "updated_at", null: false
+    t.index ["privacy", "expires_at"], name: "index_playlist_tracks_on_privacy_and_expires_at"
   end
 
   create_table "posts", force: :cascade do |t|
@@ -703,7 +727,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
   end
 
   create_table "takeaway_menu_items", force: :cascade do |t|
-    t.boolean "available"
+    t.boolean "available", default: true, null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"
@@ -740,6 +764,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
     t.integer "user_id", null: false
     t.index ["delivery_driver_id", "status"], name: "index_takeaway_orders_on_delivery_driver_id_and_status"
     t.index ["delivery_driver_id"], name: "index_takeaway_orders_on_delivery_driver_id"
+    t.index ["restaurant_id", "status", "updated_at"], name: "index_takeaway_orders_on_restaurant_id_and_status_and_updated_at"
     t.index ["restaurant_id"], name: "index_takeaway_orders_on_restaurant_id"
     t.index ["user_id"], name: "index_takeaway_orders_on_user_id"
   end
@@ -763,6 +788,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["city_id"], name: "index_takeaway_restaurants_on_city_id"
+    t.index ["latitude", "longitude"], name: "index_takeaway_restaurants_on_latitude_and_longitude"
     t.index ["user_id"], name: "index_takeaway_restaurants_on_user_id"
   end
 
@@ -1014,6 +1040,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
   add_foreign_key "messages", "conversations"
   add_foreign_key "moderation_flags", "users"
   add_foreign_key "moderation_reports", "users"
+  add_foreign_key "marketplace_reviews", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_reviews", "users"
   add_foreign_key "neighborhoods", "cities"
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "users", column: "actor_id"

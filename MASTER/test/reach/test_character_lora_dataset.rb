@@ -19,10 +19,7 @@ class TestCharacterLoraDataset < Minitest::Test
     File.write(still, "x" * 30_000)
     subject_root = Master::Reach::CharacterLoraDataset.training_dir("test_subject", root: @root)
     FileUtils.mkdir_p(File.dirname(subject_root))
-    stub_deploy = Module.new do
-      define_singleton_method(:deploy_path) { |*parts| File.join(@root, "repligen", *parts) }
-    end
-    Master.stub(:deploy_path, ->(*parts) { File.join(@root, "repligen", *parts) }) do
+    Master.stub(:tool_path, ->(*parts) { File.join(@root, "repligen", *parts) }) do
       result = Master::Reach::CharacterLoraDataset.prepare(
         name: "test_subject",
         sources: [still],

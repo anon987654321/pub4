@@ -7,6 +7,11 @@ class WardrobeItemsController < ApplicationController
     @wardrobe_items = WardrobeItem.includes(:item).recent.limit(100)
   end
 
+  def analytics
+    @analytics = WardrobeAnalyticsService.new(Current.user).summary
+    @recommendations = Current.user.recommendations.active.recent.limit(12)
+  end
+
   def show
     @wardrobe_item.record_activity!("AmberWardrobeItemViewed", source_vertical: "amber")
   end

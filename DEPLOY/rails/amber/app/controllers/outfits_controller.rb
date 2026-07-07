@@ -28,6 +28,15 @@ class OutfitsController < ApplicationController
     }
   end
 
+  def generate
+    outfit = OutfitGenerationService.new(Current.user).generate!(
+      weather: params[:weather],
+      season: params[:season],
+      occasion: params[:occasion]
+    )
+    outfit ? redirect_to(outfit, notice: "Outfit generated") : redirect_to(outfits_path, alert: "Add wardrobe items before generating outfits")
+  end
+
   def show
     @outfit.record_activity!("AmberOutfitViewed", source_vertical: "amber")
   end

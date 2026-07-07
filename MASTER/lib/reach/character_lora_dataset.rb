@@ -6,7 +6,7 @@ require "time"
 
 module Master
   module Reach
-    # Stage character LoRA under DEPLOY/tools/repligen/lora/<name>/ (see lora/README.md).
+    # Stage character LoRA under MASTER/tools/repligen/lora/<name>/.
     module CharacterLoraDataset
       IMAGE_SUFFIXES = %w[.jpg .jpeg .png .webp .gif .bmp].freeze
       VIDEO_SUFFIXES = %w[.mp4 .mov .webm .mkv].freeze
@@ -18,7 +18,7 @@ module Master
       module_function
 
       def training_dir(name, root: Master::ROOT)
-        Master.deploy_path("tools", "repligen", "lora", name.to_s)
+        Master.tool_path("repligen", "lora", name.to_s)
       end
 
       def train_dir(name, root: Master::ROOT) = File.join(training_dir(name, root: root), "train")

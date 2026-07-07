@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "rbconfig"
+require_relative "../lib/pub4/check_runner"
+
+ROOT = File.expand_path("..", __dir__)
+RUBY = RbConfig.ruby
+STEP_TIMEOUT = Integer(ENV.fetch("MASTER_CHECK_TIMEOUT", "240"))
+runner = Pub4::CheckRunner.new(prefix: "check-agent", root: ROOT, timeout: STEP_TIMEOUT)
+
+failures = []
+failures << "selftest" unless runner.run("selftest", RUBY, "-S", "rake", "selftest")
+failures << "data_singularity" unless runner.run("data singularity", RUBY, "-S", "rake", "lint:data_singularity")
+
+exit(failures.empty? ? 0 : 1)

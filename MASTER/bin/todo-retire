@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+
+ROOT = File.expand_path("..", __dir__)
+REPO = File.expand_path("..", ROOT)
+MASTER_TODO = File.join(ROOT, "TODO.md")
+DEPLOY_TODO = File.join(REPO, "DEPLOY", "TODO.md")
+
+def unchecked?(path)
+  return true unless File.file?(path)
+
+  File.readlines(path).any? { |line| line.match?(/^\s*-\s+\[\s\]/) }
+end
+
+def run_step(name, *cmd, chdir:)
+  print "todo-retire: #{name.ljust(20)} "
+  $stdout.flush
+  _out, status = Open3.capture2e(*cmd, chdir:)
+  puts(status.success? ? "ok" : "fail")
+  status.success?
+end
+
+if unchecked?(MASTER_TODO) || unchecked?(DEPLOY_TODO)
+  warn "todo-retire: blocked — unchecked items remain in MASTER/TODO.md or DEPLOY/TODO.md"
+  warn "todo-retire: run bin/handoff for the open list"
+  exit 1
+end
+
+checks = [
+  ["MASTER check", File.join(ROOT, "bin", "check")],
+  ["DEPLOY check-rails", File.join(REPO, "DEPLOY", "bin", "check-rails")],
+  ["integrity gate", File.join(REPO, "DEPLOY", "integrity_gate.rb")],
+]
+failures = checks.reject { |name, cmd| run_step(name, cmd) }.map(&:first)
+
+if failures.any?
+  warn "todo-retire: golden checks failed: #{failures.join(', ')}"
+  exit 1
+end
+
+unless ENV["TODO_RETIRE_CONFIRM"] == "1"
+  puts "todo-retire: all checks passed; set TODO_RETIRE_CONFIRM=1 to delete both TODO files"
+  exit 0
+end
+
+File.delete(MASTER_TODO) if File.file?(MASTER_TODO)
+File.delete(DEPLOY_TODO) if File.file?(DEPLOY_TODO)
+puts "todo-retire: deleted MASTER/TODO.md and DEPLOY/TODO.md"

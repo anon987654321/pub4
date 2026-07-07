@@ -171,6 +171,8 @@ module Master
           "Motion Designer" => :design,
           "Google CSS Engineer" => :design,
           "NNGroup UX Researcher" => :design,
+          "Typographer" => :design,
+          "Cognitive Psychologist" => :design,
           "Accessibility" => :design,
           "Electronic Music Producer" => :sound,
           "Hip-Hop Producer" => :sound,

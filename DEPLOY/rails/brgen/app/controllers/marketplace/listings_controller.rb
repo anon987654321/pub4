@@ -15,10 +15,14 @@ class Marketplace::ListingsController < Marketplace::BaseController
     scope = policy_scope(Marketplace::Listing).includes(:user, :category)
     scope = apply_live_search(scope, columns: %w[title description location], vertical: "marketplace", filters: { category_id: params[:category_id] }.compact) if live_search_query.present?
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
-    if params[:lat].present? && params[:lng].present?
-      scope = scope.near(params[:lat], params[:lng], params[:radius_km] || 5)
+    @search_lat = params[:lat].presence
+    @search_lng = params[:lng].presence
+    @radius_km = Marketplace::Listing.radius_from(params[:radius_km].presence || Marketplace::Listing::DEFAULT_RADIUS_KM)
+    if @search_lat.present? && @search_lng.present?
+      scope = scope.near(@search_lat, @search_lng, @radius_km)
     end
     @pagy, @listings = pagy(scope.recent)
+    @listing_distances = listing_distances(@listings, @search_lat, @search_lng)
     @categories = Marketplace::Category.roots.includes(:children)
 
     # Schema.org ItemList for the marketplace listings page
@@ -33,6 +37,8 @@ class Marketplace::ListingsController < Marketplace::BaseController
     authorize @listing
     @listing.increment!(:views_count)
     @order = Marketplace::Order.new if authenticated?
+    @reviews = @listing.reviews.includes(:user).order(created_at: :desc)
+    @review = Marketplace::Review.new if authenticated? && @listing.reviewable_by?(Current.user)
   end
 
   def new
@@ -88,7 +94,16 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def listing_params
     params.require(:marketplace_listing).permit(
       :title, :description, :price_cents, :condition, :status, :location,
-      :category_id, :preset, photos: []
+      :latitude, :longitude, :category_id, :preset, photos: []
     )
+  end
+
+  def listing_distances(listings, lat, lng)
+    return {} if lat.blank? || lng.blank?
+
+    listings.each_with_object({}) do |listing, distances|
+      distance = listing.distance_to(lat, lng)
+      distances[listing.id] = distance if distance
+    end
   end
 end

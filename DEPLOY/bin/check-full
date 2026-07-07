@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "rbconfig"
+require_relative "../../MASTER/lib/pub4/check_runner"
+
+ROOT = File.expand_path("../..", __dir__)
+RUBY = RbConfig.ruby
+STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "600"))
+runner = Pub4::CheckRunner.new(prefix: "deploy-full", root: ROOT, timeout: STEP_TIMEOUT)
+
+failures = []
+failures << "local check" unless runner.run("local check", RUBY, "DEPLOY/bin/check")
+failures << "integrity" unless runner.run("integrity", RUBY, "DEPLOY/integrity_gate.rb")
+
+exit(failures.empty? ? 0 : 1)

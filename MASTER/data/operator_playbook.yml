@@ -154,7 +154,7 @@ lessons:
     area: deploy
     signal: "Importmap/RuboCop still run on VPS despite ci.rb fix; postpro resolves to /home/postpro"
     action: "config/ci.rb requires ../../shared from app/config → /home/<app>/shared (not /home/<app>/app/shared). vps_ci.sh syncs full DEPLOY/rails/shared there plus code overlay. Set PUB4_RAILS_ROOT=/home/dev/pub4/DEPLOY/rails for DeployPaths. Postpro/repligen: Pub4::DeployPaths or MASTER/tools/*.rb — never Rails.root/../../postpro alone on copy-tree."
-    proof: "grep unless vps_host /home/brgen/shared/config/ci.rb; ruby -e 'require \"pub4/deploy_paths\"' under brgen app finds /home/dev/pub4/DEPLOY/tools/postpro/postpro.rb"
+    proof: "grep unless vps_host /home/brgen/shared/config/ci.rb; ruby -e 'require \"pub4/deploy_paths\"' under brgen app finds /home/dev/pub4/MASTER/tools/postpro.rb"
 
   - id: vps_ci_lock_perms
     area: deploy

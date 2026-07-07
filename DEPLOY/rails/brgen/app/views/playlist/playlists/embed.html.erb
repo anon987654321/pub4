@@ -1,0 +1,2 @@
+<% content_for :title, @playlist.name %>
+<%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks, embedded: true %>

@@ -6,7 +6,7 @@ require "uri"
 
 module Master
   module Reach
-    # Thin Replicate predictions client — shared by VideoChain; mirrors DEPLOY/tools/repligen.rb API shape.
+    # Thin Replicate predictions client — shared by VideoChain; mirrors MASTER/tools/repligen.rb API shape.
     class ReplicateClient
       CONFIG_PATH = File.expand_path("~/.config/repligen/config.json").freeze
       BASE = "https://api.replicate.com/v1"

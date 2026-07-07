@@ -10,7 +10,7 @@ module Master
 
         TASK_PERSONAS = {
           mobile_ui: ["User Advocate", "Accessibility", "Web Designer", "Performance", "Google CSS Engineer"],
-          ui: ["User Advocate", "Accessibility", "NNGroup UX Researcher", "Graphic Designer"],
+          ui: ["User Advocate", "Accessibility", "NNGroup UX Researcher", "Web Designer", "Typographer", "Cognitive Psychologist", "Graphic Designer"],
           auth_mutation: ["Security", "Reliability", "Maintainer", "Ethics & Policy"],
           security_audit: ["Security", "Reliability", "Maintainer", "Skeptic"],
           architecture: ["Architect", "Maintainer", "Reliability", "Skeptic"],

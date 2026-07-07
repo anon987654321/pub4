@@ -30,13 +30,12 @@ body.vertical-marketplace .deal-card {
   background: var(--shop-luxury-bg);
   border: 1px solid var(--border);
   border-radius: 0;
-  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 body.vertical-marketplace .deal-card:hover {
-  background: var(--shop-luxury-bg);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
-  transform: translateY(-2px);
+  background: #fff;
+  border-color: var(--shop-cta);
 }
 
 body.vertical-marketplace .deal-card-img {

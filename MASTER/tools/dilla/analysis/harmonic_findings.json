@@ -1,0 +1,257 @@
+{
+  "dilla": {
+    "duration_s": 45.0,
+    "bpm_est": 87.6,
+    "bpm_use_halftime": 87.6,
+    "spectral_centroid_hz": 1057,
+    "rolloff85_hz": 1829,
+    "band_pct": {
+      "sub_0_120": 3152.3,
+      "low_120_400": 2250.8,
+      "mid_400_2k": 300.2,
+      "high_2k_plus": 27.3
+    },
+    "chroma_top": [
+      {
+        "chord": "Bmaj",
+        "score": 0.9012
+      },
+      {
+        "chord": "Bmaj9",
+        "score": 0.8739
+      },
+      {
+        "chord": "G#m7",
+        "score": 0.8704
+      },
+      {
+        "chord": "F#maj",
+        "score": 0.8699
+      },
+      {
+        "chord": "D#m7",
+        "score": 0.8676
+      },
+      {
+        "chord": "C#m7",
+        "score": 0.8643
+      }
+    ],
+    "dominant_pitch_classes": [
+      "C#",
+      "F#",
+      "B",
+      "D#"
+    ],
+    "melody_pitch_percentiles": [
+      "E2",
+      "A2",
+      "C\u266f3"
+    ],
+    "rms": 0.0845
+  },
+  "flylo": {
+    "duration_s": 45.0,
+    "bpm_est": 110.0,
+    "bpm_use_halftime": 110.0,
+    "spectral_centroid_hz": 3141,
+    "rolloff85_hz": 7165,
+    "band_pct": {
+      "sub_0_120": 3647.9,
+      "low_120_400": 1495.5,
+      "mid_400_2k": 124.3,
+      "high_2k_plus": 52.7
+    },
+    "chroma_top": [
+      {
+        "chord": "Gmaj",
+        "score": 0.93
+      },
+      {
+        "chord": "Bmin",
+        "score": 0.9168
+      },
+      {
+        "chord": "Bmaj",
+        "score": 0.8966
+      },
+      {
+        "chord": "G#min",
+        "score": 0.8943
+      },
+      {
+        "chord": "Cmaj9",
+        "score": 0.8939
+      },
+      {
+        "chord": "G7",
+        "score": 0.891
+      }
+    ],
+    "dominant_pitch_classes": [
+      "D",
+      "B",
+      "D#",
+      "C"
+    ],
+    "melody_pitch_percentiles": [
+      "C2",
+      "D\u266f2",
+      "B3"
+    ],
+    "rms": 0.248
+  },
+  "madlib": {
+    "duration_s": 45.0,
+    "bpm_est": 94.0,
+    "bpm_use_halftime": 94.0,
+    "spectral_centroid_hz": 2091,
+    "rolloff85_hz": 4209,
+    "band_pct": {
+      "sub_0_120": 3820.9,
+      "low_120_400": 942.4,
+      "mid_400_2k": 419.7,
+      "high_2k_plus": 32.2
+    },
+    "chroma_top": [
+      {
+        "chord": "D#maj",
+        "score": 0.9392
+      },
+      {
+        "chord": "D#min",
+        "score": 0.9191
+      },
+      {
+        "chord": "D#maj7",
+        "score": 0.8949
+      },
+      {
+        "chord": "G#maj9",
+        "score": 0.8897
+      },
+      {
+        "chord": "Cm7",
+        "score": 0.8879
+      },
+      {
+        "chord": "D#7",
+        "score": 0.8856
+      }
+    ],
+    "dominant_pitch_classes": [
+      "A#",
+      "D#",
+      "A",
+      "G#"
+    ],
+    "melody_pitch_percentiles": [
+      "E5",
+      "E5",
+      "F5"
+    ],
+    "rms": 0.172
+  },
+  "slum": {
+    "duration_s": 45.0,
+    "bpm_est": 94.0,
+    "bpm_use_halftime": 94.0,
+    "spectral_centroid_hz": 3390,
+    "rolloff85_hz": 7338,
+    "band_pct": {
+      "sub_0_120": 2968.7,
+      "low_120_400": 1057.7,
+      "mid_400_2k": 268.8,
+      "high_2k_plus": 50.3
+    },
+    "chroma_top": [
+      {
+        "chord": "D#maj7",
+        "score": 0.6806
+      },
+      {
+        "chord": "A#maj",
+        "score": 0.6779
+      },
+      {
+        "chord": "Dmaj7",
+        "score": 0.674
+      },
+      {
+        "chord": "D#maj9",
+        "score": 0.6561
+      },
+      {
+        "chord": "Dmin",
+        "score": 0.655
+      },
+      {
+        "chord": "Dmaj",
+        "score": 0.6498
+      }
+    ],
+    "dominant_pitch_classes": [
+      "D",
+      "D#",
+      "C#",
+      "F"
+    ],
+    "melody_pitch_percentiles": [
+      "C2",
+      "C2",
+      "E2"
+    ],
+    "rms": 0.2129
+  },
+  "samiyam": {
+    "duration_s": 45.0,
+    "bpm_est": 95.7,
+    "bpm_use_halftime": 95.7,
+    "spectral_centroid_hz": 2097,
+    "rolloff85_hz": 4299,
+    "band_pct": {
+      "sub_0_120": 3402.8,
+      "low_120_400": 1607.5,
+      "mid_400_2k": 287.9,
+      "high_2k_plus": 36.3
+    },
+    "chroma_top": [
+      {
+        "chord": "Dmin",
+        "score": 0.8409
+      },
+      {
+        "chord": "D#maj7",
+        "score": 0.8161
+      },
+      {
+        "chord": "Dm9",
+        "score": 0.8071
+      },
+      {
+        "chord": "Dmaj",
+        "score": 0.802
+      },
+      {
+        "chord": "Em7",
+        "score": 0.7969
+      },
+      {
+        "chord": "D#maj9",
+        "score": 0.7952
+      }
+    ],
+    "dominant_pitch_classes": [
+      "D",
+      "D#",
+      "E",
+      "A"
+    ],
+    "melody_pitch_percentiles": [
+      "C2",
+      "D2",
+      "F2"
+    ],
+    "rms": 0.2839
+  }
+}

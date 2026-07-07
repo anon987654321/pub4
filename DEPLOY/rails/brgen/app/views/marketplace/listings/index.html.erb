@@ -29,6 +29,9 @@
   <%= f.select :category_id,
         options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
         { include_blank: "All categories" }, aria: { label: "Filter by category" } %>
+  <%= f.number_field :lat, value: @search_lat, step: "0.000001", placeholder: "Latitude", aria: { label: "Latitude" } %>
+  <%= f.number_field :lng, value: @search_lng, step: "0.000001", placeholder: "Longitude", aria: { label: "Longitude" } %>
+  <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: "Radius km", aria: { label: "Radius in kilometres" } %>
 <% end %>
 
 <% content_for :widgets do %>

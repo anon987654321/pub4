@@ -64,6 +64,8 @@ module Master
 
         def self.build_persona(attrs)
           return unless attrs.is_a?(Hash) && attrs[:name]
+
+          normalised = PERSONA_DEFAULTS.merge(attrs.transform_keys(&:to_sym))
           normalised[:veto_role] = normalised.delete(:can_veto) if normalised.key?(:can_veto)
           normalised = normalised.slice(*ALLOWED_KEYS)
           Persona.new(**normalised)

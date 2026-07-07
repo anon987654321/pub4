@@ -19,10 +19,18 @@ class Dependency < ApplicationRecord
     [ dep_type.presence || "run", depends_on&.name ].compact.join(": ")
   end
 
-  # For dep tree viz (AN802)
-  def self.tree_for(port)
-    includes(:depends_on).where(port: port).map do |d|
-      { id: d.id, label: d.label, children: tree_for(d.depends_on) }
+  def self.tree_for(port, seen: Set.new, depth: 0)
+    return [] if depth > 6 || seen.include?(port.id)
+
+    seen = seen.dup.add(port.id)
+    includes(:depends_on).where(port: port).map do |dependency|
+      child_port = dependency.depends_on
+      {
+        id: dependency.id,
+        label: dependency.label,
+        pkgpath: child_port&.pkgpath,
+        children: child_port ? tree_for(child_port, seen:, depth: depth + 1) : []
+      }
     end
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_07_130000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -60,6 +60,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
     t.integer "user_id", null: false
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
     t.index ["user_id"], name: "index_comments_on_user_id"
+  end
+
+  create_table "connections", force: :cascade do |t|
+    t.integer "addressee_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "requester_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["addressee_id", "status"], name: "index_connections_on_addressee_id_and_status"
+    t.index ["addressee_id"], name: "index_connections_on_addressee_id"
+    t.index ["requester_id", "addressee_id"], name: "index_connections_on_requester_id_and_addressee_id", unique: true
+    t.index ["requester_id"], name: "index_connections_on_requester_id"
   end
 
   create_table "consent_events", force: :cascade do |t|
@@ -176,7 +188,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
   end
 
   create_table "items", force: :cascade do |t|
-    t.string "analysis_status"
+    t.string "analysis_status", default: "pending", null: false
     t.string "brand"
     t.string "category"
     t.string "color"
@@ -197,7 +209,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["analysis_status"], name: "index_items_on_analysis_status"
     t.index ["user_id"], name: "index_items_on_user_id"
+  end
+
+  create_table "live_streams", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.datetime "ended_at"
+    t.datetime "scheduled_at"
+    t.datetime "started_at"
+    t.string "status", default: "scheduled", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "viewer_count", default: 0, null: false
+    t.index ["status", "scheduled_at"], name: "index_live_streams_on_status_and_scheduled_at"
+    t.index ["user_id"], name: "index_live_streams_on_user_id"
+  end
+
+  create_table "messages", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "read_at"
+    t.integer "recipient_id", null: false
+    t.integer "sender_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recipient_id", "read_at", "created_at"], name: "index_messages_on_recipient_id_and_read_at_and_created_at"
+    t.index ["recipient_id"], name: "index_messages_on_recipient_id"
+    t.index ["sender_id", "recipient_id", "created_at"], name: "index_messages_on_sender_id_and_recipient_id_and_created_at"
+    t.index ["sender_id"], name: "index_messages_on_sender_id"
   end
 
   create_table "outfit_items", force: :cascade do |t|
@@ -370,6 +411,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "affiliate_links", "items"
   add_foreign_key "comments", "users"
+  add_foreign_key "connections", "users", column: "addressee_id"
+  add_foreign_key "connections", "users", column: "requester_id"
   add_foreign_key "consent_events", "users"
   add_foreign_key "creator_profiles", "users"
   add_foreign_key "creator_wardrobe_items", "creator_profiles"
@@ -386,6 +429,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
   add_foreign_key "garment_embeddings", "items"
   add_foreign_key "identity_verifications", "users"
   add_foreign_key "items", "users"
+  add_foreign_key "live_streams", "users"
+  add_foreign_key "messages", "users", column: "recipient_id"
+  add_foreign_key "messages", "users", column: "sender_id"
   add_foreign_key "outfit_items", "items"
   add_foreign_key "outfit_items", "outfits"
   add_foreign_key "outfits", "users"

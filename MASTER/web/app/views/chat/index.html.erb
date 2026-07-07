@@ -72,7 +72,7 @@
   <%# prefetch (not modulepreload) THREE.js: warms the 514KB into cache WITHOUT compiling it,
       so the ~10-20s parse happens on primer tap (deferred boot), not on initial page load %>
   <link rel="prefetch" href="<%= asset_path("three.face.module.js") %>" as="script">
-  <link rel="modulepreload" href="<%= asset_path("face.js") %>">
+  <link rel="prefetch" href="<%= asset_path("face.js") %>" as="script">
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <style nonce="<%= content_security_policy_nonce %>">
     html, body { background: #000; color: #f5f0e8; }

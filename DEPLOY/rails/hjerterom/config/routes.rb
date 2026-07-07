@@ -43,6 +43,7 @@ Rails.application.routes.draw do
   resources :shifts, only: %i[index update]
 
   resources :users, only: %i[show]
+  get "operator", to: "operator#index", as: :operator_dashboard
 
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker

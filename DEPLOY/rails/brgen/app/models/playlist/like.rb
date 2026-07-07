@@ -4,6 +4,9 @@ module Playlist
   class Like < ApplicationRecord
     self.table_name = "playlist_likes"
 
+    include Shared::ActivityTrackable
+    tracks_activity created: "PlaylistLiked", source_vertical: "playlist", visibility: "private", actor: :user
+
     belongs_to :user
     belongs_to :set, class_name: "Playlist::Set", optional: true
     belongs_to :playlist, class_name: "Playlist::Playlist", optional: true

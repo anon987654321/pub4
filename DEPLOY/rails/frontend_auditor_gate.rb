@@ -7,7 +7,6 @@ ROOT = File.expand_path(__dir__)
 APPS = %w[amber brgen bsdports hjerterom].freeze
 SHARED = Pathname(ROOT).join("shared")
 
-load SHARED.join("app/services/shared/frontend_rule_set.rb")
 load SHARED.join("app/services/shared/frontend_auditor.rb")
 
 count = (APPS + ["shared"]).sum do |app|

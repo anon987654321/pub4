@@ -27,6 +27,9 @@
         <div class="field"><%= f.text_field :name, placeholder: "Name", required: true %></div>
         <div class="field"><%= f.number_field :price_cents, placeholder: "Price (øre)", required: true %></div>
         <div class="field"><%= f.text_field :description, placeholder: "Description" %></div>
+        <div class="field field--check"><%= f.check_box :available, checked: true %><%= f.label :available %></div>
+        <div class="field field--check"><%= f.check_box :vegetarian %><%= f.label :vegetarian %></div>
+        <div class="field field--check"><%= f.check_box :vegan %><%= f.label :vegan %></div>
         <div class="field"><%= f.submit "Add", class: "btn btn-primary btn-sm" %></div>
       <% end %>
     </div>
@@ -43,6 +46,8 @@
         <article class="menu-row">
           <div>
             <strong><%= item.name %></strong> · <%= item.price_display %>
+            <% if item.vegetarian? %><span class="chip">Vegetarian</span><% end %>
+            <% if item.vegan? %><span class="chip">Vegan</span><% end %>
             <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
           </div>
           <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: "Quantity for #{item.name}" } %>

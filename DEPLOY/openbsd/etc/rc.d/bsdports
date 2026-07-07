@@ -5,7 +5,7 @@ APP_DIR=/home/bsdports/app
 [ -f /etc/rails/bsdports.env ] && . /etc/rails/bsdports.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/bsdports.env}"
 daemon="/usr/local/bin/bundle34"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/bsdports falcon serve --bind http://127.0.0.1:${PORT}"
+daemon_flags="exec env RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/bsdports falcon serve --bind http://127.0.0.1:${PORT}"
 daemon_user="bsdports"
 daemon_execdir="/home/bsdports/app"
 daemon_logger="daemon.notice"

@@ -18,4 +18,5 @@ class Recommendation < ApplicationRecord
   }
 
   scope :active, -> { where(dismissed_at: nil) }
+  scope :recent, -> { order(created_at: :desc) }
 end

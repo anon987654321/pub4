@@ -5,6 +5,7 @@ class Playlist::Playlist < ApplicationRecord
 
   # Engine-ize Shared via pub4-shared
   include Shared.concern(:ActivityTrackable) rescue nil
+  tracks_activity created: "PlaylistCreated", source_vertical: "playlist", actor: :user
   include Shared.concern(:Reactable) rescue nil
   include Shared.concern(:Notifiable) rescue nil
   include Shared.concern(:GeoLocatable) rescue nil
@@ -22,6 +23,11 @@ class Playlist::Playlist < ApplicationRecord
   scope :public_playlists, -> { where(public_access: true) }
   scope :popular,           -> { order(plays_count: :desc) }
   scope :recent,            -> { order(created_at: :desc) }
+  scope :city_trending, ->(city = Current.city_record) {
+    relation = public_playlists
+    relation = relation.where(city: city) if city.present? && column_names.include?("city_id")
+    relation.order(plays_count: :desc, tracks_count: :desc, updated_at: :desc)
+  }
 
   def add_track!(track, user:)
     playlist_track = playlist_tracks.find_or_initialize_by(track: track)
@@ -33,5 +39,9 @@ class Playlist::Playlist < ApplicationRecord
     playlist_track.save!
     increment!(:tracks_count)
     playlist_track
+  end
+
+  def duration_seconds
+    tracks.unexpired.sum(:duration_seconds)
   end
 end

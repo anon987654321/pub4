@@ -1,13 +1,24 @@
 # frozen_string_literal: true
 
 class Takeaway::MenuItem < ApplicationRecord
+  include Shared::ActivityTrackable
+  include Shared::MediaProcessable
+  tracks_activity created: "TakeawayMenuItemCreated", updated: "TakeawayMenuItemUpdated", source_vertical: "takeaway", actor: :restaurant_owner
+
   belongs_to :restaurant, class_name: "Takeaway::Restaurant"
   has_one_attached :photo
+  process_media_variants :photo, variants: {
+    thumb: { resize_to_limit: [ 320, 320 ], format: :webp },
+    card: { resize_to_limit: [ 720, 540 ], format: :webp }
+  }
 
   validates :name, :price_cents, presence: true
   validates :price_cents, numericality: { greater_than: 0 }
+  before_validation { self.available = true if available.nil? }
 
   scope :available, -> { where(available: true) }
 
   def price_display = "#{price_cents / 100.0} NOK"
+  def restaurant_owner = restaurant&.user
+  def available_for_order? = available? && restaurant&.active?
 end

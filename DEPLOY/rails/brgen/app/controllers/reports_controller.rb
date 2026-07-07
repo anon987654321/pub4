@@ -5,11 +5,11 @@ class ReportsController < ApplicationController
 
   def create
     @target = GlobalID::Locator.locate_signed!(params.require(:target_gid))
-    @report = ModerationReport.create!(
-      user: Current.user,
-      reportable: @target,
-      reason: params[:reason].presence || "other",
-      status: "open"
+    @report = ModerationWorkflow.report!(
+      reporter: Current.user,
+      target: @target,
+      reason: params[:reason],
+      details: params[:details]
     )
     ModerationReportNotificationJob.perform_later(@report.id)
     respond_to do |f|

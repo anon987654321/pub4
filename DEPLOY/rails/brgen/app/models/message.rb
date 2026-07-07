@@ -2,6 +2,7 @@
 
 class Message < ApplicationRecord
   include Shared::ActivityTrackable
+  include Shared::MediaProcessable
   tracks_activity created: "MessageSent", source_vertical: "messages", actor: :sender
 
   include Shared.concern(:Notifiable) rescue nil
@@ -10,6 +11,10 @@ class Message < ApplicationRecord
   belongs_to :sender, class_name: "User", foreign_key: :sender_id
   has_many :message_receipts, dependent: :destroy
   has_one_attached :attachment
+  process_media_variants :attachment, variants: {
+    inline: { resize_to_limit: [ 900, 900 ], format: :webp },
+    thumb: { resize_to_limit: [ 320, 320 ], format: :webp }
+  }
 
   validates :content, presence: true, length: { maximum: 10_000 }
   validates :message_type, inclusion: { in: %w[text image file audio] }

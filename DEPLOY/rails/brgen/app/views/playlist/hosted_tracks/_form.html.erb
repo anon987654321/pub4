@@ -32,6 +32,11 @@
   </div>
 
   <div class="field">
+    <%= form.label :expires_at %>
+    <%= form.datetime_field :expires_at %>
+  </div>
+
+  <div class="field">
     <%= form.label :audio_file, "Audio file" %>
     <%= form.file_field :audio_file, direct_upload: true %>
   </div>

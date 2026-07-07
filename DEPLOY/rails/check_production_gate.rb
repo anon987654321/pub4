@@ -4,13 +4,14 @@
 require "open3"
 require "rbconfig"
 require "yaml"
-require_relative "../tools/utf8"
+require_relative "../lib/utf8"
 
 RUBY_BIN = RbConfig.ruby
 
 ROOT = File.expand_path("../..", __dir__)
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
+SHARED_DEPLOY = File.join(RAILS_ROOT, "shared", "deploy", "@shared_functions.sh")
 
 def fail!(failures, message)
   failures << message
@@ -72,6 +73,14 @@ apps.each do |name, metadata|
     gemfile_text = File.read(gemfile)
     warnings << "#{name}: Gemfile has no explicit ruby version" unless gemfile_text.match?(/^ruby\s+/)
     fail!(app_failures, "Gemfile must target Rails 8.1") unless gemfile_text.match?(/^gem ['"]rails['"], ['"]~> 8\.1/)
+    if gemfile_text.include?("solid_queue")
+      deploy_yml = File.join(app_dir, "config", "deploy.yml")
+      rcd = File.join(ROOT, "DEPLOY", "openbsd", "etc", "rc.d", name)
+      deploy_yml_text = File.file?(deploy_yml) ? File.read(deploy_yml) : ""
+      rcd_text = File.file?(rcd) ? File.read(rcd) : ""
+      fail!(app_failures, "Solid Queue deploy.yml must set SOLID_QUEUE_IN_PUMA: true") unless deploy_yml_text.include?("SOLID_QUEUE_IN_PUMA: true")
+      fail!(app_failures, "rc.d must export SOLID_QUEUE_IN_PUMA=true for Falcon") unless rcd_text.include?("SOLID_QUEUE_IN_PUMA=true")
+    end
   else
     fail!(app_failures, "missing Gemfile")
   end
@@ -103,8 +112,10 @@ apps.each do |name, metadata|
 
   if File.file?(deploy_script)
     deploy_text = File.read(deploy_script)
-    fail!(app_failures, "deploy script must require ruby34") unless deploy_text.include?("need_cmd ruby34")
-    fail!(app_failures, "deploy script must configure relayd for #{domain}") unless deploy_text.include?("relayd_add_relay")
+    deploy_contract = [deploy_text, File.file?(SHARED_DEPLOY) ? File.read(SHARED_DEPLOY) : ""].join("\n")
+    fail!(app_failures, "deploy script must call shared deploy entrypoint") unless deploy_text.include?('deploy_tracked_app "$APP_NAME"')
+    fail!(app_failures, "deploy contract must require ruby34") unless deploy_contract.include?("need_cmd ruby34")
+    fail!(app_failures, "deploy contract must configure relayd for #{domain}") unless deploy_contract.include?("relayd_add_relay")
   else
     fail!(app_failures, "missing deploy script #{metadata.fetch('deploy_script')}")
   end
@@ -133,6 +144,15 @@ if File.file?(archive_restore_gate)
   fail!(failures, "archive restore gate failed") unless status.success?
 else
   fail!(failures, "missing DEPLOY/rails/archive_restore_gate.rb")
+end
+
+master_tts_gate = File.join(RAILS_ROOT, "master_tts_gate.rb")
+if File.file?(master_tts_gate)
+  stdout, status = Open3.capture2(RUBY_BIN, master_tts_gate, chdir: ROOT)
+  print stdout
+  fail!(failures, "MASTER TTS gate failed") unless status.success?
+else
+  fail!(failures, "missing DEPLOY/rails/master_tts_gate.rb")
 end
 
 if failures.any?

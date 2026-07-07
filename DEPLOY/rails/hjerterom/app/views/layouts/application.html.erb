@@ -35,7 +35,7 @@
 <nav role="navigation" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to root_path, class: "brand", aria: { label: "Hjerterom", current: current_page?(root_path) ? 'page' : nil } do %>
     <% if content_for?(:body_class) && yield(:body_class).include?("map-home-page") %>
-      <span class="brand__spacer" aria-hidden="true"></span>
+      <span class="brand-spacer" aria-hidden="true"></span>
     <% else %>
       <%= render "shared/logo", compact: true, svg_uid: "nav" %>
     <% end %>
@@ -44,6 +44,7 @@
   <%= link_to "Ressurser",  resources_path, aria: { current: current_page?(resources_path) ? 'page' : nil } %>
   <%= link_to "Fellesskap", community_path, aria: { current: current_page?(community_path) ? 'page' : nil } %>
   <% if authenticated? %>
+    <%= link_to "Drift", operator_dashboard_path, aria: { current: current_page?(operator_dashboard_path) ? 'page' : nil } %>
     <%= render "shared/inbox_link" %>
     <%= link_to "Logg ut", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
   <% else %>

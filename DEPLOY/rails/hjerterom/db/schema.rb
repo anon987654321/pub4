@@ -10,10 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_15_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_07_140000) do
   create_table "beneficiaries", force: :cascade do |t|
     t.boolean "active", default: true, null: false
+    t.string "address"
     t.string "area"
+    t.float "latitude"
+    t.float "longitude"
     t.datetime "created_at", null: false
     t.text "dietary_restrictions"
     t.integer "household_size"
@@ -79,10 +82,38 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_000200) do
     t.index ["donor_id"], name: "index_donations_on_donor_id"
   end
 
+  create_table "delivery_routes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "notes"
+    t.date "route_date", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "volunteer_id"
+    t.index ["volunteer_id"], name: "index_delivery_routes_on_volunteer_id"
+  end
+
+  create_table "delivery_stops", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "delivery_route_id", null: false
+    t.float "latitude"
+    t.float "longitude"
+    t.string "label", null: false
+    t.bigint "reference_id"
+    t.string "reference_type"
+    t.integer "sequence", default: 0, null: false
+    t.integer "stop_kind", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_route_id"], name: "index_delivery_stops_on_delivery_route_id"
+    t.index ["reference_type", "reference_id"], name: "index_delivery_stops_on_reference_type_and_reference_id"
+  end
+
   create_table "donors", force: :cascade do |t|
     t.boolean "active", default: true, null: false
+    t.string "address"
     t.datetime "created_at", null: false
     t.string "email"
+    t.float "latitude"
+    t.float "longitude"
     t.string "name", null: false
     t.text "notes"
     t.string "phone"
@@ -90,17 +121,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_000200) do
   end
 
   create_table "food_items", force: :cascade do |t|
+    t.string "age_range"
     t.integer "beneficiary_id"
     t.date "best_before"
     t.integer "box_id"
     t.integer "category", default: 6, null: false
+    t.string "condition_label"
     t.datetime "created_at", null: false
     t.text "dietary_tags"
     t.integer "donation_id", null: false
+    t.string "language_label"
     t.string "name", null: false
     t.text "notes"
     t.integer "quality_state", default: 0, null: false
     t.integer "quantity"
+    t.string "reuse_status", default: "intake", null: false
+    t.string "size_label"
     t.string "status", default: "available", null: false
     t.datetime "updated_at", null: false
     t.index ["beneficiary_id"], name: "index_food_items_on_beneficiary_id"
@@ -223,9 +259,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_000200) do
     t.text "notes"
     t.string "phone"
     t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["user_id"], name: "index_volunteers_on_user_id"
   end
 
   add_foreign_key "boxes", "beneficiaries"
+  add_foreign_key "delivery_routes", "volunteers"
+  add_foreign_key "delivery_stops", "delivery_routes"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
   add_foreign_key "donations", "donors"
@@ -242,4 +282,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_000200) do
   add_foreign_key "sessions", "users"
   add_foreign_key "shifts", "volunteers"
   add_foreign_key "support_requests", "users"
+  add_foreign_key "volunteers", "users"
 end

@@ -5,7 +5,7 @@
 
 require "open3"
 require "rbconfig"
-require_relative "tools/utf8"
+require_relative "lib/utf8"
 
 ROOT = File.expand_path("..", __dir__)
 RUBY = RbConfig.ruby
@@ -18,6 +18,9 @@ GATES = [
   { name: "relayd_smoke", path: "DEPLOY/openbsd/deploy_smoke_gate.rb" },
   { name: "domain_align", path: "DEPLOY/rails/domain_alignment_gate.rb" },
   { name: "crawl_inventory", path: "DEPLOY/rails/crawl_probe.rb", args: [] },
+  { name: "schema_migration", path: "DEPLOY/rails/schema_migration_gate.rb" },
+  { name: "asset_freshness", path: "DEPLOY/rails/generated_asset_freshness_gate.rb" },
+  { name: "human_walkthrough", path: "DEPLOY/rails/human_walkthrough_gate.rb" },
 ].freeze
 
 failures = []

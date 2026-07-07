@@ -8,6 +8,7 @@
 
 <section
   class="map-home"
+  data-visitor-orientation
   data-controller="map"
   data-map-points-value="<%= json_escape(@map_points.to_json) %>"
   data-map-center-lat-value="60.4669"
@@ -38,6 +39,7 @@
   </nav>
 
   <div class="map-home-dock">
+    <h1>Hjerterom Åsane</h1>
     <p class="map-home-tagline">Overskuddsmat og trygge ressurser i Åsane.</p>
     <div class="map-home-actions">
       <%= link_to "Legg ut mat", new_food_listing_path, class: "btn btn-primary btn-sm" %>

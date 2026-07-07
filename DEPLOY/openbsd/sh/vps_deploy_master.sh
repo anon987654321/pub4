@@ -15,6 +15,7 @@ cd "$WEB"
 export RAILS_ENV=production
 export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 32)}"
 bundle exec rails assets:precompile
+bundle exec ruby "$ROOT/DEPLOY/rails/master_web_assets_gate.rb"
 
 echo "==> restart master"
 doas rcctl restart master

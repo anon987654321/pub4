@@ -45,6 +45,9 @@
     <%= link_to "Post",      new_post_path %>
     <%= link_to "Wardrobe",  items_path, aria: { current: current_page?(items_path) ? 'page' : nil } %>
     <%= link_to "Outfits",       outfits_path, aria: { current: current_page?(outfits_path) ? 'page' : nil } %>
+    <%= link_to "Analytics", analytics_wardrobe_items_path %>
+    <%= link_to "Messages", messages_path %>
+    <%= link_to "Live", live_streams_path %>
     <%= link_to "Style",         dressing_room_outfits_path, aria: { current: current_page?(dressing_room_outfits_path) ? 'page' : nil } %>
     <%= link_to "Planner",       planned_outfits_path, aria: { current: current_page?(planned_outfits_path) ? 'page' : nil } %>
     <%= link_to "Search",    ai_search_path %>

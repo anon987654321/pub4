@@ -4,7 +4,7 @@
 require "open3"
 require "rbconfig"
 require "yaml"
-require_relative "../tools/utf8"
+require_relative "../lib/utf8"
 
 ROOT = File.expand_path("../..", __dir__)
 

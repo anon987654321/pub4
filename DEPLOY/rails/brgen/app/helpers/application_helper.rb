@@ -125,6 +125,6 @@ module ApplicationHelper
   end
 
   def tv_media_image_classes(attachment)
-    [ "tv-media__image", media_polish_classes(attachment) ].compact_blank.join(" ")
+    [ "tv-media-image", media_polish_classes(attachment) ].compact_blank.join(" ")
   end
 end

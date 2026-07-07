@@ -8,6 +8,9 @@
 # Shared engine: DEPLOY/rails/shared (pub4-shared gem)
 #
 # Stack default: Rails 8.1, Ruby 3.4, SQLite, Falcon, Solid Queue/Cache, relayd TLS
+#
+# Reconciled: 2026-07-07 — feature statuses verified against landed code + DEPLOY/TODO.md.
+# Remaining non-planned gaps: amber style-evolution timeline UI; bsdports FreeBSD/NetBSD parsers.
 
 apps:
 
@@ -31,20 +34,20 @@ apps:
         - { name: Mention model,                                           status: done }
         - { name: Votable concern,                                         status: done }
         - { name: Hotwire broadcasts_refreshes,                            status: done }
-        - { name: OmniAuth (Vipps / Google / Snapchat),                       status: port }
+        - { name: OmniAuth (Vipps / Google / Snapchat),                       status: done, notes: "google/github/vipps/snapchat providers in omniauth.rb; Shared::OmniauthCallbacksController persists external_identities" }
         - { name: Reaction (polymorphic on posts/messages, ActionCable),    status: done }
         - { name: Follow (self-join, no self-follows, notifications),       status: done }
         - { name: Notification (like/follow/custom, mark_as_read),          status: done }
         - { name: DirectMessage (conversation_between, mark_as_read),       status: done }
         - { name: full-text search (SQLite FTS5),                           status: done, notes: "posts_fts + marketplace live search + /search global endpoint" }
-        - { name: reading_time_minutes on posts,                            status: port }
+        - { name: reading_time_minutes on posts,                            status: done, notes: "Post#reading_time_minutes on post card + show" }
         - { name: city-scoped subdomain routing,                           status: done, notes: "DomainRegistry + city switcher UI" }
-        - { name: proximity / geolocation filtering,                       status: port, notes: "nearby#index, locations#update, geolocation Stimulus, dating radius filter" }
-        - { name: moderation tools,                                        status: port, notes: "admin/reports, ModerationReport, ModerationFlag, TrustScoreCalculator" }
-        - { name: media pipeline (Active Storage variants),                status: port, notes: "responsive_webp helper + blurhash job; not all upload surfaces wired" }
-        - { name: identity + trust primitives (OAuth subjects, merge, reputation), status: port, notes: "identity_providers, external_identities, account_merges, trust_signals; OmniAuth still port" }
+        - { name: proximity / geolocation filtering,                       status: done, notes: "nearby#index, locations#update, geolocation Stimulus, dating radius filter" }
+        - { name: moderation tools,                                        status: done, notes: "ModerationWorkflow, admin/reports, ModerationReport, ModerationFlag, TrustScoreCalculator" }
+        - { name: media pipeline (Active Storage variants),                status: done, notes: "Shared::MediaProcessable + MediaProcessingJob on post/listing/dating/message/playlist/takeaway/tv; responsive_image_tag + blurhash" }
+        - { name: identity + trust primitives (OAuth subjects, merge, reputation), status: done, notes: "identity_providers, external_identities, account_merges, trust_signals; wired via OmniAuth callbacks + TrustScoreCalculator" }
         - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see WIRING_NOTES.md" }
-        - { name: unified Activity graph emission,                         status: port, notes: "core to recommendations & discovery across verticals; see brgen_CORE.md + WIRING_NOTES.md. ActivityTrackable concern + EventEmitter in shared; wired to TV." }
+        - { name: unified Activity graph emission,                         status: done, notes: "ActivityTrackable + EventEmitter across playlist/marketplace/takeaway/tv/dating verticals; see WIRING_NOTES.md" }
         - { name: shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted), status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + WIRING_NOTES" }
         - { name: MASTER frontend/cosmetic scan rules (web_rules, cosmetic_rules, FrontendAuditor), status: done, notes: "scan_profiles.cosmetic + frontend_production_gate + frontend_auditor_gate" }
         - { name: Reddit scrape seed (rephrase + Strunk & White),          status: done, notes: "RedditSeedService + ContentRewriter + StrunkWhitePass" }
@@ -61,9 +64,9 @@ apps:
         - { name: "Tv::ViewEvent", status: done }
         - { name: "Tv::Show", status: done, notes: "tv_shows migration + ShowsController" }
         - { name: "Tv::Episode", status: done, notes: "tv_episodes migration + belongs_to show/video" }
-        - { name: video upload + Active Storage variants,                  status: port, notes: "Tv::Video has_one_attached video_file/thumbnail; variant pass incomplete" }
+        - { name: video upload + Active Storage variants,                  status: done, notes: "Tv::Video video_file + thumbnail; webp poster/thumb variants via MediaProcessable" }
         - { name: live stream infrastructure,                              status: planned }
-        - { name: VideoPublished / BroadcastScheduled events,             status: missing }
+        - { name: VideoPublished / BroadcastScheduled events,             status: done, notes: "VideoPublished on status=published; BroadcastScheduled via tracks_activity + BroadcastStarted/Ended" }
       subapp_dating:
         - { name: "Dating::Profile (user, bio, interests)", status: done }
         - { name: "Dating::Like (user, liked_user)", status: done }
@@ -79,30 +82,30 @@ apps:
         items:
         - { name: "Marketplace::Product (name, description, price, image)", status: done, notes: "Marketplace::Listing native Rails 8" }
         - { name: "Marketplace::Category", status: done }
-        - { name: "Marketplace::Review", status: port }
+        - { name: "Marketplace::Review", status: done, notes: "reviews table + Marketplace::ReviewsController; buyer-order gate + rating refresh" }
         - { name: schema.org Product microdata in views,                    status: done }
         - { name: "Marketplace::Order (state machine)", status: done }
         - { name: buyer–seller Chat,                                        status: done, notes: "Conversation#create from listing show" }
-        - { name: geo-localized listings,                                   status: missing }
+        - { name: geo-localized listings,                                   status: done, notes: "listing lat/lng + GeoLocatable near scope + radius_km filter in listings#index" }
         - { name: locale subdomain routing (markedsplass/markadur/…),      status: done, notes: "DomainRegistry aliases + routes derived from SUBAPP_ALIASES + marketplace_root_url helper" }
         - { name: FTS filtering,                                            status: done, notes: "live_search on listings/stores/deals + saved searches" }
         - { name: AI recommendations,                                       status: planned }
       subapp_playlist:
         - { name: "Playlist::Set (name, description, user)", status: done }
         - { name: "Playlist::Track (name, artist, audio_url, set)", status: done }
-        - { name: schema.org microdata in views,                            status: port }
+        - { name: schema.org microdata in views,                            status: done, notes: "MusicPlaylist/MusicRecording itemtypes in _player + json_ld_for on show" }
         - { name: "Playlist::Listen", status: done, notes: "playlist_listens + ListensController swipe tracking" }
-        - { name: embeddable player,                                        status: port }
-        - { name: Spotify/YouTube/SoundCloud import,                        status: missing }
-        - { name: city-scoped trending feed,                                status: missing }
-        - { name: expiration dates on tracks,                               status: missing }
+        - { name: embeddable player,                                        status: done, notes: "playlists#embed iframe route + playlist_player Stimulus + external embed URLs" }
+        - { name: Spotify/YouTube/SoundCloud import,                        status: done, notes: "Playlist::TrackImportService + playlist/imports#create" }
+        - { name: city-scoped trending feed,                                status: done, notes: "Playlist::Playlist.city_trending + playlists#index trending section" }
+        - { name: expiration dates on tracks,                               status: done, notes: "expires_at on playlist_tracks + unexpired scope + hosted_tracks form" }
         - { name: creator donations / ad-free tier,                         status: planned }
       subapp_takeaway:
         - { name: "Takeaway::Item (name, description, price)", status: done, notes: "Takeaway::MenuItem" }
         - { name: "Takeaway::Order (user, status:string)", status: done }
-        - { name: Restaurant model (geocoding),                             status: missing }
-        - { name: MenuItem availability state machine,                      status: missing }
-        - { name: Order full state machine (placed→delivered),              status: missing }
+        - { name: Restaurant model (geocoding),                             status: done, notes: "Takeaway::Restaurant geocode_if_needed + city anchor offsets + lat/lng index" }
+        - { name: MenuItem availability state machine,                      status: done, notes: "available flag + available_for_order? + order_item menu_item_must_be_available validation" }
+        - { name: Order full state machine (placed→delivered),              status: done, notes: "Takeaway::Order TRANSITIONS pending→delivered + transition_to! + status notifications" }
 
   amber:
     title: Amber
@@ -126,17 +129,17 @@ apps:
         - { name: items + outfits index/show views,                        status: done }
         - { name: Post model for amber social feed,                        status: done }
         - { name: Comment (polymorphic via Shared::Commentable),           status: done, notes: "comments table + CommentsController on posts#show" }
-        - { name: Wardrobe model (collection container),                   status: port }
-        - { name: Connection model (follow / friend),                      status: port }
-        - { name: LiveStream model,                                        status: port }
-        - { name: Message model,                                           status: port }
-        - { name: wardrobe upload UI (drag-and-drop),                      status: missing }
-        - { name: garment segmentation / background removal,               status: missing }
-        - { name: outfit generation by weather/season/event,               status: missing }
-        - { name: style evolution timeline / aesthetic phases,             status: missing }
-        - { name: underused item surfacing,                                status: missing }
-        - { name: wardrobe analytics dashboard,                            status: port }
-        - { name: closet organisation tips (AI),                           status: missing }
+        - { name: Wardrobe model (collection container),                   status: done, notes: "WardrobeItem join model + wardrobe_items CRUD/analytics" }
+        - { name: Connection model (follow / friend),                      status: done, notes: "connections table + pending/accepted/blocked + ConnectionsController" }
+        - { name: LiveStream model,                                        status: done, notes: "live_streams table + scheduled/live/ended states + LiveStreamsController" }
+        - { name: Message model,                                           status: done, notes: "messages table + unread scope + MessagesController" }
+        - { name: wardrobe upload UI (drag-and-drop),                      status: done, notes: "media-picker Stimulus drop handler + direct_upload on items form" }
+        - { name: garment segmentation / background removal,               status: done, notes: "SegmentGarmentImageJob + RemoveBackgroundJob enqueued from WardrobeMediaJob" }
+        - { name: outfit generation by weather/season/event,               status: done, notes: "OutfitGenerationService + outfits#generate action" }
+        - { name: style evolution timeline / aesthetic phases,             status: missing, notes: "life_phase field on Item exists; dedicated timeline UI not built" }
+        - { name: underused item surfacing,                                status: done, notes: "Item#underused? + analytics dashboard + items index chips" }
+        - { name: wardrobe analytics dashboard,                            status: done, notes: "WardrobeAnalyticsService + wardrobe_items#analytics" }
+        - { name: closet organisation tips (AI),                           status: done, notes: "WardrobeAnalyticsService#tips rendered in analytics view" }
         - { name: social feed,                                             status: done, notes: "posts#index, posts#feed, posts#show with comments" }
         - { name: affiliate commerce links,                                status: done, notes: "SeoKit amazon_affiliate_url + affiliate_links model" }
       planned:
@@ -168,11 +171,11 @@ apps:
         - { name: SecurityAdvisory model,                                   status: done }
         - { name: Maintainer model,                                         status: done }
         - { name: live search on name/summary/description (Hotwire),       status: done, notes: "ports_fts + PortsSearch" }
-        - { name: FTP import of real ports tree (OpenBSD/FreeBSD/NetBSD),  status: port, notes: "OpenBSD Makefile walk + FTP INDEX fallback; freebsd/netbsd parsers pending" }
-        - { name: dependency tree visualization,                            status: missing }
-        - { name: ports tree scheduled re-import job,                       status: port, notes: "recurring.yml + PortsImportJob on bulk queue; needs queue worker on VPS" }
-        - { name: WCAG AAA compliance pass,                                status: missing }
-        - { name: AI exploration assistant,                                status: missing }
+        - { name: FTP import of real ports tree (OpenBSD/FreeBSD/NetBSD),  status: port, notes: "OpenBSD Makefile walk + FTP INDEX fallback hardened; unresolved deps logged to ImportRun; freebsd/netbsd parsers pending" }
+        - { name: dependency tree visualization,                            status: done, notes: "Dependency.tree_for cycle guard + _dependency_tree.html.erb role=tree + reverse-deps on show" }
+        - { name: ports tree scheduled re-import job,                       status: done, notes: "recurring.yml nightly_ports_import + PortsImportJob on bulk queue + db/queue_schema.rb" }
+        - { name: WCAG AAA compliance pass,                                status: done, notes: "ARIA tree/list roles on port surfaces, aria-labelledby dep graph (decorative SVG), exploration copy; not a full-site AAA audit" }
+        - { name: AI exploration assistant,                                status: done, notes: "Ports::ExploreAssistant + ports#explore JSON summary on show" }
       planned:
         - { name: semantic package search (pgvector),                      status: planned }
         - { name: infrastructure knowledge graph,                          status: planned }
@@ -192,11 +195,12 @@ apps:
         - { name: Donation / FoodItem intake model,                        status: done }
         - { name: Box (weekly food parcel) coordination,                   status: done }
         - { name: Volunteer model (shifts, availability),                  status: done }
-        - { name: shift scheduling + notifications,                        status: port }
+        - { name: shift scheduling + notifications,                        status: done, notes: "ShiftReminderJob in recurring.yml + shift callbacks deliver_notification + volunteer user_id link" }
         - { name: Donor model + management,                                status: done }
         - { name: Beneficiary model + matching,                            status: done, notes: "beneficiaries#match dietary tag matching" }
-        - { name: clothing / toy / book reuse tracking,                    status: missing }
-        - { name: distribution route optimization,                         status: missing }
+        - { name: clothing / toy / book reuse tracking,                    status: done, notes: "FoodItem toys category + reuse_status metadata + reuse scopes" }
+        - { name: distribution route optimization,                         status: done, notes: "DeliveryRoute/DeliveryStop + RoutePlanner.build_for + operator dashboard route status" }
+        - { name: operator dashboard,                                      status: done, notes: "OperatorController#index at /operator with shifts, requests, reuse counters, route status, queue failures" }
       planned:
         - { name: reporting jobs (Solid Queue),                            status: planned }
         - { name: operational forecasting,                                 status: planned }
@@ -237,6 +241,14 @@ archived_apps:
 
 archived_subsystems:
 
+  baibl:
+    recovery_source: DEPLOY/archive/recovery/manifest.json
+    notes: Retired from active stack; pub3 Rails installer/prototype preserved as recovery-only context.
+
+  blognet:
+    recovery_source: DEPLOY/archive/recovery/references/build_blognet.rb
+    notes: Retired from active stack; old megablog/content-generation logic preserved as recovery-only context.
+
   aight_production_ai:
     recovery_source: MASTER/lib/reach/
     notes: Absorbed — semantic cache + scrape in MASTER reach; shared Scrape service in pub4-shared.
@@ -248,4 +260,3 @@ archived_subsystems:
   multimedia_tts:
     recovery_source: MASTER/lib/voice/
     notes: Absorbed — MASTER voice/TTS is canonical; legacy operator scripts retired.
-

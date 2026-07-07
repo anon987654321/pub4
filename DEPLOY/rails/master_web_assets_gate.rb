@@ -8,6 +8,13 @@ WEB_ROOT = File.join(ROOT, "MASTER", "web")
 ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
 MANIFEST = File.join(ASSETS_DIR, ".manifest.json")
 REQUIRED = %w[face.css face.js chat.js three.face.module.js].freeze
+DEPLOY_SCRIPTS = {
+  "DEPLOY/openbsd/openbsd.sh" => :start_or_restart,
+  "DEPLOY/openbsd/sh/vps_install_all.sh" => :start_or_restart,
+  "DEPLOY/openbsd/sh/vps_on_vm_install.sh" => :start_or_restart,
+  "DEPLOY/openbsd/sh/vps_console_install.exp" => :restart,
+  "DEPLOY/openbsd/sh/vps_deploy_master.sh" => :restart
+}.freeze
 
 failures = []
 unless File.file?(MANIFEST)
@@ -23,6 +30,26 @@ else
     failures << "manifest #{logical} has empty digested_path" if digested.empty?
     path = File.join(ASSETS_DIR, digested)
     failures << "missing digested asset #{digested} for #{logical}" unless File.file?(path)
+  end
+end
+
+DEPLOY_SCRIPTS.each do |relative_path, restart_mode|
+  path = File.join(ROOT, relative_path)
+  unless File.file?(path)
+    failures << "missing MASTER web deploy script #{relative_path}"
+    next
+  end
+
+  content = File.read(path)
+  failures << "#{relative_path} must precompile MASTER/web assets" unless content.include?("assets:precompile")
+  failures << "#{relative_path} must run master_web_assets_gate" unless content.include?("master_web_assets_gate.rb")
+
+  restarts_master = content.include?("rcctl restart master")
+  starts_master = content.include?("rcctl start master")
+  if restart_mode == :restart
+    failures << "#{relative_path} must restart master after precompile" unless restarts_master
+  elsif !restarts_master && !starts_master
+    failures << "#{relative_path} must start or restart master after precompile"
   end
 end
 

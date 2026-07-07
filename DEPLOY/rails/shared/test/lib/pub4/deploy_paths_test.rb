@@ -5,20 +5,20 @@ require "pathname"
 require_relative "../../../lib/pub4/deploy_paths"
 
 class DeployPathsTest < Minitest::Test
-  def test_postpro_resolves_under_deploy
+  def test_postpro_resolves_under_master_tools
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Pub4::DeployPaths.postpro_script
       assert script, "expected postpro script"
-      assert_includes script.to_s, "/DEPLOY/tools/postpro/postpro.rb"
+      assert_includes script.to_s, "/MASTER/tools/postpro.rb"
       assert File.file?(script)
     end
   end
 
-  def test_repligen_resolves_under_deploy
+  def test_repligen_resolves_under_master_tools
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Pub4::DeployPaths.repligen_script
       assert script, "expected repligen script"
-      assert_includes script.to_s, "/DEPLOY/tools/repligen.rb"
+      assert_includes script.to_s, "/MASTER/tools/repligen.rb"
       assert File.file?(script)
     end
   end

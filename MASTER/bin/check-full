@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "rbconfig"
+require_relative "../lib/pub4/check_runner"
+
+ROOT = File.expand_path("..", __dir__)
+RUBY = RbConfig.ruby
+STEP_TIMEOUT = Integer(ENV.fetch("MASTER_CHECK_TIMEOUT", "600"))
+runner = Pub4::CheckRunner.new(prefix: "check-full", root: ROOT, timeout: STEP_TIMEOUT)
+
+failures = []
+failures << "ci" unless runner.run("bin/ci", RUBY, File.join(ROOT, "bin", "ci"))
+failures << "probe all" unless runner.run("bin/probe all", RUBY, File.join(ROOT, "bin", "probe"), "all")
+failures << "audit" unless runner.run("rake audit", RUBY, "-S", "rake", "audit")
+
+exit(failures.empty? ? 0 : 1)

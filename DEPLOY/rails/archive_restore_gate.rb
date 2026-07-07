@@ -4,7 +4,8 @@
 # Block restored pub3 anti-patterns and verify archive artifacts exist.
 
 require "open3"
-require_relative "../tools/utf8"
+require_relative "../lib/utf8"
+require "json"
 require "yaml"
 
 ROOT = File.expand_path("../..", __dir__)
@@ -31,9 +32,10 @@ warnings = []
 
 required = [
   "DEPLOY/archive/RESTORE_FROM_PUB2_PUB3.md",
-  "DEPLOY/tools/audio/akmd_mastering_chain.rb",
-  "DEPLOY/tools/audio/radio_bergen_tracks.yml",
-  "DEPLOY/tools/audio/radio_bergen_visualizer_controller.js",
+  "DEPLOY/archive/recovery/manifest.json",
+  "MASTER/tools/audio/akmd_mastering_chain.rb",
+  "MASTER/tools/audio/radio_bergen_tracks.yml",
+  "MASTER/tools/audio/radio_bergen_visualizer_controller.js",
   "DEPLOY/openbsd/domain_candidates_from_pub3.yml",
   "DEPLOY/openbsd/ptr_openbsd_amsterdam.rb",
   "MASTER/tools/convergence/evidence_gate.rb",
@@ -71,7 +73,7 @@ tracked_files.each do |rel|
   end
 end
 
-tracks_path = File.join(ROOT, "DEPLOY/tools/audio/radio_bergen_tracks.yml")
+tracks_path = File.join(ROOT, "MASTER/tools/audio/radio_bergen_tracks.yml")
 if File.file?(tracks_path)
   tracks = YAML.safe_load_file(tracks_path)
   local = tracks.fetch("local_mp3", [])
@@ -79,12 +81,41 @@ if File.file?(tracks_path)
   failures << "radio_bergen_tracks.yml must mark external references as review-only" unless tracks.dig("external_reference", "policy") == "reference_only_until_rights_review"
 end
 
-chain_path = File.join(ROOT, "DEPLOY/tools/audio/akmd_mastering_chain.rb")
+chain_path = File.join(ROOT, "MASTER/tools/audio/akmd_mastering_chain.rb")
 if File.file?(chain_path)
   chain = File.read(chain_path)
   %w[highpass lowpass equalizer acompressor asoftclip alimiter].each do |token|
     failures << "akmd_mastering_chain.rb missing #{token}" unless chain.include?(token)
   end
+end
+
+manifest_path = File.join(ROOT, "DEPLOY/archive/recovery/manifest.json")
+if File.file?(manifest_path)
+  manifest = JSON.parse(File.read(manifest_path))
+  %w[pub pub2 pub3].each do |repo|
+    failures << "recovery manifest missing source #{repo}" unless manifest.dig("sources", repo, "head")
+  end
+  expected_apps = %w[privcam pub_attorney mytoonz]
+  archived_apps = Array(manifest["archived_apps"]).map { |entry| entry.fetch("name") }
+  expected_apps.each do |app|
+    failures << "recovery manifest missing archived app #{app}" unless archived_apps.include?(app)
+  end
+  expected_retired = %w[baibl blognet]
+  archived_subsystems = Array(manifest["archived_subsystems"]).map { |entry| entry.fetch("name") }
+  expected_retired.each do |name|
+    failures << "recovery manifest missing retired subsystem #{name}" unless archived_subsystems.include?(name)
+  end
+end
+
+{
+  "DEPLOY/rails/privcam/app/models/video.rb" => "class Video",
+  "DEPLOY/rails/privcam/app/reflexes/videos_infinite_scroll_reflex.rb" => "class VideosInfiniteScrollReflex",
+  "DEPLOY/rails/pub_attorney/app/reflexes/case_match_reflex.rb" => "class CaseMatchReflex",
+  "DEPLOY/rails/mytoonz/app/services/replicate_service.rb" => "class ReplicateService",
+  "DEPLOY/rails/mytoonz/app/jobs/generate_comic_strip_job.rb" => "class GenerateComicStripJob"
+}.each do |rel, token|
+  path = File.join(ROOT, rel)
+  failures << "missing recovered Rails app logic: #{rel}" unless File.file?(path) && File.read(path).include?(token)
 end
 
 if warnings.any?

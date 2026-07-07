@@ -12,12 +12,21 @@ class Takeaway::Order < ApplicationRecord
 
   STATUSES = %w[pending confirmed preparing out_for_delivery delivered cancelled].freeze
   TERMINAL_STATUSES = %w[delivered cancelled].freeze
+  TRANSITIONS = {
+    "pending" => %w[confirmed cancelled],
+    "confirmed" => %w[preparing cancelled],
+    "preparing" => %w[out_for_delivery cancelled],
+    "out_for_delivery" => %w[delivered],
+    "delivered" => [],
+    "cancelled" => []
+  }.freeze
   CENTS_PER_KRONE = 100.0
 
   validates :status, inclusion: { in: STATUSES }
   validates :delivery_address, presence: true
 
   before_validation { self.status ||= "pending" }
+  validate :status_transition_allowed, on: :update
 
   scope :active, -> { where.not(status: TERMINAL_STATUSES) }
   scope :recent, -> { order(created_at: :desc) }
@@ -29,17 +38,32 @@ class Takeaway::Order < ApplicationRecord
   end
 
   def advance_status!
-    idx = STATUSES.index(status)
-    return unless idx && idx < STATUSES.length - 1
+    transition_to!(next_status)
+  end
 
-    update!(status: STATUSES[idx + 1])
+  def transition_to!(next_status)
+    return false unless may_transition_to?(next_status)
+
+    update!(status: next_status)
     deliver_notification(user, title: "Order #{status.humanize.downcase}", body: "Your order from #{restaurant.name} is now #{status.humanize.downcase}.", source: self)
-    record_activity!("TakeawayOrderUpdated", actor: restaurant.user, source_vertical: "takeaway", locality: restaurant.city, visibility: "private")
+    record_activity!("TakeawayOrderUpdated", actor: restaurant.user, source_vertical: "takeaway", locality: restaurant[:city], visibility: "private")
+    true
   end
 
   def advanceable?
-    STATUSES.include?(status) && TERMINAL_STATUSES.exclude?(status)
+    next_status.present?
   end
+
+  def may_transition_to?(next_status)
+    TRANSITIONS.fetch(status, []).include?(next_status.to_s)
+  end
+
+  def next_status = TRANSITIONS.fetch(status, []).first
+  def cancel! = transition_to!("cancelled")
+  def confirm! = transition_to!("confirmed")
+  def prepare! = transition_to!("preparing")
+  def dispatch! = transition_to!("out_for_delivery")
+  def deliver! = transition_to!("delivered")
 
   def subtotal_display
     amount_display(subtotal_cents)
@@ -57,5 +81,14 @@ class Takeaway::Order < ApplicationRecord
 
   def amount_display(cents)
     format("%.2f NOK", cents.to_i / CENTS_PER_KRONE)
+  end
+
+  def status_transition_allowed
+    return unless will_save_change_to_status?
+    previous_status = status_in_database
+    return if previous_status.blank?
+    return if TRANSITIONS.fetch(previous_status, []).include?(status)
+
+    errors.add(:status, "cannot transition from #{previous_status} to #{status}")
   end
 end

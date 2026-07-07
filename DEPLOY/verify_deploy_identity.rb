@@ -6,7 +6,7 @@
 #   ruby DEPLOY/verify_deploy_identity.rb
 
 require "yaml"
-require_relative "tools/utf8"
+require_relative "lib/utf8"
 
 ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
@@ -25,6 +25,17 @@ failures << "shared bundler helper missing deployment config" unless shared_func
 failures << "shared bundler helper missing without config" unless shared_functions.include?(
   'bundle config set --local without \"development test\"'
 )
+shared_checks = {
+  "deploy_tracked_app()" => "shared deploy helper missing deploy_tracked_app",
+  "need_cmd ruby34 bundle doas" => "shared deploy helper must require ruby34/bundle/doas",
+  'doas mkdir -p "${APP_DIR}/.bundle"' => "shared deploy helper missing app .bundle mkdir",
+  'bundle_install_as_app "$APP_NAME" "$APP_DIR"' => "shared deploy helper missing bundler install",
+  'install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"' => "shared deploy helper missing standard rc.d install call",
+  'relayd_add_relay "$APP_DOMAIN" "$APP_PORT"' => "shared deploy helper missing standard relay call"
+}
+shared_checks.each do |needle, message|
+  failures << message unless shared_functions.include?(needle)
+end
 
 metadata.each do |app, expected|
   script = File.join(ROOT, expected.fetch("deploy_script"))
@@ -56,10 +67,8 @@ metadata.each do |app, expected|
     "SCRIPT_DIR=${0:a:h}" => "missing zsh script dir resolution for #{app}",
     "SRC_DIR=${SCRIPT_DIR}" => "missing source dir for #{app}",
     "SHARED_BUNDLE_CACHE" => "missing shared bundle cache for #{app}",
-    'doas mkdir -p "${APP_DIR}/.bundle"' => "missing app .bundle mkdir for #{app}",
-    'bundle_install_as_app "$APP_NAME" "$APP_DIR"' => "missing shared bundler install for #{app}",
-    "install_rcd \"$APP_NAME\" \"$APP_DIR\" \"$APP_PORT\" \"$APP_NAME\"" => "missing standard rc.d install call for #{app}",
-    "relayd_add_relay \"$APP_DOMAIN\" \"$APP_PORT\"" => "missing standard relay call for #{app}"
+    '. "${SCRIPT_DIR:h}/shared/deploy/@shared_functions.sh"' => "missing shared deploy source for #{app}",
+    'deploy_tracked_app "$APP_NAME"' => "missing shared deploy entrypoint for #{app}"
   }
 
   checks.each do |needle, message|

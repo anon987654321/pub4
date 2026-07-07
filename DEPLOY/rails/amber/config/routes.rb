@@ -28,13 +28,18 @@ Rails.application.routes.draw do
   patch "drafts/:id", to: "drafts#update", as: :draft
 
   resources :outfits do
-    collection { get :dressing_room }
+    collection { get :dressing_room; post :generate }
     member { post :like; patch :reorder; post :share; post :wear }
   end
 
   resources :planned_outfits, only: %i[index create destroy]
 
-  resources :wardrobe_items
+  resources :wardrobe_items do
+    collection { get :analytics }
+  end
+  resources :connections, only: %i[index create update]
+  resources :live_streams, only: %i[index show create update destroy]
+  resources :messages, only: %i[index create]
 
   resources :posts, only: %i[index show new create destroy] do
     resources :comments, only: %i[create destroy]

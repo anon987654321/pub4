@@ -2,31 +2,99 @@
 # frozen_string_literal: true
 
 require "open3"
+require "rbconfig"
+require "timeout"
 
 ROOT = File.expand_path(__dir__)
 APPS = %w[amber brgen bsdports hjerterom].freeze
 FAILURES = []
+STEP_TIMEOUT = Integer(ENV.fetch("RELEASE_GATE_STEP_TIMEOUT", "180"))
 
-RUBY_PREFIX = if ENV["RBENV_VERSION"]
-                "RBENV_VERSION=#{ENV["RBENV_VERSION"]} "
-              elsif system("which bundle34", out: File::NULL, err: File::NULL)
-                ""
-              else
-                "RBENV_VERSION=3.4.9 "
-              end
+def command_available?(cmd)
+  system("command", "-v", cmd, out: File::NULL, err: File::NULL)
+end
+
+def rbenv_version_available?(version)
+  return false unless command_available?("rbenv")
+
+  versions, status = Open3.capture2("rbenv", "versions", "--bare")
+  status.success? && versions.lines.map(&:strip).include?(version)
+end
+
+def ruby_cmd
+  return ENV["RUBY_CMD"].split if ENV["RUBY_CMD"].to_s != ""
+  return ["ruby34"] if command_available?("ruby34")
+  return ["env", "RBENV_VERSION=3.4.9", "rbenv", "exec", "ruby"] if rbenv_version_available?("3.4.9")
+
+  [RbConfig.ruby]
+end
+
+def bundle_cmd
+  return ENV["BUNDLE_CMD"].split if ENV["BUNDLE_CMD"].to_s != ""
+  return ["bundle34"] if command_available?("bundle34")
+  return ["env", "RBENV_VERSION=3.4.9", "rbenv", "exec", "bundle"] if rbenv_version_available?("3.4.9")
+  return ["bundle"] if command_available?("bundle")
+
+  nil
+end
 
 def run(label, command, chdir: ROOT)
-  stdout, stderr, status = Open3.capture3(command, chdir: chdir)
+  puts "release gate: #{label}"
+  stdout = +""
+  stderr = +""
+  status = nil
+
+  Open3.popen3(*command, chdir: chdir) do |stdin, out, err, wait_thread|
+    stdin.close
+    stdout_reader = Thread.new { out.read }
+    stderr_reader = Thread.new { err.read }
+
+    begin
+      Timeout.timeout(STEP_TIMEOUT) do
+        status = wait_thread.value
+        stdout = stdout_reader.value
+        stderr = stderr_reader.value
+      end
+    rescue Timeout::Error
+      begin
+        Process.kill("TERM", wait_thread.pid)
+      rescue Errno::ESRCH
+        # Child exited exactly as the timeout fired.
+      end
+
+      sleep 1
+
+      begin
+        Process.kill("KILL", wait_thread.pid) if wait_thread.alive?
+      rescue Errno::ESRCH
+        # Already gone after TERM.
+      end
+
+      FAILURES << "#{label}: timed out after #{STEP_TIMEOUT}s (#{command.join(" ")})"
+      return
+    end
+  end
+
   return if status.success?
 
   FAILURES << "#{label}: #{stderr.lines.last&.strip || stdout.lines.last&.strip || "exit #{status.exitstatus}"}"
 end
 
+RUBY = ruby_cmd
+BUNDLE = bundle_cmd
+
+unless BUNDLE
+  warn "Release gate skipped: bundle/bundle34 not available. Set BUNDLE_CMD to the intended Bundler executable."
+  exit 0
+end
+
 APPS.each do |app|
   dir = File.join(ROOT, app)
-  run("#{app} dartsass", "#{RUBY_PREFIX}bundle exec rails dartsass:build", chdir: dir)
-  importmap_audit = "#{RUBY_PREFIX}bundle exec ruby -e " \
-    '"require \"./config/environment\"; require \"importmap/commands\"; Importmap::Commands.start(%w[audit])"'
+  run("#{app} dartsass", [*BUNDLE, "exec", *RUBY, "bin/rails", "dartsass:build"], chdir: dir)
+  importmap_audit = [
+    *BUNDLE, "exec", *RUBY, "-e",
+    'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])'
+  ]
   run("#{app} importmap", importmap_audit, chdir: dir)
 end
 
@@ -37,14 +105,14 @@ end
   shared/test/lib/pub4/deploy_paths_test.rb
   shared/test/lib/pub4/ci_guard_test.rb
 ].each do |test|
-  run(test, "#{RUBY_PREFIX}ruby #{test}", chdir: ROOT)
+  run(test, [*RUBY, test], chdir: ROOT)
 end
 
-run("domain_alignment_gate", "ruby domain_alignment_gate.rb", chdir: ROOT)
+run("domain_alignment_gate", [*RUBY, "domain_alignment_gate.rb"], chdir: ROOT)
 
-run("frontend_production_gate", "ruby frontend_production_gate.rb", chdir: ROOT)
+run("frontend_production_gate", [*RUBY, "frontend_production_gate.rb"], chdir: ROOT)
 
-run("frontend_auditor", "#{RUBY_PREFIX}ruby frontend_auditor_gate.rb", chdir: ROOT)
+run("frontend_auditor", [*RUBY, "frontend_auditor_gate.rb"], chdir: ROOT)
 
 if FAILURES.any?
   warn "Release gate failures:"

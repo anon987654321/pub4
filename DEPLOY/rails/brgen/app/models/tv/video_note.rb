@@ -4,6 +4,9 @@ module Tv
   class VideoNote < ApplicationRecord
     self.table_name = "tv_video_notes"
 
+    include Shared::ActivityTrackable
+    tracks_activity created: "TvVideoNoteCreated", source_vertical: "tv", actor: :user
+
     belongs_to :video, class_name: "Tv::Video"
     belongs_to :user
 

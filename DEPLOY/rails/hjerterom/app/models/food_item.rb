@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class FoodItem < ApplicationRecord
-  enum :category, { dry_goods: 0, fresh: 1, frozen: 2, hygiene: 3, clothing: 4, books: 5, other: 6 }, prefix: :category, default: :other
+  enum :category, { dry_goods: 0, fresh: 1, frozen: 2, hygiene: 3, clothing: 4, books: 5, other: 6, toys: 7 }, prefix: :category, default: :other
+  REUSE_CATEGORIES = %w[clothing books toys].freeze
   enum :quality_state, { usable: 0, urgent: 1, unusable: 2 }, default: :usable
 
   belongs_to :donation
@@ -14,4 +15,5 @@ class FoodItem < ApplicationRecord
 
   scope :available, -> { where(status: "available", box_id: nil).where.not(quality_state: :unusable) }
   scope :urgent, -> { where(quality_state: :urgent) }
+  scope :reuse, -> { where(category: REUSE_CATEGORIES.map { |name| categories[name] }) }
 end

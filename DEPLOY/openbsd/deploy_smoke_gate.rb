@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../tools/utf8"
+require_relative "../lib/utf8"
 
 ROOT = File.expand_path("../..", __dir__)
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")

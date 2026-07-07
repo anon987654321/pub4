@@ -49,6 +49,19 @@ class TestSelfTest < Minitest::Test
     end
   end
 
+  def test_singularity_flags_duplicate_top_level_data_keys
+    Dir.mktmpdir do |root|
+      write_fixture_tree(root)
+      File.write(File.join(root, "data", "one.yml"), "alpha:\n  one: true\n")
+      File.write(File.join(root, "data", "two.yml"), "alpha:\n  two: true\n")
+
+      result = Master::Judge::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"])
+      singularity = result.value!.checks.fetch(0)
+
+      assert singularity.findings.any? { |finding| finding[:message].include?("top-level key alpha") }
+    end
+  end
+
   private
 
   def write_fixture_tree(root)
