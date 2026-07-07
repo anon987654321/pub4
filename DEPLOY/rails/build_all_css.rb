@@ -66,7 +66,7 @@ def selected_apps
 end
 
 def ensure_fonts!
-  FileUtils.mkdir_p(FONTS_DIR)
+  FileUtils.mkdir_p(fonts_dir)
   FONT_SOURCES.each do |filename, url|
     path = File.join(fonts_dir, filename)
     next if File.file?(path) && File.size(path).positive?
