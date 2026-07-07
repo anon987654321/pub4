@@ -82,7 +82,7 @@ if (( run_per_app )); then
 fi
 
 log "Smoke checks..."
-vssh 'ps aux | grep -E "falcon|puma" | grep -v grep' || log "WARN: no Falcon/Puma processes"
+vssh 'ps aux | grep -E "falcon serve" | grep -v grep' || log "WARN: no Falcon processes"
 if command -v jq >/dev/null 2>&1; then
   while IFS=$'\t' read -r app port; do
     vssh "nc -z 127.0.0.1 ${port}" 2>/dev/null && log "  ${app} listening on :${port}" \

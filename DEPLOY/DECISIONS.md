@@ -23,3 +23,9 @@ Rails app trees are copied to `/home/<app>/app`; shared code is copied to `/home
 ## MASTER Web Assets Must Be Explicit
 
 Falcon does not hot-reload production assets. MASTER web changes require `rails assets:precompile` and `doas rcctl restart master`.
+
+## Falcon Only (No Puma)
+
+Production app servers on vm23 are Falcon (`falcon serve` in `/etc/rc.d/*`). Do not add Puma or run `bin/rails server` with Puma in production.
+
+Solid Queue inline mode uses the env var `SOLID_QUEUE_IN_PUMA=true` — that name comes from Solid Queue/Rails 8 defaults and means "run the supervisor inside the web server process," not "use Puma." Falcon honors it the same way.

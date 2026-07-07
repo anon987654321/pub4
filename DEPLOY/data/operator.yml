@@ -6,6 +6,10 @@ meta:
   vps: dev@46.23.89.226
   repo_on_vps: /home/dev/pub4
 
+stack:
+  app_server: Falcon only on vm23 (falcon serve in rc.d). No Puma in production.
+  solid_queue: SOLID_QUEUE_IN_PUMA=true runs the supervisor inside the Falcon process (env name is Solid Queue convention, not Puma).
+
 app_layout:
   summary: Each DEPLOY/rails/<app>/ is already a full Rails 8 app (app/, config/, db/, test/).
   bootstrap: Greenfield apps use rails new once; existing apps are maintained in-tree.

@@ -4,9 +4,9 @@
 open:
   - id: solid_queue_worker_proof
     area: vps
-    signal: bsdports rcctl ok but :47312 not listening; full vps-deploy blocked by load/CI lock
-    action: when load < 4, run zsh DEPLOY/bin/vps-deploy bsdports then DEPLOY/openbsd/sh/solid_queue_proof.sh bsdports
-    proof: solid_queue processes > 0 and curl http://127.0.0.1:47312/up
+    signal: bsdports Falcon serves /up on :47312 but production_queue.sqlite3 has no solid_queue tables yet
+    action: vps-deploy bsdports (or doas su -m bsdports rails db:schema:load:queue) then rcctl restart bsdports; run solid_queue_proof.sh
+    proof: solid_queue processes > 0 in production_queue.sqlite3 and curl http://127.0.0.1:47312/up
 
 closed:
   - id: tts_host_binary
