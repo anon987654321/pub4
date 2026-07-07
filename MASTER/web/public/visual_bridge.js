@@ -414,11 +414,12 @@
 
   function bootExperimentalVisuals() {
     const params = new URLSearchParams(window.location.search);
-    const face3dOff = params.get("face3d") === "0" || localStorage.getItem("master_face3d") === "0";
-    const desktop = matchMedia("(min-width: 1024px)").matches;
-    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const face3d = !face3dOff && (params.get("face3d") === "1" || (desktop && !reducedMotion));
-    const clusters = face3d || params.get("clusters") === "1";
+    // The face3d_preview is a legacy 2D-canvas Papua-mask painter that grabs the
+    // shared #face canvas with getContext('2d'). A canvas can only ever hold one
+    // context type, so booting it permanently blocks the real WebGL 3D face from
+    // ever initializing on #face. It is now strictly OPT-IN — never auto-on.
+    const face3d = params.get("face3d") === "1" || localStorage.getItem("master_face3d") === "1";
+    const clusters = params.get("clusters") === "1";
 
     if (clusters && !window.MASTERClusterMiner) {
       const script = document.createElement("script");
