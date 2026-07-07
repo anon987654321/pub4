@@ -4,7 +4,7 @@ OpenBSD production stack for pub4. Start with `START_HERE.md`; operator runbook:
 
 Use `DEPLOY/bin/check` for local deploy validation, `DEPLOY/bin/check-rails` for Rails deploy gates,
 `DEPLOY/bin/check-openbsd` for OpenBSD config/deploy identity, and `DEPLOY/bin/check-vps` only for
-live vm23 checks.
+live vm23 checks. Start with `bin/pub4 status` and `RECIPES.md`.
 
 ## Layout
 

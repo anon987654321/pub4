@@ -1,17 +1,28 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "optparse"
 require "rbconfig"
 require_relative "../lib/pub4/check_runner"
+require_relative "../lib/pub4/ruby_runner"
 
 ROOT = File.expand_path("..", __dir__)
-RUBY = RbConfig.ruby
+RUBY = Pub4::RubyRunner.ruby_cmd
 STEP_TIMEOUT = Integer(ENV.fetch("MASTER_CHECK_TIMEOUT", "240"))
+profile = "operator"
+OptionParser.new do |parser|
+  parser.on("--profile=PROFILE", "contributor (fast) or operator (default)") { |value| profile = value }
+end.parse!
+
 runner = Pub4::CheckRunner.new(prefix: "check", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
 failures << "test" unless runner.run("rake test", RUBY, "-S", "rake", "test")
-failures << "test:kernel" unless runner.run("rake test:kernel", RUBY, "-S", "rake", "test:kernel")
+if profile == "contributor"
+  puts "check: test:kernel          skip — contributor profile"
+else
+  failures << "test:kernel" unless runner.run("rake test:kernel", RUBY, "-S", "rake", "test:kernel")
+end
 failures << "data_singularity" unless runner.run("data singularity", RUBY, "-S", "rake", "lint:data_singularity")
 
 if failures.empty?

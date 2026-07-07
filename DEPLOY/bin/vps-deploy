@@ -1,0 +1,52 @@
+#!/usr/bin/env zsh
+# Serial VPS deploy entrypoint — sync, CI, restart, health, deploy stamp.
+# Usage: zsh DEPLOY/bin/vps-deploy brgen|amber|bsdports|hjerterom|master
+set -euo pipefail
+
+app=${1:-}
+[[ -n $app ]] || { print -u2 "usage: vps-deploy APP|master"; exit 2 }
+
+repo=${PUB4_ROOT:-/home/dev/pub4}
+stamp_dir=/var/db/pub4
+mkdir -p "$stamp_dir" 2>/dev/null || doas mkdir -p "$stamp_dir"
+doas chmod 755 "$stamp_dir" 2>/dev/null || true
+
+sha=$(git -C "$repo" rev-parse --short HEAD)
+started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+write_stamp() {
+  local name=$1 status=$2
+  local file=$stamp_dir/last_deploy_${name}.json
+  doas tee "$file" >/dev/null <<EOF
+{"app":"$name","sha":"$sha","at":"$started","status":"$status","host":"$(hostname)"}
+EOF
+  doas chmod 644 "$file" 2>/dev/null || true
+}
+
+if [[ $app == master ]]; then
+  print "vps-deploy: master web"
+  zsh "$repo/DEPLOY/openbsd/sh/vps_deploy_master.sh"
+  write_stamp master ok
+  exit 0
+fi
+
+[[ -d /home/${app}/app ]] || { print -u2 "missing /home/${app}/app"; exit 1 }
+
+print "vps-deploy: $app (preflight load)"
+if [[ -x $repo/DEPLOY/openbsd/resource_guard.sh ]]; then
+  doas ksh "$repo/DEPLOY/openbsd/resource_guard.sh" || true
+fi
+
+print "vps-deploy: $app (ci + sync)"
+zsh "$repo/DEPLOY/openbsd/sh/vps_ci.sh" "$app"
+
+print "vps-deploy: $app (restart)"
+doas rcctl restart "$app"
+sleep 3
+doas rcctl check "$app"
+
+port=$(ruby34 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/DEPLOY/rails/apps.yml")).dig("apps","'"$app"'","port")')
+curl -fsS "http://127.0.0.1:${port}/up" >/dev/null
+
+print "vps-deploy: $app ok"
+write_stamp "$app" ok

@@ -1,0 +1,39 @@
+# Aspirational features — out of scope for agents unless explicitly requested.
+# Canonical active inventory: apps.yml (status: done). Do not implement horizon items by default.
+
+agent_policy: ignore
+
+horizon:
+  brgen:
+    core:
+      - { name: AI feed ranking, status: planned }
+      - { name: creator monetization, status: planned }
+    subapp_tv:
+      - { name: live stream infrastructure, status: planned }
+    subapp_dating:
+      - { name: premium memberships / boost purchases, status: planned }
+    subapp_marketplace:
+      - { name: AI recommendations, status: planned }
+    subapp_playlist:
+      - { name: creator donations / ad-free tier, status: planned }
+  amber:
+    wardrobe:
+      - { name: fashion embeddings (pgvector), status: planned }
+      - { name: visual similarity search, status: planned }
+      - { name: virtual fitting room, status: planned }
+      - { name: mood matcher, status: planned }
+      - { name: event outfit planner, status: planned }
+      - { name: sustainable styles / resale, status: planned }
+      - { name: weather-based suggestions, status: planned }
+      - { name: global trends / local designer highlights, status: planned }
+      - { name: style agents (MASTER integration), status: planned }
+  bsdports:
+    core:
+      - { name: FreeBSD/NetBSD ports parsers, status: planned, notes: "OpenBSD-only production scope" }
+      - { name: semantic package search (pgvector), status: planned }
+      - { name: infrastructure knowledge graph, status: planned }
+      - { name: OpenBSD package intelligence, status: planned }
+  hjerterom:
+    planned:
+      - { name: reporting jobs (Solid Queue), status: planned }
+      - { name: operational forecasting, status: planned }

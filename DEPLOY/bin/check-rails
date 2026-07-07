@@ -1,24 +1,47 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "rbconfig"
+require "optparse"
 require_relative "../../MASTER/lib/pub4/check_runner"
+require_relative "../../MASTER/lib/pub4/ruby_runner"
 
 ROOT = File.expand_path("../..", __dir__)
-RUBY = RbConfig.ruby
+RUBY = Pub4::RubyRunner.gate_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
-runner = Pub4::CheckRunner.new(prefix: "deploy-rails", root: ROOT, timeout: STEP_TIMEOUT)
+profile = "operator"
+OptionParser.new do |parser|
+  parser.on("--profile=PROFILE", "contributor (source gates) or operator (default)") { |value| profile = value }
+end.parse!
 
+runner = Pub4::CheckRunner.new(prefix: "deploy-rails", root: ROOT, timeout: STEP_TIMEOUT)
 failures = []
-failures << "ports" unless runner.run("ports", RUBY, "DEPLOY/rails/port_inventory_gate.rb")
-failures << "production" unless runner.run("production", RUBY, "DEPLOY/rails/check_production_gate.rb")
-failures << "walkthrough" unless runner.run("walkthrough", RUBY, "DEPLOY/rails/human_walkthrough_gate.rb")
-failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "DEPLOY/rails/check_phantom_foreign_keys.rb")
-failures << "domain_align" unless runner.run("domain align", RUBY, "DEPLOY/rails/domain_alignment_gate.rb")
-failures << "frontend" unless runner.run("frontend", RUBY, "DEPLOY/rails/frontend_production_gate.rb")
-failures << "auditor" unless runner.run("auditor", RUBY, "DEPLOY/rails/frontend_auditor_gate.rb")
-failures << "schema" unless runner.run("schema", RUBY, "DEPLOY/rails/schema_migration_gate.rb")
-failures << "assets" unless runner.run("asset freshness", RUBY, "DEPLOY/rails/generated_asset_freshness_gate.rb")
-failures << "runtime" unless runner.run("runtime", RUBY, "DEPLOY/rails/rails_runtime_gate.rb", "--runtime")
+
+source_gates = [
+  ["ports", "DEPLOY/rails/port_inventory_gate.rb"],
+  ["production", "DEPLOY/rails/check_production_gate.rb"],
+  ["walkthrough", "DEPLOY/rails/human_walkthrough_gate.rb"],
+  ["phantom fk", "DEPLOY/rails/check_phantom_foreign_keys.rb"],
+  ["domain align", "DEPLOY/rails/domain_alignment_gate.rb"],
+  ["frontend", "DEPLOY/rails/frontend_production_gate.rb"],
+  ["schema", "DEPLOY/rails/schema_migration_gate.rb"],
+  ["asset freshness", "DEPLOY/rails/generated_asset_freshness_gate.rb"],
+]
+
+source_gates.each do |name, path|
+  key = name.tr(" ", "_")
+  failures << key unless runner.run(name, RUBY, path)
+end
+
+if profile == "contributor"
+  puts "deploy-rails: auditor            skip — contributor profile"
+  puts "deploy-rails: runtime              skip — contributor profile"
+else
+  failures << "auditor" unless runner.run("auditor", RUBY, "DEPLOY/rails/frontend_auditor_gate.rb")
+  if Pub4::RubyRunner.runtime_gate_skipped?
+    puts "deploy-rails: runtime              skip — #{Pub4::RubyRunner.runtime_skip_reason}"
+  else
+    failures << "runtime" unless runner.run("runtime", RUBY, "DEPLOY/rails/rails_runtime_gate.rb", "--runtime")
+  end
+end
 
 exit(failures.empty? ? 0 : 1)

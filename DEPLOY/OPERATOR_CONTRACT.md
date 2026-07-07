@@ -10,6 +10,7 @@ This contract is for humans and AI agents working on DEPLOY.
 
 ## Rules
 
+- Run `bin/pub4 status` before starting work; use `RECIPES.md` for copy-paste paths.
 - Read `VPS_SAFETY.md` before live operations.
 - Treat `rails/apps.yml` and `master.json` as inventories, not suggestions.
 - Any `/etc` change made on vm23 must be copied back to `DEPLOY/openbsd/etc/`.

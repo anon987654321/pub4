@@ -14,11 +14,14 @@ DEPLOY is the production surface for pub4: OpenBSD vm23, relayd, NSD/acme, Rails
 
 ## Golden Commands
 
-- `DEPLOY/bin/check` runs local static deploy gates.
-- `DEPLOY/bin/check-rails` runs Rails deploy gates that do not need the VPS.
+- `bin/pub4 status` — one-screen repo/VPS posture and next command.
+- `RECIPES.md` — copy-paste operator recipes.
+- `DEPLOY/bin/check --profile=contributor` — fast static deploy gates.
+- `DEPLOY/bin/check-rails --profile=contributor` — Rails source gates (skips runtime on Ruby mismatch).
 - `DEPLOY/bin/check-openbsd` checks OpenBSD config/deploy identity locally.
 - `DEPLOY/bin/check-vps` is the explicit VPS/live gate wrapper; run it only on vm23 or with SSH/operator intent.
 - `DEPLOY/bin/check-full` chains the local checks and the integrity gate.
+- `DEPLOY/bin/vps-state` / `bin/pub4 vps deploy <app>` — deployed vs dev tree on vm23.
 
 ## Source Of Truth
 
@@ -26,7 +29,7 @@ DEPLOY is the production surface for pub4: OpenBSD vm23, relayd, NSD/acme, Rails
 - Public/deploy identity: `DEPLOY/master.json`.
 - OpenBSD configs: `DEPLOY/openbsd/etc/`.
 - Operator runbook: `DEPLOY/OPERATOR.md`.
-- Feature backlog: `DEPLOY/TODO.md`.
+- Feature backlog: `BACKLOG.yml` (open work) + `DEPLOY/rails/apps.yml` (inventory) + `apps.horizon.yml` (agent: ignore).
 
 ## Safety Defaults
 

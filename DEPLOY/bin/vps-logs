@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+
+ROOT = File.expand_path("../..", __dir__)
+$LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
+require "pub4/environment"
+
+options = { lines: 20 }
+OptionParser.new do |parser|
+  parser.banner = "Usage: vps-logs APP [--lines N]"
+  parser.on("--lines N", Integer) { |n| options[:lines] = n }
+end.parse!
+
+app = ARGV.shift
+abort "usage: vps-logs APP [--lines N]" if app.to_s.empty?
+
+unless Pub4::Environment.on_vps?
+  warn "vps-logs: skip — not on VPS (use: bin/pub4 vps logs #{app} --remote)"
+  exit 0
+end
+
+log_candidates = [
+  "/var/log/pub4/#{app}.log",
+  "/var/log/daemon",
+  "/var/log/maillog",
+]
+
+target = log_candidates.find { |path| File.file?(path) } || "/var/log/daemon"
+cmd = if File.readable?(target)
+        ["tail", "-n", options[:lines].to_s, target]
+      else
+        ["doas", "tail", "-n", options[:lines].to_s, target]
+      end
+
+exec(*cmd)

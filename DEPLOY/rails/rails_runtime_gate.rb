@@ -5,19 +5,19 @@ require "open3"
 require "yaml"
 
 ROOT = File.expand_path("../..", __dir__)
+$LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
+require "pub4/ruby_runner"
+require "pub4/environment"
+
 RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 
 def bundle_cmd
-  return ENV["BUNDLE_CMD"] if ENV["BUNDLE_CMD"].to_s != ""
-  return "bundle34" if RUBY_PLATFORM.include?("openbsd")
-  "bundle"
+  Pub4::RubyRunner.bundle_cmd
 end
 
 def rails_cmd
-  return ENV["RAILS_CMD"] if ENV["RAILS_CMD"].to_s != ""
-  return "ruby34" if RUBY_PLATFORM.include?("openbsd") && File.executable?("/usr/local/bin/ruby34")
-  "ruby"
+  Pub4::RubyRunner.ruby_cmd
 end
 
 def run!(cmd, chdir: ROOT, env: nil)
@@ -38,10 +38,13 @@ def runtime_ready?
 end
 
 def runtime_gate!(apps)
-  return true if ENV["SKIP_RUNTIME_GATE"] == "1"
+  if Pub4::RubyRunner.runtime_gate_skipped?
+    warn "runtime gate skipped: #{Pub4::RubyRunner.runtime_skip_reason || 'SKIP_RUNTIME_GATE=1'}"
+    return true
+  end
 
   unless runtime_ready?
-    warn "runtime gate skipped: #{bundle_cmd} not available (set SKIP_RUNTIME_GATE=1 to silence)"
+    warn "runtime gate skipped: #{bundle_cmd} not available"
     return true
   end
 

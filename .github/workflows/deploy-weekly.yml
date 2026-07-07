@@ -1,0 +1,15 @@
+name: Deploy Weekly Integrity
+
+# Run on vm23 via cron (preferred) or manual dispatch when billing allows GitHub scheduling.
+# On VPS: add DEPLOY/openbsd/sh/vps_weekly_integrity.sh to root crontab (weekly, off-peak).
+on:
+  workflow_dispatch:
+
+jobs:
+  note:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Weekly integrity runs on vm23, not GitHub runners."
+          echo "SSH: cd /home/dev/pub4 && sh DEPLOY/openbsd/sh/vps_weekly_integrity.sh"
+          echo "Log: /var/log/pub4/weekly_integrity.log"

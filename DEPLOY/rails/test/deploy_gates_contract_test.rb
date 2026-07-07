@@ -29,10 +29,31 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_integrity_gate_wires_new_gates
-    source = File.read(File.join(DEPLOY_ROOT, "integrity_gate.rb"))
-    %w[schema_migration asset_freshness human_walkthrough].each do |gate|
-      assert_includes source, gate
+    integrity = File.read(File.join(DEPLOY_ROOT, "integrity_gate.rb"))
+    gates = File.read(File.join(DEPLOY_ROOT, "lib", "gate_environment.rb"))
+    assert_includes integrity, "gate_environment"
+    assert_includes integrity, "GateEnvironment::INTEGRITY_GATES"
+    %w[schema_migration asset_freshness human_walkthrough vps_health].each do |gate|
+      assert_includes gates, gate
     end
+  end
+
+  def test_operator_surface_files_exist
+    %w[
+      ../bin/vps-state
+      ../bin/vps-deploy
+      ../bin/vps-logs
+      ../bin/post-pull-checklist
+      ../lib/gate_environment.rb
+      apps.horizon.yml
+    ].each do |rel|
+      path = File.join(ROOT, rel)
+      assert File.exist?(path), "missing #{rel}"
+    end
+    repo_root = File.expand_path("..", DEPLOY_ROOT)
+    assert File.exist?(File.join(repo_root, "RECIPES.md"))
+    assert File.exist?(File.join(repo_root, "BACKLOG.yml"))
+    assert File.exist?(File.join(repo_root, "bin", "pub4"))
   end
 
   def test_bsdports_queue_schema_present

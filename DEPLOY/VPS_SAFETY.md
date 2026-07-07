@@ -28,4 +28,4 @@ vm23 is a small OpenBSD VPS. Treat live operations as scarce, serial, and recove
 
 - Run `ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps`.
 - Copy any live `/etc` changes back into `DEPLOY/openbsd/etc/`.
-- Record persistent lessons in `DEPLOY/TODO.md`, `DEPLOY/DEBT.md`, or `DEPLOY/DECISIONS.md`.
+- Record persistent lessons in `BACKLOG.yml`, `DEPLOY/DEBT.md`, or `DEPLOY/DECISIONS.md`.

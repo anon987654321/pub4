@@ -1,0 +1,83 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+require "open3"
+
+ROOT = File.expand_path("..", __dir__)
+$LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib")) unless $LOAD_PATH.include?(File.join(ROOT, "MASTER", "lib"))
+
+require "pub4/environment"
+require "pub4/status_report"
+
+def usage
+  <<~HELP
+    pub4 — repo-wide operator surface
+
+    Usage:
+      bin/pub4 status [--json]
+      bin/pub4 vps state [--json] [--remote]
+      bin/pub4 vps deploy <app|master> [--remote]
+      bin/pub4 vps logs <app> [--lines N] [--remote]
+      bin/pub4 post-pull
+
+    Profiles (passed through to check scripts):
+      DEPLOY/bin/check --profile=contributor
+      cd MASTER && bin/check --profile=contributor
+  HELP
+end
+
+def ssh_host
+  ENV.fetch("PUB4_SSH_HOST", "dev@46.23.89.226")
+end
+
+def ssh_key
+  File.expand_path(ENV.fetch("PUB4_SSH_KEY", "~/.ssh/id_ed25519_brgen"))
+end
+
+def ssh_run(remote_cmd)
+  cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15", "-i", ssh_key, ssh_host, remote_cmd]
+  exec(*cmd)
+end
+
+command = ARGV.shift
+case command
+when "status", nil
+  json = ARGV.include?("--json")
+  puts Pub4::StatusReport.new(root: ROOT).render(json:)
+when "post-pull"
+  script = File.join(ROOT, "DEPLOY", "bin", "post-pull-checklist")
+  exec(script, *ARGV)
+when "vps"
+  sub = ARGV.shift
+  case sub
+  when "state"
+    if ARGV.delete("--remote")
+      ssh_run("cd /home/dev/pub4 && ruby34 DEPLOY/bin/vps-state #{ARGV.join(' ')}")
+    else
+      exec(File.join(ROOT, "DEPLOY", "bin", "vps-state"), *ARGV)
+    end
+  when "deploy"
+    app = ARGV.shift
+    abort(usage) if app.to_s.empty?
+    if ARGV.delete("--remote")
+      ssh_run("cd /home/dev/pub4 && zsh DEPLOY/bin/vps-deploy #{app}")
+    else
+      exec(File.join(ROOT, "DEPLOY", "bin", "vps-deploy"), app, *ARGV)
+    end
+  when "logs"
+    app = ARGV.shift
+    abort(usage) if app.to_s.empty?
+    if ARGV.delete("--remote")
+      ssh_run("cd /home/dev/pub4 && ruby34 DEPLOY/bin/vps-logs #{app} #{ARGV.join(' ')}")
+    else
+      exec(File.join(ROOT, "DEPLOY", "bin", "vps-logs"), app, *ARGV)
+    end
+  else
+    warn usage
+    exit 2
+  end
+else
+  warn usage
+  exit 2
+end

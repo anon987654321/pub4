@@ -57,4 +57,4 @@ macOS-only skips (expected): `crawl`/`smoke-web` with no local server, `crawl-br
 4. Verify: `ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps` and open `https://ai.brgen.no`,
    tap to start, confirm the particle face renders.
 
-Remaining feature work: `MASTER/TODO.md` and `DEPLOY/TODO.md`.
+Remaining feature work: `BACKLOG.yml` (open) and `DEPLOY/rails/apps.horizon.yml` (planned, agent: ignore).

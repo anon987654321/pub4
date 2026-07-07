@@ -3,25 +3,22 @@
 
 require "open3"
 require "socket"
+require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
-DEPLOY_TODO = File.join(REPO, "DEPLOY", "TODO.md")
-MASTER_TODO = File.join(ROOT, "TODO.md")
+BACKLOG = File.join(REPO, "BACKLOG.yml")
 
 def capture(*cmd, chdir: REPO)
   out, status = Open3.capture2e(*cmd, chdir:)
   status.success? ? out.strip : nil
 end
 
-def unchecked_todos(path)
-  return [] unless File.file?(path)
+def backlog_open
+  return [] unless File.file?(BACKLOG)
 
-  File.readlines(path, chomp: true).filter_map do |line|
-    next unless line.match?(/^\s*-\s+\[\s\]/)
-
-    line.sub(/^\s*-\s+\[\s\]\s+/, "").strip
-  end
+  data = YAML.safe_load(File.read(BACKLOG)) || {}
+  Array(data["open"])
 end
 
 def port_open?(port)
@@ -52,22 +49,18 @@ puts "repo: #{REPO}"
 puts "branch: #{branch} @ #{commit} (#{dirty} dirty, #{behind} behind upstream)"
 puts
 
-master_open = unchecked_todos(MASTER_TODO)
-deploy_open = unchecked_todos(DEPLOY_TODO)
-puts "MASTER/TODO.md open: #{master_open.size}"
-master_open.first(8).each { |item| puts "  - #{item}" }
-puts "  …" if master_open.size > 8
-puts
-puts "DEPLOY/TODO.md open: #{deploy_open.size}"
-deploy_open.first(8).each { |item| puts "  - #{item}" }
-puts "  …" if deploy_open.size > 8
+open_items = backlog_open
+puts "BACKLOG.yml open: #{open_items.size}"
+open_items.first(8).each { |item| puts "  - #{item}" }
+puts "  …" if open_items.size > 8
 puts
 
-puts "golden checks (last commands to rerun):"
-puts "  cd MASTER && bin/check"
-puts "  cd MASTER && bin/check-agent"
-puts "  cd MASTER && bin/check-web"
-puts "  DEPLOY/bin/check-rails"
+puts "quick status: bin/pub4 status"
+puts
+puts "golden checks (contributor profile):"
+puts "  cd MASTER && bin/check --profile=contributor"
+puts "  DEPLOY/bin/check --profile=contributor"
+puts "  DEPLOY/bin/check-rails --profile=contributor"
 puts "  ruby DEPLOY/integrity_gate.rb"
 puts "  cd MASTER && bundle exec ruby bin/cli /scan DEPLOY/rails/<app>"
 puts
@@ -90,3 +83,5 @@ puts "browser/audio probes:"
 puts "  #{probe_status('WebGL/tap probe', 'PROBE_REQUIRE_BROWSER')}"
 puts "  #{probe_status('Live web tests', 'MASTER_CI_WEB')}"
 puts "  TTS: edge-tts or espeak on PATH (#{capture('which', 'edge-tts') || capture('which', 'espeak') || 'not found'})"
+puts
+puts "recipes: RECIPES.md"

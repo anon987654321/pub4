@@ -1,0 +1,8 @@
+# brgen — agent notes
+
+- **Domain:** brgen.no (+ vertical subdomains). **Port:** 38182. **Deploy root:** `DEPLOY/rails/brgen`.
+- **Shared engine:** `DEPLOY/rails/shared` — prefer concerns there over duplicating in brgen.
+- **Inventory:** `DEPLOY/rails/apps.yml` (active); horizon work in `apps.horizon.yml` (ignore).
+- **Golden checks:** `DEPLOY/bin/check-rails --profile=contributor`; scan via `cd MASTER && bundle exec ruby bin/cli` → `/scan DEPLOY/rails/brgen`.
+- **VPS:** `bin/pub4 vps deploy brgen --remote` (serial — never parallel with other apps).
+- **Do not:** enable `force_ssl` behind relayd; edit `master.json` without updating `apps.yml`.

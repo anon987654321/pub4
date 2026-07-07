@@ -3,6 +3,7 @@
 
 # encoding: utf-8
 
+require "json"
 require "open3"
 require "optparse"
 require "yaml"
@@ -14,14 +15,16 @@ APPS_YML = File.join(ROOT, "DEPLOY", "rails", "apps.yml")
 options = {
   all_ready_apps: false,
   public: false,
-  core: false
+  core: false,
+  json: false,
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: ruby34 DEPLOY/openbsd/health_check.rb [--core|--all-ready-apps] [--public]"
+  parser.banner = "Usage: ruby34 DEPLOY/openbsd/health_check.rb [--core|--all-ready-apps] [--public] [--json]"
   parser.on("--core", "Check only core infrastructure plus brgen/master") { options[:core] = true }
   parser.on("--all-ready-apps", "Require every app listed in DEPLOY/rails/apps.yml") { options[:all_ready_apps] = true }
   parser.on("--public", "Check public HTTPS endpoints, cert files, and externally-routed names") { options[:public] = true }
+  parser.on("--json", "Emit machine-readable JSON on success") { options[:json] = true }
 end.parse!
 
 options[:all_ready_apps] = false if options[:core]
@@ -151,10 +154,18 @@ if options[:public]
 end
 
 if failures.any?
-  warn failures.join("\n")
+  if options[:json]
+    puts JSON.generate(ok: false, failures: failures)
+  else
+    warn failures.join("\n")
+  end
   exit 1
 end
 
 mode = options[:all_ready_apps] ? "all-ready-apps" : "core"
 scope = options[:public] ? "#{mode}+public" : mode
-puts "health check ok (#{scope})"
+if options[:json]
+  puts JSON.generate(ok: true, scope: scope, services_checked: required_services, apps_checked: ready_apps)
+else
+  puts "health check ok (#{scope})"
+end

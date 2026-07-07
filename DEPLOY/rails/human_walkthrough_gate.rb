@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "net/http"
-require "nokogiri"
 require_relative "../lib/deploy_inventory"
 require_relative "../lib/gate_result"
 require_relative "crawl_support"
@@ -59,6 +58,15 @@ def source_checks(result, app)
   end
 end
 
+def nokogiri_available?
+  return @nokogiri_available if defined?(@nokogiri_available)
+
+  require "nokogiri"
+  @nokogiri_available = true
+rescue LoadError
+  @nokogiri_available = false
+end
+
 def live_checks(result, app)
   return result.warn("#{app.name}: live walkthrough skipped; port #{app.port} closed") unless CrawlSupport.port_open?("127.0.0.1", app.port)
 
@@ -71,6 +79,11 @@ def live_checks(result, app)
   html = response.body.to_s
   %w[Exception Routing\ Error].each do |bad|
     result.fail("#{app.name}: visitor saw #{bad.tr('\\', '')}") if html.include?(bad.tr("\\", ""))
+  end
+
+  unless nokogiri_available?
+    result.warn("#{app.name}: live HTML structure checks skipped (nokogiri unavailable; source checks still ran)")
+    return
   end
 
   doc = Nokogiri::HTML5(html)

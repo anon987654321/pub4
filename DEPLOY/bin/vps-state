@@ -1,0 +1,109 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "open3"
+require "yaml"
+
+ROOT = File.expand_path("../..", __dir__)
+$LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
+require "pub4/environment"
+
+APPS = %w[brgen amber bsdports hjerterom].freeze
+STAMP_DIR = "/var/db/pub4"
+
+def git_short(path)
+  return "missing" unless File.directory?(path)
+  out, status = Open3.capture2e("git", "-C", path, "rev-parse", "--short", "HEAD")
+  return out.strip if status.success?
+
+  "no-git"
+rescue StandardError
+  "unknown"
+end
+
+def service_state(service)
+  out, status = Open3.capture2e("doas", "-n", "/usr/sbin/rcctl", "check", service)
+  return "ok" if status.success? && out.include?("(ok)")
+
+  out.strip.empty? ? "failed" : out.strip
+rescue StandardError
+  "unknown"
+end
+
+def port_listening?(port)
+  Pub4::Environment.port_open?(port) ? "listening" : "closed"
+end
+
+def deploy_stamp(app)
+  path = File.join(STAMP_DIR, "last_deploy_#{app}.json")
+  return nil unless File.file?(path)
+
+  JSON.parse(File.read(path))
+rescue StandardError
+  nil
+end
+
+def app_row(name, port)
+  dev_sha = git_short(ROOT)
+  deployed_root = Pub4::Environment.deployed_app_root(name)
+  stamp = deploy_stamp(name)
+  deployed_sha = if File.directory?(deployed_root)
+                   short = git_short(deployed_root)
+                   short == "no-git" && stamp ? stamp["sha"].to_s : short
+                 else
+                   "missing"
+                 end
+  {
+    app: name,
+    dev_sha: dev_sha,
+    deployed_sha: deployed_sha,
+    drift: dev_sha != deployed_sha,
+    service: service_state(name),
+    port: port,
+    port_state: port_listening?(port),
+    last_deploy: deploy_stamp(name),
+  }
+end
+
+unless Pub4::Environment.on_vps?
+  warn "vps-state: skip — not on VPS (use: bin/pub4 vps state --remote)"
+  exit 0
+end
+
+apps_yml = YAML.safe_load(File.read(File.join(ROOT, "DEPLOY", "rails", "apps.yml")))
+ports = apps_yml.fetch("apps").transform_values { |m| m.fetch("port").to_i }
+
+payload = {
+  host: `hostname`.strip,
+  dev_repo: ROOT,
+  dev_sha: git_short(ROOT),
+  master: {
+    service: service_state("master"),
+    port: Integer(ENV.fetch("MASTER_WEB_PORT", "53187")),
+    port_state: port_listening?(Integer(ENV.fetch("MASTER_WEB_PORT", "53187"))),
+    last_deploy: deploy_stamp("master"),
+  },
+  apps: APPS.map { |name| app_row(name, ports.fetch(name)) },
+}
+
+if ARGV.include?("--json")
+  puts JSON.pretty_generate(payload)
+else
+  puts "vps-state: #{payload[:host]}"
+  puts "dev: #{payload[:dev_repo]} @ #{payload[:dev_sha]}"
+  puts
+  m = payload[:master]
+  puts format("master%-10s service=%-8s port :%-5s %-9s", "", m[:service], m[:port], m[:port_state])
+  puts
+  payload[:apps].each do |row|
+    drift = row[:drift] ? "DRIFT" : "sync"
+    puts format("%-10s dev=%s deployed=%s %-5s svc=%-8s :%-5s %-9s",
+      row[:app], row[:dev_sha], row[:deployed_sha], drift, row[:service], row[:port], row[:port_state])
+    if row[:last_deploy]
+      puts "           last_deploy: #{row[:last_deploy]['sha']} @ #{row[:last_deploy]['at']}"
+    end
+  end
+  puts
+  puts "note: dev SHA != deployed SHA until zsh DEPLOY/openbsd/sh/vps_ci.sh <app> runs"
+end

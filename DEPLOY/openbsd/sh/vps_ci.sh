@@ -50,3 +50,10 @@ print "vps_ci: $app (sync + mutex + load gate)"
 sync_from_repo
 ensure_ci_lock
 doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_CI_GUARD=1; export PUB4_RAILS_ROOT=${repo}/DEPLOY/rails; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 install && bundle34 exec bin/ci'"
+
+sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
+started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+doas mkdir -p /var/db/pub4 2>/dev/null || true
+doas tee "/var/db/pub4/last_deploy_${app}.json" >/dev/null <<EOF
+{"app":"${app}","sha":"${sha}","at":"${started}","status":"ci_ok","host":"$(hostname)"}
+EOF

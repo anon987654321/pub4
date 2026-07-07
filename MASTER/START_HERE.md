@@ -41,5 +41,5 @@ Treat guidance by force:
 - Read the target file and its nearby tests.
 - Check `PATH_OWNERSHIP.yml` for risk.
 - Prefer small patches and local patterns.
-- Update `TODO.md`, `DECISIONS.md`, or `DEBT.md` when the change settles a known ambiguity.
+- Update `BACKLOG.yml`, `DECISIONS.md`, or `DEBT.md` when the change settles a known ambiguity.
 - Run the smallest check that proves the work.

@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+# Resolve pub4's preferred Ruby (~> 3.4) and exec the remainder of the command line.
+set -eu
+
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+
+if command -v ruby34 >/dev/null 2>&1; then
+  RUBY=ruby34
+elif command -v ruby3.4 >/dev/null 2>&1; then
+  RUBY=ruby3.4
+elif [ -f "$ROOT/.ruby-version" ] && command -v rbenv >/dev/null 2>&1; then
+  RUBY="$(rbenv which ruby 2>/dev/null || true)"
+fi
+
+RUBY="${RUBY:-ruby}"
+exec "$RUBY" "$@"

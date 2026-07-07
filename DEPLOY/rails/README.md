@@ -1,6 +1,6 @@
 # Rails apps
 
-4 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.**
+4 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.** Horizon/aspirational work: `apps.horizon.yml` (agent: ignore). Per-app notes: `<app>/AGENTS.md`.
 
 ## Apps
 

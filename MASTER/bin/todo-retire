@@ -2,17 +2,12 @@
 # frozen_string_literal: true
 
 require "open3"
+require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
-MASTER_TODO = File.join(ROOT, "TODO.md")
-DEPLOY_TODO = File.join(REPO, "DEPLOY", "TODO.md")
-
-def unchecked?(path)
-  return true unless File.file?(path)
-
-  File.readlines(path).any? { |line| line.match?(/^\s*-\s+\[\s\]/) }
-end
+BACKLOG = File.join(REPO, "BACKLOG.yml")
+LEGACY = [File.join(ROOT, "TODO.md"), File.join(REPO, "DEPLOY", "TODO.md")]
 
 def run_step(name, *cmd, chdir:)
   print "todo-retire: #{name.ljust(20)} "
@@ -22,18 +17,28 @@ def run_step(name, *cmd, chdir:)
   status.success?
 end
 
-if unchecked?(MASTER_TODO) || unchecked?(DEPLOY_TODO)
-  warn "todo-retire: blocked — unchecked items remain in MASTER/TODO.md or DEPLOY/TODO.md"
-  warn "todo-retire: run bin/handoff for the open list"
+open_items = []
+if File.file?(BACKLOG)
+  data = YAML.safe_load(File.read(BACKLOG)) || {}
+  open_items = Array(data["open"])
+end
+
+legacy_open = LEGACY.any? do |path|
+  File.file?(path) && File.readlines(path).any? { |line| line.match?(/^\s*-\s+\[\s\]/) }
+end
+
+if open_items.any? || legacy_open
+  warn "todo-retire: blocked — open items remain in BACKLOG.yml or legacy TODO.md files"
+  warn "todo-retire: run bin/handoff or bin/pub4 status"
   exit 1
 end
 
 checks = [
-  ["MASTER check", File.join(ROOT, "bin", "check")],
-  ["DEPLOY check-rails", File.join(REPO, "DEPLOY", "bin", "check-rails")],
+  ["MASTER check", File.join(ROOT, "bin", "check"), "--profile=contributor"],
+  ["DEPLOY check-rails", File.join(REPO, "DEPLOY", "bin", "check-rails"), "--profile=contributor"],
   ["integrity gate", File.join(REPO, "DEPLOY", "integrity_gate.rb")],
 ]
-failures = checks.reject { |name, cmd| run_step(name, cmd) }.map(&:first)
+failures = checks.reject { |name, cmd, *args| run_step(name, cmd, *args) }.map(&:first)
 
 if failures.any?
   warn "todo-retire: golden checks failed: #{failures.join(', ')}"
@@ -41,10 +46,9 @@ if failures.any?
 end
 
 unless ENV["TODO_RETIRE_CONFIRM"] == "1"
-  puts "todo-retire: all checks passed; set TODO_RETIRE_CONFIRM=1 to delete both TODO files"
+  puts "todo-retire: all checks passed; set TODO_RETIRE_CONFIRM=1 to delete legacy TODO.md files"
   exit 0
 end
 
-File.delete(MASTER_TODO) if File.file?(MASTER_TODO)
-File.delete(DEPLOY_TODO) if File.file?(DEPLOY_TODO)
-puts "todo-retire: deleted MASTER/TODO.md and DEPLOY/TODO.md"
+LEGACY.each { |path| File.delete(path) if File.file?(path) }
+puts "todo-retire: deleted legacy MASTER/TODO.md and DEPLOY/TODO.md (BACKLOG.yml is canonical)"
