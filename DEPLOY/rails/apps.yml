@@ -10,7 +10,7 @@
 # Stack default: Rails 8.1, Ruby 3.4, SQLite, Falcon, Solid Queue/Cache, relayd TLS
 #
 # Reconciled: 2026-07-07 — feature statuses verified against landed code + DEPLOY/TODO.md.
-# Remaining non-planned gaps: amber style-evolution timeline UI; bsdports FreeBSD/NetBSD parsers.
+# Remaining non-planned gaps: none in active apps (archived recovery apps stay port).
 
 apps:
 
@@ -136,7 +136,7 @@ apps:
         - { name: wardrobe upload UI (drag-and-drop),                      status: done, notes: "media-picker Stimulus drop handler + direct_upload on items form" }
         - { name: garment segmentation / background removal,               status: done, notes: "SegmentGarmentImageJob + RemoveBackgroundJob enqueued from WardrobeMediaJob" }
         - { name: outfit generation by weather/season/event,               status: done, notes: "OutfitGenerationService + outfits#generate action" }
-        - { name: style evolution timeline / aesthetic phases,             status: missing, notes: "life_phase field on Item exists; dedicated timeline UI not built" }
+        - { name: style evolution timeline / aesthetic phases,             status: done, notes: "StyleEvolutionService + wardrobe_items#timeline groups life_phase + wear history" }
         - { name: underused item surfacing,                                status: done, notes: "Item#underused? + analytics dashboard + items index chips" }
         - { name: wardrobe analytics dashboard,                            status: done, notes: "WardrobeAnalyticsService + wardrobe_items#analytics" }
         - { name: closet organisation tips (AI),                           status: done, notes: "WardrobeAnalyticsService#tips rendered in analytics view" }
@@ -171,7 +171,8 @@ apps:
         - { name: SecurityAdvisory model,                                   status: done }
         - { name: Maintainer model,                                         status: done }
         - { name: live search on name/summary/description (Hotwire),       status: done, notes: "ports_fts + PortsSearch" }
-        - { name: FTP import of real ports tree (OpenBSD/FreeBSD/NetBSD),  status: port, notes: "OpenBSD Makefile walk + FTP INDEX fallback hardened; unresolved deps logged to ImportRun; freebsd/netbsd parsers pending" }
+        - { name: OpenBSD ports tree import (Makefile walk + FTP fallback), status: done, notes: "MakefileParser + Importer + PortsImportJob; unresolved deps logged to ImportRun" }
+        - { name: FreeBSD/NetBSD ports parsers,                            status: planned, notes: "OpenBSD-only production scope; platforms seeded inactive" }
         - { name: dependency tree visualization,                            status: done, notes: "Dependency.tree_for cycle guard + _dependency_tree.html.erb role=tree + reverse-deps on show" }
         - { name: ports tree scheduled re-import job,                       status: done, notes: "recurring.yml nightly_ports_import + PortsImportJob on bulk queue + db/queue_schema.rb" }
         - { name: WCAG AAA compliance pass,                                status: done, notes: "ARIA tree/list roles on port surfaces, aria-labelledby dep graph (decorative SVG), exploration copy; not a full-site AAA audit" }

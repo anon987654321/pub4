@@ -12,6 +12,10 @@ class WardrobeItemsController < ApplicationController
     @recommendations = Current.user.recommendations.active.recent.limit(12)
   end
 
+  def timeline
+    @timeline = StyleEvolutionService.new(Current.user).timeline
+  end
+
   def show
     @wardrobe_item.record_activity!("AmberWardrobeItemViewed", source_vertical: "amber")
   end

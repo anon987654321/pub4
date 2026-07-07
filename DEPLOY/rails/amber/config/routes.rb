@@ -35,7 +35,10 @@ Rails.application.routes.draw do
   resources :planned_outfits, only: %i[index create destroy]
 
   resources :wardrobe_items do
-    collection { get :analytics }
+    collection do
+      get :analytics
+      get :timeline
+    end
   end
   resources :connections, only: %i[index create update]
   resources :live_streams, only: %i[index show create update destroy]

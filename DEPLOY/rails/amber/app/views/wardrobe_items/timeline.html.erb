@@ -1,0 +1,76 @@
+<% content_for :title, "Style evolution" %>
+
+<header role="banner" aria-label="Style evolution header">
+  <div>
+    <p class="dim">Aesthetic phases over time</p>
+    <h1>Style evolution</h1>
+  </div>
+  <nav role="navigation" aria-label="Style evolution actions">
+    <%= link_to "Analytics", analytics_wardrobe_items_path, class: "btn" %>
+    <%= link_to "Wardrobe", items_path, class: "btn" %>
+  </nav>
+</header>
+
+<section class="chips" aria-label="Phase summary">
+  <span class="chip"><%= @timeline[:summary][:total_items] %> wardrobe items</span>
+  <span class="chip"><%= @timeline[:summary][:phased_items] %> with life phase</span>
+  <% if @timeline[:summary][:dominant_phase].present? %>
+    <span class="chip">Dominant: <%= @timeline[:summary][:dominant_phase].humanize %></span>
+  <% end %>
+</section>
+
+<section aria-label="Life phase groups">
+  <h2>Life phases</h2>
+  <div class="style-phase-grid">
+    <% @timeline[:phases].each do |group| %>
+      <article class="style-phase-card" aria-labelledby="phase-<%= group[:phase] %>">
+        <header>
+          <h3 id="phase-<%= group[:phase] %>"><%= group[:label] %></h3>
+          <p class="dim"><%= group[:count] %> items</p>
+        </header>
+        <% if group[:items].any? %>
+          <ol class="style-phase-list" role="list">
+            <% group[:items].each do |item| %>
+              <li role="listitem">
+                <%= link_to item[:title], item_path(item[:id]) %>
+                <span class="dim"><%= item[:category] %></span>
+                <% if item[:mood_effect].present? %>
+                  <span class="tag"><%= item[:mood_effect] %></span>
+                <% end %>
+              </li>
+            <% end %>
+          </ol>
+        <% else %>
+          <p class="dim">No items tagged for this phase yet.</p>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+</section>
+
+<section aria-label="Wear history timeline">
+  <h2>Wear history</h2>
+  <% if @timeline[:wear_events].any? %>
+    <ol class="style-timeline" role="list">
+      <% @timeline[:wear_events].each do |event| %>
+        <li role="listitem" class="style-timeline__event">
+          <time datetime="<%= event[:worn_on] %>"><%= event[:worn_on] %></time>
+          <p>
+            <%= link_to event[:item_title], item_path(event[:item_id]) %>
+            <% if event[:outfit_title].present? %>
+              <span class="dim">in <%= event[:outfit_title] %></span>
+            <% end %>
+          </p>
+          <% if event[:life_phase].present? %>
+            <span class="tag tag--phase"><%= event[:life_phase] %></span>
+          <% end %>
+          <% if event[:context].present? %>
+            <p class="dim"><%= event[:context] %></p>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p class="dim">Wear items to build your style timeline.</p>
+  <% end %>
+</section>

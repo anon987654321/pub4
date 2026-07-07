@@ -105,6 +105,48 @@
   color: #2d6a4f;
 }
 
+.style-phase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+  margin: var(--space-md) 0;
+}
+
+.style-phase-card {
+  border: 1px solid var(--x-border, #2f3336);
+  border-radius: 6px;
+  padding: var(--space-sm);
+}
+
+.style-phase-list {
+  margin: 0.5rem 0 0;
+  padding-inline-start: 1.2rem;
+}
+
+.style-timeline {
+  margin: var(--space-md) 0;
+  padding: 0;
+  list-style: none;
+  border-inline-start: 2px solid var(--x-border, #2f3336);
+}
+
+.style-timeline__event {
+  position: relative;
+  margin: 0 0 var(--space-md) var(--space-md);
+  padding-inline-start: var(--space-sm);
+}
+
+.style-timeline__event::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--space-md) - 5px);
+  top: 0.35rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--x-text, #e7e9ea);
+}
+
 .tag-row {
   display: flex;
   flex-wrap: wrap;

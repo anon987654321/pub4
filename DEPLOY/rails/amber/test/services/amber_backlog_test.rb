@@ -59,4 +59,20 @@ class AmberBacklogTest < Minitest::Test
     assert_includes read("app/views/wardrobe_items/analytics.html.erb"), "Wardrobe analytics"
     assert_includes read("app/views/outfits/index.html.erb"), "Generate outfit"
   end
+
+  def test_style_evolution_timeline_is_wired
+    service = read("app/services/style_evolution_service.rb")
+    controller = read("app/controllers/wardrobe_items_controller.rb")
+    routes = read("config/routes.rb")
+    view = read("app/views/wardrobe_items/timeline.html.erb")
+
+    assert_includes service, "phase_groups"
+    assert_includes service, "wear_timeline"
+    assert_includes controller, "StyleEvolutionService"
+    assert_includes controller, "def timeline"
+    assert_includes routes, "get :timeline"
+    assert_includes view, "Style evolution"
+    assert_includes view, "Life phases"
+    assert_includes read("app/views/layouts/application.html.erb"), "timeline_wardrobe_items_path"
+  end
 end
