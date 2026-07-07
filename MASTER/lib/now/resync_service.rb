@@ -41,7 +41,7 @@ module Master
         bus&.publish("resync:reset", tag: tag_name, head: git.head, was: old_head)
         lines << bundle_install_line(File.join(repo, "MASTER"), "MASTER")
         lines << bundle_install_line(File.join(repo, "MASTER/web"), "MASTER/web")
-        Open3.capture2e("doas", "rcctl", "restart", "master")
+        Master::Reach::Exec.capture2e("doas", "rcctl", "restart", "master")
         sleep 2
         lines << "  rcctl restart master — #{CommandRegistry.service_status[:state]}"
         bus&.publish("deploy:restart", service: "master", state: CommandRegistry.service_status[:state])
@@ -55,7 +55,7 @@ module Master
       end
 
       def bundle_install_line(dir, label)
-        out, status = Open3.capture2e(Master::BUNDLE_BIN, "install", chdir: dir)
+        out, status = Master::Reach::Exec.capture2e(Master::BUNDLE_BIN, "install", chdir: dir)
         ok = status.success? && out.include?("Bundle complete")
         "  bundle install #{label} — #{ok ? "ok" : "FAILED"}"
       rescue StandardError => e

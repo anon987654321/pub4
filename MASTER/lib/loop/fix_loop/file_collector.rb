@@ -45,7 +45,7 @@ module Master
         private
 
         def collect_tracked(target)
-          out, _, status = Open3.capture3("git", "-C", @root, "ls-files", "-z")
+          out, _, status = Master::Reach::Exec.capture3("git", "-C", @root, "ls-files", "-z")
           return [] unless status.success?
 
           out.split("\0").map { |rel| File.join(@root, rel) }
@@ -57,7 +57,7 @@ module Master
         end
 
         def changed_since_last_commit(target)
-          out, _, status = Open3.capture3("git", "-C", @root, "diff", "--name-only", "HEAD")
+          out, _, status = Master::Reach::Exec.capture3("git", "-C", @root, "diff", "--name-only", "HEAD")
           return [] unless status.success?
 
           out.lines.map(&:strip).reject(&:empty?)

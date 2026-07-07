@@ -42,7 +42,7 @@ module Master
       end
 
       def changed_rb_files
-        out, st = Open3.capture2e("git", "diff", "--name-only", "HEAD~#{@depth}..HEAD", "--", "*.rb", chdir: @root)
+        out, st = Master::Reach::Exec.capture2e("git", "diff", "--name-only", "HEAD~#{@depth}..HEAD", "--", "*.rb", chdir: @root)
         return [] unless st.success?
         out.lines.map(&:strip).reject(&:empty?)
       end

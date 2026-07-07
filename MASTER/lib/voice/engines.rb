@@ -80,12 +80,12 @@ module Master
 
         return true if system("which", "mlx_audio.tts.generate", out: File::NULL, err: File::NULL)
 
-        _out, status = Open3.capture2(py, "-c", "import mlx_audio.tts", err: File::NULL)
+        _out, status = Master::Reach::Exec.capture2(py, "-c", "import mlx_audio.tts", err: File::NULL)
         status.success?
       end
 
       def chatterbox_cli?
-        _out, status = Open3.capture2("python3", "-c", "import chatterbox", err: File::NULL)
+        _out, status = Master::Reach::Exec.capture2("python3", "-c", "import chatterbox", err: File::NULL)
         status.success?
       end
 
@@ -124,7 +124,7 @@ module Master
           if audio is None:
               raise RuntimeError("mlx generated no audio")
         PY
-        _out, _err, status = Open3.capture3(py, "-c", py_script)
+        _out, _err, status = Master::Reach::Exec.capture3(py, "-c", py_script)
         return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
 
         false
@@ -150,7 +150,7 @@ module Master
           wav = model.generate(#{enriched.inspect}, **kwargs)
           ta.save(#{wav.inspect}, wav, model.sr)
         PY
-        _out, _err, status = Open3.capture3("python3", "-c", py)
+        _out, _err, status = Master::Reach::Exec.capture3("python3", "-c", py)
         return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
 
         false

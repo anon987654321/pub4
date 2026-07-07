@@ -107,7 +107,7 @@ module Master
       end
 
       def image_dimensions(path)
-        out, _err, status = Open3.capture3("identify", "-format", "%w %h", path.to_s)
+        out, _err, status = Master::Reach::Exec.capture3("identify", "-format", "%w %h", path.to_s)
         return nil unless status.success?
 
         width, height = out.split.map(&:to_i)
@@ -133,7 +133,7 @@ module Master
       end
 
       def run_zip(argv)
-        _out, err, status = Open3.capture3("zip", *argv)
+        _out, err, status = Master::Reach::Exec.capture3("zip", *argv)
         raise Error, "zip failed: #{err.to_s.lines.last.to_s.strip}" unless status.success?
 
         true

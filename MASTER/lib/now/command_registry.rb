@@ -202,7 +202,7 @@ module Master
       end
 
       def audit_changes(root)
-        out, status = Open3.capture2e("git", "-C", root, "diff", "--numstat", "HEAD")
+        out, status = Master::Reach::Exec.capture2e("git", "-C", root, "diff", "--numstat", "HEAD")
         return "audit: unavailable" unless status.success?
         rows = out.lines.map(&:strip).reject(&:empty?)
         return "audit: clean" if rows.empty?

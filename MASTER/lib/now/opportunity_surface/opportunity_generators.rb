@@ -174,7 +174,7 @@ module Master
         end
 
         def recent_commit_review
-          out, _, status = Open3.capture3("git", "-C", @root, "show", "--stat", "--numstat", "--format=%h", "HEAD")
+          out, _, status = Master::Reach::Exec.capture3("git", "-C", @root, "show", "--stat", "--numstat", "--format=%h", "HEAD")
           return [nil, {}] unless status.success?
 
           lines = out.lines.map(&:strip)

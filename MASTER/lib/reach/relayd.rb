@@ -49,7 +49,7 @@ module Master
       end
 
       def reload
-        out, status = Open3.capture2e("doas", "-n", "rcctl", "reload", "relayd")
+        out, status = Master::Reach::Exec.capture2e("doas", "-n", "rcctl", "reload", "relayd")
         @bus&.publish("relayd:reload", ok: status.success?)
         return Result.ok(out.strip) if status.success?
 

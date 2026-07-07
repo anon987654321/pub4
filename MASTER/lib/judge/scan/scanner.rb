@@ -122,7 +122,7 @@ module Master
         end
 
         def git_capture(*argv)
-          Timeout.timeout(GIT_TIMEOUT_SECONDS) { Open3.capture3(*argv) }
+          Timeout.timeout(GIT_TIMEOUT_SECONDS) { Master::Reach::Exec.capture3(*argv) }
         rescue Timeout::Error
           ["", "git command timed out after #{GIT_TIMEOUT_SECONDS}s", failure_status]
         end

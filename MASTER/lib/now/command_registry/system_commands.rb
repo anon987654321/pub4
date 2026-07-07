@@ -107,19 +107,19 @@ module Master
       def dispatch_diff(root, ctx: nil)
         arg = arg_for(ctx)
         base = arg.empty? ? "HEAD" : arg
-        out, = Open3.capture2e("git", "-C", root, "diff", base, "--stat")
+        out, = Master::Reach::Exec.capture2e("git", "-C", root, "diff", base, "--stat")
         out.strip.empty? ? "(no changes since #{base})" : out.strip
       end
 
       def dispatch_commit(agent, root, ctx: nil)
-        diff, = Open3.capture2e("git", "-C", root, "diff", "--cached", "--stat")
-        diff, = Open3.capture2e("git", "-C", root, "diff", "--stat") if diff.strip.empty?
+        diff, = Master::Reach::Exec.capture2e("git", "-C", root, "diff", "--cached", "--stat")
+        diff, = Master::Reach::Exec.capture2e("git", "-C", root, "diff", "--stat") if diff.strip.empty?
         return "nothing to commit" if diff.strip.empty?
         evolution = Master::Trace::SelfEvolutionTrigger.new(root:).call
         prompt = "Write a concise git commit message (1 line, imperative mood) for:\n#{diff}"
         commit_message = agent.ask_once(prompt).to_s.strip.lines.first.to_s.strip
-        Open3.capture2e("git", "-C", root, "add", "-u")
-        out, = Open3.capture2e("git", "-C", root, "commit", "-m", commit_message)
+        Master::Reach::Exec.capture2e("git", "-C", root, "add", "-u")
+        out, = Master::Reach::Exec.capture2e("git", "-C", root, "commit", "-m", commit_message)
         [evolution, out.strip].reject(&:empty?).join("\n")
       end
 
@@ -192,7 +192,7 @@ module Master
         script = File.join(root, "bin", "doctor")
         return "doctor: missing #{script}" unless File.file?(script)
 
-        out, err, status = Open3.capture3(Gem.ruby, script, chdir: root)
+        out, err, status = Master::Reach::Exec.capture3(Gem.ruby, script, chdir: root)
         body = [out, err].map(&:strip).reject(&:empty?).join("\n")
         status.success? ? body : "#{body}\ndoctor: exit #{status.exitstatus}"
       end

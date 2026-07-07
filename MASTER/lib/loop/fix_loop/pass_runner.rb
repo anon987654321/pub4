@@ -122,7 +122,7 @@ module Master
           fixed = 0
           rb = files.select { |f| f.end_with?(".rb") }
           if rb.any?
-            _, status = Open3.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
+            _, status = Master::Reach::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
             fixed += status.success? ? rb.size : rubocop_each_file(rb)
           end
           rb.each do |path|
@@ -136,7 +136,7 @@ module Master
 
         def rubocop_each_file(files)
           files.count do |path|
-            _, status = Open3.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", path, chdir: @root)
+            _, status = Master::Reach::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", path, chdir: @root)
             @bus&.publish("fix_loop:rubocop_file_failed", file: path) unless status.success?
             status.success?
           end
@@ -302,7 +302,7 @@ module Master
         def open_breakers = @llm_router.open_breakers
 
         def system_load_avg
-          out, _, st = Open3.capture3("/sbin/sysctl", "-n", "vm.loadavg")
+          out, _, st = Master::Reach::Exec.capture3("/sbin/sysctl", "-n", "vm.loadavg")
           return unless st.success?
           out.to_s[/\d+(?:\.\d+)?/]&.to_f
         rescue StandardError

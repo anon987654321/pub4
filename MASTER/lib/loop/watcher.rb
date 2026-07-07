@@ -66,7 +66,7 @@ module Master
       end
 
       def load_avg_1m
-        out, _, st = Open3.capture3("/sbin/sysctl", "-n", "vm.loadavg")
+        out, _, st = Master::Reach::Exec.capture3("/sbin/sysctl", "-n", "vm.loadavg")
         return unless st.success?
 
         load_average_1m(out)
@@ -76,13 +76,13 @@ module Master
 
       # OpenBSD does not expose vm.uvmexp.free via sysctl — parse vmstat instead.
       def mem_free_pct
-        out, _, st = Open3.capture3("/usr/bin/vmstat")
+        out, _, st = Master::Reach::Exec.capture3("/usr/bin/vmstat")
         return unless st.success?
 
         free = vmstat_free_bytes(out)
         return unless free
 
-        total, _, st2 = Open3.capture3("/sbin/sysctl", "-n", "hw.physmem")
+        total, _, st2 = Master::Reach::Exec.capture3("/sbin/sysctl", "-n", "hw.physmem")
         return unless st2.success?
 
         memory_free_percent(free, physmem_bytes(total))
@@ -129,7 +129,7 @@ module Master
       end
 
       def disk_root_pct
-        out, _, st = Open3.capture3("/bin/df", "-k", "/")
+        out, _, st = Master::Reach::Exec.capture3("/bin/df", "-k", "/")
         return unless st.success?
 
         disk_percent(out)
@@ -144,7 +144,7 @@ module Master
 
       # The master daemon runs as `falcon serve` on port 53187.
       def master_rss_mb
-        out, _, st = Open3.capture3("/bin/ps", "-Ao", "rss,command")
+        out, _, st = Master::Reach::Exec.capture3("/bin/ps", "-Ao", "rss,command")
         return unless st.success?
 
         master_rss_mb_from_ps(out)
@@ -163,7 +163,7 @@ module Master
 
       # nil = unknown (e.g. rcctl errored); false = explicitly down.
       def master_alive?
-        _, _, st = Open3.capture3("/usr/sbin/rcctl", "check", "master")
+        _, _, st = Master::Reach::Exec.capture3("/usr/sbin/rcctl", "check", "master")
         st.success?
       rescue StandardError
         nil

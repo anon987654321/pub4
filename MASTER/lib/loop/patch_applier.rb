@@ -29,7 +29,7 @@ module Master
         Tempfile.open(["master_patch", ".src"]) do |f|
           f.write(@original)
           f.flush
-          _out, err, status = Open3.capture3("patch", "--no-backup-if-mismatch", "-s", f.path, stdin_data: @diff)
+          _out, err, status = Master::Reach::Exec.capture3("patch", "--no-backup-if-mismatch", "-s", f.path, stdin_data: @diff)
           return Failure.new(reason: err.strip[0, 200]) unless status.success?
           return Failure.new(reason: "no change") if result.strip == @original.strip
         end

@@ -65,7 +65,7 @@ module Master
       end
 
       def service_status
-        out, _, st = Open3.capture3("/usr/sbin/rcctl", "check", "master")
+        out, _, st = Master::Reach::Exec.capture3("/usr/sbin/rcctl", "check", "master")
         { state: st.success? ? "ok" : "down", detail: out.strip }
       rescue Errno::ENOENT
         { state: "n/a", detail: "rcctl absent — not OpenBSD" }
@@ -74,7 +74,7 @@ module Master
       end
 
       def bundle_ok?(dir)
-        out, = Open3.capture2e("bundle34", "check", chdir: dir)
+        out, = Master::Reach::Exec.capture2e("bundle34", "check", chdir: dir)
         out.include?("dependencies are satisfied")
       end
 

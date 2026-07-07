@@ -30,7 +30,7 @@ module Master
         return unless Dir.exist?(web_dir)
 
         Master.ensure_services!(root: Master::ROOT)
-        pids_out, = Open3.capture2e("lsof", "-ti", ":#{port}")
+        pids_out, = Master::Reach::Exec.capture2e("lsof", "-ti", ":#{port}")
         pids_out.split.each { |pid| Process.kill("TERM", pid.to_i) rescue Errno::ESRCH }
         sleep 0.5
         count = ENV.fetch("FALCON_COUNT", "2")

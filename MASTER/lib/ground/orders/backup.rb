@@ -15,7 +15,7 @@ module Master
           src = File.expand_path("../../..", root)  # ~/pub4 from MASTER root
           cmd = ["openrsync", "-ae", "ssh #{SSH_OPTS.join(" ")}",
                  src, "#{REMOTE_HOST}:#{REMOTE_PATH}"]
-          out, status = Open3.capture2e(*cmd)
+          out, status = Master::Reach::Exec.capture2e(*cmd)
           if status.success?
             bytes = begin; File.size(src); rescue StandardError; nil; end
             bus&.publish("backup:ok", bytes:)

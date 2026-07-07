@@ -76,14 +76,14 @@ module Master
 
       def run_ffmpeg(argv)
         cmd = ["ffmpeg", *argv]
-        _out, err, status = Open3.capture3(*cmd)
+        _out, err, status = Master::Reach::Exec.capture3(*cmd)
         raise "ffmpeg failed: #{err.to_s.lines.last.to_s.strip}" unless status.success?
 
         true
       end
 
       def probe_duration(video_path)
-        out, err, status = Open3.capture3(
+        out, err, status = Master::Reach::Exec.capture3(
           "ffprobe", "-v", "error", "-show_entries", "format=duration",
           "-of", "default=noprint_wrappers=1:nokey=1", video_path
         )

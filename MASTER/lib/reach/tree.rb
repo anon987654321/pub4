@@ -23,7 +23,7 @@ module Master
         end
         return Result.err("path not found: #{target}", category: :validation) unless Dir.exist?(target)
 
-        out, err, status = Open3.capture3("zsh", SCRIPT, target)
+        out, err, status = Master::Reach::Exec.capture3("zsh", SCRIPT, target)
         return Result.err("tree failed: #{err.strip}", category: :unknown) unless status.success?
 
         lines = out.lines.map(&:chomp).reject(&:empty?)

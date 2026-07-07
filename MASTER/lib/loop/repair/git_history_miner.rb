@@ -21,7 +21,7 @@ module Master
         end
 
         def recent(limit: 100)
-          out, = Open3.capture2e(
+          out, = Master::Reach::Exec.capture2e(
             "git",
             "log",
             "--oneline",

@@ -60,7 +60,7 @@ module Master
       end
 
       def changed_lib_files(lib_dir)
-        out, = Open3.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
+        out, = Master::Reach::Exec.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
         return [] if out.strip.empty?
         out.lines
            .map { |l| File.join(@refs.root, l.strip) }

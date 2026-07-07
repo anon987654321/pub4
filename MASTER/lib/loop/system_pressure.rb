@@ -28,7 +28,7 @@ module Master
       def current_mem_free_pct
         return 100.0 unless RUBY_PLATFORM.include?("openbsd")
 
-        out, status = Open3.capture2("sysctl", "-n", "hw.physmem", "vm.stats.vm.v_free_count", "vm.stats.vm.v_page_size")
+        out, status = Master::Reach::Exec.capture2("sysctl", "-n", "hw.physmem", "vm.stats.vm.v_free_count", "vm.stats.vm.v_page_size")
         return 100.0 unless status.success?
 
         physmem, free_count, page_size = out.lines.map(&:strip).map(&:to_f)

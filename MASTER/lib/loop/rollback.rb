@@ -20,8 +20,8 @@ module Master
         tag = "master:rollback:#{category}:#{Process.pid}"
         @bus&.publish("pipeline:rollback", category: category, message: result.message[0, ROLLBACK_MSG_TRUNCATE], tag: tag)
         @bus&.publish("ops:rollback", category: category, tag: tag)
-        Open3.capture2e("git", "-C", @root, "stash", "push", "-u", "-m", tag)
-        Open3.capture2e("git", "-C", @root, "reset", "--hard", "HEAD")
+        Master::Reach::Exec.capture2e("git", "-C", @root, "stash", "push", "-u", "-m", tag)
+        Master::Reach::Exec.capture2e("git", "-C", @root, "reset", "--hard", "HEAD")
         true
       end
 
@@ -38,7 +38,7 @@ module Master
       end
 
       def dirty?
-        out, _, status = Open3.capture3("git", "-C", @root, "status", "--porcelain")
+        out, _, status = Master::Reach::Exec.capture3("git", "-C", @root, "status", "--porcelain")
         status.success? && !out.strip.empty?
       end
     end
