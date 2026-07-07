@@ -4,9 +4,11 @@ This file records intentional shapes that may otherwise look like bugs.
 
 ## Two Master Spines
 
-`lib/` and `kernel/` both define `Master::` intentionally. `lib/` is the gem, CLI, loop, judge, reach, trace, voice, and web-facing runtime. `kernel/` is a small isolated constitutional fold loaded on a separate path by kernel tests and `bin/master-kernel`.
+`lib/` and `kernel/` are intentionally separate load paths. `lib/` is the gem, CLI, loop, judge, reach, trace, voice, and web-facing runtime. `kernel/` is a small isolated constitutional fold loaded on its own path by kernel tests and `bin/master-kernel`.
 
-Namespace tooling should treat the kernel entrypoint as a known exception.
+As of `b61d73a7d`, kernel types live under `Master::Kernel::` (not top-level `Master::`) so namespace audits no longer collide with lib constants. `bin/nsaudit` skips only the kernel entrypoint file, not the whole tree.
+
+Namespace tooling should treat `bin/master-kernel` as the kernel load entrypoint.
 
 ## Rule Data Stays Split
 
