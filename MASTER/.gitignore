@@ -28,3 +28,9 @@ data/learnings.jsonl
 /runtime/
 !data/runtime/
 knowledge/
+
+# Runtime constitutional state — written by soul.yml hooks / scan runs. Keeping it
+# out of the tree means a dirty `git status` always signals human/agent edits, not
+# just that a probe ran.
+.constitutional_violations.jsonl
+.constitutional_locks/
