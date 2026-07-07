@@ -36,29 +36,29 @@ end
 # A scripted model: a fixed list of effects, proposed in order.
 class ScriptedModel
   def initialize(script) = @script = script
-  def propose(_context, verbs:) = @script.shift || Master::Effect.done("script empty")
+  def propose(_context, verbs:) = @script.shift || Master::Kernel::Effect.done("script empty")
 end
 
 Dir.mktmpdir do |root|
   init_git!(root)
 
   script = [
-    Master::Effect.write("ok.rb", "A = 1\n"),
-    Master::Effect.new(verb: :write, args: { path: "bad.rb", content: "A = {.freeze\n" }),
-    Master::Effect.new(verb: :write, args: { path: "leak.rb", content: "K = 'sk-#{'A' * 24}'\n" }),
-    Master::Effect.exec(["true"], evidence: :test_pass),
-    Master::Effect.exec(["true"], evidence: :scan_clean),
-    Master::Effect.exec(["true"], evidence: :code_review),
-    Master::Effect.git(:stage, paths: ["ok.rb"]),
-    Master::Effect.git(:commit, message: "add ok.rb"),
-    Master::Effect.done("built ok.rb, proved with exec"),
+    Master::Kernel::Effect.write("ok.rb", "A = 1\n"),
+    Master::Kernel::Effect.new(verb: :write, args: { path: "bad.rb", content: "A = {.freeze\n" }),
+    Master::Kernel::Effect.new(verb: :write, args: { path: "leak.rb", content: "K = 'sk-#{'A' * 24}'\n" }),
+    Master::Kernel::Effect.exec(["true"], evidence: :test_pass),
+    Master::Kernel::Effect.exec(["true"], evidence: :scan_clean),
+    Master::Kernel::Effect.exec(["true"], evidence: :code_review),
+    Master::Kernel::Effect.git(:stage, paths: ["ok.rb"]),
+    Master::Kernel::Effect.git(:commit, message: "add ok.rb"),
+    Master::Kernel::Effect.done("built ok.rb, proved with exec"),
   ]
 
-  kernel = Master::Kernel.new(
+  kernel = Master::Kernel::Fold.new(
     model: ScriptedModel.new(script),
-    constitution: Master::Constitution.load(data_dir: DATA),
-    world: Master::World.new(root:),
-    memory: Master::Memory.new
+    constitution: Master::Kernel::Constitution.load(data_dir: DATA),
+    world: Master::Kernel::World.new(root:),
+    memory: Master::Kernel::Memory.new
   )
 
   done = kernel.run("create ok.rb and prove it")
@@ -72,18 +72,18 @@ Dir.mktmpdir do |root|
 end
 
 puts "\nSecret — leak is structurally hard"
-s = Master::Secret.new("sk-live-xyz")
+s = Master::Kernel::Secret.new("sk-live-xyz")
 check("redacts in interpolation")  { "k=#{s}" == "k=[REDACTED]" }
 check("expose is the only way out") { s.expose == "sk-live-xyz" }
 
 puts "\nEvidence gate — no done without proof"
 Dir.mktmpdir do |root|
   init_git!(root)
-  k = Master::Kernel.new(
-    model: ScriptedModel.new([Master::Effect.done("claiming done with no work")]),
-    constitution: Master::Constitution.load(data_dir: DATA),
-    world: Master::World.new(root:),
-    memory: Master::Memory.new,
+  k = Master::Kernel::Fold.new(
+    model: ScriptedModel.new([Master::Kernel::Effect.done("claiming done with no work")]),
+    constitution: Master::Kernel::Constitution.load(data_dir: DATA),
+    world: Master::Kernel::World.new(root:),
+    memory: Master::Kernel::Memory.new,
     max_turns: 1
   )
   check("done without evidence is blocked") { k.run("x").reason == :max_turns }

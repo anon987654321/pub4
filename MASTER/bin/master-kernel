@@ -11,10 +11,10 @@ class NullModel
   def initialize(goal)
     @goal = goal
     @script = [
-      Master::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :test_pass),
-      Master::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :scan_clean),
-      Master::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :code_review),
-      Master::Effect.done("noop complete: #{@goal}")
+      Master::Kernel::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :test_pass),
+      Master::Kernel::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :scan_clean),
+      Master::Kernel::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :code_review),
+      Master::Kernel::Effect.done("noop complete: #{@goal}")
     ]
   end
 
@@ -22,7 +22,7 @@ class NullModel
     unsupported = @script.map(&:verb).uniq - verbs
     raise "kernel verbs unavailable: #{unsupported.join(", ")}" unless unsupported.empty?
 
-    @script.shift || Master::Effect.done("noop complete: #{@goal}")
+    @script.shift || Master::Kernel::Effect.done("noop complete: #{@goal}")
   end
 end
 
@@ -44,12 +44,12 @@ end
 
 root = File.expand_path(options.fetch(:root))
 data_dir = File.join(File.expand_path("..", __dir__), "data")
-constitution = Master::Constitution.load(data_dir:)
-world = Master::World.new(root:)
-memory = Master::Memory.new
+constitution = Master::Kernel::Constitution.load(data_dir:)
+world = Master::Kernel::World.new(root:)
+memory = Master::Kernel::Memory.new
 model = NullModel.new(goal)
 
-result = Master::Kernel.new(
+result = Master::Kernel::Fold.new(
   model:,
   constitution:,
   world:,

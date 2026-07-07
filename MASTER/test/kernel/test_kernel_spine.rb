@@ -10,21 +10,21 @@ class TestKernelSpine < Minitest::Test
     def propose(_context, verbs:)
       raise "missing verbs" unless verbs.include?(:done)
 
-      effects.shift || Master::Effect.done("empty")
+      effects.shift || Master::Kernel::Effect.done("empty")
     end
   end
 
   def constitution
-    Master::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
+    Master::Kernel::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
   end
 
   def test_done_without_evidence_is_blocked
     Dir.mktmpdir do |dir|
-      model = Model.new([Master::Effect.done("fake")])
-      memory = Master::Memory.new
-      world = Master::World.new(root: dir)
+      model = Model.new([Master::Kernel::Effect.done("fake")])
+      memory = Master::Kernel::Memory.new
+      world = Master::Kernel::World.new(root: dir)
 
-      result = Master::Kernel.new(
+      result = Master::Kernel::Fold.new(
         model:,
         constitution: constitution,
         world:,
@@ -38,25 +38,25 @@ class TestKernelSpine < Minitest::Test
   end
 
   def test_exec_requires_structured_argv
-    effect = Master::Effect.new(verb: :exec, args: { command: "echo unsafe" })
-    verdict = constitution.admit(effect, Master::Memory.new)
+    effect = Master::Kernel::Effect.new(verb: :exec, args: { command: "echo unsafe" })
+    verdict = constitution.admit(effect, Master::Kernel::Memory.new)
 
-    assert_kind_of Master::Verdict::Block, verdict
+    assert_kind_of Master::Kernel::Verdict::Block, verdict
     assert_equal :structured_exec, verdict.by
   end
 
   def test_ruby_write_must_parse
-    effect = Master::Effect.write("bad.rb", "def nope")
-    verdict = constitution.admit(effect, Master::Memory.new)
+    effect = Master::Kernel::Effect.write("bad.rb", "def nope")
+    verdict = constitution.admit(effect, Master::Kernel::Memory.new)
 
-    assert_kind_of Master::Verdict::Block, verdict
+    assert_kind_of Master::Kernel::Verdict::Block, verdict
     assert_equal :ruby_parses, verdict.by
   end
 
   def test_world_blocks_path_escape
     Dir.mktmpdir do |dir|
-      world = Master::World.new(root: dir)
-      observation = world.perform(Master::Effect.read("../outside"))
+      world = Master::Kernel::World.new(root: dir)
+      observation = world.perform(Master::Kernel::Effect.read("../outside"))
 
       assert observation.err?
       assert_match(/path escapes workspace/, observation.message)
@@ -64,8 +64,8 @@ class TestKernelSpine < Minitest::Test
   end
 
   def test_plain_success_is_not_evidence
-    memory = Master::Memory.new
-    memory.record(Master::Effect.exec(["true"]), Master::Observation.ok(""))
+    memory = Master::Kernel::Memory.new
+    memory.record(Master::Kernel::Effect.exec(["true"]), Master::Kernel::Observation.ok(""))
 
     refute memory.proved?
   end

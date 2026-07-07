@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Master
+module Master::Kernel
   # Kernel — the fold. This is the whole control flow of the agent, and it fits
   # on a screen on purpose. The model proposes an Effect; the Constitution
   # admits or blocks it; the World performs what was admitted; the Memory
@@ -10,7 +10,7 @@ module Master
   # Capability lives in the World, judgement lives in the Constitution, the
   # Kernel only sequences them. To add an ability, add an Effect handler; to add
   # a constraint, add a rule. The spine never grows.
-  class Kernel
+  class Fold
     Done = Data.define(:reason, :turns, :summary)
 
     def initialize(model:, constitution:, world:, memory:, max_turns: 40)
