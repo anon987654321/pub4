@@ -87,10 +87,24 @@ it unblocks dogfooding).
 Each slice: absorb essence → prove green (`rake test:kernel`, kernel smoke,
 `bin/master-kernel "dogfood noop"`) → delete the drained files → commit.
 
+## Severance is a rewire, not a delete
+
+A reference sweep of the media/infra kill list found it is **load-bearing in the
+live lib boot**, not free-floating dead code: `builder.rb`, `builder/boot_phases.rb`,
+`now/command_registry/tool_commands.rb`, `judge/council/motion_critique.rb`,
+`master.rb`, and `master_runtime.rb` all wire it in (`video_chain` alone has 28
+references). So the accretion cannot be peeled off file-by-file while lib runs —
+each subsystem comes out only when the kernel replaces the layer that boots it
+(builder → `Fold.new`, command_registry → thin dispatch). Severance (slices 5–6)
+is therefore a deliberate cutover of the deployed runtime, gated on a decision,
+not the incremental green-at-each-step work of slices 0–4. **Do not delete lib
+boot dependencies until the kernel is wired as the CLI's runtime.**
+
 ## Kill list (dies, does not move)
 
 Verified per-file for live references at migration time (the Phase 1 method), but
-these carry no coding-agent role and are expected to delete outright:
+these carry no coding-agent role and are expected to delete outright once the boot
+layer above them is the kernel:
 
 - **reach media/infra:** `character_lora_*`, `motion_lora_*`, `comfyui_client`,
   `replicate_client`, `repligen*`, `video_*`, `postpro`, `social_sim/`,
