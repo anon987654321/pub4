@@ -2,12 +2,12 @@
 
 require "json"
 
-module Master::Kernel
+module Master::Core
   # Model — the entire LLM surface of the agent, reduced to one method: given the
   # conversation Memory and the closed verb set, emit exactly one Effect. Whatever
   # the old lib/judge dispatcher did — routing, tool schemas, ReAct loops, council
   # — collapses to "ask for the next effect and parse it." The Constitution, not
-  # the model, decides whether the effect happens; the Kernel, not the model,
+  # the model, decides whether the effect happens; the Core, not the model,
   # sequences the turns. So the model stays thin and replaceable.
   #
   # parse is total and pure: any malformed reply becomes a note Effect, so a bad
@@ -37,7 +37,7 @@ module Master::Kernel
 
       Rules the runtime enforces (so obey them or the effect is refused):
         - never write a secret into a file or note
-        - never write the constitution (data/rules.yml, data/soul.yml) or the kernel/ spine
+        - never write the constitution (data/rules.yml, data/soul.yml) or the core/ spine
         - every .rb you write must parse
         - exec argv must be an array of strings
         - you cannot declare `done` (or `git commit`) until exec effects have
@@ -46,12 +46,12 @@ module Master::Kernel
       Reason silently; output only the JSON object.
     PROMPT
 
-    def initialize(model_id: ENV.fetch("MASTER_KERNEL_MODEL", DEFAULT_MODEL), chat: nil)
+    def initialize(model_id: ENV.fetch("MASTER_CORE_MODEL", DEFAULT_MODEL), chat: nil)
       @model_id = model_id
       @chat = chat
     end
 
-    # The one method the Kernel calls. Returns an Effect.
+    # The one method the Core calls. Returns an Effect.
     def propose(context, verbs:)
       reply = ask(transcript(context))
       Model.parse(reply, verbs:)

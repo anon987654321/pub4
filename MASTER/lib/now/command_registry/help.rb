@@ -18,9 +18,9 @@ module Master
           summary: "scan MASTER itself",
           detail: ["/self", "Runs the MASTER self-scan with stream output."],
         },
-        "kernel" => {
-          summary: "run kernel fold smoke test",
-          detail: ["/kernel", "Runs kernel/spec/kernel_smoke.rb — Effect → Constitution → World loop."],
+        "core" => {
+          summary: "run core fold smoke test",
+          detail: ["/core", "Runs core/spec/core_smoke.rb — Effect → Constitution → World loop."],
         },
         "fix" => {
           summary: "run or preview fixes for a target",
@@ -108,8 +108,8 @@ module Master
           detail: ["/help", "/help <command>"],
         },
         "fold" => {
-          summary: "run a coding goal through the kernel Fold (rebuild runtime)",
-          detail: ["/fold <goal>", "Routes one goal to kernel/; streams turns as kernel:turn events."],
+          summary: "run a coding goal through the core Fold (rebuild runtime)",
+          detail: ["/fold <goal>", "Routes one goal to core/; streams turns as core:turn events."],
         },
         "domain" => {
           summary: "inspect or sync a pub4 subdomain cluster",

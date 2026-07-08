@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../kernel/master"
+require_relative "../../core/master"
 
 # Model.parse is the whole trust boundary between the LLM and the fold: it must
 # turn any string into exactly one Effect, and never raise. These cases pin that.
 class TestModelParse < Minitest::Test
-  VERBS = Master::Kernel::VERBS
+  VERBS = Master::Core::VERBS
 
-  def parse(text) = Master::Kernel::Model.parse(text, verbs: VERBS)
+  def parse(text) = Master::Core::Model.parse(text, verbs: VERBS)
 
   def test_clean_write_effect
     e = parse('{"verb":"write","args":{"path":"a.rb","content":"A = 1\n"}}')

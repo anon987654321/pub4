@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Master::Kernel
+module Master::Core
   # Memory — the record. Holds the conversation the model sees and the evidence
   # the Constitution checks. Compaction is turn-aware: it summarises the oldest
   # turns and keeps the recent ones whole, never orphaning an observation from
@@ -11,7 +11,7 @@ module Master::Kernel
     Entry = Data.define(:role, :text)
 
     # What counts as proof, and how much of it ends the turn. This is the one
-    # Ruby source for the kernel's evidence policy; the Model's prompt is built
+    # Ruby source for the core's evidence policy; the Model's prompt is built
     # from it (no restated numbers) and a test pins it to data/rules.yml, whose
     # evidence_scoring the lib spine still reads until that spine is severed.
     SCORING = {
@@ -26,7 +26,7 @@ module Master::Kernel
     # Context budget in characters. A ~1GB OpenBSD VPS cannot hold a generous
     # transcript alongside an LLM call without the OOM-killer stepping in, so on a
     # constrained host the budget shrinks and compaction runs sooner. This is the
-    # whole of the old HostBudget the kernel needs — the guard rides on Memory's
+    # whole of the old HostBudget the core needs — the guard rides on Memory's
     # existing compaction, so the Fold gains no new logic. The rest of HostBudget
     # (TTS toggles, pid reaping, shell tips) is CLI accretion that dies with lib.
     GENEROUS_BUDGET = 24_000

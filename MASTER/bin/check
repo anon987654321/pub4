@@ -19,9 +19,9 @@ runner = Pub4::CheckRunner.new(prefix: "check", root: ROOT, timeout: STEP_TIMEOU
 failures = []
 failures << "test" unless runner.run("rake test", RUBY, "-S", "rake", "test")
 if profile == "contributor"
-  puts "check: test:kernel          skip — contributor profile"
+  puts "check: test:core          skip — contributor profile"
 else
-  failures << "test:kernel" unless runner.run("rake test:kernel", RUBY, "-S", "rake", "test:kernel")
+  failures << "test:core" unless runner.run("rake test:core", RUBY, "-S", "rake", "test:core")
 end
 failures << "data_singularity" unless runner.run("data singularity", RUBY, "-S", "rake", "lint:data_singularity")
 

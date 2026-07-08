@@ -6,9 +6,9 @@ require "securerandom"
 require "timeout"
 require "time"
 
-module Master::Kernel
+module Master::Core
   # World — the only thing that touches the outside. Each verb is one handler;
-  # the set is closed (Master::Kernel::VERBS), so the blast radius of the agent is the
+  # the set is closed (Master::Core::VERBS), so the blast radius of the agent is the
   # surface of this file and nothing else. The Constitution has already admitted
   # whatever arrives here, so handlers do the IO plainly — their only added duty
   # is crash-safety (writes are atomic) and honest reporting. Reversing a whole
@@ -22,7 +22,7 @@ module Master::Kernel
       @ask = ask
     end
 
-    def verbs = Master::Kernel::VERBS
+    def verbs = Master::Core::VERBS
 
     def perform(effect)
       send("do_#{effect.verb}", **effect.args)

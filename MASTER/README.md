@@ -6,4 +6,4 @@ Local boot: `bundle install`, then `bundle exec ruby bin/cli`. Pipeline stages a
 
 Start with `START_HERE.md`; use `EXAMPLES.md` when in doubt about patch shape. Use `bin/check` for ordinary contributor validation, `bin/check-agent` for law/agent changes, `bin/check-web` for the face, and `bin/check-full` for operator-grade gates.
 
-Two spines share the `Master::` namespace intentionally. `lib/` is the application/runtime spine loaded by the gem and the CLI. `kernel/` is a small constitutional fold spine loaded on its own path by `bin/master-kernel` and kernel tests. Namespace audits skip the kernel entrypoint so the two-spine design is not mistaken for accidental duplicate constants.
+Two spines share the `Master::` namespace intentionally. `lib/` is the application/runtime spine loaded by the gem and the CLI. `core/` is a small constitutional fold spine (`Master::Core::`) loaded on its own path by `bin/master-core` and the core tests. Because it lives under `Master::Core::` (not top-level `Master::`), it coexists with `lib/` in one process without constant collisions.

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../kernel/master"
+require_relative "../../core/master"
 require "tmpdir"
 
 # The observer lets a host watch the fold turn by turn without being able to
@@ -11,15 +11,15 @@ class FoldObserverTest < Minitest::Test
   # Minimal offline model: emit a scripted list of effects, then done.
   class ScriptedModel
     def initialize(*effects) = @effects = effects
-    def propose(_context, verbs:) = @effects.shift || Master::Kernel::Effect.done("done")
+    def propose(_context, verbs:) = @effects.shift || Master::Core::Effect.done("done")
   end
 
   def build(model, root:, observer: nil)
-    Master::Kernel::Fold.new(
+    Master::Core::Fold.new(
       model:,
-      constitution: Master::Kernel::Constitution.new(rules: []),
-      world: Master::Kernel::World.new(root:),
-      memory: Master::Kernel::Memory.new,
+      constitution: Master::Core::Constitution.new(rules: []),
+      world: Master::Core::World.new(root:),
+      memory: Master::Core::Memory.new,
       observer:
     )
   end
@@ -28,8 +28,8 @@ class FoldObserverTest < Minitest::Test
     Dir.mktmpdir do |root|
       seen = []
       model = ScriptedModel.new(
-        Master::Kernel::Effect.write("a.txt", "hi\n"),
-        Master::Kernel::Effect.done("built")
+        Master::Core::Effect.write("a.txt", "hi\n"),
+        Master::Core::Effect.done("built")
       )
       observer = ->(turn:, effect:, observation:) { seen << [turn, effect.verb, observation.ok?] }
       done = build(model, root:, observer:).run("goal")
@@ -43,15 +43,15 @@ class FoldObserverTest < Minitest::Test
     Dir.mktmpdir do |root|
       seen = []
       # A rule that blocks every write; the fold observes the refusal and moves on.
-      block_writes = Master::Kernel::Constitution::Rule.new(
+      block_writes = Master::Core::Constitution::Rule.new(
         id: :no_writes, verbs: %i[write],
-        judge: ->(_e, _m) { Master::Kernel::Verdict::Block.new(reason: "no", by: :no_writes) }
+        judge: ->(_e, _m) { Master::Core::Verdict::Block.new(reason: "no", by: :no_writes) }
       )
-      fold = Master::Kernel::Fold.new(
-        model: ScriptedModel.new(Master::Kernel::Effect.write("a", "b"), Master::Kernel::Effect.done),
-        constitution: Master::Kernel::Constitution.new(rules: [block_writes]),
-        world: Master::Kernel::World.new(root:),
-        memory: Master::Kernel::Memory.new,
+      fold = Master::Core::Fold.new(
+        model: ScriptedModel.new(Master::Core::Effect.write("a", "b"), Master::Core::Effect.done),
+        constitution: Master::Core::Constitution.new(rules: [block_writes]),
+        world: Master::Core::World.new(root:),
+        memory: Master::Core::Memory.new,
         observer: ->(turn:, effect:, observation:) { seen << [effect.verb, observation.ok?] }
       )
       fold.run("goal")
@@ -61,7 +61,7 @@ class FoldObserverTest < Minitest::Test
 
   def test_no_observer_still_runs
     Dir.mktmpdir do |root|
-      done = build(ScriptedModel.new(Master::Kernel::Effect.done("ok")), root:).run("g")
+      done = build(ScriptedModel.new(Master::Core::Effect.done("ok")), root:).run("g")
       assert_equal :complete, done.reason
     end
   end

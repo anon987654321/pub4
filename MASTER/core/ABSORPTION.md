@@ -1,7 +1,7 @@
 # Absorption Map
 
-How `lib/` (43.6k lines, 14 subsystems) folds into `kernel/` (662 lines, 4 concepts).
-This is the chart for the kernel-first rebuild: every migration slice moves one
+How `lib/` (43.6k lines, 14 subsystems) folds into `core/` (662 lines, 4 concepts).
+This is the chart for the core-first rebuild: every migration slice moves one
 piece of essential behaviour into the fold and deletes the subsystem it came from.
 
 ## The invariant
@@ -11,7 +11,7 @@ The spine never grows. There are exactly four concepts and one sentence:
 > Fold proposed **Effects** through a **Constitution** that admits each one before
 > it touches the **World**, keeping the **Memory** that the model reasons from.
 
-So absorption is not "move 43k lines into `kernel/`." It is:
+So absorption is not "move 43k lines into `core/`." It is:
 
 - **New ability** → one new **Effect verb** + its handler in `world.rb`. Nothing else.
 - **New constraint** → one new **rule** in `constitution.rb`. Nothing else.
@@ -24,12 +24,12 @@ and its files are deleted — not when its code is relocated.
 ## Target shape
 
 ```
-kernel/
+core/
   master.rb        vocabulary: Effect, Verdict, Observation, Secret, VERBS
   constitution.rb  the gate: load rules, admit/revise/block each Effect
   world.rb         the effects: read write exec git — the ONLY door to reality
   memory.rb        the record: turns + evidence the Model reasons from
-  kernel.rb        the fold: propose → admit → perform → observe → repeat
+  core.rb        the fold: propose → admit → perform → observe → repeat
   model.rb         the one LLM method: Memory → next Effect (done)
 ```
 
@@ -55,7 +55,7 @@ are no new concepts.
 | `ops/` `deploy/` `design/` | 609 | (peripheral) process/deploy | **stays**, scripts | — |
 
 Peripherals (`voice`, `rails/web`, `pub4`, `ops`, `deploy`, `design`) are *not*
-accretion — they are real, separate programs. The kernel does not absorb them; it
+accretion — they are real, separate programs. The core does not absorb them; it
 stops depending on them. When they need to act on the world they go through an
 `exec` Effect like any other caller.
 
@@ -73,19 +73,19 @@ it unblocks dogfooding).
 2. **Constitution: the gating rules.** Absorb `ground/{sandbox_policy, taint,
    redactor, immutability, pledge, done_checker, axioms}` as rules. Delete the
    scanner engine; deep static analysis becomes an `exec` evidence source, not a
-   kernel subsystem. Fold `judge/{commit_guard, output_check, verdict}` into Verdict.
+   core subsystem. Fold `judge/{commit_guard, output_check, verdict}` into Verdict.
 3. **Memory: turns + evidence.** Absorb `ground/{memory, evidence, checkpoint,
    unfinished_ledger}` and collapse `trace/` to a single Observation stream.
 4. **Fold: budget + rollback.** Absorb `loop/rollback` into World's transaction and
    the HostBudget guard into one Fold check. Delete the rest of `loop/`.
 5. **CLI: thin shell.** Reduce `now/cli` + `command_registry` to a dispatcher over
-   `bin/master-kernel`. Delete `now/` pipeline/stages/routing.
-6. **Sever peripherals.** Point `voice`, `rails/web`, `pub4`, `ops` at the kernel via
+   `bin/master-core`. Delete `now/` pipeline/stages/routing.
+6. **Sever peripherals.** Point `voice`, `rails/web`, `pub4`, `ops` at the core via
    `exec`; delete their reach-into-lib couplings. `lib/master.rb` becomes a shim,
    then goes.
 
-Each slice: absorb essence → prove green (`rake test:kernel`, kernel smoke,
-`bin/master-kernel "dogfood noop"`) → delete the drained files → commit.
+Each slice: absorb essence → prove green (`rake test:core`, core smoke,
+`bin/master-core "dogfood noop"`) → delete the drained files → commit.
 
 ## Severance is a rewire, not a delete
 
@@ -94,17 +94,17 @@ live lib boot**, not free-floating dead code: `builder.rb`, `builder/boot_phases
 `now/command_registry/tool_commands.rb`, `judge/council/motion_critique.rb`,
 `master.rb`, and `master_runtime.rb` all wire it in (`video_chain` alone has 28
 references). So the accretion cannot be peeled off file-by-file while lib runs —
-each subsystem comes out only when the kernel replaces the layer that boots it
+each subsystem comes out only when the core replaces the layer that boots it
 (builder → `Fold.new`, command_registry → thin dispatch). Severance (slices 5–6)
 is therefore a deliberate cutover of the deployed runtime, gated on a decision,
 not the incremental green-at-each-step work of slices 0–4. **Do not delete lib
-boot dependencies until the kernel is wired as the CLI's runtime.**
+boot dependencies until the core is wired as the CLI's runtime.**
 
 ## Kill list (dies, does not move)
 
 Verified per-file for live references at migration time (the Phase 1 method), but
 these carry no coding-agent role and are expected to delete outright once the boot
-layer above them is the kernel:
+layer above them is the core:
 
 - **reach media/infra:** `character_lora_*`, `motion_lora_*`, `comfyui_client`,
   `replicate_client`, `repligen*`, `video_*`, `postpro`, `social_sim/`,
@@ -125,7 +125,7 @@ layer above them is the kernel:
 
 Done and green (branch `master-rebuild-phase1`):
 
-- **Kernel fold complete** (slices 0–4): Model, atomic World, Constitution with an
+- **Core fold complete** (slices 0–4): Model, atomic World, Constitution with an
   immutability rule, one-source evidence policy, host-aware Memory budget.
 - **Media-generation capability severed**: ~9.3k lines / 141 files — video, LoRA,
   comfyui, repligen, postpro, social_sim, motion_critique, their CLI/boot wiring,
@@ -153,11 +153,11 @@ sessions, streaming, TTS, standing orders, the event bus.
 
 The Fold expresses the *essence* of all this — run a coding goal to completion
 under a constitution — in 700 lines. But it is a batch runner, not an interactive
-streaming REPL. So finishing the kernel-first rebuild means one of:
+streaming REPL. So finishing the core-first rebuild means one of:
 
 1. **Bridge** — route the CLI's agent turn through the Fold while keeping the
    interactive shell; retire pipeline/judge stages behind it. Additive, green,
-   incremental, but a real build (wire kernel Model/World/Constitution into the
+   incremental, but a real build (wire core Model/World/Constitution into the
    CLI's root/session/stream).
 2. **Replace** — make the Fold the whole runtime and drop the interactive shell,
    web, TTS, sessions. Smallest final `lib/`, but deletes deployed product surface.
@@ -167,7 +167,7 @@ running on the VPS *is*. That gate is where this branch pauses for a call.
 
 ## Done
 
-The kernel is finished when `lib/` holds only peripherals that reach the world
+The core is finished when `lib/` holds only peripherals that reach the world
 through `exec`, and the agent's entire ability-and-constraint surface is: the verbs
 in `world.rb` and the rules in `constitution.rb`. Adding a capability then means
 adding a handler; adding a limit means adding a rule; and the spine is still one

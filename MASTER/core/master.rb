@@ -4,11 +4,11 @@
 #
 # The whole thing is one sentence: fold proposed effects through a constitution
 # that admits each one before it touches the world. Four concepts carry it —
-# Kernel (the fold), Constitution (the gate), World (the effects), Memory (the
+# Core (the fold), Constitution (the gate), World (the effects), Memory (the
 # record) — and this file holds the vocabulary they share.
 module Master; end
 
-module Master::Kernel
+module Master::Core
   # An Effect is something the agent wants to do. Nothing reaches the world
   # except by proposing an Effect and having the Constitution admit it. The verb
   # set is closed and small; that closure is what makes the agent auditable.
@@ -37,7 +37,7 @@ module Master::Kernel
 
   Evidence = Data.define(:kind, :ok, :score, :detail, :at)
 
-  # A Verdict is the Constitution's answer to an Effect. The Kernel sees two
+  # A Verdict is the Constitution's answer to an Effect. The Core sees two
   # shapes; the third is internal to a single rule:
   #   Allow(effect:)       perform this effect (possibly rewritten by a rule)
   #   Block(reason:, by:)  it must not happen; the agent observes and adapts
@@ -76,5 +76,5 @@ end
 require_relative "memory"
 require_relative "world"
 require_relative "constitution"
-require_relative "kernel"
+require_relative "core"
 require_relative "model"

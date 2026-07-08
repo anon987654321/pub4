@@ -354,7 +354,7 @@ paths:
   immutable:
   - data/rules.yml
   - data/soul.yml
-  - kernel/
+  - core/
 thresholds:
   class:
     max_methods: 6

@@ -3,7 +3,7 @@
 require "open3"
 require "yaml"
 
-module Master::Kernel
+module Master::Core
   # Constitution — the single gate. Every Effect the agent proposes folds
   # through the rules here before the World performs anything. This is where the
   # old council, scan, judge, biases, veto, evidence, sharp_edges, and the Guard

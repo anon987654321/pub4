@@ -49,7 +49,7 @@ module Master
         {
           "scan" => command(:dispatch_scan, scanner, root),
           "self" => command(:dispatch_self, scanner, root, bus),
-          "kernel" => command(:dispatch_kernel, root),
+          "core" => command(:dispatch_core, root),
           "fix" => command(:dispatch_fix, fix_loop, root, scanner),
           "status" => command(:dispatch_status, root, fix_loop, bus, git, infra[:trace]),
           "replay" => command(:dispatch_replay, root, infra[:trace]),
@@ -80,12 +80,12 @@ module Master
         result.value!.line
       end
 
-      def dispatch_kernel(root:, ctx: nil)
-        smoke = File.join(root, "kernel", "spec", "kernel_smoke.rb")
-        return "kernel: smoke script missing at #{smoke}" unless File.file?(smoke)
+      def dispatch_core(root:, ctx: nil)
+        smoke = File.join(root, "core", "spec", "core_smoke.rb")
+        return "core: smoke script missing at #{smoke}" unless File.file?(smoke)
 
         out, status = Master::Reach::Exec.capture2e(Gem.ruby, smoke, chdir: root)
-        status.success? ? out.lines.last(5).join : "kernel smoke failed:\n#{out}"
+        status.success? ? out.lines.last(5).join : "core smoke failed:\n#{out}"
       end
 
       # Constitutional scoreboard: per-axiom violation counts over lib/, plus a

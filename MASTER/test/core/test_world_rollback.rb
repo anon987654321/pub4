@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "../../kernel/master"
+require_relative "../../core/master"
 require "tmpdir"
 
 class WorldRollbackTest < Minitest::Test
@@ -15,7 +15,7 @@ class WorldRollbackTest < Minitest::Test
       File.write(File.join(root, "tracked.txt"), "pre-effect\n")
       File.write(File.join(root, "untracked.txt"), "keep me\n")
 
-      world = Master::Kernel::World.new(root:)
+      world = Master::Core::World.new(root:)
       checkpoint = world.checkpoint
 
       File.write(File.join(root, "tracked.txt"), "failed-effect\n")

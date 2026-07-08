@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-module Master::Kernel
-  # Kernel — the fold. This is the whole control flow of the agent, and it fits
+module Master::Core
+  # Core — the fold. This is the whole control flow of the agent, and it fits
   # on a screen on purpose. The model proposes an Effect; the Constitution
   # admits or blocks it; the World performs what was admitted; the Memory
   # records the outcome and the loop turns again until the model is done.
   #
   # There is no pipeline of stages, no council subsystem, no scan/fix polling.
   # Capability lives in the World, judgement lives in the Constitution, the
-  # Kernel only sequences them. To add an ability, add an Effect handler; to add
+  # Core only sequences them. To add an ability, add an Effect handler; to add
   # a constraint, add a rule. The spine never grows.
   class Fold
     Done = Data.define(:reason, :turns, :summary)

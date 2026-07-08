@@ -4,17 +4,17 @@
 require "optparse"
 require "rbconfig"
 
-$LOAD_PATH.unshift File.expand_path("../kernel", __dir__)
+$LOAD_PATH.unshift File.expand_path("../core", __dir__)
 require "master"
 
 class NullModel
   def initialize(goal)
     @goal = goal
     @script = [
-      Master::Kernel::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :test_pass),
-      Master::Kernel::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :scan_clean),
-      Master::Kernel::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :code_review),
-      Master::Kernel::Effect.done("noop complete: #{@goal}")
+      Master::Core::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :test_pass),
+      Master::Core::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :scan_clean),
+      Master::Core::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :code_review),
+      Master::Core::Effect.done("noop complete: #{@goal}")
     ]
   end
 
@@ -22,14 +22,14 @@ class NullModel
     unsupported = @script.map(&:verb).uniq - verbs
     raise "kernel verbs unavailable: #{unsupported.join(", ")}" unless unsupported.empty?
 
-    @script.shift || Master::Kernel::Effect.done("noop complete: #{@goal}")
+    @script.shift || Master::Core::Effect.done("noop complete: #{@goal}")
   end
 end
 
 options = { root: Dir.pwd, max_turns: 40, real: false, model: nil }
 
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: master-kernel [--root PATH] [--max-turns N] [--real [--model ID]] GOAL"
+  opts.banner = "usage: master-core [--root PATH] [--max-turns N] [--real [--model ID]] GOAL"
   opts.on("--root PATH") { |path| options[:root] = path }
   opts.on("--max-turns N", Integer) { |n| options[:max_turns] = n }
   opts.on("--real", "drive a live LLM (needs a provider key); default is the scripted no-op") { options[:real] = true }
@@ -46,12 +46,12 @@ end
 
 root = File.expand_path(options.fetch(:root))
 data_dir = File.join(File.expand_path("..", __dir__), "data")
-constitution = Master::Kernel::Constitution.load(data_dir:)
-world = Master::Kernel::World.new(root:)
-memory = Master::Kernel::Memory.new
-model = options[:real] ? Master::Kernel::Model.new(**{ model_id: options[:model] }.compact) : NullModel.new(goal)
+constitution = Master::Core::Constitution.load(data_dir:)
+world = Master::Core::World.new(root:)
+memory = Master::Core::Memory.new
+model = options[:real] ? Master::Core::Model.new(**{ model_id: options[:model] }.compact) : NullModel.new(goal)
 
-result = Master::Kernel::Fold.new(
+result = Master::Core::Fold.new(
   model:,
   constitution:,
   world:,
@@ -59,4 +59,4 @@ result = Master::Kernel::Fold.new(
   max_turns: options.fetch(:max_turns)
 ).run(goal)
 
-puts "master-kernel: #{result.reason} turns=#{result.turns} summary=#{result.summary}"
+puts "master-core: #{result.reason} turns=#{result.turns} summary=#{result.summary}"

@@ -4,11 +4,11 @@ This file records intentional shapes that may otherwise look like bugs.
 
 ## Two Master Spines
 
-`lib/` and `kernel/` are intentionally separate load paths. `lib/` is the gem, CLI, loop, judge, reach, trace, voice, and web-facing runtime. `kernel/` is a small isolated constitutional fold loaded on its own path by kernel tests and `bin/master-kernel`.
+`lib/` and `core/` are intentionally separate load paths. `lib/` is the gem, CLI, loop, judge, reach, trace, voice, and web-facing runtime. `core/` is a small isolated constitutional fold loaded on its own path by the core tests and `bin/master-core`.
 
-As of `b61d73a7d`, kernel types live under `Master::Kernel::` (not top-level `Master::`) so namespace audits no longer collide with lib constants. `bin/nsaudit` skips only the kernel entrypoint file, not the whole tree.
+Core types live under `Master::Core::` (not top-level `Master::`) so they coexist with lib constants in one process — the runtime cutover loads `core/` into the CLI via the bridge. `bin/nsaudit` loads the core entrypoint explicitly; the two-spine design is deliberate, not accidental duplication. (The module was named `Master::Kernel` until it was renamed to `Master::Core` to stop shadowing Ruby's built-in `::Kernel`.)
 
-Namespace tooling should treat `bin/master-kernel` as the kernel load entrypoint.
+Namespace tooling should treat `bin/master-core` as the core load entrypoint.
 
 ## Rule Data Stays Split
 

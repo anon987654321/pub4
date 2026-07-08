@@ -84,12 +84,12 @@ task :autoload do
 end
 
 namespace :test do
-  desc "Kernel spine tests (isolated from lib/master Zeitwerk load)"
-  task :kernel do
+  desc "Core spine tests (isolated from lib/master Zeitwerk load)"
+  task :core do
     # Each file runs in its own process: `ruby a.rb b.rb c.rb` runs only a.rb and
     # passes the rest as ARGV, so the old single-invocation form silently skipped
     # every file after the first.
-    FileList["test/kernel/test_*.rb"].each { |f| ruby "-Itest", f }
+    FileList["test/core/test_*.rb"].each { |f| ruby "-Itest", f }
   end
 
   desc "Live web HTTP/browser tests (requires Falcon on MASTER_WEB_PORT)"

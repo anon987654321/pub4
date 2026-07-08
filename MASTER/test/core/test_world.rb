@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../kernel/master"
+require_relative "../../core/master"
 require "tmpdir"
 
 # The World is the only door to reality, so its handlers carry the whole blast
@@ -9,10 +9,10 @@ require "tmpdir"
 # the sandbox never opens, writes replace atomically, and a failed exec is
 # reported as data (err Observation), never raised.
 class WorldTest < Minitest::Test
-  E = Master::Kernel::Effect
+  E = Master::Core::Effect
 
   def with_world
-    Dir.mktmpdir { |root| yield Master::Kernel::World.new(root:), root }
+    Dir.mktmpdir { |root| yield Master::Core::World.new(root:), root }
   end
 
   def test_read_returns_file_contents
