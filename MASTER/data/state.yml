@@ -29,7 +29,10 @@
   exclude: "data/|test/|knowledge/"
   command: audit constitution
   callable: constitution_drift
-  enabled: true
+  # Disabled: fires a full deep-scan of lib/ on every source write — the exact
+  # repo-wide scan HostBudget exists to prevent from OOM-killing the 1GB VPS.
+  # Re-enable only with a per-file (not whole-lib) scan.
+  enabled: false
 
 - name: autocommit_post_chat
   description: After any turn that mutated source, generate a Strunk-style commit message and commit.
@@ -38,7 +41,9 @@
   filter: "write_file|str_replace|ast_edit|replace"
   command: git autocommit
   callable: autocommit
-  enabled: true
+  # Disabled: would auto-commit AND push to the repo after every source-mutating
+  # turn. Opt in deliberately rather than have edits push themselves.
+  enabled: false
 
 - name: restart_master_on_web_edit
   description: Restart MASTER service when web/ files change so edits take effect immediately.

@@ -99,6 +99,11 @@ namespace :test do
     sh "cd web && bundle exec rails test"
   end
 
+  desc "Static web UI checks (asset manifest, boot contract)"
+  task :web_ui do
+    sh "ruby -Ilib:test test/test_web_ui.rb"
+  end
+
   desc "Subprocess CLI boot tests (MASTER_CLI_E2E=1)"
   task :cli_e2e do
     ENV["MASTER_CLI_E2E"] = "1"
@@ -107,13 +112,6 @@ namespace :test do
 end
 
 task default: :test
-
-namespace :test do
-  desc "Run web system tests"
-  task :web do
-    sh "ruby -Ilib:test test/test_web_ui.rb"
-  end
-end
 
 namespace :lint do
   desc "Check all Ruby files have # frozen_string_literal: true"
@@ -128,9 +126,7 @@ namespace :lint do
       abort "lint:frozen: #{missing.size} file(s) missing frozen_string_literal"
     end
   end
-end
 
-namespace :lint do
   desc "Check top-level YAML registry keys are singular"
   task :data_singularity do
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
