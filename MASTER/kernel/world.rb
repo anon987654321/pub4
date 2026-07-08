@@ -11,7 +11,9 @@ module Master::Kernel
   # the set is closed (Master::Kernel::VERBS), so the blast radius of the agent is the
   # surface of this file and nothing else. The Constitution has already admitted
   # whatever arrives here, so handlers do the IO plainly — their only added duty
-  # is reversibility (back up before overwriting) and honest reporting.
+  # is crash-safety (writes are atomic) and honest reporting. Reversing a whole
+  # effect is the Fold's job via #checkpoint/#rollback, so handlers keep no
+  # second, per-write backup of their own.
   #
   # This is where the old reach/ (git, web, fs), ops/, and tools/ collapse to.
   class World
@@ -57,9 +59,8 @@ module Master::Kernel
 
     def do_write(path:, content:, **)
       abs = within(path)
-      backup(abs)
       FileUtils.mkdir_p(File.dirname(abs))
-      File.write(abs, content)
+      write_atomic(abs, content)
       Observation.ok("wrote #{path} (#{content.bytesize}b)")
     end
 
@@ -101,10 +102,16 @@ module Master::Kernel
       abs
     end
 
-    def backup(abs)
-      return unless File.exist?(abs)
-
-      FileUtils.cp(abs, "#{abs}.#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}.bak")
+    # Write via tmp+rename: an OOM kill or crash mid-write can never leave a
+    # half-written file, since rename is atomic on a POSIX filesystem. The tmp
+    # sits beside the target so the rename stays on one device.
+    def write_atomic(abs, content)
+      tmp = "#{abs}.tmp.#{Process.pid}.#{SecureRandom.hex(4)}"
+      File.write(tmp, content)
+      File.rename(tmp, abs)
+    rescue StandardError
+      File.delete(tmp) if tmp && File.exist?(tmp)
+      raise
     end
 
     def git_has_head?
