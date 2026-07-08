@@ -108,6 +108,7 @@ module ApplicationHelper
     when /\Atv/ then :tv
     when /\Adating/ then :dating
     when /\Amaps/ then :maps
+    when /\Aconversations/, /\Amessages/, /\Atyping_indicators/ then :messenger
     else nil
     end
   end
