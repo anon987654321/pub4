@@ -44,15 +44,36 @@ module Master::Kernel
     # a predicate, not prose. Safety rules Block; hygiene rules Revise.
     def self.default_rules(data)
       veto = (data["veto_patterns"] || {}).filter_map { |n, s| [n, safe_rx(s["detect"])] }.to_h
+      immutable = Array(data.dig("paths", "immutable")).map(&:to_s).freeze
 
       [
         no_secret_rule(veto),
+        immutable_paths_rule(immutable),
         ruby_parses_rule,
         structured_exec_rule,
         safe_exec_rule(veto),
         evidence_for_done_rule,
         git_commit_evidence_rule
       ]
+    end
+
+    # The agent may not rewrite the constitution it is judged by or the spine
+    # that folds its effects. A write, or a git stage of such a path, is blocked.
+    def self.immutable_paths_rule(immutable)
+      Rule.new(id: :immutable_paths, verbs: %i[write git], judge: lambda { |effect, _memory|
+        targets = effect.verb == :write ? [effect.args[:path]] : Array(effect.args[:paths])
+        hit = targets.compact.map(&:to_s).find { |path| immutable_hit?(path, immutable) }
+        next nil unless hit
+
+        Verdict::Block.new(reason: "immutable path: #{hit}", by: :immutable_paths)
+      })
+    end
+
+    # Prefix match against the immutable list; a trailing "/" entry guards a
+    # whole subtree, a bare entry guards that exact path.
+    def self.immutable_hit?(path, immutable)
+      norm = path.delete_prefix("./")
+      immutable.any? { |g| g.end_with?("/") ? norm.start_with?(g) : norm == g }
     end
 
     # No credential ever reaches disk or the transcript.
