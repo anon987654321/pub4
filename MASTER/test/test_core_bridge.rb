@@ -4,7 +4,7 @@ require "test_helper"
 require "now/core_bridge"
 require "tmpdir"
 
-# The bridge runs one goal through the kernel Fold from inside the CLI and streams
+# The bridge runs one goal through the core Fold from inside the CLI and streams
 # turns to the event bus. These pin that it works fully offline (scripted model),
 # returns a Fold summary, and publishes a turn event the dashboard can render.
 class CoreBridgeTest < Minitest::Test
@@ -50,12 +50,12 @@ class CoreBridgeTest < Minitest::Test
     Dir.mktmpdir do |root|
       model = ScriptedModel.new(*evidence_then_done(summary: "all clear"))
       out = Master::Now::CoreBridge.run_string("check", root:, model:)
-      assert_match(/kernel: complete/, out)
+      assert_match(/core: complete/, out)
       assert_match(/all clear/, out)
     end
   end
 
   def test_empty_goal_is_refused
-    assert_equal "kernel: no goal", Master::Now::CoreBridge.run_string("   ", root: Dir.pwd)
+    assert_equal "core: no goal", Master::Now::CoreBridge.run_string("   ", root: Dir.pwd)
   end
 end

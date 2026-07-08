@@ -7,14 +7,14 @@ module Master
 
       # /fold <goal> — run a coding goal through the core Fold (the rebuild's
       # runtime) instead of the legacy pipeline. Additive during the cutover.
-      def core_commands(root:, bus: nil)
+      def core_commands(root:, bus: nil, model_id: nil)
         {
-          "fold" => command(:dispatch_fold, root, bus),
+          "fold" => command(:dispatch_fold, root, bus, model_id),
         }
       end
 
-      def dispatch_fold(root, bus, ctx: nil)
-        Master::Now::CoreBridge.run_string(arg_for(ctx), root:, bus:)
+      def dispatch_fold(root, bus, model_id, ctx: nil)
+        Master::Now::CoreBridge.run_string(arg_for(ctx), root:, bus:, model_id:)
       end
     end
   end

@@ -39,7 +39,7 @@ module Master
         commands.merge!(memory_commands(infra[:memory], ai[:agent], root:))
         commands.merge!(work_commands(ai:, root:, infra:))
         commands.merge!(media_commands(bus: infra[:bus]))
-        commands.merge!(core_commands(root:, bus: infra[:bus]))
+        commands.merge!(core_commands(root:, bus: infra[:bus], model_id: ai[:agent]&.model))
         commands.merge!(domain_commands(root:))
         shell_tool = Array(ai[:tools]).find { |t| t.is_a?(Reach::Shell) }
         commands.merge!(agent_commands(
