@@ -15,11 +15,11 @@ module Master
   # - governed autonomous restructuring
     class ReferenceGraph
       DEFAULT_EXTENSIONS = %w[
-        .rb .js .ts .tsx .erb .yml .yaml .json .md .sh,
+        .rb .js .ts .tsx .erb .yml .yaml .json .md .sh
       ].freeze
 
       IGNORE_DIRS = %w[
-        .git node_modules vendor tmp log coverage dist build .bundle,
+        .git node_modules vendor tmp log coverage dist build .bundle
       ].freeze
 
       Edge = Struct.new(:type, :from, :to, :weight, keyword_init: true)

@@ -39,6 +39,6 @@ bin/cli
 ## Check Selection
 
 - Ordinary code: `bin/check`.
-- Constitutional/agent behavior: `bin/check-agent`.
-- Web face: `bin/check-web`.
-- Release/operator pass: `bin/check-full`.
+- Constitutional/agent behavior: `bin/check --profile=agent`.
+- Web face: `bin/check --profile=web`.
+- Release/operator pass: `bin/check --profile=full`.

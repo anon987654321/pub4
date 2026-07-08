@@ -18,9 +18,9 @@ module Master
           summary: "scan MASTER itself",
           detail: ["/self", "Runs the MASTER self-scan with stream output."],
         },
-        "kernel" => {
-          summary: "run kernel fold smoke test",
-          detail: ["/kernel", "Runs kernel/spec/kernel_smoke.rb — Effect → Constitution → World loop."],
+        "core" => {
+          summary: "run core fold smoke test",
+          detail: ["/core", "Runs core/spec/core_smoke.rb — Effect → Constitution → World loop."],
         },
         "fix" => {
           summary: "run or preview fixes for a target",
@@ -35,8 +35,8 @@ module Master
           detail: ["/orient", "/orient <soul|rules|limits|bootstrap|trace|…>", "Pipeline map, runtime bootstrap, constitution file index."],
         },
         "tools" => {
-          summary: "list Reach agent tools and CLI media commands",
-          detail: ["/tools", "Shows Builder TOOL_MAP, /postpro /repligen /video, and data/tools.yml."],
+          summary: "list Reach agent tools",
+          detail: ["/tools", "Shows Builder TOOL_MAP and data/tools.yml."],
         },
         "replay" => {
           summary: "replay operational event history",
@@ -107,58 +107,9 @@ module Master
           summary: "show command summaries or details",
           detail: ["/help", "/help <command>"],
         },
-        "video" => {
-          summary: "long-form cinematic video via VideoChain",
-          detail: [
-            "/video [--backend kling|happyhorse|cogvideox|minimax|animatediff|animatediff_camera]",
-            "[--minutes N] [--critique] [--vision-critique] [--per-chunk-critique]",
-            "[--auto-retry] [--max-retries N] [--lora ID]",
-            "[--motion-stack preset1,preset2] [--motion-preset NAME] <prompt>",
-            "Standalone: bundle exec ruby bin/video (see /orient replicate).",
-          ],
-        },
-        "motion-dataset" => {
-          summary: "bootstrap Motion LoRA training clips",
-          detail: [
-            "/motion-dataset --preset slow_dolly_push_in --subject \"character description\"",
-            "[--clips 12] [--backend kling] [--lora ID]",
-            "Presets: data/comfyui/motion_lora_presets.yml",
-          ],
-        },
-        "lora-train" => {
-          summary: "train a character Flux LoRA from photos and videos",
-          detail: [
-            "/lora-train --name ragnhild [--destination owner/model] [--trigger ragnhild]",
-            "[--split-all] splits every video frame; curates to 12-18 for training.",
-            "[--local] writes ostris/ai-toolkit config + run_train.sh (no Replicate).",
-            "[--ai-toolkit PATH] [--steps 1000] [--rank 16] [--use-all-frames] [--prepare-only]",
-            "Standalone: bundle exec ruby bin/video lora-train …",
-          ],
-        },
-        "social-sim" => {
-          summary: "closed synthetic inbox sim (NPC personas, metrics, no real messengers)",
-          detail: [
-            "/social-sim init --subject ragnhild [--personas 12]",
-            "/social-sim tick --hours 24 [--auto ghost|busy|not_interested]",
-            "/social-sim tui | stats | dashboard | visuals [--lora basicfeatures/ragnhild]",
-            "Standalone: bundle exec ruby bin/social_sim help",
-          ],
-        },
-        "photograph" => {
-          summary: "Flux photo + kodak_portra postpro",
-          detail: ["/photograph <seed>", "Attach a reference image in web chat for vision-guided refinement."],
-        },
-        "prompt" => {
-          summary: "refine a generation prompt (photo or video)",
-          detail: ["/prompt <seed>", "/prompt photo <seed>", "/prompt video <seed>"],
-        },
-        "repligen" => {
-          summary: "Replicate image/video generation CLI",
-          detail: ["/repligen generate <model> <prompt>", "/repligen sync|search|stats …"],
-        },
-        "postpro" => {
-          summary: "film-stock post-processing on images",
-          detail: ["/postpro --input path --output path --preset portrait --stock kodak_portra"],
+        "fold" => {
+          summary: "run a coding goal through the core Fold (rebuild runtime)",
+          detail: ["/fold <goal>", "Routes one goal to core/; streams turns as core:turn events."],
         },
         "domain" => {
           summary: "inspect or sync a pub4 subdomain cluster",
@@ -236,9 +187,9 @@ module Master
         "session" => %w[clear save history grep audit tokens cost undo rollback redo],
         "work" => %w[scan fix workflow review critique self kernel status replay graph resync tail edge-cases],
         "agent" => %w[run mode task persona btw shell gateway plan rebuild],
-        "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help domain],
+        "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help domain fold],
         "infer" => [],
-        "media" => %w[photograph repligen postpro prompt video motion-dataset lora-train social-sim music],
+        "media" => %w[music],
       }.freeze
 
       CLI_ONLY_SLASH = %w[

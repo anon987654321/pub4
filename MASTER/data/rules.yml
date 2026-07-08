@@ -348,6 +348,13 @@ paths:
   tree:
     max_depth: 2
     max_lines: 200
+  # Paths the agent may never write or stage. The constitution it is judged by
+  # and the spine that folds its effects must not be rewritable by an effect.
+  # Prefix match; a trailing "/" marks a directory subtree.
+  immutable:
+  - data/rules.yml
+  - data/soul.yml
+  - core/
 thresholds:
   class:
     max_methods: 6

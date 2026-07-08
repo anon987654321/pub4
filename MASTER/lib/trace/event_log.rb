@@ -24,7 +24,7 @@ module Master
         record
       rescue SystemCallError, JSON::GeneratorError => e
         # Stderr is last resort — cannot route through bus without risking recursion.
-        Kernel.warn("event_log: append to #{@path} failed — #{e.class}: #{e.message}")
+        ::Kernel.warn("event_log: append to #{@path} failed — #{e.class}: #{e.message}")
         nil
       end
 

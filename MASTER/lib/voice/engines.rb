@@ -48,7 +48,7 @@ module Master
 
         tmp = out_path.sub(/\.mp3\z/, "_replicate#{File.extname(url)}")
         tmp = "#{tmp}.wav" if File.extname(tmp).empty?
-        Reach::VideoPost.download_url(url, tmp)
+        client.download_url(url, tmp)
         return FileUtils.cp(tmp, out_path) if tmp.end_with?(".mp3") && File.size?(tmp)
 
         convert_to_mp3(tmp, out_path)

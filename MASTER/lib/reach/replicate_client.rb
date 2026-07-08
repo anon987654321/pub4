@@ -6,7 +6,7 @@ require "uri"
 
 module Master
   module Reach
-    # Thin Replicate predictions client — shared by VideoChain; mirrors MASTER/tools/repligen.rb API shape.
+    # Thin Replicate predictions client — used by the replicate_kokoro TTS engine.
     class ReplicateClient
       CONFIG_PATH = File.expand_path("~/.config/repligen/config.json").freeze
       BASE = "https://api.replicate.com/v1"
@@ -40,6 +40,18 @@ module Master
       def predict_vision(model_id, prompt:, image_urls:, timeout: 600)
         input = { prompt: prompt, images: Array(image_urls) }
         predict(model_id, input, timeout: timeout)
+      end
+
+      # Fetch a prediction output URL (e.g. synthesized audio) to a local path.
+      def download_url(url, path)
+        uri = URI(url)
+        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: 120) do |http|
+          res = http.get(uri.request_uri)
+          raise "download failed #{res.code}" unless res.code.to_i.between?(200, 299)
+
+          File.binwrite(path, res.body)
+        end
+        path
       end
 
       def upload_file(path)

@@ -199,24 +199,6 @@ module Master
         end
       end
 
-      class Postpro < RubyLLM::Tool
-        description "Apply cinematic post-processing (film stocks, presets, recipes) to images " \
-          "via ruby-vips for genuinely good photography look. Use AFTER /repligen generate (flux etc) " \
-          "or on uploaded refs. Stocks emulate kodak_portra, vision3 etc + grain/clarity."
-        param :target_dir, desc: "Directory containing source images (relative to project root)", required: true
-        param :preset, desc: "One of: portrait, landscape, street, blockbuster, quality_uplift", required: false
-        param :variations, desc: "1-5 output variations per file", type: "integer", required: false
-        param :recipe, desc: "JSON recipe filename (overrides preset)", required: false
-
-        def initialize(tool) = @tool = tool
-
-        def execute(target_dir:, preset: "portrait", variations: 2, recipe: nil)
-          result = @tool.call(target_dir: target_dir.to_s, preset: preset.to_s,
-                              variations: variations.to_i, recipe: recipe&.to_s)
-          result.ok? ? result.value! : "Error: #{result.message}"
-        end
-      end
-
       class SubdomainOrchestrator < RubyLLM::Tool
         description "Inspect or synchronize a pub4 subdomain cluster. Domains: marketplace, playlist, takeaway, tv, messages, maps, amber, hjerterom, bsdports, brgen, ai."
         param :domain, desc: "Subdomain cluster key (e.g. marketplace, maps, amber, bsdports)", required: true
@@ -229,32 +211,6 @@ module Master
           result.ok? ? JSON.pretty_generate(result.value!) : "Error: #{result.message}"
         end
       end
-
-      class Repligen < RubyLLM::Tool
-        description "Discover, search, stats, and generate images via Replicate (Flux etc for photography). " \
-          "Actions: sync, search, stats, generate. For generate pass query as 'model_id the prompt'. " \
-          "Pair results with postpro tool (film stocks like kodak_portra) for genuinely cinematic photography. " \
-          "For long-form video use CLI /video or bin/video (VideoChain) — not single-shot repligen generate. " \
-          "Requires REPLICATE_API_TOKEN for generate/sync."
-        param :action, desc: "One of: sync, search, stats, generate", required: true
-        param :query, desc: "For search: query; for generate: 'owner/model prompt text here'", required: false
-        param :limit, desc: "Sync limit", type: "integer", required: false
-
-        def initialize(tool) = @tool = tool
-
-        def execute(action:, query: nil, limit: nil)
-          if action.to_s == "generate" && !query.to_s.strip.empty?
-            result = @tool.call(args: "generate #{query}")
-            return result.ok? ? result.value! : "Error: #{result.message}"
-          end
-          argv = [action.to_s]
-          argv << query.to_s if query && !query.to_s.strip.empty?
-          argv << limit.to_s if limit
-          result = @tool.call(args: argv.join(" "))
-          result.ok? ? result.value! : "Error: #{result.message}"
-        end
-      end
-
     end
   end
 end

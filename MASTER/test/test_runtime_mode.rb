@@ -29,6 +29,6 @@ class TestRuntimeMode < Minitest::Test
   def test_tools_command_lists_reach_tools
     output = Master::Now::CommandRegistry.dispatch_tools(Master::ROOT, nil, ctx: { args: "" })
     assert_includes output, "ReadFile"
-    assert_includes output, "postpro"
+    assert_includes output, "reach"
   end
 end

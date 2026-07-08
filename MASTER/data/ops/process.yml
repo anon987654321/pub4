@@ -17,7 +17,7 @@ loops:
     max_run_seconds: 0
     min_sleep_seconds: 30
   heartbeat:
-    env: MASTER_BACKGROUND
+    env: MASTER_HEARTBEAT
     max_run_seconds: 120
     min_sleep_seconds: 60
 

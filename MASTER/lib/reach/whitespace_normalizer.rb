@@ -12,6 +12,8 @@ module Master
 
       def normalize(content, path: nil)
         return content unless content.is_a?(String) && !content.empty?
+
+        out = strip_trailing(content)
         out = collapse_blanks(out)
         out = collapse_internal(out) if collapse_internal?(path)
         out
@@ -19,6 +21,8 @@ module Master
 
       def collapse_internal?(path)
         return false unless path
+
+        COLLAPSE_INTERNAL_EXTS.include?(File.extname(path.to_s).downcase)
       end
 
       def strip_trailing(src)

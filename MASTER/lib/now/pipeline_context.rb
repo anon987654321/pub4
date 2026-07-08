@@ -20,7 +20,7 @@ module Master
         rendered output_findings voice
         image felt_sense explicit_run
         channel metadata turn_id
-        _timings _parallel_errors _parallel_timeout _stage_error,
+        _timings _parallel_errors _parallel_timeout _stage_error
       ].freeze
 
       REQUIRED = %i[user_message].freeze

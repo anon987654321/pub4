@@ -47,8 +47,6 @@ module Master
         Reach::SearchKnowledge => Reach::LLM::SearchKnowledge,
         Reach::FeedbackRecord => Reach::LLM::FeedbackRecord,
         Reach::MemoryRecord => Reach::LLM::MemoryRecord,
-        Reach::Repligen => Reach::LLM::Repligen,
-        Reach::Postpro => Reach::LLM::Postpro,
         Reach::SubdomainOrchestrator => Reach::LLM::SubdomainOrchestrator,
       }.freeze
 

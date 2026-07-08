@@ -1,7 +1,0 @@
-# ComfyUI AnimateDiff wrapper
-
-This optional HTTP shim sits between MASTER VideoChain and a local ComfyUI instance for AnimateDiff image-to-video work. With only COMFYUI_URL set, Reach::ComfyuiClient patches data/comfyui/animatediff_i2v.workflow.json and calls ComfyUI at /prompt. With COMFYUI_WRAPPER_URL set, the same payload shape as Grok’s /api/animatediff/generate applies, which helps when you want one JSON endpoint or run ComfyUI on another host.
-
-Start the wrapper from MASTER with COMFYUI_URL pointing at the ComfyUI server (for example http://127.0.0.1:8188), WORKFLOW_JSON set to data/comfyui/animatediff_i2v.workflow.json, and python3 tools/comfyui/animatediff_api.py --port 8189. Then export COMFYUI_WRAPPER_URL (for example http://127.0.0.1:8189) and run bundle exec ruby bin/video --backend animatediff_camera with a motion stack such as slow_dolly_push_in,elegant_orbit_tracking and your scene prompt.
-
-ComfyUI must have AnimateDiff-Evolved and ADMotionDirector nodes installed. Motion LoRA files belong under ComfyUI/models/animatediff_motion_lora/ per data/comfyui/motion_lora_presets.yml. After exporting your workflow from ComfyUI in API format, update node IDs in data/comfyui/animatediff_i2v.inputs.yml. POST JSON with prompt, image (URL or local keyframe path), frame_count, motion_loras array, and motion_lora_strength; the response returns view_url pointing at ComfyUI’s view endpoint.

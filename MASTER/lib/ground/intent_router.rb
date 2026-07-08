@@ -37,7 +37,7 @@ module Master
       RISK_TIERS = {
         low: %i[
           codify_policy refactor_to_ruby create_facade apply_user_style_rules
-          run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa,
+          run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa
         ],
         medium: %i[wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app run_full_workflow],
         high: %i[write_repo_changes delete_redundant_config],

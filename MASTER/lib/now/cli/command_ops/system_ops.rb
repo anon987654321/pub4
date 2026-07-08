@@ -7,38 +7,6 @@ module Master
     class CLI
       private
 
-      def run_rebuild
-        puts @refs.renderer.render("rebuild: syntax check + session save + hot-restart", mode: :dim)
-        lib_dir = File.join(Master::ROOT, "lib")
-        errors = []
-        changed_lib_files(lib_dir).each do |path|
-          ok = system(RbConfig.ruby, "-c", path, out: File::NULL, err: File::NULL)
-          errors << path unless ok
-        end
-        if errors.any?
-          errors.each { |p| puts @refs.renderer.render("  syntax error: #{p}", mode: :warning) }
-          puts @refs.renderer.render("rebuild: aborted — fix errors first", mode: :warning)
-          return
-        end
-        @refs.session.save!
-        puts @refs.renderer.render("rebuild: ok — exec'ing fresh process", mode: :dim)
-        $stdout.flush
-        Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
-      end
-
-      def run_context
-        query = @last_input.to_s
-        puts @refs.renderer.render("context: gathering for query=#{query[0, 60]}", mode: :dim)
-        provider = Master::Ground::ContextProvider.new
-        rows = provider.brief(query, limit: 8)
-        if rows.empty?
-          puts @refs.renderer.render("context: nothing found", mode: :dim)
-        else
-          rows.each { |r| puts @refs.renderer.render("  #{r}", mode: :dim) }
-        end
-        @refs.bus&.publish("attention:context", query: query, rows: rows.size)
-      end
-
       def run_snapshot
         puts @refs.renderer.render("snapshot: publishing MASTER + DEPLOY", mode: :dim)
         output = Master::Now::CommandRegistry.dispatch_snapshot(@refs.root)
@@ -46,33 +14,6 @@ module Master
         @refs.bus&.publish("snapshot:published", root: @refs.root)
       rescue StandardError => e
         puts @refs.renderer.render("snapshot: #{e.message}", mode: :warning)
-      end
-
-      def run_checkpoint
-        puts @refs.renderer.render("checkpoint: snapshotting changed files", mode: :dim)
-        lib_dir = File.join(Master::ROOT, "lib")
-        files = changed_lib_files(lib_dir)
-        cp = Master::Ground::Checkpoint.new
-        result = cp.create(label: "manual", files: files)
-        id = result.respond_to?(:fetch) ? result[:id] : result.to_s
-        puts @refs.renderer.render("checkpoint: #{id} (#{files.size} file(s))", mode: :dim)
-      end
-
-      def run_verify
-        puts @refs.renderer.render("verify: checking recently landed operator symbols", mode: :dim)
-        plan = {
-          files: %w[lib/ground/intent_router.rb lib/ground/attention_context.rb
-                    lib/ground/unfinished_ledger.rb lib/ground/orchestration_policy.rb],
-          symbols: %w[Master::Ground::IntentRouter Master::Ground::AttentionContext
-                      Master::Ground::UnfinishedLedger Master::Ground::OrchestrationPolicy],
-          callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify],
-        }
-        checker = Master::Ground::DoneChecker.new
-        result = checker.call(plan)
-        result.each do |key, check_result|
-          icon = check_result.is_a?(TrueClass) || check_result == :ok ? "ok" : "!!"
-          puts @refs.renderer.render("  #{icon} #{key}", mode: check_result == false ? :warning : :dim)
-        end
       end
 
       def run_swallow_report

@@ -23,6 +23,15 @@ class TestMasterLoop < Minitest::Test
     end
   end
 
+  # The early-boot mode map and data/ops/process.yml are the same fact in two
+  # places; this pins them so heartbeat->env and the "fix"/"autofix" alias cannot
+  # drift the way they had ("MASTER_BACKGROUND" vs "MASTER_HEARTBEAT").
+  def test_loop_flags_agree_with_process_yaml
+    from_yaml = Master::Ops::ProcessBudget.env_by_loop
+                     .transform_keys { |name| name == "autofix" ? "fix" : name }
+    assert_equal from_yaml, Master::MasterRuntime::LOOP_FLAGS
+  end
+
   def test_data_file_resolves_renamed_limits
     assert File.exist?(Master.limits_path)
     assert Master.limits_path.end_with?("limits.yml")

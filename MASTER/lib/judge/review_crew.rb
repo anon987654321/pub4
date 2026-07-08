@@ -32,11 +32,14 @@ module Master
           Thread.new do
             started = Time.now
             @bus&.publish("review_crew:agent_started", agent: worker.name, files: files.size)
-            worker_findings = []
             files.each do |file|
               code = File.read(file, encoding: "UTF-8") rescue next
-              worker_findings.concat(Array(worker.analyze(code, file)))
+              worker.analyze(code, file)
             end
+            # BaseAgent#analyze accumulates into worker.findings and returns the whole
+            # growing array; read it once here instead of concatenating per file
+            # (which duplicated earlier files' findings quadratically).
+            worker_findings = worker.findings
             elapsed = Time.now - started
             @bus&.publish("review_crew:agent_done", agent: worker.name, findings: worker_findings.size, elapsed: elapsed)
             queue << { agent: worker.name, findings: worker_findings.map(&:to_h), elapsed: elapsed }

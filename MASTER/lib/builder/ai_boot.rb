@@ -16,7 +16,6 @@ module Master
         code_index: infra[:code_index], homeostat: infra[:homeostat]
       )
       agent = Judge::Agent.new(deps:)
-      tools.each { |t| t.agent = agent if t.is_a?(Reach::Repligen) }
       soul_doc = Voice::Soul.new(root:, agent:)
       tools << Reach::AskLlm.new(agent:, governor: infra[:governor],
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
@@ -30,7 +29,7 @@ module Master
       ecology = infra[:ecology]
       scanner = build_scanner(root:, agent:, bus:, ecology:)
       swarm = Judge::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
-      personas = Judge::Council::Personas.load(File.join(Master::ROOT, "data", "council.yml"))
+      personas = Judge::Council::Personas.load(Master::COUNCIL_PATH)
       axioms = Ground::Rules.new(root:)
       deliberation = Judge::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
       ideation = Judge::Council::Ideation.new(agent:, event_bus: bus)

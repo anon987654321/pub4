@@ -21,23 +21,6 @@ module Master
         puts @refs.renderer.render(detail, mode: :dim) if detail && !detail.start_with?("help: no detail")
       end
 
-      def run_sound_critique
-        puts @refs.renderer.render("sound-critique: assembling audio panel", mode: :dim)
-        critic = Master::Judge::Council::SoundCritique.new(agent: @refs.agent, event_bus: @refs.bus)
-        result = critic.run
-        if result.ok?
-          data = result.value!
-          picks = data[:cherry_picks]
-          puts @refs.renderer.render("sound-critique: #{picks.size} cherry-pick(s)", mode: :dim)
-          picks.each { |p| puts @refs.renderer.render("  cherry: #{p}", mode: :dim) }
-          data[:feedback].each do |f|
-            puts @refs.renderer.render("  [#{f[:persona]}] #{f[:feedback].to_s.lines.first.to_s.strip}", mode: :dim)
-          end
-        else
-          puts @refs.renderer.render("sound-critique: #{result.message}", mode: :warning)
-        end
-      end
-
       def run_rebuild
         puts @refs.renderer.render("rebuild: syntax check + session save + hot-restart", mode: :dim)
         lib_dir = File.join(Master::ROOT, "lib")
@@ -54,7 +37,7 @@ module Master
         @refs.session.save!
         puts @refs.renderer.render("rebuild: ok — exec'ing fresh process", mode: :dim)
         $stdout.flush
-        Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
+        ::Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
       end
 
       def run_context

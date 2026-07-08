@@ -36,6 +36,11 @@ module Master
         config.fetch("loops", {}).keys.sort
       end
 
+      # The one source for loop name -> env flag. Other loop views derive from this.
+      def env_by_loop
+        config.fetch("loops", {}).transform_values { |spec| spec["env"] }.compact
+      end
+
       def slot_loop?(name, spec = loop_config(name))
         return false if NON_SLOT_LOOPS.include?(name.to_s)
         spec.fetch("slot", true) != false

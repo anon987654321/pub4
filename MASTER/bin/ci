@@ -26,7 +26,7 @@ end
 failures = []
 
 failures << "test" unless run_step("rake test", RUBY, "-S", "rake", "test")
-failures << "test:kernel" unless run_step("rake test:kernel", RUBY, "-S", "rake", "test:kernel")
+failures << "test:core" unless run_step("rake test:core", RUBY, "-S", "rake", "test:core")
 failures << "selftest" unless run_step("rake selftest", RUBY, "-S", "rake", "selftest")
 failures << "data_singularity" unless run_step("rake lint:data_singularity", RUBY, "-S", "rake", "lint:data_singularity")
 

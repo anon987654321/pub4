@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "base64"
 require "fileutils"
 require "open3"
 require "yaml"
@@ -13,9 +12,13 @@ module Master
     module SnapshotPublisher
       TEXT_EXTS = %w[.rb .py .js .ts .zsh .sh .bash .md .yml .yaml .json .toml .gemspec .txt .erb .conf .ini .env].to_set.freeze
       TEXT_NAMES = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
-      SKIP_SEGS = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
+      SKIP_SEGS = %w[.git .master vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
       BOOT_DIRS = %w[bin lib data].freeze
       BOOT_MAX_BYTES = 50_000
+      # A readable snapshot inlines source, not media or generated bulk. Binaries
+      # are noted (never base64-inlined — that once produced multi-GB "snapshots"),
+      # and any text file past this cap is listed rather than pasted whole.
+      MAX_INLINE_BYTES = 262_144
 
       module_function
 
@@ -170,19 +173,14 @@ module Master
       end
 
       def file_section(path)
-        if text_file?(path)
-          begin
-            text = File.read(path, encoding: "UTF-8", invalid: :replace)
-            lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(path).downcase, "text")
-            lines = text.each_line.map(&:rstrip)
-            return [["```#{lang}", *lines, "```"], lines.size]
-          rescue StandardError
-            # fall through to binary capture
-          end
-        end
-        data = File.binread(path)
-        encoded = Base64.strict_encode64(data)
-        [["binary: #{data.bytesize} bytes", "```base64", encoded, "```"], encoded.lines.size]
+        size = File.size(path)
+        return [["_binary: #{size} bytes (not inlined)_"], 0] unless text_file?(path)
+        return [["_text: #{size} bytes over #{MAX_INLINE_BYTES} cap (not inlined)_"], 0] if size > MAX_INLINE_BYTES
+
+        text = File.read(path, encoding: "UTF-8", invalid: :replace)
+        lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(path).downcase, "text")
+        lines = text.each_line.map(&:rstrip)
+        [["```#{lang}", *lines, "```"], lines.size]
       rescue StandardError => e
         [["```text", "[unreadable: #{e.message}]", "```"], 1]
       end

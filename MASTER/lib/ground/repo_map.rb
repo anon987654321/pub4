@@ -5,7 +5,7 @@ module Master
     class RepoMap
       DEFAULT_IGNORES = %w[
         .git tmp log vendor node_modules coverage .bundle storage public/assets
-        knowledge/awesome knowledge/vendor,
+        knowledge/awesome knowledge/vendor
       ].freeze
 
       LANGUAGE_BY_EXT = {

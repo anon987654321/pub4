@@ -58,7 +58,7 @@ script = [
 
 failures = []
 failures << "cli" unless run_step("bundle exec ruby bin/cli", env, BUNDLE, "exec", RUBY, "bin/cli", stdin_data: script)
-failures << "kernel" unless run_step("ruby bin/master-kernel", env, RUBY, "bin/master-kernel", "dogfood noop")
+failures << "kernel" unless run_step("ruby bin/master-core", env, RUBY, "bin/master-core", "dogfood noop")
 
 if failures.empty?
   puts "dogfood: clean"

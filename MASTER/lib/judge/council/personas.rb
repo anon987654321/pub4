@@ -19,8 +19,6 @@ module Master
           model: nil,
         }.freeze
 
-        ROOT_DATA_PATH = File.join(File.expand_path("../../..", __dir__), "data", "council.yml").freeze
-
         DEFAULTS = [
           Persona.new(name: "Architect", role: "System design", bias: "Structure",
                       prompt: "Review for architectural soundness, coupling, and interface design.",
@@ -48,7 +46,7 @@ module Master
         @cache = {}
 
         def self.load(data_path = nil)
-          path = data_path || ROOT_DATA_PATH
+          path = data_path || Master::COUNCIL_PATH
           return DEFAULTS unless File.exist?(path)
 
           @cache[path] ||= begin

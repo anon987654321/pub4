@@ -11,7 +11,7 @@ ownership:
   AGENT_CONTRACT.md:
     purpose: collaboration contract for agents and humans
     risk: medium
-    check: bin/check-agent
+    check: bin/check --profile=agent
   DECISIONS.md:
     purpose: intentional architecture decisions
     risk: medium
@@ -19,7 +19,7 @@ ownership:
   DEBT.md:
     purpose: known debt separated from actionable TODO
     risk: medium
-    check: bin/check-agent
+    check: bin/check --profile=agent
   ../BACKLOG.yml:
     purpose: canonical open operator backlog (repo root)
     risk: medium
@@ -31,31 +31,31 @@ ownership:
   lib/master.rb:
     purpose: runtime loader and namespace setup
     risk: high
-    check: bin/check-full
+    check: bin/check --profile=full
   lib/now/:
     purpose: CLI, commands, pipeline, web adapters
     risk: high
-    check: bin/check-agent
+    check: bin/check --profile=agent
   lib/judge/:
     purpose: scanners, verdicts, routing, review and output checks
     risk: high
-    check: bin/check-agent
+    check: bin/check --profile=agent
   lib/loop/:
     purpose: fix loop, watcher, rollback, self-check
     risk: high
-    check: bin/check-agent
+    check: bin/check --profile=agent
   lib/reach/:
     purpose: tools and external actions
     risk: high
-    check: bin/check-agent
+    check: bin/check --profile=agent
   lib/ground/:
     purpose: constitution, config, policy, memory, schema
     risk: high
-    check: bin/check-agent
+    check: bin/check --profile=agent
   lib/trace/:
     purpose: evidence, events, telemetry, replay, snapshots
     risk: high
-    check: bin/check-agent
+    check: bin/check --profile=agent
   lib/voice/:
     purpose: personality, speech, TTS, rendering
     risk: medium
@@ -67,11 +67,11 @@ ownership:
   data/soul.yml:
     purpose: constitutional identity
     risk: critical
-    check: bin/check-agent
+    check: bin/check --profile=agent
   data/rules.yml:
     purpose: constitutional rule registry
     risk: critical
-    check: bin/check-agent
+    check: bin/check --profile=agent
   data/rules/:
     purpose: scanner rule shards by scope
     risk: high
@@ -87,19 +87,19 @@ ownership:
   web/app/views/chat/index.html.erb:
     purpose: face boot shell and primer contract
     risk: critical
-    check: bin/check-web
+    check: bin/check --profile=web
   web/public/face.js:
     purpose: deferred face loader
     risk: critical
-    check: bin/check-web
+    check: bin/check --profile=web
   web/public/face.part*.txt:
     purpose: split face runtime payload
     risk: critical
-    check: bin/check-web
+    check: bin/check --profile=web
   web/public/three.face.module.js:
     purpose: heavy WebGL dependency, deferred until tap
     risk: critical
-    check: bin/check-web
+    check: bin/check --profile=web
   knowledge/:
     purpose: local-only search corpus for SearchKnowledge
     risk: local

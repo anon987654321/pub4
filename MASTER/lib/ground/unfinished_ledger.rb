@@ -40,7 +40,7 @@ module Master
 
       def load
         return [] unless File.exist?(@path)
-        parsed = JSON.parse(raw, symbolize_names: true)
+        parsed = JSON.parse(File.read(@path), symbolize_names: true)
         Array(parsed)
       rescue JSON::ParserError
         []

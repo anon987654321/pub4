@@ -1,9 +1,0 @@
-# Regeneratable frame splits and staging
-**/.cache/
-
-# Training output and logs
-**/weights/
-**/*.log
-
-# Large derived archives (rebuild from train/)
-**/exports/*.zip

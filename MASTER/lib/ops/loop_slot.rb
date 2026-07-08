@@ -1,18 +1,22 @@
 # frozen_string_literal: true
 
+require_relative "process_budget"
+
 module Master
   module Ops
+    # At most one *slot* loop (autofix/watch/watcher) may run at a time. The loops
+    # and their env flags are not defined here — they come from the single source,
+    # data/ops/process.yml, via ProcessBudget. LoopSlot is only the mutual-exclusion
+    # view over the slot loops; the background heartbeat is non-slot and excluded.
     module LoopSlot
-      LOOP_FLAGS = {
-        "autofix" => "MASTER_AUTOFIX",
-        "watch" => "MASTER_WATCH",
-        "watcher" => "MASTER_WATCHER",
-      }.freeze
-
       module_function
 
+      def flags
+        ProcessBudget.env_by_loop.select { |name, _env| ProcessBudget.slot_loop?(name) }
+      end
+
       def enabled
-        LOOP_FLAGS.select { |_name, env| ENV[env] == "1" }.keys
+        ProcessBudget.active_loops
       end
 
       def selected
@@ -28,13 +32,12 @@ module Master
           selected: selected,
           enabled: enabled,
           valid: valid?,
-          flags: LOOP_FLAGS.transform_values { |env| ENV.fetch(env, "0") },
+          flags: flags.transform_values { |env| ENV.fetch(env, "0") },
         }
       end
 
       def validate!
-        active = enabled
-        return true if active.size <= 1
+        return true if valid?
 
         raise ArgumentError,
               "Set exactly one loop: MASTER_LOOP=fix|watch|watcher or MASTER_AUTOFIX=1, MASTER_WATCH=1, MASTER_WATCHER=1."
