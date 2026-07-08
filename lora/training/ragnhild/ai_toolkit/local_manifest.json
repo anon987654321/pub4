@@ -6,8 +6,12 @@
   "config_path": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/train_ragnhild.yaml",
   "run_script": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/run_train.sh",
   "weights_dir": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output",
-  "images": 18,
+  "images": 17,
   "target_model_version": "ragnhild_v2",
+  "image_processing": {
+    "preferred_backend": "ruby-vips/libvips",
+    "fallback_backend": "ImageMagick"
+  },
   "steps": 1600,
   "rank": 16,
   "alpha": 16,

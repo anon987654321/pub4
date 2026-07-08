@@ -4,10 +4,6 @@
   "split_videos": true,
   "sources": [
     {
-      "path": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/sources/selfie.jpg",
-      "type": "image"
-    },
-    {
       "path": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/sources/grok-video-65b87ee9-af88-40ae-92f7-6f6c5a713f34.mp4",
       "type": "video",
       "extracted_frames": 145,
@@ -20,10 +16,15 @@
       "mode": "all_frames"
     }
   ],
-  "extracted_images": 291,
-  "curated_images": 18,
+  "extracted_images": 290,
+  "curated_images": 17,
   "active_training_config": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/train_ragnhild.yaml",
   "target_model_version": "ragnhild_v2",
+  "image_processing": {
+    "preferred_backend": "ruby-vips/libvips",
+    "fallback_backend": "ImageMagick",
+    "note": "Use ruby-vips for contact sheets, resizing, crops, and image QA; fall back to ImageMagick only when libvips is unavailable."
+  },
   "dataset_audit": {
     "current_strengths": [
       "real approved-looking source material",
@@ -31,7 +32,7 @@
       "phone-camera realism with natural skin detail"
     ],
     "current_risks": [
-      "only 18 curated images",
+      "only 17 curated images after removing the excluded selfie",
       "many near-duplicate frames from the same videos",
       "dominant white cap and striped outfit may bind to identity",
       "high-angle phone framing is overrepresented",
@@ -47,7 +48,6 @@
     ]
   },
   "images": [
-    "img_001.jpg",
     "img_002.jpg",
     "img_003.jpg",
     "img_004.jpg",
