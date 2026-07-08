@@ -20,8 +20,10 @@ class Follow < ApplicationRecord
   end
 
   def emit_follow_created
-    Shared::Notifiable.deliver_notification(followed, actor: follower, kind: "follow", source: self)
+    followed.notifications.create!(actor: follower, kind: "follow", notifiable: self)
     Shared::EventEmitter.call("brgen.follow.created", follower_id:, followed_id:) if defined?(Shared::EventEmitter)
+  rescue StandardError => e
+    Rails.logger.warn("Follow notification skipped: #{e.class}: #{e.message}")
   end
 
   def emit_follow_removed

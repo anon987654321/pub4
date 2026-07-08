@@ -10,4 +10,7 @@ class Place < ApplicationRecord
   validates :latitude, presence: true
   validates :longitude, presence: true
   validates :name, presence: true
+
+  has_many :place_check_ins, dependent: :destroy
+  has_many :check_in_users, through: :place_check_ins, source: :user
 end

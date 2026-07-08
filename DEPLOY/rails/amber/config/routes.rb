@@ -57,6 +57,12 @@ Rails.application.routes.draw do
     end
   end
 
+  get "creators/:handle", to: "creator_profiles#show", as: :creator_profile
+  resource :creator_profile, only: %i[new create edit update], as: :my_creator_profile
+  scope "creators/:handle", as: :creator_profile do
+    resources :wardrobe_items, only: %i[create destroy], controller: "creator_wardrobe_items"
+  end
+
   resources :declutter, only: :index, param: :id do
     member do
       get  :review

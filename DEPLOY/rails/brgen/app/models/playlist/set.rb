@@ -17,6 +17,7 @@ module Playlist
     has_many :collaborators, through: :collaborations, source: :user
     has_many :dilla_sketches, class_name: "Playlist::DillaSketch", dependent: :destroy
     has_many :likes, class_name: "Playlist::Like", dependent: :destroy
+    has_one :listening_party, class_name: "Playlist::ListeningParty", foreign_key: :playlist_set_id, dependent: :destroy
 
     validates :name, presence: true
     validates :privacy, inclusion: { in: PRIVACY_LEVELS }, allow_blank: true

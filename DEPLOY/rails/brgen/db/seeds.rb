@@ -215,6 +215,7 @@ restaurants = 15.times.map do
     name: Faker::Restaurant.name,
     cuisine_type: cuisines.sample,
     address: Faker::Address.street_address,
+    active: true,
     delivery_fee_cents: rand(2000..6000),
     min_order_cents: rand(8000..15_000),
     latitude: 60.39 + rand(-0.04..0.04),
@@ -228,7 +229,8 @@ restaurants.each do |rest|
       restaurant: rest,
       name: Faker::Food.dish,
       description: Faker::Food.description,
-      price_cents: rand(6000..18_000)
+      price_cents: rand(6000..18_000),
+      available: true
     )
   end
 end
@@ -245,7 +247,7 @@ restaurants.sample(10).each do |rest|
   )
   order.record_activity!('TakeawayOrder') if order.respond_to?(:record_activity!)
 
-  items = Takeaway::MenuItem.where(restaurant: rest).order(Arel.sql('RANDOM()')).limit(2)
+  items = Takeaway::MenuItem.available.includes(:restaurant).where(restaurant: rest).order(Arel.sql('RANDOM()')).limit(2)
   items.each do |item|
     order.order_items.create!(menu_item: item, quantity: rand(1..2), unit_price_cents: item.price_cents)
   end

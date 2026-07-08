@@ -461,4 +461,37 @@ class DeployBacklogTest < Minitest::Test
     assert_includes source, 'class: CableHealthJob'
     assert_includes source, 'schedule: every hour at minute 7'
   end
+
+  def test_brgen_users_maps_checkins_and_listening_parties_are_wired
+    routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
+    migration = File.read(File.join(ROOT, 'brgen/db/migrate/20260708120000_create_maps_check_ins_and_listening_parties.rb'))
+
+    assert_includes routes, 'resources :users, only: [ :show ]'
+    assert_includes routes, 'post :check_in'
+    assert_includes routes, 'resource :listening_party'
+    assert_includes migration, 'create_table :place_check_ins'
+    assert_includes migration, 'create_table :playlist_listening_parties'
+    assert_includes migration, 'idx_party_messages_on_party_and_created_at'
+    assert_includes read_brgen('app/controllers/users_controller.rb'), 'def show'
+    assert_includes read_brgen('app/controllers/maps/places_controller.rb'), 'def check_in'
+    assert_includes read_brgen('app/controllers/playlist/listening_parties_controller.rb'), 'def create'
+    assert_includes read_brgen('app/views/users/show.html.erb'), 'follow_button'
+    assert_includes read_brgen('app/views/maps/places/show.html.erb'), 'check_in_maps_place_path'
+    assert_includes read_brgen('app/views/playlist/sets/show.html.erb'), 'playlist_set_listening_party_path'
+  end
+
+  def test_bsdports_security_advisory_refresh_job_uses_nvd_service
+    job = File.read(File.join(ROOT, 'bsdports/app/jobs/security_advisory_refresh_job.rb'))
+    recurring = File.read(File.join(ROOT, 'bsdports/config/recurring.yml'))
+
+    assert_includes job, 'NvdCveService.crossref'
+    assert_includes job, 'CURSOR_KEY'
+    assert_includes recurring, 'SecurityAdvisoryRefreshJob'
+  end
+
+  private
+
+  def read_brgen(relative)
+    File.read(File.join(ROOT, 'brgen', relative))
+  end
 end

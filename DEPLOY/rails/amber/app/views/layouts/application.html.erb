@@ -49,6 +49,11 @@
     <%= link_to "Timeline", timeline_wardrobe_items_path %>
     <%= link_to "Messages", messages_path %>
     <%= link_to "Live", live_streams_path %>
+    <% if Current.user.creator_profile %>
+      <%= link_to "Creator", creator_profile_path(Current.user.creator_profile.handle) %>
+    <% else %>
+      <%= link_to "Creator", new_my_creator_profile_path %>
+    <% end %>
     <%= link_to "Style",         dressing_room_outfits_path, aria: { current: current_page?(dressing_room_outfits_path) ? 'page' : nil } %>
     <%= link_to "Planner",       planned_outfits_path, aria: { current: current_page?(planned_outfits_path) ? 'page' : nil } %>
     <%= link_to "Search",    ai_search_path %>

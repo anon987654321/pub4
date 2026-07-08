@@ -75,4 +75,29 @@ class AmberBacklogTest < Minitest::Test
     assert_includes view, "Life phases"
     assert_includes read("app/views/layouts/application.html.erb"), "timeline_wardrobe_items_path"
   end
+
+  def test_wardrobe_items_migration_and_intelligence_jobs_are_wired
+    migration = read("db/migrate/20260708120000_create_wardrobe_items_and_wire_intelligence_jobs.rb")
+    media_job = read("app/jobs/wardrobe_media_job.rb")
+    ai = read("app/controllers/ai_controller.rb")
+
+    assert_includes migration, "create_table :wardrobe_items"
+    assert_includes media_job, "EmbedGarmentJob.perform_later"
+    assert_includes media_job, "CalculateSustainabilityJob.perform_later"
+    assert_includes ai, "RecommendOutfitsJob.perform_later"
+    assert_includes ai, "packing_list_items.find_or_create_by!"
+  end
+
+  def test_creator_profiles_are_wired
+    routes = read("config/routes.rb")
+    controller = read("app/controllers/creator_profiles_controller.rb")
+
+    assert_includes routes, 'get "creators/:handle"'
+    assert_includes routes, "resource :creator_profile"
+    assert_includes controller, "def show"
+    assert_includes controller, "def create"
+    assert_includes read("app/controllers/creator_wardrobe_items_controller.rb"), "def create"
+    assert_includes read("app/views/creator_profiles/show.html.erb"), "Showcase"
+    assert_includes read("app/views/layouts/application.html.erb"), "new_my_creator_profile_path"
+  end
 end

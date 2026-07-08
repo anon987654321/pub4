@@ -128,6 +128,9 @@ Rails.application.routes.draw do
         resources :collaborations, only: %i[create destroy]
         resources :dilla_sketches, only: %i[create update destroy]
         resource :like, only: %i[create destroy]
+        resource :listening_party, only: %i[create show update destroy], controller: "listening_parties" do
+          resources :party_messages, only: :create
+        end
       end
       resources :listens, only: :create
       resources :hosted_tracks
@@ -170,7 +173,11 @@ Rails.application.routes.draw do
   constraints(subdomain: MAPS_SUBDOMAINS) do
     scope module: "maps", as: "maps" do
       root "home#index", as: :maps_root
-      resources :places, only: %i[index show]
+      resources :places, only: %i[index show] do
+        member do
+          post :check_in
+        end
+      end
     end
   end
 

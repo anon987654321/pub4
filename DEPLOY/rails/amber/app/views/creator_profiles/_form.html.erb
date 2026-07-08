@@ -1,0 +1,35 @@
+<%= form_with model: profile, url: my_creator_profile_path, method: (profile.persisted? ? :patch : :post) do |form| %>
+  <% if profile.errors.any? %>
+    <%= tag.section role: "alert" do %>
+      <%= tag.h2 t("shared.errors", count: profile.errors.count, default: "Please review the form") %>
+      <%= tag.ul do %>
+        <% profile.errors.full_messages.each do |message| %>
+          <%= tag.li message %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :handle %>
+    <%= form.text_field :handle, required: true %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :display_name %>
+    <%= form.text_field :display_name, required: true %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :bio %>
+    <%= form.text_area :bio, rows: 4, data: { controller: "textarea-autogrow char-counter", "char-counter-max-value": 1000 } %>
+    <span class="char-counter" data-char-counter-target="counter"></span>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :public, "Public profile" %>
+    <%= form.check_box :public %>
+  <% end %>
+
+  <%= form.submit profile.persisted? ? "Save profile" : "Create profile" %>
+<% end %>
