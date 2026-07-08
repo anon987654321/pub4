@@ -23,7 +23,14 @@
   "image_processing": {
     "preferred_backend": "ruby-vips/libvips",
     "fallback_backend": "ImageMagick",
-    "note": "Use ruby-vips for contact sheets, resizing, crops, and image QA; fall back to ImageMagick only when libvips is unavailable."
+    "postpro_script": "/Users/mac/Documents/GitHub/pub4/MASTER/tools/postpro.rb",
+    "sample_postpro_helper": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/postpro_samples.rb",
+    "sample_postpro_presets": [
+      "portrait",
+      "cinematic",
+      "quality_uplift"
+    ],
+    "note": "Use ruby-vips for contact sheets, resizing, crops, sample grading, and image QA; fall back to ImageMagick only when libvips is unavailable. Apply postpro to generated samples, not to the training photos."
   },
   "dataset_audit": {
     "current_strengths": [

@@ -10,7 +10,14 @@
   "target_model_version": "ragnhild_v2",
   "image_processing": {
     "preferred_backend": "ruby-vips/libvips",
-    "fallback_backend": "ImageMagick"
+    "fallback_backend": "ImageMagick",
+    "postpro_script": "/Users/mac/Documents/GitHub/pub4/MASTER/tools/postpro.rb",
+    "sample_postpro_helper": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/postpro_samples.rb",
+    "sample_postpro_presets": [
+      "portrait",
+      "cinematic",
+      "quality_uplift"
+    ]
   },
   "steps": 1600,
   "rank": 16,

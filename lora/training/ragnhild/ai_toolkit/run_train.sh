@@ -19,4 +19,7 @@ if [ ! -f run.py ]; then
   exit 1
 fi
 echo "training ragnhild LoRA with $CONFIG"
-exec python run.py "$CONFIG"
+python run.py "$CONFIG"
+if [ "${RAGNHILD_POSTPRO_SAMPLES:-0}" = "1" ]; then
+  ruby /Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/postpro_samples.rb
+fi
