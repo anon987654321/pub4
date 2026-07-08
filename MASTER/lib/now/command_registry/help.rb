@@ -107,6 +107,10 @@ module Master
           summary: "show command summaries or details",
           detail: ["/help", "/help <command>"],
         },
+        "fold" => {
+          summary: "run a coding goal through the kernel Fold (rebuild runtime)",
+          detail: ["/fold <goal>", "Routes one goal to kernel/; streams turns as kernel:turn events."],
+        },
         "domain" => {
           summary: "inspect or sync a pub4 subdomain cluster",
           detail: ["/domain <name>", "Names: marketplace playlist takeaway tv maps amber hjerterom bsdports brgen …"],
@@ -183,7 +187,7 @@ module Master
         "session" => %w[clear save history grep audit tokens cost undo rollback redo],
         "work" => %w[scan fix workflow review critique self kernel status replay graph resync tail edge-cases],
         "agent" => %w[run mode task persona btw shell gateway plan rebuild],
-        "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help domain],
+        "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help domain fold],
         "infer" => [],
         "media" => %w[music],
       }.freeze
