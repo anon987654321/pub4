@@ -26,12 +26,14 @@ class NullModel
   end
 end
 
-options = { root: Dir.pwd, max_turns: 40 }
+options = { root: Dir.pwd, max_turns: 40, real: false, model: nil }
 
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: master-kernel [--root PATH] [--max-turns N] GOAL"
+  opts.banner = "usage: master-kernel [--root PATH] [--max-turns N] [--real [--model ID]] GOAL"
   opts.on("--root PATH") { |path| options[:root] = path }
   opts.on("--max-turns N", Integer) { |n| options[:max_turns] = n }
+  opts.on("--real", "drive a live LLM (needs a provider key); default is the scripted no-op") { options[:real] = true }
+  opts.on("--model ID") { |id| options[:model] = id }
 end
 
 parser.parse!(ARGV)
@@ -47,7 +49,7 @@ data_dir = File.join(File.expand_path("..", __dir__), "data")
 constitution = Master::Kernel::Constitution.load(data_dir:)
 world = Master::Kernel::World.new(root:)
 memory = Master::Kernel::Memory.new
-model = NullModel.new(goal)
+model = options[:real] ? Master::Kernel::Model.new(**{ model_id: options[:model] }.compact) : NullModel.new(goal)
 
 result = Master::Kernel::Fold.new(
   model:,
