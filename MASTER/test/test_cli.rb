@@ -249,7 +249,7 @@ class TestCLI < Minitest::Test
         assert_includes body, "## Tree"
         assert_includes body, "## Codebase"
         assert_includes body, "puts 42"
-        assert_includes body, "no truncation"
+        assert_includes body, "git-tracked source text only"
       ensure
         if prior
           ENV["MASTER_SNAPSHOT_DIR"] = prior

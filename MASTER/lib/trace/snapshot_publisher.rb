@@ -5,14 +5,13 @@ require "open3"
 require "yaml"
 
 require_relative "snapshot_agent_guide"
+require_relative "snapshot_collector"
 
 module Master
   module Trace
-    # Canonical snapshot builder — tree walk, agent preamble, Downloads output.
+    # Canonical snapshot builder — git-tracked source, agent preamble, Downloads output.
     module SnapshotPublisher
-      TEXT_EXTS = %w[.rb .py .js .ts .zsh .sh .bash .md .yml .yaml .json .toml .gemspec .txt .erb .conf .ini .env].to_set.freeze
-      TEXT_NAMES = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
-      SKIP_SEGS = %w[.git .master vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
+      SKIP_SEGS = SnapshotCollector::SKIP_SEGS
       BOOT_DIRS = %w[bin lib data].freeze
       BOOT_MAX_BYTES = 50_000
       # A readable snapshot inlines source, not media or generated bulk. Binaries
@@ -58,7 +57,7 @@ module Master
       end
 
       def build_document(target, label, repo_root:)
-        body, files, n_lines = build_markdown(target, label)
+        body, files, n_lines = build_markdown(target, label, repo_root:)
         header = summary_header(target, label, repo_root:, files:, n_lines:)
         [header + body, files, n_lines]
       end
@@ -113,21 +112,27 @@ module Master
         false
       end
 
-      def build_markdown(target, label)
-        all = snapshot_paths(target)
-        dirs = all.select { |f| File.directory?(f) }
-        files = all.select { |f| File.file?(f) }
+      def build_markdown(target, label, repo_root:)
+        parts = SnapshotCollector.partition(SnapshotCollector.collect_paths(label:, repo_root:, target:))
+        files = parts[:inlined]
+        large = parts[:large]
         md = ["## Tree", "```"]
-        entries = (dirs.map { |d| [d, :dir] } + files.map { |f| [f, :file] })
-                  .sort_by { |p, _| p.split("/") }
-                  .map { |p, k| "#{"  " * p.delete_prefix("#{target}/").count("/")}#{File.basename(p)}#{k == :dir ? "/" : ""}" }
-        md.concat(entries) << "```" << ""
+        files.each { |path| md << path.delete_prefix("#{target}/").delete_prefix("#{repo_root}/").delete_prefix("/") }
+        md << "```" << ""
+        unless large.empty?
+          md << "## Large files (listed, not inlined)"
+          large.each do |path|
+            rel = path.delete_prefix("#{target}/").delete_prefix("#{repo_root}/").delete_prefix("/")
+            md << "- `#{rel}` (#{(File.size(path) / 1024.0).round} KB)"
+          end
+          md << ""
+        end
         md.concat(artifacts_section) if label == "MASTER"
         md << "## Codebase" << ""
         n_lines = 0
-        files.each do |f|
-          rel = f.delete_prefix("#{target}/")
-          section, line_count = file_section(f)
+        files.each do |path|
+          rel = path.delete_prefix("#{target}/").delete_prefix("#{repo_root}/").delete_prefix("/")
+          section, line_count = SnapshotCollector.file_section(path)
           n_lines += line_count
           md << "## `#{rel}`"
           md.concat(section)
@@ -150,7 +155,7 @@ module Master
           "- files: #{files.size}",
           "- lines: #{n_lines}",
           "- target: `#{target}`",
-          "- policy: full tree + every file verbatim (no truncation)",
+          "- policy: #{SnapshotCollector::POLICY_SUMMARY}",
           *(stats || []),
           *(git || []),
           "",
@@ -158,35 +163,6 @@ module Master
           recent_commits(repo_root),
           ""
         ].join("\n")
-      end
-
-      def snapshot_paths(target)
-        Dir.glob(File.join(target, "**", "*"), File::FNM_DOTMATCH)
-           .reject { |f| skip_entry?(f.delete_prefix("#{target}/").delete_prefix("/")) }
-           .sort
-      end
-
-      def skip_entry?(rel)
-        return true if rel.empty? || rel == "."
-
-        rel.split("/").any? { |segment| segment == "." || segment == ".." || SKIP_SEGS.include?(segment) }
-      end
-
-      def file_section(path)
-        size = File.size(path)
-        return [["_binary: #{size} bytes (not inlined)_"], 0] unless text_file?(path)
-        return [["_text: #{size} bytes over #{MAX_INLINE_BYTES} cap (not inlined)_"], 0] if size > MAX_INLINE_BYTES
-
-        text = File.read(path, encoding: "UTF-8", invalid: :replace)
-        lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(path).downcase, "text")
-        lines = text.each_line.map(&:rstrip)
-        [["```#{lang}", *lines, "```"], lines.size]
-      rescue StandardError => e
-        [["```text", "[unreadable: #{e.message}]", "```"], 1]
-      end
-
-      def text_file?(file)
-        TEXT_EXTS.include?(File.extname(file).downcase) || TEXT_NAMES.include?(File.basename(file))
       end
 
       def runtime_stats(root)

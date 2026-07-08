@@ -10,16 +10,10 @@
 #
 # Default: all subtrees, written as snapshot_<LABEL>.md at the pub4 repo root.
 
-require "set"
 require "optparse"
+require_relative "../lib/trace/snapshot_collector"
 
 REPO_ROOT = File.expand_path("../..", __dir__) # pub4 (parent of MASTER/)
-CAP = 262_144
-
-TEXT = %w[.rb .rake .ru .py .js .mjs .ts .jsx .tsx .css .scss .html .erb .haml .slim
-          .zsh .sh .bash .md .markdown .yml .yaml .json .toml .gemspec .txt .conf
-          .ini .env .sql .xml .svg .ruby-version .gitignore .keep].to_set
-NAMED = %w[Gemfile Rakefile Dockerfile Makefile Procfile].to_set
 LANG = {
   ".rb" => "ruby", ".rake" => "ruby", ".ru" => "ruby", ".gemspec" => "ruby",
   ".js" => "javascript", ".mjs" => "javascript", ".ts" => "typescript",
@@ -40,34 +34,36 @@ labels = which == "all" ? %w[MASTER DEPLOY] : [which.upcase]
 
 def fence(body) = "`" * [body.scan(/`+/).map(&:length).max.to_i + 1, 3].max
 
-def snapshot(label, out_dir)
-  tracked = `git ls-files #{label}`.lines.map(&:chomp).reject(&:empty?).select { |f| File.file?(f) }
-  text = tracked.select { |f| TEXT.include?(File.extname(f).downcase) || NAMED.include?(File.basename(f)) }
-  inlined = text.select { |f| File.size(f) <= CAP }.sort
-  large   = text.select { |f| File.size(f) > CAP }.sort
+def rel_path(path, repo_root) = path.delete_prefix("#{repo_root}/")
+
+def snapshot(label, out_dir, repo_root)
+  parts = Master::Trace::SnapshotCollector.partition(
+    Master::Trace::SnapshotCollector.collect_paths(label:, repo_root:, target: File.join(repo_root, label))
+  )
+  inlined = parts[:inlined]
+  large = parts[:large]
   dest = File.join(out_dir, "snapshot_#{label}.md")
 
   File.open(dest, "w") do |io|
     io.puts "# #{label} — source snapshot", ""
     io.puts "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} · #{inlined.size} files · " \
-            "git-tracked source only (no vendor / node_modules / .master / generated assets; " \
-            "files over #{CAP / 1024} KB are listed but not inlined).", ""
+            "#{Master::Trace::SnapshotCollector::POLICY_SUMMARY}.", ""
     io.puts "## Tree", "```"
-    inlined.each { |f| io.puts f }
+    inlined.each { |path| io.puts rel_path(path, repo_root) }
     io.puts "```"
     unless large.empty?
       io.puts "", "## Large files (listed, not inlined)"
-      large.each { |f| io.puts "- `#{f}` (#{(File.size(f) / 1024.0).round} KB)" }
+      large.each { |path| io.puts "- `#{rel_path(path, repo_root)}` (#{(File.size(path) / 1024.0).round} KB)" }
     end
     io.puts "", "## Files"
-    inlined.each do |f|
-      body = File.read(f, encoding: "UTF-8").scrub
+    inlined.each do |path|
+      body = File.read(path, encoding: "UTF-8").scrub
       wrap = fence(body)
-      io.puts "", "### #{f}", "", "#{wrap}#{LANG[File.extname(f).downcase]}", body, wrap
+      io.puts "", "### #{rel_path(path, repo_root)}", "", "#{wrap}#{LANG[File.extname(path).downcase]}", body, wrap
     end
   end
   puts "snapshot: #{label} -> #{dest} (#{(File.size(dest) / 1024.0 / 1024).round(1)} MB, " \
        "#{inlined.size} files#{large.empty? ? '' : ", #{large.size} large listed"})"
 end
 
-Dir.chdir(REPO_ROOT) { labels.each { |label| snapshot(label, out) } }
+Dir.chdir(REPO_ROOT) { labels.each { |label| snapshot(label, out, REPO_ROOT) } }

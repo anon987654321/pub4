@@ -46,7 +46,7 @@ module Master
           "1. Create a temp workspace, e.g. `mktemp -d` → `$SNAP/work`.",
           "2. For each `## \\`relative/path\\`` heading, recreate directory structure under `$SNAP/work`.",
           "3. Copy the fenced block body **exactly** (preserve newlines; strip only the outer ```lang fences).",
-          "4. Binary sections use `\\`\\`\\`base64` — decode to bytes, write with the same relative path.",
+          "4. Binaries and large files are **listed only** (not inlined) — do not expect base64 blocks.",
           "5. Repeat for **both** `MASTER_snapshot.md` and `DEPLOY_snapshot.md` when present:",
           "   - `$SNAP/work/MASTER/...` from MASTER sections",
           "   - `$SNAP/work/DEPLOY/...` from DEPLOY sections",
