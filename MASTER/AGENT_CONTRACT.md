@@ -6,7 +6,7 @@ This contract is for AI agents and humans who want predictable collaboration wit
 
 - Contributor mode: make narrow changes, run `bin/check`, and avoid broad constitutional cleanup.
 - Operator mode: run full gates, triage debt, and change policy or runtime contracts deliberately.
-- Agent mode: obey this file, surface uncertainty, and run `bin/check-agent` when changing law or agent behavior.
+- Agent mode: obey this file, surface uncertainty, and run `bin/check --profile=agent` when changing law or agent behavior.
 
 ## Work Rules
 
@@ -22,8 +22,8 @@ This contract is for AI agents and humans who want predictable collaboration wit
 - Use `rg` for search.
 - Use `bin/check` for ordinary local validation.
 - Use `rake lint:data_singularity` after YAML registry edits.
-- Use `bin/check-web` after web face or asset changes.
-- Use `bin/check-agent` after changes to `data/soul.yml`, `data/rules.yml`, scanners, loop repair, or agent routing.
+- Use `bin/check --profile=web` after web face or asset changes.
+- Use `bin/check --profile=agent` after changes to `data/soul.yml`, `data/rules.yml`, scanners, loop repair, or agent routing.
 
 ## Reporting Rules
 

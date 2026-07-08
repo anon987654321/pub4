@@ -16,9 +16,9 @@ Read these first:
 ## Safe First Commands
 
 - `bin/check` runs the normal contributor gate.
-- `bin/check-agent` runs the self-test law gate and may fail on known debt.
-- `bin/check-web` runs static web UI checks; set `MASTER_WEB_LIVE=1` for live web checks.
-- `bin/check-full` runs the full CI/probe/audit path and may fail until known debt is triaged.
+- `bin/check --profile=agent` runs the self-test law gate and may fail on known debt.
+- `bin/check --profile=web` runs static web UI checks; set `MASTER_WEB_LIVE=1` for live web checks.
+- `bin/check --profile=full` runs the full CI/probe/audit path and may fail until known debt is triaged.
 
 ## Source And Local State
 

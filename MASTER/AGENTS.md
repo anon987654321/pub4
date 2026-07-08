@@ -26,8 +26,8 @@ Law: `data/soul.yml` + `data/rules.yml`. VPS deploy: `DEPLOY/OPERATOR.md`. Recip
 | Change type | Command |
 |-------------|---------|
 | Ordinary code | `cd MASTER && bin/check --profile=contributor` |
-| Law / scanner / loop | `bin/check-agent` |
-| Web face / assets | `bin/check-web` |
+| Law / scanner / loop | `bin/check --profile=agent` |
+| Web face / assets | `bin/check --profile=web` |
 | Deploy / Rails | `DEPLOY/bin/check-rails --profile=contributor` |
 | Operator / release | `bin/pub4 status` then `DEPLOY/bin/check-full` |
 
