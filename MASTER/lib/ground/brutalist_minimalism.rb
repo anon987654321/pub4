@@ -7,15 +7,15 @@ module Master
       PRIMARY_RULE = "If it does not improve readability, delete it.".freeze
 
       FORBIDDEN_EFFECTS = %w[
-        shadows glows 3d_effects gradients animations transitions rounded_corners decorative_borders,
+        shadows glows 3d_effects gradients animations transitions rounded_corners decorative_borders
       ].freeze
 
       FORBIDDEN_CSS = %w[
-        box-shadow border-radius background-image transform filter,
+        box-shadow border-radius background-image transform filter
       ].freeze
 
       ALLOWED_CSS = %w[
-        font-size font-weight margin padding line-height max-width display flex grid,
+        font-size font-weight margin padding line-height max-width display flex grid
       ].freeze
 
       SYSTEM_FONTS = {

@@ -36,7 +36,7 @@ module Master
         permission_authorization
         input_validation_normalization
         quality_style
-        output_verification,
+        output_verification
       ].freeze
 
       OUTPUT_POLICY = {
