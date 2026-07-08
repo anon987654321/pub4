@@ -50,10 +50,7 @@ module Master
       TEXT
 
       REPLICATE = <<~TEXT.strip
-        Media via Replicate API; text reasoning on OpenRouter/xAI/Anthropic. Token: REPLICATE_API_TOKEN in /etc/master.env or ~/.config/repligen/config.json.
-        Image default: black-forest-labs/flux-2-pro (data/providers.yml). VideoChain: lib/reach/video_chain.rb.
-        Backends: kling, happyhorse, cogvideox, minimax, animatediff, animatediff_camera. Help: bundle exec ruby bin/video help.
-        Motion critique: lib/judge/council/motion_critique.rb. Env: MOTION_CRITIQUE_VISION, COMFYUI_URL, COMFYUI_WRAPPER_URL.
+        Replicate API is used only by the replicate_kokoro TTS engine. Token: REPLICATE_API_TOKEN in /etc/master.env or ~/.config/repligen/config.json.
       TEXT
 
       CONVENTIONS = <<~TEXT.strip

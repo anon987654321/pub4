@@ -1,0 +1,27 @@
+<% content_for :title, @user.display_name %>
+<%= turbo_stream_from @user %>
+
+<header class="profile-header" role="banner" aria-label="User profile">
+  <h1><%= @user.display_name %></h1>
+  <p class="dim">
+    <%= @followers_count %> followers · <%= @following_count %> following · <%= @posts.size %> posts
+  </p>
+
+  <% if authenticated? && Current.user != @user %>
+    <%= render "shared/follow_button", user: @user, active: @active_follow %>
+    <%= button_to "Message", user_conversations_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>
+  <% end %>
+
+  <% if @user.dating_profile.present? %>
+    <p><%= link_to "Dating profile", dating_profile_path, class: "btn btn-ghost btn-sm" %></p>
+  <% end %>
+</header>
+
+<section>
+  <h2>Posts</h2>
+  <% if @posts.any? %>
+    <%= render partial: "posts/post", collection: @posts %>
+  <% else %>
+    <p class="dim">No posts yet.</p>
+  <% end %>
+</section>

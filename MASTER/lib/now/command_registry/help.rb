@@ -35,8 +35,8 @@ module Master
           detail: ["/orient", "/orient <soul|rules|limits|bootstrap|trace|…>", "Pipeline map, runtime bootstrap, constitution file index."],
         },
         "tools" => {
-          summary: "list Reach agent tools and CLI media commands",
-          detail: ["/tools", "Shows Builder TOOL_MAP, /postpro /repligen /video, and data/tools.yml."],
+          summary: "list Reach agent tools",
+          detail: ["/tools", "Shows Builder TOOL_MAP and data/tools.yml."],
         },
         "replay" => {
           summary: "replay operational event history",
@@ -106,59 +106,6 @@ module Master
         "help" => {
           summary: "show command summaries or details",
           detail: ["/help", "/help <command>"],
-        },
-        "video" => {
-          summary: "long-form cinematic video via VideoChain",
-          detail: [
-            "/video [--backend kling|happyhorse|cogvideox|minimax|animatediff|animatediff_camera]",
-            "[--minutes N] [--critique] [--vision-critique] [--per-chunk-critique]",
-            "[--auto-retry] [--max-retries N] [--lora ID]",
-            "[--motion-stack preset1,preset2] [--motion-preset NAME] <prompt>",
-            "Standalone: bundle exec ruby bin/video (see /orient replicate).",
-          ],
-        },
-        "motion-dataset" => {
-          summary: "bootstrap Motion LoRA training clips",
-          detail: [
-            "/motion-dataset --preset slow_dolly_push_in --subject \"character description\"",
-            "[--clips 12] [--backend kling] [--lora ID]",
-            "Presets: data/comfyui/motion_lora_presets.yml",
-          ],
-        },
-        "lora-train" => {
-          summary: "train a character Flux LoRA from photos and videos",
-          detail: [
-            "/lora-train --name ragnhild [--destination owner/model] [--trigger ragnhild]",
-            "[--split-all] splits every video frame; curates to 12-18 for training.",
-            "[--local] writes ostris/ai-toolkit config + run_train.sh (no Replicate).",
-            "[--ai-toolkit PATH] [--steps 1000] [--rank 16] [--use-all-frames] [--prepare-only]",
-            "Standalone: bundle exec ruby bin/video lora-train …",
-          ],
-        },
-        "social-sim" => {
-          summary: "closed synthetic inbox sim (NPC personas, metrics, no real messengers)",
-          detail: [
-            "/social-sim init --subject ragnhild [--personas 12]",
-            "/social-sim tick --hours 24 [--auto ghost|busy|not_interested]",
-            "/social-sim tui | stats | dashboard | visuals [--lora basicfeatures/ragnhild]",
-            "Standalone: bundle exec ruby bin/social_sim help",
-          ],
-        },
-        "photograph" => {
-          summary: "Flux photo + kodak_portra postpro",
-          detail: ["/photograph <seed>", "Attach a reference image in web chat for vision-guided refinement."],
-        },
-        "prompt" => {
-          summary: "refine a generation prompt (photo or video)",
-          detail: ["/prompt <seed>", "/prompt photo <seed>", "/prompt video <seed>"],
-        },
-        "repligen" => {
-          summary: "Replicate image/video generation CLI",
-          detail: ["/repligen generate <model> <prompt>", "/repligen sync|search|stats …"],
-        },
-        "postpro" => {
-          summary: "film-stock post-processing on images",
-          detail: ["/postpro --input path --output path --preset portrait --stock kodak_portra"],
         },
         "domain" => {
           summary: "inspect or sync a pub4 subdomain cluster",
@@ -238,7 +185,7 @@ module Master
         "agent" => %w[run mode task persona btw shell gateway plan rebuild],
         "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help domain],
         "infer" => [],
-        "media" => %w[photograph repligen postpro prompt video motion-dataset lora-train social-sim music],
+        "media" => %w[music],
       }.freeze
 
       CLI_ONLY_SLASH = %w[

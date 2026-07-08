@@ -26,6 +26,7 @@ class AiController < ApplicationController
   end
 
   def suggest_outfits
+    RecommendOutfitsJob.perform_later(Current.user.id, occasion: params[:occasion], season: params[:season])
     @suggestions = WardrobeAiService.new(Current.user).suggest_outfits(
       occasion: params[:occasion], season: params[:season]
     )
@@ -121,8 +122,21 @@ class AiController < ApplicationController
       @result = WardrobeAiService.new(Current.user).suggest_packing_list(@duration, @climate)
       # auto create packing list demo
       if @result["outfits"]
-        list = Current.user.packing_lists.create!(name: "#{@climate} #{ @duration }d trip", starts_on: Date.today, ends_on: Date.today + @duration)
-        # would link items if matched
+        list = Current.user.packing_lists.create!(
+          name: "#{@climate} #{@duration}d trip",
+          starts_on: Date.current,
+          ends_on: Date.current + @duration
+        )
+        Array(@result["outfits"]).each do |outfit|
+          Array(outfit["items"]).each do |title|
+            key = title.to_s.split("(").first.strip.downcase
+            item = Current.user.items.where("lower(title) LIKE ?", "%#{key}%").first
+            next unless item
+
+            list.packing_list_items.find_or_create_by!(item: item) { |pli| pli.quantity = 1 }
+          end
+        end
+        @packing_list = list
       end
     end
   end

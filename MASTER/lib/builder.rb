@@ -43,8 +43,6 @@ module Master
       "WebSearch"       => ->(r, i) { Reach::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
       "Clean"           => ->(r, i) { Reach::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "FeedbackRecord"  => ->(r, i) { Reach::FeedbackRecord.new(learnings: i[:learnings]) },
-      "Repligen"        => ->(r, i) { Reach::Repligen.new(root: r, event_bus: i[:bus]) },
-      "Postpro"         => ->(r, i) { Reach::Postpro.new(root: r, event_bus: i[:bus]) },
       "SubdomainOrchestrator" => ->(r, i) {
         Reach::SubdomainOrchestrator.new(root: r, event_bus: i[:bus],
           web_fetch: Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus]))

@@ -28,9 +28,29 @@
         "https://www.openstreetmap.org/?mlat=#{@place.latitude}&mlon=#{@place.longitude}#map=16/#{@place.latitude}/#{@place.longitude}",
         class: "btn", target: "_blank", rel: "noopener" %>
     <% if authenticated? %>
-      <%= form_with url: "#", method: :post, local: true, html: { style: "display:inline" } do |f| %>
-        <%= f.submit "I'm here (check-in)", class: "btn" %>
-      <% end %> <!-- basic stub for AN625 user check-in -->
+      <% unless @checked_in %>
+        <%= form_with url: check_in_maps_place_path(@place), method: :post, local: true, html: { style: "display:inline" } do |f| %>
+          <%= f.text_field :note, placeholder: "Optional note", class: "field--grow" %>
+          <%= f.submit "I'm here (check-in)", class: "btn" %>
+        <% end %>
+      <% else %>
+        <p class="dim">You checked in here recently.</p>
+      <% end %>
     <% end %>
   </p>
+
+  <% if @recent_check_ins.any? %>
+    <section>
+      <h2>Recent check-ins</h2>
+      <ul>
+        <% @recent_check_ins.each do |check_in| %>
+          <li>
+            <%= check_in.user.display_name %>
+            <% if check_in.note.present? %> — <%= check_in.note %><% end %>
+            <span class="dim">· <time datetime="<%= check_in.checked_in_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(check_in.checked_in_at) %> ago</time></span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
 </article>

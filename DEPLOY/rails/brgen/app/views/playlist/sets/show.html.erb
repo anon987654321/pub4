@@ -126,7 +126,11 @@
 <section>
   <h2>Listening party</h2>
   <p class="dim">Start or join a real-time synced listening session with embedded player and chat.</p>
-  <%= button_to "Start party", "#", class: "btn btn-primary btn-sm", disabled: true %>
-  <span class="dim"> (full cable sync + party model planned for a follow-up)</span>
+  <% if @set.listening_party&.active? %>
+    <%= link_to "Join party", playlist_set_listening_party_path(@set), class: "btn btn-primary btn-sm" %>
+    <span class="dim">Code: <%= @set.listening_party.join_code %></span>
+  <% else %>
+    <%= button_to "Start party", playlist_set_listening_party_path(@set), method: :post, class: "btn btn-primary btn-sm" %>
+  <% end %>
 </section>
 <% end %>

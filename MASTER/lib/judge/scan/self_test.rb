@@ -208,8 +208,8 @@ module Master
         def singularity_yaml_paths(data_dir)
           Dir.glob(File.join(data_dir, "**", "*.yml")).sort.reject do |path|
             rel = path.delete_prefix("#{data_dir}/")
-            rel.start_with?("agents/", "comfyui/", "council/", "harnesses/", "lessons/", "ops/", "personas/",
-                            "prompts/", "rules/", "runtime/", "security/", "social_sim/")
+            rel.start_with?("agents/", "council/", "harnesses/", "lessons/", "ops/", "personas/",
+                            "prompts/", "rules/", "runtime/", "security/")
           end
         end
 

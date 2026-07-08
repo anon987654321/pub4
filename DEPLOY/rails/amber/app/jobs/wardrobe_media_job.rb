@@ -21,6 +21,8 @@ class WardrobeMediaJob < ApplicationJob
     item.extract_dominant_color! if item.photos.attached?
     SegmentGarmentImageJob.perform_later(item.id) if item.photos.attached?
     RemoveBackgroundJob.perform_later(item.id) if item.photos.attached?
+    EmbedGarmentJob.perform_later(item.id) if item.photos.attached?
+    CalculateSustainabilityJob.perform_later(item.id)
 
     # auto postpro film stock on item image upload (DF06)
     if item.photos.attached?

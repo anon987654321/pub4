@@ -6,7 +6,6 @@ require_relative "command_registry/help"
 require_relative "command_registry/memory_commands"
 require_relative "command_registry/work_commands"
 require_relative "command_registry/system_commands"
-require_relative "command_registry/tool_commands"
 require_relative "command_registry/media_commands"
 require_relative "command_registry/domain_commands"
 require_relative "command_registry/agent_commands"
@@ -38,7 +37,6 @@ module Master
         commands.merge!(mode_commands(infra[:config]))
         commands.merge!(memory_commands(infra[:memory], ai[:agent], root:))
         commands.merge!(work_commands(ai:, root:, infra:))
-        commands.merge!(tool_commands(root, (ai || {}).merge(bus: infra[:bus])))
         commands.merge!(media_commands(bus: infra[:bus]))
         commands.merge!(domain_commands(root:))
         shell_tool = Array(ai[:tools]).find { |t| t.is_a?(Reach::Shell) }

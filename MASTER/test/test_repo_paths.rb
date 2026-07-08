@@ -10,8 +10,8 @@ class RepoPathsTest < Minitest::Test
   end
 
   def test_tool_path_joins_under_master_tools
-    path = Master.tool_path("postpro.rb")
-    assert_includes path, "/MASTER/tools/postpro.rb"
+    path = Master.tool_path("security_sweep.rb")
+    assert_includes path, "/MASTER/tools/security_sweep.rb"
     assert File.file?(path)
   end
 end

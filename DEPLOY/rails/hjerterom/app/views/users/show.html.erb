@@ -1,0 +1,40 @@
+<% content_for :title, @user.email_address.split("@").first %>
+
+<header class="profile-header" role="banner" aria-label="Volunteer profile">
+  <h1><%= @user.email_address.split("@").first %></h1>
+  <% if @volunteer %>
+    <p class="dim">Volunteer · <%= @volunteer.availability.presence || "availability not set" %></p>
+  <% end %>
+</header>
+
+<section>
+  <h2>Community posts</h2>
+  <% if @posts.any? %>
+    <ul>
+      <% @posts.each do |post| %>
+        <li>
+          <%= link_to post.title, community_show_path(post) %>
+          <span class="dim">· <%= time_ago_in_words(post.created_at) %> ago</span>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="dim">No community posts yet.</p>
+  <% end %>
+</section>
+
+<section>
+  <h2>Food listings</h2>
+  <% if @food_listings.any? %>
+    <ul>
+      <% @food_listings.each do |listing| %>
+        <li>
+          <%= link_to listing.title, food_listing_path(listing) %>
+          <span class="dim">· <%= listing.status %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="dim">No food listings yet.</p>
+  <% end %>
+</section>
