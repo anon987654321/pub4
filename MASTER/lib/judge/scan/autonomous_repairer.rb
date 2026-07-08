@@ -9,7 +9,7 @@ module Master
           healed = fix.changed ? File.read(path, encoding: "UTF-8") : source
           Result.ok(healed)
         rescue StandardError => e
-          Result.err("autonomous repair failed: #{e.message}", category: :syntax_collapse)
+          Result.err("autonomous repair failed: #{e.message}", category: :infrastructure)
         end
       end
     end

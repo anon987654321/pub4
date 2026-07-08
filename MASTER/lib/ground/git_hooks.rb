@@ -22,7 +22,7 @@ module Master
         File.chmod(0o755, hook_path)
         Result.ok(path: hook_path)
       rescue StandardError => e
-        Result.err("pre-commit hook install failed: #{e.message}", category: :internal_error)
+        Result.err("pre-commit hook install failed: #{e.message}", category: :infrastructure)
       end
     end
   end

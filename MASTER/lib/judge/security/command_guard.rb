@@ -28,11 +28,11 @@ module Master
           stdout_and_stderr, status = Master::Reach::Exec.capture2e(clean_env, *Array(args), chdir: chdir)
           return Result.ok(stdout_and_stderr) if status.success?
 
-          Result.err(stdout_and_stderr, category: :execution_failure)
+          Result.err(stdout_and_stderr, category: :infrastructure)
         rescue Master::SecurityError => e
           Result.err(e.message, category: :validation)
         rescue StandardError => e
-          Result.err(e.message, category: :internal_error)
+          Result.err(e.message, category: :infrastructure)
         end
       end
     end
