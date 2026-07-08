@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+#
+# Readable source snapshots — one markdown per repo subtree, git-tracked text only.
+# Media, vendored deps, generated assets, and the .master cache never inline; files
+# over the cap are listed, not pasted. This is the full-snapshot tool; the small
+# boot-context snapshot still lives in MASTER/lib/trace/snapshot_publisher.rb.
+#
+#   bin/snapshot [all|MASTER|DEPLOY] [--out DIR]
+#
+# Default: all subtrees, written as snapshot_<LABEL>.md at the pub4 repo root.
+
+require "set"
+require "optparse"
+
+REPO_ROOT = File.expand_path("../..", __dir__) # pub4 (parent of MASTER/)
+CAP = 262_144
+
+TEXT = %w[.rb .rake .ru .py .js .mjs .ts .jsx .tsx .css .scss .html .erb .haml .slim
+          .zsh .sh .bash .md .markdown .yml .yaml .json .toml .gemspec .txt .conf
+          .ini .env .sql .xml .svg .ruby-version .gitignore .keep].to_set
+NAMED = %w[Gemfile Rakefile Dockerfile Makefile Procfile].to_set
+LANG = {
+  ".rb" => "ruby", ".rake" => "ruby", ".ru" => "ruby", ".gemspec" => "ruby",
+  ".js" => "javascript", ".mjs" => "javascript", ".ts" => "typescript",
+  ".yml" => "yaml", ".yaml" => "yaml", ".json" => "json", ".toml" => "toml",
+  ".md" => "markdown", ".markdown" => "markdown", ".erb" => "erb", ".sh" => "bash",
+  ".bash" => "bash", ".zsh" => "bash", ".css" => "css", ".scss" => "scss",
+  ".html" => "html", ".sql" => "sql", ".xml" => "xml",
+}.freeze
+
+out = REPO_ROOT
+OptionParser.new do |opts|
+  opts.banner = "usage: bin/snapshot [all|MASTER|DEPLOY] [--out DIR]"
+  opts.on("--out DIR") { |dir| out = File.expand_path(dir) }
+end.parse!
+
+which = (ARGV.first || "all").downcase
+labels = which == "all" ? %w[MASTER DEPLOY] : [which.upcase]
+
+def fence(body) = "`" * [body.scan(/`+/).map(&:length).max.to_i + 1, 3].max
+
+def snapshot(label, out_dir)
+  tracked = `git ls-files #{label}`.lines.map(&:chomp).reject(&:empty?).select { |f| File.file?(f) }
+  text = tracked.select { |f| TEXT.include?(File.extname(f).downcase) || NAMED.include?(File.basename(f)) }
+  inlined = text.select { |f| File.size(f) <= CAP }.sort
+  large   = text.select { |f| File.size(f) > CAP }.sort
+  dest = File.join(out_dir, "snapshot_#{label}.md")
+
+  File.open(dest, "w") do |io|
+    io.puts "# #{label} — source snapshot", ""
+    io.puts "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} · #{inlined.size} files · " \
+            "git-tracked source only (no vendor / node_modules / .master / generated assets; " \
+            "files over #{CAP / 1024} KB are listed but not inlined).", ""
+    io.puts "## Tree", "```"
+    inlined.each { |f| io.puts f }
+    io.puts "```"
+    unless large.empty?
+      io.puts "", "## Large files (listed, not inlined)"
+      large.each { |f| io.puts "- `#{f}` (#{(File.size(f) / 1024.0).round} KB)" }
+    end
+    io.puts "", "## Files"
+    inlined.each do |f|
+      body = File.read(f, encoding: "UTF-8").scrub
+      wrap = fence(body)
+      io.puts "", "### #{f}", "", "#{wrap}#{LANG[File.extname(f).downcase]}", body, wrap
+    end
+  end
+  puts "snapshot: #{label} -> #{dest} (#{(File.size(dest) / 1024.0 / 1024).round(1)} MB, " \
+       "#{inlined.size} files#{large.empty? ? '' : ", #{large.size} large listed"})"
+end
+
+Dir.chdir(REPO_ROOT) { labels.each { |label| snapshot(label, out) } }
