@@ -129,9 +129,9 @@ module Master
   ]
   rule_fragments.each { |name| loader.ignore(File.join(__dir__, "judge", "scan", "rules", name)) }
   %w[
-    master_paths.rb harness/registry.rb history/fossils.rb
-    providers/catalog_index.rb providers/fallback_chain.rb quality/slop_budget.rb repo/inventory.rb
-    scope/ledger.rb builder/boot_phases.rb builder/ai_boot.rb judge/llm_dispatcher
+    master_paths.rb
+    providers/catalog_index.rb providers/fallback_chain.rb
+    builder/boot_phases.rb builder/ai_boot.rb judge/llm_dispatcher
   ].each { |relative| loader.ignore(File.join(__dir__, relative)) }
 
   loader.setup

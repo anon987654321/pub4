@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require_relative "plugins/reach"
 require_relative "builder/boot_phases"
 require_relative "builder/ai_boot"
 require_relative "loop/rollback"
@@ -14,14 +13,43 @@ module Master
     MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
     RING_SIZE          = 1000
 
-    TOOL_MAP = Plugins::Reach::TOOL_MAP.merge(
-      "AstEdit" => ->(r, i) {
+    TOOL_MAP = {
+      "ReadFile"        => ->(r, i) {
+        Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus], ground_truth: i[:ground_truth])
+      },
+      "WriteFile"       => ->(r, i) {
+        Reach::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
+          event_bus: i[:bus], diff_stager: i[:diff_stager])
+      },
+      "StrReplace"      => ->(r, i) {
+        Reach::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
+          event_bus: i[:bus], diff_stager: i[:diff_stager])
+      },
+      "BatchReplace"    => ->(r, i) { Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+      "AstEdit"         => ->(r, i) {
         Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
       },
-      "MemoryRecord" => ->(r, i) {
-        Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus])
+      "MemoryRecord"    => ->(r, i) { Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus]) },
+      "Tree"            => ->(r, i) { Reach::Tree.new(root: r, event_bus: i[:bus]) },
+      "ListDir"         => ->(r, i) { Reach::ListDir.new(root: r, event_bus: i[:bus]) },
+      "SearchFiles"     => ->(r, i) { Reach::SearchFiles.new(root: r, event_bus: i[:bus]) },
+      "SearchKnowledge" => ->(r, i) { Reach::SearchKnowledge.new(root: r, event_bus: i[:bus]) },
+      "SymbolLookup"    => ->(r, i) { Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus]) },
+      "Shell"           => ->(r, i) {
+        Reach::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus], library_verify: i[:library_verify])
       },
-    ).freeze
+      "GitContext"      => ->(r, i) { Reach::GitContext.new(root: r, event_bus: i[:bus]) },
+      "WebFetch"        => ->(r, i) { Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
+      "WebSearch"       => ->(r, i) { Reach::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
+      "Clean"           => ->(r, i) { Reach::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+      "FeedbackRecord"  => ->(r, i) { Reach::FeedbackRecord.new(learnings: i[:learnings]) },
+      "Repligen"        => ->(r, i) { Reach::Repligen.new(root: r, event_bus: i[:bus]) },
+      "Postpro"         => ->(r, i) { Reach::Postpro.new(root: r, event_bus: i[:bus]) },
+      "SubdomainOrchestrator" => ->(r, i) {
+        Reach::SubdomainOrchestrator.new(root: r, event_bus: i[:bus],
+          web_fetch: Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus]))
+      },
+    }.freeze
 
     module_function
 
