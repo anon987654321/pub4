@@ -1,0 +1,127 @@
+{
+  "name": "ragnhild",
+  "trigger_word": "ragnhild",
+  "split_videos": true,
+  "sources": [
+    {
+      "path": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/sources/selfie.jpg",
+      "type": "image"
+    },
+    {
+      "path": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/sources/grok-video-65b87ee9-af88-40ae-92f7-6f6c5a713f34.mp4",
+      "type": "video",
+      "extracted_frames": 145,
+      "mode": "all_frames"
+    },
+    {
+      "path": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/sources/grok-video-fcc56478-53fb-467a-8c39-4fed2ca57ae4.mp4",
+      "type": "video",
+      "extracted_frames": 145,
+      "mode": "all_frames"
+    }
+  ],
+  "extracted_images": 291,
+  "curated_images": 18,
+  "active_training_config": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/train_ragnhild.yaml",
+  "target_model_version": "ragnhild_v2",
+  "dataset_audit": {
+    "current_strengths": [
+      "real approved-looking source material",
+      "several facial expressions",
+      "phone-camera realism with natural skin detail"
+    ],
+    "current_risks": [
+      "only 18 curated images",
+      "many near-duplicate frames from the same videos",
+      "dominant white cap and striped outfit may bind to identity",
+      "high-angle phone framing is overrepresented",
+      "limited indoor, profile, studio, low-light, and lens variety"
+    ],
+    "recommended_v2_additions": [
+      "8-12 close portraits across neutral, smile, and candid expressions",
+      "6-10 three-quarter and profile portraits without hat",
+      "6-10 waist-up or full-body photos in different outfits",
+      "4-8 indoor window-light photos and 4-8 outdoor overcast photos",
+      "2-4 warmer tungsten/night practical-light photos",
+      "remove blurry frames, heavy filters, extreme wide-angle distortion, and unflattering stills"
+    ]
+  },
+  "images": [
+    "img_001.jpg",
+    "img_002.jpg",
+    "img_003.jpg",
+    "img_004.jpg",
+    "img_005.jpg",
+    "img_006.jpg",
+    "img_007.jpg",
+    "img_008.jpg",
+    "img_009.jpg",
+    "img_010.jpg",
+    "img_011.jpg",
+    "img_012.jpg",
+    "img_013.jpg",
+    "img_014.jpg",
+    "img_015.jpg",
+    "img_016.jpg",
+    "img_017.jpg",
+    "img_018.jpg"
+  ],
+  "curation": "even_sample",
+  "training_sweeps": [
+    {
+      "name": "balanced_v2_default",
+      "rank": 16,
+      "alpha": 16,
+      "learning_rate": 0.00007,
+      "steps": 1600,
+      "caption_dropout_rate": 0.08,
+      "best_for": "more identity detail without overfitting the hat/outfit as aggressively"
+    },
+    {
+      "name": "soft_identity_low_rank",
+      "rank": 8,
+      "alpha": 8,
+      "learning_rate": 0.00008,
+      "steps": 1400,
+      "caption_dropout_rate": 0.1,
+      "best_for": "more flexible prompts and less outfit memorization"
+    },
+    {
+      "name": "high_fidelity_review_only",
+      "rank": 32,
+      "alpha": 16,
+      "learning_rate": 0.00005,
+      "steps": 1200,
+      "caption_dropout_rate": 0.08,
+      "best_for": "identity fidelity tests after the dataset has more varied approved photos"
+    }
+  ],
+  "photo_prompt_presets": [
+    "ragnhild, woman, honest close portrait, soft window light, natural skin texture, 85mm lens, shallow depth of field, Kodak Portra 400 color, subtle film grain",
+    "photo of ragnhild, woman, candid editorial portrait outdoors, overcast daylight, gentle expression, realistic skin, 50mm documentary photography",
+    "ragnhild, woman, analog snapshot, relaxed smile, imperfect real photo, fine grain, mild halation, neutral background",
+    "ragnhild, woman, commercial beauty close-up, clean key light, restrained makeup, lifelike eyes, natural hair detail, realistic photography"
+  ],
+  "negative_prompt": "plastic skin, waxy face, over-smoothed, airbrushed, doll, uncanny, deformed eyes, asymmetrical eyes, extra teeth, bad hands, harsh HDR, oversaturated, anime, illustration, CGI, face swap artifacts",
+  "video_recipe": {
+    "target_duration_seconds": "30-40",
+    "strategy": "generate locked hero stills first, then use image-to-video shots stitched together instead of one long generation",
+    "shot_count": "5-8",
+    "shot_duration_seconds": "4-6",
+    "identity_method": "use the best ragnhild_v2 still as first-frame/reference input for each shot",
+    "shot_list": [
+      "hero close-up with soft window key light",
+      "outdoor walking or turn-to-camera shot",
+      "hands/detail insert with shallow depth of field",
+      "warm indoor tungsten reaction shot",
+      "product or story action shot if needed",
+      "final analog beauty frame with gentle smile"
+    ],
+    "grade_presets": [
+      "Portra 400 stills: warm mids, soft contrast, fine grain, protected skin hue",
+      "ARRI commercial: neutral skin, soft highlight rolloff, clean shadows, subtle teal separation only in background",
+      "night practical: warm tungsten key, gentle halation, lifted black floor, restrained saturation",
+      "documentary daylight: overcast soft key, natural contrast, light grain, minimal sharpening"
+    ]
+  }
+}

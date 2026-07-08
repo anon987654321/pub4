@@ -1,0 +1,25 @@
+{
+  "name": "ragnhild",
+  "trigger_word": "ragnhild",
+  "toolkit_root": "/Users/mac/ai-toolkit",
+  "dataset_dir": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/dataset",
+  "config_path": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/train_ragnhild.yaml",
+  "run_script": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/run_train.sh",
+  "weights_dir": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output",
+  "images": 18,
+  "target_model_version": "ragnhild_v2",
+  "steps": 1600,
+  "rank": 16,
+  "alpha": 16,
+  "learning_rate": 0.00007,
+  "caption_dropout_rate": 0.08,
+  "model": "black-forest-labs/FLUX.1-dev",
+  "validation_prompts": [
+    "ragnhild, woman, honest close portrait, soft window light, natural skin texture, 85mm lens, shallow depth of field, Kodak Portra 400 color, subtle film grain",
+    "photo of ragnhild, woman, candid editorial portrait outdoors, overcast daylight, gentle expression, realistic skin, 50mm documentary photography",
+    "ragnhild, woman, three quarter portrait, warm tungsten practical light, cinematic color grade, soft highlight rolloff, natural face detail",
+    "ragnhild, woman, first frame for cinematic video, medium close-up, stable identity, soft background separation, ARRI Alexa style color"
+  ],
+  "negative_prompt": "plastic skin, waxy face, over-smoothed, airbrushed, doll, uncanny, deformed eyes, asymmetrical eyes, extra teeth, bad hands, harsh HDR, oversaturated, anime, illustration, CGI, face swap artifacts",
+  "video_duration_plan_seconds": "30-40 via 5-8 image-to-video shots of 4-6 seconds each"
+}

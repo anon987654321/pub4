@@ -678,7 +678,7 @@ MASTER/tools/history_valuables.rb
 MASTER/tools/nmap.rb
 MASTER/tools/public/index.html
 MASTER/tools/public/radio_bergen.html
-MASTER/tools/repligen/lora/ragnhild/weights/ragnhild_v1/config.yaml
+lora/ragnhild/weights/ragnhild_v2/config.yaml
 MASTER/tools/repo_inventory.rb
 MASTER/tools/security_sweep.rb
 MASTER/tools/stipple.rb
@@ -75293,17 +75293,17 @@ scan(target, severity, attack_type)
 </html>
 ```
 
-### MASTER/tools/repligen/lora/ragnhild/weights/ragnhild_v1/config.yaml
+### lora/ragnhild/weights/ragnhild_v2/config.yaml
 
 ```yaml
 job: extension
 config:
-  name: zikigirl_v1
+  name: ragnhild_v2
   process:
   - type: sd_trainer
-    training_folder: /Users/mac/Documents/GitHub/pub4/DEPLOY/repligen/lora/zikigirl/weights
+    training_folder: /Users/mac/Documents/GitHub/pub4/lora/ragnhild/weights
     device: mps
-    trigger_word: zikigirl
+    trigger_word: ragnhild
     network:
       type: lora
       linear: 16
@@ -75314,9 +75314,9 @@ config:
       max_step_saves_to_keep: 4
       push_to_hub: false
     datasets:
-    - folder_path: /Users/mac/Documents/GitHub/pub4/DEPLOY/repligen/lora/zikigirl/train
+    - folder_path: /Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/dataset
       caption_ext: txt
-      caption_dropout_rate: 0.05
+      caption_dropout_rate: 0.08
       shuffle_tokens: false
       cache_latents_to_disk: true
       resolution:
@@ -75325,17 +75325,17 @@ config:
       - 1024
     train:
       batch_size: 1
-      steps: 1000
+      steps: 1600
       gradient_accumulation_steps: 1
       train_unet: true
       train_text_encoder: false
       gradient_checkpointing: true
       noise_scheduler: flowmatch
       optimizer: adamw8bit
-      lr: 0.0001
+      lr: 0.00007
       ema_config:
         use_ema: true
-        ema_decay: 0.99
+        ema_decay: 0.995
       dtype: bf16
     model:
       name_or_path: black-forest-labs/FLUX.1-dev
@@ -75348,20 +75348,23 @@ config:
       width: 1024
       height: 1024
       prompts:
-      - zikigirl, woman, portrait, natural light, detailed face
-      - photo of zikigirl, woman, candid, soft background
-      - zikigirl, woman, studio portrait, neutral backdrop
-      neg: ''
+      - ragnhild, woman, honest close portrait, soft window light, natural skin texture, 85mm lens, shallow depth of field, Kodak Portra 400 color, subtle film grain
+      - photo of ragnhild, woman, candid editorial portrait outdoors, overcast daylight, gentle expression, realistic skin, 50mm documentary photography
+      - ragnhild, woman, three quarter portrait, warm tungsten practical light, cinematic color grade, soft highlight rolloff, natural face detail
+      - ragnhild, woman, analog snapshot, relaxed smile, imperfect real photo, fine grain, mild halation, neutral background
+      - ragnhild, woman, commercial beauty close-up, clean key light, restrained makeup, lifelike eyes, natural hair detail, realistic photography
+      - ragnhild, woman, first frame for cinematic video, medium close-up, stable identity, soft background separation, ARRI Alexa style color
+      neg: plastic skin, waxy face, over-smoothed, airbrushed, doll, uncanny, deformed eyes, asymmetrical eyes, extra teeth, bad hands, harsh HDR, oversaturated, anime, illustration, CGI, face swap artifacts''
       seed: 42
       walk_seed: true
-      guidance_scale: 4
-      sample_steps: 20
+      guidance_scale: 3.5
+      sample_steps: 28
     meta:
-      name: zikigirl_v1
+      name: ragnhild_v2
       version: '1.0'
-      master_trigger: zikigirl
+      master_trigger: ragnhild
 meta:
-  name: zikigirl_v1
+  name: ragnhild_v2
   version: '1.0'
 ```
 

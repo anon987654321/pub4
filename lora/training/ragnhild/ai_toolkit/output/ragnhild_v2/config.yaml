@@ -1,0 +1,70 @@
+job: extension
+config:
+  name: ragnhild_v2
+  process:
+  - type: sd_trainer
+    training_folder: /Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output
+    device: mps
+    trigger_word: ragnhild
+    network:
+      type: lora
+      linear: 16
+      linear_alpha: 16
+    save:
+      dtype: float16
+      save_every: 250
+      max_step_saves_to_keep: 4
+      push_to_hub: false
+    datasets:
+    - folder_path: /Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/dataset
+      caption_ext: txt
+      caption_dropout_rate: 0.08
+      shuffle_tokens: false
+      cache_latents_to_disk: true
+      resolution:
+      - 512
+      - 768
+      - 1024
+    train:
+      batch_size: 1
+      steps: 1600
+      gradient_accumulation_steps: 1
+      train_unet: true
+      train_text_encoder: false
+      gradient_checkpointing: true
+      noise_scheduler: flowmatch
+      optimizer: adamw8bit
+      lr: 0.00007
+      ema_config:
+        use_ema: true
+        ema_decay: 0.995
+      dtype: bf16
+    model:
+      name_or_path: black-forest-labs/FLUX.1-dev
+      is_flux: true
+      quantize: true
+      low_vram: true
+    sample:
+      sampler: flowmatch
+      sample_every: 250
+      width: 1024
+      height: 1024
+      prompts:
+      - ragnhild, woman, honest close portrait, soft window light, natural skin texture, 85mm lens, shallow depth of field, Kodak Portra 400 color, subtle film grain
+      - photo of ragnhild, woman, candid editorial portrait outdoors, overcast daylight, gentle expression, realistic skin, 50mm documentary photography
+      - ragnhild, woman, three quarter portrait, warm tungsten practical light, cinematic color grade, soft highlight rolloff, natural face detail
+      - ragnhild, woman, analog snapshot, relaxed smile, imperfect real photo, fine grain, mild halation, neutral background
+      - ragnhild, woman, commercial beauty close-up, clean key light, restrained makeup, lifelike eyes, natural hair detail, realistic photography
+      - ragnhild, woman, first frame for cinematic video, medium close-up, stable identity, soft background separation, ARRI Alexa style color
+      neg: plastic skin, waxy face, over-smoothed, airbrushed, doll, uncanny, deformed eyes, asymmetrical eyes, extra teeth, bad hands, harsh HDR, oversaturated, anime, illustration, CGI, face swap artifacts
+      seed: 42
+      walk_seed: true
+      guidance_scale: 3.5
+      sample_steps: 28
+    meta:
+      name: ragnhild_v2
+      version: '2.0'
+      master_trigger: ragnhild
+meta:
+  name: ragnhild_v2
+  version: '2.0'
