@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_07_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_08_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -392,6 +392,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_130000) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  create_table "wardrobe_items", force: :cascade do |t|
+    t.date "acquisition_date"
+    t.string "condition"
+    t.datetime "created_at", null: false
+    t.integer "item_id", null: false
+    t.text "notes"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["item_id"], name: "index_wardrobe_items_on_item_id"
+    t.index ["user_id", "item_id"], name: "index_wardrobe_items_on_user_id_and_item_id", unique: true
+    t.index ["user_id"], name: "index_wardrobe_items_on_user_id"
+  end
+
   create_table "wear_logs", force: :cascade do |t|
     t.string "context"
     t.datetime "created_at", null: false
@@ -451,6 +464,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_130000) do
   add_foreign_key "sessions", "users"
   add_foreign_key "style_preferences", "users"
   add_foreign_key "sustainability_metrics", "items"
+  add_foreign_key "wardrobe_items", "items"
+  add_foreign_key "wardrobe_items", "users"
   add_foreign_key "wear_logs", "items"
   add_foreign_key "wear_logs", "outfits"
   add_foreign_key "wear_logs", "users"
