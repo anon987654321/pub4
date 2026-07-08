@@ -5,7 +5,7 @@ require "fileutils"
 module Master
   module Rails
     class MobilePwaOperator
-      DEPLOY_RAILS = File.expand_path("../../DEPLOY/rails", Master::ROOT).freeze
+      DEPLOY_RAILS = Master::DEPLOY_RAILS
 
       MODES = %i[generate_from_blank refactor_existing redesign_ui audit_pwa mine_reference_repos].freeze
 

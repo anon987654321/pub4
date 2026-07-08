@@ -3,7 +3,7 @@
 module Master
   module Rails
     class Rails8AppAudit
-      DEPLOY_RAILS = File.expand_path("../../DEPLOY/rails", Master::ROOT).freeze
+      DEPLOY_RAILS = Master::DEPLOY_RAILS
 
       DOCTRINE = Master::Ground::Axioms::RailsDoctrine::PILLARS
       SOLID_TRIFECTA = Master::Ground::Axioms::RailsDoctrine::SOLID_TRIFECTA

@@ -29,6 +29,7 @@ module Master
   ROOT = File.expand_path("..", __dir__).freeze
   REPO_ROOT = File.expand_path("..", ROOT).freeze
   DEPLOY_ROOT = File.join(REPO_ROOT, "DEPLOY").freeze
+  DEPLOY_RAILS = File.join(DEPLOY_ROOT, "rails").freeze
   TOOLS_ROOT = File.join(ROOT, "tools").freeze
   DATA = File.join(ROOT, "data").freeze
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
