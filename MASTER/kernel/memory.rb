@@ -23,7 +23,42 @@ module Master::Kernel
     }.freeze
     PASS_THRESHOLD = 80
 
-    def initialize(budget: 24_000, summarize: ->(dropped) { "[#{dropped.length} earlier steps summarised]" })
+    # Context budget in characters. A ~1GB OpenBSD VPS cannot hold a generous
+    # transcript alongside an LLM call without the OOM-killer stepping in, so on a
+    # constrained host the budget shrinks and compaction runs sooner. This is the
+    # whole of the old HostBudget the kernel needs — the guard rides on Memory's
+    # existing compaction, so the Fold gains no new logic. The rest of HostBudget
+    # (TTS toggles, pid reaping, shell tips) is CLI accretion that dies with lib.
+    GENEROUS_BUDGET = 24_000
+    CONSTRAINED_BUDGET = 8_000
+    CONSTRAINED_MB = 1_100
+
+    def self.budget_for(total_mb)
+      total_mb && total_mb <= CONSTRAINED_MB ? CONSTRAINED_BUDGET : GENEROUS_BUDGET
+    end
+
+    def self.host_budget = budget_for(host_memory_mb)
+
+    # Physical memory in MB, or nil when it cannot be told (then we stay generous).
+    def self.host_memory_mb
+      @host_memory_mb ||= detect_host_memory_mb
+    end
+
+    def self.detect_host_memory_mb
+      if RUBY_PLATFORM.include?("openbsd")
+        bytes = `sysctl -n hw.physmem 2>/dev/null`.to_i
+        return bytes / 1_048_576 if bytes.positive?
+      end
+      if File.readable?("/proc/meminfo")
+        kb = File.readlines("/proc/meminfo").find { |l| l.start_with?("MemTotal:") }&.split&.fetch(1, nil).to_i
+        return kb / 1024 if kb&.positive?
+      end
+      nil
+    rescue StandardError
+      nil
+    end
+
+    def initialize(budget: self.class.host_budget, summarize: ->(dropped) { "[#{dropped.length} earlier steps summarised]" })
       @entries = []
       @budget = budget
       @summarize = summarize
