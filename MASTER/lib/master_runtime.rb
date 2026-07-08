@@ -7,6 +7,10 @@ module Master
       "MASTER_SAFE_MODE" => "1", "MASTER_BACKGROUND" => "0", "MASTER_AUTOFIX" => "0",
       "MASTER_WATCH" => "0", "MASTER_WATCHER" => "0", "MASTER_HEARTBEAT" => "0", "MASTER_DRIFT" => "0",
     }.freeze
+    # MASTER_LOOP selects one loop by mode name. The name->env mapping is the one
+    # source in data/ops/process.yml (Ops::ProcessBudget.env_by_loop); "fix" is the
+    # historical alias for the "autofix" loop. Kept explicit here because it is read
+    # at early boot; test_master_loop pins it to process.yml so the two cannot drift.
     LOOP_FLAGS = {
       "fix" => "MASTER_AUTOFIX", "watch" => "MASTER_WATCH",
       "watcher" => "MASTER_WATCHER", "heartbeat" => "MASTER_HEARTBEAT",
