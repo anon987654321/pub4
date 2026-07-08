@@ -29,6 +29,7 @@ class CreateMapsCheckInsAndListeningParties < ActiveRecord::Migration[8.1]
       t.string :body, null: false, limit: 500
       t.timestamps
     end
-    add_index :playlist_party_messages, %i[listening_party_id created_at]
+    add_index :playlist_party_messages, %i[listening_party_id created_at],
+              name: "idx_party_messages_on_party_and_created_at"
   end
 end

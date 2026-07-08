@@ -13,7 +13,7 @@
   <% end %>
 
   <% if @user.dating_profile.present? %>
-    <p><%= link_to "Dating profile", dating_profile_path, class: "btn btn-ghost btn-sm" %></p>
+    <p><%= link_to "Dating profile", dating_root_url(subdomain: "dating"), class: "btn btn-ghost btn-sm" %></p>
   <% end %>
 </header>
 

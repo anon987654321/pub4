@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_08_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", null: false
@@ -487,6 +487,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "place_check_ins", force: :cascade do |t|
+    t.datetime "checked_in_at", null: false
+    t.datetime "created_at", null: false
+    t.text "note"
+    t.integer "place_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["place_id", "user_id", "checked_in_at"], name: "index_place_check_ins_on_place_id_and_user_id_and_checked_in_at"
+    t.index ["place_id"], name: "index_place_check_ins_on_place_id"
+    t.index ["user_id"], name: "index_place_check_ins_on_user_id"
+  end
+
   create_table "places", force: :cascade do |t|
     t.string "address"
     t.integer "city_id", null: false
@@ -545,6 +557,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
     t.index ["user_id"], name: "index_playlist_likes_on_user_id"
   end
 
+  create_table "playlist_listening_parties", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "current_track_id"
+    t.integer "host_id", null: false
+    t.string "join_code", null: false
+    t.integer "playlist_set_id", null: false
+    t.integer "position_seconds", default: 0, null: false
+    t.string "status", default: "active", null: false
+    t.datetime "updated_at", null: false
+    t.index ["current_track_id"], name: "index_playlist_listening_parties_on_current_track_id"
+    t.index ["host_id"], name: "index_playlist_listening_parties_on_host_id"
+    t.index ["join_code"], name: "index_playlist_listening_parties_on_join_code", unique: true
+    t.index ["playlist_set_id", "status"], name: "index_playlist_listening_parties_on_playlist_set_id_and_status"
+    t.index ["playlist_set_id"], name: "index_playlist_listening_parties_on_playlist_set_id"
+  end
+
   create_table "playlist_listens", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "playlist_track_id", null: false
@@ -552,6 +580,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
     t.integer "user_id", null: false
     t.index ["playlist_track_id"], name: "index_playlist_listens_on_playlist_track_id"
     t.index ["user_id"], name: "index_playlist_listens_on_user_id"
+  end
+
+  create_table "playlist_party_messages", force: :cascade do |t|
+    t.string "body", limit: 500, null: false
+    t.datetime "created_at", null: false
+    t.integer "listening_party_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["listening_party_id", "created_at"], name: "idx_party_messages_on_party_and_created_at"
+    t.index ["listening_party_id"], name: "index_playlist_party_messages_on_listening_party_id"
+    t.index ["user_id"], name: "index_playlist_party_messages_on_user_id"
   end
 
   create_table "playlist_playlist_tracks", force: :cascade do |t|
@@ -1045,6 +1084,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
   add_foreign_key "neighborhoods", "cities"
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "users", column: "actor_id"
+  add_foreign_key "place_check_ins", "places"
+  add_foreign_key "place_check_ins", "users"
   add_foreign_key "places", "cities"
   add_foreign_key "places", "neighborhoods"
   add_foreign_key "playlist_collaborations", "playlist_sets", column: "set_id"
@@ -1054,8 +1095,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_120000) do
   add_foreign_key "playlist_dilla_sketches", "users"
   add_foreign_key "playlist_likes", "playlist_sets", column: "set_id"
   add_foreign_key "playlist_likes", "users"
+  add_foreign_key "playlist_listening_parties", "playlist_sets"
+  add_foreign_key "playlist_listening_parties", "playlist_tracks", column: "current_track_id"
+  add_foreign_key "playlist_listening_parties", "users", column: "host_id"
   add_foreign_key "playlist_listens", "playlist_tracks"
   add_foreign_key "playlist_listens", "users"
+  add_foreign_key "playlist_party_messages", "playlist_listening_parties", column: "listening_party_id"
+  add_foreign_key "playlist_party_messages", "users"
   add_foreign_key "playlist_playlist_tracks", "playlist_playlists"
   add_foreign_key "playlist_playlist_tracks", "playlist_tracks"
   add_foreign_key "playlist_playlist_tracks", "users"

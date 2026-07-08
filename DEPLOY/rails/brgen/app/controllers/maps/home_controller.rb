@@ -2,6 +2,8 @@
 
 module Maps
   class HomeController < BaseController
+    allow_unauthenticated_access only: :index
+
     def index
       @mapbox_token = ENV.fetch("MAPBOX_API_KEY", "")
       @places_json = Place.includes(:city, :neighborhood).limit(500).map do |p|

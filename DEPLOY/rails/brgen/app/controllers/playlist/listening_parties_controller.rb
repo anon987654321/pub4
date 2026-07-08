@@ -32,7 +32,7 @@ class Playlist::ListeningPartiesController < Playlist::BaseController
     private
 
     def set_set
-      @set = Playlist::Set.find(params[:set_id])
+      @set = Playlist::Set.includes(:listening_party, :tracks).find(params[:set_id])
     end
 
     def set_party

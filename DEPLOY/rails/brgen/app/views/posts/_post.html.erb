@@ -4,7 +4,13 @@
       <div class="x-avatar"></div>
       <div class="x-content">
         <div class="x-header">
-          <span class="x-name"><%= post.author_name %></span>
+          <span class="x-name">
+            <% if post.anonymous? || post.user&.guest? %>
+              <%= post.author_name %>
+            <% else %>
+              <%= link_to post.author_name, user_path(post.user), class: "link-inherit" %>
+            <% end %>
+          </span>
           <% if post.community %>
             <span class="x-handle">@<%= post.community.slug %></span>
           <% end %>
