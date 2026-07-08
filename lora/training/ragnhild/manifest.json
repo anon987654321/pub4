@@ -58,6 +58,7 @@
     "status": "needs_new_training_run",
     "identity_first": true,
     "postpro_after_identity_approval": true,
+    "generation_blocker": "Local LoRA generation is blocked until Hugging Face access is available for black-forest-labs/FLUX.1-dev or a compatible local base model is installed.",
     "rejected_outputs": [
       {
         "path": "/Users/mac/Documents/GitHub/pub4/lora/ragnhild/weights/ragnhild_v2/test_portrait.webp",
@@ -72,6 +73,23 @@
       "postpro is applied only to approved generated samples"
     ],
     "next_training_bias": "add more approved no-hat close portraits, profile and three-quarter portraits, indoor window-light shots, and varied outfits before judging v2 quality"
+  },
+  "source_review_outputs": {
+    "note": "These are not LoRA generations; they are source-based postpro and motion-review assets for judging likeness and cinematic direction while model generation is blocked.",
+    "graded_stills_contact": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/ragnhild_review_stills_contact.jpg",
+    "graded_stills": [
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/stills/ragnhild_06_portrait.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/stills/ragnhild_07_portrait.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/stills/ragnhild_09_portrait.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/stills/ragnhild_10_portrait.jpg"
+    ],
+    "video_snippets": [
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_06_portrait_snippet.mp4",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_07_portrait_snippet.mp4",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_09_portrait_snippet.mp4",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_10_portrait_snippet.mp4"
+    ],
+    "review_reel": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_source_review_reel.mp4"
   },
   "images": [
     "img_002.jpg",

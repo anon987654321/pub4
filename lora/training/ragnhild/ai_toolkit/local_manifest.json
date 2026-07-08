@@ -23,9 +23,15 @@
     "status": "needs_new_training_run",
     "identity_first": true,
     "postpro_after_identity_approval": true,
+    "generation_blocker": "HF access is required for black-forest-labs/FLUX.1-dev or a compatible local base model must be installed before LoRA photo/video generation can run locally.",
     "rejected_outputs_removed": [
       "/Users/mac/Documents/GitHub/pub4/lora/ragnhild/weights/ragnhild_v2/test_portrait.webp"
     ]
+  },
+  "source_review_outputs": {
+    "kind": "source-based postpro review assets, not LoRA generations",
+    "root": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources",
+    "review_reel": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_source_review_reel.mp4"
   },
   "steps": 1600,
   "rank": 16,
