@@ -1,7 +1,7 @@
 ---
 meta:
   source: runtime authority — edit this file or use MemoryRecord; do not add data/claude/*.md
-  count: 10
+  count: 12
 entries:
 - key: personality_rb_comment_audit
   name: personality rb comment audit
@@ -121,3 +121,24 @@ entries:
     The operator is an architect by training. Aesthetic, typographic, and design-philosophy proposals—even ones LLMs dismiss as fluff—are usually approved.
 
     Surface aesthetic content from Bringhurst, Ando, Rams, wabi-sabi, ma, and kanso, plus beauty sections in YAML, without self-censoring. Treat these as engineering anchors, not disclaimers. Propose UI, prose, and config refinements actively. Do not argue that beauty or zen YAML is "not actionable."
+
+- key: master_design_vision
+  name: MASTER design vision (pure-Ruby AI, OpenBSD-mirrored, Snohetta parametric)
+  description: Guiding vision and influences — steer every design/refactor decision toward it
+  type: project
+  body: |-
+    The operator's guiding vision for MASTER, to steer every design and refactor decision.
+
+    (a) A NEW AGE IN COMPUTING — the first pure-Ruby AI. No Python in the spine; Ruby all the way down. Influences the operator cites (to be credited in a forthcoming book): Jeremy Evans (author of Roda + Sequel, and maintainer of the OpenBSD Ruby port — the exact Ruby<->OpenBSD nexus MASTER sits on); adam12 / Adam Daniels (Roda/Sequel/Rack/Hanami minimalist-Ruby school, Gemdocs.org — the operator designed the new Gemdocs logo); DHH (Rails); J Dilla's mastering engineer Dave Cooley (craft and feel); the architecture firm Snohetta; and the wider OpenBSD / Ruby / Rails communities.
+
+    (b) OPENBSD DESIGN, MIRRORED AS CLOSELY AS POSSIBLE. Correctness and simplicity above all; secure-by-default; ruthless removal of unused code; a small closed surface; sane defaults; docs as first-class. Respect to Theo de Raadt. A future OpenBSD Rust port is planned, likely with a higher-level Ruby overlay. Concretely in MASTER: the core/ fold is an OpenBSD-style minimal kernel — a fixed 7-verb World surface (the syscall table), the immutability rule as pledge(2) (the agent cannot rewrite its own constitution or spine), the Constitution as a security gate before every effect, atomic writes.
+
+    (c) SNOHETTA-STYLE NORWEGIAN PARAMETRIC ARCHITECTURE. The operator studied architecture (in Malaysia, their father is from there) and favours timeless, well-thought-out design: one clear organizing idea, nothing decorative, form follows the idea.
+
+    HOW TO APPLY: prefer collapse over accretion — one parametric form with data-driven variants over many near-duplicate files (e.g. the four bin/check-* scripts collapsed to one bin/check --profile). Closed minimal surfaces. When in doubt, remove. Match the surrounding restraint. Craft is not accretion — the TTS voice engines were deliberately kept.
+- key: bsdports_openbsd_ports_index
+  name: bsdports is the official next-gen OpenBSD ports index (Solene blessing)
+  description: DEPLOY/rails/bsdports — sanctioned successor to Solene Rapenne's ports index
+  type: project
+  body: |-
+    DEPLOY/rails/bsdports is being built as the official next-generation OpenBSD ports index — the operator has the blessing and go-ahead of Solene Rapenne (solene@, former OpenBSD developer, now Qubes OS core team; blog at dataswamp.org) to create the next version of her ports index. Treat bsdports as a first-class, real-world OpenBSD-community deliverable, not a demo.
