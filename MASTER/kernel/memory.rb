@@ -10,6 +10,19 @@ module Master::Kernel
   class Memory
     Entry = Data.define(:role, :text)
 
+    # What counts as proof, and how much of it ends the turn. This is the one
+    # Ruby source for the kernel's evidence policy; the Model's prompt is built
+    # from it (no restated numbers) and a test pins it to data/rules.yml, whose
+    # evidence_scoring the lib spine still reads until that spine is severed.
+    SCORING = {
+      test_pass: 35,
+      scan_clean: 25,
+      code_review: 20,
+      log_analysis: 10,
+      profiling_data: 10
+    }.freeze
+    PASS_THRESHOLD = 80
+
     def initialize(budget: 24_000, summarize: ->(dropped) { "[#{dropped.length} earlier steps summarised]" })
       @entries = []
       @budget = budget
@@ -30,19 +43,13 @@ module Master::Kernel
     end
 
     def evidence_score = @evidence.select(&:ok).sum(&:score)
-    def proved? = evidence_score >= 80
+    def proved? = evidence_score >= PASS_THRESHOLD
 
     def record_evidence(effect, observation)
       return unless effect.verb == :exec && observation.ok?
 
       kind = effect.args[:evidence]&.to_sym
-      score = {
-        test_pass: 35,
-        scan_clean: 25,
-        code_review: 20,
-        log_analysis: 10,
-        profiling_data: 10
-      }.fetch(kind, 0)
+      score = SCORING.fetch(kind, 0)
       @evidence << Evidence.new(kind:, ok: true, score:, detail: observation.message, at: Time.now.utc) if score.positive?
     end
 

@@ -15,6 +15,11 @@ module Master::Kernel
   class Model
     DEFAULT_MODEL = "x-ai/grok-4-fast"
 
+    # Built from Memory's evidence policy so the numbers the model is told match
+    # the numbers the Constitution enforces — one source, no prose drift.
+    EVIDENCE_KINDS = Memory::SCORING.keys.join("|").freeze
+    EVIDENCE_WEIGHTS = Memory::SCORING.map { |k, v| "#{k}=#{v}" }.join(", ").freeze
+
     SYSTEM = <<~PROMPT.freeze
       You are MASTER, a constitutional coding agent. Propose the single next action
       as ONE JSON object and nothing else:
@@ -24,7 +29,7 @@ module Master::Kernel
       Verbs and their args:
         read   {"path"}
         write  {"path","content"}
-        exec   {"argv":["prog","arg"...],"evidence":"test_pass|scan_clean|code_review|log_analysis|profiling_data"}
+        exec   {"argv":["prog","arg"...],"evidence":"#{EVIDENCE_KINDS}"}
         git    {"operation":"diff|stage|commit","paths":[...],"message":"..."}
         ask    {"prompt","options":[...]}
         note   {"kind","text"}
@@ -32,11 +37,11 @@ module Master::Kernel
 
       Rules the runtime enforces (so obey them or the effect is refused):
         - never write a secret into a file or note
+        - never write the constitution (data/rules.yml, data/soul.yml) or the kernel/ spine
         - every .rb you write must parse
         - exec argv must be an array of strings
         - you cannot declare `done` (or `git commit`) until exec effects have
-          produced enough passing evidence (test_pass=35, scan_clean=25,
-          code_review=20; threshold 80)
+          produced enough passing evidence (#{EVIDENCE_WEIGHTS}; threshold #{Memory::PASS_THRESHOLD})
 
       Reason silently; output only the JSON object.
     PROMPT
