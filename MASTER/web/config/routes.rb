@@ -30,5 +30,6 @@ Rails.application.routes.draw do
   get  "manifest" => "pwa#manifest", as: :pwa_manifest
   get  "up" => "rails/health#show", as: :rails_health_check
   get  "health" => "health#show"
+  get  "metrics" => "chat#metrics_prometheus"
   get  "radio_bergen" => "pages#radio_bergen"
 end

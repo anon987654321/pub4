@@ -35,7 +35,11 @@ module Master
         path = Master.data_path("tts.yml")
         raw = File.exist?(path) ? YAML.safe_load(File.read(path), permitted_classes: [Symbol]) : {}
         section = raw.is_a?(Hash) ? (raw["transcendent"] || raw[:transcendent] || {}) : {}
-        DEFAULTS.merge(stringify_keys(section))
+        cfg = DEFAULTS.merge(stringify_keys(section))
+        if Engines.openbsd?
+          cfg["engine_chain"] = ENV.fetch("MASTER_TTS_ENGINE_CHAIN", Engines::OPENBSD_CHAIN.join(","))
+        end
+        cfg
       rescue StandardError
         DEFAULTS.dup
       end
@@ -86,7 +90,7 @@ module Master
         played = false
         used_engine = nil
         chain.each do |engine|
-          next unless Engines.available?(engine, cfg)
+          next unless Engines.attempt?(engine, cfg)
 
           played = Engines.synth(
             engine,

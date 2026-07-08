@@ -12,6 +12,7 @@ module Master
       POLL_INTERVAL_S = 0.1
 
       @pool_rr = 0
+      @spawn_failures = {}
 
       module_function
 
@@ -56,7 +57,15 @@ module Master
 
           File.unlink(path) if File.exist?(path)
           spawn_daemon(root:, path:, index:)
-          wait_for_socket(path)
+          if wait_for_socket(path)
+            @spawn_failures[index] = 0
+            true
+          else
+            failures = (@spawn_failures[index] ||= 0) + 1
+            @spawn_failures[index] = failures
+            sleep [POLL_INTERVAL_S * (2**[failures - 1, 4].min), 2.0].min
+            false
+          end
         end
       end
 

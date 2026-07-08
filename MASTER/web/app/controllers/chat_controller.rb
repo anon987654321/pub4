@@ -11,7 +11,7 @@ class ChatController < ApplicationController
   skip_before_action :verify_authenticity_token, only: :command
   # Face shell renders immediately; container finishes booting in the background (~90s on VPS).
   # Metrics returns 401/503 JSON — must not hit the HTML warming gate first.
-  skip_before_action :require_container!, only: %i[index metrics]
+  skip_before_action :require_container!, only: %i[index metrics metrics_prometheus]
 
   def index
     c = container
@@ -31,23 +31,30 @@ class ChatController < ApplicationController
     c = container
     return render(json: { error: "warming up" }, status: :service_unavailable) unless c
 
-    repo_root = Rails.root.join("..").to_s
-    out, = Open3.capture2e("git", "-C", repo_root, "status", "--porcelain")
-    dirty = out.lines.count
-    open_models = c[:breaker].respond_to?(:open_models) ? c[:breaker].open_models : []
-    cache = Master::Trace::CacheEfficiency.snapshot
-    quota = Master::Ground::ModelQuota.snapshot[:exhausted]
-    render json: {
-      model:            c[:agent].model.to_s.split("/").last,
-      tokens:           c[:session].respond_to?(:token_est) ? c[:session].token_est : 0,
-      cost:             "$%.4f" % (c[:session].respond_to?(:cost) ? c[:session].cost : 0.0),
-      uptime:           ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - start_ms),
-      repo_dirty_count: dirty,
-      open_breakers:    open_models,
-      tier:             request.env["master.tier"].to_s,
-      cache_efficiency: cache[:efficiency_pct],
-      model_quota:      quota
-    }
+    render json: metrics_payload(c)
+  end
+
+  def metrics_prometheus
+    c = container
+    unless c
+      return render(plain: "# HELP master_up 1 if ready\nmaster_up 0\n", status: :service_unavailable,
+                    content_type: "text/plain; version=0.0.4")
+    end
+
+    data = metrics_payload(c)
+    lines = [
+      "# HELP master_up 1 if ready",
+      "master_up 1",
+      "# HELP master_tokens Context tokens",
+      "master_tokens #{data[:tokens]}",
+      "# HELP master_cost_usd Session cost USD",
+      "master_cost_usd #{data[:cost_usd]}",
+      "# HELP master_repo_dirty_count Git dirty file count",
+      "master_repo_dirty_count #{data[:repo_dirty_count]}",
+      "# HELP master_cache_efficiency_pct Cache hit efficiency",
+      "master_cache_efficiency_pct #{data[:cache_efficiency]}",
+    ]
+    render plain: lines.join("\n") + "\n", content_type: "text/plain; version=0.0.4"
   end
 
   def history
@@ -159,6 +166,28 @@ class ChatController < ApplicationController
 
   def message_params
     params.permit(:message, :state, :pre_enhanced, :voice, :image_token, image: %i[data mime name])
+  end
+
+  def metrics_payload(c)
+    repo_root = Rails.root.join("..").to_s
+    out, = Open3.capture2e("git", "-C", repo_root, "status", "--porcelain")
+    dirty = out.lines.count
+    open_models = c[:breaker].respond_to?(:open_models) ? c[:breaker].open_models : []
+    cache = Master::Trace::CacheEfficiency.snapshot
+    quota = Master::Ground::ModelQuota.snapshot[:exhausted]
+    cost = c[:session].respond_to?(:cost) ? c[:session].cost : 0.0
+    {
+      model:            c[:agent].model.to_s.split("/").last,
+      tokens:           c[:session].respond_to?(:token_est) ? c[:session].token_est : 0,
+      cost:             "$%.4f" % cost,
+      cost_usd:         cost,
+      uptime:           ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - start_ms),
+      repo_dirty_count: dirty,
+      open_breakers:    open_models,
+      tier:             request.env["master.tier"].to_s,
+      cache_efficiency: cache[:efficiency_pct],
+      model_quota:      quota
+    }
   end
 
   def web_logger

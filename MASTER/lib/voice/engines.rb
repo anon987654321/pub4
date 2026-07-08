@@ -7,7 +7,23 @@ module Master
   module Voice
     # Multi-engine TTS registry — mlx, chatterbox, edge_melodic, edge, say.
     module Engines
+      OPENBSD_CHAIN = %w[replicate_kokoro edge_melodic edge say].freeze
+      DEFAULT_CHAIN = %w[mlx chatterbox replicate_kokoro edge_melodic edge say].freeze
+
       module_function
+
+      def openbsd? = RUBY_PLATFORM.include?("openbsd")
+
+      def default_engine_chain
+        openbsd? ? OPENBSD_CHAIN.join(",") : DEFAULT_CHAIN.join(",")
+      end
+
+      # Gate preflight; on OpenBSD always attempt Replicate Kokoro and fall through on failure.
+      def attempt?(name, cfg)
+        return true if name.to_s == "replicate_kokoro" && openbsd?
+
+        available?(name, cfg)
+      end
 
       def available?(name, cfg)
         case name.to_s
@@ -43,6 +59,8 @@ module Master
         speed = (cfg["replicate_speed"] || 1.18).to_f
         client = Reach::ReplicateClient.new
         output = client.predict(model, { text: enriched, voice: kokoro_voice, speed: speed })
+        return false if output.nil?
+
         url = Array(output).flatten.first.to_s
         return false if url.strip.empty?
 
@@ -51,8 +69,14 @@ module Master
         client.download_url(url, tmp)
         return FileUtils.cp(tmp, out_path) if tmp.end_with?(".mp3") && File.size?(tmp)
 
-        convert_to_mp3(tmp, out_path)
-      rescue StandardError
+        if convert_to_mp3(tmp, out_path)
+          File.size?(out_path)
+        elsif File.extname(tmp) == ".mp3" && File.size?(tmp)
+          FileUtils.cp(tmp, out_path)
+          File.size?(out_path)
+        end
+      rescue StandardError => e
+        Ground::Swallow.log(e, context: "Engines.synth_replicate_kokoro")
         false
       ensure
         File.delete(tmp) if defined?(tmp) && tmp && File.exist?(tmp) && tmp != out_path

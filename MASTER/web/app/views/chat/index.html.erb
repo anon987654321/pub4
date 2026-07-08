@@ -185,11 +185,17 @@
       function clearWatch(){
         clearTimeout(hintT);clearTimeout(retryT);clearTimeout(fallback);
         clearInterval(timer);timer=null;
+        if(typeof window.stop2DFallback==='function')window.stop2DFallback();
+        showProgress(100);
       }
       function bootFailed(){clearWatch();fallbackUi();}
+      function showProgress(pct){
+        var n=Math.max(0,Math.min(100,Math.round(pct)));
+        if(title)title.textContent='loading… '+n+'%';
+        if(ui)ui.textContent='loading face '+n+'%';
+      }
       function showLoadState(){
-        if(title)title.textContent='loading…';
-        if(ui)ui.textContent='loading face';
+        showProgress(0);
       }
       function fallbackUi(){
         dismissPrimer();
@@ -221,12 +227,20 @@
         primeAudio();
         dismissPrimer();
         revealPrompt();
+        if(typeof window.start2DFallback==='function')window.start2DFallback();
         loadFace();
         if(boot())return;
         showLoadState();
+        var progPct=0;
         // Nielsen #1 (visibility of system status): reassure at 8s, hard-fail at 35s (was a silent 60s).
         hintT=setTimeout(function(){if(ui)ui.textContent='still loading the face…';},8000);
-        timer=setInterval(function(){if(boot())clearWatch();},40);
+        timer=setInterval(function(){
+          if(boot()){clearWatch();return;}
+          if(progPct<90){
+            progPct+=0.5+Math.random()*1.5;
+            showProgress(Math.min(progPct,90));
+          }
+        },40);
         fallback=setTimeout(function(){if(window.MASTER_FACE&&window.MASTER_FACE.primerFired){clearWatch();}else{bootFailed();}},35000);
       }
       if(p){
@@ -238,6 +252,7 @@
       addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}});
     })();
   </script>
+  <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
   <script src="/master_events.js" defer></script>
   <script src="/shortcut_sheet.js" defer></script>
   <%# Deferred boot modules — single ordered manifest, loaded after the shell paints.

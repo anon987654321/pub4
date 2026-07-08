@@ -84,7 +84,7 @@ module Master
       def clear_last_error! = (@last_error = nil)
 
       def available?
-        edge_tts_available? || !espeak_path.nil?
+        edge_tts_available? || !espeak_path.nil? || Engines.replicate_token?
       end
 
       def edge_tts_available?
@@ -179,6 +179,10 @@ module Master
         return ENV["MASTER_TTS_MODE"] if ENV.key?("MASTER_TTS_MODE")
 
         cfg = Transcendent.load_config
+        if Engines.openbsd? && Transcendent.enabled?
+          return "transcendent"
+        end
+
         cfg["default_mode"].to_s == "transcendent" && Transcendent.enabled? ? "transcendent" : "classic"
       end
 

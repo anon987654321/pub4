@@ -3,11 +3,14 @@
 require "test_helper"
 
 class HealthControllerTest < ActionDispatch::IntegrationTest
-  test "health returns ok json" do
+  test "health returns status and dependency checks" do
     get "/health"
 
     assert_response :success
-    assert_equal({ "status" => "ok" }, JSON.parse(response.body))
+    body = JSON.parse(response.body)
+    assert_includes %w[ok degraded], body["status"]
+    assert body["checks"].key?("tts")
+    assert body["checks"].key?("git")
   end
 
   test "rails health check is exempt from container warmup" do
