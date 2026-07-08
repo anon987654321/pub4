@@ -121,6 +121,50 @@ layer above them is the kernel:
   `attention_context`, and the long tail of single-use `*_policy` / `*_registry`
   files whose rule (if any) belongs in `constitution.rb`.
 
+## Progress
+
+Done and green (branch `master-rebuild-phase1`):
+
+- **Kernel fold complete** (slices 0–4): Model, atomic World, Constitution with an
+  immutability rule, one-source evidence policy, host-aware Memory budget.
+- **Media-generation capability severed**: ~9.3k lines / 141 files — video, LoRA,
+  comfyui, repligen, postpro, social_sim, motion_critique, their CLI/boot wiring,
+  tools and assets. Kept the dual-use `ReplicateClient` + `replicate_kokoro` TTS
+  (production voice) and `SubdomainOrchestrator` (deploy).
+- **Five dead subsystems deleted**: eval_harness, prompt_evolver, system_pressure,
+  soul_proposals, opportunity_surface.
+
+Corrections to earlier assumptions found while severing:
+
+- **`bedrock_stub` stays** — it is not accretion but a guard that pre-defines the
+  RubyLLM Bedrock constant so ruby_llm never autoloads `openssl.so`. Load-bearing.
+- **`semantic_cache`/`semantic_index`/`embeddings` and `mcp_coordinator` are not
+  standalone** — they are wired into the live agent stack (`ai_boot` adds
+  `infra[:mcp].tools`; `cache:` flows into `Judge::Agent`). They drop *with* the
+  runtime cutover, not before it.
+
+## The runtime cutover is a reimplementation, not a deletion
+
+What remains is the hard core: `now/` (pipeline, stages, cli — an interactive,
+streaming REPL), `loop/` (background fix/watch loops), and `judge/`'s agent stack
+(Judge::Agent + council/swarm/consensus/graph over ruby_llm tool-calling). This is
+the **deployed product**: the interactive CLI, the web dashboard at ai.brgen.no,
+sessions, streaming, TTS, standing orders, the event bus.
+
+The Fold expresses the *essence* of all this — run a coding goal to completion
+under a constitution — in 700 lines. But it is a batch runner, not an interactive
+streaming REPL. So finishing the kernel-first rebuild means one of:
+
+1. **Bridge** — route the CLI's agent turn through the Fold while keeping the
+   interactive shell; retire pipeline/judge stages behind it. Additive, green,
+   incremental, but a real build (wire kernel Model/World/Constitution into the
+   CLI's root/session/stream).
+2. **Replace** — make the Fold the whole runtime and drop the interactive shell,
+   web, TTS, sessions. Smallest final `lib/`, but deletes deployed product surface.
+
+Both are product decisions, not mechanical severance — they change what the agent
+running on the VPS *is*. That gate is where this branch pauses for a call.
+
 ## Done
 
 The kernel is finished when `lib/` holds only peripherals that reach the world
