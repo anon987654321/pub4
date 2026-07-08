@@ -37,7 +37,7 @@ module Master
         @refs.session.save!
         puts @refs.renderer.render("rebuild: ok — exec'ing fresh process", mode: :dim)
         $stdout.flush
-        Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
+        ::Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
       end
 
       def run_context

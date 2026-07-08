@@ -404,7 +404,7 @@ module Master
 
       def warn_tts(message)
         @last_error = message
-        Kernel.warn("tts: #{message}")
+        ::Kernel.warn("tts: #{message}")
       end
     end
   end

@@ -29,7 +29,7 @@ module Master
       rescue StandardError => e
         # Last resort: the logger itself failed. Cannot use the bus or recurse
         # into Swallow — write straight to stderr so the failure is not lost.
-        Kernel.warn("swallow:meta_error #{e.class}: #{e.message}")
+        ::Kernel.warn("swallow:meta_error #{e.class}: #{e.message}")
         nil
       end
 

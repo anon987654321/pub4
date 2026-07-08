@@ -79,7 +79,7 @@ module Master
         return "rebuild: aborted — syntax errors in #{errors.size} file(s)" if errors.any?
 
         session&.save! if session.respond_to?(:save!)
-        Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
+        ::Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
       rescue StandardError => e
         "rebuild: #{e.message}"
       end

@@ -12,7 +12,7 @@ module Master
         @refs.session.save!
         puts @refs.renderer.render("restart: exec'ing fresh master in place", mode: :dim)
         $stdout.flush
-        Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
+        ::Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
       end
 
       def run_undo

@@ -7,6 +7,7 @@ require_relative "command_registry/memory_commands"
 require_relative "command_registry/work_commands"
 require_relative "command_registry/system_commands"
 require_relative "command_registry/media_commands"
+require_relative "command_registry/kernel_commands"
 require_relative "command_registry/domain_commands"
 require_relative "command_registry/agent_commands"
 require "open3"
@@ -38,6 +39,7 @@ module Master
         commands.merge!(memory_commands(infra[:memory], ai[:agent], root:))
         commands.merge!(work_commands(ai:, root:, infra:))
         commands.merge!(media_commands(bus: infra[:bus]))
+        commands.merge!(kernel_commands(root:, bus: infra[:bus]))
         commands.merge!(domain_commands(root:))
         shell_tool = Array(ai[:tools]).find { |t| t.is_a?(Reach::Shell) }
         commands.merge!(agent_commands(

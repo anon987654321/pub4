@@ -114,12 +114,21 @@ module Master::Kernel
       raise
     end
 
+    def git_repo?
+      _, status = Open3.capture2e("git", "-C", @root, "rev-parse", "--is-inside-work-tree")
+      status.success?
+    end
+
     def git_has_head?
       _, status = Open3.capture2e("git", "-C", @root, "rev-parse", "--verify", "HEAD")
       status.success?
     end
 
+    # A workspace need not be a git repo. When it isn't, there is nothing to
+    # capture and rollback becomes a clean no-op, so the fold still runs.
     def worktree_patch
+      return "" unless git_repo?
+
       if git_has_head?
         git_capture("diff", "HEAD", "--binary", raw: true)
       else
