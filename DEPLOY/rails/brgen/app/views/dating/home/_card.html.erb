@@ -2,32 +2,46 @@
   class="swipe-card swipe-card--stack-<%= index %>"
   data-user-id="<%= profile.user_id %>"
 >
-  <% if profile.photos.attached? %>
-    <%= lazy_image_tag profile.photos.first, alt: profile.user.display_name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash") %>
-  <% else %>
-    <div class="swipe-placeholder">
-      <span><%= profile.user.email_address.first.upcase %></span>
+  <div class="swipe-photo">
+    <% if profile.photos.attached? %>
+      <%= lazy_image_tag profile.photos.first, alt: profile.user.display_name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash") %>
+    <% else %>
+      <div class="swipe-placeholder">
+        <span><%= profile.user.email_address.first.upcase %></span>
+      </div>
+    <% end %>
+    <span class="swipe-stamp swipe-stamp--like" aria-hidden="true">LIKE</span>
+    <span class="swipe-stamp swipe-stamp--pass" aria-hidden="true">NOPE</span>
+    <div class="swipe-overlay">
+      <div class="swipe-meta">
+        <h2>
+          <%= profile.user.email_address.split("@").first %>
+          <% if profile.age %><span class="swipe-age">, <%= profile.age %></span><% end %>
+        </h2>
+        <% if profile.location.present? || profile.neighborhood&.name.present? %>
+          <p class="swipe-location">
+            <%= [profile.location, profile.neighborhood&.name].compact.join(" · ") %>
+          </p>
+        <% end %>
+      </div>
     </div>
-  <% end %>
-  <div class="swipe-meta">
-    <div>
-      <h2><%= profile.user.email_address.split("@").first %><% if profile.age %>, <%= profile.age %><% end %></h2>
-      <% if profile.location.present? %><p class="dim"><%= profile.location %></p><% end %>
-      <% if profile.neighborhood&.name.present? %><p class="dim"><%= profile.neighborhood.name %></p><% end %>
+  </div>
+
+  <div class="swipe-body">
+    <% if profile.bio.present? %><p class="swipe-bio"><%= profile.bio %></p><% end %>
+    <div class="chips swipe-chips">
+      <% if profile.gender.present? %><span class="chip"><%= profile.gender %></span><% end %>
+      <% if profile.looking_for.present? %><span class="chip">Looking for <%= profile.looking_for %></span><% end %>
+      <span class="chip chip--status"><%= profile.visible? ? "visible" : "paused" %></span>
     </div>
-    <span class="chip"><%= profile.visible? ? "visible" : "paused" %></span>
   </div>
-  <% if profile.bio.present? %><p><%= profile.bio %></p><% end %>
-  <div class="chips">
-    <% if profile.gender.present? %><span class="chip"><%= profile.gender %></span><% end %>
-    <% if profile.looking_for.present? %><span class="chip">Looking for <%= profile.looking_for %></span><% end %>
-  </div>
+
   <% if authenticated? %>
     <div class="swipe-actions">
-      <%= button_tag "Pass", type: "button", class: "btn btn-ghost", data: { action: "click->swipe#pass" } %>
-      <%= button_tag "Like", type: "button", class: "btn", data: { action: "click->swipe#like" } %>
+      <%= button_tag "✕", type: "button", class: "swipe-action swipe-action--pass", title: "Pass", aria: { label: "Pass" }, data: { action: "click->swipe#pass" } %>
+      <%= button_tag "♥", type: "button", class: "swipe-action swipe-action--like", title: "Like", aria: { label: "Like" }, data: { action: "click->swipe#like" } %>
     </div>
   <% else %>
-    <%= link_to "Sign in to swipe", new_session_path, class: "btn" %>
+    <%= link_to "Logg inn for å sveipe", new_session_path, class: "btn swipe-signin" %>
   <% end %>
 </article>
