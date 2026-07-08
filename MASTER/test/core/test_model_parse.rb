@@ -36,6 +36,18 @@ class TestModelParse < Minitest::Test
     assert_equal "x", e.args[:path]
   end
 
+  def test_json_in_a_code_fence_is_parsed
+    e = parse("```json\n{\"verb\":\"read\",\"args\":{\"path\":\"lib/a.rb\"}}\n```")
+    assert_equal :read, e.verb
+    assert_equal "lib/a.rb", e.args[:path]
+  end
+
+  def test_write_with_braces_in_content_survives
+    e = parse('{"verb":"write","args":{"path":"a.rb","content":"def f = { a: 1 }\n"}}')
+    assert_equal :write, e.verb
+    assert_equal "def f = { a: 1 }\n", e.args[:content]
+  end
+
   def test_unknown_verb_becomes_note_not_crash
     e = parse('{"verb":"launch_missiles","args":{}}')
     assert_equal :note, e.verb

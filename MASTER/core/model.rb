@@ -21,27 +21,34 @@ module Master::Core
     EVIDENCE_WEIGHTS = Memory::SCORING.map { |k, v| "#{k}=#{v}" }.join(", ").freeze
 
     SYSTEM = <<~PROMPT.freeze
-      You are MASTER, a constitutional coding agent. Propose the single next action
-      as ONE JSON object and nothing else:
+      You are MASTER, a constitutional coding agent working toward one GOAL. Each
+      turn, propose the single next action as ONE JSON object and nothing else:
 
         {"verb": "<verb>", "args": { ... }}
 
       Verbs and their args:
-        read   {"path"}
-        write  {"path","content"}
+        read   {"path"}                          inspect a file before changing it
+        write  {"path","content"}                create or replace a file (full contents)
         exec   {"argv":["prog","arg"...],"evidence":"#{EVIDENCE_KINDS}"}
         git    {"operation":"diff|stage|commit","paths":[...],"message":"..."}
-        ask    {"prompt","options":[...]}
-        note   {"kind","text"}
-        done   {"summary"}
+        ask    {"prompt","options":[...]}        ask the operator only when truly blocked
+        note   {"kind","text"}                   record a thought when no action fits
+        done   {"summary"}                        finish — only after enough evidence
 
-      Rules the runtime enforces (so obey them or the effect is refused):
+      How to work:
+        - Orient first: read the files you will change and exec `ls` or
+          `git ls-files` to learn the layout. Never write blind.
+        - Change the minimum that satisfies the goal. Every .rb you write must parse.
+        - Prove it: exec the tests or checks with an evidence tag. Each result comes
+          back as the next turn's observation — react to failures, never ignore them.
+        - Then, and only then, `done`.
+
+      Constraints the runtime enforces (violate them and the effect is refused):
         - never write a secret into a file or note
         - never write the constitution (data/rules.yml, data/soul.yml) or the core/ spine
-        - every .rb you write must parse
         - exec argv must be an array of strings
-        - you cannot declare `done` (or `git commit`) until exec effects have
-          produced enough passing evidence (#{EVIDENCE_WEIGHTS}; threshold #{Memory::PASS_THRESHOLD})
+        - no `done` or `git commit` until exec evidence reaches the threshold
+          (#{EVIDENCE_WEIGHTS}; threshold #{Memory::PASS_THRESHOLD})
 
       Reason silently; output only the JSON object.
     PROMPT
@@ -58,9 +65,11 @@ module Master::Core
     end
 
     # Pure: model text -> Effect. Unknown/absent verb or bad JSON -> a note the
-    # loop can react to, never an exception.
+    # loop can react to, never an exception. Tolerant of ```json fences and a stray
+    # sentence around the object; the object itself is first-brace to last-brace.
     def self.parse(text, verbs:)
-      json = text.to_s[/\{.*\}/m]
+      cleaned = text.to_s.gsub(/```[a-z]*/i, "")
+      json = cleaned[/\{.*\}/m]
       return Effect.note(:parse_error, "no JSON object in model reply") unless json
 
       data = JSON.parse(json)
@@ -78,8 +87,16 @@ module Master::Core
 
     private
 
+    # Render Memory as a clean ReAct trace so the model can follow what it has
+    # already done and what each action produced.
     def transcript(context)
-      Array(context).map { |entry| "#{entry.role}: #{entry.text}" }.join("\n")
+      Array(context).map do |entry|
+        case entry.role
+        when :act then "ACTION: #{entry.text}"
+        when :obs then "RESULT: #{entry.text}"
+        else entry.text # notes, including "goal: ..."
+        end
+      end.join("\n")
     end
 
     def ask(prompt)
