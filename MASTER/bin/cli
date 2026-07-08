@@ -54,6 +54,7 @@ def parse_initial_message_options(argv)
       exit 0
     end
     opts.on("-m", "--message TEXT") { |text| options[:message] = text }
+    opts.on("--fold", "run the message through the core Fold, then exit") { ENV["MASTER_FOLD"] = "1" }
     opts.on("--web") { ENV["MASTER_WEB"] = "1" }
     opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }
     opts.on("--boot-status") { ENV["MASTER_BOOT_STATUS"] = "1" }
@@ -105,6 +106,19 @@ else
   cli = Master.boot(root: Dir.pwd)
 end
 Master::Ops::RuntimeLoopGuards.install!
+
+# --fold routes one coding goal through the core Fold (kernel-first runtime) with
+# the CLI's live provider config and event bus, then exits. Opt-in during the
+# cutover; the default path stays on the legacy pipeline.
+if ENV["MASTER_FOLD"] == "1"
+  goal = initial_message_from_argv(ARGV)
+  container = cli.container
+  puts Master::Now::CoreBridge.run_string(
+    goal, root: Dir.pwd, bus: container[:bus], model_id: container[:agent]&.model
+  )
+  save_cli_session_safely(cli)
+  exit!(0)
+end
 
 if $stdin.tty?
   Master::Now::WebServer.start(cli.container[:config]) unless fast_boot
