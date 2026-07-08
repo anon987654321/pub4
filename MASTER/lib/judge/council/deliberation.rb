@@ -17,7 +17,6 @@ module Master
         CONVERGENCE_ROUNDS = 3
         CONVERGENCE_OVERLAP = 0.7
         CONVERGENCE_TEXT_SIM = 0.6
-        COUNCIL_DATA_PATH = Master.data_path("council.yml").freeze
         LEGACY_PROMPTS_PATH = Master.data_path("prompts", "council.yml").freeze
 
         def self.questions = @questions ||= QualityFramework.questions
@@ -31,7 +30,7 @@ module Master
 
         def self.prompts
           @prompts ||= begin
-            council = Master.load_yaml(COUNCIL_DATA_PATH) || {}
+            council = Master.load_yaml(Master::COUNCIL_PATH) || {}
             configured = council["prompts"]
             configured.is_a?(Hash) && !configured.empty? ? configured : Master.load_yaml(LEGACY_PROMPTS_PATH)
           end
