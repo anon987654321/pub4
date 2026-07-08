@@ -54,6 +54,25 @@
       "remove blurry frames, heavy filters, extreme wide-angle distortion, and unflattering stills"
     ]
   },
+  "sample_review": {
+    "status": "needs_new_training_run",
+    "identity_first": true,
+    "postpro_after_identity_approval": true,
+    "rejected_outputs": [
+      {
+        "path": "/Users/mac/Documents/GitHub/pub4/lora/ragnhild/weights/ragnhild_v2/test_portrait.webp",
+        "reason": "rejected by user because the face did not look like Ragnhild; removed from retained outputs"
+      }
+    ],
+    "acceptance_criteria": [
+      "face shape and proportions read as Ragnhild before any film grade",
+      "eyes, mouth, smile, resting expression, and candid expression all stay consistent",
+      "identity holds across close-up, three-quarter, outdoor, indoor, and video first-frame prompts",
+      "hat, striped shirt, high-angle framing, or a single source-video pose do not become mandatory identity tokens",
+      "postpro is applied only to approved generated samples"
+    ],
+    "next_training_bias": "add more approved no-hat close portraits, profile and three-quarter portraits, indoor window-light shots, and varied outfits before judging v2 quality"
+  },
   "images": [
     "img_002.jpg",
     "img_003.jpg",

@@ -19,6 +19,14 @@
       "quality_uplift"
     ]
   },
+  "sample_review": {
+    "status": "needs_new_training_run",
+    "identity_first": true,
+    "postpro_after_identity_approval": true,
+    "rejected_outputs_removed": [
+      "/Users/mac/Documents/GitHub/pub4/lora/ragnhild/weights/ragnhild_v2/test_portrait.webp"
+    ]
+  },
   "steps": 1600,
   "rank": 16,
   "alpha": 16,
