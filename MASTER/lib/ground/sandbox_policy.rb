@@ -7,7 +7,7 @@ module Master
     module SandboxPolicy
       include Policy
       DENY_PATTERNS = [
-        /\brm\s+-rf\s+(?:\/|~|\$HOME)\b/,
+        /\brm\s+-rf\s+(?:\/|~|\$HOME)(?=\s|\z)/,
         /\bsudo\b/,
         /\bmkfs\b/,
         /\bdd\s+if=/,
@@ -48,7 +48,9 @@ module Master
       def decide(command)
         source = command.to_s.strip
         return Decision.new(mode: :deny, reason: "empty command") if source.empty?
-        return Decision.new(mode: :deny, reason: "matched deny pattern") if
+        return Decision.new(mode: :deny, reason: "matched deny pattern") if DENY_PATTERNS.any? { |re| source.match?(re) }
+        return Decision.new(mode: :ask, reason: "matched ask pattern") if ASK_PATTERNS.any? { |re| source.match?(re) }
+        return Decision.new(mode: :allow, reason: "matched allow pattern") if ALLOW_PATTERNS.any? { |re| source.match?(re) }
 
         Decision.new(mode: :ask, reason: "unknown command risk")
       end

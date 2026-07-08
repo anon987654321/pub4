@@ -64,6 +64,7 @@ module Master
 
       def degraded?
         return false if critical?
+        t = HEALTH_THRESHOLDS[:degraded]
         @state[:error_rate] >= t[:error_rate] ||
           @state[:fatigue] >= t[:fatigue] ||
           @state[:energy] <= t[:energy]
@@ -71,6 +72,7 @@ module Master
 
       def health_status
         return :critical if critical?
+        return :degraded if degraded?
         :healthy
       end
 
