@@ -14,11 +14,13 @@ module Master
     module CoreBridge
       module_function
 
-      def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40)
+      def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil)
         transcript = []
         observer = lambda do |turn:, effect:, observation:|
-          transcript << "#{turn}: #{effect} -> #{observation}"
+          line = "#{turn}: #{effect} -> #{observation}"
+          transcript << line
           bus&.publish("core:turn", turn:, effect: effect.to_s, ok: observation.ok?, detail: observation.message)
+          on_turn&.call(line)
         end
 
         done = Master::Core::Fold.new(

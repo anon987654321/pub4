@@ -1,20 +1,20 @@
 # MASTER_NEW_PROPOSAL.md
 
-**Status (2026-07-09):** M2, M3, M5–M8 implemented or satisfied. **M1 and M4 remain**
-— blocked on the Bridge vs Replace product decision documented in `core/ABSORPTION.md`
-(§ "The runtime cutover is a reimplementation, not a deletion"). Delete this file only
-after M1 absorption cutover and M4 CoreBridge sunset are complete.
+**Status (2026-07-09):** M2, M3, M5–M8 done. **Bridge chosen** — agent turns wired;
+M1 slices 5–6 and M4 remain. Delete this file only after full CLI cutover and M4.
 
 ## Remaining work
 
-### M1 — Absorption program (blocked: Bridge vs Replace)
-Slices 0–4 done per `core/ABSORPTION.md`. Slices 5–6 (CLI cutover, sever lib boot
-dependencies) require choosing Bridge (wire CLI through Fold) or Replace (Fold-only
-runtime). `lib/` still ~368 files until cutover lands.
+### M1 — Absorption program (in progress: Bridge)
+Slices 0–4 done per `core/ABSORPTION.md`. **Bridge milestone 1:** `CLI#run_input`
+routes plain-language goals through `CoreBridge` / `Fold` (opt-out:
+`MASTER_LEGACY_PIPELINE=1`). Slice 5 still open: slash `command_registry` handlers
+and pipeline deletion. `lib/` still ~368 files.
 
-### M4 — CoreBridge sunset (blocked: same gate)
-Delete `lib/now/core_bridge.rb`, `/fold` alias, and `bin/cli --fold` only when
-`command_registry` routes every handler through `Master::Core` — not yet true.
+### M4 — CoreBridge sunset
+Delete `lib/now/core_bridge.rb`, `/fold`, and `bin/cli --fold` only when
+`command_registry` routes every handler through `Master::Core` — slash commands
+still use the legacy pipeline.
 
 ## Done
 

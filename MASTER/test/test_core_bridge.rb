@@ -58,4 +58,14 @@ class CoreBridgeTest < Minitest::Test
   def test_empty_goal_is_refused
     assert_equal "core: no goal", Master::Now::CoreBridge.run_string("   ", root: Dir.pwd)
   end
+
+  def test_on_turn_callback_fires_per_turn
+    Dir.mktmpdir do |root|
+      lines = []
+      model = ScriptedModel.new(*evidence_then_done(summary: "done"))
+      Master::Now::CoreBridge.run("goal", root:, model:, on_turn: ->(line) { lines << line })
+      refute_empty lines
+      assert(lines.all? { |line| line.match?(/\A\d+:/) })
+    end
+  end
 end

@@ -107,9 +107,9 @@ else
 end
 Master::Ops::RuntimeLoopGuards.install!
 
-# --fold routes one coding goal through the core Fold (kernel-first runtime) with
-# the CLI's live provider config and event bus, then exits. Opt-in during the
-# cutover; the default path stays on the legacy pipeline.
+# --fold routes one coding goal through the core Fold, then exits. Plain-language
+# agent turns use the same Fold by default; MASTER_LEGACY_PIPELINE=1 restores the
+# legacy pipeline. Slash commands still use the legacy pipeline.
 if ENV["MASTER_FOLD"] == "1"
   goal = initial_message_from_argv(ARGV)
   container = cli.container

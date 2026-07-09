@@ -163,7 +163,17 @@ streaming REPL. So finishing the core-first rebuild means one of:
    web, TTS, sessions. Smallest final `lib/`, but deletes deployed product surface.
 
 Both are product decisions, not mechanical severance — they change what the agent
-running on the VPS *is*. That gate is where this branch pauses for a call.
+running on the VPS *is*.
+
+**Decision: Bridge** (2026-07-09). Plain-language agent turns in `CLI#run_input` now
+route through `Master::Now::CoreBridge` → `Master::Core::Fold` by default.
+Slash commands, NL_DISPATCH, workflow intents, web, TTS, and sessions stay on the
+legacy path. Opt out with `MASTER_LEGACY_PIPELINE=1`. `bin/cli --fold` remains a
+one-shot Fold run that exits immediately.
+
+Remaining Bridge work before slice 5 is "done": migrate slash handlers
+(`/scan`, `/fix`, …) off the pipeline; then M4 can sunset `core_bridge.rb` as a
+separate shim.
 
 ## Done
 
