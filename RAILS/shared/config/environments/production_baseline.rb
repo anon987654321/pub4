@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 # Shared OpenBSD/relayd production baseline — apps call apply_production_baseline with host overrides.
-def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil, secret_key_base: false)
+def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil, secret_key_base: true)
   mailer_host ||= Array(hosts).first
 
-  config.secret_key_base = ENV.fetch("SECRET_KEY_BASE") if secret_key_base
+  config.secret_key_base = ENV.fetch("SECRET_KEY_BASE") if secret_key_base && ENV["SECRET_KEY_BASE"].present? && ENV["SECRET_KEY_BASE"].present?
 
   config.yjit = true if config.respond_to?(:yjit=)
 

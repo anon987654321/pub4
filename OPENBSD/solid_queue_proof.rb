@@ -18,8 +18,9 @@ abort "missing #{app_dir}" unless File.directory?(app_dir)
   end
 end
 
-secret = ENV["SECRET_KEY_BASE"]
-abort "missing SECRET_KEY_BASE in /etc/#{app}.env" if secret.to_s.empty?
+abort "missing SECRET_KEY_BASE in /etc/#{app}.env" if ENV["SECRET_KEY_BASE"].to_s.empty?
+
+env_sources = %W[/etc/#{app}.env /etc/rails/#{app}.env].select { |path| File.readable?(path) }
 
 runner = <<~RUBY
   adapter = ActiveJob::Base.queue_adapter
@@ -51,9 +52,10 @@ cmd = [
   "su", "-m", app, "-c",
   [
     "export HOME=/home/#{app}",
+    *env_sources.map { |path| ". #{Shellwords.escape(path)}" },
+    ": \\${SECRET_KEY_BASE:?missing SECRET_KEY_BASE}",
     "export RAILS_ENV=production",
     "export SOLID_QUEUE_IN_PUMA=true",
-    "export SECRET_KEY_BASE=#{Shellwords.escape(secret)}",
     "cd #{Shellwords.escape(app_dir)}",
     "bundle34 exec rails runner -e production #{Shellwords.escape(runner)}"
   ].join(" && ")
