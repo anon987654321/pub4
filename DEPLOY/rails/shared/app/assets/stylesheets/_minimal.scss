@@ -3,9 +3,9 @@
 
 @use "x_base" as x;
 
-:root {
-  @include x.x-dark-tokens;
-  color-scheme: dark;
+// Shared alias set — same 10 x.com-style names regardless of mode, just
+// re-pointed at the light or dark @include. Defined once, applied twice below.
+@mixin minimal-alias-tokens {
   --white: var(--x-bg);
   --black: var(--x-text);
   --blue: var(--x-accent);
@@ -15,26 +15,22 @@
   --grey: var(--x-text-secondary);
   --dark-grey: var(--x-text-secondary);
   --warning-red: var(--x-danger);
-  --radius: var(--x-radius-card);
   --hover: var(--x-hover);
   --hover-subtle: var(--x-hover-subtle);
+}
+
+:root {
+  @include x.x-dark-tokens;
+  color-scheme: dark;
+  @include minimal-alias-tokens;
+  --radius: var(--x-radius-card);
 }
 
 @media (prefers-color-scheme: light) {
   :root {
     @include x.x-light-tokens;
     color-scheme: light;
-    --white: var(--x-bg);
-    --black: var(--x-text);
-    --blue: var(--x-accent);
-    --light-blue: var(--x-accent);
-    --extra-light-grey: var(--x-border);
-    --light-grey: var(--x-text-secondary);
-    --grey: var(--x-text-secondary);
-    --dark-grey: var(--x-text-secondary);
-    --warning-red: var(--x-danger);
-    --hover: var(--x-hover);
-    --hover-subtle: var(--x-hover-subtle);
+    @include minimal-alias-tokens;
   }
 }
 
@@ -91,7 +87,7 @@ nav {
   gap: 1rem;
   align-items: center;
   padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.85);
+  background: color-mix(in srgb, var(--white) 85%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--extra-light-grey);
   transform: translateY(-100%);
@@ -414,17 +410,6 @@ footer {
   min-height: 120px;
   border-radius: var(--radius);
   margin-bottom: 1rem;
-}
-
-.skeleton {
-  background: linear-gradient(90deg, var(--x-surface-elevated) 25%, var(--extra-light-grey) 50%, var(--x-surface-elevated) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
 }
 
 [dir="rtl"] {

@@ -37,7 +37,7 @@
   display: block;
   width: 0.75rem;
   height: 0.75rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 2px solid rgba(255, 255, 255, .82);
   background: var(--primary, #e11d48);
   box-shadow: 0 0 0 6px rgba(225, 29, 72, .14);
@@ -102,7 +102,7 @@
   text-transform: uppercase;
   letter-spacing: .18em;
   font-size: .72rem;
-  color: var(--muted);
+  color: var(--text-dim);
 }
 
 @keyframes matchFadeIn {

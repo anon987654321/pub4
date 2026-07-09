@@ -1,7 +1,7 @@
 /* Takeaway — DoorDash urgency + Foodora/Wolt restaurant discovery */
 body.vertical-takeaway {
-  --food-dash: #ff3008;
-  --foodora: #df1061;
+  --food-dash: oklch(64% 0.2 30);
+  --foodora: oklch(52% 0.2 350);
   --food-eta-bg: #fff4f0;
   --food-card-radius: 12px;
 }

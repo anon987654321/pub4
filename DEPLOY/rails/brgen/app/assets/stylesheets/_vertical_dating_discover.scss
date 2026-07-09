@@ -51,7 +51,7 @@ body.vertical-dating .dating-discover {
 body.vertical-dating .swipe-card {
   background: var(--dating-card);
   border-color: var(--dating-border);
-  border-radius: 20px;
+  border-radius: var(--x-radius-lg);
 }
 
 body.vertical-dating .swipe-bio {
@@ -64,7 +64,7 @@ body.vertical-dating .swipe-signin {
   background: linear-gradient(90deg, var(--dating-accent), var(--dating-accent-warm));
   color: #fff;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-weight: 600;
 }
 

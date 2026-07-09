@@ -12,6 +12,7 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
   config.eager_load = true
   config.consider_all_requests_local = false
   config.action_controller.perform_caching = true
+  config.public_file_server.enabled = true
   config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
   config.active_storage.service = :local
 

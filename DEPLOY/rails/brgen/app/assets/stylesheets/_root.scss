@@ -14,14 +14,15 @@
   --search-bg: var(--x-search-bg);
   --text: var(--x-text);
   --text-dim: var(--x-text-secondary);
-  --accent: var(--x-accent);
-  --accent-hover: var(--x-accent-hover);
-  --upvote: var(--x-accent);
-  --downvote: #f91880;
+  --accent: oklch(76% 0.13 68);
+  --accent-hover: oklch(70% 0.13 68);
+  --upvote: var(--accent);
+  --downvote: oklch(58% 0.15 30);
   --border: var(--x-border);
   --hover: var(--x-hover);
   --hover-subtle: var(--x-hover-subtle);
   --radius: var(--x-radius-card);
+  --radius-chip: var(--x-radius-sm);
   --radius-pill: var(--x-radius-pill);
   --sp: 8px;
   --sidebar-width: var(--x-sidebar);
@@ -34,7 +35,7 @@
   --z-app: 10;
   --z-nav: 80;
   --z-splash: 1000;
-  --turbo-progress-bar-color: var(--x-accent);
+  --turbo-progress-bar-color: var(--accent);
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
@@ -80,10 +81,10 @@
   --search-bg: var(--x-search-bg);
   --text: var(--x-text);
   --text-dim: var(--x-text-secondary);
-  --accent: var(--x-accent);
-  --accent-hover: var(--x-accent-hover);
-  --upvote: var(--x-accent);
-  --downvote: #f91880;
+  --accent: oklch(76% 0.13 68);
+  --accent-hover: oklch(70% 0.13 68);
+  --upvote: var(--accent);
+  --downvote: oklch(58% 0.15 30);
   --border: var(--x-border);
   --hover: var(--x-hover);
   --hover-subtle: var(--x-hover-subtle);

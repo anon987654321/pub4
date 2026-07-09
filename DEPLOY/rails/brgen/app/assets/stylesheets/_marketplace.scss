@@ -110,7 +110,7 @@
   padding: 6px 0.875rem;
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   font-size: .875rem;
   color: var(--text);
   white-space: nowrap;

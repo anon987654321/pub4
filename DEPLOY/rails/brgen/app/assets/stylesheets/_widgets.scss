@@ -18,7 +18,7 @@
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
-  background: rgba(0,0,0,.85);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(0.75rem);
   z-index: 10;
 }
@@ -31,8 +31,10 @@
 .sort-tab {
   padding: 16px 20px;
   text-align: center;
-  font-size: .9375rem;
-  font-weight: 500;
+  font: 0.75rem/1 var(--x-font);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--text-dim);
   border-bottom: 2px solid transparent;
   transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
@@ -73,7 +75,7 @@ article[data-component="card"] { padding: var(--card-padding); }
 
 article { padding: 20px 16px; border-bottom: 1px solid var(--border); transition: background var(--transition-fast); display: flex; gap: 0.75rem; }
 article:hover { background: var(--hover-subtle); }
-.x-avatar { width: 48px; height: 48px; border-radius: 9999px; background: var(--surface2); flex-shrink: 0; }
+.x-avatar { width: 48px; height: 48px; border-radius: var(--radius-pill); background: var(--surface2); flex-shrink: 0; }
 .x-content { flex: 1; min-width: 0; }
 .x-header { display: flex; gap: 4px; font-size: 0.9375rem; color: var(--text-dim); margin-bottom: 2px; }
 .x-name { color: var(--text); font-weight: 700; letter-spacing: -0.01em; }
@@ -82,7 +84,7 @@ article:hover { background: var(--hover-subtle); }
 .x-text a { color: var(--accent); text-decoration: none; }
 .x-text a:hover { text-decoration: underline; }
 .x-actions { display: flex; align-items: center; justify-content: space-between; gap: 4px; color: var(--text-dim); font-size: 0.8125rem; margin-top: 8px; }
-.x-act { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: 9999px; transition: color var(--transition-fast), background var(--transition-fast); }
+.x-act { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: var(--radius-chip); transition: color var(--transition-fast), background var(--transition-fast); }
 .x-act:hover { color: var(--accent); background: var(--hover); }
 .x-count { font-size: 0.8125rem; }
 .compose-actions span { font-family: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }

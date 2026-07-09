@@ -397,7 +397,7 @@ body.vertical-playlist .playlist-index {
   width: 100%;
   height: 96px;
   display: block;
-  border-radius: 8px;
+  border-radius: var(--x-radius-sm);
   cursor: pointer;
 }
 
@@ -413,31 +413,31 @@ body.vertical-playlist .playlist-index {
 }
 
 .playlist-transport-play {
-  background: #ff5500;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-bg);
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 8px 12px;
   font-weight: 700;
 }
 
 .playlist-scrub {
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.12);
   overflow: hidden;
 }
 
 .playlist-scrub-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ff5500, #ff7733);
+  background: linear-gradient(90deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 65%, white));
 }
 
 .playlist-embed-frame {
   width: 100%;
   min-height: 180px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--x-radius-sm);
   background: #101010;
 }
 
@@ -456,5 +456,5 @@ body.vertical-playlist .playlist-index {
 }
 
 .playlist-queue-item.is-active {
-  background: rgba(255, 85, 0, 0.08);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
 }

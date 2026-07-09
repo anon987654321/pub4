@@ -31,6 +31,8 @@ header {
     margin-top: 18px;
     color: var(--light-grey);
     border-bottom: 1px solid var(--extra-light-grey);
+    font-family: var(--x-font-mono, ui-monospace, monospace);
+    font-size: 0.8125rem;
 
     p {
       padding: 0 3px 8px;
@@ -38,8 +40,12 @@ header {
 
       &.active {
         color: var(--black);
-        border-bottom: 2px solid var(--light-blue);
+        border-bottom: 2px solid var(--black);
         font-weight: 700;
+
+        &::before {
+          content: "* ";
+        }
       }
     }
   }
@@ -49,15 +55,22 @@ header {
   width: 90%;
   max-width: 584px;
   border: 1px solid var(--extra-light-grey);
-  border-radius: var(--x-radius-pill, 9999px);
+  border-radius: var(--x-radius-sm);
   background: var(--x-search-bg, #202327);
   font-size: 18px;
   display: flex;
   align-items: center;
   padding: 0 20px;
+  font-family: var(--x-font-mono, ui-monospace, monospace);
+
+  &::before {
+    content: "$";
+    color: var(--dark-grey);
+    margin-inline-end: 10px;
+  }
 
   &:focus-within {
-    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+    border-color: var(--light-blue);
   }
 
   input {
@@ -67,6 +80,7 @@ header {
     width: 100%;
     padding: 16px 0;
     font-size: 16px;
+    font-family: inherit;
     color: var(--black);
 
     &::placeholder {
@@ -95,8 +109,9 @@ header {
 }
 
 .port-name {
-  font-weight: 600;
-  color: var(--light-blue);
+  font-family: var(--x-font-mono, ui-monospace, monospace);
+  font-weight: 700;
+  color: var(--black);
   text-decoration: none;
 }
 

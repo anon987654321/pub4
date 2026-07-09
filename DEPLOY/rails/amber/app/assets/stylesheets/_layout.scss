@@ -12,11 +12,11 @@ main {
 
   &--error,
   &--alert {
-    color: #c00;
+    color: var(--color-danger);
   }
 
   &--notice {
-    color: #060;
+    color: var(--color-success);
   }
 }
 
@@ -53,6 +53,8 @@ main {
 h1,
 h2 {
   margin-bottom: var(--space-sm);
+  font-family: var(--ny-serif, "Libre Baskerville", Georgia, serif);
+  font-weight: 400;
 }
 
 [dir="rtl"] {

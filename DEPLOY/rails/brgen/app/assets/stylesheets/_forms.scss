@@ -53,10 +53,10 @@ body.zen-minimal .revealed ~ .layout > main {
   align-items: center;
   justify-content: center;
   padding: 10px 20px;
-  background: var(--text);
-  color: var(--bg);
+  background: var(--accent);
+  color: #000;
   border: none;
-  border-radius: 9999px;
+  border-radius: var(--radius-chip);
   font-size: .9375rem;
   font-weight: 700;
   cursor: pointer;

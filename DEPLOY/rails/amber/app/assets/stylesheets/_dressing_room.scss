@@ -90,7 +90,7 @@
   gap: var(--space-sm);
   padding: 0.35rem var(--space-sm);
   border: 1px solid var(--color-extra-light-grey);
-  border-radius: 4px;
+  border-radius: var(--x-radius-xs);
 }
 
 .zone-tag {
@@ -98,13 +98,13 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #888;
+  color: var(--x-text-secondary, #71767b);
   min-width: 70px;
 }
 
 .carousel-btn {
   background: none;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-extra-light-grey);
   border-radius: 3px;
   width: 28px;
   height: 28px;
@@ -117,7 +117,7 @@
   flex-shrink: 0;
 
   &:hover {
-    background: #f0f0f0;
+    background: var(--x-hover);
   }
 }
 
@@ -133,7 +133,7 @@
 
 .zone-count {
   font-size: 0.7rem;
-  color: #999;
+  color: var(--x-text-secondary, #71767b);
 }
 
 .dressing-room-actions {

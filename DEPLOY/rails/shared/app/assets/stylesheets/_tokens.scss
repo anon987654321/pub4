@@ -1,5 +1,22 @@
 @use "x_base" as x;
 
+// Shared light-theme override set — used identically by [data-theme="light"]
+// and the @media(prefers-color-scheme:light) fallback below, so it's defined once.
+@mixin semantic-light-overrides {
+  @include x.x-light-tokens;
+  color-scheme: light;
+  --color-shadow: var(--x-bg);
+  --color-midtone: var(--x-text-secondary);
+  --color-highlight: var(--x-surface);
+  --color-accent: var(--x-accent);
+  --color-border: var(--x-border);
+  --color-midtone-tint: var(--x-hover);
+  --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
+  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.65) 0%, transparent 60%);
+  --text-primary: var(--x-text);
+  --text-secondary: var(--x-text-secondary);
+}
+
 :root {
   @include x.x-dark-tokens;
   color-scheme: dark;
@@ -17,6 +34,10 @@
   --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
   --text-primary: var(--x-text);
   --text-secondary: var(--x-text-secondary);
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 0.75rem;
@@ -43,34 +64,12 @@
 }
 
 [data-theme="light"] {
-  @include x.x-light-tokens;
-  color-scheme: light;
-  --color-shadow: var(--x-bg);
-  --color-midtone: var(--x-text-secondary);
-  --color-highlight: var(--x-surface);
-  --color-accent: var(--x-accent);
-  --color-border: var(--x-border);
-  --color-midtone-tint: var(--x-hover);
-  --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
-  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.65) 0%, transparent 60%);
-  --text-primary: var(--x-text);
-  --text-secondary: var(--x-text-secondary);
+  @include semantic-light-overrides;
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    @include x.x-light-tokens;
-    color-scheme: light;
-    --color-shadow: var(--x-bg);
-    --color-midtone: var(--x-text-secondary);
-    --color-highlight: var(--x-surface);
-    --color-accent: var(--x-accent);
-    --color-border: var(--x-border);
-    --color-midtone-tint: var(--x-hover);
-    --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
-    --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.65) 0%, transparent 60%);
-    --text-primary: var(--x-text);
-    --text-secondary: var(--x-text-secondary);
+    @include semantic-light-overrides;
   }
 }
 

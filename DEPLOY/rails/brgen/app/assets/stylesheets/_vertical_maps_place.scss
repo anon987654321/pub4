@@ -41,7 +41,7 @@ body.vertical-maps .btn-primary {
   background: linear-gradient(90deg, var(--maps-accent), #60a5fa);
   color: #fff;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-weight: 600;
 }
 

@@ -60,8 +60,8 @@
   max-height: 72vh;
   padding: 8px 16px calc(18px + var(--safe-bottom));
   background: var(--bg);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
   border-top: 1px solid var(--border);
   box-shadow: 0 -16px 40px rgba(0, 0, 0, .24);
   transform: translateY(100%);
@@ -74,7 +74,7 @@
 .mobile-sheet-handle {
   width: 42px;
   height: 4px;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   background: var(--border);
   justify-self: center;
 }

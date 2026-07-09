@@ -19,7 +19,7 @@
 }
 
 .swipe-chips .chip {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.75rem;
   padding: 0.2rem 0.55rem;
 }
@@ -54,16 +54,16 @@
 }
 
 .swipe-action--pass {
-  background: rgba(240, 90, 90, 0.12);
-  border-color: rgba(240, 90, 90, 0.45);
-  color: #f05a5a;
+  background: color-mix(in srgb, var(--dating-pass) 12%, transparent);
+  border-color: color-mix(in srgb, var(--dating-pass) 45%, transparent);
+  color: var(--dating-pass);
 }
 
 .swipe-action--like {
-  background: linear-gradient(135deg, rgba(0, 240, 200, 0.2), rgba(255, 85, 0, 0.2));
-  border-color: rgba(0, 212, 170, 0.55);
-  color: #00d4aa;
-  box-shadow: 0 8px 24px rgba(0, 212, 170, 0.18);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--dating-accent) 20%, transparent), color-mix(in srgb, var(--dating-accent-warm) 20%, transparent));
+  border-color: color-mix(in srgb, var(--dating-accent) 55%, transparent);
+  color: var(--dating-accent);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--dating-accent) 18%, transparent);
 }
 
 .swipe-signin {
@@ -77,10 +77,10 @@
 }
 
 .swipe-card.liked {
-  border-color: rgba(41, 195, 106, 0.55);
+  border-color: color-mix(in srgb, var(--dating-accent) 55%, transparent);
 }
 
 .swipe-card.passed {
-  border-color: rgba(240, 90, 90, 0.55);
+  border-color: color-mix(in srgb, var(--dating-pass) 55%, transparent);
 }
 

@@ -57,9 +57,9 @@ input, button, textarea, select {
 .px-15 { padding-inline: var(--space-15); }
 .px-16 { padding-inline: var(--space-16); }
 
-.text-sm { font-size: 0.875rem; line-height: 1.4; }
-.text-base { font-size: 1rem; line-height: 1.5; }
-.text-lg { font-size: 1.125rem; line-height: 1.5; }
+.text-sm { font-size: var(--text-sm); line-height: 1.4; }
+.text-base { font-size: var(--text-base); line-height: 1.5; }
+.text-lg { font-size: var(--text-lg); line-height: 1.5; }
 
 .text-primary { color: var(--color-primary); }
 .bg-surface { background: var(--color-surface); }
@@ -98,7 +98,7 @@ input, button, textarea, select {
   gap: var(--space-2);
   min-height: 44px;
   padding: 0 var(--space-4);
-  border-radius: 9999px;
+  border-radius: var(--x-radius-pill);
   border: 1px solid transparent;
   background: var(--x-text, var(--color-primary));
   color: var(--x-bg, var(--color-highlight));
@@ -163,7 +163,7 @@ input, button, textarea, select {
   place-items: center;
   width: 100%;
   height: 100%;
-  border-radius: 9999px;
+  border-radius: var(--x-radius-pill);
   background: var(--color-midtone);
   color: var(--color-highlight);
   font-weight: 700;
@@ -199,7 +199,7 @@ input, button, textarea, select {
   background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-border) 50%, var(--color-surface) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
-  border-radius: 8px;
+  border-radius: var(--x-radius-sm);
 }
 
 .toast {
@@ -209,7 +209,7 @@ input, button, textarea, select {
   padding: var(--space-3) var(--space-4);
   background: var(--color-primary);
   color: var(--color-highlight);
-  border-radius: 12px;
+  border-radius: var(--x-radius-md);
   box-shadow: 0 10px 24px rgb(0 0 0 / 0.18);
   max-width: 360px;
   pointer-events: all;
@@ -241,7 +241,7 @@ article {
 
 .dialog {
   border: none;
-  border-radius: 20px;
+  border-radius: var(--x-radius-lg);
   padding: 0;
   max-width: min(560px, 90vw);
   max-height: 90dvh;
@@ -266,7 +266,7 @@ article {
   background: var(--color-primary);
   color: var(--color-highlight);
   font-size: var(--text-xs);
-  border-radius: 4px;
+  border-radius: var(--x-radius-xs);
   padding: var(--space-1) var(--space-2);
   white-space: nowrap;
   pointer-events: none;
@@ -305,7 +305,7 @@ input[type="checkbox"].toggle {
   height: 26px;
   appearance: none;
   background: var(--color-border);
-  border-radius: 9999px;
+  border-radius: var(--x-radius-pill);
   transition: background 160ms ease;
 }
 
@@ -320,7 +320,7 @@ input[type="radio"]:checked + label {
 
 .dropzone {
   border: 2px dashed var(--color-border);
-  border-radius: 16px;
+  border-radius: var(--x-radius-card);
   padding: var(--space-8);
   text-align: center;
   transition: all 160ms ease;
@@ -335,7 +335,7 @@ progress {
   appearance: none;
   width: 100%;
   height: 4px;
-  border-radius: 9999px;
+  border-radius: var(--x-radius-pill);
   background: var(--color-border);
 }
 
@@ -345,7 +345,7 @@ progress::-webkit-progress-bar {
 
 progress::-webkit-progress-value {
   background: var(--color-midtone);
-  border-radius: 9999px;
+  border-radius: var(--x-radius-pill);
 }
 
 input[type="radio"].star:checked ~ .star,
@@ -439,6 +439,15 @@ thead th {
   button {
     forced-color-adjust: auto;
     border: 1px solid ButtonText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

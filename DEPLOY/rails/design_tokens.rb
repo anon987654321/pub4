@@ -28,13 +28,21 @@ module DesignTokens
       lines << "  --#{key.tr('_', '-')}: #{anchors.fetch(key)};"
     end
     lines << "  --x-font-mono: #{data.fetch('font_mono')};"
+    lines << "  --font-label: #{data.fetch('font_label')};"
     lines << "  color-scheme: dark;"
     %w[top right bottom left].each do |side|
       lines << "  --safe-#{side}: env(safe-area-inset-#{side}, 0px);"
     end
+    { "t" => "top", "r" => "right", "b" => "bottom", "l" => "left" }.each do |short, side|
+      lines << "  --inset-#{short}: calc(12px + var(--safe-#{side}));"
+    end
     lines << "  --face-bg: #{data.fetch('face_bg')};"
     derived.each { |k, v| lines << "  --#{k.tr('_', '-')}: #{v};" }
-    layout.each { |k, v| lines << "  --#{k}: #{v};" }
+    layout.each do |k, v|
+      lines << "  /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */" if k == "face-particle-size"
+      lines << "  /* z-scale: canvas(base) < chrome(persistent HUD) < ui < overlay(panels) < modal(blocking) < toast(errors) < skip(a11y skip-link) */" if k == "z-canvas"
+      lines << "  --#{k}: #{v};"
+    end
     lines << "}"
     lines.join("\n")
   end

@@ -18,7 +18,7 @@
 .preset-opt span {
   padding: 5px 0.875rem;
   border: 1px solid var(--border);
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   font-size: .8125rem;
   color: var(--text-dim);
   transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
@@ -49,7 +49,7 @@
   background: var(--text);
   color: #000;
   border: none;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   padding: 10px 20px;
   font-size: .9375rem;
   font-weight: 700;

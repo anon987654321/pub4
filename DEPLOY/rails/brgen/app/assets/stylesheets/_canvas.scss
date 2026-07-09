@@ -57,7 +57,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgba(0,0,0,.86);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
   color: var(--text);
   cursor: pointer;
   user-select: none;

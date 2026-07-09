@@ -7,7 +7,7 @@ nav {
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-sm) var(--space-md);
-  background: rgba(0, 0, 0, 0.85);
+  background: color-mix(in srgb, var(--x-bg) 85%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-extra-light-grey);
   transform: translateY(-100%);
@@ -19,11 +19,27 @@ nav {
   }
 
   a {
-    color: inherit;
+    color: var(--x-text-secondary, #71767b);
+    font-family: var(--ny-serif, "Libre Baskerville", Georgia, serif);
+    font-size: 0.75rem;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    padding-bottom: 2px;
+    border-bottom: 1px solid transparent;
+    transition: color 120ms ease, border-color 120ms ease;
   }
 
   a:hover {
-    text-decoration: underline;
+    color: var(--x-text);
+    text-decoration: none;
+    border-bottom-color: var(--color-extra-light-grey);
+  }
+
+  a[aria-current="page"] {
+    color: var(--x-text);
+    font-style: normal;
+    font-weight: 700;
+    border-bottom-color: var(--app-accent);
   }
 
   .brand {

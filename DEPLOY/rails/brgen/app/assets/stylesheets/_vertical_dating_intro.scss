@@ -22,7 +22,7 @@
   content: "";
   position: absolute;
   inset: 8% 0 18%;
-  background: radial-gradient(ellipse at 58% 42%, rgba(255, 70, 35, 0.42), transparent 68%);
+  background: radial-gradient(ellipse at 58% 42%, color-mix(in srgb, var(--dating-accent-warm) 42%, transparent), transparent 68%);
   filter: blur(18px);
   pointer-events: none;
 }

@@ -28,7 +28,7 @@ body.vertical-messenger .disappearing-settings select {
   background: var(--msg-surface);
   border: 1px solid var(--msg-border);
   color: var(--msg-ink);
-  border-radius: 8px;
+  border-radius: var(--x-radius-sm);
   padding: 0.25rem 0.5rem;
 }
 
@@ -84,7 +84,7 @@ body.vertical-messenger #messages article p {
 
 body.vertical-messenger #messages article img {
   margin-top: 0.5rem;
-  border-radius: 12px;
+  border-radius: var(--x-radius-md);
   max-width: 100%;
 }
 
@@ -92,7 +92,7 @@ body.vertical-messenger #new_message {
   position: sticky;
   bottom: max(12px, env(safe-area-inset-bottom));
   padding: 0.75rem;
-  border-radius: 16px;
+  border-radius: var(--radius);
   background: var(--msg-surface);
   border: 1px solid var(--msg-border);
 }
@@ -102,7 +102,7 @@ body.vertical-messenger #new_message textarea {
   resize: vertical;
   min-height: 4rem;
   padding: 0.65rem 0.75rem;
-  border-radius: 12px;
+  border-radius: var(--x-radius-md);
   border: 1px solid var(--msg-border);
   background: #0f0f0f;
   color: var(--msg-ink);
@@ -115,7 +115,7 @@ body.vertical-messenger #new_message input[type="submit"] {
   width: 100%;
   padding: 0.65rem 1rem;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--msg-accent);
   color: #fff;
   font-weight: 600;

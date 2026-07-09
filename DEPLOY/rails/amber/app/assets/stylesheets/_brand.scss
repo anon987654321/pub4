@@ -45,6 +45,13 @@
   50% { opacity: 0.95; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .amber-logo-gradient,
+  .amber-swoosh-line {
+    animation: none;
+  }
+}
+
 .amber-guest-hero {
   min-height: calc(100dvh - 6rem);
   display: flex;

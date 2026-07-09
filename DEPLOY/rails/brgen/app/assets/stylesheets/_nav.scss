@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   padding: 0 16px;
-  background: rgba(0,0,0,.85);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(0.75rem);
   border-bottom: 1px solid var(--border);
   z-index: 10;
@@ -30,8 +30,10 @@
   display: block;
   padding: 16px;
   text-align: center;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font: 0.75rem/1 var(--x-font);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--text-dim);
   border-bottom: 2px solid transparent;
   transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
@@ -123,7 +125,7 @@
   gap: 0.75rem;
   background: var(--search-bg);
   border: 1px solid transparent;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   padding: 10px 16px;
   margin-bottom: 16px;
   transition: border-color var(--transition-fast), background var(--transition-fast);

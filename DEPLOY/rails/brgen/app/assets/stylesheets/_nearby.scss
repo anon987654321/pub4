@@ -63,7 +63,7 @@
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-dim);
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   padding: 5px 0.875rem;
   font-size: .875rem;
   cursor: pointer;
