@@ -70,11 +70,11 @@ module Pub4
     end
 
     def backlog_source
-      "DEPLOY/data/debt.yml"
+      "OPERATOR/data/debt.yml"
     end
 
     def backlog_open_count
-      path = File.join(@root, "DEPLOY", "data", "debt.yml")
+      path = File.join(@root, "OPERATOR", "data", "debt.yml")
       return 0 unless File.file?(path)
 
       data = YAML.safe_load(File.read(path)) || {}
@@ -82,7 +82,7 @@ module Pub4
     end
 
     def horizon_count
-      horizon = File.join(@root, "DEPLOY", "rails", "apps.horizon.yml")
+      horizon = File.join(@root, "RAILS", "apps.horizon.yml")
       return 0 unless File.file?(horizon)
 
       data = YAML.safe_load(File.read(horizon)) || {}

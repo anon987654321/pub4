@@ -4,5 +4,5 @@ spots:
   - "face: WebGL particle UI at /chat"
   - "council: multi-persona deliberation"
   - "engine: pub4-shared across active Rails apps"
-  - "deploy: relayd health + DEPLOY.sh gates"
+  - "deploy: relayd health + OPERATOR.sh gates"
   - "kernel: 5-file spine smoke in kernel/"

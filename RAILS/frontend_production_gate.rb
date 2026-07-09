@@ -4,11 +4,11 @@
 require "open3"
 require "rbconfig"
 require "yaml"
-require_relative "../lib/utf8"
+require_relative "../OPERATOR/lib/utf8"
 
-ROOT = File.expand_path("../..", __dir__)
+ROOT = File.expand_path("..", __dir__)
 
-RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
+RAILS_ROOT = File.join(ROOT, "RAILS")
 WEB_ROOT = File.join(ROOT, "MASTER", "web")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 

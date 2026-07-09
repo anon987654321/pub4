@@ -1,4 +1,4 @@
-# DEPLOY operator runtime authority — served via /orient deploy and bin/pub4.
+# OPERATOR operator runtime authority — served via /orient deploy and bin/pub4.
 # Markdown stubs (START_HERE.md, RECIPES.md) point here; edit this file.
 
 meta:
@@ -11,27 +11,27 @@ stack:
   solid_queue: SOLID_QUEUE_IN_PUMA=true runs the supervisor inside the Falcon process (env name is Solid Queue convention, not Puma).
 
 app_layout:
-  summary: Each DEPLOY/rails/<app>/ is already a full Rails 8 app (app/, config/, db/, test/).
+  summary: Each RAILS/<app>/ is already a full Rails 8 app (app/, config/, db/, test/).
   bootstrap: Greenfield apps use rails new once; existing apps are maintained in-tree.
-  deploy_entrypoint: DEPLOY/rails/<app>/<app>.sh copies the tracked tree to /home/<app>/app
+  deploy_entrypoint: RAILS/<app>/<app>.sh copies the tracked tree to /home/<app>/app
   deployed_tree: /home/<app>/app is what relayd serves — not the dev git checkout alone
-  shared_engine: DEPLOY/rails/shared (pub4-shared gem)
+  shared_engine: RAILS/shared (pub4-shared gem)
 
 single_source_of_truth:
-  features: DEPLOY/rails/apps.yml
-  horizon: DEPLOY/rails/apps.horizon.yml
-  debt: DEPLOY/data/debt.yml
-  deploy_identity: DEPLOY/master.json
+  features: RAILS/apps.yml
+  horizon: RAILS/apps.horizon.yml
+  debt: OPERATOR/data/debt.yml
+  deploy_identity: OPERATOR/master.json
 
 recipes:
   - want: See where I am
     run: bin/pub4 status
     expect: mode, ruby, ports, next command
   - want: Fast local contributor check
-    run: DEPLOY/bin/check --profile=contributor && cd MASTER && bin/check --profile=contributor
+    run: OPERATOR/bin/check --profile=contributor && cd MASTER && bin/check --profile=contributor
     expect: static gates ok
   - want: After git pull on vm23
-    run: DEPLOY/bin/post-pull-checklist && bin/pub4 vps state
+    run: OPERATOR/bin/post-pull-checklist && bin/pub4 vps state
     expect: drift visible; follow deploy list
   - want: Deploy one Rails app on VPS
     run: bin/pub4 vps deploy brgen --remote
@@ -40,5 +40,5 @@ recipes:
     run: bin/pub4 vps deploy master --remote
     expect: assets precompiled + master restarted
   - want: Full integrity on VPS
-    run: ssh brgen 'cd /home/dev/pub4 && ruby34 DEPLOY/integrity_gate.rb'
+    run: ssh brgen 'cd /home/dev/pub4 && ruby34 OPERATOR/integrity_gate.rb'
     expect: integrity clean after apps deployed

@@ -72,7 +72,7 @@ module Master
             next [] unless path.end_with?(".rb", ".sh")
             read_lines(path).each_with_index.filter_map do |line, index|
               next unless line.match?(/^\s*rescue\s*(?:$|=>)/) || line.match?(/^\s*trap\s+.*\s+do/)
-              finding(path:, line: index + 1, message: "bare rescue/trap in DEPLOY — use explicit error handling")
+              finding(path:, line: index + 1, message: "bare rescue/trap in OPERATOR — use explicit error handling")
             end
           end
         end
@@ -82,7 +82,7 @@ module Master
             yaml = Master.load_yaml(path)
             ids = rule_ids(yaml)
             ids.group_by(&:itself).filter_map do |id, values|
-              finding(path:, line: 1, message: "duplicate id #{id} in DEPLOY config") if values.size > 1
+              finding(path:, line: 1, message: "duplicate id #{id} in OPERATOR config") if values.size > 1
             end
           rescue StandardError
             []
@@ -98,7 +98,7 @@ module Master
             lines.each_with_index do |line, i|
               depth += 1 if line.match?(/^\s*(if|do|case|while|for)\b/)
               depth -= 1 if line.match?(/^\s*(fi|done|esac|end)\b/)
-              findings << finding(path:, line: i + 1, message: "nesting >4 in DEPLOY (violates LINEARITY)") if depth > 4
+              findings << finding(path:, line: i + 1, message: "nesting >4 in OPERATOR (violates LINEARITY)") if depth > 4
             end
             findings
           end
@@ -107,13 +107,13 @@ module Master
         def deploy_god_class_findings
           deploy_paths.select { |p| p.end_with?(".rb") }.flat_map do |path|
             code = read_text(path) rescue ""
-            code.scan(/^\s*def\s+\w+/).size > 10 ? [finding(path:, line: 1, message: "potential god class in DEPLOY rails (>10 defs)")] : []
+            code.scan(/^\s*def\s+\w+/).size > 10 ? [finding(path:, line: 1, message: "potential god class in OPERATOR rails (>10 defs)")] : []
           end
         end
 
         def deploy_small_files_findings
           deploy_paths.select { |p| File.size(p) > 300 * 80 rescue false }.map do |path|
-            finding(path:, line: 1, message: "DEPLOY file >~300 lines (violates DENSITY/SMALL_FILES)")
+            finding(path:, line: 1, message: "OPERATOR file >~300 lines (violates DENSITY/SMALL_FILES)")
           end
         end
 
@@ -130,7 +130,7 @@ module Master
         end
 
         def build_deploy_paths
-          deploy_root = File.expand_path("../DEPLOY", @root)
+          deploy_root = File.expand_path("../OPERATOR", @root)
           return [] unless File.directory?(deploy_root)
 
           patterns = [

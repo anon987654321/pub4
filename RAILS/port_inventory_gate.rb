@@ -1,22 +1,22 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "../lib/deploy_inventory"
-require_relative "../lib/gate_result"
-require_relative "../lib/utf8"
+require_relative "../OPERATOR/lib/deploy_inventory"
+require_relative "../OPERATOR/lib/gate_result"
+require_relative "../OPERATOR/lib/utf8"
 
-ROOT = File.expand_path("../..", __dir__)
-MASTER_JSON = ENV.fetch("MASTER_JSON", File.join(ROOT, "DEPLOY", "master.json"))
-OPENBSD_DEPLOY = File.join(ROOT, "DEPLOY", "openbsd", "DEPLOY.sh")
-APPS_YML = File.join(ROOT, "DEPLOY", "rails", "apps.yml")
-RAILS_README = File.join(ROOT, "DEPLOY", "rails", "README.md")
-PWA_BUILDER = File.join(ROOT, "DEPLOY", "rails", "scripts", "build_workbox.mjs")
+ROOT = File.expand_path("..", __dir__)
+MASTER_JSON = ENV.fetch("MASTER_JSON", File.join(ROOT, "OPERATOR", "master.json"))
+OPENBSD_DEPLOY = File.join(ROOT, "OPENBSD", "OPERATOR.sh")
+APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
+RAILS_README = File.join(ROOT, "RAILS", "README.md")
+PWA_BUILDER = File.join(ROOT, "RAILS", "scripts", "build_workbox.mjs")
 RETIRED_ACTIVE_PATHS = [
-  "DEPLOY/openbsd/sh/vps_console_install.exp",
-  "DEPLOY/openbsd/sh/vps_console_poll_install.exp",
-  "DEPLOY/openbsd/usr/local/bin/relayd-watchdog",
-  "DEPLOY/rails/env.sample",
-  "DEPLOY/rails/scripts/build_workbox.mjs",
+  "OPENBSD/sh/vps_console_install.exp",
+  "OPENBSD/sh/vps_console_poll_install.exp",
+  "OPENBSD/usr/local/bin/relayd-watchdog",
+  "RAILS/env.sample",
+  "RAILS/scripts/build_workbox.mjs",
   "MASTER/tools/public/index.html"
 ].freeze
 RETIRED_APP_NAMES = %w[baibl blognet].freeze
@@ -39,14 +39,14 @@ end
 
 def check_master_json(result, apps)
   unless File.file?(MASTER_JSON)
-    result.fail("missing DEPLOY/master.json mirror: #{MASTER_JSON}")
+    result.fail("missing OPERATOR/master.json mirror: #{MASTER_JSON}")
     return
   end
 
   master = Deploy::Inventory.new(root: ROOT).master_apps(path: MASTER_JSON)
   expected = apps.sort_by(&:name).map { |app| [app.name, app.domain, app.port] }
   actual = master.sort_by(&:name).map { |app| [app.name, app.domain, app.port] }
-  result.fail("DEPLOY/master.json must mirror DEPLOY/rails/apps.yml active apps") unless actual == expected
+  result.fail("OPERATOR/master.json must mirror RAILS/apps.yml active apps") unless actual == expected
 end
 
 def check_deploy_scripts(result, apps)
@@ -88,7 +88,7 @@ def check_openbsd_ports(result, apps)
   end
 
   ports = openbsd_ports
-  result.fail("DEPLOY/openbsd/DEPLOY.sh missing APP_PORTS map") if ports.empty?
+  result.fail("OPENBSD/OPERATOR.sh missing APP_PORTS map") if ports.empty?
   apps.each do |app|
     result.fail("#{app.name}: missing fixed OpenBSD APP_PORTS entry") unless ports.key?(app.name)
     next unless ports.key?(app.name) && ports.fetch(app.name) != app.port
@@ -106,18 +106,18 @@ def check_pwa_builder(result, apps)
   body = File.read(PWA_BUILDER)
   match = body.match(/const APPS = \[(?<apps>.*?)\]/)
   unless match
-    result.fail("DEPLOY/rails/scripts/build_workbox.mjs must expose const APPS")
+    result.fail("RAILS/scripts/build_workbox.mjs must expose const APPS")
     return
   end
 
   actual = match[:apps].scan(/"([^"]+)"/).flatten.sort
   expected = apps.map(&:name).sort
-  result.fail("Workbox APPS must mirror DEPLOY/rails/apps.yml active apps") unless actual == expected
+  result.fail("Workbox APPS must mirror RAILS/apps.yml active apps") unless actual == expected
 end
 
 def check_readmes(result, apps)
   root_readme = File.read(RAILS_README)
-  result.fail("DEPLOY/rails/README.md active app count must mirror apps.yml") unless root_readme.include?("#{apps.size} active production Rails")
+  result.fail("RAILS/README.md active app count must mirror apps.yml") unless root_readme.include?("#{apps.size} active production Rails")
 
   apps.each do |app|
     readme_path = File.join(ROOT, app.deploy_root, "README.md")

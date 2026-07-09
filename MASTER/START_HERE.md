@@ -42,8 +42,8 @@ High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `data/rules/*.yml`, `li
 | Ordinary code | `bin/check` |
 | Law / scanners / loop | `bin/check --profile=agent` |
 | Web face | `bin/check --profile=web` |
-| Deploy / Rails | `DEPLOY/bin/check-rails --profile=contributor` |
-| Operator / release | `bin/pub4 status` then `DEPLOY/bin/check-full` |
+| Deploy / Rails | `OPERATOR/bin/check-rails --profile=contributor` |
+| Operator / release | `bin/pub4 status` then `OPERATOR/bin/check-full` |
 
 **Do not optimize away:** dual `lib/` + `core/` spines until absorption cutover; `data/rules/` shards (one consumer each); deferred WebGL until primer tap; constitution self-scan debt during unrelated UI work.
 
@@ -53,15 +53,15 @@ High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `data/rules/*.yml`, `li
 2. `data/rules/*.yml` shards stay split — do not fold into `rules.yml` without retuning scanners.
 3. `knowledge/` is local-only — do not commit without updating `SearchKnowledge`.
 4. WebGL / face boot stays deferred until primer tap.
-5. `DEPLOY/rails/apps.horizon.yml` is agent-ignore horizon — do not implement unprompted.
+5. `RAILS/apps.horizon.yml` is agent-ignore horizon — do not implement unprompted.
 6. VPS: one app CI/deploy at a time on vm23.
 7. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets.
 8. After `git pull` on vm23, run `vps-deploy` before expecting live health.
-9. Feature truth: `DEPLOY/rails/apps.yml`; debt: `DEPLOY/data/debt.yml`.
-10. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 — see `DEPLOY/VPS_SAFETY.md`.
+9. Feature truth: `RAILS/apps.yml`; debt: `OPERATOR/data/debt.yml`.
+10. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 — see `OPERATOR/VPS_SAFETY.md`.
 11. Production VM is vm23 only (`dev@brgen.no`).
 12. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only gates.
-13. Dmesg every file op — see `DEPLOY/OPERATOR_CONTRACT.md`.
+13. Dmesg every file op — see `OPERATOR/OPERATOR_CONTRACT.md`.
 
 ## Data File Budget (why so many YAML files)
 
@@ -95,12 +95,12 @@ There are ~80 files under `data/`. That is too many. They exist because the runt
 
 **Target end state:** 5 law YAMLs + 1 patterns + registries + 1 runtime catalog + 3 data markdown stubs. Top-level MASTER markdown: this file + `README.md` stub + `DEBT.md` / `DECISIONS.md` / `EXAMPLES.md` / `REPAIR_PLAYBOOKS.md` only when they hold living entries.
 
-DEPLOY mirror: `DEPLOY/START_HERE.md` + `DEPLOY/OPERATOR.md` — not duplicate MASTER law.
+OPERATOR mirror: `OPERATOR/START_HERE.md` + `OPERATOR/OPERATOR.md` — not duplicate MASTER law.
 
 ## Repo shape (run before big refactors)
 
 ```bash
-ruby DEPLOY/openbsd/tools/tree.rb . --pub4-overview
+ruby OPENBSD/tools/tree.rb . --pub4-overview
 ```
 
 Far-away visual tree with noise pruned and alignment notes. Do this before merging YAML/MD or restructuring folders.

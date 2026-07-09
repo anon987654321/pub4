@@ -4,18 +4,18 @@
 require "json"
 require_relative "design_tokens"
 
-ROOT = File.expand_path("../..", __dir__)
+ROOT = File.expand_path("..", __dir__)
 FACE_CSS = File.join(ROOT, "MASTER", "web", "public", "face.css")
 WEB_ROOT = File.join(ROOT, "MASTER", "web")
 ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
 MANIFEST = File.join(ASSETS_DIR, ".manifest.json")
 REQUIRED = %w[face.css face.js chat.js three.face.module.js].freeze
 DEPLOY_SCRIPTS = {
-  "DEPLOY/openbsd/DEPLOY.sh" => :start_or_restart,
-  "DEPLOY/openbsd/sh/vps_install_all.sh" => :start_or_restart,
-  "DEPLOY/openbsd/sh/vps_on_vm_install.sh" => :start_or_restart,
-  "DEPLOY/openbsd/sh/vps_console_install.exp" => :restart,
-  "DEPLOY/openbsd/sh/vps_deploy_master.sh" => :restart
+  "OPENBSD/OPERATOR.sh" => :start_or_restart,
+  "OPENBSD/sh/vps_install_all.sh" => :start_or_restart,
+  "OPENBSD/sh/vps_on_vm_install.sh" => :start_or_restart,
+  "OPENBSD/sh/vps_console_install.exp" => :restart,
+  "OPENBSD/sh/vps_deploy_master.sh" => :restart
 }.freeze
 
 failures = []

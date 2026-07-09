@@ -49,7 +49,7 @@ module DesignTokens
 
   def face_root_block
     <<~CSS.strip
-      /* BEGIN:generated-face-root — ruby DEPLOY/rails/scripts/generate_face_root_css.rb */
+      /* BEGIN:generated-face-root — ruby RAILS/scripts/generate_face_root_css.rb */
       #{face_root_css}
       /* END:generated-face-root */
     CSS
@@ -92,6 +92,6 @@ module DesignTokens
     expected = face_root_css
     return nil if actual == expected
 
-    "face.css :root drift — run: ruby DEPLOY/rails/scripts/generate_face_root_css.rb"
+    "face.css :root drift — run: ruby RAILS/scripts/generate_face_root_css.rb"
   end
 end

@@ -21,7 +21,7 @@ module Deploy
       apps.map(&:name)
     end
 
-    def master_apps(path: File.join(root, "DEPLOY", "master.json"))
+    def master_apps(path: File.join(root, "OPERATOR", "master.json"))
       data = JSON.parse(File.read(path))
       data.fetch("apps").map do |entry|
         App.new(
@@ -35,7 +35,7 @@ module Deploy
     private
 
     def load_apps
-      data = YAML.safe_load(File.read(File.join(root, "DEPLOY", "rails", "apps.yml")))
+      data = YAML.safe_load(File.read(File.join(root, "RAILS", "apps.yml")))
       data.fetch("apps").map do |name, metadata|
         App.new(
           name: name,

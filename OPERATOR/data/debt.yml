@@ -1,5 +1,5 @@
 # Actionable deploy debt — open items agents should work unless blocked.
-# Feature inventory: DEPLOY/rails/apps.yml. Deferred features: apps.horizon.yml (agent: ignore).
+# Feature inventory: RAILS/apps.yml. Deferred features: apps.horizon.yml (agent: ignore).
 
 open: []
 

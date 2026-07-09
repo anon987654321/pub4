@@ -70,7 +70,7 @@
     },
     {
       "name": "shared_installer_patterns",
-      "recovery_source": "DEPLOY/rails/shared",
+      "recovery_source": "RAILS/shared",
       "notes": "InfiniteScrollReflex, AnonymousPostService ported; messenger disappearing in brgen"
     },
     {

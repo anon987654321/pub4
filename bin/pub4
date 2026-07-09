@@ -5,6 +5,7 @@ require "optparse"
 require "open3"
 
 ROOT = File.expand_path("..", __dir__)
+OPERATOR = File.join(ROOT, "OPERATOR")
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib")) unless $LOAD_PATH.include?(File.join(ROOT, "MASTER", "lib"))
 
 require "pub4/environment"
@@ -22,7 +23,7 @@ def usage
       bin/pub4 post-pull
 
     Profiles (passed through to check scripts):
-      DEPLOY/bin/check --profile=contributor
+      OPERATOR/bin/check --profile=contributor
       cd MASTER && bin/check --profile=contributor
   HELP
 end
@@ -46,32 +47,32 @@ when "status", nil
   json = ARGV.include?("--json")
   puts Pub4::StatusReport.new(root: ROOT).render(json:)
 when "post-pull"
-  script = File.join(ROOT, "DEPLOY", "bin", "post-pull-checklist")
+  script = File.join(OPERATOR, "bin", "post-pull-checklist")
   exec(script, *ARGV)
 when "vps"
   sub = ARGV.shift
   case sub
   when "state"
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && ruby34 DEPLOY/bin/vps-state #{ARGV.join(' ')}")
+      ssh_run("cd /home/dev/pub4 && ruby34 OPERATOR/bin/vps-state #{ARGV.join(' ')}")
     else
-      exec(File.join(ROOT, "DEPLOY", "bin", "vps-state"), *ARGV)
+      exec(File.join(OPERATOR, "bin", "vps-state"), *ARGV)
     end
   when "deploy"
     app = ARGV.shift
     abort(usage) if app.to_s.empty?
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && zsh DEPLOY/bin/vps-deploy #{app}")
+      ssh_run("cd /home/dev/pub4 && zsh OPERATOR/bin/vps-deploy #{app}")
     else
-      exec(File.join(ROOT, "DEPLOY", "bin", "vps-deploy"), app, *ARGV)
+      exec(File.join(OPERATOR, "bin", "vps-deploy"), app, *ARGV)
     end
   when "logs"
     app = ARGV.shift
     abort(usage) if app.to_s.empty?
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && ruby34 DEPLOY/bin/vps-logs #{app} #{ARGV.join(' ')}")
+      ssh_run("cd /home/dev/pub4 && ruby34 OPERATOR/bin/vps-logs #{app} #{ARGV.join(' ')}")
     else
-      exec(File.join(ROOT, "DEPLOY", "bin", "vps-logs"), app, *ARGV)
+      exec(File.join(OPERATOR, "bin", "vps-logs"), app, *ARGV)
     end
   else
     warn usage

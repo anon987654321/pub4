@@ -6,7 +6,7 @@ module Pub4
   # Monorepo vs copy-tree deploy path resolution (Rails app/ vs repo siblings).
   module DeployPaths
     DEFAULT_REPO = "/home/dev/pub4"
-    DEFAULT_RAILS = "#{DEFAULT_REPO}/DEPLOY/rails".freeze
+    DEFAULT_RAILS = "#{DEFAULT_REPO}/RAILS".freeze
 
     module_function
 
@@ -36,7 +36,7 @@ module Pub4
       return Pathname.new(explicit) if explicit
 
       repo = env_value("PUB4_ROOT")
-      return Pathname.new(File.join(repo, "DEPLOY")) if repo
+      return Pathname.new(File.join(repo, "OPERATOR")) if repo
 
       rails_root.join("..").expand_path
     end

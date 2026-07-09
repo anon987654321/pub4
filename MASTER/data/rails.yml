@@ -1,4 +1,4 @@
-# Aligned with rubocop/rails-style-guide + rubocop-rails-omakase (DEPLOY/rails/shared/.rubocop.yml)
+# Aligned with rubocop/rails-style-guide + rubocop-rails-omakase (RAILS/shared/.rubocop.yml)
 style_guides: data/runtime/style_guides.yml
 
 stack:

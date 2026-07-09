@@ -1,15 +1,15 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Verifies low-level DEPLOY identity hygiene without requiring app dependencies.
+# Verifies low-level OPERATOR identity hygiene without requiring app dependencies.
 # Run from the repository root:
-#   ruby DEPLOY/verify_deploy_identity.rb
+#   ruby OPERATOR/verify_deploy_identity.rb
 
 require "yaml"
 require_relative "lib/utf8"
 
 ROOT = File.expand_path("..", __dir__)
-RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
+RAILS_ROOT = File.join(ROOT, "OPERATOR", "rails")
 APPS_FILE = File.join(RAILS_ROOT, "apps.yml")
 SHARED_FUNCTIONS = File.join(RAILS_ROOT, "shared", "deploy", "@shared_functions.sh")
 metadata = YAML.load_file(APPS_FILE).fetch("apps")
@@ -110,9 +110,9 @@ domains.each do |domain, apps|
 end
 
 if failures.empty?
-  puts "DEPLOY identity verification passed for #{metadata.keys.join(', ')}"
+  puts "OPERATOR identity verification passed for #{metadata.keys.join(', ')}"
 else
-  warn "DEPLOY identity verification failed:"
+  warn "OPERATOR identity verification failed:"
   failures.each { |failure| warn "- #{failure}" }
   exit 1
 end

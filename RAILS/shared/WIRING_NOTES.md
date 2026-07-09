@@ -77,7 +77,7 @@ bin/importmap audit
 bin/rails test
 ```
 
-Family-level: `ruby DEPLOY/rails/test/pwa_design_contract_test.rb`, `ruby DEPLOY/rails/test/shared_social_routes_test.rb`, `ruby DEPLOY/rails/frontend_production_gate.rb`.
+Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/shared_social_routes_test.rb`, `ruby RAILS/frontend_production_gate.rb`.
 
 ## Engine extraction (done)
 

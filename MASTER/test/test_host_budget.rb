@@ -5,7 +5,7 @@ require "ground/host_budget"
 
 class TestHostBudget < Minitest::Test
   def test_repo_wide_request_detects_full_tree_prompt
-    text = "analyze every single file in MASTER and DEPLOY recursively and autofix gaps"
+    text = "analyze every single file in MASTER and OPERATOR recursively and autofix gaps"
     assert Master::Ground::HostBudget.repo_wide_request?(text)
   end
 

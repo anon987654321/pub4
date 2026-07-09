@@ -25,7 +25,7 @@ class DeployPathsTest < Minitest::Test
 
   def test_deploy_root_from_pub4_root
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => nil, "PUB4_DEPLOY_ROOT" => nil) do
-      assert_equal File.join(repo_root, "DEPLOY"), Pub4::DeployPaths.deploy_root.to_s
+      assert_equal File.join(repo_root, "OPERATOR"), Pub4::DeployPaths.deploy_root.to_s
     end
   end
 
@@ -36,7 +36,7 @@ class DeployPathsTest < Minitest::Test
   end
 
   def rails_root
-    File.join(repo_root, "DEPLOY/rails")
+    File.join(repo_root, "RAILS")
   end
 
   def with_env(vars)

@@ -28,10 +28,10 @@ stale_ci_cleanup() {
 
 heal_doas_conf() {
 	typeset repo=${GUARD_REPO:-/home/dev/pub4}
-	typeset helper="${repo}/DEPLOY/openbsd/sh/validate_doas.ksh"
+	typeset helper="${repo}/OPENBSD/sh/validate_doas.ksh"
 	[[ -r $helper ]] || return 0
 	. "$helper"
-	install_doas_conf_from_repo "${repo}/DEPLOY/openbsd/etc/doas.conf" resource-guard || true
+	install_doas_conf_from_repo "${repo}/OPENBSD/etc/doas.conf" resource-guard || true
 }
 
 heal_doas_conf

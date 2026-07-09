@@ -87,10 +87,10 @@ module Master
           detail: ["/audit", "Lists git diff line counts for changed files."],
         },
         "snapshot" => {
-          summary: "publish MASTER + DEPLOY codebase snapshots",
+          summary: "publish MASTER + OPERATOR codebase snapshots",
           detail: [
             "/snapshot",
-            "Writes full MASTER + DEPLOY snapshots to ~/Downloads.",
+            "Writes full MASTER + OPERATOR snapshots to ~/Downloads.",
             "Tree listing then every file verbatim (no truncation).",
             "Outputs: MASTER_snapshot.md and MASTER_snapshot_YYYY-MM-DD.md.",
           ],

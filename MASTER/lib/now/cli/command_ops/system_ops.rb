@@ -8,7 +8,7 @@ module Master
       private
 
       def run_snapshot
-        puts @refs.renderer.render("snapshot: publishing MASTER + DEPLOY", mode: :dim)
+        puts @refs.renderer.render("snapshot: publishing MASTER + OPERATOR", mode: :dim)
         output = Master::Now::CommandRegistry.dispatch_snapshot(@refs.root)
         output.to_s.lines.each { |line| puts @refs.renderer.render(line, mode: :dim) }
         @refs.bus&.publish("snapshot:published", root: @refs.root)
@@ -41,7 +41,7 @@ module Master
       end
 
       def run_rails_pwa_audit
-        puts @refs.renderer.render("rails-pwa-audit: scanning DEPLOY apps", mode: :dim)
+        puts @refs.renderer.render("rails-pwa-audit: scanning OPERATOR apps", mode: :dim)
         op = Master::Rails::MobilePwaOperator.new(agent: @refs.agent, event_bus: @refs.bus)
         result = op.audit_all_deploy
         if result.ok?
@@ -59,7 +59,7 @@ module Master
       end
 
       def run_rails_pwa_fix
-        puts @refs.renderer.render("rails-pwa-fix: applying network-first SW + offline fallback to DEPLOY apps", mode: :dim)
+        puts @refs.renderer.render("rails-pwa-fix: applying network-first SW + offline fallback to OPERATOR apps", mode: :dim)
         op = Master::Rails::MobilePwaOperator.new(agent: @refs.agent, event_bus: @refs.bus)
         result = op.audit_all_deploy
         return puts @refs.renderer.render("rails-pwa-fix: #{result.message}", mode: :warning) unless result.ok?

@@ -1,6 +1,6 @@
 # Start Here
 
-DEPLOY is the production surface for pub4: OpenBSD vm23, relayd, NSD/acme, Rails 8 apps, MASTER web, and operator recovery tools.
+OPERATOR is the production surface for pub4: OpenBSD vm23, relayd, NSD/acme, Rails 8 apps, MASTER web, and operator recovery tools.
 
 ## Read First
 
@@ -16,20 +16,20 @@ DEPLOY is the production surface for pub4: OpenBSD vm23, relayd, NSD/acme, Rails
 
 - `bin/pub4 status` — one-screen repo/VPS posture and next command.
 - `RECIPES.md` — copy-paste operator recipes.
-- `DEPLOY/bin/check --profile=contributor` — fast static deploy gates.
-- `DEPLOY/bin/check-rails --profile=contributor` — Rails source gates (skips runtime on Ruby mismatch).
-- `DEPLOY/bin/check-openbsd` checks OpenBSD config/deploy identity locally.
-- `DEPLOY/bin/check-vps` is the explicit VPS/live gate wrapper; run it only on vm23 or with SSH/operator intent.
-- `DEPLOY/bin/check-full` chains the local checks and the integrity gate.
-- `DEPLOY/bin/vps-state` / `bin/pub4 vps deploy <app>` — deployed vs dev tree on vm23.
+- `OPERATOR/bin/check --profile=contributor` — fast static deploy gates.
+- `OPERATOR/bin/check-rails --profile=contributor` — Rails source gates (skips runtime on Ruby mismatch).
+- `OPERATOR/bin/check-openbsd` checks OpenBSD config/deploy identity locally.
+- `OPERATOR/bin/check-vps` is the explicit VPS/live gate wrapper; run it only on vm23 or with SSH/operator intent.
+- `OPERATOR/bin/check-full` chains the local checks and the integrity gate.
+- `OPERATOR/bin/vps-state` / `bin/pub4 vps deploy <app>` — deployed vs dev tree on vm23.
 
 ## Source Of Truth
 
-- App inventory: `DEPLOY/rails/apps.yml`.
-- Public/deploy identity: `DEPLOY/master.json`.
-- OpenBSD configs: `DEPLOY/openbsd/etc/`.
-- Operator runbook: `DEPLOY/OPERATOR.md`.
-- Feature inventory: `DEPLOY/rails/apps.yml`. Open debt: `DEPLOY/data/debt.yml`. Horizon: `apps.horizon.yml` (agent: ignore). Runtime: `/orient deploy`.
+- App inventory: `RAILS/apps.yml`.
+- Public/deploy identity: `OPERATOR/master.json`.
+- OpenBSD configs: `OPENBSD/etc/`.
+- Operator runbook: `OPERATOR/OPERATOR.md`.
+- Feature inventory: `RAILS/apps.yml`. Open debt: `OPERATOR/data/debt.yml`. Horizon: `apps.horizon.yml` (agent: ignore). Runtime: `/orient deploy`.
 
 ## Safety Defaults
 

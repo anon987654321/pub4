@@ -6,7 +6,7 @@ require "rbconfig"
 
 class IntegrityLocaleTest < Minitest::Test
   ROOT = File.expand_path("../../..", __dir__)
-  GATE = File.join(ROOT, "DEPLOY", "integrity_gate.rb")
+  GATE = File.join(ROOT, "OPERATOR", "integrity_gate.rb")
 
   def test_integrity_chain_is_independent_of_operator_locale
     env = { "LANG" => nil, "LC_ALL" => "C", "LC_CTYPE" => nil }

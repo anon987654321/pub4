@@ -1,15 +1,15 @@
-# DEPLOY
+# OPERATOR
 
 OpenBSD production stack for pub4. Start with `START_HERE.md`; operator runbook: `OPERATOR.md`.
 
-Use `DEPLOY/bin/check` for local deploy validation, `DEPLOY/bin/check-rails` for Rails deploy gates,
-`DEPLOY/bin/check-openbsd` for OpenBSD config/deploy identity, and `DEPLOY/bin/check-vps` only for
+Use `OPERATOR/bin/check` for local deploy validation, `OPERATOR/bin/check-rails` for Rails deploy gates,
+`OPERATOR/bin/check-openbsd` for OpenBSD config/deploy identity, and `OPERATOR/bin/check-vps` only for
 live vm23 checks. Start with `bin/pub4 status` and `RECIPES.md`.
 
 ## Layout
 
 ```
-openbsd/   pf, relayd, nsd, acme, DEPLOY.sh; sh/ VPS helpers (vps_ci.sh, install scripts)
+openbsd/   pf, relayd, nsd, acme, OPERATOR.sh; sh/ VPS helpers (vps_ci.sh, install scripts)
 rails/     four active Rails 8 apps + shared engine (apps.yml)
 tools/     creative + utility scripts: postpro (libvips film), repligen (Replicate CLI),
            dilla, audio, burst, stipple, nmap, security_sweep, bp, bin, public
@@ -21,12 +21,12 @@ Top level also holds the deploy gates (`integrity_gate.rb`, `verify_deploy_ident
 ## OpenBSD
 
 ```zsh
-cd ~/pub4/DEPLOY/openbsd
-tmux new-session -d -s deploy "doas zsh DEPLOY.sh 2>&1 | tee /tmp/deploy.log"
+cd ~/pub4/OPENBSD
+tmux new-session -d -s deploy "doas zsh OPERATOR.sh 2>&1 | tee /tmp/deploy.log"
 tmux attach -t deploy
 ```
 
-Config sync: `doas zsh DEPLOY.sh --sync-configs`. Details: `openbsd/README.md`.
+Config sync: `doas zsh OPERATOR.sh --sync-configs`. Details: `openbsd/README.md`.
 
 ## Rails
 
@@ -44,10 +44,10 @@ Seeds: Faker base in each `db/seeds.rb`. Optional web augmentation: `SEED_FROM_W
 ## Checks
 
 ```zsh
-DEPLOY/bin/check
-ruby DEPLOY/integrity_gate.rb
-ruby DEPLOY/rails/crawl_probe.rb
-MASTER_CRAWL_BROWSER=1 ruby DEPLOY/rails/crawl_browser.rb   # VPS Ferrum crawl
+OPERATOR/bin/check
+ruby OPERATOR/integrity_gate.rb
+ruby RAILS/crawl_probe.rb
+MASTER_CRAWL_BROWSER=1 ruby RAILS/crawl_browser.rb   # VPS Ferrum crawl
 cd MASTER && bundle exec ruby bin/probe integrity
 ```
 

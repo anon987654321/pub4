@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# DEPLOY/openbsd/tools/tree.rb
+# OPENBSD/tools/tree.rb
 #
 # Constitution-aware project tree for pub4.
 # Respects skip_dirs from MASTER/data/rules.yml + aggressive pruning for overview.
 # Usage: ruby tree.rb [root] [--max-depth=3] [--summary]
 #
-# Shell entry: DEPLOY/openbsd/sh/tree.sh (operator wrapper for vm23 / local use).
+# Shell entry: OPENBSD/sh/tree.sh (operator wrapper for vm23 / local use).
 
 require "yaml"
 require "optparse"
@@ -16,7 +16,7 @@ class ProjectTree
   DEFAULT_SKIP = %w[
     .git vendor tmp var node_modules .bundle coverage log dist
     knowledge github_repos
-    DEPLOY/openbsd/var DEPLOY/rails
+    OPENBSD/var RAILS
   ].freeze
 
   NOISE_SEGMENTS = %w[
@@ -31,7 +31,7 @@ class ProjectTree
     @overview = overview
     @pillar = pillar
     @skip = load_skip_dirs
-    @skip -= ["DEPLOY/rails"] if @overview && @pillar != :master
+    @skip -= ["RAILS"] if @overview && @pillar != :master
     @counts = Hash.new(0)
   end
 
@@ -71,12 +71,12 @@ class ProjectTree
   def print_pub4_alignment
     puts
     puts "Alignment read (far-away):"
-    puts "  ✓ SENSIBLE  4 pillars: DEPLOY (prod), MASTER (agent), bin (CLI), lora (training)"
-    puts "  ✓ SENSIBLE  DEPLOY/rails: 7 apps + shared engine + apps.yml inventory"
+    puts "  ✓ SENSIBLE  4 pillars: OPERATOR (prod), MASTER (agent), bin (CLI), lora (training)"
+    puts "  ✓ SENSIBLE  RAILS: 7 apps + shared engine + apps.yml inventory"
     puts "  ✓ SENSIBLE  brgen verticals: dating maps marketplace playlist takeaway tv + social core"
     puts "  ✓ SENSIBLE  MASTER/lib: now judge loop reach ground trace voice (constitutional spine)"
     puts "  ⚠ DRIFT     MASTER/data: ~50 root yml + runtime/ shard — merge target (see START_HERE)"
-    puts "  ⚠ DRIFT     DEPLOY + MASTER duplicate DECISIONS/EXAMPLES/REPAIR/DEBT md pairs"
+    puts "  ⚠ DRIFT     OPERATOR + MASTER duplicate DECISIONS/EXAMPLES/REPAIR/DEBT md pairs"
     puts "  ⚠ DRIFT     brgen SCSS: many _vertical_* partials — visual split matches domains (ok)"
     puts "  ✗ NOISE     lora/*.jpg at repo root — move under lora/exports/"
     puts "  → Pillar views: --master-overview | --deploy-overview"
@@ -90,7 +90,7 @@ class ProjectTree
     puts "  ✓ SENSIBLE  core/ + kernel/ isolated from lib/ until absorption cutover"
     puts "  ✓ SENSIBLE  data/soul.yml + rules/*.yml shards — law tier, do not blind-merge"
     puts "  ⚠ DRIFT     data/ root: ~45 yml + runtime/ (14 shards) — merge per START_HERE tiers"
-    puts "  ⚠ DRIFT     Duplicate MD pairs with DEPLOY: DECISIONS, EXAMPLES, REPAIR, DEBT"
+    puts "  ⚠ DRIFT     Duplicate MD pairs with OPERATOR: DECISIONS, EXAMPLES, REPAIR, DEBT"
     puts "  ⚠ DRIFT     tools/ + web/ + bin/ — three faces; acceptable but watch overlap"
     puts "  ✗ NOISE     .master/ runtime (cache, tts, melodic) — local-only, never commit"
     puts "  → Deep dive: ruby tree.rb MASTER --master-lib"
@@ -98,7 +98,7 @@ class ProjectTree
 
   def print_deploy_alignment
     puts
-    puts "DEPLOY alignment (far-away):"
+    puts "OPERATOR alignment (far-away):"
     puts "  ✓ SENSIBLE  openbsd/etc + rc.d — production truth for vm23 (relayd, pf, acme)"
     puts "  ✓ SENSIBLE  rails/apps.yml inventory + shared engine — multi-tenant spine"
     puts "  ✓ SENSIBLE  brgen: social core + vertical engines (dating, maps, playlist, tv…)"
@@ -108,7 +108,7 @@ class ProjectTree
     puts "  ⚠ DRIFT     apps.horizon.yml — agent-ignore; keep out of contributor path"
     puts "  ⚠ DRIFT     archive/recovery — legacy pub2/pub3 installers; document-only"
     puts "  ✗ NOISE     rails/node_modules, log/, storage/, app/assets/builds/"
-    puts "  → Gates: DEPLOY/bin/check-full | check-rails --profile=contributor"
+    puts "  → Gates: OPERATOR/bin/check-full | check-rails --profile=contributor"
   end
 
   def breakdown_lib(lib_root)
@@ -265,12 +265,12 @@ class ProjectTree
     end
 
     # pub4-wide (root = repo) or fallback
-    return 0 if rel.match?(%r{^DEPLOY/rails/[^/]+/app/[^/]+})
-    return 1 if rel.match?(%r{^DEPLOY/rails/[^/]+/app$})
-    return 1 if rel.match?(%r{^DEPLOY/rails/[^/]+$}) && !rel.end_with?("/shared")
+    return 0 if rel.match?(%r{^RAILS/[^/]+/app/[^/]+})
+    return 1 if rel.match?(%r{^RAILS/[^/]+/app$})
+    return 1 if rel.match?(%r{^RAILS/[^/]+$}) && !rel.end_with?("/shared")
     return 1 if rel == "MASTER/data" || rel.start_with?("MASTER/data/runtime")
     return 2 if rel == "MASTER/lib"
-    return 1 if rel == "DEPLOY/openbsd/etc"
+    return 1 if rel == "OPENBSD/etc"
 
     @max_depth
   end
@@ -367,10 +367,10 @@ if __FILE__ == $PROGRAM_NAME
       options[:max_depth] = 3
       options[:summary] = true
     end
-    opts.on("--deploy-overview", "Far-away DEPLOY pillar: rails apps + openbsd collapsed, noise pruned") do
+    opts.on("--deploy-overview", "Far-away OPERATOR pillar: rails apps + openbsd collapsed, noise pruned") do
       options[:overview] = true
       options[:pillar] = :deploy
-      options[:root] = File.join(Dir.pwd, "DEPLOY")
+      options[:root] = File.join(Dir.pwd, "OPERATOR")
       options[:max_depth] = 3
       options[:summary] = true
     end
@@ -379,7 +379,7 @@ if __FILE__ == $PROGRAM_NAME
       puts "\nExamples:"
       puts "  tree.rb . --pub4-overview       # full repo shape (start here)"
       puts "  tree.rb --master-overview       # MASTER pillar only"
-      puts "  tree.rb --deploy-overview       # DEPLOY pillar only"
+      puts "  tree.rb --deploy-overview       # OPERATOR pillar only"
       puts "  tree.rb MASTER --max-depth=5"
       puts "  tree.rb --focus lib --max-depth=6 --summary"
       puts "  tree.rb --master-lib            # best for working on the architecture"
@@ -399,7 +399,7 @@ if __FILE__ == $PROGRAM_NAME
   if options[:overview]
     banner = case options[:pillar]
              when :master then "MASTER pillar"
-             when :deploy then "DEPLOY pillar"
+             when :deploy then "OPERATOR pillar"
              else "pub4 overview"
              end
     puts "=== #{banner} (noise pruned: vendor, tmp, log, storage, node_modules, builds, assets, .master) ==="

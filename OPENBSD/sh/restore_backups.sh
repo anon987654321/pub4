@@ -48,7 +48,7 @@ extract_archives() {
 }
 
 extract_rails_from_installers() {
-  local scripts_root="$ROOT_DIR/MASTER/DEPLOY/rails"
+  local scripts_root="$ROOT_DIR/MASTER/RAILS"
   local out_root="$ROOT_DIR/railsy"
   mkdir -p "$out_root"
 
@@ -109,7 +109,7 @@ main() {
 
   restore_repo_tree "$ROOT_DIR/MASTER" "$ROOT_DIR/pub"
   restore_repo_tree "$ROOT_DIR/archive/recovery" "$ROOT_DIR/tmp/recovery_snapshot"
-  restore_repo_tree "$ROOT_DIR/MASTER/DEPLOY/rails" "$ROOT_DIR/railsy"
+  restore_repo_tree "$ROOT_DIR/MASTER/RAILS" "$ROOT_DIR/railsy"
 
   extract_archives
   extract_rails_from_installers

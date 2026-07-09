@@ -4,12 +4,12 @@
 require "open3"
 require "rbconfig"
 require "yaml"
-require_relative "../lib/utf8"
+require_relative "../OPERATOR/lib/utf8"
 
 RUBY_BIN = RbConfig.ruby
 
-ROOT = File.expand_path("../..", __dir__)
-RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
+ROOT = File.expand_path("..", __dir__)
+RAILS_ROOT = File.join(ROOT, "RAILS")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 SHARED_DEPLOY = File.join(RAILS_ROOT, "shared", "deploy", "@shared_functions.sh")
 
@@ -35,9 +35,9 @@ warnings = []
 apps = load_yaml(APPS_YML).fetch("apps")
 env_sample = File.join(RAILS_ROOT, "env.sample")
 
-tracked_master_keys = git_ls_files("DEPLOY/rails/*/config/master.key")
+tracked_master_keys = git_ls_files("RAILS/*/config/master.key")
 fail!(failures, "tracked Rails master keys: #{tracked_master_keys.join(', ')}") if tracked_master_keys.any?
-fail!(failures, "missing shared DEPLOY/rails/env.sample") unless File.file?(env_sample)
+fail!(failures, "missing shared RAILS/env.sample") unless File.file?(env_sample)
 
 apps.each do |name, metadata|
   app_dir = File.join(RAILS_ROOT, name)
@@ -75,7 +75,7 @@ apps.each do |name, metadata|
     fail!(app_failures, "Gemfile must target Rails 8.1") unless gemfile_text.match?(/^gem ['"]rails['"], ['"]~> 8\.1/)
     if gemfile_text.include?("solid_queue")
       deploy_yml = File.join(app_dir, "config", "deploy.yml")
-      rcd = File.join(ROOT, "DEPLOY", "openbsd", "etc", "rc.d", name)
+      rcd = File.join(ROOT, "OPENBSD", "etc", "rc.d", name)
       deploy_yml_text = File.file?(deploy_yml) ? File.read(deploy_yml) : ""
       rcd_text = File.file?(rcd) ? File.read(rcd) : ""
       fail!(app_failures, "Solid Queue deploy.yml must set SOLID_QUEUE_IN_PUMA: true") unless deploy_yml_text.include?("SOLID_QUEUE_IN_PUMA: true")
@@ -134,7 +134,7 @@ if File.file?(master_assets_gate)
   print stdout
   fail!(failures, "MASTER/web assets gate failed") unless status.success?
 else
-  fail!(failures, "missing DEPLOY/rails/master_web_assets_gate.rb")
+  fail!(failures, "missing RAILS/master_web_assets_gate.rb")
 end
 
 archive_restore_gate = File.join(RAILS_ROOT, "archive_restore_gate.rb")
@@ -143,7 +143,7 @@ if File.file?(archive_restore_gate)
   print stdout
   fail!(failures, "archive restore gate failed") unless status.success?
 else
-  fail!(failures, "missing DEPLOY/rails/archive_restore_gate.rb")
+  fail!(failures, "missing RAILS/archive_restore_gate.rb")
 end
 
 master_tts_gate = File.join(RAILS_ROOT, "master_tts_gate.rb")
@@ -152,7 +152,7 @@ if File.file?(master_tts_gate)
   print stdout
   fail!(failures, "MASTER TTS gate failed") unless status.success?
 else
-  fail!(failures, "missing DEPLOY/rails/master_tts_gate.rb")
+  fail!(failures, "missing RAILS/master_tts_gate.rb")
 end
 
 if failures.any?

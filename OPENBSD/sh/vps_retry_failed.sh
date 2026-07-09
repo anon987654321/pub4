@@ -11,7 +11,7 @@ APPS=(brgen amber bsdports hjerterom)
 
 for app in $APPS; do
   log "=== retry ${app} ==="
-  typeset script="$PUB4/DEPLOY/rails/${app}/${app}.sh"
+  typeset script="$PUB4/RAILS/${app}/${app}.sh"
   if zsh "$script"; then
     doas rcctl check "$app" 2>/dev/null && log "ok: ${app}" || log "WARN: ${app} rcctl check failed"
   else

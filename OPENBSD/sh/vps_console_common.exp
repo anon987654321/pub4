@@ -10,7 +10,7 @@ proc require_console_risk_ack {} {
   if {![info exists env(I_UNDERSTAND_CONSOLE_RISK)] || $env(I_UNDERSTAND_CONSOLE_RISK) != "1"} {
     puts stderr "REFUSING: vmctl console automation is recovery-only."
     puts stderr "Human operator must approve: export I_UNDERSTAND_CONSOLE_RISK=1"
-    puts stderr "See DEPLOY/VPS_SAFETY.md and DEPLOY/OPERATOR_CONTRACT.md."
+    puts stderr "See OPERATOR/VPS_SAFETY.md and OPERATOR/OPERATOR_CONTRACT.md."
     exit 1
   }
 }

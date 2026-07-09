@@ -32,5 +32,5 @@ Subdomain constraints live in `brgen/config/routes.rb` via `Brgen::DomainRegistr
 ## Gate
 
 ```bash
-ruby DEPLOY/rails/domain_alignment_gate.rb
+ruby RAILS/domain_alignment_gate.rb
 ```

@@ -17,14 +17,14 @@ runner = Pub4::CheckRunner.new(prefix: "deploy-rails", root: ROOT, timeout: STEP
 failures = []
 
 source_gates = [
-  ["ports", "DEPLOY/rails/port_inventory_gate.rb"],
-  ["production", "DEPLOY/rails/check_production_gate.rb"],
-  ["walkthrough", "DEPLOY/rails/human_walkthrough_gate.rb"],
-  ["phantom fk", "DEPLOY/rails/check_phantom_foreign_keys.rb"],
-  ["domain align", "DEPLOY/rails/domain_alignment_gate.rb"],
-  ["frontend", "DEPLOY/rails/frontend_production_gate.rb"],
-  ["schema", "DEPLOY/rails/schema_migration_gate.rb"],
-  ["asset freshness", "DEPLOY/rails/generated_asset_freshness_gate.rb"],
+  ["ports", "RAILS/port_inventory_gate.rb"],
+  ["production", "RAILS/check_production_gate.rb"],
+  ["walkthrough", "RAILS/human_walkthrough_gate.rb"],
+  ["phantom fk", "RAILS/check_phantom_foreign_keys.rb"],
+  ["domain align", "RAILS/domain_alignment_gate.rb"],
+  ["frontend", "RAILS/frontend_production_gate.rb"],
+  ["schema", "RAILS/schema_migration_gate.rb"],
+  ["asset freshness", "RAILS/generated_asset_freshness_gate.rb"],
 ]
 
 source_gates.each do |name, path|
@@ -36,11 +36,11 @@ if profile == "contributor"
   puts "deploy-rails: auditor            skip — contributor profile"
   puts "deploy-rails: runtime              skip — contributor profile"
 else
-  failures << "auditor" unless runner.run("auditor", RUBY, "DEPLOY/rails/frontend_auditor_gate.rb")
+  failures << "auditor" unless runner.run("auditor", RUBY, "RAILS/frontend_auditor_gate.rb")
   if Pub4::RubyRunner.runtime_gate_skipped?
     puts "deploy-rails: runtime              skip — #{Pub4::RubyRunner.runtime_skip_reason}"
   else
-    failures << "runtime" unless runner.run("runtime", RUBY, "DEPLOY/rails/rails_runtime_gate.rb", "--runtime")
+    failures << "runtime" unless runner.run("runtime", RUBY, "RAILS/rails_runtime_gate.rb", "--runtime")
   end
 end
 

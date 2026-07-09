@@ -15,7 +15,7 @@ sources:
     repo: https://github.com/rubocop/rails-style-guide
     local: rails-style-guide
     rubocop: rubocop-rails-omakase
-    enforce_via: [DEPLOY/rails/shared/.rubocop.yml, data/rails.yml]
+    enforce_via: [RAILS/shared/.rubocop.yml, data/rails.yml]
   - id: javascript
     repo: https://github.com/airbnb/javascript
     local: javascript
@@ -24,7 +24,7 @@ sources:
   - id: css
     repo: https://github.com/airbnb/css
     local: css
-    enforce_via: [data/style.yml#css, DEPLOY/rails/shared/frontend]
+    enforce_via: [data/style.yml#css, RAILS/shared/frontend]
   - id: thoughtbot
     repo: https://github.com/thoughtbot/guides
     local: guides
@@ -88,4 +88,4 @@ html_css_seo:
 gates:
   - script/style_gate.rb
   - bundle exec rubocop
-  - DEPLOY/rails/shared/bin/rubocop
+  - RAILS/shared/bin/rubocop

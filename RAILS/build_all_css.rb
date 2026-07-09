@@ -5,16 +5,16 @@
 # Syncs shared static tokens + ensures nerd fonts are present.
 #
 # Usage:
-#   ruby DEPLOY/rails/build_all_css.rb           # all apps with application.scss
-#   ruby DEPLOY/rails/build_all_css.rb --app brgen
-#   ruby DEPLOY/rails/build_all_css.rb --check   # verify x tokens without building
+#   ruby RAILS/build_all_css.rb           # all apps with application.scss
+#   ruby RAILS/build_all_css.rb --app brgen
+#   ruby RAILS/build_all_css.rb --check   # verify x tokens without building
 
 require "open3"
 require "yaml"
 require "fileutils"
 
 RAILS_ROOT = File.expand_path(__dir__)
-ROOT = File.expand_path("../..", __dir__)
+ROOT = File.expand_path("..", __dir__)
 SHARED_STYLES = File.join(RAILS_ROOT, "shared", "app", "assets", "stylesheets")
 def shared_public_dir
   home = ENV["HOME"].to_s

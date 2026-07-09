@@ -15,7 +15,7 @@ ALLOWED_ROOT_FILES = %w[
 ].freeze
 ALLOWED_ROOT_DIRS = %w[
   .github
-  DEPLOY
+  OPERATOR
   MASTER
   dilla
   multimedia

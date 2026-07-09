@@ -9,7 +9,7 @@ Rails 8.1 · SQLite · Falcon · Hotwire · OpenBSD relayd
 ## Deploy
 
 ```zsh
-doas zsh DEPLOY/rails/pub_attorney/pub_attorney.sh
+doas zsh RAILS/pub_attorney/pub_attorney.sh
 curl -fsS http://127.0.0.1:10002/up
 ```
 

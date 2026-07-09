@@ -9,13 +9,13 @@ Rails 8.1 · SQLite · Falcon · Hotwire · OpenBSD relayd
 ## Deploy
 
 ```zsh
-doas zsh DEPLOY/rails/hjerterom/hjerterom.sh
+doas zsh RAILS/hjerterom/hjerterom.sh
 curl -fsS http://127.0.0.1:38891/up
 ```
 
 ## Integration
 
-Shared concerns and activity emission per `DEPLOY/rails/shared/WIRING_NOTES.md`.
+Shared concerns and activity emission per `RAILS/shared/WIRING_NOTES.md`.
 
 ## Status
 

@@ -4,11 +4,11 @@
 # Block restored pub3 anti-patterns and verify archive artifacts exist.
 
 require "open3"
-require_relative "../lib/utf8"
+require_relative "../OPERATOR/lib/utf8"
 require "json"
 require "yaml"
 
-ROOT = File.expand_path("../..", __dir__)
+ROOT = File.expand_path("..", __dir__)
 
 def tracked_files
   stdout, status = Open3.capture2("git", "-C", ROOT, "ls-files")
@@ -31,13 +31,13 @@ failures = []
 warnings = []
 
 required = [
-  "DEPLOY/archive/RESTORE_FROM_PUB2_PUB3.md",
-  "DEPLOY/archive/recovery/manifest.json",
+  "OPERATOR/archive/RESTORE_FROM_PUB2_PUB3.md",
+  "OPERATOR/archive/recovery/manifest.json",
   "MASTER/tools/audio/akmd_mastering_chain.rb",
   "MASTER/tools/audio/radio_bergen_tracks.yml",
   "MASTER/tools/audio/radio_bergen_visualizer_controller.js",
-  "DEPLOY/openbsd/domain_candidates_from_pub3.yml",
-  "DEPLOY/openbsd/ptr_openbsd_amsterdam.rb",
+  "OPENBSD/domain_candidates_from_pub3.yml",
+  "OPENBSD/ptr_openbsd_amsterdam.rb",
   "MASTER/tools/convergence/evidence_gate.rb",
   "MASTER/data/lessons/pub_archive_restore.yml"
 ]
@@ -47,7 +47,7 @@ required.each do |rel|
 end
 
 pattern_doc_allowlist = [
-  "DEPLOY/rails/archive_restore_gate.rb",
+  "RAILS/archive_restore_gate.rb",
   "MASTER/data/lessons/pub_archive_restore.yml",
   "MASTER/tools/convergence/evidence_gate.rb"
 ].freeze
@@ -64,7 +64,7 @@ forbidden_patterns = {
 tracked_files.each do |rel|
   path = File.join(ROOT, rel)
   next unless text_file?(path)
-  next if rel.start_with?("ARCHIVE/", "DEPLOY/archive/")
+  next if rel.start_with?("ARCHIVE/", "OPERATOR/archive/")
   next if File.basename(rel).start_with?("snapshot_") # generated source dumps embed this gate's own patterns
   next if pattern_doc_allowlist.include?(rel)
 
@@ -90,7 +90,7 @@ if File.file?(chain_path)
   end
 end
 
-manifest_path = File.join(ROOT, "DEPLOY/archive/recovery/manifest.json")
+manifest_path = File.join(ROOT, "OPERATOR/archive/recovery/manifest.json")
 if File.file?(manifest_path)
   manifest = JSON.parse(File.read(manifest_path))
   %w[pub pub2 pub3].each do |repo|
@@ -109,11 +109,11 @@ if File.file?(manifest_path)
 end
 
 {
-  "DEPLOY/rails/privcam/app/models/video.rb" => "class Video",
-  "DEPLOY/rails/privcam/app/reflexes/videos_infinite_scroll_reflex.rb" => "class VideosInfiniteScrollReflex",
-  "DEPLOY/rails/pub_attorney/app/reflexes/case_match_reflex.rb" => "class CaseMatchReflex",
-  "DEPLOY/rails/mytoonz/app/services/replicate_service.rb" => "class ReplicateService",
-  "DEPLOY/rails/mytoonz/app/jobs/generate_comic_strip_job.rb" => "class GenerateComicStripJob"
+  "RAILS/privcam/app/models/video.rb" => "class Video",
+  "RAILS/privcam/app/reflexes/videos_infinite_scroll_reflex.rb" => "class VideosInfiniteScrollReflex",
+  "RAILS/pub_attorney/app/reflexes/case_match_reflex.rb" => "class CaseMatchReflex",
+  "RAILS/mytoonz/app/services/replicate_service.rb" => "class ReplicateService",
+  "RAILS/mytoonz/app/jobs/generate_comic_strip_job.rb" => "class GenerateComicStripJob"
 }.each do |rel, token|
   path = File.join(ROOT, rel)
   failures << "missing recovered Rails app logic: #{rel}" unless File.file?(path) && File.read(path).include?(token)

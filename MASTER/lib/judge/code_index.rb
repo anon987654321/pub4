@@ -179,7 +179,7 @@ module Master
 
       def summary_class?(sym)
         return false unless %i[class module].include?(sym.type)
-        return false if sym.file.include?("/DEPLOY/") || sym.file.match?(/fix_|patch_/)
+        return false if sym.file.include?("/OPERATOR/") || sym.file.match?(/fix_|patch_/)
         SUMMARY_SKIP_NAMES.none? { |n| sym.fqn.end_with?("::#{n}") }
       end
 

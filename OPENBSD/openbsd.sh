@@ -1,3 +1,3 @@
 #!/usr/bin/env zsh
-# Compatibility shim — use DEPLOY.sh
-exec "${0:a:h}/DEPLOY.sh" "$@"
+# Compatibility shim — use OPERATOR.sh
+exec "${0:a:h}/OPERATOR.sh" "$@"

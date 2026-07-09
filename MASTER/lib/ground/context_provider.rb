@@ -78,7 +78,7 @@ module Master
         terms = query.to_s.downcase.scan(/[a-z0-9_]+/)
         return [] unless (terms & RAILS_PWA_QUERY_TERMS).any?
 
-        deploy_rails = File.expand_path("../../DEPLOY/rails", @root)
+        deploy_rails = File.expand_path("../../RAILS", @root)
         return [] unless Dir.exist?(deploy_rails)
 
         patterns = %w[
@@ -98,7 +98,7 @@ module Master
         patterns.filter_map do |rel|
           path = File.join(deploy_rails, app, rel)
           next unless File.exist?(path)
-          { source: :rails_pwa, path: "DEPLOY/rails/#{app}/#{rel}", text: "#{app}/#{rel}" }
+          { source: :rails_pwa, path: "RAILS/#{app}/#{rel}", text: "#{app}/#{rel}" }
         end
       end
 
@@ -122,7 +122,7 @@ module Master
       end
 
       def cross_repo_roots
-        deploy_rails = File.join(@root, "DEPLOY", "rails")
+        deploy_rails = File.join(@root, "OPERATOR", "rails")
         return [] unless Dir.exist?(deploy_rails)
 
         Dir.children(deploy_rails)

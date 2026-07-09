@@ -1,5 +1,5 @@
 # Canonical open operator backlog (repo root).
-# Runtime mirror: DEPLOY/data/debt.yml — bin/pub4 status reads debt.yml open count.
+# Runtime mirror: OPERATOR/data/debt.yml — bin/pub4 status reads debt.yml open count.
 
 open: []
 

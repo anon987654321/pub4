@@ -13,6 +13,6 @@ ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} << 'ENDSSH'
 set -euo pipefail
 cd ~/pub4
 git pull origin main
-cd DEPLOY/openbsd
-doas zsh DEPLOY.sh
+cd OPENBSD
+doas zsh OPERATOR.sh
 ENDSSH

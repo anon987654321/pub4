@@ -39,7 +39,7 @@ module Master
         Modules: now (pipeline/CLI), loop (fix/rule/watch), judge (scanner/council), voice (render/TTS), ground (constitution/memory), reach (tools), trace (events/session).
         Flat Hierarchy: standing order aggressive_merge on every write — merge thin siblings, rename to dense Rails-parameterize slugs (snake_case, Strunk-clean tokens), OpenBSD-flat, Zeitwerk-true, Roda-tight.
         Pipeline: #{Master::Now::RuntimeMode::PIPELINE_STAGES}. Review runs Council when enabled, then Lint on written paths, then Prune.
-        VPS/deploy: DEPLOY/OPERATOR.md (human runbook). Do not memorize /scan /fix — standing orders and Review handle most choreography.
+        VPS/deploy: OPERATOR/OPERATOR.md (human runbook). Do not memorize /scan /fix — standing orders and Review handle most choreography.
       TEXT
 
       TRACE = <<~TEXT.strip
@@ -57,7 +57,7 @@ module Master
         Inviolable law: data/soul.yml, data/rules.yml. Evidence mandatory — no hedges without command output or diffs.
         Ruby 3.3+ on OpenBSD. Style: frozen_string_literal, double quotes, no bare rescue, guard clauses, Result monad, files ≤300 lines, methods ≤10 lines.
         Shell on zsh/SSH: no sed/awk/grep/find — Ruby and zsh builtins. Scan before structural edits.
-        VPS: dev@46.23.89.226, ruby34, bundle34. Operator: DEPLOY/OPERATOR.md. Full rule index: data/CANON.md (generated).
+        VPS: dev@46.23.89.226, ruby34, bundle34. Operator: OPERATOR/OPERATOR.md. Full rule index: data/CANON.md (generated).
       TEXT
 
       SECTIONS = {

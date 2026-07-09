@@ -4,7 +4,8 @@ require "minitest/autorun"
 
 class DeployGatesContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  DEPLOY_ROOT = File.expand_path("../..", __dir__)
+  REPO_ROOT = File.expand_path("../..", __dir__)
+  OPERATOR_ROOT = File.join(REPO_ROOT, "OPERATOR")
 
   GATE_FILES = %w[
     schema_migration_gate.rb
@@ -22,15 +23,15 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_check_rails_wires_new_gates
-    source = File.read(File.join(DEPLOY_ROOT, "bin", "check-rails"))
+    source = File.read(File.join(OPERATOR_ROOT, "bin", "check-rails"))
     %w[schema_migration_gate generated_asset_freshness_gate rails_runtime_gate].each do |gate|
       assert_includes source, gate
     end
   end
 
   def test_integrity_gate_wires_new_gates
-    integrity = File.read(File.join(DEPLOY_ROOT, "integrity_gate.rb"))
-    gates = File.read(File.join(DEPLOY_ROOT, "lib", "gate_environment.rb"))
+    integrity = File.read(File.join(OPERATOR_ROOT, "integrity_gate.rb"))
+    gates = File.read(File.join(OPERATOR_ROOT, "lib", "gate_environment.rb"))
     assert_includes integrity, "gate_environment"
     assert_includes integrity, "GateEnvironment::INTEGRITY_GATES"
     %w[schema_migration asset_freshness human_walkthrough vps_health].each do |gate|
@@ -39,22 +40,17 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_operator_surface_files_exist
-    %w[
-      ../bin/vps-state
-      ../bin/vps-deploy
-      ../bin/vps-logs
-      ../bin/post-pull-checklist
-      ../lib/gate_environment.rb
-      apps.horizon.yml
-    ].each do |rel|
-      path = File.join(ROOT, rel)
-      assert File.exist?(path), "missing #{rel}"
+    %w[bin/vps-state bin/vps-deploy bin/vps-logs bin/post-pull-checklist lib/gate_environment.rb].each do |rel|
+      path = File.join(OPERATOR_ROOT, rel)
+      assert File.exist?(path), "missing OPERATOR/#{rel}"
     end
-    repo_root = File.expand_path("..", DEPLOY_ROOT)
-    assert File.exist?(File.join(repo_root, "RECIPES.md"))
-    assert File.exist?(File.join(repo_root, "DEPLOY", "data", "debt.yml"))
-    assert File.exist?(File.join(repo_root, "DEPLOY", "data", "operator.yml"))
-    assert File.exist?(File.join(repo_root, "bin", "pub4"))
+    assert File.exist?(File.join(ROOT, "apps.horizon.yml"))
+    assert File.exist?(File.join(REPO_ROOT, "RECIPES.md"))
+    assert File.exist?(File.join(OPERATOR_ROOT, "data", "debt.yml"))
+    assert File.exist?(File.join(OPERATOR_ROOT, "data", "operator.yml"))
+    assert File.exist?(File.join(REPO_ROOT, "bin", "pub4"))
+    assert File.exist?(File.join(REPO_ROOT, "RAILS", "apps.yml"))
+    assert File.exist?(File.join(REPO_ROOT, "OPENBSD", "OPERATOR.sh"))
   end
 
   def test_bsdports_queue_schema_present

@@ -17,7 +17,7 @@ module Master
       # Never cache — auth, session, checkout, user-specific routes
       PRIVATE_PATTERNS = %w[/auth /login /logout /session /account /checkout /payment /admin].freeze
 
-      # Current DEPLOY apps use plain cache-first (cached || fetch)
+      # Current OPERATOR apps use plain cache-first (cached || fetch)
       # This is fine for static assets but wrong for dynamic content
       CACHE_FIRST_ONLY_SIGNAL = /caches\.match.*\|\|.*fetch(?!\s*\(request,\s*\{)/m
 

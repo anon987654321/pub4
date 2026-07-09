@@ -1,5 +1,5 @@
 # Quarantined sample: non-executable reference only.
-# Original path: DEPLOY/sh/tools/pouncekeys/pklog.sh
+# Original path: OPERATOR/sh/tools/pouncekeys/pklog.sh
 # Reason: keylogger installer content; kept only for audit/provenance.
 # Do not run, source, deploy, or rename into an executable extension.
 

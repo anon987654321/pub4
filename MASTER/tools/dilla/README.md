@@ -1,6 +1,6 @@
 # Dilla Lab
 
-`DEPLOY/dilla` is a small audio lab for Dilla-inspired groove sketches, sample cleanup, stem handling, and local render experiments.
+`OPERATOR/dilla` is a small audio lab for Dilla-inspired groove sketches, sample cleanup, stem handling, and local render experiments.
 
 ## Entrypoints
 
@@ -15,13 +15,13 @@
 Generate a MIDI file:
 
 ```sh
-ruby DEPLOY/dilla/electronium.rb DEPLOY/dilla/dilla_electronium.mid
+ruby OPERATOR/dilla/electronium.rb OPERATOR/dilla/dilla_electronium.mid
 ```
 
 Optional knobs:
 
 ```sh
-BPM=84 BARS=16 ruby DEPLOY/dilla/electronium.rb /tmp/dilla.mid
+BPM=84 BARS=16 ruby OPERATOR/dilla/electronium.rb /tmp/dilla.mid
 ```
 
 The gist at `https://gist.github.com/anon987654321/3831126ddcbc401c10b6c73435f776fe` contains two source sketches, `dilla_deepseek.rb` and `dilla_glm.rb`. The repo version keeps their core idea, but removes automatic dependency installation and renderer shell commands so the generator is predictable in deploy and audit contexts.

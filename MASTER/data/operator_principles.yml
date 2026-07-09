@@ -31,16 +31,16 @@ principles:
     Council is Review-stage deliberation with Security veto—the operator says tribunal, the code says council. Run it on dangerous patterns, multi-file diffs, or when config enables council. Scan plus sweep is the default loop; council is conditional, not automatic.
 - id: feedback_probe_before_ship
   name: "Verify Before Ship — integrity gates block done"
-  description: DEPLOY or web edits require integrity or crawl probes; gate failure keeps the task open
+  description: OPERATOR or web edits require integrity or crawl probes; gate failure keeps the task open
   type: feedback
   body: |-
-    After DEPLOY/ or MASTER/web/ edits, run bin/probe integrity or ruby DEPLOY/integrity_gate.rb before declaring done. HTTP crawl syncs apps.yml to master.json. On VPS use MASTER_CRAWL_BROWSER=1 when primer, face-session, or ping/pong matter. Gate failure means the task is still open.
+    After OPERATOR/ or MASTER/web/ edits, run bin/probe integrity or ruby OPERATOR/integrity_gate.rb before declaring done. HTTP crawl syncs apps.yml to master.json. On VPS use MASTER_CRAWL_BROWSER=1 when primer, face-session, or ping/pong matter. Gate failure means the task is still open.
 - id: feedback_vps_serial_truth
   name: "Single Source of Truth — VPS serial production verify"
   description: One SSH session, verify on dev@46.23.89.226, copy openbsd edits back to git same session
   type: feedback
   body: |-
-    One SSH session—no parallel bin/ci. Production truth is dev@46.23.89.226. macOS may edit locally and HTTP-probe; Ferrum face crawl defaults to VPS unless MASTER_CRAWL_BROWSER=1. Copy any DEPLOY/openbsd/ VPS edit back to git in the same session. Use tmux for long deploys.
+    One SSH session—no parallel bin/ci. Production truth is dev@46.23.89.226. macOS may edit locally and HTTP-probe; Ferrum face crawl defaults to VPS unless MASTER_CRAWL_BROWSER=1. Copy any OPENBSD/ VPS edit back to git in the same session. Use tmux for long deploys.
 - id: feedback_restart_rails
   name: "No Hot Reload — restart master per web deploy"
   description: Falcon does not reload; one file one doas rcctl restart master; wait before curl

@@ -1,11 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "../lib/gate_result"
-require_relative "../lib/deploy_inventory"
+require_relative "../OPERATOR/lib/gate_result"
+require_relative "../OPERATOR/lib/deploy_inventory"
 
-ROOT = File.expand_path("../..", __dir__)
-RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
+ROOT = File.expand_path("..", __dir__)
+RAILS_ROOT = File.join(ROOT, "RAILS")
 
 WATCHED = [
   "app/assets/stylesheets/application.scss",

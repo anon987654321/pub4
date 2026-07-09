@@ -1,7 +1,7 @@
 #!/bin/sh
 # Deploy MASTER web + lib to vm23 after git pull.
 # Usage (from dev laptop):
-#   ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226 'zsh /home/dev/pub4/DEPLOY/openbsd/sh/vps_deploy_master.sh'
+#   ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226 'zsh /home/dev/pub4/OPENBSD/sh/vps_deploy_master.sh'
 
 set -e
 ROOT="${ROOT:-/home/dev/pub4}"
@@ -19,7 +19,7 @@ export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 32)}"
 doas rm -rf public/assets
 doas chown -R dev:dev public
 bundle exec rails assets:precompile
-bundle exec ruby "$ROOT/DEPLOY/rails/master_web_assets_gate.rb"
+bundle exec ruby "$ROOT/RAILS/master_web_assets_gate.rb"
 
 echo "==> restart master"
 doas rcctl restart master

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-ROOT = File.expand_path("../..", __dir__)
+ROOT = File.expand_path("..", __dir__)
 MASTER = File.join(ROOT, "MASTER")
 
 checks = {
@@ -18,10 +18,10 @@ checks = {
     "tts_e2e poll",
     "tts_e2e"
   ],
-  "DEPLOY/openbsd/DEPLOY.sh" => [
+  "OPENBSD/OPERATOR.sh" => [
     "espeak"
   ],
-  "DEPLOY/openbsd/etc/rc.d/master" => [
+  "OPENBSD/etc/rc.d/master" => [
     "Master::Voice::TtsSupervisor.ensure_daemon!",
     "MASTER_TTS_TIMEOUT=45"
   ]

@@ -50,20 +50,20 @@ puts "branch: #{branch} @ #{commit} (#{dirty} dirty, #{behind} behind upstream)"
 puts
 
 open_items = debt_open
-puts "DEPLOY/data/debt.yml open: #{open_items.size}"
+puts "OPERATOR/data/debt.yml open: #{open_items.size}"
 open_items.first(8).each { |item| puts "  - [#{item['id']}] #{item['signal']}" }
 puts "  …" if open_items.size > 8
 puts
 
-puts "feature inventory: DEPLOY/rails/apps.yml (horizon: apps.horizon.yml)"
+puts "feature inventory: RAILS/apps.yml (horizon: apps.horizon.yml)"
 puts "quick status: bin/pub4 status · /orient deploy"
 puts
 puts "golden checks (contributor profile):"
 puts "  cd MASTER && bin/check --profile=contributor"
-puts "  DEPLOY/bin/check --profile=contributor"
-puts "  DEPLOY/bin/check-rails --profile=contributor"
-puts "  ruby DEPLOY/integrity_gate.rb"
-puts "  cd MASTER && bundle exec ruby bin/cli /scan DEPLOY/rails/<app>"
+puts "  OPERATOR/bin/check --profile=contributor"
+puts "  OPERATOR/bin/check-rails --profile=contributor"
+puts "  ruby OPERATOR/integrity_gate.rb"
+puts "  cd MASTER && bundle exec ruby bin/cli /scan RAILS/<app>"
 puts
 
 ports = {

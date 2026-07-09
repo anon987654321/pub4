@@ -7,7 +7,7 @@ errors = []
 hostname = Socket.gethostname
 errors << "not running as root (uid=#{Process.uid})" unless Process.uid.zero?
 errors << "hostname missing" if hostname.nil? || hostname.empty?
-errors << "repo path missing" unless File.directory?(File.expand_path("../..", __dir__))
+errors << "repo path missing" unless File.directory?(File.expand_path("..", __dir__))
 errors << "/etc/master.env missing" unless File.exist?("/etc/master.env")
 
 if errors.any?

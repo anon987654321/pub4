@@ -128,7 +128,7 @@ module Master
         pub = Master::Trace::SnapshotPublisher
         [
           pub.write(target: root, label: "MASTER", repo_root:, mode: :both),
-          pub.write(target: File.expand_path("../DEPLOY", root), label: "DEPLOY", repo_root:, mode: :both),
+          pub.write(target: File.expand_path("../OPERATOR", root), label: "OPERATOR", repo_root:, mode: :both),
         ].flatten.join("\n")
       end
 

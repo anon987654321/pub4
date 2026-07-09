@@ -85,5 +85,5 @@ pub3:
 gates:
   required:
     - "ruby MASTER/tools/convergence/evidence_gate.rb"
-    - "ruby DEPLOY/rails/archive_restore_gate.rb"
-    - "ruby DEPLOY/rails/check_production_gate.rb"
+    - "ruby RAILS/archive_restore_gate.rb"
+    - "ruby RAILS/check_production_gate.rb"

@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-ROOT = File.expand_path("../..", __dir__)
-OPENBSD = File.join(ROOT, "DEPLOY", "openbsd")
+ROOT = File.expand_path("..", __dir__)
+OPENBSD = File.join(ROOT, "OPENBSD")
 failures = []
 
 doas_conf = File.join(OPENBSD, "etc", "doas.conf")
@@ -14,10 +14,10 @@ else
 end
 
 validate_doas = File.join(OPENBSD, "sh", "validate_doas.ksh")
-failures << "missing DEPLOY/openbsd/sh/validate_doas.ksh" unless File.file?(validate_doas)
+failures << "missing OPENBSD/sh/validate_doas.ksh" unless File.file?(validate_doas)
 
 console_common = File.join(OPENBSD, "sh", "vps_console_common.exp")
-failures << "missing DEPLOY/openbsd/sh/vps_console_common.exp" unless File.file?(console_common)
+failures << "missing OPENBSD/sh/vps_console_common.exp" unless File.file?(console_common)
 
 Dir.glob(File.join(OPENBSD, "sh", "vps_console*.exp")).sort.each do |path|
   rel = path.delete_prefix("#{ROOT}/")
@@ -34,7 +34,7 @@ drop_install = File.join(OPENBSD, "sh", "vps_drop_install.exp")
 if File.file?(drop_install)
   text = File.read(drop_install)
   unless text.include?("vps_console_common.exp") && text.include?("require_console_risk_ack")
-    failures << "DEPLOY/openbsd/sh/vps_drop_install.exp must source vps_console_common.exp"
+    failures << "OPENBSD/sh/vps_drop_install.exp must source vps_console_common.exp"
   end
 end
 

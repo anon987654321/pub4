@@ -1,6 +1,6 @@
 # Release readiness
 
-Status: **ready** — MASTER and DEPLOY gates green on the release branch. Four Rails apps
+Status: **ready** — MASTER and OPERATOR gates green on the release branch. Four Rails apps
 (brgen, amber, hjerterom, bsdports) + MASTER. `baibl` and `blognet` were removed from the stack.
 
 ## Release surface
@@ -28,14 +28,14 @@ The brgen verticals are one Rails app under subdomains; relayd routes them all
 cd MASTER && bin/ci                 # unit + kernel tests
 cd MASTER && bin/probe all          # smoke, nsaudit, kernel, dogfood, preflight, rails, phantom_fk
 cd MASTER && bin/probe deploy       # rails, phantom_fk, crawl, integrity, smoke-web, playbook
-ruby DEPLOY/integrity_gate.rb       # deploy_identity, production, phantom_fk, frontend, relayd, domain_align, crawl
+ruby OPERATOR/integrity_gate.rb       # deploy_identity, production, phantom_fk, frontend, relayd, domain_align, crawl
 ```
 
 macOS-only skips (expected): `crawl`/`smoke-web` with no local server, `crawl-browser`/`health`/`vps_health` off-VPS.
 
 ## Changes in this release
 
-- **DEPLOY gate chain restored** — repointed 10 `require_relative "utf8"` refs to `tools/utf8`
+- **OPERATOR gate chain restored** — repointed 10 `require_relative "utf8"` refs to `tools/utf8`
   after the `tools/` reorg; every gate had been crashing with `LoadError`.
 - **CLI + probe bugs** — `Master::CommandRegistry.tree_lines` → `Master::Now::CommandRegistry
   .dispatch_tree`; nsaudit eager-loads + skips the kernel spine; smoke-web no longer crashes on a
@@ -50,11 +50,11 @@ macOS-only skips (expected): `crawl`/`smoke-web` with no local server, `crawl-br
 ## Deploy checklist
 
 1. `cd /home/dev/pub4 && git pull --ff-only`
-2. Full stack: `cd DEPLOY/openbsd && tmux new-session -d -s deploy "doas zsh DEPLOY.sh 2>&1 | tee /tmp/deploy.log"`
+2. Full stack: `cd OPENBSD && tmux new-session -d -s deploy "doas zsh OPERATOR.sh 2>&1 | tee /tmp/deploy.log"`
 3. **MASTER web must precompile + restart** (Falcon has no hot-reload; skipping this is the usual
    cause of stale-UI / dead-tap reports): `cd MASTER/web && RAILS_ENV=production rails assets:precompile`
-   then `doas rcctl restart master`. The full `DEPLOY.sh` run already does this.
-4. Verify: `ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps` and open `https://ai.brgen.no`,
+   then `doas rcctl restart master`. The full `OPERATOR.sh` run already does this.
+4. Verify: `ruby34 OPENBSD/health_check.rb --public --all-ready-apps` and open `https://ai.brgen.no`,
    tap to start, confirm the particle face renders.
 
-Remaining feature work: `BACKLOG.yml` (open) and `DEPLOY/rails/apps.horizon.yml` (planned, agent: ignore).
+Remaining feature work: `BACKLOG.yml` (open) and `RAILS/apps.horizon.yml` (planned, agent: ignore).

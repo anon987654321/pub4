@@ -9,7 +9,7 @@ Rails 8.1 · SQLite · Falcon · Hotwire · OpenBSD relayd
 ## Deploy
 
 ```zsh
-doas zsh DEPLOY/rails/privcam/privcam.sh
+doas zsh RAILS/privcam/privcam.sh
 curl -fsS http://127.0.0.1:47200/up
 ```
 

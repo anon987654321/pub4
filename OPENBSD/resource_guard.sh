@@ -26,12 +26,12 @@ if vmstat -s >/dev/null 2>&1; then
 fi
 
 GUARD_REPO=${GUARD_REPO:-/home/dev/pub4}
-if [[ -r ${GUARD_REPO}/DEPLOY/openbsd/sh/validate_doas.ksh ]]; then
-	. ${GUARD_REPO}/DEPLOY/openbsd/sh/validate_doas.ksh
-	install_doas_conf_from_repo "${GUARD_REPO}/DEPLOY/openbsd/etc/doas.conf" resource-guard || true
+if [[ -r ${GUARD_REPO}/OPENBSD/sh/validate_doas.ksh ]]; then
+	. ${GUARD_REPO}/OPENBSD/sh/validate_doas.ksh
+	install_doas_conf_from_repo "${GUARD_REPO}/OPENBSD/etc/doas.conf" resource-guard || true
 fi
-if [[ -f ${GUARD_REPO}/DEPLOY/openbsd/stale_ci_cleanup.ksh ]]; then
-  . ${GUARD_REPO}/DEPLOY/openbsd/stale_ci_cleanup.ksh
+if [[ -f ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh ]]; then
+  . ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh
   stale_ci_cleanup "$load" "$mem_free_pct"
 fi
 
@@ -54,7 +54,7 @@ fi
 
 if awk -v l="$load" -v c="$LOAD_CRIT" 'BEGIN{exit !(l>=c)}'; then
   logger -t resource-guard "crit load=$load — running emergency_cpu"
-  ksh /home/dev/pub4/DEPLOY/openbsd/emergency_cpu.sh 2>&1 | logger -t resource-guard
+  ksh /home/dev/pub4/OPENBSD/emergency_cpu.sh 2>&1 | logger -t resource-guard
 fi
 
 exit 0

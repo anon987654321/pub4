@@ -3,15 +3,15 @@ ownership:
   README.md:
     purpose: deploy front door
     risk: low
-    check: DEPLOY/bin/check
+    check: OPERATOR/bin/check
   START_HERE.md:
     purpose: first-contact deploy orientation
     risk: low
-    check: DEPLOY/bin/check
+    check: OPERATOR/bin/check
   OPERATOR.md:
     purpose: production runbook
     risk: high
-    check: DEPLOY/bin/check
+    check: OPERATOR/bin/check
   ../BACKLOG.yml:
     purpose: canonical open operator backlog
     risk: medium
@@ -19,7 +19,7 @@ ownership:
   rails/apps.horizon.yml:
     purpose: aspirational features (agent ignore)
     risk: low
-    check: DEPLOY/bin/check-rails
+    check: OPERATOR/bin/check-rails
   bin/vps-state:
     purpose: dev vs deployed SHA and service posture on vm23
     risk: medium
@@ -27,55 +27,55 @@ ownership:
   bin/vps-deploy:
     purpose: serial VPS deploy entrypoint
     risk: critical
-    check: zsh DEPLOY/bin/vps-deploy <app>
+    check: zsh OPERATOR/bin/vps-deploy <app>
   master.json:
     purpose: deploy identity and public service inventory
     risk: high
-    check: ruby DEPLOY/verify_deploy_identity.rb
+    check: ruby OPERATOR/verify_deploy_identity.rb
   integrity_gate.rb:
     purpose: full local deploy gate chain
     risk: high
-    check: ruby DEPLOY/integrity_gate.rb
+    check: ruby OPERATOR/integrity_gate.rb
   rails/apps.yml:
     purpose: canonical app/domain/port/deploy inventory
     risk: critical
-    check: DEPLOY/bin/check-rails
+    check: OPERATOR/bin/check-rails
   rails/check_production_gate.rb:
     purpose: production Rails contract
     risk: high
-    check: DEPLOY/bin/check-rails
+    check: OPERATOR/bin/check-rails
   rails/domain_alignment_gate.rb:
     purpose: domain and inventory consistency
     risk: high
-    check: DEPLOY/bin/check-rails
+    check: OPERATOR/bin/check-rails
   rails/frontend*_gate.rb:
     purpose: frontend production/auditor contracts
     risk: medium
-    check: DEPLOY/bin/check-rails
+    check: OPERATOR/bin/check-rails
   rails/shared/:
     purpose: shared Rails engine and deploy helpers
     risk: high
-    check: DEPLOY/bin/check-rails
+    check: OPERATOR/bin/check-rails
   rails/*/*.sh:
     purpose: per-app deploy scripts
     risk: critical
-    check: ruby DEPLOY/verify_deploy_identity.rb
-  openbsd/DEPLOY.sh:
+    check: ruby OPERATOR/verify_deploy_identity.rb
+  openbsd/OPERATOR.sh:
     purpose: full OpenBSD installer/deployer
     risk: critical
-    check: DEPLOY/bin/check-openbsd
+    check: OPERATOR/bin/check-openbsd
   openbsd/etc/:
     purpose: repo mirror of live /etc configs
     risk: critical
-    check: DEPLOY/bin/check-openbsd
+    check: OPERATOR/bin/check-openbsd
   openbsd/sh/vps_ci.sh:
     purpose: serial app CI entrypoint on vm23
     risk: high
-    check: zsh -n DEPLOY/openbsd/sh/vps_ci.sh
+    check: zsh -n OPENBSD/sh/vps_ci.sh
   openbsd/resource_guard.sh:
     purpose: load shedding on vm23
     risk: high
-    check: ksh -n DEPLOY/openbsd/resource_guard.sh
+    check: ksh -n OPENBSD/resource_guard.sh
   tools/:
     purpose: creative and utility scripts outside core deploy
     risk: medium

@@ -15,7 +15,7 @@ class GateContractSpec < Minitest::Test
   def test_gate_is_expected_to_keep_repo_clean
     source = File.read(GATE)
     assert_includes source, "assert_clean(\"MASTER\")"
-    assert_includes source, "assert_clean(\"DEPLOY\", \"MASTER\")"
+    assert_includes source, "assert_clean(\"OPERATOR\", \"MASTER\")"
   end
 
   def test_gate_forces_safe_env

@@ -1,8 +1,15 @@
 # Decisions
 
+## Repo Layout (2026-07)
+
+- `RAILS/` — Rails apps + shared engine (was `DEPLOY/rails`)
+- `OPENBSD/` — pf, relayd, rc.d, VPS scripts (was `DEPLOY/openbsd`)
+- `OPERATOR/` — gates, bin/, data/, operator docs (was `DEPLOY/` minus rails/openbsd)
+- `DEPLOY` → symlink to `OPERATOR`; `OPERATOR/rails` → `RAILS`; `OPERATOR/openbsd` → `OPENBSD`
+
 ## OpenBSD First
 
-DEPLOY targets OpenBSD vm23. macOS local checks are useful, but OpenBSD behavior wins for package names, service management, relayd, pf, NSD, and Ruby command names.
+OPERATOR targets OpenBSD vm23. macOS local checks are useful, but OpenBSD behavior wins for package names, service management, relayd, pf, NSD, and Ruby command names.
 
 ## relayd Owns TLS
 
@@ -14,7 +21,7 @@ App ports are internal implementation details. Public ingress is 22, 25, 80, and
 
 ## `rails/apps.yml` Is Canonical
 
-App status, domains, ports, and deploy scripts live in `DEPLOY/rails/apps.yml`. `DEPLOY/master.json`, relayd, acme, NSD, and docs should agree with it.
+App status, domains, ports, and deploy scripts live in `RAILS/apps.yml`. `OPERATOR/master.json`, relayd, acme, NSD, and docs should agree with it.
 
 ## Copy-Tree Deploy
 

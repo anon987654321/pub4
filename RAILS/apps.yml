@@ -1,11 +1,11 @@
-# Rails deploy matrix — canonical inventory for DEPLOY/rails.
+# Rails deploy matrix — canonical inventory for RAILS.
 #
 # deploy_root: tracked tree copied to /home/<app>/app by <app>.sh
 # status: done | port | missing | planned
 #
-# Verify claims: cd MASTER && bundle exec ruby bin/cli  →  /scan DEPLOY/rails/<app>
-# Human summary: DEPLOY/rails/README.md and per-app README.md
-# Shared engine: DEPLOY/rails/shared (pub4-shared gem)
+# Verify claims: cd MASTER && bundle exec ruby bin/cli  →  /scan RAILS/<app>
+# Human summary: RAILS/README.md and per-app README.md
+# Shared engine: RAILS/shared (pub4-shared gem)
 #
 # Stack default: Rails 8.1, Ruby 3.4, SQLite, Falcon, Solid Queue/Cache, relayd TLS
 #
@@ -20,8 +20,8 @@ apps:
     port: 38182
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, Solid Queue, Solid Cache, OpenBSD, relayd
     stack_later: PostgreSQL where needed, city graph scaling, richer SNI/domain routing
-    deploy_script: DEPLOY/rails/brgen/brgen.sh
-    deploy_root: DEPLOY/rails/brgen
+    deploy_script: RAILS/brgen/brgen.sh
+    deploy_root: RAILS/brgen
     public: true
     features:
       core:
@@ -113,8 +113,8 @@ apps:
     port: 61352
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, multimodal retrieval, richer PWA/offline features
-    deploy_script: DEPLOY/rails/amber/amber.sh
-    deploy_root: DEPLOY/rails/amber
+    deploy_script: RAILS/amber/amber.sh
+    deploy_root: RAILS/amber
     public: true
     features:
       core:
@@ -159,8 +159,8 @@ apps:
     port: 47312
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, infrastructure knowledge graph, OpenBSD package intelligence
-    deploy_script: DEPLOY/rails/bsdports/bsdports.sh
-    deploy_root: DEPLOY/rails/bsdports
+    deploy_script: RAILS/bsdports/bsdports.sh
+    deploy_root: RAILS/bsdports
     public: true
     features:
       core:
@@ -188,8 +188,8 @@ apps:
     port: 38891
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, route optimization, reporting jobs, operational forecasting
-    deploy_script: DEPLOY/rails/hjerterom/hjerterom.sh
-    deploy_root: DEPLOY/rails/hjerterom
+    deploy_script: RAILS/hjerterom/hjerterom.sh
+    deploy_root: RAILS/hjerterom
     public: true
     features:
       core:
@@ -206,7 +206,7 @@ apps:
         - { name: reporting jobs (Solid Queue),                            status: planned, agent: ignore }
         - { name: operational forecasting,                                 status: planned, agent: ignore }
 
-# ── Archived / not in DEPLOY/rails (recovery in DEPLOY/archive/recovery/) ───────
+# ── Archived / not in RAILS (recovery in OPERATOR/archive/recovery/) ───────
 
 archived_apps:
 
@@ -215,9 +215,9 @@ archived_apps:
     domain: privcam.brgen.no
     port: 47200
     status: port
-    deploy_script: DEPLOY/rails/privcam/privcam.sh
-    deploy_root: DEPLOY/rails/privcam
-    recovery_source: DEPLOY/archive/recovery/installers/privcam.sh
+    deploy_script: RAILS/privcam/privcam.sh
+    deploy_root: RAILS/privcam
+    recovery_source: OPERATOR/archive/recovery/installers/privcam.sh
     notes: Video upload, VideosInfiniteScrollReflex, comments. Referenced by old deploy_all.sh — removed from master.json.
 
   pub_attorney:
@@ -225,9 +225,9 @@ archived_apps:
     domain: pub.attorney
     port: 10012
     status: port
-    deploy_script: DEPLOY/rails/pub_attorney/pub_attorney.sh
-    deploy_root: DEPLOY/rails/pub_attorney
-    recovery_source: DEPLOY/archive/recovery/installers/pub_attorney.sh
+    deploy_script: RAILS/pub_attorney/pub_attorney.sh
+    deploy_root: RAILS/pub_attorney
+    recovery_source: OPERATOR/archive/recovery/installers/pub_attorney.sh
     notes: Lawyer/Case/Document models, CaseMatchReflex, wicked_pdf/prawn.
 
   mytoonz:
@@ -235,19 +235,19 @@ archived_apps:
     domain: mytoonz.brgen.no
     port: 10008
     status: port
-    deploy_script: DEPLOY/rails/mytoonz/mytoonz.sh
-    deploy_root: DEPLOY/rails/mytoonz
-    recovery_source: DEPLOY/archive/recovery/installers/mytoonz.sh
+    deploy_script: RAILS/mytoonz/mytoonz.sh
+    deploy_root: RAILS/mytoonz
+    recovery_source: OPERATOR/archive/recovery/installers/mytoonz.sh
     notes: ReplicateService comic-strip generation, GenerateComicStripJob.
 
 archived_subsystems:
 
   baibl:
-    recovery_source: DEPLOY/archive/recovery/manifest.json
+    recovery_source: OPERATOR/archive/recovery/manifest.json
     notes: Retired from active stack; pub3 Rails installer/prototype preserved as recovery-only context.
 
   blognet:
-    recovery_source: DEPLOY/archive/recovery/references/build_blognet.rb
+    recovery_source: OPERATOR/archive/recovery/references/build_blognet.rb
     notes: Retired from active stack; old megablog/content-generation logic preserved as recovery-only context.
 
   aight_production_ai:

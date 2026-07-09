@@ -7,7 +7,7 @@ require "yaml"
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
 BACKLOG = File.join(REPO, "BACKLOG.yml")
-LEGACY = [File.join(ROOT, "TODO.md"), File.join(REPO, "DEPLOY", "TODO.md")]
+LEGACY = [File.join(ROOT, "TODO.md"), File.join(REPO, "OPERATOR", "TODO.md")]
 
 def run_step(name, *cmd, chdir:)
   print "todo-retire: #{name.ljust(20)} "
@@ -35,8 +35,8 @@ end
 
 checks = [
   ["MASTER check", ROOT, [File.join(ROOT, "bin", "check"), "--profile=contributor"]],
-  ["DEPLOY check-rails", REPO, [File.join(REPO, "DEPLOY", "bin", "check-rails"), "--profile=contributor"]],
-  ["integrity gate", REPO, [File.join(REPO, "DEPLOY", "integrity_gate.rb")]],
+  ["OPERATOR check-rails", REPO, [File.join(REPO, "OPERATOR", "bin", "check-rails"), "--profile=contributor"]],
+  ["integrity gate", REPO, [File.join(REPO, "OPERATOR", "integrity_gate.rb")]],
 ]
 failures = checks.reject { |name, dir, cmd| run_step(name, *cmd, chdir: dir) }.map(&:first)
 
@@ -51,4 +51,4 @@ unless ENV["TODO_RETIRE_CONFIRM"] == "1"
 end
 
 LEGACY.each { |path| File.delete(path) if File.file?(path) }
-puts "todo-retire: deleted legacy MASTER/TODO.md and DEPLOY/TODO.md (BACKLOG.yml is canonical)"
+puts "todo-retire: deleted legacy MASTER/TODO.md and OPERATOR/TODO.md (BACKLOG.yml is canonical)"

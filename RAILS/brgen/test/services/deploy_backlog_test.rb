@@ -10,8 +10,8 @@ class DeployBacklogTest < Minitest::Test
   ROOT = ENV.fetch('PUB4_RAILS_ROOT') do
     app = ENV.fetch('PUB4_CI_APP', 'brgen')
     candidates = [
-      "/home/#{app}/pub4-rails/DEPLOY/rails",
-      '/home/dev/pub4/DEPLOY/rails',
+      "/home/#{app}/pub4-rails/RAILS",
+      '/home/dev/pub4/RAILS',
       File.expand_path('../../..', __dir__)
     ]
     candidates.find { |path| File.readable?(File.join(path, 'shared', 'app')) } ||

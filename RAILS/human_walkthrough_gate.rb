@@ -2,13 +2,13 @@
 # frozen_string_literal: true
 
 require "net/http"
-require_relative "../lib/deploy_inventory"
-require_relative "../lib/gate_result"
+require_relative "../OPERATOR/lib/deploy_inventory"
+require_relative "../OPERATOR/lib/gate_result"
 require_relative "crawl_support"
-require_relative "../lib/utf8"
+require_relative "../OPERATOR/lib/utf8"
 
-ROOT = File.expand_path("../..", __dir__)
-RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
+ROOT = File.expand_path("..", __dir__)
+RAILS_ROOT = File.join(ROOT, "RAILS")
 
 APP_FILES = {
   "amber" => {

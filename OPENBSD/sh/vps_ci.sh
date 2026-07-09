@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Run one Rails app CI on vm23 with mutex + load gate (serial operator entrypoint).
-# Usage: zsh DEPLOY/openbsd/sh/vps_ci.sh brgen
+# Usage: zsh OPENBSD/sh/vps_ci.sh brgen
 set -euo pipefail
 
 app=${1:-}
@@ -12,7 +12,7 @@ shared_dir=/home/${app}/shared
 [[ -d $app_dir ]] || { print -u2 "missing $app_dir"; exit 1 }
 
 export PUB4_CI_GUARD=1
-export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/DEPLOY/rails}
+export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/RAILS}
 
 ensure_ci_lock() {
   doas sh -c "
@@ -25,13 +25,13 @@ ensure_ci_lock() {
 sync_ci_rails_root() {
   local mirror=/home/${app}/pub4-rails
   doas mkdir -p "$mirror"
-  doas tar cf - -C "$repo" DEPLOY/rails | doas sh -c "cd ${mirror} && tar xf -"
+  doas tar cf - -C "$repo" RAILS | doas sh -c "cd ${mirror} && tar xf -"
   doas chown -R "${app}:${app}" "$mirror"
 }
 
 sync_from_repo() {
-  local src=$repo/DEPLOY/rails/$app
-  local shared_src=$repo/DEPLOY/rails/shared
+  local src=$repo/RAILS/$app
+  local shared_src=$repo/RAILS/shared
   sync_ci_rails_root
   if [[ -d $src ]]; then
     local -a paths=(test app lib config bin db Gemfile Gemfile.lock)
@@ -57,7 +57,7 @@ cache_home=/home/${app}/.cache
 print "vps_ci: $app (sync + mutex + load gate)"
 sync_from_repo
 ensure_ci_lock
-ci_rails_root=/home/${app}/pub4-rails/DEPLOY/rails
+ci_rails_root=/home/${app}/pub4-rails/RAILS
 doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 install && bundle34 exec bin/ci'"
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)

@@ -60,7 +60,7 @@ operators:
       - Multi-file refactoring with rule consistency
       - Enforces custom constraints (zsh discipline, style rules) reliably
       - Best time-to-correct-answer for architectural changes
-      - Reads DEPLOY/OPERATOR.md and MASTER/data/*.yml as actual authority (/orient bootstrap for mental model)
+      - Reads OPERATOR/OPERATOR.md and MASTER/data/*.yml as actual authority (/orient bootstrap for mental model)
       - Memory system (user/feedback/project/reference types) persists across sessions
       - Agent tool spawns parallel sub-agents; foreground vs background aware
       - Conversation history is stateful for safety checks — context carries forward
@@ -71,7 +71,7 @@ operators:
       - Uses ≤25 words between tool calls — keep prompts action-dense, not prose
       - Minimalist prose style by default; bullets only when structure genuinely aids
     context_format: |
-      Claude bootstraps via /orient bootstrap and DEPLOY/OPERATOR.md. Feed additional context as:
+      Claude bootstraps via /orient bootstrap and OPERATOR/OPERATOR.md. Feed additional context as:
       <file path="MASTER/lib/...">...</file> blocks or plain === FILE === separators.
       soul.yml, rules.yml, voice.yml, limits.yml, operator_principles.yml, skills_registry.yml,
       and project_context.yml are authoritative — reference them by name.

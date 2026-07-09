@@ -2,11 +2,11 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../lib/utf8"
+require_relative "../OPERATOR/lib/utf8"
 
-ROOT = File.expand_path("../..", __dir__)
-RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
-RELAYD = File.join(ROOT, "DEPLOY", "openbsd", "etc", "relayd.conf")
+ROOT = File.expand_path("..", __dir__)
+RAILS_ROOT = File.join(ROOT, "RAILS")
+RELAYD = File.join(ROOT, "OPENBSD", "etc", "relayd.conf")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 
 apps = YAML.safe_load(File.read(APPS_YML)).fetch("apps")
@@ -30,7 +30,7 @@ else
   failures << "relayd: master missing http /up check" unless relayd.include?('forward to <master> port 53187 check http "/up"')
 end
 
-master_rc = File.join(ROOT, "DEPLOY", "openbsd", "etc", "rc.d", "master")
+master_rc = File.join(ROOT, "OPENBSD", "etc", "rc.d", "master")
 if File.file?(master_rc)
   rc_text = File.read(master_rc)
   failures << "rc.d/master: container warmup must use smoke ping" unless rc_text.include?("chat/message?message=ping")
@@ -67,11 +67,11 @@ else
   failures << "MASTER/web: missing AuthTier middleware"
 end
 
-openbsd = File.join(ROOT, "DEPLOY", "openbsd", "DEPLOY.sh")
+openbsd = File.join(ROOT, "OPENBSD", "OPERATOR.sh")
 if File.file?(openbsd)
   text = File.read(openbsd)
-  failures << "DEPLOY.sh: production db:seed is not explicitly gated" unless text.include?("RUN_PRODUCTION_SEEDS")
-  failures << "DEPLOY.sh: default deploy must run sync/apply path" unless text.match?(/""\)\s*\n\s*deploy_live/m)
+  failures << "OPERATOR.sh: production db:seed is not explicitly gated" unless text.include?("RUN_PRODUCTION_SEEDS")
+  failures << "OPERATOR.sh: default deploy must run sync/apply path" unless text.match?(/""\)\s*\n\s*deploy_live/m)
 else
   failures << "missing canonical OpenBSD deploy script"
 end

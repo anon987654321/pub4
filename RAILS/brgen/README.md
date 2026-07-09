@@ -13,7 +13,7 @@ Subdomains: `tv`, `dating`, `playlist`, `takeaway`, marketplace aliases, `maps`,
 Rails 8.1 · SQLite · Falcon · Hotwire · Solid Queue/Cache · relayd
 
 ```zsh
-doas zsh DEPLOY/rails/brgen/brgen.sh
+doas zsh RAILS/brgen/brgen.sh
 curl -fsS http://127.0.0.1:38182/up
 ```
 

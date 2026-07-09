@@ -1,5 +1,5 @@
 # Canonical design token anchors — keep in sync with _x_base.scss defaults and face.css :root.
-# Regenerate face :root: ruby DEPLOY/rails/scripts/generate_face_root_css.rb
+# Regenerate face :root: ruby RAILS/scripts/generate_face_root_css.rb
 
 face_root:
   anchors:

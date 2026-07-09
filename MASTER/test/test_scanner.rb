@@ -181,7 +181,7 @@ class TestScanner < Minitest::Test
     Dir.mktmpdir do |repo|
       web_path = File.join(repo, "web", "app.rb")
       master_path = File.join(repo, "MASTER", "lib", "engine.rb")
-      deploy_path = File.join(repo, "DEPLOY", "skip.rb")
+      deploy_path = File.join(repo, "OPERATOR", "skip.rb")
       FileUtils.mkdir_p(File.dirname(web_path))
       FileUtils.mkdir_p(File.dirname(master_path))
       FileUtils.mkdir_p(File.dirname(deploy_path))

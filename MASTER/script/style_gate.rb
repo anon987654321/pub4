@@ -5,7 +5,7 @@ require "open3"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("../..", ROOT)
-DEPLOY_RAILS = File.join(REPO, "DEPLOY", "rails")
+RAILS_ROOT = File.join(REPO, "RAILS")
 
 def run(label, command, chdir: ROOT)
   out, err, status = Open3.capture3(*command, chdir: chdir)
@@ -28,15 +28,15 @@ results << run(
   chdir: ROOT
 )
 
-shared_rubocop = File.join(DEPLOY_RAILS, "shared", "bin", "rubocop")
+shared_rubocop = File.join(RAILS_ROOT, "shared", "bin", "rubocop")
 if File.executable?(shared_rubocop)
-  Dir.glob(File.join(DEPLOY_RAILS, "*")).select { |path| File.directory?(path) }.sort.each do |app|
+  Dir.glob(File.join(RAILS_ROOT, "*")).select { |path| File.directory?(path) }.sort.each do |app|
     gemfile = File.join(app, "Gemfile")
     next unless File.file?(gemfile)
 
     command = bundle_exec_rubocop(shared_rubocop, app) + ["--format", "simple"]
     results << run(
-      "DEPLOY #{File.basename(app)} rubocop",
+      "OPERATOR #{File.basename(app)} rubocop",
       command,
       chdir: app
     )

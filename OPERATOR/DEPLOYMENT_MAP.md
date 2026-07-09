@@ -37,7 +37,7 @@ Internet
 Local:
 
 ```text
-DEPLOY/bin/check
+OPERATOR/bin/check
   -> verify_deploy_identity
   -> rails production/domain/phantom/frontend gates
   -> openbsd deploy smoke
@@ -48,7 +48,7 @@ Operator:
 ```text
 git pull --ff-only on vm23
   -> vps_ci.sh <app>
-  -> DEPLOY.sh or per-app deploy
+  -> OPERATOR.sh or per-app deploy
   -> rcctl restart affected services
   -> health_check --public --all-ready-apps
 ```

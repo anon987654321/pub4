@@ -1,6 +1,6 @@
 # Operator Contract
 
-This contract is for humans and AI agents working on DEPLOY.
+This contract is for humans and AI agents working on OPERATOR.
 
 ## Modes
 
@@ -19,18 +19,18 @@ AI agents must **not** autonomously:
 | `vps_console*.exp` / `vps_drop_install.exp` | Gated by `I_UNDERSTAND_CONSOLE_RISK=1`; recovery-only |
 | Deploy or install from serial console | Bypasses SSH safety, tmux, and load gates |
 | Target vm27 or any non-vm23 VM | Wrong tenant; production is vm23 (`dev`) |
-| `DEPLOY.sh --stage-1` without `I_UNDERSTAND_DNS_WIPE=1` | Destructive DNS wipe |
+| `OPERATOR.sh --stage-1` without `I_UNDERSTAND_DNS_WIPE=1` | Destructive DNS wipe |
 
-When SSH to vm23 is required, use normal paths: `doas zsh DEPLOY.sh`, `vps-deploy`, `vps_ci.sh`.
+When SSH to vm23 is required, use normal paths: `doas zsh OPERATOR.sh`, `vps-deploy`, `vps_ci.sh`.
 
 ## Rules
 
 - Run `bin/pub4 status` before starting work; use `RECIPES.md` for copy-paste paths.
 - Read `VPS_SAFETY.md` before live operations.
 - Treat `rails/apps.yml` and `master.json` as inventories, not suggestions.
-- Any `/etc` change made on vm23 must be copied back to `DEPLOY/openbsd/etc/`.
+- Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
 - Use `ruby34` and `bundle34` on OpenBSD.
-- Use `zsh DEPLOY/openbsd/sh/vps_ci.sh <app>` for per-app CI on vm23.
+- Use `zsh OPENBSD/sh/vps_ci.sh <app>` for per-app CI on vm23.
 - Never run parallel SSH deploys, parallel `bin/ci`, or broad app restarts casually on the 1 GiB VPS.
 - Keep secrets in `/etc/*.env`; never commit them.
 - Keep Rails `config.assume_ssl = true`; do not enable `force_ssl` behind relayd.
@@ -43,9 +43,9 @@ OpenBSD dmesg style: terse, lowercase, one fact per line, path-first.
 Format for each file touch:
 
 ```
-write DEPLOY/openbsd/etc/rc.d/brgen 412B +12/-3
+write OPENBSD/etc/rc.d/brgen 412B +12/-3
 read MASTER/lib/reach/base.rb sha256=a1b2c3… 2048B
-run zsh DEPLOY/bin/check-openbsd exit=0
+run zsh OPERATOR/bin/check-openbsd exit=0
 ```
 
 Rules:

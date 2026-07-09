@@ -23,7 +23,7 @@ doas mkdir -p "$APP_DIR"
 
 sync_tree "${SRC_DIR}/" "${APP_DIR}"
 doas rm -rf "/home/${APP_NAME}/shared"
-sync_tree /home/dev/pub4/DEPLOY/rails/shared "/home/${APP_NAME}/shared"
+sync_tree /home/dev/pub4/RAILS/shared "/home/${APP_NAME}/shared"
 doas chown -R "${APP_NAME}:${APP_NAME}" "/home/${APP_NAME}/shared"
 doas chown -R "${APP_NAME}:${APP_NAME}" "$APP_DIR"
 overlay_shared_initializers "$APP_DIR"

@@ -17,14 +17,14 @@ end.parse!
 runner = Pub4::CheckRunner.new(prefix: "deploy-check", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
-failures << "identity" unless runner.run("identity", RUBY, "DEPLOY/verify_deploy_identity.rb")
-failures << "production" unless runner.run("production", RUBY, "DEPLOY/rails/check_production_gate.rb")
-failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "DEPLOY/rails/check_phantom_foreign_keys.rb")
-failures << "domain_align" unless runner.run("domain align", RUBY, "DEPLOY/rails/domain_alignment_gate.rb")
-failures << "openbsd_smoke" unless runner.run("openbsd smoke", RUBY, "DEPLOY/openbsd/deploy_smoke_gate.rb")
+failures << "identity" unless runner.run("identity", RUBY, "OPERATOR/verify_deploy_identity.rb")
+failures << "production" unless runner.run("production", RUBY, "RAILS/check_production_gate.rb")
+failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "RAILS/check_phantom_foreign_keys.rb")
+failures << "domain_align" unless runner.run("domain align", RUBY, "RAILS/domain_alignment_gate.rb")
+failures << "openbsd_smoke" unless runner.run("openbsd smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
 
 if profile == "contributor"
-  puts "deploy-check: extended gates     skip — contributor profile (use DEPLOY/bin/check-full for integrity)"
+  puts "deploy-check: extended gates     skip — contributor profile (use OPERATOR/bin/check-full for integrity)"
 end
 
 exit(failures.empty? ? 0 : 1)

@@ -21,7 +21,7 @@ module Master
 
       TEXT_NAMES = %w[Gemfile Rakefile Dockerfile Makefile Procfile].to_set.freeze
       MAX_INLINE_BYTES = 262_144
-      GIT_LABELS = %w[MASTER DEPLOY].freeze
+      GIT_LABELS = %w[MASTER OPERATOR].freeze
 
       POLICY_SUMMARY =
         "git-tracked source text only (skips vendor, node_modules, tmp, knowledge, runtime, " \

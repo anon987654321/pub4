@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # OpenBSD vm23 deploy — executable script. Everything else in this tree is an exact config mirror.
-# Routine (on vm23): cd ~/pub4/DEPLOY/openbsd && doas zsh DEPLOY.sh
+# Routine (on vm23): cd ~/pub4/OPENBSD && doas zsh OPERATOR.sh
 # Installs etc/ usr/ var/ onto /, validates pf/relayd, restarts services.
 # Rare: --first-install | --stage-1 (DNS wipe) | --stage-2 (full app bootstrap)
 # VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-01-06)
@@ -14,7 +14,7 @@
 #   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
 # - Data preserved: Rails SQLite under /home/<app>/app/storage, ~/priv, acme certs in /etc/ssl when
 #   stage_1 is skipped. Re-running stage_2 does not drop databases.
-# - Post-deploy verification: ruby /home/dev/pub4/DEPLOY/openbsd/health_check.rb
+# - Post-deploy verification: ruby /home/dev/pub4/OPENBSD/health_check.rb
 # Engine-ize: bootstrap_rails now relies on bundle install for pub4-shared path gem (Gemfiles declare it); legacy sh shared/install_* deprecated in scripts + WIRING. No copy sprawl.
 
 set -euo pipefail
@@ -194,14 +194,14 @@ sync_openbsd_apply() {
   fi
 
   # STRICT rules.yml adherence (per success_criteria: "system_applies_to_itself_without_exception", self_test, ground_truth_check, evidence_scoring, veto_patterns, anti_patterns, tier1 principle_priorities).
-  # Run MASTER deep scan on DEPLOY tree before any service restart. Block on violations (tier1 critical + veto).
-  # Uses ground_truth_check (fresh read), self_test (laws on DEPLOY), evidence_scoring (scan_clean).
+  # Run MASTER deep scan on OPERATOR tree before any service restart. Block on violations (tier1 critical + veto).
+  # Uses ground_truth_check (fresh read), self_test (laws on OPERATOR), evidence_scoring (scan_clean).
   # Also covers lexical/structural for sh, yml, conf, erb; no bypasses.
   if [[ -n ${SKIP_MASTER_SCAN:-} ]]; then
     log WARN "MASTER scan skipped (SKIP_MASTER_SCAN)"
   elif [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
-    log INFO "MASTER rules scan (DEPLOY) — strict pre-apply per rules.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
-    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli /scan DEPLOY --depth deep' 2>&1 | tee /tmp/master_deploy_scan.log; then
+    log INFO "MASTER rules scan (OPERATOR) — strict pre-apply per rules.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
+    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli /scan OPERATOR --depth deep' 2>&1 | tee /tmp/master_deploy_scan.log; then
       log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per rules.yml)"
       return 1
     fi
@@ -574,7 +574,7 @@ setup_litestream() {
 
 bootstrap_rails_app() {
   typeset app=$1 port=$2
-  typeset app_dir=/home/dev/pub4/DEPLOY/rails/$app
+  typeset app_dir=/home/dev/pub4/RAILS/$app
   typeset secret
 
   [[ -d $app_dir ]] || { log ERROR "app tree missing: $app_dir"; return 1 }
@@ -799,7 +799,7 @@ stage_2() {
   RAILS_ENV=production bundle exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:precompile \
     || log WARN "MASTER assets:precompile failed"
   ruby "${SCRIPT_DIR}/../rails/master_web_assets_gate.rb" 2>/dev/null \
-    || ruby "$m3dir/../DEPLOY/rails/master_web_assets_gate.rb" 2>/dev/null \
+    || ruby "$m3dir/../RAILS/master_web_assets_gate.rb" 2>/dev/null \
     || log WARN "MASTER master_web_assets_gate skipped"
   typeset master_secret
   typeset -a _master_secret_lines
@@ -828,16 +828,16 @@ deploy_live() {
 
 main() {
   if [[ ${1:-} = --help ]]; then
-    print -r -- "OpenBSD vm23 deploy (DEPLOY.sh). Config trees: etc/ usr/ var/ → /.
+    print -r -- "OpenBSD vm23 deploy (OPERATOR.sh). Config trees: etc/ usr/ var/ → /.
 Usage:
-  cd ~/pub4/DEPLOY/openbsd && doas zsh DEPLOY.sh
+  cd ~/pub4/OPENBSD && doas zsh OPERATOR.sh
 
 Default: install configs, validate pf/relayd, restart services.
 
 Rare:
-  doas zsh DEPLOY.sh --first-install
-  doas zsh DEPLOY.sh --stage-1        # requires I_UNDERSTAND_DNS_WIPE=1
-  doas zsh DEPLOY.sh --stage-2
+  doas zsh OPERATOR.sh --first-install
+  doas zsh OPERATOR.sh --stage-1        # requires I_UNDERSTAND_DNS_WIPE=1
+  doas zsh OPERATOR.sh --stage-2
 
 --sync-configs is an alias for the default."
     exit 0

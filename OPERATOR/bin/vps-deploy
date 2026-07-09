@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Serial VPS deploy entrypoint — sync, CI, restart, health, deploy stamp.
-# Usage: zsh DEPLOY/bin/vps-deploy brgen|amber|bsdports|hjerterom|master
+# Usage: zsh OPERATOR/bin/vps-deploy brgen|amber|bsdports|hjerterom|master
 set -euo pipefail
 
 app=${1:-}
@@ -25,7 +25,7 @@ EOF
 
 if [[ $app == master ]]; then
   print "vps-deploy: master web"
-  zsh "$repo/DEPLOY/openbsd/sh/vps_deploy_master.sh"
+  zsh "$repo/OPENBSD/sh/vps_deploy_master.sh"
   write_stamp master ok
   exit 0
 fi
@@ -33,27 +33,27 @@ fi
 [[ -d /home/${app}/app ]] || { print -u2 "missing /home/${app}/app"; exit 1 }
 
 print "vps-deploy: $app (preflight load)"
-if [[ -x $repo/DEPLOY/openbsd/resource_guard.sh ]]; then
-  doas ksh "$repo/DEPLOY/openbsd/resource_guard.sh" || true
+if [[ -x $repo/OPENBSD/resource_guard.sh ]]; then
+  doas ksh "$repo/OPENBSD/resource_guard.sh" || true
 fi
 
 if [[ -n ${SKIP_CI:-} ]]; then
   print "vps-deploy: $app (sync via ${app}.sh, SKIP_CI=1)"
-  zsh "$repo/DEPLOY/rails/${app}/${app}.sh"
+  zsh "$repo/RAILS/${app}/${app}.sh"
 else
   print "vps-deploy: $app (ci + sync)"
-  zsh "$repo/DEPLOY/openbsd/sh/vps_ci.sh" "$app"
+  zsh "$repo/OPENBSD/sh/vps_ci.sh" "$app"
 fi
 
 print "vps-deploy: $app (secondary db schemas)"
-. "$repo/DEPLOY/rails/shared/deploy/@shared_functions.sh"
+. "$repo/RAILS/shared/deploy/@shared_functions.sh"
 rails_prepare_secondary_dbs_as_app "$app" "/home/${app}/app"
 
 print "vps-deploy: $app (restart)"
 doas rcctl restart "$app"
 doas rcctl check "$app"
 
-port=$(ruby34 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/DEPLOY/rails/apps.yml")).dig("apps","'"$app"'","port")')
+port=$(ruby34 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","port")')
 up_ok=0
 for i in {1..30}; do
   curl -fsS "http://127.0.0.1:${port}/up" >/dev/null 2>&1 && { up_ok=1; break; }
@@ -61,10 +61,10 @@ for i in {1..30}; do
 done
 [[ $up_ok -eq 1 ]] || { print -u2 "vps-deploy: $app /up not ready on :${port}"; exit 1; }
 
-queue_schema="$repo/DEPLOY/rails/${app}/db/queue_schema.rb"
+queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 if [[ -f $queue_schema ]] && ! grep -q 'define(version: 0)' "$queue_schema" 2>/dev/null; then
   print "vps-deploy: $app (solid_queue proof)"
-  ksh "$repo/DEPLOY/openbsd/sh/solid_queue_proof.sh" "$app" \
+  ksh "$repo/OPENBSD/sh/solid_queue_proof.sh" "$app" \
     || { print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
 fi
 

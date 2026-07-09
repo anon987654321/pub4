@@ -2,16 +2,16 @@
 
 # Flags live schema foreign keys that point at phantom SQLite tables.
 
-require_relative "../lib/utf8"
+require_relative "../OPERATOR/lib/utf8"
 
-ROOT = File.expand_path("../..", __dir__)
+ROOT = File.expand_path("..", __dir__)
 PHANTOM_TABLES = %w[
   buyers listings likers likees dislikers dislikees initiators receivers orders menu_items
   followees followers followed
 ].freeze
 
 def schema_files
-  Dir.glob(File.join(ROOT, "DEPLOY", "rails", "*", "db", "schema.rb"))
+  Dir.glob(File.join(ROOT, "RAILS", "*", "db", "schema.rb"))
 end
 
 def check_schema(path)

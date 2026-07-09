@@ -37,7 +37,9 @@ module Pub4
     def tree_kind
       cwd = Dir.pwd
       return :deployed_app if cwd.match?(%r{/home/[^/]+/app\z})
-      return :dev_checkout if cwd.include?("/home/dev/pub4") || File.directory?(File.join(repo_root, "DEPLOY"))
+      return :dev_checkout if cwd.include?("/home/dev/pub4") ||
+                               File.directory?(File.join(repo_root, "OPERATOR")) ||
+                               File.directory?(File.join(repo_root, "OPERATOR"))
       :local
     end
 
@@ -77,11 +79,11 @@ module Pub4
     def next_command_for(mode = self.mode)
       case mode
       when :vps_operator
-        "zsh DEPLOY/openbsd/sh/vps_ci.sh <app>  # after git pull; then ruby34 DEPLOY/integrity_gate.rb"
+        "zsh OPENBSD/sh/vps_ci.sh <app>  # after git pull; then ruby34 OPERATOR/integrity_gate.rb"
       when :local_contributor
-        ruby_version_ok? ? "DEPLOY/bin/check && cd MASTER && bin/check --profile=contributor" : "bin/ruby DEPLOY/bin/check  # resolves Ruby 3.4"
+        ruby_version_ok? ? "OPERATOR/bin/check && cd MASTER && bin/check --profile=contributor" : "bin/ruby OPERATOR/bin/check  # resolves Ruby 3.4"
       else
-        "DEPLOY/bin/check-full"
+        "OPERATOR/bin/check-full"
       end
     end
   end

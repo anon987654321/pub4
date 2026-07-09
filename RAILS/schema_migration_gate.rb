@@ -2,11 +2,11 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../lib/gate_result"
-require_relative "../lib/deploy_inventory"
+require_relative "../OPERATOR/lib/gate_result"
+require_relative "../OPERATOR/lib/deploy_inventory"
 
-ROOT = File.expand_path("../..", __dir__)
-RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
+ROOT = File.expand_path("..", __dir__)
+RAILS_ROOT = File.join(ROOT, "RAILS")
 
 def migration_versions(app_dir)
   Dir.glob(File.join(app_dir, "db", "migrate", "*.rb")).map do |path|

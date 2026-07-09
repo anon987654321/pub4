@@ -4,12 +4,12 @@
 require "open3"
 require "yaml"
 
-ROOT = File.expand_path("../..", __dir__)
+ROOT = File.expand_path("..", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
 require "pub4/ruby_runner"
 require "pub4/environment"
 
-RAILS_ROOT = File.join(ROOT, "DEPLOY", "rails")
+RAILS_ROOT = File.join(ROOT, "RAILS")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 
 def bundle_cmd

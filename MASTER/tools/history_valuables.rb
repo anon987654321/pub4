@@ -16,7 +16,7 @@ VALUABLE_PATTERNS = [
   /public_key|private_key/i,
   /rcctl|relayd|httpd|pfctl|doas/,
   /Stimulus|Turbo|Rails|Falcon/,
-  /MASTER|DEPLOY|converge|council|critique/i
+  /MASTER|OPERATOR|converge|council|critique/i
 ].freeze
 
 WINDOW = ENV.fetch("HISTORY_WINDOW", "--since=90.days.ago")

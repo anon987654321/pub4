@@ -39,45 +39,45 @@ agents:
 batches:
   consolidate_brgen_core_docs:
     files:
-      - DEPLOY/rails/brgen/brgen_CORE.md
-      - DEPLOY/rails/brgen/brgen_events.md
-      - DEPLOY/rails/brgen/brgen_feed.md
-      - DEPLOY/rails/brgen/brgen_search.md
-      - DEPLOY/rails/brgen/brgen_media.md
-      - DEPLOY/rails/brgen/brgen_moderation.md
+      - RAILS/brgen/brgen_CORE.md
+      - RAILS/brgen/brgen_events.md
+      - RAILS/brgen/brgen_feed.md
+      - RAILS/brgen/brgen_search.md
+      - RAILS/brgen/brgen_media.md
+      - RAILS/brgen/brgen_moderation.md
 
   codify_activity_graph:
     files:
-      - DEPLOY/rails/brgen/app/models/activity_event.rb
-      - DEPLOY/rails/brgen/app/services/activity_event_recorder.rb
-      - DEPLOY/rails/brgen/app/controllers/activity_events_controller.rb
-      - DEPLOY/rails/brgen/app/views/activity_events/index.html.erb
-      - DEPLOY/rails/brgen/config/routes.rb
+      - RAILS/brgen/app/models/activity_event.rb
+      - RAILS/brgen/app/services/activity_event_recorder.rb
+      - RAILS/brgen/app/controllers/activity_events_controller.rb
+      - RAILS/brgen/app/views/activity_events/index.html.erb
+      - RAILS/brgen/config/routes.rb
 
   codify_marketplace_trust:
     files:
-      - DEPLOY/rails/brgen/app/models/marketplace/listing_favorite.rb
-      - DEPLOY/rails/brgen/app/models/marketplace/saved_search.rb
-      - DEPLOY/rails/brgen/app/controllers/marketplace/favorites_controller.rb
-      - DEPLOY/rails/brgen/app/controllers/marketplace/saved_searches_controller.rb
-      - DEPLOY/rails/brgen/app/views/marketplace/listings/index.html.erb
-      - DEPLOY/rails/brgen/app/views/marketplace/listings/show.html.erb
+      - RAILS/brgen/app/models/marketplace/listing_favorite.rb
+      - RAILS/brgen/app/models/marketplace/saved_search.rb
+      - RAILS/brgen/app/controllers/marketplace/favorites_controller.rb
+      - RAILS/brgen/app/controllers/marketplace/saved_searches_controller.rb
+      - RAILS/brgen/app/views/marketplace/listings/index.html.erb
+      - RAILS/brgen/app/views/marketplace/listings/show.html.erb
 
   codify_takeaway_retention:
     files:
-      - DEPLOY/rails/brgen/app/models/takeaway/favorite_restaurant.rb
-      - DEPLOY/rails/brgen/app/controllers/takeaway/favorite_restaurants_controller.rb
-      - DEPLOY/rails/brgen/app/views/takeaway/restaurants/show.html.erb
-      - DEPLOY/rails/brgen/app/views/takeaway/orders/show.html.erb
+      - RAILS/brgen/app/models/takeaway/favorite_restaurant.rb
+      - RAILS/brgen/app/controllers/takeaway/favorite_restaurants_controller.rb
+      - RAILS/brgen/app/views/takeaway/restaurants/show.html.erb
+      - RAILS/brgen/app/views/takeaway/orders/show.html.erb
 
   codify_amber_intelligence:
     files:
-      - DEPLOY/rails/amber/app/models/item.rb
-      - DEPLOY/rails/amber/app/models/outfit.rb
-      - DEPLOY/rails/amber/app/views/items/_item.html.erb
-      - DEPLOY/rails/amber/app/views/outfits/index.html.erb
-      - DEPLOY/rails/amber/app/views/outfits/show.html.erb
-      - DEPLOY/rails/amber/app/views/ai/capsule.html.erb
+      - RAILS/amber/app/models/item.rb
+      - RAILS/amber/app/models/outfit.rb
+      - RAILS/amber/app/views/items/_item.html.erb
+      - RAILS/amber/app/views/outfits/index.html.erb
+      - RAILS/amber/app/views/outfits/show.html.erb
+      - RAILS/amber/app/views/ai/capsule.html.erb
 
 completion_definition:
   - canonical docs replace repeated prose

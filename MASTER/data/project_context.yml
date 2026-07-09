@@ -37,13 +37,13 @@ entries:
   description: pub4/MASTER — constitutional AI coding agent on OpenBSD VPS dev@brgen.no
   type: project
   body: |-
-    The MASTER project runs on VPS dev@brgen.no (46.23.89.226), OpenBSD 7.8, 1GB RAM, with passwordless doas. SSH uses `sshpass -p '<pass>' ssh -o StrictHostKeyChecking=no dev@46.23.89.226 'cmd'`—password per session; see `DEPLOY/OPERATOR.md`. The codebase lives at `~/pub4/MASTER/`—roughly six thousand lines of Ruby, Zeitwerk-autoloaded.
+    The MASTER project runs on VPS dev@brgen.no (46.23.89.226), OpenBSD 7.8, 1GB RAM, with passwordless doas. SSH uses `sshpass -p '<pass>' ssh -o StrictHostKeyChecking=no dev@46.23.89.226 'cmd'`—password per session; see `OPERATOR/OPERATOR.md`. The codebase lives at `~/pub4/MASTER/`—roughly six thousand lines of Ruby, Zeitwerk-autoloaded.
 
     MASTER is a constitutional AI agent replacing the Claude Code CLI. OpenRouter runs through `ruby_llm` with default model `nvidia/nemotron-3-super-120b-a12b:free`. Fallback order is qwen3-coder:free, then minimax-m2.5:free, then gpt-oss-120b:free, then gemini-2.0-flash.
 
     All coding happens on the VPS via sshpass SSH—never local edits. Patches go through `~/pub4/tmp/patch.rb`. Shell work uses zsh builtins only; no sed, awk, grep, find, head, or tail.
 
-    The pipeline is Intake → Enhance → Infer → Route → Guard → Deliberate → DestructiveReview → Execute → Review (Council, then Lint, then Prune) → Memory → Render. Pipe commands with `echo "cmd" | bundle exec ruby bin/cli`. Startup YAML includes `state.yml`, `limits.yml`, `rules.yml`, `voice.yml`, `style.yml`, and `models.yml`. The web tier is Falcon on port 53187; relayd terminates TLS at `https://ai.brgen.no` on 443. Deploy checks: `ruby DEPLOY/integrity_gate.rb` and `bin/probe integrity`.
+    The pipeline is Intake → Enhance → Infer → Route → Guard → Deliberate → DestructiveReview → Execute → Review (Council, then Lint, then Prune) → Memory → Render. Pipe commands with `echo "cmd" | bundle exec ruby bin/cli`. Startup YAML includes `state.yml`, `limits.yml`, `rules.yml`, `voice.yml`, `style.yml`, and `models.yml`. The web tier is Falcon on port 53187; relayd terminates TLS at `https://ai.brgen.no` on 443. Deploy checks: `ruby OPERATOR/integrity_gate.rb` and `bin/probe integrity`.
 - key: project_master_dual_gemfile
   name: MASTER has two Gemfiles
   description: MASTER/Gemfile (CLI) and MASTER/web/Gemfile (Falcon web) are independent
@@ -62,7 +62,7 @@ entries:
     VPS dev@brgen.no.
   type: project
   body: |-
-    Approved 2026-05-08 after scan, sweep, and council on `lib/` and `DEPLOY`.
+    Approved 2026-05-08 after scan, sweep, and council on `lib/` and `OPERATOR`.
 
     Target layout under `lib/`: `now/` for cli, repl, and pipeline; `loop/` for autoloop, sweep, heartbeat, and convergence; `judge/` for scan/rules, council, swarm, and security with a unified Verdict; `voice/` for personality, soul, renderer, and speech; `ground/` for config, axioms, and `data/*.yml` as the Constitution aggregator; `reach/` for tools/base plus twenty-four tools; `trace/` for session, telemetry, bus, and undo. The old `lib/master/` tree is gone; this subsumes the Constitution aggregator, Reach::Base, deliberation unification, refactor cycle, Security::Policy, and the Voice namespace.
 
@@ -140,10 +140,10 @@ entries:
     HOW TO APPLY: prefer collapse over accretion — one parametric form with data-driven variants over many near-duplicate files (e.g. the four bin/check-* scripts collapsed to one bin/check --profile). Closed minimal surfaces. When in doubt, remove. Match the surrounding restraint. Craft is not accretion — the TTS voice engines were deliberately kept.
 - key: bsdports_openbsd_ports_index
   name: bsdports is the official next-gen OpenBSD ports index (Solene blessing)
-  description: DEPLOY/rails/bsdports — sanctioned successor to Solene Rapenne's ports
+  description: RAILS/bsdports — sanctioned successor to Solene Rapenne's ports
     index
   type: project
-  body: DEPLOY/rails/bsdports is being built as the official next-generation OpenBSD
+  body: RAILS/bsdports is being built as the official next-generation OpenBSD
     ports index — the operator has the blessing and go-ahead of Solene Rapenne (solene@,
     former OpenBSD developer, now Qubes OS core team; blog at dataswamp.org) to create
     the next version of her ports index. Treat bsdports as a first-class, real-world

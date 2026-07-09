@@ -7,7 +7,7 @@ require_relative "../lib/pub4/ci_guard"
 ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
 ENV["BUNDLER_AUDIT_UPDATE"] ||= "0"
 ENV["NPM_CONFIG_CACHE"] ||= File.expand_path("~/.npm")
-monorepo_rails = "/home/dev/pub4/DEPLOY/rails"
+monorepo_rails = "/home/dev/pub4/RAILS"
 ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_rails, "shared"))
 
 vps_host = ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps") || File.exist?("/etc/relayd.conf")
@@ -19,7 +19,7 @@ Pub4::CiGuard.run! do
     app = File.basename(Dir.getwd)
     css_builder = File.join(rails_root, "build_all_css.rb")
     unless File.readable?(css_builder)
-      fallback = File.expand_path("pub4-rails/DEPLOY/rails/build_all_css.rb", ENV["HOME"].to_s)
+      fallback = File.expand_path("pub4-rails/RAILS/build_all_css.rb", ENV["HOME"].to_s)
       css_builder = fallback if File.readable?(fallback)
     end
     step "Styles: pub4 CSS", "#{RbConfig.ruby} #{css_builder} --app #{app}"

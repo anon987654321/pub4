@@ -1,5 +1,5 @@
 # Quarantined sample: non-executable reference only.
-# Original path: DEPLOY/sh/tools/pouncekeys/pouncekeys_setup.rb
+# Original path: OPERATOR/sh/tools/pouncekeys/pouncekeys_setup.rb
 # Reason: keylogger installer content; kept only for audit/provenance.
 # Do not run, source, deploy, or rename into an executable extension.
 

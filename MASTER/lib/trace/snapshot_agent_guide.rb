@@ -2,7 +2,7 @@
 
 module Master
   module Trace
-    # Preamble embedded at the top of MASTER/DEPLOY snapshot markdown artifacts.
+    # Preamble embedded at the top of MASTER/OPERATOR snapshot markdown artifacts.
     # Instructs downstream AI agents how to consume the digest before the tree/codebase.
     module SnapshotAgentGuide
       module_function
@@ -49,7 +49,7 @@ module Master
           "4. Binaries and large files are **listed only** (not inlined) — do not expect base64 blocks.",
           "5. Repeat for **both** `MASTER_snapshot.md` and `DEPLOY_snapshot.md` when present:",
           "   - `$SNAP/work/MASTER/...` from MASTER sections",
-          "   - `$SNAP/work/DEPLOY/...` from DEPLOY sections",
+          "   - `$SNAP/work/OPERATOR/...` from OPERATOR sections",
           "6. Verify: file count vs Tree, spot-check hashes, run targeted tests from the mirrored tree.",
           "",
           "Do not edit the mirrored tree until you have a written assessment and a trace for the path",

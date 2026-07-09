@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @shared_functions.sh — shared helpers for DEPLOY/rails/* scripts
+# @shared_functions.sh — shared helpers for RAILS/* scripts
 # Source this file; do not execute directly.
 # Requires: zsh, ruby34, bundle, rails, doas
 set -euo pipefail
@@ -26,8 +26,8 @@ master_scan_dep() {
   local log=/tmp/master_${app_name}_scan.log
   [[ -x ${master}/bin/cli ]] || return 0
   [[ -n ${SKIP_MASTER_SCAN:-} ]] && { log "MASTER scan skipped (SKIP_MASTER_SCAN)"; return 0; }
-  log "MASTER rules scan (DEPLOY) pre-bundle"
-  if ! (cd "$master" && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle_exec exec ruby bin/cli "/scan DEPLOY") \
+  log "MASTER rules scan (OPERATOR) pre-bundle"
+  if ! (cd "$master" && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle_exec exec ruby bin/cli "/scan OPERATOR") \
     </dev/null >"$log" 2>&1; then
     cat "$log" >&2
     log_err "MASTER scan CLI failed"
@@ -80,7 +80,7 @@ need_cmd() {
 # overlay_shared_initializers APP_DIR — shared config wins over stale per-app copies
 overlay_shared_initializers() {
   local app_dir=$1
-  local shared_init=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/config/initializers
+  local shared_init=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails/shared/config/initializers
   [[ -d $shared_init ]] || return 0
   sync_tree "$shared_init" "${app_dir}/config/initializers"
   log_ok "shared initializers overlaid"
@@ -89,7 +89,7 @@ overlay_shared_initializers() {
 # overlay_shared_public APP_DIR — merge shared/public (tokens.css, minimal-ui.css, icons)
 overlay_shared_public() {
   local app_dir=$1
-  local shared_public=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/public
+  local shared_public=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails/shared/public
   [[ -d $shared_public ]] || return 0
   sync_tree "$shared_public" "${app_dir}/public" 0
   log_ok "shared public assets overlaid"
@@ -99,7 +99,7 @@ overlay_shared_public() {
 # overlay_shared_bin APP_DIR — ci.rb expects bin/rubocop, brakeman, bundler-audit stubs
 overlay_shared_bin() {
   local app_dir=$1
-  local shared_bin=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/bin
+  local shared_bin=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails/shared/bin
   [[ -d $shared_bin ]] || return 0
   ${_PRIV} mkdir -p "${app_dir}/bin"
   for tool in rubocop brakeman bundler-audit; do
@@ -107,8 +107,8 @@ overlay_shared_bin() {
     ${_PRIV} cp "${shared_bin}/${tool}" "${app_dir}/bin/${tool}"
     ${_PRIV} chmod 755 "${app_dir}/bin/${tool}"
   done
-  [[ -f ${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/.rubocop.yml ]] \
-    && ${_PRIV} cp "${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails/shared/.rubocop.yml" "${app_dir}/.rubocop.yml"
+  [[ -f ${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails/shared/.rubocop.yml ]] \
+    && ${_PRIV} cp "${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails/shared/.rubocop.yml" "${app_dir}/.rubocop.yml"
   log_ok "shared bin stubs overlaid"
 }
 
@@ -178,7 +178,7 @@ master_web_assets_precompile() {
     cd "$web_root"
     rm -rf public/assets
     RAILS_ENV=production SECRET_KEY_BASE="${SECRET_KEY_BASE:-dummy}" bundle_exec exec rails assets:precompile
-    bundle_exec exec ruby "${PUB4:-/home/dev/pub4}/DEPLOY/rails/master_web_assets_gate.rb"
+    bundle_exec exec ruby "${PUB4:-/home/dev/pub4}/RAILS/master_web_assets_gate.rb"
   ) || { log_err "MASTER web assets precompile failed"; return 1; }
   log_ok "MASTER web assets ready"
 }
@@ -266,7 +266,7 @@ rails_runtime_gate() {
     rails_assets_precompile_as_app "$app_name" "$app_dir" \
       || return 1
     if [[ -x ${app_dir}/bin/ci ]]; then
-      local rails_tree=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}/rails
+      local rails_tree=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails
       if [[ -d $rails_tree ]]; then
         chmod o+x /home/dev 2>/dev/null || true
         chmod -R a+rX "$rails_tree" 2>/dev/null || true
@@ -455,7 +455,7 @@ deploy_tracked_app() {
 
   sync_tree "${SRC_DIR}/" "${APP_DIR}"
   doas rm -rf "/home/${app_name}/shared"
-  sync_tree /home/dev/pub4/DEPLOY/rails/shared "/home/${app_name}/shared"
+  sync_tree /home/dev/pub4/RAILS/shared "/home/${app_name}/shared"
   doas chown -R "${app_name}:${app_name}" "/home/${app_name}/shared"
   doas chown -R "${app_name}:${app_name}" "$APP_DIR"
   overlay_shared_initializers "$APP_DIR"
@@ -550,7 +550,7 @@ retire_legacy_rails_rcd() {
 # Installs or updates the rc.d service file for a Rails app on OpenBSD.
 install_rcd() {
   local app_name=$1 app_dir=$2 port=$3 svc=${4:-$1}
-  local deploy_root=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/DEPLOY}
+  local deploy_root=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}
   local rcd_src="${deploy_root}/openbsd/etc/rc.d/${svc}"
   local rcd_dst="/etc/rc.d/${svc}"
   if [[ ! -f $rcd_src ]]; then

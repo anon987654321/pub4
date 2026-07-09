@@ -19,7 +19,7 @@ end
 runner = Pub4::CheckRunner.new(prefix: "deploy-vps", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
-failures << "health core" unless runner.run("health core", ruby34, "DEPLOY/openbsd/health_check.rb", "--core")
-failures << "public health" unless runner.run("public health", ruby34, "DEPLOY/openbsd/health_check.rb", "--public", "--all-ready-apps")
+failures << "health core" unless runner.run("health core", ruby34, "OPENBSD/health_check.rb", "--core")
+failures << "public health" unless runner.run("public health", ruby34, "OPENBSD/health_check.rb", "--public", "--all-ready-apps")
 
 exit(failures.empty? ? 0 : 1)

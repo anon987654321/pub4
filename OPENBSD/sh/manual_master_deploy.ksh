@@ -1,6 +1,6 @@
 #!/bin/ksh
 # Manual MASTER deploy — use when vps_deploy_master.sh stalls.
-# Run on VPS: tmux new-session -d -s masterdeploy /home/dev/pub4/DEPLOY/openbsd/sh/manual_master_deploy.ksh
+# Run on VPS: tmux new-session -d -s masterdeploy /home/dev/pub4/OPENBSD/sh/manual_master_deploy.ksh
 # Watch: tail -f /tmp/master_manual.log
 
 LOG=/tmp/master_manual.log
@@ -30,7 +30,7 @@ else
   bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle
   bundle34 exec rails assets:precompile
 fi
-ruby34 /home/dev/pub4/DEPLOY/rails/master_web_assets_gate.rb
+ruby34 /home/dev/pub4/RAILS/master_web_assets_gate.rb
 
 echo restart_master
 # rc_pre skips face/precompile when artifacts exist (patched /etc/rc.d/master).

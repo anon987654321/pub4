@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Fix hardcoded password123 in DEPLOY/rails deploy scripts (pure zsh).
+# Fix hardcoded password123 in RAILS deploy scripts (pure zsh).
 
 SCRIPT_DIR=${0:a:h}
 RAILS_ROOT=${SCRIPT_DIR:h}/rails

@@ -1,6 +1,6 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* BEGIN:generated-face-root — ruby DEPLOY/rails/scripts/generate_face_root_css.rb */
+/* BEGIN:generated-face-root — ruby RAILS/scripts/generate_face_root_css.rb */
 :root {
   --c-text: oklch(86% 0.02 80);
   --x-text: #e7e9ea;

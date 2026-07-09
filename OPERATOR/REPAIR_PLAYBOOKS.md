@@ -5,7 +5,7 @@
 First command:
 
 ```sh
-ruby DEPLOY/integrity_gate.rb
+ruby OPERATOR/integrity_gate.rb
 ```
 
 Read the first failing gate. Do not jump to full deploy. Most failures are inventory drift, frontend rules, relayd/domain mismatch, or missing generated assets.
@@ -15,7 +15,7 @@ Read the first failing gate. Do not jump to full deploy. Most failures are inven
 First command:
 
 ```sh
-zsh DEPLOY/openbsd/sh/vps_ci.sh <app>
+zsh OPENBSD/sh/vps_ci.sh <app>
 ```
 
 Keep one run at a time. If npm or sass touches root-owned cache, export `HOME=/home/<app>` and `NPM_CONFIG_CACHE=/home/<app>/.npm`.
@@ -37,8 +37,8 @@ Then open `https://ai.brgen.no`, tap to start, and inspect whether the prompt ap
 First commands:
 
 ```sh
-ruby DEPLOY/rails/domain_alignment_gate.rb
-ruby DEPLOY/openbsd/deploy_smoke_gate.rb
+ruby RAILS/domain_alignment_gate.rb
+ruby OPENBSD/deploy_smoke_gate.rb
 ```
 
 Compare `rails/apps.yml`, `master.json`, `openbsd/etc/relayd.conf`, and acme/NSD config. Restart relayd only after the config is coherent.

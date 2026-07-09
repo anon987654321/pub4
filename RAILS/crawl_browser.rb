@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 # Ferrum browser crawl — element presence and light interaction checks.
-# Run from MASTER: BUNDLE_WITH=test bundle exec ruby ../DEPLOY/rails/crawl_browser.rb
+# Run from MASTER: BUNDLE_WITH=test bundle exec ruby ../RAILS/crawl_browser.rb
 
 require "optparse"
 require "timeout"

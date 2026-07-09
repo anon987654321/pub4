@@ -27,19 +27,19 @@ cd "${PUB4}/MASTER/web"
 bundle config set --local path vendor/bundle
 bundle install
 RAILS_ENV=production SECRET_KEY_BASE="${SECRET_KEY_BASE:-dummy}" bundle exec rails assets:precompile
-bundle exec ruby "${PUB4}/DEPLOY/rails/master_web_assets_gate.rb"
+bundle exec ruby "${PUB4}/RAILS/master_web_assets_gate.rb"
 doas rcctl restart master 2>/dev/null || doas rcctl start master
 doas rcctl check master || log "WARN: master not ok"
 
 typeset -a APPS
-if command -v jq >/dev/null 2>&1 && [[ -f ${PUB4}/DEPLOY/master.json ]]; then
-  APPS=("${(@f)$(jq -r '.apps[].name' "${PUB4}/DEPLOY/master.json")}")
+if command -v jq >/dev/null 2>&1 && [[ -f ${PUB4}/OPERATOR/master.json ]]; then
+  APPS=("${(@f)$(jq -r '.apps[].name' "${PUB4}/OPERATOR/master.json")}")
 else
   APPS=(brgen amber bsdports hjerterom)
 fi
 
 for app in $APPS; do
-  typeset script="${PUB4}/DEPLOY/rails/${app}/${app}.sh"
+  typeset script="${PUB4}/RAILS/${app}/${app}.sh"
   log "=== Rails: ${app} ==="
   if [[ ! -f $script ]]; then
     log "WARN: missing $script"
