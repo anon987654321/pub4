@@ -60,8 +60,11 @@ sync_tree() {
     log_warn "openrsync failed; falling back to tar copy"
   fi
   if [[ $delete == 1 ]]; then
-    ${_PRIV} find "${dst%/}" -mindepth 1 -maxdepth 1 \
-      ! -name db ! -name storage ! -name log ! -name tmp -exec rm -rf {} +
+    ${_PRIV} sh -c 'cd "$1" && for entry in * .[!.]* ..?*; do
+      [[ -e "$entry" ]] || continue
+      case "$entry" in db|storage|log|tmp) continue ;; esac
+      rm -rf -- "$entry"
+    done' _ "${dst%/}" 2>/dev/null || true
   fi
   ${_PRIV} sh -c "cd '${src%/}' && tar cf - ." | ${_PRIV} sh -c "cd '${dst%/}' && tar xf -"
   ${_PRIV} find "${dst%/}" -name '._*' -delete 2>/dev/null || true
