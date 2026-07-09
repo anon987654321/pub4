@@ -47,7 +47,9 @@
         face_council_multi.js face_phosphor_trail.js face_offscreen_ecology.js face_micro_interactions.js
         face_perf_guards.js face_brutalist.js
         face_semantics.js face_minimal_ui.js face_loops_music.js face_loops_nudge.js
-      ].to_h { |name| [name, asset_path(name)] }.to_json) %>
+        face_vision.bundle.js cognition_ecology.js cognition_ecology_render.js
+      ].to_h { |name| [name, asset_path(name)] }.to_json) %>,
+      faceVisionBundle: "<%= asset_path("face_vision.bundle.js") %>"
     };
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
@@ -126,6 +128,8 @@
   <%# Loaded ahead of the manifest below: defines window.ParticleKernel, the base global that
       particle_worker, the cognition-ecology scripts, and the lazily-imported face modules read. %>
   <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
+  <script src="<%= asset_path("container_gate.js") %>" defer></script>
+  <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
@@ -183,9 +187,16 @@
       }
       // Deferred boot: the WebGL face (THREE.js ~514KB parse) is loaded only AFTER the
       // primer tap, so the initial page stays light and the shell is interactive at once.
+      function resetFaceCanvasForWebGL(){
+        var cv=document.getElementById('face');
+        if(!cv||!cv.parentNode)return;
+        var fresh=cv.cloneNode(false);
+        cv.parentNode.replaceChild(fresh,cv);
+      }
       function loadFace(retried){
         if(window.__MASTER_FACE_IMPORT__)return;
         window.__MASTER_FACE_IMPORT__=true;
+        resetFaceCanvasForWebGL();
         import("<%= asset_path("face.js") %>").then(function(){
           // import() resolves only after face.js sets window.MASTER_FACE — start here so a boot
           // that finishes after the 35s watchdog still runs instead of leaving a loaded-but-dead face.
@@ -203,6 +214,7 @@
         if(fired)return;
         fired=true;
         window._primerFired=true;
+        window.dispatchEvent(new CustomEvent('primer:ready'));
         primeAudio();
         dismissPrimer();
         revealPrompt();
@@ -232,13 +244,13 @@
     })();
   </script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
-  <script src="/master_events.js" defer></script>
-  <script src="/shortcut_sheet.js" defer></script>
   <%# Deferred boot modules — single ordered manifest, loaded after the shell paints.
       face.js (the THREE.js WebGL face) is intentionally absent: loadFace() imports it
       lazily on the primer tap (see the boot script above). %>
   <%= javascript_include_tag(*%w[face_state visual_governor topology_registry particle_worker
-        chat_actions visual_bridge cognition_ecology cognition_ecology_render chat], defer: true) %>
+        chat_actions visual_bridge chat], defer: true) %>
+  <script src="<%= asset_path("master_events.js") %>" defer></script>
+  <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
     fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
       if (cfg && typeof cfg === 'object') window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };

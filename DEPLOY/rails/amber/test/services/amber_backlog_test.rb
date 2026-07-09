@@ -82,8 +82,9 @@ class AmberBacklogTest < Minitest::Test
     ai = read("app/controllers/ai_controller.rb")
 
     assert_includes migration, "create_table :wardrobe_items"
-    assert_includes media_job, "EmbedGarmentJob.perform_later"
-    assert_includes media_job, "CalculateSustainabilityJob.perform_later"
+    assert_includes media_job, "enqueue_once(EmbedGarmentJob"
+    assert_includes media_job, "enqueue_once(CalculateSustainabilityJob"
+    assert_includes media_job, "MediaProcessingJob.perform_now"
     assert_includes ai, "RecommendOutfitsJob.perform_later"
     assert_includes ai, "packing_list_items.find_or_create_by!"
   end

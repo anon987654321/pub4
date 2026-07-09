@@ -27,7 +27,7 @@ class ItemsController < ApplicationController
   def create
     @item = Current.user.items.build(item_params)
     if @item.save
-      WardrobeMediaJob.perform_later(@item.id) if @item.photos.attached?
+      WardrobeMediaJob.enqueue_for(@item.id) if @item.photos.attached?
       @item.record_activity!("AmberItemCreated", source_vertical: "amber")
       redirect_to(@item, notice: "Item added")
     else
@@ -39,7 +39,7 @@ class ItemsController < ApplicationController
 
   def update
     if @item.update(item_params)
-      WardrobeMediaJob.perform_later(@item.id) if @item.photos.attached?
+      WardrobeMediaJob.enqueue_for(@item.id) if @item.photos.attached?
       @item.record_activity!("AmberItemUpdated", source_vertical: "amber")
       redirect_to(@item, notice: "Updated")
     else

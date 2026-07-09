@@ -16,3 +16,8 @@ test:
 
 production:
   <<: *default
+  workers:
+    - queues: [critical, default, bulk]
+      threads: 1
+      processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
+      polling_interval: 0.5

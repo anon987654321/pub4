@@ -1,4 +1,5 @@
-// Lightweight 2D face while Three.js loads. Uses canvas#face (2d context only).
+// Lightweight 2D placeholder while Three.js loads. Never touches #face — a 2d context
+// on that canvas permanently blocks WebGLRenderer from initializing (dead tap / black face).
 "use strict";
 
 let fallbackFrame = null;
@@ -8,11 +9,25 @@ function stop2DFallback() {
     cancelAnimationFrame(fallbackFrame);
     fallbackFrame = null;
   }
+  const canvas = document.getElementById("face-2d-fallback");
+  if (canvas) canvas.remove();
+}
+
+function ensureFallbackCanvas() {
+  let canvas = document.getElementById("face-2d-fallback");
+  if (canvas) return canvas;
+  canvas = document.createElement("canvas");
+  canvas.id = "face-2d-fallback";
+  canvas.setAttribute("aria-hidden", "true");
+  canvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;background:#000";
+  const face = document.getElementById("face");
+  if (face?.parentNode) face.parentNode.insertBefore(canvas, face.nextSibling);
+  else document.body.appendChild(canvas);
+  return canvas;
 }
 
 function start2DFallback() {
-  const canvas = document.getElementById("face");
-  if (!canvas) return;
+  const canvas = ensureFallbackCanvas();
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
@@ -29,7 +44,7 @@ function start2DFallback() {
   let phase = 0;
 
   const draw = () => {
-    if (window.MASTER_FACE && window.MASTER_FACE.startEverything) {
+    if (window.MASTER_FACE?.startEverything) {
       stop2DFallback();
       return;
     }
