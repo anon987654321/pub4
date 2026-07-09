@@ -14,5 +14,6 @@ set -euo pipefail
 cd ~/pub4
 git pull origin main
 cd DEPLOY/openbsd
-doas zsh openbsd.sh
+doas cp -R etc usr var /
+doas zsh DEPLOY.sh --sync-configs
 ENDSSH

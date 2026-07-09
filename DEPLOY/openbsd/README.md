@@ -20,13 +20,17 @@ ssh -p 31415 dev@server4.openbsd.amsterdam   # hypervisor
 
 ```zsh
 cd ~/pub4/DEPLOY/openbsd
-tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"
-tmux attach -t deploy
+doas zsh DEPLOY.sh
+doas cp -R etc usr var /
+# or config-only:
+doas cp -R etc usr var /
+doas zsh DEPLOY.sh --sync-configs
 ```
 
 | Command | Purpose |
 |---------|---------|
-| `doas zsh openbsd.sh --sync-configs` | Repo `etc/` → `/etc`, restart |
+| `doas cp -R etc usr var /` | Install exact config trees from repo |
+| `doas zsh DEPLOY.sh --sync-configs` | Install configs + validate + restart |
 | `doas ksh resource_guard.sh` | Shed optional apps under load |
 | `doas ksh start_all_apps.sh` | Full stack |
 
