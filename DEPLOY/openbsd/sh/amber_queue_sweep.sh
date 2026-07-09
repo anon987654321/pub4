@@ -5,11 +5,15 @@ APP=amber
 DIR=/home/${APP}/app
 export HOME=/home/${APP}
 
+run_amber() {
+  doas su -m "${APP}" -c "export HOME=/home/${APP}; cd ${DIR} && bundle34 exec rails $* RAILS_ENV=production"
+}
+
 echo "==> amber queue report"
-su -m "${APP}" -c "cd ${DIR} && bundle exec rails amber:queue:report RAILS_ENV=production"
+run_amber amber:queue:report
 
 echo "==> amber queue sweep"
-su -m "${APP}" -c "cd ${DIR} && bundle exec rails amber:queue:sweep RAILS_ENV=production"
+run_amber amber:queue:sweep
 
 echo "==> amber queue report (after)"
-su -m "${APP}" -c "cd ${DIR} && bundle exec rails amber:queue:report RAILS_ENV=production"
+run_amber amber:queue:report
