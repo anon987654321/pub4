@@ -18,8 +18,8 @@ class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
 
     advisories = [ SecurityAdvisory.new(identifier: "CVE-TEST-1") ]
     calls = []
-    NvdCveService.stub(:crossref, ->(port, limit: 5) { calls << [port.id, limit]; advisories }) do
-      SecurityAdvisoryRefreshJob.stub_const(:SLEEP_SECONDS, 0) do
+    Kernel.stub(:sleep, nil) do
+      NvdCveService.stub(:crossref, ->(port, limit: 5) { calls << [port.id, limit]; advisories }) do
         SecurityAdvisoryRefreshJob.perform_now(batch_size: 2)
       end
     end
