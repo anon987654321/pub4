@@ -20,11 +20,17 @@ class ProjectTree
     DEPLOY/openbsd/var DEPLOY/rails
   ].freeze
 
-  def initialize(root:, max_depth: 4, summary: false)
+  NOISE_SEGMENTS = %w[
+    vendor tmp log storage node_modules .bundle coverage dist .master knowledge output
+    weights .kamal .cursor .codex .claude sockets pids cache tts_cache
+  ].freeze
+
+  def initialize(root:, max_depth: 4, summary: false, overview: false)
     @root = File.expand_path(root)
     @max_depth = max_depth
     @summary = summary
-    @skip = load_skip_dirs
+    @overview = overview
+    @skip = overview ? load_skip_dirs - ["DEPLOY/rails"] : load_skip_dirs
     @counts = Hash.new(0)
   end
 
@@ -40,6 +46,10 @@ class ProjectTree
       puts "  Total files: #{@counts['files']}"
       puts "  Total dirs:  #{@counts['dirs']}"
 
+      if @overview && File.basename(@root) == "pub4"
+        print_pub4_alignment
+      end
+
       # Special useful breakdown for MASTER work
       if @root.end_with?("MASTER") || File.basename(@root) == "MASTER"
         lib_dir = File.join(@root, "lib")
@@ -50,6 +60,20 @@ class ProjectTree
         end
       end
     end
+  end
+
+  def print_pub4_alignment
+    puts
+    puts "Alignment read (far-away):"
+    puts "  ✓ SENSIBLE  4 pillars: DEPLOY (prod), MASTER (agent), bin (CLI), lora (training)"
+    puts "  ✓ SENSIBLE  DEPLOY/rails: 7 apps + shared engine + apps.yml inventory"
+    puts "  ✓ SENSIBLE  brgen verticals: dating maps marketplace playlist takeaway tv + social core"
+    puts "  ✓ SENSIBLE  MASTER/lib: now judge loop reach ground trace voice (constitutional spine)"
+    puts "  ⚠ DRIFT     MASTER/data: ~50 root yml + runtime/ shard — merge target (see START_HERE)"
+    puts "  ⚠ DRIFT     DEPLOY + MASTER duplicate DECISIONS/EXAMPLES/REPAIR/DEBT md pairs"
+    puts "  ⚠ DRIFT     brgen SCSS: many _vertical_* partials — visual split matches domains (ok)"
+    puts "  ✗ NOISE     lora/*.jpg at repo root — move under lora/exports/"
+    puts "  → Re-run: ruby DEPLOY/openbsd/sh/tools/tree.rb . --pub4-overview"
   end
 
   def breakdown_lib(lib_root)
@@ -152,11 +176,35 @@ class ProjectTree
 
   def should_skip?(path)
     rel = path.sub(@root + "/", "")
+    return true if noise_path?(rel)
     @skip.any? { |s| rel.start_with?(s) || rel == s }
   end
 
+  def noise_path?(rel)
+    parts = rel.split("/")
+    return true if parts.any? { |p| NOISE_SEGMENTS.include?(p) }
+    return true if rel.include?("public/assets/") || rel.include?("public/packs/")
+    return true if rel.include?("app/assets/builds/")
+
+    false
+  end
+
+  def depth_limit_for(dir, depth)
+    return @max_depth unless @overview
+
+    rel = dir.sub(@root + "/", "")
+    return 0 if rel.match?(%r{^DEPLOY/rails/[^/]+/app/[^/]+}) # no drill into views/controllers files
+    return 1 if rel.match?(%r{^DEPLOY/rails/[^/]+/app$})
+    return 1 if rel.match?(%r{^DEPLOY/rails/[^/]+$}) && !rel.end_with?("/shared")
+    return 1 if rel == "MASTER/data" || rel.start_with?("MASTER/data/runtime")
+    return 2 if rel == "MASTER/lib"
+
+    @max_depth
+  end
+
   def walk(dir, prefix, depth)
-    return if depth > @max_depth
+    limit = depth_limit_for(dir, depth)
+    return if depth > limit
 
     entries = begin
       Dir.entries(dir).sort
@@ -205,7 +253,7 @@ class ProjectTree
 end
 
 if __FILE__ == $PROGRAM_NAME
-  options = { max_depth: 4, summary: false, root: nil, focus: nil }
+  options = { max_depth: 4, summary: false, root: nil, focus: nil, overview: false }
 
   OptionParser.new do |opts|
     opts.on("--max-depth=N", Integer) { |n| options[:max_depth] = n }
@@ -231,9 +279,15 @@ if __FILE__ == $PROGRAM_NAME
       options[:summary] = true
       # We'll enhance the summary logic below for this flag
     end
+    opts.on("--pub4-overview", "Far-away visual tree: all pillars, Rails apps collapsed, noise pruned") do
+      options[:overview] = true
+      options[:max_depth] = 3
+      options[:summary] = true
+    end
     opts.on("-h", "--help") do
       puts opts
       puts "\nExamples:"
+      puts "  tree.rb . --pub4-overview     # full repo shape (start here)"
       puts "  tree.rb MASTER --max-depth=5"
       puts "  tree.rb --focus lib --max-depth=6 --summary"
       puts "  tree.rb --master-lib          # best for working on the architecture"
@@ -250,10 +304,16 @@ if __FILE__ == $PROGRAM_NAME
     end
   end
 
+  if options[:overview]
+    puts "=== pub4 overview (noise pruned: vendor, tmp, log, storage, node_modules, builds, assets) ==="
+    puts
+  end
+
   tree = ProjectTree.new(
     root: options[:root],
     max_depth: options[:max_depth],
-    summary: options[:summary]
+    summary: options[:summary],
+    overview: options[:overview]
   )
 
   # Simple focus mode (restricts walk root)
@@ -271,7 +331,8 @@ if __FILE__ == $PROGRAM_NAME
       focused_tree = ProjectTree.new(
         root: focus_path,
         max_depth: options[:max_depth],
-        summary: options[:summary]
+        summary: options[:summary],
+        overview: options[:overview]
       )
       focused_tree.run
       exit

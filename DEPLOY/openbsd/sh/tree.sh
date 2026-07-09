@@ -17,7 +17,7 @@ set -eu
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 RUBY_TREE="$SCRIPT_DIR/tools/tree.rb"
 
-ROOT="/root/pub4"
+ROOT="${PUB4_ROOT:-$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)}"
 
 # If the first argument looks like a directory (or .), treat it as root
 if [ $# -gt 0 ]; then

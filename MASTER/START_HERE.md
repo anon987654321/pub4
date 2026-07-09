@@ -97,6 +97,14 @@ There are ~80 files under `data/`. That is too many. They exist because the runt
 
 DEPLOY mirror: `DEPLOY/START_HERE.md` + `DEPLOY/OPERATOR.md` — not duplicate MASTER law.
 
+## Repo shape (run before big refactors)
+
+```bash
+ruby DEPLOY/openbsd/sh/tools/tree.rb . --pub4-overview
+```
+
+Far-away visual tree with noise pruned and alignment notes. Do this before merging YAML/MD or restructuring folders.
+
 ## Source And Local State
 
 - Source: `lib/`, `kernel/`, `data/`, `bin/`, `test/`, `spec/`, `web/app/`, `web/public/`.
