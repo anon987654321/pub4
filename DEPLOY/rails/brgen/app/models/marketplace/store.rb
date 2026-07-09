@@ -5,11 +5,10 @@ module Marketplace
     include CityTenantable
 
     # Engine-ized Shared
-    include Shared.concern(:Notifiable) rescue nil
-    include Shared.concern(:ActivityTrackable) rescue nil
+    include Shared::Notifiable
     tracks_activity created: "MarketplaceStoreCreated", updated: "MarketplaceStoreUpdated", source_vertical: "marketplace", actor: :owner
-    include Shared.concern(:GeoLocatable) rescue nil
-    include Shared.concern(:Reactable) rescue nil
+    include Shared::GeoLocatable
+    include Shared::Reactable
 
     self.table_name = "marketplace_stores"
 

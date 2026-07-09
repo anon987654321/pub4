@@ -42,15 +42,4 @@ module ApplicationHelper
     url_for(attachment.variant(resize_to_limit: [ largest, largest ]))
   end
 
-  def nok(amount)
-    number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")
-  end
-
-  def norwegian_date(value)
-    l(value.to_date, format: "%d.%m.%Y")
-  end
-
-  def api_date(value)
-    value.to_date.iso8601
-  end
 end

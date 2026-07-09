@@ -46,18 +46,6 @@ module ApplicationHelper
     end
   end
 
-  def nok(amount)
-    number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")
-  end
-
-  def norwegian_date(value)
-    l(value.to_date, format: "%d.%m.%Y")
-  end
-
-  def api_date(value)
-    value.to_date.iso8601
-  end
-
   def safe_http_link(label, url)
     safe_url = safe_http_url(url)
     return unless safe_url

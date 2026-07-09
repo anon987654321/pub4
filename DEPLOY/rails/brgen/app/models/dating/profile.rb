@@ -4,11 +4,10 @@ class Dating::Profile < ApplicationRecord
   include CityTenantable
 
   # Engine-ize Shared
-  include Shared::ActivityTrackable
   tracks_activity created: "DatingProfileCreated", updated: "DatingProfileUpdated", source_vertical: "dating", visibility: "private", actor: :user
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::GeoLocatable
   include Shared::MediaProcessable
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Reactable
   belongs_to :user
   belongs_to :neighborhood, optional: true
   has_many_attached :photos
@@ -27,7 +26,6 @@ class Dating::Profile < ApplicationRecord
   validate :photos_present_when_visible, on: :update
 
   scope :visible, -> { where(visible: true) }
-  include Shared::GeoLocatable
   # nearby (bbox) + haversine provided by concern; old approx replaced for consistency
   scope :in_neighborhood, ->(neigh) { neigh ? where(neighborhood_id: neigh.id) : all }
 

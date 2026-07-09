@@ -3,7 +3,6 @@
 class Playlist::DillaSketch < ApplicationRecord
   self.table_name = "playlist_dilla_sketches"
 
-  include Shared::ActivityTrackable
   tracks_activity created: "DillaSketchCreated", updated: "DillaSketchUpdated", source_vertical: "playlist", visibility: "private", actor: :user
 
   belongs_to :user

@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
 class Message < ApplicationRecord
-  include Shared::ActivityTrackable
   include Shared::MediaProcessable
   tracks_activity created: "MessageSent", source_vertical: "messages", actor: :sender
 
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   belongs_to :conversation
   belongs_to :sender, class_name: "User", foreign_key: :sender_id
   has_many :message_receipts, dependent: :destroy

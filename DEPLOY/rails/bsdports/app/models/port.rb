@@ -2,8 +2,8 @@
 
 class Port < ApplicationRecord
   # Engine-ize Shared via pub4-shared
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
   belongs_to :platform
   belongs_to :category
   belongs_to :maintainer, optional: true

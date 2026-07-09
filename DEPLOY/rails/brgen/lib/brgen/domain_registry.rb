@@ -30,6 +30,14 @@ module Brgen
       "mercato" => :marketplace
     }.freeze
 
+    TV_SUBDOMAINS          = %w[tv].freeze
+    DATING_SUBDOMAINS      = %w[dating].freeze
+    PLAYLIST_SUBDOMAINS    = %w[playlist spilleliste].freeze
+    TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
+    MARKETPLACE_SUBDOMAINS = SUBAPP_ALIASES.select { |_subdomain, subapp| subapp == :marketplace }.keys.freeze
+    MAPS_SUBDOMAINS        = %w[maps].freeze
+    MESSENGER_SUBDOMAINS   = %w[messenger].freeze
+
     LOCAL_HOSTS = [ "127.0.0.1", "localhost" ].freeze
 
     ENTRIES = [

@@ -2,8 +2,8 @@
 
 class SecurityAdvisory < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   enum :severity, { low: 0, medium: 1, high: 2, critical: 3 }, default: :medium
 
   belongs_to :port, optional: true

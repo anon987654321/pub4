@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Tv::Broadcast < ApplicationRecord
-  include Shared::ActivityTrackable
   include Shared::MediaProcessable
   tracks_activity created: "BroadcastScheduled", updated: "BroadcastUpdated", source_vertical: "tv", actor: :user
 

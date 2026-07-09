@@ -2,8 +2,8 @@
 
 class Shift < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   enum :kind, { intake: 0, packing: 1, transport: 2, coordination: 3 }, default: :packing
   enum :state, { open: 0, assigned: 1, completed: 2, cancelled: 3 }, default: :open
 

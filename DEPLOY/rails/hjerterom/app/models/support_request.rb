@@ -2,8 +2,8 @@
 
 class SupportRequest < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   belongs_to :user
 
   STATUSES   = %w[open in_progress resolved closed].freeze

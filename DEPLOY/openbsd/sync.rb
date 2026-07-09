@@ -8,7 +8,7 @@ require "fileutils"
 MIRROR = File.expand_path("..", __FILE__)
 
 FIXED_SOURCES = [
-  "/etc/rc.d/master", "/etc/rc.d/brgen", "/etc/rc.d/brgen_tv",
+  "/etc/rc.d/master", "/etc/rc.d/brgen",
   "/etc/rc.d/amber",
   "/etc/rc.d/bsdports",
   "/etc/rc.d/hjerterom",

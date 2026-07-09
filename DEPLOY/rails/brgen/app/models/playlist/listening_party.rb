@@ -6,7 +6,6 @@ module Playlist
 
     STATUSES = %w[active ended].freeze
 
-    include Shared::ActivityTrackable
     tracks_activity created: "PlaylistListeningPartyStarted", source_vertical: "playlist", actor: :host
 
     belongs_to :set, class_name: "Playlist::Set", foreign_key: :playlist_set_id, inverse_of: :listening_party

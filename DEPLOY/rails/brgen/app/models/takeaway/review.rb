@@ -2,11 +2,10 @@
 
 class Takeaway::Review < ApplicationRecord
   # Engine-ized Shared concerns
-  include Shared::ActivityTrackable
   tracks_activity created: "TakeawayReviewCreated", source_vertical: "takeaway", actor: :user
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Votable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::Votable
 
   belongs_to :user
   belongs_to :order, class_name: "Takeaway::Order"

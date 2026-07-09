@@ -7,50 +7,50 @@ default: &default
 development:
   primary:
     <<: *default
-    database: db/development.sqlite3
+    database: storage/development.sqlite3
   cache:
     <<: *default
-    database: db/development_cache.sqlite3
+    database: storage/development_cache.sqlite3
     migrations_paths: db/cache_schema_migrations
   queue:
     <<: *default
-    database: db/development_queue.sqlite3
+    database: storage/development_queue.sqlite3
     migrations_paths: db/queue_schema_migrations
   cable:
     <<: *default
-    database: db/development_cable.sqlite3
+    database: storage/development_cable.sqlite3
     migrations_paths: db/cable_schema_migrations
 
 test:
   primary:
     <<: *default
-    database: db/test.sqlite3
+    database: storage/test.sqlite3
   cache:
     <<: *default
-    database: db/test_cache.sqlite3
+    database: storage/test_cache.sqlite3
     migrations_paths: db/cache_schema_migrations
   queue:
     <<: *default
-    database: db/test_queue.sqlite3
+    database: storage/test_queue.sqlite3
     migrations_paths: db/queue_schema_migrations
   cable:
     <<: *default
-    database: db/test_cable.sqlite3
+    database: storage/test_cable.sqlite3
     migrations_paths: db/cable_schema_migrations
 
 production:
   primary:
     <<: *default
-    database: db/production.sqlite3
+    database: storage/production.sqlite3
   cache:
     <<: *default
-    database: db/production_cache.sqlite3
+    database: storage/production_cache.sqlite3
     migrations_paths: db/cache_schema_migrations
   queue:
     <<: *default
-    database: db/production_queue.sqlite3
+    database: storage/production_queue.sqlite3
     migrations_paths: db/queue_schema_migrations
   cable:
     <<: *default
-    database: db/production_cable.sqlite3
+    database: storage/production_cable.sqlite3
     migrations_paths: db/cable_schema_migrations

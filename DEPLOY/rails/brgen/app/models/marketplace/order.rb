@@ -2,7 +2,6 @@
 
 class Marketplace::Order < ApplicationRecord
   include Shared::Notifiable
-  include Shared::ActivityTrackable
   tracks_activity created: "MarketplaceOrder", source_vertical: "marketplace", actor: :buyer
 
   belongs_to :buyer,   class_name: "User"

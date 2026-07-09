@@ -2,8 +2,8 @@
 
 class Crisis < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   validates :title, :phone, presence: true
 
   scope :around_clock, -> { where(available_24h: true) }

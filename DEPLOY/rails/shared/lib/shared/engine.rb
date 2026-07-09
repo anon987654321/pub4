@@ -59,6 +59,5 @@ module Shared
       )
     end
 
-    def self.concern(n); const_get("Shared::#{n.to_s.camelize}") rescue (require "shared/#{n}"; const_get("Shared::#{n.to_s.camelize}")) end
   end
 end

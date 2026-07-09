@@ -9,7 +9,6 @@ require_relative "../lib/utf8"
 ROOT = Pathname.new(__dir__).join("..", "..").expand_path
 OPENBSD = ROOT.join("DEPLOY", "openbsd", "openbsd.sh")
 REGISTRY = ROOT.join("DEPLOY", "rails", "brgen", "lib", "brgen", "domain_registry.rb")
-ROUTES = ROOT.join("DEPLOY", "rails", "brgen", "config", "routes.rb")
 COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
 MASTER_ONLY_SUBAPPS = %w[ai].freeze
 NORWEGIAN_PLAYLIST_ALIAS = "spilleliste"
@@ -38,8 +37,8 @@ def parse_registry_entries
   text.scan(/Entry\.new\("([^"]+)",\s*"[^"]+",\s*"[^"]+",\s*:[^,]+,\s*"[^"]+",\s*"([^"]+)"\)/).to_h
 end
 
-def parse_routes_subdomains
-  text = ROUTES.read
+def parse_registry_subdomains
+  text = REGISTRY.read
   {
     tv: extract_constant(text, "TV_SUBDOMAINS"),
     dating: extract_constant(text, "DATING_SUBDOMAINS"),
@@ -67,7 +66,7 @@ end
 failures = []
 openbsd = parse_openbsd_domains
 registry = parse_registry_entries
-routes = parse_routes_subdomains
+routes = parse_registry_subdomains
 
 missing_dns = registry.keys - openbsd.keys
 fail!(failures, "domain set mismatch: missing DNS #{missing_dns.sort.join(', ')}") if missing_dns.any?

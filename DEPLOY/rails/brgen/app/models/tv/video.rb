@@ -2,11 +2,10 @@
 
 class Tv::Video < ApplicationRecord
   # Engine-ized Shared (tranche10)
-  include Shared.concern(:ActivityTrackable) rescue nil
   tracks_activity created: "VideoUploaded", updated: "VideoUpdated", source_vertical: "tv", actor: :user
   include Shared::MediaProcessable
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
 
   belongs_to :channel,     class_name: "Tv::Channel",   foreign_key: :tv_channel_id
   belongs_to :user

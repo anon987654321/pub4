@@ -5,10 +5,9 @@ module Marketplace
     self.table_name = "marketplace_deals"
 
     # Engine-ize Shared
-    include Shared::ActivityTrackable
     tracks_activity created: "MarketplaceDealCreated", updated: "MarketplaceDealUpdated", source_vertical: "marketplace", actor: :listing_owner
-    include Shared.concern(:Reactable) rescue nil
-    include Shared.concern(:Notifiable) rescue nil
+    include Shared::Reactable
+    include Shared::Notifiable
     belongs_to :listing, class_name: "Marketplace::Listing"
 
     validates :headline, presence: true, length: { maximum: 160 }

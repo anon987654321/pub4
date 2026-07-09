@@ -2,8 +2,8 @@
 
 class Dependency < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   belongs_to :port
   belongs_to :depends_on, class_name: "Port"
 

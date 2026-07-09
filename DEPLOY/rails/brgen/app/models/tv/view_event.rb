@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Tv::ViewEvent < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "TvVideoViewed", source_vertical: "tv", visibility: "private", actor: :user
 
   belongs_to :user

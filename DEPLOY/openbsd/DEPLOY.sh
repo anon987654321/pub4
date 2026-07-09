@@ -12,7 +12,7 @@
 #   regenerating signed zones. Never re-run stage_1 on a live authoritative server without backup.
 # - State tracking: STATE_FILE=/var/db/openbsd_setup.state — is_step_completed/mark_step_completed
 #   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
-# - Data preserved: Rails SQLite under /home/<app>/app/db, ~/priv, acme certs in /etc/ssl when
+# - Data preserved: Rails SQLite under /home/<app>/app/storage, ~/priv, acme certs in /etc/ssl when
 #   stage_1 is skipped. Re-running stage_2 does not drop databases.
 # - Post-deploy verification: ruby /home/dev/pub4/DEPLOY/health_check.rb
 # Engine-ize: bootstrap_rails now relies on bundle install for pub4-shared path gem (Gemfiles declare it); legacy sh shared/install_* deprecated in scripts + WIRING. No copy sprawl.
@@ -766,11 +766,8 @@ stage_2() {
   _master_secret_lines=("${(@f)$(RAILS_ENV=production bundle exec rails secret 2>/dev/null)}")
   master_secret=${_master_secret_lines[-1]}
   [[ ${#master_secret} -ge 64 ]] || { log ERROR "master: secret capture failed (got ${#master_secret} chars)"; exit 1 }
-  if [[ -f ${SCRIPT_DIR}/etc/rc.d/master ]]; then
-    cp "${SCRIPT_DIR}/etc/rc.d/master" /etc/rc.d/master
-  else
-    install_template etc/rc.d/master.tmpl /etc/rc.d/master
-  fi
+  [[ -f ${SCRIPT_DIR}/etc/rc.d/master ]] || { log ERROR "missing etc/rc.d/master"; exit 1 }
+  cp "${SCRIPT_DIR}/etc/rc.d/master" /etc/rc.d/master
   chmod 555 /etc/rc.d/master
   [[ -f $m3dir/data/soul.yml ]] && chmod 0444 "$m3dir/data/soul.yml"
   [[ -f $m3dir/data/checksums.yml ]] && chmod 0444 "$m3dir/data/checksums.yml"

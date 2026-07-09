@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Vote < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "VoteCreated", source_vertical: "social", visibility: "private", actor: :user
 
   belongs_to :user

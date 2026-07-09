@@ -1,5 +1,5 @@
 dbs:
-  - path: /home/brgen/app/db
+  - path: /home/brgen/app/storage
     pattern: "*.sqlite3"
     replicas:
       - url: file:///var/backups/litestream/brgen

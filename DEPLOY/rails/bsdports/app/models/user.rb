@@ -2,9 +2,9 @@
 
 class User < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::GeoLocatable
   has_secure_password
   has_many :sessions, dependent: :destroy
   has_many :watches, dependent: :destroy

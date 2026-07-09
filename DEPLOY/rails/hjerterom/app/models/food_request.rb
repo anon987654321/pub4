@@ -2,8 +2,8 @@
 
 class FoodRequest < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Notifiable
+  include Shared::GeoLocatable
   belongs_to :food_listing
   belongs_to :user
 

@@ -10,16 +10,13 @@ Rails.application.routes.draw do
 
   jobs_constraint = ->(request) { request.cookies["session_id"].present? }
 
-  TV_SUBDOMAINS          = %w[tv].freeze
-  DATING_SUBDOMAINS      = %w[dating].freeze
-  PLAYLIST_SUBDOMAINS    = %w[playlist spilleliste].freeze
-  TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
-  MARKETPLACE_SUBDOMAINS = Brgen::DomainRegistry::SUBAPP_ALIASES
-    .select { |_subdomain, subapp| subapp == :marketplace }
-    .keys
-    .freeze
-  MAPS_SUBDOMAINS        = %w[maps].freeze
-  MESSENGER_SUBDOMAINS   = %w[messenger].freeze
+  TV_SUBDOMAINS          = Brgen::DomainRegistry::TV_SUBDOMAINS
+  DATING_SUBDOMAINS      = Brgen::DomainRegistry::DATING_SUBDOMAINS
+  PLAYLIST_SUBDOMAINS    = Brgen::DomainRegistry::PLAYLIST_SUBDOMAINS
+  TAKEAWAY_SUBDOMAINS    = Brgen::DomainRegistry::TAKEAWAY_SUBDOMAINS
+  MARKETPLACE_SUBDOMAINS = Brgen::DomainRegistry::MARKETPLACE_SUBDOMAINS
+  MAPS_SUBDOMAINS        = Brgen::DomainRegistry::MAPS_SUBDOMAINS
+  MESSENGER_SUBDOMAINS   = Brgen::DomainRegistry::MESSENGER_SUBDOMAINS
 
   resource  :session
   resources :passwords, param: :token
@@ -183,10 +180,6 @@ Rails.application.routes.draw do
 
   constraints(subdomain: MESSENGER_SUBDOMAINS) do
     root "conversations#index", as: :messenger_root
-    resources :conversations, only: %i[index show update] do
-      resources :messages, only: [ :create ]
-      resources :typing_indicators, only: [ :create ]
-    end
   end
 
   resources :email_subscriptions, only: %i[create destroy], param: :token

@@ -2,8 +2,8 @@
 
 class PortUpdate < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   belongs_to :port
 
   validates :new_version, presence: true

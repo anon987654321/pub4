@@ -2,7 +2,6 @@
 
 class Takeaway::Order < ApplicationRecord
   include Shared::Notifiable
-  include Shared::ActivityTrackable
   tracks_activity created: "TakeawayOrderPlaced", source_vertical: "takeaway", actor: :user
 
   belongs_to :user

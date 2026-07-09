@@ -3,10 +3,9 @@
 module Tv
   class Episode < ApplicationRecord
     # Engine-ize Shared via pub4-shared
-    include Shared.concern(:ActivityTrackable) rescue include Shared::ActivityTrackable
     tracks_activity created: "TvEpisodeCreated", updated: "TvEpisodeUpdated", source_vertical: "tv", actor: :channel_owner
-    include Shared.concern(:Reactable) rescue nil
-    include Shared.concern(:Notifiable) rescue nil
+    include Shared::Reactable
+    include Shared::Notifiable
 
     self.table_name = "tv_episodes"
 

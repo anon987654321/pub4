@@ -6,10 +6,9 @@ class Takeaway::Restaurant < ApplicationRecord
   include CityTenantable
 
   # Engine-ized Shared concerns (via pub4-shared)
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
-  include Shared.concern(:ActivityTrackable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::GeoLocatable
   tracks_activity created: "TakeawayRestaurantCreated", updated: "TakeawayRestaurantUpdated", source_vertical: "takeaway", actor: :user
 
   belongs_to :user
@@ -31,7 +30,6 @@ class Takeaway::Restaurant < ApplicationRecord
   scope :popular, -> { order(rating: :desc) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
 
-  include Shared::GeoLocatable
 
   def owner?(account)
     user_id == account&.id

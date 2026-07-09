@@ -2,8 +2,8 @@
 
 class DeclutterChallenge < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
   belongs_to :user
   belongs_to :item
   belongs_to :outfit, optional: true

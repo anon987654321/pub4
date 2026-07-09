@@ -370,6 +370,23 @@ db_create_migrate_as_app() {
   log_ok "Database ready"
 }
 
+# migrate_sqlite_db_to_storage_if_needed APP_NAME APP_DIR — one-time brgen db/ → storage/ move (R7).
+migrate_sqlite_db_to_storage_if_needed() {
+  local app_name=$1 app_dir=$2
+  local db_dir="${app_dir}/db" storage_dir="${app_dir}/storage"
+  [[ -d $db_dir ]] || return 0
+  ${_PRIV} mkdir -p "$storage_dir"
+  local moved=0 base
+  for f in ${db_dir}/production*.sqlite3(N); do
+    base=${f:t}
+    [[ -f ${storage_dir}/${base} ]] && continue
+    ${_PRIV} mv "$f" "${storage_dir}/${base}"
+    moved=1
+    log_ok "moved db/${base} → storage/${base}"
+  done
+  [[ $moved -eq 1 ]] && ${_PRIV} chown -R "${app_name}:${app_name}" "$storage_dir"
+}
+
 # db_seed_as_app APP_NAME APP_DIR
 db_seed_as_app() {
   local app_name=$1 app_dir=$2 secret
@@ -432,6 +449,7 @@ deploy_tracked_app() {
   doas chown -R "${app_name}:${app_name}" "${APP_DIR}/.bundle"
 
   bundle_install_as_app "$APP_NAME" "$APP_DIR"
+  migrate_sqlite_db_to_storage_if_needed "$APP_NAME" "$APP_DIR"
   db_create_migrate_as_app "$APP_NAME" "$APP_DIR"
   [[ -f ${APP_DIR}/db/seeds.rb ]] && db_seed_as_app "$APP_NAME" "$APP_DIR" || true
 

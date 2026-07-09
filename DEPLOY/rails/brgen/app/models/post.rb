@@ -4,11 +4,10 @@ class Post < ApplicationRecord
   include CityTenantable
 
   # Engine-ize: use Shared.concern for consistency
-  include Shared.concern(:Votable) rescue include Shared::Votable
-  include Shared.concern(:Commentable) rescue include Shared::Commentable
-  include Shared.concern(:Taggable) rescue include Shared::Taggable
-  include Shared.concern(:Reactable) rescue include Shared::Reactable
-  include Shared::ActivityTrackable
+  include Shared::Votable
+  include Shared::Commentable
+  include Shared::Taggable
+  include Shared::Reactable
   include Shared::MediaProcessable
   tracks_activity created: "PostCreated", source_vertical: "social", actor: :user
 

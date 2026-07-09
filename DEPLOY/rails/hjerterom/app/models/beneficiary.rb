@@ -2,9 +2,9 @@
 
 class Beneficiary < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::GeoLocatable
   has_many :boxes, dependent: :nullify
   has_many :food_items, dependent: :nullify
 

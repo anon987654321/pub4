@@ -4,11 +4,10 @@ class Tv::Channel < ApplicationRecord
   include CityTenantable
 
   # Engine-ized Shared via pub4-shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:ActivityTrackable) rescue nil
+  include Shared::Notifiable
   tracks_activity created: "TvChannelCreated", updated: "TvChannelUpdated", source_vertical: "tv", actor: :user
   include Shared::MediaProcessable
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Reactable
 
   belongs_to :user
   has_many :videos,        class_name: "Tv::Video",        foreign_key: :tv_channel_id, dependent: :destroy

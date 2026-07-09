@@ -2,7 +2,7 @@
 
 class Conversation < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Notifiable
   has_many :conversation_participants, dependent: :destroy
   has_many :participants, through: :conversation_participants, source: :user
   has_many :messages, dependent: :destroy

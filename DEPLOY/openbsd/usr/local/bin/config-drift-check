@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# config-drift-check — detect relayd/acme SAN drift, NSD zone omissions, relayd health.
+# config-drift-check — relayd/acme SAN drift, NSD zone omissions, DNSSEC zonefile paths.
 # Install: cp to /usr/local/bin/config-drift-check && chmod 755
 # Cron: */15 * * * * /usr/local/bin/config-drift-check >> /var/log/config_drift.log 2>&1
 
@@ -20,15 +20,15 @@ acme_conf   = read("/etc/acme-client.conf") || ""
 nsd_conf    = read("/var/nsd/etc/nsd.conf") || read("/etc/nsd.conf") || ""
 
 hosts = relayd_conf.scan(/match request header "Host" value "([^"]+)"/).flatten.uniq.sort
-sans  = acme_conf.scan(/"([a-z0-9.*-]+\.brgen\.no)"/i).flatten.uniq.sort
+sans  = acme_conf.scan(/"([a-z0-9.*-]+\.[a-z]{2,})"/i).flatten.uniq.sort
 
 sans.each do |host|
   next if hosts.include?(host)
   failures << "relayd missing Host route for acme SAN: #{host}"
 end
 
-hosts.select { |h| h.end_with?(".brgen.no") }.each do |host|
-  next if sans.include?(host) || host == "brgen.no"
+hosts.each do |host|
+  next if sans.include?(host)
   failures << "acme SAN missing for relayd host: #{host}"
 end
 
@@ -40,6 +40,36 @@ zone_files.each do |zone|
   failures << "nsd.conf missing zone block: #{zone}"
 end
 
+registered.each do |zone|
+  block = nsd_conf[/zone:\s*\n\s*name:\s*"#{Regexp.escape(zone)}"\s*\n\s*zonefile:\s*"([^"]+)"/m, 1]
+  next unless block
+
+  has_ds = !Dir["/var/nsd/zones/master/K#{zone}.+*.ds"].empty?
+  signed_path = "/var/nsd/zones/master/#{zone}.zone.signed"
+  next unless has_ds || File.file?(signed_path)
+
+  failures << "nsd.conf #{zone} serves #{block} but signed material exists" unless block.end_with?(".zone.signed")
+end
+
+relayd_hosts = hosts.to_h { |h| [h, true] }
+Dir["/var/nsd/zones/master/*.zone"].each do |path|
+  zone = File.basename(path, ".zone")
+  next unless zone.end_with?(".no") || zone.include?(".")
+
+  read(path).each_line do |line|
+    next unless line.match?(/\sIN\s+A\s+/)
+
+    label = line.split.first.to_s.sub(/\.$/, "")
+    next if label.empty? || label == "@"
+
+    fqdn = label.include?(".") ? label : "#{label}.#{zone}"
+    next if relayd_hosts[fqdn]
+    next if sans.include?(fqdn)
+
+    failures << "zone A record without relayd/acme route: #{fqdn} (#{path})"
+  end
+end
+
 ok, out = Open3.capture2e("/usr/sbin/rcctl", "check", "relayd")
 failures << "relayd not ok: #{out.strip}" unless ok && out.include?("(ok)")
 
@@ -48,4 +78,4 @@ if failures.any?
   exit 1
 end
 
-puts "config-drift ok (#{hosts.size} relayd hosts, #{zone_files.size} zone files)"
+puts "config-drift ok (#{hosts.size} relayd hosts, #{sans.size} acme SANs, #{zone_files.size} zones)"

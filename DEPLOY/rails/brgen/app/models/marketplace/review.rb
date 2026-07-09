@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Marketplace::Review < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "MarketplaceReviewCreated", source_vertical: "marketplace", actor: :user
 
   belongs_to :user

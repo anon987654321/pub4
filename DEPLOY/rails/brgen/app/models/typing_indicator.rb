@@ -4,7 +4,7 @@ class TypingIndicator < ApplicationRecord
   belongs_to :conversation
   belongs_to :user
 
-  scope :active, -> { where("expires_at > ?", Time.now) }
+  scope :active, -> { where("expires_at > ?", Time.current) }
 
   def self.set!(conversation:, user:)
     rec = find_or_create_by(conversation:, user:)

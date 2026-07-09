@@ -36,6 +36,13 @@ class DomainRegistryTest < ActiveSupport::TestCase
     assert_equal :"en-US", result.entry.locale
   end
 
+  test "subdomain constants match routes constraints" do
+    assert_equal %w[tv], Brgen::DomainRegistry::TV_SUBDOMAINS
+    assert_equal %w[dating], Brgen::DomainRegistry::DATING_SUBDOMAINS
+    assert_includes Brgen::DomainRegistry::PLAYLIST_SUBDOMAINS, "playlist"
+    assert_includes Brgen::DomainRegistry::MARKETPLACE_SUBDOMAINS, "markedsplass"
+  end
+
   test "subreddits for bergen include r/bergen" do
     subs = Brgen::DomainRegistry.subreddits_for("brgen.no")
 

@@ -4,11 +4,10 @@ class Playlist::Playlist < ApplicationRecord
   include CityTenantable
 
   # Engine-ize Shared via pub4-shared
-  include Shared.concern(:ActivityTrackable) rescue nil
   tracks_activity created: "PlaylistCreated", source_vertical: "playlist", actor: :user
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
+  include Shared::GeoLocatable
   belongs_to :user
   has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
            foreign_key: :playlist_playlist_id, dependent: :destroy

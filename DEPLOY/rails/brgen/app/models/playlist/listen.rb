@@ -2,9 +2,8 @@
 
 class Playlist::Listen < ApplicationRecord
   # Engine-ized Shared (tranche10)
-  include Shared.concern(:ActivityTrackable) rescue nil
   tracks_activity created: "PlaylistListen", source_vertical: "playlist", visibility: "private", actor: :user
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Reactable
 
   belongs_to :user
   belongs_to :track, class_name: "Playlist::Track", foreign_key: :playlist_track_id

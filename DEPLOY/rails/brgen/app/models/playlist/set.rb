@@ -6,10 +6,9 @@ module Playlist
 
     PRIVACY_LEVELS = %w[public private unlisted].freeze
 
-    include Shared::ActivityTrackable
     tracks_activity created: "PlaylistSetCreated", source_vertical: "playlist", actor: :user
-    include Shared.concern(:Reactable) rescue nil
-    include Shared.concern(:Notifiable) rescue nil
+    include Shared::Reactable
+    include Shared::Notifiable
     belongs_to :user
     has_many :set_tracks, class_name: "Playlist::SetTrack", foreign_key: :playlist_set_id, dependent: :destroy
     has_many :tracks, through: :set_tracks, source: :track, class_name: "Playlist::Track"

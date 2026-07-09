@@ -2,8 +2,8 @@
 
 class Maintainer < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   has_many :ports, dependent: :nullify
 
   validates :name, presence: true

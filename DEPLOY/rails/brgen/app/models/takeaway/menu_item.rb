@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Takeaway::MenuItem < ApplicationRecord
-  include Shared::ActivityTrackable
   include Shared::MediaProcessable
   tracks_activity created: "TakeawayMenuItemCreated", updated: "TakeawayMenuItemUpdated", source_vertical: "takeaway", actor: :restaurant_owner
 

@@ -24,6 +24,13 @@ vm23 is a small OpenBSD VPS. Treat live operations as scarce, serial, and recove
 - Console recovery: `ssh server4`, `vmctl console vm23`.
 - pf lockout recovery from console: `doas pfctl -t bruteforce -T flush`.
 
+## Backups (Litestream)
+
+`etc/litestream.yml` replicates each app's SQLite to `file:///var/backups/litestream/` on the
+same VPS disk. That protects against app-level corruption, not disk loss or provider failure.
+Accepted RPO for full-disk loss: last manual off-host backup or git pull + redeploy. Add an
+off-host Litestream replica (sftp/s3) before treating backups as disaster-recovery grade.
+
 ## Post-Change
 
 - Run `ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps`.

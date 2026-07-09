@@ -3,9 +3,8 @@
 module Tv
   class LiveStream < ApplicationRecord
     # Engine-ized Shared (tranche10)
-    include Shared.concern(:ActivityTrackable) rescue nil
     tracks_activity created: "LiveStreamScheduled", updated: "LiveStreamUpdated", source_vertical: "tv", actor: :user
-    include Shared.concern(:Notifiable) rescue nil
+    include Shared::Notifiable
 
     self.table_name = "tv_live_streams"
 

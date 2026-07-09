@@ -2,8 +2,7 @@
 
 class Dating::Match < ApplicationRecord
   # Engine-ized Shared (tranche10)
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared::ActivityTrackable
+  include Shared::Notifiable
   tracks_activity created: "DatingMatch", source_vertical: "dating", visibility: "private", actor: :initiator
 
   belongs_to :initiator, class_name: "User"

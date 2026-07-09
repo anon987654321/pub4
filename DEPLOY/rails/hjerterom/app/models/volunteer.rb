@@ -2,9 +2,9 @@
 
 class Volunteer < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::GeoLocatable
   belongs_to :user, optional: true
   has_many :shifts, dependent: :destroy
 

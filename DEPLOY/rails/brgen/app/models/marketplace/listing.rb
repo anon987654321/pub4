@@ -2,12 +2,11 @@
 
 class Marketplace::Listing < ApplicationRecord
   include CityTenantable
-  include Shared::ActivityTrackable
   include Shared::MediaProcessable
   tracks_activity created: "ListingCreated", source_vertical: "marketplace", actor: :user
 
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
   belongs_to :user
   belongs_to :store, class_name: "Marketplace::Store", optional: true
   belongs_to :category, class_name: "Marketplace::Category",
