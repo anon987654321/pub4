@@ -15,8 +15,8 @@ module Marketplace
           q: like
         )
       end
-      @deals = scope.limit(100)
-      @featured_deals = @deals.select(&:featured?).first(12)
+      @featured_deals = scope.featured.limit(12).to_a if live_search_query.blank?
+      @pagy, @deals = pagy(scope)
       finish_live_search(partial: "marketplace/deals/live_search_results")
     end
 

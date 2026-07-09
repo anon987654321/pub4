@@ -14,7 +14,7 @@ module Playlist
         track_ids = Playlist::Track.where("name LIKE :q OR artist LIKE :q", q: "%#{ActiveRecord::Base.sanitize_sql_like(live_search_query)}%").pluck(:playlist_set_id)
         scope = scope.where(id: (set_ids + track_ids).uniq)
       end
-      @sets = scope.limit(100)
+      @pagy, @sets = pagy(scope)
       finish_live_search(partial: "playlist/sets/live_search_results")
     end
 

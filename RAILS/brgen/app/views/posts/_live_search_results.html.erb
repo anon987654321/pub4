@@ -19,7 +19,8 @@
              pagy: @pagy,
              reflex: "PostsInfiniteScrollReflex#load_more",
              sentinel_id: "posts-sentinel",
-             sort: params[:sort] %>
+             sort: params[:sort],
+             q: params[:q] %>
 <% else %>
   <p class="empty">No posts match this search.</p>
 <% end %>

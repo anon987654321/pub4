@@ -1,13 +1,19 @@
+<% if live_search_query.present? %>
+  <p class="dim"><%= @sets.size %> results for "<%= live_search_query %>"</p>
+<% end %>
+
 <% if @sets.any? %>
-  <% @sets.each do |set| %>
-    <article>
-      <h2><%= link_to set.name, playlist_set_path(set) %></h2>
-      <p class="dim"><%= set.privacy.presence&.humanize || "Public" %> · <%= set.tracks.count %> tracks · <%= set.formatted_duration %></p>
-      <% if set.description.present? %>
-        <p><%= set.description %></p>
-      <% end %>
-    </article>
-  <% end %>
+  <div id="playlist-sets-grid">
+    <% @sets.each do |set| %>
+      <%= render "playlist/sets/card", set: set %>
+    <% end %>
+  </div>
+
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "SetsInfiniteScrollReflex#load_more",
+             sentinel_id: "playlist-sets-sentinel",
+             q: params[:q] %>
 <% else %>
   <div class="empty" role="status" aria-live="polite"><p>No sets yet.</p></div>
 <% end %>

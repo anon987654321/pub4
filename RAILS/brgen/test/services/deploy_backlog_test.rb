@@ -635,6 +635,68 @@ class DeployBacklogTest < Minitest::Test
     refute_includes index, 'infinite_scroll_sentinel'
   end
 
+  def test_marketplace_deals_stores_and_playlist_sets_use_infinite_scroll
+    deals_partial = read_brgen('app/views/marketplace/deals/_live_search_results.html.erb')
+    stores_partial = read_brgen('app/views/marketplace/stores/_live_search_results.html.erb')
+    sets_partial = read_brgen('app/views/playlist/sets/_live_search_results.html.erb')
+
+    assert_includes deals_partial, 'DealsInfiniteScrollReflex#load_more'
+    assert_includes stores_partial, 'StoresInfiniteScrollReflex#load_more'
+    assert_includes sets_partial, 'SetsInfiniteScrollReflex#load_more'
+    assert_includes read_brgen('app/controllers/marketplace/deals_controller.rb'), '@pagy, @deals = pagy'
+    assert_includes read_brgen('app/controllers/marketplace/stores_controller.rb'), '@pagy, @stores = pagy'
+    assert_includes read_brgen('app/controllers/playlist/sets_controller.rb'), '@pagy, @sets = pagy'
+    assert_includes read_brgen('app/reflexes/deals_infinite_scroll_reflex.rb'), 'marketplace/deals/card'
+    assert_includes read_brgen('app/reflexes/stores_infinite_scroll_reflex.rb'), 'marketplace/stores/card'
+    assert_includes read_brgen('app/reflexes/sets_infinite_scroll_reflex.rb'), 'playlist/sets/card'
+  end
+
+  def test_communities_infinite_scroll_and_crud_views_are_wired
+    partial = read_brgen('app/views/communities/_live_search_results.html.erb')
+    controller = read_brgen('app/controllers/communities_controller.rb')
+
+    assert_includes partial, 'CommunitiesInfiniteScrollReflex#load_more'
+    assert_includes controller, '@pagy, @communities = pagy'
+    assert_includes controller, 'def edit'
+    assert_includes controller, 'def update'
+    assert_includes controller, 'def destroy'
+    assert File.file?(File.join(ROOT, 'brgen/app/views/communities/edit.html.erb'))
+    assert_includes read_brgen('app/reflexes/communities_infinite_scroll_reflex.rb'), 'communities/card'
+    assert_includes File.read(File.join(ROOT, 'brgen/app/assets/stylesheets/_communities.scss')), '.community-list'
+  end
+
+  def test_playlist_set_likes_controller_and_ui_are_wired
+    controller = read_brgen('app/controllers/playlist/likes_controller.rb')
+    show = read_brgen('app/views/playlist/sets/show.html.erb')
+
+    assert_includes controller, 'class LikesController'
+    assert_includes controller, 'module Playlist'
+    assert_includes controller, 'find_or_create_by!'
+    assert_includes controller, 'destroy_all'
+    assert_includes show, 'playlist_set_like_path'
+    assert_includes show, 'likes.count'
+  end
+
+  def test_posts_infinite_scroll_preserves_search_query
+    partial = read_brgen('app/views/posts/_live_search_results.html.erb')
+    reflex = read_brgen('app/reflexes/posts_infinite_scroll_reflex.rb')
+
+    assert_includes partial, 'q: params[:q]'
+    assert_includes reflex, 'element.dataset["q"]'
+    assert_includes reflex, 'title LIKE ? OR content LIKE ?'
+  end
+
+  def test_marketplace_stores_edit_update_destroy_are_wired
+    controller = read_brgen('app/controllers/marketplace/stores_controller.rb')
+
+    assert_includes controller, 'def edit'
+    assert_includes controller, 'def update'
+    assert_includes controller, 'def destroy'
+    assert_includes controller, 'authorize_owner'
+    assert File.file?(File.join(ROOT, 'brgen/app/views/marketplace/stores/edit.html.erb'))
+    assert_includes read_brgen('app/assets/stylesheets/_marketplace.scss'), '.store-grid'
+  end
+
   private
 
   def read_brgen(relative)

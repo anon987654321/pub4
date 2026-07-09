@@ -1,0 +1,21 @@
+.community-list {
+  list-style: none;
+  padding: 16px;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.community-list li {
+  padding: 0.75rem 1rem;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  transition: background var(--transition-fast);
+}
+
+.community-list li:hover { background: var(--hover); }
+
+.community-list a {
+  font-weight: 600;
+  text-decoration: none;
+}

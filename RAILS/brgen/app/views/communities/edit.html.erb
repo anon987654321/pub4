@@ -1,0 +1,21 @@
+<h1>Edit <%= @community.name %></h1>
+<%= form_with model: @community do |f| %>
+  <% if @community.errors.any? %>
+    <ul>
+      <% @community.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+    </ul>
+  <% end %>
+  <p>
+    <%= f.label :name %>
+    <%= f.text_field :name %>
+  </p>
+  <p>
+    <%= f.label :description %>
+    <%= f.text_area :description, rows: 3, data: { controller: "char-counter", "char-counter-max-value": 1000 } %>
+    <span class="char-counter" data-char-counter-target="counter"></span>
+  </p>
+  <p>
+    <%= f.submit "Save" %>
+    <%= link_to "Cancel", @community %>
+  </p>
+<% end %>

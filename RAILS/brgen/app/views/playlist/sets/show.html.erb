@@ -21,6 +21,18 @@
   <% if @set.collaborative? %>
     <p class="dim">Collaborative</p>
   <% end %>
+  <% if authenticated? %>
+    <div class="cluster">
+      <% if @set.likes.exists?(user: Current.user) %>
+        <%= button_to "Unlike", playlist_set_like_path(@set), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%= button_to "Like", playlist_set_like_path(@set), method: :post, class: "btn btn-primary btn-sm" %>
+      <% end %>
+      <span class="dim"><%= @set.likes.count %> likes</span>
+    </div>
+  <% else %>
+    <p class="dim"><%= @set.likes.count %> likes</p>
+  <% end %>
 </article>
 
 <% if authenticated? %>

@@ -2,16 +2,19 @@
  <p class="dim"><%= @stores.size %> results for "<%= live_search_query %>"</p>
 <% end %>
 
-<div class="store-grid" role="list" aria-label="Stores list">
+<% if @stores.any? %>
+<div class="store-grid" id="marketplace-stores-grid" role="list" aria-label="Stores list">
  <% @stores.each do |store| %>
- <article class="store-card">
- <h2><%= link_to store.name, marketplace_shop_path(store.slug) %></h2>
- <% if store.vertical.present? %><p><%= store.vertical.humanize %></p><% end %>
- <% if store.description.present? %><p class="dim"><%= store.description %></p><% end %>
- </article>
+   <%= render "marketplace/stores/card", store: store %>
  <% end %>
 </div>
 
-<% if @stores.empty? %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "StoresInfiniteScrollReflex#load_more",
+           sentinel_id: "marketplace-stores-sentinel",
+           q: params[:q],
+           vertical: params[:vertical] %>
+<% else %>
  <p class="empty">No stores match this search.</p>
 <% end %>

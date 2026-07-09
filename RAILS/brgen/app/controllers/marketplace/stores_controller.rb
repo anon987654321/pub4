@@ -6,15 +6,18 @@ module Marketplace
 
     allow_unauthenticated_access only: %i[index show]
 
+    before_action :set_store, only: %i[show edit update destroy]
+    before_action :require_real_user, only: %i[new create edit update destroy]
+    before_action :authorize_owner, only: %i[edit update destroy]
+
     def index
       scope = Marketplace::Store.active.by_vertical(params[:vertical]).recent
       scope = apply_live_search(scope, columns: %w[name description vertical], vertical: "marketplace") if live_search_query.present?
-      @stores = scope.limit(100)
+      @pagy, @stores = pagy(scope)
       finish_live_search(partial: "marketplace/stores/live_search_results")
     end
 
     def show
-      @store = Marketplace::Store.find_by!(slug: params[:id])
       @listings = @store.listings.active.recent.limit(100)
     end
 
@@ -33,7 +36,33 @@ module Marketplace
       end
     end
 
+    def edit
+    end
+
+    def update
+      if @store.update(store_params)
+        redirect_to marketplace_shop_path(@store.slug), notice: t("marketplace.store_updated", default: "Store updated")
+      else
+        render :edit, status: :unprocessable_entity
+      end
+    end
+
+    def destroy
+      @store.destroy
+      redirect_to marketplace_shops_path, notice: t("marketplace.store_deleted", default: "Store removed")
+    end
+
     private
+
+    def set_store
+      @store = Marketplace::Store.find_by!(slug: params[:id])
+    end
+
+    def authorize_owner
+      return if Current.user == @store.owner
+
+      redirect_to marketplace_shop_path(@store.slug), alert: t("marketplace.store_not_allowed", default: "Not allowed")
+    end
 
     def store_params
       params.require(:store).permit(:name, :slug, :description, :vertical)

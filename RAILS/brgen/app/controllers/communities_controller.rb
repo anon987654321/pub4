@@ -3,13 +3,14 @@
 class CommunitiesController < ApplicationController
   include Shared::LiveSearchable
 
-  before_action :require_real_user, only: [ :new, :create ]
-  before_action :set_community,     only: [ :show ]
+  before_action :require_real_user, only: %i[new create edit update destroy]
+  before_action :set_community, only: %i[show edit update destroy]
+  before_action :authorize_owner, only: %i[edit update destroy]
 
   def index
     scope = Community.popular.includes(:user)
     scope = apply_live_search(scope, columns: %w[name description], vertical: "communities") if live_search_query.present?
-    @communities = scope.limit(100)
+    @pagy, @communities = pagy(scope)
     finish_live_search(partial: "communities/live_search_results")
   end
 
@@ -31,8 +32,35 @@ class CommunitiesController < ApplicationController
     end
   end
 
+  def edit
+  end
+
+  def update
+    if @community.update(community_params)
+      redirect_to @community, notice: "Community updated."
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    @community.destroy
+    redirect_to communities_path, notice: "Community removed."
+  end
+
   private
 
-  def set_community    = @community = Community.find(params[:id])
-  def community_params = params.require(:community).permit(:name, :description)
+  def set_community
+    @community = Community.find(params[:id])
+  end
+
+  def authorize_owner
+    return if Current.user == @community.user
+
+    redirect_to @community, alert: "Not allowed"
+  end
+
+  def community_params
+    params.require(:community).permit(:name, :description)
+  end
 end

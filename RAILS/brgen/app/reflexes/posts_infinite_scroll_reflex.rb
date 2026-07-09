@@ -18,6 +18,10 @@ class PostsInfiniteScrollReflex < Shared::InfiniteScrollReflex
             when "top" then Post.top
             else Post.hot
             end
-    scope.includes(:user, :community, :votes)
+    scope = scope.includes(:user, :community, :votes)
+    return scope unless element.dataset["q"].present?
+
+    term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"
+    scope.where("title LIKE ? OR content LIKE ?", term, term)
   end
 end

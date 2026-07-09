@@ -1,0 +1,4 @@
+<li>
+  <%= link_to community.name, community_path(community) %>
+  <% if community.description.present? %><p class="dim"><%= community.description %></p><% end %>
+</li>
