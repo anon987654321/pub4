@@ -6,6 +6,7 @@ class DeploySmokeContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   OPENBSD_ROOT = File.expand_path("../../openbsd", __dir__)
   APPS = %w[amber brgen bsdports hjerterom].freeze
+  RAILS_APPS = %w[amber brgen bsdports hjerterom mytoonz privcam pub_attorney].freeze
 
   def test_all_deployed_apps_expose_rails_health_up_route
     APPS.each do |app|
@@ -39,6 +40,12 @@ class DeploySmokeContractTest < Minitest::Test
     assert_includes shared, "assets:precompile"
   end
 
+  def test_production_baseline_serves_precompiled_assets
+    baseline = read(File.join(ROOT, "shared/config/environments/production_baseline.rb"))
+    assert_includes baseline, "config.public_file_server.enabled = true"
+    assert_includes baseline, "config.public_file_server.headers"
+  end
+
   def test_brgen_solid_cache_schema_present
     cache = read(File.join(ROOT, "brgen/db/cache_schema.rb"))
     assert_includes cache, "solid_cache_entries"
@@ -48,6 +55,18 @@ class DeploySmokeContractTest < Minitest::Test
   def test_brgen_face_assets_under_javascripts
     assert File.file?(File.join(ROOT, "brgen/app/assets/javascripts/particle_kernel.js"))
     assert File.file?(File.join(ROOT, "brgen/app/assets/javascripts/face.js"))
+  end
+
+  def test_stimulus_controllers_do_not_use_method_trailing_commas
+    RAILS_APPS.each do |app|
+      Dir.glob(File.join(ROOT, app, "app/javascript/controllers/**/*_controller.js")).each do |controller|
+        body = read(controller)
+        refute_match(/^\s{2}},\s*$/m, body, "#{controller} has a trailing comma after a class method")
+        body.lines.grep(/StimulusReflex\.register|textContent|addEventListener|removeEventListener|style\.height/).each do |line|
+          refute_match(/,\s*$/, line, "#{controller} has a trailing comma after a statement")
+        end
+      end
+    end
   end
 
   private

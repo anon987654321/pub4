@@ -176,9 +176,11 @@ class DeployBacklogTest < Minitest::Test
       'brgen/app/models/dating/dislike.rb' => %w[DatingDislike dating]
     }
 
+    app_record = File.read(File.join(ROOT, 'shared/app/models/application_record.rb'))
+    assert_includes app_record, 'include Shared::ActivityTrackable'
+
     expected_events.each do |relative, (event_name, vertical)|
       source = File.read(File.join(ROOT, relative))
-      assert_includes source, 'ActivityTrackable'
       assert_includes source, 'tracks_activity'
       assert_includes source, event_name
       assert_includes source, "source_vertical: \"#{vertical}\""
@@ -491,6 +493,35 @@ class DeployBacklogTest < Minitest::Test
     assert_includes job, 'NvdCveService.crossref'
     assert_includes job, 'CURSOR_KEY'
     assert_includes recurring, 'SecurityAdvisoryRefreshJob'
+  end
+
+  def test_shared_auth_fields_migrated_across_rails_apps
+    %w[amber brgen bsdports hjerterom mytoonz privcam pub_attorney].each do |app|
+      migration = File.join(ROOT, app, 'db/migrate/20260709120000_add_shared_auth_fields_to_users.rb')
+      assert File.file?(migration), "missing shared auth migration for #{app}"
+
+      source = File.read(migration)
+      assert_includes source, ':remember_token'
+      assert_includes source, ':magic_link_token'
+      assert_includes source, ':two_factor_enabled'
+    end
+
+    initializer = File.read(File.join(ROOT, 'shared/config/initializers/auth_extensions.rb'))
+    assert_includes initializer, 'Shared::UserAuthExtensions'
+    assert_includes File.read(File.join(ROOT, 'shared/app/models/concerns/shared/user_auth_extensions.rb')),
+                    'ensure_auth_column!'
+  end
+
+  def test_playlist_tracks_and_hosted_tracks_wire_user_ownership
+    migration = read_brgen('db/migrate/20260709120100_add_user_to_playlist_tracks.rb')
+    track = read_brgen('app/models/playlist/track.rb')
+    hosted = read_brgen('app/controllers/playlist/hosted_tracks_controller.rb')
+    tracks_controller = read_brgen('app/controllers/playlist/tracks_controller.rb')
+
+    assert_includes migration, 'add_reference :playlist_tracks, :user'
+    assert_includes track, 'belongs_to :user'
+    assert_includes hosted, '@track.user = Current.user'
+    assert_includes tracks_controller, 'user: Current.user'
   end
 
   private

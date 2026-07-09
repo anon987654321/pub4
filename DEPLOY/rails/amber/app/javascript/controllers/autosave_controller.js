@@ -54,12 +54,13 @@ export default class extends Controller {
       return
     }
 
+    const headers = {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+      "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || ""
+    }
     const response = await fetch(this.urlValue, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || ""
-      },
+      headers: headers,
       body: new URLSearchParams(snapshot)
     }).catch(() => null)
 
