@@ -5,7 +5,7 @@
       <div class="x-content">
         <div class="x-header">
           <span class="x-name">
-            <% if post.anonymous? || post.user&.guest? %>
+            <% if post.anonymous? || post.user&.guest? || post.user.blank? %>
               <%= post.author_name %>
             <% else %>
               <%= link_to post.author_name, user_path(post.user), class: "link-inherit" %>

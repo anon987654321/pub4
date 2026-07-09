@@ -3,6 +3,8 @@
 require "test_helper"
 
 class BergenDemoSeederTest < ActiveSupport::TestCase
+  parallelize(workers: 1)
+
   setup do
     Brgen::CitySeed.sync! if City.table_exists?
     @city = City.find_by!(domain: "brgen.no")

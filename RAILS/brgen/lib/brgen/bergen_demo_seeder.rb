@@ -386,11 +386,15 @@ module Brgen
     private
 
     def ensure_communities
-      admin = User.strict_loading(false).find_or_create_by!(email_address: "admin@#{@city.domain}") do |user|
-        user.username = "admin_#{@city.slug}"
-        user.password = user.password_confirmation = "password123"
-        user.city = @city
-      end
+      admin = User.strict_loading(false).find_by(email_address: "admin@#{@city.domain}") ||
+              User.strict_loading(false).find_by(username: "admin_#{@city.slug}") ||
+              User.strict_loading(false).create!(
+                email_address: "admin@#{@city.domain}",
+                username: "admin_#{@city.slug}",
+                password: "password123",
+                password_confirmation: "password123",
+                city: @city
+              )
 
       Brgen::CityContent.community_slugs_for(@city.country_code).index_with do |slug|
         Community.find_or_create_by!(slug: slug, city: @city) do |community|

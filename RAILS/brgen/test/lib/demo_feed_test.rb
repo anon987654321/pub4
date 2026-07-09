@@ -3,6 +3,8 @@
 require "test_helper"
 
 class DemoFeedTest < ActiveSupport::TestCase
+  parallelize(workers: 1)
+
   setup do
     Brgen::CitySeed.sync! if City.table_exists?
     @city = City.find_by!(domain: "brgen.no")
@@ -24,7 +26,10 @@ class DemoFeedTest < ActiveSupport::TestCase
       password_confirmation: "password123",
       city: @city
     )
-    community = Community.create!(name: "bergen", slug: "bergen", user: demo_user)
+    community = Community.find_or_create_by!(slug: "bergen", city: @city) do |c|
+      c.name = "bergen"
+      c.user = demo_user
+    end
     demo_post = Post.create!(user: demo_user, community: community, title: "Demo post", content: "Hei Bergen")
     Post.create!(user: noise_user, community: community, title: "Noise", content: "Lorem")
 
