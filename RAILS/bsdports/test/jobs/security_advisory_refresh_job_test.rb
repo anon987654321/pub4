@@ -3,6 +3,15 @@
 require "test_helper"
 
 class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
+  setup do
+    @original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache.lookup_store(:memory_store)
+  end
+
+  teardown do
+    Rails.cache = @original_cache
+  end
+
   test "refreshes advisories in batches and advances cursor" do
     platform = Platform.find_or_create_by!(slug: "openbsd") { |p| p.name = "OpenBSD" }
     category = Category.first || Category.create!(platform: platform, name: "devel")
