@@ -73,7 +73,7 @@ Rails.application.routes.draw do
 
   constraints(subdomain: TV_SUBDOMAINS) do
     scope module: "tv", as: "tv" do
-      root "home#index", as: :tv_root
+      root "home#index"
       resources :channels, param: :slug do
         member do
           post :subscribe
