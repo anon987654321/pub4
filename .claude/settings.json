@@ -9,5 +9,8 @@
     "deny": [],
     "ask": []
   },
-  "comment": "Per MASTER2 LLM.md — bash permitted for git/ruby/bundle invocations only. All other shell ops use zsh."
+  "comment": "Per MASTER2 LLM.md — bash permitted for git/ruby/bundle invocations only. All other shell ops use zsh.",
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  }
 }
