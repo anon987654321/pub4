@@ -14,9 +14,9 @@ echo "==> assets precompile"
 cd "$WEB"
 export RAILS_ENV=production
 export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 32)}"
-# Propshaft wedges when public/assets/ is stale or root-owned from rc.d precompile.
-doas rm -rf public/assets 2>/dev/null || rm -rf public/assets 2>/dev/null || true
-doas chown -R dev:dev public 2>/dev/null || true
+# rc.d master precompiles as root; dev cannot rewrite root-owned public/assets/assets.
+doas rm -rf public/assets
+doas chown -R dev:dev public
 bundle exec rails assets:precompile
 bundle exec ruby "$ROOT/DEPLOY/rails/master_web_assets_gate.rb"
 
