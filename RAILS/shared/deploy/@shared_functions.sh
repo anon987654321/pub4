@@ -497,8 +497,10 @@ deploy_tracked_app() {
   doas chown -R "${app_name}:${app_name}" "${APP_DIR}/.bundle"
 
   bundle_install_as_app "$APP_NAME" "$APP_DIR"
+  log_ok "production bundle installed for ${app_name}"
   migrate_sqlite_db_to_storage_if_needed "$APP_NAME" "$APP_DIR"
-  db_create_migrate_as_app "$APP_NAME" "$APP_DIR"
+  db_create_migrate_as_app "$APP_NAME" "$APP_DIR" || exit 1
+  log_ok "database migrated for ${app_name}"
   if [[ -f ${APP_DIR}/db/seeds.rb && ${SEED_ON_DEPLOY:-} == 1 ]]; then
     db_seed_as_app "$APP_NAME" "$APP_DIR"
   fi

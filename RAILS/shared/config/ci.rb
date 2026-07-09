@@ -29,8 +29,9 @@ Pub4::CiGuard.run! do
     audit = ENV["BUNDLER_AUDIT_UPDATE"] == "1" ? "bundle exec bundler-audit check --update" : "bundle exec bundler-audit check"
     step "Security: Gem audit", audit
     step "Security: Brakeman", "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
-    step "Tests: DB prepare", "env RAILS_ENV=test bin/rails db:migrate"
+    step "Tests: DB prepare", "env RAILS_ENV=test bin/rails db:test:prepare"
     step "Tests: Rails", "bin/rails test"
-    step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed:replant"
+    seed_env = vps_host ? "env RAILS_ENV=test SKIP_BERGEN_DEMO=1" : "env RAILS_ENV=test"
+    step "Tests: Seeds", "#{seed_env} bin/rails db:seed:replant"
   end
 end

@@ -482,7 +482,7 @@ module Brgen
       return if playlist.tracks.count >= radio_bergen_manifest_tracks.size
 
       radio_bergen_manifest_tracks.each do |row|
-        track = find_or_create_radio_track!(row)
+        track = find_or_create_radio_track!(row, owner: owner)
         playlist.add_track!(track, user: owner)
       end
       playlist.update_column(:tracks_count, playlist.tracks.count) if playlist.tracks_count != playlist.tracks.count
@@ -570,13 +570,14 @@ module Brgen
       RadioBergenManifest.load
     end
 
-    def find_or_create_radio_track!(row)
+    def find_or_create_radio_track!(row, owner:)
       Playlist::Track.find_or_create_by!(
         title: row[:title],
         artist: row[:artist],
         source_type: row[:source_type],
         source_url: row[:source_url]
       ) do |track|
+        track.user = owner
         track.privacy = "public"
         track.duration_seconds = rand(150..320)
         track.genre = row[:source_type] == "direct" ? "bergen" : "beats"
