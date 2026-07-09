@@ -5,18 +5,24 @@ module Brgen
   class RadioBergenManifest
     class << self
       def manifest_path
-        Pub4::DeployPaths.repo_join("MASTER/tools/audio/radio_bergen_tracks.yml")
+        Pub4::DeployPaths.first_file([
+          Pub4::DeployPaths.repo_join("MASTER/tools/audio/radio_bergen_tracks.yml"),
+          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_tracks.yml")
+        ])
       end
 
       def lessons_path
-        Pub4::DeployPaths.repo_join("MASTER/data/lessons/pub_archive_restore.yml")
+        Pub4::DeployPaths.first_file([
+          Pub4::DeployPaths.repo_join("MASTER/data/lessons/pub_archive_restore.yml"),
+          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/data/lessons/pub_archive_restore.yml")
+        ])
       end
 
       def load
         path = manifest_path
-        return {} unless path.file?
+        return {} unless path
 
-        YAML.safe_load(path.read, permitted_classes: [], aliases: true) || {}
+        YAML.safe_load(File.read(path), permitted_classes: [], aliases: true) || {}
       end
 
       def youtube_tracks
@@ -53,9 +59,9 @@ module Brgen
 
       def lessons_pub2_head
         path = lessons_path
-        return "ad05242c97ff" unless path.file?
+        return "ad05242c97ff" unless path
 
-        data = YAML.safe_load(path.read, permitted_classes: [], aliases: true) || {}
+        data = YAML.safe_load(File.read(path), permitted_classes: [], aliases: true) || {}
         data.dig("pub2", "head") || "ad05242c97ff"
       end
     end

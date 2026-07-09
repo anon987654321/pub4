@@ -28,7 +28,7 @@ module Pub4
     end
 
     def rails_root
-      Pathname.new(ENV.fetch("PUB4_RAILS_ROOT", DEFAULT_RAILS))
+      Pathname.new(env_value("PUB4_RAILS_ROOT") || DEFAULT_RAILS)
     end
 
     def deploy_root
