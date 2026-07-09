@@ -23,6 +23,27 @@ module SchemaHelper
                 data: { turbo_permanent: true }
   end
 
+  # ItemList for category / search result pages (marketplace index, etc.)
+  def item_list_schema(items, title: nil)
+    {
+      "@context" => "https://schema.org",
+      "@type" => "ItemList",
+      "name" => title,
+      "numberOfItems" => items.size,
+      "itemListElement" => items.map.with_index(1) do |item, index|
+        {
+          "@type" => "ListItem",
+          "position" => index,
+          "item" => {
+            "@type" => "Product",
+            "name" => item.try(:title) || item.try(:name),
+            "url" => schema_url_for(item)
+          }
+        }
+      end
+    }.compact
+  end
+
   private
 
   def build_schema(resource, explicit_type)
@@ -188,27 +209,6 @@ module SchemaHelper
       "latitude" => place.latitude,
       "longitude" => place.longitude
     }
-  end
-
-  # Simple ItemList for category / search result pages (good for marketplace, etc.)
-  def item_list_schema(items, title: nil)
-    {
-      "@context" => "https://schema.org",
-      "@type" => "ItemList",
-      "name" => title,
-      "numberOfItems" => items.size,
-      "itemListElement" => items.map.with_index(1) do |item, index|
-        {
-          "@type" => "ListItem",
-          "position" => index,
-          "item" => {
-            "@type" => "Product",
-            "name" => item.try(:title) || item.try(:name),
-            "url" => schema_url_for(item)
-          }
-        }
-      end
-    }.compact
   end
 
   def schema_url_for(resource)
