@@ -65,12 +65,16 @@
     <p><%= link_to "Add your first item", new_item_path %></p>
   <% end %>
 <% else %>
-  <section class="empty-state" data-visitor-orientation>
-    <h1>Amber turns your wardrobe into a working system.</h1>
-    <p class="empty-state-body">Catalog what you own, plan outfits, spot what you never wear, and get capsule suggestions before you buy more.</p>
-    <p>
+  <section class="amber-guest-hero" data-visitor-orientation>
+    <div class="amber-guest-hero__logo" aria-hidden="true">
+      <%= render "shared/logo", id_prefix: "hero" %>
+    </div>
+    <h1 class="amber-guest-hero__title">Amber turns your wardrobe into a working system.</h1>
+    <p class="amber-guest-hero__body">Catalog what you own, plan outfits, spot what you never wear, and get capsule suggestions before you buy more.</p>
+    <p class="amber-guest-hero__actions">
       <%= link_to "Sign in", new_session_path, class: "btn btn--primary" %>
       <%= link_to "Create account", new_registration_path, class: "btn btn--ghost" %>
+      <%= link_to "Talk to MASTER", root_path(master: 1), class: "btn btn--ghost" %>
     </p>
   </section>
 <% end %>

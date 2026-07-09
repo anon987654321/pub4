@@ -1,24 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" role="img" aria-label="Amber">
+<% id_prefix = local_assigns.fetch(:id_prefix, "amber-logo") %>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" role="img" aria-label="Amber" class="amber-logo-svg">
   <defs>
-    <path id="swoosh-path" d="M50,220 C250,180 750,180 950,220"/>
-    <clipPath id="text-mask-1">
+    <path id="<%= id_prefix %>-swoosh-path" d="M50,220 C250,180 750,180 950,220"/>
+    <clipPath id="<%= id_prefix %>-text-mask">
       <text font-family="'Caprasimo', Arial, sans-serif" letter-spacing="-3" stroke="none">
-        <textPath href="#swoosh-path" startOffset="2%">amber<tspan dx="10" dy="-40" stroke="none">®</tspan></textPath>
+        <textPath href="#<%= id_prefix %>-swoosh-path" startOffset="2%">amber<tspan dx="10" dy="-40" stroke="none">®</tspan></textPath>
       </text>
     </clipPath>
   </defs>
-  <g clip-path="url(#text-mask-1)">
+  <g clip-path="url(#<%= id_prefix %>-text-mask)">
     <foreignObject x="0" y="100" width="1000" height="300">
       <div xmlns="http://www.w3.org/1999/xhtml" class="amber-logo-gradient"></div>
     </foreignObject>
   </g>
-  <path stroke="#FFFFFF" stroke-width="0.5" fill="none" d="M50,180 C200,100 400,200 600,100 S850,160 950,130"/>
-  <path stroke="#FFFFFF" stroke-width="1"   fill="none" d="M50,195 C200,115 400,215 600,115 S850,175 950,145"/>
-  <path stroke="#FFFFFF" stroke-width="1.5" fill="none" d="M50,205 C200,125 400,225 600,125 S850,185 950,155"/>
-  <path stroke="#FFFFFF" stroke-width="2"   fill="none" d="M50,213 C200,133 400,233 600,133 S850,193 950,163"/>
-  <path stroke="#FFFFFF" stroke-width="2.5" fill="none" d="M50,220 C200,140 400,240 600,140 S850,200 950,170"/>
-  <path stroke="#FFFFFF" stroke-width="3"   fill="none" d="M50,226 C200,146 400,246 600,146 S850,206 950,176"/>
-  <path stroke="#FFFFFF" stroke-width="3"   fill="none" d="M50,231 C200,151 400,251 600,151 S850,211 950,181"/>
-  <path stroke="#FFFFFF" stroke-width="3.5" fill="none" d="M50,235 C200,155 400,255 600,155 S850,215 950,185"/>
-  <path stroke="#FFFFFF" stroke-width="4"   fill="none" d="M50,238 C200,158 400,258 600,158 S850,218 950,188"/>
+  <g class="amber-swoosh-lines" aria-hidden="true">
+    <path class="amber-swoosh-line" stroke="#FFFFFF" stroke-width="0.5" fill="none" d="M50,180 C200,100 400,200 600,100 S850,160 950,130"/>
+    <path class="amber-swoosh-line" stroke="#FFFFFF" stroke-width="1"   fill="none" d="M50,195 C200,115 400,215 600,115 S850,175 950,145"/>
+    <path class="amber-swoosh-line" stroke="#FFFFFF" stroke-width="1.5" fill="none" d="M50,205 C200,125 400,225 600,125 S850,185 950,155"/>
+    <path class="amber-swoosh-line" stroke="#FFFFFF" stroke-width="2"   fill="none" d="M50,213 C200,133 400,233 600,133 S850,193 950,163"/>
+    <path class="amber-swoosh-line" stroke="#FFFFFF" stroke-width="2.5" fill="none" d="M50,220 C200,140 400,240 600,140 S850,200 950,170"/>
+    <path class="amber-swoosh-line" stroke="#FFFFFF" stroke-width="3"   fill="none" d="M50,226 C200,146 400,246 600,146 S850,206 950,176"/>
+    <path class="amber-swoosh-line" stroke="#FFFFFF" stroke-width="3"   fill="none" d="M50,231 C200,151 400,251 600,151 S850,211 950,181"/>
+    <path class="amber-swoosh-line" stroke="#FFFFFF" stroke-width="3.5" fill="none" d="M50,235 C200,155 400,255 600,155 S850,215 950,185"/>
+    <path class="amber-swoosh-line" stroke="#FFFFFF" stroke-width="4"   fill="none" d="M50,238 C200,158 400,258 600,158 S850,218 950,188"/>
+  </g>
 </svg>

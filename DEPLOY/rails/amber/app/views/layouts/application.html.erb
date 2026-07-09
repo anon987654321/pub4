@@ -35,9 +35,9 @@
 </head>
 <body class="zen-minimal editorial-surface" data-pwa-key="amber" data-controller="pwa-standalone">
 <a class="skip-link" href="#main-content">Skip to main content</a>
-<nav role="navigation" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
+<nav role="navigation" class="<%= authenticated? ? nil : "nav-visible" %>" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to root_path, class: "brand", aria: { label: "Amber home" } do %>
-    <%= render "shared/logo" %>
+    <%= render "shared/logo", id_prefix: "nav" %>
   <% end %>
   <% if authenticated? %>
     <%= render "shared/inbox_link" %>
