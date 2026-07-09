@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class FoodRequestsController < ApplicationController
+  before_action :require_real_user
+
   def create
     @listing = FoodListing.find(params[:food_listing_id])
     @request = @listing.food_requests.build(request_params.merge(user: Current.user, status: "pending"))

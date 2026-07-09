@@ -4,6 +4,7 @@ class FoodListingsController < ApplicationController
   include Shared::LiveSearchable
 
   allow_unauthenticated_access only: %i[index show]
+  before_action :require_real_user, except: %i[index show]
   before_action :set_listing, only: %i[show edit update destroy]
   before_action :authorize!, only: %i[edit update destroy]
 

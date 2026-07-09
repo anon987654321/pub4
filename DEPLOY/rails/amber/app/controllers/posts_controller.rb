@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class PostsController < ApplicationController
+  before_action :require_real_user, except: %i[index show]
   before_action :set_post, only: %i[show destroy like]
+  before_action :authorize_owner!, only: :destroy
 
   def index
     @pagy, @posts = pagy(Post.recent.includes(:user, :outfit, :item))
@@ -46,5 +48,9 @@ class PostsController < ApplicationController
   private
 
   def set_post = @post = Post.find(params[:id])
+  def authorize_owner!
+    redirect_to(posts_path, alert: "Unauthorized") unless @post.user == Current.user
+  end
+
   def post_params = params.require(:post).permit(:body, :outfit_id, :item_id)
 end

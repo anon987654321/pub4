@@ -4,7 +4,9 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   include Shared::LiveSearchable
 
   allow_unauthenticated_access only: %i[index show]
+  before_action :require_real_user, except: %i[index show]
   before_action :set_restaurant, only: %i[show edit update destroy]
+  before_action :authorize_owner!, only: %i[edit update destroy]
 
   def index
     scope = Takeaway::Restaurant.active.includes(:user)
@@ -51,6 +53,10 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   private
 
   def set_restaurant = (@restaurant = Takeaway::Restaurant.find(params[:id]))
+
+  def authorize_owner!
+    redirect_to(takeaway_restaurants_path, alert: "Not allowed") unless @restaurant.owner?(Current.user)
+  end
 
   def restaurant_params = params.require(:takeaway_restaurant).permit(
     :name,

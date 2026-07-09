@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class WardrobeItemsController < ApplicationController
+  before_action :require_real_user
   before_action :set_wardrobe_item, only: %i[show edit update destroy]
+  before_action :authorize!, only: %i[show edit update destroy]
 
   def index
     @wardrobe_items = WardrobeItem.includes(:item).recent.limit(100)
@@ -25,8 +27,7 @@ class WardrobeItemsController < ApplicationController
   end
 
   def create
-    @wardrobe_item = WardrobeItem.new(wardrobe_item_params)
-    @wardrobe_item.user = current_user if respond_to?(:current_user, true)
+    @wardrobe_item = Current.user.wardrobe_items.build(wardrobe_item_params)
 
     if @wardrobe_item.save
       @wardrobe_item.record_activity!("AmberWardrobeItemCreated", source_vertical: "amber")
@@ -58,6 +59,10 @@ class WardrobeItemsController < ApplicationController
 
   def set_wardrobe_item
     @wardrobe_item = WardrobeItem.find(params[:id])
+  end
+
+  def authorize!
+    redirect_to(wardrobe_items_path, alert: "Unauthorized") unless @wardrobe_item.user == Current.user
   end
 
   def wardrobe_item_params

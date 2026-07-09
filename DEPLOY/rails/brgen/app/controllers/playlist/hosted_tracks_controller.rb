@@ -3,7 +3,9 @@
 module Playlist
   class HostedTracksController < BaseController
     allow_unauthenticated_access only: %i[index show]
+    before_action :require_real_user, except: %i[index show]
     before_action :set_track, only: %i[show edit update destroy]
+    before_action :authorize_owner!, only: %i[edit update destroy]
 
     def index
       @tracks = Playlist::Track.publicly_visible.unexpired.recent.limit(100)
@@ -19,6 +21,7 @@ module Playlist
 
     def create
       @track = Playlist::Track.new(track_params)
+      @track.user = Current.user if @track.respond_to?(:user=)
       @track.audio_file.attach(params[:track][:audio_file]) if params.dig(:track, :audio_file).present?
       @track.artwork.attach(params[:track][:artwork]) if params.dig(:track, :artwork).present?
 
@@ -53,6 +56,13 @@ module Playlist
 
     def track_params
       params.require(:track).permit(:title, :artist, :album, :duration_seconds, :source_type, :source_url, :genre, :privacy, :expires_at)
+    end
+
+    def authorize_owner!
+      return unless @track.respond_to?(:user)
+      return if @track.user == Current.user
+
+      redirect_to playlist_hosted_tracks_path, alert: t("playlist.not_allowed", default: "Not allowed")
     end
   end
 end

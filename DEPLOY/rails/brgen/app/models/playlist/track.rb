@@ -8,6 +8,7 @@ class Playlist::Track < ApplicationRecord
   include Shared::MediaProcessable
   tracks_activity created: "PlaylistTrackCreated", source_vertical: "playlist"
   include Shared::Reactable
+  belongs_to :user, optional: true
   has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
            foreign_key: :playlist_track_id, dependent: :destroy
   has_many :playlists, through: :playlist_tracks, class_name: "Playlist::Playlist"

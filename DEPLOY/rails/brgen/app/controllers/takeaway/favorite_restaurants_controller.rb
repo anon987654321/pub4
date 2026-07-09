@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Takeaway::FavoriteRestaurantsController < Takeaway::BaseController
+  before_action :require_real_user
   before_action :set_restaurant
 
   def create
