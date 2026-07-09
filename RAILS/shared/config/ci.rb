@@ -29,7 +29,7 @@ Pub4::CiGuard.run! do
     audit = ENV["BUNDLER_AUDIT_UPDATE"] == "1" ? "bundle exec bundler-audit check --update" : "bundle exec bundler-audit check"
     step "Security: Gem audit", audit
     step "Security: Brakeman", "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
-    step "Tests: DB prepare", "env RAILS_ENV=test bin/rails db:prepare"
+    step "Tests: DB prepare", "env RAILS_ENV=test bin/rails db:migrate"
     step "Tests: Rails", "bin/rails test"
     step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed:replant"
   end
