@@ -5,7 +5,6 @@ require "zlib"
 class Takeaway::Restaurant < ApplicationRecord
   include CityTenantable
 
-  # Engine-ized Shared concerns (via pub4-shared)
   include Shared::Notifiable
   include Shared::Reactable
   include Shared::GeoLocatable

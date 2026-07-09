@@ -6,7 +6,6 @@ class Item < ApplicationRecord
   include MoneyInOre
   money_reader :price
 
-  # Engine-ize: pull shared behavior via pub4-shared (Gemfile path). Use Shared.concern for lazy load.
   include Shared::Reactable
   include Shared::Notifiable
   belongs_to :user

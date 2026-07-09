@@ -3,7 +3,6 @@
 class Dating::Profile < ApplicationRecord
   include CityTenantable
 
-  # Engine-ize Shared
   tracks_activity created: "DatingProfileCreated", updated: "DatingProfileUpdated", source_vertical: "dating", visibility: "private", actor: :user
   include Shared::GeoLocatable
   include Shared::MediaProcessable

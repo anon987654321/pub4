@@ -3,7 +3,6 @@
 class Post < ApplicationRecord
   include CityTenantable
 
-  # Engine-ize: use Shared.concern for consistency
   include Shared::Votable
   include Shared::Commentable
   include Shared::Taggable

@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Verify openbsd.sh DNS, domain_registry.rb, and routes.rb agree on city subdomains.
+# Verify DEPLOY.sh DNS, domain_registry.rb, and subdomain constants agree on city subdomains.
 
 require "pathname"
 require_relative "../lib/utf8"
 
 ROOT = Pathname.new(__dir__).join("..", "..").expand_path
-OPENBSD = ROOT.join("DEPLOY", "openbsd", "openbsd.sh")
+OPENBSD = ROOT.join("DEPLOY", "openbsd", "DEPLOY.sh")
 REGISTRY = ROOT.join("DEPLOY", "rails", "brgen", "lib", "brgen", "domain_registry.rb")
 COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
 MASTER_ONLY_SUBAPPS = %w[ai].freeze
@@ -51,7 +51,7 @@ end
 
 def extract_constant(text, name)
   match = text.match(/#{name}\s*=\s*%w\[([^\]]+)\]/)
-  raise "missing #{name} in routes.rb" unless match
+  raise "missing #{name} in domain_registry.rb" unless match
 
   match[1].split(/\s+/)
 end

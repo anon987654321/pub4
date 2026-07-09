@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Place < ApplicationRecord
-  # Engine-ize: Shared for maps (AN624/625 geo)
+  include Shared::ActivityTrackable
   include Shared::GeoLocatable
   belongs_to :city
   belongs_to :neighborhood, optional: true

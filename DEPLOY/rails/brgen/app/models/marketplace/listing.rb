@@ -3,6 +3,7 @@
 class Marketplace::Listing < ApplicationRecord
   include CityTenantable
   include Shared::MediaProcessable
+  include Shared::GeoLocatable
   tracks_activity created: "ListingCreated", source_vertical: "marketplace", actor: :user
 
   include Shared::Reactable
@@ -48,9 +49,6 @@ class Marketplace::Listing < ApplicationRecord
   scope :recent,   -> { order(created_at: :desc) }
   scope :popular,  -> { order(views_count: :desc) }
   scope :from_store, ->(store) { where(store: store) }
-
-  include Shared::GeoLocatable
-  # near/nearby + geo? + distance_to + haversine provided by concern (standardized pure ruby)
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
   scope :rated, -> { where("rating > 0") }
 

@@ -20,7 +20,7 @@ module Maps
 
     def show
       @place = Place.includes(:city, :neighborhood).find(params[:id])
-      @place.record_activity!("PlaceViewed", source_vertical: "maps") rescue nil
+      @place.record_activity!("PlaceViewed", source_vertical: "maps")
       @recent_check_ins = @place.place_check_ins.includes(:user).recent.limit(10)
       @checked_in = authenticated? && @place.place_check_ins.exists?(user: Current.user)
     end
