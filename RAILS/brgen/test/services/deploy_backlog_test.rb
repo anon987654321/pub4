@@ -512,6 +512,14 @@ class DeployBacklogTest < Minitest::Test
                     'ensure_auth_column!'
   end
 
+  def test_playlist_tracks_schema_includes_user_ownership
+    schema = File.read(File.join(ROOT, 'brgen/db/schema.rb'))
+    assert_includes schema, 'create_table "playlist_tracks"'
+    assert_includes schema, 't.integer "user_id"', 'brgen schema missing playlist_tracks.user_id'
+    assert_includes schema, 'index_playlist_tracks_on_user_id'
+    assert_includes schema, 'add_foreign_key "playlist_tracks", "users"'
+  end
+
   def test_schema_dumps_include_shared_auth_user_columns
     %w[amber brgen bsdports hjerterom mytoonz privcam pub_attorney].each do |app|
       schema = File.read(File.join(ROOT, app, 'db', 'schema.rb'))

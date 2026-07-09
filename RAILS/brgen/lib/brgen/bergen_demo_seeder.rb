@@ -581,7 +581,7 @@ module Brgen
         source_type: row[:source_type],
         source_url: row[:source_url]
       ) do |track|
-        track.user = owner
+        track.user = owner if track.has_attribute?(:user_id)
         track.privacy = "public"
         track.duration_seconds = rand(150..320)
         track.genre = row[:source_type] == "direct" ? "bergen" : "beats"

@@ -658,7 +658,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.string "source_url"
     t.string "title"
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.index ["privacy", "expires_at"], name: "index_playlist_tracks_on_privacy_and_expires_at"
+    t.index ["user_id"], name: "index_playlist_tracks_on_user_id"
   end
 
   create_table "posts", force: :cascade do |t|
@@ -1121,6 +1123,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
   add_foreign_key "playlist_set_tracks", "playlist_sets"
   add_foreign_key "playlist_set_tracks", "playlist_tracks"
   add_foreign_key "playlist_set_tracks", "users"
+  add_foreign_key "playlist_tracks", "users"
   add_foreign_key "playlist_sets", "users"
   add_foreign_key "posts", "cities"
   add_foreign_key "posts", "communities"
