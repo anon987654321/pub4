@@ -247,6 +247,25 @@ sync_openbsd_apply() {
   done
   log INFO "optional Rails apps left stopped (vm23_small); start with: doas rcctl start <app>"
 
+  wait_for_up() {
+    typeset port=$1 name=$2 attempts=${3:-24} delay=${4:-5}
+    typeset i code
+    for (( i = 1; i <= attempts; i++ )); do
+      code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 8 http://127.0.0.1:${port}/up 2>/dev/null)
+      [[ $code == 200 ]] && { log INFO "$name /up ok (attempt $i)"; return 0; }
+      sleep $delay
+    done
+    log ERROR "$name /up not ready on :${port} after $((attempts * delay))s (last=$code)"
+    return 1
+  }
+
+  if ! wait_for_up 53187 master 12 5; then
+    log WARN "master slow — starting dev tmux falcon fallback"
+    su -m dev -c 'tmux kill-session -t falcon53187 2>/dev/null; tmux new -d -s falcon53187 "cd /home/dev/pub4/MASTER/web && export RAILS_ENV=production MASTER_SAFE_MODE=1 MASTER_SKIP_SELF_TEST=1 MASTER_BACKGROUND=0 SECRET_KEY_BASE_DUMMY=1 PATH=/usr/local/bin:/usr/bin:/bin && exec bundle34 exec falcon serve -n 1 --health-check-timeout 300 --bind http://127.0.0.1:53187 >> /tmp/falcon53187.log 2>&1"'
+    wait_for_up 53187 master 24 5 || return 1
+  fi
+  wait_for_up 38182 brgen 24 5 || return 1
+
   ruby34 "${SCRIPT_DIR}/health_check.rb" --core && log INFO "health_check ok" \
     || { log ERROR "health_check failed"; return 1; }
 }

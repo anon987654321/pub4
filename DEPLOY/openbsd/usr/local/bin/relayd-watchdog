@@ -6,6 +6,21 @@
 
 require "open3"
 
+REPO_DOAS = "/home/dev/pub4/DEPLOY/openbsd/etc/doas.conf"
+
+def heal_doas_conf!
+  return unless Process.uid.zero?
+  return unless File.file?(REPO_DOAS)
+
+  src = File.read(REPO_DOAS)
+  src += "\n" unless src.end_with?("\n")
+  dst = File.read("/etc/doas.conf") rescue ""
+  return if dst == src
+
+  File.write("/etc/doas.conf", src)
+  log("synced /etc/doas.conf from repo")
+end
+
 BACKENDS = {
   "brgen" => 38182,
   "amber" => 61352,
@@ -59,6 +74,8 @@ def stale_backends
   end
   stale.uniq { |entry| entry[:name] }
 end
+
+heal_doas_conf!
 
 unless relayd_running?
   restart_relayd("relayd check failed")

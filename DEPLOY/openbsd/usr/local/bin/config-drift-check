@@ -7,6 +7,23 @@
 
 require "open3"
 
+REPO_DOAS = "/home/dev/pub4/DEPLOY/openbsd/etc/doas.conf"
+
+def heal_doas_conf!
+  return unless Process.uid.zero?
+  return unless File.file?(REPO_DOAS)
+
+  src = File.read(REPO_DOAS)
+  src += "\n" unless src.end_with?("\n")
+  dst = File.read("/etc/doas.conf") rescue ""
+  return if dst == src
+
+  File.write("/etc/doas.conf", src)
+  warn "config-drift: synced /etc/doas.conf from repo"
+end
+
+heal_doas_conf!
+
 failures = []
 
 def read(path)

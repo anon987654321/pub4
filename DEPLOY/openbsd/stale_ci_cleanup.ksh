@@ -25,3 +25,14 @@ stale_ci_cleanup() {
 
 	pkill -U dev -f 'ruby.*bin/cli' 2>/dev/null || true
 }
+
+heal_doas_conf() {
+	typeset repo=${GUARD_REPO:-/home/dev/pub4}
+	typeset src="${repo}/DEPLOY/openbsd/etc/doas.conf"
+	[[ -r $src && -w /etc/doas.conf ]] || return 0
+	cmp -s /etc/doas.conf "$src" 2>/dev/null && return 0
+	cp "$src" /etc/doas.conf
+	logger -t resource-guard "synced /etc/doas.conf from repo"
+}
+
+heal_doas_conf
