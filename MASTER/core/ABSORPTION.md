@@ -175,8 +175,12 @@ orders. Regex workflow fan-out in `repl_flow` removed — one goal, Fold decides
 high-risk requires `critique` verb (in-process `Deliberation` tribunal) before
 `done`. Constitution enforces ideation notes and council clearance; no pipeline stages.
 
-Remaining legacy: the **pipeline object** still boots but hot path uses
-`TurnRouter` + Fold only. Delete pipeline in slice 5.
+**Slice 5** (2026-07-09): `build_runtime` replaces `build_pipeline` — container
+`:pipeline` is a `TurnPipeline` adapter over `TurnRouter`; legacy stages no longer
+boot. `lib/now/pipeline.rb` remains for smoke tests only.
+
+Slice 6 still open: trim `ai_boot` accretion (swarm, council_stage shell) and
+sever remaining lib→pipeline back-edges.
 
 ## Done
 

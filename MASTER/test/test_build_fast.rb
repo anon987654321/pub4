@@ -14,12 +14,15 @@ class TestBuildFast < Minitest::Test
 
   def test_fast_command_registry_keys
     container = Master::Builder.build_fast(root: Master::ROOT)
-    route = container[:pipeline].instance_variable_get(:@stages)
-      .find { |stage| stage.is_a?(Master::Now::Stages::Route) }
-    commands = route.instance_variable_get(:@commands)
+    commands = container[:commands]
 
     %w[status orient help tools].each do |name|
       assert commands.key?(name), "missing fast command /#{name}"
     end
+  end
+
+  def test_fast_pipeline_is_turn_adapter
+    container = Master::Builder.build_fast(root: Master::ROOT)
+    assert_instance_of Master::Now::TurnPipeline, container[:pipeline]
   end
 end

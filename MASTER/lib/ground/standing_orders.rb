@@ -194,12 +194,11 @@ module Master
           return Result.err("unknown callable: #{callable_key}") unless klass
           return klass.new(container: @container.merge(bus: @bus, root: Master::ROOT, event: event)).call
         end
-        if @container[:commands]
-          return Master::Now::TurnRouter.call(message: order["command"].to_s, container: @container)
-        end
-        return Result.err("no router") unless @pipeline
+        return Master::Now::TurnRouter.call(message: order["command"].to_s, container: @container) if @container[:commands]
 
-        @pipeline.call(Result.ok(user_message: order["command"].to_s))
+        return @pipeline.call(Result.ok(user_message: order["command"].to_s)) if @pipeline
+
+        Result.err("no router")
       rescue StandardError => e
         Result.err(e.message)
       end

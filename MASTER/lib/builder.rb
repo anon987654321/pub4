@@ -56,7 +56,7 @@ module Master
       Master.configure_providers!
       infra = build_infrastructure(root)
       ai    = build_ai(root, infra)
-      _pipeline, _gateway, runtime = build_pipeline(root:, infra:, ai:)
+      _pipeline, _gateway, runtime = build_runtime(root:, infra:, ai:)
       runtime
     end
 
@@ -86,14 +86,9 @@ module Master
       commands = Now::CommandRegistry.build_fast(infra:, ai:, root:)
       agent = fast_agent_stub
       ai[:agent] = agent
-      stages = [
-        Now::Stages::Intake.new,
-        Now::Stages::Route.new(commands:, agent:, bus:),
-        Now::Stages::Execute.new,
-        Now::Stages::Render.new(renderer: infra[:renderer], output_check:, event_bus: bus),
-      ]
-      pipeline = Now::Pipeline.new(stages, bus:, root:, scanner:)
-      infra.merge(ai).merge(pipeline:, commands:, scanner:, root:)
+      runtime = infra.merge(ai).merge(commands:, scanner:, root:)
+      pipeline = Now::TurnPipeline.new(container: runtime)
+      runtime.merge(pipeline:)
     end
 
     def fast_agent_stub
@@ -171,35 +166,16 @@ module Master
       end
     end
 
-    def build_pipeline(root:, infra:, ai:)
-      config = infra[:config]
+    def build_runtime(root:, infra:, ai:)
       bus = infra[:bus]
       commands = Now::CommandRegistry.build(infra:, ai:, root:)
-      stages = [
-        Now::Stages::Intake.new,
-        Now::Stages::Enhance.new(agent: ai[:agent], event_bus: bus, skills: ai[:skills]),
-        Now::Stages::Infer.new(bus:, session: infra[:session]),
-        Now::Stages::Route.new(commands:, agent: ai[:agent], bus:),
-        Now::Stages::Guard.new(
-          governor: infra[:governor], injection_guard: ai[:guard],
-          evidence: infra[:evidence], event_bus: bus
-        ),
-        Now::Stages::Deliberate.new(agent: ai[:agent], config:),
-        Now::Stages::DestructiveReview.new(deliberation: ai[:deliberation], event_bus: bus),
-        Now::Stages::Execute.new,
-        Now::Pipeline::SkipOnPressure.new(
-          Now::Stages::Review.new(council: ai[:council_stage], scanner: ai[:scanner], config:, root:, event_bus: bus),
-          bus:,
-        ),
-        Now::Stages::Memory.new(memory: infra[:memory], event_bus: bus),
-        Now::Stages::Render.new(renderer: infra[:renderer], output_check: infra[:output_check], event_bus: bus),
-      ]
-      pipeline = Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:, scanner: ai[:scanner])
-      runtime = infra.merge(ai).merge(pipeline:, commands:, root:)
-      ai[:standing].wire_pipeline(pipeline)
+      runtime = infra.merge(ai).merge(commands:, root:)
       ai[:standing].wire_container(runtime)
+      pipeline = Now::TurnPipeline.new(container: runtime)
+      runtime = runtime.merge(pipeline:)
       gateway = Reach::Gateway.new(pipeline:, session: infra[:session], event_bus: bus, container: runtime)
       commands["gateway"] = ->(_ctx) { gateway.channels }
+      runtime = runtime.merge(gateway:)
       [pipeline, gateway, runtime]
     end
 

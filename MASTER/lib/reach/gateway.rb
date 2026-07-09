@@ -41,8 +41,10 @@ module Master
         end
         result = if @container&.dig(:commands)
                    Master::Now::TurnRouter.call(message: message_text, container: @container)
-                 else
+                 elsif @pipeline
                    @pipeline.call(Result.ok(ctx))
+                 else
+                   Result.err("gateway: no router", category: :infrastructure)
                  end
         unsub&.call
         result = attach_client_actions(result, client_actions) if client_actions.any?

@@ -115,6 +115,12 @@ class ChatService
     subscribe("btw:done") { |ev| write_json_event("btw", { type: ev[:type], summary: ev[:summary].to_s[0, 500] }) }
     subscribe("skills:triggered") { |ev| write_json_event("thought", "skill #{ev[:skill]}") }
     subscribe("felt:sense") { |ev| write_json_event("felt", { mood: ev[:mood], entropy: ev[:entropy], confidence: ev[:confidence] }) }
+    subscribe("fold:risk") { |ev| write_json_event("dmesg", "fold0 at master0: risk=#{ev[:risk]} intent=#{ev[:intent]}") }
+    subscribe("ideation:start") { |ev| write_json_event("dmesg", "ideation0 at master0: start risk=#{ev[:risk]}") }
+    subscribe("ideation:done") { |ev| write_json_event("dmesg", "ideation0 at master0: #{ev[:ideas]} approaches synthesized") }
+    subscribe("council:start") { |ev| write_json_event("thought", "council reviewing diff") }
+    subscribe("council:pass") { |ev| write_json_event("dmesg", "council0 at master0: pass jurors=#{ev[:jurors]}") }
+    subscribe("council:veto") { |ev| write_json_event("dmesg", "council0 at master0: veto #{ev[:message].to_s[0, 120]}") }
     subscribe("infer:resolved") { |ev| write_json_event("dmesg", dmesg_format("infer:resolved", ev)) }
     subscribe("infer:confidence") { |ev| write_json_event("dmesg", dmesg_format("infer:confidence", ev)) }
     subscribe("pressure:updated") { |ev| write_json_event("pressure", ev.slice(:value, :tokens, :limit, :pct)) }
