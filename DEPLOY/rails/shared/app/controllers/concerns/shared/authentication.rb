@@ -70,7 +70,7 @@ module Shared
     end
 
     def require_user_session
-      return if Current.user.present?
+      return if authenticated?
 
       redirect_to new_session_path, alert: "Sign in to continue"
     end
@@ -88,16 +88,12 @@ module Shared
     end
 
     def find_or_create_guest_user
-      return anonymous_user unless supports_guests?
+      return nil unless supports_guests?
 
       guest_id = session[:guest_user_id]
       return create_guest_user unless guest_id
 
       ::User.find_by(id: guest_id, guest: true) || create_guest_user
-    end
-
-    def anonymous_user
-      ::User.order(:id).first
     end
 
     def create_guest_user
