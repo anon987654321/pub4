@@ -376,7 +376,9 @@ puts 'Ready for demo / development.'
 if (bergen = City.find_by(domain: 'brgen.no')) && !ENV['SKIP_BERGEN_DEMO']
   puts "\nSeeding Bergen demo content (Norwegian posts, users, media)..."
   Brgen::BergenDemoSeeder.new(bergen).seed!
-  puts "Bergen demo: #{Post.where(city: bergen).count} posts, #{Marketplace::Listing.count} listings"
+  playlist = Playlist::Playlist.find_by(city: bergen, name: Brgen::BergenDemoSeeder::RADIO_BERGEN_PLAYLIST)
+  track_count = playlist&.tracks&.count.to_i
+  puts "Bergen demo: #{Post.where(city: bergen).count} posts, #{Dating::Profile.joins(:user).where(users: { city_id: bergen.id }).count} dating profiles, #{track_count} Radio Bergen tracks"
 end
 
 # Optional web-augmented fictive seeds using Ferrum + vision LLM (see lib/tasks/{reddit,x}.rake)
