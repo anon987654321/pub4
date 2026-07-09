@@ -11,7 +11,7 @@ class TypingIndicatorTest < ActiveSupport::TestCase
       password: "password123",
       city: @city
     )
-    @conversation = Conversation.create!
+    @conversation = Conversation.create!(conversation_type: "direct")
     ConversationParticipant.create!(conversation: @conversation, user: @user)
   end
 

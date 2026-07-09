@@ -16,14 +16,16 @@ module Pub4
     def postpro_candidates
       [
         repo_join("MASTER/tools/postpro.rb"),
-        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/postpro.rb")
+        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/postpro.rb"),
+        rails_root.join("../../MASTER/tools/postpro.rb")
       ]
     end
 
     def repligen_candidates
       [
         repo_join("MASTER/tools/repligen.rb"),
-        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/repligen.rb")
+        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/repligen.rb"),
+        rails_root.join("../../MASTER/tools/repligen.rb")
       ]
     end
 

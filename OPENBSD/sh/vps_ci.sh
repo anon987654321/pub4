@@ -26,6 +26,9 @@ sync_ci_rails_root() {
   local mirror=/home/${app}/pub4-rails
   doas mkdir -p "$mirror"
   doas tar cf - -C "$repo" RAILS | doas sh -c "cd ${mirror} && tar xf -"
+  if [[ -d ${repo}/MASTER/tools ]]; then
+    doas tar cf - -C "$repo" MASTER/tools | doas sh -c "cd ${mirror} && tar xf -"
+  fi
   doas chown -R "${app}:${app}" "$mirror"
 }
 
@@ -58,7 +61,9 @@ print "vps_ci: $app (sync + mutex + load gate)"
 sync_from_repo
 ensure_ci_lock
 ci_rails_root=/home/${app}/pub4-rails/RAILS
-doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 config unset without 2>/dev/null || true && bundle34 config unset deployment 2>/dev/null || true && bundle34 install --jobs=2 && bundle34 exec bin/ci'"
+doas chmod o+x /home/dev 2>/dev/null || true
+doas chmod -R a+rX "${repo}/MASTER/tools" 2>/dev/null || true
+doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 config unset without 2>/dev/null || true && bundle34 config unset deployment 2>/dev/null || true && bundle34 install --jobs=2 && bundle34 exec bin/ci'"
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
 started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
