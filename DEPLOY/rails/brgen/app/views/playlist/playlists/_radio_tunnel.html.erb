@@ -2,23 +2,25 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js" defer></script>
 <% end %>
 
-<div
-  class="radio-tunnel"
-  data-controller="radio-tunnel"
-  data-radio-tunnel-tracks-value="<%= radio_tunnel_tracks_json %>"
-  data-radio-tunnel-heading-value="radio.brgen.no"
->
+<%= tag.div(
+      class: "radio-tunnel",
+      data: {
+        controller: "radio-tunnel",
+        radio_tunnel_tracks_value: radio_tunnel_catalog,
+        radio_tunnel_heading_value: "git dig · pub4/index.html"
+      }
+    ) do %>
   <a href="#radio-canvas" class="radio-skip-link">Skip to main content</a>
 
   <canvas
     id="radio-canvas"
     data-radio-tunnel-target="canvas"
     role="img"
-    aria-label="J Dilla audio visualization warp tunnel experience"
+    aria-label="Radio Bergen warp tunnel — excavated from pub4 index.html"
   ></canvas>
 
   <header class="radio-header">
-    <h1 data-radio-tunnel-target="heading">radio.brgen.no</h1>
+    <h1 data-radio-tunnel-target="heading">git dig · pub4/index.html</h1>
   </header>
 
   <nav class="radio-nav" aria-label="Playlist navigation">
@@ -31,6 +33,12 @@
     <% end %>
   </nav>
 
+  <aside class="radio-archaeology" data-radio-tunnel-target="archaeology" hidden aria-label="Git archaeology log">
+    <% radio_archaeology_lines.each do |line| %>
+      <div class="radio-archaeology-line"><%= line %></div>
+    <% end %>
+  </aside>
+
   <div class="radio-now-playing" aria-live="polite">
     <span class="radio-note-icon" aria-hidden="true">♪</span>
     <span class="radio-track-display" data-radio-tunnel-target="trackDisplay">J Dilla - Microphone Master</span>
@@ -39,12 +47,15 @@
   <div
     class="radio-overlay"
     data-radio-tunnel-target="overlay"
-    role="dialog"
+    data-action="click->radio-tunnel#start keydown->radio-tunnel#startKey"
+    role="button"
     aria-labelledby="radio-overlay-title"
     tabindex="0"
   >
-    <h2 id="radio-overlay-title" class="visually-hidden">Start audio visualization</h2>
-    <p class="radio-start-message">Touch or click to start</p>
+    <h2 id="radio-overlay-title" class="visually-hidden">Excavate Radio Bergen</h2>
+    <p class="radio-start-eyebrow">git archaeology</p>
+    <p class="radio-start-message">pub4/index.html → radio.brgen.no</p>
+    <p class="radio-start-hint">tap to excavate</p>
   </div>
 
   <div class="radio-cursor" data-radio-tunnel-target="cursor" aria-hidden="true"></div>
@@ -63,4 +74,4 @@
   <% if local_assigns.fetch(:show_library, false) %>
     <%= render "playlist/playlists/library", playlists: playlists %>
   <% end %>
-</div>
+<% end %>

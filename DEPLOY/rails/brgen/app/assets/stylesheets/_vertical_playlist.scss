@@ -56,7 +56,7 @@ body.vertical-playlist .app-shell {
 .radio-tunnel {
   position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 50;
   font-family: var(--font-primary);
   font-size: var(--font-size-base);
   color: var(--color-text);
@@ -179,24 +179,63 @@ body.vertical-playlist .app-shell {
   background: var(--color-overlay);
   display: grid;
   place-items: center;
-  z-index: 100;
+  align-content: center;
+  gap: var(--space-sm);
+  z-index: 200;
   backdrop-filter: blur(10px);
   cursor: pointer;
   pointer-events: auto;
+  text-align: center;
+  padding: var(--space-md);
 }
 
 .radio-overlay[hidden] {
   display: none;
 }
 
+.radio-start-eyebrow {
+  margin: 0;
+  font: 10px/1.4 var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #0f0;
+  pointer-events: none;
+}
+
 .radio-start-message {
+  margin: 0;
   font-size: var(--font-size-large);
   font-weight: 300;
-  color: var(--color-muted);
-  text-align: center;
+  color: var(--color-text);
   animation: radio-pulse 2s ease-in-out infinite;
   pointer-events: none;
-  padding: var(--space-md);
+}
+
+.radio-start-hint {
+  margin: 0;
+  font: var(--font-size-small)/1.5 var(--font-mono);
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.radio-archaeology {
+  position: fixed;
+  inset-block-end: calc(var(--space-lg) + 3rem);
+  inset-inline-start: var(--space-lg);
+  z-index: 12;
+  max-width: min(420px, 72vw);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(0, 255, 0, 0.18);
+  border-radius: var(--border-radius);
+  font: 10px/1.45 var(--font-mono);
+  color: #0c0;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+
+.radio-archaeology-line + .radio-archaeology-line {
+  margin-top: 0.2rem;
 }
 
 @keyframes radio-pulse {

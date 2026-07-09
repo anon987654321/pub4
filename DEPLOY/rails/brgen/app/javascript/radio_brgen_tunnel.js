@@ -306,6 +306,7 @@ export class RadioBrgen {
     this.canvas = options.canvas
     this.overlay = options.overlay
     this.cursor = options.cursor
+    this.onStart = options.onStart
     this.isStarted = false
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
     this._boundHandlers = []
@@ -317,11 +318,20 @@ export class RadioBrgen {
     })
     this.visualEngine = new VisualEngine(this.canvas)
 
-    if (options.heading) options.heading.textContent = options.headingText || "radio.brgen.no"
+    if (options.heading) options.heading.textContent = options.headingText || "git dig · pub4/index.html"
 
     this.setupGUI()
     this.setupEventListeners()
     this.startAnimation()
+  }
+
+  start() {
+    if (this.isStarted) return
+    this.isStarted = true
+    this.audioEngine.setUserInteracted()
+    this.audioEngine.start()
+    if (this.overlay) this.overlay.hidden = true
+    this.onStart?.()
   }
 
   setupGUI() {
@@ -349,15 +359,7 @@ export class RadioBrgen {
   }
 
   setupEventListeners() {
-    let hasInteracted = false
-    const startExperience = () => {
-      if (hasInteracted) return
-      hasInteracted = true
-      this.audioEngine.setUserInteracted()
-      this.audioEngine.start()
-      if (this.overlay) this.overlay.hidden = true
-      this.isStarted = true
-    }
+    const startExperience = () => this.start()
 
     const onOverlayClick = () => startExperience()
     const onOverlayKey = (e) => {
