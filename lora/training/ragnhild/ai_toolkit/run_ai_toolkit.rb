@@ -16,5 +16,8 @@ if ENV["HF_TOKEN"] && !ENV["HUGGINGFACE_HUB_TOKEN"]
   ENV["HUGGINGFACE_HUB_TOKEN"] = ENV["HF_TOKEN"]
 end
 
+# M2 8 GB: FLUX quantize/load needs unified memory past the default MPS cap.
+ENV["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] ||= "0.0"
+
 status = system(venv, "run.py", CONFIG, chdir: ROOT)
 exit(status ? 0 : 1)
