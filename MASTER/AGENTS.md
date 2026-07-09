@@ -20,7 +20,7 @@
 
 ## Boot sequence
 
-Read `START_HERE.md` (DEPLOY) or `QUICKSTART.md` (MASTER) and `AGENT_CONTRACT.md` before editing.
+Read `START_HERE.md` (DEPLOY or MASTER) and `AGENT_CONTRACT.md` before editing.
 
 Runtime orientation: `/orient bootstrap`, `/orient agents`, `/orient conventions`.
 

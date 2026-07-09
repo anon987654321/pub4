@@ -1,7 +1,7 @@
 # Operator
 
 Production runbook for pub4. Read `START_HERE.md`, `OPERATOR_CONTRACT.md`, and `VPS_SAFETY.md`
-before live work. Read `MASTER/QUICKSTART.md` for the agent runtime; this file covers the VPS and
+before live work. Read `MASTER/START_HERE.md` for the agent runtime; this file covers the VPS and
 deploy surface.
 
 ## Repo layout
