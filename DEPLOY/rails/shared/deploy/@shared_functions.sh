@@ -62,7 +62,7 @@ sync_tree() {
   if [[ $delete == 1 ]]; then
     ${_PRIV} sh -c 'cd "$1" && for entry in * .[!.]* ..?*; do
       [[ -e "$entry" ]] || continue
-      case "$entry" in db|storage|log|tmp) continue ;; esac
+      case "$entry" in db|storage|log|tmp|vendor|.bundle) continue ;; esac
       rm -rf -- "$entry"
     done' _ "${dst%/}" 2>/dev/null || true
   fi
