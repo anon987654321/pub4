@@ -12,6 +12,7 @@ cd "$ROOT" && git pull origin main
 
 echo "==> assets precompile"
 cd "$WEB"
+export LANG=C.UTF-8 LC_ALL=C.UTF-8
 export RAILS_ENV=production
 export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 32)}"
 # rc.d master precompiles as root; dev cannot rewrite root-owned public/assets/assets.

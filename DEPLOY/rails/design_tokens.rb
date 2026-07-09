@@ -10,6 +10,10 @@ module DesignTokens
 
   module_function
 
+  def read_utf8(path)
+    File.read(path, encoding: "UTF-8")
+  end
+
   def load
     YAML.safe_load_file(SOURCE) || {}
   end
@@ -44,7 +48,7 @@ module DesignTokens
   end
 
   def sync_face_css!(path)
-    body = File.read(path)
+    body = read_utf8(path)
     pattern = %r{/\* BEGIN:generated-face-root.*?\*/.*?/\* END:generated-face-root \*/}m
     unless body.match?(pattern)
       abort "design_tokens: missing generated-face-root markers in #{path}"
@@ -59,7 +63,7 @@ module DesignTokens
   def scss_anchor_drift?(path = File.join(ROOT, "shared", "app", "assets", "stylesheets", "_x_base.scss"))
     return "missing #{path}" unless File.file?(path)
 
-    scss = File.read(path)
+    scss = read_utf8(path)
     anchors = load.fetch("face_root").fetch("anchors")
     drifted = anchors.filter_map do |key, value|
       needle = key == "x_text" ? "$text: #{value}" : "$#{key.tr('_', '-')}: #{value}"
@@ -71,7 +75,7 @@ module DesignTokens
   end
 
   def face_root_drift?(path)
-    body = File.read(path)
+    body = read_utf8(path)
     pattern = %r{/\* BEGIN:generated-face-root.*?\*/(.*?)/\* END:generated-face-root \*/}m
     match = body.match(pattern)
     return "missing generated-face-root markers" unless match
