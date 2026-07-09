@@ -1,0 +1,16 @@
+<% content_for :title, @item.title %>
+
+<article class="item-detail">
+  <p class="dim"><%= link_to "← Demo wardrobe", demo_wardrobe_path %></p>
+  <% if @item.photos.attached? %>
+    <%= responsive_image_tag @item.photos.first, alt: @item.title, widths: [400, 800], sizes: "(max-width: 768px) 100vw, 600px", class: "item-photo item-photo--detail" %>
+  <% end %>
+  <h1><%= @item.title %></h1>
+  <p class="dim"><%= [@item.brand, @item.category, @item.color, @item.size].compact.join(" · ") %></p>
+  <p>Worn <%= @item.times_worn.to_i %>× · <%= @item.value_label %></p>
+  <% if @item.spark_joy? %>
+    <p class="chip">Spark joy</p>
+  <% end %>
+  <p class="hint">Sign in to track wears, declutter scores, and AI outfit suggestions on your own wardrobe.</p>
+  <p><%= link_to "Sign in", new_session_path, class: "btn btn--primary" %></p>
+</article>

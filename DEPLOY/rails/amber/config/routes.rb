@@ -91,6 +91,9 @@ Rails.application.routes.draw do
     get "pack", to: "ai#packing_list", as: :ai_packing_list
   end
 
+  get "demo", to: "demo_wardrobe#index", as: :demo_wardrobe
+  get "demo/items/:id", to: "demo_wardrobe#show", as: :demo_wardrobe_item
+
   root "home#index"
   constraints(jobs_constraint) do
     mount SolidQueue::Engine, at: "/admin/jobs"

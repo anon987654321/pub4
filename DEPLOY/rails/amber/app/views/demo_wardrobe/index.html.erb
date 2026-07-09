@@ -1,0 +1,35 @@
+<% content_for :title, "Demo wardrobe" %>
+
+<header role="banner" aria-label="Demo wardrobe header">
+  <p class="dim">Capsule demo · <%= @demo_user.profile&.display_name || Amber::DemoWardrobe::DEMO_DISPLAY_NAME %></p>
+  <h1>Demo wardrobe</h1>
+  <p class="tagline">Browse a realistic capsule before you sign in — cost-per-wear, categories, and outfit combos.</p>
+  <nav role="navigation" aria-label="Demo wardrobe actions">
+    <%= link_to "Sign in to build yours", new_session_path, class: "btn btn--primary" %>
+    <%= link_to "Create account", new_registration_path, class: "btn btn--ghost" %>
+  </nav>
+</header>
+
+<% if @outfits.any? %>
+  <section>
+    <h2>Outfits</h2>
+    <div class="plan-list">
+      <% @outfits.each do |outfit| %>
+        <div class="plan-row">
+          <strong><%= outfit.name %></strong>
+          <span class="dim"><%= outfit.context_label %> · <%= pluralize(outfit.items.size, "piece") %></span>
+        </div>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
+<section>
+  <h2>All pieces</h2>
+  <div class="item-grid">
+    <%= render partial: "demo_wardrobe/item", collection: @items %>
+  </div>
+  <% if @pagy.next %>
+    <p><%= link_to "Next page", demo_wardrobe_path(page: @pagy.next), class: "btn btn--ghost" %></p>
+  <% end %>
+</section>

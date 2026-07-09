@@ -398,6 +398,24 @@ seed_bergen_demo_as_app() {
     || log_warn "brgen:demo_seed skipped"
 }
 
+# seed_amber_demo_as_app — public demo capsule wardrobe for guests
+seed_amber_demo_as_app() {
+  local app_dir=$1 secret
+  secret=$(app_secret_for amber)
+  ${_PRIV} sh -c "su -m amber -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails amber:demo_seed'" \
+    || log_warn "amber:demo_seed skipped"
+}
+
+# warm_brgen_after_restart — Falcon cold boot can exceed relayd/client timeouts
+warm_brgen_after_restart() {
+  local port=${1:-38182}
+  sleep 8
+  curl -fsS -m 120 -H "Host: brgen.no" "http://127.0.0.1:${port}/up" -o /dev/null 2>/dev/null \
+    || log_warn "brgen warm /up skipped"
+  curl -fsS -m 120 -H "Host: markedsplass.brgen.no" "http://127.0.0.1:${port}/" -o /dev/null 2>/dev/null \
+    || log_warn "brgen warm marketplace skipped"
+}
+
 # db_seed_as_app APP_NAME APP_DIR
 db_seed_as_app() {
   local app_name=$1 app_dir=$2 secret
@@ -491,8 +509,13 @@ deploy_tracked_app() {
   rails_runtime_gate "$APP_NAME" "$APP_DIR" || exit 1
   if [[ $app_name == brgen ]]; then
     seed_bergen_demo_as_app "$APP_DIR"
+  elif [[ $app_name == amber ]]; then
+    seed_amber_demo_as_app "$APP_DIR"
   fi
   doas rcctl restart "$APP_NAME" || doas rcctl start "$APP_NAME"
+  if [[ $app_name == brgen ]]; then
+    warm_brgen_after_restart "$APP_PORT"
+  fi
   log_ok "$APP_NAME live on :$APP_PORT"
 }
 

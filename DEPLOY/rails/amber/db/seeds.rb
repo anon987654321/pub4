@@ -1,6 +1,11 @@
 # frozen_string_literal: true
-# Fictive seed data for Amber using ruby-faker.
-# Run with: bin/rails db:seed (or db:setup, db:seed:replant in test/ci)
+# Production: credible demo capsule only. Dev/test: Faker flood for local work.
+
+if Rails.env.production?
+  Amber::AmberDemoSeeder.new.seed!
+  puts "ok demo items=#{Amber::DemoWardrobe.items.count} outfits=#{Amber::DemoWardrobe.outfits.count}"
+  exit 0
+end
 
 require "faker"
 

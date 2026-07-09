@@ -5,7 +5,14 @@ class HomeController < ApplicationController
 
   def index
     return render_master_guest_home!(title: "Amber") if params[:master].present? && master_guest_home?
-    return unless authenticated?
+
+    unless authenticated?
+      if Amber::DemoWardrobe.available?
+        @demo_items = Amber::DemoWardrobe.preview_items
+        @demo_outfits = Amber::DemoWardrobe.preview_outfits
+      end
+      return
+    end
 
     items = Current.user.items
     @items_count      = items.count
