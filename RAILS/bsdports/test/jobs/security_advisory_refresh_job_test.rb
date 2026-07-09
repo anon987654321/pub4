@@ -25,6 +25,6 @@ class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
     end
 
     assert_equal ports.map(&:id).sort, calls.map(&:first).sort
-    assert_equal 2, Rails.cache.read(SecurityAdvisoryRefreshJob::CURSOR_KEY)
+    assert_equal ports.last.id, Rails.cache.read(SecurityAdvisoryRefreshJob::CURSOR_KEY)
   end
 end
