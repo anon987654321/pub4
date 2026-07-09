@@ -28,7 +28,6 @@ rcctl check master
 
 echo "==> smoke"
 curl -fsS http://127.0.0.1:53187/up
-curl -fsS http://127.0.0.1:53187/ | grep -q domain-cluster-bar
-ruby "$WEB/script/probe_http" || true
+ruby "$WEB/script/probe_http"
 
 echo "==> master deploy ok"
