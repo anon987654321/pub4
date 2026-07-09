@@ -25,11 +25,6 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @listing_distances = listing_distances(@listings, @search_lat, @search_lng)
     @categories = Marketplace::Category.roots.includes(:children)
 
-    # Schema.org ItemList for the marketplace listings page
-    if @listings.any?
-      content_for :json_ld, helpers.item_list_schema(@listings, title: "Markedsplass")
-    end
-
     finish_live_search(partial: "marketplace/listings/live_search_results")
   end
 

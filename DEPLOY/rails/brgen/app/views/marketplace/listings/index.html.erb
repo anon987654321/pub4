@@ -1,4 +1,5 @@
 <% content_for :title, "Markedsplass" %>
+<% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: "Markedsplass")) if @listings.any? %>
 
 <% unless authenticated? %>
   <% content_for :splash do %>
