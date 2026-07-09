@@ -30,14 +30,14 @@ class CLIBridgeTest < Minitest::Test
     )
   end
 
-  def test_run_input_uses_core_bridge_for_plain_language
+  def test_run_input_uses_turn_router_for_plain_language
     pipeline = Object.new
     pipeline.define_singleton_method(:call) { raise "pipeline should not run" }
     cli = build_cli(pipeline:)
     fold = { reason: :complete, turns: 2, summary: "ok", transcript: ["1: done -> ok"] }
 
     Master.stub(:any_api_key_present?, true) do
-      Master::Now::CoreBridge.stub(:run, fold) do
+      Master::Now::TurnRouter.stub(:call, Master::Result.ok(output: "core: complete turns=2\nok", rendered: "core: complete turns=2\nok", core: fold)) do
         out, = capture_io { cli.run_input("write a note") }
         assert_match(/core: complete turns=2/, out)
         assert_match(/ok/, out)
@@ -45,7 +45,7 @@ class CLIBridgeTest < Minitest::Test
     end
   end
 
-  def test_run_input_dispatches_slash_commands_without_pipeline
+  def test_run_input_dispatches_slash_without_pipeline
     calls = []
     pipeline = Object.new
     pipeline.define_singleton_method(:call) { |*| calls << :pipeline; Master::Result.ok(output: "legacy") }
@@ -56,32 +56,15 @@ class CLIBridgeTest < Minitest::Test
     assert_empty calls
   end
 
-  def test_run_core_bridge_input_maps_complete_fold_to_ok
+  def test_run_agent_turn_skips_workflow_fanout
     cli = build_cli
-    fold = { reason: :complete, turns: 1, summary: "note written", transcript: [] }
+    fold = { reason: :complete, turns: 1, summary: "fixed", transcript: [] }
+    routed = nil
+    cli.define_singleton_method(:run_input) { |line| routed = line }
 
     Master.stub(:any_api_key_present?, true) do
-      Master::Now::CoreBridge.stub(:run, fold) do
-        state = { streamed: false, thinking_shown: true }
-        result = cli.send(:run_core_bridge_input, "write note.txt", state:, accumulated: +"")
-        assert result.ok?
-        assert_match(/core: complete/, result.value[:output])
-        assert_match(/note written/, result.value[:output])
-      end
-    end
-  end
-
-  def test_run_core_bridge_input_maps_max_turns_to_err
-    cli = build_cli
-    fold = { reason: :max_turns, turns: 40, summary: nil, transcript: ["40: write -> blocked"] }
-
-    Master.stub(:any_api_key_present?, true) do
-      Master::Now::CoreBridge.stub(:run, fold) do
-        state = { streamed: false, thinking_shown: true }
-        result = cli.send(:run_core_bridge_input, "never finish", state:, accumulated: +"")
-        refute result.ok?
-        assert_equal :policy, result.category
-      end
+      cli.send(:run_agent_turn, "scan lib then fix and commit")
+      assert_equal "scan lib then fix and commit", routed
     end
   end
 end

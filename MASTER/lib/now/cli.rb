@@ -8,7 +8,7 @@ require_relative "cli/result_display"
 require_relative "cli/background_scan"
 require_relative "cli/repl_flow"
 require_relative "cli/bridge_run"
-require_relative "cli/command_dispatch"
+
 
 require "open3"
 require "reline"
@@ -107,13 +107,18 @@ module Master
         end
 
         print_thinking_indicator unless paste
+        on_turn = lambda do |line|
+          accumulated << line << "\n"
+          handle_stream_text(line + "\n", state) if $stdout.isatty
+        end
         @pipeline_thread = Thread.new do
           Thread.current.report_on_exception = false
-          if input.to_s.strip.start_with?("/")
-            run_slash_dispatch(input, state:, accumulated:)
-          else
-            run_core_bridge_input(input, state:, accumulated:)
-          end
+          TurnRouter.call(
+            message: input,
+            container: @container,
+            felt_sense: cli_felt_sense,
+            on_turn:
+          )
         end
         result = begin
           @pipeline_thread.value
@@ -122,6 +127,7 @@ module Master
         rescue StandardError => _e
           Result.err("aborted", category: :abort)
         end
+        print_bridge_footer(result.value[:core], state:) if result.ok? && state[:streamed] && result.value[:core]
         display_result(result:, accumulated:, streamed: state[:streamed])
       ensure
         @pipeline_thread = nil

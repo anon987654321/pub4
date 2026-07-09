@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../../ground/orchestration_policy"
 require_relative "command_handlers"
 
 module Master
@@ -85,8 +84,6 @@ module Master
       end
 
       NL_DISPATCH = [
-        [/\b(?:analyze|analyse|audit|scan)\b.*\b(?:every|all|each)\b.*\bfiles?\b/i, :run_bounded_repo_scan],
-        [/\b(?:autofix|autoalign|autoimplement)\b.*\b(?:recursively|recursive|every|all)\b/i, :run_bounded_repo_scan],
         [/\A(?:hi|hello|hey|yo|good (?:morning|afternoon|evening))[\s!.?]*\z/i, :run_chitchat],
         [/\b(?:show|print|list)\s+(?:undo\s+)?histor/i, :run_history],
         [/\b(?:why|how)\s+(?:this|that)\s+(?:fail(?:ed)?|break|broke|error|wrong|happen(?:ed)?)\b/i, :run_why],
@@ -95,13 +92,8 @@ module Master
         [/\b(?:suggest|what(?:'s|\s+is)\s+next|next\s+steps?)\b/i, :run_propose],
         [/\b(?:show|list)\s+(?:my\s+)?principles\b/i, :run_principles],
         [/\brestart\b|\bhot[\s-]?reload\b/i, :run_restart],
-        [/\bui[\s-]?critique\b/i, :run_ui_critique],
-        [/\bsound[\s-]?critique\b/i, :run_sound_critique],
         [/\brebuild\b/i, :run_rebuild],
         [/\bshow\s+context\b|\bcontext\s+window\b/i, :run_context],
-        [/\bverifie?d?\b/i, :run_verify],
-        [/\brails[\s-]?pwa[\s-]?audit\b/i, :run_rails_pwa_audit],
-        [/\brails[\s-]?pwa[\s-]?fix\b/i, :run_rails_pwa_fix],
         [/\bswallow[\s-]?report\b|\berror\s+ledger\b/i, :run_swallow_report],
         [/\btoggle\s+chips?\b|\bchips?\s+(?:on|off)\b/i, :toggle_chips],
         [/\btoggle\s+dmesg\b|\bdmesg\s+(?:on|off)\b/i, :toggle_dmesg],
@@ -146,66 +138,21 @@ module Master
         when "/rails-pwa-fix" then run_rails_pwa_fix
         when "/swallow-report" then run_swallow_report
         when "<<" then run_input(read_multiline)
-        else stripped.start_with?("/") ? run_input(stripped) : handle_plain_language_line(line)
+        else run_agent_turn(line)
         end
       end
 
       def run_chitchat
-        puts @refs.renderer.render("hello. MASTER is awake. use /cmd for commands or ask for a scan.", mode: :dim)
+        puts @refs.renderer.render("hello. MASTER is awake. describe a goal or use /cmd for operator commands.", mode: :dim)
       end
 
-      WORKFLOW_INTENTS = %i[
-        wire_existing_module refactor_to_ruby create_facade codify_policy
-        continue_prior_plan run_full_workflow
-      ].freeze
-
-      def handle_plain_language_line(line)
+      def run_agent_turn(line)
         if (refusal = host_refusal_for(line))
           puts @refs.renderer.render(refusal, mode: :warning)
           return
         end
 
-        route = inferred_intent_route(line)
-        return run_input(line) unless route
-
-        case route[:intent]
-        when :scan_then_fix_then_commit
-          target = inferred_target_path(line)
-          run_workflow(target)
-          run_commit
-        when :scan_then_fix
-          target = inferred_target_path(line)
-          run_work_command("scan", target)
-          run_work_command("fix", target)
-        when :scan_target
-          run_work_command("scan", inferred_target_path(line))
-        when :scan_git_changes
-          run_scan_git_changes
-        when :scan_fix_lint
-          target = inferred_target_path(line)
-          run_workflow(target)
-          run_lint(target)
-        when :why_axioms
-          run_why
-          run_axioms
-        when :run_ui_review
-          run_ui_critique
-        when :run_sound_review
-          run_sound_critique
-        when :verify_patch_landed
-          run_verify
-        when :write_repo_changes
-          run_commit
-          run_push if route[:push]
-        when :bounded_repo_scan
-          run_bounded_repo_scan(autofix: route[:autofix])
-        when *WORKFLOW_INTENTS
-          target = inferred_target_path(line)
-          run_workflow(target)
-          run_commit if route[:risk] != :low
-        else
-          run_input(line)
-        end
+        run_input(line.strip)
       end
 
       def run_reap
@@ -214,111 +161,12 @@ module Master
         puts @refs.renderer.render(msg, mode: :dim)
       end
 
-      def run_bounded_repo_scan(autofix: false)
-        puts @refs.renderer.render("scan0: lib/ only (DEPLOY via /scan ../DEPLOY/rails — host budget)", mode: :dim)
-        run_work_command("scan", "lib")
-        run_work_command("fix", "lib") if autofix
-      end
-
       def host_refusal_for(line)
         Master::Ground::HostBudget.refuse_heavy_prompt?(line)
       rescue StandardError
         nil
       end
 
-      def host_repo_wide_request?(text)
-        Master::Ground::HostBudget.repo_wide_request?(text)
-      rescue StandardError
-        false
-      end
-
-      def run_workflow(target)
-        run_work_command("workflow", target)
-      end
-
-      def run_work_command(command, args = "")
-        run_input(["/#{command}", args.to_s.strip].join(" ").strip)
-      end
-
-      def inferred_intent_route(line)
-        text = line.to_s.strip
-        if host_repo_wide_request?(text)
-          return { intent: :bounded_repo_scan, autofix: text.match?(/\b(?:autofix|autoalign|autoimplement)\b/i), risk: :high }
-        end
-        if text.match?(/\b(?:run|put|send|take)\s+(?:this|it|that)?\s*through\s+master\b/i) ||
-           text.match?(/\b(?:full\s+)?(?:pass|tribunal)\b/i)
-          return { intent: :run_full_workflow, risk: :medium }
-        end
-        return { intent: :scan_then_fix_then_commit, risk: :high } if text.match?(/\A.*\bscan\b.*\bfix\b.*\bcommit\b/i)
-        return { intent: :scan_fix_lint, risk: :medium } if text.match?(/\A(?:clean|tidy|polish)\b/i)
-        return { intent: :scan_target, risk: :low } if text.match?(/\A(?:check|audit)\b/i)
-        return { intent: :scan_git_changes, risk: :low } if text.match?(/\b(?:review\s+my\s+changes?|check\s+what\s+I\s+edited|what\s+did\s+I\s+change)\b/i)
-        return { intent: :why_axioms, risk: :low } if text.match?(/\A(?:explain|why|what)\b/i)
-        return { intent: :scan_then_fix, risk: :medium } if text.match?(/\Afix\b/i)
-        return { intent: :run_ui_review, risk: :low } if text.match?(/\A(?:ui[\s-]?)?critique\b/i)
-        return { intent: :verify_patch_landed, risk: :low } if text.match?(/\A(?:verify|confirm)\b/i)
-        return { intent: :write_repo_changes, risk: :high, push: text.match?(/\bpush\b/i) } if text.match?(/\b(?:commit|save|ship|push)\b/i)
-
-        policy = @intent_policy ||= Master::Ground::OrchestrationPolicy.new
-        route = policy.evaluate(text)
-        route[:intent] == :unknown ? nil : route
-      rescue StandardError
-        nil
-      end
-
-      def inferred_target_path(line)
-        text = line.to_s
-        text[%r{\b([\w./-]+\.(?:rb|js|ts|yml|yaml|md|erb|css|scss|json))\b}, 1] || "."
-      end
-
-      def run_commit
-        puts @refs.renderer.render(Master::Now::CommandRegistry.dispatch_commit(@refs.agent, @refs.root), mode: :dim)
-      rescue StandardError => e
-        puts @refs.renderer.render("commit: #{e.message}", mode: :warning)
-      end
-
-      def run_push
-        out, status = Master::Reach::Exec.capture2e("git", "-C", @refs.root, "push")
-        message = status.success? ? out.strip : "push: #{out.strip}"
-        puts @refs.renderer.render(message.empty? ? "push: ok" : message, mode: status.success? ? :dim : :warning)
-      rescue StandardError => e
-        puts @refs.renderer.render("push: #{e.message}", mode: :warning)
-      end
-
-      def run_axioms
-        puts @refs.renderer.render(Master::Now::CommandRegistry.dispatch_axioms(scanner: @refs.scanner, root: @refs.root), mode: :dim)
-      rescue StandardError => e
-        puts @refs.renderer.render("axioms: #{e.message}", mode: :warning)
-      end
-
-      def run_scan_git_changes
-        out, status = Master::Reach::Exec.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
-        unless status.success?
-          puts @refs.renderer.render("scan: git diff failed — #{out.strip}", mode: :warning)
-          return
-        end
-        paths = out.lines.map(&:strip).reject(&:empty?).first(20)
-        if paths.empty?
-          puts @refs.renderer.render("scan: no uncommitted changes", mode: :dim)
-          return
-        end
-        paths.each { |path| run_work_command("scan", path) }
-      end
-
-      def run_lint(target)
-        ctx = Master::Now::PipelineContext.build(user_message: "lint #{target}", output: "", written_files: [File.expand_path(target, @refs.root)])
-        lint = Master::Now::Stages::Lint.new(scanner: @refs.scanner, config: @refs.config, root: @refs.root, event_bus: @refs.bus)
-        result = lint.call(ctx)
-        report = result.ok? ? result.value!.lint_report : []
-        text = if report.empty?
-                 "lint: clean"
-               else
-                 "lint: #{report.size} finding(s)"
-               end
-        puts @refs.renderer.render(text, mode: :dim)
-      rescue StandardError => e
-        puts @refs.renderer.render("lint: #{e.message}", mode: :warning)
-      end
     end
   end
 end

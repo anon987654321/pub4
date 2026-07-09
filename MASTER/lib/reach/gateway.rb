@@ -12,10 +12,11 @@ module Master
         end
       end
 
-      def initialize(pipeline:, session:, event_bus: nil)
+      def initialize(pipeline:, session:, event_bus: nil, container: nil)
         @pipeline = pipeline
         @session = session
         @bus = event_bus
+        @container = container
         @adapters = {}
       end
 
@@ -38,7 +39,11 @@ module Master
         unsub = @bus&.subscribe("client_action") do |ev|
           client_actions << ev.slice(:action, :url, :label).compact
         end
-        result = @pipeline.call(Result.ok(ctx))
+        result = if @container&.dig(:commands)
+                   Master::Now::TurnRouter.call(message: message_text, container: @container)
+                 else
+                   @pipeline.call(Result.ok(ctx))
+                 end
         unsub&.call
         result = attach_client_actions(result, client_actions) if client_actions.any?
 

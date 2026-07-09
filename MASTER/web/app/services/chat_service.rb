@@ -47,7 +47,12 @@ class ChatService
     prepare_turn
     subscribe_to_events
     publish_canvas_state
-    result = @container[:pipeline].call(Master::Result.ok(**pipeline_context))
+    result = Master::Now::TurnRouter.call(
+      message: @params[:message].to_s.strip,
+      container: @container,
+      felt_sense: felt_sense_payload,
+      on_turn: method(:stream_fold_turn)
+    )
     write_fallback(result)
     write_turn_ctx_footer
     @stream.write("data: [DONE]\n\n")
@@ -132,16 +137,13 @@ class ChatService
     subscribe("client_action") { |ev| write_json_event("client_action", client_action_payload(ev)) }
   end
 
-  def pipeline_context
-    {
-      user_message: @params[:message].to_s.strip,
-      on_chunk: method(:write_chunk),
-      felt_sense: felt_sense_payload
-    }.tap do |ctx|
-      ctx[:pre_enhanced] = true if @params[:pre_enhanced].present?
-      ctx[:voice] = true if @params[:voice].present?
-      ctx[:image] = image_payload if image_payload
-    end
+  def stream_fold_turn(line)
+    text = line.to_s.strip
+    return if text.empty?
+
+    @streamed = true
+    write_json_event("dmesg", "core0 at master0: #{text}")
+    write_chunk(text)
   end
 
   def image_payload

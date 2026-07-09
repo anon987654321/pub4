@@ -56,8 +56,8 @@ module Master
       Master.configure_providers!
       infra = build_infrastructure(root)
       ai    = build_ai(root, infra)
-      pipeline, gateway = build_pipeline(root:, infra:, ai:)
-      infra.merge(ai).merge(pipeline:, gateway:, commands:, root:)
+      _pipeline, _gateway, runtime = build_pipeline(root:, infra:, ai:)
+      runtime
     end
 
     def build_scan_only(root: Dir.pwd)
@@ -195,10 +195,12 @@ module Master
         Now::Stages::Render.new(renderer: infra[:renderer], output_check: infra[:output_check], event_bus: bus),
       ]
       pipeline = Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:, scanner: ai[:scanner])
+      runtime = infra.merge(ai).merge(pipeline:, commands:, root:)
       ai[:standing].wire_pipeline(pipeline)
-      gateway = Reach::Gateway.new(pipeline:, session: infra[:session], event_bus: bus)
+      ai[:standing].wire_container(runtime)
+      gateway = Reach::Gateway.new(pipeline:, session: infra[:session], event_bus: bus, container: runtime)
       commands["gateway"] = ->(_ctx) { gateway.channels }
-      [pipeline, gateway]
+      [pipeline, gateway, runtime]
     end
 
     def boot_snapshot(container)
