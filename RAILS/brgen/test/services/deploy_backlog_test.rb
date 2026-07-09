@@ -669,8 +669,8 @@ class DeployBacklogTest < Minitest::Test
     controller = read_brgen('app/controllers/playlist/likes_controller.rb')
     show = read_brgen('app/views/playlist/sets/show.html.erb')
 
-    assert_includes controller, 'class LikesController'
-    assert_includes controller, 'module Playlist'
+    assert_includes controller, 'class Playlist::LikesController'
+    refute_includes controller, 'module Playlist'
     assert_includes controller, 'find_or_create_by!'
     assert_includes controller, 'destroy_all'
     assert_includes show, 'playlist_set_like_path'
