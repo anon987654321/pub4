@@ -3,7 +3,7 @@ set -eu
 
 . "$(dirname -- "$0")/lib.sh"
 
-config="$(mktemp "${TMPDIR:-/tmp}/ragnhild_train.XXXXXX.yaml")"
+config="$(mktemp "${TMPDIR:-/tmp}/ragnhild_train_XXXXXX").yaml"
 trap 'rm -f "$config"' EXIT INT TERM
 
 if hf_auth_missing; then

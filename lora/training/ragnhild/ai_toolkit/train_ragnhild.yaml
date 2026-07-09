@@ -26,6 +26,7 @@ config:
     train:
       batch_size: 1
       steps: 1800
+      skip_first_sample: true
       gradient_accumulation_steps: 1
       train_unet: true
       train_text_encoder: false

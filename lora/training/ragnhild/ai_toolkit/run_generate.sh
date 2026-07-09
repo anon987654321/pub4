@@ -85,7 +85,7 @@ require_lora_weights() {
 
 run_generate_samples() {
   require_lora_weights
-  config="$(mktemp "${TMPDIR:-/tmp}/ragnhild_generate.XXXXXX.yaml")"
+  config="$(mktemp "${TMPDIR:-/tmp}/ragnhild_generate_XXXXXX").yaml"
   trap 'rm -f "$config"' EXIT INT TERM
   render_config generate "$config"
   echo "ok: generating samples"
