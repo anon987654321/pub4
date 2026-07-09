@@ -8,7 +8,7 @@ daemon_flags="exec env PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.U
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_logger="daemon.notice"
-daemon_timeout="90"
+daemon_timeout="300"
 . /etc/rc.d/rc.subr
 pexp="ruby34.*${PORT}"
 rc_bg=YES
