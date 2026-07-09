@@ -75,6 +75,8 @@ test("chat index inline boot lazy-imports face with status hint, auto-retry, 35s
   assert.match(index, /function loadFace/);
   assert.match(index, /import\("<%= asset_path\("face\.js"\) %>"\)/);
   assert.match(index, /dismissPrimer\(\);\n\s+revealPrompt\(\);/);
+  assert.match(index, /window\.__MASTER_PRIMER_TAP__=go/);
+  assert.doesNotMatch(index, /DOMContentLoaded.*armPrimer/);
   assert.match(index, /error-live/);
   // NN/g recovery + visibility-of-status UX
   assert.match(index, /still loading the face/);
@@ -125,8 +127,8 @@ test("chat index wires digested assets around lazy face boot", () => {
   const particleIdx = index.indexOf('asset_path("particle_kernel.js")');
   const primerIdx = index.indexOf('id="primer"');
   const bootIdx = index.indexOf("function go()");
-  assert.ok(primerIdx > 0 && particleIdx > primerIdx, "particle kernel should load after shell markup");
-  assert.ok(bootIdx > particleIdx, "inline boot should follow particle kernel script");
+  assert.ok(primerIdx > 0 && bootIdx > primerIdx, "inline boot should follow primer markup");
+  assert.ok(particleIdx > bootIdx, "defer scripts should load after synchronous primer boot");
 });
 
 test("face3d preview consumes TTS events and reports nonblank frames", () => {

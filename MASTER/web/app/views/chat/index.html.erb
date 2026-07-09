@@ -34,35 +34,6 @@
         return original.apply(this, arguments);
       };
     })();
-    (function () {
-      function armPrimer() {
-        var p = document.getElementById("primer");
-        if (!p || p.dataset.primerArmed === "1") return;
-        p.dataset.primerArmed = "1";
-        function fire() {
-          if (window._primerFired) return;
-          if (typeof window.__MASTER_PRIMER_GO__ === "function") {
-            window.__MASTER_PRIMER_GO__();
-            return;
-          }
-          window._primerFired = true;
-          window.dispatchEvent(new CustomEvent("primer:ready"));
-          document.body.classList.remove("face-loading");
-          p.classList.add("gone");
-        }
-        ["pointerdown", "click", "touchend"].forEach(function (ev) {
-          p.addEventListener(ev, fire, { capture: true, passive: true });
-        });
-        p.addEventListener("keydown", function (e) {
-          if (e.key === " " || e.key === "Enter") { e.preventDefault(); fire(); }
-        });
-        addEventListener("keydown", function (e) {
-          if (!window._primerFired && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); fire(); }
-        });
-      }
-      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", armPrimer);
-      else armPrimer();
-    })();
     window.MASTER_ASSET_PATHS = {
       threeModule: "<%= asset_path("three.face.module.js") %>",
       faceParts: <%= raw((1..5).map { |part| asset_path("face.part#{part}.txt") }.to_json) %>,
@@ -100,8 +71,7 @@
       f.addEventListener('load',on);if(f.sheet)on();})();
   </script>
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
-  <link rel="prefetch" href="<%= asset_path("face.js") %>" as="script">
-  <%# No prefetch of THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
+  <%# No prefetch of face.js or THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <style nonce="<%= content_security_policy_nonce %>">
     html, body { background: #000; color: #f5f0e8; }
@@ -125,38 +95,8 @@
   <div id="primer" role="button" aria-labelledby="primer-title" tabindex="0">
     <h1 id="primer-title">tap to start</h1>
   </div>
-  <main id="chat-shell" aria-label="MASTER chat">
-    <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
-  </main>
-  <div class="ui-status" id="ui-status" aria-live="polite" aria-atomic="true"></div>
-  <div id="mood-sparkline" class="mood-sparkline" aria-hidden="true"></div>
-  <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
-  <div class="face-controls" aria-label="Face controls">
-    <button id="focus-btn" type="button" class="tool" aria-pressed="false" title="Toggle focus mode">◎</button>
-    <button id="describe-face-btn" type="button" class="tool" title="Describe face state">◎?</button>
-    <label class="face-scale" for="font-scale" title="Adjust font size">
-      <span aria-hidden="true">A</span>
-      <input id="font-scale" type="range" min="0.85" max="1.4" step="0.05" value="1">
-    </label>
-  </div>
-  <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
-    <span class="pp">master</span><span class="sep2">* </span>
-    <button type="button" class="tool" data-cmd="/photograph " aria-label="Photo">photo</button>
-    <button type="button" class="tool" data-cmd="/repligen generate " aria-label="Video">video</button>
-    <button type="button" class="tool" data-cmd="/sing " aria-label="Sing">sing</button>
-    <button type="button" class="tool" data-act="mic" aria-label="Microphone">mic</button>
-    <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message"></textarea>
-    <span id="zsh-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
-    <span id="tts-rate" aria-label="TTS speed" title="Ctrl+[ / Ctrl+]"></span>
-    <span id="char-count" aria-hidden="true"></span>
-    <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
-    <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
-  </form>
-  <%# Loaded ahead of the manifest below: defines window.ParticleKernel, the base global that
-      particle_worker, the cognition-ecology scripts, and the lazily-imported face modules read. %>
-  <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
-  <script src="<%= asset_path("container_gate.js") %>" defer></script>
-  <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>
+  <%# Boot + primer tap must run synchronously here — before defer scripts. Waiting for
+      DOMContentLoaded wedged the main thread on a 1-CPU VPS and made the overlay look dead. %>
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
@@ -190,8 +130,6 @@
         }
         return false;
       }
-      // Cancel every outstanding boot timer — called on success and on terminal failure so
-      // a late hint/retry/watchdog can't overwrite the final UI or re-run the fallback.
       function clearWatch(){
         clearTimeout(hintT);clearTimeout(retryT);clearTimeout(fallback);
         clearInterval(timer);timer=null;
@@ -204,16 +142,14 @@
         if(title)title.textContent='loading… '+n+'%';
         if(ui)ui.textContent='loading face '+n+'%';
       }
-      function showLoadState(){
-        showProgress(0);
-      }
+      function showLoadState(){showProgress(0);}
       function fallbackUi(){
         dismissPrimer();
         revealPrompt();
         if(ui)ui.textContent='face failed to load — reload';
+        var errLive=document.getElementById('error-live');
+        if(errLive)errLive.textContent='face failed to load — reload the page';
       }
-      // Deferred boot: the WebGL face (THREE.js ~514KB parse) is loaded only AFTER the
-      // primer tap, so the initial page stays light and the shell is interactive at once.
       function resetFaceCanvasForWebGL(){
         var cv=document.getElementById('face');
         if(!cv||!cv.parentNode)return;
@@ -225,12 +161,8 @@
         window.__MASTER_FACE_IMPORT__=true;
         resetFaceCanvasForWebGL();
         import("<%= asset_path("face.js") %>").then(function(){
-          // import() resolves only after face.js sets window.MASTER_FACE — start here so a boot
-          // that finishes after the 35s watchdog still runs instead of leaving a loaded-but-dead face.
           if(boot())clearWatch();
         }).catch(function(){
-          // Nielsen #9 (help users recover): one silent auto-retry before asking to reload.
-          // Retry lives here, not on a timer — a timer retry would double-run a merely-slow import.
           window.__MASTER_FACE_IMPORT__=false;
           if(retried){bootFailed();return;}
           if(ui)ui.textContent='retrying…';
@@ -250,7 +182,6 @@
         if(boot())return;
         showLoadState();
         var progPct=0;
-        // Nielsen #1 (visibility of system status): reassure at 8s, hard-fail at 35s (was a silent 60s).
         hintT=setTimeout(function(){if(ui)ui.textContent='still loading the face…';},8000);
         timer=setInterval(function(){
           if(boot()){clearWatch();return;}
@@ -262,8 +193,52 @@
         fallback=setTimeout(function(){if(window.MASTER_FACE&&window.MASTER_FACE.primerFired){clearWatch();}else{bootFailed();}},35000);
       }
       window.__MASTER_PRIMER_GO__=go;
+      window.__MASTER_PRIMER_TAP__=go;
+      if(p){
+        ['pointerdown','click','touchend'].forEach(function(ev){
+          p.addEventListener(ev,go,{capture:true,passive:true});
+        });
+        p.addEventListener('keydown',function(e){
+          if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}
+        });
+      }
+      addEventListener('keydown',function(e){
+        if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}
+      });
     })();
   </script>
+  <main id="chat-shell" aria-label="MASTER chat">
+    <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
+  </main>
+  <div class="ui-status" id="ui-status" aria-live="polite" aria-atomic="true"></div>
+  <div id="mood-sparkline" class="mood-sparkline" aria-hidden="true"></div>
+  <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+  <div class="face-controls" aria-label="Face controls">
+    <button id="focus-btn" type="button" class="tool" aria-pressed="false" title="Toggle focus mode">◎</button>
+    <button id="describe-face-btn" type="button" class="tool" title="Describe face state">◎?</button>
+    <label class="face-scale" for="font-scale" title="Adjust font size">
+      <span aria-hidden="true">A</span>
+      <input id="font-scale" type="range" min="0.85" max="1.4" step="0.05" value="1">
+    </label>
+  </div>
+  <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
+    <span class="pp">master</span><span class="sep2">* </span>
+    <button type="button" class="tool" data-cmd="/photograph " aria-label="Photo">photo</button>
+    <button type="button" class="tool" data-cmd="/repligen generate " aria-label="Video">video</button>
+    <button type="button" class="tool" data-cmd="/sing " aria-label="Sing">sing</button>
+    <button type="button" class="tool" data-act="mic" aria-label="Microphone">mic</button>
+    <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message"></textarea>
+    <span id="zsh-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+    <span id="tts-rate" aria-label="TTS speed" title="Ctrl+[ / Ctrl+]"></span>
+    <span id="char-count" aria-hidden="true"></span>
+    <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
+    <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
+  </form>
+  <%# Loaded ahead of the manifest below: defines window.ParticleKernel, the base global that
+      particle_worker, the cognition-ecology scripts, and the lazily-imported face modules read. %>
+  <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
+  <script src="<%= asset_path("container_gate.js") %>" defer></script>
+  <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
   <%# Deferred boot modules — single ordered manifest, loaded after the shell paints.
       face.js (the THREE.js WebGL face) is intentionally absent: loadFace() imports it
