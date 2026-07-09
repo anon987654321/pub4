@@ -5,7 +5,7 @@ Runtime authority: `DEPLOY/data/operator.yml` — list with `cd MASTER && bundle
 ## Repo shape (visual overview)
 
 ```bash
-ruby DEPLOY/openbsd/sh/tools/tree.rb . --pub4-overview
+ruby DEPLOY/openbsd/tools/tree.rb . --pub4-overview
 # or: zsh DEPLOY/openbsd/sh/tree.sh . --pub4-overview
 ```
 

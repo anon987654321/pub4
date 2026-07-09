@@ -15,7 +15,7 @@ set -eu
 # implementing major architectural simplifications.
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-RUBY_TREE="$SCRIPT_DIR/tools/tree.rb"
+RUBY_TREE="$SCRIPT_DIR/../tools/tree.rb"
 
 ROOT="${PUB4_ROOT:-$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)}"
 

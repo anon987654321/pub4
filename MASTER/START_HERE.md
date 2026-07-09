@@ -100,7 +100,7 @@ DEPLOY mirror: `DEPLOY/START_HERE.md` + `DEPLOY/OPERATOR.md` — not duplicate M
 ## Repo shape (run before big refactors)
 
 ```bash
-ruby DEPLOY/openbsd/sh/tools/tree.rb . --pub4-overview
+ruby DEPLOY/openbsd/tools/tree.rb . --pub4-overview
 ```
 
 Far-away visual tree with noise pruned and alignment notes. Do this before merging YAML/MD or restructuring folders.
