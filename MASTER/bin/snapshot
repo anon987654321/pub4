@@ -6,7 +6,7 @@
 # over the cap are listed, not pasted. This is the full-snapshot tool; the small
 # boot-context snapshot still lives in MASTER/lib/trace/snapshot_publisher.rb.
 #
-#   bin/snapshot [all|MASTER|DEPLOY] [--out DIR]
+#   bin/snapshot [all|MASTER|OPERATOR|RAILS|OPENBSD] [--out DIR]
 #
 # Default: all subtrees, written as snapshot_<LABEL>.md at the pub4 repo root.
 
@@ -25,12 +25,12 @@ LANG = {
 
 out = REPO_ROOT
 OptionParser.new do |opts|
-  opts.banner = "usage: bin/snapshot [all|MASTER|DEPLOY] [--out DIR]"
+  opts.banner = "usage: bin/snapshot [all|MASTER|OPERATOR|RAILS|OPENBSD] [--out DIR]"
   opts.on("--out DIR") { |dir| out = File.expand_path(dir) }
 end.parse!
 
 which = (ARGV.first || "all").downcase
-labels = which == "all" ? %w[MASTER DEPLOY] : [which.upcase]
+labels = which == "all" ? %w[MASTER OPERATOR] : [which.upcase]
 
 def fence(body) = "`" * [body.scan(/`+/).map(&:length).max.to_i + 1, 3].max
 

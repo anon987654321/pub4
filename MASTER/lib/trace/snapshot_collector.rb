@@ -21,7 +21,8 @@ module Master
 
       TEXT_NAMES = %w[Gemfile Rakefile Dockerfile Makefile Procfile].to_set.freeze
       MAX_INLINE_BYTES = 262_144
-      GIT_LABELS = %w[MASTER OPERATOR].freeze
+      GIT_LABELS = %w[MASTER OPERATOR RAILS OPENBSD].freeze
+      DEPLOY_PILLARS = %w[OPERATOR RAILS OPENBSD].freeze
 
       POLICY_SUMMARY =
         "git-tracked source text only (skips vendor, node_modules, tmp, knowledge, runtime, " \
@@ -40,6 +41,8 @@ module Master
       def collect_paths(label:, repo_root:, target:)
         label_key = label.to_s.upcase
         if git_repo?(repo_root) && GIT_LABELS.include?(label_key)
+          return deploy_pillar_paths(repo_root) if label_key == "OPERATOR"
+
           git_tracked_paths(repo_root, label_key)
         else
           tree_paths(target)
@@ -69,6 +72,10 @@ module Master
 
       def git_repo?(repo_root)
         File.directory?(File.join(repo_root, ".git"))
+      end
+
+      def deploy_pillar_paths(repo_root)
+        DEPLOY_PILLARS.flat_map { |pillar| git_tracked_paths(repo_root, pillar) }.uniq.sort
       end
 
       def git_tracked_paths(repo_root, label)

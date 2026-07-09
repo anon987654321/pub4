@@ -10,7 +10,7 @@ class TestSnapshotAgentGuide < Minitest::Test
     assert_includes body, "Word-for-word read + cross-reference"
     assert_includes body, "Deep execution traces"
     assert_includes body, "Rehydrate files locally"
-    assert_includes body, "DEPLOY_snapshot.md"
+    assert_includes body, "OPERATOR_snapshot.md"
   end
 
   def test_publish_snapshot_digest_includes_agent_protocol

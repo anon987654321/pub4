@@ -64,7 +64,7 @@ module Master
 
       def artifacts_section(title: "Download snapshot artifacts")
         dir = output_dir
-        paths = %w[MASTER_snapshot.md DEPLOY_snapshot.md].filter_map do |name|
+        paths = %w[MASTER_snapshot.md OPERATOR_snapshot.md].filter_map do |name|
           path = File.join(dir, name)
           next unless File.file?(path)
           "- `#{path}` (#{File.size(path)} bytes, updated #{File.mtime(path).utc.iso8601})"
