@@ -3,4 +3,9 @@
     <%= render "videos/row", video: %>
   <% end %>
 </ul>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "VideosInfiniteScrollReflex#load_more",
+           sentinel_id: "videos-infinite-scroll-sentinel",
+           q: params[:q] %>

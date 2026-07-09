@@ -3,11 +3,17 @@
 <% end %>
 
 <% if @posts.any? %>
- <div class="post-grid">
+ <div class="post-grid" id="home-feed">
  <% @posts.each do |post| %>
  <%= render "posts/post", post: post %>
  <% end %>
  </div>
+
+ <%= render "shared/infinite_scroll_sentinel",
+            pagy: @pagy,
+            reflex: "HomeInfiniteScrollReflex#load_more",
+            sentinel_id: "home-feed-sentinel",
+            q: params[:q] %>
 <% else %>
  <section class="empty">
  <% if live_search_query.present? %>

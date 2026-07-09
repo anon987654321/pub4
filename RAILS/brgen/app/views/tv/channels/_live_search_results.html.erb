@@ -1,7 +1,11 @@
-<% @channels.each do |c| %>
-  <article>
-    <h2><%= link_to c.name, tv_channel_path(c) %><% if c.live? %> <span class="live-badge">Live</span><% end %></h2>
-    <p class="dim"><%= c.subscribers_count %> subscribers</p>
-  </article>
-<% end %>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<section id="tv-channels-list" role="region" aria-label="TV channel results">
+  <% @channels.each do |c| %>
+    <%= render "tv/channels/row", channel: c %>
+  <% end %>
+</section>
+
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "ChannelsInfiniteScrollReflex#load_more",
+           sentinel_id: "tv-channels-sentinel",
+           q: params[:q] %>

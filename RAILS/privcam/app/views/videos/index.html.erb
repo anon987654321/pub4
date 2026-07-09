@@ -6,8 +6,3 @@
 </header>
 
 <%= live_search_index url: videos_path, results_partial: "videos/live_search_results", placeholder: "Search videos…", label: "Video search", frame_id: "privcam-videos" %>
-
-<%= render "shared/infinite_scroll_sentinel",
-           pagy: @pagy,
-           reflex: "VideosInfiniteScroll#load_more",
-           sentinel_id: "videos-infinite-scroll-sentinel" %>

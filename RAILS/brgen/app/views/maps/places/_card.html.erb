@@ -1,0 +1,4 @@
+<article class="place-card" role="article" aria-label="<%= place.name %>">
+  <h2><%= link_to place.name, maps_place_path(place) %></h2>
+  <p class="dim"><%= place.kind %><% if place.city %> · <%= place.city.name %><% end %><% if place.neighborhood %> · <%= place.neighborhood.name %><% end %></p>
+</article>

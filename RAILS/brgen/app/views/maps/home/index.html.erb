@@ -10,6 +10,7 @@
   <div class="map-hud" role="region" aria-label="Map search and info">
     <div class="cluster">
       <input id="map-search" type="search" placeholder="Search places…" data-map-target="search" role="searchbox" aria-label="Search places on map" class="map-search-input">
+      <%= link_to "Browse list", maps_places_path, class: "btn btn-ghost btn-sm map-browse-link" %>
     </div>
     <div id="place-popup" class="map-place-popup" data-map-target="popup" hidden role="status" aria-live="polite"></div>
   </div>

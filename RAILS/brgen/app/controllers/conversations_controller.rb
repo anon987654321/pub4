@@ -27,8 +27,20 @@ class ConversationsController < ApplicationController
   end
 
   def create
-    other         = User.find(params[:user_id])
+    other = resolve_conversation_partner
     @conversation = Conversation.find_or_create_direct(Current.user, other)
     redirect_to @conversation
+  rescue ActiveRecord::RecordNotFound
+    redirect_to conversations_path, alert: "User not found"
+  end
+
+  private
+
+  def resolve_conversation_partner
+    if params[:username].present?
+      User.find_by!(username: params[:username].to_s.strip.downcase)
+    else
+      User.find(params[:user_id])
+    end
   end
 end

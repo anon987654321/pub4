@@ -12,6 +12,8 @@
        <% if local_assigns[:lat].present? %>data-lat="<%= lat %>"<% end %>
        <% if local_assigns[:lng].present? %>data-lng="<%= lng %>"<% end %>
        <% if local_assigns[:radius_km].present? %>data-radius-km="<%= radius_km %>"<% end %>
+       <% if local_assigns[:cuisine].present? %>data-cuisine="<%= cuisine %>"<% end %>
+       <% if local_assigns[:kind].present? %>data-kind="<%= kind %>"<% end %>
        aria-live="polite">
     <span class="dim">Loading more…</span>
   </div>

@@ -2,6 +2,16 @@
   <h1>Messages</h1>
 </div>
 
+<section class="messenger-compose" aria-label="Start a conversation">
+  <%= form_with url: conversations_path, method: :post, class: "messenger-compose-form" do |f| %>
+    <%= f.label :username, "New message" %>
+    <div class="messenger-compose-row">
+      <%= f.text_field :username, placeholder: "Username", required: true, autocomplete: "username" %>
+      <%= f.submit "Start chat", class: "btn" %>
+    </div>
+  <% end %>
+</section>
+
 <% if @conversations.any? %>
   <ul role="list" aria-label="Conversations">
     <% @conversations.each do |c| %>

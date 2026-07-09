@@ -552,6 +552,89 @@ class DeployBacklogTest < Minitest::Test
     assert_includes tracks_controller, 'user: Current.user'
   end
 
+  def test_home_feed_uses_stimulus_reflex_infinite_scroll
+    home = read_brgen('app/controllers/home_controller.rb')
+    partial = read_brgen('app/views/home/_live_search_results.html.erb')
+    reflex = read_brgen('app/reflexes/home_infinite_scroll_reflex.rb')
+
+    assert_includes home, '@pagy, @posts = pagy(scope)'
+    assert_includes partial, 'HomeInfiniteScrollReflex#load_more'
+    assert_includes partial, 'home-feed-sentinel'
+    assert_includes reflex, 'timeline_posts.hot'
+    assert_includes reflex, 'Brgen::DemoFeed.posts_scope.hot'
+  end
+
+  def test_takeaway_and_tv_indexes_use_infinite_scroll_reflexes
+    restaurants = read_brgen('app/views/takeaway/restaurants/_live_search_results.html.erb')
+    channels = read_brgen('app/views/tv/channels/_live_search_results.html.erb')
+
+    assert_includes restaurants, 'RestaurantsInfiniteScrollReflex#load_more'
+    assert_includes restaurants, 'takeaway-restaurants-sentinel'
+    assert_includes channels, 'ChannelsInfiniteScrollReflex#load_more'
+    assert_includes channels, 'tv-channels-sentinel'
+    assert_includes File.read(File.join(ROOT, 'brgen/app/reflexes/restaurants_infinite_scroll_reflex.rb')),
+                    'takeaway/restaurants/card'
+    assert_includes File.read(File.join(ROOT, 'brgen/app/reflexes/channels_infinite_scroll_reflex.rb')),
+                    'tv/channels/row'
+  end
+
+  def test_maps_places_browse_and_infinite_scroll_are_wired
+    controller = read_brgen('app/controllers/maps/places_controller.rb')
+    index = read_brgen('app/views/maps/places/index.html.erb')
+    partial = read_brgen('app/views/maps/places/_live_search_results.html.erb')
+    reflex = read_brgen('app/reflexes/places_infinite_scroll_reflex.rb')
+    home = read_brgen('app/views/maps/home/index.html.erb')
+
+    assert_includes controller, 'format.html'
+    assert_includes controller, '@pagy, @places = pagy'
+    assert_includes index, 'maps_places_path'
+    assert_includes partial, 'PlacesInfiniteScrollReflex#load_more'
+    assert_includes reflex, 'maps/places/card'
+    assert_includes home, 'maps_places_path'
+  end
+
+  def test_messenger_compose_flow_accepts_username
+    index = read_brgen('app/views/conversations/index.html.erb')
+    controller = read_brgen('app/controllers/conversations_controller.rb')
+
+    assert_includes index, 'messenger-compose'
+    assert_includes index, 'f.text_field :username'
+    assert_includes controller, 'resolve_conversation_partner'
+    assert_includes controller, 'params[:username]'
+  end
+
+  def test_sitemap_routes_and_shared_builder_across_rails_apps
+    sentinel = File.read(File.join(ROOT, 'shared/app/views/shared/_infinite_scroll_sentinel.html.erb'))
+    builder = File.read(File.join(ROOT, 'shared/app/services/shared/sitemap_builder.rb'))
+
+    assert_includes sentinel, 'data-cuisine'
+    assert_includes sentinel, 'data-kind'
+    assert_includes builder, 'Builder::XmlMarkup'
+
+    %w[amber brgen bsdports hjerterom mytoonz privcam pub_attorney].each do |app|
+      routes = File.read(File.join(ROOT, "#{app}/config/routes.rb"))
+      assert_includes routes, 'sitemaps#index', "#{app} missing sitemap route"
+      assert File.file?(File.join(ROOT, app, 'app/controllers/sitemaps_controller.rb')),
+             "#{app} missing SitemapsController"
+      source = File.read(File.join(ROOT, app, 'app/controllers/sitemaps_controller.rb'))
+      assert_includes source, 'Shared::Sitemapable'
+      assert_includes source, 'sitemap_entries'
+    end
+
+    brgen_routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
+    assert_includes brgen_routes, 'robots#show'
+    assert_includes read_brgen('app/controllers/sitemaps_controller.rb'), 'Brgen::DomainRegistry.resolve'
+  end
+
+  def test_privcam_videos_infinite_scroll_sentinel_lives_in_results_partial
+    partial = File.read(File.join(ROOT, 'privcam/app/views/videos/_live_search_results.html.erb'))
+    index = File.read(File.join(ROOT, 'privcam/app/views/videos/index.html.erb'))
+
+    assert_includes partial, 'VideosInfiniteScrollReflex#load_more'
+    assert_includes partial, 'videos-infinite-scroll-sentinel'
+    refute_includes index, 'infinite_scroll_sentinel'
+  end
+
   private
 
   def read_brgen(relative)

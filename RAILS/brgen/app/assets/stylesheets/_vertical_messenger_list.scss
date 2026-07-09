@@ -58,6 +58,43 @@ body.vertical-messenger .page-header h1 {
   margin: 0;
 }
 
+body.vertical-messenger .messenger-compose {
+  margin-bottom: 1rem;
+}
+
+body.vertical-messenger .messenger-compose label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--msg-muted);
+}
+
+body.vertical-messenger .messenger-compose-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+body.vertical-messenger .messenger-compose-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--x-radius-md);
+  border: 1px solid var(--msg-border);
+  background: var(--msg-surface);
+  color: var(--msg-ink);
+  font-family: inherit;
+}
+
+body.vertical-messenger .messenger-compose-row input[type="submit"] {
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--msg-accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 body.vertical-messenger ul[aria-label="Conversations"] {
   list-style: none;
   margin: 0;

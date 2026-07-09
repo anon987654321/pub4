@@ -1,0 +1,19 @@
+<% content_for :title, "Places" %>
+
+<div class="page-header" role="banner" aria-label="Places header">
+  <h1>Places</h1>
+  <nav role="navigation" aria-label="Places navigation">
+    <%= link_to "Map", maps_maps_root_path, class: "btn btn-ghost" %>
+  </nav>
+</div>
+
+<%= live_search_index url: maps_places_path,
+                      results_partial: "maps/places/live_search_results",
+                      placeholder: "Search places…",
+                      label: "Place search",
+                      frame_id: "maps-places" do |f| %>
+  <%= f.select :kind,
+        [["All types", ""]] + Place.distinct.order(:kind).pluck(:kind).compact.map { |k| [k.humanize, k] },
+        { selected: params[:kind] },
+        {} %>
+<% end %>
