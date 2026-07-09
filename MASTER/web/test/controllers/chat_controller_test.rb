@@ -21,8 +21,9 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "15000"
     assert_match(/function go\(\)\{[\s\S]*?revealPrompt/, response.body)
     assert_match(/function go\(\)\{[\s\S]*?dismissPrimer/, response.body)
-    assert_includes response.body, "voice-picker"
-    assert_includes response.body, "tts-style-chips"
+    # TTS controls run on sensible defaults — no visible box (removed 2026-07-09).
+    refute_includes response.body, "voice-picker"
+    refute_includes response.body, "tts-style-chips"
     assert_includes response.body, "spin-btn"
   end
 

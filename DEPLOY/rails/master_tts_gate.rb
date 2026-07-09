@@ -18,7 +18,7 @@ checks = {
     "tts_e2e poll",
     "tts_e2e"
   ],
-  "DEPLOY/openbsd/openbsd.sh" => [
+  "DEPLOY/openbsd/DEPLOY.sh" => [
     "espeak"
   ],
   "DEPLOY/openbsd/etc/rc.d/master" => [

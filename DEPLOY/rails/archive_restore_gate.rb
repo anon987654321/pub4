@@ -65,6 +65,7 @@ tracked_files.each do |rel|
   path = File.join(ROOT, rel)
   next unless text_file?(path)
   next if rel.start_with?("ARCHIVE/", "DEPLOY/archive/")
+  next if File.basename(rel).start_with?("snapshot_") # generated source dumps embed this gate's own patterns
   next if pattern_doc_allowlist.include?(rel)
 
   body = File.read(path)

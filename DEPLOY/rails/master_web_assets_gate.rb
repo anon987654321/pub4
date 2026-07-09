@@ -11,7 +11,7 @@ ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
 MANIFEST = File.join(ASSETS_DIR, ".manifest.json")
 REQUIRED = %w[face.css face.js chat.js three.face.module.js].freeze
 DEPLOY_SCRIPTS = {
-  "DEPLOY/openbsd/openbsd.sh" => :start_or_restart,
+  "DEPLOY/openbsd/DEPLOY.sh" => :start_or_restart,
   "DEPLOY/openbsd/sh/vps_install_all.sh" => :start_or_restart,
   "DEPLOY/openbsd/sh/vps_on_vm_install.sh" => :start_or_restart,
   "DEPLOY/openbsd/sh/vps_console_install.exp" => :restart,
@@ -20,6 +20,9 @@ DEPLOY_SCRIPTS = {
 
 failures = []
 if (drift = DesignTokens.face_root_drift?(FACE_CSS))
+  failures << drift
+end
+if (drift = DesignTokens.scss_anchor_drift?)
   failures << drift
 end
 

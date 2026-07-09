@@ -56,6 +56,20 @@ module DesignTokens
     true
   end
 
+  def scss_anchor_drift?(path = File.join(ROOT, "shared", "app", "assets", "stylesheets", "_x_base.scss"))
+    return "missing #{path}" unless File.file?(path)
+
+    scss = File.read(path)
+    anchors = load.fetch("face_root").fetch("anchors")
+    drifted = anchors.filter_map do |key, value|
+      needle = key == "x_text" ? "$text: #{value}" : "$#{key.tr('_', '-')}: #{value}"
+      "#{key}=#{value}" unless scss.include?(needle)
+    end
+    return nil if drifted.empty?
+
+    "_x_base.scss defaults drifted from design_tokens.yml anchors: #{drifted.join(', ')}"
+  end
+
   def face_root_drift?(path)
     body = File.read(path)
     pattern = %r{/\* BEGIN:generated-face-root.*?\*/(.*?)/\* END:generated-face-root \*/}m
