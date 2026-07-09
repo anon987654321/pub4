@@ -48,6 +48,21 @@ body.vertical-dating .app-shell {
   background: var(--dating-bg);
 }
 
+body.vertical-dating .match-list .match-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--dating-border);
+}
+
+body.vertical-dating .match-list .match-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .dating-intro {
   position: fixed;
   inset: 0;

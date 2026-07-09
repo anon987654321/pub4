@@ -2,10 +2,13 @@
 
 <div class="page-header" role="banner" aria-label="My orders header"><h1>My Orders</h1></div>
 
-<% @orders.each do |o| %>
-  <article role="article" aria-label="Order">
-    <h2><%= link_to o.restaurant.name, takeaway_order_path(o) %></h2>
-    <p class="dim"><%= o.status.humanize %> · <%= o.total_display %> · <time><%= o.created_at.strftime("%d %b %Y") %></time></p>
-  </article>
-<% end %>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<section id="takeaway-orders-list" class="order-list" role="list" aria-label="Order history">
+  <% @orders.each do |order| %>
+    <%= render "takeaway/orders/order", order: %>
+  <% end %>
+</section>
+
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "OrdersInfiniteScrollReflex#load_more",
+           sentinel_id: "takeaway-orders-sentinel" %>

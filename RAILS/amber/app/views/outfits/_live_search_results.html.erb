@@ -10,4 +10,8 @@
   <div class="empty" role="status" aria-live="polite"><p>No outfits yet. Start with a capsule, event, season, or mood.</p></div>
 <% end %>
 
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "OutfitsInfiniteScrollReflex#load_more",
+           sentinel_id: "amber-outfits-sentinel",
+           q: params[:q] %>

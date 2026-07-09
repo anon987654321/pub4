@@ -4,13 +4,13 @@
   <h1>Beneficiaries</h1>
 </header>
 
-<ul>
+<ul id="beneficiaries-list" class="beneficiary-list">
   <% @beneficiaries.each do |beneficiary| %>
-    <li>
-      <%= link_to beneficiary.household_label, beneficiary_path(beneficiary) %>
-      <%= link_to "Match food", match_beneficiary_path(beneficiary), class: "btn btn-sm" %>
-    </li>
+    <%= render "beneficiaries/row", beneficiary: %>
   <% end %>
 </ul>
 
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "BeneficiariesInfiniteScrollReflex#load_more",
+           sentinel_id: "hjerterom-beneficiaries-sentinel" %>

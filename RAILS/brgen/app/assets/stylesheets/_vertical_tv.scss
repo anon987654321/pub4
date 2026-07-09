@@ -82,3 +82,30 @@ body.vertical-tv .btn-primary {
 body.vertical-tv [data-controller="tv-player"] {
   margin: 0 16px 24px;
 }
+
+body.vertical-tv .video-grid,
+body.vertical-tv .show-grid {
+  display: grid;
+  gap: 12px;
+}
+
+body.vertical-tv .show-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  padding: 0 16px 24px;
+}
+
+body.vertical-tv .show-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--x-radius-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--transition-fast);
+}
+
+body.vertical-tv .show-card:hover {
+  background: var(--hover-subtle);
+}

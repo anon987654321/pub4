@@ -1,9 +1,10 @@
-<section id="cases">
+<section id="cases" class="case-list">
   <% @cases.each do |kase| %>
-    <article>
-      <h2><%= link_to kase.title, case_path(kase) %></h2>
-      <p><%= kase.status %> <% if kase.lawyer %>· <%= kase.lawyer.name %><% end %></p>
-    </article>
+    <%= render "cases/card", kase: %>
   <% end %>
 </section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "CasesInfiniteScrollReflex#load_more",
+           sentinel_id: "pub-attorney-cases-sentinel",
+           q: params[:q] %>

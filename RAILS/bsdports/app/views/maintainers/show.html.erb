@@ -5,14 +5,13 @@
     <p><%= link_to @maintainer.email, "mailto:#{@maintainer.email}" %></p>
   <% end %>
 </header>
-<ul id="ports">
+<ul id="ports" class="port-list">
   <% @ports.each do |port| %>
-    <li>
-      <%= link_to port.name, port %>
-      <small><%= port.version %></small>
-      <small><%= link_to port.category.name, category_path(port.category) %></small>
-      <small><%= port.comment %></small>
-    </li>
+    <%= render "ports/row", port: %>
   <% end %>
 </ul>
-<%= @pagy.series_nav if @pagy && @pagy.pages > 1 %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "MaintainerPortsInfiniteScrollReflex#load_more",
+           sentinel_id: "maintainer-ports-sentinel",
+           maintainer_id: @maintainer.id %>

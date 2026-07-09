@@ -3,15 +3,19 @@
     <h2>Library</h2>
     <button type="button" class="radio-library-close" data-action="click->radio-tunnel#closeLibrary" aria-label="Close library">×</button>
   </header>
-  <div class="radio-library-list">
-    <% playlists.each do |pl| %>
-      <%= link_to playlist_playlist_path(pl), class: "radio-library-item" do %>
-        <strong><%= pl.name %></strong>
-        <span><%= pl.tracks_count %> tracks · <%= pl.plays_count %> plays</span>
-      <% end %>
+  <div id="playlist-library-list" class="radio-library-list">
+    <% playlists.each do |playlist| %>
+      <%= render "playlist/playlists/row", playlist: %>
     <% end %>
     <% if playlists.empty? %>
       <p class="dim">No playlists yet.</p>
     <% end %>
   </div>
+
+  <% if local_assigns[:pagy]&.next %>
+    <%= render "shared/infinite_scroll_sentinel",
+               pagy: pagy,
+               reflex: "PlaylistsInfiniteScrollReflex#load_more",
+               sentinel_id: "playlist-library-sentinel" %>
+  <% end %>
 </aside>

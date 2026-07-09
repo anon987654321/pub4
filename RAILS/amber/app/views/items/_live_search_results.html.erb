@@ -24,4 +24,8 @@
   </div>
 <% end %>
 
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "ItemsInfiniteScrollReflex#load_more",
+           sentinel_id: "amber-items-sentinel",
+           q: params[:q] %>

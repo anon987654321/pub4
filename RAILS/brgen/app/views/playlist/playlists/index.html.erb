@@ -1,6 +1,6 @@
 <% content_for :title, "radio.brgen.no" %>
 
-<%= render "playlist/playlists/radio_tunnel", show_library: true, playlists: @playlists %>
+<%= render "playlist/playlists/radio_tunnel", show_library: true, playlists: @playlists, pagy: @pagy %>
 
 <% if @trending_playlists.any? %>
   <section class="section-divider" aria-label="City trending playlists">

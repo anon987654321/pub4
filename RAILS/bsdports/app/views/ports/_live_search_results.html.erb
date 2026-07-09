@@ -1,17 +1,18 @@
 <% if @category %>
   <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
 <% end %>
-<ul id="ports" role="list" aria-label="OpenBSD ports list">
+<ul id="ports" role="list" aria-label="OpenBSD ports list" class="port-list">
   <% @ports.each do |port| %>
-    <li role="listitem">
-      <%= link_to port.name, port %>
-      <small><%= port.version %></small>
-      <small><%= link_to port.category.name, category_path(port.category) %></small>
-      <small><%= port.comment %></small>
-    </li>
+    <%= render "ports/row", port: %>
   <% end %>
 </ul>
 <% if @ports.empty? %>
   <div class="empty" role="status" aria-live="polite"><p>No ports found.</p></div>
 <% end %>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "PortsInfiniteScrollReflex#load_more",
+           sentinel_id: "bsdports-ports-sentinel",
+           q: params[:q],
+           category_id: params[:category_id],
+           sort: params[:sort] %>

@@ -1,0 +1,8 @@
+<section id="tv-trending-videos" class="video-grid" role="list" aria-label="Trending videos">
+  <%= render @trending %>
+</section>
+
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy_trending,
+           reflex: "TrendingVideosInfiniteScrollReflex#load_more",
+           sentinel_id: "tv-trending-sentinel" %>

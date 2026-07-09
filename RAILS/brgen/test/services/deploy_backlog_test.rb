@@ -697,6 +697,76 @@ class DeployBacklogTest < Minitest::Test
     assert_includes read_brgen('app/assets/stylesheets/_marketplace.scss'), '.store-grid'
   end
 
+  def test_secondary_brgen_verticals_use_infinite_scroll_reflexes
+    sentinel = File.read(File.join(ROOT, 'shared/app/views/shared/_infinite_scroll_sentinel.html.erb'))
+    assert_includes sentinel, 'data-channel-slug'
+
+    assert_includes read_brgen('app/views/tv/channels/_channel_videos.html.erb'), 'ChannelVideosInfiniteScrollReflex#load_more'
+    assert_includes read_brgen('app/reflexes/channel_videos_infinite_scroll_reflex.rb'), 'tv/videos/tv_video'
+
+    assert_includes read_brgen('app/views/tv/home/_trending_videos.html.erb'), 'TrendingVideosInfiniteScrollReflex#load_more'
+    assert_includes read_brgen('app/reflexes/trending_videos_infinite_scroll_reflex.rb'), 'Tv::Video.trending'
+
+    assert_includes read_brgen('app/views/takeaway/orders/index.html.erb'), 'OrdersInfiniteScrollReflex#load_more'
+    assert_includes read_brgen('app/reflexes/orders_infinite_scroll_reflex.rb'), 'takeaway/orders/order'
+
+    assert_includes read_brgen('app/views/dating/matches/index.html.erb'), 'MatchesInfiniteScrollReflex#load_more'
+    assert_includes read_brgen('app/reflexes/matches_infinite_scroll_reflex.rb'), 'dating/matches/match'
+
+    assert_includes read_brgen('app/views/marketplace/categories/show.html.erb'), 'CategoryListingsInfiniteScrollReflex#load_more'
+    assert_includes read_brgen('app/reflexes/category_listings_infinite_scroll_reflex.rb'), 'marketplace/listings/card'
+
+    assert_includes read_brgen('app/views/tv/shows/index.html.erb'), 'ShowsInfiniteScrollReflex#load_more'
+    assert_includes read_brgen('app/reflexes/shows_infinite_scroll_reflex.rb'), 'tv/shows/card'
+
+    assert_includes read_brgen('app/views/playlist/playlists/_library.html.erb'), 'PlaylistsInfiniteScrollReflex#load_more'
+    assert_includes read_brgen('app/reflexes/playlists_infinite_scroll_reflex.rb'), 'playlist/playlists/row'
+    assert_includes read_brgen('app/assets/stylesheets/_vertical_tv.scss'), '.show-grid'
+    assert_includes read_brgen('app/assets/stylesheets/_vertical_takeaway.scss'), '.order-list'
+    assert_includes read_brgen('app/assets/stylesheets/_vertical_dating_shell.scss'), '.match-list'
+  end
+
+  def test_satellite_apps_use_infinite_scroll_reflexes
+    sentinel = File.read(File.join(ROOT, 'shared/app/views/shared/_infinite_scroll_sentinel.html.erb'))
+
+    assert_includes File.read(File.join(ROOT, 'amber/app/views/items/_live_search_results.html.erb')),
+                    'ItemsInfiniteScrollReflex#load_more'
+    assert_includes File.read(File.join(ROOT, 'amber/app/reflexes/items_infinite_scroll_reflex.rb')),
+                    'items/item'
+
+    assert_includes File.read(File.join(ROOT, 'amber/app/views/outfits/_live_search_results.html.erb')),
+                    'OutfitsInfiniteScrollReflex#load_more'
+    assert_includes File.read(File.join(ROOT, 'amber/app/reflexes/outfits_infinite_scroll_reflex.rb')),
+                    'outfits/outfit'
+
+    assert_includes File.read(File.join(ROOT, 'bsdports/app/views/ports/_live_search_results.html.erb')),
+                    'PortsInfiniteScrollReflex#load_more'
+    assert_includes File.read(File.join(ROOT, 'bsdports/app/reflexes/ports_infinite_scroll_reflex.rb')),
+                    'ports/row'
+
+    assert_includes File.read(File.join(ROOT, 'hjerterom/app/views/food_listings/_live_search_results.html.erb')),
+                    'FoodListingsInfiniteScrollReflex#load_more'
+    assert_includes File.read(File.join(ROOT, 'hjerterom/app/reflexes/food_listings_infinite_scroll_reflex.rb')),
+                    'food_listings/card'
+
+    assert_includes File.read(File.join(ROOT, 'hjerterom/app/views/resources/_live_search_results.html.erb')),
+                    'ResourcesInfiniteScrollReflex#load_more'
+    assert_includes File.read(File.join(ROOT, 'hjerterom/app/reflexes/resources_infinite_scroll_reflex.rb')),
+                    'resources/card'
+
+    assert_includes File.read(File.join(ROOT, 'hjerterom/app/views/beneficiaries/index.html.erb')),
+                    'BeneficiariesInfiniteScrollReflex#load_more'
+    assert_includes File.read(File.join(ROOT, 'bsdports/app/views/maintainers/show.html.erb')),
+                    'MaintainerPortsInfiniteScrollReflex#load_more'
+    assert_includes File.read(File.join(ROOT, 'pub_attorney/app/views/cases/_live_search_results.html.erb')),
+                    'CasesInfiniteScrollReflex#load_more'
+    assert_includes File.read(File.join(ROOT, 'pub_attorney/app/views/lawyers/_live_search_results.html.erb')),
+                    'LawyersInfiniteScrollReflex#load_more'
+    assert_includes File.read(File.join(ROOT, 'mytoonz/app/views/comic_strips/_live_search_results.html.erb')),
+                    'ComicStripsInfiniteScrollReflex#load_more'
+    assert_includes sentinel, 'data-maintainer-id'
+  end
+
   private
 
   def read_brgen(relative)

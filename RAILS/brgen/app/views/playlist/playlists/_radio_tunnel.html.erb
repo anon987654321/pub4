@@ -72,6 +72,6 @@
   </div>
 
   <% if local_assigns.fetch(:show_library, false) %>
-    <%= render "playlist/playlists/library", playlists: playlists %>
+    <%= render "playlist/playlists/library", playlists: playlists, pagy: local_assigns[:pagy] %>
   <% end %>
 <% end %>

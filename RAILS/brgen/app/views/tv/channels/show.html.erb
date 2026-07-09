@@ -35,11 +35,10 @@
 <section>
   <h2>Videos</h2>
   <% if @videos.any? %>
-    <%= render @videos %>
+    <%= render "tv/channels/channel_videos" %>
   <% else %>
     <div class="empty">
       <p>No published videos yet.</p>
     </div>
   <% end %>
 </section>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>

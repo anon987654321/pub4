@@ -1,12 +1,10 @@
-<ul role="list" aria-label="Comic strip list" id="comic_strips">
+<ul role="list" aria-label="Comic strip list" id="comic_strips" class="comic-strip-list">
   <% @comic_strips.each do |comic_strip| %>
-    <li>
-      <article>
-        <h2><%= link_to comic_strip.prompt.truncate(60), comic_strip_path(comic_strip) %></h2>
-        <p>Style: <%= comic_strip.style %> · Status: <%= comic_strip.status %></p>
-        <small>by <%= comic_strip.user.email_address %></small>
-      </article>
-    </li>
+    <%= render "comic_strips/row", comic_strip: %>
   <% end %>
 </ul>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "ComicStripsInfiniteScrollReflex#load_more",
+           sentinel_id: "mytoonz-comic-strips-sentinel",
+           q: params[:q] %>

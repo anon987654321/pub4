@@ -40,8 +40,11 @@
 
 <section role="region" aria-label="Trending content">
   <h2>Trending</h2>
-  <%= render @trending %>
-  <%= pagy_nav(@pagy_trending) if @pagy_trending&.pages.to_i > 1 %>
+  <% if @trending.any? %>
+    <%= render "tv/home/trending_videos" %>
+  <% else %>
+    <div class="empty"><p>No trending videos yet.</p></div>
+  <% end %>
 </section>
 
 <section role="region" aria-label="Recent content">

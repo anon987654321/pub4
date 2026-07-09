@@ -6,16 +6,18 @@
 </div>
 
 <turbo-frame id="marketplace-category" data-turbo-action="replace">
-<div role="region" aria-label="Category listings">
-<% @listings.each do |l| %>
-  <article role="listitem">
-    <h2><%= link_to l.title, marketplace_listing_path(l) %></h2>
-    <p class="dim"><strong><%= l.price_display %></strong></p>
-  </article>
+<div id="marketplace-category-listings" class="deal-grid" role="region" aria-label="Category listings">
+<% @listings.each do |listing| %>
+  <%= render "marketplace/listings/card", listing: %>
 <% end %>
 <% if @listings.empty? %>
   <div class="empty" role="status" aria-live="polite"><p>No listings in this category.</p></div>
 <% end %>
 </div>
+
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "CategoryListingsInfiniteScrollReflex#load_more",
+           sentinel_id: "marketplace-category-sentinel",
+           category_id: @category.id %>
 </turbo-frame>
-<%= @pagy.series_nav if @pagy.pages > 1 %>

@@ -1,13 +1,13 @@
-<section id="food_listings">
+<section id="food_listings" class="food-listing-grid">
   <% @listings.each do |listing| %>
-    <article role="article" aria-label="Food listing">
-      <%= link_to listing.title, food_listing_path(listing) %>
-      <p><%= listing.quantity %> <%= listing.unit %> · <%= listing.city %></p>
-      <p>Until <%= listing.available_until&.strftime("%b %-d, %H:%M") %></p>
-      <% if listing.dietary_info.present? %>
-        <small><%= listing.dietary_info %></small>
-      <% end %>
-    </article>
+    <%= render "food_listings/card", listing: %>
   <% end %>
 </section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "FoodListingsInfiniteScrollReflex#load_more",
+           sentinel_id: "hjerterom-food-listings-sentinel",
+           q: params[:q],
+           lat: params[:lat],
+           lng: params[:lng],
+           radius_km: params[:radius_km] %>

@@ -1,0 +1,6 @@
+<li role="listitem" class="port-row">
+  <%= link_to port.name, port %>
+  <small><%= port.version %></small>
+  <small><%= link_to port.category.name, category_path(port.category) %></small>
+  <small><%= port.comment %></small>
+</li>

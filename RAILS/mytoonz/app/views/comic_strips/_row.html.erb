@@ -1,0 +1,7 @@
+<li class="comic-strip-row">
+  <article>
+    <h2><%= link_to comic_strip.prompt.truncate(60), comic_strip_path(comic_strip) %></h2>
+    <p>Style: <%= comic_strip.style %> · Status: <%= comic_strip.status %></p>
+    <small>by <%= comic_strip.user.email_address %></small>
+  </article>
+</li>

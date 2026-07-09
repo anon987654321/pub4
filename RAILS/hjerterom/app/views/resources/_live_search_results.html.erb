@@ -1,11 +1,11 @@
-<section id="resources">
+<section id="resources" class="resource-list">
   <% @resources.each do |resource| %>
-    <article data-resource-type="<%= resource.resource_type %>">
-      <%= link_to resource.title, resource %>
-      <small><%= resource.resource_type %></small>
-      <p><%= resource.description %></p>
-      <p><%= [resource.city, resource.phone].compact.join(" · ") %></p>
-    </article>
+    <%= render "resources/card", resource: %>
   <% end %>
 </section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "ResourcesInfiniteScrollReflex#load_more",
+           sentinel_id: "hjerterom-resources-sentinel",
+           q: params[:q],
+           kind: params[:type] %>

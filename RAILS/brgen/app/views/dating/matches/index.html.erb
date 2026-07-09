@@ -11,15 +11,14 @@
 <% if @matches.none? %>
   <div class="empty" role="status" aria-live="polite"><p>No matches yet.</p></div>
 <% else %>
-  <% @matches.each do |m| %>
-    <% other = m.other_user(Current.user) %>
-    <article>
-      <% if other.dating_profile&.photos&.attached? %>
-        <%= lazy_image_tag other.dating_profile.photos.first, alt: other.display_name, class: "match-avatar" %>
-      <% end %>
-      <strong><%= other.email_address.split("@").first %></strong>
-      <p class="dim">Matched</p>
-    </article>
-  <% end %>
+  <section id="dating-matches-list" class="match-list" role="list" aria-label="Matches">
+    <% @matches.each do |match| %>
+      <%= render "dating/matches/match", match: %>
+    <% end %>
+  </section>
+
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "MatchesInfiniteScrollReflex#load_more",
+             sentinel_id: "dating-matches-sentinel" %>
 <% end %>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
