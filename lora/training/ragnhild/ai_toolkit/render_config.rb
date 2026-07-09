@@ -36,13 +36,17 @@ def apply_device!(process)
     return
   end
 
+  train = process["train"]
   case device
   when "cuda"
     model["low_vram"] = false
     model["quantize"] = false
+    train["optimizer"] = "adamw8bit"
   when "mps"
     model["low_vram"] = true
     model["quantize"] = true
+    # bitsandbytes 8-bit optimizers are CUDA-only; adamw runs on MPS.
+    train["optimizer"] = "adamw"
   end
 end
 
