@@ -49,8 +49,8 @@
     <%= link_to "Timeline", timeline_wardrobe_items_path %>
     <%= link_to "Messages", messages_path %>
     <%= link_to "Live", live_streams_path %>
-    <% if Current.user.creator_profile %>
-      <%= link_to "Creator", creator_profile_path(Current.user.creator_profile.handle) %>
+    <% if (creator = current_creator_profile) %>
+      <%= link_to "Creator", creator_profile_path(creator.handle) %>
     <% else %>
       <%= link_to "Creator", new_my_creator_profile_path %>
     <% end %>

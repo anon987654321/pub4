@@ -8,11 +8,15 @@ require_relative '../../../shared/app/services/shared/queue_failure_summary'
 
 class DeployBacklogTest < Minitest::Test
   ROOT = ENV.fetch('PUB4_RAILS_ROOT') do
+    app = ENV.fetch('PUB4_CI_APP', 'brgen')
     candidates = [
+      "/home/#{app}/pub4-rails/DEPLOY/rails",
       '/home/dev/pub4/DEPLOY/rails',
       File.expand_path('../../..', __dir__)
     ]
-    candidates.find { |path| File.directory?(File.join(path, 'shared')) } || candidates.last
+    candidates.find { |path| File.readable?(File.join(path, 'shared', 'app')) } ||
+      candidates.find { |path| File.directory?(File.join(path, 'shared')) } ||
+      candidates.last
   end.freeze
 
   def test_shared_cache_policy_exposes_explicit_ttls

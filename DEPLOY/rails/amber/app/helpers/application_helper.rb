@@ -34,6 +34,12 @@ module ApplicationHelper
     end
   end
 
+  def current_creator_profile
+    return unless Current.user
+
+    User.strict_loading(false) { Current.user.creator_profile }
+  end
+
   def responsive_image_url(attachment, widths: [ 400, 800, 1_200 ])
     return url_for(attachment) unless attachment.respond_to?(:variant)
 

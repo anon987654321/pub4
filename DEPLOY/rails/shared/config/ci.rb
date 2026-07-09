@@ -17,7 +17,12 @@ Pub4::CiGuard.run! do
     step "Setup", "bin/setup --skip-server"
     rails_root = ENV["PUB4_RAILS_ROOT"] || File.expand_path("../..", __dir__)
     app = File.basename(Dir.getwd)
-    step "Styles: pub4 CSS", "#{RbConfig.ruby} #{File.join(rails_root, "build_all_css.rb")} --app #{app}"
+    css_builder = File.join(rails_root, "build_all_css.rb")
+    unless File.readable?(css_builder)
+      fallback = File.expand_path("pub4-rails/DEPLOY/rails/build_all_css.rb", ENV["HOME"].to_s)
+      css_builder = fallback if File.readable?(fallback)
+    end
+    step "Styles: pub4 CSS", "#{RbConfig.ruby} #{css_builder} --app #{app}"
     step("Security: Importmap audit", "bundle exec importmap audit") unless vps_host
     rubocop = 'bundle exec rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
     step("Style: Ruby", rubocop) unless vps_host

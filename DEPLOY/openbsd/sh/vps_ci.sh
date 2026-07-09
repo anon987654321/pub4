@@ -22,9 +22,17 @@ ensure_ci_lock() {
   "
 }
 
+sync_ci_rails_root() {
+  local mirror=/home/${app}/pub4-rails
+  doas mkdir -p "$mirror"
+  doas tar cf - -C "$repo" DEPLOY/rails | doas sh -c "cd ${mirror} && tar xf -"
+  doas chown -R "${app}:${app}" "$mirror"
+}
+
 sync_from_repo() {
   local src=$repo/DEPLOY/rails/$app
   local shared_src=$repo/DEPLOY/rails/shared
+  sync_ci_rails_root
   if [[ -d $src ]]; then
     local -a paths=(test app lib config bin db Gemfile Gemfile.lock)
     local -a existing=()
@@ -49,7 +57,8 @@ cache_home=/home/${app}/.cache
 print "vps_ci: $app (sync + mutex + load gate)"
 sync_from_repo
 ensure_ci_lock
-doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_CI_GUARD=1; export PUB4_RAILS_ROOT=${repo}/DEPLOY/rails; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 install && bundle34 exec bin/ci'"
+ci_rails_root=/home/${app}/pub4-rails/DEPLOY/rails
+doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 install && bundle34 exec bin/ci'"
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
 started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
