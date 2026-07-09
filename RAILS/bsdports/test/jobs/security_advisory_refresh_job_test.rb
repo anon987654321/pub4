@@ -3,12 +3,18 @@
 require "test_helper"
 
 class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
+  parallelize(workers: 1)
+
   setup do
     @original_cache = Rails.cache
-    Rails.cache = ActiveSupport::Cache.lookup_store(:memory_store)
+    @memory_cache = ActiveSupport::Cache.lookup_store(:memory_store)
+    Rails.cache = @memory_cache
+    Rails.application.config.cache_store = @memory_cache
+    @memory_cache.delete(SecurityAdvisoryRefreshJob::CURSOR_KEY)
   end
 
   teardown do
+    Rails.application.config.cache_store = @original_cache
     Rails.cache = @original_cache
   end
 
@@ -33,7 +39,8 @@ class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
       end
     end
 
+    assert_equal 2, calls.size
     assert_equal ports.map(&:id).sort, calls.map(&:first).sort
-    assert_equal ports.last.id, Rails.cache.read(SecurityAdvisoryRefreshJob::CURSOR_KEY)
+    assert_equal ports.last.id, @memory_cache.read(SecurityAdvisoryRefreshJob::CURSOR_KEY)
   end
 end
