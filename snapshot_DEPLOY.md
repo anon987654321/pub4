@@ -1,6 +1,6 @@
 # DEPLOY — source snapshot
 
-Generated 2026-07-08 23:25 UTC · 1816 files · git-tracked source text only (skips vendor, node_modules, tmp, knowledge, runtime, .venv, renders, storage; files over 256 KB listed, not inlined).
+Generated 2026-07-09 01:56 UTC · 1822 files · git-tracked source text only (skips vendor, node_modules, tmp, knowledge, runtime, .venv, renders, storage; files over 256 KB listed, not inlined).
 
 ## Tree
 ```
@@ -31,6 +31,7 @@ DEPLOY/lib/gate_environment.rb
 DEPLOY/lib/gate_result.rb
 DEPLOY/lib/utf8.rb
 DEPLOY/master.json
+DEPLOY/openbsd/DEPLOY.sh
 DEPLOY/openbsd/README.md
 DEPLOY/openbsd/SSH_ACCESS.md
 DEPLOY/openbsd/_net.sh
@@ -91,6 +92,8 @@ DEPLOY/openbsd/usr/local/bin/renew-certs.sh
 DEPLOY/openbsd/verify_deploy_identity.rb
 DEPLOY/openbsd/verify_openbsd_idempotency.rb
 DEPLOY/openbsd/vm_resource.yml
+DEPLOY/openbsd/vps_safety_gate.rb
+DEPLOY/rails/DEPLOY.sh
 DEPLOY/rails/MULTI_TENANT_ROUTING.md
 DEPLOY/rails/PRODUCTION_READINESS.md
 DEPLOY/rails/README.md
@@ -601,6 +604,13 @@ DEPLOY/rails/brgen/app/models/tv/video_note.rb
 DEPLOY/rails/brgen/app/models/tv/view_event.rb
 DEPLOY/rails/brgen/app/models/typing_indicator.rb
 DEPLOY/rails/brgen/app/models/user.rb
+DEPLOY/rails/brgen/app/models/user/core_associations.rb
+DEPLOY/rails/brgen/app/models/user/dating_associations.rb
+DEPLOY/rails/brgen/app/models/user/marketplace_associations.rb
+DEPLOY/rails/brgen/app/models/user/playlist_associations.rb
+DEPLOY/rails/brgen/app/models/user/social_associations.rb
+DEPLOY/rails/brgen/app/models/user/takeaway_associations.rb
+DEPLOY/rails/brgen/app/models/user/tv_associations.rb
 DEPLOY/rails/brgen/app/models/vote.rb
 DEPLOY/rails/brgen/app/policies/marketplace/listing_policy.rb
 DEPLOY/rails/brgen/app/policies/marketplace/order_policy.rb
@@ -610,7 +620,6 @@ DEPLOY/rails/brgen/app/reflexes/paginate_reflex.rb
 DEPLOY/rails/brgen/app/reflexes/posts_infinite_scroll_reflex.rb
 DEPLOY/rails/brgen/app/reflexes/vote_reflex.rb
 DEPLOY/rails/brgen/app/services/account_merge_service.rb
-DEPLOY/rails/brgen/app/services/activity_event_recorder.rb
 DEPLOY/rails/brgen/app/services/dating/matchmaking_service.rb
 DEPLOY/rails/brgen/app/services/follow_toggle.rb
 DEPLOY/rails/brgen/app/services/identity_assurance_service.rb
@@ -618,9 +627,7 @@ DEPLOY/rails/brgen/app/services/moderation_workflow.rb
 DEPLOY/rails/brgen/app/services/newsletter_edition_builder.rb
 DEPLOY/rails/brgen/app/services/playlist/track_import_service.rb
 DEPLOY/rails/brgen/app/services/post_moderation_service.rb
-DEPLOY/rails/brgen/app/services/reaction_toggle.rb
 DEPLOY/rails/brgen/app/services/reddit_seed_service.rb
-DEPLOY/rails/brgen/app/services/scrape.rb
 DEPLOY/rails/brgen/app/services/thread_summarizer.rb
 DEPLOY/rails/brgen/app/services/tradedoubler.rb
 DEPLOY/rails/brgen/app/services/trust_score_calculator.rb
@@ -1037,6 +1044,7 @@ DEPLOY/rails/brgen/test/jobs/weekly_stats_job_test.rb
 DEPLOY/rails/brgen/test/lib/domain_registry_test.rb
 DEPLOY/rails/brgen/test/models/city_tenant_test.rb
 DEPLOY/rails/brgen/test/models/post_test.rb
+DEPLOY/rails/brgen/test/models/typing_indicator_test.rb
 DEPLOY/rails/brgen/test/services/deploy_backlog_test.rb
 DEPLOY/rails/brgen/test/services/live_search_test.rb
 DEPLOY/rails/brgen/test/services/post_moderation_service_test.rb
@@ -1065,7 +1073,6 @@ DEPLOY/rails/bsdports/app/controllers/rails/pwa_controller.rb
 DEPLOY/rails/bsdports/app/controllers/reactions_controller.rb
 DEPLOY/rails/bsdports/app/controllers/reports_controller.rb
 DEPLOY/rails/bsdports/app/controllers/sessions_controller.rb
-DEPLOY/rails/bsdports/app/helpers/application_helper.rb
 DEPLOY/rails/bsdports/app/javascript/application.js
 DEPLOY/rails/bsdports/app/javascript/controllers/application.js
 DEPLOY/rails/bsdports/app/javascript/controllers/application_controller.js
@@ -1218,7 +1225,6 @@ DEPLOY/rails/hjerterom/app/controllers/sessions_controller.rb
 DEPLOY/rails/hjerterom/app/controllers/shifts_controller.rb
 DEPLOY/rails/hjerterom/app/controllers/users_controller.rb
 DEPLOY/rails/hjerterom/app/controllers/volunteers_controller.rb
-DEPLOY/rails/hjerterom/app/helpers/application_helper.rb
 DEPLOY/rails/hjerterom/app/javascript/application.js
 DEPLOY/rails/hjerterom/app/javascript/controllers/application.js
 DEPLOY/rails/hjerterom/app/javascript/controllers/application_controller.js
@@ -2030,15 +2036,11 @@ Always use tmux.
 
 ```zsh
 cd ~/pub4/DEPLOY/openbsd
-tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"
+tmux new-session -d -s deploy "doas zsh DEPLOY.sh 2>&1 | tee /tmp/deploy.log"
 tmux attach -t deploy
 ```
 
-| Flag | Use |
-|------|-----|
-| `--sync-configs` | Mirror `etc/` to `/etc`, restart services |
-
-Stage 1: NSD, DNSSEC, acme certs, httpd ACME, pf. Stage 2: Rails trees, relayd SNI, smtpd, rc.d, health check.
+Default installs `etc/` `usr/` `var/`, validates pf/relayd, restarts services. Rare: `--first-install`, `--stage-1`, `--stage-2`.
 
 After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-reload.
 
@@ -2046,13 +2048,12 @@ After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-relo
 
 ```zsh
 cd /home/dev/pub4 && git pull --ff-only
-zsh DEPLOY/openbsd/sh/vps_ci.sh <app>          # one app, mutex-gated
-SKIP_MASTER_SCAN=1 zsh DEPLOY/openbsd/sh/vps_on_vm_install.sh   # full stack
-doas rcctl restart relayd              # after route/table changes
+cd DEPLOY/rails && doas zsh DEPLOY.sh          # brgen (default)
+doas zsh DEPLOY.sh amber                     # or: all
 ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps
 ```
 
-Per-app script: `doas zsh DEPLOY/rails/<app>/<app>.sh`. New Propshaft assets need `rails assets:precompile` before restart.
+Per-app: `doas zsh DEPLOY/rails/<app>/<app>.sh`. New Propshaft assets need `rails assets:precompile` before restart.
 
 Ruby on VPS: `ruby34`, `bundle34`. Never parallel `bin/ci` across SSH sessions.
 
@@ -2082,7 +2083,7 @@ Any file changed on the VPS under `DEPLOY/openbsd/` must be copied back to git a
 
 ### DEPLOY/OPERATOR_CONTRACT.md
 
-```markdown
+````markdown
 # Operator Contract
 
 This contract is for humans and AI agents working on DEPLOY.
@@ -2091,7 +2092,22 @@ This contract is for humans and AI agents working on DEPLOY.
 
 - Local contributor mode: edit repo files, run local gates, do not SSH.
 - VPS operator mode: one SSH session, one CI/deploy operation at a time, tmux for long work.
-- Recovery mode: use console/resource guard only to restore access or health, then document the fix.
+- Recovery mode: human-directed console or resource guard only to restore access or health, then document the fix.
+
+## Agent hard stops
+
+AI agents must **not** autonomously:
+
+| Action | Why |
+|--------|-----|
+| `vmctl console/stop/start` on server4 | Serial console sessions have caused VM reboots and site outages |
+| `pkill cu` or killing VMM console processes on server4 | Disrupts other operators and can wedge vm23 |
+| `vps_console*.exp` / `vps_drop_install.exp` | Gated by `I_UNDERSTAND_CONSOLE_RISK=1`; recovery-only |
+| Deploy or install from serial console | Bypasses SSH safety, tmux, and load gates |
+| Target vm27 or any non-vm23 VM | Wrong tenant; production is vm23 (`dev`) |
+| `DEPLOY.sh --stage-1` without `I_UNDERSTAND_DNS_WIPE=1` | Destructive DNS wipe |
+
+When SSH to vm23 is required, use normal paths: `doas zsh DEPLOY.sh`, `vps-deploy`, `vps_ci.sh`.
 
 ## Rules
 
@@ -2104,6 +2120,28 @@ This contract is for humans and AI agents working on DEPLOY.
 - Never run parallel SSH deploys, parallel `bin/ci`, or broad app restarts casually on the 1 GiB VPS.
 - Keep secrets in `/etc/*.env`; never commit them.
 - Keep Rails `config.assume_ssl = true`; do not enable `force_ssl` behind relayd.
+
+## Agent dmesg (verbose file operations)
+
+External agents (Grok CLI, Claude Code, Cursor) and MASTER should log mutations in
+OpenBSD dmesg style: terse, lowercase, one fact per line, path-first.
+
+Format for each file touch:
+
+```
+write DEPLOY/openbsd/etc/rc.d/brgen 412B +12/-3
+read MASTER/lib/reach/base.rb sha256=a1b2c3… 2048B
+run zsh DEPLOY/bin/check-openbsd exit=0
+```
+
+Rules:
+
+- Name the **path** (repo-relative) on every read, write, or delete.
+- Show **evidence** on writes: unified diff stat (`+N/-M`) or byte size.
+- Show **command + exit code** for shell, not "deployed successfully".
+- Silence on success is fine for bulk gates; speak up for each mutated file.
+- MASTER: `/dmesg` or `toggle dmesg` streams bus events; CLI thinking spinner prints
+  `write path` / `touch path` lines during tool calls.
 
 ## Reporting
 
@@ -2121,7 +2159,7 @@ Bad deploy closeout:
 - public health not checked
 - asset precompile skipped after web changes
 - route/cert changes without relayd/acme/NSD context
-```
+````
 
 ### DEPLOY/PATH_OWNERSHIP.yml
 
@@ -2490,10 +2528,33 @@ DEPLOY is the production surface for pub4: OpenBSD vm23, relayd, NSD/acme, Rails
 
 ### DEPLOY/VPS_SAFETY.md
 
-```markdown
+````markdown
 # VPS Safety
 
 vm23 is a small OpenBSD VPS. Treat live operations as scarce, serial, and recoverable.
+
+## Forbidden for AI agents (unless the human explicitly requests recovery)
+
+These actions have caused production downtime when run autonomously:
+
+- `vmctl console`, `vmctl stop`, `vmctl start`, or `vmctl reboot` on server4
+- `pkill` / `kill` of `cu`, `vmctl`, or other VMM console sessions on server4
+- Any `DEPLOY/openbsd/sh/vps_console*.exp` or `vps_drop_install.exp` without human approval
+- Running `DEPLOY.sh`, full app installs, or `pkill` deploy workers **from the serial console**
+- Touching **vm27** or any VM other than **vm23** (owner `dev`)
+- Parallel SSH deploys, parallel `bin/ci`, or broad `rcctl restart` without a named target
+
+Agents may SSH to vm23 for routine work only when the task requires it. Prefer local gates first.
+
+## Console automation gate
+
+Recovery-only expect scripts refuse to run unless a human operator exports:
+
+```zsh
+export I_UNDERSTAND_CONSOLE_RISK=1
+```
+
+Same pattern as `I_UNDERSTAND_DNS_WIPE=1` for `DEPLOY.sh --stage-1`.
 
 ## Before SSH
 
@@ -2509,20 +2570,34 @@ vm23 is a small OpenBSD VPS. Treat live operations as scarce, serial, and recove
 - Use `zsh DEPLOY/openbsd/sh/vps_ci.sh <app>` for app CI; it has mutex/load gates.
 - Do not run full stack deploy and app CI in parallel.
 - Do not restart relayd, pf, nsd, or app services without knowing the affected domains.
+- Routine deploy on vm23: `cd ~/pub4/DEPLOY/openbsd && doas zsh DEPLOY.sh` (SSH, not console).
 
-## Recovery
+## doas.conf
+
+OpenBSD rejects `/etc/doas.conf` without a trailing newline — `doas` breaks for everyone.
+`DEPLOY.sh` fixes the repo copy before install, validates `su dev -c 'doas id'`, and rolls back on failure.
+Cron heal paths use `DEPLOY/openbsd/sh/validate_doas.ksh` with the same validation.
+
+## Recovery (human operator)
 
 - Load shedding: `doas ksh DEPLOY/openbsd/resource_guard.sh`.
 - Core health: `doas rcctl check master brgen relayd pf`.
-- Console recovery: `ssh server4`, `vmctl console vm23`.
-- pf lockout recovery from console: `doas pfctl -t bruteforce -T flush`.
+- SSH lockout only: `ssh server4`, then `vmctl console vm23` (manual — not agent-automated).
+- pf lockout from console: `doas pfctl -t bruteforce -T flush`.
+
+## Backups (Litestream)
+
+`etc/litestream.yml` replicates each app's SQLite to `file:///var/backups/litestream/` on the
+same VPS disk. That protects against app-level corruption, not disk loss or provider failure.
+Accepted RPO for full-disk loss: last manual off-host backup or git pull + redeploy. Add an
+off-host Litestream replica (sftp/s3) before treating backups as disaster-recovery grade.
 
 ## Post-Change
 
 - Run `ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps`.
 - Copy any live `/etc` changes back into `DEPLOY/openbsd/etc/`.
 - Record persistent lessons in `BACKLOG.yml`, `DEPLOY/DEBT.md`, or `DEPLOY/DECISIONS.md`.
-```
+````
 
 ### DEPLOY/archive/RESTORE_FROM_PUB2_PUB3.md
 
@@ -6801,6 +6876,891 @@ Encoding.default_external = Encoding::UTF_8
 }
 ```
 
+### DEPLOY/openbsd/DEPLOY.sh
+
+```bash
+#!/usr/bin/env zsh
+# OpenBSD vm23 deploy — executable script. Everything else in this tree is an exact config mirror.
+# Routine (on vm23): cd ~/pub4/DEPLOY/openbsd && doas zsh DEPLOY.sh
+# Installs etc/ usr/ var/ onto /, validates pf/relayd, restarts services.
+# Rare: --first-install | --stage-1 (DNS wipe) | --stage-2 (full app bootstrap)
+# VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-01-06)
+#
+# IDEMPOTENCY NOTES (CC14):
+# - Safe to re-run: bootstrap_rails_app (cp tree, bundle install, db:migrate), sync_openbsd_configs
+#   (backs up /etc first), relayd/pf template installs when configs already match, rcctl enable/start.
+# - DESTRUCTIVE on re-run: stage_1 deletes /var/nsd/etc/* and /var/nsd/zones/master/* before
+#   regenerating signed zones. Never re-run stage_1 on a live authoritative server without backup.
+# - State tracking: STATE_FILE=/var/db/openbsd_setup.state — is_step_completed/mark_step_completed
+#   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
+# - Data preserved: Rails SQLite under /home/<app>/app/storage, ~/priv, acme certs in /etc/ssl when
+#   stage_1 is skipped. Re-running stage_2 does not drop databases.
+# - Post-deploy verification: ruby /home/dev/pub4/DEPLOY/health_check.rb
+# Engine-ize: bootstrap_rails now relies on bundle install for pub4-shared path gem (Gemfiles declare it); legacy sh shared/install_* deprecated in scripts + WIRING. No copy sprawl.
+
+set -euo pipefail
+setopt no_unset nullglob local_traps
+zmodload zsh/regex
+zmodload zsh/datetime
+
+typeset -a TMPFILES
+SCRIPT_DIR=${0:a:h}
+
+# Helpers inlined ( _lib.sh removed for ONE_SOURCE/singularity). Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs (now ships .zshrc to /home/dev too).
+log() {
+  typeset level=$1; shift
+  print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] [$level] $*" | tee -a /var/log/openbsd_setup.log >&2
+}
+log_info()  { log INFO "$@" }
+log_error() { log ERROR "$@" }
+
+transaction_log() {
+  typeset operation=$1 target=$2 op_status=$3 metadata=${4:-}
+  print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] [$operation] $target | Status: $op_status | $metadata" \
+    >> /var/log/openbsd_transactions.log
+}
+
+cleanup() {
+  typeset exit_code=$?
+  for tmpfile in "${TMPFILES[@]}"; do
+    [[ -n $tmpfile && -f $tmpfile ]] && rm -f "$tmpfile"
+  done
+  return $exit_code
+}
+
+error_handler() {
+  typeset exit_code=$1 line_num=$2
+  log ERROR "Script failed with exit code $exit_code at line $line_num"
+  cleanup
+  exit $exit_code
+}
+
+backup_directory() {
+  typeset target_dir=$1 backup_name=${2:-${1:t}}
+  typeset backup_dir=/var/backups/openbsd_setup
+  typeset backup_file="$backup_dir/${backup_name}-${EPOCHSECONDS}.tar.gz"
+  [[ ! -d $backup_dir ]] && mkdir -p "$backup_dir"
+  [[ ! -d $target_dir ]] && { log WARN "Directory $target_dir does not exist, skipping backup"; return 0 }
+  log INFO "Backing up $target_dir to $backup_file"
+  transaction_log "BACKUP" "$target_dir" "START"
+  if tar -czf "$backup_file" -C "${target_dir:h}" "${target_dir:t}" 2>/dev/null; then
+    transaction_log "BACKUP" "$target_dir" "SUCCESS" "$backup_file"
+    typeset -a _bfiles; _bfiles=("$backup_dir"/${backup_name}-*.tar.gz(N))
+    (( ${#_bfiles} > 10 )) && {
+      typeset -a _sorted; _sorted=("$backup_dir"/${backup_name}-*.tar.gz(NOm))
+      for _f in "${_sorted[@]:10}"; do rm -f "$_f"; done
+    }
+    echo "$backup_file"
+    return 0
+  else
+    transaction_log "BACKUP" "$target_dir" "FAILURE"
+    log ERROR "Backup failed for $target_dir"
+    return 1
+  fi
+}
+
+install_template() {
+  typeset src=${SCRIPT_DIR}/$1 dst=$2
+  [[ -f $src ]] || { log ERROR "Missing template: $src"; exit 1 }
+  typeset content; content=$(<"$src")
+  eval "cat > \"$dst\" <<INSTALL_TEMPLATE_EOF
+$content
+INSTALL_TEMPLATE_EOF"
+}
+
+append_template() {
+  typeset src=${SCRIPT_DIR}/$1 dst=$2
+  [[ -f $src ]] || { log ERROR "Missing template: $src"; exit 1 }
+  typeset content; content=$(<"$src")
+  eval "cat >> \"$dst\" <<APPEND_TEMPLATE_EOF
+$content
+APPEND_TEMPLATE_EOF"
+}
+
+install_static() {
+  typeset src=${SCRIPT_DIR}/$1 dst=$2
+  [[ -f $src ]] || { log ERROR "Missing file: $src"; exit 1 }
+  cp "$src" "$dst"
+}
+
+is_step_completed()  { [[ -f "${STATE_FILE}.steps" ]] && [[ $(<"${STATE_FILE}.steps") == *"$1"* ]] }
+mark_step_completed() { print -r -- "$1" >> "${STATE_FILE}.steps" }
+
+# Install exact config trees from repo onto /. Run separately or before --sync-configs:
+#   doas cp -R etc usr var /
+install_root_configs() {
+  typeset src=${1:-${SCRIPT_DIR}}
+  [[ -d $src/etc ]] || { log ERROR "No etc/ in $src"; return 1 }
+  backup_directory /etc "etc-pre-sync" || return 1
+
+  if [[ -f $src/etc/doas.conf ]] && [[ $(tail -c1 "$src/etc/doas.conf" | wc -c) -eq 0 ]]; then
+    print >> "$src/etc/doas.conf"
+    log WARN "doas.conf missing trailing newline — fixed before install"
+  fi
+
+  typeset doas_rollback=""
+  if [[ -f /etc/doas.conf ]]; then
+    mkdir -p /var/backups/openbsd_setup
+    doas_rollback="/var/backups/openbsd_setup/doas.conf.${EPOCHSECONDS}.rollback"
+    cp /etc/doas.conf "$doas_rollback"
+  fi
+
+  for d in etc usr var; do
+    [[ -d $src/$d ]] || continue
+    install -d "/$d" 2>/dev/null || true
+    cp -R "$src/$d"/. "/$d"/
+    log INFO "installed /$d from repo"
+  done
+
+  [[ -f /etc/rc.d/master ]] && chmod 555 /etc/rc.d/master
+  [[ -f /etc/daily.local ]] && chmod 755 /etc/daily.local
+  for f in /etc/rc.d/*(N); do chmod 755 "$f"; done
+  for f in /usr/local/bin/*(N); do [[ -f $f ]] && chmod 755 "$f"; done
+
+  if [[ -f /etc/doas.conf ]]; then
+    if ! su dev -c 'doas id' 2>/dev/null | grep -q 'uid=0(root)'; then
+      log ERROR "doas validation failed after config install — aborting (restoring previous doas.conf)"
+      [[ -n $doas_rollback && -f $doas_rollback ]] && cp "$doas_rollback" /etc/doas.conf
+      return 1
+    fi
+    log INFO "doas validation passed after config install"
+  fi
+
+  if [[ -x /usr/local/bin/relayd-watchdog ]] || [[ -x /usr/local/bin/config-drift-check ]]; then
+    typeset root_cron=/tmp/root_crontab.$$
+    crontab -l 2>/dev/null > $root_cron || :
+    if [[ -x /usr/local/bin/relayd-watchdog ]] && ! grep -q relayd-watchdog $root_cron 2>/dev/null; then
+      print -r -- "*/5 * * * * /usr/local/bin/relayd-watchdog" >> $root_cron
+      log INFO "installed root cron: relayd-watchdog (every 5 min)"
+    fi
+    if [[ -x /usr/local/bin/config-drift-check ]] && ! grep -q config-drift-check $root_cron 2>/dev/null; then
+      print -r -- "*/15 * * * * /usr/local/bin/config-drift-check >> /var/log/config_drift.log 2>&1" >> $root_cron
+      log INFO "installed root cron: config-drift-check"
+    fi
+    crontab $root_cron
+    rm -f $root_cron
+  fi
+
+  if [[ -f $src/etc/.zshrc ]]; then
+    install -d -o dev -g dev -m 700 /home/dev 2>/dev/null || true
+    cp "$src/etc/.zshrc" /home/dev/.zshrc
+    chown dev:dev /home/dev/.zshrc 2>/dev/null || true
+    chmod 644 /home/dev/.zshrc 2>/dev/null || true
+    log INFO "synced .zshrc to /home/dev"
+  fi
+
+  log INFO "OpenBSD config tree install complete (with backup)"
+}
+
+sync_openbsd_configs() {
+  install_root_configs "$@"
+}
+
+sync_openbsd_apply() {
+  typeset src=${1:-${SCRIPT_DIR}}
+  install_root_configs "$src" || return 1
+
+  /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid after sync"; return 1 }
+  /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf reload failed"; return 1 }
+  /sbin/pfctl -e 2>/dev/null || log WARN "pf already enabled or enable skipped"
+
+  if [[ -x /usr/bin/ruby34 ]] || command -v ruby34 >/dev/null 2>&1; then
+    ruby34 "${SCRIPT_DIR}/relayd_prune_keypairs.rb" /etc/relayd.conf \
+      || log WARN "relayd keypair prune failed"
+  fi
+  relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid after sync"; return 1 }
+
+  if [[ -x /usr/local/bin/nsd-resign ]]; then
+    ruby /usr/local/bin/nsd-resign || log WARN "nsd-resign failed after zone sync"
+  fi
+
+  # STRICT rules.yml adherence (per success_criteria: "system_applies_to_itself_without_exception", self_test, ground_truth_check, evidence_scoring, veto_patterns, anti_patterns, tier1 principle_priorities).
+  # Run MASTER deep scan on DEPLOY tree before any service restart. Block on violations (tier1 critical + veto).
+  # Uses ground_truth_check (fresh read), self_test (laws on DEPLOY), evidence_scoring (scan_clean).
+  # Also covers lexical/structural for sh, yml, conf, erb; no bypasses.
+  if [[ -n ${SKIP_MASTER_SCAN:-} ]]; then
+    log WARN "MASTER scan skipped (SKIP_MASTER_SCAN)"
+  elif [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
+    log INFO "MASTER rules scan (DEPLOY) — strict pre-apply per rules.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
+    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli /scan DEPLOY --depth deep' 2>&1 | tee /tmp/master_deploy_scan.log; then
+      log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per rules.yml)"
+      return 1
+    fi
+    log INFO "MASTER scan clean — proceeding (scan_clean + self_apply satisfied)"
+  else
+    log WARN "MASTER not available for scan; continuing (violates full self-application — fix immediately)"
+  fi
+
+  # Enforce ground_truth_check + evidence before writes (rules.yml): fresh read, diff, output shown.
+  # library_verify pre-flight before bundle/shell (per rules).
+  for f in /etc/pf.conf /etc/relayd.conf; do
+    [[ -s $f ]] || { log ERROR "ground_truth fail on $f"; return 1; }
+  done
+  # (In per-app: before bundle, check Gemfile etc.)
+
+  install -m 755 "${SCRIPT_DIR}/resource_guard.sh" /usr/local/bin/resource_guard.sh 2>/dev/null || true
+  if [[ -x /usr/local/bin/resource_guard.sh ]]; then
+    typeset guard_cron=/tmp/root_crontab.$$
+    crontab -l 2>/dev/null > $guard_cron || :
+    if ! grep -q resource_guard $guard_cron 2>/dev/null; then
+      print -r -- "*/5 * * * * /usr/local/bin/resource_guard.sh" >> $guard_cron
+      crontab $guard_cron
+      log INFO "installed root cron: resource_guard (every 5 min)"
+    fi
+    rm -f $guard_cron
+  fi
+
+  typeset -a svcs=(nsd httpd relayd smtpd master)
+  for svc in $svcs; do
+    [[ -x /etc/rc.d/$svc ]] || continue
+    /usr/sbin/rcctl enable $svc 2>/dev/null || true
+    /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
+      || log WARN "$svc restart/start failed"
+  done
+  # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
+  typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312 hjerterom 38891)
+  typeset -a core_apps=(brgen)
+  typeset -a optional_apps=(amber bsdports hjerterom litestream)
+  for svc in $core_apps $optional_apps; do
+    [[ -x /etc/rc.d/$svc ]] || continue
+    /usr/sbin/rcctl enable $svc 2>/dev/null || true
+  done
+  for svc in $core_apps; do
+    typeset port=${app_ports[$svc]:-0}
+    if (( port > 0 )); then
+      typeset code; code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://127.0.0.1:${port}/up 2>/dev/null)
+      if [[ $code != 200 ]]; then
+        log WARN "$svc /up=$code before restart; attempting one controlled restart"
+        /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
+          || { log ERROR "$svc restart/start failed"; return 1; }
+        sleep 10
+        code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://127.0.0.1:${port}/up 2>/dev/null)
+        [[ $code == 200 ]] || { log ERROR "$svc /up still $code after restart"; return 1; }
+        continue
+      fi
+    fi
+    /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
+      || { log ERROR "$svc restart/start failed"; return 1; }
+  done
+  log INFO "optional Rails apps left stopped (vm23_small); start with: doas rcctl start <app>"
+
+  wait_for_up() {
+    typeset port=$1 name=$2 attempts=${3:-24} delay=${4:-5}
+    typeset i code
+    for (( i = 1; i <= attempts; i++ )); do
+      code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 8 http://127.0.0.1:${port}/up 2>/dev/null)
+      [[ $code == 200 ]] && { log INFO "$name /up ok (attempt $i)"; return 0; }
+      sleep $delay
+    done
+    log ERROR "$name /up not ready on :${port} after $((attempts * delay))s (last=$code)"
+    return 1
+  }
+
+  if ! wait_for_up 53187 master 12 5; then
+    log WARN "master slow — starting dev tmux falcon fallback"
+    su -m dev -c 'tmux kill-session -t falcon53187 2>/dev/null; tmux new -d -s falcon53187 "cd /home/dev/pub4/MASTER/web && export RAILS_ENV=production MASTER_SAFE_MODE=1 MASTER_SKIP_SELF_TEST=1 MASTER_BACKGROUND=0 SECRET_KEY_BASE_DUMMY=1 PATH=/usr/local/bin:/usr/bin:/bin && exec bundle34 exec falcon serve -n 1 --health-check-timeout 300 --bind http://127.0.0.1:53187 >> /tmp/falcon53187.log 2>&1"'
+    wait_for_up 53187 master 24 5 || return 1
+  fi
+  wait_for_up 38182 brgen 24 5 || return 1
+
+  ruby34 "${SCRIPT_DIR}/health_check.rb" --core && log INFO "health_check ok" \
+    || { log ERROR "health_check failed"; return 1; }
+}
+
+source "${SCRIPT_DIR}/_net.sh"
+
+trap 'cleanup' EXIT
+trap 'error_handler $? $LINENO' ERR INT TERM
+
+typeset -r BRGEN_IP="46.23.89.226"
+typeset -r HYP_IP="194.63.248.53"
+typeset -r LOCALHOST="127.0.0.1"
+typeset -r EMAIL_ADDRESS="bergen@pub.attorney"
+
+typeset -a PUBLIC_RESOLVERS=(8.8.8.8 1.1.1.1 9.9.9.9)
+typeset -A APP_PORTS=(
+  brgen 38182
+  amber 61352
+  bsdports 47312
+  hjerterom 38891
+  master 53187
+)
+typeset -A FAILED_CERTS
+
+validate_ip "$BRGEN_IP" || { log ERROR "Invalid BRGEN_IP: $BRGEN_IP"; exit 1 }
+validate_ip "$HYP_IP"   || { log ERROR "Invalid HYP_IP: $HYP_IP"; exit 1 }
+
+ALL_APPS=(
+  brgen:brgen.no
+  amber:amber.brgen.no
+  bsdports:bsdports.org
+  hjerterom:hjerterom.brgen.no
+)
+
+SERVICES=()
+
+ALL_DOMAINS=(
+  brgen.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger,ai
+  longyearbyn.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger
+  oshlo.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger
+  stvanger.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger
+  trmso.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger
+  trndheim.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger
+  reykjavk.is:markadur,playlist,dating,tv,takeaway,maps,messenger
+  kbenhvn.dk:markedsplads,playlist,dating,tv,takeaway,maps,messenger
+  gtebrg.se:marknadsplats,playlist,dating,tv,takeaway,maps,messenger
+  mlmoe.se:marknadsplats,playlist,dating,tv,takeaway,maps,messenger
+  stholm.se:marknadsplats,playlist,dating,tv,takeaway,maps,messenger
+  hlsinki.fi:markkinapaikka,playlist,dating,tv,takeaway,maps,messenger
+  brmingham.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  cardff.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  edinbrgh.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  glasgw.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  lndon.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  lverpool.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  mnchester.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  amstrdam.nl:marktplaats,playlist,dating,tv,takeaway,maps,messenger
+  rottrdam.nl:marktplaats,playlist,dating,tv,takeaway,maps,messenger
+  utrcht.nl:marktplaats,playlist,dating,tv,takeaway,maps,messenger
+  brssels.be:marche,playlist,dating,tv,takeaway,maps,messenger
+  zrich.ch:marktplatz,playlist,dating,tv,takeaway,maps,messenger
+  lchtenstein.li:marktplatz,playlist,dating,tv,takeaway,maps,messenger
+  frankfrt.de:marktplatz,playlist,dating,tv,takeaway,maps,messenger
+  brdeaux.fr:marche,playlist,dating,tv,takeaway,maps,messenger
+  mrseille.fr:marche,playlist,dating,tv,takeaway,maps,messenger
+  mlan.it:mercato,playlist,dating,tv,takeaway,maps,messenger
+  lisbon.pt:mercado,playlist,dating,tv,takeaway,maps,messenger
+  wrsawa.pl:marktplatz,playlist,dating,tv,takeaway,maps,messenger
+  gdnsk.pl:marktplatz,playlist,dating,tv,takeaway,maps,messenger
+  austn.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  chcago.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  denvr.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  dllas.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  dnver.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  dtroit.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  houstn.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  lsangeles.com:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  mnnesota.com:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  newyrk.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  prtland.com:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  wshingtondc.com:marketplace,playlist,dating,tv,takeaway,maps,messenger
+  pub.healthcare
+  pub.attorney
+  freehelp.legal
+  bsdports.org
+  bsddocs.org
+  discordb.org
+  stacyspassion.com
+  foball.no
+  amber.brgen.no
+  hjerterom.brgen.no
+)
+
+# ── Stage 1: DNS, DNSSEC, TLS certificates ────────────────────────────────────
+
+stage_1() {
+  log INFO "Stage 1: DNS and certificates"
+
+  typeset -a _df_root; _df_root=("${(@f)$(df -k /)}"); typeset _root_avail=${${(z)_df_root[2]}[4]}
+  (( _root_avail < 10000 )) && { log ERROR "Insufficient disk space on /"; exit 1 }
+  typeset -a _df_var; _df_var=("${(@f)$(df -k /var)}"); typeset _var_avail=${${(z)_df_var[2]}[4]}
+  (( _var_avail < 512000 )) && { log ERROR "Insufficient disk space on /var"; exit 1 }
+
+  pkg_add -U ldns-utils ruby%3.4 litestream zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak 2>/tmp/pkg_add.log \
+    || { log ERROR "pkg_add failed. See /tmp/pkg_add.log"; exit 1 }
+
+  [[ -f /etc/rc.conf.local && $(<"/etc/rc.conf.local") == *"pf=NO"* ]] && log WARN "pf disabled in rc.conf.local"
+  ifconfig vio0 >/dev/null 2>&1 || { log ERROR "Interface vio0 not found"; exit 1 }
+
+  /sbin/pfctl -d || log WARN "pf disable failed"
+  /sbin/pfctl -e || { log ERROR "pf enable failed"; exit 1 }
+  install_template etc/pf.stage1.conf /etc/pf.conf
+  /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
+  /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf failed"; exit 1 }
+
+  [[ -d /var/nsd/etc ]]          || { log ERROR "/var/nsd/etc missing"; exit 1 }
+  [[ -d /var/nsd/zones/master ]] || { log ERROR "/var/nsd/zones/master missing"; exit 1 }
+
+  backup_directory /var/nsd/zones/master nsd-zones || { log ERROR "Backup failed"; exit 1 }
+  transaction_log "DELETE" "/var/nsd/etc/*" "START"
+  rm -rf /var/nsd/etc/*(/) /var/nsd/zones/master/*(/)
+  transaction_log "DELETE" "/var/nsd/etc/* and /var/nsd/zones/master/*" "SUCCESS"
+
+  install_template var/nsd/etc/nsd.conf /var/nsd/etc/nsd.conf
+  for domain in ${ALL_DOMAINS[*]%%:*}; do
+    append_template var/nsd/etc/nsd-zone.tmpl /var/nsd/etc/nsd.conf
+  done
+  nsd-checkconf /var/nsd/etc/nsd.conf || { log ERROR "nsd.conf invalid"; exit 1 }
+
+  typeset serial=${$(date +%Y%m%d%H):-}
+  for domain_entry in $ALL_DOMAINS; do
+    typeset domain=${domain_entry%%:*}
+    typeset subdomains=${domain_entry#*:}
+    [[ $subdomains = $domain ]] && subdomains=""
+
+    install_template var/nsd/zones/master/zone.tmpl /var/nsd/zones/master/$domain.zone
+    [[ $domain = brgen.no ]] && print -r -- "ns IN A $BRGEN_IP" >> /var/nsd/zones/master/$domain.zone
+
+    if [[ -n $subdomains && $subdomains != $domain ]]; then
+      for subdomain in ${(s:,:):-$subdomains}; do
+        print -r -- "$subdomain IN A $BRGEN_IP" >> /var/nsd/zones/master/$domain.zone
+      done
+    fi
+
+    nsd-checkzone "$domain" /var/nsd/zones/master/$domain.zone \
+      || { log ERROR "Zone invalid for $domain"; exit 1 }
+
+    cd /var/nsd/zones/master
+    typeset zsk ksk
+    zsk=$(ldns-keygen -a ECDSAP256SHA256 "$domain")
+    ksk=$(ldns-keygen -k -a ECDSAP256SHA256 -b 2048 "$domain")
+
+    typeset zonefile=/var/nsd/zones/master/$domain.zone
+    typeset signed_zonefile=/var/nsd/zones/master/$domain.zone.signed
+    typeset salt=$(dd if=/dev/random bs=16 count=1 2>/dev/null | sha1 -q)
+    ldns-signzone -n -p -s "$salt" "$zonefile" "$zsk" "$ksk"
+    nsd-checkzone "$domain" "$signed_zonefile" || { log ERROR "Signed zone invalid for $domain"; exit 1 }
+
+    nsd-control reload 2>/dev/null || true
+    ldns-key2ds -n -2 /var/nsd/zones/master/$domain.zone.signed > /var/nsd/zones/master/$domain.ds
+    chown _nsd:_nsd /var/nsd/zones/master/*
+    chmod 640 /var/nsd/zones/master/*
+  done
+
+  [[ ! -f /var/nsd/etc/nsd_server.pem ]] && {
+    log INFO "Generating NSD control certificates"
+    cd /var/nsd/etc && nsd-control-setup || { log ERROR "nsd-control-setup failed"; exit 1 }
+  }
+
+  cleanup_nsd
+  /usr/sbin/rcctl enable nsd
+
+  typeset retries=0 max_retries=2
+  while (( retries <= max_retries )); do
+    /usr/bin/timeout 10 /usr/sbin/rcctl start nsd && break
+    (( retries++ ))
+    (( retries <= max_retries )) && cleanup_nsd || { log ERROR "nsd failed"; exit 1 }
+  done
+
+  sleep 5
+  typeset _nsd_check; _nsd_check=$(/usr/sbin/rcctl check nsd)
+  [[ $_nsd_check == *"nsd(ok)"* ]] || { log ERROR "nsd not running"; exit 1 }
+  verify_nsd
+
+  [[ -d /var/www/acme ]] || mkdir -p /var/www/acme
+  install_static etc/httpd.conf /etc/httpd.conf
+  httpd -n -f /etc/httpd.conf || { log ERROR "httpd.conf invalid"; exit 1 }
+  /usr/sbin/rcctl enable httpd
+  /usr/sbin/rcctl start httpd || { log ERROR "httpd failed"; exit 1 }
+  sleep 5
+  typeset _httpd_check; _httpd_check=$(/usr/sbin/rcctl check httpd)
+  [[ $_httpd_check == *"httpd(ok)"* ]] || { log ERROR "httpd not running"; exit 1 }
+
+  # httpd strips /.well-known/acme-challenge/ and serves from /var/www/acme/<token>
+  print -r -- test > /var/www/acme/test
+  typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" http://$BRGEN_IP/.well-known/acme-challenge/test):-000}
+  rm -f /var/www/acme/test
+  [[ $http_status == "200" ]] || { log ERROR "httpd pre-flight failed (HTTP $http_status)"; exit 1 }
+
+  [[ $(<"/etc/group") == *$'\n_acme:'* || $(<"/etc/group") == _acme:* ]] || groupadd -g 765 _acme
+  [[ ! -f /etc/acme/letsencrypt_privkey.pem ]] && \
+    openssl genpkey -algorithm RSA -out /etc/acme/letsencrypt_privkey.pem -pkeyopt rsa_keygen_bits:4096
+  chown root:_acme /etc/acme/letsencrypt_privkey.pem
+  chmod 640 /etc/acme/letsencrypt_privkey.pem
+
+  install_static etc/acme-client.conf /etc/acme-client.conf
+  for domain_entry in $ALL_DOMAINS; do
+    typeset domain=${domain_entry%%:*}
+    typeset subdomains=${domain_entry#*:}
+    [[ $subdomains = $domain ]] && subdomains=""
+    {
+      print -r -- "domain \"$domain\" {"
+      if [[ -n $subdomains ]]; then
+        typeset altnames="\"$domain\""
+        for sub in ${(s:,:)subdomains}; do altnames="$altnames \"$sub.$domain\""; done
+        print -r -- "  alternative names { $altnames }"
+      fi
+      print -r -- "  domain key \"/etc/ssl/private/$domain.key\""
+      print -r -- "  domain full chain certificate \"/etc/ssl/$domain.fullchain.pem\""
+      print -r -- "  sign with letsencrypt"
+      print -r -- "  challengedir \"/var/www/acme\""
+      print -r -- "}"
+      print -r -- ""
+    } >> /etc/acme-client.conf
+  done
+  acme-client -n -f /etc/acme-client.conf || { log ERROR "acme-client.conf invalid"; exit 1 }
+
+  for domain_entry in $ALL_DOMAINS; do
+    typeset domain=${domain_entry%%:*}
+    typeset dns_check=${$(/usr/bin/dig @"$BRGEN_IP" "$domain" A +short):-}
+    if [[ $dns_check != $BRGEN_IP ]]; then
+      log WARN "DNS for $domain failed"; FAILED_CERTS[$domain]=1; continue
+    fi
+    print -r -- "test_$domain" > /var/www/acme/test_$domain
+    typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $domain" http://$BRGEN_IP/.well-known/acme-challenge/test_$domain):-000}
+    rm -f /var/www/acme/test_$domain
+    if [[ $http_status != 200 ]]; then
+      log WARN "HTTP test for $domain failed"; FAILED_CERTS[$domain]=1; continue
+    fi
+    if acme-client -v -f /etc/acme-client.conf "$domain"; then
+      generate_tlsa_record "$domain"
+    else
+      log WARN "Certificate issuance failed for $domain"; FAILED_CERTS[$domain]=1
+    fi
+  done
+  (( $#FAILED_CERTS )) && retry_failed_certs
+
+  install_static usr/local/bin/renew-certs.sh /usr/local/bin/renew-certs.sh
+  chmod 755 /usr/local/bin/renew-certs.sh
+  typeset crontab_tmp=/tmp/crontab_tmp
+  crontab -l 2>/dev/null > $crontab_tmp || :
+  print -r -- "0 2 * * 1 /usr/local/bin/renew-certs.sh >> /var/log/cert-renewal.log 2>&1" >> $crontab_tmp
+  crontab $crontab_tmp || { log ERROR "Crontab update failed"; exit 1 }
+  rm $crontab_tmp
+
+  log INFO "Stage 1 complete. ns.brgen.no ($BRGEN_IP) authoritative with DNSSEC."
+  log INFO "DS records: /var/nsd/zones/master/*.ds — submit each to your registrar (Domeneshop: domain settings → DNSSEC)."
+  log INFO "After submitting DS records, wait 24-48h for propagation, then press Enter to continue."
+  log INFO "Verify with: dig DS brgen.no +short"
+  read -r
+}
+
+# ── Stage 2: services, Rails apps, relayd ─────────────────────────────────────
+
+setup_services() {
+  log INFO "Setting up services"
+  /usr/sbin/rcctl enable smtpd
+  /usr/sbin/rcctl start smtpd || { log ERROR "smtpd failed"; exit 1 }
+  sleep 5
+  typeset _smtpd_check; _smtpd_check=$(/usr/sbin/rcctl check smtpd)
+  [[ $_smtpd_check == *"smtpd(ok)"* ]] || { log ERROR "smtpd not running"; exit 1 }
+  /usr/bin/timeout 5 telnet $BRGEN_IP 25 >/dev/null 2>&1 || log WARN "SMTP port 25 not responding"
+  /usr/sbin/rcctl enable relayd
+  log INFO "Services configured. relayd enabled but not started (awaiting configuration)"
+}
+
+setup_litestream() {
+  log INFO "Setting up litestream"
+  mkdir -p /var/backups/litestream
+  install_template etc/litestream.yml /etc/litestream.yml
+  install_template etc/rc.d/litestream /etc/rc.d/litestream
+  chmod 755 /etc/rc.d/litestream
+  /usr/sbin/rcctl enable litestream
+  /usr/sbin/rcctl restart litestream || /usr/sbin/rcctl start litestream \
+    || { log ERROR "litestream failed"; exit 1 }
+  sleep 2
+  typeset _c; _c=$(/usr/sbin/rcctl check litestream)
+  [[ $_c == *"litestream(ok)"* ]] || { log ERROR "litestream not running"; exit 1 }
+}
+
+bootstrap_rails_app() {
+  typeset app=$1 port=$2
+  typeset app_dir=/home/dev/pub4/DEPLOY/rails/$app
+  typeset secret
+
+  [[ -d $app_dir ]] || { log ERROR "app tree missing: $app_dir"; return 1 }
+  log INFO "bootstrapping $app from pub4 tree on :$port"
+
+  su -l dev -c "gem install --user-install rails bundler falcon" >/dev/null 2>&1 || :
+  su -l dev -c "cd $app_dir && bundle config set --local deployment true && bundle config set --local without development:test && RAILS_ENV=production bundle install" \
+    || { log ERROR "bundle install failed for $app"; return 1 }
+  su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:create db:migrate" \
+    || log WARN "db:create/migrate non-zero for $app (idempotent skip likely)"
+  if [[ -f $app_dir/db/seeds.rb ]]; then
+    if [[ ${RUN_PRODUCTION_SEEDS:-0} == 1 ]]; then
+      log WARN "$app: RUN_PRODUCTION_SEEDS=1 set; running production db:seed"
+      su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:seed"
+    else
+      log INFO "$app: production db:seed skipped (set RUN_PRODUCTION_SEEDS=1 for explicit one-off seed)"
+    fi
+  fi
+
+  typeset -a _secret_lines
+  _secret_lines=("${(@f)$(su -l dev -c "cd $app_dir && RAILS_ENV=production bundle exec rails secret 2>/dev/null")}")
+  secret=${_secret_lines[-1]}
+  [[ ${#secret} -ge 64 ]] || { log ERROR "$app: secret capture failed (got ${#secret} chars)"; return 1 }
+  [[ -f /etc/${app}.env ]] || print -r -- "SECRET_KEY_BASE=${secret}" > /etc/${app}.env
+  chmod 640 /etc/${app}.env 2>/dev/null || true
+
+  typeset svc=$app
+  [[ -f ${SCRIPT_DIR}/etc/rc.d/${svc} ]] || install_template etc/rc.d/rails-app.tmpl /etc/rc.d/${svc}
+  chmod 755 /etc/rc.d/${svc}
+  /usr/sbin/rcctl enable ${svc}
+  /usr/sbin/rcctl restart ${svc} || /usr/sbin/rcctl start ${svc} \
+    || { log ERROR "${svc} failed to start"; return 1 }
+  sleep 10
+  typeset _c; _c=$(/usr/sbin/rcctl check ${svc})
+  [[ $_c == *"${svc}(ok)"* ]] || { log ERROR "${svc} not running"; return 1 }
+  typeset _http; _http=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 http://127.0.0.1:${port}/up 2>/dev/null)
+  [[ $_http == "200" ]] || log WARN "${svc} /up returned $_http — SECRET_KEY_BASE or DB may need attention"
+  log INFO "  ${svc} live on :$port"
+}
+
+configure_relayd() {
+  log INFO "Writing relayd.conf (TLS+SNI on :443)"
+
+  typeset -A DOMAIN_BACKEND=() BACKEND_PORT=()
+  typeset app_entry app dom entry rest sub backend
+
+  for app_entry in $ALL_APPS; do
+    app=${app_entry%%:*}; dom=${app_entry##*:}
+    DOMAIN_BACKEND[$dom]=$app
+    BACKEND_PORT[$app]=${APP_PORTS[$app]:-0}
+  done
+  DOMAIN_BACKEND[ai.brgen.no]=master
+  BACKEND_PORT[master]=${APP_PORTS[master]:-53187}
+  DOMAIN_BACKEND[hjerterom.brgen.no]=hjerterom
+  for entry in $ALL_DOMAINS; do
+    dom=${entry%%:*}
+    [[ -n ${DOMAIN_BACKEND[$dom]:-} ]] && continue
+    DOMAIN_BACKEND[$dom]=brgen
+  done
+
+  for dom in ${(k)DOMAIN_BACKEND}; do
+    [[ -f /etc/ssl/${dom}.fullchain.pem ]] || continue
+    ln -sf /etc/ssl/${dom}.fullchain.pem /etc/ssl/${dom}.crt
+    # Primary domain: key is the real file, not a symlink — nothing to do.
+  done
+  # Subdomains share the parent cert+key — create both symlinks so relayd
+  # tls keypair finds /etc/ssl/${dom}.crt AND /etc/ssl/private/${dom}.key.
+  # Skip only domains that have their own fullchain.pem (handled above).
+  # Use -sf so existing .crt symlinks don't prevent missing .key from being created.
+  for dom in ${(k)DOMAIN_BACKEND}; do
+    [[ -f /etc/ssl/${dom}.fullchain.pem ]] && continue
+    typeset parent="" try=${dom#*.}
+    while [[ -n $try ]]; do
+      if [[ -f /etc/ssl/${try}.fullchain.pem ]]; then parent=$try; break; fi
+      [[ $try == *.* ]] || break
+      try=${try#*.}
+    done
+    [[ -n $parent ]] || continue
+    ln -sf /etc/ssl/${parent}.fullchain.pem /etc/ssl/${dom}.crt
+    ln -sf /etc/ssl/private/${parent}.key    /etc/ssl/private/${dom}.key
+  done
+
+  {
+    print -r -- "log connection errors"
+    print -r -- "interval 120"
+    print -r -- "timeout 30000"
+    print -r -- ""
+    for backend in ${(k)BACKEND_PORT}; do
+      print -r -- "table <${backend}> { 127.0.0.1 }"
+    done
+    print -r -- ""
+    print -r -- "http protocol \"https_proxy\" {"
+    for dom in ${(k)DOMAIN_BACKEND}; do
+      [[ -L /etc/ssl/${dom}.crt ]] && print -r -- "  tls keypair \"${dom}\""
+    done
+    print -r -- "  match request header set \"X-Forwarded-Proto\" value \"https\""
+    print -r -- "  match request header set \"X-Forwarded-For\" value \"\$REMOTE_ADDR\""
+    print -r -- "  match response header set \"Strict-Transport-Security\" value \"max-age=31536000; includeSubDomains; preload\""
+    print -r -- "  match response header set \"Referrer-Policy\" value \"strict-origin\""
+    print -r -- "  match response header set \"X-Content-Type-Options\" value \"nosniff\""
+    print -r -- "  match response header set \"X-XSS-Protection\" value \"0\""
+    print -r -- "  # No global X-Frame-Options — MASTER uses CSP frame-ancestors for brgen/amber embeds."
+    print -r -- "  match response header set \"Permissions-Policy\" value \"accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(self), payment=(), usb=()\""
+    print -r -- "  match response header remove \"X-Frame-Options\""
+    print -r -- "  match response header remove \"Server\""
+    print -r -- "  http websockets"
+    for dom in ${(k)DOMAIN_BACKEND}; do
+      backend=${DOMAIN_BACKEND[$dom]}
+      print -r -- "  match request header \"Host\" value \"${dom}\" forward to <${backend}>"
+      for entry in $ALL_DOMAINS; do
+        [[ ${entry%%:*} == $dom ]] || continue
+        rest=${entry#*:}
+        [[ $rest == $dom ]] && break
+        for sub in ${(s:,:)rest}; do
+          [[ -n ${DOMAIN_BACKEND[${sub}.${dom}]:-} ]] && continue
+          print -r -- "  match request header \"Host\" value \"${sub}.${dom}\" forward to <${backend}>"
+        done
+        break
+      done
+    done
+    print -r -- "  pass"
+    print -r -- "}"
+    print -r -- ""
+    print -r -- "relay \"https_in\" {"
+    print -r -- "  listen on 0.0.0.0 port 443 tls"
+    print -r -- "  protocol \"https_proxy\""
+    for backend in ${(k)BACKEND_PORT}; do
+      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check http \"/up\" code 200"
+    done
+    print -r -- "}"
+  } > /etc/relayd.conf
+
+  relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid"; exit 1 }
+  /usr/sbin/rcctl enable relayd
+  /usr/sbin/rcctl restart relayd || /usr/sbin/rcctl start relayd \
+    || { log ERROR "relayd failed"; exit 1 }
+  sleep 3
+  typeset _c; _c=$(/usr/sbin/rcctl check relayd)
+  [[ $_c == *"relayd(ok)"* ]] || { log ERROR "relayd not running"; exit 1 }
+  log INFO "relayd live — TLS+SNI on :443"
+}
+
+configure_dev_ssh() {
+  typeset cfg=/home/dev/.ssh/config
+  install -d -o dev -g dev -m 700 /home/dev/.ssh
+  [[ -f $cfg ]] || install -o dev -g dev -m 600 /dev/null "$cfg"
+  typeset existing="$(<$cfg)"
+  if [[ $existing != *"Host github.com"* ]]; then
+    print -r -- $'\nHost github.com\n  IdentityFile ~/.ssh/id_ed25519_brgen\n  IdentitiesOnly yes' >>"$cfg"
+    chown dev:dev "$cfg"
+    chmod 600 "$cfg"
+    log INFO "dev ssh: github.com block installed"
+  fi
+
+  # Ensure the operator dev account uses the modern Zsh environment
+  # (packages for zsh + starship + neovim etc. are installed in Stage 1).
+  typeset dev_shell=${${(s/:/)$(getent passwd dev)}[-1]}
+  if [[ $dev_shell != */zsh ]]; then
+    chsh -s /usr/local/bin/zsh dev 2>/dev/null || log WARN "chsh dev to zsh failed (may need manual)"
+  fi
+}
+
+stage_2() {
+  log INFO "Stage 2: services and apps"
+
+  check_dns_propagation
+
+  typeset _mem_line; _mem_line=$(vmstat -s | while IFS= read -r _l; do [[ $_l == *"free memory"* ]] && print -r -- "$_l" && break; done)
+  typeset _mem_free=${${(z)_mem_line}[1]}
+  (( _mem_free < 512000 )) && { log ERROR "Insufficient free memory"; exit 1 }
+
+  install_template etc/pf.conf /etc/pf.conf
+  /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
+  /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf failed"; exit 1 }
+
+  install_template etc/mail/smtpd.conf /etc/mail/smtpd.conf
+  smtpd -n -f /etc/mail/smtpd.conf || { log ERROR "smtpd.conf invalid"; exit 1 }
+  [[ ! -f /etc/ssl/private/smtp.key ]] && \
+    openssl genpkey -algorithm RSA -out /etc/ssl/private/smtp.key -pkeyopt rsa_keygen_bits:4096
+  [[ ! -f /etc/ssl/smtp.crt ]] && \
+    openssl req -x509 -new -key /etc/ssl/private/smtp.key -out /etc/ssl/smtp.crt -days 365 -subj "/CN=mail.pub.attorney"
+  chmod 640 /etc/ssl/private/smtp.key /etc/ssl/smtp.crt
+
+  setup_services
+
+  typeset -a deploy_order=(amber)
+  for app_entry in $ALL_APPS; do
+    typeset app=${app_entry[(ws:*:)1]}
+    [[ $app != amber ]] && deploy_order+=($app)
+  done
+  for app in $deploy_order; do
+    typeset port=${APP_PORTS[$app]:-}
+    [[ -n $port ]] || { log ERROR "missing fixed APP_PORTS entry for $app"; exit 1; }
+    bootstrap_rails_app "$app" "$port" || { log ERROR "bootstrap failed: $app"; exit 1 }
+  done
+
+  setup_litestream
+
+  for svc_entry in $SERVICES; do
+    typeset svc_name=${svc_entry%%:*}
+    typeset svc_rest=${svc_entry#*:}
+    typeset svc_port=${svc_rest##*:}
+    log INFO "Setting up service: $svc_name on port $svc_port"
+    chmod 755 /etc/rc.d/$svc_name
+    /usr/sbin/rcctl enable $svc_name
+    /usr/sbin/rcctl start $svc_name || log WARN "$svc_name start failed (may need manual start)"
+  done
+
+  configure_dev_ssh
+
+  log INFO "Deploying MASTER web UI"
+  typeset m3dir="/home/dev/pub4/MASTER"
+  [[ -d $m3dir ]] || { log ERROR "MASTER not found at $m3dir"; exit 1 }
+  cd "$m3dir/web"
+  bundle config set --local path vendor/bundle
+  bundle config set --local deployment true
+  bundle config set --local without 'development test'
+  RAILS_ENV=production bundle install --quiet
+  # Propshaft must not re-digest public/assets/ (nested assets/assets wedges Falcon boot).
+  rm -rf public/assets/assets 2>/dev/null || true
+  log INFO "MASTER: building face runtime + precompiling assets"
+  RAILS_ENV=production bundle exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:precompile \
+    || log WARN "MASTER assets:precompile failed"
+  ruby "${SCRIPT_DIR}/../rails/master_web_assets_gate.rb" 2>/dev/null \
+    || ruby "$m3dir/../DEPLOY/rails/master_web_assets_gate.rb" 2>/dev/null \
+    || log WARN "MASTER master_web_assets_gate skipped"
+  typeset master_secret
+  typeset -a _master_secret_lines
+  _master_secret_lines=("${(@f)$(RAILS_ENV=production bundle exec rails secret 2>/dev/null)}")
+  master_secret=${_master_secret_lines[-1]}
+  [[ ${#master_secret} -ge 64 ]] || { log ERROR "master: secret capture failed (got ${#master_secret} chars)"; exit 1 }
+  [[ -f ${SCRIPT_DIR}/etc/rc.d/master ]] || { log ERROR "missing etc/rc.d/master"; exit 1 }
+  cp "${SCRIPT_DIR}/etc/rc.d/master" /etc/rc.d/master
+  chmod 555 /etc/rc.d/master
+  [[ -f $m3dir/data/soul.yml ]] && chmod 0444 "$m3dir/data/soul.yml"
+  [[ -f $m3dir/data/checksums.yml ]] && chmod 0444 "$m3dir/data/checksums.yml"
+  rcctl enable master
+  rcctl start master
+  log INFO "MASTER web UI running on :53187"
+
+  configure_relayd
+
+  log INFO "Deploy complete. Test: curl https://brgen.no, rcctl check master."
+}
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+
+deploy_live() {
+  sync_openbsd_apply "${SCRIPT_DIR}"
+}
+
+main() {
+  if [[ ${1:-} = --help ]]; then
+    print -r -- "OpenBSD vm23 deploy (DEPLOY.sh). Config trees: etc/ usr/ var/ → /.
+Usage:
+  cd ~/pub4/DEPLOY/openbsd && doas zsh DEPLOY.sh
+
+Default: install configs, validate pf/relayd, restart services.
+
+Rare:
+  doas zsh DEPLOY.sh --first-install
+  doas zsh DEPLOY.sh --stage-1        # requires I_UNDERSTAND_DNS_WIPE=1
+  doas zsh DEPLOY.sh --stage-2
+
+--sync-configs is an alias for the default."
+    exit 0
+  fi
+
+  case ${1:-} in
+    --sync-configs|--sync|sync)
+      deploy_live
+      ;;
+    --first-install)
+      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
+      stage_1
+      stage_2
+      ;;
+    --stage-1|--stage1)
+      [[ ${I_UNDERSTAND_DNS_WIPE:-0} == 1 ]] || {
+        log ERROR "stage_1 rewrites DNS material; rerun with I_UNDERSTAND_DNS_WIPE=1 if this is intentional"
+        exit 1
+      }
+      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
+      stage_1
+      ;;
+    --stage-2|--stage2)
+      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
+      stage_2
+      ;;
+    "")
+      deploy_live
+      ;;
+    *)
+      log ERROR "unknown flag: $1 (try --help)"
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"
+```
+
 ### DEPLOY/openbsd/README.md
 
 ````markdown
@@ -6826,13 +7786,12 @@ ssh -p 31415 dev@server4.openbsd.amsterdam   # hypervisor
 
 ```zsh
 cd ~/pub4/DEPLOY/openbsd
-tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"
-tmux attach -t deploy
+doas zsh DEPLOY.sh
 ```
 
 | Command | Purpose |
 |---------|---------|
-| `doas zsh openbsd.sh --sync-configs` | Repo `etc/` → `/etc`, restart |
+| `doas zsh DEPLOY.sh` | Install etc/usr/var, validate, restart services |
 | `doas ksh resource_guard.sh` | Shed optional apps under load |
 | `doas ksh start_all_apps.sh` | Full stack |
 
@@ -6956,11 +7915,13 @@ Same username + pubkey as the VM. User is in `_vmdusers` for socket access to `v
 
 ```zsh
 vmctl status vm23
-vmctl console vm23      # serial console; exit with ~.
-vmctl stop -fw vm23
+vmctl console vm23      # serial console; exit with ~.  Human recovery only — not for agents.
+vmctl stop -fw vm23     # NEVER autonomous — causes downtime
 vmctl start -c vm23
 doas pkill -9 -xf "vmd: vm23"   # hung VM ([known.html](https://www.openbsd.amsterdam/known.html))
 ```
+
+`DEPLOY/openbsd/sh/vps_console*.exp` scripts require `I_UNDERSTAND_CONSOLE_RISK=1` (see `DEPLOY/VPS_SAFETY.md`).
 
 Recovery when VM SSH is pf-blocked:
 
@@ -7886,9 +8847,7 @@ domain "amber.brgen.no" {
 
 ```
 permit nopass keepenv dev as root
-permit nopass dev as root cmd /sbin/rcctl args restart master
-permit nopass dev as root cmd /home/dev/pub4/MASTER/tools/postpro.rb
-permit nopass dev as root cmd /home/dev/pub4/MASTER/tools/repligen.rb
+# Blanket rule for dev deploy flows (O9 option a).
 ```
 
 ### DEPLOY/openbsd/etc/httpd.conf
@@ -7920,7 +8879,7 @@ server "brgen.no" {
 
 ```yaml
 dbs:
-  - path: /home/brgen/app/db
+  - path: /home/brgen/app/storage
     pattern: "*.sqlite3"
     replicas:
       - url: file:///var/backups/litestream/brgen
@@ -8077,6 +9036,18 @@ vmd:\
 xenodm:\
 	:openfiles=512:\
 	:tc=daemon:
+
+brgen:\
+	:tc=rails:
+
+amber:\
+	:tc=rails:
+
+bsdports:\
+	:tc=rails:
+
+hjerterom:\
+	:tc=rails:
 ```
 
 ### DEPLOY/openbsd/etc/mail/smtpd.conf
@@ -8100,9 +9071,9 @@ match from local for any action "outbound"
 # OpenBSD log rotation for the deploy stack.
 # Weekly rotation, compressed archives, no signal delivery needed.
 
-/var/log/openbsd_setup.log        root:wheel 640 12 $W0D0 ZN
-/var/log/openbsd_transactions.log root:wheel 640 12 $W0D0 ZN
-/var/log/cert-renewal.log         root:wheel 640 12 $W0D0 ZN
+/var/log/openbsd_setup.log        root:wheel 640 12 * $W0D0 Z
+/var/log/openbsd_transactions.log root:wheel 640 12 * $W0D0 Z
+/var/log/cert-renewal.log         root:wheel 640 12 * $W0D0 Z
 ```
 
 ### DEPLOY/openbsd/etc/pf.conf
@@ -8151,16 +9122,16 @@ anchor "relayd/*"
 ```
 # Minimal PF for Stage 1 per pf.conf(5) - OpenBSD 7.8
 ext_if = "vio0"
-brgen_ip = "$BRGEN_IP"
-hyp_ip = "$HYP_IP"
+brgen_ip = "46.23.89.226"
+hyp_ip = "194.63.248.53"
 set skip on lo
 set block-policy return
 block log all
-pass out on \$ext_if all
-pass in on \$ext_if inet proto tcp to \$brgen_ip port 22 keep state
-pass in on \$ext_if inet proto { tcp, udp } to \$brgen_ip port 53 keep state
-pass in on \$ext_if inet proto udp to \$hyp_ip port 53 keep state
-pass in on \$ext_if inet proto tcp to \$brgen_ip port 80 keep state
+pass out on $ext_if all
+pass in on $ext_if inet proto tcp to $brgen_ip port 22 keep state
+pass in on $ext_if inet proto { tcp, udp } to $brgen_ip port 53 keep state
+pass in on $ext_if inet proto udp to $hyp_ip port 53 keep state
+pass in on $ext_if inet proto tcp to $brgen_ip port 80 keep state
 pass inet proto icmp all icmp-type { echoreq, unreach, timex }
 ```
 
@@ -8400,871 +9371,8 @@ end
 
 ```bash
 #!/usr/bin/env zsh
-# Configure OpenBSD 7.8: NSD/DNSSEC, acme-client, Rails, pf, relayd, smtpd.
-# Usage:
-#   doas zsh openbsd.sh --first-install
-#   doas zsh openbsd.sh --stage-2
-#   doas zsh openbsd.sh --sync-configs
-# VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-01-06)
-#
-# IDEMPOTENCY NOTES (CC14):
-# - Safe to re-run: bootstrap_rails_app (cp tree, bundle install, db:migrate), sync_openbsd_configs
-#   (backs up /etc first), relayd/pf template installs when configs already match, rcctl enable/start.
-# - DESTRUCTIVE on re-run: stage_1 deletes /var/nsd/etc/* and /var/nsd/zones/master/* before
-#   regenerating signed zones. Never re-run stage_1 on a live authoritative server without backup.
-# - State tracking: STATE_FILE=/var/db/openbsd_setup.state — is_step_completed/mark_step_completed
-#   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
-# - Data preserved: Rails SQLite under /home/<app>/app/db, ~/priv, acme certs in /etc/ssl when
-#   stage_1 is skipped. Re-running stage_2 does not drop databases.
-# - Post-deploy verification: ruby /home/dev/pub4/DEPLOY/health_check.rb
-# Engine-ize: bootstrap_rails now relies on bundle install for pub4-shared path gem (Gemfiles declare it); legacy sh shared/install_* deprecated in scripts + WIRING. No copy sprawl.
-
-set -euo pipefail
-setopt no_unset nullglob local_traps
-zmodload zsh/regex
-zmodload zsh/datetime
-
-typeset -a TMPFILES
-SCRIPT_DIR=${0:a:h}
-
-# Helpers inlined ( _lib.sh removed for ONE_SOURCE/singularity). Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs (now ships .zshrc to /home/dev too).
-log() {
-  typeset level=$1; shift
-  print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] [$level] $*" | tee -a /var/log/openbsd_setup.log >&2
-}
-log_info()  { log INFO "$@" }
-log_error() { log ERROR "$@" }
-
-transaction_log() {
-  typeset operation=$1 target=$2 op_status=$3 metadata=${4:-}
-  print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] [$operation] $target | Status: $op_status | $metadata" \
-    >> /var/log/openbsd_transactions.log
-}
-
-cleanup() {
-  typeset exit_code=$?
-  for tmpfile in "${TMPFILES[@]}"; do
-    [[ -n $tmpfile && -f $tmpfile ]] && rm -f "$tmpfile"
-  done
-  return $exit_code
-}
-
-error_handler() {
-  typeset exit_code=$1 line_num=$2
-  log ERROR "Script failed with exit code $exit_code at line $line_num"
-  cleanup
-  exit $exit_code
-}
-
-backup_directory() {
-  typeset target_dir=$1 backup_name=${2:-${1:t}}
-  typeset backup_dir=/var/backups/openbsd_setup
-  typeset backup_file="$backup_dir/${backup_name}-${EPOCHSECONDS}.tar.gz"
-  [[ ! -d $backup_dir ]] && mkdir -p "$backup_dir"
-  [[ ! -d $target_dir ]] && { log WARN "Directory $target_dir does not exist, skipping backup"; return 0 }
-  log INFO "Backing up $target_dir to $backup_file"
-  transaction_log "BACKUP" "$target_dir" "START"
-  if tar -czf "$backup_file" -C "${target_dir:h}" "${target_dir:t}" 2>/dev/null; then
-    transaction_log "BACKUP" "$target_dir" "SUCCESS" "$backup_file"
-    typeset -a _bfiles; _bfiles=("$backup_dir"/${backup_name}-*.tar.gz(N))
-    (( ${#_bfiles} > 10 )) && {
-      typeset -a _sorted; _sorted=("$backup_dir"/${backup_name}-*.tar.gz(NOm))
-      for _f in "${_sorted[@]:10}"; do rm -f "$_f"; done
-    }
-    echo "$backup_file"
-    return 0
-  else
-    transaction_log "BACKUP" "$target_dir" "FAILURE"
-    log ERROR "Backup failed for $target_dir"
-    return 1
-  fi
-}
-
-install_template() {
-  typeset src=${SCRIPT_DIR}/$1 dst=$2
-  [[ -f $src ]] || { log ERROR "Missing template: $src"; exit 1 }
-  typeset content; content=$(<"$src")
-  eval "cat > \"$dst\" <<INSTALL_TEMPLATE_EOF
-$content
-INSTALL_TEMPLATE_EOF"
-}
-
-append_template() {
-  typeset src=${SCRIPT_DIR}/$1 dst=$2
-  [[ -f $src ]] || { log ERROR "Missing template: $src"; exit 1 }
-  typeset content; content=$(<"$src")
-  eval "cat >> \"$dst\" <<APPEND_TEMPLATE_EOF
-$content
-APPEND_TEMPLATE_EOF"
-}
-
-install_static() {
-  typeset src=${SCRIPT_DIR}/$1 dst=$2
-  [[ -f $src ]] || { log ERROR "Missing file: $src"; exit 1 }
-  cp "$src" "$dst"
-}
-
-is_step_completed()  { [[ -f "${STATE_FILE}.steps" ]] && [[ $(<"${STATE_FILE}.steps") == *"$1"* ]] }
-mark_step_completed() { print -r -- "$1" >> "${STATE_FILE}.steps" }
-
-# Mirror DEPLOY/openbsd tree onto live /etc (VPS source of truth = repo).
-# Usage: doas zsh openbsd.sh --sync-configs
-sync_openbsd_configs() {
-  typeset src=${1:-${SCRIPT_DIR}}
-  [[ -d $src/etc ]] || { log ERROR "No etc/ in $src"; return 1 }
-  backup_directory /etc "etc-pre-sync" || return 1
-
-  typeset -a etc_files=(
-    pf.conf rc.conf.local relayd.conf httpd.conf acme-client.conf
-    doas.conf login.conf newsyslog.conf litestream.yml
-  )
-  for f in $etc_files; do
-    [[ -e $src/etc/$f ]] || continue
-    cp "$src/etc/$f" "/etc/$f"
-    log INFO "synced /etc/$f"
-  done
-
-  [[ -f $src/etc/ssh/sshd_config ]] && cp "$src/etc/ssh/sshd_config" /etc/ssh/sshd_config && log INFO "synced /etc/ssh/sshd_config"
-  [[ -f $src/etc/mail/smtpd.conf ]] && cp "$src/etc/mail/smtpd.conf" /etc/mail/smtpd.conf && log INFO "synced /etc/mail/smtpd.conf"
-  [[ -f $src/var/nsd/etc/nsd.conf ]] && cp "$src/var/nsd/etc/nsd.conf" /var/nsd/etc/nsd.conf && log INFO "synced /var/nsd/etc/nsd.conf"
-
-  if [[ -d $src/var/nsd/zones/master ]]; then
-    install -d -o _nsd -g _nsd -m 750 /var/nsd/zones/master 2>/dev/null || true
-    for f in $src/var/nsd/zones/master/*.zone(.); do
-      cp "$f" "/var/nsd/zones/master/${f:t}"
-      log INFO "synced zone ${f:t}"
-    done
-  fi
-
-  [[ -f $src/etc/daily.local ]] && {
-    cp "$src/etc/daily.local" /etc/daily.local
-    chmod 755 /etc/daily.local
-    log INFO "synced /etc/daily.local"
-  }
-
-  if [[ -d $src/etc/rc.d ]]; then
-    for f in $src/etc/rc.d/*(.); do
-      typeset name=${f:t}
-      cp "$f" "/etc/rc.d/$name"
-      chmod 755 "/etc/rc.d/$name"
-      [[ $name = master ]] && chmod 555 "/etc/rc.d/master"
-      log INFO "synced /etc/rc.d/$name"
-    done
-  fi
-
-  if [[ -d $src/usr/local/bin ]]; then
-    for f in $src/usr/local/bin/*(.); do
-      cp "$f" "/usr/local/bin/${f:t}"
-      chmod 755 "/usr/local/bin/${f:t}"
-      log INFO "synced /usr/local/bin/${f:t}"
-    done
-  fi
-
-  if [[ -x /usr/local/bin/relayd-watchdog ]] || [[ -x /usr/local/bin/config-drift-check ]]; then
-    typeset root_cron=/tmp/root_crontab.$$
-    crontab -l 2>/dev/null > $root_cron || :
-    if [[ -x /usr/local/bin/relayd-watchdog ]] && ! grep -q relayd-watchdog $root_cron 2>/dev/null; then
-      print -r -- "*/5 * * * * /usr/local/bin/relayd-watchdog" >> $root_cron
-      log INFO "installed root cron: relayd-watchdog (every 5 min)"
-    fi
-    if [[ -x /usr/local/bin/config-drift-check ]] && ! grep -q config-drift-check $root_cron 2>/dev/null; then
-      print -r -- "*/15 * * * * /usr/local/bin/config-drift-check >> /var/log/config_drift.log 2>&1" >> $root_cron
-      log INFO "installed root cron: config-drift-check"
-    fi
-    crontab $root_cron
-    rm -f $root_cron
-  fi
-
-  if [[ -f $src/etc/.zshrc ]]; then
-    install -d -o dev -g dev -m 700 /home/dev 2>/dev/null || true
-    cp "$src/etc/.zshrc" /home/dev/.zshrc
-    chown dev:dev /home/dev/.zshrc 2>/dev/null || true
-    chmod 644 /home/dev/.zshrc 2>/dev/null || true
-    log INFO "synced .zshrc to /home/dev"
-  fi
-
-  log INFO "OpenBSD config tree sync complete (with backup)"
-}
-
-sync_openbsd_apply() {
-  typeset src=${1:-${SCRIPT_DIR}}
-  sync_openbsd_configs "$src" || return 1
-
-  /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid after sync"; return 1 }
-  /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf reload failed"; return 1 }
-  /sbin/pfctl -e 2>/dev/null || log WARN "pf already enabled or enable skipped"
-
-  if [[ -x /usr/bin/ruby34 ]] || command -v ruby34 >/dev/null 2>&1; then
-    ruby34 "${SCRIPT_DIR}/relayd_prune_keypairs.rb" /etc/relayd.conf \
-      || log WARN "relayd keypair prune failed"
-  fi
-  relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid after sync"; return 1 }
-
-  if [[ -x /usr/local/bin/nsd-resign ]]; then
-    ruby /usr/local/bin/nsd-resign || log WARN "nsd-resign failed after zone sync"
-  fi
-
-  # STRICT rules.yml adherence (per success_criteria: "system_applies_to_itself_without_exception", self_test, ground_truth_check, evidence_scoring, veto_patterns, anti_patterns, tier1 principle_priorities).
-  # Run MASTER deep scan on DEPLOY tree before any service restart. Block on violations (tier1 critical + veto).
-  # Uses ground_truth_check (fresh read), self_test (laws on DEPLOY), evidence_scoring (scan_clean).
-  # Also covers lexical/structural for sh, yml, conf, erb; no bypasses.
-  if [[ -n ${SKIP_MASTER_SCAN:-} ]]; then
-    log WARN "MASTER scan skipped (SKIP_MASTER_SCAN)"
-  elif [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
-    log INFO "MASTER rules scan (DEPLOY) — strict pre-apply per rules.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
-    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli /scan DEPLOY --depth deep' 2>&1 | tee /tmp/master_deploy_scan.log; then
-      log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per rules.yml)"
-      return 1
-    fi
-    log INFO "MASTER scan clean — proceeding (scan_clean + self_apply satisfied)"
-  else
-    log WARN "MASTER not available for scan; continuing (violates full self-application — fix immediately)"
-  fi
-
-  # Enforce ground_truth_check + evidence before writes (rules.yml): fresh read, diff, output shown.
-  # library_verify pre-flight before bundle/shell (per rules).
-  for f in /etc/pf.conf /etc/relayd.conf; do
-    [[ -s $f ]] || { log ERROR "ground_truth fail on $f"; return 1; }
-  done
-  # (In per-app: before bundle, check Gemfile etc.)
-
-  install -m 755 "${SCRIPT_DIR}/resource_guard.sh" /usr/local/bin/resource_guard.sh 2>/dev/null || true
-  if [[ -x /usr/local/bin/resource_guard.sh ]]; then
-    typeset guard_cron=/tmp/root_crontab.$$
-    crontab -l 2>/dev/null > $guard_cron || :
-    if ! grep -q resource_guard $guard_cron 2>/dev/null; then
-      print -r -- "*/5 * * * * /usr/local/bin/resource_guard.sh" >> $guard_cron
-      crontab $guard_cron
-      log INFO "installed root cron: resource_guard (every 5 min)"
-    fi
-    rm -f $guard_cron
-  fi
-
-  typeset -a svcs=(nsd httpd relayd smtpd master)
-  for svc in $svcs; do
-    [[ -x /etc/rc.d/$svc ]] || continue
-    /usr/sbin/rcctl enable $svc 2>/dev/null || true
-    /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
-      || log WARN "$svc restart/start failed"
-  done
-  # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
-  typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312 hjerterom 38891)
-  typeset -a core_apps=(brgen)
-  typeset -a optional_apps=(amber bsdports hjerterom litestream)
-  for svc in $core_apps $optional_apps; do
-    [[ -x /etc/rc.d/$svc ]] || continue
-    /usr/sbin/rcctl enable $svc 2>/dev/null || true
-  done
-  for svc in $core_apps; do
-    typeset port=${app_ports[$svc]:-0}
-    if (( port > 0 )); then
-      typeset code; code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://127.0.0.1:${port}/up 2>/dev/null)
-      if [[ $code != 200 ]]; then
-        log WARN "$svc /up=$code before restart; attempting one controlled restart"
-        /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
-          || { log ERROR "$svc restart/start failed"; return 1; }
-        sleep 10
-        code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://127.0.0.1:${port}/up 2>/dev/null)
-        [[ $code == 200 ]] || { log ERROR "$svc /up still $code after restart"; return 1; }
-        continue
-      fi
-    fi
-    /usr/sbin/rcctl restart $svc 2>/dev/null || /usr/sbin/rcctl start $svc 2>/dev/null \
-      || { log ERROR "$svc restart/start failed"; return 1; }
-  done
-  log INFO "optional Rails apps left stopped (vm23_small); start with: doas rcctl start <app>"
-
-  ruby34 "${SCRIPT_DIR}/health_check.rb" --core && log INFO "health_check ok" \
-    || { log ERROR "health_check failed"; return 1; }
-}
-
-source "${SCRIPT_DIR}/_net.sh"
-
-trap 'cleanup' EXIT
-trap 'error_handler $? $LINENO' ERR INT TERM
-
-typeset -r BRGEN_IP="46.23.89.226"
-typeset -r HYP_IP="194.63.248.53"
-typeset -r LOCALHOST="127.0.0.1"
-typeset -r EMAIL_ADDRESS="bergen@pub.attorney"
-
-typeset -a PUBLIC_RESOLVERS=(8.8.8.8 1.1.1.1 9.9.9.9)
-typeset -A APP_PORTS=(
-  brgen 38182
-  amber 61352
-  bsdports 47312
-  hjerterom 38891
-  master 53187
-)
-typeset -A FAILED_CERTS
-
-validate_ip "$BRGEN_IP" || { log ERROR "Invalid BRGEN_IP: $BRGEN_IP"; exit 1 }
-validate_ip "$HYP_IP"   || { log ERROR "Invalid HYP_IP: $HYP_IP"; exit 1 }
-
-ALL_APPS=(
-  brgen:brgen.no
-  amber:amber.brgen.no
-  bsdports:bsdports.org
-  hjerterom:hjerterom.brgen.no
-)
-
-SERVICES=()
-
-ALL_DOMAINS=(
-  brgen.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger,ai
-  longyearbyn.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger
-  oshlo.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger
-  stvanger.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger
-  trmso.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger
-  trndheim.no:markedsplass,playlist,spilleliste,dating,tv,takeaway,maps,messenger
-  reykjavk.is:markadur,playlist,dating,tv,takeaway,maps,messenger
-  kbenhvn.dk:markedsplads,playlist,dating,tv,takeaway,maps,messenger
-  gtebrg.se:marknadsplats,playlist,dating,tv,takeaway,maps,messenger
-  mlmoe.se:marknadsplats,playlist,dating,tv,takeaway,maps,messenger
-  stholm.se:marknadsplats,playlist,dating,tv,takeaway,maps,messenger
-  hlsinki.fi:markkinapaikka,playlist,dating,tv,takeaway,maps,messenger
-  brmingham.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  cardff.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  edinbrgh.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  glasgw.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  lndon.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  lverpool.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  mnchester.uk:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  amstrdam.nl:marktplaats,playlist,dating,tv,takeaway,maps,messenger
-  rottrdam.nl:marktplaats,playlist,dating,tv,takeaway,maps,messenger
-  utrcht.nl:marktplaats,playlist,dating,tv,takeaway,maps,messenger
-  brssels.be:marche,playlist,dating,tv,takeaway,maps,messenger
-  zrich.ch:marktplatz,playlist,dating,tv,takeaway,maps,messenger
-  lchtenstein.li:marktplatz,playlist,dating,tv,takeaway,maps,messenger
-  frankfrt.de:marktplatz,playlist,dating,tv,takeaway,maps,messenger
-  brdeaux.fr:marche,playlist,dating,tv,takeaway,maps,messenger
-  mrseille.fr:marche,playlist,dating,tv,takeaway,maps,messenger
-  mlan.it:mercato,playlist,dating,tv,takeaway,maps,messenger
-  lisbon.pt:mercado,playlist,dating,tv,takeaway,maps,messenger
-  wrsawa.pl:marktplatz,playlist,dating,tv,takeaway,maps,messenger
-  gdnsk.pl:marktplatz,playlist,dating,tv,takeaway,maps,messenger
-  austn.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  chcago.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  denvr.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  dllas.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  dnver.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  dtroit.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  houstn.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  lsangeles.com:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  mnnesota.com:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  newyrk.us:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  prtland.com:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  wshingtondc.com:marketplace,playlist,dating,tv,takeaway,maps,messenger
-  pub.healthcare
-  pub.attorney
-  freehelp.legal
-  bsdports.org
-  bsddocs.org
-  discordb.org
-  stacyspassion.com
-  foball.no
-  amber.brgen.no
-  hjerterom.brgen.no
-)
-
-# ── Stage 1: DNS, DNSSEC, TLS certificates ────────────────────────────────────
-
-stage_1() {
-  log INFO "Stage 1: DNS and certificates"
-
-  typeset -a _df_root; _df_root=("${(@f)$(df -k /)}"); typeset _root_avail=${${(z)_df_root[2]}[4]}
-  (( _root_avail < 10000 )) && { log ERROR "Insufficient disk space on /"; exit 1 }
-  typeset -a _df_var; _df_var=("${(@f)$(df -k /var)}"); typeset _var_avail=${${(z)_df_var[2]}[4]}
-  (( _var_avail < 512000 )) && { log ERROR "Insufficient disk space on /var"; exit 1 }
-
-  pkg_add -U ldns-utils ruby%3.4 litestream zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak 2>/tmp/pkg_add.log \
-    || { log ERROR "pkg_add failed. See /tmp/pkg_add.log"; exit 1 }
-
-  [[ -f /etc/rc.conf.local && $(<"/etc/rc.conf.local") == *"pf=NO"* ]] && log WARN "pf disabled in rc.conf.local"
-  ifconfig vio0 >/dev/null 2>&1 || { log ERROR "Interface vio0 not found"; exit 1 }
-
-  /sbin/pfctl -d || log WARN "pf disable failed"
-  /sbin/pfctl -e || { log ERROR "pf enable failed"; exit 1 }
-  install_template etc/pf.stage1.conf /etc/pf.conf
-  /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
-  /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf failed"; exit 1 }
-
-  [[ -d /var/nsd/etc ]]          || { log ERROR "/var/nsd/etc missing"; exit 1 }
-  [[ -d /var/nsd/zones/master ]] || { log ERROR "/var/nsd/zones/master missing"; exit 1 }
-
-  backup_directory /var/nsd/zones/master nsd-zones || { log ERROR "Backup failed"; exit 1 }
-  transaction_log "DELETE" "/var/nsd/etc/*" "START"
-  rm -rf /var/nsd/etc/*(/) /var/nsd/zones/master/*(/)
-  transaction_log "DELETE" "/var/nsd/etc/* and /var/nsd/zones/master/*" "SUCCESS"
-
-  install_template var/nsd/etc/nsd.conf /var/nsd/etc/nsd.conf
-  for domain in ${ALL_DOMAINS[*]%%:*}; do
-    append_template var/nsd/etc/nsd-zone.tmpl /var/nsd/etc/nsd.conf
-  done
-  nsd-checkconf /var/nsd/etc/nsd.conf || { log ERROR "nsd.conf invalid"; exit 1 }
-
-  typeset serial=${$(date +%Y%m%d%H):-}
-  for domain_entry in $ALL_DOMAINS; do
-    typeset domain=${domain_entry%%:*}
-    typeset subdomains=${domain_entry#*:}
-    [[ $subdomains = $domain ]] && subdomains=""
-
-    install_template var/nsd/zones/master/zone.tmpl /var/nsd/zones/master/$domain.zone
-    [[ $domain = brgen.no ]] && print -r -- "ns IN A $BRGEN_IP" >> /var/nsd/zones/master/$domain.zone
-
-    if [[ -n $subdomains && $subdomains != $domain ]]; then
-      for subdomain in ${(s:,:):-$subdomains}; do
-        print -r -- "$subdomain IN A $BRGEN_IP" >> /var/nsd/zones/master/$domain.zone
-      done
-    fi
-
-    nsd-checkzone "$domain" /var/nsd/zones/master/$domain.zone \
-      || { log ERROR "Zone invalid for $domain"; exit 1 }
-
-    cd /var/nsd/zones/master
-    typeset zsk ksk
-    zsk=$(ldns-keygen -a ECDSAP256SHA256 "$domain")
-    ksk=$(ldns-keygen -k -a ECDSAP256SHA256 -b 2048 "$domain")
-
-    typeset zonefile=/var/nsd/zones/master/$domain.zone
-    typeset signed_zonefile=/var/nsd/zones/master/$domain.zone.signed
-    typeset salt=$(dd if=/dev/random bs=16 count=1 2>/dev/null | sha1 -q)
-    ldns-signzone -n -p -s "$salt" "$zonefile" "$zsk" "$ksk"
-    nsd-checkzone "$domain" "$signed_zonefile" || { log ERROR "Signed zone invalid for $domain"; exit 1 }
-
-    nsd-control reload 2>/dev/null || true
-    ldns-key2ds -n -2 /var/nsd/zones/master/$domain.zone.signed > /var/nsd/zones/master/$domain.ds
-    chown _nsd:_nsd /var/nsd/zones/master/*
-    chmod 640 /var/nsd/zones/master/*
-  done
-
-  [[ ! -f /var/nsd/etc/nsd_server.pem ]] && {
-    log INFO "Generating NSD control certificates"
-    cd /var/nsd/etc && nsd-control-setup || { log ERROR "nsd-control-setup failed"; exit 1 }
-  }
-
-  cleanup_nsd
-  /usr/sbin/rcctl enable nsd
-
-  typeset retries=0 max_retries=2
-  while (( retries <= max_retries )); do
-    /usr/bin/timeout 10 /usr/sbin/rcctl start nsd && break
-    (( retries++ ))
-    (( retries <= max_retries )) && cleanup_nsd || { log ERROR "nsd failed"; exit 1 }
-  done
-
-  sleep 5
-  typeset _nsd_check; _nsd_check=$(/usr/sbin/rcctl check nsd)
-  [[ $_nsd_check == *"nsd(ok)"* ]] || { log ERROR "nsd not running"; exit 1 }
-  verify_nsd
-
-  [[ -d /var/www/acme ]] || mkdir -p /var/www/acme
-  install_static etc/httpd.conf /etc/httpd.conf
-  httpd -n -f /etc/httpd.conf || { log ERROR "httpd.conf invalid"; exit 1 }
-  /usr/sbin/rcctl enable httpd
-  /usr/sbin/rcctl start httpd || { log ERROR "httpd failed"; exit 1 }
-  sleep 5
-  typeset _httpd_check; _httpd_check=$(/usr/sbin/rcctl check httpd)
-  [[ $_httpd_check == *"httpd(ok)"* ]] || { log ERROR "httpd not running"; exit 1 }
-
-  # httpd strips /.well-known/acme-challenge/ and serves from /var/www/acme/<token>
-  print -r -- test > /var/www/acme/test
-  typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" http://$BRGEN_IP/.well-known/acme-challenge/test):-000}
-  rm -f /var/www/acme/test
-  [[ $http_status == "200" ]] || { log ERROR "httpd pre-flight failed (HTTP $http_status)"; exit 1 }
-
-  [[ $(<"/etc/group") == *$'\n_acme:'* || $(<"/etc/group") == _acme:* ]] || groupadd -g 765 _acme
-  [[ ! -f /etc/acme/letsencrypt_privkey.pem ]] && \
-    openssl genpkey -algorithm RSA -out /etc/acme/letsencrypt_privkey.pem -pkeyopt rsa_keygen_bits:4096
-  chown root:_acme /etc/acme/letsencrypt_privkey.pem
-  chmod 640 /etc/acme/letsencrypt_privkey.pem
-
-  install_static etc/acme-client.conf /etc/acme-client.conf
-  for domain_entry in $ALL_DOMAINS; do
-    typeset domain=${domain_entry%%:*}
-    typeset subdomains=${domain_entry#*:}
-    [[ $subdomains = $domain ]] && subdomains=""
-    {
-      print -r -- "domain \"$domain\" {"
-      if [[ -n $subdomains ]]; then
-        typeset altnames="\"$domain\""
-        for sub in ${(s:,:)subdomains}; do altnames="$altnames \"$sub.$domain\""; done
-        print -r -- "  alternative names { $altnames }"
-      fi
-      print -r -- "  domain key \"/etc/ssl/private/$domain.key\""
-      print -r -- "  domain full chain certificate \"/etc/ssl/$domain.fullchain.pem\""
-      print -r -- "  sign with letsencrypt"
-      print -r -- "  challengedir \"/var/www/acme\""
-      print -r -- "}"
-      print -r -- ""
-    } >> /etc/acme-client.conf
-  done
-  acme-client -n -f /etc/acme-client.conf || { log ERROR "acme-client.conf invalid"; exit 1 }
-
-  for domain_entry in $ALL_DOMAINS; do
-    typeset domain=${domain_entry%%:*}
-    typeset dns_check=${$(/usr/bin/dig @"$BRGEN_IP" "$domain" A +short):-}
-    if [[ $dns_check != $BRGEN_IP ]]; then
-      log WARN "DNS for $domain failed"; FAILED_CERTS[$domain]=1; continue
-    fi
-    print -r -- "test_$domain" > /var/www/acme/test_$domain
-    typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $domain" http://$BRGEN_IP/.well-known/acme-challenge/test_$domain):-000}
-    rm -f /var/www/acme/test_$domain
-    if [[ $http_status != 200 ]]; then
-      log WARN "HTTP test for $domain failed"; FAILED_CERTS[$domain]=1; continue
-    fi
-    if acme-client -v -f /etc/acme-client.conf "$domain"; then
-      generate_tlsa_record "$domain"
-    else
-      log WARN "Certificate issuance failed for $domain"; FAILED_CERTS[$domain]=1
-    fi
-  done
-  (( $#FAILED_CERTS )) && retry_failed_certs
-
-  install_static usr/local/bin/renew-certs.sh /usr/local/bin/renew-certs.sh
-  chmod 755 /usr/local/bin/renew-certs.sh
-  typeset crontab_tmp=/tmp/crontab_tmp
-  crontab -l 2>/dev/null > $crontab_tmp || :
-  print -r -- "0 2 * * 1 /usr/local/bin/renew-certs.sh >> /var/log/cert-renewal.log 2>&1" >> $crontab_tmp
-  crontab $crontab_tmp || { log ERROR "Crontab update failed"; exit 1 }
-  rm $crontab_tmp
-
-  log INFO "Stage 1 complete. ns.brgen.no ($BRGEN_IP) authoritative with DNSSEC."
-  log INFO "DS records: /var/nsd/zones/master/*.ds — submit each to your registrar (Domeneshop: domain settings → DNSSEC)."
-  log INFO "After submitting DS records, wait 24-48h for propagation, then press Enter to continue."
-  log INFO "Verify with: dig DS brgen.no +short"
-  read -r
-}
-
-# ── Stage 2: services, Rails apps, relayd ─────────────────────────────────────
-
-setup_services() {
-  log INFO "Setting up services"
-  /usr/sbin/rcctl enable smtpd
-  /usr/sbin/rcctl start smtpd || { log ERROR "smtpd failed"; exit 1 }
-  sleep 5
-  typeset _smtpd_check; _smtpd_check=$(/usr/sbin/rcctl check smtpd)
-  [[ $_smtpd_check == *"smtpd(ok)"* ]] || { log ERROR "smtpd not running"; exit 1 }
-  /usr/bin/timeout 5 telnet $BRGEN_IP 25 >/dev/null 2>&1 || log WARN "SMTP port 25 not responding"
-  /usr/sbin/rcctl enable relayd
-  log INFO "Services configured. relayd enabled but not started (awaiting configuration)"
-}
-
-setup_litestream() {
-  log INFO "Setting up litestream"
-  mkdir -p /var/backups/litestream
-  install_template etc/litestream.yml /etc/litestream.yml
-  install_template etc/rc.d/litestream /etc/rc.d/litestream
-  chmod 755 /etc/rc.d/litestream
-  /usr/sbin/rcctl enable litestream
-  /usr/sbin/rcctl restart litestream || /usr/sbin/rcctl start litestream \
-    || { log ERROR "litestream failed"; exit 1 }
-  sleep 2
-  typeset _c; _c=$(/usr/sbin/rcctl check litestream)
-  [[ $_c == *"litestream(ok)"* ]] || { log ERROR "litestream not running"; exit 1 }
-}
-
-bootstrap_rails_app() {
-  typeset app=$1 port=$2
-  typeset app_dir=/home/dev/pub4/DEPLOY/rails/$app
-  typeset secret
-
-  [[ -d $app_dir ]] || { log ERROR "app tree missing: $app_dir"; return 1 }
-  log INFO "bootstrapping $app from pub4 tree on :$port"
-
-  su -l dev -c "gem install --user-install rails bundler falcon" >/dev/null 2>&1 || :
-  su -l dev -c "cd $app_dir && bundle config set --local deployment true && bundle config set --local without development:test && RAILS_ENV=production bundle install" \
-    || { log ERROR "bundle install failed for $app"; return 1 }
-  su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:create db:migrate" \
-    || log WARN "db:create/migrate non-zero for $app (idempotent skip likely)"
-  if [[ -f $app_dir/db/seeds.rb ]]; then
-    if [[ ${RUN_PRODUCTION_SEEDS:-0} == 1 ]]; then
-      log WARN "$app: RUN_PRODUCTION_SEEDS=1 set; running production db:seed"
-      su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:seed"
-    else
-      log INFO "$app: production db:seed skipped (set RUN_PRODUCTION_SEEDS=1 for explicit one-off seed)"
-    fi
-  fi
-
-  typeset -a _secret_lines
-  _secret_lines=("${(@f)$(su -l dev -c "cd $app_dir && RAILS_ENV=production bundle exec rails secret 2>/dev/null")}")
-  secret=${_secret_lines[-1]}
-  [[ ${#secret} -ge 64 ]] || { log ERROR "$app: secret capture failed (got ${#secret} chars)"; return 1 }
-  [[ -f /etc/${app}.env ]] || print -r -- "SECRET_KEY_BASE=${secret}" > /etc/${app}.env
-  chmod 640 /etc/${app}.env 2>/dev/null || true
-
-  typeset svc=$app
-  [[ -f ${SCRIPT_DIR}/etc/rc.d/${svc} ]] || install_template etc/rc.d/rails-app.tmpl /etc/rc.d/${svc}
-  chmod 755 /etc/rc.d/${svc}
-  /usr/sbin/rcctl enable ${svc}
-  /usr/sbin/rcctl restart ${svc} || /usr/sbin/rcctl start ${svc} \
-    || { log ERROR "${svc} failed to start"; return 1 }
-  sleep 10
-  typeset _c; _c=$(/usr/sbin/rcctl check ${svc})
-  [[ $_c == *"${svc}(ok)"* ]] || { log ERROR "${svc} not running"; return 1 }
-  typeset _http; _http=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 http://127.0.0.1:${port}/up 2>/dev/null)
-  [[ $_http == "200" ]] || log WARN "${svc} /up returned $_http — SECRET_KEY_BASE or DB may need attention"
-  log INFO "  ${svc} live on :$port"
-}
-
-configure_relayd() {
-  log INFO "Writing relayd.conf (TLS+SNI on :443)"
-
-  typeset -A DOMAIN_BACKEND=() BACKEND_PORT=()
-  typeset app_entry app dom entry rest sub backend
-
-  for app_entry in $ALL_APPS; do
-    app=${app_entry%%:*}; dom=${app_entry##*:}
-    DOMAIN_BACKEND[$dom]=$app
-    BACKEND_PORT[$app]=${APP_PORTS[$app]:-0}
-  done
-  DOMAIN_BACKEND[ai.brgen.no]=master
-  BACKEND_PORT[master]=${APP_PORTS[master]:-53187}
-  DOMAIN_BACKEND[hjerterom.brgen.no]=hjerterom
-  for entry in $ALL_DOMAINS; do
-    dom=${entry%%:*}
-    [[ -n ${DOMAIN_BACKEND[$dom]:-} ]] && continue
-    DOMAIN_BACKEND[$dom]=brgen
-  done
-
-  for dom in ${(k)DOMAIN_BACKEND}; do
-    [[ -f /etc/ssl/${dom}.fullchain.pem ]] || continue
-    ln -sf /etc/ssl/${dom}.fullchain.pem /etc/ssl/${dom}.crt
-    # Primary domain: key is the real file, not a symlink — nothing to do.
-  done
-  # Subdomains share the parent cert+key — create both symlinks so relayd
-  # tls keypair finds /etc/ssl/${dom}.crt AND /etc/ssl/private/${dom}.key.
-  # Skip only domains that have their own fullchain.pem (handled above).
-  # Use -sf so existing .crt symlinks don't prevent missing .key from being created.
-  for dom in ${(k)DOMAIN_BACKEND}; do
-    [[ -f /etc/ssl/${dom}.fullchain.pem ]] && continue
-    typeset parent="" try=${dom#*.}
-    while [[ -n $try ]]; do
-      if [[ -f /etc/ssl/${try}.fullchain.pem ]]; then parent=$try; break; fi
-      [[ $try == *.* ]] || break
-      try=${try#*.}
-    done
-    [[ -n $parent ]] || continue
-    ln -sf /etc/ssl/${parent}.fullchain.pem /etc/ssl/${dom}.crt
-    ln -sf /etc/ssl/private/${parent}.key    /etc/ssl/private/${dom}.key
-  done
-
-  {
-    print -r -- "log connection errors"
-    print -r -- "interval 120"
-    print -r -- "timeout 30000"
-    print -r -- ""
-    for backend in ${(k)BACKEND_PORT}; do
-      print -r -- "table <${backend}> { 127.0.0.1 }"
-    done
-    print -r -- ""
-    print -r -- "http protocol \"https_proxy\" {"
-    for dom in ${(k)DOMAIN_BACKEND}; do
-      [[ -L /etc/ssl/${dom}.crt ]] && print -r -- "  tls keypair \"${dom}\""
-    done
-    print -r -- "  match request header set \"X-Forwarded-Proto\" value \"https\""
-    print -r -- "  match request header set \"X-Forwarded-For\" value \"\$REMOTE_ADDR\""
-    print -r -- "  match response header set \"Strict-Transport-Security\" value \"max-age=31536000; includeSubDomains; preload\""
-    print -r -- "  match response header set \"Referrer-Policy\" value \"strict-origin\""
-    print -r -- "  match response header set \"X-Content-Type-Options\" value \"nosniff\""
-    print -r -- "  match response header set \"X-XSS-Protection\" value \"0\""
-    print -r -- "  # No global X-Frame-Options — MASTER uses CSP frame-ancestors for brgen/amber embeds."
-    print -r -- "  match response header set \"Permissions-Policy\" value \"accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(self), payment=(), usb=()\""
-    print -r -- "  match response header remove \"X-Frame-Options\""
-    print -r -- "  match response header remove \"Server\""
-    print -r -- "  http websockets"
-    for dom in ${(k)DOMAIN_BACKEND}; do
-      backend=${DOMAIN_BACKEND[$dom]}
-      print -r -- "  match request header \"Host\" value \"${dom}\" forward to <${backend}>"
-      for entry in $ALL_DOMAINS; do
-        [[ ${entry%%:*} == $dom ]] || continue
-        rest=${entry#*:}
-        [[ $rest == $dom ]] && break
-        for sub in ${(s:,:)rest}; do
-          [[ -n ${DOMAIN_BACKEND[${sub}.${dom}]:-} ]] && continue
-          print -r -- "  match request header \"Host\" value \"${sub}.${dom}\" forward to <${backend}>"
-        done
-        break
-      done
-    done
-    print -r -- "  pass"
-    print -r -- "}"
-    print -r -- ""
-    print -r -- "relay \"https_in\" {"
-    print -r -- "  listen on 0.0.0.0 port 443 tls"
-    print -r -- "  protocol \"https_proxy\""
-    for backend in ${(k)BACKEND_PORT}; do
-      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check http \"/up\" code 200"
-    done
-    print -r -- "}"
-  } > /etc/relayd.conf
-
-  relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid"; exit 1 }
-  /usr/sbin/rcctl enable relayd
-  /usr/sbin/rcctl restart relayd || /usr/sbin/rcctl start relayd \
-    || { log ERROR "relayd failed"; exit 1 }
-  sleep 3
-  typeset _c; _c=$(/usr/sbin/rcctl check relayd)
-  [[ $_c == *"relayd(ok)"* ]] || { log ERROR "relayd not running"; exit 1 }
-  log INFO "relayd live — TLS+SNI on :443"
-}
-
-configure_dev_ssh() {
-  typeset cfg=/home/dev/.ssh/config
-  install -d -o dev -g dev -m 700 /home/dev/.ssh
-  [[ -f $cfg ]] || install -o dev -g dev -m 600 /dev/null "$cfg"
-  typeset existing="$(<$cfg)"
-  if [[ $existing != *"Host github.com"* ]]; then
-    print -r -- $'\nHost github.com\n  IdentityFile ~/.ssh/id_ed25519_brgen\n  IdentitiesOnly yes' >>"$cfg"
-    chown dev:dev "$cfg"
-    chmod 600 "$cfg"
-    log INFO "dev ssh: github.com block installed"
-  fi
-
-  # Ensure the operator dev account uses the modern Zsh environment
-  # (packages for zsh + starship + neovim etc. are installed in Stage 1).
-  typeset dev_shell=${${(s/:/)$(getent passwd dev)}[-1]}
-  if [[ $dev_shell != */zsh ]]; then
-    chsh -s /usr/local/bin/zsh dev 2>/dev/null || log WARN "chsh dev to zsh failed (may need manual)"
-  fi
-}
-
-stage_2() {
-  log INFO "Stage 2: services and apps"
-
-  check_dns_propagation
-
-  typeset _mem_line; _mem_line=$(vmstat -s | while IFS= read -r _l; do [[ $_l == *"free memory"* ]] && print -r -- "$_l" && break; done)
-  typeset _mem_free=${${(z)_mem_line}[1]}
-  (( _mem_free < 512000 )) && { log ERROR "Insufficient free memory"; exit 1 }
-
-  install_template etc/pf.conf /etc/pf.conf
-  /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
-  /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf failed"; exit 1 }
-
-  install_template etc/mail/smtpd.conf /etc/mail/smtpd.conf
-  smtpd -n -f /etc/mail/smtpd.conf || { log ERROR "smtpd.conf invalid"; exit 1 }
-  [[ ! -f /etc/ssl/private/smtp.key ]] && \
-    openssl genpkey -algorithm RSA -out /etc/ssl/private/smtp.key -pkeyopt rsa_keygen_bits:4096
-  [[ ! -f /etc/ssl/smtp.crt ]] && \
-    openssl req -x509 -new -key /etc/ssl/private/smtp.key -out /etc/ssl/smtp.crt -days 365 -subj "/CN=mail.pub.attorney"
-  chmod 640 /etc/ssl/private/smtp.key /etc/ssl/smtp.crt
-
-  setup_services
-
-  typeset -a deploy_order=(amber)
-  for app_entry in $ALL_APPS; do
-    typeset app=${app_entry[(ws:*:)1]}
-    [[ $app != amber ]] && deploy_order+=($app)
-  done
-  for app in $deploy_order; do
-    typeset port=${APP_PORTS[$app]:-}
-    [[ -n $port ]] || { log ERROR "missing fixed APP_PORTS entry for $app"; exit 1; }
-    bootstrap_rails_app "$app" "$port" || { log ERROR "bootstrap failed: $app"; exit 1 }
-  done
-
-  setup_litestream
-
-  for svc_entry in $SERVICES; do
-    typeset svc_name=${svc_entry%%:*}
-    typeset svc_rest=${svc_entry#*:}
-    typeset svc_port=${svc_rest##*:}
-    log INFO "Setting up service: $svc_name on port $svc_port"
-    chmod 755 /etc/rc.d/$svc_name
-    /usr/sbin/rcctl enable $svc_name
-    /usr/sbin/rcctl start $svc_name || log WARN "$svc_name start failed (may need manual start)"
-  done
-
-  configure_dev_ssh
-
-  log INFO "Deploying MASTER web UI"
-  typeset m3dir="/home/dev/pub4/MASTER"
-  [[ -d $m3dir ]] || { log ERROR "MASTER not found at $m3dir"; exit 1 }
-  cd "$m3dir/web"
-  bundle config set --local path vendor/bundle
-  bundle config set --local deployment true
-  bundle config set --local without 'development test'
-  RAILS_ENV=production bundle install --quiet
-  # Propshaft must not re-digest public/assets/ (nested assets/assets wedges Falcon boot).
-  rm -rf public/assets/assets 2>/dev/null || true
-  log INFO "MASTER: building face runtime + precompiling assets"
-  RAILS_ENV=production bundle exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:precompile \
-    || log WARN "MASTER assets:precompile failed"
-  ruby "${SCRIPT_DIR}/../rails/master_web_assets_gate.rb" 2>/dev/null \
-    || ruby "$m3dir/../DEPLOY/rails/master_web_assets_gate.rb" 2>/dev/null \
-    || log WARN "MASTER master_web_assets_gate skipped"
-  typeset master_secret
-  typeset -a _master_secret_lines
-  _master_secret_lines=("${(@f)$(RAILS_ENV=production bundle exec rails secret 2>/dev/null)}")
-  master_secret=${_master_secret_lines[-1]}
-  [[ ${#master_secret} -ge 64 ]] || { log ERROR "master: secret capture failed (got ${#master_secret} chars)"; exit 1 }
-  if [[ -f ${SCRIPT_DIR}/etc/rc.d/master ]]; then
-    cp "${SCRIPT_DIR}/etc/rc.d/master" /etc/rc.d/master
-  else
-    install_template etc/rc.d/master.tmpl /etc/rc.d/master
-  fi
-  chmod 555 /etc/rc.d/master
-  [[ -f $m3dir/data/soul.yml ]] && chmod 0444 "$m3dir/data/soul.yml"
-  [[ -f $m3dir/data/checksums.yml ]] && chmod 0444 "$m3dir/data/checksums.yml"
-  rcctl enable master
-  rcctl start master
-  log INFO "MASTER web UI running on :53187"
-
-  configure_relayd
-
-  log INFO "Deploy complete. Test: curl https://brgen.no, rcctl check master."
-}
-
-# ── Entry point ───────────────────────────────────────────────────────────────
-
-main() {
-  if [[ ${1:-} = --help ]]; then
-    print -r -- "Configure OpenBSD 7.8 for Rails with DNSSEC and relayd TLS+SNI.
-Usage:
-  doas zsh openbsd.sh --first-install
-  doas zsh openbsd.sh --stage-1        # requires I_UNDERSTAND_DNS_WIPE=1
-  doas zsh openbsd.sh --stage-2
-  doas zsh openbsd.sh --sync-configs
-
-The no-argument form is intentionally disabled because stage_1 rewrites
-authoritative DNS material."
-    exit 0
-  fi
-
-  if [[ ${1:-} = --sync-configs ]]; then
-    sync_openbsd_apply "${SCRIPT_DIR}"
-    exit $?
-  fi
-
-  case ${1:-} in
-    --first-install)
-      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
-      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
-      stage_1
-      stage_2
-      ;;
-    --stage-1|--stage1)
-      [[ ${I_UNDERSTAND_DNS_WIPE:-0} == 1 ]] || {
-        log ERROR "stage_1 rewrites DNS material; rerun with I_UNDERSTAND_DNS_WIPE=1 if this is intentional"
-        exit 1
-      }
-      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
-      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
-      stage_1
-      ;;
-    --stage-2|--stage2)
-      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
-      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
-      stage_2
-      ;;
-    *)
-      log ERROR "refusing no-argument deploy because stage_1 is destructive; use --first-install, --stage-2, or --sync-configs"
-      exit 1
-      ;;
-  esac
-}
-
-main "$@"
+# Compatibility shim — use DEPLOY.sh
+exec "${0:a:h}/DEPLOY.sh" "$@"
 ```
 
 ### DEPLOY/openbsd/ptr_openbsd_amsterdam.rb
@@ -9418,6 +9526,10 @@ if vmstat -s >/dev/null 2>&1; then
 fi
 
 GUARD_REPO=${GUARD_REPO:-/home/dev/pub4}
+if [[ -r ${GUARD_REPO}/DEPLOY/openbsd/sh/validate_doas.ksh ]]; then
+	. ${GUARD_REPO}/DEPLOY/openbsd/sh/validate_doas.ksh
+	install_doas_conf_from_repo "${GUARD_REPO}/DEPLOY/openbsd/etc/doas.conf" resource-guard || true
+fi
 if [[ -f ${GUARD_REPO}/DEPLOY/openbsd/stale_ci_cleanup.ksh ]]; then
   . ${GUARD_REPO}/DEPLOY/openbsd/stale_ci_cleanup.ksh
   stale_ci_cleanup "$load" "$mem_free_pct"
@@ -9516,7 +9628,7 @@ set -euo pipefail
 cd ~/pub4
 git pull origin main
 cd DEPLOY/openbsd
-doas zsh openbsd.sh
+doas zsh DEPLOY.sh
 ENDSSH
 ```
 
@@ -11819,7 +11931,7 @@ require "fileutils"
 MIRROR = File.expand_path("..", __FILE__)
 
 FIXED_SOURCES = [
-  "/etc/rc.d/master", "/etc/rc.d/brgen", "/etc/rc.d/brgen_tv",
+  "/etc/rc.d/master", "/etc/rc.d/brgen",
   "/etc/rc.d/amber",
   "/etc/rc.d/bsdports",
   "/etc/rc.d/hjerterom",
@@ -11890,31 +12002,9 @@ end
 
 ```bash
 #!/usr/bin/env zsh
+# Renew TLS certs via acme-client; relayd reload only.
+# Zone signing and TLSA records: usr/local/bin/nsd-resign (daily.local).
 set -euo pipefail
-
-generate_tlsa_record() {
-  typeset domain=$1
-  typeset cert=/etc/ssl/$domain.fullchain.pem
-  typeset zonefile=/var/nsd/zones/master/$domain.zone
-  typeset zsk=/var/nsd/zones/master/K$domain.+013+zsk.key
-  typeset ksk=/var/nsd/zones/master/K$domain.+013+ksk.key
-  [[ ! -f $cert ]] && return 1
-  typeset tlsa_record
-  tlsa_record=$(openssl x509 -noout -pubkey -in "$cert" | \
-    openssl pkey -pubin -outform der 2>/dev/null | \
-    openssl dgst -sha256 2>/dev/null)
-  tlsa_record=${tlsa_record##* }
-  [[ -z $tlsa_record ]] && return 1
-  typeset -a lines
-  lines=("${(@f)$(<$zonefile)}")
-  lines=("${(@)lines:#_443._tcp.$domain. IN TLSA*}")
-  print -rl -- $lines > "$zonefile"
-  print -r -- "_443._tcp.$domain. IN TLSA 3 1 1 $tlsa_record" >> "$zonefile"
-  typeset salt
-  salt=$(dd if=/dev/random bs=16 count=1 2>/dev/null | sha1 -q)
-  ldns-signzone -n -p -s "$salt" "$zonefile" "$zsk" "$ksk"
-  nsd-control reload
-}
 
 ALL_DOMAINS=(
   brgen.no longyearbyn.no oshlo.no stvanger.no trmso.no trndheim.no
@@ -11927,13 +12017,12 @@ ALL_DOMAINS=(
   wshingtondc.com pub.healthcare pub.attorney freehelp.legal
   bsdports.org bsddocs.org discordb.org
   stacyspassion.com
- foball.no amber.brgen.no
+  foball.no amber.brgen.no
 )
 
 for domain in $ALL_DOMAINS; do
   if acme-client -v -f /etc/acme-client.conf "$domain"; then
     print -r -- "Renewed: $domain"
-    generate_tlsa_record "$domain"
   fi
 done
 
@@ -12020,6 +12109,117 @@ limits:
   mem_free_pct_crit: 6
   relayd_check_interval: 120
   master_falcon_workers: 2  # SSE must not block /up relayd health checks
+```
+
+### DEPLOY/openbsd/vps_safety_gate.rb
+
+```ruby
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+ROOT = File.expand_path("../..", __dir__)
+OPENBSD = File.join(ROOT, "DEPLOY", "openbsd")
+failures = []
+
+doas_conf = File.join(OPENBSD, "etc", "doas.conf")
+if File.file?(doas_conf)
+  text = File.read(doas_conf)
+  failures << "doas.conf must end with newline (OpenBSD parser rejects EOF without one)" unless text.end_with?("\n")
+else
+  failures << "missing tracked etc/doas.conf"
+end
+
+validate_doas = File.join(OPENBSD, "sh", "validate_doas.ksh")
+failures << "missing DEPLOY/openbsd/sh/validate_doas.ksh" unless File.file?(validate_doas)
+
+console_common = File.join(OPENBSD, "sh", "vps_console_common.exp")
+failures << "missing DEPLOY/openbsd/sh/vps_console_common.exp" unless File.file?(console_common)
+
+Dir.glob(File.join(OPENBSD, "sh", "vps_console*.exp")).sort.each do |path|
+  rel = path.delete_prefix("#{ROOT}/")
+  text = File.read(path)
+  unless text.include?("vps_console_common.exp") && text.include?("require_console_risk_ack")
+    failures << "#{rel} must source vps_console_common.exp and call require_console_risk_ack"
+  end
+  if text.include?("vm27")
+    failures << "#{rel} must target vm23 only (found vm27)"
+  end
+end
+
+drop_install = File.join(OPENBSD, "sh", "vps_drop_install.exp")
+if File.file?(drop_install)
+  text = File.read(drop_install)
+  unless text.include?("vps_console_common.exp") && text.include?("require_console_risk_ack")
+    failures << "DEPLOY/openbsd/sh/vps_drop_install.exp must source vps_console_common.exp"
+  end
+end
+
+Dir.glob(File.join(OPENBSD, "etc", "rc.d", "*")).sort.each do |path|
+  next unless File.file?(path)
+  next if File.basename(path) == "litestream"
+
+  text = File.read(path)
+  rel = path.delete_prefix("#{ROOT}/")
+  if text.include?("falcon serve") && !text.include?("bundle34 exec falcon")
+    failures << "#{rel} must invoke falcon via bundle34 exec (gem binstub, not PATH)"
+  end
+end
+
+if failures.any?
+  warn "VPS safety gate failures:"
+  failures.each { |failure| warn "  - #{failure}" }
+  exit 1
+end
+
+puts "VPS safety gate passed (doas.conf, console guards, validate_doas.ksh, rc.d falcon)."
+```
+
+### DEPLOY/rails/DEPLOY.sh
+
+```bash
+#!/usr/bin/env zsh
+# Rails app deploy — executable script. App trees live in DEPLOY/rails/<app>/.
+# Routine (on vm23): cd ~/pub4/DEPLOY/rails && doas zsh DEPLOY.sh
+# Default deploys brgen (core). Pass an app name or `all` for every public app.
+set -euo pipefail
+
+SCRIPT_DIR=${0:a:h}
+typeset -a CORE_APPS=(brgen)
+typeset -a ALL_APPS=(brgen amber bsdports hjerterom)
+
+deploy_app() {
+  typeset app=$1
+  typeset script=${SCRIPT_DIR}/${app}/${app}.sh
+  [[ -f $script ]] || { print -u2 "DEPLOY.sh: no script for ${app} (${script})"; exit 1 }
+  print -r -- "==> ${app}"
+  doas zsh "$script"
+}
+
+main() {
+  if [[ ${1:-} = --help ]]; then
+    print -r -- "Rails deploy (DEPLOY.sh).
+Usage:
+  cd ~/pub4/DEPLOY/rails && doas zsh DEPLOY.sh          # brgen (default)
+  doas zsh DEPLOY.sh amber
+  doas zsh DEPLOY.sh all                               # all public apps"
+    exit 0
+  fi
+
+  case ${1:-brgen} in
+    all)
+      for app in $ALL_APPS; do deploy_app "$app"; done
+      ;;
+    brgen|amber|bsdports|hjerterom)
+      deploy_app "$1"
+      ;;
+    *)
+      print -u2 "DEPLOY.sh: unknown app '$1' (try brgen, amber, bsdports, hjerterom, or all)"
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"
 ```
 
 ### DEPLOY/rails/MULTI_TENANT_ROUTING.md
@@ -12139,7 +12339,7 @@ ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps
 | bsdports | bsdports.org | 47312 | Ports search and advisories |
 | hjerterom | hjerterom.brgen.no | 38891 | Food rescue and volunteer ops |
 
-Deploy: `doas zsh DEPLOY/rails/<app>/<app>.sh`
+Deploy: `cd DEPLOY/rails && doas zsh DEPLOY.sh` (default: brgen) or `doas zsh DEPLOY.sh <app>`
 
 ## Contract
 
@@ -14594,17 +14794,6 @@ module ApplicationHelper
     url_for(attachment.variant(resize_to_limit: [ largest, largest ]))
   end
 
-  def nok(amount)
-    number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")
-  end
-
-  def norwegian_date(value)
-    l(value.to_date, format: "%d.%m.%Y")
-  end
-
-  def api_date(value)
-    value.to_date.iso8601
-  end
 end
 ```
 
@@ -15563,8 +15752,8 @@ end
 
 class DeclutterChallenge < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
   belongs_to :user
   belongs_to :item
   belongs_to :outfit, optional: true
@@ -15731,9 +15920,8 @@ class Item < ApplicationRecord
   include MoneyInOre
   money_reader :price
 
-  # Engine-ize: pull shared behavior via pub4-shared (Gemfile path). Use Shared.concern for lazy load.
-  include (defined?(Shared) ? Shared.concern(:Reactable) : Module.new) rescue nil
-  include (defined?(Shared) ? Shared.concern(:Notifiable) : Module.new) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
   belongs_to :user
   has_one :garment_embedding, dependent: :destroy
   has_one :sustainability_metric, dependent: :destroy
@@ -15921,8 +16109,8 @@ end
 
 class Outfit < ApplicationRecord
   # Engine-ize Shared via pub4-shared
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
   belongs_to :user
   has_many :outfit_items, dependent: :destroy
   has_many :items, through: :outfit_items
@@ -26887,7 +27075,7 @@ module Maps
 
     def show
       @place = Place.includes(:city, :neighborhood).find(params[:id])
-      @place.record_activity!("PlaceViewed", source_vertical: "maps") rescue nil
+      @place.record_activity!("PlaceViewed", source_vertical: "maps")
       @recent_check_ins = @place.place_check_ins.includes(:user).recent.limit(10)
       @checked_in = authenticated? && @place.place_check_ins.exists?(user: Current.user)
     end
@@ -27880,7 +28068,7 @@ module Playlist
       @set.user = current_user if respond_to?(:current_user, true)
 
       if @set.save
-        @set.record_activity!("PlaylistSetCreated", actor: Current.user, source_vertical: "playlist") rescue nil
+        @set.record_activity!("PlaylistSetCreated", actor: Current.user, source_vertical: "playlist")
         redirect_to playlist_set_path(@set), notice: t("playlist.set_created", default: "Set created")
       else
         render :new, status: :unprocessable_entity
@@ -29026,18 +29214,6 @@ module ApplicationHelper
         ]
       )
     end
-  end
-
-  def nok(amount)
-    number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")
-  end
-
-  def norwegian_date(value)
-    l(value.to_date, format: "%d.%m.%Y")
-  end
-
-  def api_date(value)
-    value.to_date.iso8601
   end
 
   def safe_http_link(label, url)
@@ -32702,7 +32878,6 @@ end
 
 class Comment < ApplicationRecord
   include Shared::Votable
-  include Shared::ActivityTrackable
   tracks_activity created: "CommentCreated", source_vertical: "social", actor: :user
 
   belongs_to :user
@@ -32793,7 +32968,7 @@ end
 
 class Conversation < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Notifiable
   has_many :conversation_participants, dependent: :destroy
   has_many :participants, through: :conversation_participants, source: :user
   has_many :messages, dependent: :destroy
@@ -32897,7 +33072,6 @@ end
 # frozen_string_literal: true
 
 class Dating::Dislike < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "DatingDislike", source_vertical: "dating", visibility: "private", actor: :disliker
 
   belongs_to :disliker, class_name: "User"
@@ -32918,7 +33092,6 @@ end
 # frozen_string_literal: true
 
 class Dating::Like < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "DatingLike", source_vertical: "dating", visibility: "private", actor: :liker
 
   belongs_to :liker, class_name: "User"
@@ -32949,8 +33122,7 @@ end
 
 class Dating::Match < ApplicationRecord
   # Engine-ized Shared (tranche10)
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared::ActivityTrackable
+  include Shared::Notifiable
   tracks_activity created: "DatingMatch", source_vertical: "dating", visibility: "private", actor: :initiator
 
   belongs_to :initiator, class_name: "User"
@@ -32997,12 +33169,10 @@ end
 class Dating::Profile < ApplicationRecord
   include CityTenantable
 
-  # Engine-ize Shared
-  include Shared::ActivityTrackable
   tracks_activity created: "DatingProfileCreated", updated: "DatingProfileUpdated", source_vertical: "dating", visibility: "private", actor: :user
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::GeoLocatable
   include Shared::MediaProcessable
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Reactable
   belongs_to :user
   belongs_to :neighborhood, optional: true
   has_many_attached :photos
@@ -33021,7 +33191,6 @@ class Dating::Profile < ApplicationRecord
   validate :photos_present_when_visible, on: :update
 
   scope :visible, -> { where(visible: true) }
-  include Shared::GeoLocatable
   # nearby (bbox) + haversine provided by concern; old approx replaced for consistency
   scope :in_neighborhood, ->(neigh) { neigh ? where(neighborhood_id: neigh.id) : all }
 
@@ -33092,7 +33261,6 @@ end
 # frozen_string_literal: true
 
 class Follow < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "FollowCreated", source_vertical: "social", actor: :follower
 
   belongs_to :follower, class_name: "User"
@@ -33190,8 +33358,8 @@ end
 
 class Marketplace::Category < ApplicationRecord
   # Engine-ize
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
   belongs_to :parent, class_name: "Marketplace::Category", optional: true
   has_many :children, class_name: "Marketplace::Category", foreign_key: :parent_id, dependent: :nullify
   has_many :listings, class_name: "Marketplace::Listing", foreign_key: :category_id, dependent: :nullify
@@ -33217,10 +33385,9 @@ module Marketplace
     self.table_name = "marketplace_deals"
 
     # Engine-ize Shared
-    include Shared::ActivityTrackable
     tracks_activity created: "MarketplaceDealCreated", updated: "MarketplaceDealUpdated", source_vertical: "marketplace", actor: :listing_owner
-    include Shared.concern(:Reactable) rescue nil
-    include Shared.concern(:Notifiable) rescue nil
+    include Shared::Reactable
+    include Shared::Notifiable
     belongs_to :listing, class_name: "Marketplace::Listing"
 
     validates :headline, presence: true, length: { maximum: 160 }
@@ -33252,12 +33419,12 @@ end
 
 class Marketplace::Listing < ApplicationRecord
   include CityTenantable
-  include Shared::ActivityTrackable
   include Shared::MediaProcessable
+  include Shared::GeoLocatable
   tracks_activity created: "ListingCreated", source_vertical: "marketplace", actor: :user
 
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
   belongs_to :user
   belongs_to :store, class_name: "Marketplace::Store", optional: true
   belongs_to :category, class_name: "Marketplace::Category",
@@ -33299,9 +33466,6 @@ class Marketplace::Listing < ApplicationRecord
   scope :recent,   -> { order(created_at: :desc) }
   scope :popular,  -> { order(views_count: :desc) }
   scope :from_store, ->(store) { where(store: store) }
-
-  include Shared::GeoLocatable
-  # near/nearby + geo? + distance_to + haversine provided by concern (standardized pure ruby)
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
   scope :rated, -> { where("rating > 0") }
 
@@ -33333,7 +33497,6 @@ end
 # frozen_string_literal: true
 
 class Marketplace::ListingFavorite < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "MarketplaceListingFavorited", source_vertical: "marketplace", visibility: "private", actor: :user
 
   belongs_to :user
@@ -33350,7 +33513,6 @@ end
 
 class Marketplace::Order < ApplicationRecord
   include Shared::Notifiable
-  include Shared::ActivityTrackable
   tracks_activity created: "MarketplaceOrder", source_vertical: "marketplace", actor: :buyer
 
   belongs_to :buyer,   class_name: "User"
@@ -33385,7 +33547,6 @@ end
 # frozen_string_literal: true
 
 class Marketplace::Review < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "MarketplaceReviewCreated", source_vertical: "marketplace", actor: :user
 
   belongs_to :user
@@ -33445,11 +33606,10 @@ module Marketplace
     include CityTenantable
 
     # Engine-ized Shared
-    include Shared.concern(:Notifiable) rescue nil
-    include Shared.concern(:ActivityTrackable) rescue nil
+    include Shared::Notifiable
     tracks_activity created: "MarketplaceStoreCreated", updated: "MarketplaceStoreUpdated", source_vertical: "marketplace", actor: :owner
-    include Shared.concern(:GeoLocatable) rescue nil
-    include Shared.concern(:Reactable) rescue nil
+    include Shared::GeoLocatable
+    include Shared::Reactable
 
     self.table_name = "marketplace_stores"
 
@@ -33503,12 +33663,11 @@ end
 # frozen_string_literal: true
 
 class Message < ApplicationRecord
-  include Shared::ActivityTrackable
   include Shared::MediaProcessable
   tracks_activity created: "MessageSent", source_vertical: "messages", actor: :sender
 
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   belongs_to :conversation
   belongs_to :sender, class_name: "User", foreign_key: :sender_id
   has_many :message_receipts, dependent: :destroy
@@ -33746,8 +33905,8 @@ end
 # frozen_string_literal: true
 
 class Place < ApplicationRecord
-  # Engine-ize: Shared for maps (AN624/625 geo)
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::ActivityTrackable
+  include Shared::GeoLocatable
   belongs_to :city
   belongs_to :neighborhood, optional: true
 
@@ -33767,6 +33926,8 @@ end
 # frozen_string_literal: true
 
 class PlaceCheckIn < ApplicationRecord
+  include Shared::ActivityTrackable
+
   belongs_to :place
   belongs_to :user
 
@@ -33776,22 +33937,7 @@ class PlaceCheckIn < ApplicationRecord
   scope :recent, -> { order(checked_in_at: :desc) }
 
   after_create_commit do
-    record_activity!("PlaceCheckedIn", source_vertical: "maps", actor: user) rescue nil
-  end
-
-  private
-
-  def record_activity!(event_type, **payload)
-    return unless defined?(Shared::ActivityTrackable)
-
-    ActivityEvent.create!(
-      event_type: event_type,
-      actor: user,
-      subject: place,
-      source_vertical: payload[:source_vertical],
-      visibility: payload.fetch(:visibility, "public"),
-      metadata: { place_id: place_id, place_name: place.name }
-    )
+    record_activity!("PlaceCheckedIn", source_vertical: "maps", actor: user)
   end
 end
 ```
@@ -33837,7 +33983,6 @@ module Playlist
   class Collaboration < ApplicationRecord
     self.table_name = "playlist_collaborations"
 
-    include Shared::ActivityTrackable
     tracks_activity created: "PlaylistCollaborationCreated", source_vertical: "playlist", visibility: "private", actor: :user
 
     ROLES = %w[owner editor viewer].freeze
@@ -33868,7 +34013,6 @@ end
 class Playlist::DillaSketch < ApplicationRecord
   self.table_name = "playlist_dilla_sketches"
 
-  include Shared::ActivityTrackable
   tracks_activity created: "DillaSketchCreated", updated: "DillaSketchUpdated", source_vertical: "playlist", visibility: "private", actor: :user
 
   belongs_to :user
@@ -33919,7 +34063,6 @@ module Playlist
   class Like < ApplicationRecord
     self.table_name = "playlist_likes"
 
-    include Shared::ActivityTrackable
     tracks_activity created: "PlaylistLiked", source_vertical: "playlist", visibility: "private", actor: :user
 
     belongs_to :user
@@ -33945,9 +34088,8 @@ end
 
 class Playlist::Listen < ApplicationRecord
   # Engine-ized Shared (tranche10)
-  include Shared.concern(:ActivityTrackable) rescue nil
   tracks_activity created: "PlaylistListen", source_vertical: "playlist", visibility: "private", actor: :user
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Reactable
 
   belongs_to :user
   belongs_to :track, class_name: "Playlist::Track", foreign_key: :playlist_track_id
@@ -33972,7 +34114,6 @@ module Playlist
 
     STATUSES = %w[active ended].freeze
 
-    include Shared::ActivityTrackable
     tracks_activity created: "PlaylistListeningPartyStarted", source_vertical: "playlist", actor: :host
 
     belongs_to :set, class_name: "Playlist::Set", foreign_key: :playlist_set_id, inverse_of: :listening_party
@@ -34048,11 +34189,10 @@ class Playlist::Playlist < ApplicationRecord
   include CityTenantable
 
   # Engine-ize Shared via pub4-shared
-  include Shared.concern(:ActivityTrackable) rescue nil
   tracks_activity created: "PlaylistCreated", source_vertical: "playlist", actor: :user
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
+  include Shared::GeoLocatable
   belongs_to :user
   has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
            foreign_key: :playlist_playlist_id, dependent: :destroy
@@ -34117,10 +34257,9 @@ module Playlist
 
     PRIVACY_LEVELS = %w[public private unlisted].freeze
 
-    include Shared::ActivityTrackable
     tracks_activity created: "PlaylistSetCreated", source_vertical: "playlist", actor: :user
-    include Shared.concern(:Reactable) rescue nil
-    include Shared.concern(:Notifiable) rescue nil
+    include Shared::Reactable
+    include Shared::Notifiable
     belongs_to :user
     has_many :set_tracks, class_name: "Playlist::SetTrack", foreign_key: :playlist_set_id, dependent: :destroy
     has_many :tracks, through: :set_tracks, source: :track, class_name: "Playlist::Track"
@@ -34215,10 +34354,9 @@ require "uri"
 
 class Playlist::Track < ApplicationRecord
   # Engine-ize Shared via pub4-shared
-  include Shared::ActivityTrackable
   include Shared::MediaProcessable
   tracks_activity created: "PlaylistTrackCreated", source_vertical: "playlist"
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Reactable
   has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
            foreign_key: :playlist_track_id, dependent: :destroy
   has_many :playlists, through: :playlist_tracks, class_name: "Playlist::Playlist"
@@ -34329,12 +34467,10 @@ end
 class Post < ApplicationRecord
   include CityTenantable
 
-  # Engine-ize: use Shared.concern for consistency
-  include Shared.concern(:Votable) rescue include Shared::Votable
-  include Shared.concern(:Commentable) rescue include Shared::Commentable
-  include Shared.concern(:Taggable) rescue include Shared::Taggable
-  include Shared.concern(:Reactable) rescue include Shared::Reactable
-  include Shared::ActivityTrackable
+  include Shared::Votable
+  include Shared::Commentable
+  include Shared::Taggable
+  include Shared::Reactable
   include Shared::MediaProcessable
   tracks_activity created: "PostCreated", source_vertical: "social", actor: :user
 
@@ -34398,9 +34534,8 @@ end
 
 class Reaction < ApplicationRecord
   # Engine-ized Shared (tranche10)
-  include Shared::ActivityTrackable
   tracks_activity created: "ReactionCreated", source_vertical: "social"
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Notifiable
 
   KINDS = %w[like love laugh wow sad angry local].freeze
 
@@ -34532,7 +34667,6 @@ end
 # frozen_string_literal: true
 
 class Takeaway::FavoriteRestaurant < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "TakeawayRestaurantFavorited", source_vertical: "takeaway", visibility: "private", actor: :user
 
   belongs_to :user
@@ -34548,7 +34682,6 @@ end
 # frozen_string_literal: true
 
 class Takeaway::MenuItem < ApplicationRecord
-  include Shared::ActivityTrackable
   include Shared::MediaProcessable
   tracks_activity created: "TakeawayMenuItemCreated", updated: "TakeawayMenuItemUpdated", source_vertical: "takeaway", actor: :restaurant_owner
 
@@ -34578,7 +34711,6 @@ end
 
 class Takeaway::Order < ApplicationRecord
   include Shared::Notifiable
-  include Shared::ActivityTrackable
   tracks_activity created: "TakeawayOrderPlaced", source_vertical: "takeaway", actor: :user
 
   belongs_to :user
@@ -34703,11 +34835,9 @@ require "zlib"
 class Takeaway::Restaurant < ApplicationRecord
   include CityTenantable
 
-  # Engine-ized Shared concerns (via pub4-shared)
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
-  include Shared.concern(:ActivityTrackable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::GeoLocatable
   tracks_activity created: "TakeawayRestaurantCreated", updated: "TakeawayRestaurantUpdated", source_vertical: "takeaway", actor: :user
 
   belongs_to :user
@@ -34729,7 +34859,6 @@ class Takeaway::Restaurant < ApplicationRecord
   scope :popular, -> { order(rating: :desc) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
 
-  include Shared::GeoLocatable
 
   def owner?(account)
     user_id == account&.id
@@ -34787,11 +34916,10 @@ end
 
 class Takeaway::Review < ApplicationRecord
   # Engine-ized Shared concerns
-  include Shared::ActivityTrackable
   tracks_activity created: "TakeawayReviewCreated", source_vertical: "takeaway", actor: :user
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Votable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::Votable
 
   belongs_to :user
   belongs_to :order, class_name: "Takeaway::Order"
@@ -34840,7 +34968,6 @@ end
 # frozen_string_literal: true
 
 class Tv::Broadcast < ApplicationRecord
-  include Shared::ActivityTrackable
   include Shared::MediaProcessable
   tracks_activity created: "BroadcastScheduled", updated: "BroadcastUpdated", source_vertical: "tv", actor: :user
 
@@ -34879,11 +35006,10 @@ class Tv::Channel < ApplicationRecord
   include CityTenantable
 
   # Engine-ized Shared via pub4-shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:ActivityTrackable) rescue nil
+  include Shared::Notifiable
   tracks_activity created: "TvChannelCreated", updated: "TvChannelUpdated", source_vertical: "tv", actor: :user
   include Shared::MediaProcessable
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Reactable
 
   belongs_to :user
   has_many :videos,        class_name: "Tv::Video",        foreign_key: :tv_channel_id, dependent: :destroy
@@ -34918,7 +35044,6 @@ end
 # frozen_string_literal: true
 
 class Tv::Comment < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "TvCommentCreated", source_vertical: "tv", actor: :user
 
   belongs_to :user
@@ -34936,10 +35061,9 @@ end
 module Tv
   class Episode < ApplicationRecord
     # Engine-ize Shared via pub4-shared
-    include Shared.concern(:ActivityTrackable) rescue include Shared::ActivityTrackable
     tracks_activity created: "TvEpisodeCreated", updated: "TvEpisodeUpdated", source_vertical: "tv", actor: :channel_owner
-    include Shared.concern(:Reactable) rescue nil
-    include Shared.concern(:Notifiable) rescue nil
+    include Shared::Reactable
+    include Shared::Notifiable
 
     self.table_name = "tv_episodes"
 
@@ -34966,9 +35090,8 @@ end
 module Tv
   class LiveStream < ApplicationRecord
     # Engine-ized Shared (tranche10)
-    include Shared.concern(:ActivityTrackable) rescue nil
     tracks_activity created: "LiveStreamScheduled", updated: "LiveStreamUpdated", source_vertical: "tv", actor: :user
-    include Shared.concern(:Notifiable) rescue nil
+    include Shared::Notifiable
 
     self.table_name = "tv_live_streams"
 
@@ -35014,7 +35137,6 @@ end
 
 module Tv
   class Show < ApplicationRecord
-    include Shared::ActivityTrackable
     tracks_activity created: "TvShowCreated", updated: "TvShowUpdated", source_vertical: "tv", actor: :channel_owner
 
     self.table_name = "tv_shows"
@@ -35045,7 +35167,6 @@ module Tv
   class StreamChat < ApplicationRecord
     self.table_name = "tv_stream_chats"
 
-    include Shared::ActivityTrackable
     tracks_activity created: "TvStreamChatCreated", source_vertical: "tv", visibility: "private", actor: :user
 
     belongs_to :live_stream, class_name: "Tv::LiveStream"
@@ -35068,7 +35189,6 @@ end
 # frozen_string_literal: true
 
 class Tv::Subscription < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "TvChannelSubscribed", source_vertical: "tv", visibility: "private", actor: :user
 
   belongs_to :user
@@ -35084,11 +35204,10 @@ end
 
 class Tv::Video < ApplicationRecord
   # Engine-ized Shared (tranche10)
-  include Shared.concern(:ActivityTrackable) rescue nil
   tracks_activity created: "VideoUploaded", updated: "VideoUpdated", source_vertical: "tv", actor: :user
   include Shared::MediaProcessable
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
 
   belongs_to :channel,     class_name: "Tv::Channel",   foreign_key: :tv_channel_id
   belongs_to :user
@@ -35140,7 +35259,6 @@ module Tv
   class VideoNote < ApplicationRecord
     self.table_name = "tv_video_notes"
 
-    include Shared::ActivityTrackable
     tracks_activity created: "TvVideoNoteCreated", source_vertical: "tv", actor: :user
 
     belongs_to :video, class_name: "Tv::Video"
@@ -35165,7 +35283,6 @@ end
 # frozen_string_literal: true
 
 class Tv::ViewEvent < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "TvVideoViewed", source_vertical: "tv", visibility: "private", actor: :user
 
   belongs_to :user
@@ -35182,7 +35299,7 @@ class TypingIndicator < ApplicationRecord
   belongs_to :conversation
   belongs_to :user
 
-  scope :active, -> { where("expires_at > ?", Time.now) }
+  scope :active, -> { where("expires_at > ?", Time.current) }
 
   def self.set!(conversation:, user:)
     rec = find_or_create_by(conversation:, user:)
@@ -35205,49 +35322,15 @@ end
 
 class User < ApplicationRecord
   include CityTenantable
+  include User::CoreAssociations
+  include User::MarketplaceAssociations
+  include User::PlaylistAssociations
+  include User::TakeawayAssociations
+  include User::TvAssociations
+  include User::DatingAssociations
+  include User::SocialAssociations
 
   has_secure_password
-
-  has_many :account_merges, dependent: :destroy
-  has_many :activity_events, foreign_key: :actor_id, dependent: :nullify
-  has_many :comments, dependent: :destroy
-  has_many :communities
-  has_many :conversation_participants, dependent: :destroy
-  has_many :conversations, through: :conversation_participants
-  has_many :external_identities, dependent: :destroy
-  has_many :identity_assurances, dependent: :destroy
-  has_many :marketplace_favorites, class_name: "Marketplace::ListingFavorite", dependent: :destroy
-  has_many :marketplace_listings, class_name: "Marketplace::Listing", dependent: :destroy
-  has_many :marketplace_orders, class_name: "Marketplace::Order", foreign_key: :buyer_id, dependent: :destroy
-  has_many :marketplace_saved_searches, class_name: "Marketplace::SavedSearch", dependent: :destroy
-  has_many :moderation_flags, dependent: :destroy
-  has_many :moderation_reports, dependent: :destroy
-  has_many :notifications, dependent: :destroy
-  has_many :playlist_listens, class_name: "Playlist::Listen", dependent: :destroy
-  has_many :playlist_playlists, class_name: "Playlist::Playlist", dependent: :destroy
-  has_many :posts, dependent: :destroy
-  has_many :push_subscriptions, dependent: :destroy
-  has_many :reputation_scores, dependent: :destroy
-  has_many :sessions, dependent: :destroy
-  has_many :takeaway_favorite_restaurants, class_name: "Takeaway::FavoriteRestaurant", dependent: :destroy
-  has_many :takeaway_orders, class_name: "Takeaway::Order", dependent: :destroy
-  has_many :takeaway_restaurants, class_name: "Takeaway::Restaurant", dependent: :destroy
-  has_many :trust_signals, dependent: :destroy
-  has_many :tv_channels, class_name: "Tv::Channel", dependent: :destroy
-  has_many :tv_subscriptions, class_name: "Tv::Subscription", dependent: :destroy
-  has_many :votes, dependent: :destroy
-
-  has_many :dating_dislikes, class_name: "Dating::Dislike", foreign_key: :disliker_id, dependent: :destroy
-  has_many :dating_likes, class_name: "Dating::Like", foreign_key: :liker_id, dependent: :destroy
-  has_many :dating_matches_as_initiator, class_name: "Dating::Match", foreign_key: :initiator_id, dependent: :destroy
-  has_many :dating_matches_as_receiver, class_name: "Dating::Match", foreign_key: :receiver_id, dependent: :destroy
-  has_many :follows_as_followed, class_name: "Follow", foreign_key: :followed_id, dependent: :destroy
-  has_many :follows_as_follower, class_name: "Follow", foreign_key: :follower_id, dependent: :destroy
-  has_many :followers, through: :follows_as_followed, source: :follower
-  has_many :following, through: :follows_as_follower, source: :followed
-  has_many :subscribed_channels, through: :tv_subscriptions, source: :tv_channel
-
-  has_one :dating_profile, class_name: "Dating::Profile", dependent: :destroy
 
   validates :email_address, presence: true, uniqueness: true
   validates :username, uniqueness: true, allow_nil: true
@@ -35257,7 +35340,6 @@ class User < ApplicationRecord
   include Shared::GeoLocatable
 
   def display_name = guest? ? "anon" : (username.presence || email_address.split("@").first)
-
 
   def anon_handle = "Stranger ##{Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase}"
 
@@ -35291,13 +35373,155 @@ class User < ApplicationRecord
 end
 ```
 
+### DEPLOY/rails/brgen/app/models/user/core_associations.rb
+
+```ruby
+# frozen_string_literal: true
+
+class User
+  module CoreAssociations
+    extend ActiveSupport::Concern
+
+    included do
+      has_many :account_merges, dependent: :destroy
+      has_many :activity_events, foreign_key: :actor_id, dependent: :nullify
+      has_many :comments, dependent: :destroy
+      has_many :communities
+      has_many :conversation_participants, dependent: :destroy
+      has_many :conversations, through: :conversation_participants
+      has_many :external_identities, dependent: :destroy
+      has_many :identity_assurances, dependent: :destroy
+      has_many :moderation_flags, dependent: :destroy
+      has_many :moderation_reports, dependent: :destroy
+      has_many :notifications, dependent: :destroy
+      has_many :posts, dependent: :destroy
+      has_many :push_subscriptions, dependent: :destroy
+      has_many :reputation_scores, dependent: :destroy
+      has_many :sessions, dependent: :destroy
+      has_many :trust_signals, dependent: :destroy
+      has_many :votes, dependent: :destroy
+    end
+  end
+end
+```
+
+### DEPLOY/rails/brgen/app/models/user/dating_associations.rb
+
+```ruby
+# frozen_string_literal: true
+
+class User
+  module DatingAssociations
+    extend ActiveSupport::Concern
+
+    included do
+      has_many :dating_dislikes, class_name: "Dating::Dislike", foreign_key: :disliker_id, dependent: :destroy
+      has_many :dating_likes, class_name: "Dating::Like", foreign_key: :liker_id, dependent: :destroy
+      has_many :dating_matches_as_initiator, class_name: "Dating::Match", foreign_key: :initiator_id, dependent: :destroy
+      has_many :dating_matches_as_receiver, class_name: "Dating::Match", foreign_key: :receiver_id, dependent: :destroy
+      has_one :dating_profile, class_name: "Dating::Profile", dependent: :destroy
+    end
+  end
+end
+```
+
+### DEPLOY/rails/brgen/app/models/user/marketplace_associations.rb
+
+```ruby
+# frozen_string_literal: true
+
+class User
+  module MarketplaceAssociations
+    extend ActiveSupport::Concern
+
+    included do
+      has_many :marketplace_favorites, class_name: "Marketplace::ListingFavorite", dependent: :destroy
+      has_many :marketplace_listings, class_name: "Marketplace::Listing", dependent: :destroy
+      has_many :marketplace_orders, class_name: "Marketplace::Order", foreign_key: :buyer_id, dependent: :destroy
+      has_many :marketplace_saved_searches, class_name: "Marketplace::SavedSearch", dependent: :destroy
+    end
+  end
+end
+```
+
+### DEPLOY/rails/brgen/app/models/user/playlist_associations.rb
+
+```ruby
+# frozen_string_literal: true
+
+class User
+  module PlaylistAssociations
+    extend ActiveSupport::Concern
+
+    included do
+      has_many :playlist_listens, class_name: "Playlist::Listen", dependent: :destroy
+      has_many :playlist_playlists, class_name: "Playlist::Playlist", dependent: :destroy
+    end
+  end
+end
+```
+
+### DEPLOY/rails/brgen/app/models/user/social_associations.rb
+
+```ruby
+# frozen_string_literal: true
+
+class User
+  module SocialAssociations
+    extend ActiveSupport::Concern
+
+    included do
+      has_many :follows_as_followed, class_name: "Follow", foreign_key: :followed_id, dependent: :destroy
+      has_many :follows_as_follower, class_name: "Follow", foreign_key: :follower_id, dependent: :destroy
+      has_many :followers, through: :follows_as_followed, source: :follower
+      has_many :following, through: :follows_as_follower, source: :followed
+    end
+  end
+end
+```
+
+### DEPLOY/rails/brgen/app/models/user/takeaway_associations.rb
+
+```ruby
+# frozen_string_literal: true
+
+class User
+  module TakeawayAssociations
+    extend ActiveSupport::Concern
+
+    included do
+      has_many :takeaway_favorite_restaurants, class_name: "Takeaway::FavoriteRestaurant", dependent: :destroy
+      has_many :takeaway_orders, class_name: "Takeaway::Order", dependent: :destroy
+      has_many :takeaway_restaurants, class_name: "Takeaway::Restaurant", dependent: :destroy
+    end
+  end
+end
+```
+
+### DEPLOY/rails/brgen/app/models/user/tv_associations.rb
+
+```ruby
+# frozen_string_literal: true
+
+class User
+  module TvAssociations
+    extend ActiveSupport::Concern
+
+    included do
+      has_many :tv_channels, class_name: "Tv::Channel", dependent: :destroy
+      has_many :tv_subscriptions, class_name: "Tv::Subscription", dependent: :destroy
+      has_many :subscribed_channels, through: :tv_subscriptions, source: :tv_channel
+    end
+  end
+end
+```
+
 ### DEPLOY/rails/brgen/app/models/vote.rb
 
 ```ruby
 # frozen_string_literal: true
 
 class Vote < ApplicationRecord
-  include Shared::ActivityTrackable
   tracks_activity created: "VoteCreated", source_vertical: "social", visibility: "private", actor: :user
 
   belongs_to :user
@@ -35512,18 +35736,6 @@ class AccountMergeService
 
   def merge_trust_signals
     guest_user.trust_signals.update_all(user_id: user.id)
-  end
-end
-```
-
-### DEPLOY/rails/brgen/app/services/activity_event_recorder.rb
-
-```ruby
-# frozen_string_literal: true
-
-class ActivityEventRecorder
-  def self.call(**kwargs)
-    Shared::ActivityEventRecorder.call(**kwargs)
   end
 end
 ```
@@ -35996,46 +36208,6 @@ class PostModerationService
 end
 ```
 
-### DEPLOY/rails/brgen/app/services/reaction_toggle.rb
-
-```ruby
-# frozen_string_literal: true
-
-class ReactionToggle
-  def self.call(user:, reactable:, kind: "like")
-    new(user:, reactable:, kind:).call
-  end
-
-  def initialize(user:, reactable:, kind:)
-    @user = user
-    @reactable = reactable
-    @kind = kind.to_s.presence || "like"
-  end
-
-  def call
-    reaction = Reaction.find_by(user:, reactable:, kind:)
-    if reaction
-      reaction.destroy!
-      changed = false
-    else
-      reaction = Reaction.create!(user:, reactable:, kind:)
-      changed = true
-    end
-
-    Shared::EventEmitter.call("brgen.reaction.toggled", user_id: user.id, target: reactable_gid, kind:, active: changed) if defined?(Shared::EventEmitter)
-    changed
-  end
-
-  private
-
-  attr_reader :user, :reactable, :kind
-
-  def reactable_gid
-    reactable.respond_to?(:to_global_id) ? reactable.to_global_id.to_s : "#{reactable.class.name}:#{reactable.id}"
-  end
-end
-```
-
 ### DEPLOY/rails/brgen/app/services/reddit_seed_service.rb
 
 ```ruby
@@ -36246,62 +36418,6 @@ class RedditSeedService
       body is post selftext; empty for link/image posts.
       Subreddit: r/#{sub}
     HINT
-  end
-end
-```
-
-### DEPLOY/rails/brgen/app/services/scrape.rb
-
-```ruby
-# frozen_string_literal: true
-
-require "net/http"
-require "json"
-require "base64"
-
-class Scrape
-  MODEL    = ENV.fetch("SCRAPE_MODEL", "google/gemini-2.0-flash-001")
-  ENDPOINT = URI("https://openrouter.ai/api/v1/chat/completions")
-  HTML_MAX = 60_000
-
-  def self.call(url, schema:, hint: nil)
-    require "ferrum"
-    browser = Ferrum::Browser.new(headless: true, timeout: 30,
-                                  browser_options: { "no-sandbox": nil })
-    browser.go_to(url)
-    browser.network.wait_for_idle(timeout: 10)
-    html = browser.body
-    png  = Base64.strict_encode64(browser.screenshot(encoding: :binary, full: true))
-    browser.quit
-    reason(url:, html:, png:, schema:, hint:)
-  end
-
-  def self.reason(url:, html:, png:, schema:, hint:)
-    prompt = <<~TXT
-      Source: #{url}
-      Extract every listed item on the page as JSON. Use the screenshot to read visual layout (cards, sponsored banners, hidden overlays); use the HTML for exact text and links.
-      #{hint}
-      Reply with one JSON object: {"items":[{#{schema.join(', ')}}, ...]}.
-      HTML (truncated to #{HTML_MAX} bytes):
-      #{html.byteslice(0, HTML_MAX)}
-    TXT
-    payload = {
-      model: MODEL,
-      messages: [ {
-        role: "user",
-        content: [
-          { type: "text",      text: prompt },
-          { type: "image_url", image_url: { url: "data:image/png;base64,#{png}" } }
-        ]
-      } ],
-      response_format: { type: "json_object" }
-    }
-    req = Net::HTTP::Post.new(ENDPOINT,
-                              "Content-Type"  => "application/json",
-                              "Authorization" => "Bearer #{ENV.fetch("OPENROUTER_API_KEY")}")
-    req.body = payload.to_json
-    res = Net::HTTP.start(ENDPOINT.hostname, ENDPOINT.port, use_ssl: true, read_timeout: 60) { |h| h.request(req) }
-    JSON.parse(JSON.parse(res.body).dig("choices", 0, "message", "content")).fetch("items", [])
   end
 end
 ```
@@ -41216,52 +41332,52 @@ default: &default
 development:
   primary:
     <<: *default
-    database: db/development.sqlite3
+    database: storage/development.sqlite3
   cache:
     <<: *default
-    database: db/development_cache.sqlite3
+    database: storage/development_cache.sqlite3
     migrations_paths: db/cache_schema_migrations
   queue:
     <<: *default
-    database: db/development_queue.sqlite3
+    database: storage/development_queue.sqlite3
     migrations_paths: db/queue_schema_migrations
   cable:
     <<: *default
-    database: db/development_cable.sqlite3
+    database: storage/development_cable.sqlite3
     migrations_paths: db/cable_schema_migrations
 
 test:
   primary:
     <<: *default
-    database: db/test.sqlite3
+    database: storage/test.sqlite3
   cache:
     <<: *default
-    database: db/test_cache.sqlite3
+    database: storage/test_cache.sqlite3
     migrations_paths: db/cache_schema_migrations
   queue:
     <<: *default
-    database: db/test_queue.sqlite3
+    database: storage/test_queue.sqlite3
     migrations_paths: db/queue_schema_migrations
   cable:
     <<: *default
-    database: db/test_cable.sqlite3
+    database: storage/test_cable.sqlite3
     migrations_paths: db/cable_schema_migrations
 
 production:
   primary:
     <<: *default
-    database: db/production.sqlite3
+    database: storage/production.sqlite3
   cache:
     <<: *default
-    database: db/production_cache.sqlite3
+    database: storage/production_cache.sqlite3
     migrations_paths: db/cache_schema_migrations
   queue:
     <<: *default
-    database: db/production_queue.sqlite3
+    database: storage/production_queue.sqlite3
     migrations_paths: db/queue_schema_migrations
   cable:
     <<: *default
-    database: db/production_cable.sqlite3
+    database: storage/production_cable.sqlite3
     migrations_paths: db/cable_schema_migrations
 ```
 
@@ -41711,16 +41827,13 @@ Rails.application.routes.draw do
 
   jobs_constraint = ->(request) { request.cookies["session_id"].present? }
 
-  TV_SUBDOMAINS          = %w[tv].freeze
-  DATING_SUBDOMAINS      = %w[dating].freeze
-  PLAYLIST_SUBDOMAINS    = %w[playlist spilleliste].freeze
-  TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
-  MARKETPLACE_SUBDOMAINS = Brgen::DomainRegistry::SUBAPP_ALIASES
-    .select { |_subdomain, subapp| subapp == :marketplace }
-    .keys
-    .freeze
-  MAPS_SUBDOMAINS        = %w[maps].freeze
-  MESSENGER_SUBDOMAINS   = %w[messenger].freeze
+  TV_SUBDOMAINS          = Brgen::DomainRegistry::TV_SUBDOMAINS
+  DATING_SUBDOMAINS      = Brgen::DomainRegistry::DATING_SUBDOMAINS
+  PLAYLIST_SUBDOMAINS    = Brgen::DomainRegistry::PLAYLIST_SUBDOMAINS
+  TAKEAWAY_SUBDOMAINS    = Brgen::DomainRegistry::TAKEAWAY_SUBDOMAINS
+  MARKETPLACE_SUBDOMAINS = Brgen::DomainRegistry::MARKETPLACE_SUBDOMAINS
+  MAPS_SUBDOMAINS        = Brgen::DomainRegistry::MAPS_SUBDOMAINS
+  MESSENGER_SUBDOMAINS   = Brgen::DomainRegistry::MESSENGER_SUBDOMAINS
 
   resource  :session
   resources :passwords, param: :token
@@ -41884,10 +41997,6 @@ Rails.application.routes.draw do
 
   constraints(subdomain: MESSENGER_SUBDOMAINS) do
     root "conversations#index", as: :messenger_root
-    resources :conversations, only: %i[index show update] do
-      resources :messages, only: [ :create ]
-      resources :typing_indicators, only: [ :create ]
-    end
   end
 
   resources :email_subscriptions, only: %i[create destroy], param: :token
@@ -45925,6 +46034,14 @@ module Brgen
       "mercado" => :marketplace,
       "mercato" => :marketplace
     }.freeze
+
+    TV_SUBDOMAINS          = %w[tv].freeze
+    DATING_SUBDOMAINS      = %w[dating].freeze
+    PLAYLIST_SUBDOMAINS    = %w[playlist spilleliste].freeze
+    TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
+    MARKETPLACE_SUBDOMAINS = SUBAPP_ALIASES.select { |_subdomain, subapp| subapp == :marketplace }.keys.freeze
+    MAPS_SUBDOMAINS        = %w[maps].freeze
+    MESSENGER_SUBDOMAINS   = %w[messenger].freeze
 
     LOCAL_HOSTS = [ "127.0.0.1", "localhost" ].freeze
 
@@ -84841,6 +84958,13 @@ class DomainRegistryTest < ActiveSupport::TestCase
     assert_equal :"en-US", result.entry.locale
   end
 
+  test "subdomain constants match routes constraints" do
+    assert_equal %w[tv], Brgen::DomainRegistry::TV_SUBDOMAINS
+    assert_equal %w[dating], Brgen::DomainRegistry::DATING_SUBDOMAINS
+    assert_includes Brgen::DomainRegistry::PLAYLIST_SUBDOMAINS, "playlist"
+    assert_includes Brgen::DomainRegistry::MARKETPLACE_SUBDOMAINS, "markedsplass"
+  end
+
   test "subreddits for bergen include r/bergen" do
     subs = Brgen::DomainRegistry.subreddits_for("brgen.no")
 
@@ -84925,6 +85049,53 @@ class PostTest < ActiveSupport::TestCase
 
   test "reading_time_minutes is zero without body text" do
     assert_equal 0, Post.new(content: "<p> </p>").reading_time_minutes
+  end
+end
+```
+
+### DEPLOY/rails/brgen/test/models/typing_indicator_test.rb
+
+```ruby
+# frozen_string_literal: true
+
+require "test_helper"
+
+class TypingIndicatorTest < ActiveSupport::TestCase
+  setup do
+    Brgen::CitySeed.sync! if City.table_exists?
+    @city = City.find_by!(domain: "brgen.no")
+    @user = User.strict_loading(false).create!(
+      email_address: "typing@brgen.no",
+      password: "password123",
+      city: @city
+    )
+    @conversation = Conversation.create!
+    ConversationParticipant.create!(conversation: @conversation, user: @user)
+  end
+
+  test "active scope uses Time.current in the configured zone" do
+    Time.use_zone("Europe/Oslo") do
+      travel_to Time.zone.parse("2026-07-09 12:00:00") do
+        fresh = TypingIndicator.create!(
+          conversation: @conversation,
+          user: @user,
+          expires_at: 1.minute.from_now
+        )
+        stale = TypingIndicator.create!(
+          conversation: @conversation,
+          user: User.strict_loading(false).create!(
+            email_address: "typing-stale@brgen.no",
+            password: "password123",
+            city: @city
+          ),
+          expires_at: 1.minute.ago
+        )
+
+        active_ids = TypingIndicator.active.pluck(:id)
+        assert_includes active_ids, fresh.id
+        assert_not_includes active_ids, stale.id
+      end
+    end
   end
 end
 ```
@@ -86263,26 +86434,6 @@ class SessionsController < ApplicationController
 end
 ```
 
-### DEPLOY/rails/bsdports/app/helpers/application_helper.rb
-
-```ruby
-# frozen_string_literal: true
-
-module ApplicationHelper
-  def nok(amount)
-    number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")
-  end
-
-  def norwegian_date(value)
-    l(value.to_date, format: "%d.%m.%Y")
-  end
-
-  def api_date(value)
-    value.to_date.iso8601
-  end
-end
-```
-
 ### DEPLOY/rails/bsdports/app/javascript/application.js
 
 ```javascript
@@ -86452,8 +86603,8 @@ end
 
 class Comment < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
   belongs_to :user
   belongs_to :port
   belongs_to :parent, class_name: "Comment", optional: true
@@ -86485,8 +86636,8 @@ end
 
 class Dependency < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   belongs_to :port
   belongs_to :depends_on, class_name: "Port"
 
@@ -86583,8 +86734,8 @@ end
 
 class Maintainer < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   has_many :ports, dependent: :nullify
 
   validates :name, presence: true
@@ -86626,8 +86777,8 @@ end
 
 class Port < ApplicationRecord
   # Engine-ize Shared via pub4-shared
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
   belongs_to :platform
   belongs_to :category
   belongs_to :maintainer, optional: true
@@ -86670,8 +86821,8 @@ end
 
 class PortUpdate < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   belongs_to :port
 
   validates :new_version, presence: true
@@ -86708,8 +86859,8 @@ end
 
 class SecurityAdvisory < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   enum :severity, { low: 0, medium: 1, high: 2, critical: 3 }, default: :medium
 
   belongs_to :port, optional: true
@@ -86750,9 +86901,9 @@ end
 
 class User < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::GeoLocatable
   has_secure_password
   has_many :sessions, dependent: :destroy
   has_many :watches, dependent: :destroy
@@ -86770,8 +86921,8 @@ end
 
 class Watch < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   belongs_to :user
   belongs_to :port
 
@@ -90190,15 +90341,14 @@ end
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Verify openbsd.sh DNS, domain_registry.rb, and routes.rb agree on city subdomains.
+# Verify DEPLOY.sh DNS, domain_registry.rb, and subdomain constants agree on city subdomains.
 
 require "pathname"
 require_relative "../lib/utf8"
 
 ROOT = Pathname.new(__dir__).join("..", "..").expand_path
-OPENBSD = ROOT.join("DEPLOY", "openbsd", "openbsd.sh")
+OPENBSD = ROOT.join("DEPLOY", "openbsd", "DEPLOY.sh")
 REGISTRY = ROOT.join("DEPLOY", "rails", "brgen", "lib", "brgen", "domain_registry.rb")
-ROUTES = ROOT.join("DEPLOY", "rails", "brgen", "config", "routes.rb")
 COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
 MASTER_ONLY_SUBAPPS = %w[ai].freeze
 NORWEGIAN_PLAYLIST_ALIAS = "spilleliste"
@@ -90227,8 +90377,8 @@ def parse_registry_entries
   text.scan(/Entry\.new\("([^"]+)",\s*"[^"]+",\s*"[^"]+",\s*:[^,]+,\s*"[^"]+",\s*"([^"]+)"\)/).to_h
 end
 
-def parse_routes_subdomains
-  text = ROUTES.read
+def parse_registry_subdomains
+  text = REGISTRY.read
   {
     tv: extract_constant(text, "TV_SUBDOMAINS"),
     dating: extract_constant(text, "DATING_SUBDOMAINS"),
@@ -90241,7 +90391,7 @@ end
 
 def extract_constant(text, name)
   match = text.match(/#{name}\s*=\s*%w\[([^\]]+)\]/)
-  raise "missing #{name} in routes.rb" unless match
+  raise "missing #{name} in domain_registry.rb" unless match
 
   match[1].split(/\s+/)
 end
@@ -90256,7 +90406,7 @@ end
 failures = []
 openbsd = parse_openbsd_domains
 registry = parse_registry_entries
-routes = parse_routes_subdomains
+routes = parse_registry_subdomains
 
 missing_dns = registry.keys - openbsd.keys
 fail!(failures, "domain set mismatch: missing DNS #{missing_dns.sort.join(', ')}") if missing_dns.any?
@@ -91911,26 +92061,6 @@ class VolunteersController < ApplicationController
 end
 ```
 
-### DEPLOY/rails/hjerterom/app/helpers/application_helper.rb
-
-```ruby
-# frozen_string_literal: true
-
-module ApplicationHelper
-  def nok(amount)
-    number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")
-  end
-
-  def norwegian_date(value)
-    l(value.to_date, format: "%d.%m.%Y")
-  end
-
-  def api_date(value)
-    value.to_date.iso8601
-  end
-end
-```
-
 ### DEPLOY/rails/hjerterom/app/javascript/application.js
 
 ```javascript
@@ -92369,9 +92499,9 @@ end
 
 class Beneficiary < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::GeoLocatable
   has_many :boxes, dependent: :nullify
   has_many :food_items, dependent: :nullify
 
@@ -92404,9 +92534,9 @@ end
 
 class Box < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::GeoLocatable
   enum :status, { planning: 0, packing: 1, ready: 2, delivered: 3, cancelled: 4 }, default: :planning
 
   belongs_to :beneficiary, optional: true
@@ -92429,7 +92559,7 @@ end
 
 class Category < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Reactable
   has_many :resources, dependent: :nullify
   has_many :posts, dependent: :nullify
 
@@ -92473,8 +92603,8 @@ end
 
 class Crisis < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   validates :title, :phone, presence: true
 
   scope :around_clock, -> { where(available_24h: true) }
@@ -92531,9 +92661,9 @@ end
 
 class Donation < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Reactable
+  include Shared::Notifiable
+  include Shared::GeoLocatable
   enum :status, { pending: 0, accepted: 1, packed: 2, distributed: 3, cancelled: 4 }, default: :pending
 
   belongs_to :donor, optional: true
@@ -92639,8 +92769,8 @@ end
 
 class FoodRequest < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Notifiable
+  include Shared::GeoLocatable
   belongs_to :food_listing
   belongs_to :user
 
@@ -92724,8 +92854,8 @@ end
 
 class Shift < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   enum :kind, { intake: 0, packing: 1, transport: 2, coordination: 3 }, default: :packing
   enum :state, { open: 0, assigned: 1, completed: 2, cancelled: 3 }, default: :open
 
@@ -92772,8 +92902,8 @@ end
 
 class SupportRequest < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
   belongs_to :user
 
   STATUSES   = %w[open in_progress resolved closed].freeze
@@ -92817,9 +92947,9 @@ end
 
 class Volunteer < ApplicationRecord
   # Engine-ize Shared
-  include Shared.concern(:Notifiable) rescue nil
-  include Shared.concern(:Reactable) rescue nil
-  include Shared.concern(:GeoLocatable) rescue nil
+  include Shared::Notifiable
+  include Shared::Reactable
+  include Shared::GeoLocatable
   belongs_to :user, optional: true
   has_many :shifts, dependent: :destroy
 
@@ -107224,6 +107354,8 @@ Models: `Shared::Reactable`, `Followable`, `Votable`, `Commentable`, `Notifiable
 
 **Deferred DRY:** brgen still has local `NotificationsController` and `VotesController` vs shared stubs; Follow schema differs across apps. Promote when city inbox grouping and vote karma side-effects are unified.
 
+**Notification model:** brgen keeps `Notification` (not `Shared::Notification`) on the same `notifications` table. Brgen adds `title`/`body` presenters, a `match` kind for dating, and Turbo broadcasts to `brgen:notifications:*`. Shared::Notification is the thin engine stub for apps that eval `shared/config/routes/social.rb`. Same table, different presentation contract — duplication beats the wrong abstraction until inbox grouping unifies.
+
 Controllers: `Shared::LiveSearchable`, `StructuredEvents`, `MediaGuard`, `ActorIdentity`.
 
 Emit activity via `Shared::EventEmitter` / `include Shared::StructuredEvents` for unified graph + Turbo Stream consumers.
@@ -109406,6 +109538,18 @@ end
 module ApplicationHelper
   include SchemaHelper
   include Shared::SeoKit
+
+  def nok(amount)
+    number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")
+  end
+
+  def norwegian_date(value)
+    l(value.to_date, format: "%d.%m.%Y")
+  end
+
+  def api_date(value)
+    value.to_date.iso8601
+  end
 end
 ```
 
@@ -114063,6 +114207,23 @@ db_create_migrate_as_app() {
   log_ok "Database ready"
 }
 
+# migrate_sqlite_db_to_storage_if_needed APP_NAME APP_DIR — one-time brgen db/ → storage/ move (R7).
+migrate_sqlite_db_to_storage_if_needed() {
+  local app_name=$1 app_dir=$2
+  local db_dir="${app_dir}/db" storage_dir="${app_dir}/storage"
+  [[ -d $db_dir ]] || return 0
+  ${_PRIV} mkdir -p "$storage_dir"
+  local moved=0 base
+  for f in ${db_dir}/production*.sqlite3(N); do
+    base=${f:t}
+    [[ -f ${storage_dir}/${base} ]] && continue
+    ${_PRIV} mv "$f" "${storage_dir}/${base}"
+    moved=1
+    log_ok "moved db/${base} → storage/${base}"
+  done
+  [[ $moved -eq 1 ]] && ${_PRIV} chown -R "${app_name}:${app_name}" "$storage_dir"
+}
+
 # db_seed_as_app APP_NAME APP_DIR
 db_seed_as_app() {
   local app_name=$1 app_dir=$2 secret
@@ -114125,6 +114286,7 @@ deploy_tracked_app() {
   doas chown -R "${app_name}:${app_name}" "${APP_DIR}/.bundle"
 
   bundle_install_as_app "$APP_NAME" "$APP_DIR"
+  migrate_sqlite_db_to_storage_if_needed "$APP_NAME" "$APP_DIR"
   db_create_migrate_as_app "$APP_NAME" "$APP_DIR"
   [[ -f ${APP_DIR}/db/seeds.rb ]] && db_seed_as_app "$APP_NAME" "$APP_DIR" || true
 
@@ -116535,7 +116697,6 @@ module Shared
       )
     end
 
-    def self.concern(n); const_get("Shared::#{n.to_s.camelize}") rescue (require "shared/#{n}"; const_get("Shared::#{n.to_s.camelize}")) end
   end
 end
 ```

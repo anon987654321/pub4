@@ -1,6 +1,6 @@
 # MASTER — source snapshot
 
-Generated 2026-07-08 23:25 UTC · 826 files · git-tracked source text only (skips vendor, node_modules, tmp, knowledge, runtime, .venv, renders, storage; files over 256 KB listed, not inlined).
+Generated 2026-07-09 01:56 UTC · 827 files · git-tracked source text only (skips vendor, node_modules, tmp, knowledge, runtime, .venv, renders, storage; files over 256 KB listed, not inlined).
 
 ## Tree
 ```
@@ -507,6 +507,7 @@ MASTER/test/core/test_fold_observer.rb
 MASTER/test/core/test_host_budget.rb
 MASTER/test/core/test_immutable_paths.rb
 MASTER/test/core/test_model_parse.rb
+MASTER/test/core/test_no_lib_backedges.rb
 MASTER/test/core/test_no_secret_note.rb
 MASTER/test/core/test_world.rb
 MASTER/test/core/test_world_rollback.rb
@@ -1121,6 +1122,11 @@ Lint/RedundantCopDisableDirective:
 8. After `git pull` on vm23, **deployed trees do not move** — run `vps-deploy` before expecting live health.
 9. Constitution self-scan debt is visible by design — do not chase zero during unrelated UI fixes.
 10. Feature truth is `apps.yml`; open debt is `DEPLOY/data/debt.yml`; horizon is `apps.horizon.yml` (ignore).
+11. **Never** autonomously run `vmctl console/stop/start`, kill `cu` on server4, or `vps_console*.exp` — see `DEPLOY/VPS_SAFETY.md`.
+12. Production VM is **vm23** only (`dev@brgen.no`); never touch vm27 or other tenants.
+13. VPS deploy is SSH + `doas zsh DEPLOY.sh` / `vps-deploy` — not serial-console automation.
+14. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only recovery gates.
+15. **Dmesg every file op** — `write path/to/file`, `read path`, `run cmd exit=N`; see `DEPLOY/OPERATOR_CONTRACT.md` Agent dmesg section. MASTER bus emits `tool:before`/`tool:after` with `path`, `op`, `bytes`.
 
 ## Boot sequence
 
@@ -8116,10 +8122,10 @@ entries:
     The operator is an architect by training. Aesthetic, typographic, and design-philosophy proposals—even ones LLMs dismiss as fluff—are usually approved.
 
     Surface aesthetic content from Bringhurst, Ando, Rams, wabi-sabi, ma, and kanso, plus beauty sections in YAML, without self-censoring. Treat these as engineering anchors, not disclaimers. Propose UI, prose, and config refinements actively. Do not argue that beauty or zen YAML is "not actionable."
-
 - key: master_design_vision
   name: MASTER design vision (pure-Ruby AI, OpenBSD-mirrored, Snohetta parametric)
-  description: Guiding vision and influences — steer every design/refactor decision toward it
+  description: Guiding vision and influences — steer every design/refactor decision
+    toward it
   type: project
   body: |-
     The operator's guiding vision for MASTER, to steer every design and refactor decision.
@@ -8133,10 +8139,33 @@ entries:
     HOW TO APPLY: prefer collapse over accretion — one parametric form with data-driven variants over many near-duplicate files (e.g. the four bin/check-* scripts collapsed to one bin/check --profile). Closed minimal surfaces. When in doubt, remove. Match the surrounding restraint. Craft is not accretion — the TTS voice engines were deliberately kept.
 - key: bsdports_openbsd_ports_index
   name: bsdports is the official next-gen OpenBSD ports index (Solene blessing)
-  description: DEPLOY/rails/bsdports — sanctioned successor to Solene Rapenne's ports index
+  description: DEPLOY/rails/bsdports — sanctioned successor to Solene Rapenne's ports
+    index
   type: project
-  body: |-
-    DEPLOY/rails/bsdports is being built as the official next-generation OpenBSD ports index — the operator has the blessing and go-ahead of Solene Rapenne (solene@, former OpenBSD developer, now Qubes OS core team; blog at dataswamp.org) to create the next version of her ports index. Treat bsdports as a first-class, real-world OpenBSD-community deliverable, not a demo.
+  body: DEPLOY/rails/bsdports is being built as the official next-generation OpenBSD
+    ports index — the operator has the blessing and go-ahead of Solene Rapenne (solene@,
+    former OpenBSD developer, now Qubes OS core team; blog at dataswamp.org) to create
+    the next version of her ports index. Treat bsdports as a first-class, real-world
+    OpenBSD-community deliverable, not a demo.
+- key: pub4_reanalysis
+  name: pub4 reanalysis
+  description: Summary of potential issues and recommended actions for pub4 based
+    on code review
+  type: project
+  body: 'Based on the codebase listing, pub4 components include modules and classes
+    under lib/pub4 and tools/audio. No recent changes are visible without version
+    control access. Recommended actions: 1) Run git log to inspect recent commits
+    in pub4 directories for potential regressions or style violations. 2) Execute
+    linting and test suites (e.g., rubocop, minitest) focusing on pub4 files to catch
+    any deviations from constitutional rules such as abbreviation use in identifiers
+    (e.g., Pub4, AkmdMasteringChain) or path names (e.g., pub4, akmd). 3) Verify that
+    any new files added to pub4 follow Flat Hierarchy naming (lowercase snake_case,
+    no abbreviations, concrete nouns/verbs). 4) Check for god classes or methods exceeding
+    size limits (e.g., >200 lines, >6 methods) in pub4 classes. 5) Ensure no hardcoded
+    credentials or banned GNU tools (sed, awk, etc.) appear in pub4 scripts. 6) Confirm
+    that pub4-related changes adhere to One Source principle and avoid duplication.
+    7) Run full test suite to ensure no regressions. Prioritize checking for any new
+    abbreviations in code or paths, as these violate Naming and Flat Hierarchy rules.'
 ```
 
 ### MASTER/data/prompts/mode_code_agent.yml
@@ -36653,11 +36682,14 @@ module Master
       def emit_dmesg_line(payload)
         ev = payload[:event].to_s
         return if ev.empty? || DMESG_IGNORE.include?(ev)
-        kv = payload.reject { |k, _| %i[event ts topic].include?(k) }
+        file_line = format_file_dmesg(ev, payload)
+        kv = payload.reject { |k, _| %i[event ts topic path op bytes tool].include?(k) }
                     .map { |k, v| "#{k}=#{v.to_s[0, 60]}" }.join(" ")
         diff = ev == "tool:after" && MUTATING_TOOLS.include?(payload[:tool].to_s) ? diff_stat(payload[:path]) : nil
         tail = diff ? " #{diff}" : ""
-        line = "  %s [%7d] %s%s%s" % [glyph_for_event(ev), elapsed_ms, ev, kv.empty? ? "" : " #{kv}", tail]
+        body = file_line || ev
+        extras = [kv, tail].reject(&:empty?).join(" ")
+        line = "  %s [%7d] %s%s" % [glyph_for_event(ev), elapsed_ms, body, extras.empty? ? "" : " #{extras}"]
         @think_mutex&.synchronize do
           print "\r\e[K"
           $stdout.puts @refs.renderer.render(line, mode: :dim)
@@ -36665,6 +36697,20 @@ module Master
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_event", event_bus: @refs.bus)
+      end
+
+      def format_file_dmesg(ev, payload)
+        return unless ev.start_with?("tool:")
+        path = payload[:path].to_s
+        return if path.empty?
+
+        op = payload[:op].to_s
+        op = ev == "tool:before" ? "touch" : "done" if op.empty?
+        bytes = payload[:bytes]
+        size = bytes ? " #{bytes}B" : ""
+        rel = path.delete_prefix("#{@refs.root}/")
+        rel = path if rel == path
+        "#{op} #{rel}#{size}"
       end
 
       def diff_stat(path)
@@ -44747,14 +44793,16 @@ module Master
       # Returns Result.ok(full_path), or stages it if diff_stager is wired.
       def commit_write(full, content, path: nil)
         content = WhitespaceNormalizer.normalize(content, path: full)
+        written = path || full
+        bytes = content.bytesize
+        @bus&.publish("tool:before", tool: self.class::NAME, path: written, bytes: bytes, op: "write")
         return @diff_stager.stage(path: full, new_content: content, tool: self.class::NAME) if @diff_stager
 
         @undo.snapshot(full)
         FileUtils.mkdir_p(File.dirname(full))
         write_atomic(full, content)
-        written = path || full
         Master::Trace::WriteTracker.current&.record(written)
-        @bus&.publish("tool:after", tool: self.class::NAME, path: written)
+        @bus&.publish("tool:after", tool: self.class::NAME, path: written, bytes: bytes, op: "write")
         Result.ok(full)
       end
 
@@ -48994,6 +49042,13 @@ module Master
 
       def format_entry(payload)
         event = payload[:event].to_s
+        if event.start_with?("tool:") && payload[:path]
+          op = payload[:op] || event.split(":", 2).last
+          bytes = payload[:bytes] ? " #{payload[:bytes]}B" : ""
+          path = Master::Ground::Redactor.text(payload[:path].to_s)
+          return "tool: #{op} #{path}#{bytes}"
+        end
+
         rest = Master::Ground::Redactor.payload(payload.except(:event, :ts))
         component, action = event.split(":", 2)
         action ||= "ready"
@@ -56137,6 +56192,37 @@ class TestModelParse < Minitest::Test
   end
 end
 ````
+
+### MASTER/test/core/test_no_lib_backedges.rb
+
+```ruby
+# frozen_string_literal: true
+
+require "minitest/autorun"
+require "pathname"
+
+ROOT = Pathname.new(__dir__).join("..", "..").expand_path
+CORE = ROOT.join("core")
+LIB = ROOT.join("lib")
+
+class NoLibBackedgesTest < Minitest::Test
+  def test_core_files_do_not_require_lib
+    offenders = []
+    CORE.glob("**/*.rb").each do |path|
+      text = path.read
+      next unless text.match?(/\b(require|require_relative)\b/)
+
+      text.each_line.with_index(1) do |line, lineno|
+        next unless line.match?(/\b(require|require_relative)\s+["'].*lib/)
+
+        offenders << "#{path.relative_path_from(ROOT)}:#{lineno}: #{line.strip}"
+      end
+    end
+
+    assert_empty offenders, "core/ must not require lib/:\n#{offenders.join("\n")}"
+  end
+end
+```
 
 ### MASTER/test/core/test_no_secret_note.rb
 
@@ -80637,27 +80723,6 @@ end
       <span aria-hidden="true">A</span>
       <input id="font-scale" type="range" min="0.85" max="1.4" step="0.05" value="1">
     </label>
-    <label class="voice-picker" for="voice-picker" title="Select voice">
-      <span aria-hidden="true">◉</span>
-      <select id="voice-picker" aria-label="Voice selection">
-        <option value="osman" selected>osman</option>
-        <option value="pernille">pernille</option>
-        <option value="finn">finn</option>
-        <option value="ryan">ryan</option>
-        <option value="wayne">wayne</option>
-        <option value="ezinne">ezinne</option>
-      </select>
-    </label>
-    <button id="voice-preview-btn" type="button" class="tool" aria-label="Preview selected voice" title="Preview selected voice">▶</button>
-    <div class="tts-style-chips" role="group" aria-label="TTS style">
-      <button type="button" class="style-chip" data-style="clear">clear</button>
-      <button type="button" class="style-chip" data-style="dramatic">dramatic</button>
-      <button type="button" class="style-chip" data-style="whispered">whispered</button>
-      <button type="button" class="style-chip" data-style="energetic">energetic</button>
-      <button type="button" class="style-chip" data-style="intimate">intimate</button>
-      <button type="button" class="style-chip" data-style="storyteller">storyteller</button>
-    </div>
-    <span id="tts-style-indicator" aria-live="polite"></span>
   </div>
   <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
     <span class="pp">master</span><span class="sep2">* </span>
@@ -85498,76 +85563,6 @@ body[data-mode="listening"] #mic-dot {
 .face-scale input[type="range"] {
   width: 88px;
   accent-color: var(--face-fg);
-}
-
-.voice-picker {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--face-muted);
-  font: 9px/1 "JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
-  text-transform: uppercase;
-  letter-spacing: .18em;
-}
-
-.voice-picker select {
-  appearance: none;
-  background: transparent;
-  color: inherit;
-  border: 1px solid color-mix(in srgb, var(--face-fg) 10%, transparent);
-  border-radius: 6px;
-  padding: 3px 6px;
-  font: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-  min-width: 96px;
-}
-
-.voice-picker select:focus-visible {
-  outline: 1px solid var(--face-fg);
-  outline-offset: 1px;
-}
-
-.tts-style-chips {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-
-.style-chip {
-  font: 8px/1 "JetBrains Mono", "Cascadia Code", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  padding: 3px 6px;
-  border: 1px solid color-mix(in srgb, var(--face-fg) 10%, transparent);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--face-muted);
-  cursor: pointer;
-  transition: color 120ms var(--ease-out), border-color 120ms var(--ease-out), background 120ms var(--ease-out);
-}
-
-.style-chip:hover,
-.style-chip:focus-visible {
-  color: var(--face-fg);
-  border-color: color-mix(in srgb, var(--face-fg) 22%, transparent);
-  outline: none;
-}
-
-.style-chip.active {
-  color: var(--c-accent);
-  border-color: color-mix(in srgb, var(--c-accent) 45%, transparent);
-  background: color-mix(in srgb, var(--c-accent) 8%, transparent);
-}
-
-#tts-style-indicator {
-  font: 8px/1 "JetBrains Mono", "Cascadia Code", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--face-dim);
-  min-width: 4ch;
-  white-space: nowrap;
 }
 
 /* SR-only for a11y live announcements (mood changes etc) — screen readers only, no visual */
