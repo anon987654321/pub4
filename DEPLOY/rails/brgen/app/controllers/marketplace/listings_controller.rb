@@ -27,7 +27,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
     # Schema.org ItemList for the marketplace listings page
     if @listings.any?
-      content_for :json_ld, item_list_schema(@listings, title: "Markedsplass")
+      content_for :json_ld, helpers.item_list_schema(@listings, title: "Markedsplass")
     end
 
     finish_live_search(partial: "marketplace/listings/live_search_results")
