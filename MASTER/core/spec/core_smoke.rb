@@ -15,10 +15,10 @@ DATA = File.expand_path("../../data", __dir__)
 $fail = 0
 def check(label)
   ok = yield
-  puts "#{ok ? '  ok ' : 'FAIL'}  #{label}"
+  puts "#{ok ? 'ok:' : 'warn:'} #{label}"
   $fail += 1 unless ok
 rescue StandardError => e
-  puts "FAIL  #{label}  (#{e.class}: #{e.message})"
+  puts "warn: #{label} (#{e.class}: #{e.message})"
   $fail += 1
 end
 
@@ -89,5 +89,5 @@ Dir.mktmpdir do |root|
   check("done without evidence is blocked") { k.run("x").reason == :max_turns }
 end
 
-puts "\n#{$fail.zero? ? 'ALL GREEN' : "#{$fail} FAILED"}"
+puts $fail.zero? ? "\nok: core smoke passed" : "\nwarn: core smoke #{$fail} failed"
 exit($fail.zero? ? 0 : 1)

@@ -80,7 +80,7 @@ module Master
                  name, st[:enabled], st[:slot], st[:cooldown_elapsed],
                  st[:max_run_seconds], st[:min_sleep_seconds])
         end
-        head = valid_loop_slot? ? "OK process" : "FAIL process"
+        head = valid_loop_slot? ? "ok: process" : "warn: process"
         owner = LoopOwner.active
         owner_text = owner ? " owner=#{owner.fetch("loop", "unknown")}" : " owner=none"
         (["#{head}: active=#{active_loops.join(',').empty? ? 'none' : active_loops.join(',')} max=#{max_active_loops}#{owner_text}"] + rows).join("\n")

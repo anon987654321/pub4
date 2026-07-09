@@ -1,3 +1,9 @@
-# Replicate
+# Replicate and local LoRA
 
-Media authority is `data/providers.yml`, `lib/reach/video_chain.rb`, and `/orient replicate`. CLI detail: `bundle exec ruby bin/video help`.
+Cloud media: `data/providers.yml`, `Master::Reach::ReplicateClient`, `/repligen`.
+
+Local Ragnhild FLUX LoRA: `data/lora_pipeline.yml`, `lib/reach/lora_pipeline.rb`, `/lora-train`.
+
+Postpro grading: `MASTER/tools/postpro.rb`, `/postpro`.
+
+Routing summary: `lib/reach/video_chain.rb`. Runtime detail: `/orient replicate`.

@@ -22,11 +22,11 @@ end
 
 def skip_probe!(reason)
   if static_html_ok?(URL)
-    puts "\nprobe_chat_e2e: SKIP (#{reason})"
-    puts "static HTML checks OK: primer + felt_state + sse_contract present"
+    puts "\nok: probe_chat_e2e skip (#{reason})"
+    puts "ok: static HTML primer felt_state sse_contract present"
     exit 0
   end
-  puts "\nprobe_chat_e2e: FAIL (#{reason})"
+  puts "\nwarn: probe_chat_e2e (#{reason})"
   exit 1
 end
 

@@ -9,6 +9,7 @@ require_relative "command_registry/system_commands"
 require_relative "command_registry/media_commands"
 require_relative "command_registry/core_commands"
 require_relative "command_registry/domain_commands"
+require_relative "command_registry/reach_commands"
 require_relative "command_registry/agent_commands"
 require "open3"
 
@@ -41,6 +42,7 @@ module Master
         commands.merge!(media_commands(bus: infra[:bus]))
         commands.merge!(core_commands(root:, bus: infra[:bus], model_id: ai[:agent]&.model))
         commands.merge!(domain_commands(root:))
+        commands.merge!(reach_commands(root:))
         shell_tool = Array(ai[:tools]).find { |t| t.is_a?(Reach::Shell) }
         commands.merge!(agent_commands(
           agent: ai[:agent],

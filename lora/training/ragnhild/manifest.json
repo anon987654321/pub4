@@ -3,13 +3,24 @@
   "trigger_word": "ragnhild",
   "model_version": "ragnhild_v2",
   "orchestrator": "training/ragnhild/ai_toolkit/run_generate.sh",
-  "train_config": "training/ragnhild/ai_toolkit/train_ragnhild.yaml",
+  "helpers": {
+    "gate_check": "training/ragnhild/ai_toolkit/check_hf_flux_access.rb",
+    "render_config": "training/ragnhild/ai_toolkit/render_config.rb",
+    "postpro": "training/ragnhild/ai_toolkit/postpro_samples.rb",
+    "ai_toolkit_runner": "training/ragnhild/ai_toolkit/run_ai_toolkit.rb"
+  },
   "prompts": "training/ragnhild/ai_toolkit/prompts.yaml",
+  "train_config": "training/ragnhild/ai_toolkit/train_ragnhild.yaml",
   "images_root": "lora",
   "weights_dir": "training/ragnhild/ai_toolkit/weights/ragnhild_v2",
   "dataset_dir": "training/ragnhild/ai_toolkit/dataset",
   "dataset_images": 17,
   "model": "black-forest-labs/FLUX.1-dev",
+  "upstream": {
+    "name": "ai-toolkit",
+    "entrypoint": "run.py",
+    "note": "only upstream train/generate boundary uses ai-toolkit venv python"
+  },
   "review": {
     "identity_first": true,
     "postpro_after_approval": true

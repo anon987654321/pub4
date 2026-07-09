@@ -54,15 +54,15 @@ end
 
 failed = results.reject { |row| row[:ok] }
 results.each do |row|
-  icon = row[:ok] ? "ok" : "FAIL"
-  puts "#{icon} #{row[:label]}"
+  tag = row[:ok] ? "ok:" : "warn:"
+  puts "#{tag} #{row[:label]}"
   puts row[:body] unless row[:body].empty?
 end
 
 if failed.any?
-  warn "\nstyle_gate: #{failed.size} check(s) failed"
+  warn "warn: style_gate #{failed.size} check(s) failed"
   exit 1
 end
 
-puts "\nstyle_gate: all checks passed"
+puts "ok: style_gate passed"
 exit 0

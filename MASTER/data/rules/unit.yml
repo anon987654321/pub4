@@ -52,7 +52,7 @@ unit:
   fix: FLATTEN nesting; SPLIT god classes; INLINE single-call helpers; delete abstractions
     until it hurts.
 - id: POLA_PRINCIPLE
-  source: Principle of Least Astonishment (POLA)
+  source: Principle of Least Astonishment (POLA) — not least resistance
   name: Principle of Least Astonishment
   tier: principle
   severity: warning

@@ -172,11 +172,11 @@ begin
   end
 rescue Ferrum::TimeoutError, Ferrum::DeadBrowserError, Timeout::Error => e
   if static_html_ok?(URL)
-    puts "\nprobe_primer: SKIP (headless blocked — #{e.class})"
-    puts "static HTML checks OK: primer + boot script present"
+    puts "\nok: probe_primer skip headless blocked (#{e.class})"
+    puts "ok: static HTML primer and boot script present"
     exit 0
   end
-  puts "\nprobe_primer: FAIL (#{e.class}: #{e.message})"
+  puts "\nwarn: probe_primer (#{e.class}: #{e.message})"
   exit 1
 ensure
   browser&.quit

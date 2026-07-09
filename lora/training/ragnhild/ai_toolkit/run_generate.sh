@@ -46,8 +46,7 @@ if [ "${RAGNHILD_SKIP_POSTPRO:-0}" = "1" ]; then
 fi
 
 run_gate_check() {
-  activate_toolkit
-  python "$CHECK_SCRIPT"
+  ruby "$CHECK_SCRIPT"
 }
 
 check_dataset() {
@@ -79,7 +78,7 @@ run_generate_samples() {
   trap 'rm -f "$config"' EXIT INT TERM
   render_config generate "$config"
   echo "ok: generating samples"
-  python run.py "$config"
+  run_ai_toolkit "$config"
   sync_samples_to_lora_root
 }
 

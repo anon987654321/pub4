@@ -14,7 +14,7 @@ fi
 
 render_config train "$config"
 echo "ok: training ragnhild_v2"
-python run.py "$config"
+run_ai_toolkit "$config"
 
 if [ "${RAGNHILD_POSTPRO_SAMPLES:-0}" = "1" ]; then
   run_postpro

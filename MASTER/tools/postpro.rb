@@ -15,7 +15,15 @@ BOOT_TIME = Time.now.freeze
 module PostproBootstrap
   def self.dmesg(msg)
     elapsed = defined?(BOOT_TIME) ? " +%.3fs" % (Time.now - BOOT_TIME) : ""
-    $stdout.puts "postpro0 at vips8#{elapsed}: #{msg}"
+    tag = if msg.start_with?("ERROR", "error")
+            "fix:"
+          elsif msg.start_with?("WARN", "warn")
+            "warn:"
+          else
+            "ok:"
+          end
+    text = msg.sub(/\A(?:OK|WARN|ERROR|ok|warn|error)\s+/i, "")
+    $stdout.puts "postpro#{elapsed}: #{tag} #{text}"
     $stdout.flush
   end
 

@@ -20,9 +20,9 @@ sections:
     Session: .master/session.json (/history). Undo: .master/undo_journal.jsonl (/undo).
     Triage: /status, /tail, /dmesg, bin/probe. Key events: pipeline:stage_start, review:verdict, scan:progress, route:resolved.
   replicate: |-
-    Media via Replicate API; text reasoning on OpenRouter/xAI/Anthropic. Token: REPLICATE_API_TOKEN in /etc/master.env or ~/.config/repligen/config.json.
-    Image default: black-forest-labs/flux-2-pro (data/providers.yml). VideoChain: lib/reach/video_chain.rb.
-    Backends: kling, happyhorse, cogvideox, minimax, animatediff, animatediff_camera. Help: bundle exec ruby bin/video help.
+    Cloud media via Replicate API (data/providers.yml). Token: REPLICATE_API_TOKEN or ~/.config/repligen/config.json.
+    Local identity LoRA: Ruby helpers in lora/training/ragnhild/ai_toolkit/; data/lora_pipeline.yml; /lora-train in CLI. Only ai-toolkit run.py uses python.
+    Grade stills: MASTER/tools/postpro.rb, /postpro. Routing help: lib/reach/video_chain.rb.
     Motion critique: lib/judge/council/motion_critique.rb. Env: MOTION_CRITIQUE_VISION, COMFYUI_URL, COMFYUI_WRAPPER_URL.
   conventions: |-
     Inviolable law: data/soul.yml, data/rules.yml. Evidence mandatory — no hedges without command output or diffs.
