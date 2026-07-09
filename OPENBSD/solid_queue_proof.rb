@@ -24,7 +24,7 @@ abort "missing SECRET_KEY_BASE in /etc/#{app}.env" if secret.to_s.empty?
 runner = <<~RUBY
   adapter = ActiveJob::Base.queue_adapter
   unless adapter.is_a?(ActiveJob::QueueAdapters::SolidQueueAdapter)
-    warn "solid_queue: #{app} adapter=#{adapter.class.name}"
+    warn "solid_queue: #{app} adapter=\#{adapter.class.name}"
     exit 1
   end
 
