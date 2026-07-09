@@ -179,8 +179,12 @@ high-risk requires `critique` verb (in-process `Deliberation` tribunal) before
 `:pipeline` is a `TurnPipeline` adapter over `TurnRouter`; legacy stages no longer
 boot. `lib/now/pipeline.rb` remains for smoke tests only.
 
-Slice 6 still open: trim `ai_boot` accretion (swarm, council_stage shell) and
-sever remaining lib→pipeline back-edges.
+**Slice 6** (2026-07-09): lean boot by default (`MASTER_FULL_BOOT=1` for full
+swarm/council_stage/graph fan-out/propose_tree). VPS rc.d already sets
+`MASTER_WATCHER=0`, `MASTER_AUTOFIX=0`, etc.
+
+Optional later: migrate slash `Stages::*` in TurnRouter to thin handlers; delete
+`lib/now/pipeline.rb` when smoke tests no longer need it.
 
 ## Done
 

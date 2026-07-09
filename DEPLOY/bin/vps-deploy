@@ -37,8 +37,13 @@ if [[ -x $repo/DEPLOY/openbsd/resource_guard.sh ]]; then
   doas ksh "$repo/DEPLOY/openbsd/resource_guard.sh" || true
 fi
 
-print "vps-deploy: $app (ci + sync)"
-zsh "$repo/DEPLOY/openbsd/sh/vps_ci.sh" "$app"
+if [[ -n ${SKIP_CI:-} ]]; then
+  print "vps-deploy: $app (sync via ${app}.sh, SKIP_CI=1)"
+  zsh "$repo/DEPLOY/rails/${app}/${app}.sh"
+else
+  print "vps-deploy: $app (ci + sync)"
+  zsh "$repo/DEPLOY/openbsd/sh/vps_ci.sh" "$app"
+fi
 
 print "vps-deploy: $app (secondary db schemas)"
 . "$repo/DEPLOY/rails/shared/deploy/@shared_functions.sh"

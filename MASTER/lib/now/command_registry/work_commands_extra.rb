@@ -15,9 +15,15 @@ module Master
       def dispatch_review(council_stage:, deliberation:, root:, bus:, review_crew:, ctx: nil)
         arg = arg_for(ctx)
         case arg
-        when "on"     then council_stage.enable!; "review: enabled in pipeline"
-        when "off"    then council_stage.disable!; "review: disabled in pipeline"
-        when "status" then "review: #{council_stage.enabled? ? "on" : "off"} in pipeline"
+        when "on"
+          return "review: lean boot (set MASTER_FULL_BOOT=1 for pipeline toggle)" unless council_stage
+          council_stage.enable!; "review: enabled in pipeline"
+        when "off"
+          return "review: lean boot (set MASTER_FULL_BOOT=1 for pipeline toggle)" unless council_stage
+          council_stage.disable!; "review: disabled in pipeline"
+        when "status"
+          return "review: lean boot (deliberation tribunal available)" unless council_stage
+          "review: #{council_stage.enabled? ? "on" : "off"} in pipeline"
         else
           target = arg.empty? ? "." : arg
           crew_result = review_crew&.run(target: target)

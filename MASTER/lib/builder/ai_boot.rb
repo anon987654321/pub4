@@ -28,13 +28,18 @@ module Master
       agent.wire_constitution(Ground::Constitution.new)
       ecology = infra[:ecology]
       scanner = build_scanner(root:, agent:, bus:, ecology:)
-      swarm = Judge::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
+      lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
+      swarm = lean_boot ? nil : Judge::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
       personas = Judge::Council::Personas.load(Master::COUNCIL_PATH)
       axioms = Ground::Rules.new(root:)
       deliberation = Judge::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
       ideation = Judge::Council::Ideation.new(agent:, event_bus: bus)
-      council_stage = Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus,
-                                               ground_truth: infra[:ground_truth])
+      council_stage = if lean_boot
+                        nil
+                      else
+                        Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus,
+                                                 ground_truth: infra[:ground_truth])
+                      end
       # Permissive for user chat (CLI + web); strict guard remains in ToolContract for shell/git.
       guard = Judge::Security::InjectionGuard.new(mode: :permissive)
       autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms:)
@@ -42,13 +47,15 @@ module Master
       autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
       Trace::FeedbackLedger.new(event_bus: bus, learnings: autonomous[:learnings]).attach
       Trace::ReflexionLedger.new(event_bus: bus, root:).attach
-      Judge::GraphRetriever.new(reference_graph: infra[:reference_graph], root:).tap do |graph_retriever|
-        bus.subscribe("tool:after") do |event|
-          path = event[:path] || event["path"]
-          next unless path
+      unless lean_boot
+        Judge::GraphRetriever.new(reference_graph: infra[:reference_graph], root:).tap do |graph_retriever|
+          bus.subscribe("tool:after") do |event|
+            path = event[:path] || event["path"]
+            next unless path
 
-          neighbours = graph_retriever.neighbors([path])
-          bus.publish("graph:neighbours", path:, neighbours:) unless neighbours.empty?
+            neighbours = graph_retriever.neighbors([path])
+            bus.publish("graph:neighbours", path:, neighbours:) unless neighbours.empty?
+          end
         end
       end
       unless ENV["MASTER_SKIP_SELF_TEST"] == "1"
@@ -76,6 +83,7 @@ module Master
     end
 
     def boot_autonomous(root:, infra:, agent:, scanner:, axioms: nil)
+      lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
       bus = infra[:bus]
       standing = Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
       git = Reach::GitOperations.new(root)
@@ -104,9 +112,11 @@ module Master
       triggers = Trace::Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
 
-      propose_tree = Loop::ProposeTree.new(root:, agent:, event_bus: bus)
-      bus.subscribe("fix_loop:clean") { Thread.new { propose_tree.call } }
-      bus.subscribe("fix_loop:plateau") { Thread.new { propose_tree.call } }
+      propose_tree = lean_boot ? nil : Loop::ProposeTree.new(root:, agent:, event_bus: bus)
+      unless lean_boot
+        bus.subscribe("fix_loop:clean") { Thread.new { propose_tree.call } }
+        bus.subscribe("fix_loop:plateau") { Thread.new { propose_tree.call } }
+      end
       bus.subscribe("fix_loop:oscillation") { |payload| rollback.call(Master::Result.err("fix loop oscillation", category: :policy)) }
       bus.subscribe("fix_loop:cycle_detected") { |payload| rollback.call(Master::Result.err("fix loop cycle detected", category: :policy)) }
 
