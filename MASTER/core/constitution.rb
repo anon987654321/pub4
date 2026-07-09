@@ -53,7 +53,9 @@ module Master::Core
         structured_exec_rule,
         safe_exec_rule(veto),
         evidence_for_done_rule,
-        git_commit_evidence_rule
+        git_commit_evidence_rule,
+        council_for_done_rule,
+        ideation_before_write_rule
       ]
     end
 
@@ -131,6 +133,25 @@ module Master::Core
         next nil if memory.proved?
 
         Verdict::Block.new(reason: "cannot commit before evidence threshold", by: :git_commit_evidence)
+      })
+    end
+
+    # High-risk goals require an in-process council critique before done.
+    def self.council_for_done_rule
+      Rule.new(id: :council_for_done, verbs: %i[done], judge: lambda { |_effect, memory|
+        next nil unless memory.council_required?
+        next nil if memory.council_cleared?
+
+        Verdict::Block.new(reason: "run critique (council tribunal) before done on high-risk goals", by: :council_for_done)
+      })
+    end
+
+    # Medium+ goals must carry ideation notes seeded before the first write.
+    def self.ideation_before_write_rule
+      Rule.new(id: :ideation_before_write, verbs: %i[write], judge: lambda { |_effect, memory|
+        next nil if memory.ideation_satisfied?
+
+        Verdict::Block.new(reason: "ideation not complete — approaches/chosen must be in memory", by: :ideation_before_write)
       })
     end
 

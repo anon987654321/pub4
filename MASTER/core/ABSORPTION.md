@@ -170,9 +170,13 @@ plain language and `/run <goal>` → `CoreBridge` → `Fold`; slash commands →
 `command_registry`. Wired in CLI, web `ChatService`, `Gateway`, and standing
 orders. Regex workflow fan-out in `repl_flow` removed — one goal, Fold decides.
 
-Remaining legacy: the **pipeline object** still boots (stages, council, enhance)
-for nothing on the hot path; delete it in slice 5. M4 sunsets `core_bridge.rb`
-once `TurnRouter` is the only loader and the shim inlines into `bin/master-core`.
+**Deliberation rebuild** (2026-07-09): conditional hybrid on `TurnRouter` —
+`FoldRisk` classifies goals; medium+ runs `Ideation` (3–5 approaches + synthesis);
+high-risk requires `critique` verb (in-process `Deliberation` tribunal) before
+`done`. Constitution enforces ideation notes and council clearance; no pipeline stages.
+
+Remaining legacy: the **pipeline object** still boots but hot path uses
+`TurnRouter` + Fold only. Delete pipeline in slice 5.
 
 ## Done
 

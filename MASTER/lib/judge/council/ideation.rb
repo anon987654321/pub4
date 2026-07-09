@@ -21,17 +21,20 @@ module Master
             return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
             brainstorm_result = brainstorm(prompt:, prior: ideas, constraints:)
             return brainstorm_result if brainstorm_result.err?
+            ideas.concat(brainstorm_result.value!)
             @bus&.publish("ideation:cycle", cycle: cycle + 1, ideas: ideas.size)
 
             return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
             critique_result = critique(ideas)
             return critique_result if critique_result.err?
+            critiques << critique_result.value!
           end
 
           return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
+          synth_result = synthesize(prompt:, ideas:, critiques:, constraints:)
           return synth_result if synth_result.err?
 
-          Master::Result.ok(ideas: ideas, critiques: critiques, final: synth_result.value)
+          Master::Result.ok(ideas: ideas.uniq, critiques:, final: synth_result.value!)
         end
 
         private

@@ -58,11 +58,32 @@ module Master::Core
       nil
     end
 
-    def initialize(budget: self.class.host_budget, summarize: ->(dropped) { "[#{dropped.length} earlier steps summarised]" })
+    def initialize(budget: self.class.host_budget, summarize: ->(dropped) { "[#{dropped.length} earlier steps summarised]" }, risk: :low)
       @entries = []
       @budget = budget
       @summarize = summarize
       @evidence = []
+      @risk = risk.to_sym
+      @ideation_complete = false
+      @council_pass = false
+    end
+
+    attr_reader :risk
+
+    def council_required? = %i[high critical].include?(@risk)
+    def ideation_required? = %i[medium high critical].include?(@risk)
+    def council_cleared? = @council_pass || !council_required?
+    def ideation_satisfied? = !ideation_required? || @ideation_complete
+
+    def mark_ideation_complete!
+      @ideation_complete = true
+      self
+    end
+
+    def mark_council_pass!(detail: "council pass")
+      @council_pass = true
+      @evidence << Evidence.new(kind: :council_pass, ok: true, score: 0, detail:, at: Time.now.utc)
+      self
     end
 
     def note(kind, text)
@@ -74,6 +95,7 @@ module Master::Core
       @entries << Entry.new(role: :act, text: effect.to_s)
       @entries << Entry.new(role: :obs, text: observation.to_s)
       record_evidence(effect, observation)
+      mark_council_pass!(detail: observation.message) if effect.verb == :critique && observation.ok?
       self
     end
 

@@ -17,9 +17,10 @@ module Master::Core
   #
   # This is where the old reach/ (git, web, fs), ops/, and tools/ collapse to.
   class World
-    def initialize(root:, ask: nil)
+    def initialize(root:, ask: nil, critique_runner: nil)
       @root = File.expand_path(root)
       @ask = ask
+      @critique_runner = critique_runner
     end
 
     def verbs = Master::Core::VERBS
@@ -93,6 +94,15 @@ module Master::Core
     end
 
     def do_note(**) = Observation.ok # the Memory keeps the note; nothing to do here
+
+    def do_critique(scope: "diff", **)
+      return Observation.no("critique: council runner unavailable") unless @critique_runner
+
+      result = @critique_runner.call(root: @root, scope: scope.to_s)
+      result.ok? ? Observation.ok(result.value!.to_s) : Observation.no(result.message.to_s)
+    rescue StandardError => e
+      Observation.no("critique: #{e.class}: #{e.message}")
+    end
 
     # Paths are sandboxed to root; nothing escapes the workspace.
     def within(path)

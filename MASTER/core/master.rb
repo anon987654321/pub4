@@ -12,7 +12,7 @@ module Master::Core
   # An Effect is something the agent wants to do. Nothing reaches the world
   # except by proposing an Effect and having the Constitution admit it. The verb
   # set is closed and small; that closure is what makes the agent auditable.
-  VERBS = %i[read write exec git ask note done].freeze
+  VERBS = %i[read write exec git ask note critique done].freeze
 
   Effect = Data.define(:verb, :args) do
     def self.read(path) = new(verb: :read, args: { path: })
@@ -22,6 +22,7 @@ module Master::Core
     def self.git(operation, **args) = new(verb: :git, args: { operation:, **args })
     def self.ask(prompt, options: nil) = new(verb: :ask, args: { prompt:, options: })
     def self.note(kind, text) = new(verb: :note, args: { kind:, text: })
+    def self.critique(scope: "diff") = new(verb: :critique, args: { scope: })
     def self.done(summary = nil) = new(verb: :done, args: { summary: })
 
     def initialize(verb:, args:)

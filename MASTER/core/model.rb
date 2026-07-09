@@ -31,9 +31,10 @@ module Master::Core
         write  {"path","content"}                create or replace a file (full contents)
         exec   {"argv":["prog","arg"...],"evidence":"#{EVIDENCE_KINDS}"}
         git    {"operation":"diff|stage|commit","paths":[...],"message":"..."}
-        ask    {"prompt","options":[...]}        ask the operator only when truly blocked
-        note   {"kind","text"}                   record a thought when no action fits
-        done   {"summary"}                        finish — only after enough evidence
+        ask      {"prompt","options":[...]}      ask the operator only when truly blocked
+        note     {"kind","text"}                 record a thought when no action fits
+        critique {"scope":"diff"}                run council tribunal on git diff (high-risk)
+        done     {"summary"}                      finish — only after enough evidence
 
       How to work:
         - Orient first: read the files you will change and exec `ls` or
@@ -41,6 +42,7 @@ module Master::Core
         - Change the minimum that satisfies the goal. Every .rb you write must parse.
         - Prove it: exec the tests or checks with an evidence tag. Each result comes
           back as the next turn's observation — react to failures, never ignore them.
+        - On high-risk goals (risk: high/critical in memory), run `critique` before `done`.
         - Then, and only then, `done`.
 
       Constraints the runtime enforces (violate them and the effect is refused):
@@ -49,6 +51,8 @@ module Master::Core
         - exec argv must be an array of strings
         - no `done` or `git commit` until exec evidence reaches the threshold
           (#{EVIDENCE_WEIGHTS}; threshold #{Memory::PASS_THRESHOLD})
+        - medium+ goals carry approach/chosen notes — do not write before reading them
+        - high-risk goals require a passing `critique` before `done`
 
       Reason silently; output only the JSON object.
     PROMPT

@@ -12,7 +12,8 @@ module Master
     module CoreBridge
       module_function
 
-      def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil)
+      def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
+              container: nil, risk: :low)
         transcript = []
         observer = lambda do |turn:, effect:, observation:|
           line = "#{turn}: #{effect} -> #{observation}"
@@ -21,16 +22,19 @@ module Master
           on_turn&.call(line)
         end
 
+        memory ||= Master::Core::Memory.new(risk:)
+        critique_runner = container ? CouncilCrit.runner_for(container) : nil
+
         done = Master::Core::Fold.new(
           model:       model || Master::Core::Model.new(**{ model_id: }.compact),
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path),
-          world:       Master::Core::World.new(root:),
-          memory:      Master::Core::Memory.new,
+          world:       Master::Core::World.new(root:, critique_runner:),
+          memory:,
           max_turns:,
           observer:
         ).run(goal)
 
-        { reason: done.reason, turns: done.turns, summary: done.summary, transcript: }
+        { reason: done.reason, turns: done.turns, summary: done.summary, transcript:, risk: memory.risk }
       end
 
       def run_string(goal, root:, bus: nil, model: nil, model_id: nil)

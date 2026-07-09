@@ -22,12 +22,29 @@ module Master
         return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
 
         root = container[:root] || Dir.pwd
+        assessment = FoldRisk.assess(goal, root:)
+        risk = assessment[:risk]
+        container[:bus]&.publish("fold:risk", risk:, intent: assessment[:intent])
+
+        memory = Master::Core::Memory.new(risk:)
+        memory.note(:risk, risk)
+        ideation = DeliberationPrep.prepare!(goal:, container:, risk:)
+        if ideation
+          DeliberationPrep.seed_memory!(memory, ideation)
+        elsif FoldRisk.ideation_required?(risk)
+          memory.note(:chosen, "proceed: ideation skipped (no agent)")
+          memory.mark_ideation_complete!
+        end
+
         fold = CoreBridge.run(
           goal,
           root:,
           bus: container[:bus],
           model_id: container[:agent]&.model,
-          on_turn:
+          on_turn:,
+          memory:,
+          container:,
+          risk:
         )
         fold_to_result(fold)
       rescue StandardError => e
@@ -79,6 +96,7 @@ module Master
 
       def fold_output_text(fold)
         header = "core: #{fold[:reason]} turns=#{fold[:turns]}"
+        header += " risk=#{fold[:risk]}" if fold[:risk]
         [header, *fold[:transcript], fold[:summary]].compact.join("\n")
       end
 
