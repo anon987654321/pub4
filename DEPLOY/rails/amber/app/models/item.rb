@@ -24,7 +24,8 @@ class Item < ApplicationRecord
   validates :times_worn, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validates :price_cents, numericality: { greater_than_or_equal_to: 0, only_integer: true }, allow_nil: true
 
-  broadcasts_refreshes
+  # broadcasts_refreshes omitted on 1-CPU VPS: each save enqueues Turbo::Streams::BroadcastStreamJob
+  # and media/AI pipelines touch items many times per upload (queue depth >> 1000).
 
   scope :joy,          -> { where(spark_joy: true) }
   scope :by_category,  ->(c) { where(category: c) }

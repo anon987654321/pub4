@@ -32,6 +32,33 @@ sweep_queue() {
       WHERE job_id NOT IN (SELECT id FROM solid_queue_jobs);
     DELETE FROM solid_queue_failed_executions
       WHERE job_id NOT IN (SELECT id FROM solid_queue_jobs);
+    DELETE FROM solid_queue_ready_executions
+      WHERE job_id IN (
+        SELECT id FROM solid_queue_jobs
+        WHERE finished_at IS NULL AND class_name = 'Turbo::Streams::BroadcastStreamJob'
+      );
+    DELETE FROM solid_queue_scheduled_executions
+      WHERE job_id IN (
+        SELECT id FROM solid_queue_jobs
+        WHERE finished_at IS NULL AND class_name = 'Turbo::Streams::BroadcastStreamJob'
+      );
+    DELETE FROM solid_queue_claimed_executions
+      WHERE job_id IN (
+        SELECT id FROM solid_queue_jobs
+        WHERE finished_at IS NULL AND class_name = 'Turbo::Streams::BroadcastStreamJob'
+      );
+    DELETE FROM solid_queue_blocked_executions
+      WHERE job_id IN (
+        SELECT id FROM solid_queue_jobs
+        WHERE finished_at IS NULL AND class_name = 'Turbo::Streams::BroadcastStreamJob'
+      );
+    DELETE FROM solid_queue_failed_executions
+      WHERE job_id IN (
+        SELECT id FROM solid_queue_jobs
+        WHERE finished_at IS NULL AND class_name = 'Turbo::Streams::BroadcastStreamJob'
+      );
+    DELETE FROM solid_queue_jobs
+      WHERE finished_at IS NULL AND class_name = 'Turbo::Streams::BroadcastStreamJob';
     WITH ranked AS (
       SELECT id, class_name, arguments,
              ROW_NUMBER() OVER (PARTITION BY class_name, arguments ORDER BY id) AS rn
