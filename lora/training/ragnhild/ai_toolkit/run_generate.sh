@@ -25,14 +25,12 @@ Environment:
   RAGNHILD_LOW_VRAM=0|1          (optional; cuda defaults to 0)
   RAGNHILD_FLUX_MODEL_PATH, RAGNHILD_SKIP_POSTPRO=1
 
-GPU VPS (not pub4 vm23 — needs 24GB+ VRAM, Linux + CUDA):
-  1. git clone pub4 + git clone ai-toolkit; pip install ai-toolkit deps
-  2. export HF_TOKEN=...  (accept black-forest-labs/FLUX.1-dev on Hugging Face)
-  3. export RAGNHILD_DEVICE=cuda AI_TOOLKIT_ROOT=~/ai-toolkit
-  4. tmux new -s ragnhild
-  5. cd lora/training/ragnhild/ai_toolkit && ./run_generate.sh --check
-  6. ./run_generate.sh --train 2>&1 | tee train_run.log
-  7. scp weights/ragnhild_v2/*.safetensors back to Mac when done
+RunPod (24GB+ GPU — RTX 4090 / A5000 / L4):
+  1. Create pod: PyTorch 2.x CUDA 12 template, 50GB+ disk
+  2. SSH in, export HF_TOKEN=hf_...
+  3. ./setup_runpod.sh --train   (or see setup_runpod.sh --help)
+  4. tmux attach -t ragnhild
+  5. scp weights/ragnhild_v2/*.safetensors back to Mac when done
 
 Exit: 0 ok | 1 setup | 2 HF gate | 3 no weights
 EOF
