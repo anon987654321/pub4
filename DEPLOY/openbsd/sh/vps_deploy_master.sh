@@ -14,6 +14,8 @@ echo "==> assets precompile"
 cd "$WEB"
 export RAILS_ENV=production
 export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 32)}"
+# Propshaft must not re-digest public/assets/ (nested assets/assets wedges precompile).
+rm -rf public/assets/assets 2>/dev/null || true
 bundle exec rails assets:precompile
 bundle exec ruby "$ROOT/DEPLOY/rails/master_web_assets_gate.rb"
 
