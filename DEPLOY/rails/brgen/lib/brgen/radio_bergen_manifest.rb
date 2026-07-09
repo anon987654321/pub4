@@ -3,14 +3,20 @@
 module Brgen
   # Shared Radio Bergen manifest loader — pub2 index.html archaeology split into data + Rails.
   class RadioBergenManifest
-    MANIFEST_PATH = Rails.root.join("../../..", "MASTER/tools/audio/radio_bergen_tracks.yml").expand_path
-    LESSONS_PATH = Rails.root.join("../../..", "MASTER/data/lessons/pub_archive_restore.yml").expand_path
-
     class << self
-      def load
-        return {} unless MANIFEST_PATH.exist?
+      def manifest_path
+        Pub4::DeployPaths.repo_join("MASTER/tools/audio/radio_bergen_tracks.yml")
+      end
 
-        YAML.safe_load(MANIFEST_PATH.read, permitted_classes: [], aliases: true) || {}
+      def lessons_path
+        Pub4::DeployPaths.repo_join("MASTER/data/lessons/pub_archive_restore.yml")
+      end
+
+      def load
+        path = manifest_path
+        return {} unless path.file?
+
+        YAML.safe_load(path.read, permitted_classes: [], aliases: true) || {}
       end
 
       def youtube_tracks
@@ -46,9 +52,10 @@ module Brgen
       end
 
       def lessons_pub2_head
-        return "ad05242c97ff" unless LESSONS_PATH.exist?
+        path = lessons_path
+        return "ad05242c97ff" unless path.file?
 
-        data = YAML.safe_load(LESSONS_PATH.read, permitted_classes: [], aliases: true) || {}
+        data = YAML.safe_load(path.read, permitted_classes: [], aliases: true) || {}
         data.dig("pub2", "head") || "ad05242c97ff"
       end
     end

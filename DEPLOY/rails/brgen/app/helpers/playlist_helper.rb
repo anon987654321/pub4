@@ -15,7 +15,17 @@ module PlaylistHelper
       .limit(12)
       .filter_map { |track| radio_track_from_source(track) }
 
-    (hosted + manifest).uniq { |t| t[:id] }.first(24)
+    catalog = (hosted + manifest).uniq { |t| t[:id] }
+    catalog = radio_tunnel_fallback_tracks if catalog.empty?
+    catalog.first(24)
+  end
+
+  def radio_tunnel_fallback_tracks
+    [
+      { title: "Microphone Master", id: "9EGHwkDix78", artist: "J Dilla" },
+      { title: "In Space", id: "vO2nWXCVt6o", artist: "J Dilla" },
+      { title: "Get It Together", id: "t6T-Q6HMbEo", artist: "Slum Village" }
+    ]
   end
 
   def radio_archaeology_lines

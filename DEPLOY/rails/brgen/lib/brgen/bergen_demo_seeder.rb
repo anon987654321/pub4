@@ -587,7 +587,7 @@ module Brgen
     end
 
     def repo_root
-      @repo_root ||= Rails.root.join("../../..").expand_path
+      @repo_root ||= Pub4::DeployPaths.repo_root
     end
   end
 end
