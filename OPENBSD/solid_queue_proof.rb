@@ -22,27 +22,28 @@ secret = ENV["SECRET_KEY_BASE"]
 abort "missing SECRET_KEY_BASE in /etc/#{app}.env" if secret.to_s.empty?
 
 runner = <<~RUBY
-  n = SolidQueue::Process.count
-  puts n
+  n = 0
+  30.times do
+    n = SolidQueue::Process.count
+    break if n.positive?
+
+    sleep 2
+  end
+  warn "solid_queue: #{app} processes=\#{n}"
+  exit(n.positive? ? 0 : 1)
 RUBY
 
-base = [
-  "export HOME=/home/#{app}",
-  "export RAILS_ENV=production",
-  "export SOLID_QUEUE_IN_PUMA=true",
-  "export SECRET_KEY_BASE=#{Shellwords.escape(secret)}",
-  "cd #{Shellwords.escape(app_dir)}",
-  "bundle34 exec rails runner -e production #{Shellwords.escape(runner)}"
-].join(" && ")
+cmd = [
+  "su", "-m", app, "-c",
+  [
+    "export HOME=/home/#{app}",
+    "export RAILS_ENV=production",
+    "export SOLID_QUEUE_IN_PUMA=true",
+    "export SECRET_KEY_BASE=#{Shellwords.escape(secret)}",
+    "cd #{Shellwords.escape(app_dir)}",
+    "bundle34 exec rails runner -e production #{Shellwords.escape(runner)}"
+  ].join(" && ")
+]
 
-count = nil
-30.times do
-  out = `su -m #{Shellwords.escape(app)} -c #{Shellwords.escape(base)} 2>/dev/null`.strip
-  count = out.lines.last.to_i
-  break if count.positive?
-
-  sleep 2
-end
-
-warn "solid_queue: #{app} processes=#{count || 0}"
-exit(count.to_i.positive? ? 0 : 1)
+success = system(*cmd)
+exit(success ? 0 : 1)
