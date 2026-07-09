@@ -15,10 +15,10 @@ sha=$(git -C "$repo" rev-parse --short HEAD)
 started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 write_stamp() {
-  local name=$1 status=$2
+  local name=$1 stamp_status=$2
   local file=$stamp_dir/last_deploy_${name}.json
   doas tee "$file" >/dev/null <<EOF
-{"app":"$name","sha":"$sha","at":"$started","status":"$status","host":"$(hostname)"}
+{"app":"$name","sha":"$sha","at":"$started","status":"$stamp_status","host":"$(hostname)"}
 EOF
   doas chmod 644 "$file" 2>/dev/null || true
 }
