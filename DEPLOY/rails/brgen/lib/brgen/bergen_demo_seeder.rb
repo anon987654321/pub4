@@ -567,10 +567,7 @@ module Brgen
     end
 
     def load_radio_bergen_manifest
-      path = repo_root.join("MASTER/tools/audio/radio_bergen_tracks.yml")
-      return {} unless path.exist?
-
-      YAML.safe_load(path.read, permitted_classes: [], aliases: true) || {}
+      RadioBergenManifest.load
     end
 
     def find_or_create_radio_track!(row)
@@ -586,8 +583,5 @@ module Brgen
       end
     end
 
-    def repo_root
-      @repo_root ||= Pub4::DeployPaths.repo_root
-    end
   end
 end
