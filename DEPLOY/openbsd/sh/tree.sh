@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-# DEPLOY/sh/tree.sh
+# DEPLOY/openbsd/sh/tree.sh
 #
 # Thin portable wrapper around the constitution-aware tree generator.
 # Provides the "full overview" requested during MASTER KISS/DRY redesign work.
@@ -44,4 +44,3 @@ else
 fi
 
 exec "$RUBY" "$RUBY_TREE" "$ROOT" "$@"
-

@@ -1,0 +1,93 @@
+/* Dating — full-screen neon intro (css-doodle heart) */
+body.vertical-dating {
+  --dating-bg: #0a0a0a;
+  --dating-ink: #ffffff;
+  --dating-muted: rgba(255, 255, 255, 0.62);
+  --dating-card: #141414;
+  --dating-border: rgba(255, 255, 255, 0.08);
+  --dating-accent: #00d4aa;
+  --dating-accent-warm: #ff5500;
+  --font-primary: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--dating-bg);
+  color: var(--dating-ink);
+  font-family: var(--font-primary);
+}
+
+body.vertical-dating .sidebar,
+body.vertical-dating .widgets,
+body.vertical-dating .tab-bar,
+body.vertical-dating .compose-fab,
+body.vertical-dating .theme-toggle,
+body.vertical-dating #tunnel-canvas,
+body.vertical-dating .city-carousel,
+body.vertical-dating .widget-search,
+body.vertical-dating .mobile-sheet,
+body.vertical-dating .mobile-sheet-backdrop {
+  display: none;
+}
+
+body.vertical-dating .layout {
+  grid-template-areas: "main";
+  grid-template-columns: 1fr;
+  max-width: 100%;
+}
+
+body.vertical-dating main {
+  max-width: 100%;
+  padding: 0;
+  min-height: 100dvh;
+}
+
+body.vertical-dating .app-shell {
+  background: var(--dating-bg);
+}
+
+.dating-app {
+  min-height: 100dvh;
+  background: var(--dating-bg);
+}
+
+.dating-intro {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-splash);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding:
+    max(28px, env(safe-area-inset-top))
+    20px
+    max(36px, env(safe-area-inset-bottom));
+  background: var(--dating-bg);
+  color: var(--dating-ink);
+  text-align: center;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  transition: opacity 420ms ease, transform 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.dating-intro:active {
+  cursor: grabbing;
+}
+
+.dating-intro--dismissed {
+  opacity: 0;
+  transform: translateY(-24px);
+  pointer-events: none;
+}
+
+.dating-intro[hidden] {
+  display: none;
+}
+
+.dating-intro-hint {
+  margin: 0;
+  padding-top: clamp(48px, 12vh, 96px);
+  font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  font-size: clamp(1rem, 3.8vw, 1.125rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--dating-ink);
+}

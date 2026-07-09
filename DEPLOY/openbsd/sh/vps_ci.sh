@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Run one Rails app CI on vm23 with mutex + load gate (serial operator entrypoint).
-# Usage: zsh DEPLOY/sh/vps_ci.sh brgen
+# Usage: zsh DEPLOY/openbsd/sh/vps_ci.sh brgen
 set -euo pipefail
 
 app=${1:-}

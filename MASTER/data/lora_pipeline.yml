@@ -1,7 +1,7 @@
 schema: 1
 orchestrator: lora/training/ragnhild/ai_toolkit/run_generate.sh
 manifest: lora/training/ragnhild/manifest.json
-prompts: lora/training/ragnhild/ai_toolkit/prompts.yaml
+prompt_file: lora/training/ragnhild/ai_toolkit/prompts.yaml
 helpers:
   gate_check: lora/training/ragnhild/ai_toolkit/check_hf_flux_access.rb
   render_config: lora/training/ragnhild/ai_toolkit/render_config.rb
@@ -13,7 +13,7 @@ upstream:
   name: ai-toolkit
   entrypoint: run.py
   note: only upstream boundary uses ai-toolkit venv python
-modes:
+mode_flags:
   check: --check
   train: --train
   generate: --generate

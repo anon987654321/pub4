@@ -36,5 +36,5 @@ Restarted stuff, should be up.
 ## Good Refusal
 
 ```text
-I am not running `openbsd.sh` from macOS. I can run local gates here; the full installer belongs on vm23 under tmux.
+I am not running `DEPLOY.sh` from macOS. I can run local gates here; the full installer belongs on vm23 under tmux.
 ```

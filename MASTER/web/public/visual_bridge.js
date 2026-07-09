@@ -444,29 +444,13 @@
     classify
   };
 
-  function containerLive() {
-    return window.MASTER_CONTAINER_READY !== false;
-  }
-
-  function bootLink() {
-    if (!containerLive() || state.connected || eventSource || cableSocket) return;
-    connectSse();
-  }
-
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) disconnectSse();
-    else if (window._primerFired && containerLive()) bootLink();
+    else connectSse();
   }, { passive: true });
 
   observeDomSignals();
-  window.addEventListener("master:container-ready", bootLink);
-  if (window._primerFired && containerLive()) bootLink();
-  else {
-    window.addEventListener("master:session-ready", bootLink, { once: true });
-    window.addEventListener("primer:ready", () => {
-      if (containerLive()) bootLink();
-    }, { once: true });
-  }
+  connectSse();
   bootEmotionalTimeline();
   whenPrimed(bootExperimentalVisuals);
   emitVisual("visual:ready", { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "ready" });

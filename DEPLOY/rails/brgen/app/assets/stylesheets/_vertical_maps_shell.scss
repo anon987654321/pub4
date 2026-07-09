@@ -1,0 +1,99 @@
+/* Maps — full-bleed MapLibre canvas + glass HUD */
+body.vertical-maps {
+  --maps-bg: #0b0f14;
+  --maps-ink: #f4f7fb;
+  --maps-muted: rgba(244, 247, 251, 0.62);
+  --maps-accent: #3b82f6;
+  --maps-accent-soft: rgba(59, 130, 246, 0.18);
+  --maps-surface: rgba(12, 18, 28, 0.82);
+  --maps-border: rgba(255, 255, 255, 0.1);
+  --font-primary: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--maps-bg);
+  color: var(--maps-ink);
+  font-family: var(--font-primary);
+}
+
+body.vertical-maps .sidebar,
+body.vertical-maps .widgets,
+body.vertical-maps .tab-bar,
+body.vertical-maps .compose-fab,
+body.vertical-maps .theme-toggle,
+body.vertical-maps #tunnel-canvas,
+body.vertical-maps .city-carousel,
+body.vertical-maps .widget-search,
+body.vertical-maps .mobile-sheet,
+body.vertical-maps .mobile-sheet-backdrop,
+body.vertical-maps .feed-header {
+  display: none;
+}
+
+body.vertical-maps .layout {
+  grid-template-areas: "main";
+  grid-template-columns: 1fr;
+  max-width: 100%;
+}
+
+body.vertical-maps main {
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+body.vertical-maps .app-shell {
+  background: var(--maps-bg);
+}
+
+body.vertical-maps .map-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-canvas);
+}
+
+body.vertical-maps .map-hud {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  inset-inline-start: max(16px, env(safe-area-inset-left));
+  inset-inline-end: max(16px, env(safe-area-inset-right));
+  z-index: var(--z-app);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(100%, 360px);
+  pointer-events: none;
+}
+
+body.vertical-maps .map-hud > * {
+  pointer-events: auto;
+}
+
+body.vertical-maps .map-search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--maps-border);
+  background: var(--maps-surface);
+  backdrop-filter: blur(14px);
+  color: var(--maps-ink);
+  font-size: 0.9375rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+body.vertical-maps .map-search-input::placeholder {
+  color: var(--maps-muted);
+}
+
+body.vertical-maps .map-place-popup {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--maps-border);
+  background: var(--maps-surface);
+  backdrop-filter: blur(14px);
+  color: var(--maps-ink);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+body.vertical-maps .map-marker span {
+  border-color: rgba(255, 255, 255, 0.9);
+}

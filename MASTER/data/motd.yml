@@ -3,6 +3,6 @@ spots:
   - "scan: %{rule_count} rules, self-test on boot"
   - "face: WebGL particle UI at /chat"
   - "council: multi-persona deliberation"
-  - "engine: pub4-shared across 6 Rails apps"
-  - "deploy: relayd health + openbsd.sh gates"
+  - "engine: pub4-shared across active Rails apps"
+  - "deploy: relayd health + DEPLOY.sh gates"
   - "kernel: 5-file spine smoke in kernel/"

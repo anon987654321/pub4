@@ -7,7 +7,7 @@ require_relative "../lib/utf8"
 
 ROOT = File.expand_path("../..", __dir__)
 MASTER_JSON = ENV.fetch("MASTER_JSON", File.join(ROOT, "DEPLOY", "master.json"))
-OPENBSD_SH = File.join(ROOT, "DEPLOY", "openbsd", "openbsd.sh")
+OPENBSD_DEPLOY = File.join(ROOT, "DEPLOY", "openbsd", "DEPLOY.sh")
 APPS_YML = File.join(ROOT, "DEPLOY", "rails", "apps.yml")
 RAILS_README = File.join(ROOT, "DEPLOY", "rails", "README.md")
 PWA_BUILDER = File.join(ROOT, "DEPLOY", "rails", "scripts", "build_workbox.mjs")
@@ -69,7 +69,7 @@ def check_deploy_scripts(result, apps)
 end
 
 def openbsd_ports
-  body = File.read(OPENBSD_SH)
+  body = File.read(OPENBSD_DEPLOY)
   match = body.match(/typeset -A APP_PORTS=\(\n(?<ports>.*?)\n\)/m)
   return {} unless match
 
@@ -82,13 +82,13 @@ def openbsd_ports
 end
 
 def check_openbsd_ports(result, apps)
-  unless File.file?(OPENBSD_SH)
-    result.fail("missing OpenBSD deploy script: #{OPENBSD_SH}")
+  unless File.file?(OPENBSD_DEPLOY)
+    result.fail("missing OpenBSD deploy script: #{OPENBSD_DEPLOY}")
     return
   end
 
   ports = openbsd_ports
-  result.fail("DEPLOY/openbsd/openbsd.sh missing APP_PORTS map") if ports.empty?
+  result.fail("DEPLOY/openbsd/DEPLOY.sh missing APP_PORTS map") if ports.empty?
   apps.each do |app|
     result.fail("#{app.name}: missing fixed OpenBSD APP_PORTS entry") unless ports.key?(app.name)
     next unless ports.key?(app.name) && ports.fetch(app.name) != app.port

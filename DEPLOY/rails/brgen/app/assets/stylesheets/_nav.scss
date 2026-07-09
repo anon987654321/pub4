@@ -57,7 +57,7 @@
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 1rem;
   color: var(--text-dim);
 }
 
@@ -97,9 +97,9 @@
 
 .compose-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
 .compose-actions { display: flex; gap: 0.75rem; color: var(--text-dim); font-size: 18px; }
-.compose-submit { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
-.compose-as { font-size: 13px; }
-.compose-hint { font-size: 13px; margin: 0.5rem 0 0; }
+.compose-submit { display: flex; align-items: center; gap: 0.5rem; margin-inline-start: auto; }
+.compose-as { font-size: 1rem; }
+.compose-hint { font-size: 1rem; margin: 0.5rem 0 0; }
 
 /* Right widgets column */
 .widgets {
@@ -145,4 +145,3 @@
 }
 
 .widget-search input::placeholder { color: var(--text-dim); }
-

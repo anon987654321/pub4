@@ -2,6 +2,7 @@
 
 require "open3"
 require "yaml"
+require_relative "../master_paths"
 
 module Master
   module Reach
@@ -26,7 +27,7 @@ module Master
       end
 
       def flag(mode)
-        config.fetch("modes", {}).fetch(mode.to_s, "--#{mode}")
+        config.fetch("mode_flags", {}).fetch(mode.to_s, "--#{mode}")
       end
 
       def run(mode: "check")
@@ -55,7 +56,7 @@ module Master
           "upstream: #{upstream['name']} #{upstream['entrypoint']} — #{upstream['note']}",
           "images: #{config['images_root']}",
           "weights: #{config['weights_dir']}",
-          "modes: #{config.fetch('modes', {}).keys.join(', ')}",
+          "modes: #{config.fetch('mode_flags', {}).keys.join(', ')}",
         ].join("\n")
       end
     end

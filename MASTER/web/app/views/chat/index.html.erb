@@ -100,7 +100,8 @@
       f.addEventListener('load',on);if(f.sheet)on();})();
   </script>
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
-  <%# No prefetch of THREE/face — on a 1-CPU VPS it competes with primer tap on the main thread. %>
+  <link rel="prefetch" href="<%= asset_path("face.js") %>" as="script">
+  <%# No prefetch of THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <style nonce="<%= content_security_policy_nonce %>">
     html, body { background: #000; color: #f5f0e8; }

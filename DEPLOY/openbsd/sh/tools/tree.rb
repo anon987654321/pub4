@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# DEPLOY/sh/tools/tree.rb
+# DEPLOY/openbsd/sh/tools/tree.rb
 #
 # Constitution-aware project tree for pub4.
 # Respects skip_dirs from MASTER/data/rules.yml + aggressive pruning for overview.
 # Usage: ruby tree.rb [root] [--max-depth=3] [--summary]
 #
-# This exists because DEPLOY/sh/tree.sh was referenced for full overview
+# This exists because DEPLOY/openbsd/sh/tree.sh is referenced for full overview
 # during major KISS/DRY architectural work on MASTER.
 
 require "yaml"

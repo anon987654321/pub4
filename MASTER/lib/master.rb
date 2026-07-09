@@ -115,9 +115,10 @@ module Master
   ignored_files = %w[
     reach/ruby_llm_patch.rb reach/bedrock_stub.rb now/cli/signals.rb now/cli/command_ops.rb
     now/cli/thinking_indicator.rb now/cli/background_scan.rb now/cli/command_handlers.rb
-    now/cli/repl_flow.rb now/cli/result_display.rb judge/review_crew/agents.rb
+    now/cli/repl_flow.rb now/cli/result_display.rb now/cli/bridge_run.rb judge/review_crew/agents.rb
   ]
   ignored_files.each { |relative| loader.ignore(File.join(__dir__, relative)) }
+  # command_ops is both a file and a helper directory; the file is required manually.
   loader.ignore(File.join(__dir__, "now", "cli", "command_ops"))
 
   Dir.glob(File.join(__dir__, "now", "command_registry", "*.rb")).each do |path|

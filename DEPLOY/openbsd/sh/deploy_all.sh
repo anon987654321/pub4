@@ -1,14 +1,14 @@
 #!/usr/bin/env zsh
-# Workstation orchestrator: sync pub4 to VPS and run DEPLOY/openbsd/openbsd.sh.
+# Workstation orchestrator: sync pub4 to VPS and run DEPLOY/openbsd/DEPLOY.sh.
 #
-# Canonical app list: DEPLOY/master.json (6 Rails apps).
+# Canonical app list: DEPLOY/master.json (active Rails apps).
 # NOT deployed (archived installers only): privcam, pub_attorney, mytoonz
 #   → see DEPLOY/archive/recovery/manifest.json
 #
 # Usage:
-#   zsh DEPLOY/sh/deploy_all.sh
-#   VPS_HOST=dev@46.23.89.226 SSH_KEY=~/.ssh/id_ed25519 zsh DEPLOY/sh/deploy_all.sh
-#   zsh DEPLOY/sh/deploy_all.sh --per-app   # also run rails/<app>/<app>.sh (copies to /home/<app>/app)
+#   zsh DEPLOY/openbsd/sh/deploy_all.sh
+#   VPS_HOST=dev@46.23.89.226 SSH_KEY=~/.ssh/id_ed25519 zsh DEPLOY/openbsd/sh/deploy_all.sh
+#   zsh DEPLOY/openbsd/sh/deploy_all.sh --per-app   # also run rails/<app>/<app>.sh (copies to /home/<app>/app)
 set -euo pipefail
 
 SCRIPT_DIR=${0:a:h}
@@ -62,11 +62,11 @@ else
 fi
 
 log "Running OpenBSD deploy stage 2 (services + Rails bootstrap from DEPLOY/rails trees)..."
-if ! vssh "cd ${REMOTE_PUB4}/DEPLOY/openbsd && doas zsh openbsd.sh --stage-2"; then
+if ! vssh "cd ${REMOTE_PUB4}/DEPLOY/openbsd && doas zsh DEPLOY.sh --stage-2"; then
   if [[ $ALLOW_PARTIAL_DEPLOY == 1 ]]; then
-    log "WARN: openbsd.sh reported issues — ALLOW_PARTIAL_DEPLOY=1 set"
+    log "WARN: DEPLOY.sh reported issues — ALLOW_PARTIAL_DEPLOY=1 set"
   else
-    error "openbsd.sh failed — refusing false-green deploy"
+    error "DEPLOY.sh failed — refusing false-green deploy"
   fi
 fi
 

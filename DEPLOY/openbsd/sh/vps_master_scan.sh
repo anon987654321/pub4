@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # MASTER /scan on vm23 — shares CI lock so scan + CI never overlap.
-# Usage: zsh DEPLOY/sh/vps_master_scan.sh [scan args...]
+# Usage: zsh DEPLOY/openbsd/sh/vps_master_scan.sh [scan args...]
 set -euo pipefail
 
 repo=${PUB4_ROOT:-/home/dev/pub4}

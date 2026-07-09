@@ -67,11 +67,13 @@ else
   failures << "MASTER/web: missing AuthTier middleware"
 end
 
-openbsd = File.join(ROOT, "DEPLOY", "openbsd", "openbsd.sh")
+openbsd = File.join(ROOT, "DEPLOY", "openbsd", "DEPLOY.sh")
 if File.file?(openbsd)
   text = File.read(openbsd)
-  failures << "openbsd.sh: production db:seed is not explicitly gated" unless text.include?("RUN_PRODUCTION_SEEDS")
-  failures << "openbsd.sh: no-argument deploy not blocked" unless text.include?("refusing no-argument deploy")
+  failures << "DEPLOY.sh: production db:seed is not explicitly gated" unless text.include?("RUN_PRODUCTION_SEEDS")
+  failures << "DEPLOY.sh: default deploy must run sync/apply path" unless text.match?(/""\)\s*\n\s*deploy_live/m)
+else
+  failures << "missing canonical OpenBSD deploy script"
 end
 
 master_web_root = File.join(ROOT, "MASTER", "web")

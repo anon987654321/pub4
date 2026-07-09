@@ -1,0 +1,52 @@
+body.vertical-maps .page-header {
+  max-width: min(100%, 720px);
+  margin-inline: auto;
+  padding: max(16px, env(safe-area-inset-top)) 16px 0.75rem;
+}
+
+body.vertical-maps .page-header h1 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+body.vertical-maps article.place {
+  max-width: min(100%, 720px);
+  margin: 0 auto;
+  padding: 0 16px max(24px, env(safe-area-inset-bottom));
+}
+
+body.vertical-maps article.place dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  padding: 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--maps-border);
+}
+
+body.vertical-maps article.place dt {
+  color: var(--maps-muted);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+body.vertical-maps article.place dd {
+  margin: 0;
+}
+
+body.vertical-maps .btn,
+body.vertical-maps .btn-primary {
+  background: linear-gradient(90deg, var(--maps-accent), #60a5fa);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+body.vertical-maps .btn-ghost {
+  background: transparent;
+  border-color: var(--maps-border);
+  color: var(--maps-muted);
+}

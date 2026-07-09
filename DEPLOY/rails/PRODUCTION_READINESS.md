@@ -38,8 +38,8 @@ Ship criteria: `MASTER/data/operator_playbook.yml`.
 
 ## Blockers
 
-1. City vanity TLS — `openbsd.sh` stage 1 must issue certs for every apex in `ALL_DOMAINS`; relayd keypairs only exist for certs on disk.
-2. Domain drift — `master.json`, `apps.yml`, `openbsd.sh`, and `relayd.conf` must agree.
+1. City vanity TLS — `DEPLOY.sh` stage 1 must issue certs for every apex in `ALL_DOMAINS`; relayd keypairs only exist for certs on disk.
+2. Domain drift — `master.json`, `apps.yml`, `DEPLOY.sh`, and `relayd.conf` must agree.
 3. relayd restart after route changes.
 4. Seeds skipped in production unless `RUN_PRODUCTION_SEEDS=1`.
 5. openrsync broken on vm23 — deploy uses git pull.

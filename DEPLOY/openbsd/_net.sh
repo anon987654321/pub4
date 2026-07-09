@@ -12,7 +12,7 @@ validate_ip() {
 }
 
 generate_random_port() {
-  log ERROR "missing APP_PORTS entry; assign a fixed port in openbsd.sh"
+  log ERROR "missing APP_PORTS entry; assign a fixed port in DEPLOY.sh"
   exit 1
 }
 

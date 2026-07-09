@@ -50,10 +50,10 @@ macOS-only skips (expected): `crawl`/`smoke-web` with no local server, `crawl-br
 ## Deploy checklist
 
 1. `cd /home/dev/pub4 && git pull --ff-only`
-2. Full stack: `cd DEPLOY/openbsd && tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"`
+2. Full stack: `cd DEPLOY/openbsd && tmux new-session -d -s deploy "doas zsh DEPLOY.sh 2>&1 | tee /tmp/deploy.log"`
 3. **MASTER web must precompile + restart** (Falcon has no hot-reload; skipping this is the usual
    cause of stale-UI / dead-tap reports): `cd MASTER/web && RAILS_ENV=production rails assets:precompile`
-   then `doas rcctl restart master`. The full `openbsd.sh` run already does this.
+   then `doas rcctl restart master`. The full `DEPLOY.sh` run already does this.
 4. Verify: `ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps` and open `https://ai.brgen.no`,
    tap to start, confirm the particle face renders.
 

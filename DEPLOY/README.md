@@ -9,8 +9,8 @@ live vm23 checks. Start with `bin/pub4 status` and `RECIPES.md`.
 ## Layout
 
 ```
-openbsd/   pf, relayd, nsd, acme, openbsd.sh; sh/ VPS helpers (vps_ci.sh, install scripts)
-rails/     six Rails 8 apps + shared engine (apps.yml)
+openbsd/   pf, relayd, nsd, acme, DEPLOY.sh; sh/ VPS helpers (vps_ci.sh, install scripts)
+rails/     four active Rails 8 apps + shared engine (apps.yml)
 tools/     creative + utility scripts: postpro (libvips film), repligen (Replicate CLI),
            dilla, audio, burst, stipple, nmap, security_sweep, bp, bin, public
 ```
@@ -22,11 +22,11 @@ Top level also holds the deploy gates (`integrity_gate.rb`, `verify_deploy_ident
 
 ```zsh
 cd ~/pub4/DEPLOY/openbsd
-tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"
+tmux new-session -d -s deploy "doas zsh DEPLOY.sh 2>&1 | tee /tmp/deploy.log"
 tmux attach -t deploy
 ```
 
-Config sync: `doas zsh openbsd.sh --sync-configs`. Details: `openbsd/README.md`.
+Config sync: `doas zsh DEPLOY.sh --sync-configs`. Details: `openbsd/README.md`.
 
 ## Rails
 

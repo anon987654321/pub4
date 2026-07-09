@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Run on vm23 as dev — MASTER + 6 Rails apps (scripts must be synced from workstation).
+# Run on vm23 as dev — MASTER + active Rails apps (scripts must be synced from workstation).
 set -euo pipefail
 PUB4=/home/dev/pub4
 LOG=/tmp/pub4_on_vm_install_$(date +%Y%m%d_%H%M%S).log

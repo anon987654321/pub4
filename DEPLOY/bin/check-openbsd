@@ -13,8 +13,9 @@ failures = []
 failures << "identity" unless runner.run("identity", RUBY, "DEPLOY/verify_deploy_identity.rb")
 failures << "ports" unless runner.run("ports", RUBY, "DEPLOY/rails/port_inventory_gate.rb")
 failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "DEPLOY/openbsd/deploy_smoke_gate.rb")
-failures << "vps_ci syntax" unless runner.run("vps_ci syntax", "zsh", "-n", "DEPLOY/openbsd/sh/vps_ci.sh")
-failures << "openbsd syntax" unless runner.run("openbsd syntax", "zsh", "-n", "DEPLOY/openbsd/openbsd.sh")
+failures << "vps_ci_all syntax" unless runner.run("vps_ci_all syntax", "zsh", "-n", "DEPLOY/openbsd/sh/vps_ci_all.sh")
+failures << "openbsd deploy syntax" unless runner.run("openbsd deploy syntax", "zsh", "-n", "DEPLOY/openbsd/DEPLOY.sh")
+failures << "openbsd shim syntax" unless runner.run("openbsd shim syntax", "zsh", "-n", "DEPLOY/openbsd/openbsd.sh")
 failures << "vps safety" unless runner.run("vps safety", RUBY, "DEPLOY/openbsd/vps_safety_gate.rb")
 
 exit(failures.empty? ? 0 : 1)

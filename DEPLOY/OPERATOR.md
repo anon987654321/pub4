@@ -43,7 +43,7 @@ The stack serves four Rails apps (brgen, amber, hjerterom, bsdports) plus MASTER
 `blognet` were removed from the stack (apps, relayd, acme, nsd, litestream, inventories); their
 vanity/megablog domains (`baibl.no`, `blognet.no`, `foodielicio.us`, `anti{casino,gambling,betting}blog.com`)
 went with them. City vanity apex domains (`oshlo.no`, `lsangeles.com`, …) still need stage-1 certs
-from `openbsd.sh`.
+from `DEPLOY.sh`.
 
 TLS terminates at relayd. Rails sets `config.assume_ssl = true`; do not enable `force_ssl`.
 

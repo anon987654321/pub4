@@ -48,7 +48,7 @@ Operator:
 ```text
 git pull --ff-only on vm23
   -> vps_ci.sh <app>
-  -> openbsd.sh or per-app deploy
+  -> DEPLOY.sh or per-app deploy
   -> rcctl restart affected services
   -> health_check --public --all-ready-apps
 ```

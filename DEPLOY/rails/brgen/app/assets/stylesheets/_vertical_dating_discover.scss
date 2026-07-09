@@ -1,0 +1,77 @@
+.dating-discover-panel {
+  min-height: 100dvh;
+  padding: max(12px, env(safe-area-inset-top)) 12px max(88px, env(safe-area-inset-bottom));
+}
+
+.dating-discover-panel[hidden] {
+  display: none;
+}
+
+body.vertical-dating .page-header {
+  max-width: min(100%, 420px);
+  margin-inline: auto;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body.vertical-dating header .dim {
+  color: var(--dating-muted);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+body.vertical-dating header h1 {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 5vw, 1.875rem);
+  letter-spacing: -0.03em;
+  margin: 0.15rem 0 0;
+}
+
+body.vertical-dating header nav {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+body.vertical-dating .btn-ghost {
+  color: var(--dating-muted);
+  border-color: rgba(255, 255, 255, 0.12);
+  font-size: 0.8125rem;
+}
+
+body.vertical-dating .dating-discover {
+  max-width: min(100%, 420px);
+  margin-inline: auto;
+}
+
+body.vertical-dating .swipe-card {
+  background: var(--dating-card);
+  border-color: var(--dating-border);
+  border-radius: 20px;
+}
+
+body.vertical-dating .swipe-bio {
+  color: var(--dating-muted);
+}
+
+body.vertical-dating .btn,
+body.vertical-dating .btn-primary,
+body.vertical-dating .swipe-signin {
+  background: linear-gradient(90deg, var(--dating-accent), var(--dating-accent-warm));
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+body.vertical-dating .empty {
+  max-width: min(100%, 420px);
+  margin-inline: auto;
+  text-align: center;
+  color: var(--dating-muted);
+  padding: 2rem 1rem;
+}

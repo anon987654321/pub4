@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-script = File.read(File.expand_path("openbsd.sh", __dir__))
+script = File.read(File.expand_path("DEPLOY.sh", __dir__))
 
 issues = []
 
@@ -19,4 +19,4 @@ if issues.any?
   exit 1
 end
 
-puts "openbsd.sh idempotency ok"
+puts "DEPLOY.sh idempotency ok"
