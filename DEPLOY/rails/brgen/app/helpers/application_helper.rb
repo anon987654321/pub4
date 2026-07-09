@@ -104,7 +104,8 @@ module ApplicationHelper
   POSTPRO_PRESETS = PostproJob::VALID_PRESETS.freeze
 
   def media_polish_classes(attachment)
-    return "" unless attachment&.attached?
+    return "" if attachment.blank?
+    return "" if attachment.respond_to?(:attached?) && !attachment.attached?
 
     name = attachment.filename.to_s.downcase
     classes = []
