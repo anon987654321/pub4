@@ -84,8 +84,11 @@ module Master
       end
 
       def load_identity
-        path = File.join(Master::ROOT, "IDENTITY.md")
-        return File.read(path, encoding: "UTF-8").strip if File.exist?(path)
+        data_path = File.join(Master::ROOT, "data", "IDENTITY.md")
+        return File.read(data_path, encoding: "UTF-8").strip if File.exist?(data_path)
+
+        legacy = File.join(Master::ROOT, "IDENTITY.md")
+        return File.read(legacy, encoding: "UTF-8").strip if File.exist?(legacy)
 
         ""
       rescue StandardError => e

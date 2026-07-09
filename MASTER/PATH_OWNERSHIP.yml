@@ -5,13 +5,9 @@ ownership:
     risk: low
     check: bin/check
   START_HERE.md:
-    purpose: first-contact orientation
-    risk: low
-    check: bin/check
-  AGENT_CONTRACT.md:
-    purpose: collaboration contract for agents and humans
+    purpose: single orientation — agent contract, runtime map, data file budget
     risk: medium
-    check: bin/check --profile=agent
+    check: bin/check
   DECISIONS.md:
     purpose: intentional architecture decisions
     risk: medium

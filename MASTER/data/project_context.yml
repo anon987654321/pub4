@@ -21,6 +21,8 @@ entries:
     The 2026-05-07 proposal aimed for a single source of truth with one yml per fact and prose references only; shrinking `data/` from eleven to eight files by merging council, infer, sweep, and zsh into `patterns.yml`; flattening the repo root from twenty-six to ten entries including `__predecessors/`, `audio/`, `scripts/`, `web/`, and `memory/`; renames such as `deploy/openbsd.sh`, `state.yml`, `limits.yml`, `voice.yml`, and `style.yml`, with CONVENTIONS.md generated or deleted; and smoothing work—stash before `git reset --hard`, explicit `scope:` on `Master.build`, unified `Result`, per-stage budget in `limits.yml`, reconciled Guard and auto-approve, unified `exe/master` boot, and generalized WhyExplainer lookup-then-LLM.
 
     Priority-1 Orient work—`orient.rb`, slim AGENTS and CLAUDE, `/orient` plus subcommand, zshrc `[[ -t 0 ]]` guard—shipped then reverted as a useless wrapper. One fact equals one place; commits stay small and reversible; smoothing items remain follow-up tickets.
+
+    2026-07 doc consolidation: top-level MASTER stubs (SOURCE_TREE, TRACE, REPLICATE, CONVENTIONS, QUICKSTART, AGENT_CONTRACT, RUNTIME_MAP, root IDENTITY.md) removed or folded into START_HERE.md. Target law stack documented there (5 YAML + rules shards). Next YAML pass: merge data/runtime/*.yml into data/runtime.yml; fold tier-5 misc into patterns.yml + operator_principles.yml.
 - key: project_falcon_em_subprocess
   name: Falcon Async + EventMachine = subprocess pattern
   description: EM-based gems (rb-edge-tts, em-http) inside Falcon request handlers
