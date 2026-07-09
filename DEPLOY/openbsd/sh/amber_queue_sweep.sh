@@ -1,19 +1,49 @@
 #!/bin/sh
-# Sweep amber Solid Queue backlog on vm23. Run as dev after git pull.
+# Sweep amber Solid Queue backlog on vm23. Uses sqlite3 (no full Rails boot).
 set -e
 APP=amber
 DIR=/home/${APP}/app
-export HOME=/home/${APP}
+QUEUE_DB="${DIR}/storage/production_queue.sqlite3"
 
-run_amber() {
-  doas sh -c ". /etc/${APP}.env 2>/dev/null || . /etc/rails/${APP}.env; export HOME=/home/${APP}; cd ${DIR} && su -m ${APP} -c 'export HOME=/home/${APP} SECRET_KEY_BASE=${SECRET_KEY_BASE}; cd ${DIR} && bundle34 exec rails $* RAILS_ENV=production'"
+report_queue() {
+  echo "==> amber queue report (${QUEUE_DB})"
+  doas su -m "${APP}" -c "sqlite3 '${QUEUE_DB}' \"
+    SELECT class_name, COUNT(*) AS c
+    FROM solid_queue_jobs
+    WHERE finished_at IS NULL
+    GROUP BY class_name
+    ORDER BY c DESC
+    LIMIT 20;
+    SELECT 'pending_total', COUNT(*) FROM solid_queue_jobs WHERE finished_at IS NULL;
+  \""
 }
 
-echo "==> amber queue report"
-run_amber amber:queue:report
+sweep_queue() {
+  echo "==> amber queue sweep"
+  doas su -m "${APP}" -c "sqlite3 '${QUEUE_DB}' \"
+    DELETE FROM solid_queue_jobs WHERE finished_at IS NOT NULL;
+    DELETE FROM solid_queue_ready_executions
+      WHERE job_id NOT IN (SELECT id FROM solid_queue_jobs);
+    DELETE FROM solid_queue_scheduled_executions
+      WHERE job_id NOT IN (SELECT id FROM solid_queue_jobs);
+    DELETE FROM solid_queue_claimed_executions
+      WHERE job_id NOT IN (SELECT id FROM solid_queue_jobs);
+    DELETE FROM solid_queue_blocked_executions
+      WHERE job_id NOT IN (SELECT id FROM solid_queue_jobs);
+    DELETE FROM solid_queue_failed_executions
+      WHERE job_id NOT IN (SELECT id FROM solid_queue_jobs);
+    WITH ranked AS (
+      SELECT id, class_name, arguments,
+             ROW_NUMBER() OVER (PARTITION BY class_name, arguments ORDER BY id) AS rn
+      FROM solid_queue_jobs
+      WHERE finished_at IS NULL
+        AND class_name IN ('WardrobeMediaJob', 'Shared::MediaProcessingJob')
+    )
+    DELETE FROM solid_queue_jobs
+    WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+  \""
+}
 
-echo "==> amber queue sweep"
-run_amber amber:queue:sweep
-
-echo "==> amber queue report (after)"
-run_amber amber:queue:report
+report_queue
+sweep_queue
+report_queue
