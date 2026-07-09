@@ -390,6 +390,14 @@ migrate_sqlite_db_to_storage_if_needed() {
   [[ $moved -eq 1 ]] && ${_PRIV} chown -R "${app_name}:${app_name}" "$storage_dir"
 }
 
+# seed_bergen_demo_as_app — credible brgen.no feed (no Faker flood)
+seed_bergen_demo_as_app() {
+  local app_dir=$1 secret
+  secret=$(app_secret_for brgen)
+  ${_PRIV} sh -c "su -m brgen -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails brgen:demo_seed'" \
+    || log_warn "brgen:demo_seed skipped"
+}
+
 # db_seed_as_app APP_NAME APP_DIR
 db_seed_as_app() {
   local app_name=$1 app_dir=$2 secret
@@ -481,6 +489,9 @@ deploy_tracked_app() {
   [[ -n $APP_DOMAIN ]] && relayd_add_relay "$APP_DOMAIN" "$APP_PORT"
 
   rails_runtime_gate "$APP_NAME" "$APP_DIR" || exit 1
+  if [[ $app_name == brgen ]]; then
+    seed_bergen_demo_as_app "$APP_DIR"
+  fi
   doas rcctl restart "$APP_NAME" || doas rcctl start "$APP_NAME"
   log_ok "$APP_NAME live on :$APP_PORT"
 }

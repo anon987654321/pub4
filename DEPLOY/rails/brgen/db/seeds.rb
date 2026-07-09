@@ -10,6 +10,19 @@ require 'faker'
 # Each city domain is an isolated experience.
 Brgen::CitySeed.sync! if defined?(Brgen::CitySeed) && ActiveRecord::Base.connection.table_exists?(:cities)
 
+if Rails.env.production? && City.table_exists?
+  puts "Production seed: Bergen demo only (skipping Faker flood)."
+  User.find_or_create_by!(email_address: "admin@brgen.no") do |u|
+    u.username = "admin"
+    u.password = u.password_confirmation = ENV.fetch("ADMIN_SEED_PASSWORD", "password123")
+  end
+  if (bergen = City.find_by(domain: "brgen.no"))
+    Brgen::BergenDemoSeeder.new(bergen).seed!
+    puts "Bergen demo: #{Post.where(city: bergen).count} posts"
+  end
+  exit 0
+end
+
 if City.table_exists?
   puts 'Seeding flagship per-city content (brgen.no, lsangeles.com, amstrdam.nl, oshlo.no)...'
   City.where(domain: %w[brgen.no lsangeles.com amstrdam.nl oshlo.no]).find_each do |city|

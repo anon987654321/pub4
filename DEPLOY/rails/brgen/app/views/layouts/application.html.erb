@@ -92,12 +92,9 @@
   </div>
 
   <% if content_for?(:splash) %>
-    <dialog id="splash" class="splash" data-controller="dialog" data-dialog-target="dialog" data-dialog-open-value="true" data-action="click->dialog#backdropClose">
+    <div id="splash" class="splash" role="dialog" aria-modal="true" tabindex="0">
       <%= yield :splash %>
-      <form method="dialog" class="dialog-form" role="dialog" aria-label="Dialog">
-        <button type="submit" class="btn btn-primary">Continue</button>
-      </form>
-    </dialog>
+    </div>
   <% end %>
 
   <div class="app-shell">

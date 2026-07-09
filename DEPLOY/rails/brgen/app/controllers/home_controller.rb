@@ -9,6 +9,8 @@ class HomeController < ApplicationController
 
     scope = if authenticated?
               Current.user.timeline_posts.hot
+            elsif Brgen::DemoFeed.available?
+              Brgen::DemoFeed.hot
             else
               Post.hot
             end
