@@ -58,7 +58,7 @@ print "vps_ci: $app (sync + mutex + load gate)"
 sync_from_repo
 ensure_ci_lock
 ci_rails_root=/home/${app}/pub4-rails/RAILS
-doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 install && bundle34 exec bin/ci'"
+doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 config unset without 2>/dev/null || true && bundle34 config unset deployment 2>/dev/null || true && bundle34 install --jobs=2 && bundle34 exec bin/ci'"
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
 started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
