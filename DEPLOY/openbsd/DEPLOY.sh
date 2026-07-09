@@ -112,6 +112,11 @@ install_root_configs() {
   [[ -d $src/etc ]] || { log ERROR "No etc/ in $src"; return 1 }
   backup_directory /etc "etc-pre-sync" || return 1
 
+  if [[ -f $src/etc/doas.conf ]] && [[ $(tail -c1 "$src/etc/doas.conf" | wc -c) -eq 0 ]]; then
+    print >> "$src/etc/doas.conf"
+    log WARN "doas.conf missing trailing newline — fixed before install"
+  fi
+
   for d in etc usr var; do
     [[ -d $src/$d ]] || continue
     install -d "/$d" 2>/dev/null || true
