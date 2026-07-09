@@ -112,7 +112,7 @@ Rails.application.routes.draw do
 
   constraints(subdomain: PLAYLIST_SUBDOMAINS) do
     scope module: "playlist", as: "playlist" do
-      root "playlists#index", as: :playlist_root
+      root "playlists#index"
       resources :playlists do
         member { get :embed }
         resources :imports, only: :create
@@ -136,7 +136,7 @@ Rails.application.routes.draw do
 
   constraints(subdomain: TAKEAWAY_SUBDOMAINS) do
     scope module: "takeaway", as: "takeaway" do
-      root "restaurants#index", as: :takeaway_root
+      root "restaurants#index"
       resources :restaurants do
         resource :favorite_restaurant, only: %i[create destroy]
         resources :menu_items, only: %i[create destroy]
