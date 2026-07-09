@@ -5,7 +5,11 @@
   "dataset_dir": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/dataset",
   "config_path": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/train_ragnhild.yaml",
   "run_script": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/run_train.sh",
-  "weights_dir": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output",
+  "generate_script": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/run_generate.sh",
+  "generate_config": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/generate_ragnhild.yaml",
+  "gate_check_script": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/check_hf_flux_access.py",
+  "images_root": "/Users/mac/Documents/GitHub/pub4/lora",
+  "weights_dir": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/weights/ragnhild_v2",
   "images": 17,
   "target_model_version": "ragnhild_v2",
   "image_processing": {
@@ -30,8 +34,8 @@
   },
   "source_review_outputs": {
     "kind": "final source-derived analog profile stills, not LoRA generations",
-    "profile_set": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final",
-    "profile_contact": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_contact.jpg",
+    "profile_set": "/Users/mac/Documents/GitHub/pub4/lora",
+    "profile_contact": "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_final_contact.jpg",
     "photo_count": 16,
     "contains_videos": false,
     "contains_intermediate_grids": false

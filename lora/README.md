@@ -1,161 +1,131 @@
-# Ragnhild LoRA og analoge portrettnotater
+# Ragnhild-portretter
 
-Dette er det lille verkstedet der Ragnhild-portrettprosjektet bor.
+Denne mappen inneholder Ragnhild-fotoprosjektet. Målet er enkelt: **hun skal se ut som seg selv** — varm, naturlig, norsk, i 40-årene, med ekte hudtekstur og mildt lys. Ikke en generisk modell. Ikke et ansiktsbytte.
 
-Kortversjonen: de ferdige profilbildene akkurat na er ikke falske nye ansikter funnet opp av en modell. De er kildebaserte portretter laget fra ekte bilderammer av Ragnhild, deretter beskjart, balansert og fargegradert med et varsomt analogt fotouttrykk. Malet var ikke a gjore henne om til en blank, syntetisk fremmed. Malet var a bevare henne som seg selv: norsk, voksen, varm, naturlig, en kvinne i 40-arene med ekte uttrykk, ekte hudtekstur og lys som ikke overdøver personen.
+---
 
-## Det som finnes na
+## Hvor bildene ligger
 
-Det ferdige kildebaserte profilsettet ligger her:
+Alle ferdige bilder ligger **flatt i denne mappen** (`pub4/lora/`). Åpne den i Finder. Du trenger ikke lete i undermapper.
 
-`training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final`
+| Filer | Hva de er |
+|-------|-----------|
+| `ragnhild_final_*.jpg` | **Beste materiale nå.** Ekte bilder av Ragnhild, lett beskåret og fargegradert. |
+| `ragnhild_final_contact.jpg` | Ett ark med alle 16 finalbilder for rask gjennomgang. |
+| `ragnhild_hf_*.jpg` | Tidlige AI-tester. **Ikke godkjent** som Ragnhild. |
+| `ragnhild_hf_*_portrait.jpg` | Samme tester, med lett portrettpolering. |
 
-Kontaktarket for rask gjennomgang ligger her:
+Treningsfiler og skript ligger under `training/ragnhild/`. Du kan ignorere det med mindre du kjører pipelinen selv.
 
-`training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_contact.jpg`
+---
 
-Disse bildene er laget fra utvalgte ekte Ragnhild-bilder, hovedsakelig de rammene som best bevarer identiteten hennes i treningssettet. De er ikke produsert av en ferdig FLUX LoRA-genereringsrunde. Den forskjellen er viktig. Nar et bilde ligner henne, er det fordi det startet med henne.
+## Tre typer bilder — ikke bland dem
 
-## Uttrykket
+**1. Kildeportretter (`ragnhild_final_*`)**  
+Disse starter fra ekte rammer av Ragnhild. Ligner de henne, er det fordi de begynte som henne. **Bruk disse til profil inntil LoRA-resultater er godkjent.**
 
-Det ferdige settet sikter mot analog portrettfotografi, ikke syntetisk glamour:
+**2. HF-forhåndsvisning (`ragnhild_hf_*`)**  
+Laget med Hugging Faces raske FLUX-modell og bare tekst. Ingen egen «Ragnhild-hjerne» er koblet på. Behandle dem som stemningstester, ikke ferdige portretter.
 
-- nordisk apen skygge fremfor hard studioblits
-- Bergen-aktig overskyet mykhet fremfor plastkontrast
-- Trondheim-stemning med praktisk lys for et forsiktig filmstillpreg
-- Hardanger-varme for hud og har med litt gyllen analog tone
-- Portra-inspirert farge: myk varme, beskyttede hoylys, fin kornstruktur, naturlig hud
-- moden hudtekstur bevart, ikke visket bort
-- ingen beauty-filter-ansiktsbytte
-- ingen tvungen ungdomsutglatting
+**3. LoRA-portretter (kommer)**  
+Maskinen lærer Ragnhild av 17 treningsbilder og lager nye scener. Hvert bilde må sjekkes med øyet før vi beholder det. **Trening pågår nå** (se under).
 
-Fargegraderingen er med vilje behersket. Et godt profilbilde skal kjennes som et bedre minne av et ekte oyeblikk, ikke som om ansiktet er laminert.
+---
 
-## Hvordan bildene ble laget
+## Status
 
-Kildebildene ligger her:
+| Steg | Tilstand |
+|------|----------|
+| Kildeportrettsett (16) | Ferdig |
+| HF-forhåndsvisning (12) | Ferdig — ikke identitetsgodkjent |
+| Hugging Face FLUX-lisens | **Godkjent** |
+| LoRA-trening (`ragnhild_v2`) | **Pågår** — laster ned FLUX, deretter ~1800 treningssteg |
+| Nytt LoRA-portrettsett | Venter på trening + manuell vurdering |
 
-`training/ragnhild/ai_toolkit/dataset`
+**Rekkefølge:** likhet først, skjønnhet etterpå, effekter til slutt.
 
-De ferdige stillbildene ble laget med Ruby og `ruby-vips`. Prosessen er omtrent:
+---
 
-1. Velg rammene som bevarer likheten best.
-2. Beskjar dem til kvadratiske profilbilde-komposisjoner.
-3. Bevar ansiktsgeometrien.
-4. Legg pa lett analog fargeforming.
-5. Legg til fint korn og moderat skarphet.
-6. Bygg ett kontaktark for vurdering.
-7. Slett overflodige eksperimentfiler sa mappen holder seg ren.
+## Hva treningen gjør
 
-Det ferdige settet har flere stemninger:
+1. Laster ned **FLUX.1-dev** — en bildekvalitetsmodell fra Hugging Face (~24 GB).
+2. Studerer 17 utvalgte bilder i `training/ragnhild/ai_toolkit/dataset/`.
+3. Bygger en liten tilleggsfil (en **LoRA**) som lærer modellen «dette er Ragnhild».
+4. Genererer prøveportretter ved steg 250, 500, 750, … opp til 1800.
+5. Kopierer nye prøver hit og legger på lett `portrait`-grading.
 
-- `nordic_open_shade`: stille, rent og realistisk.
-- `portra_warm`: varmere hud og mykere kontrast.
-- `bergen_editorial`: klart, naturlig og lett polert.
-- `trondheim_cinema`: diskre filmatisk farge og dybde.
-- `hardanger_gold`: varmere gyllen analog tone.
-- `mono`: svart-hvitt for identitetssjekk.
+Trening tar timer på Mac (Apple Silicon). Følg med slik:
 
-Svart-hvitt-bildene er ikke nodvendigvis hovedvalgene for glamour. De er nyttige fordi monokromt uttrykk gjor ansiktsform, oyne, uttrykk og lys lettere a vurdere uten at fargene tar over showet.
+```sh
+tail -f training/ragnhild/ai_toolkit/train_run.log
+```
 
-## Det som ble ryddet bort
+Når den er ferdig, se etter nye `ragnhild_hf_*.jpg` eller LoRA-prøver i `lora/`.
 
-Tidligere eksperimenter laget for mye rot:
+---
 
-- utforskende kontaktark
-- kildegrids
-- gjentatte fargevarianter
-- videosnutter
-- rekursive postprosesseringer
-- overeksponerte `quality_uplift`-varianter
+## Slik vurderer du et godt portrett
 
-Dette er med vilje ikke en del av det ferdige profilsettet.
+Still ett spørsmål: **«Er det Ragnhild?»**
 
-Oppsettet skal na unnga a lage hauger med overflodige filer. Hjelpeskriptet bruker som standard bare en ren `portrait`-postprosessering og rydder utmappen for nye genererte postpro-filer for det skriver nye.
+Sjekk ansiktsform, øyne, munn, alder og uttrykk før du bryr deg om filmlook eller bakgrunn.
 
-Hjelpeskript:
+- **Naturlig profilenergi:** smileportrettene i de høyere `ragnhild_final_*`-numrene
+- **Identitetssjekk:** rolige nærportrett og svart-hvitt `mono`
+- **Analog varme:** `portra_warm`, `nordic_open_shade`, `hardanger_gold`
 
-`training/ragnhild/ai_toolkit/postpro_samples.rb`
+Forkast alt som føles for ungt, for glatt eller som en annen kvinne. Vi har allerede kastet ett tidlig testbilde av den grunn.
 
-## LoRA-oppsettet
+Vi sikter mot **analog portrettfilm**, ikke plastglamour: mykt nordisk lys, dempet farge, fint korn, moden hud beholdt.
 
-LoRA-treningskonfigurasjonen er:
+---
 
-`training/ragnhild/ai_toolkit/train_ragnhild.yaml`
+## For deg som kjører pipelinen
 
-Malmodellen er fortsatt:
+Du trenger [ai-toolkit](https://github.com/ostris/ai-toolkit) på `/Users/mac/ai-toolkit`, et Hugging Face-token, og **Agree** klikket på [FLUX.1-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev) for samme konto som tokenet.
 
-`black-forest-labs/FLUX.1-dev`
+```sh
+cd training/ragnhild/ai_toolkit
 
-Det er kvalitetsvalget. Problemet er ikke den lokale Ruby-pipelinen eller promptene. Den gjeldende Hugging Face-kontoen kan logge inn, men er ikke autorisert for den lukkede FLUX-dev-modellen. Inntil den modellen kan lastes, kan vi ikke aerlig si at vi har generert et helt nytt sett Ragnhild-bilder fra den endelige FLUX LoRA-en.
+./run_generate.sh --check      # sjekk tilgang og datasett
+./run_generate.sh --train        # tren LoRA, synk prøver til lora/
+./run_generate.sh --generate     # nye bilder fra trenede vekter
+./run_generate.sh --postpro      # portrettgrading på ragnhild_hf_* bare
+```
 
-Aerlig status:
+Konfigurasjon: `train_ragnhild.yaml`, `generate_ragnhild.yaml`.  
+Tilgangssjekk: `check_hf_flux_access.py`.
 
-- kildebaserte analoge profilbilder: ja
-- rent ferdig stillbildesett: ja
-- ekte nye FLUX LoRA-genereringer: ikke enda, blokkert av FLUX-dev-tilgang
-- presis identitet foran alt: ja, og derfor brukes kildebaserte bilder akkurat na
+**Innlogging er ikke det samme som lisens.** Tokenet bekrefter hvem du er. **Agree**-knappen på nettsiden gir nedlastingstilgang. Du trenger begge.
 
-## Prompt-filosofien
+---
 
-Valideringspromptene er skrevet for a motarbeide de vanlige AI-feilene:
+## Mappeoversikt
 
-- ikke gjor henne for ung
-- ikke visk bort moden hudtekstur
-- ikke gjor henne til en generisk influencer
-- ikke bind identiteten hennes til den hvite capsen
-- ikke la ett antrekk bli hele personen
-- ikke la filmatisk stil overstyre ansiktsformen
+```
+lora/                         ← alle leveransebilder her
+training/ragnhild/
+  ai_toolkit/dataset/         ← treningsbilder
+  ai_toolkit/weights/         ← LoRA-vekter (ikke bilder)
+  ai_toolkit/run_generate.sh  ← start her
+```
 
-Promptene beskriver henne na som en voksen norsk kvinne i 40-arene, med referanser til Bergen, Trondheim, Hardanger, nordisk dagslys, apen skygge, praktisk lys, myk analog farge og naturlige ansiktsdetaljer.
+---
 
-Det er ikke pynt. Det forteller modellen hva slags realisme den skal respektere.
+## Det vi unngår
 
-Neste ekte LoRA-genererte sett har en strengere kreativ regel: hvert nytt bilde skal kjennes som en annen profesjonell fotografering, ikke som en liten mutasjon av forrige bilde. Ett kan vaere Bergen-regn-mot-vindu-realisme. Ett kan vaere Hardanger i gyllen time. Ett kan vaere et filmstill fra en cafe i Trondheim. Ett kan vaere svart-hvitt Tri-X-dokumentar. Ett kan vaere nordisk studioeditorial. Sted, lys, objektiv, stemning, filmstock, fargegrad, garderobe og emosjonell temperatur skal endre seg.
+- Beauty-filtre og ungdomsutglatting
+- Å binde utseendet hennes til én caps eller ett antrekk
+- Å beholde hvert AI-utkast — de fleste slettes
+- Å kalle prompt-bilder «ferdige Ragnhild-portretter»
 
-Det eneste som ikke skal endre seg, er Ragnhild.
+---
 
-Det betyr:
+## Neste steg etter trening
 
-- radikal variasjon i fotografisk konsept
-- presis kontinuitet i identitet
-- voksen norsk kvinne i 40-arene, ikke generisk ung modell
-- naturlig hud og uttrykk
-- vakkert lys for tung stil
-- analog og filmatisk polering bare etter at likheten holder
+1. Åpne nye prøver i `lora/`.
+2. Behold bare bilder som leses som Ragnhild.
+3. Kjør `./run_generate.sh --generate` for et fullt sett med 12 prompts.
+4. Legg portrett-postpro bare på godkjente bilder.
 
-Det beste fremtidige settet skal kjennes som en liten magasinportfolio: tolv forskjellige fotoshoots, en umiskjennelig person.
-
-## MASTER-passet
-
-Det gjeldende `pub4/MASTER` postprosesseringsverktoyet ble testet pa profilsettet:
-
-`../MASTER/tools/postpro.rb`
-
-`portrait`-presetet ga brukbare resultater. `quality_uplift` ble forkastet for disse allerede graderte profilbildene fordi det overeksponerte dem. Det presetet kan fortsatt vaere nyttig senere pa ra modelloutputs, men det var ikke riktig for de ferdige kildebaserte bildene.
-
-Den naervaerende sluttmappen beholder bare de ferdige stillbildene og ett kontaktark. De tidligere MASTER-postpro-eksperimentene var nyttige for testing, men er ikke en del av det rene ferdigsettet.
-
-## Hvordan lese sluttsettet
-
-Hvis Ragnhild vil ha de mest naturlige valgene, begynn med smileportrettene i de hoyere numrene. De har mest profilbilde-energi.
-
-Hvis hun vil ha de mest identitetstro sjekkene, se pa de roligere naerportrettene og svart-hvitt-variantene. De viser om ansiktet fortsatt leses som henne uten at farge eller stemning gjor all jobben.
-
-Hvis hun vil ha mest analog folelse, se etter `portra_warm`, `nordic_open_shade` og `hardanger_gold`.
-
-Det beste resultatet er ikke nodvendigvis det mest dramatiske. Det beste resultatet er det der hun tenker: ja, det der er meg, bare med snillere lys.
-
-## Neste ekte oppgradering
-
-Neste virkelige kvalitetsloft er ikke enda et filter. Det er enten:
-
-1. Fa Hugging Face-tilgang godkjent for `black-forest-labs/FLUX.1-dev`.
-2. Kjore den tunede Ragnhild LoRA-konfigurasjonen.
-3. Vurdere genererte prover for likhet for noen filmgrade legges pa.
-4. Beholde bare bildene der ansiktsform, oyne, munn, alder, uttrykk og tilstedevaerelse leses som Ragnhild.
-5. Deretter bruke analog og filmatisk finishing.
-
-Rekkefolgen betyr noe. Identitet forst. Skjonnhet etterpa. Magi til slutt.
-
-Magien far gjerne glitre litt, men den far ikke lyve.
+Magien kan få glitre litt. Den får ikke lyve.

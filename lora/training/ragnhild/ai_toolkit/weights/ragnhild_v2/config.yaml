@@ -1,10 +1,9 @@
----
 job: extension
 config:
   name: ragnhild_v2
   process:
   - type: sd_trainer
-    training_folder: "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output"
+    training_folder: /Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/weights
     device: mps
     trigger_word: ragnhild
     network:
@@ -17,7 +16,7 @@ config:
       max_step_saves_to_keep: 4
       push_to_hub: false
     datasets:
-    - folder_path: "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/dataset"
+    - folder_path: /Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/dataset
       caption_ext: txt
       caption_dropout_rate: 0.08
       shuffle_tokens: false

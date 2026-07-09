@@ -1,4 +1,6 @@
 ---
+# Sample-only pass: resume the latest ragnhild_v2 LoRA checkpoint and render prompts.
+# Training loop is skipped via start_step == steps; force_first_sample triggers sampling.
 job: extension
 config:
   name: "ragnhild_v2"
@@ -26,6 +28,8 @@ config:
     train:
       batch_size: 1
       steps: 1800
+      start_step: 1800
+      force_first_sample: true
       gradient_accumulation_steps: 1
       train_unet: true
       train_text_encoder: false

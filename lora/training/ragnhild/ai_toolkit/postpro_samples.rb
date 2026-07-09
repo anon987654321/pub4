@@ -9,8 +9,9 @@ require "rbconfig"
 require "shellwords"
 
 SCRIPT_DIR = Pathname.new(__dir__).expand_path.freeze
-DEFAULT_INPUT_DIR = SCRIPT_DIR.join("output", "ragnhild_v2").freeze
-DEFAULT_OUTPUT_DIR = DEFAULT_INPUT_DIR.join("postpro").freeze
+LORA_ROOT = SCRIPT_DIR.join("..", "..", "..").expand_path.freeze
+DEFAULT_INPUT_DIR = LORA_ROOT.freeze
+DEFAULT_OUTPUT_DIR = LORA_ROOT.freeze
 DEFAULT_PRESETS = %w[portrait].freeze
 IMAGE_EXTENSIONS = %w[.jpg .jpeg .png .webp].freeze
 DERIVED_IMAGE_PATTERN = /(?:contact|grid|reel|_portrait|_cinematic|_quality_uplift|_blockbuster|_magic_hour|_postpro)\b/i
@@ -45,12 +46,13 @@ def parse_options
 end
 
 def image_files(input_dir, output_dir, limit)
+  same_dir = input_dir.expand_path == output_dir.expand_path
   output_prefix = "#{output_dir.expand_path}/"
-  files = Dir.glob(input_dir.join("**", "*"), File::FNM_CASEFOLD).select do |path|
+  files = Dir.glob(input_dir.join("*"), File::FNM_CASEFOLD).select do |path|
     file = Pathname.new(path)
     file.file? &&
       IMAGE_EXTENSIONS.include?(file.extname.downcase) &&
-      !file.expand_path.to_s.start_with?(output_prefix) &&
+      (same_dir || !file.expand_path.to_s.start_with?(output_prefix)) &&
       !file.basename.to_s.match?(DERIVED_IMAGE_PATTERN)
   end
 
@@ -94,7 +96,9 @@ def main
   abort "postpro.rb not found at #{postpro}" unless postpro.file?
   abort "input dir not found: #{options[:input_dir]}" unless options[:input_dir].directory?
 
-  FileUtils.rm_rf(options[:output_dir]) if options[:clean_output] && !options[:dry_run]
+  if options[:clean_output] && !options[:dry_run]
+    Dir.glob(options[:output_dir].join("*_portrait.jpg")).each { |path| FileUtils.rm_f(path) }
+  end
   FileUtils.mkdir_p(options[:output_dir]) unless options[:dry_run]
   files = image_files(options[:input_dir], options[:output_dir], options[:limit])
   abort "no generated sample images found in #{options[:input_dir]}" if files.empty?
