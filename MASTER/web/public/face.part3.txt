@@ -38,8 +38,8 @@ window.addEventListener('master:pressure', (ev) => {
     valence: d.valence ?? 0
   };
 });
-const FACE_RENDER_SCALE_MIN = 0.48;
-const FACE_RENDER_SCALE_MAX = 0.72;
+const FACE_RENDER_SCALE_MIN = 0.62;
+const FACE_RENDER_SCALE_MAX = 0.92;
 let particleWorker = null;
 let particleWorkerSeq = 0;
 const particleWorkerPending = new Map();
@@ -156,10 +156,10 @@ function frame(t) {
         pressureLine
       ].filter(Boolean).join(' · ');
     }
-    if (!State.reducedMotion && fpsEma < 18 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
-      FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.04);
+    if (!State.reducedMotion && fpsEma < 16 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
+      FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.03);
       resize();
-    } else if (fpsEma > 23 && FACE_RENDER_SCALE < FACE_RENDER_SCALE_MAX - 0.02) {
+    } else if (fpsEma > 26 && FACE_RENDER_SCALE < FACE_RENDER_SCALE_MAX - 0.02) {
       FACE_RENDER_SCALE = Math.min(FACE_RENDER_SCALE_MAX, FACE_RENDER_SCALE + 0.02);
       resize();
     }
@@ -420,7 +420,7 @@ function frame(t) {
     faceMat.uniforms.uExposure.value = baseExposure;
     const focusDim = rootBody.dataset.focusMode === '1' ? 0.88 : 1.0;
     faceMat.uniforms.uFocusDim.value += (focusDim - faceMat.uniforms.uFocusDim.value) * 0.06;
-    const phosphorSoft = State.reducedMotion ? 0.35 : 0.55;
+    const phosphorSoft = State.reducedMotion ? 0.42 : 0.68;
     faceMat.uniforms.uPhosphorSoft.value += (phosphorSoft - faceMat.uniforms.uPhosphorSoft.value) * 0.04;
     const crtProfile = rootBody.dataset.runtimeProfile === 'crt';
     const scanTarget = crtProfile ? 0.42 : (State.mode === 'thinking' ? 0.38 : (State.mode === 'speaking' ? 0.18 : 0.12));

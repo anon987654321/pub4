@@ -30,10 +30,10 @@ const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
-let FACE_PIXEL_SIZE = 0.019;
-let FACE_GLOW_SCALE = 1.22;
-let FACE_PHOSPHOR_DECAY = 0.80;
-let FACE_RENDER_SCALE = 0.72;
+let FACE_PIXEL_SIZE = 0.024;
+let FACE_GLOW_SCALE = 1.38;
+let FACE_PHOSPHOR_DECAY = 0.88;
+let FACE_RENDER_SCALE = 0.88;
 const soulDrift = Math.max(0, Math.min(1, Number(window.MASTER_SOUL_DRIFT || 0)));
 rootBody.dataset.soulDrift = soulDrift.toFixed(3);
 const modelBadge = (() => {
@@ -468,7 +468,7 @@ function markFaceReady() {
 let renderer, scene, camera, phosphorFadeMesh, phosphorFadeScene, phosphorFadeCam;
 if (_hasWebGL && THREE) {
   try {
-    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
+    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: false, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 1);
     renderer.autoClear = true;
   } catch (_) {}
@@ -596,11 +596,16 @@ function generateFaceDepthMap(size) {
     ctx.beginPath(); ctx.arc(0, 0, W*0.088, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   }
-  // Corneal specular — tiny highlight in each eye socket (top-left quadrant)
+  // Corneal specular + iris ring — layered highlights per eye
   for (const ex of [-0.122, 0.122]) {
-    g = ctx.createRadialGradient(cx + ex*W + W*0.013, cy - H*0.100, 0, cx + ex*W + W*0.013, cy - H*0.100, W*0.020);
-    g.addColorStop(0,   'rgba(210,210,210,0.52)');
-    g.addColorStop(0.5, 'rgba(155,155,155,0.18)');
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.085, 0, cx + ex*W, cy - H*0.085, W*0.034);
+    g.addColorStop(0,   'rgba(175,175,175,0.38)');
+    g.addColorStop(0.55,'rgba(95,95,95,0.16)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    g = ctx.createRadialGradient(cx + ex*W + W*0.013, cy - H*0.100, 0, cx + ex*W + W*0.013, cy - H*0.100, W*0.022);
+    g.addColorStop(0,   'rgba(235,235,235,0.72)');
+    g.addColorStop(0.45,'rgba(185,185,185,0.28)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
@@ -721,7 +726,7 @@ function sampleDepthMapGrid(canvas, cols, rows) {
       const sx = Math.min(size - 1, (u * size) | 0);
       const sy = Math.min(size - 1, (v * size) | 0);
       const lum = px[(sy * size + sx) * 4] / 255;
-      if (lum < 0.08) continue;
+      if (lum < 0.045) continue;
       const idx = (positions.length / 3) | 0;
       cell[row * cols + col] = idx;
       const nx = (u * 2 - 1) * 0.62;
@@ -809,16 +814,16 @@ function sampleDepthMapGrid(canvas, cols, rows) {
 
 function particleScale() {
   const area = Math.max(320 * 480, window.innerWidth * window.innerHeight);
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  return Math.max(0.7, Math.min(1.35, Math.sqrt((area * dpr) / (1280 * 720))));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  return Math.max(0.88, Math.min(1.52, Math.sqrt((area * dpr) / (1280 * 720))));
 }
-const FACE_GRID_COLS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
-const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 40 : 66) * particleScale());
+const FACE_GRID_COLS = Math.round((State.coarsePointer ? 44 : 72) * particleScale());
+const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 54 : 92) * particleScale());
 const FACE_N_2D = Math.round(480 * particleScale());
 let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBoundary, faceZone, faceEdgeAlpha;
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
-  sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));
+  sampleDepthMapGrid(generateFaceDepthMap(768), FACE_GRID_COLS, FACE_GRID_ROWS));
 
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
@@ -960,8 +965,8 @@ void main(){
   // FA09 council sector — radial sector glow by zone during deliberation (carried via uBeat spike)
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
-  float sizeBoost=0.70+curvature*0.55+depth*1.10+boundary*0.35;
-  gl_PointSize=clamp(uSize*(240./-mv.z)*sizeBoost,1.0,2.0);
+  float sizeBoost=0.78+curvature*0.62+depth*1.22+boundary*0.42;
+  gl_PointSize=clamp(uSize*(260./-mv.z)*sizeBoost,1.0,2.75);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
   float zoneAudio=0.0;
@@ -1040,7 +1045,7 @@ void main(){
   float scan=0.86+0.14*abs(sin(gl_FragCoord.y*0.5+uTime*38.0));
   alpha*=mix(1.0,scan,uScanline);
   float dither=bayer4(gl_FragCoord.xy);
-  float grain=mix(0.38,0.72,uPhosphorSoft);
+  float grain=mix(0.44,0.80,uPhosphorSoft);
   alpha=step(dither,alpha*(grain+vDepth*0.18));
   gl_FragColor=vec4(col,max(0.0,alpha));
 }`;
@@ -1068,7 +1073,7 @@ if (_hasWebGL && THREE) {
       uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.55}, uScanline:{value:0.12}, uTime:{value:0}
+      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.10}, uTime:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -1093,8 +1098,8 @@ if (_hasWebGL && THREE) {
       const mat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
       return new THREE.LineSegments(geom, mat);
     }
-    faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.10);
-    faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.04);
+    faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.14);
+    faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.065);
     // Legacy single-line ref kept null — two-tier replaces it
     faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;
   }
@@ -1113,8 +1118,8 @@ function initSemanticPools() {
     if (z >= 0.68) mouthIdx.push(i);
     if (z >= 0.30 && z <= 0.55) eyeIdx.push(i);
   }
-  mouthPool = K.createPool(Math.min(96, Math.max(12, mouthIdx.length)));
-  eyePool = K.createPool(Math.min(64, Math.max(10, eyeIdx.length)));
+  mouthPool = K.createPool(Math.min(140, Math.max(16, mouthIdx.length)));
+  eyePool = K.createPool(Math.min(96, Math.max(14, eyeIdx.length)));
   for (let mi = 0; mi < mouthIdx.length && mouthPool.count < mouthPool.capacity; mi++) {
     const i = mouthIdx[mi];
     K.spawn(mouthPool, faceHome[i * 3], faceHome[i * 3 + 1], {
@@ -1256,7 +1261,7 @@ if (_hasWebGL && THREE && scene && facePoints) {
       uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.55}, uScanline:{value:0.12}, uTime:{value:0}
+      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.10}, uTime:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
@@ -1337,8 +1342,8 @@ window.addEventListener('master:pressure', (ev) => {
     valence: d.valence ?? 0
   };
 });
-const FACE_RENDER_SCALE_MIN = 0.48;
-const FACE_RENDER_SCALE_MAX = 0.72;
+const FACE_RENDER_SCALE_MIN = 0.62;
+const FACE_RENDER_SCALE_MAX = 0.92;
 let particleWorker = null;
 let particleWorkerSeq = 0;
 const particleWorkerPending = new Map();
@@ -1455,10 +1460,10 @@ function frame(t) {
         pressureLine
       ].filter(Boolean).join(' · ');
     }
-    if (!State.reducedMotion && fpsEma < 18 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
-      FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.04);
+    if (!State.reducedMotion && fpsEma < 16 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
+      FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.03);
       resize();
-    } else if (fpsEma > 23 && FACE_RENDER_SCALE < FACE_RENDER_SCALE_MAX - 0.02) {
+    } else if (fpsEma > 26 && FACE_RENDER_SCALE < FACE_RENDER_SCALE_MAX - 0.02) {
       FACE_RENDER_SCALE = Math.min(FACE_RENDER_SCALE_MAX, FACE_RENDER_SCALE + 0.02);
       resize();
     }
@@ -1719,7 +1724,7 @@ function frame(t) {
     faceMat.uniforms.uExposure.value = baseExposure;
     const focusDim = rootBody.dataset.focusMode === '1' ? 0.88 : 1.0;
     faceMat.uniforms.uFocusDim.value += (focusDim - faceMat.uniforms.uFocusDim.value) * 0.06;
-    const phosphorSoft = State.reducedMotion ? 0.35 : 0.55;
+    const phosphorSoft = State.reducedMotion ? 0.42 : 0.68;
     faceMat.uniforms.uPhosphorSoft.value += (phosphorSoft - faceMat.uniforms.uPhosphorSoft.value) * 0.04;
     const crtProfile = rootBody.dataset.runtimeProfile === 'crt';
     const scanTarget = crtProfile ? 0.42 : (State.mode === 'thinking' ? 0.38 : (State.mode === 'speaking' ? 0.18 : 0.12));

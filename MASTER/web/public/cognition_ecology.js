@@ -52,10 +52,10 @@
   const trails = [];
   const weather = [];
   const terrainImpacts = [];
-  const MAX_TRAILS = reducedMotion ? 24 : 96;
-  const MAX_WEATHER = reducedMotion ? 48 : 180;
-  const MAX_MEMORIES = reducedMotion ? 18 : 64;
-  const MAX_IMPACTS = reducedMotion ? 8 : 28;
+  const MAX_TRAILS = reducedMotion ? 32 : 128;
+  const MAX_WEATHER = reducedMotion ? 64 : 240;
+  const MAX_MEMORIES = reducedMotion ? 24 : 88;
+  const MAX_IMPACTS = reducedMotion ? 12 : 36;
 
   function makeCanvas() {
     const node = document.createElement("canvas");
@@ -65,7 +65,7 @@
     return node;
   }
 
-  let internalW = 480, internalH = 270;
+  let internalW = 640, internalH = 360;
 
   function resize() {
     state.width = innerWidth;
@@ -74,7 +74,7 @@
     // Low internal resolution + integer upscale per data/topologies.yml + visual_clusters.yml.
     const limits = window.MASTER_VISUAL_LIMITS || {};
     const isReduced = reducedMotion || (limits.reducedMotionParticles && limits.reducedMotionParticles < 100);
-    let res = { w: 480, h: 270 };
+    let res = { w: 640, h: 360 };
     if (isReduced || (state.width * state.height) < 400000) res = { w: 320, h: 180 };
 
     internalW = res.w;

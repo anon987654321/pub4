@@ -120,7 +120,8 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.match(index, /%w\[[^\]]*visual_bridge[^\]]*\]/);
   assert.match(index, /defer: true/);
   assert.doesNotMatch(index, /rel="modulepreload"[^>]+asset_path\("face\.js"\)/);
-  assert.match(index, /<link rel="prefetch" href="<%= asset_path\("face\.js"\) %>" as="script">/);
+  assert.doesNotMatch(index, /<link rel="prefetch"[^>]+asset_path\("three\.face\.module\.js"\)/);
+  assert.doesNotMatch(index, /<link rel="prefetch"[^>]+asset_path\("face\.js"\)/);
   const particleIdx = index.indexOf('asset_path("particle_kernel.js")');
   const primerIdx = index.indexOf('id="primer"');
   const bootIdx = index.indexOf("function go()");
