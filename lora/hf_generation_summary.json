@@ -1,20 +1,20 @@
 {
   "mode": "hf_inference_flux_schnell_no_lora",
-  "blocker": "FLUX.1-dev gated; LoRA weights unavailable",
+  "note": "Prompt-only previews. Not LoRA. No likeness guarantee.",
+  "count": 12,
   "saved": [
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_01_bergen_rain.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_02_hardanger_gold.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_03_trondheim_cinema.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_04_tri_x_mono.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_05_nordic_editorial.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_06_coastal_winter.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_07_kitchen_film.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_08_mountain_road.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_09_fashion_natural.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_10_bergen_candid.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_11_profile_avatar.jpg",
-    "/Users/mac/Documents/GitHub/pub4/lora/ragnhild_hf_12_identity_check.jpg"
+    "ragnhild_hf_01_bergen_rain.jpg",
+    "ragnhild_hf_02_hardanger_gold.jpg",
+    "ragnhild_hf_03_trondheim_cinema.jpg",
+    "ragnhild_hf_04_tri_x_mono.jpg",
+    "ragnhild_hf_05_nordic_editorial.jpg",
+    "ragnhild_hf_06_coastal_winter.jpg",
+    "ragnhild_hf_07_kitchen_film.jpg",
+    "ragnhild_hf_08_mountain_road.jpg",
+    "ragnhild_hf_09_fashion_natural.jpg",
+    "ragnhild_hf_10_bergen_candid.jpg",
+    "ragnhild_hf_11_profile_avatar.jpg",
+    "ragnhild_hf_12_identity_check.jpg"
   ],
-  "errors": [],
-  "count": 12
+  "errors": []
 }
