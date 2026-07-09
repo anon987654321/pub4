@@ -18,6 +18,19 @@ if [ ! -f run.py ]; then
   echo "run.py missing in $ROOT — is ai-toolkit installed?" >&2
   exit 1
 fi
+if [ -n "${HF_TOKEN:-}" ]; then
+  export HUGGINGFACE_HUB_TOKEN="${HF_TOKEN}"
+fi
+if [ ! -s "$HOME/.cache/huggingface/token" ] && [ ! -s "$HOME/.huggingface/token" ] && [ -z "${HUGGINGFACE_HUB_TOKEN:-}" ]; then
+  cat >&2 <<'EOF'
+Hugging Face auth not found.
+For the best-quality Ragnhild LoRA, log in and accept access to black-forest-labs/FLUX.1-dev, then rerun.
+  hf auth login
+or:
+  huggingface-cli login
+EOF
+  exit 1
+fi
 echo "training ragnhild LoRA with $CONFIG"
 python run.py "$CONFIG"
 if [ "${RAGNHILD_POSTPRO_SAMPLES:-0}" = "1" ]; then

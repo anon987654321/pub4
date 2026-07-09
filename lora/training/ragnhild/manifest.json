@@ -58,7 +58,7 @@
     "status": "needs_new_training_run",
     "identity_first": true,
     "postpro_after_identity_approval": true,
-    "generation_blocker": "Local LoRA generation is blocked until Hugging Face access is available for black-forest-labs/FLUX.1-dev or a compatible local base model is installed.",
+    "generation_blocker": "Local LoRA generation is blocked until the current Hugging Face account is authorized for black-forest-labs/FLUX.1-dev or a compatible local base model is installed.",
     "rejected_outputs": [
       {
         "path": "/Users/mac/Documents/GitHub/pub4/lora/ragnhild/weights/ragnhild_v2/test_portrait.webp",
@@ -75,21 +75,31 @@
     "next_training_bias": "add more approved no-hat close portraits, profile and three-quarter portraits, indoor window-light shots, and varied outfits before judging v2 quality"
   },
   "source_review_outputs": {
-    "note": "These are not LoRA generations; they are source-based postpro and motion-review assets for judging likeness and cinematic direction while model generation is blocked.",
-    "graded_stills_contact": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/ragnhild_review_stills_contact.jpg",
-    "graded_stills": [
-      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/stills/ragnhild_06_portrait.jpg",
-      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/stills/ragnhild_07_portrait.jpg",
-      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/stills/ragnhild_09_portrait.jpg",
-      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/stills/ragnhild_10_portrait.jpg"
+    "note": "Final source-derived analog profile set from curated Ragnhild frames. These are not LoRA generations; they are identity-faithful still-photo edits while FLUX-dev generation remains gated.",
+    "profile_set": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final",
+    "profile_contact": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_contact.jpg",
+    "profile_photos": [
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_01_nordic_open_shade.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_02_portra_warm.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_03_bergen_editorial.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_04_nordic_open_shade.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_05_portra_warm.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_06_trondheim_cinema.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_07_bergen_editorial.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_08_hardanger_gold.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_09_portra_warm.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_10_nordic_open_shade.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_11_portra_warm.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_12_trondheim_cinema.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_13_hardanger_gold.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_14_bergen_editorial.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_15_mono.jpg",
+      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/profile_set/final/ragnhild_final_16_mono.jpg"
     ],
-    "video_snippets": [
-      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_06_portrait_snippet.mp4",
-      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_07_portrait_snippet.mp4",
-      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_09_portrait_snippet.mp4",
-      "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_10_portrait_snippet.mp4"
-    ],
-    "review_reel": "/Users/mac/Documents/GitHub/pub4/lora/training/ragnhild/ai_toolkit/output/ragnhild_v2/review_sources/videos/ragnhild_source_review_reel.mp4"
+    "photo_count": 16,
+    "contains_videos": false,
+    "contains_intermediate_grids": false,
+    "cleanup_policy": "Keep final stills and one contact sheet only; do not retain temp grids, recursive postpro variants, or video snippets in the final profile set."
   },
   "images": [
     "img_002.jpg",
@@ -141,12 +151,27 @@
     }
   ],
   "photo_prompt_presets": [
-    "ragnhild, woman, honest close portrait, soft window light, natural skin texture, 85mm lens, shallow depth of field, Kodak Portra 400 color, subtle film grain",
-    "photo of ragnhild, woman, candid editorial portrait outdoors, overcast daylight, gentle expression, realistic skin, 50mm documentary photography",
-    "ragnhild, woman, analog snapshot, relaxed smile, imperfect real photo, fine grain, mild halation, neutral background",
-    "ragnhild, woman, commercial beauty close-up, clean key light, restrained makeup, lifelike eyes, natural hair detail, realistic photography"
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, Bergen rain-window close portrait, soft grey daylight, steady eyes, natural mature skin, Portra 400 scan, muted blacks, fine grain, 85mm lens",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, Hardanger fjord golden-hour portrait, wind in blonde hair, warm rim light, gentle smile, Kodak Gold warmth, soft highlight rolloff, 50mm lens",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, Trondheim cafe cinematic still, tungsten practicals, window-blue fill, quiet expression, lifted shadows, subtle halation, ARRI-style color",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, black-and-white Tri-X documentary headshot, direct gaze, real skin texture, silver-rich contrast, soft grain, 90mm portrait lens",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, Nordic editorial studio portrait, large softbox, clean catchlights, restrained makeup, natural mouth and eyes, Hasselblad medium-format feel",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, coastal winter portrait, pale sky, wool coat, cool sea light, calm face, low saturation, cyan shadows, protected skin tone",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, warm kitchen film still, morning side light, shallow depth, lived-in background, honest face proportions, soft color negative grade",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, mountain-road travel portrait, overcast Hardanger light, relaxed posture, documentary realism, neutral colors, gentle analog grain",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, high-fashion but natural portrait, black wool coat, sculpted soft key light, deep muted background, elegant Hollywood color grade",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, candid laughing portrait, Bergen street corner, wet pavement reflections, handheld 35mm photojournalism, warm skin, cool environment",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, simple profile avatar, face centered, plain background, clean catchlights, skin texture intact, realistic color, no stylization",
+    "ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, identity check portrait, front view, plain light, face shape, eyes, mouth, age, and expression clear before any cinematic grade"
   ],
-  "negative_prompt": "plastic skin, waxy face, over-smoothed, airbrushed, doll, uncanny, deformed eyes, asymmetrical eyes, extra teeth, bad hands, harsh HDR, oversaturated, anime, illustration, CGI, face swap artifacts",
+  "negative_prompt": "plastic skin, waxy face, over-smoothed, airbrushed, doll, uncanny, deformed eyes, asymmetrical eyes, extra teeth, bad hands, harsh HDR, oversaturated, anime, illustration, CGI, face swap artifacts, cap, hat, selfie distortion, beauty filter, heavy makeup, face morph, identity drift, teenage face, overly young face, generic influencer face, different woman",
+  "prompt_research_notes": [
+    "Use the trigger word plainly and keep each validation prompt focused on one photographic test.",
+    "Keep identity and style disentangled: validate face shape before applying stronger film or cinematic looks.",
+    "Favor concrete photographic nouns over hype: open shade, north-window light, catchlights, muted blacks, highlight rolloff, fine grain.",
+    "Use repeated seeds and varied prompts during training review to see whether identity holds as context changes.",
+    "Each future generated photo must test a different photographic world: lens, location, lighting, film stock, color grade, and mood should vary while preserving exact Ragnhild identity."
+  ],
   "video_recipe": {
     "target_duration_seconds": "30-40",
     "strategy": "generate locked hero stills first, then use image-to-video shots stitched together instead of one long generation",

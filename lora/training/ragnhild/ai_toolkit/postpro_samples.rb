@@ -11,8 +11,9 @@ require "shellwords"
 SCRIPT_DIR = Pathname.new(__dir__).expand_path.freeze
 DEFAULT_INPUT_DIR = SCRIPT_DIR.join("output", "ragnhild_v2").freeze
 DEFAULT_OUTPUT_DIR = DEFAULT_INPUT_DIR.join("postpro").freeze
-DEFAULT_PRESETS = %w[portrait cinematic quality_uplift].freeze
+DEFAULT_PRESETS = %w[portrait].freeze
 IMAGE_EXTENSIONS = %w[.jpg .jpeg .png .webp].freeze
+DERIVED_IMAGE_PATTERN = /(?:contact|grid|reel|_portrait|_cinematic|_quality_uplift|_blockbuster|_magic_hour|_postpro)\b/i
 
 def repo_root
   SCRIPT_DIR.ascend.find { |path| path.join("MASTER", "tools", "postpro.rb").file? }
@@ -25,6 +26,7 @@ def parse_options
     postpro: nil,
     presets: DEFAULT_PRESETS,
     limit: 12,
+    clean_output: true,
     dry_run: false
   }
 
@@ -35,6 +37,7 @@ def parse_options
     parser.on("--postpro PATH", "Path to MASTER/tools/postpro.rb") { |value| options[:postpro] = Pathname.new(value).expand_path }
     parser.on("--presets LIST", "Comma-separated postpro presets") { |value| options[:presets] = value.split(",").map(&:strip).reject(&:empty?) }
     parser.on("--limit N", Integer, "Maximum source images to grade") { |value| options[:limit] = value }
+    parser.on("--keep-output", "Keep existing generated postpro files") { options[:clean_output] = false }
     parser.on("--dry-run", "Print commands without running postpro") { options[:dry_run] = true }
   end.parse!
 
@@ -48,7 +51,7 @@ def image_files(input_dir, output_dir, limit)
     file.file? &&
       IMAGE_EXTENSIONS.include?(file.extname.downcase) &&
       !file.expand_path.to_s.start_with?(output_prefix) &&
-      !file.basename.to_s.match?(/_(?:portrait|cinematic|quality_uplift|blockbuster|magic_hour|postpro)\b/i)
+      !file.basename.to_s.match?(DERIVED_IMAGE_PATTERN)
   end
 
   files.sort_by { |path| [File.mtime(path), path] }.last(limit).map { |path| Pathname.new(path).expand_path }
@@ -91,6 +94,7 @@ def main
   abort "postpro.rb not found at #{postpro}" unless postpro.file?
   abort "input dir not found: #{options[:input_dir]}" unless options[:input_dir].directory?
 
+  FileUtils.rm_rf(options[:output_dir]) if options[:clean_output] && !options[:dry_run]
   FileUtils.mkdir_p(options[:output_dir]) unless options[:dry_run]
   files = image_files(options[:input_dir], options[:output_dir], options[:limit])
   abort "no generated sample images found in #{options[:input_dir]}" if files.empty?
