@@ -1,0 +1,70 @@
+# Canonical design token anchors — keep in sync with _x_base.scss defaults and face.css :root.
+# Regenerate face :root: ruby DEPLOY/rails/scripts/generate_face_root_css.rb
+
+face_root:
+  anchors:
+    c_text: "oklch(86% 0.02 80)"
+    x_text: "#e7e9ea"
+    c_accent: "oklch(86% 0.08 88)"
+    c_danger: "oklch(62% 0.18 28)"
+    c_code: "oklch(74% 0.11 255)"
+  font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
+  face_bg: "black"
+  derived:
+    face_fg: "var(--c-text)"
+    face_muted: "color-mix(in srgb, var(--c-text) 35%, transparent)"
+    face_dim: "color-mix(in srgb, var(--c-text) 18%, transparent)"
+    face_soft: "color-mix(in srgb, var(--c-text) 8%, transparent)"
+    flash_chroma_r: "color-mix(in srgb, var(--c-danger) 65%, transparent)"
+    flash_chroma_b: "color-mix(in srgb, var(--c-code) 62%, transparent)"
+    shadow_pip: "color-mix(in srgb, var(--face-bg) 45%, transparent)"
+    shadow_banner: "color-mix(in srgb, var(--face-bg) 28%, transparent)"
+  layout:
+    face-bar-height: "36px"
+    face-particle-size: "0.019"
+    face-glow-scale: "1.22"
+    face-phosphor-decay: "0.80"
+    transition-fast: "180ms"
+    transition-normal: "300ms"
+    ease-out: "cubic-bezier(0.25,0.1,0.25,1)"
+    ease-linear: "cubic-bezier(0,0,1,1)"
+    ease-in-out: "cubic-bezier(0.4,0,0.6,1)"
+    z-ui: "90"
+    z-modal: "1000"
+
+dark:
+  x_bg: "#000000"
+  x_surface: "#000000"
+  x_surface_elevated: "#16181c"
+  x_search_bg: "#202327"
+  x_text: "#e7e9ea"
+  x_text_secondary: "#71767b"
+  x_border: "#2f3336"
+  x_hover: "rgba(231, 233, 234, 0.1)"
+  x_hover_subtle: "rgba(231, 233, 234, 0.03)"
+  x_accent: "#1d9bf0"
+  x_accent_hover: "#1a8cd8"
+  x_danger: "#f4212e"
+  x_font: '"JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace'
+  x_font_size: "16px"
+  x_line_height: "20px"
+  x_radius_pill: "9999px"
+  x_radius_card: "16px"
+  x_sidebar: "275px"
+  x_feed_max: "600px"
+  x_widgets: "350px"
+  x_layout_max: "1265px"
+
+light:
+  x_bg: "#ffffff"
+  x_surface: "#ffffff"
+  x_surface_elevated: "#f7f9f9"
+  x_search_bg: "#eff3f4"
+  x_text: "#0f1419"
+  x_text_secondary: "#536471"
+  x_border: "#eff3f4"
+  x_hover: "rgba(15, 20, 25, 0.1)"
+  x_hover_subtle: "rgba(15, 20, 25, 0.03)"
+  x_accent: "#1d9bf0"
+  x_accent_hover: "#1a8cd8"
+  x_danger: "#f4212e"

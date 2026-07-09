@@ -1,12 +1,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* BEGIN:generated-face-root — ruby DEPLOY/rails/scripts/generate_face_root_css.rb */
 :root {
   --c-text: oklch(86% 0.02 80);
   --x-text: #e7e9ea;
-  --x-font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --c-accent: oklch(86% 0.08 88);
   --c-danger: oklch(62% 0.18 28);
   --c-code: oklch(74% 0.11 255);
+  --x-font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -33,6 +34,7 @@
   --z-ui: 90;
   --z-modal: 1000;
 }
+/* END:generated-face-root */
 
 html, body {
   height: 100%;

@@ -43,7 +43,7 @@ Bad closeout:
 
 ## Do Not Optimize Away
 
-- The `lib/` and `kernel/` spines both define `Master::` intentionally.
+- The `lib/` and `core/` spines both define `Master::` intentionally until absorption cutover.
 - `data/rules/` shards are split by scanner scope intentionally.
 - `knowledge/` is local-only but still powers `SearchKnowledge`.
 - WebGL face boot is deferred until the primer tap.

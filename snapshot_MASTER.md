@@ -1,6 +1,6 @@
 # MASTER — source snapshot
 
-Generated 2026-07-09 01:56 UTC · 827 files · git-tracked source text only (skips vendor, node_modules, tmp, knowledge, runtime, .venv, renders, storage; files over 256 KB listed, not inlined).
+Generated 2026-07-09 02:03 UTC · 827 files · git-tracked source text only (skips vendor, node_modules, tmp, knowledge, runtime, .venv, renders, storage; files over 256 KB listed, not inlined).
 
 ## Tree
 ```
@@ -1112,7 +1112,7 @@ Lint/RedundantCopDisableDirective:
 
 ## Do not touch (unless the task explicitly requires it)
 
-1. `lib/` and `kernel/` are **two spines** — both use `Master::`; do not merge or “fix” namespace collisions.
+1. `lib/` and `core/` are **two spines** — runtime CLI in `lib/`, constitutional fold in `core/`; do not merge or “fix” namespace collisions before absorption completes.
 2. `data/rules/*.yml` shards stay split — each file has one consumer; do not merge into `rules.yml`.
 3. `knowledge/` is gitignored and local-only — do not commit or move without updating `SearchKnowledge`.
 4. WebGL / face boot stays **deferred until primer tap** — never eager `getContext('webgl*')`.
@@ -1197,7 +1197,7 @@ Bad closeout:
 
 ## Do Not Optimize Away
 
-- The `lib/` and `kernel/` spines both define `Master::` intentionally.
+- The `lib/` and `core/` spines both define `Master::` intentionally until absorption cutover.
 - `data/rules/` shards are split by scanner scope intentionally.
 - `knowledge/` is local-only but still powers `SearchKnowledge`.
 - WebGL face boot is deferred until the primer tap.
@@ -85161,13 +85161,14 @@ log('modules: ' + (typeof Symbol !== "undefined" && typeof Promise !== "undefine
 ```css
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* BEGIN:generated-face-root — ruby DEPLOY/rails/scripts/generate_face_root_css.rb */
 :root {
   --c-text: oklch(86% 0.02 80);
   --x-text: #e7e9ea;
-  --x-font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --c-accent: oklch(86% 0.08 88);
   --c-danger: oklch(62% 0.18 28);
   --c-code: oklch(74% 0.11 255);
+  --x-font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -85194,6 +85195,7 @@ log('modules: ' + (typeof Symbol !== "undefined" && typeof Promise !== "undefine
   --z-ui: 90;
   --z-modal: 1000;
 }
+/* END:generated-face-root */
 
 html, body {
   height: 100%;

@@ -2,8 +2,10 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "design_tokens"
 
 ROOT = File.expand_path("../..", __dir__)
+FACE_CSS = File.join(ROOT, "MASTER", "web", "public", "face.css")
 WEB_ROOT = File.join(ROOT, "MASTER", "web")
 ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
 MANIFEST = File.join(ASSETS_DIR, ".manifest.json")
@@ -17,6 +19,10 @@ DEPLOY_SCRIPTS = {
 }.freeze
 
 failures = []
+if (drift = DesignTokens.face_root_drift?(FACE_CSS))
+  failures << drift
+end
+
 unless File.file?(MANIFEST)
   failures << "missing #{MANIFEST} — run: cd MASTER/web && RAILS_ENV=production bundle exec rails assets:precompile"
 else

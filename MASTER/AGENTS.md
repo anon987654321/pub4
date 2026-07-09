@@ -2,7 +2,7 @@
 
 ## Do not touch (unless the task explicitly requires it)
 
-1. `lib/` and `kernel/` are **two spines** — both use `Master::`; do not merge or “fix” namespace collisions.
+1. `lib/` and `core/` are **two spines** — runtime CLI in `lib/`, constitutional fold in `core/`; do not merge or “fix” namespace collisions before absorption completes.
 2. `data/rules/*.yml` shards stay split — each file has one consumer; do not merge into `rules.yml`.
 3. `knowledge/` is gitignored and local-only — do not commit or move without updating `SearchKnowledge`.
 4. WebGL / face boot stays **deferred until primer tap** — never eager `getContext('webgl*')`.

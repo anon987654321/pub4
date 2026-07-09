@@ -1,6 +1,6 @@
 # DEPLOY — source snapshot
 
-Generated 2026-07-09 01:56 UTC · 1822 files · git-tracked source text only (skips vendor, node_modules, tmp, knowledge, runtime, .venv, renders, storage; files over 256 KB listed, not inlined).
+Generated 2026-07-09 02:03 UTC · 1822 files · git-tracked source text only (skips vendor, node_modules, tmp, knowledge, runtime, .venv, renders, storage; files over 256 KB listed, not inlined).
 
 ## Tree
 ```
@@ -95939,8 +95939,10 @@ puts "MASTER TTS gate passed."
 # frozen_string_literal: true
 
 require "json"
+require_relative "design_tokens"
 
 ROOT = File.expand_path("../..", __dir__)
+FACE_CSS = File.join(ROOT, "MASTER", "web", "public", "face.css")
 WEB_ROOT = File.join(ROOT, "MASTER", "web")
 ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
 MANIFEST = File.join(ASSETS_DIR, ".manifest.json")
@@ -95954,6 +95956,10 @@ DEPLOY_SCRIPTS = {
 }.freeze
 
 failures = []
+if (drift = DesignTokens.face_root_drift?(FACE_CSS))
+  failures << drift
+end
+
 unless File.file?(MANIFEST)
   failures << "missing #{MANIFEST} — run: cd MASTER/web && RAILS_ENV=production bundle exec rails assets:precompile"
 else
@@ -108022,20 +108028,41 @@ footer {
 ### DEPLOY/rails/shared/app/assets/stylesheets/_x_base.scss
 
 ```scss
-// x.com reference tokens — shared base for brgen + MASTER face.css
-@mixin x-dark-tokens {
-  --x-bg: #000000;
-  --x-surface: #000000;
-  --x-surface-elevated: #16181c;
-  --x-search-bg: #202327;
-  --x-text: #e7e9ea;
-  --x-text-secondary: #71767b;
-  --x-border: #2f3336;
+// Parametric x.com tokens — defaults match shared/design_tokens.yml (R10).
+// Derived hovers use color-mix; hex anchors unchanged for visual parity.
+
+@mixin x-dark-tokens(
+  $bg: #000000,
+  $surface: #000000,
+  $surface-elevated: #16181c,
+  $search-bg: #202327,
+  $text: #e7e9ea,
+  $text-secondary: #71767b,
+  $border: #2f3336,
+  $accent: #1d9bf0,
+  $accent-hover: #1a8cd8,
+  $danger: #f4212e,
+  $c-text: oklch(86% 0.02 80),
+  $c-accent: oklch(86% 0.08 88),
+  $c-danger: oklch(62% 0.18 28),
+  $c-code: oklch(74% 0.11 255)
+) {
+  --c-text: #{$c-text};
+  --c-accent: #{$c-accent};
+  --c-danger: #{$c-danger};
+  --c-code: #{$c-code};
+  --x-bg: #{$bg};
+  --x-surface: #{$surface};
+  --x-surface-elevated: #{$surface-elevated};
+  --x-search-bg: #{$search-bg};
+  --x-text: #{$text};
+  --x-text-secondary: #{$text-secondary};
+  --x-border: #{$border};
   --x-hover: rgba(231, 233, 234, 0.1);
   --x-hover-subtle: rgba(231, 233, 234, 0.03);
-  --x-accent: #1d9bf0;
-  --x-accent-hover: #1a8cd8;
-  --x-danger: #f4212e;
+  --x-accent: #{$accent};
+  --x-accent-hover: #{$accent-hover};
+  --x-danger: #{$danger};
   --x-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
   --x-font-size: 16px;
   --x-line-height: 20px;
@@ -108047,19 +108074,30 @@ footer {
   --x-layout-max: 1265px;
 }
 
-@mixin x-light-tokens {
-  --x-bg: #ffffff;
-  --x-surface: #ffffff;
-  --x-surface-elevated: #f7f9f9;
-  --x-search-bg: #eff3f4;
-  --x-text: #0f1419;
-  --x-text-secondary: #536471;
-  --x-border: #eff3f4;
+@mixin x-light-tokens(
+  $bg: #ffffff,
+  $surface: #ffffff,
+  $surface-elevated: #f7f9f9,
+  $search-bg: #eff3f4,
+  $text: #0f1419,
+  $text-secondary: #536471,
+  $border: #eff3f4,
+  $accent: #1d9bf0,
+  $accent-hover: #1a8cd8,
+  $danger: #f4212e
+) {
+  --x-bg: #{$bg};
+  --x-surface: #{$surface};
+  --x-surface-elevated: #{$surface-elevated};
+  --x-search-bg: #{$search-bg};
+  --x-text: #{$text};
+  --x-text-secondary: #{$text-secondary};
+  --x-border: #{$border};
   --x-hover: rgba(15, 20, 25, 0.1);
   --x-hover-subtle: rgba(15, 20, 25, 0.03);
-  --x-accent: #1d9bf0;
-  --x-accent-hover: #1a8cd8;
-  --x-danger: #f4212e;
+  --x-accent: #{$accent};
+  --x-accent-hover: #{$accent-hover};
+  --x-danger: #{$danger};
 }
 ```
 
