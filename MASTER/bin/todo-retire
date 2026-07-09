@@ -34,11 +34,11 @@ if open_items.any? || legacy_open
 end
 
 checks = [
-  ["MASTER check", File.join(ROOT, "bin", "check"), "--profile=contributor"],
-  ["DEPLOY check-rails", File.join(REPO, "DEPLOY", "bin", "check-rails"), "--profile=contributor"],
-  ["integrity gate", File.join(REPO, "DEPLOY", "integrity_gate.rb")],
+  ["MASTER check", ROOT, [File.join(ROOT, "bin", "check"), "--profile=contributor"]],
+  ["DEPLOY check-rails", REPO, [File.join(REPO, "DEPLOY", "bin", "check-rails"), "--profile=contributor"]],
+  ["integrity gate", REPO, [File.join(REPO, "DEPLOY", "integrity_gate.rb")]],
 ]
-failures = checks.reject { |name, cmd, *args| run_step(name, cmd, *args) }.map(&:first)
+failures = checks.reject { |name, dir, cmd| run_step(name, *cmd, chdir: dir) }.map(&:first)
 
 if failures.any?
   warn "todo-retire: golden checks failed: #{failures.join(', ')}"

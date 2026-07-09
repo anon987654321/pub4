@@ -1,4 +1,4 @@
-# config_status: aspirational  # spec exists, runtime wiring pending
+# config_status: wired  # PersonalityPromptBuilder loads capability_disclosure + refusal_phrasing
 # Refusal scaffolding when MASTER cannot or should not act.
 # Source: OpenAI / Anthropic system-prompt reunification (#74).
 

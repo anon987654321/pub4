@@ -1,14 +1,11 @@
 # Actionable deploy debt — open items agents should work unless blocked.
 # Feature inventory: DEPLOY/rails/apps.yml. Deferred features: apps.horizon.yml (agent: ignore).
 
-open:
-  - id: solid_queue_worker_proof
-    area: vps
-    signal: bsdports Falcon serves /up on :47312 but production_queue.sqlite3 has no solid_queue tables yet
-    action: vps-deploy bsdports (or doas su -m bsdports rails db:schema:load:queue) then rcctl restart bsdports; run solid_queue_proof.sh
-    proof: solid_queue processes > 0 in production_queue.sqlite3 and curl http://127.0.0.1:47312/up
+open: []
 
 closed:
+  - id: solid_queue_worker_proof
+    resolution: vps-deploy loads queue schema via rails_prepare_secondary_dbs_as_app and runs solid_queue_proof.sh before stamp
   - id: tts_host_binary
     resolution: pkg_add espeak; master rc.d PATH=/usr/local/bin; tts_proof.sh ok on vm23
   - id: macos_ruby_mismatch

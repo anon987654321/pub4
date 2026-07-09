@@ -61,5 +61,12 @@ for i in {1..30}; do
 done
 [[ $up_ok -eq 1 ]] || { print -u2 "vps-deploy: $app /up not ready on :${port}"; exit 1; }
 
+queue_schema="$repo/DEPLOY/rails/${app}/db/queue_schema.rb"
+if [[ -f $queue_schema ]] && ! grep -q 'define(version: 0)' "$queue_schema" 2>/dev/null; then
+  print "vps-deploy: $app (solid_queue proof)"
+  ksh "$repo/DEPLOY/openbsd/sh/solid_queue_proof.sh" "$app" \
+    || { print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
+fi
+
 print "vps-deploy: $app ok"
 write_stamp "$app" ok

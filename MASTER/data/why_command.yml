@@ -1,4 +1,4 @@
-# config_status: aspirational  # spec exists, runtime wiring pending
+# config_status: wired  # Trace::WhyExplainer + /why dispatch; LLM fallback on miss
 # /why slash-command — explains the chain Law -> rule -> fix -> evidence.
 # Source: cross-cutting reunification (#97).
 why_command:
