@@ -8,10 +8,11 @@ exec >"$LOG" 2>&1
 set -x
 echo "START $(date -u)"
 
-pkill -f vps_deploy_master 2>/dev/null
-pkill -f "rails assets:precompile" 2>/dev/null
-pkill -f "rcctl restart master" 2>/dev/null
-pkill -f "falcon.*53187" 2>/dev/null
+pkill -9 -f vps_deploy_master 2>/dev/null
+pkill -9 -f "rails assets:precompile" 2>/dev/null
+pkill -9 -f "bundle34 exec rails assets" 2>/dev/null
+pkill -9 -f "rcctl restart master" 2>/dev/null
+pkill -9 -f "falcon.*53187" 2>/dev/null
 sleep 1
 
 doas rcctl stop master 2>/dev/null
@@ -21,13 +22,27 @@ cd /home/dev/pub4/MASTER/web || exit 1
 export RAILS_ENV=production
 export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 16)}"
 
-echo precompile_start
-bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle
-bundle34 exec rails assets:precompile
+MANIFEST=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
+if [ -f "$MANIFEST" ] && [ "${FORCE_PRECOMPILE:-0}" != "1" ]; then
+  echo precompile_skip manifest_exists
+else
+  echo precompile_start
+  bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle
+  bundle34 exec rails assets:precompile
+fi
 ruby34 /home/dev/pub4/DEPLOY/rails/master_web_assets_gate.rb
 
 echo restart_master
-doas rcctl restart master
+# rc_pre skips face/precompile when artifacts exist (patched /etc/rc.d/master).
+doas rcctl restart master &
+_rc_pid=$!
+_i=0
+while kill -0 "$_rc_pid" 2>/dev/null && [ "$_i" -lt 120 ]; do
+  curl -fsS "http://127.0.0.1:53187/up" >/dev/null 2>&1 && break
+  _i=$((_i + 1))
+  sleep 2
+done
+wait "$_rc_pid" 2>/dev/null || true
 
 i=0
 while [ "$i" -lt 60 ]; do
