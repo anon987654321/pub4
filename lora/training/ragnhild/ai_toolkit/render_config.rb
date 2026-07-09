@@ -8,10 +8,42 @@ ROOT = File.expand_path(__dir__)
 BASE = File.join(ROOT, "train_ragnhild.yaml")
 PROMPTS = File.join(ROOT, "prompts.yaml")
 
+ALLOWED_DEVICES = %w[mps cuda cpu].freeze
+
 def load_mapping(path)
   data = YAML.load_file(path)
   abort "warn: expected mapping in #{path}" unless data.is_a?(Hash)
   data
+end
+
+def resolve_device
+  device = ENV.fetch("RAGNHILD_DEVICE", "mps").downcase
+  unless ALLOWED_DEVICES.include?(device)
+    abort "warn: RAGNHILD_DEVICE must be one of: #{ALLOWED_DEVICES.join(', ')}"
+  end
+  device
+end
+
+def apply_device!(process)
+  device = resolve_device
+  process["device"] = device
+
+  model = process["model"]
+  if ENV.key?("RAGNHILD_LOW_VRAM")
+    low = ENV["RAGNHILD_LOW_VRAM"] != "0"
+    model["low_vram"] = low
+    model["quantize"] = low
+    return
+  end
+
+  case device
+  when "cuda"
+    model["low_vram"] = false
+    model["quantize"] = false
+  when "mps"
+    model["low_vram"] = true
+    model["quantize"] = true
+  end
 end
 
 def build(mode)
@@ -23,6 +55,7 @@ def build(mode)
   process["datasets"].first["folder_path"] = File.join(ROOT, "dataset")
   process["sample"]["prompts"] = prompts.fetch("prompts")
   process["sample"]["neg"] = prompts.fetch("negative")
+  apply_device!(process)
 
   if mode == "generate"
     train = process.fetch("train").dup

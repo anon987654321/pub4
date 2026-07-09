@@ -9,6 +9,11 @@ helpers:
   ai_toolkit_runner: lora/training/ragnhild/ai_toolkit/run_ai_toolkit.rb
 images_root: lora
 weights_dir: lora/training/ragnhild/ai_toolkit/weights/ragnhild_v2
+device_env: RAGNHILD_DEVICE
+devices:
+  - mps
+  - cuda
+  - cpu
 upstream:
   name: ai-toolkit
   entrypoint: run.py
