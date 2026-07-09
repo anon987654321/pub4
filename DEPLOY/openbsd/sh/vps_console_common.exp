@@ -1,0 +1,16 @@
+# Shared guard for vmctl console automation on server4 → vm23.
+# Recovery-only. Agents must never run these scripts without explicit human approval.
+#
+# Usage (first lines of every vps_console*.exp / vps_drop_install.exp):
+#   source [file join [file dirname $argv0] vps_console_common.exp]
+#   require_console_risk_ack
+
+proc require_console_risk_ack {} {
+  global env
+  if {![info exists env(I_UNDERSTAND_CONSOLE_RISK)] || $env(I_UNDERSTAND_CONSOLE_RISK) != "1"} {
+    puts stderr "REFUSING: vmctl console automation is recovery-only."
+    puts stderr "Human operator must approve: export I_UNDERSTAND_CONSOLE_RISK=1"
+    puts stderr "See DEPLOY/VPS_SAFETY.md and DEPLOY/OPERATOR_CONTRACT.md."
+    exit 1
+  }
+}

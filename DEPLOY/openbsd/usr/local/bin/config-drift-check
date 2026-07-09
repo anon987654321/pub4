@@ -8,18 +8,14 @@
 require "open3"
 
 REPO_DOAS = "/home/dev/pub4/DEPLOY/openbsd/etc/doas.conf"
+VALIDATE_DOAS = "/home/dev/pub4/DEPLOY/openbsd/sh/validate_doas.ksh"
 
 def heal_doas_conf!
   return unless Process.uid.zero?
-  return unless File.file?(REPO_DOAS)
+  return unless File.file?(REPO_DOAS) && File.executable?(VALIDATE_DOAS)
 
-  src = File.read(REPO_DOAS)
-  src += "\n" unless src.end_with?("\n")
-  dst = File.read("/etc/doas.conf") rescue ""
-  return if dst == src
-
-  File.write("/etc/doas.conf", src)
-  warn "config-drift: synced /etc/doas.conf from repo"
+  ok = system("ksh", VALIDATE_DOAS, "install", REPO_DOAS, "config-drift")
+  warn "config-drift: doas heal failed (rolled back if possible)" unless ok
 end
 
 heal_doas_conf!

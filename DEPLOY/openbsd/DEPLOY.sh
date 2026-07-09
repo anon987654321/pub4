@@ -117,6 +117,13 @@ install_root_configs() {
     log WARN "doas.conf missing trailing newline — fixed before install"
   fi
 
+  typeset doas_rollback=""
+  if [[ -f /etc/doas.conf ]]; then
+    mkdir -p /var/backups/openbsd_setup
+    doas_rollback="/var/backups/openbsd_setup/doas.conf.${EPOCHSECONDS}.rollback"
+    cp /etc/doas.conf "$doas_rollback"
+  fi
+
   for d in etc usr var; do
     [[ -d $src/$d ]] || continue
     install -d "/$d" 2>/dev/null || true
@@ -128,6 +135,15 @@ install_root_configs() {
   [[ -f /etc/daily.local ]] && chmod 755 /etc/daily.local
   for f in /etc/rc.d/*(N); do chmod 755 "$f"; done
   for f in /usr/local/bin/*(N); do [[ -f $f ]] && chmod 755 "$f"; done
+
+  if [[ -f /etc/doas.conf ]]; then
+    if ! su dev -c 'doas id' 2>/dev/null | grep -q 'uid=0(root)'; then
+      log ERROR "doas validation failed after config install — aborting (restoring previous doas.conf)"
+      [[ -n $doas_rollback && -f $doas_rollback ]] && cp "$doas_rollback" /etc/doas.conf
+      return 1
+    fi
+    log INFO "doas validation passed after config install"
+  fi
 
   if [[ -x /usr/local/bin/relayd-watchdog ]] || [[ -x /usr/local/bin/config-drift-check ]]; then
     typeset root_cron=/tmp/root_crontab.$$

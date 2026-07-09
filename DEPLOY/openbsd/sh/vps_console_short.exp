@@ -1,4 +1,6 @@
 #!/usr/bin/expect -f
+source [file join [file dirname $argv0] vps_console_common.exp]
+require_console_risk_ack
 set timeout 15
 set keyfile $env(HOME)/.ssh/id_ed25519_brgen
 set cmd [lindex $argv 0]

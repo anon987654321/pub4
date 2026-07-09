@@ -83,11 +83,14 @@ module Master
       def emit_dmesg_line(payload)
         ev = payload[:event].to_s
         return if ev.empty? || DMESG_IGNORE.include?(ev)
-        kv = payload.reject { |k, _| %i[event ts topic].include?(k) }
+        file_line = format_file_dmesg(ev, payload)
+        kv = payload.reject { |k, _| %i[event ts topic path op bytes tool].include?(k) }
                     .map { |k, v| "#{k}=#{v.to_s[0, 60]}" }.join(" ")
         diff = ev == "tool:after" && MUTATING_TOOLS.include?(payload[:tool].to_s) ? diff_stat(payload[:path]) : nil
         tail = diff ? " #{diff}" : ""
-        line = "  %s [%7d] %s%s%s" % [glyph_for_event(ev), elapsed_ms, ev, kv.empty? ? "" : " #{kv}", tail]
+        body = file_line || ev
+        extras = [kv, tail].reject(&:empty?).join(" ")
+        line = "  %s [%7d] %s%s" % [glyph_for_event(ev), elapsed_ms, body, extras.empty? ? "" : " #{extras}"]
         @think_mutex&.synchronize do
           print "\r\e[K"
           $stdout.puts @refs.renderer.render(line, mode: :dim)
@@ -95,6 +98,20 @@ module Master
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_event", event_bus: @refs.bus)
+      end
+
+      def format_file_dmesg(ev, payload)
+        return unless ev.start_with?("tool:")
+        path = payload[:path].to_s
+        return if path.empty?
+
+        op = payload[:op].to_s
+        op = ev == "tool:before" ? "touch" : "done" if op.empty?
+        bytes = payload[:bytes]
+        size = bytes ? " #{bytes}B" : ""
+        rel = path.delete_prefix("#{@refs.root}/")
+        rel = path if rel == path
+        "#{op} #{rel}#{size}"
       end
 
       def diff_stat(path)

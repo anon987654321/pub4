@@ -4,8 +4,8 @@ APP_DIR=/home/amber/app
 [ -r /etc/amber.env ] && . /etc/amber.env
 [ -f /etc/rails/amber.env ] && . /etc/rails/amber.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/amber.env}"
-daemon="/usr/local/bin/bundle34"
-daemon_flags="exec env RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/amber falcon serve --bind http://127.0.0.1:${PORT}"
+daemon="/bin/ksh"
+daemon_flags="-c 'cd ${APP_DIR} && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/amber && exec /usr/local/bin/bundle34 exec falcon serve --bind http://127.0.0.1:${PORT}'"
 daemon_user="amber"
 daemon_execdir="/home/amber/app"
 daemon_logger="daemon.notice"

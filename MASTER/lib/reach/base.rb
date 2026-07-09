@@ -17,14 +17,16 @@ module Master
       # Returns Result.ok(full_path), or stages it if diff_stager is wired.
       def commit_write(full, content, path: nil)
         content = WhitespaceNormalizer.normalize(content, path: full)
+        written = path || full
+        bytes = content.bytesize
+        @bus&.publish("tool:before", tool: self.class::NAME, path: written, bytes: bytes, op: "write")
         return @diff_stager.stage(path: full, new_content: content, tool: self.class::NAME) if @diff_stager
 
         @undo.snapshot(full)
         FileUtils.mkdir_p(File.dirname(full))
         write_atomic(full, content)
-        written = path || full
         Master::Trace::WriteTracker.current&.record(written)
-        @bus&.publish("tool:after", tool: self.class::NAME, path: written)
+        @bus&.publish("tool:after", tool: self.class::NAME, path: written, bytes: bytes, op: "write")
         Result.ok(full)
       end
 

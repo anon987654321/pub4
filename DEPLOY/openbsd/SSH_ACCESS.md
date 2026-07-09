@@ -84,11 +84,13 @@ Same username + pubkey as the VM. User is in `_vmdusers` for socket access to `v
 
 ```zsh
 vmctl status vm23
-vmctl console vm23      # serial console; exit with ~.
-vmctl stop -fw vm23
+vmctl console vm23      # serial console; exit with ~.  Human recovery only — not for agents.
+vmctl stop -fw vm23     # NEVER autonomous — causes downtime
 vmctl start -c vm23
 doas pkill -9 -xf "vmd: vm23"   # hung VM ([known.html](https://www.openbsd.amsterdam/known.html))
 ```
+
+`DEPLOY/openbsd/sh/vps_console*.exp` scripts require `I_UNDERSTAND_CONSOLE_RISK=1` (see `DEPLOY/VPS_SAFETY.md`).
 
 Recovery when VM SSH is pf-blocked:
 

@@ -12,6 +12,11 @@
 8. After `git pull` on vm23, **deployed trees do not move** — run `vps-deploy` before expecting live health.
 9. Constitution self-scan debt is visible by design — do not chase zero during unrelated UI fixes.
 10. Feature truth is `apps.yml`; open debt is `DEPLOY/data/debt.yml`; horizon is `apps.horizon.yml` (ignore).
+11. **Never** autonomously run `vmctl console/stop/start`, kill `cu` on server4, or `vps_console*.exp` — see `DEPLOY/VPS_SAFETY.md`.
+12. Production VM is **vm23** only (`dev@brgen.no`); never touch vm27 or other tenants.
+13. VPS deploy is SSH + `doas zsh DEPLOY.sh` / `vps-deploy` — not serial-console automation.
+14. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only recovery gates.
+15. **Dmesg every file op** — `write path/to/file`, `read path`, `run cmd exit=N`; see `DEPLOY/OPERATOR_CONTRACT.md` Agent dmesg section. MASTER bus emits `tool:before`/`tool:after` with `path`, `op`, `bytes`.
 
 ## Boot sequence
 

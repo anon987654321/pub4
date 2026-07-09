@@ -26,10 +26,9 @@ if vmstat -s >/dev/null 2>&1; then
 fi
 
 GUARD_REPO=${GUARD_REPO:-/home/dev/pub4}
-REPO_DOAS="${GUARD_REPO}/DEPLOY/openbsd/etc/doas.conf"
-if [[ -r $REPO_DOAS && -w /etc/doas.conf ]] && ! cmp -s /etc/doas.conf "$REPO_DOAS" 2>/dev/null; then
-	cp "$REPO_DOAS" /etc/doas.conf
-	logger -t resource-guard "synced /etc/doas.conf from repo"
+if [[ -r ${GUARD_REPO}/DEPLOY/openbsd/sh/validate_doas.ksh ]]; then
+	. ${GUARD_REPO}/DEPLOY/openbsd/sh/validate_doas.ksh
+	install_doas_conf_from_repo "${GUARD_REPO}/DEPLOY/openbsd/etc/doas.conf" resource-guard || true
 fi
 if [[ -f ${GUARD_REPO}/DEPLOY/openbsd/stale_ci_cleanup.ksh ]]; then
   . ${GUARD_REPO}/DEPLOY/openbsd/stale_ci_cleanup.ksh

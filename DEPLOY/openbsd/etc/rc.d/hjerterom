@@ -4,8 +4,8 @@ APP_DIR=/home/hjerterom/app
 [ -r /etc/hjerterom.env ] && . /etc/hjerterom.env
 [ -f /etc/rails/hjerterom.env ] && . /etc/rails/hjerterom.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/hjerterom.env}"
-daemon="/usr/local/bin/bundle34"
-daemon_flags="exec env RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/hjerterom falcon serve --bind http://127.0.0.1:${PORT}"
+daemon="/bin/ksh"
+daemon_flags="-c 'cd ${APP_DIR} && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/hjerterom && exec /usr/local/bin/bundle34 exec falcon serve --bind http://127.0.0.1:${PORT}'"
 daemon_user="hjerterom"
 daemon_execdir="/home/hjerterom/app"
 daemon_logger="daemon.notice"

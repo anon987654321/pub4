@@ -121,10 +121,10 @@ entries:
     The operator is an architect by training. Aesthetic, typographic, and design-philosophy proposals—even ones LLMs dismiss as fluff—are usually approved.
 
     Surface aesthetic content from Bringhurst, Ando, Rams, wabi-sabi, ma, and kanso, plus beauty sections in YAML, without self-censoring. Treat these as engineering anchors, not disclaimers. Propose UI, prose, and config refinements actively. Do not argue that beauty or zen YAML is "not actionable."
-
 - key: master_design_vision
   name: MASTER design vision (pure-Ruby AI, OpenBSD-mirrored, Snohetta parametric)
-  description: Guiding vision and influences — steer every design/refactor decision toward it
+  description: Guiding vision and influences — steer every design/refactor decision
+    toward it
   type: project
   body: |-
     The operator's guiding vision for MASTER, to steer every design and refactor decision.
@@ -138,7 +138,30 @@ entries:
     HOW TO APPLY: prefer collapse over accretion — one parametric form with data-driven variants over many near-duplicate files (e.g. the four bin/check-* scripts collapsed to one bin/check --profile). Closed minimal surfaces. When in doubt, remove. Match the surrounding restraint. Craft is not accretion — the TTS voice engines were deliberately kept.
 - key: bsdports_openbsd_ports_index
   name: bsdports is the official next-gen OpenBSD ports index (Solene blessing)
-  description: DEPLOY/rails/bsdports — sanctioned successor to Solene Rapenne's ports index
+  description: DEPLOY/rails/bsdports — sanctioned successor to Solene Rapenne's ports
+    index
   type: project
-  body: |-
-    DEPLOY/rails/bsdports is being built as the official next-generation OpenBSD ports index — the operator has the blessing and go-ahead of Solene Rapenne (solene@, former OpenBSD developer, now Qubes OS core team; blog at dataswamp.org) to create the next version of her ports index. Treat bsdports as a first-class, real-world OpenBSD-community deliverable, not a demo.
+  body: DEPLOY/rails/bsdports is being built as the official next-generation OpenBSD
+    ports index — the operator has the blessing and go-ahead of Solene Rapenne (solene@,
+    former OpenBSD developer, now Qubes OS core team; blog at dataswamp.org) to create
+    the next version of her ports index. Treat bsdports as a first-class, real-world
+    OpenBSD-community deliverable, not a demo.
+- key: pub4_reanalysis
+  name: pub4 reanalysis
+  description: Summary of potential issues and recommended actions for pub4 based
+    on code review
+  type: project
+  body: 'Based on the codebase listing, pub4 components include modules and classes
+    under lib/pub4 and tools/audio. No recent changes are visible without version
+    control access. Recommended actions: 1) Run git log to inspect recent commits
+    in pub4 directories for potential regressions or style violations. 2) Execute
+    linting and test suites (e.g., rubocop, minitest) focusing on pub4 files to catch
+    any deviations from constitutional rules such as abbreviation use in identifiers
+    (e.g., Pub4, AkmdMasteringChain) or path names (e.g., pub4, akmd). 3) Verify that
+    any new files added to pub4 follow Flat Hierarchy naming (lowercase snake_case,
+    no abbreviations, concrete nouns/verbs). 4) Check for god classes or methods exceeding
+    size limits (e.g., >200 lines, >6 methods) in pub4 classes. 5) Ensure no hardcoded
+    credentials or banned GNU tools (sed, awk, etc.) appear in pub4 scripts. 6) Confirm
+    that pub4-related changes adhere to One Source principle and avoid duplication.
+    7) Run full test suite to ensure no regressions. Prioritize checking for any new
+    abbreviations in code or paths, as these violate Naming and Flat Hierarchy rules.'

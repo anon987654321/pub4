@@ -1,4 +1,6 @@
 #!/usr/bin/expect -f
+source [file join [file dirname $argv0] vps_console_common.exp]
+require_console_risk_ack
 set timeout 20
 set keyfile $env(HOME)/.ssh/id_ed25519_brgen
 spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23

@@ -1,5 +1,7 @@
 #!/usr/bin/expect -f
 # Sync deploy scripts tarball + run MASTER + Rails install on vm23 console.
+source [file join [file dirname $argv0] vps_console_common.exp]
+require_console_risk_ack
 set timeout 30
 set keyfile $env(HOME)/.ssh/id_ed25519_brgen
 set tgzfile /tmp/pub4_deploy_sync.tgz
