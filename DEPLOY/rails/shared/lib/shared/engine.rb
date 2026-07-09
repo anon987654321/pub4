@@ -29,6 +29,13 @@ module Shared
       end
     end
 
+    initializer "shared.schema_helper" do
+      ActiveSupport.on_load(:action_controller_base) do
+        require_dependency Shared::Engine.root.join("app/helpers/schema_helper").to_s
+        helper SchemaHelper
+      end
+    end
+
     initializer "shared.master_embed_helper" do
       ActiveSupport.on_load(:action_controller_base) do
         require_dependency Shared::Engine.root.join("app/helpers/shared/master_embed_helper").to_s
