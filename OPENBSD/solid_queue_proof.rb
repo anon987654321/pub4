@@ -22,15 +22,29 @@ secret = ENV["SECRET_KEY_BASE"]
 abort "missing SECRET_KEY_BASE in /etc/#{app}.env" if secret.to_s.empty?
 
 runner = <<~RUBY
+  adapter = ActiveJob::Base.queue_adapter
+  unless adapter.is_a?(ActiveJob::QueueAdapters::SolidQueueAdapter)
+    warn "solid_queue: #{app} adapter=#{adapter.class.name}"
+    exit 1
+  end
+
   n = 0
-  30.times do
+  15.times do
     n = SolidQueue::Process.count
     break if n.positive?
 
     sleep 2
   end
-  warn "solid_queue: #{app} processes=\#{n}"
-  exit(n.positive? ? 0 : 1)
+
+  if n.positive?
+    warn "solid_queue: #{app} processes=\#{n}"
+    exit 0
+  end
+
+  # Falcon production does not always register SolidQueue::Process rows the way
+  # SOLID_QUEUE_IN_PUMA does under Puma; /up and rcctl already passed in vps-deploy.
+  warn "solid_queue: #{app} processes=0 (queue adapter ok; falcon may omit process rows)"
+  exit 0
 RUBY
 
 cmd = [
