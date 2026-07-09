@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+
 class CLIBridgeTest < Minitest::Test
-  def build_cli(pipeline:)
+  def build_cli(commands: nil, pipeline: Object.new)
     unless pipeline.respond_to?(:last_timings)
       pipeline.define_singleton_method(:last_timings) { nil }
     end
@@ -20,29 +21,13 @@ class CLIBridgeTest < Minitest::Test
         undo: Object.new,
         config: {},
         pipeline:,
+        commands: commands || {
+          "status" => Master::Now::CommandRegistry::Command.new { "status-ok" },
+        },
         root: Dir.pwd,
         bus: nil
       }
     )
-  end
-
-  def test_bridge_agent_turn_for_plain_language
-    cli = build_cli(pipeline: Object.new)
-    assert cli.send(:bridge_agent_turn?, "add a health check")
-    refute cli.send(:bridge_agent_turn?, "/scan lib")
-  end
-
-  def test_bridge_agent_turn_respects_legacy_pipeline_env
-    cli = build_cli(pipeline: Object.new)
-    prior = ENV["MASTER_LEGACY_PIPELINE"]
-    ENV["MASTER_LEGACY_PIPELINE"] = "1"
-    refute cli.send(:bridge_agent_turn?, "add a health check")
-  ensure
-    if prior
-      ENV["MASTER_LEGACY_PIPELINE"] = prior
-    else
-      ENV.delete("MASTER_LEGACY_PIPELINE")
-    end
   end
 
   def test_run_input_uses_core_bridge_for_plain_language
@@ -60,22 +45,19 @@ class CLIBridgeTest < Minitest::Test
     end
   end
 
-  def test_run_input_uses_pipeline_for_slash_commands
+  def test_run_input_dispatches_slash_commands_without_pipeline
     calls = []
     pipeline = Object.new
-    pipeline.define_singleton_method(:call) do |initial|
-      calls << initial
-      Master::Result.ok(output: "scanned")
-    end
+    pipeline.define_singleton_method(:call) { |*| calls << :pipeline; Master::Result.ok(output: "legacy") }
     cli = build_cli(pipeline:)
 
-    out, = capture_io { cli.run_input("/scan lib") }
-    assert_match(/scanned/, out)
-    assert_equal 1, calls.size
+    out, = capture_io { cli.run_input("/status") }
+    assert_match(/status-ok/, out)
+    assert_empty calls
   end
 
   def test_run_core_bridge_input_maps_complete_fold_to_ok
-    cli = build_cli(pipeline: Object.new)
+    cli = build_cli
     fold = { reason: :complete, turns: 1, summary: "note written", transcript: [] }
 
     Master.stub(:any_api_key_present?, true) do
@@ -90,7 +72,7 @@ class CLIBridgeTest < Minitest::Test
   end
 
   def test_run_core_bridge_input_maps_max_turns_to_err
-    cli = build_cli(pipeline: Object.new)
+    cli = build_cli
     fold = { reason: :max_turns, turns: 40, summary: nil, transcript: ["40: write -> blocked"] }
 
     Master.stub(:any_api_key_present?, true) do

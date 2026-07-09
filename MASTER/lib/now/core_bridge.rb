@@ -4,10 +4,8 @@ require_relative "../../core/master"
 
 module Master
   module Now
-    # CoreBridge — run one coding goal through the core Fold from inside the
-    # interactive CLI. The Fold (core/) is the runtime this rebuild is folding
-    # toward; the bridge routes a single goal to it while the legacy pipeline still
-    # handles everything else, so the cutover stays incremental and always green.
+    # CoreBridge — run one coding goal through the core Fold from the CLI and web
+    # cutover. Folds agent turns; slash commands use command_registry directly.
     #
     # Turns stream to the event bus as they happen, so the terminal and the web
     # dashboard see the same live trace they get from the legacy path.

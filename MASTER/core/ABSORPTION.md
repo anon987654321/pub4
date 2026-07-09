@@ -165,15 +165,15 @@ streaming REPL. So finishing the core-first rebuild means one of:
 Both are product decisions, not mechanical severance — they change what the agent
 running on the VPS *is*.
 
-**Decision: Bridge** (2026-07-09). Plain-language agent turns in `CLI#run_input` now
-route through `Master::Now::CoreBridge` → `Master::Core::Fold` by default.
-Slash commands, NL_DISPATCH, workflow intents, web, TTS, and sessions stay on the
-legacy path. Opt out with `MASTER_LEGACY_PIPELINE=1`. `bin/cli --fold` remains a
-one-shot Fold run that exits immediately.
+**Decision: Bridge** (2026-07-09). `CLI#run_input` no longer calls the legacy
+pipeline: plain language and `/run <goal>` go through `CoreBridge` → `Fold`;
+other slash commands dispatch via `command_registry` (Intake → Route → Execute).
+`MASTER_LEGACY_PIPELINE` removed — there is no CLI opt-out.
 
-Remaining Bridge work before slice 5 is "done": migrate slash handlers
-(`/scan`, `/fix`, …) off the pipeline; then M4 can sunset `core_bridge.rb` as a
-separate shim.
+Remaining legacy: **web chat** (`ChatService` → pipeline), **standing orders**,
+and the pipeline object still built at boot for those paths. Slice 5 done when
+web/orders use the same router; then delete pipeline stages and M4 sunset
+`core_bridge.rb` as a thin shim.
 
 ## Done
 

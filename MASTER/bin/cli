@@ -108,8 +108,7 @@ end
 Master::Ops::RuntimeLoopGuards.install!
 
 # --fold routes one coding goal through the core Fold, then exits. Plain-language
-# agent turns use the same Fold by default; MASTER_LEGACY_PIPELINE=1 restores the
-# legacy pipeline. Slash commands still use the legacy pipeline.
+# agent turns and /run <goal> use the Fold; other slash commands dispatch directly.
 if ENV["MASTER_FOLD"] == "1"
   goal = initial_message_from_argv(ARGV)
   container = cli.container

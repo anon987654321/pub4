@@ -5,14 +5,6 @@ module Master
     class CLI
       private
 
-      # Plain-language agent goals route through the core Fold; slash commands and
-      # workflow intents stay on the legacy pipeline until command_registry absorbs them.
-      def bridge_agent_turn?(input)
-        return false if ENV["MASTER_LEGACY_PIPELINE"] == "1"
-
-        !input.to_s.strip.start_with?("/")
-      end
-
       def run_core_bridge_input(input, state:, accumulated:)
         goal = input.to_s.strip
         return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?

@@ -8,6 +8,7 @@ require_relative "cli/result_display"
 require_relative "cli/background_scan"
 require_relative "cli/repl_flow"
 require_relative "cli/bridge_run"
+require_relative "cli/command_dispatch"
 
 require "open3"
 require "reline"
@@ -108,10 +109,10 @@ module Master
         print_thinking_indicator unless paste
         @pipeline_thread = Thread.new do
           Thread.current.report_on_exception = false
-          if bridge_agent_turn?(input)
-            run_core_bridge_input(input, state:, accumulated:)
+          if input.to_s.strip.start_with?("/")
+            run_slash_dispatch(input, state:, accumulated:)
           else
-            @refs.pipeline.call(Result.ok(user_message: input, on_chunk:, felt_sense: cli_felt_sense))
+            run_core_bridge_input(input, state:, accumulated:)
           end
         end
         result = begin

@@ -57,7 +57,7 @@ module Master
       infra = build_infrastructure(root)
       ai    = build_ai(root, infra)
       pipeline, gateway = build_pipeline(root:, infra:, ai:)
-      infra.merge(ai).merge(pipeline:, gateway:, root:)
+      infra.merge(ai).merge(pipeline:, gateway:, commands:, root:)
     end
 
     def build_scan_only(root: Dir.pwd)
@@ -93,7 +93,7 @@ module Master
         Now::Stages::Render.new(renderer: infra[:renderer], output_check:, event_bus: bus),
       ]
       pipeline = Now::Pipeline.new(stages, bus:, root:, scanner:)
-      infra.merge(ai).merge(pipeline:, scanner:, root:)
+      infra.merge(ai).merge(pipeline:, commands:, scanner:, root:)
     end
 
     def fast_agent_stub

@@ -6,10 +6,9 @@ M1 slices 5–6 and M4 remain. Delete this file only after full CLI cutover and 
 ## Remaining work
 
 ### M1 — Absorption program (in progress: Bridge)
-Slices 0–4 done per `core/ABSORPTION.md`. **Bridge milestone 1:** `CLI#run_input`
-routes plain-language goals through `CoreBridge` / `Fold` (opt-out:
-`MASTER_LEGACY_PIPELINE=1`). Slice 5 still open: slash `command_registry` handlers
-and pipeline deletion. `lib/` still ~368 files.
+Slices 0–4 done per `core/ABSORPTION.md`. **Bridge milestone 2:** `CLI#run_input` off pipeline — Fold for agent turns,
+direct `command_registry` for slash. Slice 5 still open: web chat + standing
+orders + pipeline deletion. `lib/` still ~368 files.
 
 ### M4 — CoreBridge sunset
 Delete `lib/now/core_bridge.rb`, `/fold`, and `bin/cli --fold` only when
