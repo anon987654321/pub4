@@ -26,12 +26,15 @@
     <% end %>
   </div>
 
-  <% if @pagy.next %>
-    <div class="load-more-sentinel" data-controller="futurism-load-more"
-         data-url="<%= marketplace_listings_path(page: @pagy.next, q: params[:q], category_id: params[:category_id]) %>">
-      <div class="loading-placeholder">Loading more deals…</div>
-    </div>
-  <% end %>
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "ListingsInfiniteScrollReflex#load_more",
+             sentinel_id: "marketplace-listings-sentinel",
+             q: params[:q],
+             category_id: params[:category_id],
+             lat: @search_lat,
+             lng: @search_lng,
+             radius_km: @radius_km %>
 <% else %>
   <div class="empty"><p>No listings match this search. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
 <% end %>

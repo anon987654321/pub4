@@ -7,6 +7,11 @@
        data-next-page="<%= pagy.next %>"
        <% if local_assigns[:sort].present? %>data-sort="<%= sort %>"<% end %>
        <% if local_assigns[:blog_id].present? %>data-blog-id="<%= blog_id %>"<% end %>
+       <% if local_assigns[:q].present? %>data-q="<%= q %>"<% end %>
+       <% if local_assigns[:category_id].present? %>data-category-id="<%= category_id %>"<% end %>
+       <% if local_assigns[:lat].present? %>data-lat="<%= lat %>"<% end %>
+       <% if local_assigns[:lng].present? %>data-lng="<%= lng %>"<% end %>
+       <% if local_assigns[:radius_km].present? %>data-radius-km="<%= radius_km %>"<% end %>
        aria-live="polite">
     <span class="dim">Loading more…</span>
   </div>

@@ -512,6 +512,34 @@ class DeployBacklogTest < Minitest::Test
                     'ensure_auth_column!'
   end
 
+  def test_schema_dumps_include_shared_auth_user_columns
+    %w[amber brgen bsdports hjerterom mytoonz privcam pub_attorney].each do |app|
+      schema = File.read(File.join(ROOT, app, 'db', 'schema.rb'))
+      assert_includes schema, 't.string "remember_token"', "#{app} schema missing remember_token"
+      assert_includes schema, 't.string "magic_link_token"', "#{app} schema missing magic_link_token"
+      assert_includes schema, 't.boolean "two_factor_enabled"', "#{app} schema missing two_factor_enabled"
+      assert_includes schema, 'index_users_on_remember_token', "#{app} schema missing remember_token index"
+    end
+  end
+
+  def test_messenger_subdomain_routes_conversations_and_messages
+    routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
+    assert_includes routes, 'constraints(subdomain: MESSENGER_SUBDOMAINS)'
+    assert_includes routes, 'as: :messenger_root'
+    assert_includes routes, 'resources :conversations, only: %i[show update create]'
+    assert_includes routes, 'resources :messages, only: %i[create]'
+  end
+
+  def test_marketplace_listings_use_stimulus_reflex_infinite_scroll
+    partial = read_brgen('app/views/marketplace/listings/_live_search_results.html.erb')
+    reflex = read_brgen('app/reflexes/listings_infinite_scroll_reflex.rb')
+
+    assert_includes partial, 'ListingsInfiniteScrollReflex#load_more'
+    assert_includes partial, 'marketplace-listings-sentinel'
+    assert_includes reflex, 'class ListingsInfiniteScrollReflex'
+    assert_includes reflex, 'marketplace/listings/card'
+  end
+
   def test_playlist_tracks_and_hosted_tracks_wire_user_ownership
     migration = read_brgen('db/migrate/20260709120100_add_user_to_playlist_tracks.rb')
     track = read_brgen('app/models/playlist/track.rb')

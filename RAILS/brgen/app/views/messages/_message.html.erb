@@ -1,4 +1,4 @@
-<div id="<%= dom_id(message) %>" role="listitem">
+<li id="<%= dom_id(message) %>" role="listitem">
 <article data-from="<%= message.sender == Current.user ? "self" : "peer" %>" aria-label="Message from <%= message.sender.username %>">
   <header>
     <span><%= message.sender.display_name %></span>
@@ -20,4 +20,4 @@
     <% end %>
   <% end %>
 </article>
-</div>
+</li>

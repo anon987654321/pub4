@@ -180,6 +180,10 @@ Rails.application.routes.draw do
 
   constraints(subdomain: MESSENGER_SUBDOMAINS) do
     root "conversations#index", as: :messenger_root
+    resources :conversations, only: %i[show update create] do
+      resources :messages, only: %i[create]
+      resources :typing_indicators, only: %i[create]
+    end
   end
 
   resources :email_subscriptions, only: %i[create destroy], param: :token
@@ -193,6 +197,8 @@ Rails.application.routes.draw do
   get "nearby" => "nearby#index", as: :nearby
   post "nearby" => "nearby#create"
   get "search" => "search#index", as: :global_search
+  get "sitemap.xml" => "sitemaps#index", as: :sitemap
+  get "robots.txt" => "robots#show", as: :robots
 
   root "home#index"
   get "up" => "rails/health#show", as: :rails_health_check
