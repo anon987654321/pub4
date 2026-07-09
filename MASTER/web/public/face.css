@@ -8,21 +8,37 @@
   --c-danger: oklch(62% 0.18 28);
   --c-code: oklch(74% 0.11 255);
   --x-font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
+  --font-label: "JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
+  --inset-t: calc(12px + var(--safe-top));
+  --inset-r: calc(12px + var(--safe-right));
+  --inset-b: calc(12px + var(--safe-bottom));
+  --inset-l: calc(12px + var(--safe-left));
   --face-bg: black;
   --face-fg: var(--c-text);
   --face-muted: color-mix(in srgb, var(--c-text) 35%, transparent);
   --face-dim: color-mix(in srgb, var(--c-text) 18%, transparent);
   --face-soft: color-mix(in srgb, var(--c-text) 8%, transparent);
+  --mood-accent: var(--c-accent);
+  --border-faint: color-mix(in srgb, var(--face-fg) 10%, transparent);
+  --border-soft: color-mix(in srgb, var(--face-fg) 14%, transparent);
+  --border-strong: color-mix(in srgb, var(--face-fg) 24%, transparent);
+  --radius-xs: 2px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --shadow-float: 0 16px 36px var(--shadow-banner);
   --flash-chroma-r: color-mix(in srgb, var(--c-danger) 65%, transparent);
   --flash-chroma-b: color-mix(in srgb, var(--c-code) 62%, transparent);
   --shadow-pip: color-mix(in srgb, var(--face-bg) 45%, transparent);
   --shadow-banner: color-mix(in srgb, var(--face-bg) 28%, transparent);
   --face-bar-height: 36px;
+  /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
   --face-particle-size: 0.024;
   --face-glow-scale: 1.38;
   --face-phosphor-decay: 0.88;
@@ -31,8 +47,14 @@
   --ease-out: cubic-bezier(0.25,0.1,0.25,1);
   --ease-linear: cubic-bezier(0,0,1,1);
   --ease-in-out: cubic-bezier(0.4,0,0.6,1);
+  /* z-scale: canvas(base) < chrome(persistent HUD) < overlay(panels) < modal(blocking) < toast(errors, always on top) */
+  --z-canvas: 1;
+  --z-chrome: 10;
   --z-ui: 90;
+  --z-overlay: 100;
   --z-modal: 1000;
+  --z-toast: 1100;
+  --z-skip: 2000;
 }
 /* END:generated-face-root */
 

@@ -28,12 +28,13 @@ config:
     train:
       batch_size: 1
       steps: 1800
+      skip_first_sample: true
       gradient_accumulation_steps: 1
       train_unet: true
       train_text_encoder: false
       gradient_checkpointing: true
       noise_scheduler: flowmatch
-      optimizer: adamw8bit
+      optimizer: adamw
       lr: 5.0e-05
       ema_config:
         use_ema: true
@@ -49,6 +50,10 @@ config:
       sample_every: 250
       width: 1024
       height: 1024
+      seed: 42
+      walk_seed: true
+      guidance_scale: 3.5
+      sample_steps: 28
       prompts:
       - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, Bergen
         rain-window close portrait, soft grey daylight, steady eyes, natural mature
@@ -91,14 +96,7 @@ config:
         anime, illustration, CGI, face swap artifacts, cap, hat, selfie distortion,
         beauty filter, heavy makeup, face morph, identity drift, teenage face, overly
         young face, generic influencer face, different woman
-      seed: 42
-      walk_seed: true
-      guidance_scale: 3.5
-      sample_steps: 28
     meta:
       name: ragnhild_v2
       version: '2.0'
       master_trigger: ragnhild
-meta:
-  name: ragnhild_v2
-  version: '2.0'
