@@ -81,6 +81,19 @@ module Master
           }
         end
 
+        # Inline in chat shell only — keeps first paint off the ~30KB full catalog parse.
+        def web_boot_payload_minimal
+          runtime_cfg = Master.load_yaml(File.join(RUNTIME_DIR, "runtime.yml"), default: {})
+          pending = enhancements.count { |item| item["status"].to_s == "pending" }
+
+          {
+            topologies_path: "/runtime/topologies",
+            config_path: "/runtime/config",
+            enhancements_pending_count: pending,
+            enhancements: Array(runtime_cfg["enhancements"]),
+          }
+        end
+
         def clear_cache!
           @cache = {}
         end

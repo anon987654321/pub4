@@ -47,6 +47,16 @@ class TestRuntimeCatalog < Minitest::Test
     assert payload[:topologies].is_a?(Hash)
   end
 
+  def test_web_boot_payload_minimal_shape
+    payload = Master::Ground::RuntimeCatalog.web_boot_payload_minimal
+
+    assert_equal "/runtime/topologies", payload[:topologies_path]
+    assert_equal "/runtime/config", payload[:config_path]
+    assert payload[:enhancements_pending_count].is_a?(Integer)
+    assert payload[:enhancements].is_a?(Array)
+    refute payload.key?(:topologies)
+  end
+
   def test_invariants_and_event_registry
     inv = Master::Ground::RuntimeCatalog.invariants
     assert inv["invariants"].is_a?(Array)

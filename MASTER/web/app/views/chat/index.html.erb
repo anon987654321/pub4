@@ -34,6 +34,35 @@
         return original.apply(this, arguments);
       };
     })();
+    (function () {
+      function armPrimer() {
+        var p = document.getElementById("primer");
+        if (!p || p.dataset.primerArmed === "1") return;
+        p.dataset.primerArmed = "1";
+        function fire() {
+          if (window._primerFired) return;
+          if (typeof window.__MASTER_PRIMER_GO__ === "function") {
+            window.__MASTER_PRIMER_GO__();
+            return;
+          }
+          window._primerFired = true;
+          window.dispatchEvent(new CustomEvent("primer:ready"));
+          document.body.classList.remove("face-loading");
+          p.classList.add("gone");
+        }
+        ["pointerdown", "click", "touchend"].forEach(function (ev) {
+          p.addEventListener(ev, fire, { capture: true, passive: true });
+        });
+        p.addEventListener("keydown", function (e) {
+          if (e.key === " " || e.key === "Enter") { e.preventDefault(); fire(); }
+        });
+        addEventListener("keydown", function (e) {
+          if (!window._primerFired && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); fire(); }
+        });
+      }
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", armPrimer);
+      else armPrimer();
+    })();
     window.MASTER_ASSET_PATHS = {
       threeModule: "<%= asset_path("three.face.module.js") %>",
       faceParts: <%= raw((1..5).map { |part| asset_path("face.part#{part}.txt") }.to_json) %>,
@@ -56,7 +85,7 @@
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
     window.MASTER_PERSONA = <%= raw((persona.respond_to?(:browser_profile) ? persona.browser_profile : {}).to_json) %>;
     window.MASTER_SOUL_SUMMARY = "persona malay; voice ms-MY-OsmanNeural; constitutional face";
-    window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload.to_json %>;
+    window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload_minimal.to_json %>;
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,10 +100,7 @@
       f.addEventListener('load',on);if(f.sheet)on();})();
   </script>
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
-  <%# prefetch (not modulepreload) THREE.js: warms the 514KB into cache WITHOUT compiling it,
-      so the ~10-20s parse happens on primer tap (deferred boot), not on initial page load %>
-  <link rel="prefetch" href="<%= asset_path("three.face.module.js") %>" as="script">
-  <link rel="prefetch" href="<%= asset_path("face.js") %>" as="script">
+  <%# No prefetch of THREE/face — on a 1-CPU VPS it competes with primer tap on the main thread. %>
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <style nonce="<%= content_security_policy_nonce %>">
     html, body { background: #000; color: #f5f0e8; }
@@ -234,13 +260,7 @@
         },40);
         fallback=setTimeout(function(){if(window.MASTER_FACE&&window.MASTER_FACE.primerFired){clearWatch();}else{bootFailed();}},35000);
       }
-      if(p){
-        p.addEventListener('pointerdown',go);
-        p.addEventListener('touchend',go,{passive:true});
-        p.addEventListener('click',go);
-        p.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}});
-      }
-      addEventListener('keydown',function(e){if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}});
+      window.__MASTER_PRIMER_GO__=go;
     })();
   </script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
@@ -253,7 +273,10 @@
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
     fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
-      if (cfg && typeof cfg === 'object') window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };
+      if (cfg && typeof cfg === 'object') {
+        window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };
+        window.dispatchEvent(new CustomEvent('master:runtime-config'));
+      }
     }).catch(() => {});
   </script>
 </body>
