@@ -6,7 +6,7 @@ DIR=/home/${APP}/app
 export HOME=/home/${APP}
 
 run_amber() {
-  doas su -m "${APP}" -c "export HOME=/home/${APP}; cd ${DIR} && bundle34 exec rails $* RAILS_ENV=production"
+  doas su -m "${APP}" -c "export HOME=/home/${APP}; [ -r /etc/${APP}.env ] && . /etc/${APP}.env; cd ${DIR} && bundle34 exec rails $* RAILS_ENV=production"
 }
 
 echo "==> amber queue report"
