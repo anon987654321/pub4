@@ -9,7 +9,7 @@ module Amber
     module_function
 
     def user
-      User.find_by(email_address: DEMO_EMAIL)
+      User.strict_loading(false).includes(:profile).find_by(email_address: DEMO_EMAIL)
     end
 
     def available?
