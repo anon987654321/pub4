@@ -54,6 +54,11 @@
   border-radius: 50%;
   background: var(--surface2);
   flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-dim);
 }
 
 .compose-inner { flex: 1; min-width: 0; }
@@ -69,8 +74,32 @@
 
 .compose-prompt:hover { color: var(--text); text-decoration: none; }
 
-.compose-footer { display: flex; align-items: center; justify-content: space-between; }
+.compose-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 20px;
+  line-height: 1.4;
+  padding: 10px 0;
+  resize: none;
+  min-height: 44px;
+}
+
+.compose-input::placeholder { color: var(--text-dim); }
+.compose-input:focus { outline: none; }
+
+.compose-box--expanded .compose-input {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.75rem;
+}
+
+.compose-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
 .compose-actions { display: flex; gap: 0.75rem; color: var(--text-dim); font-size: 18px; }
+.compose-submit { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+.compose-as { font-size: 13px; }
+.compose-hint { font-size: 13px; margin: 0.5rem 0 0; }
 
 /* Right widgets column */
 .widgets {

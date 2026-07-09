@@ -4,6 +4,10 @@ en:
     name: "Brgen"
   feed:
     title: "Local news"
+    compose_prompt: "What are you up to today?"
+    post_action: "Post"
+    guest_hint: "Posting as anon · %{limit} posts per browser"
+    advanced_post: "Advanced post with photo"
   nav:
     sign_in: "Sign in"
     new_post: "New post"

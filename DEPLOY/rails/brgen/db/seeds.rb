@@ -373,6 +373,12 @@ place_count = ActiveRecord::Base.connection.table_exists?(:places) ? Place.count
 puts "TV channels: #{Tv::Channel.count}, Places: #{place_count}"
 puts 'Ready for demo / development.'
 
+if (bergen = City.find_by(domain: 'brgen.no')) && !ENV['SKIP_BERGEN_DEMO']
+  puts "\nSeeding Bergen demo content (Norwegian posts, users, media)..."
+  Brgen::BergenDemoSeeder.new(bergen).seed!
+  puts "Bergen demo: #{Post.where(city: bergen).count} posts, #{Marketplace::Listing.count} listings"
+end
+
 # Optional web-augmented fictive seeds using Ferrum + vision LLM (see lib/tasks/{reddit,x}.rake)
 # Requires OPENROUTER_API_KEY. Per-city: rake scrape:reddit_seed[brgen.no] or scrape:reddit_seed[lsangeles.com]
 # then fictivize/anonymize into Posts, Takeaway, Marketplace etc. for more "real" seed data.

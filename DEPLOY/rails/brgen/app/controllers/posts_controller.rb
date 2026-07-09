@@ -42,7 +42,11 @@ class PostsController < ApplicationController
 
     @post           = Post.new(post_params)
     @post.user      = Current.user
-    @post.anonymous = true if Current.user.guest?
+    @post.anonymous = true if Current.user.guest? || ActiveModel::Type::Boolean.new.cast(post_params[:anonymous])
+    if @post.title.blank? && @post.content.present?
+      @post.title = @post.content.to_s.lines.first.to_s.strip.presence || @post.content.to_s.strip
+      @post.title = @post.title.truncate(300)
+    end
     @post.community = @community if @community
     unless PostModerationService.new(@post).approve?
       redirect_to new_post_path, alert: "Post blocked by moderation."

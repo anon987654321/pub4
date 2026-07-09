@@ -4,6 +4,10 @@ nb:
     name: "Brgen"
   feed:
     title: "Lokale nyheter"
+    compose_prompt: "Hva skjer i Bergen i dag?"
+    post_action: "Publiser"
+    guest_hint: "Du poster som anon · %{limit} innlegg per nettleser"
+    advanced_post: "Utvidet innlegg med bilde"
   nav:
     sign_in: "Logg inn"
     new_post: "Nytt innlegg"

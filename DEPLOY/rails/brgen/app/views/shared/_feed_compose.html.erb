@@ -1,0 +1,34 @@
+<%= form_with model: Post.new, url: posts_path, class: "compose-box", data: { controller: "feed-compose", feed_compose_target: "box", action: "submit->form-submit#lock" } do |f| %>
+  <div class="compose-avatar" aria-hidden="true"><%= guest? ? "?" : (Current.user.username&.first&.upcase || "B") %></div>
+  <div class="compose-inner">
+    <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>
+    <%= f.text_area :content,
+          rows: 1,
+          placeholder: t("feed.compose_prompt"),
+          class: "compose-input",
+          data: {
+            controller: "textarea-autogrow",
+            feed_compose_target: "input",
+            action: "focus->feed-compose#expand input->feed-compose#syncTitle blur->feed-compose#collapse"
+          } %>
+    <div class="compose-footer" data-feed-compose-target="footer" hidden>
+      <div class="compose-actions" aria-hidden="true">
+        <span title="Photo">📷</span><span title="Poll">📊</span><span title="Emoji">😊</span><span title="Place">📍</span>
+      </div>
+      <div class="compose-submit">
+        <% if guest? %>
+          <%= f.hidden_field :anonymous, value: true %>
+          <span class="dim compose-as">anon</span>
+        <% end %>
+        <%= f.submit t("feed.post_action"), class: "btn btn-primary btn-sm" %>
+      </div>
+    </div>
+    <p class="dim compose-hint">
+      <% if guest? %>
+        <%= t("feed.guest_hint", limit: Shared::AnonymousPostService::LIMIT) %>
+      <% else %>
+        <%= link_to t("feed.advanced_post"), new_post_path, class: "link-inherit" %>
+      <% end %>
+    </p>
+  </div>
+<% end %>

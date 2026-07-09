@@ -171,18 +171,7 @@
           </div>
         <% end %>
         <% if current_page?(root_path) && Current.user.present? %>
-          <div class="compose-box">
-            <div class="compose-avatar"></div>
-            <div class="compose-inner">
-              <%= link_to "What's happening?", new_post_path, class: "compose-prompt" %>
-              <div class="compose-footer">
-                <div class="compose-actions">
-                  <span>📷</span><span>📊</span><span>😊</span><span>📍</span>
-                </div>
-                <%= link_to "Post", new_post_path, class: "btn btn-primary" %>
-              </div>
-            </div>
-          </div>
+          <%= render "shared/feed_compose" %>
         <% end %>
         <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
         <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
