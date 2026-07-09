@@ -47,6 +47,8 @@ def apply_device!(process)
     model["quantize"] = true
     # bitsandbytes 8-bit optimizers are CUDA-only; adamw runs on MPS.
     train["optimizer"] = "adamw"
+    # bf16 on MPS can yield NaN loss; fp16 is more stable on Apple Silicon.
+    train["dtype"] = "fp16"
   end
 end
 
