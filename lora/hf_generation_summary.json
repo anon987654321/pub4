@@ -1,8 +1,9 @@
 {
   "mode": "hf_inference_flux_schnell_no_lora",
-  "note": "Prompt-only previews. Not LoRA. No likeness guarantee.",
-  "count": 12,
-  "saved": [
+  "note": "Prompt-only previews removed — no likeness guarantee; did not match subject.",
+  "count": 0,
+  "saved": [],
+  "removed": [
     "ragnhild_hf_01_bergen_rain.jpg",
     "ragnhild_hf_02_hardanger_gold.jpg",
     "ragnhild_hf_03_trondheim_cinema.jpg",
@@ -14,7 +15,9 @@
     "ragnhild_hf_09_fashion_natural.jpg",
     "ragnhild_hf_10_bergen_candid.jpg",
     "ragnhild_hf_11_profile_avatar.jpg",
-    "ragnhild_hf_12_identity_check.jpg"
+    "ragnhild_hf_12_identity_check.jpg",
+    "ragnhild_hf_*_portrait.jpg",
+    "hf_flux_schnell_test.jpg"
   ],
   "errors": []
 }
