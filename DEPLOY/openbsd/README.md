@@ -21,16 +21,11 @@ ssh -p 31415 dev@server4.openbsd.amsterdam   # hypervisor
 ```zsh
 cd ~/pub4/DEPLOY/openbsd
 doas zsh DEPLOY.sh
-doas cp -R etc usr var /
-# or config-only:
-doas cp -R etc usr var /
-doas zsh DEPLOY.sh --sync-configs
 ```
 
 | Command | Purpose |
 |---------|---------|
-| `doas cp -R etc usr var /` | Install exact config trees from repo |
-| `doas zsh DEPLOY.sh --sync-configs` | Install configs + validate + restart |
+| `doas zsh DEPLOY.sh` | Install etc/usr/var, validate, restart services |
 | `doas ksh resource_guard.sh` | Shed optional apps under load |
 | `doas ksh start_all_apps.sh` | Full stack |
 

@@ -1,13 +1,8 @@
 #!/usr/bin/env zsh
 # OpenBSD vm23 deploy — executable script. Everything else in this tree is an exact config mirror.
-# Usage (on vm23):
-#   cd ~/pub4/DEPLOY/openbsd
-#   doas zsh DEPLOY.sh
-#   doas cp -R etc usr var /
-# Flags:
-#   doas zsh DEPLOY.sh --first-install
-#   doas zsh DEPLOY.sh --stage-2
-#   doas zsh DEPLOY.sh --sync-configs   # validate + restart after cp
+# Routine (on vm23): cd ~/pub4/DEPLOY/openbsd && doas zsh DEPLOY.sh
+# Installs etc/ usr/ var/ onto /, validates pf/relayd, restarts services.
+# Rare: --first-install | --stage-1 (DNS wipe) | --stage-2 (full app bootstrap)
 # VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-01-06)
 #
 # IDEMPOTENCY NOTES (CC14):
@@ -790,28 +785,31 @@ stage_2() {
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
+deploy_live() {
+  sync_openbsd_apply "${SCRIPT_DIR}"
+}
+
 main() {
   if [[ ${1:-} = --help ]]; then
     print -r -- "OpenBSD vm23 deploy (DEPLOY.sh). Config trees: etc/ usr/ var/ → /.
 Usage:
-  cd ~/pub4/DEPLOY/openbsd
-  doas zsh DEPLOY.sh
-  doas cp -R etc usr var /
+  cd ~/pub4/DEPLOY/openbsd && doas zsh DEPLOY.sh
+
+Default: install configs, validate pf/relayd, restart services.
+
+Rare:
   doas zsh DEPLOY.sh --first-install
   doas zsh DEPLOY.sh --stage-1        # requires I_UNDERSTAND_DNS_WIPE=1
   doas zsh DEPLOY.sh --stage-2
-  doas zsh DEPLOY.sh --sync-configs   # install configs + validate + restart
 
-Default (no flag) runs --stage-2. stage_1 rewrites authoritative DNS material."
+--sync-configs is an alias for the default."
     exit 0
   fi
 
-  if [[ ${1:-} = --sync-configs ]]; then
-    sync_openbsd_apply "${SCRIPT_DIR}"
-    exit $?
-  fi
-
   case ${1:-} in
+    --sync-configs|--sync|sync)
+      deploy_live
+      ;;
     --first-install)
       ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
       ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
@@ -833,9 +831,7 @@ Default (no flag) runs --stage-2. stage_1 rewrites authoritative DNS material."
       stage_2
       ;;
     "")
-      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
-      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
-      stage_2
+      deploy_live
       ;;
     *)
       log ERROR "unknown flag: $1 (try --help)"

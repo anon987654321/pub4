@@ -53,15 +53,11 @@ Always use tmux.
 
 ```zsh
 cd ~/pub4/DEPLOY/openbsd
-tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"
+tmux new-session -d -s deploy "doas zsh DEPLOY.sh 2>&1 | tee /tmp/deploy.log"
 tmux attach -t deploy
 ```
 
-| Flag | Use |
-|------|-----|
-| `--sync-configs` | Mirror `etc/` to `/etc`, restart services |
-
-Stage 1: NSD, DNSSEC, acme certs, httpd ACME, pf. Stage 2: Rails trees, relayd SNI, smtpd, rc.d, health check.
+Default installs `etc/` `usr/` `var/`, validates pf/relayd, restarts services. Rare: `--first-install`, `--stage-1`, `--stage-2`.
 
 After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-reload.
 
@@ -69,13 +65,12 @@ After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-relo
 
 ```zsh
 cd /home/dev/pub4 && git pull --ff-only
-zsh DEPLOY/openbsd/sh/vps_ci.sh <app>          # one app, mutex-gated
-SKIP_MASTER_SCAN=1 zsh DEPLOY/openbsd/sh/vps_on_vm_install.sh   # full stack
-doas rcctl restart relayd              # after route/table changes
+cd DEPLOY/rails && doas zsh DEPLOY.sh          # brgen (default)
+doas zsh DEPLOY.sh amber                     # or: all
 ruby34 DEPLOY/openbsd/health_check.rb --public --all-ready-apps
 ```
 
-Per-app script: `doas zsh DEPLOY/rails/<app>/<app>.sh`. New Propshaft assets need `rails assets:precompile` before restart.
+Per-app: `doas zsh DEPLOY/rails/<app>/<app>.sh`. New Propshaft assets need `rails assets:precompile` before restart.
 
 Ruby on VPS: `ruby34`, `bundle34`. Never parallel `bin/ci` across SSH sessions.
 

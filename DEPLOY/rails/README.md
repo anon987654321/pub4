@@ -11,7 +11,7 @@
 | bsdports | bsdports.org | 47312 | Ports search and advisories |
 | hjerterom | hjerterom.brgen.no | 38891 | Food rescue and volunteer ops |
 
-Deploy: `doas zsh DEPLOY/rails/<app>/<app>.sh`
+Deploy: `cd DEPLOY/rails && doas zsh DEPLOY.sh` (default: brgen) or `doas zsh DEPLOY.sh <app>`
 
 ## Contract
 
