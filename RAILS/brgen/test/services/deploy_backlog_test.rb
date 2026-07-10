@@ -10,8 +10,13 @@ class DeployBacklogTest < Minitest::Test
   ROOT = ENV.fetch('PUB4_RAILS_ROOT') do
     app = ENV.fetch('PUB4_CI_APP', 'brgen')
     candidates = [
-      "/home/#{app}/pub4-rails/RAILS",
+      # Canonical checkout first: per-app "pub4-rails" copies are leftovers from
+      # older deploy schemes and can go stale relative to the real monorepo
+      # without anything noticing (confirmed 2026-07-10: a stale
+      # /home/<app>/pub4-rails/RAILS caused every DeployBacklogTest assertion to
+      # silently check month-old file contents instead of failing loudly).
       '/home/dev/pub4/RAILS',
+      "/home/#{app}/pub4-rails/RAILS",
       File.expand_path('../../..', __dir__)
     ]
     candidates.find { |path| File.readable?(File.join(path, 'shared', 'app')) } ||
