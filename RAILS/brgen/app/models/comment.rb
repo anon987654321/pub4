@@ -31,13 +31,22 @@ class Comment < ApplicationRecord
   }
 
   def root?  = parent_id.nil?
-  def depth  = parent ? parent.depth + 1 : 0
+
+  def depth
+    d = 0
+    ancestor_id = parent_id
+    while ancestor_id
+      d += 1
+      ancestor_id = Comment.where(id: ancestor_id).pick(:parent_id)
+    end
+    d
+  end
 
   LONG_THREAD_THRESHOLD = 20
 
   def long_thread?
-    root_replies = replies.count
-    total = root_replies + replies.sum { |r| r.replies.count }
+    direct_reply_ids = Comment.where(parent_id: id).pluck(:id)
+    total = direct_reply_ids.size + Comment.where(parent_id: direct_reply_ids).count
     total > LONG_THREAD_THRESHOLD
   end
 
