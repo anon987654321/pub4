@@ -1,8 +1,8 @@
 @use "x_base" as x;
 
 :root {
-  @include x.x-dark-tokens;
-  color-scheme: dark;
+  @include x.x-light-tokens;
+  color-scheme: light;
   --color-black: var(--x-bg);
   --color-white: var(--x-text);
   --color-extra-light-grey: var(--x-border);
@@ -17,15 +17,4 @@
   --app-accent: #d97706;
   --color-badge: #f0c040;
   --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--x-surface-elevated));
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    @include x.x-light-tokens;
-    color-scheme: light;
-    --color-black: var(--x-bg);
-    --color-white: var(--x-text);
-    --color-extra-light-grey: var(--x-border);
-    --color-grey-text: var(--x-text-secondary);
-  }
 }
