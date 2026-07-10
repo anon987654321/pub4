@@ -499,6 +499,11 @@ deploy_tracked_app() {
   bundle_install_as_app "$APP_NAME" "$APP_DIR"
   log_ok "production bundle installed for ${app_name}"
   migrate_sqlite_db_to_storage_if_needed "$APP_NAME" "$APP_DIR"
+  # Stop the running app before touching its SQLite db: db:prepare/migrate hangs
+  # indefinitely waiting on the write lock a live Falcon worker already holds,
+  # which silently swallowed every deploy's runtime gate (precompile + bin/ci)
+  # behind it -- this app_name may not have a running service yet on first deploy.
+  doas rcctl stop "$app_name" 2>/dev/null || true
   db_create_migrate_as_app "$APP_NAME" "$APP_DIR" || exit 1
   log_ok "database migrated for ${app_name}"
   if [[ -f ${APP_DIR}/db/seeds.rb && ${SEED_ON_DEPLOY:-} == 1 ]]; then
