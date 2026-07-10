@@ -49,6 +49,7 @@ def apply_device!(process)
     train["optimizer"] = "adamw"
     # bf16 on MPS can yield NaN loss; fp16 is more stable on Apple Silicon.
     train["dtype"] = "fp16"
+    train["lr"] = 1.0e-5 unless ENV.key?("RAGNHILD_LR")
   end
 end
 
