@@ -32,7 +32,7 @@
     </section>
   <% end %>
 
-  <% comment.replies.best.each do |reply| %>
+  <% Comment.where(parent_id: comment.id).best.each do |reply| %>
     <%= render "comments/comment", comment: reply %>
   <% end %>
 </article>
