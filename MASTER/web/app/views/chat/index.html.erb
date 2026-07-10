@@ -96,15 +96,18 @@
   <div id="primer" role="button" aria-labelledby="primer-title" tabindex="0">
     <h1 id="primer-title">tap to start</h1>
   </div>
-  <%# Sync load: go() calls start2DFallback on tap; defer would miss an early tap on slow VPS. %>
-  <script src="<%= asset_path("face_2d_fallback.js") %>"></script>
-  <%# Boot + primer tap must run synchronously here — before defer scripts. Waiting for
-      DOMContentLoaded wedged the main thread on a 1-CPU VPS and made the overlay look dead. %>
+  <%# Boot + primer tap must run synchronously right after #primer — before ANY other
+      script (including face_2d_fallback). A blocking <script src> above this line delays
+      handler wiring; early taps look dead. #zsh and #ui-status are below this block —
+      resolve them lazily in go(), not at parse time. %>
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
-      var p=document.getElementById('primer'),z=document.getElementById('zsh'),ui=document.getElementById('ui-status'),title=document.getElementById('primer-title');
+      var p=document.getElementById('primer');
       var fired=false,timer=null,fallback=null,hintT=null,retryT=null,started=false;
+      function zshEl(){return document.getElementById('zsh');}
+      function uiEl(){return document.getElementById('ui-status');}
+      function titleEl(){return document.getElementById('primer-title');}
       function primeAudio(){
         try{
           var Ctx=window.AudioContext||window.webkitAudioContext;
@@ -121,6 +124,7 @@
         window.setTimeout(function(){p.remove();},220);
       }
       function revealPrompt(){
+        var z=zshEl(),ui=uiEl();
         if(z)z.classList.add('live');
         if(ui&&!ui.textContent)ui.textContent='starting';
       }
@@ -142,6 +146,7 @@
       function bootFailed(){clearWatch();fallbackUi();}
       function showProgress(pct){
         var n=Math.max(0,Math.min(100,Math.round(pct)));
+        var title=titleEl(),ui=uiEl();
         if(title)title.textContent='loading… '+n+'%';
         if(ui)ui.textContent='loading face '+n+'%';
       }
@@ -149,6 +154,7 @@
       function fallbackUi(){
         dismissPrimer();
         revealPrompt();
+        var ui=uiEl();
         if(ui)ui.textContent='face failed to load — reload';
         var errLive=document.getElementById('error-live');
         if(errLive)errLive.textContent='face failed to load — reload the page';
@@ -168,6 +174,7 @@
         }).catch(function(){
           window.__MASTER_FACE_IMPORT__=false;
           if(retried){bootFailed();return;}
+          var ui=uiEl();
           if(ui)ui.textContent='retrying…';
           retryT=setTimeout(function(){loadFace(true);},1200);
         });
@@ -185,7 +192,7 @@
         if(boot())return;
         showLoadState();
         var progPct=0;
-        hintT=setTimeout(function(){if(ui)ui.textContent='still loading the face…';},8000);
+        hintT=setTimeout(function(){var ui=uiEl();if(ui)ui.textContent='still loading the face…';},8000);
         timer=setInterval(function(){
           if(boot()){clearWatch();return;}
           if(progPct<90){
@@ -210,6 +217,7 @@
       });
     })();
   </script>
+  <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
   <main id="chat-shell" aria-label="MASTER chat">
     <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
   </main>

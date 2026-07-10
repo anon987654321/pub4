@@ -117,8 +117,9 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.match(index, /asset_path\("face\.css"\)/);
   assert.match(index, /asset_path\("face\.js"\)/);
   assert.match(index, /faceRuntime/);
-  assert.match(index, /asset_path\("face_2d_fallback\.js"\)/);
-  assert.doesNotMatch(index, /face_2d_fallback\.js.*defer/);
+  assert.match(index, /asset_path\("face_2d_fallback\.js"\).*defer/);
+  assert.match(index, /function zshEl/);
+  assert.doesNotMatch(index, /getElementById\('zsh'\),ui=document\.getElementById\('ui-status'\)/);
   assert.match(index, /asset_path\("particle_kernel\.js"\)/);
   // Deferred modules now come from one ordered javascript_include_tag manifest, not 9 literal tags.
   assert.match(index, /javascript_include_tag\(\*%w\[[^\]]*chat_actions[^\]]*\]/);
@@ -128,9 +129,11 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.doesNotMatch(index, /<link rel="prefetch"[^>]+asset_path\("three\.face\.module\.js"\)/);
   assert.doesNotMatch(index, /<link rel="prefetch"[^>]+asset_path\("face\.js"\)/);
   const particleIdx = index.indexOf('asset_path("particle_kernel.js")');
+  const fallbackIdx = index.indexOf('asset_path("face_2d_fallback.js")');
   const primerIdx = index.indexOf('id="primer"');
   const bootIdx = index.indexOf("function go()");
   assert.ok(primerIdx > 0 && bootIdx > primerIdx, "inline boot should follow primer markup");
+  assert.ok(fallbackIdx > bootIdx, "face_2d_fallback must not block inline boot before tap wiring");
   assert.ok(particleIdx > bootIdx, "defer scripts should load after synchronous primer boot");
 });
 
