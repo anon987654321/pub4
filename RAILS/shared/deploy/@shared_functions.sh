@@ -387,7 +387,9 @@ migrate_sqlite_db_to_storage_if_needed() {
     moved=1
     log_ok "moved db/${base} → storage/${base}"
   done
-  [[ $moved -eq 1 ]] && ${_PRIV} chown -R "${app_name}:${app_name}" "$storage_dir"
+  if [[ $moved -eq 1 ]]; then
+    ${_PRIV} chown -R "${app_name}:${app_name}" "$storage_dir"
+  fi
 }
 
 # seed_bergen_demo_as_app — credible brgen.no feed (no Faker flood)
