@@ -34,7 +34,7 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
     }
     assert_redirected_to creator_profile_path("showcase_creator")
 
-    profile.reload
+    profile = CreatorProfile.find_by!(user: user)
     assert profile.public?
 
     post creator_profile_wardrobe_items_path(handle: profile.handle), params: { item_id: item.id, caption: "Daily blazer" }

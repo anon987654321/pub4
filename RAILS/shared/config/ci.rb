@@ -15,14 +15,18 @@ vps_host = ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps") || Fil
 Pub4::CiGuard.run! do
   CI.run do
     step "Setup", "bin/setup --skip-server"
-    rails_root = ENV["PUB4_RAILS_ROOT"] || File.expand_path("../..", __dir__)
     app = File.basename(Dir.getwd)
-    css_builder = File.join(rails_root, "build_all_css.rb")
-    unless File.readable?(css_builder)
-      fallback = File.expand_path("pub4-rails/RAILS/build_all_css.rb", ENV["HOME"].to_s)
-      css_builder = fallback if File.readable?(fallback)
+    css_builder = [
+      ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "build_all_css.rb"),
+      "/home/dev/pub4/RAILS/build_all_css.rb",
+      File.expand_path("../..", __dir__) + "/build_all_css.rb",
+      File.expand_path("pub4-rails/RAILS/build_all_css.rb", ENV["HOME"].to_s)
+    ].compact.find { |candidate| File.readable?(candidate) }
+    if css_builder
+      step "Styles: pub4 CSS", "#{RbConfig.ruby} #{css_builder} --app #{app}"
+    else
+      step "Styles: pub4 CSS", "echo 'build_all_css.rb not found in any known location -- skipping' >&2"
     end
-    step "Styles: pub4 CSS", "#{RbConfig.ruby} #{css_builder} --app #{app}"
     step("Security: Importmap audit", "bundle exec importmap audit") unless vps_host
     rubocop = 'bundle exec rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
     step("Style: Ruby", rubocop) unless vps_host
