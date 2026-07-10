@@ -18,6 +18,8 @@ module Shared
     CLASS_SELECTOR_PATTERN = /(^|[\s,{>+~])\.([a-zA-Z0-9_-]+)/
     WILL_CHANGE_PATTERN = /will-change\s*:/
     BOX_SHADOW_HOVER_PATTERN = /:hover[^{]*\{[^}]*box-shadow\s*:|box-shadow\s*:[^;]+;[^}]*:hover/i
+    BOX_SHADOW_PATTERN = /box-shadow\s*:\s*(?!none\b)/i
+    BACKDROP_BLUR_PATTERN = /backdrop-filter\s*:\s*blur\(|filter\s*:[^;]*\bblur\(/i
     COLOR_INHERIT_PATTERN = /color:\s*inherit\b/
     BEM_IN_VIEW_PATTERN = /class=["'][^"']*__[^"']*["']/
     UTILITY_SOUP_PATTERN = /class=["'][^"']*(?:\b(?:mt|mb|ml|mr|px|py|col|row|d-flex)\b[^"']*){3,}/i
@@ -32,7 +34,7 @@ module Shared
       |actiontext\.css
       |frontend/layouts/visualizer
       |public/assets/layouts/visualizer
-      |public/assets/_(?:minimal|zen_shell)-[a-f0-9]+\.scss
+      |public/assets/.*-[a-f0-9]{6,}\.(?:css|scss|js)\z
       |minimal-ui\.css
     }ix
     MAILER_STYLE_PATH_PATTERN = %r{(?:layouts/(?:mailer|_mailer_styles)|_mailer/)}
@@ -115,6 +117,8 @@ module Shared
       add(:warning, path, :selector_specificity, "Selector exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes]} class selectors; flatten the selector chain") if selector_depths(body).any? { |depth| depth > Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes] }
       add(:warning, path, :will_change, "will-change detected; restrict it to active animations or component connect/disconnect hooks") if body.match?(WILL_CHANGE_PATTERN)
       add(:warning, path, :paint_cost, "box-shadow hover detected; prefer background-color, opacity, or transform for hover states") if body.match?(BOX_SHADOW_HOVER_PATTERN)
+      add(:warning, path, :flat_design, "box-shadow detected; this repo's design system is flat -- use a 1px border for separation instead") if body.match?(BOX_SHADOW_PATTERN)
+      add(:warning, path, :flat_design, "backdrop-filter/filter blur() detected; this repo's design system is flat -- use a solid background instead") if body.match?(BACKDROP_BLUR_PATTERN)
       add(:info, path, :color_inherit, "color: inherit detected; good for preventing default link colors") if body.match?(COLOR_INHERIT_PATTERN)
       body.scan(/font-size:\s*(\d+(?:\.\d+)?)px/i).flatten.each do |size|
         add(:warning, path, :small_font, "Font size #{size}px is below 16px") if size.to_f < Shared::FrontendRuleSet::TYPOGRAPHY[:body_font_px][:min]

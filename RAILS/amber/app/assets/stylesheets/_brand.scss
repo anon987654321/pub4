@@ -63,7 +63,7 @@
   text-align: center;
 }
 
-.amber-guest-hero__logo {
+.amber-guest-hero .logo {
   width: min(92vw, 42rem);
   line-height: 0;
 
@@ -74,7 +74,7 @@
   }
 }
 
-.amber-guest-hero__title {
+.amber-guest-hero .title {
   max-width: 28rem;
   font-family: var(--ny-serif, "Libre Baskerville", Georgia, serif);
   font-size: clamp(1.35rem, 3vw, 2rem);
@@ -82,13 +82,13 @@
   margin: 0;
 }
 
-.amber-guest-hero__body {
+.amber-guest-hero .body {
   max-width: 32rem;
   color: var(--color-grey-text);
   margin: 0;
 }
 
-.amber-guest-hero__actions {
+.amber-guest-hero .actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-sm);
