@@ -13,7 +13,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "window.__MASTER_FACE_IMPORT__"
     assert_includes response.body, "window._primerFired"
     assert_includes response.body, "error-live"
-    assert_includes response.body, "face.js"
+    assert_match(%r{/assets/face-[0-9a-f]+\.js}, response.body)
     assert_match(%r{face_state-[0-9a-f]+\.js}, response.body)
     assert_match(%r{visual_bridge-[0-9a-f]+\.js}, response.body)
     assert_match(%r{chat_actions-[0-9a-f]+\.js}, response.body)
@@ -21,9 +21,12 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "15000"
     assert_match(/function go\(\)\{[\s\S]*?revealPrompt/, response.body)
     assert_match(/function go\(\)\{[\s\S]*?dismissPrimer/, response.body)
-    # TTS controls run on sensible defaults — no visible box (removed 2026-07-09).
+    # TTS/voice settings UI removed — persona defaults only (c3a186a3f, reinforced 2026-07-10).
     refute_includes response.body, "voice-picker"
     refute_includes response.body, "tts-style-chips"
+    refute_includes response.body, "tts-style-indicator"
+    refute_includes response.body, 'id="tts-rate"'
+    refute_includes response.body, "face-controls"
     assert_includes response.body, "spin-btn"
   end
 
