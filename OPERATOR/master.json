@@ -1,8 +1,0 @@
-{
-  "apps": [
-    { "name": "amber",     "domain": "amber.brgen.no", "port": 61352 },
-    { "name": "brgen",     "domain": "brgen.no",       "port": 38182 },
-    { "name": "bsdports",  "domain": "bsdports.org",   "port": 47312 },
-    { "name": "hjerterom", "domain": "hjerterom.brgen.no", "port": 38891 }
-  ]
-}
