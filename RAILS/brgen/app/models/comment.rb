@@ -15,14 +15,19 @@ class Comment < ApplicationRecord
 
   after_create_commit -> { broadcast_append_to [ commentable, "comments" ], partial: "comments/comment", locals: { comment: self } }
 
-  scope :best,          -> { left_joins(:votes).group(:id).order("SUM(COALESCE(votes.value, 0)) DESC") }
+  BEST_SQL = Arel.sql("SUM(COALESCE(votes.value, 0)) DESC")
+  CONTROVERSIAL_SQL = Arel.sql("ABS(SUM(votes.value)) ASC")
+  HAS_UPVOTE_SQL = Arel.sql("COUNT(CASE WHEN votes.value =  1 THEN 1 END) > 0")
+  HAS_DOWNVOTE_SQL = Arel.sql("COUNT(CASE WHEN votes.value = -1 THEN 1 END) > 0")
+
+  scope :best,          -> { left_joins(:votes).group(:id).order(BEST_SQL) }
   scope :top,           -> { best }
   scope :new_first,     -> { order(created_at: :desc) }
   scope :controversial, -> {
     left_joins(:votes).group(:id)
-      .having("COUNT(CASE WHEN votes.value =  1 THEN 1 END) > 0")
-      .having("COUNT(CASE WHEN votes.value = -1 THEN 1 END) > 0")
-      .order("ABS(SUM(votes.value)) ASC")
+      .having(HAS_UPVOTE_SQL)
+      .having(HAS_DOWNVOTE_SQL)
+      .order(CONTROVERSIAL_SQL)
   }
 
   def root?  = parent_id.nil?

@@ -6,8 +6,8 @@
 
 require "open3"
 
-REPO_DOAS = "/home/dev/pub4/DEPLOY/openbsd/etc/doas.conf"
-VALIDATE_DOAS = "/home/dev/pub4/DEPLOY/openbsd/sh/validate_doas.ksh"
+REPO_DOAS = "/home/dev/pub4/OPENBSD/etc/doas.conf"
+VALIDATE_DOAS = "/home/dev/pub4/OPENBSD/sh/validate_doas.ksh"
 
 def heal_doas_conf!
   return unless Process.uid.zero?

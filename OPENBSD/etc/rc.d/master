@@ -4,7 +4,7 @@ PORT=53187
 CACHE_VERSION="${CACHE_VERSION:-$(cd /home/dev/pub4 2>/dev/null && git rev-parse --short HEAD 2>/dev/null)}"
 CACHE_VERSION="${CACHE_VERSION:-v2}"
 daemon="/bin/ksh"
-daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && export PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} MASTER_TTS_TIMEOUT=45 MASTER_TTS_POOL_SIZE=1 MASTER_SAFE_MODE=1 MASTER_SKIP_SELF_TEST=1 MASTER_BACKGROUND=0 MASTER_AUTOFIX=0 MASTER_WATCH=0 MASTER_WATCHER=0 MASTER_HEARTBEAT=0 SECRET_KEY_BASE_DUMMY=1 DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY OPENROUTER_API_KEY=$OPENROUTER_API_KEY REPLICATE_API_KEY=$REPLICATE_API_KEY WEAVIATE_API_KEY=$WEAVIATE_API_KEY GEMINI_API_KEY=$GEMINI_API_KEY && exec /usr/local/bin/bundle34 exec falcon serve -n 2 --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && export PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} MASTER_TTS_TIMEOUT=45 MASTER_TTS_POOL_SIZE=1 MASTER_SAFE_MODE=1 MASTER_SKIP_SELF_TEST=1 MASTER_BACKGROUND=0 MASTER_AUTOFIX=0 MASTER_WATCH=0 MASTER_WATCHER=0 MASTER_HEARTBEAT=0 SECRET_KEY_BASE_DUMMY=1 DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY OPENROUTER_API_KEY=$OPENROUTER_API_KEY REPLICATE_API_KEY=$REPLICATE_API_KEY WEAVIATE_API_KEY=$WEAVIATE_API_KEY GEMINI_API_KEY=$GEMINI_API_KEY && exec /usr/local/bin/bundle34 exec falcon serve -n 1 --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_logger="daemon.notice"
@@ -27,6 +27,9 @@ rc_pre() {
 	rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
 	# Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
 	rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
+	# Deploy-in-progress lock: other tooling (or a future agent) can check this file
+	# before assuming the asset tree is in a stable, servable state.
+	touch /home/dev/pub4/.deploying 2>/dev/null || true
 	_face_ok=1
 	for _f in /home/dev/pub4/MASTER/web/public/face.js /home/dev/pub4/MASTER/web/public/face.modules.bundle.js /home/dev/pub4/MASTER/web/public/face_vision.bundle.js; do
 		[ -f "$_f" ] || _face_ok=0
@@ -52,6 +55,28 @@ rc_pre() {
 		mkdir -p /home/dev/pub4/MASTER/web/tmp
 		echo "$_digest" > "$_stamp"
 	fi
+	# Load-bearing asset gate: refuse to start serving a broken face.js/manifest
+	# mismatch (the exact class of bug that wedged the primer boot on 2026-07-10).
+	# One self-heal precompile retry before actually blocking the start.
+	_gate=/home/dev/pub4/RAILS/master_web_assets_gate.rb
+	if [ -f "$_gate" ]; then
+		_gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" 2>&1)
+		_gate_rc=$?
+		if [ "$_gate_rc" != "0" ]; then
+			logger -t master "assets gate failed, forcing fresh precompile and retrying once: $_gate_out"
+			(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
+			echo "$_digest" > "$_stamp"
+			_gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" 2>&1)
+			_gate_rc=$?
+			if [ "$_gate_rc" != "0" ]; then
+				logger -t master "CRITICAL: assets gate still failing after retry, refusing to start with broken assets: $_gate_out"
+				rm -f /home/dev/pub4/.deploying 2>/dev/null || true
+				exit 1
+			fi
+			logger -t master "assets gate passed after retry precompile"
+		fi
+	fi
+	rm -f /home/dev/pub4/.deploying 2>/dev/null || true
 	sleep 1
 }
 

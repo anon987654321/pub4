@@ -8,7 +8,7 @@ export DEEPSEEK_API_KEY=__REDACTED__
 export PATH="/home/dev/.local/share/gem/ruby/3.4/bin:$PATH"
 
 # Modern dev terminal (Nerd Fonts, Starship, Neovim, good aliases)
-# Installed via DEPLOY/openbsd pkg_add + this tracked .zshrc
+# Installed via OPENBSD pkg_add + this tracked .zshrc
 if command -v starship >/dev/null 2>&1; then
   eval "$(starship init zsh)"
 fi

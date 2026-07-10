@@ -1,0 +1,14 @@
+User-agent: *
+Disallow: /items
+Disallow: /outfits
+Disallow: /planned_outfits
+Disallow: /wardrobe_items
+Disallow: /connections
+Disallow: /live_streams
+Disallow: /messages
+Disallow: /users/
+Disallow: /my_creator_profile
+Disallow: /declutter
+Disallow: /ai/
+
+Sitemap: https://amber.brgen.no/sitemap.xml

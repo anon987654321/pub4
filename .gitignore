@@ -54,8 +54,8 @@ MASTER/.constitutional_locks/
 
 # Repo-relative temp dir
 tmp/
-DEPLOY/rails/*/vendor/bundle/
-DEPLOY/rails/*/vendor/
+RAILS/*/vendor/bundle/
+RAILS/*/vendor/
 *.so
 
 # Generated MASTER snapshots / runtime
@@ -65,16 +65,18 @@ MASTER/snapshot.md
 .master/
 MASTER/output/
 
-# DEPLOY build artifacts and local audio scratch
-DEPLOY/tools/dilla/analysis/
-DEPLOY/tools/dilla/.dilla_*.wav
-DEPLOY/tools/dilla/.live_tmp.wav
-DEPLOY/tools/dilla/dilla_beat_live*.mp3
-DEPLOY/rails/*/app/assets/builds/*.css.map
+# MASTER/tools/dilla build artifacts and local audio scratch
+# (was DEPLOY/tools/dilla/ before the 2026-07 DEPLOY->OPERATOR/RAILS/OPENBSD
+# split — dilla itself lives under MASTER/tools/, never moved to OPERATOR)
+MASTER/tools/dilla/analysis/
+MASTER/tools/dilla/.dilla_*.wav
+MASTER/tools/dilla/.live_tmp.wav
+MASTER/tools/dilla/dilla_beat_live*.mp3
+RAILS/*/app/assets/builds/*.css.map
 
-# DEPLOY/tools/dilla generated + scratch audio — large, regenerable. Never track.
+# MASTER/tools/dilla generated + scratch audio — large, regenerable. Never track.
 # KEPT on purpose (inputs the generator reads, do NOT ignore):
-#   - DEPLOY/tools/dilla/vocals_*.wav  (source vocal takes — VOCALS{} in dilla.rb)
-#   - DEPLOY/tools/dilla/samples/      (drum kits read at runtime)
-DEPLOY/tools/dilla/renders/
-DEPLOY/tools/dilla/.harmony_*.wav
+#   - MASTER/tools/dilla/vocals_*.wav  (source vocal takes — VOCALS{} in dilla.rb)
+#   - MASTER/tools/dilla/samples/      (drum kits read at runtime)
+MASTER/tools/dilla/renders/
+MASTER/tools/dilla/.harmony_*.wav

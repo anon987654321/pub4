@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /beneficiaries
+Disallow: /donations
+Disallow: /boxes
+Disallow: /volunteers
+Disallow: /shifts
+Disallow: /users/
+Disallow: /operator
+
+Sitemap: https://hjerterom.brgen.no/sitemap.xml

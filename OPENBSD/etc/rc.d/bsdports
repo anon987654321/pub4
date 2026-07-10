@@ -1,12 +1,13 @@
 #!/bin/ksh
 PORT=47312
 APP_DIR=/home/bsdports/app
+[ -r /etc/rails/common.env ] && . /etc/rails/common.env
 [ -r /etc/bsdports.env ] && . /etc/bsdports.env
 [ -f /etc/rails/bsdports.env ] && . /etc/rails/bsdports.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/bsdports.env}"
 daemon="/bin/ksh"
 # SOLID_QUEUE_IN_PUMA is Solid Queue's env name — supervisor runs inside Falcon, not Puma.
-daemon_flags="-c 'cd ${APP_DIR} && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/bsdports && exec /usr/local/bin/bundle34 exec falcon serve --bind http://127.0.0.1:${PORT}'"
+daemon_flags="-c 'cd ${APP_DIR} && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/bsdports && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --bind http://127.0.0.1:${PORT}'"
 daemon_user="bsdports"
 daemon_execdir="/home/bsdports/app"
 daemon_logger="daemon.notice"
@@ -17,9 +18,31 @@ rc_bg=YES
 rc_reload=NO
 
 rc_pre() {
+  touch /home/dev/pub4/.deploying-bsdports 2>/dev/null || true
   pkill -f "falcon.*${PORT}" 2>/dev/null || true
   pkill -f "ruby34.*${PORT}" 2>/dev/null || true
   sleep 1
+  rm -f /home/dev/pub4/.deploying-bsdports 2>/dev/null || true
 }
 
 rc_cmd $1
+rc=$?
+if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
+  if [ "$rc" = "0" ]; then
+    # relayd can keep routing to the old (now-dead) backend connection after a
+    # restart until it's kicked — same fix already used by MASTER's rc.d script.
+    _i=0
+    _up_ok=0
+    while [ "$_i" -lt 30 ]; do
+      curl -fsS "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && { _up_ok=1; break; }
+      sleep 1
+      _i=$((_i + 1))
+    done
+    if [ "$_up_ok" = "1" ]; then
+      rcctl restart relayd 2>/dev/null || true
+    else
+      logger -t bsdports "relayd skipped: /up not ready after restart"
+    fi
+  fi
+fi
+exit $rc

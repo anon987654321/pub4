@@ -8,8 +8,17 @@ set -e
 ALL_APPS_FLAG=/var/db/pub4_all_apps
 CORE="master brgen"
 OPTIONAL="amber bsdports hjerterom litestream"
-LOAD_WARN=0.85
-LOAD_CRIT=1.20
+# vm23 is 1 vCPU (hw.ncpu=1) — load=1.0 just means the single core is fully
+# busy, which is routine, not an emergency. The previous 0.85/1.20 thresholds
+# were never actually reachable in testing because of the pages-free/pages-freed
+# awk bug below (fixed 2026-07-10) that silently killed this script on every
+# run since it was written — so they were never validated against real load.
+# First real run under the fix shed all three OPTIONAL apps within a minute of
+# a batch of simultaneous restarts (load spiked to ~6.9 from restart warm-up
+# alone, not sustained pressure). Retuned against tonight's observed baselines:
+# calm ~0.5-1.4, restart-storm transient ~3-7, genuine OOM crisis ~4.6 sustained.
+LOAD_WARN=2.5
+LOAD_CRIT=5.0
 MEM_WARN=12
 MEM_CRIT=6
 
@@ -19,7 +28,11 @@ load=${load:-9.9}
 mem_free_pct=100
 if vmstat -s >/dev/null 2>&1; then
   pages=$(vmstat -s | awk '/pages managed/{print $1}')
-  free=$(vmstat -s | awk '/pages free/{print $1}')
+  # Anchored: "pages free" is a substring of "pages freed by pagedaemon" — an
+  # unanchored match pulls both lines into $free and breaks the arithmetic
+  # below with a ksh parse error, silently killing this script on every run
+  # (confirmed: resource-guard never once logged in this box's history).
+  free=$(vmstat -s | awk '/pages free$/{print $1}')
   if [[ -n $pages && -n $free && $pages -gt 0 ]]; then
     mem_free_pct=$(( free * 100 / pages ))
   fi
