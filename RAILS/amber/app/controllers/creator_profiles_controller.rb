@@ -16,7 +16,7 @@ class CreatorProfilesController < ApplicationController
   end
 
   def new
-    redirect_to(edit_my_creator_profile_path) if Current.user.creator_profile
+    redirect_to(edit_my_creator_profile_path) if CreatorProfile.exists?(user: Current.user)
     @profile = Current.user.build_creator_profile(
       display_name: Current.user.profile&.display_name.presence || Current.user.email_address.split("@").first,
       handle: default_handle
@@ -47,7 +47,7 @@ class CreatorProfilesController < ApplicationController
   private
 
   def set_own_profile
-    @profile = Current.user.creator_profile || redirect_to(new_my_creator_profile_path)
+    @profile = CreatorProfile.find_by(user: Current.user) || redirect_to(new_my_creator_profile_path)
   end
 
   def set_public_profile

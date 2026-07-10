@@ -25,6 +25,6 @@ class CreatorWardrobeItemsController < ApplicationController
   private
 
   def set_profile
-    @profile = Current.user.creator_profile || redirect_to(new_my_creator_profile_path)
+    @profile = CreatorProfile.find_by(user: Current.user) || redirect_to(new_my_creator_profile_path)
   end
 end

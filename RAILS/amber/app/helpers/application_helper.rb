@@ -37,7 +37,7 @@ module ApplicationHelper
   def current_creator_profile
     return unless Current.user
 
-    User.strict_loading(false) { Current.user.creator_profile }
+    CreatorProfile.find_by(user: Current.user)
   end
 
   def responsive_image_url(attachment, widths: [ 400, 800, 1_200 ])

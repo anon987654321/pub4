@@ -47,7 +47,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
   private
 
   def set_playlist
-    @playlist = Playlist::Playlist.find(params[:id])
+    @playlist = Playlist::Playlist.includes(:user).find(params[:id])
   end
 
   def playlist_params

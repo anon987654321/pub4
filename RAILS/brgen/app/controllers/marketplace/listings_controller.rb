@@ -84,7 +84,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   private
 
-  def set_listing = (@listing = Marketplace::Listing.find(params[:id]))
+  def set_listing = (@listing = Marketplace::Listing.includes(:user, :category, photos_attachments: :blob).find(params[:id]))
 
   def listing_params
     params.require(:marketplace_listing).permit(
