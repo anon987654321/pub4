@@ -1,7 +1,0 @@
-# MASTER web
-
-The web tier is Rails 8 on Falcon, bound to loopback port 53187 and published at https://ai.brgen.no through relayd. The chat surface at GET / combines the assistant stream and the face runtime. Health is at GET /up. SSE endpoints include GET /chat/message for the assistant stream, GET /chat/metrics for session metrics, and GET /events/stream for the event bus.
-
-The single HTML entrypoint is app/views/chat/index.html.erb via ChatController#index. Runtime assets live under public/: face.js for the THREE.js wireframe mesh, cognition_ecology.js for the ecology particle layer above the face canvas, particle_kernel.js for the typed cell pool, and topology_registry.js for topology dispatch. Topology configuration is in MASTER/data/topologies.yml, not a path relative to the web app root. Tap #primer to start audio and WebGL; ecology particles should render over the face in a fresh private window when the origin is healthy.
-
-After deploying web changes on the VPS, restart with doas rcctl restart master and confirm with curl against http://127.0.0.1:53187/up. Authentication accepts Bearer tokens, X-Token, or a master_session cookie; visitors receive chat only without full tool access.
