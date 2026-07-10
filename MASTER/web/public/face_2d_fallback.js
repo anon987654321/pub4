@@ -99,3 +99,6 @@ function start2DFallback() {
 
 window.start2DFallback = start2DFallback;
 window.stop2DFallback = stop2DFallback;
+
+if (window._primerFired) start2DFallback();
+else window.addEventListener("primer:ready", start2DFallback, { once: true });
