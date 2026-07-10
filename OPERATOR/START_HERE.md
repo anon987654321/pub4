@@ -5,12 +5,11 @@ OPERATOR is the production surface for pub4: OpenBSD vm23, relayd, NSD/acme, Rai
 ## Read First
 
 1. `README.md` for the short layout.
-2. `OPERATOR.md` + `OPERATOR_CONTRACT.md` for safe deployment behavior.
-3. `DEPLOYMENT_MAP.md` for how OpenBSD, relayd, Rails, and MASTER fit together.
-4. `VPS_SAFETY.md` before any SSH, `doas`, rc.d, pf, relayd, or full-stack deploy.
-5. `MASTER/START_HERE.md` for MASTER agent rules and the **data file budget** (why ~80 YAML files exist and what merges next).
-6. `REPAIR_PLAYBOOKS.md` when a gate fails.
-7. `EXAMPLES.md` for good/bad deploy patch shapes.
+2. `OPERATOR.md` for everything else: deployment map, agent contract, live-operation safety
+   (read before any SSH, `doas`, rc.d, pf, relayd, or full-stack deploy), deploy commands, gates.
+3. `MASTER/START_HERE.md` for MASTER agent rules and the **data file budget** (why ~80 YAML files exist and what merges next).
+4. `REPAIR_PLAYBOOKS.md` when a gate fails.
+5. `EXAMPLES.md` for good/bad deploy patch shapes.
 
 ## Golden Commands
 

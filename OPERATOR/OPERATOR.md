@@ -1,12 +1,39 @@
 # Operator
 
-Production runbook for pub4. Read `START_HERE.md`, `OPERATOR_CONTRACT.md`, and `VPS_SAFETY.md`
-before live work. Read `MASTER/START_HERE.md` for the agent runtime; this file covers the VPS and
-deploy surface.
+Production runbook for pub4. Read `START_HERE.md` and this file before live work. Read
+`MASTER/START_HERE.md` for the agent runtime; this file covers the VPS and deploy surface,
+the agent contract, and live-operation safety in one place.
 
 ## Repo layout
 
-Only `MASTER/` and `OPERATOR/` at the repo root, plus dotfolders. Canonical inventories: `RAILS/apps.yml`, `OPERATOR/master.json`.
+`MASTER/`, `RAILS/`, `OPERATOR/`, `OPENBSD/` at the repo root, plus dotfolders. Canonical
+inventories: `RAILS/apps.yml`, `OPERATOR/master.json`. Deploy gates (`integrity_gate.rb`,
+`verify_deploy_identity.rb`, `master.json`) and recovery pens (`archive/`, `quarantine/`) live
+at `OPERATOR/` top level.
+
+## Deployment map
+
+```text
+Internet
+  -> pf
+  -> relayd TLS/SNI
+  -> loopback app ports
+      -> MASTER Falcon on ai.brgen.no
+      -> brgen Rails app and vertical subdomains
+      -> amber Rails app
+      -> hjerterom Rails app
+      -> bsdports Rails app
+  -> NSD/acme/httpd for DNS and certificate plumbing
+```
+
+Runtime contract: TLS terminates at relayd; apps listen on loopback-only ports; Rails uses
+SQLite plus Solid Queue/Cache; secrets live in `/etc/*.env`; source of truth on the VPS is
+`/home/dev/pub4`; long deploys run under tmux.
+
+Gate flow — local: `OPERATOR/bin/check` → `verify_deploy_identity` → Rails production/domain/
+phantom/frontend gates → OpenBSD deploy smoke. Operator: `git pull --ff-only` on vm23 →
+`vps_ci.sh <app>` → `OPERATOR.sh` or per-app deploy → `rcctl restart` affected services →
+`health_check --public --all-ready-apps`.
 
 ## SSH
 
@@ -47,6 +74,74 @@ from `OPERATOR.sh`.
 
 TLS terminates at relayd. Rails sets `config.assume_ssl = true`; do not enable `force_ssl`.
 
+## Agent contract
+
+Modes: local contributor (edit repo files, run local gates, do not SSH), VPS operator (one SSH
+session, one CI/deploy operation at a time, tmux for long work), recovery (human-directed
+console or resource guard only to restore access or health, then document the fix).
+
+**Hard stops — AI agents must not autonomously:**
+
+| Action | Why |
+|--------|-----|
+| `vmctl console/stop/start/reboot` on server4 | Serial console sessions have caused VM reboots and site outages |
+| `pkill`/`kill` of `cu`, `vmctl`, or other VMM console sessions on server4 | Disrupts other operators and can wedge vm23 |
+| `vps_console*.exp` / `vps_drop_install.exp` without human approval | Gated by `I_UNDERSTAND_CONSOLE_RISK=1`; recovery-only |
+| Deploy, install, or `pkill` deploy workers from the serial console | Bypasses SSH safety, tmux, and load gates |
+| Target vm27 or any non-vm23 VM | Wrong tenant; production is vm23 (`dev`) |
+| `OPERATOR.sh --stage-1` without `I_UNDERSTAND_DNS_WIPE=1` | Destructive DNS wipe |
+| Parallel SSH deploys, parallel `bin/ci`, or broad `rcctl restart` without a named target | 1 GiB VPS; contention causes outages |
+
+When SSH to vm23 is required, use normal paths: `doas zsh OPERATOR.sh`, `vps-deploy`, `vps_ci.sh`.
+
+**Rules:**
+
+- Run `bin/pub4 status` before starting work; use `RECIPES.md` for copy-paste paths.
+- Treat `RAILS/apps.yml` and `master.json` as inventories, not suggestions.
+- Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
+- Use `ruby34` and `bundle34` on OpenBSD; `zsh OPENBSD/sh/vps_ci.sh <app>` for per-app CI.
+- Keep secrets in `/etc/*.env`; never commit them.
+- Keep Rails `config.assume_ssl = true`; do not enable `force_ssl` behind relayd.
+- Prefer local gates first (`OPERATOR/bin/check`) before any SSH.
+
+**Agent dmesg (verbose file operations):** external agents (Grok CLI, Claude Code, Cursor) and
+MASTER should log mutations in OpenBSD dmesg style — terse, lowercase, one fact per line,
+path-first, e.g.:
+
+```
+write OPENBSD/etc/rc.d/brgen 412B +12/-3
+read MASTER/lib/reach/base.rb sha256=a1b2c3… 2048B
+run zsh OPERATOR/bin/check-openbsd exit=0
+```
+
+Name the path on every read/write/delete; show evidence on writes (diff stat or byte size); show
+command + exit code for shell, not "deployed successfully." Silence on success is fine for bulk
+gates; speak up for each mutated file. MASTER: `/dmesg` or `toggle dmesg` streams bus events.
+
+**Reporting** — good deploy closeout: exact host/environment, commands run, gates passed/skipped/
+failed, services restarted, remaining manual verification. Bad: "deployed" without host/command,
+public health not checked, asset precompile skipped after web changes, route/cert changes
+without relayd/acme/NSD context.
+
+## Console automation gate
+
+Recovery-only expect scripts refuse to run unless a human operator exports
+`I_UNDERSTAND_CONSOLE_RISK=1` (same pattern as `I_UNDERSTAND_DNS_WIPE=1` for `OPERATOR.sh
+--stage-1`).
+
+## doas.conf
+
+OpenBSD rejects `/etc/doas.conf` without a trailing newline — `doas` breaks for everyone.
+`OPERATOR.sh` fixes the repo copy before install, validates `su dev -c 'doas id'`, and rolls
+back on failure. Cron heal paths use `OPENBSD/sh/validate_doas.ksh` with the same validation.
+
+## Backups (Litestream)
+
+`etc/litestream.yml` replicates each app's SQLite to `file:///var/backups/litestream/` on the
+same VPS disk. That protects against app-level corruption, not disk loss or provider failure.
+Accepted RPO for full-disk loss: last manual off-host backup or git pull + redeploy. Add an
+off-host Litestream replica (sftp/s3) before treating backups as disaster-recovery grade.
+
 ## OpenBSD deploy
 
 Always use tmux.
@@ -85,7 +180,7 @@ MASTER_CRAWL_BROWSER=1 ruby RAILS/crawl_browser.rb   # Ferrum element crawl (VPS
 cd MASTER && bundle exec ruby bin/probe integrity deploy crawl crawl-browser
 ```
 
-`bin/probe deploy` and `bin/probe integrity` alias the integrity gate. On macOS, `crawl-browser` skips unless `MASTER_CRAWL_BROWSER=1` or `PROBE_FORCE_BROWSER=1`. Matrix and blockers: `RAILS/PRODUCTION_READINESS.md`.
+`bin/probe deploy` and `bin/probe integrity` alias the integrity gate. On macOS, `crawl-browser` skips unless `MASTER_CRAWL_BROWSER=1` or `PROBE_FORCE_BROWSER=1`. Matrix and blockers: `RAILS/README.md` ("Production readiness" section).
 
 ## Secrets
 
@@ -93,6 +188,15 @@ cd MASTER && bundle exec ruby bin/probe integrity deploy crawl crawl-browser
 
 ## Recovery
 
-Load shedding: `doas ksh OPENBSD/resource_guard.sh`. Full stack: `doas ksh OPENBSD/start_all_apps.sh`. Core health: `doas rcctl check master brgen`.
+Load shedding: `doas ksh OPENBSD/resource_guard.sh`. Full stack: `doas ksh OPENBSD/start_all_apps.sh`. Core health: `doas rcctl check master brgen relayd pf`.
+
+SSH lockout only: `ssh server4`, then `vmctl console vm23` (manual — not agent-automated). pf
+lockout from console: `doas pfctl -t bruteforce -T flush`.
 
 Any file changed on the VPS under `OPENBSD/` must be copied back to git and committed.
+
+## Post-change
+
+- Run `ruby34 OPENBSD/health_check.rb --public --all-ready-apps`.
+- Copy any live `/etc` changes back into `OPENBSD/etc/`.
+- Record persistent lessons in `BACKLOG.yml`, `OPERATOR/DEBT.md`, or `OPERATOR/DECISIONS.md`.

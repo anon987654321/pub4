@@ -58,10 +58,10 @@ High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `data/rules/*.yml`, `li
 7. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets.
 8. After `git pull` on vm23, run `vps-deploy` before expecting live health.
 9. Feature truth: `RAILS/apps.yml`; debt: `OPERATOR/data/debt.yml`.
-10. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 — see `OPERATOR/VPS_SAFETY.md`.
+10. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 — see `OPERATOR/OPERATOR.md`.
 11. Production VM is vm23 only (`dev@brgen.no`).
 12. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only gates.
-13. Dmesg every file op — see `OPERATOR/OPERATOR_CONTRACT.md`.
+13. Dmesg every file op — see `OPERATOR/OPERATOR.md`.
 
 ## Data File Budget (why so many YAML files)
 
@@ -124,4 +124,5 @@ Far-away visual tree with noise pruned and alignment notes. Do this before mergi
 - Check `PATH_OWNERSHIP.yml` for risk.
 - Prefer small patches; run the smallest check that proves the work.
 - Update `DECISIONS.md` or `DEBT.md` when settling ambiguity.
-- Face boot: read `web/BOOT_CONTRACT.md` first.
+- Face boot: read `web/CLAUDE.md` first.
+- RAILS app CSS/visual work: read `RAILS/shared/WIRING_NOTES.md`'s "Visual design system" section first — x.com is the base reference, tokens live in `RAILS/shared/app/assets/stylesheets/_x_base.scss`, and the flat-only (no shadow/blur/glow) rule applies repo-wide.

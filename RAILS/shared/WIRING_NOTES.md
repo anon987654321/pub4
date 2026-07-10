@@ -79,6 +79,22 @@ bin/rails test
 
 Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/shared_social_routes_test.rb`, `ruby RAILS/frontend_production_gate.rb`.
 
+## Visual design system (2026-07-10)
+
+**Reference:** x.com's real, current design language is the base for every app's chrome — not a vague "social app" look, the actual measured values. Source of truth is code, not this doc: `shared/app/assets/stylesheets/_x_base.scss` (two mixins, `x-dark-tokens`/`x-light-tokens`) and `shared/design_tokens.yml`. All five apps (amber, brgen, hjerterom, mytoonz, bsdports) inherit these via `pub4_stack` → `_tokens.scss` → `_x_base.scss`, so a change to `_x_base.scss` propagates everywhere.
+
+Real X reference values baked into the tokens (verify against current x.com before changing, don't guess):
+- Accent `#1d9bf0`, danger `#f4212e`, success `#00ba7c`, warning `#ffd400`
+- Dark: bg/surface `#000000`, elevated surface `#16181c`, text `#e7e9ea`, secondary text `#71767b`, border `#2f3336`
+- Light: bg/surface `#ffffff`, elevated surface `#f7f9f9`, text `#0f1419`, secondary text `#536471`, border `#eff3f4`
+- Layout: 275px sidebar / 600px feed / 350px widgets / 1265px max — X's real three-column widths
+- Radius: 16px cards, full pill on buttons/chips/avatars, 4-12px on smaller controls
+- Type: `--x-font` is X's real UI stack (`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`) — Chirp itself is proprietary and can't be redistributed, so this is the same fallback X itself serves when Chirp isn't loaded. `--x-font-mono` (JetBrains Mono stack) is reserved for code/data/terminal-flavored surfaces (bsdports' ports listings) — never the default body font.
+
+**Flat rule, no exceptions:** no `box-shadow`, `text-shadow`, `backdrop-filter`, or `filter: blur()/drop-shadow()` anywhere in app CSS. Real X has none of these in its own chrome — elevation and separation come from a 1px hairline border (`var(--x-border)`/`var(--border)`) or a solid (non-translucent) background, never a shadow or a glassmorphism blur. If you're tempted to add elevation, add a border instead.
+
+**Process:** phase 1 (current) is exact parity with x.com's real values on the shared token layer. Deliberate, branded divergence from that baseline is phase 2 and hasn't started yet — don't invent a "unique" color/spacing choice on the shared layer without that being an explicit, separate decision.
+
 ## Engine extraction (done)
 
 `install_frontend_baseline.sh` is deprecated. Prune per-app duplicates of shared controllers/partials when found.

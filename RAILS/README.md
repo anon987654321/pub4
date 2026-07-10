@@ -52,3 +52,70 @@ bundle34 exec bin/ci            # direct (auto-guarded on VPS via Pub4::CiGuard)
 ## PWA
 
 Workbox workers via `/service-worker`. Rebuild: `npm ci && npm run build:pwa` from this directory. Source: `shared/pwa/service_worker.js`.
+
+## Multi-tenant routing
+
+Subdomain constraints live in `brgen/config/routes.rb` via `Brgen::DomainRegistry`.
+
+**brgen verticals:**
+
+| Subdomain | Module |
+|-----------|--------|
+| markedsplass / marketplace aliases | marketplace |
+| playlist / spilleliste | playlist |
+| takeaway | takeaway |
+| tv | tv |
+| maps | maps |
+| messenger | conversations |
+| dating | dating |
+| ai | MASTER relay → :53187 |
+
+**Standalone apps:** amber (amber.brgen.no:61352), hjerterom (hjerterom.brgen.no:38891), bsdports (bsdports.org:47312).
+
+**Operator UI:** MASTER domain bar (`MASTER/web/public/domain_cluster.js`), matrix console (`MASTER/tools/public/index.html`), CLI `/domain <name>` via `SubdomainOrchestrator`.
+
+Gate: `ruby RAILS/domain_alignment_gate.rb`
+
+## Production readiness
+
+Last updated: 2026-06-28. Repo gates pass locally; public readiness needs VPS proof and city vanity TLS.
+
+**Gates:**
+
+```sh
+ruby RAILS/check_production_gate.rb
+ruby RAILS/rails_runtime_gate.rb
+ruby OPENBSD/deploy_smoke_gate.rb
+cd MASTER && bin/probe all
+```
+
+VPS per app:
+
+```sh
+cd /home/dev/pub4/RAILS/<app>
+bundle34 check
+RAILS_ENV=production bundle34 exec rails db:prepare
+bundle34 exec bin/ci
+curl -fsS http://127.0.0.1:<port>/up
+ruby34 OPENBSD/health_check.rb --public --all-ready-apps
+```
+
+**Status:** brgen/amber/hjerterom/bsdports ready when VPS `bin/ci` + public `/up` pass; master (ai.brgen.no) ready on auth smoke + `/up`. Ship criteria: `MASTER/data/operator_playbook.yml`.
+
+**Blockers:**
+
+1. City vanity TLS — `OPERATOR.sh` stage 1 must issue certs for every apex in `ALL_DOMAINS`; relayd keypairs only exist for certs on disk.
+2. Domain drift — `master.json`, `apps.yml`, `OPERATOR.sh`, and `relayd.conf` must agree.
+3. relayd restart after route changes.
+4. Seeds skipped in production unless `RUN_PRODUCTION_SEEDS=1`.
+5. openrsync broken on vm23 — deploy uses git pull.
+
+**Deploy:**
+
+```sh
+ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226
+cd /home/dev/pub4 && git pull origin main
+SKIP_MASTER_SCAN=1 zsh OPENBSD/sh/vps_on_vm_install.sh
+doas rcctl restart relayd
+ruby34 OPENBSD/health_check.rb --public --all-ready-apps
+```

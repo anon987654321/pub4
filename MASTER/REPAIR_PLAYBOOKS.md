@@ -22,7 +22,7 @@ Symptom: primer tap does nothing, prompt never appears, or face blocks the main 
 
 First command: `bin/check --profile=web`.
 
-Then inspect `web/BOOT_CONTRACT.md`. Confirm WebGL is blocked before `_primerFired` and allowed after the tap. Do not move THREE.js or face import back into initial page load.
+Then inspect `web/CLAUDE.md`. Confirm WebGL is blocked before `_primerFired` and allowed after the tap. Do not move THREE.js or face import back into initial page load.
 
 ## Provider Or Key Failure
 

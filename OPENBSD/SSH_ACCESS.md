@@ -90,7 +90,7 @@ vmctl start -c vm23
 doas pkill -9 -xf "vmd: vm23"   # hung VM ([known.html](https://www.openbsd.amsterdam/known.html))
 ```
 
-`OPENBSD/sh/vps_console*.exp` scripts require `I_UNDERSTAND_CONSOLE_RISK=1` (see `OPERATOR/VPS_SAFETY.md`).
+`OPENBSD/sh/vps_console*.exp` scripts require `I_UNDERSTAND_CONSOLE_RISK=1` (see `OPERATOR/OPERATOR.md`).
 
 Recovery when VM SSH is pf-blocked:
 
