@@ -1,0 +1,36 @@
+name: RAILS Tests
+
+# Auto-runs paused: GitHub account billing lock prevents job start (same as
+# master-tests.yml / master-through-master.yml). Restore push/pull_request
+# triggers after billing is fixed at github.com/settings/billing.
+on:
+  workflow_dispatch:
+  # push:
+  #   paths:
+  #     - "RAILS/**"
+  #     - ".github/workflows/rails-tests.yml"
+  # pull_request:
+  #   paths:
+  #     - "RAILS/**"
+  #     - ".github/workflows/rails-tests.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [amber, brgen, bsdports, hjerterom]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: RAILS/${{ matrix.app }}
+
+      - name: Run ${{ matrix.app }} CI
+        working-directory: RAILS/${{ matrix.app }}
+        run: bundle exec bin/ci
