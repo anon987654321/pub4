@@ -9,16 +9,18 @@ require "yaml"
 require_relative "lib/utf8"
 
 ROOT = File.expand_path("..", __dir__)
-RAILS_ROOT = File.join(ROOT, "OPERATOR", "rails")
+RAILS_ROOT = File.join(ROOT, "RAILS")
 APPS_FILE = File.join(RAILS_ROOT, "apps.yml")
-SHARED_FUNCTIONS = File.join(RAILS_ROOT, "shared", "deploy", "@shared_functions.sh")
+SHARED_DEPLOY = File.join(RAILS_ROOT, "@deploy.sh")
+SHARED_BUNDLE = File.join(RAILS_ROOT, "@bundle.sh")
 metadata = YAML.load_file(APPS_FILE).fetch("apps")
 
 failures = []
 ports = Hash.new { |h, k| h[k] = [] }
 domains = Hash.new { |h, k| h[k] = [] }
-shared_functions = File.file?(SHARED_FUNCTIONS) ? File.read(SHARED_FUNCTIONS) : ""
-failures << "missing shared deploy functions: #{SHARED_FUNCTIONS}" if shared_functions.empty?
+shared_functions = File.file?(SHARED_DEPLOY) ? File.read(SHARED_DEPLOY) : ""
+shared_functions += File.file?(SHARED_BUNDLE) ? File.read(SHARED_BUNDLE) : ""
+failures << "missing shared deploy functions: #{SHARED_DEPLOY}" if shared_functions.empty?
 failures << "shared bundler helper missing deployment config" unless shared_functions.include?(
   "bundle config set --local deployment true"
 )
@@ -67,7 +69,7 @@ metadata.each do |app, expected|
     "SCRIPT_DIR=${0:a:h}" => "missing zsh script dir resolution for #{app}",
     "SRC_DIR=${SCRIPT_DIR}" => "missing source dir for #{app}",
     "SHARED_BUNDLE_CACHE" => "missing shared bundle cache for #{app}",
-    '. "${SCRIPT_DIR:h}/shared/deploy/@shared_functions.sh"' => "missing shared deploy source for #{app}",
+    '. "${SCRIPT_DIR:h}/@deploy.sh"' => "missing shared deploy source for #{app}",
     'deploy_tracked_app "$APP_NAME"' => "missing shared deploy entrypoint for #{app}"
   }
 

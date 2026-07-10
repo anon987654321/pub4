@@ -1,37 +1,4 @@
-let tunnel, SCALE = 1, lastT = 0;
-
 if (window.Turbo?.config?.drive) Turbo.config.drive.progressBarDelay = 100;
-
-function initTunnel() {
-  const canvas = document.getElementById("tunnel-canvas");
-  if (!canvas || canvas.__tunnelInit) return;
-  canvas.__tunnelInit = true;
-
-  const ctx = canvas.getContext("2d", { alpha: false, willReadFrequently: true }) || canvas.getContext("2d");
-  tunnel = new PixelTunnel(ctx);
-
-  const sizeCanvas = () => {
-    SCALE = Math.max(0.5, Math.min(2, Math.min(2, DPR) * (isLowEnd ? 0.8 : 1)));
-    const w = Math.floor(window.innerWidth * SCALE), h = Math.floor(window.innerHeight * SCALE);
-    canvas.width = w; canvas.height = h;
-    canvas.style.width = window.innerWidth + "px"; canvas.style.height = window.innerHeight + "px";
-    tunnel.resize(w, h, SCALE);
-  };
-  sizeCanvas();
-  window.addEventListener("resize", () => { clearTimeout(window.__rzT); window.__rzT = setTimeout(sizeCanvas, 80); });
-
-  // Canvas fills the viewport (position:fixed; inset:0) so clientX === canvas X.
-  // Listen on window so app-shell (z-index:10) doesn't swallow the events.
-  window.addEventListener("mousemove", e => { if (!tunnel) return; tunnel.mouse = { x: e.clientX * SCALE, y: e.clientY * SCALE, down: tunnel.mouse.down, active: true }; }, { passive: true });
-  window.addEventListener("mouseleave", () => { if (!tunnel) return; tunnel.mouse.active = false; tunnel.mouse.down = false; });
-
-  const animate = () => {
-    const n = performance.now();
-    if (!document.hidden && n - lastT >= 16) { tunnel.frame(syntheticData()); lastT = n; }
-    requestAnimationFrame(animate);
-  };
-  animate();
-}
 
 function updateCarouselPrefix() {
   const el = document.getElementById("cityCarousel");
@@ -77,13 +44,12 @@ function syncStandaloneMode() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  initTunnel();
   initCarousel();
   initSplash();
   syncStandaloneMode();
 });
 
-// Re-run splash + carousel prefix on Turbo page loads (tunnel/carousel persist via data-turbo-permanent)
+// Re-run splash + carousel prefix on Turbo page loads (carousel persists via data-turbo-permanent)
 document.addEventListener("turbo:load", () => {
   initSplash();
   updateCarouselPrefix();

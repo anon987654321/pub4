@@ -1,16 +1,3 @@
-/* Canvas */
-#tunnel-canvas {
-  position: fixed;
-  inset: 0;
-  width: 100dvw;
-  height: 100dvh;
-  display: block;
-  z-index: var(--z-canvas);
-  touch-action: none;
-  image-rendering: pixelated;
-
-}
-
 /* City carousel */
 .city-carousel {
   position: fixed;

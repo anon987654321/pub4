@@ -11,7 +11,7 @@ RUBY_BIN = RbConfig.ruby
 ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "RAILS")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
-SHARED_DEPLOY = File.join(RAILS_ROOT, "shared", "deploy", "@shared_functions.sh")
+SHARED_DEPLOY = File.join(RAILS_ROOT, "@deploy.sh")
 
 def fail!(failures, message)
   failures << message

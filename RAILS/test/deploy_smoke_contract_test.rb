@@ -35,7 +35,7 @@ class DeploySmokeContractTest < Minitest::Test
   end
 
   def test_rails_runtime_gate_precompiles_assets
-    shared = read(File.join(ROOT, "shared/deploy/@shared_functions.sh"))
+    shared = read(File.join(ROOT, "@assets.sh"))
     assert_includes shared, "rails_assets_precompile_as_app"
     assert_includes shared, "assets:precompile"
   end

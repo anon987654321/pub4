@@ -15,7 +15,7 @@ class AmberScriptTest < ActiveSupport::TestCase
 
   test "deploy script avoids self-copying an amber bundle cache" do
     content = SCRIPT.read
-    shared = Rails.root.join("../shared/deploy/@shared_functions.sh").read
+    shared = Rails.root.join("../@deploy.sh").read
 
     assert_includes content, "SHARED_BUNDLE_CACHE"
     assert_includes shared, "${bundle_home} != /home/amber/.bundle"
@@ -23,7 +23,8 @@ class AmberScriptTest < ActiveSupport::TestCase
 
   test "deploy script delegates to the shared deploy_tracked_app pipeline" do
     content = SCRIPT.read
-    shared = Rails.root.join("../shared/deploy/@shared_functions.sh").read
+    shared = Rails.root.join("../@deploy.sh").read
+    shared << Rails.root.join("../@bundle.sh").read
 
     assert_includes content, 'deploy_tracked_app "$APP_NAME"'
     assert_includes shared, 'bundle_install_as_app "$APP_NAME" "$APP_DIR"'
