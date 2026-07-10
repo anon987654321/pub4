@@ -50,6 +50,8 @@ def apply_device!(process)
     # bf16 on MPS can yield NaN loss; fp16 is more stable on Apple Silicon.
     train["dtype"] = "fp16"
     train["lr"] = 1.0e-5 unless ENV.key?("RAGNHILD_LR")
+    # M2 8 GB: single resolution bucket reduces VRAM churn.
+    process["datasets"].first["resolution"] = [512] unless ENV.key?("RAGNHILD_RESOLUTIONS")
   end
 end
 
