@@ -19,7 +19,7 @@ test("face.js loads modules and runtime parts through MASTER_ASSET_PATHS", () =>
   const tail = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
   assert.match(faceJs, /MASTER_ASSET_PATHS\?\.faceModules\?\.\[modulePath\]/);
   assert.match(faceJs, /MASTER_ASSET_PATHS\?\.faceModulesList/);
-  assert.match(faceJs, /MASTER_ASSET_PATHS\?\.faceParts/);
+  assert.match(faceJs, /MASTER_ASSET_PATHS\?\.faceRuntime/);
   assert.match(faceJs, /FACE_BLOB_URL/);
   assert.match(tail, /function sendMessage/);
   assert.match(tail, /window\.MASTER_FACE =/);
@@ -116,6 +116,9 @@ test("chat index wires digested assets around lazy face boot", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /asset_path\("face\.css"\)/);
   assert.match(index, /asset_path\("face\.js"\)/);
+  assert.match(index, /faceRuntime/);
+  assert.match(index, /asset_path\("face_2d_fallback\.js"\)/);
+  assert.doesNotMatch(index, /face_2d_fallback\.js.*defer/);
   assert.match(index, /asset_path\("particle_kernel\.js"\)/);
   // Deferred modules now come from one ordered javascript_include_tag manifest, not 9 literal tags.
   assert.match(index, /javascript_include_tag\(\*%w\[[^\]]*chat_actions[^\]]*\]/);

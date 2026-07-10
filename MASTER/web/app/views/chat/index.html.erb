@@ -49,7 +49,8 @@
         face_semantics.js face_minimal_ui.js face_loops_music.js face_loops_nudge.js
         face_vision.bundle.js cognition_ecology.js cognition_ecology_render.js
       ].to_h { |name| [name, asset_path(name)] }.to_json) %>,
-      faceVisionBundle: "<%= asset_path("face_vision.bundle.js") %>"
+      faceVisionBundle: "<%= asset_path("face_vision.bundle.js") %>",
+      faceRuntime: "<%= asset_path("face.runtime.js") %>"
     };
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
@@ -95,6 +96,8 @@
   <div id="primer" role="button" aria-labelledby="primer-title" tabindex="0">
     <h1 id="primer-title">tap to start</h1>
   </div>
+  <%# Sync load: go() calls start2DFallback on tap; defer would miss an early tap on slow VPS. %>
+  <script src="<%= asset_path("face_2d_fallback.js") %>"></script>
   <%# Boot + primer tap must run synchronously here — before defer scripts. Waiting for
       DOMContentLoaded wedged the main thread on a 1-CPU VPS and made the overlay look dead. %>
   <script nonce="<%= content_security_policy_nonce %>">
@@ -239,7 +242,6 @@
   <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
   <script src="<%= asset_path("container_gate.js") %>" defer></script>
   <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>
-  <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
   <%# Deferred boot modules — single ordered manifest, loaded after the shell paints.
       face.js (the THREE.js WebGL face) is intentionally absent: loadFace() imports it
       lazily on the primer tap (see the boot script above). %>

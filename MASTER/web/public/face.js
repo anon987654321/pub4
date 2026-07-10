@@ -20,19 +20,13 @@ await Promise.all(FACE_MODULES.map(async (modulePath) => {
   await import(url);
 }));
 
-const FACE_PARTS = window.MASTER_ASSET_PATHS?.faceParts || [
-  "face.part1.txt",
-  "face.part2.txt",
-  "face.part3.txt",
-  "face.part4.txt",
-  "face.part5.txt"
-];
+const FACE_RUNTIME = window.MASTER_ASSET_PATHS?.faceRuntime
+  || window.MASTER_ASSET_PATHS?.faceModules?.["face.runtime.js"]
+  || "face.runtime.js";
 
-const FACE_TEXT = await Promise.all(FACE_PARTS.map(async (part) => {
-  const res = await fetch(part);
-  if (!res.ok) throw new Error(`failed to load ${part}: ${res.status}`);
-  return res.text();
-}));
+const runtimeRes = await fetch(FACE_RUNTIME);
+if (!runtimeRes.ok) throw new Error(`failed to load face runtime: ${runtimeRes.status}`);
+const FACE_TEXT = await runtimeRes.text();
 
 const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
 const absoluteAsset = (path) => path ? new URL(path, document.baseURI).href : null;
@@ -43,7 +37,7 @@ const MODULE_PATHS = {
 };
 const FACE_SOURCE = Object.entries(MODULE_PATHS).reduce(
   (source, [name, path]) => path ? source.replaceAll(`'${name}'`, JSON.stringify(path)) : source,
-  FACE_TEXT.join("\n")
+  FACE_TEXT
 );
 const FACE_BLOB = new Blob([FACE_SOURCE], { type: "text/javascript" });
 const FACE_BLOB_URL = URL.createObjectURL(FACE_BLOB);
