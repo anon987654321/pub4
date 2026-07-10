@@ -40,7 +40,7 @@
   justify-content: center;
   width: 52px;
   height: 52px;
-  border-radius: var(--radius-chip);
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   color: var(--text);
   margin: 4px 0;
@@ -70,7 +70,7 @@ nav { display: flex; flex-direction: column; gap: 2px; width: 100%; }
   align-items: center;
   gap: 20px;
   padding: 0.75rem;
-  border-radius: var(--radius-chip);
+  border-radius: var(--radius-pill);
   border-inline-start: 2px solid transparent;
   color: var(--text);
   font-size: 20px;
@@ -97,7 +97,7 @@ nav { display: flex; flex-direction: column; gap: 2px; width: 100%; }
   background: var(--accent);
   color: #000;
   border: none;
-  border-radius: var(--radius-chip);
+  border-radius: var(--radius-pill);
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
@@ -114,14 +114,13 @@ nav { display: flex; flex-direction: column; gap: 2px; width: 100%; }
   bottom: calc(70px + var(--safe-bottom));
   width: 54px;
   height: 54px;
-  border-radius: var(--radius-chip);
+  border-radius: var(--radius-pill);
   display: none;
   align-items: center;
   justify-content: center;
   background: var(--accent);
   color: #000;
   z-index: var(--z-nav);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, .18);
   text-decoration: none;
 }
 

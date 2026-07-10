@@ -6,7 +6,7 @@
 
 .dash-stats dt {
   font-size: 0.75rem;
-  color: var(--x-text-secondary, #71767b);
+  color: var(--color-grey-text);
   text-transform: uppercase;
 }
 
@@ -18,7 +18,7 @@
 .weather-bar {
   background: color-mix(in srgb, var(--x-accent) 15%, var(--x-surface-elevated));
   border-bottom: 1px solid color-mix(in srgb, var(--x-accent) 40%, var(--x-border));
-  padding: 0.4rem var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   font-size: 0.85rem;
   color: var(--x-accent);
 }
@@ -30,15 +30,15 @@
 .plan-list {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  margin: var(--space-sm) 0;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
 }
 
 .plan-row {
   display: flex;
   gap: var(--space-md);
   align-items: center;
-  padding: 0.35rem 0;
+  padding: var(--space-sm) 0;
   border-bottom: 1px solid var(--color-extra-light-grey);
 }
 
@@ -46,21 +46,21 @@
   font-weight: 600;
   min-width: 4rem;
   font-size: 0.85rem;
-  color: var(--x-text-secondary, #71767b);
+  color: var(--color-grey-text);
 }
 
 .cpw-list {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  margin: var(--space-sm) 0;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
 }
 
 .cpw-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.3rem 0;
+  padding: var(--space-xs) 0;
   border-bottom: 1px solid var(--color-extra-light-grey);
 }
 
@@ -80,8 +80,8 @@
 
 .input {
   border: 1px solid var(--color-extra-light-grey);
-  border-radius: 3px;
-  padding: 0.4rem 0.6rem;
+  border-radius: var(--x-radius-xs);
+  padding: var(--space-xs) var(--space-sm);
   font: inherit;
 }
 
@@ -94,28 +94,28 @@
   display: inline-block;
   background: var(--color-badge);
   padding: 0.15rem 0.5rem;
-  border-radius: 3px;
+  border-radius: var(--x-radius-xs);
   font-size: 0.75rem;
   font-weight: 600;
   margin-inline-end: 0.3rem;
 }
 
 .tag--phase {
-  background: color-mix(in srgb, var(--color-success) 20%, var(--x-surface-elevated));
+  background: var(--tint-success);
   color: var(--color-success);
 }
 
 .style-phase-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-md);
-  margin: var(--space-md) 0;
+  gap: var(--space-lg);
+  margin: var(--space-lg) 0;
 }
 
 .style-phase-card {
   border: 1px solid var(--x-border, #2f3336);
-  border-radius: 6px;
-  padding: var(--space-sm);
+  border-radius: var(--x-radius-sm);
+  padding: var(--space-md);
 }
 
 .style-phase-list {
@@ -157,14 +157,14 @@
 .occasion-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: var(--space-md);
-  margin: var(--space-md) 0;
+  gap: var(--space-lg);
+  margin: var(--space-lg) 0;
 }
 
 .occasion-card {
   border: 2px solid var(--color-extra-light-grey);
-  border-radius: 6px;
-  padding: var(--space-sm);
+  border-radius: var(--x-radius-sm);
+  padding: var(--space-md);
 }
 
 .occasion-card--sparse {
@@ -189,19 +189,19 @@
 .capsule-list {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-sm);
 }
 
 .capsule-row {
   display: flex;
   gap: var(--space-sm);
   align-items: flex-start;
-  padding: 0.5rem;
+  padding: var(--space-sm) var(--space-md);
   border-radius: var(--x-radius-xs);
 }
 
 .capsule-row--keep {
-  background: color-mix(in srgb, var(--color-success) 20%, var(--x-surface-elevated));
+  background: var(--tint-success);
 }
 
 .capsule-row--consider {

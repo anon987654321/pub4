@@ -33,7 +33,8 @@
   --x-accent: #{$accent};
   --x-accent-hover: #{$accent-hover};
   --x-danger: #{$danger};
-  --x-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  --x-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --x-font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
   --x-font-size: 16px;
   --x-line-height: 20px;
   --x-radius-xs: 4px;

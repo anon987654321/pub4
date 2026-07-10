@@ -1,14 +1,14 @@
 .item-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--space-md);
+  gap: var(--space-lg);
 }
 
 .item-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
-  padding: var(--space-sm);
+  gap: var(--space-sm);
+  padding: var(--space-md);
   border: 1px solid var(--color-extra-light-grey);
   border-radius: var(--x-radius-xs);
 }
@@ -17,7 +17,7 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 2px;
+  border-radius: var(--x-radius-xs);
 }
 
 .item-card .item-title {
@@ -71,7 +71,7 @@
   background: var(--color-black);
   color: var(--color-white);
   border: none;
-  border-radius: 3px;
+  border-radius: var(--x-radius-xs);
   cursor: pointer;
   font-size: 0.85rem;
   text-decoration: none;
@@ -83,7 +83,7 @@
   background: #444;
   color: #fff;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--x-radius-xs);
   cursor: pointer;
 }
 
@@ -99,12 +99,12 @@
   display: inline-block;
   background: var(--color-badge);
   padding: 0.1rem 0.4rem;
-  border-radius: 3px;
+  border-radius: var(--x-radius-xs);
   font-size: 0.75rem;
   font-weight: 600;
 }
 
 .dim {
-  color: var(--x-text-secondary, #71767b);
+  color: var(--color-grey-text);
   font-size: 0.85rem;
 }

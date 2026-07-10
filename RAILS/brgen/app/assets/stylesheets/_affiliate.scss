@@ -27,7 +27,7 @@
 
 .field-error {
   border-color: var(--color-danger);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-danger) 22%, transparent);
+  border-width: 2px;
 }
 
 /* Layout utilities */

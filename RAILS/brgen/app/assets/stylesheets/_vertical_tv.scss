@@ -21,7 +21,6 @@ body.vertical-tv .video-player {
   max-height: min(72vh, 720px);
   border-radius: var(--x-radius-sm);
   background: var(--tv-stage);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
 }
 
 /* postpro.rb cinematic grade hook — applied when thumbnail/video processed */

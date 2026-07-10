@@ -5,8 +5,7 @@
   display: flex;
   flex-direction: column;
   padding: 0 16px;
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  backdrop-filter: blur(0.75rem);
+  background: var(--panel-blur-bg);
   border-bottom: 1px solid var(--border);
   z-index: 10;
 }

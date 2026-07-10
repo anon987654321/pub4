@@ -6,6 +6,7 @@
   --color-black: var(--x-bg);
   --color-white: var(--x-text);
   --color-extra-light-grey: var(--x-border);
+  --color-grey-text: var(--x-text-secondary);
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
@@ -15,6 +16,7 @@
   --line-height-base: calc(20 / 15);
   --app-accent: #d97706;
   --color-badge: #f0c040;
+  --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--x-surface-elevated));
 }
 
 @media (prefers-color-scheme: light) {
@@ -24,5 +26,6 @@
     --color-black: var(--x-bg);
     --color-white: var(--x-text);
     --color-extra-light-grey: var(--x-border);
+    --color-grey-text: var(--x-text-secondary);
   }
 }

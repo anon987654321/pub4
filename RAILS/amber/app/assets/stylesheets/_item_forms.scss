@@ -5,16 +5,16 @@
 .form .field {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  margin-bottom: var(--space-sm);
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
 }
 
 .form input,
 .form select,
 .form textarea {
   border: 1px solid var(--color-extra-light-grey);
-  border-radius: 3px;
-  padding: 0.4rem 0.6rem;
+  border-radius: var(--x-radius-xs);
+  padding: var(--space-sm);
   font: inherit;
 }
 
@@ -22,7 +22,7 @@
   display: flex;
   gap: var(--space-sm);
   align-items: center;
-  margin-top: var(--space-md);
+  margin-top: var(--space-lg);
 }
 
 .media-picker {

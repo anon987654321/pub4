@@ -74,10 +74,8 @@ body.vertical-maps .map-search-input {
   border-radius: 14px;
   border: 1px solid var(--maps-border);
   background: var(--maps-surface);
-  backdrop-filter: blur(14px);
   color: var(--maps-ink);
   font-size: 0.9375rem;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
 body.vertical-maps .map-search-input::placeholder {
@@ -89,9 +87,7 @@ body.vertical-maps .map-place-popup {
   border-radius: 14px;
   border: 1px solid var(--maps-border);
   background: var(--maps-surface);
-  backdrop-filter: blur(14px);
   color: var(--maps-ink);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
 body.vertical-maps .map-marker span {

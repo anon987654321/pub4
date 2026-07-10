@@ -63,7 +63,7 @@ dark:
   x_accent: "#1d9bf0"
   x_accent_hover: "#1a8cd8"
   x_danger: "#f4212e"
-  x_font: '"JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace'
+  x_font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
   x_font_size: "16px"
   x_line_height: "20px"
   x_radius_pill: "9999px"

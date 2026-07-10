@@ -2,8 +2,8 @@ main {
   flex: 1;
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-md);
-  padding: var(--space-md);
+  gap: var(--space-lg);
+  padding: var(--space-lg);
 }
 
 .flash {

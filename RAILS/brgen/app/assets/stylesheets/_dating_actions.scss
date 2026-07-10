@@ -46,7 +46,7 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  transition: transform 160ms ease, background 160ms ease;
 }
 
 .swipe-action:active {
@@ -63,7 +63,6 @@
   background: linear-gradient(135deg, color-mix(in srgb, var(--dating-accent) 20%, transparent), color-mix(in srgb, var(--dating-accent-warm) 20%, transparent));
   border-color: color-mix(in srgb, var(--dating-accent) 55%, transparent);
   color: var(--dating-accent);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--dating-accent) 18%, transparent);
 }
 
 .swipe-signin {
@@ -73,7 +72,7 @@
 
 .swipe-card.dragging {
   cursor: grabbing;
-  box-shadow: 0 24px 56px rgba(0, 0, 0, .36);
+  border-color: var(--dating-accent);
 }
 
 .swipe-card.liked {

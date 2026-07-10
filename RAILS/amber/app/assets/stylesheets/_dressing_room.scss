@@ -17,7 +17,6 @@
   transform-style: preserve-3d;
   transform: rotateY(-8deg) rotateX(2deg);
   transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  filter: drop-shadow(0.75rem 16px 32px rgb(0 0 0 / 0.55));
 
   &:hover {
     transform: rotateY(8deg) rotateX(2deg);
@@ -79,7 +78,7 @@
 .zone-carousels {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   width: 100%;
   max-width: 420px;
 }
@@ -88,7 +87,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 0.35rem var(--space-sm);
+  padding: var(--space-sm);
   border: 1px solid var(--color-extra-light-grey);
   border-radius: var(--x-radius-xs);
 }
@@ -98,14 +97,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--x-text-secondary, #71767b);
+  color: var(--color-grey-text);
   min-width: 70px;
 }
 
 .carousel-btn {
   background: none;
   border: 1px solid var(--color-extra-light-grey);
-  border-radius: 3px;
+  border-radius: var(--x-radius-pill);
   width: 28px;
   height: 28px;
   cursor: pointer;
@@ -133,7 +132,7 @@
 
 .zone-count {
   font-size: 0.7rem;
-  color: var(--x-text-secondary, #71767b);
+  color: var(--color-grey-text);
 }
 
 .dressing-room-actions {

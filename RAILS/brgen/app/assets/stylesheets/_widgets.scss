@@ -18,8 +18,7 @@
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  backdrop-filter: blur(0.75rem);
+  background: var(--panel-blur-bg);
   z-index: 10;
 }
 
@@ -84,7 +83,7 @@ article:hover { background: var(--hover-subtle); }
 .x-text a { color: var(--accent); text-decoration: none; }
 .x-text a:hover { text-decoration: underline; }
 .x-actions { display: flex; align-items: center; justify-content: space-between; gap: 4px; color: var(--text-dim); font-size: 0.8125rem; margin-top: 8px; }
-.x-act { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: var(--radius-chip); transition: color var(--transition-fast), background var(--transition-fast); }
+.x-act { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: var(--radius-pill); transition: color var(--transition-fast), background var(--transition-fast); }
 .x-act:hover { color: var(--accent); background: var(--hover); }
 .x-count { font-size: 0.8125rem; }
 .compose-actions span { font-family: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
