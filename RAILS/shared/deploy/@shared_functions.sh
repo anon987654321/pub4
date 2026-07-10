@@ -80,7 +80,7 @@ need_cmd() {
 # overlay_shared_initializers APP_DIR — shared config wins over stale per-app copies
 overlay_shared_initializers() {
   local app_dir=$1
-  local shared_init=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails/shared/config/initializers
+  local shared_init=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/config/initializers
   [[ -d $shared_init ]] || return 0
   sync_tree "$shared_init" "${app_dir}/config/initializers"
   log_ok "shared initializers overlaid"
@@ -89,7 +89,7 @@ overlay_shared_initializers() {
 # overlay_shared_public APP_DIR — merge shared/public (tokens.css, minimal-ui.css, icons)
 overlay_shared_public() {
   local app_dir=$1
-  local shared_public=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails/shared/public
+  local shared_public=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/public
   [[ -d $shared_public ]] || return 0
   sync_tree "$shared_public" "${app_dir}/public" 0
   log_ok "shared public assets overlaid"
@@ -99,7 +99,7 @@ overlay_shared_public() {
 # overlay_shared_bin APP_DIR — ci.rb expects bin/rubocop, brakeman, bundler-audit stubs
 overlay_shared_bin() {
   local app_dir=$1
-  local shared_bin=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails/shared/bin
+  local shared_bin=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/bin
   [[ -d $shared_bin ]] || return 0
   ${_PRIV} mkdir -p "${app_dir}/bin"
   for tool in rubocop brakeman bundler-audit; do
@@ -107,8 +107,8 @@ overlay_shared_bin() {
     ${_PRIV} cp "${shared_bin}/${tool}" "${app_dir}/bin/${tool}"
     ${_PRIV} chmod 755 "${app_dir}/bin/${tool}"
   done
-  [[ -f ${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails/shared/.rubocop.yml ]] \
-    && ${_PRIV} cp "${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails/shared/.rubocop.yml" "${app_dir}/.rubocop.yml"
+  [[ -f ${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/.rubocop.yml ]] \
+    && ${_PRIV} cp "${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/.rubocop.yml" "${app_dir}/.rubocop.yml"
   log_ok "shared bin stubs overlaid"
 }
 
@@ -266,7 +266,7 @@ rails_runtime_gate() {
     rails_assets_precompile_as_app "$app_name" "$app_dir" \
       || return 1
     if [[ -x ${app_dir}/bin/ci ]]; then
-      local rails_tree=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}/rails
+      local rails_tree=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}
       if [[ -d $rails_tree ]]; then
         chmod o+x /home/dev 2>/dev/null || true
         chmod -R a+rX "$rails_tree" 2>/dev/null || true
@@ -559,8 +559,8 @@ retire_legacy_rails_rcd() {
 # Installs or updates the rc.d service file for a Rails app on OpenBSD.
 install_rcd() {
   local app_name=$1 app_dir=$2 port=$3 svc=${4:-$1}
-  local deploy_root=${PUB4_DEPLOY_ROOT:-/home/dev/pub4/OPERATOR}
-  local rcd_src="${deploy_root}/openbsd/etc/rc.d/${svc}"
+  local openbsd_root=${PUB4_OPENBSD_ROOT:-/home/dev/pub4/OPENBSD}
+  local rcd_src="${openbsd_root}/etc/rc.d/${svc}"
   local rcd_dst="/etc/rc.d/${svc}"
   if [[ ! -f $rcd_src ]]; then
     log_warn "rc.d template not found: $rcd_src — skipping install_rcd"
