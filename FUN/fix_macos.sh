@@ -94,7 +94,7 @@ after-startup-command = [
 ]
 
 [mode.main.binding]
-    ctrl-shift-return = 'exec-and-forget open -a Ghostty'
+    ctrl-shift-enter = 'exec-and-forget open -a Ghostty'
     ctrl-shift-t = 'exec-and-forget open -a Ghostty'
     ctrl-shift-space = '''exec-and-forget osascript -e 'tell application "System Events" to keystroke space using {command down}' '''
 
