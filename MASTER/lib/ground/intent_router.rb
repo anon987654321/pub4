@@ -20,7 +20,7 @@ module Master
         continue_prior_plan: %w[go ahead continue land it proceed ship],
         write_repo_changes: %w[land write commit save push apply],
         prefer_ruby: %w[ruby not markdown no yaml keep ruby],
-        run_full_workflow: %w[through master tribunal full pass review deliberat],
+        run_full_workflow: %w[through master tribunal full pass review deliberate deliberation deliberating deliberations],
       }.freeze
 
       STANDING_SEMANTICS = {
@@ -48,14 +48,15 @@ module Master
         downcased = text.to_s.downcase.strip
         return STANDING_SEMANTICS[downcased] if STANDING_SEMANTICS.key?(downcased)
 
-        # start_with?, not include?: keywords like "ui" or "go" are short enough
-        # that anywhere-substring matching false-positives on ordinary words
-        # ("quick" contains "ui") and misroutes plain chat into the coding
-        # Fold. A handful of keywords ("deliberat") are deliberate prefixes of
-        # longer inflections, which start_with? still matches correctly.
+        # Exact token match, not substring/prefix: short keywords like "ui",
+        # "go", "no", "up" are common word PREFIXES too ("norwegian" starts
+        # with "no", "quick" contains "ui" anywhere) and either weaker check
+        # misroutes plain chat into the coding Fold. Every INTENTS keyword is
+        # a real whole word (inflections like "deliberating" are spelled out
+        # explicitly above) so exact match is correct, not just safer.
         tokens = downcased.scan(/\w+/)
         scores = INTENTS.transform_values do |keywords|
-          tokens.count { |t| keywords.any? { |k| t.start_with?(k) } }
+          tokens.count { |t| keywords.include?(t) }
         end
         best, score = scores.max_by { |_, v| v }
         score.positive? ? best : :unknown
