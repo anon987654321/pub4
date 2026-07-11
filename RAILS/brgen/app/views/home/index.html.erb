@@ -10,6 +10,8 @@
         <span class="chip"><%= link_to "dating", dating_root_url(subdomain: "dating") %></span>
         <span class="chip"><%= link_to "playlist", playlist_root_url(subdomain: "playlist") %></span>
         <span class="chip"><%= link_to "takeaway", takeaway_root_url(subdomain: "takeaway") %></span>
+        <span class="chip"><%= link_to "maps", maps_maps_root_url(subdomain: "maps") %></span>
+        <span class="chip"><%= link_to "messenger", messenger_root_url(subdomain: "messenger") %></span>
       </nav>
       <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path %> to post</p>
     </div>
@@ -39,5 +41,8 @@
 </nav>
 
 <section id="feed-panel" role="tabpanel" aria-labelledby="hot-tab" data-tabs-target="panel">
-  <%= live_search_index url: root_path, results_partial: "home/live_search_results", placeholder: "Search feed…", label: "Feed search", frame_id: "brgen-home" %>
+  <% if home_feed_following? && !authenticated? %>
+    <p class="dim feed-hint"><%= link_to "Sign in", new_session_path %> to see posts from people you follow.</p>
+  <% end %>
+  <%= live_search_index url: root_path(feed: params[:feed]), results_partial: "home/live_search_results", placeholder: "Search feed…", label: "Feed search", frame_id: "brgen-home", feed: params[:feed] %>
 </section>

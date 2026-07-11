@@ -1,0 +1,31 @@
+/* Brgen-specific shell tweaks on top of shared x_shell / x_responsive */
+
+.app-shell {
+  position: fixed;
+  inset: 0;
+}
+
+.brand-text {
+  text-transform: uppercase;
+}
+
+.feed-hint {
+  padding: 0 16px 8px;
+}
+
+@media (max-width: 1280px) {
+  .compose-label {
+    display: inline;
+  }
+
+  .compose-icon {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .theme-toggle {
+    top: 10px;
+    right: 10px;
+  }
+}

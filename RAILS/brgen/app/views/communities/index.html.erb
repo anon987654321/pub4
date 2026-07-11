@@ -1,4 +1,8 @@
-<h1>Communities</h1>
-<% if authenticated? %><%= link_to "+ New", new_community_path %><% end %>
+<% content_for :title, "Communities" %>
+
+<div class="page-header" role="banner" aria-label="Communities header">
+  <h1>Communities</h1>
+  <% if authenticated? %><%= link_to "+ New", new_community_path, class: "btn btn-sm" %><% end %>
+</div>
 
 <%= live_search_index url: communities_path, results_partial: "communities/live_search_results", placeholder: "Search communities…", label: "Community search", frame_id: "brgen-communities" %>

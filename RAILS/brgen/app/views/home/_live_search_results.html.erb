@@ -13,7 +13,8 @@
             pagy: @pagy,
             reflex: "HomeInfiniteScrollReflex#load_more",
             sentinel_id: "home-feed-sentinel",
-            q: params[:q] %>
+            q: params[:q],
+            feed: params[:feed] %>
 <% else %>
  <section class="empty">
  <% if live_search_query.present? %>

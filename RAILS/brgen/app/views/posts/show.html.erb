@@ -54,7 +54,7 @@
 
 <section id="comments-section">
   <h3>Comment as <strong><%= Current.user&.guest? ? "anon" : (Current.user&.username || "anon") %></strong><% unless authenticated? %> · <%= link_to "sign in", new_session_path %><% end %></h3>
-  <% if authenticated? %>
+  <% if authenticated? || guest? %>
     <%= render "comments/form", comment: @new_comment, commentable: @post %>
   <% end %>
 

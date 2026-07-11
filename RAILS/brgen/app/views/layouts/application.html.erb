@@ -25,9 +25,11 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= yield :head %>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=optional" rel="stylesheet">
+  <% if active_vertical == :marketplace %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=optional" rel="stylesheet">
+  <% end %>
   <link rel="preload" href="/face.css" as="style">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <link rel="stylesheet" href="/lightgallery.css">
@@ -128,11 +130,11 @@
           <% end %>
           <%= link_to nearby_path, class: nav_cls.(nearby_path) do %>
             <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-            <span>Lists</span>
+            <span>Nearby</span>
           <% end %>
           <% if authenticated? %>
-            <%= link_to session_path, class: "nav-item", data: { turbo_method: :delete, turbo_prefetch: false } do %>
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+            <%= link_to user_path(Current.user), class: nav_cls.(user_path(Current.user)) do %>
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M5.5 4.5a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zM2 19.25c0-2.9 3.6-5.25 8-5.25s8 2.35 8 5.25V21H2v-1.75z"/></svg>
               <span>Profile</span>
             <% end %>
           <% else %>
@@ -146,9 +148,10 @@
           <div class="sidebar-dropdown" data-controller="dropdown" data-action="click@window->dropdown#hide">
             <button type="button" class="btn btn-ghost btn-sm" data-dropdown-button aria-expanded="false" data-action="click->dropdown#toggle">More</button>
             <div class="sidebar-dropdown-menu hidden" data-dropdown-target="menu">
-              <%= link_to "Profile", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
+              <%= link_to "Profile", user_path(Current.user) %>
               <%= link_to "New post", new_post_path %>
               <%= link_to "New community", new_community_path %>
+              <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
             </div>
           </div>
         <% end %>
@@ -159,13 +162,15 @@
       </aside>
 
       <main id="main-content" role="main" data-controller="pull-to-refresh">
-        <% unless vertical_surface? %>
+        <% if !vertical_surface? && current_page?(root_path) %>
           <div class="feed-header">
-            <h1><%= content_for?(:title) ? yield(:title) : "Home" %></h1>
-            <div class="feed-tabs">
-              <button type="button" class="feed-tab active">For you</button>
-              <button type="button" class="feed-tab">Following</button>
-            </div>
+            <h1>Home</h1>
+            <nav class="feed-tabs" aria-label="Feed">
+              <%= link_to "For you", root_path(request.query_parameters.except("feed")),
+                    class: "feed-tab#{" active" unless home_feed_following?}" %>
+              <%= link_to "Following", root_path(request.query_parameters.merge(feed: "following")),
+                    class: "feed-tab#{" active" if home_feed_following?}" %>
+            </nav>
           </div>
         <% end %>
         <% if current_page?(root_path) && Current.user.present? %>
@@ -217,7 +222,12 @@
       <div class="mobile-sheet-links">
         <%= link_to "New post", new_post_path %>
         <%= link_to "New community", new_community_path %>
-        <%= link_to "Profile", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
+        <% if authenticated? %>
+          <%= link_to "Profile", user_path(Current.user) %>
+          <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
+        <% else %>
+          <%= link_to "Sign in", new_session_path %>
+        <% end %>
       </div>
     </section>
   </div>

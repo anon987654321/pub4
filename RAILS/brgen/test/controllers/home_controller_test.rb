@@ -12,6 +12,17 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, 'class="master-embed-frame"'
   end
 
+  def test_root_feed_tabs_are_wired
+    host! "brgen.no"
+    get root_url
+    assert_response :success
+    assert_includes response.body, 'class="feed-tab active">For you'
+    assert_includes response.body, 'feed=following'
+    get root_url(feed: "following")
+    assert_response :success
+    assert_includes response.body, 'class="feed-tab active">Following'
+  end
+
   def test_guest_root_can_open_master_embed
     host! "brgen.no"
     get root_url(master: 1)

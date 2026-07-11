@@ -7,13 +7,8 @@ class HomeController < ApplicationController
   def index
     return render_master_guest_home!(title: "Brgen") if params[:master].present? && master_guest_home?
 
-    scope = if authenticated?
-              Current.user.timeline_posts.hot
-            elsif Brgen::DemoFeed.available?
-              Brgen::DemoFeed.hot
-            else
-              Post.hot
-            end
+    @feed = params[:feed]
+    scope = Brgen::HomeFeed.scope(feed: @feed, authenticated: authenticated?)
     scope = scope.includes(:user, :community, :votes)
     scope = apply_live_search(scope, columns: %w[title content], vertical: "feed") if live_search_query.present?
     @pagy, @posts = pagy(scope)

@@ -1,14 +1,15 @@
 <%= turbo_stream_from "posts" %>
+<% content_for :title, "All posts" %>
 
-<header>
+<div class="page-header" role="banner" aria-label="Posts header">
   <h1>All posts</h1>
-  <% if authenticated? %><%= link_to "+ New post", new_post_path %><% end %>
-</header>
+  <% if authenticated? %><%= link_to "+ New post", new_post_path, class: "btn btn-sm" %><% end %>
+</div>
 
-<nav role="navigation">
-  <%= link_to "hot",   posts_path,                class: ("active" unless params[:sort]) %>
-  <%= link_to "fresh", posts_path(sort: "fresh"), class: ("active" if params[:sort] == "fresh") %>
-  <%= link_to "top",   posts_path(sort: "top"),   class: ("active" if params[:sort] == "top") %>
+<nav class="sort-tabs" aria-label="Sort posts">
+  <%= link_to "Hot", posts_path, class: "sort-tab#{" active" unless params[:sort]}" %>
+  <%= link_to "Fresh", posts_path(sort: "fresh"), class: "sort-tab#{" active" if params[:sort] == "fresh"}" %>
+  <%= link_to "Top", posts_path(sort: "top"), class: "sort-tab#{" active" if params[:sort] == "top"}" %>
 </nav>
 
 <%= live_search_index url: posts_path(sort: params[:sort]), results_partial: "posts/live_search_results", placeholder: "Search posts…", label: "Post search", frame_id: "brgen-posts" %>

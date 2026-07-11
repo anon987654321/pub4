@@ -86,12 +86,17 @@ module ApplicationHelper
       ["playlist", "//playlist.#{domain}/"],
       ["TV", "//tv.#{domain}/"],
       ["takeaway", "//takeaway.#{domain}/"],
+      ["maps", "//maps.#{domain}/"],
       ["messenger", "//messenger.#{domain}/"]
     ]
   end
 
   def active_vertical
     Current.subapp || inferred_vertical_from_controller
+  end
+
+  def home_feed_following?
+    Brgen::HomeFeed.following?(feed: params[:feed])
   end
 
   def vertical_surface?

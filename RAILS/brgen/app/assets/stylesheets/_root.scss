@@ -1,71 +1,17 @@
 @use "fonts";
 @use "x_base" as x;
+@use "x_root" as xroot;
 
 :root {
   @include x.x-dark-tokens;
+  @include xroot.x-app-root-tokens;
   color-scheme: dark;
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
-  --bg: var(--x-bg);
-  --surface: var(--x-surface);
-  --surface2: var(--x-surface-elevated);
-  --search-bg: var(--x-search-bg);
-  --text: var(--x-text);
-  --text-dim: var(--x-text-secondary);
-  --accent: oklch(76% 0.13 68);
-  --accent-hover: oklch(70% 0.13 68);
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
-  --border: var(--x-border);
-  --hover: var(--x-hover);
-  --hover-subtle: var(--x-hover-subtle);
-  --radius: var(--x-radius-card);
-  --radius-pill: var(--x-radius-pill);
-  --panel-blur-bg: var(--bg);
-  --sp: 8px;
-  --sidebar-width: var(--x-sidebar);
-  --widgets-width: var(--x-widgets);
-  --feed-max: var(--x-feed-max);
-  --transition-fast: 180ms;
-  --transition-normal: 300ms;
   --z-canvas: 0;
   --z-carousel: 95;
-  --z-app: 10;
-  --z-nav: 80;
   --z-splash: 1000;
   --turbo-progress-bar-color: var(--accent);
-  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-
-#dark-toggle {
-  position: fixed;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.theme-toggle {
-  position: fixed;
-  top: calc(0.75rem + var(--safe-top));
-  inset-inline-end: calc(0.75rem + var(--safe-right));
-  z-index: 110;
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-pill);
-  background: var(--surface2);
-  color: var(--text);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
-}
-
-.theme-toggle:hover {
-  background: var(--hover);
-  text-decoration: none;
 }
 
 .theme-root {
@@ -84,6 +30,7 @@
   --border: var(--x-border);
   --hover: var(--x-hover);
   --hover-subtle: var(--x-hover-subtle);
+  --panel-blur-bg: var(--bg);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

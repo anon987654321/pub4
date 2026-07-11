@@ -13,13 +13,10 @@ class HomeInfiniteScrollReflex < Shared::InfiniteScrollReflex
   end
 
   def feed_scope
-    scope = if Current.user
-              Current.user.timeline_posts.hot
-            elsif Brgen::DemoFeed.available?
-              Brgen::DemoFeed.posts_scope.hot
-            else
-              Post.hot
-            end
+    scope = Brgen::HomeFeed.scope(
+      feed: element.dataset["feed"],
+      authenticated: Current.user.present? && !Current.user.guest?
+    )
     scope = scope.includes(:user, :community, :votes)
     return scope unless element.dataset["q"].present?
 

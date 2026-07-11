@@ -579,7 +579,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes home, '@pagy, @posts = pagy(scope)'
     assert_includes partial, 'HomeInfiniteScrollReflex#load_more'
     assert_includes partial, 'home-feed-sentinel'
-    assert_includes reflex, 'timeline_posts.hot'
+    assert_includes reflex, 'Brgen::HomeFeed.scope'
     assert_includes reflex, 'Brgen::DemoFeed.posts_scope.hot'
   end
 
