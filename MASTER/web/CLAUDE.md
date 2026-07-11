@@ -67,6 +67,39 @@ code read.
 5. Confirm the primer dismisses, prompt appears, and the face either starts or fails visibly.
 6. Confirm console errors do not indicate eager WebGL or THREE.js boot before tap.
 
+## RESOLVED 2026-07-11: the real "dead tap" root cause was a MutationObserver loop
+
+After 30+ provisional "fix primer tap" commits, the actual cause of the
+slow-page / infinite-loading-spinner / dead-tap triad was found and fixed:
+`public/face_state.js`'s `observe()` watched `attributes: true` on the same
+elements (`#status`, `#ui-status`, `#pipeline-stage`) whose `data-runtime-status`
+attribute its own callback writes via `applyFrom()`. Each write re-fired the
+observer → wrote again → an infinite mutation→observe→mutate **microtask** loop
+that permanently starved the main thread. Because it's a microtask flood (not a
+plain `while` loop), the thread never yields to rendering or input — so the page
+load event never fires (spinner), and the primer's tap listeners never get a
+slot (dead tap). Fix: drop `attributes` from the observe options; `runtimeStatus`
+is only ever written by this file, so there was no external attribute change
+worth observing. The real external signal (status text) still fires via
+`childList`/`characterData`.
+
+Two things this exposed, both worth heeding:
+- **Headless bisection *did* find it**, contradicting the "false hangs" caution
+  below. The trustworthy method was a *controlled A/B*: intercept-and-block one
+  script at a time (via ferrum/Playwright request interception) and probe main-
+  thread responsiveness with a short-timeout `evaluate`. Blocking *only*
+  `face_state.js` flipped the page from wedged to responsive; a sandbox false-
+  hang can't produce that selective result. A raw "it hangs" from one load is
+  untrustworthy; a bisect is not.
+- **The rc.d precompile-skip digest is incomplete.** `/etc/rc.d/master`'s
+  `_digest=$(cksum …)` covers only ~10 named files (face.part*, face.css,
+  face.js, container_gate.js, the bundles, index/_face_boot erb). It does NOT
+  include `face_state.js` or the other ~30 standalone `face_*.js` modules — so
+  editing one and restarting master **silently skips precompile** and keeps the
+  stale fingerprint. When editing any face_* module, either add it to that
+  digest list or force `RAILS_ENV=production bundle34 exec rails assets:precompile`
+  manually before restart, then confirm the live fingerprint changed.
+
 ## The primer → face boot sequence
 
 The page loads with a black `#primer` overlay ("tap to start"). Two

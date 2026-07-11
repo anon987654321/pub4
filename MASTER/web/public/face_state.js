@@ -32,8 +32,15 @@
 
   function observe(el) {
     if (!el) return;
+    // Observe text/child changes only — NOT attributes. applyFrom() writes
+    // el.dataset.runtimeStatus (a data-* attribute) on these same elements, so
+    // observing `attributes` here re-fired this callback on every write, an
+    // infinite mutation→observe→mutate microtask loop that permanently starved
+    // the main thread (page never finished loading, primer tap never handled).
+    // runtimeStatus is only ever written by this file, so there is no external
+    // attribute change worth observing; the real external signal is status text.
     new MutationObserver(() => apply()).observe(el, {
-      childList: true, subtree: true, characterData: true, attributes: true
+      childList: true, subtree: true, characterData: true
     });
   }
 
