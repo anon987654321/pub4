@@ -77,7 +77,6 @@
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
   <%# No prefetch of face.js or THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
-  <link rel="stylesheet" href="<%= asset_path("photo_upload.css") %>">
   <style nonce="<%= content_security_policy_nonce %>">
     html, body { background: #000; color: #f5f0e8; }
     canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; }
@@ -207,7 +206,15 @@
             showProgress(Math.min(progPct,90));
           }
         },40);
-        fallback=setTimeout(function(){if(window.MASTER_FACE&&window.MASTER_FACE.primerFired){clearWatch();}else{bootFailed();}},35000);
+        fallback=setTimeout(function(){
+          var f=window.MASTER_FACE;
+          // primerFired only proves startEverything() ran, not that anything
+          // painted - a WebGLRenderer that threw during construction (caught
+          // and swallowed downstream) leaves primerFired true and the canvas
+          // permanently black. dbgFrames only increments from inside a real
+          // frame() call, so it's the actual evidence of rendering.
+          if(f&&f.primerFired&&!window.__MASTER_RENDERER_FAILED__&&(f.dbgFrames>0||!f.renderer)){clearWatch();}else{bootFailed();}
+        },35000);
       }
       window.__MASTER_PRIMER_GO__=go;
       window.__MASTER_PRIMER_TAP__=go;
@@ -232,8 +239,6 @@
   <div id="mood-sparkline" class="mood-sparkline" aria-hidden="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
   <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
-    <button id="photo-button" type="button" aria-label="Attach photo">+</button>
-    <input id="photo" type="file" accept="image/*" capture="environment" hidden>
     <span class="pp">user</span><span class="sep2">$ </span>
     <button type="button" class="tool" data-act="mic" aria-label="Microphone">mic</button>
     <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message"></textarea>
@@ -251,7 +256,7 @@
       face.js (the THREE.js WebGL face) is intentionally absent: loadFace() imports it
       lazily on the primer tap (see the boot script above). %>
   <%= javascript_include_tag(*%w[face_state visual_governor topology_registry particle_worker
-        chat_actions visual_bridge face_agent_hud chat], defer: true) %>
+        chat_actions visual_bridge chat], defer: true) %>
   <script src="<%= asset_path("master_events.js") %>" defer></script>
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">

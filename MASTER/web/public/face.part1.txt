@@ -485,7 +485,17 @@ if (_hasWebGL && THREE) {
     renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: false, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 1);
     renderer.autoClear = true;
-  } catch (_) {}
+  } catch (e) {
+    // A silently-swallowed failure here left `renderer` undefined forever:
+    // frame() keeps rescheduling itself via requestAnimationFrame but bails
+    // out at its own `if (!renderer)` guard every tick, so the canvas stays
+    // permanently black with no console output and no user-visible signal.
+    // Surface it so the boot watchdog (index.html.erb) can tell a genuine
+    // WebGL failure apart from a successful boot instead of trusting
+    // primerFired alone.
+    console.error('MASTER face: WebGLRenderer construction failed', e);
+    window.__MASTER_RENDERER_FAILED__ = true;
+  }
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
   camera.position.set(0, 0, 4.6);
