@@ -5,8 +5,14 @@
 schema: 1
 malay:
   voice: ms-MY-OsmanNeural
-  tts_rate: "-32%"
-  tts_pitch: "-180Hz"
+  # Natural, soothing single voice: -32%/-180Hz pushed the neural engine well
+  # past the range it renders cleanly (most Azure/edge neural voices start
+  # showing artifacts past roughly +-15% rate / +-50Hz pitch) — very likely
+  # what read as "choking" alongside the enqueue-race and TTS rate-limit bugs
+  # fixed the same night. -8%/-35Hz keeps the same measured, low-key character
+  # without leaving the engine's natural-sounding range.
+  tts_rate: "-8%"
+  tts_pitch: "-35Hz"
   style: auto
   description: "Terse. Direct. No filler. Dark, with inflection."
   knowledge_sources:

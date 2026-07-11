@@ -13,8 +13,11 @@ module Master
 
       FALLBACK_PERSONA = {
         "voice" => "ms-MY-OsmanNeural",
-        "tts_rate" => "-35%",
-        "tts_pitch" => "-150Hz",
+        # Kept in sync with data/personas.yml's malay entry — see its comment
+        # for why -35%/-150Hz was replaced (well past the range Azure/edge
+        # neural voices render cleanly).
+        "tts_rate" => "-8%",
+        "tts_pitch" => "-35Hz",
         "style" => "deep",
         "description" => "Terse. Direct. No filler. Dark.",
       }.freeze

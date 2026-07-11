@@ -10,6 +10,24 @@ class CanvasController < ApplicationController
     user:expression face:metrics
   ].freeze
 
+  SEASON_TOPOLOGY = {
+    "spring" => "ecology",
+    "summer" => "face",
+    "autumn" => "codebase",
+    "winter" => "ecology"
+  }.freeze
+
+  # GET /canvas/topology?season=summer — seasonal accent hint for the pixel
+  # field (wireVisionC/D in face_vision.bundle.js). No route existed for this
+  # at all; the fetch always 404'd and was silently .catch()-guarded to an
+  # empty seasonal event. topologies.yml has no seasonal concept, so this
+  # derives a real one from the current date rather than the querystring
+  # alone, falling back to it only if the param is one of the four seasons.
+  def topology
+    season = params[:season].to_s.presence_in(SEASON_TOPOLOGY.keys) || current_season
+    render json: { season: season, id: SEASON_TOPOLOGY.fetch(season) }
+  end
+
   def post_event
     topic = params.require(:topic).to_s
     return head(:unprocessable_entity) unless ALLOWED_TOPICS.include?(topic)
@@ -44,5 +62,16 @@ class CanvasController < ApplicationController
     }
     container[:bus].publish(:canvas_state, **payload) rescue nil
     head :accepted
+  end
+
+  private
+
+  def current_season
+    case Time.now.month
+    when 3..5 then "spring"
+    when 6..8 then "summer"
+    when 9..11 then "autumn"
+    else "winter"
+    end
   end
 end

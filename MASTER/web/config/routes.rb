@@ -25,6 +25,7 @@ Rails.application.routes.draw do
   get  "runtime/status", to: "runtime#status"
   get  "runtime/topologies", to: "runtime#topologies"
   get  "events/stream", to: "events#stream"
+  get  "canvas/topology", to: "canvas#topology"
   post "canvas/event",  to: "canvas#post_event"
   post "canvas/state",  to: "canvas#state"
   get  "manifest" => "pwa#manifest", as: :pwa_manifest

@@ -8,11 +8,22 @@ class ApplicationController < ActionController::Base
 
   VISITOR_ALLOWED_TOOLS = %w[AskLlm WebSearch].freeze
   AUTHENTICATED_ACTIONS = %i[dmesg history live metrics].freeze
-  TTS_ACTIONS = %i[show status].freeze
+  TTS_SYNTH_ACTIONS = %i[show].freeze
+  TTS_POLL_ACTIONS = %i[status stream].freeze
   CHAT_RATE_LIMIT = 30  # requests per 60s per IP
   CHAT_WINDOW_S   = 60
   TTS_RATE_LIMIT  = 30
   TTS_WINDOW_S    = 60
+  # status/stream are cheap, read-only progress polls — pollTTSJob calls status
+  # every 250ms-1.5s per in-flight job, so a couple of concurrent utterances
+  # legitimately produce dozens of polls per minute. They used to share
+  # TTS_RATE_LIMIT with `show` (the actual synthesis request); polling for an
+  # existing job isn't synthesis abuse, and a 429 here made the client's
+  # pollTTSJob throw and silently fall back to the browser's native voice —
+  # same failure mode as the enqueue race, different trigger. Give polling its
+  # own, much larger budget.
+  TTS_POLL_RATE_LIMIT = 300
+  TTS_POLL_WINDOW_S   = 60
   WEB_READ_RATE_LIMIT  = 120
   WEB_READ_WINDOW_S    = 60
   WEB_WRITE_RATE_LIMIT = 60
@@ -23,7 +34,8 @@ class ApplicationController < ActionController::Base
   before_action :require_container!
   before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }
   before_action :enforce_chat_rate_limit, if: -> { action_in?(:message) }
-  before_action :enforce_tts_rate_limit, if: -> { controller_name == "tts" && action_in?(TTS_ACTIONS) }
+  before_action :enforce_tts_rate_limit, if: -> { controller_name == "tts" && action_in?(TTS_SYNTH_ACTIONS) }
+  before_action :enforce_tts_poll_rate_limit, if: -> { controller_name == "tts" && action_in?(TTS_POLL_ACTIONS) }
   before_action :enforce_web_read_rate_limit, if: -> { action_in?(%i[dmesg history live metrics]) }
   before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }
 
