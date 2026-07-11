@@ -355,7 +355,13 @@ window.addEventListener('tts:playback:end', (ev) => {
   State.pulse = Math.max(0, (State.pulse || 0) * decay);
   if (State.mode === 'speaking') State.mode = 'idle';
   State.currentSpeechStyle = null;
-  clearViseme?.();
+  // clearViseme() lives in face.runtime.js's own closure, not exposed to this
+  // module — referencing it threw ReferenceError on every tts:playback:end
+  // (optional chaining only guards a null/undefined value, not an undeclared
+  // identifier), so the mouth shape never relaxed to neutral between speech
+  // segments. Reset State directly, mirroring face.runtime.js's clearViseme().
+  State.viseme = 'neutral';
+  State.visemeAmp = 0;
 });
 
 window.addEventListener('tts:viseme', (ev) => {
