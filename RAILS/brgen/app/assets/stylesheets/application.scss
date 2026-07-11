@@ -1,5 +1,6 @@
 @use "pub4_stack_brgen" as *;
 @use "_root";
+@use "_a11y";
 @use "_canvas";
 @use "_shell";
 @use "_nav";
@@ -12,6 +13,7 @@
 @use "_forms";
 @use "_widgets";
 @use "_marketplace";
+@use "_marketplace_stores";
 @use "_nearby";
 @use "_share";
 @use "_media";

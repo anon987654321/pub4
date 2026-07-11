@@ -32,7 +32,7 @@ class DeployPathsTest < Minitest::Test
   private
 
   def repo_root
-    @repo_root ||= File.expand_path("../../../../../..", __dir__)
+    @repo_root ||= File.expand_path("../../../../..", __dir__)
   end
 
   def rails_root
