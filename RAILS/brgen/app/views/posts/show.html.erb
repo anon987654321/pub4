@@ -3,23 +3,25 @@
 <% content_for :json_ld, json_ld_for(@post, type: :article) %>
 <%= turbo_stream_from @post %>
 
-<article>
-  <% if authenticated? %>
-    <%= button_to "▲", post_vote_path(@post), params: { vote: { value: 1 } },
-          class: ("active-up" if @post.upvoted_by?(Current.user)) %>
-  <% else %>
-    <span>▲</span>
-  <% end %>
-  <span data-controller="animated-number"
-        data-animated-number-start-value="0"
-        data-animated-number-end-value="<%= @post.score.to_i %>"
-        data-animated-number-duration-value="900"><%= @post.score %></span>
-  <% if authenticated? %>
-    <%= button_to "▼", post_vote_path(@post), params: { vote: { value: -1 } },
-          class: ("active-down" if @post.downvoted_by?(Current.user)) %>
-  <% else %>
-    <span>▼</span>
-  <% end %>
+<article class="post_show">
+  <div class="post_vote">
+    <% if authenticated? %>
+      <%= button_to "▲", post_vote_path(@post), params: { vote: { value: 1 } },
+            class: ("active-up" if @post.upvoted_by?(Current.user)) %>
+    <% else %>
+      <span>▲</span>
+    <% end %>
+    <span data-controller="animated-number"
+          data-animated-number-start-value="0"
+          data-animated-number-end-value="<%= @post.score.to_i %>"
+          data-animated-number-duration-value="900"><%= @post.score %></span>
+    <% if authenticated? %>
+      <%= button_to "▼", post_vote_path(@post), params: { vote: { value: -1 } },
+            class: ("active-down" if @post.downvoted_by?(Current.user)) %>
+    <% else %>
+      <span>▼</span>
+    <% end %>
+  </div>
 
   <header>
     <% if @post.community %>

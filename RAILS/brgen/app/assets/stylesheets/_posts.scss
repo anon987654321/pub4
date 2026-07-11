@@ -65,17 +65,45 @@
 
 .post-actions a:hover { color: var(--accent); background: var(--hover); text-decoration: none; }
 
-/* Post show */
-.post-show { padding: 16px; border-bottom: 1px solid var(--border); }
-.post-content { color: var(--text); line-height: 1.7; margin: 0.75rem 0; white-space: pre-wrap; font-size: 0.9375rem; }
+/* Post show — single-column editorial reading (old-brgen feel on the dark shell).
+   Overrides the generic feed-card `article { display: flex }` / dimmed `article p`. */
+.post_show {
+  display: block;
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.post_show:hover { background: none; }
+.post_vote {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+.post_vote button, .post_vote span { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.post_vote button:hover { color: var(--upvote); }
+.post_show header { font-size: .875rem; color: var(--text-dim); margin-bottom: 8px; }
+.post_show header a { color: var(--text-dim); }
+.post_show h1 { font-size: 1.5rem; font-weight: 800; line-height: 1.25; letter-spacing: -0.01em; margin: 0 0 0.9rem; color: var(--text); }
+.post_show p { color: var(--text); line-height: 1.7; font-size: 1.0625rem; margin: 0 0 1.2em; }
+.post_show p:last-of-type { margin-bottom: 0; }
+.post_show a { text-decoration: underline; }
+.post_show .post-image { display: block; max-width: 100%; border-radius: var(--radius); margin: 0 0 1.2em; }
 
-/* Comments */
+/* Comments — single-column, editorial body, nested replies indented */
 .comment-form-wrap { padding: 16px; border-bottom: 1px solid var(--border); }
-.comment { padding: 0.75rem 16px; border-bottom: 1px solid var(--border); }
-.comment .comment { padding-inline-start: 56px; }
-.comment-meta { font-size: .875rem; color: var(--text-dim); margin-bottom: 4px; }
-.comment-meta .author { color: var(--text); font-weight: 700; }
-.comment-body { line-height: 1.6; font-size: 0.9375rem; }
+.comment_item {
+  display: block;
+  padding: 0.75rem 16px;
+  border-bottom: 1px solid var(--border);
+}
+.comment_item:hover { background: none; }
+.comment_item header { font-size: .875rem; color: var(--text-dim); margin-bottom: 4px; }
+.comment_item header span:first-child { color: var(--text); font-weight: 700; }
+.comment_item p { color: var(--text); line-height: 1.6; font-size: 0.9375rem; margin: 0; }
+.comment_item a { text-decoration: underline; }
+.comment_item .comment_item { padding-inline-end: 0; padding-inline-start: 40px; border-bottom: 0; }
 
 /* Forms */
 .form-wrap { padding: 24px 16px; max-width: 480px; }

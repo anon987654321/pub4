@@ -1,5 +1,5 @@
 <%= turbo_frame_tag dom_id(comment) do %>
-<article data-depth="<%= [comment.depth, 4].min %>">
+<article class="comment_item" data-depth="<%= [comment.depth, 4].min %>">
   <header>
     <span><%= comment.user&.username || "anon" %></span>
     <span> · <span data-controller="timeago"><%= time_ago_in_words(comment.created_at) %> ago</span></span>
