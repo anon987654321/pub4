@@ -405,42 +405,17 @@ class ChatService
     text.gsub("\\", "\\\\").gsub("\n", "\\n")
   end
 
+  # Only reachable through the "**" catch-all below, gated by BUS_THOUGHT_RE —
+  # every other event name either fails that regex, is in BUS_DMESG_SKIP, or
+  # already has its own direct subscribe() above that renders it a different
+  # way (tool:before -> "tool", llm:request -> "model", tribunal:rendered ->
+  # "verdict", etc). Adding a branch here does nothing until the event name
+  # also matches BUS_THOUGHT_RE; check that before reintroducing one.
   def thought_format(event, payload)
     case event
-    when "enhance:rewrite" then "refining your prompt for clarity"
-    when "llm:request" then thought_model(payload)
-    when "llm:escalation" then "escalating to a deeper model (depth #{payload[:depth]})"
-    when "tool:before" then thought_tool(payload)
-    when "council_feedback", :council_feedback then thought_council(payload)
-    when "tribunal:rendered" then "tribunal #{payload[:vetoes].to_i.positive? ? "vetoed" : "approved"}"
-    when "pipeline:stage" then thought_stage(payload)
-    when "pipeline:stage_start" then thought_stage(payload.merge(stage: payload[:stage]))
-    when "pipeline:stage_complete" then "#{payload[:stage]} #{payload[:ms]}ms"
     when "phantom:detected" then "phantom guard: #{Array(payload[:patterns]).join(', ')}"
     when "compaction:done" then "compacted context (#{payload[:token_est]} tokens remain)"
     end
-  end
-
-  def thought_model(payload)
-    model = payload[:model].to_s.split("/").last
-    model.empty? ? "thinking" : "thinking with #{model}"
-  end
-
-  def thought_tool(payload)
-    tool = payload[:tool].to_s.split("::").last.to_s.downcase
-    path = payload[:path].to_s
-    path.empty? ? "using #{tool}" : "using #{tool} on #{File.basename(path)}"
-  end
-
-  def thought_council(payload)
-    persona = payload[:persona].to_s
-    persona.empty? ? "council deliberating" : "#{persona} weighs in"
-  end
-
-  def thought_stage(payload)
-    stage = payload[:stage].to_s
-    stages = %w[enhance infer route guard execute council deliberate prune memo render]
-    stages.include?(stage) ? "entering #{stage}" : nil
   end
 
   def dmesg_format(event, payload)
