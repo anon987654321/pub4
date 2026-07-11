@@ -74,6 +74,22 @@ module ApplicationHelper
     marketplace_marketplace_root_url(subdomain: marketplace_subdomain, host: Current.domain, **options)
   end
 
+  # Primary vertical navigation for the pull-down swiper. front → home feed;
+  # AI → the shared MASTER face; the rest are per-city verticals on subdomains.
+  def brgen_nav_items
+    domain = Current.domain
+    [
+      ["front", root_path],
+      ["AI", "https://ai.brgen.no"],
+      ["marketplace", "//#{marketplace_host}/"],
+      ["dating", "//dating.#{domain}/"],
+      ["playlist", "//playlist.#{domain}/"],
+      ["TV", "//tv.#{domain}/"],
+      ["takeaway", "//takeaway.#{domain}/"],
+      ["messenger", "//messenger.#{domain}/"]
+    ]
+  end
+
   def active_vertical
     Current.subapp || inferred_vertical_from_controller
   end
