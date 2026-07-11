@@ -111,6 +111,21 @@ end
 up_checks.each do |name, port|
   ok, out = curl_ok?("http://127.0.0.1:#{port}/up", timeout: 20)
   failures << "#{name} up: #{out.empty? ? "no response on :#{port}" : out}" unless ok
+
+  next unless ready_apps.include?(name)
+
+  health_ok, health_out = curl_ok?("http://127.0.0.1:#{port}/health", timeout: 20)
+  unless health_ok
+    failures << "#{name} health: #{health_out.empty? ? "no response on :#{port}" : health_out}"
+    next
+  end
+
+  begin
+    payload = JSON.parse(health_out)
+    failures << "#{name} health: status=#{payload['status']}" if payload["status"] == "unavailable"
+  rescue JSON::ParserError
+    failures << "#{name} health: invalid JSON"
+  end
 end
 
 if File.file?("/etc/relayd.conf")

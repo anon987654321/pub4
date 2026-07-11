@@ -15,6 +15,7 @@ Rails 8.1 · SQLite · Falcon · Hotwire · Solid Queue/Cache · relayd
 ```zsh
 doas zsh RAILS/brgen/brgen.sh
 curl -fsS http://127.0.0.1:38182/up
+curl -fsS http://127.0.0.1:38182/health
 ```
 
 ## Cities

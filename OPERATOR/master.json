@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "generated_from": "RAILS/apps.yml",
+  "generated_at": "2026-07-11",
+  "apps": [
+    {
+      "name": "amber",
+      "domain": "amber.brgen.no",
+      "port": 61352
+    },
+    {
+      "name": "brgen",
+      "domain": "brgen.no",
+      "port": 38182
+    },
+    {
+      "name": "bsdports",
+      "domain": "bsdports.org",
+      "port": 47312
+    }
+  ],
+  "master_face": {
+    "name": "master",
+    "domain": "ai.brgen.no",
+    "port": 53187,
+    "deploy_root": "MASTER/web"
+  }
+}

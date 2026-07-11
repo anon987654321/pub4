@@ -48,7 +48,10 @@ apps.each do |name, metadata|
   failures << "#{name}: production.rb missing assume_ssl" unless text.match?(/\bconfig\.assume_ssl\s*=\s*true\b/)
   failures << "#{name}: production.rb has force_ssl" if text.match?(/\bconfig\.force_ssl\s*=\s*true\b/)
   failures << "#{name}: production.rb missing host #{domain}" unless text.include?(domain)
-  failures << "#{name}: production.rb missing /up host_authorization exclude" unless text.include?('"/up"')
+  failures << "#{name}: production.rb missing /up host_authorization exclude" unless text.include?('"/up"') || text.include?("/up")
+  failures << "#{name}: production.rb missing /health host_authorization exclude" unless text.include?("/health")
+  routes = File.join(RAILS_ROOT, name, "config", "routes.rb")
+  failures << "#{name}: routes must load shared fleet health endpoint" if File.file?(routes) && !File.read(routes).include?("fleet.rb")
 end
 
 master_web = File.join(ROOT, "MASTER", "web", "config", "environments", "production.rb")

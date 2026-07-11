@@ -4,7 +4,7 @@
 def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil, secret_key_base: true)
   mailer_host ||= Array(hosts).first
 
-  config.secret_key_base = ENV.fetch("SECRET_KEY_BASE") if secret_key_base && ENV["SECRET_KEY_BASE"].present? && ENV["SECRET_KEY_BASE"].present?
+  config.secret_key_base = ENV.fetch("SECRET_KEY_BASE") if secret_key_base && ENV["SECRET_KEY_BASE"].present?
 
   config.yjit = true if config.respond_to?(:yjit=)
 
@@ -17,6 +17,7 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
   config.active_storage.service = :local
 
   config.assume_ssl = true
+  config.force_ssl = false
 
   config.log_tags = [:request_id]
   config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
@@ -42,5 +43,7 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
   config.active_record.attributes_for_inspect = [:id]
 
   config.hosts = Array(hosts)
-  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  config.host_authorization = {
+    exclude: ->(request) { %w[/up /health].include?(request.path) },
+  }
 end

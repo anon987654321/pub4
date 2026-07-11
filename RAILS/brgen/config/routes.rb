@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   resource  :session
   resources :passwords, param: :token
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../shared/config/routes/fleet.rb", __dir__)))
   resources :activity_events, only: :index
   resources :notifications, only: %i[index update] do
     collection do

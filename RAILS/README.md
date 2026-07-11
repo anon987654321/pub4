@@ -1,6 +1,6 @@
 # Rails apps
 
-4 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.** Horizon/aspirational work: `apps.horizon.yml` (agent: ignore). Per-app notes: `<app>/AGENTS.md`.
+3 active production Rails 8.1 apps under one shared engine (plus `hjerterom` archived — decommissioned on the 1GB VPS 2026-07-11, source retained). **Source of truth: `apps.yml`.** Horizon/aspirational work: `apps.horizon.yml` (agent: ignore). Per-app notes: `<app>/AGENTS.md`.
 
 ## Apps
 
@@ -9,7 +9,7 @@
 | brgen | brgen.no | 38182 | City social + marketplace, dating, TV, takeaway, playlist |
 | amber | amber.brgen.no | 61352 | Wardrobe / outfit intelligence |
 | bsdports | bsdports.org | 47312 | Ports search and advisories |
-| hjerterom | hjerterom.brgen.no | 38891 | Food rescue and volunteer ops |
+| hjerterom | hjerterom.brgen.no | 38891 | Food rescue (decommissioned on VPS; redeploy when RAM allows) |
 
 Deploy: `cd RAILS && doas zsh OPERATOR.sh` (default: brgen) or `doas zsh OPERATOR.sh <app>`
 
@@ -19,7 +19,7 @@ Deploy: `cd RAILS && doas zsh OPERATOR.sh` (default: brgen) or `doas zsh OPERATO
 2. `pub4-shared` via `path: '../shared'` in Gemfile
 3. Ruby 3.4, `RAILS_ENV=production`, Falcon behind relayd
 4. `config.assume_ssl = true` — no `force_ssl`
-5. Health at `/up`; rc.d service per app in `OPENBSD/etc/rc.d/`
+5. Health at `/up` (liveness) and `/health` (Solid Cache/Queue/DB depth); rc.d per app in `OPENBSD/etc/rc.d/`
 6. Secrets in `/etc/<app>.env` on VPS — no `config/master.key` in git
 
 ## Shared

@@ -11,6 +11,7 @@ Rails 8.1 · SQLite · Falcon · Hotwire · Active Storage · OpenBSD relayd
 ```zsh
 doas zsh RAILS/amber/amber.sh
 curl -fsS http://127.0.0.1:61352/up
+curl -fsS http://127.0.0.1:61352/health
 ```
 
 ## Integration

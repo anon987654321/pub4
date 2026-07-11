@@ -65,7 +65,17 @@ apps.each do |name, metadata|
   fail!(app_failures, "production mailer host must use #{domain}") unless mailer_ok
   hosts_ok = prod_active.any? { |line| line.include?(domain) && (line.include?("config.hosts") || line.include?("hosts:")) }
   fail!(app_failures, "production config.hosts must include #{domain}") unless hosts_ok
-  fail!(app_failures, "production host_authorization must keep /up available") unless prod_active.any? { |line| line.include?("config.host_authorization") && line.include?('"/up"') }
+  prod_text = prod_active.join("\n")
+  fail!(app_failures, "production host_authorization must keep /up available") unless prod_text.include?("config.host_authorization") && prod_text.include?("/up")
+  fail!(app_failures, "production host_authorization must keep /health available") unless prod_text.include?("config.host_authorization") && prod_text.include?("/health")
+
+  routes = File.join(app_dir, "config", "routes.rb")
+  if File.file?(routes)
+    routes_text = File.read(routes)
+    fail!(app_failures, "routes must load shared fleet health endpoint") unless routes_text.include?("fleet.rb")
+  else
+    fail!(app_failures, "missing config/routes.rb")
+  end
   fail!(app_failures, "Solid Cache must be enabled") unless prod_active.any? { |line| line.match?(/\bconfig\.cache_store\s*=\s*:solid_cache_store\b/) }
   fail!(app_failures, "Solid Queue must be enabled") unless prod_active.any? { |line| line.match?(/\bconfig\.active_job\.queue_adapter\s*=\s*:solid_queue\b/) }
 
