@@ -10,12 +10,22 @@ end
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@hotwired/stimulus", to: "@hotwired--stimulus.js"
 pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
-pin "@rails/request.js", to: "@rails--request.js.js"
+# Same relative-import issue as date-fns below: index.js pulls in
+# ./fetch_request, ./fetch_response, ./request_interceptor, ./verbs via
+# relative paths, which only resolve when served from the same CDN directory.
+pin "@rails/request.js", to: "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/src/index.js"
 pin "stimulus-use"
 pin "stimulus_reflex"
 pin "cable_ready"
 pin "@stimulus_reflex/futurism"
-pin "date-fns"
+# date-fns's own ESM build cross-references ~200 sibling files via *relative*
+# imports (./addDays.js, ./formatDistance.js, ...) rather than bare specifiers,
+# so vendoring a single flattened file locally breaks every one of those
+# relative paths once served from our own domain. Pinning straight to the CDN
+# keeps the relative imports resolving against that same CDN path, matching
+# the swiper/bundle pin below. Only stimulus-components/timeago needs this,
+# for formatDistanceToNow.
+pin "date-fns", to: "https://unpkg.com/date-fns@4.4.0/index.js"
 pin "sortablejs"
 pin "pub4/hotwire", to: "pub4_hotwire.js"
 pin "pub4/stimulus_boot", to: "pub4_stimulus_boot.js"
