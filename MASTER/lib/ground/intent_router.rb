@@ -48,9 +48,14 @@ module Master
         downcased = text.to_s.downcase.strip
         return STANDING_SEMANTICS[downcased] if STANDING_SEMANTICS.key?(downcased)
 
+        # start_with?, not include?: keywords like "ui" or "go" are short enough
+        # that anywhere-substring matching false-positives on ordinary words
+        # ("quick" contains "ui") and misroutes plain chat into the coding
+        # Fold. A handful of keywords ("deliberat") are deliberate prefixes of
+        # longer inflections, which start_with? still matches correctly.
         tokens = downcased.scan(/\w+/)
         scores = INTENTS.transform_values do |keywords|
-          tokens.count { |t| keywords.any? { |k| t.include?(k) } }
+          tokens.count { |t| keywords.any? { |k| t.start_with?(k) } }
         end
         best, score = scores.max_by { |_, v| v }
         score.positive? ? best : :unknown
