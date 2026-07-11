@@ -51,7 +51,8 @@ class ChatService
       message: @params[:message].to_s.strip,
       container: @container,
       felt_sense: felt_sense_payload,
-      on_turn: method(:stream_fold_turn)
+      on_turn: method(:stream_fold_turn),
+      on_chunk: method(:write_chunk)
     )
     write_fallback(result)
     write_turn_ctx_footer

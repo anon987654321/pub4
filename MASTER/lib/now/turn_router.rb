@@ -1,20 +1,52 @@
 # frozen_string_literal: true
 
+require_relative "../../core/master"
+
 module Master
   module Now
     # TurnRouter — one entry for agent work: plain language → Fold, slash → command_registry.
     module TurnRouter
       module_function
 
-      def call(message:, container:, felt_sense: nil, on_turn: nil)
+      def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil)
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
 
         if text.start_with?("/")
           dispatch_slash(text, container:, felt_sense:, on_turn:)
+        elsif casual?(text)
+          casual_reply(text, container:, felt_sense:, on_chunk:)
         else
           run_fold(text, container:, on_turn:)
         end
+      end
+
+      # Core::Fold's constitution requires exec evidence (test_pass, scan_clean,
+      # ...) before it will admit a `done` effect — right for a coding goal, but
+      # it means the Fold can never just answer "hi". Plain conversation (no
+      # recognized coding-task keyword, no risk-pattern hit) skips the Fold
+      # entirely and talks straight to the agent, which already carries the
+      # persona system prompt, model routing, and visitor-scoped tools
+      # (AskLlm/WebSearch — see Fiber[:master_visitor] in tool_registry.rb).
+      def casual?(text)
+        return false if text.match?(FoldRisk::HIGH_PATTERNS) || text.match?(FoldRisk::MEDIUM_PATTERNS)
+
+        Ground::IntentRouter.new.classify(text) == :unknown
+      end
+
+      def casual_reply(text, container:, felt_sense: nil, on_chunk: nil)
+        return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
+
+        agent = container[:agent]
+        return Master::Result.err("agent unavailable", category: :infrastructure) unless agent
+
+        result = agent.call({ message: text, on_chunk:, felt_sense: })
+        return result if result.is_a?(Master::Result::Err)
+
+        reply = result.value!.to_s
+        Master::Result.ok({ output: reply, rendered: reply })
+      rescue StandardError => e
+        Master::Result.err("chat: #{e.message}", category: :infrastructure)
       end
 
       def run_fold(goal, container:, on_turn: nil)
