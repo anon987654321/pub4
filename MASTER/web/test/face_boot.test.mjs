@@ -129,6 +129,7 @@ test("visual_bridge emits master:emotion and uses asset paths", () => {
 test("chat index includes photo attach and LAUI agent hud", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /id="photo-button"/);
+  assert.match(index, /id="photo"/);
   assert.match(index, /photo_upload\.css/);
   assert.match(index, /face_agent_hud/);
 });
@@ -174,6 +175,13 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.ok(particleIdx > bootIdx, "defer scripts should load after synchronous primer boot");
 });
 
+test("application layout does not eagerly parse face or THREE", () => {
+  const layout = readFileSync(join(viewsDir, "layouts", "application.html.erb"), "utf8");
+  assert.doesNotMatch(layout, /modulepreload[^>]+three\.face\.module\.js/);
+  assert.doesNotMatch(layout, /modulepreload[^>]+face\.js/);
+  assert.doesNotMatch(layout, /type="module"[^>]+face\.js/);
+});
+
 test("face3d preview consumes TTS events and reports nonblank frames", () => {
   const preview = readFileSync(join(publicDir, "face3d_preview.js"), "utf8");
   const renderer = readFileSync(join(publicDir, "face3d_renderer.js"), "utf8");
@@ -214,6 +222,8 @@ test("visual_bridge connects SSE and normalizes visual events", () => {
   assert.match(bridge, /MASTERTopology\.classifyEvent/);
   assert.match(bridge, /master:visual/);
   assert.match(bridge, /disconnectSse/);
+  assert.doesNotMatch(bridge, /MASTERFace/);
+  assert.match(bridge, /MASTER_FACE/);
 });
 
 test("ecology render starts RAF and resumes on visual events", () => {
@@ -232,20 +242,30 @@ test("topology registry exposes canonical classifier", () => {
 
 test("chat_actions posts chat stream instead of EventSource GET", () => {
   const actions = readFileSync(join(publicDir, "chat_actions.js"), "utf8");
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   assert.match(actions, /method:\s*"POST"/);
   assert.match(actions, /\/chat\/message/);
   assert.doesNotMatch(actions, /new EventSource\(/);
   assert.match(actions, /window\.MASTERChat/);
   assert.match(actions, /MASTER_FACE\?\.sendMessage/);
+  assert.match(runtime, /MASTERChat\.startChatStream/);
 });
 
 test("face runtime keeps chat stream and particle worker boot paths", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   assert.match(runtime, /function sendMessage/);
+  assert.match(runtime, /MASTERChat\.startChatStream/);
   assert.match(runtime, /const url = `\/chat\/message\?message=/);
-  assert.match(runtime, /evtSrc = new EventSource\(url\)/);
   assert.match(runtime, /new Worker\('\/particle_worker\.js'\)|new Worker\("\/particle_worker\.js"\)/);
   assert.match(runtime, /window\.MASTER_FACE/);
+});
+
+test("tts defaults to server style inference and recovers after fallback cooldown", () => {
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  assert.match(runtime, /TTS_STYLE_DEFAULT = 'auto'/);
+  assert.match(runtime, /style_locked/);
+  assert.match(runtime, /serverUnavailableUntil/);
+  assert.match(runtime, /serverFailureCount/);
 });
 
 test("service worker avoids stale undigested precache", () => {

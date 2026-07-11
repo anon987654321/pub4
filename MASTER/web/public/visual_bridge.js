@@ -115,8 +115,8 @@
       window.MASTERMask.event(name, visual);
     }
 
-    if (window.MASTERFace && typeof window.MASTERFace.event === "function") {
-      window.MASTERFace.event(name, visual);
+    if (window.MASTER_FACE && typeof window.MASTER_FACE.event === "function") {
+      window.MASTER_FACE.event(name, visual);
     }
 
     reflectToDom(visual);
@@ -144,6 +144,7 @@
 
   function forwardVisemePlan(plan) {
     clearVisemePlanTimers();
+    if (window.MASTER_FACE?.tts) return;
     const frames = Array.isArray(plan)
       ? plan
       : (plan?.frames || plan?.visemes || null);

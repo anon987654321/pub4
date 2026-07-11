@@ -2098,7 +2098,7 @@ function beep(freq, dur) {
 
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
 const VISEME_STEP_MS = 90;
-const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
+const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'nb-NO-PernilleNeural';
@@ -2123,11 +2123,12 @@ function _activeTtsVoice() {
 }
 function _nextTtsVoice() { return _activeTtsVoice(); }
 const TTS_STYLE_KEY = 'master:tts_style';
-const TTS_STYLE_DEFAULT = 'clear';
+const TTS_STYLE_DEFAULT = 'auto';
 function _readStoredTtsStyle() {
   try { return localStorage.getItem(TTS_STYLE_KEY) || TTS_STYLE_DEFAULT; } catch (_) { return TTS_STYLE_DEFAULT; }
 }
 window.MASTER_TTS_STYLE = _readStoredTtsStyle();
+State.ttsStyleLocked = window.MASTER_TTS_STYLE !== 'auto';
 function _ttsStyleDecayRate(style) {
   const s = String(style || '').toLowerCase();
   if (/dramatic|storyteller|intense/.test(s)) return 0.92;
@@ -2153,6 +2154,7 @@ function syncTtsStyleUi() {
 function setTtsStyle(style, opts = {}) {
   const next = String(style || '').trim().toLowerCase() || TTS_STYLE_DEFAULT;
   window.MASTER_TTS_STYLE = next;
+  State.ttsStyleLocked = opts.lockStyle === false ? false : next !== 'auto';
   try { localStorage.setItem(TTS_STYLE_KEY, next); } catch (_) {}
   syncTtsStyleUi();
   if (!opts.silent) {
@@ -2352,7 +2354,10 @@ function ttsURL(text, voice, style) {
   const persona = window.MASTER_PERSONA || {};
   const resolvedStyle = style || _nextTtsStyle(voice);
   if (voice) qs.set('voice', voice);
-  if (resolvedStyle) qs.set('style', resolvedStyle);
+  if (State.ttsStyleLocked && resolvedStyle && resolvedStyle !== 'auto') {
+    qs.set('style', resolvedStyle);
+    qs.set('style_locked', '1');
+  }
   if (State.voiceLocked) qs.set('voice_locked', '1');
   if (persona.tts_rate) qs.set('rate', String(persona.tts_rate));
   if (persona.tts_pitch) qs.set('pitch', String(persona.tts_pitch));
@@ -2584,7 +2589,8 @@ function clearViseme() {
 }
 
 function fetchTTS(text, voice, style) {
-  if (tts.serverUnavailable || tts.prefetch.has(text)) return;
+  if ((tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) || tts.prefetch.has(text)) return;
+  if (tts.serverUnavailable && Date.now() >= (tts.serverUnavailableUntil || 0)) tts.serverUnavailable = false;
   const meta = tts.meta.get(text) || {};
   const p = loadTTSBlob(text, voice || meta.voice, style || meta.style).catch(() => null);
   tts.prefetch.set(text, p);
@@ -2713,8 +2719,9 @@ function ttsTick() {
   const wdMs = Math.min(120000, Math.max(20000, text.length * 180));
   tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: requeue'); requeueChunk(text); finishTTSPlayback(null, true); } }, wdMs);
   State.mode = 'speaking'; setAmbientHum(false);
-  if (tts.serverUnavailable && speakWithBrowserTTS(text, token)) return;
-  if (tts.serverUnavailable) { tts.playing = false; tts.current = null; setTTSLoading(false); ttsTick(); return; }
+  if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0) && speakWithBrowserTTS(text, token)) return;
+  if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) { tts.playing = false; tts.current = null; setTTSLoading(false); ttsTick(); return; }
+  if (tts.serverUnavailable) tts.serverUnavailable = false;
   const meta = tts.meta.get(text) || {};
   const voice = meta.voice || _activeTtsVoice();
   const style = meta.style;
@@ -2761,7 +2768,9 @@ function ttsTick() {
   edgeBlob
     .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
     .catch(() => {
+      tts.serverFailureCount = (tts.serverFailureCount || 0) + 1;
       tts.serverUnavailable = true;
+      tts.serverUnavailableUntil = Date.now() + Math.min(120000, 15000 * tts.serverFailureCount);
       if (speakWithBrowserTTS(text, token)) return;
       tts.audio = null; tts.playing = false; tts.current = null; setTTSLoading(false);
       requeueChunk(text);
@@ -3103,14 +3112,94 @@ async function sendMessage(text) {
   syncShareStateUrl();
   if (input.length > 180) State.lean = 0.14;
   const feltFallback = `${State.mood}|${State.mode}|${(State.entropy ?? 0.2).toFixed(2)}|${(State.confidence ?? 0.86).toFixed(2)}`;
-  const stateBlob = encodeURIComponent(window.collectFeltState?.() || feltFallback);
-  const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
-  const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
-  if (window._imageToken) window._imageToken = null;
   if (!_firstChatSent) {
     _firstChatSent = true;
     window.MASTERVisual?.event?.('chat:first', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, provider: State.modelName || State.model, mode: 'first' });
   }
+  if (window.MASTERChat?.startChatStream) {
+    const imageToken = window._imageToken || null;
+    window._imageToken = null;
+    let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
+    const stallTimer = setTimeout(() => {
+      rootBody.dataset.networkStall = '1';
+      window._chatOnDmesg?.('link thinking');
+      State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
+    }, 4000);
+    const onMessage = (rawData) => {
+      const raw = rawData || '';
+      clearTimeout(stallTimer);
+      delete rootBody.dataset.networkStall;
+      if (raw.length < 200 && raw.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.type === 'trace') return;
+        } catch (_) {}
+      }
+      if (raw === '[DONE]') {
+        if (pending.trim() && !ttsSuppressed) {
+          tts.lastText = pending.trim();
+          enqueueSpeech(pending.trim());
+        }
+        pending = '';
+        State.mode = 'idle';
+        clearThinkingAloud();
+        showStage("");
+        if (navigator.vibrate) navigator.vibrate([60]);
+        window._chatOnDone?.();
+        return;
+      }
+      if (raw.startsWith('ERROR:')) {
+        window._chatOnChunk?.(`\n${raw}\n`);
+        State.mode = 'error'; State.flash = 1; State.shake = 0.8;
+        fadeColorTo(TINT.veto);
+        morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
+        clearThinkingAloud();
+        speakFailure("Sorry, I hit a snag.");
+        window._chatOnError?.();
+        return;
+      }
+      const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+      clearThinkingAloud();
+      if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
+      window._chatOnChunk?.(chunk);
+      pending += chunk;
+      State.pulse = Math.min(0.6, State.pulse + 0.05);
+      let m;
+      while ((m = pending.match(SENT_BREAK)) || (pending.length > TTS_CHUNK_MAX && (m = pending.match(/\s+/)))) {
+        const cut = m ? m.index + m[0].length : TTS_CHUNK_MAX;
+        const sent = pending.slice(0, cut).trim();
+        pending = pending.slice(cut);
+        if (!sent) continue;
+        totalTTSChars += sent.length;
+        const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
+        ttsFirst = false;
+        enqueueSpeech(prefix + sent);
+      }
+    };
+    window.MASTERChat.startChatStream({
+      message: finalText,
+      state: window.collectFeltState?.() || feltFallback,
+      preEnhanced,
+      imageToken
+    }, {
+      onMessage,
+      onNamed: (event, data) => window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
+      onError: () => {
+        clearTimeout(stallTimer);
+        State.flash = 1; State.shake = 0.8; State.mode = 'error';
+        window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
+        clearThinkingAloud();
+        window._chatOnDmesg?.('link quiet');
+        window._chatOnError?.('stream interrupted');
+        speakFailure("Sorry, I hit a snag.");
+      }
+    }).catch(() => {});
+    return;
+  }
+  const stateBlob = encodeURIComponent(window.collectFeltState?.() || feltFallback);
+  const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
+  const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
+  if (window._imageToken) window._imageToken = null;
   evtSrc = new EventSource(url);
   let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
   let _stallTimer = setTimeout(() => {
@@ -3761,4 +3850,3 @@ await import('/face_semantics.js');
 await import('/face_minimal_ui.js');
 await import('/face_loops_music.js');
 await import('/face_loops_nudge.js');
-

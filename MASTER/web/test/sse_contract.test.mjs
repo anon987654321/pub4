@@ -62,10 +62,11 @@ test("visual_bridge logs parse failures instead of silent catch", () => {
   assert.match(bridge, /MASTER_LOG\?\.warn\?\.\("visual_bridge:cable_frame"/);
 });
 
-test("chat index prefetches the face-specific THREE module", () => {
+test("chat index keeps THREE behind the primer tap", () => {
   const index = readFileSync(join(root, "app", "views", "chat", "index.html.erb"), "utf8");
   assert.match(index, /three\.face\.module\.js/);
-  assert.match(index, /rel="prefetch"/);
+  assert.doesNotMatch(index, /rel="prefetch"[^>]+three\.face\.module\.js/);
+  assert.doesNotMatch(index, /rel="modulepreload"[^>]+three\.face\.module\.js/);
 });
 
 test("face runtime logs failures for chat and TTS paths", () => {

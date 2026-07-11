@@ -295,14 +295,94 @@ async function sendMessage(text) {
   syncShareStateUrl();
   if (input.length > 180) State.lean = 0.14;
   const feltFallback = `${State.mood}|${State.mode}|${(State.entropy ?? 0.2).toFixed(2)}|${(State.confidence ?? 0.86).toFixed(2)}`;
-  const stateBlob = encodeURIComponent(window.collectFeltState?.() || feltFallback);
-  const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
-  const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
-  if (window._imageToken) window._imageToken = null;
   if (!_firstChatSent) {
     _firstChatSent = true;
     window.MASTERVisual?.event?.('chat:first', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, provider: State.modelName || State.model, mode: 'first' });
   }
+  if (window.MASTERChat?.startChatStream) {
+    const imageToken = window._imageToken || null;
+    window._imageToken = null;
+    let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
+    const stallTimer = setTimeout(() => {
+      rootBody.dataset.networkStall = '1';
+      window._chatOnDmesg?.('link thinking');
+      State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
+    }, 4000);
+    const onMessage = (rawData) => {
+      const raw = rawData || '';
+      clearTimeout(stallTimer);
+      delete rootBody.dataset.networkStall;
+      if (raw.length < 200 && raw.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.type === 'trace') return;
+        } catch (_) {}
+      }
+      if (raw === '[DONE]') {
+        if (pending.trim() && !ttsSuppressed) {
+          tts.lastText = pending.trim();
+          enqueueSpeech(pending.trim());
+        }
+        pending = '';
+        State.mode = 'idle';
+        clearThinkingAloud();
+        showStage("");
+        if (navigator.vibrate) navigator.vibrate([60]);
+        window._chatOnDone?.();
+        return;
+      }
+      if (raw.startsWith('ERROR:')) {
+        window._chatOnChunk?.(`\n${raw}\n`);
+        State.mode = 'error'; State.flash = 1; State.shake = 0.8;
+        fadeColorTo(TINT.veto);
+        morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
+        clearThinkingAloud();
+        speakFailure("Sorry, I hit a snag.");
+        window._chatOnError?.();
+        return;
+      }
+      const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+      clearThinkingAloud();
+      if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
+      window._chatOnChunk?.(chunk);
+      pending += chunk;
+      State.pulse = Math.min(0.6, State.pulse + 0.05);
+      let m;
+      while ((m = pending.match(SENT_BREAK)) || (pending.length > TTS_CHUNK_MAX && (m = pending.match(/\s+/)))) {
+        const cut = m ? m.index + m[0].length : TTS_CHUNK_MAX;
+        const sent = pending.slice(0, cut).trim();
+        pending = pending.slice(cut);
+        if (!sent) continue;
+        totalTTSChars += sent.length;
+        const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
+        ttsFirst = false;
+        enqueueSpeech(prefix + sent);
+      }
+    };
+    window.MASTERChat.startChatStream({
+      message: finalText,
+      state: window.collectFeltState?.() || feltFallback,
+      preEnhanced,
+      imageToken
+    }, {
+      onMessage,
+      onNamed: (event, data) => window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
+      onError: () => {
+        clearTimeout(stallTimer);
+        State.flash = 1; State.shake = 0.8; State.mode = 'error';
+        window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
+        clearThinkingAloud();
+        window._chatOnDmesg?.('link quiet');
+        window._chatOnError?.('stream interrupted');
+        speakFailure("Sorry, I hit a snag.");
+      }
+    }).catch(() => {});
+    return;
+  }
+  const stateBlob = encodeURIComponent(window.collectFeltState?.() || feltFallback);
+  const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
+  const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
+  if (window._imageToken) window._imageToken = null;
   evtSrc = new EventSource(url);
   let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
   let _stallTimer = setTimeout(() => {
