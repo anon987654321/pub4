@@ -31,7 +31,7 @@ const rootBody = document.body;
 let FACE_PIXEL_SIZE = 0.019;
 let FACE_GLOW_SCALE = 1.22;
 let FACE_PHOSPHOR_DECAY = 0.88;
-let FACE_RENDER_SCALE = 0.88;
+let FACE_RENDER_SCALE = 0.72;
 const soulDrift = Math.max(0, Math.min(1, Number(window.MASTER_SOUL_DRIFT || 0)));
 rootBody.dataset.soulDrift = soulDrift.toFixed(3);
 const modelBadge = (() => {
@@ -750,7 +750,7 @@ function sampleDepthMapGrid(canvas, cols, rows) {
       const sx = Math.min(size - 1, (u * size) | 0);
       const sy = Math.min(size - 1, (v * size) | 0);
       const lum = px[(sy * size + sx) * 4] / 255;
-      if (lum < 0.045) continue;
+      if (lum < 0.08) continue;
       const idx = (positions.length / 3) | 0;
       cell[row * cols + col] = idx;
       const nx = (u * 2 - 1) * 0.62;
@@ -838,13 +838,13 @@ function sampleDepthMapGrid(canvas, cols, rows) {
 
 function particleScale() {
   const area = Math.max(320 * 480, window.innerWidth * window.innerHeight);
-  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-  return Math.max(0.88, Math.min(1.52, Math.sqrt((area * dpr) / (1280 * 720))));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  return Math.max(0.7, Math.min(1.35, Math.sqrt((area * dpr) / (1280 * 720))));
 }
-const FACE_GRID_COLS = Math.round((State.coarsePointer ? 44 : 72) * particleScale());
-const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 54 : 92) * particleScale());
+const FACE_GRID_COLS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
+const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 40 : 66) * particleScale());
 const FACE_N_2D = Math.round(480 * particleScale());
 let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBoundary, faceZone, faceEdgeAlpha;
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
-  sampleDepthMapGrid(generateFaceDepthMap(768), FACE_GRID_COLS, FACE_GRID_ROWS));
+  sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));
