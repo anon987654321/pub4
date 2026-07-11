@@ -72,7 +72,7 @@ module Master
         energetic:    { rate: "+15%", pitch: "+30Hz" }    # lively, higher
       }.freeze
 
-      DEFAULT_VOICE = :osman
+      DEFAULT_VOICE = :pernille
       DEFAULT_STYLE = :calm
       MAX_CHARS = 900
       CHUNK_CHARS = 220

@@ -263,7 +263,7 @@ async function sendMessage(text) {
     return;
   }
   if (/^\/whoami$/i.test(trimmed)) {
-    const summary = window.MASTER_SOUL_SUMMARY || "persona malay; voice ms-MY-OsmanNeural; constitutional face";
+    const summary = window.MASTER_SOUL_SUMMARY || "persona anchor; voice nb-NO-PernilleNeural; constitutional face";
     if (uiStatus) uiStatus.textContent = "whoami…";
     enqueueSpeech(summary);
     window._chatOnChunk?.(summary);

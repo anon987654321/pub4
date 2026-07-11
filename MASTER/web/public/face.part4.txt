@@ -50,7 +50,7 @@ const VISEME_STEP_MS = 90;
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
-const TTS_DEFAULT_VOICE = 'ms-MY-OsmanNeural';
+const TTS_DEFAULT_VOICE = 'nb-NO-PernilleNeural';
 function emitTtsEvent(type, detail = {}) {
   const payload = { ...detail, type };
   window.dispatchEvent(new CustomEvent(type, { detail: payload }));

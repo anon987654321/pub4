@@ -1,17 +1,17 @@
 # Pre-cached TTS phrase bank — short clips primed on face boot.
 phrases:
   - text: "Ready."
-    voice: osman
+    voice: pernille
     style: clear
   - text: "Listening."
-    voice: osman
+    voice: pernille
     style: calm
   - text: "Still thinking."
-    voice: osman
+    voice: pernille
     style: calm
   - text: "Council convenes."
     voice: ryan
     style: heavy
   - text: "Scan complete."
-    voice: osman
+    voice: pernille
     style: clear

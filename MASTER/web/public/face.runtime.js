@@ -840,6 +840,7 @@ let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBounda
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
   sampleDepthMapGrid(generateFaceDepthMap(768), FACE_GRID_COLS, FACE_GRID_ROWS));
+
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
@@ -1316,6 +1317,7 @@ async function swapMask(imageUrl) {
     if (uiStatus) uiStatus.textContent = 'mask load failed';
   }
 }
+
 let frameLoopActive = false;
 function ensureFrameLoop() {
   if (State.hidden || document.hidden) return;
@@ -2036,6 +2038,7 @@ if ('getBattery' in navigator) {
     b.addEventListener('chargingchange', check);
   }).catch(() => {});
 }
+
 let actx = null;
 let ambientHumGain = null;
 function initAudio() {
@@ -2088,7 +2091,7 @@ const VISEME_STEP_MS = 90;
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
-const TTS_DEFAULT_VOICE = 'ms-MY-OsmanNeural';
+const TTS_DEFAULT_VOICE = 'nb-NO-PernilleNeural';
 function emitTtsEvent(type, detail = {}) {
   const payload = { ...detail, type };
   window.dispatchEvent(new CustomEvent(type, { detail: payload }));
@@ -2792,6 +2795,7 @@ function ttsTogglePause() {
   tts.paused = true;
   if (spinBtn) { spinBtn.textContent = '▶'; spinBtn.setAttribute('aria-label', 'Resume current response'); }
 }
+
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
 function startVisemeAnim(text) {
   stopVisemeAnim();
@@ -3057,7 +3061,7 @@ async function sendMessage(text) {
     return;
   }
   if (/^\/whoami$/i.test(trimmed)) {
-    const summary = window.MASTER_SOUL_SUMMARY || "persona malay; voice ms-MY-OsmanNeural; constitutional face";
+    const summary = window.MASTER_SOUL_SUMMARY || "persona anchor; voice nb-NO-PernilleNeural; constitutional face";
     if (uiStatus) uiStatus.textContent = "whoami…";
     enqueueSpeech(summary);
     window._chatOnChunk?.(summary);
@@ -3747,3 +3751,4 @@ await import('/face_semantics.js');
 await import('/face_minimal_ui.js');
 await import('/face_loops_music.js');
 await import('/face_loops_nudge.js');
+
