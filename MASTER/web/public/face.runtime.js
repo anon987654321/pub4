@@ -504,9 +504,18 @@ if (_hasWebGL && THREE) {
   phosphorFadeScene = new THREE.Scene();
   phosphorFadeCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const fadeGeom = new THREE.PlaneGeometry(2, 2);
+  // Phosphor fade via a transparent BLACK quad at opacity (1 - decay) under
+  // default NormalBlending: dst*(1-a) + 0*a == dst*decay — the same math the
+  // old MultiplyBlending gray quad intended. In the custom three.face.module
+  // build that quad rendered opaque/additive instead (proved by GL draw-call
+  // bisection: skipping only this quad turned a saturated-white screen back
+  // to black), painting the whole framebuffer to white in two frames — THE
+  // long-standing "background lit up white, no face" bug. Normal alpha
+  // blending is the one mode every build and driver agrees on.
   const fadeMat = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(FACE_PHOSPHOR_DECAY, FACE_PHOSPHOR_DECAY, FACE_PHOSPHOR_DECAY),
-    blending: THREE.MultiplyBlending,
+    color: 0x000000,
+    transparent: true,
+    opacity: 1 - FACE_PHOSPHOR_DECAY,
     depthTest: false,
     depthWrite: false
   });
@@ -1900,7 +1909,9 @@ function frame(t) {
     if (tts.playing) decay = Math.max(0.52, decay - 0.05);
     if (State.mood === 'weary') decay = Math.min(0.92, decay + 0.06);
     if (State.mode === 'thinking') decay = Math.max(0.58, decay - 0.03);
-    phosphorFadeMesh.material.color.setRGB(decay, decay, decay);
+    // Black quad at opacity (1 - decay) == multiply by decay; see the fade
+    // material construction in face.part1.txt for why not MultiplyBlending.
+    phosphorFadeMesh.material.opacity = 1 - decay;
     renderer.autoClear = false;
     renderer.render(phosphorFadeScene, phosphorFadeCam);
   } else {

@@ -570,7 +570,9 @@ function frame(t) {
     if (tts.playing) decay = Math.max(0.52, decay - 0.05);
     if (State.mood === 'weary') decay = Math.min(0.92, decay + 0.06);
     if (State.mode === 'thinking') decay = Math.max(0.58, decay - 0.03);
-    phosphorFadeMesh.material.color.setRGB(decay, decay, decay);
+    // Black quad at opacity (1 - decay) == multiply by decay; see the fade
+    // material construction in face.part1.txt for why not MultiplyBlending.
+    phosphorFadeMesh.material.opacity = 1 - decay;
     renderer.autoClear = false;
     renderer.render(phosphorFadeScene, phosphorFadeCam);
   } else {
