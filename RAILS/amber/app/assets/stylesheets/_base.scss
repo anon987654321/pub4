@@ -1,19 +1,18 @@
-* {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 html,
 body {
   height: 100%;
-  font-family: var(--x-font);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-base);
-  color: var(--color-white);
-  background-color: var(--color-black);
-  display: flex;
-  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  font: var(--x-font-size) / var(--x-line-height) var(--x-font);
+  -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -22,7 +21,7 @@ body {
   html,
   body {
     font-size: 21px;
-    line-height: calc(28 / 21);
+    line-height: 28px;
   }
 }
 
@@ -32,7 +31,7 @@ img {
 }
 
 a {
-  color: var(--x-accent);
+  color: var(--text);
   text-decoration: none;
   cursor: pointer;
 
@@ -41,7 +40,16 @@ a {
   }
 
   &:focus-visible {
-    outline: 2px solid var(--x-accent);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }

@@ -2,3 +2,9 @@ nb:
   hello: "Hei"
   app:
     name: "Amber"
+  amber:
+    feed:
+      compose_prompt: "Del en #ootd tanke…"
+      post_action: "Publiser"
+      guest_hint: "Poster som anon · %{remaining} av %{limit} innlegg igjen i denne nettleseren"
+      advanced_post: "Merk antrekk eller plagg →"

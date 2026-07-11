@@ -52,19 +52,43 @@
   }
 }
 
+.amber-logo-banner {
+  --amber-logo-height: clamp(4.5rem, 14vw, 8rem);
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  line-height: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: calc(var(--z-nav) + 1);
+
+  a {
+    display: block;
+    width: 100%;
+    text-decoration: none;
+  }
+
+  .amber-logo-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-height: var(--amber-logo-height);
+  }
+}
+
 .amber-guest-hero {
-  min-height: calc(100dvh - 6rem);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
   gap: var(--space-lg);
-  padding: var(--space-xl) var(--space-md);
+  padding: var(--space-xl) 0 var(--space-lg);
   text-align: center;
 }
 
 .amber-guest-hero .logo {
-  width: min(92vw, 42rem);
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
   line-height: 0;
 
   svg {
@@ -76,16 +100,21 @@
 
 .amber-guest-hero .title {
   max-width: 28rem;
-  font-family: var(--ny-serif, "Libre Baskerville", Georgia, serif);
-  font-size: clamp(1.35rem, 3vw, 2rem);
-  font-weight: 400;
-  margin: 0;
+  margin-inline: auto;
+  font-family: var(--x-font);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 800;
+  margin-block: 0;
+  letter-spacing: -0.02em;
 }
 
 .amber-guest-hero .body {
   max-width: 32rem;
-  color: var(--color-grey-text);
-  margin: 0;
+  margin-inline: auto;
+  color: var(--text-dim);
+  margin-block: 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
 }
 
 .amber-guest-hero .actions {

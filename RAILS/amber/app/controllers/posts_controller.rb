@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 class PostsController < ApplicationController
-  before_action :require_real_user, except: %i[index show]
+  before_action :require_real_user, except: %i[index show create]
   before_action :set_post, only: %i[show destroy like]
   before_action :authorize_owner!, only: :destroy
 
   def index
-    @pagy, @posts = pagy(Post.recent.includes(:user, :outfit, :item))
+    @pagy, @posts = pagy(Post.public_feed.includes(:user, :outfit, :item))
   end
 
   def feed
@@ -24,12 +24,22 @@ class PostsController < ApplicationController
   end
 
   def create
+    anon = Shared::AnonymousPostService.new(request: request, user: Current.user)
+    unless anon.allowed?
+      redirect_to new_registration_path,
+        alert: "Sign up to post more (#{Shared::AnonymousPostService::LIMIT} anonymous posts per browser)."
+      return
+    end
+
     @post = Current.user.posts.build(post_params)
+    @post.anonymous = true if guest? || ActiveModel::Type::Boolean.new.cast(post_params[:anonymous])
+
     if @post.save
-      @post.record_activity!("AmberPostCreated", source_vertical: "amber")
-      redirect_to(posts_path, notice: "Posted")
+      anon.record_post!
+      @post.record_activity!("AmberPostCreated", source_vertical: "amber") unless guest?
+      redirect_to(guest? ? root_path : posts_path, notice: guest? ? "Posted anonymously" : "Posted")
     else
-      render(:new, status: :unprocessable_entity)
+      redirect_to root_path, alert: @post.errors.full_messages.to_sentence
     end
   end
 
@@ -52,5 +62,5 @@ class PostsController < ApplicationController
     redirect_to(posts_path, alert: "Unauthorized") unless @post.user == Current.user
   end
 
-  def post_params = params.require(:post).permit(:body, :outfit_id, :item_id)
+  def post_params = params.require(:post).permit(:body, :outfit_id, :item_id, :anonymous)
 end

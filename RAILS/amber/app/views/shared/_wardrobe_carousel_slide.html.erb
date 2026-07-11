@@ -1,0 +1,17 @@
+<%# locals: item %>
+<% slide_path = item.is_a?(Item) ? demo_wardrobe_item_path(item) : demo_wardrobe_path %>
+<div class="wardrobe-slide-card">
+  <% if item.is_a?(Item) && item.photos.attached? %>
+    <%= link_to slide_path, class: "wardrobe-slide-card__media", tabindex: "-1", aria: { hidden: true } do %>
+      <%= responsive_image_tag item.photos.first, alt: "", widths: [160, 240], sizes: "140px", class: "wardrobe-slide-card__img" %>
+    <% end %>
+  <% else %>
+    <%= link_to slide_path, class: "wardrobe-slide-card__media wardrobe-slide-card__media--swatch", tabindex: "-1", aria: { hidden: true }, style: "--swatch: #{wardrobe_color_swatch(item.color)};" do %>
+      <span class="wardrobe-slide-card__glyph" aria-hidden="true"><%= item.title.to_s.first&.upcase %></span>
+    <% end %>
+  <% end %>
+  <div class="wardrobe-slide-card__copy">
+    <%= link_to item.title, slide_path, class: "wardrobe-slide-card__title" %>
+    <span class="wardrobe-slide-card__meta"><%= [item.brand, item.color].compact.join(" · ") %></span>
+  </div>
+</div>

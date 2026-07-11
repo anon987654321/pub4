@@ -10,6 +10,12 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "amber-logo-gradient"
     assert_includes response.body, "amber-swoosh-line"
     assert_includes response.body, "Amber turns your wardrobe into a working system."
+    assert_includes response.body, "amber-wardrobe-showcase"
+    assert_includes response.body, 'data-controller="carousel"'
+    assert_includes response.body, "Headwear"
+    assert_includes response.body, "Shoes"
+    assert_includes response.body, "amber-compose-box"
+    assert_includes response.body, "Share an #ootd thought"
     assert_not_includes response.body, 'class="master-embed-frame"'
   end
 

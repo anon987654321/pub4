@@ -1,0 +1,139 @@
+/* Anonymous frontpage compose — brgen pattern, Google-light Amber styling */
+
+.amber-compose-box {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  margin: 0 0 1.25rem;
+  background: #ffffff;
+  color: #202124;
+  border: 1px solid #dadce0;
+  border-radius: 16px;
+  font-family: var(--x-font);
+}
+
+.amber-compose-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(145deg, #ffe8d6, #f6d6d9 58%, #e8f0fe);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #5f6368;
+}
+
+.amber-compose-inner {
+  flex: 1;
+  min-width: 0;
+}
+
+.amber-compose-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #202124;
+  font: inherit;
+  font-size: 1.0625rem;
+  line-height: 1.45;
+  padding: 0.35rem 0;
+  resize: none;
+  min-height: 44px;
+}
+
+.amber-compose-input::placeholder {
+  color: #5f6368;
+}
+
+.amber-compose-input:focus {
+  outline: none;
+}
+
+.amber-compose-box--expanded .amber-compose-input {
+  border-bottom: 1px solid #dadce0;
+  margin-bottom: 0.65rem;
+}
+
+.amber-compose-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.amber-compose-tags {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  color: #5f6368;
+  font-size: 0.75rem;
+}
+
+.amber-compose-tags span {
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-pill);
+  background: #f1f3f4;
+}
+
+.amber-compose-submit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.amber-compose-as {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #5f6368;
+  text-transform: lowercase;
+}
+
+.amber-compose-btn {
+  background: var(--accent) !important;
+  color: #202124 !important;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  border: none;
+}
+
+.amber-compose-hint {
+  font-size: 0.8125rem;
+  color: #5f6368;
+  margin: 0.45rem 0 0;
+}
+
+.amber-compose-hint a {
+  color: var(--accent);
+}
+
+.amber-guest-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.amber-guest-feed .feed-post {
+  background: #ffffff;
+  color: #202124;
+  border: 1px solid #dadce0;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.amber-guest-feed .feed-post .post-meta {
+  color: #5f6368;
+}
+
+.amber-guest-feed .feed-post .author {
+  color: #202124;
+  font-weight: 700;
+}
+
+.amber-guest-feed .feed-post .post-body {
+  color: #3c4043;
+}

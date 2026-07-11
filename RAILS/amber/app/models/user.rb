@@ -36,7 +36,15 @@ class User < ApplicationRecord
 
   validates :email_address, presence: true, uniqueness: true
 
-  after_create :ensure_identity_records
+  after_create :ensure_identity_records, unless: :guest?
+
+  def guest? = has_attribute?(:guest) && self[:guest]
+
+  def display_name
+    return "anon" if guest?
+
+    profile&.display_name.presence || email_address.to_s.split("@").first
+  end
 
   broadcasts_refreshes
 

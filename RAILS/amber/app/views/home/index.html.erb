@@ -65,10 +65,18 @@
     <p><%= link_to "Add your first item", new_item_path %></p>
   <% end %>
 <% else %>
+  <%= render "shared/feed_compose" %>
+
+  <section class="amber-guest-feed" aria-label="Style feed">
+    <% if @guest_posts&.any? %>
+      <%= render @guest_posts %>
+    <% else %>
+      <p class="dim">No posts yet — share an #ootd thought above.</p>
+    <% end %>
+    <%= pagy_nav(@pagy) if @pagy&.pages.to_i > 1 %>
+  </section>
+
   <section class="amber-guest-hero" data-visitor-orientation>
-    <div class="logo" aria-hidden="true">
-      <%= render "shared/logo", id_prefix: "hero" %>
-    </div>
     <h1 class="title">Amber turns your wardrobe into a working system.</h1>
     <p class="body">Catalog what you own, plan outfits, spot what you never wear, and get capsule suggestions before you buy more.</p>
     <p class="actions">

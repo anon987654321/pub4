@@ -1,14 +1,6 @@
-main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-lg);
-  padding: var(--space-lg);
-}
-
 .flash {
   padding: var(--space-sm) var(--space-md);
-  border-bottom: 1px solid var(--color-extra-light-grey);
+  border-bottom: 1px solid var(--border);
 
   &--error,
   &--alert {
@@ -20,50 +12,12 @@ main {
   }
 }
 
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    gap: var(--space-md);
-    padding: var(--space-sm);
-
-    &__tabs {
-      gap: var(--space-sm);
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  html,
-  body {
-    font-size: 0.75rem;
-  }
-
-  .header__tabs {
-    gap: var(--space-xs);
-  }
-
-  .header__tab {
-    padding: var(--space-xs) var(--space-sm);
-    font-size: 0.9em;
-  }
-}
-
 h1,
 h2 {
   margin-bottom: var(--space-sm);
-  font-family: var(--ny-serif, "Libre Baskerville", Georgia, serif);
-  font-weight: 400;
-}
-
-[dir="rtl"] {
-  direction: rtl;
-}
-
-[dir="rtl"] nav .brand {
-  margin-inline-end: 0;
-  margin-inline-start: auto;
+  font-family: var(--x-font);
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 [dir="rtl"] .form .field--check {

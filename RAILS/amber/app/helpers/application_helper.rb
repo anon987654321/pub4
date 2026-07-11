@@ -40,6 +40,21 @@ module ApplicationHelper
     CreatorProfile.find_by(user: Current.user)
   end
 
+  def wardrobe_color_swatch(color)
+    case color.to_s.downcase
+    when /navy|indigo/ then "#3c4858"
+    when /black|charcoal/ then "#3c4043"
+    when /white|ivory|oatmeal|cream|pearl/ then "#f8f9fa"
+    when /blush|rose|mauve/ then "#f6d6d9"
+    when /sage|olive/ then "#c8d5b9"
+    when /rust|terracotta/ then "#c96b4b"
+    when /camel|tan|gold/ then "#d4a574"
+    when /nude/ then "#e8d2c5"
+    when /tortoise/ then "#8b5e3c"
+    else "#e8eaed"
+    end
+  end
+
   def responsive_image_url(attachment, widths: [ 400, 800, 1_200 ])
     return url_for(attachment) unless attachment.respond_to?(:variant)
 

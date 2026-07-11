@@ -1,7 +1,7 @@
 namespace :scrape do
-  desc "Fashion/wardrobe inspiration via Ferrum + vision LLM (subs: comma-separated, default: malefashion,femalefashionadvice,streetwear)"
+  desc "Fashion/wardrobe inspiration via Ferrum + vision LLM (subs: comma-separated, default: femalefashionadvice,30PlusSkinCare,PetiteFashion)"
   task :fashion, [ :subs ] => :environment do |_, args|
-    subs   = (args[:subs] || "malefashion,femalefashionadvice,streetwear").split(",").map(&:strip)
+    subs   = (args[:subs] || "femalefashionadvice,30PlusSkinCare,PetiteFashion").split(",").map(&:strip)
     schema = %w[title description url upvotes comments image_hints]
     subs.each do |sub|
       Scrape.call(
@@ -14,7 +14,7 @@ namespace :scrape do
 
   desc "Seed fictive wardrobe/outfit data from fashion scrape into amber. Requires OPENROUTER_API_KEY. Supplements Faker seeds."
   task :fashion_seed, [ :subs ] => :environment do |_, args|
-    subs   = (args[:subs] || "malefashion,femalefashionadvice,streetwear").split(",").map(&:strip)
+    subs   = (args[:subs] || "femalefashionadvice,30PlusSkinCare,PetiteFashion").split(",").map(&:strip)
     schema = %w[title description url upvotes comments image_hints]
 
     seed_user = User.find_or_create_by!(email_address: "fashion-seed@amber.local") do |u|

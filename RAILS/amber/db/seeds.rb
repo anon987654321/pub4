@@ -9,7 +9,7 @@ end
 
 require "faker"
 
-puts "Seeding Amber with fictive data..."
+puts "Seeding Amber with female fashion fictive data..."
 
 seed_job_adapter = ActiveJob::Base.queue_adapter
 ActiveJob::Base.queue_adapter = :inline
@@ -24,50 +24,37 @@ if Rails.env.development? || Rails.env.test?
   Post.destroy_all
 end
 
-# Create users (strict_loading off — ensure_identity_records touches profile)
 users = 20.times.map do
   User.strict_loading(false).create!(
-    email_address: Faker::Internet.unique.email,
+    email_address: Amber::FashionFaker.user_email,
     password: "password123",
     password_confirmation: "password123"
-  )
+  ).tap do |user|
+    profile = user.profile || user.create_profile!
+    profile.update!(display_name: Amber::FashionFaker.user_display_name) if profile.display_name.blank?
+  end
 end
 
 puts "Created #{users.size} users"
 
-# Create wardrobe items (clothing, accessories)
-categories = %w[shirt pants jacket shoes dress coat sweater accessory hat]
-colors = %w[black navy white gray beige olive burgundy teal mustard]
-brands = %w[Acne Arket COS Uniqlo Zara H&M Everlane Patagonia]
-
 items = users.flat_map do |user|
   8.times.map do
-    Item.create!(
-      user: user,
-      title: "#{Faker::Commerce.product_name} #{Faker::Color.color_name}",
-      category: categories.sample,
-      color: colors.sample,
-      brand: brands.sample,
-      size: %w[XS S M L XL].sample,
-      price_cents: rand(1500..15_000),
-      times_worn: rand(0..25),
-      last_worn_on: rand(1..90).days.ago.to_date,
-      metadata: { notes: Faker::Lorem.sentence(word_count: 12) }
-    )
+    attrs = Amber::FashionFaker.item_attributes
+    Item.create!(attrs.merge(user: user))
   end
 end
 
 puts "Created #{items.size} wardrobe items"
 
-# Create outfits (capsules, looks)
 outfits = users.flat_map do |user|
   3.times.map do
-    outfit_items = user.items.sample(rand(3..6))
+    outfit_items = user.items.sample(rand(3..5))
     outfit = Outfit.create!(
       user: user,
-      name: "#{Faker::Commerce.product_name} Look",
-      description: Faker::Lorem.paragraph(sentence_count: 2),
-      occasion: %w[casual work date travel party].sample
+      name: Amber::FashionFaker.outfit_name,
+      description: Amber::FashionFaker.outfit_description,
+      occasion: Item::OCCASIONS.sample,
+      season: Item::SEASONS.sample
     )
     outfit_items.each { |item| outfit.outfit_items.create!(item: item) }
     outfit
@@ -76,12 +63,11 @@ end
 
 puts "Created #{outfits.size} outfits"
 
-# Create social posts (style shares, declutter thoughts)
 posts = users.flat_map do |user|
   5.times.map do
     Post.create!(
       user: user,
-      body: Faker::Lorem.paragraph(sentence_count: 3) + " #style #wardrobe",
+      body: Amber::FashionFaker.post_body,
       outfit: user.outfits.sample,
       item: user.items.sample,
       likes_count: rand(0..42)
@@ -91,10 +77,8 @@ end
 
 puts "Created #{posts.size} posts"
 
-# Some reactions/likes on posts (using shared concern if wired)
 posts.sample(30).each do |post|
   liker = users.sample
-  # Simulate reaction (model may use shared Reactable)
   post.reactions.create!(user: liker, kind: %w[like love].sample) if post.respond_to?(:reactions)
 end
 
@@ -104,15 +88,12 @@ puts "Users: #{User.count}, Items: #{Item.count}, Outfits: #{Outfit.count}, Post
 ApplicationRecord.strict_loading_by_default = was_strict
 ActiveJob::Base.queue_adapter = seed_job_adapter
 
-# Optional web-augmented fictive seeds using Ferrum (see lib/tasks/fashion.rake)
-# Requires OPENROUTER_API_KEY. Supplements with real fashion inspiration from Reddit.
-# Usage: SEED_FROM_WEB=1 OPENROUTER_API_KEY=... bin/rails db:seed
-if ENV['SEED_FROM_WEB'] && ENV['OPENROUTER_API_KEY']
+if ENV["SEED_FROM_WEB"] && ENV["OPENROUTER_API_KEY"]
   puts "\nAugmenting Amber with web-scraped fashion data via Ferrum..."
   begin
-    Rake::Task['scrape:fashion_seed'].invoke
+    Rake::Task["scrape:fashion_seed"].invoke
   rescue => e
     puts "  fashion_seed skipped: #{e.message}"
   end
-  puts "  (Creates Items, Outfits, Posts from Reddit fashion subs like malefashion, streetwear.)"
+  puts "  (Creates Items, Outfits, Posts from Reddit fashion subs like femalefashionadvice.)"
 end

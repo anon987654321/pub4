@@ -1,12 +1,18 @@
 @use "x_base" as x;
+@use "x_root" as xroot;
 
 :root {
-  @include x.x-light-tokens;
-  color-scheme: light;
+  @include x.x-dark-tokens;
+  @include xroot.x-app-root-tokens;
+  color-scheme: dark;
+  --accent: oklch(76% 0.13 68);
+  --accent-hover: oklch(70% 0.13 68);
   --color-black: var(--x-bg);
   --color-white: var(--x-text);
   --color-extra-light-grey: var(--x-border);
   --color-grey-text: var(--x-text-secondary);
+  --color-success: #00ba7c;
+  --color-danger: var(--x-danger);
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
@@ -14,7 +20,32 @@
   --space-xl: 2rem;
   --font-size-base: var(--x-font-size);
   --line-height-base: calc(20 / 15);
-  --app-accent: #d97706;
-  --color-badge: #f0c040;
+  --app-accent: var(--accent);
+  --color-badge: var(--accent);
   --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--x-surface-elevated));
+}
+
+#dark-toggle {
+  position: fixed;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-root {
+  min-height: 100vh;
+}
+
+#dark-toggle:checked ~ .theme-root {
+  @include x.x-light-tokens;
+  color-scheme: light;
+  --bg: var(--x-bg);
+  --surface: var(--x-surface);
+  --surface2: var(--x-surface-elevated);
+  --search-bg: var(--x-search-bg);
+  --text: var(--x-text);
+  --text-dim: var(--x-text-secondary);
+  --border: var(--x-border);
+  --hover: var(--x-hover);
+  --hover-subtle: var(--x-hover-subtle);
+  --panel-blur-bg: var(--bg);
 }

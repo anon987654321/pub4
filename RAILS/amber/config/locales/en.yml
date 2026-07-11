@@ -2,3 +2,9 @@ en:
   hello: "Hello"
   app:
     name: "Amber"
+  amber:
+    feed:
+      compose_prompt: "Share an #ootd thought…"
+      post_action: "Post"
+      guest_hint: "Posting as anon · %{remaining} of %{limit} posts left this browser"
+      advanced_post: "Tag outfit or item →"
