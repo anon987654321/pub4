@@ -359,6 +359,7 @@ async function sendMessage(text) {
       return;
     }
     const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+    clearThinkingAloud();
     if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
     window._chatOnChunk?.(chunk);
     pending += chunk;
