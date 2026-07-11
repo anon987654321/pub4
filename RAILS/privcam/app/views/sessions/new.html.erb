@@ -3,7 +3,7 @@
 
 <%= form_with url: session_path do |form| %>
   <p><%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address] %></p>
-  <p><%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72 %></p>
+  <p><%= password_visibility_field form, :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72  %></p>
   <p><%= form.submit "Sign in" %></p>
 <% end %>
 

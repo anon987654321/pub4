@@ -5,7 +5,9 @@
     <small><%= link_to @port.category.name, category_path(@port.category) %></small>
   </header>
   <p><%= @port.comment %></p>
-  <p><%= @port.description %></p>
+  <% if @port.description.present? %>
+    <%= read_more(@port.description, lines: 4) %>
+  <% end %>
   <dl>
     <dt>Maintainer</dt><dd><% if @maintainer %><%= link_to @port.maintainer, maintainer_path(@maintainer) %><% else %><%= @port.maintainer %><% end %></dd>
     <dt>Local install</dt><dd><%= @pkg_info.present? ? "installed (#{@pkg_info})" : "not installed" %></dd>
@@ -112,7 +114,10 @@
   </div>
   <% if authenticated? %>
     <%= form_with url: port_comments_path(@port), id: "port_comment_form", data: { turbo: true } do |f| %>
-      <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…", data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
+      <p><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :content, rows: 3, placeholder: "Add a comment…" , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></p>
       <p><%= f.submit "Comment" %></p>
     <% end %>
   <% end %>

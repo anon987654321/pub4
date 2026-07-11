@@ -1,7 +1,10 @@
 <%= form_with model: outfit, class: "form" do |f| %>
   <%= render "shared/errors", object: outfit %>
   <div class="field"><%= f.label :name %><%= f.text_field :name, autofocus: true %></div>
-  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+  <div class="field">
+    <%= f.label :description %>
+    <%= character_counter_field f, :description, max: 1000, rows: 3 %>
+  </div>
   <div class="field">
     <%= f.label :category %>
     <%= f.select :category, %w[Casual Formal Work Workout Evening], include_blank: "Select…" %>
@@ -11,19 +14,18 @@
     <%= f.select :season, Item::SEASONS, include_blank: "Select…" %>
   </div>
   <div class="field"><%= f.label :occasion %><%= f.text_field :occasion %></div>
-  <section class="nested-form" data-controller="stimulus-rails-nested-form">
+  <section class="nested-form" data-controller="nested-form">
     <h3>Items</h3>
-    <template data-stimulus-rails-nested-form-target="template">
+    <template data-nested-form-target="template">
       <%= f.fields_for :outfit_items, OutfitItem.new, child_index: "NEW_RECORD" do |outfit_item_fields| %>
         <%= render "outfit_item_fields", f: outfit_item_fields %>
       <% end %>
     </template>
-    <div data-stimulus-rails-nested-form-target="container">
-      <%= f.fields_for :outfit_items do |outfit_item_fields| %>
-        <%= render "outfit_item_fields", f: outfit_item_fields %>
-      <% end %>
-    </div>
-    <button type="button" class="btn-link" data-action="stimulus-rails-nested-form#add">Add item</button>
+    <%= f.fields_for :outfit_items do |outfit_item_fields| %>
+      <%= render "outfit_item_fields", f: outfit_item_fields %>
+    <% end %>
+    <div data-nested-form-target="target"></div>
+    <button type="button" class="btn-link" data-action="nested-form#add">Add item</button>
   </section>
   <div class="actions"><%= f.submit class: "btn" %> <%= link_to "Cancel", outfits_path %></div>
 <% end %>

@@ -8,7 +8,10 @@
   <%= form_with model: @message do |f| %>
     <%= render "shared/errors", object: @message %>
     <div class="field"><%= f.label :recipient_id %><%= f.collection_select :recipient_id, User.where.not(id: Current.user.id).order(:email_address), :id, :email_address, include_blank: "Choose recipient" %></div>
-    <div class="field"><%= f.label :body %><%= f.text_area :body, rows: 3, data: { controller: "textarea-autogrow char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+    <div class="field"><%= f.label :body %><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :body, rows: 3 , data: { character_counter_target: "input", controller: "textarea-autogrow" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></div>
     <div class="field"><%= f.submit "Send", class: "btn" %></div>
   <% end %>
 </section>

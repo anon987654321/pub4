@@ -3,6 +3,11 @@
 # Shared importmap pins for the pub4 Rails family.
 # Include from each app: eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), binding)
 
+sc_vendor = Shared::Engine.root.join("vendor/javascript")
+sc_pin = lambda do |name|
+  pin "@stimulus-components/#{name}", to: sc_vendor.join("@stimulus-components--#{name}.js").to_s
+end
+
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@hotwired/stimulus", to: "@hotwired--stimulus.js"
 pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
@@ -25,26 +30,12 @@ pin "pub4/theme_meta", to: "pub4_theme_meta.js"
 pin "pub4/theme_toggle", to: "pub4_theme_toggle_controller.js"
 pin "pub4/minimal_gesture", to: "minimal-gesture.js"
 
-pin "@stimulus-components/auto-submit", to: "@stimulus-components--auto-submit.js"
-pin "@stimulus-components/character-counter", to: "@stimulus-components--character-counter.js"
-pin "@stimulus-components/checkbox-select-all", to: "@stimulus-components--checkbox-select-all.js"
-pin "@stimulus-components/clipboard", to: "@stimulus-components--clipboard.js"
-pin "@stimulus-components/content-loader", to: "@stimulus-components--content-loader.js"
-pin "@stimulus-components/dialog", to: "@stimulus-components--dialog.js"
-pin "@stimulus-components/dropdown", to: "@stimulus-components--dropdown.js"
-pin "@stimulus-components/hotkey", to: "@stimulus-components--hotkey.js"
-pin "@stimulus-components/lightbox", to: "@stimulus-components--lightbox.js"
-pin "@stimulus-components/notification", to: "@stimulus-components--notification.js"
-pin "@stimulus-components/popover", to: "@stimulus-components--popover.js"
-pin "@stimulus-components/read-more", to: "@stimulus-components--read-more.js"
-pin "@stimulus-components/reveal", to: "@stimulus-components--reveal.js"
-pin "@stimulus-components/scroll-to", to: "@stimulus-components--scroll-to.js"
-pin "@stimulus-components/sortable", to: "@stimulus-components--sortable.js"
-pin "@stimulus-components/sound", to: "@stimulus-components--sound.js"
-pin "@stimulus-components/speech-recognition", to: "@stimulus-components--speech-recognition.js"
-pin "@stimulus-components/textarea-autogrow", to: "@stimulus-components--textarea-autogrow.js"
-pin "@stimulus-components/timeago", to: "@stimulus-components--timeago.js"
-pin "@stimulus-components/animated-number", to: "@stimulus-components--animated-number.js"
-pin "@stimulus-components/password-visibility", to: "@stimulus-components--password-visibility.js"
-pin "@stimulus-components/rails-nested-form", to: "@stimulus-components--rails-nested-form.js"
-pin "@stimulus-components/carousel", to: "@stimulus-components--carousel.js"
+%w[
+  animated-number auto-submit character-counter checkbox-select-all clipboard
+  content-loader dialog dropdown hotkey lightbox notification popover read-more
+  reveal scroll-to sortable sound speech-recognition timeago password-visibility
+  rails-nested-form carousel
+].each { |name| sc_pin.call(name) }
+
+pin "@stimulus-components/textarea-autogrow", to: sc_vendor.join("@stimulus-components--textarea-autogrow.js").to_s
+pin "stimulus-textarea-autogrow", to: sc_vendor.join("@stimulus-components--textarea-autogrow.js").to_s

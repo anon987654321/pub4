@@ -493,6 +493,28 @@ body.zen-minimal [data-minimal-reveal].revealed {
   pointer-events: auto;
 }
 
+.read-more-content {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--read-more-line-clamp, 3);
+}
+
+.password-field {
+  display: flex;
+  gap: var(--space-2, 8px);
+  align-items: center;
+}
+
+.password-field .hidden,
+[data-password-visibility-target="icon"].hidden {
+  display: none;
+}
+
+body:has(dialog[data-dialog-target="dialog"][open]) {
+  overflow: hidden;
+}
+
 /* Mobile sensor affordances */
 @media (pointer: coarse) {
   body.zen-minimal {

@@ -59,8 +59,10 @@
       </div>
       <div class="field">
         <%= f.label :special_instructions, "Special instructions (optional)" %>
-        <%= f.text_area :special_instructions, data: { controller: "char-counter", "char-counter-max-value": 500 } %>
-        <span class="char-counter" data-char-counter-target="counter"></span>
+        <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :special_instructions , maxlength: 500, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
       </div>
       <div class="field"><%= f.submit "Place order", class: "btn btn-primary" %></div>
     <% end %>
@@ -93,8 +95,10 @@
     </div>
     <div class="field">
       <%= f.label :body, "Comments (optional)" %>
-      <%= f.text_area :body, rows: 3, data: { controller: "char-counter", "char-counter-max-value": 1000 } %>
-      <span class="char-counter" data-char-counter-target="counter"></span>
+      <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :body, rows: 3 , maxlength: 1000, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
     </div>
     <div class="field"><%= f.submit "Post review", class: "btn btn-primary btn-sm" %></div>
   <% end %>

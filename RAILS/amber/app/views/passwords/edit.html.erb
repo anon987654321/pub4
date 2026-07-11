@@ -3,11 +3,11 @@
   <%= form_with model: @user, url: password_path(params[:token]), method: :put do |f| %>
     <div class="field">
       <%= f.label :password, "New password" %>
-      <%= f.password_field :password, autocomplete: "new-password" %>
+      <%= password_visibility_field f, :password, autocomplete: "new-password"  %>
     </div>
     <div class="field">
       <%= f.label :password_confirmation, "Confirm password" %>
-      <%= f.password_field :password_confirmation, autocomplete: "new-password" %>
+      <%= password_visibility_field f, :password_confirmation, autocomplete: "new-password"  %>
     </div>
     <div class="actions">
       <%= f.submit "Set password", class: "btn btn--primary" %>

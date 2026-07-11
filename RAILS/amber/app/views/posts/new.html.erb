@@ -3,7 +3,10 @@
   <%= render "shared/errors", object: @post %>
   <div class="field">
     <%= f.label :body, "What are you wearing?" %>
-    <%= f.text_area :body, rows: 3, maxlength: 500, placeholder: "Share your outfit…", data: { controller: "char-counter", "char-counter-max-value": 500 } %><span class="char-counter" data-char-counter-target="counter"></span>
+    <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :body, rows: 3, placeholder: "Share your outfit…" , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
   </div>
   <div class="field">
     <%= f.label :outfit_id, "Tag an outfit (optional)" %>

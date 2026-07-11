@@ -3,6 +3,7 @@
 module ApplicationHelper
   include SchemaHelper
   include Shared::SeoKit
+  include Shared::StimulusFormHelper
 
   def nok(amount)
     number_to_currency(amount, unit: "kr", separator: ",", delimiter: " ", format: "%n %u")

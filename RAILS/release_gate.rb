@@ -113,6 +113,7 @@ run("domain_alignment_gate", [*RUBY, "domain_alignment_gate.rb"], chdir: ROOT)
 run("frontend_production_gate", [*RUBY, "frontend_production_gate.rb"], chdir: ROOT)
 
 run("frontend_auditor", [*RUBY, "frontend_auditor_gate.rb"], chdir: ROOT)
+run("stimulus_components", [*RUBY, "stimulus_components_adoption_gate.rb"], chdir: ROOT)
 
 if FAILURES.any?
   warn "Release gate failures:"

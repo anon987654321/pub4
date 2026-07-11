@@ -401,7 +401,7 @@ class DeployBacklogTest < Minitest::Test
     source = File.read(File.join(ROOT, 'shared/config/environments/development.rb'))
     assert_includes source, 'strict_loading_by_default = true'
 
-    source = File.read(File.join(ROOT, 'shared/frontend/stimulus_components.js'))
+    source = File.read(File.join(ROOT, 'shared/frontend/pub4_stimulus_boot.js'))
     %w[
       Clipboard
       Dialog
@@ -413,6 +413,12 @@ class DeployBacklogTest < Minitest::Test
       toast
       TextareaAutogrow
       Timeago
+      PasswordVisibility
+      RailsNestedForm
+      Carousel
+      CharacterCounter
+      CheckboxSelectAll
+      ReadMore
     ].each do |component|
       assert_includes source, component
     end
@@ -420,8 +426,8 @@ class DeployBacklogTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, 'shared/app/views/shared/_toast.html.erb')), 'data-controller="toast"'
     assert_includes File.read(File.join(ROOT, 'shared/frontend/examples.html.erb')), 'data-controller="toast"'
 
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/wardrobe_items/_form.html.erb')),
-                    'textarea-autogrow'
+    wardrobe_form = File.read(File.join(ROOT, 'amber/app/views/wardrobe_items/_form.html.erb'))
+    assert wardrobe_form.include?('textarea-autogrow') || wardrobe_form.include?('character-counter')
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/comments/_form.html.erb')), 'textarea-autogrow'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id]'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id]'

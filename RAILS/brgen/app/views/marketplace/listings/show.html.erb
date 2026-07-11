@@ -53,7 +53,10 @@
     <div class="form-wrap form-wrap--flush">
       <%= form_with(model: @review, url: marketplace_listing_reviews_path(@listing)) do |f| %>
         <div class="field"><%= f.label :rating %><%= f.select :rating, options_for_select((1..5).map { |n| [ "#{n} ★", n ] }) %></div>
-        <div class="field"><%= f.label :body %><%= f.text_area :body, rows: 3, data: { controller: "char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+        <div class="field"><%= f.label :body %><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :body, rows: 3 , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></div>
         <div class="field"><%= f.submit "Post review", class: "btn btn-primary" %></div>
       <% end %>
     </div>
@@ -78,7 +81,10 @@
     <div class="form-wrap form-wrap--flush">
       <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>
       <%= form_with(model: @order, url: marketplace_listing_orders_path(@listing), data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
-        <div class="field"><%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3, data: { controller: "char-counter", "char-counter-max-value": 280 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+        <div class="field"><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3 , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></div>
         <div class="field"><%= f.submit "Send offer", class: "btn btn-primary" %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>
       <% end %>
     </div>

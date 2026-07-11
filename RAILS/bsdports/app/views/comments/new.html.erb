@@ -3,7 +3,10 @@
 <h1>Comment</h1>
 <%= render "shared/errors", object: @comment %>
 <%= form_with url: port_comments_path(@port), data: { turbo: true } do |f| %>
-  <p><%= f.text_area :content, rows: 4, placeholder: "Add a comment…", data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></p>
+  <p><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :content, rows: 4, placeholder: "Add a comment…" , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></p>
   <p><%= f.submit "Comment" %></p>
 <% end %>
 <p><%= link_to "Back to port", @port %></p>

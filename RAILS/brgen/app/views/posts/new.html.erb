@@ -17,8 +17,10 @@
     <div class="field" data-controller="tiptap-composer">
       <%= f.label :content, "Body (optional)" %>
       <div class="tiptap-editor" data-tiptap-composer-target="editor"></div>
-      <%= f.text_area :content, placeholder: "Text (optional)", rows: 5, class: "tiptap-input", data: { tiptap_composer_target: "input", controller: "char-counter", "char-counter-max-value": 10000 } %>
-      <span class="char-counter" data-char-counter-target="counter"></span>
+      <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :content, placeholder: "Text (optional)", rows: 5, class: "tiptap-input" , maxlength: 10000, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
     </div>
     <div class="field" data-controller="media-picker">
       <%= f.file_field :image,

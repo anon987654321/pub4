@@ -3,7 +3,7 @@
 <% if flash[:alert] %><p role="alert"><%= flash[:alert] %></p><% end %>
 
 <%= form_with url: password_path(params[:token]), method: :put do |form| %>
-  <p><%= form.password_field :password, required: true, autocomplete: "new-password", placeholder: "Enter new password", maxlength: 72 %></p>
-  <p><%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: 72 %></p>
+  <p><%= password_visibility_field form, :password, required: true, autocomplete: "new-password", placeholder: "Enter new password", maxlength: 72  %></p>
+  <p><%= password_visibility_field form, :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: 72  %></p>
   <p><%= form.submit "Save" %></p>
 <% end %>

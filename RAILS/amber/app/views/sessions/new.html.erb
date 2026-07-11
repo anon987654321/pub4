@@ -8,7 +8,7 @@
     </div>
     <div class="field">
       <%= f.label :password %>
-      <%= f.password_field :password, autocomplete: "current-password" %>
+      <%= password_visibility_field f, :password, autocomplete: "current-password"  %>
     </div>
     <div class="actions">
       <%= f.submit "Sign in", class: "btn btn--primary" %>

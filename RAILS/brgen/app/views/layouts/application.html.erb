@@ -39,7 +39,7 @@
   <%= javascript_include_tag "face", defer: true, "data-turbo-track": "reload" %>
 </head>
 <body class="<%= body_surface_classes %>"
-      data-controller="hotkey browser-fingerprint"
+      data-controller="feed-hotkey browser-fingerprint"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme"
@@ -91,8 +91,10 @@
   </div>
 
   <% if content_for?(:splash) %>
-    <div id="splash" class="splash" role="dialog" aria-modal="true" tabindex="0">
-      <%= yield :splash %>
+    <div data-controller="dialog" data-action="click->dialog#backdropClose">
+      <dialog id="splash" class="splash" data-dialog-target="dialog" data-dialog-open-value="true" aria-modal="true">
+        <%= yield :splash %>
+      </dialog>
     </div>
   <% end %>
 
@@ -181,11 +183,11 @@
           <%= form.submit "Search", class: "visually-hidden" %>
         <% end %>
         <%= yield :widgets %>
-        <div class="sidebar-card" data-controller="reveal" data-minimal-reveal>
+        <div class="sidebar-card" data-controller="scroll-reveal" data-minimal-reveal>
           <h3>What's happening</h3>
           <p class="dim">City communities across Scandinavia and Europe.</p>
         </div>
-        <div class="sidebar-card" data-controller="reveal" data-minimal-reveal>
+        <div class="sidebar-card" data-controller="scroll-reveal" data-minimal-reveal>
           <h3>Who to follow</h3>
           <div class="who-follow">brgen.no <button class="btn btn-ghost btn-sm">Follow</button></div>
           <div class="who-follow">longyearbyn.no <button class="btn btn-ghost btn-sm">Follow</button></div>

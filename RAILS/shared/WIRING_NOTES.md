@@ -29,7 +29,9 @@ Each app compiles a **single** `app/assets/builds/application.css` via Dart Sass
 
 **JS entrypoints** (`shared/frontend/`):
 - `pub4_hotwire.js` — Turbo, theme-meta, PWA SW, nav-reveal (idempotent), minimal-gesture boot
-- `pub4_stimulus_boot.js` — @stimulus-components, StimulusReflex, Futurism, live-search, offline-page, install-prompt, theme-toggle
+- `pub4_stimulus_boot.js` — full @stimulus-components fleet (incl. password-visibility, nested-form, carousel, read-more, checkbox-select-all), StimulusReflex, Futurism, live-search, offline-page, install-prompt, theme-toggle
+- `Shared::StimulusFormHelper` — `character_counter_field`, `password_visibility_field`, `read_more`
+- Gate: `ruby RAILS/stimulus_components_adoption_gate.rb` (no legacy `char-counter` / duplicate controllers)
 - `pub4_theme_meta.js`, `pub4_nav_reveal.js`, `pub4_live_search_controller.js`, …
 
 **Per-app wiring:**

@@ -6,7 +6,10 @@
   <%= form_with model: @playlist, url: playlist_playlist_path(@playlist), method: :patch do |f| %>
     <%= render "shared/errors", object: @playlist %>
     <div class="field"><%= f.label :name %><%= f.text_field :name %></div>
-    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3, data: { controller: "char-counter", "char-counter-max-value": 1000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+    <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :description, rows: 3 , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></div>
     <div class="field field--check"><%= f.check_box :public_access %><%= f.label :public_access, "Public" %></div>
     <div class="field field--check"><%= f.check_box :collaborative %><%= f.label :collaborative, "Collaborative" %></div>
     <div class="field"><%= f.submit "Save", class: "btn btn-primary" %></div>

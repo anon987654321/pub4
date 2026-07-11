@@ -10,7 +10,10 @@
   <%= form_with model: @listing, url: marketplace_listings_path, html: { role: "form", "aria-label": "Create marketplace listing" } do |f| %>
     <%= render "shared/errors", object: @listing %>
     <div class="field"><%= f.label :title %><%= f.text_field :title %></div>
-    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4, data: { controller: "char-counter", "char-counter-max-value": 2000 } %><span class="char-counter" data-char-counter-target="counter"></span></div>
+    <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></div>
     <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents %></div>
     <div class="field"><%= f.label :condition %><%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :category_id, "Category" %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>

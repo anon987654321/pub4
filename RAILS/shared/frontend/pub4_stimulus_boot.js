@@ -19,6 +19,9 @@ import SpeechRecognition from "@stimulus-components/speech-recognition"
 import TextareaAutogrow from "@stimulus-components/textarea-autogrow"
 import Timeago from "@stimulus-components/timeago"
 import AnimatedNumber from "@stimulus-components/animated-number"
+import PasswordVisibility from "@stimulus-components/password-visibility"
+import RailsNestedForm from "@stimulus-components/rails-nested-form"
+import Carousel from "@stimulus-components/carousel"
 import StimulusReflex from "stimulus_reflex"
 import ApplicationController from "controllers/application_controller"
 import LiveSearch from "pub4/live_search"
@@ -49,7 +52,11 @@ const COMPONENT_REGISTRATIONS = [
   ["speech-recognition", SpeechRecognition],
   ["textarea-autogrow", TextareaAutogrow],
   ["timeago", Timeago],
-  ["animated-number", AnimatedNumber]
+  ["animated-number", AnimatedNumber],
+  ["password-visibility", PasswordVisibility],
+  ["nested-form", RailsNestedForm],
+  ["rails-nested-form", RailsNestedForm],
+  ["carousel", Carousel],
 ]
 
 export function bootPub4Stimulus(application, { futurism = true } = {}) {
