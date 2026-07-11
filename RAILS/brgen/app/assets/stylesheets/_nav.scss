@@ -29,12 +29,13 @@
   display: block;
   padding: 16px;
   text-align: center;
-  font: 0.75rem/1 var(--x-font);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font: 0.9375rem/1 var(--x-font);
+  font-weight: 500;
   color: var(--text-dim);
+  background: none;
+  border: 0;
   border-bottom: 2px solid transparent;
+  cursor: pointer;
   transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 

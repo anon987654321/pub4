@@ -30,10 +30,8 @@
 .sort-tab {
   padding: 16px 20px;
   text-align: center;
-  font: 0.75rem/1 var(--x-font);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font: 0.9375rem/1 var(--x-font);
+  font-weight: 500;
   color: var(--text-dim);
   border-bottom: 2px solid transparent;
   transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
@@ -79,8 +77,8 @@ article:hover { background: var(--hover-subtle); }
 .x-header { display: flex; gap: 4px; font-size: 0.9375rem; color: var(--text-dim); margin-bottom: 2px; }
 .x-name { color: var(--text); font-weight: 700; letter-spacing: -0.01em; }
 .x-handle, .x-time, .x-count { color: var(--text-dim); font-size: 0.8125rem; }
-.x-text { font-size: 17px; line-height: 1.4; margin: 0 0 8px; color: var(--text); }
-.x-text a { color: var(--accent); text-decoration: none; }
+.x-text { font-size: 0.9375rem; line-height: 1.4; margin: 0 0 8px; color: var(--text); font-family: var(--x-font); text-transform: none; }
+.x-text a { color: var(--text); text-decoration: none; }
 .x-text a:hover { text-decoration: underline; }
 .x-actions { display: flex; align-items: center; justify-content: space-between; gap: 4px; color: var(--text-dim); font-size: 0.8125rem; margin-top: 8px; }
 .x-act { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: var(--radius-pill); transition: color var(--transition-fast), background var(--transition-fast); }
