@@ -371,8 +371,17 @@ class DeployBacklogTest < Minitest::Test
     ].each do |relative|
       source = File.read(File.join(ROOT, relative))
       assert_includes source, 'data-turbo-permanent'
-      assert_includes source, 'turbo_prefetch: false'
       assert_includes source, 'turbo-cache-control", content: "no-cache"'
+
+      # amber and hjerterom factor the sign-out link (and its turbo_prefetch:
+      # false safety attribute — prevents a hover-prefetch from firing the
+      # DELETE) into shared/_sidebar_nav.html.erb rather than inlining it in
+      # the layout; check that partial too when the layout itself doesn't.
+      app_dir = relative.split("/").first
+      nav_partial = File.join(ROOT, app_dir, "app/views/shared/_sidebar_nav.html.erb")
+      haystack = source
+      haystack += File.read(nav_partial) if File.file?(nav_partial)
+      assert_includes haystack, 'turbo_prefetch: false'
     end
 
     setup = File.read(File.join(ROOT, 'shared/app/controllers/concerns/shared/application_setup.rb'))
