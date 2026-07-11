@@ -115,9 +115,19 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 		if [ "$_ping_ok" = "0" ]; then
 			logger -t master "container warmup: ping not ready after 240s"
 		fi
-		# Container bootstrap already warms TTS; su avoids doas EPERM from rcctl root context.
-		su -m dev -c 'cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -Ilib -e "require \"master\"; Master::Voice::TtsSupervisor.ensure_daemon!"' \
-			2>/dev/null || true
+		# Warm TTS with MASTER Gemfile only — never inherit Falcon web/vendor/bundle env.
+		_tts_warm_ok=0
+		if su -m dev -c 'unset BUNDLE_PATH GEM_HOME GEM_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT RUBYOPT; cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile bundle34 exec ruby -Ilib -e "require \"master\"; exit(Master::Voice::TtsSupervisor.ensure_daemon! ? 0 : 1)"' 2>>/var/log/daemon; then
+			_l=0
+			while [ "$_l" -lt 30 ]; do
+				[ -S /home/dev/pub4/MASTER/.master/tts-0.sock ] && { _tts_warm_ok=1; break; }
+				sleep 1
+				_l=$((_l + 1))
+			done
+		fi
+		if [ "$_tts_warm_ok" = "0" ]; then
+			logger -t master "CRITICAL: TTS sockets missing after ensure_daemon (check .master/tts-worker-*.log)"
+		fi
 		ruby34 /home/dev/pub4/MASTER/web/script/probe_http 2>/dev/null || logger -t master "probe_http failed after restart"
 	fi
 fi

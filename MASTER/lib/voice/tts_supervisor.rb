@@ -10,6 +10,12 @@ module Master
     module TtsSupervisor
       START_TIMEOUT_S = 15
       POLL_INTERVAL_S = 0.1
+      # Process.spawn merges env onto the parent; Falcon's web bundle vars must not
+      # leak into tts-worker children or Bundler resolves against web/vendor/bundle.
+      BUNDLE_ISOLATION_KEYS = %w[
+        BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT
+        BUNDLE_DISABLE_SHARED_GEMS GEM_HOME GEM_PATH RUBYOPT
+      ].freeze
 
       @pool_rr = 0
       @spawn_failures = {}
@@ -149,7 +155,7 @@ module Master
       end
 
       def daemon_env(root)
-        {
+        env = {
           "HOME" => ENV["HOME"].to_s,
           "USER" => ENV["USER"].to_s,
           "PATH" => ENV.fetch("PATH", "/usr/local/bin:/usr/bin:/bin"),
@@ -157,6 +163,8 @@ module Master
           "LC_ALL" => ENV.fetch("LC_ALL", "C.UTF-8"),
           "BUNDLE_GEMFILE" => File.join(root, "Gemfile"),
         }
+        BUNDLE_ISOLATION_KEYS.each { |key| env[key] = nil }
+        env
       end
     end
   end

@@ -10,7 +10,13 @@
 # — followed by raw MP3 bytes back, then EOF. Single-threaded; serialised by
 # EM reactor lifecycle.
 
-ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
+ROOT = File.expand_path("..", __dir__)
+BUNDLE_ISOLATION_KEYS = %w[
+  BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT
+  BUNDLE_DISABLE_SHARED_GEMS GEM_HOME GEM_PATH RUBYOPT
+].freeze
+BUNDLE_ISOLATION_KEYS.each { |key| ENV.delete(key) }
+ENV["BUNDLE_GEMFILE"] = File.join(ROOT, "Gemfile")
 require "bundler/setup"
 require "eventmachine"
 require "rb_edge_tts"
@@ -34,15 +40,16 @@ def synth(voice, rate, pitch, text, out_path)
 end
 
 def worker_env
-  root = File.expand_path("..", __dir__)
-  {
+  env = {
     "HOME" => ENV["HOME"].to_s,
     "USER" => ENV["USER"].to_s,
     "PATH" => ENV.fetch("PATH", "/usr/local/bin:/usr/bin:/bin"),
     "LANG" => ENV.fetch("LANG", "C.UTF-8"),
     "LC_ALL" => ENV.fetch("LC_ALL", "C.UTF-8"),
-    "BUNDLE_GEMFILE" => File.join(root, "Gemfile"),
+    "BUNDLE_GEMFILE" => File.join(ROOT, "Gemfile"),
   }
+  BUNDLE_ISOLATION_KEYS.each { |key| env[key] = nil }
+  env
 end
 
 def synth_subprocess(voice, rate, pitch, text, out_path)

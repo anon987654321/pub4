@@ -10,9 +10,14 @@ checks = {
     "def espeak_path",
     "synthesize_espeak(text_str) if espeak_path"
   ],
+  "MASTER/lib/voice/tts_supervisor.rb" => [
+    "BUNDLE_ISOLATION_KEYS",
+    "BUNDLE_ISOLATION_KEYS.each { |key| env[key] = nil }"
+  ],
   "MASTER/bin/tts-worker" => [
     "tts-worker --daemon",
-    "EventMachine SSL support unavailable"
+    "EventMachine SSL support unavailable",
+    "BUNDLE_ISOLATION_KEYS.each { |key| ENV.delete(key) }"
   ],
   "MASTER/bin/smoke" => [
     "tts_e2e poll",

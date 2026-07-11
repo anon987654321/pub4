@@ -4,6 +4,18 @@ require_relative "test_helper"
 require "socket"
 
 class TestSpeech < Minitest::Test
+  def test_daemon_env_strips_web_bundle_pollution
+    Dir.mktmpdir("master_tts_env") do |root|
+      ENV["BUNDLE_PATH"] = "/wrong/web/vendor/bundle"
+      ENV["GEM_HOME"] = "/wrong/gems"
+      env = Master::Voice::TtsSupervisor.daemon_env(root)
+      Master::Voice::TtsSupervisor::BUNDLE_ISOLATION_KEYS.each do |key|
+        assert_nil env[key], "expected #{key} to be cleared"
+      end
+      assert_equal File.join(root, "Gemfile"), env["BUNDLE_GEMFILE"]
+    end
+  end
+
   def test_tts_supervisor_health_check_uses_ping_without_synthesis
     Dir.mktmpdir("master_tts_health") do |root|
       socket_path = File.join(root, "tts.sock")
