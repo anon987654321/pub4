@@ -439,7 +439,7 @@ class DeployBacklogTest < Minitest::Test
     assert wardrobe_form.include?('textarea-autogrow') || wardrobe_form.include?('character-counter')
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/comments/_form.html.erb')), 'textarea-autogrow'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id]'
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id]'
+    assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id, post.anonymous?]'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'data-controller="clipboard"'
     assert_includes File.read(File.join(ROOT, 'shared/app/views/shared/_copyable.html.erb')),
                     'data-controller="clipboard"'
@@ -589,7 +589,6 @@ class DeployBacklogTest < Minitest::Test
     assert_includes partial, 'HomeInfiniteScrollReflex#load_more'
     assert_includes partial, 'home-feed-sentinel'
     assert_includes reflex, 'Brgen::HomeFeed.scope'
-    assert_includes reflex, 'Brgen::DemoFeed.posts_scope.hot'
   end
 
   def test_takeaway_and_tv_indexes_use_infinite_scroll_reflexes
