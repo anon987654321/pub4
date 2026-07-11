@@ -33,9 +33,12 @@ face_root:
     radius-lg: "12px"
     radius-pill: "999px"
     face-bar-height: "36px"
-    face-particle-size: "0.024"
-    face-glow-scale: "1.38"
-    face-phosphor-decay: "0.88"
+    # Additive-blending budget: ~17k points; raising size/glow/decay together
+    # (the 2026-07-09 "pristine detail tier": 0.024/1.38/0.88) overflows the
+    # framebuffer into a solid white oval. These are the last-known-good values.
+    face-particle-size: "0.019"
+    face-glow-scale: "1.22"
+    face-phosphor-decay: "0.80"
     transition-fast: "180ms"
     transition-normal: "300ms"
     ease-out: "cubic-bezier(0.25,0.1,0.25,1)"
