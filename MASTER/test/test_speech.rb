@@ -7,12 +7,14 @@ class TestSpeech < Minitest::Test
   def test_daemon_env_strips_web_bundle_pollution
     Dir.mktmpdir("master_tts_env") do |root|
       ENV["BUNDLE_PATH"] = "/wrong/web/vendor/bundle"
+      ENV["BUNDLE_GEMFILE"] = "/wrong/web/Gemfile"
       ENV["GEM_HOME"] = "/wrong/gems"
       env = Master::Voice::TtsSupervisor.daemon_env(root)
-      Master::Voice::TtsSupervisor::BUNDLE_ISOLATION_KEYS.each do |key|
-        assert_nil env[key], "expected #{key} to be cleared"
-      end
+      assert_nil env["BUNDLE_PATH"]
+      assert_nil env["GEM_HOME"]
       assert_equal File.join(root, "Gemfile"), env["BUNDLE_GEMFILE"]
+      assert_equal ENV.fetch("HOME", ""), env["HOME"]
+      assert env.values.compact.size <= Master::Voice::TtsSupervisor::SPAWN_ENV_KEYS.size + 1
     end
   end
 

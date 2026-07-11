@@ -13,7 +13,7 @@
 ROOT = File.expand_path("..", __dir__)
 BUNDLE_ISOLATION_KEYS = %w[
   BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT
-  BUNDLE_DISABLE_SHARED_GEMS GEM_HOME GEM_PATH RUBYOPT
+  BUNDLE_DISABLE_SHARED_GEMS BUNDLE_APP_CONFIG GEM_HOME GEM_PATH RUBYOPT
 ].freeze
 BUNDLE_ISOLATION_KEYS.each { |key| ENV.delete(key) }
 ENV["BUNDLE_GEMFILE"] = File.join(ROOT, "Gemfile")
@@ -40,16 +40,15 @@ def synth(voice, rate, pitch, text, out_path)
 end
 
 def worker_env
-  env = {
-    "HOME" => ENV["HOME"].to_s,
-    "USER" => ENV["USER"].to_s,
+  wipe = ENV.keys.to_h { |key| [key, nil] }
+  wipe.merge(
+    "HOME" => ENV.fetch("HOME", ""),
+    "USER" => ENV.fetch("USER", ""),
     "PATH" => ENV.fetch("PATH", "/usr/local/bin:/usr/bin:/bin"),
     "LANG" => ENV.fetch("LANG", "C.UTF-8"),
     "LC_ALL" => ENV.fetch("LC_ALL", "C.UTF-8"),
-    "BUNDLE_GEMFILE" => File.join(ROOT, "Gemfile"),
-  }
-  BUNDLE_ISOLATION_KEYS.each { |key| env[key] = nil }
-  env
+    "BUNDLE_GEMFILE" => File.join(ROOT, "Gemfile")
+  )
 end
 
 def synth_subprocess(voice, rate, pitch, text, out_path)

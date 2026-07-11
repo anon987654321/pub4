@@ -14,8 +14,10 @@ module Master
       # leak into tts-worker children or Bundler resolves against web/vendor/bundle.
       BUNDLE_ISOLATION_KEYS = %w[
         BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT
-        BUNDLE_DISABLE_SHARED_GEMS GEM_HOME GEM_PATH RUBYOPT
+        BUNDLE_DISABLE_SHARED_GEMS BUNDLE_APP_CONFIG GEM_HOME GEM_PATH RUBYOPT
       ].freeze
+
+      SPAWN_ENV_KEYS = %w[HOME USER PATH LANG LC_ALL].freeze
 
       @pool_rr = 0
       @spawn_failures = {}
@@ -155,16 +157,20 @@ module Master
       end
 
       def daemon_env(root)
-        env = {
-          "HOME" => ENV["HOME"].to_s,
-          "USER" => ENV["USER"].to_s,
+        # Wipe the parent Falcon/web bundle env entirely — nil deletes on Process.spawn merge.
+        wipe = ENV.keys.to_h { |key| [key, nil] }
+        wipe.merge(spawn_env(root))
+      end
+
+      def spawn_env(root)
+        {
+          "HOME" => ENV.fetch("HOME", ""),
+          "USER" => ENV.fetch("USER", ""),
           "PATH" => ENV.fetch("PATH", "/usr/local/bin:/usr/bin:/bin"),
           "LANG" => ENV.fetch("LANG", "C.UTF-8"),
           "LC_ALL" => ENV.fetch("LC_ALL", "C.UTF-8"),
           "BUNDLE_GEMFILE" => File.join(root, "Gemfile"),
         }
-        BUNDLE_ISOLATION_KEYS.each { |key| env[key] = nil }
-        env
       end
     end
   end
