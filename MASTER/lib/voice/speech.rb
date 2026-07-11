@@ -6,6 +6,7 @@ require "open3"
 require "socket"
 require "json"
 require "timeout"
+require_relative "policy"
 
 module Master
   module Voice
@@ -72,7 +73,7 @@ module Master
         energetic:    { rate: "+15%", pitch: "+30Hz" }    # lively, higher
       }.freeze
 
-      DEFAULT_VOICE = :pernille
+      DEFAULT_VOICE = Policy.single_voice_key
       DEFAULT_STYLE = :calm
       # clean_text hard-truncates every utterance at this length with no
       # continuation. At 900 a full LLM reply enqueued as one utterance lost

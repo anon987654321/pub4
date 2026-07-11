@@ -224,6 +224,11 @@ function speakFailure(reason = "Sorry, I hit a snag.") {
 
 function handleFaceNamedEvent(event, data) {
   const raw = String(data || '');
+  if (event === 'content_kind') {
+    const kind = raw.trim() || (data && typeof data === 'object' ? data.kind : '');
+    if (kind === 'listing') window._streamContentKind = 'listing';
+    return true;
+  }
   if (event === 'mood') {
     const m = raw.trim();
     if (!m) return true;
@@ -360,8 +365,16 @@ async function sendMessage(text) {
   if (rateMatch) { setTtsRate(parseFloat(rateMatch[1])); return; }
   const pitchMatch = trimmed.match(/^\/pitch\s+([+-]?[\d.]+)$/i);
   if (pitchMatch) { tts.pitchOffset = Math.max(-20, Math.min(20, parseFloat(pitchMatch[1]))); if (uiStatus) uiStatus.textContent = `pitch ${tts.pitchOffset >= 0 ? '+' : ''}${tts.pitchOffset}Hz`; return; }
+  const streamToggle = trimmed.match(/^\/voice\s+stream\s+(on|off)$/i);
+  if (streamToggle) {
+    setTtsStreamLive(streamToggle[1].toLowerCase() === 'on');
+    return;
+  }
   const voiceMatch = trimmed.match(/^\/voice(?:\s+last)?\s+(\S+)(?:\s+(\S+))?$/i);
   if (voiceMatch) {
+    if (window.MASTER_VOICE_POLICY?.persona_affects_text_only && voiceMatch[1].toLowerCase() !== 'last') {
+      if (uiStatus) uiStatus.textContent = 'tts: Pernille only; persona affects text';
+    }
     setVoiceName(voiceMatch[1]);
     if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
     if (uiStatus) {
@@ -410,7 +423,8 @@ async function sendMessage(text) {
   if (window.MASTERChat?.startChatStream) {
     const imageToken = window._imageToken || null;
     window._imageToken = null;
-    let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
+    let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true, ttsStreamSpokenLen = 0;
+    window._streamContentKind = '';
     const stallTimer = setTimeout(() => {
       rootBody.dataset.networkStall = '1';
       window._chatOnDmesg?.('link thinking');
@@ -456,7 +470,9 @@ async function sendMessage(text) {
       pending += chunk;
       totalTTSChars += chunk.length;
       State.pulse = Math.min(0.6, State.pulse + 0.05);
+      if (window._streamContentKind === 'listing') ttsSuppressed = true;
       if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
+      if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
     };
     window.MASTERChat.startChatStream({
       message: finalText,
@@ -483,7 +499,8 @@ async function sendMessage(text) {
   const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
   if (window._imageToken) window._imageToken = null;
   evtSrc = new EventSource(url);
-  let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true;
+  let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true, ttsStreamSpokenLen = 0;
+  window._streamContentKind = '';
   let _stallTimer = setTimeout(() => {
     rootBody.dataset.networkStall = '1';
     window._chatOnDmesg?.('link thinking');
@@ -544,8 +561,14 @@ async function sendMessage(text) {
     pending += chunk;
     totalTTSChars += chunk.length;
     State.pulse = Math.min(0.6, State.pulse + 0.05);
+    if (window._streamContentKind === 'listing') ttsSuppressed = true;
     if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
+    if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
   };
+  evtSrc.addEventListener('content_kind', (ev) => {
+    const kind = (ev.data || '').trim();
+    if (kind === 'listing') window._streamContentKind = 'listing';
+  });
   evtSrc.addEventListener('mood', (ev) => {
     const m = (ev.data || '').trim();
     if (!m) return;

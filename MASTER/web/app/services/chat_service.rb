@@ -209,11 +209,36 @@ class ChatService
     text = token.to_s
     return if text.empty? || @stream_broken
 
+    emit_content_kind_if_needed(text)
     @streamed = true
     @stream.write("data: #{escape_sse(text)}\n\n")
   rescue StandardError => e
     @stream_broken = true
     Master::Ground::Swallow.log(e, context: "ChatService.write_chunk")
+  end
+
+  def emit_content_kind_if_needed(text)
+    return if @content_kind_emitted
+
+    @content_kind_buffer = "#{@content_kind_buffer}#{text}"
+    return unless listing_stream?(@content_kind_buffer)
+
+    @content_kind_emitted = true
+    write_event("content_kind", "listing")
+  end
+
+  def listing_stream?(text)
+    t = text.to_s
+    return false if t.length < 80
+
+    tokens = t.split(/\s+/).reject(&:empty?)
+    return false if tokens.size < 8
+
+    short = tokens.count { |tok| tok.length <= 28 && tok !~ /[.!?…]/ }
+    times = tokens.count { |tok| tok.match?(/^\d{1,2}:\d{2}$/) }
+    paths = tokens.count { |tok| tok.match?(%r{[./\\]}) }
+    nums = tokens.count { |tok| tok.match?(/^\d+$/) }
+    short.to_f / tokens.size >= 0.85 && times >= 3 && (paths >= 3 || nums.to_f / tokens.size >= 0.4)
   end
 
   def write_event(event, data)

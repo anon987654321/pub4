@@ -45,7 +45,7 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     cvEl.addEventListener('pointerdown', () => {
       t = setTimeout(() => {
         if (window._chatSpeakLast) window._chatSpeakLast();
-        else if (window.sendMessage) window.sendMessage('/voice last osman dramatic');
+        else if (window.sendMessage) window.sendMessage('/voice last dramatic');
         F_FACE_STATE.pulse = 1.1;
       }, 480);
     });
@@ -96,8 +96,8 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
       const z = document.getElementById('zsh');
       if (z) z.classList.add('revealed');
     },
-    triggerOsman: (text) => {
-      if (window.sendMessage) window.sendMessage(`/voice ${text || 'last'} osman`);
+    triggerVoice: (text) => {
+      if (window.sendMessage) window.sendMessage(`/voice ${text || 'last'}`);
     }
   };
 
@@ -108,20 +108,20 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     rec.lang = 'en-US';
     rec.onresult = (ev) => {
       const t = ev.results[0][0].transcript.toLowerCase();
-      if (t.includes('osman')) {
-        const cmd = t.replace(/osman|hey|ok/gi, '').trim();
-        if (cmd && window.sendMessage) window.sendMessage(`/voice ${cmd} osman`);
+      if (/\b(voice|speak|say)\b/.test(t)) {
+        const cmd = t.replace(/\b(voice|speak|say|hey|ok)\b/gi, '').trim();
+        if (cmd && window.sendMessage) window.sendMessage(`/voice ${cmd}`);
       }
     };
     // rec.start() throws InvalidStateError when recognition is already
     // running (including the main STT mic), and a bare keydown listener
     // hijacked "?" even while typing in the chat box. Guard both.
-    let osmanRecActive = false;
-    rec.onend = () => { osmanRecActive = false; };
-    rec.onerror = () => { osmanRecActive = false; };
+    let voiceRecActive = false;
+    rec.onend = () => { voiceRecActive = false; };
+    rec.onerror = () => { voiceRecActive = false; };
     const safeStart = () => {
-      if (osmanRecActive) return;
-      try { rec.start(); osmanRecActive = true; } catch (_) {}
+      if (voiceRecActive) return;
+      try { rec.start(); voiceRecActive = true; } catch (_) {}
     };
     document.addEventListener('keydown', e => {
       const t = e.target;

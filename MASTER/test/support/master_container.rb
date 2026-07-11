@@ -17,7 +17,7 @@ module Master
       DEFAULT_FIXTURES = {
         "soul.yml" => <<~YML,
           version: "test"
-          persona: malay
+          persona: anchor
           absolute:
             golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
             code_rules:
@@ -30,12 +30,23 @@ module Master
             default_model: openrouter/auto
         YML
         "personas.yml" => <<~YML,
-          malay:
-            voice: ms-MY-OsmanNeural
-            tts_rate: "-35%"
-            tts_pitch: "-150Hz"
-            style: deep
-            description: "Terse. Direct."
+          anchor:
+            voice: nb-NO-PernilleNeural
+            tts_rate: "-8%"
+            tts_pitch: "+8Hz"
+            style: clear
+            description: "Norwegian. Clear. Curious."
+        YML
+        "voice.yml" => <<~YML,
+          tts:
+            single_voice: pernille
+            neural: nb-NO-PernilleNeural
+            persona_affects_text_only: true
+          voice:
+            strunk:
+              preambles: []
+              hedges: []
+              endings: []
         YML
         "rules.yml" => <<~YML,
           rules: {}

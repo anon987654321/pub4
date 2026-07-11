@@ -1,4 +1,14 @@
 # Voice output rules — extracted from rules.yml (scan corpus stays in rules.yml).
+# TTS synthesis policy: Ruby (speech.rb, tts_controller) and JS (face.part4) read `tts`.
+# Persona registries (personas.yml, soul.yml) affect LLM text/style only when persona_affects_text_only is true.
+tts:
+  single_voice: pernille
+  neural: nb-NO-PernilleNeural
+  persona_affects_text_only: true
+  stream_live_default: false
+  default_rate: "-8%"
+  default_pitch: "+8Hz"
+
 voice:
   style: openbsd_dmesg
   anti_simulation:

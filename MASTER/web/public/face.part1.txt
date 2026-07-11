@@ -318,6 +318,17 @@ function shouldSpeakStreamReply(text, ttsSuppressed) {
   if (!ttsSuppressed) return true;
   return looksLikeProse(t);
 }
+function pushLiveStreamTts(pending, spokenLen) {
+  if (!ttsStreamLiveEnabled?.()) return spokenLen;
+  const slice = String(pending || '').slice(spokenLen);
+  if (!slice || looksLikeListingStream(pending)) return spokenLen;
+  const m = slice.match(/^[\s\S]*?[.!?…]["'\u201D]?\s+/);
+  if (!m) return spokenLen;
+  const chunk = m[0].trim();
+  if (chunk.length < TTS_MIN_CHUNK) return spokenLen;
+  enqueueSpeech(chunk, { flush: true });
+  return spokenLen + m[0].length;
+}
 function flushStreamTts(pending, opts = {}) {
   const text = String(pending || '').trim();
   if (!text || looksLikeListingStream(text)) return;

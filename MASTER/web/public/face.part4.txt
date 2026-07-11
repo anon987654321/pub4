@@ -50,7 +50,34 @@ const VISEME_STEP_MS = 90;
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
-const TTS_DEFAULT_VOICE = 'nb-NO-PernilleNeural';
+const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'nb-NO-PernilleNeural';
+const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
+function ttsStreamLiveEnabled() {
+  try {
+    if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '1') return true;
+    if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '0') return false;
+  } catch (_) {}
+  return !!window.MASTER_VOICE_POLICY?.stream_live_default;
+}
+function setTtsStreamLive(on) {
+  try { localStorage.setItem(TTS_STREAM_LIVE_KEY, on ? '1' : '0'); } catch (_) {}
+  if (uiStatus) uiStatus.textContent = `tts stream ${on ? 'on' : 'off'}`;
+}
+function setTtsHealthStatus(msg, ttlMs = 8000) {
+  const el = ttsLive || document.getElementById('tts-live');
+  if (!el) return;
+  if (!msg) {
+    delete el.dataset.health;
+    if (!tts.loading && !tts.playing) el.textContent = '';
+    return;
+  }
+  el.textContent = msg;
+  el.dataset.health = '1';
+  clearTimeout(setTtsHealthStatus._timer);
+  setTtsHealthStatus._timer = setTimeout(() => {
+    if (el.dataset.health === '1') setTtsHealthStatus('');
+  }, ttlMs);
+}
 function emitTtsEvent(type, detail = {}) {
   const payload = { ...detail, type };
   window.dispatchEvent(new CustomEvent(type, { detail: payload }));
@@ -362,6 +389,7 @@ function latchTtsRateLimit(res) {
   tts.serverUnavailable = true;
   tts.serverUnavailableUntil = Date.now() + retryAfter;
   tts.prefetch.clear();
+  setTtsHealthStatus(`tts: waiting ${Math.ceil(retryAfter / 1000)}s (rate limit)`);
 }
 async function loadTTSBlob(text, voice, style) {
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) throw new Error('429');
@@ -805,3 +833,18 @@ function ttsTogglePause() {
   tts.paused = true;
   if (spinBtn) { spinBtn.textContent = '▶'; spinBtn.setAttribute('aria-label', 'Resume current response'); }
 }
+
+(function pollDeployHealth() {
+  const refresh = () => {
+    fetch('/health', { credentials: 'same-origin', cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        if (!body) return;
+        if (body.deploy?.tts_socket === false) setTtsHealthStatus('tts: socket down', 12000);
+        else if (body.checks?.tts === false) setTtsHealthStatus('tts: unavailable', 12000);
+      })
+      .catch(() => {});
+  };
+  refresh();
+  setInterval(refresh, 60000);
+})();

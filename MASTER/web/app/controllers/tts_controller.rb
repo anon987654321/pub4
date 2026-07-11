@@ -107,7 +107,7 @@ class TtsController < ApplicationController
   end
 
   def resolve_tts_voice(_raw, _fallback_voice = nil)
-    Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
+    Master::Voice::Speech.resolve_voice(Master::Voice::Policy.single_voice_key)
   end
 
   def resolve_tts_style(raw_style, text)

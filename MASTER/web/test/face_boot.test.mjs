@@ -197,7 +197,7 @@ test("face.css includes subtle visual polish layers", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   assert.match(css, /body::after/);
   assert.match(css, /radial-gradient/);
-  assert.match(css, /--face-glow-scale:\s*1\.42/);
+  assert.match(css, /--face-glow-scale:\s*1\.22/);
   assert.match(css, /mood-sparkline i[\s\S]*--mood-accent/);
 });
 
@@ -285,7 +285,13 @@ test("face runtime keeps chat stream and particle worker boot paths", () => {
 test("tts defaults to server style inference and recovers after fallback cooldown", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   const controller = readFileSync(join(root, "app", "controllers", "tts_controller.rb"), "utf8");
+  const chatJs = readFileSync(join(publicDir, "chat.js"), "utf8");
+  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(runtime, /TTS_STYLE_DEFAULT = 'auto'/);
+  assert.match(runtime, /MASTER_VOICE_POLICY/);
+  assert.match(runtime, /setTtsHealthStatus/);
+  assert.match(runtime, /ttsStreamLiveEnabled/);
+  assert.match(runtime, /content_kind/);
   assert.match(runtime, /style_locked/);
   assert.match(runtime, /serverUnavailableUntil/);
   assert.match(runtime, /serverFailureCount/);
@@ -296,8 +302,11 @@ test("tts defaults to server style inference and recovers after fallback cooldow
   assert.match(runtime, /shouldSpeakStreamReply/);
   assert.match(runtime, /synthInFlight/);
   assert.doesNotMatch(runtime, /while \(\(m = pending\.match\(SENT_BREAK\)\)/);
+  assert.doesNotMatch(chatJs, /osman/);
+  assert.match(index, /MASTER_VOICE_POLICY/);
   assert.doesNotMatch(controller, /params\[:style\]\.present\?/);
   assert.doesNotMatch(controller, /params\[:voice\]\.present\?/);
+  assert.match(controller, /Voice::Policy\.single_voice_key/);
 });
 
 test("service worker avoids stale undigested precache", () => {

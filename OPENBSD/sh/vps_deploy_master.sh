@@ -19,6 +19,8 @@ export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 32)}"
 doas rm -rf public/assets
 doas chown -R dev:dev public
 bundle34 config set --local without 'development:test' 2>/dev/null || true
+BUNDLE_WITHOUT=development:test bundle34 check 2>/dev/null || BUNDLE_WITHOUT=development:test bundle34 install
+BUNDLE_WITHOUT=development:test bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle 2>/dev/null || true
 BUNDLE_WITHOUT=development:test bundle34 exec rails assets:precompile
 BUNDLE_WITHOUT=development:test bundle34 exec ruby "$ROOT/RAILS/master_web_assets_gate.rb"
 

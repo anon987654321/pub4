@@ -106,8 +106,9 @@ class TestWebUI < Minitest::Test
     app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes app_controller, "TTS_RATE_LIMIT  = 30"
-    assert_includes app_controller, 'before_action :enforce_tts_rate_limit, if: -> { controller_name == "tts" && action_in?(TTS_ACTIONS) }'
-    assert_includes app_controller, "TTS_ACTIONS = %i[show status].freeze"
+    assert_includes app_controller, 'before_action :enforce_tts_rate_limit, if: -> { controller_name == "tts" && action_in?(TTS_SYNTH_ACTIONS) }'
+    assert_includes app_controller, "TTS_SYNTH_ACTIONS = %i[show].freeze"
+    assert_includes app_controller, "TTS_POLL_ACTIONS = %i[status stream].freeze"
     assert_includes app_controller, "Retry-After"
   end
 

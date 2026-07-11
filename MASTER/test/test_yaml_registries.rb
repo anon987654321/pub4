@@ -134,6 +134,16 @@ class TestRulesYamlRegistry < Minitest::Test
     assert strunk, "voice.yml must define voice.strunk"
   end
 
+  def test_voice_yml_tts_policy_single_voice
+    voice = Master.load_yaml(File.join(DATA, "voice.yml"))
+    tts = voice["tts"] || {}
+    assert_equal "pernille", tts["single_voice"]
+    assert_equal "nb-NO-PernilleNeural", tts["neural"]
+    assert_equal true, tts["persona_affects_text_only"]
+    assert_equal :pernille, Master::Voice::Policy.single_voice_key
+    assert_equal "nb-NO-PernilleNeural", Master::Voice::Policy.neural_voice
+  end
+
   def test_standing_order_voice_directives_match_rules_voice_strunk
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))
     strunk = voice.dig("voice", "strunk") || data.dig("voice", "strunk")

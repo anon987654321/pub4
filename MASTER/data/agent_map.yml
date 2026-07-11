@@ -1,0 +1,74 @@
+# Machine-readable map for coding agents — "touching X → edit these files".
+# Human mirror: START_HERE.md. Dump: /orient agent_map
+schema: 1
+
+topics:
+  tts:
+    files:
+      - data/voice.yml
+      - lib/voice/policy.rb
+      - lib/voice/speech.rb
+      - web/app/controllers/tts_controller.rb
+      - web/public/face.part4.txt
+      - web/public/face.part5.txt
+    tests:
+      - test/test_speech.rb
+      - test/test_yaml_registries.rb
+      - web/test/face_boot.test.mjs
+    deploy: zsh /home/dev/pub4/OPENBSD/sh/vps_deploy_master.sh
+    playbook: master_web_pernille_defaults
+
+  face_boot:
+    files:
+      - web/app/views/chat/index.html.erb
+      - web/public/face.js
+      - web/public/face.part1.txt
+      - web/public/face.part5.txt
+      - web/public/container_gate.js
+      - OPENBSD/etc/rc.d/master
+    tests:
+      - web/test/face_boot.test.mjs
+      - web/script/probe_http
+    deploy: zsh /home/dev/pub4/OPENBSD/sh/vps_deploy_master.sh
+    playbook: master_web_pernille_defaults
+
+  deploy:
+    files:
+      - OPENBSD/sh/vps_deploy_master.sh
+      - OPENBSD/etc/rc.d/master
+      - RAILS/master_web_assets_gate.rb
+      - OPERATOR/bin/vps-deploy
+    tests:
+      - web/script/probe_http
+    command: ssh dev@46.23.89.226 'zsh /home/dev/pub4/OPENBSD/sh/vps_deploy_master.sh'
+    playbook: post_sync_vps_proof
+
+  persona:
+    files:
+      - data/soul.yml
+      - data/personas.yml
+      - lib/voice/personality.rb
+      - web/app/views/chat/index.html.erb
+    note: TTS voice is always Pernille per data/voice.yml; persona changes LLM style only.
+
+patch_briefs:
+  data/voice.yml:
+    tests: [test/test_yaml_registries.rb, test/test_speech.rb]
+    deploy: vps-deploy master
+    playbook: master_web_pernille_defaults
+  lib/voice/speech.rb:
+    tests: [test/test_speech.rb]
+    deploy: vps-deploy master
+    playbook: master_web_pernille_defaults
+  web/public/face.part4.txt:
+    tests: [web/test/face_boot.test.mjs]
+    deploy: vps-deploy master
+    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+  web/public/face.css:
+    tests: [web/test/face_boot.test.mjs]
+    deploy: vps-deploy master
+    post: ruby RAILS/scripts/generate_face_root_css.rb
+  OPENBSD/etc/rc.d/master:
+    tests: []
+    deploy: doas cp OPENBSD/etc/rc.d/master /etc/rc.d/master
+    playbook: relayd_after_master_restart

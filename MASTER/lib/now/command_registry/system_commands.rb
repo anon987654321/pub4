@@ -49,10 +49,15 @@ module Master
         "trace" => [nil, "event paths and triage"],
         "replicate" => [nil, "media generation authority pointers"],
         "conventions" => [nil, "external LLM coding conventions"],
+        "agent_map" => ["data/agent_map.yml", "machine-readable touch-map for agents (TTS, face boot, deploy)"],
       }.freeze
 
       def dispatch_orient(root, ctx: nil)
         arg = arg_for(ctx)
+        if arg.start_with?("patch ")
+          rel = arg.delete_prefix("patch ").strip
+          return Master::Ground::AgentMap.patch_brief(rel) || "no patch brief for #{rel} — try /orient agent_map"
+        end
         return cat_orient(root, arg) unless arg.empty?
         [
           "MASTER — constitutional AI runtime for any text artifact",
@@ -83,6 +88,8 @@ module Master
       end
 
       def cat_orient(root, arg)
+        return Master::Ground::AgentMap.format_topics if arg == "agent_map"
+
         runtime = Master::Ground::BootstrapDocs.section(arg)
         return runtime if runtime
 

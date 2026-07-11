@@ -59,7 +59,8 @@
   <script nonce="<%= content_security_policy_nonce %>">
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
     window.MASTER_PERSONA = <%= raw((persona.respond_to?(:browser_profile) ? persona.browser_profile : {}).to_json) %>;
-    window.MASTER_SOUL_SUMMARY = "persona <%= persona&.name || 'anchor' %>; voice <%= persona&.voice || 'nb-NO-PernilleNeural' %>; constitutional face";
+    window.MASTER_VOICE_POLICY = <%= raw Master::Voice::Policy.browser_payload.to_json %>;
+    window.MASTER_SOUL_SUMMARY = "persona <%= persona&.name || 'anchor' %>; voice <%= Master::Voice::Policy.neural_voice %> (TTS fixed; persona affects text only); constitutional face";
     window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload_minimal.to_json %>;
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">

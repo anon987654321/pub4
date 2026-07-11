@@ -58,15 +58,18 @@ module Master
       end
 
       def browser_profile
+        policy = Master::Voice::Policy
+        synth_voice = policy.neural_voice
         {
           name: @name.to_s,
-          voice: @voice,
-          tts_rate: @tts_rate,
-          tts_pitch: @tts_pitch,
+          voice: policy.persona_affects_text_only? ? synth_voice : @voice,
+          tts_rate: policy.persona_affects_text_only? ? policy.default_rate : @tts_rate,
+          tts_pitch: policy.persona_affects_text_only? ? policy.default_pitch : @tts_pitch,
           style: @style,
           description: @description,
           knowledge_sources: @knowledge_sources,
           disclaimer: @disclaimer,
+          tts_policy: policy.browser_payload,
         }
       end
 
