@@ -10,7 +10,7 @@ module Master
         invariants ui_philosophy event_registry provider_economy
         cognitive_spine face_enhancements micro_interactions
         platform_topology collaboration repo_ecology
-        routing_architecture face3d_migration style_guides
+        routing_architecture face3d_migration style_guides face_research
       ].freeze
 
       @cache = {}
@@ -59,6 +59,10 @@ module Master
           load("face3d_migration")
         end
 
+        def face_research
+          load("face_research")
+        end
+
         def web_boot_payload
           topologies = Master.load_yaml(Master.data_path("topologies.yml"), default: {})
           visual = Master.load_yaml(Master.data_path("ops", "visual.yml"), default: {})
@@ -78,6 +82,7 @@ module Master
             visual_limits: visual["visual"] || visual,
             tts_config: tts,
             topologies: topologies,
+            face_research: face_research,
           }
         end
 

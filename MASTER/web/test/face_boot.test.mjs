@@ -112,6 +112,29 @@ test("probe_webgl_guard covers before-tap canvas lock and after-tap unlock", () 
   assert.match(ciProbe, /probe_webgl_guard\.mjs/);
 });
 
+test("chat index includes photo attach and LAUI agent hud", () => {
+  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  assert.match(index, /id="photo-button"/);
+  assert.match(index, /photo_upload\.css/);
+  assert.match(index, /face_agent_hud/);
+});
+
+test("face_agent_hud implements LAUI engagement rail", () => {
+  const hud = readFileSync(join(publicDir, "face_agent_hud.js"), "utf8");
+  assert.match(hud, /agent-hud/);
+  assert.match(hud, /thought.*action.*speech/s);
+  assert.match(hud, /master:visual/);
+  assert.match(hud, /MASTER_AGENT_PLACEHOLDERS/);
+});
+
+test("face_research catalog documents ar5iv and github references", () => {
+  const research = readFileSync(join(root, "..", "data", "runtime", "face_research.yml"), "utf8");
+  assert.match(research, /2405\.13050/);
+  assert.match(research, /2410\.22370/);
+  assert.match(research, /open-webui/);
+  assert.match(research, /modalities:/);
+});
+
 test("chat index wires digested assets around lazy face boot", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /asset_path\("face\.css"\)/);

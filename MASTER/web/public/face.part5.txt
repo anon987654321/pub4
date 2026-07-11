@@ -731,13 +731,25 @@ zshIn.addEventListener('focus', () => {
   window.MASTERVisual?.event?.('input:focus', { topology: 'papua-mask', entropy: 0.14, confidence: 0.88, mode: 'attending' });
 });
 
-const PLACEHOLDERS = ['ask anything', 'what do you think?', 'challenge me', 'show your work', 'explain simply'];
+const PLACEHOLDERS = [
+  'ask anything — type your instruction',
+  'attach photo (+) then describe what to see',
+  'tap mic — speak, I will listen',
+  'paste code — ask for review or explain',
+  'what are you trying to accomplish?',
+  'challenge me — show your work',
+  'explain simply — then go deeper'
+];
 let _phIdx = 0;
-setInterval(() => {
+function _cyclePlaceholder() {
   if (document.activeElement === zshIn || zshIn.value) return;
-  _phIdx = (_phIdx + 1) % PLACEHOLDERS.length;
-  zshIn.placeholder = PLACEHOLDERS[_phIdx];
-}, 8000);
+  const research = window.MASTER_AGENT_PLACEHOLDERS;
+  const pool = Array.isArray(research) && research.length ? research : PLACEHOLDERS;
+  _phIdx = (_phIdx + 1) % pool.length;
+  zshIn.placeholder = pool[_phIdx];
+}
+setInterval(_cyclePlaceholder, 8000);
+window.addEventListener('master:runtime-config', () => _cyclePlaceholder());
 
 const _charCount = document.getElementById('char-count');
 const _cmdHistKey = 'master:cmd_hist';

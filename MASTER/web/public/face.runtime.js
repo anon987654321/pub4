@@ -824,7 +824,6 @@ let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBounda
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
   sampleDepthMapGrid(generateFaceDepthMap(768), FACE_GRID_COLS, FACE_GRID_ROWS));
-
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
@@ -1301,7 +1300,6 @@ async function swapMask(imageUrl) {
     if (uiStatus) uiStatus.textContent = 'mask load failed';
   }
 }
-
 let frameLoopActive = false;
 function ensureFrameLoop() {
   if (State.hidden || document.hidden) return;
@@ -2017,7 +2015,6 @@ if ('getBattery' in navigator) {
     b.addEventListener('chargingchange', check);
   }).catch(() => {});
 }
-
 let actx = null;
 let ambientHumGain = null;
 function initAudio() {
@@ -2771,7 +2768,6 @@ function ttsTogglePause() {
   tts.paused = true;
   if (spinBtn) { spinBtn.textContent = '▶'; spinBtn.setAttribute('aria-label', 'Resume current response'); }
 }
-
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
 function startVisemeAnim(text) {
   stopVisemeAnim();
@@ -3505,13 +3501,25 @@ zshIn.addEventListener('focus', () => {
   window.MASTERVisual?.event?.('input:focus', { topology: 'papua-mask', entropy: 0.14, confidence: 0.88, mode: 'attending' });
 });
 
-const PLACEHOLDERS = ['ask anything', 'what do you think?', 'challenge me', 'show your work', 'explain simply'];
+const PLACEHOLDERS = [
+  'ask anything — type your instruction',
+  'attach photo (+) then describe what to see',
+  'tap mic — speak, I will listen',
+  'paste code — ask for review or explain',
+  'what are you trying to accomplish?',
+  'challenge me — show your work',
+  'explain simply — then go deeper'
+];
 let _phIdx = 0;
-setInterval(() => {
+function _cyclePlaceholder() {
   if (document.activeElement === zshIn || zshIn.value) return;
-  _phIdx = (_phIdx + 1) % PLACEHOLDERS.length;
-  zshIn.placeholder = PLACEHOLDERS[_phIdx];
-}, 8000);
+  const research = window.MASTER_AGENT_PLACEHOLDERS;
+  const pool = Array.isArray(research) && research.length ? research : PLACEHOLDERS;
+  _phIdx = (_phIdx + 1) % pool.length;
+  zshIn.placeholder = pool[_phIdx];
+}
+setInterval(_cyclePlaceholder, 8000);
+window.addEventListener('master:runtime-config', () => _cyclePlaceholder());
 
 const _charCount = document.getElementById('char-count');
 const _cmdHistKey = 'master:cmd_hist';
@@ -3714,4 +3722,3 @@ await import('/face_semantics.js');
 await import('/face_minimal_ui.js');
 await import('/face_loops_music.js');
 await import('/face_loops_nudge.js');
-

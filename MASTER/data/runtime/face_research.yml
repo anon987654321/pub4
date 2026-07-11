@@ -1,0 +1,87 @@
+# Research-backed face UX references — LAUI, GenAI UI survey, open repos.
+# Wired into /runtime/config for proactive hints and placeholder cycling.
+---
+meta:
+  updated: "2026-07-11"
+  purpose: "Ground face enhancements in published HCI/agent-interface research"
+
+papers:
+  - id: laui_2405
+    title: "Human-Centered LLM-Agent User Interface (LAUI)"
+    arxiv: "2405.13050"
+    ar5iv: "https://ar5iv.labs.arxiv.org/html/2405.13050v1"
+    insight: >
+      Agent as secretary not butler — study user needs, propose interaction schemes,
+      separate thought/action/speech lanes, multi-modal feedback coordinated by agent.
+    face_hooks: [agent_hud, engagement_rail, proactive_hints]
+
+  - id: genai_ui_survey_2410
+    title: "Survey of UI Design in Generative AI Applications"
+    arxiv: "2410.22370"
+    ar5iv: "https://ar5iv.labs.arxiv.org/html/2410.22370v1"
+    insight: >
+      Distinguish prompt (instruction) from input (data acted upon); taxonomy of
+      user-guided interactions across text, visual, and audio modalities.
+    face_hooks: [modality_chips, placeholder_cycle, photo_attach]
+
+repos:
+  - id: open_webui
+    name: open-webui/open-webui
+    url: "https://github.com/open-webui/open-webui"
+    pattern: "streaming chat, model chips, tool-call transparency, keyboard palette"
+  - id: assistant_ui
+    name: assistant-ui/assistant-ui
+    url: "https://github.com/assistant-ui/assistant-ui"
+    pattern: "composable chat primitives, tool UI slots, streaming affordances"
+  - id: huggingface_chat_ui
+    name: huggingface/chat-ui
+    url: "https://github.com/huggingface/chat-ui"
+    pattern: "minimal chrome, model routing chip, multimodal attachments"
+  - id: open_llm_vtuber
+    name: Open-LLM-VTuber/Open-LLM-VTuber
+    url: "https://github.com/Open-LLM-VTuber/Open-LLM-VTuber"
+    pattern: "avatar lip-sync, viseme-driven face, proactive agent persona"
+  - id: flute_x_gpt
+    name: DoubleBlind23408929/Flute-X-GPT
+    url: "https://github.com/DoubleBlind23408929/Flute-X-GPT"
+    pattern: "LAUI reference — real-time multi-modal tutoring, function-call HUD"
+
+engagement_levels:
+  - id: passive
+    label: idle
+    face_mode: idle
+  - id: attending
+    label: listen
+    face_mode: attending
+  - id: deliberative
+    label: think
+    face_mode: thinking
+  - id: instrumental
+    label: act
+    face_mode: tool
+  - id: expressive
+    label: speak
+    face_mode: speaking
+
+modalities:
+  - id: prompt_text
+    label: prompt
+    placeholder: "ask anything — type your instruction"
+  - id: input_photo
+    label: photo
+    placeholder: "attach a photo (+) then describe what to see"
+  - id: input_voice
+    label: voice
+    placeholder: "tap mic — speak, I'll listen"
+  - id: input_code
+    label: code
+    placeholder: "paste code — ask for review or explain"
+  - id: collaborative
+    label: co-plan
+    placeholder: "what are you trying to accomplish?"
+
+proactive_hints:
+  - "LAUI: describe your goal — I'll propose a workflow, not just answer"
+  - "prompt ≠ input: type what you want; attach photo/code as separate data"
+  - "mid-stream tools show in the act lane — face reacts while agents work"
+  - "tap face canvas to replay last reply with viseme sync"

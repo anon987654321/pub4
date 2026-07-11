@@ -976,3 +976,33 @@ enhancements:
   status: implemented
   handler: js
   summary: Optional WebGL renderer preserving retro canvas default
+- id: enh_laui_agent_hud
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: LAUI engagement rail with thought/action/speech lanes (ar5iv 2405.13050)
+- id: enh_modality_chips
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Prompt vs input modality chips — photo/voice/code (ar5iv 2410.22370)
+- id: enh_research_placeholders
+  area: web
+  tier: p1
+  status: implemented
+  handler: both
+  summary: Research-informed placeholder cycle from face_research.yml modalities
+- id: enh_photo_live_shell
+  area: web
+  tier: p0
+  status: implemented
+  handler: both
+  summary: Photo attach (+) in live chat shell index.html.erb
+- id: enh_face_research_catalog
+  area: bus
+  tier: p2
+  status: implemented
+  handler: ruby
+  summary: face_research.yml wired into RuntimeCatalog /runtime/config boot
