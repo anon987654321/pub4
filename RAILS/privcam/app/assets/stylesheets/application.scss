@@ -1,18 +1,10 @@
 @use "pub4_stack" as *;
+@use "x_widgets";
+@use "x_root" as xroot;
 
 :root {
-  --turbo-progress-bar-color: var(--x-accent, #1d9bf0);
-  --app-accent: #7c3aed;
-}
-
-body {
-  color: var(--black);
-  background: var(--white);
-}
-
-main {
-  align-items: stretch;
-  justify-content: flex-start;
+  @include xroot.x-app-root-tokens;
+  --turbo-progress-bar-color: var(--accent);
 }
 
 .video-list {

@@ -1,7 +1,10 @@
 @use "pub4_stack" as *;
+@use "x_widgets";
+@use "x_root" as xroot;
 
 :root {
-  --turbo-progress-bar-color: var(--x-accent, #1d9bf0);
+  @include xroot.x-app-root-tokens;
+  --turbo-progress-bar-color: var(--accent);
 }
 
 .dep-graph {
@@ -39,8 +42,8 @@ header {
       margin-inline-end: 28px;
 
       &.active {
-        color: var(--black);
-        border-bottom: 2px solid var(--black);
+        color: var(--text);
+        border-bottom: 1px solid var(--accent);
         font-weight: 700;
 
         &::before {

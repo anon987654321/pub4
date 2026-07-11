@@ -1,41 +1,33 @@
 @use "pub4_stack" as *;
+@use "x_widgets";
+@use "x_root" as xroot;
 
 :root {
-  --turbo-progress-bar-color: var(--x-accent, #1d9bf0);
-  --app-accent: #f59e0b;
-}
-
-body {
-  color: var(--black);
-  background: var(--white);
-}
-
-main {
-  align-items: stretch;
-  justify-content: flex-start;
+  @include xroot.x-app-root-tokens;
+  --turbo-progress-bar-color: var(--accent);
 }
 
 nav .brand {
   font-weight: 800;
-  font-style: italic;
   letter-spacing: -0.02em;
 }
 
 nav a {
-  color: var(--black);
+  color: var(--text);
   font-weight: 600;
   text-decoration: none;
-  border-bottom: 3px solid transparent;
+  border-bottom: 1px solid transparent;
   padding-bottom: 2px;
-  transition: border-color 120ms ease;
+  transition: border-color 120ms ease, color 120ms ease;
 }
 
 nav a:hover {
-  border-bottom-color: var(--extra-light-grey);
+  border-bottom-color: var(--border);
 }
 
 nav a[aria-current="page"] {
-  border-bottom-color: var(--app-accent);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 .comic-form {
@@ -47,7 +39,7 @@ nav a[aria-current="page"] {
 
 .comic-form textarea,
 .comic-form select {
-  border: 2px solid var(--black);
+  border: 1px solid var(--border);
   border-radius: var(--x-radius-sm);
   padding: 0.6rem 0.75rem;
   font: inherit;
@@ -67,8 +59,8 @@ nav a[aria-current="page"] {
 
 .comic-grid article {
   padding: 1.25rem 1.5rem;
-  border: 2px solid var(--black);
-  border-radius: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
 .status-badge {
@@ -106,5 +98,6 @@ nav a[aria-current="page"] {
 .comic-gallery img {
   width: 100%;
   display: block;
-  border: 2px solid var(--black);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
