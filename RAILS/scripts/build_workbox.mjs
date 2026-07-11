@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
-const APPS = ["amber", "brgen", "bsdports"]
+const APPS = ["amber", "brgen", "bsdports", "hjerterom", "mytoonz", "privcam", "pub_attorney"]
 const root = resolve(import.meta.dirname, "..")
 const source = join(root, "shared", "pwa", "service_worker.js")
 const temp = await mkdtemp(join(tmpdir(), "pub4-workbox-"))
