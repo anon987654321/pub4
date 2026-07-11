@@ -264,7 +264,6 @@
   <%= javascript_include_tag(*%w[face_state visual_governor topology_registry particle_worker
         sse_contract chat_actions visual_bridge chat], defer: true) %>
   <script src="<%= asset_path("master_events.js") %>" defer></script>
-  <script src="<%= asset_path("face_agent_hud.js") %>" defer></script>
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
     fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {

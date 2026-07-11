@@ -355,17 +355,7 @@
     try { localStorage.setItem("master:font-scale", String(scale)); } catch (_) {}
   });
 
-  V.register(117, "skip-link text boot", () => {
-    if (document.getElementById("skip-to-input")) return;
-    const a = document.createElement("a");
-    a.id = "skip-to-input";
-    a.href = "#zin";
-    a.className = "skip-link";
-    a.textContent = "Skip to input";
-    body.prepend(a);
-  });
-
-  V.register(118, "degraded WebGL UI trigger", (ctx) => {
+V.register(118, "degraded WebGL UI trigger", (ctx) => {
     const reason = ctx.detail.message || ctx.detail.reason || "Degraded text mode";
     root.dataset.degradedWebgl = "1";
     body.dataset.errorBoundary = "1";

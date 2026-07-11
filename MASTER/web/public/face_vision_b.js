@@ -170,7 +170,6 @@
 
   V.register(57, "smoke heartbeat", () => {
     root.dataset.smokeHeartbeat = root.dataset.smokeHeartbeat === "on" ? "off" : "on";
-    window._chatOnDmesg?.("♥ smoke");
     V.spawn(0, { kind: 57, arousal: 0.3, decay: 0.025 });
   });
 

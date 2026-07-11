@@ -36,16 +36,6 @@ let recentReplyCursor = -1;
 let _streamEl = null;
 let _typingEl = null;
 
-const sessionStats = (() => {
-  let el = document.getElementById('session-stats');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'session-stats';
-    el.className = 'session-stats';
-    document.body.appendChild(el);
-  }
-  return el;
-})();
 
 // ARIA live region for streamed text (FA137) — announce new tokens to SR
 const streamLive = (() => {
@@ -81,33 +71,9 @@ function triggerLaughterBurst() {
   }, 900);
 }
 
-function updateSessionStats() {
-  if (!sessionStats || !log) return;
-  const messageCount = log.querySelectorAll('.message').length;
-  const wordCount = Array.from(log.querySelectorAll('.message')).reduce((total, msgEl) => {
-    const body = msgEl.querySelector('.msg-body');
-    const text = (body?.textContent || msgEl.textContent || '').replace(/^(you\$|master\$)\s*/i, '').trim();
-    if (!text) return total;
-    return total + text.split(/\s+/).filter(Boolean).length;
-  }, 0);
-  const elapsedMs = Date.now() - sessionStartedAt;
-  const minutes = Math.floor(elapsedMs / 60000);
-  const seconds = Math.floor((elapsedMs % 60000) / 1000).toString().padStart(2, '0');
-  const wordLabel = wordCount >= 1000 ? `${(wordCount / 1000).toFixed(1).replace(/\.0$/, '')}k words today` : `${wordCount} words today`;
-  sessionStats.textContent = `${wordLabel} · ${minutes}m ${seconds}s`;
-  sessionStats.title = `remembers ${messageCount} things from today`;
-}
-let sessionStatsTimer = null;
-function scheduleSessionStats() {
-  if (sessionStatsTimer) clearTimeout(sessionStatsTimer);
-  const idle = document.hidden || !log?.querySelector(".message");
-  sessionStatsTimer = setTimeout(() => {
-    updateSessionStats();
-    scheduleSessionStats();
-  }, idle ? 5000 : 1000);
-}
-scheduleSessionStats();
-document.addEventListener("visibilitychange", scheduleSessionStats, { passive: true });
+// Session word/time counter UI removed (idle-screen chrome); kept as a no-op
+// so the existing call sites below don't need to change.
+function updateSessionStats() {}
 
 const providerChip = (() => {
   let el = document.getElementById('provider-chip');
@@ -424,21 +390,9 @@ function openActionMenu(msgEl) {
   }, 0);
 }
 
-window._chatOnCtxFooter = (payload) => {
-  const asst = log?.querySelector('.message.assistant:last-of-type');
-  if (!asst || !payload) return;
-  let foot = asst.querySelector('.ctx-footer');
-  if (!foot) {
-    foot = document.createElement('div');
-    foot.className = 'ctx-footer';
-    asst.appendChild(foot);
-  }
-  const model = payload.model || 'model';
-  const est = payload.token_est ?? 0;
-  const limit = payload.limit ?? 0;
-  const pct = payload.pct ?? 0;
-  foot.textContent = `ctx: ${est}/${limit} ${pct}% · ${model}`;
-};
+// Per-message context-usage footer removed (idle-screen chrome); no-op kept
+// since callers use optional chaining and this file assigns it unconditionally.
+window._chatOnCtxFooter = () => {};
 
 window._chatOnCompaction = (payload) => {
   if (!payload?.summary) return;
@@ -460,17 +414,13 @@ window._chatOnCompaction = (payload) => {
 };
 
 window._chatOnPhantom = (payload) => {
+  // Raw "phantom: <pattern>" badge text removed (internal-mechanism jargon
+  // leaking into the transcript); the glitch reaction below is kept since
+  // it's an ambient visual cue, not a label.
   const asst = log?.querySelector('.message.assistant:last-of-type');
   if (asst) {
     asst.classList.add('msg-phantom');
     asst.dataset.phantom = (payload?.patterns || []).join(',');
-    let badge = asst.querySelector('.phantom-badge');
-    if (!badge) {
-      badge = document.createElement('span');
-      badge.className = 'phantom-badge';
-      asst.appendChild(badge);
-    }
-    badge.textContent = `phantom: ${(payload?.patterns || []).join(', ')}`;
   }
   document.body.dataset.phantomGlitch = '1';
   setTimeout(() => delete document.body.dataset.phantomGlitch, 900);
@@ -545,24 +495,10 @@ window._chatOnBtw = (payload) => {
   log.scrollTop = log.scrollHeight;
 };
 
-window._chatOnThought = (line) => {
-  if (!line) return;
-  const asst = log.querySelector('.message.assistant:last-of-type');
-  if (!asst) return;
-  let block = asst.querySelector('.thought-trace');
-  if (!block) {
-    block = document.createElement('div');
-    block.className = 'thought-trace';
-    asst.insertBefore(block, asst.firstChild);
-  }
-  const d = document.createElement('div');
-  d.className = 'thought-line';
-  d.textContent = line;
-  block.appendChild(d);
-  log.scrollTop = log.scrollHeight;
-};
+// Visible "thought trace" block removed (internal event-name clutter). No-op
+// kept since callers use optional chaining.
+window._chatOnThought = () => {};
 
-const _dmesgFadeRing = [];
 window._chatPassHairline = () => {
   const last = log?.querySelector('.message.assistant:last-of-type, .message.user:last-of-type');
   if (!last) return;
@@ -570,45 +506,14 @@ window._chatPassHairline = () => {
   setTimeout(() => last.classList.remove('msg-pass-flash'), 420);
 };
 
+// The visible "dmesg" transcript line (raw internal event names like
+// "llm0 at master0: ...") is removed, but face_micro_interactions.js's
+// veto/pass ecology reaction depends on the chat:dmesg event firing, so the
+// dispatch + ecology burst stay; only the DOM line creation is gone.
 window._chatOnDmesg = (line) => {
-  if (!line || !log) return;
-  const d = document.createElement('div');
-  d.className = 'dmesg-line';
-  d.setAttribute('aria-hidden', 'true');
-  const ts = new Date();
-  const stamp = ts.getHours().toString().padStart(2, '0') + ':' +
-    ts.getMinutes().toString().padStart(2, '0') + ':' +
-    ts.getSeconds().toString().padStart(2, '0');
-  const prompt = document.createElement('span');
-  prompt.className = 'dmesg-ts';
-  prompt.textContent = stamp + ' ';
-  const body = document.createElement('span');
-  body.className = 'dmesg-body';
-  body.textContent = String(line);
-  d.appendChild(prompt);
-  d.appendChild(body);
-  const asst = log.querySelector('.message.assistant:last-of-type');
-  asst ? log.insertBefore(d, asst) : log.appendChild(d);
-  log.scrollTop = log.scrollHeight;
+  if (!line) return;
   window.dispatchEvent(new CustomEvent('chat:dmesg', { detail: { line: String(line) } }));
   if (/veto|pass/i.test(String(line))) window.MASTEREcology?.burst?.(4, 0.25);
-  if (/tool|scan|sweep/i.test(String(line))) d.dataset.tool = '1';
-  requestAnimationFrame(() => d.classList.add('dmesg-live'));
-  const fadeDelay = d.dataset.tool ? 7800 : 7200;
-  const slot = _dmesgFadeRing.shift() || {};
-  if (slot.t1) clearTimeout(slot.t1);
-  if (slot.t2) clearTimeout(slot.t2);
-  slot.t1 = setTimeout(() => {
-    d.classList.remove('dmesg-live');
-    d.classList.add('dmesg-fade');
-    slot.t2 = setTimeout(() => d.remove(), 820);
-  }, fadeDelay);
-  _dmesgFadeRing.push(slot);
-  while (_dmesgFadeRing.length > 3) {
-    const old = _dmesgFadeRing.shift();
-    if (old?.t1) clearTimeout(old.t1);
-    if (old?.t2) clearTimeout(old.t2);
-  }
 };
 
 (function wirePhotoUpload() {
